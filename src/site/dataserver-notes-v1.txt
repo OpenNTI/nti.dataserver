@@ -1,0 +1,124 @@
+Note Storage v1
+
+* Note Storage
+
+  Notes are built on the capabilities defined in dataserver-v2.txt.
+  For interoperability, the Structured URLs and Structured Data SHOULD
+  follow the conventions documented in this note (although this is not
+  enforced by the server).
+
+** Structured URLs
+
+   Recall the URL format:
+
+   /dataserver/users/$USERNAME/$TYPE/$GROUP/$ID?format=$FORMAT
+
+   When working with notes, the variables take on the following
+   values.
+
+   - $TYPE MUST be 'Notes'.
+   - $GROUP MUST be the value of the 'ntiid' META tag from the HTML
+     page to which the note is associated. Notes are always associated
+     with (embedded in) one and only one page.
+
+** Dataserver Additions and Reserved Keys
+
+   Since dataserver-v2.txt was written, the following additions have
+   been made to the data returned by the server. Like 'Last Modified',
+   these keys are automatically added by the server, and values sent
+   in for them are ignored.
+
+   - OID is a string value containing an identifier that is unique among all
+     objects the dataserver stores. It will never change or be reused.
+     (Contrast this with the ID field that MAY be user defined and
+     which MAY be reused.)
+   - Creator is a string containing the username of the account that
+     originally created the item.
+   - The In-Reply-To and References fields described in 'Threading'.
+
+    Any key that begins with an uppercase letter SHOULD be considered
+    reserved by the dataserver. User content dictionaries SHOULD NOT
+    use keys that begin with uppercase letters. Any key that begins
+    with an uppercase letter the dataserver MAY interpret specially.
+
+** Note Structure
+
+   Notes are defined to have the following keys (with additions in the
+   'Threading' section).
+
+   - text. A string containing the content of the note. More details below.
+
+   - left, top, zIndex. Integers. For notes that have been anchored or opened
+     for editing "floating" in space, these are the HTML document
+     coordinates of the floating note window. Optional but highly useful.
+
+   - anchorPoint, anchorType. For notes that have been anchored within
+     a page, these give the location within the page where the
+     note should be anchored. The value of anchorType defines the
+     interpretation of anchorPoint. Currently, the only defined anchorType is
+     'previousName', which means the the anchorPoint is the value of
+     the 'name' attribute of an A tag /preceding/ the element after
+     which the note content should be inlined in the page. Optional
+     but highly useful (most likely to be optional in replies to
+     discussions; threads trump location).
+
+    Additional fields MAY be added and SHOULD not cause problems.
+    These fields SHOULD be round-tripped and preserved by a client
+    that does not use them.
+
+*** Note Text
+
+	A note SHOULD have text. A note with empty text SHOULD be
+    automatically deleted upon save (or simply not initially saved).
+
+	The text MAY be plain text, RTF, or HTML. If it is HTML, it MUST
+    be a complete HTML document beginning with "<html><body>" and
+    ending with the corresponding close tags. The HTML MUST be
+    well-formed XML. Each paragraph should be delimited with "p" tags.
+    Inline styles may be applied by wrapping a section with "span"
+    tags and applying styles directly to the "style" attribute. The
+    supported styles are minimal; anything other than
+    'background-color', 'color', 'text-align' 'text-decoration',
+    'font-family' and 'font-size' MAY be ignored and lost.
+
+**** Links In HTML Notes
+
+	 Linking to a page within HTML note content SHOULD use the
+     "x-nti-cid" URL format. This is an opaque URL format. Its body
+     is a 'ntiid' ID. For example, x-nti-cid:aops-prealgebra-0.
+
+	 Images contained within notes SHOULD use the data: URL format and
+     should be small. (Links to pages created by the pad app combine
+     both of these features.)
+
+** Threading
+
+   Notes are threaded into a discussion client-side in a format very
+   similar to email (as described in RFC2822, S3.6.4). There are two
+   fields involved, both of which MUST be set as described here:
+
+   - In-Reply-To is a single string containing the parent's OID. If
+     there is no In-Reply-To field, the message is not part of a
+     discussion.
+   - References is a list containing a copy of the parent's References
+     field, with the parent's OID appended.
+
+   When loading notes, the client should check for the presence of
+   these fields and build up an appropriate local threaded view. Note
+   that some parents may be completely missing (deleted) but multiple
+   children may still refer to them; in this case, the client should
+   still display a thread view (perhaps dummying up a fake parent).
+   The location or page embedded parent of the thread should be taken
+   from the parent, and locations of children ignored. (Threads trump location.)
+
+   Any notes that are part of the discussion that the client has not
+   already loaded can be retrieved at the URL /dataserver/Objects/$OID.
+
+
+** Known upcoming changes
+
+   - Storing some notion of an original highlighted span for later
+     display.
+   - Returning sharing information for display/edit.
+   - Threading will be made more efficient.
+   - Getting all the notes, etc, for a page will be made more efficient.

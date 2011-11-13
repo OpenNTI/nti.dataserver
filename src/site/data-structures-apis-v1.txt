@@ -1,0 +1,495 @@
+// -*- mode: idl -*-
+//A sketch of data structures and APIs.
+
+typedef string ntiid;
+typedef string oid_t;
+
+struct Link {
+	// A link represents a relationship between two entities.
+	// One entity is defined by being the container of the link.
+	// The other entity is specified as the target.
+
+	// The target of the link is specified in the href field. This
+	// may be a relative URI or an absolute URI. If an absolute
+	// URI, it may be an NTIID or some other protocol (such as HTTP).
+	string href;
+	enum {
+		self, // The link is another way of reaching the containing entity
+		related, // The target is related to the containing entity
+		enclosure, // The target is potentially large data logically contained within this entity
+		alternate,
+		edit,
+	} rel;  //Relationship, represented as a string
+
+
+	optional string type; // The MIME type of the target.
+	optional string title; // The human-readable name of the target.
+}
+
+// TODO: Many of the object properties can be remodeled as
+// link relationships. Examples include following, Communities,
+// a Theadable's references, etc.
+
+
+struct Object {
+	readonly oid_t OID; //object id
+	readonly string Creator;
+	readonly time_t LastModified;
+	readonly time_t CreatedTime;
+	readonly string Class;
+
+	// Any object may optionally have links to other
+	// objects, expressing a relationship between them.
+	// TODO: should this be inline on the object or part
+	// of external metadata? That gets to: do we need a
+	// 'entry' wrapper object?
+	readonly optional Link[] Links;
+}
+
+struct Entity : Object {
+	readonly string Username; //The name is always in email format.
+	URL avatarUrl;
+	string realname;
+	string alias;
+}
+
+mixin Contained {
+	string ContainerId;
+}
+
+struct FriendsList : Entity<Contained> {
+	Entity friends[]; //'friends' is a list of friends, possibly containing existing users or other emails.
+}
+
+struct Person : Entity {
+	time_t lastLoginTime; //time_t format, you must set
+	out integer NotificationCount; //reset with lastLoginTime
+
+	string Presence; // "Online" or "Offline"
+
+	in string password;
+
+	//list of names of people we are not accepting
+	//shared data from
+	string ignoring[];
+	//List of names of people we agree to accept shared
+	//data from. Anytime someone adds us to a friends list,
+	//we start accepting data from them (unless we have
+	//previously ignored them). This generates a notification and
+	//stream event.
+	string accepting[];
+
+	//NOTE: ignoring and accepting can be posted to with a single
+	//string to add the user to the list (and ensure it's not in the counterpart list).
+	//They can also accept a dictionary with up to two keys, add and remove. The values for
+	//those keys are lists, and each element of that list will be added or removed
+	//as specified
+
+
+	//Communities I am a member of. I will see all data shared
+	//with the community if I follow the community. I will
+	//see data shared with people I follow if they share it with the
+	//community.
+	readonly string[] Communities;
+
+	//The names of individuals or communities I am following.
+	//I will see data these people share publically or
+	//to a community I belong to. When I add someone to a friends
+	//list, I automatically follow them.
+	string following[];
+
+	string email[]; //preferred order
+	//name is logon name is email
+	string organization;
+	string role[];
+}
+
+struct Preferences : Object {
+	//TODO
+}
+
+mixin Shareable {
+	Entity sharedWith[]; //May be OIDs instead
+	//TODO Flags
+	bool prohibitReSharing;
+}
+
+mixin Anchored<Contained> {
+	optional point_t coordinates;
+	//and/or
+	optional anchor_t anchor;
+}
+
+struct Bookmark : Object<Contained,Shareable> { }
+
+struct Highlight : Bookmark {
+	range_t ranges[];
+}
+
+mixin Threadable {
+	oid_t inReplyTo;
+	oid_t references[];
+}
+
+struct Note : Highlight <Threadable, Anchored> {
+	string text; //deprecated
+	//An ordered list of objects (strings or objects) that make up the body.
+	//In particular, Canvas objects can appear here.
+	//text is a synonym for the first body part. Setting text
+	//replaces all other bodyParts.
+	Object[] body;
+}
+
+struct Canvas : Object<Contained,Shareable> {
+	//TBD
+}
+
+struct Change : Object<Contained> {
+	enum {
+		CREATED,
+		MODIFIED,
+		CIRCLED
+	} changeType;
+	Object object;
+}
+
+struct ActivityStream : Object<Contained> {
+	Change changes[];
+	//TODO: If we support older/multiple ranges,
+	//some indication here of which part of range,
+	//whether there is more?
+}
+/**
+ * Chat and Event info
+ */
+//Chat server info
+typedef string roomid_t;
+typedef string msgid_t;
+
+struct RoomInfo : Object<Contained,Threadable> {
+	roomid_t ID;
+	time_t CreatedTime;
+	boolean Active;
+	int MessageCount;
+	boolean Moderated;
+	//Am I being shadowed in this room?
+	//if so, all of my non-default-channel posts
+	//and messages I receive will be copied to someone else
+	boolean Shadowed;
+
+	string[] Occupents;
+}
+
+/**
+ * Channels:
+ * Within a chat room, a 'channel' is a separate sideband of information exchange. Besides
+ * text messages, many operational messages are carried on channels so that
+ * they may be a part of the transcript.
+ * Channels are named by strings, such as "DEFAULT."
+ *
+ * -Security
+ * Channels may be uni-directional or multi-directional. In the case of a moderated
+ * room, each channel may have different perimissioning; in particular, permissions
+ * may be based on the particular sender, the particular recipients, and the value
+ * of certain fields, such as replyTo.
+ *
+ * - Interface panes
+ * In some implementations, some channels may correspond to separate interface
+ * "panes" or "tabs" or otherwise be displayed and interacted with differently.
+ * (For example, the default channel may be treated like a typical chat window,
+ * while the content channel may be used to navigate an existing browser window.)
+ *
+ * - Channels
+ * This section describes the defined channels. An application MUST IGNORE
+ * communication on a channel it doesn't recoginize.
+ *
+ * -- DEFAULT
+ *
+ * This channel is the general any-to-all messaging channel. Messages
+ * on this channel, or messages that have no channel set at all, are
+ * delivered to all recipients in the room (regardless of the
+ * recipient setting). The body is uninterpreted by the server. It
+ * will typically be the same content as a Note (e.g., a string or a
+ * list of strings and Canvas objects). In moderated rooms, posts to
+ * this channel must be approved.
+ *
+ * -- WHISPER
+ *
+ * This channel is for messages directed from one user to a subset of
+ * the other users in the room. (For moderation, if the recipient list
+ * is the full list of room occupants excluding moderators, this is
+ * the same as the DEFAULT channel.) The use-case is for private
+ * conversations between students and assistants. Users may have their
+ * whispers shadowed by a moderator, meaning that all conversation to
+ * or from that user on the whisper channel is echoed to the
+ * moderator. In moderated rooms, the ability to whisper may be
+ * restricted to particular recipients (TAs). The body is as for the
+ * DEFAULT channel.
+ *
+ * -- CONTENT
+ *
+ * This channel is used to ask recipients to display particular units
+ * of content. The content is displayed in the way most suitable for
+ * that content, and replaces previous content like that. The content
+ * is typically curated content. In moderated rooms, the ability to
+ * send on this channel may be restricted to particular senders.
+ *
+ * The body is a dictionary. One key is defined, 'ntiid', whose value
+ * is a string conforming * to the NTIID specification. The server MAY
+ * drop any keys in the dictionary it doesn't * recognize. Clients MUST
+ * ignore unknown keys. The recipients list is ignored and this message
+ * goes to all occupants.
+ *
+ * -- POLL
+ *
+ * This channel contains interactive quizzes/assessments and, probably
+ * most common, student polls. When a message is posted without a
+ * replyTo set (a privilege restricted to moderators in moderated
+ * rooms) then its body is a dictionary of polling options (TBD). When
+ * a replyTo is set on a message that's posted, it is a response to a
+ * poll (a privilege open to anyone in moderated rooms)--and it must
+ * refer to a poll; the server MAY drop messages that do not refer to
+ * polls on this channel. Messages on the DEFAULT or WHISPER channels
+ * MAY be inReplyTo polls to discuss them. Recipient lists are ignored
+ * and this message goes to all occupants.
+ *
+ * -- META
+ *
+ * This channel is used for meta information and meta commands that
+ * affect other channels. In particular, it is used to request
+ * interfaces to pin particular messages. In moderated rooms, this
+ * channel will be restricted to sending by moderators only. Recipient
+ * lists are ignored and commands are distributed to all occupants
+ * (for those commands that
+ *
+ * The body is a dictionary describing the command. One key is always
+ * 'channel', naming the channel to apply the action to. The server
+ * and client MUST drop messages for unsupported channels. Another
+ * required key is 'action;' the server and client MUST drop messages
+ * for unsupported actions. The remainder of the dictionary is
+ * action-specific; the server MAY filter out keys that are unknown
+ * for the particular action and the client MUST ignore them.
+ *
+ * The 'pin' action asks the interface to make a particular unit of content
+ * permanently visible. The way this is done will vary depending on content
+ * type. The dictionary will contain an 'ntiid' key, as for the CONTENT channel; the ID is
+ * more likely to be a transient ID referring to a current message in the DEFAULT channel.
+ *
+ * Pinned content SHOULD accumulate until the 'clearPinned' action is sent. There
+ * are no other keys in the body.
+ */
+
+struct MessageInfo : Object<Contained,Threadable> {
+	msgid_t ID;
+	string Creator; //May be 'System'
+	time_t LastModified; //Time of message on server.
+	msgid_t ContainerId; //The rooms to post to.
+	enum {
+		DEFAULT,
+		WHISPER,
+		CONTENT,
+		POLL,
+		META
+	} channel;
+
+	enum {
+		st_PENDING,
+		st_POSTED,
+		st_SHADOWED,
+		st_INITIAL
+	} Status;
+
+	msgid_t inReplyTo; //parent message id.
+	Object body; //See info on channels to determine the body.
+
+	//A list of usernames that should get this message.
+	//Only important if on the non-default channel.
+	string[] recipients;
+}
+
+struct TranscriptSummary : Object {
+	readonly RoomInfo RoomInfo;
+	//set of all usernames that received or sent messages
+	//contained in this transcript
+	readonly string[] Contributors;
+}
+
+struct Transcript : TranscriptSummary {
+	MessageInfo Messages[];
+}
+
+/**
+ * Events from client to server.
+ */
+//emit to enter a room and begin getting messages for it.
+// At minimum, the room_id field must be present;
+//for an anonymous room (transient, person-to-person) the room_id field
+//MUST be blank. The occupents field should be set to the online
+//users to include in the room.
+//To enter a persistent meeting room, send no Occupants, but DO
+//set the container id to the id of a persistent meeting container. (If you include Occupants
+//you may be able to start a persistent meeting, but you could not
+//join one already in progress.)
+chat_enterRoom( room_info )
+//Sent if you attempted to enter a room, but failed
+chat_failedToEnterRoom( room_info )
+
+//emit to stop receiving messages for a room
+chat_exitRoom( room_id )
+
+//Post a message into a room. The body must be present, rooms
+//must be present and should be a list of rooms to post to that you are in.
+//sender should be present as well. in_reply_to should be set
+//if this is a direct reply (in p2p, everything will be a direct reply)
+//(use case: noticing that questions have been replied to)
+chat_postMessage( msg_info )
+
+//moderation messages
+chat_approveMessages( mid[] )
+chat_makeModerated( room_id, flag )
+//Causes all messages on non-default channels to be sent
+//to all room moderators via recvMessageForShadow
+chat_shadowUsers( room_id, usernames[] )
+//causes each user to get recvMessageForAttention
+chat_flagMessagesToUsers( mid[], usernames[] )
+
+/**
+ * Events from server to client.
+ */
+//Sent when you have been added to a room, directly or
+//indirectly.
+chat_enteredRoom( room_info )
+chat_exitedRoom( room_info )
+
+//Sent when a room you are in has gained/lost a member other
+//than yourself.
+chat_roomMembershipChanged( room_info )
+
+//Sent when a user in your "buddy list" goes offline/online
+chat_presenceForUserChangedTo( username, presence )
+
+//A message arrived in a room you are currently in.
+//This includes messages you yourself posted.
+//This may be sent multiple times if the message is edited (for instance,
+//moderated); compare by message id.
+chat_recvMessage( msg_info )
+
+//Sent to the moderators of a room when a message arrives
+//that requires moderation
+chat_recvMessageForModeration( msg_info )
+
+//Sent to someone in a room when a message requires their attention.
+chat_recvMessageForAttention( mid )
+
+//Sent to the moderators of a room when a shadowed user
+//posts or receives something on a non-default channel.
+chat_recvMessageForShadow( msg_info )
+
+
+//Sent when there is a data change, such as something
+//shared with you.
+data_noticeIncomingChange( change )
+
+//Transcript access
+// Read-only
+// /prefix/Transcripts/ => { RoomId => TranscriptSummary }
+// /prefix/Transcripts/$roomId => Transcript
+
+//TODO: Library
+
+//API
+
+//The prefix shall include the username: (1) This may help with
+//impersonation later; (2) Explicit is better than implicit.
+//Thus prefix becomes: /users/$username
+
+/**
+ * CRUD
+ All creation shall be done by POSTing directly to the prefix.
+ The POSTed data MUST have 'ContainerId' and 'Class' attributes.
+ Note 1: The root /Objects/ prefix also works.
+ Note 2: The returned value shall include the HTTP Location header
+ giving the canonical permanent URL of the new data. The canonical
+ URLs will change between releases; always respect what the server provides.
+ Note 3: In the very near future the Content-Type header will
+ be required on the uploaded data. The Content-Type header on the
+ response will change.
+ This includes quizzes.
+
+ Ediing/updating is done by PUTting modified data to one of:
+ 1. The canonical URL.
+ 2. /prefix/Objects/$OID
+ 3. /Objects/$OID
+ Note 1: Very soon the Content-Type will be required.
+ Note 2: Locations will soon become embedded in the data.
+ Note 3: It is not possible to use PUT to create a new resource.
+ Note 4: The same URLs work for DELETE.
+
+ In general, always PUT/POST the entire contents of the object.
+ As a special case, to simply change the sharing settings for something,
+ one only needs to PUT the dictionary having only
+ the 'sharedWith' value to the object's URL.
+
+ Deprecation WARNING:
+  The older per-class URLs beneath /prefix/, e.g., /prefix/Notes/,
+  should be considered deprecated for fetching since they have terrible
+  performance characteristics. Note that these deprecated
+  URLs have removed one level of wrapping compared to earlier DS versions.
+  These URLs are also deprecated for writing.
+
+  The new URLs are currently rooted at /dataserver2/, while the old, deprecated
+  URLs are rooted at /dataserver/.
+*/
+
+/**
+ * Content-Type
+ The value of the content-type header signifies the format
+ of the representation in the body of a request or response.
+ Our use of content-type (and Accept) is similar to github's
+ (http://developer.github.com/v3/mime/). In particular, our format is:
+
+ application/vnd.nextthought[.version][.class][.param][+json|plist]
+
+ If version is missing, it means the latest. Class is required
+ for create and update operations (unless specified in the data itself;
+ the mime type overrides the data); it is ignored in the Accept header. The class
+ is the lowercased version of the 'Class' value from the data.
+
+ No versions are currently defined. No parameters are currently defined.
+ JSON is the default but may be specified with +json.
+
+ Also valid in Accept headers are:
+ application/json (for the default, latest JSON encoding)
+ application/xml  (for the default, latest XML encoding in PList schema)
+
+ Therefore, application/json is equivalent to application/vnd.nextthought+json
+ and application/xml is equivalent to application/vnd.nextthought+plist.
+
+ */
+
+
+
+/**
+ * Supporting finding other entities: GET beneath
+     /UserSearch/$searchString => [usernames]
+ * $searchString can be empty. It does substring matching
+ */
+
+/**
+ * Access contained entities (owned and shared): CRUD beneath:
+/prefix/Pages/$ntiid/UserGeneratedData/
+/prefix/Pages/$ntiid/RecursiveUserGeneratedData/
+
+
+ * Stream:
+/prefix/Pages/$ntiid/Stream/
+/prefix/Pages/$ntiid/RecursiveStream/
+
+ * Stream and Data:
+/prefix/Pages/$ntiid/UserGeneratedDataAndRecursiveStream
+   This URL has the best performance characteristics for most uses. Prefer it.
+
+ * The Recursive versions include the given $ntiid plus
+ * all of the $ntiid's children.
+ *
+ */

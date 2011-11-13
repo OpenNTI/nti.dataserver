@@ -1,0 +1,96 @@
+// -*- mode: idl -*-
+Whiteboard API v1
+
+* This document contains the API for integrating the whiteboard into an application.  There are 2
+  whiteboards, one for IOS (iPad specifically) and one for use in web applications.  Both whiteboards
+  use the same object models, which are NTIUserData objects that can be saved and retrieved by the
+  dataserver.
+
+
+* Model
+
+  - CanvasShape:
+  	An object that all other "shape" objects inherit from. All shapes are of unit size,
+	positioned at the origin. The final location and size is determined
+	by applying a transformation.
+  	*Class - the class name, same as the shape
+  	*transform - The 2d Affine transform to get final location, size, shape, and rotation.
+
+  - CanvasPolygonShape
+  	For lines, triangles, squares, etc. Adds the 'sides' value.
+
+  - CanvasCircleShape
+	For circles and ovals.
+
+  - CanvasTextShape:
+	An object that describes a text box or possibly a note.
+
+  - Canvas:
+  	This object is a container for a bunch of shapes, a scene, that can be saved.
+  	*shapeList - a list of WBShape objects.
+
+struct WBObject : Object {
+}
+
+struct CanvasAffineTransform { //Notice: This is NOT an Object.
+	float a, b, c, d, tx, ty;
+}
+
+struct CanvasShape : WBObject {
+	CanvasAffineTransform transform;
+}
+
+struct CanvasPolygonShape : CanvasShape {
+	int sides;
+}
+struct CanvasCircleShape : CanvasShape {}
+struct CanvasTextShape : CanvasShape {
+	string text;
+}
+
+struct Canvas : WBObject {
+	CanvasShape[] shapeList;
+}
+
+* Model Scaling
+
+  All models are in standard coordinate system, which means the are represented by float values between
+  0 and 1.  All lengths are also scaled to this system.  This way the model or the list of models,
+  the canvas, can be scaled up to a rectangle of any size, by multiplying the x and y coordinates by the
+  standard x and y in the models.
+
+
+* iOS 5.0 (Required for ARC)
+
+  The NTIWhiteboardTouch framework is available to incorporate this into an iOS application.  There are
+  2 classes that will be used specifically, they are detailed below.
+
+  NTIWBToolBarViewController
+  * This is the view controller for the toolbar.  Currently, the view comes with all possible operations
+    embedded.  Create the view controller and be sure to set it's delegate to handle tool presses.  The
+    NTIWBCanvasViewController can and should be a delegate unless you need to intercept calls before
+    passing them to the canvas.
+
+    Create one using the initWithDelegate method and specify the size of the toolbar view.  Here's an
+    example, note the delegate is a NTIWBCanvasViewController class.
+
+    self.toolbarViewController = [[NTIWBToolBarViewController alloc] initWithDelegate: self.canvasViewController
+																			  andSize:CGRectMake(0, 0, 640, 60)];
+
+  NTIWBCanvasViewController
+
+  * This is the view controller for the canvas space which has a scene drawn upon it.  If you have specified this
+    as a delegate to your toolbar view controller, then there shouldn't be any more work necessary to start drawing on it.
+
+    Here's an example of how to create one, be sure to pass in the size of the canvas you want.
+
+    self.canvasViewController = [[NTIWBCanvasViewController alloc] initWithSize:CGRectMake(0, 0, 640, 480)];
+
+    There are some properties that can be used to get data from the view controller:
+
+    - canvas : gets the NTIWBCanvas object which can be imported or exported.  You can also set the scene by setting this property.
+
+
+* Web
+
+  Currently being implemented.

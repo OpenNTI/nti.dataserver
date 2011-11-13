@@ -1,0 +1,28 @@
+<!-- -*- mode: nxml -*- -->
+<configure xmlns="http://namespaces.zope.org/zope">
+	<include package="zope.component" />
+	<adapter factory=".workspaces.ContainerEnumerationWorkspace" />
+	<adapter factory=".workspaces.PagesCollection" />
+	<adapter factory=".workspaces.HomogeneousTypedContainerCollection" />
+	<adapter factory=".workspaces.LibraryWorkspace" />
+	<adapter factory=".workspaces.LibraryCollection" />
+	<adapter factory=".workspaces.WorkspaceExternalizer" />
+	<adapter factory=".workspaces.UserService"
+			 provides='.interfaces.IService'/>
+	<adapter factory=".workspaces.ServiceExternalizer" />
+
+	<adapter factory=".workspaces.CollectionSummaryExternalizer" />
+	<adapter factory=".workspaces.CollectionSummaryExternalizer"
+			 name="summary"/>
+	<adapter factory=".workspaces.ContainerCollectionDetailExternalizer"
+			 name="detail"/>
+	<adapter factory=".workspaces.LibraryCollectionDetailExternalizer"
+			 name="detail" />
+	<adapter factory=".workspaces.LibraryCollectionDetailExternalizer" />
+	<adapter factory=".workspaces.ContainerCollectionDetailExternalizer" />
+	<adapter factory=".workspaces.CollectionContentTypeAware" />
+	<adapter factory="._adapters.EnclosureExternalObject" />
+
+
+	<include package="nti.dataserver" />
+</configure>

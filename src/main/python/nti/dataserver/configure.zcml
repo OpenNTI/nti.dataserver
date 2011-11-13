@@ -1,0 +1,11 @@
+<!-- -*- mode: nxml -*- -->
+<configure xmlns="http://namespaces.zope.org/zope">
+	<include package="zope.component" />
+	<include package="zope.location" />
+	<include package="zope.container" />
+	<adapter factory=".meeting_container_storage._FriendsListAdapter" />
+	<adapter factory=".meeting_container_storage._ClassSectionAdapter" />
+	<adapter factory=".mimetype.ModeledContentTypeAwareAdapter" />
+	<adapter factory=".links.NoOpLinkExternalObjectAdapter"
+			 name="wsgi" />
+</configure>

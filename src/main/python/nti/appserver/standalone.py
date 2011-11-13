@@ -1,0 +1,100 @@
+#!/usr/bin/env python2.7
+
+import logging
+logger = logging.getLogger( __name__ )
+
+import sys
+import os
+import signal
+import select
+import platform
+
+try:
+	import plasTeX
+except ImportError:
+	toAdd = "../../../../../../../AoPS/src/main/plastex"
+	if os.path.dirname( __file__ ):
+		toAdd = os.path.abspath( os.path.join( os.path.dirname( __file__ ), toAdd ) )
+	sys.path.append( toAdd )
+	import plasTeX
+	assert plasTeX
+
+from wsgiref.simple_server import make_server
+
+import nti.dataserver as dataserver
+from nti.dataserver.library import Library
+
+
+# gevent is a prereq for socketio
+import gevent.pywsgi
+
+import socketio
+
+
+from application import createApplication, AppServer, _configure_logging
+
+
+SOCKET_IO_PATH = 'socket.io'
+USE_FILE_INDICES = 'USE_ZEO_USER_INDICES' not in os.environ
+HTTP_PORT = int(os.environ.get('DATASERVER_PORT', '8080'))
+
+def configure_app(create_ds=True):
+	os.environ['DATASERVER_NO_REDIRECT'] = '1'
+
+	_configure_logging()
+
+	def createApp():
+
+		root = '/Library/WebServer/Documents/'
+		if "--root" in sys.argv:
+			root = sys.argv[sys.argv.index( "--root" ) + 1]
+		elif 'APP_ROOT' in os.environ:
+			root = os.environ['APP_ROOT']
+
+		# We'll volunteer to serve all the files in the root directory
+		# This SHOULD include 'prealgebra' and 'mathcounts'
+		serveFiles = [ ('/' + s, os.path.join( root, s) )
+					   for s in os.listdir( root )
+					   if os.path.isdir( os.path.join( root, s ) )]
+		libraryPaths = []
+		for _, path in serveFiles:
+			to_append = None
+			if path.endswith( '/prealgebra' ):
+				to_append = (path, False, 'Prealgebra', '/prealgebra/icons/chapters/PreAlgebra-cov-icon.png')
+			elif path.endswith( '/mathcounts' ):
+				to_append = (path, False, 'MathCounts', '/mathcounts/icons/mathcounts-logo.gif' )
+			else:
+				to_append = (path, False)
+			libraryPaths.append( to_append )
+
+		application,main = createApplication( HTTP_PORT, Library( libraryPaths ), process_args=True, create_ds=create_ds )
+
+		main.setServeFiles( serveFiles )
+		return application
+
+	httpd = AppServer(
+		('',HTTP_PORT), createApp(),
+		policy_server=False,
+		namespace=SOCKET_IO_PATH,
+		session_manager = create_ds and dataserver.Dataserver.get_shared_dataserver().session_manager )
+	def set_app( self, app ): self.application = app
+	httpd.set_app = set_app
+	return httpd
+
+def pyramid_main(*args, **kwargs):
+	return configure_app(create_ds=False).application
+
+def run_main():
+
+	httpd = configure_app()
+	while True:
+		try:
+			#SIGHUP could cause this to raise 'interrupted system call'
+			print "Starting server %s:%s %s" % (platform.uname()[1], HTTP_PORT, httpd.__class__)
+			httpd.serve_forever()
+		except KeyboardInterrupt:
+			dataserver.Dataserver.get_shared_dataserver().close()
+			raise
+
+if __name__ == '__main__':
+	run_main()

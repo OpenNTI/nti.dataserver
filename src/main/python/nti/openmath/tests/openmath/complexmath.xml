@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<OMOBJ xmlns="http://www.openmath.org/OpenMath" version="2.0" cdbase="http://www.openmath.org/cd">
+  <OMA>
+    <OMS cd="arith1" name="plus"/>
+    <OMA>
+      <OMS cd="arith1" name="root"/>
+      <OMI>31</OMI>
+      <OMI>3</OMI>
+    </OMA>
+    <OMA>
+      <OMS cd="arith1" name="divide"/>
+      <OMA>
+        <OMS cd="arith1" name="minus"/>
+        <OMA>
+          <OMS cd="arith1" name="power"/>
+          <OMV name="q"/>
+          <OMI>2</OMI>
+        </OMA>
+        <OMI>1</OMI>
+      </OMA>
+      <OMA>
+        <OMS cd="arith1" name="minus"/>
+        <OMV name="q"/>
+        <OMI>1</OMI>
+      </OMA>
+    </OMA>
+  </OMA>
+</OMOBJ>

@@ -1,0 +1,23 @@
+#tag {
+	margin: -20px 0 0 -20px;
+	position: absolute;
+	background: url(ref_bubble.png);
+	width: 25px;
+	height: 29px;
+	display: inline;
+	cursor: hand;
+}
+
+#definition {
+	padding: 1em;
+	border-radius: 2em;
+	border: thick solid black;
+	position: absolute;
+	height: 90%;
+	background: #c0c0c0;
+}
+
+#definition input {
+	font-size: 2em;
+	width: 100%;
+}
