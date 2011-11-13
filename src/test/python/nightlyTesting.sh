@@ -8,11 +8,11 @@ cd $CHECKOUT_DIR
 
 # Checkout the source
 svn co -q https://svn.nextthought.com/repository/AoPS/trunk AoPS
-svn co -q https://svn.nextthought.com/repository/Sprints/ Sprints
+svn co -q https://svn.nextthought.com/repository/NextThoughtPlatform/trunk/ NextThoughtPlatform
 
 #Install the dictionary file
-TEST_DIR=Sprints/20110505/src/test/python
-PYTHONPATH=Sprints/20110505/src/main/python
+TEST_DIR=NextThoughtPlatform/src/test/python
+PYTHONPATH=NextThoughtPlatform/src/main/python
 mkdir $PYTHONPATH/wiktionary/
 cp ~/bin/dict.db $PYTHONPATH/wiktionary/
 
