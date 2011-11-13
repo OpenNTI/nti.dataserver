@@ -10,6 +10,7 @@ import json
 import time
 import email.utils
 import wsgiref
+import wsgiref.handlers # req, despite pylint
 import plistlib
 import numbers
 

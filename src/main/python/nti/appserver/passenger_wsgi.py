@@ -154,6 +154,7 @@ try:
  													(root + '/mathcounts', False, 'MathCounts',
  													 '/mathcounts/icons/mathcounts-logo.gif')) ) )
 
+	main.setServeFiles( () ) # To trigger creation of pyramid_app
 	application = _SocketIOApp( application )
 
 except ImportError, e:
