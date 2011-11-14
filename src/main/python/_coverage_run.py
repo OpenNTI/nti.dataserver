@@ -181,7 +181,7 @@ def _stop_handler(request=None, save = True, report = True):
 		finally:
 			os.kill(os.getpid(), 2)
 	
-def _terminate_handler(request=None, report = True):
+def _terminate_handler(request=None, report = True, save=True):
 	"""
 	tries to terminate all processes
 	"""
@@ -189,6 +189,8 @@ def _terminate_handler(request=None, report = True):
 	if os.getpid() == _main_pid:
 		if report:
 			_report_coverage_data_handler(request, False)
+		elif save:
+			_save_coverage_data_handler(request)
 	
 		for pid, ip, port in _read_pids_file():		
 			if pid != _main_pid:
@@ -273,9 +275,9 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
 		elif data == 'start':
 			_start_coverage_data_handler(self.request)
 		elif data == 'terminate-and-report':
-			_terminate_handler(self.request, True)
+			_terminate_handler(self.request, report=True)
 		elif data == 'terminate':
-			_terminate_handler(self.request, False)
+			_terminate_handler(self.request, report=False)
 		elif data == 'save':
 			_save_coverage_data_handler(self.request)
 		elif data == 'report':
