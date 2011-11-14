@@ -21,8 +21,8 @@ svn co -q https://svn.nextthought.com/repository/NextThoughtPlatform/trunk/ Next
 # Install the dictionary file
 
 echo "Installing the dictionary file..."
-TEST_DIR=NextThoughtPlatform/src/test/python
-PYTHONPATH=NextThoughtPlatform/src/main/python
+TEST_DIR=`pwd`/NextThoughtPlatform/src/test/python
+PYTHONPATH=`pwd`/NextThoughtPlatform/src/main/python
 mkdir $PYTHONPATH/wiktionary/
 cp ~/bin/dict.db $PYTHONPATH/wiktionary/
 
@@ -52,7 +52,6 @@ function clean_data()
 date
 export PYTHONPATH
 cd $PYTHONPATH
-echo `pwd`
 
 python2.7 $TEST_DIR/ServerTest_v2.py > $LOG 2>&1
 stop_daemons $DATASERVER_DIR 
