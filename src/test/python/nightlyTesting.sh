@@ -1,28 +1,40 @@
 #!/bin/bash
 
+function pause()
+{
+   read -p "$*"
+}
+
 export PATH=/opt/local/bin:$PATH
 export TMPDIR=/tmp
 CHECKOUT_DIR=`mktemp -d -t nightly`
 
 cd $CHECKOUT_DIR
+echo `pwd`
 
 # Checkout the source
+
+echo "Checking out source..."
 svn co -q https://svn.nextthought.com/repository/AoPS/trunk AoPS
 svn co -q https://svn.nextthought.com/repository/NextThoughtPlatform/trunk/ NextThoughtPlatform
 
-#Install the dictionary file
+# Install the dictionary file
+
+echo "Installing the dictionary file..."
 TEST_DIR=NextThoughtPlatform/src/test/python
 PYTHONPATH=NextThoughtPlatform/src/main/python
 mkdir $PYTHONPATH/wiktionary/
 cp ~/bin/dict.db $PYTHONPATH/wiktionary/
 
-#Setup a location for the dataserver
+# Setup a location for the dataserver
 mkdir Data
 export DATASERVER_DIR=`pwd`/Data
 export TEST_WAIT=10
+echo $DATASERVER_DIR
 #export DATASERVER_NO_REDIRECT=1
 LOG=~/tmp/lastNightlyTesting.txt
 export PATH=/opt/local/Library/Frameworks/Python.framework/Versions/2.7/bin:$PATH
+
 function stop_daemons()
 {
 	for i in $1/*.zconf.xml; do
@@ -39,6 +51,8 @@ function clean_data()
 #Let 'er rip!
 date
 export PYTHONPATH
+cd $PYTHONPATH
+echo `pwd`
 
 python2.7 $TEST_DIR/ServerTest_v2.py > $LOG 2>&1
 stop_daemons $DATASERVER_DIR 
@@ -48,16 +62,16 @@ python2.7 $TEST_DIR/ServerTest_v3_quizzes.py >> $LOG 2>&1
 stop_daemons $DATASERVER_DIR 
 clean_data $DATASERVER_DIR
 
-python2.7 $TEST_DIR/run_integration_tests.py >> $LOG 2>&1
+python2.7 $TEST_DIR/run_integration_tests.py --use_coverage >> $LOG 2>&1
 stop_daemons $DATASERVER_DIR 
 clean_data $DATASERVER_DIR
 
-cd $PYTHONPATH
 COVERDIR=${COVERDIR:-/Library/WebServer/Documents/cover-reports}
 if [ -d $COVERDIR ]; then
 	COVEROPT="--cover-html-dir=$COVERDIR"
 fi
-nosetests -d --with-coverage --cover-html $COVEROPT --cover-inclusive --cover-package=nti,socketio,geventwebsocket,wiktionary,context >> $LOG 2>&1
+echo nosetests -d --with-coverage --cover-html $COVEROPT --cover-inclusive --cover-package=nti,socketio,geventwebsocket,wiktionary,context >> $LOG 2>&1
+
 stop_daemons $DATASERVER_DIR 
 cat $LOG
 if [ -d $COVERDIR ]; then
