@@ -121,8 +121,9 @@ class DataserverProcess(object):
 
 	terminate_server = terminateServer
 	
-	def terminateServerWithCoverage(self, block_untill_terminated=True, block_interval_seconds=1):
-		if self.process and self._send_message(self.LOCALHOST, self.PORT_COV, 'terminate', False):
+	def terminateServerWithCoverage(self, report=True, block_untill_terminated=True, block_interval_seconds=1):
+		command  = 'terminate-and-report' if report else 'terminate'
+		if self.process and self._send_message(self.LOCALHOST, self.PORT_COV, command, False):
 			return self._wait_for_termination(block_untill_terminated, block_interval_seconds)
 		else:
 			return False
