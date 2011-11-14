@@ -29,11 +29,70 @@ Whiteboard API v1
   	This object is a container for a bunch of shapes, a scene, that can be saved.
   	*shapeList - a list of WBShape objects.
 
+* Comments on Stroke and Fill
+Assumptions are:
+- The CoreGraphics/Quartz rendering model, plus OmniQuartz extensions
+  on the iPad
+
+- An SVG-like rendering model on the browser.
+
+They are pretty similar. The SVG model typically allows for a lot more
+flexibility in units and representations than does tho iPad, but most
+of them are convertible, so this is mainly an exercise in choosing the
+set that's easiest to convert. (OTOH, there are some things the iPad
+is more flexible with).
+
+I think we can ignore joints and miters and dashes and fill rules and
+such for now, so we'll limit ourselves to basic stroke and fill
+properties. The four properties to be added to CanvasShape are:
+
+strokeColor/fillColor: String specifying an sRGB color: "rgb( 0, 12, 123 )".
+-- This is directly acceptable to SVG.
+
+-- On the iPad, we'll need to chop off everything outside the
+   parenthesis, remove the commas, then use
+   +[OQColor colorWithRGBAString].
+
+-- On the iPad, we have a -[OQColor cssString] to get output--it
+   unconditionally includes the alpha component though ("rgba(
+   r,g,b,a)"); more on that in a moment.
+
+strokeWidth: String specifying a width in points (the same points we use elsewhere): "1.0pt".
+-- Directly acceptable to SVG.
+-- Easily parsed as a number on the iPad.
+
+-- The server will take either with or without trailing 'pt'. Will
+   always produce trailing 'pt'.
+
+strokeOpacity/fillOpacity: String giving a float between 0.0 and 1.0 for the opacity.
+-- Directly acceptable to SVG.
+
+-- On the iPad, can be parsed as a number, added to -1.0 to get the
+   alpha. (alpha and opacity are inverse). Then
+   -[OQColor colorWithAlphaComponent:] can be used to get the actual
+   stroke/fill color.
+
+On the iPad, we can use just one property to represent color and
+alpha, an RGBA color. Rather than write the conversion code on the end
+platforms, the server will add the following pseudo-properties:
+
+strokeRGBAColor/fillRGBAColor: The combination of color and opacity (converted to alpha), directly parseable: "1.2 2.3, 3.4. 0.3".
+
+-- If this is set, the split properties are derived from it. If the
+   others are set, they are combined to create this. If both are sent
+   in, these take priority. Therefore, these should result in a set of
+   properties that are directly usable on both platforms.
+
+-- On the iPad, can directly be read and produced with OQColor.
+
 struct WBObject : Object {
 }
 
 struct CanvasAffineTransform { //Notice: This is NOT an Object.
 	float a, b, c, d, tx, ty;
+	string strokeColor, fillColor;
+	string strokeWidth;
+	string strokeRGBAColor, fillRGBAColor;
 }
 
 struct CanvasShape : WBObject {
