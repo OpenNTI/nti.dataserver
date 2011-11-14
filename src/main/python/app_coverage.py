@@ -6,11 +6,12 @@ import argparse
 import app
 import _coverage_run
 		
-def main():
+def main(args = None):
 	
 	global process
 	
-	args = sys.argv[1:]
+	if not args:
+		args = sys.argv[1:]
 	
 	parser = argparse.ArgumentParser(prog='NTI DataServer')
 	parser.add_argument('-rc', '--rcfile', help='coverage configuration file')
