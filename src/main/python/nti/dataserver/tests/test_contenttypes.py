@@ -156,11 +156,20 @@ class TestCanvas(unittest.TestCase):
 		ext = canvas.toExternalObject()
 		tx_ext = {'Class': 'CanvasAffineTransform', 'a': 1, 'b': 0, 'c': 0, 'd': 1, 'tx': 0, 'ty': 0 }
 
+		def_fill_stroke = {'strokeRGBAColor': '255.0 255.0 255.0 1.0',
+						   'fillRGBAColor': '255.0 255.0 255.0 0.0',
+						   'strokeOpacity': 1.0,
+						   'strokeWidth': '1.0pt',
+						   'fillColor': 'rgb(255.0,255.0,255.0)',
+						   'fillOpacity': 0.0,
+						   'strokeColor': 'rgb(255.0,255.0,255.0)' }
 		shape1_ext = {'Class': 'CanvasPolygonShape', 'sides': 3, 'transform': tx_ext }
 		tx_ext = dict(tx_ext)
 		tx_ext['a'] = 5
 		tx_ext['ty'] = 42
 		shape2_ext = {'Class': 'CanvasCircleShape', 'transform': tx_ext }
+		shape1_ext.update( def_fill_stroke )
+		shape2_ext.update( def_fill_stroke )
 
 		assert_that( ext, is_( {'Class': 'Canvas', 'shapeList': [shape1_ext, shape2_ext], 'CreatedTime': canvas.createdTime} ) )
 
@@ -172,6 +181,32 @@ class TestCanvas(unittest.TestCase):
 
 		assert_that( canvas2, is_( canvas ) )
 		assert_that( canvas2.containerId, is_( 'CID' ) )
+
+def test_update_shape_rgba():
+	c = CanvasShape()
+
+	c.updateFromExternalObject( { 'strokeRGBAColor': "1.0 2.0 3.0 0.5" } )
+	assert_that( c.strokeOpacity, is_( 0.5 ) )
+	assert_that( c.strokeColor, is_( "rgb(1.0,2.0,3.0)" ) )
+
+	c.updateFromExternalObject( { 'strokeOpacity': 0.75 } )
+	assert_that( c.strokeColor, is_( "rgb(1.0,2.0,3.0)" ) )
+	assert_that( c.strokeOpacity, is_( 0.75 ) )
+	assert_that( c.strokeRGBAColor, is_( "1.0 2.0 3.0 0.75" ) )
+
+	c.updateFromExternalObject( { 'strokeColor': "rgb( 221.0, 128.1,21.0   )" } )
+	assert_that( c.strokeOpacity, is_( 0.75 ) )
+	assert_that( c.strokeColor, is_( "rgb(221.0,128.1,21.0)" ) )
+	assert_that( c.strokeRGBAColor, is_( "221.0 128.1 21.0 0.75" ) )
+
+def test_update_stroke_width( ):
+	c = CanvasShape()
+
+	c.updateFromExternalObject( {"strokeWidth": "3.2"} )
+	assert_that( c.strokeWidth, is_( "3.2pt" ) )
+
+	c.updateFromExternalObject( {"strokeWidth": "2.4pt" } )
+	assert_that( c.strokeWidth, is_( "2.4pt" ) )
 
 if __name__ == '__main__':
 	unittest.main()
