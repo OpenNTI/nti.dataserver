@@ -2,7 +2,7 @@ from unittest import defaultTestLoader
 from unittest import TextTestRunner
 from servertests.server import DataserverProcess
 
-def runner(path, pattern="test*.py", use_coverage=False):
+def runner(path, pattern="test*.py", use_coverage=False, coverage_report=False):
 	
 	suite = defaultTestLoader.discover(path, pattern)
 	dsprocess = DataserverProcess()
@@ -18,6 +18,6 @@ def runner(path, pattern="test*.py", use_coverage=False):
 			
 	finally:
 		if use_coverage:
-			dsprocess.terminateServerWithCoverage()
+			dsprocess.terminateServerWithCoverage(report = coverage_report)
 		else:
 			dsprocess.terminateServer()
