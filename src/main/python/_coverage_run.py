@@ -272,8 +272,10 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
 			_stop_handler(self.request)
 		elif data == 'start':
 			_start_coverage_data_handler(self.request)
+		elif data == 'terminate-and-report':
+			_terminate_handler(self.request, True)
 		elif data == 'terminate':
-			_terminate_handler(self.request)
+			_terminate_handler(self.request, False)
 		elif data == 'save':
 			_save_coverage_data_handler(self.request)
 		elif data == 'report':
