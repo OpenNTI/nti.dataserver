@@ -73,14 +73,17 @@ COVERDIR=${COVERDIR:-/Library/WebServer/Documents/cover-reports}
 if [ -d $COVERDIR ]; then
 	COVEROPT="--cover-html-dir=$COVERDIR"
 fi
-echo nosetests -d --with-coverage --cover-html $COVEROPT --cover-inclusive --cover-package=nti,socketio,geventwebsocket,wiktionary,context >> $LOG 2>&1
+
+nosetests -d --with-coverage --cover-html $COVEROPT --cover-inclusive --cover-package=nti,socketio,geventwebsocket,wiktionary,context >> $LOG 2>&1
 
 stop_daemons $DATASERVER_DIR 
 cat $LOG
 if [ -d $COVERDIR ]; then
 	cp $LOG $COVERDIR
 fi
-#Cleanup
-#cd ~
-#rm -rf $CHECKOUT_DIR
+
+# Cleanup
+
+cd ~
+rm -rf $CHECKOUT_DIR
 date
