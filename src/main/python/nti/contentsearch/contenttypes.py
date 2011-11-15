@@ -83,6 +83,8 @@ def get_text_from_mutil_part_body(body):
 	elif isinstance(body, collections.Iterable):
 		items = []
 		
+		gbls = globals()
+		
 		def add_to_items(d, key):
 			data = d[key] if d and key in d else None
 			if data: items.append(str(data))
@@ -93,7 +95,7 @@ def get_text_from_mutil_part_body(body):
 			elif  isinstance(item, dict) and 'Class' in item:
 				name = item['Class']
 				name = name[0:-1] if name.endswith('s') else name
-				if name in __dict__ and IUserIndexableContent.implementedBy(__dict__[name]):
+				if name in gbls and IUserIndexableContent.implementedBy(gbls[name]):
 					try:
 						obj = __dict__[name]()
 						d = obj.get_index_data(item)
