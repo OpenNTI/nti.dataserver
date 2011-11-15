@@ -309,6 +309,9 @@ message_ctx = MessageContext()
 
 # -----------------------------
 
+def _self_of_emtpy(s):
+	return ' ' + s if s else ''
+ 
 class Serverkill(WebSocketException):
 	def __init__(self, args=None):
 		super(Serverkill, self).__init__(str(args) if args else '')
@@ -325,8 +328,8 @@ class InvalidDataFormat(WebSocketException):
 		self.data_format = data_format
 		
 class CouldNotEnterRoom(WebSocketException):
-	def __init__(self, room_id=''):
-		super(CouldNotEnterRoom, self).__init__('Could not enter room %s' % room_id)
+	def __init__(self, room_id=None):
+		super(CouldNotEnterRoom, self).__init__('Could not enter room' + _self_of_emtpy( room_id))
 		
 class NotEnoughOccupants(WebSocketException):
 	def __init__(self, room_id=''):
