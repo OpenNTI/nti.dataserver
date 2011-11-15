@@ -69,6 +69,12 @@ python2.7 $TEST_DIR/run_integration_tests.py --use_coverage >> $LOG 2>&1
 stop_daemons $DATASERVER_DIR 
 clean_data $DATASERVER_DIR
 
+# combine coverage data from integration tests
+
+coverage combine
+
+# running nosetests
+ 
 COVERDIR=${COVERDIR:-/Library/WebServer/Documents/cover-reports}
 if [ -d $COVERDIR ]; then
 	COVEROPT="--cover-html-dir=$COVERDIR"
