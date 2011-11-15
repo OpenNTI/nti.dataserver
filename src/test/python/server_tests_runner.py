@@ -15,6 +15,7 @@ def runner(path, pattern="test*.py", use_coverage=False, coverage_report=False):
 		runner = TextTestRunner(verbosity=2)
 		for test in suite:
 			runner.run(test)
+			break
 			
 	finally:
 		if use_coverage:
