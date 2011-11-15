@@ -60,18 +60,18 @@ class TestSimpleChat(BasicChatTest):
 	def setUp(self):
 		super(TestSimpleChat, self).setUp()
 		self.user_one = self.user_names[0]
-		self.user_three = self.user_names[1]
-		self.user_two = self.generate_user_name()
-		self.register_friends(self.user_two, str((self.user_one, self.user_three)))
+		self.user_two = self.user_names[1]
+		self.user_three = self.generate_user_name()
+		self.register_friends(self.user_three, [self.user_one, self.user_two])
+		self.user_four = self.generate_user_name()
+		self.register_friends(self.user_four, str((self.user_one, self.user_two)))
 		self.user_five = self.generate_user_name()
-		self.register_friends(self.user_two, str((self.user_one, self.user_three)))
 	
 	def test_chadtf(self):
 		entries = random.randint(5, 10)
-		one, two = run_chat(entries, self.user_one, self.user_five)
-		
-		for u in (one,two):
-			assert_that(str(u.exception), is_('Could not enter room'))
+		one, two = run_chat(entries, self.user_three, self.user_four)
+		self.assert_(str(one.exception) == 'Could not enter room', "User %s caught exception %s" % (one.username, one.exception))
+		self.assert_(str(('%s' % two.exception)[3:15]) == 'Invalid auth', "User %s caught exception %s" % (two.username, two.exception))
 		
 	def _compare(self, sender, receiver):
 		
