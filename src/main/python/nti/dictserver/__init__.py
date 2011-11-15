@@ -2,25 +2,35 @@
 
 import os.path
 from dictionary import ChromeDictionary
-dictionary = ChromeDictionary(os.path.dirname(__file__) + '/../../wiktionary/dict.db')
 
 import re
 import json
+
+from zope import component
+from . import interfaces
 
 def __wiki_clean(defn):
 	if not defn: return defn
 	defn = re.sub( "\{\{.*?\}\}", "", defn ).replace( '[[', '').replace(']]', '').strip()
 	return defn.replace( 'http://en.wiktionary.org/wiki/', '' )
 
-def lookup( info ):
+def lookup( info, dictionary=None ):
 	"""
 	Given a WordInfo, fills it in.
 
 	:param info: A :class:`WordInfo` or a string.
+	:param dictionary: Implementation of :class:`interfaces.IDictionary` or None.
 	:return: A :class:`WordInfo` with the definition filled in.
 	"""
 	if isinstance( info, basestring ):
 		info = WordInfo( info )
+
+	if dictionary is None:
+		dictionary = component.queryUtility( interfaces.IDictionary )
+	if dictionary is None:
+		dictionary = ChromeDictionary(os.path.dirname(__file__) + '/../../wiktionary/dict.db')
+		component.provideUtility( dictionary )
+
 
 	s = dictionary.lookup(info.word)
 

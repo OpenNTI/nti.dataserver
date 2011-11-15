@@ -1,7 +1,14 @@
+#!/usr/bin/env python2.7
+
 import sqlite3 as sql
 import os
 
+from zope import interface
+import interfaces
+
 class ChromeDictionary(object):
+
+	interface.implements(interfaces.IDictionary)
 
 	def __init__(self, lookupPath):
 		self.lookupPath = lookupPath
