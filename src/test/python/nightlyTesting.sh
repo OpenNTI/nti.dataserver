@@ -91,7 +91,7 @@ coverage combine
 # produce html report
 
 if [ -d $COVERDIR ]; then
-	coverage html --directory=$COVERDIR
+	coverage html -i --directory=$COVERDIR --omit="*/test/*,*/tests/*"
 fi
 
 stop_daemons $DATASERVER_DIR 
