@@ -1,4 +1,9 @@
 import time
+import random
+import threading
+
+from user_chat_objects import OneRoomUser
+from user_chat_objects import BasicChatTest
 
 from servertests import DataServerTestCase
 from servertests.integration import contained_in
@@ -47,34 +52,110 @@ from servertests.contenttypes import CanvasPolygonShape
 from servertests.contenttypes import CanvasAffineTransform
 from servertests.contenttypes import CanvasShape
 from servertests.server import DataserverClient
+from user_chat_objects import OneRoomUser
+from user_chat_objects import BasicChatTest
 
-class TestBasicSharing(DataServerTestCase):
-
-	owner = ('test.user.1@nextthought.com', 'temp001')
-	target = ('test.user.2@nextthought.com', 'temp001')
-	unauthorized_target = ('test.user.3@nextthought.com', 'incorrect')
-	noteToCreateAndShare = {'text': 'A note to share'}
-
-	def setUp(self):
-		super(TestBasicSharing, self).setUp()
-
-		#Changes can't go to users that dont exist so we make sure to autocreate them
-		self.ds.getRecursiveStreamData('dontcare', credentials=self.owner)
-		self.ds.getRecursiveStreamData('dontcare', credentials=self.target)
-
-		self.CONTAINER = 'TestBasicStream-container-%s' % time.time()
-		self.ds.setCredentials(self.owner)
+class TestSimpleChat(BasicChatTest):
 	
-	def test_delete_shared_reply(self):
-		# create the object to share
-		canvasAffineTransform = CanvasAffineTransform(a=0, b=0, c=0, d=0, tx=.25, ty=.25)
-		CanvasShape(transform=canvasAffineTransform)
-		polygonShape = CanvasPolygonShape(sides=4, container=self.CONTAINER)
-		canvas = Canvas(shapeList=[polygonShape], container=self.CONTAINER)
-		print canvas
+	def setUp(self):
+		super(TestSimpleChat, self).setUp()
+		self.user_one = self.user_names[0]
+		self.user_three = self.user_names[1]
+		self.user_two = self.generate_user_name()
+		self.register_friends(self.user_two, str((self.user_one, self.user_three)))
+		self.user_five = self.generate_user_name()
+		self.register_friends(self.user_two, str((self.user_one, self.user_three)))
+	
+	def test_chadtf(self):
+		entries = random.randint(5, 10)
+		one, two = run_chat(entries, self.user_one, self.user_five)
 		
-		self.ds.createNote(('check this out', canvas), self.CONTAINER, adapt=True)
+		for u in (one,two):
+			assert_that(str(u.exception), is_('Could not enter room'))
 		
+	def _compare(self, sender, receiver):
+		
+		_sent = list(sender.sent)
+		self.assertTrue(len(_sent) > 0, "%s did not send any messages" % sender)
+		_sent.sort()
+		
+		_recv = list(receiver.received)
+		self.assertTrue(len(_recv) > 0, "%s did not get any messages" % receiver)
+		_recv.sort()
+		
+		self.assertEqual(_sent, _recv, "%s did not get all messages from %s" % (receiver, sender))
+		
+# ----------------------------
+
+def run_chat(entries, user_one, user_two):
+	
+	connect_event = threading.Event()
+	one = User(username=user_one)
+	two = User(username=user_two)
+		
+	print "entries", entries
+	
+	def two_runnable():
+		t_args={'occupants':(user_one), 'entries':entries}
+		try:
+			time.sleep(1)
+			two.ws_connect()
+			connect_event.set()
+			two(**t_args)
+		except Exception, e:
+			two.exception = e
+			two.ws_capture_and_close()
+	
+	o_args={'entries':entries, 'connect_event':connect_event}
+	o_t=threading.Thread(target=one, kwargs=o_args)
+	o_t.start()
+
+	t_t=threading.Thread(target=two_runnable)
+	t_t.start()
+
+	for t in (o_t, t_t):
+		t.join()
+		
+	return one, two
+			
+# ----------------------------
+
+class User(OneRoomUser):
+		
+	def __call__(self, *args, **kwargs):
+		t = time.time()
+		try:
+			entries = kwargs.get('entries', None)
+			occupants = kwargs.get('occupants', None)
+					
+			# connect
+			if not self.ws_connected:
+				self.ws_connect()
+	
+			# check for an connect event
+			event = kwargs.get('connect_event', None)
+			if event: 
+				event.wait(60)
+					
+			if occupants:
+				self.enterRoom(occupants)
+				
+			self.wait_4_room()
+				
+			# write any messages
+			room_id = self.room
+			if room_id:
+				self.post_random_messages(room_id, entries, 5)
+					
+			# get any message
+			self.wait_heart_beats()
+					
+		except Exception, e:
+			self.exception = e
+		finally:
+			self.ws_capture_and_close()
+			print "exit %s,%s" % (self, time.time() - t)
+	
 if __name__ == '__main__':
 	import unittest
 	unittest.main()
