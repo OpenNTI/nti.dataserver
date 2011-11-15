@@ -30,10 +30,11 @@ cp ~/bin/dict.db $PYTHONPATH/wiktionary/
 mkdir Data
 export DATASERVER_DIR=`pwd`/Data
 export TEST_WAIT=10
-echo $DATASERVER_DIR
 #export DATASERVER_NO_REDIRECT=1
-LOG=~/tmp/lastNightlyTesting.txt
+LOG=/tmp/lastNightlyTesting.txt
 export PATH=/opt/local/Library/Frameworks/Python.framework/Versions/2.7/bin:$PATH
+
+mkdir -p $DATASERVER_DIR
 
 function stop_daemons()
 {
@@ -53,14 +54,17 @@ date
 export PYTHONPATH
 cd $PYTHONPATH
 
+echo "Executing ServerTest_v2..."
 python2.7 $TEST_DIR/ServerTest_v2.py > $LOG 2>&1
 stop_daemons $DATASERVER_DIR 
 clean_data $DATASERVER_DIR
 
+echo "Executing ServerTest_v3_quizzes..."
 python2.7 $TEST_DIR/ServerTest_v3_quizzes.py >> $LOG 2>&1
 stop_daemons $DATASERVER_DIR 
 clean_data $DATASERVER_DIR
 
+echo "Executing Integration tests..."
 python2.7 $TEST_DIR/run_integration_tests.py --use_coverage >> $LOG 2>&1
 stop_daemons $DATASERVER_DIR 
 clean_data $DATASERVER_DIR
@@ -77,6 +81,6 @@ if [ -d $COVERDIR ]; then
 	cp $LOG $COVERDIR
 fi
 #Cleanup
-cd ~
-rm -rf $CHECKOUT_DIR
+#cd ~
+#rm -rf $CHECKOUT_DIR
 date
