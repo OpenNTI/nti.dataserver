@@ -58,11 +58,14 @@ stop_daemons $DATASERVER_DIR
 clean_data $DATASERVER_DIR
 
 # combine coverage data from integration tests
+
 coverage combine
+
+# move file to be combined later
 
 if [ -f $CHECKOUT_DIR/.coverage ]
 then
-	mv $CHECKOUT_DIR/.coverage $CHECKOUT_DIR/.coverage.int
+	mv $CHECKOUT_DIR/.coverage $PYTHONPATH/.coverage.int
 fi
 
 # change directory to run nose tests
@@ -80,12 +83,11 @@ nosetests -d --with-coverage --cover-html $COVEROPT --cover-inclusive --cover-pa
 
 if [ -f $PYTHONPATH/.coverage ]
 then
-	mv $PYTHONPATH/.coverage $CHECKOUT_DIR/.coverage.nose
+	mv $PYTHONPATH/.coverage $PYTHONPATH/.coverage.nose
 fi
 
 # combine all results integration and nosetests
 
-cd $CHECKOUT_DIR
 coverage combine
 
 # produce html report
