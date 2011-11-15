@@ -11,10 +11,11 @@ class TestSimpleChat(BasicChatTest):
 		super(TestSimpleChat, self).setUp()
 		self.user_one = self.user_names[0]
 		self.user_two = self.user_names[1]
-		self.user_three = self.generate_user_name()
-		self.register_friends(self.user_three, [self.user_one])
-		self.user_four = self.generate_user_name()
-		self.register_friends(self.user_four, self.user_one)
+		self.user_three = self.user_names[2]
+		self.register_friends(self.user_three, [self.user_one, self.user_two])
+		self.user_four = self.user_names[3]
+		self.register_friends(self.user_four, str((self.user_one, self.user_two)))
+		self.user_five = self.generate_user_name()
 	
 	def test_chat(self):
 		entries = random.randint(5, 10)
@@ -26,9 +27,9 @@ class TestSimpleChat(BasicChatTest):
 		self._compare(one, two)
 		self._compare(two, one)
 		
-	def test_chat_with_random_generated_user(self):
+	def test_chat_reregistered_user(self):
 		entries = random.randint(5, 10)
-		one, two = run_chat(entries, self.user_one, self.user_three)
+		one, two = run_chat(entries, self.user_three, self.user_four)
 		
 		for u in (one,two):
 			self.assert_(u.exception == None, "User %s caught exception %s" % (u.username, u.exception))
@@ -36,9 +37,15 @@ class TestSimpleChat(BasicChatTest):
 		self._compare(one, two)
 		self._compare(two, one)
 		
-	def test_chat_with_random_generated_user_string_for_friends_list(self):
+	def test_chat_unregistered_user(self):
 		entries = random.randint(5, 10)
-		one, two = run_chat(entries, self.user_one, self.user_four)
+		one, two = run_chat(entries, self.user_one, self.user_five)
+		self.assert_(str(one.exception) == 'Could not enter room', "User %s caught exception %s" % (one.username, one.exception))
+		self.assert_(str(('%s' % two.exception)[3:15]) == 'Invalid auth', "User %s caught exception %s" % (two.username, two.exception))
+		
+	def test_chat_user_not_friend(self):
+		entries = random.randint(5, 10)
+		one, two = run_chat(entries, self.user_three, self.user_four)
 		
 		for u in (one,two):
 			self.assert_(u.exception == None, "User %s caught exception %s" % (u.username, u.exception))
