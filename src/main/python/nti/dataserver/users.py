@@ -1670,9 +1670,13 @@ class User(Principal):
 		This is an extension point for layers.
 		"""
 		#TODO: Move the device support to a layer too.
+		apnsCon = _get_shared_dataserver().apns
+		if not apnsCon:
+			if self.devices:
+				logger.warn( "No APNS connection, not broadcasting change" )
+			return
 		if self.devices:
 			# If we have any devices, notify them
-			apnsCon = _get_shared_dataserver().apns
 			userInfo = None
 			if change.containerId:
 				userInfo = {'url:': 'x-nti-cid:%s' % (change.containerId) }

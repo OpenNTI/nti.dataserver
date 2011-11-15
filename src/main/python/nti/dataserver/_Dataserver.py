@@ -285,10 +285,6 @@ class MinimalDataserver(object):
 		storage = ZEO.ClientStorage.ClientStorage( zeo_addr, storage=storage_name, blob_dir=blob_dir, shared_blob_dir=True)
 		assert ZODB.interfaces.IBlobStorage in interface.providedBy(storage), "Should be supporting blobs"
 
-		if DATASERVER_DEMO:
-			storage = DemoStorage.DemoStorage( base=storage )
-			logger.info( 'Created demo storage %s', storage )
-			assert ZODB.interfaces.IBlobStorage in interface.providedBy(storage), "Should be supporting blobs"
 		return storage
 
 	def _setup_launch_zeo( self, clientPipe, path, args, daemon ):
@@ -345,6 +341,7 @@ class MinimalDataserver(object):
 			<logfile>
 			path %(logfile)s
 			format %%(asctime)s %%(message)s
+			level DEBUG
 			</logfile>
 			</eventlog>
 			""" % { 'clientPipe': clientPipe, 'blobDir': blobDir,
@@ -352,6 +349,14 @@ class MinimalDataserver(object):
 					'sessionDataFile': sessionDataFile, 'sessionBlobDir': sessionBlobDir,
 					'searchDataFile': searchDataFile, 'searchBlobDir': searchBlobDir
 					}
+		if DATASERVER_DEMO:
+			logger.info( "Creating demo storages" )
+			# NOTE: DemoStorage is NOT a ConflictResolvingStorage.
+			# It will not run our _p_resolveConflict methods.
+			for i in range(1,4):
+				configuration = configuration.replace( '<filestorage %s>' % i,
+													   '<demostorage %s>\n\t\t\t<filestorage %s>' % (i,i) )
+			configuration = configuration.replace( '</filestorage>', '</filestorage>\n\t\t</demostorage>' )
 		config_file = clientDir + '/configuration.xml'
 		daemonutils.write_configuration_file( config_file, configuration )
 
@@ -725,7 +730,7 @@ class Dataserver(MinimalDataserver):
 		""" Given a Change received, distribute it to all registered listeners. """
 
 		done = False
-		tries = 2
+		tries = 5
 		while tries and not done:
 			try:
 				with self.dbTrans():
@@ -743,7 +748,11 @@ class Dataserver(MinimalDataserver):
 			except transaction.interfaces.TransientError as e:
 				logger.exception( "Retrying to distribute change" )
 				tries -= 1
-			except Exception, e:
+				# Give things a chance to settle.
+				# TODO: Is this right?
+				self.db.invalidateCache()
+				gevent.sleep( 0.5 )
+			except Exception as e:
 				logger.exception( "Failed to distribute change" )
 				break
 

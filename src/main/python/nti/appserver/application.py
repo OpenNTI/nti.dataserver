@@ -375,6 +375,9 @@ def createApplication( http_port, library, process_args=False, create_ds=True ):
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._UGDPostView',
 							 renderer='rest', context='nti.appserver.dataserver_pyramid_views._PagesResource',
 							 permission='create', request_method='POST' )
+	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
+							 renderer='rest', context='nti.appserver.dataserver_pyramid_views._PagesResource',
+							 permission='read', request_method='GET' )
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._UGDDeleteView',
 							 renderer='rest', context='nti.appserver.dataserver_pyramid_views._ContainedObjectResource',
 							 permission='delete', request_method='DELETE' )

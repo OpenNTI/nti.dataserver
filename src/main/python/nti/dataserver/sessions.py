@@ -112,7 +112,13 @@ class Session(Persistent):
 			self.hits = 1
 
 	def clear_disconnect_timeout(self):
-		self.last_heartbeat_time = time.time()
+		# Putting server messages/client messages
+		# should not clear this. We wind up writing to session
+		# state from background processes, which
+		# leads to conflicts.
+		#self.last_heartbeat_time = time.time()
+		pass
+
 
 	def heartbeat(self):
 		self.last_heartbeat_time = time.time()
