@@ -40,6 +40,18 @@ def WithMockDS( func ):
 			ds.close()
 	return nose.tools.make_decorator( func )( f )
 
+def WithMockDSTrans( func ):
+
+	def f( *args ):
+		ds = MockDataserver()
+		try:
+			with ds.dbTrans():
+				func( *args )
+		finally:
+			ds.close()
+	return nose.tools.make_decorator( func )( f )
+
+
 import unittest
 
 

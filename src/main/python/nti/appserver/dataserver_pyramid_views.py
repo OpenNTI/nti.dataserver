@@ -370,6 +370,44 @@ class _EmptyContainerGetView(object):
 	def __call__( self ):
 		raise hexc.HTTPNotFound()
 
+def lists_and_dicts_to_ext_collection( items ):
+	""" Given items that may be dictionaries or lists, combines them
+	and externalizes them for return to the user as a dictionary. If the individual items
+	are ModDateTracking (have a lastModified value) then the returned
+	dict will have the maximum value as 'Last Modified' """
+	result = []
+	# To avoid returning duplicates, we keep track of object
+	# ids and only add one copy.
+	oids = set()
+	items = [item for item in items if item is not None]
+	lastMod = 0
+	for item in items:
+		lastMod = max( lastMod, getattr( item, 'lastModified', 0) )
+		if hasattr( item, 'itervalues' ):
+			item = item.itervalues()
+		# None would come in because of weak refs, numbers
+		# would come in because of Last Modified.
+		# In the case of shared data, the object might
+		# update but our container wouldn't
+		# know it, so check for internal update times too
+		for x in item:
+			if x is None or isinstance( x, numbers.Number ):
+				continue
+
+			lastMod = max( lastMod, getattr( x, 'lastModified', 0) )
+			add = True
+			oid = toExternalOID( x, id(x) )
+
+			if oid not in oids:
+				oids.add( oid )
+			else:
+				add = False
+			if add: result.append( x )
+
+	result = { 'Last Modified': lastMod, 'Items': result }
+	return result
+
+
 class _UGDView(object):
 
 	get_owned = users.User.getContainer
@@ -378,56 +416,32 @@ class _UGDView(object):
 
 	def __init__(self, request ):
 		self.request = request
+		self._my_objects_may_be_empty = True
 
 	def __call__( self ):
 		user, ntiid = self.request.context.user, self.request.context.ntiid
-		return self.transformAndCombineObjects( self.getObjectsForId( user, ntiid ) )
+		return lists_and_dicts_to_ext_collection( self.getObjectsForId( user, ntiid ) )
 
 	def getObjectsForId( self, user, ntiid ):
 		""" Returns a sequence of values that can be passed to
-		self.transformAndCombineObjects."""
+		:func:`lists_and_dicts_to_ext_collection`.
+
+		:raise :class:`hexc.HTTPNotFound`: If no actual objects can be found.
+		"""
 		mystuffDict = self.get_owned( user, ntiid ) if self.get_owned else ()
 		sharedstuffList = self.get_shared( user, ntiid) if self.get_shared else ()
 		publicDict = self.get_public( user, ntiid ) if self.get_public else ()
+		# To determine the existence of the container,
+		# My stuff either exists or it doesn't. The others, being shared,
+		# may be empty or not empty.
+		if (mystuffDict is None \
+			or (not self._my_objects_may_be_empty and not mystuffDict)) \
+			   and not sharedstuffList \
+			   and not publicDict:
+			raise hexc.HTTPNotFound()
+
 		return (mystuffDict, sharedstuffList, publicDict)
 
-	def transformAndCombineObjects(self, items ):
-		""" Given items that may be dictionaries or lists, combines them
-		and externalizes them for return to the user as a dictionary. If the individual items
-		are ModDateTracking (have a lastModified value) then the returned
-		dict will have the maximum value as 'Last Modified' """
-		result = []
-		# To avoid returning duplicates, we keep track of object
-		# ids and only add one copy.
-		oids = set()
-		items = [item for item in items if item is not None]
-		lastMod = 0
-		for item in items:
-			lastMod = max( lastMod, getattr( item, 'lastModified', 0) )
-			if hasattr( item, 'itervalues' ):
-				item = item.itervalues()
-			# None would come in because of weak refs, numbers
-			# would come in because of Last Modified.
-			# In the case of shared data, the object might
-			# update but our container wouldn't
-			# know it, so check for internal update times too
-			for x in item:
-				if x is None or isinstance( x, numbers.Number ):
-					continue
-
-				lastMod = max( lastMod, getattr( x, 'lastModified', 0) )
-				add = True
-				oid = toExternalOID( x, id(x) )
-				# This check is only valid for dictionary-like
-				# things. We always add lists.
-				if oid not in oids:
-					oids.add( oid )
-				else:
-					add = False
-				if add: result.append( x )
-
-		result = { 'Last Modified': lastMod, 'Items': result }
-		return result
 
 class _RecursiveUGDView(_UGDView):
 
@@ -449,7 +463,29 @@ class _RecursiveUGDView(_UGDView):
 
 		items = []
 		for container in containers:
-			items += super(_RecursiveUGDView,self).getObjectsForId( user, container )
+			try:
+				items += super(_RecursiveUGDView,self).getObjectsForId( user, container )
+			except hexc.HTTPNotFound:
+				pass
+
+		# We are not found iff the root container DNE (empty is OK)
+		# and the children are empty/DNE. In other words, if
+		# accessing UGD for this container would throw,
+		# so does accessing recursive.
+		empty = len(items) == 0
+		if not empty:
+			# We have items. We are only truly empty, though,
+			# if each and every one of the items is empty.
+			empty = True
+			for i in items:
+				li = len(i)
+				if li >= 2 or (li == 1 and 'Last Modified' not in i):
+					empty = False
+					break
+
+		if empty:
+			# Let this throw if it did before
+			super(_RecursiveUGDView,self).getObjectsForId( user, ntiid )
 
 		return items
 
@@ -459,6 +495,7 @@ class _UGDStreamView(_UGDView):
 		super(_UGDStreamView,self).__init__(request)
 		self.get_owned = users.User.getContainedStream
 		self.get_shared = None
+		self._my_objects_may_be_empty = False
 
 class _RecursiveUGDStreamView(_RecursiveUGDView):
 
@@ -466,6 +503,7 @@ class _RecursiveUGDStreamView(_RecursiveUGDView):
 		super(_RecursiveUGDStreamView,self).__init__(request)
 		self.get_owned = users.User.getContainedStream
 		self.get_shared = None
+		self._my_objects_may_be_empty = False
 
 class _UGDAndRecursiveStreamView(_UGDView):
 
@@ -473,6 +511,7 @@ class _UGDAndRecursiveStreamView(_UGDView):
 		super(_UGDAndRecursiveStreamView,self).__init__( request )
 		self.pageGet = _UGDView( request )
 		self.streamGet = _RecursiveUGDStreamView( request )
+		self.streamGet._my_objects_may_be_empty = True
 
 	def getObjectsForId( self, user, ntiid ):
 		page_data = self.pageGet.getObjectsForId( user, ntiid )

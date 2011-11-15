@@ -3,6 +3,7 @@ import nti.appserver
 
 from pyramid.testing import setUp as psetUp
 from pyramid.testing import tearDown as ptearDown
+from pyramid.testing import DummyRequest
 
 from zope.configuration import xmlconfig
 import zope.component
@@ -10,7 +11,7 @@ import zope.component
 class ConfiguringTestBase(unittest.TestCase):
 
 	def setUp( self ):
-		psetUp()
+		psetUp(request=DummyRequest())
 		# Notice that the pyramid testing setup
 		# FAILS to make the sitemanager a child of the global sitemanager.
 		# this breaks the zope component APIs in many bad ways

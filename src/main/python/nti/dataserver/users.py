@@ -475,7 +475,6 @@ class SharingTarget(Entity):
 		# TODO: What's the right heuristic here? Seems like things shared directly with me
 		# may be more important than things I'm following...
 		# TODO: These data structures could and should be optimized for this.
-
 		result = UserList.UserList()
 		result.lastModified = 0
 
@@ -1422,7 +1421,9 @@ class User(Principal):
 			return FakeTranscripts(self.username)
 
 		stored_value = self.containers.getContainer( containerId, defaultValue )
-		transcript_value = _get_shared_dataserver().chatserver.transcript_summaries_for_user_in_container( self.username, containerId )
+		transcript_value = _get_shared_dataserver().chatserver.transcript_summaries_for_user_in_container( self.username, containerId ) \
+						   if _get_shared_dataserver().chatserver \
+						   else None
 		if stored_value is defaultValue:
 			# TODO: Notice the duplication here
 			if not transcript_value or (len(transcript_value) == 1 and 'Last Modified' in transcript_value):
