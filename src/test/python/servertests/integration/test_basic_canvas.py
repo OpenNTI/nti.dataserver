@@ -1,20 +1,13 @@
-'''
-Created on Nov 14, 2011
-
-@author: ltesti
-'''
-
 import time
-
-from servertests import DataServerTestCase
-from servertests.contenttypes import CanvasAffineTransform
-from servertests.contenttypes import Canvas
-from servertests.contenttypes import CanvasPolygonShape
-from servertests.integration import contains
 
 from hamcrest import assert_that
 from hamcrest import is_not
 from hamcrest import is_
+
+from servertests import DataServerTestCase
+from servertests.contenttypes import Canvas
+from servertests.contenttypes import CanvasPolygonShape
+from servertests.contenttypes import CanvasAffineTransform
 
 class TestBasicCanvas(DataServerTestCase):
 	owner = ('test.user.1@nextthought.com', 'temp001')
@@ -46,8 +39,6 @@ class TestBasicCanvas(DataServerTestCase):
 		assert_that(createdObj['shapeList'][0]['transform']['tx'], is_(.25))
 		assert_that(createdObj['shapeList'][0]['transform']['ty'], is_(.25))
 		
-		
-
 if __name__ == '__main__':
 	import unittest
 	unittest.main()
