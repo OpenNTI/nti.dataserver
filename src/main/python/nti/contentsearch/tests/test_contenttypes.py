@@ -11,6 +11,8 @@ from nti.contentsearch.contenttypes import get_datetime
 from nti.contentsearch.contenttypes import get_keywords
 from nti.contentsearch.contenttypes import empty_search_result
 from nti.contentsearch.contenttypes import empty_suggest_result
+from nti.contentsearch.contenttypes import merge_search_results
+from nti.contentsearch.contenttypes import merge_suggest_results
 from nti.contentsearch.contenttypes import get_highlighted_content
 from nti.contentsearch.contenttypes import get_text_from_mutil_part_body
 from nti.contentsearch.contenttypes import empty_suggest_and_search_result
@@ -91,5 +93,69 @@ class TestContentTypes(unittest.TestCase):
 		self.assertEqual({}, d['Items'])
 		self.assertEqual([], d['Suggestions'])
 		
+	def test_merge_search_results(self):
+		a = {'Last Modified': 1, 'Items':{'a':1}}
+		b = {'Last Modified': 2, 'Items':{'b':2}}
+		m = merge_search_results(a, b)
+		self.assertEqual(2, m['Last Modified'])
+		self.assertEqual({'a':1, 'b':2}, m['Items'])
+		self.assertEqual(2, m['Hit Count'])
+		
+		a = {'Last Modified': 1, 'Items':{'a':1}}
+		b = {'Items':{'b':2}}
+		m = merge_search_results(a, b)
+		self.assertEqual(1, m['Last Modified'])
+		
+		a = {'Items':{'a':1}}
+		b = {'Last Modified': 3, 'Items':{'b':2}}
+		m = merge_search_results(a, b)
+		self.assertEqual(3, m['Last Modified'])
+		
+		a = None
+		b = {'Last Modified': 3, 'Items':{'b':2}}
+		m = merge_search_results(a, b)
+		self.assertEqual(b, m)
+		
+		a = {'Last Modified': 3, 'Items':{'b':2}}
+		b = None
+		m = merge_search_results(a, b)
+		self.assertEqual(a, m)
+		
+		m = merge_search_results(None, None)
+		self.assertEqual(None, m)
+		
+	def test_merge_suggest_results(self):
+		a = {'Last Modified': 4, 'Items':['a']}
+		b = {'Last Modified': 2, 'Items':['b','c']}
+		m = merge_suggest_results(a, b)
+		self.assertEqual(4, m['Last Modified'])
+		self.assertEqual(['a','c', 'b'], m['Items'])
+		self.assertEqual(3, m['Hit Count'])
+		
+		a = {'Last Modified': 1, 'Items':['a']}
+		b = {'Items':['b']}
+		m = merge_suggest_results(a, b)
+		self.assertEqual(1, m['Last Modified'])
+		self.assertEqual(['a','b'], m['Items'])
+		
+		a = {'Items':['a']}
+		b = {'Last Modified': 3, 'Items':['b']}
+		m = merge_suggest_results(a, b)
+		self.assertEqual(3, m['Last Modified'])
+		
+		a = None
+		b = {'Last Modified': 3, 'Items':['b']}
+		m = merge_suggest_results(a, b)
+		self.assertEqual(b, m)
+		
+		a = {'Last Modified': 3, 'Items':['c']}
+		b = None
+		m = merge_suggest_results(a, b)
+		self.assertEqual(a, m)
+		
+		m = merge_suggest_results(None, None)
+		self.assertEqual(None, m)
+
+
 if __name__ == '__main__':
 	unittest.main()
