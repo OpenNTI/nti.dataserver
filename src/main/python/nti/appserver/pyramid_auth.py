@@ -2,9 +2,11 @@
 import os
 import binascii
 import warnings
+import logging
 
-from pyramid.authentication import CallbackAuthenticationPolicy
+#from pyramid.authentication import CallbackAuthenticationPolicy
 from paste.httpheaders import WWW_AUTHENTICATE
+from repoze.who.interfaces import IAuthenticator, IChallengeDecider
 from pyramid.interfaces import IAuthenticationPolicy
 
 from zope import interface
@@ -42,7 +44,7 @@ def _decode_username( request ):
 	:return: Tuple (user,pass).
 	"""
 	username, password = _get_basicauth_credentials( request )
-	if username and '@' in username:
+	if username and '%40' in username:
 		username = username.replace( '%40', '@' )
 		auth = (username + ':' + password).encode( 'base64' ).strip()
 		request.authorization = 'Basic ' + auth
@@ -88,10 +90,17 @@ class _NTIUsers(object):
 		return password == self.user_password( username )
 
 	def __call__( self, userid, request ):
-		username, password = _decode_username( request )
-		if self.user_has_password( username, password ):
-			return ()
-		return None
+		result = None
+		# Because we are both part of a middleware and the pyramid
+		# auth policy, we can get called both already authenticated
+		# and not-authenticated.
+		if 'login' in userid and 'password' in userid:
+			username, password = userid['login'], userid['password'] # _decode_username( request )
+			if self.user_has_password( username, password ):
+				result = ()
+		elif 'repoze.who.userid' in userid:
+			result = ()
+		return result
 
 def _make_user_auth():
 	""" :return: Function to be used with authkit authentication. Function must be run in transaction. """
@@ -111,46 +120,86 @@ def _make_user_auth():
 
 	return _NTIUsers( User.get_user, create_user )
 
-class NTIBasicAuthPolicy(CallbackAuthenticationPolicy):
+pyramid_auth_callback = _make_user_auth
 
-	interface.implements( IAuthenticationPolicy )
+class NTIUsersAuthenticatorPlugin(object):
+	interface.implements( IAuthenticator )
 
-	def __init__( self, realm='NTI' ):
-		super(NTIBasicAuthPolicy,self).__init__( )
-		self.callback = _make_user_auth()
-		self.realm = realm
-		self.users = None
+	def __init__( self ):
+		pass
 
-	def unauthenticated_userid( self, request ):
-		return _decode_username( request )[0]
+	def authenticate( self, environ, identity ):
+		if 'login' not in identity or 'password' not in identity: return None
 
-	def remember(self, request, principal, **kw):
-		# TODO: Set authtkt token?
-		return []
+		if _make_user_auth().user_has_password( identity['login'], identity['password'] ):
+			return identity['login']
 
-	def forget(self, request):
-		head = WWW_AUTHENTICATE.tuples('Basic realm="%s"' % self.realm)
-		return head
+from repoze.who.middleware import PluggableAuthenticationMiddleware
+from repoze.who.interfaces import IIdentifier
+from repoze.who.interfaces import IChallenger
+from repoze.who.plugins.basicauth import BasicAuthPlugin
+from repoze.who.plugins.auth_tkt import AuthTktCookiePlugin
+from repoze.who.plugins.redirector import RedirectorPlugin
+from repoze.who.plugins.htpasswd import HTPasswdPlugin
+from repoze.who.classifiers import default_challenge_decider
+from repoze.who.classifiers import default_request_classifier
+from pyramid_who.whov2 import WhoV2AuthenticationPolicy
 
-from pyramid.httpexceptions import default_exceptionresponse_view, HTTPUnauthorized
-import pyramid.security as sec
-
-def exceptionresponse_view(context, request):
+def _basicauth_challenge_decider( environ, status, headers ):
 	"""
 	Transform the 403 Forbidden response into a 401 Unauthorized
 	response if there are no credentials provided.
-
-	This is probably something of a hack. We're letting this exception
-	propagate up to AuthKit, which renderes the response and
-	inserts WWW-Authenticate. It's not clear how to make pyramid do
-	this on its own.
 	"""
+	return (status.startswith( '403' ) and 'repoze.who.identity' not in environ) \
+		   or default_challenge_decider( environ, status, headers )
 
-	if getattr( context, 'code', 0 ) == 403:
-		if not sec.authenticated_userid( request ):
-			unauth = HTTPUnauthorized( detail=context.detail,
-									   headers=context.headers,
-									   comment=context.comment )
-			context = unauth
-	return default_exceptionresponse_view( context, request )
+interface.directlyProvides( _basicauth_challenge_decider, IChallengeDecider )
 
+def _create_middleware( app=None ):
+	user_auth = NTIUsersAuthenticatorPlugin()
+	basicauth = BasicAuthPlugin('NTI')
+	auth_tkt = AuthTktCookiePlugin('secret', 'auth_tkt')
+	basicauth.include_ip = False
+	basicauth.remember = auth_tkt.remember
+	identifiers = [('auth_tkt', auth_tkt),
+				   ('basicauth', basicauth)]
+	authenticators = [('auth_tkt', auth_tkt),
+					  ('htpasswd', user_auth)]
+	challengers = [('basicauth', basicauth)]
+	mdproviders = []
+
+	middleware = PluggableAuthenticationMiddleware(
+					app,
+					identifiers,
+					authenticators,
+					challengers,
+					mdproviders,
+					default_request_classifier,
+					_basicauth_challenge_decider,
+					log_stream = logging.getLogger( 'repoze.who' ),
+					log_level = logging.DEBUG )
+	return middleware
+
+def wrap_repoze_middleware( app ):
+	return _create_middleware( app )
+
+def create_authentication_policy( ):
+	middleware = _create_middleware()
+	result = NTIAuthenticationPolicy()
+	result.api_factory = middleware.api_factory
+	return result
+
+class NTIAuthenticationPolicy(WhoV2AuthenticationPolicy):
+
+	interface.implements( IAuthenticationPolicy )
+
+	def __init__( self ):
+		super(NTIAuthenticationPolicy,self).__init__( '', '', callback=_make_user_auth() )
+		self.api_factory = None
+
+	def unauthenticated_userid( self, request ):
+		_decode_username( request )
+		return super(NTIAuthenticationPolicy,self).unauthenticated_userid( request )
+
+	def _getAPI( self, request ):
+		return self.api_factory( request.environ )

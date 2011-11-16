@@ -16,26 +16,20 @@ import numbers
 
 import collections
 
-#import transaction
-
-
 from datastructures import (to_external_representation, EXT_FORMAT_JSON, EXT_FORMAT_PLIST,
 							toExternalObject,
-							PersistentExternalizableDictionary, getPersistentState)
+							PersistentExternalizableDictionary)
 from _Dataserver import Dataserver
 from datastructures import ModDateTrackingPersistentMapping, toExternalOID
 import datastructures
 
-from quizzes import Quiz, QuizResult, QuizQuestionResponse
-from ..assessment import assess
+from quizzes import Quiz
+#from ..assessment import assess
 
 import users
 import ntiids
 
-from authkit.authorize.wsgi_adaptors import authorize_request
-
-from authkit.authorize import NotAuthorizedError
-from authkit.permissions import ValidAuthKitUser, And, RequestPermission
+from pyramid import httpexceptions as hexc
 
 def findFormat( environ ):
 	""" Returns either JSON or PLIST """
@@ -61,13 +55,13 @@ def ifLastModified( environ ):
 		if lmdate: lmdate = time.mktime( lmdate )
 	return lmdate
 
-class SameRemoteUserAsPath(RequestPermission):
-	def check(self, app, environ, start_response ):
+class SameRemoteUserAsPath(object):
+	def __call__( self, environ ):
 		env = environ.get('REMOTE_USER',None)
 		key = environ['wsgiorg.routing_args'][1]['user']
 		if env != key:
-			raise NotAuthorizedError( "Not same user: env '%s' key '%s'" %(env,key) )
-		return app(environ, start_response )
+			raise hexc.HTTPUnauthorized()
+
 
 class NoOpCM(object):
 
@@ -144,10 +138,18 @@ class Get(object):
 		return headers
 
 	def authenticationPermission( self ):
-		return ValidAuthKitUser()
+		return None
 
 	def authorizeRequest( self, environ ):
-		authorize_request( environ, self.authenticationPermission() )
+		identity = environ.get( 'repoze.who.identity' )
+		if not identity:
+			raise hexc.HTTPUnauthorized()
+		uname = identity.get( 'repoze.who.userid' )
+		if not uname:
+			raise hexc.HTTPUnauthorized()
+		perm = self.authenticationPermission()
+		if callable(perm):
+			perm( environ )
 
 	def doRespond( self, environ, start_response, body ):
 		return self.respond( body, environ, start_response )
@@ -498,8 +500,7 @@ class Post(UserBasedGet):
 		return pm
 
 	def authenticationPermission( self ):
-		return And( super( Post, self ).authenticationPermission(),
-					SameRemoteUserAsPath() )
+		return SameRemoteUserAsPath()
 
 	def __call__(self, environ, start_response ):
 		self.authorizeRequest( environ )
@@ -738,7 +739,7 @@ class ObjectBasedPut(Put):
 		self.inputClass = dict
 
 	def authenticationPermission( self ):
-		return ValidAuthKitUser()
+		return None
 
 	def __call__(self, environ, start_response ):
 		with NoOpCM():
@@ -751,7 +752,7 @@ class ObjectBasedPut(Put):
 			# Then ensure the users match
 			remoteUser = self.getRemoteUser( environ )
 			if remoteUser != theObject.creator:
-				raise NotAuthorizedError( 'Not same user' )
+				raise hexc.HTTPForbidden( "Not same user" )
 
 			creator = theObject.creator
 			containerId = theObject.containerId
@@ -785,7 +786,7 @@ class ObjectBasedPost(UserBasedPost):
 		super(ObjectBasedPost,self).__init__( *args, **kwargs )
 
 	def authenticationPermission( self ):
-		return ValidAuthKitUser()
+		return None
 
 	def getOrCreateUser( self, environ ):
 		""" We only work with existing users, and it must be the
@@ -906,7 +907,7 @@ class ObjectBasedDelete(Delete):
 		super(ObjectBasedDelete,self).__init__( keyName='object')
 
 	def authenticationPermission( self ):
-		return ValidAuthKitUser()
+		return None
 
 	def __call__(self, environ, start_response ):
 		self.authorizeRequest( environ )
@@ -922,7 +923,7 @@ class ObjectBasedDelete(Delete):
 		# Then ensure the users match
 		remoteUser = self.getRemoteUser( environ )
 		if remoteUser != theObject.creator:
-			raise NotAuthorizedError( 'Not same user' )
+			raise hexc.HTTPForbidden()
 
 		user = theObject.creator
 
@@ -1177,12 +1178,12 @@ class QuizTree( object ):
 				super(PutQuiz,self).__init__( keyName='quiz', parent=parent, inputClass=Quiz )
 
 			def authenticationPermission( self ):
-				return ValidAuthKitUser()
+				return None
 
 		class DeleteQuiz(Delete):
 			"Changes permission model for deleting."
 			def authenticationPermission( self ):
-				return ValidAuthKitUser()
+				return None
 
 		self.put_quiz = PutQuiz( parent=self.get_all_quiz )
 		self.delete_quiz = DeleteQuiz( keyName='quiz', parent=self.get_all_quiz )

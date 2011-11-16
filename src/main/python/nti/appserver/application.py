@@ -35,7 +35,7 @@ from selector import Selector
 from nti.dataserver.users import SharingTarget
 
 from cors import CORSInjector
-import auth
+
 from layers import register_implicit_layers
 
 from zope import component
@@ -46,10 +46,11 @@ from . import workspaces
 import pyramid.config
 import pyramid.authorization
 import pyramid.httpexceptions as hexc
+
+
 import datetime
 import pyramid_auth
 
-import warnings
 from zope.location.location import LocationProxy
 
 # Make the zope interface extend the pyramid interface
@@ -163,7 +164,10 @@ class _Main(object):
 			start_request( '200 OK', (('Content-Type', 'text/plain'),) )
 			return body + '\n'
 
-		return self.captured( environ, start_request )
+		try:
+			return self.captured( environ, start_request )
+		except hexc.HTTPError as h:
+			start_request( h.status, h.headers.items(), sys.exc_info() )
 
 def createApplication( http_port, library, process_args=False, create_ds=True ):
 	server = None
@@ -205,14 +209,13 @@ def createApplication( http_port, library, process_args=False, create_ds=True ):
 	# leading to some breakage in ZCA apis...this can be fixed by setting the site manager
 	# to have a __bases__ that includes the global site manager.
 	pyramid_config = pyramid.config.Configurator( registry=component.getGlobalSiteManager(),
-												  debug_logger=logging.getLogger( 'pyramid' ),
-												  exceptionresponse_view=pyramid_auth.exceptionresponse_view)
+												  debug_logger=logging.getLogger( 'pyramid' ) ) #,
+
 	pyramid_config.setup_registry()
-	# Note that we are using an exception-catching view to convert
-	# forbidden responses into 401 responses. This is slightly odd
-	pyramid_config.set_authentication_policy( pyramid_auth.NTIBasicAuthPolicy() )
+
+	pyramid_config.set_authentication_policy( pyramid_auth.create_authentication_policy() )
 	pyramid_config.set_authorization_policy( pyramid.authorization.ACLAuthorizationPolicy() )
-	pyramid_config.add_view( pyramid_auth.exceptionresponse_view, context=hexc.HTTPForbidden )
+
 
 	xmlconfig.file( 'configure.zcml', package=nti.appserver )
 
@@ -453,7 +456,8 @@ def createApplication( http_port, library, process_args=False, create_ds=True ):
 	main.addServeFiles( ('/dataserver/UserSearch/', None) )
 	main.addServeFiles( ('/dataserver2', None) )
 
-	application = auth.add_authentication( main, server )
+	application = main
+	application = pyramid_auth.wrap_repoze_middleware( application )
 	application = ErrorMiddleware( application, show_exceptions_in_wsgi_errors=True, debug=True )
 	# CORS needs to be outermost so that even 401 errors ond
 	# exceptions have the chance to get their responses wrapped

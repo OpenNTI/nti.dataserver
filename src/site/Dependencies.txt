@@ -46,6 +46,8 @@ Dependencies (easy_install):
 +-- zope.filerepresentation # 3.6.0
 +-- zope.dottedname	  # 3.4.6
 +-- zope.event		  # 3.5.1
+- pyramid_who		  # 0.3, 2011-11-16
++-- repoze.who		  # 2.0
 
 Dependencies (macports):
 - py27-cython		# 2011-08-31
