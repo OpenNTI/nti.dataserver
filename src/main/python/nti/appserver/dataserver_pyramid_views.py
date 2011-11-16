@@ -162,6 +162,8 @@ class _PagesResource(object):
 						 (sec.Deny, sec.Everyone, sec.ALL_PERMISSIONS) ]
 
 	def __getitem__( self, key ):
+		if key == ntiids.ROOT:
+			return _PageContainerResource( self, None, key, self.user )
 		cont = self.user.getContainer( key )
 		if cont is None:
 			raise KeyError()
@@ -509,13 +511,51 @@ class _UGDAndRecursiveStreamView(_UGDView):
 
 	def __init__(self, request ):
 		super(_UGDAndRecursiveStreamView,self).__init__( request )
-		self.pageGet = _UGDView( request )
-		self.streamGet = _RecursiveUGDStreamView( request )
-		self.streamGet._my_objects_may_be_empty = True
+
+	def __call__( self ):
+		"""
+		Overrides the normal mechanism to separate out the page
+		data and the change data in separate keys.
+		"""
+		user, ntiid = self.request.context.user, self.request.context.ntiid
+		page_data, stream_data = self._getAllObjects( user, ntiid )
+		all_data = []; all_data += page_data; all_data += stream_data
+		# The legacy code expects { 'LastMod': 0, 'Items': [] }
+		top_level = lists_and_dicts_to_ext_collection( all_data )
+
+		# To that we add something more similar to our new collection
+		# structure, buried under the 'Collection' key.
+		# the end result is:
+		# { 'LM': 0, 'Items': [], 'Collection': { 'Items': [ {stream} {page} ] } }
+
+		collection = {}
+		page_data = lists_and_dicts_to_ext_collection( page_data )
+		page_data['Title'] = 'UGD'
+		stream_data = lists_and_dicts_to_ext_collection( stream_data )
+		stream_data['Title'] = 'Stream'
+		collection['Items'] = [page_data, stream_data]
+		top_level['Collection'] = collection
+		return top_level
+
+
+	def _getAllObjects( self, user, ntiid ):
+		pageGet = _UGDView( self.request )
+		streamGet = _RecursiveUGDStreamView( self.request )
+		streamGet._my_objects_may_be_empty = True
+		page_data = ()
+		try:
+			page_data = pageGet.getObjectsForId( user, ntiid )
+		except hexc.HTTPNotFound:
+			# If the root object container DNE,
+			# then we must have a stream, otherwise
+			# the whole thing should 404
+			streamGet._my_objects_may_be_empty = False
+
+		stream_data = streamGet.getObjectsForId( user, ntiid )
+		return page_data, stream_data
 
 	def getObjectsForId( self, user, ntiid ):
-		page_data = self.pageGet.getObjectsForId( user, ntiid )
-		stream_data = self.streamGet.getObjectsForId( user, ntiid )
+		page_data, stream_data = self._getAllObjects( user, ntiid )
 		all_data = []
 		all_data += page_data
 		all_data += stream_data

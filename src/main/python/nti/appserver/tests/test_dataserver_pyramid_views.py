@@ -2,7 +2,7 @@
 
 import unittest
 from hamcrest import (assert_that, is_, none,
-					  has_entry)
+					  has_entry, has_length, has_key)
 
 from nti.appserver.dataserver_pyramid_views import (class_name_from_content_type,
 													_UGDView, _RecursiveUGDView,
@@ -119,27 +119,53 @@ class TestUGDViews(ConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_ugdrstream_withUGD_not_found_404(self):
+		child_ntiid = ntiids.make_ntiid( provider='ou', specific='test2', nttype='test' )
+		class NID(object):
+			ntiid = child_ntiid
 		class Lib(object):
-			def childrenOfNTIID( self, nti ): return []
+			def childrenOfNTIID( self, nti ): return [NID] if nti == ntiids.ROOT else []
 		get_current_request().registry.registerUtility( Lib(), ILibrary )
 		view = _UGDAndRecursiveStreamView( get_current_request() )
 		user = users.User( 'jason.madden@nextthought.com', 'temp001' )
+		# No data and no changes
 		with self.assertRaises(hexc.HTTPNotFound):
 			view.getObjectsForId( user, ntiids.ROOT )
+
 		# Now if there are objects in there, it won't raise.
-		class C(object):
-			containerId =  ntiids.make_ntiid( provider='ou', specific='test', nttype='test' )
+		class C(persistent.Persistent):
+			containerId = child_ntiid
 			id = None
+			lastModified = 1
+			creator = 'chris.utz@nextthought.com'
 		c = C()
 		user.addContainedObject( c )
 		assert_that( user.getContainedObject( c.containerId, c.id ), is_( c ) )
+		assert_that( user.getContainer( C.containerId ), has_length( 2 ) )
 		view.getObjectsForId( user, C.containerId )
+
 		# Then deleting, does not go back to error
 		user.deleteContainedObject( c.containerId, c.id )
 		view.getObjectsForId( user, C.containerId )
 		# except if we look above it
 		with self.assertRaises( hexc.HTTPNotFound ):
 			view.getObjectsForId( user, ntiids.ROOT )
+
+		# But if there are changes at the low level, we get them
+		# if we ask at the high level.
+		user._addToStream( C() )
+		view.getObjectsForId( user, ntiids.ROOT )
+
+		# See which items are there
+		class Context(object):
+			user = None
+			ntiid = ntiids.ROOT
+		Context.user = user
+		view.request.context = Context
+		top_level = view()
+		assert_that( top_level, has_key( 'Collection' ) )
+		assert_that( top_level['Collection'], has_key( 'Items' ) )
+		items = top_level['Collection']['Items']
+		assert_that( items, has_length( 2 ) )
 
 
 def test_lists_and_dicts_to_collection():

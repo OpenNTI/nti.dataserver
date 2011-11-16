@@ -458,11 +458,14 @@ class UserBasedPageDataAndRecursiveUserBasedStreamGet(UserBasedPageDataGet):
 		all_data = []
 		all_data += page_data['Items']
 		all_data += stream_data['Items']
-		return {'Last Modified': max(page_data['Last Modified'], stream_data['Last Modified']),
-				'Items': all_data}
-		all_data = self.transformAndCombineObjects( all_data )
-		all_data['Last Modified'] = max(all_data['Last Modified'], page_data['Last Modified'], stream_data['Last Modified'] )
-		return all_data
+		collection = {}
+		page_data['Title'] = 'UGD'
+		stream_data['Title'] = 'Stream'
+		collection['Items'] = [page_data, stream_data]
+		top_level = {'Last Modified': max(page_data['Last Modified'], stream_data['Last Modified']),
+					 'Items': all_data,
+					 'Collection': collection }
+		return top_level
 
 
 class Post(UserBasedGet):
