@@ -322,14 +322,18 @@ struct Transcript : TranscriptSummary {
  * Events from client to server.
  */
 //emit to enter a room and begin getting messages for it.
-// At minimum, the room_id field must be present;
-//for an anonymous room (transient, person-to-person) the room_id field
-//MUST be blank. The occupents field should be set to the online
-//users to include in the room.
+//For an anonymous (transient, person-to-person) room, the RoomId must be
+//absent and the Occupants array must be present and containing
+//the usernames of the online users to include in the room.
 //To enter a persistent meeting room, send no Occupants, but DO
-//set the container id to the id of a persistent meeting container. (If you include Occupants
-//you may be able to start a persistent meeting, but you could not
-//join one already in progress.)
+//set the ContainerId to the id of a persistent meeting container
+//(for example, for a FriendsList/study group or class session, the
+//id to use as the ContainerId is the 'NTIID' value)
+//(If you include Occupants you may be able to start a persistent
+// meeting, but you could not join one already in progress.)
+//The server will reply with the enteredRoom message; its ContainerId
+//will be the containerId you set (if you set one and were allowed
+//to create it).
 chat_enterRoom( room_info )
 //Sent if you attempted to enter a room, but failed
 chat_failedToEnterRoom( room_info )
