@@ -1,13 +1,11 @@
-from hamcrest import (assert_that, is_)
 import os
 import json
 import unittest
 
-from nti.contentsearch.contenttypes import MessageInfo
-
+from hamcrest import (assert_that, is_)
 from whoosh.filedb.filestore import RamStorage
 
-_path = os.path.dirname(__file__)
+from nti.contentsearch.contenttypes import MessageInfo
 
 class TestChatMessages(unittest.TestCase):
 
@@ -15,9 +13,9 @@ class TestChatMessages(unittest.TestCase):
 
 	@classmethod
 	def setUpClass(cls):
-		tf = os.path.join(_path, 'transcript.json')
+		tf = os.path.join(os.path.dirname(__file__), 'transcript.json')
 		with open(tf, "r") as f:
-			cls.sample_transcript = json.load(f);
+			cls.sample_transcript = json.load(f)
 
 	def create_index_from_transcript(self, transcript):
 		cm = MessageInfo()

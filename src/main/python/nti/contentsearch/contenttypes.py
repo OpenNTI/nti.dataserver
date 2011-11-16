@@ -81,7 +81,6 @@ def get_text_from_mutil_part_body(body):
 	if not body or isinstance(body, basestring):
 		return get_content(body)
 	elif isinstance(body, collections.Iterable):
-		items = []
 		
 		gbls = globals()
 		
@@ -89,20 +88,26 @@ def get_text_from_mutil_part_body(body):
 			data = d[key] if d and key in d else None
 			if data: items.append(str(data))
 			
-		for item in body:
-			if isinstance(item, basestring):
-				items.append(item)
-			elif  isinstance(item, dict) and 'Class' in item:
-				name = item['Class']
-				name = name[0:-1] if name.endswith('s') else name
-				if name in gbls and IUserIndexableContent.implementedBy(gbls[name]):
-					try:
-						obj = __dict__[name]()
-						d = obj.get_index_data(item)
-						add_to_items(d, 'content')
-						add_to_items(d, 'text')
-					except:
-						pass
+		def add_from_dict(item):
+			name = item['Class'] if 'Class' in item else None
+			if name in gbls and IUserIndexableContent.implementedBy(gbls[name]):
+				try:
+					obj = gbls[name]()
+					d = obj.get_index_data(item)
+					add_to_items(d, 'content')
+					add_to_items(d, 'text')
+				except:
+					pass
+			
+		items = []
+		if isinstance(body, dict):
+			add_from_dict(body)
+		else:
+			for item in body:
+				if isinstance(item, basestring) and item:
+					items.append(item)
+				elif isinstance(item, dict):
+					add_from_dict(item)
 			
 		return get_content(' '.join(items))
 	else:
@@ -726,12 +731,30 @@ class MessageInfo(Note):
 		return result
 
 
-class CanvasShape(UserIndexableContent):
+class _Illustration(UserIndexableContent):
 	_schema = None
 	__indexable__ = False
 	
 	def get_index_data(self, externalValue, *args, **kwargs):
 		return {}
+	
+class Canvas(_Illustration):
+	def get_index_data(self, externalValue, *args, **kwargs):
+		data = externalValue
+		if not isinstance(data, collections.Mapping) or 'shapeList' not in data:
+			return None
+		
+		items = []
+		shapeList = data['shapeList']
+		for shape in shapeList:
+			txt = get_text_from_mutil_part_body(shape)
+			if txt: items.append(txt)
+		
+		return {'text': ' '.join(items)} if items else {}
+			
+		
+class CanvasShape(_Illustration):
+	pass
 
 class CanvasCircleShape(CanvasShape):
 	pass
