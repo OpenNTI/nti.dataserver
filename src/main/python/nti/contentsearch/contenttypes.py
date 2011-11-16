@@ -28,13 +28,6 @@ def get_datetime(x=None):
 		f = float(x) if isinstance(x, basestring) else x
 	return datetime.fromtimestamp(f)
 
-def get_oid(oid):
-	if oid.startswith( '0x' ):
-		oid = oid[2:].decode( 'hex' )
-	# Recall that oids are padded to 8 with \x00
-	oid = oid.rjust( 8, '\x00' )
-	return unicode(oid)
-
 def get_content(text, wordpat=r"(?L)\w+"):
 
 	if not text or not isinstance(text, basestring):
