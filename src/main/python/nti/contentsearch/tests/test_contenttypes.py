@@ -1,13 +1,19 @@
 import os
 import json
 import unittest
+import collections
 from datetime import datetime
 
 from nti.contentsearch.contenttypes import echo
+from nti.contentsearch.contenttypes import epoch_time
 from nti.contentsearch.contenttypes import get_content
 from nti.contentsearch.contenttypes import get_datetime
 from nti.contentsearch.contenttypes import get_keywords
+from nti.contentsearch.contenttypes import empty_search_result
+from nti.contentsearch.contenttypes import empty_suggest_result
+from nti.contentsearch.contenttypes import get_highlighted_content
 from nti.contentsearch.contenttypes import get_text_from_mutil_part_body
+from nti.contentsearch.contenttypes import empty_suggest_and_search_result
 
 class TestContentTypes(unittest.TestCase):
 	
@@ -22,6 +28,11 @@ class TestContentTypes(unittest.TestCase):
 		self.assertEqual('', echo(''))
 		self.assertEqual('None', echo('None'))
 	
+	def test_epoch_time(self):
+		d = datetime.fromordinal(730920)
+		self.assertEqual(1015826400.0, epoch_time(d))
+		self.assertEqual(0, epoch_time(None))
+		
 	def test_get_datetime(self):
 		f = 1321391468.411328
 		s = '1321391468.411328'
@@ -46,6 +57,39 @@ class TestContentTypes(unittest.TestCase):
 		js = self._load_json()
 		msg = get_text_from_mutil_part_body(js['Body'])
 		self.assertEqual(u'Zanpakuto and Zangetsu', msg)
+		self.assertEqual('Soul Reaper', get_text_from_mutil_part_body('Soul Reaper'))
+		
+	def test_get_highlighted_content(self):
+		text = unicode(get_content("""
+		An orange-haired high school student, Ichigo becomes a "substitute Shinigami (Soul Reaper)" 
+		after unintentionally absorbing most of Rukia Kuchiki's powers
+		""")) 
+		self.assertEqual('high school student ICHIGO becomes a substitute', get_highlighted_content('ichigo', text))
+		self.assertEqual('ICHIGO becomes', get_highlighted_content('ichigo', text, surround=5))
+		self.assertEqual('becomes a substitute SHINIGAMI Soul', get_highlighted_content('shinigami', text, maxchars=10))
+		self.assertEqual('RUKIA', get_highlighted_content('rukia', text, maxchars=10, surround=1))
 
+	def _check_empty(self, d, query):
+		self.assert_(isinstance(d, collections.Mapping))
+		self.assertEqual(query, d['Query'])
+		self.assertEqual(0, d['Hit Count'])
+		self.assertEqual(0, d['Last Modified'])
+		
+	def test_empty_search_result(self):	
+		d = empty_search_result('myQuery')
+		self._check_empty(d, 'myQuery')
+		self.assertEqual({}, d['Items'])
+		
+	def test_empty_suggest_result(self):	
+		d = empty_suggest_result('myQuery')
+		self._check_empty(d, 'myQuery')
+		self.assertEqual([], d['Items'])
+		
+	def test_empty_suggest_and_search_result(self):
+		d = empty_suggest_and_search_result('myQuery')
+		self._check_empty(d, 'myQuery')
+		self.assertEqual({}, d['Items'])
+		self.assertEqual([], d['Suggestions'])
+		
 if __name__ == '__main__':
 	unittest.main()

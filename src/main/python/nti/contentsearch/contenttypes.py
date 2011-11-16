@@ -62,10 +62,6 @@ def get_highlighted_content(query, text, analyzer=None, maxchars=300, surround=2
 	formatter = highlight.UppercaseFormatter()
 	return highlight.highlight(text, terms, analyzer, fragmenter, formatter)
 
-def supports_sortby(searcher):
-	reader = searcher.reader()
-	return hasattr(reader, "fieldcache")
-
 def echo(x):
 	return unicode(x) if x else u''
 
@@ -442,7 +438,11 @@ class Book(_IndexableContent):
 		return RuntimeError("Cannot delete book index")
 
 	def execute_search(self, searcher, parsed_query, limit):
-		if supports_sortby(searcher):
+		
+		reader = searcher.reader()
+		supports_sortby = hasattr(reader, "fieldcache")
+		
+		if supports_sortby:
 			return searcher.search(parsed_query, sortedby='order', limit=limit)
 		else:
 			return searcher.search(parsed_query, limit=limit)
