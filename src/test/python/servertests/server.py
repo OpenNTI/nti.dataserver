@@ -75,17 +75,17 @@ class DataserverProcess(object):
 		
 	# -----------------------------------
 	
-	def startServer(self, path=_APP_PATH, blockUntillStarted=True, blockIntervalSeconds=1):
-		self._start_process([sys.executable, path], blockUntillStarted, blockIntervalSeconds)
+	def startServer(self, path=_APP_PATH, blockIntervalSeconds=1, maxWaitSeconds=30):
+		self._start_process([sys.executable, path], blockIntervalSeconds, maxWaitSeconds)
 
 	start_server = startServer
 	
-	def startServerWithCoverage(self, path=_APP_PATH_COV, blockUntillStarted=True, blockIntervalSeconds=1):
-		self._start_process([sys.executable, path], blockUntillStarted, blockIntervalSeconds)
+	def startServerWithCoverage(self, path=_APP_PATH_COV, blockIntervalSeconds=1, maxWaitSeconds=30):
+		self._start_process([sys.executable, path], blockIntervalSeconds, maxWaitSeconds)
 		
 	start_server_with_coverage  = startServerWithCoverage
 	
-	def _start_process(self, args, block_untill_started=True, block_interval_seconds=1):
+	def _start_process(self, args, block_interval_seconds=1, max_wait_secs=30):
 		
 		if self.process or self.isRunning():
 			print 'Dataserver already running.  Won\'t start a new one'
@@ -102,40 +102,50 @@ class DataserverProcess(object):
 		if devnull is not None: 
 			devnull.close()
 
-		while block_untill_started and not self.isRunning():
+		elapsed = 0
+		while elapsed <= max_wait_secs and not self.isRunning():
 			time.sleep(block_interval_seconds)
+			elapsed = elapsed + block_interval_seconds
 			
+		if elapsed >= max_wait_secs:
+			raise Exception("Could not start data server")
+		
 		if self.KEY_TEST_WAIT in os.environ:
 			time.sleep( int( os.environ[self.KEY_TEST_WAIT] ) )
 			
 	# -----------------------------------
 	
-	def terminateServer(self, blockUntillTerminated=True, blockIntervalSeconds=1):
+	def terminateServer(self, blockIntervalSeconds=1, maxWaitSeconds=30):
 		if self.process:
 			self.process.terminate()
-			return self._wait_for_termination(blockUntillTerminated, blockIntervalSeconds)
+			return self._wait_for_termination(blockIntervalSeconds, maxWaitSeconds)
 		else:
 			return False
-		
-		self._terminate_process(blockUntillTerminated, blockIntervalSeconds)
 
 	terminate_server = terminateServer
 	
-	def terminateServerWithCoverage(self, report=True, block_untill_terminated=True, block_interval_seconds=1):
+	def terminateServerWithCoverage(self, report=True, block_interval_seconds=1, max_wait_secs=30):
 		command  = 'terminate-and-report' if report else 'terminate'
 		if self.process and self._send_message(self.LOCALHOST, self.PORT_COV, command, False):
-			return self._wait_for_termination(block_untill_terminated, block_interval_seconds)
+			return self._wait_for_termination(block_interval_seconds, max_wait_secs)
 		else:
 			return False
 
 	terminate_server_with_coverage = terminateServerWithCoverage
 	
-	def _wait_for_termination(self, block_untill_terminated=True, block_interval_seconds=1):
+	def _wait_for_termination(self, block_interval_seconds=1, max_wait_secs=30):
 
 		print 'Terminating dataserver'
-		while block_untill_terminated and self.isRunning():
+		
+		elapsed = 0
+		while  elapsed <= max_wait_secs and self.isRunning():
 			time.sleep(block_interval_seconds)
+			elapsed = elapsed + block_interval_seconds
 			
+		if elapsed >= max_wait_secs:
+			print "Could not stop data server"
+			return False
+		
 		return True
 		
 	# -----------------------------------
