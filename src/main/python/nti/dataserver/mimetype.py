@@ -48,6 +48,13 @@ class ModeledContentTypeAwareRegistryMetaclass(type):
 	This class declares one property, `mime_types`, which is an
 	iterable of the string values of all known modeled
 	content types (those that use this metaclass).
+
+	.. warning::
+
+		If you are going to implement other interfaces, the metaclass
+		definition *must* be the first statement in the class, above
+		the :func:`interface.implements` statement.
+
 	"""
 	# A metaclass might be overkill for this??
 

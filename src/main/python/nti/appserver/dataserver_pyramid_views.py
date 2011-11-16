@@ -120,7 +120,9 @@ class _UserResource(object):
 		self.__name__ = name or user.username
 		self.request = parent.request
 		self.user = user
-		self.resource = user
+		# Our resource is the user, which for the sake of the weirdness
+		# in the view processing, sits below us.
+		self.resource = LocationProxy( user, self, self.__name__ )
 		# Owner can do anything
 		self.__acl__ = [ (sec.Allow, self.user.username, sec.ALL_PERMISSIONS) ]
 		self.__acl__.extend( _UserResource.__acl__ )
@@ -361,7 +363,13 @@ class _GenericGetView(object):
 										 app_interfaces.ICollection,
 										 default=context )
 		if hasattr( result, '__parent__' ):
-			result.__parent__ = self.request.context.__parent__
+			# FIXME: Choosing which parent to set is also borked up.
+			# Some context objects (resources) are at the same conceptual level
+			# as the actual request.context, some are /beneath/ that level??
+			if hasattr( context, '__parent__' ):
+				result.__parent__ = context.__parent__
+			elif context is not self.request.context and hasattr( self.request.context, '__parent__' ):
+				result.__parent__ = self.request.context.__parent__
 		return result
 
 class _EmptyContainerGetView(object):

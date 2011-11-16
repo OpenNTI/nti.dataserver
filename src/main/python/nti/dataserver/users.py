@@ -970,10 +970,8 @@ from activitystream_change import Change
 
 @functools.total_ordering
 class Device(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
-
-	interface.implements( nti_interfaces.IDevice )
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-
+	interface.implements( nti_interfaces.IDevice )
 	__external_can_create__ = True
 
 	def __init__(self, deviceId):
@@ -988,7 +986,7 @@ class Device(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 			del self.__dict__['containerId']
 
 	def get_containerId( self ):
-		return 'Devices'
+		return _DevicesMap.container_name
 	def set_containerId( self, cid ):
 		pass
 	containerId = property( get_containerId, set_containerId )
@@ -1029,6 +1027,12 @@ class _DevicesMap(datastructures.AbstractNamedContainerMap):
 		if not isinstance( value, Device ):
 			value = Device( value )
 		super(_DevicesMap,self).__setitem__( key, value )
+
+
+nti_interfaces.IDevice.setTaggedValue( nti_interfaces.IHTC_NEW_FACTORY,
+									   Factory( lambda extDict:  Device( extDict ),
+												interfaces=(nti_interfaces.IDevice,)) )
+
 
 class _TranscriptsMap(datastructures.AbstractNamedContainerMap):
 
