@@ -13,6 +13,9 @@ from zope import interface
 
 from nti.dataserver.users import User
 
+# TODO: This decoding stuff is happening too simalarly in the different
+# places. Decide what's really needed and remove what isn't and consolidate
+# the rest.
 
 def _get_basicauth_credentials( request ):
 	"""
@@ -23,6 +26,23 @@ def _get_basicauth_credentials( request ):
 	password = None
 	try:
 		authorization = request.authorization
+		authmeth, auth = authorization
+		if 'basic' == authmeth.lower():
+			auth = auth.strip().decode('base64')
+			username, password = auth.split(':',1)
+	except (TypeError,ValueError, binascii.Error): username, password = None, None
+
+	return (username, password)
+
+def _get_basicauth_credentials_environ( environ ):
+	"""
+	:return: Tuple (user,pass) if present and valid in the
+		request. Does not modify the request.
+	"""
+	username = None
+	password = None
+	try:
+		authorization = environ['HTTP_AUTHORIZATION']
 		authmeth, auth = authorization
 		if 'basic' == authmeth.lower():
 			auth = auth.strip().decode('base64')
@@ -51,7 +71,48 @@ def _decode_username( request ):
 		request.remote_user = username
 	return (username, password)
 
+def _decode_username_environ( environ ):
+	"""
+	Decodes %40 in a Basic Auth username into an @. Modifies
+	the request.
+
+	Our usernames are in domain syntax. This sometimes confuses
+	browsers who expect to use an @ to separate user and password,
+	so clients often workaround this by percent-encoding the username.
+	Reverse that step here. This should be an outer layer before
+	authkit gets to do anything.
+	:return: Tuple (user,pass).
+	"""
+	username, password = _get_basicauth_credentials_environ( environ )
+	if username and '%40' in username:
+		username = username.replace( '%40', '@' )
+		auth = (username + ':' + password).encode( 'base64' ).strip()
+		environ['HTTP_AUTHORIZATION'] = 'Basic ' + auth
+		environ['REMOTE_USER'] = username
+	return (username, password)
+
+def _decode_username_identity( identity ):
+	"""
+	Decodes %40 in a Basic Auth username into an @. Modifies
+	the request.
+
+	Our usernames are in domain syntax. This sometimes confuses
+	browsers who expect to use an @ to separate user and password,
+	so clients often workaround this by percent-encoding the username.
+	Reverse that step here. This should be an outer layer before
+	authkit gets to do anything.
+	:return: Tuple (user,pass).
+	"""
+	username, password = identity['login'], identity['password']
+	if username and '%40' in username:
+		username = username.replace( '%40', '@' )
+		identity['login'] = username
+	return (username, password)
+
 class _NTIUsers(object):
+
+	# TODO: Many of these functions are left over from AuthKit.
+	# Remove those that are no longer needed.
 
 	def __init__( self, user_callable, create_user_callable=None ):
 		"""
@@ -131,6 +192,8 @@ class NTIUsersAuthenticatorPlugin(object):
 	def authenticate( self, environ, identity ):
 		if 'login' not in identity or 'password' not in identity: return None
 
+		_decode_username_environ( environ )
+		_decode_username_identity( identity )
 		if _make_user_auth().user_has_password( identity['login'], identity['password'] ):
 			return identity['login']
 
