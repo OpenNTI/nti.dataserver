@@ -11,7 +11,7 @@ def load_suite(path, pattern, top_level_dir):
 	except Exception, e:
 		print "Error importing tests from '%s'. %s" % (path, e)
 		
-def collect_main_tests(path, pattern="*.py"):
+def collect_main_tests(path, pattern="test_*.py"):
 	test_list = []
 
 	def collector(dir_path):
