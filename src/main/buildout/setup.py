@@ -70,8 +70,8 @@ setup(
                         ],
     extras_require = {'test': ['z3c.coverage', 'zope.testing', 'zc.buildout']},
 
-    packages = find_packages('src'),
-    package_dir = {'': 'src'},
+    packages = find_packages('.'),
+    package_dir = {'': '.'},
     include_package_data = False,
     zip_safe = True,
     )
