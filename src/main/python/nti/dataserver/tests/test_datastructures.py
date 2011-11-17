@@ -1,6 +1,7 @@
 
 from hamcrest import (assert_that, is_, has_entry, instance_of,
 					  has_key, is_in, not_none, is_not, greater_than,
+					  greater_than_or_equal_to,
 					  same_instance)
 from hamcrest.core.base_matcher import BaseMatcher
 
@@ -195,6 +196,24 @@ class TestContainedStorage(unittest.TestCase):
 		assert_that( cs.lastModified, is_not( 0 ) )
 		assert_that( cs.lastModified, is_( cs.getContainer( 'foo' ).lastModified ) )
 
+	def test_delete_contained_updates_lm( self ):
+		cs = ContainedStorage( containerType=PersistentExternalizableList )
+		obj = self.C()
+		obj.containerId = 'foo'
+		cs.addContainedObject( obj )
+		lm_add = cs.lastModified
+		assert_that( cs.lastModified, is_not( 0 ) )
+		assert_that( cs.lastModified, is_( cs.getContainer( 'foo' ).lastModified ) )
+
+		# Reset
+		cs.getContainer( 'foo' ).lastModified = 42
+		cs.deleteContainedObject( obj.containerId, obj.id )
+
+		assert_that( cs.lastModified, is_( greater_than_or_equal_to( lm_add ) ) )
+
+
+
+
 does_not = is_not
 
 class TestExternalizableInstanceDict(unittest.TestCase):
@@ -237,7 +256,6 @@ class TestExternalizableInstanceDict(unittest.TestCase):
 		assert_that( ext, does_not( has_key( '_A4' ) ) )
 		assert_that( newObj.A1, is_( 1 ) )
 		assert_that( newObj.A2, is_( "2" ) )
-
 
 if __name__ == '__main__':
 	unittest.main()

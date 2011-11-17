@@ -773,11 +773,14 @@ class ContainedStorage(persistent.Persistent,ModDateTrackingObject):
 		# especially during evolution, we cannot
 		# statically decide which access method to use (e.g.,
 		# based on self.containerType)
-		def _put_in_container( c, i, d ):
+		def _put_in_container( c, i, d, orig ):
 			if isinstance( c, collections.Mapping ):
 				c[i] = d
 			else:
 				c.append( d )
+				try:
+					d.containerId = len(c) - 1
+				except AttributeError: pass
 		def _get_in_container( c, i, d=None ):
 			if isinstance( c, collections.Mapping ):
 				return c.get( i, d )
@@ -785,15 +788,24 @@ class ContainedStorage(persistent.Persistent,ModDateTrackingObject):
 				return c[i]
 			except IndexError:
 				return d
+		def _pop_in_container( c, i, d=None ):
+			if isinstance( c, collections.Mapping ):
+				return c.pop( i, d )
+			try:
+				return c.pop( i )
+			except IndexError:
+				return d
 
 		self._v_putInContainer = _put_in_container
 		self._v_getInContainer = _get_in_container
+		self._v_popInContainer = _pop_in_container
 
 	def _v_wrap(self,obj): pass
 	def _v_unwrap(self,obj): pass
 	def _v_create(self,obj): pass
-	def _v_putInContainer( self, obj ): pass
+	def _v_putInContainer( self, obj, orig ): pass
 	def _v_getInContainer( self, obj, defv=None ): pass
+	def _v_popInContainer( self, obj, defv=None ): pass
 
 	def __setstate__( self, dic ):
 		super(ContainedStorage,self).__setstate__(dic)
@@ -868,16 +880,22 @@ class ContainedStorage(persistent.Persistent,ModDateTrackingObject):
 
 		# Save
 		self._v_create( contained )
-		self._v_putInContainer( container, getattr(contained, StandardInternalFields.ID, None), self._v_wrap( contained ) )
+		self._v_putInContainer( container,
+								getattr(contained, StandardInternalFields.ID, None),
+								self._v_wrap( contained ),
+								contained )
 		# Synchronize the timestamps
-		self.updateLastMod( )
-		up = getattr( container, 'updateLastMod', None )
-		if callable( up ):
-			up( self.lastModified )
+		self._updateContainerLM( container )
 
 		self.afterAddContainedObject( contained )
 
 		return contained
+
+	def _updateContainerLM( self, container ):
+		self.updateLastMod( )
+		up = getattr( container, 'updateLastMod', None )
+		if callable( up ):
+			up( self.lastModified )
 
 	@property
 	def afterAddContainedObject( self ):
@@ -896,9 +914,9 @@ class ContainedStorage(persistent.Persistent,ModDateTrackingObject):
 		removes that object from the container and returns it. Returns None
 		if there is no such object. """
 		container = self.containers.get( containerId, {} )
-		contained = self._v_unwrap( container.pop( containedId, None ) )
+		contained = self._v_unwrap( self._v_popInContainer( container, containedId, None ) )
 		if contained is not None:
-			self.updateLastMod( getattr( container, 'lastModified', None ) )
+			self._updateContainerLM( container )
 			self.afterDeleteContainedObject( contained )
 		return contained
 

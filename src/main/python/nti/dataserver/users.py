@@ -426,32 +426,8 @@ class SharingTarget(Entity):
 		self.containersOfShared.addContainedObject( contained )
 
 	def _removeSharedObject( self, contained ):
-		if contained is None or contained.containerId is None: return
-		container = self.containersOfShared.getContainer( contained.containerId )
-		if container is None: return
-
-		try:
-			container.remove( persistent.wref.WeakRef( contained ) )
-		except ValueError: pass
-		except TypeError:
-			# Getting here means that we are no longer able to resolve
-			# at least one object by OID. Might as well take this opportunity
-			# to clear out all the dangling refs. Notice we keep the identical
-			# container object though
-			# TODO: Where should this go?
-			cid = getattr( contained, '_p_oid', self ) or self
-			tmp = list( container )
-			del container[:]
-			for weak in tmp:
-				if cid == getattr( weak, 'oid', None ) or \
-				   cid == getattr( weak, '_p_oid', None ):
-					continue
-				strong = weak if not callable( weak ) else weak()
-				if strong is not None and strong != contained:
-					container.append( strong )
-				else:
-					logger.debug( "Dropping obj by equality/missing during delete %s == %s", strong, contained )
-
+		if contained is None or contained.containerId is None or contained.id is None: return
+		self.containersOfShared.deleteContainedObject( contained.containerId, contained.id )
 
 	def _addToStream( self, change ):
 		container = self.streamCache.get( change.containerId )
