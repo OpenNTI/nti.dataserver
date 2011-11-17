@@ -37,7 +37,7 @@ class IndexAgent(object):
 					break
 
 		self._agent = gevent.spawn( _worker )
-
+		
 	def _handle_event(self, event):
 		"""
 		Handle user content indexing events.
@@ -47,24 +47,28 @@ class IndexAgent(object):
 
 		# TODO: These must be kept alive or they may never run!
 		if event.changeType in (Change.CREATED, Change.SHARED):
-			gevent.Greenlet.spawn(self.indexmanager.index_user_content,
-									externalValue=data,
-									username= event.creator,
-									typeName=event.dataType)
+			job = gevent.Greenlet.spawn(self.indexmanager.index_user_content,
+											externalValue=data,
+											username= event.creator,
+											typeName=event.dataType)
 		elif event.changeType == Change.MODIFIED:
-			gevent.Greenlet.spawn(self.indexmanager.update_user_content,
-									externalValue=data,
-									username=event.creator,
-									typeName=event.dataType)
+			job = gevent.Greenlet.spawn(self.indexmanager.update_user_content,
+											externalValue=data,
+											username=event.creator,
+											typeName=event.dataType)
 		elif event.changeType == Change.DELETED:
-			gevent.Greenlet.spawn(self.indexmanager.delete_user_content,
-									externalValue=data,
-									username=event.creator,
-									typeName=event.dataType)
-
-
+			job = gevent.Greenlet.spawn(self.indexmanager.delete_user_content,
+											externalValue=data,
+											username=event.creator,
+											typeName=event.dataType)
+			
+		return job
+	
+	def _create_event(self, creator, changeType, dataType, data):
+		return _IndexEvent(creator, changeType, dataType, data)
+		
 	def add_event( self, creator, changeType, dataType, data):
-		event = _IndexEvent(creator, changeType, dataType, data)
+		event = self._create_event(creator, changeType, dataType, data)
 		logger.debug("Index event %s received", event)
 		self._queue.put_nowait( event )
 
