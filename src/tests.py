@@ -1,7 +1,8 @@
-import glob
 import os
-import unittest
 import sys
+import glob
+import argparse
+import unittest
 
 from unittest import defaultTestLoader
 
@@ -49,7 +50,7 @@ def collect_server_tests(path, pattern="test_*.py"):
 	
 	return test_list
 	
-def test_collector():
+def test_collector(include_integration=False):
 	"""
 	Collect all tests return a unittest.TestSuite
 	"""
@@ -60,9 +61,9 @@ def test_collector():
 	
 	test_list.extend(collect_main_tests(main_dir))
 	
-	# only do the integration tests for the time being
-	tests_dir = os.path.join(src_dir, "test/python/servertests/integration/")
-	test_list.extend(collect_server_tests(tests_dir))
+	if include_integration:
+		tests_dir = os.path.join(src_dir, "test/python/servertests/integration/")
+		test_list.extend(collect_server_tests(tests_dir))
 
 	suite = unittest.TestSuite()
 	suite.addTests(test_list)
@@ -72,4 +73,6 @@ def test_collector():
 test_suite = test_collector
 
 if __name__ == '__main__':
-	test_collector()
+	args = sys.argv[1:]
+	include_integration = args[0] == '--include_integration' if args else False
+	test_collector(include_integration)
