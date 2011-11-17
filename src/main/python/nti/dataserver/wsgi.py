@@ -58,9 +58,9 @@ def ifLastModified( environ ):
 class SameRemoteUserAsPath(object):
 	def __call__( self, environ ):
 		env = environ.get('REMOTE_USER',None)
-		key = environ['wsgiorg.routing_args'][1]['user']
+		key = environ['wsgiorg.routing_args'][1].get('user',self)
 		if env != key:
-			raise hexc.HTTPUnauthorized()
+			raise hexc.HTTPForbidden( "User %s cannot access %s" %(env,key) )
 
 
 class NoOpCM(object):

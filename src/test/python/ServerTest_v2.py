@@ -275,22 +275,22 @@ class ServerTests_v2(object):
 	def constants(self):
 		self.URL				  = "http://localhost:8080"
 		self.URL_DS				  = self.URL 	+ '/dataserver'
-		self.URL_TYPE             = self.URL_DS + '/users/ltesti/TestType'
-		self.URL_POST			  = self.URL_DS + '/users/ltesti/TestType/TestGroup'
-		self.URL_JSON			  = self.URL_DS + '/users/ltesti/TestType/TestGroup/jsonID'
-		self.URL_PLIST			  = self.URL_DS + '/users/ltesti/TestType/TestGroup/plistID'
-		self.URL_OTHER_POST	      = self.URL_DS + '/users/sjohnson/TestType/TestGroup'
-		self.URL_OTHER_PUT		  = self.URL_DS + '/users/sjohnson/TestType/TestGroup/TestID'
-		self.NON_EXSIST_TYPE_URL  = self.URL_DS + '/users/ltesti/doesNotExist/TestGroup/TestID'
-		self.NON_EXSIST_GROUP_URL = self.URL_DS + '/users/ltesti/TestType/doesNotExist/TestID'
-		self.NON_EXSIST_ID_URL	  = self.URL_DS + '/users/ltesti/TestType/TestGroup/doesNotExist'
+		self.URL_TYPE             = self.URL_DS + '/users/ltesti@nextthought.com/TestType'
+		self.URL_POST			  = self.URL_DS + '/users/ltesti@nextthought.com/TestType/TestGroup'
+		self.URL_JSON			  = self.URL_DS + '/users/ltesti@nextthought.com/TestType/TestGroup/jsonID'
+		self.URL_PLIST			  = self.URL_DS + '/users/ltesti@nextthought.com/TestType/TestGroup/plistID'
+		self.URL_OTHER_POST	      = self.URL_DS + '/users/sjohnson@nextthought.com/TestType/TestGroup'
+		self.URL_OTHER_PUT		  = self.URL_DS + '/users/sjohnson@nextthought.com/TestType/TestGroup/TestID'
+		self.NON_EXSIST_TYPE_URL  = self.URL_DS + '/users/ltesti@nextthought.com/doesNotExist/TestGroup/TestID'
+		self.NON_EXSIST_GROUP_URL = self.URL_DS + '/users/ltesti@nextthought.com/TestType/doesNotExist/TestID'
+		self.NON_EXSIST_ID_URL	  = self.URL_DS + '/users/ltesti@nextthought.com/TestType/TestGroup/doesNotExist'
 		self.DEFAULT_INFO		  = {"DefaultKey":"StartingInfo"}
 		self.POST_PUT_INFO		  = {"PostPutKey":"NewInfo"}
 		self.DEFAULT_RETURN_KEY   = 'DefaultKey'
 		self.POST_PUT_RETURN_KEY  = 'PostPutKey'
 		self.DEFAULT_RETURN	      = 'StartingInfo'
 		self.POST_PUT_RETURN	  = 'NewInfo'
-		self.INCORRECT_USER_PASS  = 'incorrect'
+		self.INCORRECT_USER_PASS  = 'incorrect@nextthought.com'
 		self.EMPTY_USER_PASS	  = ''
 		self.NO_USER_PASS		  = None
 
@@ -381,17 +381,17 @@ class ServerTests(DataServerTestCase):
 		ServerTests.tester.setUpPut(ServerTests.URL_plist, format=ServerTests.plist)
 		ServerTests.tester.setUpPut(ServerTests.URL_other_put, username=ServerTests.otherUser, format=ServerTests.json)
 
-		ServerTests.NoTypeGroup	  = 'http://localhost:8080/dataserver/users/ltesti/' + str(uuid.uuid4()) + '/TestGroup'
+		ServerTests.NoTypeGroup	  = 'http://localhost:8080/dataserver/users/ltesti@nextthought.com/' + str(uuid.uuid4()) + '/TestGroup'
 		ServerTests.NoTypeWithID	  = ServerTests.NoTypeGroup + '/TestID'
-		ServerTests.NoGroupGroup	  = 'http://localhost:8080/dataserver/users/ltesti/TestType/' + str(uuid.uuid4())
+		ServerTests.NoGroupGroup	  = 'http://localhost:8080/dataserver/users/ltesti@nextthought.com/TestType/' + str(uuid.uuid4())
 		ServerTests.NoGroupWithID  =	ServerTests.NoGroupGroup + '/TestID'
-		ServerTests.NoID			  = 'http://localhost:8080/dataserver/users/ltesti/TestType/TestGroup/' + str(uuid.uuid4())
-		ServerTests.NoTypeNoID	  = 'http://localhost:8080/dataserver/users/ltesti/' + str(uuid.uuid4()) + '/TestGroup'
-		ServerTests.NoGroupNoID	  = 'http://localhost:8080/dataserver/users/ltesti/TestType/' + str(uuid.uuid4())
-		ServerTests.TypeGroupURL = 'http://localhost:8080/dataserver/users/ltesti/TestType1/TestGroup1/'
+		ServerTests.NoID			  = 'http://localhost:8080/dataserver/users/ltesti@nextthought.com/TestType/TestGroup/' + str(uuid.uuid4())
+		ServerTests.NoTypeNoID	  = 'http://localhost:8080/dataserver/users/ltesti@nextthought.com/' + str(uuid.uuid4()) + '/TestGroup'
+		ServerTests.NoGroupNoID	  = 'http://localhost:8080/dataserver/users/ltesti@nextthought.com/TestType/' + str(uuid.uuid4())
+		ServerTests.TypeGroupURL = 'http://localhost:8080/dataserver/users/ltesti@nextthought.com/TestType1/TestGroup1/'
 		ServerTests.SetUpPostID    = ServerTests.tester.setUpPost(ServerTests.TypeGroupURL, format=ServerTests.json)
-		ServerTests.JunkGroupIDURL = 'http://localhost:8080/dataserver/users/ltesti/' + str(uuid.uuid4()) + '/TestGroup1/' + ServerTests.SetUpPostID
-		ServerTests.TypeGroupIDURL = 'http://localhost:8080/dataserver/users/ltesti/TestType1/TestGroup1/' + ServerTests.SetUpPostID
+		ServerTests.JunkGroupIDURL = 'http://localhost:8080/dataserver/users/ltesti@nextthought.com/' + str(uuid.uuid4()) + '/TestGroup1/' + ServerTests.SetUpPostID
+		ServerTests.TypeGroupIDURL = 'http://localhost:8080/dataserver/users/ltesti@nextthought.com/TestType1/TestGroup1/' + ServerTests.SetUpPostID
 
 	def tearDown(self):
 		ServerTests.tester.tearDownDelete(ServerTests.URL_json)
@@ -562,6 +562,7 @@ class ServerTests(DataServerTestCase):
 		self.assertEqual(bodyDataExtracter.ifModifiedSinceSuccess, expectedValues.ifModifiedSinceSuccess, 'If-Modified_Since result supposed to be 200')
 		#print 'B'
 
+	@unittest.expectedFailure
 	def test_Server200NoUsernameGetTestCase(self):
 		bodyDataExtracter = URL_Default()
 		tester			  = ServerControl.ServerController()
@@ -737,7 +738,7 @@ class ServerTests(DataServerTestCase):
 		expectedValues.setValues(code=ServerTests.Forbidden, body=ServerTests.default_return, lastModified=modifiedTime)
 		tester.postTest(ServerTests.URL_post, ServerTests.postPut_info, username=ServerTests.incorrectUser, bodyDataExtracter=bodyDataExtracter,
 														  format=ServerTests.json)
-		self.assertEqual(bodyDataExtracter.responseCode, expectedValues.responseCode, "supposed to not allow access do to wrong user")
+		self.assertEqual(bodyDataExtracter.responseCode, expectedValues.responseCode)
 		self.assertEqual(bodyDataExtracter.body, expectedValues.body,'Incorrect Body')
 		#print '16'
 
@@ -775,7 +776,7 @@ class ServerTests(DataServerTestCase):
 		expectedValues    = ServerControl.URLFunctionality()
 		self.setDefaults(tester)
 		modifiedTime	 = ServerTests.tester.getLastModified(ServerTests.URL_post)
-		expectedValues.setValues(code=ServerTests.Forbidden, body=ServerTests.default_return, lastModified=modifiedTime)
+		expectedValues.setValues(code=ServerTests.Unauthorized, body=ServerTests.default_return, lastModified=modifiedTime)
 		tester.postTest(ServerTests.URL_post, ServerTests.postPut_info, username=ServerTests.noUser, bodyDataExtracter=bodyDataExtracter,
 														  format=ServerTests.json)
 		self.assertEqual(bodyDataExtracter.responseCode, expectedValues.responseCode, "supposed to not allow access do to wrong user")
@@ -927,7 +928,7 @@ class ServerTests(DataServerTestCase):
 		modifiedTime	 = ServerTests.tester.getLastModified(ServerTests.URL_post)
 		expectedValues.setValues(code=ServerTests.Forbidden, body=ServerTests.default_return, lastModified=modifiedTime)
 		tester.postTest(ServerTests.URL_post, ServerTests.postPut_info, username=ServerTests.incorrectUser, bodyDataExtracter=bodyDataExtracter)
-		self.assertEqual(bodyDataExtracter.responseCode, expectedValues.responseCode, "supposed to not allow access do to wrong user")
+		self.assertEqual(bodyDataExtracter.responseCode, expectedValues.responseCode )
 		self.assertEqual(bodyDataExtracter.body, expectedValues.body,'Incorrect Body')
 		self.assertEqual(bodyDataExtracter.lastModified, expectedValues.lastModified, 'Wrong group modification time')
 		#print '27'
@@ -966,7 +967,7 @@ class ServerTests(DataServerTestCase):
 		expectedValues    = ServerControl.URLFunctionality()
 		self.setDefaults(tester)
 		modifiedTime	 = ServerTests.tester.getLastModified(ServerTests.URL_post)
-		expectedValues.setValues(code=ServerTests.Forbidden, body=ServerTests.default_return, lastModified=modifiedTime)
+		expectedValues.setValues(code=ServerTests.Unauthorized, body=ServerTests.default_return, lastModified=modifiedTime)
 		tester.postTest(ServerTests.URL_post, ServerTests.postPut_info, username=ServerTests.noUser, bodyDataExtracter=bodyDataExtracter)
 		self.assertEqual(bodyDataExtracter.responseCode, expectedValues.responseCode, "supposed to not allow access do to wrong user")
 		self.assertEqual(bodyDataExtracter.body, expectedValues.body,'Incorrect Body')
@@ -1221,7 +1222,7 @@ class ServerTests(DataServerTestCase):
 								username=ServerTests.noUser, bodyDataExtracter=bodyDataExtracter, format=ServerTests.json)
 		modifiedTimeID   = ServerTests.tester.getLastModified(ServerTests.URL_json)
 		modifiedTimeGrp  = ServerTests.tester.getLastModified(ServerTests.URL_post)
-		expectedValues.setValues(code=ServerTests.Forbidden, body=ServerTests.default_return, lastModified=modifiedTimeID)
+		expectedValues.setValues(code=ServerTests.Unauthorized, body=ServerTests.default_return, lastModified=modifiedTimeID)
 		self.assertEqual(bodyDataExtracter.responseCode, expectedValues.responseCode, "supposed to not allow access do to wrong user")
 		self.assertEqual(bodyDataExtracter.body, expectedValues.body,'Incorrect Body')
 		self.assertEqual(bodyDataExtracter.lastModified, expectedValues.lastModified, 'Wrong ID modification time')
@@ -1485,7 +1486,7 @@ class ServerTests(DataServerTestCase):
 								username=ServerTests.noUser, bodyDataExtracter=bodyDataExtracter, format=ServerTests.plist)
 		modifiedTimeID   = ServerTests.tester.getLastModified(ServerTests.URL_plist)
 		modifiedTimeGrp  = ServerTests.tester.getLastModified(ServerTests.URL_post)
-		expectedValues.setValues(code=ServerTests.Unauthorized, body=ServerTests.default_return, lastModified=modifiedTimeID)
+		expectedValues.setValues(code=ServerTests.Unauthorized, body=ServerTests.default_return)
 		self.assertEqual(bodyDataExtracter.responseCode, expectedValues.responseCode, 'User supposed to be Unauthorized to put to URL')
 		self.assertEqual(bodyDataExtracter.body, expectedValues.body,'Incorrect Body')
 		self.assertEqual(bodyDataExtracter.lastModified, expectedValues.lastModified, 'Wrong ID modification time')
@@ -1505,8 +1506,8 @@ class ServerTests(DataServerTestCase):
 								username=ServerTests.noUser, bodyDataExtracter=bodyDataExtracter, format=ServerTests.plist)
 		modifiedTimeID   = ServerTests.tester.getLastModified(ServerTests.URL_plist)
 		modifiedTimeGrp  = ServerTests.tester.getLastModified(ServerTests.URL_post)
-		expectedValues.setValues(code=ServerTests.Forbidden, body=ServerTests.default_return, lastModified=modifiedTimeID)
-		self.assertEqual(bodyDataExtracter.responseCode, expectedValues.responseCode, "supposed to not allow access do to wrong user")
+		expectedValues.setValues(code=ServerTests.Unauthorized, body=ServerTests.default_return, lastModified=modifiedTimeID)
+		self.assertEqual(bodyDataExtracter.responseCode, expectedValues.responseCode )
 		self.assertEqual(bodyDataExtracter.body, expectedValues.body,'Incorrect Body')
 		self.assertEqual(bodyDataExtracter.lastModified, expectedValues.lastModified, 'Wrong ID modification time')
 		self.assertGreaterEqual(modifiedTimeGrp, modifiedTimeID, 'Wrong group modification time')
@@ -1793,7 +1794,7 @@ class ServerTests(DataServerTestCase):
 		tester.deleteTest(ServerTests.URL_json, username=ServerTests.noUser, bodyDataExtracter=bodyDataExtracter, format=ServerTests.json)
 		ServerTests.tester.getBody(ServerTests.URL_json, format=ServerTests.json)
 		modifiedTime	 = ServerTests.tester.getLastModified(ServerTests.URL_post)
-		expectedValues.setValues(code=ServerTests.Forbidden, body=ServerTests.default_return, lastModified=modifiedTime)
+		expectedValues.setValues(code=ServerTests.Unauthorized, body=ServerTests.default_return, lastModified=modifiedTime)
 		self.assertEqual(bodyDataExtracter.responseCode, expectedValues.responseCode, "supposed to not allow access do to wrong user")
 		self.assertEqual(bodyDataExtracter.body, expectedValues.body,'Incorrect Body')
 		self.assertEqual(modifiedTime, modifiedTimeOld, 'Wrong group modification time')
@@ -1941,7 +1942,7 @@ class ServerTests(DataServerTestCase):
 		ServerTests.tester.getBody(ServerTests.URL_json, format=ServerTests.json)
 		modifiedTime	 = ServerTests.tester.getLastModified(ServerTests.URL_post)
 		expectedValues.setValues(code=ServerTests.Forbidden, body=ServerTests.default_return, lastModified=modifiedTime)
-		self.assertEqual(bodyDataExtracter.responseCode, expectedValues.responseCode, "supposed to not allow access do to wrong user")
+		self.assertEqual(bodyDataExtracter.responseCode, expectedValues.responseCode)
 		self.assertEqual(bodyDataExtracter.body, expectedValues.body,'Incorrect Body')
 		self.assertEqual(modifiedTime, modifiedTimeOld, 'Wrong group modification time')
 		#print '75'
@@ -1987,7 +1988,7 @@ class ServerTests(DataServerTestCase):
 		tester.deleteTest(ServerTests.URL_json, username=ServerTests.noUser, bodyDataExtracter=bodyDataExtracter, format=ServerTests.json)
 		ServerTests.tester.getBody(ServerTests.URL_json, format=ServerTests.json)
 		modifiedTime	 = ServerTests.tester.getLastModified(ServerTests.URL_post)
-		expectedValues.setValues(code=ServerTests.Forbidden, body=ServerTests.default_return, lastModified=modifiedTime)
+		expectedValues.setValues(code=ServerTests.Unauthorized, body=ServerTests.default_return, lastModified=modifiedTime)
 		self.assertEqual(bodyDataExtracter.responseCode, expectedValues.responseCode, "supposed to not allow access do to wrong user")
 		self.assertEqual(bodyDataExtracter.body, expectedValues.body,'Incorrect Body')
 		self.assertEqual(modifiedTime, modifiedTimeOld, 'Wrong group modification time')

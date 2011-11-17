@@ -8,6 +8,7 @@ import logging
 from paste.httpheaders import WWW_AUTHENTICATE
 from repoze.who.interfaces import IAuthenticator, IChallengeDecider
 from pyramid.interfaces import IAuthenticationPolicy
+import pyramid.httpexceptions as hexc
 
 from zope import interface
 
@@ -51,6 +52,12 @@ def _get_basicauth_credentials_environ( environ ):
 
 	return (username, password)
 
+def _get_username( username ):
+	if username and '%40' in username:
+		username = username.replace( '%40', '@' )
+
+	return username
+
 def _decode_username( request ):
 	"""
 	Decodes %40 in a Basic Auth username into an @. Modifies
@@ -64,8 +71,8 @@ def _decode_username( request ):
 	:return: Tuple (user,pass).
 	"""
 	username, password = _get_basicauth_credentials( request )
-	if username and '%40' in username:
-		username = username.replace( '%40', '@' )
+	if _get_username( username ) != username:
+		username = _get_username( username )
 		auth = (username + ':' + password).encode( 'base64' ).strip()
 		request.authorization = 'Basic ' + auth
 		request.remote_user = username
@@ -84,8 +91,8 @@ def _decode_username_environ( environ ):
 	:return: Tuple (user,pass).
 	"""
 	username, password = _get_basicauth_credentials_environ( environ )
-	if username and '%40' in username:
-		username = username.replace( '%40', '@' )
+	if _get_username( username ) != username:
+		username = _get_username( username )
 		auth = (username + ':' + password).encode( 'base64' ).strip()
 		environ['HTTP_AUTHORIZATION'] = 'Basic ' + auth
 		environ['REMOTE_USER'] = username
@@ -104,8 +111,8 @@ def _decode_username_identity( identity ):
 	:return: Tuple (user,pass).
 	"""
 	username, password = identity['login'], identity['password']
-	if username and '%40' in username:
-		username = username.replace( '%40', '@' )
+	if _get_username( username ) != username:
+		username = _get_username( username )
 		identity['login'] = username
 	return (username, password)
 
@@ -155,8 +162,9 @@ class _NTIUsers(object):
 		# Because we are both part of a middleware and the pyramid
 		# auth policy, we can get called both already authenticated
 		# and not-authenticated.
+
 		if 'login' in userid and 'password' in userid:
-			username, password = userid['login'], userid['password'] # _decode_username( request )
+			username, password = _decode_username_identity( userid )
 			if self.user_has_password( username, password ):
 				result = ()
 		elif 'repoze.who.userid' in userid:
@@ -170,11 +178,10 @@ def _make_user_auth():
 	if 'DATASERVER_NO_AUTOCREATE_USERS' not in os.environ:
 		def create( username ):
 			warnings.warn( 'Autocreation of users is deprecated', FutureWarning )
-			#origuser = username
-			if username and '@' not in username:
-				warnings.warn( 'Usernames must contain "@"', FutureWarning )
-				username = username + '@nextthought.com'
-			user = User.create_user( username=username )
+			user = None
+			username = _get_username( username )
+			if username and '@' in username:
+				user = User.create_user( username=username )
 			#server.root['users'][origuser] = user
 			return user
 		create_user = create
@@ -191,7 +198,6 @@ class NTIUsersAuthenticatorPlugin(object):
 
 	def authenticate( self, environ, identity ):
 		if 'login' not in identity or 'password' not in identity: return None
-
 		_decode_username_environ( environ )
 		_decode_username_identity( identity )
 		if _make_user_auth().user_has_password( identity['login'], identity['password'] ):

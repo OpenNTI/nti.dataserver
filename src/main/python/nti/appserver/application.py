@@ -168,6 +168,7 @@ class _Main(object):
 			return self.captured( environ, start_request )
 		except hexc.HTTPError as h:
 			start_request( h.status, h.headers.items(), sys.exc_info() )
+			return [h.message]
 
 def createApplication( http_port, library, process_args=False, create_ds=True ):
 	server = None

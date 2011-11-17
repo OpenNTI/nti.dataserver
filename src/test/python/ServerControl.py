@@ -1,5 +1,6 @@
 import urllib2
 import os
+import sys
 import json
 import plistlib
 import cStringIO
@@ -13,10 +14,10 @@ class DefaultValues(object):
 
 	def __init__(self):
 		self.path                 = _APP_PATH
-		self.username             = 'ltesti'
-		self.otherUser            = 'sjohnson'
+		self.username             = 'ltesti@nextthought.com'
+		self.otherUser            = 'sjohnson@nextthought.com'
 		self.password             = 'temp001'
-		self.incorrectpassword    = 'incorrect'
+		self.incorrectpassword    = 'incorrect@foo.bar' # This is also used as a username.
 		self.message              = None
 		self.void                 = None
 		self.TinyNumber           = 0
@@ -114,14 +115,20 @@ def _http_ise_error_logging(f):
 		try:
 			return f( *args, **kwargs )
 		except urllib2.HTTPError as http:
-			if http.getcode() == 500:
-				try:
-					body = http.read()
-					http.msg += ' URL: ' + http.geturl()
-					# The last 20 or so lines
-					http.msg += ' Body: ' + str( body )[-1600:]
-				except (AttributeError, IOError): pass
-			raise http
+			# If the server sent us anything,
+			# try to use it
+			_, _, tb = sys.exc_info()
+			try:
+				http.msg += ' URL: ' + http.geturl()
+				body = http.read()
+				# The last 20 or so lines
+				http.msg += ' Body: ' + str( body )[-1600:]
+			except (AttributeError, IOError): pass
+			http.msg += '\n Args: ' + str(args)
+			http.msg += '\n KWArgs: ' + str(kwargs)
+			# re-raise the original exception object
+			# with the original traceback
+			raise http, None, tb
 	return to_call
 
 class ServerController(object):

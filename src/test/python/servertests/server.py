@@ -34,7 +34,7 @@ def objectPath(obj):
 	return 'Objects/%s' % oid
 
 class DataserverProcess(object):
-	
+
 	SERVER			= None
 	PARENT_DIR		= "~/tmp"
 	DATA_FILE_NAME	= "test.fs"
@@ -54,67 +54,67 @@ class DataserverProcess(object):
 
 	def isRunning(self):
 		return self._send_message(self.LOCALHOST, self.PORT)
-	
+
 	is_running = isRunning
-	
+
 	def _send_message(self, ip, port, message=None, do_shutdown=True):
 		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		try:
 			sock.connect((ip, int(port)))
 			if message:
 				sock.send(message)
-				
+
 			if do_shutdown:
 				sock.shutdown(2)
-				
+
 			return True
 		except:
 			return False
 		finally:
 			sock.close()
-		
+
 	# -----------------------------------
-	
+
 	def startServer(self, path=_APP_PATH, blockIntervalSeconds=1, maxWaitSeconds=30):
 		self._start_process([sys.executable, path], blockIntervalSeconds, maxWaitSeconds)
 
 	start_server = startServer
-	
+
 	def startServerWithCoverage(self, path=_APP_PATH_COV, blockIntervalSeconds=1, maxWaitSeconds=30):
 		self._start_process([sys.executable, path], blockIntervalSeconds, maxWaitSeconds)
-		
+
 	start_server_with_coverage  = startServerWithCoverage
-	
+
 	def _start_process(self, args, block_interval_seconds=1, max_wait_secs=30):
-		
+
 		if self.process or self.isRunning():
 			print 'Dataserver already running.  Won\'t start a new one'
 			return
-		
+
 		print 'Starting dataserver'
-		
+
 		if 'DATASERVER_DIR' not in os.environ:
 			os.environ['DATASERVER_DIR'] = os.path.expanduser(self.PARENT_DIR)
-					
+
 		devnull = open(self.DEVNULL, self.WRITE_ARG) if 'DATASERVER_NO_REDIRECT' not in os.environ else None
-		
+
 		self.process = subprocess.Popen(args, stdin=devnull, stdout=devnull, stderr=devnull)
-		if devnull is not None: 
+		if devnull is not None:
 			devnull.close()
 
 		elapsed = 0
 		while elapsed <= max_wait_secs and not self.isRunning():
 			time.sleep(block_interval_seconds)
 			elapsed = elapsed + block_interval_seconds
-			
+
 		if elapsed >= max_wait_secs:
 			raise Exception("Could not start data server")
-		
+
 		if self.KEY_TEST_WAIT in os.environ:
 			time.sleep( int( os.environ[self.KEY_TEST_WAIT] ) )
-			
+
 	# -----------------------------------
-	
+
 	def terminateServer(self, blockIntervalSeconds=1, maxWaitSeconds=30):
 		if self.process:
 			self.process.terminate()
@@ -123,7 +123,7 @@ class DataserverProcess(object):
 			return False
 
 	terminate_server = terminateServer
-	
+
 	def terminateServerWithCoverage(self, report=True, block_interval_seconds=1, max_wait_secs=30):
 		command  = 'terminate-and-report' if report else 'terminate'
 		if self.process and self._send_message(self.LOCALHOST, self.PORT_COV, command, False):
@@ -132,30 +132,30 @@ class DataserverProcess(object):
 			return False
 
 	terminate_server_with_coverage = terminateServerWithCoverage
-	
+
 	def _wait_for_termination(self, block_interval_seconds=1, max_wait_secs=30):
 
 		print 'Terminating dataserver'
-		
+
 		elapsed = 0
 		while  elapsed <= max_wait_secs and self.isRunning():
 			time.sleep(block_interval_seconds)
 			elapsed = elapsed + block_interval_seconds
-			
+
 		if elapsed >= max_wait_secs:
 			print "Could not stop data server"
 			return False
-		
+
 		return True
-		
+
 	# -----------------------------------
-	
+
 	def _execute_call(self, command ):
 		if not subprocess.call(command):
 			print "Could not execute '%s' correctly " % ' '.join(command)
 			return False
 		return True
-	
+
 # -----------------------------------
 
 DEFAULT_IS_ADAPT = True
@@ -165,14 +165,20 @@ def _http_ise_error_logging(f):
 		try:
 			return f( *args, **kwargs )
 		except urllib2.HTTPError as http:
-			if http.getcode() == 500:
-				try:
-					body = http.read()
-					http.msg += ' URL: ' + http.geturl()
-					# The last 20 or so lines
-					http.msg += ' Body: ' + str( body )[-1600:]
-				except (AttributeError, IOError): pass
-			raise http
+			# If the server sent us anything,
+			# try to use it
+			_, _, tb = sys.exc_info()
+			try:
+				http.msg += ' URL: ' + http.geturl()
+				body = http.read()
+				# The last 20 or so lines
+				http.msg += ' Body: ' + str( body )[-1600:]
+			except (AttributeError, IOError): pass
+			http.msg += '\n Args: ' + str(args)
+			http.msg += '\n KWArgs: ' + str(kwargs)
+			# re-raise the original exception object
+			# with the original traceback
+			raise http, None, tb
 	return to_call
 
 class DataserverClient(object):
@@ -286,7 +292,7 @@ class DataserverClient(object):
 		return self.createObjectAtPath(path, obj, credentials=creds, adapt=adapt)
 
 	# -----------------------------------
-	
+
 	def shareObject(self, obj, targetOrTargets, credentials=None, adapt=DEFAULT_IS_ADAPT):
 		if isinstance(obj, Sharable):
 			obj.shareWith(targetOrTargets)
@@ -418,4 +424,4 @@ class DataserverClient(object):
 	def _credentialsToUse(self, passedCredentials):
 		return passedCredentials or self.credentials
 
-	
+

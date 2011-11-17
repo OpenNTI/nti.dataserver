@@ -3,9 +3,9 @@ Dependencies (easy_install):
 - ZODB3
 - authkit
 - selector
-- whoosh			# For contentsearch
+- whoosh			# 2.3.0, For contentsearch
 - cython			# 2011-08-31, 0.15, optional, if you choose MUST install before gevent-zeromq
-- gevent-zeromq		# 2011-08-31, 0.2.0 MUST have installed py27-cython
+- gevent_zeromq		# 2011-08-31, 0.2.0 MUST have installed py27-cython
 - pyhamcrest		# 2011-09-13, 1.5. For unit tests.
 - pyquery			# 2011-09-14, 1.0. jquery-like library, goes with lxml (install py27-lxml first!)
 - zc.queue			# 2011-09-25
