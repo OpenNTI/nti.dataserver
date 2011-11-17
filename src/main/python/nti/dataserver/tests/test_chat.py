@@ -181,21 +181,25 @@ class TestChatserver(ConfiguringTestBase):
 		sessions[2] = self.Session( 'friend@bar' )
 		sessions[3] = self.Session( 'foo@bar' )
 		chatserver = chat.Chatserver( sessions, meeting_container_storage=mc )
-		handler = chat._ChatHandler( chatserver, sessions[3] )
-		handler2 = chat._ChatHandler( chatserver, sessions[2] )
-		handler3 = chat._ChatHandler( chatserver, sessions[1] )
+		foo_handler = chat._ChatHandler( chatserver, sessions[3] )
+		friend_handler = chat._ChatHandler( chatserver, sessions[2] )
+		sj_handler = chat._ChatHandler( chatserver, sessions[1] )
 
 		with ds.dbTrans():
 
 			# I entered and created.
-			room = handler.enterRoom( {'ContainerId': fl1.NTIID } )
+			room = foo_handler.enterRoom( {'ContainerId': fl1.NTIID } )
 			assert_that( room, is_( not_none() ) )
 
 			# A friend can enter and be in the same room.
-			assert_that( handler2.enterRoom( {"ContainerId": fl1.NTIID } ), is_( room ) )
+			assert_that( friend_handler.enterRoom( {"ContainerId": fl1.NTIID } ), is_( room ) )
 
 			# A foreigner cannot.
-			assert_that( handler3.enterRoom( {'ContainerId': fl1.NTIID } ), is_( none() ) )
+			assert_that( sj_handler.enterRoom( {'ContainerId': fl1.NTIID } ), is_( none() ) )
+
+			# The friend can exit and re-enter the room
+			assert_that( friend_handler.exitRoom( room.ID ), is_( True ) )
+			assert_that( friend_handler.enterRoom( {"ContainerId": fl1.NTIID } ), is_( room ) )
 
 	@WithMockDS
 	def test_integration_chat_storage_class_section( self ):

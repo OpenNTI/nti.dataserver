@@ -411,8 +411,9 @@ class _ChatHandler( Persistent ):
 		return room
 
 	def exitRoom( self, room_id ):
-		self._chatserver.exit_room( room_id, self.session_id )
+		result = self._chatserver.exit_meeting( room_id, self.session_id )
 		_discard( self.rooms_im_in, room_id )
+		return result
 
 	def makeModerated( self, room_id, flag ):
 		# TODO: Roles. Who can moderate?
@@ -519,7 +520,7 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 
 	@property
 	def occupant_session_ids(self):
-		return set(self._occupant_session_ids)
+		return frozenset(self._occupant_session_ids)
 
 	def _ensure_message_stored( self, msg_info ):
 		"""
@@ -624,7 +625,7 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 		if broadcast and len( self._occupant_session_ids ) != lb4:
 			# Yay, we added one!
 			self.emit_enteredRoom( session_id, self )
-			self.emit_roomMembershipChanged( self._occupant_session_ids - set((session_id,)), self )
+			self.emit_roomMembershipChanged( self.occupant_session_ids - set((session_id,)), self )
 
 	def add_occupant_session_ids( self, session_ids ):
 		"""
@@ -642,6 +643,7 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 			_discard( self._occupant_session_ids, session_id )
 			self.emit_exitedRoom( session_id, self )
 			self.emit_roomMembershipChanged( self._occupant_session_ids, self )
+			return True
 
 	def toExternalDictionary( self, mergeFrom=None ):
 		result = dict(mergeFrom) if mergeFrom else dict()
@@ -1119,9 +1121,13 @@ class Chatserver(object):
 	def get_room( self, r ): pass
 
 	def exit_meeting( self, room_id, session_id ):
+		"""
+		:return: Value indicating successful exit.
+		"""
+		result = None
 		room = self.rooms.get( room_id )
 		if room:
-			room.del_occupant_session_id( session_id )
+			result = room.del_occupant_session_id( session_id )
 			if not room.occupant_session_ids:
 				room.Active = False
 				container = self.meeting_container_storage.get( room.containerId )
@@ -1135,6 +1141,8 @@ class Chatserver(object):
 				# to clear our reference to it.
 				if not room.Active:
 					del self.rooms[room_id]
+		return result
+
 
 	@deprecated(exit_meeting)
 	def exit_room( self, r, s ): pass
