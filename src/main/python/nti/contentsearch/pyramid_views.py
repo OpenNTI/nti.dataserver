@@ -1,9 +1,7 @@
-
-from zope import component
 from nti.contentsearch import IIndexManager
 
+# TODO: We should make this a config option
 USE_TYPE_AHEAD = False
-
 
 class GetSearch(object):
 
