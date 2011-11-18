@@ -78,6 +78,16 @@ class TestSimpleChat(BasicChatTest):
 		self._compare(one, two)
 		self._compare(two, one)
 		
+	# a bug i ran into while writing a test earlier. Basically, the user leaves the chat and then attempts to make a post
+	def test_chat_user_leaves_before_his_her_post(self):
+		one, two = run_chat(self.user_one, self.user_two, LeaveEarly=True, StopScript=False)
+		
+		for u in (one,two):
+			self.assert_(u.exception == None, "User %s caught exception %s" % (u.username, u.exception))
+			
+		self._compare(one, two)
+		self._compare(two, one)
+		
 	def _compare(self, sender, receiver, receivedAllMessages=True):
 		
 		_sent = list(sender.sent)
@@ -94,11 +104,11 @@ class TestSimpleChat(BasicChatTest):
 		
 # ----------------------------
 
-def run_chat(user_one, user_two, PostEarly=False, LeaveEarly=False):
+def run_chat(user_one, user_two, PostEarly=False, LeaveEarly=False, StopScript=True):
 	entries = random.randint(1, 5)
 	connect_event = threading.Event()
 	one = User(username=user_one, PostEarly=PostEarly)
-	two = User(username=user_two, LeaveEarly=LeaveEarly)
+	two = User(username=user_two, LeaveEarly=LeaveEarly, StopScript=StopScript)
 	
 	def two_runnable(LeaveEarly):
 		t_args={'occupants':(user_one), 'entries':entries}
@@ -127,10 +137,11 @@ def run_chat(user_one, user_two, PostEarly=False, LeaveEarly=False):
 
 class User(OneRoomUser):
 		
-	def __init__(self, PostEarly=False, LeaveEarly=False, **kwargs):
+	def __init__(self, PostEarly=False, LeaveEarly=False, StopScript=True, **kwargs):
 		super(User, self).__init__(**kwargs)
 		self.PostEarly=PostEarly
 		self.LeaveEarly=LeaveEarly
+		self.StopScript=StopScript
 		
 	def __call__(self, *args, **kwargs):
 		self.t = time.time()
@@ -168,7 +179,8 @@ class User(OneRoomUser):
 			
 			if self.username == 'test.user.2@nextthought.com' and self.LeaveEarly == True:
 				self.userLeaves()
-				return
+				if self.StopScript == True:
+					return
 			#get any message
 			self.wait_heart_beats(1)
 			
