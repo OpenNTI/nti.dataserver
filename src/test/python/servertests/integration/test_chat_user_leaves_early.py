@@ -9,10 +9,10 @@ import threading
 from user_chat_objects import OneRoomUser
 from user_chat_objects import BasicChatTest
 
-class TestSimpleChat(BasicChatTest):
+class TestChatUserLeavesEarly(BasicChatTest):
 	
 	def setUp(self):
-		super(TestSimpleChat, self).setUp()
+		super(TestChatUserLeavesEarly, self).setUp()
 		self.user_one = self.user_names[0]
 		self.user_two = self.user_names[1]
 		self.user_three = self.user_names[2]
