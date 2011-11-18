@@ -46,6 +46,7 @@ setup(
                          'whoosh',
                          'zc.queue',
                          'ZODB3',
+                         'zope.annotation',
                          'zope.broken',
                          'zope.browser',
                          'zope.browserpage',
