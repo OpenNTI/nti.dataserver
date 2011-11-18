@@ -382,7 +382,7 @@ class _IndexableContent(object):
 	def execute_search(self, searcher, parsed_query, limit):
 		return searcher.search(parsed_query, limit=limit)
 
-	def get_data_from_search_hit(self, hit, hit_count, d):
+	def get_data_from_search_hit(self, hit, d):
 		d['Class'] = 'Hit'
 		d['Last Modified'] = epoch_time(hit[self.hit_last_modified()])
 		return str(hit.docnum)
@@ -447,8 +447,8 @@ class Book(_IndexableContent):
 		else:
 			return searcher.search(parsed_query, limit=limit)
 
-	def get_data_from_search_hit(self, hit, hit_count, d):
-		super(Book, self).get_data_from_search_hit(hit, hit_count, d)
+	def get_data_from_search_hit(self, hit, d):
+		super(Book, self).get_data_from_search_hit(hit, d)
 		d['Type'] = 'Content'
 		d['ContainerId'] = hit['ntiid']
 		d['Title'] = hit['title']
@@ -613,8 +613,8 @@ class Highlight(UserIndexableContent):
 	def execute_search(self, searcher, parsed_query, limit):
 		return searcher.search(parsed_query, limit=limit)
 
-	def get_data_from_search_hit(self, hit, hit_count, d):
-		_IndexableContent.get_data_from_search_hit(self, hit, hit_count, d)
+	def get_data_from_search_hit(self, hit, d):
+		_IndexableContent.get_data_from_search_hit(self, hit, d)
 		d['Type'] = self.__class__.__name__
 		d['TargetOID'] = hit.get('oid', '')
 		d['ContainerId'] = hit.get('containerId', '')
@@ -716,8 +716,8 @@ class MessageInfo(Note):
 		result.pop('collectionId', None)
 		return result
 
-	def get_data_from_search_hit(self, hit, hit_count, d):
-		result = super(MessageInfo, self).get_data_from_search_hit(hit, hit_count, d)
+	def get_data_from_search_hit(self, hit, d):
+		result = super(MessageInfo, self).get_data_from_search_hit(hit, d)
 		d['ID'] = hit.get('id', '')
 		d['Creator'] = hit.get("creator", '')
 		d.pop('CollectionID', None)
