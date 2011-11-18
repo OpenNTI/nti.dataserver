@@ -789,8 +789,10 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 
 	@property
 	def NTIID(self):
-		return ntiids.make_ntiid( date=ntiids.DATE, provider=self.creator.username if self.creator else 'Unknown',
-								  nttype='MeetingRoom', specific=self.username.lower().replace( ' ', '_' ).replace( '-', '_' ) )
+		return ntiids.make_ntiid( date=ntiids.DATE,
+								  provider=self.creator.username if self.creator else 'Unknown',
+								  nttype=ntiids.TYPE_MEETINGROOM_GROUP,
+								  specific=self.username.lower().replace( ' ', '_' ).replace( '-', '_' ) )
 
 	#### Externalization/Pickling
 
@@ -1349,10 +1351,9 @@ class User(Principal):
 	def get_by_ntiid( self, container_id ):
 		result = super(User,self).get_by_ntiid( container_id )
 		if not result:
-			id_type = ntiids.get_type( container_id )
+			if ntiids.is_ntiid_of_type( container_id, ntiids.TYPE_MEETINGROOM ):
 			# TODO: Generalize this
 			# TODO: Should we track updates here?
-			if id_type == ntiids.TYPE_MEETINGROOM:
 				for x in self.friendsLists.itervalues():
 					if getattr( x, 'NTIID', None ) == container_id:
 						result = x
