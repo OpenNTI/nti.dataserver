@@ -58,7 +58,7 @@ class TestIndexManager(unittest.TestCase):
 			d['ContainerId'] = "aops-" + str(x)
 			d['Creator'] = 'ntdev@nextthought.com'
 			d["Last Modified"] = self.now
-			d['text'] = phrases[x]
+			d['body'] = phrases[x]
 			d['sharedWith'] = ['cutz@nextthought.com', 'cs@nt.com']
 			d['references'] = ['aops-main']
 			d['id'] = x
@@ -92,7 +92,6 @@ class TestIndexManager(unittest.TestCase):
 		self.assertEqual(results['Hit Count'], 0)
 		im.close()
 
-	@unittest.expectedFailure
 	def test_search_notes(self):
 		im = self.create_im()
 		self.add_notes(im)

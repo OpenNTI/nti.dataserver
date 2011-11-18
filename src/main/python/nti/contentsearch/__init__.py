@@ -228,6 +228,13 @@ class UserIndexManager(object):
 					results = merge_suggest_results(results, rs)
 		return results if results else empty_suggest_result(word)
 
+	def externalize(self, typeName='Notes'):
+		t = self.get_content_index(typeName, False)
+		if t:
+			with t.index.reader() as reader:
+				for s in reader.all_stored_fields():
+					t.instance.externalize(s)
+					
 	##########################
 
 	def index_content(self, externalValue, typeName='Notes'):
@@ -479,6 +486,11 @@ class IndexManager(object):
 		um = self.get_user_index_manager(username)
 		if um: um.delete_content(externalValue, typeName)
 
+	@descriptor
+	def externalize(self, username, typeName="Notes"):
+		um = self.get_user_index_manager(username)
+		if um: um.externalize(typeName)
+		
 	##########################
 
 	@classmethod

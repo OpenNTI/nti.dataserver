@@ -19,7 +19,7 @@ class TestNotes(unittest.TestCase):
 			d['ContainerId'] = "aops-" + str(x)
 			d['Creator'] = 'ntdev@nextthought.com'
 			d["Last Modified"] = self.now
-			d['text'] = phrases[x]
+			d['body'] = phrases[x]
 			d['sharedWith'] = ['cutz@nextthought.com', 'cs@nt.com']
 			d['references'] = ['aops-main']
 			d['id'] = x
@@ -38,7 +38,6 @@ class TestNotes(unittest.TestCase):
 
 		return (note, idx)
 
-	@unittest.expectedFailure
 	def test_add_and_search(self):
 
 		note, idx = self.create_note_index()
@@ -58,13 +57,12 @@ class TestNotes(unittest.TestCase):
 			self.assertEqual(item['Type'], 'Note')
 			self.assertEqual(item['Class'], 'Hit')
 
-	@unittest.expectedFailure
 	def test_update(self):
 
 		note, idx = self.create_note_index()
 
 		d = self.get_notes()[0]
-		d['text'] = "Pillow brown"
+		d['body'] = "Pillow brown"
 
 		newtime = time.time()
 		d["Last Modified"] = newtime
@@ -90,7 +88,6 @@ class TestNotes(unittest.TestCase):
 			d = note.search(s, "pillow")
 			self.assertEqual(d['Hit Count'], 0)
 
-	@unittest.expectedFailure
 	def test_suggest(self):
 
 		note, idx = self.create_note_index()

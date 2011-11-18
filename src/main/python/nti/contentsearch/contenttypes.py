@@ -9,9 +9,21 @@ from datetime import datetime
 
 from zope import interface
 
-from whoosh.fields import Schema, TEXT,ID, KEYWORD, DATETIME, NGRAM, NUMERIC
-from whoosh import highlight, analysis
-from whoosh.qparser import QueryParser, GtLtPlugin
+from whoosh.fields import ID
+from whoosh.fields import TEXT
+from whoosh.fields import NGRAM
+from whoosh.fields import Schema
+from whoosh.fields import KEYWORD
+from whoosh.fields import NUMERIC
+from whoosh.fields import DATETIME
+
+from whoosh.searching import Hit
+
+from whoosh import analysis
+from whoosh import highlight
+
+from whoosh.qparser import QueryParser
+from whoosh.qparser import GtLtPlugin
 from whoosh.qparser.dateparse import DateParserPlugin
 
 def epoch_time(dt):
@@ -214,9 +226,37 @@ class IIndexableContent(interface.Interface):
 		:param commit_args: [whoosh] index writer commit arguments
 		"""
 
+class MetaIndexableContent(type):
+	def __new__(cls, name, bases, cls_dict):
+		t = type.__new__(cls, name, bases, cls_dict)
+		
+		inverted = {}
+		fields = getattr(t, 'fields', None)
+		if not fields:
+			schema = getattr(t, 'schema', None)
+			if schema:
+				for name in schema.stored_names():
+					inverted[name] = name.capitalize()
+		else:				
+			for k, v in fields.items():
+				name = v[0]
+				inverted[name] = k
+
+		if inverted:
+			inverted['last_modified'] ='Last Modified'
+			t.inverted_fields = inverted
+			
+			def f(self, name):
+				return self.inverted_fields[name] if name in self.inverted_fields else ''
+			t.external_name = f
+		
+		return t
+	
 class _IndexableContent(object):
 	interface.implements(IIndexableContent)
 	
+	__metaclass__ = MetaIndexableContent
+		
 	def __init__(self):
 		super(_IndexableContent,self).__init__()
 
@@ -382,10 +422,26 @@ class _IndexableContent(object):
 	def execute_search(self, searcher, parsed_query, limit):
 		return searcher.search(parsed_query, limit=limit)
 
+	def externalize(self, hit_or_doc):
+		result = {}
+		result['Type'] = self.__class__.__name__
+		
+		schema = self.get_schema()
+		if schema:
+			for k, v in hit_or_doc.items():
+				if k == self.hit_last_modified():
+					v = epoch_time(v)
+				result[self.external_name(k)] = v
+					
+		return result
+		
 	def get_data_from_search_hit(self, hit, d):
 		d['Class'] = 'Hit'
-		d['Last Modified'] = epoch_time(hit[self.hit_last_modified()])
-		return str(hit.docnum)
+		if self.hit_last_modified() in hit:
+			d['Last Modified'] = epoch_time(hit[self.hit_last_modified()])
+		else:
+			d['Last Modified'] = 0
+		return str(hit.docnum) if hit.__class__ == Hit else None
 
 	def hit_last_modified(self):
 		"""
@@ -393,8 +449,15 @@ class _IndexableContent(object):
 		"""
 		return 'last_modified'
 
+
 ##########################
 
+class MetaBook(MetaIndexableContent):
+	def __new__(cls, name, bases, cls_dict):
+		t = super(MetaBook, cls).__new__(cls, name, bases, cls_dict)
+		t.inverted_fields['ntiid'] = 'ContainerId'
+		return t
+	
 class Book(_IndexableContent):
 
 	"""
@@ -411,6 +474,8 @@ class Book(_IndexableContent):
 	ref: chapter reference
 	"""
 
+	__metaclass__ = MetaBook
+	
 	schema = Schema(ntiid=ID(stored=True, unique=True),\
 					title=TEXT(stored=True, spelling=True),
 				  	last_modified=DATETIME(stored=True),\
@@ -420,10 +485,6 @@ class Book(_IndexableContent):
 				 	section=TEXT(),\
 				 	order=NUMERIC(int),\
 				 	content=TEXT(stored=True, spelling=True))
-
-
-	def __init__(self):
-		super(Book,self).__init__()
 
 	def get_schema(self):
 		return self.schema
@@ -446,12 +507,12 @@ class Book(_IndexableContent):
 			return searcher.search(parsed_query, sortedby='order', limit=limit)
 		else:
 			return searcher.search(parsed_query, limit=limit)
-
+	
 	def get_data_from_search_hit(self, hit, d):
 		super(Book, self).get_data_from_search_hit(hit, d)
 		d['Type'] = 'Content'
-		d['ContainerId'] = hit['ntiid']
-		d['Title'] = hit['title']
+		d[self.external_name('title')] = hit['title']
+		d[self.external_name('ntiid')] = hit['ntiid']
 		return hit['ntiid']
 
 ##########################
@@ -497,6 +558,15 @@ class UserIndexableContent(_IndexableContent):
 		if quick and d.has_key(self.search_field):
 			d[self.quick_field]=d[self.search_field]
 
+
+##########################
+
+class MetaHighlight(MetaIndexableContent):
+	def __new__(cls, name, bases, cls_dict):
+		t = super(MetaHighlight, cls).__new__(cls, name, bases, cls_dict)
+		t.inverted_fields['oid'] = 'TargetOID'
+		return t
+	
 class Highlight(UserIndexableContent):
 
 	"""
@@ -513,6 +583,8 @@ class Highlight(UserIndexableContent):
 	quick: text used for type-ahead
 
 	"""
+	
+	__metaclass__ = MetaHighlight
 	
 	__indexable__ = True
 	
@@ -616,12 +688,20 @@ class Highlight(UserIndexableContent):
 	def get_data_from_search_hit(self, hit, d):
 		_IndexableContent.get_data_from_search_hit(self, hit, d)
 		d['Type'] = self.__class__.__name__
-		d['TargetOID'] = hit.get('oid', '')
-		d['ContainerId'] = hit.get('containerId', '')
-		d['CollectionID'] = hit.get('collectionId', '')
+		d[self.external_name('oid')] = hit.get('oid', '')
+		d[self.external_name('containerId')] = hit.get('containerId', '')
+		d[self.external_name('collectionId')] = hit.get('collectionId', '')
 		return hit.get('oid', None)
 
 
+##########################
+
+class MetaNote(MetaHighlight):
+	def __new__(cls, name, bases, cls_dict):
+		t = super(MetaNote, cls).__new__(cls, name, bases, cls_dict)
+		t.inverted_fields['content'] = 'Body'
+		return t
+	
 class Note(Highlight):
 
 	"""
@@ -638,6 +718,8 @@ class Note(Highlight):
 	id: internal id
 
 	"""
+	
+	__metaclass__ = MetaNote
 	
 	__indexable__ = True
 	
@@ -666,6 +748,12 @@ class Note(Highlight):
 			"id": ("id", echo)
 			}
 
+##########################
+
+class MetaMessageInfo(MetaNote):
+	def __new__(cls, name, bases, cls_dict):
+		return super(MetaMessageInfo, cls).__new__(cls, name, bases, cls_dict)
+	
 class MessageInfo(Note):
 
 	"""
@@ -682,6 +770,8 @@ class MessageInfo(Note):
 	id: message id
 	"""
 
+	__metaclass__ = MetaMessageInfo
+	
 	__indexable__ = True
 	
 	indexname_postfix = '_chat_messages'
@@ -718,11 +808,12 @@ class MessageInfo(Note):
 
 	def get_data_from_search_hit(self, hit, d):
 		result = super(MessageInfo, self).get_data_from_search_hit(hit, d)
-		d['ID'] = hit.get('id', '')
-		d['Creator'] = hit.get("creator", '')
+		d[self.external_name('id')] = hit.get('id', '')
+		d[self.external_name('creator')] = hit.get("creator", '')
 		d.pop('CollectionID', None)
 		return result
 
+##########################
 
 class _Illustration(UserIndexableContent):
 	_schema = None
@@ -757,3 +848,4 @@ class CanvasPolygonShape(CanvasShape):
 	
 class CanvasTextShape(CanvasShape):
 	pass
+
