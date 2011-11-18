@@ -723,7 +723,8 @@ class ContainedStorage(persistent.Persistent,ModDateTrackingObject):
 	# is last modified), updating lastModified to now.
 	####
 
-	def __init__( self, weak=False, create=False, containers=None, containerType=ModDateTrackingOOBTree ):
+	def __init__( self, weak=False, create=False, containers=None, containerType=ModDateTrackingOOBTree,
+				  set_ids=True):
 		"""
 		Creates a new container.
 
@@ -735,12 +736,16 @@ class ContainedStorage(persistent.Persistent,ModDateTrackingObject):
 		:param dict containers: Initial containers
 		:param type containerType: The type for each created container. Should be a mapping
 			type, and should handle conflicts. The default value only allows comparable keys.
+		:param bool set_ids: If true (default) the ``id`` field of newly added objects will be set.
+			Otherwise, the must already have an id. Set this to False if the added objects
+			are shared (and especially shared in the database.)
 		"""
 		super(ContainedStorage,self).__init__()
 		self.containers = ModDateTrackingOOBTree() # read-only, but mutates.
 		self.weak = weak # read-only
 		self.create = create # read-only
 		self.containerType = containerType # read-only
+		self.set_ids = set_ids # read-only
 		self._setup( )
 
 		for k,v in (containers or {}).iteritems():
@@ -778,10 +783,11 @@ class ContainedStorage(persistent.Persistent,ModDateTrackingObject):
 				c[i] = d
 			else:
 				c.append( d )
-				try:
-					setattr( orig, StandardInternalFields.ID, len(c) - 1 )
-				except AttributeError:
-					logger.debug( "Failed to set id", exc_info=True )
+				if self.set_ids:
+					try:
+						setattr( orig, StandardInternalFields.ID, len(c) - 1 )
+					except AttributeError:
+						logger.debug( "Failed to set id", exc_info=True )
 		def _get_in_container( c, i, d=None ):
 			if isinstance( c, collections.Mapping ):
 				return c.get( i, d )
@@ -789,28 +795,36 @@ class ContainedStorage(persistent.Persistent,ModDateTrackingObject):
 				return c[i]
 			except IndexError:
 				return d
-		def _pop_in_container( c, i, d=None ):
+		def _remove_in_container( c, d ):
 			if isinstance( c, collections.Mapping ):
-				return c.pop( i, d )
-			try:
-				return c.pop( i )
-			except IndexError:
-				return d
+				for k, v in c.iteritems():
+					if v == d:
+						del c[k]
+						return v
+				raise ValueError
+			ix = c.index( d )
+			d = c[ix]
+			c.pop( ix )
+
 
 		self._v_putInContainer = _put_in_container
 		self._v_getInContainer = _get_in_container
-		self._v_popInContainer = _pop_in_container
+		self._v_removeFromContainer = _remove_in_container
 
 	def _v_wrap(self,obj): pass
 	def _v_unwrap(self,obj): pass
 	def _v_create(self,obj): pass
 	def _v_putInContainer( self, obj, orig ): pass
 	def _v_getInContainer( self, obj, defv=None ): pass
-	def _v_popInContainer( self, obj, defv=None ): pass
+	def _v_removeFromContainer( self, o ):
+		"""
+		Raises ValueError if the object is not in the container"
+		"""
 
 	def __setstate__( self, dic ):
 		super(ContainedStorage,self).__setstate__(dic)
-		#print dic, hasattr( super(ContainedStorage,self), '__setstate__' )
+		if not hasattr( self, 'set_ids' ):
+			self.set_ids = True
 		self._setup()
 
 	def addContainer( self, containerId, container ):
@@ -869,6 +883,8 @@ class ContainedStorage(persistent.Persistent,ModDateTrackingObject):
 
 			# Assign the next available ID if necessary
 			if not hasattr(contained, StandardInternalFields.ID ) or not getattr( contained, StandardInternalFields.ID ):
+				if not self.set_ids:
+					raise ValueError( "Contained object has no id and we cannot give it one" )
 				theId = 0
 				#strip non-integer keys
 				#The keys come in as strings, and that's (probably) how we must store them,
@@ -914,12 +930,50 @@ class ContainedStorage(persistent.Persistent,ModDateTrackingObject):
 		""" Given the ID of a container and something contained within it,
 		removes that object from the container and returns it. Returns None
 		if there is no such object. """
-		container = self.containers.get( containerId, {} )
-		contained = self._v_unwrap( self._v_popInContainer( container, containedId, None ) )
-		if contained is not None:
+		# In order to share the maximum amount of code, we are first
+		# looking the object up and then removing it by equality.
+		# NOTE: The reverse DOES NOT work. We may not find the right
+		# objects by containedId (if our containers are not maps but lists,
+		# and we are just holding shared objects we do not own)
+		return self.deleteEqualContainedObject( self.getContainedObject( containerId, containedId ) )
+
+
+	def deleteEqualContainedObject( self, contained ):
+		"""
+		Given an object contained herein, removes it. Returns the removed
+		object, if found, else returns None.
+		"""
+		if contained is None or contained.containerId is None:
+			return
+		container = self.containers.get( contained.containerId, {} )
+		if container is None: return None
+
+		wrapped = self._v_wrap( contained ) # outside the catch
+		try:
+			contained = self._v_unwrap( self._v_removeFromContainer( container, wrapped ) )
 			self._updateContainerLM( container )
 			self.afterDeleteContainedObject( contained )
-		return contained
+			return contained
+		except ValueError:
+			return None
+		except TypeError:
+			# Getting here means that we are no longer able to resolve
+			# at least one object by OID. Might as well take this opportunity
+			# to clear out all the dangling refs. Notice we keep the identical
+			# container object though
+			# FIXME: This code only works when we're using list containers.
+			cid = getattr( contained, '_p_oid', self ) or self
+			tmp = list( container )
+			del container[:]
+			for weak in tmp:
+				if cid == getattr( weak, 'oid', None ) or \
+				   cid == getattr( weak, '_p_oid', None ):
+					continue
+				strong = weak if not callable( weak ) else weak()
+				if strong is not None and strong != contained:
+					container.append( strong )
+				else:
+					logger.debug( "Dropping obj by equality/missing during delete %s == %s", strong, contained )
 
 
 	@property

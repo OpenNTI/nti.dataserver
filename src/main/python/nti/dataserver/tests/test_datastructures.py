@@ -149,6 +149,7 @@ class TestContainedStorage(unittest.TestCase):
 		assert_that( obj.id, not_none() )
 
 		lm = cs.lastModified
+
 		assert_that( cs.deleteContainedObject( 'foo', obj.id ), same_instance( obj ) )
 		assert_that( cs.lastModified, greater_than( lm ) )
 		# container stays around

@@ -64,13 +64,14 @@ class TestUser(unittest.TestCase):
 		assert_that( note.id, is_not( none() ) )
 
 		note.addSharingTarget( 'fab@bar', actor=user1 )
-
+		note.id = 'foobar' # to ensure it doesn't get used or changed by the sharing process
 		user2._noticeChange( Change( Change.SHARED, note ) )
+		assert_that( note.id, is_( 'foobar' ) )
 		assert_that( persistent.wref.WeakRef( note ), is_in( user2.getSharedContainer( 'c1' ) ) )
 
 		user2._noticeChange( Change( Change.DELETED, note ) )
 		assert_that( persistent.wref.WeakRef( note ), is_not( is_in( user2.getSharedContainer( 'c1' ) ) ) )
-
+		assert_that( note.id, is_( 'foobar' ) )
 
 if __name__ == '__main__':
 	unittest.main()

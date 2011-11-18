@@ -286,11 +286,14 @@ class SharingTarget(Entity):
 		# that parallels the contained items map. The first level is
 		# from container ID to a list of weak references to shared objects.
 		# (Un-sharing something, which requires removal from an arbitrary
-		# position in the list, should be rare.)
+		# position in the list, should be rare.) Notice that we must NOT
+		# have the shared storage set or use IDs, because these objects
+		# are not owned by us.
 		# TODO: Specialize these data structures
 		self.containersOfShared = datastructures.ContainedStorage( weak=True,
 																   create=False,
-																   containerType=datastructures.PersistentExternalizableList)
+																   containerType=datastructures.PersistentExternalizableList,
+																   set_ids=False )
 
 		# A cache of recent items that make of the stream. Going back
 		# further than this requires walking through the containersOfShared.
@@ -302,6 +305,7 @@ class SharingTarget(Entity):
 			self._sources_not_accepted = OOTreeSet( getattr( self, '_sources_not_accepted', set() ) )
 		if isinstance( getattr( self, '_sources_accepted', set() ), set ):
 			self._sources_accepted = OOTreeSet( getattr( self, '_sources_accepted', set() ) )
+		self.containersOfShared.set_ids = False
 
 	def _discard( self, s, k ):
 		try:
@@ -426,8 +430,7 @@ class SharingTarget(Entity):
 		self.containersOfShared.addContainedObject( contained )
 
 	def _removeSharedObject( self, contained ):
-		if contained is None or contained.containerId is None or contained.id is None: return
-		self.containersOfShared.deleteContainedObject( contained.containerId, contained.id )
+		self.containersOfShared.deleteEqualContainedObject( contained )
 
 	def _addToStream( self, change ):
 		container = self.streamCache.get( change.containerId )
