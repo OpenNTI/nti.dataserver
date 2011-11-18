@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 
 entry_points = {"paste.app_factory": ["main = dataserver:main"],
-				"console_scripts": ["nti = nti:app"]}
+				"dataserver": ["dataserver = app:main"]}
 
 setup(
     name = 'nti',
@@ -12,7 +12,7 @@ setup(
     author = 'NTI',
     author_email = 'jason.madden@nextthought.com',
     description = 'NextThought Dataserver',
-    long_description = 'Dataserver readme',
+    long_description = 'Dataserver README',
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
         "Intended Audience :: Developers",

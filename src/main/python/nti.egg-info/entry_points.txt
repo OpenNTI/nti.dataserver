@@ -1,6 +1,6 @@
 [paste.app_factory]
 main = dataserver:main
 
-[console_scripts]
-nti = nti:app
+[dataserver]
+dataserver = app:main
 
