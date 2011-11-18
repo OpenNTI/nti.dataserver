@@ -4,6 +4,8 @@ import unittest
 import collections
 from datetime import datetime
 
+from nti.contentsearch.contenttypes import MessageInfo
+
 from nti.contentsearch.contenttypes import echo
 from nti.contentsearch.contenttypes import epoch_time
 from nti.contentsearch.contenttypes import get_content
@@ -156,6 +158,19 @@ class TestContentTypes(unittest.TestCase):
 		m = merge_suggest_results(None, None)
 		self.assertEqual(None, m)
 
-
+	def test_message_info(self):
+		js = self._load_json()
+		mi = MessageInfo()
+		d = mi.get_index_data(js)
+		self.assertEqual('35128948a285417693eb35147cd3b659', d['containerId'])
+		self.assertEqual('troy.daley@nextthought.com', d['creator'])
+		self.assertEqual('0x49:53657373696f6e73', d['oid'])
+		self.assertEqual('Zanpakuto and Zangetsu', d['content'])
+		self.assertEqual('troy.daley@nextthought.com,carlos.sanchez@nextthought.com', d['sharedWith'])
+		self.assertEqual('Zanpakuto and Zangetsu', d['quick'])
+		self.assertEqual('c76e78bb0e7c4828ade7d303763011fc', d['id'])
+		self.assertEqual('DEFAULT', d['channel'])
+		self.assertEqual(datetime(2011, 11, 15, 15, 11, 8, 411328), d['last_modified'])
+		
 if __name__ == '__main__':
 	unittest.main()

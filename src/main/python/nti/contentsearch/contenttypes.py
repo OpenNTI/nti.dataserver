@@ -711,7 +711,7 @@ class MessageInfo(Note):
 			"OID": ("oid",  echo),\
 			}
 
-	def get_index_data(self, externalValue, items):
+	def get_index_data(self, externalValue, items=None):
 		result = super(MessageInfo, self).get_index_data(externalValue, items)
 		result.pop('collectionId', None)
 		return result
