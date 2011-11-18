@@ -92,11 +92,11 @@ class TestBasicStream(DataServerTestCase):
 		# FIXME: need to abstract this but it requires something more than a plain dict
 		# now edit the object.
 		updatedText = 'updated text'
-		sharedObj['text'] = updatedText
+		sharedObj['body'] = [updatedText]
 		updatedObj = self.ds.updateObject(sharedObj)
 
 		# we aren't instant	Wait some arbitrary time.
-		self.ds.waitForEvent(maxWaitSeconds=20)
+		self.ds.waitForEvent()
 
 		# check that it is in the stream
 		stream = self.ds.getRecursiveStreamData(self.CONTAINER, credentials=self.target)
@@ -111,10 +111,7 @@ class TestBasicStream(DataServerTestCase):
 		updateChange = sortedchanges[0]
 		assert_that(updateChange, of_change_type_modified())
 		assert_that(updateChange, wraps_item(updatedObj))
-		try:
-			assert_that(unwrapObject(updateChange), has_entry('text', updatedText))
-		except AssertionError:
-			warnings.warn( "Should the text be updated in %s?" % (sortedchanges) )
+		assert_that(unwrapObject(updateChange), has_entry('text', updatedText))
 
 		# cleanup
 		self.ds.deleteObject(createdObj)
