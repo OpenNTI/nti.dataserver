@@ -2,21 +2,28 @@
 
 from setuptools import setup, find_packages
 
+entry_points = {"paste.app_factory": ["main = dataserver:main"],
+				"console_scripts": ["nti = nti:app"]}
+
 setup(
-    name = 'ntids',
-    version = '0.1dev',
+    name = 'nti',
+    version = '0.0',
+    keywords = 'web pyramid pylons',
     author = 'NTI',
     author_email = 'jason.madden@nextthought.com',
-    description = 'Next Thought dataserver',
+    description = 'NextThought Dataserver',
+    long_description = 'Dataserver readme',
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
         "Intended Audience :: Developers",
         "Operating System :: OS Independent",
         "Programming Language :: Python"
+        "Framework :: Pylons",
+		"Internet :: WWW/HTTP",
+		"Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
         ],
 
     # Support unit tests of package
-    test_suite = "tests",
     tests_require = ['z3c.coverage','zope.testing'],
 
     install_requires = [ 'setuptools',
@@ -73,5 +80,6 @@ setup(
     packages = find_packages('.'),
     package_dir = {'': '.'},
     include_package_data = False,
-    zip_safe = True,
+    zip_safe = False,
+    entry_points = entry_points
     )

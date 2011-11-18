@@ -1,22 +1,17 @@
 Metadata-Version: 1.0
-Name: dataserver
+Name: nti
 Version: 0.0
-Summary: dataserver
+Summary: NextThought Dataserver
 Home-page: UNKNOWN
-Author: UNKNOWN
-Author-email: UNKNOWN
+Author: NTI
+Author-email: jason.madden@nextthought.com
 License: UNKNOWN
-Description: dataserver README
-        
-        
-        0.0
-        ---
-        
-        -  Initial version
-        
+Description: Dataserver readme
 Keywords: web pyramid pylons
 Platform: UNKNOWN
-Classifier: Programming Language :: Python
-Classifier: Framework :: Pylons
-Classifier: Topic :: Internet :: WWW/HTTP
+Classifier: Development Status :: 2 - Pre-Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: PythonFramework :: Pylons
+Classifier: Internet :: WWW/HTTP
 Classifier: Topic :: Internet :: WWW/HTTP :: WSGI :: Application
