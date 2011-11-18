@@ -358,7 +358,7 @@ class _IndexableContent(object):
 		for hit in search_hits:
 
 			d = {}
-			item_id = self.get_data_from_search_hit(hit, hit_count, d)
+			item_id = self.get_data_from_search_hit(hit, d)
 			lm = d['Last Modified'] if d.has_key('Last Modified') else 0
 			maxLM = max(lm, maxLM)
 
