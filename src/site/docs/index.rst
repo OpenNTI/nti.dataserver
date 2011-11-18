@@ -33,6 +33,7 @@ Documentation
 .. automodule:: nti.dataserver.mimetype
 .. automodule:: nti.dataserver._Dataserver
 .. automodule:: nti.dataserver._daemonutils
+.. automodule:: nti.dataserver.authorization
 
 .. automodule:: nti.contentsearch
 

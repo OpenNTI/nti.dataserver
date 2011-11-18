@@ -899,7 +899,7 @@ class ShareableMixin(datastructures.CreatedModDateTrackingObject):
 			return
 
 		if self.creator is not None and self.creator != actor:
-			raise ValueError( "Creator is not actor" )
+			raise ValueError( "Creator (%s) is not actor (%s)" % (self.creator,actor) )
 		if self._sharingTargets is None:
 			self._sharingTargets = datastructures.PersistentExternalizableList()
 		if target not in self._sharingTargets:

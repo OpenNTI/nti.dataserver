@@ -2,7 +2,7 @@
 
 from hamcrest import (assert_that, is_, has_entry, instance_of,
 					  has_key, is_in, not_none, is_not, greater_than,
-					  same_instance)
+					  same_instance, is_not, none)
 import unittest
 
 import UserDict
@@ -19,7 +19,11 @@ from nti.dataserver.datastructures import (getPersistentState, toExternalOID, to
 
 from ..users import User, FriendsList, Device
 from ..interfaces import IFriendsList
+from ..contenttypes import Note
+from ..activitystream_change import Change
 from . import provides
+from mock_dataserver import WithMockDSTrans
+import persistent.wref
 
 class TestUser(unittest.TestCase):
 
@@ -45,6 +49,28 @@ class TestUser(unittest.TestCase):
 		user.addContainedObject( created )
 		assert_that( user.getContainedObject( created.containerId, created.id ),
 					 is_( created ) )
+
+	@WithMockDSTrans
+	def test_share_unshare_note(self):
+		user1 = User( 'foo@bar', 'temp' )
+		user2 = User( 'fab@bar', 'temp' )
+
+		note = Note()
+		note['body'] = ['text']
+		note.containerId = 'c1'
+		note.creator = user1.username
+
+		user1.addContainedObject( note )
+		assert_that( note.id, is_not( none() ) )
+
+		note.addSharingTarget( 'fab@bar', actor=user1 )
+
+		user2._noticeChange( Change( Change.SHARED, note ) )
+		assert_that( persistent.wref.WeakRef( note ), is_in( user2.getSharedContainer( 'c1' ) ) )
+
+		user2._noticeChange( Change( Change.DELETED, note ) )
+		assert_that( persistent.wref.WeakRef( note ), is_not( is_in( user2.getSharedContainer( 'c1' ) ) ) )
+
 
 if __name__ == '__main__':
 	unittest.main()

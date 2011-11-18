@@ -779,8 +779,9 @@ class ContainedStorage(persistent.Persistent,ModDateTrackingObject):
 			else:
 				c.append( d )
 				try:
-					d.containerId = len(c) - 1
-				except AttributeError: pass
+					setattr( orig, StandardInternalFields.ID, len(c) - 1 )
+				except AttributeError:
+					logger.debug( "Failed to set id", exc_info=True )
 		def _get_in_container( c, i, d=None ):
 			if isinstance( c, collections.Mapping ):
 				return c.get( i, d )
