@@ -68,7 +68,8 @@ from zope import location as zlocation
 SOCKET_IO_PATH = 'socket.io'
 
 #TDOD: we should do this as configuration
-USE_FILE_INDICES = 'USE_ZEO_USER_INDICES' not in os.environ
+DATASERVER_ZEO_INDEXES = 'DATASERVER_NO_INDEX_BLOBS' not in os.environ
+USE_FILE_INDICES = not DATASERVER_ZEO_INDEXES
 
 class _Main(object):
 
@@ -494,9 +495,13 @@ def _add_index_listener( server, user_indices_dir ):
 	create_index_manager(server, use_zeodb_index_storage(), user_indices_dir)
 	server.add_change_listener( IndexManager.onChange )
 
-def create_index_manager(server, use_zeo_storage=False, user_indices_dir='/tmp'):
+def create_index_manager(server, use_zeo_storage=None, user_indices_dir='/tmp'):
+
+	if use_zeo_storage is None:
+		use_zeo_storage = use_zeodb_index_storage()
 
 	if use_zeo_storage:
+		logger.debug( 'Creating ZEO index manager' )
 		indicesKey, blobsKey = '__indices', "__blobs"
 		indexmanager = contentsearch.create_zodb_index_manager(	db=server.searchDB,
 																indicesKey=indicesKey,

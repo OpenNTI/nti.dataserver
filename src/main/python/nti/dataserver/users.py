@@ -29,7 +29,7 @@ from nti.dataserver import ntiids
 from nti.dataserver import enclosures
 from nti.dataserver import links
 from nti.dataserver import mimetype
-from .. import apns
+from nti import apns
 
 
 

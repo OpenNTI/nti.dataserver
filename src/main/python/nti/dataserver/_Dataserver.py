@@ -2,6 +2,7 @@ import logging
 logger = logging.getLogger( __name__ )
 
 import os
+import tempfile
 import sys
 import types
 import stat
@@ -281,8 +282,8 @@ class MinimalDataserver(object):
 		self._dataFileName = dataFileName
 
 
-	def _setup_storage( self, zeo_addr, storage_name, blob_dir ):
-		storage = ZEO.ClientStorage.ClientStorage( zeo_addr, storage=storage_name, blob_dir=blob_dir, shared_blob_dir=True)
+	def _setup_storage( self, zeo_addr, storage_name, blob_dir, shared_blob_dir=True ):
+		storage = ZEO.ClientStorage.ClientStorage( zeo_addr, storage=storage_name, blob_dir=blob_dir, shared_blob_dir=shared_blob_dir )
 		assert ZODB.interfaces.IBlobStorage in interface.providedBy(storage), "Should be supporting blobs"
 
 		return storage
@@ -349,6 +350,7 @@ class MinimalDataserver(object):
 					'sessionDataFile': sessionDataFile, 'sessionBlobDir': sessionBlobDir,
 					'searchDataFile': searchDataFile, 'searchBlobDir': searchBlobDir
 					}
+		shared_blobs = True # While we are on IPC
 		if DATASERVER_DEMO:
 			logger.info( "Creating demo storages" )
 			# NOTE: DemoStorage is NOT a ConflictResolvingStorage.
@@ -357,6 +359,13 @@ class MinimalDataserver(object):
 				configuration = configuration.replace( '<filestorage %s>' % i,
 													   '<demostorage %s>\n\t\t\t<filestorage %s>' % (i,i) )
 			configuration = configuration.replace( '</filestorage>', '</filestorage>\n\t\t</demostorage>' )
+			# Must use non-shared blobs, DemoStorage is missing fshelper.
+			shared_blobs = False
+			blobDir = tempfile.mkdtemp( '.demoblobs', prefix='blobs' )
+			sessionBlobDir = tempfile.mkdtemp( '.demoblobs', prefix='session' )
+			searchBlobDir = tempfile.mkdtemp( '.demoblobs', prefix='search' )
+			# TODO: We need to clean these up
+			logger.debug( "Using temporary blob dirs %s %s %s", blobDir, sessionBlobDir, searchBlobDir )
 		config_file = clientDir + '/configuration.xml'
 		daemonutils.write_configuration_file( config_file, configuration )
 
@@ -364,9 +373,9 @@ class MinimalDataserver(object):
 		args = ['-C', config_file]
 		self._setup_launch_zeo( clientPipe, path, args, daemon )
 
-		return ( self._setup_storage( clientPipe, '1', blobDir ),
-				 self._setup_storage( clientPipe, '2', sessionBlobDir ),
-				 self._setup_storage( clientPipe, '3', searchBlobDir ) )
+		return ( self._setup_storage( clientPipe, '1', blobDir, shared_blob_dir=shared_blobs ),
+				 self._setup_storage( clientPipe, '2', sessionBlobDir, shared_blob_dir=shared_blobs ),
+				 self._setup_storage( clientPipe, '3', searchBlobDir, shared_blob_dir=shared_blobs ) )
 
 	def _setup_dbs( self, parentDir, dataFileName, daemon, classFactory ):
 		"""
