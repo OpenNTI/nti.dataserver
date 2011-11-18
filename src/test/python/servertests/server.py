@@ -413,7 +413,7 @@ class DataserverClient(object):
 	# abstract away waiting.  Right now we just wait the max
 	# time but it will most certainly change.
 	# Some things still take longer than we were waiting
-	def waitForEvent(self, event=None, maxWaitSeconds=10):
+	def waitForEvent(self, event=None, maxWaitSeconds=3):
 		if maxWaitSeconds and maxWaitSeconds > 0:
 			time.sleep(maxWaitSeconds)
 		return
