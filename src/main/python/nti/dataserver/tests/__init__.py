@@ -38,6 +38,21 @@ class Implements(BaseMatcher):
 def implements( iface ):
 	return Implements( iface )
 
+
+class HasAttr(BaseMatcher):
+
+	def __init__( self, attr ):
+		super(HasAttr,self).__init__( )
+		self.attr = attr
+	def _matches(self, item):
+		return hasattr( item, self.attr )
+
+	def describe_mismatch( self, item, mismatch_description ):
+		mismatch_description.append_description_of( item ).append_text( ' has no attr ').append_text( self.attr )
+
+def has_attr( attr ):
+	return HasAttr( attr )
+
 def runner(path, pattern="*.py"):
 	suite = defaultTestLoader.discover(path, pattern)
 	try:

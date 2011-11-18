@@ -161,6 +161,19 @@ class IContainerIterable(interface.Interface):
 		"""
 		:return: An iteration across the containers held in this object.
 		"""
+
+### Groups/Roles/ACLs
+
+class IGroupMember(interface.Interface):
+	"""
+	Something that can report on the groups
+	it belongs to.
+	"""
+
+	groups = schema.Iterable(
+		title=u'Iterate across the names of the groups')
+
+
 ### Content
 
 class IContent(ILastModified,ICreated):

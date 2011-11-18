@@ -11,8 +11,10 @@ from pyramid.interfaces import IAuthenticationPolicy
 import pyramid.httpexceptions as hexc
 
 from zope import interface
+from zope import component
 
 from nti.dataserver.users import User
+from nti.dataserver import interfaces as nti_interfaces
 
 # TODO: This decoding stuff is happening too simalarly in the different
 # places. Decide what's really needed and remove what isn't and consolidate
@@ -118,9 +120,6 @@ def _decode_username_identity( identity ):
 
 class _NTIUsers(object):
 
-	# TODO: Many of these functions are left over from AuthKit.
-	# Remove those that are no longer needed.
-
 	def __init__( self, user_callable, create_user_callable=None ):
 		"""
 		:param user_callable: A function of username that returns a User object.
@@ -138,37 +137,36 @@ class _NTIUsers(object):
 			user = self.users( username )
 		return user is not None
 
-	def user( self, username ):
-		if not self.user_exists( username ): return None
-		userObj = self.users( username )
-		return {
-			'username': username,
-			'password': userObj.password,
-			'roles': [],
-			'group': None } if userObj else None
-
 	def user_password( self, username ):
-		if not self.user_exists( username ): return None
-		userObj = self.user( username )
-		return userObj['password'] if userObj else None
+		userObj = self.users( username )
+		return userObj.password if userObj else None
 
 	def user_has_password( self, username, password ):
-		if not username or not password or not username.strip() or not password.strip(): return False
 		if not self.user_exists( username ): return False
 		return password == self.user_password( username )
+
+	def _query_groups( self, username, components ):
+		result = set()
+		# Query all the available groups for this user
+		for _, adapter in components.getAdapters( (self.users(username),),
+												  nti_interfaces.IGroupMember ):
+			result.update( adapter.groups )
+		return result
+
 
 	def __call__( self, userid, request ):
 		result = None
 		# Because we are both part of a middleware and the pyramid
 		# auth policy, we can get called both already authenticated
 		# and not-authenticated.
-
-		if 'login' in userid and 'password' in userid:
+		# TODO: Cache the groups results
+		if 'repoze.who.userid' in userid:
+			result = self._query_groups( userid['repoze.who.userid'], request.registry )
+		elif 'login' in userid and 'password' in userid:
 			username, password = _decode_username_identity( userid )
 			if self.user_has_password( username, password ):
-				result = ()
-		elif 'repoze.who.userid' in userid:
-			result = ()
+				result = self._query_groups( username, component )
+
 		return result
 
 def _make_user_auth():

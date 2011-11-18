@@ -3,7 +3,6 @@ from hamcrest import (assert_that, is_, has_entry, instance_of,
 					  has_key, is_in, not_none, is_not, greater_than,
 					  greater_than_or_equal_to,
 					  same_instance)
-from hamcrest.core.base_matcher import BaseMatcher
 
 import unittest
 
@@ -20,19 +19,8 @@ from nti.dataserver.datastructures import (getPersistentState, toExternalOID, fr
 									   to_external_representation, EXT_FORMAT_JSON, EXT_FORMAT_PLIST,
 									   PersistentExternalizableList, ExternalizableInstanceDict)
 
-class HasAttr(BaseMatcher):
+from nti.dataserver.tests import has_attr
 
-	def __init__( self, attr ):
-		super(HasAttr,self).__init__( )
-		self.attr = attr
-	def _matches(self, item):
-		return hasattr( item, self.attr )
-
-	def describe_mismatch( self, item, mismatch_description ):
-		mismatch_description.append_description_of( item ).append_text( ' has no attr ').append_text( self.attr )
-
-def has_attr( attr ):
-	return HasAttr( attr )
 
 class TestFunctions(unittest.TestCase):
 

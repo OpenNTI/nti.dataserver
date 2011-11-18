@@ -71,7 +71,7 @@ class SimpleEnclosureMixin(object):
 		:raises KeyError: If the enclosures container enforces uniqueness,
 			doesn't allow overwriting, and no unique name can be found.
 
-
+		EOD
 		"""
 		if content:
 			if getattr( self, '_enclosures', None ) is None:

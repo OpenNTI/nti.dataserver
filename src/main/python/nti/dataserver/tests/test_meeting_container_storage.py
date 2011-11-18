@@ -25,7 +25,7 @@ from mock_dataserver import MockDataserver, WithMockDS, ConfiguringTestBase
 
 class TestMeetingContainer(ConfiguringTestBase):
 
-	ID_FL1 = ntiids.make_ntiid( provider='foo@bar', nttype=ntiids.TYPE_MEETINGROOM, specific='fl1' )
+	ID_FL1 = ntiids.make_ntiid( provider='foo@bar', nttype=ntiids.TYPE_MEETINGROOM_GROUP, specific='fl1' )
 
 	@WithMockDS
 	def test_no_entity( self ):

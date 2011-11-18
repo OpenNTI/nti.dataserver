@@ -3,9 +3,21 @@
 	<include package="zope.component" />
 	<include package="zope.location" />
 	<include package="zope.container" />
+	<include package="zope.annotation" />
 	<adapter factory=".meeting_container_storage._FriendsListAdapter" />
 	<adapter factory=".meeting_container_storage._ClassSectionAdapter" />
 	<adapter factory=".mimetype.ModeledContentTypeAwareAdapter" />
 	<adapter factory=".links.NoOpLinkExternalObjectAdapter"
 			 name="wsgi" />
+
+	<!-- Groups and ACLs -->
+	<!-- First, make something that can store group names on the user -->
+	<class class=".users.User">
+		<implements interface="zope.annotation.interfaces.IAttributeAnnotatable" />
+	</class>
+	<!-- As we add more of these (rule based) we'll need to give them names -->
+	<adapter factory=".authorization._persistent_group_member_factory"
+			 provides=".interfaces.IGroupMember"
+			 for=".users.User" />
+
 </configure>
