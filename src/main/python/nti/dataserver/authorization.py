@@ -43,7 +43,12 @@ of the path. (Thus, more specific entries will override less specific
 entries.) The root object should contain entries for things that apply
 generally (equivalent to global capabilities.).
 
-
+Persistent storage references to principals should be by their unique
+identifier string (not object identity). Yet ACLs should hold
+IPrincipal objects. This conversion happens through (optionally named) ZCA adapters.
+Likewise, the permissions in an ACL entry should be IPermission objects,
+but persistent storage should be strings; conversion is handled by registering
+IPermission objects by name as utilities.
 
 """
 import persistent
@@ -54,11 +59,21 @@ from zope import annotation
 from zope import component
 
 import nti.dataserver.interfaces as nti_interfaces
+from zope.security.permission import Permission
 
-ACT_CREATE = 'nti.actions.create'
-ACT_DELETE = 'nti.actions.delete'
-ACT_UPDATE = 'nti.actions.update'
-ACT_READ   = 'nti.actions.read'
+# TODO: How does zope normally present these? Side effects of import are bad
+if not '__str__' in Permission.__dict__:
+	Permission.__str__ = lambda x: x.id
+if not '__repr__' in Permission.__dict__:
+	Permission.__repr__ = lambda x: "%s('%s','%s','%s')" %(x.__class__.__name__, x.id, x.title, x.description )
+if not '__eq__' in Permission.__dict__:
+	Permission.__eq__ = lambda x, y: x.id == getattr( y, 'id', x )
+
+
+ACT_CREATE = Permission('nti.actions.create')
+ACT_DELETE = Permission('nti.actions.delete')
+ACT_UPDATE = Permission('nti.actions.update')
+ACT_READ   = Permission('nti.actions.read')
 
 # Groups that are expected to have certain rights
 # in certain areas
@@ -74,11 +89,20 @@ class PersistentGroupMember(persistent.Persistent):
 	component.adapts(annotation.interfaces.IAttributeAnnotatable)
 
 	def __init__( self ):
+		# We store strings in this set, and adapt them to
+		# IGroups during iteration.
 		self._groups = OOSet()
 
 	@property
 	def groups(self):
-		return self._groups
+		return (nti_interfaces.IGroup(g) for g in self._groups)
 
 def _persistent_group_member_factory( obj ):
 	return annotation.factory(PersistentGroupMember)(obj)
+
+# TODO: Adapter from strings to IPrincipal. Register one of these special
+# by name for system_user
+# TODO: Likewise for IGroup.
+# TODO: Adapter from nti.ds.users.User to IPrincipal.
+
+# TODO: IACLProvider implementation

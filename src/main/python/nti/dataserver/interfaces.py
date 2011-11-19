@@ -1,6 +1,7 @@
 #!/usr/bin/env python2.7
 
 import warnings
+import itertools
 
 from zope import interface, schema
 
@@ -164,6 +165,12 @@ class IContainerIterable(interface.Interface):
 
 ### Groups/Roles/ACLs
 
+# some aliases
+from zope.security.interfaces import IPrincipal
+from zope.security.interfaces import IGroup
+from zope.security.interfaces import IGroupAwarePrincipal
+from zope.security.interfaces import IPermission
+
 class IGroupMember(interface.Interface):
 	"""
 	Something that can report on the groups
@@ -171,8 +178,26 @@ class IGroupMember(interface.Interface):
 	"""
 
 	groups = schema.Iterable(
-		title=u'Iterate across the names of the groups')
+		title=u'Iterate across the IGroups belonged to.')
 
+IGroupAwarePrincipal.__bases__ = tuple( itertools.chain( IGroupAwarePrincipal.__bases__, (IGroupMember,) ))
+
+class IACL(interface.Interface):
+	"""
+	Something that can iterate across access control entries.
+	"""
+
+	def __iter__():
+		"""
+		Iterates across access control entries.
+		"""
+
+class IACLProvider(interface.Interface):
+	"""
+	Something that can provide an ACL for itself.
+	"""
+
+	__acl__ = interface.Attribute( "An IACL" )
 
 ### Content
 
