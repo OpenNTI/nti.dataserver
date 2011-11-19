@@ -97,7 +97,7 @@ class PunktLanguageVars(object):
 		"""Tokenize a string to split of punctuation other than periods"""
 		result = self._word_tokenizer_re().findall(s)
 		if remove_punkt and wordpat:
-			result = re.findall(wordpat, s)
+			result = re.findall(wordpat, ' '.join(result))
 		return result
 		
 	_period_context_fmt = r"""
