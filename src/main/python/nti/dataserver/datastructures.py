@@ -618,6 +618,9 @@ class PersistentExternalizableWeakList(PersistentExternalizableList):
 	def __eq__( self, other ):
 		# If we just compare lists, weak refs will fail badly
 		# if they're compared with non-weak refs
+		if not isinstance( other, collections.Sequence ):
+			return False
+
 		result = False
 		if len(self) == len(other):
 			result = True
@@ -826,6 +829,20 @@ class ContainedStorage(persistent.Persistent,ModDateTrackingObject):
 		if not hasattr( self, 'set_ids' ):
 			self.set_ids = True
 		self._setup()
+
+	def __setattr__( self, name, value ):
+		changed = self._p_changed
+		super(ContainedStorage,self).__setattr__( name, value )
+		# Our volatile attributes should not upset our changed state!
+		# Unfortunately, we really have to force this.
+		if not changed and (name.startswith( '_v_') or name in ('afterAddContainedObject',
+															   'afterGetContainedObject',
+															   'afterDeleteContainedObject')):
+			self._p_changed = False
+			if self._p_jar \
+				and self in getattr( self._p_jar, '_registered_objects', ()) \
+				and self not in getattr( self._p_jar, '_added', () ):
+				getattr( self._p_jar, '_registered_objects' ).remove( self )
 
 	def addContainer( self, containerId, container ):
 		"""

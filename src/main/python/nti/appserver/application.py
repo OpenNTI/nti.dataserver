@@ -475,7 +475,7 @@ def _configure_logging():
 	# TODO: Where should logging in these background processes be configured?
 	logging.basicConfig( level=logging.DEBUG )
 	logging.getLogger( 'nti' ).setLevel( logging.DEBUG )
-	logging.root.handlers[0].setFormatter( logging.Formatter( '[%(name)s] %(levelname)s: %(message)s' ) )
+	logging.root.handlers[0].setFormatter( logging.Formatter( '%(asctime)s [%(name)s] %(levelname)s: %(message)s' ) )
 
 
 def _add_sharing_listener( server ):

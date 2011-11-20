@@ -75,7 +75,7 @@ def launch_python_daemon( flag_file, path, args, daemon=None, **kwargs ):
 		# make sure we always launch the uncompiled version to avoid
 		# conflict warnings
 		path = path[0:-1]
-		
+
 	path_and_args = ' '.join( ([sys.executable, path] + args) )
 	args = [sys.executable, zdaemon.zdctl.__file__]
 	config_file = os.path.expanduser( flag_file + '.zconf.xml' )
@@ -160,13 +160,14 @@ def load_func( module_name, local_name ):
 def _run_main(args=None):
 	if args is None:
 		args = sys.argv[1:]
-		
+
 	if args[0] == '--func':
 		# TODO: Configuration.
 		# TODO: Logging. Notice this conflicts with
 		# application.py
 		logging.basicConfig( level=logging.WARN )
 		logging.getLogger( 'nti' ).setLevel( logging.DEBUG )
+		logging.root.handlers[0].setFormatter( logging.Formatter( '%(asctime)s [%(name)s] %(levelname)s: %(message)s' ) )
 
 		func = load_func( args[1], args[2] )
 		func( *args[3:] )

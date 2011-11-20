@@ -46,8 +46,6 @@ from . import _PubSubDevice
 from . import interfaces
 
 
-
-
 DEFAULT_PASSWORD = "temp001"
 
 ###
@@ -553,7 +551,9 @@ class Dataserver(MinimalDataserver):
 		self.session_manager = self._setup_session_manager( sdb )
 		self.chatserver = self._setup_chat( room_name, tran_name )
 
-		self._apns = self._setup_apns( apnsCertFile )
+		self._apnsCertFile = apnsCertFile
+		self._apns = self
+
 
 		# A topic that broadcasts Change events
 		self.changePublisherStream, self.other_closeables = self._setup_change_distribution()
@@ -641,6 +641,13 @@ class Dataserver(MinimalDataserver):
 
 	@property
 	def apns(self):
+		if self._apns is self:
+			try:
+				self._apns = self._setup_apns( self._apnsCertFile )
+			except Exception:
+				# Probably a certificate problem
+				logger.warn( "Failed to create APNS connection. Notifications not available" )
+				self._apns = None
 		return self._apns
 
 
@@ -687,7 +694,7 @@ class Dataserver(MinimalDataserver):
 						if datastructures.toExternalOID(_change)}
 				if oids:
 					oids = list(oids)
-					logger.debug( "Enqueuing change OIDs %s %s", oids, os.getpid() )
+					logger.debug( "Enqueuing change OIDs %s in %s(%s)", oids, os.getpid(), self )
 					try:
 						self.ds.changePublisherStream.put_nowait( oids )
 					except:
@@ -698,6 +705,12 @@ class Dataserver(MinimalDataserver):
 
 				if len(oids) != len(self._changes):
 					logger.warning( 'Dropping non-externalized change on the floor!' )
+
+				# We are a one-shot object. Changes go or they don't.
+				self._changes = []
+
+		def __repr__(self):
+			return "<%s.%s object at %s %s>" % (self.__class__.__module__, self.__class__.__name__, id(self), self.kwargs)
 
 	def enqueue_change( self, change, **kwargs ):
 		""" Distributes a change to all the queued listener functions.
@@ -742,7 +755,8 @@ class Dataserver(MinimalDataserver):
 		tries = 5
 		while tries and not done:
 			try:
-				with self.dbTrans():
+				with self.dbTrans() as conn:
+					conn._storage_sync()
 					for oid in msg:
 						_change = self.get_by_oid( oid )
 						change = _change.change
@@ -750,16 +764,14 @@ class Dataserver(MinimalDataserver):
 						for changeListener in self.changeListeners:
 							try:
 								changeListener( self, change, **_change.meta )
-							except Exception, e:
+							except Exception as e:
 								logger.exception( "Failed to distribute change to %s", changeListener )
 				done = True
 				break
 			except transaction.interfaces.TransientError as e:
-				logger.exception( "Retrying to distribute change" )
+				logger.warn( "Retrying to distribute change", exc_info=True )
 				tries -= 1
 				# Give things a chance to settle.
-				# TODO: Is this right?
-				self.db.invalidateCache()
 				gevent.sleep( 0.5 )
 			except Exception as e:
 				logger.exception( "Failed to distribute change" )
@@ -924,6 +936,10 @@ class Dataserver(MinimalDataserver):
 			except KeyError: continue
 			if getattr( o, 'lastModified', None ) == 0:
 				o.lastModified = 42
+			cs = getattr( o, 'containersOfShared', None )
+			if cs is not None and not hasattr( cs, 'set_ids' ):
+				cs.set_ids = False
+				logger.info( "Updated containersOfShared on %s", key )
 
 		logger.info( 'done migrating users' )
 
@@ -949,6 +965,7 @@ class _ChangeReceivingDataserver(Dataserver):
 					msg = changeSubscriber.recv_multipart()
 					try:
 						logger.debug( "Received change %s %s", msg, os.getpid() )
+						self.db.invalidateCache()
 						self._on_recv_change( msg )
 						logger.debug( "Done processing change %s", os.getpid() )
 					except Exception:
@@ -983,9 +1000,6 @@ class _ChangeReceivingDataserver(Dataserver):
 		pass
 
 	def _setupPresence( self ):
-		pass
-
-	def _setup_apns( self, apnsCertFile ):
 		pass
 
 	# sessions and chat are required in the background processes

@@ -1007,18 +1007,23 @@ class Chatserver(object):
 			session.protocol_handler.send_event( name, *args )
 
 	### General events
+	# We are directing these events to all sessions connected for the user
+	def _notify_target( self, target, meth_name, *args ):
+		candidates = list( self.sessions.get_sessions_by_owner( target ) )
+		candidates.sort( key=lambda x: x.creation_time, reverse=True )
+		for sess in candidates:
+			try:
+				getattr( self.handlerFor( sess ),
+						 meth_name )( sess, *args )
+			except Exception:
+				logger.exception( "Failed to %s to %s", meth_name, sess )
 
 	def notify_presence_change( self, sender, new_presence, targets ):
 		for target in set(targets):
-			sess = self.get_session_for( target )
-
-			if sess:
-				self.handlerFor( sess ).emit_presenceOfUserChangedTo( sess, sender, new_presence )
+			self._notify_target( target, 'emit_presenceOfUserChangedTo', sender, new_presence )
 
 	def notify_data_change( self, target, change ):
-		sess = self.get_session_for( target )
-		if sess:
-			self.handlerFor( sess ).emit_data_noticeIncomingChange( sess, change )
+		self._notify_target( target, 'emit_data_noticeIncomingChange', change )
 
 	### Rooms
 

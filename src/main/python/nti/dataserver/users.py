@@ -1,3 +1,4 @@
+#!/usr/bin/env python2.7
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -305,7 +306,10 @@ class SharingTarget(Entity):
 			self._sources_not_accepted = OOTreeSet( getattr( self, '_sources_not_accepted', set() ) )
 		if isinstance( getattr( self, '_sources_accepted', set() ), set ):
 			self._sources_accepted = OOTreeSet( getattr( self, '_sources_accepted', set() ) )
-		self.containersOfShared.set_ids = False
+		if getattr( self.containersOfShared, 'set_ids', True ):
+			# So in __setstate__, it's critical to not modify
+			# other objects unless they require it.
+			self.containersOfShared.set_ids = False
 
 	def _discard( self, s, k ):
 		try:
