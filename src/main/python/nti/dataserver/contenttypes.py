@@ -1,5 +1,6 @@
 """ This module defines the content types that users can create within the system. """
-
+import logging
+logger = logging.getLogger( __name__ )
 import persistent
 import collections
 import numbers
@@ -386,12 +387,16 @@ class CanvasShape(_UserContentRoot,datastructures.ExternalizableInstanceDict):
 			stroke_color = parsed.pop( colName, None )    # "rgb(r,g,b)"
 			stroke_opacity = parsed.pop( opacName, None ) # float
 			if stroke_color:
-				r, g, b = map( float, stroke_color.strip()[4:-1].split( ',' ) )
-				assert( 0.0 <= r <= 255.0 )
-				assert( 0.0 <= g <= 255.0 )
-				assert( 0.0 <= b <= 255.0 )
-				arr[0], arr[1], arr[2] = r, g, b
-				self._p_changed = True
+				try:
+					r, g, b = map( float, stroke_color.strip()[4:-1].split( ',' ) )
+				except ValueError:
+					logger.warn( "Bad data for %s: %s", colName, stroke_color )
+				else:
+					assert( 0.0 <= r <= 255.0 )
+					assert( 0.0 <= g <= 255.0 )
+					assert( 0.0 <= b <= 255.0 )
+					arr[0], arr[1], arr[2] = r, g, b
+					self._p_changed = True
 			if stroke_opacity is not None:
 				assert( 0.0 <= stroke_opacity <= 1.0 )
 				# opacity and alpha are exactly the same,

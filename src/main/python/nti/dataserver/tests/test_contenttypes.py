@@ -207,6 +207,12 @@ def test_update_shape_rgba():
 	assert_that( c.strokeColor, is_( "rgb(221.0,128.1,21.0)" ) )
 	assert_that( c.strokeRGBAColor, is_( "221.0 128.1 21.0 0.75" ) )
 
+	# bad values don't change anything
+	c.updateFromExternalObject( { 'strokeColor': "rgb( 21.0, 18.1, F0   )" } )
+	assert_that( c.strokeOpacity, is_( 0.75 ) )
+	assert_that( c.strokeColor, is_( "rgb(221.0,128.1,21.0)" ) )
+	assert_that( c.strokeRGBAColor, is_( "221.0 128.1 21.0 0.75" ) )
+
 def test_update_stroke_width( ):
 	c = CanvasShape()
 
