@@ -187,9 +187,15 @@ def test_update_shape_rgba():
 	c.updateFromExternalObject( { 'strokeRGBAColor': "1.0 2.0 3.0" } )
 	assert_that( c.strokeColor, is_( "rgb(1.0,2.0,3.0)" ) )
 	assert_that( c.strokeOpacity, is_( 1.0 ) )
+
 	c.updateFromExternalObject( { 'strokeRGBAColor': "1.0 2.0 3.0 0.5" } )
 	assert_that( c.strokeOpacity, is_( 0.5 ) )
 	assert_that( c.strokeColor, is_( "rgb(1.0,2.0,3.0)" ) )
+
+	# Updating again doesn't change opacity
+	c.updateFromExternalObject( { 'strokeRGBAColor': "1.0 2.0 3.0" } )
+	assert_that( c.strokeColor, is_( "rgb(1.0,2.0,3.0)" ) )
+	assert_that( c.strokeOpacity, is_( 0.5 ) )
 
 	c.updateFromExternalObject( { 'strokeOpacity': 0.75 } )
 	assert_that( c.strokeColor, is_( "rgb(1.0,2.0,3.0)" ) )

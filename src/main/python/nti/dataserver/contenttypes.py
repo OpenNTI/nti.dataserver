@@ -399,9 +399,9 @@ class CanvasShape(_UserContentRoot,datastructures.ExternalizableInstanceDict):
 				arr[3] = stroke_opacity
 				self._p_changed = True
 
-		def update_from_rgba( arr, string ):
+		def update_from_rgba( arr, string, alpha=1.0 ):
 			rgba = string.split( ' ' )
-			if len(rgba) == 3: rgba = list(rgba); rgba.append( 1.0 )
+			if len(rgba) == 3: rgba = list(rgba); rgba.append( alpha )
 			r, g, b, a = map( float, rgba )
 			assert( 0.0 <= r <= 255.0 )
 			assert( 0.0 <= g <= 255.0 )
@@ -412,11 +412,11 @@ class CanvasShape(_UserContentRoot,datastructures.ExternalizableInstanceDict):
 			self._p_changed = True
 
 		if stroke_rgba_string is not None:
-			update_from_rgba( self._stroke_rgba, stroke_rgba_string )
+			update_from_rgba( self._stroke_rgba, stroke_rgba_string, self.strokeOpacity )
 		else:
 			update_from_rgb_opacity( self._stroke_rgba, 'strokeColor', 'strokeOpacity' )
 		if fill_rgba_string is not None:
-			update_from_rgba( self._fill_rgba, fill_rgba_string )
+			update_from_rgba( self._fill_rgba, fill_rgba_string, self.fillOpacity )
 		else:
 			update_from_rgb_opacity( self._fill_rgba, 'fillColor', 'fillOpacity' )
 
