@@ -90,13 +90,13 @@ struct WBObject : Object {
 
 struct CanvasAffineTransform { //Notice: This is NOT an Object.
 	float a, b, c, d, tx, ty;
-	string strokeColor, fillColor;
-	string strokeWidth;
-	string strokeRGBAColor, fillRGBAColor;
 }
 
 struct CanvasShape : WBObject {
 	CanvasAffineTransform transform;
+	string strokeColor, fillColor;
+	string strokeWidth;
+	string strokeRGBAColor, fillRGBAColor;
 }
 
 struct CanvasPolygonShape : CanvasShape {
