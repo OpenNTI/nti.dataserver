@@ -930,6 +930,9 @@ class Dataserver(MinimalDataserver):
 		# Thus we must materialize the set of keys
 		# before we begin to get everything.
 
+		if getattr( usersContainer['Everyone'], 'creator', '') != 'zope.security.management.system_user':
+			usersContainer['Everyone'].creator = 'zope.security.management.system_user'
+
 		for key in list(usersContainer.keys()):
 			try:
 				o = usersContainer[key]
@@ -940,6 +943,15 @@ class Dataserver(MinimalDataserver):
 			if cs is not None and not hasattr( cs, 'set_ids' ):
 				cs.set_ids = False
 				logger.info( "Updated containersOfShared on %s", key )
+			try:
+				everyone = o.friendsLists['Everyone']
+				if getattr( o.friendsLists['Everyone'], 'creator', '') != 'zope.security.management.system_user':
+					delattr( o.friendsLists['Everyone'], 'creator' )
+					logger.info( "Updated everyone for %s", key )
+			except (KeyError,AttributeError):
+				pass
+			except Exception:
+				logger.exception( "Failed to update %s", key )
 
 		logger.info( 'done migrating users' )
 

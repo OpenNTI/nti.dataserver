@@ -256,6 +256,8 @@ class TranscriptSummary(datastructures.ExternalizableInstanceDict):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	__parent__ = None
 	links = ()
+	creator = nti_interfaces.SYSTEM_USER_NAME
+
 
 	def __init__( self, meeting_storage ):
 		"""

@@ -171,6 +171,8 @@ from zope.security.interfaces import IGroup
 from zope.security.interfaces import IGroupAwarePrincipal
 from zope.security.interfaces import IPermission
 
+SYSTEM_USER_NAME = 'zope.security.management.system_user'
+
 class IGroupMember(interface.Interface):
 	"""
 	Something that can report on the groups

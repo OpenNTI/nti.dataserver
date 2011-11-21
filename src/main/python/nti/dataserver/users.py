@@ -87,6 +87,8 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject,d
 		dataserver = dataserver or _get_shared_dataserver()
 		return  dataserver and dataserver.root[_namespace].get( username, default )
 
+	creator = nti_interfaces.SYSTEM_USER_NAME
+
 	def __init__(self, username, avatarURL=None, realname=None, alias=None):
 		super(Entity,self).__init__()
 		if not username or '%' in username:
