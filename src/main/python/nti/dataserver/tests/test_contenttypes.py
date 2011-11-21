@@ -156,8 +156,8 @@ class TestCanvas(unittest.TestCase):
 		ext = canvas.toExternalObject()
 		tx_ext = {'Class': 'CanvasAffineTransform', 'a': 1, 'b': 0, 'c': 0, 'd': 1, 'tx': 0, 'ty': 0 }
 
-		def_fill_stroke = {'strokeRGBAColor': '255.0 255.0 255.0 1.0',
-						   'fillRGBAColor': '255.0 255.0 255.0 0.0',
+		def_fill_stroke = {'strokeRGBAColor': '1.000 1.000 1.000 1.00',
+						   'fillRGBAColor': '1.000 1.000 1.000 0.00',
 						   'strokeOpacity': 1.0,
 						   'strokeWidth': '1.0pt',
 						   'fillColor': 'rgb(255.0,255.0,255.0)',
@@ -184,34 +184,34 @@ class TestCanvas(unittest.TestCase):
 
 def test_update_shape_rgba():
 	c = CanvasShape()
-	c.updateFromExternalObject( { 'strokeRGBAColor': "1.0 2.0 3.0" } )
-	assert_that( c.strokeColor, is_( "rgb(1.0,2.0,3.0)" ) )
+	c.updateFromExternalObject( { 'strokeRGBAColor': "1.0 0.5 0.5" } )
+	assert_that( c.strokeColor, is_( "rgb(255.0,127.5,127.5)" ) )
 	assert_that( c.strokeOpacity, is_( 1.0 ) )
 
-	c.updateFromExternalObject( { 'strokeRGBAColor': "1.0 2.0 3.0 0.5" } )
+	c.updateFromExternalObject( { 'strokeRGBAColor': "1.0 0.5 0.3 0.5" } )
 	assert_that( c.strokeOpacity, is_( 0.5 ) )
-	assert_that( c.strokeColor, is_( "rgb(1.0,2.0,3.0)" ) )
+	assert_that( c.strokeColor, is_( "rgb(255.0,127.5,76.5)" ) )
 
 	# Updating again doesn't change opacity
-	c.updateFromExternalObject( { 'strokeRGBAColor': "1.0 2.0 3.0" } )
-	assert_that( c.strokeColor, is_( "rgb(1.0,2.0,3.0)" ) )
+	c.updateFromExternalObject( { 'strokeRGBAColor': "1.0 0.5 0.5" } )
+	assert_that( c.strokeColor, is_( "rgb(255.0,127.5,127.5)" ) )
 	assert_that( c.strokeOpacity, is_( 0.5 ) )
 
 	c.updateFromExternalObject( { 'strokeOpacity': 0.75 } )
-	assert_that( c.strokeColor, is_( "rgb(1.0,2.0,3.0)" ) )
+	assert_that( c.strokeColor, is_( "rgb(255.0,127.5,127.5)" ) )
 	assert_that( c.strokeOpacity, is_( 0.75 ) )
-	assert_that( c.strokeRGBAColor, is_( "1.0 2.0 3.0 0.75" ) )
+	assert_that( c.strokeRGBAColor, is_( "1.000 0.500 0.500 0.75" ) )
 
 	c.updateFromExternalObject( { 'strokeColor': "rgb( 221.0, 128.1,21.0   )" } )
 	assert_that( c.strokeOpacity, is_( 0.75 ) )
 	assert_that( c.strokeColor, is_( "rgb(221.0,128.1,21.0)" ) )
-	assert_that( c.strokeRGBAColor, is_( "221.0 128.1 21.0 0.75" ) )
+	assert_that( c.strokeRGBAColor, is_( "0.867 0.502 0.082 0.75" ) )
 
 	# bad values don't change anything
 	c.updateFromExternalObject( { 'strokeColor': "rgb( 21.0, 18.1, F0   )" } )
 	assert_that( c.strokeOpacity, is_( 0.75 ) )
 	assert_that( c.strokeColor, is_( "rgb(221.0,128.1,21.0)" ) )
-	assert_that( c.strokeRGBAColor, is_( "221.0 128.1 21.0 0.75" ) )
+
 
 def test_update_stroke_width( ):
 	c = CanvasShape()

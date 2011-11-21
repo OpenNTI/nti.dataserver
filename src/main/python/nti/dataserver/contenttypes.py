@@ -326,8 +326,8 @@ class CanvasShape(_UserContentRoot,datastructures.ExternalizableInstanceDict):
 		# We expose stroke and fill properties optimized
 		# for both Web and iPad. The iPad format is a superset
 		# of the other format and so that's what we store
-		self._stroke_rgba = [255.0, 255.0, 255.0, 1.0]
-		self._fill_rgba = [255.0, 255.0, 255.0, 0.0]
+		self._stroke_rgba = [1.0, 1.0, 1.0, 1.0]
+		self._fill_rgba = [1.0, 1.0, 1.0, 0.0]
 		# stroke width is the same both places, and stored in pts.
 		self._stroke_width = 1.0
 
@@ -353,13 +353,13 @@ class CanvasShape(_UserContentRoot,datastructures.ExternalizableInstanceDict):
 
 	@property
 	def strokeRGBAColor(self):
-		return ' '.join( map( str, self._stroke_rgba ) )
+		return "{:.3f} {:.3f} {:.3f} {:.2f}".format( *self._stroke_rgba )
 	@property
 	def fillRGBAColor(self):
-		return ' '.join( map( str, self._fill_rgba ) )
+		return "{:.3f} {:.3f} {:.3f} {:.2f}".format( *self._fill_rgba )
 	@property
 	def strokeColor(self):
-		return "rgb({:.1f},{:.1f},{:.1f})".format( *self._stroke_rgba[0:3] )
+		return "rgb({:.1f},{:.1f},{:.1f})".format( *[x * 255.0 for x in self._stroke_rgba[0:3]] )
 	@property
 	def strokeOpacity(self):
 		return self._stroke_rgba[3]
@@ -368,7 +368,7 @@ class CanvasShape(_UserContentRoot,datastructures.ExternalizableInstanceDict):
 		return "%.1fpt" % self._stroke_width
 	@property
 	def fillColor(self):
-		return "rgb({:.1f},{:.1f},{:.1f})".format( *self._fill_rgba[0:3] )
+		return "rgb({:.1f},{:.1f},{:.1f})".format( *[x * 255.0 for x in self._fill_rgba[0:3]] )
 	@property
 	def fillOpacity(self):
 		return self._fill_rgba[3]
@@ -395,7 +395,7 @@ class CanvasShape(_UserContentRoot,datastructures.ExternalizableInstanceDict):
 					assert( 0.0 <= r <= 255.0 )
 					assert( 0.0 <= g <= 255.0 )
 					assert( 0.0 <= b <= 255.0 )
-					arr[0], arr[1], arr[2] = r, g, b
+					arr[0], arr[1], arr[2] = r / 255.0, g / 255.0, b / 255.0
 					self._p_changed = True
 			if stroke_opacity is not None:
 				assert( 0.0 <= stroke_opacity <= 1.0 )
@@ -408,9 +408,9 @@ class CanvasShape(_UserContentRoot,datastructures.ExternalizableInstanceDict):
 			rgba = string.split( ' ' )
 			if len(rgba) == 3: rgba = list(rgba); rgba.append( alpha )
 			r, g, b, a = map( float, rgba )
-			assert( 0.0 <= r <= 255.0 )
-			assert( 0.0 <= g <= 255.0 )
-			assert( 0.0 <= b <= 255.0 )
+			assert( 0.0 <= r <= 1.0 )
+			assert( 0.0 <= g <= 1.0 )
+			assert( 0.0 <= b <= 1.0 )
 			arr[0], arr[1], arr[2] = r, g, b
 			assert( 0.0 <= a <= 1.0 )
 			arr[3] = a
