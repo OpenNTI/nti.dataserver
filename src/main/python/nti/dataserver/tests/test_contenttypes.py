@@ -184,7 +184,9 @@ class TestCanvas(unittest.TestCase):
 
 def test_update_shape_rgba():
 	c = CanvasShape()
-
+	c.updateFromExternalObject( { 'strokeRGBAColor': "1.0 2.0 3.0" } )
+	assert_that( c.strokeColor, is_( "rgb(1.0,2.0,3.0)" ) )
+	assert_that( c.strokeOpacity, is_( 1.0 ) )
 	c.updateFromExternalObject( { 'strokeRGBAColor': "1.0 2.0 3.0 0.5" } )
 	assert_that( c.strokeOpacity, is_( 0.5 ) )
 	assert_that( c.strokeColor, is_( "rgb(1.0,2.0,3.0)" ) )

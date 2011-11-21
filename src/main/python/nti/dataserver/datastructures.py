@@ -301,6 +301,8 @@ class LocatedExternalDict(dict):
 	by toExternalDictionary.
 	"""
 	interface.implements( ILocation )
+	__name__ = ''
+	__parent__ = None
 
 class LocatedExternalList(list):
 	"""
@@ -308,6 +310,8 @@ class LocatedExternalList(list):
 	by toExternalObject.
 	"""
 	interface.implements( ILocation )
+	__name__ = ''
+	__parent__ = None
 
 def toExternalDictionary( self, mergeFrom=None, name=_ex_name_marker, registry=component):
 	""" Returns a dictionary of the object's contents. The super class's

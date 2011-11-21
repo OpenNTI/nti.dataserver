@@ -400,7 +400,9 @@ class CanvasShape(_UserContentRoot,datastructures.ExternalizableInstanceDict):
 				self._p_changed = True
 
 		def update_from_rgba( arr, string ):
-			r, g, b, a = map( float, string.split( ' ' ) )
+			rgba = string.split( ' ' )
+			if len(rgba) == 3: rgba = list(rgba); rgba.append( 1.0 )
+			r, g, b, a = map( float, rgba )
 			assert( 0.0 <= r <= 255.0 )
 			assert( 0.0 <= g <= 255.0 )
 			assert( 0.0 <= b <= 255.0 )
