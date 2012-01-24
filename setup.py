@@ -92,7 +92,7 @@ setup(
                         ],
     extras_require = {'test': ['z3c.coverage', 'zope.testing', 'zc.buildout']},
 	dependency_links = ['http://svn.wikimedia.org/svnroot/pywikipedia/trunk/pywikipedia/'],
-    packages = find_packages('.'),
+    packages = find_packages('src'),
     package_dir = {'': '.'},
     include_package_data = False,
     zip_safe = False,
