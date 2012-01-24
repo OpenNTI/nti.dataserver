@@ -1,0 +1,68 @@
+<?xml version="1.0" ?>
+<toc NTIRelativeScrollHeight="11990" href="index.html" icon="icons/chapters/PreAlgebra-cov-icon.png"
+    label="Prealgebra" ntiid="aops-prealgebra-31">
+    <topic NTIRelativeScrollHeight="2155" href="chapter-arithmetic.html"
+        icon="icons/chapters/C1.png" label="Properties of Arithmetic" ntiid="aops-prealgebra-10">
+        <topic NTIRelativeScrollHeight="49401" href="sect0001.html"
+            label="Why Start with Arithmetic?" ntiid="aops-prealgebra-0"/>
+        <topic NTIRelativeScrollHeight="65601" href="sect0002.html" label="Addition"
+            ntiid="aops-prealgebra-1"/>
+        <topic NTIRelativeScrollHeight="93508" href="sec-multiplication.html" label="Multiplication"
+            ntiid="aops-prealgebra-2"/>
+        <topic NTIRelativeScrollHeight="76248" href="sec-negation.html" label="Negation"
+            ntiid="aops-prealgebra-3"/>
+        <topic NTIRelativeScrollHeight="73034" href="sec-subtraction.html" label="Subtraction"
+            ntiid="aops-prealgebra-4"/>
+        <topic NTIRelativeScrollHeight="51971" href="sect0003.html" label="Reciprocals"
+            ntiid="aops-prealgebra-5"/>
+        <topic NTIRelativeScrollHeight="86513" href="sec-division.html" label="Division"
+            ntiid="aops-prealgebra-6"/>
+        <topic NTIRelativeScrollHeight="26088" href="sect0004.html" label="Summary"
+            ntiid="aops-prealgebra-7"/>
+        <topic NTIRelativeScrollHeight="8520" href="sect0005.html" label="Review Problems"
+            ntiid="aops-prealgebra-8"/>
+        <topic NTIRelativeScrollHeight="16454" href="sect0006.html" label="Challenge Problems"
+            ntiid="aops-prealgebra-9"/>
+    </topic>
+    <topic NTIRelativeScrollHeight="11979" href="chapter-exponents.html"
+        icon="icons/chapters/C2.png" label="Exponents" ntiid="aops-prealgebra-18">
+        <topic NTIRelativeScrollHeight="89041" href="sect0007.html" label="Squares"
+            ntiid="aops-prealgebra-11"/>
+        <topic NTIRelativeScrollHeight="108511" href="sec-highexp.html" label="Higher Exponents"
+            ntiid="aops-prealgebra-12"/>
+        <topic NTIRelativeScrollHeight="29173" href="sect0008.html" label="Zero as an Exponent"
+            ntiid="aops-prealgebra-13"/>
+        <topic NTIRelativeScrollHeight="98865" href="sec-negativeexponent.html"
+            label="Negative Exponents" ntiid="aops-prealgebra-14"/>
+        <topic NTIRelativeScrollHeight="7031" href="sect0009.html" label="Summary"
+            ntiid="aops-prealgebra-15"/>
+        <topic NTIRelativeScrollHeight="15531" href="sect0010.html" label="Review Problems"
+            ntiid="aops-prealgebra-16"/>
+        <topic NTIRelativeScrollHeight="16516" href="sect0011.html" label="Challenge Problems"
+            ntiid="aops-prealgebra-17"/>
+    </topic>
+    <topic NTIRelativeScrollHeight="3795" href="chap-numthy.html" icon="icons/chapters/C3.png"
+        label="Number Theory" ntiid="aops-prealgebra-29">
+        <topic NTIRelativeScrollHeight="81201" href="sec-multiples.html" label="Multiples"
+            ntiid="aops-prealgebra-19"/>
+        <topic NTIRelativeScrollHeight="127681" href="sect0012.html" label="Divisibility Tests"
+            ntiid="aops-prealgebra-20"/>
+        <topic NTIRelativeScrollHeight="111331" href="sect0013.html" label="Prime Numbers"
+            ntiid="aops-prealgebra-21"/>
+        <topic NTIRelativeScrollHeight="120044" href="sect0014.html" label="Prime Factorization"
+            ntiid="aops-prealgebra-22"/>
+        <topic NTIRelativeScrollHeight="143428" href="sec-lcm.html" label="Least Common Multiple"
+            ntiid="aops-prealgebra-23"/>
+        <topic NTIRelativeScrollHeight="66594" href="sect0015.html" label="Divisors"
+            ntiid="aops-prealgebra-24"/>
+        <topic NTIRelativeScrollHeight="164402" href="sect0016.html" label="Greatest Common Divisor"
+            ntiid="aops-prealgebra-25"/>
+        <topic NTIRelativeScrollHeight="24581" href="sect0017.html" label="Summary"
+            ntiid="aops-prealgebra-26"/>
+        <topic NTIRelativeScrollHeight="24905" href="sect0018.html" label="Review Problems"
+            ntiid="aops-prealgebra-27"/>
+        <topic NTIRelativeScrollHeight="25124" href="sect0019.html" label="Challenge Problems"
+            ntiid="aops-prealgebra-28"/>
+    </topic>
+    <topic href="sect0020.html" label="Index"/>
+</toc>

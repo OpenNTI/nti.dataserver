@@ -1,0 +1,137 @@
+<?xml version="1.0"?>
+<rdf:RDF
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns:gss="http://www.w3.org/2001/11/IsaViz/graphstylesheets#"
+    xmlns:nti="http://nextthought.com/xml/v1/"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+    xmlns:dc="http://http://purl.org/dc/elements/1.1/"
+    xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+  xml:base="file:/Users/jmadden/Projects/AoPS/src/main/python/rdf/foaf.gss">
+  <rdf:Description rdf:ID="DashPropStyle">
+    <gss:stroke-width>2.0</gss:stroke-width>
+    <gss:stroke-dasharray>10.0,20.0</gss:stroke-dasharray>
+  </rdf:Description>
+  <gss:Resource>
+    <gss:style>
+      <rdf:Description rdf:ID="DocumentStyle">
+        <gss:shape>{20.0,-30.0;20.0,15.0;5.0,30.0;-30.0,30.0;-30.0,-30.0}</gss:shape>
+        <gss:text-align rdf:resource="http://www.w3.org/2001/11/IsaViz/graphstylesheets#Below"/>
+      </rdf:Description>
+    </gss:style>
+    <gss:style>
+      <rdf:Description rdf:ID="WebPageStyle">
+        <gss:fill>rgb(100,149,237)</gss:fill>
+        <gss:stroke>rgb(25,137,67)</gss:stroke>
+      </rdf:Description>
+    </gss:style>
+    <gss:subjectOfStatement rdf:parseType="Resource">
+      <gss:predicate rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#type"/>
+      <gss:object rdf:parseType="Resource">
+        <gss:value>http://nextthought.com/xml/v1/Section</gss:value>
+      </gss:object>
+    </gss:subjectOfStatement>
+  </gss:Resource>
+  <rdf:Description rdf:ID="MiscInfoStyle">
+    <gss:fill>rgb(176,242,202)</gss:fill>
+    <gss:stroke>rgb(17,95,48)</gss:stroke>
+  </rdf:Description>
+  <gss:Property>
+    <gss:display rdf:resource="http://www.w3.org/2001/11/IsaViz/graphstylesheets#None"/>
+    <gss:uriEquals rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#type"/>
+  </gss:Property>
+  <gss:Property>
+    <gss:display rdf:resource="http://www.w3.org/2001/11/IsaViz/graphstylesheets#None"/>
+    <gss:uriEquals rdf:resource="http://http://purl.org/dc/elements/1.1/Title"/>
+  </gss:Property>
+  <gss:Property>
+    <gss:display rdf:resource="http://www.w3.org/2001/11/IsaViz/graphstylesheets#None"/>
+    <gss:uriEquals rdf:resource="http://www.w3.org/2000/01/rdf-schema#label"/>
+  </gss:Property>
+  <gss:Property>
+    <gss:display rdf:resource="http://www.w3.org/2001/11/IsaViz/graphstylesheets#None"/>
+    <gss:uriEquals rdf:resource="http://nextthought.com/xml/v1/sectionOf2"/>
+  </gss:Property>
+  <gss:Property>
+    <gss:display rdf:resource="http://www.w3.org/2001/11/IsaViz/graphstylesheets#None"/>
+    <gss:uriEquals rdf:resource="http://nextthought.com/xml/v1/Require"/>
+    <gss:predicateOfStatement rdf:parseType="Resource">
+      <gss:subject rdf:parseType="Resource">
+        <gss:class rdf:resource="http://nextthought.com/xml/v1/Chapter"/>
+      </gss:subject>
+    </gss:predicateOfStatement>
+  </gss:Property>
+  <gss:Property>
+    <gss:display rdf:resource="http://www.w3.org/2001/11/IsaViz/graphstylesheets#None"/>
+    <gss:uriEquals rdf:resource="http://nextthought.com/xml/v1/Provide"/>
+    <gss:predicateOfStatement rdf:parseType="Resource">
+      <gss:subject rdf:parseType="Resource">
+        <gss:class rdf:resource="http://nextthought.com/xml/v1/Chapter"/>
+      </gss:subject>
+    </gss:predicateOfStatement>
+  </gss:Property>
+  <gss:Property>
+    <gss:style rdf:resource="file:/Users/jmadden/Projects/AoPS/src/main/python/rdf/foaf.gss#WebPageStyle"/>
+    <gss:uriEquals rdf:resource="http://xmlns.com/foaf/0.1/homepage"/>
+  </gss:Property>
+  <gss:Resource>
+    <gss:style>
+      <rdf:Description rdf:ID="ChatStyle">
+        <gss:fill>rgb(94,228,148)</gss:fill>
+        <gss:stroke>rgb(17,95,48)</gss:stroke>
+      </rdf:Description>
+    </gss:style>
+    <gss:objectOfStatement rdf:parseType="Resource">
+      <gss:predicate rdf:resource="http://xmlns.com/foaf/0.1/nick"/>
+    </gss:objectOfStatement>
+  </gss:Resource>
+  <rdf:Description rdf:ID="DefaultFoafStyle">
+    <gss:stroke>rgb(31,171,84)</gss:stroke>
+  </rdf:Description>
+  <gss:Resource>
+    <gss:sortPropertiesBy>
+      <rdf:Description rdf:ID="NameSorting">
+        <rdf:li rdf:resource="http://xmlns.com/foaf/0.1/title"/>
+        <rdf:li rdf:resource="http://xmlns.com/foaf/0.1/surname"/>
+        <rdf:li rdf:resource="http://xmlns.com/foaf/0.1/firstName"/>
+        <rdf:li rdf:resource="http://xmlns.com/foaf/0.1/family_name"/>
+        <rdf:li rdf:resource="http://xmlns.com/foaf/0.1/givenname"/>
+        <rdf:li rdf:resource="http://xmlns.com/foaf/0.1/name"/>
+        <rdf:li rdf:resource="http://xmlns.com/foaf/0.1/phone"/>
+        <rdf:li rdf:resource="http://xmlns.com/foaf/0.1/mbox"/>
+        <rdf:li rdf:resource="http://xmlns.com/foaf/0.1/mbox_sha1sum"/>
+        <rdf:li rdf:resource="http://xmlns.com/foaf/0.1/nick"/>
+        <rdf:li rdf:resource="http://xmlns.com/foaf/0.1/aimChatID"/>
+        <rdf:li rdf:resource="http://xmlns.com/foaf/0.1/iChatID"/>
+        <rdf:li rdf:resource="http://xmlns.com/foaf/0.1/jabberID"/>
+        <rdf:li rdf:resource="http://xmlns.com/foaf/0.1/msnChatID"/>
+        <rdf:li rdf:resource="http://xmlns.com/foaf/0.1/homepage"/>
+        <rdf:li rdf:resource="http://xmlns.com/foaf/0.1/page"/>
+        <rdf:li rdf:resource="http://xmlns.com/foaf/0.1/workplaceHomepage"/>
+        <rdf:li rdf:resource="http://xmlns.com/foaf/0.1/workInfoHomepage"/>
+        <rdf:li rdf:resource="http://xmlns.com/foaf/0.1/schoolPage"/>
+        <rdf:li rdf:resource="http://xmlns.com/foaf/0.1/weblog"/>
+      </rdf:Description>
+    </gss:sortPropertiesBy>
+    <gss:style rdf:resource="file:/Users/jmadden/Projects/AoPS/src/main/python/rdf/foaf.gss#DocumentStyle"/>
+    <gss:subjectOfStatement rdf:parseType="Resource">
+      <gss:predicate rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#type"/>
+      <gss:object rdf:parseType="Resource">
+        <gss:value>http://nextthought.com/xml/v1/Chapter</gss:value>
+      </gss:object>
+    </gss:subjectOfStatement>
+  </gss:Resource>
+  <gss:Resource>
+    <gss:style rdf:resource="file:/Users/jmadden/Projects/AoPS/src/main/python/rdf/foaf.gss#MiscInfoStyle"/>
+    <gss:objectOfStatement rdf:parseType="Resource">
+      <gss:predicate rdf:resource="http://http://purl.org/dc/elements/1.1/Title"/>
+    </gss:objectOfStatement>
+  </gss:Resource>
+  <gss:Property>
+    <gss:style rdf:resource="file:/Users/jmadden/Projects/AoPS/src/main/python/rdf/foaf.gss#DashPropStyle"/>
+    <gss:uriEquals rdf:resource="http://nextthought.com/xml/v1/Require"/>
+  </gss:Property>
+  <rdf:Description rdf:ID="DefaultLitStyle">
+    <gss:fill>rgb(255,255,255)</gss:fill>
+    <gss:stroke>rgb(26,124,138)</gss:stroke>
+  </rdf:Description>
+</rdf:RDF>

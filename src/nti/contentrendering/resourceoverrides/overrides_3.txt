@@ -1,0 +1,7 @@
+\[
+\begin{array}{r@{}r@{\,}c@{\,}l}
+& 10x & = & 3.333\ldots \\
+-& x & = & 0.333\ldots \\ \hline
+\multicolumn{2}{r}{(10x-x)} & = & 3
+\end{array}
+\]

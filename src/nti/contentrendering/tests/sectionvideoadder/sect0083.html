@@ -1,0 +1,288 @@
+<html xml:lang="en" lang="en">
+	<head>
+        <meta content="2011-12-31 10:00:35.180286" http-equiv="last-modified">
+		<meta name="viewport" content="width=730">
+        <meta name="NTIRelativeScrollHeight" content="22478">
+        <meta content="tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.114" name="NTIID">
+		<meta name="generator" content="plasTeX">
+		<meta content="text/html; charset=utf-8" http-equiv="content-type">
+		<title>Counting Pairs</title>
+		<link href="sect0084.html" title="Probability" rel="next">
+		<link href="sect0082.html" title="Casework" rel="prev">
+		<link href="sect0079.html" title="Counting" rel="up">
+		<link rel="stylesheet" href="styles/styles.css">
+		<link rel="stylesheet" href="styles/prealgebra.css">
+		<link rel="stylesheet" href="styles/application.css">
+		
+		<script type="text/javascript" src="js/jquery-1.6.1.min.js"></script>
+        
+        <script type="text/javascript" src="js/prealgebra.js"></script>
+	</head>
+	<body id="NTIContent">
+		<div class="navigation">
+			<div>
+				<div class="previous"><a href="sect0082.html" title="Casework">&lt;</a></div>
+				<div class="up"><a href="sect0079.html" title="Counting">^</a></div>
+				<div class="next"><a href="sect0084.html" title="Probability">&gt;</a></div>
+			</div>
+			<div class="navigation-title" align="center">Prealgebra</div>
+			<div>
+				<div class="contents"><a href="index.html" title="Table of Contents">C</a></div>
+				<div class="index"><a href="sect0096.html" title="Index">#</a></div>
+			</div>
+		</div>
+
+		<!-- TODO: this should be rendered by the UI... -->
+		<div class="breadcrumbs">
+			<span>
+				<span> <a href="index.html">Prealgebra</a> : </span>
+				
+			</span><span>
+				<span> <a href="sect0079.html">Counting</a> : </span>
+				
+			</span><span>
+				
+				<span><b class="current">Counting Pairs</b></span>
+			</span>
+			<hr>
+		</div>
+
+		<div class="page-contents"><div id="a0000000084" class="chapter title">
+	<span class="ref">14.4</span>
+	<span class="label">Counting Pairs</span>
+</div>
+
+<div id="a0000012414" class="section-problems"><span class="headingtext">Section Problems</span></div>
+<ol class="section-problems itemize">
+	<li>
+		<div probnum="17" class="problem"><a name="a0000012415"></a>
+<p>A round-robin tennis tournament consists of each player playing every other player exactly once. How many matches will be held during an 8-person round-robin tennis tournament? </p></div>
+	</li><li>
+		<div probnum="18" class="problem"><a name="a0000012416"></a>
+<p>A round-robin tennis tournament consists of each player playing every other player exactly once. Find a formula for the number of matches that will be held during a <span class="mathname">n</span>-person round-robin tennis tournament, where <span></span>
+. </p></div>
+	</li><li>
+		<div probnum="19" class="problem"><a name="a0000012417"></a>
+<p>Five women and four men are at a party. </p>
+<ol class="parts itemize">
+	<li class="part"><a name="a0000012419"></a>
+<p>If each person shakes hands with each other person, then how many total handshakes are there? </p></li><li class="part"><a name="a0000012420"></a>
+<p>If no two men shake hands, but each woman shakes hands with each other person, then how many total handshakes are there? </p></li>
+</ol></div>
+	</li><li>
+		<div probnum="20" class="problem">
+<ol class="parts itemize">
+	<li class="part"><a name="a0000012422"></a>
+<p>How many diagonals does a triangle have? </p></li><li class="part"><a name="a0000012423"></a>
+<p>How many diagonals does a quadrilateral have? </p></li><li class="part"><a name="a0000012424"></a>
+<p>How many diagonals does a pentagon have? </p></li><li class="part"><a name="a0000012425"></a>
+<p>How many diagonals does a hexagon have? </p></li><li class="part"><a name="a0000012426"></a>
+<p>Find a formula for the number of diagonals in a polygon with <span class="mathname">n</span> sides, where <span class="mathname">n</span> is an integer greater than 2. </p></li>
+</ol></div>
+	</li>
+</ol>
+<div class="end section-problems">End section problems</div>
+<a name="a0000012428"></a>
+<p><a name="a0000012429" id="a0000012429"></a> <a name="a0000012430" id="a0000012430"></a> </p>
+<div probnum="17" type="problem" class="problem"><a name="a0000012432"></a>
+<p><a name="prob:roundrobin"></a> A round-robin tennis tournament consists of each player playing every other player exactly once. How many matches will be held during an 8-person round-robin tennis tournament? </p></div>
+<div id="a0000012434" class="solution">Solution for Problem 17:</div>
+<span><a name="a0000012435"></a>
+<p> Say you’re one of the players. How many matches will you play? </p><a name="a0000012436"></a>
+<p>Each player plays 7 matches, one against each of the other 7 players. </p><a name="a0000012437"></a>
+<p>So what’s wrong with the following reasoning? </p><a name="a0000012438"></a>
+<p><div class="bogus"> Each of the eight players plays 7 games, so there are <span></span>
+ total games played. </div> </p><a name="a0000012439"></a>
+<p>Suppose two of the players are Alice and Bob. Among Alice’s 7 matches is a match against Bob. Among Bob’s 7 matches is a match against Alice. When we count the total number of matches as <span></span>
+, the match between Alice and Bob is counted twice, once for Alice and once for Bob. </p><a name="a0000012440"></a>
+<p>Therefore, since <span></span>
+ counts each match twice, we must divide this total by 2 to get the total number of matches. Hence the number of matches in an 8-player round-robin tournament is <span></span>
+. </p></span><a name="a0000012441"></a>
+<p>Here’s another way to solve Problem <a href="sect0083.html#prob:roundrobin">17</a>. We’ll go one player at a time, and keep a running count of the number of matches involving those players. </p><a name="a0000012442"></a>
+<p>Let’s start with Alice. We already know that Alice plays 7 matches. </p><a name="a0000012443"></a>
+<p>Next, we move on to Bob. We also know that Bob plays 7 matches, but we’ve already counted the match that he plays with Alice. So Bob plays in 6 more matches that we haven’t already counted. Therefore, our running total—the number of matches involving Alice or Bob—is <span></span>
+. </p><a name="a0000012444"></a>
+<p>Then, we go to the next player, Carol. We know that Carol plays 7 matches, but we’ve already counted two of them: the one between Carol and Alice, and the one between Carol and Bob. So Carol plays in 5 more matches that we haven’t already counted. Therefore, our running total—the number of matches involving Alice, Bob, or Carol—is <span></span>
+. </p><a name="a0000012445"></a>
+<p>If we keep going in this manner, we’ll eventually arrive at a grand total of </p>
+<div id="a0000012447" class="math equation">
+<div></div>
+
+
+</div><a name="a0000012448"></a>
+<p> matches. </p><a name="a0000012449"></a>
+<p>Problem <a href="sect0083.html#prob:roundrobin">17</a> is an example of counting pairs of objects—in this case, pairs of players in a tennis tournament. Now that we know what happens with 8 players, let’s take a look at what happens when there are <span class="mathname">n</span> players. This is an example of <span class="def">generalizing</span> a problem: we have solved the problem for a specific number, 8, and now we’re going to find a formula that will work for any positive integer number of players. </p>
+<div probnum="18" type="problem" class="problem"><a name="a0000012451"></a>
+<p><a name="prob:generalrr"></a> A round-robin tennis tournament consists of each player playing every other player exactly <a name="a0000012452" id="a0000012452"></a>once. Find a formula for the number of matches that will be held during a <span class="mathname">n</span>-person round-robin tennis tournament, where <span></span>
+. </p></div>
+<div id="a0000012454" class="solution">Solution for Problem 18:</div>
+<span><a name="a0000012455"></a>
+<p> If we proceed as in the solution to Problem <a href="sect0083.html#prob:roundrobin">17</a>, we see that each of the <span class="mathname">n</span> players must play every other player, so each player must play <span></span>
+ matches. This leads to a preliminary count of <span></span>
+ matches. </p><a name="a0000012456"></a>
+<p>But this method counts each match twice, once for each player. Thus we must divide by 2, to get the answer <span></span>
+. </p></span><a name="a0000012457"></a>
+<p>Another way to approach the general tournament problem in Problem <a href="sect0083.html#generalcountingproblem">18</a> is as follows: </p><a name="a0000012458"></a>
+<p>Number the players from 1 through <span class="mathname">n</span>. </p><a name="a0000012459"></a>
+<p>Player 1 plays players <span></span>
+ for a total of <span></span>
+ matches. </p><a name="a0000012460"></a>
+<p>Player 2 plays players <span></span>
+. But we’ve already counted the match between players 1 and 2. So we only need to add on the matches between player 2 and players <span></span>
+, for another <span></span>
+ matches. </p><a name="a0000012461"></a>
+<p>Similarly, for player 3, we’ve already counted the matches against players 1 and 2, so we need to add on the matches between player 3 and players <span></span>
+, for another <span></span>
+ matches. </p><a name="a0000012462"></a>
+<p>And so on. </p><a name="a0000012463"></a>
+<p>So the total number of matches is the sum of our counts <a name="generalcountingproblem"></a>above, which is </p>
+<div id="a0000012465" class="math equation">
+<div></div>
+
+
+</div><a name="a0000012466"></a>
+<p>Since this must match the count that we had before, we’ve just shown that </p>
+<div id="a0000012468" class="math equation">
+<div></div>
+
+
+</div><a name="a0000012469"></a>
+<p>Our work above gives us a formula for the sum of the first <span class="mathname">k</span> positive integers! If we let <span></span>
+ in the equation we just found (and reverse the order of the sum so our sum goes from 1 to <span class="mathname">k</span>), then we get </p>
+<div id="a0000012471" class="math equation">
+<div></div>
+
+
+</div><a name="a0000012472"></a>
+<p>So, our counting explanations have given us an algebra formula! </p><a name="a0000012473"></a>
+<p><div class="concept"> We can sometimes use counting explanations to find algebraic relationships. </div> </p><a name="a0000012474"></a>
+<p>We also could have used algebra to find a formula for the sum of the first <span class="mathname">k</span> positive integers. We write </p>
+<div id="a0000012476" class="math equation">
+<div></div>
+
+
+</div><a name="a0000012477"></a>
+<p>We can, of course, just as easily write <span class="mathname">S</span> in reverse order: </p>
+<div id="a0000012479" class="math equation">
+<div></div>
+
+
+</div><a name="a0000012480"></a>
+<p> This may seems like a useless thing to do, but watch what happens when we add them together: </p>
+<div id="a0000012482" class="math equation">
+<div></div>
+
+
+</div><a name="a0000012483"></a>
+<p> The last line has <span class="mathname">k</span> copies of <span></span>
+, and hence </p>
+<div id="a0000012485" class="math equation">
+<div></div>
+
+
+</div><a name="a0000012486"></a>
+<p> So, we divide by 2 to get <span></span>
+. </p><a name="a0000012487"></a>
+<p><div class="important"> For any positive integer <span class="mathname">k</span>,<a name="a0000012488" id="a0000012488"></a> <div id="a0000012489" class="math equation">
+<div></div>
+
+
+</div> </div> </p><a name="a0000012490"></a>
+<p><div class="sidebar"> Legend has it that the famous German mathematician Carl Friedrich Gauss (1777–1855) once used the above formula to very quickly compute the sum of the integers from 1 to 100. What is remarkable about this is that Gauss was only 7 years old at the time! His schoolteacher gave his class, as an exercise, the assignment to calculate <div id="a0000012491" class="math equation">
+<div></div>
+
+
+</div> figuring that it would take the students many minutes. The teacher was quite surprised when young Gauss came up with the answer almost immediately! Gauss, even at age 7, recognized that there was a quick way to add consecutive integers, and used the same process that we used to prove our formula.<a name="a0000012492" id="a0000012492"></a></div> </p><a name="a0000012493"></a>
+<p>In some problems, we don’t necessarily want to count <em>all</em> pairs, but just some of them. </p>
+<div probnum="19" type="problem" class="problem"><a name="a0000012495"></a>
+<p>Five women and four men are at a party. </p>
+<ol class="parts itemize">
+	<li class="part"><a name="a0000012497"></a>
+<p>If each person shakes hands with each other person, then how many total handshakes are there? </p></li><li class="part"><a name="a0000012498"></a>
+<p>If no two men shake hands, but each woman shakes hands with each other person, then how many total handshakes are there? </p></li>
+</ol></div>
+<div id="a0000012500" class="solution">Solution for Problem 19:</div>
+<span>
+<ol class="parts itemize">
+	<li class="part"><a name="a0000012502"></a>
+<p>There are 9 people total, and each must shake hands with each other person. So, each person shakes hands 8 times. This gives us a preliminary count of <span></span>
+ handshakes. But this counts each handshake twice, once for each person in the handshake. So, we must divide by 2 to get a total of <span></span>
+ handshakes. (Notice that this problem is essentially the same as the round-robin tournament problem, where we’ve replaced “matches” with “handshakes.”) </p></li><li class="part"><a name="a0000012503"></a>
+<p>What’s wrong with this solution: </p><a name="a0000012504"></a>
+<p><div class="bogus"> Each woman shakes hands with 8 other people, and there are 5 women, for a preliminary total of <span></span>
+ handshakes. But this counts each handshake twice, once for each person in the handshake. So, we must divide by 2 to get a total of <span></span>
+ handshakes. </div> </p><a name="a0000012505"></a>
+<p>The problem here is that the count <span></span>
+ does not count each handshake twice! A handshake between two women is counted twice, but a handshake between a man and a woman is counted only once, just for the woman. </p><a name="a0000012506"></a>
+<p><div class="warning"> When dividing by 2 in a counting problem to correct for counting each item twice, make sure you really were counting each item twice! </div> </p><a name="a0000012507"></a>
+<p>We have to handle the handshakes between two women separately from handshakes between a man and a woman. Each of the 5 women shakes hands with 4 other women, for a preliminary count of <span></span>
+ handshakes. Suppose Alice and Barb are two of the women. Our count of <span></span>
+ counts the handshake between Alice and Barb twice—once among Alice’s 4 handshakes with other women, and once among Barb’s 4 handshakes with other women. So, here we have to divide by 2, since <span></span>
+ counts each handshake twice, once for each woman. This gives us <span></span>
+ handshakes between two women. </p><a name="a0000012508"></a>
+<p>Turning to handshakes between a man and a woman, each of the women shakes hands with 4 men, for a preliminary count of <span></span>
+ handshakes. Suppose Alice is one of the women and Carl is one of the men. The handshake between Alice and Carl is only counted once, just among Alice’s 4 handshakes with men. So, we don’t divide the preliminary count by 2, because each handshake between a woman and a man is only counted once. There are 20 handshakes between a woman and a man. </p><a name="a0000012509"></a>
+<p>Combining the handshakes between two women with those between a woman and a man, we have <span></span>
+ handshakes. </p></li>
+</ol></span>
+<div probnum="20" type="problem" class="problem"><a name="a0000012511"></a>
+<p><a name="prob:polydiags"></a> </p>
+<ol class="parts itemize">
+	<li class="part"><a name="a0000012513"></a>
+<p>How many diagonals does a triangle have? </p></li><li class="part"><a name="a0000012514"></a>
+<p>How many diagonals does a quadrilateral have? </p></li><li class="part"><a name="a0000012515"></a>
+<p>How many diagonals does a pentagon have? </p></li><li class="part"><a name="a0000012516"></a>
+<p>How many diagonals does a hexagon have? </p></li><li class="part"><a name="a0000012517"></a>
+<p>Find a formula for the number of diagonals in a polygon with <span class="mathname">n</span> sides, where <span class="mathname">n</span> is an integer greater than 2. </p></li>
+</ol><a name="a0000012518"></a>
+<p> <a name="a0000012519" id="a0000012519"></a> </p></div>
+<div id="a0000012521" class="solution">Solution for Problem 20:</div>
+<span>
+<ol class="parts itemize">
+	<li class="part"><a name="a0000012523"></a>
+<p>A triangle has <span></span>
+ diagonals. </p></li><li class="part"><a name="a0000012524"></a>
+<p>A quadrilateral has <span></span>
+ diagonals. </p></li><li class="part"><a name="a0000012525"></a>
+<p>As shown at the left below, a pentagon has <span></span>
+ diagonals. </p>
+<div class="figure"><a name="a0000012527"></a>
+<p> <div style="width:227.622047244pt" class="minipage"> <div class="align-center"><img alt="\includegraphics{../Images/solngeom_13.pdf}" style="width:; height:">
+ <div class="caption"><b>Figure 14.1</b>: <span>*</span></div>A Pentagon and Its Diagonals </div> </div> <div style="width:227.622047244pt" class="minipage"> <div class="align-center"><img alt="\includegraphics{../Images/solngeom_15.pdf}" style="width:; height:">
+ <div class="caption"><b>Figure 14.2</b>: <span>*</span></div>A Hexagon and Its Diagonals </div></div> </p></div></li><li class="part"><a name="a0000012528"></a>
+<p>A hexagon and its diagonals are shown at the right above. Rather than counting the diagonals directly, we count the diagonals by thinking about each vertex. Each vertex can connect to the other 5 vertices, but 2 of these connections are edges, not diagonals. So each vertex has <span></span>
+ diagonals. (This is a lot like the handshaking problem! Thinking of a diagonal as a handshake between two vertices, each vertex “shakes hands” with 3 other vertices.) </p><a name="a0000012529"></a>
+<p>There are 6 vertices of a hexagon and each connects to 3 vertices by a diagonal, so it appears that there are <span></span>
+ diagonals. However, this counts each diagonal twice, once for each vertex at its endpoints. To correct for this, we must divide by 2, giving <span></span>
+ diagonals. </p></li><li class="part"><a name="a0000012530"></a>
+<p>We can use our process from part (d) for any polygon. A polygon with <span class="mathname">n</span> sides has <span class="mathname">n</span> vertices. As in part (c), each vertex can connect to the other <span></span>
+ vertices, but 2 of these connections are edges, not diagonals. So each vertex has <span></span>
+ diagonals. </p><a name="a0000012531"></a>
+<p>Since each of the <span class="mathname">n</span> vertices has <span></span>
+ diagonals, it appears that there are <span></span>
+ diagonals. But again, this counts each diagonal twice, once for each vertex at its endpoints. So, we correct our count by dividing by 2, giving <span></span>
+ diagonals for a polygon with <span class="mathname">n</span> sides. Checking, we see that this formula does give us the values we found in the first four parts. </p></li>
+</ol></span><a name="a0000012532"></a>
+<p><a name="a0000012533" id="a0000012533"></a> </p><div id="a0000012534" class="exercises"><span class="headingtext">Exercises</span></div>
+<ol class="exercises itemize">
+	<li><a name="a0000012535"></a>
+<p>There are five girls in a tennis class. How many different doubles teams of two girls each can be formed from the students in the class? <span class="source">(Source: MOEMS)</span></p></li><li><a name="a0000012536"></a>
+<p>A club has 12 members and needs to choose 2 members to be co-presidents. How many different pairs of co-presidents are possible? </p></li><li><a name="a0000012537"></a>
+<p>Two students are needed to work in the school store during the lunch hour every day, and four students volunteer for this work. What is the greatest number of days that can be arranged in which no pair of the four students work together more than once? <span class="source">(Source: MOEMS)</span></p></li><li><a name="a0000012538"></a>
+<p>Six people participated in a checkers tournament. Each participant played exactly three games with each of the other participants. How many games were played in all? <span class="source">(Source: MOEMS)</span></p></li><li><a name="a0000012539"></a>
+<p>A sports conference has 12 teams in two divisions of 6. How many games are in a complete season for the conference if each team must play every other team in its own division twice and every team in the other division once? </p></li><li><a name="a0000012540"></a>
+<p>Find a formula for the sum of the first <span class="mathname">n</span> even integers: <span></span>
+ </p></li><li><a name="a0000012541"></a>
+<p>How many interior diagonals does an icosahedron have? (An <span class="def">icosahedron</span> is a 3-dimensional figure with 20 triangular faces and 12 vertices, with 5 faces meeting at each vertex. An <span class="def">interior diagonal</span> is a segment connecting two vertices that do not lie on a common face.)  , ,  <a name="a0000012542" id="a0000012542"></a> </p><span class="hint"><a href="#" onclick="return togglehint(event)">Hint: </a><span class="hint content hidden"> Consider a simpler problem; how did we solve the problem about polygon diagonals in the text? <a name="a0000012543"></a>
+</span></span><span class="hint"><a href="#" onclick="return togglehint(event)">Hint: </a><span class="hint content hidden"> Each vertex is connected to how many other vertices by an interior diagonal of the icosahedron? <a name="a0000012544"></a>
+</span></span><span class="hint"><a href="#" onclick="return togglehint(event)">Hint: </a><span class="hint content hidden"> Each vertex is connected to how many other vertices by an edge of the icosahedron? <a name="a0000012545"></a>
+</span></span></li>
+</ol>
+<div class="end exercises">End exercises</div></div>
+
+		
+
+		
+
+	</body>
+</html>

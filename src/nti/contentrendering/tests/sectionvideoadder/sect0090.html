@@ -1,0 +1,224 @@
+<html xml:lang="en" lang="en">
+	<head>
+        <meta content="2011-12-31 10:00:35.180286" http-equiv="last-modified">
+		<meta name="viewport" content="width=730">
+        <meta name="NTIRelativeScrollHeight" content="12348">
+        <meta content="tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.121" name="NTIID">
+		<meta name="generator" content="plasTeX">
+		<meta content="text/html; charset=utf-8" http-equiv="content-type">
+		<title>Make a List</title>
+		<link href="sect0091.html" title="Draw a Picture" rel="next">
+		<link href="sect0089.html" title="Find a Pattern" rel="prev">
+		<link href="sect0088.html" title="Problem-Solving Strategies" rel="up">
+		<link rel="stylesheet" href="styles/styles.css">
+		<link rel="stylesheet" href="styles/prealgebra.css">
+		<link rel="stylesheet" href="styles/application.css">
+		
+		<script type="text/javascript" src="js/jquery-1.6.1.min.js"></script>
+        
+        <script type="text/javascript" src="js/prealgebra.js"></script>
+	</head>
+	<body id="NTIContent">
+		<div class="navigation">
+			<div>
+				<div class="previous"><a href="sect0089.html" title="Find a Pattern">&lt;</a></div>
+				<div class="up"><a href="sect0088.html" title="Problem-Solving Strategies">^</a></div>
+				<div class="next"><a href="sect0091.html" title="Draw a Picture">&gt;</a></div>
+			</div>
+			<div class="navigation-title" align="center">Prealgebra</div>
+			<div>
+				<div class="contents"><a href="index.html" title="Table of Contents">C</a></div>
+				<div class="index"><a href="sect0096.html" title="Index">#</a></div>
+			</div>
+		</div>
+
+		<!-- TODO: this should be rendered by the UI... -->
+		<div class="breadcrumbs">
+			<span>
+				<span> <a href="index.html">Prealgebra</a> : </span>
+				
+			</span><span>
+				<span> <a href="sect0088.html">Problem-Solving Strategies</a> : </span>
+				
+			</span><span>
+				
+				<span><b class="current">Make a List</b></span>
+			</span>
+			<hr>
+		</div>
+
+		<div class="page-contents"><div id="a0000000091" class="chapter title">
+	<span class="ref">15.2</span>
+	<span class="label">Make a List</span>
+</div>
+
+<a name="a0000012833"></a>
+<p><a name="a0000012834" id="a0000012834"></a> </p><a name="a0000012835"></a>
+<p>If a strategy is good enough to allow Santa Claus to distribute presents to all the children in the world, it ought to be good enough to help us solve some math problems. </p><div id="a0000012836" class="section-problems"><span class="headingtext">Section Problems</span></div>
+<ol class="section-problems itemize">
+	<li>
+		<div probnum="5" class="problem"><a name="a0000012837"></a>
+<p>Find a two-digit positive integer with all these properties: </p>
+<ul class="itemize">
+<li><a name="a0000012839"></a>
+<p>the tens digit is larger than the ones digit (units digit), </p></li><li><a name="a0000012840"></a>
+<p>the difference between the digits is greater than 3, </p></li><li><a name="a0000012841"></a>
+<p>the sum of the digits is greater than 10, and </p></li><li><a name="a0000012842"></a>
+<p>the integer is a multiple of 12. </p></li>
+</ul><a name="a0000012843"></a>
+<p> <span class="source">(Source: MOEMS)</span></p></div>
+	</li><li>
+		<div probnum="6" class="problem"><a name="a0000012844"></a>
+<p>Elizabeth spent exactly <span></span>
+ for some <span class="mathnumber">15</span>-cent stamps and some <span class="mathnumber">31</span>-cent stamps. How many <span class="mathnumber">15</span>-cent stamps did she buy? </p></div>
+	</li><li>
+		<div probnum="7" class="problem"><a name="a0000012845"></a>
+<p>A <span class="def">partition</span> of a positive integer <span class="mathname">n</span> is a way of writing <span class="mathname">n</span> as the sum of positive integers in which the order of the numbers in the sum doesn’t matter. For example, the partitions of 3 are 3, <span></span>
+, and <span></span>
+. We consider <span></span>
+ and <span></span>
+ to be the same, so there are 3 partitions of 3. How many partitions of 6 are there? </p></div>
+	</li>
+</ol>
+<div class="end section-problems">End section problems</div>
+
+<div probnum="5" type="problem" class="problem"><a name="a0000012848"></a>
+<p>Find a two-digit positive integer with all these properties: </p>
+<ul class="itemize">
+<li><a name="a0000012850"></a>
+<p>the tens digit is larger than the ones digit (units digit), </p></li><li><a name="a0000012851"></a>
+<p>the difference between the digits is greater than 3, </p></li><li><a name="a0000012852"></a>
+<p>the sum of the digits is greater than 10, and </p></li><li><a name="a0000012853"></a>
+<p>the integer is a multiple of 12. </p></li>
+</ul><a name="a0000012854"></a>
+<p> <span class="source">(Source: MOEMS)</span></p></div>
+<div id="a0000012856" class="solution">Solution for Problem 5:</div>
+<span><a name="a0000012857"></a>
+<p> It would take way too long to test every single two-digit number. We narrow our search by first focusing on just one of the properties. But which one? <div class="concept"> When faced with several restrictions in a problem, it’s often best to consider the most restrictive first. </div> Each of the first three properties is satisfied by quite a few two-digit numbers, but there aren’t many two-digit multiples of 12. So, we start by listing the multiples of 12: </p>
+<div id="a0000012859" class="math equation">
+<div></div>
+
+
+</div><a name="a0000012860"></a>
+<p> Now that we have a short list of possible solutions, we can quickly go through the other properties and eliminate possibilities from this list. Since the tens digit must be larger than the ones digit, we can eliminate the first four numbers in the list, leaving </p>
+<div id="a0000012862" class="math equation">
+<div></div>
+
+
+</div><a name="a0000012863"></a>
+<p> The next property, that the difference between the digits is greater than 3, eliminates 96: </p>
+<div id="a0000012865" class="math equation">
+<div></div>
+
+
+</div><a name="a0000012866"></a>
+<p> Finally, since the sum of the digits must be greater than 10, we can eliminate 60 and 72, and we are left with 84 as the answer to the problem. </p></span>
+<div probnum="6" type="problem" class="problem"><a name="a0000012868"></a>
+<p>Elizabeth spent exactly <span></span>
+ for some <span class="mathnumber">15</span>-cent stamps and some <span class="mathnumber">31</span>-cent stamps. How many <span class="mathnumber">15</span>-cent stamps did she buy?<a name="prob_solve:31cent"></a> </p></div>
+<div id="a0000012870" class="solution">Solution for Problem 6:</div>
+<span><a name="a0000012871"></a>
+<p> We often start word problems by assigning variables and writing equations. Let’s try that here. First, we note that <span></span>
+ is 700 cents. If we let <span class="mathname">a</span> be the number of <span class="mathnumber">15</span>-cent stamps and <span class="mathname">b</span> be the number of <span class="mathnumber">31</span>-cent stamps, then we must have </p>
+<div id="a0000012873" class="math equation">
+<div></div>
+
+
+</div><a name="a0000012874"></a>
+<p> That’s all we know about <span class="mathname">a</span> and <span class="mathname">b</span>, and this equation isn’t terribly helpful. We could just guess values of <span class="mathname">a</span> or <span class="mathname">b</span> and hope we get lucky, but there are a lot of possibilities. </p><a name="a0000012875"></a>
+<p>Instead, we take a more organized approach. After paying for all the <span class="mathnumber">31</span>-cent stamps, the amount remaining must be divisible by 15 cents. So, we imagine that Elizabeth starts with 700 cents and pays for the <span class="mathnumber">31</span>-cent stamps one at a time. We then list the number of cents she has remaining at each step, looking for a multiple of 15: </p>
+<div id="a0000012877" class="math equation">
+<div></div>
+
+
+</div><a name="a0000012878"></a>
+<p> Since <span class="mathnumber">390</span> is divisible by both 3 and 5, it is divisible by 15. Elizabeth spent <span></span>
+ cents on 31-cent stamps, so she bought 10 31-cent stamps. With the other 390 cents, she bought <span></span>
+ <span class="mathnumber">15</span>-cent stamps. </p><a name="a0000012879"></a>
+<p>You might have noticed that we could have saved a lot of work with a little bit of thinking. Instead of buying the <span class="mathnumber">31</span>-cent stamps one at a time, we might have noticed that the number of <span class="mathnumber">31</span>-cent stamps she bought must have been a multiple of 5. This is the only way the number of cents left for 15-cent stamps could be a multiple of 5. So, we can shorten our list by buying five <span class="mathnumber">31</span>-cent stamps at a time. Each block of five <span class="mathnumber">31</span>-cent stamps costs <span></span>
+ cents, so our list is </p>
+<div id="a0000012881" class="math equation">
+<div></div>
+
+
+</div><a name="a0000012882"></a>
+<p> We reach the desired multiple of 15 much faster this way! Furthermore, it’s easy with this method to see why there are no other combinations she could have bought. If we continue the list, we have </p>
+<div id="a0000012884" class="math equation">
+<div></div>
+
+
+</div><a name="a0000012885"></a>
+<p> The only multiple of 15 in this list is 390. So, the only way she can buy 31-cent stamps and 15-cent stamps is if she spends 390 cents on 15-cent stamps and 310 cents on 31-cent stamps. </p></span><a name="a0000012886"></a>
+<p>In the previous problem, we saw that doing a little bit of thinking before listing can sometimes shorten the amount of listing you have to do. In the next problem, we see that sometimes we need to do some careful thinking just to make sure we have a complete list. </p>
+<div probnum="7" type="problem" class="problem"><a name="a0000012888"></a>
+<p>A <span class="def">partition</span> of a positive integer <span class="mathname">n</span> is a way of writing <span class="mathname">n</span> as the sum of positive integers in which the order of the numbers in the sum doesn’t matter. For example, the partitions of 3 are 3, <span></span>
+, and <span></span>
+. We consider <span></span>
+ and <span></span>
+ to be the same, so there are 3 partitions of 3. How many partitions of 6 are there?<a name="prbsolv:partition"></a> </p></div>
+<div id="a0000012890" class="solution">Solution for Problem 7:</div>
+<span><a name="a0000012891"></a>
+<p> If we just start listing partitions of 6 as we think of them, it will be hard to know when we’ve found them all. So, we should take an organized approach. <div class="concept"> Organized lists are much more useful than disorganized lists. </div> </p><a name="a0000012892"></a>
+<p>One way to organize the partitions is to group them based on the largest number in the partition. Obviously, there’s only one partition that has 6, namely </p>
+<div id="a0000012894" class="math equation">
+<div></div>
+
+
+</div><a name="a0000012895"></a>
+<p> Similarly, there’s only one partition in which 5 is the largest number: </p>
+<div id="a0000012897" class="math equation">
+<div></div>
+
+
+</div><a name="a0000012898"></a>
+<p> The partitions with 4 as the greatest number are </p>
+<div id="a0000012900" class="math equation">
+<div></div>
+
+
+</div><a name="a0000012901"></a>
+<p> The partitions with 3 as the greatest number are </p>
+<div id="a0000012903" class="math equation">
+<div></div>
+
+
+</div><a name="a0000012904"></a>
+<p> The partitions with 2 as the greatest number are </p>
+<div id="a0000012906" class="math equation">
+<div></div>
+
+
+</div><a name="a0000012907"></a>
+<p> The only partition with 1 as the greatest number is </p>
+<div id="a0000012909" class="math equation">
+<div></div>
+
+
+</div><a name="a0000012910"></a>
+<p>Altogether, we count 11 partitions of 6. </p></span><div id="a0000012911" class="exercises"><span class="headingtext">Exercises</span></div>
+<ol class="exercises itemize">
+	<li><a name="a0000012912"></a>
+<p>In Problem <a href="sect0090.html#prob_solve:31cent">6</a>, why did we choose to imagine buying the 31-cent stamps one at a time, rather than starting with buying the 15-cent stamps? </p></li><li><a name="a0000012913"></a>
+<p>I am less than 6 feet tall but more than 2 feet tall. My height in inches is a multiple of 7 and is also 1 more than a multiple of 6. What is my height? </p></li><li><a name="a0000012914"></a>
+<p>List all two-digit positive integers that satisfy both of the following: </p>
+<ol class="enumerate">
+<li value="1"><a name="a0000012916"></a>
+<p>The tens and ones digits are consecutive numbers, and </p></li><li value="2"><a name="a0000012917"></a>
+<p>The integer is the product of two consecutive numbers. </p></li>
+</ol><a name="a0000012918"></a>
+<p> <span class="source">(Source: MOEMS)</span></p></li><li><a name="a0000012919"></a>
+<p>If a number is divided by 3, the remainder is 0. If the number is divided by 5, the remainder is 4. If the number is divided by 11, the remainder is 7. The number has two digits. What is the number? </p></li><li><a name="a0000012920"></a>
+<p>The three-digit number 114 has a <span class="def">digit sum</span> of <span></span>
+, or <span class="mathnumber">6</span>. How many three-digit positive integers have a digit sum of 6?  ,  </p><a name="a0000012921"></a>
+<p><a name="a0000012922" id="a0000012922"></a> </p><span class="hint"><a href="#" onclick="return togglehint(event)">Hint: </a><span class="hint content hidden"> What is a good way to organize the three-digit numbers whose digit sum is 6? <a name="a0000012923"></a>
+</span></span><span class="hint"><a href="#" onclick="return togglehint(event)">Hint: </a><span class="hint content hidden"> How many start with 6? How many start with 5? <a name="a0000012924"></a>
+</span></span></li>
+</ol>
+<div class="end exercises">End exercises</div></div>
+
+		
+
+		
+
+	</body>
+</html>

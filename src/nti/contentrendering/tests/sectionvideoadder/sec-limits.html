@@ -1,0 +1,289 @@
+<html xml:lang="en" lang="en">
+	<head>
+        <meta content="2011-12-31 10:00:35.180286" http-equiv="last-modified">
+		<meta name="viewport" content="width=730">
+        <meta name="NTIRelativeScrollHeight" content="25973">
+        <meta content="tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.105" name="NTIID">
+		<meta name="generator" content="plasTeX">
+		<meta content="text/html; charset=utf-8" http-equiv="content-type">
+		<title>Limits of Basic Statistics</title>
+		<link href="sect0075.html" title="Tables, Graphs, and Charts" rel="next">
+		<link href="sect0074.html" title="Basic Statistics" rel="prev">
+		<link href="sect0073.html" title="Data and Statistics" rel="up">
+		<link rel="stylesheet" href="styles/styles.css">
+		<link rel="stylesheet" href="styles/prealgebra.css">
+		<link rel="stylesheet" href="styles/application.css">
+		
+		<script type="text/javascript" src="js/jquery-1.6.1.min.js"></script>
+        
+        <script type="text/javascript" src="js/prealgebra.js"></script>
+	</head>
+	<body id="NTIContent">
+		<div class="navigation">
+			<div>
+				<div class="previous"><a href="sect0074.html" title="Basic Statistics">&lt;</a></div>
+				<div class="up"><a href="sect0073.html" title="Data and Statistics">^</a></div>
+				<div class="next"><a href="sect0075.html" title="Tables, Graphs, and Charts">&gt;</a></div>
+			</div>
+			<div class="navigation-title" align="center">Prealgebra</div>
+			<div>
+				<div class="contents"><a href="index.html" title="Table of Contents">C</a></div>
+				<div class="index"><a href="sect0096.html" title="Index">#</a></div>
+			</div>
+		</div>
+
+		<!-- TODO: this should be rendered by the UI... -->
+		<div class="breadcrumbs">
+			<span>
+				<span> <a href="index.html">Prealgebra</a> : </span>
+				
+			</span><span>
+				<span> <a href="sect0073.html">Data and Statistics</a> : </span>
+				
+			</span><span>
+				
+				<span><b class="current">Limits of Basic Statistics</b></span>
+			</span>
+			<hr>
+		</div>
+
+		<div class="page-contents"><div id="sec:limits" class="chapter title">
+	<span class="ref">13.2</span>
+	<span class="label">Limits of Basic Statistics</span>
+</div>
+
+<a name="a0000011682"></a>
+<p><a name="sec:limits"></a> </p><a name="a0000011683"></a>
+<p>Now that we know how to compute average, median, and mode, we will think about what sort of information they tell us. And, perhaps more importantly, we will think about what sort of information they <em>don’t</em> tell us. </p><div id="a0000011684" class="section-problems"><span class="headingtext">Section Problems</span></div>
+<ol class="section-problems itemize">
+	<li>
+		<div probnum="8" class="problem"><a name="a0000011685"></a>
+<p>You have to choose one of four people in your math club to be your partner on a math assignment. You’d like to choose someone who is very good at math! Here are the four students’ scores on their previous seven assignments: </p>
+<div id="a0000011687" class="math equation">
+<div></div>
+
+
+</div>
+<ol class="parts itemize">
+	<li class="part"><a name="a0000011689"></a>
+<p>Which student has the highest average score? </p></li><li class="part"><a name="a0000011690"></a>
+<p>Which student has the highest median score? </p></li><li class="part"><a name="a0000011691"></a>
+<p>Which student has the highest mode score? </p></li><li class="part"><a name="a0000011692"></a>
+<p>Which student would you choose as your partner? </p></li>
+</ol></div>
+	</li><li>
+		<div probnum="9" class="problem"><a name="a0000011693"></a>
+<p>The average wealth of a person in Richville is <span></span>
+ and the average wealth of a person in Poorville is <span></span>
+. </p>
+<ol class="parts itemize">
+	<li class="part"><a name="a0000011695"></a>
+<p>Suppose a person is called “filthy stinking rich” if the person has over one million dollars. Can we tell which town has more filthy stinking rich people? </p></li><li class="part"><a name="a0000011696"></a>
+<p>Can we tell which town has the higher median wealth? </p></li><li class="part"><a name="a0000011697"></a>
+<p>If both towns have the same number of people, can we tell which town has the higher total wealth? </p></li><li class="part"><a name="a0000011698"></a>
+<p>Suppose a person with <span></span>
+ and 4 people who have <span></span>
+ move into Richville. Will the average wealth of Richville go up or down? </p></li>
+</ol></div>
+	</li><li>
+		<div probnum="10" class="problem"><a name="a0000011699"></a>
+<p>The median wealth of a person in Goldtown is <span></span>
+ and the median wealth of a person in Tintown is <span></span>
+. Each town has <span class="mathnumber">8000</span> people. </p>
+<ol class="parts itemize">
+	<li class="part"><a name="a0000011701"></a>
+<p>Suppose a town qualifies for special government subsidies if at least half of its residents each has less than <span></span>
+. Does either town necessarily qualify for the subsidies? </p></li><li class="part"><a name="a0000011702"></a>
+<p>Can we tell which town has the higher average wealth? </p></li><li class="part"><a name="a0000011703"></a>
+<p>Suppose a person with <span></span>
+ and 4 people who have <span></span>
+ move into Goldtown. Will the median wealth of Goldtown go up or down? </p></li>
+</ol></div>
+	</li>
+</ol>
+<div class="end section-problems">End section problems</div>
+
+<div probnum="8" type="problem" class="problem"><a name="a0000011706"></a>
+<p>You have to choose one of four people in your math club to be your partner on a math assignment. You’d like to choose someone who is very good at math! Here are the four students’ scores on their previous seven assignments:<a name="prob:basicstatlimit"></a> </p>
+<div id="a0000011708" class="math equation">
+<div></div>
+
+
+</div>
+<ol class="parts itemize">
+	<li class="part"><a name="a0000011710"></a>
+<p>Which student has the highest average score? </p></li><li class="part"><a name="a0000011711"></a>
+<p>Which student has the highest median score? </p></li><li class="part"><a name="a0000011712"></a>
+<p>Which student has the highest mode score? </p></li><li class="part"><a name="a0000011713"></a>
+<p>Which student would you choose as your partner? </p></li>
+</ol></div>
+<div id="a0000011715" class="solution">Solution for Problem 8:</div>
+<span>
+<ol class="parts itemize">
+	<li class="part"><a name="a0000011717"></a>
+<p>Here are the averages: </p>
+<div id="a0000011719" class="math equation">
+<div></div>
+
+
+</div><a name="a0000011720"></a>
+<p> Carol has the highest average. </p></li><li class="part"><a name="a0000011721"></a>
+<p>We find the students’ median scores by putting each student’s scores in order from least to greatest: </p>
+<div id="a0000011723" class="math equation">
+<div></div>
+
+
+</div><a name="a0000011724"></a>
+<p> For each student, the corresponding median is the middle number in the list. Each student’s median is underlined. Bob has the highest median. </p></li><li class="part"><a name="a0000011725"></a>
+<p>The mode is the most frequent score. Each student has one repeated score, so we can quickly find each student’s mode score: </p>
+<div id="a0000011727" class="math equation">
+<div></div>
+
+
+</div><a name="a0000011728"></a>
+<p> Doug has the highest mode. </p></li><li class="part"><a name="a0000011729"></a>
+<p>There’s no clearly correct answer to this question. Carol has the highest average, Bob has the highest median, and Doug has the highest mode. But you might be best off choosing Anna! </p><a name="a0000011730"></a>
+<p>Looking at all of the scores, it’s pretty clear that you probably don’t want to choose Doug (the student with the highest mode). Most of the time he does very poorly. Mode is usually not a very helpful statistic. </p><a name="a0000011731"></a>
+<p>Even though Bob has the highest median, Bob appears to be considerably more likely than Anna or Carol to do badly. So choosing Bob seems to bring a higher risk of a low score. </p><a name="a0000011732"></a>
+<p>Carol, with the highest average, appears to be more reliable than Anna, but Anna’s single bad score of 0 suggests that there may be some other explanation for her poor performance on that assignment. Maybe she simply didn’t turn it in. </p><a name="a0000011733"></a>
+<p>If you can be sure that Anna will show up, then it looks like she has a good chance to do better than Carol, because all of Anna’s nonzero scores are higher than all of Carol’s scores. </p></li>
+</ol></span><a name="a0000011734"></a>
+<p>The key point of Problem <a href="sec-limits.html#prob:basicstatlimit">8</a> is that all of the basic statistics we have studied so far are usually poor substitutes for considering all of the data. Of course, sometimes we don’t have all of the data available, or there is way too much data to consider all of it. As you study more statistics in the future, you’ll learn methods for analyzing large batches of data. </p><a name="a0000011735"></a>
+<p>For now, we’ll take a closer look at the limitations of the basic tools we have studied so far. It’s particularly important to understand the strengths and weaknesses of average and median, since these are the two statistics that people use (and misuse!) the most. </p>
+<div probnum="9" type="problem" class="problem"><a name="a0000011737"></a>
+<p>The average wealth of a person in Richville is <span></span>
+ and the average wealth of a person in Poorville is <span></span>
+.<a name="prob:firstRichville"></a> </p>
+<ol class="parts itemize">
+	<li class="part"><a name="a0000011739"></a>
+<p>Suppose a person is called “filthy stinking rich” if the person has over one million dollars. Can we tell which town has more filthy stinking rich people? </p></li><li class="part"><a name="a0000011740"></a>
+<p>Can we tell which town has the higher median wealth? </p></li><li class="part"><a name="a0000011741"></a>
+<p>If both towns have the same number of people, can we tell which town has the higher total wealth? </p></li><li class="part"><a name="a0000011742"></a>
+<p>Suppose a person with <span></span>
+ and 4 people who have <span></span>
+ move into Richville. Will the average wealth of Richville go up or down? </p></li>
+</ol></div>
+<div id="a0000011744" class="solution">Solution for Problem 9:</div>
+<span>
+<ol class="parts itemize">
+	<li class="part"><a name="a0000011746"></a>
+<p>First notice that we aren’t given any information about how many people are in each town. </p><a name="a0000011747"></a>
+<p><div class="warning"> Neither the average nor the median of a group of numbers tells us anything about how many numbers are in the group. </div> </p><a name="a0000011748"></a>
+<p>On the one hand, it’s possible that everyone in Richville has exactly <span></span>
+, so there is no one in Richville who is filthy stinking rich. At the same time, Poorville might consist of 100 people: one person with <span></span>
+, who is definitely filthy stinking rich, and 99 people with no money at all. (Note that this does make the average wealth in Poorville equal to <span></span>
+, as required.) In this case, Poorville has more filthy stinking rich people. </p><a name="a0000011749"></a>
+<p>On the other hand, it’s possible that everyone in Poorville has exactly <span></span>
+ (so that no one is filthy stinking rich), while Richville consists of one filthy stinking rich person with <span></span>
+ and 99 people who each have nothing. In this case, Richville has more filthy stinking rich people. </p><a name="a0000011750"></a>
+<p>So without any additional information, we can’t tell which town has more filthy stinking rich people. </p></li><li class="part"><a name="a0000011751"></a>
+<p>On the one hand, suppose the towns’ populations are: </p>
+<div class="align-center"> <div class="tabular"><img alt="\begin{tabular}{c|c} Richville   &amp;  Poorville   \\ \hline 50 people with $\$ 150{,}000$ each   &amp;  1 person with $\$ 1{,}000{,}000$   \\ &amp;  49 people with $\$ 0$ each   \end{tabular}" align="bottom">
+</div> </div><a name="a0000011753"></a>
+<p>The average and median wealth in Richville are each <span></span>
+, whereas the average wealth in Poorville is <span></span>
+ and the median wealth in Poorville is <span></span>
+. In this case, Richville has a higher median wealth than Poorville. </p><a name="a0000011754"></a>
+<p>On the other hand, suppose the towns’ populations are: </p>
+<div class="align-center"> <div class="tabular"><img alt="\begin{tabular}{c|c} Richville   &amp;  Poorville   \\ \hline 1 person with $\$ 1{,}500{,}000$   &amp;  10 people with $\$ 20{,}000$ each   \\ 9 people with $\$ 0$ each   \end{tabular}" align="bottom">
+</div> </div><a name="a0000011756"></a>
+<p>The average and median wealth in Poorville are each <span></span>
+, whereas the average wealth in Richville is <span></span>
+ and the median wealth in Richville is <span></span>
+. In this case, Poorville has a higher median wealth than Richville. </p><a name="a0000011757"></a>
+<p>So without any additional information, we can’t tell which town has the higher median wealth. <div class="important"> We cannot determine anything about the median of a set of data just by knowing the average of the data. </div> </p></li><li class="part"><a name="a0000011758"></a>
+<p>For each town, the average wealth equals the total wealth divided by the number of people. So, the total wealth equals the product of the average wealth and the number of people. If the two towns have the same number of people, then Richville must have the higher total wealth. Specifically, if both towns have <span class="mathname">n</span> people, then Richville has a total wealth of <span></span>
+, and Poorville has a total wealth of <span></span>
+. </p><a name="a0000011759"></a>
+<p>Note that this analysis only worked because we were told that the number of people in each town are the same. If we weren’t given this additional bit of information, we couldn’t tell which town had more total wealth. For example, if the population of Richville was just 1 and the population of Poorville was 10, then the total wealth of Richville would be <span></span>
+ whereas the total wealth of Poorville would be <span></span>
+. In this example, the total wealth of Poorville would be greater. </p><a name="a0000011760"></a>
+<p><div class="important"> Without knowing the size of the data sets, we cannot compare the sums of the data just by comparing their averages. </div> </p></li><li class="part"><a name="a0000011761"></a>
+<p>The average wealth equals the total wealth divided by the number of people. In other words, the average equals the amount each person would have if we divided the total wealth equally among the people. The five people who move into Richville have a total of <span></span>
+. To keep the town average at <span></span>
+ per person, these five new people only need a total of <span></span>
+, which is <span></span>
+. So, when these five new people come to town, there’s an extra <span></span>
+ above the total amount needed for <span></span>
+ per person. This means that the average wealth in the town must go up when these five people arrive. </p></li>
+</ol></span><a name="a0000011762"></a>
+<p>Problem <a href="sec-limits.html#prob:firstRichville">9</a> shows us some features and limitations of average. In particular, in our examples in parts (a), (b), and (d), we see that it is possible for a single number to have a huge effect on the average. For example, if an extremely rich person moves into your neighborhood, the average wealth of your neighborhood will rise a lot! But the other people in your neighborhood haven’t gotten any richer, even though, judging by the average wealth of the neighborhood, it looks like the neighborhood has become much richer. </p>
+<div probnum="10" type="problem" class="problem"><a name="a0000011764"></a>
+<p>The median wealth of a person in Goldtown is <span></span>
+ and the median wealth of a person in Tintown is <span></span>
+. Each town has <span class="mathnumber">8000</span> people. </p>
+<ol class="parts itemize">
+	<li class="part"><a name="a0000011766"></a>
+<p>Suppose a town qualifies for special government subsidies if at least half of its residents each has less than <span></span>
+. Does either town necessarily qualify for the subsidies? </p></li><li class="part"><a name="a0000011767"></a>
+<p>Can we tell which town has the higher average wealth? </p></li><li class="part"><a name="a0000011768"></a>
+<p>Suppose a person with <span></span>
+ and 4 people who have <span></span>
+ move into Goldtown. Will the median wealth of Goldtown go up or down? </p></li>
+</ol></div>
+<div id="a0000011770" class="solution">Solution for Problem 10:</div>
+<span>
+<ol class="parts itemize">
+	<li class="part"><a name="a0000011772"></a>
+<p>Suppose we line up everyone in Tintown based on how much wealth they have. The population of Tintown is even, so the median wealth, <span></span>
+, is the average wealth of the two people in the middle. So, either the middle two people have <span></span>
+ each, or the poorer of the two has less than <span></span>
+. Either way, each person in the poorer half of the line has no greater than the median wealth, <span></span>
+. Each of these people therefore has less than <span></span>
+, so Tintown qualifies for the subsidies. </p><a name="a0000011773"></a>
+<p>Over in Goldtown, the median wealth is <span></span>
+. If we line up Goldtown from poorest to richest, then each person in the richer half of the line has at least <span></span>
+. But all we know about the people in the poorer half of the line is that each person has no more than <span></span>
+. It is possible for each person in the poorer half to have less than <span></span>
+. For example, suppose each person in the poorer half of Goldtown has <span></span>
+ and each person in the richer half of Goldtown has <span></span>
+. Then, the median wealth of Goldtown is <span></span>
+, but Goldtown still qualifies for the subsidy. </p></li><li class="part"><a name="a0000011774"></a>
+<p>The median value only tells us how much the “middle” person has in each town, and that half the people in town have at least this much. But the richest person in town could have any amount more than the median wealth. For example, it’s possible that everyone in Goldtown has exactly <span></span>
+, while everyone in Tintown has <span></span>
+ except for one person who has tens of billions of dollars. In this case, Tintown could have much higher total wealth, and therefore higher average wealth, than Goldtown. <div class="concept"> Only the middle value (or middle two values) in a group of numbers is used to compute the median. So, increasing the values above the median, or decreasing the values below the median, does not affect the median. </div> </p></li><li class="part"><a name="a0000011775"></a>
+<p>Suppose that, before the five new people arrive, we line up all the people in Goldtown based on their wealth, with the richest first and the poorest last. Since there are 8000 people, the median is the average wealth of the middle two people, who are the <span>4000</span><sup>th</sup> and <span>4001</span><sup>st</sup> people in the line. </p><a name="a0000011776"></a>
+<p>When the five new people arrive and find their places in the line, the four with <span></span>
+ will join the poorer end, and the person with <span></span>
+ will be somewhere in the rich half of the line. So, in this new line there will be 8005 people. The person who joined the rich end causes the people who were previously <span>4000</span><sup>th</sup> and <span>4001</span><sup>st</sup> to be shifted back by 1, to <span>4001</span><sup>st</sup> and <span>4002</span><sup>nd</sup> in the line. </p><a name="a0000011777"></a>
+<p>In this new line of 8005 people, the middle person is <span>4003</span><sup>rd</sup> in line. Most notably, this person is behind, and therefore not richer than, the two people whose average gave us the original median. That is, the new median cannot possibly be greater than the old median. </p><a name="a0000011778"></a>
+<p>We can’t actually say that the new median must be lower than the old median, since we might have many people in the middle with the same wealth. So, it’s possible that the new median is the same as the old median, but the new median cannot be higher than the old median. </p><a name="a0000011779"></a>
+<p>The interesting observation here is that the new people brought a total of one <em>billion</em> dollars to the town, but the median did not rise. That’s because we added more poor people than rich people. Once again, we see that the actual values above and below the median value do not affect the median. The median only tells us what the middle is. </p></li>
+</ol></span><a name="a0000011780"></a>
+<p><div class="concept"><a name="a0000011781"></a>
+<p> Average and median only give us very limited information about a set of data. In particular, neither tells us anything about the size of the set, and median does not tell us anything about the total of the data in the set. Neither average nor median tells us anything about the other (that is, if we know the average, we don’t know anything about the median; and if we know the median, we don’t know anything about the average). </p><a name="a0000011782"></a>
+<a name="a0000011783"></a>
+<p>We say that a number in a group of numbers is an <span class="def">outlier</span> if it is very far from the other numbers in the group. Outliers can have a significant effect on average, but have little effect on the median. </p><a name="a0000011784"></a>
+<a name="a0000011785"></a>
+<p>Sometimes, when analyzing data, people will remove outliers from a group of numbers before computing the average of the group. For example, a teacher might do this by throwing out a student’s lowest exam grade before computing his or her average grade. </p></div> </p><div id="a0000011786" class="exercises"><span class="headingtext">Exercises</span></div>
+<ol class="exercises itemize">
+	<li><a name="a0000011787"></a>
+<p>The median height of the players on my basketball team is 6 feet, 4 inches. What is the shortest that the tallest player on the team could possibly be? </p></li><li><a name="a0000011788"></a>
+<p>The average wealth of a person in Richville is $150,000 and the average wealth of a person in Poorville is $20,000. Suppose Richville and Poorville combine to form Mediumville. </p>
+<ol class="parts itemize">
+	<li class="part"><a name="a0000011790"></a>
+<p>Is it possible that the average wealth in Mediumville is exactly <span></span>
+? </p></li><li class="part"><a name="a0000011791"></a>
+<p>Suppose one person from Richville refuses to join Mediumville. Then, is it possible that the average wealth of Mediumville is less than <span></span>
+? </p></li><li class="part"><a name="a0000011792"></a>
+<p>If there were the same number of people in Poorville and Richville, then what is the average wealth of Mediumville? </p></li><li class="part"><a name="a0000011793"></a>
+<p>If the average wealth of Mediumville is <span></span>
+, then which city was larger, Richville or Poorville? </p></li>
+</ol></li><li><a name="a0000011794"></a>
+<p>Below are the average and median of test scores for Nick and Omar. </p>
+<div id="a0000011796" class="math equation">
+<div></div>
+
+
+</div><a name="a0000011797"></a>
+<p> One of the students usually does OK, but when he does badly, he does very badly. The other one usually doesn’t do very well, but when he does well, he does extremely well. Which is which? </p><a name="a0000011798"></a>
+<p><a name="a0000011799" id="a0000011799"></a><a name="a0000011800" id="a0000011800"></a> </p></li>
+</ol>
+<div class="end exercises">End exercises</div></div>
+
+		
+
+		
+
+	</body>
+</html>

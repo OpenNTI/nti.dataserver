@@ -1,0 +1,30 @@
+<!-- -*- mode: nxml -*- -->
+<configure xmlns="http://namespaces.zope.org/zope"
+		   i18n_domain="zope">
+	<include package="zope.component" />
+
+	<utility component=".relatedlinksetter.TOCRelatedAdder"
+			 name="TOCRelatedAdder" />
+	<utility component=".relatedlinksetter.LinkRelatedAdder"
+			 name="LinkRelatedAdder" />
+	<utility component=".relatedlinksetter.ExistingTOCRelatedAdder"
+			 name="ExistingTOCRelatedAdder" />
+
+	<utility component=".sectionvideoadder.YouTubeRelatedVideoAdder"
+			 name="YouTubeRelatedVideoAdder" />
+
+	<!-- Icon and image finders for the prealgebra book -->
+	<!-- TODO: Move this to a specific package and include it based on
+	the jobname. -->
+	<adapter factory=".tociconsetter._PrealgebraIconFinder"
+			 for=".interfaces.IRenderedBook .interfaces.IEclipseMiniDomTopic"
+			 provides=".interfaces.IIconFinder"
+			 name="prealgebra" />
+	<adapter factory=".tociconsetter._PrealgebraBackgroundImageFinder"
+			 for=".interfaces.IRenderedBook .interfaces.IEclipseMiniDomTopic"
+			 provides=".interfaces.IBackgroundImageFinder"
+			 name="prealgebra" />
+
+	<include package=".transforms" />
+	<include package=".contentchecks" />
+</configure>

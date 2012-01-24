@@ -1,0 +1,97 @@
+Dependencies (easy_install):
+
+- ZODB3
+- authkit
+- selector
+- whoosh			# 2.3.2, For contentsearch
+- gevent_zeromq		# 2011-08-31, 0.2.0 MUST have installed py27-cython
+
+- lxml				# 2012-01-06, 2.3.3 (Previously installed with macports)
+- pyquery			# 2011-09-14, 1.1.1. jquery-like library, goes with lxml (install lxml first!)
+- zc.queue			# 2011-09-25
+- paste				# 2011-10-08, 1.7.5.1
+- pyramid			# 2012-01-05, 1.3a6
++-- zope.component	# 3.12.0
++-- zope.deprecation# 3.5.0
+- webob				# 2011-10-24. At least 1.2b2
+- pyramid_traversalwrapper # 2011-10-24
+- pyramid_zodbconn	# 2011-10-26,
+- zope.component	# 2011-11-22,  3.12.0
+- zope.interface	# 3.8.0
+- zope.configuration # 2011-12-1,  3.8.0
++-- zope.schema 		  # 4.0.1
++---- six				  # 1.0.0, Py 2 and 3 compat lib
++-- zope.i18nmessageid # 3.6.1
+- zope.mimetype		 # 2011-11-02, 1.3.1
++-- zope.security	  # 3.8.3
++-- zope.publisher	  # 3.13.0
++-- zope.i18n		  # 3.7.4
++-- zope.formlib		  # 4.0.6
++-- zope.contenttype	  # 3.5.5
++-- zope.browserresource # 3.12.0
++-- zope.browser		  # 1.3
++-- zope.proxy			  # 3.6.1
++-- zope.location	  # 3.9.1
++-- zope.exceptions	  # 3.6.1
++-- pytz			  # 2011k
++-- zope.datetime	  # 3.4.0
++-- zope.traversing	  # 3.14.0
++-- zope.lifecycleevent # 3.7.0
++-- zope.browserpage	# 3.12.2
++-- zope.pagetemplate  # 3.6.3
++-- RestrictedPython   # 3.6.0
++-- zope.tal		  # 3.6.0
++-- zope.tales		  # 3.5.1
++- repoze.sphinx.autointerface # 0.6.2, optional
+- zope.container	  # 3.12.0
++-- zope.location	  # 3.9.1
++-- zope.broken		  # 3.6.0
++-- zope.size		  # 3.4.1
++-- zope.filerepresentation # 3.6.0
++-- zope.dottedname	  # 3.4.6
++-- zope.event		  # 3.5.1
+- pyramid_who		  # 0.3, 2011-11-16
++-- repoze.who		  # 2.0
+- zope.annotation	  # 3.5.0, 2011-11-17
+- gunicorn			  # 0.13.4, 2011-12-31
+- setproctitle		  # 1.1.3, 2011-12-31
+- pyramid_tm		  # 0.3, 2012-01-01
+- simplejson		  # 2012-01-14, 2.3.2
+
+Content Rendering (easy_install)
+
+rdflib				 # 3.1.0 2011-12-12
+
+Web app deployment (easy_install)
+
+slimit				# 0.5.5
+zetalibrary			# 0.5.91
+
+Testing Dependencies (easy_install):
+
+- webtest			 # 1.3.3, 2011-12-11
+- pyhamcrest		 # 2011-12-22, 1.6. For unit tests.
+- zope.testing		 # 4.0.0, 2011-12-21
+- requests			 # 0.9.1 2012-01-10
+
+Dependencies (macports):
+- py27-cython		# 2011-08-31
+- py27-zmq			# 2.10.0, and corresponding ZMQ. 2011-10-22
+- py27-gevent		# For greenlets, runloop, and sockio. 2011-08-26
+- py27-sphinx		# 1.0.7 for documentation generation
+- py27-lxml			# XML and HTML parsing. v2.3. 2011-09-14
+- py27-html5lib		# 2011-09-14, 0.90, extends lxml's HTML support
+- py27-anyjson		# 2011-09-15, 0.3.1, Wrapper for JSON support
+- py27-nose			# 2011-10-25, 1.1.2, unittest support
+- py27-coverage		# 2011-10-25, 3.5.1, code coverage test module
+- py27-nltk			# 2011-11-21, 2.0.1rc1 (requires py27-matplotlib py27-numpy py27-yaml)
+- nginx				# 2011-12-31, 1.0.11 (Optional)
+- py27-epydoc		# 2012-01-01, 3.0.1
+- HAProxy			# 2010-01-04, 1.14.18 (Optional)
+- stunnel			# "", latest, (Optional)
+
+Dependencies (other):
+- Phusion Passenger # 3.0.9, 2011-10-08
+
+Dependencies for content generation:
+- Full TeX distribution (including extras)

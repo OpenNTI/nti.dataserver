@@ -1,0 +1,435 @@
+<html xml:lang="en" lang="en">
+	<head>
+        <meta content="2011-12-31 10:00:35.180286" http-equiv="last-modified">
+		<meta name="viewport" content="width=730">
+        <meta name="NTIRelativeScrollHeight" content="25414">
+        <meta content="tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.20" name="NTIID">
+		<meta name="generator" content="plasTeX">
+		<meta content="text/html; charset=utf-8" http-equiv="content-type">
+		<title>Divisibility Tests</title>
+		<link href="sect0013.html" title="Prime Numbers" rel="next">
+		<link href="sec-multiples.html" title="Multiples" rel="prev">
+		<link href="chap-numthy.html" title="Number Theory" rel="up">
+		<link rel="stylesheet" href="styles/styles.css">
+		<link rel="stylesheet" href="styles/prealgebra.css">
+		<link rel="stylesheet" href="styles/application.css">
+		
+		<script type="text/javascript" src="js/jquery-1.6.1.min.js"></script>
+        
+        <script type="text/javascript" src="js/prealgebra.js"></script>
+	</head>
+	<body id="NTIContent">
+		<div class="navigation">
+			<div>
+				<div class="previous"><a href="sec-multiples.html" title="Multiples">&lt;</a></div>
+				<div class="up"><a href="chap-numthy.html" title="Number Theory">^</a></div>
+				<div class="next"><a href="sect0013.html" title="Prime Numbers">&gt;</a></div>
+			</div>
+			<div class="navigation-title" align="center">Prealgebra</div>
+			<div>
+				<div class="contents"><a href="index.html" title="Table of Contents">C</a></div>
+				<div class="index"><a href="sect0096.html" title="Index">#</a></div>
+			</div>
+		</div>
+
+		<!-- TODO: this should be rendered by the UI... -->
+		<div class="breadcrumbs">
+			<span>
+				<span> <a href="index.html">Prealgebra</a> : </span>
+				
+			</span><span>
+				<span> <a href="chap-numthy.html">Number Theory</a> : </span>
+				
+			</span><span>
+				
+				<span><b class="current">Divisibility Tests</b></span>
+			</span>
+			<hr>
+		</div>
+
+		<div class="page-contents"><div id="a0000000013" class="chapter title">
+	<span class="ref">3.2</span>
+	<span class="label">Divisibility Tests</span>
+</div>
+
+<a name="a0000002692"></a>
+<p> <a name="a0000002693" id="a0000002693"></a> </p><a name="a0000002694"></a>
+<p>Another way to say that 12 is a multiple of 4 is to say that 12 is <span class="def">divisible</span> by 4. </p><a name="a0000002695"></a>
+<p><div class="defn"> Let <span class="mathname">a</span> be a number, and let <span class="mathname">b</span> be a nonzero number. We say that <span class="mathname">a</span> is <span class="def">divisible</span> by <span class="mathname">b</span> if <span></span>
+ is an integer. </div> </p><a name="a0000002696"></a>
+<p>So, for example, 12 is divisible by 4 because <span></span>
+ equals the integer 3. Similarly, 0 is divisible by every nonzero integer, since <span class="mathnumber">0</span> divided by any nonzero integer is the integer 0. </p><a name="a0000002697"></a>
+<p>The concept of “divisible” is a lot like the concept of “multiple.” As long as <span class="mathname">a</span> and <span class="mathname">b</span> are not both 0, then “<span class="mathname">a</span> is divisible by <span class="mathname">b</span>” and “<span class="mathname">a</span> is a multiple of <span class="mathname">b</span>” say the same thing. (If <span></span>
+, then <span class="mathname">a</span> is still a multiple of <span class="mathname">b</span>, but <span class="mathname">a</span> is not divisible by <span class="mathname">b</span>, since we can’t divide by 0.) </p><a name="a0000002698"></a>
+<p>In this section, we explore some shortcuts for determining whether or not one number is divisible by another. You’re probably familiar with several of these shortcuts already, but by the end of this section, you’ll also understand why these shortcuts work. </p><div id="a0000002699" class="section-problems"><span class="headingtext">Section Problems</span></div>
+<ol class="section-problems itemize">
+	<li>
+		<div probnum="6" class="problem">
+<ol class="parts itemize">
+	<li class="part"><a name="a0000002701"></a>
+<p>Note that </p>
+<div id="a0000002703" class="math equation">
+<div></div>
+
+
+</div><a name="a0000002704"></a>
+<p> How can we use this fact to tell that 121212 is divisible by 3? </p></li><li class="part"><a name="a0000002705"></a>
+<p>How can we quickly tell that 363637 is <em>not</em> divisible by 3? </p></li>
+</ol></div>
+	</li><li>
+		<div probnum="7" class="problem"><a name="a0000002706"></a>
+<p>How can we tell at a glance whether or not a number is a multiple of 10? </p></div>
+	</li><li>
+		<div probnum="8" class="problem">
+<ol class="parts itemize">
+	<li class="part"><a name="a0000002708"></a>
+<p>Is every multiple of 10 also a multiple of 5? </p></li><li class="part"><a name="a0000002709"></a>
+<p>How can we tell at a glance whether or not a number is a multiple of 5? </p></li><li class="part"><a name="a0000002710"></a>
+<p>How can we tell at a glance whether or not a number is a multiple of 2? </p></li>
+</ol></div>
+	</li><li>
+		<div probnum="9" class="problem">
+<ol class="parts itemize">
+	<li class="part"><a name="a0000002712"></a>
+<p>Which of the following numbers are divisible by 4: </p>
+<div id="a0000002714" class="math equation">
+<div></div>
+
+
+</div></li><li class="part"><a name="a0000002715"></a>
+<p>Is every multiple of 100 also a multiple of 4? </p></li><li class="part"><a name="a0000002716"></a>
+<p>Use your answer to part (b) to explain why 5,687,623,688 is divisible by 4. </p></li><li class="part"><a name="a0000002717"></a>
+<p>Use your answer to part (b) to explain why 4,650,310 is <em>not</em> divisible by 4. </p></li>
+</ol></div>
+	</li><li>
+		<div probnum="10" class="problem"><a name="a0000002718"></a>
+<p>In this problem, we discover a method for determining whether or not a number is divisible by 9. Notice that </p>
+<div id="a0000002720" class="math equation">
+<div></div>
+
+
+</div>
+<ol class="parts itemize">
+	<li class="part"><a name="a0000002722"></a>
+<p>As shown above, 765 equals <span></span>
+. Notice that <span></span>
+ is divisible by 9. Explain why this tells us that 765 is divisible by 9. </p></li><li class="part"><a name="a0000002723"></a>
+<p>Notice that <span></span>
+. Explain why this tells us that <span class="mathnumber">8514</span> is divisible by 9. </p></li><li class="part"><a name="a0000002724"></a>
+<p>Determine whether or not 59814 is divisible by 9 <em>without dividing 9 into 59814</em>. </p></li>
+</ol></div>
+	</li><li>
+		<div probnum="11" class="problem"><a name="a0000002725"></a>
+<p>In the previous problem, we noted that <span></span>
+. </p>
+<ol class="parts itemize">
+	<li class="part"><a name="a0000002727"></a>
+<p>Are both 99 and 9 divisible by 3? </p></li><li class="part"><a name="a0000002728"></a>
+<p>Is 765 divisible by 3? </p></li><li class="part"><a name="a0000002729"></a>
+<p>Is 67242 divisible by 3? </p></li><li class="part"><a name="a0000002730"></a>
+<p>Explain why 6148 is not divisible by 3 <em>without dividing 6148 by 3</em>. </p></li>
+</ol></div>
+	</li><li>
+		<div probnum="12" class="problem"><a name="a0000002731"></a>
+<p><span class="mathname">A</span> is the units digit in the four-digit number <span></span>
+. If <span></span>
+ is divisible by 3 and by 4, then what are all the possible values of <span class="mathname">A</span>? </p></div>
+	</li><li>
+		<div probnum="13" class="problem"><a name="a0000002732"></a>
+<p><span class="mathname">N</span> is the tens digit in the five-digit number <span></span>
+. If <span></span>
+ is divisible by 9, then must <span></span>
+ also be divisible by 4? </p></div>
+	</li>
+</ol>
+<div class="end section-problems">End section problems</div>
+
+<div probnum="6" type="problem" class="problem">
+<ol class="parts itemize">
+	<li class="part"><a name="a0000002736"></a>
+<p>Note that <span></span>
+. How can we use this fact to tell that 121212 is divisible by 3? </p></li><li class="part"><a name="a0000002737"></a>
+<p>How can we quickly tell that 363637 is <em>not</em> divisible by 3? </p></li>
+</ol><a name="a0000002738"></a>
+<p><a name="prob:divtesttip"></a> </p></div>
+<div id="a0000002740" class="solution">Solution for Problem 6:</div>
+<span>
+<ol class="parts itemize">
+	<li class="part"><a name="a0000002742"></a>
+<p>Since 12 is a multiple of 3, we know that 120000, 1200, and 12 are all multiples of 3. From our work in Section <a href="sec-multiples.html">3.1</a>, we know that the sum of multiples of 3 must be a multiple of 3. So, the sum <span></span>
+ is a multiple of 3, which means that 121212 is divisible by 3. </p></li><li class="part"><a name="a0000002743"></a>
+<p>Looking back at the previous part, we know that <span></span>
+ is a multiple of 3 because 36 is a multiple of 3. Since 363637 is 1 more than a multiple of 3, we know that dividing <span class="mathnumber">363637</span> by 3 will give a remainder of 1. Therefore, 363637 is not divisible by 3. </p></li>
+</ol></span><a name="a0000002744"></a>
+<p>Our work in Problem <a href="sect0012.html#prob:divtesttip">2</a> gives us two strategies for testing whether a number <span class="mathname">a</span> is divisible by some other number <span class="mathname">b</span>: </p>
+<ul class="itemize">
+<li><a name="a0000002746"></a>
+<p>Write <span class="mathname">a</span> as a sum of numbers that are divisible by <span class="mathname">b</span>. We did this when we wrote <span class="mathnumber">121212</span> as <span></span>
+. </p></li><li><a name="a0000002747"></a>
+<p>Compare <span class="mathname">a</span> to nearby numbers that are obviously divisible by <span class="mathname">b</span>. We did this when we noted that 363637 is 1 greater than 363636. </p></li>
+</ul><a name="a0000002748"></a>
+<p>For the rest of this section, we will use these two tactics to develop strategies for testing for divisibility by specific numbers. </p>
+<div probnum="7" type="problem" class="problem"><a name="a0000002750"></a>
+<p>How can we tell at a glance whether or not a number is a multiple of 10?<a name="a0000002751" id="a0000002751"></a> </p></div>
+<div id="a0000002753" class="solution">Solution for Problem 7:</div>
+<span><a name="a0000002754"></a>
+<p> We compute the product of 10 and an integer by placing a 0 at the end of the integer. For example, <span></span>
+. So, any number that equals 10 times an integer must end in 0. Also, any integer that ends in 0 is a multiple of 10, since it equals 10 times the integer that remains when its units digit is removed: <span></span>
+. </p></span>
+<div probnum="8" type="problem" class="problem">
+<ol class="parts itemize">
+	<li class="part"><a name="a0000002757"></a>
+<p>Is every multiple of 10 also a multiple of 5? </p></li><li class="part"><a name="a0000002758"></a>
+<p>How can we tell at a glance whether or not a number is a multiple of 5? </p></li><li class="part"><a name="a0000002759"></a>
+<p>How can we tell at a glance whether or not a number is a multiple of 2? </p></li>
+</ol><a name="a0000002760"></a>
+<p><a name="a0000002761" id="a0000002761"></a><a name="a0000002762" id="a0000002762"></a> </p></div>
+<div id="a0000002764" class="solution">Solution for Problem 8:</div>
+<span>
+<ol class="parts itemize">
+	<li class="part"><a name="a0000002766"></a>
+<p>Because 10 is a multiple of 5, every multiple of 10 is also a multiple of 5. </p></li><li class="part"><a name="a0000002767"></a>
+<p>The multiples of 10 are the numbers that have 0 as the units digit. So, every number with 0 as the units digit is a multiple of both 5 and 10. But there are other multiples of 5, such as 5, 15, and 25. Each of these has 5 as the units digit. </p><a name="a0000002768"></a>
+<p>It appears that every multiple of 5 has either 0 or 5 as the units digit. To focus on the units digit of a number we can write the number as some multiple of 10 plus the units digit of the number. For example, we can write 435 as </p>
+<div id="a0000002770" class="math equation">
+<div></div>
+
+
+</div><a name="a0000002771"></a>
+<p> Every multiple of 10 is also a multiple of 5, so <span class="mathnumber">430</span> is a multiple of 5. Since 5 is obviously a multiple of 5, the sum <span></span>
+ is the sum of two multiples of 5. The sum of two multiples of 5 must be a multiple of 5, so 435 is a multiple of 5. </p><a name="a0000002772"></a>
+<p>We can do the same with any positive integer. That is, we can write any integer as the sum of a multiple of 10 and the units digit of the original integer. The multiple of 10 is a multiple of 5, so the sum is a multiple of 5 whenever the units digit is also a multiple of 5. The only single digits that are multiples of 5 are 0 and 5, so any number that has 0 or 5 as its units digit must be a multiple of 5. </p><a name="a0000002773"></a>
+<p>Any number that does not have 0 or 5 as its units digit is between two consecutive multiples of 5. Such a number cannot be a multiple of 5. For example, 813 is between 810 and <span></span>
+, so 813 cannot be a multiple of 5. </p><a name="a0000002774"></a>
+<p><div class="important"> Any integer that has 0 or 5 as its units digit is a multiple of 5. Any integer that does not have 0 or 5 as its units digit is not a multiple of 5. </div> </p></li><li class="part"><a name="a0000002775"></a>
+<p>Our key observation in the previous part is that 10 is a multiple of 5. But 10 is also a multiple of 2. So, we can go through the same steps to see that the last digit of a number tells us whether or not the number is a multiple of 2. For example, we can write 838 as <span></span>
+. Since 830 is a multiple of 10, we know it is a multiple of 2. Since 830 and 8 are both multiples of 2, we know that <span></span>
+ is a multiple of 2. </p><a name="a0000002776"></a>
+<p><div class="important"> Any integer that has an even units digit (0, 2, 4, 6, 8) is a multiple of 2. Any integer that has an odd units digit (1, 3, 5, 7, 9) is not a multiple of 2. </div> </p></li>
+</ol></span>
+<div probnum="9" type="problem" class="problem">
+<ol class="parts itemize">
+	<li class="part"><a name="a0000002779"></a>
+<p>Which of the following numbers are divisible by 4: </p>
+<div id="a0000002781" class="math equation">
+<div></div>
+
+
+</div></li><li class="part"><a name="a0000002782"></a>
+<p>Is every multiple of 100 also a multiple of 4? </p></li><li class="part"><a name="a0000002783"></a>
+<p>Use your answer to part (b) to explain why 5,687,623,688 is divisible by 4. </p></li><li class="part"><a name="a0000002784"></a>
+<p>Use your answer to part (b) to explain why 4,650,310 is <em>not</em> divisible by 4. </p></li>
+</ol><a name="a0000002785"></a>
+<p><a name="a0000002786" id="a0000002786"></a> </p></div>
+<div id="a0000002788" class="solution">Solution for Problem 9:</div>
+<span>
+<ol class="parts itemize">
+	<li class="part"><a name="a0000002790"></a>
+<p>All of the numbers are divisible by 4! And all of the numbers end in the same two digits. Perhaps these two facts are related. </p></li><li class="part"><a name="a0000002791"></a>
+<p>Since 100 is a multiple of 4, every multiple of 100 is also a multiple of 4. </p></li><li class="part"><a name="a0000002792"></a>
+<p>The multiples of 100 are the numbers that have 0 as both the tens and the units digit. We know that every multiple of 100 is a multiple of 4, so we write the number as a multiple of 100 plus a two-digit number: </p>
+<div id="a0000002794" class="math equation">
+<div></div>
+
+
+</div><a name="a0000002795"></a>
+<p> Since 5,687,623,600 is a multiple of 100, it is also a multiple of 4. We also have <span></span>
+, so 88 is a multiple of 4. Since 5,687,623,600 and 88 are both multiples of 4, their sum is also a multiple of 4. </p><a name="a0000002796"></a>
+<p>Similarly, we can write any positive integer as a multiple of 100 plus the number formed by the last two digits of the original integer. If this number formed by the last two digits is divisible by 4, then the original integer is divisible by 4, as well. </p></li><li class="part"><a name="a0000002797"></a>
+<p>The number formed by the last two digits of 4,650,310 is 10, which is not divisible by 4. So, we expect that 4,650,310 is not divisible by 4. To be sure, we write 4,650,310 as </p>
+<div id="a0000002799" class="math equation">
+<div></div>
+
+
+</div><a name="a0000002800"></a>
+<p> Since <span></span>
+ is a multiple of 100, it is a multiple of 4. Therefore, <span></span>
+ is between two multiples of 4, namely </p>
+<div id="a0000002802" class="math equation">
+<div></div>
+
+
+</div><a name="a0000002803"></a>
+<p> So, 4,650,310 is not a multiple of 4. </p><a name="a0000002804"></a>
+<p>We also might have noted that since 10 is not a multiple of 4, adding 10 to a multiple of 4 gives a sum that is not a multiple of 4. (See Problem <a href="sec-multiples.html#prob:intromult7pr">4</a> on pages <a href="sec-multiples.html#prob:intromult7pr">Multiples</a>–<a href="sec-multiples.html#addnonmultddd">Multiples</a> if you don’t remember why.) Therefore, <span></span>
+ is not a multiple of 4. </p></li>
+</ol></span><a name="a0000002805"></a>
+<p><div class="important"> A positive integer is divisible by 4 if the number formed by the last two digits of the original integer is divisible by 4. If this number is not divisible by 4, then the original integer is not divisible by 4. </div> </p>
+<div probnum="10" type="problem" class="problem"><a name="a0000002807"></a>
+<p>In this problem, we discover a method for determining whether or not a number is divisible by 9. <a name="a0000002808" id="a0000002808"></a>Notice that </p>
+<div id="a0000002810" class="math equation">
+<div></div>
+
+
+</div>
+<ol class="parts itemize">
+	<li class="part"><a name="a0000002812"></a>
+<p>As shown above, 765 equals <span></span>
+. Notice that <span></span>
+ is divisible by 9. Explain why this tells us that 765 is divisible by 9. </p></li><li class="part"><a name="a0000002813"></a>
+<p>Notice that <span></span>
+. Explain why this tells us that <span class="mathnumber">8514</span> is divisible by 9. </p></li><li class="part"><a name="a0000002814"></a>
+<p>Determine whether or not 59814 is divisible by 9 <em>without dividing 9 into 59814</em>. </p></li>
+</ol><a name="a0000002815"></a>
+<p><a name="prob:divby9"></a> </p></div>
+<div id="a0000002817" class="solution">Solution for Problem 10:</div>
+<span>
+<ol class="parts itemize">
+	<li class="part"><a name="a0000002819"></a>
+<p>Since 99 is a multiple of 9, so is <span></span>
+. Therefore, the sum <span></span>
+ is the sum of three multiples of 9, namely, <span></span>
+, <span></span>
+, and <span></span>
+. This means that the sum itself, which equals 765, is a multiple of 9. </p></li><li class="part"><a name="a0000002820"></a>
+<p>Just as <span></span>
+, we have </p>
+<div id="a0000002822" class="math equation">
+<div></div>
+
+
+</div><a name="a0000002823"></a>
+<p> We have <span></span>
+, which is a multiple of 9. Each of <span></span>
+, <span></span>
+, and <span></span>
+ is also a multiple of 9. So, we have written 8514 as the sum of multiples of 9, which means that 8514 is itself a multiple of 9. </p><a name="a0000002824"></a>
+<p>Notice that our key step here is to write 8514 as the sum of several multiples of 9 plus the sum of the digits of 8514: </p>
+<div id="a0000002826" class="math equation">
+<div></div>
+
+
+</div><a name="a0000002827"></a>
+<p> Similarly, we can write any positive integer as the sum of multiples of 9 plus the sum of the digits of the integer. The sum of the digits then tells us whether or not the original integer is a multiple of 9. <div class="important"> If the sum of the digits of an integer is a multiple of 9, then the integer is divisible by 9. Otherwise, the integer is not divisible by 9. </div> </p></li><li class="part"><a name="a0000002828"></a>
+<p>The sum of the digits of <span class="mathnumber">59814</span> is <span></span>
+. This sum is divisible by 9, so 59814 is divisible by 9. </p></li>
+</ol></span>
+<div probnum="11" type="problem" class="problem"><a name="a0000002830"></a>
+<p>In the previous problem, we noted that <span></span>
+. </p>
+<ol class="parts itemize">
+	<li class="part"><a name="a0000002832"></a>
+<p>Are both 99 and 9 divisible by 3? </p></li><li class="part"><a name="a0000002833"></a>
+<p>Is 765 divisible by 3? </p></li><li class="part"><a name="a0000002834"></a>
+<p>Is 67242 divisible by 3? </p></li><li class="part"><a name="a0000002835"></a>
+<p>Explain why 6148 is not divisible by 3 <em>without dividing 6148 by 3</em>. </p></li>
+</ol><a name="a0000002836"></a>
+<p><a name="a0000002837" id="a0000002837"></a><a name="prob:divby3"></a> </p></div>
+<div id="a0000002839" class="solution">Solution for Problem 11:</div>
+<span>
+<ol class="parts itemize">
+	<li class="part"><a name="a0000002841"></a>
+<p>We have <span></span>
+ and <span></span>
+, so both 99 and 9 are divisible by 3. </p></li><li class="part"><a name="a0000002842"></a>
+<p>In Problem <a href="sect0012.html#prob:divby9">3</a>, we wrote 765 as </p>
+<div id="a0000002844" class="math equation">
+<div></div>
+
+
+</div><a name="a0000002845"></a>
+<p> Both 99 and 9 are multiples of 3, so <span></span>
+ and <span></span>
+ are multiples of 3. The sum <span></span>
+ is a multiple of 3. So, the sum <span></span>
+ is the sum of three multiples of 3, namely, <span></span>
+, <span></span>
+, and <span></span>
+. Therefore, 765 is a multiple of 3. </p></li><li class="part"><a name="a0000002846"></a>
+<p>We have </p>
+<div id="a0000002848" class="math equation">
+<div></div>
+
+
+</div><a name="a0000002849"></a>
+<p> Any number consisting only of 9’s is a multiple of 9, and is therefore a multiple of 3. So, each product in the sum <span></span>
+ is itself a multiple of 3. This means that this sum is a multiple of 3. Since <span></span>
+ is also a multiple of 3, we know that <span class="mathnumber">67242</span> is the sum of multiples of 3. Therefore, 67242 is a multiple of 3. </p><a name="a0000002850"></a>
+<p>Similarly, if the sum of the digits of an integer is a multiple of 3, then the integer is divisible by 3. </p></li><li class="part"><a name="a0000002851"></a>
+<p>When we follow the same process as in part (c), we get </p>
+<div id="a0000002853" class="math equation">
+<div></div>
+
+
+</div><a name="a0000002854"></a>
+<p> Since <span></span>
+, <span></span>
+, and <span></span>
+ are multiples of 3, the sum <span></span>
+ is a multiple of 3. So, we see that 6148 is <span></span>
+ more than a multiple of 3. But 19 is not a multiple of 3. From our work on Problem <a href="sec-multiples.html#prob:intromult7pr">4</a> on pages <a href="sec-multiples.html#prob:intromult7pr">Multiples</a>–<a href="sec-multiples.html#addnonmultddd">Multiples</a>, we know that if we add a multiple of 3 to a number is not a multiple of 3, then the resulting sum is not a multiple of 3. Therefore, 6148 is not a multiple of 3. </p></li>
+</ol></span><a name="a0000002855"></a>
+<p>Our work in Problem <a href="sect0012.html#prob:divby3">4</a> suggests the following rule for divisibility by 3, which looks a lot like our rule for divisibility by 9: <div class="important"> If the sum of the digits of an integer is a multiple of 3, then the integer is divisible by 3. Otherwise, the integer is not divisible by 3. </div> </p>
+<div probnum="12" type="problem" class="problem"><a name="a0000002857"></a>
+<p><span class="mathname">A</span> is the units digit in the four-digit number <span></span>
+. If <span></span>
+ is divisible by 3 and by 4, then what are all the possible values of <span class="mathname">A</span>? </p></div>
+<div id="a0000002859" class="solution">Solution for Problem 12:</div>
+<span><a name="a0000002860"></a>
+<p> Since the number is divisible by 4, the number formed by its last two digits, <span></span>
+, must be divisible by 4. The only two-digit multiples of 4 with 3 as the tens digit are 32 and 36, which makes the two possible four-digit numbers <span></span>
+ and <span></span>
+. </p><a name="a0000002861"></a>
+<p>The four-digit number <span></span>
+ must also be divisible by 3. To check for divisibility by 3, we find the sums of the digits of <span></span>
+ and <span></span>
+. We have <span></span>
+, which is divisible by 3, so <span class="mathnumber">4632</span> is divisible by 3. We also have <span></span>
+, which is not divisible by 3, so <span class="mathnumber">4636</span> is not divisible by 3. Therefore, the only possible value of <span class="mathname">A</span> is 2. </p></span>
+<div probnum="13" type="problem" class="problem"><a name="a0000002863"></a>
+<p><span class="mathname">N</span> is the tens digit in the five-digit number <span></span>
+. If <span></span>
+ is divisible by 9, then must <span></span>
+ also be divisible by 4?</p></div>
+<div id="a0000002865" class="solution">Solution for Problem 13:</div>
+<span><a name="a0000002866"></a>
+<p> Since the number is divisible by 9, the sum of its digits is divisible by 9. The sum of the digits of the number is <span></span>
+. The only digit <span class="mathname">N</span> that makes <span></span>
+ a multiple of 9 is 7, so our five-digit number is 24,678. The number formed by the last two digits of 24,678 is 78. Since 78 is not divisible by 4, we know that 24,678 is not divisible by 4. </p></span><a name="a0000002867"></a>
+<p>Here is a summary of all of the divisibility tests we learned in this section: </p>
+<div class="align-center"> <div class="tabular"><img alt="\begin{tabular}{c|l} Number  &amp; Condition under which $n$ is divisible by the number  \\ \hline 2  &amp; Units digit of $n$ is 0, 2, 4, 6, or 8  \\ 3  &amp; Sum of the digits of $n$ is a multiple of 3  \\ 4  &amp; Number formed by last two digits of $n$ is a multiple of 4  \\ 5  &amp; Units digit of $n$ is 0 or 5  \\ 9  &amp; Sum of the digits of $n$ is a multiple of 9  \\ 10  &amp; Units digit of $n$ is 0   \end{tabular}" align="bottom">
+</div> </div><div id="a0000002869" class="exercises"><span class="headingtext">Exercises</span></div>
+<ol class="exercises itemize">
+	<li><a name="a0000002870"></a>
+<p>Which of the following numbers are divisible by 5: </p>
+<div id="a0000002872" class="math equation">
+<div></div>
+
+
+</div></li><li><a name="a0000002873"></a>
+<p>Which of the following numbers are divisible by 4: </p>
+<div id="a0000002875" class="math equation">
+<div></div>
+
+
+</div></li><li><a name="a0000002876"></a>
+<p>Which of the following numbers are divisible by 3: </p>
+<div id="a0000002878" class="math equation">
+<div></div>
+
+
+</div></li><li><a name="a0000002879"></a>
+<p>Which of the following numbers are <em>not</em> divisible by 7: </p>
+<div id="a0000002881" class="math equation">
+<div></div>
+
+
+</div></li><li><a name="a0000002882"></a>
+<p>How many numbers from 1 through 400 have a 2 in the units place (ones place) and are divisible by 4? </p></li><li><a name="a0000002883"></a>
+<p>Both <span class="mathname">ABC</span> and <span></span>
+ are three-digit numbers such that <span></span>
+. If <span></span>
+ is divisible by 9, then what number does <span class="mathname">ABC</span> represent? <span class="source">(Source: MOEMS)</span></p></li><li><a name="a0000002884"></a>
+<p>What is the largest digit <span class="mathname">d</span> for which the number <span></span>
+ is divisible by 3? </p></li><li><a name="a0000002885"></a>
+<p>Consider the rules we found to test for divisibility by 2 and by 4. Can you find a similar rule for divisibility by <a name="a0000002886" id="a0000002886"></a>8? </p><a name="a0000002887"></a>
+<p><a name="a0000002888" id="a0000002888"></a> </p></li>
+</ol>
+<div class="end exercises">End exercises</div></div>
+
+		
+
+		
+
+	</body>
+</html>

@@ -1,0 +1,21 @@
+\[
+\left(
+\text{
+\begin{minipage}{2in}
+\begin{center}
+the sum of the amounts by which below-average numbers  are less than the average
+\end{center}
+\end{minipage}
+}
+\right)
+=
+\left(
+\text{
+\begin{minipage}{2in}
+\begin{center}
+the sum of the amounts by which above-average numbers are greater than the average 
+\end{center}
+\end{minipage}
+}
+\right)
+\]

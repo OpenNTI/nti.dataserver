@@ -1,0 +1,10 @@
+$\begin{array}{rr@{}c@{.}c@{}c@{}l}
+&& 1 & 7 & 2 & \ldots \\ \cline{2-6}
+\multicolumn{1}{r|}{11} & 1 & 9 & 0 & 0 & \ldots \\
+& 1 & 1 \\ \cline{2-3}
+&  & 8 & 0 \\
+&  & 7 & 7 \\ \cline{2-4}
+&  & 0 & 3 & 0 \\
+&  & 0 & 2 & 2 \\ \cline{2-5}
+&  & 0 & 0 & 8
+\end{array}$
