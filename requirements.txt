@@ -1,9 +1,9 @@
 file:../lib/pywikipedia/#egg=pywikipedia
 file:../lib/concurrent.futures#egg=concurrent.futures
--e svn+https://svn.nextthought.com/repository/NextThoughtPlatform/trunk/site-libs/plastex-dist
--e svn+https://svn.nextthought.com/repository/NextThoughtPlatform/trunk/site-libs/context
--e svn+https://svn.nextthought.com/repository/NextThoughtPlatform/trunk/site-libs/geventwebsocket
--e svn+https://svn.nextthought.com/repository/NextThoughtPlatform/trunk/site-libs/socketio
+-e svn+https://svn.nextthought.com/repository/NextThoughtPlatform/trunk/site-lib/plastex-dist#egg=plastex
+-e svn+https://svn.nextthought.com/repository/NextThoughtPlatform/trunk/site-lib/context#egg=context
+-e svn+https://svn.nextthought.com/repository/NextThoughtPlatform/trunk/site-lib/geventwebsocket#egg=geventwebsocket
+-e svn+https://svn.nextthought.com/repository/NextThoughtPlatform/trunk/site-lib/socketio#egg=socketio
 
 
 
