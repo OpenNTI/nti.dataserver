@@ -1,0 +1,11 @@
+<!-- -*- mode: nxml -*- -->
+<configure xmlns="http://namespaces.zope.org/zope"
+		   i18n_domain="zope">
+	<include package="zope.component" />
+
+	<utility component=".transchapters" name="transchapters"/>
+	<utility component=".transmath" name="transmath" />
+	<utility component=".xymatrix" name="xymatrix"/>
+
+
+</configure>

@@ -1,0 +1,116 @@
+{
+    "body": [
+        "", 
+        {
+            "Last Modified": 1321391468.411895, 
+            "CreatedTime": 1321391468.411416, 
+            "shapeList": [
+                {
+                    "strokeRGBAColor": "255.0 255.0 255.0 1.0", 
+                    "fillOpacity": 0.0, 
+                    "fillRGBAColor": "255.0 255.0 255.0 0.0", 
+                    "fillColor": "rgb(255.0,255.0,255.0)", 
+                    "strokeColor": "rgb(255.0,255.0,255.0)", 
+                    "strokeWidth": "1.0pt", 
+                    "transform": {
+                        "a": 0.09633319672131146, 
+                        "c": 0, 
+                        "b": 0, 
+                        "d": 0.09633319672131146, 
+                        "tx": 0.16188524590163936, 
+                        "ty": 0.12090163934426229, 
+                        "Class": "CanvasAffineTransform"
+                    }, 
+                    "strokeOpacity": 1.0, 
+                    "Class": "CanvasCircleShape"
+                }, 
+                {
+                    "strokeRGBAColor": "255.0 255.0 255.0 1.0", 
+                    "fillOpacity": 0.0, 
+                    "fillRGBAColor": "255.0 255.0 255.0 0.0", 
+                    "fillColor": "rgb(255.0,255.0,255.0)", 
+                    "strokeColor": "rgb(255.0,255.0,255.0)", 
+                    "strokeWidth": "1.0pt", 
+                    "transform": {
+                        "a": 0.11773422131147541, 
+                        "c": 0, 
+                        "b": 0, 
+                        "d": 0.11773422131147541, 
+                        "tx": 0.28688524590163933, 
+                        "ty": 0.22540983606557377, 
+                        "Class": "CanvasAffineTransform"
+                    }, 
+                    "strokeOpacity": 1.0, 
+                    "Class": "CanvasCircleShape"
+                }
+            ], 
+            "OID": "0x4a:53657373696f6e73", 
+            "Class": "Canvas"
+        }, 
+        "Zanpakuto and Zangetsu"
+    ], 
+    "Body": [
+        "", 
+        {
+            "Last Modified": 1321391468.411895, 
+            "CreatedTime": 1321391468.411416, 
+            "shapeList": [
+                {
+                    "strokeRGBAColor": "255.0 255.0 255.0 1.0", 
+                    "fillOpacity": 0.0, 
+                    "fillRGBAColor": "255.0 255.0 255.0 0.0", 
+                    "fillColor": "rgb(255.0,255.0,255.0)", 
+                    "strokeColor": "rgb(255.0,255.0,255.0)", 
+                    "strokeWidth": "1.0pt", 
+                    "transform": {
+                        "a": 0.09633319672131146, 
+                        "c": 0, 
+                        "b": 0, 
+                        "d": 0.09633319672131146, 
+                        "tx": 0.16188524590163936, 
+                        "ty": 0.12090163934426229, 
+                        "Class": "CanvasAffineTransform"
+                    }, 
+                    "strokeOpacity": 1.0, 
+                    "Class": "CanvasCircleShape"
+                }, 
+                {
+                    "strokeRGBAColor": "255.0 255.0 255.0 1.0", 
+                    "fillOpacity": 0.0, 
+                    "fillRGBAColor": "255.0 255.0 255.0 0.0", 
+                    "fillColor": "rgb(255.0,255.0,255.0)", 
+                    "strokeColor": "rgb(255.0,255.0,255.0)", 
+                    "strokeWidth": "1.0pt", 
+                    "transform": {
+                        "a": 0.11773422131147541, 
+                        "c": 0, 
+                        "b": 0, 
+                        "d": 0.11773422131147541, 
+                        "tx": 0.28688524590163933, 
+                        "ty": 0.22540983606557377, 
+                        "Class": "CanvasAffineTransform"
+                    }, 
+                    "strokeOpacity": 1.0, 
+                    "Class": "CanvasCircleShape"
+                }
+            ], 
+            "OID": "0x4a:53657373696f6e73", 
+            "Class": "Canvas"
+        }, 
+        "Zanpakuto and Zangetsu"
+    ], 
+    "recipients": [], 
+    "CreatedTime": 1321391468.411328, 
+    "ID": "c76e78bb0e7c4828ade7d303763011fc", 
+    "Status": "st_POSTED", 
+    "ContainerId": "35128948a285417693eb35147cd3b659", 
+    "Creator": "troy.daley@nextthought.com", 
+    "Last Modified": 1321391468.411328, 
+    "OID": "0x49:53657373696f6e73", 
+    "sharedWith": [
+        "troy.daley@nextthought.com", 
+        "carlos.sanchez@nextthought.com"
+    ], 
+    "Class": "MessageInfo", 
+    "channel": "DEFAULT"
+}

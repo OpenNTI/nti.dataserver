@@ -1,0 +1,311 @@
+# Sections inherit “requires” from their chapter. Chapters inherit
+# provides” from their sections, in addition to ones listed.
+
+
+\chapter{Properties of Arithmetic}
+	\provide{integer.arithmetic}
+
+	\section{The Number Line}
+		\provide{number.line}
+
+	\section{Addition}
+		\provide{integer.addition}
+
+	\section{Multiplication}
+		\provide{integer.multiplication}
+		\require{integer.addition}
+
+	\section{Negation}
+		\provide{integer.negation}
+		\require{integer.multiplication}
+		\require{integer.addition}
+
+	\section{Subtraction}
+		\provide{integer.subtraction}
+		\require{integer.multiplication}
+		\require{integer.addition}
+
+	\section{Reciprocals}
+		\provide{integer.reciprocals}
+		\require{integer.multiplication}
+
+	\section{Division}
+		\provide{integer.division}
+		\require{integer.reciprocals}
+		\require{integer.multiplication}
+		\require{integer.subtraction}
+
+
+\chapter{Exponents}
+	\provide{integer.exponents}
+	\require{integer.arithmetic}
+
+	\section{Squares}
+		\provide{integer.squares}
+
+	\section{Cubes}
+		\provide{integer.cubes}
+
+	\section{Higher.Exponents}
+		\provide{exponent.laws}
+
+	\section{Zero.as.an.Exponent}
+		\provide{zero.exponent}
+		\require{exponent.laws}
+
+	\section{Negative.Exponents}
+		\provide{negative.integer.exponents}
+		\require{zero.exponent}
+		\require{exponent.laws}
+
+\chapter{Number.Theory}
+	\require{integer.arithmetic}
+	\require{integer.exponents}
+	\provide{multiples.and.divisors}
+	\provide{primes.and.composites}
+
+	\section{Multiples}
+		\provide{multiples}
+
+	\section{Divisibility.Tests}
+		\provide{divisibility.tests}
+		\require{multiples}
+
+	\section{Prime.Numbers}
+		\require{multiples}
+		\provide{primes}
+
+	\section{Prime.Factorization}
+		\require{primes}
+		\provide{prime.factorization}
+
+	\section{Least.Common.Multiple}
+		\require{multiples}
+		\require{prime.factorization}
+		\provide{least.common.multiple}
+
+	\section{Divisors}
+		\require{multiples}
+		\provide{divisors}
+
+	\section{Greatest.Common.Divisor}
+		\provide{greatest.common.divisor}
+		\require{divisors}
+		\require{prime.factorization}
+
+
+\chapter{Fractions}
+	\require{integer.arithmetic}
+	\require{multiples.and.divisors}
+	\require{primes.and.composites}
+	\provide{fraction.arithmetic}
+
+	\section{What.is.a.Fraction?}
+		\provide{fraction.definition}
+
+	\section{Multiplying.Fractions}
+		\provide{fraction.multiplication}
+		\require{fraction.definition}
+
+	\section{Dividing.by.a.Fraction}
+		\provide{fraction.division}
+		\require{integer.division}
+		\require{integer.reciprocals}
+		\require{fraction.multiplication}
+
+	\section{Raising.Fractions.to.Powers}
+		\provide{fraction.integer.exponents}
+		\require{integer.exponents}
+		\require{fraction.multiplication}
+		\require{fraction.division}
+
+	\section{Simplest.Form.of.Fractions}
+		\provide{fraction.simplest.form}
+		\require{fraction.multiplication}
+
+	\section{Comparing.Fractions}
+		\provide{fraction.comparison}
+		\require{fraction.simplest.form}
+
+	\section{Adding.and.Subtracting.Fractions}
+		\require{fraction.simplest.form}
+		\provide{fraction.addition}
+		\provide{fraction.subtraction}
+
+	\section{Mixed.Numbers}
+		\require{fraction.addition}
+		\require{fraction.subtraction}
+		\require{fraction.division}
+		\provide{mixed.numbers}
+
+
+
+\chapter{Equations.and.Inequalities}
+	\require{fraction.arithmetic}
+	\require{integer.arithmetic}
+	\provide{one-variable.linear.equations}
+	\provide{one-variable.linear.inequalities}
+
+	\section{Expressions}
+		\provide{linear.expressions}
+
+	\section{Solving.Linear.Equations.I}
+		\provide{basic.one-variable.linear.equations}
+		\require{linear.expressions}
+
+	\section{Solving.Linear.Equations.II}
+		\provide{one-variable.linear.equations}
+		\require{basic.one-variable.linear.equations}
+
+	\section{Word.Problems}
+		\provide{one-variable.linear.equation.word.problems}
+		\require{one-variable.linear.equations}
+
+	\section{Inequalities}
+		\require{one-variable.linear.equations}
+
+\chapter{Decimals}
+	\require{integer.arithmetic}
+	\require{fraction.arithmetic}
+
+
+\chapter{Ratios,.Conversions,.and.Rates}
+\require{fraction.arithmetic}
+\require{integer.arithmetic}
+\require{one-variable.linear.equations}
+\provide{ratio}
+\provide{proportion}
+\provide{rates}
+\provide{conversion.factors}
+
+\section{What.is.a.Ratio?}
+\provide{two-way.ratio}
+
+\section{Multi-way.Ratios}
+\require{two-way.ratio}
+\provide{multi-way.ratio}
+
+\section{Proportions}
+\require{two-way.ratio}
+\provide{proportion}
+
+\section{Conversions}
+\require{two-way.ratio}
+\provide{conversion.factors}
+
+\section{Speed}
+\provide{speed}
+\require{conversion.factors}
+\require{proportion}
+
+\section{Other.Rates}
+\require{speed}
+\provide{rates}
+
+
+
+\chapter{Percent}
+\require{fraction.arithmetic}
+\require{ratio}
+\provide{percent}
+\require{one-variable.linear.equations}
+
+\section{What.is.a.Percent?}
+\provide{percent.definition}
+
+\section{Word.Problems}
+\require{percent.definition}
+
+\section{Percent.Increase.and.Decrease}
+\require{percent.definition}
+\provide{percent.increase.and.decrease}
+
+
+\chapter{Square.Roots}
+\require{integer.arithmetic}
+\require{integer.exponents}
+\require{multiples.and.divisors}
+\require{primes.and.composites}
+\provide{square.root}
+
+\section{From.Squares.to.Square.Roots}
+\provide{square.roots.of.squares}
+
+\section{Square.Roots.of.Non-square.Integers}
+\require{square.roots.of.squares}
+\provide{square.root.estimation}
+\provide{irrational.number}
+
+\section{Arithmetic.with.Square.Roots}
+\require{prime.factorization}
+\require{square.roots.of.squares}
+\provide{square.root.arithmetic}
+
+
+\chapter{Angles}
+\require{one-variable.linear.equations}
+\provide{angles}
+
+\section{Measuring.Angles}
+\provide{angles.basics}
+
+\section{Parallel.Lines}
+\provide{angles.with.parallel.lines}
+\require{angles.basics}
+
+\section{Angles.in.Polygons}
+\provide{angles.in.polygons}
+\require{angles.with.parallel.lines}
+
+
+\chapter{Perimeter.and.Area}
+\provide{area}
+\provide{perimeter}
+\provide{circle.basics}
+\require{angles}
+\require{integer.arithmetic}
+
+\section{Measuring.Segments}
+\provide{perimeter}
+\require{one-variable.linear.inequalities}
+
+\section{Area}
+\provide{area.basics}
+\require{integer.squares}
+
+\section{Circles}
+\require{perimeter}
+\require{area}
+\provide{circle.basics}
+\provide{pi}
+
+
+\chapter{Right.Triangles.and.Quadrilaterals}
+\require{area}
+\require{angles}
+\require{square.root}
+
+\section{The.Pythagorean.Theorem}
+\provide{Pythagorean.Theorem}
+
+\section{Some.Special.Triangles}
+\require{Pythagorean.Theorem}
+\provide{30-60-90.triangle}
+\provide{45-45-90.triangle}
+
+\section{Quadrilateral}
+\require{Pythagorean.Theorem}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

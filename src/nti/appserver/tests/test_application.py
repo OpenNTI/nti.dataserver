@@ -1,0 +1,376 @@
+#!/usr/bin/env python2.7
+
+from hamcrest import (assert_that, is_, none,
+					  has_entry, has_length, has_item, has_key,
+					  contains_string, ends_with, all_of, has_entries)
+from nti.appserver.application import createApplication
+from nti.dataserver.library import Library
+import nti.contentsearch
+import nti.contentsearch.interfaces
+import pyramid.config
+import pyramid.httpexceptions as hexc
+
+from nti.appserver.tests import ConfiguringTestBase
+from webtest import TestApp
+
+import os
+import os.path
+
+import urllib
+from nti.dataserver import users, ntiids, providers, classes
+from nti.dataserver.datastructures import ContainedMixin, to_external_ntiid_oid
+from nti.dataserver import contenttypes, datastructures
+
+from nti.dataserver.tests import mock_dataserver
+
+import anyjson as json
+from persistent import Persistent
+
+class ContainedExternal(ContainedMixin):
+
+	def toExternalObject( self ):
+		return str(self)
+
+class PersistentContainedExternal(ContainedExternal,Persistent):
+	pass
+
+class TestApplication(ConfiguringTestBase):
+
+	def setUp(self):
+		super(TestApplication,self).setUp()
+		self.ds = mock_dataserver.MockDataserver()
+		self.app, self.main = createApplication( 8080, Library(), create_ds=self.ds, pyramid_config=self.config )
+		root = '/Library/WebServer/Documents/'
+		# We'll volunteer to serve all the files in the root directory
+		# This SHOULD include 'prealgebra' and 'mathcounts'
+		serveFiles = [ ('/' + s, os.path.join( root, s) )
+					   for s in os.listdir( root )
+					   if os.path.isdir( os.path.join( root, s ) )]
+		self.main.setServeFiles( serveFiles )
+
+	def _make_extra_environ(self, user='sjohnson@nextthought.com'):
+		return {
+			'HTTP_AUTHORIZATION': 'Basic ' + (user + ':temp001').encode('base64'),
+			}
+
+	# FIXME: This shouldn't be necessary. But the SocketIOHandler
+	# part of the AppServer is currently dealing with transactions.
+	# Migrate to pyramid_tm
+	@mock_dataserver.WithMockDSTrans
+	def test_path_with_parens(self):
+		contained = ContainedExternal()
+		user = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+		contained.containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
+		user.addContainedObject( contained )
+		assert_that( user.getContainer( contained.containerId ), has_length( 2 ) )
+
+		testapp = TestApp( self.app )
+		path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + contained.containerId + ')/UserGeneratedData'
+		#path = urllib.quote( path )
+		res = testapp.get( path, extra_environ=self._make_extra_environ())
+
+		assert_that( res.body, contains_string( str(contained) ) )
+
+	@mock_dataserver.WithMockDSTrans
+	def test_pages_with_only_shared_not_404(self):
+		contained = PersistentContainedExternal()
+		user = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+		contained.containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
+		user.addContainedObject( contained )
+		assert_that( user.getContainer( contained.containerId ), has_length( 2 ) )
+
+		user2 = users.User.create_user( self.ds, username='foo@bar' )
+		user2._addSharedObject( contained )
+
+		testapp = TestApp( self.app )
+		path = '/dataserver2/users/foo@bar/Pages(' + contained.containerId + ')/UserGeneratedData'
+		#path = urllib.quote( path )
+		res = testapp.get( path, extra_environ=self._make_extra_environ(user='foo@bar'))
+
+		assert_that( res.body, contains_string( str(contained) ) )
+
+	@mock_dataserver.WithMockDSTrans
+	def test_deprecated_path_with_slash(self):
+		contained = ContainedExternal()
+		user = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+		contained.containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
+		user.addContainedObject( contained )
+		assert_that( user.getContainer( contained.containerId ), has_length( 2 ) )
+
+		testapp = TestApp( self.app )
+		path = '/dataserver2/users/sjohnson@nextthought.com/Pages/' + contained.containerId + '/UserGeneratedData'
+		#path = urllib.quote( path )
+		res = testapp.get( path, extra_environ=self._make_extra_environ())
+
+		assert_that( res.body, contains_string( str(contained) ) )
+
+
+	@mock_dataserver.WithMockDSTrans
+	def test_post_pages_collection(self):
+		user = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+		testapp = TestApp( self.app )
+		containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
+		data = json.serialize( { 'Class': 'Highlight',
+								 'ContainerId': containerId,
+								 'Location': 'foo-bar'} )
+
+		path = '/dataserver2/users/sjohnson@nextthought.com/Pages/'
+		res = testapp.post( path, data, extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 201 ) )
+		assert_that( res.body, contains_string( '"Location": "foo-bar"' ) )
+		assert_that( res.headers, has_entry( 'Location', contains_string( 'http://localhost/dataserver2/users/sjohnson%40nextthought.com/Objects/tag:nextthought.com,2011-10:sjohnson@nextthought.com-OID' ) ) )
+		assert_that( res.headers, has_entry( 'Content-Type', contains_string( 'application/vnd.nextthought.highlight+json' ) ) )
+
+		path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + containerId + ')/UserGeneratedData'
+		res = testapp.get( path, extra_environ=self._make_extra_environ())
+		assert_that( res.body, contains_string( '"Location": "foo-bar"' ) )
+
+	@mock_dataserver.WithMockDSTrans
+	def test_user_search(self):
+		contained = ContainedExternal()
+		user = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+		contained.containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
+		user.addContainedObject( contained )
+		assert_that( user.getContainer( contained.containerId ), has_length( 2 ) )
+
+		testapp = TestApp( self.app )
+		path = '/dataserver2/UserSearch/sjohnson@nextthought.com'
+		res = testapp.get( path, extra_environ=self._make_extra_environ())
+
+		assert_that( res.body, contains_string( str('sjohnson@nextthought.com') ) )
+		# We should have an edit link
+		assert_that( res.body, contains_string( '"Links": [{"href": "/dataserver2/Objects/tag:nextthought.com,2011-10:sjohnson@nextthought.com-OID' ) )
+		assert_that( res.body, contains_string( '"Link", "rel": "edit"}' ) )
+
+	@mock_dataserver.WithMockDSTrans
+	def test_user_search_deprecated_path(self):
+		contained = ContainedExternal()
+		user = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+		contained.containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
+		user.addContainedObject( contained )
+		assert_that( user.getContainer( contained.containerId ), has_length( 2 ) )
+
+		testapp = TestApp( self.app )
+		path = '/dataserver/UserSearch/sjohnson@nextthought.com'
+		res = testapp.get( path, extra_environ=self._make_extra_environ())
+
+		assert_that( res.body, contains_string( str('sjohnson@nextthought.com') ) )
+
+	@mock_dataserver.WithMockDSTrans
+	def test_search_empty_term_user_ugd_book(self):
+		"Searching with an empty term returns empty results"
+		contained = ContainedExternal()
+		user = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+		contained.containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
+		user.addContainedObject( contained )
+		assert_that( user.getContainer( contained.containerId ), has_length( 2 ) )
+
+		testapp = TestApp( self.app )
+		# The results are not defined across the search types,
+		# we just test that it doesn't raise a 404
+		for search_path in ('UserSearch','users/sjohnson@nextthought.com/Search/RecursiveUserGeneratedData'):
+			for ds_path in ('dataserver', 'dataserver2'):
+				path = '/' + ds_path +'/' + search_path + '/'
+				res = testapp.get( path, extra_environ=self._make_extra_environ())
+				assert_that( res.status_int, is_( 200 ) )
+
+	@mock_dataserver.WithMockDSTrans
+	def test_ugd_search_no_data_returns_empty(self):
+		"Any search term against a user whose index DNE returns empty results"
+
+		users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+		testapp = TestApp( self.app )
+		for search_term in ('', 'term'):
+			for ds_path in ('dataserver', 'dataserver2'):
+				path = '/' + ds_path +'/users/sjohnson@nextthought.com/Search/RecursiveUserGeneratedData/' + search_term
+				res = testapp.get( path, extra_environ=self._make_extra_environ())
+				assert_that( res.status_int, is_( 200 ) )
+
+		# This should not have created index entries for the user.
+		# (Otherwise, theres denial-of-service possibilities)
+		ixman = pyramid.config.global_registries.last.getUtility( nti.contentsearch.interfaces.IIndexManager )
+		with ixman.dbTrans():
+			assert_that( ixman.get_user_index_manager( 'user@dne.org', create=False ), is_( none() ) )
+
+	@mock_dataserver.WithMockDSTrans
+	def test_ugd_search_other_user(self):
+		"Security prevents searching other user's data"
+
+		users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+		testapp = TestApp( self.app )
+		for search_term in ('', 'term'):
+			for ds_path in ('dataserver', 'dataserver2'):
+				path = '/' + ds_path +'/users/user@dne.org/Search/RecursiveUserGeneratedData/' + search_term
+				with self.assertRaises(hexc.HTTPForbidden):
+					testapp.get( path, extra_environ=self._make_extra_environ())
+
+
+		# This should not have created index entries for the user.
+		# (Otherwise, theres denial-of-service possibilities)
+		ixman = pyramid.config.global_registries.last.getUtility( nti.contentsearch.interfaces.IIndexManager )
+		with ixman.dbTrans():
+			assert_that( ixman.get_user_index_manager( 'user@dne.org', create=False ), is_( none() ) )
+
+
+	@mock_dataserver.WithMockDSTrans
+	def test_create_friends_list_content_type(self):
+		users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+		testapp = TestApp( self.app )
+		data = '{"Last Modified":1323788728,"ContainerId":"FriendsLists","Username": "boom@nextthought.com","friends":["troy.daley@nextthought.com"],"realname":"boom"}'
+
+		path = '/dataserver2/users/sjohnson@nextthought.com/FriendsLists/'
+
+		res = testapp.post( path, data, extra_environ=self._make_extra_environ(), headers={'Content-Type': 'application/vnd.nextthought.friendslist+json' } )
+		assert_that( res.status_int, is_( 201 ) )
+		assert_that( res.body, contains_string( '"boom@nextthought.com"' ) )
+		assert_that( res.headers, has_entry( 'Content-Type', contains_string( 'application/vnd.nextthought.friendslist+json' ) ) )
+
+	@mock_dataserver.WithMockDSTrans
+	def test_edit_note_returns_editlink(self):
+		"The object returned by POST should have enough ACL to regenerate its Edit link"
+		user = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+		n = contenttypes.Note()
+		n.containerId = 'tag:nti:foo'
+		user.addContainedObject( n )
+		testapp = TestApp( self.app )
+		data = '{"body": ["text"]}'
+
+		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % datastructures.to_external_ntiid_oid( n )
+		path = urllib.quote( path )
+		res = testapp.put( path, data, extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 200 ) )
+		assert_that( json.loads(res.body), has_entry( 'href', path ) )
+		assert_that( json.loads(res.body), has_entry( 'Links', has_item( has_entry( 'rel', 'edit' ) ) ) )
+
+
+	@mock_dataserver.WithMockDSTrans
+	def test_meth_not_allowed(self):
+		users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+
+		testapp = TestApp( self.app )
+		path = '/dataserver2/users/sjohnson@nextthought.com'
+		with self.assertRaises(hexc.HTTPMethodNotAllowed):
+			testapp.get( path, status=405, extra_environ=self._make_extra_environ())
+
+
+	@mock_dataserver.WithMockDSTrans
+	def test_class_provider_hrefs(self):
+		users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+		users.User.create_user( self.ds, username='jason.madden@nextthought.com' )
+
+		clazz = _create_class( self.ds, ('sjohnson@nextthought.com',) )
+		testapp = TestApp( self.app )
+		body = testapp.get( '/dataserver2/providers/OU/Classes/CS2051', extra_environ=self._make_extra_environ() )
+
+		body = json.loads( body.text )
+		assert_that( body, has_entry( 'MimeType', 'application/vnd.nextthought.classinfo' ) )
+		# The edit href is complete
+		assert_that( body, has_entry( 'Links',
+									  has_item( has_entries( rel='edit',
+															 href='/dataserver2/providers/OU/Objects/%s' % urllib.quote(to_external_ntiid_oid(clazz)) ) ) ) )
+		# And the top-level href matches the edit href
+		assert_that( body, has_entry( 'href', body['Links'][0]['href'] ) )
+
+
+		body = testapp.get( '/dataserver2/providers/OU/Classes/CS2051/CS2051.101', extra_environ=self._make_extra_environ() )
+
+		body = json.loads( body.text )
+		assert_that( body, has_entry( 'MimeType', 'application/vnd.nextthought.sectioninfo' ) )
+		assert_that( body, has_entry( 'href', '/dataserver2/providers/OU/Classes/CS2051/CS2051.101' ) )
+
+		# We should be able to resolve the parent class of this section
+		assert_that( body, has_entry( 'Links', has_item( has_entry( 'rel', 'parent' ) ) ) )
+		class_url = body['Links'][0]['href']
+		assert_that( class_url, ends_with( 'OU-Class-CS2051' ) ) # NTIID URL
+		body = testapp.get( class_url, extra_environ=self._make_extra_environ() )
+		json.loads( body.text )
+
+		# When fetched as a collection, they still have edit info
+		body = testapp.get( '/dataserver2/providers/OU/Classes/', extra_environ=self._make_extra_environ() )
+		body = json.loads( body.text )
+		assert_that( body, has_entry( 'Items', has_length( 1 ) ) )
+		body = body['Items']['CS2051']
+		assert_that( body, has_entry( 'MimeType', 'application/vnd.nextthought.classinfo' ) )
+		# The edit href is complete
+		assert_that( body, has_entry( 'Links',
+									  has_item( has_entries( rel='edit',
+															 href='/dataserver2/providers/OU/Objects/%s' % urllib.quote(to_external_ntiid_oid(clazz) ) ) ) ) )
+		# And the top-level href matches the edit href
+		assert_that( body, has_entry( 'href', body['Links'][0]['href'] ) )
+
+	@mock_dataserver.WithMockDSTrans
+	def _do_post_class_to_path(self, path):
+		users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+		_create_class( self.ds, ('sjohnson@nextthought.com',) )
+		testapp = TestApp( self.app )
+		data = json.serialize( { 'Class': 'ClassInfo',
+								 'ContainerId': 'Classes',
+								 'ID': 'CS2502'} )
+
+		res = testapp.post( path, data, extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 201 ) )
+		body = json.loads( res.body )
+		assert_that( body, has_entry( 'ID', 'CS2502' ) )
+
+	@mock_dataserver.WithMockDSTrans
+	def _do_post_class_to_path_with_section(self, path, get=None):
+		users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+		_create_class( self.ds, ('sjohnson@nextthought.com',) )
+		testapp = TestApp( self.app )
+		data = json.serialize( { 'Class': 'ClassInfo',
+								 'ContainerId': 'Classes',
+								 'ID': 'CS2503' } )
+
+
+		res = testapp.post( path, data, extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 201 ) )
+
+		data = json.serialize( { 'Class': 'ClassInfo',
+								 'ContainerId': 'Classes',
+								 'ID': 'CS2503',
+								 'Sections': [{'ID': 'CS2503.101', 'Class': 'SectionInfo', 'Enrolled': ['jason.madden@nextthought.com']}]} )
+		res = testapp.put( path + 'CS2503', data, extra_environ=self._make_extra_environ() )
+
+		body = json.loads( res.body )
+		assert_that( body, has_entry( 'ID', 'CS2503' ) )
+		assert_that( body, has_entry( 'Sections', has_item( has_entry( 'ID', 'CS2503.101' ) ) ) )
+		assert_that( body, has_entry( 'Sections', has_item( has_entry( 'Enrolled', has_item( 'jason.madden@nextthought.com' ) ) ) ) )
+
+		if get:
+			res = testapp.get( path + 'CS2503', extra_environ=self._make_extra_environ() )
+			body = json.loads( res.body )
+			assert_that( body, has_entry( 'ID', 'CS2503' ) )
+			assert_that( body, has_entry( 'Sections', has_item( has_entry( 'ID', 'CS2503.101' ) ) ) )
+			assert_that( body, has_entry( 'Sections', has_item( has_entry( 'Enrolled', has_item( 'jason.madden@nextthought.com' ) ) ) ) )
+
+	def test_post_class_full_path(self):
+		self._do_post_class_to_path( '/dataserver2/providers/OU/Classes/' )
+		self._do_post_class_to_path_with_section( '/dataserver2/providers/OU/Classes/', get=True )
+
+	def test_post_class_part_path(self):
+		self._do_post_class_to_path( '/dataserver2/providers/OU/' )
+
+
+
+def _create_class(ds, usernames_to_enroll=()):
+	provider = providers.Provider( 'OU' )
+	ds.root['providers']['OU'] = provider
+	klass = provider.maybeCreateContainedObjectWithType(  'Classes', None )
+	klass.containerId = 'Classes'
+	klass.ID = 'CS2051'
+	klass.Description = 'CS Class'
+	with ds.dbTrans() as txn:
+		txn._p_jar.add( klass )
+
+	section = classes.SectionInfo()
+	section.ID = 'CS2051.101'
+	klass.add_section( section )
+	section.InstructorInfo = classes.InstructorInfo()
+	for user in usernames_to_enroll:
+		section.enroll( user )
+	section.InstructorInfo.Instructors.append( 'jason.madden@nextthought.com' )
+	section.InstructorInfo.Instructors.append( 'sjohnson@nextthought.com' )
+	section.Provider = 'OU'
+	provider.addContainedObject( klass )
+
+	return klass

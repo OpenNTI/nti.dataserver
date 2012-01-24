@@ -1,0 +1,7 @@
+\[
+\begin{array}{r@{}r@{\,}c@{\,}r@{.}l}
+& 10^6x & = & 142857 & 142857\ldots \\
+-& x & = & 0 &142857\ldots \\ \hline
+\multicolumn{2}{r@{\,}}{10^6x-x} & = & 142857
+\end{array}
+\]

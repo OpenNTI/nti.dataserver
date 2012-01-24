@@ -1,0 +1,9 @@
+overrides_1.txt=png,svg
+overrides_2.txt=png,svg
+overrides_3.txt=png,svg
+overrides_4.txt=png,svg
+overrides_5.txt=png,svg
+overrides_6.txt=png,svg
+overrides_7.txt=png,svg
+overrides_8.txt=png,svg
+overrides_9.txt=png,svg

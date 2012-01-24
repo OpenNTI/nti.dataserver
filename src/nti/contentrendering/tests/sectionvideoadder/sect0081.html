@@ -1,0 +1,196 @@
+<html xml:lang="en" lang="en">
+	<head>
+        <meta content="2011-12-31 10:00:35.180286" http-equiv="last-modified">
+		<meta name="viewport" content="width=730">
+        <meta name="NTIRelativeScrollHeight" content="15541">
+        <meta content="tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.112" name="NTIID">
+		<meta name="generator" content="plasTeX">
+		<meta content="text/html; charset=utf-8" http-equiv="content-type">
+		<title>The Multiplication Principle</title>
+		<link href="sect0082.html" title="Casework" rel="next">
+		<link href="sect0080.html" title="Counting with Addition and Subtraction" rel="prev">
+		<link href="sect0079.html" title="Counting" rel="up">
+		<link rel="stylesheet" href="styles/styles.css">
+		<link rel="stylesheet" href="styles/prealgebra.css">
+		<link rel="stylesheet" href="styles/application.css">
+		
+		<script type="text/javascript" src="js/jquery-1.6.1.min.js"></script>
+        
+        <script type="text/javascript" src="js/prealgebra.js"></script>
+	</head>
+	<body id="NTIContent">
+		<div class="navigation">
+			<div>
+				<div class="previous"><a href="sect0080.html" title="Counting with Addition and Subtraction">&lt;</a></div>
+				<div class="up"><a href="sect0079.html" title="Counting">^</a></div>
+				<div class="next"><a href="sect0082.html" title="Casework">&gt;</a></div>
+			</div>
+			<div class="navigation-title" align="center">Prealgebra</div>
+			<div>
+				<div class="contents"><a href="index.html" title="Table of Contents">C</a></div>
+				<div class="index"><a href="sect0096.html" title="Index">#</a></div>
+			</div>
+		</div>
+
+		<!-- TODO: this should be rendered by the UI... -->
+		<div class="breadcrumbs">
+			<span>
+				<span> <a href="index.html">Prealgebra</a> : </span>
+				
+			</span><span>
+				<span> <a href="sect0079.html">Counting</a> : </span>
+				
+			</span><span>
+				
+				<span><b class="current">The Multiplication Principle</b></span>
+			</span>
+			<hr>
+		</div>
+
+		<div class="page-contents"><div id="a0000000082" class="chapter title">
+	<span class="ref">14.2</span>
+	<span class="label">The Multiplication Principle</span>
+</div>
+
+<div id="a0000012238" class="section-problems"><span class="headingtext">Section Problems</span></div>
+<ol class="section-problems itemize">
+	<li>
+		<div probnum="8" class="problem"><a name="a0000012239"></a>
+<p>You have three shirts and four pairs of pants. How many outfits consisting of one shirt and one pair of pants can you make? </p></div>
+	</li><li>
+		<div probnum="9" class="problem"><a name="a0000012240"></a>
+<p>In how many ways can we form an international commission if we must choose one European country from among 6 European countries, one Asian country from among 4, one North American country from among 3, and one African country from among 7? </p></div>
+	</li><li>
+		<div probnum="10" class="problem"><a name="a0000012241"></a>
+<p>In how many ways can we form a license plate using only digits (0–9) and capital letters (other than O and I), given that each plate has 6 characters, the first of which is a digit, and the second of which is a letter? </p></div>
+	</li><li>
+		<div probnum="11" class="problem"><a name="a0000012242"></a>
+<p>In how many ways can I arrange four different books from left to right on a shelf? </p></div>
+	</li><li>
+		<div probnum="12" class="problem"><a name="a0000012243"></a>
+<p>Your math club has 16 members. In how many ways can it select a president, a vice-president, and a treasurer if no member can hold more than one office? </p></div>
+	</li>
+</ol>
+<div class="end section-problems">End section problems</div>
+<a name="a0000012245"></a>
+<p><a name="a0000012246" id="a0000012246"></a> </p><a name="a0000012247"></a>
+<p>Often we’ll be counting the number of outcomes of a series of events. Here’s an example of this type of problem. </p>
+<div probnum="8" type="problem" class="problem"><a name="a0000012249"></a>
+<p><a name="prob:outfit"></a> You have three shirts and four pairs of pants. How many outfits consisting of one shirt and one pair of pants can you make? </p></div>
+<div id="a0000012251" class="solution">Solution for Problem 8:</div>
+<span><a name="a0000012252"></a>
+<p> In this problem, the number of possibilities is so small that we can just list them. </p><a name="a0000012253"></a>
+<p>If our shirts are labeled <span></span>
+ and our pants are labeled <span></span>
+, then we can list all of the possible outfits: </p>
+<div id="a0000012255" class="math equation">
+<div></div>
+
+
+</div><a name="a0000012256"></a>
+<p> So there are 12 outfits. </p></span><a name="a0000012257"></a>
+<p>Listing the outfits like this is somewhat annoying. We can better visualize the outfits by using a diagram. One sort of diagram is a <span class="def">tree</span>, as shown below. We start at the dot at the top, and each arrow is a choice of one item: the first arrow (from the dot at the top) is the choice of pants, and the second arrow (from the choice of pants) is the choice of shirt. Each complete path of two arrows leads to a complete outfit. </p><a name="a0000012258"></a>
+<p><div class="align-center"><img alt="\includegraphics{../Images/counting_21.pdf}" style="width:; height:">
+</div> <a name="a0000012259" id="a0000012259"></a> </p><a name="a0000012260"></a>
+<p>Another type of diagram we can use for Problem <a href="sect0081.html#prob:outfit">8</a> is a <span class="def">grid</span>. A grid looks a bit like a multiplication table: we put the choices of pants along the top and the choices of shirts along the side. Each box in the grid is a complete outfit, as shown below: </p>
+<div id="a0000012262" class="math equation">
+<div></div>
+
+
+</div><a name="a0000012263"></a>
+<p> <a name="a0000012264" id="a0000012264"></a> </p><a name="a0000012265"></a>
+<p>For both the tree and the grid, we can count outfits by using the following reasoning: we have four choices for the pants, and for each of these four choices of pants, we have three choices for the shirt. Therefore, there are <span></span>
+ outfits. </p><a name="a0000012266"></a>
+<p><div class="concept"> The point of drawing a tree or a grid is to keep our counting organized. Clear organization is very important for solving counting problems.<a name="a0000012267" id="a0000012267"></a> </div> </p><a name="a0000012268"></a>
+<p>It’s easy for us to draw a tree or a grid in Problem <a href="sect0081.html#prob:outfit">8</a> because the numbers are small. Let’s look at a more complicated version of the same type of problem. </p>
+<div probnum="9" type="problem" class="problem"><a name="a0000012270"></a>
+<p><a name="prob:countcountries"></a> In how many ways can we form an international commission if we must choose one European country from among 6 European countries, one Asian country from among 4, one North American country from among 3, and one African country from among 7? </p></div>
+<div id="a0000012272" class="solution">Solution for Problem 9:</div>
+<span><a name="a0000012273"></a>
+<p> Clearly drawing a grid or a tree is not going to be practical—there are too many choices! So we’ll have to do this problem by reasoning out the answer. </p><a name="a0000012274"></a>
+<p>We tackle a problem like this in steps. </p><a name="a0000012275"></a>
+<p><em>Step 1:</em> There are 6 ways to choose a European country. </p><a name="a0000012276"></a>
+<p><em>Step 2:</em> For each European country, we can choose an Asian country in 4 ways, for a total of <span></span>
+ ways to choose both a European and an Asian country. </p><a name="a0000012277"></a>
+<p><em>Step 3:</em> For each pair of countries that we’ve chosen in Steps 1 and 2, we can choose a North American country in 3 ways. So there are <span></span>
+ ways to choose 3 countries. </p><a name="a0000012278"></a>
+<p><em>Step 4:</em> For each triple of countries that we’ve chosen in Steps 1–3, we can choose an African country in 7 ways. So there are <span></span>
+ ways to choose 4 countries. </p><a name="a0000012279"></a>
+<p>So we see that there are <span></span>
+ possibilities. </p></span><a name="a0000012280"></a>
+<p>We say that the choices in Problem <a href="sect0081.html#prob:countcountries">9</a> are <span class="def">independent</span><a name="a0000012281" id="a0000012281"></a>, meaning that each decision does not depend on the others and does not affect the others. Specifically, we choose a European country, then an Asian country, then a North American country, then an African country. Each choice doesn’t depend on or affect the other choices. </p><a name="a0000012282"></a>
+<p><div class="concept"> We use multiplication to count the number of outcomes from a sequence of independent events.<a name="a0000012283" id="a0000012283"></a> </div> </p>
+<div probnum="10" type="problem" class="problem"><a name="a0000012285"></a>
+<p>In how many ways can we form a license plate using only digits (0–9) and capital letters (other than O and I), given that each plate has 6 characters, the first of which is a digit, and the second of which is a letter? </p></div>
+<div id="a0000012287" class="solution">Solution for Problem 10:</div>
+<span><a name="a0000012288"></a>
+<p> Since each character does not depend on any of the other characters, our choices are independent. There are 10 choices for the first character (any digit from 0 through 9), there are 24 choices for the second character (any letter A–Z except for O or I), and there are 34 choices for each of the other five characters (any digit 0–9 or any letter A–Z, except O or I). </p><a name="a0000012289"></a>
+<p>Therefore, since the choices are independent, we multiply the number of choices at each step, and we have </p>
+<div id="a0000012291" class="math equation">
+<div></div>
+
+
+</div><a name="a0000012292"></a>
+<p> ways to form our license plate. </p></span><a name="a0000012293"></a>
+<p>In some counting problems, we make a series of choices, but later choices will depend on some of the earlier choices. This is unlike the problems that we’ve done before. For example, in Problem <a href="sect0081.html#prob:outfit">8</a>, our choices of shirt didn’t depend at all on our choice of pants. Things are a little bit different in the next problem. </p>
+<div probnum="11" type="problem" class="problem"><a name="a0000012295"></a>
+<p><a name="prob:4books"></a> In how many ways can I arrange four different books from left to right on a shelf? </p></div>
+<div id="a0000012297" class="solution">Solution for Problem 11:</div>
+<span><a name="a0000012298"></a>
+<p> We cannot just count <span></span>
+, because once we place the first book on the left, we no longer have 4 choices for the second book. We can’t reuse the first book, so we only have 3 choices remaining for the second book. Let’s carefully count our choices step by step: </p><a name="a0000012299"></a>
+<p><em>Step 1:</em> We have 4 choices for which book to place on the left. </p><a name="a0000012300"></a>
+<p><em>Step 2:</em> Regardless of which book we chose in step 1, we have 3 books remaining, so we have 3 choices for the second book. Thus we have a total of <span></span>
+ choices for the first two books on the left. </p><a name="a0000012301"></a>
+<p><em>Step 3:</em> We have 2 books remaining, so we have 2 choices for the third book. Thus we have a total of <span></span>
+ choices for the first three books. </p><a name="a0000012302"></a>
+<p><em>Step 4:</em> We only have 1 book remaining, so we have 1 choice for the fourth book. Thus we have a total of <span></span>
+ choices for all four books. </p><a name="a0000012303"></a>
+<p>So the answer is 24. </p></span><a name="a0000012304"></a>
+<p>One important thing to note about Problem <a href="sect0081.html#prob:4books">11</a> is that although the choices themselves are not independent at each step, the <em>number</em> of choices at each step is independent of our previous choices. For example, no matter which book we choose in Step 1, we always have 3 remaining books to choose from in Step 2. Therefore, we can get our answer by multiplying the number of choices at each step, so that <span></span>
+ is the answer. </p><a name="a0000012305"></a>
+<p>If you’re not yet convinced, we could represent our choices in this problem as a tree, where the books are labeled <span class="mathname">A</span>, <span class="mathname">B</span>, <span class="mathname">C</span>, and <span class="mathname">D</span>, as shown in the picture on the next page. We can see that there are 4 arrows from the starting dot for the first choice, then 3 arrows for the next choice, and so on, and indeed there are 24 possible arrangements. </p>
+<div class="figure">
+<div class="align-center"> <div id="a0000012308" class="math equation ntixydisplaymath">
+	<img alt="\[ \xymatrix@R=-2.5pt{ &amp; &amp; &amp;  ABC \ar [r] &amp;  ABCD \\ &amp; &amp;  AB \ar [ur] \ar [dr] \\ &amp; &amp; &amp;  ABD \ar [r] &amp;  ABDC \\ \\ &amp; &amp; &amp;  ACB \ar [r] &amp;  ACBD \\ &amp;  A \ar [uuuur] \ar [r] \ar [ddddr] &amp;  AC \ar [ur] \ar [dr] \\ &amp; &amp; &amp;  ACD \ar [r] &amp;  ACDB \\ \\ &amp; &amp; &amp;  ADB \ar [r] &amp;  ADBC \\ &amp; &amp;  AD \ar [ur] \ar [dr] \\ &amp; &amp; &amp;  ADC \ar [r] &amp;  ADCB \\ \\ &amp; &amp; &amp;  BAC \ar [r] &amp;  BACD \\ &amp; &amp;  BA \ar [ur] \ar [dr] \\ &amp; &amp; &amp;  BAD \ar [r] &amp;  BADC \\ \\ &amp; &amp; &amp;  BCA \ar [r] &amp;  BCAD \\ &amp;  B \ar [uuuur] \ar [r] \ar [ddddr] &amp;  BC \ar [ur] \ar [dr] \\ &amp; &amp; &amp;  BCD \ar [r] &amp;  BCDA \\ \\ &amp; &amp; &amp;  BDA \ar [r] &amp;  BDAC \\ &amp; &amp;  BD \ar [ur] \ar [dr] \\ &amp; &amp; &amp;  BDC \ar [r] &amp;  BDCA \\ {\bullet } \ar [uuuuuuuuuuuuuuuuur] \ar [uuuuuur] \ar [ddddddr] \ar [dddddddddddddddddr] \\ &amp; &amp; &amp;  CAB \ar [r] &amp;  CABD \\ &amp; &amp;  CA \ar [ur] \ar [dr] \\ &amp; &amp; &amp;  CAD \ar [r] &amp;  CADB \\ \\ &amp; &amp; &amp;  CBA \ar [r] &amp;  CBAD \\ &amp;  C \ar [uuuur] \ar [r] \ar [ddddr] &amp;  CB \ar [ur] \ar [dr] \\ &amp; &amp; &amp;  CBD \ar [r] &amp;  CBDA \\ \\ &amp; &amp; &amp;  CDA \ar [r] &amp;  CDAB \\ &amp; &amp;  CD \ar [ur] \ar [dr] \\ &amp; &amp; &amp;  CDB \ar [r] &amp;  CDBA \\ \\ &amp; &amp; &amp;  DAB \ar [r] &amp;  DABC \\ &amp; &amp;  DA \ar [ur] \ar [dr] \\ &amp; &amp; &amp;  DAC \ar [r] &amp;  DACB \\ \\ &amp; &amp; &amp;  DBA \ar [r] &amp;  DBAC \\ &amp;  D \ar [uuuur] \ar [r] \ar [ddddr] &amp;  DB \ar [ur] \ar [dr] \\ &amp; &amp; &amp;  DBC \ar [r] &amp;  DBCA \\ \\ &amp; &amp; &amp;  DCA \ar [r] &amp;  DCAB \\ &amp; &amp;  DC \ar [ur] \ar [dr] \\ &amp; &amp; &amp;  DCB \ar [r] &amp;  DCBA \\ &amp;  \   \\ &amp;  \  \\ &amp;  *\txt {Step 1} &amp;  *\txt {Step 2} &amp;  *\txt {Step 3} &amp;  *\txt {Step 4} } \]" align="bottom">
+
+	
+	
+	
+</div> </div></div><a name="a0000012309"></a>
+<p><a name="a0000012310" id="a0000012310"></a> </p><a name="a0000012311"></a>
+<p>Here’s another example of a counting problem in which the choices are not independent. </p>
+<div probnum="12" type="problem" class="problem"><a name="a0000012313"></a>
+<p><a name="prob:3officers"></a> Your math club has 16 members. In how many ways can it select a president, a vice-president, and a treasurer if no member can hold more than one office? </p></div>
+<div id="a0000012315" class="solution">Solution for Problem 12:</div>
+<span><a name="a0000012316"></a>
+<p> Once again, our choices are not independent. Once a student has been chosen president, she is not available to be chosen vice-president or treasurer. However, the number of choices we have for each position is the same no matter who is chosen. </p><a name="a0000012317"></a>
+<p>We have 16 choices for president. Once we’ve chosen a president, then we have 15 people remaining to choose from for vice-president. Then, we have 14 people remaining to choose from for treasurer. </p><a name="a0000012318"></a>
+<p>Therefore, there are </p>
+<div id="a0000012320" class="math equation">
+<div></div>
+
+
+</div><a name="a0000012321"></a>
+<p> ways to fill the three offices. </p></span><a name="a0000012322"></a>
+<p>The last two problems contain examples of <span class="def">permutations</span><a name="a0000012323" id="a0000012323"></a>. A permutation occurs whenever we have to choose several different items, one at a time, from a larger group of items. </p><a name="a0000012324"></a>
+<p><a name="a0000012325" id="a0000012325"></a> </p><div id="a0000012326" class="exercises"><span class="headingtext">Exercises</span></div>
+<ol class="exercises itemize">
+	<li><a name="a0000012327"></a>
+<p>Suppose I have 7 shirts and 4 ties. How many shirt-and-tie outfits can I make? </p></li><li><a name="a0000012328"></a>
+<p>For each of 9 colors, I have one shirt and one tie of that color. How many shirt-and-tie outfits can I make if I refuse to wear a shirt and a tie of the same color? </p></li><li><a name="a0000012329"></a>
+<p>In how many ways can 5 people stand in a line? </p></li><li><a name="a0000012330"></a>
+<p>A shopkeeper sells house numbers. She has a large supply of the digits 1, 2, 7, and 8, but no other digits. How many different three-digit house numbers could be made using only the digits in her supply? </p></li><li><a name="a0000012331"></a>
+<p>How many four-digit positive integers are there such that the leftmost digit is odd, the second digit is even, and all four digits are different? <span class="source">(Source: AMC 8)</span> </p></li><li><a name="a0000012332"></a>
+<p>When the order of the digits of <span class="mathnumber">2552</span> is reversed, the number remains the same. Such a number is called a <span class="def">palindrome</span>. How many integers between 100 and <span class="mathnumber">1000</span> are palindromes? <span class="source">(Source: MOEMS)</span></p></li><li><a name="a0000012333"></a>
+<p>Suppose that I have 5 different books, 2 of which are math books. In how many ways can I place my 5 books left-to-right on a shelf if I want a math book on both ends? </p></li><li><a name="a0000012334"></a>
+<p>How many integers between 99 and 999 contain exactly one 0? <span class="source">(Source: AMC 8)</span> </p></li>
+</ol>
+<div class="end exercises">End exercises</div></div>
+
+		
+
+		
+
+	</body>
+</html>

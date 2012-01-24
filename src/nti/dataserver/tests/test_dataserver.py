@@ -1,0 +1,143 @@
+#!/usr/bin/env python2.7
+
+import unittest
+
+from hamcrest import assert_that, equal_to, is_, none, not_none
+import mock_dataserver
+
+import nti.dataserver.users as users
+import nti.dataserver.ntiids as ntiids
+import nti.dataserver.contenttypes as contenttypes
+from nti.dataserver.datastructures import toExternalOID, to_external_ntiid_oid
+import nti.dataserver.interfaces as nti_interfaces
+
+import persistent
+
+class TestDataserver( unittest.TestCase ):
+
+	@mock_dataserver.WithMockDS
+	def test_find_content_type( self ):
+		ds =  mock_dataserver.current_mock_ds
+		# is_ doesn't work, that turns into class assertion
+		assert_that( ds.find_content_type( 'Notes' ), equal_to( contenttypes.Note ) )
+		assert_that( ds.find_content_type( 'Note' ), equal_to( contenttypes.Note ) )
+		assert_that( ds.find_content_type( 'notes' ), equal_to( contenttypes.Note ) )
+
+		assert_that( ds.find_content_type( 'quizresults' ), equal_to( contenttypes.quizresult ) )
+
+		assert_that( ds.find_content_type( 'TestDataserver' ), is_( none() ) )
+		TestDataserver.__external_can_create__ = True
+		assert_that( ds.find_content_type( 'TestDataserver' ), equal_to( TestDataserver ) )
+		del TestDataserver.__external_can_create__
+
+	@mock_dataserver.WithMockDSTrans
+	def test_get_plain_oid(self):
+		"""
+		We can access an object given its OID bytes with no additional checks.
+		"""
+		obj = persistent.Persistent()
+		mock_dataserver.current_transaction.add( obj )
+
+		assert_that( mock_dataserver.current_mock_ds.get_by_oid( obj._p_oid ), is_( obj ) )
+		assert_that( mock_dataserver.current_mock_ds.get_by_oid( '00000' ), is_( none() ) )
+
+	@mock_dataserver.WithMockDSTrans
+	def test_get_external_oid(self):
+		"""
+		We can access an object given its external OID string with no additional checks.
+		"""
+		obj = persistent.Persistent()
+		mock_dataserver.current_transaction.add( obj )
+
+		oid = toExternalOID( obj )
+		assert_that( mock_dataserver.current_mock_ds.get_by_oid( oid ), is_( obj ) )
+
+
+	@mock_dataserver.WithMockDSTrans
+	def test_get_ntiid_oid_system_user(self):
+		"""
+		We can access an object given its OID in NTIID form when the provider
+		is the system principal and the object has no creator. If it has a
+		creator, then it must match.
+		"""
+		obj = contenttypes.Note()
+		mock_dataserver.current_transaction.add( obj )
+
+		oid = to_external_ntiid_oid( obj )
+		assert_that( oid, is_( not_none() ) )
+		assert_that( ntiids.get_provider( oid ), is_( nti_interfaces.SYSTEM_USER_NAME ) )
+
+		assert_that( mock_dataserver.current_mock_ds.get_by_oid( oid ), is_( obj ) )
+
+		# The system user is the only one that can access uncreated objects
+		oid = ntiids.make_ntiid( provider='foo@bar', base=oid )
+		assert_that( mock_dataserver.current_mock_ds.get_by_oid( oid ), is_( none() ) )
+
+		# Now flip-flop the users around. The system user gets no
+		# special treatment on created objects
+		obj = contenttypes.Note()
+		obj.creator = 'sjohnson@nextthought.com'
+		mock_dataserver.current_transaction.add( obj )
+
+		oid = to_external_ntiid_oid( obj )
+		assert_that( ntiids.get_provider( oid ), is_( 'sjohnson@nextthought.com' ) )
+
+		oid = ntiids.make_ntiid( provider=nti_interfaces.SYSTEM_USER_NAME, base=oid )
+		assert_that( ntiids.get_provider( oid ), is_( nti_interfaces.SYSTEM_USER_NAME ) )
+
+		assert_that( mock_dataserver.current_mock_ds.get_by_oid( oid ), is_( none() ) )
+
+	@mock_dataserver.WithMockDSTrans
+	def test_get_ntiid_oid_same_user(self):
+		"""
+		We can access an object given its OID in NTIID form when the creator
+		matches the NTIID's provider.
+		"""
+		obj = contenttypes.Note()
+		obj.creator = 's-johnson@nextthought.com' # Note the creator gets escaped
+		mock_dataserver.current_transaction.add( obj )
+
+		oid = to_external_ntiid_oid( obj )
+		assert_that( ntiids.get_provider( oid ), is_( 's_johnson@nextthought.com' ) )
+		assert_that( mock_dataserver.current_mock_ds.get_by_oid( oid ), is_( obj ) )
+
+		oid = ntiids.make_ntiid( provider='some one else@nextthought.com', base=oid )
+		assert_that( ntiids.get_provider( oid ), is_( 'some_one_else@nextthought.com' ) )
+
+		assert_that( mock_dataserver.current_mock_ds.get_by_oid( oid ), is_( none() ) )
+
+	@mock_dataserver.WithMockDSTrans
+	def test_get_ntiid_oid_no_provider(self):
+		"""
+		The provider must match the creator, if there is one.
+		"""
+		obj = contenttypes.Note()
+		obj.creator = 'sjohnson@nextthought.com'
+		mock_dataserver.current_transaction.add( obj )
+
+		oid = to_external_ntiid_oid( obj )
+		assert_that( ntiids.get_provider( oid ), is_( 'sjohnson@nextthought.com' ) )
+		# The provider is required
+		oid_parts = ntiids.get_parts( oid )
+		oid = ntiids.make_ntiid( nttype=oid_parts.nttype, specific=oid_parts.specific )
+		assert_that( ntiids.get_provider( oid ), is_( none() ) )
+
+		assert_that( mock_dataserver.current_mock_ds.get_by_oid( oid ), is_( none() ) )
+
+
+	@mock_dataserver.WithMockDSTrans
+	def test_get_ntiid_oid_diff_user(self):
+		"""
+		We can access an object given its OID bytes with no additional checks.
+		"""
+		obj = contenttypes.Note()
+		obj.creator = 'sjohnson@nextthought.com'
+		mock_dataserver.current_transaction.add( obj )
+
+		oid = to_external_ntiid_oid( obj )
+		oid = ntiids.make_ntiid( provider='someoneelse@nextthought.com', base=oid )
+		assert_that( ntiids.get_provider( oid ), is_( 'someoneelse@nextthought.com' ) )
+
+		assert_that( mock_dataserver.current_mock_ds.get_by_oid( oid ), is_( none() ) )
+
+

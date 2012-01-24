@@ -1,0 +1,202 @@
+<html xml:lang="en" lang="en">
+	<head>
+        <meta content="2011-12-31 10:00:35.180286" http-equiv="last-modified">
+		<meta name="viewport" content="width=730">
+        <meta name="NTIRelativeScrollHeight" content="16425">
+        <meta content="tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.113" name="NTIID">
+		<meta name="generator" content="plasTeX">
+		<meta content="text/html; charset=utf-8" http-equiv="content-type">
+		<title>Casework</title>
+		<link href="sect0083.html" title="Counting Pairs" rel="next">
+		<link href="sect0081.html" title="The Multiplication Principle" rel="prev">
+		<link href="sect0079.html" title="Counting" rel="up">
+		<link rel="stylesheet" href="styles/styles.css">
+		<link rel="stylesheet" href="styles/prealgebra.css">
+		<link rel="stylesheet" href="styles/application.css">
+		
+		<script type="text/javascript" src="js/jquery-1.6.1.min.js"></script>
+        
+        <script type="text/javascript" src="js/prealgebra.js"></script>
+	</head>
+	<body id="NTIContent">
+		<div class="navigation">
+			<div>
+				<div class="previous"><a href="sect0081.html" title="The Multiplication Principle">&lt;</a></div>
+				<div class="up"><a href="sect0079.html" title="Counting">^</a></div>
+				<div class="next"><a href="sect0083.html" title="Counting Pairs">&gt;</a></div>
+			</div>
+			<div class="navigation-title" align="center">Prealgebra</div>
+			<div>
+				<div class="contents"><a href="index.html" title="Table of Contents">C</a></div>
+				<div class="index"><a href="sect0096.html" title="Index">#</a></div>
+			</div>
+		</div>
+
+		<!-- TODO: this should be rendered by the UI... -->
+		<div class="breadcrumbs">
+			<span>
+				<span> <a href="index.html">Prealgebra</a> : </span>
+				
+			</span><span>
+				<span> <a href="sect0079.html">Counting</a> : </span>
+				
+			</span><span>
+				
+				<span><b class="current">Casework</b></span>
+			</span>
+			<hr>
+		</div>
+
+		<div class="page-contents"><div id="a0000000083" class="chapter title">
+	<span class="ref">14.3</span>
+	<span class="label">Casework</span>
+</div>
+
+<a name="a0000012335"></a>
+<p> <a name="a0000012336" id="a0000012336"></a> <a name="a0000012337" id="a0000012337"></a> </p><a name="a0000012338"></a>
+<p>Many counting problems can be solved by considering different cases—that is, by dividing what we’re trying to count into two or more categories. This general approach is called <span class="def">casework</span>. The key to solving problems using casework is to be organized, and to be careful that you don’t skip any cases. </p><div id="a0000012339" class="section-problems"><span class="headingtext">Section Problems</span></div>
+<ol class="section-problems itemize">
+	<li>
+		<div probnum="13" class="problem"><div class="rightpic parpic"><div id="a0000012340" class="math equation ntixydisplaymath">
+	<img alt="\[ \xymatrix{ &amp; &amp;  *+[o][F]{B} \ar [dr] \ar@ /^/[dr] \ar@ /_/[dr]&amp;  \\*+[o][F]{A} \ar [urr] \ar@ /^/[urr] \ar@ /^1pc/[urr] \ar@ /_/[urr] \ar@ /^/[dr] \ar@ /_/[dr] &amp; &amp; &amp;  *+[o][F]{D} \\ &amp;  *+[o][F]{C} \ar [urr] \ar@ /^/[urr] \ar@ /^1pc/[urr] \ar@ /_/[urr] \ar@ /_1pc/[urr] &amp; &amp;  } \]" align="bottom">
+
+	
+	
+	
+</div></div> The figure to the right represents a road map between 4 villages, labeled <span class="mathname">A</span>, <span class="mathname">B</span>, <span class="mathname">C</span> and <span class="mathname">D</span>. The arcs indicate paths between the various villages. How many ways are there to go from <span class="mathname">A</span> to <span class="mathname">D</span> along the paths, if you can only move left to right? (For example, you can't go <span class="mathname">ABABACD</span>; you can only go <span class="mathname">ACD</span> or <span class="mathname">ABD</span>.)   </div>
+	</li><li>
+		<div probnum="14" class="problem"><a name="a0000012341"></a>
+<p>On the island of Abcdef, the alphabet has only 6 letters, and every word in their language has no more than 3 letters in it. How many words are possible? (A word can use a letter more than once, but 0 letters does not count as a word.) </p></div>
+	</li><li>
+		<div probnum="15" class="problem"><a name="a0000012342"></a>
+<p>How many pairs of positive integers <span></span>
+ satisfy <span></span>
+? </p></div>
+	</li><li>
+		<div probnum="16" class="problem"><a name="a0000012343"></a>
+<p>A digital clock shows time in the form HH:MM. On a certain day, what is the number of minutes between 7:59 AM and 2:59 PM that HH is greater than MM? <span class="source">(Source: MOEMS)</span></p></div>
+	</li>
+</ol>
+<div class="end section-problems">End section problems</div>
+<a name="a0000012345"></a>
+<p><div probnum="13" type="picproblem" class="problem"><a name="prob:twopaths"></a><div class="rightpic parpic"><div id="a0000012346" class="math equation ntixydisplaymath">
+	<img alt="\[ \xymatrix{ &amp; &amp;  *+[o][F]{B} \ar [dr] \ar@ /^/[dr] \ar@ /_/[dr]&amp;  \\*+[o][F]{A} \ar [urr] \ar@ /^/[urr] \ar@ /^1pc/[urr] \ar@ /_/[urr] \ar@ /^/[dr] \ar@ /_/[dr] &amp; &amp; &amp;  *+[o][F]{D} \\ &amp;  *+[o][F]{C} \ar [urr] \ar@ /^/[urr] \ar@ /^1pc/[urr] \ar@ /_/[urr] \ar@ /_1pc/[urr] &amp; &amp;  } \]" align="bottom">
+
+	
+	
+	
+</div></div> The figure to the right represents a road map between 4 villages, labeled <span class="mathname">A</span>, <span class="mathname">B</span>, <span class="mathname">C</span> and <span class="mathname">D</span>. The arcs indicate paths between the various villages. How many ways are there to go from <span class="mathname">A</span> to <span class="mathname">D</span> along the paths, if you can only move left to right? (For example, you can’t go <span class="mathname">ABABACD</span>; you can only go <span class="mathname">ACD</span> or <span class="mathname">ABD</span>.)   </div> </p>
+<div id="a0000012348" class="solution">Solution for Problem 13:</div>
+<span><a name="a0000012349"></a>
+<p> Broadly speaking, we have two ways to get from <span class="mathname">A</span> to <span class="mathname">D</span>: we can go through <span class="mathname">B</span> or through <span class="mathname">C</span>. We have to go through one of them, and we can’t go through both. We say that these two choices are <span class="def">exclusive</span>, because we must choose one or the other, but not both. </p><a name="a0000012350"></a>
+<p>Our two exclusive choices will form our two cases. </p><a name="a0000012351"></a>
+<p><em>Case 1: Go from <span class="mathname">A</span> to <span class="mathname">D</span> through <span class="mathname">B</span></em> <br>There are 4 ways to get from <span class="mathname">A</span> to <span class="mathname">B</span>, and 3 ways to get from <span class="mathname">B</span> to <span class="mathname">D</span>, so there are <span></span>
+ ways to get from <span class="mathname">A</span> to <span class="mathname">D</span> through <span class="mathname">B</span>. </p><a name="a0000012352"></a>
+<p><em>Case 2: Go from <span class="mathname">A</span> to <span class="mathname">D</span> through <span class="mathname">C</span></em> <br>There are 2 ways to get from <span class="mathname">A</span> to <span class="mathname">C</span>, and 5 ways to get from <span class="mathname">C</span> to <span class="mathname">D</span>, so there are <span></span>
+ ways to get from <span class="mathname">A</span> to <span class="mathname">D</span> through <span class="mathname">C</span>. </p><a name="a0000012353"></a>
+<p>To count the total number of ways to get from <span class="mathname">A</span> to <span class="mathname">D</span>, we now add the number of ways from each of our cases. There are 12 ways through <span class="mathname">B</span> and another 10 ways through <span class="mathname">C</span>, so there are a total of <span></span>
+ ways from <span class="mathname">A</span> to <span class="mathname">D</span>. </p></span><a name="a0000012354"></a>
+<p>Why did we multiply in some of the steps of Solution <a href="sect0082.html#prob:twopaths">13</a> (for example, counting the paths from <span class="mathname">A</span> to <span class="mathname">D</span> through <span class="mathname">B</span>), but add in other steps (when we added the results from each case)? </p><a name="a0000012355"></a>
+<p>To choose a path from <span class="mathname">A</span> to <span class="mathname">D</span> through <span class="mathname">B</span>, we choose a path from <span class="mathname">A</span> to <span class="mathname">B</span>, <b class="bfseries">AND</b> independently choose a path from <span class="mathname">B</span> to <span class="mathname">D</span>, so we <b class="bfseries">multiply</b> the numbers of paths from <span class="mathname">A</span> to <span class="mathname">B</span> by the number of paths from <span class="mathname">B</span> to <span class="mathname">D</span>. </p><a name="a0000012356"></a>
+<p>To choose a path from <span class="mathname">A</span> to <span class="mathname">D</span> through <span class="mathname">C</span>, we choose a path from <span class="mathname">A</span> to <span class="mathname">C</span>, <b class="bfseries">AND</b> independently choose a path from <span class="mathname">C</span> to <span class="mathname">D</span>, so we <b class="bfseries">multiply</b> the numbers of paths from <span class="mathname">A</span> to <span class="mathname">C</span> by the number of paths from <span class="mathname">C</span> to <span class="mathname">D</span>. </p><a name="a0000012357"></a>
+<p>To choose a path from <span class="mathname">A</span> to <span class="mathname">D</span>, we choose a path from <span class="mathname">A</span> to <span class="mathname">D</span> through <span class="mathname">B</span>, <b class="bfseries">OR</b> choose a path from <span class="mathname">A</span> to <span class="mathname">D</span> through <span class="mathname">C</span>, so we <b class="bfseries">add</b> the numbers of paths from <span class="mathname">A</span> to <span class="mathname">D</span> through <span class="mathname">B</span> and the number of paths from <span class="mathname">A</span> to <span class="mathname">D</span> through <span class="mathname">C</span>. </p><a name="a0000012358"></a>
+<p><div class="concept"> When faced with a series of independent choices, one after the other, we <b class="bfseries">multiply</b> the number of options at each choice. When faced with exclusive cases (meaning we can’t choose more than one), we <b class="bfseries">add</b> the number of options in each case. </div> </p><a name="a0000012359"></a>
+<p>Make sure you see the difference. Don’t memorize it—understand it. </p><a name="a0000012360"></a>
+<p><div class="important"> Don’t memorize! Understand, and know. </div> </p>
+<div probnum="14" type="problem" class="problem"><a name="a0000012362"></a>
+<p>On the island of Abcdef, the alphabet has only 6 letters, and every word in their language has no more than 3 letters in it. How many words are possible? (A word can use a letter more than once, but 0 letters does not count as a word.) </p></div>
+<div id="a0000012364" class="solution">Solution for Problem 14:</div>
+<span><a name="a0000012365"></a>
+<p> Often, the tricky part of casework problems is deciding what the cases should be. For this problem, it makes sense to use as our cases the number of letters in each word. </p><a name="a0000012366"></a>
+<p><em>Case 1: one-letter words</em> <br>There are 6 one-letter words (each of the 6 letters is itself a 1-letter word). </p><a name="a0000012367"></a>
+<p><em>Case 2: two-letter words</em> <br>To form a two-letter word, we have 6 choices for our first letter, and 6 choices for our second letter. Thus there are <span></span>
+ two-letter words possible. </p><a name="a0000012368"></a>
+<p><em>Case 3: three-letter words</em> <br>To form a three-letter word, we have 6 choices for our first letter, 6 choices for our second letter, and 6 choices for our third letter. Thus there are <span></span>
+ three-letter words possible. </p><a name="a0000012369"></a>
+<p>So to get the total number of words in the language, we add the number of words from each of our cases. (We need to make sure that the cases are exclusive, meaning they don’t overlap. But that’s clear in this solution, since, for example, a word can’t be both a 2-letter word and a 3-letter word at the same time.) </p><a name="a0000012370"></a>
+<p>Therefore there are <span></span>
+ words possible on Abcdef. (I guess the Abcdefians don’t have a lot to say.) </p></span><a name="a0000012371"></a>
+<p>Again, in this problem, you have to know when to multiply and when to add. When computing the number of 3-letter words, for example, we have to choose the first letter <b class="bfseries">AND</b> the second letter <b class="bfseries">AND</b> the third letter, so we <b class="bfseries">multiply</b> the number of choices for each letter to get the number of 3-letter words. However, when choosing a word from the language as a whole, we have to choose a 1-letter word <b class="bfseries">OR</b> a 2-letter word <b class="bfseries">OR</b> a 3-letter word, so we <b class="bfseries">add</b> the number of choices for each length of word to get the number of total words. </p>
+<div probnum="15" type="problem" class="problem"><a name="a0000012373"></a>
+<p>How many pairs of positive integers <span></span>
+ satisfy <span></span>
+? </p></div>
+<div id="a0000012375" class="solution">Solution for Problem 15:</div>
+<span><a name="a0000012376"></a>
+<p> It may not be obvious how to proceed with this problem, but a little experimentation might lead you to determine the possible values of <span class="mathname">a</span>. </p><a name="a0000012377"></a>
+<p>Since <span></span>
+, we can see that <span class="mathname">a</span> must be one of 1, 2, 3, or 4. So let’s use these as our cases. </p><a name="a0000012378"></a>
+<p><em>Case 1: <span></span>
+</em> <br>When <span></span>
+, we must have <span></span>
+. Thus there are 22 possible choices for <span class="mathname">b</span> when <span></span>
+, since <span class="mathname">b</span> can be any integer from 1 to 22. </p><a name="a0000012379"></a>
+<p><em>Case 2: <span></span>
+</em> <br>When <span></span>
+, we must have <span></span>
+. Thus there are 19 possible choices for <span class="mathname">b</span> when <span></span>
+. </p><a name="a0000012380"></a>
+<p><em>Case 3: <span></span>
+</em> <br>When <span></span>
+, we must have <span></span>
+. Thus there are 14 possible choices for <span class="mathname">b</span> when <span></span>
+. </p><a name="a0000012381"></a>
+<p><em>Case 4: <span></span>
+</em> <br>When <span></span>
+, we must have <span></span>
+. Thus there are 7 possible choices for <span class="mathname">b</span> when <span></span>
+. </p><a name="a0000012382"></a>
+<p>So to get the total number of pairs of positive integers satisfying the inequality, we add up all of our possible cases, and see that there are <span></span>
+ possible pairs. </p></span><a name="a0000012383"></a>
+<p>We can see from this problem that sometimes it’s not immediately clear how we want to set up our different cases. Breaking up a problem into cases, and deciding what the different cases should be, is something that you’ll get better at with practice. It is important to make sure that the cases are exclusive—that is, that they don’t overlap—and also that every possible solution to the original problem is accounted for in one of the cases. </p>
+<div probnum="16" type="problem" class="problem"><a name="a0000012385"></a>
+<p>A digital clock shows time in the form HH:MM. On a certain day, what is the number of minutes between 7:59 AM and 2:59 PM that HH is greater than MM? <span class="source">(Source: MOEMS)</span></p></div>
+<div id="a0000012387" class="solution">Solution for Problem 16:</div>
+<span><a name="a0000012388"></a>
+<p> We first notice that the hours in the time period described in the problem are 8, 9, 10, 11, 12, 1, and 2. We can then do casework in two ways. </p><a name="a0000012389"></a>
+<p><em>Method 1: Use the hours as the cases.</em> In the 8-o’clock hour, the minutes from :00 to :07 (inclusive) satisfy the condition that the hour is greater than the minutes. Thus, there are 8 minutes in the 8-o’clock hour that we need to count. </p><a name="a0000012390"></a>
+<p>The same logic shows that in the <span class="mathname">n</span>-o’clock hour, there are <span class="mathname">n</span> minutes that we need to count. So we just need to add up the hours: <span></span>
+ and our answer is that there are 53 minutes satisfying the condition of the problem. </p><a name="a0000012391"></a>
+<p><em>Method 2: Use the minutes as the cases.</em> We can list which hours each minute should be counted in. For example, the minute :00 should be counted in each hour, since it is less than all of the hours that we care about; on the other hand, the minute :10 should only be counted in the 11-o’clock and 12-o’clock hours. Here is the list: </p>
+<div class="align-center"> <div class="tabular"><img alt="\begin{tabular}{c|l|c} Minute   &amp;  Hour(s)   &amp;  Number of hours   \\ \hline :00   &amp;  8,9,10,11,12,1,2   &amp;  7   \\ :01   &amp;  8,9,10,11,12,2   &amp;  6   \\ :02   &amp;  8,9,10,11,12   &amp;  5   \\ :03   &amp;  8,9,10,11,12   &amp;  5   \\ :04   &amp;  8,9,10,11,12   &amp;  5   \\ :05   &amp;  8,9,10,11,12   &amp;  5   \\ :06   &amp;  8,9,10,11,12   &amp;  5   \\ :07   &amp;  8,9,10,11,12   &amp;  5   \\ :08   &amp;  9,10,11,12   &amp;  4   \\ :09   &amp;  10,11,12   &amp;  3   \\ :10   &amp;  11,12   &amp;  2   \\ :11   &amp;  12   &amp;  1   \end{tabular}" align="bottom">
+</div> </div><a name="a0000012393"></a>
+<p>Minutes that are :12 or greater will never be counted. Therefore, the total number of minutes is </p>
+<div id="a0000012395" class="math equation">
+<div></div>
+
+
+</div></span><div id="a0000012396" class="exercises"><span class="headingtext">Exercises</span></div>
+<ol class="exercises itemize">
+	<li><a name="a0000012397"></a>
+<p>We write the integers from 1 to 150 inclusive. What is the total number of digits that must be written? </p></li><li><a name="a0000012398"></a>
+<p>I have two hats. In one hat are balls numbered 1 through 15. In the other hat are balls numbered 16 through 25. I first choose a hat, then from that hat, I choose 2 balls, without replacing the balls between selections. How many different ordered selections of 2 balls are possible? (By “ordered selections,” we mean that “Ball 1 then ball 2” is considered different from “Ball 2 then ball 1.”) </p></li><li>
+<ol class="parts itemize">
+	<li class="part"><a name="a0000012400"></a>
+<p>How many paths are there from <span class="mathname">A</span> to <span class="mathname">D</span> in the diagram shown below, if we can only travel in the direction of the arrows? </p></li><li class="part"><a name="a0000012401"></a>
+<p>How many paths are there from <span class="mathname">D</span> to <span class="mathname">H</span> in the diagram shown below, if we can only travel in the direction of the arrows? </p></li><li class="part"><a name="a0000012402"></a>
+<p>How many paths are there from <span class="mathname">A</span> to <span class="mathname">H</span> in the diagram shown below, if we can only travel in the direction of the arrows? </p></li>
+</ol>
+<div id="a0000012404" class="math equation ntixydisplaymath">
+	<img alt="\[ \xymatrix{ &amp; &amp; &amp;  *+[o][F]{E} \ar [ddr] &amp;  \\ &amp;  *+[o][F]{B} \ar [dr] &amp; &amp; &amp;  \\*+[o][F]{A} \ar@ /^/[ur] \ar@ /_/[ur] \ar@ /^/[dr] \ar@ /_/[dr] &amp; &amp;  *+[o][F]{D} \ar [uur] \ar@ /_/[ddr] \ar@ /^/[ddr] \ar@ /^/[r] \ar@ /_/[r] &amp;  *+[o][F]{F} \ar@ /^/[r] \ar@ /_/[r] \ar [r] &amp;  *+[o][F]{H} \\ &amp;  *+[o][F]{C} \ar@ /^/[ur] \ar@ /_/[ur] \ar [ur] &amp; &amp; &amp;  \\ &amp; &amp; &amp;  *+[o][F]{G} \ar [uur] &amp;  } \]" align="bottom">
+
+	
+	
+	
+</div></li><li><a name="a0000012405"></a>
+<p>How many positive 3-digit numbers have the property that the first digit is at least three times the second digit? </p></li><li><a name="a0000012406"></a>
+<p>How many positive 4-digit numbers have the last digit equal to the sum of the first two digits? </p></li><li><a name="a0000012407"></a>
+<p>How many positive two-digit numbers have digits whose sum is a perfect square? <span class="source">(Source: AMC 8)</span> </p><a name="a0000012408"></a>
+<p><div class="rightpic parpic"><img alt="\includegraphics{../Images/countingchapter2.2}" style="width:; height:">
+</div> </p></li><li><a name="a0000012409"></a>
+<p>How many squares of any size can be formed by connecting dots in the grid shown to the right?   </p><a name="a0000012410"></a>
+<p><a name="a0000012411" id="a0000012411"></a> <a name="a0000012412" id="a0000012412"></a> </p><span class="hint"><a href="#" onclick="return togglehint(event)">Hint: </a><span class="hint content hidden"> Don't forget squares whose sides aren't horizontal or vertical lines! <a name="a0000012413"></a>
+</span></span></li>
+</ol>
+<div class="end exercises">End exercises</div></div>
+
+		
+
+		
+
+	</body>
+</html>

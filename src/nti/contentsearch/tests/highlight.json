@@ -1,0 +1,18 @@
+{
+   "startHighlightedFullText":"You know how to add, subtract, multiply, and divide. In fact, you may already know how to solve many of the problems in this chapter. So why do we start this book with an entire chapter on arithmetic? ",
+   "startXpath":"id(\"NTIContent\")/DIV[1]/P[1]/text()[1]",
+   "startAnchor":"a0000000141",
+   "ContainerId":"tag:nextthought.com,2011-07-14:AOPS-HTML-prealgebra-0",
+   "Creator":"troy.daley@nextthought.com",
+   "Last Modified":1321584477.793211,
+   "text":"add",
+   "OID":"0x62:5573657273",
+   "Class":"Highlight",
+   "endOffset":19,
+   "endXpath":"id(\"NTIContent\")/DIV[1]/P[1]/text()[1]",
+   "color":"yellow",
+   "startOffset":16,
+   "CreatedTime":1321584477.792784,
+   "ID":"2",
+   "startHighlightedText":"add"
+}

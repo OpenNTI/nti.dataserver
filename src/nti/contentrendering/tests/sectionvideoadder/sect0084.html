@@ -1,0 +1,333 @@
+<html xml:lang="en" lang="en">
+	<head>
+        <meta content="2011-12-31 10:00:35.180286" http-equiv="last-modified">
+		<meta name="viewport" content="width=730">
+        <meta name="NTIRelativeScrollHeight" content="17155">
+        <meta content="tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.115" name="NTIID">
+		<meta name="generator" content="plasTeX">
+		<meta content="text/html; charset=utf-8" http-equiv="content-type">
+		<title>Probability</title>
+		<link href="sect0085.html" title="Summary" rel="next">
+		<link href="sect0083.html" title="Counting Pairs" rel="prev">
+		<link href="sect0079.html" title="Counting" rel="up">
+		<link rel="stylesheet" href="styles/styles.css">
+		<link rel="stylesheet" href="styles/prealgebra.css">
+		<link rel="stylesheet" href="styles/application.css">
+		
+		<script type="text/javascript" src="js/jquery-1.6.1.min.js"></script>
+        
+        <script type="text/javascript" src="js/prealgebra.js"></script>
+	</head>
+	<body id="NTIContent">
+		<div class="navigation">
+			<div>
+				<div class="previous"><a href="sect0083.html" title="Counting Pairs">&lt;</a></div>
+				<div class="up"><a href="sect0079.html" title="Counting">^</a></div>
+				<div class="next"><a href="sect0085.html" title="Summary">&gt;</a></div>
+			</div>
+			<div class="navigation-title" align="center">Prealgebra</div>
+			<div>
+				<div class="contents"><a href="index.html" title="Table of Contents">C</a></div>
+				<div class="index"><a href="sect0096.html" title="Index">#</a></div>
+			</div>
+		</div>
+
+		<!-- TODO: this should be rendered by the UI... -->
+		<div class="breadcrumbs">
+			<span>
+				<span> <a href="index.html">Prealgebra</a> : </span>
+				
+			</span><span>
+				<span> <a href="sect0079.html">Counting</a> : </span>
+				
+			</span><span>
+				
+				<span><b class="current">Probability</b></span>
+			</span>
+			<hr>
+		</div>
+
+		<div class="page-contents"><div id="a0000000085" class="chapter title">
+	<span class="ref">14.5</span>
+	<span class="label">Probability</span>
+</div>
+
+<a name="a0000012546"></a>
+<p><a name="a0000012547" id="a0000012547"></a> </p><a name="a0000012548"></a>
+<p>Now we turn from counting to <span class="def">probability</span>. Unfortunately, while even most three-year-olds know what “counting” means, the concept of probability is a bit difficult to describe precisely. </p><a name="a0000012549"></a>
+<p>Let’s start with an example. Suppose we have a coin, where one side is heads, and the other side is tails. If we flip the coin over and over and over again, we expect that about half the time we’ll flip heads and about half the time we’ll flip tails. We express this mathematically by saying that the <span class="def">probability</span> that a coin flip will turn up heads is <span></span>
+. </p><a name="a0000012550"></a>
+<p>This is what we mean by probability of an outcome: it’s the fraction of times that we expect an outcome to occur if we perform the experiment over and over. Notice that we can’t say the <em>exact</em> fraction of times we have success. This is the difficulty in defining probability. Probability only exists because we are trying to measure an event that is not definite. </p><a name="a0000012551"></a>
+<p>In basic examples, we’ll compute probability by counting the number of equally likely outcomes, then counting how many of these outcomes are “successes.” Our probability of success is the ratio of the number of successful outcomes to the total number of possible outcomes. For instance, in our coin-flipping example above, there are 2 possible outcomes (heads and tails), and 1 successful outcome (heads), so the probability of flipping heads is <span></span>
+. </p><a name="a0000012552"></a>
+<p>But we have a very important consideration: </p><a name="a0000012553"></a>
+<p><div class="important"> We must be sure that each possible outcome is equally likely. </div> </p><div id="a0000012554" class="section-problems"><span class="headingtext">Section Problems</span></div>
+<ol class="section-problems itemize">
+	<li>
+		<div probnum="21" class="problem"><a name="a0000012555"></a>
+<p>The faces of a fair 6-sided die are numbered <img alt="\Cube1" align="bottom">
+
+
+, <img alt="\Cube2" align="bottom">
+
+
+, <img alt="\Cube3" align="bottom">
+
+
+, <img alt="\Cube4" align="bottom">
+
+
+, <img alt="\Cube5" align="bottom">
+
+
+, <img alt="\Cube6" align="bottom">
+
+
+. (“Fair” means that each side is equally likely to be rolled.) What is the probability that when the die is rolled, a <img alt="\Cube{2}" align="bottom">
+
+
+ is facing up? </p></div>
+	</li><li>
+		<div probnum="22" class="problem"><a name="a0000012556"></a>
+<p>What is the probability that when a fair 6-sided die is rolled, an odd number faces up? </p></div>
+	</li><li>
+		<div probnum="23" class="problem"><a name="a0000012557"></a>
+<p>What is the greatest possible probability for any event? What is the least possible probability for any event? </p></div>
+	</li><li>
+		<div probnum="24" class="problem"><a name="a0000012558"></a>
+<p>A standard deck of cards has 52 cards divided into 4 suits, each of which has 13 cards. Two of the suits (<span></span>
+ and <span></span>
+, called “hearts” and “diamonds”) are red, and the other two (<span></span>
+ and <span></span>
+, called “spades” and “clubs”) are black. The cards in the deck are placed in random order (usually by a process called “shuffling”). What is the probability that the top two cards are both red? </p></div>
+	</li><li>
+		<div probnum="25" class="problem"><a name="a0000012559"></a>
+<p>Suppose we have 2 fair 6-sided dice numbered from <img alt="\Cube1" align="bottom">
+
+
+ to <img alt="\Cube6" align="bottom">
+
+
+. If we roll them both, then what is the probability that the two numbers shown sum to 7? </p></div>
+	</li>
+</ol>
+<div class="end section-problems">End section problems</div>
+<a name="a0000012561"></a>
+<p>Let’s start with a basic example. </p>
+<div probnum="21" type="problem" class="problem"><a name="a0000012563"></a>
+<p><a name="prob:onedie"></a> The faces of a fair 6-sided die are numbered <img alt="\Cube1" align="bottom">
+
+
+, <img alt="\Cube2" align="bottom">
+
+
+, <img alt="\Cube3" align="bottom">
+
+
+, <img alt="\Cube4" align="bottom">
+
+
+, <img alt="\Cube5" align="bottom">
+
+
+, <img alt="\Cube6" align="bottom">
+
+
+. (“Fair” means that each side is equally likely to be rolled.) What is the probability that when the die is rolled, a <img alt="\Cube{2}" align="bottom">
+
+
+ is facing up? </p></div>
+<div id="a0000012565" class="solution">Solution for Problem 21:</div>
+<span><a name="a0000012566"></a>
+<p> When we roll the die, there are 6 equally likely outcomes: <img alt="\Cube{1}" align="bottom">
+
+
+, <img alt="\Cube{2}" align="bottom">
+
+
+, <img alt="\Cube{3}" align="bottom">
+
+
+, <img alt="\Cube{4}" align="bottom">
+
+
+, <img alt="\Cube{5}" align="bottom">
+
+
+, or <img alt="\Cube{6}" align="bottom">
+
+
+. In this problem, there is only one “successful” outcome, namely when a <img alt="\Cube{2}" align="bottom">
+
+
+ comes up. Therefore, the probability that a <img alt="\Cube{2}" align="bottom">
+
+
+ is rolled is the 1 successful outcome divided by the total of 6 equally likely outcomes, or <span></span>
+. </p></span><a name="a0000012567"></a>
+<p>As we discussed in the introduction to this section, the way to interpret this probability is that if we were to roll our die many, many times, we would expect that about <span></span>
+ of our rolls would come up <img alt="\Cube{2}" align="bottom">
+
+
+. </p><a name="a0000012568"></a>
+<p>In Problem <a href="sect0084.html#prob:onedie">21</a> we see the basic way to calculate probabilities. </p><a name="a0000012569"></a>
+<p><div class="concept"> If all outcomes are <span class="def">equally likely</span>, then the probability of success is <div id="a0000012570" class="math equation">
+<div></div>
+
+
+</div> </div> </p><a name="a0000012571"></a>
+<p>Here’s another example with our trusty die: </p>
+<div probnum="22" type="problem" class="problem"><a name="a0000012573"></a>
+<p>What is the probability that when a fair 6-sided die is rolled, an odd number faces up? </p></div>
+<div id="a0000012575" class="solution">Solution for Problem 22:</div>
+<span><a name="a0000012576"></a>
+<p> In this problem, as in Problem <a href="sect0084.html#prob:onedie">21</a>, there are 6 equally likely outcomes. Three of those outcomes are successful: a <img alt="\Cube{1}" align="bottom">
+
+
+, <img alt="\Cube{3}" align="bottom">
+
+
+, or <img alt="\Cube5" align="bottom">
+
+
+. Therefore, the probability is <span></span>
+. </p></span><a name="a0000012577"></a>
+<p>Now that we’ve done a couple of basic probability problems, let’s ask some important general questions about probability. </p>
+<div probnum="23" type="problem" class="problem"><a name="a0000012579"></a>
+<p>What is the greatest possible probability for any event? What is the least possible probability for any event? </p></div>
+<div id="a0000012581" class="solution">Solution for Problem 23:</div>
+<span><a name="a0000012582"></a>
+<p><a name="a0000012583" id="a0000012583"></a> Since the probability of an event occurring is essentially the proportion of times that we expect the event to occur, the largest the probability could be is 1. This occurs when the event happens every time. </p><a name="a0000012584"></a>
+<p>Another way to look at this is to recall that for any event, we have </p>
+<div id="a0000012586" class="math equation">
+<div></div>
+
+
+</div><a name="a0000012587"></a>
+<p> Clearly the number of successful outcomes cannot be greater than the number of possible outcomes, so the probability must be no greater than 1. If every outcome is successful, then the number of successful outcomes equals the number of possible outcomes, and the probability is 1. For example, if the event is “a single die roll is less than 10,” then the probability is 1, since there are 6 successful outcomes out of 6 possible outcomes. </p><a name="a0000012588"></a>
+<p>Similarly, the smallest the probability could ever be is 0. This occurs when the event cannot happen, so the number of successful outcomes is 0. For example, if the event is “a single die roll is 8,” then the probability is 0, because there are 0 successful outcomes out of 6 possible outcomes. </p></span><a name="a0000012589"></a>
+<p><div class="important"> When working on a probability problem, if you ever get a probability that’s less than 0 or greater than 1, then you’ve made a mistake! All probabilities are greater than or equal to 0, and less than or equal to 1. </div> <a name="a0000012590" id="a0000012590"></a> </p><a name="a0000012591"></a>
+<p>Let’s try a slightly more complicated problem. </p>
+<div probnum="24" type="problem" class="problem"><a name="a0000012593"></a>
+<p><a name="prob:deck"></a> A standard deck of cards has 52 cards divided into 4 suits, each of which has 13 cards. Two of the suits (<span></span>
+ and <span></span>
+, called “hearts” and “diamonds”) are red, and the other two (<span></span>
+ and <span></span>
+, called “spades” and “clubs”) are black. The cards in the deck are placed in random order (usually by a process called “shuffling”). What is the probability that the top two cards are both red? </p></div>
+<div id="a0000012595" class="solution">Solution for Problem 24:</div>
+<span><a name="a0000012596"></a>
+<p> Since all choices of the first two cards are equally likely, we need to count the total number of possibilities for the first two cards, and also the number of ways that the first two cards are both red. </p><a name="a0000012597"></a>
+<p>First we count the total number of ways to draw two cards. There are 52 ways to pick the first card, then 51 ways to pick the second card, for a total of <span></span>
+ possibilities. </p><a name="a0000012598"></a>
+<p>Next we count the number of successful possibilities, meaning the number of ways to draw two red cards. There are 26 ways to pick a red card first (since there are 26 total red cards), then there are 25 ways to also pick a second red card (since there are 25 red cards remaining after we’ve chosen the first card). Thus, there are a total of <span></span>
+ successful possibilities. </p><a name="a0000012599"></a>
+<p>Therefore, the probability is </p>
+<div id="a0000012601" class="math equation">
+<div></div>
+
+
+</div></span>
+<div probnum="25" type="problem" class="problem"><a name="a0000012603"></a>
+<p>Suppose we have 2 fair 6-sided dice numbered from <img alt="\Cube1" align="bottom">
+
+
+ to <img alt="\Cube6" align="bottom">
+
+
+. If we roll them both, then what is the probability the two numbers shown sum to 7? </p></div>
+<div id="a0000012605" class="solution">Solution for Problem 25:</div>
+<span><a name="a0000012606"></a>
+<p> We might incorrectly think like this: </p><a name="a0000012607"></a>
+<p><div class="bogus"> Any number from 2 to 12 could occur, so there are 11 possibilities. 7 is one of those, so the probability is 1/11. </div> </p><a name="a0000012608"></a>
+<p>The error here is that the 11 possibilities are <b class="bfseries">not equally likely</b>. For example, rolling a sum of 7 is more likely than rolling a sum of 2. In order to correctly compute probability, we need to count equally likely outcomes, and then determine how many of those possibilities result in a sum of 7. But how can we count equally likely outcomes for the sum of two dice? </p><a name="a0000012609"></a>
+<p>There are 6 equally likely outcomes for each die, so there are <span></span>
+ total equally likely outcomes for both dice together. It may be easier to see this if you think of one of the dice as being black and the other as being white. There are 6 outcomes for the black die and 6 outcomes for the white die, for a total of <span></span>
+ outcomes for the pair of dice. The outcomes that sum to 7 are <img alt="\BlackCube1" align="bottom">
+
+
+ <img alt="\Cube6" align="bottom">
+
+
+, <img alt="\BlackCube2" align="bottom">
+
+
+ <img alt="\Cube5" align="bottom">
+
+
+, <img alt="\BlackCube3" align="bottom">
+
+
+ <img alt="\Cube4" align="bottom">
+
+
+, <img alt="\BlackCube4" align="bottom">
+
+
+ <img alt="\Cube3" align="bottom">
+
+
+, <img alt="\BlackCube5" align="bottom">
+
+
+ <img alt="\Cube2" align="bottom">
+
+
+, and <img alt="\BlackCube6" align="bottom">
+
+
+ <img alt="\Cube1" align="bottom">
+
+
+, for a total of 6 equally likely successful outcomes. Therefore, the probability of rolling a sum of 7 is <span></span>
+. </p></span><a name="a0000012610"></a>
+<p>We can see all of the possible equally likely outcomes for the two dice in the following table: </p>
+<div class="align-center"> <div class="tabular"><img alt="\begin{tabular}{cc|cccccc}&amp; &amp;  \multicolumn{6}{c}{Die \# 1}   \\ &amp; &amp;  \BlackCube{1}   &amp;  \BlackCube{2}   &amp;  \BlackCube{3}   &amp;  \BlackCube{4}   &amp;  \BlackCube{5}   &amp;  \BlackCube{6}   \\ \hline    &amp;  \raisebox{-2pt}[0pt]{\Cube{1}}   &amp;  2   &amp;  3   &amp;  4   &amp;  5   &amp;  6   &amp;  7   \\ &amp;  \raisebox{-2pt}[0pt]{\Cube{2}}   &amp;  3   &amp;  4   &amp;  5   &amp;  6   &amp;  7   &amp;  8   \\ &amp;  \raisebox{-2pt}[0pt]{\Cube{3}}   &amp;  4   &amp;  5   &amp;  6   &amp;  7   &amp;  8   &amp;  9   \\ \raisebox{1.5ex}[0pt]{Die \# 2}   &amp;  \raisebox{-2pt}[0pt]{\Cube{4}}   &amp;  5   &amp;  6   &amp;  7   &amp;  8   &amp;  9   &amp;  10   \\ &amp;  \raisebox{-2pt}[0pt]{\Cube{5}}   &amp;  6   &amp;  7   &amp;  8   &amp;  9   &amp;  10   &amp;  11   \\ &amp;  \raisebox{-2pt}[0pt]{\Cube{6}}   &amp;  7   &amp;  8   &amp;  9   &amp;  10   &amp;  11   &amp;  12   \end{tabular}" align="bottom">
+</div> </div><a name="a0000012612"></a>
+<p> Notice that 6 of the entries in the above table are 7, and there are 36 total entries in the table, so the probability of rolling a 7 is <span></span>
+. </p><div id="a0000012613" class="exercises"><span class="headingtext">Exercises</span></div>
+<ol class="exercises itemize">
+	<li><a name="a0000012614"></a>
+<p>Suppose we roll a fair 6-sided die. What is the probability that </p>
+<ol class="parts itemize">
+	<li class="part"><a name="a0000012616"></a>
+<p>a <img alt="\Cube{5}" align="bottom">
+
+
+ is rolled? </p></li><li class="part"><a name="a0000012617"></a>
+<p>an even number is rolled? </p></li><li class="part"><a name="a0000012618"></a>
+<p>a perfect square is rolled? </p></li>
+</ol></li><li><a name="a0000012619"></a>
+<p>Suppose that we have an 8-sided die with 2 red sides, 5 yellow sides, and a blue side. What is the probability of rolling a yellow side? </p></li><li><a name="a0000012620"></a>
+<p>Consider a standard deck of 52 cards (as described in Problem <a href="sect0084.html#prob:deck">24</a>). The deck is randomly arranged. What is the probability that </p>
+<ol class="parts itemize">
+	<li class="part"><a name="a0000012622"></a>
+<p>the top card is a <span></span>
+? </p></li><li class="part"><a name="a0000012623"></a>
+<p>the top card is a 9? </p></li><li class="part"><a name="a0000012624"></a>
+<p>the top card is a face card (a Jack, Queen, or King)? </p></li><li class="part"><a name="a0000012625"></a>
+<p>the top card is black and the second card is red? </p></li><li class="part"><a name="a0000012626"></a>
+<p>the top card is a 3 and the second card is an 8? </p></li><li class="part"><a name="a0000012627"></a>
+<p>the top two cards are both Aces? </p></li>
+</ol></li><li><a name="a0000012628"></a>
+<p>Suppose we flip four coins simultaneously: a penny, a nickel, a dime, and a quarter. What is the probability that </p>
+<ol class="parts itemize">
+	<li class="part"><a name="a0000012630"></a>
+<p>they all come up heads? </p></li><li class="part"><a name="a0000012631"></a>
+<p>the penny and nickel both come up heads? </p></li><li class="parthard"><a name="a0000012632"></a>
+<p>at least 15¢ worth of coins come up heads? </p></li>
+</ol></li><li><a name="a0000012633"></a>
+<p>Suppose that we roll two fair 6-sided dice. What is the probability that the two numbers rolled sum to 5? </p></li><li><a name="a0000012634"></a>
+<p>Two dice are thrown. What is the probability that the product of the two numbers is a multiple of 5? <span class="source">(Source: AMC 8)</span> </p></li><li><a name="a0000012635"></a>
+<p>A pair of 8-sided dice has the sides of each die numbered 1 through 8. Each side has the same probability of landing face up. What is the probability that the product of the two numbers on the sides that land face-up is greater than 36? <span class="source">(Source: AMC 8)</span> </p></li><li><a name="a0000012636"></a>
+<p>At a party, there are only single women and married men with their wives. The probability that a randomly selected woman is single is <span></span>
+. What fraction of the people in the room are married men? <span class="source">(Source: AMC 8)</span> </p><a name="a0000012637"></a>
+<p><a name="a0000012638" id="a0000012638"></a> </p></li>
+</ol>
+<div class="end exercises">End exercises</div></div>
+
+		
+
+		
+
+	</body>
+</html>

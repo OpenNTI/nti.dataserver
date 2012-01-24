@@ -1,0 +1,272 @@
+<html xml:lang="en" lang="en">
+	<head>
+        <meta content="2011-12-31 10:00:35.180286" http-equiv="last-modified">
+		<meta name="viewport" content="width=730">
+        <meta name="NTIRelativeScrollHeight" content="24140">
+        <meta content="tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.21" name="NTIID">
+		<meta name="generator" content="plasTeX">
+		<meta content="text/html; charset=utf-8" http-equiv="content-type">
+		<title>Prime Numbers</title>
+		<link href="sect0014.html" title="Prime Factorization" rel="next">
+		<link href="sect0012.html" title="Divisibility Tests" rel="prev">
+		<link href="chap-numthy.html" title="Number Theory" rel="up">
+		<link rel="stylesheet" href="styles/styles.css">
+		<link rel="stylesheet" href="styles/prealgebra.css">
+		<link rel="stylesheet" href="styles/application.css">
+		
+		<script type="text/javascript" src="js/jquery-1.6.1.min.js"></script>
+        
+        <script type="text/javascript" src="js/prealgebra.js"></script>
+	</head>
+	<body id="NTIContent">
+		<div class="navigation">
+			<div>
+				<div class="previous"><a href="sect0012.html" title="Divisibility Tests">&lt;</a></div>
+				<div class="up"><a href="chap-numthy.html" title="Number Theory">^</a></div>
+				<div class="next"><a href="sect0014.html" title="Prime Factorization">&gt;</a></div>
+			</div>
+			<div class="navigation-title" align="center">Prealgebra</div>
+			<div>
+				<div class="contents"><a href="index.html" title="Table of Contents">C</a></div>
+				<div class="index"><a href="sect0096.html" title="Index">#</a></div>
+			</div>
+		</div>
+
+		<!-- TODO: this should be rendered by the UI... -->
+		<div class="breadcrumbs">
+			<span>
+				<span> <a href="index.html">Prealgebra</a> : </span>
+				
+			</span><span>
+				<span> <a href="chap-numthy.html">Number Theory</a> : </span>
+				
+			</span><span>
+				
+				<span><b class="current">Prime Numbers</b></span>
+			</span>
+			<hr>
+		</div>
+
+		<div class="page-contents"><div id="a0000000014" class="chapter title">
+	<span class="ref">3.3</span>
+	<span class="label">Prime Numbers</span>
+</div>
+
+<a name="a0000002889"></a>
+<p> <a name="a0000002890" id="a0000002890"></a><a name="a0000002891" id="a0000002891"></a> <a name="a0000002892" id="a0000002892"></a><a name="a0000002893" id="a0000002893"></a> </p><a name="a0000002894"></a>
+<p>Every positive integer is divisible by 1 and by itself. Some numbers are not divisible by any other positive integers. For example, 5 is divisible by 1 and 5, but not by any other positive integer. Meanwhile, 6 is divisible by 1 and 6, but also by 2 and 3. </p><a name="a0000002895"></a>
+<p><div class="defn"> A <span class="def">prime number</span> is a positive integer that is divisible by exactly two positive integers: 1 and the number itself. A <span class="def">composite number</span> is a positive integer that is divisible by more than two positive integers. This means that a number is composite if it is divisible by some positive integer besides 1 and the number itself. </div> </p><a name="a0000002896"></a>
+<p>For example, 2 is divisible by 1 and by 2, but it is not divisible by any other positive number. Therefore, 2 is prime. Meanwhile, 12 is divisible by 3, so 12 is composite. The number 1 is the only positive integer that is neither prime nor composite. Each integer greater than 1 is either prime or composite. </p><a name="a0000002897"></a>
+<p>We often use the word “prime” as a noun, as in, “2 is a prime.” </p><div id="a0000002898" class="section-problems"><span class="headingtext">Section Problems</span></div>
+<ol class="section-problems itemize">
+	<li>
+		<div probnum="14" class="problem"><a name="a0000002899"></a>
+<p>List every prime that is less than 20. </p></div>
+	</li><li>
+		<div probnum="15" class="problem"><a name="a0000002900"></a>
+<p>Meena is trying to determine whether or not 113 is prime. She’s doing so by checking 113 for divisibility by each positive integer starting with 2. She sees that 113 is odd, so it is not divisible by 2. She then checks if 113 is divisible by 3. Since <span></span>
+ is not divisible by 3, she knows that 113 is not divisible by 3. </p>
+<ol class="parts itemize">
+	<li class="part"><a name="a0000002902"></a>
+<p>Meena says, “Since 113 is not divisible by 2, I know that 113 isn’t divisible by 4.” Is she right? Why or why not? </p></li><li class="part"><a name="a0000002903"></a>
+<p>How does Meena know at a glance that 113 is not divisible by 5? </p></li><li class="part"><a name="a0000002904"></a>
+<p>She then says, “Since 113 is not divisible by 2, I know that it isn’t divisible by 6.” Is she right? Why or why not? </p></li><li class="part"><a name="a0000002905"></a>
+<p>Meena divides 113 by 7 and finds a remainder of 1, so she knows that 113 is not divisible by 7. She then says, “I don’t have to test 8, 9, or 10. I know that 113 isn’t divisible by any of those.” How does she know without testing? </p></li><li class="part"><a name="a0000002906"></a>
+<p>Meena then says, “Since <span></span>
+ is 121, I don’t have to test any numbers higher than 10. I now know that 113 is prime.” Why doesn’t Meena have to test any more numbers? </p></li>
+</ol></div>
+	</li><li>
+		<div probnum="16" class="problem"><a name="a0000002907"></a>
+<p>Describe each of the following numbers as prime or composite: </p><a name="a0000002908"></a>
+<p>2 </p>
+<ol class="parts itemize">
+	<li class="part"><a name="a0000002910"></a>
+<p>61 </p></li><li class="part"><a name="a0000002911"></a>
+<p>91 </p></li><li class="part"><a name="a0000002912"></a>
+<p>143 </p></li><li class="part"><a name="a0000002913"></a>
+<p>157 </p></li>
+</ol><a name="a0000002914"></a>
+</div>
+	</li><li>
+		<div probnum="17" class="problem"><a name="a0000002915"></a>
+<p>Find the largest two-digit composite number in which both digits are prime. </p></div>
+	</li><li>
+		<div probnum="18" class="problem"><a name="a0000002916"></a>
+<p>Find all pairs of primes whose sum is 61. </p></div>
+	</li><li>
+		<div probnum="19" class="problem"><a name="a0000002917"></a>
+<p><div class="rightpic"><img alt="\rightpic{num_thy_1.pdf}" align="bottom">
+</div>
+
+ Start with the grid of numbers on the right, and perform the following process: </p><a name="a0000002918"></a>
+<p> <div style="width:293.4162pt" class="minipage"> <ol class="parts itemize">
+	<li class="part"><a name="a0000002919"></a>
+<p>Circle the smallest number that is not already circled or crossed out. </p></li><li class="part"><a name="a0000002920"></a>
+<p>Cross out all of the multiples of the number you circled in Step 1, except for the circled number itself. </p></li><li class="part"><a name="a0000002921"></a>
+<p>If every number is either circled or crossed out, then stop. Otherwise, go back to Step 1. </p></li>
+</ol> </div> </p><a name="a0000002922"></a>
+<p> When you finish, do you notice anything interesting about the circled numbers?<br> </p></div>
+	</li>
+</ol>
+<div class="end section-problems">End section problems</div>
+
+<div probnum="14" type="problem" class="problem"><a name="a0000002925"></a>
+<p>List every prime that is less than 20. </p></div>
+<div id="a0000002927" class="solution">Solution for Problem 14:</div>
+<span><a name="a0000002928"></a>
+<p> In the introduction, we noted that 1 is not prime and 2 is prime. </p><a name="a0000002929"></a>
+<p>The number 3 is divisible by 1 and by 3, but not by 2. A positive number cannot be divisible by a number greater than itself, so we don’t have to check if 3 is divisible by 4 or 5 or any other number greater than 3. Therefore, we know that 3 is prime. </p><a name="a0000002930"></a>
+<p>Since 4 is divisible by 2, we know that 4 is composite. Similarly, 6, 8, 10, 12, 14, 16, and 18 are all divisible by 2 and therefore are composite. Of course, you probably recognize these as even numbers. Any number that is divisible by 2 is even, and any integer that is not divisible by 2 is an odd number. Since every even number is divisible by 2, the only even prime is 2. So, we don’t have to check any more even numbers. </p><a name="a0000002931"></a>
+<p>Continuing in this manner, we find that the only primes less than 20 are 2, 3, 5, 7, 11, 13, 17, and 19. To see why the other numbers are not prime, we note that 1 is not prime by definition, all the other even numbers are divisible by 2, and both 9 and 15 are multiples of 3. </p></span><a name="a0000002932"></a>
+<p><div class="xtra"> Finding large prime numbers is a thrill for some mathematicians and computer scientists. As of this writing, the largest known prime is <div id="a0000002933" class="math equation">
+<div></div>
+
+
+</div> which has <span></span>
+ digits! This prime was discovered in 2008 by the <span class="def">Great Internet Mersenne Prime Search</span> (<span class="def">GIMPS</span>), which is a collaborative internet-based search for large primes. Visit <tt class="ttfamily">www.mersenne.org</tt> to join the search!</div> </p>
+<div probnum="15" type="problem" class="problem"><a name="a0000002935"></a>
+<p>Meena is trying to determine whether or not 113 is prime. She’s doing so by checking 113 for divisibility by each positive integer starting with 2. She sees that 113 is odd, so it is not divisible by 2. She then checks if 113 is divisible by 3. Since <span></span>
+ is not divisible by 3, she knows that 113 is not divisible by 3. </p>
+<ol class="parts itemize">
+	<li class="part"><a name="a0000002937"></a>
+<p>Meena says, “Since 113 is not divisible by 2, I know that 113 isn’t divisible by 4.” Is she right? Why or why not? </p></li><li class="part"><a name="a0000002938"></a>
+<p>How does Meena know at a glance that 113 is not divisible by 5? </p></li><li class="part"><a name="a0000002939"></a>
+<p>She then says, “Since 113 is not divisible by 2, I know that it isn’t divisible by 6.” Is she right? Why or why not?</p></li><li class="part"><a name="a0000002940"></a>
+<p>Meena divides 113 by 7 and finds a remainder of 1, so she knows that 113 is not divisible by 7. She then says, “I don’t have to test 8, 9, or 10. I know that 113 isn’t divisible by any of those.” How does she know without testing? </p></li><li class="part"><a name="a0000002941"></a>
+<p>Meena then says, “Since <span></span>
+ is 121, I don’t have to test any numbers higher than 10. I now know that 113 is prime.” Why doesn’t Meena have to test any more numbers? </p></li>
+</ol><a name="a0000002942"></a>
+<p><a name="prob:findprime"></a> </p></div>
+<div id="a0000002944" class="solution">Solution for Problem 15:</div>
+<span>
+<ol class="parts itemize">
+	<li class="part"><a name="a0000002946"></a>
+<p>Yes, she is right. Every multiple of 4 is also a multiple of 2, since 4 is a multiple of 2. But Meena already knows that 113 is not a multiple of 2, so she knows that 113 cannot possibly be a multiple of 4. </p></li><li class="part"><a name="a0000002947"></a>
+<p>The last digit of 113 is not 0 or 5, so she knows that 113 is not divisible by 5. </p></li><li class="part"><a name="a0000002948"></a>
+<p>Yes, she is right. As in part (a), every multiple of 6 is also a multiple of 2, since 6 is a multiple of 2. Meena knows that 113 is not a multiple of 2, so she knows that 113 cannot be a multiple of 6. </p></li><li class="part"><a name="a0000002949"></a>
+<p>She doesn’t have to test 8 or 10 because these are both multiples of 2. Since 113 is not a multiple of 2, Meena knows that 113 is not divisible by any even number. </p><a name="a0000002950"></a>
+<p>Every multiple of 9 is also a multiple of 3. Since Meena knows that 113 is not a multiple of 3, she knows that 113 cannot be a multiple of 9, either. Therefore, Meena doesn’t have to test 8, 9, or 10. </p></li><li class="part"><a name="a0000002951"></a>
+<p>Meena knows that 113 is not a multiple of any integer from 2 through 10. So, if 113 is the product of two integers, and neither integer is 1, then both of the integers must be greater than 10. </p><a name="a0000002952"></a>
+<p>The smallest possible product of two integers greater than 10 is <span></span>
+, which is larger than 113. Any other product of two integers greater than 10 will be even larger. So, 113 cannot be written as the product of two integers that are greater than 1. This means that 113 is divisible only by 1 and by itself, so 113 is prime. </p></li>
+</ol></span><a name="a0000002953"></a>
+<p>Our work in Problem <a href="sect0013.html#prob:findprime">5</a> revealed two very important points about testing whether or not a number is prime. </p><a name="a0000002954"></a>
+<p><div class="important"> If a number is not divisible by a prime, then it is not divisible by any multiple of that prime. So, in testing whether or not a number is prime, we only need to test if that number is divisible by prime numbers. </div> </p><a name="a0000002955"></a>
+<p><div class="important"> To check if a number is prime, we only need to test if it is divisible by primes whose squares are less than or equal to the number we are testing. </div> </p><a name="a0000002956"></a>
+<p>For example, to test whether or not 59 is prime, we only need to check if it is divisible by 2, 3, 5, or 7. Since <span></span>
+ is greater than 59, we don’t need to test any other primes. </p>
+<div probnum="16" type="problem" class="problem"><a name="a0000002958"></a>
+<p>Describe each of the following numbers as prime or composite: </p><a name="a0000002959"></a>
+<p>4 </p>
+<ol class="parts itemize">
+	<li class="part"><a name="a0000002961"></a>
+<p>61 </p></li><li class="part"><a name="a0000002962"></a>
+<p>91 </p></li><li class="part"><a name="a0000002963"></a>
+<p>143 </p></li><li class="part"><a name="a0000002964"></a>
+<p>157 </p></li>
+</ol><a name="a0000002965"></a>
+</div>
+<div id="a0000002967" class="solution">Solution for Problem 16:</div>
+<span>
+<ol class="parts itemize">
+	<li class="part"><a name="a0000002969"></a>
+<p>Since <span></span>
+ is greater than 61, we only need to test for divisibility by 2, 3, 5, and 7. Since 61 is not divisible by any of these primes, we know that 61 is prime. </p></li><li class="part"><a name="a0000002970"></a>
+<p><span></span>
+, so 91 is composite. </p></li><li class="part"><a name="a0000002971"></a>
+<p><span></span>
+, so 143 is composite. </p></li><li class="part"><a name="a0000002972"></a>
+<p>Since <span></span>
+ is greater than 157, we only need to test for divisibility by 2, 3, 5, 7, and 11. Since 157 is not divisible by any of these primes, we know that 157 is prime. </p></li>
+</ol></span>
+<div probnum="17" type="problem" class="problem"><a name="a0000002974"></a>
+<p>Find the largest two-digit composite number in which both digits are prime. </p></div>
+<div id="a0000002976" class="solution">Solution for Problem 17:</div>
+<span><a name="a0000002977"></a>
+<p> The one-digit primes are 2, 3, 5, and 7. The largest two-digit number we can form with these digits is 77, which is indeed composite because <span></span>
+. </p></span>
+<div probnum="18" type="problem" class="problem"><a name="a0000002979"></a>
+<p>Find all pairs of primes whose sum is 61. </p></div>
+<div id="a0000002981" class="solution">Solution for Problem 18:</div>
+<span><a name="a0000002982"></a>
+<p> If two integers sum to 61, then one of the integers must be even and the other odd. The only even prime is 2, so one of the primes must be 2. We have <span></span>
+, and 59 is prime, so 2 and 59 is the only pair of primes whose sum is 61. </p></span><a name="a0000002983"></a>
+<p><div probnum="19" type="picproblem" class="problem"><a name="a0000002984"></a>
+<p><div class="rightpic"><img alt="\rightpic{num_thy_1.pdf}" align="bottom">
+</div>
+
+ Start with the grid of numbers on the right, and perform the following process: </p><a name="a0000002985"></a>
+<p> <div style="width:293.4162pt" class="minipage"> <ol class="parts itemize">
+	<li class="part"><a name="a0000002986"></a>
+<p>Circle the smallest number that is not already circled or crossed out. </p></li><li class="part"><a name="a0000002987"></a>
+<p>Cross out all of the multiples of the number you circled in Step 1, except for the circled number itself. </p></li><li class="part"><a name="a0000002988"></a>
+<p>If every number is either circled or crossed out, then stop. Otherwise, go back to Step 1. </p></li>
+</ol> </div> </p><a name="a0000002989"></a>
+<p> When you finish, do you notice anything interesting about the circled numbers?<br> </p></div> </p><a name="a0000002990"></a>
+<p><div class="rightpic"><img alt="\rightpic{num_thy_2.pdf}" align="bottom">
+</div>
+
+ </p>
+<div id="a0000002992" class="solution">Solution for Problem 19:</div>
+<span><a name="a0000002993"></a>
+<p> The smallest number in the grid is 2, so we start by circling 2 in Step 1. Step 2 then tells us to cross out all of the multiples of 2 except for 2, so we cross out all the even numbers except 2. Moving on to Step 3, we still have plenty of numbers that are not circled or crossed out, so we go back to Step 1.  </p><a name="a0000002994"></a>
+<p><div class="rightpic"><img alt="\rightpic{num_thy_3.pdf}" align="bottom">
+</div>
+
+ The smallest number that was not circled or crossed out already is 3, so we circle 3. We then cross out all the other multiples of 3. As we go, we notice that a bunch of these multiples of 3 are already crossed out—these are the numbers that are also multiples of 2. After crossing out all the multiples of 3 besides 3, we still have many numbers that are not circled or crossed out. Back to Step 1 we go.  </p><a name="a0000002995"></a>
+<p><div class="rightpic"><img alt="\rightpic{num_thy_4.pdf}" align="bottom">
+</div>
+
+ Now the smallest number that was not circled or crossed out already is 5, so we circle 5. We then cross out all of the other multiples of 5. There are still plenty of numbers to go. Back to Step 1.  </p><a name="a0000002996"></a>
+<p><div class="rightpic"><img alt="\rightpic{num_thy_5.pdf}" align="bottom">
+</div>
+
+ The smallest number that was not circled or crossed out is now 7, so we circle that and then cross out the other multiples of 7. Sigh, still a bunch of numbers to go. </p><a name="a0000002997"></a>
+<p>The next number we’ll circle is 11. But there are no other multiples of 11 in the grid that are not circled or crossed out. This is because we have circled or crossed out all the multiples of 2, 3, 5, and 7 already. That means we have crossed out <span></span>
+, <span></span>
+, <span></span>
+, and <span></span>
+. We also crossed out <span></span>
+, <span></span>
+, and <span></span>
+ when we crossed out multiples of 2, and we crossed out <span></span>
+ when we crossed out multiples of 3.  </p><a name="a0000002998"></a>
+<p><div class="rightpic"><img alt="\rightpic{num_thy_6.pdf}" align="bottom">
+</div>
+
+ We circle 11 and still have plenty of numbers left. But for each number we circle, there are no more un-crossed-out multiples of the circled number left in the grid. So, as we repeat the three steps over and over, we circle all the remaining numbers in the grid. In the end, we have the grid at the right. </p><a name="a0000002999"></a>
+<p>The circled numbers are the primes less than 100! Why? </p><a name="a0000003000"></a>
+<p>Each time we cross out numbers in Step 2, the numbers we cross out are multiples of the number we just circled in Step 1. So, all of the crossed out numbers are composite. We’ll never cross out a prime number, because a prime number isn’t a multiple of any of the numbers in the grid besides itself. Therefore, eventually each prime number will become the smallest available number in the grid in Step 1. It will then be circled and all its multiples crossed out. Since each prime gets circled and all its multiples get crossed out, every composite number will get crossed out in the step after we circle the smallest prime that evenly divides the composite number. So, we must have all primes in the grid circled and all composite numbers crossed out when we finish. </p><a name="a0000003001"></a>
+<p>This process is called the <a name="a0000003002" id="a0000003002"></a><span class="def">Sieve of Eratosthenes</span> after the ancient Greek mathematician who developed it. There’s nothing special about 100 in our example above of the Sieve of Eratosthenes. We could have started with a much larger grid to find many more primes. </p></span><a name="a0000003003"></a>
+<p><div class="sidebar"> The Sieve of Eratosthenes is a very efficient way to generate long lists of prime numbers. For example, if you wanted to write a computer program to list of all the primes that are less than 1,000,000, you’d be much better off using the Sieve of Eratosthenes rather than checking each number one at time with the process we used in Problem <a href="sect0013.html#prob:findprime">5</a>. </div> </p><div id="a0000003004" class="exercises"><span class="headingtext">Exercises</span></div>
+<ol class="exercises itemize">
+	<li><a name="a0000003005"></a>
+<p>What is the sum of all the prime numbers between 80 and 90? </p></li><li><a name="a0000003006"></a>
+<p>Find every number between 70 and 80 that is not prime and is not a multiple of 2, 3, or 5. <span class="source">(Source: MATHCOUNTS)</span></p></li><li><a name="a0000003007"></a>
+<p>What is the largest prime number <span class="mathname">p</span> such that 8 times <span class="mathname">p</span> is less than 1000? </p></li><li><a name="a0000003008"></a>
+<p>How many pairs of primes are there such that sum of the pair is <span class="mathnumber">40</span>? </p></li><li>
+<ol class="parts itemize">
+	<li class="part"><a name="a0000003010"></a>
+<p>The product of all prime numbers between 1 and 80 is divided by 10. What is the remainder? </p></li><li class="parthard"><a name="a0000003011"></a>
+<p>The product of all prime numbers between 1 and 80 is divided by 4. What is the remainder? </p></li>
+</ol></li><li><a name="a0000003012"></a>
+<p>How many groups of three prime numbers add to 22? Note: <span></span>
+ is considered the same group of three primes as <span></span>
+. </p></li><li><a name="a0000003013"></a>
+<p>Suppose <span class="mathname">P</span> and <span class="mathname">Q</span> both represent prime numbers such that </p>
+<div id="a0000003015" class="math equation">
+<div></div>
+
+
+</div><a name="a0000003016"></a>
+<p> Find the value of the prime <span class="mathname">P</span>. <span class="source">(Source: MOEMS)</span></p><a name="a0000003017"></a>
+<p><a name="a0000003018" id="a0000003018"></a><a name="a0000003019" id="a0000003019"></a> <a name="a0000003020" id="a0000003020"></a><a name="a0000003021" id="a0000003021"></a> </p></li>
+</ol>
+<div class="end exercises">End exercises</div></div>
+
+		
+
+		
+
+	</body>
+</html>

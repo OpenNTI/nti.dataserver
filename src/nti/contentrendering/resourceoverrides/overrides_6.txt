@@ -1,0 +1,6 @@
+$\begin{array}{rr@{.}c@{}l}
+&& 5 & \ldots \\ \cline{2-4}
+\multicolumn{1}{r|}{9} & 5 & 0 & \ldots \\
+& 4 & 5 \\ \cline{2-3}
+& 0 & 5
+\end{array}$

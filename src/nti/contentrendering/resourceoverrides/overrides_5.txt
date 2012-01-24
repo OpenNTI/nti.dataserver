@@ -1,0 +1,7 @@
+\[
+\begin{array}{r@{}r@{\,}c@{\,}r@{.}l}
+& 100x & = & 51 & 5151\ldots \\
+-& x & = & 0 & 5151\ldots \\ \hline
+\multicolumn{2}{r@{\,}}{100x-x} & = & 51
+\end{array}
+\]

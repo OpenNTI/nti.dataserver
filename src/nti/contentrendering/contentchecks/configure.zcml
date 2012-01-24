@@ -1,0 +1,11 @@
+<!-- -*- mode: nxml -*- -->
+<configure xmlns="http://namespaces.zope.org/zope"
+		   i18n_domain="zope">
+	<include package="zope.component" />
+
+	<utility component=".checkpagewidth" name="checkpagewidth"/>
+	<utility component=".overflowedmath" name="overflowedmath" />
+	<utility component=".mathjaxerror" name="mathjaxerror" />
+
+
+</configure>

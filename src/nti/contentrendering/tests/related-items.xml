@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<toc NTIRelativeScrollHeight="292" href="index.html" icon="icons/chapters/Biology%20Intro-icon.png" label="Biology Intro" ntiid="tag:nextthought.com,2011-10:ck12-HTML-book-tx.8" thumbnail="thumbnails/index.png">
+    <topic NTIRelativeScrollHeight="32608" href="id36066028.html"
+		   label="Biology: The Study of Life"
+		   ntiid="tag:nextthought.com,2011-10:ck12-HTML-book-tx.1"
+		   thumbnail="thumbnails/id36066028.png">
+		<Related>
+			<video ntiid="videos/addition-1.small.m4v" href="videos/addition-1.small.m4v"
+			   icon="icons/videos/addition-1.png" title="Addition Rules!" qualifier="We cover the commutative and associative properties of addition, and then we add the numbers from 1 to 100. We also add a lot of hats."
+			  type="video" />
+		</Related>
+	</topic>
+</toc>
