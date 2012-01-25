@@ -6,7 +6,7 @@ if [ -z "$WORKON_HOME" ]; then
 	exit 1
 fi
 # make sure virtualenv is on the path
-export PATH=/opt/local/Library/Frameworks/Python/Versions/2.7/bin:$PATH
+export PATH=/opt/local/Library/Frameworks/Python.framework/Versions/2.7/bin:$PATH
 
 if [ -z `which virtualenvwrapper.sh` ]; then
 	echo "Installing virtualenvwrapper. You may be prompted for a password"
