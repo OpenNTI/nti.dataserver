@@ -7,7 +7,7 @@ entry_points = {
 		"nti_render = nti.contentrendering.aopstoxml:main"
 	],
 	"paste.app_factory": [
-		"main = dataserver:main"
+		"main = nti.appserver.standalone:configure_app"
 	],
 	"paste.server_runner": [
 		"http = nti.appserver.standalone:server_runner"

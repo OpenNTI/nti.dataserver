@@ -30,6 +30,7 @@ from selector import Selector
 
 from nti.dataserver.users import SharingTarget
 from nti.dataserver import authorization as nauth
+from nti.dataserver.interfaces import IDataserver
 
 from cors import CORSInjector
 
@@ -178,7 +179,8 @@ class _Main(object):
 			start_request( h.status, h.headers.items(), sys.exc_info() )
 			return [h.message]
 
-def createApplication( http_port, library,
+def createApplication( http_port,
+					   library,
 					   process_args=False,
 					   create_ds=True,
 					   pyramid_config=None,
@@ -190,14 +192,14 @@ def createApplication( http_port, library,
 	register_implicit_layers()
 	logger.debug( 'Began starting dataserver' )
 	server = None
-	if not isinstance( create_ds, bool ):
+
+	if IDataserver.providedBy( create_ds ): #not isinstance( create_ds, bool ):
 		server = create_ds
 	elif not create_ds:
 		class MockServer(object):
-			pass
+			_parentDir = '.'
+			_dataFileName = 'data.fs'
 		server = MockServer()
-		server._parentDir = '.'
-		server._dataFileName = 'data.fs'
 	else:
 		ds_class = dataserver.Dataserver if not sync_changes else dataserver._Dataserver._SynchronousChangeDataserver
 		if process_args:
