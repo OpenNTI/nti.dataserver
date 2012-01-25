@@ -78,7 +78,6 @@ def _serve(httpd):
 
 # The paste.server_runner, only good with pyramid_main
 def server_runner(wsgi_app, global_conf, host='', port=HTTP_PORT, **kwargs):
-	import pdb; pdb.set_trace()
 	httpd = AppServer(
 		(host, int(port)),
 		wsgi_app,
