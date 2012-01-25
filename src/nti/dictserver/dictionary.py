@@ -2,6 +2,7 @@
 
 import sqlite3 as sql
 import os
+import sys
 
 from zope import interface
 import interfaces
@@ -11,13 +12,21 @@ class ChromeDictionary(object):
 	interface.implements(interfaces.IDictionary)
 
 	def __init__(self, lookupPath):
+		if not lookupPath:
+			# sqlite accepts an empty path as meaning...what?
+			# whatever, it doesn't work
+			clz = TypeError if lookupPath is None else LookupError
+			raise clz( 'Empty path' )
 		self.lookupPath = lookupPath
 
-		if os.path.exists(self.lookupPath):
+		try:
 			self.connection = sql.connect(self.lookupPath)
 			self.cursor = self.connection.cursor()
-		else:
-			raise LookupError( 'No path' + self.lookupPath )
+		except sql.Error:
+			_, _, tb = sys.exc_info()
+
+			ex = LookupError( 'No path ' + self.lookupPath )
+			raise ex, None, tb
 
 
 	def lookup(self, word, exact=False):

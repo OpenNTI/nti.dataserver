@@ -9,9 +9,11 @@ import traceback
 
 import UserDict
 
+import nti.dictserver.dictionary
 import nti.dictserver._pyramid
 dictserver = UserDict.UserDict()
 dictserver.pyramid = nti.dictserver._pyramid
+dictserver.dictionary = nti.dictserver.dictionary
 
 from paste.exceptions.errormiddleware import ErrorMiddleware
 
@@ -259,15 +261,19 @@ def createApplication( http_port,
 
 
 	selector = Selector( consume_path=False )
-	if dictserver.pyramid:
-		# TODO: This fails at runtime. Need to configure and register an IDictionary instance
-		logger.debug( "Adding dictionary" )
+	if dictserver.pyramid and 'main_dictionary_path' in settings:
+		try:
+			dictionary = dictserver.dictionary.ChromeDictionary( settings['main_dictionary_path'] )
+			pyramid_config.registry.registerUtility( dictionary )
+			logger.debug( "Adding dictionary" )
 
-		pyramid_config.add_static_view( '/dictionary/static', 'nti.dictserver:static/',
-										cache_max_age=datetime.timedelta(days=1) )
-		pyramid_config.add_route( name='dictionary.word', pattern='/dictionary/{word}',
-								  request_method='GET')
-		pyramid_config.scan( dictserver.pyramid )
+			pyramid_config.add_static_view( '/dictionary/static', 'nti.dictserver:static/',
+											cache_max_age=datetime.timedelta(days=1) )
+			pyramid_config.add_route( name='dictionary.word', pattern='/dictionary/{word}',
+									  request_method='GET')
+			pyramid_config.scan( dictserver.pyramid )
+		except LookupError:
+			logger.exception( "Failed to add dictionary server" )
 
 	pyramid_config.add_renderer( name='rest', factory='nti.appserver.pyramid_renderers.REST' )
 
@@ -521,10 +527,10 @@ class AppServer(dataserver.socketio_server.SocketIOServer):
 
 def _configure_logging():
 	# TODO: Where should logging in these background processes be configured?
-	logging.basicConfig( level=logging.DEBUG )
-	logging.getLogger( 'nti' ).setLevel( logging.DEBUG )
-	logging.root.handlers[0].setFormatter( logging.Formatter( '%(asctime)s [%(name)s] %(levelname)s: %(message)s' ) )
-
+	# logging.basicConfig( level=logging.DEBUG )
+	# logging.getLogger( 'nti' ).setLevel( logging.DEBUG )
+	# logging.root.handlers[0].setFormatter( logging.Formatter( '%(asctime)s [%(name)s] %(levelname)s: %(message)s' ) )
+	pass
 
 def _add_sharing_listener( server ):
 	_configure_logging()
