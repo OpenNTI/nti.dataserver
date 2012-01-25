@@ -22,7 +22,9 @@ USE_FILE_INDICES = 'USE_ZEO_USER_INDICES' not in os.environ
 HTTP_PORT = int(os.environ.get('DATASERVER_PORT', '8081'))
 SYNC_CHANGES = 'DATASERVER_SYNC_CHANGES' in os.environ
 
-def configure_app(create_ds=True):
+def configure_app( global_config, nti_create_ds=True, **settings ):
+	":return: A WSGI callable."
+
 	os.environ['DATASERVER_NO_REDIRECT'] = '1'
 
 	_configure_logging()
@@ -51,22 +53,16 @@ def configure_app(create_ds=True):
 				to_append = (path, False)
 			libraryPaths.append( to_append )
 
-		application,main = createApplication( HTTP_PORT, Library( libraryPaths ), process_args=True, create_ds=create_ds, sync_changes=SYNC_CHANGES )
+		application,main = createApplication( HTTP_PORT,
+											  Library( libraryPaths ),
+											  process_args=True,
+											  create_ds=nti_create_ds,
+											  sync_changes=SYNC_CHANGES )
 
 		main.setServeFiles( serveFiles )
 		return application
 
-	httpd = AppServer(
-		('',HTTP_PORT), createApp(),
-		policy_server=False,
-		namespace=SOCKET_IO_PATH,
-		session_manager = create_ds and component.getUtility(nti_interfaces.IDataserver).session_manager )
-	def set_app( self, app ): self.application = app
-	httpd.set_app = set_app
-	return httpd
-
-def pyramid_main(*args, **kwargs):
-	return configure_app()
+	return createApp()
 
 def _serve(httpd):
 	while True:
@@ -80,12 +76,11 @@ def _serve(httpd):
 
 
 # The paste.server_runner, only good with pyramid_main
-def server_runner(wsgi_app, global_conf, **kwargs):
-	_serve( wsgi_app )
-
-def run_main():
-	httpd = configure_app()
+def server_runner(wsgi_app, global_conf, host='', port=HTTP_PORT, **kwargs):
+	httpd = AppServer(
+		(host, int(port)),
+		wsgi_app,
+		policy_server=False,
+		namespace=SOCKET_IO_PATH,
+		session_manager = component.getUtility(nti_interfaces.IDataserver).session_manager )
 	_serve( httpd )
-
-if __name__ == '__main__':
-	run_main()
