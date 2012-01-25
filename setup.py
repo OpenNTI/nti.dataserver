@@ -3,10 +3,11 @@
 from setuptools import setup, find_packages
 
 entry_points = {"paste.app_factory": ["main = dataserver:main"],
+				"paste.server_runner": ["http = nti.appserver.standalone:server_runner"],
 				"dataserver": ["dataserver = app:main"]}
 
 setup(
-    name = 'nti',
+    name = 'nti.dataserver',
     version = '0.0',
     keywords = 'web pyramid pylons',
     author = 'NTI',
@@ -93,7 +94,7 @@ setup(
     extras_require = {'test': ['z3c.coverage', 'zope.testing', 'zc.buildout']},
 	dependency_links = ['http://svn.wikimedia.org/svnroot/pywikipedia/trunk/pywikipedia/'],
     packages = find_packages('src'),
-    package_dir = {'': '.'},
+    package_dir = {'': 'src'},
     include_package_data = False,
     zip_safe = False,
     entry_points = entry_points

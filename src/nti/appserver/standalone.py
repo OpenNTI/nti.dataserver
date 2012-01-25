@@ -76,11 +76,9 @@ def configure_app(create_ds=True):
 	return httpd
 
 def pyramid_main(*args, **kwargs):
-	return configure_app(create_ds=False).application
+	return configure_app()
 
-def run_main():
-
-	httpd = configure_app()
+def _serve(httpd):
 	while True:
 		try:
 			#SIGHUP could cause this to raise 'interrupted system call'
@@ -89,6 +87,15 @@ def run_main():
 		except KeyboardInterrupt:
 			component.getUtility(nti_interfaces.IDataserver).close()
 			raise
+
+
+# The paste.server_runner, only good with pyramid_main
+def server_runner(wsgi_app, global_conf, **kwargs):
+	_serve( wsgi_app )
+
+def run_main():
+	httpd = configure_app()
+	_serve( httpd )
 
 if __name__ == '__main__':
 	run_main()
