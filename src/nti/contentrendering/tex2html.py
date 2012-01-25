@@ -9,18 +9,25 @@ import html2mathml
 import warnings
 _debug = False
 
+from pkg_resources import resource_exists, resource_filename
+def _require_resource_filename( mathjaxconfigname ):
+	if not resource_exists( __name__, 'zpts/Themes/AoPS/js/' + mathjaxconfigname ):
+		raise Exception( "Unable to get mathjax config" )
+	warnings.warn( "MathJax config file has dependency on AoPS path" )
+	return resource_filename( __name__, 'zpts/Themes/AoPS/js/' + mathjaxconfigname ):
+
 class ResourceSetGenerator(resources.BaseResourceSetGenerator):
 
 	htmlfile 			= 'math.html'
 	mathjaxconfigname	= 'mathjaxconfig.js'
 	# FIXME: This path assumption is not good.
-	mathjaxconfigfile	= '%s/../../../renderers/Themes/AoPS/js/%s' % (os.path.dirname(__file__), mathjaxconfigname)
+	# we should be at least using the jobname?
+	mathjaxconfigfile	= _require_resource_filename(mathjaxconfigname)
 
 	wrapInText = False
 
 	def __init__(self, compiler, encoding, batch):
 		super(ResourceSetGenerator, self).__init__(compiler, encoding, batch)
-		warnings.warn( "MathJax config file specified by weird relative path" )
 
 		# TODO: Why the check???
 		self.configName = self.mathjaxconfigfile if self.mathjaxconfigname else None
