@@ -1,0 +1,67 @@
+name: abstract
+<div class="abstract" tal:content="self">abstract</div>
+
+name: title author date thanks
+
+name: maketitle
+<div class="titlepage" tal:define="metadata self/ownerDocument/userdata">
+	<div class="title" tal:content="metadata/title">title</div>
+	<div tal:condition="metadata/author">
+		<div tal:repeat="author metadata/author" tal:content="author">authors</div>
+	</div>
+	<div tal:condition="metadata/date" tal:content="metadata/date">date</div>
+	<div tal:condition="metadata/thanks" tal:content="metadata/thanks">thanks</div>
+</div>
+
+name: part chapter section
+<div tal:condition="self/ref" class="chapter title" tal:attributes="id self/id">
+	<span class="ref" tal:content="self/ref"></span>
+	<span class="label" tal:content="self/title"></span>
+</div>
+<div tal:condition="not:self/ref" class="chapter title" tal:attributes="id self/id" tal:content="self/fullTitle">Morbi metus pede, imperdiet vitae</div>
+<p tal:replace="self"></p>
+
+
+name: subsection 
+<div tal:condition="self/ref" class="subsection title" tal:attributes="id self/id">
+	<span class="ref" tal:content="self/ref"></span>
+	<span class="label" tal:content="self/title"></span>
+</div>
+<div tal:condition="not:self/ref" class="subsection title" tal:attributes="id self/id" tal:content="self/fullTitle">Cras dignissim</div>
+<p tal:replace="self"></p>
+
+
+name: subsubsection
+<div tal:condition="self/ref" class="subsubsection title" tal:attributes="id self/id">
+	<span class="ref" tal:content="self/ref"></span>
+	<span class="label" tal:content="self/title"></span>
+</div>
+<div tal:condition="not:self/ref" class="subsubsection title" tal:attributes="id self/id" tal:content="self/fullTitle">Velit id pharetra</div>
+<p tal:replace="self"></p>
+
+
+name: paragraph
+<div tal:condition="self/ref" class="paragraph title" tal:attributes="id self/id">
+	<span class="ref" tal:content="self/ref"></span>
+	<span class="label" tal:content="self/title"></span>
+</div>
+<div tal:condition="not:self/ref" class="paragraph title" tal:attributes="id self/id" tal:content="self/fullTitle">Donec elementum mauris vel urna</div>
+<p tal:replace="self"></p>
+
+
+name: subparagraph
+<div tal:condition="self/ref" class="subparagraph title" tal:attributes="id self/id">
+	<span class="ref" tal:content="self/ref"></span>
+	<span class="label" tal:content="self/title"></span>
+</div>
+<div tal:condition="not:self/ref" class="subparagraph title" tal:attributes="id self/id" tal:content="self/fullTitle">Duis orci</div>
+<p tal:replace="self"></p>
+
+
+name: subsubparagraph
+<div tal:condition="self/ref" class="subsubparagraph title" tal:attributes="id self/id">
+	<span class="ref" tal:content="self/ref"></span>
+	<span class="label" tal:content="self/title"></span>
+</div>
+<div tal:condition="not:self/ref" class="subsubparagraph title" tal:attributes="id self/id" tal:content="self/fullTitle">Mauris fringilla, metus</div>
+<p tal:replace="self"></p>

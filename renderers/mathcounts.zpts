@@ -1,0 +1,20 @@
+name: mathcountsproblem
+<div class="problem">
+<input class="answerblank" type="number" tal:attributes="id self/attributes/probnum">
+<a tal:attributes="name self/id"/>
+<span tal:content="self"/>
+</div>
+<div class="result"/>
+
+
+name: mathcountssolution mathcountsdifficulty
+
+name: mathcountsworksheet
+<div class="worksheet-title" tal:content="self/title">Title</div>
+<form>
+<ol class="worksheet-problems itemize">
+	<li tal:repeat="item self"  tal:content="item">	</li>
+</ol>
+<a id="submit" onclick="NTISubmitAnswers(event,'input[type]')" href="#" >Submit</a>
+</form>
+

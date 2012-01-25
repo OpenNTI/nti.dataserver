@@ -1,0 +1,7 @@
+name: ntiincludevideo
+# The things we have links to right now we embed as iframes. This
+# will need to get smarter as there are more types. Note that WebKit
+# refuses to load iframes properly from on-disk files.
+#<video tal:attributes="src self/attributes/text" />
+<iframe width="640" height="360" tal:attributes="src self/attributes/text" frameborder="0" allowfullscreen />
+
