@@ -1,0 +1,5 @@
+name: subfloat subfig
+<div class="figure" tal:attributes="id self/id">
+	<div class="content" tal:content="self"></div>
+	<div class="caption">(<span tal:replace="string:${self/subref}">x</span>) <span tal:content="self/title">Sub-caption</span></div>
+</div>

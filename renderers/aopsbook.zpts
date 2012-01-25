@@ -1,0 +1,140 @@
+name: defn bogus importantdef important concept warning game sidebar defns chapterquote chapterauthor exer exerhard xtra
+<div tal:condition="self" tal:attributes="class python: type(self).__name__" tal:content='self' />
+
+name: picdefns
+<div class="picdefns">
+<div tal:replace="self/attributes/Picture"/>
+<div tal:replace="self"/>
+</div>
+
+name: boxed
+<span class="boxed" tal:content="self"/>
+
+name: phantom
+<span class="phantom hidden" tal:content="self/attributes/tex"/>
+
+name:Def Defnoindex angle
+<span class="def" tal:content='self/attributes/text' />
+
+name: label
+<a tal:attributes="name self/attributes/label"/>
+
+name: parts
+<ol class="parts itemize">
+	<li tal:repeat="item self" tal:attributes="class python: type(item).__name__" tal:content="item"></li>
+</ol>
+
+name: source MOEMS MathCounts AMC
+<span class="source" tal:content="python: '(Source: %s)' % self.attributes['source']" />
+
+name: probref ref
+<a tal:attributes="href self/idref/label/url" tal:content="self/idref/label/ref | self.idref.id" />
+
+name: challengeprobs
+<div class="challenge-problems" tal:attributes="id self/id"><span class="headingtext">Challenge Problems</span></div>
+<ol class="challenge-problems itemize">
+	<li tal:repeat="item self">
+		<div class="problem" tal:attributes="probnum item/attributes/probnum" tal:content="item"></div>
+	</li>
+</ol>
+
+name: beginsol solution
+<div class="solution" tal:attributes="id self/id" tal:content="python: 'Solution for Problem ' + str(self.attributes['probnum']) + ':'">Solution</div>
+<span tal:content="self" />
+
+name: reviewprobs
+<div class="review-problems" tal:attributes="id self/id"><span class="headingtext">Review Problems</span></div>
+<ol class="review-problems itemize">
+	<li tal:repeat="item self">
+		<div class="problem" tal:attributes="probnum item/attributes/probnum" tal:content="item"></div>
+	</li>
+</ol>
+
+name: sectionproblems
+<div class="section-problems" tal:attributes="id self/id"><span class="headingtext">Section Problems</span></div>
+<ol class="section-problems itemize">
+	<li tal:repeat="item self">
+		<div class="problem" tal:attributes="probnum item/attributes/probnum" tal:content="item"></div>
+	</li>
+</ol>
+<div class="end section-problems">End section problems</div>
+
+name: hintitem
+<span class="hint"><a href="#" onclick="return togglehint(event)">Hint: </a><span class="hint content hidden" tal:content="self" /></span>
+
+name: problem picproblem secprob picsecprob picsecprobspec picproblemspec problemspec
+<div class="problem" tal:attributes="probnum self/attributes/probnum; type python: type(self).__name__" tal:content="self"></div>
+
+name: rightpic leftpic
+<div tal:condition="python: hasattr(self, 'resource')" tal:attributes="class python: type(self).__name__" tal:content="self/resource"/>
+<div tal:define="style self/style" tal:condition="python: not hasattr(self, 'resource') and not style" tal:attributes="class python: type(self).__name__"><img tal:attributes="src self/image/url; alt self/source; width self/image/width/px; height self/image/height/px" /></div>
+<div tal:define="style self/style" tal:condition="python: not hasattr(self, 'resource') and style" tal:attributes="class python: type(self).__name__"><img tal:attributes="src self/image/url; alt self/source; style self/style/inline" /></div>
+
+#FIXME There are many options to parpic that we are not handling in the templates
+#We only account for the presence of 'r' or 'l' in the options argument
+name: parpic
+#There has to be a better way to do this
+<div tal:attributes="class python: (('r' in self.attributes['Options'] and 'rightpic') or ('l' in self.attributes['Options'] and 'leftpic') or '') + ' parpic'" tal:content="self/attributes/Picture"></div>
+
+name: fig
+<div class="figure" tal:attributes="id self/title/id" tal:content="self"></div>
+
+name: exercises
+<div class="exercises" tal:attributes="id self/id"><span class="headingtext">Exercises</span></div>
+<ol class="exercises itemize">
+	<li tal:repeat="item self" tal:content="item"></li>
+</ol>
+<div class="end exercises">End exercises</div>
+
+name: ntixymath
+<div tal:condition="python: hasattr(self, 'resource')" class="ntixymath" tal:content="self/resource"/>
+<div tal:define="style self/style" tal:condition="python: not hasattr(self, 'resource') and not style" tal:attributes="class python: type(self).__name__"><img tal:attributes="src self/image/url; alt self/source; width self/image/width/px; height self/image/height/px" /></div>
+<div tal:define="style self/style" tal:condition="python: not hasattr(self, 'resource') and style" tal:attributes="class python: type(self).__name__"><img tal:attributes="src self/image/url; alt self/source; style self/style/inline" /></div>
+
+name: ntixydisplaymath
+<div class="math equation ntixydisplaymath" tal:attributes="id self/id">
+	<p tal:condition="python: hasattr(self, 'resource')" tal:replace="self/resource"/>
+	<div tal:define="style self/style" tal:condition="python: not hasattr(self, 'resource') and not style" tal:attributes="class python: type(self).__name__"><img tal:attributes="src self/image/url; alt self/source; width self/image/width/px; height self/image/height/px" /></div>
+	<div tal:define="style self/style" tal:condition="python: not hasattr(self, 'resource') and style" tal:attributes="class python: type(self).__name__"><img tal:attributes="src self/image/url; alt self/source; style self/style/inline" /></div>
+	<div tal:condition="self/ref" class="equation-number">(<span tal:content="self/ref">1.1.1</span>)</div>
+</div>
+
+name: nst nnd nrd nth
+<span tal:content="self/attributes/text" /><sup tal:content="python: type(self).__name__[1:]"/>
+
+name: math ensuremath
+<p tal:condition="python: hasattr(self, 'resource')" tal:replace="self/resource"/>
+<span tal:condition="python: not hasattr(self, 'resource')" class="math tex2jax_process mathquill-embedded-latex" tal:content="python: '\\(' + self.source[1:-1] + '\\)'" />
+
+name: displaymath equation equation* eqnarray eqnarray* align align* gather gather* falign falign* \
+      multiline multiline* alignat alignat* split
+<div class="math equation" tal:attributes="id self/id">
+<p tal:condition="python: hasattr(self, 'resource')" tal:replace="self/resource"/>
+<span tal:condition="python: not hasattr(self, 'resource')" class="math tex2jax_process mathquill-embedded-latex" tal:content="python:self.source" />
+<div tal:condition="self/ref" class="equation-number">(<span tal:content="self/ref">1.1.1</span>)</div>
+</div>
+
+
+#We must make sure to obey the blockType attribute for the p tag.  It's not clear to me
+#if we should also omit the anchors for blockType elements.  Leaving them in results in some places
+#with duplicate anchors.   BlockType elements should contain paragraphs and anchors
+#that are not from blocktype elements so omitting the anchors should work fine?
+name: par
+<a tal:attributes="name self/id" tal:omit-tag="self/blockType"/>
+<p tal:content="self" tal:omit-tag="self/blockType"></p>
+
+name: Cube BlackCube
+<p tal:condition="python: hasattr(self, 'resource')" tal:replace="self/resource"/>
+<img align="bottom" tal:define="style self/style" tal:condition="python: not hasattr(self, 'resource') and not style" tal:attributes="src self/image/url; alt self/source; width self/image/width/px; height self/image/height/px" />
+<img align="bottom" tal:define="style self/style" tal:condition="python: not hasattr(self, 'resource') and style" tal:attributes="src self/image/url; alt self/source; style self/style/inline" />
+
+name: tabular tabular* tabularx
+<div tal:attributes="class python: type(self).__name__" tal:content="self/resource"/>
+
+name: mathnumber mathname
+<span tal:attributes="class python: type(self).__name__" tal:content="self/attributes/text"/>
+
+#pageref's dont make sense in our rendering.  What to do with them?
+name: pageref
+<a tal:attributes="href self/idref/label/url" tal:content="python: self.getPageNameForRef()">Page Reference</a>
+

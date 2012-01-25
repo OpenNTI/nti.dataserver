@@ -1,0 +1,8 @@
+name: mbox makebox
+<div class="mbox" tal:attributes="style string:width:${self/attributes/width}" tal:content="self">make box</div>
+
+name: fbox framebox
+<div class="fbox" tal:attributes="style string:width:${self/attributes/width}" tal:content="self">frame box</div>
+
+name: parbox
+<div class="parbox" tal:attributes="style string:width:${self/attributes/width}" tal:content="self">par box</div>

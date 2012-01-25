@@ -1,0 +1,5 @@
+name: subfigure subtable
+<div class="figure" tal:attributes="id self/id">
+	<div class="content" tal:content="self"></div>
+	<div class="caption">(<span tal:replace="self/ref">x</span>) <span tal:condition="self/title" tal:content="self/title">Sub-caption</span></div>
+</div>

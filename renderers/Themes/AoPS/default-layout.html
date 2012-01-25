@@ -1,0 +1,90 @@
+<!--$Revision$-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!-- A nomespace confuses some clients -->
+<html tal:define="links self/links" xml:lang="en" lang="en">
+	<head>
+        <meta http-equiv="last-modified" tal:condition="python: self.ownerDocument.userdata.has_key('generated_time')" tal:attributes="content python: self.ownerDocument.userdata['generated_time']"/>
+		<meta name="viewport" content="width=730" />
+        <meta name="NTIRelativeScrollHeight" content="-1" />
+        <meta name="NTIID" tal:condition="python: hasattr(self.ownerDocument,'nextNTIID')" tal:attributes="content python: self.ownerDocument.nextNTIID()"/>
+		<meta name="generator" content="plasTeX" />
+		<meta http-equiv="content-type" tal:attributes="content string:text/html;; charset=${config/files/output-encoding}" />
+		<title tal:content="stripped self/title">Morbi metus pede, imperdiet vitae</title>
+		<link tal:condition="links/next" rel="next" tal:attributes="href links/next/url; title links/next/title/textContent" />
+		<link tal:condition="links/prev" rel="prev" tal:attributes="href links/prev/url; title links/prev/title/textContent" />
+		<link tal:condition="links/up" rel="up" tal:attributes="href links/up/url; title links/up/title/textContent" />
+		<link rel="stylesheet" href="styles/styles.css" />
+		<link rel="stylesheet" href="styles/prealgebra.css" />
+		<link rel="stylesheet" href="styles/application.css" />
+		<script tal:condition="python: not self.ownerDocument.userdata.has_key('transform_process')" type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+		<script type="text/javascript" src="js/jquery-1.6.1.min.js"></script>
+        <script tal:condition="python: not self.ownerDocument.userdata.has_key('transform_process')" type="text/javascript" src="js/mathjaxconfig.js"></script>
+        <script type="text/javascript" src="js/prealgebra.js"></script>
+	</head>
+	<body id="NTIContent">
+		<div class="navigation" metal:define-macro="navigation">
+			<div>
+				<div tal:condition="links/prev" class="previous"><a tal:attributes="href links/prev/url; title stripped:links/prev/title">&lt;</a></div>
+				<div tal:condition="links/up" class="up"><a tal:attributes="href links/up/url; title stripped:links/up/title">^</a></div>
+				<div tal:condition="links/next" class="next"><a tal:attributes="href links/next/url; title stripped:links/next/title">&gt;</a></div>
+			</div>
+			<div class="navigation-title" align="center" tal:content="links/document/title">Section Title</div>
+			<div>
+				<div tal:condition="links/contents" class="contents"><a tal:attributes="href links/contents/url" title="Table of Contents">C</a></div>
+				<div tal:condition="links/index" class="index"><a tal:attributes="href links/index/url" title="Index">#</a></div>
+			</div>
+		</div>
+
+		<!-- TODO: this should be rendered by the UI... -->
+		<div tal:condition="python:path('self/level') &gt; -10" class="breadcrumbs">
+			<span tal:repeat="crumb links/breadcrumbs">
+				<span tal:condition="not:repeat/crumb/end"> <a href="." tal:attributes="href crumb/url" tal:content="crumb/title">Parent Section</a> : </span>
+				<span tal:condition="repeat/crumb/end"><b class="current" tal:content="crumb/title">Current Section</b></span>
+			</span>
+			<hr />
+		</div>
+
+		<div class="page-contents" tal:content="self">File contents</div>
+
+		<div tal:condition="self/tableofcontents" tal:attributes="class string:page-contents contents ${self/nodeName}-contents">
+			<!--<strong>Subsections</strong>-->
+			<ul>
+				<li tal:repeat="section self/tableofcontents">
+					<a href="." tal:attributes="href section/url" tal:content="section/fullTocEntry">Aliquam est. Aliquam fringilla pede</a>
+					<ul tal:condition="section/tableofcontents">
+						<li tal:repeat="subsection section/tableofcontents">
+							<a href="." tal:attributes="href subsection/url" tal:content="subsection/fullTocEntry"></a>
+							<ul tal:condition="subsection/tableofcontents">
+								<li tal:repeat="subsubsection subsection/tableofcontents">
+									<a href="." tal:attributes="href subsubsection/url" tal:content="subsubsection/fullTocEntry"></a>
+									<ul tal:condition="subsubsection/tableofcontents">
+										<li tal:repeat="paragraph subsubsection/tableofcontents">
+											<a href="." tal:attributes="href paragraph/url" tal:content="paragraph/fullTocEntry"></a>
+											<ul tal:condition="paragraph/tableofcontents">
+												<li tal:repeat="subparagraph paragraph/tableofcontents">
+													<a href="." tal:attributes="href subparagraph/url" tal:content="subparagraph/fullTocEntry"></a>
+												</li>
+											</ul>
+										</li>
+									</ul>
+								</li>
+							</ul>
+						</li>
+					</ul>
+				</li>
+				<li tal:replace="nothing"><a href=".">Maecenas id purus</a></li>
+				<li tal:replace="nothing"><a href=".">Duis et eros</a></li>
+				<li tal:replace="nothing"><a href=".">Duis est</a></li>
+			</ul>
+		</div>
+
+		<div id="footnotes" tal:condition="self/footnotes">
+			<div class="label">Footnotes</div>
+			<ol>
+				<li tal:repeat="footnote self/footnotes" tal:content="footnote" tal:attributes="id footnote/id">footnote text</li>
+			</ol>
+		</div>
+
+	</body>
+</html>
