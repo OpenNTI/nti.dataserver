@@ -7,16 +7,6 @@ import sys
 import os
 import platform
 
-try:
-	import plasTeX
-except ImportError:
-	toAdd = "../../../../../../../AoPS/src/main/plastex"
-	if os.path.dirname( __file__ ):
-		toAdd = os.path.abspath( os.path.join( os.path.dirname( __file__ ), toAdd ) )
-	sys.path.append( toAdd )
-	import plasTeX
-	assert plasTeX
-
 from nti.dataserver.library import Library
 from nti.dataserver import interfaces as nti_interfaces
 from zope import component

@@ -21,6 +21,8 @@ from pyquery import PyQuery
 import logging
 logger = logging.getLogger( __name__ )
 
+from . import javascript_path
+
 warnings.warn( "Using whatever phantomjs is on the path" )
 def _runPhantomOnPage( htmlFile, scriptName, args, key ):
 	process = "phantomjs %s %s %s 2>/dev/null" % (scriptName, htmlFile, " ".join([str(x) for x in args]))
@@ -57,8 +59,7 @@ class RenderedBook(object):
 
 
 	def _processPages(self):
-		javascript =  os.path.join( os.path.dirname(__file__), 'js', 'getPageInfo.js')
-		if not os.path.exists( javascript ): raise Exception( "Unable to get page info script %s" % javascript )
+		javascript =  javascript_path( 'getPageInfo.js')
 
 		results = self.runPhantomOnPages(javascript)
 
