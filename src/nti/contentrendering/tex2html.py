@@ -14,7 +14,7 @@ def _require_resource_filename( mathjaxconfigname ):
 	if not resource_exists( __name__, 'zpts/Themes/AoPS/js/' + mathjaxconfigname ):
 		raise Exception( "Unable to get mathjax config" )
 	warnings.warn( "MathJax config file has dependency on AoPS path" )
-	return resource_filename( __name__, 'zpts/Themes/AoPS/js/' + mathjaxconfigname ):
+	return resource_filename( __name__, 'zpts/Themes/AoPS/js/' + mathjaxconfigname )
 
 class ResourceSetGenerator(resources.BaseResourceSetGenerator):
 
