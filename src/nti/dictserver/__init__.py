@@ -5,6 +5,7 @@ from dictionary import ChromeDictionary
 
 import re
 import json
+import warnings
 
 from zope import component
 from . import interfaces
@@ -28,6 +29,7 @@ def lookup( info, dictionary=None ):
 	if dictionary is None:
 		dictionary = component.queryUtility( interfaces.IDictionary )
 	if dictionary is None:
+		warnings.warn( "Trying to use static dictionary path; please register one with ZCA." )
 		dictionary = ChromeDictionary(os.path.dirname(__file__) + '/../../wiktionary/dict.db')
 		component.provideUtility( dictionary )
 

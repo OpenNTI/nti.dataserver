@@ -15,6 +15,8 @@ from zope.configuration import xmlconfig
 
 import nti.contentrendering
 
+from pkg_resources import resource_filename
+
 log = getLogger(__name__)
 logger = log
 
@@ -240,8 +242,8 @@ def setupResources():
 
 def generateImages(document):
 	### Generates required images ###
-
-	overrides = os.path.join(os.path.dirname(__file__), 'resourceoverrides')
+	# Replace this with configuration/use of ZCA
+	overrides = resource_filename(__name__, 'resourceoverrides')
 	db = ResourceDB(document, overridesLocation=overrides)
 	db.generateResourceSets()
 	return db

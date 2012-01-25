@@ -14,8 +14,9 @@ import warnings
 import logging
 logger = logging.getLogger(__name__)
 
-javascript = os.path.join(os.path.dirname(__file__), 'js', 'rasterize.js')
-if not os.path.exists(javascript): raise Exception( "Unable to load %s" % javascript )
+from . import javascript_path
+
+javascript = javascript_path( 'rasterize.js')
 thumbnailsLocationName = 'thumbnails'
 
 

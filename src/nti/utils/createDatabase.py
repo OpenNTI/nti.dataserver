@@ -2,11 +2,8 @@
 import sys
 import os
 import glob
-try:
-	import nti
-except ImportError:
-	sys.path.append( os.path.abspath( os.path.join( os.path.dirname( __file__ ), '..', '..' ) ) )
 
+import nti
 import nti.dataserver as dataserver
 from nti.dataserver.users import User, Community, FriendsList
 import nti.dataserver.providers as providers

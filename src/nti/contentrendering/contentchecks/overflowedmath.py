@@ -9,9 +9,7 @@ from .. import interfaces
 interface.moduleProvides(interfaces.IRenderedBookValidator)
 
 import nti.contentrendering
-javascript =  os.path.join( os.path.dirname( nti.contentrendering.__file__), 'js', 'detectOverflowedMath.js' )
-if not os.path.exists( javascript ): raise Exception( "Unable to get %s" % javascript )
-
+javascript = nti.contentrendering.javascript_path( 'detectOverflowedMath.js' )
 def check(book):
 	results = book.runPhantomOnPages(javascript)
 

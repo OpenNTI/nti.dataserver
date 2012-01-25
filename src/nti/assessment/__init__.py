@@ -3,16 +3,8 @@
 import os
 import sys
 
-try:
-	import plasTeX
-except ImportError:
-	toAdd = "../../../../../../../AoPS/src/main/plastex"
-	if os.path.dirname( __file__ ):
-		toAdd = os.path.realpath(os.path.abspath(os.path.join( os.path.realpath( os.path.dirname( __file__ ) ), toAdd ) ))
 
-	sys.path.append( toAdd )
-	import plasTeX
-	assert plasTeX
+import plasTeX
 
 from plasTeX.TeX import TeX
 from plasTeX.ConfigManager import *

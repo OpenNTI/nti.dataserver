@@ -5,8 +5,8 @@ import ssl
 import time
 import json
 import os
-import threading
 import struct
+from pkg_resources import resource_filename
 
 import zmq
 from zmq.eventloop import IOLoop
@@ -87,7 +87,7 @@ class APNS(object):
 			localCert = 'NextThoughtPOCCertDev.pem'
 			if 'APNS_PROD' in os.environ:
 				localCert = 'NextThoughtPOCCertProd.pem'
-			self.certFile = os.path.join( os.path.dirname(__file__), localCert )
+			self.certFile = resource_filename(__name__, localCert )
 		self.connection = None
 		self.selecting = None
 		# TODO: Need a registry or something of these.

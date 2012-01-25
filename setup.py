@@ -95,8 +95,8 @@ setup(
 	dependency_links = ['http://svn.wikimedia.org/svnroot/pywikipedia/trunk/pywikipedia/'],
     packages = find_packages('src'),
     package_dir = {'': 'src'},
+    include_package_data = True,
     namespace_packages=['nti',],
-    include_package_data = False,
     zip_safe = False,
     entry_points = entry_points
     )

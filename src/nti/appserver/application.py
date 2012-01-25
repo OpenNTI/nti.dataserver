@@ -9,15 +9,9 @@ import traceback
 
 import UserDict
 
-
-try:
-	import nti.dictserver._pyramid
-	dictserver = UserDict.UserDict()
-	dictserver.pyramid = nti.dictserver._pyramid
-except (ImportError,LookupError):
-	logger.exception( "Dictionary lookups unavailable." )
-	dictserver = UserDict.UserDict()
-	dictserver.pyramid = None
+import nti.dictserver._pyramid
+dictserver = UserDict.UserDict()
+dictserver.pyramid = nti.dictserver._pyramid
 
 from paste.exceptions.errormiddleware import ErrorMiddleware
 
@@ -263,6 +257,7 @@ def createApplication( http_port, library,
 
 	selector = Selector( consume_path=False )
 	if dictserver.pyramid:
+		# TODO: This fails at runtime. Need to configure and register an IDictionary instance
 		logger.debug( "Adding dictionary" )
 		pyramid_config.add_static_view( '/dictionary/static', 'nti.dictserver:static/',
 										cache_max_age=datetime.timedelta(days=1) )
