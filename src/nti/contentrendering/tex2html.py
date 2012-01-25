@@ -9,6 +9,7 @@ import html2mathml
 import warnings
 _debug = False
 
+from nti.contentrendering import javascript_path
 from pkg_resources import resource_exists, resource_filename
 def _require_resource_filename( mathjaxconfigname ):
 	if not resource_exists( __name__, 'zpts/Themes/AoPS/js/' + mathjaxconfigname ):
@@ -132,14 +133,12 @@ class ResourceGenerator(html2mathml.ResourceGenerator):
 	concurrency = 4
 	illegalCommands = None
 	resourceType = 'mathjax_inline'
-	javascript = os.path.join( os.path.dirname(__file__), 'js', 'tex2html.js' )
+	javascript = javascript_path( 'tex2html.js' )
 
 	def __init__(self, document):
 		super(ResourceGenerator, self).__init__(document)
 		warnings.warn( "Using phantomjs from PATH" )
 		self.compiler = 'phantomjs %s' % (self.javascript)
-		if not os.path.exists( self.javascript ):
-			raise Exception( "Unable to get javascript %s" % self.javascript )
 
 	def createResourceSetGenerator(self, compiler='', encoding='utf-8', batch=0):
 		return ResourceSetGenerator(compiler, encoding, batch)

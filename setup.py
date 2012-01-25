@@ -2,9 +2,20 @@
 
 from setuptools import setup, find_packages
 
-entry_points = {"paste.app_factory": ["main = dataserver:main"],
-				"paste.server_runner": ["http = nti.appserver.standalone:server_runner"],
-				"dataserver": ["dataserver = nti.appserver.standalone:run_main"]}
+entry_points = {
+	'console_scripts': [
+		"nti_render = nti.contentrendering.aopstoxml:main"
+	],
+	"paste.app_factory": [
+		"main = dataserver:main"
+	],
+	"paste.server_runner": [
+		"http = nti.appserver.standalone:server_runner"
+	],
+	"dataserver": [
+		"dataserver = nti.appserver.standalone:run_main"
+	]
+}
 
 setup(
     name = 'nti.dataserver',
