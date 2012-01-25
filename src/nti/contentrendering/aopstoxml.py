@@ -25,9 +25,9 @@ def _configure_logging():
 	logging.basicConfig( level=logging.INFO )
 	logging.root.handlers[0].setFormatter( logging.Formatter( '[%(name)s] %(levelname)s: %(message)s' ) )
 
-def main(argv):
+def main():
 	""" Main program routine """
-
+	argv = sys.argv[1:]
 	_configure_logging()
 	xmlconfig.file( 'configure.zcml', package=nti.contentrendering )
 
@@ -37,6 +37,11 @@ def main(argv):
 
 	if argv:
 		outFormat = argv.pop(0)
+
+	# TODO: Style files need to be in per-job locations
+	# As-is, the one style we have, aopsbook, is in this location
+	# and must be directly importable
+	sys.path.insert( 0, os.path.dirname( __file__ ) )
 
 	# Create document instance that output will be put into
 	document = plasTeX.TeXDocument()
@@ -64,13 +69,18 @@ def main(argv):
 	#			continue
 	#		document.context.restore(fname, rname)
 
-	# Parse the document
-	print "Parsing %s" % sourceFile
-	tex.parse()
 
 	# Set up TEXINPUTS to include the current directory for the renderer
 	os.environ['TEXINPUTS'] = '%s%s%s%s' % (os.getcwd(), os.pathsep,
 										 os.environ.get('TEXINPUTS',''), os.pathsep)
+	# Likewise for the renderers
+	# TODO: Make this respect the job name?
+	os.environ['XHTMLTEMPLATES'] = resource_filename( __name__, 'zpts' )
+
+	# Parse the document
+	print "Parsing %s" % sourceFile
+	tex.parse()
+
 	# Change to specified directory to output to
 	outdir = document.config['files']['directory']
 	if outdir:
@@ -248,5 +258,3 @@ def generateImages(document):
 	db.generateResourceSets()
 	return db
 
-if __name__ == '__main__':
-	main(sys.argv[1:])
