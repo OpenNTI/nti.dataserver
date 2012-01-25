@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 entry_points = {"paste.app_factory": ["main = dataserver:main"],
 				"paste.server_runner": ["http = nti.appserver.standalone:server_runner"],
-				"dataserver": ["dataserver = app:main"]}
+				"dataserver": ["dataserver = nti.appserver.standalone:run_main"]}
 
 setup(
     name = 'nti.dataserver',
@@ -95,6 +95,7 @@ setup(
 	dependency_links = ['http://svn.wikimedia.org/svnroot/pywikipedia/trunk/pywikipedia/'],
     packages = find_packages('src'),
     package_dir = {'': 'src'},
+    namespace_packages=['nti',],
     include_package_data = False,
     zip_safe = False,
     entry_points = entry_points
