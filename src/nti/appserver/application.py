@@ -184,7 +184,8 @@ def createApplication( http_port,
 					   process_args=False,
 					   create_ds=True,
 					   pyramid_config=None,
-					   sync_changes=False):
+					   sync_changes=False,
+					   **settings ):
 	"""
 	:return: A tuple (wsgi app, _Main)
 	"""
@@ -261,6 +262,7 @@ def createApplication( http_port,
 	if dictserver.pyramid:
 		# TODO: This fails at runtime. Need to configure and register an IDictionary instance
 		logger.debug( "Adding dictionary" )
+
 		pyramid_config.add_static_view( '/dictionary/static', 'nti.dictserver:static/',
 										cache_max_age=datetime.timedelta(days=1) )
 		pyramid_config.add_route( name='dictionary.word', pattern='/dictionary/{word}',
@@ -510,10 +512,6 @@ def createApplication( http_port,
 
 	application = main
 	application = pyramid_auth.wrap_repoze_middleware( application )
-	application = ErrorMiddleware( application, show_exceptions_in_wsgi_errors=True, debug=True )
-	# CORS needs to be outermost so that even 401 errors ond
-	# exceptions have the chance to get their responses wrapped
-	application = CORSInjector( application )
 
 	return (application,main)
 

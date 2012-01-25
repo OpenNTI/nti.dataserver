@@ -3,7 +3,7 @@
 """
 Defines traversal views and resources for the dataserver.
 """
-import warnings
+import sys
 import logging
 logger = logging.getLogger( __name__ )
 

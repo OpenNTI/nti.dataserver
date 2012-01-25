@@ -92,3 +92,5 @@ class CORSInjector(object):
 
 		return result
 
+def cors_filter_factory( app, global_conf ):
+	return CORSInjector(app)

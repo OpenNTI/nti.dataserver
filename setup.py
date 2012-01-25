@@ -9,6 +9,10 @@ entry_points = {
 	"paste.app_factory": [
 		"main = nti.appserver.standalone:configure_app"
 	],
+
+	"paste.filter_app_factory": [
+		"cors = nti.appserver.cors:cors_filter_factory"
+	],
 	"paste.server_runner": [
 		"http = nti.appserver.standalone:server_runner"
 	],

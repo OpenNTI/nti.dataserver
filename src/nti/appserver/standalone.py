@@ -57,7 +57,8 @@ def configure_app( global_config, nti_create_ds=True, **settings ):
 											  Library( libraryPaths ),
 											  process_args=True,
 											  create_ds=nti_create_ds,
-											  sync_changes=SYNC_CHANGES )
+											  sync_changes=SYNC_CHANGES,
+											  **settings)
 
 		main.setServeFiles( serveFiles )
 		return application
@@ -77,6 +78,7 @@ def _serve(httpd):
 
 # The paste.server_runner, only good with pyramid_main
 def server_runner(wsgi_app, global_conf, host='', port=HTTP_PORT, **kwargs):
+	import pdb; pdb.set_trace()
 	httpd = AppServer(
 		(host, int(port)),
 		wsgi_app,
