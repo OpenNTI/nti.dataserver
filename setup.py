@@ -40,7 +40,7 @@ setup(
 		],
 
 	# Support unit tests of package
-	tests_require = ['z3c.coverage','zope.testing'],
+#	tests_require = ['z3c.coverage','zope.testing'],
 	setup_requires = ['nose'],
 	install_requires = [ 'nltk',
 						 'anyjson',
@@ -104,9 +104,11 @@ setup(
 						 'zope.tal',
 						 'zope.tales',
 						 'zope.traversing',
-						 'zope.testing'
+						 'zope.testing',
+						 'z3c.coverage',
+						 'coverage'
 						],
-	extras_require = {'test': ['z3c.coverage', 'zope.testing', 'zc.buildout']},
+	extras_require = {'test': ['zope.testing', 'zc.buildout']},
 	dependency_links = ['http://svn.wikimedia.org/svnroot/pywikipedia/trunk/pywikipedia/'],
 	packages = find_packages('src'),
 	package_dir = {'': 'src'},
