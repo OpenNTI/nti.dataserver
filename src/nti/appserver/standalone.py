@@ -66,17 +66,20 @@ def _serve(httpd):
 			component.getUtility(nti_interfaces.IDataserver).close()
 			raise
 
+def _create_app_server(wsgi_app, global_conf, host='', port=None, **kwargs):
+	httpd = AppServer(
+		(host, int(port)),
+		wsgi_app,
+		policy_server=False,
+		namespace=SOCKET_IO_PATH,
+		session_manager = component.getUtility(nti_interfaces.IDataserver).session_manager )	
+	return httpd
 
 # The paste.server_runner, only good with pyramid_main
 def server_runner(wsgi_app, global_conf, host='', port=None, **kwargs):
 	# Temp hack for compatibility with code that wants to use the environment
 	# variable to control the HTTP_PORT: if the arg is the default but env var isn't,
 	# use the env var
-	httpd = AppServer(
-		(host, int(port)),
-		wsgi_app,
-		policy_server=False,
-		namespace=SOCKET_IO_PATH,
-		session_manager = component.getUtility(nti_interfaces.IDataserver).session_manager )
+	httpd = _create_app_server(wsgi_app, global_conf, host, port, **kwargs)
 	logger.info( "Starting server %s:%s %s", platform.uname()[1], port, httpd.__class__ )
 	_serve( httpd )
