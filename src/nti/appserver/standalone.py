@@ -78,6 +78,11 @@ def _serve(httpd):
 
 # The paste.server_runner, only good with pyramid_main
 def server_runner(wsgi_app, global_conf, host='', port=HTTP_PORT, **kwargs):
+	# Temp hack for compatibility with code that wants to use the environment
+	# variable to control the HTTP_PORT: if the arg is the default but env var isn't,
+	# use the env var
+	if port == 8081 and HTTP_PORT != 8081:
+		port = HTTP_PORT
 	httpd = AppServer(
 		(host, int(port)),
 		wsgi_app,
