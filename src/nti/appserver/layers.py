@@ -2,12 +2,14 @@
 
 import logging
 logger = logging.getLogger( __name__ )
+
 import os
 
-from .. import dataserver
-from ..dataserver.users import User
+from nti import dataserver
+from nti.dataserver.users import User
 
 import nti.dataserver.interfaces as nti_interfaces
+
 from zope import component
 
 ######
@@ -26,7 +28,7 @@ class SocketPresenceLayer(context.layers.Layer):
 	def active( self ):
 		return True
 
-class SocketPresenceExtension(SocketPresenceLayer,dataserver.sessions.Session):
+class SocketPresenceExtension(SocketPresenceLayer, dataserver.sessions.Session):
 
 	@context.layers.before
 	def kill(self, ctx):
