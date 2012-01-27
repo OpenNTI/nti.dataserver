@@ -8,18 +8,18 @@ from zope.location import location
 from zope.mimetype import interfaces as mime_interfaces
 from zope.location.location import LocationProxy
 
-from ..dataserver import interfaces as model_interfaces
-from ..dataserver import datastructures
-from ..dataserver.datastructures import toExternalObject, toExternalDictionary, isSyntheticKey, StandardExternalFields
-from ..dataserver import library
-from ..dataserver import users
-from ..dataserver import links
-from ..dataserver import mimetype
-from ..dataserver import ntiids
+from nti.dataserver import interfaces as model_interfaces
+from nti.dataserver import datastructures
+from nti.dataserver.datastructures import toExternalObject, toExternalDictionary, isSyntheticKey, StandardExternalFields
+from nti.dataserver import library
+from nti.dataserver import users
+from nti.dataserver import links
+from nti.dataserver import mimetype
+from nti.dataserver import ntiids
 from nti.dataserver import authorization as nauth
 
-from . import interfaces as app_interfaces
-from . import pyramid_renderers as rest
+import nti.appserver.interfaces as app_interfaces
+import nti.appserver.pyramid_renderers as rest
 
 from pyramid import traversal
 from pyramid import security as psec
