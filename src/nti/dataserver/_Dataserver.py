@@ -45,6 +45,7 @@ from . import _PubSubDevice
 from . import interfaces
 from . import ntiids
 from . import chat_interfaces
+from . import config
 
 
 DEFAULT_PASSWORD = "temp001"
@@ -292,11 +293,13 @@ class MinimalDataserver(object):
 		""" If classFactory is given, it is a callable of (connection, modulename, globalname) that
 		should return a type; if it returns None or raises, the rest of the chain of factories
 		will be traversed. Our version of the classFactory will auto-create missing contenttypes. """
+
 		if parentDir == "~/tmp" and 'DATASERVER_DIR' in os.environ:
 			parentDir = os.environ['DATASERVER_DIR']
 		if dataFileName == 'test.fs' and 'DATASERVER_FILE' in os.environ:
 			dataFileName = os.environ['DATASERVER_FILE']
 		parentDir = os.path.expanduser( parentDir )
+		self.conf = config.temp_get_config( parentDir, demo=DATASERVER_DEMO )
 		self.db, self.sessionsDB, self.searchDB = self._setup_dbs( parentDir, dataFileName, daemon, classFactory )
 		self._parentDir = parentDir
 		self._dataFileName = dataFileName
@@ -309,7 +312,8 @@ class MinimalDataserver(object):
 		return storage
 
 	def _setup_launch_zeo( self, clientPipe, path, args, daemon ):
-		daemonutils.launch_python_daemon( clientPipe, path, args, daemon=daemon )
+		raise Exception( "Must launch ZEO first." )
+		#daemonutils.launch_python_daemon( clientPipe, path, args, daemon=daemon )
 
 	def _setup_storages( self, parentDir, dataFileName, daemon ):
 		"""
@@ -397,25 +401,35 @@ class MinimalDataserver(object):
 				 self._setup_storage( clientPipe, '2', sessionBlobDir, shared_blob_dir=shared_blobs ),
 				 self._setup_storage( clientPipe, '3', searchBlobDir, shared_blob_dir=shared_blobs ) )
 
+	__my_setup_storages = _setup_storages
+
 	def _setup_dbs( self, parentDir, dataFileName, daemon, classFactory ):
 		"""
 		Creates the database connections. Returns a tuple (userdb, sessiondb, searchdb).
 		"""
-
-		st_user, st_sess, st_search = self._setup_storages( parentDir, dataFileName, daemon )
-		databases = {}
-		db = ZODB.DB( st_user, databases=databases, database_name='Users' )
+		if self._setup_storages != self.__my_setup_storages:
+			raise Exception( "Setup storages no longer supported:" + str( self._setup_storages ) )
+		path = os.path.dirname( ZEO.__file__ ) + "/runzeo.py"
+		args = ['-C', self.conf.zeo_conf]
+		db, ses_db, search_db = self.conf.connect_databases()
 		db.classFactory = _ClassFactory( classFactory, db.classFactory )
+		ses_db.classFactory = _ClassFactory( classFactory, ses_db.classFactory )
+		#self._setup_launch_zeo( db.storage._addr, path, args, False )
+		return db, ses_db, search_db
+		# st_user, st_sess, st_search = self._setup_storages( parentDir, dataFileName, daemon )
+		# databases = {}
+		# db = ZODB.DB( st_user, databases=databases, database_name='Users' )
+		# db.classFactory = _ClassFactory( classFactory, db.classFactory )
 
-		sessionsDB = ZODB.DB( st_sess,
-							  databases=databases,
-							  database_name='Sessions')
-		sessionsDB.classFactory = _ClassFactory( classFactory, sessionsDB.classFactory )
+		# sessionsDB = ZODB.DB( st_sess,
+		# 					  databases=databases,
+		# 					  database_name='Sessions')
+		# sessionsDB.classFactory = _ClassFactory( classFactory, sessionsDB.classFactory )
 
-		searchDB = ZODB.DB( st_search,
-							databases=databases,
-							database_name='Search')
-		return (db, sessionsDB, searchDB)
+		# searchDB = ZODB.DB( st_search,
+		# 					databases=databases,
+		# 					database_name='Search')
+		# return (db, sessionsDB, searchDB)
 
 
 	@property

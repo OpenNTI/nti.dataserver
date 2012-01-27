@@ -42,7 +42,8 @@ setup(
 	# Support unit tests of package
 #	tests_require = ['z3c.coverage','zope.testing'],
 	setup_requires = ['nose'],
-	install_requires = [ 'nltk',
+	install_requires = [ 'supervisor',
+						 'nltk',
 						 'anyjson',
 						 'html5lib',
 						 'setuptools',
@@ -62,6 +63,7 @@ setup(
 						 'requests',
 						 'repoze.sphinx.autointerface',
 						 'repoze.who',
+						 'repoze.zodbconn',
 						 'RestrictedPython',
 						 'scss',
 						 'selector',
@@ -106,7 +108,8 @@ setup(
 						 'zope.traversing',
 						 'zope.testing',
 						 'z3c.coverage',
-						 'coverage'
+						 'coverage',
+						 'pylint'
 						],
 	extras_require = {'test': ['zope.testing', 'zc.buildout']},
 	dependency_links = ['http://svn.wikimedia.org/svnroot/pywikipedia/trunk/pywikipedia/'],
