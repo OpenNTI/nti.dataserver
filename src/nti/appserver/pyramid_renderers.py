@@ -31,7 +31,7 @@ from nti.dataserver import users
 from nti.dataserver import ntiids
 from nti.dataserver import authorization as nauth
 
-from . import interfaces as app_interfaces
+import nti.appserver.interfaces as app_interfaces
 
 def find_content_type( request, data=None ):
 	"""
