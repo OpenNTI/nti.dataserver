@@ -42,7 +42,7 @@ from zope import interface
 from zope import component
 from zope.configuration import xmlconfig
 
-from . import workspaces
+import nti.appserver.workspaces
 
 import pyramid.config
 import pyramid.authorization
