@@ -38,7 +38,8 @@ if os.environ.get( 'HTTP_REFERER' ) and value:
 	print 'Status: 301 Moved'
 	# Let them know they subscribed. We're assuming it comes from
 	# a URL that doesn't have a query already
-	print 'Location:', (os.environ['HTTP_REFERER'] + '?subscribed=true')
+	#print 'Location:', (os.environ['HTTP_REFERER'] + '?subscribed=true')
+	print 'Location: http://nextthought.com/thankyou.html?subscribed=true'
 	print
 else:
 	print
