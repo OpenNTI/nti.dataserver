@@ -12,6 +12,8 @@ import os
 import gevent
 
 import zc.queue
+from zope import interface
+from zope import component
 
 try:
 	import anyjson as json
@@ -26,8 +28,9 @@ from persistent import Persistent
 from persistent.list import PersistentList
 import BTrees.OOBTree
 
-import _daemonutils as daemonutils
-import _PubSubDevice
+#import _daemonutils as daemonutils
+#import _PubSubDevice
+from nti.dataserver import interfaces as nti_interfaces
 
 class Session(Persistent):
 	"""
@@ -171,27 +174,8 @@ class SessionService(object):
 
 		self.proxy_sessions = {}
 
-		# We should allow specifying these paths
-		pub_sub_dir = os.environ.get( 'DATASERVER_DIR', '~/tmp/' )
-		pub_sub_dir = os.path.expanduser( pub_sub_dir )
-
-		pub_sub_file = os.environ.get( 'DATASERVER_FILE', 'data.fs' )
-		pub_file = 'pub.' + pub_sub_file
-		sub_file = 'sub.' + pub_sub_file
-
-		pub_path = os.path.join( pub_sub_dir, pub_file )
-		pub_addr = 'ipc://' + pub_path
-		sub_path = os.path.join( pub_sub_dir, sub_file )
-		sub_addr = 'ipc://' + sub_path
-
-		flag_file = os.path.join( pub_sub_dir, 'pub.sub.flag.' + pub_sub_file )
-		daemonutils.launch_python_daemon( flag_file, _PubSubDevice.__file__, [flag_file, pub_addr, sub_addr] )
-
-		self.pub_socket = zmq.Context.instance().socket( zmq.PUB )
-		self.pub_socket.connect( sub_addr )
-		sub_socket = zmq.Context.instance().socket( zmq.SUB )
-		sub_socket.setsockopt( zmq.SUBSCRIBE, "" )
-		sub_socket.connect( pub_addr )
+		env_settings = component.getUtility( nti_interfaces.IEnvironmentSettings )
+		self.pub_socket, sub_socket = env_settings.create_pubsub_pair( 'session' )
 
 		def read_incoming():
 			while True:

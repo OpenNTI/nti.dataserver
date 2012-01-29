@@ -122,7 +122,11 @@ class MeetingContainerStorage(object):
 	for the chatserver.
 	"""
 
-	def __init__( self, server ):
+	def __init__( self, server=None ):
+		"""
+		:param server: If given and not None, the dataserver used to lookup entities.
+			If not given, the global default will be used.
+		"""
 		self.server = server
 
 	def get_by_ntiid( self, container_id ):

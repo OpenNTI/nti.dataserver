@@ -13,7 +13,7 @@ import nti.dataserver.interfaces as nti_interfaces
 
 import persistent
 
-class TestDataserver( unittest.TestCase ):
+class TestDataserver( mock_dataserver.ConfiguringTestBase ):
 
 	@mock_dataserver.WithMockDS
 	def test_find_content_type( self ):

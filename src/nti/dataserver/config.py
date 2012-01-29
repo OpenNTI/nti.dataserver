@@ -8,7 +8,12 @@ logger = logging.getLogger(__name__)
 import os
 import sys
 import stat
-import tempfile
+import ConfigParser
+
+from zope import interface
+from nti.dataserver import interfaces as nti_interfaces
+from gevent_zeromq import zmq # If things crash, remove core.so
+
 
 def _file_contents_equal( path, contents ):
 	""" :return: Whether the file at `path` exists and has `contents` """
@@ -33,28 +38,31 @@ def write_configuration_file( path, contents ):
 
 class _Program(object):
 	cmd_line = None
+	name = None
 	priority = 999
 
-	def __init__( self, cmd_line ):
+	def __init__( self, name, cmd_line ):
+		self.name = name
 		self.cmd_line = cmd_line
 
-
-class _Env(object):
+class _ReadableEnv(object):
+	interface.implements(nti_interfaces.IEnvironmentSettings)
 	env_root = '/'
 	settings = {}
 	programs = ()
 
-	def __init__( self, root='/', settings=None, create=False ):
+	def __init__( self, root='/', settings=None ):
 		self.env_root = os.path.expanduser( root )
-		self.settings = settings or dict(os.environ)
+		self.settings = settings if settings is not None else dict(os.environ)
 		self.programs = []
-		if create:
-			os.makedirs( self.env_root )
-			os.makedirs( self.run_dir() )
-			os.makedirs( os.path.join( self.run_dir() , 'log' ) )
+		self._main_conf = None
 
-	def add_program( self, program ):
-		self.programs.append( program )
+	@property
+	def main_conf(self):
+		if self._main_conf is None:
+			self._main_conf = ConfigParser.SafeConfigParser()
+			self._main_conf.read( self.conf_file( 'main.ini' ) )
+		return self._main_conf
 
 	def conf_file( self, name ):
 		return os.path.join( self.env_root, 'etc', name )
@@ -71,11 +79,94 @@ class _Env(object):
 	def log_file( self, name ):
 		return os.path.join( self.env_root, 'var', 'log', name )
 
+	def _create_pubsub_pair(self, pub_addr, sub_addr, connect_sub=True, connect_pub=True):
+		pub_socket = zmq.Context.instance().socket( zmq.PUB )
+		if connect_pub:
+			pub_socket.connect( sub_addr )
+
+		sub_socket = zmq.Context.instance().socket( zmq.SUB )
+		sub_socket.setsockopt( zmq.SUBSCRIBE, b"" )
+		if connect_sub:
+			sub_socket.connect( pub_addr )
+
+		return pub_socket, sub_socket
+
+	def create_pubsub_pair( self, section_name, connect_sub=True, connect_pub=True ):
+		"""
+		:return: A pair of ZMQ sockets (pub, sub), connected as specified.
+		"""
+		return self._create_pubsub_pair( self.main_conf.get( section_name, 'pub_addr' ),
+										 self.main_conf.get( section_name, 'sub_addr' ),
+										 connect_sub=connect_sub,
+										 connect_pub=connect_pub )
+
+class _Env(_ReadableEnv):
+
+	def __init__( self, root='/', settings=None, create=False ):
+		super(_Env,self).__init__( root=root, settings=settings )
+		if create:
+			os.makedirs( self.env_root )
+			os.makedirs( self.run_dir() )
+			os.makedirs( os.path.join( self.run_dir() , 'log' ) )
+
+	def add_program( self, program ):
+		self.programs.append( program )
+
+	def write_main_conf( self ):
+		if self._main_conf is not None:
+			with open( self.conf_file( 'main.ini' ), 'wb' ) as fp:
+				self._main_conf.write(fp)
+
 	def write_conf_file( self, name, contents ):
 		write_configuration_file( self.conf_file( name ), contents )
 
+	def write_supervisor_conf_file( self ):
+		contents = []
+		contents.append( '[supervisord]' )
+		contents.append( 'logfile = ' + self.log_file( 'supervisord.log' ) )
+		contents.append( 'loglevel = debug' )
+		contents.append( 'pidfile = ' + self.run_file( 'supervisord.pid' ) )
+		contents.append( 'childlogdir = ' + self.run_file( 'log' ) )
+		contents.append( '' )
+
+		for p in self.programs:
+			line = '[program:%s]' % p.name
+			contents.append( line )
+			line = 'command = %s' % p.cmd_line
+			contents.append( line )
+			contents.append( '' )
+
+		contents = '\n'.join( contents )
+		self.write_conf_file( 'supervisord.conf', contents )
+
+def _configure_pubsub( env, name ):
+
+	pub_file = env.run_file( 'pub.%s.sock' % name )
+	sub_file = env.run_file( 'sub.%s.sock' % name )
+	pid_file = env.run_file( 'pubsub.%s.pid' % name )
+
+	cmd_line = ' '.join( ['nti_pubsub_device', pid_file, 'ipc://' + pub_file, 'ipc://' + sub_file ] )
+
+	env.add_program( _Program( 'pubsub_%s' % name, cmd_line ) )
+
+	if not env.main_conf.has_section( name ):
+		env.main_conf.add_section( name )
+	env.main_conf.set( name, 'pub_addr', 'ipc://' + pub_file )
+	env.main_conf.set( name, 'sub_addr', 'ipc://' + sub_file )
+
+
+def _configure_pubsub_changes( env ):
+
+	_configure_pubsub( env, 'changes' )
+
+def _configure_pubsub_session( env ):
+	_configure_pubsub( env, 'session' )
 
 def _configure_zeo( env_root ):
+	"""
+	:return: A list of URIs that can be passed to db_from_uris to directly connect
+	to the file storages, without using ZEO.
+	"""
 	def _mk_blobdir( blobDir ):
 		if not os.path.exists( blobDir ):
 			os.makedirs( blobDir )
@@ -148,16 +239,21 @@ def _configure_zeo( env_root ):
 
 
 	base_uri = 'zeo://%(addr)s?storage=%(storage)s&database_name=%(name)s&blob_dir=%(blob_dir)s&shared_blob_dir=%(shared)s'
+	file_uri = 'file://%s?database_name=%s&blobstorage_dir=%s'
+
 	uris = []
 	demo_uris = []
-	for storage, name, blob_dir, demo_blob_dir in ((1, 'Users',    blobDir, demoBlobDir),
-												   (2, 'Sessions', sessionBlobDir, sessionDemoBlobDir),
-												   (3, 'Search',   searchBlobDir, searchDemoBlobDir)):
+	file_uris = []
+	for storage, name, data_file, blob_dir, demo_blob_dir in ((1, 'Users',    dataFile, blobDir, demoBlobDir),
+															  (2, 'Sessions', sessionDataFile, sessionBlobDir, sessionDemoBlobDir),
+															  (3, 'Search',   searchDataFile, searchBlobDir, searchDemoBlobDir)):
 		uri = base_uri % {'addr': clientPipe, 'storage': storage, 'name': name, 'blob_dir': blob_dir, 'shared': True }
 		uris.append( uri )
 
 		uri = base_uri % {'addr': clientPipe, 'storage': storage, 'name': name, 'blob_dir': demo_blob_dir, 'shared': False }
 		demo_uris.append( uri )
+
+		file_uris.append( file_uri % (data_file, name, blob_dir) )
 
 
 	uri_conf = '[ZODB]\nuris = ' + ' '.join( uris )
@@ -166,12 +262,29 @@ def _configure_zeo( env_root ):
 	env_root.write_conf_file( 'zeo_uris.ini', uri_conf )
 	env_root.write_conf_file( 'demo_zeo_uris.ini', demo_uri_conf )
 
-
 	# We assume that runzeo is on the path (virtualenv)
-#	program = _Program()
+	program = _Program( 'zeo', 'runzeo -C ' + env_root.conf_file( 'zeo_conf.xml' ) )
+	env_root.add_program( program )
+
+
+	return file_uris
 
 from ConfigParser import SafeConfigParser
 from repoze.zodbconn.uri import db_from_uri
+from zope.configuration import xmlconfig
+from zope import component
+from ZODB.DB import ContextManager as DBContext
+from nti.dataserver import interfaces as nti_interfaces
+
+def _configure_database( env, uris ):
+
+	db = db_from_uri( uris )
+	subscribers = component.subscribers( (db,), nti_interfaces.IDatabaseInitializer )
+	with DBContext( db ) as conn:
+		for subscriber in subscribers:
+			subscriber.init_database( conn )
+
+
 
 def temp_get_config( root, demo=False ):
 	env = _Env( root, create=False )
@@ -180,6 +293,7 @@ def temp_get_config( root, demo=False ):
 
 	env.zeo_conf = env.conf_file( pfx + 'zeo_conf.xml' )
 	env.zeo_client_conf = env.conf_file( pfx + 'zeo_uris.ini' )
+	env.zeo_launched = True
 	ini = SafeConfigParser()
 	ini.read( env.zeo_client_conf )
 
@@ -205,8 +319,14 @@ def temp_get_config( root, demo=False ):
 
 def main():
 	root_dir = sys.argv[1]
-	env = _Env( root_dir )
-	_configure_zeo( env )
+	env = _Env( root_dir, create=True )
+	xmlconfig.file( 'configure.zcml', package=sys.modules['nti.dataserver'] )
+	uris = _configure_zeo( env )
+	_configure_database( env, uris )
+	_configure_pubsub_changes( env )
+	_configure_pubsub_session( env )
+	env.write_supervisor_conf_file()
+	env.write_main_conf()
 
 if __name__ == '__main__':
 	main()

@@ -289,7 +289,7 @@ class MinimalDataserver(object):
 	Represents the basic connections and nothing more.
 	"""
 
-	def __init__(self, parentDir = "~/tmp", dataFileName="test.fs", classFactory=None, apnsCertFile=None, daemon=None  ):
+	def __init__(self, parentDir="~/tmp", dataFileName="test.fs", classFactory=None, apnsCertFile=None, daemon=None  ):
 		""" If classFactory is given, it is a callable of (connection, modulename, globalname) that
 		should return a type; if it returns None or raises, the rest of the chain of factories
 		will be traversed. Our version of the classFactory will auto-create missing contenttypes. """
@@ -300,106 +300,20 @@ class MinimalDataserver(object):
 			dataFileName = os.environ['DATASERVER_FILE']
 		parentDir = os.path.expanduser( parentDir )
 		self.conf = config.temp_get_config( parentDir, demo=DATASERVER_DEMO )
+		component.provideUtility( self.conf ) # TODO: We shouldn't be doing this, it should be passed to us
 		self.db, self.sessionsDB, self.searchDB = self._setup_dbs( parentDir, dataFileName, daemon, classFactory )
 		self._parentDir = parentDir
 		self._dataFileName = dataFileName
 
 
 	def _setup_storage( self, zeo_addr, storage_name, blob_dir, shared_blob_dir=True ):
-		storage = ZEO.ClientStorage.ClientStorage( zeo_addr, storage=storage_name, blob_dir=blob_dir, shared_blob_dir=shared_blob_dir )
-		assert ZODB.interfaces.IBlobStorage in interface.providedBy(storage), "Should be supporting blobs"
-
-		return storage
+		raise Exception( "Setup_storage no longer supported" )
 
 	def _setup_launch_zeo( self, clientPipe, path, args, daemon ):
 		raise Exception( "Must launch ZEO first." )
-		#daemonutils.launch_python_daemon( clientPipe, path, args, daemon=daemon )
 
 	def _setup_storages( self, parentDir, dataFileName, daemon ):
-		"""
-		Ensures that ZEO is running, configuring it with the needed file storages.
-		:return: A tuple of results from :meth:`_setup_storage`: (user, session, search)
-		"""
-
-		if 'INSTANCE_HOME' not in os.environ:
-			os.environ['INSTANCE_HOME'] = parentDir
-			try:
-				os.mkdir( os.path.join( parentDir, 'var' ) )
-			except: pass
-
-		clientDir = os.path.expanduser( parentDir )
-		if not os.path.exists( clientDir ):
-			os.mkdir( clientDir )
-
-		clientPipe = clientDir + "/zeosocket"
-		dataFile = clientDir + "/" + dataFileName
-		blobDir = dataFile + '.blobs'
-		if not os.path.exists( blobDir ):
-			os.mkdir( blobDir )
-			os.chmod( blobDir, stat.S_IRWXU )
-
-		sessionDataFile = os.path.join( clientDir, 'sessions.' + dataFileName )
-		sessionBlobDir = os.path.join( clientDir, 'sessions.' + dataFileName + '.blobs' )
-
-		searchDataFile = os.path.join( clientDir, 'search.' + dataFileName )
-		searchBlobDir = os.path.join( clientDir, 'search.' + dataFileName + '.blobs' )
-
-		configuration = """
-			<zeo>
-			address %(clientPipe)s
-			</zeo>
-			<filestorage 1>
-			path %(dataFile)s
-			blob-dir %(blobDir)s
-			</filestorage>
-			<filestorage 2>
-			path %(sessionDataFile)s
-			blob-dir %(sessionBlobDir)s
-			</filestorage>
-			<filestorage 3>
-			path %(searchDataFile)s
-			blob-dir %(searchBlobDir)s
-			</filestorage>
-
-
-			<eventlog>
-			<logfile>
-			path %(logfile)s
-			format %%(asctime)s %%(message)s
-			level DEBUG
-			</logfile>
-			</eventlog>
-			""" % { 'clientPipe': clientPipe, 'blobDir': blobDir,
-					'dataFile': dataFile, 'logfile': clientDir + '/zeo.log',
-					'sessionDataFile': sessionDataFile, 'sessionBlobDir': sessionBlobDir,
-					'searchDataFile': searchDataFile, 'searchBlobDir': searchBlobDir
-					}
-		shared_blobs = True # While we are on IPC
-		if DATASERVER_DEMO:
-			logger.info( "Creating demo storages" )
-			# NOTE: DemoStorage is NOT a ConflictResolvingStorage.
-			# It will not run our _p_resolveConflict methods.
-			for i in range(1,4):
-				configuration = configuration.replace( '<filestorage %s>' % i,
-													   '<demostorage %s>\n\t\t\t<filestorage %s>' % (i,i) )
-			configuration = configuration.replace( '</filestorage>', '</filestorage>\n\t\t</demostorage>' )
-			# Must use non-shared blobs, DemoStorage is missing fshelper.
-			shared_blobs = False
-			blobDir = tempfile.mkdtemp( '.demoblobs', prefix='blobs' )
-			sessionBlobDir = tempfile.mkdtemp( '.demoblobs', prefix='session' )
-			searchBlobDir = tempfile.mkdtemp( '.demoblobs', prefix='search' )
-			# TODO: We need to clean these up
-			logger.debug( "Using temporary blob dirs %s %s %s", blobDir, sessionBlobDir, searchBlobDir )
-		config_file = clientDir + '/configuration.xml'
-		daemonutils.write_configuration_file( config_file, configuration )
-
-		path = os.path.dirname( ZEO.__file__ ) + "/runzeo.py"
-		args = ['-C', config_file]
-		self._setup_launch_zeo( clientPipe, path, args, daemon )
-
-		return ( self._setup_storage( clientPipe, '1', blobDir, shared_blob_dir=shared_blobs ),
-				 self._setup_storage( clientPipe, '2', sessionBlobDir, shared_blob_dir=shared_blobs ),
-				 self._setup_storage( clientPipe, '3', searchBlobDir, shared_blob_dir=shared_blobs ) )
+		raise Exception( "Setup storages no longer supported" )
 
 	__my_setup_storages = _setup_storages
 
@@ -409,28 +323,11 @@ class MinimalDataserver(object):
 		"""
 		if self._setup_storages != self.__my_setup_storages:
 			raise Exception( "Setup storages no longer supported:" + str( self._setup_storages ) )
-		path = os.path.dirname( ZEO.__file__ ) + "/runzeo.py"
-		args = ['-C', self.conf.zeo_conf]
 		db, ses_db, search_db = self.conf.connect_databases()
 		db.classFactory = _ClassFactory( classFactory, db.classFactory )
 		ses_db.classFactory = _ClassFactory( classFactory, ses_db.classFactory )
-		#self._setup_launch_zeo( db.storage._addr, path, args, False )
+
 		return db, ses_db, search_db
-		# st_user, st_sess, st_search = self._setup_storages( parentDir, dataFileName, daemon )
-		# databases = {}
-		# db = ZODB.DB( st_user, databases=databases, database_name='Users' )
-		# db.classFactory = _ClassFactory( classFactory, db.classFactory )
-
-		# sessionsDB = ZODB.DB( st_sess,
-		# 					  databases=databases,
-		# 					  database_name='Sessions')
-		# sessionsDB.classFactory = _ClassFactory( classFactory, sessionsDB.classFactory )
-
-		# searchDB = ZODB.DB( st_search,
-		# 					databases=databases,
-		# 					database_name='Search')
-		# return (db, sessionsDB, searchDB)
-
 
 	@property
 	def root(self):
@@ -461,7 +358,7 @@ class MinimalDataserver(object):
 				try:
 					getattr( self, n ).close()
 				except AttributeError:
-					warnings.warn( 'Failed to close %s' % n )
+					logger.warning( 'Failed to close %s', n, exc_info=True )
 		_c( 'searchDB' )
 		_c( 'sessionsDB' )
 		_c( 'db' )
@@ -472,6 +369,42 @@ class MinimalDataserver(object):
 
 	def get_by_oid( self, oid_string ):
 		return get_object_by_oid( _ContextManager.contextManager().conn, oid_string )
+
+class _DataserverInitializer(object):
+	interface.implements(interfaces.IDatabaseInitializer)
+	component.adapts( ZODB.interfaces.IDatabase )
+
+	def __init__( self, db ):
+		self.db = db
+
+	def init_database( self, conn ):
+		root = conn.root()
+		if not root.has_key('users'):
+			root['users'] = datastructures.CaseInsensitiveModDateTrackingOOBTree()
+
+		if 'Everyone' not in root['users']:
+			# Hmm. In the case that we're running multiple DS instances in the
+			# same VM, our constant could wind up with different _p_jar
+			# and _p_oid settings. Hence the copy
+			root['users']['Everyone'] = copy.deepcopy( users.EVERYONE )
+		# This is interesting. Must do this to ensure that users
+		# that get created at different times and that have weak refs
+		# to the right thing. What's a better way?
+		users.EVERYONE = root['users']['Everyone']
+
+		# By keeping track of changes in one specific place, and weak-referencing
+		# them elsewhere, we can control how much history is kept in one place.
+		# This also solves the problem of 'who owns the change?' We do.
+		if not root.has_key( 'changes'):
+			root['changes'] = PersistentList()
+
+		for key in ('vendors', 'library', 'quizzes', 'providers' ):
+			if not root.has_key( key ):
+				root[key] = datastructures.CaseInsensitiveModDateTrackingOOBTree()
+
+		for key in ('users','vendors', 'library', 'quizzes', 'providers' ):
+			if getattr( root[key], '__name__', None ) is None:
+				root[key].__name__ = key
 
 
 
@@ -484,12 +417,16 @@ class Dataserver(MinimalDataserver):
 		should return a type; if it returns None or raises, the rest of the chain of factories
 		will be traversed. Our version of the classFactory will auto-create missing contenttypes. """
 		super(Dataserver, self).__init__(parentDir, dataFileName, classFactory, apnsCertFile, daemon )
+		self.changeListeners = []
 
-		with self.dbTrans( ):
-			self.changeListeners = []
-
-			if not self.root.has_key('users'):
-				self.root['users'] = datastructures.CaseInsensitiveModDateTrackingOOBTree()
+		with self.dbTrans( ) as conn:
+			# Perform migrations
+			# TODO: Adopt the standard migration package
+			# TODO: For right now, we are also handling initialization until all code
+			# is ported over
+			if not self.root.has_key( 'users' ):
+				warnings.warn( "Creating DS against uninitialized DB. Test code?", stacklevel=2 )
+				_DataserverInitializer( self.db ).init_database( conn )
 			if not isinstance( self.root['users'], datastructures.CaseInsensitiveModDateTrackingOOBTree ):
 				self.root['users'] = datastructures.CaseInsensitiveModDateTrackingOOBTree( self.root['users'] )
 			if 'Everyone' not in self.root['users']:
@@ -502,19 +439,6 @@ class Dataserver(MinimalDataserver):
 			# to the right thing. What's a better way?
 			users.EVERYONE = self.root['users']['Everyone']
 
-			# By keeping track of changes in one specific place, and weak-referencing
-			# them elsewhere, we can control how much history is kept in one place.
-			# This also solves the problem of 'who owns the change?' We do.
-			if not self.root.has_key( 'changes'):
-				self.root['changes'] = PersistentList()
-
-			for key in ('vendors', 'library', 'quizzes', 'providers' ):
-				if not self.root.has_key( key ):
-					self.root[key] = datastructures.CaseInsensitiveModDateTrackingOOBTree()
-
-			for key in ('users','vendors', 'library', 'quizzes', 'providers' ):
-				if getattr( self.root[key], '__name__', None ) is None:
-					self.root[key].__name__ = key
 			self.migrateUsers( self.root['users'] )
 
 		# Sessions and Chat configuration
@@ -536,11 +460,6 @@ class Dataserver(MinimalDataserver):
 
 
 		room_name = 'meeting_rooms'
-		with sdb() as r:
-			if room_name not in r:
-				# delayed import due to cycles
-				import chat
-				r[room_name] = chat.PersistentMappingMeetingStorage( OOBTree.OOBTree )
 
 		self._setupPresence()
 		self.session_manager = self._setup_session_manager( sdb )
@@ -602,7 +521,7 @@ class Dataserver(MinimalDataserver):
 		import meeting_container_storage
 		return  chat.Chatserver( self.session_manager,
 								 meeting_storage=_SessionDbMeetingStorage( room_name ),
-								 meeting_container_storage=meeting_container_storage.MeetingContainerStorage( self ) )
+								 meeting_container_storage=meeting_container_storage.MeetingContainerStorage( ) )
 
 
 	def _setup_apns( self, apnsCertFile ):

@@ -20,7 +20,23 @@ from zope.location.interfaces import IContained as IZContained
 class IDataserver(interface.Interface):
 	pass
 
+class IDatabaseInitializer(interface.Interface):
+	"""
+	Intended to be used as a (subscription) adapter
+	:class:`ZODB.interfaces.IDatabase`. Creates required structures
+	in the database.
+	"""
+
+	def init_database( conn ):
+		"""Performs the initialization tasks for the database.
+		:param: An open connection to the root database. The transaction
+		will be manager externally.
+		"""
+
 class IChatserver(interface.Interface):
+	pass
+
+class IEnvironmentSettings(interface.Interface):
 	pass
 
 class IExternalObject(interface.Interface):
