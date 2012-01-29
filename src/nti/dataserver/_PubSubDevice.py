@@ -27,9 +27,13 @@ def __main__( flag_file, pub_addr, sub_addr ):
 		os.remove( flag_file )
 
 
-if __name__ == '__main__':
+def main():
 	import sys
 	__main__( sys.argv[1], sys.argv[2], sys.argv[3] )
+
+if __name__ == '__main__':
+	main()
+
 
 
 

@@ -7,6 +7,11 @@ from ZODB.DemoStorage import DemoStorage
 import nti.dataserver as dataserver
 from nti.dataserver import users
 
+from zope import component
+from ZODB.DB import ContextManager as DBContext
+from nti.dataserver import interfaces as nti_interfaces
+
+
 class MockDataserver( dataserver._Dataserver.Dataserver ):
 
 	def __init__( self, *args, **kwargs ):
@@ -50,6 +55,12 @@ class MockDataserver( dataserver._Dataserver.Dataserver ):
 			searchDB = ZODB.DB( DemoStorage(),
 								databases=databases,
 								database_name='Search')
+
+			subscribers = component.subscribers( (db,), nti_interfaces.IDatabaseInitializer )
+			with DBContext( db ) as conn:
+				for subscriber in subscribers:
+					subscriber.init_database( conn )
+
 			return db
 
 		self.conf.zeo_make_db = make_db
