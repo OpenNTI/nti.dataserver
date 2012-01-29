@@ -20,7 +20,7 @@ import nti.dataserver as dataserver
 #import nti.dataserver.users
 
 
-
+import mock_dataserver
 from mock_dataserver import MockDataserver
 import plistlib
 import os
@@ -42,7 +42,7 @@ def test_normalize_html_text_to_par():
 	_check_sanitized( html, exp )
 
 
-class NoteTest(unittest.TestCase):
+class NoteTest(mock_dataserver.ConfiguringTestBase):
 
 	def test_external_reply_to(self):
 		ds = MockDataserver()
@@ -206,7 +206,7 @@ class NoteTest(unittest.TestCase):
 			n.updateFromExternalObject( ext, dataserver=ds )
 
 
-class TestCanvas(unittest.TestCase):
+class TestCanvas(mock_dataserver.ConfiguringTestBase):
 
 	def test_external(self):
 		canvas = Canvas()
@@ -307,7 +307,7 @@ def test_update_shape_rgba():
 	yield check_update_props, 'strokeRGBAColor'
 	yield check_update_props, 'fillRGBAColor', 'fillColor', 'fillOpacity', 1.0
 
-class TestStroke(unittest.TestCase):
+class TestStroke(mock_dataserver.ConfiguringTestBase):
 	def test_update_stroke_width( self ):
 		c = CanvasShape()
 		c.updateFromExternalObject( {"strokeWidth": "3.2pt"} )

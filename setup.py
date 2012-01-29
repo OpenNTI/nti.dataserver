@@ -4,7 +4,9 @@ from setuptools import setup, find_packages
 
 entry_points = {
 	'console_scripts': [
-		"nti_render = nti.contentrendering.aopstoxml:main"
+		"nti_render = nti.contentrendering.aopstoxml:main",
+		"nti_init_env = nti.dataserver.config:main",
+		"nti_pubsub_device = nti.dataserver._PubSubDevice:main"
 	],
 	"paste.app_factory": [
 		"main = nti.appserver.standalone:configure_app"

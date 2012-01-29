@@ -209,26 +209,6 @@ class _SessionDbMeetingStorage( object ):
 
 DATASERVER_DEMO = 'DATASERVER_DEMO' in os.environ and 'DATASERVER_NO_DEMO' not in os.environ
 
-def _get_change_pubsub_addrs( parentDir, dataFileName ):
-	"""
-	:return: Tuple (pub_addr, sub_addr, flag_file)
-	"""
-	pub_sub_dir = parentDir
-	pub_sub_dir = os.path.expanduser( pub_sub_dir )
-
-	pub_sub_file = 'change.' + dataFileName
-	pub_file = 'pub.' + pub_sub_file
-	sub_file = 'sub.' + pub_sub_file
-
-	pub_path = os.path.join( pub_sub_dir, pub_file )
-	pub_addr = 'ipc://' + pub_path
-	sub_path = os.path.join( pub_sub_dir, sub_file )
-	sub_addr = 'ipc://' + sub_path
-
-	flag_file = os.path.join( pub_sub_dir, 'pub.sub.flag.' + pub_sub_file )
-
-	return (pub_addr,sub_addr,flag_file)
-
 def _run_change_listener( parentDir, dataFileName, func_module, func_name, *func_args ):
 	change_func = daemonutils.load_func( func_module, func_name )
 
@@ -425,7 +405,7 @@ class Dataserver(MinimalDataserver):
 			# TODO: For right now, we are also handling initialization until all code
 			# is ported over
 			if not self.root.has_key( 'users' ):
-				warnings.warn( "Creating DS against uninitialized DB. Test code?", stacklevel=2 )
+				warnings.warn( "Creating DS against uninitialized DB. Test code?", stacklevel=3 )
 				_DataserverInitializer( self.db ).init_database( conn )
 			if not isinstance( self.root['users'], datastructures.CaseInsensitiveModDateTrackingOOBTree ):
 				self.root['users'] = datastructures.CaseInsensitiveModDateTrackingOOBTree( self.root['users'] )
@@ -475,13 +455,8 @@ class Dataserver(MinimalDataserver):
 	def _setup_change_distribution( self ):
 		# We only broadcast, we never receive.
 		# TODO: Some of this could be shared.
-		pub_addr, sub_addr, flag_file = _get_change_pubsub_addrs( self._parentDir, self._dataFileName )
-
-		daemonutils.launch_python_daemon( flag_file, _PubSubDevice.__file__, [flag_file, pub_addr, sub_addr] )
-
 		# A topic that broadcasts Change events
-		changePublisher = zmq.Context.instance().socket( zmq.PUB )
-		changePublisher.connect( sub_addr )
+		changePublisher, _ = self.conf.create_pubsub_pair( 'changes', connect_sub=False )
 
 		changePublisherStream = gevent.queue.Queue()
 
@@ -901,16 +876,7 @@ class _SynchronousChangeDataserver(Dataserver):
 class _ChangeReceivingDataserver(Dataserver):
 
 	def _setup_change_distribution( self ):
-		pub_addr, sub_addr, flag_file = _get_change_pubsub_addrs( self._parentDir, self._dataFileName )
-		# We can assume that the pub sub device is running.
-		# daemonutils.launch_python_daemon( flag_file, _PubSubDevice.__file__, [flag_file, pub_addr, sub_addr] )
-
-		# A topic that broadcasts Change events
-		changePublisher = zmq.Context.instance().socket( zmq.PUB )
-		changePublisher.connect( sub_addr )
-		changeSubscriber = zmq.Context.instance().socket( zmq.SUB )
-		changeSubscriber.setsockopt( zmq.SUBSCRIBE, "" )
-		changeSubscriber.connect( pub_addr )
+		changePublisher, changeSubscriber = self.conf.create_pubsub_pair( 'changes' )
 
 		def read_generic_changes():
 			try:
