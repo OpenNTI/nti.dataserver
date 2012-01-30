@@ -84,7 +84,9 @@ Dependencies (macports):
 - py27-anyjson		# 2011-09-15, 0.3.1, Wrapper for JSON support
 - py27-nose			# 2011-10-25, 1.1.2, unittest support
 - py27-coverage		# 2011-10-25, 3.5.1, code coverage test module
-- py27-nltk			# 2011-11-21, 2.0.1rc1 (requires py27-matplotlib py27-numpy py27-yaml)
+- py27-matplotlib	# 2011-11-21 - nltk
+- py27-numpy		# 2011-11-21 - nltk
+- py27-yaml			# 2011-11-21 - ntlk
 - nginx				# 2011-12-31, 1.0.11 (Optional)
 - py27-epydoc		# 2012-01-01, 3.0.1
 - HAProxy			# 2010-01-04, 1.14.18 (Optional)
@@ -95,3 +97,8 @@ Dependencies (other):
 
 Dependencies for content generation:
 - Full TeX distribution (including extras)
+
+- Optionals (easy_install / pip)
+psutil			# process monitoring
+
+
