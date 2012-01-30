@@ -120,24 +120,32 @@ class _Env(_ReadableEnv):
 	def write_conf_file( self, name, contents ):
 		write_configuration_file( self.conf_file( name ), contents )
 
-	def write_supervisor_conf_file( self ):
-		contents = []
-		contents.append( '[supervisord]' )
-		contents.append( 'logfile = ' + self.log_file( 'supervisord.log' ) )
-		contents.append( 'loglevel = debug' )
-		contents.append( 'pidfile = ' + self.run_file( 'supervisord.pid' ) )
-		contents.append( 'childlogdir = ' + self.run_file( 'log' ) )
-		contents.append( '' )
+	def write_supervisor_conf_file( self, pserve_ini ):
+		ini = SafeConfigParser()
+		ini.add_section( 'supervisord' )
+		ini.set( 'supervisord', 'logfile', self.log_file( 'supervisord.log' ) )
+		ini.set( 'supervisord', 'loglevel', 'debug' )
+		ini.set( 'supervisord', 'pidfile', self.run_file( 'supervisord.pid' ) )
+		ini.set( 'supervisord', 'childlogdir', self.run_file( 'log' ) )
 
 		for p in self.programs:
-			line = '[program:%s]' % p.name
-			contents.append( line )
-			line = 'command = %s' % p.cmd_line
-			contents.append( line )
-			contents.append( '' )
+			line = 'program:%s' % p.name
+			ini.add_section( line )
+			ini.set( line, 'command', p.cmd_line )
+			if p.priority != _Program.priority:
+				ini.set( line, 'priority', str(p.priority) )
 
-		contents = '\n'.join( contents )
-		self.write_conf_file( 'supervisord.conf', contents )
+		with open( self.conf_file( 'supervisord.conf' ), 'wb' ) as fp:
+			ini.write( fp )
+
+
+		ini.add_section( 'program:pserve' )
+		ini.set( 'program:pserve', 'command', 'pserve %s' % pserve_ini )
+		ini.set( 'program:pserve', 'environment', 'DATASERVER_DIR=%(here)s/../' )
+		ini.set( 'supervisord', 'nodaemon', 'true' )
+		with open( self.conf_file( 'supervisord_dev.conf' ), 'wb' ) as fp:
+			ini.write( fp )
+
 
 def _configure_pubsub( env, name ):
 
@@ -264,6 +272,7 @@ def _configure_zeo( env_root ):
 
 	# We assume that runzeo is on the path (virtualenv)
 	program = _Program( 'zeo', 'runzeo -C ' + env_root.conf_file( 'zeo_conf.xml' ) )
+	program.priority = 0
 	env_root.add_program( program )
 
 
@@ -318,14 +327,23 @@ def temp_get_config( root, demo=False ):
 	return env
 
 def main():
+	if len( sys.argv ) < 3:
+		print( 'Usage: root_dir pserve_ini_file' )
+		sys.exit( 1 )
+
 	root_dir = sys.argv[1]
+	pserve_ini = sys.argv[2]
+	pserve_ini = os.path.abspath( os.path.expanduser( pserve_ini ) )
+	if not os.path.exists( pserve_ini ):
+		raise OSError( "No ini file " + pserve_ini )
+
 	env = _Env( root_dir, create=True )
 	xmlconfig.file( 'configure.zcml', package=sys.modules['nti.dataserver'] )
 	uris = _configure_zeo( env )
 	_configure_database( env, uris )
 	_configure_pubsub_changes( env )
 	_configure_pubsub_session( env )
-	env.write_supervisor_conf_file()
+	env.write_supervisor_conf_file( pserve_ini )
 	env.write_main_conf()
 
 if __name__ == '__main__':
