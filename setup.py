@@ -17,9 +17,6 @@ entry_points = {
 	],
 	"paste.server_runner": [
 		"http = nti.appserver.standalone:server_runner"
-	],
-	"dataserver": [
-		"dataserver = nti.appserver.standalone:run_main"
 	]
 }
 
