@@ -9,6 +9,7 @@ import os
 import sys
 import stat
 import ConfigParser
+from ConfigParser import SafeConfigParser
 
 from zope import interface
 from nti.dataserver import interfaces as nti_interfaces
@@ -121,7 +122,7 @@ class _Env(_ReadableEnv):
 		write_configuration_file( self.conf_file( name ), contents )
 
 	def write_supervisor_conf_file( self, pserve_ini ):
-		ini = SafeConfigParser()
+		ini = ConfigParser.SafeConfigParser()
 		ini.add_section( 'supervisord' )
 		ini.set( 'supervisord', 'logfile', self.log_file( 'supervisord.log' ) )
 		ini.set( 'supervisord', 'loglevel', 'debug' )
@@ -278,7 +279,7 @@ def _configure_zeo( env_root ):
 
 	return file_uris
 
-from ConfigParser import SafeConfigParser
+
 from repoze.zodbconn.uri import db_from_uri
 from zope.configuration import xmlconfig
 from zope import component

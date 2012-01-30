@@ -1,5 +1,8 @@
 """Support for the Apple Push Notification Service."""
 
+import logging
+logger = logging.getLogger( __name__ )
+
 import socket
 import ssl
 import time
@@ -8,7 +11,10 @@ import os
 import struct
 from pkg_resources import resource_filename
 
-import zmq
+from zope import interface
+from zope.event import notify
+from . import interfaces as apns_interfaces
+
 from zmq.eventloop import IOLoop
 
 
@@ -28,6 +34,8 @@ FPORT_PROD = 2196
 class APNSDeviceFeedback(object):
 	""" Represents feedback about a device from APNS. """
 
+	interface.implements( apns_interfaces.IDeviceFeedbackEvent )
+
 	def __init__( self, timestamp, deviceId ):
 		super(APNSDeviceFeedback,self).__init__()
 		self.timestamp = timestamp
@@ -38,6 +46,8 @@ class APNSDeviceFeedback(object):
 
 class APNSPayload(object):
 	""" Represents the payload of a APNs remote notification. """
+
+	interface.implements( apns_interfaces.INotificationPayload )
 
 	DEFAULT_SOUND = 'default'
 	MAX_PAYLOAD_SIZE = 256
@@ -61,7 +71,7 @@ class APNSPayload(object):
 		result = json.dumps( topLevel )
 		if len(result) > self.MAX_PAYLOAD_SIZE:
 			# Hmm.
-			print 'Payload data too big, stripping extra'
+			logger.warning( 'Payload data too big, stripping extra' )
 			if self.nti:
 				del topLevel['nti']
 				result = json.dumps( topLevel )
@@ -72,6 +82,8 @@ class APNS(object):
 	""" Encapsulates a connection to APNS for sending
 	push notifications. Manages the connection lifetime. Depends on
 	someone pumping the ZMQ eventloop. """
+
+	interface.implements( apns_interfaces.INotificationService )
 
 	def __init__( self, host=SERVER_SAND, port=PORT_SAND, certFile=None,
 				  feedbackHost=FEEDBACK_SAND, feedbackPort=FPORT_SAND ):
@@ -90,9 +102,6 @@ class APNS(object):
 			self.certFile = resource_filename(__name__, localCert )
 		self.connection = None
 		self.selecting = None
-		# TODO: Need a registry or something of these.
-		self.publisher = zmq.Context.instance().socket( zmq.PUB )
-		self.publisher.bind( 'inproc://apns.feedback' )
 
 	def _readFeedback( self ):
 		""" Spawns a thread and connects to the feedback
@@ -106,7 +115,6 @@ class APNS(object):
 			if events & IOLoop.ERROR:
 				# We're done.
 				try:
-					self.publisher.close()
 					IOLoop.instance().remove_handler( fd )
 				except: pass
 				try:
@@ -121,9 +129,9 @@ class APNS(object):
 					if buf:
 						unpacked = struct.unpack( '!lh32s' )
 						fb = APNSDeviceFeedback( unpacked(0), unpacked(2) )
-						self.publisher.send_pyobj( fb )
-				except Exception, e:
-					print e
+						notify( fb )
+				except Exception:
+					logger.exception( "Failed to read feedback." )
 
 		IOLoop.instance().add_handler( connection.fileno(), on_event, IOLoop.READ | IOLoop.ERROR )
 
@@ -174,8 +182,8 @@ class APNS(object):
 				print self.host, self.port, self.certFile
 				self._watch( self.connection )
 				self._readFeedback()
-			except IOError, e:
-				print 'Failed to connect', e
+			except IOError:
+				logger.exception( "Failed to connect to APNS" )
 		return self.connection
 
 	def sendNotification( self, deviceId, payload ):
@@ -203,7 +211,7 @@ class APNS(object):
 		try:
 			connection.sendall( packet )
 		except IOError:
-			print 'Failed to send data'
+			logger.warning( "Failed to send data", exc_info=True )
 			self.reset( connection )
 
 
@@ -227,5 +235,4 @@ class APNS(object):
 
 	def close( self ):
 		self.reset()
-		self.publisher.close()
 

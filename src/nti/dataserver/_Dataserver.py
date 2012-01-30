@@ -448,7 +448,6 @@ class Dataserver(MinimalDataserver):
 		self._apnsCertFile = apnsCertFile
 		self._apns = self
 
-
 		# A topic that broadcasts Change events
 		self.changePublisherStream, self.other_closeables = self._setup_change_distribution()
 
@@ -485,6 +484,7 @@ class Dataserver(MinimalDataserver):
 			return "Online" if self.sessions.get_sessions_by_owner(s.username)\
 				   else "Offline"
 
+		# FIXME: This is horribly ugly
 		users.User.presence = property(getPresence)
 
 	def _setup_session_manager( self, sdb ):
@@ -502,23 +502,12 @@ class Dataserver(MinimalDataserver):
 	def _setup_apns( self, apnsCertFile ):
 		_apns = apns.APNS( certFile=apnsCertFile )
 
-		# Listen for feedback about bad devices and send
-		# them to the Users class
-		apnsFeedbackSocket = zmq.Context.instance().socket( zmq.SUB )
-		# TODO: A registry for these
-		apnsFeedbackSocket.connect( 'inproc://apns.feedback' )
-		apnsFeedbackSocket.setsockopt( zmq.SUBSCRIBE, "" )
-
-		def read_from_apns():
-			while True:
-				msg = apnsFeedbackSocket.recv_multipart()
-				# Notice that even though the server used send_pyobj, the zmqstream gets a
-				# multi-message object with raw content. We must unpickle the first part.
-				try:
-					users.User.onDeviceFeedback( self, pickle.loads( msg[0] ) )
-				except Exception:
-					logger.exception( 'Error reading from apns feedback' )
-		gevent.spawn( read_from_apns )
+		# Here we used to be using an inproc ZMQ socket to listen
+		# for device feedback events. Now we are using zope.event to
+		# distribute these. In the future, if we need to
+		# push APNS connections off to a background process, we can either
+		# include that code in the APNS server, or we can start proxying
+		# event objects around.
 
 		return _apns
 

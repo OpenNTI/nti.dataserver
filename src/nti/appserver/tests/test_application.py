@@ -48,10 +48,16 @@ class TestApplication(ConfiguringTestBase):
 					   if os.path.isdir( os.path.join( root, s ) )]
 		self.main.setServeFiles( serveFiles )
 
-	def _make_extra_environ(self, user='sjohnson@nextthought.com'):
-		return {
+	def _make_extra_environ(self, user='sjohnson@nextthought.com', **kwargs):
+		result = {
 			'HTTP_AUTHORIZATION': 'Basic ' + (user + ':temp001').encode('base64'),
 			}
+		for k, v in kwargs.items():
+			k = str(k)
+			k.replace( '_', '-' )
+			result[k] = v
+
+		return result
 
 	# FIXME: This shouldn't be necessary. But the SocketIOHandler
 	# part of the AppServer is currently dealing with transactions.
@@ -349,6 +355,78 @@ class TestApplication(ConfiguringTestBase):
 
 	def test_post_class_part_path(self):
 		self._do_post_class_to_path( '/dataserver2/providers/OU/' )
+
+
+	@mock_dataserver.WithMockDS
+	def test_class_trivial_enclosure_href(self):
+		with self.ds.dbTrans():
+			users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+			users.User.create_user( self.ds, username='jason.madden@nextthought.com' )
+
+			_create_class( self.ds, ('sjohnson@nextthought.com',) )
+
+		testapp = TestApp( self.app )
+
+		path = '/dataserver2/providers/OU/Classes/CS2051/'
+		data = 'The simple data'
+		with self.ds.dbTrans():
+			res = testapp.post( path, data, extra_environ=self._make_extra_environ() )
+			assert_that( res.status_int, is_( 201 ) )
+
+		with self.ds.dbTrans():
+			res = testapp.get( path, extra_environ=self._make_extra_environ() )
+			body = json.loads( res.body )
+			assert_that( body, has_entry( 'Links', has_item( has_entry( 'href', '/dataserver2/providers/OU/Classes/CS2051/SimplePersistentEnclosure' ) ) ) )
+
+		with self.ds.dbTrans():
+			res = testapp.post( path, data, extra_environ=self._make_extra_environ() )
+			assert_that( res.status_int, is_( 201 ) )
+
+		with self.ds.dbTrans():
+			res = testapp.get( path, extra_environ=self._make_extra_environ() )
+			body = json.loads( res.body )
+		assert_that( body, has_entry( 'Links', has_item( has_entry( 'href', '/dataserver2/providers/OU/Classes/CS2051/SimplePersistentEnclosure' ) ) ) )
+		assert_that( body, has_entry( 'Links', has_item( has_entry( 'href', '/dataserver2/providers/OU/Classes/CS2051/SimplePersistentEnclosure-2' ) ) ) )
+
+
+
+	@mock_dataserver.WithMockDSTrans
+	def test_class_modeled_enclosure_href(self):
+		users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+		users.User.create_user( self.ds, username='jason.madden@nextthought.com' )
+
+		_create_class( self.ds, ('sjohnson@nextthought.com',) )
+		testapp = TestApp( self.app )
+
+		# Modeled data
+		path = '/dataserver2/providers/OU/Classes/CS2051/'
+		data = { 'Class': 'ClassScript', 'body': ["The body"] }
+		data = json.dumps( data )
+		res = testapp.post( path, data, extra_environ=self._make_extra_environ(), headers={'Content-Type': 'application/vnd.nextthought.classscript', 'Slug': 'TheSlug'})
+		assert_that( res.status_int, is_( 201 ) )
+
+		res = testapp.get( path, extra_environ=self._make_extra_environ() )
+		body = json.loads( res.body )
+		assert_that( body, has_entry( 'Links', has_item( has_entry( 'href', '/dataserver2/providers/OU/Classes/CS2051/TheSlug' ) ) ) )
+
+	# @mock_dataserver.WithMockDSTrans
+	# def test_section_modeled_enclosure_href(self):
+	# 	users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+	# 	users.User.create_user( self.ds, username='jason.madden@nextthought.com' )
+
+	# 	_create_class( self.ds, ('sjohnson@nextthought.com',) )
+	# 	testapp = TestApp( self.app )
+
+	# 	# Modeled data
+	# 	path = '/dataserver2/providers/OU/Classes/CS2051/CS2051.101'
+	# 	data = { 'Class': 'ClassScript', 'body': ["The body"] }
+	# 	data = json.dumps( data )
+	# 	res = testapp.post( path, data, extra_environ=self._make_extra_environ(), headers={'Content-Type': 'application/vnd.nextthought.classscript', 'Slug': 'TheSlug'})
+	# 	assert_that( res.status_int, is_( 201 ) )
+
+	# 	res = testapp.get( path, extra_environ=self._make_extra_environ() )
+	# 	body = json.loads( res.body )
+	# 	assert_that( body, has_entry( 'Links', has_item( has_entry( 'href', '/dataserver2/providers/OU/Classes/CS2051/TheSlug' ) ) ) )
 
 
 

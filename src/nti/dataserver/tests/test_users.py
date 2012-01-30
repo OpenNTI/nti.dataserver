@@ -1,8 +1,9 @@
 #!/usr/bin/env python2.7
 
 from hamcrest import (assert_that, is_, has_entry, instance_of,
-					  has_key, is_in, not_none, is_not, greater_than, greater_than_or_equal_to,
-					  same_instance, is_not, none, has_length,
+					  is_in, not_none, is_not, greater_than_or_equal_to,
+					  has_value,
+					  same_instance, is_not, none, has_length, has_item,
 					  contains)
 import unittest
 
@@ -234,6 +235,30 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		# This one is synthesized
 		assert_that( user.getContainedStream('foo')[0].creator, is_( user2 ) )
 		assert_that( user.getContainedStream('foo')[0].object, is_( note ) )
+
+from zope.component import eventtesting
+from zope.event import notify
+from nti.apns import APNSDeviceFeedback
+
+class TestFeedbackEvent(mock_dataserver.ConfiguringTestBase):
+
+	def setUp(self):
+		super(TestFeedbackEvent,self).setUp()
+		eventtesting.clearEvents()
+
+
+	@WithMockDSTrans
+	def test_devicefeedback(self):
+		user = User.create_user( self.ds, username='sjohnson@nextthought.com', password='temp001' )
+		device = user.maybeCreateContainedObjectWithType( 'Devices', 'deadbeef' )
+		user.addContainedObject( device )
+		assert_that( user.devices, has_value( device ) )
+		assert_that( user.devices, has_length( 2 ) ) # Last Modified, Device
+
+		event = APNSDeviceFeedback( 5, 'deadbeef'.decode('hex') )
+		notify( event )
+
+		assert_that( user.devices, has_length( 1 ) )
 
 if __name__ == '__main__':
 	unittest.main()
