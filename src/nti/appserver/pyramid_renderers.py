@@ -210,6 +210,7 @@ class REST(object):
 				and obj[StandardExternalFields.CREATOR] == psec.authenticated_userid( request )
 
 		def render_links( obj, parent=None ):
+			if obj is None: return
 			try:
 				obj.setdefault( StandardExternalFields.LINKS, [] )
 			except AttributeError: pass

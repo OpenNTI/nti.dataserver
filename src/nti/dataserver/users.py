@@ -30,6 +30,7 @@ from nti.dataserver import links
 from nti.dataserver import mimetype
 from nti import apns
 
+import nti.apns.interfaces
 
 
 def _createAvatarURL( username, defaultGravatarType='mm' ):
@@ -898,7 +899,7 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 	def __eq__(self,other):
 		result = super(FriendsList,self).__eq__(other)
 		if result:
-			result = self.friends == other.friends
+			result = self.friends == getattr(other, 'friends', None)
 		return result
 	def __lt__(self,other):
 		result = super(FriendsList,self).__lt__(other)
@@ -1017,7 +1018,7 @@ class Device(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 		pass
 
 	def __eq__(self, other):
-		return self.deviceId == other.deviceId
+		return self.deviceId == getattr(other, 'deviceId', None)
 
 	def __lt__(self, other):
 		return self.deviceId < other.deviceId
@@ -1734,19 +1735,21 @@ class User(Principal):
 				apnsCon.sendNotification( device.deviceId, payload )
 
 
-	# The dataserver itself currently registers both these callback functions.
 
 
-	@classmethod
-	def onDeviceFeedback( cls, datasvr, msg ):
-		deviceId = msg.deviceId
-		hexDeviceId = deviceId.encode( 'hex' )
-		# TODO: Very inefficient
-		if msg.timestamp < 0: return
-		logger.debug( 'Searching for device %s', hexDeviceId )
-		for user in datasvr.root['users'].itervalues():
+
+@component.adapter(nti.apns.interfaces.IDeviceFeedbackEvent)
+def user_devicefeedback( msg ):
+	deviceId = msg.deviceId
+	hexDeviceId = deviceId.encode( 'hex' )
+	# TODO: Very inefficient
+	# Switch this to ZCatalog/repoze.catalog
+	if msg.timestamp < 0: return
+	datasvr = _get_shared_dataserver()
+	logger.debug( 'Searching for device %s', hexDeviceId )
+	with datasvr.dbTrans():
+		for user in (u for u in datasvr.root['users'].itervalues() if isinstance(u,User)):
 			if hexDeviceId in user.devices:
 				logger.debug( 'Found device id %s in user %s', hexDeviceId, user )
 				del user.devices[hexDeviceId]
-				transaction.commit()
 
