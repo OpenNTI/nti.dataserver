@@ -129,6 +129,15 @@ class _Env(_ReadableEnv):
 		ini.set( 'supervisord', 'pidfile', self.run_file( 'supervisord.pid' ) )
 		ini.set( 'supervisord', 'childlogdir', self.run_file( 'log' ) )
 
+		ini.add_section( 'unix_http_server' )
+		ini.set( 'unix_http_server', 'file', self.run_file( 'supervisord.sock' ) )
+
+		ini.add_section( 'supervisorctl' )
+		ini.set( 'supervisorctl', 'serverurl', 'unix://' + self.run_file( 'supervisord.sock' ) )
+
+		ini.add_section( 'rpcinterface:supervisor' )
+		ini.set( 'rpcinterface:supervisor', 'supervisor.rpcinterface_factory', 'supervisor.rpcinterface:make_main_rpcinterface' )
+
 		for p in self.programs:
 			line = 'program:%s' % p.name
 			ini.add_section( line )
