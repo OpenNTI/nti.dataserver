@@ -38,7 +38,9 @@ def _createAvatarURL( username, defaultGravatarType='mm' ):
 	result = 'http://www.gravatar.com/avatar/%s?s=128&d=%s' % (md5str,defaultGravatarType)
 	return result
 
-def _get_shared_dataserver(context=None):
+def _get_shared_dataserver(context=None,default=None):
+	if default != None:
+		return component.queryUtility( nti_interfaces.IDataserver, context=context, default=default )
 	return component.getUtility( nti_interfaces.IDataserver, context=context )
 
 
@@ -84,8 +86,10 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject,d
 		# Allow for escaped usernames, since they are hard to defend against
 		# at a higher level (this behaviour changed in pyramid 1.2.3)
 		username = urllib.unquote( username )
-		dataserver = dataserver or _get_shared_dataserver()
-		return  dataserver and dataserver.root[_namespace].get( username, default )
+		dataserver = dataserver or _get_shared_dataserver(default=default)
+		if dataserver is not default:
+			return dataserver.root[_namespace].get( username, default )
+		return default
 
 	creator = nti_interfaces.SYSTEM_USER_NAME
 
