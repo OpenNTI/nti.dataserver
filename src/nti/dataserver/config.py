@@ -348,19 +348,8 @@ def temp_get_config( root, demo=False ):
 
 	return env
 
-def main():
-	args = sys.argv
 
-	if len( args ) < 3:
-		print( 'Usage: root_dir pserve_ini_file' )
-		sys.exit( 1 )
-
-	root_dir = args[1]
-	pserve_ini = args[2]
-	pserve_ini = os.path.abspath( os.path.expanduser( pserve_ini ) )
-	if not os.path.exists( pserve_ini ):
-		raise OSError( "No ini file " + pserve_ini )
-
+def write_configs(root_dir, pserve_ini):
 	env = _Env( root_dir, create=True )
 	xmlconfig.file( 'configure.zcml', package=sys.modules['nti.dataserver'] )
 	uris = _configure_zeo( env )
@@ -376,9 +365,26 @@ def main():
 	listener.priority = 50
 	env.add_program( listener )
 
-
 	env.write_supervisor_conf_file( pserve_ini )
 	env.write_main_conf()
+
+	return env
+	
+	
+def main():
+	args = sys.argv
+
+	if len( args ) < 3:
+		print( 'Usage: root_dir pserve_ini_file' )
+		sys.exit( 1 )
+
+	root_dir = args[1]
+	pserve_ini = args[2]
+	pserve_ini = os.path.abspath( os.path.expanduser( pserve_ini ) )
+	if not os.path.exists( pserve_ini ):
+		raise OSError( "No ini file " + pserve_ini )
+
+	return write_configs(root_dir, pserve_ini)
 
 if __name__ == '__main__':
 	main()
