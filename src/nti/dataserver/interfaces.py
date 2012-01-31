@@ -227,7 +227,10 @@ class IGroupMember(interface.Interface):
 IGroupAwarePrincipal.__bases__ = tuple( itertools.chain( IGroupAwarePrincipal.__bases__,
 														 (IGroupMember,) ))
 
-class IUser(interface.Interface):
+class IEntity(IZContained):
+	pass
+
+class IUser(IEntity):
 	"""
 	A user of the system. Notice this is not an IPrincipal.
 	This interface needs finished and fleshed out.

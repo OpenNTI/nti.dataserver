@@ -77,6 +77,8 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject,d
 	The root for things that represent human-like objects.
 	"""
 
+	interface.implements( nti_interfaces.IEntity )
+
 	@classmethod
 	def get_entity( cls, username, dataserver=None, default=None, _namespace='users' ):
 		"""
@@ -92,6 +94,7 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject,d
 		return default
 
 	creator = nti_interfaces.SYSTEM_USER_NAME
+	__parent__ = None
 
 	def __init__(self, username, avatarURL=None, realname=None, alias=None):
 		super(Entity,self).__init__()
@@ -110,9 +113,12 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject,d
 		# and that this type represents a fully formed object after construction
 		self.createdTime = self.updateLastMod()
 
-	@property
-	def __name__(self):
+	def _get__name__(self):
 		return self.username
+	def _set__name__(self,new_name):
+		self.username = new_name
+	__name__ = property(_get__name__, _set__name__ )
+
 
 	def __repr__(self):
 		return '%s("%s","%s","%s","%s")' % (self.__class__.__name__,self.username,self.avatarURL, self.realname, self.alias)
@@ -744,8 +750,8 @@ class Everyone(Community):
 		self.avatarURL = 'http://www.gravatar.com/avatar/dfa1147926ce6416f9f731dcd14c0260?s=128&d=retro'
 
 
-
-EVERYONE = Everyone()
+EVERYONE_PROTO = Everyone()
+EVERYONE = EVERYONE_PROTO
 #""" There is only one Everyone community. """
 
 class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters for __setstate__

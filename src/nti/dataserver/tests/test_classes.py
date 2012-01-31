@@ -2,7 +2,7 @@
 #pylint: disable=R0904
 
 
-from hamcrest import assert_that, has_length, is_, has_item, has_entry, same_instance, is_not, has_key, contains
+from hamcrest import assert_that, has_length, is_, has_item, has_entry, same_instance, is_not, has_key, contains, greater_than_or_equal_to
 from hamcrest.library import has_property
 from nti.dataserver.tests import provides
 
@@ -96,11 +96,11 @@ class TestSection(mock_dataserver.ConfiguringTestBase):
 
 		self.ds.update_from_external_object( section, dict(section_ext) )
 		assert_that( list(section.Enrolled), has_item( 'jason.madden@nextthought.com' ) )
-		assert_that( eventtesting.getEvents(), has_length( 2 ) )
+		assert_that( eventtesting.getEvents(), has_length( greater_than_or_equal_to( 2 ) ) )
 		assert_that( eventtesting.getEvents( IObjectAddedEvent ),
 					 has_item( has_property( 'newName', 'jason.madden@nextthought.com' ) ) )
-		assert_that( eventtesting.getEvents( IContainerModifiedEvent )[0],
-					 has_property( 'object', provides( nti_interfaces.IEnrolledContainer ) ) )
+		assert_that( eventtesting.getEvents( IContainerModifiedEvent ),
+					 has_item( has_property( 'object', provides( nti_interfaces.IEnrolledContainer ) ) ) )
 
 		# Doing it a second time does nothing, no changes actually happen
 		clearEvents()
@@ -168,25 +168,26 @@ class TestClass(mock_dataserver.ConfiguringTestBase):
 		assert_that( ext, has_entry( 'Sections', has_item( has_entry( 'ID', section.ID ) ) ) )
 
 	def _assert_add_section_to_class( self, clazz, section=None, object_evt_type=IObjectAddedEvent ):
-		assert_that( eventtesting.getEvents(), has_length( 2 ) )
+		assert_that( eventtesting.getEvents(), has_length( greater_than_or_equal_to( 2 ) ) )
 
-		assert_that( eventtesting.getEvents( object_evt_type ), has_length( 1 ) )
-		event = eventtesting.getEvents( object_evt_type )[0]
+		assert_that( eventtesting.getEvents( object_evt_type ), has_length( greater_than_or_equal_to( 1 ) ) )
+		events = eventtesting.getEvents( object_evt_type )
 		if section:
 			if object_evt_type == IObjectAddedEvent:
 				assert_that( section.__parent__, is_( clazz._sections ) )
-				assert_that( event.newName, is_( section.ID ) )
-			assert_that( event.object, is_( section ) )
+				assert_that( events, has_item( has_property( 'newName', is_( section.ID ) ) ) )
+			assert_that( events, has_item( has_property( 'object', is_( section ) ) ) )
 
 		if object_evt_type == IObjectAddedEvent:
-			assert_that( event.newParent, is_( clazz._sections ) )
-			assert_that( event.newParent.__parent__, is_( clazz ) )
+			assert_that( events, has_item( has_property( 'newParent', is_( clazz._sections ) ) ) )
+			assert_that( events, has_item( has_property( 'newParent', has_property( '__parent__', is_( clazz ) ) ) ) )
 
-		assert_that( eventtesting.getEvents( IContainerModifiedEvent ), has_length( 1 ) )
-		event = eventtesting.getEvents( IContainerModifiedEvent )[0]
-		assert_that( event,
-					 has_property( 'object', provides( nti_interfaces.ISectionInfoContainer ) ) )
-		assert_that( event.object, is_( clazz._sections ) )
+		assert_that( eventtesting.getEvents( IContainerModifiedEvent ), has_length( greater_than_or_equal_to( 1 ) ) )
+		events = eventtesting.getEvents( IContainerModifiedEvent )
+		assert_that( events,
+					 has_item( has_property( 'object', provides( nti_interfaces.ISectionInfoContainer ) ) ) )
+		assert_that( events,
+					 has_item( has_property( 'object', is_( clazz._sections ) ) ) )
 
 	def test_migration(self):
 		clazz = ClassInfo( ID='CS5201' )

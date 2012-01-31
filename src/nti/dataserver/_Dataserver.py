@@ -359,14 +359,16 @@ class _DataserverInitializer(object):
 
 	def init_database( self, conn ):
 		root = conn.root()
-		if not root.has_key('users'):
-			root['users'] = datastructures.CaseInsensitiveModDateTrackingOOBTree()
+
+		for key in ('users', 'vendors', 'library', 'quizzes', 'providers' ):
+			root[key] = datastructures.KeyPreservingCaseInsensitiveModDateTrackingBTreeContainer()
+			root[key].__name__ = key
 
 		if 'Everyone' not in root['users']:
 			# Hmm. In the case that we're running multiple DS instances in the
 			# same VM, our constant could wind up with different _p_jar
 			# and _p_oid settings. Hence the copy
-			root['users']['Everyone'] = copy.deepcopy( users.EVERYONE )
+			root['users']['Everyone'] = copy.deepcopy( users.EVERYONE_PROTO )
 		# This is interesting. Must do this to ensure that users
 		# that get created at different times and that have weak refs
 		# to the right thing. What's a better way?
@@ -377,16 +379,6 @@ class _DataserverInitializer(object):
 		# This also solves the problem of 'who owns the change?' We do.
 		if not root.has_key( 'changes'):
 			root['changes'] = PersistentList()
-
-		for key in ('vendors', 'library', 'quizzes', 'providers' ):
-			if not root.has_key( key ):
-				root[key] = datastructures.CaseInsensitiveModDateTrackingOOBTree()
-
-		for key in ('users','vendors', 'library', 'quizzes', 'providers' ):
-			if getattr( root[key], '__name__', None ) is None:
-				root[key].__name__ = key
-
-
 
 class Dataserver(MinimalDataserver):
 
@@ -407,13 +399,12 @@ class Dataserver(MinimalDataserver):
 			if not self.root.has_key( 'users' ):
 				warnings.warn( "Creating DS against uninitialized DB. Test code?", stacklevel=3 )
 				_DataserverInitializer( self.db ).init_database( conn )
-			if not isinstance( self.root['users'], datastructures.CaseInsensitiveModDateTrackingOOBTree ):
-				self.root['users'] = datastructures.CaseInsensitiveModDateTrackingOOBTree( self.root['users'] )
-			if 'Everyone' not in self.root['users']:
-				# Hmm. In the case that we're running multiple DS instances in the
-				# same VM, our constant could wind up with different _p_jar
-				# and _p_oid settings. Hence the copy
-				self.root['users']['Everyone'] = copy.deepcopy( users.EVERYONE )
+
+			# if 'Everyone' not in self.root['users']:
+			# 	# Hmm. In the case that we're running multiple DS instances in the
+			# 	# same VM, our constant could wind up with different _p_jar
+			# 	# and _p_oid settings. Hence the copy
+			# 	self.root['users']['Everyone'] = copy.deepcopy( users.EVERYONE )
 			# This is interesting. Must do this to ensure that users
 			# that get created at different times and that have weak refs
 			# to the right thing. What's a better way?
