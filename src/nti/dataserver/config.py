@@ -48,6 +48,13 @@ class _Program(object):
 			cmd_line = name
 		self.cmd_line = cmd_line
 
+	def get_command(self):
+		return self.cmd_line
+
+	def set_command(self, value):
+		self.cmd_line = value
+	command = property(get_command, set_command)
+	
 class _ReadableEnv(object):
 	interface.implements(nti_interfaces.IEnvironmentSettings)
 	env_root = '/'
@@ -112,6 +119,9 @@ class _Env(_ReadableEnv):
 			os.makedirs( self.run_dir() )
 			os.makedirs( os.path.join( self.run_dir() , 'log' ) )
 
+	def get_programs(self):
+		return self.programs
+	
 	def add_program( self, program ):
 		self.programs.append( program )
 
@@ -123,7 +133,8 @@ class _Env(_ReadableEnv):
 	def write_conf_file( self, name, contents ):
 		write_configuration_file( self.conf_file( name ), contents )
 
-	def write_supervisor_conf_file( self, pserve_ini ):
+	def write_supervisor_conf_file( self, pserve_ini, command_prefix=None):
+		
 		ini = ConfigParser.SafeConfigParser()
 		ini.add_section( 'supervisord' )
 		ini.set( 'supervisord', 'logfile', self.log_file( 'supervisord.log' ) )
@@ -143,7 +154,8 @@ class _Env(_ReadableEnv):
 		for p in self.programs:
 			line = 'program:%s' % p.name
 			ini.add_section( line )
-			ini.set( line, 'command', p.cmd_line )
+			command = ' '.join([command_prefix or '', p.cmd_line])
+			ini.set( line, 'command', command.lstrip())
 			if p.priority != _Program.priority:
 				ini.set( line, 'priority', str(p.priority) )
 			ini.set( line, 'environment', 'DATASERVER_DIR=%(here)s/../' )
@@ -151,14 +163,13 @@ class _Env(_ReadableEnv):
 		with open( self.conf_file( 'supervisord.conf' ), 'wb' ) as fp:
 			ini.write( fp )
 
-
+		command = ' '.join([command_prefix or '', 'pserve'])
 		ini.add_section( 'program:pserve' )
-		ini.set( 'program:pserve', 'command', 'pserve %s' % pserve_ini )
+		ini.set( 'program:pserve', 'command', '%s %s' % (command.lstrip(), pserve_ini) )
 		ini.set( 'program:pserve', 'environment', 'DATASERVER_DIR=%(here)s/../' )
 		ini.set( 'supervisord', 'nodaemon', 'true' )
 		with open( self.conf_file( 'supervisord_dev.conf' ), 'wb' ) as fp:
 			ini.write( fp )
-
 
 def _configure_pubsub( env, name ):
 
@@ -174,7 +185,6 @@ def _configure_pubsub( env, name ):
 		env.main_conf.add_section( name )
 	env.main_conf.set( name, 'pub_addr', 'ipc://' + pub_file )
 	env.main_conf.set( name, 'sub_addr', 'ipc://' + sub_file )
-
 
 def _configure_pubsub_changes( env ):
 
