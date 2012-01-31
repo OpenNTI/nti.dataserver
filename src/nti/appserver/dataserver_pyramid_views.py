@@ -492,6 +492,12 @@ class _GenericGetView(object):
 				result = LocationProxy( result, getattr( result, '__parent__', None), getattr( result, '__name__', None ) )
 			if getattr( resource, '__parent__', None ):
 				result.__parent__ = resource.__parent__
+				# FIXME: Another hack at getting the right parent relationship in.
+				# The actual parent relationship is to the Provider object,
+				# but it has no way back to the root resource. This hack is deliberately
+				# kept very specific for now.
+				if self.request.traversed[-1] == 'Classes' and self.request.traversed[0] == 'providers':
+					result.__parent__ = self.request.context.__parent__
 			elif resource is not self.request.context and hasattr( self.request.context, '__parent__' ):
 				result.__parent__ = self.request.context.__parent__
 		return result

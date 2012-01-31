@@ -84,6 +84,10 @@ def find_content_type( request, data=None ):
 
 	return best_match or MIME_BASE_JSON
 
+def _is_valid_href( target ):
+	# We really want to check if this is a valid href. How best to do that?
+	return isinstance( target, six.string_types ) and  target.startswith( '/' )
+
 def render_link( parent_resource, link, user_root_resource=None ):
 
 	# TODO: This clearly doesn't work for links that
@@ -117,8 +121,8 @@ def render_link( parent_resource, link, user_root_resource=None ):
 				href = root + '/Objects/' + ntiid
 			else:
 				href = root + '/NTIIDs/' + ntiid
-	# We really want to check if this is a valid href. How best to do that?
-	elif isinstance( target, six.string_types ) and  target.startswith( '/' ):
+
+	elif _is_valid_href( target ):
 		href = target
 	else:
 		# let the custom URL hook, if any, be used
@@ -253,8 +257,9 @@ class REST(object):
 		render_links( body, request.context )
 		# Everything possible should have an href on the way out. If we have no other
 		# preference, use the URL that was requested.
-		if 'href' not in body and isinstance( body, collections.MutableMapping ):
-			body['href'] = request.path
+		if isinstance( body, collections.MutableMapping ):
+			if 'href' not in body or not _is_valid_href( body['href'] ):
+				body['href'] = request.path
 
 		# Search for a last modified value.
 		if response.last_modified is None:

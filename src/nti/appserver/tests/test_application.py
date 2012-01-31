@@ -3,6 +3,7 @@
 from hamcrest import (assert_that, is_, none,
 					  has_entry, has_length, has_item, has_key,
 					  contains_string, ends_with, all_of, has_entries)
+from hamcrest.library import has_property
 from nti.appserver.application import createApplication
 from nti.dataserver.library import Library
 import nti.contentsearch
@@ -292,15 +293,19 @@ class TestApplication(ConfiguringTestBase):
 		json.loads( body.text )
 
 		# When fetched as a collection, they still have edit info
+
 		body = testapp.get( '/dataserver2/providers/OU/Classes/', extra_environ=self._make_extra_environ() )
 		body = json.loads( body.text )
+		assert_that( body, has_entry( 'href', '/dataserver2/providers/OU/Classes' ) )
+
 		assert_that( body, has_entry( 'Items', has_length( 1 ) ) )
+
 		body = body['Items']['CS2051']
 		assert_that( body, has_entry( 'MimeType', 'application/vnd.nextthought.classinfo' ) )
 		# The edit href is complete
 		assert_that( body, has_entry( 'Links',
 									  has_item( has_entries( rel='edit',
-															 href='/dataserver2/providers/OU/Objects/%s' % urllib.quote(to_external_ntiid_oid(clazz) ) ) ) ) )
+															 href='/dataserver2/providers/OU/Classes/CS2051' ) ) ) )
 		# And the top-level href matches the edit href
 		assert_that( body, has_entry( 'href', body['Links'][0]['href'] ) )
 
@@ -451,4 +456,5 @@ def _create_class(ds, usernames_to_enroll=()):
 	section.Provider = 'OU'
 	provider.addContainedObject( klass )
 
+	assert_that( provider, has_property( '__parent__', ds.root['providers'] ) )
 	return klass
