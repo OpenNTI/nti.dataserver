@@ -25,6 +25,10 @@ Whiteboard API v1
   - CanvasTextShape:
 	An object that describes a text box or possibly a note.
 
+  - CanvasPathShape:
+	For freehand drawing. Adds an array of 'points' forming the path and
+	 a 'closed' flag to specify whether the path is open or closed.
+   
   - Canvas:
   	This object is a container for a bunch of shapes, a scene, that can be saved.
   	*shapeList - a list of WBShape objects.
@@ -107,8 +111,14 @@ struct CanvasPolygonShape : CanvasShape {
 	int sides;
 }
 struct CanvasCircleShape : CanvasShape {}
+
 struct CanvasTextShape : CanvasShape {
 	string text;
+}
+
+struct CanvasPathShape: CanvasShape {
+	[] points;
+	bool closed;
 }
 
 struct Canvas : WBObject {
