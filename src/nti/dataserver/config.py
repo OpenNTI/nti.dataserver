@@ -121,7 +121,7 @@ class _Env(_ReadableEnv):
 	def write_conf_file( self, name, contents ):
 		write_configuration_file( self.conf_file( name ), contents )
 
-	def write_supervisor_conf_file( self, pserve_ini, path_to_bin=None ):
+	def write_supervisor_conf_file( self, pserve_ini ):
 		ini = ConfigParser.SafeConfigParser()
 		ini.add_section( 'supervisord' )
 		ini.set( 'supervisord', 'logfile', self.log_file( 'supervisord.log' ) )
@@ -149,22 +149,21 @@ class _Env(_ReadableEnv):
 			ini.write( fp )
 
 
-		command = 'pserve' if not path_to_bin else os.path.join(path_to_bin, 'pserve')
 		ini.add_section( 'program:pserve' )
-		ini.set( 'program:pserve', 'command', '%s %s' % (command, pserve_ini) )
+		ini.set( 'program:pserve', 'command', 'pserve %s' % pserve_ini )
 		ini.set( 'program:pserve', 'environment', 'DATASERVER_DIR=%(here)s/../' )
 		ini.set( 'supervisord', 'nodaemon', 'true' )
 		with open( self.conf_file( 'supervisord_dev.conf' ), 'wb' ) as fp:
 			ini.write( fp )
 
-def _configure_pubsub( env, name, path_to_bin=None ):
+
+def _configure_pubsub( env, name ):
 
 	pub_file = env.run_file( 'pub.%s.sock' % name )
 	sub_file = env.run_file( 'sub.%s.sock' % name )
 	pid_file = env.run_file( 'pubsub.%s.pid' % name )
 
-	command = 'nti_pubsub_device' if not path_to_bin else os.path.join(path_to_bin, 'nti_pubsub_device')
-	cmd_line = ' '.join( [command, pid_file, 'ipc://' + pub_file, 'ipc://' + sub_file ] )
+	cmd_line = ' '.join( ['nti_pubsub_device', pid_file, 'ipc://' + pub_file, 'ipc://' + sub_file ] )
 
 	env.add_program( _Program( 'pubsub_%s' % name, cmd_line ) )
 
@@ -174,13 +173,14 @@ def _configure_pubsub( env, name, path_to_bin=None ):
 	env.main_conf.set( name, 'sub_addr', 'ipc://' + sub_file )
 
 
-def _configure_pubsub_changes( env, path_to_bin=None ):
-	_configure_pubsub( env, 'changes', path_to_bin )
+def _configure_pubsub_changes( env ):
 
-def _configure_pubsub_session( env, path_to_bin=None):
-	_configure_pubsub( env, 'session', path_to_bin )
+	_configure_pubsub( env, 'changes' )
 
-def _configure_zeo( env_root, path_to_bin=None):
+def _configure_pubsub_session( env ):
+	_configure_pubsub( env, 'session' )
+
+def _configure_zeo( env_root ):
 	"""
 	:return: A list of URIs that can be passed to db_from_uris to directly connect
 	to the file storages, without using ZEO.
@@ -280,13 +280,11 @@ def _configure_zeo( env_root, path_to_bin=None):
 	env_root.write_conf_file( 'zeo_uris.ini', uri_conf )
 	env_root.write_conf_file( 'demo_zeo_uris.ini', demo_uri_conf )
 
-	command = 'runzeo' if not path_to_bin else os.path.join(path_to_bin, 'runzeo')
-	command = command + ' -C ' + env_root.conf_file( 'zeo_conf.xml' )
-	
 	# We assume that runzeo is on the path (virtualenv)
-	program = _Program( 'zeo', command )
+	program = _Program( 'zeo', 'runzeo -C ' + env_root.conf_file( 'zeo_conf.xml' ) )
 	program.priority = 0
 	env_root.add_program( program )
+
 
 	return file_uris
 
@@ -313,6 +311,7 @@ def _configure_database( env, uris ):
 	with db.transaction( ) as conn:
 		for subscriber in subscribers:
 			subscriber.init_database( conn )
+
 
 
 def temp_get_config( root, demo=False ):
@@ -351,7 +350,7 @@ def main(args = None):
 	args = args or sys.argv
 	
 	if len( args ) < 3:
-		print( 'Usage: root_dir pserve_ini_file [path_to_bin]' )
+		print( 'Usage: root_dir pserve_ini_file' )
 		sys.exit( 1 )
 
 	root_dir = args[1]
@@ -360,17 +359,13 @@ def main(args = None):
 	if not os.path.exists( pserve_ini ):
 		raise OSError( "No ini file " + pserve_ini )
 
-	path_to_bin = os.path.expanduser(args[3]) if len(args) >= 4 else None
-	if not path_to_bin and not os.path.exists(path_to_bin):
-		raise OSError( "Directory not found " + path_to_bin )
-	
 	env = _Env( root_dir, create=True )
 	xmlconfig.file( 'configure.zcml', package=sys.modules['nti.dataserver'] )
-	uris = _configure_zeo( env, path_to_bin)
+	uris = _configure_zeo( env )
 	_configure_database( env, uris )
-	_configure_pubsub_changes( env, path_to_bin )
-	_configure_pubsub_session( env, path_to_bin )
-	env.write_supervisor_conf_file( pserve_ini, path_to_bin)
+	_configure_pubsub_changes( env )
+	_configure_pubsub_session( env )
+	env.write_supervisor_conf_file( pserve_ini )
 	env.write_main_conf()
 
 if __name__ == '__main__':
