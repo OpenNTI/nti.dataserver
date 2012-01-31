@@ -6,7 +6,9 @@ entry_points = {
 	'console_scripts': [
 		"nti_render = nti.contentrendering.aopstoxml:main",
 		"nti_init_env = nti.dataserver.config:main",
-		"nti_pubsub_device = nti.dataserver._PubSubDevice:main"
+		"nti_pubsub_device = nti.dataserver._PubSubDevice:main",
+		"nti_sharing_listener = nti.appserver.application:sharing_listener_main",
+		"nti_index_listener = nti.appserver.application:index_listener_main"
 	],
 	"paste.app_factory": [
 		"main = nti.appserver.standalone:configure_app"

@@ -13,12 +13,13 @@ from zope import component
 
 
 from application import createApplication, AppServer
+from paste.deploy.converters import asbool
 
 
 SOCKET_IO_PATH = 'socket.io'
 #USE_FILE_INDICES = 'USE_ZEO_USER_INDICES' not in os.environ
 #HTTP_PORT = int(os.environ.get('DATASERVER_PORT', '8081'))
-#SYNC_CHANGES = 'DATASERVER_SYNC_CHANGES' in os.environ
+#SYN_CHANGES = 'DATASERVER_SYNC_CHANGES' in os.environ
 
 def configure_app( global_config,
 				   deploy_root='/Library/WebServer/Documents/',
@@ -51,7 +52,7 @@ def configure_app( global_config,
 										  Library( libraryPaths ),
 										  process_args=True,
 										  create_ds=nti_create_ds,
-										  sync_changes=bool(sync_changes),
+										  sync_changes=asbool(sync_changes),
 										  **settings)
 
 	main.setServeFiles( serveFiles )
@@ -72,7 +73,7 @@ def _create_app_server(wsgi_app, global_conf, host='', port=None, **kwargs):
 		wsgi_app,
 		policy_server=False,
 		namespace=SOCKET_IO_PATH,
-		session_manager = component.getUtility(nti_interfaces.IDataserver).session_manager )	
+		session_manager = component.getUtility(nti_interfaces.IDataserver).session_manager )
 	return httpd
 
 # The paste.server_runner, only good with pyramid_main
