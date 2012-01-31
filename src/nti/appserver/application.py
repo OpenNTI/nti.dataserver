@@ -503,8 +503,8 @@ def createApplication( http_port,
 			server.add_change_listener( SharingTarget.onChange )
 			server.add_change_listener( IndexManager.onChange )
 		else:
-			dataserver.spawn_change_listener( server, _add_sharing_listener )
-			dataserver.spawn_change_listener( server, _add_index_listener, (user_indices_dir,) )
+			logger.info( "Change listeners should already be running." )
+
 		logger.info( 'Finished adding listeners' )
 
 
@@ -527,10 +527,9 @@ class AppServer(dataserver.socketio_server.SocketIOServer):
 
 def _configure_logging():
 	# TODO: Where should logging in these background processes be configured?
-	# logging.basicConfig( level=logging.DEBUG )
-	# logging.getLogger( 'nti' ).setLevel( logging.DEBUG )
-	# logging.root.handlers[0].setFormatter( logging.Formatter( '%(asctime)s [%(name)s] %(levelname)s: %(message)s' ) )
-	pass
+	logging.basicConfig( level=logging.INFO )
+	logging.getLogger( 'nti' ).setLevel( logging.DEBUG )
+	logging.root.handlers[0].setFormatter( logging.Formatter( '%(asctime)s [%(name)s] %(levelname)s: %(message)s' ) )
 
 def _add_sharing_listener( server ):
 	_configure_logging()
@@ -567,3 +566,10 @@ def create_index_manager(server, use_zeo_storage=None, user_indices_dir='/tmp'):
 
 	return ixman
 
+def sharing_listener_main():
+	_configure_logging()
+	dataserver._Dataserver.temp_env_run_change_listener( _add_sharing_listener )
+
+def index_listener_main():
+	_configure_logging()
+	dataserver._Dataserver.temp_env_run_change_listener( _add_index_listener, None )

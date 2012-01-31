@@ -42,8 +42,10 @@ class _Program(object):
 	name = None
 	priority = 999
 
-	def __init__( self, name, cmd_line ):
+	def __init__( self, name, cmd_line=None ):
 		self.name = name
+		if cmd_line is None:
+			cmd_line = name
 		self.cmd_line = cmd_line
 
 class _ReadableEnv(object):
@@ -144,6 +146,7 @@ class _Env(_ReadableEnv):
 			ini.set( line, 'command', p.cmd_line )
 			if p.priority != _Program.priority:
 				ini.set( line, 'priority', str(p.priority) )
+			ini.set( line, 'environment', 'DATASERVER_DIR=%(here)s/../' )
 
 		with open( self.conf_file( 'supervisord.conf' ), 'wb' ) as fp:
 			ini.write( fp )
@@ -345,10 +348,9 @@ def temp_get_config( root, demo=False ):
 
 	return env
 
-def main(args = None):
-	
-	args = args or sys.argv
-	
+def main():
+	args = sys.argv
+
 	if len( args ) < 3:
 		print( 'Usage: root_dir pserve_ini_file' )
 		sys.exit( 1 )
@@ -365,6 +367,16 @@ def main(args = None):
 	_configure_database( env, uris )
 	_configure_pubsub_changes( env )
 	_configure_pubsub_session( env )
+
+	listener = _Program( 'nti_sharing_listener' )
+	listener.priority = 50
+	env.add_program( listener )
+
+	listener = _Program( 'nti_index_listener' )
+	listener.priority = 50
+	env.add_program( listener )
+
+
 	env.write_supervisor_conf_file( pserve_ini )
 	env.write_main_conf()
 
