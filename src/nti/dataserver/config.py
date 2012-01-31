@@ -293,13 +293,22 @@ from repoze.zodbconn.uri import db_from_uri
 from zope.configuration import xmlconfig
 from zope import component
 from ZODB.DB import ContextManager as DBContext
+import ZODB.interfaces
+
 from nti.dataserver import interfaces as nti_interfaces
 
 def _configure_database( env, uris ):
 
 	db = db_from_uri( uris )
+	# Circular import
+	import nti.dataserver.utils.example_database_initializer
+	component.provideSubscriptionAdapter(
+		nti.dataserver.utils.example_database_initializer.ExampleDatabaseInitializer,
+		adapts=(ZODB.interfaces.IDatabase,),
+		provides=nti_interfaces.IDatabaseInitializer )
+
 	subscribers = component.subscribers( (db,), nti_interfaces.IDatabaseInitializer )
-	with DBContext( db ) as conn:
+	with db.transaction( ) as conn:
 		for subscriber in subscribers:
 			subscriber.init_database( conn )
 
