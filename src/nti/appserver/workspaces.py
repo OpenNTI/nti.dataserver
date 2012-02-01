@@ -21,7 +21,7 @@ from nti.dataserver import authorization as nauth
 import nti.appserver.interfaces as app_interfaces
 import nti.appserver.pyramid_renderers as rest
 
-from pyramid import traversal
+from . import traversal
 from pyramid import security as psec
 from pyramid.threadlocal import get_current_request
 
@@ -237,7 +237,7 @@ class CollectionSummaryExternalizer(object):
 		ext_collection.__parent__ = collection.__parent__
 		ext_collection[StandardExternalFields.CLASS] = 'Collection'
 		ext_collection['Title'] = collection.name
-		ext_collection['href'] = traversal.resource_path( collection )
+		ext_collection['href'] = traversal.normal_resource_path( collection )
 		accepts = collection.accepts
 		if accepts is not None:
 			ext_collection['accepts'] = [mimetype.nti_mimetype_from_object( x ) for x in accepts]
@@ -255,7 +255,7 @@ class CollectionSummaryExternalizer(object):
 			for l in _links:
 				if l.target == getattr(l, '__name__', None):
 					# We know the ntiid gets used as the href
-					l.ntiid = traversal.resource_path(l)
+					l.ntiid = traversal.normal_resource_path(l)
 					l.target = l
 			ext_collection[StandardExternalFields.LINKS] = _links
 
@@ -315,7 +315,7 @@ class ContainerCollectionDetailExternalizer(object):
 			if request and psec.has_permission( nauth.ACT_UPDATE, v_, request ):
 				item.setdefault( StandardExternalFields.LINKS, [] )
 				if not any( [l['rel'] == 'edit' for l in item[StandardExternalFields.LINKS]]):
-					valid_traversal_path = traversal.resource_path( v_ )
+					valid_traversal_path = traversal.normal_resource_path( v_ )
 					if valid_traversal_path and not valid_traversal_path.startswith( '/' ):
 						valid_traversal_path = None
 					if valid_traversal_path:
@@ -325,7 +325,7 @@ class ContainerCollectionDetailExternalizer(object):
 			if 'href' not in item and  getattr( v_, '__parent__', None ) is not None:
 				# Let this thing try to produce its
 				# own href
-				valid_traversal_path = traversal.resource_path( v_ )
+				valid_traversal_path = traversal.normal_resource_path( v_ )
 				if valid_traversal_path and not valid_traversal_path.startswith( '/' ):
 					item['href'] = valid_traversal_path
 			return item
@@ -359,7 +359,7 @@ class ContainerCollectionDetailExternalizer(object):
 					 else ext_collection['Items']):
 			if 'href' not in item and 'ID' in item:
 				temp_res.__name__ = item['ID']
-				item['href'] = traversal.resource_path( temp_res )
+				item['href'] = traversal.normal_resource_path( temp_res )
 
 		return ext_collection
 
@@ -444,7 +444,7 @@ class _NTIIDEntry(object):
 		result = datastructures.LocatedExternalDict()
 		result[StandardExternalFields.LINKS] = []
 		result['ID'] = self._ntiid
-		result['href'] = traversal.resource_path( self.__parent__ )
+		result['href'] = traversal.normal_resource_path( self.__parent__ )
 
 		for link in self.__operations__:
 			target = location.Location()

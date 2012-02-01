@@ -48,15 +48,26 @@ class SimpleEnclosureMixin(object):
 	zope.container.IContainer of names to enclosures.
 	"""
 
+	_enclosures = None
+
 	def __init__(self, *args, **kwargs):
 		super(SimpleEnclosureMixin,self).__init__( *args, **kwargs )
 
 	### Enclosures
 	# The backing store, the _enclosures BTreeContainer, is created
 	# on demand
+
+	def _new_enclosure_container(self):
+		return BTreeContainer()
+
 	def iterenclosures( self ):
-		enc = getattr( self, '_enclosures', {} ) or {} # In case of None
+		enc = self._enclosures or {} # In case of None
 		return iter( enc.values() )
+
+	def __setstate__(self,state):
+		super(SimpleEnclosureMixin,self).__setstate__(state)
+		if self._enclosures is not None and self._enclosures.__parent__ is None:
+			self._enclosures.__parent__ = self
 
 	def add_enclosure( self, content ):
 		"""
@@ -68,20 +79,24 @@ class SimpleEnclosureMixin(object):
 			container provides an :class:`INameChooser` adapter.
 		:raises KeyError: If the enclosures container enforces uniqueness,
 			doesn't allow overwriting, and no unique name can be found.
+		:raises AttributeError: If the content has no `name` attribute.
+
+		:returns: The content object
 
 		EOD
 		"""
-		if content:
-			if getattr( self, '_enclosures', None ) is None:
-				setattr( self, '_enclosures', BTreeContainer() )
-			enclosures = getattr( self, '_enclosures' )
-			name_chooser = INameChooser(enclosures, None)
-			if name_chooser:
-				content.name = name_chooser.chooseName( content.name, content )
-			enclosures[content.name] = content
-			# FIXME: Weird stuff to make our weird traversal work
-			# out. We're lying about parentage.
-			try:
-				delattr( content, '__parent__' )
-			except AttributeError:
-				pass
+		if content is None:
+			return None
+
+		if self._enclosures is None:
+			self._enclosures = self._new_enclosure_container()
+			self._enclosures.__parent__ = self
+			# But notice that the __name__ is left empty...
+
+		enclosures = self._enclosures
+		name_chooser = INameChooser(enclosures, None)
+		if name_chooser:
+			content.name = name_chooser.chooseName( content.name, content )
+		enclosures[content.name] = content
+		return content
+
