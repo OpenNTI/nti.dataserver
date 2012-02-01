@@ -22,8 +22,11 @@ class TestSimpleEnclosureMixin(mock_dataserver.ConfiguringTestBase):
 
 		# accepts None gracefully
 		sem.add_enclosure( None )
-		sem.add_enclosure( '' )
 		assert_that( '_enclosures', is_not( is_in( sem.__dict__ ) ) )
+
+		with self.assertRaises(AttributeError):
+			sem.add_enclosure( '' )
+
 
 		class Content(object): pass
 		content = Content()

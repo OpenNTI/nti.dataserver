@@ -3,11 +3,14 @@
 """
 Contains renderers for the REST api.
 """
+import logging
+logger = logging.getLogger(__name__)
+
 import six
 import collections
 
 import pyramid.httpexceptions
-from pyramid import traversal
+from . import traversal
 from pyramid import security as psec
 from pyramid import location as plocation
 
@@ -116,7 +119,7 @@ def render_link( parent_resource, link, user_root_resource=None ):
 		# FIXME: Hardcoded paths.
 		if ntiids.is_valid_ntiid_string( ntiid ):
 			#from IPython.core.debugger import Tracer; debug_here = Tracer()()
-			root = traversal.resource_path( user_root_resource ) if user_root_resource else '/dataserver2'
+			root = traversal.normal_resource_path( user_root_resource ) if user_root_resource else '/dataserver2'
 			if ntiids.is_ntiid_of_type( ntiid, ntiids.TYPE_OID ):
 				href = root + '/Objects/' + ntiid
 			else:
@@ -131,14 +134,24 @@ def render_link( parent_resource, link, user_root_resource=None ):
 										   #getattr( link, '__parent__', parent_resource ) ),
 								  getattr( target, '__name__',
 										   getattr( target, 'name', (target if isinstance(target,six.string_types) else None) )) )
-		# replace the actual User object with the userrootresource if we have one
-		if user_root_resource and isinstance( list(plocation.lineage(resource))[-1], users.User ):
-			r = resource
-			while getattr( r.__parent__, '__parent__', None):
-				r = r.__parent__
-			r.__parent__ = user_root_resource
+		# replace the actual User object with the userrootresource if we have one,
+		# by injecting it into the lineage. Note that we do this with proxies
+		# to avoid changing the persistent objects.
+		if user_root_resource and traversal.find_interface( resource, users.User ):
+			lineage = [user_root_resource if isinstance(x,users.User) else x
+					   for x in traversal.lineage(resource)]
+			lineage.reverse()
+
+			parent = None
+			for y in lineage:
+				if y == user_root_resource:
+					parent = user_root_resource.__parent__
+				y = LocationProxy( y, parent, y.__name__ )
+				parent = y
+			resource = parent
+
 		try:
-			href = traversal.resource_path( resource )
+			href = traversal.normal_resource_path( resource )
 		except AttributeError:
 			logger.exception( "Failed to traverse path to %s", resource )
 
