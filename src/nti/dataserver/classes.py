@@ -113,6 +113,8 @@ class ClassInfo( datastructures.PersistentCreatedModDateTrackingObject,
 		# IDs to be unique (unless we use a name chooser).
 		# at least make that explicit
 		assert section.ID not in self._sections
+		if self.ID:
+			section.containerId = self.NTIID
 		self._sections[section.ID] = section
 
 	def __getitem__( self, key ):
@@ -125,7 +127,10 @@ class ClassInfo( datastructures.PersistentCreatedModDateTrackingObject,
 			self._sections.__name__ = 'Sections'
 			self._sections.__parent__ = self
 			_add_container_iface( self._sections, nti_interfaces.ISectionInfoContainer )
-			for s in state['Sections']: self._sections[s.ID] = s
+			for s in state['Sections']:
+				self._sections[s.ID] = s
+				if self.ID:
+					s.containerId = self.NTIID
 			del state['Sections']
 			state['_sections'] = self._sections
 		super(ClassInfo,self).__setstate__( state )
@@ -203,6 +208,8 @@ class SectionInfo( datastructures.PersistentCreatedModDateTrackingObject,
 	__external_can_create__ = True
 	# Let IDs come in, ClassInfo depends on it
 	_excluded_in_ivars_ = datastructures.ExternalizableInstanceDict._excluded_in_ivars_ - set( ('ID',) )
+
+	containerId = None
 
 	def __init__( self, ID=None ):
 		super(SectionInfo,self).__init__()

@@ -176,6 +176,7 @@ class TestClass(mock_dataserver.ConfiguringTestBase):
 			if object_evt_type == IObjectAddedEvent:
 				assert_that( section.__parent__, is_( clazz._sections ) )
 				assert_that( events, has_item( has_property( 'newName', is_( section.ID ) ) ) )
+				assert_that( section.containerId, is_( clazz.NTIID ) )
 			assert_that( events, has_item( has_property( 'object', is_( section ) ) ) )
 
 		if object_evt_type == IObjectAddedEvent:
