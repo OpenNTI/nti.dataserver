@@ -483,6 +483,9 @@ def createApplication( http_port,
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._EnclosurePostView',
 							 renderer='rest', context='nti.appserver.dataserver_pyramid_views._ContainedObjectResource',
 							 permission=nauth.ACT_CREATE, request_method='POST' )
+	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._EnclosurePostView',
+							 renderer='rest', context='nti.dataserver.interfaces.ISimpleEnclosureContainer',
+							 permission=nauth.ACT_CREATE, request_method='POST' )
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._EnclosurePutView',
 							 renderer='rest', context='nti.dataserver.interfaces.IEnclosedContent',
 							 permission=nauth.ACT_UPDATE, request_method='PUT' )
@@ -490,9 +493,14 @@ def createApplication( http_port,
 							 renderer='rest', context='nti.dataserver.interfaces.IEnclosedContent',
 							 permission=nauth.ACT_READ, request_method='GET' )
 
+	# Restore GET for the things we can POST enclosures to
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
 							 renderer='rest',context='nti.appserver.dataserver_pyramid_views._ContainedObjectResource',
 							 permission=nauth.ACT_READ, request_method='GET' )
+	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
+							 renderer='rest',context='nti.dataserver.interfaces.ISimpleEnclosureContainer',
+							 permission=nauth.ACT_READ, request_method='GET' )
+
 
 
 	# register change listeners

@@ -414,25 +414,27 @@ class TestApplication(ConfiguringTestBase):
 		body = json.loads( res.body )
 		assert_that( body, has_entry( 'Links', has_item( has_entry( 'href', '/dataserver2/providers/OU/Classes/CS2051/TheSlug' ) ) ) )
 
-	# @mock_dataserver.WithMockDSTrans
-	# def test_section_modeled_enclosure_href(self):
-	# 	users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
-	# 	users.User.create_user( self.ds, username='jason.madden@nextthought.com' )
+	@mock_dataserver.WithMockDSTrans
+	def test_class_section_trivial_enclosure_href(self):
+		users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+		users.User.create_user( self.ds, username='jason.madden@nextthought.com' )
 
-	# 	_create_class( self.ds, ('sjohnson@nextthought.com',) )
-	# 	testapp = TestApp( self.app )
+		_create_class( self.ds, ('sjohnson@nextthought.com',) )
+		testapp = TestApp( self.app )
 
-	# 	# Modeled data
-	# 	path = '/dataserver2/providers/OU/Classes/CS2051/CS2051.101'
-	# 	data = { 'Class': 'ClassScript', 'body': ["The body"] }
-	# 	data = json.dumps( data )
-	# 	res = testapp.post( path, data, extra_environ=self._make_extra_environ(), headers={'Content-Type': 'application/vnd.nextthought.classscript', 'Slug': 'TheSlug'})
-	# 	assert_that( res.status_int, is_( 201 ) )
+		# Modeled data
+		path = '/dataserver2/providers/OU/Classes/CS2051/CS2051.101'
+		data = { 'Class': 'ClassScript', 'body': ["The body"] }
+		data = json.dumps( data )
+		res = testapp.post( path, data, extra_environ=self._make_extra_environ(), headers={'Content-Type': 'application/vnd.nextthought.classscript', 'Slug': 'TheSlug'})
+		assert_that( res.status_int, is_( 201 ) )
 
-	# 	res = testapp.get( path, extra_environ=self._make_extra_environ() )
-	# 	body = json.loads( res.body )
-	# 	assert_that( body, has_entry( 'Links', has_item( has_entry( 'href', '/dataserver2/providers/OU/Classes/CS2051/TheSlug' ) ) ) )
+		res = testapp.get( path, extra_environ=self._make_extra_environ() )
+		body = json.loads( res.body )
+		assert_that( body, has_entry( 'Links', has_item( has_entry( 'href', '/dataserver2/providers/OU/Classes/CS2051/CS2051.101/TheSlug' ) ) ) )
 
+		res = testapp.get( '/dataserver2/providers/OU/Classes/CS2051/CS2051.101/TheSlug', extra_environ=self._make_extra_environ() )
+		print res
 
 
 def _create_class(ds, usernames_to_enroll=()):
