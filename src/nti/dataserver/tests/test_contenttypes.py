@@ -15,7 +15,7 @@ from nti.dataserver.datastructures import (getPersistentState, toExternalOID, fr
 									   PersistentExternalizableList, ExternalizableInstanceDict,
 									   to_external_ntiid_oid)
 from nti.dataserver import contenttypes
-from nti.dataserver.contenttypes import Note, Canvas, CanvasShape, CanvasAffineTransform, CanvasCircleShape, CanvasPolygonShape
+from nti.dataserver.contenttypes import Note, Canvas, CanvasShape, CanvasAffineTransform, CanvasCircleShape, CanvasPolygonShape, CanvasPathShape
 import nti.dataserver as dataserver
 #import nti.dataserver.users
 
@@ -257,6 +257,12 @@ class TestCanvas(mock_dataserver.ConfiguringTestBase):
 
 		assert_that( canvas2, is_( canvas ) )
 		assert_that( canvas2.containerId, is_( 'CID' ) )
+
+		shape3 = CanvasPathShape( closed=False, points=[1, 2.5] )
+		shape = CanvasPathShape()
+		with ds.dbTrans():
+			ds.update_from_external_object( shape, shape3.toExternalObject() )
+		assert_that( shape, is_( shape3 ) )
 
 def check_update_props( ext_name='strokeRGBAColor',
 						col_name='strokeColor',
