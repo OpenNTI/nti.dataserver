@@ -615,6 +615,24 @@ class CanvasTextShape(CanvasShape):
 		if self.text != tbf:
 			self.text = sanitize_user_html( self.text )
 
+class CanvasPathShape(CanvasShape):
+
+	def __init__( self, closed=True, points=() ):
+		super(CanvasPathShape,self).__init__()
+		self.closed = closed
+		self.points = points
+
+	def updateFromExternalObject(self, *args, **kwargs ):
+		super(CanvasPathShape,self).updateFromExternalObject( *args, **kwargs )
+		assert isinstance( self.closed, bool )
+		for i in self.points:
+			assert isinstance( i, numbers.Real )
+
+	def __eq__( self, other ):
+		return super(CanvasPathShape,self).__eq__( other ) \
+			and self.closed == getattr(other,'closed',None) \
+			and self.points == getattr(other,'points',None)
+
 
 # Support for legacy quiz posting
 from quizzes import QuizResult

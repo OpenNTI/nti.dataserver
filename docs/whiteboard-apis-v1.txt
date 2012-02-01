@@ -28,7 +28,7 @@ Whiteboard API v1
   - CanvasPathShape:
 	For freehand drawing. Adds an array of 'points' forming the path and
 	 a 'closed' flag to specify whether the path is open or closed.
-   
+
   - Canvas:
   	This object is a container for a bunch of shapes, a scene, that can be saved.
   	*shapeList - a list of WBShape objects.
@@ -117,7 +117,7 @@ struct CanvasTextShape : CanvasShape {
 }
 
 struct CanvasPathShape: CanvasShape {
-	[] points;
+	float [] points;
 	bool closed;
 }
 
