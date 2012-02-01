@@ -100,3 +100,11 @@ class SimpleEnclosureMixin(object):
 		enclosures[content.name] = content
 		return content
 
+
+	def get_enclosure( self, name ):
+		"""
+		Return the enclosure with the given name.
+		:raises KeyError: If no such enclosure is found.
+		"""
+
+		return (self._enclosures or {})[name]

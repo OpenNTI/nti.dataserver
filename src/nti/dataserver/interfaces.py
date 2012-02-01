@@ -316,6 +316,12 @@ class ISimpleEnclosureContainer( #IContainerNamesContainer,
 		Adds the given :class:`IContent` as an enclosure.
 		"""
 
+	def get_enclosure( name ):
+		"""
+		Return an enclosure having the given name.
+		:raises KeyError: If no such enclosure exists.
+		"""
+
 ### Particular content types
 
 class IThreadable(interface.Interface):

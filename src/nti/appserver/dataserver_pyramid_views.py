@@ -23,7 +23,7 @@ from pyramid import traversal
 
 from zope.location.location import LocationProxy
 
-from nti.dataserver.interfaces import (IDataserver, ILibrary, IEnclosureIterable, IACLProvider)
+from nti.dataserver.interfaces import (IDataserver, ILibrary, IEnclosureIterable, IACLProvider, ISimpleEnclosureContainer)
 from nti.dataserver import (users, datastructures)
 from nti.dataserver.datastructures import to_external_ntiid_oid as toExternalOID
 from nti.dataserver.datastructures import StandardInternalFields, StandardExternalFields
@@ -74,6 +74,17 @@ class ACLLocationProxy(LocationProxy):
 	def __init__( self, backing, container=None, name=None, acl=() ):
 		LocationProxy.__init__( self, backing, container=container, name=name )
 		self.__acl__ = acl
+
+class EnclosureGetItemACLLocationProxy(ACLLocationProxy):
+	"""
+	Use this for leaves of the tree that do not contain anything except enclosures.
+	"""
+	def __getitem__(self, key ):
+		enc = self.get_enclosure( key )
+		# TODO: IACLProvider
+		return ACLLocationProxy( enc, self, enc.__name__, self.__acl__ )
+
+
 
 class _RootResource(object):
 	__name__ = ''
@@ -391,11 +402,20 @@ class _ContainedObjectResource(object):
 		res = self.resource
 		try:
 			# Return something that's a direct child, if possible.
-			return ACLLocationProxy( res[key], res, key, self.__acl__ )
+			# TODO: IACLProvider should be plugged in here
+			result = EnclosureGetItemACLLocationProxy( res[key], res, key, self.__acl__ )
+			return result
 		except (KeyError,TypeError):
 			pass
 		# If no direct child, then does it contain enclosures?
 		req = _find_request( self )
+		cont = req.registry.queryAdapter( res, ISimpleEnclosureContainer ) \
+				   if not ISimpleEnclosureContainer.providedBy( res ) \
+				   else res
+		if ISimpleEnclosureContainer.providedBy( cont ):
+			# TODO: IACLProvider
+			return ACLLocationProxy( cont.get_enclosure( key ), res, key, self.__acl__ )
+
 		iterable = req.registry.queryAdapter( res, IEnclosureIterable ) \
 				   if not IEnclosureIterable.providedBy( res ) \
 				   else res
@@ -965,10 +985,10 @@ class _EnclosurePostView(_UGDModifyViewBase):
 
 
 	def __call__(self):
-		context = self.request.context # A _ContainedObjectResource
+		context = self.request.context # A _ContainedObjectResource OR an ISimpleEnclosureContainer
 		# Enclosure containers are defined to be IContainerNamesContainer,
 		# which means they will choose their name based on what we give them
-		enclosure_container = context.resource
+		enclosure_container = context if ISimpleEnclosureContainer.providedBy( context ) else context.resource
 
 		# AtomPub specifies a 'Slug' header to be used as the base of the
 		# name
@@ -989,7 +1009,7 @@ class _EnclosurePostView(_UGDModifyViewBase):
 		if modeled_content is not None:
 			modeled_content.creator = self.getRemoteUser()
 			self.updateContentObject( modeled_content, self.readInput() )
-			modeled_content.containerId = enclosure_container.id # TODO: Assumptions
+			modeled_content.containerId = getattr( enclosure_container, 'id', None ) or getattr( enclosure_container, 'ID' ) # TODO: Assumptions
 			content_type = nti_mimetype_from_object( modeled_content )
 
 		content = modeled_content if modeled_content is not None else self.request.body

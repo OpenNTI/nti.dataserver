@@ -76,7 +76,8 @@ class ClassInfo( datastructures.PersistentCreatedModDateTrackingObject,
 		# The section list is a IContainer
 		# so it fires events
 		self._sections = BTreeContainer()
-		self._sections.__name__ = 'Sections'
+		# This container is kept unnamed so that URLs come out right
+		self._sections.__name__ = ''
 		self._sections.__parent__ = self
 		_add_container_iface( self._sections, nti_interfaces.ISectionInfoContainer )
 
@@ -124,7 +125,7 @@ class ClassInfo( datastructures.PersistentCreatedModDateTrackingObject,
 	def __setstate__( self, state ):
 		if 'Sections' in state:
 			self._sections = BTreeContainer()
-			self._sections.__name__ = 'Sections'
+			self._sections.__name__ = ''
 			self._sections.__parent__ = self
 			_add_container_iface( self._sections, nti_interfaces.ISectionInfoContainer )
 			for s in state['Sections']:
@@ -135,6 +136,8 @@ class ClassInfo( datastructures.PersistentCreatedModDateTrackingObject,
 			state['_sections'] = self._sections
 		super(ClassInfo,self).__setstate__( state )
 		_add_container_iface( self._sections, nti_interfaces.ISectionInfoContainer )
+		if self._sections.__name__ == 'Sections':
+			self._sections.__name__ = ''
 
 	@property
 	def NTIID(self):
