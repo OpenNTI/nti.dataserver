@@ -133,7 +133,7 @@ class _Env(_ReadableEnv):
 	def write_conf_file( self, name, contents ):
 		write_configuration_file( self.conf_file( name ), contents )
 
-	def write_supervisor_conf_file( self, pserve_ini, command_prefix=None):
+	def write_supervisor_conf_file( self, pserve_ini):
 		
 		ini = ConfigParser.SafeConfigParser()
 		ini.add_section( 'supervisord' )
@@ -154,8 +154,7 @@ class _Env(_ReadableEnv):
 		for p in self.programs:
 			line = 'program:%s' % p.name
 			ini.add_section( line )
-			command = ' '.join([command_prefix or '', p.cmd_line])
-			ini.set( line, 'command', command.lstrip())
+			ini.set( line, 'command', p.cmd_line)
 			if p.priority != _Program.priority:
 				ini.set( line, 'priority', str(p.priority) )
 			ini.set( line, 'environment', 'DATASERVER_DIR=%(here)s/../' )
@@ -163,9 +162,9 @@ class _Env(_ReadableEnv):
 		with open( self.conf_file( 'supervisord.conf' ), 'wb' ) as fp:
 			ini.write( fp )
 
-		command = ' '.join([command_prefix or '', 'pserve'])
+		command = 'pserve'
 		ini.add_section( 'program:pserve' )
-		ini.set( 'program:pserve', 'command', '%s %s' % (command.lstrip(), pserve_ini) )
+		ini.set( 'program:pserve', 'command', '%s %s' % (command, pserve_ini) )
 		ini.set( 'program:pserve', 'environment', 'DATASERVER_DIR=%(here)s/../' )
 		ini.set( 'supervisord', 'nodaemon', 'true' )
 		with open( self.conf_file( 'supervisord_dev.conf' ), 'wb' ) as fp:
@@ -325,8 +324,6 @@ def _configure_database( env, uris ):
 		for subscriber in subscribers:
 			subscriber.init_database( conn )
 
-
-
 def temp_get_config( root, demo=False ):
 	env = _Env( root, create=False )
 
@@ -358,7 +355,6 @@ def temp_get_config( root, demo=False ):
 
 	return env
 
-
 def write_configs(root_dir, pserve_ini):
 	env = _Env( root_dir, create=True )
 	xmlconfig.file( 'configure.zcml', package=sys.modules['nti.dataserver'] )
@@ -379,7 +375,6 @@ def write_configs(root_dir, pserve_ini):
 	env.write_main_conf()
 
 	return env
-	
 	
 def main():
 	args = sys.argv
