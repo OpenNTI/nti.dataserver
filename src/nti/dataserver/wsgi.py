@@ -488,15 +488,25 @@ class Post(UserBasedGet):
 		input stream is parsed, an instance of self.inputClass is created and update()'d
 		from the input data."""
 		value = environ['wsgi.input'].read(int(environ['CONTENT_LENGTH'] ))
-		if findFormat( environ ) == 'plist':
-			value = plistlib.readPlistFromString( value )
-		else:
-			try:
+
+		try:
+			if findFormat( environ ) == 'plist':
+				value = plistlib.readPlistFromString( value )
+			else:
 				value = json.loads(value)
-			except ValueError:
-				logger.exception( 'Failed to load %s', value )
-				raise
-		return self.transformInput( environ, value )
+			return self.transformInput( environ, value )
+		except Exception:
+			# Sadly, there's not a good exception list to catch.
+			# plistlib raises undocumented exceptions from xml.parsers.expat
+			# json may raise ValueError or other things, depending on implementation.
+			# transformInput may raise TypeError if the request is bad, but it
+			# may also raise AttributeError if the inputClass is bad, but that
+			# could also come from other places. We call it all client error.
+			logger.exception( "Failed to parse/transform value %s", value )
+			_, _, tb = sys.exc_info()
+			ex = hexc.HTTPBadRequest()
+			raise ex, None, tb
+
 
 	def transformInput( self, environ, value ):
 		pm = self.inputClass( )
