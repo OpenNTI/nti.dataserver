@@ -23,7 +23,7 @@ from pyramid import traversal
 
 from zope.location.location import LocationProxy
 
-from nti.dataserver.interfaces import (IDataserver, ILibrary, IEnclosureIterable, IACLProvider, ISimpleEnclosureContainer)
+from nti.dataserver.interfaces import (IDataserver, ILibrary, IEnclosureIterable, IACLProvider, ISimpleEnclosureContainer, IEnclosedContent)
 from nti.dataserver import (users, datastructures)
 from nti.dataserver.datastructures import to_external_ntiid_oid as toExternalOID
 from nti.dataserver.datastructures import StandardInternalFields, StandardExternalFields
@@ -1040,15 +1040,46 @@ class _EnclosurePostView(_UGDModifyViewBase):
 		# just created. We need an 'Entry' wrapper.
 		return {}
 
-class _EnclosurePutView(object):
+class _EnclosurePutView(_UGDModifyViewBase):
 	"""
+	View for editing an existing enclosure.
+	"""
+
+	def __init__( self, request ):
+		super(_EnclosurePutView,self).__init__( request )
+
+	def __call__( self ):
+		context = self.request.context
+		assert IEnclosedContent.providedBy( context )
+		# How should we be dealing with changes to Content-Type?
+		# Changes to Slug are not allowed because that would change the URL
+		# Not modeled
+		result = {}
+		if not context.mime_type.startswith( MIME_BASE ):
+			context.data = self.request.body
+		else:
+			modeled_content = context.data
+			self.updateContentObject( modeled_content, self.readInput() )
+			result = modeled_content
+		return result
+
+class _EnclosureDeleteView(object):
+	"""
+	View for deleting an object.
 	"""
 
 	def __init__( self, request ):
 		self.request = request
 
 	def __call__( self ):
-		raise NotImplementedError()
+		context = self.request.context
+		assert IEnclosedContent.providedBy( context )
+		container = traversal.find_interface( context, ISimpleEnclosureContainer )
+		# TODO: Handle the KeyError here and also if ISimpleEnclosureContainer was not found
+		container.del_enclosure( context.name )
+
+		result = hexc.HTTPNoContent()
+		return result
 
 class _UserSearchView(object):
 

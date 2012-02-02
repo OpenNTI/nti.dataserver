@@ -433,8 +433,24 @@ class TestApplication(ConfiguringTestBase):
 		body = json.loads( res.body )
 		assert_that( body, has_entry( 'Links', has_item( has_entry( 'href', '/dataserver2/providers/OU/Classes/CS2051/CS2051.101/TheSlug' ) ) ) )
 
+		# Get it
 		res = testapp.get( '/dataserver2/providers/OU/Classes/CS2051/CS2051.101/TheSlug', extra_environ=self._make_extra_environ() )
-		print res
+
+		# Update it
+		data = { 'Class': 'ClassScript', 'body': ["The body2"] }
+		data = json.dumps( data )
+		testapp.put( '/dataserver2/providers/OU/Classes/CS2051/CS2051.101/TheSlug',
+					 data,
+					 headers={'Content-Type': 'application/vnd.nextthought.classscript', 'Slug': 'TheSlug'},
+					 extra_environ=self._make_extra_environ() )
+
+		# Delete it
+		res = testapp.delete( '/dataserver2/providers/OU/Classes/CS2051/CS2051.101/TheSlug', extra_environ=self._make_extra_environ() )
+		assert_that( res, has_property( 'status_int', 204 ) )
+
+		with self.assertRaises(hexc.HTTPNotFound):
+			testapp.get( '/dataserver2/providers/OU/Classes/CS2051/CS2051.101/TheSlug',
+						 extra_environ=self._make_extra_environ() )
 
 
 def _create_class(ds, usernames_to_enroll=()):

@@ -1,6 +1,6 @@
 
 from hamcrest import (assert_that, is_, has_entry, instance_of, is_not, has_entry,
-					  has_key, is_in, not_none, is_not, greater_than,
+					  has_key, is_in, not_none, is_not, greater_than, has_item,
 					  same_instance, none, has_entries, only_contains)
 from hamcrest.core.base_matcher import BaseMatcher
 
@@ -185,7 +185,9 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 		del ext['Last Modified']
 		del ext['CreatedTime']
 		assert_that( ext, has_entries( "Class", "Note",
-									   "body", only_contains( has_entries('Class', 'Canvas', 'shapeList', [], 'CreatedTime', c.createdTime ) ) ) )
+									   "body", only_contains( has_entries('Class', 'Canvas',
+																		  'shapeList', [],
+																		  'CreatedTime', c.createdTime ) ) ) )
 
 
 		n = Note()
@@ -194,6 +196,28 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 			ds.update_from_external_object( n, ext )
 
 		assert_that( n['body'][0], is_( Canvas ) )
+
+		c.append( CanvasPathShape( points=[1, 2, 3] ) )
+		n = Note()
+		n['body'] = [c]
+		c[0].closed = 1
+		ext = n.toExternalObject()
+		del ext['Last Modified']
+		del ext['CreatedTime']
+		assert_that( ext, has_entries( "Class", "Note",
+									   "body", only_contains( has_entries('Class', 'Canvas',
+																		  'shapeList', has_item( has_entry( 'Class', 'CanvasPathShape' ) ),
+																		  'CreatedTime', c.createdTime ) ) ) )
+
+
+		n = Note()
+		ds = MockDataserver()
+		with ds.dbTrans():
+			ds.update_from_external_object( n, ext )
+
+		assert_that( n['body'][0], is_( Canvas ) )
+		assert_that( n['body'][0][0], is_( CanvasPathShape ) )
+		assert_that( n['body'][0][0].closed, same_instance( True ) )
 
 	def test_update_sharing_only( self ):
 		n = Note()
