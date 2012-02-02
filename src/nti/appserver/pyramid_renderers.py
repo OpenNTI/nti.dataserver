@@ -227,10 +227,19 @@ class REST(object):
 				and obj[StandardExternalFields.CREATOR] == psec.authenticated_userid( request )
 
 		def render_links( obj, parent=None ):
-			if obj is None: return
+			if obj is None or not obj:
+				# We might get some proxies that are not 'is None'?
+				return
 			try:
 				obj.setdefault( StandardExternalFields.LINKS, [] )
 			except AttributeError: pass
+
+			# If we cannot iterate it, then we don't want to deal with it
+			try:
+				iter(obj)
+			except TypeError:
+				return
+
 			if StandardExternalFields.LINKS in obj: # Catch lists
 				# Add an Edit link if it's an editable object that we own
 				# and that doesn't already provide one.
