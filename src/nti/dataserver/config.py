@@ -389,7 +389,7 @@ def main():
 	if not os.path.exists( pserve_ini ):
 		raise OSError( "No ini file " + pserve_ini )
 
-	return write_configs(root_dir, pserve_ini)
+	write_configs(root_dir, pserve_ini)
 
 if __name__ == '__main__':
 	main()
