@@ -36,24 +36,26 @@ TYPE_TRANSCRIPT_SUMMARY = 'TranscriptSummary'
 # Validation
 _illegal_chars_ = r"/\";=?<>#%'{}|^[]"
 
+class InvalidNTIIDError(ValueError): pass
+
 def validate_ntiid_string( string ):
 	"""
-	Ensures the string is a valid NTIID, else raises ValueError.
+	Ensures the string is a valid NTIID, else raises :class:`InvalidNTIIDError`.
 	:return: The `string`.
 	"""
 	if not string or not string.startswith( 'tag:nextthought.com,20' ):
-		raise ValueError( 'Missing start value: ' + str(string) )
+		raise InvalidNTIIDError( 'Missing start value: ' + str(string) )
 
 	parts = string.split( ':', 2 ) # Split twice. Allow for : in the specific part
 	if len( parts ) != 3:
-		raise ValueError( 'Wrong number of colons: ' + string )
+		raise InvalidNTIIDError( 'Wrong number of colons: ' + string )
 
 	if len( parts[2].split( '-' ) ) > 3:
-		raise ValueError( 'Wrong number of dashes: ' + string )
+		raise InvalidNTIIDError( 'Wrong number of dashes: ' + string )
 
 	for char in _illegal_chars_:
 		if char in string:
-			raise ValueError( 'Contains illegal char' + char )
+			raise InvalidNTIIDError( 'Contains illegal char' + char )
 	return string
 
 validate_ntiid_string( ROOT )
@@ -62,7 +64,7 @@ def is_valid_ntiid_string( string ):
 	try:
 		validate_ntiid_string( string )
 		return True
-	except ValueError:
+	except InvalidNTIIDError:
 		return False
 
 def is_ntiid_of_type( ntiid, nttype ):
