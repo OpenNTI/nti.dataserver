@@ -376,7 +376,7 @@ class _ContainedObjectResource(object):
 			self.__acl__ = [ (sec.Allow, res.creator.username, sec.ALL_PERMISSIONS) ]
 		except (AttributeError,TypeError):
 			# At least make the default mutable
-			self.__acl__ = list(self.__acl__)
+			self.__acl__ = [] #list(self.__acl__)
 
 		# TODO: Finish unifying these three things
 		acl_provider = component.queryAdapter( res, IACLProvider )
@@ -392,10 +392,12 @@ class _ContainedObjectResource(object):
 
 		if hasattr( res, 'friends' ):
 			# friends lists
-
 			for target in res:
 				self.__acl__.append( (sec.Allow, target.username, nauth.ACT_READ ) )
-		self.__acl__.append( (sec.Deny, sec.Everyone, sec.ALL_PERMISSIONS) )
+
+		# Our defaults go at the end so as not to pre-empt anything we
+		# have established so far
+		self.__acl__.extend( _ContainedObjectResource.__acl__ )
 
 	@unquoting
 	def __getitem__( self, key ):
