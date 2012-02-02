@@ -489,6 +489,9 @@ def createApplication( http_port,
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._EnclosurePutView',
 							 renderer='rest', context='nti.dataserver.interfaces.IEnclosedContent',
 							 permission=nauth.ACT_UPDATE, request_method='PUT' )
+	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._EnclosureDeleteView',
+							 renderer='rest', context='nti.dataserver.interfaces.IEnclosedContent',
+							 permission=nauth.ACT_UPDATE, request_method='DELETE' )
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
 							 renderer='rest', context='nti.dataserver.interfaces.IEnclosedContent',
 							 permission=nauth.ACT_READ, request_method='GET' )

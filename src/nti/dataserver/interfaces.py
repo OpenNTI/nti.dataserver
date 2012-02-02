@@ -322,6 +322,12 @@ class ISimpleEnclosureContainer( #IContainerNamesContainer,
 		:raises KeyError: If no such enclosure exists.
 		"""
 
+	def del_enclosure( name ):
+		"""
+		Delete the enclosure having the given name.
+		:raises KeyError: If no such enclosure exists.
+		"""
+
 ### Particular content types
 
 class IThreadable(interface.Interface):

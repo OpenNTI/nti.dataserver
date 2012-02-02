@@ -624,7 +624,9 @@ class CanvasPathShape(CanvasShape):
 
 	def updateFromExternalObject(self, *args, **kwargs ):
 		super(CanvasPathShape,self).updateFromExternalObject( *args, **kwargs )
-		assert isinstance( self.closed, bool )
+		assert (isinstance( self.closed, bool ) or self.closed == 0 or self.closed == 1)
+		if self.closed == 0 or self.closed == 1:
+			self.closed = bool(self.closed)
 		for i in self.points:
 			assert isinstance( i, numbers.Real )
 

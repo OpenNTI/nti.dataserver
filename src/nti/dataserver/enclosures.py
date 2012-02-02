@@ -108,3 +108,6 @@ class SimpleEnclosureMixin(object):
 		"""
 
 		return (self._enclosures or {})[name]
+
+	def del_enclosure( self, name ):
+		del (self._enclosures or {})[name]
