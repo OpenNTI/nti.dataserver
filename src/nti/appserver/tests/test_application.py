@@ -415,7 +415,7 @@ class TestApplication(ConfiguringTestBase):
 		assert_that( body, has_entry( 'Links', has_item( has_entry( 'href', '/dataserver2/providers/OU/Classes/CS2051/TheSlug' ) ) ) )
 
 	@mock_dataserver.WithMockDSTrans
-	def test_class_section_trivial_enclosure_href(self):
+	def test_class_section_modeled_enclosure_href(self):
 		users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
 		users.User.create_user( self.ds, username='jason.madden@nextthought.com' )
 
@@ -442,6 +442,41 @@ class TestApplication(ConfiguringTestBase):
 		testapp.put( '/dataserver2/providers/OU/Classes/CS2051/CS2051.101/TheSlug',
 					 data,
 					 headers={'Content-Type': 'application/vnd.nextthought.classscript', 'Slug': 'TheSlug'},
+					 extra_environ=self._make_extra_environ() )
+
+		# Delete it
+		res = testapp.delete( '/dataserver2/providers/OU/Classes/CS2051/CS2051.101/TheSlug', extra_environ=self._make_extra_environ() )
+		assert_that( res, has_property( 'status_int', 204 ) )
+
+		with self.assertRaises(hexc.HTTPNotFound):
+			testapp.get( '/dataserver2/providers/OU/Classes/CS2051/CS2051.101/TheSlug',
+						 extra_environ=self._make_extra_environ() )
+
+	@mock_dataserver.WithMockDSTrans
+	def test_class_section_trivial_enclosure_href(self):
+		users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+		users.User.create_user( self.ds, username='jason.madden@nextthought.com' )
+
+		_create_class( self.ds, ('sjohnson@nextthought.com',) )
+		testapp = TestApp( self.app )
+
+		# Modeled data
+		path = '/dataserver2/providers/OU/Classes/CS2051/CS2051.101'
+		data = "This is the data"
+		res = testapp.post( path, data, extra_environ=self._make_extra_environ(), headers={'Content-Type': 'text/plain', 'Slug': 'TheSlug'})
+		assert_that( res.status_int, is_( 201 ) )
+
+		res = testapp.get( path, extra_environ=self._make_extra_environ() )
+		body = json.loads( res.body )
+		assert_that( body, has_entry( 'Links', has_item( has_entry( 'href', '/dataserver2/providers/OU/Classes/CS2051/CS2051.101/TheSlug' ) ) ) )
+
+		# Get it
+		res = testapp.get( '/dataserver2/providers/OU/Classes/CS2051/CS2051.101/TheSlug', extra_environ=self._make_extra_environ() )
+
+		# Update it
+		data = "This is the new data"
+		testapp.put( '/dataserver2/providers/OU/Classes/CS2051/CS2051.101/TheSlug',
+					 data,
 					 extra_environ=self._make_extra_environ() )
 
 		# Delete it
