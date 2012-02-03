@@ -33,6 +33,12 @@ class SimplePersistentEnclosure(datastructures.CreatedModDateTrackingObject, per
 		self.data = data
 		self.__parent__ = None
 
+	def __setstate__( self, state ):
+		if 'data' in state:
+			state['_data'] = state['data']
+			del state['data']
+		super(SimplePersistentEnclosure,self).__setstate__( state )
+
 	def _get__name__( self ):
 		return self.name
 	def _set__name__( self, name ):
