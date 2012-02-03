@@ -414,43 +414,71 @@ class TestApplication(ConfiguringTestBase):
 		body = json.loads( res.body )
 		assert_that( body, has_entry( 'Links', has_item( has_entry( 'href', '/dataserver2/providers/OU/Classes/CS2051/TheSlug' ) ) ) )
 
-	@mock_dataserver.WithMockDSTrans
+	@mock_dataserver.WithMockDS
 	def test_class_section_modeled_enclosure_href(self):
-		users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
-		users.User.create_user( self.ds, username='jason.madden@nextthought.com' )
+		with self.ds.dbTrans():
+			users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+			users.User.create_user( self.ds, username='jason.madden@nextthought.com' )
 
-		_create_class( self.ds, ('sjohnson@nextthought.com',) )
-		testapp = TestApp( self.app )
+			_create_class( self.ds, ('sjohnson@nextthought.com',) )
+			testapp = TestApp( self.app )
 
-		# Modeled data
-		path = '/dataserver2/providers/OU/Classes/CS2051/CS2051.101'
-		data = { 'Class': 'ClassScript', 'body': ["The body"] }
-		data = json.dumps( data )
-		res = testapp.post( path, data, extra_environ=self._make_extra_environ(), headers={'Content-Type': 'application/vnd.nextthought.classscript', 'Slug': 'TheSlug'})
-		assert_that( res.status_int, is_( 201 ) )
+			# Modeled data
+			path = '/dataserver2/providers/OU/Classes/CS2051/CS2051.101'
+			data = { 'Class': 'ClassScript', 'body': ["The body"] }
+			data = json.dumps( data )
+			res = testapp.post( path, data, extra_environ=self._make_extra_environ(), headers={'Content-Type': 'application/vnd.nextthought.classscript', 'Slug': 'TheSlug'})
+			assert_that( res.status_int, is_( 201 ) )
 
-		res = testapp.get( path, extra_environ=self._make_extra_environ() )
-		body = json.loads( res.body )
-		assert_that( body, has_entry( 'Links', has_item( has_entry( 'href', '/dataserver2/providers/OU/Classes/CS2051/CS2051.101/TheSlug' ) ) ) )
+			res = testapp.get( path, extra_environ=self._make_extra_environ() )
+			body = json.loads( res.body )
+			assert_that( body, has_entry( 'Links', has_item( has_entry( 'href', '/dataserver2/providers/OU/Classes/CS2051/CS2051.101/TheSlug' ) ) ) )
 
-		# Get it
-		res = testapp.get( '/dataserver2/providers/OU/Classes/CS2051/CS2051.101/TheSlug', extra_environ=self._make_extra_environ() )
+		with self.ds.dbTrans():
+			# Get it
+			res = testapp.get( '/dataserver2/providers/OU/Classes/CS2051/CS2051.101/TheSlug', extra_environ=self._make_extra_environ() )
 
-		# Update it
-		data = { 'Class': 'ClassScript', 'body': ["The body2"] }
-		data = json.dumps( data )
-		testapp.put( '/dataserver2/providers/OU/Classes/CS2051/CS2051.101/TheSlug',
-					 data,
-					 headers={'Content-Type': 'application/vnd.nextthought.classscript', 'Slug': 'TheSlug'},
-					 extra_environ=self._make_extra_environ() )
-
-		# Delete it
-		res = testapp.delete( '/dataserver2/providers/OU/Classes/CS2051/CS2051.101/TheSlug', extra_environ=self._make_extra_environ() )
-		assert_that( res, has_property( 'status_int', 204 ) )
-
-		with self.assertRaises(hexc.HTTPNotFound):
-			testapp.get( '/dataserver2/providers/OU/Classes/CS2051/CS2051.101/TheSlug',
+			# Update it
+			data = { 'Class': 'ClassScript', 'body': ["The body2"] }
+			data = json.dumps( data )
+			res = testapp.put( '/dataserver2/providers/OU/Classes/CS2051/CS2051.101/TheSlug',
+						 data,
+						 headers={'Content-Type': 'application/vnd.nextthought.classscript', 'Slug': 'TheSlug'},
 						 extra_environ=self._make_extra_environ() )
+			body = json.loads( res.body )
+
+			# Update it via the Object URL...this goes through a different traversal,
+			# finding the object not via container but via direct lookup, resulting in an ObjectcontainedResource
+			# which gets us to the _UGD* views, not the _Enclosure* views.
+			path = body['Links'][0]['href']
+			assert_that( path, contains_string( 'Objects' ) )
+			res = testapp.put( path,
+							   data,
+							   headers={'Content-Type': 'application/vnd.nextthought.classscript', 'Slug': 'TheSlug'},
+							   extra_environ=self._make_extra_environ() )
+			body = json.loads( res.body )
+
+		# Delete it via both URLs for the same reason as above
+		class Doomed(Exception): pass
+		with self.assertRaises(Doomed):
+			with self.ds.dbTrans():
+				# Delete it
+				res = testapp.delete( '/dataserver2/providers/OU/Classes/CS2051/CS2051.101/TheSlug', extra_environ=self._make_extra_environ() )
+				assert_that( res, has_property( 'status_int', 204 ) )
+				# Roll this transaction back :)
+				raise Doomed()
+
+
+		with self.ds.dbTrans():
+			# Delete it
+			res = testapp.delete( path, extra_environ=self._make_extra_environ() )
+			assert_that( res, has_property( 'status_int', 204 ) )
+
+
+		with self.ds.dbTrans():
+			with self.assertRaises(hexc.HTTPNotFound):
+				testapp.get( '/dataserver2/providers/OU/Classes/CS2051/CS2051.101/TheSlug',
+							 extra_environ=self._make_extra_environ() )
 
 	@mock_dataserver.WithMockDSTrans
 	def test_class_section_trivial_enclosure_href(self):
