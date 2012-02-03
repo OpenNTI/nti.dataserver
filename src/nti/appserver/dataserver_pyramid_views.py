@@ -521,6 +521,8 @@ class _GenericGetView(object):
 				# kept very specific for now.
 				if self.request.traversed[-1] == 'Classes' and self.request.traversed[0] == 'providers':
 					result.__parent__ = self.request.context.__parent__
+				elif self.request.traversed[-1] == 'Pages' and self.request.traversed[0] == 'users':
+					result.__parent__ = self.request.context.__parent__
 			elif resource is not self.request.context and hasattr( self.request.context, '__parent__' ):
 				result.__parent__ = self.request.context.__parent__
 		return result

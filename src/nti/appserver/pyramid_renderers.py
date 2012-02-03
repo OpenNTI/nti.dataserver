@@ -161,7 +161,9 @@ def render_link( parent_resource, link, user_root_resource=None ):
 				   StandardExternalFields.HREF: href,
 				   'rel': rel }
 		if content_type: result['type'] = content_type
-
+		if not _is_valid_href( href ) and not ntiids.is_valid_ntiid_string( href ):
+			logger.warn( "Generating invalid href %s for link %s parent %s root %s",
+						 href, link, parent_resource, user_root_resource )
 	return result
 
 
