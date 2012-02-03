@@ -1,5 +1,5 @@
 #!/usr/bin/env python2.7
-
+from __future__ import print_function
 from hamcrest import (assert_that, is_, none,
 					  has_entry, has_length, has_item, has_key,
 					  contains_string, ends_with, all_of, has_entries)
@@ -49,9 +49,9 @@ class TestApplication(ConfiguringTestBase):
 					   if os.path.isdir( os.path.join( root, s ) )]
 		self.main.setServeFiles( serveFiles )
 
-	def _make_extra_environ(self, user='sjohnson@nextthought.com', **kwargs):
+	def _make_extra_environ(self, user=b'sjohnson@nextthought.com', **kwargs):
 		result = {
-			'HTTP_AUTHORIZATION': 'Basic ' + (user + ':temp001').encode('base64'),
+			b'HTTP_AUTHORIZATION': b'Basic ' + (user + ':temp001').encode('base64'),
 			}
 		for k, v in kwargs.items():
 			k = str(k)
@@ -112,25 +112,41 @@ class TestApplication(ConfiguringTestBase):
 		assert_that( res.body, contains_string( str(contained) ) )
 
 
-	@mock_dataserver.WithMockDSTrans
+	@mock_dataserver.WithMockDS
 	def test_post_pages_collection(self):
-		user = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
-		testapp = TestApp( self.app )
-		containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
-		data = json.serialize( { 'Class': 'Highlight',
-								 'ContainerId': containerId,
-								 'Location': 'foo-bar'} )
+		with self.ds.dbTrans():
+			user = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+			testapp = TestApp( self.app )
+			containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
+			data = json.serialize( { 'Class': 'Highlight',
+									 'ContainerId': containerId,
+									 'Location': 'foo-bar'} )
 
-		path = '/dataserver2/users/sjohnson@nextthought.com/Pages/'
-		res = testapp.post( path, data, extra_environ=self._make_extra_environ() )
-		assert_that( res.status_int, is_( 201 ) )
-		assert_that( res.body, contains_string( '"Location": "foo-bar"' ) )
-		assert_that( res.headers, has_entry( 'Location', contains_string( 'http://localhost/dataserver2/users/sjohnson%40nextthought.com/Objects/tag:nextthought.com,2011-10:sjohnson@nextthought.com-OID' ) ) )
-		assert_that( res.headers, has_entry( 'Content-Type', contains_string( 'application/vnd.nextthought.highlight+json' ) ) )
+			path = '/dataserver2/users/sjohnson@nextthought.com/Pages/'
+			res = testapp.post( path, data, extra_environ=self._make_extra_environ() )
+			assert_that( res.status_int, is_( 201 ) )
+			assert_that( res.body, contains_string( '"Location": "foo-bar"' ) )
+			assert_that( res.headers, has_entry( 'Location', contains_string( 'http://localhost/dataserver2/users/sjohnson%40nextthought.com/Objects/tag:nextthought.com,2011-10:sjohnson@nextthought.com-OID' ) ) )
+			assert_that( res.headers, has_entry( 'Content-Type', contains_string( 'application/vnd.nextthought.highlight+json' ) ) )
 
-		path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + containerId + ')/UserGeneratedData'
-		res = testapp.get( path, extra_environ=self._make_extra_environ())
-		assert_that( res.body, contains_string( '"Location": "foo-bar"' ) )
+			path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + containerId + ')/UserGeneratedData'
+			res = testapp.get( path, extra_environ=self._make_extra_environ())
+			assert_that( res.body, contains_string( '"Location": "foo-bar"' ) )
+
+		with self.ds.dbTrans():
+			# The pages collection should have complete URLs
+			path = '/dataserver2/users/sjohnson@nextthought.com/Pages'
+			res = testapp.get( path, extra_environ=self._make_extra_environ() )
+			body = json.loads( res.body )
+			links = body['Collection']['Links']
+			assert_that( links, has_item( has_entry( 'href', '/dataserver2/users/sjohnson%40nextthought.com/Search/RecursiveUserGeneratedData' ) ) )
+			assert_that( body, has_entry( 'Items', has_length( 2 ) ) )
+			for item in body['Items']:
+				item_id = item['ID']
+				links = item['Links']
+				assert_that( links, has_item( has_entry( 'href',
+														 urllib.quote( '/dataserver2/users/sjohnson@nextthought.com/Pages(%s)/RecursiveStream' % item_id ) ) ) )
+
 
 	@mock_dataserver.WithMockDSTrans
 	def test_user_search(self):

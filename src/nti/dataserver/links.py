@@ -25,6 +25,9 @@ class Link(object):
 		raise TypeError( "Links cannot be pickled." )
 	__reduce_ex__ = __reduce__
 
+	def __repr__( self ):
+		return "<Link rel='%s' %s>" % (self.rel, self.target)
+
 class NoOpLinkExternalObjectAdapter(object):
 	"""
 	Implementation of :class:`interfaces.IExternalObject` for
