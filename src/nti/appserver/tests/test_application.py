@@ -1,6 +1,6 @@
 #!/usr/bin/env python2.7
 from __future__ import print_function
-from hamcrest import (assert_that, is_, none,
+from hamcrest import (assert_that, is_, none, starts_with,
 					  has_entry, has_length, has_item, has_key,
 					  contains_string, ends_with, all_of, has_entries)
 from hamcrest.library import has_property
@@ -162,8 +162,11 @@ class TestApplication(ConfiguringTestBase):
 
 		assert_that( res.body, contains_string( str('sjohnson@nextthought.com') ) )
 		# We should have an edit link
-		assert_that( res.body, contains_string( '"Links": [{"href": "/dataserver2/Objects/tag:nextthought.com,2011-10:sjohnson@nextthought.com-OID' ) )
-		assert_that( res.body, contains_string( '"Link", "rel": "edit"}' ) )
+		body = json.loads( res.body )
+		assert_that( body['Items'][0], has_entry( 'Links',
+												  has_item( all_of(
+													  has_entry( 'href', starts_with( "/dataserver2/Objects/tag:nextthought.com,2011-10:sjohnson@nextthought.com-OID" ) ),
+													  has_entry( 'rel', 'edit' ) ) ) ) )
 
 	@mock_dataserver.WithMockDSTrans
 	def test_user_search_deprecated_path(self):
@@ -429,6 +432,11 @@ class TestApplication(ConfiguringTestBase):
 		res = testapp.get( path, extra_environ=self._make_extra_environ() )
 		body = json.loads( res.body )
 		assert_that( body, has_entry( 'Links', has_item( has_entry( 'href', '/dataserver2/providers/OU/Classes/CS2051/TheSlug' ) ) ) )
+
+		# The enclosure should have a valid NTIID
+		enclosure_ntiid = body['Links'][0]['ntiid']
+		testapp.get( '/dataserver2/Objects/'+ enclosure_ntiid, extra_environ=self._make_extra_environ() )
+
 
 	@mock_dataserver.WithMockDS
 	def test_class_section_modeled_enclosure_href(self):

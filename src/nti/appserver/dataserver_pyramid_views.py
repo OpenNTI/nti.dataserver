@@ -24,6 +24,7 @@ from pyramid import traversal
 from zope.location.location import LocationProxy
 
 from nti.dataserver.interfaces import (IDataserver, ILibrary, IEnclosureIterable, IACLProvider, ISimpleEnclosureContainer, IEnclosedContent)
+import nti.dataserver.interfaces as nti_interfaces
 from nti.dataserver import (users, datastructures)
 from nti.dataserver.datastructures import to_external_ntiid_oid as toExternalOID
 from nti.dataserver.datastructures import StandardInternalFields, StandardExternalFields
@@ -311,7 +312,10 @@ class _ObjectsContainerResource(_ContainerResource):
 		return result
 
 	def _getitem_with_ds( self, ds, key ):
-		return ds.get_by_oid( key )
+		# The dataserver wants to provide user-based security
+		# for access with an OID. We can do better than that, though,
+		# with the true ACL security we get from Pyramid's path traversal.
+		return ds.get_by_oid( key, ignore_creator=True )
 
 class _NTIIDsContainerResource(_ObjectsContainerResource):
 
@@ -1045,7 +1049,10 @@ class _EnclosurePostView(_UGDModifyViewBase):
 			self.request.headers.get( 'Slug' ) or '',
 			content,
 			content_type )
+		enclosure.creator = self.getRemoteUser()
 		enclosure_container.add_enclosure( enclosure )
+		if getattr( enclosure_container, '_p_jar', None ):
+			enclosure_container._p_jar.add( enclosure )
 
 		self.request.response.status_int = 201 # Created
 

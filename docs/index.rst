@@ -15,6 +15,7 @@ Contents:
 	ntiid-structure
 	nginx-gunicorn
 	passenger
+	whiteboard-apis-v1
 	api
 
 

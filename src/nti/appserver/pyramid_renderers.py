@@ -35,6 +35,7 @@ from nti.dataserver import ntiids
 from nti.dataserver import authorization as nauth
 
 import nti.appserver.interfaces as app_interfaces
+import nti.dataserver.interfaces as nti_interfaces
 
 def find_content_type( request, data=None ):
 	"""
@@ -111,7 +112,9 @@ def render_link( parent_resource, link, user_root_resource=None ):
 	ntiid = getattr( target, 'ntiid', None ) \
 		or getattr( target, 'NTIID', None ) \
 		or (isinstance(target,six.string_types) and ntiids.is_valid_ntiid_string(target) and target)
-	if ntiid:
+	if ntiid and not nti_interfaces.IEnclosedContent.providedBy( target ):
+		# Although enclosures have an NTIID, we want to avoid using it
+		# if possible because it has a much nicer pretty url.
 		href = ntiid
 		# We're using ntiid as a backdoor for arbitrary strings.
 		# But if it really is an NTIID, then direct it specially if
@@ -160,7 +163,10 @@ def render_link( parent_resource, link, user_root_resource=None ):
 		result = { StandardExternalFields.CLASS: 'Link',
 				   StandardExternalFields.HREF: href,
 				   'rel': rel }
-		if content_type: result['type'] = content_type
+		if content_type:
+			result['type'] = content_type
+		if ntiids.is_valid_ntiid_string( ntiid ):
+			result['ntiid'] = ntiid
 		if not _is_valid_href( href ) and not ntiids.is_valid_ntiid_string( href ):
 			logger.warn( "Generating invalid href %s for link %s parent %s root %s",
 						 href, link, parent_resource, user_root_resource )
