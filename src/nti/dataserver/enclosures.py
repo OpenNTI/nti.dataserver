@@ -39,6 +39,14 @@ class SimplePersistentEnclosure(datastructures.CreatedModDateTrackingObject, per
 		self.name = name
 	__name__ = property( _get__name__, _set__name__ )
 
+	def _get_data( self ):
+		return self._data
+	def _set_data( self, dta ):
+		if hasattr( dta, '__parent__' ):
+			dta.__parent__ = self
+		self._data = dta
+	data = property( _get_data, _set_data )
+
 
 class SimpleEnclosureMixin(object):
 	"""

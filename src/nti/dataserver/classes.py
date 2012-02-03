@@ -26,7 +26,10 @@ class ClassScript(contenttypes._UserContentRoot,datastructures.ExternalizableIns
 	"""
 	Default implementation of :class:`IClassScript`
 	"""
-	interface.implements(nti_interfaces.IClassScript)
+	interface.implements(nti_interfaces.IClassScript,nti_interfaces.IZContained)
+
+	__parent__ = None
+	__name__ = None
 
 	def __init__( self, body=() ):
 		"""

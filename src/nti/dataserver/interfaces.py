@@ -287,6 +287,12 @@ class IModeledContent(IContent,IContained):
 	Content accessible as objects.
 	Interfaces that extend this MUST directly provide IContentTypeAware.
 	"""
+	# TODO: When there's time for testing, consider
+	# making all IModeledContent be IZContained (have __parent__)
+	# Currently, ClassScript itself is specifically adding this
+	# as it is contained in an enclosure wrapper (Maybe we should
+	# be adding IEnclosedContent dynamically to the enclosed object
+	# instead of wrapping it?)
 
 class IEnclosedContent(IContent,IContained):
 	"""

@@ -73,6 +73,7 @@ class ACLLocationProxy(LocationProxy):
 
 	def __init__( self, backing, container=None, name=None, acl=() ):
 		LocationProxy.__init__( self, backing, container=container, name=name )
+		if backing is None: raise TypeError("Cannot wrap None") # Programmer error
 		self.__acl__ = acl
 
 class EnclosureGetItemACLLocationProxy(ACLLocationProxy):
@@ -785,6 +786,10 @@ class _UGDModifyViewBase(object):
 			setattr( pm, 'creator', self.getRemoteUser() )
 		return pm
 
+	def _check_object_exists(self, o, cr='', cid='', oid=''):
+		if o is None:
+			raise hexc.HTTPNotFound( "No object %s/%s/%s" % (cr, cid,oid))
+
 	def createContentObject( self, user, datatype, externalValue ):
 		return _createContentObject( self.dataserver, user, datatype, externalValue )
 
@@ -905,20 +910,22 @@ class _UGDDeleteView(_UGDModifyViewBase):
 	def __call__(self):
 		context = self.request.context
 		theObject = context.resource
-
-		if theObject is None:
-			# Already deleted. We don't know who owned it
-			# so we cannot do permission checking, so we do
-			# the same thing as we would if the user was the owner
-			# and return a 404 Not Found
-			raise hexc.HTTPNotFound()
+		self._check_object_exists( theObject )
 
 		user = theObject.creator
 		with user.updates():
 			theObject = user.getContainedObject( theObject.containerId, theObject.id )
+			# FIXME: See notes in _UGDPutView
+
+			if theObject is None and traversal.find_interface( self.request.context.resource, IEnclosedContent ):
+				# should be self.request.context.resource.__parent__
+				self.request.context = traversal.find_interface( self.request.context.resource, IEnclosedContent )
+				return _EnclosureDeleteView( self.request )()
+
+			self._check_object_exists( theObject )
 
 			lastModified = 0
-			if theObject is None or user.deleteContainedObject( theObject.containerId, theObject.id ) is None:
+			if user.deleteContainedObject( theObject.containerId, theObject.id ) is None:
 				raise hexc.HTTPNotFound()
 
 			lastModified = theObject.creator.lastModified
@@ -939,9 +946,7 @@ class _UGDPutView(_UGDModifyViewBase):
 	def __call__(self):
 		context = self.request.context
 		theObject = context.resource
-
-		if theObject is None:
-			raise hexc.HTTPNotFound()
+		self._check_object_exists( theObject )
 
 		# Then ensure the users match
 		# remoteUser = self.getRemoteUser()
@@ -960,6 +965,16 @@ class _UGDPutView(_UGDModifyViewBase):
 			# TODO: This is sort of weird. Have User.willUpdate and User.didUpdate
 			# to be explicit?
 			theObject = creator.getContainedObject( containerId, objId )
+			# FIXME: This is terrible. We are dispatching again if we cannot resolve the object.
+			# We would have arrived here through the 'Objects' path and found
+			# (the child of) an 'enclosure' object, not an object actually contained by the user
+			if theObject is None and traversal.find_interface( self.request.context.resource, IEnclosedContent ):
+				# should be self.request.context.resource.__parent__
+				self.request.context = traversal.find_interface( self.request.context.resource, IEnclosedContent )
+				return _EnclosurePutView( self.request )()
+
+			self._check_object_exists( theObject, creator, containerId, objId )
+
 			self.updateContentObject( theObject, externalValue )
 
 		if theObject and theObject == theObject.creator:
@@ -971,7 +986,7 @@ class _UGDPutView(_UGDModifyViewBase):
 			# TODO: This should be handled by the renderer. Maybe we set
 			# a name that controls the component lookup?
 			theObject = theObject.toPersonalSummaryExternalObject()
-
+			self._check_object_exists( theObject, creator, containerId, objId )
 
 		# Hack: See _UGDPostView
 		return ACLLocationProxy( theObject, context, objId, context.__acl__ )
@@ -1051,10 +1066,11 @@ class _EnclosurePutView(_UGDModifyViewBase):
 	def __call__( self ):
 		context = self.request.context
 		assert IEnclosedContent.providedBy( context )
+		result = {}
+
 		# How should we be dealing with changes to Content-Type?
 		# Changes to Slug are not allowed because that would change the URL
-		# Not modeled
-		result = {}
+		# Not modeled # TODO: Check IModeledContent.providedBy( context.data )?
 		if not context.mime_type.startswith( MIME_BASE ):
 			context.data = self.request.body
 		else:
