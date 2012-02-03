@@ -629,6 +629,7 @@ class CanvasPathShape(CanvasShape):
 			self.closed = bool(self.closed)
 		for i in self.points:
 			assert isinstance( i, numbers.Real )
+		assert (len(self.points) % 2) == 0 # Must be even number of pairs
 
 	def __eq__( self, other ):
 		return super(CanvasPathShape,self).__eq__( other ) \

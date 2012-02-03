@@ -369,8 +369,8 @@ class MinimalDataserver(object):
 	def __del__(self):
 		self.close()
 
-	def get_by_oid( self, oid_string ):
-		return get_object_by_oid( _ContextManager.contextManager().conn, oid_string )
+	def get_by_oid( self, oid_string, ignore_creator=False ):
+		return get_object_by_oid( _ContextManager.contextManager().conn, oid_string, ignore_creator=ignore_creator )
 
 class _DataserverInitializer(object):
 	interface.implements(interfaces.IDatabaseInitializer)
@@ -930,11 +930,13 @@ class _ChangeReceivingDataserver(Dataserver):
 	# processes.
 
 
-def get_object_by_oid( connection, oid_string ):
+def get_object_by_oid( connection, oid_string, ignore_creator=False ):
 	"""
 	Given an object id string as found in an OID value
 	in an external dictionary, returns the object in the `connection` that matches that
 	id, or None.
+	:param ignore_creator: If True, then creator access checks will be
+		bypassed.
 	"""
 	# TODO: This is probably rife with possibilities for attack
 	required_user_marker = connection
@@ -964,7 +966,7 @@ def get_object_by_oid( connection, oid_string ):
 			result = result()
 
 
-		if result is not None:
+		if result is not None and not ignore_creator:
 			creator = getattr( result, 'creator', None )
 			creator_name = getattr( creator, 'username', creator )
 			# Only the creator can access something it created.

@@ -26,7 +26,9 @@ class Link(object):
 	__reduce_ex__ = __reduce__
 
 	def __repr__( self ):
-		return "<Link rel='%s' %s>" % (self.rel, self.target)
+		# It's very easy to get into an infinite recursion here
+		# if the target wants to print its links
+		return "<Link rel='%s' %s/%s>" % (self.rel, type(self.target), id(self.target))
 
 class NoOpLinkExternalObjectAdapter(object):
 	"""

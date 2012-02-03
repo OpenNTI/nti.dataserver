@@ -2,6 +2,7 @@
 """
 Relating to enclosures.
 """
+import time
 
 import persistent
 import persistent.list # Req'd, despite pylint
@@ -26,12 +27,18 @@ class SimplePersistentEnclosure(datastructures.CreatedModDateTrackingObject, per
 						  IContentTypeAware,
 						  interfaces.IZContained )
 
+	creator = None
+	lastModified = 0
+	createdTime = 0
+
 	def __init__( self, name, data='', mime_type='text/plain' ):
 		super(SimplePersistentEnclosure,self).__init__()
 		self.name = name
 		self.mime_type = mime_type
 		self.data = data
 		self.__parent__ = None
+		self.createdTime = time.time()
+		self.lastModified = self.createdTime
 
 	def __setstate__( self, state ):
 		if 'data' in state:
@@ -52,6 +59,14 @@ class SimplePersistentEnclosure(datastructures.CreatedModDateTrackingObject, per
 			dta.__parent__ = self
 		self._data = dta
 	data = property( _get_data, _set_data )
+
+	@property
+	def NTIID(self):
+		# If we wrap something with an NTIID, we want to be treated like it
+		result = getattr(self.data, 'NTIID', None)
+		if not result:
+			result = datastructures.to_external_ntiid_oid( self )
+		return result
 
 
 class SimpleEnclosureMixin(object):

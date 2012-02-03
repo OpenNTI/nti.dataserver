@@ -24,6 +24,7 @@ struct Link {
 
 	optional string type; // The MIME type of the target.
 	optional string title; // The human-readable name of the target.
+	optional string ntiid; // The NTIID of the target
 }
 
 // TODO: Many of the object properties can be remodeled as

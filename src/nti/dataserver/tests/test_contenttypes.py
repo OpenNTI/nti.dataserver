@@ -197,7 +197,7 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 
 		assert_that( n['body'][0], is_( Canvas ) )
 
-		c.append( CanvasPathShape( points=[1, 2, 3] ) )
+		c.append( CanvasPathShape( points=[1, 2, 3, 4] ) )
 		n = Note()
 		n['body'] = [c]
 		c[0].closed = 1
