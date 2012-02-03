@@ -413,9 +413,7 @@ class TestApplication(ConfiguringTestBase):
 		assert_that( body, has_entry( 'Links', has_item( has_entry( 'href', '/dataserver2/providers/OU/Classes/CS2051/SimplePersistentEnclosure-2' ) ) ) )
 
 
-
-	@mock_dataserver.WithMockDSTrans
-	def test_class_modeled_enclosure_href(self):
+	def _check_class_modeled_enclosure_href( self, data, mime_type ):
 		users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
 		users.User.create_user( self.ds, username='jason.madden@nextthought.com' )
 
@@ -424,18 +422,44 @@ class TestApplication(ConfiguringTestBase):
 
 		# Modeled data
 		path = '/dataserver2/providers/OU/Classes/CS2051/'
-		data = { 'Class': 'ClassScript', 'body': ["The body"] }
+
 		data = json.dumps( data )
-		res = testapp.post( path, data, extra_environ=self._make_extra_environ(), headers={'Content-Type': 'application/vnd.nextthought.classscript', 'Slug': 'TheSlug'})
+		res = testapp.post( path, data, extra_environ=self._make_extra_environ(), headers={'Content-Type': mime_type, 'Slug': 'TheSlug'})
 		assert_that( res.status_int, is_( 201 ) )
 
 		res = testapp.get( path, extra_environ=self._make_extra_environ() )
 		body = json.loads( res.body )
 		assert_that( body, has_entry( 'Links', has_item( has_entry( 'href', '/dataserver2/providers/OU/Classes/CS2051/TheSlug' ) ) ) )
-
 		# The enclosure should have a valid NTIID
 		enclosure_ntiid = body['Links'][0]['ntiid']
-		testapp.get( '/dataserver2/Objects/'+ enclosure_ntiid, extra_environ=self._make_extra_environ() )
+		res = testapp.get( '/dataserver2/Objects/'+ enclosure_ntiid, extra_environ=self._make_extra_environ() )
+		body = json.loads( res.body )
+		assert_that( res.content_type, is_( mime_type ) )
+		return body, testapp
+
+	@mock_dataserver.WithMockDSTrans
+	def test_class_modeled_enclosure_href(self):
+		data = { 'Class': 'ClassScript', 'body': ["The body"] }
+		self._check_class_modeled_enclosure_href( data, 'application/vnd.nextthought.classscript+json' )
+
+	@mock_dataserver.WithMockDSTrans
+	def test_class_quiz_enclosure(self):
+		quiz_data = {"MimeType":"application/vnd.nextthought.quiz",
+					 "Class": "Quiz",
+					 "ID": "mathcounts-2011-0",
+					 "Items": {"1" : { "Class": "QuizQuestion","Answers": ["$5$", "$5.0$"],
+									   "MimeType": "application/vnd.nextthought.quizquestion","ID": "1", "Text": "foo bar" } } }
+
+		quiz, testapp = self._check_class_modeled_enclosure_href( quiz_data, 'application/vnd.nextthought.quiz+json' )
+
+		# We should be able to post a response for grading
+		result_data = {"Class": "QuizResult",
+					   "ContainerId": ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' ),
+					   "QuizID": quiz['NTIID'],
+					   'Items': {"1": "0"}}
+		graded = testapp.post( '/dataserver2/users/sjohnson@nextthought.com/',
+							   json.dumps( result_data ),
+							   extra_environ=self._make_extra_environ() )
 
 
 	@mock_dataserver.WithMockDS

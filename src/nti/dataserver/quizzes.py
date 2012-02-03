@@ -7,10 +7,14 @@ import persistent
 from persistent.mapping import PersistentMapping
 from persistent.list import PersistentList
 
-from datastructures import  ExternalizableDictionaryMixin, CreatedModDateTrackingObject, toExternalObject, toExternalDictionary
+from zope import interface
+
+from datastructures import  ExternalizableDictionaryMixin, CreatedModDateTrackingObject, toExternalObject, toExternalDictionary, StandardExternalFields
 import datastructures
 
 from nti.deprecated import deprecated
+import mimetype
+import interfaces as nti_interfaces
 
 # TODO: These need interfaces and modeling.
 
@@ -50,7 +54,13 @@ class QuizQuestion(persistent.Persistent):
 		result['Answers'] = toExternalObject( [answer.value for answer in self.answers] )
 		return result
 
-class Quiz(CreatedModDateTrackingObject,persistent.Persistent):
+class Quiz(datastructures.ContainedMixin,datastructures.CreatedModDateTrackingObject,persistent.Persistent):
+
+	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
+	interface.implements(nti_interfaces.IModeledContent,nti_interfaces.IExternalObject)
+
+	canUpdateSharingOnly = True
+	__external_can_create__ = True
 
 	def __init__( self ):
 		super(Quiz,self).__init__()
@@ -83,6 +93,14 @@ class Quiz(CreatedModDateTrackingObject,persistent.Persistent):
 				question.addAnswer( QuizQuestionAnswer( answer ) )
 				self.questions[question.id] = question
 		self.updateLastMod()
+
+	@property
+	def NTIID(self):
+		# TODO: Better NTIID here
+		# To grade, we need to be able to look these things up
+		# They could be associated with a provider, and we can do the "provider.get_by_ntiid"
+		# thing.
+		return datastructures.to_external_ntiid_oid( self )
 
 	def toExternalDictionary( self, mergeFrom=None ):
 		result = toExternalDictionary(self, mergeFrom=mergeFrom)
@@ -118,12 +136,16 @@ from nti.assessment import assess
 
 class QuizResult(datastructures.ContainedMixin,CreatedModDateTrackingObject,persistent.Persistent,ExternalizableDictionaryMixin):
 
+	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
+	interface.implements(nti_interfaces.IModeledContent,nti_interfaces.IExternalObject)
+
 	__external_can_create__ = True
 
 	def __init__(self, quizId=None, theId=None):
 		super(QuizResult,self).__init__( )
 		self.id = theId
 		self.assessments = PersistentMapping()
+		self.QuizID = None
 
 	def addAssessment( self, question, response, assesment ):
 		self.assessments[question.id if hasattr(question, 'id') else question] = (question,response,assesment)
@@ -137,8 +159,14 @@ class QuizResult(datastructures.ContainedMixin,CreatedModDateTrackingObject,pers
 		# Only fresh objects can be updated
 		if getattr( self, '_p_jar', None ):
 			raise ValueError( "Can only update new results." )
+		self.containerId = rawValue.get( StandardExternalFields.CONTAINER_ID )
+
+		quizId = rawValue.get( 'QuizID' )
+		if not quizId:
+			quizId = rawValue[StandardExternalFields.CONTAINER_ID] if StandardExternalFields.CONTAINER_ID in rawValue else self.containerId
+		self.QuizID = quizId
+
 		rawValue = self.stripSyntheticKeysFromExternalDictionary( rawValue )
-		quizId = rawValue['ContainerID'] if 'ContainerID' in rawValue else self.containerId
 		qqRs = {}
 
 		# Support both "raw" dictionaries of key: response
@@ -151,8 +179,13 @@ class QuizResult(datastructures.ContainedMixin,CreatedModDateTrackingObject,pers
 			qqr = QuizQuestionResponse( quizId, key, value )
 			qqRs[key] = qqr
 
-		# FIXME: This double nesting is weird ard wrong. QuizTree sets things up funny.
-		quiz = dataserver.root['quizzes']['quizzes'][quizId]
+
+		# FIXME: Looking up the quiz is being handled in a weird way.
+		quiz = dataserver.get_by_oid( quizId, ignore_creator=True )
+		if not quiz:
+			# FIXME: This double nesting is weird ard wrong. QuizTree sets things up funny.
+			quiz = dataserver.root['quizzes']['quizzes'][quizId]
+
 		theAssessments = assess( quiz, qqRs )
 		for qqR in qqRs.itervalues():
 			assessment = theAssessments[qqR.id]
@@ -162,7 +195,7 @@ class QuizResult(datastructures.ContainedMixin,CreatedModDateTrackingObject,pers
 
 	def toExternalDictionary( self, mergeFrom=None ):
 		result = toExternalDictionary( self, mergeFrom=mergeFrom )
-		result['QuizID'] = self.containerId
+		result['QuizID'] = self.QuizID
 
 		items = []
 		for q,r,a in self.assessments.itervalues():
