@@ -1052,6 +1052,8 @@ class _EnclosurePostView(_UGDModifyViewBase):
 		enclosure.creator = self.getRemoteUser()
 		enclosure_container.add_enclosure( enclosure )
 		if getattr( enclosure_container, '_p_jar', None ):
+			if modeled_content is not None:
+				enclosure_container._p_jar.add( modeled_content )
 			enclosure_container._p_jar.add( enclosure )
 
 		self.request.response.status_int = 201 # Created
