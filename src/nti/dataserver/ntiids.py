@@ -7,6 +7,7 @@ import datetime
 import numbers
 import time
 import collections
+from nti.dataserver import interfaces as nti_interfaces
 
 # Well-known IDs
 DATE = "2011-10"
@@ -15,16 +16,17 @@ ROOT = "tag:nextthought.com,2011-10:Root"
 TYPE_OID = 'OID'
 
 TYPE_ROOM = 'MeetingRoom'
-TYPE_MEETINGROOM = 'MeetingRoom'
+TYPE_MEETINGROOM = TYPE_ROOM
 
 TYPE_HTML = 'HTML'
+TYPE_QUIZ = 'Quiz'
 
 TYPE_CLASS = 'Class'
 TYPE_CLASS_SECTION = 'ClassSection'
 
-TYPE_MEETINGROOM_GROUP = 'MeetingRoom:Group'
-TYPE_MEETINGROOM_CLASS = 'MeetingRoom:Class'
-TYPE_MEETINGROOM_SECT  = 'MeetingRoom:ClassSection'
+TYPE_MEETINGROOM_GROUP = TYPE_ROOM + ':Group'
+TYPE_MEETINGROOM_CLASS = TYPE_ROOM + ':Class'
+TYPE_MEETINGROOM_SECT  = TYPE_ROOM + ':ClassSection'
 # Transcripts and TranscriptSummaries. Note that
 # they are not subtypes of a common type because they
 # contain quite different information and are used
@@ -177,3 +179,43 @@ def get_parts( ntiid ):
 	EOD
 	"""
 	return _parse( ntiid )
+
+
+from zope import component
+
+def find_object_with_ntiid(key):
+	"Attempts to find an object with the given NTIID. No security is implied."
+	# TODO: Where should this live? Should we have registered adapters or something
+	# for every type of NTIID? Probably yes
+	if not is_valid_ntiid_string( key ):
+		return None
+
+	result = None
+	dataserver = component.queryUtility( nti_interfaces.IDataserver )
+	if dataserver:
+		if is_ntiid_of_type( key, TYPE_OID ):
+			result = dataserver.get_by_oid( key, ignore_creator=True )
+		else:
+			provider = get_provider( key )
+			# TODO: Knowledge about where providers are
+			user = dataserver.root['users'].get( provider )
+			if not user:
+				# Is it a Provider?
+				user = dataserver.root['providers'].get( provider )
+			if user:
+				result = user.get_by_ntiid( key )
+
+	if result is None:
+		# Nothing we could find specifically using a normal NTIID lookup.
+		# Is it something in the library?
+		# TODO: User-specific libraries
+		library = component.queryUtility( nti_interfaces.ILibrary )
+		if library:
+			path = library.pathToNTIID( key )
+		if path:
+			result = path[-1]
+			# TODO: IACLProvider
+			__acl__ = ( (nti_interfaces.ACE_ACT_ALLOW, nti_interfaces.AUTHENTICATED_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS), )
+			result = nti_interfaces.ACLLocationProxy( result, result.__parent__, result.__name__, __acl__ )
+
+	return result
