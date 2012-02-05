@@ -336,6 +336,27 @@ class _NTIIDsContainerResource(_ObjectsContainerResource):
 
 		return result
 
+	@unquoting
+	def __getitem__( self, key ):
+		try:
+			return super(_NTIIDsContainerResource,self).__getitem__( key )
+		except KeyError:
+			# Nothing we could find specifically using a normal NTIID lookup.
+			# Is it something in the library?
+			# TODO: User-specific libraries
+			request = _find_request( self )
+			library = request.registry.queryUtility( ILibrary )
+			if library and ntiids.is_valid_ntiid_string( key ):
+				path = library.pathToNTIID( key )
+			if path:
+				result = path[-1]
+				# TODO: IACLProvider
+				__acl__ = ( (sec.Allow, sec.Authenticated, sec.ALL_PERMISSIONS), )
+				result = ACLLocationProxy( result, result.__parent__, result.__name__, __acl__ )
+				return result
+			raise KeyError(key)
+
+
 class _PageContainerResource(_ContainerResource):
 	"""
 	Dispatches based on the type of URL requested for a page's data.
@@ -1187,3 +1208,18 @@ def _method_not_allowed(request):
 def _provider_redirect_classes(request):
 	class_path = (request.path + '/Classes') + (('?' + request.query_string) if request.query_string else '')
 	raise hexc.HTTPFound(location=class_path)
+
+def _LibraryTOCRedirectView(request):
+	"""
+	Given an :class:`nti_interfaces.ILibraryTOCEntry`, redirect the request there.
+	This allows unifying handling of NTIIDs.
+	"""
+	href = request.context.href
+	# Right now, the ILibraryTOCEntries always have relative hrefs
+	if not href.startswith( '/' ):
+		root = traversal.find_interface( request.context, nti_interfaces.ILibraryEntry )
+		href = root.root + '/' + href
+		href = href.replace( '//', '/' )
+
+	# return rather than raise to that webtest works better
+	return hexc.HTTPFound( location=href )

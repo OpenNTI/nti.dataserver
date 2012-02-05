@@ -73,9 +73,36 @@ class IExternalObject(interface.Interface):
 		used. The arguments are optional context arguments possibly passed. One
 		common key is dataserver pointing to a Dataserver."""
 
+class ILibraryTOCEntry(IZContained):
+	href = interface.Attribute( "Relative local path to this item" )
+	ntiid = schema.TextLine( title="The NTIID for this item" )
+	label = schema.TextLine( title="The human-readable section name of this item" )
+	children = schema.Iterable( title="Any :class:`ILibraryTOCEntry` objects this item has." )
+
+class ILibraryEntry(interface.Interface):
+
+	href = interface.Attribute( "Path portion of a URL for this content; ends in index.html" )
+	root = interface.Attribute( "Path portion of a URL for this content without index.html")
+	title = interface.Attribute( "Simple name for this entry" )
+	toc = interface.Attribute( "A :class:`ILibraryTOCEntry`" )
 
 class ILibrary(interface.Interface):
-	pass
+
+	def pathToNTIID(ntiid):
+		""" Returns a list of TOCEntry objects in order until
+		the given ntiid is encountered, or None if the id cannot be found."""
+
+	def childrenOfNTIID( ntiid ):
+		""" Returns a flattened list of all the children entries of ntiid
+		in no particular order. If there are no children, returns []"""
+
+	def __getitem__( key ):
+		"""
+		Return the ILibraryEntry having the matching `title` or `ntiid`.
+		"""
+
+	titles = schema.Iterable(
+		title=u'Sequence of :class:`ILibraryEntry`')
 
 ILINK_VOCABULARY = schema.vocabulary.SimpleVocabulary(
 	[schema.vocabulary.SimpleTerm(_x)

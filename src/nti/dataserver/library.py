@@ -21,9 +21,27 @@ def _hasTOC( path ):
 
 class TOCEntry(object):
 
+	interface.implements( interfaces.ILibraryTOCEntry )
+
+	NTIRelativeScrollHeight = None
+	href = None
+	icon = None
+	label = None
+	ntiid = None
+
+	parent = None
+	_children = None
+
 	def __init__( self ):
-		self._children = None
-		self.parent = None
+		pass
+
+	@property
+	def __parent__( self ):
+		return self.parent
+
+	@property
+	def __name__( self ):
+		return self.label
 
 	def appendChild( self, child ):
 		if not self._children:
@@ -45,7 +63,8 @@ class TOCEntry(object):
 			childPath = child.pathToPropertyValue( prop, value )
 			if childPath:
 				childPath.append( self )
-				if not self.parent:
+				# If we are the root, we must reverse into the right order
+				if not self.parent or isinstance(self.parent, LibraryEntry):
 					childPath.reverse()
 				return childPath
 		return None
@@ -55,6 +74,8 @@ class LibraryEntry(object):
 	""" Contains values like href for externalization, also contains
 	localPath which is a reference to the complete path on the local
 	filesystem of the directory this object represents."""
+
+	interface.implements( interfaces.ILibraryEntry )
 
 	def __init__(self, extItems=None, localPath=None):
 		super(LibraryEntry,self).__init__()
@@ -85,7 +106,9 @@ class LibraryEntry(object):
 			raise AttributeError( name )
 
 	def _tocItem( self, node ):
+		# TODO: There's stuff in nti.contentrendering.RenderedBook that does this better
 		tocItem = TOCEntry()
+		tocItem.parent = self # We must do this so that it's possible to get back to the 'root' href
 		for i in ('NTIRelativeScrollHeight', 'href', 'icon', 'label', 'ntiid'):
 			setattr( tocItem, i, node.getAttribute( i ) )
 
