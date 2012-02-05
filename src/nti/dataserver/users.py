@@ -1461,7 +1461,15 @@ class User(Principal):
 				result = self.getContainedObject( meeting.containerId,
 												  ntiids.make_ntiid( base=container_id, nttype=ntiids.TYPE_TRANSCRIPT_SUMMARY ) )
 				result = nti_interfaces.ITranscript(result)
-
+			else:
+				# Try looking up the ntiid by name in each container
+				# TODO: This is terribly expensive
+				for container_name in self.containers.containers:
+					container = self.containers.containers[container_name]
+					if isinstance( container, numbers.Number ): continue
+					result = container.get( container_id )
+					if result:
+						break
 		return result
 
 	def getContainedObject( self, containerId, containedId, defaultValue=None ):

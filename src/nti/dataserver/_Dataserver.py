@@ -948,6 +948,10 @@ def get_object_by_oid( connection, oid_string, ignore_creator=False ):
 		# we'll ignore it. Otherwise, it must be checked. If it's not
 		# present, then use a marker that will always fail.
 		required_user = parts.provider or required_user_marker
+	elif ntiids.is_valid_ntiid_string( oid_string ):
+		# Hmm, valid but not an OID.
+		logger.debug( "Failed to resolve non-OID NTIID %s", oid_string )
+		return None
 
 	oid_string, database_name = datastructures.fromExternalOID( oid_string )
 	if not oid_string:

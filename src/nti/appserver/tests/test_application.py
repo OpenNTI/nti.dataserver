@@ -427,7 +427,7 @@ class TestApplication(ApplicationTestBase):
 		assert_that( body, has_entry( 'Links', has_item( has_entry( 'href', '/dataserver2/providers/OU/Classes/CS2051/SimplePersistentEnclosure-2' ) ) ) )
 
 
-	def _check_class_modeled_enclosure_href( self, data, mime_type ):
+	def _check_class_modeled_enclosure_href( self, data, mime_type, check_get_with_objects=True ):
 		users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
 		users.User.create_user( self.ds, username='jason.madden@nextthought.com' )
 
@@ -445,10 +445,12 @@ class TestApplication(ApplicationTestBase):
 		body = json.loads( res.body )
 		assert_that( body, has_entry( 'Links', has_item( has_entry( 'href', '/dataserver2/providers/OU/Classes/CS2051/TheSlug' ) ) ) )
 		# The enclosure should have a valid NTIID
-		enclosure_ntiid = body['Links'][0]['ntiid']
-		res = testapp.get( '/dataserver2/Objects/'+ enclosure_ntiid, extra_environ=self._make_extra_environ() )
-		body = json.loads( res.body )
-		assert_that( res.content_type, is_( mime_type ) )
+		if check_get_with_objects:
+			enclosure_ntiid = body['Links'][0]['ntiid']
+			_type = 'Objects' if check_get_with_objects else 'NTIIDs'
+			res = testapp.get( '/dataserver2/' + _type + '/' + enclosure_ntiid, extra_environ=self._make_extra_environ() )
+			body = json.loads( res.body )
+			assert_that( res.content_type, is_( mime_type ) )
 		return body, testapp
 
 	@mock_dataserver.WithMockDSTrans
@@ -458,6 +460,8 @@ class TestApplication(ApplicationTestBase):
 
 	@mock_dataserver.WithMockDSTrans
 	def test_class_quiz_enclosure(self):
+		# Notice that the ID must not result in being a valid NTIID,
+		# because we need to be using the OID
 		quiz_data = {"MimeType":"application/vnd.nextthought.quiz",
 					 "Class": "Quiz",
 					 "ID": "mathcounts-2011-0",
@@ -471,7 +475,32 @@ class TestApplication(ApplicationTestBase):
 					   "ContainerId": ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' ),
 					   "QuizID": quiz['NTIID'],
 					   'Items': {"1": "0"}}
-		graded = testapp.post( '/dataserver2/users/sjohnson@nextthought.com/',
+		testapp.post( '/dataserver2/users/sjohnson@nextthought.com/',
+							   json.dumps( result_data ),
+							   extra_environ=self._make_extra_environ() )
+
+
+	@mock_dataserver.WithMockDSTrans
+	def test_quiz_container_id_auto_mapping(self):
+		# The quiz may live in any container
+		quiz_data = {"MimeType":"application/vnd.nextthought.quiz",
+					 'ContainerId': ntiids.make_ntiid( provider='mathcounts', nttype='HTML', specific='0' ),
+					 "Class": "Quiz",
+					 "ID": ntiids.make_ntiid( provider='sjohnson@nextthought.com', nttype=ntiids.TYPE_QUIZ, specific='0' ),
+					 "Items": {"1" : { "Class": "QuizQuestion","Answers": ["$5$", "$5.0$"],
+									   "MimeType": "application/vnd.nextthought.quizquestion","ID": "1", "Text": "foo bar" } } }
+		testapp = TestApp( self.app )
+		res = testapp.post( '/dataserver2/users/sjohnson@nextthought.com/Pages',
+							json.dumps(quiz_data ),
+							extra_environ=self._make_extra_environ() )
+		json.loads( res.body )
+
+		container_id = ntiids.make_ntiid( provider='sjohnson@nextthought.com', nttype=ntiids.TYPE_HTML, specific='0' )
+		# We should be able to post a response for grading
+		result_data = {"Class": "QuizResult",
+					   "ContainerId": container_id,
+					   'Items': {"1": "0"}}
+		testapp.post( '/dataserver2/users/sjohnson@nextthought.com/',
 							   json.dumps( result_data ),
 							   extra_environ=self._make_extra_environ() )
 

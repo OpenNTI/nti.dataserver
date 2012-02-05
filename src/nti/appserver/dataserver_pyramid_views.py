@@ -62,20 +62,8 @@ class HTTPUnprocessableEntity(hexc.HTTPForbidden):
 	explanation = ('The client sent a well-formed but invalid request body.')
 
 
-class ACLLocationProxy(LocationProxy):
-	"""
-	Like :class:`LocationProxy` but also adds transparent storage
-	for an __acl__ attribute
-	"""
-	__slots__ = ('__acl__',) + LocationProxy.__slots__
+from nti.dataserver.interfaces import ACLLocationProxy
 
-	def __new__( cls, backing, container=None, name=None, acl=() ):
-		return LocationProxy.__new__( cls, backing, container=container, name=name )
-
-	def __init__( self, backing, container=None, name=None, acl=() ):
-		LocationProxy.__init__( self, backing, container=container, name=name )
-		if backing is None: raise TypeError("Cannot wrap None") # Programmer error
-		self.__acl__ = acl
 
 class EnclosureGetItemACLLocationProxy(ACLLocationProxy):
 	"""
@@ -322,6 +310,8 @@ class _NTIIDsContainerResource(_ObjectsContainerResource):
 	def __init__( self, parent, user ):
 		super(_NTIIDsContainerResource,self).__init__( parent, user, name='NTIIDs' )
 
+	# TODO: These two methods have moved to ntiids.find_object_with_ntiid. They
+	# remain here for the special handling of _ObjectContainedResource. Unify this.
 	def _getitem_with_ds( self, ds, key ):
 		result = None
 		if ntiids.is_valid_ntiid_string( key ):
@@ -820,8 +810,19 @@ class _UGDModifyViewBase(object):
 	def createContentObject( self, user, datatype, externalValue ):
 		return _createContentObject( self.dataserver, user, datatype, externalValue )
 
-	def updateContentObject( self, contentObject, externalValue ):
-		self.dataserver.update_from_external_object( contentObject, externalValue )
+	def updateContentObject( self, contentObject, externalValue, set_id=False ):
+		containedObject = self.dataserver.update_from_external_object( contentObject, externalValue )
+		# If they provided an ID, use it if we can and we need to
+		if set_id and StandardExternalFields.ID in externalValue \
+			and hasattr( containedObject, StandardInternalFields.ID ) \
+			and getattr( containedObject, StandardInternalFields.ID, None ) != externalValue['ID']:
+			try:
+				containedObject.id = externalValue['ID']
+			except AttributeError:
+				# It's OK if we cannot use the given ID; POST is meant
+				# to auto-assign
+				pass
+		return containedObject
 
 	def idForLocation( self, value ):
 		theId = None
@@ -876,23 +877,13 @@ class _UGDPostView(_UGDModifyViewBase):
 
 		with owner.updates():
 			containedObject.creator = creator
-			self.updateContentObject( containedObject, externalValue )
+			self.updateContentObject( containedObject, externalValue, set_id=True )
 			# TODO: The WSGI code would attempt to infer a containerID from the
 			# path. Should we?
 			if not getattr( containedObject, StandardInternalFields.CONTAINER_ID, None ):
 				self.dataserver.doom()
-				logger.debug( "Failing to POST: input of unsupported/missing Class" )
+				logger.debug( "Failing to POST: input of unsupported/missing ContainerId" )
 				raise HTTPUnprocessableEntity( "Unsupported/missing ContainerId" )
-			# If they provided an ID, use it if we can and we need to
-			if StandardExternalFields.ID in externalValue \
-				and hasattr( containedObject, StandardInternalFields.ID ) \
-				and getattr( containedObject, StandardInternalFields.ID, None ) != externalValue['ID']:
-				try:
-					containedObject.id = externalValue['ID']
-				except AttributeError:
-					# It's OK if we cannot use the given ID; POST is meant
-					# to auto-assign
-					pass
 			try:
 				owner.addContainedObject( containedObject )
 			except KeyError:
@@ -1052,7 +1043,7 @@ class _EnclosurePostView(_UGDModifyViewBase):
 
 		if modeled_content is not None:
 			modeled_content.creator = self.getRemoteUser()
-			self.updateContentObject( modeled_content, self.readInput() )
+			self.updateContentObject( modeled_content, self.readInput(), set_id=True )
 			modeled_content.containerId = getattr( enclosure_container, 'id', None ) or getattr( enclosure_container, 'ID' ) # TODO: Assumptions
 			content_type = nti_mimetype_from_object( modeled_content )
 

@@ -15,6 +15,7 @@ import datastructures
 from nti.deprecated import deprecated
 import mimetype
 import interfaces as nti_interfaces
+import ntiids
 
 # TODO: These need interfaces and modeling.
 
@@ -92,6 +93,7 @@ class Quiz(datastructures.ContainedMixin,datastructures.CreatedModDateTrackingOb
 			for answer in item['Answers']:
 				question.addAnswer( QuizQuestionAnswer( answer ) )
 				self.questions[question.id] = question
+		self.containerId = dictionary.get( StandardExternalFields.CONTAINER_ID, self.containerId )
 		self.updateLastMod()
 
 	@property
@@ -100,7 +102,21 @@ class Quiz(datastructures.ContainedMixin,datastructures.CreatedModDateTrackingOb
 		# To grade, we need to be able to look these things up
 		# They could be associated with a provider, and we can do the "provider.get_by_ntiid"
 		# thing.
+		# If we are not stored as an enclosure but a real object, our ID will already be an
+		# ntiid, unfortunately of the wrong type (OID instead of Quiz).
+		if self.id:
+			if ntiids.is_valid_ntiid_string( self.id ):
+				return self.id
+			if self.creator:
+				try:
+					return ntiids.make_ntiid( provider=self.creator, nttype=ntiids.TYPE_QUIZ, specific=self.id )
+				except ntiids.InvalidNTIIDError:
+					pass
+
 		return datastructures.to_external_ntiid_oid( self )
+
+	def to_container_key( self ):
+		return self.NTIID
 
 	def toExternalDictionary( self, mergeFrom=None ):
 		result = toExternalDictionary(self, mergeFrom=mergeFrom)
@@ -164,6 +180,16 @@ class QuizResult(datastructures.ContainedMixin,CreatedModDateTrackingObject,pers
 		quizId = rawValue.get( 'QuizID' )
 		if not quizId:
 			quizId = rawValue[StandardExternalFields.CONTAINER_ID] if StandardExternalFields.CONTAINER_ID in rawValue else self.containerId
+
+		# If we have arrived at a quiz id that is an NTIID, but /NOT/ on OID or Quiz NTIID,
+		# then this probably means we're using the container id. This allows for an
+		# easy one-to-one mapping between containers-as-pages and quizzes.
+		if ntiids.is_valid_ntiid_string( quizId ) \
+			and not ntiids.is_ntiid_of_type( quizId, ntiids.TYPE_OID ) \
+			and not ntiids.is_ntiid_of_type( quizId, ntiids.TYPE_QUIZ ):
+
+			quizId = ntiids.make_ntiid( base=quizId, nttype=ntiids.TYPE_QUIZ )
+
 		self.QuizID = quizId
 
 		rawValue = self.stripSyntheticKeysFromExternalDictionary( rawValue )
@@ -179,13 +205,14 @@ class QuizResult(datastructures.ContainedMixin,CreatedModDateTrackingObject,pers
 			qqr = QuizQuestionResponse( quizId, key, value )
 			qqRs[key] = qqr
 
-
 		# FIXME: Looking up the quiz is being handled in a weird way.
-		quiz = dataserver.get_by_oid( quizId, ignore_creator=True )
+		# We begin by looking
+		quiz = ntiids.find_object_with_ntiid( quizId )
 		if not quiz:
 			# FIXME: This double nesting is weird ard wrong. QuizTree sets things up funny.
-			quiz = dataserver.root['quizzes']['quizzes'][quizId]
-
+			quiz = dataserver.root.get('quizzes', {}).get('quizzes', {}).get(quizId)
+		if not quiz:
+			raise ValueError( "Unable to locate quiz " + str(quizId ) )
 		theAssessments = assess( quiz, qqRs )
 		for qqR in qqRs.itervalues():
 			assessment = theAssessments[qqR.id]

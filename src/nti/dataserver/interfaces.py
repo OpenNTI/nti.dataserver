@@ -14,6 +14,22 @@ from zope.location import ILocation
 from zope.container.interfaces import IContainer as IZContainer
 from zope.container.interfaces import IContainerNamesContainer as IZContainerNamesContainer
 from zope.location.interfaces import IContained as IZContained
+from zope.location.location import LocationProxy
+
+class ACLLocationProxy(LocationProxy):
+	"""
+	Like :class:`LocationProxy` but also adds transparent storage
+	for an __acl__ attribute
+	"""
+	__slots__ = ('__acl__',) + LocationProxy.__slots__
+
+	def __new__( cls, backing, container=None, name=None, acl=() ):
+		return LocationProxy.__new__( cls, backing, container=container, name=name )
+
+	def __init__( self, backing, container=None, name=None, acl=() ):
+		LocationProxy.__init__( self, backing, container=container, name=name )
+		if backing is None: raise TypeError("Cannot wrap None") # Programmer error
+		self.__acl__ = acl
 
 #pylint: disable=E0213,E0211
 
