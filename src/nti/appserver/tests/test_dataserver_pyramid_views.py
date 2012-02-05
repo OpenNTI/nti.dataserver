@@ -1,6 +1,6 @@
 #!/usr/bin/env python2.7
 
-import unittest
+
 from hamcrest import (assert_that, is_, none,
 					  has_entry, has_length, has_key, is_not)
 
@@ -9,6 +9,7 @@ from nti.appserver.dataserver_pyramid_views import (class_name_from_content_type
 													_UGDPostView,
 													_UGDStreamView, _RecursiveUGDStreamView,
 													_UGDAndRecursiveStreamView, _UserResource,
+													_NTIIDsContainerResource,
 													lists_and_dicts_to_ext_collection)
 from nti.appserver.tests import ConfiguringTestBase
 from pyramid.threadlocal import get_current_request
@@ -42,7 +43,7 @@ def test_content_type():
 	assert_that( class_name_from_content_type( 'application/vnd.nextthought.version.flag.class' ),
 				 is_( 'class' ) )
 
-def test_user_pseudo_resources():
+def test_user_pseudo_resources_exist():
 	user = users.User( 'jason.madden@nextthought.com', 'temp001' )
 
 	class Parent(object):
@@ -279,3 +280,22 @@ def test_lists_and_dicts_to_collection():
 	yield _check_items, (col1,col2), [o], 42
 
 
+class TestNTIIDsContainer(ConfiguringTestBase):
+
+	@WithMockDSTrans
+	def test_ntiid_uses_library(self):
+		child_ntiid = ntiids.make_ntiid( provider='ou', specific='test2', nttype='HTML' )
+
+		class NID(object):
+			ntiid = child_ntiid
+			__parent__ = None
+			__name__ = child_ntiid
+		class Lib(object):
+			def pathToNTIID( self, ntiid ): return [NID()] if ntiid == child_ntiid else None
+
+		get_current_request().registry.registerUtility( Lib(), ILibrary )
+		get_current_request().registry.registerUtility( self.ds )
+		cont = _NTIIDsContainerResource( None, None )
+		cont.request = get_current_request()
+
+		assert_that( cont[child_ntiid], is_( NID ) )

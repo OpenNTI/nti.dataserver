@@ -429,6 +429,9 @@ def createApplication( http_port,
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
 							 renderer='rest',
 							 permission=nauth.ACT_READ, request_method='GET' )
+	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._LibraryTOCRedirectView',
+							 renderer='rest', context='nti.dataserver.interfaces.ILibraryTOCEntry',
+							 permission=nauth.ACT_READ, request_method='GET' )
 
 	# Generic user object tree traversal
 	# For the Library/Main URL.

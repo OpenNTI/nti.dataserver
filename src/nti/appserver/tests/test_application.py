@@ -1,8 +1,13 @@
 #!/usr/bin/env python2.7
 from __future__ import print_function
+
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
+
 from hamcrest import (assert_that, is_, none, starts_with,
-					  has_entry, has_length, has_item, has_key,
+					  has_entry, has_length, has_item,
 					  contains_string, ends_with, all_of, has_entries)
+
 from hamcrest.library import has_property
 from nti.appserver.application import createApplication
 from nti.dataserver.library import Library
@@ -20,12 +25,14 @@ import os.path
 import urllib
 from nti.dataserver import users, ntiids, providers, classes
 from nti.dataserver.datastructures import ContainedMixin, to_external_ntiid_oid
-from nti.dataserver import contenttypes, datastructures
+from nti.dataserver import contenttypes, datastructures, interfaces as nti_interfaces
 
 from nti.dataserver.tests import mock_dataserver
 
 import anyjson as json
+
 from persistent import Persistent
+from zope import interface
 
 class ContainedExternal(ContainedMixin):
 
@@ -35,12 +42,15 @@ class ContainedExternal(ContainedMixin):
 class PersistentContainedExternal(ContainedExternal,Persistent):
 	pass
 
-class TestApplication(ConfiguringTestBase):
+class ApplicationTestBase(ConfiguringTestBase):
+
+	def _setup_library(self):
+		return Library()
 
 	def setUp(self):
-		super(TestApplication,self).setUp()
+		super(ApplicationTestBase,self).setUp()
 		self.ds = mock_dataserver.MockDataserver()
-		self.app, self.main = createApplication( 8080, Library(), create_ds=self.ds, pyramid_config=self.config )
+		self.app, self.main = createApplication( 8080, self._setup_library(), create_ds=self.ds, pyramid_config=self.config )
 		root = '/Library/WebServer/Documents/'
 		# We'll volunteer to serve all the files in the root directory
 		# This SHOULD include 'prealgebra' and 'mathcounts'
@@ -59,6 +69,10 @@ class TestApplication(ConfiguringTestBase):
 			result[k] = v
 
 		return result
+
+
+class TestApplication(ApplicationTestBase):
+
 
 	# FIXME: This shouldn't be necessary. But the SocketIOHandler
 	# part of the AppServer is currently dealing with transactions.
@@ -587,3 +601,45 @@ def _create_class(ds, usernames_to_enroll=()):
 
 	assert_that( provider, has_property( '__parent__', ds.root['providers'] ) )
 	return klass
+
+class TestApplicationLibrary(ApplicationTestBase):
+	child_ntiid = ntiids.make_ntiid( provider='ou', specific='test2', nttype='HTML' )
+
+	def _setup_library(self):
+
+		class NID(object):
+			interface.implements( nti_interfaces.ILibraryTOCEntry )
+			ntiid = TestApplicationLibrary.child_ntiid
+			href = 'sect_0002.html'
+			__parent__ = None
+			__name__ = 'The name'
+			def with_parent( self, p ):
+				self.__parent__ = p
+				return self
+
+		class LibEnt(object):
+			interface.implements( nti_interfaces.ILibraryEntry )
+			root = '/prealgebra/'
+
+		class Lib(object):
+			interface.implements( nti_interfaces.ILibrary )
+			titles = ()
+			def pathToNTIID( self, ntiid ):
+				return [NID().with_parent( LibEnt() )] if ntiid == TestApplicationLibrary.child_ntiid else None
+
+		return Lib()
+
+	@mock_dataserver.WithMockDSTrans
+	def test_library_redirect(self):
+
+		testapp = TestApp( self.app )
+		# Unauth gets nothing
+		with self.assertRaises( hexc.HTTPForbidden ):
+			res = testapp.get( '/dataserver2/NTIIDs/' + self.child_ntiid )
+
+		res = testapp.get( '/dataserver2/NTIIDs/' + self.child_ntiid, extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 302 ) )
+		assert_that( res.headers, has_entry( 'Location', 'http://localhost/prealgebra/sect_0002.html' ) )
+
+
+
