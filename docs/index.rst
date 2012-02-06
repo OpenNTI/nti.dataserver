@@ -15,9 +15,11 @@ Contents:
 	ntiid-structure
 	nginx-gunicorn
 	passenger
+	dataserver-contenttypes
 	whiteboard-apis-v1
 	api
 	chat-apis
+	http-rest
 
 
 `Epydoc generated doc <./epydoc>`_

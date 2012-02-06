@@ -50,7 +50,7 @@ while the content channel may be used to navigate an existing browser window.)
 
 Channels
 ~~~~~~~~
-This section describes the defined channels. An application MUST IGNORE
+This section describes the defined channels. An application *MUST IGNORE*
 communication on a channel it doesn't recognize.
 
 DEFAULT
