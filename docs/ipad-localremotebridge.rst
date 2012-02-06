@@ -140,7 +140,7 @@ and remote stores in sync.  See \"Storage Bridge\" and \"Container
 Locking\" for more details.
 
 Container Locking
-+++++++++++++++++
+-----------------
 
 Because access to local storage can occur on different threads when
 used in a bridged environment local storage must provide some basic
