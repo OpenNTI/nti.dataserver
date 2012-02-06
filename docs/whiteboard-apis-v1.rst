@@ -100,7 +100,7 @@ strokeRGBAColor/fillRGBAColor: The combination of color and opacity (converted t
 
 - On the iPad, can directly be read and produced with OQColor.
 
-::
+.. code-block:: cpp
 
 	struct WBObject : Object {
 	}
