@@ -17,6 +17,7 @@ Contents:
 	passenger
 	whiteboard-apis-v1
 	api
+	chat-apis
 
 
 `Epydoc generated doc <./epydoc>`_
