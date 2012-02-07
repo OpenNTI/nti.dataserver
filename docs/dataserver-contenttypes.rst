@@ -182,25 +182,18 @@ These are definitions related to content that a user can generate.
    }
 
    mixin Anchored<Contained> {
-        string startHighlightedFullText;
-        string startHighlightedText;
-        string startXpath;
-        string startAnchor;
-        int startOffset;
-
-        int endOffset;
-        string endAnchor;
-        string endXpath;
-        string endHighlightedText;
-        string endHighlightedFullText;
-
         string anchorPoint;
         string anchorType;
    }
 
    mixin Taggable {
-       // Although the tag collections are defined as lists,
+       // Although the tag collections are defined as lists of words,
        // in reality they may be treated as unordered sets.
+       // Spaces in individual terms may be split. Capitilazition may
+       // not be preserved. These are plain text, and any HTML
+       // will simply cause the term to be discarded
+
+
        // Tags that are added automatically, somehow derived from the data
        string[] AutoTags;
        // Tags that are added manually by the user.
@@ -215,7 +208,18 @@ These are definitions related to content that a user can generate.
    // leaving all other fields absent.
 
    struct Highlight : Bookmark {
-	   range_t ranges[];
+        string startHighlightedFullText;
+        string startHighlightedText;
+        string endHighlightedText;
+        string endHighlightedFullText;
+        string startXpath;
+        string startAnchor;
+
+        int startOffset;
+        int endOffset;
+
+        string endAnchor;
+        string endXpath;
    }
 
    mixin Threadable {

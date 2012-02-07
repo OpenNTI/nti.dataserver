@@ -177,6 +177,8 @@ class _UserArbitraryDataContentRoot(_UserContentRoot, datastructures.IDItemMixin
 
 class Highlight(_UserContentRoot,datastructures.ExternalizableInstanceDict):
 
+	_excluded_in_ivars_ = { 'AutoTags' } | datastructures.ExternalizableInstanceDict._excluded_in_ivars_
+
 	def __init__( self ):
 		super(Highlight,self).__init__()
 		self.top = 0
@@ -197,6 +199,27 @@ class Highlight(_UserContentRoot,datastructures.ExternalizableInstanceDict):
 		self.anchorPoint = ''
 		self.anchorType = ''
 
+		# Tags. It may be better to use objects to represent
+		# the tags and have a single list. The two-field approach
+		# most directly matches what the externalization is.
+		self.tags = ()
+		self.AutoTags = ()
+
+	def updateFromExternalObject( self, parsed, dataserver=None ):
+		super(Highlight,self).updateFromExternalObject( parsed, dataserver=dataserver )
+		if 'tags' in parsed:
+			# we lowercase and sanitize tags. Our sanitization here is really
+			# cheap and discards html symbols
+			temp_tags = { t.lower() for t in parsed['tags'] if '>' not in t and '<' not in t and '&' not in t }
+			if not temp_tags:
+				self.tags = ()
+			else:
+				# Preserve an existing mutable object if we have one
+				if not self.tags:
+					self.tags = []
+				del self.tags[:]
+				self.tags.extend( temp_tags )
+
 
 
 import html5lib
@@ -210,7 +233,7 @@ def _html5lib_tostring(doc,sanitize=True):
 	stream = walker(doc)
 	# We can easily subclass filters.HTMLSanitizer to add more
 	# forbidden tags, and some CSS things to filter. Then
-	# we pas a treewalker over it to the XHTMLSerializer instead
+	# we pass a treewalker over it to the XHTMLSerializer instead
 	# of using the keyword arg.
 	s = serializer.xhtmlserializer.XHTMLSerializer(omit_optional_tags=False,sanitize=sanitize,quote_attr_values=True)
 	output_generator = s.serialize(stream)
