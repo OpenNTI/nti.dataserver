@@ -6,14 +6,16 @@ from __future__ import print_function, unicode_literals
 
 __docformat__ = 'restructuredtext'
 
-generation = 1
+generation = 2
 
 from zope.generations.generations import SchemaManager
 
 class _DataserverSchemaManager(SchemaManager):
 	"A schema manager that we can register as a utility in ZCML."
 	def __init__( self ):
-		super( _DataserverSchemaManager, self ).__init__(generation=1,minimum_generation=1,package_name='nti.dataserver.generations')
+		super( _DataserverSchemaManager, self ).__init__(generation=2,
+														 minimum_generation=2,
+														 package_name='nti.dataserver.generations')
 
 
 def evolve( context ):

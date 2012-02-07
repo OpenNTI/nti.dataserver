@@ -27,13 +27,14 @@ from zope.configuration import xmlconfig
 import ZODB.serialize
 from zope.event import notify
 from zope.processlifetime import DatabaseOpenedWithRoot
+import zope.generations.generations
 
 import ZEO
 import ZEO.ClientStorage
 from persistent import Persistent, wref
 import transaction
 from transaction.interfaces import DoomedTransaction
-from persistent.list import PersistentList
+from persistent.mapping import PersistentMapping
 from BTrees import OOBTree
 
 import contenttypes
@@ -311,6 +312,23 @@ class MinimalDataserver(object):
 		# Now, simply broadcasting the DatabaseOpenedWithRoot option
 		# will trigger the installers/evolvers from zope.generations
 		# TODO: Should we be the ones doing this?
+
+		# In the past, we weren't used to install the application
+		# Therefore we could have all the installed components, but
+		# not the generation key. We'll support that for awhile by
+		# manually running the migrations: set the version to 1, the first version that
+		# actually was installed by us, and then let the 1-to-2 migration path
+		# really fire.
+		with self.db.transaction() as conn:
+			root = conn.root()
+			if root.get( zope.generations.generations.generations_key ) is None and root.get( 'users' ) is not None:
+				# OK, the application has been run before, but migration and schema setup have
+				# not.
+				generations = PersistentMapping()
+				root[zope.generations.generations.generations_key] = generations
+				generations['nti.dataserver'] = 1
+
+
 		notify( DatabaseOpenedWithRoot( self.db ) )
 
 		self._parentDir = parentDir

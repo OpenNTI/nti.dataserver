@@ -174,10 +174,28 @@ These are definitions related to content that a user can generate.
 	   bool prohibitReSharing;
    }
 
-   mixin Anchored<Contained> {
+   //Anchors are far from ideal at this point
+   mixin IdealAnchored<Contained> {
 	   optional point_t coordinates;
 	   //and/or
 	   optional anchor_t anchor;
+   }
+
+   mixin Anchored<Contained> {
+        string startHighlightedFullText;
+        string startHighlightedText;
+        string startXpath;
+        string startAnchor;
+        int startOffset;
+
+        int endOffset;
+        string endAnchor;
+        string endXpath;
+        string endHighlightedText;
+        string endHighlightedFullText;
+
+        string anchorPoint;
+        string anchorType;
    }
 
    mixin Taggable {

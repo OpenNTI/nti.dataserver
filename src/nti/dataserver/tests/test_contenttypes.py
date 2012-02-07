@@ -132,11 +132,6 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 		n.updateFromExternalObject( {'body': 'body' } )
 		ext = n.toExternalObject()
 		assert_that( ext['body'][0], is_( 'body' ) )
-		# But legacy support for text on the note when asked for directly
-		assert_that( n['text'], is_( 'body' ) )
-
-
-
 
 		n.updateFromExternalObject( {'body': ['First', 'second'] } )
 		ext = n.toExternalObject()
@@ -146,41 +141,15 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 		# If both, text is ignored.
 		n.updateFromExternalObject( {'body': ['First', 'second'], 'text': 'foo' } )
 		ext = n.toExternalObject()
-		assert_that( n['text'], is_( 'First' ) )
 		assert_that( ext['body'][0], is_('First') )
 		assert_that( ext['body'][1] ,is_('second') )
-
-
-	def test_setstate_text_migration(self):
-		n = Note()
-		# default state
-		assert_that( n.data, has_entry( 'body', ('',) ) )
-		assert_that( n.data, is_not( has_key( 'text' ) ) )
-
-		n.__setstate__( n.__getstate__() )
-		assert_that( n.data, has_entry( 'body', ('',) ) )
-		assert_that( n.data, is_not( has_key( 'text' ) ) )
-
-		# Now give it text
-		del n.data['body']
-		n.data['text'] = 'foo'
-		assert_that( n.data, has_key( 'text' ) )
-		n.__setstate__( n.__getstate__() )
-		assert_that( n.data, is_not( has_key( 'text' ) ) )
-		assert_that( n.data, has_entry( 'body', ('foo',) ) )
-		to_external_representation( n )
-
-		# If the body was a string it should become a tuple
-		n.data['body'] = 'foo'
-		n.__setstate__( n.__getstate__() )
-		assert_that( n.data, has_entry( 'body', ('foo',) ) )
-		to_external_representation( n )
 
 	def test_external_body_with_canvas(self):
 		n = Note()
 		c = Canvas()
 
-		n['body'] = [c]
+		n.body = [c]
+		n.updateLastMod()
 		ext = n.toExternalObject()
 		del ext['Last Modified']
 		del ext['CreatedTime']
@@ -199,8 +168,9 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 
 		c.append( CanvasPathShape( points=[1, 2, 3, 4] ) )
 		n = Note()
-		n['body'] = [c]
+		n.body = [c]
 		c[0].closed = 1
+		n.updateLastMod()
 		ext = n.toExternalObject()
 		del ext['Last Modified']
 		del ext['CreatedTime']

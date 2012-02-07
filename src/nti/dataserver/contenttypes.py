@@ -175,8 +175,29 @@ class _UserArbitraryDataContentRoot(_UserContentRoot, datastructures.IDItemMixin
 			return
 		super( _UserArbitraryDataContentRoot, self ).__setitem__( key, value )
 
-class Highlight(_UserArbitraryDataContentRoot):
-	pass
+class Highlight(_UserContentRoot,datastructures.ExternalizableInstanceDict):
+
+	def __init__( self ):
+		super(Highlight,self).__init__()
+		self.top = 0
+		self.left = 0
+		# TODO: Determine the meaning of all these fields.
+		self.startHighlightedFullText = ''
+		self.startHighlightedText = ''
+		self.startXpath = ''
+		self.startAnchor = ''
+		self.startOffset = 0
+		self.endOffset = 0
+		self.endAnchor = ''
+		self.endXpath = ''
+
+		self.endHighlightedText = ''
+		self.endHighlightedFullText = ''
+
+		self.anchorPoint = ''
+		self.anchorType = ''
+
+
 
 import html5lib
 from html5lib import treewalkers, serializer, treebuilders
@@ -254,36 +275,25 @@ def sanitize_user_html( user_input ):
 class Note(ThreadableExternalizableMixin, Highlight):
 	interface.implements(nti_interfaces.INote)
 
-	# TODO: Migrate this off arbitrary data and onto something stable.
 	def __init__(self):
 		super(Note,self).__init__()
-		self['body'] = ('',)
-
-	def __setstate__( self, state ):
-		super(Note,self).__setstate__( state )
-		# Migration from old text to new body
-		if 'text' in self.data and 'body' not in self.data:
-			self.data['body'] = (self.data['text'],)
-		if 'text' in self.data:
-			del self.data['text']
-		if isinstance(self.data['body'],six.string_types):
-			self.data['body'] = (self.data['body'],)
+		self.body = ("",)
 
 	def __getitem__( self, key ):
-		if key == 'text' and 'body' in self:
-			warnings.warn( "The text property is deprecated", FutureWarning, stacklevel=2 )
-			return self['body'][0]
-		return super(Note,self).__getitem__(key)
+		warnings.warn( "Treating notes like dictionaries is deprecated", FutureWarning, stacklevel=2 )
+		return self.__dict__[key]
+
+	def __setitem__( self, key, val ):
+		warnings.warn( "Treating notes like dictionaries is deprecated", FutureWarning, stacklevel=2 )
+		self.__dict__[key] = val
 
 	def __contains__( self, key ):
-		if key == 'text':
-			return 'body' in self
-		return super(Note,self).__contains__( key )
+		return key in self.__dict__
 
 	def toExternalDictionary( self ):
 		result = super(Note,self).toExternalDictionary()
 		# In our initial state, don't try to send empty body/text
-		if self['body'] == ('',):
+		if self.body == ('',):
 			result.pop( 'body' )
 
 		return result
@@ -300,20 +310,20 @@ class Note(ThreadableExternalizableMixin, Highlight):
 		if 'body' in parsed:
 			# Support raw body, not wrapped
 			if isinstance( parsed['body'], six.string_types ):
-				self['body'] = ( parsed['body'], )
-			assert len(self['body']) > 0
+				self.body = ( parsed['body'], )
+			assert len(self.body) > 0
 			# convert mutable lists to immutable tuples
-			self['body'] = tuple( self['body'] )
+			self.body = tuple( self.body )
 
 			# Verify that the body contains supported types, if
 			# sent from the client.
-			for x in self['body']:
+			for x in self.body:
 				assert (isinstance(x, six.string_types) and len(x) > 0) or isinstance(x,Canvas)
 
 			# Sanitize the body
-			self['body'] = [sanitize_user_html(x) if isinstance(x,six.string_types) else x
+			self.body = [sanitize_user_html(x) if isinstance(x,six.string_types) else x
 							for x
-							in self['body']]
+							in self.body]
 
 		# If we are newly created, and a reply, then
 		# we want to use our policy settings to determine the sharing
@@ -340,9 +350,9 @@ class Note(ThreadableExternalizableMixin, Highlight):
 
 			# Now some other things we want to inherit if possible
 			for copy in ('anchorPoint','anchorType','left','top'):
-				val = self.inReplyTo.get( copy, self.get( copy ) )
+				val = getattr( self.inReplyTo, copy, getattr( self, copy, None ) )
 				if val is not None:
-					self[copy] = val
+					setattr( self, copy, val )
 
 #####
 # Whiteboard shapes

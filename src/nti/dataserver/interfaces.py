@@ -202,6 +202,10 @@ class IAnchoredRepresentation(IContained):
 	Something not only contained within a container, but that has a
 	specific position within the rendered representation of that
 	container.
+
+	There are currently a wide range of fields associated with such a representation, many
+	of which are not well understood and need to be better documented. See the Highlight class for
+	a list of known fields.
 	"""
 	pass
 
@@ -444,7 +448,12 @@ class ICanvas(IShareableModeledContent, IThreadable):
 		Adds the shape to the top of the list of shapes.
 		"""
 
-class INote(IShareableModeledContent,IThreadable,IAnchoredRepresentation):
+class IHighlight(IShareableModeledContent,IThreadable,IAnchoredRepresentation):
+	"""
+	A highlighted portion of content the user wishes to remember.
+	"""
+
+class INote(IHighlight):
 	"""
 	A user-created note attached to other content.
 	"""
