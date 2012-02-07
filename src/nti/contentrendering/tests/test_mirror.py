@@ -29,7 +29,7 @@ class TestMirror(ConfiguringTestBase):
 		shutil.rmtree( self.temp_dir )
 
 	def test_mirror_includes_video_excludes_fragments(self):
-		" Mirrored files should include vides, but not anything with a fragment. "
+		" Mirrored files should include videos, but not anything with a fragment. "
 		fetched_urls = []
 		parent_dirs = set()
 		def execute_fetch(arg):

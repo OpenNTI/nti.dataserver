@@ -14,6 +14,7 @@ import nti.dataserver.classes as classes
 
 from zope import component
 from zope import interface
+from zope.generations import interfaces as gen_interfaces
 from nti.dataserver import interfaces as nti_interfaces
 
 _DATA_QUIZ_0 = {'Class': 'Quiz',
@@ -128,7 +129,10 @@ _DATA_QUIZ_1 = {'Class': 'Quiz',
 		 'OID': '0x0922'}
 
 class ExampleDatabaseInitializer(object):
-	interface.implements(nti_interfaces.IDatabaseInitializer)
+	interface.implements(gen_interfaces.IInstallableSchemaManager)
+
+	generation = 0
+	minimum_generation = 0
 
 	def __init__( self, *args ):
 		pass
@@ -226,7 +230,8 @@ class ExampleDatabaseInitializer(object):
 		for_user.addContainedObject( fl )
 
 
-	def init_database( self, conn ):
+	def install( self, context ):
+		conn = context.connection
 		root = conn.root()
 		ONLY_NEW = '--only-new' in sys.argv
 		if ONLY_NEW:

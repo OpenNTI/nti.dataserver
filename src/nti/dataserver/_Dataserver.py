@@ -25,6 +25,8 @@ from zope import interface
 from zope import component
 from zope.configuration import xmlconfig
 import ZODB.serialize
+from zope.event import notify
+from zope.processlifetime import DatabaseOpenedWithRoot
 
 import ZEO
 import ZEO.ClientStorage
@@ -302,8 +304,15 @@ class MinimalDataserver(object):
 			dataFileName = os.environ['DATASERVER_FILE']
 		parentDir = os.path.expanduser( parentDir )
 		self.conf = config.temp_get_config( parentDir, demo=DATASERVER_DEMO )
-		component.provideUtility( self.conf ) # TODO: We shouldn't be doing this, it should be passed to us
+		# TODO: We shouldn't be doing this, it should be passed to us
+		component.provideUtility( self.conf )
 		self.db, self.sessionsDB, self.searchDB = self._setup_dbs( parentDir, dataFileName, daemon, classFactory )
+
+		# Now, simply broadcasting the DatabaseOpenedWithRoot option
+		# will trigger the installers/evolvers from zope.generations
+		# TODO: Should we be the ones doing this?
+		notify( DatabaseOpenedWithRoot( self.db ) )
+
 		self._parentDir = parentDir
 		self._dataFileName = dataFileName
 
@@ -372,36 +381,6 @@ class MinimalDataserver(object):
 	def get_by_oid( self, oid_string, ignore_creator=False ):
 		return get_object_by_oid( _ContextManager.contextManager().conn, oid_string, ignore_creator=ignore_creator )
 
-class _DataserverInitializer(object):
-	interface.implements(interfaces.IDatabaseInitializer)
-	component.adapts( ZODB.interfaces.IDatabase )
-
-	def __init__( self, db ):
-		self.db = db
-
-	def init_database( self, conn ):
-		root = conn.root()
-
-		for key in ('users', 'vendors', 'library', 'quizzes', 'providers' ):
-			root[key] = datastructures.KeyPreservingCaseInsensitiveModDateTrackingBTreeContainer()
-			root[key].__name__ = key
-
-		if 'Everyone' not in root['users']:
-			# Hmm. In the case that we're running multiple DS instances in the
-			# same VM, our constant could wind up with different _p_jar
-			# and _p_oid settings. Hence the copy
-			root['users']['Everyone'] = copy.deepcopy( users.EVERYONE_PROTO )
-		# This is interesting. Must do this to ensure that users
-		# that get created at different times and that have weak refs
-		# to the right thing. What's a better way?
-		users.EVERYONE = root['users']['Everyone']
-
-		# By keeping track of changes in one specific place, and weak-referencing
-		# them elsewhere, we can control how much history is kept in one place.
-		# This also solves the problem of 'who owns the change?' We do.
-		if not root.has_key( 'changes'):
-			root['changes'] = PersistentList()
-
 class Dataserver(MinimalDataserver):
 
 	interface.implements(interfaces.IDataserver)
@@ -419,8 +398,7 @@ class Dataserver(MinimalDataserver):
 			# TODO: For right now, we are also handling initialization until all code
 			# is ported over
 			if not self.root.has_key( 'users' ):
-				warnings.warn( "Creating DS against uninitialized DB. Test code?", stacklevel=3 )
-				_DataserverInitializer( self.db ).init_database( conn )
+				raise Exception( "Creating DS against uninitialized DB. Test code?" )
 
 			# if 'Everyone' not in self.root['users']:
 			# 	# Hmm. In the case that we're running multiple DS instances in the
