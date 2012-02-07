@@ -41,6 +41,8 @@ from layers import register_implicit_layers
 from zope import interface
 from zope import component
 from zope.configuration import xmlconfig
+from zope.event import notify
+from zope.processlifetime import ProcessStarting
 
 import nti.appserver.workspaces
 
@@ -192,7 +194,13 @@ def createApplication( http_port,
 	:return: A tuple (wsgi app, _Main)
 	"""
 	server = None
-	register_implicit_layers()
+	# Configure subscribers, etc.
+	xmlconfig.file( 'configure.zcml', package=nti.appserver )
+	# Notify of startup. (Note that configuring the packages loads zope.component:configure.zcml
+	# which in turn hooks up zope.component.event to zope.event for event dispatching)
+	notify( ProcessStarting() )
+
+	register_implicit_layers() # TODO: Move this to configuration?
 	logger.debug( 'Began starting dataserver' )
 	server = None
 
@@ -237,15 +245,11 @@ def createApplication( http_port,
 													  debug_logger=logging.getLogger( 'pyramid' ) ) #,
 
 		pyramid_config.setup_registry()
-
 	pyramid_config.set_authorization_policy( pyramid.authorization.ACLAuthorizationPolicy() )
 	pyramid_config.set_authentication_policy( pyramid_auth.create_authentication_policy() )
 	pyramid_config.add_route( name='logout', pattern='/dataserver2/logout' )
 	pyramid_config.add_view( route_name='logout',
 							 view='nti.appserver.dataserver_pyramid_views._logout' )
-
-
-	xmlconfig.file( 'configure.zcml', package=nti.appserver )
 
 	# Temporarily make everyone an OU admin
 	class OUAdminFactory(object):

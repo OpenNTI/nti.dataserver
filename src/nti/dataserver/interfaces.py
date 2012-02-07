@@ -49,6 +49,11 @@ class IDatabaseInitializer(interface.Interface):
 		will be manager externally.
 		"""
 
+#import zope.generations.interfaces
+#IDatabaseInitializer = zope.generations.interfaces.IInstallableSchemaManager
+import zope.deprecation
+zope.deprecation.deprecated( 'IDatabaseInitializer', 'replaced with zope.generations.interfaces.IInstallableSchemaManager' )
+
 class IChatserver(interface.Interface):
 	pass
 

@@ -54,7 +54,7 @@ class _Program(object):
 	def set_command(self, value):
 		self.cmd_line = value
 	command = property(get_command, set_command)
-	
+
 class _ReadableEnv(object):
 	interface.implements(nti_interfaces.IEnvironmentSettings)
 	env_root = '/'
@@ -121,7 +121,7 @@ class _Env(_ReadableEnv):
 
 	def get_programs(self):
 		return self.programs
-	
+
 	def add_program( self, program ):
 		self.programs.append( program )
 
@@ -134,7 +134,7 @@ class _Env(_ReadableEnv):
 		write_configuration_file( self.conf_file( name ), contents )
 
 	def write_supervisor_conf_file( self, pserve_ini):
-		
+
 		ini = ConfigParser.SafeConfigParser()
 		ini.add_section( 'supervisord' )
 		ini.set( 'supervisord', 'logfile', self.log_file( 'supervisord.log' ) )
@@ -312,13 +312,13 @@ from nti.dataserver import interfaces as nti_interfaces
 def _configure_database( env, uris ):
 
 	db = db_from_uri( uris )
-	# Circular import
+	# TODO: Circular import
 	import nti.dataserver.utils.example_database_initializer
 	component.provideSubscriptionAdapter(
 		nti.dataserver.utils.example_database_initializer.ExampleDatabaseInitializer,
 		adapts=(ZODB.interfaces.IDatabase,),
 		provides=nti_interfaces.IDatabaseInitializer )
-
+	# TODO: Replace this with zope.generations IInstallableSchemaManager
 	subscribers = component.subscribers( (db,), nti_interfaces.IDatabaseInitializer )
 	with db.transaction( ) as conn:
 		for subscriber in subscribers:
@@ -375,7 +375,7 @@ def write_configs(root_dir, pserve_ini):
 	env.write_main_conf()
 
 	return env
-	
+
 def main():
 	args = sys.argv
 

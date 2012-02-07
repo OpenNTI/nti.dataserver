@@ -303,6 +303,10 @@ class _ObjectsContainerResource(_ContainerResource):
 		# The dataserver wants to provide user-based security
 		# for access with an OID. We can do better than that, though,
 		# with the true ACL security we get from Pyramid's path traversal.
+		# FIXME: Some objects (SimplePersistentEnclosure, for example) don't
+		# have ACLs (ACLProvider) yet and so this path is not actually doing anything.
+		# Those objects are dependent on their container structure being
+		# traversed to get a correct ACL, and coming in this way that doesn't happen.
 		return ds.get_by_oid( key, ignore_creator=True )
 
 class _NTIIDsContainerResource(_ObjectsContainerResource):
@@ -312,6 +316,8 @@ class _NTIIDsContainerResource(_ObjectsContainerResource):
 
 	# TODO: These two methods have moved to ntiids.find_object_with_ntiid. They
 	# remain here for the special handling of _ObjectContainedResource. Unify this.
+	# FIXME: Why is there even a distinction here with 'Objects' vs NTIIDs since OID
+	# NTIIDs are a type of NTIID. This should be resolving those, right?
 	def _getitem_with_ds( self, ds, key ):
 		result = None
 		if ntiids.is_valid_ntiid_string( key ):
