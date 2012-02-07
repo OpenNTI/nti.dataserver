@@ -15,7 +15,7 @@ from nti.dataserver.datastructures import (getPersistentState, toExternalOID, fr
 									   PersistentExternalizableList, ExternalizableInstanceDict,
 									   to_external_ntiid_oid)
 from nti.dataserver import contenttypes
-from nti.dataserver.contenttypes import Note, Canvas, CanvasShape, CanvasAffineTransform, CanvasCircleShape, CanvasPolygonShape, CanvasPathShape
+from nti.dataserver.contenttypes import Highlight, Note, Canvas, CanvasShape, CanvasAffineTransform, CanvasCircleShape, CanvasPolygonShape, CanvasPathShape
 import nti.dataserver as dataserver
 #import nti.dataserver.users
 
@@ -41,6 +41,27 @@ def test_normalize_html_text_to_par():
 	exp =  u'<html><body><p style=" text-align: left;"><span>The pad replies to my note.</span></p><p style=" text-align: left;">The server edits it.</p></body></html>'
 	_check_sanitized( html, exp )
 
+
+class HighlightTest(mock_dataserver.ConfiguringTestBase):
+
+	@mock_dataserver.WithMockDSTrans
+	def test_external_tags(self):
+		ext = { 'tags': ['foo'], 'AutoTags': ['bar'] }
+		highlight = Highlight()
+		highlight.updateFromExternalObject( ext, self.ds )
+
+		assert_that( highlight.AutoTags, is_( () ) )
+		assert_that( highlight.tags, is_( ['foo'] ) )
+
+		# They are lowercased
+		ext = { 'tags': ['Baz'] }
+		highlight.updateFromExternalObject( ext, self.ds )
+		assert_that( highlight.tags, is_( ['baz'] ) )
+
+		# Bad ones are filtered
+		ext = { 'tags': ['<html>Hi'] }
+		highlight.updateFromExternalObject( ext, self.ds )
+		assert_that( highlight.tags, is_( () ) )
 
 class NoteTest(mock_dataserver.ConfiguringTestBase):
 
