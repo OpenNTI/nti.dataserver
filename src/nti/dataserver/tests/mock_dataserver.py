@@ -55,12 +55,6 @@ class MockDataserver( dataserver._Dataserver.Dataserver ):
 			searchDB = ZODB.DB( DemoStorage(),
 								databases=databases,
 								database_name='Search')
-
-			subscribers = component.subscribers( (db,), nti_interfaces.IDatabaseInitializer )
-			with DBContext( db ) as conn:
-				for subscriber in subscribers:
-					subscriber.init_database( conn )
-
 			return db
 
 		self.conf.zeo_make_db = make_db

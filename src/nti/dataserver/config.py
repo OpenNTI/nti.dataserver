@@ -307,6 +307,9 @@ from zope import component
 from ZODB.DB import ContextManager as DBContext
 import ZODB.interfaces
 
+from zope.event import notify
+from zope.processlifetime import DatabaseOpenedWithRoot
+
 from nti.dataserver import interfaces as nti_interfaces
 
 def _configure_database( env, uris ):
@@ -314,15 +317,13 @@ def _configure_database( env, uris ):
 	db = db_from_uri( uris )
 	# TODO: Circular import
 	import nti.dataserver.utils.example_database_initializer
-	component.provideSubscriptionAdapter(
-		nti.dataserver.utils.example_database_initializer.ExampleDatabaseInitializer,
-		adapts=(ZODB.interfaces.IDatabase,),
-		provides=nti_interfaces.IDatabaseInitializer )
-	# TODO: Replace this with zope.generations IInstallableSchemaManager
-	subscribers = component.subscribers( (db,), nti_interfaces.IDatabaseInitializer )
-	with db.transaction( ) as conn:
-		for subscriber in subscribers:
-			subscriber.init_database( conn )
+	component.provideUtility(
+		nti.dataserver.utils.example_database_initializer.ExampleDatabaseInitializer(),
+		name='nti.dataserver-example' )
+	# Now, simply broadcasting the DatabaseOpenedWithRoot option
+	# will trigger the installers from zope.generations
+	notify( DatabaseOpenedWithRoot( db ) )
+
 
 def temp_get_config( root, demo=False ):
 	env = _Env( root, create=False )

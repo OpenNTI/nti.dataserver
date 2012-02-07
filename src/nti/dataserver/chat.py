@@ -1193,17 +1193,3 @@ class Chatserver(object):
 import ZODB.interfaces
 from BTrees import OOBTree
 
-class _ChatDatabaseInitializer(object):
-	interface.implements(nti_interfaces.IDatabaseInitializer)
-	component.adapts( ZODB.interfaces.IDatabase )
-
-	def __init__( self, db ):
-		self.db = db
-
-	def init_database( self, conn ):
-		room_name = 'meeting_rooms'
-		sess_conn = conn.get_connection( 'Sessions' )
-		sess_root = sess_conn.root()
-
-		if room_name not in sess_root:
-			sess_root[room_name] = PersistentMappingMeetingStorage( OOBTree.OOBTree )
