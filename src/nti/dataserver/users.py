@@ -1521,6 +1521,19 @@ class User(Principal):
 		The returned value MOST NOT be modified."""
 		return self.containers.containers
 
+	def values(self):
+		"""
+		Returns something that iterates across all contained objects of this user.
+		This is intended for use during migrations (enabling :func:`zope.generations.utility.findObjectsProviding`)
+		and not general use.
+		"""
+		# We could simply return getAllContainers().values() and let findObjectsProviding
+		# deal with the traversal, but this way is a tad more general
+		for container in self.getAllContainers().values():
+			if not hasattr( container, 'values' ): continue
+			for o in container.values():
+				yield o
+
 	def _is_container_ntiid( self, containerId ):
 		"""
 		Filters out things that are not used as NTIIDs. In the future,
