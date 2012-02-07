@@ -1,8 +1,8 @@
 name: defn bogus importantdef important concept warning game sidebar defns chapterquote chapterauthor exer exerhard xtra
-<div tal:condition="self" tal:attributes="class python: type(self).__name__" tal:content='self' />
+<div tal:condition="self" tal:attributes="class python: type(self).__name__; id self/id" tal:content='self' />
 
 name: picdefns
-<div class="picdefns">
+<div class="picdefns" tal:attributes="id self/id">
 <div tal:replace="self/attributes/Picture"/>
 <div tal:replace="self"/>
 </div>
@@ -34,7 +34,7 @@ name: challengeprobs
 <div class="challenge-problems" tal:attributes="id self/id"><span class="headingtext">Challenge Problems</span></div>
 <ol class="challenge-problems itemize">
 	<li tal:repeat="item self">
-		<div class="problem" tal:attributes="probnum item/attributes/probnum" tal:content="item"></div>
+		<div class="problem" tal:attributes="id self/id; probnum item/attributes/probnum" tal:content="item"></div>
 	</li>
 </ol>
 
@@ -46,7 +46,7 @@ name: reviewprobs
 <div class="review-problems" tal:attributes="id self/id"><span class="headingtext">Review Problems</span></div>
 <ol class="review-problems itemize">
 	<li tal:repeat="item self">
-		<div class="problem" tal:attributes="probnum item/attributes/probnum" tal:content="item"></div>
+		<div class="problem" tal:attributes="id self/id; probnum item/attributes/probnum" tal:content="item"></div>
 	</li>
 </ol>
 
@@ -54,7 +54,7 @@ name: sectionproblems
 <div class="section-problems" tal:attributes="id self/id"><span class="headingtext">Section Problems</span></div>
 <ol class="section-problems itemize">
 	<li tal:repeat="item self">
-		<div class="problem" tal:attributes="probnum item/attributes/probnum" tal:content="item"></div>
+		<div class="problem" tal:attributes="id self/id; probnum item/attributes/probnum" tal:content="item"></div>
 	</li>
 </ol>
 <div class="end section-problems">End section problems</div>
@@ -62,8 +62,12 @@ name: sectionproblems
 name: hintitem
 <span class="hint"><a href="#" onclick="return togglehint(event)">Hint: </a><span class="hint content hidden" tal:content="self" /></span>
 
+# Note that the non-standard probnum attribute is used in CSS to label these problems (div.problem:after)
+# TODO: Why can't we handle that in the template?
+# TODO: The 'type' non-standard attribute doesn't seem to be used? It should
+# really be unified with the class attribute anyway
 name: problem picproblem secprob picsecprob picsecprobspec picproblemspec problemspec
-<div class="problem" tal:attributes="probnum self/attributes/probnum; type python: type(self).__name__" tal:content="self"></div>
+<div class="problem" tal:attributes="id self/id; probnum self/attributes/probnum; type python: type(self).__name__" tal:content="self"></div>
 
 name: rightpic leftpic
 <div tal:condition="python: hasattr(self, 'resource')" tal:attributes="class python: type(self).__name__" tal:content="self/resource"/>
@@ -74,7 +78,7 @@ name: rightpic leftpic
 #We only account for the presence of 'r' or 'l' in the options argument
 name: parpic
 #There has to be a better way to do this
-<div tal:attributes="class python: (('r' in self.attributes['Options'] and 'rightpic') or ('l' in self.attributes['Options'] and 'leftpic') or '') + ' parpic'" tal:content="self/attributes/Picture"></div>
+<div tal:attributes="id self/id; class python: (('r' in self.attributes['Options'] and 'rightpic') or ('l' in self.attributes['Options'] and 'leftpic') or '') + ' parpic'" tal:content="self/attributes/Picture"></div>
 
 name: fig
 <div class="figure" tal:attributes="id self/title/id" tal:content="self"></div>
@@ -129,7 +133,7 @@ name: Cube BlackCube
 <img align="bottom" tal:define="style self/style" tal:condition="python: not hasattr(self, 'resource') and style" tal:attributes="src self/image/url; alt self/source; style self/style/inline" />
 
 name: tabular tabular* tabularx
-<div tal:attributes="class python: type(self).__name__" tal:content="self/resource"/>
+<div tal:attributes="id self/id; class python: type(self).__name__" tal:content="self/resource"/>
 
 name: mathnumber mathname
 <span tal:attributes="class python: type(self).__name__" tal:content="self/attributes/text"/>
