@@ -25,6 +25,10 @@ from . import javascript_path
 
 warnings.warn( "Using whatever phantomjs is on the path" )
 def _runPhantomOnPage( htmlFile, scriptName, args, key ):
+	# phantomjs 1.3 will take plain paths to open, 1.4 requires a URL
+	# This is a pretty lousy way to get a URL and probably has escaping problems
+	if not htmlFile.startswith( 'file:' ):
+		htmlFile = 'file://' + os.path.abspath( htmlFile )
 	process = "phantomjs %s %s %s 2>/dev/null" % (scriptName, htmlFile, " ".join([str(x) for x in args]))
 	jsonStr = subprocess.Popen(process, shell=True, stdout=subprocess.PIPE).communicate()[0].strip()
 	try:
