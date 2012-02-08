@@ -7,10 +7,13 @@ logger = logging.getLogger( __name__ )
 import sys
 
 
+
 import nti.dataserver as dataserver
 from nti.dataserver.users import User, Community, FriendsList
 import nti.dataserver.providers as providers
 import nti.dataserver.classes as classes
+import nti.dataserver.datastructures as datastructures
+import nti.dataserver.quizzes as quizzes
 
 from zope import component
 from zope import interface
@@ -283,14 +286,14 @@ class ExampleDatabaseInitializer(object):
 
 		# Quizzes
 		if not ONLY_NEW or 'quizzes' not in root or 'quizzes' not in root['quizzes']:
-			root['quizzes']['quizzes'] = dataserver.ModDateTrackingOOBTree()
-			q = dataserver.Quiz()
+			root['quizzes']['quizzes'] = datastructures.ModDateTrackingOOBTree()
+			q = quizzes.Quiz()
 			q.update( _DATA_QUIZ_1 )
 
 			q.id = _DATA_QUIZ_1['ID']
 			root['quizzes']['quizzes'][q.id] = q
 
-			q = dataserver.Quiz()
+			q = quizzes.Quiz()
 			q.update( _DATA_QUIZ_0 )
 
 			q.id = _DATA_QUIZ_0['ID']
