@@ -185,7 +185,7 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 		with ds.dbTrans():
 			ds.update_from_external_object( n, ext )
 
-		assert_that( n['body'][0], is_( Canvas ) )
+		assert_that( n.body[0], is_( Canvas ) )
 
 		c.append( CanvasPathShape( points=[1, 2, 3, 4] ) )
 		n = Note()
@@ -206,13 +206,13 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 		with ds.dbTrans():
 			ds.update_from_external_object( n, ext )
 
-		assert_that( n['body'][0], is_( Canvas ) )
-		assert_that( n['body'][0][0], is_( CanvasPathShape ) )
-		assert_that( n['body'][0][0].closed, same_instance( True ) )
+		assert_that( n.body[0], is_( Canvas ) )
+		assert_that( n.body[0][0], is_( CanvasPathShape ) )
+		assert_that( n.body[0][0].closed, same_instance( True ) )
 
 	def test_update_sharing_only( self ):
 		n = Note()
-		n['body'] = ['This is the body']
+		n.body = ['This is the body']
 
 		ds = MockDataserver()
 		ext = { 'sharedWith': ['jason'] }

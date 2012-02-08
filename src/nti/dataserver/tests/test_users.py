@@ -82,7 +82,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		user2 = User( 'fab@bar', 'temp' )
 
 		note = Note()
-		note['body'] = ['text']
+		note.body = ['text']
 		note.containerId = 'c1'
 		note.creator = user1.username
 
@@ -106,7 +106,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 			user2 = User.create_user( mock_dataserver.current_mock_ds, username='fab@bar' )
 
 			note = Note()
-			note['body'] = ['text']
+			note.body = ['text']
 			note.containerId = 'c1'
 			note.creator = user1.username
 
@@ -138,7 +138,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 			user2 = User.create_user( mock_dataserver.current_mock_ds, username='fab@bar' )
 
 			note = Note()
-			note['body'] = ['text']
+			note.body = ['text']
 			note.containerId = 'c1'
 			note.creator = user1.username
 
