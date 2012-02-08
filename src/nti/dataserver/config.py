@@ -162,12 +162,23 @@ class _Env(_ReadableEnv):
 		with open( self.conf_file( 'supervisord.conf' ), 'wb' ) as fp:
 			ini.write( fp )
 
+		enviroment = ['DATASERVER_DIR=%(here)s/../']
+		
 		command = 'pserve'
 		ini.add_section( 'program:pserve' )
 		ini.set( 'program:pserve', 'command', '%s %s' % (command, pserve_ini) )
-		ini.set( 'program:pserve', 'environment', 'DATASERVER_DIR=%(here)s/../' )
+		ini.set( 'program:pserve', 'environment', ','.join(enviroment) )
 		ini.set( 'supervisord', 'nodaemon', 'true' )
 		with open( self.conf_file( 'supervisord_dev.conf' ), 'wb' ) as fp:
+			ini.write( fp )
+			
+		enviroment.append('DATASERVER_DEMO=1')
+		zeo_p = _create_zeo_program(self, 'demo_zeo_conf.xml')
+		ini.set('program:zeo', 'command', zeo_p.cmd_line)
+		for p in self.programs:
+			section = 'program:%s' % p.name
+			ini.set(section, 'environment', ','.join(enviroment))
+		with open( self.conf_file( 'supervisord_demo.conf' ), 'wb' ) as fp:
 			ini.write( fp )
 
 def _configure_pubsub( env, name ):
@@ -191,6 +202,11 @@ def _configure_pubsub_changes( env ):
 
 def _configure_pubsub_session( env ):
 	_configure_pubsub( env, 'session' )
+
+def _create_zeo_program(env_root, zeo_config='zeo_conf.xml' ):
+	program = _Program( 'zeo', 'runzeo -C ' + env_root.conf_file( zeo_config ) )
+	program.priority = 0
+	return program
 
 def _configure_zeo( env_root ):
 	"""
@@ -292,11 +308,9 @@ def _configure_zeo( env_root ):
 	env_root.write_conf_file( 'zeo_uris.ini', uri_conf )
 	env_root.write_conf_file( 'demo_zeo_uris.ini', demo_uri_conf )
 
-	# We assume that runzeo is on the path (virtualenv)
-	program = _Program( 'zeo', 'runzeo -C ' + env_root.conf_file( 'zeo_conf.xml' ) )
-	program.priority = 0
+	# We assume that runzeo is on the path (virtualenv)	
+	program = _create_zeo_program(env_root, 'zeo_conf.xml' ) 
 	env_root.add_program( program )
-
 
 	return file_uris
 
