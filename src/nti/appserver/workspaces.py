@@ -17,6 +17,7 @@ from nti.dataserver import links
 from nti.dataserver import mimetype
 from nti.dataserver import ntiids
 from nti.dataserver import authorization as nauth
+from nti.dataserver import authorization_acl as nacl
 
 import nti.appserver.interfaces as app_interfaces
 import nti.appserver.pyramid_renderers as rest
@@ -30,19 +31,7 @@ def _find_name( obj ):
 		   or getattr( obj, '__name__', None ) \
 		   or getattr( obj, 'container_name', None )
 
-class ACLLocationProxy(LocationProxy):
-	"""
-	Like :class:`LocationProxy` but also adds transparent storage
-	for an __acl__ attribute
-	"""
-	__slots__ = ('__acl__',) + LocationProxy.__slots__
-
-	def __new__( cls, backing, container=None, name=None, acl=() ):
-		return LocationProxy.__new__( cls, backing, container=container, name=name )
-
-	def __init__( self, backing, container=None, name=None, acl=() ):
-		LocationProxy.__init__( self, backing, container=container, name=name )
-		self.__acl__ = acl
+from nti.dataserver.interfaces import ACLLocationProxy
 
 class _ContainerWrapper(object):
 	"""
@@ -337,12 +326,12 @@ class ContainerCollectionDetailExternalizer(object):
 			# Note we assume that if there's an acl there are also parents
 			if hasattr(v, '__acl__' ):
 				return v
-			acl_prov = model_interfaces.IACLProvider( v, None )
+			acl = nacl.ACL( v )
 			return ACLLocationProxy( v,
 									 collection,
 									 # Pick, in order, id, ID, or __name__
 									 getattr( v, 'id', getattr( v, 'ID', getattr( v, '__name__', None ))),
-									 acl_prov.__acl__ if acl_prov else () )
+									 acl )
 
 		if isinstance( container, collections.Mapping ):
 			ext_collection['Items'] = { k: fixup(acl_wrapped(v),toExternalObject(v)) for k,v in container.iteritems()
@@ -558,8 +547,8 @@ class _UserEnrolledClassSectionsCollection(object):
 						# correct the parent
 						# Note we must also supply the ACL now or the code in CCDetailExternalizer
 						# will override our choices
-						acl = model_interfaces.IACLProvider( section, None )
-						l = ACLLocationProxy( section, clazz, section.__name__, acl.__acl__ )
+						acl = nacl.ACL( section )
+						l = ACLLocationProxy( section, clazz, section.__name__, acl )
 						result.append( l )
 
 		return result

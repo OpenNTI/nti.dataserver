@@ -23,7 +23,7 @@ from pyramid import traversal
 
 from zope.location.location import LocationProxy
 
-from nti.dataserver.interfaces import (IDataserver, ILibrary, IEnclosureIterable, IACLProvider, ISimpleEnclosureContainer, IEnclosedContent)
+from nti.dataserver.interfaces import (IDataserver, ILibrary, IEnclosureIterable, ISimpleEnclosureContainer, IEnclosedContent)
 import nti.dataserver.interfaces as nti_interfaces
 from nti.dataserver import (users, datastructures)
 from nti.dataserver.datastructures import to_external_ntiid_oid as toExternalOID
@@ -32,6 +32,7 @@ from nti.dataserver import ntiids
 from nti.dataserver import enclosures
 from nti.dataserver.mimetype import MIME_BASE, nti_mimetype_from_object
 from nti.dataserver import authorization as nauth
+from nti.dataserver import authorization_acl as nacl
 from . import interfaces as app_interfaces
 
 def _find_request( resource ):
@@ -71,8 +72,7 @@ class EnclosureGetItemACLLocationProxy(ACLLocationProxy):
 	"""
 	def __getitem__(self, key ):
 		enc = self.get_enclosure( key )
-		# TODO: IACLProvider
-		return ACLLocationProxy( enc, self, enc.__name__, self.__acl__ )
+		return ACLLocationProxy( enc, self, enc.__name__, nacl.ACL( enc, self.__acl__ ) )
 
 
 
@@ -180,7 +180,7 @@ class _ProviderResource(_UserResource):
 		del self._pseudo_classes_['EnrolledClassSections']
 
 	def _init_acl( self ):
-		self.__acl__ = IACLProvider( self.resource ).__acl__
+		self.__acl__ = nacl.ACL( self.resource )
 
 class _UsersRootResource( object ):
 
@@ -346,9 +346,7 @@ class _NTIIDsContainerResource(_ObjectsContainerResource):
 				path = library.pathToNTIID( key )
 			if path:
 				result = path[-1]
-				# TODO: IACLProvider
-				__acl__ = ( (sec.Allow, sec.Authenticated, sec.ALL_PERMISSIONS), )
-				result = ACLLocationProxy( result, result.__parent__, result.__name__, __acl__ )
+				result = ACLLocationProxy( result, result.__parent__, result.__name__, nacl.ACL( result ) )
 				return result
 			raise KeyError(key)
 
@@ -401,16 +399,14 @@ class _ContainedObjectResource(object):
 			self.__acl__ = [] #list(self.__acl__)
 
 		# TODO: Finish unifying these three things
-		acl_provider = component.queryAdapter( res, IACLProvider )
-		if acl_provider:
-			self.__acl__ += acl_provider.__acl__
+		self.__acl__ += nacl.ACL( res )
 		# Infer the ACL from who it is shared with. They can see it
 		# but everyone else is denied!
 		# The actual resource or contained enclosure that extends
 		# from us defaults to this same security.
-		elif hasattr( res, 'getFlattenedSharingTargetNames' ):
-			for target in res.getFlattenedSharingTargetNames():
-				self.__acl__.append( (sec.Allow, target, nauth.ACT_READ ) )
+		# elif hasattr( res, 'getFlattenedSharingTargetNames' ):
+		# 	for target in res.getFlattenedSharingTargetNames():
+		# 		self.__acl__.append( (sec.Allow, target, nauth.ACT_READ ) )
 
 		if hasattr( res, 'friends' ):
 			# friends lists
@@ -426,8 +422,12 @@ class _ContainedObjectResource(object):
 		res = self.resource
 		try:
 			# Return something that's a direct child, if possible.
-			# TODO: IACLProvider should be plugged in here
-			result = EnclosureGetItemACLLocationProxy( res[key], res, key, self.__acl__ )
+			# If not, then we'll go for enclosures.
+			child = res[key]
+			result = EnclosureGetItemACLLocationProxy( child,
+													   res,
+													   key,
+													   nacl.ACL( child, self.__acl__ ) )
 			return result
 		except (KeyError,TypeError):
 			pass
@@ -436,31 +436,35 @@ class _ContainedObjectResource(object):
 		cont = req.registry.queryAdapter( res, ISimpleEnclosureContainer ) \
 				   if not ISimpleEnclosureContainer.providedBy( res ) \
 				   else res
-		if ISimpleEnclosureContainer.providedBy( cont ):
-			# TODO: IACLProvider
-			return ACLLocationProxy( cont.get_enclosure( key ), res, key, self.__acl__ )
 
+		# If it claims to provide enclosures, let it do so.
+		# A missing enclosure is an error.
+		if ISimpleEnclosureContainer.providedBy( cont ):
+			child = cont.get_enclosure( key )
+			return ACLLocationProxy( child, res, key, nacl.ACL( child, self.__acl__ ) )
+		# The older iterable interface. Does anything provide
+		# iterators but not direct access? If so, look manually.
 		iterable = req.registry.queryAdapter( res, IEnclosureIterable ) \
 				   if not IEnclosureIterable.providedBy( res ) \
 				   else res
 		if IEnclosureIterable.providedBy( iterable ):
-			# TODO: Replace this loop with an IContainer interface
 			for enc in iterable.iterenclosures():
 				if enc.name == key:
 					# TODO: Understand why we have to copy this ACL down
 					# to get permissions to work.
 					# The parent resource has an ACL denying everything
-					return ACLLocationProxy( enc, res, key, self.__acl__ )
-
+					return ACLLocationProxy( enc, res, key, nacl.ACL( enc, self.__acl__ ) )
+		raise KeyError( key )
 
 	@property
 	def resource( self ):
 		# TODO: See comments above about ACL
+		res = self.user.getContainedObject( self.ntiid, self.objectid )
 		return ACLLocationProxy(
-				self.user.getContainedObject( self.ntiid, self.objectid ),
+				res,
 				self.__parent__,
 				self.objectid,
-				self.__acl__)
+				nacl.ACL( res, self.__acl__ ) )
 
 
 class _ObjectContainedResource(_ContainedObjectResource):
@@ -920,7 +924,10 @@ class _UGDPostView(_UGDModifyViewBase):
 		# Location header. It's probably happening because there's no ACL on this object,
 		# so we can return an ACLLocationProxy with an ACL (one we synthesize or one
 		# based on the ACL of the context?). (Seealso: _UGDPutView) The below may or may not be correct:
-		return ACLLocationProxy( containedObject, context, containedObject.id, context.__acl__ )
+		return ACLLocationProxy( containedObject,
+								 context,
+								 containedObject.id,
+								 nacl.ACL( containedObject, context.__acl__) )
 
 
 class _UGDDeleteView(_UGDModifyViewBase):
@@ -1013,7 +1020,10 @@ class _UGDPutView(_UGDModifyViewBase):
 			self._check_object_exists( theObject, creator, containerId, objId )
 
 		# Hack: See _UGDPostView
-		return ACLLocationProxy( theObject, context, objId, context.__acl__ )
+		return ACLLocationProxy( theObject,
+								 context,
+								 objId,
+								 nacl.ACL( theObject, context.__acl__ ) )
 
 
 class _EnclosurePostView(_UGDModifyViewBase):
@@ -1069,6 +1079,7 @@ class _EnclosurePostView(_UGDModifyViewBase):
 			content_type )
 		enclosure.creator = self.getRemoteUser()
 		enclosure_container.add_enclosure( enclosure )
+		# Ensure we'll be able to get a OID
 		if getattr( enclosure_container, '_p_jar', None ):
 			if modeled_content is not None:
 				enclosure_container._p_jar.add( modeled_content )
@@ -1082,7 +1093,7 @@ class _EnclosurePostView(_UGDModifyViewBase):
 																				   enclosure.name ) )
 		# TODO: We need to return some representation of this object
 		# just created. We need an 'Entry' wrapper.
-		return {}
+		return ACLLocationProxy( enclosure, context, enclosure.name, nacl.ACL( enclosure, context.__acl__ ) )
 
 class _EnclosurePutView(_UGDModifyViewBase):
 	"""
