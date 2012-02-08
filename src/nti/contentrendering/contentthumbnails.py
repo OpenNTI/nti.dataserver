@@ -23,7 +23,10 @@ thumbnailsLocationName = 'thumbnails'
 warnings.warn( "Using phantomjs and convert from the PATH" )
 def _generateImage(contentdir, page, output):
 	#print 'Fetching page info for %s' % htmlFile
-	process = "phantomjs %s %s %s 2>/dev/null" % (javascript, os.path.join(contentdir, page.location), output)
+	# FIXME: Need to use book.runPhantomOnPages. But it needs to be extended to
+	# then do arbitrary things, or we need to run the pipeline twice, in order to deal
+	# with convert
+	process = "phantomjs %s file://%s %s 2>/dev/null" % (javascript, os.path.join(contentdir, page.location), output)
 	#print process
 	subprocess.Popen(process, shell=True, stdout=subprocess.PIPE).communicate()[0].strip()
 
