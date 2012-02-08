@@ -19,9 +19,10 @@ from paste.exceptions.errormiddleware import ErrorMiddleware
 
 
 import nti.dataserver as dataserver
- #Hmm, these next two MUST be imported. We seem to have a path-dependent import req.
+ #Hmm, these next three MUST be imported. We seem to have a path-dependent import req.
 import nti.dataserver.socketio_server
 import nti.dataserver.wsgi
+import nti.dataserver._Dataserver
 from nti.dataserver.library import Library
 from nti.dataserver import interfaces as nti_interfaces
 
