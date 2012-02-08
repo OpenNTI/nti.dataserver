@@ -302,17 +302,6 @@ class Note(ThreadableExternalizableMixin, Highlight):
 		super(Note,self).__init__()
 		self.body = ("",)
 
-	def __getitem__( self, key ):
-		warnings.warn( "Treating notes like dictionaries is deprecated", FutureWarning, stacklevel=2 )
-		return self.__dict__[key]
-
-	def __setitem__( self, key, val ):
-		warnings.warn( "Treating notes like dictionaries is deprecated", FutureWarning, stacklevel=2 )
-		self.__dict__[key] = val
-
-	def __contains__( self, key ):
-		return key in self.__dict__
-
 	def toExternalDictionary( self ):
 		result = super(Note,self).toExternalDictionary()
 		# In our initial state, don't try to send empty body/text
