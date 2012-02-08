@@ -4,8 +4,8 @@ if(phantom.args.length < 1){
 
 var page = require('webpage').create();
 //page.viewportSize =  {width: 760, height: 964}; //height is 1024 - 60
-page.onConsoleMessage = function (msg) {
-    console.log(' Message from page: ' + msg);
+page.onConsoleMessage = function (msg, line, source) {
+    console.log(' Message from page: ' + msg + ' at ' + line + ' in ' + source);
 };
 
 
@@ -45,7 +45,7 @@ var getPageInfo = function(){
 
 var onPageOpen = function(status){
 	if(status !== 'success'){
-		console.log('Unable to open page');
+		console.log('Unable to open page ' + status);
 	}
 	else{
 		var pageinfo = page.evaluate(getPageInfo);
