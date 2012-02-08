@@ -30,14 +30,14 @@ class SimplePersistentEnclosure(datastructures.CreatedModDateTrackingObject, per
 	creator = None
 	lastModified = 0
 	createdTime = 0
+	__parent__ = None
 
 	def __init__( self, name, data='', mime_type='text/plain' ):
 		super(SimplePersistentEnclosure,self).__init__()
 		self.name = name
 		self.mime_type = mime_type
 		self.data = data
-		self.__parent__ = None
-		self.createdTime = time.time()
+		# Change default modified time from 0 to now
 		self.lastModified = self.createdTime
 
 	def __setstate__( self, state ):

@@ -5,6 +5,7 @@ from ZODB.MappingStorage import MappingStorage
 from ZODB.DemoStorage import DemoStorage
 
 import nti.dataserver as dataserver
+import nti.dataserver._Dataserver
 from nti.dataserver import users
 
 from zope import component

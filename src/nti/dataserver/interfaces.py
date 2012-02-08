@@ -6,7 +6,7 @@ import warnings
 import itertools
 
 from zope import interface, schema
-
+from zope.deprecation import deprecated
 from zope.mimetype.interfaces import IContentTypeAware, IContentType
 
 from zope.location import ILocation
@@ -328,11 +328,16 @@ class IModeledContent(IContent,IContained):
 	# be adding IEnclosedContent dynamically to the enclosed object
 	# instead of wrapping it?)
 
-class IEnclosedContent(IContent,IContained):
+class IEnclosedContent(IContent,IContained,IContentTypeAware):
 	"""
-	Content accessible as a bag-of-bytes.
+	Content accessible logically within another object.
+	This typically serves as a wrapper around another object, whether
+	modeled content or unmodeled content. In the case of modeled content,
+	its `__parent__` should be this object, and the `creator` should be the same
+	as this object's creator.
 	"""
 	name = interface.Attribute( "The human-readable name of this content." )
+	data = interface.Attribute( "The actual enclosed content." )
 
 class IEnclosureIterable(interface.Interface):
 	"""
@@ -344,6 +349,8 @@ class IEnclosureIterable(interface.Interface):
 		:return: An iteration across the :class:`IContent` contained
 			within this object.
 		"""
+
+deprecated( 'IEnclosureIterable', 'Implement ISimpleEnclosureContainer instead' )
 
 class ISimpleEnclosureContainer( #IContainerNamesContainer,
 								 IEnclosureIterable):

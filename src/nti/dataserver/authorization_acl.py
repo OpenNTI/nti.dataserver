@@ -74,6 +74,22 @@ class _ACE(object):
 ace_allowing = _ACE.allowing
 ace_denying = _ACE.denying
 
+def ACL( obj, default=() ):
+	"""
+	Produce an ACL for the given `obj`. If the object already has an ACL,
+	that will be returned. Otherwise, if it can be adapted into
+	an :class:`IACLProvider` it will be and that will be returned.
+	If no ACL can be found, returns an empty iterable (or whatever
+	the value of the `default` parameter is).
+	"""
+	try:
+		return obj.__acl__
+	except AttributeError:
+		try:
+			return nti_interfaces.IACLProvider( obj ).__acl__
+		except TypeError:
+			return default
+
 class _CreatedACLProvider(object):
 	"""
 	The creator of an object can do anything with it.
@@ -179,7 +195,7 @@ class _ClassInfoACLProvider(_CreatedACLProvider):
 		# We can thus flatten the acls into a simple dictionary.
 		section_acls = dict()
 		for s in self._created.Sections:
-			acl = nti_interfaces.IACLProvider(s).__acl__
+			acl = ACL(s)
 			for ace in acl:
 				section_acls[ace.actor] = ace
 		# The provider's admin role gets all perms
@@ -199,3 +215,33 @@ class _ClassInfoACLProvider(_CreatedACLProvider):
 		result.append( ace_denying( nti_interfaces.EVERYONE_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS ) )
 
 		return result
+
+class _EnclosedContentACLProvider(_CreatedACLProvider):
+	"""
+	The ACL for enclosed content depends on a few things, most notably
+	whether the content it is enclosing itself has an ACL.
+	"""
+	component.adapts( nti_interfaces.IEnclosedContent )
+
+	def __init__( self, obj ):
+		super(_EnclosedContentACLProvider,self).__init__( obj )
+
+	@property
+	def __acl__( self ):
+		# Give the creator full rights.
+		result = self._creator_acl()
+		# Add to this any ACL we can determine for the enclosed
+		# content
+		result.extend( ACL( self._created.data ) )
+		return result
+
+class _LibraryTOCEntryACLProvider(object):
+	"""
+	Allows all authenticated users access to library entries.
+	"""
+	interface.implements( nti_interfaces.IACLProvider )
+	component.adapts(nti_interfaces.ILibraryTOCEntry)
+
+	def __init__( self, obj ):
+		self._obj = obj
+		self.__acl__ = ( ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS ), )

@@ -8,6 +8,7 @@ import numbers
 import time
 import collections
 from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver import authorization_acl as nacl
 
 # Well-known IDs
 DATE = "2011-10"
@@ -214,8 +215,6 @@ def find_object_with_ntiid(key):
 			path = library.pathToNTIID( key )
 		if path:
 			result = path[-1]
-			# TODO: IACLProvider
-			__acl__ = ( (nti_interfaces.ACE_ACT_ALLOW, nti_interfaces.AUTHENTICATED_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS), )
-			result = nti_interfaces.ACLLocationProxy( result, result.__parent__, result.__name__, __acl__ )
+			result = nti_interfaces.ACLLocationProxy( result, result.__parent__, result.__name__, nacl.ACL( result ) )
 
 	return result
