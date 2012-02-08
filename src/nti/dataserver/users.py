@@ -9,6 +9,7 @@ import numbers
 import hashlib
 import functools
 import time
+import six
 
 from zope import interface
 from zope import component
@@ -777,29 +778,31 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 			friend.accept_shared_data_from( self.creator )
 			self.creator.follow( friend )
 
-	def _resolve_friend( self, friend, ix ):
-		result = friend
-		if isinstance( friend, basestring ):
-			result = User.get_user( friend, default=friend )
-			if result is not friend:
-				self._on_added_friend( result )
-				# Now that we found it, if possible replace the string
-				# with the real thing
-				try:
-					# Must have the index, the weak refs in here
-					# behave badly in comparisons.
-					self._friends[ix] = persistent.wref.WeakRef( result )
-				except ValueError: pass
-		elif isinstance( friend, persistent.wref.WeakRef ):
-			result = friend()
-		return result
-
 	def __iter__(self):
 		"""
 		Iterating over a FriendsList iterates over its friends
-		(as Entity objects), resolving weak refs.
+		(as Entity objects), resolving weak refs and strings.
 		"""
-		resolved = [self._resolve_friend(self.friends[i], i) for i in xrange(len(self.friends))]
+		# This function replaces things in the friends list as we
+		# iterate across it, so we must iterate by index
+		def _resolve_friend( friend, ix ):
+			result = friend
+			if isinstance( friend, six.string_types ):
+				result = User.get_user( friend, default=None )
+				if result is not None:
+					self._on_added_friend( result )
+					# Now that we found it, if possible replace the string
+					# with the real thing
+					try:
+						# Must have the index, the weak refs in here
+						# behave badly in comparisons.
+						self._friends[ix] = persistent.wref.WeakRef( result )
+					except ValueError: pass
+			elif isinstance( friend, persistent.wref.WeakRef ):
+				result = friend()
+			return result
+
+		resolved = [_resolve_friend(self.friends[i], i) for i in xrange(len(self.friends))]
 		return iter( {x for x in resolved if x is not None} )
 
 	@property

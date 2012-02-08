@@ -23,7 +23,7 @@ from pyramid import traversal
 
 from zope.location.location import LocationProxy
 
-from nti.dataserver.interfaces import (IDataserver, ILibrary, IEnclosureIterable, ISimpleEnclosureContainer, IEnclosedContent)
+from nti.dataserver.interfaces import (IDataserver, ILibrary, ISimpleEnclosureContainer, IEnclosedContent)
 import nti.dataserver.interfaces as nti_interfaces
 from nti.dataserver import (users, datastructures)
 from nti.dataserver.datastructures import to_external_ntiid_oid as toExternalOID
@@ -392,30 +392,19 @@ class _ContainedObjectResource(object):
 		self.user = user
 		res = self.resource
 
-		try:
-			self.__acl__ = [ (sec.Allow, res.creator.username, sec.ALL_PERMISSIONS) ]
-		except (AttributeError,TypeError):
-			# At least make the default mutable
-			self.__acl__ = [] #list(self.__acl__)
+		self.__acl__ = nacl.ACL( res, default=self )
+		if self.__acl__ is self:
+			logger.warn( "An object has no ACL provider: %s", res )
+			# This branch is never hit in the tests, but might be in real life?
+			try:
+				self.__acl__ = [ (sec.Allow, res.creator.username, sec.ALL_PERMISSIONS) ]
+			except (AttributeError,TypeError):
+				# At least make the default mutable
+				self.__acl__ = [] #list(self.__acl__)
 
-		# TODO: Finish unifying these three things
-		self.__acl__ += nacl.ACL( res )
-		# Infer the ACL from who it is shared with. They can see it
-		# but everyone else is denied!
-		# The actual resource or contained enclosure that extends
-		# from us defaults to this same security.
-		# elif hasattr( res, 'getFlattenedSharingTargetNames' ):
-		# 	for target in res.getFlattenedSharingTargetNames():
-		# 		self.__acl__.append( (sec.Allow, target, nauth.ACT_READ ) )
-
-		if hasattr( res, 'friends' ):
-			# friends lists
-			for target in res:
-				self.__acl__.append( (sec.Allow, target.username, nauth.ACT_READ ) )
-
-		# Our defaults go at the end so as not to pre-empt anything we
-		# have established so far
-		self.__acl__.extend( _ContainedObjectResource.__acl__ )
+			# Our defaults go at the end so as not to pre-empt anything we
+			# have established so far
+			self.__acl__.extend( _ContainedObjectResource.__acl__ )
 
 	@unquoting
 	def __getitem__( self, key ):
@@ -442,18 +431,6 @@ class _ContainedObjectResource(object):
 		if ISimpleEnclosureContainer.providedBy( cont ):
 			child = cont.get_enclosure( key )
 			return ACLLocationProxy( child, res, key, nacl.ACL( child, self.__acl__ ) )
-		# The older iterable interface. Does anything provide
-		# iterators but not direct access? If so, look manually.
-		iterable = req.registry.queryAdapter( res, IEnclosureIterable ) \
-				   if not IEnclosureIterable.providedBy( res ) \
-				   else res
-		if IEnclosureIterable.providedBy( iterable ):
-			for enc in iterable.iterenclosures():
-				if enc.name == key:
-					# TODO: Understand why we have to copy this ACL down
-					# to get permissions to work.
-					# The parent resource has an ACL denying everything
-					return ACLLocationProxy( enc, res, key, nacl.ACL( enc, self.__acl__ ) )
 		raise KeyError( key )
 
 	@property

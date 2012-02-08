@@ -10,11 +10,14 @@ from nti.dataserver import authorization as auth
 
 class _ACE(object):
 	"""
-	Object to hold a single ACE, permitting more descriptive code.
+	Object to hold a single ACE, permitting more descriptive code and
+	prettier string output. These objects must not be persisted.
 	"""
 
+	interface.implements( nti_interfaces.IACE )
+
 	@classmethod
-	def allowing( cls, actor=None, permission=None ):
+	def allowing( cls, actor=None, permission=None, provenance=None ):
 		"""
 		:return: An :class:`nti_interfaces.IACE` allowing the given `actor` the given `permission.`
 
@@ -24,10 +27,10 @@ class _ACE(object):
 			Must be an `IPermission` or something that can be converted to it,
 			or an interable sequence thereof. Also allowable is :const:`nti_interfaces.ALL_PERMISSIONS`.
 		"""
-		return cls( nti_interfaces.ACE_ACT_ALLOW, actor, permission )
+		return cls( nti_interfaces.ACE_ACT_ALLOW, actor, permission, provenance=provenance )
 
 	@classmethod
-	def denying( cls, actor=None, permission=None ):
+	def denying( cls, actor=None, permission=None, provenance=None ):
 		"""
 		:return: An :class:`nti_interfaces.IACE` denying the given `actor` the given `permission.`
 
@@ -37,9 +40,11 @@ class _ACE(object):
 			Must be an `IPermission` or something that can be converted to it,
 			or an interable sequence thereof. Also allowable is :const:`nti_interfaces.ALL_PERMISSIONS`.
 		"""
-		return cls( nti_interfaces.ACE_ACT_DENY, actor, permission )
+		return cls( nti_interfaces.ACE_ACT_DENY, actor, permission, provenance=None )
 
-	def __init__( self, action, actor, permission ):
+	_provenance = None
+
+	def __init__( self, action, actor, permission, provenance=None ):
 		self.action = action
 		assert self.action in (nti_interfaces.ACE_ACT_ALLOW,nti_interfaces.ACE_ACT_DENY)
 		self.actor = (nti_interfaces.IPrincipal( actor )
@@ -47,6 +52,9 @@ class _ACE(object):
 						else actor)
 		if not hasattr( permission, '__iter__' ):
 			permission = [permission]
+
+		if provenance:
+			self._provenance = provenance
 
 		if permission is nti_interfaces.ALL_PERMISSIONS:
 			self.permission = permission
@@ -57,18 +65,29 @@ class _ACE(object):
 								for x
 								in permission]
 
+	# Make them non-picklable
+	def __reduce__( self, *args, **kwargs ):
+		raise TypeError( "Links cannot be pickled." )
+	__reduce_ex__ = __reduce__
+
 	def __eq__(self,other):
 		# TODO: Work on this
-		return self.action == other.action and self.actor == other.actor and self.permission == other.permission
+		# This trick (reversing the order and comparing to a tuple) lets us compare
+		# equal to plain tuples as used in pyramid and that sometimes sneak in
+		return other == (self.action, self.actor.id, self.permission)
 
 	def __iter__(self):
 		return iter( (self.action, self.actor, self.permission) )
 
 	def __repr__(self):
-		return "%s('%s',%s,%s)" % (self.__class__.__name__,
-								   self.action,
-								   self.actor,
-								   self.permission)
+		provenance = ''
+		if self._provenance:
+			provenance = self._provenance.__name__ if isinstance(self._provenance,type) else type(self._provenance).__name__
+		return "<%s: %s,%s,%s%s>" % (self.__class__.__name__,
+									 self.action,
+									 self.actor.id,
+									 getattr( self.permission, 'id', self.permission ),
+									 (" := " + provenance if provenance else '' ) )
 
 # Export these ACE functions publicly
 ace_allowing = _ACE.allowing
@@ -90,6 +109,10 @@ def ACL( obj, default=() ):
 		except TypeError:
 			return default
 
+class _ACL(list):
+	interface.implements(nti_interfaces.IACL)
+
+
 class _CreatedACLProvider(object):
 	"""
 	The creator of an object can do anything with it.
@@ -106,9 +129,9 @@ class _CreatedACLProvider(object):
 		:return: A fresh, mutable list containing at most one :class:`_ACE` for
 				the creator (if there is a creator).
 		"""
-		return ([_ACE.allowing( self._created.creator, nti_interfaces.ALL_PERMISSIONS )]
-				if getattr(self._created, 'creator', None ) # They don't all comply with the interface
-				else [])
+		return _ACL([ace_allowing( self._created.creator, nti_interfaces.ALL_PERMISSIONS, self )]
+					if getattr(self._created, 'creator', None ) # They don't all comply with the interface
+					else [])
 
 	@property
 	def __acl__( self ):
@@ -137,7 +160,7 @@ class _ShareableModeledContentACLProvider(_CreatedACLProvider):
 	def __acl__( self ):
 		result = self._creator_acl()
 		for name in self._created.getFlattenedSharingTargetNames():
-			result.append( _ACE.allowing( name, auth.ACT_READ ) )
+			result.append( ace_allowing( name, auth.ACT_READ, _ShareableModeledContentACLProvider ) )
 		return result
 
 # NOTE: All of the ACLs around classes will change as
@@ -164,15 +187,15 @@ class _SectionInfoACLProvider(_CreatedACLProvider):
 		result = self._creator_acl()
 		# First, give the user's enrolled viewing
 		for name in self._created.Enrolled:
-			result.append( ace_allowing( name, auth.ACT_READ ) )
+			result.append( ace_allowing( name, auth.ACT_READ, _SectionInfoACLProvider ) )
 		# And the instructors get full control
 		for name in (self._created.InstructorInfo or ()).Instructors:
-			result.append( ace_allowing( name, nti_interfaces.ALL_PERMISSIONS ) )
+			result.append( ace_allowing( name, nti_interfaces.ALL_PERMISSIONS, _SectionInfoACLProvider ) )
 		# As do the admins
 		if self._created.Provider:
 			result.append( _provider_admin_ace( self._created ) )
 		# And finally nobody else gets jack squat
-		result.append( ace_denying( nti_interfaces.EVERYONE_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS ) )
+		result.append( ace_denying( nti_interfaces.EVERYONE_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _SectionInfoACLProvider ) )
 		return result
 
 class _ClassInfoACLProvider(_CreatedACLProvider):
@@ -212,9 +235,9 @@ class _ClassInfoACLProvider(_CreatedACLProvider):
 		section_acls.pop( nti_interfaces.IPrincipal(nti_interfaces.EVERYONE_GROUP_NAME), None )
 		result = [v for v in section_acls.values()]
 		# And finally nobody else gets jack squat
-		result.append( ace_denying( nti_interfaces.EVERYONE_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS ) )
+		result.append( ace_denying( nti_interfaces.EVERYONE_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _ClassInfoACLProvider ) )
 
-		return result
+		return _ACL(result)
 
 class _EnclosedContentACLProvider(_CreatedACLProvider):
 	"""
@@ -244,4 +267,22 @@ class _LibraryTOCEntryACLProvider(object):
 
 	def __init__( self, obj ):
 		self._obj = obj
-		self.__acl__ = ( ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS ), )
+		self.__acl__ = ( ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _LibraryTOCEntryACLProvider ), )
+
+class _FriendsListACLProvider(_CreatedACLProvider):
+	"""
+	Makes friends lists readable by those it contains.
+	"""
+	component.adapts(nti_interfaces.IFriendsList)
+
+	def __init__( self, obj ):
+		super(_FriendsListACLProvider,self).__init__( obj )
+
+	@property
+	def __acl__( self ):
+		result = self._creator_acl()
+		for friend in self._created:
+			result.append( ace_allowing( friend.username, auth.ACT_READ ) )
+		# And finally nobody else gets jack squat
+		result.append( ace_denying( nti_interfaces.EVERYONE_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _SectionInfoACLProvider ) )
+		return result
