@@ -162,6 +162,7 @@ class _Env(_ReadableEnv):
 		with open( self.conf_file( 'supervisord.conf' ), 'wb' ) as fp:
 			ini.write( fp )
 
+		# write dev config
 		enviroment = ['DATASERVER_DIR=%(here)s/../']
 		
 		command = 'pserve'
@@ -172,9 +173,11 @@ class _Env(_ReadableEnv):
 		with open( self.conf_file( 'supervisord_dev.conf' ), 'wb' ) as fp:
 			ini.write( fp )
 			
+		# write demo config
 		enviroment.append('DATASERVER_DEMO=1')
 		zeo_p = _create_zeo_program(self, 'demo_zeo_conf.xml')
 		ini.set('program:zeo', 'command', zeo_p.cmd_line)
+		ini.set('program:pserve', 'environment', ','.join(enviroment) )
 		for p in self.programs:
 			section = 'program:%s' % p.name
 			ini.set(section, 'environment', ','.join(enviroment))
