@@ -145,6 +145,7 @@ class SessionConsumer(Persistent):
 				# handler in the list. This could be a little inefficient in the case
 				# of multiple handlers that come from related packages.
 				args = _convert_message_args_to_objects( h, message )
+				#logger.debug( "Handling message using %s(%s)", h, args )
 				result = h(*args)
 				if result is not None:
 					last_result = result
@@ -155,12 +156,13 @@ class SessionConsumer(Persistent):
 	def _on_msg( self, socket_obj, message ):
 		if message is None:
 			# socket has died
+			logger.debug( "Socket has died %s", socket_obj )
 			return
 		if message['type'] != 'event':
-			logger.warning( 'Dropping unhandled message %s', message )
+			logger.warning( 'Dropping unhandled message of wrong type %s', message )
 			return
 
-		handler = self._find_handler( message )
+		handler = self._find_handler( message ) # This logs missing handlers
 		if handler is None:
 			return
 

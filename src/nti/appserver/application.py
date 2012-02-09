@@ -23,6 +23,7 @@ import nti.dataserver as dataserver
 import nti.dataserver.socketio_server
 import nti.dataserver.wsgi
 import nti.dataserver._Dataserver
+import nti.dataserver.session_consumer
 from nti.dataserver.library import Library
 from nti.dataserver import interfaces as nti_interfaces
 
