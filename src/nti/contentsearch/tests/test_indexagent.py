@@ -27,14 +27,14 @@ def decorator(f):
 			f(self, *args, **kwargs)
 		except Exception, e:
 			self.exception = e
-			
+	execute.__name__ = f.__name__
 	return execute
-			
-class MockIndexManager():
-	
+
+class MockIndexManager(object):
+
 	def __init__(self):
 		self.exception = None
-		
+
 	@decorator
 	def index_user_content(self, externalValue, username, typeName):
 		assert_that('Note', equal_to(typeName))
@@ -50,41 +50,37 @@ class MockIndexManager():
 	@decorator
 	def delete_user_content(self, externalValue, username, typeName):
 		self.update_user_content(externalValue, username, typeName)
-		
+
 ##########################
-	
+
 class TestIndexAgent(unittest.TestCase):
-	
+
 	indexagent = None
 	indexmanager = None
-		
-	@classmethod
-	def setUpClass(cls):
-		cls.indexmanager = MockIndexManager()
-		cls.indexagent = IndexAgent(cls.indexmanager)
-		
+
+	def setUp(self):
+		self.indexmanager = MockIndexManager()
+		self.indexagent = IndexAgent(self.indexmanager)
+
 	def test_create(self):
 		event = self.indexagent._create_event(test_user, Change.CREATED, 'Note', note_add)
 		self.indexagent._handle_event(event).run()
 		if self.indexmanager.exception:
 			self.fail(str(self.indexmanager.exception))
-					
+
 	def test_update(self):
 		event = self.indexagent._create_event(test_user, Change.MODIFIED, 'Note', note_mod)
 		self.indexagent._handle_event(event).run()
 		if self.indexmanager.exception:
 			self.fail(str(self.indexmanager.exception))
-		
+
 	def test_delete(self):
 		event = self.indexagent._create_event(test_user, Change.DELETED, 'Note', note_mod)
 		self.indexagent._handle_event(event).run()
 		if self.indexmanager.exception:
 			self.fail(str(self.indexmanager.exception))
-		
-	@classmethod
-	def tearDownClass(cls):
-		cls.indexagent.close()
 
-if __name__ == '__main__':
-	unittest.main()
-	
+	def tearDown(self):
+		self.indexagent.close()
+
+
