@@ -1,9 +1,12 @@
 #!/usr/bin/env python2.7
+import logging
+logger = logging.getLogger(__name__)
 
+from . import run_phantom_on_page
 import codecs, os
 import resources
 import tempfile
-import subprocess
+#import subprocess
 import cgi
 import html2mathml
 import warnings
@@ -86,7 +89,7 @@ class ResourceSetGenerator(resources.BaseResourceSetGenerator):
 
 		tempdir = tempfile.mkdtemp()
 
-		#We need to copy the html file
+		# We need to copy the html file
 		htmlOutFile = os.path.join(tempdir, self.htmlfile)
 		codecs.open(htmlOutFile, 'w', 'utf-8').write(htmlSource)
 
@@ -96,16 +99,7 @@ class ResourceSetGenerator(resources.BaseResourceSetGenerator):
 			configOutFile = os.path.join(tempdir, configName)
 			resources.copy(self.mathjaxconfigfile, configOutFile, _debug)
 
-			program	 = self.compiler
-			command = '%s "%s"' % (program, htmlOutFile)
-
-			stdout, stderr = subprocess.Popen( command, shell=True, stdout=subprocess.PIPE).communicate()
-
-			if _debug:
-				print 'out'
-				print stdout
-				print 'error'
-				print stderr
+			stdout = run_phantom_on_page( htmlOutFile, self.compiler, expect_non_json_output=True )
 
 			return (stdout, tempdir)
 		finally:
@@ -137,8 +131,7 @@ class ResourceGenerator(html2mathml.ResourceGenerator):
 
 	def __init__(self, document):
 		super(ResourceGenerator, self).__init__(document)
-		warnings.warn( "Using phantomjs from PATH" )
-		self.compiler = 'phantomjs %s' % (self.javascript)
+		self.compiler = self.javascript
 
 	def createResourceSetGenerator(self, compiler='', encoding='utf-8', batch=0):
 		return ResourceSetGenerator(compiler, encoding, batch)

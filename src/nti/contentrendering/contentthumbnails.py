@@ -14,21 +14,22 @@ import warnings
 import logging
 logger = logging.getLogger(__name__)
 
-from . import javascript_path
+from . import javascript_path, run_phantom_on_page
 
 javascript = javascript_path( 'rasterize.js')
 thumbnailsLocationName = 'thumbnails'
 
 
-warnings.warn( "Using phantomjs and convert from the PATH" )
+warnings.warn( "Using convert from the PATH" )
 def _generateImage(contentdir, page, output):
-	#print 'Fetching page info for %s' % htmlFile
-	# FIXME: Need to use book.runPhantomOnPages. But it needs to be extended to
-	# then do arbitrary things, or we need to run the pipeline twice, in order to deal
-	# with convert
-	process = "phantomjs %s file://%s %s 2>/dev/null" % (javascript, os.path.join(contentdir, page.location), output)
-	#print process
-	subprocess.Popen(process, shell=True, stdout=subprocess.PIPE).communicate()[0].strip()
+	run_phantom_on_page( os.path.join(contentdir, page.location), javascript, (output,), expect_no_output=True )
+	# #print 'Fetching page info for %s' % htmlFile
+	# # FIXME: Need to use book.runPhantomOnPages. But it needs to be extended to
+	# # then do arbitrary things, or we need to run the pipeline twice, in order to deal
+	# # with convert
+	# process = "phantomjs %s file://%s %s 2>/dev/null" % (javascript,, output)
+	# #print process
+	# subprocess.Popen(process, shell=True, stdout=subprocess.PIPE).communicate()[0].strip()
 
 	#shrink it down to size
 	process = "convert %s -resize %d%% PNG32:%s" % (output, 25, output)

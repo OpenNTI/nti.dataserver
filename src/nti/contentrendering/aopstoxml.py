@@ -31,14 +31,13 @@ def main():
 	_configure_logging()
 	xmlconfig.file( 'configure.zcml', package=nti.contentrendering )
 
-
 	sourceFile = argv.pop(0)
 	outFormat = 'xml'
 
 	if argv:
 		outFormat = argv.pop(0)
 
-	# TODO: Style files need to be in per-job locations
+	# TODO: Style files need to be in per-job locations (e.g., where the source file is?)
 	# As-is, the one style we have, aopsbook, is in this location
 	# and must be directly importable
 	sys.path.insert( 0, os.path.dirname( __file__ ) )
@@ -49,7 +48,14 @@ def main():
 	#setup config options we want
 	document.config['files']['split-level'] = 1
 	document.config['general']['theme'] = 'AoPS'
+	# Read a config if present
+	document.config.add_section( 'NTI' )
+	document.config.set( 'NTI', 'provider', os.environ.get( 'NTI_PROVIDER', 'AOPS' ) )
+	conf_name = os.path.join(
+		os.path.dirname( os.path.abspath( os.path.expanduser( sourceFile ) ) ),
+		"nti_render_conf.ini" )
 
+	document.config.read( (conf_name,) )
 	# Instantiate the TeX processor
 	tex = TeX(document, file=sourceFile)
 
@@ -110,7 +116,7 @@ def nextID(self):
 	ntiid = ntiid + 1
 
 	setattr(self, 'NTIID', ntiid)
-	provider = os.environ.get( "NTI_PROVIDER", "AOPS" )
+	provider = self.config.get( "NTI", "provider" )
 	return 'tag:nextthought.com,2011-10:%s-HTML-%s.%s' % (provider,self.userdata['jobname'], ntiid)
 
 plasTeX.TeXDocument.nextNTIID = nextID

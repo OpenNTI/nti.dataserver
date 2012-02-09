@@ -11,6 +11,7 @@ from zope.deprecation import deprecate
 from zope import interface
 from . import interfaces
 from . import minidom_writexml
+from . import run_phantom_on_page
 
 import html5lib
 from html5lib import treewalkers, serializer, treebuilders
@@ -24,37 +25,8 @@ logger = logging.getLogger( __name__ )
 
 from . import javascript_path
 
-warnings.warn( "Using whatever phantomjs is on the path" )
 def _runPhantomOnPage( htmlFile, scriptName, args, key ):
-	# phantomjs 1.3 will take plain paths to open, 1.4 requires a URL
-	# This is a pretty lousy way to get a URL and probably has escaping problems
-	if not htmlFile.startswith( 'file:' ):
-		htmlFile = 'file://' + os.path.abspath( htmlFile )
-	# They claim that loading plugins is off by default, but that doesn't
-	# seem to be true. And some plugins produce output during the loading process,
-	# which screws up or JSON parsing. Worse, an unloadable plugin can crash the
-	# entire process. So we attempt to force disable plugin loading: However, this
-	# is not entirely reliable; there seems to be a race condition. We try instead
-	# to parse just the last line
-
-	process = "phantomjs --load-plugins=no %s %s %s 2>/dev/null" % (scriptName, htmlFile, " ".join([str(x) for x in args]))
-	jsonStr = subprocess.Popen(process, shell=True, stdout=subprocess.PIPE).communicate()[0].strip()
-
-	try:
-		try:
-			result = json.loads(jsonStr)
-		except ValueError:
-			if jsonStr:
-				# We got output. Perhaps there was plugin junk above? Try
-				# again with just the last line.
-				result = json.loads( jsonStr.splitlines()[-1] )
-			else:
-				raise
-	except:
-		logger.exception( "Failed to read json (%s) from %s", jsonStr, process )
-		raise
-	return (key, result)
-
+	return run_phantom_on_page( htmlFile, scriptName, args, key )
 
 class RenderedBook(object):
 
