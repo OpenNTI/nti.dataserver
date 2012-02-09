@@ -1,5 +1,6 @@
 #!/usr/bin/env python2.7
-
+import logging
+logger = logging.getLogger(__name__)
 
 import collections
 
