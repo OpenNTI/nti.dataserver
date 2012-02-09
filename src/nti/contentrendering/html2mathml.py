@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+import logging
+logger = logging.getLogger( __name__ )
 
 import codecs, os, re, sys
 import resources
@@ -85,10 +87,10 @@ class ResourceGenerator(resources.BaseResourceGenerator):
 
 		size = len(generatableSources)
 		if not size > 0:
-			print 'No sources to generate'
+			logger.info( 'No sources to generate' )
 			return
-		else:
-			print 'Generating %s sources' % size
+
+		logger.info( 'Generating %s sources', size )
 
 		encoding = self.document.config['files']['output-encoding']
 		generators = list()
@@ -106,7 +108,7 @@ class ResourceGenerator(resources.BaseResourceGenerator):
 		for g in generators:
 			g.writePostamble()
 
-		if self.concurrency > 1:
+		if self.concurrency > 1 and size > 1:
 			# Process batches in parallel,
 			params = [True] * self.concurrency
 			with ProcessPoolExecutor() as executor:

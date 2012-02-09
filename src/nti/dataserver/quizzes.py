@@ -151,18 +151,21 @@ class QuizQuestionResponse(persistent.Persistent):
 
 from nti.assessment import assess
 
-class QuizResult(datastructures.ContainedMixin,CreatedModDateTrackingObject,persistent.Persistent,ExternalizableDictionaryMixin):
+class QuizResult(datastructures.ContainedMixin,
+				 CreatedModDateTrackingObject,
+				 persistent.Persistent,
+				 ExternalizableDictionaryMixin):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	interface.implements(nti_interfaces.IModeledContent,nti_interfaces.IExternalObject)
 
 	__external_can_create__ = True
 
+	QuizID = None
+
 	def __init__(self, quizId=None, theId=None):
-		super(QuizResult,self).__init__( )
-		self.id = theId
+		super(QuizResult,self).__init__( containedId=theId )
 		self.assessments = PersistentMapping()
-		self.QuizID = None
 
 	def addAssessment( self, question, response, assesment ):
 		self.assessments[question.id if hasattr(question, 'id') else question] = (question,response,assesment)

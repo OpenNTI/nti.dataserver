@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+import logging
+logger = logging.getLogger(__name__)
+
 import os, time, tempfile, shutil, codecs
 import copy as cp
 
@@ -11,11 +14,10 @@ except ImportError:
 	import pickle as mPickle
 
 from StringIO import StringIO
-from plasTeX.Logging import getLogger
 from plasTeX.Filenames import Filenames
 from plasTeX.Imagers import WorkingFile, Image
 
-logger = getLogger(__name__)
+import zope.dottedname.resolve as dottedname
 
 # try:
 # 	import Image as PILImage
@@ -52,7 +54,7 @@ class ResourceTypeOverrides(DictMixin):
 			for line in f.readlines():
 				sourceFileName, types = line.split('=')
 				types = types.split(',')
-				types = [type.strip() for type in types]
+				types = [t.strip() for t in types]
 
 				sourcePath = os.path.join(self.location, sourceFileName)
 
@@ -148,18 +150,19 @@ class ResourceSet(object):
 
 
 class ResourceDB(object):
-
-	dirty = False
-
-	types = {'mathjax_inline': 'tex2html',\
-			 'mathjax_display': 'displaymath2html',\
-			 'svg': 'pdf2svg',\
-			 'png': 'gspdfpng2',\
-			 'mathml': 'html2mathml'}
-
 	"""
 	Manages external resources (images, mathml, videos, etc..) for a document
 	"""
+
+	dirty = False
+
+	types = {'mathjax_inline': 'nti.contentrendering.tex2html.ResourceGenerator',
+			 'mathjax_display': 'nti.contentrendering.displaymath2html.ResourceGenerator',
+			 'svg': 'nti.contentrendering.pdf2svg.ResourceGenerator',
+			 'png': 'nti.contentrendering.gspdfpng2.ResourceGenerator',
+			 'mathml': 'nti.contentrendering.html2mathml.ResourceGenerator'}
+
+
 	def __init__(self, document, path=None, overridesLocation=None):
 		self.__document = document
 		self.__config = self.__document.config
@@ -238,8 +241,7 @@ class ResourceDB(object):
 			logger.warn('No generator specified for resource type %s', resourceType)
 			return None
 		try:
-			m  = __import__(self.types[resourceType])
-			return m.ResourceGenerator(self.__document)
+			return dottedname.resolve( self.types[resourceType] )(self.__document)
 		except ImportError, msg:
 			logger.warning("Could not load custom imager '%s' because '%s'", resourceType, msg)
 			return None
@@ -427,7 +429,7 @@ class BaseResourceSetGenerator(object):
 						 len(self.generatables), nresources, self.batch )
 
 		elapsed = time.time() - start
-		print "%s resources generated in %sms for batch %s" % (nresources, elapsed, self.batch)
+		logger.info( "%s resources generated in %sms for batch %s", nresources, elapsed, self.batch )
 
 		return zip(self.generatables, resources)
 
