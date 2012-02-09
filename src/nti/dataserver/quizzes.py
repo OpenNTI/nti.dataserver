@@ -175,11 +175,16 @@ class QuizResult(datastructures.ContainedMixin,CreatedModDateTrackingObject,pers
 		# Only fresh objects can be updated
 		if getattr( self, '_p_jar', None ):
 			raise ValueError( "Can only update new results." )
-		self.containerId = rawValue.get( StandardExternalFields.CONTAINER_ID )
+
+		self.containerId = rawValue.get( StandardExternalFields.CONTAINER_ID, self.containerId )
 
 		quizId = rawValue.get( 'QuizID' )
 		if not quizId:
 			quizId = rawValue[StandardExternalFields.CONTAINER_ID] if StandardExternalFields.CONTAINER_ID in rawValue else self.containerId
+
+		# Backwards compat warnings
+		if not StandardExternalFields.CONTAINER_ID in rawValue or not "QuizID" in rawValue:
+			logger.warning( "Please provide container id and quiz id" )
 
 		# If we have arrived at a quiz id that is an NTIID, but /NOT/ on OID or Quiz NTIID,
 		# then this probably means we're using the container id. This allows for an
