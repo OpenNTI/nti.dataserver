@@ -255,7 +255,7 @@ class _ChatHandler( Persistent ):
 		if room_info.get( 'RoomId' ) is not None:
 			# Trying to join an established room
 			# Right now, unsupported.
-			pass
+			logger.debug( "Cannot enter existing room %s", room_info )
 		elif len( room_info.get( 'Occupants', () ) ) == 0 and XFields.CONTAINER_ID in room_info:
 			# No occupants, but a container ID. This must be for something
 			# that can persistently host meetings. We want
