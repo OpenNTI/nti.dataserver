@@ -184,7 +184,7 @@ def get_parts( ntiid ):
 
 from zope import component
 
-def find_object_with_ntiid(key):
+def find_object_with_ntiid(key, dataserver=None):
 	"Attempts to find an object with the given NTIID. No security is implied."
 	# TODO: Where should this live? Should we have registered adapters or something
 	# for every type of NTIID? Probably yes
@@ -192,7 +192,7 @@ def find_object_with_ntiid(key):
 		return None
 
 	result = None
-	dataserver = component.queryUtility( nti_interfaces.IDataserver )
+	dataserver = dataserver or component.queryUtility( nti_interfaces.IDataserver )
 	if dataserver:
 		if is_ntiid_of_type( key, TYPE_OID ):
 			result = dataserver.get_by_oid( key, ignore_creator=True )

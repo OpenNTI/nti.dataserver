@@ -275,11 +275,12 @@ class _ContainerResource(object):
 	def __getitem__( self, key ):
 		# Throw KeyError
 		#self.container.__getitem__(key)
-		if self.user.getContainedObject( self.ntiid, key ) is None:
+		contained_object = self.user.getContainedObject( self.ntiid, key )
+		if contained_object is None:
 			raise KeyError( key )
 		# The owner has full rights, authenticated can read,
 		# and deny everything to everyone else (so we don't recurse up the tree)
-		result = _ContainedObjectResource( self, self.ntiid, key, self.user )
+		result = _ACLAndLocationForcingObjectResource( self, self.ntiid, key, self.user )
 		return result
 
 class _NewContainerResource(_ContainerResource): pass
@@ -295,8 +296,24 @@ class _ObjectsContainerResource(_ContainerResource):
 		request = _find_request( self )
 		ds = request.registry.getUtility(IDataserver)
 		result = self._getitem_with_ds( ds, key )
-		if result is None: raise KeyError( key )
-		result = _ObjectContainedResource( self, key, self.user, result, self.__name__ )
+		if result is None:
+			raise KeyError( key )
+		return self._wrap_as_resource( key, result )
+
+	_no_wrap_ifaces = {nti_interfaces.ILibraryTOCEntry,nti_interfaces.ILibrary, nti_interfaces.ILibraryEntry}
+
+	def _wrap_as_resource( self, key, result ):
+		# FIXME: This is weird. We're whitelisting a few interfaces
+		# we don't want to wrap in a _DirectlyProvidedObjectResource:
+		# It doesn't proxy interfaces and such, but that probably actually
+		# doesn't matter because these interfaces wind up falling through to GenericGetView
+		# anyway....which knows to use either the request.context or request.context.resource, as appropriate.
+		# So this can probably stop altogether, pending a few test updates
+		provided = interface.providedBy( result )
+		for iface in self._no_wrap_ifaces:
+			if iface in provided:
+				return result
+		result = _DirectlyProvidedObjectResource( self, objectid=key, user=self.user, resource=result, containerid=self.__name__ )
 		return result
 
 	def _getitem_with_ds( self, ds, key ):
@@ -307,48 +324,16 @@ class _ObjectsContainerResource(_ContainerResource):
 		# have ACLs (ACLProvider) yet and so this path is not actually doing anything.
 		# Those objects are dependent on their container structure being
 		# traversed to get a correct ACL, and coming in this way that doesn't happen.
-		return ds.get_by_oid( key, ignore_creator=True )
+		return ntiids.find_object_with_ntiid( key, dataserver=ds )
 
 class _NTIIDsContainerResource(_ObjectsContainerResource):
-
+	"""
+	This class exists now mostly for backward compat and for the name. It can
+	probably go away.
+	"""
 	def __init__( self, parent, user ):
 		super(_NTIIDsContainerResource,self).__init__( parent, user, name='NTIIDs' )
 
-	# TODO: These two methods have moved to ntiids.find_object_with_ntiid. They
-	# remain here for the special handling of _ObjectContainedResource. Unify this.
-	# FIXME: Why is there even a distinction here with 'Objects' vs NTIIDs since OID
-	# NTIIDs are a type of NTIID. This should be resolving those, right?
-	def _getitem_with_ds( self, ds, key ):
-		result = None
-		if ntiids.is_valid_ntiid_string( key ):
-			provider = ntiids.get_provider( key )
-			# TODO: Assuming the NTIID provider is a given type
-			user = users.User.get_user( provider, ds )
-			if not user:
-				# Is it a Provider?
-				user = ds.root['providers'].get( provider )
-			if user:
-				result = user.get_by_ntiid( key )
-
-		return result
-
-	@unquoting
-	def __getitem__( self, key ):
-		try:
-			return super(_NTIIDsContainerResource,self).__getitem__( key )
-		except KeyError:
-			# Nothing we could find specifically using a normal NTIID lookup.
-			# Is it something in the library?
-			# TODO: User-specific libraries
-			request = _find_request( self )
-			library = request.registry.queryUtility( ILibrary )
-			if library and ntiids.is_valid_ntiid_string( key ):
-				path = library.pathToNTIID( key )
-			if path:
-				result = path[-1]
-				result = ACLLocationProxy( result, result.__parent__, result.__name__, nacl.ACL( result ) )
-				return result
-			raise KeyError(key)
 
 
 class _PageContainerResource(_ContainerResource):
@@ -373,82 +358,99 @@ class _PageContainerResource(_ContainerResource):
 		result = LocationProxy( inst(), self, self.ntiid )
 		return result
 
-class _ContainedObjectResource(object):
+class _AbstractObjectResource(object):
 
-	__acl__ = (
-		# Authenticated can read
-		(sec.Allow, sec.Authenticated, nauth.ACT_READ),
-		# Everyone else can do nothing
-		(sec.Deny,  sec.Everyone, sec.ALL_PERMISSIONS)
-		)
-
-
-	def __init__( self, parent, ntiid, objectid, user ):
-		super(_ContainedObjectResource,self).__init__()
+	def __init__( self, parent, containerid, objectid, user ):
+		super(_AbstractObjectResource,self).__init__()
 		self.__parent__ = parent
 		self.__name__ = objectid
-		self.ntiid = ntiid
+		self.ntiid = containerid
 		self.objectid = objectid
 		self.user = user
-		res = self.resource
 
-		self.__acl__ = nacl.ACL( res, default=self )
-		if self.__acl__ is self:
+	def _acl_for_resource( self, res ):
+		result = nacl.ACL( res, default=self )
+		if result is self:
 			logger.warn( "An object has no ACL provider: %s", res )
 			# This branch is never hit in the tests, but might be in real life?
 			try:
-				self.__acl__ = [ (sec.Allow, res.creator.username, sec.ALL_PERMISSIONS) ]
+				result = [ (sec.Allow, res.creator.username, sec.ALL_PERMISSIONS) ]
 			except (AttributeError,TypeError):
 				# At least make the default mutable
-				self.__acl__ = [] #list(self.__acl__)
+				result = [] #list(self.__acl__)
 
 			# Our defaults go at the end so as not to pre-empt anything we
 			# have established so far
-			self.__acl__.extend( _ContainedObjectResource.__acl__ )
+			result.extend( ( # Authenticated can read
+							 (sec.Allow, sec.Authenticated, nauth.ACT_READ),
+							 # Everyone else can do nothing
+							 (sec.Deny,  sec.Everyone, sec.ALL_PERMISSIONS)
+							))
+		return result
+
+
+	@property
+	def __acl__( self ):
+		return self._acl_for_resource( self.resource )
 
 	@unquoting
 	def __getitem__( self, key ):
 		res = self.resource
+		child = None
+		# The result we return needs to support ACLs
+		proxy = ACLLocationProxy
 		try:
 			# Return something that's a direct child, if possible.
 			# If not, then we'll go for enclosures.
 			child = res[key]
-			result = EnclosureGetItemACLLocationProxy( child,
-													   res,
-													   key,
-													   nacl.ACL( child, self.__acl__ ) )
-			return result
+			# In the case we returned something directly,
+			# we're assuming that it cannot further contain any items
+			# of its own (Why?) Therefore we return an object
+			# that implements __getitem__ to return enclosures
+			# (TODO: Weird. This needs to be unified into a Grand Traversal Theory.
+			# Pyramid's traversal factory objects may help here)
+			proxy = EnclosureGetItemACLLocationProxy
 		except (KeyError,TypeError):
-			pass
-		# If no direct child, then does it contain enclosures?
-		req = _find_request( self )
-		cont = req.registry.queryAdapter( res, ISimpleEnclosureContainer ) \
-				   if not ISimpleEnclosureContainer.providedBy( res ) \
-				   else res
+			# If no direct child, then does it contain enclosures?
+			req = _find_request( self )
+			cont = req.registry.queryAdapter( res, ISimpleEnclosureContainer ) \
+				if not ISimpleEnclosureContainer.providedBy( res ) \
+				else res
 
-		# If it claims to provide enclosures, let it do so.
-		# A missing enclosure is an error.
-		if ISimpleEnclosureContainer.providedBy( cont ):
-			child = cont.get_enclosure( key )
-			return ACLLocationProxy( child, res, key, nacl.ACL( child, self.__acl__ ) )
-		raise KeyError( key )
+			# If it claims to provide enclosures, let it do so.
+			# A missing enclosure is an error.
+			if ISimpleEnclosureContainer.providedBy( cont ):
+				child = cont.get_enclosure( key )
+
+		if child is None:
+			raise KeyError( key )
+
+
+		return proxy( child,
+					  res,
+					  key,
+					  nacl.ACL( child, self.__acl__ ) )
 
 	@property
 	def resource( self ):
-		# TODO: See comments above about ACL
+		raise NotImplementedError()
+
+class _ACLAndLocationForcingObjectResource(_AbstractObjectResource):
+
+	@property
+	def resource( self ):
 		res = self.user.getContainedObject( self.ntiid, self.objectid )
 		return ACLLocationProxy(
 				res,
 				self.__parent__,
 				self.objectid,
-				nacl.ACL( res, self.__acl__ ) )
+				self._acl_for_resource( res ) )
 
+class _DirectlyProvidedObjectResource(_AbstractObjectResource):
 
-class _ObjectContainedResource(_ContainedObjectResource):
-
-	def __init__( self, parent, objectid, user, resource, name='Objects' ):
+	def __init__( self, parent, containerid='Objects', objectid=None, user=None, resource=None ):
+		super(_DirectlyProvidedObjectResource,self).__init__( parent, containerid, objectid, user )
 		self._resource = resource
-		super(_ObjectContainedResource,self).__init__( parent, name, objectid, user )
 
 	@property
 	def resource( self ):
@@ -465,7 +467,7 @@ class _LibraryResource(object):
 		self.resource = request.registry.queryUtility( ILibrary )
 
 	def __getitem__( self, key ):
-		return _ObjectContainedResource( self, key, None, self.resource[key], 'Library' )
+		return _DirectlyProvidedObjectResource( self, objectid=key, user=None, resource=self.resource[key], containerid='Library' )
 
 class _ServiceGetView(object):
 
@@ -1013,7 +1015,7 @@ class _EnclosurePostView(_UGDModifyViewBase):
 
 
 	def __call__(self):
-		context = self.request.context # A _ContainedObjectResource OR an ISimpleEnclosureContainer
+		context = self.request.context # A _AbstractObjectResource OR an ISimpleEnclosureContainer
 		# Enclosure containers are defined to be IContainerNamesContainer,
 		# which means they will choose their name based on what we give them
 		enclosure_container = context if ISimpleEnclosureContainer.providedBy( context ) else context.resource

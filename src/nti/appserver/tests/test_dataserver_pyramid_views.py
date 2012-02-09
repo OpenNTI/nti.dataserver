@@ -287,6 +287,7 @@ class TestNTIIDsContainer(ConfiguringTestBase):
 		child_ntiid = ntiids.make_ntiid( provider='ou', specific='test2', nttype='HTML' )
 
 		class NID(object):
+			interface.implements(nti_interfaces.ILibraryTOCEntry)
 			ntiid = child_ntiid
 			__parent__ = None
 			__name__ = child_ntiid
