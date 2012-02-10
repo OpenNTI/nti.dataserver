@@ -47,6 +47,7 @@ class TestChatMessages(unittest.TestCase):
 			assert_that( item['Type'], is_( 'MessageInfo' ) )
 			self.assertEqual(item['Class'], 'Hit')
 			self.assertEqual(item["ID"], "06c35b96bae5458793c0c505f255f94b")
+			self.assertTrue(not item["NTIID"])
 
 
 	def test_delete(self):

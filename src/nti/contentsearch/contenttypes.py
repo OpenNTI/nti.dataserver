@@ -605,6 +605,7 @@ class Highlight(UserIndexableContent):
 	The schema fields are as follows
 
 	collectionId: Book/Collection name
+	ntiid: NTI id
 	oid: object id
 	creator: username
 	last_modified: Last modification since the epoch
@@ -628,7 +629,8 @@ class Highlight(UserIndexableContent):
 				  		sharedWith=KEYWORD(stored=False), 
 				  		color=TEXT(stored=False),
 				 		quick=NGRAM(maxsize=10),
-				 		keywords=KEYWORD(stored=True))
+				 		keywords=KEYWORD(stored=True),
+				 		ntiid=ID(stored=True, unique=True))
 
 	fields = {
 			"CollectionID": ("collectionId", echo),
@@ -639,7 +641,8 @@ class Highlight(UserIndexableContent):
 			"startHighlightedFullText" : ("content", get_content),
 			"sharedWith": ("sharedWith", get_keywords),
 			"color": ("color", echo),
-			"keywords": ("keywords", get_keywords)
+			"keywords": ("keywords", get_keywords),
+			"NTIID": ("ntiid", echo)
 			}
 
 	indexname_postfix = '__highlights'
@@ -722,6 +725,7 @@ class Highlight(UserIndexableContent):
 		_IndexableContent.get_data_from_search_hit(self, hit, d)
 		d['Type'] = self.__class__.__name__
 		d[self.external_name('oid')] = hit.get('oid', '')
+		d[self.external_name('ntiid')] = hit.get('ntiid', '')
 		d[self.external_name('creator')] = hit.get("creator", '')
 		d[self.external_name('containerId')] = hit.get('containerId', '')
 		d[self.external_name('collectionId')] = hit.get('collectionId', '')
@@ -768,7 +772,8 @@ class Note(Highlight):
 				  		references=KEYWORD(stored=False), 
 				 		quick=NGRAM(maxsize=10),
 				 		id=NUMERIC(int, stored=False),
-				 		keywords=KEYWORD(stored=True))
+				 		keywords=KEYWORD(stored=True),
+				 		ntiid=ID(stored=True, unique=True) )
 
 	fields = {
 			"CollectionID": ("collectionId", echo),
@@ -780,7 +785,8 @@ class Note(Highlight):
 			"sharedWith": ("sharedWith", get_keywords),
 			"references": ("references", get_keywords),
 			"id": ("id", echo),
-			"keywords": ("keywords", get_keywords)
+			"keywords": ("keywords", get_keywords),
+			"NTIID": ("ntiid", echo)
 			}
 
 class MessageInfo(Note):
@@ -814,7 +820,8 @@ class MessageInfo(Note):
 				 		oid=ID(stored=True, unique=True),
 				 		id=ID(stored=True, unique=True),
 				 		last_modified=DATETIME(stored=True),
-				 		keywords=KEYWORD(stored=True))
+				 		keywords=KEYWORD(stored=True),
+				 		ntiid=ID(stored=True, unique=True))
 
 	fields = {
 			"ContainerId": ("containerId", echo),
@@ -827,7 +834,8 @@ class MessageInfo(Note):
 			"Last Modified": ("last_modified", get_datetime),
 			"ID": ("id",  echo),
 			"OID": ("oid",  echo),
-			"keywords": ("keywords", get_keywords)
+			"keywords": ("keywords", get_keywords),
+			"NTIID": ("ntiid", echo)
 			}
 
 	def get_index_data(self, externalValue, items=None):

@@ -22,6 +22,7 @@ class TestNotes(unittest.TestCase):
 			d['body'] = phrases[x]
 			d['sharedWith'] = ['cutz@nextthought.com', 'cs@nt.com']
 			d['references'] = ['aops-main']
+			d['NTIID'] = 'tag:nextthought.com,2011-10:zope.security.management.system_user-OID-0x1:527%s' % x
 			d['id'] = x
 			result.append(d)
 		return result
@@ -56,6 +57,7 @@ class TestNotes(unittest.TestCase):
 			self.assertEqual(item['Last Modified'], self.now)
 			self.assertEqual(item['Type'], 'Note')
 			self.assertEqual(item['Class'], 'Hit')
+			self.assert_(item['NTIID'])
 
 	def test_update(self):
 

@@ -38,6 +38,7 @@ class TestHighlight(unittest.TestCase):
 			self.assertEqual(len(items), 1)
 			item = items['0x62:5573657273']
 			
+			self.assert_(item['NTIID'])
 			self.assertEqual('Hit', item['Class'])
 			self.assertEqual('Highlight', item['Type'])
 			self.assertEqual('prealgebra', item['CollectionID'])
