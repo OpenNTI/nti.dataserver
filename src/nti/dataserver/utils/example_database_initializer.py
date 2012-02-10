@@ -21,7 +21,7 @@ from zope.generations import interfaces as gen_interfaces
 from nti.dataserver import interfaces as nti_interfaces
 
 _DATA_QUIZ_0 = {'Class': 'Quiz',
-				'ID': 'tag:nextthought.com,2011-10:mathcounts-HTML-mathcounts.2011.0',
+				'ID': 'tag:nextthought.com,2011-10:mathcounts-Quiz-mathcounts.2011.0',
 				'Items': {
 					u'1': {'Answers': [u'$5$', u'$5.0$'],
 								 'Class': 'QuizQuestion',
@@ -77,7 +77,7 @@ _DATA_QUIZ_0 = {'Class': 'Quiz',
 		 'OID': '0x068a'}
 
 _DATA_QUIZ_1 = {'Class': 'Quiz',
-		 'ID': 'tag:nextthought.com,2011-10:mathcounts-HTML-mathcounts.2011.1',
+		 'ID': 'tag:nextthought.com,2011-10:mathcounts-Quiz-mathcounts.2011.1',
 		 'Items': {u'1': {'Answers': [u'$1$'],
 						  'Class': 'QuizQuestion',
 						  'ID': u'1',
@@ -134,8 +134,8 @@ _DATA_QUIZ_1 = {'Class': 'Quiz',
 class ExampleDatabaseInitializer(object):
 	interface.implements(gen_interfaces.IInstallableSchemaManager)
 
-	generation = 0
-	minimum_generation = 0
+	generation = 1
+	minimum_generation = 1
 
 	def __init__( self, *args ):
 		pass
@@ -298,4 +298,23 @@ class ExampleDatabaseInitializer(object):
 
 			q.id = _DATA_QUIZ_0['ID']
 			root['quizzes']['quizzes'][q.id] = q
+
+
+	def evolve( self, context, generation ):
+		conn = context.connection
+		root = conn.root()
+
+		# Quizzes
+		q = quizzes.Quiz()
+		q.update( _DATA_QUIZ_1 )
+
+		q.id = _DATA_QUIZ_1['ID']
+		root['quizzes']['quizzes'][q.id] = q
+
+		q = quizzes.Quiz()
+		q.update( _DATA_QUIZ_0 )
+
+		q.id = _DATA_QUIZ_0['ID']
+		root['quizzes']['quizzes'][q.id] = q
+
 
