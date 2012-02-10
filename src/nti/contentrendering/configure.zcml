@@ -24,7 +24,14 @@
 			 for=".interfaces.IRenderedBook .interfaces.IEclipseMiniDomTopic"
 			 provides=".interfaces.IBackgroundImageFinder"
 			 name="prealgebra" />
-
+	<adapter factory=".tociconsetter._PrealgebraIconFinder"
+			 for=".interfaces.IRenderedBook .interfaces.IEclipseMiniDomTopic"
+			 provides=".interfaces.IIconFinder"
+			 name="mathcounts" />
+	<adapter factory=".tociconsetter._PrealgebraBackgroundImageFinder"
+			 for=".interfaces.IRenderedBook .interfaces.IEclipseMiniDomTopic"
+			 provides=".interfaces.IBackgroundImageFinder"
+			 name="mathcounts" />
 	<include package=".transforms" />
 	<include package=".contentchecks" />
 </configure>
