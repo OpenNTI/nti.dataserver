@@ -129,6 +129,7 @@ import contentsizesetter
 import relatedlinksetter
 import contentthumbnails
 import sectionvideoadder
+import ntiidlinksetter
 
 from RenderedBook import RenderedBook
 
@@ -150,7 +151,6 @@ def postRender(document, contentLocation='.', jobname='prealgebra'):
 
 	print 'Fetching page info'
 	book = RenderedBook(document, contentLocation)
-
 
 	print 'Storing content height in pages'
 	contentsizesetter.transform(book)
@@ -207,8 +207,12 @@ def postRender(document, contentLocation='.', jobname='prealgebra'):
 	print "Creating html cache-manifest"
 	html5cachefile.main(contentPath, contentPath)
 
+	print 'Changing intra-content links'
+	ntiidlinksetter.transform( book )
+
 	print "Creating a mirror file"
 	mirror.main( contentPath, contentPath, zip_root_dir=jobname )
+
 
 from resources.ResourceRenderer import createResourceRenderer
 

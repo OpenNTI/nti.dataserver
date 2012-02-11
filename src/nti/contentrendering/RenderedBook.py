@@ -193,6 +193,9 @@ class EclipseTOC(object):
 		return self.getPageNodeWithAttribute('ntiid', value=ntiid, node=node)[0]
 
 	def getPageNodeWithAttribute(self, name, value=None, node=None):
+		"""
+		:return: A list of DOM nodes.
+		"""
 
 		if node is None:
 			node = self.getRootTOCNode()
@@ -254,7 +257,7 @@ class _EclipseTOCMiniDomTopic(object):
 
 		# These four are identical for b/w/c
 		self.sourceFile = href or (self.get_topic_filename( )
-								   and os.path.join( contentLocation, self.get_topic_filename().value ) )
+								   and os.path.join( contentLocation, self.get_topic_filename() ) )
 		self.location = self.sourceFile
 
 		self.href = href or os.path.split(self.sourceFile)[-1]
@@ -445,7 +448,19 @@ class _EclipseTOCMiniDomTopic(object):
 		return self.dom("title").text()
 
 	def get_topic_filename( self ):
-		return (self.topic.attributes and self.topic.attributes.get('href'))
+		if self.topic.attributes and self.topic.attributes.get('href'):
+			return self.topic.attributes.get('href').value
+
+	def topic_with_filename( self, filename ):
+		"""
+		:return: The topic having a matching filename, this object or beneath it, or None.
+		"""
+		if self.get_topic_filename( ) == filename:
+			return self
+		for kid in self.childTopics:
+			node = kid.topic_with_filename( filename )
+			if node:
+				return node
 
 	def set_background_image( self, image_path ):
 
