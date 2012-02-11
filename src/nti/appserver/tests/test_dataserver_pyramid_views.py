@@ -138,6 +138,7 @@ class TestUGDViews(ConfiguringTestBase):
 			id = None
 			lastModified = 1
 			creator = 'chris.utz@nextthought.com'
+			object = None
 		user._addToStream( C() )
 		view.getObjectsForId( user, 'foobar' )
 
@@ -151,6 +152,7 @@ class TestUGDViews(ConfiguringTestBase):
 		# Any child of the root throws if (1) the root DNE
 		# and (2) the children are empty
 		class C(persistent.Persistent):
+			object = None
 			interface.implements(nti_interfaces.IContained)
 			containerId = ntiids.make_ntiid( provider='ou', specific='test', nttype='test' )
 			id = None
@@ -186,6 +188,7 @@ class TestUGDViews(ConfiguringTestBase):
 
 		# Now if there are objects in there, it won't raise.
 		class C(persistent.Persistent):
+			object = None
 			interface.implements(nti_interfaces.IContained)
 			containerId = child_ntiid
 			id = None
