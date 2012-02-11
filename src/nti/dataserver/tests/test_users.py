@@ -13,7 +13,7 @@ import collections
 import persistent
 import json
 import plistlib
-from nti.dataserver.datastructures import (getPersistentState, toExternalOID, toExternalObject,
+from nti.dataserver.datastructures import (getPersistentState, toExternalOID, toExternalObject, to_external_ntiid_oid,
 									   ExternalizableDictionaryMixin, CaseInsensitiveModDateTrackingOOBTree,
 									   LastModifiedCopyingUserList, PersistentExternalizableWeakList,
 									   ContainedStorage, ContainedMixin, CreatedModDateTrackingObject,
@@ -31,6 +31,15 @@ import persistent
 import mock_dataserver
 from nti.dataserver import datastructures
 import time
+
+class PersistentContainedThreadable(ContainedMixin,persistent.Persistent):
+	lastModified = 0
+	inReplyTo = None
+	creator = None
+	references = ()
+	shared_with = True
+	def isSharedWith( self, other ):
+		return self.shared_with
 
 def test_create_friends_list_through_registry():
 	def _test( name ):
@@ -179,6 +188,69 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		# value
 		user._removeSharedObject( c )
 		assert_that( user.getSharedContainer( 'foo', 42 ), has_length( 0 ) )
+
+	@WithMockDSTrans
+	def test_mute_conversation( self ):
+		user = User( 'sjohnson@nextthought.com', 'temp001' )
+
+		c = PersistentContainedThreadable()
+		c.containerId = 'foo'
+		c.id = 'a'
+
+		change = Change( Change.SHARED, c )
+		user._acceptIncomingChange( change )
+		assert_that( user.getSharedContainer( 'foo' ), has_length( 1 ) )
+		assert_that( user.getContainedStream( 'foo' ), has_length( 1 ) )
+
+		user.mute_conversation( to_external_ntiid_oid( c ) )
+
+		# Now, the shared container is empty
+		assert_that( user.getSharedContainer( 'foo', 42 ), has_length( 0 ) )
+		assert_that( user.getContainedStream( 'foo' ), has_length( 0 ) )
+
+		# Stays empty as we reply
+		reply = PersistentContainedThreadable()
+		reply.containerId = 'foo'
+		reply.id = 'b'
+		reply.inReplyTo = c
+		change = Change( Change.SHARED, reply )
+		user._noticeChange( change )
+
+
+
+		assert_that( user.getSharedContainer( 'foo', 42 ), has_length( 0 ) )
+		assert_that( user.getContainedStream( 'foo' ), has_length( 0 ) )
+
+		# Stays empty as we reference
+		reference = PersistentContainedThreadable()
+		reference.containerId = 'foo'
+		reference.id = '3'
+		reference.references = [c]
+		change = Change( Change.SHARED, reference )
+		user._noticeChange( change )
+
+
+		assert_that( user.getSharedContainer( 'foo', 42 ), has_length( 0 ) )
+		assert_that( user.getContainedStream( 'foo' ), has_length( 0 ) )
+
+		# But unmuting it brings all the objects back
+		user.unmute_conversation( to_external_ntiid_oid( c ) )
+		assert_that( user.getSharedContainer( 'foo' ), has_length( 3 ) )
+		assert_that( user.getContainedStream( 'foo' ), has_length( 3 ) )
+
+		# If a DELETE arrives while muted, then it is still missing when unmuted
+		user.mute_conversation( to_external_ntiid_oid( c ) )
+
+		assert_that( user.getSharedContainer( 'foo', 42 ), has_length( 0 ) )
+		assert_that( user.getContainedStream( 'foo' ), has_length( 0 ) )
+
+		change = Change( Change.DELETED, reference )
+		user._noticeChange( change )
+
+		user.unmute_conversation( to_external_ntiid_oid( c ) )
+		assert_that( user.getSharedContainer( 'foo' ), has_length( 2 ) )
+		assert_that( user.getContainedStream( 'foo' ), has_length( 2 ) )
+
 
 	@WithMockDSTrans
 	def test_getContainedStream_Note_shared_community_cache(self):

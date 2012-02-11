@@ -120,7 +120,7 @@ These objects describe users and things related to users.
 
 	   string Presence; // "Online" or "Offline"
 
-	   in string password;
+	   in string password; //Not echoed
 
 	   //list of names of people we are not accepting
 	   //shared data from
@@ -150,6 +150,16 @@ These objects describe users and things related to users.
 	   //to a community I belong to. When I add someone to a friends
 	   //list, I automatically follow them.
 	   string following[];
+
+	   // These two fields (which are mutually exclusive) can be sent
+	   // to mute (hide the conversation and all replies, including
+	   // stream activity) or unmute a conversation. They take an
+	   // NTIID OID. Notice that there is no provided list of all
+	   // muted conversations: the use-case for unmuting is an "Undo"
+	   // immediately following a mute, so the UI is expected to keep
+	   // track of the last muted conversation.
+	   in string mute_conversation;
+	   in string unmute_conversation;
 
 	   string email[]; //preferred order
 	   //name is logon name is email

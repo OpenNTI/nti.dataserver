@@ -309,26 +309,90 @@ class SharingTarget(Entity):
 																   containerType=datastructures.PersistentExternalizableList,
 																   set_ids=False )
 
+		# For muted conversations, which can be unmuted, there is an
+		# identical structure. References are moved in and out of this
+		# container as conversations are un/muted. The goal of this structure
+		# is to keep reads fast. Only writes--changing the muted status--are slow
+		self.containers_of_muted = datastructures.ContainedStorage( weak=True,
+																   create=False,
+																   containerType=datastructures.PersistentExternalizableList,
+																   set_ids=False )
+		# This maintains the strings of external NTIID OIDs whose conversations are muted.
+		self.muted_oids = OOTreeSet()
+
+
 		# A cache of recent items that make of the stream. Going back
 		# further than this requires walking through the containersOfShared.
 		self.streamCache = datastructures.ModDateTrackingOOBTree()
-
-	def __setstate__( self, state ):
-		super(SharingTarget,self).__setstate__( state )
-		if isinstance( getattr( self, '_sources_not_accepted', set() ), set ):
-			self._sources_not_accepted = OOTreeSet( getattr( self, '_sources_not_accepted', set() ) )
-		if isinstance( getattr( self, '_sources_accepted', set() ), set ):
-			self._sources_accepted = OOTreeSet( getattr( self, '_sources_accepted', set() ) )
-		if getattr( self.containersOfShared, 'set_ids', True ):
-			# So in __setstate__, it's critical to not modify
-			# other objects unless they require it.
-			self.containersOfShared.set_ids = False
 
 	def _discard( self, s, k ):
 		try:
 			s.remove( k )
 			self._p_changed = True
-		except KeyError: pass
+			return True
+		except KeyError:
+			return False
+
+	def __manage_mute( self, mute=True ):
+		# TODO: Horribly inefficient
+		_from = self.containersOfShared
+		_to = self.containers_of_muted
+		if not mute:
+			_from, _to = _to, _from
+
+		to_move = []
+		for container in _from.containers.values():
+			if isinstance( container, numbers.Number ): continue
+			for obj in container:
+				obj = obj()
+				if mute:
+					if self.is_muted( obj ):
+						to_move.append( obj )
+				elif not self.is_muted( obj ):
+					to_move.append( obj )
+
+
+		for x in to_move:
+			_from.deleteEqualContainedObject( x )
+			_to.addContainedObject( x )
+
+			stream = self.streamCache.get( x.containerId )
+			if mute and stream is not None:
+				change = None
+				for change in stream:
+					if change.object == x:
+						break
+				if change is not None:
+					stream.remove( change )
+
+	def mute_conversation( self, root_ntiid_oid ):
+		self.muted_oids.add( root_ntiid_oid )
+
+		# Now move over anything that is muted
+		self.__manage_mute( )
+
+
+	def unmute_conversation( self, root_ntiid_oid ):
+		if self._discard( self.muted_oids, root_ntiid_oid ):
+			# Now unmute anything required
+			self.__manage_mute( mute=False )
+
+
+	def is_muted( self, the_object ):
+		if the_object is None:
+			return False
+		ntiid = datastructures.to_external_ntiid_oid( the_object )
+		if ntiid in self.muted_oids:
+			return True
+		reply_ntiid = datastructures.to_external_ntiid_oid( the_object.inReplyTo ) if hasattr( the_object, 'inReplyTo' ) else None
+		if reply_ntiid in self.muted_oids:
+			return True
+		refs_ntiids = [datastructures.to_external_ntiid_oid(x) for x in the_object.references] if hasattr( the_object, 'references') else ()
+		for x in refs_ntiids:
+			if x in self.muted_oids:
+				return True
+
+		return False
 
 	def accept_shared_data_from( self, source ):
 		"""
@@ -448,30 +512,42 @@ class SharingTarget(Entity):
 		return result
 
 	def _addSharedObject( self, contained ):
-		self.containersOfShared.addContainedObject( contained )
+		containers = self.containers_of_muted if self.is_muted(contained) else self.containersOfShared
+		containers.addContainedObject( contained )
 
 	def _removeSharedObject( self, contained ):
 		"""
 		:return: The removed object, or None if nothing was removed.
 		"""
-		return self.containersOfShared.deleteEqualContainedObject( contained )
+		# Remove from both muted and normal, just in case
+		result = False
+		for containers in (self.containersOfShared,self.containers_of_muted):
+			result = containers.deleteEqualContainedObject( contained ) or result
+		return result
 
 	def _addToStream( self, change ):
+		"""
+		:return: A boolean indicating whether the change was accepted
+		or muted.
+		"""
+		if self.is_muted( change.object ):
+			return False
+
 		container = self.streamCache.get( change.containerId )
 		if container is None:
 			container = datastructures.PersistentExternalizableWeakList()
 			self.streamCache[change.containerId] = container
 		if len(container) >= self.MAX_STREAM_SIZE:
-			# TODO: O(n)
 			container.pop( 0 )
 
 		container.append( change )
+		return True
 
 	def _get_stream_cache_containers( self, containerId ):
 		""" Return a sequence of stream cache containers for the id. """
 		return (self.streamCache.get( containerId, () ),)
 
-	def getContainedStream( self, containerId, minAge=0, maxCount=MAX_STREAM_SIZE ):
+	def getContainedStream( self, containerId, minAge=-1, maxCount=MAX_STREAM_SIZE ):
 		# The contained stream is an amalgamation of the traffic explicitly
 		# to us, plus the traffic of things we're following. We merge these together and return
 		# just the ones that fit the criteria.
@@ -525,10 +601,15 @@ class SharingTarget(Entity):
 		return result
 
 	def _acceptIncomingChange( self, change ):
-		self._addToStream( change )
+		"""
+		:return: A value indicating if the change was actually accepted or
+		is muted.
+		"""
+		accepted = self._addToStream( change )
 		# TODO: What's the right check here?
 		if not isinstance( change.object, Entity ):
 			self._addSharedObject( change.object )
+		return accepted
 
 	def _noticeChange( self, change ):
 		""" Should run in a transaction. """
@@ -1305,6 +1386,18 @@ class User(Principal):
 				password = parsed.pop( 'password' )
 				self.password = password
 
+			# Muting/Unmuting conversations. Notice that we only allow
+			# a single thing to be changed at once. Also notice that we never provide
+			# the full list of currently muted objects as external data. These
+			# both support the idea that the use-case for this feature is a single button
+			# in the UI at the conversation level, and that 'unmuting' a conversation is
+			# only available /immediately/ after muting it, as an 'Undo' action (like in
+			# gmail). Our muted conversations still show up in search results, as in gmail.
+			if 'mute_conversation' in parsed:
+				self.mute_conversation( parsed.pop( 'mute_conversation' ) )
+			elif 'unmute_conversation' in parsed:
+				self.unmute_conversation( parsed.pop( 'unmute_conversation' ) )
+
 			# These two arrays cancel each other out. In order to just have to
 			# deal with sending one array or the other, the presence of an entry
 			# in one array will remove it from the other. This happens
@@ -1735,9 +1828,10 @@ class User(Principal):
 			sendChangeToUser( lovedPerson, change )
 
 	def _acceptIncomingChange( self, change ):
-		super(User,self)._acceptIncomingChange( change )
-		self.notificationCount = self.notificationCount + 1
-		self._broadcastIncomingChange( change )
+		accepted = super(User,self)._acceptIncomingChange( change )
+		if accepted:
+			self.notificationCount = self.notificationCount + 1
+			self._broadcastIncomingChange( change )
 
 	def _broadcastIncomingChange( self, change ):
 		"""
