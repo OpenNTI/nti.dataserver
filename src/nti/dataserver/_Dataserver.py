@@ -319,6 +319,8 @@ class MinimalDataserver(object):
 		# manually running the migrations: set the version to 1, the first version that
 		# actually was installed by us, and then let the 1-to-2 migration path
 		# really fire.
+		# We also need to arrange for the example database to get migrated
+		# if it present (since we do not statically configure it)
 		with self.db.transaction() as conn:
 			root = conn.root()
 			if root.get( zope.generations.generations.generations_key ) is None and root.get( 'users' ) is not None:
@@ -327,6 +329,15 @@ class MinimalDataserver(object):
 				generations = PersistentMapping()
 				root[zope.generations.generations.generations_key] = generations
 				generations['nti.dataserver'] = 1
+			generations = root.get( zope.generations.generations.generations_key )
+			if generations is not None and 'nti.dataserver-example' in generations:
+				# see config.py
+				# TODO: Circular import
+				import nti.dataserver.utils.example_database_initializer
+				component.provideUtility(
+					nti.dataserver.utils.example_database_initializer.ExampleDatabaseInitializer(),
+					name='nti.dataserver-example' )
+
 
 
 		notify( DatabaseOpenedWithRoot( self.db ) )
