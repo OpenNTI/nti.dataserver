@@ -20,8 +20,14 @@ class mathcountsproblem(Base.Environment):
 class mathcountsquestion(Base.Environment):
 	pass
 
+class mathcountsresult(Base.Environment):
+	pass
+
 class mathcountssolution(Base.Environment):
 	pass
+
+class mathcountshint(Base.Command):
+	args = 'href:str helptext:str'
 
 class tab(Base.Command):
 	pass

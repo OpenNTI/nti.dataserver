@@ -1,11 +1,16 @@
 name: mathcountsproblem
 <div class="problem">
-<input class="answerblank" type="number" tal:attributes="id self/attributes/probnum">
-<a tal:attributes="name self/id"/>
-<span tal:content="self"/>
+	 <input class="answerblank" type="number" tal:attributes="id self/attributes/probnum" />
+	 <a tal:attributes="name self/id"/>
+	 <span tal:content="self"/>
 </div>
-<div class="result"/>
 
+name: mathcountsresult
+<div class="result hidden" tal:content="self"></div>
+
+
+name: mathcountshint
+<a class="helplink"  tal:attributes="href self/attributes/href" tal:content="self/attributes/helptext" />
 
 name: mathcountssolution mathcountsdifficulty
 
