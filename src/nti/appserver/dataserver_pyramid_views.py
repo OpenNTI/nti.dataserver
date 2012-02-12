@@ -324,9 +324,8 @@ class _ObjectsContainerResource(_ContainerResource):
 		# have ACLs (ACLProvider) yet and so this path is not actually doing anything.
 		# Those objects are dependent on their container structure being
 		# traversed to get a correct ACL, and coming in this way that doesn't happen.
-		# FIXME: Deal correctly with library NTIIDs that have a fragment. When we render
-		# them as a 302 response, we need to put the fragment back. NOTE: Right
-		# now, ntiidlinksetter.py isn't even adding fragments for this reason.
+		# NOTE: We do not expect to get a fragment here. Browsers drop fragments in URLs.
+		# Fragment handling will have to be completely client side.
 		return ntiids.find_object_with_ntiid( key, dataserver=ds )
 
 class _NTIIDsContainerResource(_ObjectsContainerResource):
