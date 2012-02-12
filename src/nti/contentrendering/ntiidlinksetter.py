@@ -25,22 +25,55 @@ def transform( book, save_toc=True ):
 		dom = topic.dom
 
 		if dom:
-			hrefs = dom("a['href']") #Any need to do the next/prev links in the header?
+			hrefs = []
+			# The main body
+			hrefs.extend( dom("a['href']") )
+			# next/prev/up links in the header
+			for rel in ('next','up','prev'):
+				hrefs.extend( dom( 'link[href][rel='+rel+']' ) )
 
 		for href in hrefs:
 			filename = href.attrib['href']
-			if filename.startswith( topic.get_topic_filename() ):
-				# Leave in-page links alone so as not to confuse the browser
+			if filename == '#':
+				# We're probably dealing with a javascript onclick handler here,
+				# ignore it
+				continue
+			if filename.startswith( '#' ):
+				# Yay, it's already an in-page relative link and we can
+				# ignore it. (See comments below)
 				continue
 
 			fragment = ''
-			if '#' in filename:
-				filename, fragment = filename.split( '#', 1 )
+			filename_frag = filename.split( '#', 1 )
+			if len(filename_frag) == 2:
+				filename, fragment = filename_frag
 				fragment = '#' + fragment
+
+			if filename == topic.get_topic_filename():
+				if fragment:
+					# Make in-page links drop all references to a file for consistency.
+					# A fragment-only link is correctly handled by the browser
+					href.attrib['href'] = fragment
+					result += 1
+				else:
+					# Bare links to the current page occur as part of some referencing
+					# schemes. (E.g., "Problem number <Section>.<Counter>" generates
+					# two links, one for the current page, one for the counter.) The first
+					# link is useless and annoying if you click it, so make it do
+					# nothing (But this doesn't count as real work)
+					logger.debug( "Stripping a bare link to the current page '%s' in %s", href.attrib['href'], topic )
+					href.attrib['href'] = '#'
+				continue
+
+
 			ntiid_topic = book.toc.root_topic.topic_with_filename( filename )
 			if ntiid_topic:
-				href.attrib['href'] = ntiid_topic.ntiid # + fragment # When the dataserver can deal with stripping fragments, add these back
+				# Fragments are not sent when the browser follows a URL, so
+				# the client will have to handle fragment behaviour
+				href.attrib['href'] = ntiid_topic.ntiid + fragment
 				result += 1
+			else:
+				logger.warning( "Unable to resolve NTIID for href '%s' and file '%s' in %s", href.attrib['href'], filename, topic )
 
 		if result:
 			topic.write_dom()

@@ -671,4 +671,15 @@ class TestApplicationLibrary(ApplicationTestBase):
 		assert_that( res.headers, has_entry( 'Location', 'http://localhost/prealgebra/sect_0002.html' ) )
 
 
+	@mock_dataserver.WithMockDSTrans
+	def test_library_redirect_with_fragment(self):
+
+		testapp = TestApp( self.app )
+
+		fragment = "#fragment"
+		ntiid = self.child_ntiid + fragment
+		res = testapp.get( '/dataserver2/NTIIDs/' + ntiid, extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 302 ) )
+		assert_that( res.headers, has_entry( 'Location', 'http://localhost/prealgebra/sect_0002.html' ) )
+
 

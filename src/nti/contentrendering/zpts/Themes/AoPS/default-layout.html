@@ -2,7 +2,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <!-- A nomespace confuses some clients -->
-<html tal:define="links self/links" xml:lang="en" lang="en">
+<html tal:define="links self/links" lang="en">
 	<head>
         <meta http-equiv="last-modified" tal:condition="python: self.ownerDocument.userdata.has_key('generated_time')" tal:attributes="content python: self.ownerDocument.userdata['generated_time']"/>
 		<meta name="viewport" content="width=730" />
@@ -23,32 +23,9 @@
         <script type="text/javascript" src="js/prealgebra.js"></script>
 	</head>
 	<body id="NTIContent">
-		<div class="navigation" metal:define-macro="navigation">
-			<div>
-				<div tal:condition="links/prev" class="previous"><a tal:attributes="href links/prev/url; title stripped:links/prev/title">&lt;</a></div>
-				<div tal:condition="links/up" class="up"><a tal:attributes="href links/up/url; title stripped:links/up/title">^</a></div>
-				<div tal:condition="links/next" class="next"><a tal:attributes="href links/next/url; title stripped:links/next/title">&gt;</a></div>
-			</div>
-			<div class="navigation-title" align="center" tal:content="links/document/title">Section Title</div>
-			<div>
-				<div tal:condition="links/contents" class="contents"><a tal:attributes="href links/contents/url" title="Table of Contents">C</a></div>
-				<div tal:condition="links/index" class="index"><a tal:attributes="href links/index/url" title="Index">#</a></div>
-			</div>
-		</div>
-
-		<!-- TODO: this should be rendered by the UI... -->
-		<div tal:condition="python:path('self/level') &gt; -10" class="breadcrumbs">
-			<span tal:repeat="crumb links/breadcrumbs">
-				<span tal:condition="not:repeat/crumb/end"> <a href="." tal:attributes="href crumb/url" tal:content="crumb/title">Parent Section</a> : </span>
-				<span tal:condition="repeat/crumb/end"><b class="current" tal:content="crumb/title">Current Section</b></span>
-			</span>
-			<hr />
-		</div>
-
 		<div class="page-contents" tal:content="self">File contents</div>
 
 		<div tal:condition="self/tableofcontents" tal:attributes="class string:page-contents contents ${self/nodeName}-contents">
-			<!--<strong>Subsections</strong>-->
 			<ul>
 				<li tal:repeat="section self/tableofcontents">
 					<a href="." tal:attributes="href section/url" tal:content="section/fullTocEntry">Aliquam est. Aliquam fringilla pede</a>
