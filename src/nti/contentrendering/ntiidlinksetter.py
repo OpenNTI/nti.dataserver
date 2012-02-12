@@ -42,6 +42,11 @@ def transform( book, save_toc=True ):
 				# Yay, it's already an in-page relative link and we can
 				# ignore it. (See comments below)
 				continue
+			if filename.startswith( 'tag:nextthought' ):
+				# Yay, it's already a NTIID
+				# Note that we're not using the nti.dataserver.ntiids module to validate this to
+				# avoid dependencies (which may not be important)
+				continue
 
 			fragment = ''
 			filename_frag = filename.split( '#', 1 )

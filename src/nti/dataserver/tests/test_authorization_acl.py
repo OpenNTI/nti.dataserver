@@ -220,7 +220,6 @@ class Permits(BaseMatcher):
 								 .append( self.perm.id )
 
 	def describe_mismatch(self, item, mismatch_description):
-		import pdb; pdb.set_trace()
 		mismatch_description.append_text('was ').append_description_of(getattr( item, '__acl__', item ))
 
 class Denies(Permits):
