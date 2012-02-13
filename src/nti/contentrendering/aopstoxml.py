@@ -204,6 +204,10 @@ def postRender(document, contentLocation='.', jobname='prealgebra'):
 				logger.debug( 'pypy exception', exc_info=True )
 				indexer.index_content(tocFile=toc_file, contentPath=contentPath, indexname=jobname)
 
+	# TODO: Aren't the things in the archive mirror file the same things
+	# we want to list in the manifest? If so, we should be able to combine
+	# these steps (if nothing else, just list the contents of the archive to get the
+	# manifest)
 	print "Creating html cache-manifest"
 	html5cachefile.main(contentPath, contentPath)
 
