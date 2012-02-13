@@ -619,5 +619,11 @@ def index_listener_main():
 	dataserver._Dataserver.temp_env_run_change_listener( _add_index_listener, None )
 
 def openidcallback(context, request, success_dict):
-	# Email comes back as a list
-	return hexc.HTTPOk("You have signed on, %s from %s" % ( success_dict['ax']['email'], success_dict['identity_url'] ))
+	# Google only supports AX, sreg is ignored.
+	# Each of these comes back as a list, for some reason
+	fname = success_dict.get( 'ax', {} ).get('firstname', [''])[0]
+	lname = success_dict.get( 'ax', {} ).get('lastname', [''])[0]
+	email = success_dict.get( 'ax', {} ).get('email', [''])[0]
+	langu = success_dict.get( 'ax', {} ).get('language', [''])[0]
+	idurl = success_dict.get( 'identity_url' )
+	return hexc.HTTPOk("You have signed on, %s %s at %s and you speak %s. Your ID is %s" % ( fname, lname, email, langu, idurl ) )
