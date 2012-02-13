@@ -62,6 +62,7 @@ setup(
 		'pyramid_traversalwrapper',
 		'pyramid_who',
 		'pyramid_zodbconn',
+		'pyramid-openid',
 		'pytz',
 		'rdflib',
 		'repoze.sphinx.autointerface',

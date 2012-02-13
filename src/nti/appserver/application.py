@@ -245,15 +245,38 @@ def createApplication( http_port,
 	# leading to some breakage in ZCA apis...this can be fixed by setting the site manager
 	# to have a __bases__ that includes the global site manager.
 	if pyramid_config is None:
+
 		pyramid_config = pyramid.config.Configurator( registry=component.getGlobalSiteManager(),
-													  debug_logger=logging.getLogger( 'pyramid' ) ) #,
+													  debug_logger=logging.getLogger( 'pyramid' ),
+													  settings=settings)
 
 		pyramid_config.setup_registry()
+		# Because we're using the global registry, the settings almost certainly
+		# get trounced, so reinstall them
+		pyramid_config.registry.settings.update( settings )
+
+
+	# The pyramid_openid view requires a session. The repoze.who.plugins.openid plugin
+	# uses a cookie by default to handle this, so it's not horrible to use an unencrypted
+	# cookie session for this purpose. This keeps us from having to have a cross-server
+	# solution.
+	# NOTE: The OpenID store may be a bigger problem. Unless stateless actually works,
+	# we have to make sure that file store is shared, or implement our own store.
+	from pyramid.session import UnencryptedCookieSessionFactoryConfig
+	my_session_factory = UnencryptedCookieSessionFactoryConfig('ntidataservercookiesecretpass')
+	pyramid_config.set_session_factory( my_session_factory )
+
 	pyramid_config.set_authorization_policy( pyramid.authorization.ACLAuthorizationPolicy() )
 	pyramid_config.set_authentication_policy( pyramid_auth.create_authentication_policy() )
 	pyramid_config.add_route( name='logout', pattern='/dataserver2/logout' )
-	pyramid_config.add_view( route_name='logout',
-							 view='nti.appserver.dataserver_pyramid_views._logout' )
+	pyramid_config.add_view( route_name='logout', view='nti.appserver.dataserver_pyramid_views._logout' )
+
+	pyramid_config.add_route( name='verify_openid', pattern='/dataserver2/openid.html' )
+	# Note that the openid value MUST be POST'd to this view; an unmodified view goes into
+	# an infinite loop if the openid value is part of a GET param
+	# This value works for any google apps account: https://www.google.com/accounts/o8/id
+	pyramid_config.add_view( route_name='verify_openid', view='pyramid_openid.verify_openid' )
+
 
 	# Temporarily make everyone an OU admin
 	class OUAdminFactory(object):
@@ -516,7 +539,6 @@ def createApplication( http_port,
 							 permission=nauth.ACT_READ, request_method='GET' )
 
 
-
 	# register change listeners
 	# Now, fork off the change listeners
 	if create_ds:
@@ -595,3 +617,7 @@ def sharing_listener_main():
 def index_listener_main():
 	_configure_logging()
 	dataserver._Dataserver.temp_env_run_change_listener( _add_index_listener, None )
+
+def openidcallback(context, request, success_dict):
+	# Email comes back as a list
+	return hexc.HTTPOk("You have signed on, %s from %s" % ( success_dict['ax']['email'], success_dict['identity_url'] ))
