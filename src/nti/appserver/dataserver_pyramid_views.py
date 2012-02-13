@@ -30,7 +30,7 @@ from nti.dataserver.datastructures import to_external_ntiid_oid as toExternalOID
 from nti.dataserver.datastructures import StandardInternalFields, StandardExternalFields
 from nti.dataserver import ntiids
 from nti.dataserver import enclosures
-from nti.dataserver.mimetype import MIME_BASE, nti_mimetype_from_object
+from nti.dataserver.mimetype import MIME_BASE, nti_mimetype_from_object, nti_mimetype_with_class
 from nti.dataserver import authorization as nauth
 from nti.dataserver import authorization_acl as nacl
 from . import interfaces as app_interfaces
@@ -1200,8 +1200,12 @@ def _provider_redirect_classes(request):
 
 def _LibraryTOCRedirectView(request):
 	"""
-	Given an :class:`nti_interfaces.ILibraryTOCEntry`, redirect the request there.
+	Given an :class:`nti_interfaces.ILibraryTOCEntry`, redirect the request to the static content.
 	This allows unifying handling of NTIIDs.
+	If the client uses the Accept header to ask for a Link to the content, though,
+	then return that link; the client will do the redirection manually. (This is helpful
+	for clients that need to know the URL of the content and which are using libraries
+	that otherwise would swallow it and automatically redirect.)
 	"""
 	href = request.context.href
 	# Right now, the ILibraryTOCEntries always have relative hrefs
@@ -1210,5 +1214,11 @@ def _LibraryTOCRedirectView(request):
 		href = root.root + '/' + href
 		href = href.replace( '//', '/' )
 
+	# If the client asks for a specific type of data,
+	# a link, then give it to them. Otherwis
+	link_json = nti_mimetype_with_class( 'link' ) + '+json'
+	if request.accept and request.accept.best_match( ('text/html',link_json,) ) == link_json:
+		return {"Class": "Link", "href": href}
+
 	# return rather than raise to that webtest works better
-	return hexc.HTTPFound( location=href )
+	return hexc.HTTPSeeOther( location=href )
