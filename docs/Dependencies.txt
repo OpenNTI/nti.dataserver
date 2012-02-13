@@ -96,10 +96,16 @@ Dependencies (other):
 - Phusion Passenger # 3.0.9, 2011-10-08
 
 Dependencies for content generation:
-- texlive (macports)
-- texlive-bibtex-extra (macports)
-- texlive-latex-extra (macports)
-- Full TeX distribution (including extras)
+- Full TeX distribution (including extras) - macports
+	- texlive 
+	- texlive-latex
+	- texlive-bibtex-extra
+	- texlive-latex-extra
+	- texlive-generic-extra
+	- texlive-math-extra
+	- texlive-fonts-extra
+	- pdf2svg 
+	- ImageMagick
 
 - Optionals (easy_install / pip)
 psutil			# process monitoring
