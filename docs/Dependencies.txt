@@ -97,6 +97,8 @@ Dependencies (other):
 
 Dependencies for content generation:
 - texlive (macports)
+- texlive-bibtex-extra (macports)
+- texlive-latex-extra (macports)
 - Full TeX distribution (including extras)
 
 - Optionals (easy_install / pip)
