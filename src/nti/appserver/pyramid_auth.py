@@ -269,7 +269,9 @@ class NTIAuthenticationPolicy(WhoV2AuthenticationPolicy):
 	interface.implements( IAuthenticationPolicy )
 
 	def __init__( self ):
-		super(NTIAuthenticationPolicy,self).__init__( '', '', callback=_make_user_auth() )
+		# configfile is ignored, second argument is identifier_id, which must match one of the
+		# things we setup in _create_middleware. It's used in remember()
+		super(NTIAuthenticationPolicy,self).__init__( '', 'auth_tkt', callback=_make_user_auth() )
 		self.api_factory = None
 
 	def unauthenticated_userid( self, request ):

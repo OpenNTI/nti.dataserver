@@ -1191,6 +1191,7 @@ def _logout(request):
 	response = Response( "OK", headerlist=forget( request ) )
 	return response
 
+
 def _method_not_allowed(request):
 	raise hexc.HTTPMethodNotAllowed()
 
