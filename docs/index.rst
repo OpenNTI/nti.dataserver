@@ -19,6 +19,7 @@ Contents:
 	whiteboard-apis-v1
 	api
 	chat-apis
+	interfaces
 	http-rest
 
 

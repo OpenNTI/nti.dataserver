@@ -260,8 +260,12 @@ def createApplication( http_port,
 	# uses a cookie by default to handle this, so it's not horrible to use an unencrypted
 	# cookie session for this purpose. This keeps us from having to have a cross-server
 	# solution.
-	# NOTE: The OpenID store may be a bigger problem. Unless stateless actually works,
+	# NOTE: The OpenID store may be a bigger problem. Unless stateless actually works.
 	# we have to make sure that file store is shared, or implement our own store.
+	# Note: Stateless does seem to work.
+	# Note: It's not clear how much benefit, if any, ropez.who.plugins.openid would bring
+	# us. I don't know if I want 401s to automatically result in redirections to HTML pages.
+	# OTOH, it would fit in with the existing place that we 'autocreate' users
 	from pyramid.session import UnencryptedCookieSessionFactoryConfig
 	my_session_factory = UnencryptedCookieSessionFactoryConfig('ntidataservercookiesecretpass')
 	pyramid_config.set_session_factory( my_session_factory )
@@ -618,6 +622,8 @@ def index_listener_main():
 	_configure_logging()
 	dataserver._Dataserver.temp_env_run_change_listener( _add_index_listener, None )
 
+from pyramid.security import remember
+
 def openidcallback(context, request, success_dict):
 	# Google only supports AX, sreg is ignored.
 	# Each of these comes back as a list, for some reason
@@ -626,4 +632,8 @@ def openidcallback(context, request, success_dict):
 	email = success_dict.get( 'ax', {} ).get('email', [''])[0]
 	langu = success_dict.get( 'ax', {} ).get('language', [''])[0]
 	idurl = success_dict.get( 'identity_url' )
-	return hexc.HTTPOk("You have signed on, %s %s at %s and you speak %s. Your ID is %s" % ( fname, lname, email, langu, idurl ) )
+	# The webapp actually needs its own cookie that we are not currently providing, so a simple
+	# redirect won't cut it. It's going to take some deeper cooperation.
+	response = hexc.HTTPFound( location='/NextThoughtWebApp/index.html')
+	response.headers.extend( remember( request, email ) )
+	return response
