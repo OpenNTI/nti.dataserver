@@ -630,7 +630,7 @@ class Highlight(UserIndexableContent):
 				  		color=TEXT(stored=False),
 				 		quick=NGRAM(maxsize=10),
 				 		keywords=KEYWORD(stored=True),
-				 		ntiid=ID(stored=True, unique=True))
+				 		ntiid=ID(stored=True))
 
 	fields = {
 			"CollectionID": ("collectionId", echo),
@@ -773,7 +773,7 @@ class Note(Highlight):
 				 		quick=NGRAM(maxsize=10),
 				 		id=NUMERIC(int, stored=False),
 				 		keywords=KEYWORD(stored=True),
-				 		ntiid=ID(stored=True, unique=True) )
+				 		ntiid=ID(stored=True) )
 
 	fields = {
 			"CollectionID": ("collectionId", echo),
@@ -821,7 +821,7 @@ class MessageInfo(Note):
 				 		id=ID(stored=True, unique=True),
 				 		last_modified=DATETIME(stored=True),
 				 		keywords=KEYWORD(stored=True),
-				 		ntiid=ID(stored=True, unique=True))
+				 		ntiid=ID(stored=True))
 
 	fields = {
 			"ContainerId": ("containerId", echo),
