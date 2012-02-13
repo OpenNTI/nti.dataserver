@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# $Id$
+# Disable pylint warning about "too many methods" on the Command subclasses,
+# and "deprecated string" module
+#pylint: disable=R0904,W0402
 from plasTeX import Node
 import plasTeX.Base
 import string
@@ -11,21 +16,11 @@ interface.moduleProvides(interfaces.IDocumentTransformer)
 
 
 class _mathnode(plasTeX.Base.Command):
-
-	#@property
-	#def unicode(self):
-	#	return self.attributes['text'] if 'text' in self.attributes else None
+	origMathSource = None
 
 	@property
 	def source(self):
 		return self.origMathSource
-
-## class mathangle(_mathnode):
-##	nodeName = 'mathangle'
-
-## class mathline(_mathnode):
-##	resourceTypes=['svg']
-##	nodeName = 'mathline'
 
 class mathname(_mathnode):
 	nodeName = 'mathname'
@@ -53,14 +48,14 @@ def transformSimpleNsuperscript(document):
 	for nsuperscript in nsuperscriptsinmath:
 		#if our math parent only has one child and it is us
 		if nsuperscript.parentNode.childNodes == [nsuperscript]:
-			print 'Moving nsuperscript out of math environment'
+			logger.info( 'Moving nsuperscript out of math environment %s', nsuperscript )
 			mathsParent = nsuperscript.parentNode.parentNode
 			mathsParent.replaceChild(nsuperscript, nsuperscript.parentNode)
 
 
 def transformSimpleMath(document):
-	''' Transform simple maths.	 Simple maths are math
-	elemsnts that have only text children '''
+	""" Transform simple maths.	 Simple maths are math
+	elements that have only text children """
 
 	simpleMaths = [math for math in document.getElementsByTagName('math') \
 				   if all( [ child.nodeType == Node.TEXT_NODE for child in math.childNodes ] )]
