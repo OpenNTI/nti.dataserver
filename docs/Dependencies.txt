@@ -106,6 +106,7 @@ Dependencies for content generation:
 	- texlive-fonts-extra
 	- pdf2svg 
 	- ImageMagick
+	- wget
 
 - Optionals (easy_install / pip)
 psutil			# process monitoring
