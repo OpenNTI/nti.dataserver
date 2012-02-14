@@ -168,8 +168,16 @@ def render_link( parent_resource, link, user_root_resource=None ):
 		if ntiids.is_valid_ntiid_string( ntiid ):
 			result['ntiid'] = ntiid
 		if not _is_valid_href( href ) and not ntiids.is_valid_ntiid_string( href ):
-			logger.warn( "Generating invalid href %s for link %s parent %s root %s",
+			if href and href.startswith( 'users/' ) or href.startswith( 'providers/' ):
+				# TODO: Hardcoded paths
+				href = '/dataserver2/' + href
+				result[StandardExternalFields.HREF] = href
+				logger.warn( "Fixing up invalid href %s for link %s parent %s root %s",
 						 href, link, parent_resource, user_root_resource )
+			else:
+				logger.warn( "Generating invalid href %s for link %s parent %s root %s",
+						 href, link, parent_resource, user_root_resource )
+
 	return result
 
 
