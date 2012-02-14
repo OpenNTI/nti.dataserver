@@ -17,7 +17,6 @@ def main(url_or_path, out_dir="/tmp/", manifest='cache-manifest', port=7776):
 	"""
 	Creates an html cache-manifest file with all resources in the specified url
 	"""
-	import pdb; pdb.set_trace()
 	httpd = None
 	try:
 		if not _is_valid_url(url_or_path):
