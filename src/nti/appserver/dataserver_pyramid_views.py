@@ -10,6 +10,7 @@ logger = logging.getLogger( __name__ )
 import numbers
 import collections
 import urllib
+import time
 
 import plistlib
 import anyjson as json
@@ -1006,6 +1007,20 @@ class _UGDPutView(_UGDModifyViewBase):
 								 objId,
 								 nacl.ACL( theObject, context.__acl__ ) )
 
+def _force_update_modification_time( object, lastModified, max_depth=-1 ):
+	"""Traverse up the parent tree (up to `max_depth` times) updating modification times."""
+	if hasattr( object, 'updateLastMod' ):
+		object.updateLastMod( lastModified )
+
+	if max_depth == 0:
+		return
+	if max_depth > 0:
+		max_depth = max_depth - 1
+
+	parent = getattr( object, '__parent__', None )
+	if parent is None:
+		return
+	_force_update_modification_time( parent, lastModified, max_depth )
 
 class _EnclosurePostView(_UGDModifyViewBase):
 	"""
@@ -1060,14 +1075,21 @@ class _EnclosurePostView(_UGDModifyViewBase):
 			content_type )
 		enclosure.creator = self.getRemoteUser()
 		enclosure_container.add_enclosure( enclosure )
+
 		# Ensure we'll be able to get a OID
 		if getattr( enclosure_container, '_p_jar', None ):
 			if modeled_content is not None:
 				enclosure_container._p_jar.add( modeled_content )
 			enclosure_container._p_jar.add( enclosure )
 
-		self.request.response.status_int = 201 # Created
+		# TODO: Creating enclosures generally doesn't update the modification time
+		# of its container. It arguably should. Since we currently report a few levels
+		# of the tree at once, though, (classes AND their sections) it is necessary
+		# to update a few levels at once. This is wrong and increases the chance of conflicts.
+		# The right thing is to stop doing that.
+		_force_update_modification_time( enclosure_container, enclosure.lastModified )
 
+		self.request.response.status_int = 201 # Created
 
 		self.request.response.location = self.request.resource_url( LocationProxy( enclosure,
 																				   context,
@@ -1092,12 +1114,15 @@ class _EnclosurePutView(_UGDModifyViewBase):
 		# How should we be dealing with changes to Content-Type?
 		# Changes to Slug are not allowed because that would change the URL
 		# Not modeled # TODO: Check IModeledContent.providedBy( context.data )?
+		# FIXME: See comments in _EnclosurePostView about mod times.
 		if not context.mime_type.startswith( MIME_BASE ):
 			context.data = self.request.body
+			_force_update_modification_time( context, time.time() )
 		else:
 			modeled_content = context.data
 			self.updateContentObject( modeled_content, self.readInput() )
 			result = modeled_content
+			_force_update_modification_time( context, modeled_content.lastModified )
 		return result
 
 class _EnclosureDeleteView(object):
