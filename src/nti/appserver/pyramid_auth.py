@@ -234,8 +234,8 @@ def _create_middleware( app=None ):
 	user_auth = NTIUsersAuthenticatorPlugin()
 	basicauth = BasicAuthPlugin('NTI')
 	auth_tkt = AuthTktCookiePlugin('secret', 'auth_tkt')
-	basicauth.include_ip = False
-	basicauth.remember = auth_tkt.remember
+	#basicauth.include_ip = False
+	#basicauth.remember = auth_tkt.remember
 	identifiers = [('auth_tkt', auth_tkt),
 				   ('basicauth', basicauth)]
 	authenticators = [('auth_tkt', auth_tkt),

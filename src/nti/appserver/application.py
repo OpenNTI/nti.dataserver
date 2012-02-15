@@ -275,6 +275,11 @@ def createApplication( http_port,
 	pyramid_config.add_route( name='logout', pattern='/dataserver2/logout' )
 	pyramid_config.add_view( route_name='logout', view='nti.appserver.dataserver_pyramid_views._logout' )
 
+	pyramid_config.add_route( name='logon.ping', pattern='/dataserver2/logon.ping' )
+	pyramid_config.add_route( name='logon.handshake', pattern='/dataserver2/logon.handshake' )
+	pyramid_config.add_route( name='logon.nti.password', pattern='/dataserver2/logon.nti.password' )
+	pyramid_config.scan( 'nti.appserver.logon' )
+
 	pyramid_config.add_route( name='verify_openid', pattern='/dataserver2/openid.html' )
 	# Note that the openid value MUST be POST'd to this view; an unmodified view goes into
 	# an infinite loop if the openid value is part of a GET param
