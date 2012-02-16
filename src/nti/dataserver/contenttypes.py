@@ -79,6 +79,9 @@ class ThreadableExternalizableMixin(ThreadableMixin):
 		for ref in references:
 			self.addReference( ref )
 
+# TODO: These objects should probably implement IZContained (__name__,__parent__). Otherwise they
+# often wind up wrapped in container proxy objects, which is confusing. There may be
+# traversal implications to that though, that need to be considered. See also classes.py
 class _UserContentRoot(users.ShareableMixin, datastructures.ContainedMixin, datastructures.CreatedModDateTrackingObject, persistent.Persistent):
 	""" By default, if an update comes in with only new sharing information,
 	and we have been previously saved, then we do not clear our
@@ -176,8 +179,11 @@ class _UserArbitraryDataContentRoot(_UserContentRoot, datastructures.IDItemMixin
 		super( _UserArbitraryDataContentRoot, self ).__setitem__( key, value )
 
 class Highlight(_UserContentRoot,datastructures.ExternalizableInstanceDict):
-
+	# See comments above about being IZContained. We add it here to minimize the impact
+	interface.implements( nti_interfaces.IZContained, nti_interfaces.IHighlight )
 	_excluded_in_ivars_ = { 'AutoTags' } | datastructures.ExternalizableInstanceDict._excluded_in_ivars_
+
+	__parent__ = None
 
 	def __init__( self ):
 		super(Highlight,self).__init__()
@@ -204,6 +210,13 @@ class Highlight(_UserContentRoot,datastructures.ExternalizableInstanceDict):
 		# most directly matches what the externalization is.
 		self.tags = ()
 		self.AutoTags = ()
+
+	def _get_name(self):
+		return self.id
+	def _set_name(self,name):
+		self.id = name
+	__name__ = property(_get_name,_set_name)
+
 
 	def updateFromExternalObject( self, parsed, dataserver=None ):
 		super(Highlight,self).updateFromExternalObject( parsed, dataserver=dataserver )

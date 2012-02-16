@@ -381,6 +381,9 @@ class SharingTarget(Entity):
 	def is_muted( self, the_object ):
 		if the_object is None:
 			return False
+
+		if getattr( the_object, 'id', self ) in self.muted_oids:
+			return True
 		ntiid = datastructures.to_external_ntiid_oid( the_object )
 		if ntiid in self.muted_oids:
 			return True
