@@ -238,12 +238,11 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		assert_that( user.getSharedContainer( 'foo' ), has_length( 3 ) )
 		assert_that( user.getContainedStream( 'foo' ), has_length( 3 ) )
 
-		# If a DELETE arrives while muted, then it is still missing when unmuted
 		user.mute_conversation( to_external_ntiid_oid( c ) )
-
+		# and they can all go away
 		assert_that( user.getSharedContainer( 'foo', 42 ), has_length( 0 ) )
 		assert_that( user.getContainedStream( 'foo' ), has_length( 0 ) )
-
+		# If a DELETE arrives while muted, then it is still missing when unmuted
 		change = Change( Change.DELETED, reference )
 		user._noticeChange( change )
 

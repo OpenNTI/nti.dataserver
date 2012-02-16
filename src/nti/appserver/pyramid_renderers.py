@@ -255,8 +255,12 @@ class REST(object):
 				iter(obj)
 			except TypeError:
 				return
-
-			if StandardExternalFields.LINKS in obj: # Catch lists
+			has_links = False
+			try:
+				has_links = StandardExternalFields.LINKS in obj # Catch lists, weak refs
+			except TypeError:
+				has_links = False
+			if has_links:
 				# Add an Edit link if it's an editable object that we own
 				# and that doesn't already provide one.
 
