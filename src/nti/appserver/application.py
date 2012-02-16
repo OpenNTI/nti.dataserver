@@ -278,6 +278,8 @@ def createApplication( http_port,
 	pyramid_config.add_route( name='logon.ping', pattern='/dataserver2/logon.ping' )
 	pyramid_config.add_route( name='logon.handshake', pattern='/dataserver2/logon.handshake' )
 	pyramid_config.add_route( name='logon.nti.password', pattern='/dataserver2/logon.nti.password' )
+	pyramid_config.add_route( name='logon.google', pattern='/dataserver2/logon.google' )
+	pyramid_config.add_route( name='logon.google.result', pattern='/dataserver2/logon.google.result' )
 	pyramid_config.scan( 'nti.appserver.logon' )
 
 	pyramid_config.add_route( name='verify_openid', pattern='/dataserver2/openid.html' )
@@ -285,6 +287,7 @@ def createApplication( http_port,
 	# an infinite loop if the openid value is part of a GET param
 	# This value works for any google apps account: https://www.google.com/accounts/o8/id
 	pyramid_config.add_view( route_name='verify_openid', view='pyramid_openid.verify_openid' )
+	pyramid_config.add_view( name='verify_openid', route_name='verify_openid', view='pyramid_openid.verify_openid' )
 
 
 	# Temporarily make everyone an OU admin
@@ -626,19 +629,3 @@ def sharing_listener_main():
 def index_listener_main():
 	_configure_logging()
 	dataserver._Dataserver.temp_env_run_change_listener( _add_index_listener, None )
-
-from pyramid.security import remember
-
-def openidcallback(context, request, success_dict):
-	# Google only supports AX, sreg is ignored.
-	# Each of these comes back as a list, for some reason
-	fname = success_dict.get( 'ax', {} ).get('firstname', [''])[0]
-	lname = success_dict.get( 'ax', {} ).get('lastname', [''])[0]
-	email = success_dict.get( 'ax', {} ).get('email', [''])[0]
-	langu = success_dict.get( 'ax', {} ).get('language', [''])[0]
-	idurl = success_dict.get( 'identity_url' )
-	# The webapp actually needs its own cookie that we are not currently providing, so a simple
-	# redirect won't cut it. It's going to take some deeper cooperation.
-	response = hexc.HTTPFound( location='/NextThoughtWebApp/index.html')
-	response.headers.extend( remember( request, email ) )
-	return response
