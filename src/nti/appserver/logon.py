@@ -5,6 +5,8 @@ Views and data models relating to the login process.
 
 from __future__ import print_function, unicode_literals
 
+import logging
+logger = logging.getLogger(__name__)
 
 from zope import interface, component
 from nti.dataserver import interfaces as nti_interfaces
@@ -37,6 +39,7 @@ def _links_for_authenticated_users( request ):
 	links = ()
 	remote_user_name = sec.authenticated_userid( request )
 	if remote_user_name:
+		logger.debug( "Found authenticated user %s", dict(request.environ.get( 'repoze.who.identity', {} )) )
 		# They are already logged in, provide a continue link
 		continue_href = request.route_path( 'user.root.service', _='' )
 		links = ( Link( continue_href, rel=REL_CONTINUE ), )
