@@ -30,6 +30,7 @@ import BTrees.OOBTree
 
 from zope import interface
 from zope import component
+from zope.deprecation import deprecate
 
 
 class _AlwaysIn(object):
@@ -948,6 +949,7 @@ class Chatserver(object):
 		for target in set(targets):
 			self._notify_target( target, 'emit_presenceOfUserChangedTo', sender, new_presence )
 
+	@deprecate("We need to replace this with something not directly tied to IChatserver/chat.py")
 	def notify_data_change( self, target, change ):
 		self._notify_target( target, 'emit_data_noticeIncomingChange', change )
 
