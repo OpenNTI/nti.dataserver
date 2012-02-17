@@ -53,11 +53,11 @@ class SocketIOServer(socketio.SocketIOServer):
 	## TODO: I don't really care for these being here. Factor
 	## them into their own class.
 
-	def create_new_session( self ):
+	def create_new_session( self, environ=None ):
 		""" Creates a new session. Upon return, it will be visible to all connections. """
 		session = None
 		session = self.session_manager.create_session( session_class=Session )
-		self._after_create_session( session )
+		self._after_create_session( session, environ=environ )
 		logger.debug( "Created new session %s", session )
 		return session
 
@@ -80,7 +80,7 @@ class SocketIOServer(socketio.SocketIOServer):
 	#			self.sessions.delete_session( session )
 	#		except KeyError: pass
 
-	def _after_create_session( self, session ):
+	def _after_create_session( self, session, environ=None ):
 		pass
 
 def _add_cors_headers( headers, environ ):

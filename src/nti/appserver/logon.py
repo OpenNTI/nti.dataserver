@@ -6,22 +6,28 @@ Views and data models relating to the login process.
 from __future__ import print_function, unicode_literals
 
 
-from zope import interface
+from zope import interface, component
 from nti.dataserver import interfaces as nti_interfaces
+from nti.appserver import interfaces as app_interfaces
 
 from nti.dataserver.links import Link
 from nti.dataserver import mimetype
+from nti.dataserver import users
 
-from pyramid.view import view_config, render_view_to_response
+from pyramid.view import view_config
 from pyramid import security as sec
+import pyramid.interfaces
 import pyramid.request
 import pyramid.httpexceptions as hexc
+
+import requests
 
 REL_HANDSHAKE = 'logon.handshake'
 REL_CONTINUE  = 'logon.continue'
 
 REL_LOGIN_NTI_PASSWORD = 'logon.nti.password'
 REL_LOGIN_GOOGLE = 'logon.google'
+REL_LOGIN_OPENID = 'logon.openid'
 
 def _links_for_authenticated_users( request ):
 	"""
@@ -61,6 +67,11 @@ class _Pong(dict):
 		dict.__init__( self )
 		self.links = lnks
 
+class NoSuchUser(object):
+	interface.implements( app_interfaces.IMissingUser )
+
+	def __init__( self, username ):
+		self.username = username
 
 @view_config(route_name=REL_HANDSHAKE, request_method='POST', renderer='rest')
 def handshake(request):
@@ -75,18 +86,83 @@ def handshake(request):
 
 	links = []
 
+
 	# TODO: Check for existence in the database before generating these.
 	# We also need to be validating whether we can do a openid login, etc.
-	links.append( Link( request.route_path( REL_LOGIN_NTI_PASSWORD ), rel=REL_LOGIN_NTI_PASSWORD ) )
+	user = users.User.get_user( username=desired_username,
+								dataserver=request.registry.getUtility(nti_interfaces.IDataserver) )
+
+	if user is None:
+		user = NoSuchUser(desired_username)
+
+	links = {}
+	for provider in request.registry.subscribers( (user,request), app_interfaces.ILogonLinkProvider ):
+		if provider.rel in links:
+			continue
+		link = provider()
+		if link is not None:
+			links[link.rel] = link
 
 
-	links.append( Link( request.route_path( REL_LOGIN_GOOGLE ),
-						rel=REL_LOGIN_GOOGLE ) )
-
+	links = list( links.values() )
 
 	links.extend( _links_for_authenticated_users( request ) )
 
 	return _Handshake( links )
+
+class _SimpleExistingUserLinkProvider(object):
+	interface.implements( app_interfaces.ILogonLinkProvider )
+	component.adapts( nti_interfaces.IUser, pyramid.interfaces.IRequest )
+
+	rel = REL_LOGIN_NTI_PASSWORD
+
+	def __init__( self, user, req ):
+		self.request = req
+		self.user = user
+
+	def __call__(self):
+		if self.user.has_password():
+			return Link( self.request.route_path( REL_LOGIN_NTI_PASSWORD ), rel=REL_LOGIN_NTI_PASSWORD )
+
+class _WhitelistedDomainGoogleLoginLinkProvider(object):
+	interface.implements( app_interfaces.ILogonLinkProvider )
+	component.adapts( nti_interfaces.IUser, pyramid.interfaces.IRequest )
+
+	rel = REL_LOGIN_GOOGLE
+
+	def __init__( self, user, req ):
+		self.request = req
+		self.user = user
+
+	# TODO: We are never checking that the user we get actually comes
+	# from one of these domains.
+	domains = ['nextthought.com', 'gmail.com']
+	def __call__( self ):
+		if getattr( self.user, 'identity_url', None ) is not None:
+			# They have a specific ID already, they don't need this
+			return None
+
+		domain = self.user.username.split( '@' )[-1]
+		if domain in self.domains:
+			return Link( self.request.route_path( REL_LOGIN_GOOGLE ),
+						  rel=REL_LOGIN_GOOGLE )
+
+class _MissingUserWhitelistedDomainGoogleLoginLinkProvider(_WhitelistedDomainGoogleLoginLinkProvider):
+	component.adapts( app_interfaces.IMissingUser, pyramid.interfaces.IRequest )
+
+
+class _ExistingOpenIdUserLoginLinkProvider(object):
+	component.adapts( nti_interfaces.IOpenIdUser, pyramid.interfaces.IRequest )
+
+	rel = REL_LOGIN_OPENID
+
+	def __init__( self, user, req ):
+		self.request = req
+		self.user = user
+
+	def __call__( self ):
+		return Link( self.request.route_path( REL_LOGIN_OPENID, _query={'openid': self.user.identity_url} ),
+					 rel=REL_LOGIN_OPENID )
 
 class _Handshake(dict):
 	interface.implements( nti_interfaces.IExternalObject )
@@ -135,14 +211,19 @@ def password_logon(request):
 
 import pyramid_openid.view
 
-@view_config(route_name=REL_LOGIN_GOOGLE, request_method="GET")
-def google_login(context, request):
+def _openid_login(context, request, openid='https://www.google.com/accounts/o8/id'):
 	nrequest = pyramid.request.Request.blank( request.route_url( 'logon.google.result', _query=request.params ),
 											  POST={'openid2': 'https://www.google.com/accounts/o8/id'} )
 	nrequest.registry = request.registry
-	# TODO: Why can't I use this API?
-#	return render_view_to_response(context, nrequest, name='verify_openid')
 	return pyramid_openid.view.verify_openid( context, nrequest )
+
+@view_config(route_name=REL_LOGIN_GOOGLE, request_method="GET")
+def google_login(context, request):
+	return _openid_login( context, request )
+
+@view_config(route_name=REL_LOGIN_OPENID, request_method="GET")
+def openid_login(context, request):
+	return _openid_login( context, request, request.params.get( 'openid' ) )
 
 @view_config(route_name="logon.google.result", request_method='GET')
 def google_response(context, request):
@@ -162,6 +243,11 @@ def google_response(context, request):
 	return response
 
 def _openidcallback( context, request, success_dict ):
+	#import pdb; pdb.set_trace()
+	# FIXME: There are some major problems here that allow a person
+	# to login as an alternate user. It seems that the identity_url is actually
+	# ignored by google and we get back identifying information for alternate
+	# users
 	# Google only supports AX, sreg is ignored.
 	# Each of these comes back as a list, for some reason
 	fname = success_dict.get( 'ax', {} ).get('firstname', [''])[0]
@@ -169,7 +255,18 @@ def _openidcallback( context, request, success_dict ):
 	email = success_dict.get( 'ax', {} ).get('email', [''])[0]
 	langu = success_dict.get( 'ax', {} ).get('language', [''])[0]
 	idurl = success_dict.get( 'identity_url' )
-	# TODO: Creating user object, etc
-	# The webapp actually needs its own cookie that we are not currently providing, so a simple
-	# redirect won't cut it. It's going to take some deeper cooperation.
+	#print( "User ", email, " belongs to ", idurl )
+	dataserver = request.registry.getUtility(nti_interfaces.IDataserver)
+	user = users.User.get_user( username=email, dataserver=dataserver )
+	if user:
+		if not nti_interfaces.IOpenIdUser.providedBy( user ):
+			interface.alsoProvides( user, nti_interfaces.IOpenIdUser )
+			user.identity_url = idurl
+			# TODO: Can I assign to persistent object's __class__? Should I?
+		assert user.identity_url == idurl
+	else:
+		# TODO: Adding to the right communities, etc
+		user = users.OpenIdUser.create_user( dataserver=dataserver, username=email, password='', realname=fname + ' ' + lname )
+		user.identity_url = idurl
+
 	return _create_success_response( request, userid=email )

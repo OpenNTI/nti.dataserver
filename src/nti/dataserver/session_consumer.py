@@ -27,8 +27,8 @@ class SessionConsumer(Persistent):
 	event handling.
 	"""
 
-	def __init__(self):
-		self._username = None
+	def __init__(self, username=None):
+		self._username = username
 		self._event_handlers = {}
 
 	def __call__( self, socket_obj, msg ):

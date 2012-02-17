@@ -16,7 +16,7 @@ import pyramid.httpexceptions as hexc
 import persistent
 import UserList
 
-#from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 #from nti.tests import provides
 
 from zope import interface
@@ -56,11 +56,13 @@ class TestLogon(ConfiguringTestBase):
 		assert_that( result.links[0].target, ends_with( '/dataserver2/handshake' ) )
 		assert_that( result.links[1].target, ends_with( '/dataserver2' ) )
 
+	@WithMockDSTrans
 	def test_authenticated_handshake(self):
-		"An authenticated handshake returns two links, to the handshake and the root"
+		"An authenticated handshake returns two links, to the logon and the root"
 		self.config.add_route( name='user.root.service', pattern='/dataserver2{_:/?}' )
 		self.config.add_route( name='logon.handshake', pattern='/dataserver2/handshake' )
 		self.config.add_route( name='logon.nti.password', pattern='/dataserver2/logon.password' )
+		self.config.add_route( name='logon.google', pattern='/dataserver2/logon.google' )
 		class Policy(object):
 			interface.implements( pyramid.interfaces.IAuthenticationPolicy )
 			def authenticated_userid( self, request ):
@@ -69,7 +71,7 @@ class TestLogon(ConfiguringTestBase):
 		get_current_request().params['username'] = 'jason.madden@nextthought.com'
 		result = handshake( get_current_request() )
 		assert_that( result, has_property( 'links', has_length( 2 ) ) )
-		assert_that( result.links[0].target, ends_with( '/dataserver2/logon.password' ) )
+		assert_that( result.links[0].target, ends_with( '/dataserver2/logon.google' ) )
 		assert_that( result.links[1].target, ends_with( '/dataserver2' ) )
 
 	def test_password_logon_failed(self):

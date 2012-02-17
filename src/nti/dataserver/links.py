@@ -8,6 +8,8 @@ from . import interfaces
 from zope import interface
 from zope import component
 
+import six
+
 class Link(object):
 	"""
 	Default implementation of ILink.
@@ -29,6 +31,16 @@ class Link(object):
 		# It's very easy to get into an infinite recursion here
 		# if the target wants to print its links
 		return "<Link rel='%s' %s/%s>" % (self.rel, type(self.target), id(self.target))
+
+	def __hash__( self ):
+		# In infinite recursion cases we do a terrible job. We only
+		# really work in simple cases
+		if isinstance(self.target, six.string_types):
+			return hash( self.rel + self.target )
+		return hash( self.rel )
+
+	def __eq__( self, other ):
+		return other == (self.rel,self.target)
 
 class NoOpLinkExternalObjectAdapter(object):
 	"""
