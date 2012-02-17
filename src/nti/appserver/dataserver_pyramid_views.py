@@ -1211,7 +1211,8 @@ class _UserSearchView(object):
 
 from pyramid.security import forget
 from pyramid.response import Response
-
+from zope.deprecation import deprecate
+@deprecate("Use the version in logon.py")
 def _logout(request):
 	response = Response( "OK", headerlist=forget( request ) )
 	return response
