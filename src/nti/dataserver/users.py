@@ -793,6 +793,9 @@ class Principal(SharingSource):
 
 		self.password = password
 
+	def has_password(self):
+		return bool(self.password)
+
 class DynamicSharingTarget(SharingTarget):
 	"""
 	Instances represent communities or collections (e.g., tags)
@@ -1866,7 +1869,9 @@ class User(Principal):
 				apnsCon.sendNotification( device.deviceId, payload )
 
 
-
+class OpenIdUser(User):
+	interface.implements( nti_interfaces.IOpenIdUser )
+	identity_url = None
 
 
 @component.adapter(nti.apns.interfaces.IDeviceFeedbackEvent)

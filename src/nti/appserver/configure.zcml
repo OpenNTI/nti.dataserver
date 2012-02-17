@@ -29,5 +29,18 @@
 	<adapter factory=".workspaces.ContainerCollectionDetailExternalizer" />
 	<adapter factory=".workspaces.CollectionContentTypeAware" />
 	<adapter factory="._adapters.EnclosureExternalObject" />
+
+
+	<!-- Logon -->
+	<subscriber factory=".logon._SimpleExistingUserLinkProvider"
+				provides=".interfaces.ILogonLinkProvider"/>
+	<subscriber factory=".logon._WhitelistedDomainGoogleLoginLinkProvider"
+				provides=".interfaces.ILogonLinkProvider"/>
+	<subscriber factory=".logon._ExistingOpenIdUserLoginLinkProvider"
+				provides=".interfaces.ILogonLinkProvider"/>
+	<subscriber factory=".logon._MissingUserWhitelistedDomainGoogleLoginLinkProvider"
+				provides=".interfaces.ILogonLinkProvider"/>
+
+
 	<include package="nti.dataserver" />
 </configure>

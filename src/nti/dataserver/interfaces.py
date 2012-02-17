@@ -262,7 +262,7 @@ IGroupAwarePrincipal.__bases__ = tuple( itertools.chain( IGroupAwarePrincipal.__
 														 (IGroupMember,) ))
 
 class IEntity(IZContained):
-	pass
+	username = schema.TextLine( title=u'The username' )
 
 class IUser(IEntity):
 	"""
@@ -270,6 +270,12 @@ class IUser(IEntity):
 	This interface needs finished and fleshed out.
 	"""
 
+class IOpenIdUser(IUser):
+	"""
+	A user of the system with a known OpenID identity URL.
+	"""
+
+	identity_url = schema.TextLine( title=u"The user's claimed identity URL" )
 
 class IACE(interface.Interface):
 	"""

@@ -3,7 +3,10 @@
 from zope import interface
 from zope import schema
 
+import nti.dataserver.interfaces as nti_interfaces
+
 from nti.dataserver.interfaces import ILocation
+
 
 ILocationAware = ILocation # b/c
 
@@ -53,3 +56,20 @@ class IService(ILocationAware):
 
 	workspaces = schema.Iterable(
 		u"The workspaces of this service" )
+
+
+# Logon services
+
+class IMissingUser(interface.Interface):
+	"Stand-in for an :class:`nti_interfaces.IUser` when one does not yet exist."
+
+	username = schema.TextLine( title=u"The desired username" )
+
+class ILogonLinkProvider(interface.Interface):
+	"Called to add links to the logon handshake."
+
+	rel = schema.TextLine(
+		title=u"The link rel that this object may produce." )
+
+	def __call__( ):
+		"Returns a single of :class:`nti_interfaces.ILink` object, or None."

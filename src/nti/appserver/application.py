@@ -3,6 +3,10 @@
 import logging
 logger = logging.getLogger( __name__ )
 
+# We'll want these when we start using requests in logon.py
+#import gevent.monkey
+#gevent.monkey.patch_socket(); gevent.monkey.patch_ssl()
+
 import sys
 import os
 import traceback
@@ -280,6 +284,7 @@ def createApplication( http_port,
 	pyramid_config.add_route( name='logon.nti.password', pattern='/dataserver2/logon.nti.password' )
 	pyramid_config.add_route( name='logon.google', pattern='/dataserver2/logon.google' )
 	pyramid_config.add_route( name='logon.google.result', pattern='/dataserver2/logon.google.result' )
+	pyramid_config.add_route( name='logon.openid', pattern='/dataserver2/logon.openid' )
 	pyramid_config.scan( 'nti.appserver.logon' )
 
 	pyramid_config.add_route( name='verify_openid', pattern='/dataserver2/openid.html' )
@@ -578,8 +583,18 @@ def createApplication( http_port,
 	return (application,main)
 
 class AppServer(dataserver.socketio_server.SocketIOServer):
-	def _after_create_session( self, session ):
-		session.message_handler = dataserver.session_consumer.SessionConsumer()
+	def _after_create_session( self, session, environ=None ):
+		# Try to extract the authenticated username, if we can. We don't have
+		# a pyramid request to draw on, though
+		username = None
+		if environ:
+			# A pyramid_auth.NTIAuthenticationPolicy
+			auth_policy = component.getUtility( pyramid.interfaces.IAuthenticationPolicy )
+			api = auth_policy.api_factory( environ )
+			identity = api.authenticate()
+			if identity:
+				username = identity['repoze.who.userid']
+		session.message_handler = dataserver.session_consumer.SessionConsumer(username=username)
 
 def _configure_logging():
 	# TODO: Where should logging in these background processes be configured?
