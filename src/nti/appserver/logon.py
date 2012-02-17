@@ -31,6 +31,8 @@ REL_LOGIN_NTI_PASSWORD = 'logon.nti.password'
 REL_LOGIN_GOOGLE = 'logon.google'
 REL_LOGIN_OPENID = 'logon.openid'
 
+REL_LOGIN_LOGOUT = 'logon.logout'
+
 def _links_for_authenticated_users( request ):
 	"""
 	If a request is authenticated, returns links that should
@@ -42,8 +44,26 @@ def _links_for_authenticated_users( request ):
 		logger.debug( "Found authenticated user %s", dict(request.environ.get( 'repoze.who.identity', {} )) )
 		# They are already logged in, provide a continue link
 		continue_href = request.route_path( 'user.root.service', _='' )
-		links = ( Link( continue_href, rel=REL_CONTINUE ), )
+		links = [ Link( continue_href, rel=REL_CONTINUE ) ]
+		logout_href = request.route_path( REL_LOGIN_LOGOUT )
+		links.append( Link( logout_href, rel=REL_LOGIN_LOGOUT ) )
+
 	return links
+
+def _forgetting( request, redirect_param_name, no_param_class ):
+	response = None
+	if request.params.get( redirect_param_name ):
+		response = hexc.HTTPSeeOther( location=request.params.get( redirect_param_name ) )
+	else:
+		response = no_param_class()
+	# Clear any cookies they sent that failed.
+	response.headers.extend( sec.forget(request) )
+
+	return response
+
+@view_config(route_name=REL_LOGIN_LOGOUT, request_method='GET')
+def logout(request):
+	return _forgetting( request, 'success', hexc.HTTPNoContent )
 
 @view_config(route_name='logon.ping', request_method='GET', renderer='rest')
 def ping( request ):
@@ -167,6 +187,7 @@ class _ExistingOpenIdUserLoginLinkProvider(object):
 		return Link( self.request.route_path( REL_LOGIN_OPENID, _query={'openid': self.user.identity_url} ),
 					 rel=REL_LOGIN_OPENID )
 
+
 class _Handshake(dict):
 	interface.implements( nti_interfaces.IExternalObject )
 
@@ -178,15 +199,7 @@ class _Handshake(dict):
 		self.links = lnks
 
 def _create_failure_response( request ):
-	response = None
-	if request.params.get( 'failure' ):
-		response = hexc.HTTPSeeOther( location=request.params.get( 'failure' ) )
-	else:
-		response = hexc.HTTPUnauthorized()
-	# Clear any cookies they sent that failed.
-	response.headers.extend( sec.forget(request) )
-
-	return response
+	return _forgetting( request, 'failure', hexc.HTTPUnauthorized )
 
 def _create_success_response( request, userid=None ):
 	# Incoming authentication worked. Remember the user, and
