@@ -1874,6 +1874,10 @@ class OpenIdUser(User):
 	identity_url = None
 
 
+class FacebookUser(User):
+	interface.implements( nti_interfaces.IFacebookUser )
+	facebook_url = None
+
 @component.adapter(nti.apns.interfaces.IDeviceFeedbackEvent)
 def user_devicefeedback( msg ):
 	deviceId = msg.deviceId

@@ -277,6 +277,15 @@ class IOpenIdUser(IUser):
 
 	identity_url = schema.TextLine( title=u"The user's claimed identity URL" )
 
+
+class IFacebookUser(IUser):
+	"""
+	A user of the system with a known Facebook identity URL.
+	"""
+
+	facebook_url = schema.TextLine( title=u"The user's claimed identity URL" )
+
+
 class IACE(interface.Interface):
 	"""
 	An Access Control Entry (one item in an ACL).

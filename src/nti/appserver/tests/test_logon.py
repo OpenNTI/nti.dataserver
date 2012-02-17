@@ -65,6 +65,8 @@ class TestLogon(ConfiguringTestBase):
 		self.config.add_route( name='logon.nti.password', pattern='/dataserver2/logon.password' )
 		self.config.add_route( name='logon.google', pattern='/dataserver2/logon.google' )
 		self.config.add_route( name='logon.logout', pattern='/dataserver2/logon.logout' )
+		self.config.add_route( name='logon.facebook.oauth1', pattern='/dataserver2/logon.facebook.1' )
+
 		class Policy(object):
 			interface.implements( pyramid.interfaces.IAuthenticationPolicy )
 			def authenticated_userid( self, request ):
@@ -72,10 +74,11 @@ class TestLogon(ConfiguringTestBase):
 		get_current_request().registry.registerUtility( Policy() )
 		get_current_request().params['username'] = 'jason.madden@nextthought.com'
 		result = handshake( get_current_request() )
-		assert_that( result, has_property( 'links', has_length( 3 ) ) )
+		assert_that( result, has_property( 'links', has_length( 4 ) ) )
 		assert_that( result.links[0].target, is_( '/dataserver2/logon.google' ) )
-		assert_that( result.links[1].target, is_( '/dataserver2' ) )
-		assert_that( result.links[2].target, is_( '/dataserver2/logon.logout' ) )
+		assert_that( result.links[1].target, is_( '/dataserver2/logon.facebook.1' ) )
+		assert_that( result.links[2].target, is_( '/dataserver2' ) )
+		assert_that( result.links[3].target, is_( '/dataserver2/logon.logout' ) )
 
 	def test_password_logon_failed(self):
 		class Policy(object):
