@@ -23,6 +23,8 @@ import pyramid.request
 import pyramid.httpexceptions as hexc
 
 import requests
+import urllib
+import anyjson as json
 
 REL_HANDSHAKE = 'logon.handshake'
 REL_CONTINUE  = 'logon.continue'
@@ -30,7 +32,7 @@ REL_CONTINUE  = 'logon.continue'
 REL_LOGIN_NTI_PASSWORD = 'logon.nti.password'
 REL_LOGIN_GOOGLE = 'logon.google'
 REL_LOGIN_OPENID = 'logon.openid'
-
+REL_LOGIN_FACEBOOK = 'logon.facebook'
 REL_LOGIN_LOGOUT = 'logon.logout'
 
 def _links_for_authenticated_users( request ):
@@ -50,10 +52,12 @@ def _links_for_authenticated_users( request ):
 
 	return links
 
-def _forgetting( request, redirect_param_name, no_param_class ):
+def _forgetting( request, redirect_param_name, no_param_class, value=None ):
 	response = None
-	if request.params.get( redirect_param_name ):
-		response = hexc.HTTPSeeOther( location=request.params.get( redirect_param_name ) )
+	if value is None:
+		value = request.params.get( redirect_param_name )
+	if value:
+		response = hexc.HTTPSeeOther( location=value )
 	else:
 		response = no_param_class()
 	# Clear any cookies they sent that failed.
@@ -147,6 +151,23 @@ class _SimpleExistingUserLinkProvider(object):
 		if self.user.has_password():
 			return Link( self.request.route_path( REL_LOGIN_NTI_PASSWORD ), rel=REL_LOGIN_NTI_PASSWORD )
 
+class _SimpleMissingUserFacebookLinkProvider(object):
+	interface.implements( app_interfaces.ILogonLinkProvider )
+	component.adapts( app_interfaces.IMissingUser, pyramid.interfaces.IRequest )
+
+	rel = REL_LOGIN_FACEBOOK
+
+	def __init__( self, user, req ):
+		self.request = req
+		self.user = user
+
+	def __call__(self):
+		return Link( self.request.route_path( 'logon.facebook.oauth1' ), rel=self.rel )
+
+class _SimpleExistingUserFacebookLinkProvider(_SimpleMissingUserFacebookLinkProvider):
+	component.adapts( nti_interfaces.IFacebookUser, pyramid.interfaces.IRequest )
+
+
 class _WhitelistedDomainGoogleLoginLinkProvider(object):
 	interface.implements( app_interfaces.ILogonLinkProvider )
 	component.adapts( nti_interfaces.IUser, pyramid.interfaces.IRequest )
@@ -198,14 +219,17 @@ class _Handshake(dict):
 		dict.__init__( self )
 		self.links = lnks
 
-def _create_failure_response( request ):
-	return _forgetting( request, 'failure', hexc.HTTPUnauthorized )
+def _create_failure_response( request, failure=None ):
 
-def _create_success_response( request, userid=None ):
+	return _forgetting( request, 'failure', hexc.HTTPUnauthorized, value=failure )
+
+def _create_success_response( request, userid=None, success=None ):
 	# Incoming authentication worked. Remember the user, and
 	# either redirect or no-content
-	if request.params.get( 'success' ):
-		response = hexc.HTTPSeeOther( location=request.params.get( 'success' ) )
+	if success is None:
+		success = request.params.get( 'success' )
+	if success:
+		response = hexc.HTTPSeeOther( location=success )
 	else:
 		response = hexc.HTTPNoContent()
 	if userid is None:
@@ -258,6 +282,23 @@ def google_response(context, request):
 		response = pyramid_openid.view.verify_openid( context, request )
 	return response
 
+def _deal_with_external_account( request, fname, lname, email, idurl, iface, creator ):
+	#print( "User ", email, " belongs to ", idurl )
+	dataserver = request.registry.getUtility(nti_interfaces.IDataserver)
+	user = users.User.get_user( username=email, dataserver=dataserver )
+	url_attr = iface.names()[0]
+	if user:
+		if not iface.providedBy( user ):
+			interface.alsoProvides( user, iface )
+			setattr( user, url_attr, idurl )
+			# TODO: Can I assign to persistent object's __class__? Should I?
+		assert getattr( user, url_attr ) == idurl
+	else:
+		# TODO: Adding to the right communities, etc
+		user = creator.create_user( dataserver=dataserver, username=email, password='', realname=fname + ' ' + lname )
+		setattr( user, url_attr, idurl )
+
+
 def _openidcallback( context, request, success_dict ):
 	#import pdb; pdb.set_trace()
 	# FIXME: There are some major problems here that allow a person
@@ -269,20 +310,59 @@ def _openidcallback( context, request, success_dict ):
 	fname = success_dict.get( 'ax', {} ).get('firstname', [''])[0]
 	lname = success_dict.get( 'ax', {} ).get('lastname', [''])[0]
 	email = success_dict.get( 'ax', {} ).get('email', [''])[0]
-	langu = success_dict.get( 'ax', {} ).get('language', [''])[0]
 	idurl = success_dict.get( 'identity_url' )
-	#print( "User ", email, " belongs to ", idurl )
-	dataserver = request.registry.getUtility(nti_interfaces.IDataserver)
-	user = users.User.get_user( username=email, dataserver=dataserver )
-	if user:
-		if not nti_interfaces.IOpenIdUser.providedBy( user ):
-			interface.alsoProvides( user, nti_interfaces.IOpenIdUser )
-			user.identity_url = idurl
-			# TODO: Can I assign to persistent object's __class__? Should I?
-		assert user.identity_url == idurl
-	else:
-		# TODO: Adding to the right communities, etc
-		user = users.OpenIdUser.create_user( dataserver=dataserver, username=email, password='', realname=fname + ' ' + lname )
-		user.identity_url = idurl
+
+	_deal_with_external_account( request, fname, lname, email, idurl, nti_interfaces.IOpenIdUser, users.OpenIdUser )
+
 
 	return _create_success_response( request, userid=email )
+
+
+
+@view_config( route_name='logon.facebook.oauth1', request_method='GET' )
+def facebook_oauth1( request ):
+	app_id = request.registry.settings.get( 'facebook.app.id' )
+	our_uri = urllib.quote( request.route_url( 'logon.facebook.oauth2' ) )
+	# We seem incapable of sending any parameters with the redirect_uri. If we do,
+	# then the validation step 400's.
+	for k in ('success','failure'):
+		if request.params.get( k ):
+			request.session['facebook.' + k] = request.params.get( k )
+
+	redir_to = 'https://www.facebook.com/dialog/oauth?client_id=%s&redirect_uri=%s&scope=email' % (app_id, our_uri)
+
+	return hexc.HTTPSeeOther( location=redir_to )
+
+@view_config( route_name='logon.facebook.oauth2', request_method='GET' )
+def facebook_oauth2(request):
+	if 'error' in request.params:
+		return _create_failure_response( request )
+
+	code = request.params['code']
+	app_id = request.registry.settings.get( 'facebook.app.id' )
+	our_uri = urllib.quote( request.route_url( 'logon.facebook.oauth2' ))#, _query={'success': request.params.get('success', ''),
+																		#		'failure': request.params.get('failure', '') } ) )
+	app_secret = request.registry.settings.get( 'facebook.app.secret' )
+
+	auth = requests.get( 'https://graph.facebook.com/oauth/access_token?client_id=%s&redirect_uri=%s&client_secret=%s&code=%s' % (app_id, our_uri,app_secret, code) )
+	try:
+		auth.raise_for_status()
+	except:
+		return _create_failure_response(request, request.session.get('facebook.failure'))
+
+	text = auth.text
+	token = None
+	for x in text.split( '&'):
+		if x.startswith('access_token='):
+			token = x[len('access_token='):]
+			break
+
+	data = requests.get( 'https://graph.facebook.com/me?access_token=' + token )
+	data = json.loads( data.text )
+	_deal_with_external_account( request,
+								 data['first_name'], data['last_name'],
+								 data['email'], data['link'],
+								 nti_interfaces.IFacebookUser,
+								 users.FacebookUser )
+
+	return _create_success_response( request, userid=data['email'], success=request.session.get('facebook.success') )

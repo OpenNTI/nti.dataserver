@@ -286,6 +286,8 @@ def createApplication( http_port,
 	pyramid_config.add_route( name='logon.google.result', pattern='/dataserver2/logon.google.result' )
 	pyramid_config.add_route( name='logon.openid', pattern='/dataserver2/logon.openid' )
 	pyramid_config.add_route( name='logon.logout', pattern='/dataserver2/logon.logout' )
+	pyramid_config.add_route( name='logon.facebook.oauth1', pattern='/dataserver2/logon.facebook1' )
+	pyramid_config.add_route( name='logon.facebook.oauth2', pattern='/dataserver2/logon.facebook2' )
 	pyramid_config.scan( 'nti.appserver.logon' )
 
 	pyramid_config.add_route( name='verify_openid', pattern='/dataserver2/openid.html' )
