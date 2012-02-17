@@ -486,6 +486,22 @@ class INote(IHighlight):
 		"""
 		)
 
+### Changes related to content objects/users
+SC_CREATED  = "Created"
+SC_MODIFIED = "Modified"
+SC_DELETED  = "Deleted"
+SC_SHARED   = "Shared"
+SC_CIRCLED  = "Circled"
+
+class IStreamChangeEvent(interface.interfaces.IObjectEvent):
+	"""
+	A change that goes in the activity stream for a user.
+	If the object was :class:`IContained`, then this object will be as well.
+	"""
+
+	type = interface.Attribute( "One of the constants declared by this class." )
+
+
 ### Content types for classes
 
 class IClassInfo(IModeledContent):

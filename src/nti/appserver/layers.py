@@ -54,39 +54,5 @@ class SocketPresenceExtension(SocketPresenceLayer, dataserver.sessions.Session):
 			ds.chatserver.notify_presence_change( self.owner,'Online', has_me_in_buddy_list )
 
 
-
-
-class UserChangeLayer( context.layers.Layer ):
-
-	def __init__( self ):
-		super(UserChangeLayer,self).__init__()
-
-	def active( self ):
-		# TODO: What should this condition be?
-		return True
-
-class UserChangeExtension( UserChangeLayer, User ):
-	@context.layers.after
-	def _broadcastIncomingChange( self, ctx, change ):
-		try:
-			logger.debug( 'Broadcasting incoming change to %s chg: %s pid: %s', self.username, change, os.getpid() )
-			_get_shared_dataserver().chatserver.notify_data_change( self.username, change )
-		except Exception:
-			logger.exception( 'Failed to notify data change' )
-
-	@context.layers.after
-	def _noticeChange( self, ctx, change ):
-		try:
-			# For the things that we ordinarily wouldn't
-			# broadcast over APNS, we still want to distribute
-			# to connected clients
-			if change.type in (change.MODIFIED,change.DELETED):
-				logger.debug( 'notice incoming change to %s chg: %s pid: %s', self.username, change, os.getpid() )
-				_get_shared_dataserver().chatserver.notify_data_change( self.username, change )
-		except Exception:
-			logger.exception( 'Failed to notify data change' )
-
-
 def register_implicit_layers():
 	context.layers.register_implicit( SocketPresenceLayer() )
-	context.layers.register_implicit( UserChangeLayer() )

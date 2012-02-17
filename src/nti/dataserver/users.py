@@ -643,6 +643,9 @@ class SharingTarget(Entity):
 				logger.warn( "Incoming deletion for object not found %s", change )
 		elif change.type == Change.CIRCLED:
 			self._acceptIncomingChange( change )
+		# Do a dual-dispatch to notify complex subscribers that need to know
+		# the destination user
+		component.subscribers( (self, change), None )
 
 	@classmethod
 	def onChange( cls, datasvr, msg, username=None, broadcast=None, **kwargs ):

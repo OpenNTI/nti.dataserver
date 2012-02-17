@@ -5,9 +5,12 @@ Functions and architecture for general activity streams.
 """
 
 import weakref
-
 import persistent
-import datastructures
+
+from zope import interface
+
+from nti.dataserver import  datastructures
+from nti.dataserver import interfaces as nti_interfaces
 
 class Change(persistent.Persistent,datastructures.CreatedModDateTrackingObject,datastructures.ContainedMixin):
 	"""
@@ -15,11 +18,13 @@ class Change(persistent.Persistent,datastructures.CreatedModDateTrackingObject,d
 	Contained object if the underlying object was Contained.
 	It externalizes to include the ChangeType, Creator, and Item.
 	"""
-	CREATED  = "Created"
-	MODIFIED = "Modified"
-	DELETED  = "Deleted"
-	SHARED   = "Shared"
-	CIRCLED  = "Circled"
+	interface.implements(nti_interfaces.IStreamChangeEvent)
+
+	CREATED  = nti_interfaces.SC_CREATED
+	MODIFIED = nti_interfaces.SC_MODIFIED
+	DELETED  = nti_interfaces.SC_DELETED
+	SHARED   = nti_interfaces.SC_SHARED
+	CIRCLED  = nti_interfaces.SC_CIRCLED
 
 	def __init__( self, changeType, obj ):
 		super(Change,self).__init__()
@@ -33,6 +38,8 @@ class Change(persistent.Persistent,datastructures.CreatedModDateTrackingObject,d
 			self.objectReference = weakref.ref( obj )
 		self.id = getattr( obj, 'id', None )
 		self.containerId = getattr( obj, 'containerId', None )
+		if self.id and self.containerId:
+			interface.alsoProvides( self, nti_interfaces.IContained )
 		# We don't copy the object's modification date,
 		# we have our own
 		self.updateLastMod()
