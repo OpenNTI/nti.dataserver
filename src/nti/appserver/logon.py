@@ -52,16 +52,18 @@ def _links_for_authenticated_users( request ):
 
 	return links
 
-def _forgetting( request, redirect_param_name, no_param_class, value=None ):
+def _forgetting( request, redirect_param_name, no_param_class, redirect_value=None, error=None ):
 	response = None
-	if value is None:
-		value = request.params.get( redirect_param_name )
-	if value:
-		response = hexc.HTTPSeeOther( location=value )
+	if redirect_value is None:
+		redirect_value = request.params.get( redirect_param_name )
+	if redirect_value:
+		response = hexc.HTTPSeeOther( location=redirect_value )
 	else:
 		response = no_param_class()
 	# Clear any cookies they sent that failed.
 	response.headers.extend( sec.forget(request) )
+	if error:
+		response.headers['Warning'] = [error]
 
 	return response
 
@@ -188,7 +190,8 @@ class _WhitelistedDomainGoogleLoginLinkProvider(object):
 
 		domain = self.user.username.split( '@' )[-1]
 		if domain in self.domains:
-			return Link( self.request.route_path( REL_LOGIN_GOOGLE ),
+			oidcsum = str(hash(self.user.username))
+			return Link( self.request.route_path( REL_LOGIN_GOOGLE, _query={'oidcsum': oidcsum} ),
 						  rel=REL_LOGIN_GOOGLE )
 
 class _MissingUserWhitelistedDomainGoogleLoginLinkProvider(_WhitelistedDomainGoogleLoginLinkProvider):
@@ -219,9 +222,8 @@ class _Handshake(dict):
 		dict.__init__( self )
 		self.links = lnks
 
-def _create_failure_response( request, failure=None ):
-
-	return _forgetting( request, 'failure', hexc.HTTPUnauthorized, value=failure )
+def _create_failure_response( request, failure=None, error=None ):
+	return _forgetting( request, 'failure', hexc.HTTPUnauthorized, redirect_value=failure )
 
 def _create_success_response( request, userid=None, success=None ):
 	# Incoming authentication worked. Remember the user, and
@@ -251,8 +253,15 @@ def password_logon(request):
 
 import pyramid_openid.view
 
-def _openid_login(context, request, openid='https://www.google.com/accounts/o8/id'):
-	nrequest = pyramid.request.Request.blank( request.route_url( 'logon.google.result', _query=request.params ),
+def _openid_login(context, request, openid='https://www.google.com/accounts/o8/id', params=None):
+	if params is None:
+		params = request.params
+	if 'oidcsum' not in params:
+		logger.warn( "oidcsum not present" )
+		return _create_failure_response( request )
+
+	nrequest = pyramid.request.Request.blank( request.route_url( 'logon.google.result', _query=params ),
+											  #POST={'openid2': 'https://www.google.com/a/nextthought.com/o8/id?be=o8'} )
 											  POST={'openid2': 'https://www.google.com/accounts/o8/id'} )
 	nrequest.registry = request.registry
 	return pyramid_openid.view.verify_openid( context, nrequest )
@@ -263,7 +272,9 @@ def google_login(context, request):
 
 @view_config(route_name=REL_LOGIN_OPENID, request_method="GET")
 def openid_login(context, request):
-	return _openid_login( context, request, request.params.get( 'openid' ) )
+	params = dict(request.params)
+	params['oidcsum'] = str(hash(request.params.get('openid')))
+	return _openid_login( context, request, request.params.get( 'openid' ), params )
 
 @view_config(route_name="logon.google.result", request_method='GET')
 def google_response(context, request):
@@ -308,19 +319,30 @@ def _deal_with_external_account( request, fname, lname, email, idurl, iface, cre
 
 
 def _openidcallback( context, request, success_dict ):
-	#import pdb; pdb.set_trace()
-	# FIXME: There are some major problems here that allow a person
-	# to login as an alternate user. It seems that the identity_url is actually
-	# ignored by google and we get back identifying information for alternate
-	# users
+	# It seems that the identity_url is actually
+	# ignored by google and we get back identifying information for
+	# whatever user is currently signed in. This can have strange consequences
+	# with mismatched URLs and emails (you are signed in, but not as who you
+	# indicated you wanted to be signed in as): It's not a security problems because
+	# we use the credentials you actually authenticated with, its just confusing.
+	# To try to prevent this, we are using a basic checksum approach to see if things
+	# match: oidcsum.
+
 	# Google only supports AX, sreg is ignored.
 	# Each of these comes back as a list, for some reason
 	fname = success_dict.get( 'ax', {} ).get('firstname', [''])[0]
 	lname = success_dict.get( 'ax', {} ).get('lastname', [''])[0]
 	email = success_dict.get( 'ax', {} ).get('email', [''])[0]
 	idurl = success_dict.get( 'identity_url' )
+	oidcsum = request.params.get( 'oidcsum' )
+	if str(hash(email)) != oidcsum:
+		   logger.warn( "Checksum mismatch. Logged in multiple times?")
+		   return _create_failure_response(request, error='Email checksum mismatch')
 
-	_deal_with_external_account( request, fname, lname, email, idurl, nti_interfaces.IOpenIdUser, users.OpenIdUser )
+	try:
+		_deal_with_external_account( request, fname, lname, email, idurl, nti_interfaces.IOpenIdUser, users.OpenIdUser )
+	except Exception as e:
+		return _create_failure_response( request, error=str(e) )
 
 
 	return _create_success_response( request, userid=email )
