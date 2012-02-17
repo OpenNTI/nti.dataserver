@@ -4,8 +4,8 @@ import logging
 logger = logging.getLogger( __name__ )
 
 # We'll want these when we start using requests in logon.py
-#import gevent.monkey
-#gevent.monkey.patch_socket(); gevent.monkey.patch_ssl()
+import gevent.monkey
+gevent.monkey.patch_socket(); gevent.monkey.patch_ssl()
 
 import sys
 import os

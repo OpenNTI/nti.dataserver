@@ -1242,7 +1242,7 @@ class User(Principal):
 	# http://www.gravatar.com/avatar/%<Lowercase hex MD5>=44&d=mm
 
 	def __init__(self, username, avatarURL=None, password='temp001',realname=None):
-		super(User,self).__init__(username, avatarURL, password,realname=realname)
+		super(User,self).__init__(username, avatarURL, password, realname=realname)
 		# We maintain a Map of our friends lists, organized by
 		# username (only one friend with a username)
 		self.friendsLists = _FriendsListMap()
@@ -1873,10 +1873,24 @@ class OpenIdUser(User):
 	interface.implements( nti_interfaces.IOpenIdUser )
 	identity_url = None
 
+	def __init__(self, username, **kwargs ):
+		id_url = kwargs.pop( 'identity_url', None)
+		super(OpenIdUser,self).__init__(username,**kwargs)
+		if id_url:
+			self.identity_url = id_url
+
 
 class FacebookUser(User):
 	interface.implements( nti_interfaces.IFacebookUser )
 	facebook_url = None
+
+
+	def __init__(self, username, **kwargs ):
+		id_url = kwargs.pop( 'facebook_url', None)
+		super(FacebookUser,self).__init__(username,**kwargs)
+		if id_url:
+			self.facebook_url = id_url
+
 
 @component.adapter(nti.apns.interfaces.IDeviceFeedbackEvent)
 def user_devicefeedback( msg ):
