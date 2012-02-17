@@ -8,7 +8,7 @@ from __future__ import print_function, unicode_literals
 import logging
 logger = logging.getLogger(__name__)
 
-from zope import interface, component
+from zope import interface, component, lifecycleevent
 from nti.dataserver import interfaces as nti_interfaces
 from nti.appserver import interfaces as app_interfaces
 
@@ -291,12 +291,20 @@ def _deal_with_external_account( request, fname, lname, email, idurl, iface, cre
 		if not iface.providedBy( user ):
 			interface.alsoProvides( user, iface )
 			setattr( user, url_attr, idurl )
+			lifecycleevent.modified( user, lifecycleevent.Attributes( iface, url_attr ) )
 			# TODO: Can I assign to persistent object's __class__? Should I?
 		assert getattr( user, url_attr ) == idurl
 	else:
-		# TODO: Adding to the right communities, etc
-		user = creator.create_user( dataserver=dataserver, username=email, password='', realname=fname + ' ' + lname )
-		setattr( user, url_attr, idurl )
+		# This fires lifecycleevent.IObjectAddedEvent. The oldParent attribute
+		# will be None
+		kwargs = {'dataserver': dataserver,
+				  'username': email,
+				  'password': '',
+				  'realname': fname + ' ' + lname }
+		kwargs[url_attr] = idurl
+		user = creator.create_user( **kwargs )
+		assert getattr( user, url_attr ) == idurl
+	return user
 
 
 def _openidcallback( context, request, success_dict ):
@@ -343,7 +351,7 @@ def facebook_oauth2(request):
 	our_uri = urllib.quote( request.route_url( 'logon.facebook.oauth2' ))#, _query={'success': request.params.get('success', ''),
 																		#		'failure': request.params.get('failure', '') } ) )
 	app_secret = request.registry.settings.get( 'facebook.app.secret' )
-
+#e	import pdb; pdb.set_trace()
 	auth = requests.get( 'https://graph.facebook.com/oauth/access_token?client_id=%s&redirect_uri=%s&client_secret=%s&code=%s' % (app_id, our_uri,app_secret, code) )
 	try:
 		auth.raise_for_status()

@@ -5,12 +5,19 @@ from __future__ import print_function, unicode_literals
 #pylint: disable=W0212,R0904
 
 from hamcrest import (assert_that, is_, none, ends_with,
-					  has_entry, has_length, has_key, is_not)
+					  has_entry, has_length, has_key, is_not, has_item,
+					  same_instance, none, greater_than_or_equal_to)
 from hamcrest.library import has_property
+from nti.tests import provides
+from zope import component
+from zope.component import eventtesting, provideHandler
+
+from nti.appserver import logon
 from nti.appserver.logon import (ping, handshake,password_logon)
 
 from nti.appserver.tests import ConfiguringTestBase
 from pyramid.threadlocal import get_current_request
+
 import pyramid.testing
 import pyramid.httpexceptions as hexc
 import persistent
@@ -23,6 +30,7 @@ from zope import interface
 import nti.dataserver.interfaces as nti_interfaces
 
 from nti.dataserver import datastructures
+from nti.dataserver import users
 
 class DummyView(object):
 	response = "Response"
@@ -33,6 +41,11 @@ class DummyView(object):
 		return self.response
 
 class TestLogon(ConfiguringTestBase):
+
+	def setUp(self):
+		super(TestLogon,self).setUp()
+		eventtesting.clearEvents()
+		del _user_added_events[:]
 
 	def test_unathenticated_ping(self):
 		"An unauthenticated ping returns one link, to the handshake."
@@ -116,3 +129,53 @@ class TestLogon(ConfiguringTestBase):
 		assert_that( result, is_( hexc.HTTPSeeOther ) )
 		assert_that( result.headers, has_entry( "Policy", 'jason.madden@nextthought.com') )
 		assert_that( result, has_property( 'location', '/the/url/to/go/to' ) )
+
+	@WithMockDSTrans
+	def test_create_from_external( self ):
+		component.provideHandler( eventtesting.events.append, (None,) )
+		component.provideHandler( _handle_user_add_event )
+		user = logon._deal_with_external_account( get_current_request(),
+												  "Jason",
+												  "Madden",
+												  "jason.madden@nextthought.com",
+												  "http://example.com",
+												  nti_interfaces.IOpenIdUser,
+												  users.OpenIdUser )
+		assert_that( user, provides( nti_interfaces.IOpenIdUser ) )
+		assert_that( user, is_( users.OpenIdUser ) )
+		assert_that( user, has_property( 'identity_url', 'http://example.com' ) )
+
+		# The creation of this user caused events to fire
+		assert_that( eventtesting.getEvents(), has_length( greater_than_or_equal_to( 1 ) ) )
+		assert_that( _user_added_events, has_length( 1 ) )
+		assert_that( _user_added_events[0][0], is_( same_instance( user ) ) )
+		assert_that( _user_added_events[0][1], has_property( 'oldParent', none() ) )
+
+		# Can also auth as facebook
+		fb_user = logon._deal_with_external_account( get_current_request(),
+													 "Jason",
+													 "Madden",
+													 "jason.madden@nextthought.com",
+													 "http://facebook.com",
+													 nti_interfaces.IFacebookUser,
+													 users.FacebookUser )
+
+		assert_that( fb_user, is_( same_instance( user ) ) )
+		assert_that( fb_user, provides( nti_interfaces.IFacebookUser ) )
+		assert_that( fb_user, has_property( 'facebook_url', 'http://facebook.com' ) )
+
+		# We have fired modified events for the addition of the interface
+		# and the change of the URL
+		mod_events = eventtesting.getEvents(IObjectModifiedEvent, lambda evt: evt.object == fb_user)
+		assert_that( mod_events, has_length( 1 ) )
+		assert_that( mod_events[0], has_property( 'object', fb_user ) )
+		assert_that( mod_events[0].descriptions, has_item( has_property( 'attributes', has_item( 'facebook_url' ) ) ) )
+
+
+
+from zope.lifecycleevent.interfaces import IObjectAddedEvent, IObjectModifiedEvent
+_user_added_events = []
+@component.adapter(nti_interfaces.IUser,IObjectAddedEvent)
+def _handle_user_add_event( user, object_added ):
+
+	_user_added_events.append( (user,object_added) )
