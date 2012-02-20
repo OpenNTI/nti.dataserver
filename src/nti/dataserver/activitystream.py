@@ -7,6 +7,7 @@ Functions and architecture for general activity streams.
 import logging
 logger = logging.getLogger(__name__)
 
+import os
 from nti.dataserver import interfaces as nti_interfaces
 from zope import component
 
