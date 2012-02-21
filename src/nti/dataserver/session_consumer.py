@@ -27,9 +27,13 @@ class SessionConsumer(Persistent):
 	event handling.
 	"""
 
-	def __init__(self, username=None):
+	def __init__(self, username=None, session=None):
 		self._username = username
 		self._event_handlers = {}
+		if session and username:
+			logger.info( "Initializing authenticated session for '%s'", self._username )
+			self._initialize_session(session)
+
 
 	def __call__( self, socket_obj, msg ):
 		# The first time they speak to us, we
@@ -39,6 +43,15 @@ class SessionConsumer(Persistent):
 			self._auth_user( socket_obj, msg )
 		else:
 			self._on_msg( socket_obj, msg )
+
+	def _initialize_session(self, session):
+		session.owner = self._username # save the username, cannot save user obj
+		session.incr_hits()
+
+		self._event_handlers.update( self._create_event_handlers( session.protocol_handler ) )
+
+		if session.internalize_function == plistlib.readPlistFromString:
+			session.externalize_function = to_external_representation
 
 	def _create_event_handlers( self, socket_obj ):
 		"""
@@ -61,7 +74,9 @@ class SessionConsumer(Persistent):
 		# for that to be the first thing in the stream.
 		pw = None
 		uname = None
-		def invalid_auth():
+		def invalid_auth(msg=None):
+			if msg:
+				logger.debug( msg )
 			# Notice that we're grabbing a new protocol object.
 			# The one captured by the greenlet will not be the one
 			# that actually just read that bad data---so when
@@ -76,7 +91,7 @@ class SessionConsumer(Persistent):
 		try:
 			uname, pw = msg['args']
 		except (KeyError,ValueError):
-			invalid_auth()
+			invalid_auth( "Failed socket auth: wrong arguments" )
 			return
 
 		with component.getUtility( nti_interfaces.IDataserver ).dbTrans():
@@ -84,17 +99,12 @@ class SessionConsumer(Persistent):
 			# TODO: Centralize this.
 			warnings.warn( "Code is assuming authentication protocol." )
 			if not ent or not ent.password == pw:
-				invalid_auth()
+				invalid_auth( "Failed socket auth: wrong password or user" )
 				return
 
 		self._username = uname
-		socket_obj.session.owner = self._username # save the username, cannot save user obj
-		socket_obj.session.incr_hits()
+		self._initialize_session( socket_obj.session )
 
-		self._event_handlers.update( self._create_event_handlers( socket_obj ) )
-
-		if socket_obj.session.internalize_function == plistlib.readPlistFromString:
-			socket_obj.session.externalize_function = to_external_representation
 
 	def kill( self ):
 		"""
@@ -116,7 +126,7 @@ class SessionConsumer(Persistent):
 			namespace = event[0:event.index('_')]
 			event = event[event.index('_') + 1:]
 
-		def l(): logger.warning( 'Dropping unhandled event %s from message %s', event, message )
+		def l(): logger.warning( "Dropping unhandled event '%s' from message %s", event, message )
 
 		handler_list = self._event_handlers.get(namespace)
 		if not handler_list:

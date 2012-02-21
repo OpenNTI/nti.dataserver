@@ -597,7 +597,7 @@ class AppServer(dataserver.socketio_server.SocketIOServer):
 			identity = api.authenticate()
 			if identity:
 				username = identity['repoze.who.userid']
-		session.message_handler = dataserver.session_consumer.SessionConsumer(username=username)
+		session.message_handler = dataserver.session_consumer.SessionConsumer(username=username,session=session)
 
 def _configure_logging():
 	# TODO: Where should logging in these background processes be configured?
