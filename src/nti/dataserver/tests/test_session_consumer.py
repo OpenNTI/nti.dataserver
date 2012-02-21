@@ -43,7 +43,8 @@ class MockSocketIO(object):
 	def ack( self, mid, data ):
 		self.acks.append( (mid,data) )
 
-	def new_protocol( self, h ): return self
+	def new_protocol( self, h=None ): return self
+	protocol_handler = property(new_protocol)
 	def incr_hits(self): pass
 
 class TestSessionConsumer(mock_dataserver.ConfiguringTestBase):
