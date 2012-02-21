@@ -53,7 +53,9 @@ setup(
 		'cython',
 		'gevent-zeromq',
 		'gunicorn',
-		'html5lib',
+		# 0.95 causes problems: html5lib/sanitizer.py", line 171, in sanitize_token, token["data"][::-1], TypeError: unhashable type
+		# This may be a problem in our use in _html5lib_tostring
+		'html5lib == 0.90',
 		'nltk',
 		'paste',
 		'pyhamcrest',

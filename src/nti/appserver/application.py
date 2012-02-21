@@ -612,7 +612,6 @@ def _configure_logging():
 def _add_sharing_listener( server ):
 	_configure_logging()
 	print 'Adding sharing listener', os.getpid(), server
-	register_implicit_layers()
 	server.add_change_listener( SharingTarget.onChange )
 
 
