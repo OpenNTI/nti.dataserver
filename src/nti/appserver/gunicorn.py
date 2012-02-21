@@ -1,47 +1,55 @@
 #!/usr/bin/env python2.7
 """
-Support for running the application with gunicorn. You must use our worker:
-
-	gunicorn -k nti.appserver.gunicorn.GeventApplicationWorker nti.appserver.gunicorn:app -b 127.0.0.1:8081
+Support for running the application with gunicorn. You must use our worker, configured with paster:
+	[server:main]
+	use = egg:gunicorn#main
+	host =
+	port = %(http_port)s
+	worker_class =  nti.appserver.gunicorn.GeventApplicationWorker
+	workers = 1
 """
-### XXX: This module has side-effects during import.
-### In order to work with gunicorn, we must configure the application
-### and create a variable for it.
 
 __old_name__ = __name__
 __name__ = '__main__' # Force absolute import for gunicorn
-import gunicorn.workers.sync as sync
 import gunicorn.workers.ggevent as ggevent
-import gunicorn.util as util
 import gevent
 import gevent.socket
 __name__ = __old_name__
 
 
-import logging
-if __name__ == '__main__':
-	logging.basicConfig( level=logging.WARN )
-	logging.getLogger( 'nti' ).setLevel( logging.DEBUG )
-
-
 import nti.appserver.standalone
+from paste.deploy import loadwsgi
 
-def app(*args):
+class _DummyApp(object):
+	global_conf = None
+	kwargs = None
+
+def dummy_app_factory(global_conf, **kwargs):
 	"""
-	A dummy app variable.
+	A Paste app factory that exists to bootstrap the process
+	in the master gunicorn instance. Individual worker instances will
+	create their own application; the objects returned here simply
+	echo configuration.
 	"""
-	raise NotImplementedError( "Not a real app; specify the GeventApplicationWorker" )
+	app = _DummyApp()
+	app.global_conf = global_conf
+	app.kwargs = kwargs
+	return app
 
 
 class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 
 	app_server = None
+	app = None
+	server_class = None
+	socket = None
 
 	@classmethod
 	def setup(cls):
 		"""
-		We cannot patch the entice system to work with gevent.
-		Instead, we patch just our socket.
+		We cannot patch the entire system to work with gevent due to issues
+		with ZODB (but see application.py)
+		Instead, we patch just our socket when we create it.
 		"""
 		pass
 
@@ -53,7 +61,13 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		and a deadlock (the ZEO connection pthreads do not survive the fork, I think).
 		"""
 		gevent.hub.get_hub() # init the hub
-		self.app_server = nti.appserver.standalone.configure_app(create_ds=True)
+		dummy_app = self.app.app
+		wsgi_app = loadwsgi.loadapp( 'config:' + dummy_app.global_conf['__file__'], name='dataserver_gunicorn' )
+		self.app_server = nti.appserver.standalone._create_app_server( wsgi_app,
+																	   dummy_app.global_conf,
+																	   port=dummy_app.global_conf['http_port'],
+																	   **dummy_app.kwargs )
+
 		def l_r(self):
 			c = self.__class__
 			self.__class__ = ggevent.PyWSGIHandler

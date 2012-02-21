@@ -11,7 +11,8 @@ entry_points = {
 		"nti_index_listener = nti.appserver.application:index_listener_main"
 	],
 	"paste.app_factory": [
-		"main = nti.appserver.standalone:configure_app"
+		"main = nti.appserver.standalone:configure_app",
+		"gunicorn = nti.appserver.gunicorn:dummy_app_factory"
 	],
 
 	"paste.filter_app_factory": [

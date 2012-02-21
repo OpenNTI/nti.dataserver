@@ -3,7 +3,11 @@
 import logging
 logger = logging.getLogger( __name__ )
 
-# We'll want these when we start using requests in logon.py
+# XXX Import side-effects.
+# Loading this file monkey-patches sockets and ssl to work with gevent.
+# This is needed for the openid handling in logon.py, but doing it here is a bit
+# earlier and has a greater chance of working. This is also after
+# we have loaded ZODB and doesn't seem to interfere with it. See gunicorn.py
 import gevent.monkey
 gevent.monkey.patch_socket(); gevent.monkey.patch_ssl()
 
