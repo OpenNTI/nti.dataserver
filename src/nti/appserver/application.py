@@ -590,6 +590,8 @@ class AppServer(dataserver.socketio_server.SocketIOServer):
 		# Try to extract the authenticated username, if we can. We don't have
 		# a pyramid request to draw on, though
 		username = None
+		identity = None
+		auth_policy = None
 		if environ:
 			# A pyramid_auth.NTIAuthenticationPolicy
 			auth_policy = component.getUtility( pyramid.interfaces.IAuthenticationPolicy )
@@ -597,6 +599,7 @@ class AppServer(dataserver.socketio_server.SocketIOServer):
 			identity = api.authenticate()
 			if identity:
 				username = identity['repoze.who.userid']
+		logger.debug( "Creating session handler for '%s'/%s using %s and %s", username, dict(identity) if identity else None, auth_policy, environ )
 		session.message_handler = dataserver.session_consumer.SessionConsumer(username=username,session=session)
 
 def _configure_logging():
