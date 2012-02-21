@@ -51,6 +51,7 @@ class TestSessionConsumer(mock_dataserver.ConfiguringTestBase):
 	cons = None
 	handler = None
 	socket = None
+
 	def setUp(self):
 		super(TestSessionConsumer,self).setUp()
 		self.cons = SessionConsumer()
@@ -93,6 +94,8 @@ class TestSessionConsumer(mock_dataserver.ConfiguringTestBase):
 		handlers = self.cons._create_event_handlers( self.socket )
 		assert_that( handlers, has_entry( 'chat', has_item(is_(MockChat)) ) )
 
+		component.getGlobalSiteManager().unregisterUtility( o )
+
 	@mock_dataserver.WithMockDS
 	def test_auth_user_user_dne(self):
 		self.cons( self.socket, {'args': ('username', 'pw')} )
@@ -104,14 +107,17 @@ class TestSessionConsumer(mock_dataserver.ConfiguringTestBase):
 		self.cons( self.socket, {'args': ('foo@bar', 'pw')} )
 		self._assert_bad_auth()
 
-	@mock_dataserver.WithMockDSTrans
-	def test_auth_user(self):
+	def _auth_user(self):
 		users.User.create_user( self.ds, username='foo@bar' )
 
 		self.cons( self.socket, {'args': ('foo@bar', 'temp001')} )
 
 		assert_that( self.cons, has_attr( '_username', 'foo@bar') )
 		assert_that( self.cons, has_attr( '_event_handlers', has_entry( 'chat', [self] ) ) )
+
+	@mock_dataserver.WithMockDSTrans
+	def test_auth_user(self):
+		self._auth_user()
 
 	def test_kill(self):
 		class X(object): pass
@@ -125,9 +131,10 @@ class TestSessionConsumer(mock_dataserver.ConfiguringTestBase):
 		self.cons.kill()
 		assert_that( y, has_attr( 'destroyed', True ) )
 
+	@mock_dataserver.WithMockDSTrans
 	def test_send_non_default_input_data( self ):
 		# Authenticate
-		self.test_auth_user()
+		self._auth_user()
 
 		class X(object):
 			im_class = None
@@ -146,10 +153,10 @@ class TestSessionConsumer(mock_dataserver.ConfiguringTestBase):
 
 		assert_that( x.obj, is_( chat.MessageInfo ) )
 
-
+	@mock_dataserver.WithMockDSTrans
 	def test_namespace_event( self ):
 		# Authenticate
-		self.test_auth_user()
+		self._auth_user()
 
 		# Dispatch chat event
 		def h( arg):
@@ -159,10 +166,10 @@ class TestSessionConsumer(mock_dataserver.ConfiguringTestBase):
 
 		assert_that( self.socket, has_attr( 'args', 'The arg') )
 
-
+	@mock_dataserver.WithMockDSTrans
 	def test_ack_event( self ):
 		# Authenticate
-		self.test_auth_user()
+		self._auth_user()
 
 		# Dispatch chat event
 		def h( arg):
@@ -175,9 +182,10 @@ class TestSessionConsumer(mock_dataserver.ConfiguringTestBase):
 		assert_that( self.socket, has_attr( 'args', 'The arg') )
 		assert_that( self.socket.acks, contains( ('1', "The result")) )
 
+	@mock_dataserver.WithMockDSTrans
 	def test_exception_event( self ):
 		# Authenticate
-		self.test_auth_user()
+		self._auth_user()
 
 		# Dispatch chat event
 		def h( arg):
