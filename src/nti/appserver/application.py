@@ -220,7 +220,7 @@ def createApplication( http_port,
 			_dataFileName = 'data.fs'
 		server = MockServer()
 	else:
-		ds_class = dataserver.Dataserver if not sync_changes else dataserver._Dataserver._SynchronousChangeDataserver
+		ds_class = dataserver._Dataserver.Dataserver if not sync_changes else dataserver._Dataserver._SynchronousChangeDataserver
 		if process_args:
 			dataDir = "~/tmp"
 			dataFile = "test.fs"
