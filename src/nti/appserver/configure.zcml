@@ -45,6 +45,9 @@
 	<subscriber factory=".logon._MissingUserWhitelistedDomainGoogleLoginLinkProvider"
 				provides=".interfaces.ILogonLinkProvider"/>
 
+	<!-- Events -->
+	<subscriber handler="._socket_event_listeners.session_disconnected_broadcaster" />
+	<subscriber handler="._socket_event_listeners.session_connected_broadcaster" />
 
 	<include package="nti.dataserver" />
 </configure>

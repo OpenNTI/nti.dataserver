@@ -597,6 +597,22 @@ class ISocketSession(interface.Interface):
 	connected = schema.Bool(title=u'Is the session known to be connected to a client?')
 	owner = schema.TextLine(title=u'The name of the user that owns this session.')
 
+class ISocketSessionEvent(interface.interfaces.IObjectEvent):
+	"""
+	An event fired relating to a socket session.
+	In general, socket events will only be fired for sockets that have owners.
+	"""
+
+class ISocketSessionConnectedEvent(interface.interfaces.IObjectEvent):
+	"""
+	An event that is fired when a socket session establishes a connection for the first time.
+	"""
+
+class ISocketSessionDisconnectedEvent(ISocketSessionEvent):
+	"""
+	An event that is fired when a socket session disconnects.
+	"""
+
 class ISocketEventHandler(interface.Interface):
 	"""
 	Interface for things that want to handle socket
