@@ -44,8 +44,6 @@ from nti.dataserver.interfaces import IDataserver
 
 from cors import CORSInjector
 
-from layers import register_implicit_layers
-
 from zope import interface
 from zope import component
 from zope.configuration import xmlconfig
@@ -208,7 +206,6 @@ def createApplication( http_port,
 	# which in turn hooks up zope.component.event to zope.event for event dispatching)
 	notify( ProcessStarting() )
 
-	register_implicit_layers() # TODO: Move this to configuration?
 	logger.debug( 'Began starting dataserver' )
 	server = None
 

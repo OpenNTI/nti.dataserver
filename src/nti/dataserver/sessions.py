@@ -14,6 +14,7 @@ import gevent
 import zc.queue
 from zope import interface
 from zope import component
+from zope.event import notify
 
 try:
 	import anyjson as json
@@ -32,10 +33,20 @@ import BTrees.OOBTree
 #import _PubSubDevice
 from nti.dataserver import interfaces as nti_interfaces
 
+class SocketSessionEvent(interface.interfaces.ObjectEvent):
+	interface.implements(nti_interfaces.ISocketSessionEvent)
+
+class SocketSessionConnectedEvent(SocketSessionEvent):
+	interface.implements(nti_interfaces.ISocketSessionConnectedEvent)
+
+class SocketSessionDisconnectedEvent(SocketSessionEvent):
+	interface.implements(nti_interfaces.ISocketSessionDisconnectedEvent)
+
 class Session(Persistent):
 	"""
 	`self.owner`: An attribute for the user that owns the session.
 	"""
+	interface.implements(nti_interfaces.ISocketSession)
 
 	STATE_NEW = "NEW"
 	STATE_CONNECTED = "CONNECTED"
@@ -53,7 +64,6 @@ class Session(Persistent):
 		self.connection_confirmed = False
 
 		self._owner = None
-		# FIXME: Used by layers.py
 		self._broadcast_connect = False
 
 		self.last_heartbeat_time = 0
@@ -113,6 +123,9 @@ class Session(Persistent):
 		if self.hits + 1 == 1:
 			self.state = self.STATE_CONNECTED
 			self.hits = 1
+		if self.connected and self.connection_confirmed and self.owner and not self._broadcast_connect:
+			self._broadcast_connect = True
+			notify( SocketSessionConnectedEvent( self ) )
 
 	def clear_disconnect_timeout(self):
 		# Putting server messages/client messages
@@ -127,6 +140,8 @@ class Session(Persistent):
 
 	def kill(self):
 		if self.connected:
+			if self.owner:
+				notify(SocketSessionDisconnectedEvent(self))
 			self.state = self.STATE_DISCONNECTING
 			self.do_put_server_msg( None )
 			self.do_put_client_msg( None )
@@ -339,4 +354,3 @@ class SessionService(object):
 		otherwise None.
 		"""
 		return self._get_msgs( 'server_queue', session_id )
-
