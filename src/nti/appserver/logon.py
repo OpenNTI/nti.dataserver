@@ -208,7 +208,9 @@ class _ExistingOpenIdUserLoginLinkProvider(object):
 		self.user = user
 
 	def __call__( self ):
-		return Link( self.request.route_path( REL_LOGIN_OPENID, _query={'openid': self.user.identity_url} ),
+		oidcsum = str(hash(self.user.username))
+		return Link( self.request.route_path( REL_LOGIN_OPENID, _query={'openid': self.user.identity_url,
+																		'oidcsum': oidcsum} ),
 					 rel=REL_LOGIN_OPENID )
 
 
@@ -273,10 +275,11 @@ def google_login(context, request):
 @view_config(route_name=REL_LOGIN_OPENID, request_method="GET")
 def openid_login(context, request):
 	params = dict(request.params)
-	params['oidcsum'] = str(hash(request.params.get('openid')))
+	if 'oidcsum' not in params:
+		params['oidcsum'] = str(hash(request.params.get('openid')))
 	return _openid_login( context, request, request.params.get( 'openid' ), params )
 
-@view_config(route_name="logon.google.result", request_method='GET')
+@view_config(route_name="logon.google.result")#, request_method='GET')
 def google_response(context, request):
 	"""
 	Process an OpenID response from google. This exists as a wrapper around
