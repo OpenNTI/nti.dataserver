@@ -737,6 +737,7 @@ class Dataserver(MinimalDataserver):
 
 	def get_external_type( self, externalObject, searchModules=(users,) ):
 		""" Given an object with a Class attribute, find a type that corresponds to it. """
+		# TODO: This really doesn't belong on the dataserver object.
 		className = None
 		try:
 			if 'Class' not in externalObject: return None

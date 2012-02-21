@@ -1,5 +1,5 @@
 
-
+import warnings
 import ZODB
 from ZODB.MappingStorage import MappingStorage
 from ZODB.DemoStorage import DemoStorage
@@ -81,13 +81,18 @@ def WithMockDS( func ):
 		global current_mock_ds
 		ds = MockDataserver()
 		current_mock_ds = ds
+		if component.queryUtility( nti_interfaces.IDataserver ):
+			# Nesting will fail because only one can be registered and
+			# then unregistered
+			warnings.warn( "Attempting to nest WithMockDS/Trans. This is likely to fail", stacklevel=2 )
 		component.provideUtility( ds )
+		assert component.getUtility( nti_interfaces.IDataserver )
 		try:
 			func( *args )
 		finally:
 			current_mock_ds = None
 			ds.close()
-
+			assert component.getGlobalSiteManager().unregisterUtility( ds ) or component.getSiteManager().unregisterUtility( ds )
 	return nose.tools.make_decorator( func )( f )
 
 current_transaction = None
@@ -99,7 +104,12 @@ def WithMockDSTrans( func ):
 		global current_mock_ds
 		ds = MockDataserver()
 		current_mock_ds = ds
+		if component.queryUtility( nti_interfaces.IDataserver ):
+			# Nesting will fail because only one can be registered and
+			# then unregistered
+			warnings.warn( "Attempting to nest WithMockDS/Trans. This is likely to fail", stacklevel=2 )
 		component.provideUtility( ds )
+		assert component.getUtility( nti_interfaces.IDataserver )
 		try:
 			with ds.dbTrans() as ct:
 				current_transaction = ct
@@ -108,6 +118,7 @@ def WithMockDSTrans( func ):
 			current_mock_ds = None
 			current_transaction = None
 			ds.close()
+			assert component.getGlobalSiteManager().unregisterUtility( ds ) or component.getSiteManager().unregisterUtility( ds )
 	return nose.tools.make_decorator( func )( f )
 
 
@@ -116,6 +127,7 @@ import unittest
 
 from pyramid.testing import setUp as psetUp
 from pyramid.testing import tearDown as ptearDown
+from pyramid.testing import DummyRequest
 
 from zope import component
 from zope.configuration import xmlconfig
@@ -124,8 +136,12 @@ import zope.testing.cleanup
 class ConfiguringTestBase(zope.testing.cleanup.CleanUp, unittest.TestCase):
 
 	def setUp( self ):
-		psetUp()
-		# Fix the broken hooking
+		self.request = DummyRequest()
+		self.config = psetUp(request=self.request)
+
+		# Notice that the pyramid testing setup
+		# FAILS to make the sitemanager a child of the global sitemanager.
+		# this breaks the zope component APIs in many bad ways
 		component.getSiteManager().__bases__ = (component.getGlobalSiteManager(),)
 		xmlconfig.file( 'configure.zcml', package=dataserver )
 

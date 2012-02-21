@@ -11,7 +11,7 @@ from nti.dataserver import interfaces as nti_interfaces, users
 from zope import component
 
 
-def _send_notice_to( session, presence ):
+def _notify_friends_of_presence( session, presence ):
 	dataserver = component.queryUtility( nti_interfaces.IDataserver )
 	chatserver = component.queryUtility( nti_interfaces.IChatserver )
 	if dataserver is None or chatserver is None:
@@ -29,9 +29,9 @@ def _send_notice_to( session, presence ):
 
 @component.adapter( nti_interfaces.ISocketSession, nti_interfaces.ISocketSessionDisconnectedEvent )
 def session_disconnected_broadcaster( session, event ):
-	_send_notice_to( session, 'Offline' )
+	_notify_friends_of_presence( session, 'Offline' )
 
 
 @component.adapter( nti_interfaces.ISocketSession, nti_interfaces.ISocketSessionConnectedEvent )
 def session_connected_broadcaster( session, event ):
-	_send_notice_to( session, 'Online' )
+	_notify_friends_of_presence( session, 'Online' )

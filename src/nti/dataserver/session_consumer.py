@@ -187,6 +187,9 @@ class SessionConsumer(Persistent):
 					if result is not None: raise
 					# plistlib cannot serializae None, try false
 					socket_obj.ack( message['id'], False )
+		except component.ComponentLookupError:
+				# This is a programming error we can and should fix
+				raise
 		except Exception as e:
 			# TODO: We should have a system of error codes in place
 			logger.exception( "Exception handling event %s", message )
