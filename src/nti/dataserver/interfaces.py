@@ -592,6 +592,11 @@ class IProviderOrganization(IContainerIterable):
 
 ### Dynamic event handling
 
+class ISocketSession(interface.Interface):
+
+	connected = schema.Bool(title=u'Is the session known to be connected to a client?')
+	owner = schema.TextLine(title=u'The name of the user that owns this session.')
+
 class ISocketEventHandler(interface.Interface):
 	"""
 	Interface for things that want to handle socket
@@ -613,4 +618,3 @@ class ISocketEventHandler(interface.Interface):
 		title=u'If present, names the prefix which should be subtracted from all incoming events before searching for a handler.',
 		description=u'For example, a prefix of chat and a method name of handle would match an event chat_handle',
 		required=False )
-
