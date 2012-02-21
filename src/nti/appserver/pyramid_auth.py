@@ -236,8 +236,8 @@ def _create_middleware( app=None ):
 	auth_tkt = AuthTktCookiePlugin('secret', 'auth_tkt')
 	# For testing, we let basic-auth set cookies. We don't want to do this
 	# generally.
-	basicauth.include_ip = False
-	basicauth.remember = auth_tkt.remember
+	#basicauth.include_ip = False
+	#basicauth.remember = auth_tkt.remember
 
 	identifiers = [('auth_tkt', auth_tkt),
 				   ('basicauth', basicauth)]
