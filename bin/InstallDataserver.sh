@@ -41,6 +41,9 @@ svn co https://svn.nextthought.com/repository/NextThoughtPlatform/trunk $PROJECT
 
 cd $PROJECT_PARENT/NextThoughtPlatform/nti.dataserver
 
+# NOTE: On AWS, you will need to yum install libxml2-devel and libxslt-devel,
+# and probably add /usr/includ/libxml2/ to CFLAGS
+
 pip install -r requirements.txt
 
 python setup.py develop
