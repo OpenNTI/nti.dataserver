@@ -263,8 +263,11 @@ def _openid_login(context, request, openid='https://www.google.com/accounts/o8/i
 		return _create_failure_response( request )
 
 	nrequest = pyramid.request.Request.blank( request.route_url( 'logon.google.result', _query=params ),
-											  #POST={'openid2': 'https://www.google.com/a/nextthought.com/o8/id?be=o8'} )
+											  # In theory, if we're constructing the URL correctly, this is enough
+											  # to carry through HTTPS info
+											  base_url=request.path_url,
 											  POST={'openid2': 'https://www.google.com/accounts/o8/id'} )
+	logger.debug( "Directing pyramid request to %s", nrequest )
 	nrequest.registry = request.registry
 	return pyramid_openid.view.verify_openid( context, nrequest )
 
