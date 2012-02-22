@@ -207,12 +207,18 @@ class QuizResult(datastructures.ContainedMixin,
 		# Support both "raw" dictionaries of key: response
 		# and wrapped class-like dictionaries
 		iterover = rawValue['Items'] if 'Items' in rawValue else rawValue
-
-		for key, value in iterover.iteritems():
-			if isinstance( value, collections.Mapping ) and 'Response' in value:
-				value = value['Response']
-			qqr = QuizQuestionResponse( quizId, key, value )
-			qqRs[key] = qqr
+		# The old format was to send dictionaries of trivial things
+		if isinstance(iterover, collections.Mapping ):
+			for key, value in iterover.iteritems():
+				if isinstance( value, collections.Mapping ) and 'Response' in value:
+					value = value['Response']
+				qqr = QuizQuestionResponse( quizId, key, value )
+				qqRs[key] = qqr
+		else:
+			# The new format matches the output format
+			for qqr in iterover:
+				qqRs[qqr.id] = qqr
+				# TODO: Handle multiple submissions
 
 		# FIXME: Looking up the quiz is being handled in a weird way.
 		# We begin by looking
@@ -243,4 +249,3 @@ class QuizResult(datastructures.ContainedMixin,
 							"Class": "QuizQuestionResponse"} )
 		result['Items'] = items
 		return result
-
