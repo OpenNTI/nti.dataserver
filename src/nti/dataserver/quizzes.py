@@ -217,6 +217,8 @@ class QuizResult(datastructures.ContainedMixin,
 		else:
 			# The new format matches the output format
 			for qqr in iterover:
+				if isinstance( qqr, collections.Mapping ):
+					qqr = QuizQuestionResponse( quizId, qqr['ID'], qqr['Response'] )
 				qqRs[qqr.id] = qqr
 				# TODO: Handle multiple submissions
 
