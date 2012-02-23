@@ -379,7 +379,7 @@ def facebook_oauth2(request):
 	our_uri = urllib.quote( request.route_url( 'logon.facebook.oauth2' ))#, _query={'success': request.params.get('success', ''),
 																		#		'failure': request.params.get('failure', '') } ) )
 	app_secret = request.registry.settings.get( 'facebook.app.secret' )
-#e	import pdb; pdb.set_trace()
+
 	auth = requests.get( 'https://graph.facebook.com/oauth/access_token?client_id=%s&redirect_uri=%s&client_secret=%s&code=%s' % (app_id, our_uri,app_secret, code) )
 	try:
 		auth.raise_for_status()

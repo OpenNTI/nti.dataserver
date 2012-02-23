@@ -285,6 +285,11 @@ reside in ``/etc/haproxy/haproxy.cfg``:
 	reqidel ^X-FORWARDED-PROTOCOL:.*
 	reqadd X-FORWARDED-PROTOCOL:\ ssl if is_ssl
 
+	# Go to the app by default
+	redirect location /NextThoughtWebApp/index.html code 301 if { path / }
+
+
+
   backend www_backend
     balance roundrobin
     option forwardfor # This sets X-Forwarded-For
