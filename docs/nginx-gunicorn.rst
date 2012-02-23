@@ -305,7 +305,7 @@ download and compile the latest stunnel like so:
 	[https]
 	accept = 443
 	connect = /var/run/ssl-frontend.sock
-
+	protocol = proxy
 
 Upstart
 =======
