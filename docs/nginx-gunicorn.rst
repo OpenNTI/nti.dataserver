@@ -1,5 +1,5 @@
 =================================
- nginx, gunicorn and pound Setup
+ nginx, gunicorn haproxy, and stunnel Setup
 =================================
 
 The combination of the nginx HTTP server, gunicorn WSGI server, and
@@ -8,11 +8,15 @@ pound reverse proxy is a popular one in the Python world. `nginx
 Apache) and will be used for serving the static parts of the site.
 `gunicorn <http://gunicorn.org/>`_ is a load balancer/monitor specifically
 tailored to Python WSGI applications, especially those that use
-gevent. `Pound <http://www.apsis.ch/pound/>`_ is the reverse proxy
+gevent. `HAProxy <http://haproxy.1wt.eu>`_ is the reverse proxy
 that sits in front of both of these and mediates between them (it can
-also handle load balancing); it serves as the SSL termination point
+also handle load balancing);
 (it would not be necessary if nginx could handle WebSockets, but as of
-1.1.12, it cannot).
+1.1.12, it cannot). Finally, `stunnel <http://www.stunnel.org/>`_
+serves as the SSL termination point, and forwards all actual serving
+to HAProxy (stunnel is needed because it supports arbitrary TCP
+connections and arbitrary duration; neither amazon's load balancing
+service nor the open-source Poind support WebSockets).
 
 These are basic setup instructions for OS X and Amazon Linux. The Linux
 instructions are derived from `a blog
@@ -32,11 +36,11 @@ gives the final configuration.)
 Installation
 ------------
 
-As of this writing, the latest nginx stable version is 1.0.11. On linux,
+As of this writing, the latest nginx stable version is 1.0.12. On linux,
 follow `the instructions <http://wiki.nginx.org/Install>`_ to install
 nginx (on Amazon linux, don't forget to add a ``priority=1`` line to the
 Yum configuration). On OS X, use MacPorts. If the version that comes
-with macports is too old, create a custom portfile for 1.0.11 and follow
+with macports is too old, create a custom portfile for 1.0.12 and follow
 the normal procedure.
 
 Mac OS X
@@ -81,7 +85,7 @@ and implicit. Implicit will probably be preferred.
 
 With either method, after you make the changes and restart nginx (e.g.,
 with ``nginx -s reload`` on OS X or ``service nginx reload`` on Linux)
-and start the dataserver (e.g, ``python app.py``) you should be able to
+and start the dataserver (e.g, ``pserve config/development.ini``) you should be able to
 use a single port (80 or 8080) to request both static content, hit the
 dataserver, and search within a unit of content.
 
@@ -211,86 +215,13 @@ should look something like this:
 gunicorn setup
 ==============
 
-It is very easy to use gunicorn with the above setup. The command is
-simple:
+It is very easy to use gunicorn with the above setup. The gunicorn
+server is the default server in ``config/development.ini`` so the
+``pserve`` command by default will launch gunicorn. (This is a rather
+specific configuration; see gunicorn.py for more info.)
 
-::
-
-	gunicorn -k nti.appserver.gunicorn.GeventApplicationWorker nti.appserver.gunicorn:app -b 127.0.0.1:8081
-
-This uses our application worker (the ``-k`` argument) based on gevent
-and so should be very scalable while also using our AppServer and
-handler infrastructure (this taking care of the two problems noted
-below). Note that you cannot preload the application into the master
-gunicorn process. In the future, we may be able to bind to a unix
+In the future, we may be able to bind to a unix
 domain socket (a file) instead of a port; this might be a bit faster.
-
-Legacy gunicorn info
---------------------
-
-At this time, there are two problems using gunicorn. First and most
-importantly, the dataserver is tied to using the :py:class:`nti.appserver.application.AppServer`
-WSGI server class. Not only does this class handle SocketIO sessions
-and websockets, it also handles database transactions. Heavy
-refactoring will be required to break this dependency (but this will
-be worthwile for greater portability and hopefully less implicit
-"magic").
-
-Secondly, the gunicorn workers we would like to use, the gevent workers,
-depend on having gevent monkey-patch the entire system; this is
-incompatible with threads, especially as used by ZEO. This can be worked
-around using the sync workers. However, if that's the case, then it's
-not clear there's not a whole lot we get out of gunicorn that we
-couldn't get out of nginx itself. A custom subclass of the gevent worker
-might be used to solve this problem.
-
-Pound
-=====
-
-Pound can be used to serve SSL and dispatch WebSocket traffic
-securely. Version 2.5 is available from yum (Linux) and MacPorts (OS
-X). A configuration that serves as the SSL termination and routes all
-Socket.IO (and hence WebSocket) traffic to the dataserver, while
-letting nginx handle everything else (potentially also going through
-nginx; this step could be optimized to eliminate a hop) is below.
-
-::
-
-	ListenHTTP
-    	Address 0.0.0.0
-		Port 80
-	End
-
-	ListenHTTPS
-		Address 0.0.0.0
-	    Port    443
-	    Cert    "/opt/nti/ssl_certs/srv_comb.pem"
-	End
-
-	# One service: the dataserver for socket.io
-	Service
-		URL "/socket.io/"
-		BackEnd
-			Address 127.0.0.1
-			Port 8081
-		End
-	End
-
-	# One service: nginx for static files
-	Service
-	    BackEnd
-	        Address 127.0.0.1
-	        Port    8080
-	    End
-	End
-
-With this in place, the nginx configuration is modified to not listen
-on port 80 or 443 and not use SSL; instead it listens on port 8080.
-Pound requires a combined private key and certificate file instead of
-two separate files like nginx; you can obtain this by concatenating
-the two files previously referenced in the nginx configuration. Or you
-can create one specifically for this purpose with the following
-command:
 
 ::
 
@@ -299,7 +230,16 @@ command:
 HAProxy
 =======
 
-Version 1.4.18.
+The 1.5-dev series of haproxy is required for proper proxy support.
+Version 1.5-dev7 is current. On linux, compile with:
+
+::
+
+	make TARGET=linux26 PREFIX=/opt/nti
+
+If you first install the haproxy RPM, then you can patch
+``/etc/init.d/haproxy`` to use the new binary. The configuration would
+reside in ``/etc/haproxy/haproxy.cfg``:
 
 ::
 
@@ -315,6 +255,8 @@ Version 1.4.18.
 	option httplog
 	log global
     timeout client 86400000
+	# Listen on the socket for incoming SSL in proxy mode
+    bind /var/run/ssl-frontend.sock user root mode 600 accept-proxy
     default_backend www_backend
     acl is_websocket hdr(Upgrade) -i WebSocket
     acl is_websocket hdr_beg(Host) -i ws
@@ -345,13 +287,24 @@ Version 1.4.18.
 Stunnel
 =======
 
+These instructions are for version 4.52; any version greater than 4.44
+is required in order to add proxy support so that HAProxy knows the
+originating IP and can pass it on to nginx.
+
+On AWS, first install the available stunnel distribution. Then
+download and compile the latest stunnel like so:
+
+::
+
+	./configure --prefix=/opt/nti --disable-dependency-tracking --with-threads=pthread; make
+
 ::
 
 	cert = /opt/nti/ssl_certs/srv_comb.pem
 
 	[https]
 	accept = 443
-	connect = 80
+	connect = /var/run/ssl-frontend.sock
 
 
 Upstart
@@ -374,4 +327,3 @@ The following is an upstart configuration to put in
     #exec /home/ec2-user/app_run.sh
 
     exec /bin/su - ec2-user /opt/nti/bin/gunicorn -k nti.appserver.gunicorn.GeventApplicationWorker nti.appserver.gunicorn:app -b 127.0.0.1:8081
-
