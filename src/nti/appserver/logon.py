@@ -265,7 +265,7 @@ def _openid_login(context, request, openid='https://www.google.com/accounts/o8/i
 	nrequest = pyramid.request.Request.blank( request.route_url( 'logon.google.result', _query=params ),
 											  # In theory, if we're constructing the URL correctly, this is enough
 											  # to carry through HTTPS info
-											  base_url=request.path_url,
+											  base_url=request.host_url,
 											  POST={'openid2': 'https://www.google.com/accounts/o8/id'} )
 	logger.debug( "Directing pyramid request to %s", nrequest )
 	nrequest.registry = request.registry

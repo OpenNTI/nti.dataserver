@@ -250,24 +250,40 @@ reside in ``/etc/haproxy/haproxy.cfg``:
 
   defaults
     mode        http
+	# If we don't set this, then we lose X-Forwarded-For
+	option http-server-close
 
   frontend all 0.0.0.0:80
 	option httplog
 	log global
     timeout client 86400000
 	# Listen on the socket for incoming SSL in proxy mode
-    bind /var/run/ssl-frontend.sock user root mode 600 accept-proxy
+	# We give it a specific id so that we can match in an ACL
+	# (We can't match on ssl itself because that's already been handled)
+    bind /var/run/ssl-frontend.sock user root mode 600 id 42 accept-proxy
     default_backend www_backend
-    acl is_websocket hdr(Upgrade) -i WebSocket
-    acl is_websocket hdr_beg(Host) -i ws
+
+	acl is_websocket hdr(Upgrade) -i WebSocket
+	acl is_websocket hdr_beg(Host) -i ws
 
 	acl is_dyn path_beg /dataserver
 	acl is_dyn path_beg /library
 	acl is_dyn path_beg /socket.io
 	# Consider a path_sub here for Search urls
 
+	acl is_ssl so_id 42
+
+	# Block some common attack vectors
+	acl is_blocked_name path_end .php .asp .jsp .exe .aspx
+	block if is_blocked_name
+
     use_backend socket_backend if is_websocket
     use_backend socket_backend if is_dyn
+
+	# Let gunicorn/nginx know if we are dealing with an incoming HTTPS request
+	# (This is a default 'secure-header' in gunicorns conf)
+	reqidel ^X-FORWARDED-PROTOCOL:.*
+	reqadd X-FORWARDED-PROTOCOL:\ ssl if is_ssl
 
   backend www_backend
     balance roundrobin
