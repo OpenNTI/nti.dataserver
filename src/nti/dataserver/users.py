@@ -1871,8 +1871,15 @@ class User(Principal):
 				if not isinstance( device, Device ): continue
 				apnsCon.sendNotification( device.deviceId, payload )
 
+# We have a few subclasses of User that store some specific
+# information and directly implement some interfaces.
+# Right now, we're not exposing this information directly to clients,
+# so this is an implementation detail. Thus we make their class names
+# be 'User' as well.
+# TODO: MimeTypes?
 
 class OpenIdUser(User):
+	__external_class_name__ = 'User'
 	interface.implements( nti_interfaces.IOpenIdUser )
 	identity_url = None
 
@@ -1884,6 +1891,8 @@ class OpenIdUser(User):
 
 
 class FacebookUser(User):
+	__external_class_name__ = 'User'
+
 	interface.implements( nti_interfaces.IFacebookUser )
 	facebook_url = None
 
@@ -1909,4 +1918,3 @@ def user_devicefeedback( msg ):
 			if hexDeviceId in user.devices:
 				logger.debug( 'Found device id %s in user %s', hexDeviceId, user )
 				del user.devices[hexDeviceId]
-
