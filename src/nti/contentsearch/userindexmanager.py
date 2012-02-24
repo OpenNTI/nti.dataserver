@@ -206,6 +206,12 @@ class UserIndexManager(object):
 		t = self.get_content_index(typeName, False)
 		if t: t.index.optimize()
 
+	##########################
+	
+	def optimize(self):
+		for t in self.indices.itervalues():
+			t.index.optimize()
+		
 	def close(self):
 		for t in self.indices.itervalues():
 			self._close_index(t.index)
