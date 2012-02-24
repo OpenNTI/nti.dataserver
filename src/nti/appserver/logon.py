@@ -166,6 +166,8 @@ class _SimpleExistingUserLinkProvider(object):
 		if self.user.has_password():
 			return Link( self.request.route_path( REL_LOGIN_NTI_PASSWORD ), rel=REL_LOGIN_NTI_PASSWORD )
 
+# TODO: Need to use session to record requested username in all cases, compare
+# at end. Especially for facebook...need to figure facebook out better
 class _SimpleMissingUserFacebookLinkProvider(object):
 	interface.implements( app_interfaces.ILogonLinkProvider )
 	component.adapts( app_interfaces.IMissingUser, pyramid.interfaces.IRequest )
