@@ -27,6 +27,9 @@ import requests
 # It wants to monkey patch far too much of the system (on import!)
 # and is not compatible with ZODB (patch to time). We think
 # our patching of socket and ssl in application.py is sufficient (?)
+# TODO: It looks like the incompatibilities are fixed with 1.0. application.py
+# will be doing some work with this. Once confirmed, decide what to do here
+# (the non-async api is prettier, but 'prefetch' might be helpful?)
 #import requests.async
 
 import urllib
