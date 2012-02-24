@@ -47,6 +47,10 @@ setup(
 	install_requires = [
 		'RestrictedPython',
 		'ZODB3',
+		# ZODB RelStorage:
+		# 'pylibmc', # for memcached support
+		# 'MySQL-python', # mysql adapter
+		# 'RelStorage',
 		'anyjson',
 		'authkit',
 		'coverage',
