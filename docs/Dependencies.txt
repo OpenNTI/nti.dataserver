@@ -91,6 +91,8 @@ Dependencies (macports):
 - py27-epydoc		# 2012-01-01, 3.0.1
 - HAProxy			# 2010-01-04, 1.14.18 (Optional)
 - stunnel			# "", latest, (Optional)
+- mercurial 		# 2012-02-24 (Optional)
+- py27-hggit		# 2012-02-24 (Optional)
 
 Dependencies (other):
 - Phusion Passenger # 3.0.9, 2011-10-08
