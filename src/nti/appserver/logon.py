@@ -23,6 +23,12 @@ import pyramid.request
 import pyramid.httpexceptions as hexc
 
 import requests
+# Note that we do not use requests.async.
+# It wants to monkey patch far too much of the system (on import!)
+# and is not compatible with ZODB (patch to time). We think
+# our patching of socket and ssl in application.py is sufficient (?)
+#import requests.async
+
 import urllib
 import anyjson as json
 
@@ -34,6 +40,10 @@ REL_LOGIN_GOOGLE = 'logon.google'
 REL_LOGIN_OPENID = 'logon.openid'
 REL_LOGIN_FACEBOOK = 'logon.facebook'
 REL_LOGIN_LOGOUT = 'logon.logout'
+
+# The time limit for a GET request during
+# the authentication process
+_REQUEST_TIMEOUT = 0.1
 
 def _links_for_authenticated_users( request ):
 	"""
@@ -170,6 +180,13 @@ class _SimpleExistingUserFacebookLinkProvider(_SimpleMissingUserFacebookLinkProv
 	component.adapts( nti_interfaces.IFacebookUser, pyramid.interfaces.IRequest )
 
 
+def _prepare_oid_link( request, username, rel, params=None ):
+	query = {} if params is None else dict(params)
+	oidcsum = str(hash(username))
+	query['oidcsum'] = oidcsum
+	return Link( request.route_path( rel, _query=query ),
+				 rel=rel )
+
 class _WhitelistedDomainGoogleLoginLinkProvider(object):
 	interface.implements( app_interfaces.ILogonLinkProvider )
 	component.adapts( nti_interfaces.IUser, pyramid.interfaces.IRequest )
@@ -190,13 +207,34 @@ class _WhitelistedDomainGoogleLoginLinkProvider(object):
 
 		domain = self.user.username.split( '@' )[-1]
 		if domain in self.domains:
-			oidcsum = str(hash(self.user.username))
-			return Link( self.request.route_path( REL_LOGIN_GOOGLE, _query={'oidcsum': oidcsum} ),
-						  rel=REL_LOGIN_GOOGLE )
+			return _prepare_oid_link( self.request, self.user.username, self.rel )
 
 class _MissingUserWhitelistedDomainGoogleLoginLinkProvider(_WhitelistedDomainGoogleLoginLinkProvider):
 	component.adapts( app_interfaces.IMissingUser, pyramid.interfaces.IRequest )
 
+class _OnlineQueryGoogleLoginLinkProvider(object):
+	"""
+	Queries google to see if the domain is an Apps domain that
+	we can expect to use google auth on.
+	"""
+
+	# TODO: We should be caching this
+	interface.implements( app_interfaces.ILogonLinkProvider )
+	component.adapts( app_interfaces.IMissingUser, pyramid.interfaces.IRequest )
+
+	rel = REL_LOGIN_GOOGLE
+
+	def __init__( self, user, req ):
+		self.request = req
+		self.user = user
+
+	def __call__( self ):
+		domain = self.user.username.split( '@' )[-1]
+		google_rsp = requests.get( 'https://www.google.com/accounts/o8/.well-known/host-meta',
+								   params={'hd': domain},
+								   timeout=_REQUEST_TIMEOUT )
+		if google_rsp.status_code == 200:
+			return _prepare_oid_link( self.request, self.user.username, self.rel )
 
 class _ExistingOpenIdUserLoginLinkProvider(object):
 	component.adapts( nti_interfaces.IOpenIdUser, pyramid.interfaces.IRequest )
@@ -208,10 +246,7 @@ class _ExistingOpenIdUserLoginLinkProvider(object):
 		self.user = user
 
 	def __call__( self ):
-		oidcsum = str(hash(self.user.username))
-		return Link( self.request.route_path( REL_LOGIN_OPENID, _query={'openid': self.user.identity_url,
-																		'oidcsum': oidcsum} ),
-					 rel=REL_LOGIN_OPENID )
+		return _prepare_oid_link( self.request, self.user.username, self.rel, params={'openid': self.user.identity_url} )
 
 
 class _Handshake(dict):
@@ -380,7 +415,10 @@ def facebook_oauth2(request):
 																		#		'failure': request.params.get('failure', '') } ) )
 	app_secret = request.registry.settings.get( 'facebook.app.secret' )
 
-	auth = requests.get( 'https://graph.facebook.com/oauth/access_token?client_id=%s&redirect_uri=%s&client_secret=%s&code=%s' % (app_id, our_uri,app_secret, code) )
+	auth = requests.get( 'https://graph.facebook.com/oauth/access_token',
+						 params={'client_id': app_id, 'redirect_uri': our_uri, 'client_secret': app_secret, 'code': code},
+						 timeout=_REQUEST_TIMEOUT )
+
 	try:
 		auth.raise_for_status()
 	except:
@@ -393,7 +431,10 @@ def facebook_oauth2(request):
 			token = x[len('access_token='):]
 			break
 
-	data = requests.get( 'https://graph.facebook.com/me?access_token=' + token )
+	data = requests.get( 'https://graph.facebook.com/me',
+						 params={'access_token': token},
+						 timeout=_REQUEST_TIMEOUT )
+
 	data = json.loads( data.text )
 	_deal_with_external_account( request,
 								 data['first_name'], data['last_name'],
