@@ -1,6 +1,5 @@
 file:../lib/pywikipedia/#egg=pywikipedia
 file:../lib/concurrent.futures#egg=concurrent.futures
-file:../lib/repoze.whoplugins.openid#egg=repoze.whoplugins.openid
 -e hg+https://bitbucket.org/denis/gevent#egg=gevent
 -e svn+https://svn.nextthought.com/repository/NextThoughtPlatform/trunk/site-lib/plastex-dist#egg=plastex
 -e svn+https://svn.nextthought.com/repository/NextThoughtPlatform/trunk/site-lib/context#egg=context
