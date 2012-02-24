@@ -51,8 +51,7 @@ class IndexStorage(object):
 	# limitmb: http://packages.python.org/Whoosh/batch.html
 	default_ctor_args = {'limitmb':96}
 	
-	#'merge':False, 'optimize':False
-	default_commit_args = {}
+	default_commit_args = {'merge':False, 'optimize':False}
 	
 	def create_index(self, indexname, schema, **kwargs):
 		raise NotImplementedError()
