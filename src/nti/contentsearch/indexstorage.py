@@ -43,6 +43,29 @@ class NoOpCM(object):
 	def __exit__(self,*args):
 		pass
 	
+#########################
+
+max_segments = 10
+merge_first_segments = 5
+
+def segment_merge(writer, segments):
+		
+	from whoosh.filedb.filereading import SegmentReader
+	if len(segments) <= max_segments:
+		return segments
+	
+	newsegments = []
+	sorted_segment_list = sorted(segments, key=lambda s: s.doc_count_all())
+
+	for i, s in enumerate(sorted_segment_list):
+		if i < merge_first_segments:
+			reader = SegmentReader(writer.storage, writer.schema, s)
+			writer.add_reader(reader)
+			reader.close()
+		else:
+			newsegments.append(s)
+	return newsegments
+
 class IndexStorage(object):
 	"""
 	Defines a basic index index storage object
@@ -51,7 +74,7 @@ class IndexStorage(object):
 	# limitmb: http://packages.python.org/Whoosh/batch.html
 	default_ctor_args = {'limitmb':96}
 	
-	default_commit_args = {'merge':False, 'optimize':False}
+	default_commit_args = {'merge':False, 'optimize':False, 'mergetype':segment_merge}
 	
 	def create_index(self, indexname, schema, **kwargs):
 		raise NotImplementedError()
