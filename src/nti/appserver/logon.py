@@ -43,7 +43,7 @@ REL_LOGIN_LOGOUT = 'logon.logout'
 
 # The time limit for a GET request during
 # the authentication process
-_REQUEST_TIMEOUT = 0.1
+_REQUEST_TIMEOUT = 0.5
 
 def _links_for_authenticated_users( request ):
 	"""
