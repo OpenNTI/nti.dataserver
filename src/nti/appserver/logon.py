@@ -22,7 +22,10 @@ import pyramid.interfaces
 import pyramid.request
 import pyramid.httpexceptions as hexc
 
+import logilab.common.cache
 import requests
+import gevent
+from requests.exceptions import RequestException
 # Note that we do not use requests.async.
 # It wants to monkey patch far too much of the system (on import!)
 # and is not compatible with ZODB (patch to time). We think
@@ -67,8 +70,9 @@ def _links_for_authenticated_users( request ):
 
 def _forgetting( request, redirect_param_name, no_param_class, redirect_value=None, error=None ):
 	response = None
-	if redirect_value is None:
+	if not redirect_value:
 		redirect_value = request.params.get( redirect_param_name )
+
 	if redirect_value:
 		response = hexc.HTTPSeeOther( location=redirect_value )
 	else:
@@ -166,8 +170,6 @@ class _SimpleExistingUserLinkProvider(object):
 		if self.user.has_password():
 			return Link( self.request.route_path( REL_LOGIN_NTI_PASSWORD ), rel=REL_LOGIN_NTI_PASSWORD )
 
-# TODO: Need to use session to record requested username in all cases, compare
-# at end. Especially for facebook...need to figure facebook out better
 class _SimpleMissingUserFacebookLinkProvider(object):
 	interface.implements( app_interfaces.ILogonLinkProvider )
 	component.adapts( app_interfaces.IMissingUser, pyramid.interfaces.IRequest )
@@ -179,7 +181,8 @@ class _SimpleMissingUserFacebookLinkProvider(object):
 		self.user = user
 
 	def __call__(self):
-		return Link( self.request.route_path( 'logon.facebook.oauth1' ), rel=self.rel )
+		return Link( self.request.route_path( 'logon.facebook.oauth1', _query={'username': self.user.username} ),
+					 rel=self.rel )
 
 class _SimpleExistingUserFacebookLinkProvider(_SimpleMissingUserFacebookLinkProvider):
 	component.adapts( nti_interfaces.IFacebookUser, pyramid.interfaces.IRequest )
@@ -189,6 +192,7 @@ def _prepare_oid_link( request, username, rel, params=None ):
 	query = {} if params is None else dict(params)
 	oidcsum = str(hash(username))
 	query['oidcsum'] = oidcsum
+	query['username'] = username
 	return Link( request.route_path( rel, _query=query ),
 				 rel=rel )
 
@@ -203,7 +207,7 @@ class _WhitelistedDomainGoogleLoginLinkProvider(object):
 		self.user = user
 
 	# TODO: We are never checking that the user we get actually comes
-	# from one of these domains.
+	# from one of these domains. Should we? Does it matter?
 	domains = ['nextthought.com', 'gmail.com']
 	def __call__( self ):
 		if getattr( self.user, 'identity_url', None ) is not None:
@@ -223,9 +227,10 @@ class _OnlineQueryGoogleLoginLinkProvider(object):
 	we can expect to use google auth on.
 	"""
 
-	# TODO: We should be caching this
 	interface.implements( app_interfaces.ILogonLinkProvider )
 	component.adapts( app_interfaces.IMissingUser, pyramid.interfaces.IRequest )
+
+	KNOWN_DOMAIN_CACHE = logilab.common.cache.Cache()
 
 	rel = REL_LOGIN_GOOGLE
 
@@ -235,10 +240,24 @@ class _OnlineQueryGoogleLoginLinkProvider(object):
 
 	def __call__( self ):
 		domain = self.user.username.split( '@' )[-1]
-		google_rsp = requests.get( 'https://www.google.com/accounts/o8/.well-known/host-meta',
-								   params={'hd': domain},
-								   timeout=_REQUEST_TIMEOUT )
-		if google_rsp.status_code == 200:
+		allow = False
+		cached = self.KNOWN_DOMAIN_CACHE.get( domain )
+		if cached is not None:
+			allow = cached
+		else:
+			try:
+				google_rsp = requests.get( 'https://www.google.com/accounts/o8/.well-known/host-meta',
+										   params={'hd': domain},
+										   timeout=_REQUEST_TIMEOUT )
+			except RequestException:
+				# Timeout, no resolution, nothing to cache
+				logger.info( "Timeout checking Google apps account for %s", domain )
+				return None
+			else:
+				allow = google_rsp.status_code == 200
+				self.KNOWN_DOMAIN_CACHE[domain] = allow
+
+		if allow:
 			return _prepare_oid_link( self.request, self.user.username, self.rel )
 
 class _ExistingOpenIdUserLoginLinkProvider(object):
@@ -265,7 +284,7 @@ class _Handshake(dict):
 		self.links = lnks
 
 def _create_failure_response( request, failure=None, error=None ):
-	return _forgetting( request, 'failure', hexc.HTTPUnauthorized, redirect_value=failure )
+	return _forgetting( request, 'failure', hexc.HTTPUnauthorized, redirect_value=failure, error=error )
 
 def _create_success_response( request, userid=None, success=None ):
 	# Incoming authentication worked. Remember the user, and
@@ -400,24 +419,25 @@ def facebook_oauth1( request ):
 	app_id = request.registry.settings.get( 'facebook.app.id' )
 	our_uri = urllib.quote( request.route_url( 'logon.facebook.oauth2' ) )
 	# We seem incapable of sending any parameters with the redirect_uri. If we do,
-	# then the validation step 400's.
+	# then the validation step 400's. Thus we resort to the session
 	for k in ('success','failure'):
 		if request.params.get( k ):
 			request.session['facebook.' + k] = request.params.get( k )
 
+	request.session['facebook.username'] = request.params.get('username')
 	redir_to = 'https://www.facebook.com/dialog/oauth?client_id=%s&redirect_uri=%s&scope=email' % (app_id, our_uri)
 
 	return hexc.HTTPSeeOther( location=redir_to )
 
 @view_config( route_name='logon.facebook.oauth2', request_method='GET' )
 def facebook_oauth2(request):
+
 	if 'error' in request.params:
-		return _create_failure_response( request )
+		return _create_failure_response( request, request.session.get('facebook.failure'), error=request.params.get('error') )
 
 	code = request.params['code']
 	app_id = request.registry.settings.get( 'facebook.app.id' )
-	our_uri = urllib.quote( request.route_url( 'logon.facebook.oauth2' ))#, _query={'success': request.params.get('success', ''),
-																		#		'failure': request.params.get('failure', '') } ) )
+	our_uri = request.route_url( 'logon.facebook.oauth2' )
 	app_secret = request.registry.settings.get( 'facebook.app.secret' )
 
 	auth = requests.get( 'https://graph.facebook.com/oauth/access_token',
@@ -426,9 +446,14 @@ def facebook_oauth2(request):
 
 	try:
 		auth.raise_for_status()
-	except:
-		return _create_failure_response(request, request.session.get('facebook.failure'))
+	except RequestException as req_ex:
+		logger.exception( "Failed facebook login %s", auth.text )
+		return _create_failure_response(request, request.session.get('facebook.failure'), error=str(req_ex))
 
+
+	# The facebook return value is in ridiculous format.
+	# Are we supposed to try to treat this like a url query value or
+	# something? Yick.
 	text = auth.text
 	token = None
 	for x in text.split( '&'):
@@ -436,15 +461,39 @@ def facebook_oauth2(request):
 			token = x[len('access_token='):]
 			break
 
+	# For the data formats, see here:
+	# https://developers.facebook.com/docs/reference/api/user/
+	# Fire off requests for the user's data that we want, plus
+	# the address of his picture. The picture we can use later,
+	# so let it prefetch
+	pic_rsp = requests.get( 'https://graph.facebook.com/me/picture',
+							params={'access_token': token},
+							allow_redirects=False, # This should return a 302, we want the location, not the data
+							timeout=_REQUEST_TIMEOUT,
+							return_response=False,
+							prefetch=True,
+							config={'safe_mode': True} )
+	pic_glet = gevent.spawn(pic_rsp.send)
+
 	data = requests.get( 'https://graph.facebook.com/me',
 						 params={'access_token': token},
 						 timeout=_REQUEST_TIMEOUT )
-
 	data = json.loads( data.text )
-	_deal_with_external_account( request,
-								 data['first_name'], data['last_name'],
-								 data['email'], data['link'],
-								 nti_interfaces.IFacebookUser,
-								 users.FacebookUser )
+	if data['email'] != request.session.get('facebook.username'):
+		logger.warn( "Facebook username returned different emails %s != %s", data['email'], request.session.get('facebook.username') )
+		return _create_failure_response( request, request.session.get('facebook.failure'), error='Facebook resolved to different username' )
+
+	user = _deal_with_external_account( request,
+										data['first_name'], data['last_name'],
+										data['email'], data['link'],
+										nti_interfaces.IFacebookUser,
+										users.FacebookUser )
+	# Do we have a facebook picture to use? If so, snag it and use it.
+	pic_glet.join()
+	pic_rsp = pic_rsp.response
+	if pic_rsp.status_code == 302:
+		pic_location = pic_rsp.headers['Location']
+		if pic_location and pic_location != user.avatarURL:
+			user.avatarURL = pic_location
 
 	return _create_success_response( request, userid=data['email'], success=request.session.get('facebook.success') )
