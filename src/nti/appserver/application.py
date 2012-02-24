@@ -7,9 +7,18 @@ logger = logging.getLogger( __name__ )
 # Loading this file monkey-patches sockets and ssl to work with gevent.
 # This is needed for the openid handling in logon.py, but doing it here is a bit
 # earlier and has a greater chance of working. This is also after
-# we have loaded ZODB and doesn't seem to interfere with it. See gunicorn.py
+# we have loaded ZODB and doesn't seem to interfere with it. See gunicorn.py.
+# NOTE: 1.0 of gevent seems to fix the threading issue that cause problems with ZODB.
+# Try to confirm that
+import gevent
 import gevent.monkey
-gevent.monkey.patch_socket(); gevent.monkey.patch_ssl()
+if getattr( gevent, 'version_info', (0,) )[0] >= 1:
+	logger.info( "Monkey patching most libraries for gevent" )
+	# omit thread, it's required for multiprocessing futures, used in contentrendering
+	gevent.monkey.patch_all(thread=False)
+else:
+	logger.info( "Monkey patching minimum libraries for gevent" )
+	gevent.monkey.patch_socket(); gevent.monkey.patch_ssl()
 
 import sys
 import os
