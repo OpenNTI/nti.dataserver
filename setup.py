@@ -51,6 +51,7 @@ setup(
 		'authkit',
 		'coverage',
 		'cython',
+		'gevent == 1.0dev',
 		'gevent-zeromq',
 		'gunicorn',
 		# 0.95 causes problems: html5lib/sanitizer.py", line 171, in sanitize_token, token["data"][::-1], TypeError: unhashable type
