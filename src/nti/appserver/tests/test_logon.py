@@ -4,7 +4,7 @@ from __future__ import print_function, unicode_literals
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
-from hamcrest import (assert_that, is_, none, ends_with,
+from hamcrest import (assert_that, is_, none, ends_with, starts_with,
 					  has_entry, has_length, has_key, is_not, has_item,
 					  same_instance, none, greater_than_or_equal_to)
 from hamcrest.library import has_property
@@ -13,7 +13,7 @@ from zope import component
 from zope.component import eventtesting, provideHandler
 
 from nti.appserver import logon
-from nti.appserver.logon import (ping, handshake,password_logon)
+from nti.appserver.logon import (ping, handshake,password_logon, google_login, openid_login)
 
 from nti.appserver.tests import ConfiguringTestBase
 from pyramid.threadlocal import get_current_request
@@ -92,6 +92,63 @@ class TestLogon(ConfiguringTestBase):
 		assert_that( result.links[1].target, is_( '/dataserver2/logon.facebook.1?username=jason.madden%40nextthought.com' ) )
 		assert_that( result.links[2].target, is_( '/dataserver2' ) )
 		assert_that( result.links[3].target, is_( '/dataserver2/logon.logout' ) )
+
+	def test_handshake_no_user(self):
+		assert_that( handshake( get_current_request() ), is_( hexc.HTTPBadRequest ) )
+
+	@WithMockDSTrans
+	def test_handshake_existing_user_with_pass(self):
+		self.config.add_route( name='logon.nti.password', pattern='/dataserver2/logon.nti.password' )
+		user = users.User.create_user( self.ds, username='jason.madden@nextthought.com', password='temp001' )
+
+		get_current_request().params['username'] = 'jason.madden@nextthought.com'
+
+		# With no other routes present, and us having a password, we can
+		# login that way
+		result = handshake( get_current_request() )
+		assert_that( result, has_property( 'links', has_length( 1 ) ) )
+		assert_that( result.links[0].target, is_( '/dataserver2/logon.nti.password?username=jason.madden%40nextthought.com' ) )
+
+		# Give us the capability to do a google logon, and we can
+		self.config.add_route( name='logon.google', pattern='/dataserver2/logon.google' )
+		result = handshake( get_current_request() )
+		assert_that( result, has_property( 'links', has_length( 2) ) )
+		assert_that( result.links[0].target, is_( '/dataserver2/logon.nti.password?username=jason.madden%40nextthought.com' ) )
+		assert_that( result.links[1].target, is_( '/dataserver2/logon.google?username=jason.madden%40nextthought.com&oidcsum=-1978826904171095151' ) )
+
+		# Give us a specific identity_url, and that changes to open id
+		self.config.add_route( name='logon.openid', pattern='/dataserver2/logon.openid' )
+		user.identity_url = 'http://google.com/foo'
+		interface.alsoProvides( user, nti_interfaces.IOpenIdUser )
+		result = handshake( get_current_request() )
+		assert_that( result, has_property( 'links', has_length( 2) ) )
+		assert_that( result.links[0].target, is_( '/dataserver2/logon.nti.password?username=jason.madden%40nextthought.com' ) )
+		assert_that( result.links[1].target, is_( '/dataserver2/logon.openid?username=jason.madden%40nextthought.com&openid=http%3A%2F%2Fgoogle.com%2Ffoo&oidcsum=-1978826904171095151' ) )
+
+	def test_openid_login( self ):
+		fail = google_login( None, get_current_request() )
+		assert_that( fail, is_( hexc.HTTPUnauthorized ) )
+		fail = openid_login( None, get_current_request() )
+		assert_that( fail, is_( hexc.HTTPUnauthorized ) )
+
+		from pyramid.session import UnencryptedCookieSessionFactoryConfig
+		my_session_factory = UnencryptedCookieSessionFactoryConfig('ntidataservercookiesecretpass')
+		self.config.set_session_factory( my_session_factory )
+		self.config.add_route( name='logon.google.result', pattern='/dataserver2/logon.google.result' )
+
+		# TODO: This test is assuming we have access to google.com
+		get_current_request().params['oidcsum'] = '1234'
+		result = google_login( None, get_current_request() )
+		assert_that( result, is_( hexc.HTTPFound ) )
+		assert_that( result.location, starts_with( 'https://www.google.com/accounts/o8/' ) )
+
+		# An openid request to a non-existant domain will fail
+		# to begin negotiation
+		get_current_request().params['openid'] = 'http://localhost/oidprovider/'
+		result = openid_login( None, get_current_request() )
+		assert_that( result, is_( hexc.HTTPUnauthorized ) )
+		assert_that( result.headers, has_key( 'Warning' ) )
+
 
 	def test_password_logon_failed(self):
 		class Policy(object):
