@@ -168,7 +168,8 @@ class _SimpleExistingUserLinkProvider(object):
 
 	def __call__(self):
 		if self.user.has_password():
-			return Link( self.request.route_path( REL_LOGIN_NTI_PASSWORD ), rel=REL_LOGIN_NTI_PASSWORD )
+			return Link( self.request.route_path( REL_LOGIN_NTI_PASSWORD, _query={'username': self.user.username}),
+						 rel=REL_LOGIN_NTI_PASSWORD )
 
 class _SimpleMissingUserFacebookLinkProvider(object):
 	interface.implements( app_interfaces.ILogonLinkProvider )
@@ -193,8 +194,14 @@ def _prepare_oid_link( request, username, rel, params=None ):
 	oidcsum = str(hash(username))
 	query['oidcsum'] = oidcsum
 	query['username'] = username
-	return Link( request.route_path( rel, _query=query ),
-				 rel=rel )
+	try:
+		return Link( request.route_path( rel, _query=query ),
+					 rel=rel )
+	except KeyError:
+		# This is really a programmer/configuration error,
+		# but we let it pass for tests
+		logger.exception( "Unable to direct to route %s", rel )
+		return
 
 class _WhitelistedDomainGoogleLoginLinkProvider(object):
 	interface.implements( app_interfaces.ILogonLinkProvider )
@@ -325,10 +332,25 @@ def _openid_login(context, request, openid='https://www.google.com/accounts/o8/i
 											  # In theory, if we're constructing the URL correctly, this is enough
 											  # to carry through HTTPS info
 											  base_url=request.host_url,
-											  POST={'openid2': 'https://www.google.com/accounts/o8/id'} )
+											  POST={'openid2': openid } )
 	logger.debug( "Directing pyramid request to %s", nrequest )
 	nrequest.registry = request.registry
-	return pyramid_openid.view.verify_openid( context, nrequest )
+	# If the discover process fails, the view will do two things:
+	# (1) Flash a message in the session queue request.settings.get('openid.error_flash_queue', '')
+	# (2) redirect to request.settings.get( 'openid.errordestination', '/' )
+	# We have a better way to return errors, and we want to use it,
+	# so we scan for the error_flash.
+	# NOTE: We are assuming that neither of these is configured, and that
+	# nothing else uses the flash queue
+	q_name = request.registry.settings.get( 'openid.error_flash_queue', '' )
+	q_b4 = nrequest.session.pop_flash( q_name )
+	assert len(q_b4) == 0
+	result = pyramid_openid.view.verify_openid( context, nrequest )
+	q_after = nrequest.session.pop_flash(q_name)
+	if q_after != q_b4:
+		# Error
+		result = _create_failure_response( request, error=q_after[0] )
+	return result
 
 @view_config(route_name=REL_LOGIN_GOOGLE, request_method="GET")
 def google_login(context, request):
@@ -336,10 +358,9 @@ def google_login(context, request):
 
 @view_config(route_name=REL_LOGIN_OPENID, request_method="GET")
 def openid_login(context, request):
-	params = dict(request.params)
-	if 'oidcsum' not in params:
-		params['oidcsum'] = str(hash(request.params.get('openid')))
-	return _openid_login( context, request, request.params.get( 'openid' ), params )
+	if 'openid' not in request.params:
+		return _create_failure_response( request )
+	return _openid_login( context, request, request.params['openid'] )
 
 @view_config(route_name="logon.google.result")#, request_method='GET')
 def google_response(context, request):
