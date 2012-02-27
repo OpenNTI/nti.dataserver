@@ -325,14 +325,16 @@ def _openid_login(context, request, openid='https://www.google.com/accounts/o8/i
 	if params is None:
 		params = request.params
 	if 'oidcsum' not in params:
-		logger.warn( "oidcsum not present" )
-		return _create_failure_response( request )
+		logger.warn( "oidcsum not present in %s at %s", params, request )
+		return _create_failure_response( request, error="Invalid params; missing oidcsum" )
 
+
+	openid_field = request.registry.settings.get('openid.param_field_name', 'openid')
 	nrequest = pyramid.request.Request.blank( request.route_url( 'logon.google.result', _query=params ),
 											  # In theory, if we're constructing the URL correctly, this is enough
 											  # to carry through HTTPS info
 											  base_url=request.host_url,
-											  POST={'openid2': openid } )
+											  POST={openid_field: openid } )
 	logger.debug( "Directing pyramid request to %s", nrequest )
 	nrequest.registry = request.registry
 	# If the discover process fails, the view will do two things:
@@ -345,9 +347,15 @@ def _openid_login(context, request, openid='https://www.google.com/accounts/o8/i
 	q_name = request.registry.settings.get( 'openid.error_flash_queue', '' )
 	q_b4 = nrequest.session.pop_flash( q_name )
 	assert len(q_b4) == 0
+
 	result = pyramid_openid.view.verify_openid( context, nrequest )
+
 	q_after = nrequest.session.pop_flash(q_name)
-	if q_after != q_b4:
+	if result is None:
+		# This is a programming/configuration error in 0.3.4, meaning we have
+		# failed to pass required params. For example, the openid_param_name might not match
+		raise AssertionError( "Failure to get response object; check configs" )
+	elif q_after != q_b4:
 		# Error
 		result = _create_failure_response( request, error=q_after[0] )
 	return result
@@ -359,7 +367,7 @@ def google_login(context, request):
 @view_config(route_name=REL_LOGIN_OPENID, request_method="GET")
 def openid_login(context, request):
 	if 'openid' not in request.params:
-		return _create_failure_response( request )
+		return _create_failure_response( request, error='Missing openid' )
 	return _openid_login( context, request, request.params['openid'] )
 
 @view_config(route_name="logon.google.result")#, request_method='GET')
