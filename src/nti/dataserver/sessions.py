@@ -3,7 +3,7 @@
 
 import logging
 logger = logging.getLogger( __name__ )
-
+import warnings
 import uuid
 import time
 import contextlib
@@ -16,10 +16,7 @@ from zope import interface
 from zope import component
 from zope.event import notify
 
-try:
-	import anyjson as json
-except ImportError:
-	import json
+import anyjson as json
 
 from gevent_zeromq import zmq # If things crash, remove core.so
 
@@ -54,7 +51,8 @@ class Session(Persistent):
 	STATE_DISCONNECTED = "DISCONNECTED"
 
 	def __init__(self):
-		self.session_id = uuid.uuid4().hex
+		# The session id must be plain ascii for sending across sockets
+		self.session_id = uuid.uuid4().hex.encode('ascii')
 		self.creation_time = time.time()
 		self.client_queue = zc.queue.Queue() # PersistentList() # queue for messages to client
 		self.server_queue = zc.queue.Queue() #PersistentList() # queue for messages to server
@@ -270,7 +268,8 @@ class SessionService(object):
 			sids.remove( s.session_id )
 		except ValueError: pass
 
-		self.pub_socket.send_multipart( [s.session_id, 'session_dead', "42"] )
+		self._publish_msg( b'session_dead', s.session_id, b"42" )
+
 
 	def _validated_session( self, s, session_db, sids=None ):
 		""" Returns a live session or None """
@@ -315,14 +314,30 @@ class SessionService(object):
 			if sess:
 				meth( sess, msg )
 
+	def _publish_msg( self, name, session_id, msg_str ):
+		assert isinstance( name, str ) # Not Unicode, only byte constants
+
+		assert isinstance( session_id, basestring ) # Must be a string of some type now
+		if isinstance( session_id, unicode ):
+			warnings.warn( "Got unexpected unicode session id", UnicodeWarning, stacklevel=2 )
+			session_id = session_id.encode( 'ascii' )
+
+		assert isinstance( msg_str, basestring ) # Must be a string of some type now
+		if isinstance( msg_str, unicode ):
+			warnings.warn( "Got unexpected unicode value", UnicodeWarning, stacklevel=2 )
+			msg_str = msg_str.encode( 'utf-8' )
+
+		self.pub_socket.send_multipart( [session_id, name, msg_str] )
+
 	def put_server_msg(self, session_id, msg):
 		self._put_msg( Session.do_put_server_msg, session_id, msg )
-		self.pub_socket.send_multipart( [session_id, 'put_server_msg', json.dumps(msg)] )
+		self._publish_msg( b'put_server_msg', session_id, json.dumps( msg ) )
+
 
 	def put_client_msg(self, session_id, msg):
 		self._put_msg( Session.do_put_client_msg, session_id, msg )
-		assert isinstance( msg, basestring )
-		self.pub_socket.send_multipart( [session_id, 'put_client_msg', msg] )
+		self._publish_msg( b'put_client_msg', session_id, msg )
+
 
 	def _get_msgs( self, q_name, session_id ):
 		result = None
