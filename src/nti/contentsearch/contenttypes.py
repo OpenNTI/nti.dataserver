@@ -8,6 +8,7 @@ import collections
 
 from time import mktime
 from datetime import datetime
+from collections import OrderedDict
 
 from zope import interface
 from . import interfaces
@@ -29,6 +30,8 @@ from whoosh import highlight
 from whoosh.query import (Or, Term)
 from whoosh.qparser import QueryParser
 from whoosh.qparser import GtLtPlugin
+from whoosh.analysis import NgramFilter
+from whoosh.analysis import RegexTokenizer
 from whoosh.qparser.dateparse import DateParserPlugin
 
 from nltk import clean_html
@@ -117,15 +120,78 @@ def get_keywords(records):
 		result = ','.join(records)
 	return unicode(result)
 
+##########################
+
+def ngram_tokens(text, minsize=2, maxsize=10, at='start', unique=True):
+	rext = RegexTokenizer()
+	ngf = NgramFilter(minsize=minsize, maxsize=maxsize, at=at)
+	stream = rext(unicode(text))
+	if not unique:
+		result = [token.copy() for token in ngf(stream)]
+	else:
+		result = OrderedDict( {token.text:token.copy() for token in ngf(stream)}).values()
+	return result
+		
+def ngrams(text):
+	result = [token for token in ngram_tokens(text)]
+	return ' '.join(sorted(result, cmp=lambda x,y: cmp(len(x),len(y))))
+
+def set_matched_filter(tokens, termset, text, multiple_match=True):
+	index = {} if multiple_match else None
+	for t in tokens:
+		t.matched = t.text in termset
+		if t.matched:
+			
+			idx = 0
+			if multiple_match:
+				a = index.get(t.text, None)
+				if not a:
+					a = [0]
+					index[t.text] = a
+				idx = a[-1]
+				
+			t.startchar = text.find(t.text, idx)
+			t.endchar = t.startchar + len(t.text)
+			
+			if multiple_match:
+				a.append(t.startchar+1)
+		else:
+			t.startchar = 0
+			t.endchar = len(text)
+		yield t
+		
+def highlight_content(query, text, maxchars=300, surround=50, order=highlight.FIRST, top=3, multiple_match=False):
+	"""
+	highlight based on ngrams
+	"""
+	text = unicode(text)
+	text_lower = unicode(text.lower())
+	
+	query = unicode(query.lower())
+	termset = frozenset([query])
+		
+	scorer = highlight.BasicFragmentScorer()
+	tokens = ngram_tokens(text_lower, unique=not multiple_match)
+	tokens = set_matched_filter(tokens, termset, text_lower, multiple_match)
+	
+	fragmenter = highlight.ContextFragmenter(maxchars=maxchars, surround=surround)
+	fragments = fragmenter.fragment_tokens(text, tokens)
+	fragments = highlight.top_fragments(fragments, top, scorer, order)
+	
+	formatter = highlight.UppercaseFormatter()
+	return formatter(text, fragments)
+
 def get_highlighted_content(query, text, analyzer=None, maxchars=300, surround=20):
 	"""
-	whoosh manual highlight is quite expensive.
+	whoosh highlight based on words
 	"""
 	terms = frozenset([query])
 	analyzer = analyzer or analysis.SimpleAnalyzer()
 	fragmenter = highlight.ContextFragmenter(maxchars=maxchars, surround=surround)
 	formatter = highlight.UppercaseFormatter()
 	return highlight.highlight(text, terms, analyzer, fragmenter, formatter)
+
+##########################
 
 def echo(x):
 	return unicode(x) if x else u''
