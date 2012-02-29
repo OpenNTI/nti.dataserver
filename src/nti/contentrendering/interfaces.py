@@ -9,7 +9,7 @@ from zope import schema
 
 class IEclipseMiniDomTOC(interface.Interface):
 	"""
-	Represents the 'eclipse-toc' in a :module:`xml.dom.minidom` format.
+	Represents the 'eclipse-toc' in a :mod:`xml.dom.minidom` format.
 	"""
 
 	filename = schema.TextLine(
@@ -31,7 +31,7 @@ class IEclipseMiniDomTopic(interface.Interface):
 
 	childTopics = schema.Iterable( title="All the child topics of this topic." )
 
-	dom = interface.Attribute( 'The :class:`PyQuery` object representing the HTML contents. Will be None if not parsable' )
+	dom = interface.Attribute( 'The :class:`pyquery.pyquery.PyQuery` object representing the HTML contents. Will be None if not parsable' )
 
 	def write_dom( force=False ):
 		"Causes the in-memory `dom` to be written to disk at the file it was read from."
@@ -84,25 +84,28 @@ class IDocumentTransformer(interface.Interface):
 
 class IRenderedBookTransformer(interface.Interface):
 	"""
-	Given a rendered book, mutate its on-disk state
+	Given a :class:`IRenderedBook`, mutate its on-disk state
 	to achieve some specified end. This *should* be idempotent.
 	"""
 
 	def transform( book ):
 		"""
 		Perform the book transformation.
+
+		:param book: The :class:`IRenderedBook`.
 		"""
 
 class IRenderedBookValidator(interface.Interface):
 	"""
 	Given a rendered book, check that its in-memory and on
-    disk state meets some criteria. At this time, this interface
-    does not define what happens if that is not true.
+	disk state meets some criteria. At this time, this interface
+	does not define what happens if that is not true.
 	"""
 
 	def check( book ):
 		"""
 		Check the book's adherence to the rule of this interface.
+
         :return: Undefined.
 		"""
 
@@ -126,3 +129,47 @@ class IStaticYouTubeEmbedVideoAdder(IStaticVideoAdder):
 	"""
 	Uses static information to add embedded YouTube video references to the book content.
 	"""
+
+####
+## Transforming content from one format to another
+###
+
+class IContentFragment(interface.Interface):
+	"""
+	Base interface representing different formats that content can
+	be in.
+	"""
+
+class IUnicodeContentFragment(interface.Interface):
+	"""
+	Content represented as a unicode string.
+	"""
+
+class UnicodeContentFragment(unicode):
+	interface.implements(IUnicodeContentFragment)
+
+
+class ILatexContentFragment(IUnicodeContentFragment):
+	"""
+	Interface representing content in LaTeX format.
+	"""
+
+class LatexContentFragment(UnicodeContentFragment):
+	interface.implements(ILatexContentFragment)
+
+
+class IHTMLContentFragment(IUnicodeContentFragment):
+	"""
+	Interface representing content in HTML format.
+	"""
+
+class HTMLContentFragment(UnicodeContentFragment):
+	interface.implements(IHTMLContentFragment)
+
+class IPlainTextContentFragment(IUnicodeContentFragment):
+	"""
+	Interface representing content in plain text format.
+	"""
+
+class PlainTextContentFragment(UnicodeContentFragment):
+	interface.implements(IPlainTextContentFragment)

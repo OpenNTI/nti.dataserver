@@ -1,6 +1,6 @@
-=================================
+===========================================
  nginx, gunicorn haproxy, and stunnel Setup
-=================================
+===========================================
 
 The combination of the nginx HTTP server, gunicorn WSGI server, and
 pound reverse proxy is a popular one in the Python world. `nginx

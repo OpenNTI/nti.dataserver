@@ -319,12 +319,12 @@ class SessionService(object):
 
 		assert isinstance( session_id, basestring ) # Must be a string of some type now
 		if isinstance( session_id, unicode ):
-			warnings.warn( "Got unexpected unicode session id", UnicodeWarning, stacklevel=2 )
+			warnings.warn( "Got unexpected unicode session id", UnicodeWarning, stacklevel=3 )
 			session_id = session_id.encode( 'ascii' )
 
 		assert isinstance( msg_str, basestring ) # Must be a string of some type now
 		if isinstance( msg_str, unicode ):
-			warnings.warn( "Got unexpected unicode value", UnicodeWarning, stacklevel=2 )
+			warnings.warn( "Got unexpected unicode value", UnicodeWarning, stacklevel=3 )
 			msg_str = msg_str.encode( 'utf-8' )
 
 		self.pub_socket.send_multipart( [session_id, name, msg_str] )

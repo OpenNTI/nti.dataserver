@@ -13,7 +13,12 @@
 	<utility component=".sectionvideoadder.YouTubeRelatedVideoAdder"
 			 name="YouTubeRelatedVideoAdder" />
 
-	<!-- Icon and image finders for the prealgebra book -->
+	<!-- Content fragment transformation adapters -->
+	<adapter factory=".contentfragments.PlainTextToLatexFragmentConverter"
+			 for=".interfaces.IPlainTextContentFragment"
+			 provides=".interfaces.ILatexContentFragment" />
+
+	<!-- icon and image finders for the prealgebra book -->
 	<!-- TODO: Move this to a specific package and include it based on
 	the jobname. -->
 	<adapter factory=".tociconsetter._PrealgebraIconFinder"
