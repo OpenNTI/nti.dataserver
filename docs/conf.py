@@ -27,12 +27,14 @@ sys.path.insert(0, os.path.abspath('../../main/python'))
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.todo', 'sphinx.ext.viewcode', 'sphinx.ext.intersphinx',
 				'repoze.sphinx.autointerface']
-autodoc_default_flags = ['members', 'inherited-members', 'undoc-members', 'show-inheritance']
+# epydoc is better at inherited members than sphinx, so leave that out of the defaults
+autodoc_default_flags = ['members', 'show-inheritance']
 autoclass_content = 'both'
 intersphinx_mapping = {
 	'python':  ('http://python.readthedocs.org/en/v2.7.2/', None),
 	'zodb':    ('http://zodb.readthedocs.org/en/latest/', None),
-	'pyramid': ('http://docs.pylonsproject.org/projects/pyramid/en/latest/', None) }
+	'pyramid': ('http://docs.pylonsproject.org/projects/pyramid/en/latest/', None),
+	'pyquery': ('http://packages.python.org/pyquery/', None) }
 intersphinx_cache_limit = -1
 todo_include_todos = True
 # Add any paths that contain templates here, relative to this directory.

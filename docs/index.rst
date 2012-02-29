@@ -21,6 +21,7 @@ Contents:
 	chat-apis
 	interfaces
 	http-rest
+	contentrendering-api
 
 
 `Epydoc generated doc <./epydoc>`_
@@ -32,4 +33,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
