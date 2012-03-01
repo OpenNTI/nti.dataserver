@@ -11,6 +11,8 @@ class mathcountsdifficulty(Base.Environment):
 	pass
 
 class mathcountsproblem(Base.Environment):
+	# Within a mathcounts handbook, the problems are numbered
+	# sequentially, even across sections.
 	counter = 'probnum'
 	def invoke(self, tex):
 		res = super(mathcountsproblem, self).invoke(tex)
@@ -87,9 +89,6 @@ class parpic(includegraphics):
 
 
 def ProcessOptions( options, document ):
-	#Reset by the section counter which in our implementation is the worksheet
-	document.context.newcounter( 'probnum', resetby='section')
+	# In a mathcounts handbook, the problem numbers are sequential throughout
+#	document.context.newcounter( 'probnum', resetby='section')
 	document.context.newcounter( 'solnum' )
-
-
-

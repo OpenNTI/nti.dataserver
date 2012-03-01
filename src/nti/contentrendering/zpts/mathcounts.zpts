@@ -1,10 +1,11 @@
 name: mathcountsproblem
+<li tal:attributes="value self/attributes/probnum">
 <div class="problem">
 	 <input class="answerblank" type="number" tal:attributes="id self/attributes/probnum" />
 	 <a tal:attributes="name self/id"/>
 	 <span tal:content="self"/>
 </div>
-
+</li>
 name: mathcountsresult
 <div class="result hidden" tal:content="self"></div>
 
@@ -14,12 +15,20 @@ name: mathcountshint
 
 name: mathcountssolution mathcountsdifficulty
 
+# We have two approaches to rendering the problems as items in the form/ol.
+# The one is use is to let each child render itself; problems
+# wrap themselves in a li. This makes it easy to get the numbering right,
+# but leads to some extra empty paragraphs between lis.
+# An alternative is to not use tal:content on the ol but instead
+# repeat the li directly in it, being careful not to assign li to
+# plain paragraphs (hence omit-tag). The trick here is to get the problem
+# number.
+#	<li tal:attributes="value PATH/TO/PROBNUM" tal:repeat="item self" tal:content="item" tal:omit-tag="python:not any([c.__class__.__name__.startswith('mathcounts') for c in item.childNodes])"></li>
+
 name: mathcountsworksheet
 <div class="worksheet-title" tal:content="self/title">Title</div>
 <form>
-<ol class="worksheet-problems itemize">
-	<li tal:repeat="item self"  tal:content="item">	</li>
+<ol class="worksheet-problems itemize" tal:content="self">
 </ol>
 <a id="submit" onclick="NTISubmitAnswers(event,'input[type]')" href="#" >Submit</a>
 </form>
-
