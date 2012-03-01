@@ -74,6 +74,7 @@ setup(
 		'pyramid-openid',
 		'pytz',
 		'rdflib',
+		'repoze.catalog',
 		'repoze.sphinx.autointerface',
 		'repoze.who',
 		'repoze.zodbconn',
