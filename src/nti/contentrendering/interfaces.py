@@ -33,6 +33,8 @@ class IEclipseMiniDomTopic(interface.Interface):
 
 	dom = interface.Attribute( 'The :class:`pyquery.pyquery.PyQuery` object representing the HTML contents. Will be None if not parsable' )
 
+	ntiid = schema.TextLine( title='The NTIID of this content' )
+
 	def write_dom( force=False ):
 		"Causes the in-memory `dom` to be written to disk at the file it was read from."
 
