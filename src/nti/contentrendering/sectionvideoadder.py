@@ -145,7 +145,7 @@ class YouTubeRelatedVideoAdder(AbstractVideoAdder):
 					# If we have additions to make, we want to do so
 					# at the first paragraph, if possible, and then at the end
 					page_adder = dom( 'div.page-contents' ).append
-					first_adder = dom('p:first') if dom('p:first') else page_adder
+					first_adder = dom('p:first').append if dom('p:first') else page_adder
 					adders = (first_adder,page_adder)
 					for vurl in matches:
 						adder = adders[min(result,1)]
