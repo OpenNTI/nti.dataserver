@@ -80,7 +80,8 @@ def _forgetting( request, redirect_param_name, no_param_class, redirect_value=No
 	# Clear any cookies they sent that failed.
 	response.headers.extend( sec.forget(request) )
 	if error:
-		response.headers['Warning'] = [error]
+		# TODO: Sending multiple warnings
+		response.headers['Warning'] = error
 
 	return response
 
