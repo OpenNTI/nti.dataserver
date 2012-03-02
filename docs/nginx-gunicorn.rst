@@ -256,12 +256,12 @@ reside in ``/etc/haproxy/haproxy.cfg``:
   frontend all 0.0.0.0:80
 	option httplog
 	log global
-    timeout client 86400000
+	timeout client 86400000
 	# Listen on the socket for incoming SSL in proxy mode
 	# We give it a specific id so that we can match in an ACL
 	# (We can't match on ssl itself because that's already been handled)
-    bind /var/run/ssl-frontend.sock user root mode 600 id 42 accept-proxy
-    default_backend www_backend
+	bind /var/run/ssl-frontend.sock user root mode 600 id 42 accept-proxy
+	default_backend www_backend
 
 	acl is_websocket hdr(Upgrade) -i WebSocket
 	acl is_websocket hdr_beg(Host) -i ws
@@ -273,12 +273,18 @@ reside in ``/etc/haproxy/haproxy.cfg``:
 
 	acl is_ssl so_id 42
 
+	# Proxying for YouTube so we can avoid Cross-Origin issues in the
+	# browser
+	acl is_youtube path_beg /embed
+	acl is_youtube path_beg /get_video_info
+
 	# Block some common attack vectors
 	acl is_blocked_name path_end .php .asp .jsp .exe .aspx
 	block if is_blocked_name
 
-    use_backend socket_backend if is_websocket
-    use_backend socket_backend if is_dyn
+	use_backend socket_backend if is_websocket
+	use_backend socket_backend if is_dyn
+	use_backend youtube_backend if is_youtube
 
 	# Let gunicorn/nginx know if we are dealing with an incoming HTTPS request
 	# (This is a default 'secure-header' in gunicorns conf)
@@ -288,6 +294,17 @@ reside in ``/etc/haproxy/haproxy.cfg``:
 	# Go to the app by default
 	redirect location /NextThoughtWebApp/index.html code 301 if { path / }
 
+  backend youtube_backend
+	balance roundrobin
+	timeout server 30000
+	timeout connect 4000
+	# We must alter the Host line so youtube's
+	# virtual hosting works. For the get_video_info portion
+	# we MUST use the host 'www.youtube.com' (youtube.com redirects
+	# to this, which still has Cross Origin issues)
+	reqidel ^Host:.*
+	reqadd Host:\ www.youtube.com
+	server youtube www.youtube.com:80 weight 1 maxconn 1024
 
 
   backend www_backend
