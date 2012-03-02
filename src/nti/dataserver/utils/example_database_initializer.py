@@ -6,7 +6,8 @@ import logging
 logger = logging.getLogger( __name__ )
 import sys
 
-
+import pkg_resources
+import json
 
 import nti.dataserver as dataserver
 from nti.dataserver.users import User, Community, FriendsList
@@ -134,8 +135,8 @@ _DATA_QUIZ_1 = {'Class': 'Quiz',
 class ExampleDatabaseInitializer(object):
 	interface.implements(gen_interfaces.IInstallableSchemaManager)
 
-	generation = 1
-	minimum_generation = 1
+	generation = 2
+	minimum_generation = 2
 
 	def __init__( self, *args ):
 		pass
@@ -287,24 +288,12 @@ class ExampleDatabaseInitializer(object):
 		# Quizzes
 		if not ONLY_NEW or 'quizzes' not in root or 'quizzes' not in root['quizzes']:
 			root['quizzes']['quizzes'] = datastructures.ModDateTrackingOOBTree()
-			q = quizzes.Quiz()
-			q.update( _DATA_QUIZ_1 )
+			self._install_quizzes( root )
 
-			q.id = _DATA_QUIZ_1['ID']
-			root['quizzes']['quizzes'][q.id] = q
-
-			q = quizzes.Quiz()
-			q.update( _DATA_QUIZ_0 )
-
-			q.id = _DATA_QUIZ_0['ID']
-			root['quizzes']['quizzes'][q.id] = q
-
-
-	def evolve( self, context, generation ):
-		conn = context.connection
-		root = conn.root()
-
-		# Quizzes
+	def _install_quizzes( self, root ):
+		# Quizzes are pretty much immutable and can be
+		# recreated pretty easily
+		# Static Quizzes
 		q = quizzes.Quiz()
 		q.update( _DATA_QUIZ_1 )
 
@@ -317,4 +306,18 @@ class ExampleDatabaseInitializer(object):
 		q.id = _DATA_QUIZ_0['ID']
 		root['quizzes']['quizzes'][q.id] = q
 
+		# loading quiz from mathcounts2012.json
+		with pkg_resources.resource_stream( __name__, 'mathcounts2012.json' ) as data_stream:
+			ext_quizzes = json.load(data_stream)
+			for data in ext_quizzes:
+				q = quizzes.Quiz()
+				q.update( data )
+				q.id = data['ID']
+				root['quizzes']['quizzes'][q.id] = q
 
+
+
+	def evolve( self, context, generation ):
+		conn = context.connection
+		root = conn.root()
+		self._install_quizzes( root )
