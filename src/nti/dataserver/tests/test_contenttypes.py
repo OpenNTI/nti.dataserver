@@ -38,7 +38,7 @@ def test_sanitize_html():
 
 def test_normalize_html_text_to_par():
 	html = u'<html><body><p style=" text-align: left;"><span style="font-family: \'Helvetica\';  font-size: 12pt; color: black;">The pad replies to my note.</span></p>The server edits it.</body></html>'
-	exp =  u'<html><body><p style=" text-align: left;"><span>The pad replies to my note.</span></p><p style=" text-align: left;">The server edits it.</p></body></html>'
+	exp =  u'<html><body><p style="text-align: left;"><span>The pad replies to my note.</span></p><p style="text-align: left;">The server edits it.</p></body></html>'
 	_check_sanitized( html, exp )
 
 
