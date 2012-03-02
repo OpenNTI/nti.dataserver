@@ -14,6 +14,7 @@ from whoosh import analysis
 from nltk import clean_html
 from nltk.tokenize import RegexpTokenizer
 
+from nti.dataserver.chat import MessageInfo
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.contenttypes import Canvas
 from nti.dataserver.contenttypes import Highlight
@@ -86,7 +87,7 @@ def _attrs(names):
 # -----------------------------------
 
 def _last_modified(obj, default):
-	value  = get_attr(obj, ['lastModified', 'Last Modified'], default)
+	value  = get_attr(obj, ['lastModified', 'LastModified', 'last_modified', 'Last Modified'], default)
 	if value:
 		if isinstance(value, basestring):
 			value = float(value)
@@ -212,12 +213,23 @@ def get_note_content(data):
 		if c: result.append(c)
 	return ' '.join(result)
 
+def get_messageinfo_content(data):
+	result = []
+	if isinstance(data, dict):
+		body = to_list(data.get('body', u''))
+	elif isinstance(data, MessageInfo):
+		body = to_list(data.body)
+	for item in body:
+		c = get_multipart_content(item)
+		if c: result.append(c)
+	return ' '.join(result)
+
 # -----------------------------------
 
 def _create_treadable_mixin_catalog():
 	catalog = Catalog()
-	catalog['lastModified'] = CatalogFieldIndex(_last_modified)
-	catalog['id'] = CatalogFieldIndex(_attrs(['OID','oid','id']))
+	catalog['last_modified'] = CatalogFieldIndex(_last_modified)
+	catalog['oid'] = CatalogFieldIndex(_attrs(['OID','oid','id']))
 	catalog['container'] = CatalogFieldIndex(_attrs(['ContainerId','containerId','container']))
 	catalog['collectionId'] = CatalogFieldIndex(_attrs(['CollectionID','collectionId']))
 	catalog['creator'] = CatalogFieldIndex(_attrs(['Creator','creator']))
@@ -229,7 +241,7 @@ def _create_treadable_mixin_catalog():
 def create_notes_catalog():
 	catalog = _create_treadable_mixin_catalog()
 	catalog['references'] = CatalogKeywordIndex(_keywords(['references']))
-	catalog['body'] = CatalogTextIndex(_multipart_content(['body']))
+	catalog['content'] = CatalogTextIndex(_multipart_content(['body']))
 	catalog['quick'] = CatalogTextIndex(_ngrams(['body']))
 	return catalog
 	
@@ -237,7 +249,17 @@ def create_highlight_catalog():
 	catalog = _create_treadable_mixin_catalog()
 	catalog['color'] = CatalogFieldIndex(_attrs(['color']))
 	catalog['quick'] = CatalogTextIndex(_ngrams(['startHighlightedFullText']))
-	catalog['startHighlightedFullText'] = CatalogTextIndex(_content(['startHighlightedFullText']))
+	catalog['content'] = CatalogTextIndex(_content(['startHighlightedFullText']))
+	return catalog
+
+def create_messageinfo_catalog():
+	catalog = _create_treadable_mixin_catalog()
+	catalog['id'] = CatalogFieldIndex(_attrs(['ID']))
+	catalog['channel'] = CatalogFieldIndex(_attrs(['channel']))
+	catalog['quick'] = CatalogTextIndex(_ngrams(['body']))
+	catalog['content'] = CatalogTextIndex(_multipart_content(['body']))
+	catalog['references'] = CatalogKeywordIndex(_keywords(['references']))
+	catalog['recipients'] = CatalogKeywordIndex(_keywords(['recipients']))
 	return catalog
 
 if __name__ == '__main__':
