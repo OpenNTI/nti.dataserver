@@ -58,9 +58,7 @@ setup(
 		'gevent == 1.0dev',
 		'gevent-zeromq',
 		'gunicorn',
-		# 0.95 causes problems: html5lib/sanitizer.py", line 171, in sanitize_token, token["data"][::-1], TypeError: unhashable type
-		# This may be a problem in our use in _html5lib_tostring
-		'html5lib == 0.90',
+		'html5lib == 0.95',
 		'logilab-common',
 		'nltk',
 		'paste',
@@ -126,7 +124,7 @@ setup(
 		'zope.testing',
 		'zope.traversing',
 		],
-	extras_require = {'test': ['zope.testing', 'zc.buildout']},
+	extras_require = {'test': ['zope.testing', 'zc.buildout'], 'tools': ['ipython', 'httpie']},
 	dependency_links = ['http://svn.wikimedia.org/svnroot/pywikipedia/trunk/pywikipedia/'],
 	packages = find_packages('src'),
 	package_dir = {'': 'src'},
