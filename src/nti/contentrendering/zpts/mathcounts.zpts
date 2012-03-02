@@ -5,15 +5,22 @@ name: mathcountsproblem
 	 <a tal:attributes="name self/id"/>
 	 <span tal:content="self"/>
 </div>
+<div class="result hidden">  </div>
 </li>
-name: mathcountsresult
-<div class="result hidden" tal:content="self"></div>
+
+# We currently must put a hidden result div in the body next to the problem,
+# because existing code to show grades depends on this. (Ultimately this should change.)
+# It is easier and more reliable to put it in the problem itself than as something on
+# the mathcountsresult, because there may not be a mathcountsresult.
+
+# name: mathcountsresult
+# <div class="result hidden" tal:content="self"></div>
 
 
 name: mathcountshint
 <a class="helplink"  tal:attributes="href self/attributes/href" tal:content="self/attributes/helptext" />
 
-name: mathcountssolution mathcountsdifficulty
+name: mathcountssolution mathcountsdifficulty mathcountsresult mathcountssolution
 
 # We have two approaches to rendering the problems as items in the form/ol.
 # The one is use is to let each child render itself; problems
