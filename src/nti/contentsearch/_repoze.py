@@ -1,12 +1,15 @@
 import re
-import collections
 from time import mktime
 from datetime import datetime
+from collections import Iterable
+from collections import OrderedDict
 
 from repoze.catalog.catalog import Catalog
 from repoze.catalog.indexes.text import CatalogTextIndex
 from repoze.catalog.indexes.field import CatalogFieldIndex
 from repoze.catalog.indexes.keyword import CatalogKeywordIndex
+
+from whoosh import analysis
 
 from nltk import clean_html
 from nltk.tokenize import RegexpTokenizer
@@ -29,7 +32,7 @@ def to_list(data):
 		data = [data]
 	elif isinstance(data, list):
 		pass
-	elif isinstance(data, collections.Iterable):
+	elif isinstance(data, Iterable):
 		data = list(data)
 	elif data is not None:
 		data = [data]
@@ -42,6 +45,22 @@ def epoch_time(dt):
 		return seconds
 	else:
 		return 0
+
+# -----------------------------------
+
+def ngram_tokens(text, minsize=2, maxsize=10, at='start', unique=True):
+	rext = analysis.RegexTokenizer()
+	ngf = analysis.NgramFilter(minsize=minsize, maxsize=maxsize, at=at)
+	stream = rext(unicode(text))
+	if not unique:
+		result = [token.copy() for token in ngf(stream)]
+	else:
+		result = OrderedDict( {token.text:token.copy() for token in ngf(stream)}).values()
+	return result
+		
+def ngrams(text):
+	result = [token.text for token in ngram_tokens(text)]
+	return ' '.join(sorted(result, cmp=lambda x,y: cmp(len(x),len(y))))
 
 # -----------------------------------
 	
@@ -66,7 +85,7 @@ def _attrs(names):
 
 # -----------------------------------
 
-def _last_modified(obj, default=0):
+def _last_modified(obj, default):
 	value  = get_attr(obj, ['lastModified', 'Last Modified'], default)
 	if value:
 		if isinstance(value, basestring):
@@ -77,19 +96,17 @@ def _last_modified(obj, default=0):
 		value = 0
 	return value
 
-def _keywords(names, _default=[]):
-	
-	def f(obj, default=_default):
+def _keywords(names,):
+	def f(obj, default):
 		words  = get_attr(obj, names, default)
 		if words:
 			if isinstance(words, basestring):
 				words = words.split()
-			elif isinstance(words, collections.Iterable):
+			elif isinstance(words, Iterable):
 				words = [w for w in words]
 			else:
 				words = [words]
 		return words
-			
 	return f
 	
 # -----------------------------------
@@ -104,10 +121,11 @@ def get_content(text, tokenizer=default_tokenizer):
 	text = ' '.join(words)
 	return unicode(text)
 
-def _content(names, _default=None):
-	def f(obj, default=_default):
+def _content(names):
+	def f(obj, default):
 		value = get_attr(obj, names, default)
-		return get_content(value)
+		value = get_content(value)
+		return value
 	return f
 
 def get_multipart_content(source):
@@ -116,7 +134,7 @@ def get_multipart_content(source):
 			
 	if isinstance(source, basestring):
 		return get_content(source)
-	elif isinstance(source, collections.Iterable):
+	elif isinstance(source, Iterable):
 		
 		def process_dict(d):
 			clazz = item.get('Class', None)
@@ -147,12 +165,19 @@ def get_multipart_content(source):
 			return gbls[name](source)
 	return u''
 
-def _multipart_content(names, _default=None):
-	def f(obj, default=_default):
+def _multipart_content(names):
+	def f(obj, default):
 		source = get_attr(obj, names, default)
-		return get_multipart_content(source) if source else default
+		result = get_multipart_content(source)
+		return result
 	return f
 
+def _ngrams(names):
+	def f(obj, default):
+		source = get_attr(obj, names, default)
+		result = ngrams(get_multipart_content(source))
+		return result
+	return f
 
 # -----------------------------------
 
@@ -205,12 +230,28 @@ def create_notes_catalog():
 	catalog = _create_treadable_mixin_catalog()
 	catalog['references'] = CatalogKeywordIndex(_keywords(['references']))
 	catalog['body'] = CatalogTextIndex(_multipart_content(['body']))
-	#catalog['quick'] = CatalogTextIndex('quick')
+	catalog['quick'] = CatalogTextIndex(_ngrams(['body']))
 	return catalog
 	
 def create_highlight_catalog():
 	catalog = _create_treadable_mixin_catalog()
 	catalog['color'] = CatalogFieldIndex(_attrs(['color']))
+	catalog['quick'] = CatalogTextIndex(_ngrams(['startHighlightedFullText']))
 	catalog['startHighlightedFullText'] = CatalogTextIndex(_content(['startHighlightedFullText']))
 	return catalog
 
+if __name__ == '__main__':
+	d = {
+			"MimeType": "application/vnd.nextthought.note",
+			"body": ["a setup note"],
+			"ContainerId": "test.user.container.1324420216.04",
+			"Creator": "test.user.1@nextthought.com",
+			"OID": "tag:nextthought.com,2011-10:test.user.1@nextthought.com-OID-0x02d1:5573657273",
+			"ID": "tag:nextthought.com,2011-10:test.user.1@nextthought.com-OID-0x02d1:5573657273",
+			"Class": "Note"
+	}
+	
+	#get_note_content(d)
+	c = create_notes_catalog()
+	c.index_doc(1, d)
+	
