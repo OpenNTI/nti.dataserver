@@ -36,6 +36,7 @@ from requests.exceptions import RequestException
 #import requests.async
 
 import urllib
+import urlparse
 import anyjson as json
 
 REL_HANDSHAKE = 'logon.handshake'
@@ -74,6 +75,17 @@ def _forgetting( request, redirect_param_name, no_param_class, redirect_value=No
 		redirect_value = request.params.get( redirect_param_name )
 
 	if redirect_value:
+		if error:
+			parsed = urlparse.urlparse( redirect_value )
+			parsed = list(parsed)
+			query = parsed[4]
+			if query:
+				query = query + '&error=' + urllib.quote( error )
+			else:
+				query = 'error=' + urllib.quote( error )
+			parsed[4] = query
+			redirect_value = urlparse.urlunparse( parsed )
+
 		response = hexc.HTTPSeeOther( location=redirect_value )
 	else:
 		response = no_param_class()
