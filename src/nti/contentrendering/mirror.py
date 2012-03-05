@@ -2,8 +2,8 @@ import os
 import sys
 import glob
 import shutil
+import socket
 import thread
-
 import tempfile
 import html5lib
 import subprocess
@@ -18,16 +18,26 @@ logger = logging.getLogger( __name__ )
 
 WGET_CMD = '/opt/local/bin/wget'
 
+def get_open_port():
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	try:
+		s.bind(("",0))
+		s.listen(1)
+		return s.getsockname()[1]
+	finally:
+		s.close()
+		
 def main(url_or_path, out_dir="/tmp/mirror",
 		 zip_archive=True,
 		 zip_root_dir=None,
 		 process_links=True,
 		 archive_index=False, # The Whoosh search index files, not 'index.html'
-		 port=7777):
+		 port=None):
 
 	global WGET_CMD
 
 	httpd = None
+	port = port or get_open_port()
 	try:
 		result = False
 
@@ -81,8 +91,6 @@ def main(url_or_path, out_dir="/tmp/mirror",
 				except OSError: pass
 
 def _zip_archive(source_path, out_dir, zip_name="archive.zip", zip_root_dir=None):
-
-	out_file = os.path.join(out_dir, zip_name)
 
 	logger.info( "Archiving '%s' to '%s'", source_path, zip_name )
 
@@ -176,7 +184,7 @@ def _get_index_dir(url, out_dir):
 import SimpleHTTPServer
 import SocketServer
 
-def _launch_server(data_path, port = 7777):
+def _launch_server(data_path, port=None):
 
 	if not os.path.exists(data_path):
 		raise Exception("'%s' does not exists" % data_path)
@@ -186,6 +194,7 @@ def _launch_server(data_path, port = 7777):
 	def ignore(self, *args, **kwargs):
 		pass
 
+	port = port or get_open_port()
 	handler = SimpleHTTPServer.SimpleHTTPRequestHandler
 	handler.log_error = ignore
 	handler.log_message = ignore
