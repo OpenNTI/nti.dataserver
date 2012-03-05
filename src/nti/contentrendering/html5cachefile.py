@@ -1,6 +1,7 @@
 import re
 import os
 import sys
+import socket
 import shutil
 import thread
 import tempfile
@@ -13,11 +14,21 @@ from pyquery import PyQuery as pq
 
 WGET_CMD = '/opt/local/bin/wget'
 
-def main(url_or_path, out_dir="/tmp/", manifest='cache-manifest', port=7776):
+def get_open_port():
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	try:
+		s.bind(("",0))
+		s.listen(1)
+		return s.getsockname()[1]
+	finally:
+		s.close()
+		
+def main(url_or_path, out_dir="/tmp/", manifest='cache-manifest', port=None):
 	"""
 	Creates an html cache-manifest file with all resources in the specified url
 	"""
 	httpd = None
+	port = port or get_open_port()
 	try:
 		if not _is_valid_url(url_or_path):
 			httpd = _launch_server(url_or_path, port)
@@ -71,7 +82,7 @@ def _process_node(node, resources):
 
 # -------------------------------
 
-def _launch_server(data_path, port = 7777):
+def _launch_server(data_path, port = None):
 
 	import SimpleHTTPServer
 	import SocketServer
@@ -84,6 +95,7 @@ def _launch_server(data_path, port = 7777):
 	def ignore(self, *args, **kwargs):
 		pass
 
+	port = port or get_open_port()
 	handler = SimpleHTTPServer.SimpleHTTPRequestHandler
 	handler.log_error = ignore
 	handler.log_message = ignore
