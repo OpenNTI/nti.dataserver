@@ -19,8 +19,10 @@ import gevent
 import gevent.socket
 import logging
 logger = logging.getLogger(__name__)
+import warnings
 
 import sys
+from datetime import datetime
 import nti.appserver.standalone
 from paste.deploy import loadwsgi
 
@@ -91,11 +93,26 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 			# environment, as per ggevent.
 			worker = self
 			class PhonyRequest(object):
-				pass
+				headers = ()
+
+
 			class HandlerClass(self.app_server.handler_class,ggevent.PyWSGIHandler):
 
 				def log_request(self):
-					ggevent.PyWSGIHandler.log_request( self )
+					try:
+						ggevent.PyWSGIHandler.log_request( self )
+					except TypeError:
+						warnings.warn( "Incompatibility detected in gunicorn 0.14.1. Initiate workaround" )
+						# gunicorn 0.14.1 has a bug in ggevent, it fails to log
+						# properly by not passing the request. Fake it ourself.
+						hdrs = self.headers
+						self.headers = ()
+						start = datetime.fromtimestamp(self.time_start)
+						finish = datetime.fromtimestamp(self.time_finish)
+						response_time = finish - start
+						self.server.log.access(self, PhonyRequest, self.environ, response_time)
+						self.headers = hdrs
+
 				# We are using the SocketIO server and the Gevent Worker
 				# Only the Sync and Async workers setup the environment
 				# and deal with things like x-forwarded-for. So we
