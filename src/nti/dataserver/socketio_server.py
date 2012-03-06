@@ -3,6 +3,7 @@ import logging
 logger = logging.getLogger( __name__ )
 
 import traceback
+import warnings
 
 from Queue import Empty
 from gevent.queue import Queue
@@ -240,6 +241,17 @@ class XHRPollingTransport(socketio.transports.XHRPollingTransport):
 	def __init__(self, *args, **kwargs):
 		super(XHRPollingTransport, self).__init__(*args, **kwargs)
 
+	def write(self, data=""):
+		# In gevent 0.x, pywsgi established response_headers and response_headers_list
+		# as soon as start_response was finished, and socketio relied on this.
+		# In gevent 1.0, this no longer happens because final headers are deferred until finalize_headers()
+		# is called, which is the first time data is written.
+		# Thus, we do it ourself
+		if not hasattr( self.handler, 'response_headers_list'):
+			warnings.warn( "Applying compatibility shim for gevent/socketio response_headers_list" )
+			self.handler.response_headers_list = [x[0] for x in self.handler.response_headers]
+		super(XHRPollingTransport,self).write( data=data )
+
 	def get(self, session):
 		session.clear_disconnect_timeout()
 		session_proxy = _SessionEventProxy()
@@ -298,7 +310,7 @@ class XHRPollingTransport(socketio.transports.XHRPollingTransport):
 				if pckt is not None:
 					session.put_server_msg( pckt )
 		except Exception:
-			traceback.print_exc()
+			logger.exception( "Failed te get post in XHRPolling; unconfirming connection" )
 			# The client will expect to re-confirm the session
 			# by sending a blank post when it gets an error.
 			# Our state must match.
