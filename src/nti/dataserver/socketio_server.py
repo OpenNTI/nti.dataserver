@@ -120,6 +120,8 @@ class SocketIOHandler(socketio.handler.SocketIOHandler):
 
 	_add_cors_ = False
 
+	web_socket_handler = WebSocketHandler
+
 	def __init__( self, *args, **kwargs ):
 		"""
 		:param socket socket: The client socket.
@@ -137,7 +139,7 @@ class SocketIOHandler(socketio.handler.SocketIOHandler):
 			'xhr-polling': XHRPollingTransport
 		}
 		self.websocket_connection = False # Because the super swizzles classes
-		self.web_socket_handler = WebSocketHandler
+
 
 	def handle_one_response( self, *args, **kwargs ):
 		self.handling_session_cm = self.context_manager_callable()
