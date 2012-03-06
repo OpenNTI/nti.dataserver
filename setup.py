@@ -123,6 +123,7 @@ setup(
 		'zope.tales',
 		'zope.testing',
 		'zope.traversing',
+		#'zlog',
 		#'zopyx.txng3.core',
 		#'zopyx.txng3.ext'
 		],
