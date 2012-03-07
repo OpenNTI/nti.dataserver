@@ -35,7 +35,7 @@ pip install --install-option="--zmq=/opt/local" pyzmq
 PROJECT_PARENT=${2:-~/Projects}
 echo "Checking project out to $PROJECT_PARENT/NextThoughtPlatform"
 
-if [ -f "$PROJECT_PARENT/NextThoughtPlatform" ]; then
+if [ -d "$PROJECT_PARENT/NextThoughtPlatform" ]; then
 	cd $PROJECT_PARENT/NextThoughtPlatform
 	svn up
 else
@@ -43,7 +43,7 @@ else
 	svn co https://svn.nextthought.com/repository/NextThoughtPlatform/trunk $PROJECT_PARENT/NextThoughtPlatform
 fi
 
-export INSTALL_EXTRAS="False"
+# export INSTALL_EXTRAS="True"
 
 cd $PROJECT_PARENT/NextThoughtPlatform/nti.dataserver
 
@@ -52,7 +52,7 @@ cd $PROJECT_PARENT/NextThoughtPlatform/nti.dataserver
 
 pip install -r requirements.txt
 
-if [ "$INSTALL_EXTRAS"=="True" ]; then
+if [ "$INSTALL_EXTRAS" ]; then
 
 	echo "Installing extras"
 
