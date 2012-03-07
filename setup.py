@@ -123,9 +123,10 @@ setup(
 		'zope.tales',
 		'zope.testing',
 		'zope.traversing',
-		#'zlog',
-		#'zopyx.txng3.core',
-		#'zopyx.txng3.ext'
+		# textindexng3
+		'zlog',
+		'zopyx.txng3.core',
+		'zopyx.txng3.ext'
 		],
 	extras_require = {'test': ['zope.testing', 'zc.buildout'], 'tools': ['ipython', 'httpie']},
 	dependency_links = ['http://svn.wikimedia.org/svnroot/pywikipedia/trunk/pywikipedia/'],
