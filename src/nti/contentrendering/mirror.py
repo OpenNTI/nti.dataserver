@@ -26,7 +26,7 @@ def get_open_port():
 		return s.getsockname()[1]
 	finally:
 		s.close()
-		
+
 def main(url_or_path, out_dir="/tmp/mirror",
 		 zip_archive=True,
 		 zip_root_dir=None,

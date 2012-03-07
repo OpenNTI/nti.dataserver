@@ -60,6 +60,10 @@ class MessageInfo( contenttypes.ThreadableExternalizableMixin,
 
 	_prefer_oid_ = False
 
+	# The usernames of occupants of the initial room, and others
+	# the transcript should go to. Set by policy.
+	sharedWith = ()
+
 	def __init__( self ):
 		super(MessageInfo,self).__init__()
 		self.ID = uuid.uuid4().hex
@@ -72,7 +76,6 @@ class MessageInfo( contenttypes.ThreadableExternalizableMixin,
 		self.body = None
 		self.recipients = ()
 		self.Status = STATUS_INITIAL
-		self.sharedWith = None # The usernames of occupants of the initial room
 
 	def get_Sender(self):
 		return self.Creator
@@ -1194,4 +1197,3 @@ class Chatserver(object):
 
 import ZODB.interfaces
 from BTrees import OOBTree
-

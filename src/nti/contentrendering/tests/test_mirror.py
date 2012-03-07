@@ -35,6 +35,7 @@ class TestMirror(ConfiguringTestBase):
 		def execute_fetch(arg):
 			# This is pretty fragile. We're depending on the way we construct the
 			# command string we use for wget.
+			assert_that( arg[-1], contains_string( 'http://localhost:7777' ) )
 			path = arg[-1][len('http://localhost:7777/'):]
 			fetched_urls.append( path )
 			for p in arg:
@@ -59,7 +60,8 @@ class TestMirror(ConfiguringTestBase):
 
 		assert_that( os.path.exists('archive.zip'), is_( False ) )
 		mirror.main( os.path.join( os.path.dirname(__file__), 'mirror_video_base' ),
-					 self.temp_dir, )
+					 self.temp_dir,
+					 port=7777)
 		# There should now be an archive file. (Verifying the contents is a bit harder)
 		assert_that( os.path.exists('archive.zip'), is_( True ) )
 		os.remove( 'archive.zip' )
@@ -74,4 +76,3 @@ class TestMirror(ConfiguringTestBase):
 		# And it's a set
 		fetched_urls.sort()
 		assert_that( fetched_urls, has_length( len(set( fetched_urls )) ) )
-

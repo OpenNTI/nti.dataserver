@@ -496,28 +496,7 @@ class TestChatserver(ConfiguringTestBase):
 		msg.Body = 'This is the body'
 		msg.channel = chat.CHANNEL_WHISPER
 		chatserver.post_message_to_room( room.ID, msg ) # jason whispers to Chris AND sjohnson
-		assert_that( msg.sharedWith, is_( none() ) )
-
-		# It should not be in anyone's transcript
-		assert_that( chatserver.transcript_for_user_in_room( 'sjohnson', room.ID ),
-					 is_( none() ) )
-
-		# Every one of them should have it in their TS
-		for user in ('chris', 'jason', 'sjohnson'):
-			assert_that(chatserver.transcript_for_user_in_room( user, room.ID ),
-						is_( none() ))
-
-	@WithMockDSTrans
-	def test_whisper_too_many_dropped(self):
-		room, chatserver = self._create_moderated_room()
-
-		msg = chat.MessageInfo()
-		msg.Creator = 'jason'
-		msg.recipients = ['chris', 'jason', 'sjohnson']
-		msg.Body = 'This is the body'
-		msg.channel = chat.CHANNEL_WHISPER
-		chatserver.post_message_to_room( room.ID, msg ) # jason whispers to Chris AND sjohnson
-		assert_that( msg.sharedWith, is_( none() ) )
+		assert_that( msg.sharedWith, is_( () ) )
 
 		# It should not be in anyone's transcript
 		assert_that( chatserver.transcript_for_user_in_room( 'sjohnson', room.ID ),
@@ -539,7 +518,7 @@ class TestChatserver(ConfiguringTestBase):
 		msg.Body = 'This is the body'
 		msg.channel = chat.CHANNEL_WHISPER
 		chatserver.post_message_to_room( room.ID, msg ) # jason whispers to Chris
-		assert_that( msg.sharedWith, is_( none() ) )
+		assert_that( msg.sharedWith, is_( () ) )
 
 		# No one has it, it got dropped.
 		for user in ('chris', 'jason'):
@@ -661,4 +640,3 @@ if __name__ == '__main__':
 #	logging.basicConfig()
 #	logging.getLogger( 'nti.dataserver.chat' ).setLevel( logging.DEBUG )
 	unittest.main(verbosity=3)
-
