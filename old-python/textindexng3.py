@@ -1,8 +1,8 @@
 import logging
 logger = logging.getLogger(__name__)
 
-import zopyx.txng3.core.logger as to_ignore
-to_ignore.LOG = logger
+import zopyxtxng3corelogger
+sys.modules["zopyx.txng3.core.logger"] = zopyxtxng3corelogger
 
 from zope import component
 from zope.interface import implements
