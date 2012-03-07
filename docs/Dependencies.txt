@@ -1,5 +1,7 @@
 Dependencies (macports):
-- gcc44				# 2012-03-07				
+- gcc44				# 2012-03-07
+- llvm-gcc-4.2		# 2012-03-07 (Optional)
+
 - py27-cython		# 2011-08-31
 - py27-zmq			# 2.10.0, and corresponding ZMQ. 2011-10-22
 - py27-gevent		# For greenlets, runloop, and sockio. 2011-08-26
@@ -22,7 +24,7 @@ Dependencies (macports):
 - mercurial 		# 2012-02-24 (Optional)
 - py27-hggit		# 2012-02-24 (Optional)
 - libmemcached		# 2012-02-24, 1.0.4
-- mysql5-devel		# "", When you install, link mysql_config5 to mysql_config
+- mysql5-devel		# "", When you install, link mysql_config5 to mysql_config, try it with configure.compiler=llvm-gcc-4.2 if fail w/o
 
 - SuiteSparse 		# 2012-03-07 - (Optional)
 - swig-python		# 2012-03-07 - (Optional)
