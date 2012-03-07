@@ -124,7 +124,6 @@ setup(
 		'zope.testing',
 		'zope.traversing',
 		# textindexng3
-		'zlog',
 		'zopyx.txng3.core',
 		'zopyx.txng3.ext'
 		],
