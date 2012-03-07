@@ -159,7 +159,7 @@ class TranscriptSummary(datastructures.ExternalizableInstanceDict):
 
 		self.Contributors = set()
 		for msg in _messages:
-			self.Contributors.update( msg.sharedWith )
+			self.Contributors.update( msg.sharedWith or () )
 
 		self.links = self._create_links( meeting_storage )
 
