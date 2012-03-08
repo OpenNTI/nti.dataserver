@@ -155,7 +155,7 @@ class ExampleDatabaseInitializer(object):
 				   'chris.utz', 'carlos.sanchez', 'jonathan.grimes',
 				   'pacifique.mahoro', 'eric.anderson', 'jeff.muehring',
 				   'aaron.eskam',
-				   'leo.parker', 'troy.daley', 'steve.johnson' ):
+				   'leo.parker', 'troy.daley', 'steve.johnson','greg.higgins','nathalie.kaligirwa' ):
 			USERS.append( (uid + '@nextthought.com', uid.replace( '.', ' ').title() ) )
 
 		# Add test users
