@@ -424,6 +424,25 @@ def _deal_with_external_account( request, fname, lname, email, idurl, iface, cre
 		assert getattr( user, url_attr ) == idurl
 	return user
 
+STATIC_COMMUNITIES = ('MathCounts',)
+from zope.lifecycleevent.interfaces import IObjectAddedEvent, IObjectModifiedEvent
+@component.adapter(nti_interfaces.IUser,IObjectAddedEvent)
+def add_new_user_to_static_communities( user, object_added_event ):
+	# Ultimately there should be a bunch of stuff that gets done
+	# when users are added, based on...some heuristics...
+	# in the immediate term, we will add new users to some pre-defined
+	# communities, if they exist
+	if object_added_event.oldParent:
+		# Only for new users
+		return
+	for com_name in STATIC_COMMUNITIES:
+		community = users.Entity.get_entity( com_name )
+		if community:
+			user.join_community( community )
+			user.follow( community )
+
+
+
 
 def _openidcallback( context, request, success_dict ):
 	# It seems that the identity_url is actually

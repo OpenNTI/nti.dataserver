@@ -135,8 +135,8 @@ _DATA_QUIZ_1 = {'Class': 'Quiz',
 class ExampleDatabaseInitializer(object):
 	interface.implements(gen_interfaces.IInstallableSchemaManager)
 
-	generation = 2
-	minimum_generation = 2
+	generation = 3
+	minimum_generation = 3
 
 	def __init__( self, *args ):
 		pass
@@ -201,6 +201,10 @@ class ExampleDatabaseInitializer(object):
 		ntiCommunity.realname = ntiCommunity.username
 		ntiCommunity.alias = 'NTI'
 
+		mathcountsCommunity = Community( 'MathCounts' )
+		mathcountsCommunity.realname = mathcountsCommunity.username
+		mathcountsCommunity.alias = 'MathCounts'
+
 		return (aopsCommunity, drgCommunity, ntiCommunity)
 
 	def _add_friendslists_to_user( self, for_user ):
@@ -230,8 +234,6 @@ class ExampleDatabaseInitializer(object):
 		fl.addFriend( 'grey.allman@nextthought.com' )
 		fl.addFriend( 'jeff.muehring@nextthought.com' )
 		fl.addFriend( 'ken.parker@nextthought.com' )
-		fl.addFriend( 'greg.higgins@nextthought.com' )
-		fl.addFriend( 'nathalie.kaligirwa@nextthought.com' )
 		fl.containerId = 'FriendsLists'
 		for_user.addContainedObject( fl )
 
@@ -323,3 +325,11 @@ class ExampleDatabaseInitializer(object):
 		conn = context.connection
 		root = conn.root()
 		self._install_quizzes( root )
+
+		# Add a missing community, if needed
+		mathcountsCommunity = Community( 'MathCounts' )
+		mathcountsCommunity.realname = mathcountsCommunity.username
+		mathcountsCommunity.alias = 'MathCounts'
+		if mathcountsCommunity.username not in root['users']:
+			logger.info( "Creating MathCounts community" )
+			root['users'][mathcountsCommunity.username] = mathcountsCommunity
