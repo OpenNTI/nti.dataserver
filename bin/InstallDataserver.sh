@@ -43,7 +43,7 @@ else
 	svn co https://svn.nextthought.com/repository/NextThoughtPlatform/trunk $PROJECT_PARENT/NextThoughtPlatform
 fi
 
-# export INSTALL_EXTRAS="True"
+export INSTALL_EXTRAS="True"
 
 cd $PROJECT_PARENT/NextThoughtPlatform/nti.dataserver
 
