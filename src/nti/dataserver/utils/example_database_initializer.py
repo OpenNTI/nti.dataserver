@@ -230,6 +230,8 @@ class ExampleDatabaseInitializer(object):
 		fl.addFriend( 'grey.allman@nextthought.com' )
 		fl.addFriend( 'jeff.muehring@nextthought.com' )
 		fl.addFriend( 'ken.parker@nextthought.com' )
+		fl.addFriend( 'greg.higgins@nextthought.com' )
+		fl.addFriend( 'nathalie.kaligirwa@nextthought.com' )
 		fl.containerId = 'FriendsLists'
 		for_user.addContainedObject( fl )
 
