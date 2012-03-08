@@ -4,7 +4,7 @@ from __future__ import print_function, unicode_literals
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
-from hamcrest import (assert_that, is_, none, ends_with, starts_with,
+from hamcrest import (assert_that, is_, none, not_none, ends_with, starts_with,
 					  has_entry, has_length, has_key, is_not, has_item,
 					  same_instance, none, greater_than_or_equal_to)
 from hamcrest.library import has_property
@@ -191,6 +191,9 @@ class TestLogon(ConfiguringTestBase):
 	def test_create_from_external( self ):
 		component.provideHandler( eventtesting.events.append, (None,) )
 		component.provideHandler( _handle_user_add_event )
+		# For now, we are adding to some predefined communities
+		mc = users.Community( 'MathCounts' )
+		self.ds.root['users'][mc.username] = mc
 		user = logon._deal_with_external_account( get_current_request(),
 												  "Jason",
 												  "Madden",
@@ -201,6 +204,10 @@ class TestLogon(ConfiguringTestBase):
 		assert_that( user, provides( nti_interfaces.IOpenIdUser ) )
 		assert_that( user, is_( users.OpenIdUser ) )
 		assert_that( user, has_property( 'identity_url', 'http://example.com' ) )
+
+		assert_that( users.Entity.get_entity( 'MathCounts' ), not_none() )
+		assert_that( user.communities, has_item( 'MathCounts' ) )
+		assert_that( user.following, has_item( 'MathCounts' ) )
 
 		# The creation of this user caused events to fire
 		assert_that( eventtesting.getEvents(), has_length( greater_than_or_equal_to( 1 ) ) )
