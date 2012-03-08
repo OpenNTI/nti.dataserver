@@ -2,9 +2,25 @@
 from zope import interface
 
 class IUserIndexManager(interface.Interface):
-	pass
+	
+	def search(query, limit=None, search_on=None):
+		"""
+		search the content using the specified query
+		
+		:param query: Search query
+		:param limit: max number of search hits
+		:param search_on: type items to search
+		"""
 
-
+	def suggest(self, term, prefix=-1, **kwargs):
+		"""
+		perform a word suggestion
+		
+		:param term: Search query
+		:param limit: max number of search hits
+		:param search_on: type items to search
+		"""
+		
 class IBookIndexManager(interface.Interface):
 	pass
 

@@ -151,6 +151,10 @@ class TextIndexNG3(object):
 					
 		return results
 		
+	def suggest(self, term, threshold=0.75, prefix=-1): 
+		lexicon = self.index.getLexicon()
+		return lexicon.getSimiliarWords(term=term, threshold=threshold, common_length=prefix) 
+	
 	# -------------------
 	
 	def index_object(self, docid, obj, *args, **kwargs):
@@ -177,7 +181,7 @@ class TextIndexNG3(object):
 			else:
 				result.update(docs)
 		return result
-
+	
 	# ---------------
 	
 	@property
@@ -228,6 +232,10 @@ class CatalogTextIndexNG3(CatalogIndex, TextIndexNG3):
 	@property
 	def field(self):
 		return self.fields[0]
+	
+	def suggest(self, term, threshold=0.75, prefix=-1): 
+		words = TextIndexNG3.suggest(self, term, threshold, prefix)
+		return sorted(words, key=lambda x: x[1], reverse=True)
 	
 	# ---------------
 	
