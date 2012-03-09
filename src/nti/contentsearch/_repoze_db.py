@@ -36,8 +36,8 @@ class DataStore():
 		
 		self.conn = self.db.open(self.transaction_manager)
 			
-		with self.dbTrans() as conn:
-			dbroot = conn.root()
+		with self.dbTrans():
+			dbroot = self.root
 			if not dbroot.has_key(users_key):
 				dbroot[users_key] = OOBTree()
 			
