@@ -59,24 +59,24 @@ class DataStore():
 	def docMap(self):
 		return self.root[self.docMap_key]
 		
-	def add_catalog(self, user, catalog, type_name):
-		if user not in self.users:
-			self.users[user] = PersistentMapping()
-		if type_name not in self.users[user]:
-			self.users[user][type_name] = catalog
+	def add_catalog(self, username, catalog, type_name):
+		if username not in self.users:
+			self.users[username] = PersistentMapping()
+		if type_name not in self.users[username]:
+			self.users[username][type_name] = catalog
 	
-	def get_catalog(self, user, type_name):
-		pm = self.users.get(user, {})
+	def get_catalog(self, username, type_name):
+		pm = self.users.get(username, {})
 		catalog = pm.get(type_name, None)
 		return catalog
 		
-	def get_catalog_names(self, user):
-		pm = self.users.get(user, {})
+	def get_catalog_names(self, username):
+		pm = self.users.get(username, {})
 		names = pm.keys()
 		return names
 	
-	def get_catalogs(self, user):
-		pm = self.users.get(user, {})
+	def get_catalogs(self, username):
+		pm = self.users.get(username, {})
 		values = pm.values()
 		return values
 	
