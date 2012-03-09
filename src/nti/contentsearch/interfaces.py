@@ -12,7 +12,7 @@ class IUserIndexManager(interface.Interface):
 		:param search_on: type items to search
 		"""
 
-	def suggest(self, term, limit=None, prefix=-1, search_on=None, **kwargs):
+	def suggest(term, limit=None, prefix=-1, search_on=None, **kwargs):
 		"""
 		perform a word suggestion
 		
@@ -22,15 +22,52 @@ class IUserIndexManager(interface.Interface):
 		:param search_on: type items to search
 		"""
 		
+	def suggest_and_search(query, limit=None, search_on=None):
+		"""
+		do a word suggestion and perform a search
+		
+		:param term: Search query
+		:param limit: max number of search hits
+		:param search_on: type items to search
+		"""
+			
+	# -----------------------------
+	
+	def index_content(data, type_name=None):
+		"""
+		index the specified content
+		
+		:param data: data to index
+		:param type_name: data type
+		"""
+		
+	def update_content(data, type_name=None):
+		"""
+		update the specified content index
+		
+		:param data: data to index
+		:param type_name: data type
+		"""
+
+	def delete_content(data, type_name=None):
+		"""
+		delete from the index the specified content		
+		:param data: data to delete
+		:param type_name: data type
+		"""
+	
+# -----------------------------
+		
 class IBookIndexManager(interface.Interface):
 	pass
 
-
+# -----------------------------
+	
 class IIndexManager(interface.Interface):
 	pass
 
-
-
+# -----------------------------
+	
 class IIndexableContent(interface.Interface):
 
 	def get_schema():
