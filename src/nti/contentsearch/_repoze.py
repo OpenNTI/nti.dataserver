@@ -5,7 +5,6 @@ from collections import Iterable
 from collections import OrderedDict
 
 from repoze.catalog.catalog import Catalog
-from repoze.catalog.indexes.text import CatalogTextIndex
 from repoze.catalog.indexes.field import CatalogFieldIndex
 from repoze.catalog.indexes.keyword import CatalogKeywordIndex
 
@@ -18,6 +17,7 @@ from nti.dataserver.chat import MessageInfo
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.contenttypes import Canvas
 from nti.dataserver.contenttypes import Highlight
+from nti.contentsearch.textindexng3 import CatalogTextIndexNG3
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -227,7 +227,7 @@ def get_messageinfo_content(data):
 # -----------------------------------
 
 def _create_text_index(field, discriminator):
-	return CatalogTextIndex(discriminator)
+	return CatalogTextIndexNG3(field, discriminator)
 
 def _create_treadable_mixin_catalog():
 	catalog = Catalog()
@@ -243,7 +243,7 @@ def _create_treadable_mixin_catalog():
 
 def create_notes_catalog():
 	catalog = _create_treadable_mixin_catalog()
-	catalog['quick'] = _create_text_index('quick', _ngrams(['body']))
+	catalog['ngrams'] = _create_text_index('ngrams', _ngrams(['body']))
 	catalog['references'] = CatalogKeywordIndex(_keywords(['references']))
 	catalog['content'] = _create_text_index('content', _multipart_content(['body']))
 	return catalog
@@ -251,7 +251,7 @@ def create_notes_catalog():
 def create_highlight_catalog():
 	catalog = _create_treadable_mixin_catalog()
 	catalog['color'] = CatalogFieldIndex(_attrs(['color']))
-	catalog['quick'] = _create_text_index('quick', _ngrams(['startHighlightedFullText']))
+	catalog['ngrams'] = _create_text_index('ngrams', _ngrams(['startHighlightedFullText']))
 	catalog['content'] = _create_text_index('content', _content(['startHighlightedFullText']))
 	return catalog
 
@@ -259,24 +259,20 @@ def create_messageinfo_catalog():
 	catalog = _create_treadable_mixin_catalog()
 	catalog['id'] = CatalogFieldIndex(_attrs(['ID']))
 	catalog['channel'] = CatalogFieldIndex(_attrs(['channel']))
-	catalog['quick'] = _create_text_index('quick', _ngrams(['body']))
+	catalog['ngrams'] = _create_text_index('ngrams', _ngrams(['body']))
 	catalog['content'] = _create_text_index('content', _multipart_content(['body']))
 	catalog['references'] = CatalogKeywordIndex(_keywords(['references']))
 	catalog['recipients'] = CatalogKeywordIndex(_keywords(['recipients']))
 	return catalog
 
-if __name__ == '__main__':
-	d = {
-			"MimeType": "application/vnd.nextthought.note",
-			"body": ["a setup note"],
-			"ContainerId": "test.user.container.1324420216.04",
-			"Creator": "test.user.1@nextthought.com",
-			"OID": "tag:nextthought.com,2011-10:test.user.1@nextthought.com-OID-0x02d1:5573657273",
-			"ID": "tag:nextthought.com,2011-10:test.user.1@nextthought.com-OID-0x02d1:5573657273",
-			"Class": "Note"
-	}
-	
-	#get_note_content(d)
-	c = create_notes_catalog()
-	c.index_doc(1, d)
-	
+def create_catalog(type_name='Notes'):
+	type_name = type_name[0:-1] if type_name.endswith('s') else type_name
+	type_name = type_name.lower()
+	if type_name == 'notes':
+		return create_notes_catalog()
+	elif type_name == 'highlight':
+		return create_highlight_catalog()
+	elif type_name =='messageinfo':
+		return create_messageinfo_catalog()
+	else:
+		raise Exception("cannot create catalog for type '%s'" % type_name)

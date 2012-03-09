@@ -38,6 +38,9 @@ class UserIndexManager(object):
 	def storage(self):
 		return self.index_storage
 
+	def get_username(self):
+		return self.username
+		
 	def get_content_type(self,  typeName='Notes', indexname=None):
 		indexname = indexname or self.get_content_indexname(typeName)
 		return self.indices[indexname].instance if self.indices.has_key(indexname) else None
