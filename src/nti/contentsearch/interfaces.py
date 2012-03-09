@@ -12,12 +12,13 @@ class IUserIndexManager(interface.Interface):
 		:param search_on: type items to search
 		"""
 
-	def suggest(self, term, prefix=-1, **kwargs):
+	def suggest(self, term, limit=None, prefix=-1, search_on=None, **kwargs):
 		"""
 		perform a word suggestion
 		
 		:param term: Search query
 		:param limit: max number of search hits
+		:param prefix: number of chars in terms for prefix
 		:param search_on: type items to search
 		"""
 		
