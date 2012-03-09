@@ -192,17 +192,17 @@ class IndexManager(object):
 				results = merge_suggest_and_search_results (results, job.value)
 		return results if results else empty_suggest_and_search_result(query)
 
-	def user_data_suggest(self, word, limit=None, maxdist=None, prefix=None, username=None, search_on=None ):
+	def user_data_suggest(self, term, limit=None, maxdist=None, prefix=None, username=None, search_on=None ):
 		results = None
-		if word:
+		if term:
 			jobs = []
 			for name in [username] + self.get_user_communities(username):
-				jobs.append(gevent.spawn(self._execute_user_search, UserIndexManager.suggest, name, word, \
+				jobs.append(gevent.spawn(self._execute_user_search, UserIndexManager.suggest, name, term, \
 										 limit=limit, maxdist=maxdist, prefix=prefix, search_on=search_on))
 			gevent.joinall(jobs)
 			for job in jobs:
 				results = merge_suggest_results (results, job.value)
-		return results if results else empty_suggest_result(word)
+		return results if results else empty_suggest_result(term)
 
 	##############################
 	

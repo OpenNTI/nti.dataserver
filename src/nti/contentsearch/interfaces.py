@@ -1,7 +1,6 @@
-
 from zope import interface
 
-class IUserIndexManager(interface.Interface):
+class ISearcher(interface.Interface):
 	
 	def search(query, limit=None, search_on=None):
 		"""
@@ -12,7 +11,7 @@ class IUserIndexManager(interface.Interface):
 		:param search_on: type items to search
 		"""
 
-	def suggest(term, limit=None, prefix=-1, search_on=None, **kwargs):
+	def suggest(term, limit=None, prefix=None, search_on=None, **kwargs):
 		"""
 		perform a word suggestion
 		
@@ -30,8 +29,15 @@ class IUserIndexManager(interface.Interface):
 		:param limit: max number of search hits
 		:param search_on: type items to search
 		"""
-			
-	# -----------------------------
+	
+# -----------------------------
+
+class IBookIndexManager(ISearcher):
+	pass
+	
+# -----------------------------
+
+class IUserIndexManager(ISearcher):
 	
 	def index_content(data, type_name=None):
 		"""
@@ -56,11 +62,6 @@ class IUserIndexManager(interface.Interface):
 		:param type_name: data type
 		"""
 	
-# -----------------------------
-		
-class IBookIndexManager(interface.Interface):
-	pass
-
 # -----------------------------
 	
 class IIndexManager(interface.Interface):

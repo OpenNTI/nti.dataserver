@@ -45,9 +45,10 @@ class BookIndexManager(object):
 			results = self.book.suggest_and_search(s, query, limit)
 		return results
 
-	def suggest(self, word, limit=None, maxdist=None, prefix=None):
+	def suggest(self, term, limit=None, prefix=None, **kwargs):
+		maxdist = kwargs.get('maxdist', None)
 		with self.bookidx.searcher() as s:
-			results = self.book.suggest(s, word, limit=limit, maxdist=maxdist, prefix=prefix)
+			results = self.book.suggest(s, term, limit=limit, maxdist=maxdist, prefix=prefix)
 		return results
 
 	##########################

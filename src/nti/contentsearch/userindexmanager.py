@@ -152,15 +152,16 @@ class UserIndexManager(object):
 					results = merge_suggest_and_search_results(results, rs)
 		return results if results else empty_suggest_and_search_result(query)
 
-	def suggest(self, word, limit=None, maxdist=None, prefix=None, search_on=None):
+	def suggest(self, term, limit=None, prefix=None, search_on=None, **kwargs):
 		results = None
+		maxdist = kwargs.get('maxdist', None)
 		search_on = self._adapt_search_on(search_on)
 		for t in self.indices.itervalues():
 			if not search_on or t.type_name in search_on:
 				with t.index.searcher() as searcher:
-					rs = t.instance.suggest(searcher=searcher, word=word, limit=limit, maxdist=maxdist, prefix=prefix)
+					rs = t.instance.suggest(searcher=searcher, word=term, limit=limit, maxdist=maxdist, prefix=prefix)
 					results = merge_suggest_results(results, rs)
-		return results if results else empty_suggest_result(word)
+		return results if results else empty_suggest_result(term)
 
 	def externalize(self, typeName='Notes'):
 		t = self.get_content_index(typeName, False)
