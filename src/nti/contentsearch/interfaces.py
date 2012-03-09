@@ -39,6 +39,11 @@ class IBookIndexManager(ISearcher):
 
 class IUserIndexManager(ISearcher):
 	
+	def get_username():
+		"""
+		return the user for this manager
+		"""
+		
 	def index_content(data, type_name=None):
 		"""
 		index the specified content
@@ -57,9 +62,17 @@ class IUserIndexManager(ISearcher):
 
 	def delete_content(data, type_name=None):
 		"""
-		delete from the index the specified content		
+		delete from the index the specified content
+		
 		:param data: data to delete
 		:param type_name: data type
+		"""
+		
+	def remove_index(type_name):
+		"""
+		remove the specified index
+		
+		:param type_name: index type
 		"""
 	
 # -----------------------------

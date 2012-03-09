@@ -5,7 +5,7 @@ from BTrees.OOBTree import OOBTree
 from persistent.mapping import PersistentMapping
 from repoze.catalog.document import DocumentMap
 
-# =====================
+# -----------------------------------
 
 class NoOpCM(object):
 
@@ -22,7 +22,7 @@ class NoOpCM(object):
 	def __exit__(self,*args):
 		pass
 	
-# =====================
+# -----------------------------------
 
 class DataStore():
 	
@@ -66,12 +66,20 @@ class DataStore():
 			self.users[user][type_name] = catalog
 	
 	def get_catalog(self, user, type_name):
-		catalog = None
-		pm = self.users.get(user, None)
-		if pm:
-			catalog = pm.get(type_name, None)
+		pm = self.users.get(user, {})
+		catalog = pm.get(type_name, None)
 		return catalog
 		
+	def get_catalog_names(self, user):
+		pm = self.users.get(user, {})
+		names = pm.keys()
+		return names
+	
+	def get_catalogs(self, user):
+		pm = self.users.get(user, {})
+		values = pm.values()
+		return values
+	
 	def pack(self):
 		self.db.pack()
 		
