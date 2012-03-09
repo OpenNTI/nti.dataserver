@@ -1565,7 +1565,11 @@ class User(Principal):
 				meeting = _get_shared_dataserver().get_by_oid( ntiid_summary )
 				result = self.getContainedObject( meeting.containerId,
 												  ntiids.make_ntiid( base=container_id, nttype=ntiids.TYPE_TRANSCRIPT_SUMMARY ) )
-				result = nti_interfaces.ITranscript(result)
+				# Default to returning none if we found no contained object,
+				# ultimately 404
+				result = nti_interfaces.ITranscript(result,None)
+				result or logger.debug( "Failed to find transcript given cid %s meetid %s meet %s",
+										container_id, ntiid_summary, meeting )
 			else:
 				# Try looking up the ntiid by name in each container
 				# TODO: This is terribly expensive
