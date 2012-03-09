@@ -76,6 +76,7 @@ if [ "$INSTALL_EXTRAS" ]; then
 	pip install numpy
 	pip install matplotlib
 	pip install scipy
+	pip install pil
 	
 	rm -rf $TMPWK_DIR
 fi
