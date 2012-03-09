@@ -269,6 +269,7 @@ reside in ``/etc/haproxy/haproxy.cfg``:
 	acl is_dyn path_beg /dataserver
 	acl is_dyn path_beg /library
 	acl is_dyn path_beg /socket.io
+	acl is_dyn path_beg /dictionary
 	# Consider a path_sub here for Search urls
 
 	acl is_ssl so_id 42

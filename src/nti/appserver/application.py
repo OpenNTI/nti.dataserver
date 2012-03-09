@@ -109,7 +109,11 @@ class _Main(object):
 		self.serveFiles.extend( list(serveFiles) )
 
 		for prefix, path  in serveFiles:
-			self.pyramid_config.add_static_view( prefix, path, cache_max_age=datetime.timedelta(days=1) )
+			# Note: We are not configuring caching for these files, nor gzip. In production
+			# usage, we MUST be behind a webserver that will deal with static
+			# files correctly (nginx, apache) by applying ETags to allow caching and Content-Encoding
+			# for speed.
+			self.pyramid_config.add_static_view( prefix, path )
 		self.pyramid_config.add_static_view( SOCKET_IO_PATH + '/static/', 'socketio:static/' )
 		self.serveFiles.append( ( '/' + SOCKET_IO_PATH + '/static/', None ) )
 		self.pyramid_app = self.pyramid_config.make_wsgi_app()
