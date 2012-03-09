@@ -226,6 +226,9 @@ def get_messageinfo_content(data):
 
 # -----------------------------------
 
+def _create_text_index(field, discriminator):
+	return CatalogTextIndex(discriminator)
+
 def _create_treadable_mixin_catalog():
 	catalog = Catalog()
 	catalog['last_modified'] = CatalogFieldIndex(_last_modified)
@@ -240,24 +243,24 @@ def _create_treadable_mixin_catalog():
 
 def create_notes_catalog():
 	catalog = _create_treadable_mixin_catalog()
+	catalog['quick'] = _create_text_index('quick', _ngrams(['body']))
 	catalog['references'] = CatalogKeywordIndex(_keywords(['references']))
-	catalog['content'] = CatalogTextIndex(_multipart_content(['body']))
-	catalog['quick'] = CatalogTextIndex(_ngrams(['body']))
+	catalog['content'] = _create_text_index('content', _multipart_content(['body']))
 	return catalog
 	
 def create_highlight_catalog():
 	catalog = _create_treadable_mixin_catalog()
 	catalog['color'] = CatalogFieldIndex(_attrs(['color']))
-	catalog['quick'] = CatalogTextIndex(_ngrams(['startHighlightedFullText']))
-	catalog['content'] = CatalogTextIndex(_content(['startHighlightedFullText']))
+	catalog['quick'] = _create_text_index('quick', _ngrams(['startHighlightedFullText']))
+	catalog['content'] = _create_text_index('content', _content(['startHighlightedFullText']))
 	return catalog
 
 def create_messageinfo_catalog():
 	catalog = _create_treadable_mixin_catalog()
 	catalog['id'] = CatalogFieldIndex(_attrs(['ID']))
 	catalog['channel'] = CatalogFieldIndex(_attrs(['channel']))
-	catalog['quick'] = CatalogTextIndex(_ngrams(['body']))
-	catalog['content'] = CatalogTextIndex(_multipart_content(['body']))
+	catalog['quick'] = _create_text_index('quick', _ngrams(['body']))
+	catalog['content'] = _create_text_index('content', _multipart_content(['body']))
 	catalog['references'] = CatalogKeywordIndex(_keywords(['references']))
 	catalog['recipients'] = CatalogKeywordIndex(_keywords(['recipients']))
 	return catalog
