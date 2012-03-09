@@ -11,8 +11,12 @@ from datetime import datetime
 from collections import OrderedDict
 
 from zope import interface
+from zope import component
+
 from . import interfaces
 from interfaces import IUserIndexableContent
+from nti.dataserver.interfaces import ILibrary
+from nti.dataserver.ntiids import is_valid_ntiid_string
 
 from whoosh.fields import ID
 from whoosh.fields import TEXT
@@ -40,6 +44,17 @@ from nltk.tokenize import RegexpTokenizer
 # TODO: Use a config file
 default_tokenizer = RegexpTokenizer(r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-']\w+)*", flags = re.MULTILINE | re.DOTALL)
 
+##########################
+
+def get_collection(containerId, default='prealgebra'):
+	result = default
+	_library = component.queryUtility( ILibrary )
+	if _library and containerId and is_valid_ntiid_string(containerId):
+		paths = _library.pathToNTIID(containerId)
+		result = paths[0].label if paths else default
+	return result.lower() if result else default
+
+##########################
 
 def content_type_class(typeName='Notes'):
 	className = typeName[0:-1] if typeName.endswith('s') else typeName
@@ -48,6 +63,8 @@ def content_type_class(typeName='Notes'):
 	else:
 		result = UserIndexableContent
 	return result
+
+##########################
 
 class IndexableContentMetaclass(type):
 	"""
