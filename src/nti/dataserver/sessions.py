@@ -7,7 +7,6 @@ import warnings
 import uuid
 import time
 import contextlib
-import os
 
 import gevent
 
@@ -17,8 +16,6 @@ from zope import component
 from zope.event import notify
 
 import anyjson as json
-
-from gevent_zeromq import zmq # If things crash, remove core.so
 
 
 # Persistence
@@ -193,25 +190,29 @@ class SessionService(object):
 		def read_incoming():
 			while True:
 				msgs = sub_socket.recv_multipart()
-				sid = msgs[0]
-				tpe = msgs[1]
-				msg = msgs[2]
-
-				proxy = self.get_proxy_session( sid )
-				if hasattr( proxy, tpe ):
-					getattr( proxy, tpe )(msg)
-				elif proxy and tpe == 'session_dead':
-					# Kill anything reading from it
-					for x in ('put_server_msg', 'put_client_msg'):
-						if hasattr( proxy, x ):
-							getattr( proxy, x )(None)
+				# (session_id, function_name, msg_data)
+				self._dispatch_message_to_proxy( *msgs )
 
 		gevent.spawn( read_incoming )
 
+	def _dispatch_message_to_proxy(  self, session_id, function_name, function_arg ):
+		handled = False
+		proxy = self.get_proxy_session( session_id )
+		if hasattr( proxy, function_name ):
+			getattr( proxy, function_name )(function_arg)
+			handled = True
+		elif proxy and function_name == 'session_dead':
+			# Kill anything reading from it
+			for x in ('put_server_msg', 'put_client_msg'):
+				if hasattr( proxy, x ):
+					getattr( proxy, x )(None)
+			handled = True
+		return handled
 
-	def set_proxy_session( self, session_id, session ):
+	def set_proxy_session( self, session_id, session=None ):
 		"""
 		:param session: Something with `put_server_msg` and `put_client_msg` methods.
+			If `None`, then a proxy session for the `session_id` will be removed (if any)
 		"""
 		if session is not None:
 			self.proxy_sessions[session_id] = session
@@ -327,7 +328,14 @@ class SessionService(object):
 			warnings.warn( "Got unexpected unicode value", UnicodeWarning, stacklevel=3 )
 			msg_str = msg_str.encode( 'utf-8' )
 
-		self.pub_socket.send_multipart( [session_id, name, msg_str] )
+		# Now notify the cluster of these messages. If the session proxy lives here, in this
+		# process, then we can bypass the notification and handle it all in-process.
+		# NOTE: This is fairly tricky and fragile because there are a few layers of things
+		# going on to make this work correctly for both XHR and WebSockets from any
+		# node of the cluster, and to make the WebSockets case non-blocking (gevent). See also
+		# socketio-server
+		if not self._dispatch_message_to_proxy( session_id, name, msg_str ):
+			self.pub_socket.send_multipart( [session_id, name, msg_str] )
 
 	def put_server_msg(self, session_id, msg):
 		self._put_msg( Session.do_put_server_msg, session_id, msg )
