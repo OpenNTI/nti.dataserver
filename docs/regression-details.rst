@@ -406,7 +406,7 @@ Comments:
 
 TEST CASE ID: A.III.13
 Test case name: 
-Unit to test: If note for a chapter quotation is being created. 
+Unit to test: If note for a chapter quotation is being created.  
 test case data: 
 	user 1: nathalie.kaligirwa@nextthought.com 
 	password: temp001
