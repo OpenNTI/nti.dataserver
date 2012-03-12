@@ -1,67 +1,23 @@
-import re
-from time import mktime
 from datetime import datetime
 from collections import Iterable
-from collections import OrderedDict
 
 from repoze.catalog.catalog import Catalog
 from repoze.catalog.indexes.field import CatalogFieldIndex
 from repoze.catalog.indexes.keyword import CatalogKeywordIndex
 
-from whoosh import analysis
-
-from nltk import clean_html
-from nltk.tokenize import RegexpTokenizer
-
 from nti.dataserver.chat import MessageInfo
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.contenttypes import Canvas
 from nti.dataserver.contenttypes import Highlight
+
+from nti.contentsearch.common import ngrams
+from nti.contentsearch.common import to_list
+from nti.contentsearch.common import epoch_time
+from nti.contentsearch.common import get_content
 from nti.contentsearch.textindexng3 import CatalogTextIndexNG3
 
 import logging
 logger = logging.getLogger( __name__ )
-
-# -----------------------------------
-
-default_tokenizer = RegexpTokenizer(r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-']\w+)*", flags = re.MULTILINE | re.DOTALL)
-
-# -----------------------------------
-
-def to_list(data):
-	if isinstance(data, basestring):
-		data = [data]
-	elif isinstance(data, list):
-		pass
-	elif isinstance(data, Iterable):
-		data = list(data)
-	elif data is not None:
-		data = [data]
-	return data
-
-def epoch_time(dt):
-	if dt:
-		seconds = mktime(dt.timetuple())
-		seconds += (dt.microsecond / 1000000.0)
-		return seconds
-	else:
-		return 0
-
-# -----------------------------------
-
-def ngram_tokens(text, minsize=2, maxsize=10, at='start', unique=True):
-	rext = analysis.RegexTokenizer()
-	ngf = analysis.NgramFilter(minsize=minsize, maxsize=maxsize, at=at)
-	stream = rext(unicode(text))
-	if not unique:
-		result = [token.copy() for token in ngf(stream)]
-	else:
-		result = OrderedDict( {token.text:token.copy() for token in ngf(stream)}).values()
-	return result
-		
-def ngrams(text):
-	result = [token.text for token in ngram_tokens(text)]
-	return ' '.join(sorted(result, cmp=lambda x,y: cmp(len(x),len(y))))
 
 # -----------------------------------
 	
@@ -111,16 +67,6 @@ def _keywords(names,):
 	return f
 	
 # -----------------------------------
-
-def get_content(text, tokenizer=default_tokenizer):
-
-	if not text or not isinstance(text, basestring):
-		return u''
-
-	text = clean_html(text)
-	words = tokenizer.tokenize(text)
-	text = ' '.join(words)
-	return unicode(text)
 
 def _content(names):
 	def f(obj, default):
@@ -234,7 +180,7 @@ def _create_treadable_mixin_catalog():
 	catalog['last_modified'] = CatalogFieldIndex(_last_modified)
 	catalog['oid'] = CatalogFieldIndex(_attrs(['OID','oid','id']))
 	catalog['container'] = CatalogFieldIndex(_attrs(['ContainerId','containerId','container']))
-	catalog['collectionId'] = CatalogFieldIndex(_attrs(['CollectionID','collectionId']))
+	catalog['collectionId'] = CatalogFieldIndex(_attrs(['CollectionID', 'collectionId']))
 	catalog['creator'] = CatalogFieldIndex(_attrs(['Creator','creator']))
 	catalog['ntiid'] = CatalogFieldIndex(_attrs(['NTIID','ntiid']))
 	catalog['keywords'] = CatalogKeywordIndex(_keywords(['keywords']))
