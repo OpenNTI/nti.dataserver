@@ -6,12 +6,12 @@ from hashlib import md5
 
 from whoosh.store import LockError
 
-from contenttypes import empty_search_result
-from contenttypes import empty_suggest_result
-from contenttypes import merge_search_results
-from contenttypes import merge_suggest_results
-from contenttypes import empty_suggest_and_search_result
-from contenttypes import merge_suggest_and_search_results
+from nti.contentsearch.common import empty_search_result
+from nti.contentsearch.common import empty_suggest_result
+from nti.contentsearch.common import merge_search_results
+from nti.contentsearch.common import merge_suggest_results
+from nti.contentsearch.common import empty_suggest_and_search_result
+from nti.contentsearch.common import merge_suggest_and_search_results
 
 from zope import interface
 from . import interfaces

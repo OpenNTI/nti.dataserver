@@ -18,6 +18,32 @@ from nti.dataserver.ntiids import is_valid_ntiid_string
 
 default_tokenizer = RegexpTokenizer(r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-']\w+)*", flags = re.MULTILINE | re.DOTALL)
 
+ID = 'ID'
+HIT = 'Hit'
+OID = 'OID'
+TYPE = 'Type'
+NTIID = 'NTIID'
+CLASS = 'Class'
+QUERY = 'Query'
+ITEMS = 'Items'
+SNIPPET = 'Snippet'
+CREATOR = 'Creator'
+HIT_COUNT = 'Hit Count'
+SUGGESTIONS = 'Suggestions'
+CONTAINER_ID = 'ContainerID'
+COLLECTION_ID = 'CollectionID'
+LAST_MODIFIED = 'Last Modified'
+
+COLOR = 'color'
+LITTLE_ID = 'id'
+NGRAMS = 'ngrams'
+CHANNEL = 'channel'
+CONTENT = 'content'
+KEYWORDS = 'keywords'
+REFERENCES = 'references'
+RECIPIENTS = 'recipients'
+SHARED_WITH = 'sharedWith'
+
 # -----------------------------------
 
 def to_list(data):
@@ -43,10 +69,11 @@ def epoch_time(dt):
 
 def get_collection(containerId, default='prealgebra'):
 	result = default
-	_library = component.queryUtility( ILibrary )
-	if _library and containerId and is_valid_ntiid_string(containerId):
-		paths = _library.pathToNTIID(containerId)
-		result = paths[0].label if paths else default
+	if containerId and is_valid_ntiid_string(containerId):
+		_library = component.queryUtility( ILibrary )
+		if _library:
+			paths = _library.pathToNTIID(containerId)
+			result = paths[0].label if paths else default
 	return result.lower() if result else default
 
 # -----------------------------------
@@ -131,4 +158,79 @@ def get_content(text, tokenizer=default_tokenizer):
 	words = tokenizer.tokenize(text)
 	text = ' '.join(words)
 	return unicode(text)
+
+# -----------------------------------
+
+def _empty_result(query, is_suggest=False):
+	result = {}
+	result[QUERY] = query
+	result[HIT_COUNT] = 0
+	result[ITEMS] = [] if is_suggest else {}
+	result[LAST_MODIFIED] = 0
+	return result
+
+def empty_search_result(query):
+	return _empty_result(query)
+
+def empty_suggest_and_search_result(query):
+	result = _empty_result(query)
+	result[SUGGESTIONS] = []
+	return result
+
+def empty_suggest_result(word):
+	return _empty_result(word, True)
+
+def merge_search_results(a, b):
+
+	if not a and not b:
+		return None
+	elif not a and b:
+		return b
+	elif a and not b:
+		return a
+
+	alm = a[LAST_MODIFIED] if a.has_key(LAST_MODIFIED) else 0
+	blm = b[LAST_MODIFIED] if b.has_key(LAST_MODIFIED) else 0
+	if blm > alm:
+		a[LAST_MODIFIED] = blm
+		
+	if not a.has_key(ITEMS):
+		a[ITEMS] = {}
+	
+	a[ITEMS].update(b.get(ITEMS, {}))
+	a[HIT_COUNT] = len(a[ITEMS])
+
+	return a
+
+def merge_suggest_and_search_results(a, b):
+	result = merge_search_results(a, b)
+	s_a = set(a.get(SUGGESTIONS, [])) if a else set([])
+	s_b = set(b.get(SUGGESTIONS, [])) if b else set([])
+	s_a.update(s_b)
+	result[SUGGESTIONS] = list(s_a)
+	return result
+
+def merge_suggest_results(a, b):
+
+	if not a and not b:
+		return None
+	elif not a and b:
+		return b
+	elif a and not b:
+		return a
+
+	alm = a[LAST_MODIFIED] if a.has_key(LAST_MODIFIED) else 0
+	blm = b[LAST_MODIFIED] if b.has_key(LAST_MODIFIED) else 0
+	if blm > alm:
+		a[LAST_MODIFIED] = blm
+
+	if not a.has_key(ITEMS):
+		a[ITEMS] = []
+	
+	a_set = set(a.get(ITEMS,[]))
+	a_set.update(b.get(ITEMS,[]))
+	a[ITEMS] = list(a_set)
+	a[HIT_COUNT] = len(a[ITEMS])
+	
+	return a
 
