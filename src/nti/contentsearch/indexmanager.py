@@ -9,21 +9,22 @@ from whoosh import index
 from _indexagent import IndexAgent
 
 import contenttypes
-from contenttypes import empty_search_result
-from contenttypes import empty_suggest_result
-from contenttypes import merge_search_results
-from contenttypes import merge_suggest_results
-from contenttypes import empty_suggest_and_search_result
-from contenttypes import merge_suggest_and_search_results
-from indexstorage import create_directory_index_storage
-from indexstorage import create_zodb_index_storage
+from nti.contentsearch.common import empty_search_result
+from nti.contentsearch.common import empty_suggest_result
+from nti.contentsearch.common import merge_search_results
+from nti.contentsearch.common import merge_suggest_results
+from nti.contentsearch.common import empty_suggest_and_search_result
+from nti.contentsearch.common import merge_suggest_and_search_results
+from nti.contentsearch.contenttypes import content_type_class
+from nti.contentsearch.contenttypes import IndexableContentMetaclass
+from nti.contentsearch.indexstorage import create_directory_index_storage
+from nti.contentsearch.indexstorage import create_zodb_index_storage
 
 from zope import interface
 from . import interfaces
 from bookindexmanager import BookIndexManager
 from userindexmanager import UserIndexManager
-from contenttypes import content_type_class
-from contenttypes import IndexableContentMetaclass
+
 
 class IndexManager(object):
 	"""

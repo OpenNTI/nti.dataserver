@@ -14,7 +14,15 @@ from nti.contentsearch.common import ngrams
 from nti.contentsearch.common import to_list
 from nti.contentsearch.common import epoch_time
 from nti.contentsearch.common import get_content
+from nti.contentsearch.common import get_collection
+from nti.contentsearch.common import highlight_content
 from nti.contentsearch.textindexng3 import CatalogTextIndexNG3
+from nti.contentsearch.common import (	OID, NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE, \
+										COLLECTION_ID, ITEMS, SNIPPET, ID)
+
+from nti.contentsearch.common import (	COLOR, NGRAMS, CHANNEL, CONTENT, KEYWORDS, REFERENCES, \
+										RECIPIENTS, SHARED_WITH )
+
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -42,8 +50,14 @@ def _attrs(names):
 
 # -----------------------------------
 
+_oid_fields = [OID, 'oid', 'id']
+_ntiid_fields = [NTIID, 'ntiid']
+_creator_fields = [CREATOR, 'creator']
+_container_id_fields = [CONTAINER_ID, 'ContainerId', 'containerId', 'container']
+_last_modified_fields =  [LAST_MODIFIED, 'lastModified', 'LastModified', 'last_modified']
+
 def _last_modified(obj, default):
-	value  = get_attr(obj, ['lastModified', 'LastModified', 'last_modified', 'Last Modified'], default)
+	value  = get_attr(obj, _last_modified_fields, default)
 	if value:
 		if isinstance(value, basestring):
 			value = float(value)
@@ -53,7 +67,7 @@ def _last_modified(obj, default):
 		value = 0
 	return value
 
-def _keywords(names,):
+def _keywords(names):
 	def f(obj, default):
 		words  = get_attr(obj, names, default)
 		if words:
@@ -66,6 +80,10 @@ def _keywords(names,):
 		return words
 	return f
 	
+def _collectionId(obj, default):
+	containerId = get_attr(obj, _container_id_fields, default)
+	return get_collection(containerId)
+
 # -----------------------------------
 
 def _content(names):
@@ -84,8 +102,8 @@ def get_multipart_content(source):
 	elif isinstance(source, Iterable):
 		
 		def process_dict(d):
-			clazz = item.get('Class', None)
-			data = item.get('Items', None)
+			clazz = item.get(CLASS, None)
+			data = item.get(ITEMS, None)
 			if clazz and data:
 				name = "get_%s_content" % clazz.lower()
 				if name in gbls:
@@ -128,11 +146,14 @@ def _ngrams(names):
 
 # -----------------------------------
 
+_body = 'body'
+_startHighlightedFullText = 'startHighlightedFullText'
+
 def get_highlight_content(data):
 	if isinstance(data, dict):
-		return data.get('startHighlightedFullText', u'')
+		return data.get(_startHighlightedFullText, u'')
 	elif isinstance(data, Highlight):
-		return getattr(data, 'startHighlightedFullText', u'')
+		return getattr(data, _startHighlightedFullText, u'')
 	return u''
 
 def get_canvas_content(data):
@@ -150,7 +171,7 @@ def get_canvas_content(data):
 def get_note_content(data):
 	result = []
 	if isinstance(data, dict):
-		body = to_list(data.get('body', u''))
+		body = to_list(data.get(_body, u''))
 	elif isinstance(data, Note):
 		body = to_list(data.body)
 		
@@ -162,7 +183,7 @@ def get_note_content(data):
 def get_messageinfo_content(data):
 	result = []
 	if isinstance(data, dict):
-		body = to_list(data.get('body', u''))
+		body = to_list(data.get(_body, u''))
 	elif isinstance(data, MessageInfo):
 		body = to_list(data.body)
 	for item in body:
@@ -177,44 +198,44 @@ def _create_text_index(field, discriminator):
 
 def _create_treadable_mixin_catalog():
 	catalog = Catalog()
-	catalog['last_modified'] = CatalogFieldIndex(_last_modified)
-	catalog['oid'] = CatalogFieldIndex(_attrs(['OID','oid','id']))
-	catalog['container'] = CatalogFieldIndex(_attrs(['ContainerId','containerId','container']))
-	catalog['collectionId'] = CatalogFieldIndex(_attrs(['CollectionID', 'collectionId']))
-	catalog['creator'] = CatalogFieldIndex(_attrs(['Creator','creator']))
-	catalog['ntiid'] = CatalogFieldIndex(_attrs(['NTIID','ntiid']))
-	catalog['keywords'] = CatalogKeywordIndex(_keywords(['keywords']))
-	catalog['sharedWith'] = CatalogKeywordIndex(_keywords(['sharedWith']))
+	catalog[LAST_MODIFIED] = CatalogFieldIndex(_last_modified)
+	catalog[OID] = CatalogFieldIndex(_attrs(_oid_fields))
+	catalog[CONTAINER_ID] = CatalogFieldIndex(_attrs(_container_id_fields))
+	catalog[COLLECTION_ID] = CatalogFieldIndex(_collectionId)
+	catalog[CREATOR] = CatalogFieldIndex(_attrs(_creator_fields))
+	catalog[NTIID] = CatalogFieldIndex(_attrs(_ntiid_fields))
+	catalog[KEYWORDS] = CatalogKeywordIndex(_keywords([KEYWORDS]))
+	catalog[SHARED_WITH] = CatalogKeywordIndex(_keywords([SHARED_WITH]))
 	return catalog
 
 def create_notes_catalog():
 	catalog = _create_treadable_mixin_catalog()
-	catalog['ngrams'] = _create_text_index('ngrams', _ngrams(['body']))
-	catalog['references'] = CatalogKeywordIndex(_keywords(['references']))
-	catalog['content'] = _create_text_index('content', _multipart_content(['body']))
+	catalog[NGRAMS] = _create_text_index(NGRAMS, _ngrams([_body]))
+	catalog[REFERENCES] = CatalogKeywordIndex(_keywords([REFERENCES]))
+	catalog[CONTENT] = _create_text_index(CONTENT, _multipart_content([_body]))
 	return catalog
 	
 def create_highlight_catalog():
 	catalog = _create_treadable_mixin_catalog()
-	catalog['color'] = CatalogFieldIndex(_attrs(['color']))
-	catalog['ngrams'] = _create_text_index('ngrams', _ngrams(['startHighlightedFullText']))
-	catalog['content'] = _create_text_index('content', _content(['startHighlightedFullText']))
+	catalog[COLOR] = CatalogFieldIndex(_attrs([COLOR]))
+	catalog[NGRAMS] = _create_text_index(NGRAMS, _ngrams([_startHighlightedFullText]))
+	catalog[CONTENT] = _create_text_index(CONTENT, _content([_startHighlightedFullText]))
 	return catalog
 
 def create_messageinfo_catalog():
 	catalog = _create_treadable_mixin_catalog()
-	catalog['id'] = CatalogFieldIndex(_attrs(['ID']))
-	catalog['channel'] = CatalogFieldIndex(_attrs(['channel']))
-	catalog['ngrams'] = _create_text_index('ngrams', _ngrams(['body']))
-	catalog['content'] = _create_text_index('content', _multipart_content(['body']))
-	catalog['references'] = CatalogKeywordIndex(_keywords(['references']))
-	catalog['recipients'] = CatalogKeywordIndex(_keywords(['recipients']))
+	catalog[ID] = CatalogFieldIndex(_attrs([ID]))
+	catalog[CHANNEL] = CatalogFieldIndex(_attrs([CHANNEL]))
+	catalog[NGRAMS] = _create_text_index(NGRAMS, _ngrams([_body]))
+	catalog[CONTENT] = _create_text_index(CONTENT, _multipart_content([_body]))
+	catalog[REFERENCES] = CatalogKeywordIndex(_keywords([REFERENCES]))
+	catalog[RECIPIENTS] = CatalogKeywordIndex(_keywords([RECIPIENTS]))
 	return catalog
 
 def create_catalog(type_name='Notes'):
 	type_name = type_name[0:-1] if type_name.endswith('s') else type_name
 	type_name = type_name.lower()
-	if type_name == 'notes':
+	if type_name == 'note':
 		return create_notes_catalog()
 	elif type_name == 'highlight':
 		return create_highlight_catalog()
@@ -222,3 +243,59 @@ def create_catalog(type_name='Notes'):
 		return create_messageinfo_catalog()
 	else:
 		raise Exception("cannot create catalog for type '%s'" % type_name)
+	
+# -----------------------------------
+
+def _get_type_name(obj):
+	if not isinstance(obj, dict):
+		return obj.__class__.__name__
+	else:
+		return get_attr(obj, [CLASS] )
+		
+def _get_last_modified(obj):
+	lm = get_attr(obj, _last_modified_fields )
+	return lm if lm else 0
+
+def _highlight_content(query=None, text=None):
+	content = highlight_content(query, text) if query and text else u''
+	return content if content else text
+
+def _get_index_hit_from_object(obj):
+	result = {TYPE : _get_type_name(obj)}		
+	result[OID] =  get_attr(obj, _oid_fields )
+	result[NTIID] =  get_attr(obj, _ntiid_fields )
+	result[CREATOR] =  get_attr(obj, _creator_fields )
+	result[CONTAINER_ID] = get_attr(obj, _container_id_fields )
+	result[COLLECTION_ID] = get_collection(result[CONTAINER_ID])
+	result[LAST_MODIFIED] = _get_last_modified(obj)
+	return result
+
+def get_index_hit_from_note(obj, query=None):
+	text = get_attr(obj, [_body])
+	result = _get_index_hit_from_object(obj)
+	result[SNIPPET] = _highlight_content(query, text)
+	return result
+
+def get_index_hit_from_hightlight(obj, query=None):
+	result = _get_index_hit_from_object(obj)
+	text = get_attr(obj, [_startHighlightedFullText])
+	result[SNIPPET] = _highlight_content(query, text)
+	return result
+
+def get_index_hit_from_messgeinfo(obj, query=None):
+	text = get_attr(obj, [_body])
+	result = _get_index_hit_from_object(obj)
+	result[SNIPPET] = _highlight_content(query, text)
+	return result
+
+def get_index_hit(obj, query=None):
+	type_name =  _get_type_name(obj)
+	if type_name == 'note':
+		return get_index_hit_from_note(obj, query)
+	elif type_name == 'highlight':
+		return get_index_hit_from_hightlight(obj, query)
+	elif type_name =='messageinfo':
+		return get_index_hit_from_messgeinfo(obj, query)
+	else:
+		return None
+	

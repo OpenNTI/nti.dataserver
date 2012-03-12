@@ -3,7 +3,6 @@ import uuid
 import collections
 
 from datetime import datetime
-from collections import OrderedDict
 
 from zope import interface
 
@@ -11,6 +10,10 @@ from nti.contentsearch import interfaces
 from nti.contentsearch.interfaces import IUserIndexableContent
 from nti.contentsearch.common import epoch_time
 from nti.contentsearch.common import get_content
+from nti.contentsearch.common import empty_search_result
+from nti.contentsearch.common import empty_suggest_result
+from nti.contentsearch.common import (	OID, NTIID, CREATOR, LAST_MODIFIED, CLASS, \
+										COLLECTION_ID, ITEMS, SNIPPET, QUERY, HIT_COUNT)
 
 from whoosh.fields import ID
 from whoosh.fields import TEXT
@@ -28,8 +31,6 @@ from whoosh import highlight
 from whoosh.query import (Or, Term)
 from whoosh.qparser import QueryParser
 from whoosh.qparser import GtLtPlugin
-from whoosh.analysis import NgramFilter
-from whoosh.analysis import RegexTokenizer
 from whoosh.qparser.dateparse import DateParserPlugin
 
 import logging
@@ -93,21 +94,6 @@ def get_keywords(records):
 
 ##########################
 
-def ngram_tokens(text, minsize=2, maxsize=10, at='start', unique=True):
-	rext = RegexTokenizer()
-	ngf = NgramFilter(minsize=minsize, maxsize=maxsize, at=at)
-	stream = rext(unicode(text))
-	if not unique:
-		result = [token.copy() for token in ngf(stream)]
-	else:
-		result = OrderedDict( {token.text:token.copy() for token in ngf(stream)}).values()
-	return result
-		
-def ngrams(text):
-	result = [token for token in ngram_tokens(text)]
-	return ' '.join(sorted(result, cmp=lambda x,y: cmp(len(x),len(y))))
-
-
 def get_highlighted_content(query, text, analyzer=None, maxchars=300, surround=20):
 	"""
 	whoosh highlight based on words
@@ -136,7 +122,7 @@ def get_text_from_mutil_part_body(body):
 			if data: items.append(str(data))
 
 		def add_from_dict(item):
-			name = item['Class'] if 'Class' in item else None
+			name = item[CLASS] if CLASS in item else None
 			if name in gbls and IUserIndexableContent.implementedBy(gbls[name]):
 				try:
 					obj = gbls[name]()
@@ -160,80 +146,6 @@ def get_text_from_mutil_part_body(body):
 	else:
 		return get_content(str(body))
 
-##########################
-
-def _empty_search_result(query, is_suggest=False):
-	result = {}
-	result['Query'] = query
-	result['Hit Count'] = 0
-	result['Items'] = () if is_suggest else {}
-	result['Last Modified'] = 0
-	return result
-
-def empty_search_result(query):
-	return _empty_search_result(query)
-
-def empty_suggest_and_search_result(query):
-	result = _empty_search_result(query)
-	result['Suggestions'] = []
-	return result
-
-def empty_suggest_result(word):
-	return _empty_search_result(word, True)
-
-def merge_search_results(a, b):
-
-	if not a and not b:
-		return None
-	elif not a and b:
-		return b
-	elif a and not b:
-		return a
-
-	alm = a['Last Modified'] if a.has_key('Last Modified') else 0
-	blm = b['Last Modified'] if b.has_key('Last Modified') else 0
-	if blm > alm:
-		a['Last Modified'] = blm
-		
-	if not a.has_key('Items'):
-		a['Items'] = {}
-	
-	a['Items'].update(b.get('Items', {}))
-	a['Hit Count'] = len(a['Items'])
-
-	return a
-
-def merge_suggest_and_search_results(a, b):
-	result = merge_search_results(a, b)
-	s_a = set(a.get('Suggestions', [])) if a else set([])
-	s_b = set(b.get('Suggestions', [])) if b else set([])
-	s_a.update(s_b)
-	result['Suggestions'] = list(s_a)
-	return result
-
-def merge_suggest_results(a, b):
-
-	if not a and not b:
-		return None
-	elif not a and b:
-		return b
-	elif a and not b:
-		return a
-
-	alm = a['Last Modified'] if a.has_key('Last Modified') else 0
-	blm = b['Last Modified'] if b.has_key('Last Modified') else 0
-	if blm > alm:
-		a['Last Modified'] = blm
-
-	if not a.has_key('Items'):
-		a['Items'] = []
-	
-	a_set = set(a.get('Items',[]))
-	a_set.update(b.get('Items',[]))
-	a['Items'] = list(a_set)
-	a['Hit Count'] = len(a['Items'])
-	
-	return a
 
 ##########################
 
@@ -254,7 +166,7 @@ class MetaIndexableContent(IndexableContentMetaclass):
 				inverted[name] = k
 
 		if inverted:
-			inverted['last_modified'] = 'Last Modified'
+			inverted['last_modified'] = LAST_MODIFIED
 			t.inverted_fields = inverted
 
 			def f(self, name):
@@ -380,10 +292,10 @@ class _IndexableContent(object):
 		try:
 			records = searcher.suggest(search_field, word, limit=limit, prefix=prefix)
 			result = {}
-			result['Query'] = word
-			result['Items'] = records
-			result['Last Modified'] = 0
-			result['Hit Count'] = len(records)
+			result[QUERY] = word
+			result[ITEMS] = records
+			result[LAST_MODIFIED] = 0
+			result[HIT_COUNT] = len(records)
 		except:
 			logger.debug("Error while performing suggestion for '%s'. Returning empty result", word, exc_info=True)
 			result = empty_suggest_result(word)
@@ -400,7 +312,7 @@ class _IndexableContent(object):
 		search_hits.formatter = highlight.UppercaseFormatter()
 
 		result = {}
-		result['Query'] = query
+		result[QUERY] = query
 
 		maxLM = 0
 		hit_count = 1
@@ -409,7 +321,7 @@ class _IndexableContent(object):
 
 			d = {}
 			item_id = self.get_data_from_search_hit(hit, d)
-			lm = d['Last Modified'] if d.has_key('Last Modified') else 0
+			lm = d[LAST_MODIFIED] if d.has_key(LAST_MODIFIED) else 0
 			maxLM = max(lm, maxLM)
 
 			snippet = ''
@@ -418,14 +330,14 @@ class _IndexableContent(object):
 					snippet = hit.highlights(self.search_field)
 				else:
 					snippet = get_highlighted_content(query, hit[self.search_field])
-			d['Snippet'] = snippet
+			d[SNIPPET] = snippet
 
 			items[item_id or hit_count] = d
 			hit_count += 1
 
-		result['Items'] = items
-		result['Hit Count'] = len(items)
-		result['Last Modified'] = maxLM
+		result[ITEMS] = items
+		result[HIT_COUNT] = len(items)
+		result[LAST_MODIFIED] = maxLM
 
 		return result
 
@@ -452,11 +364,11 @@ class _IndexableContent(object):
 		return result
 
 	def get_data_from_search_hit(self, hit, d):
-		d['Class'] = 'Hit'
+		d[CLASS] = 'Hit'
 		if self.hit_last_modified() in hit:
-			d['Last Modified'] = epoch_time(hit[self.hit_last_modified()])
+			d[LAST_MODIFIED] = epoch_time(hit[self.hit_last_modified()])
 		else:
-			d['Last Modified'] = 0
+			d[LAST_MODIFIED] = 0
 		return str(hit.docnum) if hit.__class__ == Hit else None
 
 	def hit_last_modified(self):
@@ -695,8 +607,8 @@ class Highlight(UserIndexableContent):
 		elif not isinstance(data, collections.Mapping):
 			return None
 
-		if data.has_key('Items'):
-			data = data['Items']
+		if data.has_key(ITEMS):
+			data = data[ITEMS]
 
 		d = {}
 		for k,t in items:
@@ -770,16 +682,16 @@ class Note(Highlight):
 
 	fields = {
 			"CollectionID": ("collectionId", echo),
-			"OID": ("oid",  echo),
+			OID: ("oid",  echo),
 			"ContainerId":("containerId", echo),
-			"Creator": ("creator", echo),
-			"Last Modified": ("last_modified", get_datetime),
+			CREATOR: ("creator", echo),
+			LAST_MODIFIED: ("last_modified", get_datetime),
 			"body" : ("content", get_text_from_mutil_part_body),
 			"sharedWith": ("sharedWith", get_keywords),
 			"references": ("references", get_keywords),
 			"id": ("id", echo),
 			"keywords": ("keywords", get_keywords),
-			"NTIID": ("ntiid", echo)
+			NTIID: ("ntiid", echo)
 			}
 
 class MessageInfo(Note):
@@ -819,16 +731,16 @@ class MessageInfo(Note):
 	fields = {
 			"ContainerId": ("containerId", echo),
 			"Body": ("content", get_text_from_mutil_part_body),
-			"Creator": ("creator", echo),
+			CREATOR: ("creator", echo),
 			"channel": ("channel", echo),
 			"references": ("references", get_keywords),
 			"recipients": ("recipients", get_keywords),
 			"sharedWith": ("sharedWith", get_keywords),
-			"Last Modified": ("last_modified", get_datetime),
+			LAST_MODIFIED: ("last_modified", get_datetime),
 			"ID": ("id",  echo),
-			"OID": ("oid",  echo),
+			OID: ("oid",  echo),
 			"keywords": ("keywords", get_keywords),
-			"NTIID": ("ntiid", echo)
+			NTIID: ("ntiid", echo)
 			}
 
 	def get_index_data(self, externalValue, items=None):
@@ -839,7 +751,7 @@ class MessageInfo(Note):
 	def get_data_from_search_hit(self, hit, d):
 		result = super(MessageInfo, self).get_data_from_search_hit(hit, d)
 		d[self.external_name('id')] = hit.get('id', '')
-		d.pop('CollectionID', None)
+		d.pop(COLLECTION_ID, None)
 		return result
 
 ##########################
