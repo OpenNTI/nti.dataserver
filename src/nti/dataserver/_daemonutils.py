@@ -142,6 +142,7 @@ _resolve = None
 try:
 	from zope.dottedname.resolve import resolve as _resolve
 except ImportError:
+	import warnings
 	warnings.warn( "Please install zope.dottedname" )
 
 
