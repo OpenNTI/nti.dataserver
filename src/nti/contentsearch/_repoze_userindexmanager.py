@@ -10,6 +10,7 @@ from nti.contentsearch import interfaces
 from nti.contentsearch.common import empty_search_result
 from nti.contentsearch._repoze_index import get_index_hit
 from nti.contentsearch._repoze_datastore import DataStore
+from nti.contentsearch.common import  (CONTENT, LAST_MODIFIED, ITEMS, HIT_COUNT)
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -48,18 +49,24 @@ class RepozeUserIndexManager(object):
 	
 	# -------------------
 
-	def _get_server_objects(self, docMap, docIds):
-		result = []
+	def _get_hits_from_docids(self, docMap, docIds, limit=None, items=None):
+		lm =  0
+		items = items if items else []
 		with self.dataserver.dbTrans() as conn:
 			for docId in docIds:
 				try:
 					oid = docMap.address_for_docid(docId)
-					_obj = get_object_by_oid(conn, oid)
-					result.append(_obj)
+					so = get_object_by_oid(conn, oid)
+					hit = get_index_hit(so)
+					if hit:
+						items.append(hit)
+						lm = max(lm, hit[LAST_MODIFIED])
+						if limit and len(items) >= limit:
+							break
 				except:
 					pass
-		return result
-	
+		return items, lm
+				
 	def _get_catalog_names(self):
 		with self.datastore.dbTrans():
 			return self.get_catalog_names(self.username)
@@ -70,21 +77,56 @@ class RepozeUserIndexManager(object):
 			search_on = [lm(x).lower() for x in search_on]
 		return search_on
 
+	# -------------------
+	
 	def search(self, query, limit=None, search_on=None, *args, **kwargs):
 		search_on = self._adapt_search_on_types(search_on)
 		search_on = search_on if search_on else self._get_catalog_names()
 		
+		lm = 0
+		count = 0
+		hits = {}
 		results = empty_search_result()
-		items = results['Items']
 		with self.store.dbTrans():
 			docMap = self.store.docMap
 			for type_name in search_on:
 				catalog = self.datastore.get_catalog(self.username, type_name)
-				if not catalog: continue
-				_, docIds = catalog.query(Contains('content', query))
-				server_objects = self._get_server_objects(docMap, docIds) 
-				for so in server_objects:
-					hit = get_index_hit(so)
-					if hit: items.append(hit)
+				if catalog: 
+					_, docIds = catalog.query(Contains(CONTENT, query))
+					hits_items, hits_lm = self._get_hits_from_docids(docMap, docIds, limit=limit)
+					if hits_items:
+						lm = max(lm, hits_lm)
+						hits[type_name] = hits_items
+						count = count + len(hits_items)
+			
+		items = results[ITEMS]
+		for v in hits.values():
+			if limit:
+				ridx = int( limit * (len(v)/count) )
+				items.extend(v[:ridx])
+			else:
+				items.extend(v)
 				
+		results[HIT_COUNT] = count	
+		results[LAST_MODIFIED] = lm
 		return results	
+	
+	def suggest(self, term, limit=None, prefix=None, search_on=None, **kwargs):
+		pass
+		
+	def suggest_and_search(self, query, limit=None, search_on=None):
+		pass
+	
+
+	def index_content(self, data, type_name=None):
+		pass
+		
+	def update_content(self, data, type_name=None):
+		pass
+
+	def delete_content(self, data, type_name=None):
+		pass
+		
+	def remove_index(self, type_name):
+		pass
+	
