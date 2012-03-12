@@ -1,5 +1,69 @@
+LOGIN TESTS 
+-----------
 
-Group tests
+Unit to test: Types of login
+Test case data: 
+	- check if login buttons appear after an email is typed. 
+	- check if user can login with facebook. 
+	- check if user can login with gmail.
+	- nextthought email and password. 
+	- use yahoo account. 
+	
+ACCOUNT TESTS
+-------------
+Unit to test: Password changes 
+Test case data: 
+	- check if user is being prompted for old password before changing it. 
+	- check if user is allowed to use the same password when changing his password. 
+	- check if special characters are allowed.
+
+Unit to test: Lists changes 
+Test case data: 
+	- check if user can move a 'friend' from the 'accepting' list to 'ignoring' list. 
+	- check if user can move a 'friend' from the 'ignoring' list to 'accepting' list. 
+	- check if user can add a 'friend' to both lists at the same time. 
+	- check if user can add a 'friend' or 'group' to the 'following' list. 
+	
+READER TESTS
+------------
+
+Unit to test: Highlights 
+
+Test case data: Be able to highlight: 
+	- paragraphs. 
+	- pictures. 
+	- videos. 
+	- chapter quotes. 
+	- review questions. 
+
+Test case data: Check if all the different types of highlights can be shared with: 
+	- one friend. 
+	- multiple friends.
+	- one group
+	- multiple groups. 
+	
+Test case data: Be able to delete a highlight/shared highlight. 
+			
+Unit to test: Notes.
+
+Test case data: Be able to create a note for: 
+	- paragraphs.
+	- pictures. 
+	- videos.
+	- chapter quotes.
+	- review questions. 
+	
+Test case data: Check location of created notes. 
+	
+Test case data:Be able to share notes with: 
+	- one friend/multiple friends. 
+	- one group/multiple groups. 
+
+Test case data: Be able to delete  notes/shared notes. 
+
+
+
+GROUP TESTS
 -----------
 
 Unit to test: names of group
