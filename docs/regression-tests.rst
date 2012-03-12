@@ -238,7 +238,7 @@ Comments: none.
 
 TEST CASE ID: A.III.3
 
-Test case name: Note is being added in the middle of the of the highlighted text
+Test case name: Note is being added in the middle of the of the highlighted text. 
 
 Unit to Test: Check location of notes created for a highlighted text. Note should be at the end of the highlighted text.
 
@@ -268,3 +268,153 @@ Actual Results: The created note is located right below the first line of the hi
 Fail/Pass: Fail
 
 Comments: In some cases, the note is added right in the middle of the paragraph. 
+
+
+TEST CASE ID: A.III.4 
+Test case name:
+Unit to test: Check location if notes are added at the end of the highlighted text. 
+Test data: 
+	user 1: nathalie.kaligirwa@nextthought.com 
+	password: temp001
+	
+	book: Prealgebra 
+
+Execution steps: 
+Expected results: 
+Actual Results: Notes are being added at random locations within the highlighted text. 
+Fail/Pass: 
+Comments:
+
+TEST CASE ID: A.III.5
+Test case name: 
+Unit to Test: Check if created notes are overlapping at the end of section. 
+Test case data: 
+	user 1: nathalie.kaligirwa@nextthought.com 
+	password: temp001
+	
+	book: Prealgebra 
+	
+Execution steps: 
+Expected results: Notes should have spacing between them. 
+Actual results: Notes are overlapping. 
+Fail/Pass: 
+Comments: 
+
+TEST CASE ID: A.III.6 
+Test case name: 
+Unit to test:Check the space between questions when a note is added (on the exercises sections). 
+Test data: 
+	user 1: nathalie.kaligirwa@nextthought.com 
+	password: temp001
+	
+	book: Prealgebra 
+	
+Execution steps: 
+Expected results: The spacing between two questions should not be too large. 
+Actual results: Adding a note creates a huge space between the questions. 
+Fail/Pass:
+Comments: 
+
+TEST CASE ID: A.III.7 
+Test case name: 
+Unit to test: Check if the space at the end of the page is not being modified by the addition of a note (for example, the lines being 'squashed' together). 
+Test case data:
+	user 1: nathalie.kaligirwa@nextthought.com 
+	password: temp001
+	
+	book: Prealgebra (Still trying to recreate it).
+	
+Execution steps: 
+Expected results: The page size should increase to make room for notes (dynamically changed I am assuming). 
+Actual results: Size between lines is being reduced.
+Fail/Pass:
+Comments: 
+
+TEST CASE ID: A.III.8
+Test case name: Adding a note shouldn't change the numbering of questions. 
+Test case data:
+	user 1: nathalie.kaligirwa@nextthought.com 
+	password: temp001
+	
+	book: Prealgebra>Properties of Arithmetic>Exercises  
+	
+Execution steps: 
+Expected results: The page size should increase to make room for notes (dynamically changed I am assuming). 
+Actual results: Size between lines is being reduced.
+Fail/Pass:
+Comments: 
+
+TEST CASE ID: A.III.9 
+Test case name: Videos should not block the pop-up window for chatting or creating a note. 
+Test case data: 
+	user 1: nathalie.kaligirwa@nextthought.com 
+	password: temp001
+	
+	book: Prealgebra>Properties of Arithmetic>Addition
+	
+Execution steps: 
+Expected results: pop-up window fully visible even when in front of video. 
+Actual results: pop-up window is blocked by the video. 
+Fail/Pass:
+Comments: This issue happens only on Chrome because of the settings applied to videos. We have no control over it.
+
+TEST CASE ID: A.III.10 
+Test case name:
+	user 1: nathalie.kaligirwa@nextthought.com 
+	password: temp001
+	
+	book: Prealgebra 
+	
+Unit to test: Check if left-side menu changes (Who and What checkboxes) are kept after a refresh.
+Test case data: 
+	
+Execution steps: 
+Expected results: Changes to Who and What checkboxes should be maintained after a page refresh. 
+Actual Results: Left-side menu (What and Who) changes are reset to default (all checkboxes selected) after the page is refreshed. 
+Fail/Pass: 
+Comments: 
+
+TEST CASE ID: A.III.11 
+Test case name: 
+Unit to test: Overlapping notes. 
+Test case data: 
+	user 1: nathalie.kaligirwa@nextthought.com 
+	password: temp001
+	
+	book: Prealgebra > front page. 
+
+Execution steps: 
+Expected results: Notes should have space between them (<br> </br>). 
+Actual Results:  Notes are overlapping. 
+Fail/Pass: 
+Comments: 
+
+TEST CASE ID: A.III.12
+Test case name: 
+Unit to test: Format of messages in mathcounts exercises. 
+test case data: 
+	user 1: nathalie.kaligirwa@nextthought.com 
+	password: temp001
+	
+	book: Prealgebra > front page. 
+
+Execution steps: 
+Expected results: 
+Actual Results:  Notes are overlapping. 
+Fail/Pass: 
+Comments:  
+
+TEST CASE ID: A.III.13
+Test case name: 
+Unit to test: If note for a chapter quotation is being created. 
+test case data: 
+	user 1: nathalie.kaligirwa@nextthought.com 
+	password: temp001
+	
+	book: Prealgebra > Exponents
+
+Execution steps: Select chapter quotation at the beginning of chapter
+Expected results: Note should be added below the highlighted quotation. 
+Actual Results:  Note is not being created anywhere on the page. 
+Fail/Pass: 
+Comments: I tried it on three different chapter quotations and I get the same behavior.   
