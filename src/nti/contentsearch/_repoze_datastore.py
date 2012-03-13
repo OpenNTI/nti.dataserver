@@ -7,23 +7,6 @@ from repoze.catalog.document import DocumentMap
 
 # -----------------------------------
 
-class NoOpCM(object):
-
-	singleton = None
-	
-	def __new__(cls, *args, **kwargs):
-		if not cls.singleton:
-			cls.singleton = super(NoOpCM, cls).__new__(cls, *args, **kwargs)
-		return cls.singleton
-	
-	def __enter__(self,*args):
-		return self
-
-	def __exit__(self,*args):
-		pass
-	
-# -----------------------------------
-
 class DataStore():
 	
 	transaction_manager = transaction.TransactionManager()
