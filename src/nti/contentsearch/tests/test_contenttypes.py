@@ -13,13 +13,13 @@ from nti.contentsearch.contenttypes import epoch_time
 from nti.contentsearch.contenttypes import get_content
 from nti.contentsearch.contenttypes import get_datetime
 from nti.contentsearch.contenttypes import get_keywords
-from nti.contentsearch.contenttypes import empty_search_result
-from nti.contentsearch.contenttypes import empty_suggest_result
-from nti.contentsearch.contenttypes import merge_search_results
-from nti.contentsearch.contenttypes import merge_suggest_results
 from nti.contentsearch.contenttypes import get_highlighted_content
 from nti.contentsearch.contenttypes import get_text_from_mutil_part_body
-from nti.contentsearch.contenttypes import empty_suggest_and_search_result
+from nti.contentsearch.common import merge_search_results
+from nti.contentsearch.common import merge_suggest_results
+from nti.contentsearch.common import empty_search_result
+from nti.contentsearch.common import empty_suggest_result
+from nti.contentsearch.common  import empty_suggest_and_search_result
 
 class TestContentTypes(unittest.TestCase):
 

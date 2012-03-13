@@ -114,7 +114,7 @@ class TestIndexManager(unittest.TestCase):
 		self.assertEqual(results['Hit Count'], 1)
 		items = results['Items']
 		self.assertTrue(items[u'0x31']['ContainerId'])
-		self.assertEqual(items[u'0x31'][u'Snippet'],u'')	
+		self.assertEqual(items[u'0x31'][u'Snippet'],u'Blue red green render purple')	
 		self.assertEqual(items[u'0x31'][u'Creator'],u'ntdev@nextthought.com')	
 		im.close()
 		
