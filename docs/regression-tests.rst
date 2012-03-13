@@ -156,12 +156,37 @@ test case data: be able to edit a classroom.
 	- ensure that a section can be added. 
 	- ensure that a section can be deleted. 
 
+test case data: make sure the user can manage ressources through:
+	- uploading ressources. 
+	- deleting ressources. 
+
+test case data: make sure the user can: 
+	- enter a study group by clicking on its 'select' link.
+	- 
+
 MYSTUFF TESTS
 -------------
 
 Unit to test: My stuff updates. 
-test case data: Check if Mystuff display an updated list of: 
+test case data: Check if Mystuff displays an updated list of: 
 	- highlights. 
 	- notes. 
-	- messages.
+	- messagesNotes (chats).
+	
+test case data: Check if clicking on a list item (highlights/notes/messageNotes) redirects you to the right page. 
+
+
+SEARCH TESTS
+------------
+
+Unit to test: Search efficiency. 
+test case data: Check if search can match up: 
+	- special characters. 
+	- numbers.
+	- sentences. 
+	
+test case data: Check if clicking on a search result redirects to that page.Check for both: 
+	- 'content' search results. 
+	- 'user generated' search results. 
+
 
