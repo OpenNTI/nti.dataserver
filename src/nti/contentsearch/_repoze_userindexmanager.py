@@ -8,13 +8,15 @@ from nti.dataserver._Dataserver import get_object_by_oid
 
 from nti.contentsearch import interfaces
 from nti.contentsearch.common import empty_search_result
+from nti.contentsearch._repoze_index import get_objectId
+from nti.contentsearch._repoze_index import get_type_name
 from nti.contentsearch._repoze_index import get_index_hit
+from nti.contentsearch._repoze_index import create_catalog
 from nti.contentsearch._repoze_datastore import DataStore
 from nti.contentsearch.common import  (CONTENT, LAST_MODIFIED, ITEMS, HIT_COUNT)
 
 import logging
 logger = logging.getLogger( __name__ )
-
 
 class RepozeUserIndexManager(object):
 	interface.implements(interfaces.IUserIndexManager)
@@ -117,10 +119,29 @@ class RepozeUserIndexManager(object):
 	def suggest_and_search(self, query, limit=None, search_on=None):
 		pass
 	
-
+	# -------------------
+	
+	def _get_create_catalog(self, data, type_name=None):
+		type_name = type_name or get_type_name(data)
+		catalog = self.store.get_catalog(self.username, type_name)
+		if not catalog:
+			catalog = create_catalog(type_name)
+			if catalog:
+				self.store.add_catalog(self.username, catalog, type_name)
+		return catalog
+	
 	def index_content(self, data, type_name=None):
-		pass
-		
+		docid = None
+		oid = get_objectId(data)
+		type_name = type_name or get_type_name(data)
+		with self.store.dbTrans():
+			catalog = self._get_create_catalog(data, type_name)
+			if catalog and oid:
+				docMap = self.store.docMap
+				docid = docMap.add(oid)
+				catalog.index_doc(docid, data)
+		return docid
+
 	def update_content(self, data, type_name=None):
 		pass
 

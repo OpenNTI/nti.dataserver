@@ -84,6 +84,9 @@ def _collectionId(obj, default):
 	containerId = get_attr(obj, _container_id_fields, default)
 	return get_collection(containerId)
 
+def get_objectId(data):
+	return get_attr(data, _oid_fields)
+
 # -----------------------------------
 
 def _content(names):
@@ -242,15 +245,15 @@ def create_catalog(type_name='Notes'):
 	elif type_name =='messageinfo':
 		return create_messageinfo_catalog()
 	else:
-		raise Exception("cannot create catalog for type '%s'" % type_name)
+		raise None
 	
 # -----------------------------------
 
-def _get_type_name(obj):
+def get_type_name(obj):
 	if not isinstance(obj, dict):
 		return obj.__class__.__name__
 	else:
-		return get_attr(obj, [CLASS] )
+		return get_attr(obj, [CLASS])
 		
 def _get_last_modified(obj):
 	lm = get_attr(obj, _last_modified_fields )
@@ -261,7 +264,7 @@ def _highlight_content(query=None, text=None):
 	return content if content else text
 
 def _get_index_hit_from_object(obj):
-	result = {TYPE : _get_type_name(obj)}		
+	result = {TYPE : get_type_name(obj)}		
 	result[OID] =  get_attr(obj, _oid_fields )
 	result[NTIID] =  get_attr(obj, _ntiid_fields )
 	result[CREATOR] =  get_attr(obj, _creator_fields )
@@ -289,7 +292,7 @@ def get_index_hit_from_messgeinfo(obj, query=None):
 	return result
 
 def get_index_hit(obj, query=None):
-	type_name =  _get_type_name(obj)
+	type_name =  get_type_name(obj)
 	if type_name == 'note':
 		return get_index_hit_from_note(obj, query)
 	elif type_name == 'highlight':
