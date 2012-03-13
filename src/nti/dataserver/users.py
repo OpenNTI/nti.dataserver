@@ -71,6 +71,8 @@ def _downloadAvatarIcons( targetDir ):
 				for friend in x:
 					_downloadAvatarIcon( friend, targetDir )
 
+def _lower(s):
+	return s.lower() if s else s
 
 @functools.total_ordering
 class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject,datastructures.ExternalizableDictionaryMixin):
@@ -189,7 +191,7 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject,d
 		Return something that belongs to this object based on looking
 		up its NTIID, or None.
 		"""
-		assert ntiids.get_provider( container_id ) == self.username
+		assert _lower(ntiids.get_provider( container_id )) == _lower(self.username), ("%s %s should never load '%s'" %(self.__class__.__name__, self.username, container_id))
 		return None
 
 	### Externalization ###
@@ -232,13 +234,13 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject,d
 	### Comparisons and Hashing ###
 
 	def __eq__(self, other):
-		return other != None and self.username == getattr(other, 'username', None)
+		return other != None and _lower(self.username) == _lower(getattr(other, 'username', None))
 
 	def __lt__(self, other):
-		return self.username < other.username
+		return _lower(self.username) < _lower(other.username)
 
 	def __hash__(self):
-		return self.username.__hash__()
+		return _lower(self.username).__hash__()
 
 
 
