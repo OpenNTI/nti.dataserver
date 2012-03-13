@@ -17,7 +17,7 @@ from nti.contentsearch._repoze_index import get_index_hit
 from nti.contentsearch._repoze_index import create_catalog
 from nti.contentsearch._repoze_datastore import DataStore
 from nti.contentsearch.textindexng3 import CatalogTextIndexNG3
-from nti.contentsearch.common import  (CONTENT, LAST_MODIFIED, ITEMS, HIT_COUNT, SUGGESTIONS)
+from nti.contentsearch.common import  (LAST_MODIFIED, ITEMS, HIT_COUNT, SUGGESTIONS, content_)
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -100,7 +100,7 @@ class RepozeUserIndexManager(object):
 			for type_name in search_on:
 				catalog = self.datastore.get_catalog(self.username, type_name)
 				if catalog: 
-					_, docIds = catalog.query(Contains(CONTENT, query))
+					_, docIds = catalog.query(Contains(content_, query))
 					hits_items, hits_lm = self._get_hits_from_docids(docMap, docIds, limit=limit)
 					if hits_items:
 						lm = max(lm, hits_lm)

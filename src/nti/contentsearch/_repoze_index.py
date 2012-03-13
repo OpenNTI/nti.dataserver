@@ -20,8 +20,8 @@ from nti.contentsearch.textindexng3 import CatalogTextIndexNG3
 from nti.contentsearch.common import (	OID, NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE, \
 										COLLECTION_ID, ITEMS, SNIPPET, ID)
 
-from nti.contentsearch.common import (	COLOR, NGRAMS, CHANNEL, CONTENT, KEYWORDS, REFERENCES, \
-										RECIPIENTS, SHARED_WITH )
+from nti.contentsearch.common import (	color_, ngrams_, channel_, content_, keywords_, references_, \
+										recipients_, sharedWith_ )
 
 
 import logging
@@ -209,32 +209,32 @@ def _create_treadable_mixin_catalog():
 	catalog[COLLECTION_ID] = CatalogFieldIndex(_collectionId)
 	catalog[CREATOR] = CatalogFieldIndex(_attrs(_creator_fields))
 	catalog[NTIID] = CatalogFieldIndex(_attrs(_ntiid_fields))
-	catalog[KEYWORDS] = CatalogKeywordIndex(_keywords([KEYWORDS]))
-	catalog[SHARED_WITH] = CatalogKeywordIndex(_keywords([SHARED_WITH]))
+	catalog[keywords_] = CatalogKeywordIndex(_keywords([keywords_]))
+	catalog[sharedWith_] = CatalogKeywordIndex(_keywords([sharedWith_]))
 	return catalog
 
 def create_notes_catalog():
 	catalog = _create_treadable_mixin_catalog()
-	catalog[NGRAMS] = _create_text_index(NGRAMS, _ngrams([_body]))
-	catalog[REFERENCES] = CatalogKeywordIndex(_keywords([REFERENCES]))
-	catalog[CONTENT] = _create_text_index(CONTENT, _multipart_content([_body]))
+	catalog[ngrams_] = _create_text_index(ngrams_, _ngrams([_body]))
+	catalog[references_] = CatalogKeywordIndex(_keywords([references_]))
+	catalog[content_] = _create_text_index(content_, _multipart_content([_body]))
 	return catalog
 	
 def create_highlight_catalog():
 	catalog = _create_treadable_mixin_catalog()
-	catalog[COLOR] = CatalogFieldIndex(_attrs([COLOR]))
-	catalog[NGRAMS] = _create_text_index(NGRAMS, _ngrams([_startHighlightedFullText]))
-	catalog[CONTENT] = _create_text_index(CONTENT, _content([_startHighlightedFullText]))
+	catalog[color_] = CatalogFieldIndex(_attrs([color_]))
+	catalog[ngrams_] = _create_text_index(ngrams_, _ngrams([_startHighlightedFullText]))
+	catalog[content_] = _create_text_index(content_, _content([_startHighlightedFullText]))
 	return catalog
 
 def create_messageinfo_catalog():
 	catalog = _create_treadable_mixin_catalog()
 	catalog[ID] = CatalogFieldIndex(_attrs([ID]))
-	catalog[CHANNEL] = CatalogFieldIndex(_attrs([CHANNEL]))
-	catalog[NGRAMS] = _create_text_index(NGRAMS, _ngrams([_body]))
-	catalog[CONTENT] = _create_text_index(CONTENT, _multipart_content([_body]))
-	catalog[REFERENCES] = CatalogKeywordIndex(_keywords([REFERENCES]))
-	catalog[RECIPIENTS] = CatalogKeywordIndex(_keywords([RECIPIENTS]))
+	catalog[channel_] = CatalogFieldIndex(_attrs([channel_]))
+	catalog[ngrams_] = _create_text_index(ngrams_, _ngrams([_body]))
+	catalog[content_] = _create_text_index(content_, _multipart_content([_body]))
+	catalog[references_] = CatalogKeywordIndex(_keywords([references_]))
+	catalog[recipients_] = CatalogKeywordIndex(_keywords([recipients_]))
 	return catalog
 
 def create_catalog(type_name='Notes'):
