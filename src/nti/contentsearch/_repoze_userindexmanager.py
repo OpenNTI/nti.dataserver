@@ -121,10 +121,10 @@ class RepozeUserIndexManager(object):
 	
 	# -------------------
 	
-	def _get_create_catalog(self, data, type_name=None):
+	def _get_create_catalog(self, data, type_name=None, create=True):
 		type_name = type_name or get_type_name(data)
 		catalog = self.store.get_catalog(self.username, type_name)
-		if not catalog:
+		if not catalog and create:
 			catalog = create_catalog(type_name)
 			if catalog:
 				self.store.add_catalog(self.username, catalog, type_name)
@@ -133,7 +133,6 @@ class RepozeUserIndexManager(object):
 	def index_content(self, data, type_name=None):
 		docid = None
 		oid = get_objectId(data)
-		type_name = type_name or get_type_name(data)
 		with self.store.dbTrans():
 			catalog = self._get_create_catalog(data, type_name)
 			if catalog and oid:
@@ -143,11 +142,31 @@ class RepozeUserIndexManager(object):
 		return docid
 
 	def update_content(self, data, type_name=None):
-		pass
+		oid = get_objectId(data)
+		if not oid: return None
+		with self.store.dbTrans():
+			docMap = self.store.docMap
+			docid = docMap.docid_for_address(oid)
+			if docid:
+				catalog = self._get_create_catalog(data, type_name)
+				catalog.reindex_doc(docid, data)
+			else:
+				docid = self.index_content(data, type_name)
+		return docid
 
 	def delete_content(self, data, type_name=None):
-		pass
+		oid = get_objectId(data)
+		if not oid: return None
+		with self.store.dbTrans():
+			docMap = self.store.docMap
+			docid = docMap.docid_for_address(oid)
+			if docid:
+				catalog = self.store.get_catalog(self.username, type_name)
+				catalog.unindex_doc(docid)
+		return docid
 		
 	def remove_index(self, type_name):
-		pass
+		with self.store.dbTrans():
+			result = self.store.remove_catalog(self.username, type_name)
+			return result
 	
