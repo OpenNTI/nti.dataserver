@@ -18,31 +18,31 @@ from nti.dataserver.ntiids import is_valid_ntiid_string
 
 default_tokenizer = RegexpTokenizer(r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-']\w+)*", flags = re.MULTILINE | re.DOTALL)
 
-ID = 'ID'
-HIT = 'Hit'
-OID = 'OID'
-TYPE = 'Type'
-NTIID = 'NTIID'
-CLASS = 'Class'
-QUERY = 'Query'
-ITEMS = 'Items'
-SNIPPET = 'Snippet'
-CREATOR = 'Creator'
-HIT_COUNT = 'Hit Count'
-SUGGESTIONS = 'Suggestions'
-CONTAINER_ID = 'ContainerID'
-COLLECTION_ID = 'CollectionID'
-LAST_MODIFIED = 'Last Modified'
+ID 				= 'ID'
+HIT 			= 'Hit'
+OID 			= 'OID'
+TYPE 			= 'Type'
+NTIID 			= 'NTIID'
+CLASS 			= 'Class'
+QUERY 			= 'Query'
+ITEMS			= 'Items'
+SNIPPET 		= 'Snippet'
+CREATOR 		= 'Creator'
+HIT_COUNT 		= 'Hit Count'
+SUGGESTIONS		= 'Suggestions'
+CONTAINER_ID	= 'ContainerID'
+COLLECTION_ID	= 'CollectionID'
+LAST_MODIFIED	= 'Last Modified'
 
-COLOR = 'color'
-LITTLE_ID = 'id'
-NGRAMS = 'ngrams'
-CHANNEL = 'channel'
-CONTENT = 'content'
-KEYWORDS = 'keywords'
-REFERENCES = 'references'
-RECIPIENTS = 'recipients'
-SHARED_WITH = 'sharedWith'
+COLOR			= 'color'
+LITTLE_ID		= 'id'
+NGRAMS			= 'ngrams'
+CHANNEL			= 'channel'
+CONTENT			= 'content'
+KEYWORDS		= 'keywords'
+REFERENCES		= 'references'
+RECIPIENTS		= 'recipients'
+SHARED_WITH		= 'sharedWith'
 
 # -----------------------------------
 
@@ -189,17 +189,15 @@ def merge_search_results(a, b):
 	elif a and not b:
 		return a
 
-	alm = a[LAST_MODIFIED] if a.has_key(LAST_MODIFIED) else 0
-	blm = b[LAST_MODIFIED] if b.has_key(LAST_MODIFIED) else 0
-	if blm > alm:
-		a[LAST_MODIFIED] = blm
-		
+	alm = a.get(LAST_MODIFIED, 0)
+	blm = b.get(LAST_MODIFIED, 0)
+	a[LAST_MODIFIED] = max(alm, blm)
+
 	if not a.has_key(ITEMS):
 		a[ITEMS] = {}
 	
 	a[ITEMS].update(b.get(ITEMS, {}))
 	a[HIT_COUNT] = len(a[ITEMS])
-
 	return a
 
 def merge_suggest_and_search_results(a, b):
@@ -219,10 +217,9 @@ def merge_suggest_results(a, b):
 	elif a and not b:
 		return a
 
-	alm = a[LAST_MODIFIED] if a.has_key(LAST_MODIFIED) else 0
-	blm = b[LAST_MODIFIED] if b.has_key(LAST_MODIFIED) else 0
-	if blm > alm:
-		a[LAST_MODIFIED] = blm
+	alm = a.get(LAST_MODIFIED, 0)
+	blm = b.get(LAST_MODIFIED, 0)
+	a[LAST_MODIFIED] = max(alm, blm)
 
 	if not a.has_key(ITEMS):
 		a[ITEMS] = []
@@ -231,6 +228,4 @@ def merge_suggest_results(a, b):
 	a_set.update(b.get(ITEMS,[]))
 	a[ITEMS] = list(a_set)
 	a[HIT_COUNT] = len(a[ITEMS])
-	
 	return a
-
