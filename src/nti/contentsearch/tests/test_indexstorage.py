@@ -9,7 +9,6 @@ from ZODB import DB
 from ZEO import ClientStorage
 from ZODB.blob import BlobStorage
 from ZODB.FileStorage import FileStorage
-from persistent.mapping import PersistentMapping
 
 from whoosh import query
 from whoosh.compat import u, text_type
@@ -27,20 +26,6 @@ class _IndexStorageTest(object):
 		cls.db.close()
 		shutil.rmtree(cls.blob_dir, True)
 		
-	@classmethod
-	def _get_or_create_key(cls, conn, key):		
-		dbroot = conn.root()
-		if not dbroot.has_key(key):
-			dbroot[key] = PersistentMapping()
-		return dbroot[key]
-		
-	@classmethod
-	def _create_mappings(cls, storage):
-		indicesKey, blobsKey = '__indices', "__blobs"
-		with storage.dbTrans() as conn:
-			cls._get_or_create_key(conn, indicesKey)
-			cls._get_or_create_key(conn, blobsKey)
-	
 	@property
 	def storage(self):
 		return self.idx_storage
@@ -129,7 +114,6 @@ class TestZODBIndexStorage(_IndexStorageTest, unittest.TestCase):
 
 		cls.db = DB(blob_storage)
 		cls.idx_storage = ZODBIndexStorage(db=cls.db)
-		cls._create_mappings(cls.idx_storage)
 		
 # ------------------------
 
@@ -148,8 +132,6 @@ class TestZODBIndexStorageWithFileLocks(_IndexStorageTest, unittest.TestCase):
 		cls.idx_storage = ZODBIndexStorage(	db=cls.db,\
 											use_lock_file=True, 
 				 							lock_file_dir=cls.locks_dir)
-		
-		cls._create_mappings(cls.idx_storage)
 			
 	@classmethod
 	def tearDownClass(cls):
@@ -216,7 +198,6 @@ class TestZEOIndexStorage(_IndexStorageTest, unittest.TestCase):
 	
 		cls.db = DB(storage)		
 		cls.idx_storage = ZODBIndexStorage(db=cls.db)
-		cls._create_mappings(cls.idx_storage)
 		
 	@classmethod
 	def tearDownClass(cls):
