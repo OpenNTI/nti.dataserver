@@ -78,7 +78,6 @@ setup(
 		'repoze.zodbconn',
 		'requests',
 		'scss',
-		'selector',
 		'setproctitle',
 		'setuptools',
 		'simplejson',

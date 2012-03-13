@@ -3,7 +3,7 @@
 import logging
 logger = logging.getLogger( __name__ )
 
-import wsgiref
+import wsgiref.headers
 import sys
 import transaction
 import pyramid.httpexceptions
