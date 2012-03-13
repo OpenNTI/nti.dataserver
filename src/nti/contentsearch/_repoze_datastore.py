@@ -70,6 +70,13 @@ class DataStore():
 		catalog = pm.get(type_name, None)
 		return catalog
 		
+	def remove_catalog(self, username, type_name):
+		pm = self.users.get(username, None)
+		if pm and type_name in pm:
+			pm.pop(type_name)
+			return True
+		return False
+		
 	def get_catalog_names(self, username):
 		pm = self.users.get(username, {})
 		names = pm.keys()

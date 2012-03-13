@@ -30,6 +30,8 @@ logger = logging.getLogger( __name__ )
 # -----------------------------------
 	
 def get_attr(obj, names, default=None):
+	if not obj: return default
+	
 	names = to_list(names)
 	if isinstance(obj, dict):
 		for name in names:
@@ -85,7 +87,7 @@ def _collectionId(obj, default):
 	return get_collection(containerId)
 
 def get_objectId(data):
-	return get_attr(data, _oid_fields)
+	return data if isinstance(data, basestring) else get_attr(data, _oid_fields)
 
 # -----------------------------------
 
