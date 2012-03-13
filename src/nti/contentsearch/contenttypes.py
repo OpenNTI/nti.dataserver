@@ -13,8 +13,10 @@ from nti.contentsearch.common import get_content
 from nti.contentsearch.common import empty_search_result
 from nti.contentsearch.common import empty_suggest_result
 from nti.contentsearch.common import word_content_highlight
-from nti.contentsearch.common import (	OID, NTIID, CREATOR, LAST_MODIFIED, CLASS, \
-										COLLECTION_ID, ITEMS, SNIPPET, QUERY, HIT_COUNT)
+from nti.contentsearch.common import (	OID, NTIID, CREATOR, LAST_MODIFIED, CLASS, ID as ID_, \
+										COLLECTION_ID, ITEMS, SNIPPET, QUERY, HIT_COUNT,)
+from nti.contentsearch.common import (	color_, quick_, channel_, content_, keywords_, references_, \
+										recipients_, sharedWith_, oid_ )
 
 from whoosh.fields import ID
 from whoosh.fields import TEXT
@@ -118,7 +120,7 @@ def get_text_from_mutil_part_body(body):
 				try:
 					obj = gbls[name]()
 					d = obj.get_index_data(item)
-					add_to_items(d, 'content')
+					add_to_items(d, content_)
 					add_to_items(d, 'text')
 				except:
 					pass
@@ -192,14 +194,14 @@ class _IndexableContent(object):
 		return self.get_default_search_field()
 
 	def get_default_search_field(self):
-		return "content"
+		return content_
 
 	@property
 	def quick_field(self):
 		return self.get_quick_search_field()
 
 	def get_quick_search_field(self):
-		return "quick"
+		return quick_
 
 	@property
 	def limit(self):
@@ -423,7 +425,7 @@ class Book(_IndexableContent):
 
 		try:
 			parsed_query = qp.parse(unicode(query))
-			parsed_query = Or([parsed_query] + [Term(u"keywords", query)])
+			parsed_query = Or([parsed_query] + [Term(keywords_, query)])
 			return self.execute_query_and_externalize(searcher, parsed_query, query, limit, sortedby)
 		except:
 			logger.debug("Error while searching '%s'. Returning empty result", query, exc_info=True)
@@ -482,9 +484,9 @@ class UserIndexableContent(_IndexableContent):
 			if not d.has_key('collectionId'):
 				d['collectionId'] = unicode("prealgebra")
 
-		if add_oid and not d.has_key('oid'):
+		if add_oid and not d.has_key(oid_):
 
-			d['oid']= unicode(str(uuid.uuid1()))
+			d[oid_]= unicode(str(uuid.uuid1()))
 
 		if quick and d.has_key(self.search_field):
 			d[self.quick_field] = d[self.search_field]
@@ -495,7 +497,7 @@ class UserIndexableContent(_IndexableContent):
 class MetaHighlight(MetaIndexableContent):
 	def __new__(cls, name, bases, cls_dict):
 		t = super(MetaHighlight, cls).__new__(cls, name, bases, cls_dict)
-		t.inverted_fields['oid'] = 'TargetOID'
+		t.inverted_fields[oid_] = 'TargetOID'
 		return t
 
 class Highlight(UserIndexableContent):
@@ -533,16 +535,16 @@ class Highlight(UserIndexableContent):
 				 		ntiid=ID(stored=True))
 
 	fields = {
-			"CollectionID": ("collectionId", echo),
-			"OID": ("oid", echo),
-			"ContainerId":("containerId", echo),
-			"Creator": ("creator", echo),
-			"Last Modified": ("last_modified", get_datetime),
-			"startHighlightedFullText" : ("content", get_content),
-			"sharedWith": ("sharedWith", get_keywords),
-			"color": ("color", echo),
-			"keywords": ("keywords", get_keywords),
-			"NTIID": ("ntiid", echo)
+			"CollectionID":	("collectionId", echo),
+			OID:			(oid_, echo),
+			"ContainerId":	("containerId", echo),
+			CREATOR:		("creator", echo),
+			LAST_MODIFIED:	("last_modified", get_datetime),
+			"startHighlightedFullText" : (content_, get_content),
+			sharedWith_:	(sharedWith_, get_keywords),
+			color_:			(color_, echo),
+			keywords_:		(keywords_, get_keywords),
+			NTIID:			("ntiid", echo)
 			}
 
 	indexname_postfix = '__highlights'
@@ -582,8 +584,8 @@ class Highlight(UserIndexableContent):
 	def delete_content(self, writer, externalValue, auto_commit=True, **commit_args):
 		d = self.get_index_data(externalValue, self.fields.iteritems() )
 		try:
-			if d and d.has_key("oid"):
-				writer.delete_by_term('oid', unicode(d['oid']))
+			if d and d.has_key(oid_):
+				writer.delete_by_term(oid_, unicode(d[oid_]))
 		except Exception, e:
 			writer.cancel()
 			logger.debug("Error while deleting content '%s'", externalValue, exc_info=True)
@@ -598,7 +600,7 @@ class Highlight(UserIndexableContent):
 
 		data = externalValue
 		if isinstance(data, basestring):
-			return {"oid" : unicode(data)}
+			return {oid_ : unicode(data)}
 		elif not isinstance(data, collections.Mapping):
 			return None
 
@@ -624,19 +626,19 @@ class Highlight(UserIndexableContent):
 	def get_data_from_search_hit(self, hit, d):
 		_IndexableContent.get_data_from_search_hit(self, hit, d)
 		d['Type'] = self.__class__.__name__
-		d[self.external_name('oid')] = hit.get('oid', '')
+		d[self.external_name(oid_)] = hit.get(oid_, '')
 		d[self.external_name('ntiid')] = hit.get('ntiid', '')
 		d[self.external_name('creator')] = hit.get("creator", '')
 		d[self.external_name('containerId')] = hit.get('containerId', '')
 		d[self.external_name('collectionId')] = hit.get('collectionId', '')
-		return hit.get('oid', None)
+		return hit.get(oid_, None)
 
 ##########################
 
 class MetaNote(MetaHighlight):
 	def __new__(cls, name, bases, cls_dict):
 		t = super(MetaNote, cls).__new__(cls, name, bases, cls_dict)
-		t.inverted_fields['content'] = 'Body'
+		t.inverted_fields[content_] = 'Body'
 		return t
 
 class Note(Highlight):
@@ -676,17 +678,17 @@ class Note(Highlight):
 				 		ntiid=ID(stored=True) )
 
 	fields = {
-			"CollectionID": ("collectionId", echo),
-			OID: ("oid",  echo),
-			"ContainerId":("containerId", echo),
-			CREATOR: ("creator", echo),
-			LAST_MODIFIED: ("last_modified", get_datetime),
-			"body" : ("content", get_text_from_mutil_part_body),
-			"sharedWith": ("sharedWith", get_keywords),
-			"references": ("references", get_keywords),
-			"id": ("id", echo),
-			"keywords": ("keywords", get_keywords),
-			NTIID: ("ntiid", echo)
+			"CollectionID":	("collectionId", echo),
+			OID:			(oid_,  echo),
+			"ContainerId":	("containerId", echo),
+			CREATOR:		("creator", echo),
+			LAST_MODIFIED:	("last_modified", get_datetime),
+			"body":			(content_, get_text_from_mutil_part_body),
+			sharedWith_:	(sharedWith_, get_keywords),
+			references_:	(references_, get_keywords),
+			"id":			("id", echo),
+			keywords_:		(keywords_, get_keywords),
+			NTIID:			("ntiid", echo)
 			}
 
 class MessageInfo(Note):
@@ -724,18 +726,18 @@ class MessageInfo(Note):
 				 		ntiid=ID(stored=True))
 
 	fields = {
-			"ContainerId": ("containerId", echo),
-			"Body": ("content", get_text_from_mutil_part_body),
-			CREATOR: ("creator", echo),
-			"channel": ("channel", echo),
-			"references": ("references", get_keywords),
-			"recipients": ("recipients", get_keywords),
-			"sharedWith": ("sharedWith", get_keywords),
-			LAST_MODIFIED: ("last_modified", get_datetime),
-			"ID": ("id",  echo),
-			OID: ("oid",  echo),
-			"keywords": ("keywords", get_keywords),
-			NTIID: ("ntiid", echo)
+			"ContainerId":	("containerId", echo),
+			"Body":			(content_, get_text_from_mutil_part_body),
+			CREATOR:		("creator", echo),
+			channel_:		(channel_, echo),
+			references_:	(references_, get_keywords),
+			recipients_:	(recipients_, get_keywords),
+			sharedWith_:	(sharedWith_, get_keywords),
+			LAST_MODIFIED:	("last_modified", get_datetime),
+			ID_: 			("id",  echo),
+			OID:			(oid_,  echo),
+			keywords_:		(keywords_, get_keywords),
+			NTIID:			("ntiid", echo)
 			}
 
 	def get_index_data(self, externalValue, items=None):
