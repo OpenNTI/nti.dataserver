@@ -1,3 +1,5 @@
+from numbers import Integral
+
 from zope import component
 from zope import interface
 
@@ -8,15 +10,19 @@ from nti.dataserver._Dataserver import get_object_by_oid
 
 from nti.contentsearch import interfaces
 from nti.contentsearch.common import empty_search_result
+from nti.contentsearch.common import empty_suggest_result
 from nti.contentsearch._repoze_index import get_objectId
 from nti.contentsearch._repoze_index import get_type_name
 from nti.contentsearch._repoze_index import get_index_hit
 from nti.contentsearch._repoze_index import create_catalog
 from nti.contentsearch._repoze_datastore import DataStore
-from nti.contentsearch.common import  (CONTENT, LAST_MODIFIED, ITEMS, HIT_COUNT)
+from nti.contentsearch.textindexng3 import CatalogTextIndexNG3
+from nti.contentsearch.common import  (CONTENT, LAST_MODIFIED, ITEMS, HIT_COUNT, SUGGESTIONS)
 
 import logging
 logger = logging.getLogger( __name__ )
+
+# -----------------------------
 
 class RepozeUserIndexManager(object):
 	interface.implements(interfaces.IUserIndexManager)
@@ -88,7 +94,7 @@ class RepozeUserIndexManager(object):
 		lm = 0
 		count = 0
 		hits = {}
-		results = empty_search_result()
+		results = empty_search_result(query)
 		with self.store.dbTrans():
 			docMap = self.store.docMap
 			for type_name in search_on:
@@ -113,11 +119,42 @@ class RepozeUserIndexManager(object):
 		results[LAST_MODIFIED] = lm
 		return results	
 	
-	def suggest(self, term, limit=None, prefix=None, search_on=None, **kwargs):
-		pass
+	def quick_search(self, query, limit=None, search_on=None):
+		return empty_search_result(query)
+	
+	def suggest(self, term, limit=None, prefix=None, search_on=None, *args, **kwargs):
+		search_on = self._adapt_search_on_types(search_on)
+		search_on = search_on if search_on else self._get_catalog_names()
+		prefix = -1 if not isinstance(prefix, Integral) else prefix
+		threshold = kwargs.get('threshold', 0.75)
 		
-	def suggest_and_search(self, query, limit=None, search_on=None):
-		pass
+		suggestions = set()		
+		results = empty_suggest_result(term)
+		with self.store.dbTrans():
+			for type_name in search_on:
+				catalog = self.datastore.get_catalog(self.username, type_name)
+				if not isinstance(catalog, CatalogTextIndexNG3): continue
+				words = catalog.suggest(term=term, threshold=threshold, prefix=prefix) 
+				suggestions.update(words)
+		
+		suggestions = suggestions[:limit] if limit and limit > 0 else suggestions
+		results[SUGGESTIONS] = suggestions
+		return results
+	
+	def suggest_and_search(self, query, limit=None, search_on=None, *args, **kwargs):
+		if ' ' in query:
+			suggestions = []
+			result = self.search(query, limit, search_on, *args, **kwargs)
+		else:
+			result = self.suggest(query, limit=limit, search_on=search_on, **kwargs)
+			suggestions = result[SUGGESTIONS]
+			if len(suggestions)>0:
+				result = self.search(query, limit, search_on, *args, **kwargs)
+			else:
+				result = self.search(query, limit, search_on, *args, **kwargs)
+
+		result[SUGGESTIONS] = suggestions
+		return result
 	
 	# -------------------
 	
