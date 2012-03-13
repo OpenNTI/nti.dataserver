@@ -32,13 +32,11 @@ dictserver = UserDict.UserDict()
 dictserver.pyramid = nti.dictserver._pyramid
 dictserver.dictionary = nti.dictserver.dictionary
 
-from paste.exceptions.errormiddleware import ErrorMiddleware
-
 
 import nti.dataserver as dataserver
  #Hmm, these next three MUST be imported. We seem to have a path-dependent import req.
 import nti.dataserver.socketio_server
-import nti.dataserver.wsgi
+#import nti.dataserver.wsgi
 import nti.dataserver._Dataserver
 import nti.dataserver.session_consumer
 from nti.dataserver.library import Library
@@ -49,13 +47,10 @@ from nti.contentsearch.indexmanager import IndexManager
 #from nti.contentsearch import indexmanager
 contentsearch = nti.contentsearch
 
-from selector import Selector
-
 from nti.dataserver.users import SharingTarget
 from nti.dataserver import authorization as nauth
 from nti.dataserver.interfaces import IDataserver
 
-from cors import CORSInjector
 
 from zope import interface
 from zope import component
@@ -73,7 +68,6 @@ import pyramid.httpexceptions as hexc
 import datetime
 import pyramid_auth
 
-from zope.location.location import LocationProxy
 
 # Make the zope interface extend the pyramid interface
 # Although this seems backward, it isn't. The zope location
@@ -83,8 +77,8 @@ from pyramid.interfaces import ILocation
 from zope.location.interfaces import ILocation as IZLocation
 IZLocation.__bases__ = (ILocation,)
 
-from zope import container as zcontainer
-from zope import location as zlocation
+#from zope import container as zcontainer
+#from zope import location as zlocation
 
 
 SOCKET_IO_PATH = 'socket.io'
@@ -95,8 +89,7 @@ USE_FILE_INDICES = not DATASERVER_ZEO_INDEXES
 
 class _Main(object):
 
-	def __init__(self, app, pyramid_config, serveFiles=(), http_port=8080):
-		self.captured = app
+	def __init__(self, pyramid_config, serveFiles=(), http_port=8080):
 		self.serveFiles = [ ('/dictionary', None) ]
 		self.http_port = http_port
 		self.pyramid_config = pyramid_config
@@ -127,22 +120,6 @@ class _Main(object):
 			start_request( '200 OK', [('Content-Type', 'text/plain')] )
 			return [""]
 
-		for prefix, _ in self.serveFiles:
-			if _ == 'contains' and prefix in environ['PATH_INFO']: # tmp hack for user search
-				return self.pyramid_app( environ, start_request )
-
-			if environ['PATH_INFO'].startswith( prefix ):
-				# pyramid handles the Range requests that are necessary to stream video,
-				# but when the socket abruptly shuts down like it does on such requests,
-				# a stack trace is logged by gevent.
-				result = self.pyramid_app( environ, start_request )
-				# NOTE: In the past, we looked for a cookie, ntifacesize, and also
-				# query params for face. If the request was for prealgebra.css, we appended
-				# CSS to make it match the face value "dynamically". This made rendering on the pad
-				# faster. The pad now has a application.css that it likes to use.
-				# If the content is not local, we should dynamically create one of those automatically.
-
-				return result
 
 		# Nothing seems to actually be supporting the same
 		# WebSocket protocol versions.
@@ -162,12 +139,12 @@ class _Main(object):
 		# Chrome 15.0.865.0 dev is the same as Chrome 14.
 		# Chrome 16 is version 13 (which seems to be compatible with 7/8)
 
-		# TODO: socketio and authentication? The SocketIOHandler
-		# class runs and deals completely with the socket.io path before
-		# any of our application code runs, including authkit.
-		# So these URLs are effectively not authenticated unless we do it
-		# manually. (We could also subclass SocketIOHandler)
-		if environ['PATH_INFO'].startswith( '/' + SOCKET_IO_PATH ):
+		# We require authentication already to be setup. See
+		# _after_create_session.
+		# Note the weirdness here. Socket handling does not go through pyramid, but
+		# static javascript does.
+		if environ['PATH_INFO'].startswith( '/' + SOCKET_IO_PATH ) \
+		  and not environ['PATH_INFO'].startswith(  '/' + SOCKET_IO_PATH + '/static/' ):
 			if 'wsgi.websocket' not in environ:
 				# Well damn. We failed to upgrade the connection to a websocket.
 				# This usually means that we are behind a proxy that doesn't
@@ -200,11 +177,7 @@ class _Main(object):
 			start_request( '200 OK', [('Content-Type', 'text/plain'),] )
 			return body + '\n'
 
-		try:
-			return self.captured( environ, start_request )
-		except hexc.HTTPError as h:
-			start_request( h.status, h.headers.items(), sys.exc_info() )
-			return [h.message]
+		return self.pyramid_app( environ, start_request )
 
 def createApplication( http_port,
 					   library,
@@ -248,12 +221,6 @@ def createApplication( http_port,
 	user_indices_dir = os.path.join( server._parentDir, 'indices' )
 
 	logger.debug( 'Finished starting dataserver' )
-
-
-	userTree = dataserver.wsgi.UserTree( server, library )
-	quizTree = dataserver.wsgi.QuizTree( server )
-	libraryTree = dataserver.wsgi.LibraryTree( library )
-	logger.debug( 'Finished creating trees' )
 
 	# TODO: Consider whether to use the global site manager as the registry,
 	# or allow pyramid to hook zca. The latter should install a site manager
@@ -325,7 +292,7 @@ def createApplication( http_port,
 	pyramid_config.registry.registerAdapter( OUAdminFactory, name='OUAdminFactory' )
 
 
-	selector = Selector( consume_path=False )
+	#selector = Selector( consume_path=False )
 	if dictserver.pyramid and 'main_dictionary_path' in settings:
 		try:
 			dictionary = dictserver.dictionary.ChromeDictionary( settings['main_dictionary_path'] )
@@ -415,12 +382,6 @@ def createApplication( http_port,
 							 permission=nauth.ACT_SEARCH)
 
 	logger.debug( 'Finished creating search' )
-
-	userTree.addToSelector( selector )
-	quizTree.addToSelector( selector )
-	libraryTree.addToSelector( selector )
-	logger.debug( 'Finished adding trees' )
-
 
 	# User-generated data
 	pyramid_config.add_route( name='user.pages.traversal', pattern='/dataserver2/users/{user}/Pages/{group}/UserGeneratedData{_:/?}',
@@ -588,7 +549,7 @@ def createApplication( http_port,
 
 	# Our application needs to be innermost, before all the authkit stuff,
 	# so we define this before that happens
-	main = _Main( selector, pyramid_config, http_port=http_port )
+	main = _Main( pyramid_config, http_port=http_port )
 	#TODO: Tmp hacks
 	main.addServeFiles( ('/Search/RecursiveUserGeneratedData/', 'contains') )
 	main.addServeFiles( ('/dataserver/UserSearch/', None) )

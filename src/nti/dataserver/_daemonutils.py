@@ -139,26 +139,12 @@ def launch_python_function_as_daemon( func, args=(), directory='/tmp', qualifier
 	launch_python_daemon( flag_name, __file__, daemon_args )
 
 _resolve = None
-try:
-	from zope.dottedname.resolve import resolve as _resolve
-except ImportError:
-	import warnings
-	warnings.warn( "Please install zope.dottedname" )
+
+from zope.dottedname.resolve import resolve as _resolve
 
 
 def load_func( module_name, local_name ):
-	try:
-		return _resolve( module_name + '.' + local_name )
-	except (ImportError,TypeError):
-		pass
-
-	# TODO: Remove all this stuff once zope.dottedname is a fixed req.
-	try:
-		mod = __import__( module_name, fromlist=['a'] )
-	except ImportError:
-		mod = __import__( module_name )
-	func = mod.__dict__[local_name]
-	return func
+	return _resolve( module_name + '.' + local_name )
 
 def _run_main(args=None):
 	if args is None:
