@@ -4,8 +4,6 @@ import binascii
 import transaction
 from threading import Lock
 
-from gevent.local import local
-
 from whoosh import index
 from whoosh.store import Storage as WhooshStorage
 from whoosh.index import _DEF_INDEX_NAME
@@ -21,27 +19,12 @@ from persistent.mapping import PersistentMapping
 			
 import zc.lockfile
 
+from nti.contentsearch import NoOpCM
+
 #########################
 
 __all__ = ['DirectoryStorage', 'ZODBIndexStorage', 'ZODBIndex',
 		   'create_directory_index_storage', 'create_zodb_index_storage']
-
-#########################
-
-class NoOpCM(object):
-
-	singleton = None
-	
-	def __new__(cls, *args, **kwargs):
-		if not cls.singleton:
-			cls.singleton = super(NoOpCM, cls).__new__(cls, *args, **kwargs)
-		return cls.singleton
-	
-	def __enter__(self,*args):
-		return self
-
-	def __exit__(self,*args):
-		pass
 	
 #########################
 
@@ -220,69 +203,7 @@ def open_file(self, name, *args, **kwargs):
 	except:
 		raise
 
-#########################
-
-class _ContextManager(object):
-	"""
-	Context manager for db connections
-	"""
-	
-	local = local()
-	
-	def __init__(self, db):
-		self.db = db
-		self.tm = None
-		self.conn = None
-		self.txn = None
-
-	def __enter__(self):
-		self.tm = transaction.TransactionManager()
-		self.conn = self.db.open( self.tm )
-		self.txn = self.tm.begin()
-		self.local.cm = self
-		return self.conn
-		
-	def __exit__(self, t, v, tb):
-		try:
-			if t is None:
-				self.tm.commit()
-			else:
-				self.tm.abort()
-			self.tm = None
-		finally:
-			self.close()
-	
-	def close(self):
-		if self.conn:
-			try:
-				self.conn.close()
-			except: 
-				pass
-			
-		self.tm = None
-		self.conn = None
-			
-		try:
-			del self.local.cm
-		except:
-			pass
-		
-	def connected(self):
-		return self.conn is not None
-	
-	def abort(self):
-		if self.tm:
-			self.tm.abort()
-			
-	def commit(self):
-		if self.tm:
-			self.tm.commit()
-		
-	@classmethod
-	def get(cls):
-		return cls.local.cm
-	
-#------------------------------
+# ------------------------------
 
 class ZODBIndex(FileIndex):
 	"""
@@ -320,7 +241,7 @@ class ZODBSegmentWriter(SegmentWriter):
 	def abort(self):
 		self.cancel()
 		
-#------------------------------
+# ------------------------------
 
 class ZODBIndexStorage(WhooshStorage, IndexStorage):
 	"""
@@ -339,7 +260,17 @@ class ZODBIndexStorage(WhooshStorage, IndexStorage):
 		self.mapped = mapped
 		self.blobsKey = blobsKey
 		self.indicesKey = indicesKey
+		self.transaction_manager = transaction.TransactionManager()
+		self.conn = self.db.open( self.transaction_manager )
 		
+		# create keys
+		with self.dbTrans():
+			for key in (indicesKey, blobsKey):
+				dbroot = self.root
+				if not dbroot.has_key(key):
+					dbroot[key] = PersistentMapping()
+		
+		# set lock file
 		if use_lock_file and lock_file_dir:
 			self.lock_file_dir = os.path.expanduser(lock_file_dir)
 			if not os.path.exists(self.lock_file_dir):
@@ -351,7 +282,7 @@ class ZODBIndexStorage(WhooshStorage, IndexStorage):
 		
 	@property	
 	def root(self):
-		return _ContextManager.get().conn.root()
+		return self.conn.root()
 	
 	@property
 	def indices(self):
@@ -364,7 +295,7 @@ class ZODBIndexStorage(WhooshStorage, IndexStorage):
 	# ---------- IndexStorage ----------
 		
 	def dbTrans(self):
-		return _ContextManager(self.db)
+		return self.transaction_manager
 	
 	def index_exists(self, indexname, **kwargs):
 		return self.indices.has_key(indexname)
@@ -462,12 +393,26 @@ class ZODBIndexStorage(WhooshStorage, IndexStorage):
 				self.locks[name] = Lock()
 			return self.locks[name]
 	
+	# -----------------------------
+	
 	def __str__( self ):
 		return "%s,%s" % (self.indicesKey,  self.blobsKey)
 	
 	def __repr__(self):
 		return "%s(indices=%s,blobs=%s)" % (self.__class__.__name__, repr(self.indicesKey), repr(self.blobsKey))
 	
+	# -----------------------------
+	
+	def close(self):
+		try:
+			self.conn.close()
+		except:
+			pass
+		
+	def __del__(self):
+		self.close()
+	
+	# -----------------------------
 	
 	def _lock_file(self, name):
 		name += ".lock"
@@ -531,25 +476,12 @@ def create_zodb_index_storage(	db,
 								mapped=True):
 		
 	if isinstance(db, DB):
-		
-		def get_or_create_key(conn, key):		
-			dbroot = conn.root()
-			if not dbroot.has_key(key):
-				dbroot[key] = PersistentMapping()
-			return dbroot[key]
-	
-	
 		storage = ZODBIndexStorage(	db, 
 									indicesKey=indicesKey,
 									blobsKey = blobsKey,
 									use_lock_file = use_lock_file,
 									lock_file_dir = lock_file_dir,
-									mapped = mapped)
-		
-		with storage.dbTrans() as conn:
-			get_or_create_key(conn, indicesKey)
-			get_or_create_key(conn, blobsKey)
-			
+									mapped = mapped)		
 		return storage
 	else:
 		raise TypeError("Invalid db type")

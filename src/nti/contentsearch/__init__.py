@@ -35,3 +35,17 @@ class IndexTypeMixin(object):
 	def __repr__( self ):
 		return 'IndexTypeMixin(indexname=%s, type=%s)' %  (self.indexname, self.type_instance)
 
+class NoOpCM(object):
+
+	singleton = None
+	
+	def __new__(cls, *args, **kwargs):
+		if not cls.singleton:
+			cls.singleton = super(NoOpCM, cls).__new__(cls, *args, **kwargs)
+		return cls.singleton
+	
+	def __enter__(self,*args):
+		return self
+
+	def __exit__(self,*args):
+		pass
