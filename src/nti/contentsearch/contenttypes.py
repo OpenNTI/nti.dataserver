@@ -12,6 +12,7 @@ from nti.contentsearch.common import epoch_time
 from nti.contentsearch.common import get_content
 from nti.contentsearch.common import empty_search_result
 from nti.contentsearch.common import empty_suggest_result
+from nti.contentsearch.common import word_content_highlight
 from nti.contentsearch.common import (	OID, NTIID, CREATOR, LAST_MODIFIED, CLASS, \
 										COLLECTION_ID, ITEMS, SNIPPET, QUERY, HIT_COUNT)
 
@@ -24,8 +25,6 @@ from whoosh.fields import NUMERIC
 from whoosh.fields import DATETIME
 
 from whoosh.searching import Hit
-
-from whoosh import analysis
 from whoosh import highlight
 
 from whoosh.query import (Or, Term)
@@ -94,15 +93,7 @@ def get_keywords(records):
 
 ##########################
 
-def get_highlighted_content(query, text, analyzer=None, maxchars=300, surround=20):
-	"""
-	whoosh highlight based on words
-	"""
-	terms = frozenset([query])
-	analyzer = analyzer or analysis.SimpleAnalyzer()
-	fragmenter = highlight.ContextFragmenter(maxchars=maxchars, surround=surround)
-	formatter = highlight.UppercaseFormatter()
-	return highlight.highlight(text, terms, analyzer, fragmenter, formatter)
+get_highlighted_content = word_content_highlight
 
 ##########################
 
@@ -324,12 +315,16 @@ class _IndexableContent(object):
 			lm = d[LAST_MODIFIED] if d.has_key(LAST_MODIFIED) else 0
 			maxLM = max(lm, maxLM)
 
-			snippet = ''
+			snippet = None
 			if stored_field:
 				if field_found_in_query:
 					snippet = hit.highlights(self.search_field)
 				else:
 					snippet = get_highlighted_content(query, hit[self.search_field])
+			
+			if not snippet:
+				snippet = hit[self.search_field]
+
 			d[SNIPPET] = snippet
 
 			items[item_id or hit_count] = d

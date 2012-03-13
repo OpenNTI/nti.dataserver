@@ -78,7 +78,7 @@ def get_collection(containerId, default='prealgebra'):
 
 # -----------------------------------
 
-def ngram_tokens(text, minsize=2, maxsize=10, at='start', unique=True):
+def ngram_tokens(text, minsize=3, maxsize=10, at='start', unique=True):
 	rext = analysis.RegexTokenizer()
 	ngf = analysis.NgramFilter(minsize=minsize, maxsize=maxsize, at=at)
 	stream = rext(unicode(text))
@@ -90,7 +90,7 @@ def ngram_tokens(text, minsize=2, maxsize=10, at='start', unique=True):
 		
 def ngrams(text):
 	result = [token.text for token in ngram_tokens(text)]
-	return ' '.join(sorted(result, cmp=lambda x,y: cmp(len(x),len(y))))
+	return ' '.join(sorted(result, cmp=lambda x,y: cmp(x, y)))
 
 # -----------------------------------
 
@@ -118,7 +118,8 @@ def set_matched_filter(tokens, termset, text, multiple_match=True):
 			t.endchar = len(text)
 		yield t
 		
-def highlight_content(query, text, maxchars=300, surround=50, order=highlight.FIRST, top=3, multiple_match=False):
+def ngram_content_highlight(query, text, maxchars=300, surround=50, order=highlight.FIRST, top=3, 
+							multiple_match=False, *args, **kwargs):
 	"""
 	highlight based on ngrams
 	"""
@@ -138,6 +139,16 @@ def highlight_content(query, text, maxchars=300, surround=50, order=highlight.FI
 	
 	formatter = highlight.UppercaseFormatter()
 	return formatter(text, fragments)
+
+def word_content_highlight(query, text, analyzer=None, maxchars=300, surround=20, *args, **kwargs):
+	"""
+	whoosh highlight based on words
+	"""
+	terms = frozenset([query])
+	analyzer = analyzer or analysis.SimpleAnalyzer()
+	fragmenter = highlight.ContextFragmenter(maxchars=maxchars, surround=surround)
+	formatter = highlight.UppercaseFormatter()
+	return highlight.highlight(text, terms, analyzer, fragmenter, formatter)
 
 # -----------------------------------
 

@@ -15,7 +15,8 @@ from nti.contentsearch.common import to_list
 from nti.contentsearch.common import epoch_time
 from nti.contentsearch.common import get_content
 from nti.contentsearch.common import get_collection
-from nti.contentsearch.common import highlight_content
+from nti.contentsearch.common import word_content_highlight
+from nti.contentsearch.common import ngram_content_highlight
 from nti.contentsearch.textindexng3 import CatalogTextIndexNG3
 from nti.contentsearch.common import (	OID, NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE, \
 										COLLECTION_ID, ITEMS, SNIPPET, ID)
@@ -261,8 +262,19 @@ def _get_last_modified(obj):
 	lm = get_attr(obj, _last_modified_fields )
 	return lm if lm else 0
 
-def _highlight_content(query=None, text=None):
-	content = highlight_content(query, text) if query and text else u''
+def _word_content_highlight(query=None, text=None,  *args, **kwargs):
+	content = word_content_highlight(query, text) if query and text else u''
+	return content if content else text
+
+def _ngram_content_highlight(query=None, text=None, *args, **kwargs):
+	content = ngram_content_highlight(query, text,  *args, **kwargs) if query and text else u''
+	return content if content else text
+
+def _highlight_content(query=None, text=None, use_word_highlight=True):
+	content = None
+	if query and text:
+		content = 	word_content_highlight(query, text) if use_word_highlight else \
+					_ngram_content_highlight(query, text)
 	return content if content else text
 
 def _get_index_hit_from_object(obj):
@@ -275,32 +287,32 @@ def _get_index_hit_from_object(obj):
 	result[LAST_MODIFIED] = _get_last_modified(obj)
 	return result
 
-def get_index_hit_from_note(obj, query=None):
+def get_index_hit_from_note(obj, query=None, use_word_highlight=True, *args, **kwargs):
 	text = get_attr(obj, [_body])
 	result = _get_index_hit_from_object(obj)
-	result[SNIPPET] = _highlight_content(query, text)
+	result[SNIPPET] = _highlight_content(query, text, use_word_highlight)
 	return result
 
-def get_index_hit_from_hightlight(obj, query=None):
+def get_index_hit_from_hightlight(obj, query=None, use_word_highlight=True, *args, **kwargs):
 	result = _get_index_hit_from_object(obj)
 	text = get_attr(obj, [_startHighlightedFullText])
-	result[SNIPPET] = _highlight_content(query, text)
+	result[SNIPPET] = _highlight_content(query, text, use_word_highlight)
 	return result
 
-def get_index_hit_from_messgeinfo(obj, query=None):
+def get_index_hit_from_messgeinfo(obj, query=None, use_word_highlight=True, *args, **kwargs):
 	text = get_attr(obj, [_body])
 	result = _get_index_hit_from_object(obj)
-	result[SNIPPET] = _highlight_content(query, text)
+	result[SNIPPET] = _highlight_content(query, text, use_word_highlight)
 	return result
 
-def get_index_hit(obj, query=None):
+def get_index_hit(obj, query=None, use_word_highlight=True, *args, **kwargs):
 	type_name =  get_type_name(obj)
 	if type_name == 'note':
-		return get_index_hit_from_note(obj, query)
+		return get_index_hit_from_note(obj, query, use_word_highlight, *args, **kwargs)
 	elif type_name == 'highlight':
-		return get_index_hit_from_hightlight(obj, query)
+		return get_index_hit_from_hightlight(obj, query, use_word_highlight, *args, **kwargs)
 	elif type_name =='messageinfo':
-		return get_index_hit_from_messgeinfo(obj, query)
+		return get_index_hit_from_messgeinfo(obj, query, use_word_highlight, *args, **kwargs)
 	else:
 		return None
 	
