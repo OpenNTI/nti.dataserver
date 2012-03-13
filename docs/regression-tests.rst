@@ -8,6 +8,7 @@ Test case data:
 	- check if user can login with gmail.
 	- nextthought email and password. 
 	- use yahoo account. 
+	- check logout
 	
 ACCOUNT TESTS
 -------------
