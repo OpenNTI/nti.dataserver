@@ -17,7 +17,7 @@ from nti.contentsearch._repoze_index import get_index_hit
 from nti.contentsearch._repoze_index import create_catalog
 from nti.contentsearch._repoze_datastore import DataStore
 from nti.contentsearch.textindexng3 import CatalogTextIndexNG3
-from nti.contentsearch.common import  (LAST_MODIFIED, ITEMS, HIT_COUNT, SUGGESTIONS, content_, ngrams_)
+from nti.contentsearch.common import (OID, LAST_MODIFIED, ITEMS, HIT_COUNT, SUGGESTIONS, content_, ngrams_)
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -57,25 +57,6 @@ class RepozeUserIndexManager(object):
 	
 	# -------------------
 
-	def _get_hits_from_docids(	self, docMap, docIds, limit=None, 
-								query=None, use_word_highlight=True, items=None, *args, **kwargs):
-		lm =  0
-		items = items if items else []
-		with self.dataserver.dbTrans() as conn:
-			for docId in docIds:
-				try:
-					oid = docMap.address_for_docid(docId)
-					so = get_object_by_oid(conn, oid)
-					hit = get_index_hit(so, query=query, use_word_highlight=use_word_highlight, **kwargs)
-					if hit:
-						items.append(hit)
-						lm = max(lm, hit[LAST_MODIFIED])
-						if limit and len(items) >= limit:
-							break
-				except:
-					pass
-		return items, lm
-				
 	def _get_catalog_names(self):
 		with self.datastore.dbTrans():
 			return self.get_catalog_names(self.username)
@@ -86,6 +67,22 @@ class RepozeUserIndexManager(object):
 			search_on = [lm(x).lower() for x in search_on]
 		return search_on
 
+	def _get_hits_from_docids(	self, docMap, docIds, limit=None, 
+								query=None, use_word_highlight=True, *args, **kwargs):
+		lm =  0
+		items = []
+		with self.dataserver.dbTrans() as conn:
+			for docId in docIds:
+				oid = docMap.address_for_docid(docId)
+				svr_obj = get_object_by_oid(conn, oid)
+				hit = get_index_hit(svr_obj, query=query, use_word_highlight=use_word_highlight, **kwargs)
+				if hit:
+					items.append(hit)
+					lm = max(lm, hit[LAST_MODIFIED])
+					if limit and len(items) >= limit:
+						break
+		return items, lm
+				
 	# -------------------
 	
 	def _do_search(self, field, query, limit=None, search_on=None, use_word_highlight=True, *args, **kwargs):
@@ -116,14 +113,16 @@ class RepozeUserIndexManager(object):
 			
 		items = results[ITEMS]
 		for v in hits.values():
+			hits = v
 			if limit:
 				ridx = int( limit * (len(v)/count) )
-				items.extend(v[:ridx])
-			else:
-				items.extend(v)
+				hits = v[:ridx]
+		
+			for hit in hits:
+				items[hit[OID]] = hit
 				
-		results[HIT_COUNT] = count	
 		results[LAST_MODIFIED] = lm
+		results[HIT_COUNT] = len(items)	
 		return results	
 	
 	def search(self, query, limit=None, search_on=None, *args, **kwargs):
@@ -150,7 +149,7 @@ class RepozeUserIndexManager(object):
 				suggestions.update(words)
 		
 		suggestions = suggestions[:limit] if limit and limit > 0 else suggestions
-		results[SUGGESTIONS] = suggestions
+		results[ITEMS] = suggestions
 		return results
 	
 	def suggest_and_search(self, query, limit=None, search_on=None, *args, **kwargs):
@@ -159,8 +158,8 @@ class RepozeUserIndexManager(object):
 			result = self.search(query, limit, search_on, *args, **kwargs)
 		else:
 			result = self.suggest(query, limit=limit, search_on=search_on, **kwargs)
-			suggestions = result[SUGGESTIONS]
-			if len(suggestions)>0:
+			suggestions = result[ITEMS]
+			if suggestions:
 				result = self.search(query, limit, search_on, *args, **kwargs)
 			else:
 				result = self.search(query, limit, search_on, *args, **kwargs)

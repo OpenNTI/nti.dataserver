@@ -13,6 +13,10 @@ from nltk.tokenize import RegexpTokenizer
 
 from nti.dataserver.interfaces import ILibrary
 from nti.dataserver.ntiids import is_valid_ntiid_string
+from nti.dataserver.chat import MessageInfo
+from nti.dataserver.contenttypes import Note
+from nti.dataserver.contenttypes import Canvas
+from nti.dataserver.contenttypes import Highlight
 
 # -----------------------------------
 
@@ -27,9 +31,11 @@ NTIID 			= u'NTIID'
 CLASS 			= u'Class'
 QUERY 			= u'Query'
 ITEMS			= u'Items'
+CONTENT			= u'Content'
 SNIPPET 		= u'Snippet'
 CREATOR 		= u'Creator'
 HIT_COUNT 		= u'Hit Count'
+TARGET_OID		= u'TargetOID'
 SUGGESTIONS		= u'Suggestions'
 CONTAINER_ID	= u'ContainerID'
 COLLECTION_ID	= u'CollectionID'
@@ -37,15 +43,29 @@ LAST_MODIFIED	= u'Last Modified'
 
 id_				= u'id'
 oid_			= u'oid'
+body_ 			= u'body'
 quick_			= u'quick'
+title_			= u'title'
+ntiid_			= u'ntiid'
 color_			= u'color'
 ngrams_			= u'ngrams'
 channel_		= u'channel'
+creator_		= u'creator'
 content_		= u'content'
 keywords_		= u'keywords'
 references_		= u'references'
 recipients_		= u'recipients'
 sharedWith_		= u'sharedWith'
+containerId_	= u'containerId'
+collectionId_	= u'collectionId'
+last_modified_	= u'last_modified'
+startHighlightedFullText_ = 'startHighlightedFullText'
+
+oid_fields = [OID, oid_, id_]
+ntiid_fields = [NTIID, ntiid_]
+creator_fields = [CREATOR, creator_]
+container_id_fields = [CONTAINER_ID, 'ContainerId', containerId_, 'container']
+last_modified_fields =  [LAST_MODIFIED, 'lastModified', 'LastModified', last_modified_]
 
 # -----------------------------------
 
@@ -60,6 +80,23 @@ def to_list(data):
 		data = [data]
 	return data
 
+def get_attr(obj, names, default=None):
+	if not obj: return default
+	
+	names = to_list(names)
+	if isinstance(obj, dict):
+		for name in names:
+			value = obj.get(name,None)
+			if value: return value
+	else:
+		for name in names:
+			try:
+				value = getattr(obj, name, None)
+			except:
+				value = None
+			if value: return value
+	return default
+
 def epoch_time(dt):
 	if dt:
 		seconds = mktime(dt.timetuple())
@@ -68,6 +105,9 @@ def epoch_time(dt):
 	else:
 		return 0
 	
+def echo(x):
+	return unicode(x) if x else u''
+
 # -----------------------------------
 
 def get_collection(containerId, default='prealgebra'):
@@ -78,6 +118,87 @@ def get_collection(containerId, default='prealgebra'):
 			paths = _library.pathToNTIID(containerId)
 			result = paths[0].label if paths else default
 	return result.lower() if result else default
+
+# -----------------------------------
+
+def get_multipart_content(source):
+	
+	gbls = globals()
+			
+	if isinstance(source, basestring):
+		return get_content(source)
+	elif isinstance(source, Iterable):
+		
+		def process_dict(d):
+			clazz = item.get(CLASS, None)
+			data = item.get(ITEMS, None)
+			if clazz and data:
+				name = "get_%s_content" % clazz.lower()
+				if name in gbls:
+					return gbls[name](d)
+			return u''
+		
+		items = []
+		if isinstance(source, dict):
+			items.append(process_dict(source))
+		else:
+			for item in source:
+				if isinstance(item, basestring) and item:
+					items.append(item)
+					continue
+				elif isinstance(item, dict):
+					items.append(process_dict(item))
+				else:
+					items.add(get_multipart_content(item))
+		return get_content(' '.join(items))
+	elif not source:
+		clazz = source.__class__.__name__
+		name = "get_%s_content" % clazz.lower()
+		if name in gbls:
+			return gbls[name](source)
+	return u''
+
+def get_highlight_content(data):
+	if isinstance(data, dict):
+		return data.get(startHighlightedFullText_, u'')
+	elif isinstance(data, Highlight):
+		return getattr(data, startHighlightedFullText_, u'')
+	return u''
+
+def get_canvas_content(data):
+	result = []
+	if isinstance(data, dict):
+		shapes = data.get('shapeList', [])
+	elif isinstance(data, Canvas):
+		shapes = data.shapeList
+		
+	for s in shapes:
+		c = get_multipart_content(s)
+		if c: result.append(c)
+	return ' '.join(result)
+
+def get_note_content(data):
+	result = []
+	if isinstance(data, dict):
+		body = to_list(data.get(body_, u''))
+	elif isinstance(data, Note):
+		body = to_list(data.body)
+		
+	for item in body:
+		c = get_multipart_content(item)
+		if c: result.append(c)
+	return ' '.join(result)
+
+def get_messageinfo_content(data):
+	result = []
+	if isinstance(data, dict):
+		body = to_list(data.get(body_, u''))
+	elif isinstance(data, MessageInfo):
+		body = to_list(data.body)
+	for item in body:
+		c = get_multipart_content(item)
+		if c: result.append(c)
+	return ' '.join(result)
 
 # -----------------------------------
 
