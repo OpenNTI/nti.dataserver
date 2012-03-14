@@ -63,6 +63,8 @@ class TestChatRoom(ConfiguringTestBase):
 		room.post_message( msg )
 		assert_that( room._moderation_queue, has_key( msg.MessageId ) )
 
+		to_external_representation( room, EXT_FORMAT_JSON )
+
 	def test_external_reply_to_different_storage(self):
 		ds = MockDataserver()
 		with ds.dbTrans() as conn:
@@ -82,7 +84,7 @@ class TestChatRoom(ConfiguringTestBase):
 
 		assert_that( ext, has_entry( 'inReplyTo', to_external_ntiid_oid( n ) ) )
 		assert_that( ext, has_entry( 'references', only_contains( to_external_ntiid_oid( n ) ) ) )
-		assert_that( ext, has_entry( 'Moderators', () ) )
+		assert_that( ext, has_entry( 'Moderators', [] ) )
 		to_external_representation( room, EXT_FORMAT_JSON )
 		to_external_representation( room, EXT_FORMAT_PLIST )
 
