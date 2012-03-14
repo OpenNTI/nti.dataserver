@@ -9,7 +9,7 @@ from repoze.catalog.document import DocumentMap
 
 class DataStore():
 	
-	transaction_manager = transaction.TransactionManager()
+	transaction_manager = transaction.manager
 	
 	def __init__(self, database, users_key='users', docMap_key='docMap'):
 		self.db = database

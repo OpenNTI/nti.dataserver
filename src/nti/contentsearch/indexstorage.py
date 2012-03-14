@@ -260,7 +260,7 @@ class ZODBIndexStorage(WhooshStorage, IndexStorage):
 		self.mapped = mapped
 		self.blobsKey = blobsKey
 		self.indicesKey = indicesKey
-		self.transaction_manager = transaction.TransactionManager()
+		self.transaction_manager = transaction.manager
 		self.conn = self.db.open( self.transaction_manager )
 		
 		# create keys
