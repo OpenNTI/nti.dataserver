@@ -112,6 +112,12 @@ class _UserTranscriptStorageAdapter(object):
 		storage_id = _transcript_ntiid( meeting, self._user )
 		room = self._user.getContainedObject( meeting.containerId, storage_id )
 		if not room:
+			if not meeting.containerId:
+				logger.warn( "Meeting (room) has no container id, will not transcript %s", storage_id )
+				# Because we won't be able to store the room on the user.
+				# This is actually a bug in creating the room.
+				return
+
 			room = _MeetingTranscriptStorage( meeting )
 			room.id = storage_id
 			room.containerId = meeting.containerId
