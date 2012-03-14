@@ -1,6 +1,8 @@
 """
 Objects for classrooms.
 """
+import logging
+logger = logging.getLogger( __name__ )
 
 from zope import interface
 from zope.component.factory import Factory
@@ -146,14 +148,18 @@ class ClassInfo( datastructures.PersistentCreatedModDateTrackingObject,
 	def NTIID(self):
 		# If we are inserted into a container without having been given an ID,
 		# one is generated for us, and we cannot use it correctly in our NTIID
-		if ntiids.is_valid_ntiid_string( self.ID ):
+		try:
+			if ntiids.is_valid_ntiid_string( self.ID ):
+				return ntiids.make_ntiid( date=ntiids.DATE, provider=self.Provider,
+										  nttype=ntiids.TYPE_CLASS,
+										  base=self.ID )
+
 			return ntiids.make_ntiid( date=ntiids.DATE, provider=self.Provider,
-									  nttype=ntiids.TYPE_CLASS,
-									  base=self.ID )
-
-		return ntiids.make_ntiid( date=ntiids.DATE, provider=self.Provider,
-								  nttype=ntiids.TYPE_CLASS, specific=self.ID )
-
+									  nttype=ntiids.TYPE_CLASS, specific=self.ID )
+		except ntiids.InvalidNTIIDError:
+			logger.exception( "ClassInfo created with invalid name %s", self.ID )
+			return None
+			
 	def toExternalDictionary( self, mergeFrom=None ):
 		result = super(ClassInfo,self).toExternalDictionary( mergeFrom=mergeFrom )
 		# TODO: Add better support for externalizing OOBTreeItems (IReadSequence)

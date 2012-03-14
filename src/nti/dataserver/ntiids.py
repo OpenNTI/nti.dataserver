@@ -58,7 +58,7 @@ def validate_ntiid_string( string ):
 
 	for char in _illegal_chars_:
 		if char in string:
-			raise InvalidNTIIDError( 'Contains illegal char' + char )
+			raise InvalidNTIIDError( 'Contains illegal char ' + char )
 	return string
 
 validate_ntiid_string( ROOT )
