@@ -9,7 +9,7 @@ Welcome to Dataserver's documentation!
 Contents:
 
 .. toctree::
-	:maxdepth: 3
+	:maxdepth: 2
 
 	ipad-localremotebridge
 	ntiid-structure
@@ -23,6 +23,8 @@ Contents:
 	http-rest
 	contentrendering-api
 
+	regression-tests
+	regression-details
 
 `Epydoc generated doc <./epydoc>`_
 
