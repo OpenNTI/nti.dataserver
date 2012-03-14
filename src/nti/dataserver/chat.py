@@ -374,15 +374,6 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 		# Things for the moderation subclass
 		self._moderated = False
 
-	def __setstate__( self, state ):
-		super(_Meeting,self).__setstate__( state )
-		# Migration from old objects. Temporary. 2011-10-04
-		if not hasattr( self, 'containerId' ): self.containerId = None
-		# Migration from old objects. Temporary. 2011-10-07
-		if not hasattr( self, '_addl_transcripts_to' ): self._addl_transcripts_to = BTrees.OOBTree.Set()
-		if not hasattr( self, 'CreatedTime' ): self.CreatedTime = 0
-		if not hasattr( self, 'id' ): self.id = state.get( 'ID' )
-
 	@property
 	def RoomId(self):
 		return self.id
@@ -580,7 +571,7 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 		result['Class'] = 'RoomInfo' # TODO: Use __external_class_name__ ?
 		# TODO: Need to make this have a mime type.
 		result['Moderated'] = self.Moderated
-		result['Moderators'] = self.Moderators
+		result['Moderators'] = list(self.Moderators) # sets can't go through JSON
 		result['Occupants'] = [self._chatserver.get_session( session_id ).owner
 							   for session_id in self._occupant_session_ids
 							   if self._chatserver.get_session( session_id )]
