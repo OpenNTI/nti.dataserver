@@ -233,7 +233,7 @@ interface.directlyProvides( _basicauth_challenge_decider, IChallengeDecider )
 def _create_middleware( app=None ):
 	user_auth = NTIUsersAuthenticatorPlugin()
 	basicauth = BasicAuthPlugin('NTI')
-	auth_tkt = AuthTktCookiePlugin('secret', 'auth_tkt')
+	auth_tkt = AuthTktCookiePlugin('secret', 'nti.auth_tkt', timeout=30*24*60*60, reissue_time=600)
 	# For testing, we let basic-auth set cookies. We don't want to do this
 	# generally.
 	#basicauth.include_ip = False
