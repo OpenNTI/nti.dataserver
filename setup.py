@@ -53,6 +53,7 @@ setup(
 		# 'RelStorage',
 		'anyjson',
 		'authkit',
+		'brownie',
 		'coverage',
 		'cython',
 		'gevent == 1.0dev',
