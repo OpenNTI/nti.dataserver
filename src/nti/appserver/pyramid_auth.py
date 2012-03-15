@@ -207,10 +207,6 @@ class NTIUsersAuthenticatorPlugin(object):
 		_decode_username_environ( environ )
 		_decode_username_identity( identity )
 		if _make_user_auth().user_has_password( identity['login'], identity['password'] ):
-			# The AuthTkt plugin will only set cookie expiration if there is a max_age
-			# present in the identity. Nothing in repoze.who will add one, so
-			# we're doing it here.
-			identity['max_age'] = str(30*24*60*60)
 			return identity['login']
 
 from repoze.who.middleware import PluggableAuthenticationMiddleware
@@ -284,6 +280,20 @@ class NTIAuthenticationPolicy(WhoV2AuthenticationPolicy):
 	def unauthenticated_userid( self, request ):
 		_decode_username( request )
 		return super(NTIAuthenticationPolicy,self).unauthenticated_userid( request )
+
+	def remember(self, request, principal, **kw):
+		# The superclass hardcodes the dictionary that is used
+		# for the identity. This identity is passed to the plugins.
+		# The AuthTkt plugin will only set cookie expiration headers right
+		# if a max_age is included in the identity.
+		# So we force that here.
+		api = self._getAPI(request)
+		identity = {
+			'repoze.who.userid': principal,
+			'identifier': api.name_registry[self._identifier_id],
+			'max_age' = str(30*24*60*60)
+			}
+		return api.remember(identity)
 
 	def _getAPI( self, request ):
 		return self.api_factory( request.environ )
