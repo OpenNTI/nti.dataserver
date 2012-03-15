@@ -98,6 +98,10 @@ class _SearchableContent(object):
 	
 	__indexable__ = False
 	
+	@property
+	def schema(self):
+		return self.get_schema()
+	
 	def get_schema(self):
 		return getattr(self, '_schema', None)
 	
@@ -497,3 +501,18 @@ class CanvasPolygonShape(CanvasShape):
 class CanvasTextShape(CanvasShape):
 	pass
 
+# ----------------------------------
+
+_indexables = {}
+for k,v in globals().items():
+	if inspect.isclass(v) and getattr(v, '__indexable__', False):
+		name = k[0:-1] if k.endswith('s') else k
+		_indexables[k.lower()] = v()
+		
+def get_indexables():
+	return _indexables.keys()
+
+def get_indexable_object(type_name='Notes'):
+	name = type_name[0:-1] if type_name.endswith('s') else type_name
+	result = _indexables.get(name.lower(), None)
+	return result
