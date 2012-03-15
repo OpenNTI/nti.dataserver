@@ -207,6 +207,10 @@ class NTIUsersAuthenticatorPlugin(object):
 		_decode_username_environ( environ )
 		_decode_username_identity( identity )
 		if _make_user_auth().user_has_password( identity['login'], identity['password'] ):
+			# The AuthTkt plugin will only set cookie expiration if there is a max_age
+			# present in the identity. Nothing in repoze.who will add one, so
+			# we're doing it here.
+			identity['max_age'] = str(30*24*60*60)
 			return identity['login']
 
 from repoze.who.middleware import PluggableAuthenticationMiddleware
