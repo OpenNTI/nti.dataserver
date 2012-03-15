@@ -291,7 +291,7 @@ class NTIAuthenticationPolicy(WhoV2AuthenticationPolicy):
 		identity = {
 			'repoze.who.userid': principal,
 			'identifier': api.name_registry[self._identifier_id],
-			'max_age' = str(30*24*60*60)
+			'max_age': str(30*24*60*60)
 			}
 		return api.remember(identity)
 
