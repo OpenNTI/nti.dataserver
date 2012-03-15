@@ -1,6 +1,4 @@
-import UserDict
-from heapq import nsmallest
-from operator import itemgetter
+from brownie.caching import LFUCache
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -59,50 +57,19 @@ class NoOpCM(object):
 	
 # -----------------------------
 
-class _Counter(dict):
-	def __missing__(self, key):
-		return 0
+class LFUMap(LFUCache):
 
-class LFUMap(UserDict.DictMixin):
-	
-	_kwd_mark = object()  
-	
-	def __init__(self, maxitems, maxremoval=1, callback=None):
-		self.cache = {}
-		self.use_count = _Counter()  
-		self.maxitems = maxitems
-		self.maxremoval = min(maxremoval, maxitems)
-	
-	def __len__(self):
-		return len(self.cache)
-
-	def __contains__(self, key):
-		return key in self.cache
-	
-	def __getitem__(self, key):
-		item = self.cache[key]
-		self.use_count[key] += 1
-		return item
-
-	def __setitem__(self, key, value):
-		self.cache[key] = value
-		self.use_count[key] = 0
-		if len(self.cache) > self.maxitems:
-			for key, _ in nsmallest(self.maxremoval, 
-									self.use_count.iteritems(),
-									key=itemgetter(1)):
-				del self.cache[key], self.use_count[key]
-
+	def __init__(self, maxsize, on_removal_callback=None):
+		super(LFUMap, self).__init__(maxsize=maxsize)
+		self.on_removal_callback = on_removal_callback
+		
 	def __delitem__(self, key):
-		self.cache.pop(key)
-		if key in self.use_count:
-			self.use_count.pop(key)
+		if self.on_removal_callback:
+			value = dict.__getitem__(self, key)
+		super(LFUMap, self).__delitem__(key)
+		if self.on_removal_callback:
+			self.on_removal_callback(key, value)
 	
-	def __iter__(self):
-		return iter(self.cache)
-			
-	def iteritems(self):
-		return self.cache.iteritems()
 
 # -----------------------------
 
