@@ -30,17 +30,17 @@ class BookIndexManager(object):
 
 	##########################
 
-	def search(self, query, limit=None):
+	def search(self, query, limit=None, *args, **kwargs):
 		with self.bookidx.searcher() as s:
 			results = self.book.search(s, query, limit)
 		return results
 
-	def quick_search(self, query, limit=None):
+	def quick_search(self, query, limit=None, *args, **kwarg):
 		with self.bookidx.searcher() as s:
 			results = self.book.quick_search(s, query, limit)
 		return results
 
-	def suggest_and_search(self, query, limit=None):
+	def suggest_and_search(self, query, limit=None, *args, **kwarg):
 		with self.bookidx.searcher() as s:
 			results = self.book.suggest_and_search(s, query, limit)
 		return results

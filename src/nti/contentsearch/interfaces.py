@@ -2,7 +2,7 @@ from zope import interface
 
 class ISearcher(interface.Interface):
 	
-	def search(query, limit=None, search_on=None):
+	def search(query, limit=None, search_on=None, *args, **kwargs):
 		"""
 		search the content using the specified query
 		
@@ -11,7 +11,7 @@ class ISearcher(interface.Interface):
 		:param search_on: type items to search
 		"""
 
-	def suggest(term, limit=None, prefix=None, search_on=None, **kwargs):
+	def suggest(term, limit=None, prefix=None, search_on=None, *args, **kwargs):
 		"""
 		perform a word suggestion
 		
@@ -21,7 +21,7 @@ class ISearcher(interface.Interface):
 		:param search_on: type items to search
 		"""
 		
-	def suggest_and_search(query, limit=None, search_on=None):
+	def suggest_and_search(query, limit=None, search_on=None, *args, **kwargs):
 		"""
 		do a word suggestion and perform a search
 		
@@ -44,7 +44,7 @@ class IUserIndexManager(ISearcher):
 		return the user for this manager
 		"""
 		
-	def index_content(data, type_name=None):
+	def index_content(data, type_name=None, *args, **kwargs):
 		"""
 		index the specified content
 		
@@ -52,7 +52,7 @@ class IUserIndexManager(ISearcher):
 		:param type_name: data type
 		"""
 		
-	def update_content(data, type_name=None):
+	def update_content(data, type_name=None, *args, **kwargs):
 		"""
 		update the specified content index
 		
@@ -60,7 +60,7 @@ class IUserIndexManager(ISearcher):
 		:param type_name: data type
 		"""
 
-	def delete_content(data, type_name=None):
+	def delete_content(data, type_name=None, *args, **kwargs):
 		"""
 		delete from the index the specified content
 		
@@ -68,7 +68,7 @@ class IUserIndexManager(ISearcher):
 		:param type_name: data type
 		"""
 		
-	def remove_index(type_name):
+	def remove_index(type_name, *args, **kwargs):
 		"""
 		remove the specified index
 		
