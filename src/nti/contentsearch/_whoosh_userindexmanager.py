@@ -212,3 +212,13 @@ class WhooshUserIndexManager(object):
 			self._close_index(index)
 		self.indices.clear()
 
+# -----------------------------
+
+def wuim_factory(index_storage, use_md5=True, delay=0.25, maxiters=15):
+	def f(username, *args, **kwargs):
+		return WhooshUserIndexManager(	username = username,
+										index_storage = index_storage, 
+										use_md5 = use_md5,
+										delay = delay,
+										maxiters = maxiters)
+	return f

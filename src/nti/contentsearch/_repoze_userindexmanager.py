@@ -207,3 +207,10 @@ class RepozeUserIndexManager(object):
 			result = self.store.remove_catalog(self.username, type_name)
 			return result
 	
+# -----------------------------
+
+def ruim_factory(repoze_store, dataserver=None):
+	dataserver = dataserver or component.queryUtility( nti_interfaces.IDataserver )
+	def f(username, *args, **kwargs):
+		return RepozeUserIndexManager(username, repoze_store, dataserver)
+	return f
