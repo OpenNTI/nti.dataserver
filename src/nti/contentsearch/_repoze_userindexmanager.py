@@ -91,36 +91,25 @@ class RepozeUserIndexManager(object):
 		search_on = search_on if search_on else self._get_catalog_names()
 		
 		lm = 0
-		count = 0
-		hits = {}
 		results = empty_search_result(query)
+		items = results[ITEMS]
 		with self.store.dbTrans():
 			docMap = self.store.docMap
 			for type_name in search_on:
 				catalog = self.datastore.get_catalog(self.username, type_name)
 				if catalog: 
 					_, docIds = catalog.query(Contains(field, query))
-					hits_items, hits_lm = self._get_hits_from_docids(docMap,
-																	 docIds,
-																	 limit=limit,
-																	 query=query,
-																	 use_word_highlight=use_word_highlight,
-																	 **kwargs)
-					if hits_items:
+					hits, hits_lm = self._get_hits_from_docids(	docMap,
+																docIds,
+																limit=limit,
+																query=query,
+																use_word_highlight=use_word_highlight,
+																**kwargs)
+					if hits:
 						lm = max(lm, hits_lm)
-						hits[type_name] = hits_items
-						count = count + len(hits_items)
+						for hit in hits:
+							items[hit[OID]] = hit
 			
-		items = results[ITEMS]
-		for v in hits.values():
-			hits = v
-			if limit:
-				ridx = int( limit * (len(v)/count) )
-				hits = v[:ridx]
-		
-			for hit in hits:
-				items[hit[OID]] = hit
-				
 		results[LAST_MODIFIED] = lm
 		results[HIT_COUNT] = len(items)	
 		return results	
