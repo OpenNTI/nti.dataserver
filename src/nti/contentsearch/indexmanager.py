@@ -122,8 +122,8 @@ class IndexManager(object):
 	search = content_search
 	suggest = content_suggest
 	quick_search = content_search
+	content_ngram_search = content_quick_search
 	suggest_and_search = content_suggest_and_search
-
 	
 	##########################
 	
@@ -205,6 +205,8 @@ class IndexManager(object):
 				results = merge_suggest_results (results, job.value)
 		return results if results else empty_suggest_result(term)
 
+	user_data_ngram_search = user_data_quick_search
+	
 	##############################
 	
 	def _check_user_content(self, data, username):

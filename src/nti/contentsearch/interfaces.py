@@ -2,7 +2,7 @@ from zope import interface
 
 class ISearcher(interface.Interface):
 	
-	def search(query, limit=None, search_on=None, *args, **kwargs):
+	def search(query, limit=None, *args, **kwargs):
 		"""
 		search the content using the specified query
 		
@@ -10,8 +10,17 @@ class ISearcher(interface.Interface):
 		:param limit: max number of search hits
 		:param search_on: type items to search
 		"""
-
-	def suggest(term, limit=None, prefix=None, search_on=None, *args, **kwargs):
+	
+	def ngram_search(query, limit=None, *args, **kwargs):
+		"""
+		search the content using ngram for the specified query
+		
+		:param query: Search query
+		:param limit: max number of search hits
+		:param search_on: type items to search
+		"""
+		
+	def suggest(term, limit=None, prefix=None, *args, **kwargs):
 		"""
 		perform a word suggestion
 		
@@ -21,7 +30,7 @@ class ISearcher(interface.Interface):
 		:param search_on: type items to search
 		"""
 		
-	def suggest_and_search(query, limit=None, search_on=None, *args, **kwargs):
+	def suggest_and_search(query, limit=None, *args, **kwargs):
 		"""
 		do a word suggestion and perform a search
 		
@@ -33,7 +42,8 @@ class ISearcher(interface.Interface):
 # -----------------------------
 
 class IBookIndexManager(ISearcher):
-	pass
+	def get_indexname(self):
+		return self.bookidx.indexname
 	
 # -----------------------------
 
@@ -78,7 +88,80 @@ class IUserIndexManager(ISearcher):
 # -----------------------------
 	
 class IIndexManager(interface.Interface):
-	pass
+	
+	def content_search(indexname, query, limit=None, *args, **kwargs):
+		"""
+		perform a book search
+		
+		:param indexname: book index name
+		:param query: search query
+		:param limit: max number of search hits
+		"""
+	
+	def content_ngram_search(indexname, query, limit=None, *args, **kwargs):
+		"""
+		perform a ngram based content search
+		
+		:param indexname: book index name
+		:param query: Search query
+		:param limit: max number of search hits
+		"""
+		
+	def content_suggest_and_search(indexname, query, limit=None, *args, **kwargs):
+		"""
+		perform a book word suggestion and search
+		
+		:param indexname: book index name
+		:param query: Search query
+		:param limit: max number of search hits
+		"""
+		
+	def content_suggest(indexname, word, limit=None, prefix=None, *args, **kwargs):
+		"""
+		perform a book word suggestion
+		
+		:param indexname: book index name
+		:param word: Word fragment
+		:param limit: max number of search hits
+		:param prefix: number of chars in terms for prefix
+		"""
+	
+	def user_data_search(username, query, limit=None, *args, **kwargs):
+		"""
+		perform a user data content search
+		
+		:param username: user name
+		:param query: search query
+		:param limit: max number of search hits
+		"""
+
+	def user_data_ngram_search(username, query, limit=None, *args, **kwargs):
+		"""
+		perform a user data ngram based content search
+		
+		:param username: user name
+		:param query: search query
+		:param limit: max number of search hits
+		"""
+
+	def user_data_suggest_and_search(username, query, limit=None, *args, **kwargs):
+		"""
+		perform a book user data suggestion and search
+		
+		:param username: user name
+		:param query: Search query
+		:param limit: max number of search hits
+		"""
+
+	def user_data_suggest(username, term, limit=None, prefix=None, *args, **kwargs):
+		"""
+		perform a user data word suggestion
+		
+		:param  \username: user name
+		:param word: Word fragment
+		:param limit: max number of search hits
+		:param prefix: number of chars in terms for prefix
+		"""
 
 # -----------------------------
 	
