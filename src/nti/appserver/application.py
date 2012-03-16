@@ -332,7 +332,7 @@ def createApplication( http_port,
 	for title in library.titles:
 		indexname = os.path.basename( title.localPath )
 		routename = 'search.book'
-		if indexmanager and indexmanager.add_book( os.path.join( title.localPath, 'indexdir' ), indexname ):
+		if indexmanager and indexmanager.add_book(indexname=indexname, indexdir=os.path.join( title.localPath, 'indexdir')):
 			pattern = '/' + indexname + '/Search/{term:.*}'
 			name = routename + '.' + indexname
 			pyramid_config.add_route( name=name, pattern=pattern, factory=_ContentSearchRootFactory )
