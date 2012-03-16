@@ -56,7 +56,7 @@ class IndexManager(object):
 	def add_book(self, indexname, *args, **kwargs):
 		result = False
 		if not self.books.has_key(indexname):
-			bmi = self.bookidx_manager_factory(index=indexname, **kwargs)
+			bmi = self.bookidx_manager_factory(indexname=indexname, **kwargs)
 			if bmi:
 				self.books[indexname] = bmi
 				result = True
@@ -90,10 +90,10 @@ class IndexManager(object):
 		
 	# -------------------
 
-	def _get_user_index_manager(self, username):
+	def _get_user_index_manager(self, username, *args, **kwargs):
 		uim = self.users.get(username, None)
 		if not uim:
-			uim = self.useridx_manager_factory(username=username)
+			uim = self.useridx_manager_factory(username=username, **kwargs)
 			if uim:
 				self.users[username] = uim
 		return uim
@@ -109,10 +109,10 @@ class IndexManager(object):
 		user = self._get_user(username)
 		return list(user.communities) if user else []
 
-	def _get_search_uims(self, username):
+	def _get_search_uims(self, username, *args, **kwargs):
 		result = []
 		for name in [username] + self.get_user_communities(username):
-			uim = self._get_user_index_manager(name)
+			uim = self._get_user_index_manager(name, *args, **kwargs)
 			if uim: result.append(uim)
 		return result
 
@@ -120,7 +120,7 @@ class IndexManager(object):
 		results = None
 		if query:
 			jobs = []
-			for uim in self._get_search_uims(username):
+			for uim in self._get_search_uims(username, *args, **kwargs):
 				jobs.append(gevent.spawn(uim.search, query=query, limit=limit, **kwargs))
 			gevent.joinall(jobs)
 			for job in jobs:
@@ -131,7 +131,7 @@ class IndexManager(object):
 		results = None
 		if query:
 			jobs = []
-			for uim in self._get_search_uims(username):
+			for uim in self._get_search_uims(username, *args, **kwargs):
 				jobs.append(gevent.spawn(uim.ngram_search, query=query, limit=limit, **kwargs))
 			gevent.joinall(jobs)
 			for job in jobs:
@@ -142,7 +142,7 @@ class IndexManager(object):
 		results = None
 		if query:
 			jobs = []
-			for uim in self._get_search_uims(username):
+			for uim in self._get_search_uims(username, *args, **kwargs):
 				jobs.append(gevent.spawn(uim.suggest_and_search, query=query, limit=limit, **kwargs))
 			gevent.joinall(jobs)
 			for job in jobs:
@@ -153,7 +153,7 @@ class IndexManager(object):
 		results = None
 		if term:
 			jobs = []
-			for uim in self._get_search_uims(username):
+			for uim in self._get_search_uims(username, *args, **kwargs):
 				jobs.append(gevent.spawn(uim.suggest, term, limit=limit, prefix=prefix, **kwargs))
 			gevent.joinall(jobs)
 			for job in jobs:
