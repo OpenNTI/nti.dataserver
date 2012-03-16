@@ -268,7 +268,7 @@ class Book(_SearchableContent):
 class UserIndexableContent(_SearchableContent):
 
 	__indexable__ = False
-
+	
 	def external_name(self, name):
 		if name ==  'creator':
 			return CREATOR

@@ -44,6 +44,12 @@ class IndexManager(object):
 		self.useridx_manager_factory = useridx_manager_factory
 		self.ds = dataserver or component.queryUtility( nti_interfaces.IDataserver )
 	
+	def __str__( self ):
+		return self.__repr__()
+
+	def __repr__( self ):
+		return 'IndexManager(books=%s, users=%s)' % (len(self.books), len(self.users))
+	
 	@property
 	def dataserver(self):
 		return self.ds
