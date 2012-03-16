@@ -23,14 +23,14 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import users
 from nti.dataserver import contenttypes
 
-
+import persistent
 from persistent import Persistent
 from persistent.mapping import PersistentMapping
 import BTrees.OOBTree
 
 from zope import interface
 from zope import component
-from zope.deprecation import deprecate
+from zope.deprecation import deprecate, deprecated
 
 
 class _AlwaysIn(object):
@@ -374,6 +374,27 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 		# Things for the moderation subclass
 		self._moderated = False
 
+	def __setstate__( self, state ):
+		super(_Meeting,self).__setstate__( state )
+		# Because we are swizzling classes dynamically at
+		# runtime, that fact may not be persisted in the database.
+		# We have to restore it when the object comes alive.
+		# This is tightly coupled with the implementation of
+		# _becameModerated/_becameUnmoderated
+		if hasattr( self, '_moderation_queue' ) and self.__class__ == _Meeting:
+			self.__class__ = _ModeratedMeeting
+
+	def __getattribute__( self, name ):
+		result = super(_Meeting,self).__getattribute__( name )
+		# Unghost to guarantee we're the right class. We force this
+		# if a class attribute that's important to moderation is accessed first,
+		# before an instance var that would normally trigger this
+		if name == 'post_message' and result and super(_Meeting,self).__getattribute__('_p_state') == persistent.GHOST:
+			self._p_activate()
+			result = super(_Meeting,self).__getattribute__('post_message')
+		return result
+	
+
 	@property
 	def RoomId(self):
 		return self.id
@@ -592,11 +613,13 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 		return "<%s %s %s(%s)>" % (self.__class__.__name__, self.ID, self._occupant_session_ids, self.toExternalDictionary()['Occupants'])
 
 _ChatRoom = _Meeting
+deprecated('_ChatRoom', 'Prefer _Meeting' )
+
 
 def _bypass_for_moderator( f ):
 	def bypassing( self, msg_info ):
 		if self.is_moderated_by( msg_info.sender_sid ):
-			super(_ModeratedChatRoom,self).post_message( msg_info )
+			super(_ModeratedMeeting,self).post_message( msg_info )
 			return True
 		return f( self, msg_info )
 	return bypassing
@@ -614,11 +637,13 @@ class _ModeratedMeeting(_Meeting):
 	__metaclass__ = _ChatObjectMeta
 	__emits__ = ('recvMessageForModeration', 'recvMessageForShadow')
 
+	_moderation_queue = None
+	_moderated_by_sids = None
+	_shadowed_usernames = None
+
 	def __init__( self, *args, **kwargs ):
 		super( _ModeratedMeeting, self ).__init__( *args, **kwargs )
-		self._moderation_queue = None
-		self._moderated_by_sids = None
-		self._shadowed_usernames = None
+
 
 	def _becameModerated( self ):
 		self._moderated_by_sids = BTrees.OOBTree.Set()
@@ -626,9 +651,9 @@ class _ModeratedMeeting(_Meeting):
 		self._moderation_queue = PersistentMapping()
 
 	def _becomeUnmoderated( self ):
-		self._moderated_by_sids = None
-		self._moderation_queue = None
-		self._shadowed_usernames = None
+		del self._moderated_by_sids
+		del self._shadowed_usernames
+		del self._moderation_queue
 
 	@property
 	def moderated_by_usernames( self ):
@@ -798,6 +823,7 @@ class _ModeratedMeeting(_Meeting):
 			super(_ModeratedMeeting, self).post_message( msg )
 
 _ModeratedChatRoom = _ModeratedMeeting
+deprecated('_ModeratedChatRoom', 'Prefer _ModeratedMeeting' )
 
 def ChatHandlerFactory( socketio_protocol, chatserver=None ):
 	session = socketio_protocol.session if hasattr( socketio_protocol, 'session' ) else socketio_protocol
