@@ -12,7 +12,7 @@ logger = logging.getLogger( __name__ )
 class WhooshBookIndexManager(object):
 	interface.implements( interfaces.IBookIndexManager )
 	
-	def __init__(self, indexname="prealgebra", *args, **kwargs):
+	def __init__(self, indexname, *args, **kwargs):
 		self.indexdir = kwargs.get('indexdir', None)
 		self.storage = kwargs.get('storage', None) or kwargs.get('index_storage', None) 
 		assert self.storage or self.indexdir, "must specified a index directory or an index storage"
@@ -36,24 +36,24 @@ class WhooshBookIndexManager(object):
 	
 	# ---------------
 
-	def search(self, query, limit=None, *args, **kwargs):
+	def search(self, query, limit=None, **kwargs):
 		with self.storage.dbTrans():
 			with self.bookidx.searcher() as s:
 				results = self.book.search(s, query, limit)
 		return results
 
-	def ngram_search(self, query, limit=None, *args, **kwarg):
+	def ngram_search(self, query, limit=None, **kwarg):
 		with self.bookidx.searcher() as s:
 			results = self.book.quick_search(s, query, limit)
 		return results
 
-	def suggest_and_search(self, query, limit=None, *args, **kwarg):
+	def suggest_and_search(self, query, limit=None, **kwarg):
 		with self.storage.dbTrans():
 			with self.bookidx.searcher() as s:
 				results = self.book.suggest_and_search(s, query, limit)
 		return results
 
-	def suggest(self, term, limit=None, prefix=None, *args, **kwargs):
+	def suggest(self, term, limit=None, prefix=None, **kwargs):
 		with self.storage.dbTrans():
 			maxdist = kwargs.get('maxdist', None)
 			with self.bookidx.searcher() as s:
@@ -76,6 +76,6 @@ class WhooshBookIndexManager(object):
 # -----------------------------
 
 def wbm_factory(*args, **kwargs):
-	def f(indexname="prealgebra", *fargs, **fkwargs):
+	def f(indexname, *fargs, **fkwargs):
 		return WhooshBookIndexManager(indexname=indexname, **fkwargs)
 	return f

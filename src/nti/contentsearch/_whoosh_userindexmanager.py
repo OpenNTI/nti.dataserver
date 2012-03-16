@@ -125,15 +125,15 @@ class WhooshUserIndexManager(object):
 			
 		return results	
 	
-	def search(self, query, limit=None, *args, **kwargs):
+	def search(self, query, limit=None, **kwargs):
 		results = self._do_search(query, limit, False, **kwargs)
 		return results
 
-	def ngram_search(self, query, limit=None, *args, **kwargs):
+	def ngram_search(self, query, limit=None, **kwargs):
 		results = self._do_search(query, limit, True, **kwargs)
 		return results
 
-	def suggest_and_search(self, query, limit=None, *args, **kwargs):
+	def suggest_and_search(self, query, limit=None, **kwargs):
 		results = empty_suggest_and_search_result(query)
 		search_on = self._adapt_search_on_types(kwargs.get('search_on', None))
 		with self.storage.dbTrans():
@@ -145,7 +145,7 @@ class WhooshUserIndexManager(object):
 					results = merge_suggest_and_search_results(results, rs)
 		return results
 
-	def suggest(self, term, limit=None, prefix=None, *args, **kwargs):
+	def suggest(self, term, limit=None, prefix=None, **kwargs):
 		results = empty_suggest_result(term)
 		maxdist = kwargs.get('maxdist', None)
 		search_on = self._adapt_search_on_types(kwargs.get('search_on', None))
@@ -162,7 +162,7 @@ class WhooshUserIndexManager(object):
 	
 	# -------------------
 
-	def index_content(self, data, type_name='Notes', *args, **kwargs):
+	def index_content(self, data, type_name='Notes', **kwargs):
 		index = self._get_or_create_index(type_name)
 		if index:
 			indexable = get_indexable_object(type_name)
@@ -170,7 +170,7 @@ class WhooshUserIndexManager(object):
 				writer = self._get_index_writer(index)
 				indexable.index_content(writer, data, **self.writer_commit_args)
 
-	def update_content(self, data, type_name='Notes', *args, **kwargs):
+	def update_content(self, data, type_name='Notes', **kwargs):
 		index = self._get_or_create_index(type_name)
 		if index:
 			indexable = get_indexable_object(type_name)
@@ -178,7 +178,7 @@ class WhooshUserIndexManager(object):
 				writer = self._get_index_writer(index)
 				indexable.update_content(writer, data, **self.writer_commit_args)
 
-	def delete_content(self, data, type_name='Notes', *args, **kwargs):
+	def delete_content(self, data, type_name='Notes', **kwargs):
 		index = self._get_or_create_index(type_name)
 		if index:
 			indexable = get_indexable_object(type_name)
