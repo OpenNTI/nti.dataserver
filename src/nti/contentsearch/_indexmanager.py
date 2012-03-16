@@ -106,12 +106,12 @@ class IndexManager(object):
 		return result
 	
 	def _get_user_communities(self, username):
-		user = self._get_user(username)
+		user = self._get_user_object(username)
 		return list(user.communities) if user else []
 
 	def _get_search_uims(self, username, *args, **kwargs):
 		result = []
-		for name in [username] + self.get_user_communities(username):
+		for name in [username] + self._get_user_communities(username):
 			uim = self._get_user_index_manager(name, *args, **kwargs)
 			if uim: result.append(uim)
 		return result
@@ -164,15 +164,22 @@ class IndexManager(object):
 	
 	# -------------------
 	
-	def index_user_content(self, username, data, type_name=None, *args, **kwargs):
+	def _get_data(self, **kwargs):
+		result = kwargs.get('data', None) or kwargs.get('externalValue', None)
+		return result
+	
+	def index_user_content(self, username, type_name=None, *args, **kwargs):
+		data = self._get_data(**kwargs)
 		um = self._get_user_index_manager(username)
 		if um: um.index_content(data, type_name, *args, **kwargs)
 
-	def update_user_content(self, username, data, type_name=None, *args, **kwargs):
+	def update_user_content(self, username, type_name=None, *args, **kwargs):
+		data = self._get_data(**kwargs)
 		um = self._get_user_index_manager(username)
 		if um: um.update_content(data, type_name, *args, **kwargs)
 
-	def delete_user_content(self, username, data, type_name=None, *args, **kwargs):
+	def delete_user_content(self, username, type_name=None, *args, **kwargs):
+		data = self._get_data(**kwargs)
 		um = self._get_user_index_manager(username)
 		if um: um.delete_content(data, type_name, *args, **kwargs)
 		
