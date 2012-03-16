@@ -21,7 +21,7 @@ from nti.contentsearch.common import (	oid_fields, ntiid_fields, creator_fields,
 from nti.contentsearch.common import (	OID, NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
 										COLLECTION_ID, SNIPPET, HIT, ID, BODY)
 
-from nti.contentsearch.common import (	color_, ngrams_, channel_, content_, keywords_, references_,
+from nti.contentsearch.common import (	ngrams_, channel_, content_, keywords_, references_,
 										recipients_, sharedWith_, body_, startHighlightedFullText_)
 
 
@@ -30,7 +30,7 @@ logger = logging.getLogger( __name__ )
 
 # -----------------------------------
 
-def get_last_modified(obj, default):
+def get_last_modified(obj, default=None):
 	value  = get_attr(obj, last_modified_fields, default)
 	if value:
 		if isinstance(value, basestring):
@@ -43,9 +43,6 @@ def get_last_modified(obj, default):
 
 # -----------------------------------
 
-def get_color(obj, default=None):
-	return obj if isinstance(obj, basestring) else get_attr(obj, [color_])
-
 def get_id(obj, default=None):
 	return obj if isinstance(obj, basestring) else get_attr(obj, [ID])
 
@@ -54,6 +51,7 @@ def get_channel(obj, default=None):
 
 def get_objectId(obj, default=None):
 	return obj if isinstance(obj, basestring) else get_attr(obj, oid_fields)
+get_oid = get_objectId
 
 def get_containerId(obj, default=None):
 	return obj if isinstance(obj, basestring) else get_attr(obj, container_id_fields)
@@ -151,7 +149,6 @@ def create_notes_catalog():
 	
 def create_highlight_catalog():
 	catalog = _create_treadable_mixin_catalog()
-	catalog[color_] = CatalogFieldIndex(get_color)
 	catalog[ngrams_] = _create_text_index(ngrams_, get_highlight_ngrams)
 	catalog[content_] = _create_text_index(content_, get_highlight_content)
 	return catalog
