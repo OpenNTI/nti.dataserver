@@ -155,12 +155,12 @@ def _get_last_modified(obj):
 	lm = get_attr(obj, last_modified_fields )
 	return lm if lm else 0
 
-def _word_content_highlight(query=None, text=None, **kwargs):
+def _word_content_highlight(query=None, text=None, *args, **kwargs):
 	content = word_content_highlight(query, text) if query and text else u''
 	return content if content else text
 
-def _ngram_content_highlight(query=None, text=None, **kwargs):
-	content = ngram_content_highlight(query, text, **kwargs) if query and text else u''
+def _ngram_content_highlight(query=None, text=None, *args, **kwargs):
+	content = ngram_content_highlight(query, text, *args, **kwargs) if query and text else u''
 	return content if content else text
 
 def _highlight_content(query=None, text=None, use_word_highlight=True):
@@ -180,32 +180,32 @@ def _get_index_hit_from_object(obj):
 	result[LAST_MODIFIED] = _get_last_modified(obj)
 	return result
 
-def get_index_hit_from_note(obj, query=None, use_word_highlight=True, **kwargs):
+def get_index_hit_from_note(obj, query=None, use_word_highlight=True, *args, **kwargs):
 	text = get_attr(obj, [body_])
 	result = _get_index_hit_from_object(obj)
 	result[SNIPPET] = _highlight_content(query, text, use_word_highlight)
 	return result
 
-def get_index_hit_from_hightlight(obj, query=None, use_word_highlight=True, **kwargs):
+def get_index_hit_from_hightlight(obj, query=None, use_word_highlight=True, *args, **kwargs):
 	result = _get_index_hit_from_object(obj)
 	text = get_attr(obj, [startHighlightedFullText_])
 	result[SNIPPET] = _highlight_content(query, text, use_word_highlight)
 	return result
 
-def get_index_hit_from_messgeinfo(obj, query=None, use_word_highlight=True, **kwargs):
+def get_index_hit_from_messgeinfo(obj, query=None, use_word_highlight=True, *args, **kwargs):
 	text = get_attr(obj, [body_])
 	result = _get_index_hit_from_object(obj)
 	result[SNIPPET] = _highlight_content(query, text, use_word_highlight)
 	return result
 
-def get_index_hit(obj, query=None, use_word_highlight=True, **kwargs):
+def get_index_hit(obj, query=None, use_word_highlight=True, *args, **kwargs):
 	type_name =  get_type_name(obj)
 	if type_name == 'note':
-		return get_index_hit_from_note(obj, query, use_word_highlight, **kwargs)
+		return get_index_hit_from_note(obj, query, use_word_highlight, *args, **kwargs)
 	elif type_name == 'highlight':
-		return get_index_hit_from_hightlight(obj, query, use_word_highlight, **kwargs)
+		return get_index_hit_from_hightlight(obj, query, use_word_highlight, *args, **kwargs)
 	elif type_name =='messageinfo':
-		return get_index_hit_from_messgeinfo(obj, query, use_word_highlight, **kwargs)
+		return get_index_hit_from_messgeinfo(obj, query, use_word_highlight, *args, **kwargs)
 	else:
 		return None
 	

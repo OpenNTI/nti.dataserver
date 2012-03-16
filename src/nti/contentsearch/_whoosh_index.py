@@ -129,15 +129,15 @@ class _SearchableContent(object):
 		parsed_query = qp.parse(unicode(query))
 		return parsed_query
 	
-	def search(self, searcher, query, limit=_default_search_limit, **kwargs):
+	def search(self, searcher, query, limit=_default_search_limit, *args, **kwargs):
 		parsed_query = self._prepare_query(content_, query)
-		return self.execute_query_and_externalize(searcher, content_, parsed_query, query, limit)
+		return self.execute_query_and_externalize(searcher, content_, parsed_query, query, limit, *args, **kwargs)
 		
-	def quick_search(self, searcher, query, limit=_default_search_limit, **kwargs):
+	def quick_search(self, searcher, query, limit=_default_search_limit, *args, **kwargs):
 		parsed_query = self._prepare_query(quick_, query)
-		return self.execute_query_and_externalize(searcher, quick_, parsed_query, query, limit)
+		return self.execute_query_and_externalize(searcher, quick_, parsed_query, query, limit, *args, **kwargs)
 		
-	def suggest_and_search(self, searcher, query, limit=_default_search_limit, **kwargs):
+	def suggest_and_search(self, searcher, query, limit=_default_search_limit, *args, **kwargs):
 		if ' ' in query:
 			suggestions = []
 			result = self.search(searcher, query, limit)
@@ -148,14 +148,14 @@ class _SearchableContent(object):
 			suggestions = searcher.suggest(query, maxdist=maxdist, limit=suggest_limit, prefix=prefix)
 
 			if suggestions:
-				result = self.search(searcher, suggestions[0], limit, **kwargs)
+				result = self.search(searcher, suggestions[0], limit, *args, **kwargs)
 			else:
-				result = self.search(searcher, query, limit, **kwargs)
+				result = self.search(searcher, query, limit, *args, **kwargs)
 
 		result[SUGGESTIONS] = suggestions
 		return result
 
-	def suggest(self, searcher, word, limit=_default_suggest_limit, **kwargs):
+	def suggest(self, searcher, word, limit=_default_suggest_limit, *args, **kwargs):
 		prefix = kwargs.get('prefix', len(word))
 		maxdist = kwargs.get('maxdist', _default_word_max_dist)
 		
