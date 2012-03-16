@@ -84,7 +84,7 @@ class IndexManager(object):
 			
 	search = content_search
 	suggest = content_suggest
-	quick_search = content_search
+	quick_search = content_ngram_search
 	content_quick_search = content_ngram_search
 	suggest_and_search = content_suggest_and_search
 		
