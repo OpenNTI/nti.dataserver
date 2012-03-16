@@ -5,7 +5,6 @@ from zope import interface
 
 from nti.dataserver import interfaces as nti_interfaces
 
-import contenttypes
 from nti.contentsearch import LFUMap
 from nti.contentsearch import interfaces
 from nti.contentsearch._indexagent import IndexAgent
@@ -63,22 +62,22 @@ class IndexManager(object):
 				result = True
 		return result
 
-	def content_search(self, indexname='prealgebra', query, limit=None, *args, **kwargs):
+	def content_search(self, indexname='prealgebra', query, limit=None, **kwargs):
 		bm = self.get_book_index_manager(indexname)
-		results = bm.search(query, limit, *args, **kwargs) if (bm and query) else None
+		results = bm.search(query, limit, **kwargs) if (bm and query) else None
 		return results if results else empty_search_result(query)
 	
-	def content_ngram_search(self, indexname='prealgebra', query, limit=None, *args, **kwargs):
+	def content_ngram_search(self, indexname='prealgebra', query, limit=None, **kwargs):
 		bm = self.get_book_index_manager(indexname)
-		results = bm.ngram_search(query, limit, *args, **kwargs) if (bm and query) else None
+		results = bm.ngram_search(query, limit, **kwargs) if (bm and query) else None
 		return results if results else empty_search_result(query)
 		
-	def content_suggest_and_search(self, indexname, query, limit=None, *args, **kwargs):
+	def content_suggest_and_search(self, indexname, query, limit=None, **kwargs):
 		bm = self.get_book_index_manager(indexname)
-		results = bm.suggest_and_search(query, limit, *args, **kwargs) if (bm and query) else None
+		results = bm.suggest_and_search(query, limit, **kwargs) if (bm and query) else None
 		return results if results else empty_suggest_and_search_result(query)
 		
-	def content_suggest(self, indexname, term, limit=None, prefix=None, *args, **kwargs):
+	def content_suggest(self, indexname, term, limit=None, prefix=None, **kwargs):
 		bm = self.get_book_index_manager(indexname)
 		results = bm.suggest(term, limit=limit, prefix=prefix, **kwargs) if (bm and term) else None
 		return results if results else empty_suggest_result(term)
@@ -117,7 +116,7 @@ class IndexManager(object):
 			if uim: result.append(uim)
 		return result
 
-	def user_data_search(self, username, query, limit=None, *args, **kwargs):
+	def user_data_search(self, username, query, limit=None, **kwargs):
 		results = None
 		if query:
 			jobs = []
@@ -129,7 +128,7 @@ class IndexManager(object):
 				results = merge_search_results (results, job.value)
 		return results if results else empty_search_result(query)
 
-	def user_data_ngram_search(self, username, query, limit=None, *args, **kwargs):
+	def user_data_ngram_search(self, username, query, limit=None, **kwargs):
 		results = None
 		if query:
 			jobs = []
@@ -141,7 +140,7 @@ class IndexManager(object):
 				results = merge_search_results (results, job.value)
 		return results if results else empty_search_result(query)
 
-	def user_data_suggest_and_search(self, username, query, limit=None, *args, **kwargs):
+	def user_data_suggest_and_search(self, username, query, limit=None, **kwargs):
 		results = None
 		if query:
 			jobs = []
@@ -153,7 +152,7 @@ class IndexManager(object):
 				results = merge_suggest_and_search_results (results, job.value)
 		return results if results else empty_suggest_and_search_result(query)
 
-	def user_data_suggest(self, username, term, limit=None, prefix=None, *args, **kwargs):
+	def user_data_suggest(self, username, term, limit=None, prefix=None, **kwargs):
 		results = None
 		if term:
 			jobs = []
@@ -169,17 +168,17 @@ class IndexManager(object):
 	
 	# -------------------
 	
-	def index_user_content(self, username, data, type_name=None, *args, **kwargs):
+	def index_user_content(self, username, data, type_name=None, **kwargs):
 		um = self._get_user_index_manager(username)
-		if um: um.index_content(data, type_name, *args, **kwargs)
+		if um: um.index_content(data, type_name, **kwargs)
 
-	def update_user_content(self, username, data, type_name=None, *args, **kwargs):
+	def update_user_content(self, username, data, type_name=None, **kwargs):
 		um = self._get_user_index_manager(username)
-		if um: um.update_content(data, type_name, *args, **kwargs)
+		if um: um.update_content(data, type_name, **kwargs)
 
-	def delete_user_content(self, username, data, type_name=None, *args, **kwargs):
+	def delete_user_content(self, username, data, type_name=None, **kwargs):
 		um = self._get_user_index_manager(username)
-		if um: um.delete_contentt(data, type_name, *args, **kwargs)
+		if um: um.delete_contentt(data, type_name, **kwargs)
 		
 	# -------------------
 
@@ -187,13 +186,13 @@ class IndexManager(object):
 	def onChange(cls, datasvr, msg, username=None, broadcast=None):
 		if username:
 			obj = getattr(msg, "object", None)
-			if obj and contenttypes.__dict__.has_key(obj.__class__.__name__):
+			if obj:
 				data = obj
 				if callable( getattr( obj, 'toExternalObject', None ) ):
 					data = obj.toExternalObject()
-				cls.get_shared_indexmanager()._indexagent.add_event(creator=username,
-																	changeType=msg.type,
-																	dataType=obj.__class__.__name__,
+				cls.get_shared_indexmanager()._indexagent.add_event(creator = username,
+																	changeType = msg.type,
+																	dataType = obj.__class__.__name__,
 																	data=data )
 
 	# -------------------
@@ -226,3 +225,14 @@ class IndexManager(object):
 	def __del__(self):
 		self.close()
 
+# -----------------------------
+
+import _whoosh_bookindexmanager
+import _whoosh_userindexmanager
+from indexstorage import MultiDirectoryStorage
+
+def create_index_manager(dataserver=None):
+	mds = MultiDirectoryStorage("/tmp")
+	umf = _whoosh_userindexmanager.wuim_factory(mds, use_md5=False)
+	bmf = _whoosh_bookindexmanager.wbm_factory()
+	return IndexManager(bmf, umf, dataserver=dataserver)

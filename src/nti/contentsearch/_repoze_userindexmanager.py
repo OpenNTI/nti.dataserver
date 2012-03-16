@@ -72,7 +72,7 @@ class RepozeUserIndexManager(object):
 			search_on = [self._normalize_name(x) for x in search_on]
 		return search_on
 
-	def _get_hits_from_docids(self, docMap, docIds, limit=None, query=None, use_word_highlight=True, *args, **kwargs):
+	def _get_hits_from_docids(self, docMap, docIds, limit=None, query=None, use_word_highlight=True, **kwargs):
 		lm =  0
 		items = []
 		with self.dataserver.dbTrans() as conn:
@@ -89,7 +89,7 @@ class RepozeUserIndexManager(object):
 				
 	# -------------------
 	
-	def _do_search(self, field, query, limit=None, use_word_highlight=True, *args, **kwargs):
+	def _do_search(self, field, query, limit=None, use_word_highlight=True, **kwargs):
 		
 		search_on = self._adapt_search_on_types(kwargs.get('search_on', None))
 		search_on = search_on if search_on else self._get_catalog_names()
@@ -118,15 +118,15 @@ class RepozeUserIndexManager(object):
 		results[HIT_COUNT] = len(items)	
 		return results	
 	
-	def search(self, query, limit=None, *args, **kwargs):
-		results = self._do_search(content_, query, limit, True, *args, **kwargs)
+	def search(self, query, limit=None, **kwargs):
+		results = self._do_search(content_, query, limit, True, **kwargs)
 		return results	
 	
 	def quick_search(self, query, limit=None, *args, **kwargs):
-		results = self._do_search(ngrams_, query, limit, False, *args, **kwargs)
+		results = self._do_search(ngrams_, query, limit, False, **kwargs)
 		return results	
 		
-	def suggest(self, term, limit=None, prefix=None, *args, **kwargs):
+	def suggest(self, term, limit=None, prefix=None, **kwargs):
 		search_on = self._adapt_search_on_types(kwargs.get('search_on', None))
 		search_on = search_on if search_on else self._get_catalog_names()
 		prefix = -1 if not isinstance(prefix, Integral) else prefix
@@ -145,17 +145,17 @@ class RepozeUserIndexManager(object):
 		results[ITEMS] = suggestions
 		return results
 	
-	def suggest_and_search(self, query, limit=None, *args, **kwargs):
+	def suggest_and_search(self, query, limit=None, **kwargs):
 		if ' ' in query:
 			suggestions = []
-			result = self.search(query, limit, *args, **kwargs)
+			result = self.search(query, limit, **kwargs)
 		else:
 			result = self.suggest(query, limit=limit, **kwargs)
 			suggestions = result[ITEMS]
 			if suggestions:
-				result = self.search(query, limit, *args, **kwargs)
+				result = self.search(query, limit, **kwargs)
 			else:
-				result = self.search(query, limit, *args, **kwargs)
+				result = self.search(query, limit, **kwargs)
 
 		result[SUGGESTIONS] = suggestions
 		return result
@@ -171,7 +171,7 @@ class RepozeUserIndexManager(object):
 				self.store.add_catalog(self.username, catalog, type_name)
 		return catalog
 	
-	def index_content(self, data, type_name=None, *args, **kwargs):
+	def index_content(self, data, type_name=None, **kwargs):
 		docid = None
 		oid = get_objectId(data)
 		with self.store.dbTrans():
@@ -182,7 +182,7 @@ class RepozeUserIndexManager(object):
 				catalog.index_doc(docid, data)
 		return docid
 
-	def update_content(self, data, type_name=None, *args, **kwargs):
+	def update_content(self, data, type_name=None, **kwargs):
 		oid = get_objectId(data)
 		if not oid: return None
 		with self.store.dbTrans():
@@ -195,7 +195,7 @@ class RepozeUserIndexManager(object):
 				docid = self.index_content(data, type_name)
 		return docid
 
-	def delete_content(self, data, type_name=None, *args, **kwargs):
+	def delete_content(self, data, type_name=None, **kwargs):
 		oid = get_objectId(data)
 		if not oid: return None
 		with self.store.dbTrans():
