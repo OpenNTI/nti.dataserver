@@ -21,6 +21,12 @@ logger = logging.getLogger( __name__ )
 
 # -----------------------------
 
+def normalize_name(self, x):
+	result = u''
+	if x:
+		result =x[0:-1].lower() if x.endswith('s') else x.lower()
+	return unicode(result)
+	
 class WhooshUserIndexManager(object):
 	interface.implements(IUserIndexManager)
 
@@ -58,11 +64,8 @@ class WhooshUserIndexManager(object):
 		
 	# -------------------
 	
-	def _normalize_name(self, x):
-		return x[0:-1].lower() if x.endswith('s') else x.lower()
-	
 	def _get_indexname(self, type_name):
-		type_name = self._normalize_name(type_name)
+		type_name = normalize_name(type_name)
 		if self.use_md5:
 			m = md5()
 			m.update(self.username)
@@ -73,7 +76,7 @@ class WhooshUserIndexManager(object):
 		return indexname
 	
 	def _get_or_create_index(self, type_name):
-		type_name = self._normalize_name(type_name)
+		type_name = normalize_name(type_name)
 		indexname = self._get_indexname(type_name)
 		index = self.indices.get(indexname, None)
 		if not index:
@@ -103,8 +106,7 @@ class WhooshUserIndexManager(object):
 	def _adapt_search_on_types(self, search_on=None):
 		indexables = get_indexables()
 		if search_on:
-			lm = lambda x: x[0:-1].lower() if x.endswith('s') else x.lower()
-			search_on = [lm(x) for x in search_on if lm(x) in indexables]
+			search_on = [normalize_name(x) for x in search_on if normalize_name(x) in indexables]
 		return search_on or indexables
 	
 	def _do_search(self, query, limit=None, is_quick_search=False, **kwargs):
