@@ -7,6 +7,12 @@ import unittest
 from zope import interface, component
 import socketio
 import time
+import tempfile
+
+from ZODB.DB import DB
+from ZODB.FileStorage import FileStorage
+import transaction
+import os
 
 
 from nti.dataserver.contenttypes import Note, Canvas
@@ -54,22 +60,64 @@ class TestMessageInfo(ConfiguringTestBase):
 class TestChatRoom(ConfiguringTestBase):
 
 	def test_become_moderated(self):
-		room = chat._ChatRoom( None )
+		room = chat._Meeting( None )
 		assert_that( room.Moderated, is_(False))
 		room.Moderated = True
-		assert_that( room, is_( chat._ModeratedChatRoom) )
+		assert_that( room, is_( chat._ModeratedMeeting ) )
 
 		msg = chat.MessageInfo()
 		room.post_message( msg )
 		assert_that( room._moderation_queue, has_key( msg.MessageId ) )
 
+		# We can externalize a moderated room
 		to_external_representation( room, EXT_FORMAT_JSON )
+
+	def test_persist_moderated_stays_moderated(self):
+		# We can start with a regular room, persist it,
+		# make it moderated, persist, then load it back as moderated
+
+		tmp_dir = tempfile.mkdtemp()
+		fs = FileStorage( os.path.join( tmp_dir, "data.fs" ) )
+		db = DB( fs )
+		conn = db.open()
+		room = chat._Meeting( None )
+		assert_that( room.Moderated, is_(False))
+		conn.root()['Room'] = room
+		transaction.commit()
+		conn.close()
+		db.close()
+
+		fs = FileStorage( os.path.join( tmp_dir, "data.fs" ) )
+		db = DB( fs )
+		conn = db.open()
+		room = conn.root()['Room']
+		room.Moderated = True
+		assert_that( room, is_( chat._ModeratedMeeting ) )
+		transaction.commit()
+		conn.close()
+		db.close()
+
+		
+		# Should still be moderated.
+		fs = FileStorage( os.path.join( tmp_dir, "data.fs" ) )
+		db = DB( fs )
+		conn = db.open()
+		room = conn.root()['Room']
+		# Our hacky workaround only comes into play after the first
+		# time an attribute is accessed and we de-ghost the object.
+		assert_that( room, is_( chat._Meeting ) )
+		# A method attribute, not an ivar, triggers this
+		assert_that( room.post_message, is_( not_none() ) )
+		assert_that( room, is_( chat._ModeratedMeeting ) )
+		transaction.commit()
+		conn.close()
+		db.close()
 
 	def test_external_reply_to_different_storage(self):
 		ds = MockDataserver()
 		with ds.dbTrans() as conn:
 			n = Note()
-			room = chat._ChatRoom( None )
+			room = chat._Meeting( None )
 			conn.add( n )
 			sconn = conn.get_connection( 'Sessions' )
 			sconn.add( room )
@@ -105,9 +153,9 @@ class TestChatRoom(ConfiguringTestBase):
 			def _save_message_to_transcripts(*args, **kwargs):
 				pass
 
-		room = chat._ChatRoom( MockChatServer() )
+		room = chat._Meeting( MockChatServer() )
 		room.Moderated = True
-		assert_that( room, is_( chat._ModeratedChatRoom) )
+		assert_that( room, is_( chat._ModeratedMeeting ) )
 
 		msg = chat.MessageInfo()
 		room.post_message( msg )
