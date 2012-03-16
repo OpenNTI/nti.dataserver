@@ -162,6 +162,33 @@ class IIndexManager(interface.Interface):
 		:param limit: max number of search hits
 		:param prefix: number of chars in terms for prefix
 		"""
+		
+	def index_user_content(username, data, type_name=None, *args, **kwargs):
+		"""
+		index the specified content
+		
+		:param username: content owner
+		:param data: data to index
+		:param type_name: data type
+		"""
+
+	def update_user_content(username, data, type_name=None, *args, **kwargs):
+		"""
+		update the index for specified content
+		
+		:param username: content owner
+		:param data: data to index
+		:param type_name: data type
+		"""
+
+	def delete_user_content(username, data, type_name=None, *args, **kwargs):
+		"""
+		delete from the index the specified content
+		
+		:param username: content owner
+		:param data: data to remove from index
+		:param type_name: data type
+		"""
 
 # -----------------------------
 	
