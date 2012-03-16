@@ -36,24 +36,24 @@ class WhooshBookIndexManager(object):
 	
 	# ---------------
 
-	def search(self, query, limit=None, **kwargs):
+	def search(self, query, limit=None, *args, **kwargs):
 		with self.storage.dbTrans():
 			with self.bookidx.searcher() as s:
 				results = self.book.search(s, query, limit)
 		return results
 
-	def ngram_search(self, query, limit=None, **kwarg):
+	def ngram_search(self, query, limit=None, *args, **kwarg):
 		with self.bookidx.searcher() as s:
 			results = self.book.quick_search(s, query, limit)
 		return results
 
-	def suggest_and_search(self, query, limit=None, **kwarg):
+	def suggest_and_search(self, query, limit=None, *args, **kwarg):
 		with self.storage.dbTrans():
 			with self.bookidx.searcher() as s:
 				results = self.book.suggest_and_search(s, query, limit)
 		return results
 
-	def suggest(self, term, limit=None, prefix=None, **kwargs):
+	def suggest(self, term, limit=None, prefix=None, *args, **kwargs):
 		with self.storage.dbTrans():
 			maxdist = kwargs.get('maxdist', None)
 			with self.bookidx.searcher() as s:

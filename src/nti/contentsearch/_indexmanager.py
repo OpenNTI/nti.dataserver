@@ -50,10 +50,10 @@ class IndexManager(object):
 	
 	# -------------------
 	
-	def get_book_index_manager(self, indexname='prealgebra'):
+	def get_book_index_manager(self, indexname):
 		return self.books.get(indexname, None)
 	
-	def add_book(self, indexname='prealgebra', *args, **kwargs):
+	def add_book(self, indexname, *args, **kwargs):
 		result = False
 		if not self.books.has_key(indexname):
 			bmi = self.bookidx_manager_factory(index=indexname, **kwargs)
@@ -62,22 +62,22 @@ class IndexManager(object):
 				result = True
 		return result
 
-	def content_search(self, indexname='prealgebra', query, limit=None, **kwargs):
+	def content_search(self, indexname, query, limit=None, *args, **kwargs):
 		bm = self.get_book_index_manager(indexname)
-		results = bm.search(query, limit, **kwargs) if (bm and query) else None
+		results = bm.search(query, limit, *args, **kwargs) if (bm and query) else None
 		return results if results else empty_search_result(query)
 	
-	def content_ngram_search(self, indexname='prealgebra', query, limit=None, **kwargs):
+	def content_ngram_search(self, indexname, query, limit=None, *args, **kwargs):
 		bm = self.get_book_index_manager(indexname)
-		results = bm.ngram_search(query, limit, **kwargs) if (bm and query) else None
+		results = bm.ngram_search(query, limit, *args, **kwargs) if (bm and query) else None
 		return results if results else empty_search_result(query)
 		
-	def content_suggest_and_search(self, indexname, query, limit=None, **kwargs):
+	def content_suggest_and_search(self, indexname, query, limit=None, *args, **kwargs):
 		bm = self.get_book_index_manager(indexname)
-		results = bm.suggest_and_search(query, limit, **kwargs) if (bm and query) else None
+		results = bm.suggest_and_search(query, limit, *args, **kwargs) if (bm and query) else None
 		return results if results else empty_suggest_and_search_result(query)
 		
-	def content_suggest(self, indexname, term, limit=None, prefix=None, **kwargs):
+	def content_suggest(self, indexname, term, limit=None, prefix=None, *args, **kwargs):
 		bm = self.get_book_index_manager(indexname)
 		results = bm.suggest(term, limit=limit, prefix=prefix, **kwargs) if (bm and term) else None
 		return results if results else empty_suggest_result(term)
@@ -116,49 +116,45 @@ class IndexManager(object):
 			if uim: result.append(uim)
 		return result
 
-	def user_data_search(self, username, query, limit=None, **kwargs):
+	def user_data_search(self, username, query, limit=None, *args, **kwargs):
 		results = None
 		if query:
 			jobs = []
-			search_on = kwargs.get('search_on', None)
 			for uim in self._get_search_uims(username):
-				jobs.append(gevent.spawn(uim.search, query=query, limit=limit, search_on=search_on, **kwargs))
+				jobs.append(gevent.spawn(uim.search, query=query, limit=limit, **kwargs))
 			gevent.joinall(jobs)
 			for job in jobs:
 				results = merge_search_results (results, job.value)
 		return results if results else empty_search_result(query)
 
-	def user_data_ngram_search(self, username, query, limit=None, **kwargs):
+	def user_data_ngram_search(self, username, query, limit=None, *args, **kwargs):
 		results = None
 		if query:
 			jobs = []
-			search_on = kwargs.get('search_on', None)
 			for uim in self._get_search_uims(username):
-				jobs.append(gevent.spawn(uim.ngram_search, query=query, limit=limit, search_on=search_on, **kwargs))
+				jobs.append(gevent.spawn(uim.ngram_search, query=query, limit=limit, **kwargs))
 			gevent.joinall(jobs)
 			for job in jobs:
 				results = merge_search_results (results, job.value)
 		return results if results else empty_search_result(query)
 
-	def user_data_suggest_and_search(self, username, query, limit=None, **kwargs):
+	def user_data_suggest_and_search(self, username, query, limit=None, *args, **kwargs):
 		results = None
 		if query:
 			jobs = []
-			search_on = kwargs.get('search_on', None)
 			for uim in self._get_search_uims(username):
-				jobs.append(gevent.spawn(uim.suggest_and_search, query=query, limit=limit, search_on=search_on, **kwargs))
+				jobs.append(gevent.spawn(uim.suggest_and_search, query=query, limit=limit, **kwargs))
 			gevent.joinall(jobs)
 			for job in jobs:
 				results = merge_suggest_and_search_results (results, job.value)
 		return results if results else empty_suggest_and_search_result(query)
 
-	def user_data_suggest(self, username, term, limit=None, prefix=None, **kwargs):
+	def user_data_suggest(self, username, term, limit=None, prefix=None, *args, **kwargs):
 		results = None
 		if term:
 			jobs = []
-			search_on = kwargs.get('search_on', None)
 			for uim in self._get_search_uims(username):
-				jobs.append(gevent.spawn(uim.suggest, term, limit=limit, prefix=prefix, search_on=search_on, **kwargs))
+				jobs.append(gevent.spawn(uim.suggest, term, limit=limit, prefix=prefix, **kwargs))
 			gevent.joinall(jobs)
 			for job in jobs:
 				results = merge_suggest_results (results, job.value)
@@ -168,17 +164,17 @@ class IndexManager(object):
 	
 	# -------------------
 	
-	def index_user_content(self, username, data, type_name=None, **kwargs):
+	def index_user_content(self, username, data, type_name=None, *args, **kwargs):
 		um = self._get_user_index_manager(username)
-		if um: um.index_content(data, type_name, **kwargs)
+		if um: um.index_content(data, type_name, *args, **kwargs)
 
-	def update_user_content(self, username, data, type_name=None, **kwargs):
+	def update_user_content(self, username, data, type_name=None, *args, **kwargs):
 		um = self._get_user_index_manager(username)
-		if um: um.update_content(data, type_name, **kwargs)
+		if um: um.update_content(data, type_name, *args, **kwargs)
 
-	def delete_user_content(self, username, data, type_name=None, **kwargs):
+	def delete_user_content(self, username, data, type_name=None, *args, **kwargs):
 		um = self._get_user_index_manager(username)
-		if um: um.delete_contentt(data, type_name, **kwargs)
+		if um: um.delete_content(data, type_name, *args, **kwargs)
 		
 	# -------------------
 
