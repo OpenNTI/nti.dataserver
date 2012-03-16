@@ -107,8 +107,8 @@ class WhooshUserIndexManager(object):
 			search_on = [lm(x) for x in search_on if lm(x) in indexables]
 		return search_on or indexables
 	
-	def _do_search(self, query, limit=None, search_on=None, is_quick_search=False, **kwargs):
-		search_on = self._adapt_search_on_types(search_on)
+	def _do_search(self, query, limit=None, is_quick_search=False, **kwargs):
+		search_on = self._adapt_search_on_types(kwargs.get('search_on', None))
 		results = empty_search_result(query)
 		with self.storage.dbTrans():
 			for type_name in search_on:
@@ -123,17 +123,17 @@ class WhooshUserIndexManager(object):
 			
 		return results	
 	
-	def search(self, query, limit=None, search_on=None, *args, **kwargs):
-		results = self._do_search(query, limit, search_on, False, search_on, **kwargs)
+	def search(self, query, limit=None, *args, **kwargs):
+		results = self._do_search(query, limit, False, **kwargs)
 		return results
 
-	def quick_search(self, query, limit=None, search_on=None, *args, **kwargs):
-		results = self._do_search(query, limit, search_on, True, search_on, **kwargs)
+	def quick_search(self, query, limit=None, *args, **kwargs):
+		results = self._do_search(query, limit, True, **kwargs)
 		return results
 
-	def suggest_and_search(self, query, limit=None, search_on=None, *args, **kwargs):
+	def suggest_and_search(self, query, limit=None, *args, **kwargs):
 		results = empty_suggest_and_search_result(query)
-		search_on = self._adapt_search_on_types(search_on)
+		search_on = self._adapt_search_on_types(kwargs.get('search_on', None))
 		with self.storage.dbTrans():
 			for type_name in search_on:
 				index = self._get_or_create_index(type_name)
@@ -143,10 +143,10 @@ class WhooshUserIndexManager(object):
 					results = merge_suggest_and_search_results(results, rs)
 		return results
 
-	def suggest(self, term, limit=None, prefix=None, search_on=None, *args, **kwargs):
+	def suggest(self, term, limit=None, prefix=None, *args, **kwargs):
 		results = empty_suggest_result(term)
 		maxdist = kwargs.get('maxdist', None)
-		search_on = self._adapt_search_on_types(search_on)
+		search_on = self._adapt_search_on_types(kwargs.get('search_on', None))
 		with self.storage.dbTrans():
 			for type_name in search_on:
 				index = self._get_or_create_index(type_name)
@@ -158,7 +158,7 @@ class WhooshUserIndexManager(object):
 
 	# -------------------
 
-	def index_content(self, data, type_name='Notes'):
+	def index_content(self, data, type_name='Notes', *args, **kwargs):
 		index = self._get_or_create_index(type_name)
 		if index:
 			indexable = get_indexable_object(type_name)
@@ -166,7 +166,7 @@ class WhooshUserIndexManager(object):
 				writer = self._get_index_writer(index)
 				indexable.index_content(writer, data, **self.writer_commit_args)
 
-	def update_content(self, data, type_name='Notes'):
+	def update_content(self, data, type_name='Notes', *args, **kwargs):
 		index = self._get_or_create_index(type_name)
 		if index:
 			indexable = get_indexable_object(type_name)
@@ -174,7 +174,7 @@ class WhooshUserIndexManager(object):
 				writer = self._get_index_writer(index)
 				indexable.update_content(writer, data, **self.writer_commit_args)
 
-	def delete_content(self, data, type_name='Notes'):
+	def delete_content(self, data, type_name='Notes', *args, **kwargs):
 		index = self._get_or_create_index(type_name)
 		if index:
 			indexable = get_indexable_object(type_name)
@@ -201,7 +201,7 @@ class WhooshUserIndexManager(object):
 		if index:
 			index.optimize()
 
-	##########################
+	# -------------------
 	
 	def optimize(self):
 		for index in self.indices.itervalues():
@@ -211,14 +211,22 @@ class WhooshUserIndexManager(object):
 		for index in self.indices.itervalues():
 			self._close_index(index)
 		self.indices.clear()
+		
+	def __del__(self):
+		try:
+			self.close()
+		except:
+			pass
 
 # -----------------------------
 
-def wuim_factory(index_storage, use_md5=True, delay=0.25, maxiters=15):
+def wuim_factory(index_storage=None, use_md5=True, delay=0.25, maxiters=15):
 	def f(username, *args, **kwargs):
+		_use_md5 = kwargs['use_md5'] if 'use_md5' in kwargs else use_md5
+		_storage = index_storage or kwargs.get('index_storage', None) or kwargs.get('storage', None)
 		return WhooshUserIndexManager(	username = username,
-										index_storage = index_storage, 
-										use_md5 = use_md5,
+										index_storage = _storage, 
+										use_md5 = _use_md5,
 										delay = delay,
 										maxiters = maxiters)
 	return f
