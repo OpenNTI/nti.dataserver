@@ -1,8 +1,5 @@
 from nti.contentsearch.interfaces import IIndexManager
 
-# TODO: We should make this a config option
-USE_TYPE_AHEAD = False
-
 class GetSearch(object):
 
 	def __init__(self, request):
@@ -11,12 +8,9 @@ class GetSearch(object):
 	def __call__( self ):
 		request = self.request
 		indexmanager = request.registry.getUtility( IIndexManager )
-
 		query = self.request.matchdict['term']
 		indexname = self.get_indexname(self.request.environ)
-
-		search = indexmanager.quick_search if USE_TYPE_AHEAD else indexmanager.search
-		return search( query=query, indexname=indexname )
+		return indexmanager.search( query=query, indexname=indexname )
 
 	def get_indexname(self, environ):
 		"""
@@ -45,5 +39,4 @@ class UserSearch(object):
 		term = self.request.matchdict['term']
 		user = self.request.matchdict['user']
 		indexmanager = self.request.registry.getUtility( IIndexManager )
-
-		return indexmanager.user_data_search( term, username=user )
+		return indexmanager.user_data_search( query=term, username=user )
