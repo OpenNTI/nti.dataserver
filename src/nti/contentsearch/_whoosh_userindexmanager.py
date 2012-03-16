@@ -120,7 +120,7 @@ class WhooshUserIndexManager(object):
 					if not is_quick_search:
 						hits = indexable.search(searcher, query, limit=limit, **kwargs)
 					else:
-						hits = indexable.quick_search(searcher, query, limit=limit, **kwargs)
+						hits = indexable.ngram_search(searcher, query, limit=limit, **kwargs)
 					results = merge_search_results(results, hits)
 			
 		return results	

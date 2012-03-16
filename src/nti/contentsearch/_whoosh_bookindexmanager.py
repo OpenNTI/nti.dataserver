@@ -1,7 +1,7 @@
 from zope import interface
 
 from nti.contentsearch import interfaces
-from nti.contentsearch.contenttypes import Book
+from nti.contentsearch._whoosh_index import Book
 from nti.contentsearch.indexstorage import create_directory_index_storage
 
 import logging
@@ -44,7 +44,7 @@ class WhooshBookIndexManager(object):
 
 	def ngram_search(self, query, limit=None, *args, **kwarg):
 		with self.bookidx.searcher() as s:
-			results = self.book.quick_search(s, query, limit)
+			results = self.book.ngram_search(s, query, limit)
 		return results
 
 	def suggest_and_search(self, query, limit=None, *args, **kwarg):

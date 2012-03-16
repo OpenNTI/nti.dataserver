@@ -18,6 +18,7 @@ from nti.contentsearch.common import get_collection
 from nti.contentsearch.common import empty_search_result
 from nti.contentsearch.common import empty_suggest_result
 from nti.contentsearch.common import word_content_highlight
+from nti.contentsearch.common import ngram_content_highlight
 
 from nti.contentsearch.common import (	NTIID, CREATOR, LAST_MODIFIED, TYPE, CLASS, ID, 
 										COLLECTION_ID, ITEMS, SNIPPET, HIT, HIT_COUNT, SUGGESTIONS, 
@@ -133,10 +134,12 @@ class _SearchableContent(object):
 		parsed_query = self._prepare_query(content_, query)
 		return self.execute_query_and_externalize(searcher, content_, parsed_query, query, limit, *args, **kwargs)
 		
-	def quick_search(self, searcher, query, limit=_default_search_limit, *args, **kwargs):
+	def ngram_search(self, searcher, query, limit=_default_search_limit, *args, **kwargs):
 		parsed_query = self._prepare_query(quick_, query)
 		return self.execute_query_and_externalize(searcher, quick_, parsed_query, query, limit, *args, **kwargs)
-		
+	
+	quick_search = ngram_search
+	
 	def suggest_and_search(self, searcher, query, limit=_default_search_limit, *args, **kwargs):
 		if ' ' in query:
 			suggestions = []
@@ -194,6 +197,11 @@ class _SearchableContent(object):
 													  hit.get(content_, u''),
 													  maxchars=maxchars, 
 													  surround=surround)
+			else:
+				snippet = ngram_content_highlight(query, 
+												  hit.get(content_, u''),
+												  maxchars=maxchars, 
+												  surround=surround)
 			
 			if not snippet:
 				snippet = hit.get(content_, u'')
@@ -212,6 +220,7 @@ class _SearchableContent(object):
 		d[CLASS] = HIT
 		d[LAST_MODIFIED] = epoch_time(hit[last_modified_]) if last_modified_ in hit else 0
 		return str(hit.docnum) if hit.__class__ == Hit else None
+	
 	
 # ----------------------------------
 
