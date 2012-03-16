@@ -198,6 +198,8 @@ class SessionService(object):
 	def _dispatch_message_to_proxy(  self, session_id, function_name, function_arg ):
 		handled = False
 		proxy = self.get_proxy_session( session_id )
+		logger.info( "Dispatching %s to %s/%s with %s",
+					 function_name, session_id, proxy, function_arg )
 		if hasattr( proxy, function_name ):
 			getattr( proxy, function_name )(function_arg)
 			handled = True
