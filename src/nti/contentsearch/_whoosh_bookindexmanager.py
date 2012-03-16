@@ -34,6 +34,12 @@ class WhooshBookIndexManager(object):
 	def get_indexname(self):
 		return self.bookidx.indexname
 	
+	def __str__( self ):
+		return self.indexname
+
+	def __repr__( self ):
+		return 'WhooshBookIndexManager(indexname=%s)' % self.indexname
+	
 	# ---------------
 
 	def search(self, query, limit=None, *args, **kwargs):
