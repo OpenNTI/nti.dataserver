@@ -42,7 +42,7 @@ class WhooshBookIndexManager(object):
 				results = self.book.search(s, query, limit)
 		return results
 
-	def quick_search(self, query, limit=None, *args, **kwarg):
+	def ngram_search(self, query, limit=None, *args, **kwarg):
 		with self.bookidx.searcher() as s:
 			results = self.book.quick_search(s, query, limit)
 		return results
@@ -60,7 +60,9 @@ class WhooshBookIndexManager(object):
 				results = self.book.suggest(s, term, limit=limit, maxdist=maxdist, prefix=prefix)
 		return results
 
-	##########################
+	quick_search = ngram_search
+	
+	# ---------------
 
 	def close(self):
 		self.bookidx.close()

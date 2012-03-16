@@ -30,7 +30,7 @@ def normalize_name(self, x):
 class WhooshUserIndexManager(object):
 	interface.implements(IUserIndexManager)
 
-	def __init__(self, username, index_storage, use_md5=True, delay=0.25, maxiters=15):
+	def __init__(self, username, index_storage, use_md5=True, delay=0.25, maxiters=40):
 		self.indices = {}
 		self.delay = delay
 		self.use_md5 = use_md5
@@ -129,7 +129,7 @@ class WhooshUserIndexManager(object):
 		results = self._do_search(query, limit, False, **kwargs)
 		return results
 
-	def quick_search(self, query, limit=None, *args, **kwargs):
+	def ngram_search(self, query, limit=None, *args, **kwargs):
 		results = self._do_search(query, limit, True, **kwargs)
 		return results
 
@@ -158,6 +158,8 @@ class WhooshUserIndexManager(object):
 					results = merge_suggest_results(results, rs)
 		return results
 
+	quick_search = ngram_search
+	
 	# -------------------
 
 	def index_content(self, data, type_name='Notes', *args, **kwargs):
