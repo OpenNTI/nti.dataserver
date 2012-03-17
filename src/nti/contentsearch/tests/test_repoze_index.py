@@ -24,15 +24,21 @@ from hamcrest import has_key
 from hamcrest import has_length
 from hamcrest import greater_than_or_equal_to
 
-from nti.contentsearch.common import (	OID, NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
-										COLLECTION_ID, SNIPPET, HIT, ID, BODY)
+from nti.contentsearch.common import (	OID, NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID,
+										COLLECTION_ID, ID)
 
 from nti.contentsearch.common import (	ngrams_, channel_, content_, keywords_, references_,
-										recipients_, sharedWith_, body_, startHighlightedFullText_)
+										recipients_, sharedWith_)
 
 
 class TestRepozeIndex(unittest.TestCase):
 		
+	@classmethod
+	def setUpClass(cls):
+		tf = os.path.join(os.path.dirname(__file__), 'highlight.json')
+		with open(tf, "r") as f:
+			cls.hightlight = json.load(f)
+			
 	def _test_common_catalog(self, catalog):
 		assert_that(catalog, has_key(OID))
 		assert_that(catalog, has_key(NTIID))
@@ -69,10 +75,7 @@ class TestRepozeIndex(unittest.TestCase):
 	# -------------
 
 	def test_highlight(self):
-		tf = os.path.join(os.path.dirname(__file__), 'highlight.json')
-		with open(tf, "r") as f:
-			obj = json.load(f)
-		
+		obj = self.hightlight
 		id_str = 'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x085a:5573657273'
 		assert_that(get_id(obj), is_(id_str))
 		assert_that(get_oid(obj), is_(id_str))
@@ -84,6 +87,7 @@ class TestRepozeIndex(unittest.TestCase):
 		assert_that(get_collectionId(obj), is_('prealgebra'))
 		assert_that(get_last_modified(obj), is_(close_to(1331922120.97, 0.05)))
 		assert_that(get_highlight_content(obj), has_length(greater_than_or_equal_to(190)))
+		assert_that(get_highlight_ngrams(obj).split(), has_length(69))
 		
 if __name__ == '__main__':
 	unittest.main()
