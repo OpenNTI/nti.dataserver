@@ -205,7 +205,7 @@ def get_messageinfo_content(data):
 def ngram_tokens(text, minsize=3, maxsize=10, at='start', unique=True):
 	rext = analysis.RegexTokenizer()
 	ngf = analysis.NgramFilter(minsize=minsize, maxsize=maxsize, at=at)
-	stream = rext(unicode(text))
+	stream = rext(unicode(text.lower()))
 	if not unique:
 		result = [token.copy() for token in ngf(stream)]
 	else:
