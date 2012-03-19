@@ -190,10 +190,10 @@ def get_type_name(obj):
 	elif MIME_TYPE in obj:
 		result = obj[MIME_TYPE]
 		if result and result.startswith(nti_mimetype_prefix):
-			result = result[len(nti_mimetype_prefix):].capitalize()
+			result = result[len(nti_mimetype_prefix):]
 	else:
-		result = u''
-	return unicode(result)
+		result = None
+	return unicode(result.lower()) if result else u''
 		
 def _get_last_modified(obj):
 	lm = get_attr(obj, last_modified_fields )
