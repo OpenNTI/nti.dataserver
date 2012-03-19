@@ -170,9 +170,9 @@ class TestRepozeIndex(unittest.TestCase):
 		assert_that(d, has_entry(SNIPPET, u'Zanpakuto and Zangetsu'))
 		
 	def test_get_type_name(self):
-		assert_that(get_type_name(self.note), is_('Note'))
-		assert_that(get_type_name(self.hightlight), is_('Highlight'))
-		assert_that(get_type_name(self.messageinfo), is_('MessageInfo'))
+		assert_that(get_type_name(self.note), is_('note'))
+		assert_that(get_type_name(self.hightlight), is_('highlight'))
+		assert_that(get_type_name(self.messageinfo), is_('messageinfo'))
 
 
 if __name__ == '__main__':

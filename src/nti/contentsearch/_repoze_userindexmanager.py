@@ -17,7 +17,7 @@ from nti.contentsearch._repoze_index import get_index_hit
 from nti.contentsearch._repoze_index import create_catalog
 from nti.contentsearch._repoze_datastore import DataStore
 from nti.contentsearch.textindexng3 import CatalogTextIndexNG3
-from nti.contentsearch.common import (OID, LAST_MODIFIED, ITEMS, HIT_COUNT, SUGGESTIONS, content_, ngrams_)
+from nti.contentsearch.common import (NTIID, LAST_MODIFIED, ITEMS, HIT_COUNT, SUGGESTIONS, content_, ngrams_)
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -78,15 +78,18 @@ class RepozeUserIndexManager(object):
 		with self.dataserver.dbTrans():
 			for docId in docIds:
 				ntiid = docMap.address_for_docid(docId)
-				svr_obj = find_object_with_ntiid(ntiid, dataserver=self.dataserver)
-				if callable( getattr( svr_obj, 'toExternalObject', None ) ):
-					svr_obj = svr_obj.toExternalObject()
-				hit = get_index_hit(svr_obj, query=query, use_word_highlight=use_word_highlight, **kwargs)
-				if hit:
-					items.append(hit)
-					lm = max(lm, hit[LAST_MODIFIED])
-					if limit and len(items) >= limit:
-						break
+				try:
+					svr_obj = find_object_with_ntiid(ntiid, dataserver=self.dataserver)
+					if callable( getattr( svr_obj, 'toExternalObject', None ) ):
+						svr_obj = svr_obj.toExternalObject()
+					hit = get_index_hit(svr_obj, query=query, use_word_highlight=use_word_highlight, **kwargs)
+					if hit:
+						items.append(hit)
+						lm = max(lm, hit[LAST_MODIFIED])
+						if limit and len(items) >= limit:
+							break
+				except:
+					logger.error("cannot find object with NTIID '%s' referenced in index" % ntiid)
 		return items, lm
 				
 	# -------------------
@@ -114,7 +117,7 @@ class RepozeUserIndexManager(object):
 					if hits:
 						lm = max(lm, hits_lm)
 						for hit in hits:
-							items[hit[OID]] = hit
+							items[hit[NTIID]] = hit
 			
 		results[LAST_MODIFIED] = lm
 		results[HIT_COUNT] = len(items)	
