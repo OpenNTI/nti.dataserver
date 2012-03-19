@@ -6,12 +6,12 @@ from zope import interface
 from repoze.catalog.query import Contains
 
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver._Dataserver import get_object_by_oid
+from nti.dataserver.ntiids import find_object_with_ntiid
 
 from nti.contentsearch import interfaces
 from nti.contentsearch.common import empty_search_result
 from nti.contentsearch.common import empty_suggest_result
-from nti.contentsearch._repoze_index import get_objectId
+from nti.contentsearch._repoze_index import get_ntiid
 from nti.contentsearch._repoze_index import get_type_name
 from nti.contentsearch._repoze_index import get_index_hit
 from nti.contentsearch._repoze_index import create_catalog
@@ -31,8 +31,8 @@ class RepozeUserIndexManager(object):
 		self.username = username
 		self.datastore = repoze_store
 		self.ds = dataserver or component.queryUtility( nti_interfaces.IDataserver )
-		assert isinstance(repoze_store, DataStore), 'must specify a valid repoze store'
-		assert isinstance(dataserver, 'must specify a valid data server')
+		assert self.ds, 'must specify a valid data server'
+		assert isinstance(self.datastore, DataStore), 'must specify a valid repoze store'
 
 	# -------------------
 	
@@ -65,7 +65,7 @@ class RepozeUserIndexManager(object):
 	
 	def _get_catalog_names(self):
 		with self.datastore.dbTrans():
-			return self.get_catalog_names(self.username)
+			return self.datastore.get_catalog_names(self.username)
 			
 	def _adapt_search_on_types(self, search_on=None):
 		if search_on:
@@ -75,10 +75,10 @@ class RepozeUserIndexManager(object):
 	def _get_hits_from_docids(self, docMap, docIds, limit=None, query=None, use_word_highlight=True, *args, **kwargs):
 		lm =  0
 		items = []
-		with self.dataserver.dbTrans() as conn:
+		with self.dataserver.dbTrans():
 			for docId in docIds:
-				oid = docMap.address_for_docid(docId)
-				svr_obj = get_object_by_oid(conn, oid)
+				ntiid = docMap.address_for_docid(docId)
+				svr_obj = find_object_with_ntiid(ntiid, dataserver=self.dataserver)
 				if callable( getattr( svr_obj, 'toExternalObject', None ) ):
 					svr_obj = svr_obj.toExternalObject()
 				hit = get_index_hit(svr_obj, query=query, use_word_highlight=use_word_highlight, **kwargs)
@@ -175,21 +175,21 @@ class RepozeUserIndexManager(object):
 	
 	def index_content(self, data, type_name=None, **kwargs):
 		docid = None
-		oid = get_objectId(data)
+		ntiid = get_ntiid(data)
 		with self.store.dbTrans():
 			catalog = self._get_create_catalog(data, type_name)
-			if catalog and oid:
+			if catalog and ntiid:
 				docMap = self.store.docMap
-				docid = docMap.add(oid)
+				docid = docMap.add(ntiid)
 				catalog.index_doc(docid, data)
 		return docid
 
 	def update_content(self, data, type_name=None, *args, **kwargs):
-		oid = get_objectId(data)
-		if not oid: return None
+		ntiid = get_ntiid(data)
+		if not ntiid: return None
 		with self.store.dbTrans():
 			docMap = self.store.docMap
-			docid = docMap.docid_for_address(oid)
+			docid = docMap.docid_for_address(ntiid)
 			if docid:
 				catalog = self._get_create_catalog(data, type_name)
 				catalog.reindex_doc(docid, data)
@@ -198,11 +198,11 @@ class RepozeUserIndexManager(object):
 		return docid
 
 	def delete_content(self, data, type_name=None, *args, **kwargs):
-		oid = get_objectId(data)
-		if not oid: return None
+		ntiid = get_ntiid(data)
+		if not ntiid: return None
 		with self.store.dbTrans():
 			docMap = self.store.docMap
-			docid = docMap.docid_for_address(oid)
+			docid = docMap.docid_for_address(ntiid)
 			if docid:
 				catalog = self.store.get_catalog(self.username, type_name)
 				catalog.unindex_doc(docid)
