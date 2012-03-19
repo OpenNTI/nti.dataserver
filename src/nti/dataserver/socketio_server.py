@@ -354,13 +354,22 @@ class XHRPollingTransport(socketio.transports.XHRPollingTransport):
 class JSONPolling(XHRPollingTransport):
 	pass
 
+def _catch_all(greenlet):
+	def f():
+		try:
+			greenlet()
+		except:
+			# Trap and log.
+			logger.exception( "Failed to run greenlet %s", greenlet )
+	return f
+
 class WebsocketTransport(socketio.transports.WebsocketTransport):
 
 	def __init__( self, *args ):
 		super(WebsocketTransport,self).__init__(*args)
 		self.websocket = None
 
-	def connect(self, *args):
+	def connect(self, *args, **kwargs):
 
 		websocket = self.handler.environ['wsgi.websocket']
 		websocket.send("1::")
@@ -384,7 +393,10 @@ class WebsocketTransport(socketio.transports.WebsocketTransport):
 		context_manager_callable = self.handler.context_manager_callable
 		session_service.set_proxy_session( session_id, session_proxy )
 
+		# If these jobs die with an error, then they may leak the
+		# TCP socket up in the handler? (That may have been send_into_ws not exiting.)
 
+		@_catch_all
 		def send_into_ws():
 			while True:
 				message = session_proxy.get_client_msg()
@@ -408,6 +420,7 @@ class WebsocketTransport(socketio.transports.WebsocketTransport):
 					logger.exception( "Failed to send message that couldn't be encoded: '%s' => '%s'",
 									  message, encoded )
 
+		@_catch_all
 		def read_from_ws():
 			while True:
 				message = websocket.wait()
@@ -417,6 +430,9 @@ class WebsocketTransport(socketio.transports.WebsocketTransport):
 						break
 
 					if message is None:
+						# Kill the greenlet
+						session_proxy.put_client_msg( None )
+						# and the session
 						session.kill()
 						break
 
@@ -431,9 +447,11 @@ class WebsocketTransport(socketio.transports.WebsocketTransport):
 					if decoded_message is not None:
 						session.put_server_msg(decoded_message)
 
+		ping_sleep = kwargs.get( 'ping_sleep', 5.0 )
+		@_catch_all
 		def ping():
 			while True:
-				gevent.sleep( 5.0 )
+				gevent.sleep( ping_sleep )
 				# FIXME: Make time a config?
 				with context_manager_callable():
 					session = session_service.get_session( session_id )
