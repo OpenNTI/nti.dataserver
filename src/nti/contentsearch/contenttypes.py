@@ -535,7 +535,7 @@ class Highlight(UserIndexableContent):
 				 		ntiid=ID(stored=True))
 
 	fields = {
-			"CollectionID":	("collectionId", echo),
+			"CollectionId":	("collectionId", echo),
 			OID:			(oid_, echo),
 			"ContainerId":	("containerId", echo),
 			CREATOR:		("creator", echo),
@@ -678,7 +678,7 @@ class Note(Highlight):
 				 		ntiid=ID(stored=True) )
 
 	fields = {
-			"CollectionID":	("collectionId", echo),
+			"CollectionId":	("collectionId", echo),
 			OID:			(oid_,  echo),
 			"ContainerId":	("containerId", echo),
 			CREATOR:		("creator", echo),
