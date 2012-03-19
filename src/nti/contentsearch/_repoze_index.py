@@ -16,12 +16,12 @@ from nti.contentsearch.common import ngram_content_highlight
 from nti.contentsearch.textindexng3 import CatalogTextIndexNG3
 
 from nti.contentsearch.common import (	oid_fields, ntiid_fields, creator_fields, container_id_fields,
-										last_modified_fields)
+										last_modified_fields, keyword_fields)
 
 from nti.contentsearch.common import (	OID, NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
-										COLLECTION_ID, SNIPPET, HIT, ID, BODY)
+										COLLECTION_ID, SNIPPET, HIT, ID, BODY, MIME_TYPE)
 
-from nti.contentsearch.common import (	ngrams_, channel_, content_, keywords_, references_,
+from nti.contentsearch.common import (	ngrams_, channel_, content_, keywords_, references_, nti_mimetype_prefix,
 										recipients_, sharedWith_, body_, startHighlightedFullText_)
 
 
@@ -72,15 +72,20 @@ def _parse_words(obj, fields, default=None):
 	words = obj if isinstance(obj, basestring) else get_attr(obj, fields, default)
 	if words:
 		if isinstance(words, basestring):
-			words = words.split()
+			words = words.lower().split()
 		elif isinstance(words, Iterable):
-			words = [w for w in words]
+			words = [w.lower() for w in words]
 		else:
-			words = [words]
+			words = [words.lower()]
 	return words
 	
 def get_keywords(obj, default=None):
-	return _parse_words(obj, [keywords_])
+	result = set()
+	for name in keyword_fields:
+		words =  _parse_words(obj, [name])
+		if words:
+			result.update(words)
+	return result if result else None
 
 def get_references(obj, default=None):
 	return _parse_words(obj, [references_])
@@ -101,7 +106,7 @@ def get_note_ngrams(obj, default=None):
 def get_note_content(obj, default=None):
 	source = obj if isinstance(obj, basestring) else get_attr(obj, [body_], default)
 	result = get_multipart_content(source)
-	return result
+	return result.lower() if result else None
 	
 def get_highlight_ngrams(obj, default=None):
 	source = obj if isinstance(obj, basestring) else get_attr(obj, [startHighlightedFullText_], default)
@@ -111,7 +116,7 @@ def get_highlight_ngrams(obj, default=None):
 def get_highlight_content(obj, default=None):
 	source = obj if isinstance(obj, basestring) else get_attr(obj, [startHighlightedFullText_], default)
 	result = get_content(source)
-	return result
+	return result.lower() if result else None
 
 def get_messageinfo_ngrams(obj, default=None):
 	source = obj if isinstance(obj, basestring) else get_attr(obj, [BODY], default)
@@ -121,7 +126,7 @@ def get_messageinfo_ngrams(obj, default=None):
 def get_messageinfo_content(obj, default=None):
 	source = obj if isinstance(obj, basestring) else get_attr(obj, [BODY], default)
 	result = get_multipart_content(source)
-	return result
+	return result.lower() if result else None
 
 # -----------------------------------
 
@@ -179,28 +184,35 @@ def create_catalog(type_name='Notes'):
 
 def get_type_name(obj):
 	if not isinstance(obj, dict):
-		return obj.__class__.__name__
+		result = obj.__class__.__name__
+	elif CLASS in obj:
+		result = obj[CLASS]
+	elif MIME_TYPE in obj:
+		result = obj[MIME_TYPE]
+		if result and result.startswith(nti_mimetype_prefix):
+			result = result[len(nti_mimetype_prefix):].capitalize()
 	else:
-		return get_attr(obj, [CLASS])
+		result = u''
+	return unicode(result)
 		
 def _get_last_modified(obj):
 	lm = get_attr(obj, last_modified_fields )
 	return lm if lm else 0
 
 def _word_content_highlight(query=None, text=None, *args, **kwargs):
-	content = word_content_highlight(query, text) if query and text else u''
-	return content if content else text
+	content = word_content_highlight(query, text, *args, **kwargs) if query and text else u''
+	return unicode(content) if content else text
 
 def _ngram_content_highlight(query=None, text=None, *args, **kwargs):
 	content = ngram_content_highlight(query, text, *args, **kwargs) if query and text else u''
-	return content if content else text
+	return unicode(content) if content else text
 
-def _highlight_content(query=None, text=None, use_word_highlight=True):
+def _highlight_content(query=None, text=None, use_word_highlight=True, *args, **kwargs):
 	content = None
 	if query and text:
-		content = 	word_content_highlight(query, text) if use_word_highlight else \
-					_ngram_content_highlight(query, text)
-	return content if content else text
+		content = 	_word_content_highlight(query, text, *args, **kwargs) if use_word_highlight else \
+					_ngram_content_highlight(query, text, *args, **kwargs)
+	return unicode(content) if content else text
 
 def _get_index_hit_from_object(obj):
 	result = {TYPE : get_type_name(obj), CLASS:HIT}		
@@ -213,21 +225,21 @@ def _get_index_hit_from_object(obj):
 	return result
 
 def get_index_hit_from_note(obj, query=None, use_word_highlight=True, *args, **kwargs):
-	text = get_attr(obj, [body_])
+	text = get_multipart_content(get_attr(obj, [body_]))
 	result = _get_index_hit_from_object(obj)
-	result[SNIPPET] = _highlight_content(query, text, use_word_highlight)
+	result[SNIPPET] = _highlight_content(unicode(query), unicode(text), use_word_highlight, *args, **kwargs)
 	return result
 
 def get_index_hit_from_hightlight(obj, query=None, use_word_highlight=True, *args, **kwargs):
 	result = _get_index_hit_from_object(obj)
-	text = get_attr(obj, [startHighlightedFullText_])
-	result[SNIPPET] = _highlight_content(query, text, use_word_highlight)
+	text = get_content(get_attr(obj, [startHighlightedFullText_]))
+	result[SNIPPET] = _highlight_content(unicode(query), unicode(text), use_word_highlight, *args, **kwargs)
 	return result
 
 def get_index_hit_from_messgeinfo(obj, query=None, use_word_highlight=True, *args, **kwargs):
-	text = get_attr(obj, [body_])
+	text = get_multipart_content(get_attr(obj, [BODY]))
 	result = _get_index_hit_from_object(obj)
-	result[SNIPPET] = _highlight_content(query, text, use_word_highlight)
+	result[SNIPPET] = _highlight_content(unicode(query), unicode(text), use_word_highlight, *args, **kwargs)
 	return result
 
 def get_index_hit(obj, query=None, use_word_highlight=True, *args, **kwargs):

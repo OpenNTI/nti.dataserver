@@ -1,5 +1,5 @@
 {
-    "AutoTags": [], 
+    "AutoTags": ["operations"], 
     "Class": "Highlight", 
     "ContainerId": "tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.0", 
     "CreatedTime": 1331922120.967111, 
@@ -22,6 +22,6 @@
     "startHighlightedText": "divide. In fact, you may already know how to solve many of the problems in this chapter. So why do we start this book with an entire chapter on arithmetic? ", 
     "startOffset": 45, 
     "startXpath": "id(\"NTIContent\")/DIV[1]/P[1]/text()[1]", 
-    "tags": [], 
+    "tags": ["divide"], 
     "top": 0
 }

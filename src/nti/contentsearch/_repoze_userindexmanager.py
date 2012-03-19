@@ -79,6 +79,8 @@ class RepozeUserIndexManager(object):
 			for docId in docIds:
 				oid = docMap.address_for_docid(docId)
 				svr_obj = get_object_by_oid(conn, oid)
+				if callable( getattr( svr_obj, 'toExternalObject', None ) ):
+					svr_obj = svr_obj.toExternalObject()
 				hit = get_index_hit(svr_obj, query=query, use_word_highlight=use_word_highlight, **kwargs)
 				if hit:
 					items.append(hit)
