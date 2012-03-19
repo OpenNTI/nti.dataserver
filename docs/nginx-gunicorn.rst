@@ -263,7 +263,14 @@ reside in ``/etc/haproxy/haproxy.cfg``:
 	# If we don't set this, then we lose X-Forwarded-For
 	option http-server-close
 
-  frontend all 0.0.0.0:80
+  frontend httpredir 0.0.0.0:80
+	# Port 80 does nothing but redirect to SSL
+	option httplog
+	log global
+	timeout client 600
+	redirect location https://alpha.nextthought.com/
+
+  frontend all 127.0.0.1:8084
 	option httplog
 	log global
 	timeout client 86400000
@@ -304,6 +311,7 @@ reside in ``/etc/haproxy/haproxy.cfg``:
 
 	# Go to the app by default
 	redirect location /NextThoughtWebApp/index.html code 301 if { path / }
+	redirect location /tutorials/index.html code 301 if { path /tutorials }
 
   backend youtube_backend
 	balance roundrobin
@@ -355,6 +363,10 @@ download and compile the latest stunnel like so:
 	accept = 443
 	connect = /var/run/ssl-frontend.sock
 	protocol = proxy
+	# The default SSL version support doesn't let us be crawled
+	# by google. Turn them all on. (This probably allows some minimal
+	# security holes?)
+	sslVersion = all
 
 Upstart
 =======
