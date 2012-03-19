@@ -34,6 +34,8 @@ ITEMS			= u'Items'
 CONTENT			= u'Content'
 SNIPPET 		= u'Snippet'
 CREATOR 		= u'Creator'
+AUTO_TAGS		= u'AutoTags'
+MIME_TYPE		= u'MimeType'
 HIT_COUNT 		= u'Hit Count'
 TARGET_OID		= u'TargetOID'
 SUGGESTIONS		= u'Suggestions'
@@ -44,6 +46,7 @@ LAST_MODIFIED	= u'Last Modified'
 id_				= u'id'
 oid_			= u'oid'
 body_ 			= u'body'
+tags_			= u'tags'
 quick_			= u'quick'
 title_			= u'title'
 ntiid_			= u'ntiid'
@@ -64,8 +67,11 @@ startHighlightedFullText_ = 'startHighlightedFullText'
 oid_fields = [OID, oid_, id_]
 ntiid_fields = [NTIID, ntiid_]
 creator_fields = [CREATOR, creator_]
+keyword_fields = [keywords_, tags_, AUTO_TAGS]
 container_id_fields = [CONTAINER_ID, 'ContainerId', containerId_, 'container']
 last_modified_fields =  [LAST_MODIFIED, 'lastModified', 'LastModified', last_modified_]
+
+nti_mimetype_prefix = 'application/vnd.nextthought.'
 
 # -----------------------------------
 
@@ -149,7 +155,7 @@ def get_multipart_content(source):
 				elif isinstance(item, dict):
 					items.append(process_dict(item))
 				else:
-					items.add(get_multipart_content(item))
+					items.append(get_multipart_content(item))
 		return get_content(' '.join(items))
 	elif not source:
 		clazz = source.__class__.__name__
@@ -264,7 +270,7 @@ def ngram_content_highlight(query, text, maxchars=300, surround=50, order=highli
 	formatter = highlight.UppercaseFormatter()
 	return formatter(text, fragments)
 
-def word_content_highlight(query, text, analyzer=None, maxchars=300, surround=20, *args, **kwargs):
+def word_content_highlight(query, text, analyzer=None, maxchars=300, surround=50, *args, **kwargs):
 	"""
 	whoosh highlight based on words
 	"""
