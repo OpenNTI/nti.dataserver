@@ -39,8 +39,8 @@ MIME_TYPE		= u'MimeType'
 HIT_COUNT 		= u'Hit Count'
 TARGET_OID		= u'TargetOID'
 SUGGESTIONS		= u'Suggestions'
-CONTAINER_ID	= u'ContainerID'
-COLLECTION_ID	= u'CollectionID'
+CONTAINER_ID	= u'ContainerId'
+COLLECTION_ID	= u'CollectionId'
 LAST_MODIFIED	= u'Last Modified'
 
 id_				= u'id'
@@ -68,7 +68,7 @@ oid_fields = [OID, oid_, id_]
 ntiid_fields = [NTIID, ntiid_]
 creator_fields = [CREATOR, creator_]
 keyword_fields = [keywords_, tags_, AUTO_TAGS]
-container_id_fields = [CONTAINER_ID, 'ContainerId', containerId_, 'container']
+container_id_fields = [CONTAINER_ID, 'ContainerID', containerId_, 'container']
 last_modified_fields =  [LAST_MODIFIED, 'lastModified', 'LastModified', last_modified_]
 
 nti_mimetype_prefix = 'application/vnd.nextthought.'
