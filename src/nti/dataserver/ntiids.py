@@ -211,8 +211,7 @@ def find_object_with_ntiid(key, dataserver=None):
 		# Is it something in the library?
 		# TODO: User-specific libraries
 		library = component.queryUtility( nti_interfaces.ILibrary )
-		if library:
-			path = library.pathToNTIID( key )
+		path = library.pathToNTIID( key ) if library else None
 		if path:
 			result = path[-1]
 			result = nti_interfaces.ACLLocationProxy( result, result.__parent__, result.__name__, nacl.ACL( result ) )
