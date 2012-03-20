@@ -1,18 +1,23 @@
 #!/usr/bin/env python2.7
-import os
 import binascii
-import warnings
 import logging
 
-#from pyramid.authentication import CallbackAuthenticationPolicy
-from paste.httpheaders import WWW_AUTHENTICATE
-from repoze.who.interfaces import IAuthenticator, IChallengeDecider
 import pyramid.security
 from pyramid.interfaces import IAuthenticationPolicy
-import pyramid.httpexceptions as hexc
 
 from zope import interface
 from zope import component
+from repoze.who.interfaces import IAuthenticator, IChallengeDecider
+from repoze.who.middleware import PluggableAuthenticationMiddleware
+from repoze.who.interfaces import IIdentifier
+from repoze.who.interfaces import IChallenger
+from repoze.who.plugins.basicauth import BasicAuthPlugin
+from repoze.who.plugins.auth_tkt import AuthTktCookiePlugin
+from repoze.who.plugins.redirector import RedirectorPlugin
+from repoze.who.plugins.htpasswd import HTPasswdPlugin
+from repoze.who.classifiers import default_challenge_decider
+from repoze.who.classifiers import default_request_classifier
+from pyramid_who.whov2 import WhoV2AuthenticationPolicy
 
 from nti.dataserver.users import User
 from nti.dataserver import interfaces as nti_interfaces
@@ -121,21 +126,17 @@ def _decode_username_identity( identity ):
 
 class _NTIUsers(object):
 
-	def __init__( self, user_callable, create_user_callable=None ):
+	def __init__( self, user_callable ):
 		"""
 		:param user_callable: A function of username that returns a User object.
 		"""
 		super(_NTIUsers, self).__init__()
 		self.users = user_callable
-		self.create = create_user_callable
 
 	def user_exists( self, username ):
 		if not username or not username.strip(): # username is not None and not empty
 			return False
 		user = self.users( username )
-		if not user and self.create:
-			self.create( username )
-			user = self.users( username )
 		return user is not None
 
 	def user_password( self, username ):
@@ -180,21 +181,10 @@ class _NTIUsers(object):
 def _make_user_auth():
 	""" :return: Function to be used with authkit authentication. Function must be run in transaction. """
 
-	create_user = None
-	if 'DATASERVER_NO_AUTOCREATE_USERS' not in os.environ:
-		def create( username ):
-			warnings.warn( 'Autocreation of users is deprecated', FutureWarning )
-			user = None
-			username = _get_username( username )
-			if username and '@' in username:
-				user = User.create_user( username=username )
-			#server.root['users'][origuser] = user
-			return user
-		create_user = create
-
-	return _NTIUsers( User.get_user, create_user )
-
-pyramid_auth_callback = _make_user_auth
+	# In the past, we passed _NTIUSers a
+	# function that automatically created new user accounts, and this was enabled
+	# by default. That's dangerous and is now disabled.
+	return _NTIUsers( User.get_user )
 
 class NTIUsersAuthenticatorPlugin(object):
 	interface.implements( IAuthenticator )
@@ -208,17 +198,6 @@ class NTIUsersAuthenticatorPlugin(object):
 		_decode_username_identity( identity )
 		if _make_user_auth().user_has_password( identity['login'], identity['password'] ):
 			return identity['login']
-
-from repoze.who.middleware import PluggableAuthenticationMiddleware
-from repoze.who.interfaces import IIdentifier
-from repoze.who.interfaces import IChallenger
-from repoze.who.plugins.basicauth import BasicAuthPlugin
-from repoze.who.plugins.auth_tkt import AuthTktCookiePlugin
-from repoze.who.plugins.redirector import RedirectorPlugin
-from repoze.who.plugins.htpasswd import HTPasswdPlugin
-from repoze.who.classifiers import default_challenge_decider
-from repoze.who.classifiers import default_request_classifier
-from pyramid_who.whov2 import WhoV2AuthenticationPolicy
 
 def _basicauth_challenge_decider( environ, status, headers ):
 	"""

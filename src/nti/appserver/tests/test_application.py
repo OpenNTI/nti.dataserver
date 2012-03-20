@@ -490,6 +490,7 @@ class TestApplication(ApplicationTestBase):
 					 "Items": {"1" : { "Class": "QuizQuestion","Answers": ["$5$", "$5.0$"],
 									   "MimeType": "application/vnd.nextthought.quizquestion","ID": "1", "Text": "foo bar" } } }
 		testapp = TestApp( self.app )
+		users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
 		res = testapp.post( '/dataserver2/users/sjohnson@nextthought.com/Pages',
 							json.dumps(quiz_data ),
 							extra_environ=self._make_extra_environ() )
@@ -660,7 +661,7 @@ class TestApplicationLibrary(ApplicationTestBase):
 
 	@mock_dataserver.WithMockDSTrans
 	def test_library_redirect(self):
-
+		users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
 		testapp = TestApp( self.app )
 		# Unauth gets nothing
 		with self.assertRaises( hexc.HTTPForbidden ):
@@ -675,11 +676,10 @@ class TestApplicationLibrary(ApplicationTestBase):
 	def test_library_redirect_with_fragment(self):
 
 		testapp = TestApp( self.app )
+		users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
 
 		fragment = "#fragment"
 		ntiid = self.child_ntiid + fragment
 		res = testapp.get( '/dataserver2/NTIIDs/' + ntiid, extra_environ=self._make_extra_environ() )
 		assert_that( res.status_int, is_( 303 ) )
 		assert_that( res.headers, has_entry( 'Location', 'http://localhost/prealgebra/sect_0002.html' ) )
-
-
