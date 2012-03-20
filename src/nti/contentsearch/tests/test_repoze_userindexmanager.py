@@ -23,6 +23,7 @@ from nti.contentsearch.common import ( 	HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUE
 from hamcrest import is_
 from hamcrest import is_not
 from hamcrest import has_key
+from hamcrest import has_item
 from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
@@ -33,7 +34,7 @@ _phrases = ("Shoot To Kill",
 			"Lightning Flash Flame Shell",
 			"Flower Wind Rage and Flower God Roar, Heavenly Wind Rage and Heavenly Demon Sneer",
 			"All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade", 
-			"Cry, Raise Your Head, Rain Without end.",
+			"Cry, Raise Your Head, Rain Without end",
 			"Sting All Enemies To Death",
 			"Reduce All Creation to Ash",
 			"Sit Upon the Frozen Heavens", 
@@ -135,6 +136,30 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		hits = rim.search("shield", limit=None)
 		assert_that(hits, has_entry(HIT_COUNT, 0))
 		assert_that(hits, has_entry(QUERY, 'shield'))
-			
+		
+	@WithMockDSTrans
+	def test_suggest(self):
+		_, rim, _, _ = self._add_user_index_notes()
+		hits = rim.suggest("ra")
+		assert_that(hits, has_entry(HIT_COUNT, 4))
+		assert_that(hits, has_entry(QUERY, 'ra'))
+		assert_that(hits, has_key(ITEMS))
+		
+		items = hits[ITEMS]
+		assert_that(items, has_length(4))
+		assert_that(items, has_item('rankle'))
+		assert_that(items, has_item('raise'))
+		assert_that(items, has_item('rain'))
+		assert_that(items, has_item('rage'))
+		
+	@WithMockDSTrans
+	def test_ngram_search(self):
+		_, rim, _, _ = self._add_user_index_notes()
+		hits = rim.ngram_search("sea")
+		assert_that(hits, has_entry(HIT_COUNT, 1))
+		assert_that(hits, has_entry(QUERY, 'sea'))
+		assert_that(hits, has_key(ITEMS))
+		assert_that(hits[ITEMS], has_length(1))
+		
 if __name__ == '__main__':
 	unittest.main()
