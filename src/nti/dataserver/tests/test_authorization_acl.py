@@ -171,6 +171,7 @@ class TestFriendsListACLProvider(mock_dataserver.ConfiguringTestBase):
 	@mock_dataserver.WithMockDSTrans
 	def test_friends_list_acl_provider(self):
 		friends_list = FriendsList( "friends@bar" )
+		friends_list.creator = None
 
 		# With no creator and no one enrolled, I have an ACL
 		# that simply denies everything
