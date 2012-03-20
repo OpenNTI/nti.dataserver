@@ -35,11 +35,11 @@ class TestChatMessages(unittest.TestCase):
 			self.assertEqual(s.doc_count(), 72)
 
 			d = cm.search(s, "hacker")
-			self.assertEqual(d['Hit Count'], 10)
+			self.assertEqual(d['Hit Count'], 16)
 			self.assertEqual(d['Query'], "hacker")
 
 			items = d['Items']
-			self.assertEqual(len(items), 10)
+			self.assertEqual(len(items), 16)
 
 			item = items['0xd8:53657373696f6e73']
 			self.assertEqual(item['Snippet'], 'Chicken HACKER')
