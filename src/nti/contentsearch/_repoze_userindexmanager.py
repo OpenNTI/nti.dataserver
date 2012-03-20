@@ -1,5 +1,3 @@
-from numbers import Integral
-
 from zope import component
 from zope import interface
 
@@ -127,27 +125,32 @@ class RepozeUserIndexManager(object):
 		results = self._do_search(content_, query, limit, True, *args, **kwargs)
 		return results	
 	
-	def quick_search(self, query, limit=None, *args, **kwargs):
+	def ngram_search(self, query, limit=None, *args, **kwargs):
 		results = self._do_search(ngrams_, query, limit, False, *args, **kwargs)
 		return results	
-		
+	quick_search = ngram_search
+	
 	def suggest(self, term, limit=None, prefix=None, *args, **kwargs):
+		
 		search_on = self._adapt_search_on_types(kwargs.get('search_on', None))
 		search_on = search_on if search_on else self._get_catalog_names()
-		prefix = -1 if not isinstance(prefix, Integral) else prefix
-		threshold = kwargs.get('threshold', 0.75)
-		
+		threshold = kwargs.get('threshold', 0.4999)
+		prefix = prefix or len(term)
+				
 		suggestions = set()		
 		results = empty_suggest_result(term)
 		with self.store.dbTrans():
 			for type_name in search_on:
 				catalog = self.datastore.get_catalog(self.username, type_name)
-				if not isinstance(catalog, CatalogTextIndexNG3): continue
-				words = catalog.suggest(term=term, threshold=threshold, prefix=prefix) 
-				suggestions.update(words)
+				textfield = catalog.get(content_, None)
+				if not isinstance(textfield, CatalogTextIndexNG3): continue
+				words_t = textfield.suggest(term=unicode(term), threshold=threshold, prefix=prefix) 
+				for t in words_t:
+					suggestions.add(t[0])
 		
 		suggestions = suggestions[:limit] if limit and limit > 0 else suggestions
 		results[ITEMS] = suggestions
+		results[HIT_COUNT] = len(suggestions)
 		return results
 	
 	def suggest_and_search(self, query, limit=None, *args, **kwargs):
