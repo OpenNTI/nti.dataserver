@@ -76,9 +76,9 @@ class TestContentTypes(unittest.TestCase):
 		An orange-haired high school student, Ichigo becomes a "substitute Shinigami (Soul Reaper)"
 		after unintentionally absorbing most of Rukia Kuchiki's powers
 		"""))
-		self.assertEqual('high school student ICHIGO becomes a substitute', get_highlighted_content('ichigo', text))
+		self.assertEqual('An orange-haired high school student ICHIGO becomes a substitute Shinigami Soul Reaper after unintentionally', get_highlighted_content('ichigo', text))
 		self.assertEqual('ICHIGO becomes', get_highlighted_content('ichigo', text, surround=5))
-		self.assertEqual('becomes a substitute SHINIGAMI Soul', get_highlighted_content('shinigami', text, maxchars=10))
+		self.assertEqual('high school student Ichigo becomes a substitute SHINIGAMI Soul', get_highlighted_content('shinigami', text, maxchars=10))
 		self.assertEqual('RUKIA', get_highlighted_content('rukia', text, maxchars=10, surround=1))
 
 	def _check_empty(self, d, query):

@@ -76,7 +76,14 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 			if do_assert: assert_that(docid, is_not(None))
 			docids.append(docids)
 		return notes, docids, rim
-			
+		
+	def _add_user_index_notes(self, ds):
+		with ds.dbTrans() as ct:
+			usr = User( 'nt@nti.com', 'temp' )
+			ds.root['users']['nt@nti.com'] = usr
+			notes, docids, rim = self._index_notes(dataserver=ds, usr=usr, conn=ct, do_assert=False)
+		return usr, rim, docids, notes
+				
 	@WithMockDSTrans
 	def test_index_notes(self):
 		self._index_notes()
@@ -85,10 +92,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		ds = MockDataserver()
 		component.provideUtility( ds )
 		try:
-			with ds.dbTrans() as ct:
-				usr = User( 'nt@nti.com', 'temp' )
-				ds.root['users']['nt@nti.com'] = usr
-				_, _, rim = self._index_notes(dataserver=ds, usr=usr, conn=ct, do_assert=False)
+			_, rim, _, _ = self._add_user_index_notes(ds)
 				
 			hits = rim.search("shield", limit=None)
 			assert_that(hits, has_entry(HIT_COUNT, 1))

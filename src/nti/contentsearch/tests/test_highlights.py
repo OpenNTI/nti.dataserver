@@ -40,7 +40,7 @@ class TestHighlight(unittest.TestCase):
 			
 			self.assertEqual('Hit', item['Class'])
 			self.assertEqual('Highlight', item['Type'])
-			self.assertEqual('prealgebra', item['CollectionID'])
+			self.assertEqual('prealgebra', item['CollectionId'])
 			self.assertEqual("tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x085a:5573657273", item["TargetOID"])
 			self.assertEqual("tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x085a:5573657273", item["NTIID"])
 			self.assertEqual('multiply and DIVIDE In fact you may already', item['Snippet'])
