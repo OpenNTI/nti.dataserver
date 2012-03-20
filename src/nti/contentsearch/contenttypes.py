@@ -208,7 +208,7 @@ class _IndexableContent(object):
 		return self.get_search_limit()
 
 	def get_search_limit(self):
-		return 10
+		return None
 
 	@property
 	def maxdist(self):
@@ -222,7 +222,7 @@ class _IndexableContent(object):
 		return self.get_max_distance()
 
 	def get_suggestion_limit(self):
-		return 15
+		return None
 
 	def get_search_plugins(self):
 		return (GtLtPlugin, DateParserPlugin)
