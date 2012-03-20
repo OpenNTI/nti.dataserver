@@ -989,6 +989,8 @@ class _UGDPutView(_UGDModifyViewBase):
 			self._check_object_exists( theObject, creator, containerId, objId )
 
 			self.updateContentObject( theObject, externalValue )
+			if callable( getattr( theObject, 'updateLastMod', None ) ):
+				theObject.updateLastMod()
 
 		if theObject and theObject == theObject.creator:
 			# Updating a user. Naturally, this is done by
