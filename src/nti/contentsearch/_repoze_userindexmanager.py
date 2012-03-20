@@ -149,7 +149,7 @@ class RepozeUserIndexManager(object):
 					suggestions.add(t[0])
 		
 		suggestions = suggestions[:limit] if limit and limit > 0 else suggestions
-		results[ITEMS] = suggestions
+		results[ITEMS] = list(suggestions)
 		results[HIT_COUNT] = len(suggestions)
 		return results
 	

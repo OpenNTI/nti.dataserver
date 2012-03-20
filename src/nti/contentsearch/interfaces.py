@@ -192,6 +192,68 @@ class IIndexManager(interface.Interface):
 
 # -----------------------------
 	
+class IWhooshIndexStorage(interface.Interface):
+
+	def create_index(indexname, schema, **kwargs):
+		"""
+		create the an index with the specified index an schema
+				
+		:param indexname: index name
+		:param schema: whoosh schema
+		"""	
+	
+	def index_exists(indexname, **kwargs):
+		"""
+		check if the specified index exists
+				
+		:param indexname: index name
+		"""	
+	
+	def get_index(indexname, **kwargs):
+		"""
+		return the whoosh index with the specified index name
+				
+		:param indexname: index name
+		"""	
+	
+	def get_or_create_index(indexname, schema=None, recreate=True, **kwargs):
+		"""
+		get or create the index the specified index name
+				
+		:param indexname: index name
+		:param schema: whoosh schema
+		"""	
+	
+	def open_index(indexname, schema=None, **kwargs):
+		"""
+		open the index with the specified name
+				
+		:param indexname: index name
+		:param schema: whoosh schema
+		"""	
+	
+	def dbTrans():
+		"""
+		return a context manager (db/io transaction) to perform an index operation
+		"""	
+	
+	def storage(**kwargs):
+		"""
+		return a index underlying [file] data storage
+		"""	
+	
+	def ctor_args(**kwargs):
+		"""
+		return a dictionary with the arguments to be passed to an index writer constructor
+		""" 
+	
+	def commit_args(**kwargs):
+		"""
+		return a dictionary with the arguments to be passed to an index writer commit method
+		""" 
+	
+# -----------------------------
+	
 class IIndexableContent(interface.Interface):
 
 	def get_schema():
