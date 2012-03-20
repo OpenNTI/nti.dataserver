@@ -143,7 +143,7 @@ class ExampleDatabaseInitializer(object):
 
 	def _make_usernames(self):
 		"""
-		:return: An iterable of two-tuples of userid, realname. email will be used
+		:return: An iterable of two-tuples of (userid, realname). email will be used
 			as userid
 		"""
 		USERS = [ ('rusczyk@artofproblemsolving.com', 'Richard Rusczyk'),#Aops
@@ -159,7 +159,7 @@ class ExampleDatabaseInitializer(object):
 			USERS.append( (uid + '@nextthought.com', uid.replace( '.', ' ').title() ) )
 
 		# Add test users
-		max_test_users = 16
+		max_test_users = 20
 		for x in range(1, max_test_users):
 			uid = 'test.user.%s' % x
 			USERS.append( (uid + '@nextthought.com', uid.replace( '.', ' ').title() ) )

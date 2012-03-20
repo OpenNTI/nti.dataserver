@@ -807,7 +807,7 @@ class _UGDModifyViewBase(object):
 		# If they provided an ID, use it if we can and we need to
 		if set_id and StandardExternalFields.ID in externalValue \
 			and hasattr( containedObject, StandardInternalFields.ID ) \
-			and getattr( containedObject, StandardInternalFields.ID, None ) != externalValue['ID']:
+			and getattr( containedObject, StandardInternalFields.ID, None ) != externalValue[StandardExternalFields.ID]:
 			try:
 				containedObject.id = externalValue['ID']
 			except AttributeError:
