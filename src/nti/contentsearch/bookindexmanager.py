@@ -1,10 +1,8 @@
 import logging
 logger = logging.getLogger( __name__ )
 
-
 from contenttypes import Book
 from indexstorage import create_directory_index_storage
-
 
 from zope import interface
 from . import interfaces
