@@ -354,14 +354,7 @@ def temp_get_config( root, demo=False ):
 	ini.read( env.zeo_client_conf )
 
 	def connect_databases(  ):
-		import _daemonutils as daemonutils
-		import ZEO
-		if not getattr( env, 'zeo_launched', False ):
-			daemonutils.launch_python_daemon( os.path.join( env.env_root, 'var', 'zeosocket' ),
-											  os.path.dirname(ZEO.__file__)  + '/runzeo.py',
-											  ['-C', env.zeo_conf],
-											  daemon=False )
-			env.zeo_launched = True
+		env.zeo_launched = True
 		if not hasattr( env, 'zeo_uris' ):
 			env.zeo_uris = ini.get( 'ZODB', 'uris' )
 		if hasattr( env, 'zeo_make_db' ):

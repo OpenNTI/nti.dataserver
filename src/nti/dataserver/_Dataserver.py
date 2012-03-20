@@ -2,18 +2,10 @@ import logging
 logger = logging.getLogger( __name__ )
 
 import os
-import tempfile
 import sys
 import types
-import stat
 import inspect
-try:
-	import cPickle as pickle
-except ImportError:
-	import pickle
 
-import warnings
-import copy
 import collections
 
 import gevent.local
@@ -28,6 +20,7 @@ import ZODB.serialize
 from zope.event import notify
 from zope.processlifetime import DatabaseOpenedWithRoot
 import zope.generations.generations
+from zope.dottedname.resolve import resolve as _resolve
 
 import ZEO
 import ZEO.ClientStorage
@@ -42,7 +35,6 @@ import datastructures
 import sessions
 
 import nti.apns as apns
-import _daemonutils as daemonutils
 from . import users
 from . import _PubSubDevice
 from . import interfaces
@@ -220,37 +212,6 @@ class _SessionDbMeetingStorage( object ):
 
 
 DATASERVER_DEMO = 'DATASERVER_DEMO' in os.environ and 'DATASERVER_NO_DEMO' not in os.environ
-
-def _run_change_listener( parentDir, dataFileName, func_module, func_name, *func_args ):
-	change_func = daemonutils.load_func( func_module, func_name )
-
-	dataserver = _ChangeReceivingDataserver( parentDir, dataFileName )
-	# TODO: This is something of a hack
-	xmlconfig.file( 'configure.zcml', package=sys.modules['nti.dataserver'] )
-	component.provideUtility( dataserver )
-	logger.info( "Running change daemon %s %s", change_func, func_args )
-	try:
-		change_func( dataserver, *func_args )
-	except:
-		logger.exception( "Failed to install change listener" )
-		sys.exit( 2 ) # 2 being a magic number that zdaemon knows not to restart us
-
-	try:
-		dataserver._change_reader.join()
-	except:
-		logger.exception( "Error joining change reader" )
-		raise
-	else:
-		logger.info( "Shutting down change daemon %s %s", change_func, func_args )
-
-from zope.deprecation import deprecate
-@deprecate("Handle with config")
-def spawn_change_listener( dataserver, func, args=() ):
-	my_args = [dataserver._parentDir, dataserver._dataFileName, func.__module__, func.__name__]
-	my_args.extend( args )
-	daemonutils.launch_python_function_as_daemon( _run_change_listener, my_args,
-												  directory=my_args[0],
-												  qualifier=my_args[1] + func.__module__ + '.' + func.__name__ )
 
 def temp_env_run_change_listener( change_func, *func_args ):
 	dataserver = _ChangeReceivingDataserver()

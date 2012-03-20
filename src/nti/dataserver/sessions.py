@@ -23,8 +23,6 @@ from persistent import Persistent
 from persistent.list import PersistentList
 import BTrees.OOBTree
 
-#import _daemonutils as daemonutils
-#import _PubSubDevice
 from nti.dataserver import interfaces as nti_interfaces
 
 class SocketSessionEvent(interface.interfaces.ObjectEvent):
