@@ -90,9 +90,9 @@ get_highlighted_content = word_content_highlight
 
 # ----------------------------------
 
-_default_search_limit = 10
 _default_word_max_dist = 15
-_default_suggest_limit = 15
+_default_search_limit = None
+_default_suggest_limit = None
 _default_search_plugins =  (GtLtPlugin, DateParserPlugin)
 
 class _SearchableContent(object):
