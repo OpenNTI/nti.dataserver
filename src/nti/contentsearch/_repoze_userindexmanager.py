@@ -216,6 +216,14 @@ class RepozeUserIndexManager(object):
 			result = self.store.remove_catalog(self.username, type_name)
 			return result
 	
+	# -------------------
+	
+	def docid_for_address(self, address):
+		with self.store.dbTrans():
+			docMap = self.store.docMap
+			docid = docMap.docid_for_address(address)
+			return docid
+	
 # -----------------------------
 
 def ruim_factory(repoze_store=None, dataserver=None):
