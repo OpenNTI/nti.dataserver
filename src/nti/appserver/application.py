@@ -292,7 +292,6 @@ def createApplication( http_port,
 	pyramid_config.registry.registerAdapter( OUAdminFactory, name='OUAdminFactory' )
 
 
-	#selector = Selector( consume_path=False )
 	if dictserver.pyramid and 'main_dictionary_path' in settings:
 		try:
 			dictionary = dictserver.dictionary.ChromeDictionary( settings['main_dictionary_path'] )
