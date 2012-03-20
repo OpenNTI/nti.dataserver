@@ -257,7 +257,7 @@ class CatalogTextIndexNG3(CatalogIndex, TextIndexNG3):
 		return result
 
 	def reindex_doc(self, docid, obj):
-		return self.index_doc(docid, object)
+		return super(CatalogTextIndexNG3, self).reindex_doc(docid, obj)
 
 	def _indexed(self):
 		return self.get_docids()
