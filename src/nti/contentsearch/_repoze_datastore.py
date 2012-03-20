@@ -76,3 +76,9 @@ class DataStore():
 	def close(self):
 		self.conn.close()
 		self.db.close()
+		
+	def __del__(self):
+		try:
+			self.close()
+		except:
+			pass

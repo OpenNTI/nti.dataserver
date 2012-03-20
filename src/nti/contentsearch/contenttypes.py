@@ -16,7 +16,7 @@ from nti.contentsearch.common import word_content_highlight
 from nti.contentsearch.common import (	OID, NTIID, CREATOR, LAST_MODIFIED, CLASS, ID as ID_, \
 										COLLECTION_ID, ITEMS, SNIPPET, QUERY, HIT_COUNT,)
 from nti.contentsearch.common import (	color_, quick_, channel_, content_, keywords_, references_, \
-										recipients_, sharedWith_, oid_ )
+										recipients_, sharedWith_, oid_, id_ )
 
 from whoosh.fields import ID
 from whoosh.fields import TEXT
@@ -535,7 +535,7 @@ class Highlight(UserIndexableContent):
 				 		ntiid=ID(stored=True))
 
 	fields = {
-			"CollectionID":	("collectionId", echo),
+			"CollectionId":	("collectionId", echo),
 			OID:			(oid_, echo),
 			"ContainerId":	("containerId", echo),
 			CREATOR:		("creator", echo),
@@ -678,7 +678,7 @@ class Note(Highlight):
 				 		ntiid=ID(stored=True) )
 
 	fields = {
-			"CollectionID":	("collectionId", echo),
+			"CollectionId":	("collectionId", echo),
 			OID:			(oid_,  echo),
 			"ContainerId":	("containerId", echo),
 			CREATOR:		("creator", echo),
@@ -734,7 +734,7 @@ class MessageInfo(Note):
 			recipients_:	(recipients_, get_keywords),
 			sharedWith_:	(sharedWith_, get_keywords),
 			LAST_MODIFIED:	("last_modified", get_datetime),
-			ID_: 			("id",  echo),
+			ID_: 			(id_,  echo),
 			OID:			(oid_,  echo),
 			keywords_:		(keywords_, get_keywords),
 			NTIID:			("ntiid", echo)

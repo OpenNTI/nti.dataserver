@@ -1,7 +1,7 @@
 from zope import interface
 
 from nti.contentsearch import interfaces
-from nti.contentsearch.contenttypes import Book
+from nti.contentsearch._whoosh_index import Book
 from nti.contentsearch.indexstorage import create_directory_index_storage
 
 import logging
@@ -12,7 +12,7 @@ logger = logging.getLogger( __name__ )
 class WhooshBookIndexManager(object):
 	interface.implements( interfaces.IBookIndexManager )
 	
-	def __init__(self, indexname="prealgebra", *args, **kwargs):
+	def __init__(self, indexname, *args, **kwargs):
 		self.indexdir = kwargs.get('indexdir', None)
 		self.storage = kwargs.get('storage', None) or kwargs.get('index_storage', None) 
 		assert self.storage or self.indexdir, "must specified a index directory or an index storage"
@@ -34,6 +34,12 @@ class WhooshBookIndexManager(object):
 	def get_indexname(self):
 		return self.bookidx.indexname
 	
+	def __str__( self ):
+		return self.indexname
+
+	def __repr__( self ):
+		return 'WhooshBookIndexManager(indexname=%s)' % self.indexname
+	
 	# ---------------
 
 	def search(self, query, limit=None, *args, **kwargs):
@@ -44,7 +50,7 @@ class WhooshBookIndexManager(object):
 
 	def ngram_search(self, query, limit=None, *args, **kwarg):
 		with self.bookidx.searcher() as s:
-			results = self.book.quick_search(s, query, limit)
+			results = self.book.ngram_search(s, query, limit)
 		return results
 
 	def suggest_and_search(self, query, limit=None, *args, **kwarg):
@@ -76,6 +82,6 @@ class WhooshBookIndexManager(object):
 # -----------------------------
 
 def wbm_factory(*args, **kwargs):
-	def f(indexname="prealgebra", *fargs, **fkwargs):
+	def f(indexname, *fargs, **fkwargs):
 		return WhooshBookIndexManager(indexname=indexname, **fkwargs)
 	return f

@@ -5,7 +5,6 @@ from zope import interface
 
 from nti.dataserver import interfaces as nti_interfaces
 
-import contenttypes
 from nti.contentsearch import LFUMap
 from nti.contentsearch import interfaces
 from nti.contentsearch._indexagent import IndexAgent
@@ -45,30 +44,36 @@ class IndexManager(object):
 		self.useridx_manager_factory = useridx_manager_factory
 		self.ds = dataserver or component.queryUtility( nti_interfaces.IDataserver )
 	
+	def __str__( self ):
+		return self.__repr__()
+
+	def __repr__( self ):
+		return 'IndexManager(books=%s, users=%s)' % (len(self.books), len(self.users))
+	
 	@property
 	def dataserver(self):
 		return self.ds
 	
 	# -------------------
 	
-	def get_book_index_manager(self, indexname='prealgebra'):
+	def get_book_index_manager(self, indexname):
 		return self.books.get(indexname, None)
 	
-	def add_book(self, indexname='prealgebra', *args, **kwargs):
+	def add_book(self, indexname, *args, **kwargs):
 		result = False
 		if not self.books.has_key(indexname):
-			bmi = self.bookidx_manager_factory(index=indexname, **kwargs)
+			bmi = self.bookidx_manager_factory(indexname=indexname, **kwargs)
 			if bmi:
 				self.books[indexname] = bmi
 				result = True
 		return result
 
-	def content_search(self, indexname='prealgebra', query, limit=None, *args, **kwargs):
+	def content_search(self, indexname, query, limit=None, *args, **kwargs):
 		bm = self.get_book_index_manager(indexname)
 		results = bm.search(query, limit, *args, **kwargs) if (bm and query) else None
 		return results if results else empty_search_result(query)
 	
-	def content_ngram_search(self, indexname='prealgebra', query, limit=None, *args, **kwargs):
+	def content_ngram_search(self, indexname, query, limit=None, *args, **kwargs):
 		bm = self.get_book_index_manager(indexname)
 		results = bm.ngram_search(query, limit, *args, **kwargs) if (bm and query) else None
 		return results if results else empty_search_result(query)
@@ -85,16 +90,16 @@ class IndexManager(object):
 			
 	search = content_search
 	suggest = content_suggest
-	quick_search = content_search
+	quick_search = content_ngram_search
 	content_quick_search = content_ngram_search
 	suggest_and_search = content_suggest_and_search
 		
 	# -------------------
 
-	def _get_user_index_manager(self, username):
+	def _get_user_index_manager(self, username, *args, **kwargs):
 		uim = self.users.get(username, None)
 		if not uim:
-			uim = self.useridx_manager_factory(username=username)
+			uim = self.useridx_manager_factory(username=username, **kwargs)
 			if uim:
 				self.users[username] = uim
 		return uim
@@ -107,13 +112,13 @@ class IndexManager(object):
 		return result
 	
 	def _get_user_communities(self, username):
-		user = self._get_user(username)
+		user = self._get_user_object(username)
 		return list(user.communities) if user else []
 
-	def _get_search_uims(self, username):
+	def _get_search_uims(self, username, *args, **kwargs):
 		result = []
-		for name in [username] + self.get_user_communities(username):
-			uim = self._get_user_index_manager(name)
+		for name in [username] + self._get_user_communities(username):
+			uim = self._get_user_index_manager(name, *args, **kwargs)
 			if uim: result.append(uim)
 		return result
 
@@ -121,9 +126,8 @@ class IndexManager(object):
 		results = None
 		if query:
 			jobs = []
-			search_on = kwargs.get('search_on', None)
-			for uim in self._get_search_uims(username):
-				jobs.append(gevent.spawn(uim.search, query=query, limit=limit, search_on=search_on, **kwargs))
+			for uim in self._get_search_uims(username, *args, **kwargs):
+				jobs.append(gevent.spawn(uim.search, query=query, limit=limit, **kwargs))
 			gevent.joinall(jobs)
 			for job in jobs:
 				results = merge_search_results (results, job.value)
@@ -133,9 +137,8 @@ class IndexManager(object):
 		results = None
 		if query:
 			jobs = []
-			search_on = kwargs.get('search_on', None)
-			for uim in self._get_search_uims(username):
-				jobs.append(gevent.spawn(uim.ngram_search, query=query, limit=limit, search_on=search_on, **kwargs))
+			for uim in self._get_search_uims(username, *args, **kwargs):
+				jobs.append(gevent.spawn(uim.ngram_search, query=query, limit=limit, **kwargs))
 			gevent.joinall(jobs)
 			for job in jobs:
 				results = merge_search_results (results, job.value)
@@ -145,9 +148,8 @@ class IndexManager(object):
 		results = None
 		if query:
 			jobs = []
-			search_on = kwargs.get('search_on', None)
-			for uim in self._get_search_uims(username):
-				jobs.append(gevent.spawn(uim.suggest_and_search, query=query, limit=limit, search_on=search_on, **kwargs))
+			for uim in self._get_search_uims(username, *args, **kwargs):
+				jobs.append(gevent.spawn(uim.suggest_and_search, query=query, limit=limit, **kwargs))
 			gevent.joinall(jobs)
 			for job in jobs:
 				results = merge_suggest_and_search_results (results, job.value)
@@ -157,9 +159,8 @@ class IndexManager(object):
 		results = None
 		if term:
 			jobs = []
-			search_on = kwargs.get('search_on', None)
-			for uim in self._get_search_uims(username):
-				jobs.append(gevent.spawn(uim.suggest, term, limit=limit, prefix=prefix, search_on=search_on, **kwargs))
+			for uim in self._get_search_uims(username, *args, **kwargs):
+				jobs.append(gevent.spawn(uim.suggest, term, limit=limit, prefix=prefix, **kwargs))
 			gevent.joinall(jobs)
 			for job in jobs:
 				results = merge_suggest_results (results, job.value)
@@ -169,17 +170,24 @@ class IndexManager(object):
 	
 	# -------------------
 	
-	def index_user_content(self, username, data, type_name=None, *args, **kwargs):
+	def _get_data(self, **kwargs):
+		result = kwargs.get('data', None) or kwargs.get('externalValue', None)
+		return result
+	
+	def index_user_content(self, username, type_name=None, *args, **kwargs):
+		data = self._get_data(**kwargs)
 		um = self._get_user_index_manager(username)
 		if um: um.index_content(data, type_name, *args, **kwargs)
 
-	def update_user_content(self, username, data, type_name=None, *args, **kwargs):
+	def update_user_content(self, username, type_name=None, *args, **kwargs):
+		data = self._get_data(**kwargs)
 		um = self._get_user_index_manager(username)
 		if um: um.update_content(data, type_name, *args, **kwargs)
 
-	def delete_user_content(self, username, data, type_name=None, *args, **kwargs):
+	def delete_user_content(self, username, type_name=None, *args, **kwargs):
+		data = self._get_data(**kwargs)
 		um = self._get_user_index_manager(username)
-		if um: um.delete_contentt(data, type_name, *args, **kwargs)
+		if um: um.delete_content(data, type_name, *args, **kwargs)
 		
 	# -------------------
 
@@ -187,13 +195,13 @@ class IndexManager(object):
 	def onChange(cls, datasvr, msg, username=None, broadcast=None):
 		if username:
 			obj = getattr(msg, "object", None)
-			if obj and contenttypes.__dict__.has_key(obj.__class__.__name__):
+			if obj:
 				data = obj
 				if callable( getattr( obj, 'toExternalObject', None ) ):
 					data = obj.toExternalObject()
-				cls.get_shared_indexmanager()._indexagent.add_event(creator=username,
-																	changeType=msg.type,
-																	dataType=obj.__class__.__name__,
+				cls.get_shared_indexmanager()._indexagent.add_event(creator = username,
+																	changeType = msg.type,
+																	dataType = obj.__class__.__name__,
 																	data=data )
 
 	# -------------------
@@ -226,3 +234,14 @@ class IndexManager(object):
 	def __del__(self):
 		self.close()
 
+# -----------------------------
+
+import _whoosh_bookindexmanager
+import _whoosh_userindexmanager
+from indexstorage import MultiDirectoryStorage
+
+def create_index_manager(dataserver=None):
+	mds = MultiDirectoryStorage("/tmp")
+	umf = _whoosh_userindexmanager.wuim_factory(mds, use_md5=False)
+	bmf = _whoosh_bookindexmanager.wbm_factory()
+	return IndexManager(bmf, umf, dataserver=dataserver)

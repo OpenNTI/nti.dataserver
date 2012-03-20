@@ -101,16 +101,18 @@
     ], 
     "recipients": [], 
     "CreatedTime": 1321391468.411328, 
-    "ID": "c76e78bb0e7c4828ade7d303763011fc", 
+    "ID": "0d7ba380e77241508204a9d737625e04", 
     "Status": "st_POSTED", 
-    "ContainerId": "35128948a285417693eb35147cd3b659", 
+    "ContainerId": "tag:nextthought.com,2011-10:zope.security.management.system_user-OID-0x82:53657373696f6e73", 
     "Creator": "troy.daley@nextthought.com", 
     "Last Modified": 1321391468.411328, 
-    "OID": "0x49:53657373696f6e73", 
+    "OID": "tag:nextthought.com,2011-10:zope.security.management.system_user-OID-0x8a:53657373696f6e73", 
     "sharedWith": [
         "troy.daley@nextthought.com", 
         "carlos.sanchez@nextthought.com"
     ], 
     "Class": "MessageInfo", 
-    "channel": "DEFAULT"
+    "channel": "DEFAULT",
+    "NTIID": "tag:nextthought.com,2011-10:zope.security.management.system_user-OID-0x8a:53657373696f6e73"
 }
+

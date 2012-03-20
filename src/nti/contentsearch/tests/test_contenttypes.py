@@ -76,9 +76,9 @@ class TestContentTypes(unittest.TestCase):
 		An orange-haired high school student, Ichigo becomes a "substitute Shinigami (Soul Reaper)"
 		after unintentionally absorbing most of Rukia Kuchiki's powers
 		"""))
-		self.assertEqual('high school student ICHIGO becomes a substitute', get_highlighted_content('ichigo', text))
+		self.assertEqual('An orange-haired high school student ICHIGO becomes a substitute Shinigami Soul Reaper after unintentionally', get_highlighted_content('ichigo', text))
 		self.assertEqual('ICHIGO becomes', get_highlighted_content('ichigo', text, surround=5))
-		self.assertEqual('becomes a substitute SHINIGAMI Soul', get_highlighted_content('shinigami', text, maxchars=10))
+		self.assertEqual('high school student Ichigo becomes a substitute SHINIGAMI Soul', get_highlighted_content('shinigami', text, maxchars=10))
 		self.assertEqual('RUKIA', get_highlighted_content('rukia', text, maxchars=10, surround=1))
 
 	def _check_empty(self, d, query):
@@ -171,13 +171,14 @@ class TestContentTypes(unittest.TestCase):
 		js = self._load_json()
 		mi = MessageInfo()
 		d = mi.get_index_data(js)
-		self.assertEqual('35128948a285417693eb35147cd3b659', d['containerId'])
+		self.assertEqual('tag:nextthought.com,2011-10:zope.security.management.system_user-OID-0x82:53657373696f6e73', d['containerId'])
 		self.assertEqual('troy.daley@nextthought.com', d['creator'])
-		self.assertEqual('0x49:53657373696f6e73', d['oid'])
+		self.assertEqual('tag:nextthought.com,2011-10:zope.security.management.system_user-OID-0x8a:53657373696f6e73', d['oid'])
+		self.assertEqual('tag:nextthought.com,2011-10:zope.security.management.system_user-OID-0x8a:53657373696f6e73', d['ntiid'])
 		self.assertEqual('Zanpakuto and Zangetsu', d['content'])
 		self.assertEqual('troy.daley@nextthought.com,carlos.sanchez@nextthought.com', d['sharedWith'])
 		self.assertEqual('Zanpakuto and Zangetsu', d['quick'])
-		self.assertEqual('c76e78bb0e7c4828ade7d303763011fc', d['id'])
+		self.assertEqual('0d7ba380e77241508204a9d737625e04', d['id'])
 		self.assertEqual('DEFAULT', d['channel'])
 		self.assertEqual(datetime(2011, 11, 15, 15, 11, 8, 411328), d['last_modified'])
 
