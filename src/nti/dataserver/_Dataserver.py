@@ -430,7 +430,7 @@ class Dataserver(MinimalDataserver):
 		super(Dataserver, self).__init__(parentDir, dataFileName, classFactory, apnsCertFile, daemon )
 		self.changeListeners = []
 
-		with self.dbTrans( ) as conn:
+		with self.dbTrans( ):
 			# Perform migrations
 			# TODO: Adopt the standard migration package
 			# TODO: For right now, we are also handling initialization until all code
@@ -446,9 +446,8 @@ class Dataserver(MinimalDataserver):
 			# This is interesting. Must do this to ensure that users
 			# that get created at different times and that have weak refs
 			# to the right thing. What's a better way?
+			# TODO: This is almost certainly wrong given the _p_jar stuff
 			users.EVERYONE = self.root['users']['Everyone']
-
-			self.migrateUsers( self.root['users'] )
 
 		# Sessions and Chat configuration
 		def sdb():
@@ -830,40 +829,6 @@ class Dataserver(MinimalDataserver):
 		return containedObject
 
 
-	def migrateUsers( self, usersContainer ):
-
-		logger.info( 'migrating users %s', len(usersContainer) )
-		# Because we are mutating the container, and
-		# all of the methods like keys() and iterkeys()
-		# are dynamic, they stop iteration prematurely.
-		# Thus we must materialize the set of keys
-		# before we begin to get everything.
-
-		if getattr( usersContainer['Everyone'], 'creator', '') != 'zope.security.management.system_user':
-			usersContainer['Everyone'].creator = 'zope.security.management.system_user'
-
-		for key in list(usersContainer.keys()):
-			try:
-				o = usersContainer[key]
-			except KeyError: continue
-			if getattr( o, 'lastModified', None ) == 0:
-				o.lastModified = 42
-			cs = getattr( o, 'containersOfShared', None )
-			if cs is not None and not hasattr( cs, 'set_ids' ):
-				cs.set_ids = False
-				logger.info( "Updated containersOfShared on %s", key )
-			try:
-				everyone = o.friendsLists['Everyone']
-				if getattr( o.friendsLists['Everyone'], 'creator', '') != 'zope.security.management.system_user':
-					delattr( o.friendsLists['Everyone'], 'creator' )
-					logger.info( "Updated everyone for %s", key )
-			except (KeyError,AttributeError):
-				pass
-			except Exception:
-				logger.exception( "Failed to update %s", key )
-
-		logger.info( 'done migrating users' )
-
 class _SynchronousChangeDataserver(Dataserver):
 	""" A dataserver that processes changes synchronously. """
 
@@ -933,9 +898,6 @@ class _ChangeReceivingDataserver(Dataserver):
 	# process doesn't need to spawn any other daemons.
 
 	def _setup_launch_zeo( self, clientPipe, path, args, daemon ):
-		pass
-
-	def migrateUsers( self, usersContainer ):
 		pass
 
 	def _setupPresence( self ):

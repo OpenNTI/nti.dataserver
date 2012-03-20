@@ -2,7 +2,7 @@
 
 from hamcrest import (assert_that, is_, has_entry, instance_of,
 					  is_in, not_none, is_not, greater_than_or_equal_to,
-					  has_value,
+					  has_value, has_property,
 					  same_instance, is_not, none, has_length, has_item,
 					  contains)
 import unittest
@@ -24,6 +24,10 @@ from ..interfaces import IFriendsList
 from ..contenttypes import Note
 from ..activitystream_change import Change
 from . import provides
+
+from nti.dataserver import users
+from nti.dataserver import interfaces as nti_interfaces
+
 import mock_dataserver
 from mock_dataserver import WithMockDSTrans
 import persistent.wref
@@ -52,6 +56,9 @@ def test_create_friends_list_through_registry():
 	yield _test, 'FriendsLists'
 	# case insensitive
 	yield _test, 'friendslists'
+
+def test_everyone_has_creator():
+	assert_that( users.EVERYONE, has_property( 'creator', nti_interfaces.SYSTEM_USER_NAME ) )
 
 def test_friendslist_updated_through_user_updates_last_mod():
 	user = User( 'foo@bar', 'temp' )
