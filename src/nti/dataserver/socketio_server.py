@@ -144,22 +144,21 @@ class SocketIOHandler(socketio.handler.SocketIOHandler):
 
 	def handle_one_response( self, *args, **kwargs ):
 		self.handling_session_cm = self.context_manager_callable()
-		# TODO: We should wrap this with error handling and do something
-		# on conflict errors and the like.
+		# TODO: Should we wrap this with error handling and do something
+		# on conflict errors and the like? Or can we defer to pyramid_tm
+		# and its retry support? In some cases we would be outside of that middleware,
+		# right? We probably should not be dealing with transactions at this level
+		# at all...
 		try:
 			try:
 				with self.handling_session_cm as conn:
 					self.environ['app.db.connection'] = conn
 					super(SocketIOHandler,self).handle_one_response( *args, **kwargs )
 			except transaction.interfaces.TransientError:
-				logger.exception( "Error handling socket.io response" )
-				if callable( getattr( self, 'reset_passenger', None ) ):
-					getattr( self, 'reset_passenger' )()
+				logger.exception( "Transient error handling socket.io response for %s", self.environ )
 				self.start_response( '201 Not Modified', [] )
-		except :
-			logger.exception( "Error handling one response" )
-			if callable( getattr( self, 'reset_passenger', None ) ):
-				getattr( self, 'reset_passenger' )()
+		except:
+			logger.exception( "Unknown error handling socket.io response for %s", self.environ )
 			self.start_response( '201 Not Modified', [] )
 
 	def start_response(self, status, headers, exc_info=None):
