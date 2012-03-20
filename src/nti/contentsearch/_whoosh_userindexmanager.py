@@ -7,6 +7,7 @@ from zope import interface
 from whoosh.store import LockError
 
 from nti.contentsearch.interfaces import IUserIndexManager
+from nti.contentsearch.common import get_type_name
 from nti.contentsearch.common import empty_search_result
 from nti.contentsearch.common import empty_suggest_result
 from nti.contentsearch.common import merge_search_results
@@ -45,7 +46,6 @@ class WhooshUserIndexManager(object):
 
 	def __repr__( self ):
 		return 'WhooshUserIndexManager(user=%s)' % self.username
-
 	
 	def get_username(self):
 		return self.username
@@ -162,36 +162,50 @@ class WhooshUserIndexManager(object):
 	
 	# -------------------
 
-	def _get_type_name(self, **kwargs):
-		type_name = kwargs.get('type_name', None) or kwargs.get('typeName', None)
+	def _get_type_name(self, data=None, **kwargs):
+		type_name = get_type_name(data) if data else None
+		if not type_name:
+			type_name = kwargs.get('type_name', None) or kwargs.get('typeName', None)
 		return normalize_name(type_name)
 	
 	def index_content(self, data, *args, **kwargs):
-		type_name = self._get_type_name(**kwargs)
+		type_name = self._get_type_name(data, **kwargs)
 		index = self._get_or_create_index(type_name)
 		if index:
 			indexable = get_indexable_object(type_name)
 			with self.storage.dbTrans():
 				writer = self._get_index_writer(index)
-				indexable.index_content(writer, data, **self.writer_commit_args)
+				if not indexable.index_content(writer, data, **self.writer_commit_args):
+					writer.cancel()
+				else:
+					return True
+		return False
 
 	def update_content(self, data, *args, **kwargs):
-		type_name = self._get_type_name(**kwargs)
+		type_name = self._get_type_name(data, **kwargs)
 		index = self._get_or_create_index(type_name)
 		if index:
 			indexable = get_indexable_object(type_name)
 			with self.storage.dbTrans():
 				writer = self._get_index_writer(index)
-				indexable.update_content(writer, data, **self.writer_commit_args)
+				if not indexable.update_content(writer, data, **self.writer_commit_args):
+					writer.cancel()
+				else:
+					return True
+		return False
 
 	def delete_content(self, data, *args, **kwargs):
-		type_name = self._get_type_name(**kwargs)
+		type_name = self._get_type_name(data, **kwargs)
 		index = self._get_or_create_index(type_name)
 		if index:
 			indexable = get_indexable_object(type_name)
 			with self.storage.dbTrans():
 				writer = self._get_index_writer(index)
-				indexable.delete_content(writer, data, **self.writer_commit_args)
+				if not indexable.delete_content(writer, data, **self.writer_commit_args):
+					writer.cancel()
+				else:
+					return True
+		return False
 
 	# -------------------
 

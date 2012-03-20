@@ -116,6 +116,19 @@ def echo(x):
 
 # -----------------------------------
 
+def get_type_name(obj):
+	if not isinstance(obj, dict):
+		result = obj.__class__.__name__
+	elif CLASS in obj:
+		result = obj[CLASS]
+	elif MIME_TYPE in obj:
+		result = obj[MIME_TYPE]
+		if result and result.startswith(nti_mimetype_prefix):
+			result = result[len(nti_mimetype_prefix):]
+	else:
+		result = None
+	return unicode(result.lower()) if result else u''
+
 def get_collection(containerId, default='prealgebra'):
 	result = default
 	if containerId and is_valid_ntiid_string(containerId):

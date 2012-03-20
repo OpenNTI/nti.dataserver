@@ -18,7 +18,7 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.dataserver.tests.mock_dataserver import ConfiguringTestBase
 
 from nti.contentsearch.common import ( 	HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, SNIPPET, 
-										NTIID, OID)
+										NTIID, TARGET_OID)
 
 from hamcrest import is_
 from hamcrest import is_not
@@ -79,7 +79,6 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		return notes, docids, rim
 		
 	def _add_user_index_notes(self, ds=None):
-		#with ds.dbTrans() as ct:
 		usr = User( 'nt@nti.com', 'temp' )
 		ds = ds or mock_dataserver.current_mock_ds
 		ds.root['users']['nt@nti.com'] = usr
@@ -105,7 +104,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		key = list(items.keys())[0]
 		assert_that(items[key], has_entry(CLASS, HIT))
 		assert_that(items[key], has_entry(NTIID, is_not(None)))
-		assert_that(items[key], has_entry(OID, is_not(None)))
+		assert_that(items[key], has_entry(TARGET_OID, is_not(None)))
 		assert_that(key, is_(items[key][NTIID]))
 		assert_that(items[key], has_entry(CONTAINER_ID, 'tag:nextthought.com,2011-10:bleach-manga'))
 		assert_that(items[key], has_entry(SNIPPET, 'All Waves Rise now and Become my SHIELD Lightning Strike now and Become my Blade'))
