@@ -207,7 +207,7 @@ class RepozeUserIndexManager(object):
 			docMap = self.store.docMap
 			docid = docMap.docid_for_address(ntiid)
 			if docid:
-				catalog = self.store.get_catalog(self.username, type_name)
+				catalog = self._get_create_catalog(data, type_name)
 				catalog.unindex_doc(docid)
 		return docid
 		

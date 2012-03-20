@@ -90,7 +90,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		self._index_notes()
 		
 	@WithMockDSTrans
-	def test_query_notes(self):
+	def test_query_note(self):
 		_, rim, _, _ = self._add_user_index_notes()
 			
 		hits = rim.search("shield", limit=None)
@@ -110,7 +110,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		assert_that(items[key], has_entry(SNIPPET, 'All Waves Rise now and Become my SHIELD Lightning Strike now and Become my Blade'))
 	
 	@WithMockDSTrans
-	def test_update_notes(self):
+	def test_update_note(self):
 		_, rim, _, notes = self._add_user_index_notes()
 		note = notes[5]
 		note.body = [u'Blow It Away']
@@ -124,6 +124,17 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		hits = rim.search("blow", limit=None)
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 		assert_that(hits, has_entry(QUERY, 'blow'))
+		
+	@WithMockDSTrans
+	def test_delete_note(self):
+		_, rim, _, notes = self._add_user_index_notes()
+		note = notes[5]
+		teo = note.toExternalObject()
+		rim.delete_content(teo)
+		
+		hits = rim.search("shield", limit=None)
+		assert_that(hits, has_entry(HIT_COUNT, 0))
+		assert_that(hits, has_entry(QUERY, 'shield'))
 			
 if __name__ == '__main__':
 	unittest.main()
