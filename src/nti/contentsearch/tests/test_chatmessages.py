@@ -35,7 +35,7 @@ class TestChatMessages(unittest.TestCase):
 			self.assertEqual(s.doc_count(), 72)
 
 			d = cm.search(s, "hacker")
-			self.assertEqual(d['Hit Count'], 10)
+			self.assertEqual(d['Hit Count'], 16)
 			self.assertEqual(d['Query'], "hacker")
 
 			items = d['Items']
