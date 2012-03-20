@@ -9,6 +9,7 @@ from nti.contentsearch.common import ngrams
 from nti.contentsearch.common import get_attr
 from nti.contentsearch.common import epoch_time
 from nti.contentsearch.common import get_content
+from nti.contentsearch.common import get_type_name
 from nti.contentsearch.common import get_collection
 from nti.contentsearch.common import get_multipart_content
 from nti.contentsearch.common import word_content_highlight
@@ -19,9 +20,9 @@ from nti.contentsearch.common import (	oid_fields, ntiid_fields, creator_fields,
 										last_modified_fields, keyword_fields)
 
 from nti.contentsearch.common import (	OID, NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
-										COLLECTION_ID, SNIPPET, HIT, ID, BODY, MIME_TYPE)
+										COLLECTION_ID, SNIPPET, HIT, ID, BODY, TARGET_OID)
 
-from nti.contentsearch.common import (	ngrams_, channel_, content_, keywords_, references_, nti_mimetype_prefix,
+from nti.contentsearch.common import (	ngrams_, channel_, content_, keywords_, references_, 
 										recipients_, sharedWith_, body_, startHighlightedFullText_)
 
 
@@ -181,19 +182,6 @@ def create_catalog(type_name='Notes'):
 		raise None
 	
 # -----------------------------------
-
-def get_type_name(obj):
-	if not isinstance(obj, dict):
-		result = obj.__class__.__name__
-	elif CLASS in obj:
-		result = obj[CLASS]
-	elif MIME_TYPE in obj:
-		result = obj[MIME_TYPE]
-		if result and result.startswith(nti_mimetype_prefix):
-			result = result[len(nti_mimetype_prefix):]
-	else:
-		result = None
-	return unicode(result.lower()) if result else u''
 		
 def _get_last_modified(obj):
 	lm = get_attr(obj, last_modified_fields )
@@ -216,7 +204,7 @@ def _highlight_content(query=None, text=None, use_word_highlight=True, *args, **
 
 def _get_index_hit_from_object(obj):
 	result = {TYPE : get_type_name(obj), CLASS:HIT}		
-	result[OID] =  get_attr(obj, oid_fields )
+	result[TARGET_OID] =  get_attr(obj, oid_fields )
 	result[NTIID] =  get_attr(obj, ntiid_fields )
 	result[CREATOR] =  get_attr(obj, creator_fields )
 	result[CONTAINER_ID] = get_attr(obj, container_id_fields )

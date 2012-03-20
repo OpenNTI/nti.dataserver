@@ -310,24 +310,42 @@ class UserIndexableContent(_SearchableContent):
 	def index_content(self, writer, data, auto_commit=True, **commit_args):
 		d = self.get_index_data(data)
 		if d.has_key(oid_) and d.has_key(containerId_):
-			writer.add_document(**d)
-			if auto_commit:
-				writer.commit(**commit_args)
+			try:
+				writer.add_document(**d)
+				if auto_commit:
+					writer.commit(**commit_args)
+				return True
+			except Exception, e:
+				writer.cancel()
+				raise e
+		return False
 
 	def update_content(self, writer, data, auto_commit=True, **commit_args):
 		d = self.get_index_data(data)
 		if d.has_key(oid_) and d.has_key(containerId_):
-			writer.update_document(**d)
-			if auto_commit:
-				writer.commit(**commit_args)
+			try:
+				writer.update_document(**d)
+				if auto_commit:
+					writer.commit(**commit_args)
+				return True
+			except Exception, e:
+				writer.cancel()
+				raise e
+		return False
 		
 	def delete_content(self, writer, data, auto_commit=True, **commit_args):
 		d = self.get_index_data(data)
 		if d.has_key(oid_) and d.has_key(containerId_):
-			writer.delete_by_term(oid_, unicode(d[oid_]))
-			if auto_commit:
-				writer.commit(**commit_args)
-				
+			try:
+				writer.delete_by_term(oid_, unicode(d[oid_]))
+				if auto_commit:
+					writer.commit(**commit_args)
+				return True
+			except Exception, e:
+				writer.cancel()
+				raise e
+		return False
+	
 # ----------------------------------
 
 def create_highlight_schema():

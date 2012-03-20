@@ -7,10 +7,10 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.ntiids import find_object_with_ntiid
 
 from nti.contentsearch import interfaces
+from nti.contentsearch.common import get_type_name
 from nti.contentsearch.common import empty_search_result
 from nti.contentsearch.common import empty_suggest_result
 from nti.contentsearch._repoze_index import get_ntiid
-from nti.contentsearch._repoze_index import get_type_name
 from nti.contentsearch._repoze_index import get_index_hit
 from nti.contentsearch._repoze_index import create_catalog
 from nti.contentsearch._repoze_datastore import DataStore
