@@ -3,7 +3,6 @@ import shutil
 import unittest
 import tempfile
 
-from zope import component
 from ZODB import DB
 from ZODB.FileStorage import FileStorage
 
@@ -14,7 +13,8 @@ from nti.dataserver.ntiids import make_ntiid
 from nti.contentsearch._repoze_datastore import DataStore	
 from nti.contentsearch._repoze_userindexmanager import RepozeUserIndexManager	
 
-from nti.dataserver.tests.mock_dataserver import WithMockDSTrans, MockDataserver, current_mock_ds
+import nti.dataserver.tests.mock_dataserver as mock_dataserver
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.dataserver.tests.mock_dataserver import ConfiguringTestBase
 
 from nti.contentsearch.common import ( 	HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, SNIPPET, 
@@ -55,7 +55,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 
 	def _add_notes(self, usr=None, conn=None):
 		notes = []
-		conn = conn or current_mock_ds
+		conn = conn or mock_dataserver.current_transaction
 		usr = usr or User( 'nt@nti.com', 'temp' )
 		for x in _phrases:
 			note = Note()
@@ -77,41 +77,53 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 			docids.append(docids)
 		return notes, docids, rim
 		
-	def _add_user_index_notes(self, ds):
-		with ds.dbTrans() as ct:
-			usr = User( 'nt@nti.com', 'temp' )
-			ds.root['users']['nt@nti.com'] = usr
-			notes, docids, rim = self._index_notes(dataserver=ds, usr=usr, conn=ct, do_assert=False)
+	def _add_user_index_notes(self, ds=None):
+		#with ds.dbTrans() as ct:
+		usr = User( 'nt@nti.com', 'temp' )
+		ds = ds or mock_dataserver.current_mock_ds
+		ds.root['users']['nt@nti.com'] = usr
+		notes, docids, rim = self._index_notes(dataserver=ds, usr=usr, do_assert=False)
 		return usr, rim, docids, notes
 				
 	@WithMockDSTrans
 	def test_index_notes(self):
 		self._index_notes()
 		
+	@WithMockDSTrans
 	def test_query_notes(self):
-		ds = MockDataserver()
-		component.provideUtility( ds )
-		try:
-			_, rim, _, _ = self._add_user_index_notes(ds)
-				
-			hits = rim.search("shield", limit=None)
-			assert_that(hits, has_entry(HIT_COUNT, 1))
-			assert_that(hits, has_entry(QUERY, 'shield'))
-			assert_that(hits, has_key(ITEMS))
+		_, rim, _, _ = self._add_user_index_notes()
 			
-			items = hits[ITEMS]
-			assert_that(items, has_length(1))
-			
-			key = list(items.keys())[0]
-			assert_that(items[key], has_entry(CLASS, HIT))
-			assert_that(items[key], has_entry(NTIID, is_not(None)))
-			assert_that(items[key], has_entry(OID, is_not(None)))
-			assert_that(key, is_(items[key][NTIID]))
-			assert_that(items[key], has_entry(CONTAINER_ID, 'tag:nextthought.com,2011-10:bleach-manga'))
-			assert_that(items[key], has_entry(SNIPPET, 'All Waves Rise now and Become my SHIELD Lightning Strike now and Become my Blade'))
-		finally:
-			ds.close()
-			assert component.getGlobalSiteManager().unregisterUtility( ds ) or component.getSiteManager().unregisterUtility( ds )
+		hits = rim.search("shield", limit=None)
+		assert_that(hits, has_entry(HIT_COUNT, 1))
+		assert_that(hits, has_entry(QUERY, 'shield'))
+		assert_that(hits, has_key(ITEMS))
 		
+		items = hits[ITEMS]
+		assert_that(items, has_length(1))
+		
+		key = list(items.keys())[0]
+		assert_that(items[key], has_entry(CLASS, HIT))
+		assert_that(items[key], has_entry(NTIID, is_not(None)))
+		assert_that(items[key], has_entry(OID, is_not(None)))
+		assert_that(key, is_(items[key][NTIID]))
+		assert_that(items[key], has_entry(CONTAINER_ID, 'tag:nextthought.com,2011-10:bleach-manga'))
+		assert_that(items[key], has_entry(SNIPPET, 'All Waves Rise now and Become my SHIELD Lightning Strike now and Become my Blade'))
+	
+	@WithMockDSTrans
+	def test_update_notes(self):
+		_, rim, _, notes = self._add_user_index_notes()
+		note = notes[5]
+		note.body = [u'Blow It Away']
+		teo = note.toExternalObject()
+		rim.update_content(teo)
+		
+		hits = rim.search("shield", limit=None)
+		assert_that(hits, has_entry(HIT_COUNT, 0))
+		assert_that(hits, has_entry(QUERY, 'shield'))
+		
+		hits = rim.search("blow", limit=None)
+		assert_that(hits, has_entry(HIT_COUNT, 1))
+		assert_that(hits, has_entry(QUERY, 'blow'))
+			
 if __name__ == '__main__':
 	unittest.main()
