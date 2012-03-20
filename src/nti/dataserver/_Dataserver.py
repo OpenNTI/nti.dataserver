@@ -71,6 +71,12 @@ class _Change(Persistent):
 	def __repr__( self ):
 		return '_Change( %s, %s )' % (self.change, self.meta)
 
+def _safely(f):
+	try:
+		f()
+	except:
+		logger.exception( "Failed to execute safely %s", f )
+
 class _ContextManager(object):
 	"""
 	PEP 343 context manager. Instances of this class must
@@ -98,11 +104,11 @@ class _ContextManager(object):
 		return self.conn
 
 	def __exit__(self, t, v, tb):
-		# Cannot exit twice.
+		# Cannot exit twice....
 		try:
 			del self.local.contextManager
 		except AttributeError:
-			# except if otherwise designated
+			# ...except if otherwise designated
 			if self._premature_exit_ok:
 				return
 			else:
@@ -112,6 +118,7 @@ class _ContextManager(object):
 
 		try:
 			if self.doomed:
+				logger.debug( "Exiting doomed transaction %s", self.doomed )
 				self.tm.abort()
 				raise self.doomed[0], self.doomed[1], self.doomed[2]
 
@@ -119,19 +126,21 @@ class _ContextManager(object):
 				try:
 					self.tm.commit()
 				except DoomedTransaction:
-					self.tm.abort()
+					# Doomed was done on purpose, we shouldn't raise this (right?)
+					# But we do call attention to it
+					logger.exception( "Failed to commit doomed transaction" )
+					_safely( self.tm.abort )
 			else:
-				self.tm.abort()
+				_safely( self.tm.abort )
 		finally:
-			try:
-				self.conn.close()
-			except:
-				self.tm.abort()
-				self.conn.close()
-			finally:
-				self.conn = None
-				self.tm = None
-				self.txn = None
+			# If we got an original exception closing/committing
+			# let it propagate
+			_safely( self.conn.close )
+			self.conn = None
+			# We have already either committed or aborted self.tm
+			# at this point. Doing it again is useless
+			self.tm = None
+			self.txn = None
 
 	def premature_exit_but_its_okay(self):
 		self._premature_exit_ok = True
