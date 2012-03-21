@@ -3,6 +3,8 @@ import json
 import unittest
 from datetime import datetime
 
+from whoosh.filedb.filestore import RamStorage
+
 from nti.contentsearch._whoosh_index import Note
 from nti.contentsearch._whoosh_index import Highlight
 from nti.contentsearch._whoosh_index import MessageInfo
@@ -10,7 +12,7 @@ from nti.contentsearch._whoosh_index import get_datetime
 from nti.contentsearch._whoosh_index import get_keywords
 from nti.contentsearch._whoosh_index import get_text_from_mutil_part_body
 
-from hamcrest import (assert_that, is_, has_entry)
+from hamcrest import (assert_that, is_, has_entry, has_key, has_length)
 
 class TestWhooshIndex(unittest.TestCase):
 
@@ -18,7 +20,7 @@ class TestWhooshIndex(unittest.TestCase):
 	def setUpClass(cls):	
 		path = os.path.join(os.path.dirname(__file__), 'highlight.json')
 		with open(path, "r") as f:
-			cls.hightlight = json.load(f)
+			cls.highlight = json.load(f)
 			
 		path = os.path.join(os.path.dirname(__file__), 'note.json')
 		with open(path, "r") as f:
@@ -45,7 +47,7 @@ class TestWhooshIndex(unittest.TestCase):
 
 	def test_highlight_index_data(self):
 		hi = Highlight()
-		d = hi.get_index_data(self.hightlight)
+		d = hi.get_index_data(self.highlight)
 		assert_that(d, has_entry('containerId', 'tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.0' ))
 		assert_that(d, has_entry('creator', 'carlos.sanchez@nextthought.com' ))
 		assert_that(d, has_entry('oid', 'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x085a:5573657273' ))
@@ -78,6 +80,35 @@ class TestWhooshIndex(unittest.TestCase):
 		assert_that(d, has_entry('id', '0d7ba380e77241508204a9d737625e04'))
 		assert_that(d, has_entry('channel', 'DEFAULT'))
 		assert_that(d, has_entry('last_modified', datetime(2011, 11, 15, 15, 11, 8, 411328)))
+		
+	def test_index_highlight(self):
+					
+		hi = Highlight()
+		schema = hi.get_schema()
+		idx = RamStorage().create_index(schema)
+		hi.index_content(idx.writer(), self.highlight)
+		
+		with idx.searcher() as s:
+			self.assertEqual(s.doc_count(), 1)
+
+			d = hi.search(s, "divide")
+			assert_that(d, has_entry('Hit Count', 1))
+			assert_that(d, has_entry('Query', 'divide'))
+			assert_that(d, has_entry('Last Modified', 1331922120.967309))
+			assert_that(d, has_key('Items'))
+			
+			items = d['Items']
+			assert_that(items, has_length(1))
+			assert_that(items, has_key('tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x085a:5573657273'))
+			
+			item = items['tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x085a:5573657273']
+			assert_that(item, has_entry('Class', 'Hit'))
+			assert_that(item, has_entry('Type', 'Highlight'))
+			assert_that(item, has_entry('CollectionId', 'prealgebra'))
+			assert_that(item, has_entry('TargetOID', 'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x085a:5573657273'))
+			assert_that(item, has_entry('NTIID', 'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x085a:5573657273'))
+			assert_that(item, has_entry('Snippet', 'multiply and DIVIDE In fact you may already'))
+			assert_that(item, has_entry('ContainerId', 'tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.0'))
 
 if __name__ == '__main__':
 	unittest.main()

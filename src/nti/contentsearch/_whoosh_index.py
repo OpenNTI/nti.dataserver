@@ -145,11 +145,8 @@ class _SearchableContent(object):
 			suggestions = []
 			result = self.search(searcher, query, limit)
 		else:
-			prefix = kwargs.get('prefix', len(query))
-			maxdist = kwargs.get('maxdist', _default_word_max_dist)
-			suggest_limit = kwargs.get('suggest_limit', _default_suggest_limit)
-			suggestions = searcher.suggest(query, maxdist=maxdist, limit=suggest_limit, prefix=prefix)
-
+			result = self.suggest(searcher, query, limit, *args, **kwargs)
+			suggestions = result.get(ITEMS, None)
 			if suggestions:
 				result = self.search(searcher, suggestions[0], limit, *args, **kwargs)
 			else:

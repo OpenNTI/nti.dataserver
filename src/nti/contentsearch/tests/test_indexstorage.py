@@ -17,7 +17,7 @@ from nti.contentsearch.tests import domain
 from nti.contentsearch.tests import sample_schema
 from nti.contentsearch.indexstorage import ZODBIndexStorage	
 	
-##########################
+# ------------------------
 
 class _IndexStorageTest(object):
 
@@ -101,7 +101,7 @@ class _IndexStorageTest(object):
 				self.assertTrue(len(results) == 0)
 			
 
-##########################
+# ------------------------
 		
 class TestZODBIndexStorage(_IndexStorageTest, unittest.TestCase):
 		

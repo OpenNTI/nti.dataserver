@@ -163,9 +163,9 @@ class WhooshUserIndexManager(object):
 	# -------------------
 
 	def _get_type_name(self, data=None, **kwargs):
-		type_name = get_type_name(data) if data else None
+		type_name = kwargs.get('type_name', None) or kwargs.get('typeName', None)
 		if not type_name:
-			type_name = kwargs.get('type_name', None) or kwargs.get('typeName', None)
+			type_name = get_type_name(data) if data else None
 		return normalize_name(type_name)
 	
 	def index_content(self, data, *args, **kwargs):
