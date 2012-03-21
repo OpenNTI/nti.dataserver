@@ -203,13 +203,15 @@ def _highlight_content(query=None, text=None, use_word_highlight=True, *args, **
 	return unicode(content) if content else text
 
 def _get_index_hit_from_object(obj):
-	result = {TYPE : get_type_name(obj), CLASS:HIT}		
-	result[TARGET_OID] =  get_attr(obj, oid_fields )
-	result[NTIID] =  get_attr(obj, ntiid_fields )
-	result[CREATOR] =  get_attr(obj, creator_fields )
-	result[CONTAINER_ID] = get_attr(obj, container_id_fields )
-	result[COLLECTION_ID] = get_collection(result[CONTAINER_ID])
+	result = {}
+	result[CLASS] = HIT
+	result[NTIID] = get_attr(obj, ntiid_fields)
+	result[TYPE] = get_type_name(obj).capitalize()
+	result[TARGET_OID] = get_attr(obj, oid_fields)
 	result[LAST_MODIFIED] = _get_last_modified(obj)
+	result[CREATOR] =  get_attr(obj, creator_fields)
+	result[CONTAINER_ID] = get_attr(obj, container_id_fields)
+	result[COLLECTION_ID] = get_collection(result[CONTAINER_ID])
 	return result
 
 def get_index_hit_from_note(obj, query=None, use_word_highlight=True, *args, **kwargs):
