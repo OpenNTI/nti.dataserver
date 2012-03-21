@@ -4,6 +4,9 @@
 import unittest
 from hamcrest import assert_that, has_length, contains_string, is_, same_instance, is_not
 from hamcrest.core.base_matcher import BaseMatcher
+import tempfile
+import shutil
+import os
 
 from nti.dataserver.tests import has_attr, provides
 from zope.interface.verify import verifyObject
@@ -14,6 +17,7 @@ from nti.dataserver import authorization as auth
 from nti.dataserver import authorization_acl as auth_acl
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.users import User, FriendsList
+from nti.dataserver.library import LibraryEntry
 
 from pyramid.authorization import ACLAuthorizationPolicy
 
@@ -202,6 +206,73 @@ class TestFriendsListACLProvider(mock_dataserver.ConfiguringTestBase):
 
 		assert_that( acl_prov, denies( 'enrolled@bar',
 									   auth.ACT_UPDATE ) )
+
+class TestACE(mock_dataserver.ConfiguringTestBase):
+
+	def test_to_from_string(self):
+		# To string
+		assert_that( auth_acl.ace_allowing( 'User', auth.ACT_CREATE ).to_external_string(),
+					 is_( 'Allow:User:[\'nti.actions.create\']' ) )
+		assert_that( auth_acl.ace_allowing( 'User', nti_interfaces.ALL_PERMISSIONS ).to_external_string(),
+					 is_( 'Allow:User:All' ) )
+		assert_that( auth_acl.ace_allowing( 'User', (auth.ACT_CREATE,auth.ACT_UPDATE) ).to_external_string(),
+					 is_( 'Allow:User:[\'nti.actions.create\', \'nti.actions.update\']' ) )
+
+		assert_that( auth_acl.ace_denying( 'system.Everyone', (auth.ACT_CREATE,auth.ACT_UPDATE) ).to_external_string(),
+					 is_( 'Deny:system.Everyone:[\'nti.actions.create\', \'nti.actions.update\']' ) )
+
+		# From string
+		assert_that( auth_acl.ace_from_string('Deny:system.Everyone:[\'nti.actions.create\', \'nti.actions.update\']' ),
+					 is_( auth_acl.ace_denying( 'system.Everyone', (auth.ACT_CREATE,auth.ACT_UPDATE) ) ) )
+
+		assert_that( auth_acl.ace_from_string('Allow:User:All' ),
+					 is_( auth_acl.ace_allowing( 'User', nti_interfaces.ALL_PERMISSIONS ) ) )
+
+	def test_write_to_file( self ):
+		n = Note()
+		n.creator = 'sjohnson@nextthought.com'
+
+		acl_prov = nti_interfaces.IACLProvider( n )
+		acl = acl_prov.__acl__
+
+		temp_file = tempfile.TemporaryFile( 'w+' )
+		acl.write_to_file( temp_file )
+		temp_file.seek( 0 )
+
+		from_file = auth_acl.acl_from_file( temp_file )
+		assert_that( from_file, is_( acl ) )
+
+
+class TestLibraryEntryAclProvider(mock_dataserver.ConfiguringTestBase):
+
+	def setUp(self):
+		super(TestLibraryEntryAclProvider,self).setUp()
+		self.temp_dir = tempfile.mkdtemp()
+		self.library_entry = LibraryEntry( localPath=self.temp_dir )
+
+	def tearDown(self):
+		shutil.rmtree( self.temp_dir )
+		super(TestLibraryEntryAclProvider,self).tearDown()
+
+	def test_no_acl_file(self):
+		acl_prov = nti_interfaces.IACLProvider( self.library_entry )
+		assert_that( acl_prov, permits( nti_interfaces.AUTHENTICATED_GROUP_NAME,
+										auth.ACT_READ ) )
+
+	def test_malformed_acl_file_denies_all(self):
+		with open( os.path.join( self.temp_dir, '.nti_acl' ), 'w' ) as f:
+			f.write( "This file is invalid" )
+		acl_prov = nti_interfaces.IACLProvider( self.library_entry )
+		assert_that( acl_prov, denies( nti_interfaces.AUTHENTICATED_GROUP_NAME,
+										auth.ACT_READ ) )
+
+
+	def test_specific_acl_file(self):
+		with open( os.path.join( self.temp_dir, '.nti_acl' ), 'w' ) as f:
+			f.write( "Allow:User:[nti.actions.create]" )
+		acl_prov = nti_interfaces.IACLProvider( self.library_entry )
+		assert_that( acl_prov, permits( "User", auth.ACT_CREATE ) )
+		assert_that( acl_prov, denies( "OtherUser", auth.ACT_CREATE ) )
 
 class Permits(BaseMatcher):
 

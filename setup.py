@@ -66,7 +66,7 @@ setup(
 		'pyhamcrest',
 		'pylint',
 		'pyquery',
-		'pyramid',
+		'pyramid >= 1.3' ,
 		'pyramid_traversalwrapper',
 		'pyramid_who',
 		'pyramid_zodbconn',

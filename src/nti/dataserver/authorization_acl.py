@@ -3,6 +3,14 @@
 ACL providers for the various content types.
 """
 
+from __future__ import unicode_literals, print_function
+
+import logging
+logger = logging.getLogger(__name__)
+
+import six
+import os
+
 from zope import interface
 from zope import component
 from nti.dataserver import interfaces as nti_interfaces
@@ -26,6 +34,7 @@ class _ACE(object):
 		:param permission: The :class:`nti_interfaces.IPermission` being given.
 			Must be an `IPermission` or something that can be converted to it,
 			or an interable sequence thereof. Also allowable is :const:`nti_interfaces.ALL_PERMISSIONS`.
+		:param provenance: A string or :class:`type` giving information about where this entry came from.
 		"""
 		return cls( nti_interfaces.ACE_ACT_ALLOW, actor, permission, provenance=provenance )
 
@@ -39,8 +48,26 @@ class _ACE(object):
 		:param permission: The :class:`nti_interfaces.IPermission` being denied.
 			Must be an `IPermission` or something that can be converted to it,
 			or an interable sequence thereof. Also allowable is :const:`nti_interfaces.ALL_PERMISSIONS`.
+		:param provenance: A string or :class:`type` giving information about where this entry came from.
 		"""
-		return cls( nti_interfaces.ACE_ACT_DENY, actor, permission, provenance=None )
+		return cls( nti_interfaces.ACE_ACT_DENY, actor, permission, provenance=provenance )
+
+	@classmethod
+	def from_external_string( cls, string, provenance='from_string' ):
+		parts = string.split( ':' )
+		assert len(parts) == 3
+		action = parts[0]
+		actor = parts[1]
+
+		perms = parts[2]
+		if perms == 'All':
+			perms = nti_interfaces.ALL_PERMISSIONS
+		else:
+			# trim the surrounding array chars
+			perms = perms[1:-1]
+			perms = [x.strip().strip("'") for x in perms.split(',')]
+
+		return cls( action, actor, perms, provenance=provenance )
 
 	_provenance = None
 
@@ -64,11 +91,23 @@ class _ACE(object):
 								else x)
 								for x
 								in permission]
+			self.permission = [x for x in self.permission if x is not None]
+			assert self.permission, "Must provide a permission"
 
 	# Make them non-picklable
 	def __reduce__( self, *args, **kwargs ):
-		raise TypeError( "Links cannot be pickled." )
+		raise TypeError( "ACEs cannot be pickled." )
 	__reduce_ex__ = __reduce__
+
+	def to_external_string(self):
+		"""
+		:return: A string representing this ACE in a form that can be read
+		by :meth:`from_external_string`
+		"""
+		return "%s:%s:%s" % (self.action,
+							 self.actor.id,
+							 'All' if self.permission is nti_interfaces.ALL_PERMISSIONS else [x.id for x in self.permission])
+
 
 	def __eq__(self,other):
 		# TODO: Work on this
@@ -92,6 +131,23 @@ class _ACE(object):
 # Export these ACE functions publicly
 ace_allowing = _ACE.allowing
 ace_denying = _ACE.denying
+ace_from_string = _ACE.from_external_string
+
+def acl_from_file( path_or_file ):
+	"""
+	Return an ACL parsed from reading the contents of the given file.
+	:param path_or_file: Either a string giving a path to a readable file,
+		or a file-like object supporting :meth:`file.readlines`.
+	"""
+	if isinstance(path_or_file, six.string_types):
+		with open(path_or_file, 'rU') as f:
+			lines = f.readlines()
+			provenance = path_or_file
+	else:
+		lines = path_or_file.readlines()
+		provenance = getattr( path_or_file, 'name', str(path_or_file) )
+
+	return _ACL( [ace_from_string(x.strip(),provenance=provenance) for x in lines] )
 
 def ACL( obj, default=() ):
 	"""
@@ -111,6 +167,22 @@ def ACL( obj, default=() ):
 
 class _ACL(list):
 	interface.implements(nti_interfaces.IACL)
+
+	def write_to_file( self, path_or_file ):
+		"""
+		Given a path to a writable file or a file-like object (having the `write` method),
+		writes each entry in this ACL to the file.
+		:return: None
+		"""
+		def _write(f):
+			for x in self:
+				f.write( x.to_external_string() )
+				f.write( '\n' )
+		if isinstance(path_or_file, six.string_types):
+			with open(path_or_file, 'w') as f:
+				_write(f)
+		else:
+			_write( path_or_file )
 
 
 class _CreatedACLProvider(object):
@@ -267,7 +339,30 @@ class _LibraryTOCEntryACLProvider(object):
 
 	def __init__( self, obj ):
 		self._obj = obj
+		# TODO: Should this be taking into account a parent LibraryEntryACLProvider at all?
+		# If so, how?
 		self.__acl__ = ( ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _LibraryTOCEntryACLProvider ), )
+
+class _LibraryEntryACLProvider(object):
+	"""
+	Checks a library entry for the existence of a '.nti_acl' file, and if present,
+	reads an ACL from it. Otherwise, the ACL allows all authenticated
+	users access.
+	"""
+	interface.implements( nti_interfaces.IACLProvider )
+	component.adapts( nti_interfaces.ILibraryEntry )
+
+	def __init__( self, obj ):
+		self._obj = obj
+		if os.path.exists( os.path.join( obj.localPath, '.nti_acl' ) ):
+			try:
+				self.__acl__ = acl_from_file( os.path.join( obj.localPath, '.nti_acl' ) )
+			except:
+				logger.exception( "Failed to read acl from %s; denying all access.", obj )
+				self.__acl__ = _ACL( (ace_denying( nti_interfaces.EVERYONE_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _LibraryEntryACLProvider ), ) )
+		else:
+			self.__acl__ = _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _LibraryTOCEntryACLProvider ), ) )
+
 
 class _FriendsListACLProvider(_CreatedACLProvider):
 	"""
