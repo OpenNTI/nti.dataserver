@@ -7,14 +7,14 @@ from repoze.catalog.document import DocumentMap
 
 # -----------------------------------
 
-class DataStore():
+class RepozeDataStore():
 	
 	transaction_manager = transaction.manager
 	
 	def __init__(self, database, users_key='users', docMap_key='docMap'):
 		self.db = database
-		self.users_key = users_key
-		self.docMap_key = docMap_key
+		self.users_key = users_key or 'users'
+		self.docMap_key = docMap_key or 'docMap'
 		assert isinstance(database, DB), 'must specify a valid DB object'
 		
 		self.conn = self.db.open(self.transaction_manager)
