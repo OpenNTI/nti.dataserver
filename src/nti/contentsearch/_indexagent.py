@@ -35,9 +35,10 @@ class IndexAgent(object):
 				if event:
 					try:
 						job = self._handle_event(event)
-						jobs.append( job )
-						job.link( jobs.remove )
-						job.start()
+						if job:
+							jobs.append( job )
+							job.link( jobs.remove )
+							job.start()
 					except Exception:
 						logger.exception("When handling event %s" % event )
 				else:
@@ -72,6 +73,8 @@ class IndexAgent(object):
 								  externalValue=data,
 								  username=event.creator,
 								  typeName=event.dataType)
+		else:
+			job = None
 
 		return job
 
