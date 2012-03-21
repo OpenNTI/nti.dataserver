@@ -539,7 +539,8 @@ def createApplication( http_port,
 		if sync_changes:
 			logger.info( 'Adding synchronous change listeners.' )
 			server.add_change_listener( SharingTarget.onChange )
-			server.add_change_listener( IndexManager.onChange )
+			if indexmanager:
+				server.add_change_listener( indexmanager.onChange )
 		else:
 			logger.info( "Change listeners should already be running." )
 
@@ -594,8 +595,8 @@ def use_zeodb_index_storage():
 def _add_index_listener( server, user_indices_dir ):
 	_configure_logging()
 	print 'Adding index listener', os.getpid(), dataserver
-	create_index_manager(server, use_zeodb_index_storage(), user_indices_dir)
-	server.add_change_listener( IndexManager.onChange )
+	index_manager = create_index_manager(server, use_zeodb_index_storage(), user_indices_dir)
+	server.add_change_listener( index_manager.onChange )
 
 def create_index_manager(server, use_zeo_storage=None, user_indices_dir='/tmp'):
 
