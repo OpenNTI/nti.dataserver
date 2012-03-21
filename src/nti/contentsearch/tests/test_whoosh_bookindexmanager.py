@@ -12,21 +12,11 @@ from nti.contentsearch._whoosh_bookindexmanager import WhooshBookIndexManager
 
 from nti.contentsearch.common import ( HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, SNIPPET, NTIID)
 
+from nti.contentsearch.tests import zanpakuto_commands
+
 from hamcrest import (assert_that, is_, has_key, has_entry, has_length, is_not, has_item)
 
-_phrases = ("Shoot To Kill",
-			"Bloom, Split and Deviate",
-			"Rankle the Seas and the Skies",
-			"Lightning Flash Flame Shell",
-			"Flower Wind Rage and Flower God Roar, Heavenly Wind Rage and Heavenly Demon Sneer",
-			"All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade", 
-			"Cry, Raise Your Head, Rain Without end",
-			"Sting All Enemies To Death",
-			"Reduce All Creation to Ash",
-			"Sit Upon the Frozen Heavens", 
-			"Call forth the Twilight")
-
-class TestWhooshUserIndexManager(unittest.TestCase):
+class TestWhooshBookIndexManager(unittest.TestCase):
 			
 	@classmethod
 	def setUpClass(cls):
@@ -39,7 +29,7 @@ class TestWhooshUserIndexManager(unittest.TestCase):
 		
 		idx = cls.bim.bookidx
 		writer = idx.writer()
-		for x in _phrases:
+		for x in zanpakuto_commands:
 			writer.add_document(ntiid = unicode(make_ntiid(nttype='bleach', specific='manga')),
 								title = unicode(x),
 								content = unicode(x),

@@ -29,6 +29,10 @@ class TestWhooshIndex(unittest.TestCase):
 		path = os.path.join(os.path.dirname(__file__), 'message_info.json')
 		with open(path, "r") as f:
 			cls.messageinfo = json.load(f)
+			
+		path = os.path.join(os.path.dirname(__file__), 'transcript.json')
+		with open(path, "r") as f:
+			cls.transcript = json.load(f)
 
 	def test_get_datetime(self):
 		f = 1321391468.411328
@@ -89,7 +93,7 @@ class TestWhooshIndex(unittest.TestCase):
 		hi.index_content(idx.writer(), self.highlight)
 		
 		with idx.searcher() as s:
-			self.assertEqual(s.doc_count(), 1)
+			assert_that(s.doc_count(), is_(1))
 
 			d = hi.search(s, "divide")
 			assert_that(d, has_entry('Hit Count', 1))
@@ -109,6 +113,37 @@ class TestWhooshIndex(unittest.TestCase):
 			assert_that(item, has_entry('NTIID', 'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x085a:5573657273'))
 			assert_that(item, has_entry('Snippet', 'multiply and DIVIDE In fact you may already'))
 			assert_that(item, has_entry('ContainerId', 'tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.0'))
+			
+	def test_index_messageinfo(self):
+					
+		mi = MessageInfo()
+		schema = mi.get_schema()
+		idx = RamStorage().create_index(schema)
+		writer = idx.writer()
+		for m in self.transcript['Messages']:
+			mi.index_content(writer, m, auto_commit=False)
+		writer.commit()
+		
+		with idx.searcher() as s:
+			assert_that(s.doc_count(), is_(72))
+
+			d = mi.search(s, "hacker")
+			assert_that(d, has_entry('Hit Count', 16))
+			assert_that(d, has_entry('Query', "hacker"))
+			assert_that(d, has_key('Items'))
+			
+			items = d['Items']
+			assert_that(items, has_length(16))
+			assert_that(items, has_key('0xd8:53657373696f6e73'))
+
+			item = items['0xd8:53657373696f6e73']
+			assert_that(item, has_entry('Snippet', 'Chicken HACKER'))
+			assert_that(item, has_entry('Last Modified', 1318543995.504597))
+			assert_that(item, has_entry('Type', 'MessageInfo'))
+			assert_that(item, has_entry('Class', 'Hit'))
+			assert_that(item, has_entry('ID', "06c35b96bae5458793c0c505f255f94b"))
+			assert_that(item, has_entry('NTIID', '0xd8:53657373696f6e73'))
+
 
 if __name__ == '__main__':
 	unittest.main()
