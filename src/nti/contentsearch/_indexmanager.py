@@ -236,12 +236,26 @@ class IndexManager(object):
 
 # -----------------------------
 
-import _whoosh_bookindexmanager
-import _whoosh_userindexmanager
-from indexstorage import MultiDirectoryStorage
+def create_index_manager_with_whoosh(index_storage=None, index_dir=None, use_md5=True, dataserver=None):
+	
+	import _whoosh_bookindexmanager
+	import _whoosh_userindexmanager
+	from indexstorage import MultiDirectoryStorage
 
-def create_index_manager(dataserver=None):
-	mds = MultiDirectoryStorage("/tmp")
-	umf = _whoosh_userindexmanager.wuim_factory(mds, use_md5=False)
-	bmf = _whoosh_bookindexmanager.wbm_factory()
-	return IndexManager(bmf, umf, dataserver=dataserver)
+	book_idx_manager = _whoosh_bookindexmanager.wbm_factory()
+	index_storage = index_storage or  MultiDirectoryStorage(index_dir)
+	user_idx_manager = _whoosh_userindexmanager.wuim_factory(index_storage, use_md5=use_md5)
+	
+	return IndexManager(book_idx_manager, user_idx_manager, dataserver=dataserver)
+
+def create_index_manager_with_repoze(search_db, dataserver=None):
+	
+	import _whoosh_bookindexmanager
+	import _repoze_userindexmanager
+	from _repoze_datastore import RepozeDataStore
+	
+	book_idx_manager = _whoosh_bookindexmanager.wbm_factory()
+	repoze_store = RepozeDataStore(search_db)
+	user_idx_manager = _repoze_userindexmanager.ruim_factory(repoze_store)
+	
+	return IndexManager(book_idx_manager, user_idx_manager, dataserver=dataserver)

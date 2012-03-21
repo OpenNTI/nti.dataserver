@@ -6,7 +6,7 @@ import tempfile
 from ZODB import DB
 from ZODB.FileStorage import FileStorage
 
-from nti.contentsearch._repoze_datastore import DataStore	
+from nti.contentsearch._repoze_datastore import RepozeDataStore	
 from nti.contentsearch._repoze_index import create_notes_catalog
 from nti.contentsearch._repoze_index import create_highlight_catalog
 from nti.contentsearch._repoze_index import create_messageinfo_catalog
@@ -29,7 +29,7 @@ class TestDataStore(unittest.TestCase):
 		shutil.rmtree(self.db_dir, True)
 	
 	def test_ctor(self):
-		store = DataStore(self.db, users_key='_users_', docMap_key='_docMap_')
+		store = RepozeDataStore(self.db, users_key='_users_', docMap_key='_docMap_')
 		with store.dbTrans():
 			root = store.root
 			assert_that(root, has_key('_users_'))
@@ -39,7 +39,7 @@ class TestDataStore(unittest.TestCase):
 	
 	def test_add_get_catalog(self):
 		catalog = create_notes_catalog()
-		store = DataStore(self.db)
+		store = RepozeDataStore(self.db)
 		
 		with store.dbTrans():
 			store.add_catalog('nt@nt.com', catalog, 'note')
@@ -56,7 +56,7 @@ class TestDataStore(unittest.TestCase):
 			assert_that(c, is_(None))
 			
 	def test_get_catalogs(self):
-		store = DataStore(self.db)		
+		store = RepozeDataStore(self.db)		
 		with store.dbTrans():
 			for u in xrange(10):
 				username  = 'nt_%s@nt.com' % u
@@ -74,7 +74,7 @@ class TestDataStore(unittest.TestCase):
 				assert_that(obj, has_length(5))
 				
 	def test_remove_catalogs(self):
-		store = DataStore(self.db)
+		store = RepozeDataStore(self.db)
 		username  = 'nt@nt.com' 
 		
 		with store.dbTrans():	
