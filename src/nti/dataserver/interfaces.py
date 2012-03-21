@@ -88,6 +88,7 @@ class ILibraryEntry(interface.Interface):
 	root = interface.Attribute( "Path portion of a URL for this content without index.html")
 	title = interface.Attribute( "Simple name for this entry" )
 	toc = interface.Attribute( "A :class:`ILibraryTOCEntry`" )
+	localPath = interface.Attribute( "The absolute path on disk where the content for this entry resides." )
 
 class ILibrary(interface.Interface):
 
