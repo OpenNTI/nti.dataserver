@@ -14,7 +14,7 @@ from nti.contentsearch.common import empty_suggest_result
 from nti.contentsearch._repoze_index import get_ntiid
 from nti.contentsearch._repoze_index import get_index_hit
 from nti.contentsearch._repoze_index import create_catalog
-from nti.contentsearch._repoze_datastore import DataStore
+from nti.contentsearch._repoze_datastore import RepozeDataStore
 from nti.contentsearch.textindexng3 import CatalogTextIndexNG3
 from nti.contentsearch.common import (NTIID, LAST_MODIFIED, ITEMS, HIT_COUNT, SUGGESTIONS, content_, ngrams_)
 
@@ -31,7 +31,7 @@ class RepozeUserIndexManager(object):
 		self.datastore = repoze_store
 		self.ds = dataserver or component.queryUtility( nti_interfaces.IDataserver )
 		assert self.ds, 'must specify a valid data server'
-		assert isinstance(self.datastore, DataStore), 'must specify a valid repoze store'
+		assert isinstance(self.datastore, RepozeDataStore), 'must specify a valid repoze store'
 
 	# -------------------
 	

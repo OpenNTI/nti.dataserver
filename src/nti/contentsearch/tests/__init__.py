@@ -2,11 +2,11 @@ from whoosh import fields
 
 ##########################
 
-phrases = (	"Yellow brown", "Blue red green render purple?",\
-			"Alpha beta", "Gamma delta epsilon omega.",\
-			"One two", "Three rendered four five.",\
-			"Quick went", "Every red town.",\
-			"Yellow uptown",  "Interest rendering outer photo!",\
+phrases = (	"Yellow brown", "Blue red green render purple?",
+			"Alpha beta", "Gamma delta epsilon omega.",
+			"One two", "Three rendered four five.",
+			"Quick went", "Every red town.",
+			"Yellow uptown",  "Interest rendering outer photo!",
 			"Preserving extreme", "Chicken hacker")
 
 domain = (	"alfa", "bravo", "charlie", "delta", "echo", "foxtrot",
