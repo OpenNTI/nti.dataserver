@@ -10,7 +10,7 @@ from nti.dataserver.users import User
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.ntiids import make_ntiid
 
-from nti.contentsearch._repoze_datastore import DataStore	
+from nti.contentsearch._repoze_datastore import RepozeDataStore	
 from nti.contentsearch._repoze_userindexmanager import RepozeUserIndexManager	
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
@@ -20,25 +20,9 @@ from nti.dataserver.tests.mock_dataserver import ConfiguringTestBase
 from nti.contentsearch.common import ( 	HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, SNIPPET, 
 										NTIID, TARGET_OID)
 
-from hamcrest import is_
-from hamcrest import is_not
-from hamcrest import has_key
-from hamcrest import has_item
-from hamcrest import has_entry
-from hamcrest import has_length
-from hamcrest import assert_that
+from nti.contentsearch.tests import zanpakuto_commands
 
-_phrases = ("Shoot To Kill",
-			"Bloom, Split and Deviate",
-			"Rankle the Seas and the Skies",
-			"Lightning Flash Flame Shell",
-			"Flower Wind Rage and Flower God Roar, Heavenly Wind Rage and Heavenly Demon Sneer",
-			"All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade", 
-			"Cry, Raise Your Head, Rain Without end",
-			"Sting All Enemies To Death",
-			"Reduce All Creation to Ash",
-			"Sit Upon the Frozen Heavens", 
-			"Call forth the Twilight")
+from hamcrest import (is_, is_not, has_key, has_item, has_entry, has_length, assert_that)
 
 class TestRepozeUserIndexManager(ConfiguringTestBase):
 		
@@ -47,7 +31,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		self.db_dir = tempfile.mkdtemp(dir="/tmp")
 		self.storage = FileStorage(os.path.join(self.db_dir, 'data.fs'))
 		self.db = DB(self.storage) 
-		self.repoze = DataStore(self.db)
+		self.repoze = RepozeDataStore(self.db)
 			
 	def tearDown(self):
 		ConfiguringTestBase.tearDown(self)
@@ -58,7 +42,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		notes = []
 		conn = conn or mock_dataserver.current_transaction
 		usr = usr or User( 'nt@nti.com', 'temp' )
-		for x in _phrases:
+		for x in zanpakuto_commands:
 			note = Note()
 			note.body = [unicode(x)]
 			note.creator = usr.username
@@ -110,10 +94,10 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		assert_that(items[key], has_entry(SNIPPET, 'All Waves Rise now and Become my SHIELD Lightning Strike now and Become my Blade'))
 		
 		hits = rim.search("*", limit=None)
-		assert_that(hits, has_entry(HIT_COUNT, len(_phrases)))
+		assert_that(hits, has_entry(HIT_COUNT, len(zanpakuto_commands)))
 		
 		hits = rim.search("?", limit=None)
-		assert_that(hits, has_entry(HIT_COUNT, len(_phrases)))
+		assert_that(hits, has_entry(HIT_COUNT, len(zanpakuto_commands)))
 		
 		hits = rim.search("ra*", limit=None)
 		assert_that(hits, has_entry(HIT_COUNT, 3))

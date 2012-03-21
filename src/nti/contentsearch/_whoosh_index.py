@@ -285,7 +285,7 @@ class UserIndexableContent(_SearchableContent):
 			result[oid_] = data
 		else:
 			result[oid_] = echo(get_attr(data, oid_fields))
-			result[ntiid_] = echo(get_attr(data, ntiid_fields))
+			result[ntiid_] = echo(get_attr(data, ntiid_fields)) or result[oid_]
 			result[creator_] = echo(get_attr(data, creator_fields))
 			result[containerId_] = echo(get_attr(data, container_id_fields))
 			result[collectionId_] = echo(get_collection(result[containerId_]))
@@ -472,7 +472,8 @@ def create_messageinfo_schema():
 				 			id = fields.ID(stored=True, unique=True),
 				 			last_modified = fields.DATETIME(stored=True),
 				 			keywords = fields.KEYWORD(stored=True),
-				 			ntiid = fields.ID(stored=True))
+				 			ntiid = fields.ID(stored=True),
+				 			collectionId=fields.ID(stored=True))
 	return schema
 
 class MessageInfo(Note):
@@ -493,6 +494,11 @@ class MessageInfo(Note):
 		result[recipients_] = get_keywords(get_attr(data, recipients_))
 		result[content_] = get_text_from_mutil_part_body(get_attr(data, BODY))
 		result[quick_] = result[content_]
+		return result
+	
+	def get_data_from_search_hit(self, hit, d):
+		result = super(MessageInfo, self).get_data_from_search_hit(hit, d)
+		d[ID] = hit.get(id_, u'')
 		return result
 
 # ----------------------------------

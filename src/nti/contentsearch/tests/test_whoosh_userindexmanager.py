@@ -16,19 +16,9 @@ from nti.contentsearch._whoosh_indexstorage import create_directory_index_storag
 from nti.contentsearch.common import ( 	HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, SNIPPET, 
 										NTIID, TARGET_OID)
 
-from hamcrest import (assert_that, is_, has_key, has_entry, has_length, is_not, has_item)
+from nti.contentsearch.tests import zanpakuto_commands
 
-_phrases = ("Shoot To Kill",
-			"Bloom, Split and Deviate",
-			"Rankle the Seas and the Skies",
-			"Lightning Flash Flame Shell",
-			"Flower Wind Rage and Flower God Roar, Heavenly Wind Rage and Heavenly Demon Sneer",
-			"All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade", 
-			"Cry, Raise Your Head, Rain Without end",
-			"Sting All Enemies To Death",
-			"Reduce All Creation to Ash",
-			"Sit Upon the Frozen Heavens", 
-			"Call forth the Twilight")
+from hamcrest import (assert_that, is_, has_key, has_entry, has_length, is_not, has_item)
 
 class TestWhooshUserIndexManager(ConfiguringTestBase):
 			
@@ -47,7 +37,7 @@ class TestWhooshUserIndexManager(ConfiguringTestBase):
 		notes = []
 		conn = conn or mock_dataserver.current_transaction
 		usr = usr or User( 'nt@nti.com', 'temp' )
-		for x in _phrases:
+		for x in zanpakuto_commands:
 			note = Note()
 			note.body = [unicode(x)]
 			note.creator = usr.username
@@ -97,7 +87,7 @@ class TestWhooshUserIndexManager(ConfiguringTestBase):
 		assert_that(items[key], has_entry(SNIPPET, 'now and Become my SHIELD Lightning Strike'))
 		
 		hits = self.uim.search("*", limit=None)
-		assert_that(hits, has_entry(HIT_COUNT, len(_phrases)))
+		assert_that(hits, has_entry(HIT_COUNT, len(zanpakuto_commands)))
 		
 		hits = self.uim.search("ra*", limit=None)
 		assert_that(hits, has_entry(HIT_COUNT, 3))

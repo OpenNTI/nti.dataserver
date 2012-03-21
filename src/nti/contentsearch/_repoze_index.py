@@ -20,7 +20,7 @@ from nti.contentsearch.common import (	oid_fields, ntiid_fields, creator_fields,
 										last_modified_fields, keyword_fields)
 
 from nti.contentsearch.common import (	OID, NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
-										COLLECTION_ID, SNIPPET, HIT, ID, BODY, TARGET_OID)
+										COLLECTION_ID, SNIPPET, HIT, ID, BODY, TARGET_OID, MESSAGE_INFO)
 
 from nti.contentsearch.common import (	ngrams_, channel_, content_, keywords_, references_, 
 										recipients_, sharedWith_, body_, startHighlightedFullText_)
@@ -205,9 +205,9 @@ def _highlight_content(query=None, text=None, use_word_highlight=True, *args, **
 def _get_index_hit_from_object(obj):
 	result = {}
 	result[CLASS] = HIT
-	result[NTIID] = get_attr(obj, ntiid_fields)
-	result[TYPE] = get_type_name(obj).capitalize()
 	result[TARGET_OID] = get_attr(obj, oid_fields)
+	result[NTIID] = get_attr(obj, ntiid_fields) or result[TARGET_OID]
+	result[TYPE] = get_type_name(obj).capitalize()
 	result[LAST_MODIFIED] = _get_last_modified(obj)
 	result[CREATOR] =  get_attr(obj, creator_fields)
 	result[CONTAINER_ID] = get_attr(obj, container_id_fields)
@@ -229,6 +229,8 @@ def get_index_hit_from_hightlight(obj, query=None, use_word_highlight=True, *arg
 def get_index_hit_from_messgeinfo(obj, query=None, use_word_highlight=True, *args, **kwargs):
 	text = get_multipart_content(get_attr(obj, [BODY]))
 	result = _get_index_hit_from_object(obj)
+	result[TYPE] = MESSAGE_INFO
+	result[ID] = get_attr(obj, [ID])
 	result[SNIPPET] = _highlight_content(unicode(query), unicode(text), use_word_highlight, *args, **kwargs)
 	return result
 
