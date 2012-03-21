@@ -2,6 +2,10 @@ import os
 import json
 import unittest
 
+from zope import component
+from zope.configuration import xmlconfig
+
+import nti.contentsearch as contentsearch
 from nti.contentsearch._repoze_index import get_id
 from nti.contentsearch._repoze_index import get_oid
 from nti.contentsearch._repoze_index import get_ntiid
@@ -26,6 +30,8 @@ from nti.contentsearch._repoze_index import create_messageinfo_catalog
 from nti.contentsearch._repoze_index import get_index_hit_from_hightlight
 from nti.contentsearch._repoze_index import get_index_hit_from_messgeinfo
 
+from nti.dataserver.tests.mock_dataserver import ConfiguringTestBase
+
 from hamcrest import assert_that
 from hamcrest import close_to
 from hamcrest import is_
@@ -40,11 +46,10 @@ from nti.contentsearch.common import (	OID, NTIID, CREATOR, LAST_MODIFIED, CONTA
 from nti.contentsearch.common import (	ngrams_, channel_, content_, keywords_, references_,
 										recipients_, sharedWith_)
 
-
-class TestRepozeIndex(unittest.TestCase):
+class TestRepozeIndex(ConfiguringTestBase):
 		
 	@classmethod
-	def setUpClass(cls):
+	def setUpClass(cls):		
 		path = os.path.join(os.path.dirname(__file__), 'highlight.json')
 		with open(path, "r") as f:
 			cls.hightlight = json.load(f)
@@ -57,6 +62,11 @@ class TestRepozeIndex(unittest.TestCase):
 		with open(path, "r") as f:
 			cls.messageinfo = json.load(f)
 			
+	def setUp(self):
+		ConfiguringTestBase.setUp(self)
+		component.getSiteManager().__bases__ = (component.getGlobalSiteManager(),)
+		xmlconfig.file( 'configure.zcml', package=contentsearch )
+		
 	def _test_common_catalog(self, catalog):
 		assert_that(catalog, has_key(OID))
 		assert_that(catalog, has_key(NTIID))
@@ -173,7 +183,6 @@ class TestRepozeIndex(unittest.TestCase):
 		assert_that(get_type_name(self.note), is_('note'))
 		assert_that(get_type_name(self.hightlight), is_('highlight'))
 		assert_that(get_type_name(self.messageinfo), is_('messageinfo'))
-
 
 if __name__ == '__main__':
 	unittest.main()

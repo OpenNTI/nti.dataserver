@@ -12,7 +12,6 @@ from zope.index.interfaces import IIndexSearch
 from zopyx.txng3.core.index import Index
 from zopyx.txng3.core.config import DEFAULT_LEXICON
 from zopyx.txng3.core.config import DEFAULT_RANKING
-from zopyx.txng3.core.config import DEFAULT_STORAGE
 from zopyx.txng3.core.config import DEFAULT_ENCODING
 from zopyx.txng3.core.config import DEFAULT_ADDITIONAL_CHARS
 
@@ -53,7 +52,7 @@ class TextIndexNG3(object):
 		self.use_proxy = use_proxy
 		self.index = Index(	fields=kwargs.get('fields', [iden]),
 							lexicon=kwargs.get('lexicon', DEFAULT_LEXICON),
-							storage=kwargs.get('storage', DEFAULT_STORAGE),
+							storage=kwargs.get('storage', 'txng.storages.term_frequencies'),
 							splitter=kwargs.get('splitter', 'txng.splitters.default'),
 							autoexpand=kwargs.get('autoexpand', 'off'),
 							autoexpand_limit=kwargs.get('autoexpand_limit', 4),
