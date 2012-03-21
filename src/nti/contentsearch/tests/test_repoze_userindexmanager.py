@@ -3,6 +3,9 @@ import shutil
 import unittest
 import tempfile
 
+from zope import component
+from zope.configuration import xmlconfig
+
 from ZODB import DB
 from ZODB.FileStorage import FileStorage
 
@@ -10,6 +13,7 @@ from nti.dataserver.users import User
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.ntiids import make_ntiid
 
+import nti.contentsearch as contentsearch
 from nti.contentsearch._repoze_datastore import RepozeDataStore	
 from nti.contentsearch._repoze_userindexmanager import RepozeUserIndexManager	
 
@@ -28,13 +32,16 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		
 	def setUp(self):
 		ConfiguringTestBase.setUp(self)
+		component.getSiteManager().__bases__ = (component.getGlobalSiteManager(),)
+		xmlconfig.file( 'configure.zcml', package=contentsearch )
+		
 		self.db_dir = tempfile.mkdtemp(dir="/tmp")
 		self.storage = FileStorage(os.path.join(self.db_dir, 'data.fs'))
 		self.db = DB(self.storage) 
 		self.repoze = RepozeDataStore(self.db)
 			
 	def tearDown(self):
-		ConfiguringTestBase.tearDown(self)
+		ConfiguringTestBase.tearDown(self)		
 		self.repoze.close()
 		shutil.rmtree(self.db_dir, True)
 

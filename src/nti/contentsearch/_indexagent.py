@@ -1,10 +1,10 @@
-import logging
-logger = logging.getLogger( __name__ )
-
 import gevent
 from gevent.queue import Queue
 
 from nti.dataserver.users import Change
+
+import logging
+logger = logging.getLogger( __name__ )
 
 class _IndexEvent(object):
 	def __init__(self, creator, changeType, dataType, data):
@@ -35,7 +35,7 @@ class IndexAgent(object):
 				if event:
 					try:
 						job = self._handle_event(event)
-						if job:
+						if job is not None:
 							jobs.append( job )
 							job.link( jobs.remove )
 							job.start()
@@ -82,9 +82,12 @@ class IndexAgent(object):
 		return _IndexEvent(creator, changeType, dataType, data)
 
 	def add_event( self, creator, changeType, dataType, data):
-		event = self._create_event(creator, changeType, dataType, data)
-		logger.debug("Index event %s received", event)
-		self._queue.put_nowait( event )
+		if changeType in (Change.CREATED, Change.SHARED, Change.MODIFIED, Change.DELETED):
+			event = self._create_event(creator, changeType, dataType, data)
+			logger.debug("Index event %s received", event)
+			self._queue.put_nowait( event )
+			return True
+		return False
 
 	def close( self ):
 		# Kill the background events and wait for them to
