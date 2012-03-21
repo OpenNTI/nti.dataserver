@@ -29,7 +29,7 @@ from nti.contentsearch.tests import zanpakuto_commands
 from hamcrest import (is_, is_not, has_key, has_item, has_entry, has_length, assert_that)
 
 class TestRepozeUserIndexManager(ConfiguringTestBase):
-		
+				
 	def setUp(self):
 		ConfiguringTestBase.setUp(self)
 		component.getSiteManager().__bases__ = (component.getGlobalSiteManager(),)
