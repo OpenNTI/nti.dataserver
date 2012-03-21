@@ -4,6 +4,7 @@
 import unittest
 from hamcrest import assert_that, has_length, contains_string, is_, same_instance, is_not
 from hamcrest.core.base_matcher import BaseMatcher
+import tempfile
 
 from nti.dataserver.tests import has_attr, provides
 from zope.interface.verify import verifyObject
@@ -202,6 +203,42 @@ class TestFriendsListACLProvider(mock_dataserver.ConfiguringTestBase):
 
 		assert_that( acl_prov, denies( 'enrolled@bar',
 									   auth.ACT_UPDATE ) )
+
+class TestACE(mock_dataserver.ConfiguringTestBase):
+
+	def test_to_from_string(self):
+		# To string
+		assert_that( auth_acl.ace_allowing( 'User', auth.ACT_CREATE ).to_external_string(),
+					 is_( 'Allow:User:[\'nti.actions.create\']' ) )
+		assert_that( auth_acl.ace_allowing( 'User', nti_interfaces.ALL_PERMISSIONS ).to_external_string(),
+					 is_( 'Allow:User:All' ) )
+		assert_that( auth_acl.ace_allowing( 'User', (auth.ACT_CREATE,auth.ACT_UPDATE) ).to_external_string(),
+					 is_( 'Allow:User:[\'nti.actions.create\', \'nti.actions.update\']' ) )
+
+		assert_that( auth_acl.ace_denying( 'system.Everyone', (auth.ACT_CREATE,auth.ACT_UPDATE) ).to_external_string(),
+					 is_( 'Deny:system.Everyone:[\'nti.actions.create\', \'nti.actions.update\']' ) )
+
+		# From string
+		assert_that( auth_acl.ace_from_string('Deny:system.Everyone:[\'nti.actions.create\', \'nti.actions.update\']' ),
+					 is_( auth_acl.ace_denying( 'system.Everyone', (auth.ACT_CREATE,auth.ACT_UPDATE) ) ) )
+
+		assert_that( auth_acl.ace_from_string('Allow:User:All' ),
+					 is_( auth_acl.ace_allowing( 'User', nti_interfaces.ALL_PERMISSIONS ) ) )
+
+	def test_write_to_file( self ):
+		n = Note()
+		n.creator = 'sjohnson@nextthought.com'
+
+		acl_prov = nti_interfaces.IACLProvider( n )
+		acl = acl_prov.__acl__
+
+		temp_file = tempfile.TemporaryFile( 'w+' )
+		acl.write_to_file( temp_file )
+		temp_file.seek( 0 )
+
+		from_file = auth_acl.acl_from_file( temp_file )
+		assert_that( from_file, is_( acl ) )
+
 
 class Permits(BaseMatcher):
 
