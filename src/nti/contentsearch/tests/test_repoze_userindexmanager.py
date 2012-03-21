@@ -90,7 +90,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		self._index_notes()
 		
 	@WithMockDSTrans
-	def test_query_note(self):
+	def test_query_notes(self):
 		_, rim, _, _ = self._add_user_index_notes()
 			
 		hits = rim.search("shield", limit=None)
@@ -108,7 +108,16 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		assert_that(key, is_(items[key][NTIID]))
 		assert_that(items[key], has_entry(CONTAINER_ID, 'tag:nextthought.com,2011-10:bleach-manga'))
 		assert_that(items[key], has_entry(SNIPPET, 'All Waves Rise now and Become my SHIELD Lightning Strike now and Become my Blade'))
-	
+		
+		hits = rim.search("*", limit=None)
+		assert_that(hits, has_entry(HIT_COUNT, len(_phrases)))
+		
+		hits = rim.search("?", limit=None)
+		assert_that(hits, has_entry(HIT_COUNT, len(_phrases)))
+		
+		hits = rim.search("ra*", limit=None)
+		assert_that(hits, has_entry(HIT_COUNT, 3))
+		
 	@WithMockDSTrans
 	def test_update_note(self):
 		_, rim, _, notes = self._add_user_index_notes()

@@ -1,3 +1,4 @@
+import re
 from zope import component
 from zope import interface
 
@@ -92,33 +93,48 @@ class RepozeUserIndexManager(object):
 				
 	# -------------------
 	
+	def _do_catalog_query(self, catalog, field, query):
+		mo = re.search('([\?\*])', query)
+		if mo and mo.start(1) == 0: 
+			# globbing character return all
+			textfield = catalog.get(field, None)
+			if isinstance(textfield, CatalogTextIndexNG3): 
+				docids = textfield.get_docids()
+				return len(docids), docids
+			else:
+				return 0, []
+		
+		return catalog.query(Contains(field, query))
+		
 	def _do_search(self, field, query, limit=None, use_word_highlight=True, *args, **kwargs):
 		
-		search_on = self._adapt_search_on_types(kwargs.get('search_on', None))
-		search_on = search_on if search_on else self._get_catalog_names()
+		results = empty_search_result(query)
+		if not query:
+			return results
 		
 		lm = 0
-		results = empty_search_result(query)
 		items = results[ITEMS]
+		search_on = self._adapt_search_on_types(kwargs.get('search_on', None))
+		search_on = search_on if search_on else self._get_catalog_names()
 		with self.store.dbTrans():
 			docMap = self.store.docMap
 			for type_name in search_on:
 				catalog = self.datastore.get_catalog(self.username, type_name)
 				if catalog: 
-					_, docIds = catalog.query(Contains(field, query))
+					_, docIds = self._do_catalog_query(catalog, field, query)
 					hits, hits_lm = self._get_hits_from_docids(	docMap,
 																docIds,
 																limit=limit,
 																query=query,
 																use_word_highlight=use_word_highlight,
 																**kwargs)
-					if hits:
-						lm = max(lm, hits_lm)
-						for hit in hits:
-							items[hit[NTIID]] = hit
+					
+					lm = max(lm, hits_lm)
+					for hit in hits:
+						items[hit[NTIID]] = hit
 			
 		results[LAST_MODIFIED] = lm
-		results[HIT_COUNT] = len(items)	
+		results[HIT_COUNT] = len(items)
 		return results	
 	
 	def search(self, query, limit=None, *args, **kwargs):
@@ -132,21 +148,24 @@ class RepozeUserIndexManager(object):
 	
 	def suggest(self, term, limit=None, prefix=None, *args, **kwargs):
 		
+		results = empty_suggest_result(term)
+		if not term:
+			return results
+		
+		suggestions = set()
 		search_on = self._adapt_search_on_types(kwargs.get('search_on', None))
 		search_on = search_on if search_on else self._get_catalog_names()
 		threshold = kwargs.get('threshold', 0.4999)
 		prefix = prefix or len(term)
-				
-		suggestions = set()		
-		results = empty_suggest_result(term)
+		
 		with self.store.dbTrans():
 			for type_name in search_on:
 				catalog = self.datastore.get_catalog(self.username, type_name)
 				textfield = catalog.get(content_, None)
-				if not isinstance(textfield, CatalogTextIndexNG3): continue
-				words_t = textfield.suggest(term=unicode(term), threshold=threshold, prefix=prefix) 
-				for t in words_t:
-					suggestions.add(t[0])
+				if isinstance(textfield, CatalogTextIndexNG3): 
+					words_t = textfield.suggest(term=unicode(term), threshold=threshold, prefix=prefix) 
+					for t in words_t:
+						suggestions.add(t[0])
 		
 		suggestions = suggestions[:limit] if limit and limit > 0 else suggestions
 		results[ITEMS] = list(suggestions)
@@ -180,6 +199,7 @@ class RepozeUserIndexManager(object):
 		return catalog
 	
 	def index_content(self, data, type_name=None, **kwargs):
+		if not data: return None
 		docid = None
 		ntiid = get_ntiid(data)
 		with self.store.dbTrans():
@@ -191,6 +211,7 @@ class RepozeUserIndexManager(object):
 		return docid
 
 	def update_content(self, data, type_name=None, *args, **kwargs):
+		if not data: return None
 		ntiid = get_ntiid(data)
 		if not ntiid: return None
 		with self.store.dbTrans():
@@ -204,6 +225,7 @@ class RepozeUserIndexManager(object):
 		return docid
 
 	def delete_content(self, data, type_name=None, *args, **kwargs):
+		if not data: return None
 		ntiid = get_ntiid(data)
 		if not ntiid: return None
 		with self.store.dbTrans():
