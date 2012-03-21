@@ -16,7 +16,6 @@ from nti.contentsearch._repoze_index import get_index_hit
 from nti.contentsearch._repoze_index import create_catalog
 from nti.contentsearch._repoze_datastore import RepozeDataStore
 from nti.contentsearch.textindexng3 import CatalogTextIndexNG3
-from nti.contentsearch.textindexng3 import register_default_utilities
 from nti.contentsearch.common import (NTIID, LAST_MODIFIED, ITEMS, HIT_COUNT, SUGGESTIONS, content_, ngrams_)
 
 import logging
@@ -54,23 +53,7 @@ class RepozeUserIndexManager(object):
 	@property
 	def dataserver(self):
 		return self.ds
-	
-	
-	# -------------------
-	
-	class _RegisterSearchComponents(object):
-		def __init__(self, func):
-			self.func = func
-
-		def __call__(self, *args, **kargs):
-			register_default_utilities()
-			return self.func(*args, **kargs)
-
-		def __get__(self, instance, owner):
-			def wrapper(*args, **kargs):
-				return self(instance, *args, **kargs)
-			return wrapper
-		
+			
 	# -------------------
 
 	def _normalize_name(self, x):
@@ -154,18 +137,15 @@ class RepozeUserIndexManager(object):
 		results[HIT_COUNT] = len(items)
 		return results	
 	
-	@_RegisterSearchComponents
 	def search(self, query, limit=None, *args, **kwargs):
 		results = self._do_search(content_, query, limit, True, *args, **kwargs)
 		return results	
 	
-	@_RegisterSearchComponents
 	def ngram_search(self, query, limit=None, *args, **kwargs):
 		results = self._do_search(ngrams_, query, limit, False, *args, **kwargs)
 		return results	
 	quick_search = ngram_search
 	
-	@_RegisterSearchComponents
 	def suggest(self, term, limit=None, prefix=None, *args, **kwargs):
 		
 		results = empty_suggest_result(term)
@@ -192,7 +172,6 @@ class RepozeUserIndexManager(object):
 		results[HIT_COUNT] = len(suggestions)
 		return results
 	
-	@_RegisterSearchComponents
 	def suggest_and_search(self, query, limit=None, *args, **kwargs):
 		if ' ' in query:
 			suggestions = []
@@ -219,7 +198,6 @@ class RepozeUserIndexManager(object):
 				self.store.add_catalog(self.username, catalog, type_name)
 		return catalog
 	
-	@_RegisterSearchComponents
 	def index_content(self, data, type_name=None, **kwargs):
 		if not data: return None
 		docid = None
@@ -232,7 +210,6 @@ class RepozeUserIndexManager(object):
 				catalog.index_doc(docid, data)
 		return docid
 
-	@_RegisterSearchComponents
 	def update_content(self, data, type_name=None, *args, **kwargs):
 		if not data: return None
 		ntiid = get_ntiid(data)
@@ -247,7 +224,6 @@ class RepozeUserIndexManager(object):
 				docid = self.index_content(data, type_name)
 		return docid
 
-	@_RegisterSearchComponents
 	def delete_content(self, data, type_name=None, *args, **kwargs):
 		if not data: return None
 		ntiid = get_ntiid(data)

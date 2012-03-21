@@ -1,0 +1,25 @@
+<!-- -*- mode: nxml -*- -->
+<configure xmlns="http://namespaces.zope.org/zope" i18n_domain="zope">
+	<include package="zope.component" />
+
+	<utility component="zopyx.txng3.core.parsers.english.EnglishQueryParser"
+			 name="txng.parsers.en"
+			 provides="zopyx.txng3.core.interfaces.IParser"/>
+
+	<utility component="zopyx.txng3.core.ranking.cosine_ranking"
+			 name="txng.ranking.cosine"
+			 provides="zopyx.txng3.core.interfaces.ranking.IRanking"/>
+				 
+	<utility component="zopyx.txng3.core.lexicon.LexiconFactory"
+			 name="txng.lexicons.default"
+			 provides="zope.component.interfaces.IFactory"/>
+
+	<utility component="zopyx.txng3.core.splitter.SplitterFactory"
+			 name="txng.splitters.default"
+			 provides="zope.component.interfaces.IFactory"/>
+			 
+	<utility component="zopyx.txng3.core.storage.StorageWithTermFrequencyFactory"
+			 name="txng.storages.default"
+			 provides="zope.component.interfaces.IFactory"/>
+			 
+</configure>
