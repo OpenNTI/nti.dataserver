@@ -158,7 +158,7 @@ class RepozeUserIndexManager(object):
 			suggestions = []
 			result = self.search(query, limit, *args, **kwargs)
 		else:
-			result = self.suggest(query, limit=limit, *args, **kwargs)
+			result = self.suggest(query, limit, *args, **kwargs)
 			suggestions = result[ITEMS]
 			if suggestions:
 				result = self.search(query, limit, *args, **kwargs)

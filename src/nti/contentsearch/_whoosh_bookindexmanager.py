@@ -2,7 +2,7 @@ from zope import interface
 
 from nti.contentsearch import interfaces
 from nti.contentsearch._whoosh_index import Book
-from nti.contentsearch.indexstorage import create_directory_index_storage
+from nti.contentsearch._whoosh_indexstorage import create_directory_index_storage
 
 import logging
 logger = logging.getLogger( __name__ )
