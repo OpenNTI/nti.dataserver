@@ -159,11 +159,11 @@ class _SearchableContent(object):
 		return result
 
 	def suggest(self, searcher, word, limit=_default_suggest_limit, *args, **kwargs):
-		prefix = kwargs.get('prefix', len(word))
-		maxdist = kwargs.get('maxdist', _default_word_max_dist)
-		
+		prefix = kwargs.get('prefix', None) or len(word)
+		maxdist = kwargs.get('maxdist', None) or _default_word_max_dist
 		result = empty_suggest_result(word)
-		records = searcher.suggest(word, maxdist=maxdist, limit=limit, prefix=prefix)
+		records = searcher.suggest(content_, word, maxdist=maxdist, prefix=prefix)
+		records = records[:limit] if limit and limit > 0 else records
 		result[ITEMS] = records
 		result[HIT_COUNT] = len(records)
 		return result

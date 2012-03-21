@@ -16,7 +16,7 @@ from nti.contentsearch._whoosh_indexstorage import create_directory_index_storag
 from nti.contentsearch.common import ( 	HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, SNIPPET, 
 										NTIID, TARGET_OID)
 
-from hamcrest import (assert_that, is_, has_key, has_entry, has_length, is_not)
+from hamcrest import (assert_that, is_, has_key, has_entry, has_length, is_not, has_item)
 
 _phrases = ("Shoot To Kill",
 			"Bloom, Split and Deviate",
@@ -95,6 +95,57 @@ class TestWhooshUserIndexManager(ConfiguringTestBase):
 		assert_that(key, is_(items[key][NTIID]))
 		assert_that(items[key], has_entry(CONTAINER_ID, 'tag:nextthought.com,2011-10:bleach-manga'))
 		assert_that(items[key], has_entry(SNIPPET, 'now and Become my SHIELD Lightning Strike'))
+		
+	@WithMockDSTrans
+	def test_update_note(self):
+		notes, _ = self._add_user_index_notes()
+		note = notes[5]
+		note.body = [u'Blow It Away']
+		teo = note.toExternalObject()
+		self.uim.update_content(teo)
+		
+		hits = self.uim.search("shield", limit=None)
+		assert_that(hits, has_entry(HIT_COUNT, 0))
+		assert_that(hits, has_entry(QUERY, 'shield'))
+		
+		hits = self.uim.search("blow", limit=None)
+		assert_that(hits, has_entry(HIT_COUNT, 1))
+		assert_that(hits, has_entry(QUERY, 'blow'))
+		
+	@WithMockDSTrans
+	def test_delete_note(self):
+		notes, _  = self._add_user_index_notes()
+		note = notes[5]
+		teo = note.toExternalObject()
+		self.uim.delete_content(teo)
+		
+		hits = self.uim.search("shield", limit=None)
+		assert_that(hits, has_entry(HIT_COUNT, 0))
+		assert_that(hits, has_entry(QUERY, 'shield'))
+		
+	@WithMockDSTrans
+	def test_suggest(self):
+		self._add_user_index_notes()
+		hits = self.uim.suggest("ra")
+		assert_that(hits, has_entry(HIT_COUNT, 4))
+		assert_that(hits, has_entry(QUERY, 'ra'))
+		assert_that(hits, has_key(ITEMS))
+		
+		items = hits[ITEMS]
+		assert_that(items, has_length(4))
+		assert_that(items, has_item('rankle'))
+		assert_that(items, has_item('raise'))
+		assert_that(items, has_item('rain'))
+		assert_that(items, has_item('rage'))
+		
+	@WithMockDSTrans
+	def test_ngram_search(self):
+		self._add_user_index_notes()
+		hits = self.uim.ngram_search("sea")
+		assert_that(hits, has_entry(HIT_COUNT, 1))
+		assert_that(hits, has_entry(QUERY, 'sea'))
+		assert_that(hits, has_key(ITEMS))
+		assert_that(hits[ITEMS], has_length(1))
 		
 if __name__ == '__main__':
 	unittest.main()
