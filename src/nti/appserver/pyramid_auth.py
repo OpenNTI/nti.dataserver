@@ -160,6 +160,12 @@ class _NTIUsers(object):
 		# Add the authenticated and everyone groups
 		result.add( nti_interfaces.IPrincipal( pyramid.security.Everyone ) )
 		result.add( nti_interfaces.IPrincipal( pyramid.security.Authenticated ) )
+		if '@' in username:
+			# Make the domain portion of the username available as a group
+			# TODO: Prefix this, like we do with roles?
+			domain = username.split( '@', 1 )[-1]
+			result.add( domain )
+			result.add( nti_interfaces.IPrincipal( domain ) )
 		return result
 
 

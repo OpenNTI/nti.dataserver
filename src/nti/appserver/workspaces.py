@@ -168,7 +168,17 @@ class LibraryCollectionDetailExternalizer(object):
 		self._collection = collection
 
 	def toExternalObject(self):
-		return toExternalObject( self._collection.library )
+		request = get_current_request()
+		if request:
+			test = lambda x: psec.has_permission( nauth.ACT_READ, model_interfaces.IACLProvider(x), request )
+		else:
+			test = lambda x: True
+		# TODO: Standardize the way ACLs are applied during external writing
+		# This is weird and bad: we're overwriting what Library itself does
+		library = self._collection.library
+		return { 'icon': library.icon,
+				 'title': library.title,
+				 'titles' : [x.toExternalObject() for x in library.titles if test(x)] }
 
 class GlobalWorkspace(object):
 	"""

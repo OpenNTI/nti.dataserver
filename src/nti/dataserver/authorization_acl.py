@@ -5,7 +5,11 @@ ACL providers for the various content types.
 
 from __future__ import unicode_literals, print_function
 
+import logging
+logger = logging.getLogger(__name__)
+
 import six
+import os
 
 from zope import interface
 from zope import component
@@ -335,7 +339,30 @@ class _LibraryTOCEntryACLProvider(object):
 
 	def __init__( self, obj ):
 		self._obj = obj
+		# TODO: Should this be taking into account a parent LibraryEntryACLProvider at all?
+		# If so, how?
 		self.__acl__ = ( ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _LibraryTOCEntryACLProvider ), )
+
+class _LibraryEntryACLProvider(object):
+	"""
+	Checks a library entry for the existence of a '.nti_acl' file, and if present,
+	reads an ACL from it. Otherwise, the ACL allows all authenticated
+	users access.
+	"""
+	interface.implements( nti_interfaces.IACLProvider )
+	component.adapts( nti_interfaces.ILibraryEntry )
+
+	def __init__( self, obj ):
+		self._obj = obj
+		if os.path.exists( os.path.join( obj.localPath, '.nti_acl' ) ):
+			try:
+				self.__acl__ = acl_from_file( os.path.join( obj.localPath, '.nti_acl' ) )
+			except:
+				logger.exception( "Failed to read acl from %s; denying all access.", obj )
+				self.__acl__ = _ACL( (ace_denying( nti_interfaces.EVERYONE_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _LibraryEntryACLProvider ), ) )
+		else:
+			self.__acl__ = _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _LibraryTOCEntryACLProvider ), ) )
+
 
 class _FriendsListACLProvider(_CreatedACLProvider):
 	"""

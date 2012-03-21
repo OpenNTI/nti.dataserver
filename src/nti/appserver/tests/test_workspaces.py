@@ -11,6 +11,8 @@ from nti.appserver.workspaces import ContainerEnumerationWorkspace as CEW
 from nti.appserver.workspaces import UserEnumerationWorkspace as UEW
 from nti.appserver.workspaces import HomogeneousTypedContainerCollection as HTCW
 from nti.appserver.workspaces import UserService, _UserEnrolledClassSectionsCollection as _UserClassesCollection, _UserPagesCollection as UserPagesCollection
+from nti.appserver.workspaces import LibraryCollection
+
 from nti.appserver import tests
 from nti.appserver import interfaces as app_interfaces
 
@@ -235,3 +237,58 @@ def test_user_pages_collection_accepts_only_external_types():
 	# a great test
 
 	assert_that( 'application/vnd.nextthought.transcriptsummary', is_not( is_in( list(UserPagesCollection(None).accepts) ) ) )
+
+import tempfile
+import shutil
+import os
+from nti.dataserver.library import Library
+import pyramid.interfaces
+from pyramid.threadlocal import get_current_request
+
+class TestLibraryCollectionDetailExternalizer(tests.ConfiguringTestBase):
+
+	def setUp(self):
+		super(TestLibraryCollectionDetailExternalizer,self).setUp()
+		self.temp_dir = tempfile.mkdtemp()
+		self.entry_dir =  os.path.join( self.temp_dir, 'TheEntry' )
+		os.mkdir( self.entry_dir )
+		open( os.path.join( self.entry_dir, 'eclipse-toc.xml' ), 'w' )
+		self.library = Library( ( self.entry_dir,) )
+		self.library_collection = LibraryCollection( self.library )
+
+		class Policy(object):
+			interface.implements( pyramid.interfaces.IAuthenticationPolicy )
+			def authenticated_userid( self, request ):
+				return 'jason.madden@nextthought.com'
+			def effective_principals( self, request ):
+				return [nti_interfaces.IPrincipal(x) for x in [self.authenticated_userid(request), nti_interfaces.AUTHENTICATED_GROUP_NAME]]
+		get_current_request().registry.registerUtility( Policy() )
+		get_current_request().registry.registerUtility( pyramid.authorization.ACLAuthorizationPolicy() )
+
+	def tearDown(self):
+		shutil.rmtree( self.temp_dir )
+		super(TestLibraryCollectionDetailExternalizer,self).tearDown()
+
+	def test_no_acl_file(self):
+		external = nti_interfaces.IExternalObject( self.library_collection ).toExternalObject()
+		assert_that( external, has_entry( 'titles', has_length( 1 ) ) )
+
+	def test_malformed_acl_file_denies_all(self):
+		with open( os.path.join( self.entry_dir, '.nti_acl' ), 'w' ) as f:
+			f.write( "This file is invalid" )
+		external = nti_interfaces.IExternalObject( self.library_collection ).toExternalObject()
+		assert_that( external, has_entry( 'titles', has_length( 0 ) ) )
+
+
+	def test_specific_acl_file(self):
+		with open( os.path.join( self.entry_dir, '.nti_acl' ), 'w' ) as f:
+			f.write( "Allow:User:[nti.actions.create]" )
+
+		external = nti_interfaces.IExternalObject( self.library_collection ).toExternalObject()
+		assert_that( external, has_entry( 'titles', has_length( 0 ) ) )
+
+		with open( os.path.join( self.entry_dir, '.nti_acl' ), 'w' ) as f:
+			f.write( "Allow:jason.madden@nextthought.com:[zope.View]" )
+
+		external = nti_interfaces.IExternalObject( self.library_collection ).toExternalObject()
+		assert_that( external, has_entry( 'titles', has_length( 1 ) ) )

@@ -5,6 +5,8 @@ import unittest
 from hamcrest import assert_that, has_length, contains_string, is_, same_instance, is_not
 from hamcrest.core.base_matcher import BaseMatcher
 import tempfile
+import shutil
+import os
 
 from nti.dataserver.tests import has_attr, provides
 from zope.interface.verify import verifyObject
@@ -15,6 +17,7 @@ from nti.dataserver import authorization as auth
 from nti.dataserver import authorization_acl as auth_acl
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.users import User, FriendsList
+from nti.dataserver.library import LibraryEntry
 
 from pyramid.authorization import ACLAuthorizationPolicy
 
@@ -239,6 +242,37 @@ class TestACE(mock_dataserver.ConfiguringTestBase):
 		from_file = auth_acl.acl_from_file( temp_file )
 		assert_that( from_file, is_( acl ) )
 
+
+class TestLibraryEntryAclProvider(mock_dataserver.ConfiguringTestBase):
+
+	def setUp(self):
+		super(TestLibraryEntryAclProvider,self).setUp()
+		self.temp_dir = tempfile.mkdtemp()
+		self.library_entry = LibraryEntry( localPath=self.temp_dir )
+
+	def tearDown(self):
+		shutil.rmtree( self.temp_dir )
+		super(TestLibraryEntryAclProvider,self).tearDown()
+
+	def test_no_acl_file(self):
+		acl_prov = nti_interfaces.IACLProvider( self.library_entry )
+		assert_that( acl_prov, permits( nti_interfaces.AUTHENTICATED_GROUP_NAME,
+										auth.ACT_READ ) )
+
+	def test_malformed_acl_file_denies_all(self):
+		with open( os.path.join( self.temp_dir, '.nti_acl' ), 'w' ) as f:
+			f.write( "This file is invalid" )
+		acl_prov = nti_interfaces.IACLProvider( self.library_entry )
+		assert_that( acl_prov, denies( nti_interfaces.AUTHENTICATED_GROUP_NAME,
+										auth.ACT_READ ) )
+
+
+	def test_specific_acl_file(self):
+		with open( os.path.join( self.temp_dir, '.nti_acl' ), 'w' ) as f:
+			f.write( "Allow:User:[nti.actions.create]" )
+		acl_prov = nti_interfaces.IACLProvider( self.library_entry )
+		assert_that( acl_prov, permits( "User", auth.ACT_CREATE ) )
+		assert_that( acl_prov, denies( "OtherUser", auth.ACT_CREATE ) )
 
 class Permits(BaseMatcher):
 
