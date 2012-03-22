@@ -393,7 +393,7 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 			self._p_activate()
 			result = super(_Meeting,self).__getattribute__('post_message')
 		return result
-	
+
 
 	@property
 	def RoomId(self):
@@ -1004,7 +1004,7 @@ class Chatserver(object):
 		container = self.meeting_container_storage.get( room_info_dict[XFields.CONTAINER_ID] )
 		if not hasattr( container, 'enter_active_meeting' ):
 			# The container didn't match any storage.
-			logger.info( "The container %s (%s) is not a persistent meeting room", container, room_info_dict )
+			logger.info( "The requested container (%s) (info: %s) is not a persistent meeting room; not entering", container, room_info_dict )
 			return None
 
 		# At this point, we know we have exactly one Occupant, the (sender,sid).
