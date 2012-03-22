@@ -110,6 +110,7 @@ class WhooshUserIndexManager(object):
 		return search_on or indexables
 	
 	def _do_search(self, query, limit=None, is_quick_search=False, **kwargs):
+		query = unicode(query)
 		search_on = self._adapt_search_on_types(kwargs.get('search_on', None))
 		results = empty_search_result(query)
 		with self.storage.dbTrans():
@@ -134,6 +135,7 @@ class WhooshUserIndexManager(object):
 		return results
 
 	def suggest_and_search(self, query, limit=None, *args, **kwargs):
+		query = unicode(query)
 		results = empty_suggest_and_search_result(query)
 		search_on = self._adapt_search_on_types(kwargs.get('search_on', None))
 		with self.storage.dbTrans():
@@ -146,6 +148,7 @@ class WhooshUserIndexManager(object):
 		return results
 
 	def suggest(self, term, limit=None, prefix=None, *args, **kwargs):
+		term = unicode(term)
 		results = empty_suggest_result(term)
 		maxdist = kwargs.get('maxdist', None)
 		search_on = self._adapt_search_on_types(kwargs.get('search_on', None))

@@ -79,14 +79,15 @@ class RepozeUserIndexManager(object):
 				ntiid = docMap.address_for_docid(docId)
 				try:
 					svr_obj = find_object_with_ntiid(ntiid, dataserver=self.dataserver)
-					if callable( getattr( svr_obj, 'toExternalObject', None ) ):
-						svr_obj = svr_obj.toExternalObject()
-					hit = get_index_hit(svr_obj, query=query, use_word_highlight=use_word_highlight, **kwargs)
-					if hit:
-						items.append(hit)
-						lm = max(lm, hit[LAST_MODIFIED])
-						if limit and len(items) >= limit:
-							break
+					if svr_obj:
+						if callable( getattr( svr_obj, 'toExternalObject', None ) ):
+							svr_obj = svr_obj.toExternalObject()
+						hit = get_index_hit(svr_obj, query=query, use_word_highlight=use_word_highlight, **kwargs)
+						if hit:
+							items.append(hit)
+							lm = max(lm, hit[LAST_MODIFIED])
+							if limit and len(items) >= limit:
+								break
 				except:
 					logger.error("cannot find object with NTIID '%s' referenced in index" % ntiid)
 		return items, lm
@@ -108,6 +109,7 @@ class RepozeUserIndexManager(object):
 		
 	def _do_search(self, field, query, limit=None, use_word_highlight=True, *args, **kwargs):
 		
+		query = unicode(query)
 		results = empty_search_result(query)
 		if not query:
 			return results
@@ -147,7 +149,7 @@ class RepozeUserIndexManager(object):
 	quick_search = ngram_search
 	
 	def suggest(self, term, limit=None, prefix=None, *args, **kwargs):
-		
+		term = unicode(term)
 		results = empty_suggest_result(term)
 		if not term:
 			return results
@@ -163,7 +165,7 @@ class RepozeUserIndexManager(object):
 				catalog = self.datastore.get_catalog(self.username, type_name)
 				textfield = catalog.get(content_, None)
 				if isinstance(textfield, CatalogTextIndexNG3): 
-					words_t = textfield.suggest(term=unicode(term), threshold=threshold, prefix=prefix) 
+					words_t = textfield.suggest(term=term, threshold=threshold, prefix=prefix) 
 					for t in words_t:
 						suggestions.add(t[0])
 		
@@ -180,7 +182,7 @@ class RepozeUserIndexManager(object):
 			result = self.suggest(query, limit, *args, **kwargs)
 			suggestions = result[ITEMS]
 			if suggestions:
-				result = self.search(query, limit, *args, **kwargs)
+				result = self.search(suggestions[0], limit, *args, **kwargs)
 			else:
 				result = self.search(query, limit, *args, **kwargs)
 
