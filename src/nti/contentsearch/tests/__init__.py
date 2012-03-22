@@ -1,10 +1,7 @@
 from zope import component
 from zope.configuration import xmlconfig
 
-from whoosh import fields
-
 import nti.contentsearch as contentsearch
-
 from nti.dataserver.tests.mock_dataserver import ConfiguringTestBase as DSConfiguringTestBase
 
 # -----------------------------
@@ -33,9 +30,6 @@ zanpakuto_commands =  (	"Shoot To Kill",
 						"Reduce All Creation to Ash",
 						"Sit Upon the Frozen Heavens", 
 						"Call forth the Twilight")
-
-sample_schema = fields.Schema(	id=fields.ID(stored=True, unique=True),\
-								content=fields.TEXT(stored=True))
 
 # -----------------------------
 

@@ -6,6 +6,7 @@ from whoosh.filedb.filestore import RamStorage
 
 from nti.contentsearch.contenttypes import Highlight
 
+@unittest.SkipTest
 class TestHighlight(unittest.TestCase):
 
 	sample_hightlight = None

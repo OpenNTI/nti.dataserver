@@ -21,6 +21,7 @@ from nti.contentsearch.common import empty_search_result
 from nti.contentsearch.common import empty_suggest_result
 from nti.contentsearch.common  import empty_suggest_and_search_result
 
+@unittest.SkipTest
 class TestContentTypes(unittest.TestCase):
 
 	def _load_json(self, name = "message_info.json"):
