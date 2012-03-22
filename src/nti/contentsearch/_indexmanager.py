@@ -244,28 +244,4 @@ class IndexManager(object):
 	def __del__(self):
 		self.close()
 
-# -----------------------------
 
-def create_index_manager_with_whoosh(index_storage=None, indexdir=None, use_md5=True, dataserver=None):
-	
-	import _whoosh_bookindexmanager
-	import _whoosh_userindexmanager
-	from indexstorage import MultiDirectoryStorage
-
-	book_idx_manager = _whoosh_bookindexmanager.wbm_factory()
-	index_storage = index_storage or MultiDirectoryStorage(indexdir)
-	user_idx_manager = _whoosh_userindexmanager.wuim_factory(index_storage, use_md5=use_md5)
-	
-	return IndexManager(book_idx_manager, user_idx_manager, dataserver=dataserver)
-
-def create_index_manager_with_repoze(search_db=None, dataserver=None, repoze_store=None):
-	
-	import _whoosh_bookindexmanager
-	import _repoze_userindexmanager
-	from _repoze_datastore import RepozeDataStore
-	
-	book_idx_manager = _whoosh_bookindexmanager.wbm_factory()
-	repoze_store = repoze_store or RepozeDataStore(search_db)
-	user_idx_manager = _repoze_userindexmanager.ruim_factory(repoze_store)
-	
-	return IndexManager(book_idx_manager, user_idx_manager, dataserver=dataserver)
