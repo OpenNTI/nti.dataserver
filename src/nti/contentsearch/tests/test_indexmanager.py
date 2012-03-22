@@ -13,12 +13,12 @@ from nti.dataserver.users import User
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.ntiids import make_ntiid
 
+from nti.contentsearch.indexmanager import create_index_manager_with_repoze	
+from nti.contentsearch.indexmanager import create_index_manager_with_whoosh	
 from nti.contentsearch._whoosh_index import create_book_schema
 from nti.contentsearch._whoosh_indexstorage import create_directory_index
 from nti.contentsearch._whoosh_bookindexmanager import WhooshBookIndexManager
 from nti.contentsearch._repoze_datastore import RepozeDataStore	
-from nti.contentsearch._indexmanager import create_index_manager_with_repoze	
-from nti.contentsearch._indexmanager import create_index_manager_with_whoosh	
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
