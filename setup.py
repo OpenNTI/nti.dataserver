@@ -67,6 +67,7 @@ setup(
 		'pylint',
 		'pyquery',
 		'pyramid >= 1.3' ,
+		'pyramid_tm',
 		'pyramid_traversalwrapper',
 		'pyramid_who',
 		'pyramid_zodbconn',

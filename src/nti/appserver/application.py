@@ -241,6 +241,33 @@ def createApplication( http_port,
 		# get trounced, so reinstall them
 		pyramid_config.registry.settings.update( settings )
 
+	# Our addons
+	# First, ensure that each request is wrapped in default global transaction
+	pyramid_config.include( 'pyramid_tm' )
+	# ...which will veto commit on a 4xx or 5xx response
+	pyramid_config.registry.settings['tm.commit_veto'] = 'pyramid_tm.default_commit_veto'
+	# ...and which will retry a few times
+	# NOTE: This is disabled because retry means that the entire request body must be
+	# buffered, something that cannot happen with websockets. (However, the way the handlers
+	# are set up, we may never get to the pyramid object on a websocket request, so
+	# it probably doesn't matter. Verify).
+	# TODO: This retry and transaction logic is very nice...how to integrate it with
+	# the socketio_server and websocket handling? That all happens before we get down this
+	# far
+	#pyramid_config.registry.settings['tm.attempts'] = 3
+	# Arrange for a db connection to be opened with each request
+	# if pyramid_zodbconn.get_connection() is called (until called, this does nothing)
+	pyramid_config.include( 'pyramid_zodbconn' )
+	# Notice that we're using the db from the DS directly, not requiring construction
+	# of a new DB based on a URI; that is a second option if we don't want the
+	# DS object 'owning' the DB.
+	# NOTE: It is not entirely clear how to get a connection to the dataserver if we're not
+	# calling a method on the dataserver (and it doesn't have access to the request); however, it
+	# is weird the way it is currently handled, with static fields of a context manager class.
+	# I think the DS will want to be a transaction.interfaces.ISynchronizer and/or an IDataManager
+	pyramid_config.registry.zodb_database = server.db
+	#pyramid_config.registry.settings('zodbconn.uri') =
+
 
 	# The pyramid_openid view requires a session. The repoze.who.plugins.openid plugin
 	# uses a cookie by default to handle this, so it's not horrible to use an unencrypted
