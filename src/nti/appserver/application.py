@@ -642,9 +642,7 @@ def create_index_manager(server, use_zeo_storage=None, user_indices_dir='/tmp'):
 																		 blobsKey = blobsKey,
 																		 dataserver = server)
 	else:
-		with server.dbTrans():
-			usernames = [name for name in server.root['users'].keys()]
-			ixman = nti.contentsearch.indexmanager.create_index_manager(user_indices_dir, usernames)
+		ixman = nti.contentsearch.indexmanager.create_index_manager(user_indices_dir, dataserver=server)
 
 	return ixman
 
