@@ -7,7 +7,7 @@ logger = logging.getLogger( __name__ )
 import os
 import platform
 
-from nti.dataserver.library import Library
+from nti.dataserver.library import DynamicLibrary
 from nti.dataserver import interfaces as nti_interfaces
 from zope import component
 
@@ -28,28 +28,17 @@ def configure_app( global_config,
 				   **settings ):
 	":return: A WSGI callable."
 
-#	os.environ['DATASERVER_NO_REDIRECT'] = '1'
-
-
-	root = deploy_root
 	# We'll volunteer to serve all the files in the root directory
-	# This SHOULD include 'prealgebra' and 'mathcounts'
-	serveFiles = [ ('/' + s, os.path.join( root, s) )
-				   for s in os.listdir( root )
-				   if os.path.isdir( os.path.join( root, s ) )]
-	libraryPaths = []
-	for _, path in serveFiles:
-		to_append = None
-		if path.endswith( '/prealgebra' ):
-			to_append = (path, False, 'Prealgebra', '/prealgebra/icons/chapters/PreAlgebra-cov-icon.png')
-		elif path.endswith( '/mathcounts' ):
-			to_append = (path, False, 'MathCounts', '/mathcounts/icons/mathcounts-logo.gif' )
-		else:
-			to_append = (path, False)
-		libraryPaths.append( to_append )
+	# Note that this is not dynamic (the library is)
+	# but in production we expect to have static files served by
+	# nginx/apache
+	serveFiles = [ ('/' + s, os.path.join( deploy_root, s) )
+				   for s in os.listdir( deploy_root )
+				   if os.path.isdir( os.path.join( deploy_root, s ) )]
+
 
 	application,main = createApplication( int(settings.get('http_port','8081')),
-										  Library( libraryPaths ),
+										  DynamicLibrary( deploy_root ),
 										  process_args=True,
 										  create_ds=nti_create_ds,
 										  sync_changes=asbool(sync_changes),
