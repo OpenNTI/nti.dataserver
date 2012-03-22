@@ -145,7 +145,10 @@ class Session(Persistent):
 		self.server_queue.put( msg )
 
 	def do_put_client_msg(self, msg):
-		self.clear_disconnect_timeout()
+		if msg is not None:
+			# When we get a message from the client, reset our
+			# heartbeat timer. (Don't do this for our termination message)
+			self.clear_disconnect_timeout()
 		self.client_queue.put( msg )
 
 
@@ -223,9 +226,29 @@ class SessionService(object):
 	def create_session( self, session_class=Session ):
 		""" The returned session must not be modified. """
 		session = session_class()
+		session_id = session.session_id
 		with self.session_db_cm() as session_db:
-			session_db['session_map'][session.session_id] = session
+			session_db['session_map'][session_id] = session
 		session._v_session_service = self
+
+
+		def watchdog_session():
+			# Some transports make it very hard to detect
+			# when a session stops responding (XHR)...it just goes silent.
+			# We watch for it to die (since we created it) and cleanup
+			# after it...this is a compromise between always
+			# knowing it has died and doing the best we can across the cluster
+			gevent.sleep( 60 )	# Time? We can detect a dead session no faster than we decide it's dead,
+								# which is SESSION_HEARTBEAT_TIMEOUT 
+			logger.debug( "Checking status of session %s", session_id )
+			sess = self.get_session(session_id) # performs validation, notification
+			if sess:
+				# still alive, go again
+				gevent.spawn( watchdog_session )
+			else:
+				logger.debug( "Session %s died", session_id )
+		gevent.spawn( watchdog_session )
+
 		return session
 
 	def _replace_in_owner_index( self, session, old_owner ):
@@ -250,17 +273,20 @@ class SessionService(object):
 			result._v_session_service = self
 		return result
 
-	FIVE_MINUTES = 60 * 5
+	SESSION_HEARTBEAT_TIMEOUT = 60 * 2
 
-	def _session_dead( self, session ):
-		too_old = time.time() - self.FIVE_MINUTES
+	def _session_dead( self, session, max_age=SESSION_HEARTBEAT_TIMEOUT ):
+		too_old = time.time() - max_age
 		return session.last_heartbeat_time < too_old and session.creation_time < too_old
 
 	def _session_cleanup( self, s, session_db, sids=None ):
 		""" Cleans up a dead session. """
+		# Make sure the session itself knows it's dead
+		s.kill()
 		try:
 			del session_db['session_map'][s.session_id]
 		except KeyError: pass
+
 		if sids is None:
 			sids = self._get_session( session_db, s.owner, 'session_index' ) or []
 		try:
