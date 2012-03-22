@@ -117,7 +117,7 @@ class CollectionContentTypeAware(object):
 
 class LibraryWorkspace(object):
 	interface.implements(app_interfaces.IWorkspace)
-	component.adapts(library.Library)
+	component.adapts(model_interfaces.ILibrary)
 
 	def __init__( self, lib ):
 		self._library = lib
@@ -136,7 +136,7 @@ class LibraryWorkspace(object):
 
 class LibraryCollection(object):
 	interface.implements(app_interfaces.ICollection)
-	component.adapts(library.Library)
+	component.adapts(model_interfaces.ILibrary)
 
 	def __init__( self, lib ):
 		self._library = lib

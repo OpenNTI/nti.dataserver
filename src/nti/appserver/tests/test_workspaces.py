@@ -241,7 +241,7 @@ def test_user_pages_collection_accepts_only_external_types():
 import tempfile
 import shutil
 import os
-from nti.dataserver.library import Library
+from nti.dataserver.library import DynamicLibrary
 import pyramid.interfaces
 from pyramid.threadlocal import get_current_request
 
@@ -253,8 +253,9 @@ class TestLibraryCollectionDetailExternalizer(tests.ConfiguringTestBase):
 		self.entry_dir =  os.path.join( self.temp_dir, 'TheEntry' )
 		os.mkdir( self.entry_dir )
 		open( os.path.join( self.entry_dir, 'eclipse-toc.xml' ), 'w' )
-		self.library = Library( ( self.entry_dir,) )
-		self.library_collection = LibraryCollection( self.library )
+		self.library = DynamicLibrary( self.temp_dir )
+		self.library_workspace = component.getAdapter( self.library, app_interfaces.IWorkspace )
+		self.library_collection = self.library_workspace.collections[0]
 
 		class Policy(object):
 			interface.implements( pyramid.interfaces.IAuthenticationPolicy )
