@@ -126,6 +126,7 @@ class IndexManager(object):
 		results = None
 		if query:
 			jobs = []
+			query = unicode(query)
 			for uim in self._get_search_uims(username, *args, **kwargs):
 				jobs.append(gevent.spawn(uim.search, query=query, limit=limit, **kwargs))
 			gevent.joinall(jobs)
@@ -137,6 +138,7 @@ class IndexManager(object):
 		results = None
 		if query:
 			jobs = []
+			query = unicode(query)
 			for uim in self._get_search_uims(username, *args, **kwargs):
 				jobs.append(gevent.spawn(uim.ngram_search, query=query, limit=limit, **kwargs))
 			gevent.joinall(jobs)
@@ -148,6 +150,7 @@ class IndexManager(object):
 		results = None
 		if query:
 			jobs = []
+			query = unicode(query)
 			for uim in self._get_search_uims(username, *args, **kwargs):
 				jobs.append(gevent.spawn(uim.suggest_and_search, query=query, limit=limit, **kwargs))
 			gevent.joinall(jobs)
@@ -159,6 +162,7 @@ class IndexManager(object):
 		results = None
 		if term:
 			jobs = []
+			term = unicode(term)
 			for uim in self._get_search_uims(username, *args, **kwargs):
 				jobs.append(gevent.spawn(uim.suggest, term, limit=limit, prefix=prefix, **kwargs))
 			gevent.joinall(jobs)
@@ -170,24 +174,30 @@ class IndexManager(object):
 	
 	# -------------------
 	
-	def _get_data(self, **kwargs):
-		result = kwargs.get('data', None) or kwargs.get('externalValue', None)
+	def _get_data(self, kwargs):
+		if 'data' in kwargs:
+			result = kwargs.pop('data')
+		else:
+			result = kwargs.get('externalValue', None)
 		return result
 	
 	def index_user_content(self, username, type_name=None, *args, **kwargs):
-		data = self._get_data(**kwargs)
+		data = self._get_data(kwargs)
 		um = self._get_user_index_manager(username)
-		if um: um.index_content(data, type_name, *args, **kwargs)
+		if um and data:
+			return um.index_content(data, type_name, *args, **kwargs)
 
 	def update_user_content(self, username, type_name=None, *args, **kwargs):
-		data = self._get_data(**kwargs)
+		data = self._get_data(kwargs)
 		um = self._get_user_index_manager(username)
-		if um: um.update_content(data, type_name, *args, **kwargs)
+		if um and data: 
+			return um.update_content(data, type_name, *args, **kwargs)
 
 	def delete_user_content(self, username, type_name=None, *args, **kwargs):
-		data = self._get_data(**kwargs)
+		data = self._get_data(kwargs)
 		um = self._get_user_index_manager(username)
-		if um: um.delete_content(data, type_name, *args, **kwargs)
+		if um and data: 
+			return um.delete_content(data, type_name, *args, **kwargs)
 		
 	# -------------------
 
@@ -236,26 +246,26 @@ class IndexManager(object):
 
 # -----------------------------
 
-def create_index_manager_with_whoosh(index_storage=None, index_dir=None, use_md5=True, dataserver=None):
+def create_index_manager_with_whoosh(index_storage=None, indexdir=None, use_md5=True, dataserver=None):
 	
 	import _whoosh_bookindexmanager
 	import _whoosh_userindexmanager
 	from indexstorage import MultiDirectoryStorage
 
 	book_idx_manager = _whoosh_bookindexmanager.wbm_factory()
-	index_storage = index_storage or  MultiDirectoryStorage(index_dir)
+	index_storage = index_storage or MultiDirectoryStorage(indexdir)
 	user_idx_manager = _whoosh_userindexmanager.wuim_factory(index_storage, use_md5=use_md5)
 	
 	return IndexManager(book_idx_manager, user_idx_manager, dataserver=dataserver)
 
-def create_index_manager_with_repoze(search_db, dataserver=None):
+def create_index_manager_with_repoze(search_db=None, dataserver=None, repoze_store=None):
 	
 	import _whoosh_bookindexmanager
 	import _repoze_userindexmanager
 	from _repoze_datastore import RepozeDataStore
 	
 	book_idx_manager = _whoosh_bookindexmanager.wbm_factory()
-	repoze_store = RepozeDataStore(search_db)
+	repoze_store = repoze_store or RepozeDataStore(search_db)
 	user_idx_manager = _repoze_userindexmanager.ruim_factory(repoze_store)
 	
 	return IndexManager(book_idx_manager, user_idx_manager, dataserver=dataserver)

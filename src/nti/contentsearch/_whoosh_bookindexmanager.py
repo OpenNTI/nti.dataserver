@@ -1,5 +1,7 @@
 from zope import interface
 
+from whoosh import index
+
 from nti.contentsearch import interfaces
 from nti.contentsearch._whoosh_index import Book
 from nti.contentsearch._whoosh_indexstorage import create_directory_index_storage
@@ -43,23 +45,27 @@ class WhooshBookIndexManager(object):
 	# ---------------
 
 	def search(self, query, limit=None, *args, **kwargs):
+		query = unicode(query)
 		with self.storage.dbTrans():
 			with self.bookidx.searcher() as s:
 				results = self.book.search(s, query, limit)
 		return results
 
 	def ngram_search(self, query, limit=None, *args, **kwarg):
+		query = unicode(query)
 		with self.bookidx.searcher() as s:
 			results = self.book.ngram_search(s, query, limit)
 		return results
 
 	def suggest_and_search(self, query, limit=None, *args, **kwarg):
+		query = unicode(query)
 		with self.storage.dbTrans():
 			with self.bookidx.searcher() as s:
 				results = self.book.suggest_and_search(s, query, limit)
 		return results
 
 	def suggest(self, term, limit=None, prefix=None, *args, **kwargs):
+		term = unicode(term)
 		with self.storage.dbTrans():
 			maxdist = kwargs.get('maxdist', None)
 			with self.bookidx.searcher() as s:
@@ -83,5 +89,9 @@ class WhooshBookIndexManager(object):
 
 def wbm_factory(*args, **kwargs):
 	def f(indexname, *fargs, **fkwargs):
-		return WhooshBookIndexManager(indexname=indexname, **fkwargs)
+		indexdir = fkwargs.get('indexdir', None)
+		if indexdir and index.exists_in(indexdir, indexname=indexname):
+			return WhooshBookIndexManager(indexname=indexname, **fkwargs)
+		else:
+			return None
 	return f
