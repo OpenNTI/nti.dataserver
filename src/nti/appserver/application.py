@@ -192,6 +192,7 @@ def createApplication( http_port,
 	server = None
 	# Configure subscribers, etc.
 	xmlconfig.file( 'configure.zcml', package=nti.appserver )
+	
 	# Notify of startup. (Note that configuring the packages loads zope.component:configure.zcml
 	# which in turn hooks up zope.component.event to zope.event for event dispatching)
 	notify( ProcessStarting() )
@@ -599,6 +600,9 @@ def _add_index_listener( server, user_indices_dir ):
 	server.add_change_listener( index_manager.onChange )
 
 def create_index_manager(server, use_zeo_storage=None, user_indices_dir='/tmp'):
+
+	#from nti.contentsearch._indexmanager import create_index_manager_with_repoze
+	#return create_index_manager_with_repoze(server.searchDB, server)
 
 	if use_zeo_storage is None:
 		use_zeo_storage = use_zeodb_index_storage()
