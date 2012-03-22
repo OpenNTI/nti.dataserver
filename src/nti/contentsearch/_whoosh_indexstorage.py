@@ -484,9 +484,9 @@ def create_directory_index(indexname, schema, indexdir='/tmp/indicies'):
 		
 def create_zodb_index_storage(	database, 
 				 				indices_key = '__indices',\
-								blobs_key="__blobs",  
-				 				use_lock_file=False, 
-				 				lock_file_dir="/tmp/locks",
+								blobs_key = "__blobs",  
+				 				use_lock_file = False, 
+				 				lock_file_dir = "/tmp/locks",
 								mapped=True):
 		
 	if isinstance(database, DB):
