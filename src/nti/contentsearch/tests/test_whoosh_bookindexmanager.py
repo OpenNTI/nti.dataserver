@@ -7,10 +7,10 @@ from datetime import datetime
 from nti.dataserver.ntiids import make_ntiid
 
 from nti.contentsearch._whoosh_index import create_book_schema
-from nti.contentsearch._whoosh_indexstorage import DirectoryStorage
+from nti.contentsearch._whoosh_indexstorage import create_directory_index
 from nti.contentsearch._whoosh_bookindexmanager import WhooshBookIndexManager
 
-from nti.contentsearch.common import ( HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, SNIPPET, NTIID)
+from nti.contentsearch.common import (HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, SNIPPET, NTIID)
 
 from nti.contentsearch.tests import zanpakuto_commands
 
@@ -22,9 +22,7 @@ class TestWhooshBookIndexManager(unittest.TestCase):
 	def setUpClass(cls):
 		cls.now = time.time()
 		cls.idx_dir = tempfile.mkdtemp(dir="/tmp")
-		idx = DirectoryStorage(cls.idx_dir).get_or_create_index(indexname='bleach', schema=create_book_schema())
-		idx.close()
-		
+		create_directory_index('bleach', create_book_schema(), cls.idx_dir)
 		cls.bim = WhooshBookIndexManager('bleach', indexdir=cls.idx_dir) 
 		
 		idx = cls.bim.bookidx

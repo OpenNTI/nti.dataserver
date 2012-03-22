@@ -3,9 +3,6 @@ import shutil
 import unittest
 import tempfile
 
-from zope import component
-from zope.configuration import xmlconfig
-
 from ZODB import DB
 from ZODB.FileStorage import FileStorage
 
@@ -13,35 +10,31 @@ from nti.dataserver.users import User
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.ntiids import make_ntiid
 
-import nti.contentsearch as contentsearch
 from nti.contentsearch._repoze_datastore import RepozeDataStore	
 from nti.contentsearch._repoze_userindexmanager import RepozeUserIndexManager	
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
-from nti.dataserver.tests.mock_dataserver import ConfiguringTestBase
 
 from nti.contentsearch.common import ( 	HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, SNIPPET, 
 										NTIID, TARGET_OID)
 
 from nti.contentsearch.tests import zanpakuto_commands
+from nti.contentsearch.tests import ConfiguringTestBase
 
 from hamcrest import (is_, is_not, has_key, has_item, has_entry, has_length, assert_that)
 
 class TestRepozeUserIndexManager(ConfiguringTestBase):
 				
 	def setUp(self):
-		ConfiguringTestBase.setUp(self)
-		component.getSiteManager().__bases__ = (component.getGlobalSiteManager(),)
-		xmlconfig.file( 'configure.zcml', package=contentsearch )
-		
+		super(TestRepozeUserIndexManager, self).setUp()
 		self.db_dir = tempfile.mkdtemp(dir="/tmp")
 		self.storage = FileStorage(os.path.join(self.db_dir, 'data.fs'))
 		self.db = DB(self.storage) 
 		self.repoze = RepozeDataStore(self.db)
 			
 	def tearDown(self):
-		ConfiguringTestBase.tearDown(self)		
+		super(TestRepozeUserIndexManager, self).tearDown()		
 		self.repoze.close()
 		shutil.rmtree(self.db_dir, True)
 

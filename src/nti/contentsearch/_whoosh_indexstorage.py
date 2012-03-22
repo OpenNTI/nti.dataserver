@@ -467,12 +467,18 @@ class _LockFile(object):
 		return '_LockFile(%s)' % self.path
 		
 # -----------------------------
-		
-def create_directory_index_storage(indexdir="/tmp/indicies"):
+	
+def create_directory_index_storage(indexdir='/tmp/indicies'):
 	indexdir = os.path.expanduser(indexdir)
 	if not os.path.exists(indexdir):
 		os.makedirs(indexdir)
 	return MultiDirectoryStorage(indexdir)
+	
+def create_directory_index(indexname, schema, indexdir='/tmp/indicies'):
+	storage = DirectoryStorage(indexdir)
+	idx = storage.get_or_create_index(indexname=indexname, schema=schema)
+	idx.close()
+	return idx, storage
 			
 # -----------------------------
 		

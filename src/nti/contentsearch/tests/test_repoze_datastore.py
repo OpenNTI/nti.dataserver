@@ -3,19 +3,15 @@ import shutil
 import unittest
 import tempfile
 
-from zope import component
-from zope.configuration import xmlconfig
-
 from ZODB import DB
 from ZODB.FileStorage import FileStorage
 
-import nti.contentsearch as contentsearch
 from nti.contentsearch._repoze_datastore import RepozeDataStore	
 from nti.contentsearch._repoze_index import create_notes_catalog
 from nti.contentsearch._repoze_index import create_highlight_catalog
 from nti.contentsearch._repoze_index import create_messageinfo_catalog
 	
-from nti.dataserver.tests.mock_dataserver import ConfiguringTestBase
+from nti.contentsearch.tests import ConfiguringTestBase
 
 from hamcrest import assert_that
 from hamcrest import is_not
@@ -26,15 +22,13 @@ from hamcrest import has_length
 class TestDataStore(ConfiguringTestBase):
 	
 	def setUp(self):
-		ConfiguringTestBase.setUp(self)
-		component.getSiteManager().__bases__ = (component.getGlobalSiteManager(),)
-		xmlconfig.file('configure.zcml', package=contentsearch )
-		
+		super(TestDataStore, self).setUp()
 		self.db_dir = tempfile.mkdtemp(dir="/tmp")
 		self.storage = FileStorage(os.path.join(self.db_dir, 'data.fs'))
 		self.db = DB(self.storage) 
 
 	def tearDown(self):
+		super(TestDataStore, self).tearDown()
 		self.db.close()
 		shutil.rmtree(self.db_dir, True)
 	

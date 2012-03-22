@@ -2,10 +2,6 @@ import os
 import json
 import unittest
 
-from zope import component
-from zope.configuration import xmlconfig
-
-import nti.contentsearch as contentsearch
 from nti.contentsearch._repoze_index import get_id
 from nti.contentsearch._repoze_index import get_oid
 from nti.contentsearch._repoze_index import get_ntiid
@@ -30,7 +26,7 @@ from nti.contentsearch._repoze_index import create_messageinfo_catalog
 from nti.contentsearch._repoze_index import get_index_hit_from_hightlight
 from nti.contentsearch._repoze_index import get_index_hit_from_messgeinfo
 
-from nti.dataserver.tests.mock_dataserver import ConfiguringTestBase
+from nti.contentsearch.tests import ConfiguringTestBase
 
 from hamcrest import assert_that
 from hamcrest import close_to
@@ -62,11 +58,6 @@ class TestRepozeIndex(ConfiguringTestBase):
 		with open(path, "r") as f:
 			cls.messageinfo = json.load(f)
 			
-	def setUp(self):
-		ConfiguringTestBase.setUp(self)
-		component.getSiteManager().__bases__ = (component.getGlobalSiteManager(),)
-		xmlconfig.file( 'configure.zcml', package=contentsearch )
-		
 	def _test_common_catalog(self, catalog):
 		assert_that(catalog, has_key(OID))
 		assert_that(catalog, has_key(NTIID))
