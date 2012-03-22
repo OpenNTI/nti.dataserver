@@ -1,10 +1,16 @@
 #!/usr/bin/env python2.7
 
+from __future__ import print_function, unicode_literals
+
+import logging
+logger = logging.getLogger(__name__)
+
 from zope import interface
 
 import os
 import xml.dom.minidom as minidom
 import urllib
+import string
 
 from . import interfaces
 
@@ -70,6 +76,7 @@ class TOCEntry(object):
 		return None
 
 
+
 class LibraryEntry(object):
 	""" Contains values like href for externalization, also contains
 	localPath which is a reference to the complete path on the local
@@ -123,35 +130,37 @@ class LibraryEntry(object):
 		""" Returns the table-of-contents tree for this entry,
 		if it exists on the local filesystem. Otherwise returns None."""
 		if not _hasTOC( self.localPath ): return None
-		dom = minidom.parse( _TOCPath( self.localPath ) )
+		try:
+			dom = minidom.parse( _TOCPath( self.localPath ) )
+		except Exception:
+			logger.debug( "Failed to parse TOC at %s", _TOCPath(self.localPath), exc_info=True )
+			return None
 		return self._tocItem( dom.firstChild )
 
 	def pathToPropertyValue( self, prop, value ):
 		toc = self.toc
 		return toc.pathToPropertyValue( prop, value )
 
+class _AbstractLibrary(object):
+	"""
+	Base class for a Library. Subclasses must define the `paths` to inspect.
 
-class Library(object):
+	:param paths: A sequence of strings or tuples. If a string,
+		it is a path to a location of a library entry on the
+		filesystem. If a tuple, it begins with that path (or None)
+		followed by a boolean saying whether to ignore the existence
+		of the directory on the filesystem and create a mock
+		LibraryEntry. An optional third entry is the title; if missing
+		it will be the directory name. An optional fourth entry is the
+		relative path to the icon. In other words:
+		`(path, even_if_not_found, [Title], [relative icon path])`
+	"""
 
 	interface.implements(interfaces.ILibrary)
 
-	def __init__(self, paths=() ):
-		"""
-		Creates a library that will examine the given paths.
-
-		:param paths: A sequence of strings or tuples. If a string,
-			it is a path to a location of a library entry on the
-			filesystem. If a tuple, it begins with that path (or None)
-			followed by a boolean saying whether to ignore the existence
-			of the directory on the filesystem and create a mock
-			LibraryEntry. An optional third entry is the title; if missing
-			it will be the directory name. An optional fourth entry is the
-			relative path to the icon. In other words:
-			`(path, even_if_not_found, [Title], [relative icon path])`
-
-		EOD
-		"""
-		self.paths = paths
+	paths = ()
+	def __init__(self):
+		pass
 
 	@property
 	def icon(self):
@@ -191,7 +200,7 @@ class Library(object):
 
 				base = os.path.split( path )[-1]
 				if not title:
-					title = base.title()
+					title = string.capwords(base)
 				base = '/' + base
 				if not iconPath:
 					iconPath = base + '/icons/' + title + '-Icon.png'
@@ -211,6 +220,8 @@ class Library(object):
 					online['Archive Last Modified'] = installtime
 				entry = LibraryEntry( online )
 				entry.localPath = path
+				online['title'] = entry.toc.__name__ if entry.toc and entry.toc.__name__ else online['title']
+				entry.extItems['title'] = online['title']
 				titles.append( entry )
 
 		return titles
@@ -254,3 +265,42 @@ class Library(object):
 			# itself, so take it off; we only want the children
 			result.pop()
 		return result
+
+
+class Library(_AbstractLibrary):
+
+	interface.implements(interfaces.ILibrary)
+
+	def __init__(self, paths=() ):
+		"""
+		Creates a library that will examine the given paths.
+
+		:param paths: A sequence of strings or tuples. If a string,
+			it is a path to a location of a library entry on the
+			filesystem. If a tuple, it begins with that path (or None)
+			followed by a boolean saying whether to ignore the existence
+			of the directory on the filesystem and create a mock
+			LibraryEntry. An optional third entry is the title; if missing
+			it will be the directory name. An optional fourth entry is the
+			relative path to the icon. In other words:
+			`(path, even_if_not_found, [Title], [relative icon path])`
+
+		EOD
+		"""
+		super(Library,self).__init__()
+		self.paths = paths
+
+class DynamicLibrary(_AbstractLibrary):
+	"""
+	Implements a library by looking at the contents of a root
+	directory, when needed.
+	"""
+
+	def __init__( self, root ):
+		super(DynamicLibrary,self).__init__()
+		self._root = root
+
+	@property
+	def paths(self):
+		return [os.path.join( self._root, p) for p in os.listdir(self._root)
+				if os.path.isdir( os.path.join( self._root, p ) )]
