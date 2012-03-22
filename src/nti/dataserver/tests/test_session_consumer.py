@@ -180,7 +180,7 @@ class TestSessionConsumer(mock_dataserver.ConfiguringTestBase):
 		self.cons( self.socket, {'id': "1", 'type': 'event', 'name': 'chat_handler', 'args': ("The arg",)} )
 
 		assert_that( self.socket, has_attr( 'args', 'The arg') )
-		assert_that( self.socket.acks, contains( ('1', "The result")) )
+		assert_that( self.socket.acks, contains( ('1', ["The result"])) )
 
 	@mock_dataserver.WithMockDSTrans
 	def test_exception_event( self ):
