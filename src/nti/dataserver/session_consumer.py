@@ -180,13 +180,16 @@ class SessionConsumer(Persistent):
 		try:
 			result = handler( )
 			if message.get('id'):
-				# they expect a response
+				# they expect a response. Note that ack
+				# is unlike 'send_event' and requires that the args be
+				# pre-packed as an array. (This is due to how the JS expects
+				# to find packet.args as an array)
 				try:
-					socket_obj.ack( message['id'], result )
+					socket_obj.ack( message['id'], [result] )
 				except TypeError:
 					if result is not None: raise
 					# plistlib cannot serializae None, try false
-					socket_obj.ack( message['id'], False )
+					socket_obj.ack( message['id'], [False] )
 		except component.ComponentLookupError:
 				# This is a programming error we can and should fix
 				raise
