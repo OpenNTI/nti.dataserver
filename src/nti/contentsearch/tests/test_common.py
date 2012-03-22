@@ -8,8 +8,8 @@ from hamcrest import assert_that, has_length
 
 from nti.contentsearch.contenttypes import MessageInfo
 
-from nti.contentsearch.contenttypes import echo
-from nti.contentsearch.contenttypes import epoch_time
+from nti.contentsearch.common import echo
+from nti.contentsearch.common import epoch_time
 from nti.contentsearch.contenttypes import get_content
 from nti.contentsearch.contenttypes import get_datetime
 from nti.contentsearch.contenttypes import get_keywords
@@ -21,8 +21,7 @@ from nti.contentsearch.common import empty_search_result
 from nti.contentsearch.common import empty_suggest_result
 from nti.contentsearch.common  import empty_suggest_and_search_result
 
-@unittest.SkipTest
-class TestContentTypes(unittest.TestCase):
+class TestCommon(unittest.TestCase):
 
 	def _load_json(self, name = "message_info.json"):
 		result = os.path.join(os.path.dirname(__file__), name)
