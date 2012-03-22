@@ -15,6 +15,7 @@ from nti.contentsearch.indexstorage import DirectoryStorage
 
 import tempfile, shutil
 
+@unittest.SkipTest
 class TestBooks(unittest.TestCase):
 
 	idx = None

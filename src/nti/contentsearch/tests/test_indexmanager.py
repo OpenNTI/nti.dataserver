@@ -10,6 +10,7 @@ from nti.contentsearch.indexstorage import DirectoryStorage
 
 import tempfile, shutil
 
+@unittest.SkipTest
 class TestIndexManager(unittest.TestCase):
 
 	now = time.time()

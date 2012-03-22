@@ -6,6 +6,7 @@ from nti.contentsearch.contenttypes import Note
 
 from whoosh.filedb.filestore import RamStorage
 
+@unittest.SkipTest
 class TestNotes(unittest.TestCase):
 
 	now = time.time()

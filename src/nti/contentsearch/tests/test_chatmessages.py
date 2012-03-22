@@ -7,6 +7,7 @@ from whoosh.filedb.filestore import RamStorage
 
 from nti.contentsearch.contenttypes import MessageInfo
 
+@unittest.SkipTest
 class TestChatMessages(unittest.TestCase):
 
 	sample_transcript = None
