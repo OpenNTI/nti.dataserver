@@ -98,6 +98,7 @@ setup(
 		'zope.browserpage',
 		'zope.browserresource',
 		'zope.component',
+		'zope.componentvocabulary',
 		'zope.configuration',
 		'zope.container',
 		'zope.contenttype',
