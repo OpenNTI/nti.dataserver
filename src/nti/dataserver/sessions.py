@@ -135,13 +135,16 @@ class Session(Persistent):
 
 	def kill(self):
 		if self.connected:
+			# Mark us as disconnecting, and then send notifications
+			# (otherwise, it's too easy to recurse infinitely here)
+			self.state = self.STATE_DISCONNECTING
+
 			if self.owner:
 				notify(SocketSessionDisconnectedEvent(self))
-			self.state = self.STATE_DISCONNECTING
+
 			self.do_put_server_msg( None )
 			self.do_put_client_msg( None )
-		else:
-			pass # Fail silently
+
 
 	def do_put_server_msg(self, msg):
 		self.server_queue.put( msg )
@@ -283,8 +286,7 @@ class SessionService(object):
 
 	def _session_cleanup( self, s, session_db, sids=None ):
 		""" Cleans up a dead session. """
-		# Make sure the session itself knows it's dead
-		s.kill()
+		# Remove the session from the DB
 		try:
 			del session_db['session_map'][s.session_id]
 		except KeyError: pass
@@ -295,6 +297,10 @@ class SessionService(object):
 			sids.remove( s.session_id )
 		except ValueError: pass
 
+		# Now that the session is unreachable,
+		# make sure the session itself knows it's dead
+		s.kill()
+		# Let any listeners across the cluster also know it
 		self._publish_msg( b'session_dead', s.session_id, b"42" )
 
 
@@ -331,7 +337,7 @@ class SessionService(object):
 		with self.session_db_cm() as session_db:
 			sess = session_db['session_map'][session_id]
 			del session_db['session_map'][session_id]
-			del session_db['session_index'][sess.owner]
+			del session_db['session_index'][sess.owner] # TODO: Why?
 			sess.kill()
 
 

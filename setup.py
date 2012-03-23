@@ -58,7 +58,7 @@ setup(
 		'cython',
 		'gevent == 1.0dev',
 		'gevent-zeromq',
-		'gunicorn',
+		'gunicorn == 0.14.1',
 		'html5lib == 0.95',
 		'logilab-common',
 		'nltk',
