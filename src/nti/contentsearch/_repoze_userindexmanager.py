@@ -236,6 +236,7 @@ class RepozeUserIndexManager(object):
 			if docid:
 				catalog = self._get_create_catalog(data, type_name)
 				catalog.unindex_doc(docid)
+				docMap.remove_docid(docid)
 		return docid
 		
 	def remove_index(self, type_name):
