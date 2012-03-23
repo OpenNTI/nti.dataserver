@@ -349,7 +349,7 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 
 	__metaclass__ = _ChatObjectMeta
 	__emits__ = ('recvMessage', 'enteredRoom', 'exitedRoom',
-				 'roomMembershipChanged' )
+				 'roomMembershipChanged', 'roomModerationChanged' )
 	_prefer_oid_ = False
 
 	# Should probably have subclasses for moderation and the like?
@@ -416,9 +416,10 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 				self.__class__ = _ModeratedMeeting
 				self._becameModerated()
 			else:
-				#become unmoderated.
+				# become unmoderated.
 				self._becomeUnmoderated()
 				self.__class__ = _Meeting
+			self.emit_roomModerationChanged( self._occupant_session_ids, self )
 
 	Moderated = property( _Moderated, _setModerated )
 	Moderators = ()
@@ -810,6 +811,7 @@ class _ModeratedMeeting(_Meeting):
 
 	def add_moderator( self, mod_sid ):
 		self._moderated_by_sids.add( mod_sid )
+		self.emit_roomModerationChanged( self._occupant_session_ids, self )
 
 	def is_moderated_by( self, mod_sid ):
 		return mod_sid in self._moderated_by_sids

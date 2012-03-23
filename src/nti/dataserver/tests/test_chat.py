@@ -1,7 +1,7 @@
 
 from hamcrest import (assert_that, is_, has_entry, instance_of,
 					  has_key, is_in, not_none, is_not, greater_than,
-					  same_instance, has_length, none,
+					  same_instance, has_length, none, contains,
 					  has_entries, only_contains, has_item)
 import unittest
 from zope import interface, component
@@ -323,10 +323,16 @@ class TestChatserver(ConfiguringTestBase):
 		assert_that( other_handler.postMessage( msg ), is_( False ) )
 
 		# I can become the moderator of this room
+		del sessions[5].protocol_handler.events[:]
 		assert_that( foo_handler.makeModerated( room3.ID, True ), is_( room3 ) )
 		assert_that( room3.Moderators, is_( set([foo_handler.session_owner])) )
 		assert_that( room3.Moderated, is_(True) )
 		assert_that( room3, is_( chat._ModeratedMeeting ) )
+		assert_that( sessions[5].protocol_handler.events, has_length( 2 ) )
+		assert_that( sessions[5].protocol_handler.events,
+					 contains(
+						has_entry( 'name', 'chat_roomModerationChanged' ),
+						has_entry( 'name', 'chat_roomModerationChanged' ) ) )
 
 
 	@WithMockDSTrans
