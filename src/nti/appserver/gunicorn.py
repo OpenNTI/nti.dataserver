@@ -101,17 +101,10 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 				def log_request(self):
 					try:
 						ggevent.PyWSGIHandler.log_request( self )
-					except TypeError:
-						warnings.warn( "Incompatibility detected in gunicorn 0.14.1. Initiate workaround" )
-						# gunicorn 0.14.1 has a bug in ggevent, it fails to log
-						# properly by not passing the request. Fake it ourself.
-						hdrs = self.headers
-						self.headers = ()
-						start = datetime.fromtimestamp(self.time_start)
-						finish = datetime.fromtimestamp(self.time_finish)
-						response_time = finish - start
-						self.server.log.access(self, PhonyRequest, self.environ, response_time)
-						self.headers = hdrs
+					except (TypeError, AttributeError):
+						# This was expected in 0.14.1, should be fixed in
+						# 0.14.2. Any remaining cases we need to handle
+						logger.exception( "Not logging results of request to %s", self.environ )
 
 				# We are using the SocketIO server and the Gevent Worker
 				# Only the Sync and Async workers setup the environment
