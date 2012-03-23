@@ -671,4 +671,4 @@ def sharing_listener_main():
 
 def index_listener_main():
 	_configure_logging()
-	dataserver._Dataserver.temp_env_run_change_listener( _add_index_listener )
+	dataserver._Dataserver.temp_env_run_change_listener( _add_index_listener, [] )
