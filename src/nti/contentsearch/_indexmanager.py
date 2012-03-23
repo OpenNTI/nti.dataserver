@@ -98,7 +98,7 @@ class IndexManager(object):
 
 	def _get_user_index_manager(self, username, *args, **kwargs):
 		uim = self.users.get(username, None)
-		if not uim:
+		if not uim and kwargs.get('create',True):
 			uim = self.useridx_manager_factory(username=username, **kwargs)
 			if uim:
 				self.users[username] = uim
@@ -117,6 +117,7 @@ class IndexManager(object):
 
 	def _get_search_uims(self, username, *args, **kwargs):
 		result = []
+		kwargs['create'] = False
 		for name in [username] + self._get_user_communities(username):
 			uim = self._get_user_index_manager(name, *args, **kwargs)
 			if uim: result.append(uim)
