@@ -1,5 +1,7 @@
 import re
+import time
 from time import mktime
+from datetime import datetime
 from collections import Iterable
 from collections import OrderedDict
 
@@ -114,6 +116,19 @@ def epoch_time(dt):
 	
 def echo(x):
 	return unicode(x) if x else u''
+
+def get_datetime(x=None):
+	f = time.time()
+	if x:
+		f = float(x) if isinstance(x, basestring) else x
+	return datetime.fromtimestamp(f)
+
+
+def get_keywords(records):
+	result = ''
+	if records:
+		result = ','.join(records)
+	return unicode(result)
 
 # -----------------------------------
 

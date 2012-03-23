@@ -1,8 +1,13 @@
 import os
 
 from nti.contentsearch._indexmanager import IndexManager
-from nti.contentsearch._whoosh_indexstorage import create_directory_index_storage
+from nti.contentsearch._repoze_datastore import RepozeDataStore
+from nti.contentsearch._whoosh_bookindexmanager import wbm_factory
+from nti.contentsearch._whoosh_userindexmanager import wuim_factory
+from nti.contentsearch._repoze_userindexmanager import ruim_factory
+from nti.contentsearch._whoosh_indexstorage import MultiDirectoryStorage
 from nti.contentsearch._whoosh_indexstorage import create_zodb_index_storage
+from nti.contentsearch._whoosh_indexstorage import create_directory_index_storage
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -10,27 +15,15 @@ logger = logging.getLogger( __name__ )
 # -----------------------------
 
 def create_index_manager_with_whoosh(index_storage=None, indexdir=None, use_md5=True, dataserver=None):
-	
-	import _whoosh_bookindexmanager
-	import _whoosh_userindexmanager
-	from indexstorage import MultiDirectoryStorage
-
-	book_idx_manager = _whoosh_bookindexmanager.wbm_factory()
+	book_idx_manager = wbm_factory()
 	index_storage = index_storage or MultiDirectoryStorage(indexdir)
-	user_idx_manager = _whoosh_userindexmanager.wuim_factory(index_storage, use_md5=use_md5)
-	
+	user_idx_manager = wuim_factory(index_storage, use_md5=use_md5)
 	return IndexManager(book_idx_manager, user_idx_manager, dataserver=dataserver)
 
 def create_index_manager_with_repoze(search_db=None, dataserver=None, repoze_store=None):
-	
-	import _whoosh_bookindexmanager
-	import _repoze_userindexmanager
-	from _repoze_datastore import RepozeDataStore
-	
-	book_idx_manager = _whoosh_bookindexmanager.wbm_factory()
+	book_idx_manager = wbm_factory()
 	repoze_store = repoze_store or RepozeDataStore(search_db)
-	user_idx_manager = _repoze_userindexmanager.ruim_factory(repoze_store)
-	
+	user_idx_manager = ruim_factory(repoze_store)
 	return IndexManager(book_idx_manager, user_idx_manager, dataserver=dataserver)
 
 # -----------------------------
