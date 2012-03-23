@@ -38,15 +38,19 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		self.repoze.close()
 		shutil.rmtree(self.db_dir, True)
 
+	def _create_note(self, msg, username, containerId=None):
+		note = Note()
+		note.body = [unicode(msg)]
+		note.creator = username
+		note.containerId = containerId or make_ntiid(nttype='bleach', specific='manga')
+		return note
+		
 	def _add_notes(self, usr=None, conn=None):
 		notes = []
 		conn = conn or mock_dataserver.current_transaction
 		usr = usr or User( 'nt@nti.com', 'temp' )
 		for x in zanpakuto_commands:
-			note = Note()
-			note.body = [unicode(x)]
-			note.creator = usr.username
-			note.containerId = make_ntiid(nttype='bleach', specific='manga')
+			note = self._create_note(x, usr.username)
 			if conn: conn.add(note)
 			notes.append(usr.addContainedObject( note ))	
 		return notes, usr
@@ -70,11 +74,11 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		return usr, rim, docids, notes
 				
 	@WithMockDSTrans
-	def test_index_notes(self):
+	def xtest_index_notes(self):
 		self._index_notes()
 		
 	@WithMockDSTrans
-	def test_query_notes(self):
+	def xtest_query_notes(self):
 		_, rim, _, _ = self._add_user_index_notes()
 			
 		hits = rim.search("shield", limit=None)
@@ -103,7 +107,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		assert_that(hits, has_entry(HIT_COUNT, 3))
 		
 	@WithMockDSTrans
-	def test_update_note(self):
+	def xtest_update_note(self):
 		_, rim, _, notes = self._add_user_index_notes()
 		note = notes[5]
 		note.body = [u'Blow It Away']
@@ -119,7 +123,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		assert_that(hits, has_entry(QUERY, 'blow'))
 		
 	@WithMockDSTrans
-	def test_delete_note(self):
+	def xtest_delete_note(self):
 		_, rim, _, notes = self._add_user_index_notes()
 		note = notes[5]
 		teo = note.toExternalObject()
@@ -130,7 +134,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		assert_that(hits, has_entry(QUERY, 'shield'))
 		
 	@WithMockDSTrans
-	def test_suggest(self):
+	def xtest_suggest(self):
 		_, rim, _, _ = self._add_user_index_notes()
 		hits = rim.suggest("ra")
 		assert_that(hits, has_entry(HIT_COUNT, 4))
@@ -145,13 +149,42 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		assert_that(items, has_item('rage'))
 		
 	@WithMockDSTrans
-	def test_ngram_search(self):
+	def xtest_ngram_search(self):
 		_, rim, _, _ = self._add_user_index_notes()
 		hits = rim.ngram_search("sea")
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 		assert_that(hits, has_entry(QUERY, 'sea'))
 		assert_that(hits, has_key(ITEMS))
 		assert_that(hits[ITEMS], has_length(1))
+		
+	@WithMockDSTrans
+	def test_note_index_to_two_users(self):
+		ds = mock_dataserver.current_mock_ds
+		conn = mock_dataserver.current_transaction
+		
+		users = []
+		for x in xrange(2):
+			username = 'nt%s@nti.com' % x
+			usr = User( username, 'temp' )
+			ds.root['users'][username] = usr
+			users.append(usr)
+		
+		note = self._create_note('ichigo', usr.username)
+		conn.add(note)
+		note = users[0].addContainedObject( note )
+		teo = note.toExternalObject()
+		
+		rims = []
+		for x in xrange(2):
+			username = 'nt%s@nti.com' % x
+			rim = RepozeUserIndexManager (username, self.repoze, mock_dataserver.current_mock_ds)
+			rims.append(rim)	
+			rim.index_content(teo)
+			
+		for x in xrange(2):
+			hits = rims[x].search("ichigo", limit=None)
+			assert_that(hits, has_entry(HIT_COUNT, 1))
+		
 		
 if __name__ == '__main__':
 	unittest.main()
