@@ -192,7 +192,8 @@ to `emit` to make this happen; the callback will receive the return value.)
   will be the containerId you set (if you set one and were allowed
   to create it).
 
-  ``chat_failedToEnterRoom( room_info )`` sent if you attempted to enter a room, but failed
+``chat_failedToEnterRoom( room_info )``
+  sent if you attempted to enter a room, but failed
 
 ``chat_exitRoom( room_id ) -> boolean``
   Emit to stop receiving messages for a room
@@ -210,7 +211,7 @@ Moderation
 ++++++++++
 
 ``chat_approveMessages( mid[] )``
-	Cause the messages to be approved.
+  Cause the messages to be approved.
 
 ``chat_makeModerated( room_id, flag ) -> RoomInfo``
   The returned RoomInfo will either list you as a moderator,
@@ -235,6 +236,14 @@ Server to client
 ``chat_roomMembershipChanged( room_info )``
   Sent when a room you are in has gained/lost a member other
   than yourself.
+
+``chat_roomModerationChanged( room_info )``
+  Sent when a room you are in has a change in moderation status, such
+  as becoming moderated or gaining a moderator. Note that you will
+  recieve this after you call ``chat_makeModerated`` (you may receive
+  it multiple times with slightly different states, such as Moderated
+  being true, but no moderators listed, and then again with Moderated
+  as true and with moderators listed).
 
 ``chat_presenceForUserChangedTo( username, presence )``
   Sent when a user in your "buddy list" goes offline/online
