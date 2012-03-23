@@ -77,8 +77,10 @@ class RepozeUserIndexManager(object):
 		with self.dataserver.dbTrans():
 			for docId in docIds:
 				ntiid = docMap.address_for_docid(docId)
+				# logger.info("ntiid=%s" % ntiid)
 				try:
 					svr_obj = find_object_with_ntiid(ntiid, dataserver=self.dataserver)
+					# logger.info("svr_obj=%s" % svr_obj)
 					if svr_obj:
 						if callable( getattr( svr_obj, 'toExternalObject', None ) ):
 							svr_obj = svr_obj.toExternalObject()
@@ -124,6 +126,7 @@ class RepozeUserIndexManager(object):
 				catalog = self.datastore.get_catalog(self.username, type_name)
 				if catalog: 
 					_, docIds = self._do_catalog_query(catalog, field, query)
+					# logger.info("docs=%s" % docIds)
 					hits, hits_lm = self._get_hits_from_docids(	docMap,
 																docIds,
 																limit=limit,
@@ -208,7 +211,7 @@ class RepozeUserIndexManager(object):
 			catalog = self._get_create_catalog(data, type_name)
 			if catalog and ntiid:
 				docMap = self.store.docMap
-				docid = docMap.add(ntiid)
+				docid = docMap.docid_for_address(ntiid) or docMap.add(ntiid)
 				catalog.index_doc(docid, data)
 		return docid
 
