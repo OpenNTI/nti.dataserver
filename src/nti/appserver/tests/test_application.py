@@ -229,8 +229,7 @@ class TestApplication(ApplicationTestBase):
 		# This should not have created index entries for the user.
 		# (Otherwise, theres denial-of-service possibilities)
 		ixman = pyramid.config.global_registries.last.getUtility( nti.contentsearch.interfaces.IIndexManager )
-		with ixman.dbTrans():
-			assert_that( ixman.get_user_index_manager( 'user@dne.org', create=False ), is_( none() ) )
+		assert_that( ixman._get_user_index_manager( 'user@dne.org', create=False ), is_( none() ) )
 
 	@mock_dataserver.WithMockDSTrans
 	def test_ugd_search_other_user(self):
@@ -246,10 +245,9 @@ class TestApplication(ApplicationTestBase):
 
 
 		# This should not have created index entries for the user.
-		# (Otherwise, theres denial-of-service possibilities)
+		# (Otherwise, there's denial-of-service possibilities)
 		ixman = pyramid.config.global_registries.last.getUtility( nti.contentsearch.interfaces.IIndexManager )
-		with ixman.dbTrans():
-			assert_that( ixman.get_user_index_manager( 'user@dne.org', create=False ), is_( none() ) )
+		assert_that( ixman._get_user_index_manager( 'user@dne.org', create=False ), is_( none() ) )
 
 
 	@mock_dataserver.WithMockDSTrans
