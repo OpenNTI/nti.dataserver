@@ -32,9 +32,8 @@ dictserver = UserDict.UserDict()
 dictserver.pyramid = nti.dictserver._pyramid
 dictserver.dictionary = nti.dictserver.dictionary
 
-
 import nti.dataserver as dataserver
- #Hmm, these next three MUST be imported. We seem to have a path-dependent import req.
+#Hmm, these next three MUST be imported. We seem to have a path-dependent import req.
 import nti.dataserver.socketio_server
 #import nti.dataserver.wsgi
 import nti.dataserver._Dataserver
@@ -43,9 +42,8 @@ from nti.dataserver.library import Library
 from nti.dataserver import interfaces as nti_interfaces
 
 import nti.contentsearch
-from nti.contentsearch.indexmanager import IndexManager
-#from nti.contentsearch import indexmanager
 contentsearch = nti.contentsearch
+import nti.contentsearch.indexmanager
 
 from nti.dataserver.users import SharingTarget
 from nti.dataserver import authorization as nauth
@@ -64,7 +62,6 @@ import pyramid.config
 import pyramid.authorization
 import pyramid.httpexceptions as hexc
 
-
 import datetime
 import pyramid_auth
 
@@ -80,12 +77,12 @@ IZLocation.__bases__ = (ILocation,)
 #from zope import container as zcontainer
 #from zope import location as zlocation
 
-
 SOCKET_IO_PATH = 'socket.io'
 
 #TDOD: we should do this as configuration
-DATASERVER_ZEO_INDEXES = 'DATASERVER_NO_INDEX_BLOBS' not in os.environ
-USE_FILE_INDICES = not DATASERVER_ZEO_INDEXES
+DATASERVER_REPOZE_INDEXES = 'DATASERVER_REPOZE_INDEXES' in os.environ
+DATASERVER_ZEO_INDEXES = 'DATASERVER_NO_INDEX_BLOBS' not in os.environ or 'DATASERVER_ZEO_INDEXES' in os.environ
+DATASERVER_WHOOSH_INDEXES = not DATASERVER_ZEO_INDEXES or 'DATASERVER_WHOOSH_INDEXES' in os.environ
 
 class _Main(object):
 
@@ -219,8 +216,6 @@ def createApplication( http_port,
 		else:
 			server = ds_class()
 
-	user_indices_dir = os.path.join( server._parentDir, 'indices' )
-
 	logger.debug( 'Finished starting dataserver' )
 
 	# TODO: Consider whether to use the global site manager as the registry,
@@ -338,7 +333,7 @@ def createApplication( http_port,
 
 	indexmanager = None
 	if create_ds:
-		indexmanager = create_index_manager(server, use_zeodb_index_storage(), user_indices_dir)
+		indexmanager = create_index_manager(server, use_zeodb_index_storage())
 
 	if server:
 		pyramid_config.registry.registerUtility( indexmanager, nti.contentsearch.interfaces.IIndexManager )
@@ -616,35 +611,59 @@ def _add_sharing_listener( server ):
 	print 'Adding sharing listener', os.getpid(), server
 	server.add_change_listener( SharingTarget.onChange )
 
+# --------------------------
 
 def use_zeodb_index_storage():
-	return not USE_FILE_INDICES
+	return DATASERVER_ZEO_INDEXES or (not DATASERVER_WHOOSH_INDEXES and not DATASERVER_REPOZE_INDEXES)
+
+def use_whoosh_index_storage():
+	return DATASERVER_WHOOSH_INDEXES
+
+def use_repoze_index_storage():
+	return DATASERVER_REPOZE_INDEXES
 
 def _add_index_listener( server, user_indices_dir ):
 	_configure_logging()
 	print 'Adding index listener', os.getpid(), dataserver
-	index_manager = create_index_manager(server, use_zeodb_index_storage(), user_indices_dir)
+	index_manager = create_index_manager(server)
 	server.add_change_listener( index_manager.onChange )
 
-def create_index_manager(server, use_zeo_storage=None, user_indices_dir='/tmp'):
-
-	#from nti.contentsearch._indexmanager import create_index_manager_with_repoze
-	#return create_index_manager_with_repoze(server.searchDB, server)
-
+def create_index_manager(server, 
+						 use_zeo_storage = None,
+						 use_repoze_storage = None,
+						 use_whosh_storage = None,
+						 user_indices_dir = None):
+	
 	if use_zeo_storage is None:
 		use_zeo_storage = use_zeodb_index_storage()
 
-	if use_zeo_storage:
-		logger.debug( 'Creating ZEO index manager' )
+	if use_repoze_storage is None:
+		use_repoze_storage = use_repoze_index_storage()
+		
+	if use_whosh_storage is None:
+		use_whosh_storage = use_whoosh_index_storage()
+
+	if use_whosh_storage:
+		logger.debug( 'Creating Whoosh based index manager' )
+		user_indices_dir = user_indices_dir or os.path.join( server._parentDir, 'indices' )
+		ixman = nti.contentsearch.indexmanager.create_index_manager(user_indices_dir, dataserver=server)
+	elif use_repoze_storage:
+		logger.debug( 'Creating Repoze-Catalog based index manager' )
 		indicesKey, blobsKey = '__indices', "__blobs"
 		ixman = nti.contentsearch.indexmanager.create_zodb_index_manager(db = server.searchDB,
 																		 indicesKey = indicesKey,
 																		 blobsKey = blobsKey,
 																		 dataserver = server)
 	else:
-		ixman = nti.contentsearch.indexmanager.create_index_manager(user_indices_dir, dataserver=server)
-
+		logger.debug( 'Creating ZEO based index manager' )
+		indicesKey, blobsKey = '__indices', "__blobs"
+		ixman = nti.contentsearch.indexmanager.create_zodb_index_manager(db = server.searchDB,
+																		 indicesKey = indicesKey,
+																		 blobsKey = blobsKey,
+																		 dataserver = server)
 	return ixman
+
+# --------------------------
 
 def sharing_listener_main():
 	_configure_logging()
@@ -652,4 +671,4 @@ def sharing_listener_main():
 
 def index_listener_main():
 	_configure_logging()
-	dataserver._Dataserver.temp_env_run_change_listener( _add_index_listener, None )
+	dataserver._Dataserver.temp_env_run_change_listener( _add_index_listener )
