@@ -649,11 +649,7 @@ def create_index_manager(server,
 		ixman = nti.contentsearch.indexmanager.create_index_manager(user_indices_dir, dataserver=server)
 	elif use_repoze_storage:
 		logger.debug( 'Creating Repoze-Catalog based index manager' )
-		indicesKey, blobsKey = '__indices', "__blobs"
-		ixman = nti.contentsearch.indexmanager.create_zodb_index_manager(db = server.searchDB,
-																		 indicesKey = indicesKey,
-																		 blobsKey = blobsKey,
-																		 dataserver = server)
+		ixman = nti.contentsearch.indexmanager.create_repoze_index_manager(server.searchDB, dataserver=server)
 	else:
 		logger.debug( 'Creating ZEO based index manager' )
 		indicesKey, blobsKey = '__indices', "__blobs"
