@@ -12,7 +12,7 @@ from xml.dom.minidom import Node
 from whoosh import index
 
 from concurrent.futures import ThreadPoolExecutor
-from nti.contentsearch.contenttypes import Book
+from nti.contentsearch.whoosh_contenttypes import create_book_schema
 
 import whoosh.writing
 import multiprocessing
@@ -38,7 +38,7 @@ prop_pattern = re.compile(r'<(\w).*itemprop="(.*)".*>', re.MULTILINE | re.DOTALL
 # -----------------------------
 
 def get_schema():
-	return Book.schema
+	return create_book_schema()
 
 def get_or_create_index(indexdir, indexname ='prealgebra', recreate = True):
 
