@@ -54,6 +54,10 @@ class IndexManager(object):
 	def dataserver(self):
 		return self.ds
 	
+	def users_exists(self, username):
+		with self.dataserver.dbTrans():
+			return self.root['users'].has_key(username)
+	
 	# -------------------
 	
 	def get_book_index_manager(self, indexname):
@@ -98,7 +102,7 @@ class IndexManager(object):
 
 	def _get_user_index_manager(self, username, *args, **kwargs):
 		uim = self.users.get(username, None)
-		if not uim and kwargs.get('create',True):
+		if not uim and kwargs.get('create', True):
 			uim = self.useridx_manager_factory(username=username, **kwargs)
 			if uim:
 				self.users[username] = uim
