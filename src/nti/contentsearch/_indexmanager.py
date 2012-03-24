@@ -3,6 +3,7 @@ import gevent
 from zope import component
 from zope import interface
 
+from nti.dataserver.users import User
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.contentsearch import LFUMap
@@ -55,8 +56,8 @@ class IndexManager(object):
 		return self.ds
 	
 	def users_exists(self, username):
-		with self.dataserver.dbTrans():
-			return self.root['users'].has_key(username)
+		result = User.get_user(username, dataserver=self.dataserver) if self.dataserver else None
+		return result is not None
 	
 	# -------------------
 	
@@ -109,10 +110,7 @@ class IndexManager(object):
 		return uim
 
 	def _get_user_object(self, username):
-		result = None
-		if self.dataserver:
-			with self.dataserver.dbTrans():
-				result = self.dataserver.root['users'].get(username, None)
+		result = User.get_user(username, dataserver=self.dataserver) if self.dataserver else None
 		return result
 	
 	def _get_user_communities(self, username):
