@@ -45,7 +45,7 @@ class Session(Persistent):
 	STATE_DISCONNECTING = "DISCONNECTING"
 	STATE_DISCONNECTED = "DISCONNECTED"
 
-	def __init__(self):
+	def __init__(self, session_service=None):
 		# The session id must be plain ascii for sending across sockets
 		self.session_id = uuid.uuid4().hex.encode('ascii')
 		self.creation_time = time.time()
@@ -61,7 +61,7 @@ class Session(Persistent):
 
 		self.last_heartbeat_time = 0
 
-		self._v_session_service = None
+		self._v_session_service = session_service
 
 	def _p_resolveConflict(self, oldState, savedState, newState ):
 		logger.info( 'Conflict to resolve in %s', type(self) )
@@ -226,13 +226,12 @@ class SessionService(object):
 	def get_proxy_session( self, session_id ):
 		return self.proxy_sessions.get( session_id )
 
-	def create_session( self, session_class=Session ):
+	def create_session( self, session_class=Session, **kwargs ):
 		""" The returned session must not be modified. """
-		session = session_class()
-		session_id = session.session_id
 		with self.session_db_cm() as session_db:
+			session = session_class(session_service=self, **kwargs)
+			session_id = session.session_id
 			session_db['session_map'][session_id] = session
-		session._v_session_service = self
 
 
 		def watchdog_session():
@@ -242,7 +241,7 @@ class SessionService(object):
 			# after it...this is a compromise between always
 			# knowing it has died and doing the best we can across the cluster
 			gevent.sleep( 60 )	# Time? We can detect a dead session no faster than we decide it's dead,
-								# which is SESSION_HEARTBEAT_TIMEOUT 
+								# which is SESSION_HEARTBEAT_TIMEOUT
 			logger.debug( "Checking status of session %s", session_id )
 			sess = self.get_session(session_id) # performs validation, notification
 			if sess:

@@ -22,6 +22,7 @@ import nti.dataserver.meeting_container_storage as mcs
 
 
 from mock_dataserver import MockDataserver, WithMockDS, ConfiguringTestBase
+import mock_dataserver
 
 
 class TestMeetingContainer(ConfiguringTestBase):
@@ -32,18 +33,18 @@ class TestMeetingContainer(ConfiguringTestBase):
 	def test_no_entity( self ):
 		ds = self.ds
 		mc = mcs.MeetingContainerStorage( ds )
-		with ds.dbTrans():
+		with mock_dataserver.mock_db_trans(ds):
 			assert_that( mc.get( self.ID_FL1 ), is_( none() ) )
 			assert_that( mc.get( None ), is_( none() ) )
 
 	@WithMockDS
 	def test_entity_no_list( self ):
 		ds = self.ds
-		with ds.dbTrans():
+		with mock_dataserver.mock_db_trans(ds):
 			ds.root['users']['foo@bar'] = users.User( 'foo@bar', 'temp001' )
 
 		mc = mcs.MeetingContainerStorage( ds )
-		with ds.dbTrans():
+		with mock_dataserver.mock_db_trans(ds):
 			assert_that( ds.root['users'], has_key( 'foo@bar' ) )
 			assert_that( mc.get( self.ID_FL1 ), is_( none() ) )
 			assert_that( mc.get( None ), is_( none() ) )
@@ -51,7 +52,7 @@ class TestMeetingContainer(ConfiguringTestBase):
 	@WithMockDS
 	def test_entity_with_list( self ):
 		ds = self.ds
-		with ds.dbTrans():
+		with mock_dataserver.mock_db_trans(ds):
 			user = users.User( 'foo@bar', 'temp001' )
 			ds.root['users']['foo@bar'] = user
 			ds.root['users']['friend@bar'] = users.User( 'friend@bar', 'temp001' )
@@ -63,7 +64,7 @@ class TestMeetingContainer(ConfiguringTestBase):
 
 
 		mc = mcs.MeetingContainerStorage( ds )
-		with ds.dbTrans():
+		with mock_dataserver.mock_db_trans(ds):
 			assert_that( ds.root['users'], has_key( 'foo@bar' ) )
 
 			adapt = mc.get( self.ID_FL1 )
@@ -77,7 +78,7 @@ class TestFriendsListAdaptor( ConfiguringTestBase ):
 	def test_create_and_empty( self ):
 		ds = self.ds
 		mcs.MeetingContainerStorage( ds )
-		with ds.dbTrans():
+		with mock_dataserver.mock_db_trans(ds):
 			user = users.User( 'foo@bar', 'temp001' )
 			ds.root['users']['foo@bar'] = user
 			ds.root['users']['friend@bar'] = users.User( 'friend@bar', 'temp001' )
@@ -115,7 +116,7 @@ class TestFriendsListAdaptor( ConfiguringTestBase ):
 	def test_enter_active( self ):
 		ds = self.ds
 		mcs.MeetingContainerStorage( ds )
-		with ds.dbTrans():
+		with mock_dataserver.mock_db_trans(ds):
 			user = users.User( 'foo@bar', 'temp001' )
 			ds.root['users']['foo@bar'] = user
 			ds.root['users']['friend@bar'] = users.User( 'friend@bar', 'temp001' )
@@ -149,7 +150,7 @@ class TestClassSectionAdapter( ConfiguringTestBase ):
 	def test_create_and_empty( self ):
 		ds = self.ds
 		mcs.MeetingContainerStorage( ds )
-		with ds.dbTrans():
+		with mock_dataserver.mock_db_trans(ds):
 			user = providers.Provider( 'OU' )
 			ds.root['providers']['OU'] = user
 			fl1 = user.maybeCreateContainedObjectWithType(  'Classes', None )
@@ -195,7 +196,7 @@ class TestClassSectionAdapter( ConfiguringTestBase ):
 	def test_enter_active( self ):
 		ds = self.ds
 		mcs.MeetingContainerStorage( ds )
-		with ds.dbTrans():
+		with mock_dataserver.mock_db_trans(ds):
 			user = providers.Provider( 'OU' )
 			ds.root['providers']['OU'] = user
 			fl1 = user.maybeCreateContainedObjectWithType(  'Classes', None )
@@ -239,5 +240,3 @@ if __name__ == '__main__':
 #	logging.basicConfig()
 #	logging.getLogger( 'nti.dataserver.chat' ).setLevel( logging.DEBUG )
 	unittest.main(verbosity=3)
-
-

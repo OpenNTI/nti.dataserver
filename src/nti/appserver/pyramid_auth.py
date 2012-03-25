@@ -205,6 +205,7 @@ class NTIUsersAuthenticatorPlugin(object):
 		if _make_user_auth().user_has_password( identity['login'], identity['password'] ):
 			return identity['login']
 
+# This is no longer used, the pyramid forbidden view is
 def _basicauth_challenge_decider( environ, status, headers ):
 	"""
 	Transform the 403 Forbidden response into a 401 Unauthorized
@@ -243,8 +244,8 @@ def _create_middleware( app=None ):
 					log_level = logging.DEBUG )
 	return middleware
 
-def wrap_repoze_middleware( app ):
-	return _create_middleware( app )
+#def wrap_repoze_middleware( app ):
+#	return _create_middleware( app )
 
 def create_authentication_policy( ):
 	middleware = _create_middleware()

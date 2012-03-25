@@ -5,6 +5,8 @@ import os
 import sys
 import types
 import inspect
+import six
+import warnings
 
 import collections
 
@@ -29,6 +31,8 @@ import transaction
 from transaction.interfaces import DoomedTransaction
 from persistent.mapping import PersistentMapping
 from BTrees import OOBTree
+import contextlib
+from zope.component.hooks import site
 
 import contenttypes
 import datastructures
@@ -69,118 +73,118 @@ def _safely(f):
 	except:
 		logger.exception( "Failed to execute safely %s", f )
 
-class _ContextManager(object):
-	"""
-	PEP 343 context manager. Instances of this class must
-	always be used with the same datasource.
-	"""
-	local = gevent.local.local()
+# class _ContextManager(object):
+# 	"""
+# 	PEP 343 context manager. Instances of this class must
+# 	always be used with the same datasource.
+# 	"""
+# 	local = gevent.local.local()
 
-	def __init__( self, db ):
-		self.db = db
-		self.tm = None
-		self.conn = None
-		self.txn = None
-		self.doomed = None
-		self._premature_exit_ok = False
+# 	def __init__( self, db ):
+# 		self.db = db
+# 		self.tm = None
+# 		self.conn = None
+# 		self.txn = None
+# 		self.doomed = None
+# 		self._premature_exit_ok = False
 
-	def __enter__(self):
-		""" :return: The opened connection. """
-		if hasattr( self.local, 'contextManager' ):
-			raise ValueError( 'Transaction already entered' )
+# 	def __enter__(self):
+# 		""" :return: The opened connection. """
+# 		if hasattr( self.local, 'contextManager' ):
+# 			raise ValueError( 'Transaction already entered' )
 
-		self.local.contextManager = self
-		self.tm = transaction.TransactionManager()
-		self.conn = self.db.open( self.tm )
-		self.txn = self.tm.begin()
-		return self.conn
+# 		self.local.contextManager = self
+# 		self.tm = transaction.TransactionManager()
+# 		self.conn = self.db.open( self.tm )
+# 		self.txn = self.tm.begin()
+# 		return self.conn
 
-	def __exit__(self, t, v, tb):
-		# Cannot exit twice....
-		try:
-			del self.local.contextManager
-		except AttributeError:
-			# ...except if otherwise designated
-			if self._premature_exit_ok:
-				return
-			else:
-				if t:
-					raise t, v, tb
-				raise
+# 	def __exit__(self, t, v, tb):
+# 		# Cannot exit twice....
+# 		try:
+# 			del self.local.contextManager
+# 		except AttributeError:
+# 			# ...except if otherwise designated
+# 			if self._premature_exit_ok:
+# 				return
+# 			else:
+# 				if t:
+# 					raise t, v, tb
+# 				raise
 
-		try:
-			if self.doomed:
-				logger.debug( "Exiting doomed transaction %s", self.doomed )
-				self.tm.abort()
-				raise self.doomed[0], self.doomed[1], self.doomed[2]
+# 		try:
+# 			if self.doomed:
+# 				logger.debug( "Exiting doomed transaction %s", self.doomed )
+# 				self.tm.abort()
+# 				raise self.doomed[0], self.doomed[1], self.doomed[2]
 
-			if t is None:
-				try:
-					self.tm.commit()
-				except DoomedTransaction:
-					# Doomed was done on purpose, we shouldn't raise this (right?)
-					# But we do call attention to it
-					logger.exception( "Failed to commit doomed transaction" )
-					_safely( self.tm.abort )
-			else:
-				_safely( self.tm.abort )
-		finally:
-			# If we got an original exception closing/committing
-			# let it propagate
-			_safely( self.conn.close )
-			self.conn = None
-			# We have already either committed or aborted self.tm
-			# at this point. Doing it again is useless
-			self.tm = None
-			self.txn = None
+# 			if t is None:
+# 				try:
+# 					self.tm.commit()
+# 				except DoomedTransaction:
+# 					# Doomed was done on purpose, we shouldn't raise this (right?)
+# 					# But we do call attention to it
+# 					logger.exception( "Failed to commit doomed transaction" )
+# 					_safely( self.tm.abort )
+# 			else:
+# 				_safely( self.tm.abort )
+# 		finally:
+# 			# If we got an original exception closing/committing
+# 			# let it propagate
+# 			_safely( self.conn.close )
+# 			self.conn = None
+# 			# We have already either committed or aborted self.tm
+# 			# at this point. Doing it again is useless
+# 			self.tm = None
+# 			self.txn = None
 
-	def premature_exit_but_its_okay(self):
-		self._premature_exit_ok = True
-		self.__exit__( None, None, None )
+# 	def premature_exit_but_its_okay(self):
+# 		self._premature_exit_ok = True
+# 		self.__exit__( None, None, None )
 
-	def root(self):
-		return self.conn.root()
+# 	def root(self):
+# 		return self.conn.root()
 
-	@classmethod
-	def contextManager(cls):
-		""" Returns the thread-local context manager, if there is one. """
-		try:
-			return cls.local.contextManager
-		except AttributeError:
-			return None
+# 	@classmethod
+# 	def contextManager(cls):
+# 		""" Returns the thread-local context manager, if there is one. """
+# 		try:
+# 			return cls.local.contextManager
+# 		except AttributeError:
+# 			return None
 
-class _NestedContextManager(object):
-	"""
-	Piggybacks on a parent context manager.
-	"""
+# class _NestedContextManager(object):
+# 	"""
+# 	Piggybacks on a parent context manager.
+# 	"""
 
-	def __init__( self, parent=None ):
-		self.parent = parent
-		self.doomed = None
-		self.db = None
-		self.tm = None
-		self.conn = None
-		self.txn = None
+# 	def __init__( self, parent=None ):
+# 		self.parent = parent
+# 		self.doomed = None
+# 		self.db = None
+# 		self.tm = None
+# 		self.conn = None
+# 		self.txn = None
 
-	def __enter__(self):
-		if self.parent:
-			self.db = self.parent.db
-			self.tm = self.parent.tm
-			self.conn = self.parent.conn
-			self.txn = self.parent.txn
-			return self.conn.root()
+# 	def __enter__(self):
+# 		if self.parent:
+# 			self.db = self.parent.db
+# 			self.tm = self.parent.tm
+# 			self.conn = self.parent.conn
+# 			self.txn = self.parent.txn
+# 			return self.conn.root()
 
-	def root( self ):
-		return self.conn.root()
+# 	def root( self ):
+# 		return self.conn.root()
 
-	def __exit__(self, t, v, tb):
-		if t is not None:
-			if self.parent:
-				self.parent.doomed = (t, v, tb)
+# 	def __exit__(self, t, v, tb):
+# 		if t is not None:
+# 			if self.parent:
+# 				self.parent.doomed = (t, v, tb)
 
-	def premature_exit_but_its_okay( self ):
-		if callable( getattr( self.parent, 'premature_exit_but_its_okay', None ) ):
-			self.parent.premature_exit_but_its_okay()
+# 	def premature_exit_but_its_okay( self ):
+# 		if callable( getattr( self.parent, 'premature_exit_but_its_okay', None ) ):
+# 			self.parent.premature_exit_but_its_okay()
 
 class _SessionDbMeetingStorage( object ):
 	interface.implements(chat_interfaces.IMeetingStorage)
@@ -192,7 +196,12 @@ class _SessionDbMeetingStorage( object ):
 		self.name = name
 
 	def sdb(self):
-		return _ContextManager.contextManager().conn.get_connection( 'Sessions' )
+		lsm = component.getSiteManager()
+		conn = getattr( lsm, '_p_jar', None )
+		if conn:
+			# Our root is the top-level site manager we are using
+			return conn.get_connection( 'Sessions' )
+		#return _ContextManager.contextManager().conn.get_connection( 'Sessions' )
 
 	def get( self, key ):
 		return self.sdb().root()[self.name].get( key )
@@ -341,26 +350,37 @@ class MinimalDataserver(object):
 
 	@property
 	def root(self):
-		return _ContextManager.contextManager().conn.root()
+		# We expect to be in a transaction and have a site manager
+		# installed that came from the database
+		lsm = component.getSiteManager()
+		conn = getattr( lsm, '_p_jar', None )
+		if conn:
+			# Our root is the top-level site manager we are using
+			return conn.root()['nti.dataserver'].getSiteManager()
+		#warnings.warn( "Using dataserver outside of proper site manager", FutureWarning, stacklevel=2 )
+		#return _ContextManager.contextManager().conn.root()['nti.dataserver'].getSiteManager()
+		raise TypeError( "Using Dataserver outside of site manager" )
 
-	def dbTrans( self ):
-		""" Returns a context manager that wraps a transaction. """
-		cm = _ContextManager.contextManager()
-		if cm:
-			# TODO: Should we automatically nest or make that explicit?
-			cm = _NestedContextManager( cm )
-		else:
-			cm = _ContextManager( self.db )
-		return cm
+	# def dbTrans( self ):
+	# 	""" Returns a context manager that wraps a transaction. """
+	# 	cm = _ContextManager.contextManager()
+	# 	if cm:
+	# 		# TODO: Should we automatically nest or make that explicit?
+	# 		cm = _NestedContextManager( cm )
+	# 	else:
+	# 		cm = _ContextManager( self.db )
+	# 	return cm
 
-	def doom( self ):
-		_ContextManager.contextManager().tm.doom()
+	# def doom( self ):
+	# 	raise TypeError( "Doom no longer allowed" )
+	# 	_ContextManager.contextManager().tm.doom()
 
-	def commit( self ):
-		cm = _ContextManager.contextManager()
+	# def commit( self ):
+	# 	raise TypeError( "Commit no longer allowed" )
+	# 	cm = _ContextManager.contextManager()
 
-		if cm is not None and cm.tm is not None:
-			cm.tm.commit()
+	# 	if cm is not None and cm.tm is not None:
+	# 		cm.tm.commit()
 
 	def close(self):
 		def _c( n ):
@@ -378,7 +398,10 @@ class MinimalDataserver(object):
 		self.close()
 
 	def get_by_oid( self, oid_string, ignore_creator=False ):
-		return get_object_by_oid( _ContextManager.contextManager().conn, oid_string, ignore_creator=ignore_creator )
+		resolver = component.queryUtility( interfaces.IOIDResolver )
+		if resolver is None:
+			logger.warn( "Using dataserver without a proper ISiteManager configuration." )
+		return resolver.get_object_by_oid( oid_string, ignore_creator=ignore_creator ) if resolver else None
 
 class Dataserver(MinimalDataserver):
 
@@ -391,12 +414,13 @@ class Dataserver(MinimalDataserver):
 		super(Dataserver, self).__init__(parentDir, dataFileName, classFactory, apnsCertFile, daemon )
 		self.changeListeners = []
 
-		with self.dbTrans( ):
+		with self.db.transaction() as conn:
+			root = conn.root()
 			# Perform migrations
 			# TODO: Adopt the standard migration package
 			# TODO: For right now, we are also handling initialization until all code
 			# is ported over
-			if not self.root.has_key( 'users' ):
+			if not root.has_key( 'nti.dataserver' ):
 				raise Exception( "Creating DS against uninitialized DB. Test code?" )
 
 			# if 'Everyone' not in self.root['users']:
@@ -408,24 +432,38 @@ class Dataserver(MinimalDataserver):
 			# that get created at different times and that have weak refs
 			# to the right thing. What's a better way?
 			# TODO: This is almost certainly wrong given the _p_jar stuff
-			users.EVERYONE = self.root['users']['Everyone']
+			users.EVERYONE = root['nti.dataserver'].getSiteManager()['users']['Everyone']
 
 		# Sessions and Chat configuration
 		def sdb():
 			db = self
-			class CM(object):
-				def __init__(self):
-					self._cm = None
-					self.conn = None
-				def __enter__(self):
-					self._cm = db.dbTrans()
-					self._cm.__enter__()
-					self.conn = self._cm.conn
-					return self.conn.get_connection( 'Sessions' ).root()
-				def __exit__( self, t, v, tb ):
-					self._cm.__exit__( t, v, tb )
+			@contextlib.contextmanager
+			def _trivial_db_transaction():
+				# TODO: See socketio_server
+				# TODO: This needs all the retry logic, etc, that we
+				# get in the main app through pyramid_tm
 
-			return CM()
+				lsm = component.getSiteManager()
+				conn = getattr( lsm, '_p_jar', None )
+				if conn:
+					yield conn.get_connection('Sessions').root()
+					return
+				# The hard way
+				ds = db
+				transaction.begin()
+				conn = ds.db.open()
+				sitemanc = conn.root()['nti.dataserver']
+
+				with site( sitemanc ):
+					try:
+						yield conn.get_connection('Sessions').root()
+						transaction.commit()
+					except:
+						transaction.abort()
+						raise
+					finally:
+						conn.close()
+			return _trivial_db_transaction()
 
 
 		room_name = 'meeting_rooms'
@@ -559,7 +597,9 @@ class Dataserver(MinimalDataserver):
 					oids = list(oids)
 					logger.debug( "Enqueuing change OIDs %s in %s(%s)", oids, os.getpid(), self )
 					try:
-						self.ds.changePublisherStream.put_nowait( oids )
+						# TODO: This is broken except for synchronous changes
+						#self.ds.changePublisherStream.put_nowait( self._changes )
+						self.ds._on_recv_change( self._changes )
 					except:
 						logger.exception( "Failed to put changes to the queue %s", os.getpid() )
 						raise
@@ -596,10 +636,11 @@ class Dataserver(MinimalDataserver):
 		# Force the change to be added. Without this,
 		# sometimes for some reason it doesn't get an OID by
 		# the time the transaction is committed.
-		_ContextManager.contextManager().conn.add( _change )
+		#_ContextManager.contextManager().conn.add( _change )
+		self.root._p_jar.add( _change )
 		self.root['changes'].append( _change )
 
-		txn = _ContextManager.contextManager().txn
+		txn = transaction.get() #_ContextManager.contextManager().txn
 
 		# Coalesce if possible
 		adder = getattr( txn, 'add' + self._HOOK_NAME + 'Hook' )
@@ -619,30 +660,29 @@ class Dataserver(MinimalDataserver):
 		""" Given a Change received, distribute it to all registered listeners. """
 
 		done = False
-		tries = 5
-		while tries and not done:
-			try:
-				with self.dbTrans() as conn:
-					conn._storage_sync()
-					for oid in msg:
-						_change = self.get_by_oid( oid )
-						change = _change.change
+		#tries = 5
+#		while tries and not done:
+		try:
+				# TODO: This is broken for everything except synchronous
+#				with self.dbTrans() as conn:
+#					conn._storage_sync()
+			for oid in msg:
+				_change = self.get_by_oid( oid ) if isinstance(oid,six.string_types) else oid
+				change = _change.change
 
-						for changeListener in self.changeListeners:
-							try:
-								changeListener( self, change, **_change.meta )
-							except Exception as e:
-								logger.exception( "Failed to distribute change to %s", changeListener )
-				done = True
-				break
-			except transaction.interfaces.TransientError as e:
-				logger.warn( "Retrying to distribute change", exc_info=True )
-				tries -= 1
-				# Give things a chance to settle.
-				gevent.sleep( 0.5 )
-			except Exception as e:
-				logger.exception( "Failed to distribute change" )
-				break
+				for changeListener in self.changeListeners:
+					try:
+						changeListener( self, change, **_change.meta )
+					except Exception as e:
+						logger.exception( "Failed to distribute change to %s", changeListener )
+			done = True
+#				break
+		except transaction.interfaces.TransientError as e:
+			logger.warn( "Retrying to distribute change", exc_info=True )
+			# Give things a chance to settle.
+#			gevent.sleep( 0.5 )
+		except Exception as e:
+			logger.exception( "Failed to distribute change" )
 
 		if not done:
 			logger.warning( "Failed to distribute change %s", msg )
@@ -869,6 +909,19 @@ class _ChangeReceivingDataserver(Dataserver):
 	# TODO: Clean this up a bit, this tries to launch pub-sub
 	# processes.
 
+
+class PersistentOidResolver(Persistent):
+	interface.implements( interfaces.IOIDResolver )
+	_p_jar = None
+	def get_object_by_oid( self, oid_string, ignore_creator=False ):
+		connection = self._p_jar
+		if connection is None:
+			# Damn! Try a fallback
+			logger.warn( "Persistent object has no jar; connection closed?" )
+			lsm = component.getSiteManager()
+			connection = getattr( lsm, '_p_jar', None )
+
+		return get_object_by_oid( connection, oid_string, ignore_creator=ignore_creator )
 
 def get_object_by_oid( connection, oid_string, ignore_creator=False ):
 	"""

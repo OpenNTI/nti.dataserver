@@ -36,6 +36,16 @@ class ACLLocationProxy(LocationProxy):
 class IDataserver(interface.Interface):
 	pass
 
+class IOIDResolver(interface.Interface):
+	def get_object_by_oid( oid_string, ignore_creator=False ):
+		"""
+		Given an object id string as found in an OID value
+		in an external dictionary, returns the object in the that matches that
+		id, or None.
+		:param ignore_creator: If True, then creator access checks will be
+			bypassed.
+		"""
+
 class IChatserver(interface.Interface):
 	pass
 
