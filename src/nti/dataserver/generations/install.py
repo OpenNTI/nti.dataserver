@@ -6,7 +6,7 @@ from __future__ import print_function, unicode_literals
 
 __docformat__ = 'restructuredtext'
 
-generation = 4
+generation = 5
 
 from zope.generations.generations import SchemaManager
 
@@ -31,6 +31,7 @@ from nti.dataserver.chat import PersistentMappingMeetingStorage
 from nti.dataserver import datastructures, _Dataserver
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver import sessions
 
 import copy
 def install_chat( context ):
@@ -71,7 +72,15 @@ def install_main( context ):
 	if not lsm.has_key( 'changes'):
 		lsm['changes'] = PersistentList()
 
+	# Install the site manager and register components
 	root['nti.dataserver'] = container
+
 	oid_resolver =  _Dataserver.PersistentOidResolver()
 	conn.add( oid_resolver )
 	lsm.registerUtility( oid_resolver, provided=nti_interfaces.IOIDResolver )
+
+	sess_conn = conn.get_connection( 'Sessions' )
+	storage = sessions.PersistentSessionServiceStorage()
+	sess_conn.add( storage )
+	sess_conn.root()['session_storage'] = storage
+	lsm.registerUtility( storage, provided=nti_interfaces.ISessionServiceStorage )

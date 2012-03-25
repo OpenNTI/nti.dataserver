@@ -673,7 +673,7 @@ class TestApplicationLibrary(ApplicationTestBase):
 			users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
 		testapp = TestApp( self.app )
 		# Unauth gets nothing
-		testapp.get( '/dataserver2/NTIIDs/' + self.child_ntiid, status=403 )
+		testapp.get( '/dataserver2/NTIIDs/' + self.child_ntiid, status=401 )
 
 		res = testapp.get( '/dataserver2/NTIIDs/' + self.child_ntiid, extra_environ=self._make_extra_environ() )
 		assert_that( res.status_int, is_( 303 ) )

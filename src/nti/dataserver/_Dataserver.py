@@ -218,7 +218,35 @@ class _SessionDbMeetingStorage( object ):
 	def __str__(self):
 		return "<%s %s %s>" % ( self.__class__, self.name, hex(id(self)) )
 
+@contextlib.contextmanager
+def _trivial_db_transaction_cm():
+	# TODO: This needs all the retry logic, etc, that we
+	# get in the main app through pyramid_tm
 
+	lsm = component.getSiteManager()
+	conn = getattr( lsm, '_p_jar', None )
+	if conn:
+		yield conn
+		return
+
+	ds = component.getUtility( interfaces.IDataserver )
+	transaction.begin()
+	conn = ds.db.open()
+	sitemanc = conn.root()['nti.dataserver']
+
+	with site( sitemanc ):
+		assert component.getSiteManager() == sitemanc.getSiteManager()
+		assert component.getUtility( interfaces.IDataserver )
+		try:
+			yield conn
+			transaction.commit()
+		except:
+			transaction.abort()
+			raise
+		finally:
+			conn.close()
+
+interface.directlyProvides( _trivial_db_transaction_cm, interfaces.IDataserverTransactionContextManager )
 
 DATASERVER_DEMO = 'DATASERVER_DEMO' in os.environ and 'DATASERVER_NO_DEMO' not in os.environ
 
@@ -434,42 +462,42 @@ class Dataserver(MinimalDataserver):
 			# TODO: This is almost certainly wrong given the _p_jar stuff
 			users.EVERYONE = root['nti.dataserver'].getSiteManager()['users']['Everyone']
 
-		# Sessions and Chat configuration
-		def sdb():
-			db = self
-			@contextlib.contextmanager
-			def _trivial_db_transaction():
-				# TODO: See socketio_server
-				# TODO: This needs all the retry logic, etc, that we
-				# get in the main app through pyramid_tm
+		# # Sessions and Chat configuration
+		# def sdb():
+		# 	db = self
+		# 	@contextlib.contextmanager
+		# 	def _trivial_db_transaction():
+		# 		# TODO: See socketio_server
+		# 		# TODO: This needs all the retry logic, etc, that we
+		# 		# get in the main app through pyramid_tm
 
-				lsm = component.getSiteManager()
-				conn = getattr( lsm, '_p_jar', None )
-				if conn:
-					yield conn.get_connection('Sessions').root()
-					return
-				# The hard way
-				ds = db
-				transaction.begin()
-				conn = ds.db.open()
-				sitemanc = conn.root()['nti.dataserver']
+		# 		lsm = component.getSiteManager()
+		# 		conn = getattr( lsm, '_p_jar', None )
+		# 		if conn:
+		# 			yield conn.get_connection('Sessions').root()
+		# 			return
+		# 		# The hard way
+		# 		ds = db
+		# 		transaction.begin()
+		# 		conn = ds.db.open()
+		# 		sitemanc = conn.root()['nti.dataserver']
 
-				with site( sitemanc ):
-					try:
-						yield conn.get_connection('Sessions').root()
-						transaction.commit()
-					except:
-						transaction.abort()
-						raise
-					finally:
-						conn.close()
-			return _trivial_db_transaction()
+		# 		with site( sitemanc ):
+		# 			try:
+		# 				yield conn.get_connection('Sessions').root()
+		# 				transaction.commit()
+		# 			except:
+		# 				transaction.abort()
+		# 				raise
+		# 			finally:
+		# 				conn.close()
+		# 	return _trivial_db_transaction()
 
 
 		room_name = 'meeting_rooms'
 
 		self._setupPresence()
-		self.session_manager = self._setup_session_manager( sdb )
+		self.session_manager = self._setup_session_manager( ) #sdb )
 		self.chatserver = self._setup_chat( room_name )
 
 		self._apnsCertFile = apnsCertFile
@@ -514,8 +542,9 @@ class Dataserver(MinimalDataserver):
 		# FIXME: This is horribly ugly
 		users.User.presence = property(getPresence)
 
-	def _setup_session_manager( self, sdb ):
-		return sessions.SessionService( sdb )
+	def _setup_session_manager( self ):
+		# The session service will read a component from our local site manager
+		return sessions.SessionService()
 
 	def _setup_chat( self, room_name ):
 		# Delayed imports due to cycles
