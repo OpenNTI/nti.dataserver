@@ -38,7 +38,7 @@ import nti.dataserver.socketio_server
 #import nti.dataserver.wsgi
 import nti.dataserver._Dataserver
 import nti.dataserver.session_consumer
-from nti.dataserver.library import Library
+#from nti.dataserver.library import Library
 from nti.dataserver import interfaces as nti_interfaces
 
 import nti.contentsearch
@@ -56,11 +56,13 @@ from zope.configuration import xmlconfig
 from zope.event import notify
 from zope.processlifetime import ProcessStarting
 from zope.component.hooks import setSite, getSite, setHooks
+import transaction
 
 import nti.appserver.workspaces
 
 import pyramid.config
 import pyramid.authorization
+import pyramid.security
 import pyramid.httpexceptions as hexc
 
 import datetime
@@ -186,7 +188,6 @@ def createApplication( http_port,
 					   process_args=False,
 					   create_ds=True,
 					   pyramid_config=None,
-					   sync_changes=False,
 					   **settings ):
 	"""
 	:return: A tuple (wsgi app, _Main)
@@ -210,7 +211,7 @@ def createApplication( http_port,
 			_dataFileName = 'data.fs'
 		server = MockServer()
 	else:
-		ds_class = dataserver._Dataserver.Dataserver if not sync_changes else dataserver._Dataserver._SynchronousChangeDataserver
+		ds_class = dataserver._Dataserver.Dataserver
 		if process_args:
 			dataDir = "~/tmp"
 			dataFile = "test.fs"
@@ -269,17 +270,24 @@ def createApplication( http_port,
 	#pyramid_config.registry.settings('zodbconn.uri') =
 
 	# Our site setup
+	# If we wanted to, we could be setting sites up as we traverse as well
 	setHooks()
 	def on_new_request(evt):
 		"""
 		Within the scope of a transaction, gets a connection and installs our
-		site manager.
+		site manager. Records the active user and URL in the transaction.
 		"""
 		conn = pyramid_zodbconn.get_connection( evt.request )
 		site = conn.root()['nti.dataserver']
 		old_site = getSite()
 		setSite( site )
 		evt.request.add_finished_callback( lambda r: setSite( old_site ) )
+		# Now (and only now, that the site is setup) record info in the transaction
+		uid = pyramid.security.authenticated_userid( evt.request )
+		if uid:
+			transaction.get().setUser( uid )
+		transaction.get().note( evt.request.url )
+
 	pyramid_config.add_subscriber( on_new_request, pyramid.interfaces.INewRequest )
 
 
@@ -575,7 +583,10 @@ def createApplication( http_port,
 							 permission=nauth.ACT_READ, request_method='GET' )
 
 
-	# Make 401 come back as appropriate
+	# Make 401 come back as appropriate. Otherwise we get 403
+	# all the time, which prompts us to net send
+	# credentials
+	# TODO: Better use of an IChallangeDecider
 	def forb_view(request):
 		if 'repoze.who.identity' not in request.environ:
 			result = hexc.HTTPUnauthorized()
@@ -588,13 +599,10 @@ def createApplication( http_port,
 	# register change listeners
 	# Now, fork off the change listeners
 	if create_ds:
-		if sync_changes:
-			logger.info( 'Adding synchronous change listeners.' )
-			server.add_change_listener( SharingTarget.onChange )
-			if indexmanager:
-				server.add_change_listener( indexmanager.onChange )
-		else:
-			logger.info( "Change listeners should already be running." )
+		logger.info( 'Adding synchronous change listeners.' )
+		server.add_change_listener( SharingTarget.onChange )
+		if indexmanager:
+			server.add_change_listener( indexmanager.onChange )
 
 		logger.info( 'Finished adding listeners' )
 
@@ -629,19 +637,6 @@ class AppServer(dataserver.socketio_server.SocketIOServer):
 		logger.debug( "Creating session handler for '%s'/%s using %s and %s", username, dict(identity) if identity else None, auth_policy, environ )
 		session.message_handler = dataserver.session_consumer.SessionConsumer(username=username,session=session)
 
-def _configure_logging():
-	# TODO: Where should logging in these background processes be configured?
-	logging.basicConfig( level=logging.INFO )
-	logging.getLogger( 'nti' ).setLevel( logging.DEBUG )
-	logging.root.handlers[0].setFormatter( logging.Formatter( '%(asctime)s [%(name)s] %(levelname)s: %(message)s' ) )
-
-def _add_sharing_listener( server ):
-	_configure_logging()
-	print 'Adding sharing listener', os.getpid(), server
-	server.add_change_listener( SharingTarget.onChange )
-
-# --------------------------
-
 def use_zeodb_index_storage():
 	return DATASERVER_ZEO_INDEXES or (not DATASERVER_WHOOSH_INDEXES and not DATASERVER_REPOZE_INDEXES)
 
@@ -650,12 +645,6 @@ def use_whoosh_index_storage():
 
 def use_repoze_index_storage():
 	return DATASERVER_REPOZE_INDEXES
-
-def _add_index_listener( server, user_indices_dir ):
-	_configure_logging()
-	print 'Adding index listener', os.getpid(), dataserver
-	index_manager = create_index_manager(server)
-	server.add_change_listener( index_manager.onChange )
 
 def create_index_manager(server,
 						 use_zeo_storage = None,
@@ -688,12 +677,10 @@ def create_index_manager(server,
 																		 dataserver = server)
 	return ixman
 
-# --------------------------
-
+# These two functions exist for the sake of the installed executables
+# but they do nothing these days
 def sharing_listener_main():
-	_configure_logging()
-	dataserver._Dataserver.temp_env_run_change_listener( _add_sharing_listener )
+	pass
 
 def index_listener_main():
-	_configure_logging()
-	dataserver._Dataserver.temp_env_run_change_listener( _add_index_listener, [] )
+	pass

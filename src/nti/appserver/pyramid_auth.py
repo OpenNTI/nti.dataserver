@@ -7,14 +7,10 @@ from pyramid.interfaces import IAuthenticationPolicy
 
 from zope import interface
 from zope import component
-from repoze.who.interfaces import IAuthenticator, IChallengeDecider
+from repoze.who.interfaces import IAuthenticator
 from repoze.who.middleware import PluggableAuthenticationMiddleware
-from repoze.who.interfaces import IIdentifier
-from repoze.who.interfaces import IChallenger
 from repoze.who.plugins.basicauth import BasicAuthPlugin
 from repoze.who.plugins.auth_tkt import AuthTktCookiePlugin
-from repoze.who.plugins.redirector import RedirectorPlugin
-from repoze.who.plugins.htpasswd import HTPasswdPlugin
 from repoze.who.classifiers import default_challenge_decider
 from repoze.who.classifiers import default_request_classifier
 from pyramid_who.whov2 import WhoV2AuthenticationPolicy
@@ -205,17 +201,6 @@ class NTIUsersAuthenticatorPlugin(object):
 		if _make_user_auth().user_has_password( identity['login'], identity['password'] ):
 			return identity['login']
 
-# This is no longer used, the pyramid forbidden view is
-def _basicauth_challenge_decider( environ, status, headers ):
-	"""
-	Transform the 403 Forbidden response into a 401 Unauthorized
-	response if there are no credentials provided.
-	"""
-	return (status and status.startswith( '403' ) and 'repoze.who.identity' not in environ) \
-		   or default_challenge_decider( environ, status, headers )
-
-interface.directlyProvides( _basicauth_challenge_decider, IChallengeDecider )
-
 def _create_middleware( app=None ):
 	user_auth = NTIUsersAuthenticatorPlugin()
 	basicauth = BasicAuthPlugin('NTI')
@@ -225,8 +210,12 @@ def _create_middleware( app=None ):
 	#basicauth.include_ip = False
 	#basicauth.remember = auth_tkt.remember
 
+	# Identity (username) can come from the cookie,
+	# or HTTP Basic auth
 	identifiers = [('auth_tkt', auth_tkt),
 				   ('basicauth', basicauth)]
+	# Confirmation/authentication can come from the cookie (encryption)
+	# Or possibly HTTP Basic auth
 	authenticators = [('auth_tkt', auth_tkt),
 					  ('htpasswd', user_auth)]
 	challengers = [('basicauth', basicauth)]
@@ -239,13 +228,10 @@ def _create_middleware( app=None ):
 					challengers,
 					mdproviders,
 					default_request_classifier,
-					_basicauth_challenge_decider,
-					log_stream = logging.getLogger( 'repoze.who' ),
-					log_level = logging.DEBUG )
+					default_challenge_decider,
+					log_stream=logging.getLogger( 'repoze.who' ),
+					log_level=logging.DEBUG )
 	return middleware
-
-#def wrap_repoze_middleware( app ):
-#	return _create_middleware( app )
 
 def create_authentication_policy( ):
 	middleware = _create_middleware()

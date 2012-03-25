@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+from __future__ import print_function, unicode_literals
 import logging
 logger = logging.getLogger( __name__ )
 
@@ -6,31 +8,27 @@ import sys
 import types
 import inspect
 import six
-import warnings
 
 import collections
 
 import gevent.local
 
-from gevent_zeromq import zmq
 
-import ZODB
 from zope import interface
 from zope import component
 from zope.configuration import xmlconfig
-import ZODB.serialize
 from zope.event import notify
 from zope.processlifetime import DatabaseOpenedWithRoot
-import zope.generations.generations
-from zope.dottedname.resolve import resolve as _resolve
 
-import ZEO
-import ZEO.ClientStorage
+import zope.generations.generations
+import zope.deprecation
+
+
 from persistent import Persistent, wref
 import transaction
-from transaction.interfaces import DoomedTransaction
+
 from persistent.mapping import PersistentMapping
-from BTrees import OOBTree
+
 import contextlib
 from zope.component.hooks import site
 
@@ -40,7 +38,6 @@ import sessions
 
 import nti.apns as apns
 from . import users
-from . import _PubSubDevice
 from . import interfaces
 from . import ntiids
 from . import chat_interfaces
@@ -66,125 +63,6 @@ class _Change(Persistent):
 
 	def __repr__( self ):
 		return '_Change( %s, %s )' % (self.change, self.meta)
-
-def _safely(f):
-	try:
-		f()
-	except:
-		logger.exception( "Failed to execute safely %s", f )
-
-# class _ContextManager(object):
-# 	"""
-# 	PEP 343 context manager. Instances of this class must
-# 	always be used with the same datasource.
-# 	"""
-# 	local = gevent.local.local()
-
-# 	def __init__( self, db ):
-# 		self.db = db
-# 		self.tm = None
-# 		self.conn = None
-# 		self.txn = None
-# 		self.doomed = None
-# 		self._premature_exit_ok = False
-
-# 	def __enter__(self):
-# 		""" :return: The opened connection. """
-# 		if hasattr( self.local, 'contextManager' ):
-# 			raise ValueError( 'Transaction already entered' )
-
-# 		self.local.contextManager = self
-# 		self.tm = transaction.TransactionManager()
-# 		self.conn = self.db.open( self.tm )
-# 		self.txn = self.tm.begin()
-# 		return self.conn
-
-# 	def __exit__(self, t, v, tb):
-# 		# Cannot exit twice....
-# 		try:
-# 			del self.local.contextManager
-# 		except AttributeError:
-# 			# ...except if otherwise designated
-# 			if self._premature_exit_ok:
-# 				return
-# 			else:
-# 				if t:
-# 					raise t, v, tb
-# 				raise
-
-# 		try:
-# 			if self.doomed:
-# 				logger.debug( "Exiting doomed transaction %s", self.doomed )
-# 				self.tm.abort()
-# 				raise self.doomed[0], self.doomed[1], self.doomed[2]
-
-# 			if t is None:
-# 				try:
-# 					self.tm.commit()
-# 				except DoomedTransaction:
-# 					# Doomed was done on purpose, we shouldn't raise this (right?)
-# 					# But we do call attention to it
-# 					logger.exception( "Failed to commit doomed transaction" )
-# 					_safely( self.tm.abort )
-# 			else:
-# 				_safely( self.tm.abort )
-# 		finally:
-# 			# If we got an original exception closing/committing
-# 			# let it propagate
-# 			_safely( self.conn.close )
-# 			self.conn = None
-# 			# We have already either committed or aborted self.tm
-# 			# at this point. Doing it again is useless
-# 			self.tm = None
-# 			self.txn = None
-
-# 	def premature_exit_but_its_okay(self):
-# 		self._premature_exit_ok = True
-# 		self.__exit__( None, None, None )
-
-# 	def root(self):
-# 		return self.conn.root()
-
-# 	@classmethod
-# 	def contextManager(cls):
-# 		""" Returns the thread-local context manager, if there is one. """
-# 		try:
-# 			return cls.local.contextManager
-# 		except AttributeError:
-# 			return None
-
-# class _NestedContextManager(object):
-# 	"""
-# 	Piggybacks on a parent context manager.
-# 	"""
-
-# 	def __init__( self, parent=None ):
-# 		self.parent = parent
-# 		self.doomed = None
-# 		self.db = None
-# 		self.tm = None
-# 		self.conn = None
-# 		self.txn = None
-
-# 	def __enter__(self):
-# 		if self.parent:
-# 			self.db = self.parent.db
-# 			self.tm = self.parent.tm
-# 			self.conn = self.parent.conn
-# 			self.txn = self.parent.txn
-# 			return self.conn.root()
-
-# 	def root( self ):
-# 		return self.conn.root()
-
-# 	def __exit__(self, t, v, tb):
-# 		if t is not None:
-# 			if self.parent:
-# 				self.parent.doomed = (t, v, tb)
-
-# 	def premature_exit_but_its_okay( self ):
-# 		if callable( getattr( self.parent, 'premature_exit_but_its_okay', None ) ):
-# 			self.parent.premature_exit_but_its_okay()
 
 class _SessionDbMeetingStorage( object ):
 	interface.implements(chat_interfaces.IMeetingStorage)
@@ -250,51 +128,6 @@ interface.directlyProvides( _trivial_db_transaction_cm, interfaces.IDataserverTr
 
 DATASERVER_DEMO = 'DATASERVER_DEMO' in os.environ and 'DATASERVER_NO_DEMO' not in os.environ
 
-def temp_env_run_change_listener( change_func, *func_args ):
-	dataserver = _ChangeReceivingDataserver()
-	# TODO: This is something of a hack
-	xmlconfig.file( 'configure.zcml', package=sys.modules['nti.dataserver'] )
-	component.provideUtility( dataserver )
-	logger.info( "Running change daemon %s %s", change_func, func_args )
-	try:
-		change_func( dataserver, *func_args )
-	except:
-		logger.exception( "Failed to install change listener" )
-		sys.exit( 2 ) # 2 being a magic number that zdaemon knows not to restart us
-
-	try:
-		dataserver._change_reader.join()
-	except:
-		logger.exception( "Error joining change reader" )
-		raise
-	else:
-		logger.info( "Shutting down change daemon %s %s", change_func, func_args )
-
-
-class _ClassFactory(object):
-
-	def __init__( self, classFactory, dbClassFactory ):
-		self._classFactory = classFactory
-		self._dbClassFactory = dbClassFactory
-
-	def __call__( self, connection, modulename, globalname ):
-		result = None
-
-		if modulename.startswith( 'dataserver' ):
-			modulename = 'nti.' + modulename
-		try:
-			result = self._classFactory( connection, modulename, globalname )
-		except:
-			pass
-		if result is None:
-			# The built-in factory returns 'Broken'
-			# instances. See ZODB.broken.
-			#if modulename == contenttypes.__name__:
-			#	result = self.ensure_content_type_exists( globalname )
-			#else:
-			result = self._dbClassFactory( connection, modulename, globalname )
-
-		return result
 
 class MinimalDataserver(object):
 	"""
@@ -302,9 +135,10 @@ class MinimalDataserver(object):
 	"""
 
 	def __init__(self, parentDir="~/tmp", dataFileName="test.fs", classFactory=None, apnsCertFile=None, daemon=None  ):
-		""" If classFactory is given, it is a callable of (connection, modulename, globalname) that
-		should return a type; if it returns None or raises, the rest of the chain of factories
-		will be traversed. Our version of the classFactory will auto-create missing contenttypes. """
+		"""
+		"""
+		if classFactory:
+			raise TypeError( "classFactory no longer supported" )
 
 		if parentDir == "~/tmp" and 'DATASERVER_DIR' in os.environ:
 			parentDir = os.environ['DATASERVER_DIR']
@@ -314,7 +148,7 @@ class MinimalDataserver(object):
 		self.conf = config.temp_get_config( parentDir, demo=DATASERVER_DEMO )
 		# TODO: We shouldn't be doing this, it should be passed to us
 		component.provideUtility( self.conf )
-		self.db, self.sessionsDB, self.searchDB = self._setup_dbs( parentDir, dataFileName, daemon, classFactory )
+		self.db, self.sessionsDB, self.searchDB = self._setup_dbs( parentDir, dataFileName, daemon )
 
 		# Now, simply broadcasting the DatabaseOpenedWithRoot option
 		# will trigger the installers/evolvers from zope.generations
@@ -364,16 +198,13 @@ class MinimalDataserver(object):
 
 	__my_setup_storages = _setup_storages
 
-	def _setup_dbs( self, parentDir, dataFileName, daemon, classFactory ):
+	def _setup_dbs( self, parentDir, dataFileName, daemon ):
 		"""
 		Creates the database connections. Returns a tuple (userdb, sessiondb, searchdb).
 		"""
 		if self._setup_storages != self.__my_setup_storages:
 			raise Exception( "Setup storages no longer supported:" + str( self._setup_storages ) )
 		db, ses_db, search_db = self.conf.connect_databases()
-		db.classFactory = _ClassFactory( classFactory, db.classFactory )
-		ses_db.classFactory = _ClassFactory( classFactory, ses_db.classFactory )
-
 		return db, ses_db, search_db
 
 	@property
@@ -385,30 +216,7 @@ class MinimalDataserver(object):
 		if conn:
 			# Our root is the top-level site manager we are using
 			return conn.root()['nti.dataserver'].getSiteManager()
-		#warnings.warn( "Using dataserver outside of proper site manager", FutureWarning, stacklevel=2 )
-		#return _ContextManager.contextManager().conn.root()['nti.dataserver'].getSiteManager()
 		raise TypeError( "Using Dataserver outside of site manager" )
-
-	# def dbTrans( self ):
-	# 	""" Returns a context manager that wraps a transaction. """
-	# 	cm = _ContextManager.contextManager()
-	# 	if cm:
-	# 		# TODO: Should we automatically nest or make that explicit?
-	# 		cm = _NestedContextManager( cm )
-	# 	else:
-	# 		cm = _ContextManager( self.db )
-	# 	return cm
-
-	# def doom( self ):
-	# 	raise TypeError( "Doom no longer allowed" )
-	# 	_ContextManager.contextManager().tm.doom()
-
-	# def commit( self ):
-	# 	raise TypeError( "Commit no longer allowed" )
-	# 	cm = _ContextManager.contextManager()
-
-	# 	if cm is not None and cm.tm is not None:
-	# 		cm.tm.commit()
 
 	def close(self):
 		def _c( n ):
@@ -421,10 +229,6 @@ class MinimalDataserver(object):
 		_c( 'sessionsDB' )
 		_c( 'db' )
 
-
-	def __del__(self):
-		self.close()
-
 	def get_by_oid( self, oid_string, ignore_creator=False ):
 		resolver = component.queryUtility( interfaces.IOIDResolver )
 		if resolver is None:
@@ -436,9 +240,6 @@ class Dataserver(MinimalDataserver):
 	interface.implements(interfaces.IDataserver)
 
 	def __init__(self, parentDir = "~/tmp", dataFileName="test.fs", classFactory=None, apnsCertFile=None, daemon=None  ):
-		""" If classFactory is given, it is a callable of (connection, modulename, globalname) that
-		should return a type; if it returns None or raises, the rest of the chain of factories
-		will be traversed. Our version of the classFactory will auto-create missing contenttypes. """
 		super(Dataserver, self).__init__(parentDir, dataFileName, classFactory, apnsCertFile, daemon )
 		self.changeListeners = []
 
@@ -462,42 +263,11 @@ class Dataserver(MinimalDataserver):
 			# TODO: This is almost certainly wrong given the _p_jar stuff
 			users.EVERYONE = root['nti.dataserver'].getSiteManager()['users']['Everyone']
 
-		# # Sessions and Chat configuration
-		# def sdb():
-		# 	db = self
-		# 	@contextlib.contextmanager
-		# 	def _trivial_db_transaction():
-		# 		# TODO: See socketio_server
-		# 		# TODO: This needs all the retry logic, etc, that we
-		# 		# get in the main app through pyramid_tm
-
-		# 		lsm = component.getSiteManager()
-		# 		conn = getattr( lsm, '_p_jar', None )
-		# 		if conn:
-		# 			yield conn.get_connection('Sessions').root()
-		# 			return
-		# 		# The hard way
-		# 		ds = db
-		# 		transaction.begin()
-		# 		conn = ds.db.open()
-		# 		sitemanc = conn.root()['nti.dataserver']
-
-		# 		with site( sitemanc ):
-		# 			try:
-		# 				yield conn.get_connection('Sessions').root()
-		# 				transaction.commit()
-		# 			except:
-		# 				transaction.abort()
-		# 				raise
-		# 			finally:
-		# 				conn.close()
-		# 	return _trivial_db_transaction()
-
 
 		room_name = 'meeting_rooms'
 
 		self._setupPresence()
-		self.session_manager = self._setup_session_manager( ) #sdb )
+		self.session_manager = self._setup_session_manager( )
 		self.chatserver = self._setup_chat( room_name )
 
 		self._apnsCertFile = apnsCertFile
@@ -506,29 +276,31 @@ class Dataserver(MinimalDataserver):
 		# A topic that broadcasts Change events
 		self.changePublisherStream, self.other_closeables = self._setup_change_distribution()
 
+
 	def _setup_change_distribution( self ):
-		# We only broadcast, we never receive.
-		# TODO: Some of this could be shared.
-		# A topic that broadcasts Change events
-		changePublisher, _ = self.conf.create_pubsub_pair( 'changes', connect_sub=False )
+		"""
+		:return: A tuple of (changePublisherStream, [other closeables])
+		"""
+		# To handle changes synchronously, we execute them before the commit happens
+		# so that their changes are added with the main changes
 
 		changePublisherStream = gevent.queue.Queue()
-
-		def write_generic_change( ):
+		def read_generic_changes():
 			try:
 				while True:
+					logger.debug( "Waiting to receive change %s", os.getpid() )
 					msg = changePublisherStream.get()
 					try:
-						logger.debug( "ZMQ distributing change message %s %s", msg, os.getpid() )
-						changePublisher.send_multipart( msg )
+						logger.debug( "Received change %s %s", msg, os.getpid() )
+						self._on_recv_change( msg )
+						logger.debug( "Done processing change %s", os.getpid() )
 					except Exception:
-						logger.exception( 'error sending change %s' )
+						logger.exception( 'error reading change' )
 			finally:
-				logger.debug( "Stopping sending ZMQ changes %s", os.getpid() )
+				logger.debug( "Done receiving changes! %s", os.getpid() )
+		reader = gevent.spawn( read_generic_changes )
 
-		writer = gevent.spawn( write_generic_change )
-
-		return (changePublisherStream, (changePublisher, writer))
+		return (changePublisherStream, (reader,))
 
 	def _setupPresence( self ):
 		"""
@@ -591,10 +363,6 @@ class Dataserver(MinimalDataserver):
 				x.close()
 			except (AttributeError, TypeError): pass
 		self.other_closeables = ()
-		#Dataserver.dataserver = None
-
-	def __del__(self):
-		self.close()
 
 	def add_change_listener( self, listener ):
 		""" Adds a listener (a callable object) for changes."""
@@ -620,23 +388,10 @@ class Dataserver(MinimalDataserver):
 			if not worked:
 				logger.warning( 'Dropping change on failure to commit' )
 			else:
-				oids = {datastructures.toExternalOID( _change ) for _change in self._changes
-						if datastructures.toExternalOID(_change)}
-				if oids:
-					oids = list(oids)
-					logger.debug( "Enqueuing change OIDs %s in %s(%s)", oids, os.getpid(), self )
-					try:
-						# TODO: This is broken except for synchronous changes
-						#self.ds.changePublisherStream.put_nowait( self._changes )
-						self.ds._on_recv_change( self._changes )
-					except:
-						logger.exception( "Failed to put changes to the queue %s", os.getpid() )
-						raise
+				if self._changes:
+					self.ds._on_recv_change( self._changes )
 				else:
 					logger.debug( "There were no OIDs to publish %s", os.getpid() )
-
-				if len(oids) != len(self._changes):
-					logger.warning( 'Dropping non-externalized change on the floor!' )
 
 				# We are a one-shot object. Changes go or they don't.
 				self._changes = []
@@ -644,7 +399,7 @@ class Dataserver(MinimalDataserver):
 		def __repr__(self):
 			return "<%s.%s object at %s %s>" % (self.__class__.__module__, self.__class__.__name__, id(self), self.kwargs)
 
-	_HOOK_NAME = 'AfterCommit'
+	_HOOK_NAME = 'BeforeCommit'
 
 	def enqueue_change( self, change, **kwargs ):
 		""" Distributes a change to all the queued listener functions.
@@ -665,8 +420,9 @@ class Dataserver(MinimalDataserver):
 		# Force the change to be added. Without this,
 		# sometimes for some reason it doesn't get an OID by
 		# the time the transaction is committed.
-		#_ContextManager.contextManager().conn.add( _change )
 		self.root._p_jar.add( _change )
+		# TODO: Reconsider this. It's probably not needed anymore,
+		# and our choice of datastructure--a list--is terribly inefficient
 		self.root['changes'].append( _change )
 
 		txn = transaction.get() #_ContextManager.contextManager().txn
@@ -686,38 +442,31 @@ class Dataserver(MinimalDataserver):
 			adder( on_commit )
 
 	def _on_recv_change( self, msg ):
-		""" Given a Change received, distribute it to all registered listeners. """
+		"""
+		Given a Change received, distribute it to all registered listeners.
+		:param sequence msg: Sequence of _Change objects. For backwards compatibility,
+			can also be a sequence of OID strings.
+		"""
 
-		done = False
-		#tries = 5
-#		while tries and not done:
-		try:
-				# TODO: This is broken for everything except synchronous
-#				with self.dbTrans() as conn:
-#					conn._storage_sync()
-			for oid in msg:
-				_change = self.get_by_oid( oid ) if isinstance(oid,six.string_types) else oid
-				change = _change.change
+		for oid in msg:
+			_change = self.get_by_oid( oid ) if isinstance(oid,six.string_types) else oid
+			change = _change.change
 
-				for changeListener in self.changeListeners:
-					try:
-						changeListener( self, change, **_change.meta )
-					except Exception as e:
-						logger.exception( "Failed to distribute change to %s", changeListener )
-			done = True
-#				break
-		except transaction.interfaces.TransientError as e:
-			logger.warn( "Retrying to distribute change", exc_info=True )
-			# Give things a chance to settle.
-#			gevent.sleep( 0.5 )
-		except Exception as e:
-			logger.exception( "Failed to distribute change" )
+			for changeListener in self.changeListeners:
+				try:
+					changeListener( self, change, **_change.meta )
+				except Exception as e:
+					logger.exception( "Failed to distribute change to %s", changeListener )
+					# TODO: Since we are doing this synchronously now, we
+					# should probably let this propagate, right?
 
-		if not done:
-			logger.warning( "Failed to distribute change %s", msg )
-
+	###
+	# Dealing with content types
+	# TODO: This should be separated out
+	###
 	def find_content_type( self, typeName=None ):
-		""" Given the name of a type, optionally ending in 's' for
+		"""
+		Given the name of a type, optionally ending in 's' for
 		plural, returns that type.
 		"""
 		className = typeName[0:-1] if typeName.endswith('s') else typeName
@@ -859,85 +608,9 @@ class Dataserver(MinimalDataserver):
 		return containedObject
 
 
-class _SynchronousChangeDataserver(Dataserver):
-	""" A dataserver that processes changes synchronously. """
-
-	_HOOK_NAME = 'BeforeCommit'
-
-	def _setup_change_distribution( self ):
-		# To handle changes synchronously, we execute them before the commit happens
-		# so that their changes are added with the main changes
-
-		changePublisherStream = gevent.queue.Queue()
-		def read_generic_changes():
-			try:
-				while True:
-					logger.debug( "Waiting to receive change %s", os.getpid() )
-					msg = changePublisherStream.get()
-					try:
-						logger.debug( "Received change %s %s", msg, os.getpid() )
-						self._on_recv_change( msg )
-						logger.debug( "Done processing change %s", os.getpid() )
-					except Exception:
-						logger.exception( 'error reading change' )
-			finally:
-				logger.debug( "Done receiving changes! %s", os.getpid() )
-		reader = gevent.spawn( read_generic_changes )
-		self._change_reader = reader # TODO: Hack to keep alive
-
-		return (changePublisherStream, ())
-
-class _ChangeReceivingDataserver(Dataserver):
-
-	def _setup_change_distribution( self ):
-		changePublisher, changeSubscriber = self.conf.create_pubsub_pair( 'changes' )
-
-		def read_generic_changes():
-			try:
-				while True:
-					logger.debug( "Waiting to receive change %s", os.getpid() )
-					msg = changeSubscriber.recv_multipart()
-					try:
-						logger.debug( "Received change %s %s", msg, os.getpid() )
-						self.db.invalidateCache()
-						self._on_recv_change( msg )
-						logger.debug( "Done processing change %s", os.getpid() )
-					except Exception:
-						logger.exception( 'error reading change' )
-			finally:
-				logger.debug( "Done receiving changes! %s", os.getpid() )
-		reader = gevent.spawn( read_generic_changes )
-		self._change_reader = reader # TODO: Hack
-
-		changePublisherStream = gevent.queue.Queue()
-
-		def write_generic_change( ):
-			while True:
-				msg = changePublisherStream.get()
-				try:
-					changePublisher.send_multipart( msg )
-				except Exception:
-					logger.exception( 'error sending change' )
-
-		writer = gevent.spawn( write_generic_change )
-
-		return (changePublisherStream, (changePublisher, changeSubscriber, reader, writer))
-
-	# These are all things we don't need to do, because we can
-	# assume they are done by the main processes. The background
-	# process doesn't need to spawn any other daemons.
-
-	def _setup_launch_zeo( self, clientPipe, path, args, daemon ):
-		pass
-
-	def _setupPresence( self ):
-		pass
-
-	# sessions and chat are required in the background processes
-	# to dispatch change notifications to connected sessions.
-	# TODO: Clean this up a bit, this tries to launch pub-sub
-	# processes.
-
+_SynchronousChangeDataserver = Dataserver
+zope.deprecation.deprecated('_SynchronousChangeDataserver',
+							"Use plain Dataserver" )
 
 class PersistentOidResolver(Persistent):
 	interface.implements( interfaces.IOIDResolver )
