@@ -16,6 +16,8 @@ from zope.container.interfaces import IContainerNamesContainer as IZContainerNam
 from zope.location.interfaces import IContained as IZContained
 from zope.location.location import LocationProxy
 
+from zope.interface.common.mapping import IFullMapping
+
 class ACLLocationProxy(LocationProxy):
 	"""
 	Like :class:`LocationProxy` but also adds transparent storage
@@ -35,6 +37,18 @@ class ACLLocationProxy(LocationProxy):
 
 class IDataserver(interface.Interface):
 	pass
+
+class IDataserverTransactionContextManager(interface.Interface):
+	"""
+	Something that manages the setup needed for transactions and
+	components in the dataserver.
+	"""
+
+	def __call__():
+		"""
+		Returns a context manager that will correctly manage the dataserver
+		transactions.
+		"""
 
 class IOIDResolver(interface.Interface):
 	def get_object_by_oid( oid_string, ignore_creator=False ):
@@ -602,6 +616,48 @@ class IProviderOrganization(IContainerIterable):
 	"""
 
 ### Dynamic event handling
+
+class ISocketProxySession(interface.Interface):
+
+	def put_server_msg( msg ):
+		"""
+		"""
+
+	def put_client_msg( msg ):
+		"""
+		"""
+
+class ISessionService(interface.Interface):
+	"""
+	Manages the open sessions within the system.
+
+	Keeps a dictionary of `proxy_session` objects that will have
+	messages copied to them whenever anything happens to the real
+	session.
+	"""
+
+	def set_proxy_session(session_id, session=None):
+		"""
+		:param session: An :class:`ISocketProxySession`: something
+			with `put_server_msg` and `put_client_msg` methods. If
+			`None`, then a proxy session for the `session_id` will be
+			removed (if any)
+		"""
+
+	def create_session(session_class=None, **kwargs):
+		"""
+		This method serves as a factory for :class:`ISocketSession` objects.
+		One is created and stored persistently by this method, and returned.
+		"""
+
+	def get_session( session_id ):
+		"""
+		Returns an existing, probably alive :class:`ISocketSession` having the
+		given ID.
+		"""
+
+class ISessionServiceStorage(IFullMapping):
+	pass
 
 class ISocketSession(interface.Interface):
 

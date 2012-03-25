@@ -28,29 +28,6 @@ from nti.dataserver import interfaces as nti_interfaces
 
 __all__ = ['SocketIOServer', 'Session']
 
-@contextlib.contextmanager
-def _trivial_db_transaction_cm():
-	# TODO: This needs all the retry logic, etc, that we
-	# get in the main app through pyramid_tm
-	ds = component.getUtility( nti_interfaces.IDataserver )
-	transaction.begin()
-	conn = ds.db.open()
-	sitemanc = conn.root()['nti.dataserver']
-
-	with site( sitemanc ):
-		assert component.getSiteManager() == sitemanc.getSiteManager()
-		assert component.getUtility( nti_interfaces.IDataserver )
-		try:
-			yield conn
-			transaction.commit()
-		except:
-			transaction.abort()
-			raise
-		finally:
-			conn.close()
-
-def _trivial_db_transaction(arg):
-	return _trivial_db_transaction_cm()
 
 class SocketIOServer(socketio.SocketIOServer):
 	"""A WSGI Server with a resource that acts like an SocketIO."""
@@ -89,7 +66,8 @@ class SocketIOServer(socketio.SocketIOServer):
 			s = Session(**kwargs)
 			self._after_create_session( s, environ=environ )
 			return s
-		session = self.session_manager.create_session( session_class=factory )
+		with component.getUtility( nti_interfaces.IDataserverTransactionContextManager )():
+			session = self.session_manager.create_session( session_class=factory )
 		logger.debug( "Created new session %s", session )
 		return session
 
@@ -98,7 +76,8 @@ class SocketIOServer(socketio.SocketIOServer):
 		:return: an existing client Session.
 		:raises KeyError: If the session asked for does not exist.
 		"""
-		session = self.session_manager.get_session( session_id )
+		with component.getUtility( nti_interfaces.IDataserverTransactionContextManager )():
+			session = self.session_manager.get_session( session_id )
 		if not session:
 			raise KeyError( "No session " + str(session_id) )
 		return session
@@ -153,7 +132,7 @@ class SocketIOHandler(socketio.handler.SocketIOHandler):
 	_add_cors_ = False
 
 	web_socket_handler = WebSocketHandler
-	context_manager_callable = _trivial_db_transaction
+	#context_manager_callable = _trivial_db_transaction
 
 	def __init__( self, *args, **kwargs ):
 		"""
@@ -164,7 +143,7 @@ class SocketIOHandler(socketio.handler.SocketIOHandler):
 		:param callable context_manager_callable: A callable that produces a context manager which
 			will be wrapped around each handled client request.
 		"""
-		self.context_manager_callable = kwargs.pop( 'context_manager_callable', self.context_manager_callable )
+#		self.context_manager_callable = kwargs.pop( 'context_manager_callable', self.context_manager_callable )
 		self.handling_session_cm = None
 		super(SocketIOHandler, self).__init__( *args, **kwargs )
 		self.handler_types = {
@@ -421,7 +400,9 @@ class WebsocketTransport(socketio.transports.WebsocketTransport):
 		session_id = args[0].session_id
 		session_proxy = _SessionEventProxy()
 		session_service = self.handler.server.session_manager
-		context_manager_callable = self.handler.context_manager_callable
+		context_manager_callable = component.queryUtility( nti_interfaces.IDataserverTransactionContextManager,
+														   default=getattr( self.handler, 'context_manager_callable', None ) ) # Unit tests
+
 		session_service.set_proxy_session( session_id, session_proxy )
 
 		# If these jobs die with an error, then they may leak the
