@@ -55,6 +55,7 @@ from zope import component
 from zope.configuration import xmlconfig
 from zope.event import notify
 from zope.processlifetime import ProcessStarting
+from zope.component.hooks import setSite, getSite, setHooks
 
 import nti.appserver.workspaces
 
@@ -64,6 +65,7 @@ import pyramid.httpexceptions as hexc
 
 import datetime
 import pyramid_auth
+import pyramid_zodbconn
 
 
 # Make the zope interface extend the pyramid interface
@@ -142,6 +144,7 @@ class _Main(object):
 		# static javascript does.
 		if environ['PATH_INFO'].startswith( '/' + SOCKET_IO_PATH ) \
 		  and not environ['PATH_INFO'].startswith(  '/' + SOCKET_IO_PATH + '/static/' ):
+		  	#import pdb; pdb.set_trace()
 			if 'wsgi.websocket' not in environ:
 				# Well damn. We failed to upgrade the connection to a websocket.
 				# This usually means that we are behind a proxy that doesn't
@@ -155,9 +158,11 @@ class _Main(object):
 			# our sleep, we need to close the transaction. (It's not
 			# like we're authenticating). We would want to re-obtain it
 			# when needed.
-			environ['app.db.connection'].transaction_manager.commit()
-			environ['app.db.connection'].close()
-			environ['socketio'].session.wsgi_app_greenlet = True
+
+			#environ['app.db.connection'].transaction_manager.commit()
+			#environ['app.db.connection'].close()
+			#environ['socketio'].session.wsgi_app_greenlet = True
+			logger.debug( "Exiting %s", environ )
 			return
 
 		if environ['PATH_INFO'].startswith( '/stacktraces' ):
@@ -189,7 +194,7 @@ def createApplication( http_port,
 	server = None
 	# Configure subscribers, etc.
 	xmlconfig.file( 'configure.zcml', package=nti.appserver )
-	
+
 	# Notify of startup. (Note that configuring the packages loads zope.component:configure.zcml
 	# which in turn hooks up zope.component.event to zope.event for event dispatching)
 	notify( ProcessStarting() )
@@ -262,6 +267,20 @@ def createApplication( http_port,
 	# I think the DS will want to be a transaction.interfaces.ISynchronizer and/or an IDataManager
 	pyramid_config.registry.zodb_database = server.db
 	#pyramid_config.registry.settings('zodbconn.uri') =
+
+	# Our site setup
+	setHooks()
+	def on_new_request(evt):
+		"""
+		Within the scope of a transaction, gets a connection and installs our
+		site manager.
+		"""
+		conn = pyramid_zodbconn.get_connection( evt.request )
+		site = conn.root()['nti.dataserver']
+		old_site = getSite()
+		setSite( site )
+		evt.request.add_finished_callback( lambda r: setSite( old_site ) )
+	pyramid_config.add_subscriber( on_new_request, pyramid.interfaces.INewRequest )
 
 
 	# The pyramid_openid view requires a session. The repoze.who.plugins.openid plugin
@@ -556,6 +575,16 @@ def createApplication( http_port,
 							 permission=nauth.ACT_READ, request_method='GET' )
 
 
+	# Make 401 come back as appropriate
+	def forb_view(request):
+		if 'repoze.who.identity' not in request.environ:
+			result = hexc.HTTPUnauthorized()
+			result.www_authenticate = ('Basic', 'realm="nti"')
+			return result
+		return request.exception
+	pyramid_config.add_forbidden_view( forb_view )
+
+
 	# register change listeners
 	# Now, fork off the change listeners
 	if create_ds:
@@ -579,7 +608,7 @@ def createApplication( http_port,
 	main.addServeFiles( ('/dataserver2', None) )
 
 	application = main
-	application = pyramid_auth.wrap_repoze_middleware( application )
+	#application = pyramid_auth.wrap_repoze_middleware( application )
 
 	return (application,main)
 
@@ -628,18 +657,18 @@ def _add_index_listener( server, user_indices_dir ):
 	index_manager = create_index_manager(server)
 	server.add_change_listener( index_manager.onChange )
 
-def create_index_manager(server, 
+def create_index_manager(server,
 						 use_zeo_storage = None,
 						 use_repoze_storage = None,
 						 use_whosh_storage = None,
 						 user_indices_dir = None):
-	
+
 	if use_zeo_storage is None:
 		use_zeo_storage = use_zeodb_index_storage()
 
 	if use_repoze_storage is None:
 		use_repoze_storage = use_repoze_index_storage()
-		
+
 	if use_whosh_storage is None:
 		use_whosh_storage = use_whoosh_index_storage()
 

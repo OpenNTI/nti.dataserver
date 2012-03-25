@@ -21,6 +21,7 @@ from zope import interface
 import pyramid.security as sec
 import pyramid.httpexceptions as hexc
 from pyramid import traversal
+import transaction
 
 from zope.location.location import LocationProxy
 
@@ -863,7 +864,7 @@ class _UGDPostView(_UGDModifyViewBase):
 
 		containedObject = self.createContentObject( owner, datatype, externalValue )
 		if containedObject is None:
-			self.dataserver.doom()
+			transaction.doom()
 			logger.debug( "Failing to POST: input of unsupported/missing Class" )
 			raise HTTPUnprocessableEntity( 'Unsupported/missing Class' )
 
@@ -873,7 +874,7 @@ class _UGDPostView(_UGDModifyViewBase):
 			# TODO: The WSGI code would attempt to infer a containerID from the
 			# path. Should we?
 			if not getattr( containedObject, StandardInternalFields.CONTAINER_ID, None ):
-				self.dataserver.doom()
+				transaction.doom()
 				logger.debug( "Failing to POST: input of unsupported/missing ContainerId" )
 				raise HTTPUnprocessableEntity( "Unsupported/missing ContainerId" )
 			try:
@@ -889,7 +890,7 @@ class _UGDPostView(_UGDModifyViewBase):
 					# be given at creation time and never after (think immutable usernames
 					# which must not overlap and cannot be auto-generated). In that case,
 					# there's nothing else we can do but inform the client
-					self.dataserver.doom()
+					transaction.doom()
 					raise hexc.HTTPConflict("Cannot use an ID already in use")
 				else:
 					owner.addContainedObject( containedObject )

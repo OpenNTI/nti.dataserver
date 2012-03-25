@@ -121,6 +121,7 @@ setup(
 		'zope.processlifetime',
 		'zope.schema',
 		'zope.security',
+		'zope.site',
 		'zope.size',
 		'zope.tal',
 		'zope.tales',

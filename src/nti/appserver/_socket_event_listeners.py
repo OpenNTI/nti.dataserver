@@ -19,11 +19,9 @@ def _notify_friends_of_presence( session, presence ):
 		return
 
 	has_me_in_buddy_list = ()
-	# TODO: Confirm whether or not this transaction is necessary
-	with dataserver.dbTrans():
-		user = users.User.get_user( session.owner, dataserver=dataserver )
-		# TODO: Better algorithm. Who should this really go to?
-		has_me_in_buddy_list = user.following | set(user._sources_accepted)
+	user = users.User.get_user( session.owner, dataserver=dataserver )
+	# TODO: Better algorithm. Who should this really go to?
+	has_me_in_buddy_list = user.following | set(user._sources_accepted)
 	logger.debug( "Notifying %s of presence change of %s to %s", has_me_in_buddy_list, session.owner, presence )
 	chatserver.notify_presence_change( session.owner, presence, has_me_in_buddy_list )
 

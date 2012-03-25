@@ -94,13 +94,12 @@ class SessionConsumer(Persistent):
 			invalid_auth( "Failed socket auth: wrong arguments" )
 			return
 
-		with component.getUtility( nti_interfaces.IDataserver ).dbTrans():
-			ent = User.get_user( uname )
-			# TODO: Centralize this.
-			warnings.warn( "Code is assuming authentication protocol." )
-			if not ent or not ent.password == pw:
-				invalid_auth( "Failed socket auth: wrong password or user" )
-				return
+		ent = User.get_user( uname )
+		# TODO: Centralize this.
+		warnings.warn( "Code is assuming authentication protocol." )
+		if not ent or not ent.password == pw:
+			invalid_auth( "Failed socket auth: wrong password or user" )
+			return
 
 		self._username = uname
 		self._initialize_session( socket_obj.session )
