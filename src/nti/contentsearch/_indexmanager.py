@@ -6,7 +6,8 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.contentsearch import LFUMap
 from nti.contentsearch import interfaces
-from nti.contentsearch._indexagent import IndexAgent
+from nti.contentsearch._indexagent import handle_index_event
+
 from nti.contentsearch.common import empty_search_result
 from nti.contentsearch.common import empty_suggest_result
 from nti.contentsearch.common import merge_search_results
@@ -37,7 +38,6 @@ class IndexManager(object):
 	
 	def __init__(self, bookidx_manager_factory, useridx_manager_factory, max_users=100, dataserver=None):
 		self.books = {}
-		self._indexagent = IndexAgent( self )
 		self.users = LFUMap(maxsize=max_users, on_removal_callback=self.on_item_removed)
 		self.bookidx_manager_factory = bookidx_manager_factory
 		self.useridx_manager_factory = useridx_manager_factory
@@ -192,16 +192,7 @@ class IndexManager(object):
 
 	@classmethod
 	def onChange(cls, datasvr, msg, username=None, broadcast=None):
-		if username:
-			obj = getattr(msg, "object", None)
-			if obj:
-				data = obj
-				if callable( getattr( obj, 'toExternalObject', None ) ):
-					data = obj.toExternalObject()
-				cls.get_shared_indexmanager()._indexagent.add_event(creator = username,
-																	changeType = msg.type,
-																	dataType = obj.__class__.__name__,
-																	data=data )
+		handle_index_event(cls.get_shared_indexmanager(), username, msg)
 
 	# -------------------
 
