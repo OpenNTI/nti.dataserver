@@ -1,4 +1,6 @@
 import re
+import contextlib
+
 from zope import component
 from zope import interface
 
@@ -14,23 +16,25 @@ from nti.contentsearch.common import empty_suggest_result
 from nti.contentsearch._repoze_index import get_ntiid
 from nti.contentsearch._repoze_index import get_index_hit
 from nti.contentsearch._repoze_index import create_catalog
-from nti.contentsearch._repoze_datastore import RepozeDataStore
 from nti.contentsearch.textindexng3 import CatalogTextIndexNG3
 from nti.contentsearch.common import (NTIID, LAST_MODIFIED, ITEMS, HIT_COUNT, SUGGESTIONS, content_, ngrams_)
 
 import logging
 logger = logging.getLogger( __name__ )
 
+@contextlib.contextmanager
+def _context_manager():
+	yield component.queryUtility( interfaces.IRepozeDataStore )
+	
 class RepozeUserIndexManager(object):
 	interface.implements(interfaces.IUserIndexManager)
 
-	def __init__(self, username, repoze_store, dataserver=None):
+	def __init__(self, username):
 		self.username = username
-		self.datastore = repoze_store
-		self.ds = dataserver or component.queryUtility( nti_interfaces.IDataserver )
-		assert self.ds, 'must specify a valid data server'
-		assert isinstance(self.datastore, RepozeDataStore), 'must specify a valid repoze store'
-
+		self.datastore = component.queryUtility( interfaces.IRepozeDataStore )
+		self.dataserver = component.queryUtility( nti_interfaces.IDataserver )
+		assert self.datastore, 'repoze datastore was not found'
+		assert self.dataserver, 'must specify a valid data server'
 
 	def __str__( self ):
 		return self.username
@@ -38,38 +42,29 @@ class RepozeUserIndexManager(object):
 	def __repr__( self ):
 		return 'RepozeUserIndexManager(user=%s)' % self.username
 
-
 	def get_username(self):
 		return self.username
-
+	
 	@property
 	def store(self):
 		return self.datastore
-
-	@property
-	def dataserver(self):
-		return self.ds
-
+	
 	def _normalize_name(self, x):
 		result = u''
 		if x:
 			result =x[0:-1].lower() if x.endswith('s') else x.lower()
 		return unicode(result)
 
-	def _get_catalog_names(self):
-		with self.datastore.dbTrans():
-			return self.datastore.get_catalog_names(self.username)
-
 	def _adapt_search_on_types(self, search_on=None):
 		if search_on:
 			search_on = [self._normalize_name(x) for x in search_on]
 		return search_on
 
-	def _get_hits_from_docids(self, docMap, docIds, limit=None, query=None, use_word_highlight=True, *args, **kwargs):
+	def _get_hits_from_docids(self, docIds, limit=None, query=None, use_word_highlight=True, *args, **kwargs):
 		lm =  0
 		items = []
 		for docId in docIds:
-			ntiid = docMap.address_for_docid(docId)
+			ntiid = self.store.address_for_docid(docId)
 			try:
 				svr_obj = find_object_with_ntiid(ntiid, dataserver=self.dataserver)
 				if svr_obj:
@@ -103,21 +98,18 @@ class RepozeUserIndexManager(object):
 
 		query = unicode(query)
 		results = empty_search_result(query)
-		if not query:
-			return results
+		if not query: return results
 
 		lm = 0
 		items = results[ITEMS]
 		search_on = self._adapt_search_on_types(kwargs.get('search_on', None))
-		search_on = search_on if search_on else self._get_catalog_names()
-		with self.store.dbTrans():
-			docMap = self.store.docMap
+		with _context_manager():
+			search_on = search_on if search_on else self.store.get_catalog_names(self.username)
 			for type_name in search_on:
 				catalog = self.datastore.get_catalog(self.username, type_name)
 				if catalog:
 					_, docIds = self._do_catalog_query(catalog, field, query)
-					hits, hits_lm = self._get_hits_from_docids(	docMap,
-																docIds,
+					hits, hits_lm = self._get_hits_from_docids(	docIds,
 																limit=limit,
 																query=query,
 																use_word_highlight=use_word_highlight,
@@ -143,16 +135,15 @@ class RepozeUserIndexManager(object):
 	def suggest(self, term, limit=None, prefix=None, *args, **kwargs):
 		term = unicode(term)
 		results = empty_suggest_result(term)
-		if not term:
-			return results
+		if not term: return results
 
 		suggestions = set()
 		search_on = self._adapt_search_on_types(kwargs.get('search_on', None))
-		search_on = search_on if search_on else self._get_catalog_names()
 		threshold = kwargs.get('threshold', 0.4999)
 		prefix = prefix or len(term)
 
-		with self.store.dbTrans():
+		with _context_manager():
+			search_on = search_on if search_on else self.store.get_catalog_names(self.username)
 			for type_name in search_on:
 				catalog = self.datastore.get_catalog(self.username, type_name)
 				textfield = catalog.get(content_, None)
@@ -194,11 +185,10 @@ class RepozeUserIndexManager(object):
 		if not data: return None
 		docid = None
 		ntiid = get_ntiid(data)
-		with self.store.dbTrans():
+		with _context_manager():
 			catalog = self._get_create_catalog(data, type_name)
 			if catalog and ntiid:
-				docMap = self.store.docMap
-				docid = docMap.docid_for_address(ntiid) or docMap.add(ntiid)
+				docid = self.store.docid_for_address(ntiid) or self.store.add_address(ntiid)
 				catalog.index_doc(docid, data)
 		return docid
 
@@ -206,9 +196,8 @@ class RepozeUserIndexManager(object):
 		if not data: return None
 		ntiid = get_ntiid(data)
 		if not ntiid: return None
-		with self.store.dbTrans():
-			docMap = self.store.docMap
-			docid = docMap.docid_for_address(ntiid)
+		with _context_manager():
+			docid = self.store.docid_for_address(ntiid)
 			if docid:
 				catalog = self._get_create_catalog(data, type_name)
 				catalog.reindex_doc(docid, data)
@@ -220,32 +209,27 @@ class RepozeUserIndexManager(object):
 		if not data: return None
 		ntiid = get_ntiid(data)
 		if not ntiid: return None
-		with self.store.dbTrans():
-			docMap = self.store.docMap
-			docid = docMap.docid_for_address(ntiid)
+		with _context_manager():
+			docid = self.store.docid_for_address(ntiid)
 			if docid:
 				catalog = self._get_create_catalog(data, type_name)
 				catalog.unindex_doc(docid)
-				docMap.remove_docid(docid)
+				self.store.remove_docid(docid)
 		return docid
 
 	def remove_index(self, type_name):
-		with self.store.dbTrans():
+		with _context_manager():
 			result = self.store.remove_catalog(self.username, type_name)
 			return result
 
-
 	def docid_for_address(self, address):
-		with self.store.dbTrans():
-			docMap = self.store.docMap
-			docid = docMap.docid_for_address(address)
+		with _context_manager():
+			docid = self.store.docid_for_address(address)
 			return docid
 
 # -----------------------------
 
-def ruim_factory(repoze_store=None, dataserver=None):
-	def f(username, *args, **kwargs):
-		_ds = kwargs['dataserver'] if 'dataserver' in kwargs else dataserver
-		_store = repoze_store or kwargs.get('repoze_store', None) or kwargs.get('store', None)
-		return RepozeUserIndexManager(username, _store, _ds)
+def ruim_factory(*args, **kwargs):
+	def f(username, *fargs, **fkwargs):
+		return RepozeUserIndexManager(username)
 	return f
