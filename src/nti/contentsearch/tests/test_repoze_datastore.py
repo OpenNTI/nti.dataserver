@@ -22,7 +22,6 @@ class TestDataStore(ConfiguringTestBase):
 
 	def setUp(self):
 		super(TestDataStore, self).setUp()
-		# TODO: Why are these file stores? MappingStore is much faster
 		self.storage = MappingStorage()
 		self.db = DB(self.storage)
 
@@ -32,12 +31,10 @@ class TestDataStore(ConfiguringTestBase):
 
 	def test_ctor(self):
 		store = RepozeDataStore(self.db, users_key='_users_', docMap_key='_docMap_')
-		with store.dbTrans():
-			root = store.root
-			assert_that(root, has_key('_users_'))
-			assert_that(root, has_key('_docMap_'))
-			assert_that(root['_users_'], is_not(None))
-			assert_that(root['_docMap_'], is_not(None))
+		assert_that(store, has_key('_users_'))
+		assert_that(store, has_key('_docMap_'))
+		assert_that(store['_users_'], is_not(None))
+		assert_that(store['_docMap_'], is_not(None))
 
 	def test_add_get_catalog(self):
 		catalog = create_notes_catalog()
