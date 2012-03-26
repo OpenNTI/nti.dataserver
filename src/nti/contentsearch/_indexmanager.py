@@ -1,5 +1,3 @@
-import gevent
-
 from zope import component
 from zope import interface
 
@@ -128,49 +126,37 @@ class IndexManager(object):
 	def user_data_search(self, username, query, limit=None, *args, **kwargs):
 		results = None
 		if query:
-			jobs = []
 			query = unicode(query)
 			for uim in self._get_search_uims(username, *args, **kwargs):
-				jobs.append(gevent.spawn(uim.search, query=query, limit=limit, **kwargs))
-			gevent.joinall(jobs)
-			for job in jobs:
-				results = merge_search_results (results, job.value)
+				output = uim.search(query=query, limit=limit, **kwargs)
+				results = merge_search_results (results, output)
 		return results if results else empty_search_result(query)
 
 	def user_data_ngram_search(self, username, query, limit=None, *args, **kwargs):
 		results = None
 		if query:
-			jobs = []
 			query = unicode(query)
 			for uim in self._get_search_uims(username, *args, **kwargs):
-				jobs.append(gevent.spawn(uim.ngram_search, query=query, limit=limit, **kwargs))
-			gevent.joinall(jobs)
-			for job in jobs:
-				results = merge_search_results (results, job.value)
+				output = uim.ngram_search(query=query, limit=limit, **kwargs)
+				results = merge_search_results (results, output)
 		return results if results else empty_search_result(query)
 
 	def user_data_suggest_and_search(self, username, query, limit=None, *args, **kwargs):
 		results = None
 		if query:
-			jobs = []
 			query = unicode(query)
 			for uim in self._get_search_uims(username, *args, **kwargs):
-				jobs.append(gevent.spawn(uim.suggest_and_search, query=query, limit=limit, **kwargs))
-			gevent.joinall(jobs)
-			for job in jobs:
-				results = merge_suggest_and_search_results (results, job.value)
+				output = uim.suggest_and_search(query=query, limit=limit, **kwargs)
+				results = merge_suggest_and_search_results (results, output)
 		return results if results else empty_suggest_and_search_result(query)
 
 	def user_data_suggest(self, username, term, limit=None, prefix=None, *args, **kwargs):
 		results = None
 		if term:
-			jobs = []
 			term = unicode(term)
 			for uim in self._get_search_uims(username, *args, **kwargs):
-				jobs.append(gevent.spawn(uim.suggest, term, limit=limit, prefix=prefix, **kwargs))
-			gevent.joinall(jobs)
-			for job in jobs:
-				results = merge_suggest_results (results, job.value)
+				output = uim.suggest(term, limit=limit, prefix=prefix, **kwargs)
+				results = merge_suggest_results (results, output)
 		return results if results else empty_suggest_result(term)
 
 	user_data_quick_search = user_data_ngram_search
