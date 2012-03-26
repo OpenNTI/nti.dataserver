@@ -83,10 +83,8 @@ IZLocation.__bases__ = (ILocation,)
 
 SOCKET_IO_PATH = 'socket.io'
 
-#TDOD: we should do this as configuration
-DATASERVER_REPOZE_INDEXES = 'DATASERVER_REPOZE_INDEXES' in os.environ
-DATASERVER_ZEO_INDEXES = 'DATASERVER_NO_INDEX_BLOBS' not in os.environ or 'DATASERVER_ZEO_INDEXES' in os.environ
-DATASERVER_WHOOSH_INDEXES = not DATASERVER_ZEO_INDEXES or 'DATASERVER_WHOOSH_INDEXES' in os.environ
+#TODO: we should do this as configuration
+DATASERVER_WHOOSH_INDEXES = 'DATASERVER_WHOOSH_INDEXES' in os.environ
 
 class _Main(object):
 
@@ -360,7 +358,7 @@ def createApplication( http_port,
 
 	indexmanager = None
 	if create_ds:
-		indexmanager = create_index_manager(server, use_zeodb_index_storage())
+		indexmanager = create_index_manager(server, use_whoosh_index_storage())
 
 	if server:
 		pyramid_config.registry.registerUtility( indexmanager, nti.contentsearch.interfaces.IIndexManager )
@@ -637,26 +635,10 @@ class AppServer(dataserver.socketio_server.SocketIOServer):
 		logger.debug( "Creating session handler for '%s'/%s using %s and %s", username, dict(identity) if identity else None, auth_policy, environ )
 		session.message_handler = dataserver.session_consumer.SessionConsumer(username=username,session=session)
 
-def use_zeodb_index_storage():
-	return DATASERVER_ZEO_INDEXES or (not DATASERVER_WHOOSH_INDEXES and not DATASERVER_REPOZE_INDEXES)
-
 def use_whoosh_index_storage():
 	return DATASERVER_WHOOSH_INDEXES
 
-def use_repoze_index_storage():
-	return DATASERVER_REPOZE_INDEXES
-
-def create_index_manager(server,
-						 use_zeo_storage = None,
-						 use_repoze_storage = None,
-						 use_whosh_storage = None,
-						 user_indices_dir = None):
-
-	if use_zeo_storage is None:
-		use_zeo_storage = use_zeodb_index_storage()
-
-	if use_repoze_storage is None:
-		use_repoze_storage = use_repoze_index_storage()
+def create_index_manager(server, use_whosh_storage=None, user_indices_dir=None):
 
 	if use_whosh_storage is None:
 		use_whosh_storage = use_whoosh_index_storage()
@@ -665,16 +647,18 @@ def create_index_manager(server,
 		logger.debug( 'Creating Whoosh based index manager' )
 		user_indices_dir = user_indices_dir or os.path.join( server._parentDir, 'indices' )
 		ixman = nti.contentsearch.indexmanager.create_index_manager(user_indices_dir, dataserver=server)
-	elif use_repoze_storage:
+	else:
 		logger.debug( 'Creating Repoze-Catalog based index manager' )
 		ixman = nti.contentsearch.indexmanager.create_repoze_index_manager(dataserver=server)
-	else:
-		logger.debug( 'Creating ZEO based index manager' )
-		indicesKey, blobsKey = '__indices', "__blobs"
-		ixman = nti.contentsearch.indexmanager.create_zodb_index_manager(db = server.searchDB,
-																		 indicesKey = indicesKey,
-																		 blobsKey = blobsKey,
-																		 dataserver = server)
+		
+	#else:
+	#	logger.debug( 'Creating ZEO based index manager' )
+	#	indicesKey, blobsKey = '__indices', "__blobs"
+	#	ixman = nti.contentsearch.indexmanager.create_zodb_index_manager(db = server.searchDB,
+	#																	 indicesKey = indicesKey,
+	#																	 blobsKey = blobsKey,
+	#																	 dataserver = server)
+	
 	return ixman
 
 # These two functions exist for the sake of the installed executables
