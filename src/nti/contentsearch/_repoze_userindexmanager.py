@@ -24,17 +24,15 @@ logger = logging.getLogger( __name__ )
 
 @contextlib.contextmanager
 def _context_manager():
-	yield component.queryUtility( interfaces.IRepozeDataStore )
+	yield component.getUtility( interfaces.IRepozeDataStore )
 	
 class RepozeUserIndexManager(object):
 	interface.implements(interfaces.IUserIndexManager)
 
 	def __init__(self, username):
 		self.username = username
-		self.datastore = component.queryUtility( interfaces.IRepozeDataStore )
-		self.dataserver = component.queryUtility( nti_interfaces.IDataserver )
-		assert self.datastore, 'repoze datastore was not found'
-		assert self.dataserver, 'must specify a valid data server'
+		self.datastore = component.getUtility( interfaces.IRepozeDataStore )
+		self.dataserver = component.getUtility( nti_interfaces.IDataserver )
 
 	def __str__( self ):
 		return self.username
