@@ -3,6 +3,8 @@ from brownie.caching import LFUCache
 import logging
 logger = logging.getLogger( __name__ )
 
+from nti.contentsearch._repoze_datastore import RepozeDataStore
+
 # -----------------------------
 
 class NoOpCM(object):
@@ -38,3 +40,5 @@ class LFUMap(LFUCache):
 
 # -----------------------------
 
+def create_repoze_datastore(users_key='users', docMap_key='docMap'):
+	return RepozeDataStore(users_key=users_key, docMap_key=docMap_key)
