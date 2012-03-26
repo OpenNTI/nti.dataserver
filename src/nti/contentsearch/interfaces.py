@@ -1,5 +1,14 @@
 from zope import interface
 
+from zope.interface.common.mapping import IFullMapping
+
+# -----------------------------
+
+class IRepozeDataStore(IFullMapping):
+	pass
+
+# -----------------------------
+
 class ISearcher(interface.Interface):
 	
 	def search(query, limit=None, *args, **kwargs):
