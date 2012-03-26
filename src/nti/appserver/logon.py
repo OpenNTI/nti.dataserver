@@ -436,7 +436,10 @@ def add_new_user_to_static_communities( user, object_added_event ):
 		# Only for new users
 		return
 	for com_name in STATIC_COMMUNITIES:
-		community = users.Entity.get_entity( com_name )
+		# If we're fired during migration, we may not be
+		# able to resolve entities (no IDataserver) so we need to
+		# provide a non-None default
+		community = users.Entity.get_entity( com_name, default='' )
 		if community:
 			user.join_community( community )
 			user.follow( community )
