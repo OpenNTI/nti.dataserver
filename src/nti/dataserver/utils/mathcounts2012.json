@@ -114,7 +114,7 @@
                 "Text": "A bookshelf is to hold 6 literature books, 3 geometry books and 7 algebra books, arranged in random order. What is the probability that the books are arranged so that the first book on the shelf is a math book? Express your answer as a common fraction.",
                 "Solution": "Ten of the 16 books are math books, so the probability that the first book selected is a math book is 10/16 = 5/8.",
                 "Answers": [
-                    "$\frac{5}{8}"
+                    "$\\frac{5}{8}"
                 ],
                 "ID": "8",
                 "CCSS": "7.SP.5",
@@ -470,7 +470,7 @@
                 "Text": "In a certain parking lot, there are 2 black cars, 3 blue cars, 4 red cars and 3 green cars. If there are no other cars in the parking lot, what is the probability that a car randomly chosen from the parking lot is not green? Express your answer as a common fraction.",
                 "Solution": "There are a total of $2 + 3 + 4 + 3 = 12$ cars in the parking lot. Three are green and 9 are not green, so the probability that a car chosen at random is not green is 9/12 = 3/4.",
                 "Answers": [
-                    "$\frac{3}{4}$"
+                    "$\\frac{3}{4}$"
                 ],
                 "ID": "35",
                 "CCSS": "7.SP.7",
@@ -560,7 +560,7 @@
                 "Text": "Assuming the sections are congruent, what portion of the figure is shaded? Express your answer as a common fraction.",
                 "Solution": "Two out of 10 equal columns are shaded, so 2/10 = 1/5 of the figure is shaded.",
                 "Answers": [
-                    "$\frac{1}{5}$"
+                    "$\\frac{1}{5}$"
                 ],
                 "ID": "44",
                 "CCSS": "6.NS.1",
@@ -572,7 +572,7 @@
                 "Text": "If two different students are randomly selected from a class of 12 boys and 8 girls, what is the probability that both students are girls? Express your answer as a common fraction.",
                 "Solution": "The probability that the first student chosen is a girl is 8/20 = 2/5. If a girl is chosen first, then there are only 7 girls left out of the 19 remaining people, so the probability of choosing another girl is 7/19. The probability that both things happen is 2/5 $\\times$ 7/19 = 14/95.",
                 "Answers": [
-                    "$\frac{14}{95}$"
+                    "$\\frac{14}{95}$"
                 ],
                 "ID": "45",
                 "CCSS": "7.SP.8",
@@ -639,7 +639,7 @@
                 "Text": "If two numbers are chosen randomly, with replacement, from the set of the first five counting numbers, what is the probability that the sum of the two numbers will be 3? Express your answer as a common fraction.",
                 "Solution": "Since ``replacement'' allows the same number to be chosen twice, there are $5 \\times 5 = 25$ ways to pick two numbers from 1 to 5. There are just 2ways to get a sum of 3, either $1 + 2$ or $2 + 1$. Thus, the probability is 2/25.",
                 "Answers": [
-                    "$\frac{2}{25}$"
+                    "$\\frac{2}{25}$"
                 ],
                 "ID": "59",
                 "CCSS": "7.SP.8",
@@ -675,7 +675,7 @@
                 "Text": "A fair eight-sided die with faces numbered 1 through 8 is rolled four times. What is the probability that exactly one 3 is rolled, and that the 3 is rolled on the third roll? Express your answer as a common fraction.",
                 "Solution": "The first, second and fourth rolls can be any number other than 3, and the third roll must be a 3, so the probability that the only 3 occurs on the third roll is (7/8) $\\times$ (7/8) $\\times$ (1/8) $\\times$ (7/8) = 343/4096.",
                 "Answers": [
-                    "$\frac{343}{4096}$"
+                    "$\\frac{343}{4096}$"
                 ],
                 "ID": "54",
                 "CCSS": "S-CP.8",
@@ -939,7 +939,7 @@
                 "Text": "The math team ordered 7 eight-slice pizzas. What fraction of the total amount of the pizza ordered is left after 41 slices are eaten? Express your answer as a common fraction.",
                 "Solution": "Seven eight-slice pizzas contain $7 \\times 8 = 56$ slices. After 41 slices are eaten, there are $56 - 41 = 15$ slices left, which is 15/56 of the total amount.",
                 "Answers": [
-                    "$\frac{15}{56}$"
+                    "$\\frac{15}{56}$"
                 ],
                 "ID": "73",
                 "CCSS": "6.NS.1",
@@ -1000,7 +1000,7 @@
                 "Text": "On the number line below, the tick marks are evenly spaced. What is the value of b - a? Express your answer as a mixed number.",
                 "Solution": "There are 20 equal intervals in the distance of -3 - (-8) = -3 $+ 8 = 5$ units. Each interval must be 1/4 of a unit. There are 10 intervals from b to a, so the distance is 10/4 = 2. Since the greater value is subtracted from the lesser value, however, our answer must be -2. More specifically, b=-6 and a = -4, so b - a = -6 - (-4) = -6 + 4 = -2.",
                 "Answers": [
-                    "$-2\frac{1}{2}$"
+                    "$-2\\frac{1}{2}$"
                 ],
                 "ID": "78",
                 "CCSS": "3.NF.2",
@@ -1157,7 +1157,7 @@
                 "Text": "For what value of m does 1/m + 1/2m = 6? Express your answer as a common fraction.",
                 "Solution": "A common denominator for m and 2m is 2m, so we can add the fractions on the left as follows: 1/m + 1/(2m) = 2/(2m) + 1/(2m) = 3/(2m). Now we have the equation 3/(2m) = 6, and we multiply both sides by 2m to get $3 = 12m$. Dividing both sides by 12, we get m = 3/12 = 1/4.",
                 "Answers": [
-                    "$\frac{1}{4}$"
+                    "$\\frac{1}{4}$"
                 ],
                 "ID": "99",
                 "CCSS": "8.EE.7",
@@ -1230,7 +1230,7 @@
                 "Text": "A box contains only red, blue and green tokens. If the probability of randomly choosing a red token is 1/5 and the probability of randomly choosing a blue token is 1/3, what is the probability of randomly choosing a green token? Express your answer as a common fraction.",
                 "Solution": "The sum of the probabilities for each color of the tokens must be 1. So far, we have 1/5 + 1/3 = 3/15 + 5/15 = 8/15 for the red and the blue tokens. The probability of randomly choosing a green token must be 1 - 8/15 = 7/15.",
                 "Answers": [
-                    "$\frac{7}{15}$"
+                    "$\\frac{7}{15}$"
                 ],
                 "ID": "94",
                 "CCSS": "7.SP.5",
@@ -1609,7 +1609,7 @@
                 "Text": "If the probability that Christoph will get an A on a test is 0.25, what is the probability that he will get an A on the next two tests? Express your answer as a common fraction.",
                 "Solution": "The probability that Christoph will get an A on the first test is 0.25 = 1/4. The probability that he will earn an A on the following test is also 1/4. Thus, the probability that Christoph will get an A on his next two tests is 1/4 $\\times$ 1/4 = 1/16.",
                 "Answers": [
-                    "$\frac{1}{16}$"
+                    "$\\frac{1}{16}$"
                 ],
                 "ID": "127",
                 "CCSS": "6.EE.5",
@@ -1801,7 +1801,7 @@
                 "Text": "Paulo bought and then sold two bikes. He made a 30\\%\\ profit on the sale of the first bike and a 50\\%\\ profit on the second one. If Paulo's total profit was 45\\%\\, what was the ratio of his cost for the first bike to his cost for the second bike? Express your answer as a common fraction.",
                 "Solution": "Let x be the cost of the first bike and y be the cost of the second bike. The profit on the first bike is 0.3x and the profit on the second bike is 0.5y. The sum of the profits is equal to a 45\\%\\ profit for both bikes, so we can write $0.3x + 0.5y =$ 0.45(x + y). Distributing on the right, we get $0.3x + 0.5y = 0.45x + 0.45y$, which can be simplified further to 0.05y=0.15x. We are looking for the ratio of the cost of the first bike to the cost of the second bike, so we solve for x/y and get 0.05/0.15 = 1/3.",
                 "Answers": [
-                    "$\frac{1}{3}$"
+                    "$\\frac{1}{3}$"
                 ],
                 "ID": "144",
                 "CCSS": "7.RP.3",
@@ -1915,7 +1915,7 @@
                 "Text": "What is the slope of a line perpendicular to the segment AB, which has endpoints A(-8.1, 4.9) and B(-7.6, 2.9)? Express your answer as a common fraction.",
                 "Solution": "The slope of a perpendicular line is the negative reciprocal of the slope of the line to which it is perpendicular. The slope of the line passing through A(-8.1, 4.9) and B(-7.6, 2.9) is (2.9 - 4.9)/(-7.6 - (-8.1)) = -2/0.5 = -4. The slope of the perpendicular line is 1/4.",
                 "Answers": [
-                    "$\frac{1}{4}$"
+                    "$\\frac{1}{4}$"
                 ],
                 "ID": "153",
                 "CCSS": "G-GPE.5",
@@ -1927,7 +1927,7 @@
                 "Text": "Two standard, six-sided dice are rolled. What is the probability that the positive difference between the numbers rolled is 1? Express your answer as a common fraction.",
                 "Solution": "There are five possible positive differences of 1 when two dice are rolled, but each of them can happen in two ways. For example, if we roll a 6 on a red die and a 5 on a blue die, the positive difference is $6 - 5 = 1$, but we can also roll a 5 on the red die and a 6 on the blue die. The same goes for 5 - 4, 4 - 3, 3 - 2 and 2 - 1. In all, there are 10 ways to get a difference of 1 out of 36 possible outcomes when a pair of dice is rolled, so the probability is 10/36 = 5/18.",
                 "Answers": [
-                    "$\frac{5}{18}$"
+                    "$\\frac{5}{18}$"
                 ],
                 "ID": "152",
                 "CCSS": "7.SP.7",
@@ -1975,7 +1975,7 @@
                 "Text": "The circumference of the base of a cone is triple the circumference of a cylinder with the same height. What is the ratio of the volume of the cylinder to the volume of the cone? Express your answer as a common fraction.",
                 "Solution": "Since the circumference of the cone is triple the circumference of the cylinder, its radius must also be 3 times the radius of the cylinder. Let r be the radius of the cylinder. That means the radius of the base of the cone is 3r. The volume of a cylinder equals the product of the area of its base and its height. So the area of this cylinder is $\\pi$r2h. The volume of a cone is 1/3 of the product of the area of its base and its height. For the cone the volume is (1/3)$\\pi$(3r)2h = (1/3)$\\pi$9r2h = 3$\\pi$r2h. The ratio of the volume of the cylinder to the volume of the cone is then $\\pi$r2h/3$\\pi$r2h = 1/3.",
                 "Answers": [
-                    "$\frac{1}{3}$"
+                    "$\\frac{1}{3}$"
                 ],
                 "ID": "156",
                 "CCSS": "8.G.9",
@@ -2180,7 +2180,7 @@
                 "Text": "Students were asked to vote for one of the five choices listed for the new school mascot. Based on this data, what is the probability that a student selected at random from those who voted will be a student who did not vote in favor of Grizzly Bear as the school mascot? Express your answer as a common fraction.",
                 "Solution": "According to the table, a total of $68 + 12 + 24 + 44 + 52 = 200$ students voted. The number of students who did not vote for Grizzly Bear is 200- $68 = 132$ students. Thus, the probability that a randomly selected student did not vote in favor of Grizzly Bear is 132/200 = 33/50.",
                 "Answers": [
-                    "$\frac{33}{50}$"
+                    "$\\frac{33}{50}$"
                 ],
                 "ID": "178",
                 "CCSS": "7.SP.7",
@@ -2306,7 +2306,7 @@
                 "Text": "If n is an even integer such that $0 < n < 10$, what is the sum of all possible unit fractions of the form 1/n? Express your answer as a common fraction.",
                 "Solution": "The even numbers between 0 and 10 are 2, 4, 6 and 8, so we are looking for the sum (1/2) + (1/4) + (1/6) + (1/8). The least common denominator is 24, so we get $(12 + 6 + 4 +$ 3)/24 = 25/24.",
                 "Answers": [
-                    "$\frac{25}{24}$"
+                    "$\\frac{25}{24}$"
                 ],
                 "ID": "183",
                 "CCSS": "7.NS.1",
@@ -2318,7 +2318,7 @@
                 "Text": "The figure shown consists of a large square divided into nine smaller, congruent squares. If a rectangle is chosen at random from this figure, what is the probability that it is a square? Express your answer as a common fraction.",
                 "Solution": "The table indicates the number of rectangles of varying dimensions contained in the figure. There are a total of 36 rectangles and 14 of them are squares. So the probability that a rectangle chosen at random is a square is 14/36 = 7/18.",
                 "Answers": [
-                    "$\frac{7}{18}$"
+                    "$\\frac{7}{18}$"
                 ],
                 "ID": "181",
                 "CCSS": "5.G.4",
@@ -2390,7 +2390,7 @@
                 "Text": "Five blue marbles and five green marbles are randomly arranged in a row. What is the probability that the marbles alternate in color? Express your answer as a common fraction.",
                 "Solution": "There are 10! = 10 $\\times$ 9 $\\times$ 8 $\\times$ 7 $\\times$ 6 $\\times$ 5 $\\times$ 4 $\\times$ 3 $\\times$ 2 $\\times$ 1 = 3,628,800 ways to arrange ten distinct items in a row. In this problem, however, the blue and green marbles are not considered distinct, so we divide this product by the 5! $= 5 \\times 4 \\times 3 \\times 2 \\times 1 = 120$ ways that the blue marbles might be arranged and again by the 5! $= 5 \\times 4 \\times 3 \\times 2 \\times 1 = 120$ ways that the green marbles might be arranged. The result is 3,628,800/[(120)(120)] = 252 ways that the blue and green marbles can be arranged. Of these 252 arrangements, one has alternating colors starting with blue, and the other has alternating colors starting with green. The probability that the marbles are arranged with alternating colors is 2/252 = 1/126.",
                 "Answers": [
-                    "$\frac{1}{126}$"
+                    "$\\frac{1}{126}$"
                 ],
                 "ID": "189",
                 "CCSS": "S-CP.8",
@@ -2468,7 +2468,7 @@
                 "Text": "Kathy ate one-eighth of the jelly beans in a jar, and Sue ate one-fifth of the rest. Pat ate twice as many jelly beans as Kathy and Sue combined, and then Drew ate the rest. What is the ratio of the number of jelly beans Drew ate to the number of jelly beans Pat ate? Express your answer as a common fraction.",
                 "Solution": "Kathy ate 1/8 of the jelly beans, leaving 1 - (1/8) = 7/8 of the jelly beans in the jar. Sue ate (1/5) $\\times$ (7/8) = 7/40 of the jelly beans. Together Kathy and Sue ate (1/8) + (7/40) = (5/40) + (7/40) = 12/40 of the jelly beans. Pat ate twice this amount, 2 $\\times$ (12/40) = 24/40 of the jelly beans. That leaves 1 - [(12/40) + (24/40)] = (40/40) - (36/40) = 4/40 of the jelly beans, which Drew ate last. The ratio of the number of jelly beans Drew ate to the number Pat ate is (4/40)/(24/40) = 4/24 = 1/6.",
                 "Answers": [
-                    "$\frac{1}{6}$"
+                    "$\\frac{1}{6}$"
                 ],
                 "ID": "197",
                 "CCSS": "7.NS.3",
@@ -2594,7 +2594,7 @@
                 "Text": "The line y = kx intersects the line that passes through points A(5, 0) and B(0, 2) at a point P such that AP:PB = 1:2. What is the value of k? Express your answer as a common fraction.",
                 "Solution": "The location of point P on the line that passes through points A(5, 0) and B(0, 2) must be 1/3 of the distance from point A to point B, so as to partition segment AB in a 1:2 ratio. The x-coordinate of P must be 5 - [(1/3) $\\times$ 5] = 15/3 - 5/3 = 10/3, and the y-coordinate must be 0 + [(1/3)$\\times$2] = 2/3, so the coordinates of point P are (10/3, 2/3). Now we can substitute these values into the equation y = kx to solve for k. We get k = y/x = (2/3)/(10/3) = 2/10 = 1/5.",
                 "Answers": [
-                    "$\frac{1}{5}$"
+                    "$\\frac{1}{5}$"
                 ],
                 "ID": "207",
                 "CCSS": "8.F.4",
@@ -2673,7 +2673,7 @@
                 "Text": "A two-digit positive integer is randomly selected. What is the probability that the units digit is a multiple of the tens digit? Express your answer as a common fraction.",
                 "Solution": "There are 90 two-digit integers from 10 to 99. If we consider zero to be a multiple of any whole number, then we can count all 10 integers in the teens, all even integers in the twenties, all multiples of 3 in the thirties, etc. There are $10 + 5 + 4 + 3 + 2 + 2 + 2 + 2 + 2 =$ 32integers with a units digit that is a multiple of the tens digit. The probability that such an integer is randomly selected is 32/90 = 16/45.",
                 "Answers": [
-                    "$\frac{16}{45}$"
+                    "$\\frac{16}{45}$"
                 ],
                 "ID": "217",
                 "CCSS": "7.SP.7",
@@ -2788,7 +2788,7 @@
                 "Text": "Ms. Robinson gives the following homework assignment: You must write an essay by tomorrow. You may work alone or in boy-girl pairs. As it turned out, 2/3 of the boys and 3/5 of the girls worked in pairs. What portion of the class worked alone? Express your answer as a common fraction.",
                 "Solution": "Two-thirds of the boys must be the same number as 3/5 of the girls, since they were paired up. Let's find a common numerator for 2 and 3. That would be 6, so 2/3 = 6/9 and 3/5 = 6/10. Since 6 out of 9 parts of the boy population were paired with 6 out of 10 parts of the girl population, the total population had to be $9 + 10 = 19$ parts. Thus, 12/19 students chose to work with a partner, leaving 7/19 of the class, to work alone.",
                 "Answers": [
-                    "$\frac{7}{19}$"
+                    "$\\frac{7}{19}$"
                 ],
                 "ID": "230",
                 "CCSS": "7.NS.3",
@@ -3137,7 +3137,7 @@
                 "Text": "A box contains only quarters and dimes. If there were 10\\%\\ more quarters, the total value of the money in the box would increase by 7.5\\%\\ . What is the ratio of the number of quarters to the number of dimes in the box? Express your answer as a common fraction.",
                 "Solution": "Let's say the total value of the quarters and dimes is T. Then $T = 25q + 10d$, where q is the number of quarters and d is the number of dimes. When 10\\%\\ more quarters are added, the value of T increases by 7.5\\%\\, so $1.075T = 1.1 \\times 25q + 10d$. Let's rewrite this with fractions. Ten percent is 1/10 and 7.5\\%\\ is 3/40, so we have the following equation: (43/40)T = (11/10) $\\times 25q + 10d$. Substituting the original value of T, we have (43/40)(25q + 10d) = (11/10)(25q) + 10d. Multiplying out both sides and simplifying, we get (215/8)q + (43/4)d = (55/2)q + 10d $\\rightarrow$ (43/4)d - (40/4)d = (220/8)q - (215/8)q $\\rightarrow$ (3/4)d = (5/8)q $\\rightarrow$ q/d = (3/4)/(5/8) $\\rightarrow$ q/d = (3/4) $\\times$ (8/5) = 6/5.",
                 "Answers": [
-                    "$\frac{6}{5}$"
+                    "$\\frac{6}{5}$"
                 ],
                 "ID": "249",
                 "CCSS": "A-CED.2",
@@ -3167,7 +3167,7 @@
                 "Text": "The cube with vertices A, B, C, D, E, F, G, H has edges of length 2 units. PointM is the midpoint of $\\overline{EH}$ and N is the midpoint of $\\overline{EF}$ . What is the volume of the tetrahedron with vertices A, C, M, N? Express your answer as a common fraction.",
                 "Solution": "This problem may prove easier to solve if we can situate the figure in the coordinate plane. Let's suppose the left, rear corner of the base, which is point E, is situated at the origin with coordinates (0, 0, 0). Since all the edges have length 2 units, the other vertices would be located as follows: F(2, 0, 0), G(2, 0, 2), H(0, 0, 2), A(0, 2, 0), B(2, 2, 0), C(2, 2, 2), D(0, 2, 2), M(0, 0, 1) and N(1, 0, 0). If we let point K be the midpoint of $\\overline{N,}$ the original tetrahedron is divided into two congruent tetrahedrons with common base $\\triangle$ACK. Since $\\overline{MN}$ is the hypotenuse of an isosceles right triangle with legs of length 1 unit, its length is $\\surd$2 units. Thus, each of these two smaller tetrahedrons has height h = MK = NK = $\\surd$2/2 units. Now to determine the area of $\\triangle$ACK, we first consider rectangle ACGE. Since $\\overline{AC}$ is the diagonal of one of the faces of the cube, it is also the hypotenuse of a 45-45-90 right triangle with legs of length 2 units. That means AC = 2$\\surd$2 units and rectangle ACGE has an area of 4$\\surd$2 units2. Next we determine the area of $\\triangle$AEK to be (1/2) $\\times$ ($\\surd$2/2) $\\times$ 2 = $\\surd$2/2 units2, and the area of $\\triangle$CGK is (1/2)$\\times$ (3$\\surd$2/2) $\\times$ 2 = 3$\\surd$2/2 units2. If we subtract these two areas from the area of rectangle ACGE, the result is the area of $\\triangle$ACK. The area of $\\triangle$ACK is 4$\\surd$2 - ($\\surd$2/2) - (3$\\surd$2/2) = (8$\\surd$2/2) - ($\\surd$2/2) - (3$\\surd$2/2)= (4$\\surd$2/2)= 2$\\surd$2 units2. The volume of each of the smaller tetrahedrons is (1/3) $\\times$ (2$\\surd$2) $\\times$ ($\\surd$2/2) = 2/3units3. Therefore the volume of the large tetrahedron is 2/3 + 2/3 = 4/3 units3.",
                 "Answers": [
-                    "$\frac{4}{3}$"
+                    "$\\frac{4}{3}$"
                 ],
                 "ID": "260",
                 "CCSS": "7.G.6",
@@ -3251,7 +3251,7 @@
                 "Text": "A club with 22 students is forming a committee of either 4 or 5 students. What is the ratio of the number of different 4-person committees possible to the number of different 5-person committees possible? Express your answer as a common fraction.",
                 "Solution": "There are 22C4 = \u300c22C4\u300d ways to choose a committee of 4 from a group of 22. Similarly, there are 22C5=\u300c22C5\u300d ways to choose a committee of 5 from a group of 22. The ratio of the number of ways to choose a 4-person committee to the number of ways to choose a 5-person committee is \u300ccounting ratio\u300d.",
                 "Answers": [
-                    "$\frac{5}{18}$"
+                    "$\\frac{5}{18}$"
                 ],
                 "ID": "257",
                 "CCSS": "7.SP.8",
@@ -3629,7 +3629,7 @@
                 "Text": "What is the 10th term of the geometric sequence 729, 243, 81, 27, $\\ldots$? Express your answer as a common fraction.",
                 "Solution": "The common ratio between consecutive terms in the sequence is 1/3. Consequently, the 10th term will be 729 $\\times$ (1/3)9 = 36/39 = 1/27.",
                 "Answers": [
-                    "$\frac{1}{27}$"
+                    "$\\frac{1}{27}$"
                 ],
                 "ID": "285",
                 "CCSS": "F-LE.2",
@@ -3707,7 +3707,7 @@
                 "Text": "Two vertical poles are a ft and b ft tall, respectively. A wire is strung from the top of each pole to the base of the other pole. How high above the ground do the two wires cross? Express your answer as a common fraction in terms of a and b.",
                 "Solution": "We could proceed exactly as in the solution for the previous problem, but a more clever approach is to let BF = u and FC = v. Again, $\\triangle$EFC\uf07e$\\triangle$ABC and $\\triangle$EFB \uf07e $\\triangle$DCB. Then \u300ch over a equals v over u + v\u300d and \u300ch over b equals u over u + v\u300d. Adding these two equations together, we get\u300ch over $a + h$ over b equals\u300d. Then h\u300c1 over $a + 1$ over b\u300d = 1 or h=\u300c1 over 1 over $a + 1$ over b equals ab over a + b\u300d = 1. (Notice that BC was not needed! The height remains the same no matter how far apart the poles are.)",
                 "Answers": [
-                    "$\frac{ab}{(a + b)}$"
+                    "$\\frac{ab}{(a + b)}$"
                 ],
                 "ID": "302",
                 "CCSS": "G-SRT.5",
@@ -3731,7 +3731,7 @@
                 "Text": "In the figure shown, the largest cone has been divided into a smaller cone and two frustums by two planes that trisect the altitude of the original cone. What is the ratio of the volume of the smaller frustum to the volume of the larger frustum? Express your answer as a common fraction.",
                 "Solution": "By reasoning much like that used in the solution to problem 297, if two figures are similar with sides in the ratio a:b , then their volumes will be in the ratio a3:b3. The corresponding linear measurements in the three cones in the figure are in the ratio 1:2:3, and so the volumes of the three cones are in the ratio 1:8:27. Then it follows that the ratio of the smallest cone to the smaller frustum to the larger frustum is 1:7:19. Therefore, the ratio of the volume of the smaller frustum to the volume of the larger frustum is 7/19 .",
                 "Answers": [
-                    "$\frac{7}{19}$"
+                    "$\\frac{7}{19}$"
                 ],
                 "ID": "299",
                 "CCSS": "7.RP.3",
@@ -3755,7 +3755,7 @@
                 "Text": "Given that $\\overline{UV}$ and $\\overline{XZ}$ are parallel and that YV = 3 and YZ = 5, what is the ratio of the area of $\\triangle$UYV to the area of trapezoid UVZX? Express your answer as a common fraction.",
                 "Solution": "Since areas of figures come from multiplying measurements in two different dimensions (like the length and width for a rectangle), if two figures are similar with sides in the ratio a:b, then their areas will be in the ratio a2:b2. We know that the small triangle and the large triangle in the figure are similar, and their sides are in the ratio 3:5. Thus the areas of the triangles are in the ratio 9:25 and must be 9x and 25x for some value of x. Therefore, the area of the trapezoid is $25x - 9x = 16x$. The ratio of the area of the small triangle to the area of the trapezoid is 9/16.",
                 "Answers": [
-                    "$\frac{9}{16}$"
+                    "$\\frac{9}{16}$"
                 ],
                 "ID": "297",
                 "CCSS": "G-SRT.5",
