@@ -4,7 +4,6 @@ from zope.configuration import xmlconfig
 import nti.contentsearch as contentsearch
 from nti.dataserver.tests.mock_dataserver import ConfiguringTestBase as DSConfiguringTestBase
 
-
 phrases = (	"Yellow brown", "Blue red green render purple?",
 			"Alpha beta", "Gamma delta epsilon omega.",
 			"One two", "Three rendered four five.",
@@ -35,5 +34,4 @@ class ConfiguringTestBase(DSConfiguringTestBase):
 
 	def setUp(self):
 		super(ConfiguringTestBase, self).setUp()
-		#component.getSiteManager().__bases__ = (component.getGlobalSiteManager(),)
 		xmlconfig.file('configure.zcml', package=contentsearch )
