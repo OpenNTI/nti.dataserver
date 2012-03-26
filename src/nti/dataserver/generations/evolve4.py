@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python
 """zope.generations generation 4 evolver for nti.dataserver
 $Id$
@@ -25,10 +26,10 @@ def evolve( context ):
 	container.setSiteManager( lsm )
 
 	for key in ('users', 'vendors', 'library', 'quizzes', 'providers' ):
-		lsm[key] = root['key']
+		lsm[key] = root[key]
 		lsm[key].__name__ = key
 		try:
-			del root['key']
+			del root[key]
 		except KeyError: pass
 
 	# We drop the old changes
