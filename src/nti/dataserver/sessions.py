@@ -299,7 +299,10 @@ class SessionService(object):
 
 		# Now that the session is unreachable,
 		# make sure the session itself knows it's dead
-		s.kill()
+		# FIXME: Until we have the better transaction framework
+		# in place, this can lead to infinite recursion, as we
+		# keep loading new session states from the DB and broadcasting
+		#s.kill()
 		# Let any listeners across the cluster also know it
 		self._publish_msg( b'session_dead', s.session_id, b"42" )
 
