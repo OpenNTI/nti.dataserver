@@ -1,13 +1,13 @@
 import unittest
 
-import transaction
-from ZODB import DB
-from ZODB.MappingStorage import MappingStorage
+from zope import component
+from zope.component.hooks import resetHooks
 
 from nti.dataserver.users import User
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.ntiids import make_ntiid
 
+from nti.contentsearch.interfaces import IRepozeDataStore
 from nti.contentsearch._repoze_datastore import RepozeDataStore
 from nti.contentsearch._repoze_userindexmanager import RepozeUserIndexManager
 
@@ -26,14 +26,13 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 
 	def setUp(self):
 		super(TestRepozeUserIndexManager, self).setUp()
-		self.storage = MappingStorage()
-		self.db = DB(self.storage)
-		self.repoze = RepozeDataStore(self.db)
+		self.repoze = RepozeDataStore()
+		component.provideUtility(self.repoze, provides=IRepozeDataStore)
 
 	def tearDown(self):
 		super(TestRepozeUserIndexManager, self).tearDown()
-		self.repoze.close()
-
+		resetHooks()
+		
 	def _create_note(self, msg, username, containerId=None):
 		note = Note()
 		note.body = [unicode(msg)]
@@ -54,7 +53,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 	def _index_notes(self, dataserver=None, usr=None, conn=None, do_assert=True):
 		docids = []
 		notes, usr = self._add_notes(usr=usr, conn=conn)
-		rim = RepozeUserIndexManager ( usr.username, self.repoze, dataserver)
+		rim = RepozeUserIndexManager (usr.username)
 		for note in notes:
 			teo = note.toExternalObject()
 			docid = rim.index_content(teo)
@@ -70,11 +69,11 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		return usr, rim, docids, notes
 
 	@WithMockDSTrans
-	def xtest_index_notes(self):
+	def test_index_notes(self):
 		self._index_notes()
 
 	@WithMockDSTrans
-	def xtest_query_notes(self):
+	def test_query_notes(self):
 		_, rim, _, _ = self._add_user_index_notes()
 
 		hits = rim.search("shield", limit=None)
@@ -103,7 +102,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		assert_that(hits, has_entry(HIT_COUNT, 3))
 
 	@WithMockDSTrans
-	def xtest_update_note(self):
+	def test_update_note(self):
 		_, rim, _, notes = self._add_user_index_notes()
 		note = notes[5]
 		note.body = [u'Blow It Away']
@@ -119,7 +118,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		assert_that(hits, has_entry(QUERY, 'blow'))
 
 	@WithMockDSTrans
-	def xtest_delete_note(self):
+	def test_delete_note(self):
 		_, rim, _, notes = self._add_user_index_notes()
 		note = notes[5]
 		teo = note.toExternalObject()
@@ -130,7 +129,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		assert_that(hits, has_entry(QUERY, 'shield'))
 
 	@WithMockDSTrans
-	def xtest_suggest(self):
+	def test_suggest(self):
 		_, rim, _, _ = self._add_user_index_notes()
 		hits = rim.suggest("ra")
 		assert_that(hits, has_entry(HIT_COUNT, 4))
@@ -145,7 +144,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		assert_that(items, has_item('rage'))
 
 	@WithMockDSTrans
-	def xtest_ngram_search(self):
+	def test_ngram_search(self):
 		_, rim, _, _ = self._add_user_index_notes()
 		hits = rim.ngram_search("sea")
 		assert_that(hits, has_entry(HIT_COUNT, 1))
@@ -171,7 +170,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		for x in range(2):
 			with mock_dataserver.mock_db_trans( ds ):
 				username = 'nt%s@nti.com' % x
-				rim = RepozeUserIndexManager(username, self.repoze, mock_dataserver.current_mock_ds)
+				rim = RepozeUserIndexManager(username)
 				rims.append(rim)
 				rim.index_content(teo)
 
