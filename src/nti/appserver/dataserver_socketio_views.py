@@ -63,7 +63,7 @@ def _create_new_session(request):
 
 
 
-@view_config(route_name=RT_HANDSHAKE, request_method='GET')
+@view_config(route_name=RT_HANDSHAKE) # POST or GET
 def _handshake_view( request ):
 	"""
 	The first step in socket.io. A handshake begins the process by
