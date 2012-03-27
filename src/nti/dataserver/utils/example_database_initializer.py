@@ -324,6 +324,7 @@ class ExampleDatabaseInitializer(object):
 	def evolve( self, context, generation ):
 		conn = context.connection
 		root = conn.root()
+		root = root['nti.dataserver'].getSiteManager()
 		self._install_quizzes( root )
 
 		# Add a missing community, if needed
