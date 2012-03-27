@@ -115,6 +115,7 @@ def _trivial_db_transaction_cm():
 	# TODO: Are we doing something in the wrong order? Connection
 	# is an ISynchronizer and registers itself with the transaction manager,
 	# so we shouldn't have to do this manually
+	# ... I think the problem was a bad site. I think this can go away.
 	conn.sync()
 	sitemanc = conn.root()['nti.dataserver']
 

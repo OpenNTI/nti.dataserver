@@ -59,10 +59,7 @@ def _serve(httpd):
 def _create_app_server(wsgi_app, global_conf, host='', port=None, **kwargs):
 	httpd = AppServer(
 		(host, int(port)),
-		wsgi_app,
-		policy_server=False,
-		namespace=SOCKET_IO_PATH,
-		session_manager = component.getUtility(nti_interfaces.IDataserver).session_manager )
+		wsgi_app )
 	return httpd
 
 # The paste.server_runner, only good with pyramid_main

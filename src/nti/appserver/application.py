@@ -138,33 +138,6 @@ class _Main(object):
 		# Chrome 15.0.865.0 dev is the same as Chrome 14.
 		# Chrome 16 is version 13 (which seems to be compatible with 7/8)
 
-		# We require authentication already to be setup. See
-		# _after_create_session.
-		# Note the weirdness here. Socket handling does not go through pyramid, but
-		# static javascript does.
-		if environ['PATH_INFO'].startswith( '/' + SOCKET_IO_PATH ) \
-		  and not environ['PATH_INFO'].startswith(  '/' + SOCKET_IO_PATH + '/static/' ):
-		  	#import pdb; pdb.set_trace()
-			if 'wsgi.websocket' not in environ:
-				# Well damn. We failed to upgrade the connection to a websocket.
-				# This usually means that we are behind a proxy that doesn't
-				# support websockets, which is most annoying. Best we can do is return 404
-				# (if we don't do this here, then the return below causes problems since
-				# we don't actually spin in a greenlet)
-				start_request( '404 Not Found', [('Content-Type', 'text/plain')] )
-				return ['WebSockets not found']
-
-			# Because we're going to sit here in a greenlet spinning in
-			# our sleep, we need to close the transaction. (It's not
-			# like we're authenticating). We would want to re-obtain it
-			# when needed.
-
-			#environ['app.db.connection'].transaction_manager.commit()
-			#environ['app.db.connection'].close()
-			#environ['socketio'].session.wsgi_app_greenlet = True
-			logger.debug( "Exiting %s", environ )
-			return
-
 		if environ['PATH_INFO'].startswith( '/stacktraces' ):
 			# TODO: Extend to greenlets
 			code = []
@@ -326,6 +299,11 @@ def createApplication( http_port,
 	pyramid_config.add_view( route_name='verify_openid', view='pyramid_openid.verify_openid' )
 	pyramid_config.add_view( name='verify_openid', route_name='verify_openid', view='pyramid_openid.verify_openid' )
 
+
+	import dataserver_socketio_views
+	pyramid_config.add_route( name=dataserver_socketio_views.RT_HANDSHAKE, pattern=dataserver_socketio_views.URL_HANDSHAKE )
+	pyramid_config.add_route( name=dataserver_socketio_views.RT_CONNECT, pattern=dataserver_socketio_views.URL_CONNECT )
+	pyramid_config.scan( dataserver_socketio_views )
 
 	# Temporarily make everyone an OU admin
 	class OUAdminFactory(object):
@@ -618,22 +596,12 @@ def createApplication( http_port,
 
 	return (application,main)
 
-class AppServer(dataserver.socketio_server.SocketIOServer):
-	def _after_create_session( self, session, environ=None ):
-		# Try to extract the authenticated username, if we can. We don't have
-		# a pyramid request to draw on, though
-		username = None
-		identity = None
-		auth_policy = None
-		if environ:
-			# A pyramid_auth.NTIAuthenticationPolicy
-			auth_policy = component.getUtility( pyramid.interfaces.IAuthenticationPolicy )
-			api = auth_policy.api_factory( environ )
-			identity = api.authenticate()
-			if identity:
-				username = identity['repoze.who.userid']
-		logger.debug( "Creating session handler for '%s'/%s using %s and %s", username, dict(identity) if identity else None, auth_policy, environ )
-		session.message_handler = dataserver.session_consumer.SessionConsumer(username=username,session=session)
+import geventwebsocket.handler
+
+class AppServer(gevent.pywsgi.WSGIServer):
+	def __init__( self, *args, **kwargs ):
+		kwargs['handler_class'] = geventwebsocket.handler.WebSocketHandler
+		super(AppServer,self).__init__(*args, **kwargs)
 
 def use_whoosh_index_storage():
 	return DATASERVER_WHOOSH_INDEXES
@@ -650,7 +618,7 @@ def create_index_manager(server, use_whosh_storage=None, user_indices_dir=None):
 	else:
 		logger.debug( 'Creating Repoze-Catalog based index manager' )
 		ixman = nti.contentsearch.indexmanager.create_repoze_index_manager(dataserver=server)
-		
+
 	#else:
 	#	logger.debug( 'Creating ZEO based index manager' )
 	#	indicesKey, blobsKey = '__indices', "__blobs"
@@ -658,7 +626,7 @@ def create_index_manager(server, use_whosh_storage=None, user_indices_dir=None):
 	#																	 indicesKey = indicesKey,
 	#																	 blobsKey = blobsKey,
 	#																	 dataserver = server)
-	
+
 	return ixman
 
 # These two functions exist for the sake of the installed executables
