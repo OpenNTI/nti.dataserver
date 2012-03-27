@@ -11,22 +11,14 @@ from __future__ import print_function, unicode_literals
 import logging
 logger = logging.getLogger( __name__ )
 
-import numbers
-import collections
-import urllib
-import time
-
-import plistlib
-import anyjson as json
-
 from zope import component
 from zope import interface
 
 from pyramid.view import view_config
 import pyramid.security as sec
 import pyramid.httpexceptions as hexc
-import pyramid_interfaces
-from pyramid import traversal
+import pyramid.interfaces
+
 import transaction
 import gevent
 import pyramid_zodbconn
@@ -35,19 +27,11 @@ from gevent.queue import Queue
 import socket
 
 
-from nti.dataserver.interfaces import (IDataserver, ILibrary, ISimpleEnclosureContainer, IEnclosedContent)
+
 import nti.dataserver.interfaces as nti_interfaces
-from nti.dataserver import (users, datastructures)
-from nti.dataserver.datastructures import to_external_ntiid_oid as toExternalOID
-from nti.dataserver.datastructures import StandardInternalFields, StandardExternalFields
-from nti.dataserver import ntiids
-from nti.dataserver import enclosures
-from nti.dataserver.mimetype import MIME_BASE, nti_mimetype_from_object, nti_mimetype_with_class
-from nti.dataserver import authorization as nauth
-from nti.dataserver import authorization_acl as nacl
 import nti.dataserver.session_consumer
 from nti.dataserver.socketio_server import Session
-from . import interfaces as app_interfaces
+
 
 
 RT_HANDSHAKE = 'socket.io.handshake'
@@ -77,10 +61,7 @@ def _create_new_session(request):
 	logger.debug( "Created new session %s", session )
 	return session
 
-HANDLER_TYPES = {
-	'websocket': None,
-	'xhr-polling': None
-	}
+
 
 @view_config(route_name=RT_HANDSHAKE, request_method='GET')
 def _handshake_view( request ):
@@ -95,12 +76,15 @@ def _handshake_view( request ):
 	#data = "%s:15:10:jsonp-polling,htmlfile" % (session.session_id,)
 	# session_id:heartbeat_seconds:close_timeout:supported_type, supported_type
 	data = "%s:15:10:%s" % (session.session_id, ",".join(HANDLER_TYPES.keys()))
+	data = data.encode( 'ascii' )
 	# We are not handling JSONP here
 
 	response = request.response
 	response.body = data
 	response.content_type = 'text/plain'
 	return response
+
+from zope.component.hooks import setSite
 
 @view_config(route_name=RT_CONNECT) # Any request method
 def _connect_view( request ):
@@ -122,13 +106,13 @@ def _connect_view( request ):
 	# If we're restoring a previous session, we
 	# must switch to using the protocol from
 	# it to preserve JSON vs plist and other settings
-	environ['socketio'] = session.new_protocol( handler=environ['socketio'].handler )
+	environ['socketio'] = session.new_protocol( ) # handler=environ['socketio'].handler )
 
 	# Make the session object available for WSGI apps
 	environ['socketio'].session = session
 
 	# Create a transport and handle the request likewise
-	transport = HANDLER_TYPES[transport](None)
+	transport = HANDLER_TYPES[transport](request)
 	request_method = environ.get("REQUEST_METHOD")
 	jobs_or_response = transport.connect(session, request_method)
 	# If we have connection jobs (websockets)
@@ -139,8 +123,12 @@ def _connect_view( request ):
 	# We have to close the connection and commit the transaction
 	# if we do expect to stick around a long time
 	if 'wsgi.websocket' in environ:
+		# Basically, undo the things done by application._on_new_request
+		# and the tweens.
+		# TODO: This is weird, better cooperation (a function in the environment?)
 		transaction.commit()
 		pyramid_zodbconn.get_connection(request).close()
+		setSite( None )
 	if pyramid.interfaces.IResponse.providedBy( jobs_or_response ):
 		return jobs_or_response
 
@@ -169,7 +157,8 @@ class BaseTransport(object):
 	# of here, especially not off of the object that came out of the initial
 	# request (since it will be changing over time in the websocket case)
 	# FIXME: The send() method of SocketIOProtocol is broken, it relies
-	# on being able to find sessions in the wrong place
+	# on being able to find sessions in the wrong place...but I don't think
+	# we use that at all
 
 	def encode(self, data):
 		return self.protocol.encode(data)
@@ -206,7 +195,7 @@ class XHRPollingTransport(BaseTransport):
 	def get(self, session):
 		session.clear_disconnect_timeout()
 		session_proxy = _SessionEventProxy()
-		session_service = self.handler.server.session_manager
+		session_service = component.getUtility( nti_interfaces.IDataserver ).session_manager
 		session_service.set_proxy_session( session.session_id, session_proxy )
 		try:
 			# A dead session will feed us a None object
@@ -250,7 +239,7 @@ class XHRPollingTransport(BaseTransport):
 			message = "8::" # NOOP
 
 		response = self.request.response
-		response.body = message
+		response.body = message.encode( 'utf-8' )
 		return response
 
 	def _request_body(self):
@@ -274,7 +263,7 @@ class XHRPollingTransport(BaseTransport):
 		response = self.request.response
 		response.content_type = 'text/plain'
 		response.headers['Connection'] = 'close'
-		response.body = response_message
+		response.body = response_message.encode( 'utf-8' )
 
 
 	def connect(self, session, request_method ):
@@ -292,7 +281,7 @@ class XHRPollingTransport(BaseTransport):
 			else:
 				response = self.request.response
 				response.headers['Connection'] = 'close'
-				response.body =  "1::"
+				response.body =  b"1::"
 
 			return response
 
@@ -386,7 +375,7 @@ class WebsocketTransport(BaseTransport):
 		# and the standard loop and use that here.
 		session_id = args[0].session_id
 		session_proxy = _SessionEventProxy()
-		session_service = self.handler.server.session_manager
+		session_service = component.getUtility( nti_interfaces.IDataserver ).session_manager
 		context_manager_callable = component.queryUtility( nti_interfaces.IDataserverTransactionContextManager,
 														   default=getattr( self.handler, 'context_manager_callable', None ) ) # Unit tests
 
@@ -472,3 +461,7 @@ class WebsocketTransport(BaseTransport):
 
 	def kill( self ):
 		self.websocket.close_connection()
+HANDLER_TYPES = {
+	'websocket': WebsocketTransport,
+	'xhr-polling': XHRPollingTransport
+	}
