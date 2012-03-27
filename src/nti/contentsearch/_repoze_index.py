@@ -179,7 +179,7 @@ def create_catalog(type_name='Notes'):
 	elif type_name =='messageinfo':
 		return create_messageinfo_catalog()
 	else:
-		raise None
+		return None
 	
 # -----------------------------------
 		
