@@ -103,7 +103,7 @@ class WhooshUserIndexManager(object):
 	
 	# -------------------
 
-	class _TrxWrapper(object):
+	class TraxWrapper(object):
 		def __init__(self, func):
 			self.func = func
 
@@ -139,17 +139,17 @@ class WhooshUserIndexManager(object):
 				results = merge_search_results(results, hits)
 		return results	
 	
-	@_TrxWrapper
+	@TraxWrapper
 	def search(self, query, limit=None, *args, **kwargs):
 		results = self._do_search(query, limit, False, *args, **kwargs)
 		return results
 
-	@_TrxWrapper
+	@TraxWrapper
 	def ngram_search(self, query, limit=None,*args, **kwargs):
 		results = self._do_search(query, limit, True, *args, **kwargs)
 		return results
 
-	@_TrxWrapper
+	@TraxWrapper
 	def suggest_and_search(self, query, limit=None, *args, **kwargs):
 		query = unicode(query)
 		results = empty_suggest_and_search_result(query)
@@ -162,7 +162,7 @@ class WhooshUserIndexManager(object):
 				results = merge_suggest_and_search_results(results, rs)
 		return results
 
-	@_TrxWrapper
+	@TraxWrapper
 	def suggest(self, term, limit=None, prefix=None, *args, **kwargs):
 		term = unicode(term)
 		results = empty_suggest_result(term)
@@ -186,7 +186,7 @@ class WhooshUserIndexManager(object):
 			type_name = get_type_name(data) if data else None
 		return normalize_name(type_name)
 	
-	@_TrxWrapper
+	@TraxWrapper
 	def index_content(self, data, *args, **kwargs):
 		type_name = self._get_type_name(data, **kwargs)
 		index = self._get_or_create_index(type_name)
@@ -199,7 +199,7 @@ class WhooshUserIndexManager(object):
 				return True
 		return False
 
-	@_TrxWrapper
+	@TraxWrapper
 	def update_content(self, data, *args, **kwargs):
 		type_name = self._get_type_name(data, **kwargs)
 		index = self._get_or_create_index(type_name)
@@ -212,7 +212,7 @@ class WhooshUserIndexManager(object):
 				return True
 		return False
 
-	@_TrxWrapper
+	@TraxWrapper
 	def delete_content(self, data, *args, **kwargs):
 		type_name = self._get_type_name(data, **kwargs)
 		index = self._get_or_create_index(type_name)
@@ -231,7 +231,7 @@ class WhooshUserIndexManager(object):
 		index.optimize()
 		index.close()
 	
-	@_TrxWrapper
+	@TraxWrapper
 	def remove_index(self, type_name='Notes'):
 		indexname = self._get_indexname(type_name)
 		index = self.indices.get(indexname, None)
@@ -239,7 +239,7 @@ class WhooshUserIndexManager(object):
 			self.indices.pop(indexname)
 			self._close_index(index)
 
-	@_TrxWrapper
+	@TraxWrapper
 	def optimize_index(self, type_name='Notes'):
 		indexname = self._get_indexname(type_name)
 		index = self.indices.get(indexname, None)
@@ -248,7 +248,7 @@ class WhooshUserIndexManager(object):
 
 	# -------------------
 	
-	@_TrxWrapper
+	@TraxWrapper
 	def optimize(self):
 		for index in self.indices.itervalues():
 			index.optimize()
