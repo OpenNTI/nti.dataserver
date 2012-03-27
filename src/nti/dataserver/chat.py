@@ -1065,15 +1065,27 @@ class Chatserver(object):
 		# that wants to have a say, let it.
 		if XFields.CONTAINER_ID in room_info_dict:
 			container = self.meeting_container_storage.get( room_info_dict[XFields.CONTAINER_ID] )
-			if hasattr( container, 'create_meeting_from_dict' ):
+			if hasattr( container, 'create_or_enter_meeting' ):
 				# The container will decide what to do with things like
 				# Occupants, they may ignore it or replace it entirely.
-				room = container.create_meeting_from_dict( self, room_info_dict, lambda: _Meeting(self) )
+				orig_occupants = list(room_info_dict['Occupants'])
+				room, created = container.create_or_enter_meeting( self, room_info_dict, lambda: _Meeting(self) )
 				if room is None or not room.Active:
 					logger.debug( "Container %s vetoed creation of room %s (%s)",
 								  container, room, room_info_dict )
 					# The container vetoed creation for some reason.
 					return None
+				if room is not None and not created:
+					# We got back an already active room that we should enter.
+					# Check for our session and make sure we're in the room (just like enter_meeting_in_container)
+					logger.debug( 'Container %s found an existing room %s and forced us into it %s',
+								  container, room, room_info_dict )
+					for orig_occupant in orig_occupants:
+						if isinstance( orig_occupant, tuple ) and orig_occupant[0] == room_info_dict['Creator']:
+							room.add_occupant_session_id( orig_occupant[1] )
+							break
+					return room
+
 				# Containers deal with, roughly, persistent rooms. Therefore, if they
 				# give us a list of occupants, then regardless of whether
 				# they are currently online these occupants should get transcripts.
