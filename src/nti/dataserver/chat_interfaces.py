@@ -8,6 +8,8 @@ class IMeetingContainer(Interface):
 	def create_meeting_from_dict( chatserver, meeting_dict, constructor ):
 		"""
 		Called to create (or return) a meeting instance within this container.
+		Typically, security will be based on the creator being allowed
+		to create a meeting.
 		:param chatserver: The chatserver.
 		:param Mapping meeting_dict: The description of the room. You may modify
 			this. If it has an 'Occupants' key, it will be an iterable of usernames or
@@ -27,10 +29,22 @@ class IMeetingContainer(Interface):
 	def enter_active_meeting( chatserver, meeting_dict ):
 		"""
 		Called when someone wants to enter an active room (if there is one).
+		Typically, security will be based on the creator being allowed to occupy the
+		meeting.
 		:param meeting_dict: Guaranteed to have at least the Creator.
-			May be modified. If this method fails, we will call :meth:create_meeting_from_dict
+			May be modified. If this method fails (returns None), our caller may call :meth:create_meeting_from_dict
 			with this same dictionary.
 		:return: The active room, if successfully entered, otherwise None.
+		"""
+
+	def create_or_enter_meeting( chatserver, meeting_dict, constructor ):
+		"""
+		The combination of :meth:`create_or_enter_meeting` with :meth:`enter_active_meeting`.
+		If an active meeting exists and the ``Creator`` is allowed to occupy it,
+		then it will be returned. Otherwise, if the ``Creator`` is allowed to create
+		one then it will be returned.
+		:return: A tuple (meeting or None, created). If the first param is not None, the second
+			param will say whether it was already active (False) or freshly created (True).
 		"""
 
 

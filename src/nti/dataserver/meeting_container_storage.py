@@ -76,6 +76,21 @@ class _AbstractMeetingContainerAdapter(object):
 		setattr( self.container, self.ACTIVE_ROOM_ATTR, result )
 		return result
 
+
+	def create_or_enter_meeting( self, chatserver, meeting_dict, constructor ):
+		"""
+		The combination of :meth:`create_or_enter_meeting` with :meth:`enter_active_meeting`.
+		If an active meeting exists and the ``Creator`` is allowed to occupy it,
+		then it will be returned. Otherwise, if the ``Creator`` is allowed to create
+		one then it will be returned.
+		:return: A tuple (meeting or None, created). If the first param is not None, the second
+			param will say whether it was already active (False) or freshly created (True).
+		"""
+		active = self.enter_active_meeting( chatserver, meeting_dict )
+		if active:
+			return (active,False)
+		return (self.create_meeting_from_dict( chatserver, meeting_dict, constructor ), True)
+
 	def meeting_became_empty( self, chatserver, meeting ):
 		try:
 			delattr( self.container, self.ACTIVE_ROOM_ATTR )
@@ -148,4 +163,3 @@ class MeetingContainerStorage(object):
 			result = component.queryAdapter( container, chat_interfaces.IMeetingContainer )
 
 		return result or default
-
