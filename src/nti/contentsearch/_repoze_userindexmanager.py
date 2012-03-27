@@ -31,8 +31,6 @@ class RepozeUserIndexManager(object):
 
 	def __init__(self, username):
 		self.username = username
-		self.datastore = component.getUtility( interfaces.IRepozeDataStore )
-		self.dataserver = component.getUtility( nti_interfaces.IDataserver )
 
 	def __str__( self ):
 		return self.username
@@ -45,7 +43,12 @@ class RepozeUserIndexManager(object):
 	
 	@property
 	def store(self):
-		return self.datastore
+		return component.getUtility( interfaces.IRepozeDataStore )
+	datastore = store
+	
+	@property
+	def dataserver(self):
+		return component.getUtility( nti_interfaces.IDataserver )
 	
 	def _normalize_name(self, x):
 		result = u''
