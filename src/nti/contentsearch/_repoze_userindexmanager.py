@@ -11,6 +11,7 @@ from nti.dataserver.ntiids import find_object_with_ntiid
 
 from nti.contentsearch import interfaces
 from nti.contentsearch.common import get_type_name
+from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch.common import empty_search_result
 from nti.contentsearch.common import empty_suggest_result
 from nti.contentsearch._repoze_index import get_ntiid
@@ -49,16 +50,10 @@ class RepozeUserIndexManager(object):
 	@property
 	def dataserver(self):
 		return component.getUtility( nti_interfaces.IDataserver )
-	
-	def _normalize_name(self, x):
-		result = u''
-		if x:
-			result =x[0:-1].lower() if x.endswith('s') else x.lower()
-		return unicode(result)
 
 	def _adapt_search_on_types(self, search_on=None):
 		if search_on:
-			search_on = [self._normalize_name(x) for x in search_on]
+			search_on = [normalize_type_name(x) for x in search_on]
 		return search_on
 
 	def _get_hits_from_docids(self, docIds, limit=None, query=None, use_word_highlight=True, *args, **kwargs):
@@ -174,7 +169,7 @@ class RepozeUserIndexManager(object):
 		return result
 
 	def _get_create_catalog(self, data, type_name=None, create=True):
-		type_name = self._normalize_name(type_name or get_type_name(data))
+		type_name = normalize_type_name(type_name or get_type_name(data))
 		catalog = self.store.get_catalog(self.username, type_name)
 		if not catalog and create:
 			catalog = create_catalog(type_name)

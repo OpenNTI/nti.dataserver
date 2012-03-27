@@ -1,10 +1,16 @@
 from nti.dataserver.users import Change
+from nti.contentsearch.common import normalize_type_name
+from nti.contentsearch.common import indexable_type_names
 
 import logging
 logger = logging.getLogger( __name__ )
-		
+
+# -----------------------------------
+
 def _process_event(indexmanager, creator, change_type, data_type, data):
-	if change_type in (Change.CREATED, Change.SHARED, Change.MODIFIED, Change.DELETED):
+	if 	change_type in (Change.CREATED, Change.SHARED, Change.MODIFIED, Change.DELETED) and \
+		normalize_type_name(data_type) in indexable_type_names:
+		
 		logger.debug('Index event ("%s", "%s", "%s",  %s) received' % (creator, change_type, data_type, data))
 		
 		if change_type in (Change.CREATED, Change.SHARED):

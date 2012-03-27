@@ -76,6 +76,8 @@ last_modified_fields =  [LAST_MODIFIED, 'lastModified', 'LastModified', last_mod
 
 nti_mimetype_prefix = 'application/vnd.nextthought.'
 
+indexable_type_names = ('note', 'highlight', 'messageinfo')
+
 # -----------------------------------
 
 def to_list(data):
@@ -132,6 +134,12 @@ def get_keywords(records):
 
 # -----------------------------------
 
+def normalize_type_name(x):
+	result = u''
+	if x:
+		result =x[0:-1].lower() if x.endswith('s') else x.lower()
+	return unicode(result)
+	
 def get_type_name(obj):
 	if not isinstance(obj, dict):
 		result = obj.__class__.__name__
