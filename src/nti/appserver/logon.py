@@ -95,6 +95,7 @@ def _forgetting( request, redirect_param_name, no_param_class, redirect_value=No
 		# TODO: Sending multiple warnings
 		response.headers['Warning'] = error
 
+	logger.debug( "Forgetting user %s with %s (%s)", sec.authenticated_userid(request), response, response.headers )
 	return response
 
 @view_config(route_name=REL_LOGIN_LOGOUT, request_method='GET')
