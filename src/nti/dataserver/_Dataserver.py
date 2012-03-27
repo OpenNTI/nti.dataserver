@@ -110,6 +110,12 @@ def _trivial_db_transaction_cm():
 	ds = component.getUtility( interfaces.IDataserver )
 	transaction.begin()
 	conn = ds.db.open()
+	# If we don't sync, then we can get stale objects that
+	# think they belong to a closed connection
+	# TODO: Are we doing something in the wrong order? Connection
+	# is an ISynchronizer and registers itself with the transaction manager,
+	# so we shouldn't have to do this manually
+	conn.sync()
 	sitemanc = conn.root()['nti.dataserver']
 
 	with site( sitemanc ):
