@@ -269,7 +269,8 @@ class _ChatHandler( Persistent ):
 		else:
 			# Creating a room to chat with. Make sure I'm in it.
 			# More than that, make sure it's my session, and any
-			# of my friends lists are expanded
+			# of my friends lists are expanded. Make sure it has an active
+			# occupant besides me
 			_discard( room_info.get('Occupants'), self.session_owner )
 			room_info['Occupants'] = list( room_info['Occupants'] )
 			user = users.User.get_user( self.session_owner )
@@ -278,7 +279,12 @@ class _ChatHandler( Persistent ):
 					if i in user.friendsLists:
 						room_info['Occupants'] += [x.username for x in user.friendsLists[i]]
 			room_info['Occupants'].append( (self.session_owner, self.session_id) )
-			room = self._chatserver.create_room_from_dict( room_info )
+			def sessions_validator(sessions):
+				"""
+				We can only create the ad-hoc room if there is another online occupant.
+				"""
+				return len(sessions) > 1
+			room = self._chatserver.create_room_from_dict( room_info, sessions_validator=sessions_validator )
 
 		if room:
 			self.rooms_im_in.add( room.RoomId )
@@ -1041,12 +1047,14 @@ class Chatserver(object):
 			room = self.create_room_from_dict( room_info_dict )
 		return room
 
-	def create_room_from_dict( self, room_info_dict ):
+	def create_room_from_dict( self, room_info_dict, sessions_validator=None ):
 		"""
+		Creates a room given a dictionary of values.
+
 		:param dict room_info_dict: Contains at least an `Occupants` key. This key
 			is an iterable of usernames or (username,session_id) tuples.
-
-		Creates a room given a dictionary of values.
+		:param function sessions_validator: If given, a callable of one argument, a sequence of sessions.
+			Returns whether or not to allow the room creation given those sessions.
 		"""
 
 		room_info_dict = dict( room_info_dict ) # copy because we will modify
@@ -1089,7 +1097,7 @@ class Chatserver(object):
 				occupant = occupant[0]
 			session = self.get_session_for( occupant, session_ids )
 			if session:	sessions.append( session.session_id )
-		if not sessions:
+		if not sessions or (callable(sessions_validator) and not sessions_validator(sessions)):
 			logger.debug( "No occupants found for room %s", room_info_dict )
 			return None
 		# Run it through the usual dict-to-object mechanism

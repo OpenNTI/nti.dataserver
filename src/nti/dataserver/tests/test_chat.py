@@ -245,6 +245,28 @@ class TestChatserver(ConfiguringTestBase):
 		assert_that( sjohn_handler.shadowUsers( room.ID, ['chris'] ), is_( True ) )
 
 	@WithMockDSTrans
+	def test_handler_enter_room_no_occupants_online(self):
+		d = {'Occupants': ['sjohnson', 'other'],
+			 'ContainerId': 'tag:nextthought.com,2011-10:x-y-z' }
+		sessions = self.Sessions()
+		sessions[1] = self.Session( 'sjohnson' )
+		chatserver = chat.Chatserver( sessions )
+		assert_that( chat._ChatHandler( chatserver, sessions[1] ).enterRoom( d ),
+					 is_( none() ) )
+
+	@WithMockDSTrans
+	def test_handler_enter_room_with_occupants_online(self):
+		d = {'Occupants': ['sjohnson', 'other'],
+			 'ContainerId': 'tag:nextthought.com,2011-10:x-y-z' }
+		sessions = self.Sessions()
+		sessions[1] = self.Session( 'sjohnson' )
+		sessions[2] = self.Session( 'other' )
+		chatserver = chat.Chatserver( sessions )
+		mock_dataserver.current_transaction.add( chatserver.rooms )
+		assert_that( chat._ChatHandler( chatserver, sessions[1] ).enterRoom( d ),
+					 is_( chat._Meeting ) )
+
+	@WithMockDSTrans
 	def test_integration_chat_storage_studygroup( self ):
 		ds = self.ds
 		import nti.dataserver.users as users
