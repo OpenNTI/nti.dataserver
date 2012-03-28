@@ -164,6 +164,20 @@ class TestApplication(ApplicationTestBase):
 			assert_that( links, has_item( has_entry( 'href',
 														 urllib.quote( '/dataserver2/users/sjohnson@nextthought.com/Pages(%s)/RecursiveStream' % item_id ) ) ) )
 
+	def test_post_two_friendslist_same_name(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+
+
+		testapp = TestApp( self.app )
+
+		data = json.serialize( { 'Class': 'FriendsList',
+								 'ContainerId': 'FriendsLists',
+								 'ID': "Foo@bar" } )
+		path = '/dataserver2/users/sjohnson@nextthought.com'
+		testapp.post( path, data, extra_environ=self._make_extra_environ() )
+		# Generates a conflict the next time
+		testapp.post( path, data, extra_environ=self._make_extra_environ(), status=409 )
 
 	def test_user_search(self):
 		with mock_dataserver.mock_db_trans(self.ds):
