@@ -767,6 +767,9 @@ class _UGDModifyViewBase(object):
 			   or (self.request.content_type or '') == 'application/xml' \
 			   or self.request.GET.get('format') == 'plist':
 			ext_format = 'plist'
+		if ext_format != 'plist' and value and value[0] == '<':
+			logger.warn( "Client send plist data with wrong content type %s", self.request.content_type )
+			ext_format = 'plist'
 		try:
 			if ext_format == 'plist':
 				value = plistlib.readPlistFromString( value )
