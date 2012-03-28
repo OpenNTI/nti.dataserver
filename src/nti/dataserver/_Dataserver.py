@@ -401,7 +401,7 @@ class Dataserver(MinimalDataserver):
 					logger.debug( "There were no OIDs to publish %s", os.getpid() )
 
 				# We are a one-shot object. Changes go or they don't.
-				self._changes = []
+				self._changes = ()
 
 		def __repr__(self):
 			return "<%s.%s object at %s %s>" % (self.__class__.__module__, self.__class__.__name__, id(self), self.kwargs)
@@ -430,7 +430,7 @@ class Dataserver(MinimalDataserver):
 		self.root._p_jar.add( _change )
 		# TODO: Reconsider this. It's probably not needed anymore,
 		# and our choice of datastructure--a list--is terribly inefficient
-		self.root['changes'].append( _change )
+		#self.root['changes'].append( _change )
 
 		txn = transaction.get() #_ContextManager.contextManager().txn
 
