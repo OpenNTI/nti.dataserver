@@ -47,6 +47,7 @@ def _after_create_session( session, request ):
 		logger.debug( "Unauthenticated session request" )
 		raise hexc.HTTPUnauthorized()
 	logger.debug( "Creating session handler for '%s'", username )
+	session.owner = username
 	session.message_handler = nti.dataserver.session_consumer.SessionConsumer(username=username,session=session)
 
 
@@ -103,6 +104,12 @@ def _connect_view( request ):
 	  raise hexc.HTTPForbidden( )
 
 	session = component.getUtility( nti_interfaces.IDataserver ).session_manager.get_session( session_id )
+	if session is None:
+		raise hexc.HTTPNotFound()
+	if not session.owner:
+		logger.warn( "Found session with no owner. Cannot connect: %s", session )
+		raise hexc.HTTPForbidden()
+
 	# If we're restoring a previous session, we
 	# must switch to using the protocol from
 	# it to preserve JSON vs plist and other settings
