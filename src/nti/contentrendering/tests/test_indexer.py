@@ -3,7 +3,6 @@ import shutil
 import tempfile
 import unittest
 
-from nti.contentsearch.contenttypes import Book
 from nti.contentrendering.indexer import get_microdata
 from nti.contentrendering.indexer import index_content
 from nti.contentrendering.indexer import get_or_create_index
@@ -73,7 +72,6 @@ class TestIndexer(unittest.TestCase):
 		q = Or([Term("content", u'rules'), Term("keywords", u"number theory")])
 		with idx.searcher() as s:
 			r = s.search(q)
-			print len(r)
 			assert_that(r, has_length(2))
 
 		idx.close()

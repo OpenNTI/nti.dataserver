@@ -25,7 +25,8 @@ name: mathcountssolution mathcountsdifficulty mathcountsresult mathcountssolutio
 # We have two approaches to rendering the problems as items in the form/ol.
 # The one is use is to let each child render itself; problems
 # wrap themselves in a li. This makes it easy to get the numbering right,
-# but leads to some extra empty paragraphs between lis.
+# but leads to many extra empty paragraphs between li elements; we
+# address that by ommitting all those tags in our 'par' template below
 # An alternative is to not use tal:content on the ol but instead
 # repeat the li directly in it, being careful not to assign li to
 # plain paragraphs (hence omit-tag). The trick here is to get the problem
@@ -39,3 +40,7 @@ name: mathcountsworksheet
 </ol>
 <a id="submit" onclick="NTISubmitAnswers(event,'input[type]')" href="#" >Submit</a>
 </form>
+
+name: par
+<a tal:attributes="name self/id" tal:omit-tag=""/>
+<p tal:content="self" tal:omit-tag=""></p>

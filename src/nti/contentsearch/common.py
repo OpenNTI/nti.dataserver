@@ -1,5 +1,7 @@
 import re
+import time
 from time import mktime
+from datetime import datetime
 from collections import Iterable
 from collections import OrderedDict
 
@@ -38,6 +40,7 @@ AUTO_TAGS		= u'AutoTags'
 MIME_TYPE		= u'MimeType'
 HIT_COUNT 		= u'Hit Count'
 TARGET_OID		= u'TargetOID'
+MESSAGE_INFO	= u'MessageInfo'
 SUGGESTIONS		= u'Suggestions'
 CONTAINER_ID	= u'ContainerId'
 COLLECTION_ID	= u'CollectionId'
@@ -72,6 +75,8 @@ container_id_fields = [CONTAINER_ID, 'ContainerID', containerId_, 'container']
 last_modified_fields =  [LAST_MODIFIED, 'lastModified', 'LastModified', last_modified_]
 
 nti_mimetype_prefix = 'application/vnd.nextthought.'
+
+indexable_type_names = ('note', 'highlight', 'messageinfo')
 
 # -----------------------------------
 
@@ -114,7 +119,39 @@ def epoch_time(dt):
 def echo(x):
 	return unicode(x) if x else u''
 
+def get_datetime(x=None):
+	f = time.time()
+	if x:
+		f = float(x) if isinstance(x, basestring) else x
+	return datetime.fromtimestamp(f)
+
+
+def get_keywords(records):
+	result = ''
+	if records:
+		result = ','.join(records)
+	return unicode(result)
+
 # -----------------------------------
+
+def normalize_type_name(x):
+	result = u''
+	if x:
+		result =x[0:-1].lower() if x.endswith('s') else x.lower()
+	return unicode(result)
+	
+def get_type_name(obj):
+	if not isinstance(obj, dict):
+		result = obj.__class__.__name__
+	elif CLASS in obj:
+		result = obj[CLASS]
+	elif MIME_TYPE in obj:
+		result = obj[MIME_TYPE]
+		if result and result.startswith(nti_mimetype_prefix):
+			result = result[len(nti_mimetype_prefix):]
+	else:
+		result = None
+	return unicode(result.lower()) if result else u''
 
 def get_collection(containerId, default='prealgebra'):
 	result = default

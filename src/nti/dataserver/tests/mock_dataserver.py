@@ -74,6 +74,9 @@ import nose.tools
 
 current_mock_ds = None
 
+from zope.site import LocalSiteManager, SiteManagerContainer
+from zope.component.hooks import site, setHooks, resetHooks
+import transaction
 
 def WithMockDS( func ):
 
@@ -81,19 +84,45 @@ def WithMockDS( func ):
 		global current_mock_ds
 		ds = MockDataserver()
 		current_mock_ds = ds
-		if component.queryUtility( nti_interfaces.IDataserver ):
-			# Nesting will fail because only one can be registered and
-			# then unregistered
-			warnings.warn( "Attempting to nest WithMockDS/Trans. This is likely to fail", stacklevel=2 )
+		sitemanc = SiteManagerContainer()
+		sitemanc.setSiteManager( LocalSiteManager(None) )
+		setHooks()
+
+
+		with site(sitemanc):
+			assert component.getSiteManager() == sitemanc.getSiteManager()
+			component.provideUtility( ds )
+			assert component.getUtility( nti_interfaces.IDataserver )
+			try:
+				func( *args )
+			finally:
+				current_mock_ds = None
+				ds.close()
+				resetHooks()
+
+	return nose.tools.make_decorator( func )( f )
+
+import contextlib
+
+@contextlib.contextmanager
+def mock_db_trans(ds=None):
+	global current_transaction
+	if ds is None:
+		ds = current_mock_ds
+	transaction.begin()
+	conn = ds.db.open()
+	current_transaction = conn
+	sitemanc = conn.root()['nti.dataserver']
+
+	with site( sitemanc ):
+		assert component.getSiteManager() == sitemanc.getSiteManager()
 		component.provideUtility( ds )
 		assert component.getUtility( nti_interfaces.IDataserver )
-		try:
-			func( *args )
-		finally:
-			current_mock_ds = None
-			ds.close()
-			assert component.getGlobalSiteManager().unregisterUtility( ds ) or component.getSiteManager().unregisterUtility( ds )
-	return nose.tools.make_decorator( func )( f )
+
+		yield conn
+		transaction.commit()
+		conn.close()
+
 
 current_transaction = None
 
@@ -104,21 +133,25 @@ def WithMockDSTrans( func ):
 		global current_mock_ds
 		ds = MockDataserver()
 		current_mock_ds = ds
-		if component.queryUtility( nti_interfaces.IDataserver ):
-			# Nesting will fail because only one can be registered and
-			# then unregistered
-			warnings.warn( "Attempting to nest WithMockDS/Trans. This is likely to fail", stacklevel=2 )
-		component.provideUtility( ds )
-		assert component.getUtility( nti_interfaces.IDataserver )
-		try:
-			with ds.dbTrans() as ct:
-				current_transaction = ct
+		transaction.begin()
+		conn = ds.db.open()
+		current_transaction = conn
+		sitemanc = conn.root()['nti.dataserver']
+		setHooks()
+
+		with site( sitemanc ):
+			assert component.getSiteManager() == sitemanc.getSiteManager()
+			component.provideUtility( ds )
+			assert component.getUtility( nti_interfaces.IDataserver )
+
+			try:
 				func( *args, **kwargs )
-		finally:
-			current_mock_ds = None
-			current_transaction = None
-			ds.close()
-			assert component.getGlobalSiteManager().unregisterUtility( ds ) or component.getSiteManager().unregisterUtility( ds )
+			finally:
+				current_mock_ds = None
+				current_transaction = None
+				ds.close()
+				resetHooks()
+
 	return nose.tools.make_decorator( func )( f )
 
 
@@ -137,12 +170,11 @@ class ConfiguringTestBase(zope.testing.cleanup.CleanUp, unittest.TestCase):
 
 	def setUp( self ):
 		self.request = DummyRequest()
-		self.config = psetUp(request=self.request)
-
+		self.config = psetUp(request=self.request,hook_zca=False)
 		# Notice that the pyramid testing setup
 		# FAILS to make the sitemanager a child of the global sitemanager.
 		# this breaks the zope component APIs in many bad ways
-		component.getSiteManager().__bases__ = (component.getGlobalSiteManager(),)
+		#component.getSiteManager().__bases__ = (component.getGlobalSiteManager(),)
 		xmlconfig.file( 'configure.zcml', package=dataserver )
 
 	def tearDown( self ):

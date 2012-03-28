@@ -653,8 +653,7 @@ class SharingTarget(Entity):
 	def onChange( cls, datasvr, msg, username=None, broadcast=None, **kwargs ):
 		if username and not broadcast:
 			logger.debug( 'Incoming change to %s', username )
-			with datasvr.dbTrans():
-				cls.get_entity( username, dataserver=datasvr )._noticeChange( msg )
+			cls.get_entity( username, dataserver=datasvr )._noticeChange( msg )
 
 
 
@@ -1919,8 +1918,7 @@ def user_devicefeedback( msg ):
 	if msg.timestamp < 0: return
 	datasvr = _get_shared_dataserver()
 	logger.debug( 'Searching for device %s', hexDeviceId )
-	with datasvr.dbTrans():
-		for user in (u for u in datasvr.root['users'].itervalues() if isinstance(u,User)):
-			if hexDeviceId in user.devices:
-				logger.debug( 'Found device id %s in user %s', hexDeviceId, user )
-				del user.devices[hexDeviceId]
+	for user in (u for u in datasvr.root['users'].itervalues() if isinstance(u,User)):
+		if hexDeviceId in user.devices:
+			logger.debug( 'Found device id %s in user %s', hexDeviceId, user )
+			del user.devices[hexDeviceId]

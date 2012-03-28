@@ -26,6 +26,8 @@ from nti.contentsearch._repoze_index import create_messageinfo_catalog
 from nti.contentsearch._repoze_index import get_index_hit_from_hightlight
 from nti.contentsearch._repoze_index import get_index_hit_from_messgeinfo
 
+from nti.contentsearch.tests import ConfiguringTestBase
+
 from hamcrest import assert_that
 from hamcrest import close_to
 from hamcrest import is_
@@ -35,16 +37,15 @@ from hamcrest import has_entry
 from hamcrest import greater_than_or_equal_to
 
 from nti.contentsearch.common import (	OID, NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID,
-										COLLECTION_ID, ID, CLASS, HIT, SNIPPET)
+										COLLECTION_ID, ID, CLASS, HIT, SNIPPET, TARGET_OID)
 
 from nti.contentsearch.common import (	ngrams_, channel_, content_, keywords_, references_,
 										recipients_, sharedWith_)
 
-
-class TestRepozeIndex(unittest.TestCase):
+class TestRepozeIndex(ConfiguringTestBase):
 		
 	@classmethod
-	def setUpClass(cls):
+	def setUpClass(cls):		
 		path = os.path.join(os.path.dirname(__file__), 'highlight.json')
 		with open(path, "r") as f:
 			cls.hightlight = json.load(f)
@@ -145,7 +146,7 @@ class TestRepozeIndex(unittest.TestCase):
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.0'))
 		assert_that(d, has_entry(CREATOR, u'carlos.sanchez@nextthought.com'))
 		assert_that(d, has_entry(NTIID, u'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x085a:5573657273'))
-		assert_that(d, has_entry(OID, u'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x085a:5573657273'))
+		assert_that(d, has_entry(TARGET_OID, u'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x085a:5573657273'))
 		assert_that(d,
 			has_entry(SNIPPET, u'You know how to add subtract multiply and DIVIDE In fact you may already know how to solve many of the problems'))
 		
@@ -156,7 +157,7 @@ class TestRepozeIndex(unittest.TestCase):
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.0'))
 		assert_that(d, has_entry(CREATOR, u'carlos.sanchez@nextthought.com'))
 		assert_that(d, has_entry(NTIID, u'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x0860:5573657273'))
-		assert_that(d, has_entry(OID, u'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x0860:5573657273'))
+		assert_that(d, has_entry(TARGET_OID, u'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x0860:5573657273'))
 		assert_that(d, has_entry(SNIPPET, u'All WAVES Rise now and Become my Shield Lightning Strike now and'))
 		
 	def test_get_index_hit_from_messgeinfo(self):
@@ -166,14 +167,13 @@ class TestRepozeIndex(unittest.TestCase):
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:zope.security.management.system_user-OID-0x82:53657373696f6e73'))
 		assert_that(d, has_entry(CREATOR, u'troy.daley@nextthought.com'))
 		assert_that(d, has_entry(NTIID, u'tag:nextthought.com,2011-10:zope.security.management.system_user-OID-0x8a:53657373696f6e73'))
-		assert_that(d, has_entry(OID, u'tag:nextthought.com,2011-10:zope.security.management.system_user-OID-0x8a:53657373696f6e73'))
+		assert_that(d, has_entry(TARGET_OID, u'tag:nextthought.com,2011-10:zope.security.management.system_user-OID-0x8a:53657373696f6e73'))
 		assert_that(d, has_entry(SNIPPET, u'Zanpakuto and Zangetsu'))
 		
 	def test_get_type_name(self):
 		assert_that(get_type_name(self.note), is_('note'))
 		assert_that(get_type_name(self.hightlight), is_('highlight'))
 		assert_that(get_type_name(self.messageinfo), is_('messageinfo'))
-
 
 if __name__ == '__main__':
 	unittest.main()

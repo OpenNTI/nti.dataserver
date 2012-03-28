@@ -1,11 +1,25 @@
 from plasTeX import Base
 
+
+def _digestAndCollect( self, tokens, until ):
+	self.digestUntil(tokens, until )
+	# Force grouping into paragraphs to eliminate the empties
+	if getattr(self, 'forcePars', True):
+		self.paragraphs()
+
 class mathcountsyear(Base.chapter):
 	pass
 
 class mathcountsworksheet(Base.section):
 	args = Base.section.args + ' NTIID:str'
-	pass
+
+
+	forcePars = True
+
+	def digest(self, tokens):
+		self.paragraphs()
+		super(mathcountsworksheet,self).digest( tokens )
+
 
 class mathcountsdifficulty(Base.Environment):
 	pass
@@ -17,6 +31,7 @@ class mathcountsproblem(Base.Environment):
 	def invoke(self, tex):
 		res = super(mathcountsproblem, self).invoke(tex)
 		self.attributes['probnum'] = self.ownerDocument.context.counters['probnum'].value
+		self.paragraphs()
 		return res
 
 class mathcountsquestion(Base.Environment):

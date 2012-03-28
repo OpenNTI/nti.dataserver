@@ -1,7 +1,7 @@
 
 from hamcrest import (assert_that, is_, has_entry, instance_of,
 					  has_key, is_in, not_none, is_not, greater_than,
-					  same_instance, has_length, none,
+					  same_instance, has_length, none, contains,
 					  has_entries, only_contains, has_item)
 import unittest
 from zope import interface, component
@@ -24,7 +24,7 @@ import nti.dataserver.interfaces as interfaces
 nti_interfaces = interfaces
 
 
-from mock_dataserver import MockDataserver, WithMockDS, WithMockDSTrans, ConfiguringTestBase
+from mock_dataserver import WithMockDS, WithMockDSTrans, ConfiguringTestBase
 import mock_dataserver
 from . import provides
 
@@ -97,7 +97,6 @@ class TestChatRoom(ConfiguringTestBase):
 		conn.close()
 		db.close()
 
-		
 		# Should still be moderated.
 		fs = FileStorage( os.path.join( tmp_dir, "data.fs" ) )
 		db = DB( fs )
@@ -113,9 +112,10 @@ class TestChatRoom(ConfiguringTestBase):
 		conn.close()
 		db.close()
 
+	@WithMockDS
 	def test_external_reply_to_different_storage(self):
-		ds = MockDataserver()
-		with ds.dbTrans() as conn:
+		ds = self.ds
+		with mock_dataserver.mock_db_trans(ds) as conn:
 			n = Note()
 			room = chat._Meeting( None )
 			conn.add( n )
@@ -126,7 +126,7 @@ class TestChatRoom(ConfiguringTestBase):
 			conn.root()['Notes'] = [n]
 			sconn.root()['Notes'] = [room]
 
-		with ds.dbTrans():
+		with mock_dataserver.mock_db_trans(ds):
 			ext = room.toExternalObject()
 
 
@@ -136,12 +136,12 @@ class TestChatRoom(ConfiguringTestBase):
 		to_external_representation( room, EXT_FORMAT_JSON )
 		to_external_representation( room, EXT_FORMAT_PLIST )
 
-		with ds.dbTrans():
+		with mock_dataserver.mock_db_trans(ds):
 			room.inReplyTo = None
 			room.clearReferences()
 			assert_that( room.inReplyTo, none() )
 
-		with ds.dbTrans():
+		with mock_dataserver.mock_db_trans(ds):
 			ds.update_from_external_object( room, ext )
 			assert_that( room.inReplyTo, is_( n ) )
 			assert_that( room.references[0], is_( n ) )
@@ -271,15 +271,15 @@ class TestChatserver(ConfiguringTestBase):
 		ds = self.ds
 		import nti.dataserver.users as users
 		import nti.dataserver.meeting_container_storage as mcs
-		with ds.dbTrans():
-			user = users.User( 'foo@bar', 'temp001' )
-			ds.root['users']['foo@bar'] = user
-			ds.root['users']['friend@bar'] = users.User( 'friend@bar', 'temp001' )
-			fl1 = user.maybeCreateContainedObjectWithType(  'FriendsLists', { 'Username': 'fl1', 'friends': ['friend@bar'] } )
-			fl1.containerId = 'FriendsLists'
-			fl1.creator = user
-			fl1.addFriend( ds.root['users']['friend@bar'] )
-			user.addContainedObject( fl1 )
+
+		user = users.User( 'foo@bar', 'temp001' )
+		ds.root['users']['foo@bar'] = user
+		ds.root['users']['friend@bar'] = users.User( 'friend@bar', 'temp001' )
+		fl1 = user.maybeCreateContainedObjectWithType(  'FriendsLists', { 'Username': 'fl1', 'friends': ['friend@bar'] } )
+		fl1.containerId = 'FriendsLists'
+		fl1.creator = user
+		fl1.addFriend( ds.root['users']['friend@bar'] )
+		user.addContainedObject( fl1 )
 
 		mc = mcs.MeetingContainerStorage( ds )
 		sessions = self.Sessions()
@@ -345,10 +345,16 @@ class TestChatserver(ConfiguringTestBase):
 		assert_that( other_handler.postMessage( msg ), is_( False ) )
 
 		# I can become the moderator of this room
+		del sessions[5].protocol_handler.events[:]
 		assert_that( foo_handler.makeModerated( room3.ID, True ), is_( room3 ) )
 		assert_that( room3.Moderators, is_( set([foo_handler.session_owner])) )
 		assert_that( room3.Moderated, is_(True) )
 		assert_that( room3, is_( chat._ModeratedMeeting ) )
+		assert_that( sessions[5].protocol_handler.events, has_length( 2 ) )
+		assert_that( sessions[5].protocol_handler.events,
+					 contains(
+						has_entry( 'name', 'chat_roomModerationChanged' ),
+						has_entry( 'name', 'chat_roomModerationChanged' ) ) )
 
 
 	@WithMockDSTrans
@@ -357,24 +363,24 @@ class TestChatserver(ConfiguringTestBase):
 		import nti.dataserver.providers as providers
 		import nti.dataserver.classes as classes
 		import nti.dataserver.meeting_container_storage as mcs
-		with ds.dbTrans():
-			user = providers.Provider( 'OU' )
-			ds.root['providers']['OU'] = user
-			fl1 = user.maybeCreateContainedObjectWithType(  'Classes', None )
-			fl1.containerId = 'Classes'
-			fl1.ID = 'CS2051'
-			fl1.Description = 'CS Class'
 
-			section = classes.SectionInfo()
-			section.ID = 'CS2051.101'
-			fl1.add_section( section )
-			section.InstructorInfo = classes.InstructorInfo()
-			section.enroll( 'chris' )
-			section.InstructorInfo.Instructors.append( 'sjohnson' )
-			section.Provider = 'OU'
+		user = providers.Provider( 'OU' )
+		ds.root['providers']['OU'] = user
+		fl1 = user.maybeCreateContainedObjectWithType(  'Classes', None )
+		fl1.containerId = 'Classes'
+		fl1.ID = 'CS2051'
+		fl1.Description = 'CS Class'
 
-			user.addContainedObject( fl1 )
-			fl1 = fl1.Sections[0]
+		section = classes.SectionInfo()
+		section.ID = 'CS2051.101'
+		fl1.add_section( section )
+		section.InstructorInfo = classes.InstructorInfo()
+		section.enroll( 'chris' )
+		section.InstructorInfo.Instructors.append( 'sjohnson' )
+		section.Provider = 'OU'
+
+		user.addContainedObject( fl1 )
+		fl1 = fl1.Sections[0]
 
 		mc = mcs.MeetingContainerStorage( ds )
 		sessions = self.Sessions()

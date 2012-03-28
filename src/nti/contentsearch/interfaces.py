@@ -1,5 +1,14 @@
 from zope import interface
 
+from zope.interface.common.mapping import IFullMapping
+
+# -----------------------------
+
+class IRepozeDataStore(IFullMapping):
+	pass
+
+# -----------------------------
+
 class ISearcher(interface.Interface):
 	
 	def search(query, limit=None, *args, **kwargs):
@@ -192,94 +201,63 @@ class IIndexManager(interface.Interface):
 
 # -----------------------------
 	
-class IIndexableContent(interface.Interface):
+class IWhooshIndexStorage(interface.Interface):
 
-	def get_schema():
+	def create_index(indexname, schema, **kwargs):
 		"""
-		return the [whoosh] schema associated with this content
+		create the an index with the specified index an schema
+				
+		:param indexname: index name
+		:param schema: whoosh schema
+		"""	
+	
+	def index_exists(indexname, **kwargs):
 		"""
-
-	def index_content(writer, externalValue, auto_commit=True, **commit_args):
+		check if the specified index exists
+				
+		:param indexname: index name
+		"""	
+	
+	def get_index(indexname, **kwargs):
 		"""
-		index the specified external value content using the specified writer
-
-		:param writer: [whoosh] index writer
-		:param externalValue: Object [dict] to index
-		:param auto_commit: flag to save the content after it has been written in the index
-		:param commit_args: [whoosh] index writer commit arguments
+		return the whoosh index with the specified index name
+				
+		:param indexname: index name
+		"""	
+	
+	def get_or_create_index(indexname, schema=None, recreate=True, **kwargs):
 		"""
-
-	def update_content(writer, externalValue, auto_commit=True, **commit_args):
+		get or create the index the specified index name
+				
+		:param indexname: index name
+		:param schema: whoosh schema
+		"""	
+	
+	def open_index(indexname, schema=None, **kwargs):
 		"""
-		Update the index content for the specified external value content using the specified writer
-
-		:param writer: [whoosh] index writer
-		:param externalValue: Object [dict] to index
-		:param auto_commit: flag to save the content after it has been written in the index
-		:param commit_args: [whoosh] index writer commit arguments
+		open the index with the specified name
+				
+		:param indexname: index name
+		:param schema: whoosh schema
+		"""	
+	
+	def dbTrans():
 		"""
-
-	def delete_content(writer, externalValue, auto_commit=True, **commit_args):
+		return a context manager (db/io transaction) to perform an index operation
+		"""	
+	
+	def storage(**kwargs):
 		"""
-		Delete the index entry for the specified external value content using the specified writer
-
-		:param writer: [whoosh] index writer
-		:param externalValue: Object to delete in index
-		:param auto_commit: flag to save the content after it has been written in the index
-		:param commit_args: [whoosh] index writer commit arguments
+		return a index underlying [file] data storage
+		"""	
+	
+	def ctor_args(**kwargs):
 		"""
-
-	############################
-
-	def search(searcher, query, limit=None, sortedby=None, search_field=None):
+		return a dictionary with the arguments to be passed to an index writer constructor
+		""" 
+	
+	def commit_args(**kwargs):
 		"""
-		Search the index using the specified searcher
+		return a dictionary with the arguments to be passed to an index writer commit method
+		""" 
 
-		:param searcher: [whoosh] index searcher
-		:param query: Query string
-		:param limit: Max number of items to return in the search
-		:param search_field: search index field in the schema
-		"""
-
-	def quick_search(searcher, query, limit=None, sortedby=None, search_field=None):
-		"""
-		Perform a quick search (e.g iTunes) over the index using the specified searcher
-
-		:param searcher: [whoosh] index searcher
-		:param query: Query string
-		:param limit: Max number of items to return in the search
-		:param search_field: Search index field in the schema
-		"""
-
-	def suggest_and_search(searcher, query, limit=None, sortedby=None, search_field=None):
-		"""
-		Perform a suggest and search (e.g iTunes) over the index using the specified searcher
-
-		:param searcher: [whoosh] index searcher
-		:param query: Query string
-		:param limit: Max number of items to return in the search
-		:param search_field: Search index field in the schema
-		"""
-
-	def suggest(searcher, word, limit=None, maxdist=None, prefix=None, search_field=None):
-		"""
-		Perform a suggestion search over the index using the specified searcher
-
-		:param searcher: [whoosh] index searcher
-		:param word: suggestion word
-		:param limit: Max number of items to return in the search
-		:param maxdist: The largest edit distance from the given word to look at.
-		:param prefix: Require suggestions to share a prefix of this length with the given word.
-		:param search_field: Search index field in the schema
-		"""
-
-class IUserIndexableContent(IIndexableContent):
-
-	def get_index_data(externalValue, *args, **kwargs):
-		"""
-		Return a dictionary with the data fields to set in the index
-
-		:param externalValue: Object to gather the index data from
-		:param args: non-keyworded argument list
-		:param kwargs: keyworded variable arguments
-		"""

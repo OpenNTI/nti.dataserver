@@ -21,7 +21,7 @@ import nti.dataserver as dataserver
 
 
 import mock_dataserver
-from mock_dataserver import MockDataserver
+from mock_dataserver import WithMockDS
 import plistlib
 import os
 
@@ -65,9 +65,10 @@ class HighlightTest(mock_dataserver.ConfiguringTestBase):
 
 class NoteTest(mock_dataserver.ConfiguringTestBase):
 
+	@WithMockDS
 	def test_external_reply_to(self):
-		ds = MockDataserver()
-		with ds.dbTrans() as conn:
+		ds = self.ds
+		with mock_dataserver.mock_db_trans(ds) as conn:
 			n = Note()
 			n2 = Note()
 			conn.add( n )
@@ -76,27 +77,28 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 			n.addReference( n2 )
 			conn.root()['Notes'] = [n, n2]
 
-		with ds.dbTrans():
+		with mock_dataserver.mock_db_trans(ds):
 			ext = n.toExternalObject()
 
 		assert_that( ext, has_entry( 'inReplyTo', to_external_ntiid_oid( n2 ) ) )
 
 
-		with ds.dbTrans():
+		with mock_dataserver.mock_db_trans(ds):
 			n.inReplyTo = None
 			n.clearReferences()
 			assert_that( n.inReplyTo, none() )
 
-		with ds.dbTrans():
+		with mock_dataserver.mock_db_trans(ds):
 			ds.update_from_external_object( n, ext )
 			assert_that( n.inReplyTo, is_( n2 ) )
 			assert_that( n.references[0], is_( n2 ) )
 
 		ds.close()
 
+	@WithMockDS
 	def test_external_reply_to_different_storage(self):
-		ds = MockDataserver()
-		with ds.dbTrans() as conn:
+		ds = self.ds
+		with mock_dataserver.mock_db_trans(ds) as conn:
 			n = Note()
 			n2 = Note()
 			conn.add( n )
@@ -107,19 +109,19 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 			conn.root()['Notes'] = [n]
 			sconn.root()['Notes'] = [n2]
 
-		with ds.dbTrans():
+		with mock_dataserver.mock_db_trans(ds):
 			ext = n.toExternalObject()
 
 		assert_that( ext, has_entry( 'inReplyTo', to_external_ntiid_oid( n2 ) ) )
 		assert_that( ext, has_entry( 'references', only_contains( to_external_ntiid_oid( n2 ) ) ) )
 
 
-		with ds.dbTrans():
+		with mock_dataserver.mock_db_trans(ds):
 			n.inReplyTo = None
 			n.clearReferences()
 			assert_that( n.inReplyTo, none() )
 
-		with ds.dbTrans():
+		with mock_dataserver.mock_db_trans(ds):
 			ds.update_from_external_object( n, ext )
 			assert_that( n.inReplyTo, is_( n2 ) )
 			assert_that( n.references[0], is_( n2 ) )
@@ -165,6 +167,7 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 		assert_that( ext['body'][0], is_('First') )
 		assert_that( ext['body'][1] ,is_('second') )
 
+	@WithMockDS
 	def test_external_body_with_canvas(self):
 		n = Note()
 		c = Canvas()
@@ -181,8 +184,8 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 
 
 		n = Note()
-		ds = MockDataserver()
-		with ds.dbTrans():
+		ds = self.ds
+		with mock_dataserver.mock_db_trans(ds):
 			ds.update_from_external_object( n, ext )
 
 		assert_that( n.body[0], is_( Canvas ) )
@@ -202,27 +205,29 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 
 
 		n = Note()
-		ds = MockDataserver()
-		with ds.dbTrans():
+		ds = self.ds
+		with mock_dataserver.mock_db_trans(ds):
 			ds.update_from_external_object( n, ext )
 
 		assert_that( n.body[0], is_( Canvas ) )
 		assert_that( n.body[0][0], is_( CanvasPathShape ) )
 		assert_that( n.body[0][0].closed, same_instance( True ) )
 
+	@WithMockDS
 	def test_update_sharing_only( self ):
 		n = Note()
 		n.body = ['This is the body']
 
-		ds = MockDataserver()
+		ds = self.ds
 		ext = { 'sharedWith': ['jason'] }
-		with ds.dbTrans() as conn:
+		with mock_dataserver.mock_db_trans(ds) as conn:
 			conn.add( n )
 			n.updateFromExternalObject( ext, dataserver=ds )
 
 
 class TestCanvas(mock_dataserver.ConfiguringTestBase):
 
+	@WithMockDS
 	def test_external(self):
 		canvas = Canvas()
 		shape1 = CanvasPolygonShape( sides=3 )
@@ -266,8 +271,8 @@ class TestCanvas(mock_dataserver.ConfiguringTestBase):
 
 		ext['ContainerId'] = 'CID'
 		canvas2 = Canvas()
-		ds = MockDataserver()
-		with ds.dbTrans():
+		ds = self.ds
+		with mock_dataserver.mock_db_trans(ds):
 			ds.update_from_external_object( canvas2, ext )
 
 		assert_that( canvas2, is_( canvas ) )
@@ -275,7 +280,7 @@ class TestCanvas(mock_dataserver.ConfiguringTestBase):
 
 		shape3 = CanvasPathShape( closed=False, points=[1, 2.5] )
 		shape = CanvasPathShape()
-		with ds.dbTrans():
+		with mock_dataserver.mock_db_trans(ds):
 			ds.update_from_external_object( shape, shape3.toExternalObject() )
 		assert_that( shape, is_( shape3 ) )
 

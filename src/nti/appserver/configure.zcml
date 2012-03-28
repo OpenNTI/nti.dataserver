@@ -54,4 +54,5 @@
 	<subscriber handler=".logon.add_new_user_to_static_communities" />
 
 	<include package="nti.dataserver" />
+	<include package="nti.contentsearch" />
 </configure>

@@ -21,10 +21,9 @@ import anyjson as json
 # Persistence
 from persistent import Persistent
 from persistent.list import PersistentList
+from persistent.mapping import PersistentMapping
 import BTrees.OOBTree
 
-#import _daemonutils as daemonutils
-#import _PubSubDevice
 from nti.dataserver import interfaces as nti_interfaces
 
 class SocketSessionEvent(interface.interfaces.ObjectEvent):
@@ -47,7 +46,7 @@ class Session(Persistent):
 	STATE_DISCONNECTING = "DISCONNECTING"
 	STATE_DISCONNECTED = "DISCONNECTED"
 
-	def __init__(self):
+	def __init__(self, session_service=None):
 		# The session id must be plain ascii for sending across sockets
 		self.session_id = uuid.uuid4().hex.encode('ascii')
 		self.creation_time = time.time()
@@ -63,7 +62,7 @@ class Session(Persistent):
 
 		self.last_heartbeat_time = 0
 
-		self._v_session_service = None
+		self._v_session_service = session_service
 
 	def _p_resolveConflict(self, oldState, savedState, newState ):
 		logger.info( 'Conflict to resolve in %s', type(self) )
@@ -156,6 +155,23 @@ class Session(Persistent):
 			self.clear_disconnect_timeout()
 		self.client_queue.put( msg )
 
+def _init_session_storage( session_db ):
+	for k in ('session_map', 'session_index'):
+		if not session_db.has_key( k ):
+			session_db[k] = BTrees.OOBTree.OOBTree()
+
+class PersistentSessionServiceStorage(PersistentMapping):
+	"""
+	A persistent implementation of session storage.
+	"""
+	interface.implements( nti_interfaces.ISessionServiceStorage )
+
+	def __init__( self ):
+		super(PersistentSessionServiceStorage,self).__init__()
+		_init_session_storage(self)
+
+SimpleSessionServiceStorage = PersistentSessionServiceStorage
+
 
 class SessionService(object):
 	"""
@@ -164,32 +180,29 @@ class SessionService(object):
 	Keeps a dictionary of `proxy_session` objects that will have
 	messages copied to them whenever anything happens to the real
 	session.
+
+	This object will look for a utility component of :class:`nti_interfaces.ISessionServiceStorage`
+	to provide session storage.
+
 	"""
 
-	def __init__( self, session_db_cm=None ):
-		"""
-		:param session_db_cm: A callable to return a context manager which will
-			be wrapped around all uses of session_db. Returns a dict-like object:
-			`with session_db_cm() as dict_like:`.
-		"""
-		if session_db_cm:
-			self.session_db_cm = session_db_cm
-		else:
-			session_db = {}
-			@contextlib.contextmanager
-			def cm():
-				yield session_db
-			self.session_db_cm = cm
+	interface.implements( nti_interfaces.ISessionService )
 
-		with self.session_db_cm() as session_db:
-			# session_map: session_id -> session
-			# session_index: username -> [session_id,...,session_id]
-			for k in ('session_map', 'session_index'):
-				if not session_db.has_key( k ):
-					session_db[k] = BTrees.OOBTree.OOBTree()
+	def __init__( self ):
+		"""
+		"""
+		@contextlib.contextmanager
+		def cm():
+			yield component.getUtility( nti_interfaces.ISessionServiceStorage )
+
+		self.session_db_cm = cm
 
 		self.proxy_sessions = {}
+		self.pub_socket = None
+		self.cluster_listener = self._spawn_cluster_listener()
 
+
+	def _spawn_cluster_listener(self):
 		env_settings = component.getUtility( nti_interfaces.IEnvironmentSettings )
 		self.pub_socket, sub_socket = env_settings.create_pubsub_pair( 'session' )
 
@@ -199,7 +212,7 @@ class SessionService(object):
 				# (session_id, function_name, msg_data)
 				self._dispatch_message_to_proxy( *msgs )
 
-		gevent.spawn( read_incoming )
+		return gevent.spawn( read_incoming )
 
 	def _dispatch_message_to_proxy(  self, session_id, function_name, function_arg ):
 		handled = False
@@ -228,31 +241,31 @@ class SessionService(object):
 	def get_proxy_session( self, session_id ):
 		return self.proxy_sessions.get( session_id )
 
-	def create_session( self, session_class=Session ):
+	def create_session( self, session_class=Session, watch_session=True, **kwargs ):
 		""" The returned session must not be modified. """
-		session = session_class()
-		session_id = session.session_id
 		with self.session_db_cm() as session_db:
+			session = session_class(session_service=self, **kwargs)
+			session_id = session.session_id
 			session_db['session_map'][session_id] = session
-		session._v_session_service = self
 
-
-		def watchdog_session():
-			# Some transports make it very hard to detect
-			# when a session stops responding (XHR)...it just goes silent.
-			# We watch for it to die (since we created it) and cleanup
-			# after it...this is a compromise between always
-			# knowing it has died and doing the best we can across the cluster
-			gevent.sleep( 60 )	# Time? We can detect a dead session no faster than we decide it's dead,
-								# which is SESSION_HEARTBEAT_TIMEOUT 
-			logger.debug( "Checking status of session %s", session_id )
-			sess = self.get_session(session_id) # performs validation, notification
-			if sess:
-				# still alive, go again
-				gevent.spawn( watchdog_session )
-			else:
-				logger.debug( "Session %s died", session_id )
-		gevent.spawn( watchdog_session )
+		if watch_session:
+			def watchdog_session():
+				# Some transports make it very hard to detect
+				# when a session stops responding (XHR)...it just goes silent.
+				# We watch for it to die (since we created it) and cleanup
+				# after it...this is a compromise between always
+				# knowing it has died and doing the best we can across the cluster
+				gevent.sleep( 60 )	# Time? We can detect a dead session no faster than we decide it's dead,
+									# which is SESSION_HEARTBEAT_TIMEOUT
+				logger.debug( "Checking status of session %s", session_id )
+				with component.getUtility(nti_interfaces.IDataserverTransactionContextManager)():
+					sess = self.get_session(session_id) # performs validation, notification
+				if sess:
+					# still alive, go again
+					gevent.spawn( watchdog_session )
+				else:
+					logger.debug( "Session %s died", session_id )
+			gevent.spawn( watchdog_session )
 
 		return session
 
@@ -299,10 +312,7 @@ class SessionService(object):
 
 		# Now that the session is unreachable,
 		# make sure the session itself knows it's dead
-		# FIXME: Until we have the better transaction framework
-		# in place, this can lead to infinite recursion, as we
-		# keep loading new session states from the DB and broadcasting
-		#s.kill()
+		s.kill()
 		# Let any listeners across the cluster also know it
 		self._publish_msg( b'session_dead', s.session_id, b"42" )
 

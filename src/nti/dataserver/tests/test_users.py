@@ -31,8 +31,6 @@ from nti.dataserver import interfaces as nti_interfaces
 import mock_dataserver
 from mock_dataserver import WithMockDSTrans
 import persistent.wref
-import persistent
-import mock_dataserver
 from nti.dataserver import datastructures
 import time
 
@@ -117,7 +115,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 
 	@mock_dataserver.WithMockDS
 	def test_share_note_with_updates(self):
-		with mock_dataserver.current_mock_ds.dbTrans():
+		with mock_dataserver.mock_db_trans():
 			user1 = User.create_user( mock_dataserver.current_mock_ds, username='foo@bar' )
 			user2 = User.create_user( mock_dataserver.current_mock_ds, username='fab@bar' )
 
@@ -129,7 +127,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 			user1.addContainedObject( note )
 			assert_that( note.id, is_not( none() ) )
 
-		with mock_dataserver.current_mock_ds.dbTrans():
+		with mock_dataserver.mock_db_trans():
 			user1 = User.get_user( 'foo@bar', dataserver=mock_dataserver.current_mock_ds )
 			nots = []
 			user1._postNotification = lambda *args: nots.extend( args )
@@ -149,7 +147,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 
 	@mock_dataserver.WithMockDS
 	def test_delete_shared_note_notifications(self):
-		with mock_dataserver.current_mock_ds.dbTrans():
+		with mock_dataserver.mock_db_trans():
 			user1 = User.create_user( mock_dataserver.current_mock_ds, username='foo@bar' )
 			user2 = User.create_user( mock_dataserver.current_mock_ds, username='fab@bar' )
 
@@ -163,7 +161,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 
 			note.addSharingTarget( user2, actor=user1 )
 
-		with mock_dataserver.current_mock_ds.dbTrans():
+		with mock_dataserver.mock_db_trans():
 			user1 = User.get_user( 'foo@bar', dataserver=mock_dataserver.current_mock_ds )
 			nots = []
 			user1._postNotification = lambda *args: nots.append( args )

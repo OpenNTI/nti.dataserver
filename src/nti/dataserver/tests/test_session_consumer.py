@@ -96,7 +96,7 @@ class TestSessionConsumer(mock_dataserver.ConfiguringTestBase):
 
 		component.getGlobalSiteManager().unregisterUtility( o )
 
-	@mock_dataserver.WithMockDS
+	@mock_dataserver.WithMockDSTrans
 	def test_auth_user_user_dne(self):
 		self.cons( self.socket, {'args': ('username', 'pw')} )
 		self._assert_bad_auth()

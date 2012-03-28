@@ -1,0 +1,11 @@
+<!-- -*- mode: nxml -*- -->
+<configure xmlns="http://namespaces.zope.org/zope" i18n_domain="zope">
+	<include package="zope.component" />
+	<include package="zopyx.txng3.core" file="configure.zcml" />
+	
+	<!-- Database creation and migration -->
+	<utility factory=".generations.install._ContentSearchSchemaManager"
+			 name="nti.dataserver-contentsearch"
+			 provides="zope.generations.interfaces.IInstallableSchemaManager"/>
+			 
+</configure>

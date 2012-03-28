@@ -139,7 +139,8 @@ And the second within the ``server`` level (this replaces the existing
         # checks for static file, if not found proxy to app
         try_files $uri @proxy_to_app;
         index  index.html index.htm;
-        expires +30d;
+        expires +10m;
+		add_header Cache-Control proxy-revalidate;
     }
 
     location @proxy_to_app {
@@ -163,15 +164,23 @@ should look something like this:
 
 ::
 
-	sendfile        on;
+	sendfile       on;
 	tcp_nopush     on;
+	directio 512;
+	aio on;
 
 	keepalive_timeout  65;
 	keepalive_disable none;
 
 	gzip  on;
-	gzip_types application/xml application/x-javascript application/javascript text/xml application/vnd.nextthought.workspace+json;
+	gzip_types text/css text/javascript application/xml application/x-javascript application/javascript text/xml application/vnd.nextthought.workspace+json;
 	gzip_proxied any;
+	gzip_vary on;
+	gzip_http_version 1.0;
+
+	open_file_cache max=1000;
+	open_file_cache_errors on;
+
 	upstream appserver {
 		server localhost:8081 fail_timeout=10;
 	}
@@ -189,7 +198,8 @@ should look something like this:
 			# checks for static file, if not found proxy to app
 			try_files $uri @proxy_to_app;
 			index  index.html index.htm;
-			expires +30d;
+		    expires +10m;
+			add_header Cache-Control proxy-revalidate;
 		}
 
 		location @proxy_to_app {
@@ -246,14 +256,21 @@ reside in ``/etc/haproxy/haproxy.cfg``:
   global
     log         127.0.0.1 local2
     maxconn     4096 # Total Max Connections. This is dependent on ulimit
-    nbproc      1
+    nbproc      3
 
   defaults
     mode        http
 	# If we don't set this, then we lose X-Forwarded-For
 	option http-server-close
 
-  frontend all 0.0.0.0:80
+  frontend httpredir 0.0.0.0:80
+	# Port 80 does nothing but redirect to SSL
+	option httplog
+	log global
+	timeout client 600
+	redirect location https://alpha.nextthought.com/
+
+  frontend all 127.0.0.1:8084
 	option httplog
 	log global
 	timeout client 86400000
@@ -294,6 +311,7 @@ reside in ``/etc/haproxy/haproxy.cfg``:
 
 	# Go to the app by default
 	redirect location /NextThoughtWebApp/index.html code 301 if { path / }
+	redirect location /tutorials/index.html code 301 if { path /tutorials }
 
   backend youtube_backend
 	balance roundrobin
@@ -345,6 +363,10 @@ download and compile the latest stunnel like so:
 	accept = 443
 	connect = /var/run/ssl-frontend.sock
 	protocol = proxy
+	# The default SSL version support doesn't let us be crawled
+	# by google. Turn them all on. (This probably allows some minimal
+	# security holes?)
+	sslVersion = all
 
 Upstart
 =======

@@ -1,5 +1,8 @@
 from nti.contentsearch.interfaces import IIndexManager
 
+import logging
+logger = logging.getLogger( __name__ )
+
 class GetSearch(object):
 
 	def __init__(self, request):
@@ -37,6 +40,7 @@ class UserSearch(object):
 
 	def __call__( self ):
 		term = self.request.matchdict['term']
+		term = term.lower() if term else u''
 		user = self.request.matchdict['user']
 		indexmanager = self.request.registry.getUtility( IIndexManager )
 		return indexmanager.user_data_search( query=term, username=user )

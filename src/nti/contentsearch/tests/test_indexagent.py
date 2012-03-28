@@ -4,7 +4,7 @@ from hamcrest import equal_to
 from hamcrest import assert_that
 
 from nti.dataserver.users import Change
-from nti.contentsearch._indexagent import IndexAgent
+from nti.contentsearch._indexagent import _process_event
 
 ##########################
 
@@ -36,51 +36,43 @@ class MockIndexManager(object):
 		self.exception = None
 
 	@decorator
-	def index_user_content(self, externalValue, username, typeName):
-		assert_that('Note', equal_to(typeName))
+	def index_user_content(self, username, type_name=None, data=None, *args, **kwargs):
+		assert_that('Note', equal_to(type_name))
 		assert_that(username, equal_to(test_user))
-		assert_that(note_add, equal_to(externalValue))
+		assert_that(note_add, equal_to(data))
 
 	@decorator
-	def update_user_content(self, externalValue, username, typeName):
-		assert_that('Note', equal_to(typeName))
+	def update_user_content(self, username, type_name=None, data=None, *args, **kwargs):
+		assert_that('Note', equal_to(type_name))
 		assert_that(username, equal_to(test_user))
-		assert_that(note_mod, equal_to(externalValue))
+		assert_that(note_mod, equal_to(data))
 
 	@decorator
-	def delete_user_content(self, externalValue, username, typeName):
-		self.update_user_content(externalValue, username, typeName)
-
-##########################
+	def delete_user_content(self, username, type_name=None, data=None, *args, **kwargs):
+		self.update_user_content(username, type_name, data)
 
 class TestIndexAgent(unittest.TestCase):
 
-	indexagent = None
 	indexmanager = None
 
 	def setUp(self):
 		self.indexmanager = MockIndexManager()
-		self.indexagent = IndexAgent(self.indexmanager)
 
 	def test_create(self):
-		event = self.indexagent._create_event(test_user, Change.CREATED, 'Note', note_add)
-		self.indexagent._handle_event(event).run()
+		_process_event(self.indexmanager, test_user, Change.CREATED, 'Note', note_add)
 		if self.indexmanager.exception:
 			self.fail(str(self.indexmanager.exception))
 
 	def test_update(self):
-		event = self.indexagent._create_event(test_user, Change.MODIFIED, 'Note', note_mod)
-		self.indexagent._handle_event(event).run()
+		_process_event(self.indexmanager, test_user, Change.MODIFIED, 'Note', note_mod)
 		if self.indexmanager.exception:
 			self.fail(str(self.indexmanager.exception))
 
 	def test_delete(self):
-		event = self.indexagent._create_event(test_user, Change.DELETED, 'Note', note_mod)
-		self.indexagent._handle_event(event).run()
+		_process_event(self.indexmanager, test_user, Change.DELETED, 'Note', note_mod)
 		if self.indexmanager.exception:
 			self.fail(str(self.indexmanager.exception))
-
-	def tearDown(self):
-		self.indexagent.close()
-
+			
+if __name__ == '__main__':
+	unittest.main()
 

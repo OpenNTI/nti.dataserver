@@ -14,15 +14,20 @@ import socketio
 import geventwebsocket.handler
 import wsgiref
 
+import contextlib
+import transaction
+
 #anyjson uses lambda functions that cannot be pickled
 #import anyjson as json
 import json
 import transaction
 
 from zope import component
+from zope.component.hooks import site
 from nti.dataserver import interfaces as nti_interfaces
 
 __all__ = ['SocketIOServer', 'Session']
+
 
 class SocketIOServer(socketio.SocketIOServer):
 	"""A WSGI Server with a resource that acts like an SocketIO."""
@@ -45,7 +50,7 @@ class SocketIOServer(socketio.SocketIOServer):
 	def handle(self, sock, address):
 		handler = self.handler_class(sock, address, self,
 									 sessions=self,
-									 context_manager_callable=component.getUtility(nti_interfaces.IDataserver).dbTrans,
+									 #context_manager_callable=component.getUtility(nti_interfaces.IDataserver).dbTrans,
 									 **self.handler_kwargs)
 		self.set_environ({'socketio': socketio.protocol.SocketIOProtocol(handler)})
 		handler.handle()
@@ -57,8 +62,12 @@ class SocketIOServer(socketio.SocketIOServer):
 	def create_new_session( self, environ=None ):
 		""" Creates a new session. Upon return, it will be visible to all connections. """
 		session = None
-		session = self.session_manager.create_session( session_class=Session )
-		self._after_create_session( session, environ=environ )
+		def factory(**kwargs):
+			s = Session(**kwargs)
+			self._after_create_session( s, environ=environ )
+			return s
+		with component.getUtility( nti_interfaces.IDataserverTransactionContextManager )():
+			session = self.session_manager.create_session( session_class=factory )
 		logger.debug( "Created new session %s", session )
 		return session
 
@@ -67,7 +76,8 @@ class SocketIOServer(socketio.SocketIOServer):
 		:return: an existing client Session.
 		:raises KeyError: If the session asked for does not exist.
 		"""
-		session = self.session_manager.get_session( session_id )
+		with component.getUtility( nti_interfaces.IDataserverTransactionContextManager )():
+			session = self.session_manager.get_session( session_id )
 		if not session:
 			raise KeyError( "No session " + str(session_id) )
 		return session
@@ -122,6 +132,7 @@ class SocketIOHandler(socketio.handler.SocketIOHandler):
 	_add_cors_ = False
 
 	web_socket_handler = WebSocketHandler
+	#context_manager_callable = _trivial_db_transaction
 
 	def __init__( self, *args, **kwargs ):
 		"""
@@ -132,7 +143,7 @@ class SocketIOHandler(socketio.handler.SocketIOHandler):
 		:param callable context_manager_callable: A callable that produces a context manager which
 			will be wrapped around each handled client request.
 		"""
-		self.context_manager_callable = kwargs.pop( 'context_manager_callable' )
+#		self.context_manager_callable = kwargs.pop( 'context_manager_callable', self.context_manager_callable )
 		self.handling_session_cm = None
 		super(SocketIOHandler, self).__init__( *args, **kwargs )
 		self.handler_types = {
@@ -143,7 +154,7 @@ class SocketIOHandler(socketio.handler.SocketIOHandler):
 
 
 	def handle_one_response( self, *args, **kwargs ):
-		self.handling_session_cm = self.context_manager_callable()
+		#self.handling_session_cm = self.context_manager_callable()
 		# TODO: Should we wrap this with error handling and do something
 		# on conflict errors and the like? Or can we defer to pyramid_tm
 		# and its retry support? In some cases we would be outside of that middleware,
@@ -151,9 +162,9 @@ class SocketIOHandler(socketio.handler.SocketIOHandler):
 		# at all...
 		try:
 			try:
-				with self.handling_session_cm as conn:
-					self.environ['app.db.connection'] = conn
-					super(SocketIOHandler,self).handle_one_response( *args, **kwargs )
+				#with self.handling_session_cm as conn:
+				#	self.environ['app.db.connection'] = conn
+				super(SocketIOHandler,self).handle_one_response( *args, **kwargs )
 			except transaction.interfaces.TransientError:
 				logger.exception( "Transient error handling socket.io response for %s", self.environ )
 				self.start_response( '201 Not Modified', [] )
@@ -181,8 +192,8 @@ class Session( _sessions.Session ):
 	`self.owner`: An attribute for the user that owns the session.
 	"""
 
-	def __init__(self):
-		super(Session,self).__init__()
+	def __init__(self,**kwargs):
+		super(Session,self).__init__(**kwargs)
 		self.wsgi_app_greenlet = True
 		self.message_handler = None
 		self.externalize_function = datastructures.to_json_representation
@@ -208,8 +219,8 @@ class Session( _sessions.Session ):
 		# Putting a server message immediately processes it,
 		# wherever the session is loaded.
 		if callable(self.message_handler):
-			with self.session_service.session_db_cm():
-				self.message_handler( self.protocol_handler, msg )
+			#with self.session_service.session_db_cm():
+			self.message_handler( self.protocol_handler, msg )
 
 	def put_client_msg(self, msg):
 		self.session_service.put_client_msg( self.session_id, msg )
@@ -389,7 +400,9 @@ class WebsocketTransport(socketio.transports.WebsocketTransport):
 		session_id = args[0].session_id
 		session_proxy = _SessionEventProxy()
 		session_service = self.handler.server.session_manager
-		context_manager_callable = self.handler.context_manager_callable
+		context_manager_callable = component.queryUtility( nti_interfaces.IDataserverTransactionContextManager,
+														   default=getattr( self.handler, 'context_manager_callable', None ) ) # Unit tests
+
 		session_service.set_proxy_session( session_id, session_proxy )
 
 		# If these jobs die with an error, then they may leak the
@@ -463,12 +476,14 @@ class WebsocketTransport(socketio.transports.WebsocketTransport):
 		gr2 = gevent.spawn(read_from_ws)
 
 		heartbeat = gevent.spawn( ping )
-		# make the section appear connected
-		args[0].connection_confirmed = True
-		args[0].incr_hits()
+
+		with context_manager_callable():
+			# make the section appear connected
+			args[0].connection_confirmed = True
+			args[0].incr_hits()
 		# Stop making changes to the session, and close
 		# the connection. We'll never return from this.
-		self.handler.handling_session_cm.premature_exit_but_its_okay()
+		#self.handler.handling_session_cm.premature_exit_but_its_okay()
 		return [gr1, gr2, heartbeat]
 
 	def kill( self ):

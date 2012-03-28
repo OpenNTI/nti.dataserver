@@ -32,20 +32,18 @@ dictserver = UserDict.UserDict()
 dictserver.pyramid = nti.dictserver._pyramid
 dictserver.dictionary = nti.dictserver.dictionary
 
-
 import nti.dataserver as dataserver
- #Hmm, these next three MUST be imported. We seem to have a path-dependent import req.
+#Hmm, these next three MUST be imported. We seem to have a path-dependent import req.
 import nti.dataserver.socketio_server
 #import nti.dataserver.wsgi
 import nti.dataserver._Dataserver
 import nti.dataserver.session_consumer
-from nti.dataserver.library import Library
+#from nti.dataserver.library import Library
 from nti.dataserver import interfaces as nti_interfaces
 
 import nti.contentsearch
-from nti.contentsearch.indexmanager import IndexManager
-#from nti.contentsearch import indexmanager
 contentsearch = nti.contentsearch
+import nti.contentsearch.indexmanager
 
 from nti.dataserver.users import SharingTarget
 from nti.dataserver import authorization as nauth
@@ -57,16 +55,19 @@ from zope import component
 from zope.configuration import xmlconfig
 from zope.event import notify
 from zope.processlifetime import ProcessStarting
+from zope.component.hooks import setSite, getSite, setHooks
+import transaction
 
 import nti.appserver.workspaces
 
 import pyramid.config
 import pyramid.authorization
+import pyramid.security
 import pyramid.httpexceptions as hexc
-
 
 import datetime
 import pyramid_auth
+import pyramid_zodbconn
 
 
 # Make the zope interface extend the pyramid interface
@@ -80,12 +81,10 @@ IZLocation.__bases__ = (ILocation,)
 #from zope import container as zcontainer
 #from zope import location as zlocation
 
-
 SOCKET_IO_PATH = 'socket.io'
 
-#TDOD: we should do this as configuration
-DATASERVER_ZEO_INDEXES = 'DATASERVER_NO_INDEX_BLOBS' not in os.environ
-USE_FILE_INDICES = not DATASERVER_ZEO_INDEXES
+#TODO: we should do this as configuration
+DATASERVER_WHOOSH_INDEXES = 'DATASERVER_WHOOSH_INDEXES' in os.environ
 
 class _Main(object):
 
@@ -139,30 +138,6 @@ class _Main(object):
 		# Chrome 15.0.865.0 dev is the same as Chrome 14.
 		# Chrome 16 is version 13 (which seems to be compatible with 7/8)
 
-		# We require authentication already to be setup. See
-		# _after_create_session.
-		# Note the weirdness here. Socket handling does not go through pyramid, but
-		# static javascript does.
-		if environ['PATH_INFO'].startswith( '/' + SOCKET_IO_PATH ) \
-		  and not environ['PATH_INFO'].startswith(  '/' + SOCKET_IO_PATH + '/static/' ):
-			if 'wsgi.websocket' not in environ:
-				# Well damn. We failed to upgrade the connection to a websocket.
-				# This usually means that we are behind a proxy that doesn't
-				# support websockets, which is most annoying. Best we can do is return 404
-				# (if we don't do this here, then the return below causes problems since
-				# we don't actually spin in a greenlet)
-				start_request( '404 Not Found', [('Content-Type', 'text/plain')] )
-				return ['WebSockets not found']
-
-			# Because we're going to sit here in a greenlet spinning in
-			# our sleep, we need to close the transaction. (It's not
-			# like we're authenticating). We would want to re-obtain it
-			# when needed.
-			environ['app.db.connection'].transaction_manager.commit()
-			environ['app.db.connection'].close()
-			environ['socketio'].session.wsgi_app_greenlet = True
-			return
-
 		if environ['PATH_INFO'].startswith( '/stacktraces' ):
 			# TODO: Extend to greenlets
 			code = []
@@ -184,7 +159,6 @@ def createApplication( http_port,
 					   process_args=False,
 					   create_ds=True,
 					   pyramid_config=None,
-					   sync_changes=False,
 					   **settings ):
 	"""
 	:return: A tuple (wsgi app, _Main)
@@ -192,6 +166,7 @@ def createApplication( http_port,
 	server = None
 	# Configure subscribers, etc.
 	xmlconfig.file( 'configure.zcml', package=nti.appserver )
+
 	# Notify of startup. (Note that configuring the packages loads zope.component:configure.zcml
 	# which in turn hooks up zope.component.event to zope.event for event dispatching)
 	notify( ProcessStarting() )
@@ -207,7 +182,7 @@ def createApplication( http_port,
 			_dataFileName = 'data.fs'
 		server = MockServer()
 	else:
-		ds_class = dataserver._Dataserver.Dataserver if not sync_changes else dataserver._Dataserver._SynchronousChangeDataserver
+		ds_class = dataserver._Dataserver.Dataserver
 		if process_args:
 			dataDir = "~/tmp"
 			dataFile = "test.fs"
@@ -217,8 +192,6 @@ def createApplication( http_port,
 			server = ds_class( dataDir, dataFile )
 		else:
 			server = ds_class()
-
-	user_indices_dir = os.path.join( server._parentDir, 'indices' )
 
 	logger.debug( 'Finished starting dataserver' )
 
@@ -239,6 +212,54 @@ def createApplication( http_port,
 		# Because we're using the global registry, the settings almost certainly
 		# get trounced, so reinstall them
 		pyramid_config.registry.settings.update( settings )
+
+	# Our addons
+	# First, ensure that each request is wrapped in default global transaction
+	pyramid_config.include( 'pyramid_tm' )
+	# ...which will veto commit on a 4xx or 5xx response
+	pyramid_config.registry.settings['tm.commit_veto'] = 'pyramid_tm.default_commit_veto'
+	# ...and which will retry a few times
+	# NOTE: This is disabled because retry means that the entire request body must be
+	# buffered, something that cannot happen with websockets. (However, the way the handlers
+	# are set up, we may never get to the pyramid object on a websocket request, so
+	# it probably doesn't matter. Verify).
+	# TODO: This retry and transaction logic is very nice...how to integrate it with
+	# the socketio_server and websocket handling? That all happens before we get down this
+	# far
+	#pyramid_config.registry.settings['tm.attempts'] = 3
+	# Arrange for a db connection to be opened with each request
+	# if pyramid_zodbconn.get_connection() is called (until called, this does nothing)
+	pyramid_config.include( 'pyramid_zodbconn' )
+	# Notice that we're using the db from the DS directly, not requiring construction
+	# of a new DB based on a URI; that is a second option if we don't want the
+	# DS object 'owning' the DB.
+	# NOTE: It is not entirely clear how to get a connection to the dataserver if we're not
+	# calling a method on the dataserver (and it doesn't have access to the request); however, it
+	# is weird the way it is currently handled, with static fields of a context manager class.
+	# I think the DS will want to be a transaction.interfaces.ISynchronizer and/or an IDataManager
+	pyramid_config.registry.zodb_database = server.db
+	#pyramid_config.registry.settings('zodbconn.uri') =
+
+	# Our site setup
+	# If we wanted to, we could be setting sites up as we traverse as well
+	setHooks()
+	def on_new_request(evt):
+		"""
+		Within the scope of a transaction, gets a connection and installs our
+		site manager. Records the active user and URL in the transaction.
+		"""
+		conn = pyramid_zodbconn.get_connection( evt.request )
+		site = conn.root()['nti.dataserver']
+		old_site = getSite()
+		setSite( site )
+		evt.request.add_finished_callback( lambda r: setSite( old_site ) )
+		# Now (and only now, that the site is setup) record info in the transaction
+		uid = pyramid.security.authenticated_userid( evt.request )
+		if uid:
+			transaction.get().setUser( uid )
+		transaction.get().note( evt.request.url )
+
+	pyramid_config.add_subscriber( on_new_request, pyramid.interfaces.INewRequest )
 
 
 	# The pyramid_openid view requires a session. The repoze.who.plugins.openid plugin
@@ -279,6 +300,11 @@ def createApplication( http_port,
 	pyramid_config.add_view( name='verify_openid', route_name='verify_openid', view='pyramid_openid.verify_openid' )
 
 
+	import dataserver_socketio_views
+	pyramid_config.add_route( name=dataserver_socketio_views.RT_HANDSHAKE, pattern=dataserver_socketio_views.URL_HANDSHAKE )
+	pyramid_config.add_route( name=dataserver_socketio_views.RT_CONNECT, pattern=dataserver_socketio_views.URL_CONNECT )
+	pyramid_config.scan( dataserver_socketio_views )
+
 	# Temporarily make everyone an OU admin
 	class OUAdminFactory(object):
 		interface.implements( nti_interfaces.IGroupMember )
@@ -310,7 +336,7 @@ def createApplication( http_port,
 
 	indexmanager = None
 	if create_ds:
-		indexmanager = create_index_manager(server, use_zeodb_index_storage(), user_indices_dir)
+		indexmanager = create_index_manager(server, use_whoosh_index_storage())
 
 	if server:
 		pyramid_config.registry.registerUtility( indexmanager, nti.contentsearch.interfaces.IIndexManager )
@@ -533,15 +559,26 @@ def createApplication( http_port,
 							 permission=nauth.ACT_READ, request_method='GET' )
 
 
+	# Make 401 come back as appropriate. Otherwise we get 403
+	# all the time, which prompts us to net send
+	# credentials
+	# TODO: Better use of an IChallangeDecider
+	def forb_view(request):
+		if 'repoze.who.identity' not in request.environ:
+			result = hexc.HTTPUnauthorized()
+			result.www_authenticate = ('Basic', 'realm="nti"')
+			return result
+		return request.exception
+	pyramid_config.add_forbidden_view( forb_view )
+
+
 	# register change listeners
 	# Now, fork off the change listeners
 	if create_ds:
-		if sync_changes:
-			logger.info( 'Adding synchronous change listeners.' )
-			server.add_change_listener( SharingTarget.onChange )
-			server.add_change_listener( IndexManager.onChange )
-		else:
-			logger.info( "Change listeners should already be running." )
+		logger.info( 'Adding synchronous change listeners.' )
+		server.add_change_listener( SharingTarget.onChange )
+		if indexmanager:
+			server.add_change_listener( indexmanager.onChange )
 
 		logger.info( 'Finished adding listeners' )
 
@@ -555,71 +592,47 @@ def createApplication( http_port,
 	main.addServeFiles( ('/dataserver2', None) )
 
 	application = main
-	application = pyramid_auth.wrap_repoze_middleware( application )
+	#application = pyramid_auth.wrap_repoze_middleware( application )
 
 	return (application,main)
 
-class AppServer(dataserver.socketio_server.SocketIOServer):
-	def _after_create_session( self, session, environ=None ):
-		# Try to extract the authenticated username, if we can. We don't have
-		# a pyramid request to draw on, though
-		username = None
-		identity = None
-		auth_policy = None
-		if environ:
-			# A pyramid_auth.NTIAuthenticationPolicy
-			auth_policy = component.getUtility( pyramid.interfaces.IAuthenticationPolicy )
-			api = auth_policy.api_factory( environ )
-			identity = api.authenticate()
-			if identity:
-				username = identity['repoze.who.userid']
-		logger.debug( "Creating session handler for '%s'/%s using %s and %s", username, dict(identity) if identity else None, auth_policy, environ )
-		session.message_handler = dataserver.session_consumer.SessionConsumer(username=username,session=session)
+import geventwebsocket.handler
 
-def _configure_logging():
-	# TODO: Where should logging in these background processes be configured?
-	logging.basicConfig( level=logging.INFO )
-	logging.getLogger( 'nti' ).setLevel( logging.DEBUG )
-	logging.root.handlers[0].setFormatter( logging.Formatter( '%(asctime)s [%(name)s] %(levelname)s: %(message)s' ) )
+class AppServer(gevent.pywsgi.WSGIServer):
+	def __init__( self, *args, **kwargs ):
+		kwargs['handler_class'] = geventwebsocket.handler.WebSocketHandler
+		super(AppServer,self).__init__(*args, **kwargs)
 
-def _add_sharing_listener( server ):
-	_configure_logging()
-	print 'Adding sharing listener', os.getpid(), server
-	server.add_change_listener( SharingTarget.onChange )
+def use_whoosh_index_storage():
+	return DATASERVER_WHOOSH_INDEXES
 
+def create_index_manager(server, use_whosh_storage=None, user_indices_dir=None):
 
-def use_zeodb_index_storage():
-	return not USE_FILE_INDICES
+	if use_whosh_storage is None:
+		use_whosh_storage = use_whoosh_index_storage()
 
-def _add_index_listener( server, user_indices_dir ):
-	_configure_logging()
-	print 'Adding index listener', os.getpid(), dataserver
-	create_index_manager(server, use_zeodb_index_storage(), user_indices_dir)
-	server.add_change_listener( IndexManager.onChange )
-
-def create_index_manager(server, use_zeo_storage=None, user_indices_dir='/tmp'):
-
-	if use_zeo_storage is None:
-		use_zeo_storage = use_zeodb_index_storage()
-
-	if use_zeo_storage:
-		logger.debug( 'Creating ZEO index manager' )
-		indicesKey, blobsKey = '__indices', "__blobs"
-		ixman = nti.contentsearch.indexmanager.create_zodb_index_manager(db = server.searchDB,
-																		 indicesKey = indicesKey,
-																		 blobsKey = blobsKey,
-																		 dataserver = server)
+	if use_whosh_storage:
+		logger.debug( 'Creating Whoosh based index manager' )
+		user_indices_dir = user_indices_dir or os.path.join( server._parentDir, 'indices' )
+		ixman = nti.contentsearch.indexmanager.create_index_manager(user_indices_dir, dataserver=server)
 	else:
-		with server.dbTrans():
-			usernames = [name for name in server.root['users'].keys()]
-			ixman = nti.contentsearch.indexmanager.create_index_manager(user_indices_dir, usernames)
+		logger.debug( 'Creating Repoze-Catalog based index manager' )
+		ixman = nti.contentsearch.indexmanager.create_repoze_index_manager(dataserver=server)
+
+	#else:
+	#	logger.debug( 'Creating ZEO based index manager' )
+	#	indicesKey, blobsKey = '__indices', "__blobs"
+	#	ixman = nti.contentsearch.indexmanager.create_zodb_index_manager(db = server.searchDB,
+	#																	 indicesKey = indicesKey,
+	#																	 blobsKey = blobsKey,
+	#																	 dataserver = server)
 
 	return ixman
 
+# These two functions exist for the sake of the installed executables
+# but they do nothing these days
 def sharing_listener_main():
-	_configure_logging()
-	dataserver._Dataserver.temp_env_run_change_listener( _add_sharing_listener )
+	pass
 
 def index_listener_main():
-	_configure_logging()
-	dataserver._Dataserver.temp_env_run_change_listener( _add_index_listener, None )
+	pass

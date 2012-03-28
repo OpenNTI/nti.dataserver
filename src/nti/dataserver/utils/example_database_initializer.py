@@ -143,7 +143,7 @@ class ExampleDatabaseInitializer(object):
 
 	def _make_usernames(self):
 		"""
-		:return: An iterable of two-tuples of userid, realname. email will be used
+		:return: An iterable of two-tuples of (userid, realname). email will be used
 			as userid
 		"""
 		USERS = [ ('rusczyk@artofproblemsolving.com', 'Richard Rusczyk'),#Aops
@@ -159,7 +159,7 @@ class ExampleDatabaseInitializer(object):
 			USERS.append( (uid + '@nextthought.com', uid.replace( '.', ' ').title() ) )
 
 		# Add test users
-		max_test_users = 16
+		max_test_users = 20
 		for x in range(1, max_test_users):
 			uid = 'test.user.%s' % x
 			USERS.append( (uid + '@nextthought.com', uid.replace( '.', ' ').title() ) )
@@ -240,7 +240,7 @@ class ExampleDatabaseInitializer(object):
 
 	def install( self, context ):
 		conn = context.connection
-		root = conn.root()
+		root = conn.root()['nti.dataserver'].getSiteManager()
 		ONLY_NEW = '--only-new' in sys.argv
 		if ONLY_NEW:
 			def add_user( u ):
@@ -324,6 +324,7 @@ class ExampleDatabaseInitializer(object):
 	def evolve( self, context, generation ):
 		conn = context.connection
 		root = conn.root()
+		root = root['nti.dataserver'].getSiteManager()
 		self._install_quizzes( root )
 
 		# Add a missing community, if needed

@@ -9,6 +9,7 @@ from nti.contentsearch.common import ngrams
 from nti.contentsearch.common import get_attr
 from nti.contentsearch.common import epoch_time
 from nti.contentsearch.common import get_content
+from nti.contentsearch.common import get_type_name
 from nti.contentsearch.common import get_collection
 from nti.contentsearch.common import get_multipart_content
 from nti.contentsearch.common import word_content_highlight
@@ -19,9 +20,9 @@ from nti.contentsearch.common import (	oid_fields, ntiid_fields, creator_fields,
 										last_modified_fields, keyword_fields)
 
 from nti.contentsearch.common import (	OID, NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
-										COLLECTION_ID, SNIPPET, HIT, ID, BODY, MIME_TYPE)
+										COLLECTION_ID, SNIPPET, HIT, ID, BODY, TARGET_OID, MESSAGE_INFO)
 
-from nti.contentsearch.common import (	ngrams_, channel_, content_, keywords_, references_, nti_mimetype_prefix,
+from nti.contentsearch.common import (	ngrams_, channel_, content_, keywords_, references_, 
 										recipients_, sharedWith_, body_, startHighlightedFullText_)
 
 
@@ -178,22 +179,9 @@ def create_catalog(type_name='Notes'):
 	elif type_name =='messageinfo':
 		return create_messageinfo_catalog()
 	else:
-		raise None
+		return None
 	
 # -----------------------------------
-
-def get_type_name(obj):
-	if not isinstance(obj, dict):
-		result = obj.__class__.__name__
-	elif CLASS in obj:
-		result = obj[CLASS]
-	elif MIME_TYPE in obj:
-		result = obj[MIME_TYPE]
-		if result and result.startswith(nti_mimetype_prefix):
-			result = result[len(nti_mimetype_prefix):]
-	else:
-		result = None
-	return unicode(result.lower()) if result else u''
 		
 def _get_last_modified(obj):
 	lm = get_attr(obj, last_modified_fields )
@@ -215,13 +203,15 @@ def _highlight_content(query=None, text=None, use_word_highlight=True, *args, **
 	return unicode(content) if content else text
 
 def _get_index_hit_from_object(obj):
-	result = {TYPE : get_type_name(obj), CLASS:HIT}		
-	result[OID] =  get_attr(obj, oid_fields )
-	result[NTIID] =  get_attr(obj, ntiid_fields )
-	result[CREATOR] =  get_attr(obj, creator_fields )
-	result[CONTAINER_ID] = get_attr(obj, container_id_fields )
-	result[COLLECTION_ID] = get_collection(result[CONTAINER_ID])
+	result = {}
+	result[CLASS] = HIT
+	result[TARGET_OID] = get_attr(obj, oid_fields)
+	result[NTIID] = get_attr(obj, ntiid_fields) or result[TARGET_OID]
+	result[TYPE] = get_type_name(obj).capitalize()
 	result[LAST_MODIFIED] = _get_last_modified(obj)
+	result[CREATOR] =  get_attr(obj, creator_fields)
+	result[CONTAINER_ID] = get_attr(obj, container_id_fields)
+	result[COLLECTION_ID] = get_collection(result[CONTAINER_ID])
 	return result
 
 def get_index_hit_from_note(obj, query=None, use_word_highlight=True, *args, **kwargs):
@@ -239,6 +229,8 @@ def get_index_hit_from_hightlight(obj, query=None, use_word_highlight=True, *arg
 def get_index_hit_from_messgeinfo(obj, query=None, use_word_highlight=True, *args, **kwargs):
 	text = get_multipart_content(get_attr(obj, [BODY]))
 	result = _get_index_hit_from_object(obj)
+	result[TYPE] = MESSAGE_INFO
+	result[ID] = get_attr(obj, [ID])
 	result[SNIPPET] = _highlight_content(unicode(query), unicode(text), use_word_highlight, *args, **kwargs)
 	return result
 

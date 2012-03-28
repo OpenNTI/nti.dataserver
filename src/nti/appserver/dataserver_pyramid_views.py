@@ -21,6 +21,7 @@ from zope import interface
 import pyramid.security as sec
 import pyramid.httpexceptions as hexc
 from pyramid import traversal
+import transaction
 
 from zope.location.location import LocationProxy
 
@@ -807,7 +808,7 @@ class _UGDModifyViewBase(object):
 		# If they provided an ID, use it if we can and we need to
 		if set_id and StandardExternalFields.ID in externalValue \
 			and hasattr( containedObject, StandardInternalFields.ID ) \
-			and getattr( containedObject, StandardInternalFields.ID, None ) != externalValue['ID']:
+			and getattr( containedObject, StandardInternalFields.ID, None ) != externalValue[StandardExternalFields.ID]:
 			try:
 				containedObject.id = externalValue['ID']
 			except AttributeError:
@@ -863,7 +864,7 @@ class _UGDPostView(_UGDModifyViewBase):
 
 		containedObject = self.createContentObject( owner, datatype, externalValue )
 		if containedObject is None:
-			self.dataserver.doom()
+			transaction.doom()
 			logger.debug( "Failing to POST: input of unsupported/missing Class" )
 			raise HTTPUnprocessableEntity( 'Unsupported/missing Class' )
 
@@ -873,7 +874,7 @@ class _UGDPostView(_UGDModifyViewBase):
 			# TODO: The WSGI code would attempt to infer a containerID from the
 			# path. Should we?
 			if not getattr( containedObject, StandardInternalFields.CONTAINER_ID, None ):
-				self.dataserver.doom()
+				transaction.doom()
 				logger.debug( "Failing to POST: input of unsupported/missing ContainerId" )
 				raise HTTPUnprocessableEntity( "Unsupported/missing ContainerId" )
 			try:
@@ -889,7 +890,7 @@ class _UGDPostView(_UGDModifyViewBase):
 					# be given at creation time and never after (think immutable usernames
 					# which must not overlap and cannot be auto-generated). In that case,
 					# there's nothing else we can do but inform the client
-					self.dataserver.doom()
+					transaction.doom()
 					raise hexc.HTTPConflict("Cannot use an ID already in use")
 				else:
 					owner.addContainedObject( containedObject )
@@ -989,6 +990,8 @@ class _UGDPutView(_UGDModifyViewBase):
 			self._check_object_exists( theObject, creator, containerId, objId )
 
 			self.updateContentObject( theObject, externalValue )
+			if callable( getattr( theObject, 'updateLastMod', None ) ):
+				theObject.updateLastMod()
 
 		if theObject and theObject == theObject.creator:
 			# Updating a user. Naturally, this is done by

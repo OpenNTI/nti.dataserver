@@ -1,55 +1,26 @@
 import sys
 
-import logging
-logger = logging.getLogger(__name__)
-
 import zopyxtxng3corelogger
 sys.modules["zopyx.txng3.core.logger"] = zopyxtxng3corelogger
 
-from zope import component
 from zope.interface import implements
 from zope.index.interfaces import IInjection
 from zope.index.interfaces import IStatistics
 from zope.index.interfaces import IIndexSort
 from zope.index.interfaces import IIndexSearch
-from zope.component.interfaces import IFactory
 
 from zopyx.txng3.core.index import Index
-from zopyx.txng3.core.interfaces import IParser
-from zopyx.txng3.core.ranking import cosine_ranking
-from zopyx.txng3.core.lexicon import LexiconFactory
-from zopyx.txng3.core.splitter import SplitterFactory
-from zopyx.txng3.core.interfaces.ranking import IRanking
-from zopyx.txng3.core.parsers.english import EnglishParser
-from zopyx.txng3.core.storage import StorageWithTermFrequencyFactory
-	
 from zopyx.txng3.core.config import DEFAULT_LEXICON
 from zopyx.txng3.core.config import DEFAULT_RANKING
-from zopyx.txng3.core.config import DEFAULT_STORAGE
 from zopyx.txng3.core.config import DEFAULT_ENCODING
 from zopyx.txng3.core.config import DEFAULT_ADDITIONAL_CHARS
 
 from repoze.catalog.interfaces import ICatalogIndex
 from repoze.catalog.indexes.common import CatalogIndex
 
-# -----------------------------------
+import logging
+logger = logging.getLogger(__name__)
 
-def register_default_utilities():
-	if not component.queryUtility(IParser, 'txng.parsers.en', default=None):
-		component.provideUtility(EnglishParser(), IParser, 'txng.parsers.en')
-		
-	if not component.queryUtility(IRanking, 'txng.ranking.cosine', default=None):
-		component.provideUtility(cosine_ranking, IRanking, 'txng.ranking.cosine')
-		
-	if not component.queryUtility(IFactory, 'txng.lexicons.default', default=None):
-		component.provideUtility(LexiconFactory, IFactory, 'txng.lexicons.default')
-		
-	if not component.queryUtility(IFactory, 'txng.splitters.default', default=None):
-		component.provideUtility(SplitterFactory, IFactory, 'txng.splitters.default')
-		
-	if not component.queryUtility(IFactory, 'txng.storages.default', default=None):
-		component.provideUtility(StorageWithTermFrequencyFactory, IFactory, 'txng.storages.default')
-		
 # -----------------------------------
 
 class _Proxy(object):
@@ -75,17 +46,13 @@ class TextIndexNG3(object):
 					'autoexpand', 'similarity_ratio',
 					'ranking', 'ranking_maxhits', 'thesaurus',
 					'search_all_fields')
-
-	def __new__(cls, *args, **kwargs):
-		register_default_utilities()
-		return super(TextIndexNG3, cls).__new__(cls, *args, **kwargs)
 	
 	def __init__(self, iden, use_proxy=False, *args, **kwargs):
 		self.id = iden
 		self.use_proxy = use_proxy
 		self.index = Index(	fields=kwargs.get('fields', [iden]),
 							lexicon=kwargs.get('lexicon', DEFAULT_LEXICON),
-							storage=kwargs.get('storage', DEFAULT_STORAGE),
+							storage=kwargs.get('storage', 'txng.storages.term_frequencies'),
 							splitter=kwargs.get('splitter', 'txng.splitters.default'),
 							autoexpand=kwargs.get('autoexpand', 'off'),
 							autoexpand_limit=kwargs.get('autoexpand_limit', 4),
@@ -266,4 +233,4 @@ class CatalogTextIndexNG3(CatalogIndex, TextIndexNG3):
 		return self.apply(value)
 	
 	applyEq = applyContains
-	
+

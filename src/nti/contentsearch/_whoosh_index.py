@@ -145,11 +145,8 @@ class _SearchableContent(object):
 			suggestions = []
 			result = self.search(searcher, query, limit)
 		else:
-			prefix = kwargs.get('prefix', len(query))
-			maxdist = kwargs.get('maxdist', _default_word_max_dist)
-			suggest_limit = kwargs.get('suggest_limit', _default_suggest_limit)
-			suggestions = searcher.suggest(query, maxdist=maxdist, limit=suggest_limit, prefix=prefix)
-
+			result = self.suggest(searcher, query, limit, *args, **kwargs)
+			suggestions = result.get(ITEMS, None)
 			if suggestions:
 				result = self.search(searcher, suggestions[0], limit, *args, **kwargs)
 			else:
@@ -159,11 +156,11 @@ class _SearchableContent(object):
 		return result
 
 	def suggest(self, searcher, word, limit=_default_suggest_limit, *args, **kwargs):
-		prefix = kwargs.get('prefix', len(word))
-		maxdist = kwargs.get('maxdist', _default_word_max_dist)
-		
+		prefix = kwargs.get('prefix', None) or len(word)
+		maxdist = kwargs.get('maxdist', None) or _default_word_max_dist
 		result = empty_suggest_result(word)
-		records = searcher.suggest(word, maxdist=maxdist, limit=limit, prefix=prefix)
+		records = searcher.suggest(content_, word, maxdist=maxdist, prefix=prefix)
+		records = records[:limit] if limit and limit > 0 else records
 		result[ITEMS] = records
 		result[HIT_COUNT] = len(records)
 		return result
@@ -288,7 +285,7 @@ class UserIndexableContent(_SearchableContent):
 			result[oid_] = data
 		else:
 			result[oid_] = echo(get_attr(data, oid_fields))
-			result[ntiid_] = echo(get_attr(data, ntiid_fields))
+			result[ntiid_] = echo(get_attr(data, ntiid_fields)) or result[oid_]
 			result[creator_] = echo(get_attr(data, creator_fields))
 			result[containerId_] = echo(get_attr(data, container_id_fields))
 			result[collectionId_] = echo(get_collection(result[containerId_]))
@@ -310,24 +307,42 @@ class UserIndexableContent(_SearchableContent):
 	def index_content(self, writer, data, auto_commit=True, **commit_args):
 		d = self.get_index_data(data)
 		if d.has_key(oid_) and d.has_key(containerId_):
-			writer.add_document(**d)
-			if auto_commit:
-				writer.commit(**commit_args)
+			try:
+				writer.add_document(**d)
+				if auto_commit:
+					writer.commit(**commit_args)
+				return True
+			except Exception, e:
+				writer.cancel()
+				raise e
+		return False
 
 	def update_content(self, writer, data, auto_commit=True, **commit_args):
 		d = self.get_index_data(data)
 		if d.has_key(oid_) and d.has_key(containerId_):
-			writer.update_document(**d)
-			if auto_commit:
-				writer.commit(**commit_args)
+			try:
+				writer.update_document(**d)
+				if auto_commit:
+					writer.commit(**commit_args)
+				return True
+			except Exception, e:
+				writer.cancel()
+				raise e
+		return False
 		
 	def delete_content(self, writer, data, auto_commit=True, **commit_args):
 		d = self.get_index_data(data)
 		if d.has_key(oid_) and d.has_key(containerId_):
-			writer.delete_by_term(oid_, unicode(d[oid_]))
-			if auto_commit:
-				writer.commit(**commit_args)
-				
+			try:
+				writer.delete_by_term(oid_, unicode(d[oid_]))
+				if auto_commit:
+					writer.commit(**commit_args)
+				return True
+			except Exception, e:
+				writer.cancel()
+				raise e
+		return False
+	
 # ----------------------------------
 
 def create_highlight_schema():
@@ -457,7 +472,8 @@ def create_messageinfo_schema():
 				 			id = fields.ID(stored=True, unique=True),
 				 			last_modified = fields.DATETIME(stored=True),
 				 			keywords = fields.KEYWORD(stored=True),
-				 			ntiid = fields.ID(stored=True))
+				 			ntiid = fields.ID(stored=True),
+				 			collectionId=fields.ID(stored=True))
 	return schema
 
 class MessageInfo(Note):
@@ -478,6 +494,11 @@ class MessageInfo(Note):
 		result[recipients_] = get_keywords(get_attr(data, recipients_))
 		result[content_] = get_text_from_mutil_part_body(get_attr(data, BODY))
 		result[quick_] = result[content_]
+		return result
+	
+	def get_data_from_search_hit(self, hit, d):
+		result = super(MessageInfo, self).get_data_from_search_hit(hit, d)
+		d[ID] = hit.get(id_, u'')
 		return result
 
 # ----------------------------------
