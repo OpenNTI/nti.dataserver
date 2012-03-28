@@ -907,7 +907,7 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 	def addFriend( self, friend ):
 		""" Adding friends causes our creator to follow them. """
 		if friend is None: return
-
+		# TODO: Why is this a list?
 		if self._friends is None: self._friends = datastructures.PersistentExternalizableList()
 		if isinstance( friend, FriendsList ):
 			# Recurse to generate the correct notifications
@@ -919,9 +919,10 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 			# Dictionaries and Dictionary-like things come in from
 			# external representations. Resolve, then append.
 			self.addFriend( User.get_user( friend['Username'], default=friend['Username'] ) )
-		elif isinstance( friend, basestring ):
+		elif isinstance( friend, six.string_types ):
 			# Try to resolve, add the resolved if possible, otherwise add the
 			# string as a placeholder. Don't recurse, could be infinite
+			friend = friend.lower()
 			friend = User.get_user( friend, default=friend )
 			self._friends.append( friend )
 		else:
@@ -1134,6 +1135,9 @@ class _FriendsListMap(datastructures.AbstractNamedContainerMap):
 
 	contained_type = nti_interfaces.IFriendsList
 	container_name = 'FriendsLists'
+
+	def _newContainerData(self):
+		return datastructures.KeyPreservingCaseInsensitiveModDateTrackingOOBTree()
 
 
 nti_interfaces.IFriendsList.setTaggedValue( nti_interfaces.IHTC_NEW_FACTORY,
