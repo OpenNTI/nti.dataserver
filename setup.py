@@ -70,7 +70,7 @@ setup(
 		'pyramid_tm',
 		'pyramid_traversalwrapper',
 		'pyramid_who',
-		'pyramid_zodbconn',
+		'pyramid_zodbconn == 0.2',
 		'pyramid-openid',
 		'pytz',
 		'rdflib',
