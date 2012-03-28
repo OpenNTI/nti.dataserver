@@ -16,6 +16,27 @@ if getattr( gevent, 'version_info', (0,) )[0] >= 1:
 	logger.info( "Monkey patching most libraries for gevent" )
 	# omit thread, it's required for multiprocessing futures, used in contentrendering
 	gevent.monkey.patch_all(thread=False)
+	# However, transaction and locals in general must be made gevent compliant
+	import transaction
+	class GeventTransactionManager(transaction.TransactionManager):
+		pass
+	manager = GeventTransactionManager()
+	transaction.manager = manager
+	transaction.get = transaction.__enter__ = manager.get
+	transaction.begin = manager.begin
+	transaction.commit = manager.commit
+	transaction.abort = manager.abort
+	transaction.__exit__ = manager.__exit__
+	transaction.doom = manager.doom
+	transaction.isDoomed = manager.isDoomed
+	transaction.savepoint = manager.savepoint
+	transaction.attempts = manager.attempts
+
+	import gevent.local
+	import threading
+	threading.local = gevent.local.local
+	_threading_local = __import__('_threading_local')
+	_threading_local.local = gevent.local.local
 else:
 	logger.info( "Monkey patching minimum libraries for gevent" )
 	gevent.monkey.patch_socket(); gevent.monkey.patch_ssl()
