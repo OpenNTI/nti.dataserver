@@ -286,7 +286,12 @@ class XHRPollingTransport(BaseTransport):
 			return response
 
 		if request_method in ("GET", "POST", "OPTIONS"):
-			return getattr(self, request_method.lower())(session)
+			try:
+				return getattr(self, request_method.lower())(session)
+			except ValueError:
+				# TODO: What if its binary data?
+				logger.debug( "Failed to parse incoming body '%s'", self._request_body(), exc_info=True )
+				raise
 
 		raise Exception("No support for the method: " + request_method)
 
