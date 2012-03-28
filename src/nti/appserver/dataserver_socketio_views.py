@@ -139,7 +139,8 @@ def _connect_view( request ):
 	if pyramid.interfaces.IResponse.providedBy( jobs_or_response ):
 		return jobs_or_response
 
-	gevent.joinall(jobs_or_response)
+	if jobs_or_response:
+		gevent.joinall(jobs_or_response)
 	return request.response
 
 

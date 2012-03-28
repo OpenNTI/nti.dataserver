@@ -71,13 +71,9 @@ class CORSInjector(object):
 					theHeaders['Access-Control-Max-Age'] = "1728000" # 20 days
 					theHeaders['Access-Control-Allow-Headers'] = 'Slug, X-Requested-With, Authorization, If-Modified-Since, Content-Type, Origin, Accept, Cookie'
 					theHeaders['Access-Control-Expose-Headers'] = 'Location, Warning'
-				try:
-					return local_start_request( status, headers, exc_info )
-				except socket.error:
-					# Not unexpected, because of websockets prematurely closing
-					# before we back all the way out. Trapping this, hopefully
-					# nothing is left dangling?
-					logger.debug( "Socket error when responding" )
+
+				return local_start_request( status, headers, exc_info )
+
 			the_start_request = f
 		result = None
 		try:
