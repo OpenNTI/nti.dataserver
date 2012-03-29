@@ -1,13 +1,12 @@
 #!/usr/bin/env python2.7
 
-import os
-import sys
+import tempfile
 
 
 import plasTeX
 
 from plasTeX.TeX import TeX
-from plasTeX.ConfigManager import *
+#from plasTeX.ConfigManager import *
 from plasTeX.DOM import Node
 
 import StringIO
@@ -21,15 +20,14 @@ def buildDomFromString(docString):
 	strIO.name = 'temp'
 	tex = TeX(document,strIO)
 	document.userdata['jobname'] = 'temp'
-	document.userdata['working-dir'] = os.getcwd()
+	document.userdata['working-dir'] = tempfile.gettempdir()
 	tex.parse()
 	return document
 
 def simpleLatexDocument(maths):
-	mathsString = ''
-	for math in maths:
-		mathsString += ('%s' %math) + '\\\\'
-		doc = '\documentclass[12pt]{article} \\usepackage{amsmath}\\begin{document} %s \\end{document}' % mathsString
+	doc = r"""\documentclass[12pt]{article} \usepackage{amsmath} \begin{document} """
+	mathString = '\n'.join( [str(m) for m in maths] )
+	doc = doc + '\n' + mathString + '\n\\end{document}'
 	return doc
 
 def mathTexToDOMNodes(maths):
@@ -148,19 +146,23 @@ def assess( quiz, responses ):
 			result[questionId] = False
 			continue
 
+		# Experimentally, plasTeX sometimes has problems with $ display math
+		# We haven't set seen that problem with \( display math
 		if response.startswith( '$' ):
-			pass
+			response = response[1:-1]
+			response = "\\(" + response + "\\)"
 		elif openmath.OMOBJ in response or openmath.OMA in response:
 			response = openmath.OpenMath2Latex().translate( response )
 		else:
-			response = "$" + response + "$"
+			response = "\\(" + response + "\\)"
 
-		response = mathTexToDOMNodes( [ response ] )
+		response_doc = response
+		response = mathTexToDOMNodes( ( response, ) )
 
 		if len(response) != 1:
 			# TODO: How to handle this? We need to present
 			# some sort of retry condition?
-			raise Exception( "In question %s, invalid response format '%s'" %(questionId,questionResponse) )
+			raise Exception( u"In question %s, invalid response format '%s' (%s/%s -> %s/%s)" % (questionId,questionResponse, response_doc, type(response_doc), len(response), response) )
 		match = False
 		for answer in answers:
 			for rsp in response:
