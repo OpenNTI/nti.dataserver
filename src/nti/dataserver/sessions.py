@@ -349,9 +349,15 @@ class SessionService(object):
 	def delete_session( self, session_id ):
 		with self.session_db_cm() as session_db:
 			sess = session_db['session_map'][session_id]
-			del session_db['session_map'][session_id]
-			del session_db['session_index'][sess.owner] # TODO: Why?
-			sess.kill()
+			try:
+				del session_db['session_map'][session_id]
+			except KeyError: pass
+			session_index = session_db['session_index'].get( sess.owner )
+			try:
+				session_index.remove( session_id )
+			except ValueError,TypeError: pass
+			if sess:
+				sess.kill()
 
 
 	def _put_msg( self, meth, session_id, msg ):
