@@ -48,6 +48,7 @@ class UserSearch(object):
 		return indexmanager.user_data_search( query=query, username=user )
 	
 def clean_search_query(query):
+	if query in ('*', '?'):
+		return query
 	result = re.sub('[*?]', '', query) if query else u''
 	return unicode(result.lower())
-
