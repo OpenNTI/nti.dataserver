@@ -173,8 +173,8 @@ def get_multipart_content(source):
 	elif isinstance(source, Iterable):
 		
 		def process_dict(d):
-			clazz = item.get(CLASS, None)
-			data = item.get(ITEMS, None)
+			clazz = d.get(CLASS, None)
+			data = d.get(ITEMS, None)
 			if clazz and data:
 				name = "get_%s_content" % clazz.lower()
 				if name in gbls:

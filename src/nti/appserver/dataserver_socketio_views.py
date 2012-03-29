@@ -432,32 +432,47 @@ class WebsocketTransport(BaseTransport):
 					logger.exception( "Failed to send message that couldn't be encoded: '%s' => '%s'",
 									  message, encoded )
 
+		def _do_read(message):
+			session = session_service.get_session( session_id )
+			if session is None:
+				return False
+
+			if message is None:
+				# Kill the greenlet
+				session_proxy.put_client_msg( None )
+				# and the session
+				session.kill()
+				return False
+
+
+			decoded_message = None
+			try:
+				decoded_message = self.decode(message)
+			except Exception:
+				decoded_message = None
+				session.kill()
+				return False
+
+			if decoded_message is not None:
+				session.put_server_msg(decoded_message)
+			return True
+
 		@_catch_all
 		def read_from_ws():
-			while True:
+			listen = True
+			while listen:
 				message = websocket.wait()
-				with context_manager_callable():
-					session = session_service.get_session( session_id )
-					if session is None:
-						break
-
-					if message is None:
-						# Kill the greenlet
-						session_proxy.put_client_msg( None )
-						# and the session
-						session.kill()
-						break
-
-					decoded_message = None
+				for _ in range(2):
 					try:
-						decoded_message = self.decode(message)
-					except Exception:
-						decoded_message = None
-						session.kill()
+						with context_manager_callable():
+							cont = _do_read(message)
+							if not cont:
+								listen = False
+								break
 						break
+					except transaction.interfaces.TransientError:
+						logger.exception( "Retrying read_from_ws on transient error" )
 
-					if decoded_message is not None:
-						session.put_server_msg(decoded_message)
 
 		ping_sleep = kwargs.get( 'ping_sleep', 5.0 )
 		@_catch_all
