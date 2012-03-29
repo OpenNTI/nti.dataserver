@@ -245,9 +245,10 @@ class QuizResult(datastructures.ContainedMixin,
 		for q, r, a in self.assessments.itervalues():
 			# If the student didn't respond at all, don't send
 			# back the right answer (by request of MC)
-			question = toExternalObject( q.toExternalDictionary() )
+			question = q.toExternalDictionary()
 			if not r.response:
-				del question['Answers']
+				question['Answers'] = []
+			question = toExternalObject( question )
 			items.append( { "Question": question,
 							"Response": r.response,
 							"Assessment": a,
