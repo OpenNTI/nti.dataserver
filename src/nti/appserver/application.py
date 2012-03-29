@@ -37,6 +37,7 @@ if getattr( gevent, 'version_info', (0,) )[0] >= 1:
 	threading.local = gevent.local.local
 	_threading_local = __import__('_threading_local')
 	_threading_local.local = gevent.local.local
+	# FIXME: Must do this for site as well!
 else:
 	logger.info( "Monkey patching minimum libraries for gevent" )
 	gevent.monkey.patch_socket(); gevent.monkey.patch_ssl()
