@@ -96,3 +96,9 @@ class RepozeDataStore(PersistentMapping):
 		else:
 			return None
 		
+	def get_docids(self, username):
+		docMap = self.docmaps.get(username, None)
+		if docMap:
+			return docMap.docid_to_address.keys()
+		return []
+		
