@@ -557,6 +557,12 @@ def lists_and_dicts_to_ext_collection( items ):
 	for item in items:
 		lastMod = max( lastMod, getattr( item, 'lastModified', 0) )
 		if hasattr( item, 'itervalues' ):
+			# ModDateTrackingOOBTrees tend to lose the custom
+			# 'lastModified' attribute during persistence
+			# so if there is a 'Last Modified' entry, go
+			# for that
+			if hasattr( item, 'get' ):
+				lastMod = max( lastMod, item.get( 'Last Modified', 0 ) )
 			item = item.itervalues()
 		# None would come in because of weak refs, numbers
 		# would come in because of Last Modified.

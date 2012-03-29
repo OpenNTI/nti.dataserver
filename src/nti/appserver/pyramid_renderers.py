@@ -317,15 +317,20 @@ class REST(object):
 		if response.status_int == 200 and response.last_modified is not None and request.if_modified_since:
 			# Since we know a modification date, respect If-Modified-Since. The spec
 			# says to only do this on a 200 response
+			# This is a pretty poor time to do it, after we've done all this work
 			if response.last_modified <= request.if_modified_since:
-				raise pyramid.httpexceptions.HTTPNotModified()
+				not_mod = pyramid.httpexceptions.HTTPNotModified()
+				not_mod.last_modified = response.last_modified
+				not_mod.cache_control = 'must-revalidate'
+				not_mod.vary = 'Accept'
+				raise not_mod
 
 		response.content_type = find_content_type( request, data )
 		# our responses vary based on the Accept parameter, since
 		# that informs representation
 		response.vary = 'Accept'
 		# We also need these to be revalidated
-		response.cache_control = 'proxy-revalidate'
+		response.cache_control = 'must-revalidate'
 		if response.content_type.startswith( MIME_BASE ):
 			# Only transform this if it was one of our objects
 			if response.content_type.endswith( 'json' ):
