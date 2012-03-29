@@ -81,13 +81,9 @@ class RepozeUserIndexManager(object):
 		mo = re.search('([\?\*])', query)
 		if mo and mo.start(1) == 0:
 			# globbing character return all
-			textfield = catalog.get(field, None)
-			if isinstance(textfield, CatalogTextIndexNG3):
-				docids = textfield.get_docids()
-				return len(docids), docids
-			else:
-				return 0, []
-
+			ids = self.store.get_docids(self.username)
+			return len(ids), ids
+		
 		return catalog.query(Contains(field, query))
 
 	def _do_search(self, field, query, limit=None, use_word_highlight=True, *args, **kwargs):
