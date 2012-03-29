@@ -1,3 +1,4 @@
+import re
 from nti.contentsearch.interfaces import IIndexManager
 
 import logging
@@ -12,6 +13,7 @@ class GetSearch(object):
 		request = self.request
 		indexmanager = request.registry.getUtility( IIndexManager )
 		query = self.request.matchdict['term']
+		query = clean_search_query(query)
 		indexname = self.get_indexname(self.request.environ)
 		return indexmanager.search( query=query, indexname=indexname )
 
@@ -39,8 +41,13 @@ class UserSearch(object):
 		self.request = request
 
 	def __call__( self ):
-		term = self.request.matchdict['term']
-		term = term.lower() if term else u''
+		query = self.request.matchdict['term']
+		query = clean_search_query(query)
 		user = self.request.matchdict['user']
 		indexmanager = self.request.registry.getUtility( IIndexManager )
-		return indexmanager.user_data_search( query=term, username=user )
+		return indexmanager.user_data_search( query=query, username=user )
+	
+def clean_search_query(query):
+	result = re.sub('[*?]', '', query) if query else u''
+	return unicode(result.lower())
+
