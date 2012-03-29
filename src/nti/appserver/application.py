@@ -300,8 +300,6 @@ def createApplication( http_port,
 
 	pyramid_config.set_authorization_policy( pyramid.authorization.ACLAuthorizationPolicy() )
 	pyramid_config.set_authentication_policy( pyramid_auth.create_authentication_policy() )
-	pyramid_config.add_route( name='logout', pattern='/dataserver2/logout' )
-	pyramid_config.add_view( route_name='logout', view='nti.appserver.dataserver_pyramid_views._logout' )
 
 	pyramid_config.add_route( name='logon.ping', pattern='/dataserver2/logon.ping' )
 	pyramid_config.add_route( name='logon.handshake', pattern='/dataserver2/logon.handshake' )
@@ -313,6 +311,10 @@ def createApplication( http_port,
 	pyramid_config.add_route( name='logon.facebook.oauth1', pattern='/dataserver2/logon.facebook1' )
 	pyramid_config.add_route( name='logon.facebook.oauth2', pattern='/dataserver2/logon.facebook2' )
 	pyramid_config.scan( 'nti.appserver.logon' )
+	# Deprecated logout alias
+	pyramid_config.add_route( name='logout', pattern='/dataserver2/logout' )
+	pyramid_config.add_view( route_name='logout', view='nti.appserver.logon.logout' )
+
 
 	pyramid_config.add_route( name='verify_openid', pattern='/dataserver2/openid.html' )
 	# Note that the openid value MUST be POST'd to this view; an unmodified view goes into
