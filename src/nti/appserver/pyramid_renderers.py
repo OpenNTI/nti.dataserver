@@ -324,6 +324,8 @@ class REST(object):
 		# our responses vary based on the Accept parameter, since
 		# that informs representation
 		response.vary = 'Accept'
+		# We also need these to be revalidated
+		response.cache_control = 'proxy-revalidate'
 		if response.content_type.startswith( MIME_BASE ):
 			# Only transform this if it was one of our objects
 			if response.content_type.endswith( 'json' ):
@@ -334,6 +336,8 @@ class REST(object):
 		# for better deletion and editing of shared resources. For that to work,
 		# we need to have this be more semantically meaningful, and happen sooner.
 		# It should also be representation independent (?)
-		response.md5_etag( body, True )
+		# Until we have something here, don't bother computing and sending, it implies
+		# false promises
+		# response.md5_etag( body, True )
 
 		return body
