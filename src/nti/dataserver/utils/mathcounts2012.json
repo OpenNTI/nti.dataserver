@@ -114,7 +114,7 @@
                 "Text": "A bookshelf is to hold 6 literature books, 3 geometry books and 7 algebra books, arranged in random order. What is the probability that the books are arranged so that the first book on the shelf is a math book? Express your answer as a common fraction.",
                 "Solution": "Ten of the 16 books are math books, so the probability that the first book selected is a math book is 10/16 = 5/8.",
                 "Answers": [
-                    "$\\frac{5}{8}"
+                    "$\\frac{5}{8}$"
                 ],
                 "ID": "8",
                 "CCSS": "7.SP.5",
