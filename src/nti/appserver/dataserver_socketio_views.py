@@ -272,12 +272,13 @@ class XHRPollingTransport(BaseTransport):
 		response.content_type = 'text/plain'
 		response.headers['Connection'] = 'close'
 		response.body = response_message.encode( 'utf-8' )
+		return response
 
 
 	def connect(self, session, request_method ):
 		if not session.connection_confirmed:
 			# This is either the first time in,
-			# or we've had an error. If it was an
+			# or we've had an error that we detected. If it was an
 			# error, then this could either be a POST
 			# or a GET. We can handle GETs the same,
 			# POSTs may have data (depending on if the
@@ -285,12 +286,22 @@ class XHRPollingTransport(BaseTransport):
 			# need to be dealt with...
 			session.connection_confirmed = True
 			if request_method == 'POST' and self.request.content_length:
-				self.post( session, response_message="1::" )
+				response = self.post( session, response_message="1::" )
 			else:
 				response = self.request.response
 				response.headers['Connection'] = 'close'
 				response.body =  b"1::"
 
+			return response
+
+		if request_method == 'POST' and not self.request.content_length:
+			# We have a session that WAS confirmed, but the client
+			# thinks it is no longer confirmed...we're probably switching transports
+			# due to a hard crash of an instance. So treat this
+			# like a fresh connection
+			response = self.request.response
+			response.headers['Connection'] = 'close'
+			response.body =  b"1::"
 			return response
 
 		if request_method in ("GET", "POST", "OPTIONS"):
