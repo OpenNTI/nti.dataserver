@@ -30,7 +30,7 @@ import transaction
 from persistent.mapping import PersistentMapping
 
 import contextlib
-from zope.component.hooks import site
+from zope.component.hooks import site, getSite, setSite
 
 import contenttypes
 import datastructures
@@ -104,6 +104,7 @@ def _trivial_db_transaction_cm():
 	lsm = component.getSiteManager()
 	conn = getattr( lsm, '_p_jar', None )
 	if conn:
+		logger.warn( 'Reusing existing component connection %s %s', lsm, conn )
 		yield conn
 		return
 
@@ -119,7 +120,11 @@ def _trivial_db_transaction_cm():
 	conn.sync()
 	sitemanc = conn.root()['nti.dataserver']
 
-	with site( sitemanc ):
+	# with site is buggy in the context manager
+	#with site( sitemanc ):
+	old_site = getSite()
+	setSite( sitemanc )
+	try:
 		assert component.getSiteManager() == sitemanc.getSiteManager()
 		assert component.getUtility( interfaces.IDataserver )
 		try:
@@ -130,6 +135,8 @@ def _trivial_db_transaction_cm():
 			raise
 		finally:
 			conn.close()
+	finally:
+		setSite( old_site )
 
 interface.directlyProvides( _trivial_db_transaction_cm, interfaces.IDataserverTransactionContextManager )
 
