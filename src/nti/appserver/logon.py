@@ -100,6 +100,18 @@ def _forgetting( request, redirect_param_name, no_param_class, redirect_value=No
 
 @view_config(route_name=REL_LOGIN_LOGOUT, request_method='GET')
 def logout(request):
+	# Terminate any sessions they have open
+	if sec.authenticated_userid(request):
+		try:
+			logger.info( "Terminating sessions for %s", sec.authenticated_userid(request) )
+			dataserver = component.getUtility( nti_interfaces.IDataserver )
+			sessions = dataserver.session_manager
+			for session in sessions.get_sessions_by_owner( sec.authenticated_userid(request) ):
+				logger.debug( "Terminating %s on logout", session )
+				sessions.delete_session( session.session_id )
+		except:
+			logger.exception( "Failed to terminate sessions for %s", sec.authenticated_userid(request) )
+
 	return _forgetting( request, 'success', hexc.HTTPNoContent )
 
 @view_config(route_name='logon.ping', request_method='GET', renderer='rest')
