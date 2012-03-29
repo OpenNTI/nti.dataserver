@@ -3,44 +3,10 @@
 import logging
 logger = logging.getLogger( __name__ )
 
-# XXX Import side-effects.
-# Loading this file monkey-patches sockets and ssl to work with gevent.
-# This is needed for the openid handling in logon.py, but doing it here is a bit
-# earlier and has a greater chance of working. This is also after
-# we have loaded ZODB and doesn't seem to interfere with it. See gunicorn.py.
-# NOTE: 1.0 of gevent seems to fix the threading issue that cause problems with ZODB.
-# Try to confirm that
-import gevent
-import gevent.monkey
-if getattr( gevent, 'version_info', (0,) )[0] >= 1:
-	logger.info( "Monkey patching most libraries for gevent" )
-	# omit thread, it's required for multiprocessing futures, used in contentrendering
-	gevent.monkey.patch_all(thread=False)
-	# However, transaction and locals in general must be made gevent compliant
-	import transaction
-	class GeventTransactionManager(transaction.TransactionManager):
-		pass
-	manager = GeventTransactionManager()
-	transaction.manager = manager
-	transaction.get = transaction.__enter__ = manager.get
-	transaction.begin = manager.begin
-	transaction.commit = manager.commit
-	transaction.abort = manager.abort
-	transaction.__exit__ = manager.__exit__
-	transaction.doom = manager.doom
-	transaction.isDoomed = manager.isDoomed
-	transaction.savepoint = manager.savepoint
-	transaction.attempts = manager.attempts
+# Import this first to ensure gevent is monkey patched
+import nti.dataserver as dataserver
 
-	import gevent.local
-	import threading
-	threading.local = gevent.local.local
-	_threading_local = __import__('_threading_local')
-	_threading_local.local = gevent.local.local
-	# FIXME: Must do this for site as well!
-else:
-	logger.info( "Monkey patching minimum libraries for gevent" )
-	gevent.monkey.patch_socket(); gevent.monkey.patch_ssl()
+import gevent.local
 
 import sys
 import os
@@ -54,7 +20,7 @@ dictserver = UserDict.UserDict()
 dictserver.pyramid = nti.dictserver._pyramid
 dictserver.dictionary = nti.dictserver.dictionary
 
-import nti.dataserver as dataserver
+
 #Hmm, these next three MUST be imported. We seem to have a path-dependent import req.
 import nti.dataserver.socketio_server
 #import nti.dataserver.wsgi
@@ -77,7 +43,8 @@ from zope import component
 from zope.configuration import xmlconfig
 from zope.event import notify
 from zope.processlifetime import ProcessStarting
-from zope.component.hooks import setSite, getSite, setHooks
+from zope.component.hooks import setSite, getSite, setHooks, siteinfo
+assert gevent.local.local in type(siteinfo).__bases__
 import transaction
 
 import nti.appserver.workspaces
