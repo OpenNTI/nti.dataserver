@@ -72,23 +72,25 @@ class TestDataStore(ConfiguringTestBase):
 		
 	def test_docmap(self):
 		store = RepozeDataStore()
+		username = u'nt@nt.com'
 		address = u'tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.0'
+		store.add_catalog(username, create_notes_catalog(), 'note')
 		
-		docid = store.add_address(address)
+		docid = store.add_address(username, address)
 		assert_that(docid, is_not(None))
 		
-		xaddress = store.address_for_docid(docid)
+		xaddress = store.address_for_docid(username, docid)
 		assert_that(xaddress, is_(address))
 		
-		xdocid = store.docid_for_address(address)
+		xdocid = store.docid_for_address(username, address)
 		assert_that(xdocid, is_(docid))
 		
-		store.remove_docid(docid)
+		store.remove_docid(username, docid)
 		
-		xdocid = store.docid_for_address(address)
+		xdocid = store.docid_for_address(username, address)
 		assert_that(xdocid, is_(None))
 		
-		xaddress = store.address_for_docid(docid)
+		xaddress = store.address_for_docid(username, docid)
 		assert_that(xaddress, is_(None))
 		
 if __name__ == '__main__':

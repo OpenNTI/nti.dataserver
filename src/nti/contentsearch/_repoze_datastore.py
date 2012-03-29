@@ -18,19 +18,21 @@ class RepozeDataStore(PersistentMapping):
 			self[self.users_key] = OOBTree()
 		
 		if not self.docMap_key in self:
-			self[self.docMap_key] = DocumentMap()
+			self[self.docMap_key] = OOBTree()
 	
 	@property
 	def users(self):
 		return self[self.users_key]
-
+	
 	@property
-	def docMap(self):
+	def docmaps(self):
 		return self[self.docMap_key]
-
+	
 	def add_catalog(self, username, catalog, type_name):
 		if username not in self.users:
-			self.users[username] = PersistentMapping()
+			self.users[username] = OOBTree()
+			self.docmaps[username] = DocumentMap()
+			
 		if type_name not in self.users[username]:
 			self.users[username][type_name] = catalog
 
@@ -40,9 +42,11 @@ class RepozeDataStore(PersistentMapping):
 		return catalog
 
 	def remove_catalog(self, username, type_name):
-		pm = self.users.get(username, None)
-		if pm and type_name in pm:
-			pm.pop(type_name)
+		catalog_map = self.users.get(username, None)
+		if catalog_map:
+			catalog_map.pop(type_name, None)
+			if not catalog_map:
+				self.docmaps.pop(username, None)
 			return True
 		return False
 
@@ -56,18 +60,39 @@ class RepozeDataStore(PersistentMapping):
 		values = list(pm.values())
 		return values
 	
-	def add_address(self, address):
-		docid = self.docMap.add(address)
+	def add_address(self, username, address):
+		docMap = self.docmaps.get(username, None)
+		if docMap:
+			docid = docMap.add(address)
+			return docid
+		else:
+			return None
+	
+	def remove_docid(self, username, docid):
+		docMap = self.docmaps.get(username, None)
+		if docMap:
+			result = docMap.remove_docid(docid)
+			return result
+		else:
+			return False
+	
+	def get_or_create_docid_for_address(self, username, address):
+		docid = self.docid_for_address(username, address) or self.add_address(username, address)
 		return docid
+		
+	def docid_for_address(self, username, address):
+		docMap = self.docmaps.get(username, None)
+		if docMap:
+			docid = docMap.docid_for_address(address)
+			return docid
+		else:
+			return None
 	
-	def remove_docid(self, docid):
-		result = self.docMap.remove_docid(docid)
-		return result
-	
-	def docid_for_address(self, address):
-		docid = self.docMap.docid_for_address(address)
-		return docid
-	
-	def address_for_docid(self, docid):
-		address = self.docMap.address_for_docid(docid)
-		return address
+	def address_for_docid(self, username, docid):
+		docMap = self.docmaps.get(username, None)
+		if docMap:
+			address = docMap.address_for_docid(docid)
+			return address
+		else:
+			return None
+		

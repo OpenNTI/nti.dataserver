@@ -60,7 +60,7 @@ class RepozeUserIndexManager(object):
 		lm =  0
 		items = []
 		for docId in docIds:
-			ntiid = self.store.address_for_docid(docId)
+			ntiid = self.store.address_for_docid(self.username, docId)
 			try:
 				svr_obj = find_object_with_ntiid(ntiid, dataserver=self.dataserver)
 				if svr_obj:
@@ -184,7 +184,7 @@ class RepozeUserIndexManager(object):
 		with _context_manager():
 			catalog = self._get_create_catalog(data, type_name)
 			if catalog and ntiid:
-				docid = self.store.docid_for_address(ntiid) or self.store.add_address(ntiid)
+				docid = self.store.get_or_create_docid_for_address(self.username, ntiid)
 				catalog.index_doc(docid, data)
 		return docid
 
@@ -193,7 +193,7 @@ class RepozeUserIndexManager(object):
 		ntiid = get_ntiid(data)
 		if not ntiid: return None
 		with _context_manager():
-			docid = self.store.docid_for_address(ntiid)
+			docid = self.store.docid_for_address(self.username, ntiid)
 			if docid:
 				catalog = self._get_create_catalog(data, type_name)
 				catalog.reindex_doc(docid, data)
@@ -206,11 +206,11 @@ class RepozeUserIndexManager(object):
 		ntiid = get_ntiid(data)
 		if not ntiid: return None
 		with _context_manager():
-			docid = self.store.docid_for_address(ntiid)
+			docid = self.store.docid_for_address(self.username, ntiid)
 			if docid:
 				catalog = self._get_create_catalog(data, type_name)
 				catalog.unindex_doc(docid)
-				self.store.remove_docid(docid)
+				self.store.remove_docid(self.username, docid)
 		return docid
 
 	def remove_index(self, type_name):
@@ -220,7 +220,7 @@ class RepozeUserIndexManager(object):
 
 	def docid_for_address(self, address):
 		with _context_manager():
-			docid = self.store.docid_for_address(address)
+			docid = self.store.docid_for_address(self.username, address)
 			return docid
 
 # -----------------------------
