@@ -85,6 +85,12 @@ class TestDataStore(ConfiguringTestBase):
 		xdocid = store.docid_for_address(username, address)
 		assert_that(xdocid, is_(docid))
 		
+		counter = 0
+		docids = store.get_docids(username)
+		for _ in docids:
+			counter = counter + 1 
+		assert_that(counter, is_(1))
+		
 		store.remove_docid(username, docid)
 		
 		xdocid = store.docid_for_address(username, address)
@@ -92,6 +98,12 @@ class TestDataStore(ConfiguringTestBase):
 		
 		xaddress = store.address_for_docid(username, docid)
 		assert_that(xaddress, is_(None))
+		
+		counter = 0
+		docids = store.get_docids(username)
+		for _ in docids:
+			counter = counter + 1 
+		assert_that(counter, is_(0))
 		
 if __name__ == '__main__':
 	unittest.main()
