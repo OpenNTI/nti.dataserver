@@ -6,6 +6,7 @@ from collections import Iterable
 from collections import OrderedDict
 
 from zope import component
+from persistent.interfaces import IPersistent
 
 from whoosh import analysis
 from whoosh import highlight
@@ -21,7 +22,6 @@ from nti.dataserver.interfaces import ILibrary
 from nti.dataserver.contenttypes import Highlight
 from nti.dataserver.ntiids import is_valid_ntiid_string
 from nti.dataserver.datastructures import to_external_ntiid_oid
-from nti.dataserver.contenttypes import ThreadableExternalizableMixin
 
 # -----------------------------------
 
@@ -169,16 +169,17 @@ def get_collection(containerId, default='prealgebra'):
 # -----------------------------------
 
 def get_external_oid(obj):
-	if isinstance(obj, ThreadableExternalizableMixin):
+	if IPersistent.providedBy(obj):
 		result = to_external_ntiid_oid( obj )
 	else:
 		result = get_attr(obj, oid_fields)
 	return result
 		
 def get_ntiid(obj, default=None):
-	result = obj if isinstance(obj, basestring) else get_attr(obj, ntiid_fields)
-	if isinstance(obj, ThreadableExternalizableMixin):
+	if IPersistent.providedBy(obj):
 		result = to_external_ntiid_oid( obj )
+	else:
+		result = obj if isinstance(obj, basestring) else get_attr(obj, ntiid_fields)
 	return result
 
 def get_creator(obj, default=None):
