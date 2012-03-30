@@ -56,6 +56,12 @@ def main():
 		"nti_render_conf.ini" )
 
 	document.config.read( (conf_name,) )
+	zope_conf_name = os.path.join(
+		os.path.dirname( os.path.abspath( os.path.expanduser( sourceFile ) ) ),
+		"configure.zcml" )
+	if os.path.exists( zope_conf_name ):
+		xmlconfig.file( zope_conf_name, package=nti.contentrendering )
+
 	# Instantiate the TeX processor
 	tex = TeX(document, file=sourceFile)
 
@@ -80,8 +86,7 @@ def main():
 	os.environ['TEXINPUTS'] = '%s%s%s%s' % (os.getcwd(), os.pathsep,
 										 os.environ.get('TEXINPUTS',''), os.pathsep)
 	# Likewise for the renderers
-	# TODO: Make this respect the job name?
-	os.environ['XHTMLTEMPLATES'] = resource_filename( __name__, 'zpts' )
+	os.environ['XHTMLTEMPLATES'] = os.path.join( os.path.abspath( os.getcwd() ), 'Templates' ) + os.pathsep + resource_filename( __name__, 'zpts' )
 
 	# Parse the document
 	print "Parsing %s" % sourceFile
@@ -284,4 +289,3 @@ def generateImages(document):
 	db = ResourceDB(document, overridesLocation=overrides)
 	db.generateResourceSets()
 	return db
-
