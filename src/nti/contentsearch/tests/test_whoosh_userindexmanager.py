@@ -49,8 +49,7 @@ class TestWhooshUserIndexManager(ConfiguringTestBase):
 	def _index_notes(self, usr=None, conn=None, do_assert=True):
 		notes, usr = self._add_notes(usr=usr, conn=conn)
 		for note in notes:		
-			teo = note.toExternalObject()
-			result = self.uim.index_content(teo)
+			result = self.uim.index_content(note)
 			if do_assert:
 				assert_that(result, is_(True))
 		return notes, usr
@@ -97,8 +96,7 @@ class TestWhooshUserIndexManager(ConfiguringTestBase):
 		notes, _ = self._add_user_index_notes()
 		note = notes[5]
 		note.body = [u'Blow It Away']
-		teo = note.toExternalObject()
-		self.uim.update_content(teo)
+		self.uim.update_content(note)
 		
 		hits = self.uim.search("shield", limit=None)
 		assert_that(hits, has_entry(HIT_COUNT, 0))
@@ -112,8 +110,7 @@ class TestWhooshUserIndexManager(ConfiguringTestBase):
 	def test_delete_note(self):
 		notes, _  = self._add_user_index_notes()
 		note = notes[5]
-		teo = note.toExternalObject()
-		self.uim.delete_content(teo)
+		self.uim.delete_content(note)
 		
 		hits = self.uim.search("shield", limit=None)
 		assert_that(hits, has_entry(HIT_COUNT, 0))

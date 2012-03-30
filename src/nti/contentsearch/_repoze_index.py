@@ -13,13 +13,14 @@ from nti.contentsearch.common import get_content
 from nti.contentsearch.common import get_creator
 from nti.contentsearch.common import get_type_name
 from nti.contentsearch.common import get_collection
+from nti.contentsearch.common import get_external_oid
+from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch.common import get_multipart_content
 from nti.contentsearch.common import word_content_highlight
 from nti.contentsearch.common import ngram_content_highlight
 from nti.contentsearch.textindexng3 import CatalogTextIndexNG3
 
-from nti.contentsearch.common import (	oid_fields, ntiid_fields, creator_fields, container_id_fields,
-										last_modified_fields, keyword_fields)
+from nti.contentsearch.common import (	oid_fields, container_id_fields, last_modified_fields, keyword_fields)
 
 from nti.contentsearch.common import (	OID, NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
 										COLLECTION_ID, SNIPPET, HIT, ID, BODY, TARGET_OID, MESSAGE_INFO)
@@ -166,8 +167,7 @@ def create_messageinfo_catalog():
 	return catalog
 
 def create_catalog(type_name='Notes'):
-	type_name = type_name[0:-1] if type_name.endswith('s') else type_name
-	type_name = type_name.lower()
+	type_name = normalize_type_name(type_name)
 	if type_name == 'note':
 		return create_notes_catalog()
 	elif type_name == 'highlight':
@@ -197,11 +197,11 @@ def _highlight_content(query=None, text=None, use_word_highlight=True, *args, **
 def _get_index_hit_from_object(obj):
 	result = {}
 	result[CLASS] = HIT
-	result[TARGET_OID] = get_attr(obj, oid_fields)
-	result[NTIID] = get_attr(obj, ntiid_fields) or result[TARGET_OID]
+	result[CREATOR] = get_creator(obj)
+	result[TARGET_OID] = get_external_oid(obj)
 	result[TYPE] = get_type_name(obj).capitalize()
 	result[LAST_MODIFIED] = get_last_modified(obj)
-	result[CREATOR] =  get_attr(obj, creator_fields)
+	result[NTIID] = get_ntiid(obj) or result[TARGET_OID]
 	result[CONTAINER_ID] = get_attr(obj, container_id_fields)
 	result[COLLECTION_ID] = get_collection(result[CONTAINER_ID])
 	return result

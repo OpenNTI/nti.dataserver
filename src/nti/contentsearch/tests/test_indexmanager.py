@@ -104,7 +104,12 @@ class _BaseIndexManagerTest(object):
 	def _add_notes_to_ds(self):
 		notes = []
 		conn = mock_dataserver.current_transaction
+		
 		usr = User( 'nt@nti.com', 'temp' )
+		conn.add(usr)
+		ds = mock_dataserver.current_mock_ds
+		ds.root['users']['nt@nti.com'] = usr
+		
 		for x in zanpakuto_commands:
 			note = Note()
 			note.body = [unicode(x)]
@@ -116,8 +121,7 @@ class _BaseIndexManagerTest(object):
 
 	def _add_notes_to_index(self, im, notes):
 		for note in notes:
-			teo = note.toExternalObject()
-			im.index_user_content(data=teo, username='nt@nti.com')
+			im.index_user_content(data=note, username='nt@nti.com')
 		return notes
 
 	def _add_notes_and_index(self):
@@ -155,14 +159,12 @@ class _BaseIndexManagerTest(object):
 
 		note = notes[0]
 		note.body = [u'Shoot To Death']
-		teo = note.toExternalObject()
-		self.im.update_user_content(data=teo, username='nt@nti.com')
+		self.im.update_user_content(data=note, username='nt@nti.com')
 		hits = self.im.user_data_search(query='death', username='nt@nti.com', search_on=('Notes',))
 		assert_that(hits, has_entry(HIT_COUNT, 2))
 
 		note = notes[1]
-		teo = note.toExternalObject()
-		self.im.delete_user_content(data=teo, username='nt@nti.com')
+		self.im.delete_user_content(data=note, username='nt@nti.com')
 		hits = self.im.user_data_search(query='deviate', username='nt@nti.com', search_on=('Notes',))
 		assert_that(hits, has_entry(HIT_COUNT, 0))
 
@@ -185,7 +187,6 @@ class _TestIndexManagerWithRepoze(_BaseIndexManagerTest, ConfiguringTestBase):
 
 	def tearDown(self):
 		ConfiguringTestBase.tearDown(self)
-		self.repoze.close()
 		shutil.rmtree(self.db_dir, True)
 
 	def create_index_mananger(self):
