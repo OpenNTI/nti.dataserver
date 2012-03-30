@@ -48,6 +48,7 @@ def run_phantom_on_page( htmlFile, scriptName, args=(), key=_none_key, expect_no
 	# entire process. So we attempt to force disable plugin loading: However, this
 	# is not entirely reliable; there seems to be a race condition. We try instead
 	# to parse just the last line
+	# NOTE: This problem is fixed with 1.5, which seems to be backwards compatible entirely
 
 	process = "phantomjs --load-plugins=no %s %s %s 2>/dev/null" % (scriptName, htmlFile, " ".join([str(x) for x in args]))
 	logger.debug( "Executing %s", process )
