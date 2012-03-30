@@ -36,7 +36,7 @@ class IndexManager(object):
 			cls.indexmanager = super(IndexManager, cls).__new__(cls, *args, **kwargs)
 		return cls.indexmanager
 	
-	def __init__(self, bookidx_manager_factory, useridx_manager_factory, max_users=100, dataserver=None):
+	def __init__(self, bookidx_manager_factory, useridx_manager_factory, max_users=500, dataserver=None):
 		self.books = {}
 		self.users = LFUMap(maxsize=max_users, on_removal_callback=self.on_item_removed)
 		self.bookidx_manager_factory = bookidx_manager_factory
@@ -101,7 +101,7 @@ class IndexManager(object):
 
 	def _get_user_index_manager(self, username, *args, **kwargs):
 		uim = self.users.get(username, None)
-		if not uim and kwargs.get('create', True):
+		if not uim and self.users_exists(username):
 			uim = self.useridx_manager_factory(username=username, **kwargs)
 			if uim:
 				self.users[username] = uim
@@ -117,7 +117,6 @@ class IndexManager(object):
 
 	def _get_search_uims(self, username, *args, **kwargs):
 		result = []
-		kwargs['create'] = False
 		for name in [username] + self._get_user_communities(username):
 			uim = self._get_user_index_manager(name, *args, **kwargs)
 			if uim: result.append(uim)

@@ -28,9 +28,6 @@ def handle_index_event(indexmanager, username, msg):
 	if indexmanager and username and msg:
 		obj = getattr(msg, "object", None)
 		if obj:
-			data = obj
-			if callable( getattr( obj, 'toExternalObject', None ) ):
-				data = obj.toExternalObject()
-			return _process_event(indexmanager, username, msg.type, obj.__class__.__name__, data)
+			return _process_event(indexmanager, username, msg.type, obj.__class__.__name__, obj)
 
 	return False

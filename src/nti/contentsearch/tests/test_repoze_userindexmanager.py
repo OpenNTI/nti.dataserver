@@ -55,8 +55,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		notes, usr = self._add_notes(usr=usr, conn=conn)
 		rim = RepozeUserIndexManager (usr.username)
 		for note in notes:
-			teo = note.toExternalObject()
-			docid = rim.index_content(teo)
+			docid = rim.index_content(note)
 			if do_assert: assert_that(docid, is_not(None))
 			docids.append(docids)
 		return notes, docids, rim
@@ -106,8 +105,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		_, rim, _, notes = self._add_user_index_notes()
 		note = notes[5]
 		note.body = [u'Blow It Away']
-		teo = note.toExternalObject()
-		rim.update_content(teo)
+		rim.update_content(note)
 
 		hits = rim.search("shield", limit=None)
 		assert_that(hits, has_entry(HIT_COUNT, 0))
@@ -121,8 +119,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 	def test_delete_note(self):
 		_, rim, _, notes = self._add_user_index_notes()
 		note = notes[5]
-		teo = note.toExternalObject()
-		rim.delete_content(teo)
+		rim.delete_content(note)
 
 		hits = rim.search("shield", limit=None)
 		assert_that(hits, has_entry(HIT_COUNT, 0))
@@ -164,7 +161,6 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 
 			note = self._create_note('ichigo', users[0].username)
 			note = users[0].addContainedObject( note )
-			teo = note.toExternalObject()
 
 		rims = []
 		for x in range(2):
@@ -172,7 +168,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 				username = 'nt%s@nti.com' % x
 				rim = RepozeUserIndexManager(username)
 				rims.append(rim)
-				rim.index_content(teo)
+				rim.index_content(note)
 
 		for x in xrange(2):
 			with mock_dataserver.mock_db_trans( ds ):

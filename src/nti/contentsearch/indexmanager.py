@@ -12,16 +12,18 @@ logger = logging.getLogger( __name__ )
 
 # -----------------------------
 
-def create_index_manager_with_whoosh(index_storage=None, indexdir=None, use_md5=True, dataserver=None):
+def create_index_manager_with_whoosh(index_storage=None, indexdir=None, use_md5=True, dataserver=None, *args, **kwargs):
 	book_idx_manager = wbm_factory()
 	index_storage = index_storage or MultiDirectoryStorage(indexdir)
 	user_idx_manager = wuim_factory(index_storage, use_md5=use_md5)
-	return IndexManager(book_idx_manager, user_idx_manager, dataserver=dataserver)
+	max_users = kwargs.get('max_users', 100)
+	return IndexManager(book_idx_manager, user_idx_manager, dataserver=dataserver, max_users=max_users)
 
 def create_index_manager_with_repoze(dataserver=None, *args, **kwargs):
 	book_idx_manager = wbm_factory()
 	user_idx_manager = ruim_factory()
-	return IndexManager(book_idx_manager, user_idx_manager, dataserver=dataserver)
+	max_users = kwargs.get('max_users', 1000)
+	return IndexManager(book_idx_manager, user_idx_manager, max_users=max_users, dataserver=dataserver)
 
 # -----------------------------
 
