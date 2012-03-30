@@ -17,6 +17,7 @@ from nti.contentsearch.common import epoch_time
 from nti.contentsearch.common import get_creator
 from nti.contentsearch.common import get_content
 from nti.contentsearch.common import get_collection
+from nti.contentsearch.common import get_external_oid
 from nti.contentsearch.common import empty_search_result
 from nti.contentsearch.common import empty_suggest_result
 from nti.contentsearch.common import word_content_highlight
@@ -30,7 +31,7 @@ from nti.contentsearch.common import (	color_, quick_, channel_, content_, keywo
 										id_, recipients_, sharedWith_, oid_ , ntiid_, title_, last_modified_,
 										creator_, startHighlightedFullText_, containerId_, collectionId_)
 	
-from nti.contentsearch.common import (	oid_fields, container_id_fields, last_modified_fields)
+from nti.contentsearch.common import (	container_id_fields, last_modified_fields)
 		
 import logging
 logger = logging.getLogger( __name__ )
@@ -282,15 +283,12 @@ class UserIndexableContent(_SearchableContent):
 		return a dictonary with the info to be stored in the index
 		"""
 		result = {}
-		if isinstance(data, basestring):
-			result[oid_] = data
-		else:
-			result[creator_] = echo(get_creator(data))
-			result[oid_] = echo(get_attr(data, oid_fields))
-			result[ntiid_] = echo(get_ntiid(data)) or result[oid_]
-			result[containerId_] = echo(get_attr(data, container_id_fields))
-			result[collectionId_] = echo(get_collection(result[containerId_]))
-			result[last_modified_] = get_datetime(get_attr(data, last_modified_fields)) or get_datetime()
+		result[creator_] = echo(get_creator(data))
+		result[oid_] = echo(get_external_oid(data))
+		result[ntiid_] = echo(get_ntiid(data)) or result[oid_]
+		result[containerId_] = echo(get_attr(data, container_id_fields))
+		result[collectionId_] = echo(get_collection(result[containerId_]))
+		result[last_modified_] = get_datetime(get_attr(data, last_modified_fields))
 		return result
 
 	def get_data_from_search_hit(self, hit, d):
@@ -333,7 +331,7 @@ class UserIndexableContent(_SearchableContent):
 		
 	def delete_content(self, writer, data, auto_commit=True, **commit_args):
 		d = self.get_index_data(data)
-		if d.has_key(oid_) and d.has_key(containerId_):
+		if d.has_key(oid_):
 			try:
 				writer.delete_by_term(oid_, unicode(d[oid_]))
 				if auto_commit:
