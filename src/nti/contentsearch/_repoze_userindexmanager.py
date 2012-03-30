@@ -9,6 +9,7 @@ from repoze.catalog.query import Contains
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.contentsearch import interfaces
+from nti.contentsearch.common import messageinfo
 from nti.contentsearch.common import get_type_name
 from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch.common import empty_search_result
@@ -55,11 +56,21 @@ class RepozeUserIndexManager(object):
 			search_on = [normalize_type_name(x) for x in search_on]
 		return search_on
 
-	def _get_hits_from_docids(self, docids, limit=None, query=None, use_word_highlight=True, *args, **kwargs):
-		lsm = component.getSiteManager()
-		connection = getattr( lsm, '_p_jar', None )
+	def _get_hits_from_docids(self, *args, **kwargs):
+		
+		docids = kwargs.pop('docids')
+		query =  kwargs.pop('query', u'')
+		limit = kwargs.pop('limit', None)
+		type_name = kwargs.pop('type_name')
+		use_word_highlight = kwargs.pop('use_word_highlight', True)
+		
+		if type_name == messageinfo:
+			source = component.getUtility(nti_interfaces.ISessionServiceStorage )
+		else:
+			source = component.getSiteManager()
+		connection = getattr( source, '_p_jar', None )
 		if not connection:
-			logger.warn("SiteManager w/o _p_jar can't do search") 
+			logger.warn("Could not find a proper connection (object w/o _p_jar).") 
 			return [], 0
 		
 		lm =  0
@@ -103,7 +114,8 @@ class RepozeUserIndexManager(object):
 				catalog = self.datastore.get_catalog(self.username, type_name)
 				if catalog:
 					_, docids = self._do_catalog_query(catalog, field, query)
-					hits, hits_lm = self._get_hits_from_docids(	docids,
+					hits, hits_lm = self._get_hits_from_docids(	type_name=type_name,
+																docids=docids,
 																limit=limit,
 																query=query,
 																use_word_highlight=use_word_highlight,
