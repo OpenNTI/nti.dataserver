@@ -80,7 +80,8 @@ last_modified_fields =  [LAST_MODIFIED, 'lastModified', 'LastModified', '_lastMo
 
 nti_mimetype_prefix = 'application/vnd.nextthought.'
 
-indexable_type_names = ('note', 'highlight', 'messageinfo')
+messageinfo = 'messageinfo'
+indexable_type_names = ('note', 'highlight', messageinfo)
 
 # -----------------------------------
 
