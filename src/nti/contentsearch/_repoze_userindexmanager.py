@@ -7,14 +7,13 @@ from zope import interface
 from repoze.catalog.query import Contains
 
 from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.datastructures import toExternalOID
 
 from nti.contentsearch import interfaces
-from nti.contentsearch.common import messageinfo
 from nti.contentsearch.common import get_type_name
 from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch.common import empty_search_result
 from nti.contentsearch.common import empty_suggest_result
-from nti.contentsearch._repoze_index import get_oid
 from nti.contentsearch._repoze_index import get_index_hit
 from nti.contentsearch._repoze_index import create_catalog
 from nti.contentsearch.textindexng3 import CatalogTextIndexNG3
@@ -61,24 +60,14 @@ class RepozeUserIndexManager(object):
 		docids = kwargs.pop('docids')
 		query =  kwargs.pop('query', u'')
 		limit = kwargs.pop('limit', None)
-		type_name = kwargs.pop('type_name')
 		use_word_highlight = kwargs.pop('use_word_highlight', True)
-		
-		if type_name == messageinfo:
-			source = component.getUtility(nti_interfaces.ISessionServiceStorage )
-		else:
-			source = component.getSiteManager()
-		connection = getattr( source, '_p_jar', None )
-		if not connection:
-			logger.warn("Could not find a proper connection (object w/o _p_jar).") 
-			return [], 0
 		
 		lm =  0
 		items = []
 		for docid in docids:
-			_oid = self.store.address_for_docid(self.username, docid)
+			oid_string = self.store.address_for_docid(self.username, docid)
 			try:
-				svr_obj = connection[_oid]
+				svr_obj = self.dataserver.get_by_oid( oid_string, ignore_creator=True )
 				if svr_obj:
 					hit = get_index_hit(svr_obj, query=query, use_word_highlight=use_word_highlight, **kwargs)
 					if hit:
@@ -86,8 +75,10 @@ class RepozeUserIndexManager(object):
 						lm = max(lm, hit[LAST_MODIFIED])
 						if limit and len(items) >= limit:
 							break
+				else:
+					logger.warn("Could not find object '%s' with docid '%s' for user '%s'" % (oid_string, docid, self.username))
 			except:
-				logger.exception("Cannot find object with docid '%s' for user '%s'", docid, self.username)
+				logger.exception("Cannot find object with docid '%s' for user '%s'" % (docid, self.username))
 		return items, lm
 
 
@@ -114,8 +105,7 @@ class RepozeUserIndexManager(object):
 				catalog = self.datastore.get_catalog(self.username, type_name)
 				if catalog:
 					_, docids = self._do_catalog_query(catalog, field, query)
-					hits, hits_lm = self._get_hits_from_docids(	type_name=type_name,
-																docids=docids,
+					hits, hits_lm = self._get_hits_from_docids(	docids=docids,
 																limit=limit,
 																query=query,
 																use_word_highlight=use_word_highlight,
@@ -187,10 +177,13 @@ class RepozeUserIndexManager(object):
 				self.store.add_catalog(self.username, catalog, type_name)
 		return catalog
 
+	def _get_id(self, data):
+		return toExternalOID(data)
+	
 	def index_content(self, data, type_name=None, **kwargs):
 		if not data: return None
 		docid = None
-		_oid = get_oid(data)
+		_oid = self._get_id(data)
 		with _context_manager():
 			catalog = self._get_create_catalog(data, type_name)
 			if catalog and _oid:
@@ -200,7 +193,7 @@ class RepozeUserIndexManager(object):
 
 	def update_content(self, data, type_name=None, *args, **kwargs):
 		if not data: return None
-		_oid = get_oid(data)
+		_oid = self._get_id(data)
 		if not _oid: return None
 		with _context_manager():
 			docid = self.store.docid_for_address(self.username, _oid)
@@ -213,7 +206,7 @@ class RepozeUserIndexManager(object):
 
 	def delete_content(self, data, type_name=None, *args, **kwargs):
 		if not data: return None
-		_oid = get_oid(data)
+		_oid = self._get_id(data)
 		if not _oid: return None
 		with _context_manager():
 			docid = self.store.docid_for_address(self.username, _oid)
