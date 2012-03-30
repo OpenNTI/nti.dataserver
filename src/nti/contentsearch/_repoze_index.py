@@ -5,6 +5,8 @@ from repoze.catalog.catalog import Catalog
 from repoze.catalog.indexes.field import CatalogFieldIndex
 from repoze.catalog.indexes.keyword import CatalogKeywordIndex
 
+from nti.dataserver.users import Entity
+
 from nti.contentsearch.common import ngrams
 from nti.contentsearch.common import get_attr
 from nti.contentsearch.common import epoch_time
@@ -62,7 +64,10 @@ def get_collectionId(obj, default=None):
 	return get_collection(containerId)
 
 def get_creator(obj, default=None):
-	return obj if isinstance(obj, basestring) else get_attr(obj, creator_fields)
+	result = obj if isinstance(obj, basestring) else get_attr(obj, creator_fields)
+	if isinstance(result, Entity):
+		result = result.username
+	return result
 
 def get_ntiid(obj, default=None):
 	return obj if isinstance(obj, basestring) else get_attr(obj, ntiid_fields)

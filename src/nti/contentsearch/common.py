@@ -54,6 +54,7 @@ quick_			= u'quick'
 title_			= u'title'
 ntiid_			= u'ntiid'
 color_			= u'color'
+p_oid_			= u'_p_oid'
 ngrams_			= u'ngrams'
 channel_		= u'channel'
 creator_		= u'creator'
@@ -67,9 +68,9 @@ collectionId_	= u'collectionId'
 last_modified_	= u'last_modified'
 startHighlightedFullText_ = 'startHighlightedFullText'
 
-oid_fields = [OID, oid_, id_]
 ntiid_fields = [NTIID, ntiid_]
 creator_fields = [CREATOR, creator_]
+oid_fields = [OID, p_oid_, oid_, id_]
 keyword_fields = [keywords_, tags_, AUTO_TAGS]
 container_id_fields = [CONTAINER_ID, 'ContainerID', containerId_, 'container']
 last_modified_fields =  [LAST_MODIFIED, 'lastModified', 'LastModified', last_modified_]
@@ -134,11 +135,11 @@ def get_keywords(records):
 
 # -----------------------------------
 
-def normalize_type_name(x):
-	result = u''
+def normalize_type_name(x, encode=True):
+	result = ''
 	if x:
 		result =x[0:-1].lower() if x.endswith('s') else x.lower()
-	return unicode(result)
+	return unicode(result) if encode else result
 	
 def get_type_name(obj):
 	if not isinstance(obj, dict):
@@ -151,7 +152,7 @@ def get_type_name(obj):
 			result = result[len(nti_mimetype_prefix):]
 	else:
 		result = None
-	return unicode(result.lower()) if result else u''
+	return normalize_type_name(result) if result else u''
 
 def get_collection(containerId, default='prealgebra'):
 	result = default
@@ -196,7 +197,7 @@ def get_multipart_content(source):
 		return get_content(' '.join(items))
 	elif not source:
 		clazz = source.__class__.__name__
-		name = "get_%s_content" % clazz.lower()
+		name = "get_%s_content" % normalize_type_name(clazz, False)
 		if name in gbls:
 			return gbls[name](source)
 	return u''
