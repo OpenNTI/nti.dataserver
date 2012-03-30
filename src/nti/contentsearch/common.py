@@ -76,7 +76,7 @@ creator_fields = [CREATOR, creator_]
 oid_fields = [OID, p_oid_, oid_, id_]
 keyword_fields = [keywords_, tags_, AUTO_TAGS]
 container_id_fields = [CONTAINER_ID, 'ContainerID', containerId_, 'container']
-last_modified_fields =  [LAST_MODIFIED, 'lastModified', 'LastModified', last_modified_]
+last_modified_fields =  [LAST_MODIFIED, 'lastModified', 'LastModified', '_lastModified', last_modified_]
 
 nti_mimetype_prefix = 'application/vnd.nextthought.'
 
@@ -168,9 +168,16 @@ def get_collection(containerId, default='prealgebra'):
 
 # -----------------------------------
 
+def get_external_oid(obj):
+	if isinstance(obj, ThreadableExternalizableMixin):
+		result = to_external_ntiid_oid( obj )
+	else:
+		result = get_attr(obj, oid_fields)
+	return result
+		
 def get_ntiid(obj, default=None):
 	result = obj if isinstance(obj, basestring) else get_attr(obj, ntiid_fields)
-	if result is None and isinstance(obj, ThreadableExternalizableMixin):
+	if isinstance(obj, ThreadableExternalizableMixin):
 		result = to_external_ntiid_oid( obj )
 	return result
 
