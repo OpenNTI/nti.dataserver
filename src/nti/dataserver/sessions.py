@@ -14,6 +14,7 @@ import zc.queue
 from zope import interface
 from zope import component
 from zope.event import notify
+import transaction
 
 import anyjson as json
 
@@ -258,8 +259,15 @@ class SessionService(object):
 				gevent.sleep( 60 )	# Time? We can detect a dead session no faster than we decide it's dead,
 									# which is SESSION_HEARTBEAT_TIMEOUT
 				logger.debug( "Checking status of session %s", session_id )
-				with component.getUtility(nti_interfaces.IDataserverTransactionContextManager)():
-					sess = self.get_session(session_id) # performs validation, notification
+				try:
+					with component.getUtility(nti_interfaces.IDataserverTransactionContextManager)():
+						sess = self.get_session(session_id) # performs validation, notification
+				except transaction.interfaces.TransientError:
+					# Try again later
+					logger.debug( "Trying session poll later", exc_info=True )
+					gevent.spawn( watchdog_session )
+					return
+
 				if sess:
 					# still alive, go again
 					gevent.spawn( watchdog_session )

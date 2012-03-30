@@ -408,19 +408,36 @@ class WebsocketTransport(BaseTransport):
 		# If these jobs die with an error, then they may leak the
 		# TCP socket up in the handler? (That may have been send_into_ws not exiting.)
 
+		def _do_send(message):
+			session = session_service.get_session( session_id )
+			if session: session.get_client_msgs() # prevent buildup
+			if message is None:
+				if session:
+					try:
+						session.kill()
+					except Exception: pass
+				return False
+			return True
+		# TODO: We need to capture this retry pattern somewhere.
+		# The transaction.Attempts class is somewhat broken in 1.2.0
+		# (see pyramid_tm 0.3) so we cannot use it. pyramid_tm has a replacement,
+		# but it's private
 		@_catch_all
 		def send_into_ws():
-			while True:
+			listen = True
+			while listen:
 				message = session_proxy.get_client_msg()
-				with context_manager_callable():
-					session = session_service.get_session( session_id )
-					if session: session.get_client_msgs() # prevent buildup
-					if message is None:
-						if session:
-							try:
-								session.kill()
-							except Exception: pass
+				for _ in range(2):
+					try:
+						with context_manager_callable():
+							cont = _do_send( message )
+							if not cont:
+								listen = False
+								break
 						break
+					except transaction.interfaces.TransientError:
+						logger.exception( "Retrying send_into_ws on transient error" )
+
 				encoded = None
 				try:
 					encoded = self.encode( message )
