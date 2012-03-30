@@ -104,7 +104,7 @@ class TextIndexNG3(object):
 		query = unicode(query or '')
 		if 'ranking' not in kwargs:
 			kwargs['ranking'] = True
-			kwargs.get('ranking_maxhits', sys.maxint)
+			kwargs['ranking_maxhits'] = sys.maxint
 			
 		results = {}
 		rs = self.index.search(query, **kwargs)
