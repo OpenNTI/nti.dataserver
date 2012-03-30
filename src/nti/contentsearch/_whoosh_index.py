@@ -10,6 +10,8 @@ from whoosh.qparser import QueryParser
 from whoosh.qparser import GtLtPlugin
 from whoosh.qparser.dateparse import DateParserPlugin
 
+from nti.dataserver.users import Entity
+
 from nti.contentsearch.common import echo
 from nti.contentsearch.common import get_attr
 from nti.contentsearch.common import epoch_time
@@ -41,6 +43,12 @@ def get_datetime(x=None):
 	if x:
 		f = float(x) if isinstance(x, basestring) else x
 	return datetime.fromtimestamp(f)
+
+def get_creator(obj):
+	result = obj if isinstance(obj, basestring) else get_attr(obj, creator_fields)
+	if isinstance(result, Entity):
+		result = result.username
+	return result
 
 def get_keywords(records):
 	result = ''
@@ -284,11 +292,11 @@ class UserIndexableContent(_SearchableContent):
 		if isinstance(data, basestring):
 			result[oid_] = data
 		else:
+			result[creator_] = echo(get_creator(data))
 			result[oid_] = echo(get_attr(data, oid_fields))
-			result[ntiid_] = echo(get_attr(data, ntiid_fields)) or result[oid_]
-			result[creator_] = echo(get_attr(data, creator_fields))
 			result[containerId_] = echo(get_attr(data, container_id_fields))
 			result[collectionId_] = echo(get_collection(result[containerId_]))
+			result[ntiid_] = echo(get_attr(data, ntiid_fields)) or result[oid_]
 			result[last_modified_] = get_datetime(get_attr(data, last_modified_fields))
 		return result
 

@@ -14,7 +14,7 @@ from nti.contentsearch.common import get_type_name
 from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch.common import empty_search_result
 from nti.contentsearch.common import empty_suggest_result
-from nti.contentsearch._repoze_index import get_ntiid
+from nti.contentsearch._repoze_index import get_ntiid, get_oid
 from nti.contentsearch._repoze_index import get_index_hit
 from nti.contentsearch._repoze_index import create_catalog
 from nti.contentsearch.textindexng3 import CatalogTextIndexNG3
@@ -176,7 +176,7 @@ class RepozeUserIndexManager(object):
 	def index_content(self, data, type_name=None, **kwargs):
 		if not data: return None
 		docid = None
-		ntiid = get_ntiid(data)
+		ntiid = get_ntiid(data) or get_oid(data)
 		with _context_manager():
 			catalog = self._get_create_catalog(data, type_name)
 			if catalog and ntiid:
