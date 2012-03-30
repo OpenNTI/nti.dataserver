@@ -13,12 +13,15 @@ from whoosh import highlight
 from nltk import clean_html
 from nltk.tokenize import RegexpTokenizer
 
-from nti.dataserver.interfaces import ILibrary
-from nti.dataserver.ntiids import is_valid_ntiid_string
+from nti.dataserver.users import Entity
 from nti.dataserver.chat import MessageInfo
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.contenttypes import Canvas
+from nti.dataserver.interfaces import ILibrary
 from nti.dataserver.contenttypes import Highlight
+from nti.dataserver.ntiids import is_valid_ntiid_string
+from nti.dataserver.datastructures import to_external_ntiid_oid
+from nti.dataserver.contenttypes import ThreadableExternalizableMixin
 
 # -----------------------------------
 
@@ -162,6 +165,20 @@ def get_collection(containerId, default='prealgebra'):
 			paths = _library.pathToNTIID(containerId)
 			result = paths[0].label if paths else default
 	return result.lower() if result else default
+
+# -----------------------------------
+
+def get_ntiid(obj, default=None):
+	result = obj if isinstance(obj, basestring) else get_attr(obj, ntiid_fields)
+	if result is None and isinstance(obj, ThreadableExternalizableMixin):
+		result = to_external_ntiid_oid( obj )
+	return result
+
+def get_creator(obj, default=None):
+	result = obj if isinstance(obj, basestring) else get_attr(obj, creator_fields)
+	if isinstance(result, Entity):
+		result = result.username
+	return result
 
 # -----------------------------------
 

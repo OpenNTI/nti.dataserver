@@ -5,12 +5,12 @@ from repoze.catalog.catalog import Catalog
 from repoze.catalog.indexes.field import CatalogFieldIndex
 from repoze.catalog.indexes.keyword import CatalogKeywordIndex
 
-from nti.dataserver.users import Entity
-
 from nti.contentsearch.common import ngrams
 from nti.contentsearch.common import get_attr
+from nti.contentsearch.common import get_ntiid
 from nti.contentsearch.common import epoch_time
 from nti.contentsearch.common import get_content
+from nti.contentsearch.common import get_creator
 from nti.contentsearch.common import get_type_name
 from nti.contentsearch.common import get_collection
 from nti.contentsearch.common import get_multipart_content
@@ -34,7 +34,7 @@ logger = logging.getLogger( __name__ )
 # -----------------------------------
 
 def get_last_modified(obj, default=None):
-	value  = get_attr(obj, last_modified_fields, default)
+	value = get_attr(obj, last_modified_fields, default)
 	if value:
 		if isinstance(value, basestring):
 			value = float(value)
@@ -62,15 +62,6 @@ def get_containerId(obj, default=None):
 def get_collectionId(obj, default=None):
 	containerId = get_containerId(obj, default)
 	return get_collection(containerId)
-
-def get_creator(obj, default=None):
-	result = obj if isinstance(obj, basestring) else get_attr(obj, creator_fields)
-	if isinstance(result, Entity):
-		result = result.username
-	return result
-
-def get_ntiid(obj, default=None):
-	return obj if isinstance(obj, basestring) else get_attr(obj, ntiid_fields)
 
 # -----------------------------------
 
@@ -187,10 +178,6 @@ def create_catalog(type_name='Notes'):
 		return None
 	
 # -----------------------------------
-		
-def _get_last_modified(obj):
-	lm = get_attr(obj, last_modified_fields )
-	return lm if lm else 0
 
 def _word_content_highlight(query=None, text=None, *args, **kwargs):
 	content = word_content_highlight(query, text, *args, **kwargs) if query and text else u''
@@ -213,7 +200,7 @@ def _get_index_hit_from_object(obj):
 	result[TARGET_OID] = get_attr(obj, oid_fields)
 	result[NTIID] = get_attr(obj, ntiid_fields) or result[TARGET_OID]
 	result[TYPE] = get_type_name(obj).capitalize()
-	result[LAST_MODIFIED] = _get_last_modified(obj)
+	result[LAST_MODIFIED] = get_last_modified(obj)
 	result[CREATOR] =  get_attr(obj, creator_fields)
 	result[CONTAINER_ID] = get_attr(obj, container_id_fields)
 	result[COLLECTION_ID] = get_collection(result[CONTAINER_ID])

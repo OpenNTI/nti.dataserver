@@ -10,11 +10,11 @@ from whoosh.qparser import QueryParser
 from whoosh.qparser import GtLtPlugin
 from whoosh.qparser.dateparse import DateParserPlugin
 
-from nti.dataserver.users import Entity
-
 from nti.contentsearch.common import echo
 from nti.contentsearch.common import get_attr
+from nti.contentsearch.common import get_ntiid
 from nti.contentsearch.common import epoch_time
+from nti.contentsearch.common import get_creator
 from nti.contentsearch.common import get_content
 from nti.contentsearch.common import get_collection
 from nti.contentsearch.common import empty_search_result
@@ -30,8 +30,7 @@ from nti.contentsearch.common import (	color_, quick_, channel_, content_, keywo
 										id_, recipients_, sharedWith_, oid_ , ntiid_, title_, last_modified_,
 										creator_, startHighlightedFullText_, containerId_, collectionId_)
 	
-from nti.contentsearch.common import (	oid_fields, ntiid_fields, creator_fields, container_id_fields,
-										last_modified_fields)
+from nti.contentsearch.common import (	oid_fields, container_id_fields, last_modified_fields)
 		
 import logging
 logger = logging.getLogger( __name__ )
@@ -43,12 +42,6 @@ def get_datetime(x=None):
 	if x:
 		f = float(x) if isinstance(x, basestring) else x
 	return datetime.fromtimestamp(f)
-
-def get_creator(obj):
-	result = obj if isinstance(obj, basestring) else get_attr(obj, creator_fields)
-	if isinstance(result, Entity):
-		result = result.username
-	return result
 
 def get_keywords(records):
 	result = ''
@@ -294,10 +287,10 @@ class UserIndexableContent(_SearchableContent):
 		else:
 			result[creator_] = echo(get_creator(data))
 			result[oid_] = echo(get_attr(data, oid_fields))
+			result[ntiid_] = echo(get_ntiid(data)) or result[oid_]
 			result[containerId_] = echo(get_attr(data, container_id_fields))
 			result[collectionId_] = echo(get_collection(result[containerId_]))
-			result[ntiid_] = echo(get_attr(data, ntiid_fields)) or result[oid_]
-			result[last_modified_] = get_datetime(get_attr(data, last_modified_fields))
+			result[last_modified_] = get_datetime(get_attr(data, last_modified_fields)) or get_datetime()
 		return result
 
 	def get_data_from_search_hit(self, hit, d):
