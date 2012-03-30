@@ -242,6 +242,17 @@ def createApplication( http_port,
 		conn = pyramid_zodbconn.get_connection( evt.request )
 		site = conn.root()['nti.dataserver']
 		old_site = getSite()
+		# Not sure what circumstances lead to already having a site
+		# here. Have seen it at startup. Force it back to none (?)
+		# It is very bad to raise an exception here, it interacts
+		# badly with logging
+		if old_site is not None:
+			try:
+				assert old_site is None, "Should not have a site already in place"
+			except AssertionError:
+				logger.exception( "Should not have a site already in place: %s", old_site )
+				old_site = None
+
 		setSite( site )
 		evt.request.add_finished_callback( lambda r: setSite( old_site ) )
 		# Now (and only now, that the site is setup) record info in the transaction
