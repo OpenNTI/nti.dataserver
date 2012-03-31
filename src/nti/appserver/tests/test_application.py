@@ -34,6 +34,7 @@ import anyjson as json
 
 from persistent import Persistent
 from zope import interface
+from zope import component
 
 class ContainedExternal(ContainedMixin):
 
@@ -246,9 +247,10 @@ class TestApplication(ApplicationTestBase):
 
 		# This should not have created index entries for the user.
 		# (Otherwise, theres denial-of-service possibilities)
-		ixman = pyramid.config.global_registries.last.getUtility( nti.contentsearch.interfaces.IIndexManager )
-		assert_that( ixman._get_user_index_manager( 'user@dne.org', create=False ), is_( none() ) )
-
+		with component.getUtility( nti_interfaces.IDataserverTransactionContextManager )():
+			ixman = pyramid.config.global_registries.last.getUtility( nti.contentsearch.interfaces.IIndexManager )
+			assert_that( ixman._get_user_index_manager( 'user@dne.org', create=False ), is_( none() ) )
+			assert_that( ixman._get_user_index_manager( 'sjohnson@nextthought.com', create=False ), is_( none() ) )
 
 	def test_ugd_search_other_user(self):
 		"Security prevents searching other user's data"
@@ -266,7 +268,9 @@ class TestApplication(ApplicationTestBase):
 		# This should not have created index entries for the user.
 		# (Otherwise, there's denial-of-service possibilities)
 		ixman = pyramid.config.global_registries.last.getUtility( nti.contentsearch.interfaces.IIndexManager )
-		assert_that( ixman._get_user_index_manager( 'user@dne.org', create=False ), is_( none() ) )
+		with component.getUtility( nti_interfaces.IDataserverTransactionContextManager )():
+			assert_that( ixman._get_user_index_manager( 'user@dne.org', create=False ), is_( none() ) )
+			assert_that( ixman._get_user_index_manager( 'sjohnson@nextthought.com', create=False ), is_( none() ) )
 
 
 

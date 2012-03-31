@@ -22,9 +22,9 @@ logger = logging.getLogger( __name__ )
 
 class IndexManager(object):
 	interface.implements(interfaces.IIndexManager)
-	
+
 	# -------------------
-	
+
 	indexmanager = None
 
 	@classmethod
@@ -35,33 +35,33 @@ class IndexManager(object):
 		if not cls.indexmanager:
 			cls.indexmanager = super(IndexManager, cls).__new__(cls, *args, **kwargs)
 		return cls.indexmanager
-	
+
 	def __init__(self, bookidx_manager_factory, useridx_manager_factory, max_users=500, dataserver=None):
 		self.books = {}
 		self.users = LFUMap(maxsize=max_users, on_removal_callback=self.on_item_removed)
 		self.bookidx_manager_factory = bookidx_manager_factory
 		self.useridx_manager_factory = useridx_manager_factory
 		self.ds = dataserver or component.queryUtility( nti_interfaces.IDataserver )
-	
+
 	def __str__( self ):
 		return self.__repr__()
 
 	def __repr__( self ):
 		return 'IndexManager(books=%s, users=%s)' % (len(self.books), len(self.users))
-	
+
 	@property
 	def dataserver(self):
 		return self.ds
-	
+
 	def users_exists(self, username):
 		result = User.get_user(username, dataserver=self.dataserver) if self.dataserver else None
 		return result is not None
-	
+
 	# -------------------
-	
+
 	def get_book_index_manager(self, indexname):
 		return self.books.get(indexname, None)
-	
+
 	def add_book(self, indexname, *args, **kwargs):
 		result = False
 		if not self.books.has_key(indexname):
@@ -75,33 +75,31 @@ class IndexManager(object):
 		bm = self.get_book_index_manager(indexname)
 		results = bm.search(query, limit, *args, **kwargs) if (bm and query) else None
 		return results if results else empty_search_result(query)
-	
+
 	def content_ngram_search(self, indexname, query, limit=None, *args, **kwargs):
 		bm = self.get_book_index_manager(indexname)
 		results = bm.ngram_search(query, limit, *args, **kwargs) if (bm and query) else None
 		return results if results else empty_search_result(query)
-		
+
 	def content_suggest_and_search(self, indexname, query, limit=None, *args, **kwargs):
 		bm = self.get_book_index_manager(indexname)
 		results = bm.suggest_and_search(query, limit, *args, **kwargs) if (bm and query) else None
 		return results if results else empty_suggest_and_search_result(query)
-		
+
 	def content_suggest(self, indexname, term, limit=None, prefix=None, *args, **kwargs):
 		bm = self.get_book_index_manager(indexname)
 		results = bm.suggest(term, limit=limit, prefix=prefix, **kwargs) if (bm and term) else None
 		return results if results else empty_suggest_result(term)
-			
+
 	search = content_search
 	suggest = content_suggest
 	quick_search = content_ngram_search
 	content_quick_search = content_ngram_search
 	suggest_and_search = content_suggest_and_search
-		
-	# -------------------
 
-	def _get_user_index_manager(self, username, *args, **kwargs):
+	def _get_user_index_manager(self, username, create=False, **kwargs):
 		uim = self.users.get(username, None)
-		if not uim and self.users_exists(username):
+		if not uim and create and self.users_exists(username):
 			uim = self.useridx_manager_factory(username=username, **kwargs)
 			if uim:
 				self.users[username] = uim
@@ -110,11 +108,15 @@ class IndexManager(object):
 	def _get_user_object(self, username):
 		result = User.get_user(username, dataserver=self.dataserver) if self.dataserver else None
 		return result
-	
+
 	def _get_user_communities(self, username):
 		user = self._get_user_object(username)
 		return list(user.communities) if user else []
 
+	# Be GOD DAMN SURE not to create objects just to try to execute a search
+	# There's no need, it's wasteful, leads to conflicts. Likewise, only
+	# create objects on indexing/updating/deleting if we're really
+	# going to do it
 	def _get_search_uims(self, username, *args, **kwargs):
 		result = []
 		for name in [username] + self._get_user_communities(username):
@@ -159,35 +161,37 @@ class IndexManager(object):
 		return results if results else empty_suggest_result(term)
 
 	user_data_quick_search = user_data_ngram_search
-	
-	# -------------------
-	
+
 	def _get_data(self, kwargs):
 		if 'data' in kwargs:
 			result = kwargs.pop('data')
 		else:
 			result = kwargs.get('externalValue', None)
 		return result
-	
+
 	def index_user_content(self, username, type_name=None, *args, **kwargs):
 		data = self._get_data(kwargs)
-		um = self._get_user_index_manager(username)
+		um = None
+		if data:
+			um = self._get_user_index_manager(username, create=True)
 		if um and data:
 			return um.index_content(data, type_name, *args, **kwargs)
 
 	def update_user_content(self, username, type_name=None, *args, **kwargs):
 		data = self._get_data(kwargs)
-		um = self._get_user_index_manager(username)
-		if um and data: 
+		um = None
+		if data:
+			um = self._get_user_index_manager(username,create=True)
+		if um and data:
 			return um.update_content(data, type_name, *args, **kwargs)
 
 	def delete_user_content(self, username, type_name=None, *args, **kwargs):
 		data = self._get_data(kwargs)
-		um = self._get_user_index_manager(username)
-		if um and data: 
+		um = None
+		if data:
+			um = self._get_user_index_manager(username,create=True)
+		if um and data:
 			return um.delete_content(data, type_name, *args, **kwargs)
-		
-	# -------------------
 
 	@classmethod
 	def onChange(cls, datasvr, msg, username=None, broadcast=None):
@@ -201,10 +205,10 @@ class IndexManager(object):
 				obj.close()
 			except:
 				pass
-			
+
 	def on_item_removed(self, key, value):
 		self._close(value)
-		
+
 	def remove_user(self, username):
 		um = self.users.pop(username, None)
 		self._close(um)
@@ -212,15 +216,13 @@ class IndexManager(object):
 	def _close_ums(self):
 		for um in self.users.itervalues():
 			self._close(um)
-	
+
 	def close(self):
 		for bm in self.books.itervalues():
 			self._close(bm)
-			
+
 		self._close_ums()
 		self._indexagent.close()
 
 	def __del__(self):
 		self.close()
-
-

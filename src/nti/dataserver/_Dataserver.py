@@ -120,11 +120,8 @@ def _trivial_db_transaction_cm():
 	conn.sync()
 	sitemanc = conn.root()['nti.dataserver']
 
-	# with site is buggy in the context manager
-	#with site( sitemanc ):
-	old_site = getSite()
-	setSite( sitemanc )
-	try:
+
+	with site( sitemanc ):
 		assert component.getSiteManager() == sitemanc.getSiteManager()
 		assert component.getUtility( interfaces.IDataserver )
 		try:
@@ -135,8 +132,6 @@ def _trivial_db_transaction_cm():
 			raise
 		finally:
 			conn.close()
-	finally:
-		setSite( old_site )
 
 interface.directlyProvides( _trivial_db_transaction_cm, interfaces.IDataserverTransactionContextManager )
 
