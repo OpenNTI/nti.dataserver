@@ -230,8 +230,8 @@ class CatalogTextIndexNG3(CatalogIndex, TextIndexNG3):
 	def _indexed(self):
 		return self.get_docids()
 
-	def applyContains(self, value):
-		return self.apply(value)
+	def applyContains(self, value, *args, **kwargs):
+		return self.apply(value, *args, **kwargs)
 	
 	applyEq = applyContains
 
