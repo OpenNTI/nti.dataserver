@@ -22,8 +22,6 @@ dictserver.dictionary = nti.dictserver.dictionary
 
 
 #Hmm, these next three MUST be imported. We seem to have a path-dependent import req.
-import nti.dataserver.socketio_server
-#import nti.dataserver.wsgi
 import nti.dataserver._Dataserver
 import nti.dataserver.session_consumer
 #from nti.dataserver.library import Library
