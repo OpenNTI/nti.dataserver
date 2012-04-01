@@ -360,6 +360,29 @@ def _catch_all(greenlet):
 			logger.exception( "Failed to run greenlet %s", greenlet )
 	return f
 
+
+# def _retrying_job(func, retries):
+# 	note = func.__doc__
+# 	if note:
+# 		note = note.split('\n', 1)[0]
+# 	else:
+# 		note = func.__name__
+
+# 	for i in xrange(retries + 1):
+# 		t = manager.begin()
+# 		if i:
+# 			t.note("%s (retry: %s)" % (note, i))
+# 		else:
+# 			t.note(note)
+
+# 		try:
+# 			func(t)
+# 			t.commit()
+# 		except transaction.interfaces.TransientError:
+# 			t.abort()
+# 		else:
+# 			break
+
 class _SessionEventProxy(object):
 	"""
 	Can be used as a session proxy for getting events when

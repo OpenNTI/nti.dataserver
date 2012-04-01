@@ -5,7 +5,7 @@ from __future__ import print_function
 #pylint: disable=W0212,R0904
 
 from hamcrest import (assert_that, is_, none, starts_with,
-					  has_entry, has_length, has_item,
+					  has_entry, has_length, has_item, has_key,
 					  contains_string, ends_with, all_of, has_entries)
 
 from hamcrest.library import has_property
@@ -76,10 +76,6 @@ class ApplicationTestBase(ConfiguringTestBase):
 class TestApplication(ApplicationTestBase):
 
 
-	# FIXME: This shouldn't be necessary. But the SocketIOHandler
-	# part of the AppServer is currently dealing with transactions.
-	# Migrate to pyramid_tm
-
 	def test_path_with_parens(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			contained = ContainedExternal()
@@ -133,7 +129,7 @@ class TestApplication(ApplicationTestBase):
 
 	def test_post_pages_collection(self):
 		with mock_dataserver.mock_db_trans(self.ds):
-			user = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+			_ = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
 			testapp = TestApp( self.app )
 			containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
 			data = json.serialize( { 'Class': 'Highlight',
@@ -165,9 +161,37 @@ class TestApplication(ApplicationTestBase):
 			assert_that( links, has_item( has_entry( 'href',
 														 urllib.quote( '/dataserver2/users/sjohnson@nextthought.com/Pages(%s)/RecursiveStream' % item_id ) ) ) )
 
+	def test_get_highlight_by_oid_has_links(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			_ = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+
+		testapp = TestApp( self.app )
+		containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
+		data = json.serialize( { 'Class': 'Highlight',
+								 'ContainerId': containerId,
+								 'anchorPoint': 'foo-bar'} )
+
+		path = '/dataserver2/users/sjohnson@nextthought.com/Pages/'
+		res = testapp.post( path, data, extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 201 ) )
+		assert_that( res.body, contains_string( '"anchorPoint": "foo-bar"' ) )
+		assert_that( res.headers, has_entry( 'Location', contains_string( 'http://localhost/dataserver2/users/sjohnson%40nextthought.com/Objects/tag:nextthought.com,2011-10:sjohnson@nextthought.com-OID' ) ) )
+		assert_that( res.headers, has_entry( 'Content-Type', contains_string( 'application/vnd.nextthought.highlight+json' ) ) )
+
+
+		path = res.headers['Location']
+		res = testapp.get( path, extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_(200) )
+		body = json.loads( res.body )
+		assert_that( body, has_entry( 'Links',
+									  has_item( all_of(
+										  has_entry( 'href', contains_string( '/dataserver2/users/sjohnson%40nextthought.com/Objects/tag' ) ),
+										  has_entry( 'rel', 'edit' ) ) ) ))
+
+
 	def test_post_two_friendslist_same_name(self):
 		with mock_dataserver.mock_db_trans(self.ds):
-			user = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+			_ = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
 
 
 		testapp = TestApp( self.app )
