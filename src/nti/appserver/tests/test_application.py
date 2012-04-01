@@ -204,6 +204,43 @@ class TestApplication(ApplicationTestBase):
 		# Generates a conflict the next time
 		testapp.post( path, data, extra_environ=self._make_extra_environ(), status=409 )
 
+
+	def test_post_device(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			_ = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+
+
+		testapp = TestApp( self.app )
+
+		data = json.serialize( { 'Class': 'Device',
+								 'ContainerId': 'Devices',
+								 'ID': "deadbeef" } )
+		path = '/dataserver2/users/sjohnson@nextthought.com'
+		res = testapp.post( path, data, extra_environ=self._make_extra_environ() )
+		body = json.loads( res.body )
+		assert_that( body, has_entry( 'MimeType', 'application/vnd.nextthought.device' ) )
+		# Generates a conflict the next time
+		testapp.post( path, data, extra_environ=self._make_extra_environ(), status=409 )
+
+	def test_put_device(self):
+		"Putting a non-existant device is not possible"
+		with mock_dataserver.mock_db_trans(self.ds):
+			_ = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+
+
+		testapp = TestApp( self.app )
+
+		data = json.serialize( { 'Class': 'Device',
+								 'ContainerId': 'Devices',
+								 'ID': "deadbeef" } )
+		path = '/dataserver2/users/sjohnson@nextthought.com/Devices/deadbeef'
+		testapp.put( path, data, extra_environ=self._make_extra_environ(), status=404 )
+		# But we can post it
+		testapp.post( '/dataserver2/users/sjohnson@nextthought.com', data, extra_environ=self._make_extra_environ() )
+		# And then put
+		testapp.put( path, data, extra_environ=self._make_extra_environ(), status=200 )
+
+
 	def test_user_search(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			contained = ContainedExternal()

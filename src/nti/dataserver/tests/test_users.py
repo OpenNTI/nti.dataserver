@@ -83,7 +83,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		assert_that( created.id, is_( 'deadbeef' ) )
 		assert_that( created.deviceId, is_( 'deadbeef'.decode( 'hex' ) ) )
 		assert_that( created.containerId, is_( 'Devices' ) )
-		assert_that( created.toExternalObject(), is_( 'deadbeef' ) )
+		assert_that( created.toExternalObject(), has_entry( 'ID', 'deadbeef' ) )
 		assert_that( created, is_( created ) )
 
 		user.addContainedObject( created )
