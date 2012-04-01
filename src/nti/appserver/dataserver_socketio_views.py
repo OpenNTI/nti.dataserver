@@ -30,8 +30,60 @@ import socket
 
 import nti.dataserver.interfaces as nti_interfaces
 import nti.dataserver.session_consumer
-from nti.dataserver.socketio_server import Session
+#from nti.dataserver.socketio_server import Session
 
+
+import nti.dataserver.sessions as _sessions
+import nti.dataserver.datastructures as datastructures
+import json
+import socketio.protocol
+
+class Session( _sessions.Session ):
+	"""
+	Client session which checks the connection health and the queues for
+	message passing.
+	`self.owner`: An attribute for the user that owns the session.
+	"""
+
+	def __init__(self,**kwargs):
+		super(Session,self).__init__(**kwargs)
+		self.wsgi_app_greenlet = True
+		self.message_handler = None
+		self.externalize_function = datastructures.to_json_representation
+		self.internalize_function = json.loads
+
+
+	def new_protocol( self, handler=None ):
+		p = socketio.protocol.SocketIOProtocol( handler )
+		p.session = self
+		return p
+
+	protocol_handler = property(new_protocol)
+
+	# The names are odd. put_server_msg is a message TO
+	# the server. That is, a message arriving at the server,
+	# sent from the client. In contrast, put_client_msg
+	# is a message to send TO the client, FROM the server.
+
+	# TODO: We want to ensure queue behaviour for
+	# server messages across the cluster. Either that, or make the interaction
+	# stateless
+	def put_server_msg(self, msg):
+		# Putting a server message immediately processes it,
+		# wherever the session is loaded.
+		if callable(self.message_handler):
+			self.message_handler( self.protocol_handler, msg )
+
+	def put_client_msg(self, msg):
+		self.session_service.put_client_msg( self.session_id, msg )
+
+	def get_client_msgs(self):
+		return self.session_service.get_client_msgs( self.session_id )
+
+	def kill( self ):
+		if hasattr( self.message_handler, 'kill' ):
+			self.message_handler.kill()
+		super(Session,self).kill()
 
 
 RT_HANDSHAKE = 'socket.io.handshake'

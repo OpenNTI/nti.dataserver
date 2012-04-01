@@ -152,10 +152,6 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 					return ws_env
 			self.app_server.handler_class = HandlerClass
 			self.app_server.base_env = ggevent.PyWSGIServer.base_env
-			# The socketio handling winds up swizzling classes, so
-			# our log_request method defined above may not get called as
-			# expected when a websocket ends. Small hack for that (logging unnecessary)
-			nti.dataserver.socketio_server.WebSocketHandler.log_request = lambda *args: 42
 			return self.app_server
 
 		self.server_class = factory
