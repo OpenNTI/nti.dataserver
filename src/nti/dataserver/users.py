@@ -1092,21 +1092,23 @@ from activitystream_change import Change
 
 
 @functools.total_ordering
-class Device(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
+class Device(persistent.Persistent,
+			 datastructures.CreatedModDateTrackingObject,
+			 datastructures.ExternalizableDictionaryMixin):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	interface.implements( nti_interfaces.IDevice )
 	__external_can_create__ = True
 
 	def __init__(self, deviceId):
+		"""
+		:param deviceId: Either a basic dictionary containing `StandardExternalFields.ID`
+			or a string in hex encoding the bytes of a device id.
+		"""
 		super(Device,self).__init__()
-		self.id = deviceId
+		if isinstance(deviceId,collections.Mapping):
+			deviceId = deviceId[datastructures.StandardExternalFields.ID]
 		# device id arrives in hex encoding
 		self.deviceId = deviceId.decode( 'hex' )
-
-	def __setstate__( self, state ):
-		super(Device,self).__setstate__( state )
-		if 'containerId' in self.__dict__:
-			del self.__dict__['containerId']
 
 	def get_containerId( self ):
 		return _DevicesMap.container_name
@@ -1114,10 +1116,14 @@ class Device(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 		pass
 	containerId = property( get_containerId, set_containerId )
 
-	# We are disguising the very existence of this class.
-	# That needs to change.
+	@property
+	def id(self):
+		# Make ID not be writable
+		return self.deviceId.encode('hex')
+
 	def toExternalObject(self):
-		return self.id
+		result = super(Device,self).toExternalDictionary()
+		return result
 
 	def updateFromExternalObject(self,ext):
 		pass
