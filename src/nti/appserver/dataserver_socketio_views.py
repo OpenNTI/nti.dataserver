@@ -13,6 +13,7 @@ logger = logging.getLogger( __name__ )
 
 from zope import component
 from zope import interface
+from zope.deprecation import deprecate
 
 from pyramid.view import view_config
 import pyramid.security as sec
@@ -33,6 +34,8 @@ import nti.dataserver.session_consumer
 import nti.dataserver.sessions as _sessions
 import nti.dataserver.datastructures as datastructures
 import json
+
+from nti.socketio import interfaces as socketio_interfaces
 import nti.socketio.protocol
 
 class Session( _sessions.Session ):
@@ -42,20 +45,30 @@ class Session( _sessions.Session ):
 	`self.owner`: An attribute for the user that owns the session.
 	"""
 
+	interface.implements( socketio_interfaces.ISocketIOChannel )
+
 	def __init__(self,**kwargs):
 		super(Session,self).__init__(**kwargs)
 		self.wsgi_app_greenlet = True
 		self.message_handler = None
-		self.externalize_function = datastructures.to_json_representation
-		self.internalize_function = json.loads
+#		self.externalize_function = datastructures.to_json_representation
+#		self.internalize_function = json.loads
 
-
+	@deprecate("Prefer the `socket` property")
 	def new_protocol( self, handler=None ):
-		p = nti.socketio.protocol.SocketIOProtocol( handler )
-		p.session = self
+		return self.socket
+
+	@property
+	@deprecate( "Prefer the `socket` property" )
+	def protocol_handler(self):
+		return self.socket
+
+	@property
+	def socket(self):
+		p = nti.socketio.protocol.SocketIOSocket( self )
+		#p.session = self
 		return p
 
-	protocol_handler = property(new_protocol)
 
 	# The names are odd. put_server_msg is a message TO
 	# the server. That is, a message arriving at the server,
@@ -69,7 +82,7 @@ class Session( _sessions.Session ):
 		# Putting a server message immediately processes it,
 		# wherever the session is loaded.
 		if callable(self.message_handler):
-			self.message_handler( self.protocol_handler, msg )
+			self.message_handler( self.socket, msg )
 
 	def put_client_msg(self, msg):
 		self.session_service.put_client_msg( self.session_id, msg )

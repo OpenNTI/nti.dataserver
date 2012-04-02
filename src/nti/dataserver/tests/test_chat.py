@@ -699,7 +699,7 @@ class TestChatserver(ConfiguringTestBase):
 
 	def test_chat_handler_adapter(self):
 		class Sock(object):
-			interface.implements( socketio.interfaces.ISocketIOSocket )
+			interface.implements( nti_interfaces.ISocketSession )
 			session_id = ''
 			owner = ''
 		socket = Sock()

@@ -8,22 +8,52 @@ _writer_base = interface.Interface
 _reader_base = interface.Interface
 _socket_base = None
 
-try:
-	import socketio.interfaces
-	_writer_base = socketio.interfaces.ISocketIOWriter
-	_reader_base = socketio.interfaces.ISocketIOReader
-	_socket_base = socketio.interfaces.ISocketIOSocket
-except ImportError:
-	pass
+
+class ISocketIOMessage(interface.Interface):
+	"""
+	A message read or written to socket io.
+	"""
+	msg_type = schema.Int(
+		description="The numeric value of the message type, from 0 to 8",
+		readonly=True )
+
+class ISocketIOProtocolFormatter(interface.Interface):
+	"""
+	Functions for formatting messages appropriately for socket io.
+	"""
+
+	def make_event(name, *args):
+		"""
+		"""
+
+	def make_heartbeat( ):
+		""" """
+
+	def make_ack(msg_id, params):
+		""" """
+
+	def make_connect( data ):
+		"""
+		"""
+
+	def decode(data):
+		"""
+		:return: A single :class:`ISocketIOMessage` object.
+		"""
+
+	def decode_multi( self, data ):
+		"""
+		:return: A sequence of Message objects
+		"""
 
 class ISocketIOWriter(_writer_base):
 	"""
 	Defines the write-side of a socket (the ability to send messages to a client)
 	"""
 
-	externalize_function = schema.Field(
-		description="The function used to externalize data to send to the client. Defaults to creating strings of JSON.",
-		readonly=True)
+	# externalize_function = schema.Field(
+	# 	description="The function used to externalize data to send to the client. Defaults to creating strings of JSON.",
+	# 	readonly=True)
 
 	def ack( msg_id, params ):
 		"""
@@ -37,13 +67,11 @@ class ISocketIOWriter(_writer_base):
 			to a string.
 		"""
 
-	def send( message, destination=None ):
+	def send( message ):
 		"""
 		Sends arbitrary message data to the connected client, or another client.
 
 		:param message: The string of data to send
-		:param destination: If given, the session id that should receive the data. Defaults
-			to send the data to the connected client of this socket.
 		"""
 
 	def send_event( name, *args ):
@@ -52,24 +80,25 @@ class ISocketIOWriter(_writer_base):
 
 		:param string name: The name of the event to send.
 		:param args: The arguments the client's event handler should get, in order.
-			Will be externalized to strings.
+			Will be externalized to strings using the externalize_function.
 		"""
+
+
 
 class ISocketIOReader(_reader_base):
 	"""
 	The read-side of a socket to a connected client.
 	"""
 
-if _socket_base:
-	class ISocketIOSocket(ISocketIOReader,ISocketIOWriter,_socket_base):
-		"""
-		A socket to a connected client that can be used to read and write messages.
-		"""
-else:
-	class ISocketIOSocket(ISocketIOReader,ISocketIOWriter,):
-		"""
-		A socket to a connected client that can be used to read and write messages.
-		"""
+	# def receive():
+	# 	"""
+	# 	Waits for an incoming message and returns it.
+	# 	"""
+
+class ISocketIOSocket(ISocketIOReader,ISocketIOWriter):
+	"""
+	A socket to a connected client that can be used to read and write messages.
+	"""
 
 class ISocketIOTransport(interface.Interface):
 	"""
@@ -97,4 +126,22 @@ class ISocketIOTransport(interface.Interface):
 	def kill():
 		"""
 		Requests that this transport terminate any ongoing communication.
+		"""
+
+class ISocketIOChannel(interface.Interface):
+	"""
+	Something that represents a queued connection between client
+	and server. A channel is a bidirectional stream of messages; no interpretation
+	of the messages is done.
+	"""
+
+	def put_server_msg( msg ):
+		"""
+		A message, ``msg``, has arrived at the server and is ready to
+		be processed.
+		"""
+
+	def put_client_msg( msg ):
+		"""
+		A message, ``msg``, is ready to be sent to the remote client.
 		"""

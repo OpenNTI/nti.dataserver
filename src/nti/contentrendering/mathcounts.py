@@ -43,6 +43,9 @@ class mathcountsresult(Base.Environment):
 class mathcountssolution(Base.Environment):
 	pass
 
+class sidebar(Base.Environment):
+	pass
+
 class mathcountshint(Base.Command):
 	args = 'href:str helptext:str'
 

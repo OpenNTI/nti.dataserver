@@ -38,7 +38,7 @@ class TestWebSocket(ConfiguringTestBase):
 		websocket = WebSocket()
 		handler = Handler()
 		handler.environ['wsgi.websocket'] = websocket
-		handler.environ['socketio'] = nti.socketio.protocol.SocketIOProtocol(None)
+		handler.environ['socketio'] = nti.socketio.protocol.SocketIOSocket(None)
 
 		handler.server = Mock()
 		handler.server.session_manager = Mock()

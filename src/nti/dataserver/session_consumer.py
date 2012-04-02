@@ -48,17 +48,20 @@ class SessionConsumer(Persistent):
 		session.owner = self._username # save the username, cannot save user obj
 		session.incr_hits()
 
-		self._event_handlers.update( self._create_event_handlers( session.protocol_handler ) )
+		self._event_handlers.update( self._create_event_handlers( session.protocol_handler, session ) )
 
-		if session.internalize_function == plistlib.readPlistFromString:
-			session.externalize_function = to_external_representation
+		#if session.internalize_function == plistlib.readPlistFromString:
+		#	session.externalize_function = to_external_representation
 
-	def _create_event_handlers( self, socket_obj ):
+	def _create_event_handlers( self, socket_obj, session=None ):
 		"""
 		:return: A mapping from event prefix (empty string for no prefix) no list of possible
 			handlers for that prefix.
 		"""
 		subscribers = component.subscribers( (socket_obj,), nti_interfaces.ISocketEventHandler )
+		if session is not None:
+			subscribers = itertools.chain( subscribers,
+										   component.subscribers( (session,), nti_interfaces.ISocketEventHandler ) )
 		result = dict()
 		for subscriber in subscribers:
 			if subscriber is None: continue
