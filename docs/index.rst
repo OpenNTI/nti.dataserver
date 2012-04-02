@@ -22,6 +22,7 @@ Contents:
 	interfaces
 	http-rest
 	contentrendering-api
+	socketio-api
 
 	regression-tests
 	regression-details

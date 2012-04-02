@@ -960,7 +960,7 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 					friend = friend.toPersonalSummaryExternalObject()
 				else:
 					friend = friend.toSummaryExternalObject()
-			elif isinstance( friend, basestring ):
+			elif isinstance( friend, six.string_types ):
 				friend = { 'Class': 'UnresolvedFriend',
 						   'Username': friend,
 						   'avatarURL' : _createAvatarURL( friend, SharingTarget.defaultGravatarType ) }
