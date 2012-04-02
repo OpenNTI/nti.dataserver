@@ -468,6 +468,7 @@ class TestApplication(ApplicationTestBase):
 		body = json.loads( res.body )
 		assert_that( body, has_entry( 'ID', 'CS2503' ) )
 		assert_that( body, has_entry( 'Sections', has_item( has_entry( 'ID', 'CS2503.101' ) ) ) )
+		assert_that( body, has_entry( 'Sections', has_item( has_entry( 'NTIID', 'tag:nextthought.com,2011-10:OU-MeetingRoom:ClassSection-CS2503.101' ) ) ) )
 		assert_that( body, has_entry( 'Sections', has_item( has_entry( 'Enrolled', has_item( 'jason.madden@nextthought.com' ) ) ) ) )
 
 		if get:
@@ -486,6 +487,34 @@ class TestApplication(ApplicationTestBase):
 	def test_post_class_part_path(self):
 		self._do_post_class_to_path( '/dataserver2/providers/OU/' )
 
+
+	def test_post_class_section_same_time(self):
+		path = '/dataserver2/providers/OU/Classes/'
+		get = True
+		with mock_dataserver.mock_db_trans(self.ds):
+			users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+			_create_class( self.ds, ('sjohnson@nextthought.com',) )
+
+		testapp = TestApp( self.app )
+
+		data = json.serialize( { 'Class': 'ClassInfo',
+								 'ContainerId': 'Classes',
+								 'ID': 'CS2503',
+								 'Sections': [{'ID': 'CS2503.101', 'Class': 'SectionInfo', 'Enrolled': ['jason.madden@nextthought.com']}]} )
+		res = testapp.post( path, data, extra_environ=self._make_extra_environ() )
+
+
+		body = json.loads( res.body )
+		assert_that( body, has_entry( 'ID', 'CS2503' ) )
+		assert_that( body, has_entry( 'Sections', has_item( has_entry( 'ID', 'CS2503.101' ) ) ) )
+		assert_that( body, has_entry( 'Sections', has_item( has_entry( 'NTIID', 'tag:nextthought.com,2011-10:OU-MeetingRoom:ClassSection-CS2503.101' ) ) ) )
+		if get:
+			res = testapp.get( path + 'CS2503', extra_environ=self._make_extra_environ() )
+			body = json.loads( res.body )
+			assert_that( body, has_entry( 'ID', 'CS2503' ) )
+			assert_that( body, has_entry( 'Sections', has_item( has_entry( 'ID', 'CS2503.101' ) ) ) )
+			assert_that( body, has_entry( 'Sections', has_item( has_entry( 'NTIID', 'tag:nextthought.com,2011-10:OU-MeetingRoom:ClassSection-CS2503.101' ) ) ) )
+			assert_that( body, has_entry( 'Sections', has_item( has_entry( 'Enrolled', has_item( 'jason.madden@nextthought.com' ) ) ) ) )
 
 	def test_class_trivial_enclosure_href(self):
 		with mock_dataserver.mock_db_trans(self.ds):

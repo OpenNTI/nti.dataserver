@@ -75,16 +75,20 @@ class ClassInfo( datastructures.PersistentCreatedModDateTrackingObject,
 	__external_can_create__ = True
 
 	def __init__( self, ID=None ):
-		super(ClassInfo,self).__init__()
 		# All classes will have at least one section. The sections
 		# will vary per year.
 		# The section list is a IContainer
 		# so it fires events
 		self._sections = BTreeContainer()
+
 		# This container is kept unnamed so that URLs come out right
 		self._sections.__name__ = ''
 		self._sections.__parent__ = self
 		_add_container_iface( self._sections, nti_interfaces.ISectionInfoContainer )
+
+		# The sections container must be in place before we init super
+
+		super(ClassInfo,self).__init__()
 
 		self.Description = ""
 		#self.Provider = 'NTI' # Provider abbreviation, suitable for NTIID
@@ -101,6 +105,20 @@ class ClassInfo( datastructures.PersistentCreatedModDateTrackingObject,
 	def _set_Provider(self, np):
 		self.creator = np
 	Provider = property(_get_Provider,_set_Provider)
+
+	# We own the sections, and their provider/creator
+	# is /our/ provider/creator. Make sure they stay in sync
+	# (During the process of creation from external sources,
+	# creator can get changed several times, possibly after this
+	# object is off the stack and updateFromExternalObject is no longer
+	# able to do anything).
+	def _get_creator(self):
+		return self.__dict__['creator']
+	def _set_creator(self,nc):
+		self.__dict__['creator'] = nc
+		for section in self.Sections:
+			section.Provider = nc
+	creator = property(_get_creator,_set_creator)
 
 	def _get__name__(self):
 		return self.ID
@@ -159,7 +177,7 @@ class ClassInfo( datastructures.PersistentCreatedModDateTrackingObject,
 		except ntiids.InvalidNTIIDError:
 			logger.exception( "ClassInfo created with invalid name %s", self.ID )
 			return None
-			
+
 	def toExternalDictionary( self, mergeFrom=None ):
 		result = super(ClassInfo,self).toExternalDictionary( mergeFrom=mergeFrom )
 		# TODO: Add better support for externalizing OOBTreeItems (IReadSequence)
@@ -255,7 +273,6 @@ class SectionInfo( datastructures.PersistentCreatedModDateTrackingObject,
 		_add_container_iface( self._enrolled, nti_interfaces.IEnrolledContainer )
 
 
-
 	def __eq__( self, other ):
 		if isinstance( other, SectionInfo ):
 			# Interestingly, BTreeContainer does a poor job implementing __eq__
@@ -329,4 +346,3 @@ class InstructorInfo( Persistent,
 	def __eq__( self, other ):
 		if isinstance( other, InstructorInfo ):
 			return self.Instructors == other.Instructors
-
