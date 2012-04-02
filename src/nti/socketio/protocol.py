@@ -1,119 +1,132 @@
+#!/usr/bin/env python
+
 import logging
 logger = logging.getLogger(__name__)
-import gevent
+import six
+
 import anyjson as json
-import plistlib
+
 import interfaces
 
 from zope import interface
+from zope import component
 
 @interface.implementer(interfaces.ISocketIOSocket)
-class SocketIOProtocol(object):
-	"""SocketIO protocol specific functions."""
+class SocketIOSocket(object):
+	"""
+	A socket is little more than a wrapper around a channel (pair of queues)
+	and a way to format messages for those queues.
+	"""
+
 	# See: https://github.com/LearnBoost/socket.io-spec
-	def __init__(self, handler):
-		self.handler = handler
-		self.session = None
+	def __init__(self, channel, version="1"):
+		"""
+		:param channel: An :class:`interfaces.ISocketIOChannel`.
+		"""
+		self.channel = channel
+		self.version = version
 
 	@property
-	def externalize_function(self):
-		return getattr( self.session, 'externalize_function', None )
+	def protocol(self):
+		return component.getUtility( interfaces.ISocketIOProtocolFormatter, name=self.version )
 
-	def _get_internalize_function(self):
-		return self.session.internalize_function
-
-	def _set_internalize_function( self, f ):
-		self.session.internalize_function = f
-
-	internalize_function = property( _get_internalize_function, _set_internalize_function )
-
-	def ack(self, msg_id, params):
-		self.send("6:::%s%s" % (msg_id, self.externalize_function(params)))
-
-	def send(self, message, destination=None):
-		if destination is None:
-			dst_client = self.session
-		else:
-			dst_client = self.handler.server.sessions.get(destination)
-
-		self._write(message, dst_client)
+	def send(self, message):
+		self.channel.put_client_msg( message )
 
 	def send_event(self, name, *args):
-		self.send("5:::" + self.externalize_function({'name': name, 'args': args}))
-
-	def receive(self):
-		"""Wait for incoming messages."""
-
-		return self.session.get_server_msg()
-
-	def broadcast(self, message, exceptions=None, include_self=False):
-		"""
-		Send messages to all connected clients, except itself and some
-		others.
-		FIXME: does not apply the correct transformations.
-		"""
-		if exceptions is None:
-			exceptions = []
-
-		if not include_self:
-			exceptions.append(self.session.session_id)
-
-		for session_id, session in self.handler.server.sessions.iteritems():
-			if session_id not in exceptions:
-				self._write(message, session)
-
-	def broadcast_event(self, name, *args, **kwargs):
-		self.broadcast("5:::" + json.dumps({'name': name, 'args': args}), **kwargs)
-
-	def start_heartbeat(self):
-		"""Start the heartbeat Greenlet to check connection health."""
-		def ping():
-			self.session.state = self.session.STATE_CONNECTED
-
-			while self.session.connected:
-				gevent.sleep(5.0) # FIXME: make this a setting
-				self.send_heartbeat()
-
-		return gevent.spawn(ping)
+		self.send( self.protocol.make_event( name, *args ) )
 
 	def send_heartbeat( self ):
-		self.send( "2::")
+		self.send( self.protocol.make_heartbeat( ) )
 
-	def _write(self, message, session=None):
-		if session is None:
-			raise Exception("No client with that session exists")
-		else:
-			session.put_client_msg(message)
+	def send_connect( self, data ):
+		self.send( self.protocol.make_connect( data ) )
+
+	def ack(self, msg_id, params):
+		self.send( self.protocol.make_ack( msg_id, params ) )
+
+
+
+class AbstractMessage(dict):
+	interface.implements(interfaces.ISocketIOMessage)
+	msg_type = -1
+Message = AbstractMessage
+# 'disconnect'
+# 'connect'
+# 'heartbeat'
+# 'message'
+# 'json'
+# 'event'
+# 'ack'
+# 'error'
+# 'noop'
+
+class DisconnectMessage(AbstractMessage):
+	msg_type = 0
+
+class ConnectMessage(AbstractMessage):
+	msg_type = 1
+
+class HeartbeatMessage(AbstractMessage):
+	msg_type = 2
+
+class MessageMessage(AbstractMessage):
+	msg_type = 3
+
+class JsonMessage(AbstractMessage):
+	msg_type = 4
+
+class EventMessage(AbstractMessage):
+	msg_type = 5
+
+class AckMessage(AbstractMessage):
+	msg_type = 6
+
+class ErrorMessage(AbstractMessage):
+	msg_type = 7
+
+class NoopMessage(AbstractMessage):
+	msg_type = 8
+
+class SocketIOProtocolFormatter1(object):
+	"""Parsing functions for version 1 of the socketio protocol."""
+
+	interface.implements( interfaces.ISocketIOProtocolFormatter )
+
+	# See: https://github.com/LearnBoost/socket.io-spec
+	def __init__(self):
+		super(SocketIOProtocolFormatter1,self).__init__()
+
+	def make_event(self, name, *args):
+		return ("5:::" + self.encode({'name': name, 'args': args}))
+
+	def make_heartbeat( self ):
+		return ("2::")
+
+	def make_ack(self, msg_id, params):
+		return ("6:::%s%s" % (msg_id, self.encode(params)))
+
+	def make_connect( self, tail ):
+		return ("1::%s" % tail)
 
 	def encode(self, message):
-		if isinstance(message, basestring):
-			encoded_msg = message
-		elif isinstance(message, (object, dict)):
-			return self.encode(self.externalize_function(message))
-		else:
-			raise ValueError("Can't encode message")
+		if isinstance(message, six.string_types):
+			return message
 
-		return encoded_msg
+		if isinstance(message, (object, dict)):
+			return self.encode(json.dumps(message))
+
+		raise ValueError("Can't encode message")
+
 
 	def _parse_data( self, data ):
 		data = data.lstrip()
-		# We make some assumptions here in the interests
-		# of optimization. The alternate approach is to
-		# catch an exception thrown by internalize_function
-		# and then do content sniffing
-		result = data
-		if data.startswith( '<' ):
-			# XML format. Never valid in JSON
-			result = plistlib.readPlistFromString( str(data) )
-			# Things that will send us XML will only ever want
-			# to get XML. Go ahead and note that now.
-			if self.session:
-				self.internalize_function = plistlib.readPlistFromString
-		else:
-			result = self.internalize_function( data )
-		return result
+		return json.loads( data )
 
 	def decode(self, data):
+		"""
+		:return: A single Message object.
+		"""
 		msg_type, msg_id, tail = data.split(":", 2)
 
 		# 'disconnect'
@@ -128,29 +141,31 @@ class SocketIOProtocol(object):
 
 
 		if msg_type == "0": # disconnect
-			logger.debug( "Killing session %s at request of session", self.session )
-			self.session.kill()
-			return None
+			return DisconnectMessage()
 
 		if msg_type == "1": # connect
-			self.send("1::%s" % tail)
-			return None
+			return ConnectMessage( data=data )
+
 
 		if msg_type == "2": # heartbeat
-			self.session.heartbeat()
-			return None
+			return HeartbeatMessage()
+
+
 		message = None
 		msg_endpoint, data = tail.split(":", 1)
+		assert msg_endpoint is not None
+
 		data = data.decode( 'utf-8', 'replace' )
 		if msg_type == "3": # message
-			message = {
-				'type': 'message',
-				'data': data,
-			}
+			message = MessageMessage(
+				type='message',
+				data=data )
 		elif msg_type == "4": # json
 			message = self._parse_data(data)
+			message = JsonMessage(message)
 		elif msg_type == "5": # event
 			message = self._parse_data(data)
+			message = EventMessage( message )
 
 			if "+" in msg_id:
 				message['id'] = msg_id
@@ -163,6 +178,9 @@ class SocketIOProtocol(object):
 		return message
 
 	def decode_multi( self, data ):
+		"""
+		:return: A sequence of Message objects
+		"""
 		DELIM1 = '\xff\xfd' #u'\ufffd'
 		DELIM2 = '\xef\xbf\xbd' # utf-8 encoding
 
