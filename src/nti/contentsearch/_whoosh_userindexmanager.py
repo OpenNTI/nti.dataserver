@@ -10,6 +10,7 @@ from nti.contentsearch.interfaces import IUserIndexManager
 from nti.contentsearch.common import get_type_name
 from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch.common import empty_search_result
+from nti.contentsearch.common import indexable_type_names
 from nti.contentsearch.common import empty_suggest_result
 from nti.contentsearch.common import merge_search_results
 from nti.contentsearch.common import merge_suggest_results
@@ -241,6 +242,22 @@ class WhooshUserIndexManager(object):
 		if index:
 			index.optimize()
 
+	# -------------------
+	
+	@TraxWrapper
+	def get_stored_indices(self):
+		result = []
+		for type_name in indexable_type_names:
+			type_name = normalize_type_name(type_name)
+			index_name = self._get_indexname(type_name)
+			if self.storage.index_exists(index_name, username=self.username):
+				result.append(type_name)
+		return result
+	
+	def has_stored_indices(self):
+		names = self.get_stored_indices()
+		return True if names else False
+	
 	# -------------------
 	
 	@TraxWrapper

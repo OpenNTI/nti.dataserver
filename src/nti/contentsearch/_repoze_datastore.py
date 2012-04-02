@@ -28,6 +28,9 @@ class RepozeDataStore(PersistentMapping):
 	def docmaps(self):
 		return self[self.docMap_key]
 	
+	def has_user(self, username):
+		return username in self.users
+	
 	def add_catalog(self, username, catalog, type_name):
 		if username not in self.users:
 			self.users[username] = OOBTree()

@@ -225,7 +225,16 @@ class RepozeUserIndexManager(object):
 		with _context_manager():
 			docid = self.store.docid_for_address(self.username, address)
 			return docid
-
+		
+	def get_stored_indices(self):
+		with _context_manager():
+			return self.store.get_catalog_names(self.username)
+	get_catalog_names = get_stored_indices
+			
+	def has_stored_indices(self):
+		names = self.get_stored_indices()
+		return True if names else False
+	
 # -----------------------------
 
 def ruim_factory(*args, **kwargs):

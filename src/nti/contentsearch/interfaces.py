@@ -5,7 +5,12 @@ from zope.interface.common.mapping import IFullMapping
 # -----------------------------
 
 class IRepozeDataStore(IFullMapping):
-	pass
+	def has_user(username):
+		"""
+		return if the store has catalogs for the specified user
+		
+		:param user: username
+		"""
 
 # -----------------------------
 
@@ -58,11 +63,22 @@ class IBookIndexManager(ISearcher):
 
 class IUserIndexManager(ISearcher):
 	
+		
 	def get_username():
 		"""
 		return the user for this manager
 		"""
+
+	def has_stored_indices():
+		"""
+		return if there are accessible/stored indices for the user
+		"""
 		
+	def get_stored_indices():
+		"""
+		return the index names accessible/stored in this manager for the user
+		"""
+				
 	def index_content(data, type_name=None, *args, **kwargs):
 		"""
 		index the specified content

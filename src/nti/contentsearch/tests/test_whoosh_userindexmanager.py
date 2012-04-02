@@ -62,8 +62,15 @@ class TestWhooshUserIndexManager(ConfiguringTestBase):
 		return notes, usr
 	
 	@WithMockDSTrans
+	def test_empty(self):
+		assert_that(self.uim.get_stored_indices(), is_([]))
+		assert_that(self.uim.has_stored_indices(), is_(False))
+		
+	@WithMockDSTrans
 	def test_index_notes(self):
 		self._index_notes()
+		assert_that(self.uim.get_stored_indices(), is_(['note']))
+		assert_that(self.uim.has_stored_indices(), is_(True))
 		
 	@WithMockDSTrans
 	def test_query_notes(self):
