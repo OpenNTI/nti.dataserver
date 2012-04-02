@@ -1,4 +1,5 @@
 import sys
+import gevent.local
 
 import zopyxtxng3corelogger
 sys.modules["zopyx.txng3.core.logger"] = zopyxtxng3corelogger
@@ -21,6 +22,22 @@ from repoze.catalog.indexes.common import CatalogIndex
 import logging
 logger = logging.getLogger(__name__)
 
+# -----------------------------------
+
+_local = gevent.local.local()
+
+def set_search_params(**kwargs):
+	params = dir(kwargs)
+	_local.search_params = params
+	
+def get_search_params():
+	params = getattr(_local, 'search_params', {})
+	if 'ranking' not in params:
+		params['ranking'] = True
+	if 'ranking_maxhits' not in params:
+		params['ranking_maxhits'] = sys.maxint
+	return params
+		
 # -----------------------------------
 
 class _Proxy(object):
@@ -101,11 +118,7 @@ class TextIndexNG3(object):
 	# --- IIndexSearch --- 
 	
 	def apply(self, query, *args, **kwargs):
-		query = unicode(query or '')
-		if 'ranking' not in kwargs:
-			kwargs['ranking'] = True
-			kwargs['ranking_maxhits'] = sys.maxint
-			
+		query = unicode(query or '')			
 		results = {}
 		rs = self.index.search(query, **kwargs)
 		if rs:
@@ -230,8 +243,9 @@ class CatalogTextIndexNG3(CatalogIndex, TextIndexNG3):
 	def _indexed(self):
 		return self.get_docids()
 
-	def applyContains(self, value, *args, **kwargs):
-		return self.apply(value, *args, **kwargs)
+	def applyContains(self, value):
+		search_parms = get_search_params()
+		return self.apply(value, **search_parms)
 	
 	applyEq = applyContains
 

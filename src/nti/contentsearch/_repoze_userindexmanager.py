@@ -82,13 +82,13 @@ class RepozeUserIndexManager(object):
 		return items, lm
 
 
-	def _do_catalog_query(self, catalog, field, query):
+	def _do_catalog_query(self, catalog, field, query, limit=None):
 		mo = re.search('([\?\*])', query)
 		if mo and mo.start(1) == 0:
 			# globbing character return all
 			ids = self.store.get_docids(self.username)
 			return len(ids), ids
-		return catalog.query(Contains(field, query))
+		return catalog.query(Contains(field, query), limit=limit)
 
 	def _do_search(self, field, query, limit=None, use_word_highlight=True, *args, **kwargs):
 
@@ -104,7 +104,7 @@ class RepozeUserIndexManager(object):
 			for type_name in search_on:
 				catalog = self.datastore.get_catalog(self.username, type_name)
 				if catalog:
-					_, docids = self._do_catalog_query(catalog, field, query)
+					_, docids = self._do_catalog_query(catalog, field, query, limit=limit)
 					hits, hits_lm = self._get_hits_from_docids(	docids=docids,
 																limit=limit,
 																query=query,
