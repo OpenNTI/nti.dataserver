@@ -55,4 +55,5 @@
 
 	<include package="nti.dataserver" />
 	<include package="nti.contentsearch" />
+	<include package="nti.socketio" />
 </configure>

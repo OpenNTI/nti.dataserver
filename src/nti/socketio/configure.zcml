@@ -1,0 +1,10 @@
+<!-- -*- mode: nxml -*- -->
+<configure xmlns="http://namespaces.zope.org/zope">
+	<include package="zope.component" />
+
+	<adapter factory=".transports.XHRPollingTransport"
+			 name="xhr-polling"/>
+	<adapter factory=".transports.WebsocketTransport"
+			 name="websocket" />
+
+</configure>

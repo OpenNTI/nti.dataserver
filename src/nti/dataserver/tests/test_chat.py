@@ -5,7 +5,7 @@ from hamcrest import (assert_that, is_, has_entry, instance_of,
 					  has_entries, only_contains, has_item)
 import unittest
 from zope import interface, component
-import socketio
+import nti.socketio as socketio
 import time
 import tempfile
 
