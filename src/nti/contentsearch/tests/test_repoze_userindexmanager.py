@@ -68,8 +68,16 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		return usr, rim, docids, notes
 
 	@WithMockDSTrans
+	def test_empty(self):
+		rim = RepozeUserIndexManager ('nt@nti.com')
+		assert_that(rim.get_stored_indices(), is_([]))
+		assert_that(rim.has_stored_indices(), is_(False))
+		
+	@WithMockDSTrans
 	def test_index_notes(self):
-		self._index_notes()
+		_, _, rim, = self._index_notes()
+		assert_that(rim.get_stored_indices(), is_([u'note']))
+		assert_that(rim.has_stored_indices(), is_(True))
 
 	@WithMockDSTrans
 	def test_query_notes(self):

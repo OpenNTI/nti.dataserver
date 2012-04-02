@@ -99,9 +99,9 @@ class IndexManager(object):
 
 	def _get_user_index_manager(self, username, create=False, **kwargs):
 		uim = self.users.get(username, None)
-		if not uim and create and self.users_exists(username):
+		if not uim and self.users_exists(username):
 			uim = self.useridx_manager_factory(username=username, **kwargs)
-			if uim:
+			if uim and (create or uim.has_stored_indices()):
 				self.users[username] = uim
 		return uim
 
@@ -113,10 +113,6 @@ class IndexManager(object):
 		user = self._get_user_object(username)
 		return list(user.communities) if user else []
 
-	# Be GOD DAMN SURE not to create objects just to try to execute a search
-	# There's no need, it's wasteful, leads to conflicts. Likewise, only
-	# create objects on indexing/updating/deleting if we're really
-	# going to do it
 	def _get_search_uims(self, username, *args, **kwargs):
 		result = []
 		for name in [username] + self._get_user_communities(username):
