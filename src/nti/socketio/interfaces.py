@@ -45,9 +45,17 @@ class ISocketIOProtocolFormatter(interface.Interface):
 		:return: A single :class:`ISocketIOMessage` object.
 		"""
 
-	def decode_multi( self, data ):
+	def decode_multi( data ):
 		"""
 		:return: A sequence of Message objects
+		"""
+
+	def encode_multi( messages ):
+		"""
+		:param messages: A sequence of strings that have already been according
+			to methods like :meth:`make_event`.
+		:return: A byte string. If there was more than one message, this will be a framed
+			string. Otherwise, it will be equivalent to the first object in messages.
 		"""
 
 class ISocketIOWriter(_writer_base):
@@ -75,7 +83,8 @@ class ISocketIOWriter(_writer_base):
 		"""
 		Sends arbitrary message data to the connected client, or another client.
 
-		:param message: The string of data to send
+		:param message: The exact string of data to send. In general, this
+			method should not be invoked by clients.
 		"""
 
 	def send_event( name, *args ):
@@ -136,7 +145,7 @@ class ISocketIOChannel(interface.Interface):
 	"""
 	Something that represents a queued connection between client
 	and server. A channel is a bidirectional stream of messages; no interpretation
-	of the messages is done.
+	of the messages is done (the messages are strings of bytes).
 	"""
 
 	def put_server_msg( msg ):

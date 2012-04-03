@@ -90,10 +90,15 @@ class ErrorMessage(AbstractMessage):
 class NoopMessage(AbstractMessage):
 	msg_type = 8
 
+
+
 class SocketIOProtocolFormatter1(object):
 	"""Parsing functions for version 1 of the socketio protocol."""
 
 	interface.implements( interfaces.ISocketIOProtocolFormatter )
+
+	_LIGHTWEIGHT_FRAME_DELIM      = b'\xff\xfd'     # u'\ufffd', the opening byte of a lightweight framing
+	_LIGHTWEIGHT_FRAME_UTF8_DELIM = b'\xef\xbf\xbd' # utf-8 encoding of u'\ufffd'
 
 	# See: https://github.com/LearnBoost/socket.io-spec
 	def __init__(self):
@@ -113,7 +118,7 @@ class SocketIOProtocolFormatter1(object):
 	def make_ack(self, msg_id, params):
 		return (b"6:::%s%s" % (msg_id, self.encode(params))).encode('utf-8')
 
-	def make_connect( self, tail ):
+	def make_connect( self, tail=b'' ):
 		return (b"1::%s" % tail).encode( 'utf-8' )
 
 	def encode(self, message):
@@ -124,6 +129,36 @@ class SocketIOProtocolFormatter1(object):
 			return self.encode(json.dumps(message))
 
 		raise ValueError("Can't encode message")
+
+	def _frame( self, msg ):
+		"""
+		Given a byte string message, frame it and return the framed bytes.
+		"""
+		if isinstance(msg,unicode):
+			logger.warn( "Framing message that is unicode; should be bytes by this level %s", msg)
+			msg = msg.encode('utf-8')
+		return self._LIGHTWEIGHT_FRAME_UTF8_DELIM + str( len( msg ) ) + self._LIGHTWEIGHT_FRAME_UTF8_DELIM + msg
+
+	def encode_multi( self, messages ):
+		"""
+		:param messages: A sequence of strings that have already been according
+			to methods like :meth:`make_event`.
+		:return: A byte string. If there was more than one message, this will be a framed
+			string. Otherwise, it will be equivalent to the first object in messages.
+		"""
+		if not messages:
+			# Hmm, nothing to do. Caller error?
+			return
+
+		if len(messages) == 1:
+			msg = messages[0]
+			if isinstance(msg,unicode):
+				logger.warn( "Framing message that is unicode; should be bytes by this level %s", msg)
+				msg = msg.encode('utf-8')
+			return msg
+		# Ok, we must frame them.
+		framed = [self._frame(msg) for msg in messages]
+		return b''.join( framed )
 
 
 	def _parse_data( self, data ):
@@ -209,8 +244,8 @@ class SocketIOProtocolFormatter1(object):
 		"""
 		:return: A sequence of Message objects
 		"""
-		DELIM1 = b'\xff\xfd'     # u'\ufffd', the opening byte of a lightweight framing
-		DELIM2 = b'\xef\xbf\xbd' # utf-8 encoding of u'\ufffd'
+		DELIM1 = self._LIGHTWEIGHT_FRAME_DELIM
+		DELIM2 = self._LIGHTWEIGHT_FRAME_UTF8_DELIM
 
 		# If they give us a unicode object (weird!)
 		# encode as bytes in utf-8 format
