@@ -175,8 +175,15 @@ def render_link( parent_resource, link, user_root_resource=None ):
 				logger.warn( "Fixing up invalid href %s for link %s parent %s root %s",
 						 href, link, parent_resource, user_root_resource )
 			else:
-				logger.warn( "Generating invalid href %s for link %s parent %s root %s",
-						 href, link, parent_resource, user_root_resource )
+				logger.warn( "Generating invalid href %s for link %s target %s target-parent %s parent %s root %s",
+						 href, link,
+						 target,
+						 getattr( target, '__parent__', None ),
+						 parent_resource, user_root_resource )
+				if href and href.startswith( 'OU/' ):
+					# FIXME More hardcoded paths. WTF are these links broken?
+					href = '/dataserver2/providers/'  + href
+					logger.warn( "Fixed up invalid href" )
 
 	return result
 
