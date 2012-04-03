@@ -393,17 +393,18 @@ class TestApplication(ApplicationTestBase):
 		# The edit href is complete
 		assert_that( body, has_entry( 'Links',
 									  has_item( has_entries( rel='edit',
-															 href='/dataserver2/providers/OU/Objects/%s' % urllib.quote(to_external_ntiid_oid(clazz)) ) ) ) )
+															 href='/dataserver2/providers/OU/Classes/CS2051' ) ) ) )
+															 #href='/dataserver2/providers/OU/Objects/%s' % urllib.quote(to_external_ntiid_oid(clazz)) ) ) ) )
 		# And the top-level href matches the edit href
 		assert_that( body, has_entry( 'href', body['Links'][0]['href'] ) )
-
 
 		body = testapp.get( '/dataserver2/providers/OU/Classes/CS2051/CS2051.101', extra_environ=self._make_extra_environ() )
 
 		body = json.loads( body.text )
 		assert_that( body, has_entry( 'MimeType', 'application/vnd.nextthought.sectioninfo' ) )
-		warnings.warn( "Disabled test for section href" )
-		#assert_that( body, has_entry( 'href', '/dataserver2/providers/OU/Classes/CS2051/CS2051.101' ) )
+		#warnings.warn( "Disabled test for section href" )
+
+		assert_that( body, has_entry( 'href', '/dataserver2/providers/OU/Classes/CS2051/CS2051.101' ) )
 
 		# We should be able to resolve the parent class of this section
 		assert_that( body, has_entry( 'Links', has_item( has_entry( 'rel', 'parent' ) ) ) )
@@ -664,7 +665,8 @@ class TestApplication(ApplicationTestBase):
 		# finding the object not via container but via direct lookup, resulting in an ObjectcontainedResource
 		# which gets us to the _UGD* views, not the _Enclosure* views.
 		path = body['Links'][0]['href']
-		assert_that( path, contains_string( 'Objects' ) )
+		assert_that( path, is_( '/dataserver2/providers/OU/Classes/CS2051/CS2051.101/TheSlug' ) ) #contains_string( 'Objects' ) )
+		path = '/dataserver2/providers/OU/Objects/%s' % urllib.quote( body['OID'] )
 		res = testapp.put( path,
 							   data,
 							   headers={'Content-Type': 'application/vnd.nextthought.classscript', 'Slug': 'TheSlug'},

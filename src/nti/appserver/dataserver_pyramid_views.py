@@ -518,21 +518,25 @@ class _GenericGetView(object):
 			# FIXME: Choosing which parent to set is also borked up.
 			# Some context objects (resources) are at the same conceptual level
 			# as the actual request.context, some are /beneath/ that level??
-			if result is resource:
-				# Must be careful not to modify the persistent object
-				result = LocationProxy( result, getattr( result, '__parent__', None), getattr( result, '__name__', None ) )
-			if getattr( resource, '__parent__', None ):
-				result.__parent__ = resource.__parent__
-				# FIXME: Another hack at getting the right parent relationship in.
-				# The actual parent relationship is to the Provider object,
-				# but it has no way back to the root resource. This hack is deliberately
-				# kept very specific for now.
-				if self.request.traversed[-1] == 'Classes' and self.request.traversed[0] == 'providers':
+			# If we have a link all the way back up to the root, we're good?
+			if traversal.find_interface( result, _DSResource ):
+				pass
+			else:
+				if result is resource:
+					# Must be careful not to modify the persistent object
+					result = LocationProxy( result, getattr( result, '__parent__', None), getattr( result, '__name__', None ) )
+				if getattr( resource, '__parent__', None ):
+					result.__parent__ = resource.__parent__
+					# FIXME: Another hack at getting the right parent relationship in.
+					# The actual parent relationship is to the Provider object,
+					# but it has no way back to the root resource. This hack is deliberately
+					# kept very specific for now.
+					if self.request.traversed[-1] == 'Classes' and self.request.traversed[0] == 'providers':
+						result.__parent__ = self.request.context.__parent__
+					elif self.request.traversed[-1] == 'Pages' and self.request.traversed[0] == 'users':
+						result.__parent__ = self.request.context.__parent__
+				elif resource is not self.request.context and hasattr( self.request.context, '__parent__' ):
 					result.__parent__ = self.request.context.__parent__
-				elif self.request.traversed[-1] == 'Pages' and self.request.traversed[0] == 'users':
-					result.__parent__ = self.request.context.__parent__
-			elif resource is not self.request.context and hasattr( self.request.context, '__parent__' ):
-				result.__parent__ = self.request.context.__parent__
 		return result
 
 class _EmptyContainerGetView(object):
