@@ -31,6 +31,7 @@ import BTrees.OOBTree
 from zope import interface
 from zope import component
 from zope.deprecation import deprecate, deprecated
+from zope import minmax
 
 
 class _AlwaysIn(object):
@@ -366,7 +367,7 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 		self.Active = True
 		self.id = None
 		self.containerId = None
-		self.MessageCount = 0
+		self._MessageCount = datastructures.MergingCounter( 0 )
 		self.CreatedTime = time.time()
 		self._occupant_session_ids = BTrees.OOBTree.Set()
 		# Sometimes a room is created with a subset of the occupants that
@@ -380,7 +381,19 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 		# Things for the moderation subclass
 		self._moderated = False
 
+	def _get_MessageCount(self):
+		return self._MessageCount.value
+	def _set_MessageCount(self,nv):
+		self._MessageCount.value = nv
+	MessageCount = property(_get_MessageCount,_set_MessageCount)
+
 	def __setstate__( self, state ):
+		# Migration 2012-04-03. Easier than searching these all out
+		if 'MessageCount' in state:
+			state = dict(state)
+			state['_MessageCount'] = datastructures.MergingCounter( state['MessageCount'] )
+			del state['MessageCount']
+
 		super(_Meeting,self).__setstate__( state )
 		# Because we are swizzling classes dynamically at
 		# runtime, that fact may not be persisted in the database.
