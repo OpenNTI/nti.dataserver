@@ -116,6 +116,7 @@ setup(
 		'zope.lifecycleevent',
 		'zope.location',
 		'zope.mimetype',
+		'zope.minmax >= 1.1.2',
 		'zope.pagetemplate',
 		'zope.publisher',
 		'zope.processlifetime',
