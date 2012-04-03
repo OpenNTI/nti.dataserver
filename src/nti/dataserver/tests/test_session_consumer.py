@@ -17,6 +17,7 @@ from nti.dataserver.session_consumer import SessionConsumer
 import nti.dataserver.chat as chat
 
 import nti.socketio as socketio
+import nti.socketio.protocol
 import mock_dataserver
 
 class MockSocketIO(object):
@@ -35,12 +36,14 @@ class MockSocketIO(object):
 		self.internalize_function = None
 
 	def send_event( self, name, *args ):
+		socketio.protocol.SocketIOProtocolFormatter1().make_event( name, *args )
 		self.events.append( (name, args) )
 
 	def send( self, data ):
 		self.data.append( data )
 
 	def ack( self, mid, data ):
+		socketio.protocol.SocketIOProtocolFormatter1().make_ack( mid, data )
 		self.acks.append( (mid,data) )
 
 	def new_protocol( self, h=None ): return self
