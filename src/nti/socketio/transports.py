@@ -75,7 +75,12 @@ class XHRPollingTransport(BaseTransport):
 			messages = session.get_client_msgs()
 			if not messages:
 				existing_proxy = session_service.get_proxy_session( session.session_id )
-				if existing_proxy is None:
+				if existing_proxy is not None:
+					# Hmm. We're alive here somewhere. That's bad, we leaked somewhere.
+					# Just sleep to slow the client down
+					logger.debug( "Session %s already has proxy!", session.session_id )
+					gevent.sleep( 5 )
+				elif existing_proxy is None:
 					# On the chance that we're already polling
 					# for this session in this server, don't replace the proxy
 					# (This is 'thread'-safe because we're greenlets)
@@ -300,6 +305,8 @@ class WebsocketTransport(BaseTransport):
 				#except UnicodeError:
 				#	logger.exception( "Failed to send message that couldn't be encoded: '%s' => '%s'",
 				#					  message, encoded )
+			session_service.set_proxy_session( session_id, None )
+
 
 		def _do_read(message):
 			session = session_service.get_session( session_id )
@@ -338,7 +345,7 @@ class WebsocketTransport(BaseTransport):
 						break
 					except transaction.interfaces.TransientError:
 						logger.exception( "Retrying read_from_ws on transient error" )
-
+			session_service.set_proxy_session( session_id, None )
 
 		ping_sleep = kwargs.get( 'ping_sleep', 5.0 )
 		@_catch_all
