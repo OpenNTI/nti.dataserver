@@ -132,3 +132,15 @@ class TestSocketIOProtocolFormatter1(AbstractTestBase):
 		with self.assertRaises( ValueError ):
 			byte_framed = b'\xef\xbf\xbd' + str(len( bts ) + 5) + b'\xef\xbf\xbd' + bts
 			decode( byte_framed )
+
+	def test_encode_multi( self ):
+		# A single item
+		ucode = u'5:1+::{"name": "foo", "args": []}'
+		assert_that( self.protocol.encode_multi( [ucode] ),
+					 is_( ucode ) )
+
+		# Multiple items
+		unicode_framed = u'\ufffd' + unicode(len( ucode )) + u'\ufffd' + ucode
+		bte_framed = unicode_framed.encode( 'utf-8' )
+		assert_that( self.protocol.encode_multi( [ucode,ucode] ),
+					 is_( bte_framed + bte_framed ) )

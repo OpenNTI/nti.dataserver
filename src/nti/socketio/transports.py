@@ -87,41 +87,29 @@ class XHRPollingTransport(BaseTransport):
 				# and let the next poll pick up the message.
 				# TODO: It may be possible to back out of the transaction
 				# and retry.
-				session_proxy.get_client_msg( timeout=5.0 )
-				if messages == None or not messages:
+				message = session_proxy.get_client_msg( timeout=5.0 )
+				if message is not None:
+					messages = [message]
+				if not messages:
 					raise Empty()
-			message = messages[0]
-			message = session.socket.protocol.encode(message)
-			# Are there any more we can get immediately? If so, do it
-			# and add them on. This will raise Empty and we'll break
-			# out of the loop.
-			if messages[1:]:
-				# The first one is a little special.
-				m2 = messages[1]
-				m2 = session.socket.protocol.encode( m2 )
-				def wrap( msg ):
-					return '\xef\xbf\xbd' + str( len( msg ) ) + '\xef\xbf\xbd' + msg
-
-				message = wrap( message ) + wrap( m2 )
-
-				for m2 in messages[2:]:
-					m2 = session.socket.protocol.encode( m2 )
-					message = message + wrap( m2 )
+			message = session.socket.protocol.encode_multi( messages )
 		except (Empty,IndexError):
-			message = b"8::" # NOOP
+			message = session.socket.protocol.make_noop()
 		finally:
 			if existing_proxy is None:
 				session_service.set_proxy_session( None )
 
 		response = self.request.response
-		response.body = message.encode( 'utf-8' )
+		response.body = message
 		return response
 
 	def _request_body(self):
 		return self.request.body
 
 
-	def post(self, session, response_message="8::"):
+	def post(self, session, response_message=None):
+		if response_message is None:
+			response_message = session.socket.make_noop()
 		try:
 			_decode_packet_to_session( session, session.socket, self._request_body )
 		except Exception:
@@ -150,11 +138,11 @@ class XHRPollingTransport(BaseTransport):
 			# need to be dealt with...
 			session.connection_confirmed = True
 			if request_method == 'POST' and self.request.content_length:
-				response = self.post( session, response_message="1::" )
+				response = self.post( session, response_message=session.socket.protocol.make_connect() )
 			else:
 				response = self.request.response
 				response.headers['Connection'] = 'close'
-				response.body =  b"1::"
+				response.body =  session.socket.protocol.make_connect()
 
 			return response
 
@@ -165,7 +153,7 @@ class XHRPollingTransport(BaseTransport):
 			# like a fresh connection
 			response = self.request.response
 			response.headers['Connection'] = 'close'
-			response.body =  b"1::"
+			response.body =  session.socket.protocol.make_connect( )
 			return response
 
 		if request_method in ("GET", "POST", "OPTIONS"):
@@ -301,14 +289,15 @@ class WebsocketTransport(BaseTransport):
 					break
 				encoded = None
 				try:
-					encoded = component.getUtility( interfaces.ISocketIOProtocolFormatter, name='1' ).encode( message )
-					websocket.send(encoded)
+					assert isinstance(message, str), "Messages should already be encoded as required"
+					#encoded = component.getUtility( interfaces.ISocketIOProtocolFormatter, name='1' ).encode( message )
+					websocket.send(message)
 				except socket.error:
 					# The session will be killed of its own accord soon enough.
 					break
-				except UnicodeError:
-					logger.exception( "Failed to send message that couldn't be encoded: '%s' => '%s'",
-									  message, encoded )
+				#except UnicodeError:
+				#	logger.exception( "Failed to send message that couldn't be encoded: '%s' => '%s'",
+				#					  message, encoded )
 
 		def _do_read(message):
 			session = session_service.get_session( session_id )
