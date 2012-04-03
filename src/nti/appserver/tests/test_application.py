@@ -545,6 +545,12 @@ class TestApplication(ApplicationTestBase):
 		assert_that( body, has_entry( 'Links', has_item( has_entry( 'href', '/dataserver2/providers/OU/Classes/CS2051/SimplePersistentEnclosure' ) ) ) )
 		assert_that( body, has_entry( 'Links', has_item( has_entry( 'href', '/dataserver2/providers/OU/Classes/CS2051/SimplePersistentEnclosure-2' ) ) ) )
 
+		path = '/dataserver2/providers/OU/Classes'
+		res = testapp.get( path, extra_environ=self._make_extra_environ() )
+		body = json.loads( res.body )
+#		from IPython.core.debugger import Tracer; debug_here = Tracer()()
+		links = body['Items']['CS2051']['Links']
+		assert_that( links, has_item( has_entry( 'href', '/dataserver2/providers/OU/Classes/CS2051/SimplePersistentEnclosure' ) ) )
 
 	def _check_class_modeled_enclosure_href( self, data, mime_type, check_get_with_objects=True ):
 		with mock_dataserver.mock_db_trans( self.ds ):
@@ -648,6 +654,11 @@ class TestApplication(ApplicationTestBase):
 		body = json.loads( res.body )
 		assert_that( body, has_entry( 'Links', has_item( has_entry( 'href', '/dataserver2/providers/OU/Classes/CS2051/CS2051.101/TheSlug' ) ) ) )
 
+		# Getting just the classes is correct link as well
+		res = testapp.get( '/dataserver2/providers/OU/Classes', extra_environ=self._make_extra_environ() )
+		body = json.loads( res.body )
+		links = body['Items']['CS2051']['Sections'][0]['Links']
+		assert_that( links, has_item( has_entry( 'href', '/dataserver2/providers/OU/Classes/CS2051/CS2051.101/TheSlug' ) ) )
 
 		# Get it
 		res = testapp.get( '/dataserver2/providers/OU/Classes/CS2051/CS2051.101/TheSlug', extra_environ=self._make_extra_environ() )
