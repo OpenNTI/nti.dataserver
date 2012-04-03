@@ -280,7 +280,15 @@ class REST(object):
 
 						# For cases that we can, make edit and the toplevel href be the same.
 						# this improves caching
-						obj['href'] = render_link( parent, link, user_root )['href']
+						try:
+							href = traversal.normal_resource_path( parent )
+						except AttributeError:
+							href = None
+						if _is_valid_href(href):
+							obj['href'] = href
+							link.target = href
+						else:
+							obj['href'] = render_link( parent, link, user_root )['href']
 
 				obj[StandardExternalFields.LINKS] = [render_link(parent, link, user_root) if isinstance( link, links.Link ) else link
 													 for link
