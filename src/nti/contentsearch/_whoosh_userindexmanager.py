@@ -6,7 +6,9 @@ from zope import interface
 
 from whoosh.store import LockError
 
+from nti.contentsearch import LFUMap
 from nti.contentsearch.interfaces import IUserIndexManager
+from nti.contentsearch.interfaces import IUserIndexManagerFactory
 from nti.contentsearch.common import get_type_name
 from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch.common import empty_search_result
@@ -23,6 +25,31 @@ import logging
 logger = logging.getLogger( __name__ )
 
 # -----------------------------
+	
+def get_indexname(username, type_name, use_md5=True):
+	type_name = normalize_type_name(type_name)
+	if use_md5:
+		m = md5()
+		m.update(username)
+		m.update(type_name)
+		indexname = str(m.hexdigest())
+	else:
+		indexname = "%s_%s" % (username, type_name)
+	return indexname
+
+def get_stored_indices(username, storage, use_md5=True):
+	result = []
+	with storage.dbTrans():
+		for type_name in indexable_type_names:
+			type_name = normalize_type_name(type_name)
+			index_name = get_indexname(username, type_name, use_md5)
+			if storage.index_exists(index_name, username=username):
+				result.append(type_name)
+	return result
+	
+def has_stored_indices(username, storage, use_md5=True):
+	names = get_stored_indices(username, storage, use_md5)
+	return True if names else False
 	
 class WhooshUserIndexManager(object):
 	interface.implements(IUserIndexManager)
@@ -61,14 +88,7 @@ class WhooshUserIndexManager(object):
 	# -------------------
 	
 	def _get_indexname(self, type_name):
-		type_name = normalize_type_name(type_name)
-		if self.use_md5:
-			m = md5()
-			m.update(self.username)
-			m.update(type_name)
-			indexname = str(m.hexdigest())
-		else:
-			indexname = "%s_%s" % (self.username, type_name)
+		indexname = get_indexname(self.username, type_name, self.use_md5)
 		return indexname
 	
 	def _get_or_create_index(self, type_name):
@@ -224,7 +244,6 @@ class WhooshUserIndexManager(object):
 	# -------------------
 
 	def _close_index(self, index):
-		index.optimize()
 		index.close()
 	
 	@TraxWrapper
@@ -246,12 +265,7 @@ class WhooshUserIndexManager(object):
 	
 	@TraxWrapper
 	def get_stored_indices(self):
-		result = []
-		for type_name in indexable_type_names:
-			type_name = normalize_type_name(type_name)
-			index_name = self._get_indexname(type_name)
-			if self.storage.index_exists(index_name, username=self.username):
-				result.append(type_name)
+		result = get_stored_indices(self.username, self.storage, self.use_md5)
 		return result
 	
 	def has_stored_indices(self):
@@ -278,13 +292,44 @@ class WhooshUserIndexManager(object):
 
 # -----------------------------
 
-def wuim_factory(index_storage=None, use_md5=True, delay=0.25, maxiters=15):
-	def f(username, *args, **kwargs):
-		_use_md5 = kwargs['use_md5'] if 'use_md5' in kwargs else use_md5
-		_storage = index_storage or kwargs.get('index_storage', None) or kwargs.get('storage', None)
-		return WhooshUserIndexManager(	username = username,
-										index_storage = _storage, 
-										use_md5 = _use_md5,
-										delay = delay,
-										maxiters = maxiters)
-	return f
+class WhooshUserIndexManagerFactory(object):
+	interface.implements(IUserIndexManagerFactory)
+
+	def __init__(self, index_storage, max_users=100, use_md5=True, delay=0.25, maxiters=15):
+		self.delay = delay
+		self.use_md5 = use_md5
+		self.maxiters = maxiters
+		self.index_storage = index_storage
+		self.users = LFUMap(maxsize=max_users, on_removal_callback=self.on_item_removed)
+
+	def __str__( self ):
+		return 'users=%s' % len(self.users)
+
+	def __repr__( self ):
+		return 'WhooshUserIndexManagerFactory(users=%s)' % len(self.users)
+	
+	@property
+	def storage(self):
+		return self.index_storage	
+		
+	def __call__(self, username, *args, **kwargs):
+		uim = self.users.get(username, None)
+		create = kwargs.get('create', False)
+		if not uim and (create or has_stored_indices(username, self.storage, self.use_md5)):
+			uim = WhooshUserIndexManager(username = username,
+										 index_storage = self.storage, 
+										 use_md5 = self.use_md5,
+										 delay = self.delay,
+										 maxiters = self.maxiters)
+			self.users[username] = uim
+
+		return uim
+	
+	def on_item_removed(self, key, value):
+		try:
+			value.close()
+		except:
+			logger.exception("Error while closing index manager %s" % key)
+		
+def wuim_factory(index_storage, max_users=100, use_md5=True, delay=0.25, maxiters=15):
+	return WhooshUserIndexManagerFactory(index_storage, max_users, use_md5, delay, maxiters)

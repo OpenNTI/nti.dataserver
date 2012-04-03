@@ -4,7 +4,6 @@ from zope import interface
 from nti.dataserver.users import User
 from nti.dataserver import interfaces as nti_interfaces
 
-from nti.contentsearch import LFUMap
 from nti.contentsearch import interfaces
 from nti.contentsearch._indexagent import handle_index_event
 
@@ -38,7 +37,6 @@ class IndexManager(object):
 
 	def __init__(self, bookidx_manager_factory, useridx_manager_factory, max_users=500, dataserver=None):
 		self.books = {}
-		self.users = LFUMap(maxsize=max_users, on_removal_callback=self.on_item_removed)
 		self.bookidx_manager_factory = bookidx_manager_factory
 		self.useridx_manager_factory = useridx_manager_factory
 		self.ds = dataserver or component.queryUtility( nti_interfaces.IDataserver )
@@ -47,7 +45,7 @@ class IndexManager(object):
 		return self.__repr__()
 
 	def __repr__( self ):
-		return 'IndexManager(books=%s, users=%s)' % (len(self.books), len(self.users))
+		return 'IndexManager(books=%s, %s)' % (len(self.books), self.useridx_manager_factory)
 
 	@property
 	def dataserver(self):
@@ -98,12 +96,10 @@ class IndexManager(object):
 	suggest_and_search = content_suggest_and_search
 
 	def _get_user_index_manager(self, username, create=False, **kwargs):
-		uim = self.users.get(username, None)
-		if not uim and self.users_exists(username):
-			uim = self.useridx_manager_factory(username=username, **kwargs)
-			if uim and (create or uim.has_stored_indices()):
-				self.users[username] = uim
-		return uim
+		result = None
+		if self.users_exists(username):
+			result = self.useridx_manager_factory(username=username, create=create, **kwargs)
+		return result
 
 	def _get_user_object(self, username):
 		result = User.get_user(username, dataserver=self.dataserver) if self.dataserver else None
@@ -195,30 +191,9 @@ class IndexManager(object):
 
 	# -------------------
 
-	def _close(self, obj):
-		if obj and hasattr(obj, 'close'):
-			try:
-				obj.close()
-			except:
-				pass
-
-	def on_item_removed(self, key, value):
-		self._close(value)
-
-	def remove_user(self, username):
-		um = self.users.pop(username, None)
-		self._close(um)
-
-	def _close_ums(self):
-		for um in self.users.itervalues():
-			self._close(um)
-
 	def close(self):
 		for bm in self.books.itervalues():
 			self._close(bm)
-
-		self._close_ums()
-		self._indexagent.close()
 
 	def __del__(self):
 		self.close()

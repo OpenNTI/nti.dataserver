@@ -111,6 +111,14 @@ class IUserIndexManager(ISearcher):
 		"""
 	
 # -----------------------------
+
+class IUserIndexManagerFactory(interface.Interface):
+	def __call__(username, *args, **kwargs):
+		"""
+		return a user index manager for the specified user
+		"""
+		
+# -----------------------------
 	
 class IIndexManager(interface.Interface):
 	
