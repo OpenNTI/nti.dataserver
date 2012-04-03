@@ -19,8 +19,9 @@ from nti.socketio import interfaces
 import nti.dataserver.interfaces as nti_interfaces
 
 
-def _decode_packet_to_session( session, sock, data ):
-	for pkt in sock.protocol.decode_multi( data ):
+def _decode_packet_to_session( session, sock, data, multi=True ):
+	pkts = sock.protocol.decode_multi( data ) if multi else (sock.protocol.decode(data),)
+	for pkt in pkts:
 		if pkt.msg_type == 0:
 			session.kill()
 		elif pkt.msg_type == 1:
@@ -323,7 +324,7 @@ class WebsocketTransport(BaseTransport):
 
 
 			try:
-				_decode_packet_to_session( session, session.socket, message )
+				_decode_packet_to_session( session, session.socket, message, multi=False )
 			except Exception:
 				logger.exception( "Failed to read packets from WS; killing session %s", session_id )
 				session.kill()
