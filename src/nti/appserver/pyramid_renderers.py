@@ -180,10 +180,19 @@ def render_link( parent_resource, link, user_root_resource=None ):
 						 target,
 						 getattr( target, '__parent__', None ),
 						 parent_resource, user_root_resource )
+				try:
+					if _is_valid_href( traversal.normal_resource_path( target ) ):
+						href = traversal.normal_resource_path( target )
+						result[StandardExternalFields.HREF] = href
+						logger.warn( "Fixed up invalid href to target %s", href )
+				except AttributeError:
+					pass
+				
 				if href and href.startswith( 'OU/' ):
 					# FIXME More hardcoded paths. WTF are these links broken?
 					href = '/dataserver2/providers/'  + href
-					logger.warn( "Fixed up invalid href" )
+					result[StandardExternalFields.HREF] = href
+					logger.warn( "Fixed up invalid href to %s", href )
 
 	return result
 
