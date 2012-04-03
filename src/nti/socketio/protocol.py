@@ -173,7 +173,7 @@ class SocketIOProtocolFormatter1(object):
 				pass # TODO send auto ack
 			message['type'] = 'event'
 		else:
-			raise Exception("Unknown message type: %s" % msg_type)
+			raise Exception("Unknown message type: %s endpoint %s id %s" % (msg_type, msg_endpoint, msg_id) )
 
 		return message
 
@@ -181,11 +181,15 @@ class SocketIOProtocolFormatter1(object):
 		"""
 		:return: A sequence of Message objects
 		"""
-		DELIM1 = '\xff\xfd' #u'\ufffd'
-		DELIM2 = '\xef\xbf\xbd' # utf-8 encoding
+		DELIM1 = b'\xff\xfd' #u'\ufffd'
+		DELIM2 = b'\xef\xbf\xbd' # utf-8 encoding
+		# TODO: This is probably not right!
+		if isinstance( data, unicode ):
+			data = data.encode( 'utf-8' ) 
 
 		if not data.startswith( DELIM1 ) and not data.startswith( DELIM2 ):
 			# Assume one
+			# TODO: This is definitely not right
 			return ( self.decode( data ), )
 
 		d = DELIM1
