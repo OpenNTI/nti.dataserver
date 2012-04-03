@@ -83,6 +83,12 @@ def implements( iface ):
 
 has_attr = hamcrest.library.has_property
 
+import unittest
+import zope.testing.cleanup
+
+class AbstractTestBase(zope.testing.cleanup.CleanUp, unittest.TestCase):
+	pass
+
 def main():
 	dirname = os.path.dirname( __file__ )
 	if not dirname:
@@ -101,4 +107,3 @@ def main():
 
 if __name__ == '__main__':
 	main()
-

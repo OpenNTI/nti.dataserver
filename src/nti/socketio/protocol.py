@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function, unicode_literals
+
 import logging
 logger = logging.getLogger(__name__)
 import six
@@ -98,16 +100,16 @@ class SocketIOProtocolFormatter1(object):
 		super(SocketIOProtocolFormatter1,self).__init__()
 
 	def make_event(self, name, *args):
-		return ("5:::" + self.encode({'name': name, 'args': args}))
+		return (b"5:::" + self.encode({'name': name, 'args': args})).encode('utf-8')
 
 	def make_heartbeat( self ):
-		return ("2::")
+		return (b"2::")
 
 	def make_ack(self, msg_id, params):
-		return ("6:::%s%s" % (msg_id, self.encode(params)))
+		return (b"6:::%s%s" % (msg_id, self.encode(params))).encode('utf-8')
 
 	def make_connect( self, tail ):
-		return ("1::%s" % tail)
+		return (b"1::%s" % tail).encode( 'utf-8' )
 
 	def encode(self, message):
 		if isinstance(message, six.string_types):
@@ -123,10 +125,22 @@ class SocketIOProtocolFormatter1(object):
 		data = data.lstrip()
 		return json.loads( data )
 
+	# 0 to 5 are all we handle
+	_known_messages = [str(i) for i in range(6)]
+
 	def decode(self, data):
 		"""
 		:return: A single Message object.
 		"""
+
+		if not data:
+			raise ValueError( "Must provide data" )
+
+		if data[0] not in self._known_messages:
+			ve = ValueError( 'Unknown message type', data )
+			ve.message = 'Unknown message type'
+			raise ve
+
 		msg_type, msg_id, tail = data.split(":", 2)
 
 		# 'disconnect'
@@ -136,15 +150,15 @@ class SocketIOProtocolFormatter1(object):
 		# 'json'
 		# 'event'
 		# 'ack'
-		# 'error'
-		# 'noop'
+		# 'error' -- not handled
+		# 'noop'  -- not handled
 
 
 		if msg_type == "0": # disconnect
 			return DisconnectMessage()
 
 		if msg_type == "1": # connect
-			return ConnectMessage( data=data )
+			return ConnectMessage( data=tail )
 
 
 		if msg_type == "2": # heartbeat
@@ -172,8 +186,8 @@ class SocketIOProtocolFormatter1(object):
 			else:
 				pass # TODO send auto ack
 			message['type'] = 'event'
-		else:
-			raise Exception("Unknown message type: %s endpoint %s id %s" % (msg_type, msg_endpoint, msg_id) )
+
+		assert message is not None, "Got unhandled message"
 
 		return message
 
@@ -181,15 +195,17 @@ class SocketIOProtocolFormatter1(object):
 		"""
 		:return: A sequence of Message objects
 		"""
-		DELIM1 = b'\xff\xfd' #u'\ufffd'
-		DELIM2 = b'\xef\xbf\xbd' # utf-8 encoding
-		# TODO: This is probably not right!
+		DELIM1 = b'\xff\xfd'     # u'\ufffd', the opening byte of a lightweight framing
+		DELIM2 = b'\xef\xbf\xbd' # utf-8 encoding of u'\ufffd'
+
+		# If they give us a unicode object (weird!)
+		# encode as bytes in utf-8 format
 		if isinstance( data, unicode ):
-			data = data.encode( 'utf-8' ) 
+			data = data.encode( 'utf-8' )
+		assert isinstance( data, str ), "Must be a bytes object, not unicode"
 
 		if not data.startswith( DELIM1 ) and not data.startswith( DELIM2 ):
 			# Assume one
-			# TODO: This is definitely not right
 			return ( self.decode( data ), )
 
 		d = DELIM1
@@ -204,11 +220,11 @@ class SocketIOProtocolFormatter1(object):
 			start_search = start + dl
 			end = data.find( d, start_search )
 			len_str = int( data[start_search:end] )
-			assert len_str > 0
+			if len_str <= 0: raise ValueError( 'Bad length' )
 			end_data = end + dl + len_str
 			sub_data = data[end+dl:end_data]
-			assert sub_data, "Data from %s to %s was not len %s (got %s)" % (start_search, end_data, len_str, sub_data )
-			assert len(sub_data) == len_str, "Data from %s to %s was not len %s (got %s)" % (start_search, end_data, len_str, sub_data )
+			if not sub_data: raise ValueError( "Data from %s to %s was not len %s (got %s)" % (start_search, end_data, len_str, sub_data ) )
+			if not len(sub_data) == len_str: raise ValueError( "Data from %s to %s was not len %s (got %s)" % (start_search, end_data, len_str, sub_data ) )
 			messages.append( self.decode( sub_data ) )
 
 			start = end_data
