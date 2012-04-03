@@ -19,9 +19,19 @@ class TestSocketIOProtocolFormatter1(AbstractTestBase):
 	def test_makes_return_bytes(self):
 		assert_that( self.protocol.make_event( 'name' ), is_( str ) )
 		assert_that( self.protocol.make_heartbeat(), is_( str ) )
+		assert_that( self.protocol.make_noop(), is_( str ) )
 		assert_that( self.protocol.make_ack( '1', [] ), is_( str ) )
 		assert_that( self.protocol.make_connect( '' ), is_( str ) )
 
+	def test_make_invalid_event( self ):
+		with self.assertRaises( ValueError ):
+			self.protocol.make_event( '' )
+
+		with self.assertRaises( ValueError ):
+			self.protocol.make_event( 1 )
+
+		with self.assertRaises( ValueError ):
+			self.protocol.make_event( 'connect' )
 
 	def test_decode_disconnect( self ):
 		assert_that( self.protocol.decode( '0::' ),
@@ -56,19 +66,19 @@ class TestSocketIOProtocolFormatter1(AbstractTestBase):
 
 	def test_decode_event( self ):
 		for decoder in (self.protocol.decode, lambda x: self.protocol.decode_multi(x)[0]):
-			for s in ( u'5:::{"name": "foo"}',b'5:::{"name": "foo"}' ):
-				msg = decoder( s )
-				assert_that( msg, is_( protocol.EventMessage ) )
-				assert_that( msg, has_entry( 'type', 'event' ) )
-				assert_that( msg, has_entry( 'name', 'foo' ) )
-				assert_that( msg, has_length( 2 ) )
-
-			for s in ( u'5:1+::{"name": "foo"}',b'5:1+::{"name": "foo"}' ):
+			for s in ( u'5:::{"name": "foo", "args": []}',b'5:::{"name": "foo", "args": []}' ):
 				msg = decoder( s )
 				assert_that( msg, is_( protocol.EventMessage ) )
 				assert_that( msg, has_entry( 'type', 'event' ) )
 				assert_that( msg, has_entry( 'name', 'foo' ) )
 				assert_that( msg, has_length( 3 ) )
+
+			for s in ( u'5:1+::{"name": "foo", "args": []}',b'5:1+::{"name": "foo", "args": []}' ):
+				msg = decoder( s )
+				assert_that( msg, is_( protocol.EventMessage ) )
+				assert_that( msg, has_entry( 'type', 'event' ) )
+				assert_that( msg, has_entry( 'name', 'foo' ) )
+				assert_that( msg, has_length( 4 ) )
 				assert_that( msg, has_entry( 'id', '1+' ) )
 
 	def test_decode_exceptions( self ):
@@ -78,13 +88,25 @@ class TestSocketIOProtocolFormatter1(AbstractTestBase):
 		assert_that( cm.exception.message, is_( 'Must provide data' ) )
 
 		with self.assertRaises( ValueError ) as cm:
+			self.protocol.decode(  u'5:1+::{"args": []}' )
+		assert_that( cm.exception.args[0], is_( 'Improper event, missing name' ) )
+
+		with self.assertRaises( ValueError ) as cm:
+			self.protocol.decode(  u'5:1+::{"name": "foo"}' )
+		assert_that( cm.exception.args[0], is_( 'Improper event, missing args' ) )
+
+		with self.assertRaises( ValueError ) as cm:
+			self.protocol.decode(  u'5:1+::{"name": "connect"}' )
+		assert_that( cm.exception.args[0], is_( 'Improper event, reserved name' ) )
+
+		with self.assertRaises( ValueError ) as cm:
 			self.protocol.decode( '9' )
 		assert_that( cm.exception.message, is_( 'Unknown message type' ) )
 		assert_that( cm.exception.args, is_( ('Unknown message type', '9') ) )
 
 
 	def test_decode_multi( self ):
-		ucode = u'5:1+::{"name": "foo"}'
+		ucode = u'5:1+::{"name": "foo", "args": []}'
 		unicode_framed = u'\ufffd' + unicode(len( ucode )) + u'\ufffd' + ucode
 
 		def decode( framed ):
@@ -97,7 +119,7 @@ class TestSocketIOProtocolFormatter1(AbstractTestBase):
 
 		decode( unicode_framed )
 
-		bts = b'5:1+::{"name": "foo"}'
+		bts = b'5:1+::{"name": "foo", "args": []}'
 		byte_framed = b'\xef\xbf\xbd' + str(len( bts )) + b'\xef\xbf\xbd' + bts
 		decode( byte_framed )
 

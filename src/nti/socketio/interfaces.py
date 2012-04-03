@@ -29,6 +29,10 @@ class ISocketIOProtocolFormatter(interface.Interface):
 	def make_heartbeat( ):
 		""" """
 
+	def make_noop():
+		"""
+		"""
+
 	def make_ack(msg_id, params):
 		""" """
 

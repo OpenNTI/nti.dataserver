@@ -100,10 +100,15 @@ class SocketIOProtocolFormatter1(object):
 		super(SocketIOProtocolFormatter1,self).__init__()
 
 	def make_event(self, name, *args):
+		if not name or not isinstance( name, six.string_types ) or name in self._reserved_event_names:
+			raise ValueError( "Improper outgoing event name", name )
 		return (b"5:::" + self.encode({'name': name, 'args': args})).encode('utf-8')
 
 	def make_heartbeat( self ):
 		return (b"2::")
+
+	def make_noop( self ):
+		return b"8::"
 
 	def make_ack(self, msg_id, params):
 		return (b"6:::%s%s" % (msg_id, self.encode(params))).encode('utf-8')
@@ -127,6 +132,8 @@ class SocketIOProtocolFormatter1(object):
 
 	# 0 to 5 are all we handle
 	_known_messages = [str(i) for i in range(6)]
+	_reserved_event_names = ('message', 'connect', 'disconnect', 'open',
+							 'close', 'error', 'retry', 'reconnect')
 
 	def decode(self, data):
 		"""
@@ -180,6 +187,13 @@ class SocketIOProtocolFormatter1(object):
 		elif msg_type == "5": # event
 			message = self._parse_data(data)
 			message = EventMessage( message )
+
+			if 'name' not in message:
+				raise ValueError( 'Improper event, missing name', message )
+			if message['name'] in self._reserved_event_names:
+				raise ValueError( 'Improper event, reserved name', message )
+			if not isinstance( message.get( 'args' ), list ):
+				raise ValueError( 'Improper event, missing args', message )
 
 			if "+" in msg_id:
 				message['id'] = msg_id
