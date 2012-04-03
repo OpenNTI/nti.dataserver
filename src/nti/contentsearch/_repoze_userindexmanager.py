@@ -10,6 +10,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.datastructures import toExternalOID
 
 from nti.contentsearch import interfaces
+from nti.contentsearch.interfaces import IUserIndexManagerFactory
 from nti.contentsearch.common import get_type_name
 from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch.common import empty_search_result
@@ -23,8 +24,17 @@ import logging
 logger = logging.getLogger( __name__ )
 
 @contextlib.contextmanager
-def _context_manager():
+def repoze_context_manager():
 	yield component.getUtility( interfaces.IRepozeDataStore )
+	
+def get_stored_indices(username):
+	with repoze_context_manager():
+		store = component.getUtility( interfaces.IRepozeDataStore )
+		return store.get_catalog_names(username)
+			
+def has_stored_indices(username):
+	names = get_stored_indices(username)
+	return True if names else False
 	
 class RepozeUserIndexManager(object):
 	interface.implements(interfaces.IUserIndexManager)
@@ -99,7 +109,7 @@ class RepozeUserIndexManager(object):
 		lm = 0
 		items = results[ITEMS]
 		search_on = self._adapt_search_on_types(kwargs.get('search_on', None))
-		with _context_manager():
+		with repoze_context_manager():
 			search_on = search_on if search_on else self.store.get_catalog_names(self.username)
 			for type_name in search_on:
 				catalog = self.datastore.get_catalog(self.username, type_name)
@@ -138,7 +148,7 @@ class RepozeUserIndexManager(object):
 		threshold = kwargs.get('threshold', 0.4999)
 		prefix = prefix or len(term)
 
-		with _context_manager():
+		with repoze_context_manager():
 			search_on = search_on if search_on else self.store.get_catalog_names(self.username)
 			for type_name in search_on:
 				catalog = self.datastore.get_catalog(self.username, type_name)
@@ -184,7 +194,7 @@ class RepozeUserIndexManager(object):
 		if not data: return None
 		docid = None
 		_oid = self._get_id(data)
-		with _context_manager():
+		with repoze_context_manager():
 			catalog = self._get_create_catalog(data, type_name)
 			if catalog and _oid:
 				docid = self.store.get_or_create_docid_for_address(self.username, _oid)
@@ -195,7 +205,7 @@ class RepozeUserIndexManager(object):
 		if not data: return None
 		_oid = self._get_id(data)
 		if not _oid: return None
-		with _context_manager():
+		with repoze_context_manager():
 			docid = self.store.docid_for_address(self.username, _oid)
 			if docid:
 				catalog = self._get_create_catalog(data, type_name)
@@ -208,7 +218,7 @@ class RepozeUserIndexManager(object):
 		if not data: return None
 		_oid = self._get_id(data)
 		if not _oid: return None
-		with _context_manager():
+		with repoze_context_manager():
 			docid = self.store.docid_for_address(self.username, _oid)
 			if docid:
 				catalog = self._get_create_catalog(data, type_name)
@@ -217,27 +227,65 @@ class RepozeUserIndexManager(object):
 		return docid
 
 	def remove_index(self, type_name):
-		with _context_manager():
+		with repoze_context_manager():
 			result = self.store.remove_catalog(self.username, type_name)
 			return result
 
 	def docid_for_address(self, address):
-		with _context_manager():
+		with repoze_context_manager():
 			docid = self.store.docid_for_address(self.username, address)
 			return docid
 		
 	def get_stored_indices(self):
-		with _context_manager():
-			return self.store.get_catalog_names(self.username)
+		names = get_stored_indices(self.username)
+		return names
 	get_catalog_names = get_stored_indices
 			
 	def has_stored_indices(self):
-		names = self.get_stored_indices()
-		return True if names else False
+		result = has_stored_indices(self.username)
+		return result
 	
 # -----------------------------
 
+class ReoozeUserIndexManagerFactory(object):
+	interface.implements(IUserIndexManagerFactory)
+
+	singleton = None
+
+	def __new__(cls, *args, **kwargs):
+		if not cls.singleton:
+			cls.singleton = super(ReoozeUserIndexManagerFactory, cls).__new__(cls, *args, **kwargs)
+		return cls.singleton
+
+	def __str__( self ):
+		with repoze_context_manager():
+			return 'users=%s' % len(self.store.users)
+
+	def __repr__( self ):
+		with repoze_context_manager():
+			return 'ReoozeUserIndexManagerFactory(users=%s)' % len(self.store.users)
+	
+	@property
+	def store(self):
+		return component.getUtility( interfaces.IRepozeDataStore )
+		
+	@property
+	def dataserver(self):
+		return component.queryUtility( nti_interfaces.IDataserver )
+	
+	def __call__(self, username, *args, **kwargs):
+		create = kwargs.get('create', False)
+		if create or has_stored_indices(username):
+			uim = RepozeUserIndexManager(username)
+			return uim
+		else:
+			return None
+	
+	def on_item_removed(self, key, value):
+		try:
+			value.close()
+		except:
+			logger.exception("Error while closing index manager %s" % key)
+			
 def ruim_factory(*args, **kwargs):
-	def f(username, *fargs, **fkwargs):
-		return RepozeUserIndexManager(username)
-	return f
+	return ReoozeUserIndexManagerFactory()
