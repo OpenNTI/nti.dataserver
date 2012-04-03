@@ -315,7 +315,7 @@ class WebsocketTransport(BaseTransport):
 
 
 			try:
-				_decode_packet_to_session( session, session.socket, message, multi=False )
+				_decode_packet_to_session( session, session.socket, message )
 			except Exception:
 				logger.exception( "Failed to read packets from WS; killing session %s", session_id )
 				session.kill()
