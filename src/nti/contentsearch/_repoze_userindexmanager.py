@@ -4,8 +4,6 @@ import contextlib
 from zope import component
 from zope import interface
 
-from repoze.catalog.query import Contains
-
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.datastructures import toExternalOID
 
@@ -15,6 +13,7 @@ from nti.contentsearch.common import get_type_name
 from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch.common import empty_search_result
 from nti.contentsearch.common import empty_suggest_result
+from nti.contentsearch._repoze_query import Contains
 from nti.contentsearch._repoze_index import get_index_hit
 from nti.contentsearch._repoze_index import create_catalog
 from nti.contentsearch.textindexng3 import CatalogTextIndexNG3
@@ -98,7 +97,9 @@ class RepozeUserIndexManager(object):
 			# globbing character return all
 			ids = self.store.get_docids(self.username)
 			return len(ids), ids
-		return catalog.query(Contains(field, query), limit=limit)
+		
+		queryobject = Contains.create_for_indexng3(field, query)
+		return catalog.query(queryobject, limit=limit)
 
 	def _do_search(self, field, query, limit=None, use_word_highlight=True, *args, **kwargs):
 
