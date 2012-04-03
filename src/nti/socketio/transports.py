@@ -19,8 +19,14 @@ from nti.socketio import interfaces
 import nti.dataserver.interfaces as nti_interfaces
 
 
-def _decode_packet_to_session( session, sock, data, multi=True ):
-	pkts = sock.protocol.decode_multi( data ) if multi else (sock.protocol.decode(data),)
+def _decode_packet_to_session( session, sock, data ):
+	try:
+		pkts = sock.protocol.decode_multi( data )
+	except ValueError:
+		# Bad data from the client. This will never work
+		transaction.doom()
+		raise
+
 	for pkt in pkts:
 		if pkt.msg_type == 0:
 			session.kill()
@@ -52,46 +58,47 @@ class XHRPollingTransport(BaseTransport):
 	def __init__(self, request):
 		super(XHRPollingTransport, self).__init__(request)
 
-	def options(self):
+	def options(self, session):
 		rsp = self.request.response
 		rsp.content_type = 'text/plain'
 		return rsp
-
-	# TODO: The reading and writing should be delegated to the session.socket.protocol
 
 	def get(self, session):
 		session.clear_disconnect_timeout()
 		session_proxy = _SessionEventProxy()
 		session_service = component.getUtility( nti_interfaces.IDataserver ).session_manager
-		existing_proxy = session_service.get_proxy_session( session.session_id )
-		if existing_proxy is None:
-			# On the chance that we're already polling
-			# for this session in this server, don't replace the proxy
-			# (This is 'thread'-safe because we're greenlets)
-			session_service.set_proxy_session( session.session_id, session_proxy )
+		existing_proxy = "did not check"
+
 		try:
 			# A dead session will feed us a None object
 			# whereupon...we blow up...
 			messages = session.get_client_msgs()
-			if not messages and existing_proxy is None:
-				# Nothing to read right now.
-				# The client expects us to block, though, for some time
-				# We use our session proxy to both wait
-				# and notify us immediately if a new message comes in
-				# Note that if we get a message via broadcast,
-				# our cached session is going to be behind, so it's
-				# pointless to try to read from it again. Unfortunately,
-				# to avoid duplicate messages, we cannot just send
-				# this one to the client (since its still in the session).
-				# The simplest thing to do is to immediately return
-				# and let the next poll pick up the message.
-				# TODO: It may be possible to back out of the transaction
-				# and retry.
-				message = session_proxy.get_client_msg( timeout=5.0 )
-				if message is not None:
-					messages = [message]
-				if not messages:
-					raise Empty()
+			if not messages:
+				existing_proxy = session_service.get_proxy_session( session.session_id )
+				if existing_proxy is None:
+					# On the chance that we're already polling
+					# for this session in this server, don't replace the proxy
+					# (This is 'thread'-safe because we're greenlets)
+					session_service.set_proxy_session( session.session_id, session_proxy )
+
+					# Nothing to read right now.
+					# The client expects us to block, though, for some time
+					# We use our session proxy to both wait
+					# and notify us immediately if a new message comes in
+					session_proxy.get_client_msg( timeout=5.0 )
+					# Note that if we get a message via broadcast,
+					# our cached session is going to be behind, so it's
+					# pointless to try to read from it again. Unfortunately,
+					# to avoid duplicate messages, we cannot just send
+					# this one to the client (since its still in the session).
+					# The simplest thing to do is to immediately return
+					# and let the next poll pick up the message. Thus, the return
+					# value is ignored and we simply wait
+					# TODO: It may be possible to back out of the transaction
+					# and retry.
+
+			if not messages:
+				raise Empty()
 			message = session.socket.protocol.encode_multi( messages )
 		except (Empty,IndexError):
 			message = session.socket.protocol.make_noop()
@@ -108,22 +115,17 @@ class XHRPollingTransport(BaseTransport):
 
 
 	def post(self, session, response_message=None):
-		if response_message is None:
-			response_message = session.socket.make_noop()
-		try:
-			_decode_packet_to_session( session, session.socket, self._request_body )
-		except Exception:
-			logger.exception( "Failed to get post in XHRPolling; unconfirming connection" )
-			# The client will expect to re-confirm the session
-			# by sending a blank post when it gets an error.
-			# Our state must match.
-			session.connection_confirmed = False
-			raise
+		_decode_packet_to_session( session, session.socket, self._request_body() )
+		# The client will expect to re-confirm the session
+		# by sending a blank post when it gets an error.
+		# Our state must match. However, we cannot do this:
+		# session.connection_confirmed = False
+		# because our transaction is going to be rolled back
 
 		response = self.request.response
 		response.content_type = 'text/plain'
 		response.headers['Connection'] = 'close'
-		response.body = response_message.encode( 'utf-8' )
+		response.body = response_message or session.socket.protocol.make_noop()
 		return response
 
 
