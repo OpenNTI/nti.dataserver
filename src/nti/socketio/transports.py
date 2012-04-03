@@ -78,7 +78,7 @@ class XHRPollingTransport(BaseTransport):
 				if existing_proxy is not None:
 					# Hmm. We're alive here somewhere. That's bad, we leaked somewhere.
 					# Just sleep to slow the client down
-					logger.debug( "Session %s already has proxy!", session.session_id )
+					logger.warn( "Session %s already has proxy %s", session.session_id, existing_proxy )
 					gevent.sleep( 5 )
 				elif existing_proxy is None:
 					# On the chance that we're already polling
@@ -211,6 +211,7 @@ class _SessionEventProxy(object):
 	Can be used as a session proxy for getting events when
 	broadcast messages arrive.
 	"""
+
 	def __init__(self):
 		self.client_queue = Queue()
 
@@ -218,6 +219,9 @@ class _SessionEventProxy(object):
 		return self.client_queue.get(**kwargs)
 	def put_client_msg( self, msg ):
 		self.client_queue.put_nowait( msg )
+
+# For ease of distinguishing in logs we subclass
+class _WebsocketSessionEventProxy(_SessionEventProxy): pass
 
 class WebsocketTransport(BaseTransport):
 
@@ -247,11 +251,14 @@ class WebsocketTransport(BaseTransport):
 		# TODO: Create Greenlet subclass that handles transactions
 		# and the standard loop and use that here.
 		session_id = args[0].session_id
-		session_proxy = _SessionEventProxy()
+		session_proxy = _WebsocketSessionEventProxy()
 		session_service = component.getUtility( nti_interfaces.IDataserver ).session_manager
 		context_manager_callable = component.queryUtility( nti_interfaces.IDataserverTransactionContextManager,
 														   default=getattr( self.request, 'context_manager_callable', None ) ) # Unit tests
 
+		# TODO: These three greenlets need linked so that as soon as one dies,
+		# they all die. They also need to do their cleanup (removing the session proxy)
+		# only once
 		session_service.set_proxy_session( session_id, session_proxy )
 
 		# If these jobs die with an error, then they may leak the
@@ -274,38 +281,35 @@ class WebsocketTransport(BaseTransport):
 		@_catch_all
 		def send_into_ws():
 			listen = True
-			while listen:
-				message = session_proxy.get_client_msg()
-				for _ in range(2):
-					try:
-						listen = False
-						with context_manager_callable():
-							cont = _do_send( message )
-							if not cont:
-								break
-						# A successful commit! Yay! Go again
-						listen = True
+			try:
+				while listen:
+					message = session_proxy.get_client_msg()
+					for _ in range(2):
+						try:
+							listen = False
+							with context_manager_callable():
+								cont = _do_send( message )
+								if not cont:
+									break
+							# A successful commit! Yay! Go again
+							listen = True
+							break
+						except transaction.interfaces.TransientError:
+							logger.exception( "Retrying send_into_ws on transient error" )
+
+
+					if not listen:
+						# Don't send a message if the transactions failed
+						# and we're going to break this loop
 						break
-					except transaction.interfaces.TransientError:
-						logger.exception( "Retrying send_into_ws on transient error" )
-
-
-				if not listen:
-					# Don't send a message if the transactions failed
-					# and we're going to break this loop
-					break
-				encoded = None
-				try:
-					assert isinstance(message, str), "Messages should already be encoded as required"
-					#encoded = component.getUtility( interfaces.ISocketIOProtocolFormatter, name='1' ).encode( message )
-					websocket.send(message)
-				except socket.error:
-					# The session will be killed of its own accord soon enough.
-					break
-				#except UnicodeError:
-				#	logger.exception( "Failed to send message that couldn't be encoded: '%s' => '%s'",
-				#					  message, encoded )
-			session_service.set_proxy_session( session_id, None )
+					try:
+						assert isinstance(message, str), "Messages should already be encoded as required"
+						websocket.send(message)
+					except socket.error:
+						# The session will be killed of its own accord soon enough.
+						break
+			finally:
+				session_service.set_proxy_session( session_id, None )
 
 
 		def _do_read(message):
@@ -333,19 +337,21 @@ class WebsocketTransport(BaseTransport):
 		@_catch_all
 		def read_from_ws():
 			listen = True
-			while listen:
-				message = websocket.wait()
-				for _ in range(2):
-					try:
-						with context_manager_callable():
-							cont = _do_read(message)
-							if not cont:
-								listen = False
-								break
-						break
-					except transaction.interfaces.TransientError:
-						logger.exception( "Retrying read_from_ws on transient error" )
-			session_service.set_proxy_session( session_id, None )
+			try:
+				while listen:
+					message = websocket.wait()
+					for _ in range(2):
+						try:
+							with context_manager_callable():
+								cont = _do_read(message)
+								if not cont:
+									listen = False
+									break
+							break
+						except transaction.interfaces.TransientError:
+							logger.exception( "Retrying read_from_ws on transient error" )
+			finally:
+				session_service.set_proxy_session( session_id, None )
 
 		ping_sleep = kwargs.get( 'ping_sleep', 5.0 )
 		@_catch_all
