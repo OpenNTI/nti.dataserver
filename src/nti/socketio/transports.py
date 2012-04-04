@@ -188,6 +188,8 @@ def _catch_all(greenlet):
 	def f(*args):
 		try:
 			greenlet(*args)
+		except gevent.GreenletExit:
+			logger.info( "Terminating greenlet by request" )
 		except:
 			# Trap and log.
 			logger.exception( "Failed to run greenlet %s", greenlet )

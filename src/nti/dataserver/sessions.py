@@ -259,9 +259,9 @@ class SessionService(object):
 				gevent.sleep( 60 )	# Time? We can detect a dead session no faster than we decide it's dead,
 									# which is SESSION_HEARTBEAT_TIMEOUT
 				logger.debug( "Checking status of session %s", session_id )
+
 				try:
-					with component.getUtility(nti_interfaces.IDataserverTransactionContextManager)():
-						sess = self.get_session(session_id) # performs validation, notification
+					sess = component.getUtility( nti_interfaces.IDataserverTransactionRunner )( lambda: self.get_session(session_id), retries=2 )
 				except transaction.interfaces.TransientError:
 					# Try again later
 					logger.debug( "Trying session poll later", exc_info=True )
