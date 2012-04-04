@@ -1022,9 +1022,12 @@ class _UGDPutView(_UGDModifyViewBase):
 			self._check_object_exists( theObject, creator, containerId, objId )
 
 		# Hack: See _UGDPostView
-		containedParent = ACLLocationProxy( creator.getContainer( theObject.containerId ),
-											traversal.find_interface( context, app_interfaces.IUserRootResource ),
-											theObject.containerId )
+		try:
+			containedParent = ACLLocationProxy( creator.getContainer( theObject.containerId ),
+												traversal.find_interface( context, app_interfaces.IUserRootResource ),
+												theObject.containerId )
+		except AttributeError:
+			containedParent = context
 
 		return ACLLocationProxy( theObject,
 								 containedParent,
