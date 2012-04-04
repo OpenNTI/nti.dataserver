@@ -187,7 +187,7 @@ def render_link( parent_resource, link, user_root_resource=None ):
 						logger.warn( "Fixed up invalid href to target %s", href )
 				except AttributeError:
 					pass
-				
+
 				if href and href.startswith( 'OU/' ):
 					# FIXME More hardcoded paths. WTF are these links broken?
 					href = '/dataserver2/providers/'  + href
@@ -297,10 +297,16 @@ class REST(object):
 						# For cases that we can, make edit and the toplevel href be the same.
 						# this improves caching
 						try:
-							href = traversal.normal_resource_path( parent )
+							# There are some cases where we have unnamed containers involved and
+							# on a POST this comes back wrong. Specifically, posting a friends list is known
+							# to produce a bad URL
+							#href = traversal.normal_resource_path( data ) if (obj is body and data.__name__) else None
+							#if href is not None and not href.endswith( data.__name__ ):
+							#	href = None
+							href = None
 						except AttributeError:
 							href = None
-						if _is_valid_href(href):
+						if _is_valid_href(href) and href != '/':
 							obj['href'] = href
 							link.target = href
 						else:
