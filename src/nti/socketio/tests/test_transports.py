@@ -49,7 +49,13 @@ class TestWebSocket(ConfiguringTestBase):
 		handler.server = Mock()
 		handler.server.session_manager = Mock()
 		self.ds.session_manager = handler.server.session_manager
-		handler.server.session_manager.set_proxy_session = lambda x, y: None
+		handler.server.session_manager.proxy = {}
+		def set_proxy_session(sid,prx):
+			handler.server.session_manager.proxy[sid] = prx
+		handler.server.session_manager.set_proxy_session = set_proxy_session
+		def get_proxy_session(sid):
+			return handler.server.session_manager.proxy[sid]
+		handler.server.session_manager.get_proxy_session = get_proxy_session
 
 		def cm(): yield
 		handler.context_manager_callable = contextlib.contextmanager( cm )
@@ -86,7 +92,7 @@ class MockSession(object):
 	killed = None
 	server_messages = ()
 	connection_confirmed = False
-	
+
 	def heartbeat(self):
 		self.heartbeats = (self.heartbeats or 0) + 1
 

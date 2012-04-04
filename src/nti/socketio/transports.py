@@ -256,9 +256,8 @@ class WebsocketTransport(BaseTransport):
 		context_manager_callable = component.queryUtility( nti_interfaces.IDataserverTransactionContextManager,
 														   default=getattr( self.request, 'context_manager_callable', None ) ) # Unit tests
 
-		# TODO: These three greenlets need linked so that as soon as one dies,
-		# they all die. They also need to do their cleanup (removing the session proxy)
-		# only once
+		# The three greenlets we spawn are all linked to cleanup() to guarantee
+		# that they all die together, and that they all do cleanup when they die
 		session_service.set_proxy_session( session_id, session_proxy )
 
 		# If these jobs die with an error, then they may leak the
@@ -281,35 +280,34 @@ class WebsocketTransport(BaseTransport):
 		@_catch_all
 		def send_into_ws():
 			listen = True
-			try:
-				while listen:
-					message = session_proxy.get_client_msg()
-					for _ in range(2):
-						try:
-							listen = False
-							with context_manager_callable():
-								cont = _do_send( message )
-								if not cont:
-									break
-							# A successful commit! Yay! Go again
-							listen = True
-							break
-						except transaction.interfaces.TransientError:
-							logger.exception( "Retrying send_into_ws on transient error" )
 
-
-					if not listen:
-						# Don't send a message if the transactions failed
-						# and we're going to break this loop
-						break
+			while listen:
+				message = session_proxy.get_client_msg()
+				for _ in range(2):
 					try:
-						assert isinstance(message, str), "Messages should already be encoded as required"
-						websocket.send(message)
-					except socket.error:
-						# The session will be killed of its own accord soon enough.
+						listen = False
+						with context_manager_callable():
+							cont = _do_send( message )
+							if not cont:
+								break
+						# A successful commit! Yay! Go again
+						listen = True
 						break
-			finally:
-				session_service.set_proxy_session( session_id, None )
+					except transaction.interfaces.TransientError:
+						logger.exception( "Retrying send_into_ws on transient error" )
+
+
+				if not listen:
+					# Don't send a message if the transactions failed
+					# and we're going to break this loop
+					break
+				try:
+					assert isinstance(message, str), "Messages should already be encoded as required"
+					websocket.send(message)
+				except socket.error:
+					# The session will be killed of its own accord soon enough.
+					break
+
 
 
 		def _do_read(message):
@@ -337,21 +335,20 @@ class WebsocketTransport(BaseTransport):
 		@_catch_all
 		def read_from_ws():
 			listen = True
-			try:
-				while listen:
-					message = websocket.wait()
-					for _ in range(2):
-						try:
-							with context_manager_callable():
-								cont = _do_read(message)
-								if not cont:
-									listen = False
-									break
-							break
-						except transaction.interfaces.TransientError:
-							logger.exception( "Retrying read_from_ws on transient error" )
-			finally:
-				session_service.set_proxy_session( session_id, None )
+
+			while listen:
+				message = websocket.wait()
+				for _ in range(2):
+					try:
+						with context_manager_callable():
+							cont = _do_read(message)
+							if not cont:
+								listen = False
+								break
+						break
+					except transaction.interfaces.TransientError:
+						logger.exception( "Retrying read_from_ws on transient error" )
+
 
 		ping_sleep = kwargs.get( 'ping_sleep', 5.0 )
 		@_catch_all
@@ -368,8 +365,27 @@ class WebsocketTransport(BaseTransport):
 
 		gr1 = gevent.spawn(send_into_ws)
 		gr2 = gevent.spawn(read_from_ws)
-
 		heartbeat = gevent.spawn( ping )
+
+		to_cleanup = [gr1, gr2, heartbeat]
+
+		def cleanup(dead_greenlet):
+			logger.debug( "Performing cleanup on death of %s/%s", dead_greenlet, session_id )
+			if session_service.get_proxy_session( session_id ) is session_proxy:
+				logger.debug( "Removing websocket session proxy for %s", session_id )
+				session_service.set_proxy_session( session_id, None )
+
+			try:
+				to_cleanup.remove( dead_greenlet )
+			except ValueError: pass # hmm?
+			# When one dies, they all die
+			for greenlet in to_cleanup:
+				if not greenlet.ready():
+					logger.debug( "Killing %s on death of %s", greenlet, dead_greenlet )
+					greenlet.kill( block=False )
+
+		for link in to_cleanup:
+			link.link( cleanup )
 
 		# make the section appear connected
 		args[0].connection_confirmed = True
