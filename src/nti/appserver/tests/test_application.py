@@ -348,6 +348,26 @@ class TestApplication(ApplicationTestBase):
 		assert_that( res.body, contains_string( '"boom@nextthought.com"' ) )
 		assert_that( res.headers, has_entry( 'Content-Type', contains_string( 'application/vnd.nextthought.friendslist+json' ) ) )
 
+		body = json.loads( res.body )
+		assert_that( body, has_entry( 'href', starts_with('/dataserver2/users/sjohnson%40nextthought.com/Objects' ) ))
+
+	def test_create_friends_list_post_user(self):
+		# Like the previous test, but _UGDPostView wasn't consistent with where it was setting up the phony location proxies,
+		# so we could get different results depending on where we came from
+		with mock_dataserver.mock_db_trans( self.ds ):
+			users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+		testapp = TestApp( self.app )
+		data = '{"Last Modified":1323788728,"ContainerId":"FriendsLists","Username": "boom@nextthought.com","friends":["troy.daley@nextthought.com"],"realname":"boom"}'
+
+		path = '/dataserver2/users/sjohnson@nextthought.com'
+
+		res = testapp.post( path, data, extra_environ=self._make_extra_environ(), headers={'Content-Type': 'application/vnd.nextthought.friendslist+json' } )
+		assert_that( res.status_int, is_( 201 ) )
+		assert_that( res.body, contains_string( '"boom@nextthought.com"' ) )
+		assert_that( res.headers, has_entry( 'Content-Type', contains_string( 'application/vnd.nextthought.friendslist+json' ) ) )
+
+		body = json.loads( res.body )
+		assert_that( body, has_entry( 'href', starts_with('/dataserver2/users/sjohnson%40nextthought.com/Objects' ) ))
 
 	def test_edit_note_returns_editlink(self):
 		"The object returned by POST should have enough ACL to regenerate its Edit link"
@@ -403,7 +423,6 @@ class TestApplication(ApplicationTestBase):
 		body = json.loads( body.text )
 		assert_that( body, has_entry( 'MimeType', 'application/vnd.nextthought.sectioninfo' ) )
 		warnings.warn( "Disabled test for section href" )
-
 		#assert_that( body, has_entry( 'href', '/dataserver2/providers/OU/Classes/CS2051/CS2051.101' ) )
 
 		# We should be able to resolve the parent class of this section

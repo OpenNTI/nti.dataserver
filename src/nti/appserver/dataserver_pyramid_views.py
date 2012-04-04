@@ -920,8 +920,12 @@ class _UGDPostView(_UGDModifyViewBase):
 		# Location header. It's probably happening because there's no ACL on this object,
 		# so we can return an ACLLocationProxy with an ACL (one we synthesize or one
 		# based on the ACL of the context?). (Seealso: _UGDPutView) The below may or may not be correct:
+		containedParent = ACLLocationProxy( owner.getContainer( containedObject.containerId ),
+											traversal.find_interface( context, app_interfaces.IUserRootResource ),
+											containedObject.containerId )
+
 		return ACLLocationProxy( containedObject,
-								 context,
+								 containedParent,
 								 containedObject.id,
 								 nacl.ACL( containedObject, context.__acl__) )
 
@@ -1018,10 +1022,15 @@ class _UGDPutView(_UGDModifyViewBase):
 			self._check_object_exists( theObject, creator, containerId, objId )
 
 		# Hack: See _UGDPostView
+		containedParent = ACLLocationProxy( creator.getContainer( theObject.containerId ),
+											traversal.find_interface( context, app_interfaces.IUserRootResource ),
+											theObject.containerId )
+
 		return ACLLocationProxy( theObject,
-								 context,
+								 containedParent,
 								 objId,
-								 nacl.ACL( theObject, context.__acl__ ) )
+								 nacl.ACL( theObject, context.__acl__) )
+
 
 def _force_update_modification_time( object, lastModified, max_depth=-1 ):
 	"""Traverse up the parent tree (up to `max_depth` times) updating modification times."""

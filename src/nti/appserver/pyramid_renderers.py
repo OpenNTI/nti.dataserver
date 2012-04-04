@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 
 import six
 import collections
+import urllib
 
 import pyramid.httpexceptions
 from . import traversal
@@ -297,16 +298,16 @@ class REST(object):
 						# For cases that we can, make edit and the toplevel href be the same.
 						# this improves caching
 						try:
-							# There are some cases where we have unnamed containers involved and
-							# on a POST this comes back wrong. Specifically, posting a friends list is known
-							# to produce a bad URL
-							#href = traversal.normal_resource_path( data ) if (obj is body and data.__name__) else None
-							#if href is not None and not href.endswith( data.__name__ ):
+							# There are too many cases where we're still not correctly hooked up
+							# to be able to generate 'pretty' URLs to make this the default
+							#href = traversal.normal_resource_path( data ) if (obj is body and data.__name__ and request.method != 'PUT') else None
+							#if href is not None and not href.endswith( urllib.quote(data.__name__) ):
 							#	href = None
 							href = None
 						except AttributeError:
 							href = None
-						if _is_valid_href(href) and href != '/':
+						# TODO: More hardcoded paths
+						if _is_valid_href(href) and href != '/' and href.startswith( '/dataserver' ):
 							obj['href'] = href
 							link.target = href
 						else:
