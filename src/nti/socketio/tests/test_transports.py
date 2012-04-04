@@ -9,6 +9,7 @@ import transaction
 
 from nti.socketio import transports as socketio_server
 from gevent.queue import Queue
+from Queue import Empty
 import nti.socketio.protocol
 protocol = nti.socketio.protocol
 import nti.socketio.transports as transports
@@ -18,18 +19,20 @@ from nti.dataserver.tests import mock_dataserver
 
 from pyramid.testing import DummyRequest
 
+class WebSocket(object):
+	server = None
+	def __init__( self ):
+		self.queue = Queue()
+
+	def send(self, msg):
+		pass
+	def wait(self):
+		return self.queue.get()
+
 class TestWebSocket(ConfiguringTestBase):
 	@mock_dataserver.WithMockDS
 	def test_websocket_transport_greenlets(self):
-		class WebSocket(object):
-			server = None
-			def __init__( self ):
-				self.queue = Queue()
 
-			def send(self, msg):
-				pass
-			def wait(self):
-				return self.queue.get()
 
 		class Handler(object):
 			server, session_manager, set_proxy_session, context_manager_callable, handling_session_cm = [None] * 5
@@ -39,7 +42,8 @@ class TestWebSocket(ConfiguringTestBase):
 		class Mock(object):
 			server, session_manager, set_proxy_session, context_manager_callable, handling_session_cm, get_session = [None] * 6
 			session_id, incr_hits = [None] * 2
-
+			socket = None
+			protocol = None
 
 		websocket = WebSocket()
 		handler = Handler()
@@ -57,8 +61,7 @@ class TestWebSocket(ConfiguringTestBase):
 			return handler.server.session_manager.proxy[sid]
 		handler.server.session_manager.get_proxy_session = get_proxy_session
 
-		def cm(): yield
-		handler.context_manager_callable = contextlib.contextmanager( cm )
+
 		handler.handling_session_cm = Mock()
 	#	handler.handling_session_cm.premature_exit_but_its_okay = lambda: 1
 
@@ -70,8 +73,10 @@ class TestWebSocket(ConfiguringTestBase):
 		sess.session_id = 1
 		sess.incr_hits = lambda: 1
 		handler.server.session_manager.get_session = lambda x: sess
+		sess.socket = Mock()
+		sess.socket.protocol = protocol.SocketIOProtocolFormatter1()
 
-		jobs = transport.connect( sess, ping_sleep=0.1 )
+		jobs = transport.connect( sess, 'GET', ping_sleep=0.1 )
 		gevent.sleep( )
 		assert_that( jobs, has_length( 3 ) )
 		assert_that( jobs, only_contains( has_property( 'started', True ) ) )
@@ -84,6 +89,60 @@ class TestWebSocket(ConfiguringTestBase):
 		for job in jobs:
 			assert_that( job.ready(), is_( True ) )
 
+	@mock_dataserver.WithMockDS
+	def test_sender(self):
+		class Service(object):
+			def get_session( self, sid ): return None
+
+		proxy = socketio_server._WebsocketSessionEventProxy()
+		sender = socketio_server.WebsocketTransport.WebSocketSender( 1, proxy, Service(), None )
+
+		# Kill the session on a None-message
+		assert_that( sender._do_send(), is_( False ) )
+
+		proxy.put_client_msg( None )
+
+		sender._run()
+		with self.assertRaises( Empty ):
+			proxy.get_client_msg(block=False)
+
+	@mock_dataserver.WithMockDS
+	def test_reader(self):
+		class Socket(object):
+			protocol = protocol.SocketIOProtocolFormatter1()
+		class Session(object):
+			killed = False
+			socket = Socket()
+			def kill(self):
+				self.killed = True
+		class Service(object):
+			session = None
+			def get_session( self, sid ): return self.session
+
+		class WebSocket(object):
+			def __init__(self): self.pkts = []
+			def wait(self):
+				return self.pkts.pop()
+
+		proxy = socketio_server._WebsocketSessionEventProxy()
+		socket = WebSocket()
+		socket.pkts.append( None )
+		socket.pkts.append( b'0::' )
+		session = Session()
+		service = Service()
+		service.session = session
+
+		reader = socketio_server.WebsocketTransport.WebSocketReader( 1, proxy, service, socket )
+
+
+		reader._run()
+		assert_that( session, has_property( 'killed', True ) )
+
+		session.killed = False
+		socket.pkts.append( 'unparsable' )
+
+		reader._run()
+		assert_that( session, has_property( 'killed', True ) )
 
 class MockSession(object):
 	socket = None

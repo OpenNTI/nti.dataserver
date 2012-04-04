@@ -135,6 +135,81 @@ def _trivial_db_transaction_cm():
 
 interface.directlyProvides( _trivial_db_transaction_cm, interfaces.IDataserverTransactionContextManager )
 
+@contextlib.contextmanager
+def _connection_cm():
+
+	ds = component.getUtility( interfaces.IDataserver )
+	conn = ds.db.open()
+	try:
+		yield conn
+	finally:
+		conn.close()
+
+@contextlib.contextmanager
+def _site_cm(conn):
+	# If we don't sync, then we can get stale objects that
+	# think they belong to a closed connection
+	# TODO: Are we doing something in the wrong order? Connection
+	# is an ISynchronizer and registers itself with the transaction manager,
+	# so we shouldn't have to do this manually
+	# ... I think the problem was a bad site. I think this can go away.
+	#conn.sync()
+	# In fact, it must go away; if we sync the conn, we lose the
+	# current transaction
+	sitemanc = conn.root()['nti.dataserver']
+
+	with site( sitemanc ):
+		assert component.getSiteManager() == sitemanc.getSiteManager()
+		assert component.getUtility( interfaces.IDataserver )
+		yield sitemanc
+
+
+def run_job_in_site(func, retries=0,
+					_connection_cm=_connection_cm, _site_cm=_site_cm):
+	"""
+	Runs the function given in `func` in a transaction and dataserver local
+	site manager.
+	:param function func: A function of zero parameters to run. If it has a docstring,
+		that will be used as the transactions note. A transaction will be begun before
+		this function executes, and committed after the function completes. This function may be rerun if
+		retries are requested, so it should be prepared for that.
+	:param int retries: The number of times to retry the transaction and execution of `func` if
+		:class:`transaction.interfaces.TransientError` is raised when committing.
+		Defaults to one.
+	:return: The value returned by the first successful invocation of `func`.
+	"""
+	note = func.__doc__
+	if note:
+		note = note.split('\n', 1)[0]
+	else:
+		note = func.__name__
+
+	with _connection_cm() as conn:
+		for i in xrange(retries + 1):
+			t = transaction.begin()
+			if i:
+				t.note("%s (retry: %s)" % (note, i))
+			else:
+				t.note(note)
+			try:
+				with _site_cm(conn):
+					result = func()
+				t.commit()
+				# No errors, return the result
+				return result
+			except transaction.interfaces.TransientError:
+				t.abort()
+				if i == retries:
+					# We failed for the last time
+					raise
+			except transaction.interfaces.DoomedTransaction:
+				raise
+			except:
+				t.abort()
+				raise
+
+interface.directlyProvides( run_job_in_site, interfaces.IDataserverTransactionRunner )
+
 DATASERVER_DEMO = 'DATASERVER_DEMO' in os.environ and 'DATASERVER_NO_DEMO' not in os.environ
 
 
