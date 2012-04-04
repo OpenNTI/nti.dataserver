@@ -9,6 +9,7 @@ from zope import component
 from zope import interface
 
 import transaction
+import contextlib
 import gevent
 import types
 from Queue import Empty
@@ -59,11 +60,25 @@ class BaseTransport(object):
 	def kill(self):
 		pass
 
-
+@contextlib.contextmanager
+def _using_session_proxy( service, sid  ):
+	existing = service.get_proxy_session( sid )
+	proxy = _SessionEventProxy()
+	if existing is None:
+		service.set_proxy_session( sid, proxy )
+		try:
+			yield proxy
+		finally:
+			service.set_proxy_session( sid, None )
+	else:
+		logger.warn( "Session %s already has proxy %s", sid, existing )
+		yield proxy
 
 class XHRPollingTransport(BaseTransport):
 	component.adapts( pyramid.interfaces.IRequest )
 	interface.implements( interfaces.ISocketIOTransport )
+
+	proxy_timeout = 5.0
 
 	def __init__(self, request):
 		super(XHRPollingTransport, self).__init__(request)
@@ -75,32 +90,19 @@ class XHRPollingTransport(BaseTransport):
 
 	def get(self, session):
 		session.clear_disconnect_timeout()
-		session_proxy = _SessionEventProxy()
 		session_service = component.getUtility( nti_interfaces.IDataserver ).session_manager
-		existing_proxy = "did not check"
 
 		try:
 			# A dead session will feed us a None object
 			# whereupon...we blow up...
 			messages = session.get_client_msgs()
 			if not messages:
-				existing_proxy = session_service.get_proxy_session( session.session_id )
-				if existing_proxy is not None:
-					# Hmm. We're alive here somewhere. That's bad, we leaked somewhere.
-					# Just sleep to slow the client down
-					logger.warn( "Session %s already has proxy %s", session.session_id, existing_proxy )
-					gevent.sleep( 5 )
-				elif existing_proxy is None:
-					# On the chance that we're already polling
-					# for this session in this server, don't replace the proxy
-					# (This is 'thread'-safe because we're greenlets)
-					session_service.set_proxy_session( session.session_id, session_proxy )
-
+				with _using_session_proxy( session_service, session.session_id ) as session_proxy:
 					# Nothing to read right now.
 					# The client expects us to block, though, for some time
 					# We use our session proxy to both wait
 					# and notify us immediately if a new message comes in
-					session_proxy.get_client_msg( timeout=5.0 )
+					session_proxy.get_client_msg( timeout=self.proxy_timeout )
 					# Note that if we get a message via broadcast,
 					# our cached session is going to be behind, so it's
 					# pointless to try to read from it again. Unfortunately,
@@ -117,9 +119,6 @@ class XHRPollingTransport(BaseTransport):
 			message = session.socket.protocol.encode_multi( messages )
 		except (Empty,IndexError):
 			message = session.socket.protocol.make_noop()
-		finally:
-			if existing_proxy is None:
-				session_service.set_proxy_session( None )
 
 		response = self.request.response
 		response.body = message
@@ -143,6 +142,11 @@ class XHRPollingTransport(BaseTransport):
 		response.body = response_message or session.socket.protocol.make_noop()
 		return response
 
+	def _connect_response(self, session):
+		response = self.request.response
+		response.headers['Connection'] = 'close'
+		response.body =  session.socket.protocol.make_connect()
+		return response
 
 	def connect(self, session, request_method ):
 		if not session.connection_confirmed:
@@ -157,10 +161,7 @@ class XHRPollingTransport(BaseTransport):
 			if request_method == 'POST' and self.request.content_length:
 				response = self.post( session, response_message=session.socket.protocol.make_connect() )
 			else:
-				response = self.request.response
-				response.headers['Connection'] = 'close'
-				response.body =  session.socket.protocol.make_connect()
-
+				response = self._connect_response( session )
 			return response
 
 		if request_method == 'POST' and not self.request.content_length:
@@ -168,9 +169,7 @@ class XHRPollingTransport(BaseTransport):
 			# thinks it is no longer confirmed...we're probably switching transports
 			# due to a hard crash of an instance. So treat this
 			# like a fresh connection
-			response = self.request.response
-			response.headers['Connection'] = 'close'
-			response.body =  session.socket.protocol.make_connect( )
+			response = self._connect_response( session )
 			return response
 
 		if request_method in ("GET", "POST", "OPTIONS"):

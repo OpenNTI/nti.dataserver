@@ -151,6 +151,7 @@ class MockSession(object):
 	killed = None
 	server_messages = ()
 	connection_confirmed = False
+	session_id = 1
 
 	def heartbeat(self):
 		self.heartbeats = (self.heartbeats or 0) + 1
@@ -237,3 +238,14 @@ class TestXHRTransport(ConfiguringTestBase):
 
 		rsp = self.transport.connect( self.session, 'GET' )
 		assert_that( rsp.body, is_( self.session.client_msgs[0] ) )
+
+		class SessionService(object):
+			def get_proxy_session(self,sid): return None
+			def set_proxy_session(self,sid,sess): return None
+
+		self.ds.session_manager = SessionService()
+		self.session.client_msgs = ()
+		self.transport.proxy_timeout = 0.01
+
+		rsp = self.transport.connect( self.session, 'GET' )
+		assert_that( rsp.body, is_( b'8::' ) )
