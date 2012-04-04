@@ -10,6 +10,7 @@ from zope import interface
 
 import transaction
 import gevent
+import types
 from Queue import Empty
 from gevent.queue import Queue
 import socket
@@ -19,12 +20,13 @@ from nti.socketio import interfaces
 import nti.dataserver.interfaces as nti_interfaces
 
 
-def _decode_packet_to_session( session, sock, data ):
+def _decode_packet_to_session( session, sock, data, doom_transaction=True ):
 	try:
 		pkts = sock.protocol.decode_multi( data )
 	except ValueError:
 		# Bad data from the client. This will never work
-		transaction.doom()
+		if doom_transaction:
+			transaction.doom()
 		raise
 
 	for pkt in pkts:
@@ -36,6 +38,14 @@ def _decode_packet_to_session( session, sock, data ):
 			session.heartbeat()
 		else:
 			session.put_server_msg( pkt )
+
+def _safe_kill_session( session ):
+	try:
+		session.kill()
+	except AttributeError:
+		pass
+	except:
+		logger.exception( "Failed to kill session %s", session )
 
 class BaseTransport(object):
 	"""Base class for all transports. Mostly wraps handler class functions."""
@@ -175,36 +185,14 @@ class XHRPollingTransport(BaseTransport):
 
 
 def _catch_all(greenlet):
-	def f():
+	def f(*args):
 		try:
-			greenlet()
+			greenlet(*args)
 		except:
 			# Trap and log.
 			logger.exception( "Failed to run greenlet %s", greenlet )
 	return f
 
-
-# def _retrying_job(func, retries):
-# 	note = func.__doc__
-# 	if note:
-# 		note = note.split('\n', 1)[0]
-# 	else:
-# 		note = func.__name__
-
-# 	for i in xrange(retries + 1):
-# 		t = manager.begin()
-# 		if i:
-# 			t.note("%s (retry: %s)" % (note, i))
-# 		else:
-# 			t.note(note)
-
-# 		try:
-# 			func(t)
-# 			t.commit()
-# 		except transaction.interfaces.TransientError:
-# 			t.abort()
-# 		else:
-# 			break
 
 class _SessionEventProxy(object):
 	"""
@@ -223,6 +211,13 @@ class _SessionEventProxy(object):
 # For ease of distinguishing in logs we subclass
 class _WebsocketSessionEventProxy(_SessionEventProxy): pass
 
+from nti.dataserver._Dataserver import run_job_in_site as _run_job_in_site
+
+def run_job_in_site( *args, **kwargs ):
+	runner = component.queryUtility( nti_interfaces.IDataserverTransactionRunner,
+								   default=_run_job_in_site )
+	return runner( *args, **kwargs )
+
 class WebsocketTransport(BaseTransport):
 
 	component.adapts( pyramid.interfaces.IRequest )
@@ -232,10 +227,112 @@ class WebsocketTransport(BaseTransport):
 		super(WebsocketTransport,self).__init__(request)
 		self.websocket = None
 
-	def connect(self, *args, **kwargs):
+	class AbstractWebSocketOperator(object):
+
+		def __init__(self, session_id, session_proxy, session_service, websocket ):
+			self.session_id = session_id
+			self.session_proxy = session_proxy
+			self.session_service = session_service
+			self.websocket = websocket
+
+		@_catch_all
+		def __call__(self):
+			self._run()
+
+		def _run(self):
+			raise NotImplementedError()
+
+		def get_session(self):
+			return self.session_service.get_session( self.session_id )
+
+	class WebSocketSender(AbstractWebSocketOperator):
+		message = None
+
+		def _do_send(self):
+			message = self.message
+			session = self.get_session()
+			if session: session.get_client_msgs() # prevent buildup
+			if message is None:
+				_safe_kill_session( session )
+				return False
+			return True
+
+		def _run(self):
+			listen = True
+
+			while listen:
+				self.message = self.session_proxy.get_client_msg()
+				assert isinstance(self.message, (str,types.NoneType)), "Messages should already be encoded as required"
+
+				listen = run_job_in_site( self._do_send, retries=2 )
+
+				if not listen:
+					# Don't send a message if the transactions failed
+					# and we're going to break this loop
+					break
+
+				try:
+					self.websocket.send(self.message)
+				except socket.error:
+					# The session will be killed of its own accord soon enough.
+					break
+
+	class WebSocketReader(AbstractWebSocketOperator):
+		message = None
+
+		def _do_read(self):
+			session = self.get_session( )
+			if session is None:
+				return False
+
+			if self.message is None:
+				# Kill the greenlet
+				self.session_proxy.put_client_msg( None )
+				# and the session
+				_safe_kill_session( session )
+				return False
+
+			try:
+				_decode_packet_to_session( session, session.socket, self.message, doom_transaction=False )
+			except ValueError:
+				logger.exception( "Failed to read packets from WS; killing session %s", self.session_id )
+				# We don't doom this transaction, we want to commit the death
+				# transaction.doom()
+				_safe_kill_session( session )
+				return False
+
+			return True
+
+		def _run(self):
+			listen = True
+			while listen:
+				self.message = self.websocket.wait()
+				listen = run_job_in_site( self._do_read, retries=2 )
+
+	class WebSocketPinger(AbstractWebSocketOperator):
+
+		def __init__( self, *args, **kwargs ):
+			super(WebsocketTransport.WebSocketPinger,self).__init__( *args )
+			self.ping_sleep = kwargs.get( 'ping_sleep', 5.0 )
+
+		def _do_ping(self):
+			session = self.get_session()
+			if session and session.connected:
+				session.socket.send_heartbeat()
+				return True
+			return False
+
+		def _run(self):
+			listen = True
+			while listen:
+				gevent.sleep( self.ping_sleep )
+				# FIXME: Make time a config?
+				listen = run_job_in_site( self._do_ping, retries=2 )
+
+	def connect(self, session, request_method, ping_sleep=5.0 ):
 
 		websocket = self.request.environ['wsgi.websocket']
-		websocket.send("1::")
+		websocket.send( session.socket.protocol.make_connect() )
 		self.websocket = websocket
 
 		# Messages from the client will only
@@ -248,127 +345,24 @@ class WebsocketTransport(BaseTransport):
 		# broadcast mechanism too. Last, note that
 		# all access to the session object must be in a transaction
 		# which loads the session object fresh (if needed)
-		# TODO: Create Greenlet subclass that handles transactions
-		# and the standard loop and use that here.
-		session_id = args[0].session_id
+
+		session_id = session.session_id
 		session_proxy = _WebsocketSessionEventProxy()
 		session_service = component.getUtility( nti_interfaces.IDataserver ).session_manager
-		context_manager_callable = component.queryUtility( nti_interfaces.IDataserverTransactionContextManager,
-														   default=getattr( self.request, 'context_manager_callable', None ) ) # Unit tests
 
 		# The three greenlets we spawn are all linked to cleanup() to guarantee
 		# that they all die together, and that they all do cleanup when they die
 		session_service.set_proxy_session( session_id, session_proxy )
 
-		# If these jobs die with an error, then they may leak the
-		# TCP socket up in the handler? (That may have been send_into_ws not exiting.)
-
-		def _do_send(message):
-			session = session_service.get_session( session_id )
-			if session: session.get_client_msgs() # prevent buildup
-			if message is None:
-				if session:
-					try:
-						session.kill()
-					except Exception: pass
-				return False
-			return True
-		# TODO: We need to capture this retry pattern somewhere.
-		# The transaction.Attempts class is somewhat broken in 1.2.0
-		# (see pyramid_tm 0.3) so we cannot use it. pyramid_tm has a replacement,
-		# but it's private
-		@_catch_all
-		def send_into_ws():
-			listen = True
-
-			while listen:
-				message = session_proxy.get_client_msg()
-				for _ in range(2):
-					try:
-						listen = False
-						with context_manager_callable():
-							cont = _do_send( message )
-							if not cont:
-								break
-						# A successful commit! Yay! Go again
-						listen = True
-						break
-					except transaction.interfaces.TransientError:
-						logger.exception( "Retrying send_into_ws on transient error" )
-
-
-				if not listen:
-					# Don't send a message if the transactions failed
-					# and we're going to break this loop
-					break
-				try:
-					assert isinstance(message, str), "Messages should already be encoded as required"
-					websocket.send(message)
-				except socket.error:
-					# The session will be killed of its own accord soon enough.
-					break
-
-
-
-		def _do_read(message):
-			session = session_service.get_session( session_id )
-			if session is None:
-				return False
-
-			if message is None:
-				# Kill the greenlet
-				session_proxy.put_client_msg( None )
-				# and the session
-				session.kill()
-				return False
-
-
-			try:
-				_decode_packet_to_session( session, session.socket, message )
-			except Exception:
-				logger.exception( "Failed to read packets from WS; killing session %s", session_id )
-				session.kill()
-				return False
-
-			return True
-
-		@_catch_all
-		def read_from_ws():
-			listen = True
-
-			while listen:
-				message = websocket.wait()
-				for _ in range(2):
-					try:
-						with context_manager_callable():
-							cont = _do_read(message)
-							if not cont:
-								listen = False
-								break
-						break
-					except transaction.interfaces.TransientError:
-						logger.exception( "Retrying read_from_ws on transient error" )
-
-
-		ping_sleep = kwargs.get( 'ping_sleep', 5.0 )
-		@_catch_all
-		def ping():
-			while True:
-				gevent.sleep( ping_sleep )
-				# FIXME: Make time a config?
-				with context_manager_callable():
-					session = session_service.get_session( session_id )
-					if session and session.connected:
-						session.socket.send_heartbeat()
-					else:
-						break
+		send_into_ws = self.WebSocketSender( session_id, session_proxy, session_service, websocket )
+		read_from_ws = self.WebSocketReader( session_id, session_proxy, session_service, websocket )
+		ping = self.WebSocketPinger( session_id, session_proxy, session_service, websocket, ping_sleep=ping_sleep )
 
 		gr1 = gevent.spawn(send_into_ws)
 		gr2 = gevent.spawn(read_from_ws)
 		heartbeat = gevent.spawn( ping )
 
 		to_cleanup = [gr1, gr2, heartbeat]
-
 		def cleanup(dead_greenlet):
 			logger.debug( "Performing cleanup on death of %s/%s", dead_greenlet, session_id )
 			if session_service.get_proxy_session( session_id ) is session_proxy:
@@ -388,8 +382,8 @@ class WebsocketTransport(BaseTransport):
 			link.link( cleanup )
 
 		# make the section appear connected
-		args[0].connection_confirmed = True
-		args[0].incr_hits()
+		session.connection_confirmed = True
+		session.incr_hits()
 
 		return [gr1, gr2, heartbeat]
 

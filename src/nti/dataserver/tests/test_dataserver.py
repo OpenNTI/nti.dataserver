@@ -2,7 +2,7 @@
 
 import unittest
 
-from hamcrest import assert_that, equal_to, is_, none, not_none
+from hamcrest import assert_that, equal_to, is_, none, not_none, has_property, not_none
 import mock_dataserver
 
 import nti.dataserver.users as users
@@ -10,10 +10,63 @@ import nti.dataserver.ntiids as ntiids
 import nti.dataserver.contenttypes as contenttypes
 from nti.dataserver.datastructures import toExternalOID, to_external_ntiid_oid
 import nti.dataserver.interfaces as nti_interfaces
+from nti.dataserver._Dataserver import run_job_in_site
 
+import transaction
 import persistent
+from zope import component
 
 class TestDataserver( mock_dataserver.ConfiguringTestBase ):
+
+	@mock_dataserver.WithMockDS
+	def test_run_job_in_site(self):
+		runs = [0]
+		def job():
+			runs[0] = runs[0] + 1
+			assert_that( component.getSiteManager(), has_property( '_p_jar', not_none() ) )
+			return runs[0]
+
+		i = run_job_in_site( job )
+		assert_that( runs[0], is_( 1 ), "Only run once" )
+		assert_that( i, is_( 1 ) )
+
+		runs[0] = 0
+		run_job_in_site( job, retries=10 )
+		assert_that( runs[0], is_( 1 ), "Only run once" )
+
+		def job():
+			runs[0] = runs[0] + 1
+			raise transaction.interfaces.TransientError( str(runs[0] ) )
+
+		runs[0] = 0
+		with self.assertRaises( transaction.interfaces.TransientError ):
+			run_job_in_site( job )
+		assert_that( runs[0], is_( 1 ), "Only run once" )
+
+		runs[0] = 0
+		with self.assertRaises( transaction.interfaces.TransientError ):
+			run_job_in_site( job, retries=9 )
+		# The first time, then 9 retries
+		assert_that( runs[0], is_( 10 ), "Runs ten times" )
+
+		def job():
+			runs[0] = runs[0] + 1
+			raise transaction.interfaces.DoomedTransaction( str(runs[0] ) )
+
+		runs[0] = 0
+		with self.assertRaises( transaction.interfaces.DoomedTransaction ):
+			run_job_in_site( job, retries=9 )
+
+		assert_that( runs[0], is_( 1 ), "Runs once" )
+
+		def job():
+			runs[0] = runs[0] + 1
+			raise ValueError( str(runs[0] ) )
+
+		runs[0] = 0
+		with self.assertRaises( ValueError ):
+			run_job_in_site( job, retries=9 )
+		assert_that( runs[0], is_( 1 ), "Runs once" )
 
 	@mock_dataserver.WithMockDS
 	def test_find_content_type( self ):
@@ -139,5 +192,3 @@ class TestDataserver( mock_dataserver.ConfiguringTestBase ):
 		assert_that( ntiids.get_provider( oid ), is_( 'someoneelse@nextthought.com' ) )
 
 		assert_that( mock_dataserver.current_mock_ds.get_by_oid( oid ), is_( none() ) )
-
-

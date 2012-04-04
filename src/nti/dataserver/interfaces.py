@@ -50,6 +50,28 @@ class IDataserverTransactionContextManager(interface.Interface):
 		transactions.
 		"""
 
+deprecated( 'IDataserverTransactionContextManager', 'Prefer IDataserverTransactionRunner' )
+
+class IDataserverTransactionRunner(interface.Interface):
+	"""
+	Something that runs code within a transaction, properly setting up the dataserver
+	and its environment.
+	"""
+
+	def __call__(func, retries=0):
+		"""
+		Runs the function given in `func` in a transaction and dataserver local
+		site manager.
+		:param function func: A function of zero parameters to run. If it has a docstring,
+			that will be used as the transactions note. A transaction will be begun before
+			this function executes, and committed after the function completes. This function may be rerun if
+			retries are requested, so it should be prepared for that.
+		:param int retries: The number of times to retry the transaction and execution of `func` if
+			:class:`transaction.interfaces.TransientError` is raised when committing.
+			Defaults to one.
+		:return: The value returned by the first successful invocation of `func`.
+		"""
+
 class IOIDResolver(interface.Interface):
 	def get_object_by_oid( oid_string, ignore_creator=False ):
 		"""
