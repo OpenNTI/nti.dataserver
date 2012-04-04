@@ -194,7 +194,11 @@ def run_job_in_site(func, retries=0,
 			try:
 				with _site_cm(conn):
 					result = func()
-				t.commit()
+					# Commit the transaction while the site is still current
+					# so that any before-commit hooks run with that site
+					# (Though this has the problem that after-commit hooks would have an invalid
+					# site!)
+					t.commit()
 				# No errors, return the result
 				return result
 			except transaction.interfaces.TransientError:
@@ -537,12 +541,10 @@ class Dataserver(MinimalDataserver):
 			change = _change.change
 
 			for changeListener in self.changeListeners:
-				try:
-					changeListener( self, change, **_change.meta )
-				except Exception as e:
-					logger.exception( "Failed to distribute change to %s", changeListener )
-					# TODO: Since we are doing this synchronously now, we
-					# should probably let this propagate, right?
+				changeListener( self, change, **_change.meta )
+				# Since we are doing this synchronously now, we
+				# let the errors propagate so that they rollback the transaction
+				# (Otherwise, we could wind up with half-committed, bad state)
 
 	###
 	# Dealing with content types
