@@ -616,6 +616,7 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 		result['Occupants'] = [self._chatserver.get_session( session_id ).owner
 							   for session_id in self._occupant_session_ids
 							   if self._chatserver.get_session( session_id )]
+		result['MessageCount'] = self.MessageCount
 		# TODO: Handling shadowing and so on.
 		return super(_Meeting,self).toExternalDictionary( mergeFrom=result )
 
