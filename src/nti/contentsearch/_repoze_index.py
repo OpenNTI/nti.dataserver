@@ -13,6 +13,7 @@ from nti.contentsearch.common import get_content
 from nti.contentsearch.common import get_creator
 from nti.contentsearch.common import get_type_name
 from nti.contentsearch.common import get_collection
+from nti.contentsearch.common import get_references
 from nti.contentsearch.common import get_external_oid
 from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch.common import get_multipart_content
@@ -74,7 +75,7 @@ def _parse_words(obj, fields, default=None):
 		elif isinstance(words, Iterable):
 			words = [w.lower() for w in words]
 		else:
-			words = [words.lower()]
+			words = []
 	return words
 	
 def get_keywords(obj, default=None):
@@ -84,9 +85,6 @@ def get_keywords(obj, default=None):
 		if words:
 			result.update(words)
 	return result if result else None
-
-def get_references(obj, default=None):
-	return _parse_words(obj, [references_])
 
 def get_recipients(obj, default=None):
 	return _parse_words(obj, [recipients_])

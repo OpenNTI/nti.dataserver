@@ -189,6 +189,18 @@ def get_creator(obj, default=None):
 		result = result.username
 	return result
 
+def get_references(obj, default=None):
+	objects = obj.split() if isinstance(obj, basestring) else get_attr(obj, [references_], default)
+	objects = list(objects) if not isinstance(objects, (tuple, list)) else objects
+	result = set()
+	for obj in objects or []:
+		if isinstance(obj, basestring):
+			result.update(obj.split())
+		else:
+			ntiid = get_ntiid(obj)
+			if ntiid: result.add(ntiid)
+	return result if list(result) else None
+
 # -----------------------------------
 
 def get_multipart_content(source):
