@@ -192,6 +192,10 @@ def _connect_view( request ):
 	transport = component.getAdapter( request, nti.socketio.interfaces.ISocketIOTransport, name=transport )
 	request_method = environ.get("REQUEST_METHOD")
 	jobs_or_response = transport.connect(session, request_method)
+
+	if pyramid.interfaces.IResponse.providedBy( jobs_or_response ):
+		return jobs_or_response
+
 	# If we have connection jobs (websockets)
 	# we need to stay in this call stack so that the
 	# socket is held open for reading by the server
@@ -200,14 +204,9 @@ def _connect_view( request ):
 	# We have to close the connection and commit the transaction
 	# if we do expect to stick around a long time
 	if 'wsgi.websocket' in environ:
-		# Basically, undo the things done by application._on_new_request
-		# and the tweens.
-		# TODO: This is weird, better cooperation (a function in the environment?)
-		transaction.commit()
-		pyramid_zodbconn.get_connection(request).close()
-		setSite( None )
-	if pyramid.interfaces.IResponse.providedBy( jobs_or_response ):
-		return jobs_or_response
+		# See application.py
+		environ['nti.early_request_teardown'](request)
+
 
 	if jobs_or_response:
 		gevent.joinall(jobs_or_response)
