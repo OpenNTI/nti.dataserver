@@ -1,4 +1,5 @@
 import re
+import six
 import time
 from time import mktime
 from datetime import datetime
@@ -86,7 +87,7 @@ indexable_type_names = ('note', 'highlight', messageinfo)
 # -----------------------------------
 
 def to_list(data):
-	if isinstance(data, basestring):
+	if isinstance(data, six.string_types):
 		data = [data]
 	elif isinstance(data, list):
 		pass
@@ -127,7 +128,7 @@ def echo(x):
 def get_datetime(x=None):
 	f = time.time()
 	if x:
-		f = float(x) if isinstance(x, basestring) else x
+		f = float(x) if isinstance(x, six.string_types) else x
 	return datetime.fromtimestamp(f)
 
 
@@ -180,26 +181,30 @@ def get_ntiid(obj, default=None):
 	if IPersistent.providedBy(obj):
 		result = to_external_ntiid_oid( obj )
 	else:
-		result = obj if isinstance(obj, basestring) else get_attr(obj, ntiid_fields)
+		result = obj if isinstance(obj, six.string_types) else get_attr(obj, ntiid_fields)
 	return result
 
 def get_creator(obj, default=None):
-	result = obj if isinstance(obj, basestring) else get_attr(obj, creator_fields)
+	result = obj if isinstance(obj, six.string_types) else get_attr(obj, creator_fields)
 	if isinstance(result, Entity):
 		result = result.username
 	return result
 
 def get_references(obj, default=None):
-	objects = obj.split() if isinstance(obj, basestring) else get_attr(obj, [references_], default)
-	objects = list(objects) if not isinstance(objects, (tuple, list)) else objects
+	objects = obj.split() if hasattr(obj, 'split') else get_attr(obj, [references_], default)
+	try:
+		iterable = iter(objects)
+	except TypeError:
+		iterable = (objects,)
+
 	result = set()
-	for obj in objects or []:
-		if isinstance(obj, basestring):
+	for obj in iterable:
+		if isinstance(obj, six.string_types):
 			result.update(obj.split())
 		else:
 			ntiid = get_ntiid(obj)
 			if ntiid: result.add(ntiid)
-	return result if list(result) else None
+	return result if list(result) else []
 
 # -----------------------------------
 
@@ -207,7 +212,7 @@ def get_multipart_content(source):
 	
 	gbls = globals()
 			
-	if isinstance(source, basestring):
+	if isinstance(source, six.string_types):
 		return get_content(source)
 	elif isinstance(source, Iterable):
 		
@@ -225,7 +230,7 @@ def get_multipart_content(source):
 			items.append(process_dict(source))
 		else:
 			for item in source:
-				if isinstance(item, basestring) and item:
+				if isinstance(item, six.string_types) and item:
 					items.append(item)
 					continue
 				elif isinstance(item, dict):
