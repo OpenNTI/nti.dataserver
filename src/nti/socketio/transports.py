@@ -20,6 +20,7 @@ import pyramid.interfaces
 from nti.socketio import interfaces
 import nti.dataserver.interfaces as nti_interfaces
 
+from nti.utils import transaction_queue
 
 def _decode_packet_to_session( session, sock, data, doom_transaction=True ):
 	try:
@@ -199,15 +200,21 @@ class _SessionEventProxy(object):
 	"""
 	Can be used as a session proxy for getting events when
 	broadcast messages arrive.
+
+	Functions in a transaction-aware manner for putting client messages
+	to avoid them getting put multiple times in the event of retries.
 	"""
 
 	def __init__(self):
+		# This queue should be unbounded, otherwise we could
+		# cause commit problems
 		self.client_queue = Queue()
 
 	def get_client_msg(self, **kwargs):
 		return self.client_queue.get(**kwargs)
 	def put_client_msg( self, msg ):
-		self.client_queue.put_nowait( msg )
+		transaction_queue.put_nowait( self.client_queue, msg )
+
 
 # For ease of distinguishing in logs we subclass
 class _WebsocketSessionEventProxy(_SessionEventProxy): pass

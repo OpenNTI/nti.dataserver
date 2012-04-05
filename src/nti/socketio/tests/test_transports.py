@@ -99,9 +99,9 @@ class TestWebSocket(ConfiguringTestBase):
 
 		# Kill the session on a None-message
 		assert_that( sender._do_send(), is_( False ) )
-
+		transaction.begin()
 		proxy.put_client_msg( None )
-
+		transaction.commit()
 		sender._run()
 		with self.assertRaises( Empty ):
 			proxy.get_client_msg(block=False)

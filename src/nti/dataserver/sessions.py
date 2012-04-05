@@ -210,8 +210,18 @@ class SessionService(object):
 		def read_incoming():
 			while True:
 				msgs = sub_socket.recv_multipart()
+				# In our background greenlet, we begin and commit
+				# transactions around sending messages to
+				# the proxy queue. If the proxy is transaction aware,
+				# then it must also be waiting in another greenlet
+				# on get_client_msg, whereupon it will see this message arrive
+				# after we commit (and probably begin its own transaction)
+				# Note that the normal _dispatch_message_to_proxy can be called
+				# already in a transaction
+				transaction.begin()
 				# (session_id, function_name, msg_data)
 				self._dispatch_message_to_proxy( *msgs )
+				transaction.commit()
 
 		return gevent.spawn( read_incoming )
 
