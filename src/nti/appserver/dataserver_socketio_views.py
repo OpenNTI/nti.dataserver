@@ -51,8 +51,6 @@ class Session( _sessions.Session ):
 		super(Session,self).__init__(**kwargs)
 		self.wsgi_app_greenlet = True
 		self.message_handler = None
-#		self.externalize_function = datastructures.to_json_representation
-#		self.internalize_function = json.loads
 
 	@deprecate("Prefer the `socket` property")
 	def new_protocol( self, handler=None ):
