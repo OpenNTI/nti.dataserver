@@ -1,5 +1,9 @@
+import gevent
+
 from zope import component
 from zope import interface
+from zope.component.hooks import site
+from zope.component.interfaces import ISite
 
 from nti.dataserver.users import User
 from nti.dataserver import interfaces as nti_interfaces
@@ -19,6 +23,18 @@ logger = logging.getLogger( __name__ )
 
 # -----------------------------
 
+class _FakeSite(object):
+	interface.implements(ISite)
+	
+	def __init__(self, sitemanager):
+		self.sitemanager = sitemanager
+				
+	def setSiteManager(self, sitemanager):
+		self.sitemanager = sitemanager
+
+	def getSiteManager(self):
+		return self.sitemanager
+		
 class IndexManager(object):
 	interface.implements(interfaces.IIndexManager)
 
@@ -116,40 +132,60 @@ class IndexManager(object):
 			if uim: result.append(uim)
 		return result
 
+	def _greenlet_spawn(self, func, *args, **kwargs):
+		local_site = _FakeSite(component.getSiteManager())
+		def runner(f, *fargs, **fkwargs):
+			with site(local_site):
+				return f(*fargs, **fkwargs)
+		greenlet = gevent.spawn(runner, f=func, *args, **kwargs)
+		return greenlet
+		
 	def user_data_search(self, username, query, limit=None, *args, **kwargs):
 		results = None
 		if query:
+			jobs = []
 			query = unicode(query)
 			for uim in self._get_search_uims(username, *args, **kwargs):
-				output = uim.search(query=query, limit=limit, **kwargs)
-				results = merge_search_results (results, output)
+				jobs.append(self._greenlet_spawn(func=uim.search, query=query, limit=limit, **kwargs))
+			gevent.joinall(jobs)
+			for job in jobs:
+				results = merge_search_results (results, job.value)
 		return results if results else empty_search_result(query)
 
 	def user_data_ngram_search(self, username, query, limit=None, *args, **kwargs):
 		results = None
 		if query:
+			jobs = []
 			query = unicode(query)
 			for uim in self._get_search_uims(username, *args, **kwargs):
-				output = uim.ngram_search(query=query, limit=limit, **kwargs)
-				results = merge_search_results (results, output)
+				jobs.append(self._greenlet_spawn(func=uim.ngram_search, query=query, limit=limit, **kwargs))
+			gevent.joinall(jobs)
+			for job in jobs:
+				results = merge_search_results (results, job.value)
 		return results if results else empty_search_result(query)
 
 	def user_data_suggest_and_search(self, username, query, limit=None, *args, **kwargs):
 		results = None
 		if query:
+			jobs = []
 			query = unicode(query)
 			for uim in self._get_search_uims(username, *args, **kwargs):
-				output = uim.suggest_and_search(query=query, limit=limit, **kwargs)
-				results = merge_suggest_and_search_results (results, output)
+				jobs.append(self._greenlet_spawn(func=uim.suggest_and_search, query=query, limit=limit, **kwargs))
+			gevent.joinall(jobs)
+			for job in jobs:
+				results = merge_suggest_and_search_results (results, job.value)
 		return results if results else empty_suggest_and_search_result(query)
 
 	def user_data_suggest(self, username, term, limit=None, prefix=None, *args, **kwargs):
 		results = None
 		if term:
+			jobs = []
 			term = unicode(term)
 			for uim in self._get_search_uims(username, *args, **kwargs):
-				output = uim.suggest(term, limit=limit, prefix=prefix, **kwargs)
-				results = merge_suggest_results (results, output)
+				jobs.append(self._greenlet_spawn(func=uim.suggest, term=term, limit=limit, **kwargs))
+			gevent.joinall(jobs)
+			for job in jobs:
+				results = merge_suggest_results(results, job.value)
 		return results if results else empty_suggest_result(term)
 
 	user_data_quick_search = user_data_ngram_search
