@@ -232,32 +232,54 @@ def createApplication( http_port,
 	# Our site setup
 	# If we wanted to, we could be setting sites up as we traverse as well
 	setHooks()
+	def early_request_teardown(request):
+		"""
+		Clean up all the things set up by our new request handler and the
+		tweens. Call this function if the request thread will not be returning,
+		but these resources should be cleaned up.
+		"""
+		transaction.commit()
+		pyramid_zodbconn.get_connection(request).close()
+		setSite( None )
+		# Remove the close action that pyramid_zodbconn wants to do.
+		# The connection might have been reused by then.
+		for callback in request.finished_callbacks:
+			if getattr( callback, '__module__', None ) == pyramid_zodbconn.__name__:
+				request.finished_callbacks.remove( callback )
+				break
+
+	def set_site_teardown(request):
+		# def setSite(site=None): so calling this with no arg brings us back to None
+		setSite()
+
 	def on_new_request(evt):
 		"""
 		Within the scope of a transaction, gets a connection and installs our
 		site manager. Records the active user and URL in the transaction.
 		"""
-		conn = pyramid_zodbconn.get_connection( evt.request )
+		request = evt.request
+		conn = pyramid_zodbconn.get_connection( request )
 		site = conn.root()['nti.dataserver']
 		old_site = getSite()
 		# Not sure what circumstances lead to already having a site
 		# here. Have seen it at startup. Force it back to none (?)
 		# It is very bad to raise an exception here, it interacts
 		# badly with logging
-		if old_site is not None:
-			try:
-				assert old_site is None, "Should not have a site already in place"
-			except AssertionError:
-				logger.exception( "Should not have a site already in place: %s", old_site )
-				old_site = None
+		try:
+			assert old_site is None, "Should not have a site already in place"
+		except AssertionError:
+			logger.exception( "Should not have a site already in place: %s", old_site )
+			old_site = None
 
 		setSite( site )
-		evt.request.add_finished_callback( lambda r: setSite( old_site ) )
+
+		request.add_finished_callback( set_site_teardown )
 		# Now (and only now, that the site is setup) record info in the transaction
-		uid = pyramid.security.authenticated_userid( evt.request )
+		uid = pyramid.security.authenticated_userid( request )
 		if uid:
 			transaction.get().setUser( uid )
-		transaction.get().note( evt.request.url )
+		transaction.get().note( request.url )
+		request.environ['nti.early_request_teardown'] = early_request_teardown
 
 	pyramid_config.add_subscriber( on_new_request, pyramid.interfaces.INewRequest )
 
