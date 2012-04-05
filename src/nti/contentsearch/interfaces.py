@@ -122,6 +122,34 @@ class IUserIndexManagerFactory(interface.Interface):
 	
 class IIndexManager(interface.Interface):
 	
+	def search(query, *args, **kwargs):
+		"""
+		perform a search query
+		
+		:param query: query object
+		"""
+		
+	def ngram_search(query, *args, **kwargs):
+		"""
+		perform a ngram based search
+		
+		:param query: query object
+		"""
+		
+	def suggest_and_search(query, *args, **kwargs):
+		"""
+		perform a  word suggestion and search
+		
+		:param query: query object
+		"""
+	
+	def suggest(query, *args, **kwargs):
+		"""
+		perform a word suggestion search
+		
+		:param query: query object
+		"""
+		
 	def content_search(indexname, query, limit=None, *args, **kwargs):
 		"""
 		perform a book search
