@@ -161,8 +161,8 @@ def main(args):
 
 	if len(args) > 1:
 		parser.error('Too many arguments')
-		if len(args) < 1:
-			parser.error('A filename argument is required')
+	if len(args) < 1:
+		parser.error('A filename argument is required')
 
 	inputfile = args[0]
 	if not os.path.isfile(inputfile):
