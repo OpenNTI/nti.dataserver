@@ -27,6 +27,10 @@ Model
   - CanvasTextShape:
 	An object that describes a text box or possibly a note.
 
+  - CanvasUrlShape:
+	An object that contains the URL of an image. For now, this URL
+	must be a ``data`` URL.
+
   - CanvasPathShape:
 	For freehand drawing. Adds an array of 'points' forming the path and
 	a 'closed' flag to specify whether the path is open or closed.
@@ -133,6 +137,10 @@ strokeRGBAColor/fillRGBAColor: The combination of color and opacity (converted t
 		// array will always be an even number in length.
 		float [] points;
 		bool closed;
+	}
+
+	struct CanvasUrlShape: CanvasShape {
+		string url;
 	}
 
 	struct Canvas : WBObject {

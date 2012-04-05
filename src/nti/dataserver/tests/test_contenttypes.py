@@ -15,7 +15,7 @@ from nti.dataserver.datastructures import (getPersistentState, toExternalOID, fr
 									   PersistentExternalizableList, ExternalizableInstanceDict,
 									   to_external_ntiid_oid)
 from nti.dataserver import contenttypes
-from nti.dataserver.contenttypes import Highlight, Note, Canvas, CanvasShape, CanvasAffineTransform, CanvasCircleShape, CanvasPolygonShape, CanvasPathShape
+from nti.dataserver.contenttypes import Highlight, Note, Canvas, CanvasShape, CanvasAffineTransform, CanvasCircleShape, CanvasPolygonShape, CanvasPathShape, CanvasUrlShape
 import nti.dataserver as dataserver
 #import nti.dataserver.users
 
@@ -283,6 +283,14 @@ class TestCanvas(mock_dataserver.ConfiguringTestBase):
 		with mock_dataserver.mock_db_trans(ds):
 			ds.update_from_external_object( shape, shape3.toExternalObject() )
 		assert_that( shape, is_( shape3 ) )
+
+		shape3 = CanvasUrlShape( url='data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw==' )
+		shape = CanvasUrlShape()
+		with mock_dataserver.mock_db_trans(ds):
+			ds.update_from_external_object( shape, shape3.toExternalObject() )
+		assert_that( shape, is_( shape3 ) )
+
+		assert_that( shape.toExternalObject(), has_entry( 'url', 'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw==' ) )
 
 def check_update_props( ext_name='strokeRGBAColor',
 						col_name='strokeColor',

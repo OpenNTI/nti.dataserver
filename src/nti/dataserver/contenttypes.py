@@ -7,6 +7,7 @@ import collections
 import numbers
 from persistent.list import PersistentList
 import six
+import urlparse
 
 import users
 import datastructures
@@ -688,6 +689,18 @@ class CanvasTextShape(CanvasShape):
 		assert isinstance( self.text, six.string_types )
 		if self.text != tbf:
 			self.text = sanitize_user_html( self.text )
+
+class CanvasUrlShape(CanvasShape):
+
+	def __init__( self, url='' ):
+		super(CanvasUrlShape, self).__init__( )
+		if url:
+			assert urlparse.urlparse( url ).scheme == 'data'
+		self.url = url
+
+	def updateFromExternalObject( self, *args, **kwargs ):
+		super(CanvasUrlShape,self).updateFromExternalObject( *args, **kwargs )
+		assert urlparse.urlparse( self.url ).scheme == 'data'
 
 class CanvasPathShape(CanvasShape):
 
