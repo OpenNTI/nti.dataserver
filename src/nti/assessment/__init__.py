@@ -122,55 +122,70 @@ def textToType(text):
 	try:
 		if naturalNumberPattern.match(text):
 			return int(text)
-	except:
+	except ValueError:
 		pass
 
 	try:
 		if realNumberPattern.match(text):
 			return float(text)
-	except:
+	except ValueError:
 		pass
 
 	return text
 
+def _response_text_to_latex(response):
+	# Experimentally, plasTeX sometimes has problems with $ display math
+	# We haven't set seen that problem with \( display math
+	if response.startswith( '$' ):
+		response = response[1:-1]
+
+	if openmath.OMOBJ in response or openmath.OMA in response:
+		response = openmath.OpenMath2Latex().translate( response )
+	else:
+		if response.startswith( '\\text{' ) and response.endswith( '}' ):
+			response = response[6:-1]
+
+		response = response.replace( '\\left(', '(' )
+		response = response.replace( '\\right)', ')' )
+
+		response = "\\(" + response + "\\)"
+	return response
+
+
+def grade_one_response(questionResponse, possible_answers):
+	"""
+	:param questionResponse: The string to evaluate. It may be in latex notation
+		or openmath XML notation, or plain text. We may edit the response
+		to get something parseable.
+	:param list possible_answers: A sequence of possible answers to compare
+		`questionResponse` with.
+	"""
+	answers = mathTexToDOMNodes( possible_answers )
+	response = str(questionResponse)
+	if not response:
+		#The student skipped this question. Always
+		#a fail.
+		return False
+
+	response_doc = _response_text_to_latex( response )
+	response = mathTexToDOMNodes( ( response_doc, ) )
+
+	if len(response) != 1:
+		# TODO: How to handle this? We need to present
+		# some sort of retry condition?
+		raise Exception( u"Invalid response format '%s' (%s/%s -> %s/%s)" % (questionResponse, response_doc, type(response_doc), len(response), response) )
+
+	match = False
+	for answer in answers:
+		for rsp in response:
+			match = mathIsEqual( rsp, answer )
+			if match:
+				return True
+
+	return False
 
 def assess( quiz, responses ):
 	result = {}
 	for questionId, questionResponse in responses.iteritems():
-		answers = quiz[questionId].answers
-		answers = mathTexToDOMNodes( answers )
-		response = str(questionResponse)
-		if not response:
-			#The student skipped this question. Always
-			#a fail.
-			result[questionId] = False
-			continue
-
-		# Experimentally, plasTeX sometimes has problems with $ display math
-		# We haven't set seen that problem with \( display math
-		if response.startswith( '$' ):
-			response = response[1:-1]
-			response = "\\(" + response + "\\)"
-		elif openmath.OMOBJ in response or openmath.OMA in response:
-			response = openmath.OpenMath2Latex().translate( response )
-		else:
-			response = "\\(" + response + "\\)"
-
-		response_doc = response
-		response = mathTexToDOMNodes( ( response, ) )
-
-		if len(response) != 1:
-			# TODO: How to handle this? We need to present
-			# some sort of retry condition?
-			raise Exception( u"In question %s, invalid response format '%s' (%s/%s -> %s/%s)" % (questionId,questionResponse, response_doc, type(response_doc), len(response), response) )
-		match = False
-		for answer in answers:
-			for rsp in response:
-				match = mathIsEqual( rsp, answer )
-				if match: break
-			if match: break
-
-		result[questionId] = match
-
+		result[questionId] = grade_one_response( questionResponse, quiz[questionId].answers )
 	return result
-
