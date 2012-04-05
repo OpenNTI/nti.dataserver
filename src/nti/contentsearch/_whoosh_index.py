@@ -1,3 +1,4 @@
+import six
 import time
 import inspect
 import collections
@@ -42,7 +43,7 @@ logger = logging.getLogger( __name__ )
 def get_datetime(x=None):
 	f = time.time()
 	if x:
-		f = float(x) if isinstance(x, basestring) else x
+		f = float(x) if isinstance(x, six.string_types) else x
 	return datetime.fromtimestamp(f)
 
 def get_keywords(records):
@@ -53,7 +54,7 @@ def get_keywords(records):
 
 def get_text_from_mutil_part_body(body):
 
-	if not body or isinstance(body, basestring):
+	if not body or isinstance(body, six.string_types):
 		return get_content(body)
 	elif isinstance(body, collections.Iterable):
 
@@ -80,7 +81,7 @@ def get_text_from_mutil_part_body(body):
 			add_from_dict(body)
 		else:
 			for item in body:
-				if isinstance(item, basestring) and item:
+				if isinstance(item, six.string_types) and item:
 					items.append(item)
 				elif isinstance(item, dict):
 					add_from_dict(item)

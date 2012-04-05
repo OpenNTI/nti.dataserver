@@ -1,3 +1,4 @@
+import six
 from datetime import datetime
 from collections import Iterable
 
@@ -38,7 +39,7 @@ logger = logging.getLogger( __name__ )
 def get_last_modified(obj, default=None):
 	value = get_attr(obj, last_modified_fields, default)
 	if value:
-		if isinstance(value, basestring):
+		if isinstance(value, six.string_types):
 			value = float(value)
 		elif isinstance(value, datetime):
 			value = epoch_time(value)
@@ -49,17 +50,17 @@ def get_last_modified(obj, default=None):
 # -----------------------------------
 
 def get_id(obj, default=None):
-	return obj if isinstance(obj, basestring) else get_attr(obj, [ID])
+	return obj if isinstance(obj, six.string_types) else get_attr(obj, [ID])
 
 def get_channel(obj, default=None):
-	return obj if isinstance(obj, basestring) else get_attr(obj, [channel_])
+	return obj if isinstance(obj, six.string_types) else get_attr(obj, [channel_])
 
 def get_objectId(obj, default=None):
-	return obj if isinstance(obj, basestring) else get_attr(obj, oid_fields)
+	return obj if isinstance(obj, six.string_types) else get_attr(obj, oid_fields)
 get_oid = get_objectId
 
 def get_containerId(obj, default=None):
-	return obj if isinstance(obj, basestring) else get_attr(obj, container_id_fields)
+	return obj if isinstance(obj, six.string_types) else get_attr(obj, container_id_fields)
 
 def get_collectionId(obj, default=None):
 	containerId = get_containerId(obj, default)
@@ -68,15 +69,15 @@ def get_collectionId(obj, default=None):
 # -----------------------------------
 
 def _parse_words(obj, fields, default=None):
-	words = obj if isinstance(obj, basestring) else get_attr(obj, fields, default)
+	words = obj if isinstance(obj, six.string_types) else get_attr(obj, fields, default)
 	if words:
-		if isinstance(words, basestring):
+		if isinstance(words, six.string_types):
 			words = words.lower().split()
 		elif isinstance(words, Iterable):
 			words = [w.lower() for w in words]
 		else:
 			words = []
-	return words
+	return words or []
 	
 def get_keywords(obj, default=None):
 	result = set()
@@ -84,7 +85,7 @@ def get_keywords(obj, default=None):
 		words =  _parse_words(obj, [name])
 		if words:
 			result.update(words)
-	return result if result else None
+	return result if result else []
 
 def get_recipients(obj, default=None):
 	return _parse_words(obj, [recipients_])
@@ -95,32 +96,32 @@ def get_sharedWith(obj, default=None):
 # -----------------------------------
 
 def get_note_ngrams(obj, default=None):
-	source = obj if isinstance(obj, basestring) else get_attr(obj, [body_], default)
+	source = obj if isinstance(obj, six.string_types) else get_attr(obj, [body_], default)
 	result = ngrams(get_multipart_content(source))
 	return result
 	
 def get_note_content(obj, default=None):
-	source = obj if isinstance(obj, basestring) else get_attr(obj, [body_], default)
+	source = obj if isinstance(obj, six.string_types) else get_attr(obj, [body_], default)
 	result = get_multipart_content(source)
 	return result.lower() if result else None
 	
 def get_highlight_ngrams(obj, default=None):
-	source = obj if isinstance(obj, basestring) else get_attr(obj, [startHighlightedFullText_], default)
+	source = obj if isinstance(obj, six.string_types) else get_attr(obj, [startHighlightedFullText_], default)
 	result = ngrams(get_multipart_content(source))
 	return result
 	
 def get_highlight_content(obj, default=None):
-	source = obj if isinstance(obj, basestring) else get_attr(obj, [startHighlightedFullText_], default)
+	source = obj if isinstance(obj, six.string_types) else get_attr(obj, [startHighlightedFullText_], default)
 	result = get_content(source)
 	return result.lower() if result else None
 
 def get_messageinfo_ngrams(obj, default=None):
-	source = obj if isinstance(obj, basestring) else get_attr(obj, [BODY], default)
+	source = obj if isinstance(obj, six.string_types) else get_attr(obj, [BODY], default)
 	result = ngrams(get_multipart_content(source))
 	return result
 	
 def get_messageinfo_content(obj, default=None):
-	source = obj if isinstance(obj, basestring) else get_attr(obj, [BODY], default)
+	source = obj if isinstance(obj, six.string_types) else get_attr(obj, [BODY], default)
 	result = get_multipart_content(source)
 	return result.lower() if result else None
 
