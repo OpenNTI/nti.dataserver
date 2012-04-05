@@ -1,3 +1,4 @@
+import UserDict
 from brownie.caching import LFUCache
 
 import logging
@@ -37,6 +38,32 @@ class LFUMap(LFUCache):
 		if self.on_removal_callback:
 			self.on_removal_callback(key, value)
 	
+
+# -----------------------------
+
+class QueryObject(object, UserDict.DictMixin):
+	
+	def __init__(self, term, *args, **kwargs):
+		assert term is not None, "must specify a query term"
+		self._data = {'term': unicode(term)}
+		self._data.update(kwargs)
+		
+	@property
+	def term(self):
+		return self._data['term']
+	
+	@property
+	def limit(self):
+		return self._data.get('limit', None)
+	
+	def keys(self):
+		return self._data.keys()
+	
+	def __str__( self ):
+		return self.term
+
+	def __repr__( self ):
+		return 'QueryObject(%s)' % self._data
 
 # -----------------------------
 
