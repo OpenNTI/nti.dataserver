@@ -1,4 +1,5 @@
 import unittest
+from hamcrest import assert_that, is_
 
 from nti.assessment import *
 
@@ -125,6 +126,16 @@ class TestAssessment(unittest.TestCase):
 		self.assertMathNodesNotEqual(math1, math2)
 		self.assertMathNodesNotEqual(math3, math4)
 
+	def test_output_from_mathquill(self):
+		# Some real-life output from mathquil
+
+		answers = ( "$(0.5,0.5)$", )
+		# as typed directly
+		response = "\\left(0.5,0.5\\right)"
+		assert_that( grade_one_response( response, answers ), "Parenthesis variations" )
+		# as cut and paste
+		response = "\\text{(0.5,0.5)}"
+		assert_that( grade_one_response( response, answers ), "Text wrapping" )
 
 	def assertMathNodesEqual(self, math1, math2, message=None):
 		if not message:
@@ -139,15 +150,15 @@ class TestAssessment(unittest.TestCase):
 		self.assertFalse(mathIsEqual(math1, math2), message)
 
 	def test_assess(self):
-		quiz = {1 : MockQuiz(['$5.00$','$5$']),\
-				2 : MockQuiz(['$12$']),\
-				3 : MockQuiz(['$15.37$']),\
-				4 : MockQuiz(['$1+x$']),\
-				5 : MockQuiz(['$\\frac{2}{3}$']),\
-				6 : MockQuiz(['$10$']),\
-				7 : MockQuiz(['$42$']),\
-				8 : MockQuiz(['$210$']),\
-				9 : MockQuiz(['$6$']),\
+		quiz = {1 : MockQuiz(['$5.00$','$5$']),
+				2 : MockQuiz(['$12$']),
+				3 : MockQuiz(['$15.37$']),
+				4 : MockQuiz(['$1+x$']),
+				5 : MockQuiz(['$\\frac{2}{3}$']),
+				6 : MockQuiz(['$10$']),
+				7 : MockQuiz(['$42$']),
+				8 : MockQuiz(['$210$']),
+				9 : MockQuiz(['$6$']),
 				10 : MockQuiz(['$0$'])}
 
 		responses = {1: '5', 2: '12', 3: '15.37', 4: '1 + x', 5:'\\frac{2}{3}', 6: '10', \
@@ -158,8 +169,6 @@ class TestAssessment(unittest.TestCase):
 							 7:True, 8:True, 9:True, 10:True}
 		results = assess(quiz, responses)
 		self.assertEqual(expectedResults, results)
-
-
 
 
 		responses[3] = '15'
@@ -185,6 +194,14 @@ class TestAssessment(unittest.TestCase):
 		results = assess(quiz, responses)
 		self.assertEqual(expectedResults, results)
 
+
+	def test_assess_two(self):
+		quiz = {1 : MockQuiz(['$(0.4, 0.3)$']) }
+
+		responses = {1: '(0.4, 0.3)'}
+
+		results = assess( quiz, responses )
+		assert_that( results, is_( {1: True} ) )
 
 class MockQuiz(object):
 	def __init__(self, answers):

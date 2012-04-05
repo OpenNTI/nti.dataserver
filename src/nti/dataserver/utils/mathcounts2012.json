@@ -1345,7 +1345,7 @@
                 "Text": "What are the coordinates of the midpoint of segment AB with endpoints A(-2, 4) and B (3, -3)? Express the coordinates as decimals to the nearest tenth.",
                 "Solution": "We average the x-coordinates and the y-coordinates to find the coordinates of the midpoint of the segment. For the given segment, the midpoint has an x-coordinate of (-2 + 3)/2 = 1/2, and the y-coordinate is (4 + (-3))/2 = 1/2. So the midpoint has coordinates (1/2, 1/2) = (0.5, 0.5).",
                 "Answers": [
-                    "(0.5, 0.5)"
+                    "$(0.5, 0.5)$"
                 ],
                 "ID": "106",
                 "CCSS": "G-GPE.6",
