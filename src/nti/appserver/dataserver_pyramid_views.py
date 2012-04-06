@@ -838,7 +838,7 @@ class _UGDModifyViewBase(object):
 			theId = value.id
 		return theId
 
-		def _find_file_field(self):
+	def _find_file_field(self):
 		if self.request.content_type == 'multipart/form-data':
 			# Expecting exactly one key in POST, the file
 			field = None
