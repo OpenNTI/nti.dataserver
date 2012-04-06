@@ -72,6 +72,96 @@ class IndexManager(object):
 		return result is not None
 
 	# -------------------
+	
+	def _greenlet_spawn(self, func, *args, **kwargs):
+		local_site = _FakeSite(component.getSiteManager())
+		def runner(f, *fargs, **fkwargs):
+			with site(local_site):
+				return f(*fargs, **fkwargs)
+		greenlet = gevent.spawn(runner, f=func, *args, **kwargs)
+		return greenlet
+	
+	def search(self, query, *args, **kwargs):
+		term = query.term
+		limit = query.limit
+		username = query.username
+		indexname = query.indexname
+		
+		# search UGD
+		jobs = self._ugd_search_jobs(username, term, limit, *args, **kwargs) if username else []
+		
+		# search books
+		for indexname in query.books:
+			jobs.append(self._greenlet_spawn(func=self.content_search, indexname=indexname, query=term, limit=limit, **kwargs))
+		gevent.joinall(jobs)
+		
+		# merge results
+		results = None
+		for job in jobs:
+			results = merge_search_results (results, job.value)
+		return results
+		
+	def ngram_search(self, query, *args, **kwargs):
+		term = query.term
+		limit = query.limit
+		username = query.username
+		indexname = query.indexname
+		
+		# search UGD
+		jobs = self._ugd_ngram_search_jobs(username, term, limit, *args, **kwargs) if username else []
+		
+		# search books
+		for indexname in query.books:
+			jobs.append(self._greenlet_spawn(func=self.content_ngram_search, indexname=indexname, query=term, limit=limit, **kwargs))
+		gevent.joinall(jobs)
+		
+		# merge results
+		results = None
+		for job in jobs:
+			results = merge_search_results (results, job.value)
+		return results
+		
+	def suggest_and_search(self, query, *args, **kwargs):
+		term = query.term
+		limit = query.limit
+		username = query.username
+		indexname = query.indexname
+		
+		# search UGD
+		jobs = self._ugd_suggest_and_search_jobs(username, term, limit, *args, **kwargs) if username else []
+		
+		# search books
+		for indexname in query.books:
+			jobs.append(self._greenlet_spawn(func=self.content_suggest_and_search, indexname=indexname, query=term, limit=limit, **kwargs))
+		gevent.joinall(jobs)
+		
+		# merge results
+		results = None
+		for job in jobs:
+			results = merge_suggest_and_search_results(results, job.value)
+		return results
+	
+	def suggest(self, query, *args, **kwargs):
+		term = query.term
+		limit = query.limit
+		username = query.username
+		indexname = query.indexname
+		
+		# search UGD
+		jobs = self._ugd_suggest_jobs(username, term, limit, *args, **kwargs) if username else []
+		
+		# search books
+		for indexname in query.books:
+			jobs.append(self._greenlet_spawn(func=self.content_suggest, indexname=indexname, query=term, limit=limit, **kwargs))
+		gevent.joinall(jobs)
+		
+		# merge results
+		results = None
+		for job in jobs:
+			results = merge_suggest_results(results, job.value)
+		return results
+	
+	# -------------------
 
 	def get_book_index_manager(self, indexname):
 		return self.books.get(indexname, None)
@@ -100,16 +190,15 @@ class IndexManager(object):
 		results = bm.suggest_and_search(query, limit, *args, **kwargs) if (bm and query) else None
 		return results if results else empty_suggest_and_search_result(query)
 
-	def content_suggest(self, indexname, term, limit=None, prefix=None, *args, **kwargs):
+	def content_suggest(self, indexname, query, limit=None, prefix=None, *args, **kwargs):
 		bm = self.get_book_index_manager(indexname)
-		results = bm.suggest(term, limit=limit, prefix=prefix, **kwargs) if (bm and term) else None
-		return results if results else empty_suggest_result(term)
+		results = bm.suggest(query, limit=limit, prefix=prefix, **kwargs) if (bm and query) else None
+		return results if results else empty_suggest_result(query)
 
-	search = content_search
-	suggest = content_suggest
 	quick_search = content_ngram_search
 	content_quick_search = content_ngram_search
-	suggest_and_search = content_suggest_and_search
+	
+	# -------------------
 
 	def _get_user_index_manager(self, username, create=False, **kwargs):
 		result = None
@@ -131,65 +220,75 @@ class IndexManager(object):
 			uim = self._get_user_index_manager(name, *args, **kwargs)
 			if uim: result.append(uim)
 		return result
-
-	def _greenlet_spawn(self, func, *args, **kwargs):
-		local_site = _FakeSite(component.getSiteManager())
-		def runner(f, *fargs, **fkwargs):
-			with site(local_site):
-				return f(*fargs, **fkwargs)
-		greenlet = gevent.spawn(runner, f=func, *args, **kwargs)
-		return greenlet
+		
+	def _ugd_search_jobs(self, username, query, limit=None, *args, **kwargs):
+		jobs = []
+		query = unicode(query)
+		for uim in self._get_search_uims(username, *args, **kwargs):
+			jobs.append(self._greenlet_spawn(func=uim.search, query=query, limit=limit, **kwargs))
+		return jobs
 		
 	def user_data_search(self, username, query, limit=None, *args, **kwargs):
 		results = None
 		if query:
-			jobs = []
-			query = unicode(query)
-			for uim in self._get_search_uims(username, *args, **kwargs):
-				jobs.append(self._greenlet_spawn(func=uim.search, query=query, limit=limit, **kwargs))
+			jobs = self._ugd_search_jobs(username, query, limit, *args, **kwargs)
 			gevent.joinall(jobs)
 			for job in jobs:
 				results = merge_search_results (results, job.value)
 		return results if results else empty_search_result(query)
 
+	def _ugd_ngram_search_jobs(self, username, query, limit=None, *args, **kwargs):
+		jobs = []
+		query = unicode(query)
+		for uim in self._get_search_uims(username, *args, **kwargs):
+			jobs.append(self._greenlet_spawn(func=uim.ngram_search, query=query, limit=limit, **kwargs))
+		return jobs
+	
 	def user_data_ngram_search(self, username, query, limit=None, *args, **kwargs):
 		results = None
 		if query:
-			jobs = []
-			query = unicode(query)
-			for uim in self._get_search_uims(username, *args, **kwargs):
-				jobs.append(self._greenlet_spawn(func=uim.ngram_search, query=query, limit=limit, **kwargs))
+			jobs = self._ugd_ngram_search_jobs(username, query, limit, *args, **kwargs)
 			gevent.joinall(jobs)
 			for job in jobs:
 				results = merge_search_results (results, job.value)
 		return results if results else empty_search_result(query)
 
+	def _ugd_suggest_and_search_jobs(self, username, query, limit=None, *args, **kwargs):
+		jobs = []
+		query = unicode(query)
+		for uim in self._get_search_uims(username, *args, **kwargs):
+			jobs.append(self._greenlet_spawn(func=uim.suggest_and_search, query=query, limit=limit, **kwargs))
+		return jobs
+	
 	def user_data_suggest_and_search(self, username, query, limit=None, *args, **kwargs):
 		results = None
 		if query:
-			jobs = []
-			query = unicode(query)
-			for uim in self._get_search_uims(username, *args, **kwargs):
-				jobs.append(self._greenlet_spawn(func=uim.suggest_and_search, query=query, limit=limit, **kwargs))
+			jobs = self._ugd_suggest_and_search_jobs(username, query, limit, *args, **kwargs)
 			gevent.joinall(jobs)
 			for job in jobs:
 				results = merge_suggest_and_search_results (results, job.value)
 		return results if results else empty_suggest_and_search_result(query)
 
-	def user_data_suggest(self, username, term, limit=None, prefix=None, *args, **kwargs):
+	def _ugd_suggest_jobs(self, username, query, limit=None, *args, **kwargs):
+		jobs = []
+		query = unicode(query)
+		for uim in self._get_search_uims(username, *args, **kwargs):
+			jobs.append(self._greenlet_spawn(func=uim.suggest, query=query, limit=limit, **kwargs))
+		return jobs
+	
+	def user_data_suggest(self, username, query, limit=None, prefix=None, *args, **kwargs):
 		results = None
-		if term:
-			jobs = []
-			term = unicode(term)
-			for uim in self._get_search_uims(username, *args, **kwargs):
-				jobs.append(self._greenlet_spawn(func=uim.suggest, term=term, limit=limit, **kwargs))
+		if query:
+			jobs = self._ugd_suggest_jobs(username, query, limit, *args, **kwargs)
 			gevent.joinall(jobs)
 			for job in jobs:
 				results = merge_suggest_results(results, job.value)
-		return results if results else empty_suggest_result(term)
+		return results if results else empty_suggest_result(query)
 
 	user_data_quick_search = user_data_ngram_search
 
+	# -------------------
+	
 	def _get_data(self, kwargs):
 		if 'data' in kwargs:
 			result = kwargs.pop('data')

@@ -96,7 +96,7 @@ class _BaseIndexManagerTest(object):
 		hits = self.im.content_suggest_and_search(indexname='bleach', query='wen')
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 
-		hits = self.im.content_suggest(indexname='bleach', term='extre')
+		hits = self.im.content_suggest(indexname='bleach', query='extre')
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 
 	# ----------------
@@ -150,7 +150,7 @@ class _BaseIndexManagerTest(object):
 		hits = self.im.user_data_suggest_and_search(query='creat', username='nt@nti.com', search_on=('note',))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 
-		hits = self.im.user_data_suggest(username='nt@nti.com', search_on=('note',), term='flow')
+		hits = self.im.user_data_suggest(username='nt@nti.com', search_on=('note',), query='flow')
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 
 	@WithMockDSTrans

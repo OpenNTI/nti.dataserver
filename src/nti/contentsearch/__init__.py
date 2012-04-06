@@ -38,19 +38,33 @@ class LFUMap(LFUCache):
 		if self.on_removal_callback:
 			self.on_removal_callback(key, value)
 	
-
 # -----------------------------
 
 class QueryObject(object, UserDict.DictMixin):
 	
-	def __init__(self, term, *args, **kwargs):
-		assert term is not None, "must specify a query term"
-		self._data = {'term': unicode(term)}
-		self._data.update(kwargs)
+	def __init__(self, *args, **kwargs):
+		term = kwargs.get('term', None) or kwargs.get('query', None)
+		assert term, 'must specify a query term'
+		self._data = dict(kwargs)
+		self._data['term'] = unicode(term)
 		
+	@property
+	def books(self):
+		indexname = self._data.get('indexname', None)
+		if indexname:
+			return [indexname]
+		else:
+			books = self._data.get('books', None) or  ['prealgebra']
+			return books
+	
 	@property
 	def term(self):
 		return self._data['term']
+	query=term
+
+	@property
+	def username(self):
+		return self._data.get('username', None)
 	
 	@property
 	def limit(self):
