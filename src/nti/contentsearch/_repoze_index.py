@@ -66,6 +66,9 @@ def get_collectionId(obj, default=None):
 	containerId = get_containerId(obj, default)
 	return get_collection(containerId)
 
+def get_none(obj, default=None):
+	return None
+
 # -----------------------------------
 
 def _parse_words(obj, fields, default=None):
@@ -138,7 +141,7 @@ def _create_treadable_mixin_catalog():
 	catalog[keywords_] = CatalogKeywordIndex(get_keywords)
 	catalog[sharedWith_] = CatalogKeywordIndex(get_sharedWith)
 	catalog[CONTAINER_ID] = CatalogFieldIndex(get_containerId)
-	catalog[COLLECTION_ID] = CatalogFieldIndex(get_collectionId)
+	catalog[COLLECTION_ID] = CatalogFieldIndex(get_none)
 	catalog[LAST_MODIFIED] = CatalogFieldIndex(get_last_modified)
 	return catalog
 
@@ -188,7 +191,7 @@ def _ngram_content_highlight(query=None, text=None, *args, **kwargs):
 
 def _highlight_content(query=None, text=None, use_word_highlight=True, *args, **kwargs):
 	content = None
-	if query and text:
+	if query and text and use_word_highlight is not None:
 		content = 	_word_content_highlight(query, text, *args, **kwargs) if use_word_highlight else \
 					_ngram_content_highlight(query, text, *args, **kwargs)
 	return unicode(content) if content else text
@@ -202,7 +205,7 @@ def _get_index_hit_from_object(obj):
 	result[LAST_MODIFIED] = get_last_modified(obj)
 	result[NTIID] = get_ntiid(obj) or result[TARGET_OID]
 	result[CONTAINER_ID] = get_attr(obj, container_id_fields)
-	result[COLLECTION_ID] = get_collection(result[CONTAINER_ID])
+	#result[COLLECTION_ID] = get_collection(result[CONTAINER_ID])
 	return result
 
 def get_index_hit_from_note(obj, query=None, use_word_highlight=True, *args, **kwargs):

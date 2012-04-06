@@ -6,6 +6,7 @@ from zope import interface
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.datastructures import toExternalOID
+from nti.dataserver.datastructures import fromExternalOID
 
 from nti.contentsearch import interfaces
 from nti.contentsearch.interfaces import IUserIndexManagerFactory
@@ -35,6 +36,23 @@ def has_stored_indices(username):
 	names = get_stored_indices(username)
 	return True if names else False
 	
+def get_by_oid(oid_string):
+	lsm = component.getSiteManager()
+	connection = getattr( lsm, '_p_jar', None )
+	oid_string, database_name = fromExternalOID( oid_string )
+	try:
+		if database_name: connection = connection.get_connection( database_name )
+		result = connection[oid_string]
+	except:
+		logger.exception( "Failed to resolve oid '%s' using '%s'", oid_string.encode('hex'), connection )
+		result = None
+	return result
+
+_all_re = re.compile('([\?\*])')
+def is_all_query(query):
+	mo = _all_re.search(query)
+	return mo and mo.start(1) == 0
+
 class RepozeUserIndexManager(object):
 	interface.implements(interfaces.IUserIndexManager)
 
@@ -69,14 +87,14 @@ class RepozeUserIndexManager(object):
 		docids = kwargs.pop('docids')
 		query =  kwargs.pop('query', u'')
 		limit = kwargs.pop('limit', None)
-		use_word_highlight = kwargs.pop('use_word_highlight', True)
+		use_word_highlight = kwargs.pop('use_word_highlight', None)
 		
 		lm =  0
 		items = []
 		for docid in docids:
 			oid_string = self.store.address_for_docid(self.username, docid)
 			try:
-				svr_obj = self.dataserver.get_by_oid( oid_string, ignore_creator=True )
+				svr_obj = get_by_oid( oid_string)
 				if svr_obj:
 					hit = get_index_hit(svr_obj, query=query, use_word_highlight=use_word_highlight, **kwargs)
 					if hit:
@@ -92,8 +110,7 @@ class RepozeUserIndexManager(object):
 
 
 	def _do_catalog_query(self, catalog, field, query, limit=None):
-		mo = re.search('([\?\*])', query)
-		if mo and mo.start(1) == 0:
+		if is_all_query(query):
 			# globbing character return all
 			ids = self.store.get_docids(self.username)
 			return len(ids), ids
@@ -131,11 +148,13 @@ class RepozeUserIndexManager(object):
 		return results
 
 	def search(self, query, limit=None, *args, **kwargs):
-		results = self._do_search(content_, query, limit, True, *args, **kwargs)
+		_highlight = None if is_all_query(query) else True
+		results = self._do_search(content_, query, limit, _highlight, *args, **kwargs)
 		return results
 
 	def ngram_search(self, query, limit=None, *args, **kwargs):
-		results = self._do_search(ngrams_, query, limit, False, *args, **kwargs)
+		_highlight = None if is_all_query(query) else False
+		results = self._do_search(ngrams_, query, limit, _highlight, *args, **kwargs)
 		return results
 	quick_search = ngram_search
 
