@@ -27,10 +27,10 @@ def evolve( context ):
 	
 	for username in list(rds.users.keys()):
 		
-		logger.debug('Reindexing search documents for user %s' % username)
-		
 		docids = list(rds.get_docids(username))
-		for docid in docids:
+		logger.debug('Reindexing %s search documents for user %s' % (len(docids), username))
+		
+		for x, docid in enumerate(docids):
 			oid_string = rds.address_for_docid(username, docid)
 			if oid_string:
 				try:
@@ -45,11 +45,13 @@ def evolve( context ):
 						catalog = rds.get_catalog(username, type_name)
 						
 						# reindex
-						logger.debug("reindexing '%s' (%s,%s)" % (docid, type_name, oid_string))
+						logger.debug("reindexing (%s) '%s' (%s,%s)" % (x, docid, type_name, oid_string))
 						catalog.reindex_doc(docid, obj)
 					else:
 						logger.warn("Could not find object with OID '%s'" % oid_string)
 				except:
 					logger.exception("Could not migrate object with OID '%s'" % oid_string)
+					
+		logger.debug('Reindexing for user %s completed' % username)
 
 	
