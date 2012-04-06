@@ -170,11 +170,11 @@ def get_collection(containerId, default='prealgebra'):
 
 # -----------------------------------
 
-def get_external_oid(obj):
+def get_external_oid(obj, default=None):
 	if IPersistent.providedBy(obj):
 		result = to_external_ntiid_oid( obj )
 	else:
-		result = get_attr(obj, oid_fields)
+		result = obj if isinstance(obj, six.string_types) else get_attr(obj, oid_fields)
 	return result
 		
 def get_ntiid(obj, default=None):

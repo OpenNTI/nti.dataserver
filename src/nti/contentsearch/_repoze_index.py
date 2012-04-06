@@ -136,7 +136,7 @@ def _create_text_index(field, discriminator):
 def _create_treadable_mixin_catalog():
 	catalog = Catalog()
 	catalog[NTIID] = CatalogFieldIndex(get_ntiid)
-	catalog[OID] = CatalogFieldIndex(get_objectId)
+	catalog[OID] = CatalogFieldIndex(get_external_oid)
 	catalog[CREATOR] = CatalogFieldIndex(get_creator)
 	catalog[keywords_] = CatalogKeywordIndex(get_keywords)
 	catalog[sharedWith_] = CatalogKeywordIndex(get_sharedWith)
