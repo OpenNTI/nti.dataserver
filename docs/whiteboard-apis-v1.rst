@@ -25,7 +25,7 @@ Model
 	For circles and ovals.
 
   - CanvasTextShape:
-	An object that describes a text box or possibly a note.
+	An object that describes a (simple, plain) text box. Intended for labels.
 
   - CanvasUrlShape:
 	An object that contains the URL of an image. For now, this URL
@@ -128,7 +128,7 @@ strokeRGBAColor/fillRGBAColor: The combination of color and opacity (converted t
 	struct CanvasCircleShape : CanvasShape {}
 
 	struct CanvasTextShape : CanvasShape {
-		string text;
+		string text; //Plain
 	}
 
 	struct CanvasPathShape: CanvasShape {

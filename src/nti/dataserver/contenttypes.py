@@ -294,7 +294,7 @@ def _html5lib_tostring(doc,sanitize=True):
 	string = ''.join(list(output_generator))
 	return string
 
-def sanitize_user_html( user_input ):
+def sanitize_user_html( user_input, method='html' ):
 	"""
 	Given a user input string of plain text, HTML or HTML fragment, sanitize
 	by removing unsupported/dangerous elements and doing some normalization.
@@ -333,6 +333,9 @@ def sanitize_user_html( user_input ):
 		# so they render as default on the browser as well
 		elif node.tag == 'span' and node.getparent().tag == 'p' and node.get( 'style' ) == 'font-family: \'Helvetica\'; font-size: 12pt; color: black;':
 			del node.attrib['style']
+
+	if method == 'text':
+		return lxml.etree.tostring( doc, method='text' )
 
 	string = _html5lib_tostring( doc, sanitize=False )
 	# If we can go back to plain text, do so.
@@ -688,7 +691,8 @@ class CanvasTextShape(CanvasShape):
 		super(CanvasTextShape,self).updateFromExternalObject( *args, **kwargs )
 		assert isinstance( self.text, six.string_types )
 		if self.text != tbf:
-			self.text = sanitize_user_html( self.text )
+			self.text = sanitize_user_html( self.text, method='text' )
+
 
 class CanvasUrlShape(CanvasShape):
 

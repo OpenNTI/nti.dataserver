@@ -1,6 +1,6 @@
 
 from hamcrest import (assert_that, is_, has_entry, instance_of, is_not, has_entry,
-					  has_key, is_in, not_none, is_not, greater_than, has_item,
+					  has_key, is_in, not_none, is_not, greater_than, has_item, has_property,
 					  same_instance, none, has_entries, only_contains)
 from hamcrest.core.base_matcher import BaseMatcher
 
@@ -15,7 +15,7 @@ from nti.dataserver.datastructures import (getPersistentState, toExternalOID, fr
 									   PersistentExternalizableList, ExternalizableInstanceDict,
 									   to_external_ntiid_oid)
 from nti.dataserver import contenttypes
-from nti.dataserver.contenttypes import Highlight, Note, Canvas, CanvasShape, CanvasAffineTransform, CanvasCircleShape, CanvasPolygonShape, CanvasPathShape, CanvasUrlShape
+from nti.dataserver.contenttypes import Highlight, Note, Canvas, CanvasShape, CanvasAffineTransform, CanvasCircleShape, CanvasPolygonShape, CanvasPathShape, CanvasUrlShape, CanvasTextShape
 import nti.dataserver as dataserver
 #import nti.dataserver.users
 
@@ -35,6 +35,12 @@ def test_sanitize_html():
 	sanitized = open( os.path.join( os.path.dirname( __file__ ), 'contenttypes-notes-sanitized.txt' ) ).readlines()
 	for s in zip(strings,sanitized):
 		yield _check_sanitized, s[0], s[1]
+
+def test_sanitize_html_contenttypes():
+	text = '<html><body><span style="color: rgb(0, 0, 0);">Hi, all.  I\'ve found the following </span><font color="#0000ff"><u>video series </u></font>to be very helpful as you learn algebra.  Let me know if questions or if you find others.</body></html>\n'
+	shape = CanvasTextShape()
+	shape.updateFromExternalObject( {'text': text} )
+	assert_that( shape, has_property( 'text', "Hi, all.  I've found the following video series to be very helpful as you learn algebra.  Let me know if questions or if you find others.\n" ) )
 
 def test_normalize_html_text_to_par():
 	html = u'<html><body><p style=" text-align: left;"><span style="font-family: \'Helvetica\';  font-size: 12pt; color: black;">The pad replies to my note.</span></p>The server edits it.</body></html>'
