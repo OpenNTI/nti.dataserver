@@ -838,6 +838,40 @@ class _UGDModifyViewBase(object):
 			theId = value.id
 		return theId
 
+		def _find_file_field(self):
+		if self.request.content_type == 'multipart/form-data':
+			# Expecting exactly one key in POST, the file
+			field = None
+			for k in self.request.POST:
+				v = self.request.POST[k]
+				if hasattr( v, 'type' ) and hasattr( v, 'file' ):
+					# must be our field
+					field = v
+					break
+			return field
+
+	def _get_body_content(self):
+		field = self._find_file_field()
+		if field is not None:
+			in_file = field.file
+			in_file.seek( 0 )
+			return in_file.read()
+
+		return self.request.body
+
+	def _get_body_type(self):
+		field = self._find_file_field()
+		if field is not None:
+			return field.type
+		return self.request.content_type or 'application/octet-stream'
+
+	def _get_body_name(self):
+		field = self._find_file_field()
+		if field is not None and field.filename:
+			return field.filename
+		return self.request.headers.get( 'Slug' ) or ''
+
+
 from nti.dataserver.mimetype import nti_mimetype_class
 
 def class_name_from_content_type( request ):
@@ -1058,7 +1092,6 @@ class _EnclosurePostView(_UGDModifyViewBase):
 	def __init__(self, request):
 		super(_EnclosurePostView,self).__init__( request )
 
-
 	def __call__(self):
 		context = self.request.context # A _AbstractObjectResource OR an ISimpleEnclosureContainer
 		# Enclosure containers are defined to be IContainerNamesContainer,
@@ -1070,10 +1103,10 @@ class _EnclosurePostView(_UGDModifyViewBase):
 		# TODO: Use a ZCA factory to create enclosure?
 
 		content = None
-		content_type = self.request.content_type or 'application/octet-stream'
+		content_type = self._get_body_type()
 
 		# First, see if they're giving us something we can model
-		datatype = class_name_from_content_type( self.request )
+		datatype = class_name_from_content_type( content_type )
 		datatype = datatype + 's' if datatype else None
 
 
@@ -1083,11 +1116,11 @@ class _EnclosurePostView(_UGDModifyViewBase):
 
 		if modeled_content is not None:
 			modeled_content.creator = self.getRemoteUser()
-			self.updateContentObject( modeled_content, self.readInput(), set_id=True )
+			self.updateContentObject( modeled_content, self.readInput(self._get_body_content()), set_id=True )
 			modeled_content.containerId = getattr( enclosure_container, 'id', None ) or getattr( enclosure_container, 'ID' ) # TODO: Assumptions
 			content_type = nti_mimetype_from_object( modeled_content )
 
-		content = modeled_content if modeled_content is not None else self.request.body
+		content = modeled_content if modeled_content is not None else self._get_body_content()
 		if content is not modeled_content and content_type.startswith( MIME_BASE ):
 			# If they tried to send us something to model, but we didn't actually
 			# model it, then screw that, it's just a blob
@@ -1098,7 +1131,7 @@ class _EnclosurePostView(_UGDModifyViewBase):
 			# enclosure object
 
 		enclosure = enclosures.SimplePersistentEnclosure(
-			self.request.headers.get( 'Slug' ) or '',
+			self._get_body_name(),
 			content,
 			content_type )
 		enclosure.creator = self.getRemoteUser()
@@ -1118,10 +1151,13 @@ class _EnclosurePostView(_UGDModifyViewBase):
 		_force_update_modification_time( enclosure_container, enclosure.lastModified )
 
 		self.request.response.status_int = 201 # Created
-
-		self.request.response.location = self.request.resource_url( LocationProxy( enclosure,
-																				   context,
-																				   enclosure.name ) )
+		# If we're doing a form submission, then the browser (damn IE)
+		# will try to follow this location if we send it
+		# which results in annoying and useless dialogs
+		if self._find_file_field() is None:
+			self.request.response.location = self.request.resource_url( LocationProxy( enclosure,
+																					   context,
+																					   enclosure.name ) )
 		# TODO: We need to return some representation of this object
 		# just created. We need an 'Entry' wrapper.
 		return ACLLocationProxy( enclosure, context, enclosure.name, nacl.ACL( enclosure, context.__acl__ ) )
@@ -1144,11 +1180,11 @@ class _EnclosurePutView(_UGDModifyViewBase):
 		# Not modeled # TODO: Check IModeledContent.providedBy( context.data )?
 		# FIXME: See comments in _EnclosurePostView about mod times.
 		if not context.mime_type.startswith( MIME_BASE ):
-			context.data = self.request.body
+			context.data = self._get_body_content()
 			_force_update_modification_time( context, time.time() )
 		else:
 			modeled_content = context.data
-			self.updateContentObject( modeled_content, self.readInput() )
+			self.updateContentObject( modeled_content, self.readInput(self._get_body_content()) )
 			result = modeled_content
 			_force_update_modification_time( context, modeled_content.lastModified )
 		return result
