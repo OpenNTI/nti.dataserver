@@ -17,7 +17,6 @@ import nti.dataserver.sessions as sessions
 from nti.dataserver.session_consumer import SessionConsumer
 import nti.dataserver.chat as chat
 
-import socketio
 import mock_dataserver
 
 

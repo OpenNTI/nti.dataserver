@@ -93,7 +93,7 @@ class _Main(object):
 			# files correctly (nginx, apache) by applying ETags to allow caching and Content-Encoding
 			# for speed.
 			self.pyramid_config.add_static_view( prefix, path )
-		self.pyramid_config.add_static_view( SOCKET_IO_PATH + '/static/', 'socketio:static/' )
+		self.pyramid_config.add_static_view( SOCKET_IO_PATH + '/static/', 'nti.socketio:static/' )
 		self.serveFiles.append( ( '/' + SOCKET_IO_PATH + '/static/', None ) )
 		self.pyramid_app = self.pyramid_config.make_wsgi_app()
 
