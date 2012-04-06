@@ -37,6 +37,7 @@ def has_stored_indices(username):
 	return True if names else False
 	
 def get_by_oid(oid_string):
+	if not oid_string: return None
 	lsm = component.getSiteManager()
 	connection = getattr( lsm, '_p_jar', None )
 	oid_string, database_name = fromExternalOID( oid_string )
@@ -91,23 +92,17 @@ class RepozeUserIndexManager(object):
 		
 		lm =  0
 		items = []
-		for docid in docids:
-			oid_string = self.store.address_for_docid(self.username, docid)
-			try:
-				svr_obj = get_by_oid( oid_string)
-				if svr_obj:
-					hit = get_index_hit(svr_obj, query=query, use_word_highlight=use_word_highlight, **kwargs)
-					if hit:
-						items.append(hit)
-						lm = max(lm, hit[LAST_MODIFIED])
-						if limit and len(items) >= limit:
-							break
-				else:
-					logger.warn("Could not find object '%s' with docid '%s' for user '%s'" % (oid_string, docid, self.username))
-			except:
-				logger.exception("Cannot find object with docid '%s' for user '%s'" % (docid, self.username))
+		oids = map(self.store.address_for_docid, [self.username]*len(docids), docids)
+		objects = map(get_by_oid, oids) 
+		for svr_obj in objects:
+			if svr_obj:
+				hit = get_index_hit(svr_obj, query=query, use_word_highlight=use_word_highlight, **kwargs)
+				if hit:
+					items.append(hit)
+					lm = max(lm, hit[LAST_MODIFIED])
+					if limit and len(items) >= limit:
+						break
 		return items, lm
-
 
 	def _do_catalog_query(self, catalog, field, query, limit=None):
 		if is_all_query(query):
