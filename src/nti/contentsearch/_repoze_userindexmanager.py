@@ -139,15 +139,15 @@ class RepozeUserIndexManager(object):
 		return results
 	quick_search = ngram_search
 
-	def suggest(self, term, limit=None, prefix=None, *args, **kwargs):
-		term = unicode(term)
-		results = empty_suggest_result(term)
-		if not term: return results
+	def suggest(self, query, limit=None, prefix=None, *args, **kwargs):
+		query = unicode(query)
+		results = empty_suggest_result(query)
+		if not query: return results
 
 		suggestions = set()
 		search_on = self._adapt_search_on_types(kwargs.get('search_on', None))
 		threshold = kwargs.get('threshold', 0.4999)
-		prefix = prefix or len(term)
+		prefix = prefix or len(query)
 
 		with repoze_context_manager():
 			search_on = search_on if search_on else self.store.get_catalog_names(self.username)
@@ -155,7 +155,7 @@ class RepozeUserIndexManager(object):
 				catalog = self.datastore.get_catalog(self.username, type_name)
 				textfield = catalog.get(content_, None)
 				if isinstance(textfield, CatalogTextIndexNG3):
-					words_t = textfield.suggest(term=term, threshold=threshold, prefix=prefix)
+					words_t = textfield.suggest(term=query, threshold=threshold, prefix=prefix)
 					for t in words_t:
 						suggestions.add(t[0])
 

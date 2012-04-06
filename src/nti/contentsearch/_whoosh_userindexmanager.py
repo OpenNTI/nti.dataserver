@@ -179,16 +179,16 @@ class WhooshUserIndexManager(object):
 		return results
 
 	@TraxWrapper
-	def suggest(self, term, limit=None, prefix=None, *args, **kwargs):
-		term = unicode(term)
-		results = empty_suggest_result(term)
+	def suggest(self, query, limit=None, prefix=None, *args, **kwargs):
+		query = unicode(query)
+		results = empty_suggest_result(query)
 		maxdist = kwargs.get('maxdist', None)
 		search_on = self._adapt_search_on_types(kwargs.get('search_on', None))			
 		for type_name in search_on:
 			index = self._get_or_create_index(type_name)
 			indexable = get_indexable_object(type_name)
 			with index.searcher() as searcher:
-				rs = indexable.suggest(searcher=searcher, word=term, limit=limit, maxdist=maxdist, prefix=prefix)
+				rs = indexable.suggest(searcher=searcher, word=query, limit=limit, maxdist=maxdist, prefix=prefix)
 				results = merge_suggest_results(results, rs)
 		return results
 

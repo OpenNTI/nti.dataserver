@@ -34,11 +34,11 @@ class ISearcher(interface.Interface):
 		:param search_on: type items to search
 		"""
 		
-	def suggest(term, limit=None, prefix=None, *args, **kwargs):
+	def suggest(query, limit=None, prefix=None, *args, **kwargs):
 		"""
 		perform a word suggestion
 		
-		:param term: Search query
+		:param query: Search query
 		:param limit: max number of search hits
 		:param prefix: number of chars in terms for prefix
 		:param search_on: type items to search
@@ -214,7 +214,7 @@ class IIndexManager(interface.Interface):
 		:param limit: max number of search hits
 		"""
 
-	def user_data_suggest(username, term, limit=None, prefix=None, *args, **kwargs):
+	def user_data_suggest(username, query, limit=None, prefix=None, *args, **kwargs):
 		"""
 		perform a user data word suggestion
 		

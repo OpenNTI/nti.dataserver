@@ -15,7 +15,7 @@ class GetSearch(object):
 		query = self.request.matchdict['term']
 		query = clean_search_query(query)
 		indexname = self.get_indexname(self.request.environ)
-		return indexmanager.search( query=query, indexname=indexname )
+		return indexmanager.content_search( query=query, indexname=indexname )
 
 	def get_indexname(self, environ):
 		"""
