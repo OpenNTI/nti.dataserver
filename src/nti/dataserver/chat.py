@@ -189,7 +189,7 @@ def _send_event( chatserver, sessions, name, *args ):
 	"""
 	Utility method to send an event to a session or sessions.
 	"""
-	if isinstance( sessions, basestring) or not isinstance( sessions, collections.Iterable ):
+	if isinstance(sessions, six.string_types) or not isinstance( sessions, collections.Iterable ):
 		sessions = (sessions,)
 	for session in sessions:
 		chatserver.send_event( session, name, *args )
@@ -209,14 +209,13 @@ class _ChatObjectMeta(type):
 		return type.__new__( mcs, clsname, clsbases, clsdict )
 
 def _discard( s, k ):
-	if hasattr( s, 'discard' ):
-		s.discard(k)
-	else:
+	try:
+		s.discard( k ) # python sets
+	except AttributeError:
 		try:
-			s.remove( k )
+			s.remove( k ) # OOSet
 		except KeyError: pass
-		except ValueError: pass
-		except AttributeError: pass
+
 
 class _ChatHandler( Persistent ):
 	"""
@@ -965,7 +964,7 @@ class Chatserver(object):
 		return None
 
 	def get_session( self, session_id ):
-		return session_id if hasattr( session_id, 'protocol_handler' ) else self.sessions.get_session( session_id )
+		return session_id if hasattr( session_id, 'socket' ) else self.sessions.get_session( session_id )
 
 	### Low-level IO
 
@@ -973,7 +972,7 @@ class Chatserver(object):
 		session = self.get_session( session_id )
 		if session:
 			args = [datastructures.toExternalObject( arg ) for arg in args]
-			session.protocol_handler.send_event( name, *args )
+			session.socket.send_event( name, *args )
 
 	### General events
 	# We are directing these events to all sessions connected for the user

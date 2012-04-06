@@ -5,6 +5,7 @@ from hamcrest import (assert_that, is_, has_entry, instance_of,
 					  has_entries, only_contains, has_item)
 import unittest
 from zope import interface, component
+from zope.deprecation import deprecate
 import nti.socketio as socketio
 import time
 import tempfile
@@ -174,14 +175,19 @@ class TestChatserver(ConfiguringTestBase):
 			self.events.append( {'name':name, 'args':args} )
 
 
-	class Session(object):
+	class MockSession(object):
 
 		def __init__( self, owner ):
-			self.protocol_handler = TestChatserver.PH()
+			self.socket = TestChatserver.PH()
 			self.owner = owner
 			self.creation_time = time.time()
 			self.session_id = None
+		@property
+		@deprecate( "Prefer the `socket` property" )
+		def protocol_handler(self):
+			return self.socket
 
+	Session = MockSession
 	class Sessions(object):
 
 		def __init__( self ):
@@ -346,13 +352,13 @@ class TestChatserver(ConfiguringTestBase):
 		assert_that( other_handler.postMessage( msg ), is_( False ) )
 
 		# I can become the moderator of this room
-		del sessions[5].protocol_handler.events[:]
+		del sessions[5].socket.events[:]
 		assert_that( foo_handler.makeModerated( room3.ID, True ), is_( room3 ) )
 		assert_that( room3.Moderators, is_( set([foo_handler.session_owner])) )
 		assert_that( room3.Moderated, is_(True) )
 		assert_that( room3, is_( chat._ModeratedMeeting ) )
-		assert_that( sessions[5].protocol_handler.events, has_length( 2 ) )
-		assert_that( sessions[5].protocol_handler.events,
+		assert_that( sessions[5].socket.events, has_length( 2 ) )
+		assert_that( sessions[5].socket.events,
 					 contains(
 						has_entry( 'name', 'chat_roomModerationChanged' ),
 						has_entry( 'name', 'chat_roomModerationChanged' ) ) )

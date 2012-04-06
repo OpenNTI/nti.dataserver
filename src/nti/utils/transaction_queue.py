@@ -29,7 +29,12 @@ class _QueuePutDataManager(object):
 		pass
 
 	def sortKey(self):
-		return id(self)
+		# We must not use our own ID, those aren't guaranteed
+		# to be monotonically increasing, and we must be sorted
+		# in the order we joined the transaction, for the queue property
+		# (FIFO) to hold. The list.sort() is guaranteed to be stable,
+		# so we can use the same key and we'll stay in the right order
+		return id(self.queue)
 
 	# No subtransaction support.
 	def abort_sub(self, tx):

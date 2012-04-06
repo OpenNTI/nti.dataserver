@@ -55,6 +55,8 @@ DEFAULT_PASSWORD = "temp001"
 ### into its own function and call it explicitly.
 ###
 
+class InappropriateSiteError(LookupError): pass
+
 class _Change(Persistent):
 
 	def __init__( self, change, meta ):
@@ -304,7 +306,7 @@ class MinimalDataserver(object):
 		if conn:
 			# Our root is the top-level site manager we are using
 			return conn.root()['nti.dataserver'].getSiteManager()
-		raise TypeError( "Using Dataserver outside of site manager" )
+		raise InappropriateSiteError( "Using Dataserver outside of site manager" )
 
 	def close(self):
 		def _c( n ):

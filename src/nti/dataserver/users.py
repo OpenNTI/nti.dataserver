@@ -1374,13 +1374,20 @@ class User(Principal):
 
 		# Super's toExternalObject is defined to use toSummaryExternalObject
 		# so we get lastLoginTime and NotificationCount from there.
+		from nti.dataserver._Dataserver import InappropriateSiteError # circular imports
 		extDict = super(User,self).toExternalObject()
 		def ext( l ):
 			result = []
 			for name in l:
-				e = self.get_entity( name )
-				if e:
-					result.append( e.toSummaryExternalObject() )
+				try:
+					e = self.get_entity( name )
+				except InappropriateSiteError:
+					# We've seen this in logging that is captured and happens
+					# after things finish running, notably nose's logcapture.
+					e = None
+
+				result.append( e.toSummaryExternalObject() if e else name )
+
 			return result
 
 		# Communities are not currently editable,
