@@ -213,8 +213,8 @@ def _discard( s, k ):
 		s.discard( k ) # python sets
 	except AttributeError:
 		try:
-			s.remove( k ) # OOSet
-		except KeyError: pass
+			s.remove( k ) # OOSet, list
+		except (KeyError,ValueError): pass
 
 
 class _ChatHandler( Persistent ):
