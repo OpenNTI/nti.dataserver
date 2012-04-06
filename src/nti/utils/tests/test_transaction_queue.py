@@ -26,6 +26,24 @@ class PutQueueTest(AbstractTestBase):
 
 		assert_that( queue.get(block=False), is_( self ) )
 
+	def test_put_multiple_correct_order(self):
+		# Early builds had a bug where the sort order of the datamanagers
+		# was non-deterministic since it was based on object id, and that's not
+		# guaranteed to be atomically increasing. It takes a high iteration count to
+		# demonstrate this, though
+		queue = Queue()
+
+		for _ in range(10000):
+			transaction.begin()
+
+			put_nowait( queue, 'a' )
+			put_nowait( queue, 'b' )
+
+			transaction.commit()
+
+			assert_that( queue.get( block=False ), is_( 'a' ) )
+			assert_that( queue.get( block=False ), is_( 'b' ) )
+
 	def test_put_failure( self ):
 		queue = Queue(1) # unbounded
 		queue.put( object() )
