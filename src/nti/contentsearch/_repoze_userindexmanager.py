@@ -90,18 +90,26 @@ class RepozeUserIndexManager(object):
 		limit = kwargs.pop('limit', None)
 		use_word_highlight = kwargs.pop('use_word_highlight', None)
 		
-		lm =  0
-		items = []
+		if not docids:
+			return [], 0
+		
+		# get the oid from the doc ids
 		oids = map(self.store.address_for_docid, [self.username]*len(docids), docids)
-		objects = map(get_by_oid, oids) 
-		for svr_obj in objects:
-			if svr_obj:
-				hit = get_index_hit(svr_obj, query=query, use_word_highlight=use_word_highlight, **kwargs)
-				if hit:
-					items.append(hit)
-					lm = max(lm, hit[LAST_MODIFIED])
-					if limit and len(items) >= limit:
-						break
+		
+		# get all objects from the ds
+		objects = map(get_by_oid, oids)
+		
+		# get all index hits
+		length = len(objects)
+		hits = map(get_index_hit, objects, [query]*length, [use_word_highlight]*length)
+		
+		# filter if required
+		items = [hit for hit in hits if hit]
+		items = items[:limit] if limit else items
+		
+		# get last modified
+		lm = reduce(lambda x,y: max(x, y[LAST_MODIFIED]), items, 0)
+		
 		return items, lm
 
 	def _do_catalog_query(self, catalog, field, query, limit=None):
