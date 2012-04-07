@@ -14,7 +14,9 @@ import gevent
 import types
 from Queue import Empty
 from gevent.queue import Queue
+
 import socket
+import geventwebsocket.exceptions
 
 import pyramid.interfaces
 from nti.socketio import interfaces
@@ -281,6 +283,9 @@ class WebsocketTransport(BaseTransport):
 
 				try:
 					self.websocket.send(self.message)
+				except geventwebsocket.exceptions.FrameTooLargeException:
+					logger.warn( "Failed to send message to websocket, %s is too large. Head: %s",
+								 len(message), message[0:50] )
 				except socket.error:
 					# The session will be killed of its own accord soon enough.
 					break

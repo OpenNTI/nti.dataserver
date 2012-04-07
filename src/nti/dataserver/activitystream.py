@@ -25,7 +25,7 @@ def user_change_broadcaster( user, change ):
 
 	if chatserver:
 		try:
-			logger.debug( 'Broadcasting incoming change to %s chg: %s pid: %s', user.username, change, os.getpid() )
+			logger.debug( 'Broadcasting incoming change to %s chg: %s pid: %s', user.username, change.type, os.getpid() )
 			chatserver.notify_data_change( user.username, change )
 		except Exception:
 			logger.exception( 'Failed to notify data change' )
