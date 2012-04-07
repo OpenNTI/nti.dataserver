@@ -314,7 +314,7 @@ class WebsocketTransport(BaseTransport):
 		def _run(self):
 			listen = True
 			while listen:
-				self.message = self.websocket.wait()
+				self.message = self.websocket.receive()
 				listen = run_job_in_site( self._do_read, retries=2 )
 
 	class WebSocketPinger(AbstractWebSocketOperator):
