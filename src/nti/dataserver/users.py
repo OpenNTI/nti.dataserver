@@ -14,6 +14,7 @@ import six
 from zope import interface
 from zope import component
 from zope.component.factory import Factory
+from zope import minmax
 
 import persistent
 from BTrees.OOBTree import OOTreeSet
@@ -1298,10 +1299,6 @@ class User(Principal):
 		return result
 
 	__external_resolvers__ = { 'ignoring': _resolve_entities, 'accepting': _resolve_entities }
-	__conflict_max_keys__ = ['lastLoginTime']
-	__conflict_max_keys__.extend( Principal.__conflict_max_keys__ )
-	__conflict_merge_keys__ = ['notificationCount']
-	__conflict_merge_keys__.extend( Principal.__conflict_merge_keys__ )
 
 
 	# TODO: If no AvatarURL is set when externalizing,
@@ -1345,8 +1342,8 @@ class User(Principal):
 		# The last login time is an number of seconds (as with time.time).
 		# When it gets reset, the number of outstanding notifications also
 		# resets. It is writable, number is not
-		self.lastLoginTime = 0
-		self.notificationCount = 0
+		self.lastLoginTime = minmax.Maximum(0)
+		self.notificationCount = datastructures.MergingCounter(0)
 
 		# We maintain our own stream. The modification queue posts
 		# items to our stream, we are responsible for organization,
@@ -1371,23 +1368,6 @@ class User(Principal):
 		super(User,self).__setstate__( state )
 		# re-install our hooks that are transient
 		self.__install_container_hooks()
-		# Default some possibly missing attributes.
-		for k in ('lastLoginTime', 'notificationCount' ):
-			if not hasattr( self, k ):
-				setattr( self, k, 0 )
-		# Make devices be the right class
-		if self.devices.__class__ != _DevicesMap:
-			self.devices.__class__ = _DevicesMap
-		# Make containers actually be containers
-		if not hasattr( self.containers, 'containers' ):
-			self.containers = datastructures.ContainedStorage(create=self,
-															  containersType=datastructures.KeyPreservingCaseInsensitiveModDateTrackingOOBTree,
-															  containers={self.friendsLists.container_name: self.friendsLists,
-																		  self.devices.container_name: self.devices })
-		# Make containers case-insensitive
-		# (Necessary to create by class name from mime types)
-		if not isinstance( self.containers.containers, datastructures.KeyPreservingCaseInsensitiveModDateTrackingOOBTree ):
-			self.containers.containers = datastructures.KeyPreservingCaseInsensitiveModDateTrackingOOBTree( self.containers.containers )
 
 	@property
 	def creator(self):
@@ -1414,8 +1394,8 @@ class User(Principal):
 		extDict = super(User,self).toSummaryExternalObject( )
 
 		# TODO: Is this a privacy concern?
-		extDict['lastLoginTime'] = self.lastLoginTime
-		extDict['NotificationCount'] = self.notificationCount
+		extDict['lastLoginTime'] = self.lastLoginTime.value
+		extDict['NotificationCount'] = self.notificationCount.value
 		# TODO: Presence information will depend on who's asking
 		extDict['Presence'] = self.presence
 		return extDict
@@ -1458,9 +1438,9 @@ class User(Principal):
 		with self._NoChangeBroadcast( self ):
 			super(User,self).updateFromExternalObject( parsed, *args, **kwargs )
 			lastLoginTime = parsed.pop( 'lastLoginTime', None )
-			if isinstance( lastLoginTime, numbers.Number ) and self.lastLoginTime < lastLoginTime:
-				self.lastLoginTime = lastLoginTime
-				self.notificationCount = 0
+			if isinstance( lastLoginTime, numbers.Number ) and self.lastLoginTime.value < lastLoginTime:
+				self.lastLoginTime.value = lastLoginTime
+				self.notificationCount.value = 0
 
 			if 'password' in parsed:
 				password = parsed.pop( 'password' )
@@ -1914,7 +1894,7 @@ class User(Principal):
 	def _acceptIncomingChange( self, change ):
 		accepted = super(User,self)._acceptIncomingChange( change )
 		if accepted:
-			self.notificationCount = self.notificationCount + 1
+			self.notificationCount.value = self.notificationCount.value + 1
 			self._broadcastIncomingChange( change )
 
 	def _broadcastIncomingChange( self, change ):
@@ -1937,7 +1917,7 @@ class User(Principal):
 				if ntiids.is_valid_ntiid_string( change.containerId ):
 					userInfo = {'url:': change.containerId }
 
-			payload = apns.APNSPayload( badge=self.notificationCount,
+			payload = apns.APNSPayload( badge=self.notificationCount.value,
 										sound='default',
 										# TODO: I18N text for this
 										alert=change.creator.preferredDisplayName + ' shared an object',

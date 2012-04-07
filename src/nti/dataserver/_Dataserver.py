@@ -708,6 +708,7 @@ class PersistentOidResolver(Persistent):
 		if connection is None:
 			# Damn! Try a fallback
 			logger.warn( "Persistent object has no jar; connection closed?" )
+			import pdb; pdb.set_trace()
 			lsm = component.getSiteManager()
 			connection = getattr( lsm, '_p_jar', None )
 
