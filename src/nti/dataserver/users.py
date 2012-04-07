@@ -1842,7 +1842,7 @@ class User(Principal):
 			del self.ent._broadcast_change_to
 
 	def _postNotification( self, changeType, objAndOrigSharingTuple ):
-		logger.debug( "%s asked to post %s on %s", self, changeType, objAndOrigSharingTuple )
+		logger.debug( "%s asked to post %s", self, changeType )
 		# FIXME: Clean this up, make this not so implicit,
 		# make it go through a central place, make it asnyc, etc.
 
