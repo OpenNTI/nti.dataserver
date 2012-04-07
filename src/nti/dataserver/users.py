@@ -785,20 +785,73 @@ class SharingSource(SharingTarget):
 			return super_result
 		return result
 
+from zope.password.interfaces import IPasswordManager
+
+class _Password(object):
+	"""
+	Represents the password of a principal, as
+	encoded by a password manager. Immutable.
+	"""
+
+	def __init__( self, password, manager_name='bcrypt' ):
+		"""
+		Creates a password given the plain text and the name of a manager
+		to encode it with.
+
+		:key manager_name string: The name of the :class:`IPasswordManager` to use
+			to manager this password. The default is ``bcrypt,`` which uses a secure,
+			salted hash. This is the recommended manager. If it is not available (due to the
+			absence of C extensions?) the ``pbkdf2`` manager can be used. See :mod:`z3c.bcrypt`
+			and :mod:`zope.password`.
+		"""
+
+		self.__encoded = component.getUtility( IPasswordManager, name=manager_name ).encodePassword( password )
+		self.password_manager = manager_name
+
+	def checkPassword( self, password ):
+		"""
+		:return: Whether the given (plain text) password matches the
+		encoded password stored by this object.
+		"""
+		return component.getUtility( IPasswordManager, name=self.password_manager ).checkPassword( self.__encoded, password )
+
+	# Deliberately has no __eq__ method, passwords cannot
+	# be compared
+
 
 class Principal(SharingSource):
 	""" A Principal represents a set of credentials that has access to the system.
-	One property is username."""
 
-	def __init__(self, username=None, avatarURL=None, password='temp001',realname=None):
+	.. py:attribute:: username
+
+		 The username.
+	.. py:attribute:: password
+
+		A password object. Not comparable, only supports a `checkPassword` operation.
+	"""
+
+	def __init__(self,
+				 username=None,
+				 avatarURL=None,
+				 password=None,
+				 realname=None):
+
 		super(Principal,self).__init__(username,avatarURL,realname=realname)
 		if not username or '@' not in username:
 			raise ValueError( 'Illegal username ' + username )
-
+		self.__dict__['password'] = None # establish default (missing)
 		self.password = password
 
 	def has_password(self):
 		return bool(self.password)
+
+	def _get_password(self):
+		return self.__dict__['password']
+	def _set_password(self,np):
+		if np:
+			self.__dict__['password'] = _Password(np)
+		# otherwise, no change
+	password = property(_get_password,_set_password)
 
 class DynamicSharingTarget(SharingTarget):
 	"""
@@ -1255,8 +1308,8 @@ class User(Principal):
 	# send back a gravatar URL for the primary email:
 	# http://www.gravatar.com/avatar/%<Lowercase hex MD5>=44&d=mm
 
-	def __init__(self, username, avatarURL=None, password='temp001',realname=None):
-		super(User,self).__init__(username, avatarURL, password, realname=realname)
+	def __init__(self, username, avatarURL=None, password=None, realname=None):
+		super(User,self).__init__(username, avatarURL=avatarURL, password=password, realname=realname)
 		# We maintain a Map of our friends lists, organized by
 		# username (only one friend with a username)
 		self.friendsLists = _FriendsListMap()
@@ -1645,7 +1698,7 @@ class User(Principal):
 
 	def getAllContainers( self ):
 		""" Returns all containers, as a map from containerId to container.
-		The returned value MOST NOT be modified."""
+		The returned value *MUST NOT* be modified."""
 		return self.containers.containers
 
 	def values(self):

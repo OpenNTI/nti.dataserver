@@ -19,6 +19,9 @@ from persistent import Persistent
 
 from zope import component
 
+class UnauthenticatedSessionError(ValueError):
+	"Raised when a session consumer is called but is not authenticated."
+
 class SessionConsumer(Persistent):
 	"""
 	A callable object that responds to events from a client session.
@@ -36,13 +39,10 @@ class SessionConsumer(Persistent):
 
 
 	def __call__( self, socket_obj, msg ):
-		# The first time they speak to us, we
-		# can infer the client format, be it JSON or
-		# PList.
 		if self._username is None:
-			self._auth_user( socket_obj, msg )
-		else:
-			self._on_msg( socket_obj, msg )
+			raise UnauthenticatedSessionError()
+
+		self._on_msg( socket_obj, msg )
 
 	def _initialize_session(self, session):
 		session.owner = self._username # save the username, cannot save user obj
@@ -69,44 +69,6 @@ class SessionConsumer(Persistent):
 			result.setdefault( pfx, [] ).append( subscriber )
 
 		return result
-
-	def _auth_user( self, socket_obj, msg ):
-		# As mentioned before, we have no authentication support
-		# so we have to roll our own somehow. We default
-		# to just using authentication like the browser does, asking
-		# for that to be the first thing in the stream.
-		pw = None
-		uname = None
-		def invalid_auth(msg=None):
-			if msg:
-				logger.debug( msg )
-			# Notice that we're grabbing a new protocol object.
-			# The one captured by the greenlet will not be the one
-			# that actually just read that bad data---so when
-			# we try to send to the client, if we didn't do this,
-			# we could use the wrong format.
-			# This would be fixed by making the protocol object delegate
-			# to the session (all state should live in the session object)
-			p = socket_obj.session.new_protocol( socket_obj.handler )
-			p.send_event( 'serverkill', 'Invalid auth' )
-			p.send( "0" ) # socket.io disconnect
-
-		try:
-			uname, pw = msg['args']
-		except (KeyError,ValueError):
-			invalid_auth( "Failed socket auth: wrong arguments" )
-			return
-
-		ent = User.get_user( uname )
-		# TODO: Centralize this.
-		warnings.warn( "Code is assuming authentication protocol." )
-		if not ent or not ent.password == pw:
-			invalid_auth( "Failed socket auth: wrong password or user" )
-			return
-
-		self._username = uname
-		self._initialize_session( socket_obj.session )
-
 
 	def kill( self ):
 		"""

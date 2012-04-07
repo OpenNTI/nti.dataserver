@@ -90,6 +90,9 @@ setup(
 		'webob',
 		'webtest',
 		'whoosh',
+		 # bcrypt/pbkdf2 for zope.password
+		 # adds cryptacular and pbkdf2
+		'z3c.bcrypt',
 		'z3c.coverage',
 		'zc.queue',
 		'zetalibrary',
@@ -118,6 +121,7 @@ setup(
 		'zope.mimetype',
 		'zope.minmax >= 1.1.2',
 		'zope.pagetemplate',
+		'zope.password', # encrypted password management
 		'zope.publisher',
 		'zope.processlifetime',
 		'zope.schema',

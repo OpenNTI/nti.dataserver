@@ -141,7 +141,8 @@ class _NTIUsers(object):
 
 	def user_has_password( self, username, password ):
 		if not self.user_exists( username ): return False
-		return password == self.user_password( username )
+		user_password = self.user_password( username )
+		return user_password.checkPassword( password ) if user_password else False
 
 	def _query_groups( self, username, components ):
 		":return: The groups of an authenticated user."
