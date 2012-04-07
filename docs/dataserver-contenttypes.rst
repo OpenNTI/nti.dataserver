@@ -112,6 +112,9 @@ These objects describe users and things related to users.
    	   // users or other emails. When you POST/PUT an object, these
    	   // will be usernames (emails); the dataserver will resolve them
 	   Entity friends[];
+	   // A small set of URLs choosen to "uniquely" represent this
+	   // list
+	   URL CompositeGravatars[];
    }
 
    struct Person : Entity {

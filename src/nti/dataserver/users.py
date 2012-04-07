@@ -10,6 +10,7 @@ import hashlib
 import functools
 import time
 import six
+import random
 
 from zope import interface
 from zope import component
@@ -927,6 +928,7 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 		"""
 		Iterating over a FriendsList iterates over its friends
 		(as Entity objects), resolving weak refs and strings.
+		:return: An iterator across a set of `Entity` objects.
 		"""
 		# This function replaces things in the friends list as we
 		# iterate across it, so we must iterate by index
@@ -949,6 +951,22 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 
 		resolved = [_resolve_friend(self.friends[i], i) for i in xrange(len(self.friends))]
 		return iter( {x for x in resolved if x is not None} )
+
+	def _composite_gravatars(self):
+		""""
+		:return: A consistent list of gravatars for the users in this list. The idea is to
+			shuffle them such that they are recognizable, even among different lists
+			with similar memberships (that's why sorting wouldn't work).
+		"""
+		# We do this simply by selecting 4 random users, seeded based on the name of this
+		# object.
+		# TODO: Is there a better seed?
+		friends = [x.avatarURL for x in self]
+		if not friends:
+			return ()
+		rand = random.Random( hash(self.username) )
+		return rand.sample( friends, min(4,len(friends)) )
+
 
 	@property
 	def friends(self):
@@ -1014,15 +1032,16 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 					friend = friend.toPersonalSummaryExternalObject()
 				else:
 					friend = friend.toSummaryExternalObject()
-			elif isinstance( friend, six.string_types ):
-				friend = { 'Class': 'UnresolvedFriend',
-						   'Username': friend,
-						   'avatarURL' : _createAvatarURL( friend, SharingTarget.defaultGravatarType ) }
-			else:
-				friend = datastructures.toExternalObject( friend )
-			theFriends.append( friend )
+			# elif isinstance( friend, six.string_types ):
+			# 	friend = { 'Class': 'UnresolvedFriend',
+			# 			   'Username': friend,
+			# 			   'avatarURL' : _createAvatarURL( friend, SharingTarget.defaultGravatarType ) }
+			# else:
+			# 	friend = datastructures.toExternalObject( friend )
+				theFriends.append( friend )
 
 		extDict['friends'] = theFriends
+		extDict['CompositeGravatars'] = self._composite_gravatars()
 
 		return extDict
 
