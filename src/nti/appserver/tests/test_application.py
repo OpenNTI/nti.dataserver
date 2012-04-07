@@ -72,6 +72,9 @@ class ApplicationTestBase(ConfiguringTestBase):
 
 		return result
 
+	def _create_user(self, username=b'sjohnson@nextthought.com', password='temp001' ):
+		return users.User.create_user( self.ds, username=username, password=password )
+
 
 class TestApplication(ApplicationTestBase):
 
@@ -79,7 +82,7 @@ class TestApplication(ApplicationTestBase):
 	def test_path_with_parens(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			contained = ContainedExternal()
-			user = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+			user = self._create_user( )
 			contained.containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
 			user.addContainedObject( contained )
 			assert_that( user.getContainer( contained.containerId ), has_length( 2 ) )
@@ -94,12 +97,12 @@ class TestApplication(ApplicationTestBase):
 	def test_pages_with_only_shared_not_404(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			contained = PersistentContainedExternal()
-			user = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+			user = self._create_user()
 			contained.containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
 			user.addContainedObject( contained )
 			assert_that( user.getContainer( contained.containerId ), has_length( 2 ) )
 
-			user2 = users.User.create_user( self.ds, username='foo@bar' )
+			user2 = self._create_user( username='foo@bar' )
 			user2._addSharedObject( contained )
 
 		testapp = TestApp( self.app )
@@ -113,7 +116,7 @@ class TestApplication(ApplicationTestBase):
 	def test_deprecated_path_with_slash(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			contained = ContainedExternal()
-			user = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+			user = self._create_user()
 			contained.containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
 			user.addContainedObject( contained )
 			assert_that( user.getContainer( contained.containerId ), has_length( 2 ) )
@@ -129,7 +132,7 @@ class TestApplication(ApplicationTestBase):
 
 	def test_post_pages_collection(self):
 		with mock_dataserver.mock_db_trans(self.ds):
-			_ = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+			_ = self._create_user()
 			testapp = TestApp( self.app )
 			containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
 			data = json.serialize( { 'Class': 'Highlight',
@@ -163,7 +166,7 @@ class TestApplication(ApplicationTestBase):
 
 	def test_get_highlight_by_oid_has_links(self):
 		with mock_dataserver.mock_db_trans(self.ds):
-			_ = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+			_ = self._create_user()
 
 		testapp = TestApp( self.app )
 		containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
@@ -191,7 +194,7 @@ class TestApplication(ApplicationTestBase):
 
 	def test_post_two_friendslist_same_name(self):
 		with mock_dataserver.mock_db_trans(self.ds):
-			_ = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+			_ = self._create_user()
 
 
 		testapp = TestApp( self.app )
@@ -207,7 +210,7 @@ class TestApplication(ApplicationTestBase):
 
 	def test_post_device(self):
 		with mock_dataserver.mock_db_trans(self.ds):
-			_ = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+			_ = self._create_user()
 
 
 		testapp = TestApp( self.app )
@@ -225,7 +228,7 @@ class TestApplication(ApplicationTestBase):
 	def test_put_device(self):
 		"Putting a non-existant device is not possible"
 		with mock_dataserver.mock_db_trans(self.ds):
-			_ = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+			_ = self._create_user()
 
 
 		testapp = TestApp( self.app )
@@ -244,7 +247,7 @@ class TestApplication(ApplicationTestBase):
 	def test_user_search(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			contained = ContainedExternal()
-			user = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+			user = self._create_user()
 			contained.containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
 			user.addContainedObject( contained )
 			assert_that( user.getContainer( contained.containerId ), has_length( 2 ) )
@@ -265,7 +268,7 @@ class TestApplication(ApplicationTestBase):
 	def test_user_search_deprecated_path(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			contained = ContainedExternal()
-			user = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+			user = self._create_user()
 			contained.containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
 			user.addContainedObject( contained )
 			assert_that( user.getContainer( contained.containerId ), has_length( 2 ) )
@@ -280,7 +283,7 @@ class TestApplication(ApplicationTestBase):
 		"Searching with an empty term returns empty results"
 		with mock_dataserver.mock_db_trans( self.ds ):
 			contained = ContainedExternal()
-			user = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+			user = self._create_user()
 			contained.containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
 			user.addContainedObject( contained )
 			assert_that( user.getContainer( contained.containerId ), has_length( 2 ) )
@@ -298,7 +301,7 @@ class TestApplication(ApplicationTestBase):
 	def test_ugd_search_no_data_returns_empty(self):
 		"Any search term against a user whose index DNE returns empty results"
 		with mock_dataserver.mock_db_trans(self.ds):
-			users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+			self._create_user()
 		testapp = TestApp( self.app )
 		for search_term in ('', 'term'):
 			for ds_path in ('dataserver', 'dataserver2'):
@@ -316,7 +319,7 @@ class TestApplication(ApplicationTestBase):
 	def test_ugd_search_other_user(self):
 		"Security prevents searching other user's data"
 		with mock_dataserver.mock_db_trans( self.ds ):
-			users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+			self._create_user()
 
 
 		testapp = TestApp( self.app )
@@ -337,7 +340,7 @@ class TestApplication(ApplicationTestBase):
 
 	def test_create_friends_list_content_type(self):
 		with mock_dataserver.mock_db_trans( self.ds ):
-			users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+			self._create_user()
 		testapp = TestApp( self.app )
 		data = '{"Last Modified":1323788728,"ContainerId":"FriendsLists","Username": "boom@nextthought.com","friends":["troy.daley@nextthought.com"],"realname":"boom"}'
 
@@ -355,7 +358,7 @@ class TestApplication(ApplicationTestBase):
 		# Like the previous test, but _UGDPostView wasn't consistent with where it was setting up the phony location proxies,
 		# so we could get different results depending on where we came from
 		with mock_dataserver.mock_db_trans( self.ds ):
-			users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+			self._create_user()
 		testapp = TestApp( self.app )
 		data = '{"Last Modified":1323788728,"ContainerId":"FriendsLists","Username": "boom@nextthought.com","friends":["troy.daley@nextthought.com"],"realname":"boom"}'
 
@@ -372,7 +375,7 @@ class TestApplication(ApplicationTestBase):
 	def test_edit_note_returns_editlink(self):
 		"The object returned by POST should have enough ACL to regenerate its Edit link"
 		with mock_dataserver.mock_db_trans( self.ds ):
-			user = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+			user = self._create_user()
 
 			n = contenttypes.Note()
 			n.containerId = 'tag:nti:foo'
@@ -392,7 +395,7 @@ class TestApplication(ApplicationTestBase):
 
 	def test_meth_not_allowed(self):
 		with mock_dataserver.mock_db_trans( self.ds ):
-			users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+			self._create_user()
 
 		testapp = TestApp( self.app )
 		path = '/dataserver2/users/sjohnson@nextthought.com'
@@ -400,8 +403,8 @@ class TestApplication(ApplicationTestBase):
 
 	def test_class_provider_hrefs(self):
 		with mock_dataserver.mock_db_trans(self.ds):
-			users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
-			users.User.create_user( self.ds, username='jason.madden@nextthought.com' )
+			self._create_user()
+			self._create_user( username='jason.madden@nextthought.com' )
 
 			clazz = _create_class( self.ds, ('sjohnson@nextthought.com',) )
 
@@ -452,7 +455,7 @@ class TestApplication(ApplicationTestBase):
 
 	def _do_post_class_to_path(self, path):
 		with mock_dataserver.mock_db_trans( self.ds ):
-			users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+			self._create_user()
 			_create_class( self.ds, ('sjohnson@nextthought.com',) )
 		testapp = TestApp( self.app )
 		data = json.serialize( { 'Class': 'ClassInfo',
@@ -467,7 +470,7 @@ class TestApplication(ApplicationTestBase):
 
 	def _do_post_class_to_path_with_section(self, path, get=None):
 		with mock_dataserver.mock_db_trans(self.ds):
-			users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+			self._create_user()
 			_create_class( self.ds, ('sjohnson@nextthought.com',) )
 
 		testapp = TestApp( self.app )
@@ -512,7 +515,7 @@ class TestApplication(ApplicationTestBase):
 		path = '/dataserver2/providers/OU/Classes/'
 		get = True
 		with mock_dataserver.mock_db_trans(self.ds):
-			users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+			self._create_user()
 			_create_class( self.ds, ('sjohnson@nextthought.com',) )
 
 		testapp = TestApp( self.app )
@@ -538,8 +541,8 @@ class TestApplication(ApplicationTestBase):
 
 	def test_class_trivial_enclosure_href(self):
 		with mock_dataserver.mock_db_trans(self.ds):
-			users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
-			users.User.create_user( self.ds, username='jason.madden@nextthought.com' )
+			self._create_user()
+			self._create_user( username='jason.madden@nextthought.com' )
 
 			_create_class( self.ds, ('sjohnson@nextthought.com',) )
 
@@ -573,8 +576,8 @@ class TestApplication(ApplicationTestBase):
 
 	def _check_class_modeled_enclosure_href( self, data, mime_type, check_get_with_objects=True ):
 		with mock_dataserver.mock_db_trans( self.ds ):
-			users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
-			users.User.create_user( self.ds, username='jason.madden@nextthought.com' )
+			self._create_user()
+			self._create_user( username='jason.madden@nextthought.com' )
 
 			_create_class( self.ds, ('sjohnson@nextthought.com',) )
 
@@ -627,7 +630,7 @@ class TestApplication(ApplicationTestBase):
 
 	def test_quiz_container_id_auto_mapping(self):
 		with mock_dataserver.mock_db_trans(self.ds):
-			users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+			self._create_user()
 
 		# The quiz may live in any container
 		quiz_data = {"MimeType":"application/vnd.nextthought.quiz",
@@ -656,8 +659,8 @@ class TestApplication(ApplicationTestBase):
 	@mock_dataserver.WithMockDS
 	def test_class_section_modeled_enclosure_href(self):
 		with mock_dataserver.mock_db_trans(self.ds):
-			users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
-			users.User.create_user( self.ds, username='jason.madden@nextthought.com' )
+			self._create_user()
+			self._create_user(username='jason.madden@nextthought.com' )
 
 			_create_class( self.ds, ('sjohnson@nextthought.com',) )
 		testapp = TestApp( self.app )
@@ -722,8 +725,8 @@ class TestApplication(ApplicationTestBase):
 
 	def test_class_section_trivial_enclosure_href(self):
 		with mock_dataserver.mock_db_trans( self.ds ):
-			users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
-			users.User.create_user( self.ds, username='jason.madden@nextthought.com' )
+			self._create_user()
+			self._create_user( username='jason.madden@nextthought.com' )
 
 			_create_class( self.ds, ('sjohnson@nextthought.com',) )
 
@@ -812,7 +815,7 @@ class TestApplicationLibrary(ApplicationTestBase):
 
 	def test_library_redirect(self):
 		with mock_dataserver.mock_db_trans(self.ds):
-			users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+			self._create_user()
 		testapp = TestApp( self.app )
 		# Unauth gets nothing
 		testapp.get( '/dataserver2/NTIIDs/' + self.child_ntiid, status=401 )
@@ -824,7 +827,7 @@ class TestApplicationLibrary(ApplicationTestBase):
 
 	def test_library_redirect_with_fragment(self):
 		with mock_dataserver.mock_db_trans(self.ds):
-			users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+			self._create_user()
 
 		testapp = TestApp( self.app )
 

@@ -44,7 +44,7 @@ def test_content_type():
 				 is_( 'class' ) )
 
 def test_user_pseudo_resources_exist():
-	user = users.User( 'jason.madden@nextthought.com', 'temp001' )
+	user = users.User( 'jason.madden@nextthought.com' )
 
 	class Parent(object):
 		pass

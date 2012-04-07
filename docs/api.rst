@@ -14,7 +14,6 @@ Dataserver API documentation
 .. automodule:: nti.dataserver.chat
 .. automodule:: nti.dataserver.ntiids
 .. automodule:: nti.dataserver.session_consumer
-.. automodule:: nti.dataserver.socketio_server
 .. automodule:: nti.dataserver.wsgi
 .. automodule:: nti.dataserver.sessions
 .. automodule:: nti.dataserver.activitystream
@@ -36,4 +35,8 @@ Dataserver API documentation
 .. automodule:: nti.appserver
 .. automodule:: nti.appserver.interfaces
 .. automodule:: nti.appserver.workspaces
+.. automodule:: nti.appserver.dataserver_pyramid_views
+.. automodule:: nti.appserver.dataserver_socketio_views
+.. automodule:: nti.appserver.logon
+.. automodule:: nti.appserver.pyramid_auth
 

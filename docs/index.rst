@@ -24,8 +24,8 @@ Contents:
 	contentrendering-api
 	socketio-api
 
-	regression-tests
-	regression-details
+..	regression-tests
+..	regression-details
 
 `Epydoc generated doc <./epydoc>`_
 

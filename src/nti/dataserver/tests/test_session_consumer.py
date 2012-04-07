@@ -62,16 +62,6 @@ class TestSessionConsumer(mock_dataserver.ConfiguringTestBase):
 		self.cons._create_event_handlers = lambda *args: self.evt_handlers
 		self.socket = MockSocketIO()
 
-	def _assert_bad_auth(self):
-		assert_that( self.cons, has_attr( '_username', is_( none() ) ) )
-		assert_that( self.socket.events, contains( ('serverkill', ('Invalid auth',)) ) )
-		assert_that( self.socket.data, contains( "0" ) )
-
-
-	def test_auth_user_bad_event_args(self):
-		self.cons( self.socket, {} )
-		self._assert_bad_auth()
-
 	def test_create_event_handlers(self):
 		# There's no IChatserver registered, so this is all you get
 		interface.alsoProvides( self.socket, socketio.interfaces.ISocketIOSocket )
@@ -99,21 +89,13 @@ class TestSessionConsumer(mock_dataserver.ConfiguringTestBase):
 
 		component.getGlobalSiteManager().unregisterUtility( o )
 
-	@mock_dataserver.WithMockDSTrans
-	def test_auth_user_user_dne(self):
-		self.cons( self.socket, {'args': ('username', 'pw')} )
-		self._assert_bad_auth()
 
-	@mock_dataserver.WithMockDSTrans
-	def test_auth_user_bad_pw(self):
-		users.User.create_user( self.ds, username='foo@bar' )
-		self.cons( self.socket, {'args': ('foo@bar', 'pw')} )
-		self._assert_bad_auth()
 
 	def _auth_user(self):
 		users.User.create_user( self.ds, username='foo@bar' )
+		self.cons._username = 'foo@bar'
+		self.cons._initialize_session( self.socket.session )
 
-		self.cons( self.socket, {'args': ('foo@bar', 'temp001')} )
 
 		assert_that( self.cons, has_attr( '_username', 'foo@bar') )
 		assert_that( self.cons, has_attr( '_event_handlers', has_entry( 'chat', [self] ) ) )
