@@ -229,13 +229,14 @@ def get_index_hit_from_messgeinfo(obj, query=None, use_word_highlight=True, *arg
 	return result
 
 def get_index_hit(obj, query=None, use_word_highlight=True, *args, **kwargs):
-	type_name =  get_type_name(obj)
-	if type_name == 'note':
-		return get_index_hit_from_note(obj, query, use_word_highlight, *args, **kwargs)
-	elif type_name == 'highlight':
-		return get_index_hit_from_hightlight(obj, query, use_word_highlight, *args, **kwargs)
-	elif type_name =='messageinfo':
-		return get_index_hit_from_messgeinfo(obj, query, use_word_highlight, *args, **kwargs)
-	else:
-		return None
+	result = None
+	if obj is not None:
+		type_name = get_type_name(obj)
+		if type_name == 'note':
+			result = get_index_hit_from_note(obj, query, use_word_highlight, *args, **kwargs)
+		elif type_name == 'highlight':
+			result = get_index_hit_from_hightlight(obj, query, use_word_highlight, *args, **kwargs)
+		elif type_name =='messageinfo':
+			result = get_index_hit_from_messgeinfo(obj, query, use_word_highlight, *args, **kwargs)
+	return result
 	
