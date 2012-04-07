@@ -13,6 +13,8 @@ import gevent
 import zc.queue
 from zope import interface
 from zope import component
+from zope import minmax
+from nti.dataserver import datastructures
 from zope.event import notify
 import transaction
 
@@ -53,35 +55,17 @@ class Session(Persistent):
 		self.creation_time = time.time()
 		self.client_queue = zc.queue.Queue() # PersistentList() # queue for messages to client
 		self.server_queue = zc.queue.Queue() #PersistentList() # queue for messages to server
-		self.hits = 0
-		self.heartbeats = 0
+		self.hits = datastructures.MergingCounter( 0 )
+		self.heartbeats = datastructures.MergingCounter( 0 )
 		self.state = self.STATE_NEW
 		self.connection_confirmed = False
 
 		self._owner = None
 		self._broadcast_connect = False
 
-		self.last_heartbeat_time = 0
+		self.last_heartbeat_time = minmax.Maximum( 0 )
 
 		self._v_session_service = session_service
-
-	def _p_resolveConflict(self, oldState, savedState, newState ):
-		logger.info( 'Conflict to resolve in %s', type(self) )
-
-		for k in newState:
-			# cannot count on keys being both places
-			if savedState.get(k) != newState.get(k):
-				logger.info( "%s\t%s\t%s", k, savedState[k], newState[k] )
-
-		# merge changes to our counters
-		for k in ('hits', 'heartbeats'):
-			saveDiff = savedState[k] - oldState[k]
-			newDiff = newState[k] - oldState[k]
-			savedState[k] = oldState[k] + saveDiff + newDiff
-
-		k = 'last_heartbeat_time'
-		savedState[k] = max( oldState[k], savedState[k], newState[k] )
-		return savedState
 
 	def _get_owner( self ):
 		return self._owner
@@ -95,10 +79,10 @@ class Session(Persistent):
 		result = ['[session_id=%r' % self.session_id]
 		result.append(self.state)
 		result.append( 'owner=%s' % self.owner )
-		result.append('client_queue[%s]' % len(self.client_queue))
-		result.append('server_queue[%s]' % len(self.server_queue))
-		result.append('hits=%s' % self.hits)
-		result.append('heartbeats=%s' % self.heartbeats)
+		result.append( 'client_queue[%s]' % len(self.client_queue))
+		result.append( 'server_queue[%s]' % len(self.server_queue))
+		result.append( 'hits=%s' % self.hits.value)
+		result.append( 'heartbeats=%s' % self.heartbeats.value)
 		result.append( 'confirmed=%s' % self.connection_confirmed )
 		result.append( 'id=%s]'% id(self) )
 		return ' '.join(result)
@@ -115,9 +99,9 @@ class Session(Persistent):
 		# We don't really need to track this once
 		# we're going, and not doing so
 		# reduces chances of conflict.
-		if self.hits + 1 == 1:
+		if self.hits.value + 1 == 1:
 			self.state = self.STATE_CONNECTED
-			self.hits = 1
+			self.hits.value = 1
 		if self.connected and self.connection_confirmed and self.owner and not self._broadcast_connect:
 			self._broadcast_connect = True
 			notify( SocketSessionConnectedEvent( self ) )
@@ -127,11 +111,11 @@ class Session(Persistent):
 		# should not clear this. We wind up writing to session
 		# state from background processes, which
 		# leads to conflicts.
-		self.last_heartbeat_time = time.time()
+		self.last_heartbeat_time.value = time.time()
 
 
 	def heartbeat(self):
-		self.last_heartbeat_time = time.time()
+		self.last_heartbeat_time.value = time.time()
 
 	def kill(self):
 		if self.connected:
