@@ -26,7 +26,7 @@ class WebSocket(object):
 
 	def send(self, msg):
 		pass
-	def wait(self):
+	def receive(self):
 		return self.queue.get()
 
 class TestWebSocket(ConfiguringTestBase):
@@ -121,7 +121,7 @@ class TestWebSocket(ConfiguringTestBase):
 
 		class WebSocket(object):
 			def __init__(self): self.pkts = []
-			def wait(self):
+			def receive(self):
 				return self.pkts.pop()
 
 		proxy = socketio_server._WebsocketSessionEventProxy()
