@@ -35,43 +35,13 @@ from nti import apns
 
 import nti.apns.interfaces
 
-
-def _createAvatarURL( username, defaultGravatarType='mm' ):
-	md5str = hashlib.md5( username.lower() ).hexdigest()
-	result = 'http://www.gravatar.com/avatar/%s?s=128&d=%s' % (md5str,defaultGravatarType)
-	return result
+from nti.utils import create_gravatar_url as _createAvatarURL
 
 def _get_shared_dataserver(context=None,default=None):
 	if default != None:
 		return component.queryUtility( nti_interfaces.IDataserver, context=context, default=default )
 	return component.getUtility( nti_interfaces.IDataserver, context=context )
 
-
-def _downloadAvatarIcons( targetDir ):
-	_users = [x for x in _get_shared_dataserver().root['users'].values()
-				 if hasattr( x, 'username')]
-	seen = set()
-	def _downloadAvatarIcon( user, targetDir ):
-
-		username = user.username if hasattr( user, 'username' ) else user
-		if username in seen: return
-		seen.add( username )
-		md5str = hashlib.md5( username.lower() ).hexdigest()
-		url = user.avatarURL if hasattr( user, 'avatarURL' ) else _createAvatarURL( username )
-		url = url.replace( 'www.gravatar', 'lb.gravatar' )
-		url = url.replace( 's=44', 's=128' )
-		print username, url
-		os.system( '/opt/local/bin/wget -q -O %s/%s "%s"' %(targetDir,md5str,url) )
-
-	for user in _users:
-		_downloadAvatarIcon( user, targetDir )
-		if hasattr( user, 'friendsLists' ):
-			for x in user.friendsLists.values():
-				if not isinstance( x, Entity ):
-					continue
-				_downloadAvatarIcon( x, targetDir )
-				for friend in x:
-					_downloadAvatarIcon( friend, targetDir )
 
 def _lower(s):
 	return s.lower() if s else s

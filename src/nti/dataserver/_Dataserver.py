@@ -11,6 +11,7 @@ import six
 
 import collections
 
+import gevent.queue
 import gevent.local
 
 
@@ -134,8 +135,10 @@ def _trivial_db_transaction_cm():
 			raise
 		finally:
 			conn.close()
-
+from zope.deprecation import __show__
+__show__.off()
 interface.directlyProvides( _trivial_db_transaction_cm, interfaces.IDataserverTransactionContextManager )
+__show__.on()
 
 @contextlib.contextmanager
 def _connection_cm():
@@ -161,7 +164,7 @@ def _site_cm(conn):
 	sitemanc = conn.root()['nti.dataserver']
 
 	with site( sitemanc ):
-		assert component.getSiteManager() == sitemanc.getSiteManager()
+		assert component.getSiteManager() == sitemanc.getSiteManager(), "Hooks not installed?"
 		assert component.getUtility( interfaces.IDataserver )
 		yield sitemanc
 
