@@ -31,7 +31,7 @@ import nti.contentsearch
 contentsearch = nti.contentsearch
 import nti.contentsearch.indexmanager
 
-from nti.dataserver.users import SharingTarget
+import nti.dataserver.users
 from nti.dataserver import authorization as nauth
 from nti.dataserver.interfaces import IDataserver
 
@@ -600,7 +600,7 @@ def createApplication( http_port,
 	# Now, fork off the change listeners
 	if create_ds:
 		logger.info( 'Adding synchronous change listeners.' )
-		server.add_change_listener( SharingTarget.onChange )
+		server.add_change_listener( nti.dataserver.users.onChange )
 		if indexmanager:
 			server.add_change_listener( indexmanager.onChange )
 

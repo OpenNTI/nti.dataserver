@@ -14,6 +14,7 @@ Dataserver API documentation
 
 *** Users ***
 
+.. automodule:: nti.dataserver.sharing
 .. automodule:: nti.dataserver.users
 
 *** Contenttypes ***
