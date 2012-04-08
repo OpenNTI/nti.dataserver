@@ -1,21 +1,31 @@
+#!/usr/bin/env python
 """ This module defines the content types that users can create within the system. """
+from __future__ import print_function, unicode_literals
+
 import logging
 logger = logging.getLogger( __name__ )
+
 import persistent
 import warnings
 import collections
 import numbers
+
 from persistent.list import PersistentList
 import six
 import urlparse
 
-import users
-import datastructures
-from datastructures import StandardExternalFields, StandardInternalFields
-from . import mimetype
-
+from nti.dataserver import datastructures
+from nti.dataserver.datastructures import StandardExternalFields, StandardInternalFields
+from nti.dataserver import mimetype
+from nti.dataserver import sharing
 from nti.dataserver import interfaces as nti_interfaces
+
 from zope import interface
+
+def _get_entity( username, dataserver=None ):
+	# importing globally is easily circular
+	from nti.dataserver import users
+	return users.Entity.get_entity( username, dataserver=dataserver )
 
 class ThreadableMixin(object):
 	""" Defines an object that is client-side threadable. These objects are
@@ -83,7 +93,7 @@ class ThreadableExternalizableMixin(ThreadableMixin):
 # TODO: These objects should probably implement IZContained (__name__,__parent__). Otherwise they
 # often wind up wrapped in container proxy objects, which is confusing. There may be
 # traversal implications to that though, that need to be considered. See also classes.py
-class _UserContentRoot(users.ShareableMixin, datastructures.ContainedMixin, datastructures.CreatedModDateTrackingObject, persistent.Persistent):
+class _UserContentRoot(sharing.ShareableMixin, datastructures.ContainedMixin, datastructures.CreatedModDateTrackingObject, persistent.Persistent):
 	""" By default, if an update comes in with only new sharing information,
 	and we have been previously saved, then we do not clear our
 	other contents. Subclasses can override this by setting canUpdateSharingOnly
@@ -135,9 +145,10 @@ class _UserContentRoot(users.ShareableMixin, datastructures.ContainedMixin, data
 		self.clearSharingTargets()
 		for s in sharedWith or ():
 			target = s
-			if dataserver and s in dataserver.root['users']:
-				target = dataserver.root['users'][s]
-			elif isinstance( self.creator, users.User ):
+			warnings.warn( "Assuming datastructure layout" )
+			if _get_entity( s, dataserver=dataserver ):
+				target = _get_entity( dataserver, s )
+			elif hasattr( self.creator, 'getFriendsList' ):
 				target = self.creator.getFriendsList( s )
 			self.addSharingTarget( target or s, self.creator )
 
@@ -412,7 +423,7 @@ class Note(ThreadableExternalizableMixin, Highlight):
 			sharingTargetNames.discard( None )
 
 			for name in sharingTargetNames:
-				ent = users.Entity.get_entity( name, dataserver=dataserver )
+				ent = _get_entity( name, dataserver=dataserver )
 				target = ent or name
 				self.addSharingTarget( target, self.creator )
 
