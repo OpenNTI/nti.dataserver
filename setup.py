@@ -7,6 +7,7 @@ entry_points = {
 		"nti_render = nti.contentrendering.aopstoxml:main",
 		"nti_init_env = nti.dataserver.config:main",
 		"nti_pubsub_device = nti.dataserver._PubSubDevice:main",
+		"nti_cache_avatars = nti.dataserver.utils.nti_cache_avatars:main",
 		"nti_sharing_listener = nti.appserver.application:sharing_listener_main",
 		"nti_index_listener = nti.appserver.application:index_listener_main"
 	],
@@ -78,7 +79,7 @@ setup(
 		'repoze.sphinx.autointerface',
 		'repoze.who',
 		'repoze.zodbconn',
-		'requests',
+		'requests >= 0.11.1',
 		'scss',
 		'setproctitle',
 		'setuptools',
