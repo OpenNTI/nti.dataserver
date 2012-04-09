@@ -297,6 +297,7 @@ class TestCanvas(mock_dataserver.ConfiguringTestBase):
 		assert_that( shape, is_( shape3 ) )
 
 		assert_that( shape.toExternalObject(), has_entry( 'url', 'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw==' ) )
+		assert_that( shape3.__dict__, has_entry( '_head', 'data:image/gif;base64' ) )
 
 def check_update_props( ext_name='strokeRGBAColor',
 						col_name='strokeColor',
