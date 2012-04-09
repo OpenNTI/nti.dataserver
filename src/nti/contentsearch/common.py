@@ -27,6 +27,9 @@ from nti.dataserver.contenttypes import CanvasTextShape
 from nti.dataserver.ntiids import is_valid_ntiid_string
 from nti.dataserver.datastructures import to_external_ntiid_oid
 
+import logging
+logger = logging.getLogger( __name__ )
+
 # -----------------------------------
 
 default_tokenizer = RegexpTokenizer(r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-']\w+)*", flags = re.MULTILINE | re.DOTALL)
@@ -218,6 +221,11 @@ def get_multipart_content(source):
 			
 	if isinstance(source, six.string_types):
 		return get_content(source)
+	elif IPersistent.providedBy(source):
+		clazz = source.__class__.__name__
+		name = "get_%s_content" % clazz.lower()
+		if name in gbls:
+			return gbls[name](source)
 	elif isinstance(source, Iterable):
 		
 		def process_dict(d):
@@ -241,11 +249,6 @@ def get_multipart_content(source):
 				else:
 					items.append(get_multipart_content(item))
 		return get_content(' '.join(items))
-	elif not source:
-		clazz = source.__class__.__name__
-		name = "get_%s_content" % normalize_type_name(clazz, False)
-		if name in gbls:
-			return gbls[name](source)
 	return u''
 
 def get_highlight_content(data):
