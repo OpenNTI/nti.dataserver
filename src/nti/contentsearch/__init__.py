@@ -42,6 +42,8 @@ class LFUMap(LFUCache):
 
 class QueryObject(object, UserDict.DictMixin):
 	
+	__properties__ = ('term', 'query', 'books', 'indexname', 'username', 'limit')
+	
 	def __init__(self, *args, **kwargs):
 		term = kwargs.get('term', None) or kwargs.get('query', None)
 		assert term, 'must specify a query term'
@@ -70,6 +72,11 @@ class QueryObject(object, UserDict.DictMixin):
 	def limit(self):
 		return self._data.get('limit', None)
 	
+	def params(self):
+		for k in self.keys(): 
+			if k not in self.__properties__:
+				yield (k, self.get(k))
+				
 	def keys(self):
 		return self._data.keys()
 	
