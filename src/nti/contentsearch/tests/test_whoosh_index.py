@@ -26,6 +26,10 @@ class TestWhooshIndex(unittest.TestCase):
 		with open(path, "r") as f:
 			cls.note = json.load(f)
 				
+		path = os.path.join(os.path.dirname(__file__), 'note2.json')
+		with open(path, "r") as f:
+			cls.note2 = json.load(f)
+			
 		path = os.path.join(os.path.dirname(__file__), 'message_info.json')
 		with open(path, "r") as f:
 			cls.messageinfo = json.load(f)
@@ -71,6 +75,16 @@ class TestWhooshIndex(unittest.TestCase):
 		assert_that(d, has_entry('content', 
 			'All Waves Rise now and Become my Shield Lightning Strike now and Become my Blade'))
 		assert_that(d, has_entry('last_modified', datetime(2012, 3, 16, 13, 23, 21, 926812)))
+		
+	def test_note2_index_data(self):
+		no = Note()
+		d = no.get_index_data(self.note2)
+		assert_that(d, has_entry('containerId', 'tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.0' ))
+		assert_that(d, has_entry('creator', 'carlos.sanchez@nextthought.com' ))
+		assert_that(d, has_entry('oid', 'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x0932:5573657273' ))
+		assert_that(d, has_entry('ntiid', 'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x0932:5573657273' ))
+		assert_that(d, has_entry('content', 'Eddard Stark Lord of Winterfell'))
+		assert_that(d, has_entry('last_modified', datetime(2012, 4, 9, 14, 42, 24, 120455)))
 		
 	def test_messageinfo_index_data(self):
 		mi = MessageInfo()

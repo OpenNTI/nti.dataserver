@@ -53,6 +53,10 @@ class TestRepozeIndex(ConfiguringTestBase):
 		with open(path, "r") as f:
 			cls.note = json.load(f)
 			
+		path = os.path.join(os.path.dirname(__file__), 'note2.json')
+		with open(path, "r") as f:
+			cls.note2 = json.load(f)
+			
 		path = os.path.join(os.path.dirname(__file__), 'message_info.json')
 		with open(path, "r") as f:
 			cls.messageinfo = json.load(f)
@@ -67,20 +71,20 @@ class TestRepozeIndex(ConfiguringTestBase):
 		assert_that(catalog, has_key(COLLECTION_ID))
 		assert_that(catalog, has_key(LAST_MODIFIED))
 		
-	def teste_notes_catalog(self):
+	def test_notes_catalog(self):
 		catalog = create_notes_catalog()
 		self._test_common_catalog(catalog)
 		assert_that(catalog, has_key(references_))
 		assert_that(catalog, has_key(ngrams_))
 		assert_that(catalog, has_key(content_))
 		
-	def teste_highlight_catalog(self):
+	def test_highlight_catalog(self):
 		catalog = create_highlight_catalog()
 		self._test_common_catalog(catalog)
 		assert_that(catalog, has_key(ngrams_))
 		assert_that(catalog, has_key(content_))
 	
-	def teste_messageinf_catalog(self):
+	def test_messageinf_catalog(self):
 		catalog = create_messageinfo_catalog()
 		self._test_common_catalog(catalog)
 		assert_that(catalog, has_key(ID))
@@ -107,7 +111,7 @@ class TestRepozeIndex(ConfiguringTestBase):
 		assert_that(get_highlight_content(obj), has_length(greater_than_or_equal_to(190)))
 		assert_that(get_highlight_ngrams(obj).split(), has_length(69))
 		
-	def test_notes(self):
+	def test_note(self):
 		obj = self.note
 		id_str = 'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x0860:5573657273'
 		assert_that(get_id(obj), is_(id_str))
@@ -121,6 +125,21 @@ class TestRepozeIndex(ConfiguringTestBase):
 		assert_that(get_last_modified(obj), is_(close_to(1331922201.92, 0.05)))
 		assert_that(get_note_content(obj), is_('all waves rise now and become my shield lightning strike now and become my blade')) 
 		assert_that(get_note_ngrams(obj).split(), has_length(30))
+		
+	def test_note2(self):
+		obj = self.note2
+		id_str = 'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x0932:5573657273'
+		assert_that(get_id(obj), is_(id_str))
+		assert_that(get_oid(obj), is_(id_str))
+		assert_that(get_ntiid(obj), is_(id_str))
+		assert_that(get_creator(obj), is_('carlos.sanchez@nextthought.com'))
+		assert_that(get_keywords(obj), is_([]))
+		assert_that(get_sharedWith(obj), is_([]))
+		assert_that(get_containerId(obj), is_('tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.0'))
+		# assert_that(get_collectionId(obj), is_('prealgebra'))
+		assert_that(get_last_modified(obj), is_(close_to(1334000544.120455, 0.05)))
+		assert_that(get_note_content(obj), is_('eddard stark lord of winterfell')) 
+		assert_that(get_note_ngrams(obj).split(), has_length(17))
 		
 	def test_messageinfo(self):
 		obj = self.messageinfo

@@ -29,7 +29,7 @@ from nti.contentsearch.common import (	NTIID, CREATOR, LAST_MODIFIED, TYPE, CLAS
 										COLLECTION_ID, ITEMS, SNIPPET, HIT, HIT_COUNT, SUGGESTIONS, 
 										CONTENT, CONTAINER_ID, TARGET_OID, BODY)
 
-from nti.contentsearch.common import (	color_, quick_, channel_, content_, keywords_, references_, body_,
+from nti.contentsearch.common import (	color_, quick_, channel_, content_, keywords_, references_, body_, text_,
 										id_, recipients_, sharedWith_, oid_ , ntiid_, title_, last_modified_,
 										creator_, startHighlightedFullText_, containerId_, collectionId_)
 	
@@ -59,7 +59,8 @@ def get_text_from_mutil_part_body(body):
 	elif isinstance(body, collections.Iterable):
 
 		gbls = globals()
-
+		items = []
+				
 		def add_to_items(d, key):
 			data = d[key] if d and key in d else None
 			if data: items.append(str(data))
@@ -72,11 +73,10 @@ def get_text_from_mutil_part_body(body):
 					obj = gbls[name]()
 					d = obj.get_index_data(item)
 					add_to_items(d, content_)
-					add_to_items(d, 'text')
+					add_to_items(d, text_)
 				except:
 					pass
 
-		items = []
 		if isinstance(body, dict):
 			add_from_dict(body)
 		else:
@@ -518,7 +518,7 @@ class Canvas(_Illustration):
 		for shape in shapeList:
 			txt = get_text_from_mutil_part_body(shape)
 			if txt: items.append(txt)
-		return {'text': ' '.join(items)} if items else {}
+		return {text_: ' '.join(items)} if items else {}
 
 class CanvasShape(_Illustration):
 	pass
@@ -530,7 +530,9 @@ class CanvasPolygonShape(CanvasShape):
 	pass
 
 class CanvasTextShape(CanvasShape):
-	pass
+	def get_index_data(self, data, *args, **kwargs):
+		text = get_attr(data, text_, u'')
+		return {text_ :  text}
 
 # ----------------------------------
 
