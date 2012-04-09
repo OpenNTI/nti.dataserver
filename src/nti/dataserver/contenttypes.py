@@ -148,7 +148,7 @@ class _UserContentRoot(sharing.ShareableMixin, datastructures.ContainedMixin, da
 			target = s
 			warnings.warn( "Assuming datastructure layout" )
 			if _get_entity( s, dataserver=dataserver ):
-				target = _get_entity( dataserver, s )
+				target = _get_entity( s, dataserver=dataserver )
 			elif hasattr( self.creator, 'getFriendsList' ):
 				target = self.creator.getFriendsList( s )
 			self.addSharingTarget( target or s, self.creator )
