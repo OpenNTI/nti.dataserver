@@ -15,12 +15,15 @@ from whoosh import highlight
 from nltk import clean_html
 from nltk.tokenize import RegexpTokenizer
 
+from nti.dataserver.interfaces import ILibrary
+
 from nti.dataserver.users import Entity
 from nti.dataserver.chat import MessageInfo
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.contenttypes import Canvas
-from nti.dataserver.interfaces import ILibrary
 from nti.dataserver.contenttypes import Highlight
+from nti.dataserver.contenttypes import CanvasTextShape
+
 from nti.dataserver.ntiids import is_valid_ntiid_string
 from nti.dataserver.datastructures import to_external_ntiid_oid
 
@@ -53,6 +56,7 @@ LAST_MODIFIED	= u'Last Modified'
 id_				= u'id'
 oid_			= u'oid'
 body_ 			= u'body'
+text_			= u'text'
 tags_			= u'tags'
 quick_			= u'quick'
 title_			= u'title'
@@ -218,8 +222,7 @@ def get_multipart_content(source):
 		
 		def process_dict(d):
 			clazz = d.get(CLASS, None)
-			data = d.get(ITEMS, None)
-			if clazz and data:
+			if clazz:
 				name = "get_%s_content" % clazz.lower()
 				if name in gbls:
 					return gbls[name](d)
@@ -286,6 +289,15 @@ def get_messageinfo_content(data):
 		c = get_multipart_content(item)
 		if c: result.append(c)
 	return ' '.join(result)
+
+def get_canvastextshape_content(data):
+	if isinstance(data, dict):
+		result = data.get(text_, u'')
+	elif isinstance(data, CanvasTextShape):
+		result = data.text
+	else:
+		result = u''
+	return result
 
 # -----------------------------------
 
