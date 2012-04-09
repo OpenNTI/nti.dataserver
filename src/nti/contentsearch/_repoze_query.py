@@ -11,6 +11,13 @@ def allow_keywords(f):
 	spec = inspect.getargspec(f)
 	return True if spec.keywords else False
 	
+def set_default_indexng3(params):
+	if 'ranking' not in params:
+		params['ranking'] = True
+	if 'ranking_maxhits' not in params:
+		params['ranking_maxhits'] = sys.maxint	
+	return params
+
 class Contains(IndexContains):
 
 	def __init__(self, index_name, value, **kwargs):
@@ -29,10 +36,7 @@ class Contains(IndexContains):
 	
 	@classmethod
 	def create_for_indexng3(cls, index_name, value, **kwargs):
-		if 'ranking' not in kwargs:
-			kwargs['ranking'] = True
-		if 'ranking_maxhits' not in kwargs:
-			kwargs['ranking_maxhits'] = sys.maxint			
+		set_default_indexng3(kwargs)
 		return Contains(index_name, value, **kwargs)
 
 class DoesNotContain(IndexDoesNotContain):
@@ -52,8 +56,5 @@ class DoesNotContain(IndexDoesNotContain):
 	
 	@classmethod
 	def create_for_indexng3(cls, index_name, value, **kwargs):
-		if 'ranking' not in kwargs:
-			kwargs['ranking'] = True
-		if 'ranking_maxhits' not in kwargs:
-			kwargs['ranking_maxhits'] = sys.maxint			
+		set_default_indexng3(kwargs)			
 		return DoesNotContain(index_name, value, **kwargs)
