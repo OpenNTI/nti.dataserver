@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 from __future__ import print_function, unicode_literals
 
 from nti.dataserver.activitystream_change import Change
