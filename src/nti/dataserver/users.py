@@ -120,7 +120,7 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject,d
 	defaultGravatarType = 'mm'
 
 	def _getRealname(self):
-		result = getattr(self, '_realname' None) or self.username
+		result = getattr(self, '_realname', None) or self.username
 		if result is self.username:
 			# Try to make it prettier.
 			# Probably shouldn't do this in production.
