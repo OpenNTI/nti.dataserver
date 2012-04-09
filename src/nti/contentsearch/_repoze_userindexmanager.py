@@ -244,8 +244,8 @@ class RepozeUserIndexManager(object):
 		with repoze_context_manager():
 			docid = self.store.docid_for_address(self.username, _oid)
 			if docid:
-				catalog = self._get_create_catalog(data, type_name)
-				catalog.unindex_doc(docid)
+				catalog = self._get_create_catalog(data, type_name, create=False)
+				if catalog: catalog.unindex_doc(docid)
 				self.store.remove_docid(self.username, docid)
 		return docid
 

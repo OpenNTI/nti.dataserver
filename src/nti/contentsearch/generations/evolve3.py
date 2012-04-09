@@ -59,7 +59,7 @@ def evolve( context ):
 						docid = rds.add_address(username, oid_string)
 						catalog.index_doc(docid, obj)
 				
-						logger.debug("new docid '%s' for oid '%s'" % (docid, oid_string))
+						logger.debug("new docid '%s' for oid %r" % (docid, oid_string))
 					else:
 						logger.warn("Could not find object with NTIID '%s'" % ntiid)
 				except:

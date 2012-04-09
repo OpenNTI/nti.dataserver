@@ -4,13 +4,24 @@ __docformat__ = 'restructuredtext'
 
 generation = 4
 
+from ZODB.POSException import POSKeyError
 from nti.dataserver.datastructures import fromExternalOID
 
 from nti.contentsearch.common import get_type_name
+from nti.contentsearch.common import indexable_type_names
 
 import logging
 logger = logging.getLogger( __name__ )
 
+def _remove(rds, username, docid):
+	rds.remove_docid(username, docid)
+	for type_name in indexable_type_names:
+		catalog = rds.get_catalog(username, type_name)
+		try:
+			catalog.unindex_doc(docid)
+		except:
+			pass
+	
 def evolve( context ):
 	"""
 	Evolve generation 3 to generation 4 by reindexing objects to change object id format
@@ -45,12 +56,15 @@ def evolve( context ):
 						catalog = rds.get_catalog(username, type_name)
 						
 						# reindex
-						logger.debug("reindexing (%s) '%s' (%s,%s)" % (x, docid, type_name, oid_string))
+						logger.debug("reindexing (%s) '%s' (%s,%r)" % (x, docid, type_name, oid_string))
 						catalog.reindex_doc(docid, obj)
 					else:
-						logger.warn("Could not find object with OID '%s'" % oid_string)
+						logger.warn("Could not find object with OID %r" % oid_string)
+				except POSKeyError:
+					logger.warn("Object with OID %r not in database" % oid_string)
+					_remove(rds, username, docid)
 				except:
-					logger.exception("Could not migrate object with OID '%s'" % oid_string)
+					logger.exception("Could not migrate object with OID %r" % oid_string)
 					
 		logger.debug('Reindexing for user %s completed' % username)
 
