@@ -11,6 +11,10 @@ Support for running the application with gunicorn. You must use our worker, conf
 
 __old__ = __name__ # Force absolute import for gunicorn, since we shadow its name
 __name__ = '__main__' # Note that we cannot do this and use from __future__ imports
+# Gunicorn up through 0.14.2 has a bug, assummes gevent
+# automatically imports core. As of 1.0b2, it doesn't, so
+# we must do it ourselves. (The symptom is ggevent.py", line 90, in GeventWorker: AttributeError 'core'
+import gevent.core 
 import gunicorn.workers.ggevent as ggevent
 import gunicorn.http.wsgi as wsgi
 __name__ = __old__
