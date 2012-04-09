@@ -13,6 +13,7 @@ import numbers
 from persistent.list import PersistentList
 import six
 import urlparse
+import base64
 
 from nti.dataserver import datastructures
 from nti.dataserver.datastructures import StandardExternalFields, StandardInternalFields
@@ -709,13 +710,40 @@ class CanvasUrlShape(CanvasShape):
 
 	def __init__( self, url='' ):
 		super(CanvasUrlShape, self).__init__( )
-		if url:
-			assert urlparse.urlparse( url ).scheme == 'data'
 		self.url = url
 
 	def updateFromExternalObject( self, *args, **kwargs ):
 		super(CanvasUrlShape,self).updateFromExternalObject( *args, **kwargs )
-		assert urlparse.urlparse( self.url ).scheme == 'data'
+
+	def _get_url(self):
+		if '_head' in self.__dict__:
+			return self._head + ',' + base64.b64encode( self._raw_tail )
+		return self.__dict__[ 'url' ]
+	def _set_url(self,nurl):
+		if not nurl:
+			self.__dict__.pop( '_head', None )
+			self.__dict__.pop( '_raw_tail', None )
+			self.__dict__['url'] = nurl
+			return
+
+		parsed = urlparse.urlparse( nurl )
+		assert parsed.scheme == 'data'
+		if parsed.path.split( ';' )[-1].startswith( 'base64' ):
+			# Un-base 64 things for more compact storage
+			head = nurl[0:nurl.index(',')]
+			tail = nurl[nurl.index(',')+1:]
+			bts = base64.b64decode( tail )
+			self._head = head
+			self._raw_tail = bts
+			# By keeping url in __dict__, toExternalDictionary
+			# still does the right thing
+			self.__dict__['url'] = None
+		else:
+			self.__dict__['url'] = nurl
+	url = property(_get_url,_set_url)
+
+	def __repr__(self):
+		return '%s(%s)' % (self.__class__.__name__, len(self.url))
 
 class CanvasPathShape(CanvasShape):
 
