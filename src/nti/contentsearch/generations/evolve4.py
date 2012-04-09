@@ -18,7 +18,8 @@ def _remove(rds, username, docid):
 	for type_name in indexable_type_names:
 		catalog = rds.get_catalog(username, type_name)
 		try:
-			catalog.unindex_doc(docid)
+			if catalog:
+				catalog.unindex_doc(docid)
 		except:
 			pass
 	
@@ -54,10 +55,13 @@ def evolve( context ):
 					if obj:
 						type_name = get_type_name(obj)
 						catalog = rds.get_catalog(username, type_name)
-						
-						# reindex
-						logger.debug("reindexing (%s) '%s' (%s,%r)" % (x, docid, type_name, oid_string))
-						catalog.reindex_doc(docid, obj)
+						if catalog:
+							# reindex
+							logger.debug("reindexing (%s) '%s' (%s,%r)" % (x, docid, type_name, oid_string))
+							catalog.reindex_doc(docid, obj)
+						else:
+							logger.warn("Removing invalid index entry (%s,%r)" % (docid,oid_string))
+							_remove(rds, username, docid)
 					else:
 						logger.warn("Could not find object with OID %r" % oid_string)
 				except POSKeyError:
