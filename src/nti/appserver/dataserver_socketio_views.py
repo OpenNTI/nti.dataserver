@@ -166,12 +166,14 @@ def _connect_view( request ):
 
 	environ = request.environ
 	transport = request.matchdict.get( 'transport' )
+	ws_transports = ('websocket','flashsocket')
 	session_id = request.matchdict.get( 'session_id' )
-	if (transport == 'websocket' and 'wsgi.websocket' not in environ)\
-	  or (transport != 'websocket' and 'wsgi.websocket' in environ):
+
+	if (transport in ws_transports and 'wsgi.websocket' not in environ)\
+	  or (transport not in ws_transports and 'wsgi.websocket' in environ):
 	  # trying to use an upgraded websocket on something that is not websocket transport,
 	  # or vice/versa
-	  raise hexc.HTTPForbidden( )
+	  raise hexc.HTTPForbidden( 'Incorrect use of websockets' )
 
 	session = component.getUtility( nti_interfaces.IDataserver ).session_manager.get_session( session_id )
 	if session is None:
