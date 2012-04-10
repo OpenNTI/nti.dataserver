@@ -11,6 +11,7 @@ from whoosh.qparser import QueryParser
 from whoosh.qparser import GtLtPlugin
 from whoosh.qparser.dateparse import DateParserPlugin
 
+from nti.contentsearch import QueryObject
 from nti.contentsearch.common import echo
 from nti.contentsearch.common import get_attr
 from nti.contentsearch.common import get_ntiid
@@ -98,6 +99,7 @@ _default_word_max_dist = 15
 _default_search_limit = None
 _default_suggest_limit = None
 _default_search_plugins =  (GtLtPlugin, DateParserPlugin)
+_lower_last_modified_fields = [n.lower() for n in last_modified_fields]
 
 class _SearchableContent(object):
 	
@@ -125,62 +127,80 @@ class _SearchableContent(object):
 		else:
 			return name
 	
+	def internal_name(self, name):
+		name = name.lower()
+		if name in _lower_last_modified_fields:
+			name = last_modified_
+		return name if name in self.get_schema().stored_names() else None
+		
 	# ---------------
 	
-	def _prepare_query(self, field, query, plugins=_default_search_plugins):
-		qp = QueryParser(field, schema=self.get_schema())
+	def _prepare_query(self, field, query, plugins=_default_search_plugins, **kwargs):
+		qo = QueryObject.create(query, **kwargs)
+		text = [qo.term]
+		for n, v in qo.get_query_properties():
+			n = self.internal_name(n)
+			if not n or v is None: continue
+			text.append('AND %s:%s' % (n,v))
+		qparser = QueryParser(field, schema=self.get_schema())
 		for pg in plugins or ():
-			qp.add_plugin(pg())
-		parsed_query = qp.parse(unicode(query))
-		return parsed_query
+			qparser.add_plugin(pg())
+			
+		text = ' '.join(text)
+		parsed_query = qparser.parse(unicode(text))
+		return qo, parsed_query
 	
-	def search(self, searcher, query, limit=_default_search_limit, *args, **kwargs):
-		parsed_query = self._prepare_query(content_, query)
-		return self.execute_query_and_externalize(searcher, content_, parsed_query, query, limit, *args, **kwargs)
+	def search(self, searcher, query, *args, **kwargs):
+		qo, parsed_query = self._prepare_query(content_, query, **QueryObject.parse_query_properties(**kwargs))
+		return self.execute_query_and_externalize(searcher, content_, parsed_query, qo)
 		
-	def ngram_search(self, searcher, query, limit=_default_search_limit, *args, **kwargs):
-		parsed_query = self._prepare_query(quick_, query)
-		return self.execute_query_and_externalize(searcher, quick_, parsed_query, query, limit, *args, **kwargs)
+	def ngram_search(self, searcher, query, *args, **kwargs):
+		qo, parsed_query = self._prepare_query(quick_, query, **QueryObject.parse_query_properties(**kwargs))
+		return self.execute_query_and_externalize(searcher, quick_, parsed_query, qo)
 	
 	quick_search = ngram_search
 	
-	def suggest_and_search(self, searcher, query, limit=_default_search_limit, *args, **kwargs):
-		if ' ' in query:
+	def suggest_and_search(self, searcher, query, *args, **kwargs):
+		qo = QueryObject.create(query, **QueryObject.parse_query_properties(**kwargs))
+		if ' ' in qo.term:
 			suggestions = []
-			result = self.search(searcher, query, limit)
+			result = self.search(searcher, qo)
 		else:
-			result = self.suggest(searcher, query, limit, *args, **kwargs)
+			result = self.suggest(searcher, qo)
 			suggestions = result.get(ITEMS, None)
 			if suggestions:
-				result = self.search(searcher, suggestions[0], limit, *args, **kwargs)
+				qo.set_term(suggestions[0])
+				result = self.search(searcher, qo)
 			else:
-				result = self.search(searcher, query, limit, *args, **kwargs)
+				result = self.search(searcher, qo)
 
 		result[SUGGESTIONS] = suggestions
 		return result
 
-	def suggest(self, searcher, word, limit=_default_suggest_limit, *args, **kwargs):
-		prefix = kwargs.get('prefix', None) or len(word)
-		maxdist = kwargs.get('maxdist', None) or _default_word_max_dist
+	def suggest(self, searcher, word, *args, **kwargs):
+		qo = QueryObject.create(word, **QueryObject.parse_query_properties(**kwargs))
+		limit = qo.limit
+		prefix = qo.prefix or len(qo.term)
+		maxdist = qo.maxdist or _default_word_max_dist
 		result = empty_suggest_result(word)
-		records = searcher.suggest(content_, word, maxdist=maxdist, prefix=prefix)
+		records = searcher.suggest(content_, qo.term, maxdist=maxdist, prefix=prefix)
 		records = records[:limit] if limit and limit > 0 else records
 		result[ITEMS] = records
 		result[HIT_COUNT] = len(records)
 		return result
 
-	def execute_query_and_externalize(self, searcher, search_field, parsed_query, query, limit, *args, **kwargs):
+	def execute_query_and_externalize(self, searcher, search_field, parsed_query, queryobject):
 
 		stored_field = search_field in self.get_schema().stored_names()
 		field_found_in_query = search_field in list(t[0] for t in parsed_query.iter_all_terms())
-		search_hits = searcher.search(parsed_query, limit=limit)
+		search_hits = searcher.search(parsed_query, limit=queryobject.limit)
 	
-		surround = kwargs.get('surround', 20)
-		maxchars = kwargs.get('maxchars', 300)
+		surround = queryobject.surround
+		maxchars = queryobject.maxchars
 		search_hits.formatter = highlight.UppercaseFormatter()
 		search_hits.fragmenter = highlight.ContextFragmenter(maxchars=maxchars, surround=surround)
-		
-		result = empty_search_result(query)
+
+		result = empty_search_result(queryobject.term)
 		items = result[ITEMS]
 		
 		lm = 0
@@ -194,12 +214,12 @@ class _SearchableContent(object):
 				if field_found_in_query:
 					snippet = hit.highlights(search_field)
 				else:
-					snippet = get_highlighted_content(query, 
+					snippet = get_highlighted_content(queryobject.term, 
 													  hit.get(content_, u''),
 													  maxchars=maxchars, 
 													  surround=surround)
 			else:
-				snippet = ngram_content_highlight(query, 
+				snippet = ngram_content_highlight(queryobject.term, 
 												  hit.get(content_, u''),
 												  maxchars=maxchars, 
 												  surround=surround)
