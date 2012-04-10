@@ -7,9 +7,10 @@ from datetime import datetime
 from whoosh import fields
 from whoosh import highlight
 from whoosh.searching import Hit
+from whoosh.query import (And,Term)
 from whoosh.qparser import QueryParser
-from whoosh.qparser import GtLtPlugin
 from whoosh.qparser.dateparse import DateParserPlugin
+from whoosh.qparser import (GtLtPlugin, PrefixPlugin, WildcardPlugin)
 
 from nti.contentsearch import QueryObject
 from nti.contentsearch.common import echo
@@ -98,7 +99,7 @@ get_highlighted_content = word_content_highlight
 _default_word_max_dist = 15
 _default_search_limit = None
 _default_suggest_limit = None
-_default_search_plugins =  (GtLtPlugin, DateParserPlugin)
+_default_search_plugins =  (GtLtPlugin, DateParserPlugin, PrefixPlugin, WildcardPlugin)
 _lower_last_modified_fields = [n.lower() for n in last_modified_fields]
 
 class _SearchableContent(object):
@@ -135,19 +136,44 @@ class _SearchableContent(object):
 		
 	# ---------------
 	
+	def _get_subqueries(self, qo):
+		result = []
+		for n, v in qo.get_subqueries():
+			n = self.internal_name(n)
+			if n and v is not None:
+				result.append((n,v))
+		return result
+			
+	def _parse_or_term(self, qparser, k, v):
+		try:
+			text = unicode('%s:%s' % (k, v))
+			result = qparser.parse(text)
+		except:
+			result = Term(k, v)
+		return result
+	
 	def _prepare_query(self, field, query, plugins=_default_search_plugins, **kwargs):
 		qo = QueryObject.create(query, **kwargs)
 		text = [qo.term]
-		for n, v in qo.get_query_properties():
-			n = self.internal_name(n)
-			if not n or v is None: continue
-			text.append('AND %s:%s' % (n,v))
+		
+		# get any subquery
+		subqueries = self._get_subqueries(qo) 
+		for n, v in subqueries:
+			text.append('AND %s:%s' % (n,v))	
+		text = unicode(' '.join(text))
+		
+		# set query parser plugins
 		qparser = QueryParser(field, schema=self.get_schema())
 		for pg in plugins or ():
 			qparser.add_plugin(pg())
-			
-		text = ' '.join(text)
-		parsed_query = qparser.parse(unicode(text))
+		
+		# try to parse query
+		try:
+			parsed_query = qparser.parse(text)
+		except:
+			# can't parse the query set terms
+			subqueries =  [Term(field, qo.term)] + [self._parse_or_term(qparser, k, v) for k, v in subqueries]
+			parsed_query = And(subqueries)
 		return qo, parsed_query
 	
 	def search(self, searcher, query, *args, **kwargs):
@@ -161,7 +187,7 @@ class _SearchableContent(object):
 	quick_search = ngram_search
 	
 	def suggest_and_search(self, searcher, query, *args, **kwargs):
-		qo = QueryObject.create(query, **QueryObject.parse_query_properties(**kwargs))
+		qo = QueryObject.create(query, **kwargs)
 		if ' ' in qo.term:
 			suggestions = []
 			result = self.search(searcher, qo)
@@ -178,7 +204,7 @@ class _SearchableContent(object):
 		return result
 
 	def suggest(self, searcher, word, *args, **kwargs):
-		qo = QueryObject.create(word, **QueryObject.parse_query_properties(**kwargs))
+		qo = QueryObject.create(word, **kwargs)
 		limit = qo.limit
 		prefix = qo.prefix or len(qo.term)
 		maxdist = qo.maxdist or _default_word_max_dist

@@ -51,8 +51,8 @@ class QueryObject(object, UserDict.DictMixin):
 		term = kwargs.get('term', None) or kwargs.get('query', None)
 		assert term is not None, 'must specify a query term'
 		self._data = {}
-		for k,v in kwargs.items():
-			if v is not None and k is not None:
+		for k, v in kwargs.items():
+			if k and v is not None:
 				self.__setitem__(k, v)
 				
 	def keys(self):
@@ -113,7 +113,7 @@ class QueryObject(object, UserDict.DictMixin):
 	
 	limit = property(get_limit, set_limit)
 	
-	def get_query_properties(self):
+	def get_subqueries(self):
 		result = []
 		for k in self.keys(): 
 			if k not in self.__properties__:
@@ -161,24 +161,21 @@ class QueryObject(object, UserDict.DictMixin):
 	@classmethod
 	def parse_query_properties(cls, **kwargs):
 		result = {}
-		for k in kwargs.items(): 
-			if k in cls.__properties__:
-				result[k] = kwargs.get(k)
+		for k, v in kwargs.items(): 
+			if k.lower() in cls.__properties__:
+				result[k] = v
 		return result
 	
 	@classmethod
 	def create(cls, query, **kwargs):
-		
 		if isinstance(query, six.string_types):
-			queryobject = QueryObject(term=query, **kwargs)
+			queryobject = QueryObject(term=query)
 		else:
+			assert isinstance(query, QueryObject) 
 			queryobject = query
 			
-		assert isinstance(queryobject, QueryObject) 
-
-		for k in cls.__properties__: 
-			v = kwargs.get(k, None)
-			if v is not None:
+		for k, v in kwargs.items():
+			if k and v is not None:
 				queryobject[k] = v
 				
 		return queryobject

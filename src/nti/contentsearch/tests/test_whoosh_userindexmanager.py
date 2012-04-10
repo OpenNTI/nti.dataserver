@@ -98,6 +98,9 @@ class TestWhooshUserIndexManager(ConfiguringTestBase):
 		hits = self.uim.search("ra*", limit=None)
 		assert_that(hits, has_entry(HIT_COUNT, 3))
 		
+		hits = self.uim.search(">ichigo")
+		assert_that(hits, has_entry(HIT_COUNT, 0))
+		
 	@WithMockDSTrans
 	def test_update_note(self):
 		notes, _ = self._add_user_index_notes()
