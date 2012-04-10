@@ -13,6 +13,7 @@ from nti.dataserver import links
 
 from persistent import Persistent
 import BTrees.OOBTree
+import ZODB.POSException
 
 from zope import interface
 from zope import component
@@ -125,6 +126,12 @@ class _UserTranscriptStorageAdapter(object):
 
 		room.add_message( msg )
 
+def TranscriptSummaryAdapter(meeting_storage):
+	try:
+		return TranscriptSummary(meeting_storage)
+	except ZODB.POSException.POSKeyError:
+		logger.exception( "Meeting object gone missing." )
+		return None
 
 class TranscriptSummary(datastructures.ExternalizableInstanceDict):
 	"""
