@@ -399,8 +399,14 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 		# We have to restore it when the object comes alive.
 		# This is tightly coupled with the implementation of
 		# _becameModerated/_becameUnmoderated
-		if hasattr( self, '_moderation_queue' ) and self.__class__ == _Meeting:
+		if state['_moderated'] and self.__class__ == _Meeting:
 			self.__class__ = _ModeratedMeeting
+
+			if not '_moderated_by_sids' in state:
+				# Belt and suspenders
+				logger.warn( "Inconsistent state of meeting %s", state )
+				self._moderated = False
+				self.__class__ = _Meeting
 
 	def __getattribute__( self, name ):
 		result = super(_Meeting,self).__getattribute__( name )
@@ -657,9 +663,9 @@ class _ModeratedMeeting(_Meeting):
 	__metaclass__ = _ChatObjectMeta
 	__emits__ = ('recvMessageForModeration', 'recvMessageForShadow')
 
-	_moderation_queue = None
-	_moderated_by_sids = None
-	_shadowed_usernames = None
+	_moderation_queue = ()
+	_moderated_by_sids = ()
+	_shadowed_usernames = ()
 
 	def __init__( self, *args, **kwargs ):
 		super( _ModeratedMeeting, self ).__init__( *args, **kwargs )

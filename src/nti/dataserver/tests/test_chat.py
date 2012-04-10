@@ -1,8 +1,8 @@
 
 from hamcrest import (assert_that, is_, has_entry, instance_of,
 					  has_key, is_in, not_none, is_not, greater_than,
-					  same_instance, has_length, none, contains,
-					  has_entries, only_contains, has_item)
+					  same_instance, has_length, none, contains, same_instance,
+					  has_entries, only_contains, has_item, has_property)
 import unittest
 from zope import interface, component
 from zope.deprecation import deprecate
@@ -109,6 +109,21 @@ class TestChatRoom(ConfiguringTestBase):
 		# A method attribute, not an ivar, triggers this
 		assert_that( room.post_message, is_( not_none() ) )
 		assert_that( room, is_( chat._ModeratedMeeting ) )
+		assert_that( room, has_property( '_moderated_by_sids', not_none() ) )
+		# Now, we can reverse the property
+		room.Moderated = False
+		assert_that( room, is_( chat._Meeting ) )
+		transaction.commit()
+		conn.close()
+		db.close()
+
+		# Should still be moderated.
+		fs = FileStorage( os.path.join( tmp_dir, "data.fs" ) )
+		db = DB( fs )
+		conn = db.open()
+		room = conn.root()['Room']
+		assert_that( room, is_( chat._Meeting ) )
+		assert_that( room.post_message.im_class, is_( same_instance( chat._Meeting ) ) )
 		transaction.commit()
 		conn.close()
 		db.close()
