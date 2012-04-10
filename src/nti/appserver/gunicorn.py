@@ -14,13 +14,14 @@ __name__ = '__main__' # Note that we cannot do this and use from __future__ impo
 # Gunicorn up through 0.14.2 has a bug, assummes gevent
 # automatically imports core. As of 1.0b2, it doesn't, so
 # we must do it ourselves. (The symptom is ggevent.py", line 90, in GeventWorker: AttributeError 'core'
-import gevent.core 
+import gevent.core
 import gunicorn.workers.ggevent as ggevent
 import gunicorn.http.wsgi as wsgi
 __name__ = __old__
 
 import gevent
 import gevent.socket
+from gevent.server import StreamServer
 import logging
 logger = logging.getLogger(__name__)
 import warnings
@@ -77,6 +78,12 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 																	   dummy_app.global_conf,
 																	   port=dummy_app.global_conf['http_port'],
 																	   **dummy_app.kwargs )
+		# It's not entirely clear if this is necessary
+		try:
+			self.policy_server = FlashPolicyServer()
+			self.policy_server.start()
+		except:
+			logger.exception( "Failed to start policy server." )
 
 		def factory(*args,**kwargs):
 			# The super class will provide a Pool based on the
@@ -164,3 +171,16 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		# Everything must be complete and ready to go before we call into
 		# the super, it in turn calls run()
 		super(GeventApplicationWorker,self).init_process()
+
+
+class FlashPolicyServer(StreamServer):
+	policy = """<?xml version="1.0"?><!DOCTYPE cross-domain-policy SYSTEM "http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd">
+<cross-domain-policy><allow-access-from domain="*" to-ports="*"/></cross-domain-policy>"""
+
+	def __init__(self, listener=None, backlog=None):
+		if listener is None:
+			listener = ('0.0.0.0', 10843)
+		StreamServer.__init__(self, listener=listener, backlog=backlog)
+
+	def handle(self, socket, address):
+		socket.sendall(self.policy)

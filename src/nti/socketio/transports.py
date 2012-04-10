@@ -402,3 +402,6 @@ class WebsocketTransport(BaseTransport):
 
 	def kill( self ):
 		self.websocket.close_connection()
+
+class FlashsocketTransport(WebsocketTransport):
+	pass

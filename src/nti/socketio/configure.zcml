@@ -6,6 +6,8 @@
 			 name="xhr-polling"/>
 	<adapter factory=".transports.WebsocketTransport"
 			 name="websocket" />
+	<adapter factory=".transports.FlashsocketTransport"
+			 name="flashsocket" />
 
 	<utility factory=".protocol.SocketIOProtocolFormatter1"
 			 name="1"
