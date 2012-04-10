@@ -7,6 +7,7 @@ from zope import interface
 from whoosh.store import LockError
 
 from nti.contentsearch import LFUMap
+from nti.contentsearch import QueryObject
 from nti.contentsearch.interfaces import IUserIndexManager
 from nti.contentsearch.interfaces import IUserIndexManagerFactory
 from nti.contentsearch.common import get_type_name
@@ -140,55 +141,63 @@ class WhooshUserIndexManager(object):
 			search_on = [normalize_type_name(x) for x in search_on if normalize_type_name(x) in indexables]
 		return search_on or indexables
 	
-	def _do_search(self, query, limit=None, is_quick_search=False, **kwargs):
-		query = unicode(query)
-		search_on = self._adapt_search_on_types(kwargs.get('search_on', None))
-		results = empty_search_result(query)
+	def _do_search(self, query, is_quick_search=False, *args, **kwargs):
+		search_on = kwargs.pop('search_on', None)
+		search_on = self._adapt_search_on_types(search_on)
+		
+		query = QueryObject.create(query, **kwargs)
+		results = empty_search_result(query.term)
 		for type_name in search_on:
 			index = self._get_or_create_index(type_name)
 			indexable = get_indexable_object(type_name)
 			with index.searcher() as searcher:
 				if not is_quick_search:
-					hits = indexable.search(searcher, query, limit=limit, **kwargs)
+					hits = indexable.search(searcher, query)
 				else:
-					hits = indexable.ngram_search(searcher, query, limit=limit, **kwargs)
+					hits = indexable.ngram_search(searcher, query)
 				results = merge_search_results(results, hits)
 		return results	
 	
 	@TraxWrapper
-	def search(self, query, limit=None, *args, **kwargs):
-		results = self._do_search(query, limit, False, *args, **kwargs)
+	def search(self, query, *args, **kwargs):
+		results = self._do_search(query, False, *args, **kwargs)
 		return results
 
 	@TraxWrapper
-	def ngram_search(self, query, limit=None,*args, **kwargs):
-		results = self._do_search(query, limit, True, *args, **kwargs)
+	def ngram_search(self, query, *args, **kwargs):
+		results = self._do_search(query, True, *args, **kwargs)
 		return results
 
 	@TraxWrapper
-	def suggest_and_search(self, query, limit=None, *args, **kwargs):
-		query = unicode(query)
-		results = empty_suggest_and_search_result(query)
-		search_on = self._adapt_search_on_types(kwargs.get('search_on', None))
+	def suggest_and_search(self, query, *args, **kwargs):
+		
+		search_on = kwargs.pop('search_on', None)
+		search_on = self._adapt_search_on_types(search_on)
+		
+		query = QueryObject.create(query, **kwargs)
+		results = empty_suggest_and_search_result(query.term)
+		
 		for type_name in search_on:
 			index = self._get_or_create_index(type_name)
 			indexable = get_indexable_object(type_name)
 			with index.searcher() as searcher:
-				rs = indexable.suggest_and_search(searcher=searcher, query=query, limit=limit)
+				rs = indexable.suggest_and_search(searcher, query)
 				results = merge_suggest_and_search_results(results, rs)
 		return results
 
 	@TraxWrapper
-	def suggest(self, query, limit=None, prefix=None, *args, **kwargs):
-		query = unicode(query)
-		results = empty_suggest_result(query)
-		maxdist = kwargs.get('maxdist', None)
-		search_on = self._adapt_search_on_types(kwargs.get('search_on', None))			
+	def suggest(self, query, *args, **kwargs):
+		search_on = kwargs.pop('search_on', None)
+		search_on = self._adapt_search_on_types(search_on)
+		
+		query = QueryObject.create(query, **kwargs)
+		results = empty_suggest_result(query.term)
+	
 		for type_name in search_on:
 			index = self._get_or_create_index(type_name)
 			indexable = get_indexable_object(type_name)
 			with index.searcher() as searcher:
-				rs = indexable.suggest(searcher=searcher, word=query, limit=limit, maxdist=maxdist, prefix=prefix)
+				rs = indexable.suggest(searcher, query)
 				results = merge_suggest_results(results, rs)
 		return results
 
