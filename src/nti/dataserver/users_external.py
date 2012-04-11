@@ -3,6 +3,8 @@
 import logging
 logger = logging.getLogger( __name__ )
 
+import random
+
 from zope import component
 from zope import interface
 
@@ -66,18 +68,27 @@ class _FriendsListExternalObject(_EntityExternalObject):
 					friend = datastructures.toExternalObject( friend, name='personal-summary' )
 				else:
 					friend = datastructures.toExternalObject( friend, name='summary' )
-			# elif isinstance( friend, six.string_types ):
-			# 	friend = { 'Class': 'UnresolvedFriend',
-			# 			   'Username': friend,
-			# 			   'avatarURL' : _createAvatarURL( friend, SharingTarget.defaultGravatarType ) }
-			# else:
-			# 	friend = datastructures.toExternalObject( friend )
 				theFriends.append( friend )
 
 		extDict['friends'] = theFriends
-		extDict['CompositeGravatars'] = self.entity._composite_gravatars()
+		extDict['CompositeGravatars'] = self._composite_gravatars()
 
 		return extDict
+
+	def _composite_gravatars(self):
+		""""
+		:return: A consistent list of gravatars for the users in this list. The idea is to
+			shuffle them such that they are recognizable, even among different lists
+			with similar memberships (that's why sorting wouldn't work).
+		"""
+		# We do this simply by selecting 4 random users, seeded based on the name of this
+		# object.
+		# TODO: Is there a better seed?
+		friends = [x.avatarURL for x in self.entity]
+		if not friends:
+			return ()
+		rand = random.Random( hash(self.entity.username) )
+		return rand.sample( friends, min(4,len(friends)) )
 
 class _UserSummaryExternalObject(_EntitySummaryExternalObject):
 	component.adapts( nti_interfaces.IUser )
@@ -88,14 +99,11 @@ class _UserSummaryExternalObject(_EntitySummaryExternalObject):
 		# TODO: Is this a privacy concern?
 		extDict['lastLoginTime'] = self.entity.lastLoginTime.value
 		extDict['NotificationCount'] = self.entity.notificationCount.value
-		# TODO: Presence information will depend on who's asking
-		#extDict['Presence'] = self.presence
 		return extDict
 
 
 class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 	component.adapts( nti_interfaces.IUser )
-	# Will also be registered as the default?
 
 
 	def toExternalObject( self ):
@@ -131,23 +139,12 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 		extDict['Last Modified'] = getattr( self.entity, 'lastModified', 0 )
 		return extDict
 
-
-
-	# def toExternalObject( self ):
-	# 	if hasattr( self, '_v_writingSelf' ):
-	# 		return self.username
-	# 	setattr( self, '_v_writingSelf', True )
-	# 	try:
-	# 		extDict = self.toPersonalSummaryExternalObject()
-	# 		for k,v in self.containers.iteritems():
-	# 			extDict[k] = datastructures.toExternalObject( v )
-	# 	finally:
-	# 		delattr( self, '_v_writingSelf' )
-	# 	return extDict
+_UserExternalObject = _UserPersonalSummaryExternalObject
 
 def _UserPresenceExternalDecoratorFactory( user ):
+	# TODO: Presence information will depend on who's asking
 	ds = component.queryUtility( nti_interfaces.IDataserver )
-	if user and ds:
+	if user and ds and ds.sessions:
 		return _UserPresenceExternalDecorator( user, ds )
 
 class _UserPresenceExternalDecorator(object):

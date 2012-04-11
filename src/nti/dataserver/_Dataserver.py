@@ -359,7 +359,6 @@ class Dataserver(MinimalDataserver):
 
 		room_name = 'meeting_rooms'
 
-		self._setupPresence()
 		self.session_manager = self._setup_session_manager( )
 		self.chatserver = self._setup_chat( room_name )
 
@@ -394,18 +393,6 @@ class Dataserver(MinimalDataserver):
 		reader = gevent.spawn( read_generic_changes )
 
 		return (changePublisherStream, (reader,))
-
-	def _setupPresence( self ):
-		"""
-		Hooks up the User's presence information to work with the actual
-		online session info.
-		"""
-		def getPresence( s ):
-			return "Online" if self.sessions.get_sessions_by_owner(s.username)\
-				   else "Offline"
-
-		# FIXME: This is horribly ugly
-		users.User.presence = property(getPresence)
 
 	def _setup_session_manager( self ):
 		# The session service will read a component from our local site manager

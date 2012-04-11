@@ -166,32 +166,6 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject,d
 
 	### Externalization ###
 
-	def toExternalObject( self ):
-		""" :return: The value of :meth:`toSummaryExternalObject` """
-		result = self.toSummaryExternalObject()
-		# restore last modified since we are the true representation
-		result['Last Modified'] = getattr( self, 'lastModified', 0 )
-		return result
-
-	def toSummaryExternalObject( self ):
-		"""
-		:return: Standard dictionary minus Last Modified plus the properties of this class.
-			These properties include 'Username', 'avatarURL', 'realname', and 'alias'.
-
-		EOD
-		"""
-		extDict = super(Entity,self).toExternalDictionary( )
-		# Notice that we delete the last modified date. Because this is
-		# not a real representation of the object, we don't want people to cache based
-		# on it.
-		extDict.pop( 'Last Modified', None )
-		extDict['Username'] = self.username
-		extDict['avatarURL'] = self.avatarURL
-		extDict['realname'] = self.realname
-		extDict['alias'] = self.alias
-		extDict['CreatedTime'] = getattr( self, 'createdTime', 42 ) # for migration
-		return extDict
-
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
 		def setIf( name ):
 			o = parsed.pop( name, None )
@@ -377,21 +351,6 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 		resolved = [_resolve_friend(self.friends[i], i) for i in xrange(len(self.friends))]
 		return iter( {x for x in resolved if x is not None} )
 
-	def _composite_gravatars(self):
-		""""
-		:return: A consistent list of gravatars for the users in this list. The idea is to
-			shuffle them such that they are recognizable, even among different lists
-			with similar memberships (that's why sorting wouldn't work).
-		"""
-		# We do this simply by selecting 4 random users, seeded based on the name of this
-		# object.
-		# TODO: Is there a better seed?
-		friends = [x.avatarURL for x in self]
-		if not friends:
-			return ()
-		rand = random.Random( hash(self.username) )
-		return rand.sample( friends, min(4,len(friends)) )
-
 
 	@property
 	def friends(self):
@@ -447,28 +406,6 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 		pass
 	containerId = property( get_containerId, set_containerId )
 
-
-	def toExternalObject(self):
-		extDict = super(FriendsList,self).toExternalObject()
-		theFriends = []
-		for friend in iter(self): #iter self to weak refs and dups
-			if isinstance( friend, Entity ):
-				if friend == self.creator:
-					friend = friend.toPersonalSummaryExternalObject()
-				else:
-					friend = friend.toSummaryExternalObject()
-			# elif isinstance( friend, six.string_types ):
-			# 	friend = { 'Class': 'UnresolvedFriend',
-			# 			   'Username': friend,
-			# 			   'avatarURL' : _createAvatarURL( friend, SharingTarget.defaultGravatarType ) }
-			# else:
-			# 	friend = datastructures.toExternalObject( friend )
-				theFriends.append( friend )
-
-		extDict['friends'] = theFriends
-		extDict['CompositeGravatars'] = self._composite_gravatars()
-
-		return extDict
 
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
 		super(FriendsList,self).updateFromExternalObject( parsed, *args, **kwargs )
@@ -753,57 +690,6 @@ class User(Principal):
 	def containerId(self):
 		return "Users"
 
-	@property
-	def presence( self ):
-		"""Returns an indicator of the user's current presence in the system."""
-		return "Offline"
-
-	### Externalization
-
-	def toSummaryExternalObject( self ):
-		extDict = super(User,self).toSummaryExternalObject( )
-
-		# TODO: Is this a privacy concern?
-		extDict['lastLoginTime'] = self.lastLoginTime.value
-		extDict['NotificationCount'] = self.notificationCount.value
-		# TODO: Presence information will depend on who's asking
-		extDict['Presence'] = self.presence
-		return extDict
-
-	def toPersonalSummaryExternalObject( self ):
-		"""
-		:return: the externalization intended to be sent when requested by this user.
-		"""
-
-		# Super's toExternalObject is defined to use toSummaryExternalObject
-		# so we get lastLoginTime and NotificationCount from there.
-		from nti.dataserver._Dataserver import InappropriateSiteError # circular imports
-		extDict = super(User,self).toExternalObject()
-		def ext( l ):
-			result = []
-			for name in l:
-				try:
-					e = self.get_entity( name )
-				except InappropriateSiteError:
-					# We've seen this in logging that is captured and happens
-					# after things finish running, notably nose's logcapture.
-					e = None
-
-				result.append( e.toSummaryExternalObject() if e else name )
-
-			return result
-
-		# Communities are not currently editable,
-		# and will need special handling of Everyone
-		extDict['Communities'] = ext(self.communities)
-		# Following is writable
-		extDict['following'] = ext(self.following)
-		# as is ignoring and accepting
-		extDict['ignoring'] = ext(self.ignoring_shared_data_from)
-		extDict['accepting'] = ext(self.accepting_shared_data_from)
-		extDict['Links'] = [ links.Link( datastructures.to_external_ntiid_oid( self ), rel='edit' ) ]
-		return extDict
-
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
 		with self._NoChangeBroadcast( self ):
 			super(User,self).updateFromExternalObject( parsed, *args, **kwargs )
@@ -874,18 +760,6 @@ class User(Principal):
 						self.stop_accepting_shared_data_from,
 					accepting )
 			self.updateLastMod()
-
-	def toExternalObject( self ):
-		if hasattr( self, '_v_writingSelf' ):
-			return self.username
-		setattr( self, '_v_writingSelf', True )
-		try:
-			extDict = self.toPersonalSummaryExternalObject()
-			for k,v in self.containers.iteritems():
-				extDict[k] = datastructures.toExternalObject( v )
-		finally:
-			delattr( self, '_v_writingSelf' )
-		return extDict
 
 	### Sharing
 
