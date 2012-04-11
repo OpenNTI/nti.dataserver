@@ -177,11 +177,11 @@ class _SearchableContent(object):
 		return qo, parsed_query
 	
 	def search(self, searcher, query, *args, **kwargs):
-		qo, parsed_query = self._prepare_query(content_, query, **QueryObject.parse_query_properties(**kwargs))
+		qo, parsed_query = self._prepare_query(content_, query, **kwargs)
 		return self.execute_query_and_externalize(searcher, content_, parsed_query, qo)
 		
 	def ngram_search(self, searcher, query, *args, **kwargs):
-		qo, parsed_query = self._prepare_query(quick_, query, **QueryObject.parse_query_properties(**kwargs))
+		qo, parsed_query = self._prepare_query(quick_, query, **kwargs)
 		return self.execute_query_and_externalize(searcher, quick_, parsed_query, qo)
 	
 	quick_search = ngram_search
