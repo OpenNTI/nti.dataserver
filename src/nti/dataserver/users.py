@@ -313,7 +313,13 @@ class Everyone(Community):
 		super(Everyone,self).__init__( 'Everyone' )
 		self.realname = 'Everyone'
 		self.alias = 'Public'
-		self.avatarURL = 'http://www.gravatar.com/avatar/dfa1147926ce6416f9f731dcd14c0260?s=128&d=retro'
+		# 'everyone@nextthought.com' hash
+		self.avatarURL = 'http://www.gravatar.com/avatar/bb798c65a45658a80281bd3ba26c4ff8?s=128&d=mm'
+
+	def __setstate__(self,state):
+		if state.get( '_avatarURL' ) != 'http://www.gravatar.com/avatar/bb798c65a45658a80281bd3ba26c4ff8?s=128&d=mm':
+			state['_avatarURL'] = 'http://www.gravatar.com/avatar/bb798c65a45658a80281bd3ba26c4ff8?s=128&d=mm'
+		super(Everyone,self).__setstate__( state )
 
 
 EVERYONE_PROTO = Everyone()

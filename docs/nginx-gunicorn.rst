@@ -264,11 +264,13 @@ reside in ``/etc/haproxy/haproxy.cfg``:
 	option http-server-close
 
   frontend httpredir 0.0.0.0:80
-	# Port 80 does nothing but redirect to SSL
 	option httplog
 	log global
 	timeout client 600
-	redirect location https://alpha.nextthought.com/
+	use_backend ssl_backend if TRUE
+
+  backend ssl_backend
+	server alphassl alpha.nextthought.com redir https://alpha.nextthought.com
 
   frontend all 127.0.0.1:8084
 	option httplog
