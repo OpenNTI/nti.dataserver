@@ -9,6 +9,7 @@ from nti.dataserver.datastructures import toExternalOID
 from nti.dataserver.datastructures import fromExternalOID
 
 from nti.contentsearch import interfaces
+from nti.contentsearch import QueryObject
 from nti.contentsearch.interfaces import IUserIndexManagerFactory
 from nti.contentsearch.common import get_type_name
 from nti.contentsearch.common import normalize_type_name
@@ -83,13 +84,9 @@ class RepozeUserIndexManager(object):
 			search_on = [normalize_type_name(x) for x in search_on]
 		return search_on
 
-	def _get_hits_from_docids(self, *args, **kwargs):
+	def _get_hits_from_docids(self, qo, docids, use_word_highlight=None):
 		
-		docids = kwargs.pop('docids')
-		query =  kwargs.pop('query', u'')
-		limit = kwargs.pop('limit', None)
-		use_word_highlight = kwargs.pop('use_word_highlight', None)
-		
+		limit = qo.limit		
 		if not docids:
 			return [], 0
 		
@@ -101,7 +98,7 @@ class RepozeUserIndexManager(object):
 		
 		# get all index hits
 		length = len(objects)
-		hits = map(get_index_hit, objects, [query]*length, [use_word_highlight]*length)
+		hits = map(get_index_hit, objects, [qo.term]*length, [use_word_highlight]*length)
 		
 		# filter if required
 		items = [hit for hit in hits if hit]
@@ -112,35 +109,30 @@ class RepozeUserIndexManager(object):
 		
 		return items, lm
 
-	def _do_catalog_query(self, catalog, field, query, limit=None):
-		if is_all_query(query):
+	def _do_catalog_query(self, catalog, fieldname, qo):
+		if is_all_query(qo.term):
 			# globbing character return all
 			ids = self.store.get_docids(self.username)
 			return len(ids), ids
 		
-		queryobject = Contains.create_for_indexng3(field, query)
+		limit = qo.limit
+		queryobject = Contains.create_for_indexng3(fieldname, qo.term)
 		return catalog.query(queryobject, limit=limit)
 
-	def _do_search(self, field, query, limit=None, use_word_highlight=True, *args, **kwargs):
-
-		query = unicode(query)
-		results = empty_search_result(query)
-		if not query: return results
+	def _do_search(self, fieldname, qo, search_on=None, use_word_highlight=None):
+		
+		results = empty_search_result(qo.term)
+		if qo.is_empty: return results
 
 		lm = 0
 		items = results[ITEMS]
-		search_on = self._adapt_search_on_types(kwargs.get('search_on', None))
 		with repoze_context_manager():
 			search_on = search_on if search_on else self.store.get_catalog_names(self.username)
 			for type_name in search_on:
 				catalog = self.datastore.get_catalog(self.username, type_name)
 				if catalog:
-					_, docids = self._do_catalog_query(catalog, field, query, limit=limit)
-					hits, hits_lm = self._get_hits_from_docids(	docids=docids,
-																limit=limit,
-																query=query,
-																use_word_highlight=use_word_highlight,
-																**kwargs)
+					_, docids = self._do_catalog_query(catalog, fieldname, qo)
+					hits, hits_lm = self._get_hits_from_docids(qo, docids, use_word_highlight)
 
 					lm = max(lm, hits_lm)
 					for hit in hits:
@@ -150,26 +142,34 @@ class RepozeUserIndexManager(object):
 		results[HIT_COUNT] = len(items)
 		return results
 
-	def search(self, query, limit=None, *args, **kwargs):
-		_highlight = None if is_all_query(query) else True
-		results = self._do_search(content_, query, limit, _highlight, *args, **kwargs)
+	def search(self, query, *args, **kwargs):
+		search_on = kwargs.pop('search_on', None)
+		search_on = self._adapt_search_on_types(search_on)
+		qo = QueryObject.create(query, **kwargs)
+		word_highlight = None if is_all_query(qo.term) else True
+		results = self._do_search(content_, qo, search_on, word_highlight)
 		return results
 
-	def ngram_search(self, query, limit=None, *args, **kwargs):
-		_highlight = None if is_all_query(query) else False
-		results = self._do_search(ngrams_, query, limit, _highlight, *args, **kwargs)
+	def ngram_search(self, query, *args, **kwargs):
+		search_on = kwargs.pop('search_on', None)
+		search_on = self._adapt_search_on_types(search_on)
+		qo = QueryObject.create(query, **kwargs)
+		word_highlight = None if is_all_query(qo.term) else False
+		results = self._do_search(ngrams_, qo, search_on, word_highlight)
 		return results
 	quick_search = ngram_search
 
-	def suggest(self, query, limit=None, prefix=None, *args, **kwargs):
-		query = unicode(query)
-		results = empty_suggest_result(query)
-		if not query: return results
+	def suggest(self, query, *args, **kwargs):
+		search_on = kwargs.pop('search_on', None)
+		search_on = self._adapt_search_on_types(search_on)
+		qo = QueryObject.create(query, **kwargs)
+		results = empty_suggest_result(qo.term)
+		if qo.is_empty: return results
 
+		limit = qo.limit
 		suggestions = set()
-		search_on = self._adapt_search_on_types(kwargs.get('search_on', None))
-		threshold = kwargs.get('threshold', 0.4999)
-		prefix = prefix or len(query)
+		threshold = qo.threshold
+		prefix = qo.prefix or len(qo.term)
 
 		with repoze_context_manager():
 			search_on = search_on if search_on else self.store.get_catalog_names(self.username)
@@ -177,27 +177,29 @@ class RepozeUserIndexManager(object):
 				catalog = self.datastore.get_catalog(self.username, type_name)
 				textfield = catalog.get(content_, None)
 				if isinstance(textfield, CatalogTextIndexNG3):
-					words_t = textfield.suggest(term=query, threshold=threshold, prefix=prefix)
+					words_t = textfield.suggest(term=qo.term, threshold=threshold, prefix=prefix)
 					for t in words_t:
 						suggestions.add(t[0])
-
 		suggestions = suggestions[:limit] if limit and limit > 0 else suggestions
 		results[ITEMS] = list(suggestions)
 		results[HIT_COUNT] = len(suggestions)
 		return results
 
 	def suggest_and_search(self, query, limit=None, *args, **kwargs):
-		if ' ' in query:
+		search_on = kwargs.pop('search_on', None)
+		search_on = self._adapt_search_on_types(search_on)
+		qo = QueryObject.create(query, **kwargs)
+		if ' ' in query.term:
 			suggestions = []
-			result = self.search(query, limit, *args, **kwargs)
+			result = self.search(qo, search_on=search_on)
 		else:
-			result = self.suggest(query, limit, *args, **kwargs)
+			result = self.suggest(qo, search_on=search_on)
 			suggestions = result[ITEMS]
 			if suggestions:
-				result = self.search(suggestions[0], limit, *args, **kwargs)
+				qo.term = suggestions[0]
+				result = self.search(qo, search_on=search_on)
 			else:
-				result = self.search(query, limit, *args, **kwargs)
-
+				result = self.search(qo, search_on=search_on)
 		result[SUGGESTIONS] = suggestions
 		return result
 

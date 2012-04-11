@@ -44,8 +44,9 @@ class LFUMap(LFUCache):
 
 class QueryObject(object, UserDict.DictMixin):
 	
-	__int_properties__ 	= ('limit', 'maxdist', 'prefix', 'surround', 'maxchars')
-	__properties__ 		= ('term', 'query', 'books', 'indexname') + __int_properties__
+	__float_properties__ = ('threshold',)
+	__int_properties__ 	 = ('limit', 'maxdist', 'prefix', 'surround', 'maxchars')
+	__properties__ 		 = ('term', 'query', 'books', 'indexname') + __int_properties__ + __float_properties__
 
 	def __init__(self, *args, **kwargs):
 		term = kwargs.get('term', None) or kwargs.get('query', None)
@@ -76,6 +77,8 @@ class QueryObject(object, UserDict.DictMixin):
 				self.set_term(val)
 			elif key in self.__int_properties__:
 				self._data[key] = int(val) if val is not None else val
+			elif key in self.__float_properties__:
+				self._data[key] = float(val) if val is not None else val
 			else:
 				self._data[key] = unicode(val) if isinstance(val, six.string_types) else val
 		else:
@@ -120,6 +123,18 @@ class QueryObject(object, UserDict.DictMixin):
 				result.append( (k, self._data.get(k)) )
 		return result
 	
+	@property
+	def num_subqueries(self):
+		result = 0
+		for k in self.keys(): 
+			if k not in self.__properties__:
+				result = result + 1
+		return result
+	
+	@property
+	def is_empty(self):
+		return not self.term
+	
 	# -- suggest -- 
 	
 	def get_maxdist(self):
@@ -137,6 +152,14 @@ class QueryObject(object, UserDict.DictMixin):
 		self.__setitem__('prefix', prefix)
 		
 	prefix = property(get_prefix, set_prefix)
+	
+	def get_threshold(self):
+		return self._data.get('threshold', 0.4999)
+
+	def set_threshold(self, threshold):
+		self.__setitem__('threshold', threshold)
+		
+	threshold = property(get_threshold, set_threshold)
 	
 	# -- highlight -- 
 	
