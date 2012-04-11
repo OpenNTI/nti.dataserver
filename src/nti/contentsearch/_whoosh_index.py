@@ -132,6 +132,12 @@ class _SearchableContent(object):
 		name = name.lower()
 		if name in _lower_last_modified_fields:
 			name = last_modified_
+		elif name == containerId_.lower():
+			name = containerId_
+		elif name == sharedWith_.lower():
+			name = sharedWith_
+		elif name == collectionId_.lower():
+			name = collectionId_
 		return name if name in self.get_schema().stored_names() else None
 		
 	# ---------------
