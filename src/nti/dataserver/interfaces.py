@@ -89,6 +89,10 @@ class IEnvironmentSettings(interface.Interface):
 	pass
 
 class IExternalObject(interface.Interface):
+	"""
+	Implemented by, or adapted from, an object that can
+	be externalized.
+	"""
 
 	__external_oids__ = interface.Attribute(
 		"""For objects whose external form includes object references (OIDs),
@@ -121,6 +125,25 @@ class IExternalObject(interface.Interface):
 		this method, then if it implements clear() and update() those will be
 		used. The arguments are optional context arguments possibly passed. One
 		common key is dataserver pointing to a Dataserver."""
+
+class IExternalObjectDecorator(interface.Interface):
+	"""
+	Used as a subscription adapter to provide additional information
+	to the externalization of an object after it has been externalized
+	by the primary implementation of :class:`IExternalObject`. Allows for a separation
+	of concerns. These are called in no specific order, and so must
+	operate by mutating the external object.
+	"""
+
+	def decorateExternalObject( origial, external ):
+		"""
+		:param original: The object that is being externalized.
+			Passed to facilitate using non-classes as decorators.
+		:param external: The externalization of that object, produced
+			by an implementation of :class:`IExternalObject` or
+			default rules.
+		:return: Undefined.
+		"""
 
 class ILibraryTOCEntry(IZContained):
 	href = interface.Attribute( "Relative local path to this item" )

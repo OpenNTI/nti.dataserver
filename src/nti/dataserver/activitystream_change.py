@@ -74,4 +74,5 @@ class Change(persistent.Persistent,datastructures.CreatedModDateTrackingObject,d
 			result['Item'] = datastructures.toExternalObject( self.object ) \
 							 if not getattr( self, 'useSummaryExternalObject', False ) \
 							 else self.object.toSummaryExternalObject()
+			#datastructures.toExternalObject( self.object, name=('summary' if self.useSummaryExternalObject else '') )
 		return result

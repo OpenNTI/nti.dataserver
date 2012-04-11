@@ -855,9 +855,10 @@ deprecated('_ModeratedChatRoom', 'Prefer _ModeratedMeeting' )
 def ChatHandlerFactory( socketio_protocol, chatserver=None ):
 	session = socketio_protocol.session if hasattr( socketio_protocol, 'session' ) else socketio_protocol
 	if session:
-		chatserver = component.getUtility( nti_interfaces.IChatserver ) if not chatserver else chatserver
+		chatserver = component.queryUtility( nti_interfaces.IChatserver ) if not chatserver else chatserver
+	if session and chatserver:
 		return _ChatHandler( chatserver, session )
-	logger.warning( "No session (%s); could not create event handler.", session )
+	logger.warning( "No session (%s) or chatserver (%s); could not create event handler.", session, chatserver )
 
 class PersistentMappingMeetingStorage(Persistent):
 	"""
