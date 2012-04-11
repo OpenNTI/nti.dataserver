@@ -621,6 +621,12 @@ class CanvasShape(_UserContentRoot,datastructures.ExternalizableInstanceDict):
 			A missing alpha value is assumed to mean 1.0, matching what happens
 			with Omni's OQColor.
 			"""
+			string = string.strip()
+			string = string.lower()
+			if string.startswith( 'rgba(' ):
+				logger.warn( "Bad data for RGBA: %s", string )
+				string = string.strip()[5:-1].split( ',' )
+				string = ' '.join( string )
 			rgba = string.split( ' ' )
 			if len(rgba) == 3: rgba = list(rgba); rgba.append( alpha )
 			r, g, b, a = map( float, rgba )

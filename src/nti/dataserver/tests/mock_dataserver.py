@@ -64,11 +64,11 @@ class MockDataserver( dataserver._Dataserver.Dataserver ):
 #	def _setup_storages( self, *args ):
 #		return ( self._setup_storage(), self._setup_storage(), self._setup_storage() )
 
-	def _setupPresence( self ):
-		def getPresence( s ):
-			return "Online"
+	#def _setupPresence( self ):
+	#	def getPresence( s ):
+	#		return "Online"
 
-		users.User.presence = property(getPresence)
+	#	users.User.presence = property(getPresence)
 
 import nose.tools
 

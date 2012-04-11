@@ -503,7 +503,7 @@ class IShareableModeledContent(IShareable,IModeledContent):
 	Modeled content that can be shared.
 	"""
 
-class IFriendsList(IModeledContent):
+class IFriendsList(IModeledContent,IEntity):
 
 	def __iter__():
 		"""

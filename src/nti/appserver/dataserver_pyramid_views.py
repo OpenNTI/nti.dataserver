@@ -1052,7 +1052,7 @@ class _UGDPutView(_UGDModifyViewBase):
 			# they ever get.
 			# TODO: This should be handled by the renderer. Maybe we set
 			# a name that controls the component lookup?
-			theObject = theObject.toPersonalSummaryExternalObject()
+			theObject = datastructures.toExternalObject( theObject, 'personal-summary' )
 			self._check_object_exists( theObject, creator, containerId, objId )
 
 		# Hack: See _UGDPostView
@@ -1266,9 +1266,9 @@ class _UserSearchView(object):
 
 		# Since we are already looking in the object we might as well return the summary form
 		# For this reason, we are doing the externalization ourself.
-		result = [(user.toPersonalSummaryExternalObject()
-				   if user == remote_user
-				   else user.toSummaryExternalObject())
+		result = [datastructures.toExternalObject( user, name=('personal-summary'
+															   if user == remote_user
+															   else 'summary') )
 				  for user in result]
 
 		return {'Last Modified': 0, 'Items': result}
