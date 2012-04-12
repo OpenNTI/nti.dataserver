@@ -138,7 +138,6 @@ def get_datetime(x=None):
 		f = float(x) if isinstance(x, six.string_types) else x
 	return datetime.fromtimestamp(f)
 
-
 def get_keywords(records):
 	result = ''
 	if records:
@@ -466,3 +465,17 @@ def merge_suggest_results(a, b):
 	a[ITEMS] = list(a_set)
 	a[HIT_COUNT] = len(a[ITEMS])
 	return a
+
+# -----------------------------------
+
+class QueryExpr(object):
+	def __init__(self, expr):
+		assert expr, 'must specify a query expression'
+		self.expr = unicode(expr)
+	
+	def __str__( self ):
+		return self.expr
+
+	def __repr__( self ):
+		return 'QueryExpr(%s)' % self.expr
+
