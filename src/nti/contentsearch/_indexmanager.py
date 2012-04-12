@@ -35,38 +35,6 @@ class _FakeSite(object):
 
 	def getSiteManager(self):
 		return self.sitemanager
-		
-def _uim_search(uim, query, search_on=None):
-	try:
-		results = uim.search(query, search_on=search_on)
-	except:
-		results = None
-		logger.exception("An error occurred while searching user content")
-	return results if results else empty_search_result(query.term)
-
-def _uim_ngram_search(uim, query, search_on=None):
-	try:
-		results = uim.ngram_search(query, search_on=search_on)
-	except:
-		results = None
-		logger.exception("An error occurred while ngram-searching user content")
-	return results if results else empty_search_result(query.term)
-
-def _uim_suggest_and_search(uim, query, search_on=None):
-	try:
-		results = uim.suggest_and_search(query, search_on=search_on)
-	except:
-		results = None
-		logger.exception("An error occurred while suggest and search user content")
-	return results if results else empty_suggest_and_search_result(query.term)
-
-def _uim_suggest(uim, query, search_on=None):
-	try:
-		results = uim.suggest(query, search_on=search_on)
-	except:
-		results = None
-		logger.exception("An error occurred while getting word suggesttions from user content")
-	return results if results else empty_suggest_result(query.term)
 
 def _greenlet_spawn(func, *args, **kwargs):
 	local_site = _FakeSite(component.getSiteManager())
@@ -214,32 +182,20 @@ class IndexManager(object):
 
 	def content_ngram_search(self, indexname, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
-		try:
-			bm = self.get_book_index_manager(indexname)
-			results = bm.ngram_search(query) if (bm and not query.is_empty) else None
-		except:
-			results = None
-			logger.exception("An error occurred while ngram-searching content")
+		bm = self.get_book_index_manager(indexname)
+		results = bm.ngram_search(query) if (bm and not query.is_empty) else None
 		return results if results else empty_search_result(query.term)
 
 	def content_suggest_and_search(self, indexname, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
-		try:
-			bm = self.get_book_index_manager(indexname)
-			results = bm.suggest_and_search(query) if (bm and not query.is_empty) else None
-		except:
-			results = None
-			logger.exception("An error occurred while suggest and searching content")
+		bm = self.get_book_index_manager(indexname)
+		results = bm.suggest_and_search(query) if (bm and not query.is_empty) else None
 		return results if results else empty_suggest_and_search_result(query.term)
 
 	def content_suggest(self, indexname, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
-		try:
-			bm = self.get_book_index_manager(indexname)
-			results = bm.suggest(query) if (bm and not query.is_empty) else None
-		except:
-			results = None
-			logger.exception("An error occurred while word suggest content")
+		bm = self.get_book_index_manager(indexname)
+		results = bm.suggest(query) if (bm and not query.is_empty) else None
 		return results if results else empty_suggest_result(query.term)
 
 	quick_search = content_ngram_search
@@ -273,7 +229,7 @@ class IndexManager(object):
 	def _ugd_search_jobs(self, username, query):
 		jobs = []
 		for uim in self._get_search_uims(username):
-			job = _greenlet_spawn(func=_uim_search, uim=uim, query=query)
+			job = _greenlet_spawn(func=uim.search, query=query)
 			jobs.append(job)
 		return jobs
 		
@@ -292,7 +248,7 @@ class IndexManager(object):
 	def _ugd_ngram_search_jobs(self, username, query):
 		jobs = []
 		for uim in self._get_search_uims(username):
-			job = _greenlet_spawn(func=_uim_ngram_search, uim=uim, query=query)
+			job = _greenlet_spawn(func=uim.ngram_search, query=query)
 			jobs.append(job)
 		return jobs
 	
@@ -313,7 +269,7 @@ class IndexManager(object):
 	def _ugd_suggest_and_search_jobs(self, username, query):
 		jobs = []
 		for uim in self._get_search_uims(username):
-			job = _greenlet_spawn(func=_uim_suggest_and_search, uim=uim, query=query)
+			job = _greenlet_spawn(func=uim.suggest_and_search, query=query)
 			jobs.append(job)
 		return jobs
 	
@@ -332,7 +288,7 @@ class IndexManager(object):
 	def _ugd_suggest_jobs(self, username, query):
 		jobs = []
 		for uim in self._get_search_uims(username):
-			job = _greenlet_spawn(func=_uim_suggest, uim=uim, query=query)
+			job = _greenlet_spawn(func=uim.suggest, query=query)
 			jobs.append(job)
 		return jobs
 	
