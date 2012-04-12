@@ -14,12 +14,9 @@ class GetSearch(object):
 		self.request = request
 
 	def __call__( self ):
-		request = self.request
-		indexmanager = request.registry.getUtility( IIndexManager )
-		query = self.request.matchdict['term']
-		query = clean_search_query(query)
-		indexname = get_indexname(self.request.environ)
-		return indexmanager.content_search( query=query, indexname=indexname )
+		query = get_queryobject(self.request)
+		indexmanager = self.request.registry.getUtility( IIndexManager )
+		return indexmanager.content_search( query=query, indexname=query.indexname )
 
 class UserSearch(object):
 
@@ -27,11 +24,9 @@ class UserSearch(object):
 		self.request = request
 
 	def __call__( self ):
-		query = self.request.matchdict['term']
-		query = clean_search_query(query)
-		user = self.request.matchdict['user']
+		query = get_queryobject(self.request, False)
 		indexmanager = self.request.registry.getUtility( IIndexManager )
-		return indexmanager.user_data_search( query=query, username=user )
+		return indexmanager.user_data_search( query=query, username=query.username )
 	
 # -----------------------------
 
@@ -59,7 +54,7 @@ def get_indexname(environ):
 
 	return path
 
-def get_query_object(request, get_index=True):
+def get_queryobject(request, get_index=True):
 	
 	term = request.matchdict.get('term', None)
 	term = clean_search_query(term)
@@ -68,10 +63,10 @@ def get_query_object(request, get_index=True):
 	username = request.matchdict.get('user', None)
 	username = username or request.environ.get('REMOTE_USER', None)
 	if username:
-		args['username' : username]
+		args['username'] = username
 		
 	if get_index:
-		args['indexname' : get_indexname(request.environ)]
+		args['indexname'] = get_indexname(request.environ)
 	
 	return QueryObject(**args)
 	

@@ -101,6 +101,10 @@ class QueryObject(object, UserDict.DictMixin):
 	# -- search -- 
 	
 	@property
+	def indexname(self):
+		return self._data.get('indexname', None)
+	
+	@property
 	def books(self):
 		books = self._data.get('books', [])
 		if not books:
