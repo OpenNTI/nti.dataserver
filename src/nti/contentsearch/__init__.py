@@ -1,5 +1,6 @@
 import six
 import UserDict
+from collections import Iterable
 
 from brownie.caching import LFUCache
 
@@ -7,6 +8,19 @@ import logging
 logger = logging.getLogger( __name__ )
 
 from nti.contentsearch._repoze_datastore import RepozeDataStore
+
+# -----------------------------
+
+def to_list(data):
+	if isinstance(data, six.string_types):
+		data = [data]
+	elif isinstance(data, list):
+		pass
+	elif isinstance(data, Iterable):
+		data = list(data)
+	elif data is not None:
+		data = [data]
+	return data
 
 # -----------------------------
 
@@ -46,7 +60,7 @@ class QueryObject(object, UserDict.DictMixin):
 	
 	__float_properties__ = ('threshold',)
 	__int_properties__ 	 = ('limit', 'maxdist', 'prefix', 'surround', 'maxchars')
-	__properties__ 		 = ('term', 'query', 'books', 'indexname') + __int_properties__ + __float_properties__
+	__properties__ 		 = ('term', 'query', 'books', 'indexname', 'search_on') + __int_properties__ + __float_properties__
 
 	def __init__(self, *args, **kwargs):
 		term = kwargs.get('term', None) or kwargs.get('query', None)
@@ -94,6 +108,11 @@ class QueryObject(object, UserDict.DictMixin):
 			if indexname:
 				books = [indexname]	
 		return books
+	
+	@property
+	def search_on(self):
+		result = self._data.get('search_on', None)
+		return to_list(result) if result else None
 	
 	@property
 	def username(self):

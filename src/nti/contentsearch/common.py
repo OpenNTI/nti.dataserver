@@ -23,9 +23,10 @@ from nti.dataserver.contenttypes import Note
 from nti.dataserver.contenttypes import Canvas
 from nti.dataserver.contenttypes import Highlight
 from nti.dataserver.contenttypes import CanvasTextShape
-
 from nti.dataserver.ntiids import is_valid_ntiid_string
 from nti.dataserver.datastructures import to_external_ntiid_oid
+
+from nti.contentsearch import to_list
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -92,17 +93,6 @@ messageinfo = 'messageinfo'
 indexable_type_names = ('note', 'highlight', messageinfo)
 
 # -----------------------------------
-
-def to_list(data):
-	if isinstance(data, six.string_types):
-		data = [data]
-	elif isinstance(data, list):
-		pass
-	elif isinstance(data, Iterable):
-		data = list(data)
-	elif data is not None:
-		data = [data]
-	return data
 
 def get_attr(obj, names, default=None):
 	if not obj: return default
