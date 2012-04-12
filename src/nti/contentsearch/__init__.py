@@ -218,7 +218,7 @@ class QueryObject(object, UserDict.DictMixin):
 			queryobject = QueryObject(term=query)
 		else:
 			assert isinstance(query, QueryObject) 
-			queryobject = query
+			queryobject = QueryObject(**query._data)
 			
 		for k, v in kwargs.items():
 			if k and v is not None:
