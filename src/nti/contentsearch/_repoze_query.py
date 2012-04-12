@@ -2,9 +2,13 @@ import re
 import sys
 import inspect
 
+from repoze.catalog.query import Eq
+from repoze.catalog.query import Query
+from repoze.catalog.query import parse_query
 from repoze.catalog.query import Contains as IndexContains
 from repoze.catalog.query import DoesNotContain as IndexDoesNotContain
 
+from nti.contentsearch.common import QueryExpr
 from nti.contentsearch.common import (sharedWith_, containerId_, collectionId_, id_, oid_, ntiid_,
 									  ID, LAST_MODIFIED, CONTAINER_ID, COLLECTION_ID, OID, NTIID, CREATOR)
 from nti.contentsearch.common import (last_modified_fields)
@@ -102,12 +106,39 @@ def get_subqueries(qo, stored_names=(), map_func=map_to_key_names):
 	result = []
 	for n, v in qo.get_subqueries():
 		n = map_func(n, stored_names)
-		if n and v is not None:
+		if n and v is not None: 
 			result.append((n,v))
 	return result
 
+def parse_subquery(n, v):
+	result = None
+	try:
+		text = v
+		if isinstance(v, QueryExpr):
+			text = v.expr
+			result = parse_query(text)
+			if not isinstance(v, Query):
+				result = None 
+	except:
+		result = None
+	
+	result = result if result else Eq(n, text)
+	return result
+	
+def parse_subqueries(qo, stored_names=(), map_func=map_to_key_names):
+	chain = None
+	subqueries = get_subqueries(qo, stored_names, map_func)
+	for n, v in subqueries:
+		op = parse_subquery(n, v)
+		chain = chain & op if chain else op
+	return chain
+	
 def parse_query(catalog, fieldname, qo):
-	is_all = is_all_query(qo.term)	
-	limit = qo.limit
-	queryobject = Contains.create_for_indexng3(fieldname, qo.term)
-	return is_all, catalog.query(queryobject, limit=limit)
+	is_all = is_all_query(qo.term)
+	subquery_chain = parse_subqueries(qo, catalog.keys())
+	if is_all:
+		return is_all, subquery_chain
+	else:
+		queryobject = Contains.create_for_indexng3(fieldname, qo.term, limit=qo.limit)
+		queryobject = queryobject & subquery_chain if subquery_chain else queryobject
+		return is_all, queryobject

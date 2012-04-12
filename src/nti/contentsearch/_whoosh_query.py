@@ -1,9 +1,10 @@
 from whoosh import fields
-from whoosh.query import (And,Term)
+from whoosh.query import Term
 from whoosh.qparser import QueryParser
 from whoosh.qparser.dateparse import DateParserPlugin
 from whoosh.qparser import (GtLtPlugin, PrefixPlugin, WildcardPlugin)
 
+from nti.contentsearch.common import QueryExpr
 from nti.contentsearch.common import (sharedWith_, containerId_, collectionId_, last_modified_)
 from nti.contentsearch.common import (last_modified_fields)
 		
@@ -44,42 +45,38 @@ def get_subqueries(qo, stored_names=(), map_func=map_to_schema_names):
 			result.append((n,v))
 	return result
 
-def parse_or_term(name, value, qparser):
-	"""
-	parse the specified name value whoosh query spec
-	"""
-	qparser = qparser or create_query_parser()
+def parse_subquery(name, value, qparser=None, schema=None, plugins=default_search_plugins):
+	result = None
 	try:
-		text = unicode('%s:%s' % (name, value))
-		result = qparser.parse(text)
+		text = value
+		if isinstance(value, QueryExpr):
+			text = value.expr
+			qparser = qparser if qparser else create_query_parser(name, schema=schema, plugins=plugins)
+			result = qparser.parse(text)
 	except:
-		result = Term(name, value)
+		result = None
+		
+	result = result if result else Term(name, text)
 	return result
 	
-def get_default_parsed_query(fieldname, qo, subqueries=None, stored_names=(), map_func=map_to_schema_names):
-	"""
-	return an 'And' expression for all the terms in the specified query object
-	"""
-	qparser = create_query_parser(fieldname)
-	subqueries = subqueries or get_subqueries(qo, stored_names, map_func) 
-	subqueries = [Term(fieldname, qo.term)] + [parse_or_term(qparser, k, v) for k, v in subqueries]
-	parsed_query = And(subqueries)
-	return parsed_query
+def parse_subqueries(qo, stored_names=(), plugins=default_search_plugins, map_func=map_to_schema_names):
+	chain = None
+	subqueries = get_subqueries(qo, stored_names, map_func)
+	for n, v in subqueries:
+		op = parse_subquery(n, v, plugins=plugins)
+		chain = chain & op if chain else op
+	return chain
 	
 def parse_query(fieldname, qo, schema_or_names, plugins=default_search_plugins, map_func=map_to_schema_names):
-	text = [qo.term]
 	schema = schema_or_names if isinstance(schema_or_names, fields.Schema) else None
 	stored_names = schema.stored_names() if schema else schema_or_names
 	
-	# get any subquery
-	subqueries = get_subqueries(qo, stored_names, map_func)
-	for n, v in subqueries:
-		text.append('AND %s:%s' % (n,v))	
-	text = unicode(' '.join(text))
-		
-	qparser = create_query_parser(fieldname, schema=schema, plugins=plugins)
-	try:
-		parsed_query = qparser.parse(text)
-	except:
-		parsed_query = get_default_parsed_query(fieldname, qo, subqueries)
+	# parse main query
+	main_query = parse_subquery(fieldname, QueryExpr(qo.term), schema=schema, plugins=plugins)
+	
+	# parse subqueries
+	subquery_chain = parse_subqueries(qo, stored_names, plugins=plugins, map_func=map_func)
+	
+	# combine
+	parsed_query = main_query & subquery_chain if subquery_chain else main_query
 	return parsed_query

@@ -1,4 +1,3 @@
-import re
 import contextlib
 
 from zope import component
@@ -15,7 +14,8 @@ from nti.contentsearch.common import get_type_name
 from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch.common import empty_search_result
 from nti.contentsearch.common import empty_suggest_result
-from nti.contentsearch._repoze_query import Contains
+from nti.contentsearch._repoze_query import parse_query
+from nti.contentsearch._repoze_query import is_all_query
 from nti.contentsearch._repoze_index import get_index_hit
 from nti.contentsearch._repoze_index import create_catalog
 from nti.contentsearch.textindexng3 import CatalogTextIndexNG3
@@ -49,11 +49,6 @@ def get_by_oid(oid_string):
 		logger.exception( "Failed to resolve oid '%s' using '%s'", oid_string.encode('hex'), connection )
 		result = None
 	return result
-
-_all_re = re.compile('([\?\*])')
-def is_all_query(query):
-	mo = _all_re.search(query)
-	return mo and mo.start(1) == 0
 
 class RepozeUserIndexManager(object):
 	interface.implements(interfaces.IUserIndexManager)
@@ -110,14 +105,14 @@ class RepozeUserIndexManager(object):
 		return items, lm
 
 	def _do_catalog_query(self, catalog, fieldname, qo):
-		if is_all_query(qo.term):
+		is_all_query, queryobject = parse_query(catalog, fieldname, qo)
+		if is_all_query and not queryobject:
 			# globbing character return all
 			ids = self.store.get_docids(self.username)
 			return len(ids), ids
-		
-		limit = qo.limit
-		queryobject = Contains.create_for_indexng3(fieldname, qo.term)
-		return catalog.query(queryobject, limit=limit)
+		else:
+			limit = qo.limit
+			return catalog.query(queryobject, limit=limit)
 
 	def _do_search(self, fieldname, qo, search_on=None, use_word_highlight=None):
 		
