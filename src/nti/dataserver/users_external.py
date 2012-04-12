@@ -117,7 +117,8 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 			result = []
 			for name in l:
 				try:
-					e = self.entity.get_entity( name )
+					e = self.entity.get_entity( name, default=self )
+					e = None if e is self else e # Defend against no dataserver component to resolve with
 				except InappropriateSiteError:
 					# We've seen this in logging that is captured and happens
 					# after things finish running, notably nose's logcapture.

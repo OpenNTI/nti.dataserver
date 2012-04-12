@@ -8,11 +8,12 @@ import weakref
 import persistent
 
 from zope import interface
+from zope import component
 
 from nti.dataserver import  datastructures
 from nti.dataserver import interfaces as nti_interfaces
 
-class Change(persistent.Persistent,datastructures.CreatedModDateTrackingObject,datastructures.ContainedMixin):
+class Change(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 	"""
 	A change notification. For convenience, it acts like a
 	Contained object if the underlying object was Contained.
@@ -26,6 +27,14 @@ class Change(persistent.Persistent,datastructures.CreatedModDateTrackingObject,d
 	SHARED   = nti_interfaces.SC_SHARED
 	CIRCLED  = nti_interfaces.SC_CIRCLED
 
+	useSummaryExternalObject = False
+
+	# Notice we do not inherit from ContainedMixin, and we do not implement
+	# IContained. We do that conditionally if the object we're wrapping
+	# has these things
+	id = None
+	containerId = None
+
 	def __init__( self, changeType, obj ):
 		super(Change,self).__init__()
 		self.type = changeType
@@ -36,14 +45,16 @@ class Change(persistent.Persistent,datastructures.CreatedModDateTrackingObject,d
 			self.objectReference = persistent.wref.WeakRef( obj )
 		else:
 			self.objectReference = weakref.ref( obj )
-		self.id = getattr( obj, 'id', None )
-		self.containerId = getattr( obj, 'containerId', None )
+		_id = getattr( obj, 'id', None )
+		if _id: self.id = _id
+		_containerId = getattr( obj, 'containerId', None )
+		if _containerId: self.containerId = _containerId
+
 		if self.id and self.containerId:
 			interface.alsoProvides( self, nti_interfaces.IContained )
 		# We don't copy the object's modification date,
 		# we have our own
 		self.updateLastMod()
-		self.useSummaryExternalObject = False
 
 	@property
 	def object(self):
@@ -52,27 +63,30 @@ class Change(persistent.Persistent,datastructures.CreatedModDateTrackingObject,d
 		return self.objectReference()
 
 	def __repr__(self):
-		return "%s('%s',%s)" % (self.__class__.__name__,self.type,self.object)
+		return "%s('%s',%s)" % (self.__class__.__name__,self.type,type(self.object).__name__)
 
-	def __str__(self):
-		return str(self.toExternalObject())
+
+class _ChangeExternalObject(object):
+	interface.implements(nti_interfaces.IExternalObject)
+	component.adapts(nti_interfaces.IStreamChangeEvent)
+
+	def __init__( self, change ):
+		self.change = change
 
 	def toExternalObject(self):
 		result = {}
-		result['Last Modified'] = self.lastModified
-		if self.creator:
-			result['Creator'] = self.creator.username if hasattr( self.creator, 'username' ) else self.creator
+		change = self.change
+		result['Last Modified'] = change.lastModified
+		if change.creator:
+			result['Creator'] = change.creator.username if hasattr( change.creator, 'username' ) else change.creator
 		result['Class'] = 'Change'
-		result['ChangeType'] = self.type
-		if self.id:
-			result['ID'] = self.id
+		result['ChangeType'] = change.type
+		if change.id:
+			result['ID'] = change.id
 		# OIDs must be unique
-		result['OID'] = datastructures.toExternalOID( self )
+		result['OID'] = datastructures.toExternalOID( change )
 		if result['OID'] is None:
 			del result['OID']
-		if self.object is not None:
-			result['Item'] = datastructures.toExternalObject( self.object ) \
-							 if not getattr( self, 'useSummaryExternalObject', False ) \
-							 else self.object.toSummaryExternalObject()
-			#datastructures.toExternalObject( self.object, name=('summary' if self.useSummaryExternalObject else '') )
+		if change.object is not None:
+			result['Item'] = datastructures.toExternalObject( change.object, name=('summary' if change.useSummaryExternalObject else '') )
 		return result
