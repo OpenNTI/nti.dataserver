@@ -77,7 +77,7 @@ class RepozeUserIndexManager(object):
 	def _adapt_search_on_types(self, search_on=None):
 		if search_on:
 			search_on = [normalize_type_name(x) for x in search_on]
-		return search_on
+		return search_on or self.store.get_catalog_names(self.username)
 
 	def _get_hits_from_docids(self, qo, docids, use_word_highlight=None):
 		
@@ -114,7 +114,7 @@ class RepozeUserIndexManager(object):
 			limit = qo.limit
 			return catalog.query(queryobject, limit=limit)
 
-	def _do_search(self, fieldname, qo, search_on=None, use_word_highlight=None):
+	def _do_search(self, fieldname, qo, search_on=(), use_word_highlight=None):
 		
 		results = empty_search_result(qo.term)
 		if qo.is_empty: return results
@@ -122,7 +122,6 @@ class RepozeUserIndexManager(object):
 		lm = 0
 		items = results[ITEMS]
 		with repoze_context_manager():
-			search_on = search_on if search_on else self.store.get_catalog_names(self.username)
 			for type_name in search_on:
 				catalog = self.datastore.get_catalog(self.username, type_name)
 				if catalog:
@@ -164,7 +163,6 @@ class RepozeUserIndexManager(object):
 		prefix = qo.prefix or len(qo.term)
 
 		with repoze_context_manager():
-			search_on = search_on if search_on else self.store.get_catalog_names(self.username)
 			for type_name in search_on:
 				catalog = self.datastore.get_catalog(self.username, type_name)
 				textfield = catalog.get(content_, None)
