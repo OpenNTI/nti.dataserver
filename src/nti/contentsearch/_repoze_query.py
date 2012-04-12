@@ -110,19 +110,19 @@ def get_subqueries(qo, stored_names=(), map_func=map_to_key_names):
 			result.append((n,v))
 	return result
 
-def parse_subquery(n, v):
+def parse_subquery(fieldname, value):
 	result = None
 	try:
-		text = v
-		if isinstance(v, QueryExpr):
-			text = v.expr
+		text = value
+		if isinstance(value, QueryExpr):
+			text = value.expr
 			result = parse_query(text)
-			if not isinstance(v, Query):
+			if not isinstance(result, Query):
 				result = None 
 	except:
 		result = None
 	
-	result = result if result else Eq(n, text)
+	result = result if result else Eq(fieldname, text)
 	return result
 	
 def parse_subqueries(qo, stored_names=(), map_func=map_to_key_names):
