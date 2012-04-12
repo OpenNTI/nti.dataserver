@@ -63,7 +63,7 @@ class Session(Persistent):
 		self._owner = None
 		self._broadcast_connect = False
 
-		self.last_heartbeat_time = minmax.Maximum( 0 )
+		self._last_heartbeat_time = minmax.Maximum( 0 )
 
 		self._v_session_service = session_service
 
@@ -74,6 +74,12 @@ class Session(Persistent):
 		self._owner = o
 		self.session_service._replace_in_owner_index( self, old_owner )
 	owner = property( _get_owner, _set_owner )
+
+	def _get_last_heartbeat_time(self):
+		return self._last_heartbeat_time.value
+	def _set_last_heartbeat_time(self, t):
+		self._last_heartbeat_time.value = t
+	last_heartbeat_time = property( _get_last_heartbeat_time, _set_last_heartbeat_time )
 
 	def __str__(self):
 		result = ['[session_id=%r' % self.session_id]
@@ -111,11 +117,11 @@ class Session(Persistent):
 		# should not clear this. We wind up writing to session
 		# state from background processes, which
 		# leads to conflicts.
-		self.last_heartbeat_time.value = time.time()
+		self.last_heartbeat_time = time.time()
 
 
 	def heartbeat(self):
-		self.last_heartbeat_time.value = time.time()
+		self.last_heartbeat_time = time.time()
 
 	def kill(self):
 		if self.connected:
