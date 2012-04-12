@@ -138,26 +138,23 @@ class RepozeUserIndexManager(object):
 		return results
 
 	def search(self, query, *args, **kwargs):
-		search_on = kwargs.pop('search_on', None)
-		search_on = self._adapt_search_on_types(search_on)
 		qo = QueryObject.create(query, **kwargs)
+		search_on = self._adapt_search_on_types(qo.search_on)
 		word_highlight = None if is_all_query(qo.term) else True
 		results = self._do_search(content_, qo, search_on, word_highlight)
 		return results
 
 	def ngram_search(self, query, *args, **kwargs):
-		search_on = kwargs.pop('search_on', None)
-		search_on = self._adapt_search_on_types(search_on)
 		qo = QueryObject.create(query, **kwargs)
+		search_on = self._adapt_search_on_types(qo.search_on)
 		word_highlight = None if is_all_query(qo.term) else False
 		results = self._do_search(ngrams_, qo, search_on, word_highlight)
 		return results
 	quick_search = ngram_search
 
 	def suggest(self, query, *args, **kwargs):
-		search_on = kwargs.pop('search_on', None)
-		search_on = self._adapt_search_on_types(search_on)
 		qo = QueryObject.create(query, **kwargs)
+		search_on = self._adapt_search_on_types(qo.search_on)
 		results = empty_suggest_result(qo.term)
 		if qo.is_empty: return results
 
@@ -181,9 +178,8 @@ class RepozeUserIndexManager(object):
 		return results
 
 	def suggest_and_search(self, query, limit=None, *args, **kwargs):
-		search_on = kwargs.pop('search_on', None)
-		search_on = self._adapt_search_on_types(search_on)
 		qo = QueryObject.create(query, **kwargs)
+		search_on = self._adapt_search_on_types(qo.search_on)
 		if ' ' in query.term:
 			suggestions = []
 			result = self.search(qo, search_on=search_on)
