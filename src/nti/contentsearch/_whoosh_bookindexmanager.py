@@ -3,6 +3,7 @@ from zope import interface
 from whoosh import index
 
 from nti.contentsearch import interfaces
+from nti.contentsearch import QueryObject
 from nti.contentsearch._whoosh_index import Book
 from nti.contentsearch._whoosh_indexstorage import create_directory_index_storage
 
@@ -44,32 +45,31 @@ class WhooshBookIndexManager(object):
 	
 	# ---------------
 
-	def search(self, query, limit=None, *args, **kwargs):
-		query = unicode(query)
+	def search(self, query, *args, **kwargs):
+		query = QueryObject.create(query, **kwargs)
 		with self.storage.dbTrans():
 			with self.bookidx.searcher() as s:
-				results = self.book.search(s, query, limit)
+				results = self.book.search(s, query)
 		return results
 
-	def ngram_search(self, query, limit=None, *args, **kwarg):
-		query = unicode(query)
+	def ngram_search(self, query, limit=None, *args, **kwargs):
+		query = QueryObject.create(query, **kwargs)
 		with self.bookidx.searcher() as s:
-			results = self.book.ngram_search(s, query, limit)
+			results = self.book.ngram_search(s, query)
 		return results
 
-	def suggest_and_search(self, query, limit=None, *args, **kwarg):
-		query = unicode(query)
+	def suggest_and_search(self, query, limit=None, *args, **kwargs):
+		query = QueryObject.create(query, **kwargs)
 		with self.storage.dbTrans():
 			with self.bookidx.searcher() as s:
-				results = self.book.suggest_and_search(s, query, limit)
+				results = self.book.suggest_and_search(s, query)
 		return results
 
-	def suggest(self, term, limit=None, prefix=None, *args, **kwargs):
-		term = unicode(term)
+	def suggest(self, term, *args, **kwargs):
+		query = QueryObject.create(term, **kwargs)
 		with self.storage.dbTrans():
-			maxdist = kwargs.get('maxdist', None)
 			with self.bookidx.searcher() as s:
-				results = self.book.suggest(s, term, limit=limit, maxdist=maxdist, prefix=prefix)
+				results = self.book.suggest(s, query)
 		return results
 
 	quick_search = ngram_search
