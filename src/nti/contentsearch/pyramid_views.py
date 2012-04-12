@@ -1,4 +1,5 @@
 import re
+from pyramid.security import authenticated_userid
 
 from nti.contentsearch import QueryObject
 from nti.contentsearch.interfaces import IIndexManager
@@ -61,7 +62,7 @@ def get_queryobject(request, get_index=True):
 	args = {'term': term}
 		
 	username = request.matchdict.get('user', None)
-	username = username or request.environ.get('REMOTE_USER', None)
+	username = username or authenticated_userid( request )
 	if username:
 		args['username'] = username
 		

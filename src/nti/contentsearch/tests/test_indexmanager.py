@@ -13,6 +13,7 @@ from nti.dataserver.users import User
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.ntiids import make_ntiid
 
+from nti.contentsearch import QueryObject
 from nti.contentsearch.indexmanager import create_index_manager_with_repoze
 from nti.contentsearch.indexmanager import create_index_manager_with_whoosh
 from nti.contentsearch._whoosh_index import create_book_schema
@@ -99,9 +100,33 @@ class _BaseIndexManagerTest(object):
 		hits = self.im.content_suggest(indexname='bleach', query='extre')
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 
+	@WithMockDSTrans
+	def test_unified_search(self):
+		self._add_notes_and_index(('omega radicals', 'the queen of coffee'))
+		self.im.add_book(indexname='bleach', indexdir=self.book_idx_dir)
+		
+		q = QueryObject(term='omega', indexname='bleach', username='nt@nti.com')
+		hits = self.im.search(q)
+		assert_that(hits, has_entry(HIT_COUNT, 2))
+		
+		q.term = 'coffee'
+		hits = self.im.search(q)
+		assert_that(hits, has_entry(HIT_COUNT, 1))
+		
+		q.term = 'coff'
+		hits = self.im.ngram_search(q)
+		assert_that(hits, has_entry(HIT_COUNT, 1))
+		
+		q.term = 'omeg'
+		hits = self.im.suggest(q)
+		assert_that(hits, has_entry(HIT_COUNT, 1))
+		
+		hits = self.im.suggest_and_search(q)
+		assert_that(hits, has_entry(HIT_COUNT, 2))
+		
 	# ----------------
 
-	def _add_notes_to_ds(self):
+	def _add_notes_to_ds(self, strings=zanpakuto_commands):
 		notes = []
 		conn = mock_dataserver.current_transaction
 		
@@ -110,7 +135,7 @@ class _BaseIndexManagerTest(object):
 		ds = mock_dataserver.current_mock_ds
 		ds.root['users']['nt@nti.com'] = usr
 		
-		for x in zanpakuto_commands:
+		for x in strings:
 			note = Note()
 			note.body = [unicode(x)]
 			note.creator = usr.username
@@ -124,9 +149,9 @@ class _BaseIndexManagerTest(object):
 			im.index_user_content(data=note, username='nt@nti.com')
 		return notes
 
-	def _add_notes_and_index(self):
+	def _add_notes_and_index(self, strings=zanpakuto_commands):
 		self.im = self.create_index_mananger()
-		notes, usr = self._add_notes_to_ds()
+		notes, usr = self._add_notes_to_ds(strings)
 		self._add_notes_to_index(self.im, notes)
 		return notes, usr
 
