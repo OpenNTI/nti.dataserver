@@ -163,7 +163,7 @@ class _SearchableContent(object):
 		limit = qo.limit
 		prefix = qo.prefix or len(qo.term)
 		maxdist = qo.maxdist or _default_word_max_dist
-		result = empty_suggest_result(word)
+		result = empty_suggest_result(qo.term)
 		records = searcher.suggest(content_, qo.term, maxdist=maxdist, prefix=prefix)
 		records = records[:limit] if limit and limit > 0 else records
 		result[ITEMS] = records

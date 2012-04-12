@@ -8,6 +8,7 @@ from zope.component.interfaces import ISite
 from nti.dataserver.users import User
 from nti.dataserver import interfaces as nti_interfaces
 
+from nti.contentsearch import QueryObject
 from nti.contentsearch import interfaces
 from nti.contentsearch._indexagent import handle_index_event
 
@@ -175,25 +176,45 @@ class IndexManager(object):
 				result = True
 		return result
 
-	def content_search(self, indexname, query, limit=None, *args, **kwargs):
-		bm = self.get_book_index_manager(indexname)
-		results = bm.search(query, limit, *args, **kwargs) if (bm and query) else None
-		return results if results else empty_search_result(query)
+	def content_search(self, indexname, query, *args, **kwargs):
+		query = QueryObject.create(query, **kwargs)
+		try:
+			bm = self.get_book_index_manager(indexname)
+			results = bm.search(query) if (bm and not query.is_empty) else None
+			return results if results else empty_search_result(query.term)
+		except:
+			logger.exception("An error occurred while searching content")
+			return empty_search_result(query.term)
 
-	def content_ngram_search(self, indexname, query, limit=None, *args, **kwargs):
-		bm = self.get_book_index_manager(indexname)
-		results = bm.ngram_search(query, limit, *args, **kwargs) if (bm and query) else None
-		return results if results else empty_search_result(query)
+	def content_ngram_search(self, indexname, query, *args, **kwargs):
+		query = QueryObject.create(query, **kwargs)
+		try:
+			bm = self.get_book_index_manager(indexname)
+			results = bm.ngram_search(query) if (bm and not query.is_empty) else None
+			return results if results else empty_search_result(query.term)
+		except:
+			logger.exception("An error occurred while ngram-searching content")
+			return empty_search_result(query.term)
 
-	def content_suggest_and_search(self, indexname, query, limit=None, *args, **kwargs):
-		bm = self.get_book_index_manager(indexname)
-		results = bm.suggest_and_search(query, limit, *args, **kwargs) if (bm and query) else None
-		return results if results else empty_suggest_and_search_result(query)
+	def content_suggest_and_search(self, indexname, query, *args, **kwargs):
+		query = QueryObject.create(query, **kwargs)
+		try:
+			bm = self.get_book_index_manager(indexname)
+			results = bm.suggest_and_search(query) if (bm and not query.is_empty) else None
+			return results if results else empty_suggest_and_search_result(query.term)
+		except:
+			logger.exception("An error occurred while suggest and searching content")
+			return empty_suggest_and_search_result(query.term)
 
-	def content_suggest(self, indexname, query, limit=None, prefix=None, *args, **kwargs):
-		bm = self.get_book_index_manager(indexname)
-		results = bm.suggest(query, limit=limit, prefix=prefix, **kwargs) if (bm and query) else None
-		return results if results else empty_suggest_result(query)
+	def content_suggest(self, indexname, query, *args, **kwargs):
+		query = QueryObject.create(query, **kwargs)
+		try:
+			bm = self.get_book_index_manager(indexname)
+			results = bm.suggest(query) if (bm and not query.is_empty) else None
+			return results if results else empty_suggest_result(query.term)
+		except:
+			logger.exception("An error occurred while word suggest content")
+			return empty_suggest_result(query.term)
 
 	quick_search = content_ngram_search
 	content_quick_search = content_ngram_search
