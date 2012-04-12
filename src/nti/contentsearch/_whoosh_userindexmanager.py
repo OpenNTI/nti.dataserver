@@ -142,10 +142,8 @@ class WhooshUserIndexManager(object):
 		return search_on or indexables
 	
 	def _do_search(self, query, is_quick_search=False, *args, **kwargs):
-		search_on = kwargs.pop('search_on', None)
-		search_on = self._adapt_search_on_types(search_on)
-		
 		query = QueryObject.create(query, **kwargs)
+		search_on = self._adapt_search_on_types(query.search_on)
 		results = empty_search_result(query.term)
 		for type_name in search_on:
 			index = self._get_or_create_index(type_name)
@@ -170,13 +168,9 @@ class WhooshUserIndexManager(object):
 
 	@TraxWrapper
 	def suggest_and_search(self, query, *args, **kwargs):
-		
-		search_on = kwargs.pop('search_on', None)
-		search_on = self._adapt_search_on_types(search_on)
-		
 		query = QueryObject.create(query, **kwargs)
+		search_on = self._adapt_search_on_types(query.search_on)
 		results = empty_suggest_and_search_result(query.term)
-		
 		for type_name in search_on:
 			index = self._get_or_create_index(type_name)
 			indexable = get_indexable_object(type_name)
@@ -187,12 +181,9 @@ class WhooshUserIndexManager(object):
 
 	@TraxWrapper
 	def suggest(self, query, *args, **kwargs):
-		search_on = kwargs.pop('search_on', None)
-		search_on = self._adapt_search_on_types(search_on)
-		
 		query = QueryObject.create(query, **kwargs)
+		search_on = self._adapt_search_on_types(query.search_on)
 		results = empty_suggest_result(query.term)
-	
 		for type_name in search_on:
 			index = self._get_or_create_index(type_name)
 			indexable = get_indexable_object(type_name)
