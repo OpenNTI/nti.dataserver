@@ -1,27 +1,21 @@
 #!/usr/bin/env python
 from __future__ import print_function, unicode_literals
 
-import logging
-logging.basicConfig(level=logging.WARN)
-
 import os
 import os.path
 import sys
-import hashlib
 import urlparse
 import time
 
 from zope import component
-from zope.component.hooks import setHooks
-from zope.configuration import xmlconfig
 
 from requests import async
 import webob.datetime_utils
 
-import nti.dataserver
+
 from nti.utils import create_gravatar_url
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver._Dataserver import Dataserver
+from . import run_with_dataserver
 
 def main():
 	if len(sys.argv) < 2:
@@ -31,15 +25,11 @@ def main():
 	out_dir = sys.argv[2] if len(sys.argv) > 2 else 'avatar'
 	if not os.path.exists( out_dir ):
 		os.mkdir( out_dir )
+	run_with_dataserver( environment_dir=sys.argv[1], function=lambda: _downloadAvatarIcons( out_dir ) )
 
-	setHooks()
-	xmlconfig.file( 'configure.zcml', package=nti.dataserver )
-	ds = Dataserver( sys.argv[1] )
-	component.provideUtility( ds )
 
-	component.getUtility( nti_interfaces.IDataserverTransactionRunner )( lambda: _downloadAvatarIcons( ds, out_dir ) )
-
-def _downloadAvatarIcons( ds, targetDir ):
+def _downloadAvatarIcons( targetDir ):
+	ds = component.getUtility( nti_interfaces.IDataserver )
 	_users = (x for x in ds.root['users'].values()
 			  if hasattr( x, 'username'))
 	seen = set()
