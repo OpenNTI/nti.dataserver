@@ -1,3 +1,4 @@
+import six
 import sys
 
 import zopyxtxng3corelogger
@@ -77,7 +78,7 @@ class TextIndexNG3(object):
 		
 	def index_doc(self, docid, text):
 		if self.use_proxy:
-			if not text or isinstance(text, basestring):
+			if not text or isinstance(text, six.string_types):
 				text = _Proxy(self.fields, text)
 		self.index_object(docid, text)
 
@@ -176,11 +177,11 @@ class CatalogTextIndexNG3(CatalogIndex, TextIndexNG3):
 
 	def __init__(self, field, discriminator=None, *args, **kwargs):
 		
-		if not isinstance(field, basestring):
+		if not isinstance(field, six.string_types):
 			raise ValueError('index/catalog field must be a string')
 		
 		discriminator = discriminator or field
-		if not callable(discriminator) and not isinstance(discriminator, basestring):
+		if not callable(discriminator) and not isinstance(discriminator, six.string_types):
 			raise ValueError('discriminator value must be callable or a string')
 		
 		use_proxy = True

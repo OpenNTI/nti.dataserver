@@ -377,7 +377,7 @@ def get_content(text, tokenizer=default_tokenizer):
 	Based on nltk. Tokenizer should be domain specific
 	"""
 	
-	if not text or not isinstance(text, basestring):
+	if not text or not isinstance(text, six.string_types):
 		return u''
 
 	text = clean_html(text)
