@@ -87,14 +87,18 @@ class IndexManager(object):
 	def search(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
 		username = query.username
+	
+		jobs = []
+		try:
+			# search user contentc
+			self._ugd_search_jobs(query, jobs) if username else []
 		
-		# search user contentc
-		jobs = self._ugd_search_jobs(query) if username else []
-		
-		# search books
-		for indexname in query.books:
-			jobs.append(_greenlet_spawn(func=self.content_search, indexname=indexname, query=query))
-		gevent.joinall(jobs)
+			# search books
+			for indexname in query.books:
+				job = _greenlet_spawn(func=self.content_search, indexname=indexname, query=query)
+				jobs.append(job)
+		finally:
+			gevent.joinall(jobs)
 		
 		# merge results
 		results = None
@@ -106,13 +110,17 @@ class IndexManager(object):
 		query = QueryObject.create(query, **kwargs)
 		username = query.username
 		
-		# search user content
-		jobs = self._ugd_ngram_search_jobs(query) if username else []
+		jobs = []
+		try:
+			# search user content
+			self._ugd_ngram_search_jobs(query, jobs) if username else []
 		
-		# search books
-		for indexname in query.books:
-			jobs.append(_greenlet_spawn(func=self.content_ngram_search, indexname=indexname, query=query))
-		gevent.joinall(jobs)
+			# search books
+			for indexname in query.books:
+				job = _greenlet_spawn(func=self.content_ngram_search, indexname=indexname, query=query)
+				jobs.append(job)
+		finally:
+			gevent.joinall(jobs)
 		
 		# merge results
 		results = None
@@ -124,13 +132,17 @@ class IndexManager(object):
 		query = QueryObject.create(query, **kwargs)
 		username = query.username
 		
-		# search user content
-		jobs = self._ugd_suggest_and_search_jobs(query) if username else []
+		jobs = []
+		try:
+			# search user content
+			self._ugd_suggest_and_search_jobs(query, jobs) if username else []
 		
-		# search books
-		for indexname in query.books:
-			jobs.append(_greenlet_spawn(func=self.content_suggest_and_search, indexname=indexname, query=query))
-		gevent.joinall(jobs)
+			# search books
+			for indexname in query.books:
+				job = _greenlet_spawn(func=self.content_suggest_and_search, indexname=indexname, query=query)
+				jobs.append(job)
+		finally:
+			gevent.joinall(jobs)
 		
 		# merge results
 		results = None
@@ -142,13 +154,17 @@ class IndexManager(object):
 		query = QueryObject.create(query, **kwargs)
 		username = query.username
 		
-		# search user content
-		jobs = self._ugd_suggest_jobs(query) if username else []
+		jobs = []
+		try:
+			# search user content
+			self._ugd_suggest_jobs(query, jobs) if username else []
 		
-		# search books
-		for indexname in query.books:
-			jobs.append(_greenlet_spawn(func=self.content_suggest, indexname=indexname, query=query))
-		gevent.joinall(jobs)
+			# search books
+			for indexname in query.books:
+				job = _greenlet_spawn(func=self.content_suggest, indexname=indexname, query=query)
+				jobs.append(job)
+		finally:
+			gevent.joinall(jobs)
 		
 		# merge results
 		results = None
@@ -172,12 +188,8 @@ class IndexManager(object):
 
 	def content_search(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
-		try:
-			bm = self.get_book_index_manager(query.indexname)
-			results = bm.search(query) if (bm and not query.is_empty) else None
-		except:
-			results = None
-			logger.exception("An error occurred while searching content")
+		bm = self.get_book_index_manager(query.indexname)
+		results = bm.search(query) if (bm and not query.is_empty) else None
 		return results if results else empty_search_result(query.term)
 
 	def content_ngram_search(self, query, *args, **kwargs):
@@ -226,8 +238,7 @@ class IndexManager(object):
 		
 	# -------------------
 	
-	def _ugd_search_jobs(self, query):
-		jobs = []
+	def _ugd_search_jobs(self, query, jobs=[]):
 		for uim in self._get_search_uims(query.username):
 			job = _greenlet_spawn(func=uim.search, query=query)
 			jobs.append(job)
@@ -237,16 +248,18 @@ class IndexManager(object):
 		results = None
 		query = QueryObject.create(query, **kwargs)
 		if not query.is_empty:
-			jobs = self._ugd_search_jobs(query)
-			gevent.joinall(jobs)
+			jobs = []
+			try:
+				self._ugd_search_jobs(query,jobs)
+			finally:
+				gevent.joinall(jobs)
 			for job in jobs:
 				results = merge_search_results(results, job.value)
 		return results if results else empty_search_result(query.term)
 
 	# ------------
 	
-	def _ugd_ngram_search_jobs(self, query):
-		jobs = []
+	def _ugd_ngram_search_jobs(self, query, jobs=[]):
 		for uim in self._get_search_uims(query.username):
 			job = _greenlet_spawn(func=uim.ngram_search, query=query)
 			jobs.append(job)
@@ -256,8 +269,11 @@ class IndexManager(object):
 		results = None
 		query = QueryObject.create(query, **kwargs)
 		if not query.is_empty:
-			jobs = self._ugd_ngram_search_jobs(query)
-			gevent.joinall(jobs)
+			jobs = []
+			try:
+				self._ugd_ngram_search_jobs(query, jobs)
+			finally:
+				gevent.joinall(jobs)
 			for job in jobs:
 				results = merge_search_results (results, job.value)
 		return results if results else empty_search_result(query.term)
@@ -266,8 +282,7 @@ class IndexManager(object):
 	
 	# ------------
 	
-	def _ugd_suggest_and_search_jobs(self, query):
-		jobs = []
+	def _ugd_suggest_and_search_jobs(self, query, jobs=[]):
 		for uim in self._get_search_uims(query.username):
 			job = _greenlet_spawn(func=uim.suggest_and_search, query=query)
 			jobs.append(job)
@@ -277,16 +292,18 @@ class IndexManager(object):
 		results = None
 		query = QueryObject.create(query, **kwargs)
 		if not query.is_empty:
-			jobs = self._ugd_suggest_and_search_jobs(query)
-			gevent.joinall(jobs)
+			jobs = []
+			try:
+				self._ugd_suggest_and_search_jobs(query, jobs)
+			finally:
+				gevent.joinall(jobs)
 			for job in jobs:
 				results = merge_suggest_and_search_results (results, job.value)
 		return results if results else empty_suggest_and_search_result(query.term)
 
 	# ------------
 	
-	def _ugd_suggest_jobs(self, query):
-		jobs = []
+	def _ugd_suggest_jobs(self, query, jobs=[]):
 		for uim in self._get_search_uims(query.username):
 			job = _greenlet_spawn(func=uim.suggest, query=query)
 			jobs.append(job)
@@ -296,8 +313,11 @@ class IndexManager(object):
 		results = None
 		query = QueryObject.create(query, **kwargs)
 		if not query.is_empty:
-			jobs = self._ugd_suggest_jobs(query)
-			gevent.joinall(jobs)
+			jobs = []
+			try:
+				self._ugd_suggest_jobs(query, jobs)
+			finally:
+				gevent.joinall(jobs)
 			for job in jobs:
 				results = merge_suggest_results(results, job.value)
 		return results if results else empty_suggest_result(query)
