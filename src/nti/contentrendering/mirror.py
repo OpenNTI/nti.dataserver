@@ -1,4 +1,5 @@
 import os
+import six
 import sys
 import glob
 import shutil
@@ -70,7 +71,7 @@ def main(url_or_path, out_dir="/tmp/mirror",
 				_get_index_dir(url, archive_dir)
 
 		if zip_archive:
-			zip_name = zip_archive if isinstance(zip_archive, basestring) else 'archive.zip'
+			zip_name = zip_archive if isinstance(zip_archive, six.string_types) else 'archive.zip'
 			_zip_archive(archive_dir, out_dir, zip_name, zip_root_dir)
 
 		return result
