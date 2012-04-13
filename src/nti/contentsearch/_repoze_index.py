@@ -50,21 +50,25 @@ def get_last_modified(obj, default=None):
 # -----------------------------------
 
 def get_id(obj, default=None):
-	return obj if isinstance(obj, six.string_types) else get_attr(obj, [ID])
+	result = obj if isinstance(obj, six.string_types) else get_attr(obj, [ID])
+	return unicode(result) if result else None
 
 def get_channel(obj, default=None):
-	return obj if isinstance(obj, six.string_types) else get_attr(obj, [channel_])
+	result = obj if isinstance(obj, six.string_types) else get_attr(obj, [channel_])
+	return unicode(result) if result else None
 
 def get_objectId(obj, default=None):
-	return obj if isinstance(obj, six.string_types) else get_attr(obj, oid_fields)
+	result = obj if isinstance(obj, six.string_types) else get_attr(obj, oid_fields)
+	return unicode(result) if result else None
 get_oid = get_objectId
 
 def get_containerId(obj, default=None):
-	return obj if isinstance(obj, six.string_types) else get_attr(obj, container_id_fields)
+	result = obj if isinstance(obj, six.string_types) else get_attr(obj, container_id_fields)
+	return unicode(result) if result else None
 
 def get_collectionId(obj, default=None):
 	containerId = get_containerId(obj, default)
-	return get_collection(containerId)
+	return get_collection(containerId) if containerId else None
 
 def get_none(obj, default=None):
 	return None
@@ -75,9 +79,9 @@ def _parse_words(obj, fields, default=None):
 	words = obj if isinstance(obj, six.string_types) else get_attr(obj, fields, default)
 	if words:
 		if isinstance(words, six.string_types):
-			words = words.lower().split()
+			words = [unicode(w.lower()) for w in words.split()]
 		elif isinstance(words, Iterable):
-			words = [w.lower() for w in words]
+			words = [unicode(w.lower()) for w in words]
 		else:
 			words = []
 	return words or []
