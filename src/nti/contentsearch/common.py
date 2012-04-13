@@ -155,14 +155,14 @@ def get_type_name(obj):
 		result = None
 	return normalize_type_name(result) if result else u''
 
-def get_collection(containerId, default='prealgebra'):
+def get_collection(containerId, default=u'prealgebra'):
 	result = default
 	if containerId and is_valid_ntiid_string(containerId):
 		_library = component.queryUtility( ILibrary )
 		if _library:
 			paths = _library.pathToNTIID(containerId)
 			result = paths[0].label if paths else default
-	return result.lower() if result else default
+	return unicode(result.lower()) if result else default
 
 # -----------------------------------
 
@@ -171,20 +171,20 @@ def get_external_oid(obj, default=None):
 		result = to_external_ntiid_oid( obj )
 	else:
 		result = obj if isinstance(obj, six.string_types) else get_attr(obj, oid_fields)
-	return result
+	return unicode(result) if result else None
 		
 def get_ntiid(obj, default=None):
 	if IPersistent.providedBy(obj):
 		result = to_external_ntiid_oid( obj )
 	else:
 		result = obj if isinstance(obj, six.string_types) else get_attr(obj, ntiid_fields)
-	return result
+	return unicode(result) if result else None
 
 def get_creator(obj, default=None):
 	result = obj if isinstance(obj, six.string_types) else get_attr(obj, creator_fields)
 	if isinstance(result, Entity):
 		result = result.username
-	return result
+	return unicode(result) if result else None
 
 def get_references(obj, default=None):
 	objects = obj.split() if hasattr(obj, 'split') else get_attr(obj, [references_], default)
@@ -196,11 +196,12 @@ def get_references(obj, default=None):
 	result = set()
 	for obj in iterable:
 		if isinstance(obj, six.string_types):
-			result.update(obj.split())
+			for s in obj.split():
+				result.add(unicode(s))
 		else:
 			ntiid = get_ntiid(obj)
 			if ntiid: result.add(ntiid)
-	return result if list(result) else []
+	return list(result) if result else []
 
 # -----------------------------------
 
@@ -242,10 +243,12 @@ def get_multipart_content(source):
 
 def get_highlight_content(data):
 	if isinstance(data, dict):
-		return data.get(startHighlightedFullText_, u'')
+		result = data.get(startHighlightedFullText_, u'')
 	elif isinstance(data, Highlight):
-		return getattr(data, startHighlightedFullText_, u'')
-	return u''
+		result = getattr(data, startHighlightedFullText_, u'')
+	else:
+		result = u''
+	return unicode(result)
 
 def get_canvas_content(data):
 	result = []
@@ -257,7 +260,7 @@ def get_canvas_content(data):
 	for s in shapes:
 		c = get_multipart_content(s)
 		if c: result.append(c)
-	return ' '.join(result)
+	return unicode(' '.join(result))
 
 def get_note_content(data):
 	result = []
@@ -269,7 +272,7 @@ def get_note_content(data):
 	for item in body:
 		c = get_multipart_content(item)
 		if c: result.append(c)
-	return ' '.join(result)
+	return unicode(' '.join(result))
 
 def get_messageinfo_content(data):
 	result = []
@@ -280,7 +283,7 @@ def get_messageinfo_content(data):
 	for item in body:
 		c = get_multipart_content(item)
 		if c: result.append(c)
-	return ' '.join(result)
+	return unicode(' '.join(result))
 
 def get_canvastextshape_content(data):
 	if isinstance(data, dict):
@@ -289,7 +292,7 @@ def get_canvastextshape_content(data):
 		result = data.text
 	else:
 		result = u''
-	return result
+	return unicode(result)
 
 # -----------------------------------
 
@@ -305,7 +308,8 @@ def ngram_tokens(text, minsize=3, maxsize=10, at='start', unique=True):
 		
 def ngrams(text):
 	result = [token.text for token in ngram_tokens(text)]
-	return ' '.join(sorted(result, cmp=lambda x,y: cmp(x, y)))
+	result = ' '.join(sorted(result, cmp=lambda x,y: cmp(x, y)))
+	return unicode(result)
 
 # -----------------------------------
 
