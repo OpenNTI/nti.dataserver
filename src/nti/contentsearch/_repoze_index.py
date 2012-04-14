@@ -22,7 +22,7 @@ from nti.contentsearch.common import word_content_highlight
 from nti.contentsearch.common import ngram_content_highlight
 from nti.contentsearch.textindexng3 import CatalogTextIndexNG3
 
-from nti.contentsearch.common import (	oid_fields, container_id_fields, last_modified_fields, keyword_fields)
+from nti.contentsearch.common import (	container_id_fields, last_modified_fields, keyword_fields)
 
 from nti.contentsearch.common import (	OID, NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
 										COLLECTION_ID, SNIPPET, HIT, ID, BODY, TARGET_OID, MESSAGE_INFO)
@@ -56,11 +56,6 @@ def get_id(obj, default=None):
 def get_channel(obj, default=None):
 	result = obj if isinstance(obj, six.string_types) else get_attr(obj, [channel_])
 	return unicode(result) if result else None
-
-def get_objectId(obj, default=None):
-	result = obj if isinstance(obj, six.string_types) else get_attr(obj, oid_fields)
-	return unicode(result) if result else None
-get_oid = get_objectId
 
 def get_containerId(obj, default=None):
 	result = obj if isinstance(obj, six.string_types) else get_attr(obj, container_id_fields)
