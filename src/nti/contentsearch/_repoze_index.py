@@ -68,6 +68,10 @@ def get_collectionId(obj, default=None):
 def get_none(obj, default=None):
 	return None
 
+# restore for backward comp
+get_oid = get_external_oid
+get_objectId = get_external_oid
+
 # -----------------------------------
 
 def _parse_words(obj, fields, default=None):
