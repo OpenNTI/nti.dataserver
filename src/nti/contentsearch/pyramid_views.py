@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+
+from __future__ import print_function, unicode_literals
+
 import re
 from pyramid.security import authenticated_userid
 
@@ -6,8 +10,6 @@ from nti.contentsearch.interfaces import IIndexManager
 
 import logging
 logger = logging.getLogger( __name__ )
-
-# -----------------------------
 
 class GetSearch(object):
 
@@ -28,8 +30,7 @@ class UserSearch(object):
 		query = get_queryobject(self.request, False)
 		indexmanager = self.request.registry.getUtility( IIndexManager )
 		return indexmanager.user_data_search( query=query, username=query.username )
-	
-# -----------------------------
+
 
 def clean_search_query(query):
 	if query in ('*', '?'):
@@ -56,18 +57,17 @@ def get_indexname(environ):
 	return path
 
 def get_queryobject(request, get_index=True):
-	
 	term = request.matchdict.get('term', None)
 	term = clean_search_query(term)
+	term = term or ''
 	args = {'term': term}
-		
+
 	username = request.matchdict.get('user', None)
 	username = username or authenticated_userid( request )
 	if username:
 		args['username'] = username
-		
+
 	if get_index:
 		args['indexname'] = get_indexname(request.environ)
-	
+
 	return QueryObject(**args)
-	
