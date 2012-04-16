@@ -56,6 +56,8 @@ class _MeetingTranscriptStorage(Persistent,datastructures.ContainedMixin,datastr
 	def itervalues(self):
 		return self.messages.itervalues()
 
+	values = itervalues # for finding with zope.genartions.findObjectsMatching
+
 def _transcript_ntiid( meeting, creator, nttype=ntiids.TYPE_TRANSCRIPT_SUMMARY ):
 	"""
 	:return: A NTIID string representing the transcript (summary) for the
