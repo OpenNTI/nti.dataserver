@@ -464,7 +464,7 @@ def merge_suggest_results(a, b):
 
 class QueryExpr(object):
 	def __init__(self, expr):
-		assert expr, 'must specify a query expression'
+		assert expr is not None, 'must specify a query expression'
 		self.expr = unicode(expr)
 	
 	def __str__( self ):
