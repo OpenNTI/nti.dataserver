@@ -5,11 +5,8 @@ __docformat__ = 'restructuredtext'
 generation = 5
 
 from zope.generations.utility import findObjectsMatching
-from nti.dataserver.datastructures import fromExternalOID
+from zope.generations.utility import findObjectsProviding
 
-from nti.dataserver.chat import MessageInfo
-from nti.dataserver.contenttypes import Note
-from nti.dataserver.contenttypes import Highlight
 from nti.dataserver.datastructures import toExternalOID
 from nti.dataserver import interfaces as nti_interfaces
 
@@ -24,24 +21,6 @@ def _reindex(ds_conn, rds, user):
 	username = user.username
 	logger.debug('Reindexing object(s) for user %s' % username)
 		
-	# get chat messages b/c they will not be found easily in the 
-	# user container objects
-	messages = []
-	docids = rds.get_docids(username)
-	for docid in docids:
-		connection = ds_conn
-		oid_string = rds.address_for_docid(username, docid)
-		db_oid, database_name = fromExternalOID( oid_string )
-		if database_name: 
-			connection = ds_conn.get_connection( database_name )
-			
-		try:
-			obj = connection[db_oid] if db_oid and connection else None
-			if isinstance(obj, MessageInfo):
-				messages.append(obj)
-		except:
-			pass
-		
 	# remove user catalogs
 	rds.remove_user(username)
 	
@@ -50,26 +29,17 @@ def _reindex(ds_conn, rds, user):
 		catalog = create_catalog(type_name)
 		rds.add_catalog(username, catalog, type_name)
 		
-	def _indexer(obj):
+	counter = 0
+	for obj in findObjectsProviding( user, nti_interfaces.IModeledContent):
 		type_name = get_type_name(obj)
-		address = toExternalOID(obj)
-		catalog = rds.get_catalog(username, type_name)
-		docid = rds.get_or_create_docid_for_address(username, address)
-		catalog.index_doc(docid, obj)
-
-	counter = 0
-	for obj in findObjectsMatching( user, lambda x: isinstance(x, (Note, Highlight))):
-		_indexer(obj)
-		counter = counter + 1
+		if type_name and type_name in indexable_type_names:
+			address = toExternalOID(obj)
+			catalog = rds.get_catalog(username, type_name)
+			docid = rds.get_or_create_docid_for_address(username, address)
+			catalog.index_doc(docid, obj)
+			counter = counter + 1
 	
-	logger.debug('%s note/hightlight object(s) for user %s were reindexed' % (counter, username))
-	
-	counter = 0
-	for obj in messages:
-		_indexer(obj)
-		counter = counter + 1
-		
-	logger.debug('%s chat messages object(s) for user %s were reindexed' % (counter, username))
+	logger.debug('%s object(s) for user %s were reindexed' % (counter, username))
 
 def evolve( context ):
 	"""
