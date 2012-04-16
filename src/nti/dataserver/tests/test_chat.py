@@ -3,6 +3,7 @@ from hamcrest import (assert_that, is_, has_entry, instance_of,
 					  has_key, is_in, not_none, is_not, greater_than,
 					  same_instance, has_length, none, contains, same_instance,
 					  has_entries, only_contains, has_item, has_property)
+from nti.tests import verifiably_provides
 import unittest
 from zope import interface, component
 from zope.deprecation import deprecate
@@ -31,9 +32,15 @@ from . import provides
 
 class TestMessageInfo(ConfiguringTestBase):
 
+
+	def test_interfaces( self ):
+		m = chat.MessageInfo()
+		assert_that( m, verifiably_provides( nti_interfaces.IModeledContent ) )
+
 	@WithMockDSTrans
 	def test_external_body( self ):
 		m = chat.MessageInfo()
+		assert_that( m, verifiably_provides( nti_interfaces.IModeledContent ) )
 		m.Body = 'foo'
 		ext = m.toExternalObject()
 		assert_that( ext['Body'], is_( ext['body'] ) )
