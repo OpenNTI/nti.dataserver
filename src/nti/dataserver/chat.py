@@ -54,7 +54,7 @@ STATUS_SHADOWED = 'st_SHADOWED'
 class MessageInfo( contenttypes.ThreadableExternalizableMixin,
 				   Persistent,
 				   datastructures.ExternalizableInstanceDict ):
-
+	interface.implements( nti_interfaces.IModeledContent )
 	__external_can_create__ = True
 
 	_excluded_in_ivars_ = { 'MessageId' } | datastructures.ExternalizableInstanceDict._excluded_in_ivars_
@@ -78,12 +78,29 @@ class MessageInfo( contenttypes.ThreadableExternalizableMixin,
 		self.recipients = ()
 		self.Status = STATUS_INITIAL
 
+	# Aliases (TODO: Need general alias descriptor)
 	def get_Sender(self):
 		return self.Creator
 	def set_Sender(self,s):
 		self.Creator = s
 	Sender = property( get_Sender, set_Sender )
+	creator = Sender
 
+	@property
+	def id(self):
+		return self.ID
+
+	def get_createdTime(self):
+		return self.CreatedTime
+	def set_createdTime(self,st):
+		self.CreatedTime = st
+	createdTime = property(get_createdTime,set_createdTime)
+
+	def get_lastModified(self):
+		return self.LastModified
+	def set_lastModified(self,lm):
+		self.LastModified = lm
+	lastModified = property(get_lastModified,set_lastModified)
 
 	def get_sender_sid( self ):
 		"""
