@@ -4,6 +4,7 @@ from whoosh import index
 
 from nti.contentsearch import interfaces
 from nti.contentsearch import QueryObject
+from nti.contentsearch import SearchCallWrapper
 from nti.contentsearch._whoosh_index import Book
 from nti.contentsearch._whoosh_indexstorage import create_directory_index_storage
 
@@ -44,7 +45,8 @@ class WhooshBookIndexManager(object):
 		return 'WhooshBookIndexManager(indexname=%s)' % self.indexname
 	
 	# ---------------
-
+	
+	@SearchCallWrapper
 	def search(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
 		with self.storage.dbTrans():

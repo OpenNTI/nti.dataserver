@@ -1,4 +1,5 @@
 import six
+import time
 import UserDict
 from collections import Iterable
 
@@ -36,6 +37,22 @@ class NoOpCM(object):
 	def __exit__(self,*args):
 		pass
 
+class SearchCallWrapper(object):
+	def __init__(self, func):
+		self.func = func
+
+	def __call__(self, *args, **kargs):
+		now = time.time()
+		result =  self.func(*args, **kargs)
+		elapsed = time.time() - now
+		logger.debug('(%s,%r,%r) took %0.5fs' % (self.func.__name__, args, kargs, elapsed))
+		return result
+	
+	def __get__(self, instance, owner):
+		def wrapper(*args, **kargs):
+			return self(instance, *args, **kargs)
+		return wrapper
+		
 class LFUMap(LFUCache):
 
 	def __init__(self, maxsize, on_removal_callback=None):
