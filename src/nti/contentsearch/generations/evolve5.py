@@ -41,7 +41,8 @@ def _reindex(ds_conn, rds, user):
 				catalog.index_doc(docid, obj)
 				counter = counter + 1
 			except POSKeyError:
-				logger.warn('Broken reference for object %s. It will not be indexed' % obj)
+				# broken reference for object
+				pass
 	
 	logger.debug('%s object(s) for user %s were reindexed' % (counter, username))
 
