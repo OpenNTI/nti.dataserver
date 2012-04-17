@@ -62,11 +62,10 @@ class IndexManager(object):
 			cls.indexmanager = super(IndexManager, cls).__new__(cls, *args, **kwargs)
 		return cls.indexmanager
 
-	def __init__(self, bookidx_manager_factory, useridx_manager_factory, max_users=500, dataserver=None):
+	def __init__(self, bookidx_manager_factory, useridx_manager_factory, max_users=500, *args, **kwargs):
 		self.books = {}
 		self.bookidx_manager_factory = bookidx_manager_factory
 		self.useridx_manager_factory = useridx_manager_factory
-		self.ds = dataserver or component.queryUtility( nti_interfaces.IDataserver )
 
 	def __str__( self ):
 		return self.__repr__()
@@ -76,7 +75,7 @@ class IndexManager(object):
 
 	@property
 	def dataserver(self):
-		return self.ds
+		return component.queryUtility( nti_interfaces.IDataserver )
 
 	def users_exists(self, username):
 		result = User.get_user(username, dataserver=self.dataserver) if self.dataserver else None
