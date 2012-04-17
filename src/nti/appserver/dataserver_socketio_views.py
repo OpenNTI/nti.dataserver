@@ -20,9 +20,8 @@ import pyramid.security as sec
 import pyramid.httpexceptions as hexc
 import pyramid.interfaces
 
-import transaction
 import gevent
-import pyramid_zodbconn
+from geventwebsocket import interfaces as ws_interfaces
 
 
 import nti.socketio.interfaces
@@ -155,7 +154,44 @@ def _handshake_view( request ):
 	response.content_type = 'text/plain'
 	return response
 
-from zope.component.hooks import setSite
+class _WSWillUpgradeVeto(object):
+	"""
+	A veto handler to avoid upgrading to websockets if the session doesn't
+	exist. This lets our 404 propagate.
+	"""
+	interface.implements( ws_interfaces.IWSWillUpgradeVeto )
+
+	def __init__( self, evt=None ):
+		return
+
+	def can_upgrade( self, wswill_upgrade ):
+		"""
+		If the session exists and is valid, we can upgrade.
+		"""
+		# Pull the session id out of the path. See
+		# URL_CONNECT
+		environ = wswill_upgrade.environ
+		sid = environ['PATH_INFO'].split( '/' )[-1]
+		def test():
+			try:
+				_get_session( sid )
+			except hexc.HTTPNotFound:
+				return False
+			else:
+				return True
+		return component.getUtility( nti_interfaces.IDataserverTransactionRunner )( test )
+
+def _get_session(session_id):
+	"""
+	Returns a valid session to use, or raises HTTPNotFound.
+	"""
+	session = component.getUtility( nti_interfaces.IDataserver ).session_manager.get_session( session_id )
+	if session is None:
+		raise hexc.HTTPNotFound("No session found")
+	if not session.owner:
+		logger.warn( "Found session with no owner. Cannot connect: %s", session )
+		raise hexc.HTTPNotFound("Session has no owner.")
+	return session
 
 @view_config(route_name=RT_CONNECT) # Any request method
 def _connect_view( request ):
@@ -169,18 +205,15 @@ def _connect_view( request ):
 	ws_transports = ('websocket','flashsocket')
 	session_id = request.matchdict.get( 'session_id' )
 
+	# All our errors need to come back as 404 (not 403) otherwise the browser
+	# keeps trying to reconnect this same session
 	if (transport in ws_transports and 'wsgi.websocket' not in environ)\
 	  or (transport not in ws_transports and 'wsgi.websocket' in environ):
 	  # trying to use an upgraded websocket on something that is not websocket transport,
 	  # or vice/versa
-	  raise hexc.HTTPForbidden( 'Incorrect use of websockets' )
+	  raise hexc.HTTPNotFound( 'Incorrect use of websockets' )
 
-	session = component.getUtility( nti_interfaces.IDataserver ).session_manager.get_session( session_id )
-	if session is None:
-		raise hexc.HTTPNotFound()
-	if not session.owner:
-		logger.warn( "Found session with no owner. Cannot connect: %s", session )
-		raise hexc.HTTPForbidden()
+	session = _get_session(session_id)
 
 	# If we're restoring a previous session, we
 	# must switch to using the protocol from

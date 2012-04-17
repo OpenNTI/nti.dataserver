@@ -53,6 +53,10 @@
 
 	<subscriber handler=".logon.add_new_user_to_static_communities" />
 
+	<subscriber factory=".dataserver_socketio_views._WSWillUpgradeVeto"
+				provides="geventwebsocket.interfaces.IWSWillUpgradeVeto"
+				for="geventwebsocket.interfaces.IWSWillUpgradeEvent" />
+
 	<include package="nti.dataserver" />
 	<include package="nti.contentsearch" />
 	<include package="nti.socketio" />
