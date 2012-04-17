@@ -9,6 +9,7 @@ from nti.dataserver.datastructures import fromExternalOID
 
 from nti.contentsearch import interfaces
 from nti.contentsearch import QueryObject
+from nti.contentsearch import SearchCallWrapper
 from nti.contentsearch.interfaces import IUserIndexManagerFactory
 from nti.contentsearch.common import get_type_name
 from nti.contentsearch.common import normalize_type_name
@@ -136,6 +137,7 @@ class RepozeUserIndexManager(object):
 		results[HIT_COUNT] = len(items)
 		return results
 
+	@SearchCallWrapper
 	def search(self, query, *args, **kwargs):
 		qo = QueryObject.create(query, **kwargs)
 		search_on = self._adapt_search_on_types(qo.search_on)
