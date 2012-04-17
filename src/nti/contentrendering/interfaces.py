@@ -142,7 +142,7 @@ class IContentFragment(interface.Interface):
 	be in.
 	"""
 
-class IUnicodeContentFragment(interface.Interface):
+class IUnicodeContentFragment(IContentFragment):
 	"""
 	Content represented as a unicode string.
 	"""
