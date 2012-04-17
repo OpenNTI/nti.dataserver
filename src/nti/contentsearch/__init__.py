@@ -9,7 +9,6 @@ logger = logging.getLogger( __name__ )
 
 from nti.contentsearch._repoze_datastore import RepozeDataStore
 
-
 def to_list(data):
 	if isinstance(data, six.string_types):
 		data = [data]
@@ -37,7 +36,6 @@ class NoOpCM(object):
 	def __exit__(self,*args):
 		pass
 
-
 class LFUMap(LFUCache):
 
 	def __init__(self, maxsize, on_removal_callback=None):
@@ -50,7 +48,6 @@ class LFUMap(LFUCache):
 		super(LFUMap, self).__delitem__(key)
 		if self.on_removal_callback:
 			self.on_removal_callback(key, value)
-
 
 
 class QueryObject(object, UserDict.DictMixin):
@@ -134,6 +131,7 @@ class QueryObject(object, UserDict.DictMixin):
 
 	term = property(get_term, set_term)
 	query = term
+	word = query
 
 	def get_limit(self):
 		return self._data.get('limit', None)
@@ -229,8 +227,6 @@ class QueryObject(object, UserDict.DictMixin):
 				queryobject[k] = v
 
 		return queryobject
-
-# -----------------------------
 
 def create_repoze_datastore(users_key='users', docMap_key='docMap'):
 	return RepozeDataStore(users_key=users_key, docMap_key=docMap_key)
