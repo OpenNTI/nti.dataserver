@@ -4,6 +4,7 @@ __docformat__ = 'restructuredtext'
 
 generation = 5
 
+from ZODB.POSException import POSKeyError
 from zope.generations.utility import findObjectsMatching
 from zope.generations.utility import findObjectsProviding
 
@@ -33,11 +34,14 @@ def _reindex(ds_conn, rds, user):
 	for obj in findObjectsProviding( user, nti_interfaces.IModeledContent):
 		type_name = get_type_name(obj)
 		if type_name and type_name in indexable_type_names:
-			address = toExternalOID(obj)
 			catalog = rds.get_catalog(username, type_name)
-			docid = rds.get_or_create_docid_for_address(username, address)
-			catalog.index_doc(docid, obj)
-			counter = counter + 1
+			try:
+				address = toExternalOID(obj)
+				docid = rds.get_or_create_docid_for_address(username, address)
+				catalog.index_doc(docid, obj)
+				counter = counter + 1
+			except POSKeyError:
+				logger.warn('Broken reference for object %s. It will not be indexed' % obj)
 	
 	logger.debug('%s object(s) for user %s were reindexed' % (counter, username))
 
