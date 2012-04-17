@@ -69,10 +69,39 @@ class RepozeDataStore(PersistentMapping):
 		values = list(pm.values())
 		return values
 	
-	def add_address(self, username, address):
+	def add_metadata(self, username, docid, meta):
+		docMap = self.docmaps.get(username, None)
+		if docMap and meta:
+			docMap.add_metadata(docid, meta)
+			return True
+		return False
+	
+	def get_metadata(self, username, docid):
+		docMap = self.docmaps.get(username, None)
+		if docMap:
+			try:
+				result = docMap.get_metadata(docid)
+				return result
+			except:
+				pass
+		return None
+	
+	def remove_metadata(self, username, docid, *keys):
+		docMap = self.docmaps.get(username, None)
+		if docMap:
+			try:
+				docMap.remove_metadata(docid, *keys)
+				return True
+			except:
+				pass
+		return False
+	
+	def add_address(self, username, address, meta=None):
 		docMap = self.docmaps.get(username, None)
 		if docMap:
 			docid = docMap.add(address)
+			if meta:
+				docMap.add_metadata(docid, meta)
 			return docid
 		else:
 			return None
@@ -81,12 +110,13 @@ class RepozeDataStore(PersistentMapping):
 		docMap = self.docmaps.get(username, None)
 		if docMap:
 			result = docMap.remove_docid(docid)
+
 			return result
 		else:
 			return False
 	
-	def get_or_create_docid_for_address(self, username, address):
-		docid = self.docid_for_address(username, address) or self.add_address(username, address)
+	def get_or_create_docid_for_address(self, username, address, meta=None):
+		docid = self.docid_for_address(username, address) or self.add_address(username, address, meta)
 		return docid
 		
 	def docid_for_address(self, username, address):
