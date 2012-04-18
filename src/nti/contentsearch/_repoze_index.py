@@ -27,8 +27,9 @@ from nti.contentsearch.common import (	container_id_fields, last_modified_fields
 from nti.contentsearch.common import (	OID, NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
 										COLLECTION_ID, SNIPPET, HIT, ID, BODY, TARGET_OID, MESSAGE_INFO)
 
-from nti.contentsearch.common import (	ngrams_, channel_, content_, keywords_, references_, 
-										recipients_, sharedWith_, body_, startHighlightedFullText_)
+from nti.contentsearch.common import (	ngrams_, channel_, content_, keywords_, references_, title_, 
+										last_modified_, section_, ntiid_, recipients_, sharedWith_, body_, 
+										related_, startHighlightedFullText_)
 
 
 import logging
@@ -51,6 +52,14 @@ def get_last_modified(obj, default=None):
 
 def get_id(obj, default=None):
 	result = obj if isinstance(obj, six.string_types) else get_attr(obj, [ID])
+	return unicode(result) if result else None
+
+def get_title(obj, default=None):
+	result = obj if isinstance(obj, six.string_types) else get_attr(obj, [title_])
+	return unicode(result) if result else None
+
+def get_section(obj, default=None):
+	result = obj if isinstance(obj, six.string_types) else get_attr(obj, [section_])
 	return unicode(result) if result else None
 
 def get_channel(obj, default=None):
@@ -98,6 +107,9 @@ def get_recipients(obj, default=None):
 
 def get_sharedWith(obj, default=None):
 	return _parse_words(obj, [sharedWith_])
+
+def get_related(obj, default=None):
+	return _parse_words(obj, [related_])
 
 # -----------------------------------
 
@@ -169,6 +181,18 @@ def create_messageinfo_catalog():
 	catalog[references_] = CatalogKeywordIndex(get_references)
 	catalog[ngrams_] = _create_text_index(ngrams_, get_messageinfo_ngrams)
 	catalog[content_] = _create_text_index(content_, get_messageinfo_content)
+	return catalog
+
+def create_book_catalog():
+	catalog = Catalog()
+	catalog[ntiid_] = CatalogFieldIndex(get_ntiid)
+	catalog[title_] = CatalogFieldIndex(get_title)
+	catalog[last_modified_] = CatalogFieldIndex(get_last_modified)
+	catalog[keywords_] = CatalogKeywordIndex(get_keywords)
+	catalog[related_] = CatalogKeywordIndex(get_related)
+	catalog[ngrams_] = _create_text_index(ngrams_, get_messageinfo_ngrams)
+	catalog[content_] = _create_text_index(content_, get_messageinfo_content)
+	catalog[section_] = CatalogFieldIndex(get_section)
 	return catalog
 
 def create_catalog(type_name='Notes'):
