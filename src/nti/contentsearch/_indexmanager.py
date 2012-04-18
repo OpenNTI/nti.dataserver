@@ -10,6 +10,7 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.contentsearch import QueryObject
 from nti.contentsearch import interfaces
+from nti.contentsearch import SearchCallWrapper
 from nti.contentsearch._indexagent import handle_index_event
 
 from nti.contentsearch.common import empty_search_result
@@ -83,6 +84,7 @@ class IndexManager(object):
 
 	# -------------------
 	
+	@SearchCallWrapper
 	def search(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
 		username = query.username
@@ -105,6 +107,7 @@ class IndexManager(object):
 			results = merge_search_results (results, job.value)
 		return results
 		
+	@SearchCallWrapper
 	def ngram_search(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
 		username = query.username
@@ -127,6 +130,7 @@ class IndexManager(object):
 			results = merge_search_results (results, job.value)
 		return results
 		
+	@SearchCallWrapper
 	def suggest_and_search(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
 		username = query.username
@@ -149,6 +153,7 @@ class IndexManager(object):
 			results = merge_suggest_and_search_results(results, job.value)
 		return results
 	
+	@SearchCallWrapper
 	def suggest(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
 		username = query.username
