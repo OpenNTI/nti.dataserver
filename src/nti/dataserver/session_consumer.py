@@ -5,12 +5,10 @@ import logging
 logger = logging.getLogger( __name__ )
 
 import sys
-import plistlib
-import warnings
 import itertools
 
 from nti.dataserver.datastructures import toExternalObject
-from nti.dataserver.users import User
+
 from nti.dataserver import interfaces as nti_interfaces
 import nti.dataserver.users
 import nti.dataserver.contenttypes
