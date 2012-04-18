@@ -8,12 +8,13 @@ import logging
 logger = logging.getLogger(__name__)
 
 from nti.dataserver import interfaces as nti_interfaces, users
+from nti.chatserver import interfaces as chat_interfaces
 from zope import component
 
 
 def _notify_friends_of_presence( session, presence ):
 	dataserver = component.queryUtility( nti_interfaces.IDataserver )
-	chatserver = component.queryUtility( nti_interfaces.IChatserver )
+	chatserver = component.queryUtility( chat_interfaces.IChatserver )
 	if dataserver is None or chatserver is None:
 		logger.debug( "Unable to broadcast presence notification. DS: %s CS %s", dataserver, chatserver )
 		return

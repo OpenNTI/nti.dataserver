@@ -41,7 +41,7 @@ import nti.apns as apns
 from . import users
 from . import interfaces
 from . import ntiids
-from . import chat_interfaces
+from nti.chatserver import interfaces as chat_interfaces
 from . import config
 
 

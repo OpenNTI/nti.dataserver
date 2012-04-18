@@ -7,6 +7,7 @@ from __future__ import print_function
 from hamcrest import assert_that, is_
 
 from nti.dataserver import interfaces as nti_interfaces, users
+from nti.chatserver import interfaces as chat_interfaces
 
 from nti.appserver.tests import ConfiguringTestBase
 from nti.dataserver.tests import mock_dataserver
@@ -17,7 +18,7 @@ from zope import component
 from nti.appserver._socket_event_listeners import session_disconnected_broadcaster, session_connected_broadcaster, _notify_friends_of_presence
 
 class MockChatserver(object):
-	interface.implements(nti_interfaces.IChatserver)
+	interface.implements(chat_interfaces.IChatserver)
 
 	pchange = ()
 	def notify_presence_change( self, *args ):

@@ -176,6 +176,7 @@ class _WSWillUpgradeVeto(object):
 			try:
 				_get_session( sid )
 			except hexc.HTTPNotFound:
+				logger.debug( "Not upgrading, no session", exc_info=True )
 				return False
 			else:
 				return True
@@ -187,10 +188,10 @@ def _get_session(session_id):
 	"""
 	session = component.getUtility( nti_interfaces.IDataserver ).session_manager.get_session( session_id )
 	if session is None:
-		raise hexc.HTTPNotFound("No session found")
+		raise hexc.HTTPNotFound("No session found for %s" % session_id)
 	if not session.owner:
 		logger.warn( "Found session with no owner. Cannot connect: %s", session )
-		raise hexc.HTTPNotFound("Session has no owner.")
+		raise hexc.HTTPNotFound("Session has no owner %s" % session_id )
 	return session
 
 @view_config(route_name=RT_CONNECT) # Any request method
