@@ -28,14 +28,7 @@ import BTrees.OOBTree
 
 from nti.dataserver import interfaces as nti_interfaces
 
-class SocketSessionEvent(interface.interfaces.ObjectEvent):
-	interface.implements(nti_interfaces.ISocketSessionEvent)
-
-class SocketSessionConnectedEvent(SocketSessionEvent):
-	interface.implements(nti_interfaces.ISocketSessionConnectedEvent)
-
-class SocketSessionDisconnectedEvent(SocketSessionEvent):
-	interface.implements(nti_interfaces.ISocketSessionDisconnectedEvent)
+from nti.socketio.interfaces import SocketSessionConnectedEvent, SocketSessionDisconnectedEvent
 
 class Session(Persistent):
 	"""

@@ -659,16 +659,10 @@ class IProviderOrganization(IContainerIterable):
 	"""
 
 ### Dynamic event handling
+import nti.socketio.interfaces
+class ISocketProxySession(nti.socketio.interfaces.ISocketIOChannel):
+	pass
 
-class ISocketProxySession(interface.Interface):
-
-	def put_server_msg( msg ):
-		"""
-		"""
-
-	def put_client_msg( msg ):
-		"""
-		"""
 
 class ISessionService(interface.Interface):
 	"""
@@ -702,45 +696,10 @@ class ISessionService(interface.Interface):
 class ISessionServiceStorage(IFullMapping):
 	pass
 
-class ISocketSession(interface.Interface):
 
-	connected = schema.Bool(title=u'Is the session known to be connected to a client?')
-	owner = schema.TextLine(title=u'The name of the user that owns this session.')
-
-class ISocketSessionEvent(interface.interfaces.IObjectEvent):
-	"""
-	An event fired relating to a socket session.
-	In general, socket events will only be fired for sockets that have owners.
-	"""
-
-class ISocketSessionConnectedEvent(interface.interfaces.IObjectEvent):
-	"""
-	An event that is fired when a socket session establishes a connection for the first time.
-	"""
-
-class ISocketSessionDisconnectedEvent(ISocketSessionEvent):
-	"""
-	An event that is fired when a socket session disconnects.
-	"""
-
-class ISocketEventHandler(interface.Interface):
-	"""
-	Interface for things that want to handle socket
-	events received from a connected user.
-
-	The general contract for these objects is that they will have
-	public methods corresponding to the events they wish to handle from
-	the user. If the method returns a result that is not None, then if the
-	user requested acknowledgement that result will be sent as the ack (if
-	the user requested ack and the result was None, False will be returned).
-
-	These objects may be registered as subscription adapters for
-	:class:`socketio.interfaces.ISocketIOSocket`. If there is duplication
-	among the handlers for a particular event, all will be called in no
-	defined order; the last non-None result will be used for ack.
-	"""
-
-	event_prefix = schema.Field(
-		title=u'If present, names the prefix which should be subtracted from all incoming events before searching for a handler.',
-		description=u'For example, a prefix of chat and a method name of handle would match an event chat_handle',
-		required=False )
+from nti.socketio.interfaces import ISocketSession, ISocketSessionEvent, ISocketSessionConnectedEvent, ISocketSessionDisconnectedEvent, ISocketEventHandler
+deprecated( 'ISocketSession', 'Prefer nti.socketio' )
+deprecated( 'ISocketSessionEvent', 'Prefer nti.socketio' )
+deprecated( 'ISocketSessionConnectedEvent', 'Prefer nti.socketio' )
+deprecated( 'ISocketSessionDisconnectedEvent', 'Prefer nti.socketio' )
+deprecated( 'ISocketSessionEventHandler', 'Prefer nti.socketio' )
