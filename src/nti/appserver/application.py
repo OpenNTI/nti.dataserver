@@ -205,7 +205,7 @@ def createApplication( http_port,
 	pyramid_config.include( 'pyramid_tm' )
 	# ...which will veto commit on a 4xx or 5xx response
 	pyramid_config.registry.settings['tm.commit_veto'] = 'pyramid_tm.default_commit_veto'
-	pyramid_config.registry.settings['tm.attempts'] = 3
+	pyramid_config.registry.settings['tm.attempts'] = 5
 	# ...and which will retry a few times
 	# NOTE: This is disabled because retry means that the entire request body must be
 	# buffered, something that cannot happen with websockets. (However, the way the handlers

@@ -82,6 +82,14 @@ class _ChatHandler( Persistent ):
 		return "%s(%s %s)" % (self.__class__.__name__, self.session_owner, self.session_id)
 
 
+	def __setstate__( self, state ):
+		# Migration 2012-04-18. Easier than searching these all out
+		if '_chatserver' in state:
+			state = dict(state)
+			del state['_chatserver']
+
+		super(_ChatHandler,self).__setstate__( state )
+
 	def _get_chatserver(self):
 		return self._v_chatserver or component.queryUtility( interfaces.IChatserver )
 	def _set_chatserver( self, cs ):

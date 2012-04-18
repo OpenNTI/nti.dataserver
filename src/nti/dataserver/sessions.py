@@ -67,6 +67,11 @@ class Session(Persistent):
 
 		self._v_session_service = session_service
 
+	def __eq__( self, other ):
+		return other is self or (isinstance( other, Session ) and self.session_id == other.session_id)
+	def __hash__( self ):
+		return hash(self.session_id)
+
 	def _get_owner( self ):
 		return self._owner
 	def _set_owner( self, o ):
@@ -92,6 +97,10 @@ class Session(Persistent):
 		result.append( 'confirmed=%s' % self.connection_confirmed )
 		result.append( 'id=%s]'% id(self) )
 		return ' '.join(result)
+
+	def __repr__(self):
+		result = '<%s/%s/%s at %s>' % (type(self), self.session_id, self.state, id(self))
+		return result
 
 	@property
 	def connected(self):
@@ -303,7 +312,8 @@ class SessionService(object):
 
 	def _session_dead( self, session, max_age=SESSION_HEARTBEAT_TIMEOUT ):
 		too_old = time.time() - max_age
-		return session.last_heartbeat_time < too_old and session.creation_time < too_old
+		return (session.last_heartbeat_time < too_old and session.creation_time < too_old) \
+		  or (session.state in (Session.STATE_DISCONNECTING,Session.STATE_DISCONNECTED))
 
 	def _session_cleanup( self, s, session_db, sids=None ):
 		""" Cleans up a dead session. """

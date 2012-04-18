@@ -24,6 +24,11 @@ class MockChatserver(object):
 	def notify_presence_change( self, *args ):
 		self.pchange = args
 
+class MockSessionManager(object):
+
+	def get_sessions_by_owner(self,username):
+		return ()
+
 class MockSession(object):
 	owner = None
 
@@ -45,6 +50,11 @@ class TestBroadcasts(ConfiguringTestBase):
 		session = MockSession()
 		session.owner = user.username
 
+		# With no session manager, nothing happens
+		session_disconnected_broadcaster( session, None )
+		assert_that( cs.pchange, is_( () ) )
+
+		self.ds.session_manager = MockSessionManager()
 		session_disconnected_broadcaster( session, None )
 		assert_that( cs.pchange, is_( (user.username, 'Offline', set([user2.username]) )) )
 

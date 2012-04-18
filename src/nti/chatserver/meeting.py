@@ -27,7 +27,7 @@ from zope import minmax
 from . import interfaces
 from ._metaclass import _ChatObjectMeta
 from .interfaces import CHANNEL_DEFAULT, CHANNEL_WHISPER, CHANNELS
-from .interfaces import STATUS_POSTED, STATUS_SHADOWED, STATUS_PENDING, STATUS_INITIAL
+from .interfaces import STATUS_POSTED, STATUS_SHADOWED, STATUS_PENDING #, STATUS_INITIAL
 
 ####
 # A note on the object model:
@@ -111,6 +111,9 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 			state = dict(state)
 			state['_MessageCount'] = datastructures.MergingCounter( state['MessageCount'] )
 			del state['MessageCount']
+		if '_chatserver' in state:
+			state = dict(state)
+			del state['_chatserver']
 
 		super(_Meeting,self).__setstate__( state )
 		# Because we are swizzling classes dynamically at

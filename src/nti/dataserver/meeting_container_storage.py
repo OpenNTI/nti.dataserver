@@ -7,7 +7,7 @@ from zope import component
 from zope import interface
 
 from . import users
-from . import chat_interfaces
+from nti.chatserver import interfaces as chat_interfaces
 from . import ntiids
 from . import classes
 
