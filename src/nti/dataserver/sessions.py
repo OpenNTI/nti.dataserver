@@ -23,7 +23,6 @@ import anyjson as json
 
 # Persistence
 from persistent import Persistent
-from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
 import BTrees.OOBTree
 
@@ -53,8 +52,8 @@ class Session(Persistent):
 		# The session id must be plain ascii for sending across sockets
 		self.session_id = uuid.uuid4().hex.encode('ascii')
 		self.creation_time = time.time()
-		self.client_queue = zc.queue.Queue() # PersistentList() # queue for messages to client
-		self.server_queue = zc.queue.Queue() #PersistentList() # queue for messages to server
+		self.client_queue = zc.queue.Queue() # queue for messages to client
+		self.server_queue = zc.queue.Queue() # queue for messages to server
 		self.hits = datastructures.MergingCounter( 0 )
 		self.heartbeats = datastructures.MergingCounter( 0 )
 		self.state = self.STATE_NEW
@@ -293,14 +292,13 @@ class SessionService(object):
 				if old:
 					try:
 						old.remove( session.session_id )
-						if not old:
-							del session_db['session_index'][old_owner]
-					except ValueError: pass
+					except (ValueError,KeyError): pass
 			gnu = session_db['session_index'].get( session.owner )
-			if not gnu:
-				gnu = ()
-			session_db['session_index'][session.owner] = PersistentList( [session.session_id] ) + gnu
-
+			if gnu is None:
+				gnu = BTrees.OOBTree.OOSet( (session.session_id,) )
+				session_db['session_index'][session.owner] = gnu
+			else:
+				gnu.add( session.session_id )
 
 	def _get_session( self, session_db, session_id, map_name='session_map' ):
 		result = session_db[map_name].get( session_id )
@@ -323,10 +321,10 @@ class SessionService(object):
 		except KeyError: pass
 
 		if sids is None:
-			sids = self._get_session( session_db, s.owner, 'session_index' ) or []
+			sids = session_db['session_index'].get( s.owner ) or ()
 		try:
 			sids.remove( s.session_id )
-		except ValueError: pass
+		except (KeyError,ValueError,AttributeError): pass
 
 		# Now that the session is unreachable,
 		# make sure the session itself knows it's dead
@@ -355,9 +353,9 @@ class SessionService(object):
 		to be active and alive.
 		"""
 		with self.session_db_cm() as session_db:
-			sids = self._get_session( session_db, session_owner, 'session_index' ) or ()
+			sids = session_db['session_index'].get(session_owner) or ()
 			result = []
-			for s in list(sids): # copy because we mutate
+			for s in list(sids): # copy because we mutate -> validated_session -> session_cleanup
 				s = self._validated_session( self._get_session( session_db, s ),
 											 session_db,
 											 sids )
@@ -366,16 +364,18 @@ class SessionService(object):
 
 	def delete_session( self, session_id ):
 		with self.session_db_cm() as session_db:
-			sess = session_db['session_map'][session_id]
 			try:
+				sess = session_db['session_map'][session_id]
 				del session_db['session_map'][session_id]
-			except KeyError: pass
+			except KeyError:
+				return
+
 			session_index = session_db['session_index'].get( sess.owner )
 			try:
 				session_index.remove( session_id )
-			except ValueError,TypeError: pass
-			if sess:
-				sess.kill()
+			except (ValueError,KeyError,TypeError,AttributeError): pass
+
+			sess.kill()
 
 
 	def _put_msg( self, meth, session_id, msg ):
