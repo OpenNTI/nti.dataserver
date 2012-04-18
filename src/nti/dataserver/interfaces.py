@@ -82,8 +82,6 @@ class IOIDResolver(interface.Interface):
 			bypassed.
 		"""
 
-class IChatserver(interface.Interface):
-	pass
 
 class IEnvironmentSettings(interface.Interface):
 	pass

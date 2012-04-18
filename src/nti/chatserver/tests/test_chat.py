@@ -3,11 +3,10 @@ from hamcrest import (assert_that, is_, has_entry, instance_of,
 					  has_key, is_in, not_none, is_not, greater_than,
 					  same_instance, has_length, none, contains, same_instance,
 					  has_entries, only_contains, has_item, has_property)
-from nti.tests import verifiably_provides
+from nti.tests import verifiably_provides, provides
 import unittest
 from zope import interface, component
 from zope.deprecation import deprecate
-import nti.socketio as socketio
 import time
 import tempfile
 
@@ -18,18 +17,34 @@ import os
 
 
 from nti.dataserver.contenttypes import Note, Canvas
-import nti.dataserver.chat as chat
 from nti.dataserver.datastructures import toExternalOID, to_external_ntiid_oid, to_external_representation, EXT_FORMAT_JSON, EXT_FORMAT_PLIST
 import nti.dataserver.ntiids as ntiids
 import nti.dataserver.users as users
 import nti.dataserver.interfaces as interfaces
 nti_interfaces = interfaces
+
+from nti.chatserver import meeting
+from nti.chatserver import messageinfo
+from nti.chatserver import _handler
+from nti.chatserver import chatserver as _chatserver
 from nti.chatserver import interfaces as chat_interfaces
 
+class chat(object):
+	MessageInfo = messageinfo.MessageInfo
+	Meeting = meeting._Meeting
+	ModeratedMeeting = meeting._ModeratedMeeting
+	ChatHandler = _handler._ChatHandler
+	Chatserver = _chatserver.Chatserver
+	CHANNEL_CONTENT = chat_interfaces.CHANNEL_CONTENT
+	CHANNEL_META = chat_interfaces.CHANNEL_META
+	CHANNEL_DEFAULT = chat_interfaces.CHANNEL_DEFAULT
+	CHANNEL_WHISPER = chat_interfaces.CHANNEL_WHISPER
+	CHANNEL_POLL = chat_interfaces.CHANNEL_POLL
 
-from mock_dataserver import WithMockDS, WithMockDSTrans, ConfiguringTestBase
-import mock_dataserver
-from . import provides
+
+
+from nti.dataserver.tests.mock_dataserver import WithMockDS, WithMockDSTrans, ConfiguringTestBase
+from nti.dataserver.tests import mock_dataserver
 
 class TestMessageInfo(ConfiguringTestBase):
 
@@ -61,14 +76,13 @@ class TestMessageInfo(ConfiguringTestBase):
 
 
 
-
 class TestChatRoom(ConfiguringTestBase):
 
 	def test_become_moderated(self):
-		room = chat._Meeting( None )
+		room = chat.Meeting( None )
 		assert_that( room.Moderated, is_(False))
 		room.Moderated = True
-		assert_that( room, is_( chat._ModeratedMeeting ) )
+		assert_that( room, is_( chat.ModeratedMeeting ) )
 
 		msg = chat.MessageInfo()
 		room.post_message( msg )
@@ -85,7 +99,7 @@ class TestChatRoom(ConfiguringTestBase):
 		fs = FileStorage( os.path.join( tmp_dir, "data.fs" ) )
 		db = DB( fs )
 		conn = db.open()
-		room = chat._Meeting( None )
+		room = chat.Meeting( None )
 		assert_that( room.Moderated, is_(False))
 		conn.root()['Room'] = room
 		transaction.commit()
@@ -97,7 +111,7 @@ class TestChatRoom(ConfiguringTestBase):
 		conn = db.open()
 		room = conn.root()['Room']
 		room.Moderated = True
-		assert_that( room, is_( chat._ModeratedMeeting ) )
+		assert_that( room, is_( chat.ModeratedMeeting ) )
 		transaction.commit()
 		conn.close()
 		db.close()
@@ -109,14 +123,14 @@ class TestChatRoom(ConfiguringTestBase):
 		room = conn.root()['Room']
 		# Our hacky workaround only comes into play after the first
 		# time an attribute is accessed and we de-ghost the object.
-		assert_that( room, is_( chat._Meeting ) )
+		assert_that( room, is_( chat.Meeting ) )
 		# A method attribute, not an ivar, triggers this
 		assert_that( room.post_message, is_( not_none() ) )
-		assert_that( room, is_( chat._ModeratedMeeting ) )
+		assert_that( room, is_( chat.ModeratedMeeting ) )
 		assert_that( room, has_property( '_moderated_by_sids', not_none() ) )
 		# Now, we can reverse the property
 		room.Moderated = False
-		assert_that( room, is_( chat._Meeting ) )
+		assert_that( room, is_( chat.Meeting ) )
 		transaction.commit()
 		conn.close()
 		db.close()
@@ -126,8 +140,8 @@ class TestChatRoom(ConfiguringTestBase):
 		db = DB( fs )
 		conn = db.open()
 		room = conn.root()['Room']
-		assert_that( room, is_( chat._Meeting ) )
-		assert_that( room.post_message.im_class, is_( same_instance( chat._Meeting ) ) )
+		assert_that( room, is_( chat.Meeting ) )
+		assert_that( room.post_message.im_class, is_( same_instance( chat.Meeting ) ) )
 		transaction.commit()
 		conn.close()
 		db.close()
@@ -137,7 +151,7 @@ class TestChatRoom(ConfiguringTestBase):
 		ds = self.ds
 		with mock_dataserver.mock_db_trans(ds) as conn:
 			n = Note()
-			room = chat._Meeting( None )
+			room = chat.Meeting( None )
 			conn.add( n )
 			sconn = conn.get_connection( 'Sessions' )
 			sconn.add( room )
@@ -174,9 +188,9 @@ class TestChatRoom(ConfiguringTestBase):
 			def _save_message_to_transcripts(*args, **kwargs):
 				pass
 
-		room = chat._Meeting( MockChatServer() )
+		room = chat.Meeting( MockChatServer() )
 		room.Moderated = True
-		assert_that( room, is_( chat._ModeratedMeeting ) )
+		assert_that( room, is_( chat.ModeratedMeeting ) )
 
 		msg = chat.MessageInfo()
 		room.post_message( msg )
@@ -267,7 +281,7 @@ class TestChatserver(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_handler_shadow_user( self ):
 		room, chatserver = self._create_moderated_room()
-		sjohn_handler = chat._ChatHandler( chatserver, self.sessions[1] )
+		sjohn_handler = chat.ChatHandler( chatserver, self.sessions[1] )
 		assert_that( sjohn_handler.shadowUsers( room.ID, ['chris'] ), is_( True ) )
 
 	@WithMockDSTrans
@@ -277,7 +291,7 @@ class TestChatserver(ConfiguringTestBase):
 		sessions = self.Sessions()
 		sessions[1] = self.Session( 'sjohnson' )
 		chatserver = chat.Chatserver( sessions )
-		assert_that( chat._ChatHandler( chatserver, sessions[1] ).enterRoom( d ),
+		assert_that( chat.ChatHandler( chatserver, sessions[1] ).enterRoom( d ),
 					 is_( none() ) )
 
 	@WithMockDSTrans
@@ -289,8 +303,8 @@ class TestChatserver(ConfiguringTestBase):
 		sessions[2] = self.Session( 'other' )
 		chatserver = chat.Chatserver( sessions )
 		mock_dataserver.current_transaction.add( chatserver.rooms )
-		assert_that( chat._ChatHandler( chatserver, sessions[1] ).enterRoom( d ),
-					 is_( chat._Meeting ) )
+		assert_that( chat.ChatHandler( chatserver, sessions[1] ).enterRoom( d ),
+					 is_( chat.Meeting ) )
 
 	@WithMockDSTrans
 	def test_integration_chat_storage_studygroup( self ):
@@ -314,9 +328,9 @@ class TestChatserver(ConfiguringTestBase):
 		sessions[3] = self.Session( 'foo@bar' )
 		chatserver = chat.Chatserver( sessions, meeting_container_storage=mc )
 		mock_dataserver.current_transaction.add( chatserver.rooms )
-		foo_handler = chat._ChatHandler( chatserver, sessions[3] )
-		friend_handler = chat._ChatHandler( chatserver, sessions[2] )
-		sj_handler = chat._ChatHandler( chatserver, sessions[1] )
+		foo_handler = chat.ChatHandler( chatserver, sessions[3] )
+		friend_handler = chat.ChatHandler( chatserver, sessions[2] )
+		sj_handler = chat.ChatHandler( chatserver, sessions[1] )
 
 
 		# I entered and created.
@@ -348,8 +362,8 @@ class TestChatserver(ConfiguringTestBase):
 		del sessions[3]
 		sessions[4] = self.Session( 'friend@bar' )
 		sessions[5] = self.Session( 'foo@bar' )
-		foo_handler = chat._ChatHandler( chatserver, sessions[5] )
-		friend_handler = chat._ChatHandler( chatserver, sessions[4] )
+		foo_handler = chat.ChatHandler( chatserver, sessions[5] )
+		friend_handler = chat.ChatHandler( chatserver, sessions[4] )
 
 		room3 = foo_handler.enterRoom( {'ContainerId': fl1.NTIID } )
 		assert_that( room3, is_( not_none() ) )
@@ -366,7 +380,7 @@ class TestChatserver(ConfiguringTestBase):
 		assert_that( foo_handler.postMessage( msg ), is_( True ) )
 		# But somebody else cannot
 		sessions[6] = self.Session( 'other@other' )
-		other_handler = chat._ChatHandler( chatserver, sessions[6] )
+		other_handler = chat.ChatHandler( chatserver, sessions[6] )
 		msg.Creator = 'other@other'
 		assert_that( other_handler.postMessage( msg ), is_( False ) )
 
@@ -375,7 +389,7 @@ class TestChatserver(ConfiguringTestBase):
 		assert_that( foo_handler.makeModerated( room3.ID, True ), is_( room3 ) )
 		assert_that( room3.Moderators, is_( set([foo_handler.session_owner])) )
 		assert_that( room3.Moderated, is_(True) )
-		assert_that( room3, is_( chat._ModeratedMeeting ) )
+		assert_that( room3, is_( chat.ModeratedMeeting ) )
 		assert_that( sessions[5].socket.events, has_length( 2 ) )
 		assert_that( sessions[5].socket.events,
 					 contains(
@@ -415,9 +429,9 @@ class TestChatserver(ConfiguringTestBase):
 		sessions[3] = self.Session( 'jason' )
 		chatserver = chat.Chatserver( sessions, meeting_container_storage=mc )
 		mock_dataserver.current_transaction.add( chatserver.rooms )
-		other = chat._ChatHandler( chatserver, sessions[3] )
-		student = chat._ChatHandler( chatserver, sessions[2] )
-		instructor = chat._ChatHandler( chatserver, sessions[1] )
+		other = chat.ChatHandler( chatserver, sessions[3] )
+		student = chat.ChatHandler( chatserver, sessions[2] )
+		instructor = chat.ChatHandler( chatserver, sessions[1] )
 
 
 		# I entered and created.
@@ -736,11 +750,4 @@ class TestChatserver(ConfiguringTestBase):
 		component.provideUtility( cserver )
 
 		subs = component.subscribers( (socket,), nti_interfaces.ISocketEventHandler )
-		assert_that( subs, has_item( is_( chat._ChatHandler ) ) )
-
-
-if __name__ == '__main__':
-#	import logging
-#	logging.basicConfig()
-#	logging.getLogger( 'nti.dataserver.chat' ).setLevel( logging.DEBUG )
-	unittest.main(verbosity=3)
+		assert_that( subs, has_item( is_( chat.ChatHandler ) ) )

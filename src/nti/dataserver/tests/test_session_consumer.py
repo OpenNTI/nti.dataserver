@@ -12,6 +12,7 @@ from zope.security.permission import Permission
 
 import nti.dataserver.users as users
 import nti.dataserver.interfaces as nti_interfaces
+import nti.chatserver.interfaces as chat_interfaces
 import nti.dataserver.session_consumer
 from nti.dataserver.session_consumer import SessionConsumer
 import nti.dataserver.chat as chat
@@ -74,7 +75,7 @@ class TestSessionConsumer(mock_dataserver.ConfiguringTestBase):
 
 		class MockChatServer(object): pass
 		o = MockChatServer()
-		interface.directlyProvides( o, nti_interfaces.IChatserver)
+		interface.directlyProvides( o, chat_interfaces.IChatserver)
 		component.provideUtility( o )
 
 		component.provideSubscriptionAdapter( MockChat )
@@ -130,7 +131,7 @@ class TestSessionConsumer(mock_dataserver.ConfiguringTestBase):
 		# method of another class
 		def theEvent( obj ):
 			x.obj = obj
-		theEvent.im_class = chat.Chatserver
+		theEvent.im_class = chat._ChatHandler
 		x.theEvent = theEvent
 		self.cons._event_handlers['chat'] = [x]
 		self.cons( self.socket, {'type': 'event', 'name': 'chat_theEvent',

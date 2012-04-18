@@ -164,7 +164,10 @@ def _convert_message_args_to_objects( handler, message ):
 	Convert the list/dictionary external (incoming) structures into objects to pass to
 	the handler.
 
-	:param handler: The handler we will call. Used to inform the conversion process
+	:param handler: The handler we will call. Used to inform the conversion process.
+		The module of the handler (or its class) will be searched for registered
+		types. If the handler (or its class) declares a `_session_consumer_args_search_`
+		attribute that is an iterable of module names, those modules will be searched as well.
 	:return: A list of argument objects
 	"""
 	args = []
@@ -172,12 +175,19 @@ def _convert_message_args_to_objects( handler, message ):
 	# inspect the handler to find out where it lives so that we can
 	# limit the types the dataserver needs to search.
 	search_modules = [nti.dataserver.users, nti.dataserver.contenttypes]
+	def handlers_from_class( cls ):
+		mods = getattr( cls, '_session_consumer_args_search_', () )
+		search_modules.extend( (sys.modules[x] for x in mods) )
 	if hasattr( handler, 'im_class' ):
 		#bound method
 		search_modules.append( sys.modules[handler.im_class.__module__] )
+		handlers_from_class( handler.im_class )
 	elif isinstance( handler, type ):
 		#callable class
 		search_modules.append( sys.modules[handler.__module__] )
+		handlers_from_class( handler )
+	else:
+		handlers_from_class( handler )
 
 	ds = component.getUtility( nti_interfaces.IDataserver )
 	for arg in message['args']:
