@@ -274,7 +274,7 @@ class WebsocketTransport(BaseTransport):
 				self.message = self.session_proxy.get_client_msg()
 				assert isinstance(self.message, (str,types.NoneType)), "Messages should already be encoded as required"
 
-				listen = run_job_in_site( self._do_send, retries=2 )
+				listen = run_job_in_site( self._do_send, retries=5 )
 
 				if not listen:
 					# Don't send a message if the transactions failed
@@ -320,7 +320,7 @@ class WebsocketTransport(BaseTransport):
 			listen = True
 			while listen:
 				self.message = self.websocket.receive()
-				listen = run_job_in_site( self._do_read, retries=2 )
+				listen = run_job_in_site( self._do_read, retries=5 )
 
 	class WebSocketPinger(AbstractWebSocketOperator):
 
@@ -340,7 +340,7 @@ class WebsocketTransport(BaseTransport):
 			while listen:
 				gevent.sleep( self.ping_sleep )
 				# FIXME: Make time a config?
-				listen = run_job_in_site( self._do_ping, retries=2 )
+				listen = run_job_in_site( self._do_ping, retries=5 )
 
 	def connect(self, session, request_method, ping_sleep=5.0 ):
 

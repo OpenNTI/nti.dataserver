@@ -141,16 +141,3 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 		return extDict
 
 _UserExternalObject = _UserPersonalSummaryExternalObject
-
-def _UserPresenceExternalDecoratorFactory( user ):
-	# TODO: Presence information will depend on who's asking
-	ds = component.queryUtility( nti_interfaces.IDataserver )
-	if user and ds and ds.sessions:
-		return _UserPresenceExternalDecorator( user, ds )
-
-class _UserPresenceExternalDecorator(object):
-	def __init__( self, user, ds ):
-		self.ds = ds
-
-	def decorateExternalObject( self, user, result ):
-		result['Presence'] =  "Online" if self.ds.sessions.get_sessions_by_owner(user.username) else "Offline"

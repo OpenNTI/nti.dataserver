@@ -51,6 +51,10 @@
 	<subscriber handler="._socket_event_listeners.session_disconnected_broadcaster" />
 	<subscriber handler="._socket_event_listeners.session_connected_broadcaster" />
 
+	<subscriber factory="._socket_event_listeners._UserPresenceExternalDecoratorFactory"
+				for="nti.dataserver.interfaces.IUser"
+				provides="nti.dataserver.interfaces.IExternalObjectDecorator" />
+
 	<subscriber handler=".logon.add_new_user_to_static_communities" />
 
 	<subscriber factory=".dataserver_socketio_views._WSWillUpgradeVeto"

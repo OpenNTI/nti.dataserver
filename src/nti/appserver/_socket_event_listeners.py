@@ -11,9 +11,17 @@ from nti.dataserver import interfaces as nti_interfaces, users
 from nti.chatserver import interfaces as chat_interfaces
 from zope import component
 
+def _is_user_online(dataserver, username, ignoring_session=None):
+	"""
+	:return: A value that can be used as a boolean saying the user is online. In reality,
+		it will be an iterable of the user's sessions.
+	"""
+	sessions = set(dataserver.sessions.get_sessions_by_owner(username))
+	if ignoring_session: sessions.discard( ignoring_session )
+	return sessions
 
-def _notify_friends_of_presence( session, presence ):
-	dataserver = component.queryUtility( nti_interfaces.IDataserver )
+def _notify_friends_of_presence( session, presence, dataserver=None ):
+	dataserver = dataserver or component.queryUtility( nti_interfaces.IDataserver )
 	chatserver = component.queryUtility( chat_interfaces.IChatserver )
 	if dataserver is None or chatserver is None:
 		logger.debug( "Unable to broadcast presence notification. DS: %s CS %s", dataserver, chatserver )
@@ -32,9 +40,34 @@ def _notify_friends_of_presence( session, presence ):
 
 @component.adapter( nti_interfaces.ISocketSession, nti_interfaces.ISocketSessionDisconnectedEvent )
 def session_disconnected_broadcaster( session, event ):
-	_notify_friends_of_presence( session, 'Offline' )
+	dataserver = component.queryUtility( nti_interfaces.IDataserver )
+	if not (dataserver and dataserver.sessions):
+		logger.debug( "Unable to broadcast presence notification.")
+		return
+
+	online = _is_user_online( dataserver, session.owner, session )
+	if not online:
+		_notify_friends_of_presence( session, 'Offline' )
+	else:
+		logger.debug( "A session (%s) died, but some are still online (%s)", session, online )
 
 
 @component.adapter( nti_interfaces.ISocketSession, nti_interfaces.ISocketSessionConnectedEvent )
 def session_connected_broadcaster( session, event ):
 	_notify_friends_of_presence( session, 'Online' )
+
+## Add presence info to users
+
+
+def _UserPresenceExternalDecoratorFactory( user ):
+	# TODO: Presence information will depend on who's asking
+	ds = component.queryUtility( nti_interfaces.IDataserver )
+	if user and ds and ds.sessions:
+		return _UserPresenceExternalDecorator( user, ds )
+
+class _UserPresenceExternalDecorator(object):
+	def __init__( self, user, ds ):
+		self.ds = ds
+
+	def decorateExternalObject( self, user, result ):
+		result['Presence'] =  "Online" if _is_user_online( self.ds, user.username ) else "Offline"
