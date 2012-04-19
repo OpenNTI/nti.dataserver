@@ -42,6 +42,11 @@ class Session(Persistent):
 	STATE_DISCONNECTING = "DISCONNECTING"
 	STATE_DISCONNECTED = "DISCONNECTED"
 
+	connection_confirmed = False
+	_owner = None
+	_broadcast_connect = False
+	state = STATE_NEW
+
 	def __init__(self, session_service=None):
 		# The session id must be plain ascii for sending across sockets
 		self.session_id = uuid.uuid4().hex.encode('ascii')
@@ -50,14 +55,7 @@ class Session(Persistent):
 		self.server_queue = zc.queue.Queue() # queue for messages to server
 		self.hits = datastructures.MergingCounter( 0 )
 		self.heartbeats = datastructures.MergingCounter( 0 )
-		self.state = self.STATE_NEW
-		self.connection_confirmed = False
-
-		self._owner = None
-		self._broadcast_connect = False
-
 		self._last_heartbeat_time = minmax.Maximum( 0 )
-
 		self._v_session_service = session_service
 
 	def __eq__( self, other ):
@@ -68,9 +66,10 @@ class Session(Persistent):
 	def _get_owner( self ):
 		return self._owner
 	def _set_owner( self, o ):
-		old_owner = self._owner
-		self._owner = o
-		self.session_service._replace_in_owner_index( self, old_owner )
+		if o != self._owner:
+			old_owner = self._owner
+			self._owner = o
+			self.session_service._replace_in_owner_index( self, old_owner )
 	owner = property( _get_owner, _set_owner )
 
 	def _get_last_heartbeat_time(self):
@@ -107,6 +106,7 @@ class Session(Persistent):
 		# We don't really need to track this once
 		# we're going, and not doing so
 		# reduces chances of conflict.
+		if self._p_jar: self._p_jar.readCurrent( self.hits )
 		if self.hits.value + 1 == 1:
 			self.state = self.STATE_CONNECTED
 			self.hits.value = 1

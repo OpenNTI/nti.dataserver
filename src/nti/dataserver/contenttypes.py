@@ -36,12 +36,13 @@ class ThreadableMixin(object):
 
 	__external_oids__ = ['inReplyTo', 'references']
 
+	# Our one single parent
+	_inReplyTo = None
+	# Our chain of references back to the root
+	_references = ()
+
 	def __init__(self):
 		super(ThreadableMixin,self).__init__()
-		# Our one single parent
-		self._inReplyTo = None
-		# Our chain of references back to the root
-		self._references = []
 
 	def getInReplyTo(self):
 		return self._inReplyTo() if self._inReplyTo else None
@@ -57,10 +58,13 @@ class ThreadableMixin(object):
 
 	def addReference( self, value ):
 		if value is not None:
+			if not self._references:
+				self._references = PersistentList()
 			self._references.append( persistent.wref.WeakRef( value ) )
 
 	def clearReferences( self ):
-		del self._references[0:]
+		if self._references:
+			del self._references
 
 class ThreadableExternalizableMixin(ThreadableMixin):
 	"""

@@ -830,6 +830,8 @@ class User(Principal):
 								 if ( isinstance(x,tuple) and x[0] != obj ) or (not isinstance(x,tuple) and x != obj)]
 
 	def deleteContainedObject( self, containerId, containedId ):
+		if self._p_jar:
+			self._p_jar.readCurrent( self.containers )
 		return self.containers.deleteContainedObject( containerId, containedId )
 
 	# TODO: Could/Should we use proxy objects to automate
@@ -1221,4 +1223,7 @@ def user_devicefeedback( msg ):
 def onChange( datasvr, msg, username=None, broadcast=None, **kwargs ):
 	if username and not broadcast:
 		logger.debug( 'Incoming change to %s', username )
-		Entity.get_entity( username, dataserver=datasvr )._noticeChange( msg )
+		entity = Entity.get_entity( username, dataserver=datasvr )
+		if entity._p_jar:
+			entity._p_jar.readCurrent( entity )
+		entity._noticeChange( msg )
