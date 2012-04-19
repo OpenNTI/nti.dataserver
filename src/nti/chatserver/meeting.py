@@ -74,6 +74,7 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 	_v_chatserver = None
 	Active = True
 	_moderated = False
+	_occupant_names = ()
 	def __init__( self, chatserver ):
 		super(_Meeting,self).__init__()
 		self._v_chatserver = chatserver
@@ -81,7 +82,7 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 		self.containerId = None
 		self._MessageCount = datastructures.MergingCounter( 0 )
 		self.CreatedTime = time.time()
-		self._occupant_session_ids = BTrees.OOBTree.Set()
+		self._occupant_names = BTrees.OOBTree.Set()
 		# Sometimes a room is created with a subset of the occupants that
 		# should receive transcripts. The most notable case of this is
 		# creating a room in reply to something that's shared: everyone
@@ -114,6 +115,12 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 			state = dict(state)
 			del state['_chatserver']
 
+		# Migration 2012-04-19
+		if '_occupant_session_ids' in state:
+			state = dict(state)
+			del state['_occupant_session_ids']
+
+
 		super(_Meeting,self).__setstate__( state )
 		# Because we are swizzling classes dynamically at
 		# runtime, that fact may not be persisted in the database.
@@ -123,7 +130,7 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 		if state.get( '_moderated' ) and self.__class__ == _Meeting:
 			self.__class__ = _ModeratedMeeting
 
-			if not '_moderated_by_sids' in state:
+			if not '_moderated_by_names' in state:
 				# Belt and suspenders
 				logger.warn( "Inconsistent state of meeting %s", state )
 				self._moderated = False
@@ -169,39 +176,10 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 				# become unmoderated.
 				self._becomeUnmoderated()
 				self.__class__ = _Meeting
-			self.emit_roomModerationChanged( self._occupant_session_ids, self )
+			self.emit_roomModerationChanged( self._occupant_names, self )
 
 	Moderated = property( _Moderated, _setModerated )
 	Moderators = ()
-	@property
-	def occupant_session_ids(self):
-		"""
-		:return: A set of all the session ids occupying this room.
-		"""
-		return frozenset(self._occupant_session_ids)
-
-	def _find_sessions( self, sids ):
-		"""
-		:return: The sessions of all the active sessions in the given
-			iterable of session ids.
-		"""
-		result = []
-		for session_id in sids:
-			sess = self._chatserver.get_session( session_id )
-			if sess:
-				result.append( sess )
-		return result
-
-	@property
-	def occupant_sessions(self):
-		"""
-		:return: An iterable of the active sessions for all
-			the session ids in this room. Note that this will have length
-			equal or less than :meth:`occupant_session_ids` due to inactive
-			sessions.
-		"""
-		return self._find_sessions( self._occupant_session_ids )
-
 
 	@property
 	def occupant_session_names(self):
@@ -209,7 +187,8 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 		:return: An iterable of the names of all active users in this room.
 			See :meth:`occupant_sessions`.
 		"""
-		return { sess.owner for sess in self.occupant_sessions }
+		return frozenset(self._occupant_names)
+	occupant_names = occupant_session_names
 
 	def _ensure_message_stored( self, msg_info ):
 		"""
@@ -223,35 +202,31 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 	def _treat_recipients_like_default_channel( self, msg_info ):
 		return msg_info.is_default_channel() or not msg_info.recipients_without_sender
 
-	def _get_recipient_sessions_for_message( self, msg_info ):
+	def _get_recipient_names_for_message( self, msg_info ):
 		if self._treat_recipients_like_default_channel( msg_info ):
-			recipient_sessions = { self._chatserver.get_session( sid )
-								   for sid in self._occupant_session_ids }
+			recipient_names = set(self._occupant_names )
 		else:
-			recipient_sessions = { self._chatserver.get_session_for( r, session_ids=self._occupant_session_ids )
-								   for r in msg_info.recipients_with_sender }
-		recipient_sessions.discard( None )
-		return recipient_sessions
+			requested = set(msg_info.recipients_with_sender)
+			recipient_names = set( self._occupant_names ).intersection( requested )
+		recipient_names.discard( None )
+		return recipient_names
 
-	def _get_recipient_sids_for_message( self, msg_info, recipient_sessions=None ):
-		return {s.session_id for s in (recipient_sessions or self._get_recipient_sessions_for_message( msg_info ))}
-
-	def _sids_excluded_when_considering_all( self ):
+	def _names_excluded_when_considering_all( self ):
 		"""
 		:return: A set of sids excluded when comparing against all occupants.
 		"""
 		return set()
 
-	def _is_message_to_all_occupants( self, msg_info, recipient_sids=None, recipient_sessions=None ):
+	def _is_message_to_all_occupants( self, msg_info, recipient_names=None ):
 		"""
 		Should the message be treated as if it were the default
 		channel? Yes, if it is either to the DEFAULT channel, an empty recipient list, or its recipient list
-		is to everyone (not excluded by :meth:`_sids_excluded_when_considering_all`)
+		is to everyone (not excluded by :meth:`_names_excluded_when_considering_all`)
 		"""
 		if self._treat_recipients_like_default_channel( msg_info ):
 			return True
-		return (recipient_sids or self._get_recipient_sids_for_message( msg_info, recipient_sessions=recipient_sessions )) \
-			   == (set(self._occupant_session_ids) - self._sids_excluded_when_considering_all())
+		return (recipient_names or self._get_recipient_names_for_message( msg_info )) \
+			   == (set(self._occupant_names) - self._names_excluded_when_considering_all())
 
 	def _is_message_on_supported_channel( self, msg_info ):
 		"""
@@ -279,22 +254,22 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 
 		# Accumulate the session IDs of everyone who should get a copy.
 		# Note that may or may not include the sender--hence transcript_owners. (See note above)
-		recipient_sessions = self._get_recipient_sessions_for_message( msg_info )
+		recipient_names = self._get_recipient_names_for_message( msg_info )
 
-		if self._is_message_to_all_occupants( msg_info, recipient_sessions=recipient_sessions ):
+		if self._is_message_to_all_occupants( msg_info, recipient_names=recipient_names ):
 			# recipients are ignored for the default channel,
 			# and a message to everyone also counts for incrementing the ids.
 			self.MessageCount += 1
-			self.emit_recvMessage( recipient_sessions, msg_info )
+			self.emit_recvMessage( recipient_names, msg_info )
 		else:
 			# On a non-default channel, and not to everyone in the room
-			for session in recipient_sessions:
-				self.emit_recvMessage( session, msg_info )
+			for name in recipient_names:
+				self.emit_recvMessage( name, msg_info )
 
-		self._chatserver._save_message_to_transcripts( msg_info, recipient_sessions, transcript_owners=transcript_owners )
+		self._chatserver._save_message_to_transcripts( msg_info, recipient_names, transcript_owners=transcript_owners )
 		# Everyone who gets the transcript also
 		# is considered to be on the sharing list
-		msg_info.sharedWith = { recipient_session.owner for recipient_session in recipient_sessions }
+		msg_info.sharedWith = set(recipient_names)
 		msg_info.sharedWith = msg_info.sharedWith | transcript_owners
 		return True
 
@@ -302,40 +277,40 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 		""" Ensures that the user named `username` will get all appropriate transcripts. """
 		self._addl_transcripts_to.add( username )
 
-	def add_occupant_session_id( self, session_id, broadcast=True ):
+	def add_occupant_name( self, name, broadcast=True ):
 		"""
 		Adds the `session` to the group of sessions that are part of this room.
 		:param bool broadcast: If `True` (the default) an event will
 			be broadcast to the given session announcing it has entered the room.
 			Set to False when doing bulk updates.
 		"""
-		sess_count_before = len( self._occupant_session_ids )
-		self._occupant_session_ids.add( session_id )
-		sess_count_after = len( self._occupant_session_ids )
+		sess_count_before = len( self._occupant_names )
+		self._occupant_names.add( name )
+		sess_count_after = len( self._occupant_names )
 		if broadcast and sess_count_after != sess_count_before:
 			# Yay, we added one!
-			self.emit_enteredRoom( session_id, self )
-			self.emit_roomMembershipChanged( self.occupant_session_ids - set((session_id,)), self )
+			self.emit_enteredRoom( name, self )
+			self.emit_roomMembershipChanged( self.occupant_names - set((name,)), self )
 		else:
 			logger.debug( "Not broadcasting (%s) enter/change events for %s in %s",
-						  broadcast, session_id, self )
+						  broadcast, name, self )
 
-	def add_occupant_session_ids( self, session_ids ):
+	def add_occupant_names( self, names ):
 		"""
-		Adds all sessions contained in the iterable `sessions` to this group
+		Adds all sessions contained in the iterable `names` to this group
 		and broadcasts an event to each new member.
 		"""
-		new_members = set(session_ids).difference( self.occupant_session_ids )
-		old_members = self.occupant_session_ids - new_members
-		self._occupant_session_ids.update( new_members )
+		new_members = set(names).difference( self.occupant_names )
+		old_members = self.occupant_names - new_members
+		self._occupant_names.update( new_members )
 		self.emit_enteredRoom( new_members, self )
 		self.emit_roomMembershipChanged( old_members, self )
 
-	def del_occupant_session_id( self, session_id ):
-		if session_id in self._occupant_session_ids:
-			_discard( self._occupant_session_ids, session_id )
-			self.emit_exitedRoom( session_id, self )
-			self.emit_roomMembershipChanged( self._occupant_session_ids, self )
+	def del_occupant_name( self, name ):
+		if name in self._occupant_names:
+			_discard( self._occupant_names, name )
+			self.emit_exitedRoom( name, self )
+			self.emit_roomMembershipChanged( self._occupant_names, self )
 			return True
 
 	def toExternalDictionary( self, mergeFrom=None ):
@@ -344,9 +319,7 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 		# TODO: Need to make this have a mime type.
 		result['Moderated'] = self.Moderated
 		result['Moderators'] = list(self.Moderators) # sets can't go through JSON
-		result['Occupants'] = [self._chatserver.get_session( session_id ).owner
-							   for session_id in self._occupant_session_ids
-							   if self._chatserver.get_session( session_id )]
+		result['Occupants'] = list(self.occupant_names)
 		result['MessageCount'] = self.MessageCount
 		# TODO: Handling shadowing and so on.
 		return super(_Meeting,self).toExternalDictionary( mergeFrom=result )
@@ -362,7 +335,7 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 		except AttributeError: pass
 
 	def __repr__(self):
-		return "<%s %s %s(%s)>" % (self.__class__.__name__, self.ID, self._occupant_session_ids, self.toExternalDictionary()['Occupants'])
+		return "<%s %s %s>" % (self.__class__.__name__, self.ID, self._occupant_names)
 
 _ChatRoom = _Meeting
 deprecated('_ChatRoom', 'Prefer _Meeting' )
@@ -370,7 +343,7 @@ deprecated('_ChatRoom', 'Prefer _Meeting' )
 
 def _bypass_for_moderator( f ):
 	def bypassing( self, msg_info ):
-		if self.is_moderated_by( msg_info.sender_sid ):
+		if self.is_moderated_by( msg_info.Sender ):
 			super(_ModeratedMeeting,self).post_message( msg_info )
 			return True
 		return f( self, msg_info )
@@ -378,7 +351,7 @@ def _bypass_for_moderator( f ):
 
 def _only_for_moderator( f ):
 	def enforcing( self, msg_info ):
-		if not self.is_moderated_by( msg_info.sender_sid ):
+		if not self.is_moderated_by( msg_info.Sender ):
 			return False
 		return f( self, msg_info )
 	return enforcing
@@ -390,7 +363,7 @@ class _ModeratedMeeting(_Meeting):
 	__emits__ = ('recvMessageForModeration', 'recvMessageForShadow')
 
 	_moderation_queue = ()
-	_moderated_by_sids = ()
+	_moderated_by_names = ()
 	_shadowed_usernames = ()
 
 	def __init__( self, *args, **kwargs ):
@@ -398,19 +371,18 @@ class _ModeratedMeeting(_Meeting):
 
 
 	def _becameModerated( self ):
-		self._moderated_by_sids = BTrees.OOBTree.Set()
+		self._moderated_by_names = BTrees.OOBTree.Set()
 		self._shadowed_usernames = BTrees.OOBTree.Set()
 		self._moderation_queue = PersistentMapping()
 
 	def _becomeUnmoderated( self ):
-		del self._moderated_by_sids
+		del self._moderated_by_names
 		del self._shadowed_usernames
 		del self._moderation_queue
 
 	@property
 	def moderated_by_usernames( self ):
-		mod_sessions = self._find_sessions( self._moderated_by_sids )
-		return {session.owner for session in mod_sessions}
+		return frozenset( self._moderated_by_names )
 
 	Moderators = moderated_by_usernames
 
@@ -423,13 +395,13 @@ class _ModeratedMeeting(_Meeting):
 		self._shadowed_usernames.add( username )
 		return True
 
-	def _sids_excluded_when_considering_all( self ):
+	def _names_excluded_when_considering_all( self ):
 		"""
 		For purposes of calculating if a message is to everyone,
 		we ignore the moderators. This prevents whispering to the entire
 		room, minus the teachers.
 		"""
-		return set( self._moderated_by_sids )
+		return set( self._moderated_by_names )
 
 	def _is_message_on_supported_channel( self, msg_info ):
 		return (msg_info.channel or CHANNEL_DEFAULT) in CHANNELS
@@ -449,7 +421,7 @@ class _ModeratedMeeting(_Meeting):
 		if not handled:
 			if handler:
 				logger.debug( 'Handler (%s) rejected message (%s) sent by %s/%s (moderators: %s/%s)',
-							  handler, msg_info, msg_info.Sender, msg_info.sender_sid, list(self._moderated_by_sids), self.moderated_by_usernames )
+							  handler, msg_info, msg_info.Sender, msg_info.Sender, list(self._moderated_by_names), self.moderated_by_usernames )
 			else:
 				logger.debug( 'Dropping message on unknown channel %s', msg_info )
 		return handled
@@ -473,8 +445,8 @@ class _ModeratedMeeting(_Meeting):
 				 for recip in msg_info.recipients_with_sender] ):
 			msg_info.Status = STATUS_SHADOWED
 			self._ensure_message_stored( msg_info )
-			self.emit_recvMessageForShadow( self._moderated_by_sids, msg_info )
-			self._chatserver._save_message_to_transcripts( msg_info, self._moderated_by_sids )
+			self.emit_recvMessageForShadow( self._moderated_by_names, msg_info )
+			self._chatserver._save_message_to_transcripts( msg_info, self._moderated_by_names )
 
 	@_bypass_for_moderator
 	def _msg_handle_WHISPER( self, msg_info ):
@@ -496,7 +468,7 @@ class _ModeratedMeeting(_Meeting):
 		self._ensure_message_stored( msg_info )
 		self._moderation_queue[msg_info.MessageId] = msg_info
 		msg_info.Status = STATUS_PENDING
-		self.emit_recvMessageForModeration( self._moderated_by_sids, msg_info )
+		self.emit_recvMessageForModeration( self._moderated_by_names, msg_info )
 		return True
 
 	@_only_for_moderator
@@ -541,7 +513,7 @@ class _ModeratedMeeting(_Meeting):
 		return True
 
 	def _msg_handle_POLL( self, msg_info ):
-		if self.is_moderated_by( msg_info.sender_sid ):
+		if self.is_moderated_by( msg_info.Sender ):
 			# TODO: Track the OIDs of these messages so we can
 			# validate replies
 			# TODO: Validate body, when we decide what that is
@@ -560,12 +532,12 @@ class _ModeratedMeeting(_Meeting):
 		return True
 
 
-	def add_moderator( self, mod_sid ):
-		self._moderated_by_sids.add( mod_sid )
-		self.emit_roomModerationChanged( self._occupant_session_ids, self )
+	def add_moderator( self, mod_name ):
+		self._moderated_by_names.add( mod_name )
+		self.emit_roomModerationChanged( self._occupant_names, self )
 
-	def is_moderated_by( self, mod_sid ):
-		return mod_sid in self._moderated_by_sids
+	def is_moderated_by( self, mod_name ):
+		return mod_name in self._moderated_by_names
 
 	def approve_message( self, msg_id ):
 		# TODO: Disapprove messages? This queue could get terrifically

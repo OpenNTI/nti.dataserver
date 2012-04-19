@@ -13,14 +13,14 @@ from zope import component
 
 from . import interfaces
 
-def _send_event( chatserver, sessions, name, *args ):
+def _send_event( chatserver, names, evt_name, *args ):
 	"""
-	Utility method to send an event to a session or sessions.
+	Utility method to send an event to a username or usernames.
 	"""
-	if isinstance(sessions, six.string_types) or not isinstance( sessions, collections.Iterable ):
-		sessions = (sessions,)
-	for session in sessions:
-		chatserver.send_event( session, name, *args )
+	if isinstance(names, six.string_types) or not isinstance( names, collections.Iterable ):
+		names = (names,)
+	for sname in names:
+		chatserver.send_event_to_user( sname, evt_name, *args )
 
 class _ChatObjectMeta(type):
 

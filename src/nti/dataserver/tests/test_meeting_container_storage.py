@@ -26,7 +26,7 @@ import mock_dataserver
 
 
 class TestMeetingContainer(ConfiguringTestBase):
-
+	occupant_names = ()
 	ID_FL1 = ntiids.make_ntiid( provider='foo@bar', nttype=ntiids.TYPE_MEETINGROOM_GROUP, specific='fl1' )
 
 	@WithMockDS
@@ -73,7 +73,7 @@ class TestMeetingContainer(ConfiguringTestBase):
 
 
 class TestFriendsListAdaptor( ConfiguringTestBase ):
-
+	occupant_names = ()
 	@WithMockDS
 	def test_create_and_empty( self ):
 		ds = self.ds
@@ -142,10 +142,13 @@ class TestFriendsListAdaptor( ConfiguringTestBase ):
 		assert_that( adapt.enter_active_meeting( None, {'Creator': 'me'} ), is_( none() ) )
 
 		# Valid sender works
-		assert_that( adapt.enter_active_meeting( None, {'Creator': user.username} ), is_( self ) )
+		## A friend  reenters an existing room
+		assert_that( adapt.enter_active_meeting( None, {'Creator': 'friend@bar'} ), is_( self ) )
+		## The creator gets a fresh one
+		assert_that( adapt.enter_active_meeting( None, {'Creator': user.username} ), is_( none() ) )
 
 class TestClassSectionAdapter( ConfiguringTestBase ):
-
+	occupant_names = ()
 	@WithMockDS
 	def test_create_and_empty( self ):
 		ds = self.ds

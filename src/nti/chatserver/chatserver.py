@@ -147,17 +147,17 @@ class Chatserver(object):
 				return s
 		return None
 
-	def get_session( self, session_id ):
-		return session_id if hasattr( session_id, 'socket' ) else self.sessions.get_session( session_id )
-
 	### Low-level IO
 
-	def send_event( self, session_id, name, *args ):
-		session = self.get_session( session_id )
-		if session:
-			all_sessions = self.sessions.get_sessions_by_owner( session.owner )
+	def send_event_to_user( self, username, name, *args ):
+		if username:
+			all_sessions = self.sessions.get_sessions_by_owner( username )
+			if not all_sessions:
+				logger.debug( "No sessions for %s to send event %s to", username, name )
+				return
 			args = [datastructures.toExternalObject( arg ) for arg in args]
 			for s in all_sessions:
+				logger.debug( "Dispatching %s to %s", name, s )
 				s.socket.send_event( name, *args )
 
 	### General events
@@ -165,12 +165,14 @@ class Chatserver(object):
 	def _notify_target( self, target, meth_name, *args ):
 		candidates = list( self.sessions.get_sessions_by_owner( target ) )
 		candidates.sort( key=lambda x: x.creation_time, reverse=True )
-		for sess in candidates:
+		if candidates:
 			try:
-				getattr( ChatHandlerFactory( sess, chatserver=self ),
-						 meth_name )( sess, *args )
+				# TODO: This is weird. We're bouncing out ta a ChatHandler,
+				# which comes right back down to us to send_event_to_user. Why?
+				getattr( ChatHandlerFactory( candidates[0], chatserver=self ),
+						 meth_name )( target, *args )
 			except Exception:
-				logger.exception( "Failed to %s to %s", meth_name, sess )
+				logger.exception( "Failed to %s to %s", meth_name, candidates[0] )
 
 	def notify_presence_change( self, sender, new_presence, targets ):
 		for target in set(targets):
@@ -218,6 +220,8 @@ class Chatserver(object):
 		# This next call MIGHT change that, so preserve it.
 		occupant_tuple = room_info_dict['Occupants'][0]
 		room = container.enter_active_meeting( self, room_info_dict )
+		# NOTE: The below FIXME are probably invalid, now that we are strictly name based,
+		# and all sessions are equivalent. The 'semi-fix' is no longed needed
 		# FIXME: If the room is never completely exited, then it may persist
 		# as Active for a long time. Then users could be re-entering it
 		# many, many times, leading to an ever-growing list of active sessions
@@ -230,15 +234,11 @@ class Chatserver(object):
 		# FIXME: Clearing out all these sessions as a group means we
 		# don't do any cleanout as long as there's at least one active session.
 		# We need to do something better with individual cleanups.
-		if room and len(room.occupant_sessions) == 0 and len(room.occupant_session_ids) > 0:
-			logger.debug( "Clearing out all stale sessions from %s", room )
-			for sid in room.occupant_session_ids:
-				self.exit_meeting( room.RoomId, sid )
-			room = None
+
 		if room:
 			logger.debug( "%s entering existing persistent meeting %s", occupant_tuple, room )
 			# Yes, we got in. Announce this.
-			room.add_occupant_session_id( occupant_tuple[1] )
+			room.add_occupant_name( occupant_tuple[0] )
 		else:
 			# We didn't get in. We know we have a container, though,
 			# so see if we can start one.
@@ -283,7 +283,7 @@ class Chatserver(object):
 								  container, room, room_info_dict )
 					for orig_occupant in orig_occupants:
 						if isinstance( orig_occupant, tuple ) and orig_occupant[0] == room_info_dict['Creator']:
-							room.add_occupant_session_id( orig_occupant[1] )
+							room.add_occupant_name( orig_occupant[0] )
 							break
 					return room
 
@@ -297,8 +297,9 @@ class Chatserver(object):
 		if room is None:
 			room = _Meeting(self)
 
-		# Resolve occupants
+		# Resolve occupants, chiefly to make sure some are online
 		sessions = []
+		occupants = []
 		for occupant in room_info_dict['Occupants']:
 			session = None
 			session_ids = None
@@ -306,6 +307,7 @@ class Chatserver(object):
 				# Two-tuples give us the session ID
 				session_ids = occupant[1]
 				occupant = occupant[0]
+			occupants.append( occupant )
 			session = self.get_session_for( occupant, session_ids )
 			if session:	sessions.append( session.session_id )
 		if not sessions or (callable(sessions_validator) and not sessions_validator(sessions)):
@@ -322,21 +324,21 @@ class Chatserver(object):
 		room.Active = True
 		self.rooms.add_room( room )
 
-		room.add_occupant_session_ids( sessions )
+		room.add_occupant_names( occupants )
 		return room
 
 	def get_meeting( self, room_id ):
 		return self.rooms.get( room_id )
 
-	def exit_meeting( self, room_id, session_id ):
+	def exit_meeting( self, room_id, username ):
 		"""
 		:return: Value indicating successful exit.
 		"""
 		result = None
 		room = self.rooms.get( room_id )
 		if room:
-			result = room.del_occupant_session_id( session_id )
-			if not room.occupant_session_ids:
+			result = room.del_occupant_name( username )
+			if not room.occupant_names:
 				room.Active = False
 				container = self.meeting_container_storage.get( room.containerId )
 				if hasattr( container, 'meeting_became_empty' ):
@@ -353,8 +355,7 @@ class Chatserver(object):
 
 	### Transcripts
 
-	def _ts_storage_for( self, session, create_if_missing=True ):
-		owner = session.owner if hasattr(session,'owner') else session
+	def _ts_storage_for( self, owner, create_if_missing=True ):
 		storage = None
 		if owner:
 			# TODO: Need a component to resolve users
@@ -364,20 +365,16 @@ class Chatserver(object):
 					else None
 		return storage
 
-	def _save_message_to_transcripts( self, msg_info, transcript_sids, transcript_owners=() ):
+	def _save_message_to_transcripts( self, msg_info, transcript_names, transcript_owners=() ):
 		"""
 		Adds the message to the transcripts of each user given.
 
 		:param MessageInfo msg_info: The message. Must have a container id.
-		:param iterable transcript_sids: Iterable of session ids or sessions to post the message to.
+		:param iterable transcript_names: Iterable of usernames to post the message to.
 		:param iterable transcript_owners: Iterable of usernames to post the message to.
 		"""
 		owners = set( transcript_owners )
-
-		for sid in transcript_sids:
-			sess = self.get_session( sid )
-			if not sess: continue
-			owners.add( sess.owner )
+		owners.update( set(transcript_names) )
 
 		change = Change( Change.CREATED, msg_info )
 		change.creator = msg_info.Sender

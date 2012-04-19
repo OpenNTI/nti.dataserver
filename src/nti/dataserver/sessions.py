@@ -53,8 +53,8 @@ class Session(Persistent):
 		self.creation_time = time.time()
 		self.client_queue = zc.queue.Queue() # queue for messages to client
 		self.server_queue = zc.queue.Queue() # queue for messages to server
-		self.hits = datastructures.MergingCounter( 0 )
-		self.heartbeats = datastructures.MergingCounter( 0 )
+
+		self._hits = datastructures.MergingCounter( 0 )
 		self._last_heartbeat_time = minmax.Maximum( 0 )
 		self._v_session_service = session_service
 
@@ -84,8 +84,7 @@ class Session(Persistent):
 		result.append( 'owner=%s' % self.owner )
 		result.append( 'client_queue[%s]' % len(self.client_queue))
 		result.append( 'server_queue[%s]' % len(self.server_queue))
-		result.append( 'hits=%s' % self.hits.value)
-		result.append( 'heartbeats=%s' % self.heartbeats.value)
+		result.append( 'hits=%s' % self._hits.value)
 		result.append( 'confirmed=%s' % self.connection_confirmed )
 		result.append( 'id=%s]'% id(self) )
 		return ' '.join(result)
@@ -106,10 +105,10 @@ class Session(Persistent):
 		# We don't really need to track this once
 		# we're going, and not doing so
 		# reduces chances of conflict.
-		if self._p_jar: self._p_jar.readCurrent( self.hits )
-		if self.hits.value + 1 == 1:
+		if self._p_jar: self._p_jar.readCurrent( self._hits )
+		if self._hits.value + 1 == 1:
 			self.state = self.STATE_CONNECTED
-			self.hits.value = 1
+			self._hits.value = 1
 		if self.connected and self.connection_confirmed and self.owner and not self._broadcast_connect:
 			self._broadcast_connect = True
 			notify( SocketSessionConnectedEvent( self ) )
@@ -119,11 +118,13 @@ class Session(Persistent):
 		# should not clear this. We wind up writing to session
 		# state from background processes, which
 		# leads to conflicts.
-		self.last_heartbeat_time = time.time()
+		# Directly set the .value, avoiding the property, because
+		# the property still causes this object to be considered modified (?)
+		self._last_heartbeat_time.value = time.time()
 
 
 	def heartbeat(self):
-		self.last_heartbeat_time = time.time()
+		self.clear_disconnect_timeout()
 
 	def kill(self):
 		if self.connected:
