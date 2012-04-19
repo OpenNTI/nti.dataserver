@@ -70,12 +70,13 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 				 'roomMembershipChanged', 'roomModerationChanged' )
 	_prefer_oid_ = False
 
-	# Should probably have subclasses for moderation and the like?
+
 	_v_chatserver = None
+	Active = True
+	_moderated = False
 	def __init__( self, chatserver ):
 		super(_Meeting,self).__init__()
 		self._v_chatserver = chatserver
-		self.Active = True
 		self.id = None
 		self.containerId = None
 		self._MessageCount = datastructures.MergingCounter( 0 )
@@ -89,8 +90,6 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 		# TODO: How does this interact with things that are
 		# shared publically and not specific users?
 		self._addl_transcripts_to = BTrees.OOBTree.Set()
-		# Things for the moderation subclass
-		self._moderated = False
 
 
 	def _get_chatserver(self):
@@ -121,7 +120,7 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 		# We have to restore it when the object comes alive.
 		# This is tightly coupled with the implementation of
 		# _becameModerated/_becameUnmoderated
-		if state['_moderated'] and self.__class__ == _Meeting:
+		if state.get( '_moderated' ) and self.__class__ == _Meeting:
 			self.__class__ = _ModeratedMeeting
 
 			if not '_moderated_by_sids' in state:
@@ -129,6 +128,11 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 				logger.warn( "Inconsistent state of meeting %s", state )
 				self._moderated = False
 				self.__class__ = _Meeting
+
+	def _p_resolveConflict( self, old, saved, new ):
+		# FIXME: It's not clear what could be actually conflicting
+		logger.warn( "Resolving conflict in Meeting. \n%s\n%s\n%s", old, saved, new )
+		return new
 
 	def __getattribute__( self, name ):
 		result = super(_Meeting,self).__getattribute__( name )

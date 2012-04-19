@@ -23,7 +23,7 @@ from zope.processlifetime import DatabaseOpenedWithRoot
 
 import zope.generations.generations
 import zope.deprecation
-
+import ZODB.Connection
 
 from persistent import Persistent, wref
 import transaction
@@ -275,7 +275,7 @@ class MinimalDataserver(object):
 
 
 		notify( DatabaseOpenedWithRoot( self.db ) )
-
+		ZODB.Connection.resetCaches()
 		self._parentDir = parentDir
 		self._dataFileName = dataFileName
 

@@ -45,10 +45,9 @@ class Session( _sessions.Session ):
 
 	interface.implements( socketio_interfaces.ISocketIOChannel )
 
-	def __init__(self,**kwargs):
-		super(Session,self).__init__(**kwargs)
-		self.wsgi_app_greenlet = True
-		self.message_handler = None
+	wsgi_app_greenlet = True # TODO: Needed anymore?
+	message_handler = None
+
 
 	@deprecate("Prefer the `socket` property")
 	def new_protocol( self, handler=None ):
@@ -64,6 +63,10 @@ class Session( _sessions.Session ):
 		p = nti.socketio.protocol.SocketIOSocket( self )
 		#p.session = self
 		return p
+
+	def _p_resolveConflict( self, old, saved, new ):
+		logger.warn( "Resolving conflict in session. \n%s\n%s\n%s", old, saved, new )
+		return new
 
 
 	# The names are odd. put_server_msg is a message TO
