@@ -99,11 +99,11 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 		self._v_chatserver = cs
 	_chatserver = property(_get_chatserver, _set_chatserver )
 
-	def _get_MessageCount(self):
+	@property
+	def MessageCount(self):
+		# Can only set this directly, setting as a property
+		# leads to false conflicts
 		return self._MessageCount.value
-	def _set_MessageCount(self,nv):
-		self._MessageCount.value = nv
-	MessageCount = property(_get_MessageCount,_set_MessageCount)
 
 	def __setstate__( self, state ):
 		# Migration 2012-04-03. Easier than searching these all out
@@ -135,11 +135,6 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 				logger.warn( "Inconsistent state of meeting %s", state )
 				self._moderated = False
 				self.__class__ = _Meeting
-
-	def _p_resolveConflict( self, old, saved, new ):
-		# FIXME: It's not clear what could be actually conflicting
-		logger.warn( "Resolving conflict in Meeting. \n%s\n%s\n%s", old, saved, new )
-		return new
 
 	def __getattribute__( self, name ):
 		result = super(_Meeting,self).__getattribute__( name )
@@ -259,7 +254,7 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 		if self._is_message_to_all_occupants( msg_info, recipient_names=recipient_names ):
 			# recipients are ignored for the default channel,
 			# and a message to everyone also counts for incrementing the ids.
-			self.MessageCount += 1
+			self._MessageCount.value += 1
 			self.emit_recvMessage( recipient_names, msg_info )
 		else:
 			# On a non-default channel, and not to everyone in the room

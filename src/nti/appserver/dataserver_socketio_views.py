@@ -64,11 +64,6 @@ class Session( _sessions.Session ):
 		#p.session = self
 		return p
 
-	def _p_resolveConflict( self, old, saved, new ):
-		logger.warn( "Resolving conflict in session. \n%s\n%s\n%s", old, saved, new )
-		return new
-
-
 	# The names are odd. put_server_msg is a message TO
 	# the server. That is, a message arriving at the server,
 	# sent from the client. In contrast, put_client_msg
