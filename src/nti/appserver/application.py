@@ -195,7 +195,7 @@ def site_tween_factory(handler, registry):
 			# manager, and a normal exit ignores the return value of __exit__, so the loop
 			# doesn't actually loop: the return statement trumps).
 			# Thus, we commit here so that an exception is raised and caught.
-			# Will be filing a bug on this.
+			# See https://github.com/Pylons/pyramid_tm/issues/4
 			if not transaction.isDoomed() and not pyramid_tm.default_commit_veto( request, response ):
 				transaction.commit()
 			return response
