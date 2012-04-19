@@ -72,11 +72,11 @@ class Session(Persistent):
 			self.session_service._replace_in_owner_index( self, old_owner )
 	owner = property( _get_owner, _set_owner )
 
-	def _get_last_heartbeat_time(self):
+	@property
+	def last_heartbeat_time(self):
+		# Can only read as a property, setting as a property
+		# leads to false conflicts
 		return self._last_heartbeat_time.value
-	def _set_last_heartbeat_time(self, t):
-		self._last_heartbeat_time.value = t
-	last_heartbeat_time = property( _get_last_heartbeat_time, _set_last_heartbeat_time )
 
 	def __str__(self):
 		result = ['[session_id=%r' % self.session_id]
@@ -105,7 +105,7 @@ class Session(Persistent):
 		# We don't really need to track this once
 		# we're going, and not doing so
 		# reduces chances of conflict.
-		if self._p_jar: self._p_jar.readCurrent( self._hits )
+
 		if self._hits.value + 1 == 1:
 			self.state = self.STATE_CONNECTED
 			self._hits.value = 1
