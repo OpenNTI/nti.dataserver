@@ -401,7 +401,10 @@ class WebsocketTransport(BaseTransport):
 		return [gr1, gr2, heartbeat]
 
 	def kill( self ):
-		self.websocket.close_connection()
+		try:
+			self.websocket.close()
+		except Exception:
+			logger.exception( "Failed to close websocket." )
 
 class FlashsocketTransport(WebsocketTransport):
 	pass

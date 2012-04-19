@@ -497,29 +497,15 @@ class Dataserver(MinimalDataserver):
 		# ownership questions, we simply stuff the object in the database and
 		# send its ID.
 		_change = _Change( change, dict(kwargs) ) # Must copy, tend to be reused
-		# Force the change to be added. Without this,
-		# sometimes for some reason it doesn't get an OID by
-		# the time the transaction is committed.
-		self.root._p_jar.add( _change )
-		# TODO: Reconsider this. It's probably not needed anymore,
-		# and our choice of datastructure--a list--is terribly inefficient
-		#self.root['changes'].append( _change )
+		# In the past, we did this with an on-commit hook, but the hook may run
+		# after our site configuration has been removed, so it's best to
+		# do it immediately
+		self._on_recv_change( (_change,) )
 
-		txn = transaction.get() #_ContextManager.contextManager().txn
-
-		# Coalesce if possible
-		adder = getattr( txn, 'add' + self._HOOK_NAME + 'Hook' )
-		getter = getattr( txn, 'get' + self._HOOK_NAME + 'Hooks' )
-		found = False
-		for hook in getter():
-			if isinstance( hook[0], Dataserver._OnCommit ):
-				if hook[0].kwargs == kwargs:
-					hook[0].add_change( _change )
-					found = True
-					break
-		if not found:
-			on_commit = Dataserver._OnCommit(self,_change,kwargs)
-			adder( on_commit )
+		# # Force the change to be added. Without this,
+		# # sometimes for some reason it doesn't get an OID by
+		# # the time the transaction is committed.
+		# self.root._p_jar.add( _change )
 
 	def _on_recv_change( self, msg ):
 		"""

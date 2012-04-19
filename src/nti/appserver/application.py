@@ -140,6 +140,69 @@ class _Main(object):
 			return body + '\n'
 
 		return self.pyramid_app( environ, start_request )
+import pyramid_tm
+def site_tween_factory(handler, registry):
+	# Our site setup
+	# If we wanted to, we could be setting sites up as we traverse as well
+	setHooks()
+	def early_request_teardown(request):
+		"""
+		Clean up all the things set up by our new request handler and the
+		tweens. Call this function if the request thread will not be returning,
+		but these resources should be cleaned up.
+		"""
+		transaction.commit()
+		pyramid_zodbconn.get_connection(request).close()
+		setSite( None )
+		# Remove the close action that pyramid_zodbconn wants to do.
+		# The connection might have been reused by then.
+		for callback in request.finished_callbacks:
+			if getattr( callback, '__module__', None ) == pyramid_zodbconn.__name__:
+				request.finished_callbacks.remove( callback )
+				break
+
+	def site_tween( request ):
+		"""
+		Within the scope of a transaction, gets a connection and installs our
+		site manager. Records the active user and URL in the transaction.
+		"""
+		conn = pyramid_zodbconn.get_connection( request )
+		conn.sync()
+		site = conn.root()['nti.dataserver']
+		old_site = getSite()
+		# Not sure what circumstances lead to already having a site
+		# here. Have seen it at startup. Force it back to none (?)
+		# It is very bad to raise an exception here, it interacts
+		# badly with logging
+		try:
+			assert old_site is None, "Should not have a site already in place"
+		except AssertionError:
+			logger.exception( "Should not have a site already in place: %s", old_site )
+			old_site = None
+
+		setSite( site )
+		try:
+			# Now (and only now, that the site is setup) record info in the transaction
+			uid = pyramid.security.authenticated_userid( request )
+			if uid:
+				transaction.get().setUser( uid )
+			transaction.get().note( request.url )
+			request.environ['nti.early_request_teardown'] = early_request_teardown
+			response = handler(request)
+			### FIXME:
+			# pyramid_tm <= 0.4 has a bug in that if committing raises a retryable exception,
+			# it doesn't actually retry (because commit is inside the __exit__ of a context
+			# manager, and a normal exit ignores the return value of __exit__, so the loop
+			# doesn't actually loop: the return statement trumps).
+			# Thus, we commit here so that an exception is raised and caught.
+			# Will be filing a bug on this.
+			if not transaction.isDoomed() and not pyramid_tm.default_commit_veto( request, response ):
+				transaction.commit()
+			return response
+		finally:
+			setSite()
+
+	return site_tween
 
 def createApplication( http_port,
 					   library,
@@ -229,59 +292,7 @@ def createApplication( http_port,
 	pyramid_config.registry._zodb_databases = { '': server.db } # 0.3
 	#pyramid_config.registry.settings('zodbconn.uri') =
 
-	# Our site setup
-	# If we wanted to, we could be setting sites up as we traverse as well
-	setHooks()
-	def early_request_teardown(request):
-		"""
-		Clean up all the things set up by our new request handler and the
-		tweens. Call this function if the request thread will not be returning,
-		but these resources should be cleaned up.
-		"""
-		transaction.commit()
-		pyramid_zodbconn.get_connection(request).close()
-		setSite( None )
-		# Remove the close action that pyramid_zodbconn wants to do.
-		# The connection might have been reused by then.
-		for callback in request.finished_callbacks:
-			if getattr( callback, '__module__', None ) == pyramid_zodbconn.__name__:
-				request.finished_callbacks.remove( callback )
-				break
-
-	def set_site_teardown(request):
-		# def setSite(site=None): so calling this with no arg brings us back to None
-		setSite()
-
-	def on_new_request(evt):
-		"""
-		Within the scope of a transaction, gets a connection and installs our
-		site manager. Records the active user and URL in the transaction.
-		"""
-		request = evt.request
-		conn = pyramid_zodbconn.get_connection( request )
-		site = conn.root()['nti.dataserver']
-		old_site = getSite()
-		# Not sure what circumstances lead to already having a site
-		# here. Have seen it at startup. Force it back to none (?)
-		# It is very bad to raise an exception here, it interacts
-		# badly with logging
-		try:
-			assert old_site is None, "Should not have a site already in place"
-		except AssertionError:
-			logger.exception( "Should not have a site already in place: %s", old_site )
-			old_site = None
-
-		setSite( site )
-
-		request.add_finished_callback( set_site_teardown )
-		# Now (and only now, that the site is setup) record info in the transaction
-		uid = pyramid.security.authenticated_userid( request )
-		if uid:
-			transaction.get().setUser( uid )
-		transaction.get().note( request.url )
-		request.environ['nti.early_request_teardown'] = early_request_teardown
-
-	pyramid_config.add_subscriber( on_new_request, pyramid.interfaces.INewRequest )
+	pyramid_config.add_tween( 'nti.appserver.application.site_tween_factory', under='pyramid_tm.tm_tween_factory' )
 
 
 	# The pyramid_openid view requires a session. The repoze.who.plugins.openid plugin

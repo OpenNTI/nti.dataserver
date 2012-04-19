@@ -23,6 +23,7 @@ import anyjson as json
 
 # Persistence
 from persistent import Persistent
+import persistent.list
 from persistent.mapping import PersistentMapping
 import BTrees.OOBTree
 
@@ -287,7 +288,7 @@ class SessionService(object):
 						old.remove( session.session_id )
 					except (ValueError,KeyError): pass
 			gnu = session_db['session_index'].get( session.owner )
-			if gnu is None:
+			if gnu is None or isinstance(gnu,persistent.list.PersistentList): #migration
 				gnu = BTrees.OOBTree.OOSet( (session.session_id,) )
 				session_db['session_index'][session.owner] = gnu
 			else:
