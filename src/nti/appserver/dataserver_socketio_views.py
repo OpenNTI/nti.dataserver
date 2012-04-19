@@ -14,6 +14,7 @@ logger = logging.getLogger( __name__ )
 from zope import component
 from zope import interface
 from zope.deprecation import deprecate
+import transaction
 
 from pyramid.view import view_config
 import pyramid.security as sec
@@ -31,8 +32,6 @@ import nti.dataserver.session_consumer
 
 
 import nti.dataserver.sessions as _sessions
-import nti.dataserver.datastructures as datastructures
-import json
 
 from nti.socketio import interfaces as socketio_interfaces
 import nti.socketio.protocol
@@ -241,7 +240,16 @@ def _connect_view( request ):
 	# if we do expect to stick around a long time
 	if 'wsgi.websocket' in environ:
 		# See application.py
-		environ['nti.early_request_teardown'](request)
+		try:
+			environ['nti.early_request_teardown'](request)
+		except Exception:
+			# Gotta kill the jobs
+			logger.exception( "Failed to teardown request; aborting" )
+			transaction.doom() # No use trying again
+			transport.kill()
+			for job in jobs_or_response:
+				job.kill()
+			raise
 
 
 	if jobs_or_response:
