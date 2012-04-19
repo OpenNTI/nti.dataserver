@@ -127,7 +127,7 @@ class TestChatRoom(ConfiguringTestBase):
 		# A method attribute, not an ivar, triggers this
 		assert_that( room.post_message, is_( not_none() ) )
 		assert_that( room, is_( chat.ModeratedMeeting ) )
-		assert_that( room, has_property( '_moderated_by_sids', not_none() ) )
+		assert_that( room, has_property( '_moderated_by_names', not_none() ) )
 		# Now, we can reverse the property
 		room.Moderated = False
 		assert_that( room, is_( chat.Meeting ) )
@@ -273,7 +273,7 @@ class TestChatserver(ConfiguringTestBase):
 		"""
 		room, chatserver = self._create_room( otherDict )
 		room.Moderated = True
-		room.add_moderator( 1 ) # sjohnson moderates
+		room.add_moderator( 'sjohnson' ) # sjohnson moderates
 		assert_that( room.Moderated, is_( True ) )
 		assert_that( room.Moderators, is_( set(['sjohnson']) ) )
 		return room, chatserver
@@ -336,6 +336,7 @@ class TestChatserver(ConfiguringTestBase):
 		# I entered and created.
 		room = foo_handler.enterRoom( {'ContainerId': fl1.NTIID } )
 		assert_that( room, is_( not_none() ) )
+		assert_that( room, has_property( 'occupant_names', set( (foo_handler.session_owner, 'friend@bar') ) ) )
 
 		# A friend can enter and be in the same room.
 		assert_that( friend_handler.enterRoom( {"ContainerId": fl1.NTIID } ), is_( room ) )
@@ -349,6 +350,7 @@ class TestChatserver(ConfiguringTestBase):
 
 		# We can both exit, and now we get a new room
 		assert_that( friend_handler.exitRoom( room.ID ), is_( True ) )
+
 		assert_that( foo_handler.exitRoom( room.ID ), is_( True ) )
 
 		room2 = foo_handler.enterRoom( {'ContainerId': fl1.NTIID } )

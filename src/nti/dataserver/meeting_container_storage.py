@@ -114,6 +114,20 @@ class _FriendsListAdapter(_AbstractMeetingContainerAdapter):
 		occupants.add( self.friends_list.creator.username )
 		return occupants
 
+	def enter_active_meeting( self, chatserver, meeting_dict ):
+		# Any time the creator wants to re-enter the room, if
+		# people have left then we start fresh...in fact, we always
+		# start fresh, in order to send out 'entered room' messages. This is
+		# poorly done and can lead to 'DOS' for the poor friends
+		active_meeting = super(_FriendsListAdapter,self).enter_active_meeting( chatserver, meeting_dict )
+		if active_meeting and meeting_dict.get( 'Creator' ) == self.friends_list.creator.username:
+			logger.debug( "Recreating friends list room for creator %s (due to missing people %s != %s?)",
+						  meeting_dict.get( 'Creator' ), active_meeting.occupant_names, self._allowed_occupants )
+			self.meeting_became_empty( chatserver, active_meeting )
+			active_meeting = None
+
+		return active_meeting
+
 class _ClassSectionAdapter(_AbstractMeetingContainerAdapter):
 	component.adapts( classes.SectionInfo )
 
@@ -130,6 +144,21 @@ class _ClassSectionAdapter(_AbstractMeetingContainerAdapter):
 	def _allowed_creators( self ):
 		return self.container.InstructorInfo.Instructors
 
+	# TODO: The issues with doing the same thing for classes we do for
+	# friends lists are subtle. What do we want to do here?
+	# def enter_active_meeting( self, chatserver, meeting_dict ):
+	# 	# Any time the creator wants to re-enter the room, if
+	# 	# people have left then we start fresh...in fact, we always
+	# 	# start fresh, in order to send out 'entered room' messages. This is
+	# 	# poorly done and can lead to 'DOS' for the poor friends
+	# 	active_meeting = super(_ClassSectionAdapter,self).enter_active_meeting( chatserver, meeting_dict )
+	# 	if active_meeting and meeting_dict.get( 'Creator' ) in self._allowed_creators:
+	# 		logger.debug( "Recreating friends list room for creator %s (due to missing people %s != %s?)",
+	# 					  meeting_dict.get( 'Creator' ), active_meeting.occupant_names, self._allowed_occupants )
+	# 		self.meeting_became_empty( chatserver, active_meeting )
+	# 		active_meeting = None
+
+	# 	return active_meeting
 
 class MeetingContainerStorage(object):
 	"""

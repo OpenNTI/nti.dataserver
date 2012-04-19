@@ -275,7 +275,7 @@ class MinimalDataserver(object):
 
 
 		notify( DatabaseOpenedWithRoot( self.db ) )
-		ZODB.Connection.resetCaches()
+		#ZODB.Connection.resetCaches()
 		self._parentDir = parentDir
 		self._dataFileName = dataFileName
 

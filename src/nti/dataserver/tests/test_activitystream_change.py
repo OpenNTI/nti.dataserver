@@ -3,7 +3,7 @@
 import unittest
 from hamcrest import assert_that, is_, not_none, has_entry
 from nti.dataserver.tests import has_attr, provides
-from nti.dataserver.tests.mock_dataserver import ConfiguringTestBase
+from nti.dataserver.tests.mock_dataserver import ConfiguringTestBase, WithMockDSTrans
 from nti.tests import verifiably_provides
 
 from zope.interface.verify import verifyObject
@@ -15,6 +15,7 @@ from nti.dataserver.users import User
 
 class TestChange(ConfiguringTestBase):
 
+	@WithMockDSTrans
 	def test_to_external(self):
 		user = User( 'jason.madden@nextthought.com' )
 

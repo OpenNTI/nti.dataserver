@@ -141,11 +141,11 @@ class _ChatHandler( Persistent ):
 		if room:
 			self.rooms_im_in.add( room.RoomId )
 		else:
-			self.emit_failedToEnterRoom( self.session_id, room_info )
+			self.emit_failedToEnterRoom( self.session_owner, room_info )
 		return room
 
 	def exitRoom( self, room_id ):
-		result = self._chatserver.exit_meeting( room_id, self.session_id )
+		result = self._chatserver.exit_meeting( room_id, self.session_owner )
 		_discard( self.rooms_im_in, room_id )
 		return result
 
@@ -156,7 +156,7 @@ class _ChatHandler( Persistent ):
 			room.Moderated = flag
 			if flag:
 				logger.debug( "%s becoming moderator of room %s", self, room )
-				room.add_moderator( self.session_id )
+				room.add_moderator( self.session_owner )
 				self.rooms_i_moderate[room.RoomId] = room
 			else:
 				self.rooms_i_moderate.pop( room.RoomId, None )
@@ -173,15 +173,12 @@ class _ChatHandler( Persistent ):
 	def flagMessagesToUsers( self, m_ids, usernames ):
 		# TODO: Roles again. Who can flag to whom?
 		warnings.warn( "Allowing anyone to flag messages to users." )
-		user_sessions = [self._chatserver.get_session_for( username )
-						 for username
-						 in usernames]
 		warnings.warn( "Assuming that clients have seen messages flagged to them." )
 		for m in m_ids:
 			# TODO: Where does this state belong? Who
 			# keeps the message? Passing just the ID assumes
 			# that the client can find the message by id.
-			self.emit_recvMessageForAttention( user_sessions, m )
+			self.emit_recvMessageForAttention( usernames, m )
 		return True
 
 	def shadowUsers( self, room_id, usernames ):
