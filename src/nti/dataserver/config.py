@@ -15,6 +15,8 @@ from zope import interface
 from nti.dataserver import interfaces as nti_interfaces
 from gevent_zeromq import zmq # If things crash, remove core.so
 
+from nti.utils.zlibstorage import install_zlib_client_resolver
+
 
 def _file_contents_equal( path, contents ):
 	""" :return: Whether the file at `path` exists and has `contents` """
@@ -164,7 +166,7 @@ class _Env(_ReadableEnv):
 
 		# write dev config
 		enviroment = ['DATASERVER_DIR=%(here)s/../']
-		
+
 		command = 'pserve'
 		ini.add_section( 'program:pserve' )
 		ini.set( 'program:pserve', 'command', '%s %s' % (command, pserve_ini) )
@@ -172,7 +174,7 @@ class _Env(_ReadableEnv):
 		ini.set( 'supervisord', 'nodaemon', 'true' )
 		with open( self.conf_file( 'supervisord_dev.conf' ), 'wb' ) as fp:
 			ini.write( fp )
-			
+
 		# write demo config
 		enviroment.append('DATASERVER_DEMO=1')
 		zeo_p = _create_zeo_program(self, 'demo_zeo_conf.xml')
@@ -244,22 +246,28 @@ def _configure_zeo( env_root ):
 	searchBlobDir, searchDemoBlobDir = _mk_blobdirs( searchDataFile )
 
 	configuration = """
+		%%import zc.zlibstorage
 		<zeo>
 		address %(clientPipe)s
 		</zeo>
+		<serverzlibstorage 1>
 		<filestorage 1>
 		path %(dataFile)s
 		blob-dir %(blobDir)s
 		</filestorage>
+		</serverzlibstorage>
+		<serverzlibstorage 2>
 		<filestorage 2>
 		path %(sessionDataFile)s
 		blob-dir %(sessionBlobDir)s
 		</filestorage>
+		</serverzlibstorage>
+		<serverzlibstorage 3>
 		<filestorage 3>
 		path %(searchDataFile)s
 		blob-dir %(searchBlobDir)s
 		</filestorage>
-
+		</serverzlibstorage>
 
 		<eventlog>
 		<logfile>
@@ -287,7 +295,7 @@ def _configure_zeo( env_root ):
 	env_root.write_conf_file( 'demo_zeo_conf.xml', demo_conf )
 
 
-	base_uri = 'zeo://%(addr)s?storage=%(storage)s&database_name=%(name)s&blob_dir=%(blob_dir)s&shared_blob_dir=%(shared)s'
+	base_uri = 'zlibzeo://%(addr)s?storage=%(storage)s&database_name=%(name)s&blob_dir=%(blob_dir)s&shared_blob_dir=%(shared)s'
 	file_uri = 'file://%s?database_name=%s&blobstorage_dir=%s'
 
 	uris = []
@@ -311,8 +319,8 @@ def _configure_zeo( env_root ):
 	env_root.write_conf_file( 'zeo_uris.ini', uri_conf )
 	env_root.write_conf_file( 'demo_zeo_uris.ini', demo_uri_conf )
 
-	# We assume that runzeo is on the path (virtualenv)	
-	program = _create_zeo_program(env_root, 'zeo_conf.xml' ) 
+	# We assume that runzeo is on the path (virtualenv)
+	program = _create_zeo_program(env_root, 'zeo_conf.xml' )
 	env_root.add_program( program )
 
 	return file_uris
@@ -330,7 +338,7 @@ from zope.processlifetime import DatabaseOpenedWithRoot
 from nti.dataserver import interfaces as nti_interfaces
 
 def _configure_database( env, uris ):
-
+	install_zlib_client_resolver()
 	db = db_from_uri( uris )
 	# TODO: Circular import
 	import nti.dataserver.utils.example_database_initializer
@@ -344,7 +352,7 @@ def _configure_database( env, uris ):
 
 def temp_get_config( root, demo=False ):
 	env = _Env( root, create=False )
-
+	install_zlib_client_resolver()
 	pfx = 'demo_' if demo else ''
 
 	env.zeo_conf = env.conf_file( pfx + 'zeo_conf.xml' )
