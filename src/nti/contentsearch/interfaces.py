@@ -1,6 +1,7 @@
 from zope import interface
 
 from zope.interface.common.mapping import IFullMapping
+from nti.dataserver import interfaces as nti_interfaces
 
 # -----------------------------
 
@@ -313,3 +314,20 @@ class IWhooshIndexStorage(interface.Interface):
 		return a dictionary with the arguments to be passed to an index writer commit method
 		""" 
 
+# -----------------------------
+
+class IHighlightType(interface.Interface):
+	pass
+
+class INoSnippetHighlight(IHighlightType):
+	pass
+
+class IWordSnippetHighlight(IHighlightType):
+	pass
+
+class INgramSnippetHighlight(IHighlightType):
+	pass
+
+class ISearchHit(nti_interfaces.IExternalObject):
+	query = interface.Attribute("""query that produced this hit""")
+	pass

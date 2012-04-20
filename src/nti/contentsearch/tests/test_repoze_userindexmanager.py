@@ -5,7 +5,9 @@ from zope.component.hooks import resetHooks
 
 from nti.dataserver.users import User
 from nti.dataserver.contenttypes import Note
-from nti.dataserver.ntiids import make_ntiid
+from nti.externalization.externalization import toExternalObject
+
+from nti.ntiids.ntiids import make_ntiid
 
 from nti.contentsearch.interfaces import IRepozeDataStore
 from nti.contentsearch._repoze_datastore import RepozeDataStore
@@ -92,12 +94,13 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		assert_that(items, has_length(1))
 
 		key = list(items.keys())[0]
-		assert_that(items[key], has_entry(CLASS, HIT))
-		assert_that(items[key], has_entry(NTIID, is_not(None)))
-		assert_that(items[key], has_entry(TARGET_OID, is_not(None)))
-		assert_that(key, is_(items[key][NTIID]))
-		assert_that(items[key], has_entry(CONTAINER_ID, 'tag:nextthought.com,2011-10:bleach-manga'))
-		assert_that(items[key], has_entry(SNIPPET, 'All Waves Rise now and Become my SHIELD Lightning Strike now and Become my Blade'))
+		hit = toExternalObject(items[key])
+		assert_that(hit, has_entry(CLASS, HIT))
+		assert_that(hit, has_entry(NTIID, is_not(None)))
+		assert_that(hit, has_entry(TARGET_OID, is_not(None)))
+		assert_that(key, is_(hit[NTIID]))
+		assert_that(hit, has_entry(CONTAINER_ID, 'tag:nextthought.com,2011-10:bleach-manga'))
+		assert_that(hit, has_entry(SNIPPET, 'All Waves Rise now and Become my SHIELD Lightning Strike now and Become my Blade'))
 
 		hits = rim.search("*", limit=None)
 		assert_that(hits, has_entry(HIT_COUNT, len(zanpakuto_commands)))

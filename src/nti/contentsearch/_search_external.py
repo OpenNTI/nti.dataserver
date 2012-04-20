@@ -1,16 +1,16 @@
+import UserDict
+
 from zope import component
 from zope import interface
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.chatserver import interfaces as chat_interfaces
+from nti.externalization.externalization import toExternalObject
+
+from nti.contentsearch import interfaces as search_interfaces
 
 from nti.contentsearch.common import get_attr
-from nti.contentsearch.common import get_ntiid
 from nti.contentsearch.common import get_content
-from nti.contentsearch.common import get_creator
-from nti.contentsearch.common import get_type_name
-from nti.contentsearch.common import get_external_oid
-from nti.contentsearch.common import get_last_modified
 from nti.contentsearch.common import get_multipart_content
 from nti.contentsearch.common import word_content_highlight
 from nti.contentsearch.common import ngram_content_highlight
@@ -18,9 +18,9 @@ from nti.contentsearch.common import ngram_content_highlight
 from nti.contentsearch.common import (	WORD_HIGHLIGHT, NGRAM_HIGHLIGHT)
 
 from nti.contentsearch.common import (	NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
-										SNIPPET, HIT, ID, BODY, TARGET_OID, MESSAGE_INFO)
+										SNIPPET, HIT, ID, BODY, TARGET_OID, OID)
 
-from nti.contentsearch.common import (	container_id_fields,  body_, startHighlightedFullText_)
+from nti.contentsearch.common import (	body_, startHighlightedFullText_)
 
 
 import logging
@@ -28,81 +28,145 @@ logger = logging.getLogger( __name__ )
 
 # -----------------------------------
 
-def _word_content_highlight(query=None, text=None, *args, **kwargs):
-	content = word_content_highlight(query, text, *args, **kwargs) if query and text else u''
+def _word_content_highlight(query=None, text=None):
+	content = word_content_highlight(query, text) if query and text else u''
 	return unicode(content) if content else text
 
-def _ngram_content_highlight(query=None, text=None, *args, **kwargs):
-	content = ngram_content_highlight(query, text, *args, **kwargs) if query and text else u''
+def _ngram_content_highlight(query=None, text=None):
+	content = ngram_content_highlight(query, text) if query and text else u''
 	return unicode(content) if content else text
 
-def _highlight_content(query=None, text=None, highlight_type=True, *args, **kwargs):
+def _highlight_content(query=None, text=None, highlight_type=True):
 	content = None
 	if query and text:
 		if highlight_type == WORD_HIGHLIGHT:
-			content = _word_content_highlight(query, text, *args, **kwargs)
+			content = _word_content_highlight(query, text)
 		elif highlight_type == NGRAM_HIGHLIGHT:
-			content = _ngram_content_highlight(query, text, *args, **kwargs)
+			content = _ngram_content_highlight(query, text)
 		else:
 			content = text
 	return unicode(content) if content else text
 
 
-class _MixinExternalObject(object):
-	def __init__( self, entity ):
-		self.entity = entity
+def NoSnippetHighlightDecoratorFactory(*args):
+	return NoSnippetHighlightDecorator()
+
+class NoSnippetHighlightDecorator(object):
+	interface.implements(nti_interfaces.IExternalObjectDecorator)
+	component.adapts(search_interfaces.INoSnippetHighlight)
+
+	def decorateExternalObject(self, original, external):
+		pass
+			
+def WordSnippetHighlightDecoratorFactory(*args):
+	return WordSnippetHighlightDecorator()
 	
-	def toExternalObject(self):
-		obj = self.entity
-		result = {}
-		result[CLASS] = HIT
-		result[CREATOR] = get_creator(obj)
-		result[TARGET_OID] = get_external_oid(obj)
-		result[TYPE] = get_type_name(obj).capitalize()
-		result[LAST_MODIFIED] = get_last_modified(obj)
-		result[NTIID] = get_ntiid(obj) or result[TARGET_OID]
-		result[CONTAINER_ID] = get_attr(obj, container_id_fields)
-		#result[COLLECTION_ID] = get_collection(result[CONTAINER_ID])
-		return result
+class WordSnippetHighlightDecorator(object):
+	interface.implements(nti_interfaces.IExternalObjectDecorator)
+	component.adapts(search_interfaces.IWordSnippetHighlight)
+
+	def decorateExternalObject(self, original, external):
+		query = getattr(original, 'query', None)
+		if query:
+			text = external.get(SNIPPET, None)
+			text = _word_content_highlight(query, text)
+			external[SNIPPET] = text
 		
-class _HighlightExternalObject(_MixinExternalObject):
+def NgramSnippetHighlightDecoratorFactory(*args):
+	return NgramSnippetHighlightDecorator()
+
+class NgramSnippetHighlightDecorator(object):
+	interface.implements(nti_interfaces.IExternalObjectDecorator)
+	component.adapts(search_interfaces.INgramSnippetHighlight)
+
+	def decorateExternalObject(self, original, external):
+		query = getattr(original, 'query', None)
+		if query:
+			text = external.get(SNIPPET, None)
+			text = _ngram_content_highlight(query, text)
+			external[SNIPPET] = text
+			
+# -----------------------------------
+
+class _SearchHit(object, UserDict.DictMixin):
+	interface.implements( nti_interfaces.IExternalObject )
+	
+	__external_fields  = (CLASS, CREATOR, TARGET_OID, TYPE, LAST_MODIFIED, NTIID,
+						  CONTAINER_ID, SNIPPET, ID)
+	
+	def __init__( self, entity ):
+		if type(entity) == dict:
+			self._data = dict(entity)
+		else:
+			self._data = toExternalObject(entity) if entity else {}
+		self._supplement(self._data)
+		self._reduce(self._data)
+		self.query = None
+	
+	def _supplement(self, data):
+		if CLASS in data:
+			data[TYPE] = data[CLASS]
+		if OID in data:
+			data[TARGET_OID] = data[OID]
+		data[CLASS] = HIT
+		data[NTIID] = data.get(NTIID, None) or data.get(TARGET_OID, None)
+		
+	def _reduce(self, data):
+		for key in list(data.keys()):
+			if not key in self.__external_fields:
+				data.pop(key)
+	
+	def keys(self):
+		return self._data.keys()
+		
+	def __getitem__(self, key):
+		return self._data[key]
+	
+	def __setitem__(self, key, val):
+		self._data[key] = val
+		
+	def __delitem__(self, key):
+		self._data.pop(key)
+	
+	def toExternalObject(self):
+		return self
+		
+class _HighlightSearchHit(_SearchHit):
 	component.adapts( nti_interfaces.IHighlight )
-	interface.implements( nti_interfaces.IExternalObject )
-
-	def toExternalObject(self):
-		result = super(_HighlightExternalObject, self).toExternalObject()
-		result[SNIPPET] = get_content(get_attr(self.entity, [startHighlightedFullText_]))
-		return result
 	
-class _NoteExternalObject(_MixinExternalObject):
+	def _supplement(self, data):
+		super(_HighlightSearchHit, self)._supplement(data)
+		text = get_content(get_attr(data, [startHighlightedFullText_]))
+		data[SNIPPET] = text
+	
+class _NoteSearchHit(_SearchHit):
 	component.adapts( nti_interfaces.INote )
-	interface.implements( nti_interfaces.IExternalObject )
 
-	def toExternalObject(self):
-		result = super(_NoteExternalObject, self).toExternalObject()
-		result[SNIPPET] = get_multipart_content(get_attr(self.entity, [body_]))
-		return result
+	def _supplement(self, data):
+		super(_NoteSearchHit, self)._supplement(data)
+		text = get_multipart_content(get_attr(data, [body_]))
+		data[SNIPPET] = text
 	
-class _MessageInfoExternalObject(_MixinExternalObject):
+class _MessageInfoSearchHit(_SearchHit):
 	component.adapts( chat_interfaces.IMessageInfo )
-	interface.implements( nti_interfaces.IExternalObject )
 
-	def toExternalObject(self):
-		result = super(_MessageInfoExternalObject, self).toExternalObject()
-		result[TYPE] = MESSAGE_INFO
-		result[ID] = get_attr(self.entity, [ID])
-		result[SNIPPET] = get_multipart_content(get_attr(self.entity, [BODY]))
-		return result
-
-def _adapt_to_search_hit(adapter, query, highlight_type=WORD_HIGHLIGHT, *args, **kwargs):
-	result = adapter.toExternalObject() if adapter else None
-	if result:
-		text = result[SNIPPET]
-		result[SNIPPET] = _highlight_content(query,text,highlight_type,*args, **kwargs)
-	return result
+	def _supplement(self, data):
+		super(_MessageInfoSearchHit, self)._supplement(data)
+		text = get_multipart_content(get_attr(data, [BODY]))
+		data[SNIPPET] = text
+		
+def _provide_highlight_snippet(hit, query=None, highlight_type=WORD_HIGHLIGHT):
+	if hit is not None:
+		hit.query = query
+		if highlight_type == NGRAM_HIGHLIGHT:
+			interface.alsoProvides( hit, search_interfaces.INgramSnippetHighlight )
+		elif highlight_type == WORD_HIGHLIGHT:
+			interface.alsoProvides( hit, search_interfaces.IWordSnippetHighlight )
+		else:
+			interface.alsoProvides( hit, search_interfaces.INoSnippetHighlight )
+	return hit
 
 def get_search_hit(obj, query=None, highlight_type=WORD_HIGHLIGHT, *args, **kwargs):
-	adapter = component.queryAdapter( obj, nti_interfaces.IExternalObject, default=None, name='search-hit')
-	result = _adapt_to_search_hit(adapter, query, highlight_type, *args, **kwargs)
-	return result
-
+	hit = component.queryAdapter( obj, nti_interfaces.IExternalObject, default=_SearchHit(obj), name='search-hit')
+	hit = _provide_highlight_snippet(hit, query, highlight_type)
+	return hit

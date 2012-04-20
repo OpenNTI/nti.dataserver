@@ -10,13 +10,25 @@
 			
 	<!-- Externalization -->
 
-	<adapter factory="._search_external._HighlightExternalObject"
+	<adapter factory="._search_external._HighlightSearchHit"
 			 name="search-hit" />
 			 
-	<adapter factory="._search_external._NoteExternalObject"
+	<adapter factory="._search_external._NoteSearchHit"
 			 name="search-hit" />
 			 
-	<adapter factory="._search_external._MessageInfoExternalObject"
+	<adapter factory="._search_external._MessageInfoSearchHit"
 			 name="search-hit" />
 			  
+	<subscriber factory="._search_external.NoSnippetHighlightDecoratorFactory"
+				for=".interfaces.INoSnippetHighlight"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
+				
+	<subscriber factory="._search_external.WordSnippetHighlightDecoratorFactory"
+				for=".interfaces.IWordSnippetHighlight"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
+			
+	<subscriber factory="._search_external.NgramSnippetHighlightDecoratorFactory"
+				for=".interfaces.INgramSnippetHighlight"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
+					
 </configure>
