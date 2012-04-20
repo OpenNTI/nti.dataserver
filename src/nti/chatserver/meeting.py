@@ -24,6 +24,7 @@ import BTrees.OOBTree
 from zope import interface
 from zope import component
 from zope.deprecation import deprecated
+from zope.event import notify
 
 
 from . import interfaces
@@ -77,7 +78,7 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 	Active = True
 	_moderated = False
 	_occupant_names = ()
-	def __init__( self, chatserver ):
+	def __init__( self, chatserver=None ):
 		super(_Meeting,self).__init__()
 		self._v_chatserver = chatserver
 		self.id = None
@@ -263,7 +264,8 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 			for name in recipient_names:
 				self.emit_recvMessage( name, msg_info )
 
-		self._chatserver._save_message_to_transcripts( msg_info, recipient_names, transcript_owners=transcript_owners )
+		notify( interfaces.MessageInfoPostedToRoomEvent( msg_info, transcript_owners | recipient_names ) )
+
 		# Everyone who gets the transcript also
 		# is considered to be on the sharing list
 		msg_info.sharedWith = set(recipient_names)
@@ -443,7 +445,7 @@ class _ModeratedMeeting(_Meeting):
 			msg_info.Status = STATUS_SHADOWED
 			self._ensure_message_stored( msg_info )
 			self.emit_recvMessageForShadow( self._moderated_by_names, msg_info )
-			self._chatserver._save_message_to_transcripts( msg_info, self._moderated_by_names )
+			notify( interfaces.MessageInfoPostedToRoomEvent( msg_info, self._moderated_by_names ) )
 
 	@_bypass_for_moderator
 	def _msg_handle_WHISPER( self, msg_info ):
