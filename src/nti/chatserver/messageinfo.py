@@ -10,10 +10,12 @@ import uuid
 import collections
 import six
 
-from nti.dataserver import datastructures
+from persistent import Persistent
+
+from nti.externalization import datastructures
+
 from nti.dataserver import contenttypes
 
-from persistent import Persistent
 
 from zope import interface
 from zope import component

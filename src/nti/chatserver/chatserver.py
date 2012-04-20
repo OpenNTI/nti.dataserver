@@ -8,9 +8,11 @@ logger = logging.getLogger( __name__ )
 
 
 import numbers
+import UserDict
 
-from nti.dataserver import datastructures
-from nti.dataserver.datastructures import StandardExternalFields as XFields
+from nti.externalization import datastructures
+from nti.externalization import oids
+from nti.externalization.interfaces import StandardExternalFields as XFields
 
 from nti.dataserver.activitystream_change import Change
 from nti.dataserver.activitystream import enqueue_change
@@ -80,7 +82,7 @@ class PersistentMappingMeetingStorage(Persistent):
 			and getattr( room, '_p_jar', self ) is None:
 			getattr( self, '_p_jar' ).add( room )
 
-		room.id = datastructures.to_external_ntiid_oid( room, None )
+		room.id = oids.to_external_ntiid_oid( room, None )
 		if room.id is None:
 			raise ValueError( "Unable to assign ID, not persistent" )
 		self.meetings[room.id] = room
@@ -415,7 +417,7 @@ class Chatserver(object):
 				in storage.transcript_summaries
 				if summary.RoomInfo.containerId == containerId}
 		logger.debug( "All summaries %s", data )
-		result = datastructures.CreatedModDateTrackingPersistentMapping( data )
+		result = UserDict.UserDict( data )
 		result.creator = username
 		if data:
 			result.lastModified = max( data.itervalues(), key=lambda x: x.LastModified ).LastModified

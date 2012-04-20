@@ -9,8 +9,11 @@ import time
 import collections
 
 
-from nti.dataserver import ntiids
-from nti.dataserver import datastructures
+from nti.ntiids import ntiids
+from nti.externalization import datastructures
+from nti.zodb.minmax import MergingCounter
+
+# TODO: Break this dep
 from nti.dataserver import contenttypes
 
 import persistent
@@ -22,7 +25,6 @@ from zope import interface
 from zope import component
 from zope.deprecation import deprecated
 
-from zope import minmax
 
 from . import interfaces
 from ._metaclass import _ChatObjectMeta
@@ -80,7 +82,7 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 		self._v_chatserver = chatserver
 		self.id = None
 		self.containerId = None
-		self._MessageCount = datastructures.MergingCounter( 0 )
+		self._MessageCount = MergingCounter( 0 )
 		self.CreatedTime = time.time()
 		self._occupant_names = BTrees.OOBTree.Set()
 		# Sometimes a room is created with a subset of the occupants that
@@ -109,7 +111,7 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 		# Migration 2012-04-03. Easier than searching these all out
 		if 'MessageCount' in state:
 			state = dict(state)
-			state['_MessageCount'] = datastructures.MergingCounter( state['MessageCount'] )
+			state['_MessageCount'] = MergingCounter( state['MessageCount'] )
 			del state['MessageCount']
 		if '_chatserver' in state:
 			state = dict(state)
@@ -254,7 +256,7 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 		if self._is_message_to_all_occupants( msg_info, recipient_names=recipient_names ):
 			# recipients are ignored for the default channel,
 			# and a message to everyone also counts for incrementing the ids.
-			self._MessageCount.value += 1
+			self._MessageCount.increment()
 			self.emit_recvMessage( recipient_names, msg_info )
 		else:
 			# On a non-default channel, and not to everyone in the room

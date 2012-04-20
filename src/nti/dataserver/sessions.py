@@ -13,9 +13,11 @@ import gevent
 import zc.queue
 from zope import interface
 from zope import component
-from zope import minmax
-from nti.dataserver import datastructures
 from zope.event import notify
+
+from nti.zodb import minmax
+
+
 import transaction
 
 import anyjson as json
@@ -28,14 +30,14 @@ from persistent.mapping import PersistentMapping
 import BTrees.OOBTree
 
 from nti.dataserver import interfaces as nti_interfaces
-
+from nti.socketio.interfaces import ISocketSession
 from nti.socketio.interfaces import SocketSessionConnectedEvent, SocketSessionDisconnectedEvent
 
 class Session(Persistent):
 	"""
 	`self.owner`: An attribute for the user that owns the session.
 	"""
-	interface.implements(nti_interfaces.ISocketSession)
+	interface.implements(ISocketSession)
 
 	STATE_NEW = "NEW"
 	STATE_CONNECTED = "CONNECTED"
@@ -54,8 +56,8 @@ class Session(Persistent):
 		self.client_queue = zc.queue.Queue() # queue for messages to client
 		self.server_queue = zc.queue.Queue() # queue for messages to server
 
-		self._hits = datastructures.MergingCounter( 0 )
-		self._last_heartbeat_time = minmax.Maximum( 0 )
+		self._hits = minmax.MergingCounter( 0 )
+		self._last_heartbeat_time = minmax.NumericMaximum( 0 )
 		self._v_session_service = session_service
 
 	def __eq__( self, other ):
@@ -120,7 +122,7 @@ class Session(Persistent):
 		# leads to conflicts.
 		# Directly set the .value, avoiding the property, because
 		# the property still causes this object to be considered modified (?)
-		self._last_heartbeat_time.value = time.time()
+		self._last_heartbeat_time.set( time.time() )
 
 
 	def heartbeat(self):
