@@ -7,5 +7,13 @@
 	<utility factory=".generations.install._ContentSearchSchemaManager"
 			 name="nti.dataserver-contentsearch"
 			 provides="zope.generations.interfaces.IInstallableSchemaManager"/>
+			
+	<!-- Externalization -->
+
+	<adapter factory="._ugd_external._HighlightExternalObject"
+			 name="ugd-hit" />
 			 
+	<adapter factory="._ugd_external._NoteExternalObject"
+			 name="ugd-hit" />
+			  
 </configure>
