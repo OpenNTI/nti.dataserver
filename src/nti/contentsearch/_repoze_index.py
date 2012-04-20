@@ -10,21 +10,17 @@ from nti.contentsearch.common import get_attr
 from nti.contentsearch.common import get_ntiid
 from nti.contentsearch.common import get_content
 from nti.contentsearch.common import get_creator
-from nti.contentsearch.common import get_type_name
 from nti.contentsearch.common import get_collection
 from nti.contentsearch.common import get_references
 from nti.contentsearch.common import get_external_oid
 from nti.contentsearch.common import get_last_modified
 from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch.common import get_multipart_content
-from nti.contentsearch.common import word_content_highlight
-from nti.contentsearch.common import ngram_content_highlight
 from nti.contentsearch.textindexng3 import CatalogTextIndexNG3
 
 from nti.contentsearch.common import (	container_id_fields, keyword_fields)
 
-from nti.contentsearch.common import (	OID, NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
-										COLLECTION_ID, SNIPPET, HIT, ID, BODY, TARGET_OID, MESSAGE_INFO)
+from nti.contentsearch.common import (	OID, NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, COLLECTION_ID, ID, BODY)
 
 from nti.contentsearch.common import (	ngrams_, channel_, content_, keywords_, references_, title_, 
 										last_modified_, section_, ntiid_, recipients_, sharedWith_, body_, 
@@ -191,65 +187,4 @@ def create_catalog(type_name='Notes'):
 		return create_messageinfo_catalog()
 	else:
 		return None
-	
-# -----------------------------------
 
-def _word_content_highlight(query=None, text=None, *args, **kwargs):
-	content = word_content_highlight(query, text, *args, **kwargs) if query and text else u''
-	return unicode(content) if content else text
-
-def _ngram_content_highlight(query=None, text=None, *args, **kwargs):
-	content = ngram_content_highlight(query, text, *args, **kwargs) if query and text else u''
-	return unicode(content) if content else text
-
-def _highlight_content(query=None, text=None, use_word_highlight=True, *args, **kwargs):
-	content = None
-	if query and text and use_word_highlight is not None:
-		content = 	_word_content_highlight(query, text, *args, **kwargs) if use_word_highlight else \
-					_ngram_content_highlight(query, text, *args, **kwargs)
-	return unicode(content) if content else text
-
-def _get_index_hit_from_object(obj):
-	result = {}
-	result[CLASS] = HIT
-	result[CREATOR] = get_creator(obj)
-	result[TARGET_OID] = get_external_oid(obj)
-	result[TYPE] = get_type_name(obj).capitalize()
-	result[LAST_MODIFIED] = get_last_modified(obj)
-	result[NTIID] = get_ntiid(obj) or result[TARGET_OID]
-	result[CONTAINER_ID] = get_attr(obj, container_id_fields)
-	#result[COLLECTION_ID] = get_collection(result[CONTAINER_ID])
-	return result
-
-def get_index_hit_from_note(obj, query=None, use_word_highlight=True, *args, **kwargs):
-	text = get_multipart_content(get_attr(obj, [body_]))
-	result = _get_index_hit_from_object(obj)
-	result[SNIPPET] = _highlight_content(unicode(query), unicode(text), use_word_highlight, *args, **kwargs)
-	return result
-
-def get_index_hit_from_hightlight(obj, query=None, use_word_highlight=True, *args, **kwargs):
-	result = _get_index_hit_from_object(obj)
-	text = get_content(get_attr(obj, [startHighlightedFullText_]))
-	result[SNIPPET] = _highlight_content(unicode(query), unicode(text), use_word_highlight, *args, **kwargs)
-	return result
-
-def get_index_hit_from_messgeinfo(obj, query=None, use_word_highlight=True, *args, **kwargs):
-	text = get_multipart_content(get_attr(obj, [BODY]))
-	result = _get_index_hit_from_object(obj)
-	result[TYPE] = MESSAGE_INFO
-	result[ID] = get_attr(obj, [ID])
-	result[SNIPPET] = _highlight_content(unicode(query), unicode(text), use_word_highlight, *args, **kwargs)
-	return result
-
-def get_index_hit(obj, query=None, use_word_highlight=True, *args, **kwargs):
-	result = None
-	if obj is not None:
-		type_name = get_type_name(obj)
-		if type_name == 'note':
-			result = get_index_hit_from_note(obj, query, use_word_highlight, *args, **kwargs)
-		elif type_name == 'highlight':
-			result = get_index_hit_from_hightlight(obj, query, use_word_highlight, *args, **kwargs)
-		elif type_name =='messageinfo':
-			result = get_index_hit_from_messgeinfo(obj, query, use_word_highlight, *args, **kwargs)
-	return result
-	

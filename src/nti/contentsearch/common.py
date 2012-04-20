@@ -98,6 +98,9 @@ nti_mimetype_prefix = 'application/vnd.nextthought.'
 messageinfo = 'messageinfo'
 indexable_type_names = ('note', 'highlight', messageinfo)
 
+WORD_HIGHLIGHT  = "WordHighlight"
+NGRAM_HIGHLIGHT = "NGRAMHighlight"
+
 # -----------------------------------
 
 def get_attr(obj, names, default=None):

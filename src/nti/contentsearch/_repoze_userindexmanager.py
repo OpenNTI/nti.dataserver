@@ -17,9 +17,10 @@ from nti.contentsearch.common import empty_search_result
 from nti.contentsearch.common import empty_suggest_result
 from nti.contentsearch._repoze_query import parse_query
 from nti.contentsearch._repoze_query import is_all_query
-from nti.contentsearch._repoze_index import get_index_hit
 from nti.contentsearch._repoze_index import create_catalog
+from nti.contentsearch._search_external import get_search_hit
 from nti.contentsearch.textindexng3 import CatalogTextIndexNG3
+from nti.contentsearch.common import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT)
 from nti.contentsearch.common import (NTIID, LAST_MODIFIED, ITEMS, HIT_COUNT, SUGGESTIONS, content_, ngrams_)
 
 import logging
@@ -80,7 +81,7 @@ class RepozeUserIndexManager(object):
 			search_on = [normalize_type_name(x) for x in search_on]
 		return search_on or self.store.get_catalog_names(self.username)
 
-	def _get_hits_from_docids(self, qo, docids, use_word_highlight=None):
+	def _get_hits_from_docids(self, qo, docids, highlight_type=None):
 		
 		limit = qo.limit		
 		if not docids:
@@ -94,7 +95,7 @@ class RepozeUserIndexManager(object):
 		
 		# get all index hits
 		length = len(objects)
-		hits = map(get_index_hit, objects, [qo.term]*length, [use_word_highlight]*length)
+		hits = map(get_search_hit, objects, [qo.term]*length, [highlight_type]*length)
 		
 		# filter if required
 		items = [hit for hit in hits if hit]
@@ -115,7 +116,7 @@ class RepozeUserIndexManager(object):
 			limit = qo.limit
 			return catalog.query(queryobject, limit=limit)
 
-	def _do_search(self, fieldname, qo, search_on=(), use_word_highlight=None):
+	def _do_search(self, fieldname, qo, search_on=(), highlight_type=None):
 		
 		results = empty_search_result(qo.term)
 		if qo.is_empty: return results
@@ -127,7 +128,7 @@ class RepozeUserIndexManager(object):
 				catalog = self.datastore.get_catalog(self.username, type_name)
 				if catalog:
 					_, docids = self._do_catalog_query(catalog, fieldname, qo)
-					hits, hits_lm = self._get_hits_from_docids(qo, docids, use_word_highlight)
+					hits, hits_lm = self._get_hits_from_docids(qo, docids, highlight_type)
 
 					lm = max(lm, hits_lm)
 					for hit in hits:
@@ -141,15 +142,15 @@ class RepozeUserIndexManager(object):
 	def search(self, query, *args, **kwargs):
 		qo = QueryObject.create(query, **kwargs)
 		search_on = self._adapt_search_on_types(qo.search_on)
-		word_highlight = None if is_all_query(qo.term) else True
-		results = self._do_search(content_, qo, search_on, word_highlight)
+		highlight_type = None if is_all_query(qo.term) else WORD_HIGHLIGHT
+		results = self._do_search(content_, qo, search_on, highlight_type)
 		return results
 
 	def ngram_search(self, query, *args, **kwargs):
 		qo = QueryObject.create(query, **kwargs)
 		search_on = self._adapt_search_on_types(qo.search_on)
-		word_highlight = None if is_all_query(qo.term) else False
-		results = self._do_search(ngrams_, qo, search_on, word_highlight)
+		highlight_type = None if is_all_query(qo.term) else NGRAM_HIGHLIGHT
+		results = self._do_search(ngrams_, qo, search_on, highlight_type)
 		return results
 	quick_search = ngram_search
 
