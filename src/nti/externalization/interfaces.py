@@ -2,22 +2,15 @@
 
 from __future__ import unicode_literals
 
-import warnings
-import itertools
-
 from zope import interface, schema
 from zope.deprecation import deprecated
-from zope.mimetype.interfaces import IContentTypeAware, IContentType
+
 
 from zope.location import ILocation
-
-from zope.container.interfaces import IContainer as IZContainer
-from zope.container.interfaces import IContainerNamesContainer as IZContainerNamesContainer
-from zope.location.interfaces import IContained as IZContained
-from zope.location.location import LocationProxy
-
 from zope.interface.common.mapping import IFullMapping
 from zope.interface.common.sequence import ISequence
+
+from zope.component.interfaces import IFactory
 
 #pylint: disable=E0213,E0211
 
@@ -155,3 +148,52 @@ class ILocatedExternalSequence(IExternalizedObject,ILocation,ISequence):
 	The externalization of an object as a sequence, maintaining its location
 	information.
 	"""
+
+### Creating and updating new and existing objects given external forms
+
+class IMimeObjectFactory(IFactory):
+	"""
+	A factory named for the external mime-type of objects it works with.
+	"""
+
+class IClassObjectFactory(IFactory):
+	"""
+	A factory named for the external class name of objects it works with.
+	"""
+
+class IExternalizedObjectFactoryFinder(interface.Interface):
+	"""
+	An adapter from an externalized object to something that can find
+	factories.
+	"""
+
+	def find_factory( externalized_object ):
+		"""
+		Given an externalized object, return a :class:`IFactory` to create the proper
+		internal types.
+		:return: An IFactory, or `None`.
+		"""
+
+class IExternalReferenceResolver(interface.Interface):
+	"""
+	Used as a multi-adapter from an *internal* object and an external reference
+	to something that can resolve the reference.
+	"""
+
+	def resolve( reference ):
+		"""
+		Resolve the external reference and return it.
+		"""
+
+class IInternalObjectUpdater(interface.Interface):
+	"""
+	An adapter that can be used to update an internal object from
+	its externalized representation.
+	"""
+
+	def updateFromExternalObject( externalObject, context=None ):
+		"""
+		Update the object this is adapting from the external object.
+		Two alternate signatures are supported, one with ``dataserver`` instead of
+		context, and one with no keyword args.
+		"""

@@ -42,6 +42,8 @@ from . import users
 from . import interfaces
 from . import ntiids
 from nti.chatserver import interfaces as chat_interfaces
+from nti.externalization import interfaces as ext_interfaces
+import nti.externalization.internalization
 from . import config
 
 
@@ -534,148 +536,37 @@ class Dataserver(MinimalDataserver):
 		Given the name of a type, optionally ending in 's' for
 		plural, returns that type.
 		"""
-		className = typeName[0:-1] if typeName.endswith('s') else typeName
-		result = None
-
-		def find_class_in( mod, can_create=False ):
-			clazz = mod.get( className )
-			if not clazz and className.lower() == className:
-				# case-insensitive search of loaded modules if it was lower case.
-				for k in mod:
-					if k.lower() == className:
-						clazz = mod[k]
-						break
-			return clazz if getattr( clazz, '__external_can_create__', can_create ) else None
-
-		result = find_class_in( contenttypes.__dict__, True ) or find_class_in( users.__dict__, False )
-		# If not in the known packages, look across all NTI modules
-		if not result:
-			for k, v in sys.modules.iteritems():
-				if k.startswith( 'nti.') and isinstance( v, types.ModuleType ):
-					result = find_class_in( v.__dict__, False )
-					if result: break
-
-		return result
-
-	def ensure_content_type_exists( self, typeName=None, _createMissing=True ):
-		""" Given the name of a type, optionally ending in 's' for
-		plural, returns that type. The type will be a class descending
-		from contenttypes._UserContentRoot or IExternalObject. """
-		result = self.find_content_type( typeName )
-
-		if not result and _createMissing:
-			className = typeName[0:-1] if typeName.endswith('s') else typeName
-			# If there isn't one, we dynamically create it.
-			# TODO: Think about this. This is largely for purposes of legacy tests.
-			newType = type( className, (contenttypes._UserArbitraryDataContentRoot,), dict())
-			newType.__module__ = contenttypes._UserArbitraryDataContentRoot.__module__
-			contenttypes.__dict__[className] = newType
-			result = newType
-
-		return result
-
-	def create_content_type( self, typeName=None, create_missing=True ):
-		""" Given the name of a type, optionally ending in 's' for plural,
-		returns a new instance of that type. The instance will
-		be a class descending from contenttypes._UserContentRoot
-
-		:param bool create_missing: If True (default) classes not found will be created.
-		"""
-		if not typeName: return None
-		# _createMissing is internal to reduce code dup
-		typ = self.ensure_content_type_exists( typeName, _createMissing=create_missing )
-		# defend against None and other non-factories
-		return typ() if callable( typ ) else None
-
-	def get_external_type( self, externalObject, searchModules=(users,) ):
-		""" Given an object with a Class attribute, find a type that corresponds to it. """
-		# TODO: This really doesn't belong on the dataserver object.
-		className = None
-		try:
-			if 'Class' not in externalObject: return None
-			className = externalObject['Class']
-		except TypeError: return None # int, etc
-
-		for mod in searchModules:
-			if isinstance( mod, basestring ):
-				# TODO: Replace with zope.dottedname
-				try:
-					mod = __import__( mod, fromlist=['a'] )
-				except ImportError:
-					logger.exception( "Unable to import module for external type" )
-					continue
-			if className in mod.__dict__ and getattr( mod.__dict__[className], '__external_can_create__', False ):
-				return mod.__dict__[className]
-		return None
+		return nti.externalization.internalization.find_factory_for_class_name( typeName )
 
 	def update_from_external_object( self, containedObject, externalObject ):
-		""" :return: `containedObject` after updates from `externalObject`"""
+		return nti.externalization.internalization.update_from_external_object( containedObject, externalObject, context=self )
 
-		# Parse any contained objects
-		# TODO: We're (deliberately?) not actually updating any contained
-		# objects, we're replacing them. Is that right? We could check OIDs...
-		# If we decide that's right, then the internals could be simplified by
-		# splitting the two parts
-		# TODO: Should the current user impact on this process?
-		search_modules = {users, type(containedObject).__module__, 'nti.dataserver.contenttypes' }
-		if isinstance( externalObject, collections.MutableMapping ):
-			for k,v in externalObject.iteritems():
-				typ = self.get_external_type( v, searchModules=search_modules )
-				if typ:
-					v = self.update_from_external_object( typ(), v )
-					externalObject[k] = v
-				elif isinstance( v, collections.MutableSequence ):
-					tmp = []
-					for i in v:
-						typ = self.get_external_type( i, searchModules=search_modules)
-						if typ:
-							i = self.update_from_external_object( typ(), i )
-						tmp.append( i )
-					externalObject[k] = tmp
-		elif isinstance( externalObject, collections.MutableSequence ):
-			tmp = []
-			for i in externalObject:
-				typ = self.get_external_type( i, searchModules=search_modules)
-				if typ:
-					i = self.update_from_external_object( typ(), i )
-				tmp.append( i )
-			return tmp
-
-
-		# Run the resolution steps on the external object
-		if hasattr( containedObject, '__external_oids__'):
-			for keyPath in containedObject.__external_oids__:
-				# TODO: This version is very simple, generalize it
-				externalObjectOid = externalObject.get( keyPath )
-				if isinstance( externalObjectOid, basestring ):
-					externalObject[keyPath] = self.get_by_oid( externalObjectOid )
-				elif isinstance( externalObjectOid, collections.MutableSequence ):
-					for i in range(0,len(externalObjectOid)):
-						externalObjectOid[i] = self.get_by_oid( externalObjectOid[i] )
-		if hasattr( containedObject, '__external_resolvers__'):
-			for key, value in containedObject.__external_resolvers__.iteritems():
-				if not externalObject.get( key ): continue
-				# classmethods and static methods are implemented with descriptors,
-				# which don't work when accessed through the dictionary in this way,
-				# so we special case it so instances don't have to.
-				if isinstance( value, classmethod ) or isinstance( value, staticmethod ):
-					value = value.__get__( None, containedObject.__class__ )
-				externalObject[key] = value( self, externalObject, externalObject[key] )
-
-		if hasattr( containedObject, 'updateFromExternalObject' ) :
-			# The signature may vary.
-			argspec = inspect.getargspec( containedObject.updateFromExternalObject )
-			if argspec.keywords or 'dataserver' in argspec.args:
-				containedObject.updateFromExternalObject( externalObject, dataserver=self )
-			else:
-				logger.warn( 'Using old-style update for %s %s', type(containedObject), containedObject )
-				containedObject.updateFromExternalObject( externalObject )
-		return containedObject
 
 
 _SynchronousChangeDataserver = Dataserver
 zope.deprecation.deprecated('_SynchronousChangeDataserver',
 							"Use plain Dataserver" )
+
+@interface.implementer( ext_interfaces.IExternalReferenceResolver )
+@component.adapter( object, basestring )
+def ExternalRefResolverFactory( _, __ ):
+	ds = component.queryUtility( interfaces.IDataserver )
+	return _ExternalRefResolver( ds ) if ds else None
+
+class _ExternalRefResolver(object):
+	def __init__( self, ds ):
+		self.ds = ds
+	def resolve( self, oid ):
+		return self.ds.get_by_oid( oid )
+
+nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.users' )
+nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.contenttypes' )
+nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.providers' )
+nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.classes' )
+nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.quizzes' )
+nti.externalization.internalization.register_legacy_search_module( 'nti.chatserver.messageinfo' )
+
+
 
 class PersistentOidResolver(Persistent):
 	interface.implements( interfaces.IOIDResolver )

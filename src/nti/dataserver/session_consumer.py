@@ -9,9 +9,8 @@ import itertools
 
 from nti.dataserver.datastructures import toExternalObject
 
-from nti.dataserver import interfaces as nti_interfaces
-import nti.dataserver.users
-import nti.dataserver.contenttypes
+from nti.socketio import interfaces as sio_interfaces
+import nti.externalization.internalization
 
 from persistent import Persistent
 
@@ -56,10 +55,10 @@ class SessionConsumer(Persistent):
 		:return: A mapping from event prefix (empty string for no prefix) no list of possible
 			handlers for that prefix.
 		"""
-		subscribers = component.subscribers( (socket_obj,), nti_interfaces.ISocketEventHandler )
+		subscribers = component.subscribers( (socket_obj,), sio_interfaces.ISocketEventHandler )
 		if session is not None:
 			subscribers = itertools.chain( subscribers,
-										   component.subscribers( (session,), nti_interfaces.ISocketEventHandler ) )
+										   component.subscribers( (session,), sio_interfaces.ISocketEventHandler ) )
 		result = dict()
 		for subscriber in subscribers:
 			if subscriber is None: continue
@@ -172,10 +171,10 @@ def _convert_message_args_to_objects( handler, message ):
 	# We use the dataserver to handle the conversion. We
 	# inspect the handler to find out where it lives so that we can
 	# limit the types the dataserver needs to search.
-	search_modules = [nti.dataserver.users, nti.dataserver.contenttypes]
+	search_modules = ['nti.dataserver.users', 'nti.dataserver.contenttypes']
 	def handlers_from_class( cls ):
 		mods = getattr( cls, '_session_consumer_args_search_', () )
-		search_modules.extend( (sys.modules[x] for x in mods) )
+		search_modules.extend( mods )
 	if hasattr( handler, 'im_class' ):
 		#bound method
 		search_modules.append( sys.modules[handler.im_class.__module__] )
@@ -187,12 +186,14 @@ def _convert_message_args_to_objects( handler, message ):
 	else:
 		handlers_from_class( handler )
 
-	ds = component.getUtility( nti_interfaces.IDataserver )
+	for mod in search_modules:
+		nti.externalization.internalization.register_legacy_search_module( mod )
+
 	for arg in message['args']:
-		extType = ds.get_external_type( arg,
-										searchModules=search_modules )
+		extType = nti.externalization.internalization.find_factory_for( arg )
+
 		if extType:
-			arg = ds.update_from_external_object( extType(), arg )
+			arg = nti.externalization.internalization.update_from_external_object( extType(), arg )
 		args.append( arg ) # strings and such fall through here
 
 	return args

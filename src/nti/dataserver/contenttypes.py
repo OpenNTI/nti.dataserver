@@ -84,11 +84,11 @@ class ThreadableExternalizableMixin(ThreadableMixin):
 			extDict['references'] = extRefs
 		return extDict
 
-	def updateFromExternalObject( self, parsed, dataserver=None ):
+	def updateFromExternalObject( self, parsed, **kwargs ):
 		assert isinstance( parsed, collections.Mapping )
 		inReplyTo = parsed.pop( 'inReplyTo', None )
 		references = parsed.pop( 'references', [] )
-		super(ThreadableExternalizableMixin, self).updateFromExternalObject( parsed, dataserver=dataserver )
+		super(ThreadableExternalizableMixin, self).updateFromExternalObject( parsed, **kwargs )
 
 		self.inReplyTo = inReplyTo
 		self.clearReferences()
@@ -137,7 +137,7 @@ class _UserContentRoot(sharing.ShareableMixin, datastructures.ContainedMixin, da
 		parsed = datastructures.stripSyntheticKeysFromExternalDictionary( dict( parsed ) )
 		return len(parsed) == 0 and self.canUpdateSharingOnly and self._p_jar
 
-	def updateFromExternalObject( self, ext_parsed, dataserver=None ):
+	def updateFromExternalObject( self, ext_parsed, *args, **kwargs ):
 		assert isinstance( ext_parsed, collections.Mapping )
 		# Remove some things that may come in (in a copy!)
 		parsed = ext_parsed
@@ -151,8 +151,8 @@ class _UserContentRoot(sharing.ShareableMixin, datastructures.ContainedMixin, da
 		for s in sharedWith or ():
 			target = s
 			warnings.warn( "Assuming datastructure layout" )
-			if _get_entity( s, dataserver=dataserver ):
-				target = _get_entity( s, dataserver=dataserver )
+			if _get_entity( s ):
+				target = _get_entity( s )
 			elif hasattr( self.creator, 'getFriendsList' ):
 				target = self.creator.getFriendsList( s )
 			self.addSharingTarget( target or s, self.creator )
@@ -169,7 +169,7 @@ class _UserContentRoot(sharing.ShareableMixin, datastructures.ContainedMixin, da
 		s = super(_UserContentRoot,self)
 		if hasattr( s, 'updateFromExternalObject' ):
 			# Notice we pass on the original dictionary
-			getattr( s, 'updateFromExternalObject' )(ext_parsed, dataserver=dataserver )
+			getattr( s, 'updateFromExternalObject' )(ext_parsed, *args, **kwargs )
 
 class _UserArbitraryDataContentRoot(_UserContentRoot, datastructures.IDItemMixin, datastructures.ModDateTrackingPersistentMapping):
 	""" This class is for legacy support. It allows
@@ -178,8 +178,8 @@ class _UserArbitraryDataContentRoot(_UserContentRoot, datastructures.IDItemMixin
 	def __init__(self):
 		super(_UserArbitraryDataContentRoot,self).__init__()
 
-	def updateFromExternalObject( self, parsed, dataserver=None ):
-		super( _UserArbitraryDataContentRoot, self ).updateFromExternalObject( parsed, dataserver=dataserver )
+	def updateFromExternalObject( self, parsed, **kwargs ):
+		super( _UserArbitraryDataContentRoot, self ).updateFromExternalObject( parsed, **kwargs )
 		# The first time in, we need to allow container id (otherwise it may never get set)
 		if not self.containerId:
 			self.containerId = parsed.get( StandardExternalFields.CONTAINER_ID ) or parsed.get( StandardInternalFields.CONTAINER_ID )
@@ -235,8 +235,8 @@ class Highlight(_UserContentRoot,datastructures.ExternalizableInstanceDict):
 	__name__ = property(_get_name,_set_name)
 
 
-	def updateFromExternalObject( self, parsed, dataserver=None ):
-		super(Highlight,self).updateFromExternalObject( parsed, dataserver=dataserver )
+	def updateFromExternalObject( self, parsed, *args, **kwargs ):
+		super(Highlight,self).updateFromExternalObject( parsed, *args, **kwargs )
 		if 'tags' in parsed:
 			# we lowercase and sanitize tags. Our sanitization here is really
 			# cheap and discards html symbols
@@ -374,19 +374,19 @@ class Note(ThreadableExternalizableMixin, Highlight):
 		super(Note,self).__init__()
 		self.body = ("",)
 
-	def toExternalDictionary( self ):
-		result = super(Note,self).toExternalDictionary()
+	def toExternalDictionary( self, mergeFrom=None ):
+		result = super(Note,self).toExternalDictionary(mergeFrom=mergeFrom)
 		# In our initial state, don't try to send empty body/text
 		if self.body == ('',):
 			result.pop( 'body' )
 
 		return result
 
-	def updateFromExternalObject( self, parsed, dataserver=None ):
+	def updateFromExternalObject( self, parsed, *args, **kwargs ):
 		# Only updates to the body are accepted
 		parsed.pop( 'text', None )
 
-		super(Note, self).updateFromExternalObject( parsed, dataserver=dataserver )
+		super(Note, self).updateFromExternalObject( parsed, *args, **kwargs )
 		if self._is_update_sharing_only( parsed ):
 			return
 
@@ -428,7 +428,7 @@ class Note(ThreadableExternalizableMixin, Highlight):
 			sharingTargetNames.discard( None )
 
 			for name in sharingTargetNames:
-				ent = _get_entity( name, dataserver=dataserver )
+				ent = _get_entity( name )
 				target = ent or name
 				self.addSharingTarget( target, self.creator )
 
