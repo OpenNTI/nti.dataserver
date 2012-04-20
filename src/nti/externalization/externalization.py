@@ -1,0 +1,250 @@
+#!/usr/bin/env python
+"""
+Functions related to actually externalizing objects.
+$Revision$
+"""
+from __future__ import print_function, unicode_literals
+
+import logging
+logger = logging.getLogger( __name__ )
+
+
+import collections
+
+import persistent
+import BTrees.OOBTree
+import ZODB
+
+import plistlib
+import anyjson as json
+
+import six
+import numbers
+
+from zope import interface
+from zope import component
+
+from nti.ntiids import ntiids
+
+from .interfaces import IExternalObject, IExternalObjectDecorator, IExternalMappingDecorator, StandardExternalFields, StandardInternalFields
+from .interfaces import INonExternalizableReplacer
+from .interfaces import ILocatedExternalSequence, ILocatedExternalMapping
+from .oids import to_external_ntiid_oid
+
+# It turns out that the name we use for externalization (and really the registry, too)
+# we must keep thread-local. We call into objects without any context,
+# and they call back into us, and otherwise we would lose
+# the name that was established at the top level.
+_ex_name_marker = object()
+import gevent.local
+class _ex_name_local_c(gevent.local.local):
+	def __init__( self ):
+		super(_ex_name_local_c,self).__init__()
+		self.name = [_ex_name_marker]
+_ex_name_local = _ex_name_local_c
+_ex_name_local.name = [_ex_name_marker]
+
+# Things that can be directly externalized
+_primitives = six.string_types + (numbers.Number,bool)
+
+def toExternalObject( obj, coerceNone=False, name=_ex_name_marker, registry=component ):
+	""" Translates the object into a form suitable for
+	external distribution, through some data formatting process.
+
+	:param string name: The name of the adapter to :class:IExternalObject to look
+		for. Defaults to the empty string (the default adapter). If you provide
+		a name, and an adapter is not found, we will still look for the default name
+		(unless the name you supply is None).
+
+	"""
+
+	# Catch the primitives up here, quickly
+	if isinstance(obj, _primitives):
+		return obj
+
+	if name == _ex_name_marker:
+		name = _ex_name_local.name[-1]
+	if name == _ex_name_marker:
+		name = ''
+	_ex_name_local.name.append( name )
+
+	try:
+		def recall( obj ):
+			return toExternalObject( obj, coerceNone=coerceNone, name=name, registry=registry )
+		orig_obj = obj
+		if not IExternalObject.providedBy( obj ) and not hasattr( obj, 'toExternalObject' ):
+			adapter = registry.queryAdapter( obj, IExternalObject, default=None, name=name )
+			if not adapter and name != '':
+				# try for the default, but allow passing name of None to disable
+				adapter = registry.queryAdapter( obj, IExternalObject, default=None, name='' )
+			# if not adapter and name == '':
+			# 	# try for the default, but allow passing name of None to disable
+			# 	adapter = registry.queryAdapter( obj, IExternalObject, default=None, name='wsgi' )
+			if adapter:
+				obj = adapter
+
+		result = obj
+		if hasattr( obj, "toExternalObject" ):
+			result = obj.toExternalObject()
+		elif hasattr( obj, "toExternalDictionary" ):
+			result = obj.toExternalDictionary()
+		elif hasattr( obj, "toExternalList" ):
+			result = obj.toExternalList()
+		elif isinstance(obj, (persistent.mapping.PersistentMapping,BTrees.OOBTree.OOBTree,collections.Mapping)):
+			result = toExternalDictionary( obj, name=name, registry=registry )
+			if obj.__class__ == dict: result.pop( 'Class', None )
+			for key, value in obj.iteritems():
+				result[key] = recall( value )
+		elif isinstance( obj, (persistent.list.PersistentList, collections.Set, list, tuple) ):
+			result = registry.getAdapter( [recall(x) for x in obj], ILocatedExternalSequence )
+		# PList doesn't support None values, JSON does. The closest
+		# coersion I can think of is False.
+		elif obj is None:
+			if coerceNone:
+				result = False
+		elif isinstance( obj, ZODB.broken.PersistentBroken ):
+			# Broken objects mean there's been a persistence
+			# issue
+			logger.debug("Broken object found %s, %s", type(obj), obj)
+			result = { 'Class': 'BrokenObject' }
+		else:
+			# Otherwise, we probably won't be able to
+			# JSON-ify it
+			result = registry.queryAdapter( obj, INonExternalizableReplacer, default=DefaultNonExternalizableReplacer )(obj)
+
+		for decorator in registry.subscribers( (orig_obj,), IExternalObjectDecorator ):
+			decorator.decorateExternalObject( orig_obj, result )
+		return result
+	finally:
+		_ex_name_local.name.pop()
+
+def DefaultNonExternalizableReplacer( obj ):
+	logger.debug( "Asked to externalize non-externalizable object %s, %s", type(obj), obj )
+	result = { 'Class': 'NonExternalizableObject', 'InternalType': str(type(obj)) }
+	return result
+
+def stripNoneFromExternal( obj ):
+	""" Given an already externalized object, strips None values. """
+	if isinstance( obj, list ) or isinstance(obj, tuple):
+		obj = [stripNoneFromExternal(x) for x in obj if x is not None]
+	elif isinstance( obj, collections.Mapping ):
+		obj = {k:stripNoneFromExternal(v)
+			   for k,v in obj.iteritems()
+			   if (v is not None and k is not None)}
+	return obj
+
+def stripSyntheticKeysFromExternalDictionary( external ):
+	""" Given a mutable dictionary, removes all the external keys
+	that might have been added by toExternalDictionary and echoed back. """
+	for key in _syntheticKeys():
+		external.pop( key, None )
+	return external
+
+EXT_FORMAT_JSON = 'json'
+EXT_FORMAT_PLIST = 'plist'
+
+def to_external_representation( obj, ext_format=EXT_FORMAT_PLIST, name=_ex_name_marker, registry=component ):
+	"""
+	Transforms (and returns) the `obj` into its external (string) representation.
+
+	:param ext_format: One of :const:EXT_FORMAT_JSON or :const:EXT_FORMAT_PLIST.
+	"""
+	# It would seem nice to be able to do this in one step during
+	# the externalization process itself, but we would wind up traversing
+	# parts of the datastructure more than necessary. Here we traverse
+	# the whole thing exactly twice.
+	ext = toExternalObject( obj, name=name, registry=registry )
+
+	if ext_format == EXT_FORMAT_PLIST:
+		ext = stripNoneFromExternal( ext )
+		try:
+			ext = plistlib.writePlistToString( ext )
+		except TypeError:
+			logger.exception( "Failed to externalize %s", ext )
+			raise
+	else:
+		ext = json.dumps( ext )
+	return ext
+
+def to_json_representation( obj ):
+	""" A convenience function that calls :func:`to_external_representation` with :data:`EXT_FORMAT_JSON`."""
+	return to_external_representation( obj, EXT_FORMAT_JSON )
+
+
+def _syntheticKeys( ):
+	return ('OID', 'ID', 'Last Modified', 'Creator', 'ContainerId', 'Class')
+
+def _isMagicKey( key ):
+	""" For our mixin objects that have special keys, defines
+	those keys that are special and not settable by the user. """
+	return key in _syntheticKeys()
+
+isSyntheticKey = _isMagicKey
+
+
+
+def toExternalDictionary( self, mergeFrom=None, name=_ex_name_marker, registry=component):
+	""" Returns a dictionary of the object's contents. The super class's
+	implementation MUST be called and your object's values added to it.
+	This impl takes care of adding the standard attributes including
+	OID (from self._p_oid) and ID (from self.id if defined) and
+	Creator (from self.creator).
+
+	For convenience, if mergeFrom is not None, then those values will
+	be added to the dictionary created by this method. This allows a pattern like:
+	def toDictionary(self): return super(MyClass,self).toDictionary( {'key': self.val } )
+	The keys and values in mergeFrom should already be external.
+	"""
+	result = registry.getMultiAdapter( (), ILocatedExternalMapping )
+
+	if mergeFrom:
+		result.update( mergeFrom )
+
+	def _ordered_pick( ext_name, *fields ):
+		for x in fields:
+			if isinstance( x, basestring) and getattr( self, x, ''):
+				result[ext_name] = getattr( self, x )
+				if callable( fields[-1] ):
+					result[ext_name] = fields[-1]( result[ext_name] )
+				break
+
+	_ordered_pick( StandardExternalFields.ID, StandardInternalFields.ID, StandardExternalFields.ID )
+	# As we transition over to structured IDs that contain OIDs, we'll try to use that
+	# for both the ID and OID portions
+	if ntiids.is_ntiid_of_type( result.get( StandardExternalFields.ID ), ntiids.TYPE_OID ):
+		result[StandardExternalFields.OID] = result[StandardExternalFields.ID]
+	else:
+		oid = to_external_ntiid_oid( self, default_oid=None ) #toExternalOID( self )
+		if oid:
+			result[StandardExternalFields.OID] = oid
+
+	_ordered_pick( StandardExternalFields.CREATOR, StandardInternalFields.CREATOR, StandardExternalFields.CREATOR, str )
+	_ordered_pick( StandardExternalFields.LAST_MODIFIED, StandardInternalFields.LAST_MODIFIED, StandardInternalFields.LAST_MODIFIEDU )
+	_ordered_pick( StandardExternalFields.CREATED_TIME, StandardInternalFields.CREATED_TIME )
+
+
+	if hasattr( self, '__external_class_name__' ):
+		result[StandardExternalFields.CLASS] = getattr( self, '__external_class_name__' )
+	elif self.__class__.__module__ not in ( 'nti.externalization', 'nti.externalization.datastructures', 'nti.externalization.persistence' ) \
+		   and not self.__class__.__name__.startswith( '_' ):
+		result[StandardExternalFields.CLASS] = self.__class__.__name__
+
+	_ordered_pick( StandardExternalFields.CONTAINER_ID, StandardInternalFields.CONTAINER_ID )
+	try:
+		_ordered_pick( StandardExternalFields.NTIID, StandardInternalFields.NTIID, StandardExternalFields.NTIID )
+		# During the transition, if there is not an NTIID, but we can find one as the ID or OID,
+		# provide that
+		if StandardExternalFields.NTIID not in result:
+			for field in (StandardExternalFields.ID,StandardExternalFields.OID):
+				if ntiids.is_valid_ntiid_string( result.get( field ) ):
+					result[StandardExternalFields.NTIID] = result[field]
+					break
+	except ntiids.InvalidNTIIDError:
+		logger.exception( "Failed to get NTIID for object %s", type(self) ) # printing self probably wants to externalize
+
+
+	for decorator in registry.subscribers( (self,), IExternalMappingDecorator ):
+		decorator.decorateExternalMapping( self, result )
+
+
+	return result

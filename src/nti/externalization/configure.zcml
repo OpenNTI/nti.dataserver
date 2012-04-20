@@ -1,0 +1,18 @@
+<!-- -*- mode: nxml -*- -->
+<configure xmlns="http://namespaces.zope.org/zope">
+	<include package="zope.component" />
+
+
+	<adapter for=""
+			 provides=".interfaces.ILocatedExternalMapping"
+			 factory=".datastructures.LocatedExternalDict" />
+	<adapter for=""
+			 provides=".interfaces.ILocatedExternalSequence"
+			 factory=".datastructures.LocatedExternalList" />
+
+	<adapter for="list"
+			 provides=".interfaces.ILocatedExternalSequence"
+			 factory=".datastructures.LocatedExternalList" />
+
+
+</configure>
