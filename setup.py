@@ -97,6 +97,7 @@ setup(
 		'z3c.bcrypt',
 		'z3c.coverage',
 		'zc.queue',
+		'zc.zlibstorage', # compressed records. Will be built-in to newer ZODB
 		'zetalibrary',
 		'zope.annotation',
 		'zope.broken',
