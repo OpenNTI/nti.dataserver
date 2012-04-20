@@ -10,8 +10,10 @@ logger = logging.getLogger( __name__ )
 import warnings
 
 
-from nti.dataserver.datastructures import StandardExternalFields as XFields
-from nti.dataserver import interfaces as nti_interfaces
+from nti.externalization.interfaces import StandardExternalFields as XFields
+from nti.socketio import interfaces as sio_interfaces
+
+# FIXME: Break this dependency
 from nti.dataserver import users
 
 
@@ -65,7 +67,7 @@ class _ChatHandler( Persistent ):
 				 'data_noticeIncomingChange', 'failedToEnterRoom' )
 	_session_consumer_args_search_ = ('nti.chatserver.meeting','nti.chatserver.messageinfo')
 
-	interface.implements(nti_interfaces.ISocketEventHandler)
+	interface.implements(sio_interfaces.ISocketEventHandler)
 	event_prefix = 'chat'
 	_v_chatserver = None
 	# public methods correspond to events

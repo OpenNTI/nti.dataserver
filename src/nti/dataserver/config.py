@@ -15,7 +15,7 @@ from zope import interface
 from nti.dataserver import interfaces as nti_interfaces
 from gevent_zeromq import zmq # If things crash, remove core.so
 
-from nti.utils.zlibstorage import install_zlib_client_resolver
+from nti.zodb.zlibstorage import install_zlib_client_resolver
 
 
 def _file_contents_equal( path, contents ):
