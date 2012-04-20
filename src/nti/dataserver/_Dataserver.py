@@ -211,6 +211,7 @@ def run_job_in_site(func, retries=0,
 				if i == retries:
 					# We failed for the last time
 					raise
+				logger.exception( "Retrying transaction %s on exception", t )
 			except transaction.interfaces.DoomedTransaction:
 				raise
 			except:
