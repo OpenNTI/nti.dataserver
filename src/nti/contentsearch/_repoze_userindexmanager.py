@@ -98,11 +98,10 @@ class RepozeUserIndexManager(object):
 		hits = map(get_search_hit, objects, [qo.term]*length, [highlight_type]*length)
 		
 		# filter if required
-		items = [hit for hit in hits if hit]
-		items = items[:limit] if limit else items
+		items = hits[:limit] if limit else hits
 		
 		# get last modified
-		lm = reduce(lambda x,y: max(x, y[LAST_MODIFIED]), items, 0)
+		lm = reduce(lambda x,y: max(x, y.get(LAST_MODIFIED,0)), items, 0)
 		
 		return items, lm
 

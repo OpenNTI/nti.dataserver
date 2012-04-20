@@ -2,11 +2,14 @@ import os
 import json
 import unittest
 
+from nti.externalization.externalization import toExternalObject
+
 from nti.contentsearch.common import get_type_name
-from nti.contentsearch._search_external import _adapt_to_search_hit
-from nti.contentsearch._search_external import _NoteExternalObject
-from nti.contentsearch._search_external import _HighlightExternalObject
-from nti.contentsearch._search_external import _MessageInfoExternalObject
+from nti.contentsearch._search_external import get_search_hit
+from nti.contentsearch._search_external import _NoteSearchHit
+from nti.contentsearch._search_external import _HighlightSearchHit
+from nti.contentsearch._search_external import _MessageInfoSearchHit
+from nti.contentsearch._search_external import _provide_highlight_snippet
 
 from nti.contentsearch._repoze_index import get_id
 from nti.contentsearch._repoze_index import get_oid
@@ -27,12 +30,12 @@ from nti.contentsearch._repoze_index import get_messageinfo_content
 from nti.contentsearch._repoze_index import create_highlight_catalog
 from nti.contentsearch._repoze_index import create_messageinfo_catalog
 
-
 from nti.contentsearch.tests import ConfiguringTestBase
 
 from hamcrest import assert_that
 from hamcrest import close_to
 from hamcrest import is_
+from hamcrest import is_not
 from hamcrest import has_key
 from hamcrest import has_length
 from hamcrest import has_entry
@@ -73,6 +76,10 @@ class TestRepozeIndex(ConfiguringTestBase):
 		assert_that(catalog, has_key(CONTAINER_ID))
 		assert_that(catalog, has_key(COLLECTION_ID))
 		assert_that(catalog, has_key(LAST_MODIFIED))
+		
+	def test_get_search_hit(self):
+		hit = get_search_hit({})
+		assert_that(hit, is_not(None))
 		
 	def test_notes_catalog(self):
 		catalog = create_notes_catalog()
@@ -160,8 +167,12 @@ class TestRepozeIndex(ConfiguringTestBase):
 		assert_that(get_messageinfo_content(obj), is_('zanpakuto and zangetsu')) 
 		assert_that(get_messageinfo_ngrams(obj).split(), has_length(13))
 		
+	def _externalize(self, clazz, data, query):
+		d = _provide_highlight_snippet(clazz(data), query)
+		return toExternalObject(d)
+		
 	def test_get_index_hit_from_hightlight(self):
-		d = _adapt_to_search_hit(_HighlightExternalObject(self.hightlight), 'divide')
+		d = self._externalize(_HighlightSearchHit, self.hightlight, 'divide')
 		assert_that(d, has_entry(CLASS, HIT))
 		# assert_that(d, has_entry(COLLECTION_ID, 'prealgebra'))
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.0'))
@@ -172,7 +183,7 @@ class TestRepozeIndex(ConfiguringTestBase):
 			has_entry(SNIPPET, u'You know how to add subtract multiply and DIVIDE In fact you may already know how to solve many of the problems'))
 		
 	def test_get_index_hit_from_note(self):
-		d = _adapt_to_search_hit(_NoteExternalObject(self.note), 'waves')
+		d = self._externalize(_NoteSearchHit, self.note, 'waves')
 		assert_that(d, has_entry(CLASS, HIT))
 		# assert_that(d, has_entry(COLLECTION_ID, 'prealgebra'))
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.0'))
@@ -182,7 +193,7 @@ class TestRepozeIndex(ConfiguringTestBase):
 		assert_that(d, has_entry(SNIPPET, u'All WAVES Rise now and Become my Shield Lightning Strike now and'))
 		
 	def test_get_index_hit_from_messgeinfo(self):
-		d = _adapt_to_search_hit(_MessageInfoExternalObject(self.messageinfo), '')
+		d = self._externalize(_MessageInfoSearchHit, self.messageinfo, '')
 		assert_that(d, has_entry(CLASS, HIT))
 		# assert_that(d, has_entry(COLLECTION_ID, 'prealgebra'))
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:zope.security.management.system_user-OID-0x82:53657373696f6e73'))
