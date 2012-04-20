@@ -1,0 +1,7 @@
+<!-- -*- mode: nxml -*- -->
+<configure xmlns="http://namespaces.zope.org/zope">
+	<include package="zope.component" />
+
+	<subscriber handler=".chatserver._save_message_to_transcripts_subscriber" />
+
+</configure>

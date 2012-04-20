@@ -5,6 +5,8 @@ from __future__ import unicode_literals
 
 #pylint: disable=E0213,E0211
 
+from zope import interface
+from zope.interface import interfaces as z_interfaces
 from zope.interface import Interface
 from zope import interface
 from zope import schema
@@ -40,6 +42,33 @@ class IMessageInfo(nti_interfaces.IModeledContent):
 	Status = schema.Choice(
 		title="The status of the message. Set by the server.",
 		vocabulary=STATUS_VOCABULARY )
+
+class IMessageInfoEvent(z_interfaces.IObjectEvent):
+	"""
+	An event having to do with an :class:`IMessageInfo`.
+	"""
+
+class MessageInfoEvent(z_interfaces.ObjectEvent):
+	interface.implements(IMessageInfoEvent)
+
+
+class IMessageInfoPostedToRoomEvent(IMessageInfoEvent):
+	"""
+	A message has been delivered to a room.
+	"""
+
+	recipients = schema.Set(
+		title="The names of all the recipients of the message.",
+		description="""The actual recipients of the message, whether or not they are
+			named in the message itself. Includes people who just get the transcript.""",
+		value_type=schema.TextLine() )
+
+class MessageInfoPostedToRoomEvent(MessageInfoEvent):
+	interface.implements(IMessageInfoPostedToRoomEvent)
+
+	def __init__( self, obj, recipients=() ):
+		super(MessageInfoPostedToRoomEvent,self).__init__( obj )
+		self.recipients = recipients
 
 class IMeetingContainer(Interface):
 

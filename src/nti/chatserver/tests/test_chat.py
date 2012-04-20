@@ -259,6 +259,7 @@ class TestChatserver(ConfiguringTestBase):
 		self.sessions = sessions
 		chatserver = chat.Chatserver( sessions )
 		mock_dataserver.current_transaction.add( chatserver.rooms )
+		component.provideUtility( chatserver )
 
 		d = {'Occupants': ['jason', 'chris', 'sjohnson'],
 			 'ContainerId': 'tag:nextthought.com,2011-10:x-y-z' }
@@ -456,6 +457,7 @@ class TestChatserver(ConfiguringTestBase):
 		sessions[3] = self.Session( 'jason' )
 		chatserver = chat.Chatserver( sessions )
 		mock_dataserver.current_transaction.add( chatserver.rooms )
+		component.provideUtility( chatserver )
 		room = chatserver.create_room_from_dict( {'Occupants': ['jason', 'chris', 'sjohnson'],
 												  'ContainerId': 'tag:nextthought.com,2011-10:x-y-z'} )
 		msg = chat.MessageInfo()
@@ -708,6 +710,7 @@ class TestChatserver(ConfiguringTestBase):
 
 		conn = mock_dataserver.current_transaction
 		conn.add( chatserver.rooms )
+		component.provideUtility( chatserver )
 
 		n = Note()
 		n.addSharingTarget( 'sjohnson' )

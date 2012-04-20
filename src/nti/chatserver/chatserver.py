@@ -431,3 +431,13 @@ class Chatserver(object):
 		if not storage:
 			return ()
 		return storage.transcript_summaries
+
+
+@component.adapter( interfaces.IMessageInfo, interfaces.IMessageInfoPostedToRoomEvent )
+def _save_message_to_transcripts_subscriber( msg_info, event ):
+	"""
+	Event handler that saves messages to the appropriate transcripts.
+	"""
+	chatserver = component.queryUtility( interfaces.IChatserver )
+	if chatserver:
+		chatserver._save_message_to_transcripts( msg_info, event.recipients )
