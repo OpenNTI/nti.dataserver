@@ -46,6 +46,15 @@ class chat(object):
 from nti.dataserver.tests.mock_dataserver import WithMockDS, WithMockDSTrans, ConfiguringTestBase
 from nti.dataserver.tests import mock_dataserver
 
+import nti.externalization.internalization
+nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.users' )
+nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.contenttypes' )
+nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.providers' )
+nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.classes' )
+nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.quizzes' )
+nti.externalization.internalization.register_legacy_search_module( 'nti.chatserver.messageinfo' )
+
+
 class TestMessageInfo(ConfiguringTestBase):
 
 

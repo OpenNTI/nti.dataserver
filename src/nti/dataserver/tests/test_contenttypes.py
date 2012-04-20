@@ -25,6 +25,14 @@ from mock_dataserver import WithMockDS
 import plistlib
 import os
 
+import nti.externalization.internalization
+nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.users' )
+nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.contenttypes' )
+nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.providers' )
+nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.classes' )
+nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.quizzes' )
+nti.externalization.internalization.register_legacy_search_module( 'nti.chatserver.messageinfo' )
+
 
 def _check_sanitized( inp, expect ):
 	was = contenttypes.sanitize_user_html( inp )

@@ -79,9 +79,6 @@ class TestDataserver( mock_dataserver.ConfiguringTestBase ):
 		assert_that( ds.find_content_type( 'quizresults' ), equal_to( contenttypes.quizresult ) )
 
 		assert_that( ds.find_content_type( 'TestDataserver' ), is_( none() ) )
-		TestDataserver.__external_can_create__ = True
-		assert_that( ds.find_content_type( 'TestDataserver' ), equal_to( TestDataserver ) )
-		del TestDataserver.__external_can_create__
 
 	@mock_dataserver.WithMockDSTrans
 	def test_get_plain_oid(self):

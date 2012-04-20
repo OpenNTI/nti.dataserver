@@ -744,6 +744,7 @@ class _UGDAndRecursiveStreamView(_UGDView):
 		all_data += stream_data
 		return all_data
 
+import nti.externalization.internalization
 def _createContentObject( dataserver, user, datatype, externalValue ):
 	if datatype is None or externalValue is None: return None
 	result = user.maybeCreateContainedObjectWithType( datatype, externalValue ) \
@@ -751,9 +752,13 @@ def _createContentObject( dataserver, user, datatype, externalValue ):
 			 else None
 
 	if result is None:
-		result = dataserver.create_content_type( datatype, create_missing=False )
-	if not getattr( result, '__external_can_create__', False ):
-		result = None
+		result = nti.externalization.internalization.find_factory_for( externalValue )
+		if result:
+			result = result()
+
+#		result = #dataserver.create_content_type( datatype, create_missing=False )
+#	if not getattr( result, '__external_can_create__', False ):
+#		result = None
 	return result
 
 class _UGDModifyViewBase(object):
@@ -1108,11 +1113,12 @@ class _EnclosurePostView(_UGDModifyViewBase):
 		# First, see if they're giving us something we can model
 		datatype = class_name_from_content_type( content_type )
 		datatype = datatype + 's' if datatype else None
-
-
-		modeled_content = self.dataserver.create_content_type( datatype, create_missing=False )
-		if not getattr( modeled_content, '__external_can_create__', False ):
-			modeled_content = None
+		modeled_content = nti.externalization.internalization.find_factory_for_class_name( datatype )
+		if modeled_content:
+			modeled_content = modeled_content()
+		#modeled_content = self.dataserver.create_content_type( datatype, create_missing=False )
+		#if not getattr( modeled_content, '__external_can_create__', False ):
+		#	modeled_content = None
 
 		if modeled_content is not None:
 			modeled_content.creator = self.getRemoteUser()
