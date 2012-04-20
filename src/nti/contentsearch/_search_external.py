@@ -15,12 +15,12 @@ from nti.contentsearch.common import get_multipart_content
 from nti.contentsearch.common import word_content_highlight
 from nti.contentsearch.common import ngram_content_highlight
 
-from nti.contentsearch.common import (	container_id_fields )
+from nti.contentsearch.common import (	WORD_HIGHLIGHT, NGRAM_HIGHLIGHT)
 
 from nti.contentsearch.common import (	NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
 										SNIPPET, HIT, ID, BODY, TARGET_OID, MESSAGE_INFO)
 
-from nti.contentsearch.common import (	body_, startHighlightedFullText_)
+from nti.contentsearch.common import (	container_id_fields,  body_, startHighlightedFullText_)
 
 
 import logging
@@ -36,11 +36,15 @@ def _ngram_content_highlight(query=None, text=None, *args, **kwargs):
 	content = ngram_content_highlight(query, text, *args, **kwargs) if query and text else u''
 	return unicode(content) if content else text
 
-def _highlight_content(query=None, text=None, use_word_highlight=True, *args, **kwargs):
+def _highlight_content(query=None, text=None, highlight_type=True, *args, **kwargs):
 	content = None
-	if query and text and use_word_highlight is not None:
-		content = 	_word_content_highlight(query, text, *args, **kwargs) if use_word_highlight else \
-					_ngram_content_highlight(query, text, *args, **kwargs)
+	if query and text:
+		if highlight_type == WORD_HIGHLIGHT:
+			content = _word_content_highlight(query, text, *args, **kwargs)
+		elif highlight_type == NGRAM_HIGHLIGHT:
+			content = _ngram_content_highlight(query, text, *args, **kwargs)
+		else:
+			content = text
 	return unicode(content) if content else text
 
 
@@ -84,11 +88,21 @@ class _MessageInfoExternalObject(_MixinExternalObject):
 	interface.implements( nti_interfaces.IExternalObject )
 
 	def toExternalObject(self):
-		result = super(_NoteExternalObject, self).toExternalObject()
+		result = super(_MessageInfoExternalObject, self).toExternalObject()
 		result[TYPE] = MESSAGE_INFO
 		result[ID] = get_attr(self.entity, [ID])
 		result[SNIPPET] = get_multipart_content(get_attr(self.entity, [BODY]))
 		return result
 
-def get_index_hit(obj, query=None, use_word_highlight=True, *args, **kwargs):
-	pass
+def _adapt_to_search_hit(adapter, query, highlight_type=WORD_HIGHLIGHT, *args, **kwargs):
+	result = adapter.toExternalObject() if adapter else None
+	if result:
+		text = result[SNIPPET]
+		result[SNIPPET] = _highlight_content(query,text,highlight_type,*args, **kwargs)
+	return result
+
+def get_search_hit(obj, query=None, highlight_type=WORD_HIGHLIGHT, *args, **kwargs):
+	adapter = component.queryAdapter( obj, nti_interfaces.IExternalObject, default=None, name='search-hit')
+	result = _adapt_to_search_hit(adapter, query, highlight_type, *args, **kwargs)
+	return result
+

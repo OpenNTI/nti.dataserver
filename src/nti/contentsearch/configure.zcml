@@ -10,10 +10,13 @@
 			
 	<!-- Externalization -->
 
-	<adapter factory="._ugd_external._HighlightExternalObject"
-			 name="ugd-hit" />
+	<adapter factory="._search_external._HighlightExternalObject"
+			 name="search-hit" />
 			 
-	<adapter factory="._ugd_external._NoteExternalObject"
-			 name="ugd-hit" />
+	<adapter factory="._search_external._NoteExternalObject"
+			 name="search-hit" />
+			 
+	<adapter factory="._search_external._MessageInfoExternalObject"
+			 name="search-hit" />
 			  
 </configure>
