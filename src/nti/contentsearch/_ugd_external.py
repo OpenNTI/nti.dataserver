@@ -48,7 +48,7 @@ class _MixinExternalObject(object):
 	def __init__( self, entity ):
 		self.entity = entity
 	
-	def toExternalObject( self, *args, **kwargs):
+	def toExternalObject(self):
 		obj = self.entity
 		result = {}
 		result[CLASS] = HIT
@@ -65,38 +65,30 @@ class _HighlightExternalObject(_MixinExternalObject):
 	component.adapts( nti_interfaces.IHighlight )
 	interface.implements( nti_interfaces.IExternalObject )
 
-	def toExternalObject( self, *args, **kwargs):
-		query = kwargs.pop('query', u'')
-		use_word_highlight = kwargs.pop('use_word_highlight', None)
+	def toExternalObject(self):
 		result = super(_HighlightExternalObject, self).toExternalObject()
-		text = get_content(get_attr(self.entity, [startHighlightedFullText_]))
-		result[SNIPPET] = _highlight_content(unicode(query), unicode(text), use_word_highlight, *args, **kwargs)
+		result[SNIPPET] = get_content(get_attr(self.entity, [startHighlightedFullText_]))
 		return result
 	
 class _NoteExternalObject(_MixinExternalObject):
 	component.adapts( nti_interfaces.INote )
 	interface.implements( nti_interfaces.IExternalObject )
 
-	def toExternalObject( self, *args, **kwargs):
-		query = kwargs.pop('query', u'')
-		use_word_highlight = kwargs.pop('use_word_highlight', None)
+	def toExternalObject(self):
 		result = super(_NoteExternalObject, self).toExternalObject()
-		text = get_multipart_content(get_attr(self.entity, [body_]))
-		result[SNIPPET] = _highlight_content(unicode(query), unicode(text), use_word_highlight, *args, **kwargs)
+		result[SNIPPET] = get_multipart_content(get_attr(self.entity, [body_]))
 		return result
 	
 class _MessageInfoExternalObject(_MixinExternalObject):
 	component.adapts( chat_interfaces.IMessageInfo )
 	interface.implements( nti_interfaces.IExternalObject )
 
-	def toExternalObject( self, *args, **kwargs):
-		query = kwargs.pop('query', u'')
-		use_word_highlight = kwargs.pop('use_word_highlight', None)
+	def toExternalObject(self):
 		result = super(_NoteExternalObject, self).toExternalObject()
-		text = get_multipart_content(get_attr(self.entity, [BODY]))
 		result[TYPE] = MESSAGE_INFO
 		result[ID] = get_attr(self.entity, [ID])
-		result[SNIPPET] = _highlight_content(unicode(query), unicode(text), use_word_highlight, *args, **kwargs)
+		result[SNIPPET] = get_multipart_content(get_attr(self.entity, [BODY]))
 		return result
 
-	
+def get_index_hit(obj, query=None, use_word_highlight=True, *args, **kwargs):
+	pass
