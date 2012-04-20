@@ -15,15 +15,16 @@ from whoosh import highlight
 from nltk import clean_html
 from nltk.tokenize import RegexpTokenizer
 
-from nti.dataserver.interfaces import ILibrary
+from nti.ntiids.ntiids import is_valid_ntiid_string
+from nti.externalization import interfaces as ext_interfaces
 
 from nti.dataserver.users import Entity
 from nti.dataserver.chat import MessageInfo
 from nti.dataserver.contenttypes import Note
+from nti.dataserver.interfaces import ILibrary
 from nti.dataserver.contenttypes import Canvas
 from nti.dataserver.contenttypes import Highlight
 from nti.dataserver.contenttypes import CanvasTextShape
-from nti.dataserver.ntiids import is_valid_ntiid_string
 from nti.dataserver.datastructures import to_external_ntiid_oid
 
 from nti.contentsearch import to_list
@@ -34,51 +35,52 @@ logger = logging.getLogger( __name__ )
 # -----------------------------------
 
 default_tokenizer = RegexpTokenizer(r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-']\w+)*", flags = re.MULTILINE | re.DOTALL)
-
-ID 				= u'ID'
+	
+ID 				= unicode(ext_interfaces.StandardExternalFields.ID)
 HIT 			= u'Hit'
-OID 			= u'OID'
+OID 			= unicode(ext_interfaces.StandardExternalFields.OID)
 TYPE 			= u'Type'
 BODY			= u'Body'
-NTIID 			= u'NTIID'
+NTIID 			= unicode(ext_interfaces.StandardExternalFields.NTIID)
 CLASS 			= u'Class'
 QUERY 			= u'Query'
 ITEMS			= u'Items'
 CONTENT			= u'Content'
 SNIPPET 		= u'Snippet'
-CREATOR 		= u'Creator'
+CREATOR 		= unicode(ext_interfaces.StandardExternalFields.CREATOR)
 AUTO_TAGS		= u'AutoTags'
-MIME_TYPE		= u'MimeType'
+MIME_TYPE		= unicode(ext_interfaces.StandardExternalFields.MIMETYPE)
 HIT_COUNT 		= u'Hit Count'
 TARGET_OID		= u'TargetOID'
 MESSAGE_INFO	= u'MessageInfo'
-SUGGESTIONS		= u'Suggestions'
-CONTAINER_ID	= u'ContainerId'
+SUGGESTIONS		= u'Suggestions' 
+CONTAINER_ID	= unicode(ext_interfaces.StandardExternalFields.CONTAINER_ID)
 COLLECTION_ID	= u'CollectionId'
-LAST_MODIFIED	= u'Last Modified'
+LAST_MODIFIED	= unicode(ext_interfaces.StandardExternalFields.LAST_MODIFIED)
 
-id_				= u'id'
+	
+id_				= unicode(ext_interfaces.StandardInternalFields.ID)
 oid_			= u'oid'
 body_ 			= u'body'
 text_			= u'text'
 tags_			= u'tags'
 quick_			= u'quick'
 title_			= u'title'
-ntiid_			= u'ntiid'
+ntiid_			= unicode(ext_interfaces.StandardInternalFields.NTIID)
 color_			= u'color'
 p_oid_			= u'_p_oid'
 title_			= u'title'
 ngrams_			= u'ngrams'
 channel_		= u'channel'
 section_		= u'section'
-creator_		= u'creator'
+creator_		= unicode(ext_interfaces.StandardInternalFields.CREATOR)
 related_		= u'related'
 content_		= u'content'
 keywords_		= u'keywords'
 references_		= u'references'
 recipients_		= u'recipients'
 sharedWith_		= u'sharedWith'
-containerId_	= u'containerId'
+containerId_	= unicode(ext_interfaces.StandardInternalFields.CONTAINER_ID)
 collectionId_	= u'collectionId'
 last_modified_	= u'last_modified'
 startHighlightedFullText_ = 'startHighlightedFullText'
@@ -88,7 +90,8 @@ creator_fields = [CREATOR, creator_]
 oid_fields = [OID, p_oid_, oid_, id_]
 keyword_fields = [keywords_, tags_, AUTO_TAGS]
 container_id_fields = [CONTAINER_ID, 'ContainerID', containerId_, 'container']
-last_modified_fields =  [LAST_MODIFIED, 'lastModified', 'LastModified', '_lastModified', last_modified_]
+last_modified_fields =  [LAST_MODIFIED, ext_interfaces.StandardInternalFields.LAST_MODIFIED,
+						 ext_interfaces.StandardInternalFields.LAST_MODIFIEDU, '_lastModified', last_modified_]
 
 nti_mimetype_prefix = 'application/vnd.nextthought.'
 
@@ -205,6 +208,17 @@ def get_references(obj, default=None):
 			ntiid = get_ntiid(obj)
 			if ntiid: result.add(ntiid)
 	return list(result) if result else []
+
+def get_last_modified(obj, default=None):
+	value = get_attr(obj, last_modified_fields, default)
+	if value:
+		if isinstance(value, six.string_types):
+			value = float(value)
+		elif isinstance(value, datetime):
+			value = epoch_time(value)
+	else:
+		value = 0
+	return value
 
 # -----------------------------------
 

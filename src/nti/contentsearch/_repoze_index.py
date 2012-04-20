@@ -1,5 +1,4 @@
 import six
-from datetime import datetime
 from collections import Iterable
 
 from repoze.catalog.catalog import Catalog
@@ -9,20 +8,20 @@ from repoze.catalog.indexes.keyword import CatalogKeywordIndex
 from nti.contentsearch.common import ngrams
 from nti.contentsearch.common import get_attr
 from nti.contentsearch.common import get_ntiid
-from nti.contentsearch.common import epoch_time
 from nti.contentsearch.common import get_content
 from nti.contentsearch.common import get_creator
 from nti.contentsearch.common import get_type_name
 from nti.contentsearch.common import get_collection
 from nti.contentsearch.common import get_references
 from nti.contentsearch.common import get_external_oid
+from nti.contentsearch.common import get_last_modified
 from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch.common import get_multipart_content
 from nti.contentsearch.common import word_content_highlight
 from nti.contentsearch.common import ngram_content_highlight
 from nti.contentsearch.textindexng3 import CatalogTextIndexNG3
 
-from nti.contentsearch.common import (	container_id_fields, last_modified_fields, keyword_fields)
+from nti.contentsearch.common import (	container_id_fields, keyword_fields)
 
 from nti.contentsearch.common import (	OID, NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
 										COLLECTION_ID, SNIPPET, HIT, ID, BODY, TARGET_OID, MESSAGE_INFO)
@@ -34,19 +33,6 @@ from nti.contentsearch.common import (	ngrams_, channel_, content_, keywords_, r
 
 import logging
 logger = logging.getLogger( __name__ )
-
-# -----------------------------------
-
-def get_last_modified(obj, default=None):
-	value = get_attr(obj, last_modified_fields, default)
-	if value:
-		if isinstance(value, six.string_types):
-			value = float(value)
-		elif isinstance(value, datetime):
-			value = epoch_time(value)
-	else:
-		value = 0
-	return value
 
 # -----------------------------------
 
