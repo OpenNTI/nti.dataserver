@@ -4,12 +4,8 @@ import logging
 logger = logging.getLogger( __name__ )
 
 import os
-import sys
-import types
-import inspect
 import six
 
-import collections
 
 import gevent.queue
 import gevent.local
@@ -23,7 +19,6 @@ from zope.processlifetime import DatabaseOpenedWithRoot
 
 import zope.generations.generations
 import zope.deprecation
-import ZODB.Connection
 
 from persistent import Persistent, wref
 import transaction
@@ -33,17 +28,18 @@ from persistent.mapping import PersistentMapping
 import contextlib
 from zope.component.hooks import site, getSite, setSite
 
-import contenttypes
-import datastructures
-import sessions
 
+from nti.externalization import oids
 import nti.apns as apns
-from . import users
-from . import interfaces
-from . import ntiids
-from nti.chatserver import interfaces as chat_interfaces
+from nti.ntiids import ntiids
 from nti.externalization import interfaces as ext_interfaces
 import nti.externalization.internalization
+
+from nti.dataserver import sessions
+from nti.dataserver import users
+from nti.dataserver import interfaces
+
+from nti.chatserver import interfaces as chat_interfaces
 from . import config
 
 
@@ -604,7 +600,7 @@ def get_object_by_oid( connection, oid_string, ignore_creator=False ):
 		logger.debug( "Failed to resolve non-OID NTIID %s", oid_string )
 		return None
 
-	oid_string, database_name = datastructures.fromExternalOID( oid_string )
+	oid_string, database_name = oids.fromExternalOID( oid_string )
 	if not oid_string:
 		logger.debug( 'No OID string given' )
 		return None

@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python2.7
 
 """
@@ -8,12 +9,12 @@ logger = logging.getLogger(__name__)
 
 import six
 import collections
-import urllib
+
 
 import pyramid.httpexceptions
 from . import traversal
 from pyramid import security as psec
-from pyramid import location as plocation
+
 
 from zope.location import location
 from zope.location.location import LocationProxy
@@ -32,7 +33,7 @@ from nti.dataserver.mimetype import (MIME_BASE_PLIST, MIME_BASE_JSON,
 
 from nti.dataserver import links
 from nti.dataserver import users
-from nti.dataserver import ntiids
+from nti.ntiids import ntiids
 from nti.dataserver import authorization as nauth
 
 import nti.appserver.interfaces as app_interfaces

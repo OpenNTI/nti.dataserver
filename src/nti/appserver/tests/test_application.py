@@ -24,8 +24,10 @@ import os
 import os.path
 
 import urllib
-from nti.dataserver import users, ntiids, providers, classes
-from nti.dataserver.datastructures import ContainedMixin, to_external_ntiid_oid
+from nti.dataserver import users, classes, providers
+from nti.ntiids import ntiids
+from nti.dataserver.datastructures import ContainedMixin
+from nti.externalization.oids import to_external_ntiid_oid
 from nti.dataserver import contenttypes, datastructures, interfaces as nti_interfaces
 
 from nti.dataserver.tests import mock_dataserver

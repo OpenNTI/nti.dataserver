@@ -1,27 +1,27 @@
 #!/usr/bin/env python2.7
 
 
-from hamcrest import (assert_that, is_, has_entry, instance_of,
-					  has_key, is_in, not_none, is_not, greater_than,
-					  same_instance, has_length, none,
+from hamcrest import (assert_that, is_,
+					  has_key,  not_none,
+					    none,
 					  has_item, has_items)
 import unittest
 from zope import (interface, component)
 
 
-import nti.dataserver as dataserver
 
-import nti.dataserver.chat as chat
-import nti.dataserver.chat_interfaces as chat_interfaces
+
+#import nti.chatserver.chat as chat
+from nti.chatserver import interfaces as chat_interfaces
 
 import nti.dataserver.users as users
 import nti.dataserver.providers as providers
 import nti.dataserver.classes as classes
-import nti.dataserver.ntiids as ntiids
+from nti.ntiids import ntiids
 import nti.dataserver.meeting_container_storage as mcs
 
 
-from mock_dataserver import MockDataserver, WithMockDS, ConfiguringTestBase
+from mock_dataserver import WithMockDS, ConfiguringTestBase
 import mock_dataserver
 
 

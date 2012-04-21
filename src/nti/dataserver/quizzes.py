@@ -1,4 +1,6 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
+from __future__ import print_function, unicode_literals
+
 import logging
 logger = logging.getLogger(__name__)
 
@@ -10,13 +12,18 @@ from persistent.list import PersistentList
 
 from zope import interface
 
-from datastructures import  ExternalizableDictionaryMixin, CreatedModDateTrackingObject, toExternalObject, toExternalDictionary, StandardExternalFields
-import datastructures
+from nti.dataserver import datastructures
+
+from nti.externalization.datastructures import ExternalizableDictionaryMixin
+from nti.externalization.externalization import toExternalDictionary, toExternalObject
+from nti.externalization.interfaces import StandardExternalFields, IExternalObject
+from nti.externalization import oids
 
 from nti.deprecated import deprecated
 import mimetype
-import interfaces as nti_interfaces
-import ntiids
+from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.ntiids import find_object_with_ntiid
+from nti.ntiids import ntiids
 
 # TODO: These need interfaces and modeling.
 
@@ -59,7 +66,7 @@ class QuizQuestion(persistent.Persistent):
 class Quiz(datastructures.ContainedMixin,datastructures.CreatedModDateTrackingObject,persistent.Persistent):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-	interface.implements(nti_interfaces.IModeledContent,nti_interfaces.IExternalObject)
+	interface.implements(nti_interfaces.IModeledContent,IExternalObject)
 
 	canUpdateSharingOnly = True
 	__external_can_create__ = True
@@ -114,7 +121,7 @@ class Quiz(datastructures.ContainedMixin,datastructures.CreatedModDateTrackingOb
 				except ntiids.InvalidNTIIDError:
 					pass
 
-		return datastructures.to_external_ntiid_oid( self )
+		return oids.to_external_ntiid_oid( self )
 
 	def to_container_key( self ):
 		return self.NTIID
@@ -152,12 +159,12 @@ class QuizQuestionResponse(persistent.Persistent):
 from nti.assessment import assess
 
 class QuizResult(datastructures.ContainedMixin,
-				 CreatedModDateTrackingObject,
+				 datastructures.CreatedModDateTrackingObject,
 				 persistent.Persistent,
 				 ExternalizableDictionaryMixin):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-	interface.implements(nti_interfaces.IModeledContent,nti_interfaces.IExternalObject)
+	interface.implements(nti_interfaces.IModeledContent,IExternalObject)
 
 	__external_can_create__ = True
 
@@ -224,7 +231,7 @@ class QuizResult(datastructures.ContainedMixin,
 
 		# FIXME: Looking up the quiz is being handled in a weird way.
 		# We begin by looking
-		quiz = ntiids.find_object_with_ntiid( quizId )
+		quiz = find_object_with_ntiid( quizId )
 		if not quiz:
 			# FIXME: This double nesting is weird ard wrong. QuizTree sets things up funny.
 			quiz = dataserver.root.get('quizzes', {}).get('quizzes', {}).get(quizId)

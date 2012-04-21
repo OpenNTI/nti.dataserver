@@ -7,19 +7,20 @@ logger = logging.getLogger( __name__ )
 import sys
 import itertools
 
-from nti.dataserver.datastructures import toExternalObject
+
+from zope import interface
+from zope import component
+
+import nti.externalization.internalization
+from nti.externalization.externalization import toExternalObject
 
 from nti.socketio import interfaces as sio_interfaces
-import nti.externalization.internalization
 
-from persistent import Persistent
-
-from zope import component
 
 class UnauthenticatedSessionError(ValueError):
 	"Raised when a session consumer is called but is not authenticated."
 
-class SessionConsumer(Persistent):
+class SessionConsumer(object):
 	"""
 	A callable object that responds to events from a client session.
 
@@ -27,25 +28,22 @@ class SessionConsumer(Persistent):
 	event handling.
 	"""
 
-	def __init__(self, username=None, session=None):
-		self._username = username
-		self._event_handlers = {}
-		if session and username:
-			logger.info( "Initializing authenticated session for '%s'", self._username )
-			self._initialize_session(session)
+	interface.implements(sio_interfaces.ISocketSessionClientMessageConsumer)
 
-
-	def __call__( self, socket_obj, msg ):
-		if self._username is None:
+	def __call__( self, session, msg ):
+		if session.owner is None:
 			raise UnauthenticatedSessionError()
 
-		self._on_msg( socket_obj, msg )
+		event_handlers = self._initialize_session( session )
+		self._on_msg( event_handlers, session.socket, msg )
 
 	def _initialize_session(self, session):
-		session.owner = self._username # save the username, cannot save user obj
+		"""
+		:return: The event handlers that are interested in the session.
+		"""
 		session.incr_hits()
 
-		self._event_handlers.update( self._create_event_handlers( session.protocol_handler, session ) )
+		return self._create_event_handlers( session.socket, session )
 
 		#if session.internalize_function == plistlib.readPlistFromString:
 		#	session.externalize_function = to_external_representation
@@ -67,17 +65,17 @@ class SessionConsumer(Persistent):
 
 		return result
 
-	def kill( self ):
+	def kill( self, session ):
 		"""
 		Call while a session is being killed to teardown chat connections.
 		Any event handler with a 'destroy' method will be invoked.
 		"""
-		for v in itertools.chain( *self._event_handlers.values() ):
+		for v in itertools.chain( *self._create_event_handlers(session.socket,session).values() ):
 			destroy = getattr( v, 'destroy', None )
 			if callable(destroy): destroy()
 
 
-	def _find_handler( self, message ):
+	def _find_handler( self, event_handlers, message ):
 		"""
 		:return: A callable object of zero arguments, or None.
 		"""
@@ -89,7 +87,7 @@ class SessionConsumer(Persistent):
 
 		def l(): logger.warning( "Dropping unhandled event '%s' from message %s", event, message )
 
-		handler_list = self._event_handlers.get(namespace)
+		handler_list = event_handlers.get(namespace)
 		if not handler_list:
 			l()
 			return
@@ -124,7 +122,7 @@ class SessionConsumer(Persistent):
 
 		return call
 
-	def _on_msg( self, socket_obj, message ):
+	def _on_msg( self, event_handlers, socket_obj, message ):
 		if message is None:
 			# socket has died
 			logger.debug( "Socket has died %s", socket_obj )
@@ -133,7 +131,7 @@ class SessionConsumer(Persistent):
 			logger.warning( 'Dropping unhandled message of wrong type %s', message )
 			return
 
-		handler = self._find_handler( message ) # This logs missing handlers
+		handler = self._find_handler( event_handlers, message ) # This logs missing handlers
 		if handler is None:
 			return
 
@@ -148,8 +146,8 @@ class SessionConsumer(Persistent):
 				result = [toExternalObject(result)]
 				socket_obj.ack( message['id'], result )
 		except component.ComponentLookupError:
-				# This is a programming error we can and should fix
-				raise
+			# This is a programming error we can and should fix
+			raise
 		except Exception as e:
 			# TODO: We should have a system of error codes in place
 			logger.exception( "Exception handling event %s", message )

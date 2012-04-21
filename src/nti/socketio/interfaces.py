@@ -1,7 +1,11 @@
 #!/usr/bin/env python2.7
 """Interfaces supporting socket.io"""
 from __future__ import unicode_literals
+
 from zope import interface, schema
+from zope.interface.common import mapping
+from zope.annotation import interfaces as an_interfaces
+
 #pylint: disable=E0213,E0211
 
 _writer_base = interface.Interface
@@ -9,7 +13,7 @@ _reader_base = interface.Interface
 _socket_base = None
 
 
-class ISocketIOMessage(interface.Interface):
+class ISocketIOMessage(mapping.IFullMapping):
 	"""
 	A message read or written to socket io.
 	"""
@@ -159,11 +163,20 @@ class ISocketIOChannel(interface.Interface):
 		A message, ``msg``, is ready to be sent to the remote client.
 		"""
 
-class ISocketSession(ISocketIOChannel):
-	"A higher-level abstraction on top of io channels."
+class ISocketSession(ISocketIOChannel, an_interfaces.IAnnotatable):
+	"""
+	A higher-level abstraction on top of io channels containing some state.
 
-	connected = schema.Bool(title=u'Is the session known to be connected to a client?')
-	owner = schema.TextLine(title=u'The name of the user that owns this session.')
+	Because storing state with the session may be generally useful and is
+	also distributed throughout the system, sessions are intended to be annotatable;
+	implementations should probably be :class:`an_interfaces.IAttributeAnnotatable`
+	"""
+
+	connected = schema.Bool(title='Is the session known to be connected to a client?')
+	owner = schema.TextLine(title='The name of the user that owns this session.')
+	socket = schema.Object(
+		ISocketIOSocket,
+		title="The :class:`ISocketIOSocket` this session is connected with" )
 
 	def heartbeat():
 		pass
@@ -195,6 +208,24 @@ class SocketSessionConnectedEvent(SocketSessionEvent):
 class SocketSessionDisconnectedEvent(SocketSessionEvent):
 	interface.implements(ISocketSessionDisconnectedEvent)
 
+class ISocketSessionClientMessageConsumer(interface.Interface):
+	"""
+	A low-level event handler for messages that arrive on a socket
+	from a client. In general, there may be one of these associated with a session,
+	and it will decide how to handle client messages. The typical implementation,
+	found in :mod:`nti.socketio.session_consumer` will route events as documented
+	in :class:`ISocketEventHandler`.
+	"""
+
+	def __call__( session, message ):
+		"""
+		Handle the ``message`` that has arrived from the client.
+		:param session: The :class:`ISocketSession` that received the message.
+		:param message: An :class:`ISocketIOMessage`.
+		:return: Undefined.
+		"""
+
+
 class ISocketEventHandler(interface.Interface):
 	"""
 	Interface for things that want to handle socket
@@ -210,9 +241,20 @@ class ISocketEventHandler(interface.Interface):
 	:class:`socketio.interfaces.ISocketIOSocket`. If there is duplication
 	among the handlers for a particular event, all will be called in no
 	defined order; the last non-None result will be used for ack.
+
+	These object should generally not expect to store state beyond the current
+	event's lifetime.
+
 	"""
 
 	event_prefix = schema.Field(
 		title=u'If present, names the prefix which should be subtracted from all incoming events before searching for a handler.',
 		description=u'For example, a prefix of chat and a method name of handle would match an event chat_handle',
 		required=False )
+
+	def destroy(session):
+		"""
+		Adapters may optionally implement this method to be informed
+		when the session is being killed.
+		TODO: This should be a separate interface or event.
+		"""

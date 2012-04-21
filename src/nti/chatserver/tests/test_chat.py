@@ -17,8 +17,11 @@ import os
 
 
 from nti.dataserver.contenttypes import Note, Canvas
-from nti.dataserver.datastructures import toExternalOID, to_external_ntiid_oid, to_external_representation, EXT_FORMAT_JSON, EXT_FORMAT_PLIST
-import nti.dataserver.ntiids as ntiids
+
+from nti.externalization.oids import toExternalOID, to_external_ntiid_oid
+from nti.externalization.externalization import to_external_representation, EXT_FORMAT_JSON, EXT_FORMAT_PLIST
+from nti.ntiids import ntiids
+
 import nti.dataserver.users as users
 import nti.dataserver.interfaces as interfaces
 nti_interfaces = interfaces
@@ -28,6 +31,8 @@ from nti.chatserver import messageinfo
 from nti.chatserver import _handler
 from nti.chatserver import chatserver as _chatserver
 from nti.chatserver import interfaces as chat_interfaces
+from nti.socketio import interfaces as sio_interfaces
+from zope.annotation import interfaces as an_interfaces
 
 class chat(object):
 	MessageInfo = messageinfo.MessageInfo
@@ -218,7 +223,7 @@ class TestChatserver(ConfiguringTestBase):
 
 
 	class MockSession(object):
-
+		interface.implements(sio_interfaces.ISocketSession,an_interfaces.IAttributeAnnotatable)
 		def __init__( self, owner ):
 			self.socket = TestChatserver.PH()
 			self.owner = owner
@@ -346,7 +351,7 @@ class TestChatserver(ConfiguringTestBase):
 		# I entered and created.
 		room = foo_handler.enterRoom( {'ContainerId': fl1.NTIID } )
 		assert_that( room, is_( not_none() ) )
-		assert_that( room, has_property( 'occupant_names', set( (foo_handler.session_owner, 'friend@bar') ) ) )
+		assert_that( room, has_property( 'occupant_names', set( (foo_handler.session.owner, 'friend@bar') ) ) )
 
 		# A friend can enter and be in the same room.
 		assert_that( friend_handler.enterRoom( {"ContainerId": fl1.NTIID } ), is_( room ) )
@@ -399,7 +404,7 @@ class TestChatserver(ConfiguringTestBase):
 		# I can become the moderator of this room
 		del sessions[5].socket.events[:]
 		assert_that( foo_handler.makeModerated( room3.ID, True ), is_( room3 ) )
-		assert_that( room3.Moderators, is_( set([foo_handler.session_owner])) )
+		assert_that( room3.Moderators, is_( set([foo_handler.session.owner])) )
 		assert_that( room3.Moderated, is_(True) )
 		assert_that( room3, is_( chat.ModeratedMeeting ) )
 		assert_that( sessions[5].socket.events, has_length( 2 ) )
@@ -753,7 +758,7 @@ class TestChatserver(ConfiguringTestBase):
 
 	def test_chat_handler_adapter(self):
 		class Sock(object):
-			interface.implements( nti_interfaces.ISocketSession )
+			interface.implements( sio_interfaces.ISocketSession )
 			session_id = ''
 			owner = ''
 		socket = Sock()
@@ -763,5 +768,5 @@ class TestChatserver(ConfiguringTestBase):
 		cserver = CServer()
 		component.provideUtility( cserver )
 
-		subs = component.subscribers( (socket,), nti_interfaces.ISocketEventHandler )
+		subs = component.subscribers( (socket,), sio_interfaces.ISocketEventHandler )
 		assert_that( subs, has_item( is_( chat.ChatHandler ) ) )

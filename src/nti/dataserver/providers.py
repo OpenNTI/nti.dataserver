@@ -6,7 +6,7 @@ from zope import component
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import datastructures
-from nti.dataserver import ntiids
+from nti.ntiids import ntiids
 from nti.dataserver import authorization as auth
 from nti.dataserver.authorization_acl import ace_allowing, ace_denying
 

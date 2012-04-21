@@ -12,19 +12,22 @@ from zope.container.btree import BTreeContainer
 # pylint chokes on from . import ... stuff,
 # which means it assumes old-style classes, which
 # is annoying.
-import ntiids
-import enclosures
-import datastructures
-import contenttypes
-import mimetype
-import interfaces as nti_interfaces
+from nti.ntiids import ntiids
+from nti.externalization.datastructures import ExternalizableInstanceDict
+from nti.externalization.externalization import toExternalObject
+
+from nti.dataserver import enclosures
+from nti.dataserver import datastructures
+from nti.dataserver import contenttypes
+from nti.dataserver import mimetype
+from nti.dataserver import interfaces as nti_interfaces
 
 from nti.dataserver import links
 
 from persistent import Persistent
 from persistent.list import PersistentList
 
-class ClassScript(contenttypes._UserContentRoot,datastructures.ExternalizableInstanceDict):
+class ClassScript(contenttypes._UserContentRoot,ExternalizableInstanceDict):
 	"""
 	Default implementation of :class:`IClassScript`
 	"""
@@ -40,8 +43,8 @@ class ClassScript(contenttypes._UserContentRoot,datastructures.ExternalizableIns
 		super(ClassScript,self).__init__()
 		self.body = PersistentList( body )
 
-	def updateFromExternalObject( self, parsed, dataserver=None ):
-		super(ClassScript, self).updateFromExternalObject( parsed, dataserver=dataserver )
+	def updateFromExternalObject( self, parsed, *args, **kwargs ):
+		super(ClassScript, self).updateFromExternalObject( parsed, *args, **kwargs )
 		if self._is_update_sharing_only( parsed ):
 			return
 
@@ -64,7 +67,7 @@ def _add_container_iface( obj, iface ):
 		obj.container_name = obj.__name__
 
 class ClassInfo( datastructures.PersistentCreatedModDateTrackingObject,
-				 datastructures.ExternalizableInstanceDict,
+				 ExternalizableInstanceDict,
 				 enclosures.SimpleEnclosureMixin,
 				 datastructures.ContainedMixin):
 
@@ -181,7 +184,7 @@ class ClassInfo( datastructures.PersistentCreatedModDateTrackingObject,
 	def toExternalDictionary( self, mergeFrom=None ):
 		result = super(ClassInfo,self).toExternalDictionary( mergeFrom=mergeFrom )
 		# TODO: Add better support for externalizing OOBTreeItems (IReadSequence)
-		result['Sections'] = datastructures.toExternalObject( list(self.Sections) )
+		result['Sections'] = toExternalObject( list(self.Sections) )
 
 		#### XXX
 		# Temporary hacks
@@ -196,7 +199,7 @@ class ClassInfo( datastructures.PersistentCreatedModDateTrackingObject,
 			for ext_sect in parsed['Sections']:
 				# The DS doesn't really update the correct nested objects in place, it creates new ones
 				# So we must manage the update ourself so that relationships don't break
-				if isinstance(ext_sect,SectionInfo): ext_sect = datastructures.toExternalObject( ext_sect )
+				if isinstance(ext_sect,SectionInfo): ext_sect = toExternalObject( ext_sect )
 				# Choose a name if one not provided. We assume this
 				# must be an addition. We want to use dots and not dashes
 				# because that interfeces with ntiids so we implement this
@@ -228,7 +231,7 @@ nti_interfaces.IClassInfo.setTaggedValue( nti_interfaces.IHTC_NEW_FACTORY,
 												   interfaces=(nti_interfaces.IClassInfo,)) )
 
 class SectionInfo( datastructures.PersistentCreatedModDateTrackingObject,
-				   datastructures.ExternalizableInstanceDict,
+				   ExternalizableInstanceDict,
 				   enclosures.SimpleEnclosureMixin ):
 
 	interface.implements(nti_interfaces.ISectionInfo,
@@ -237,7 +240,7 @@ class SectionInfo( datastructures.PersistentCreatedModDateTrackingObject,
 
 	__external_can_create__ = True
 	# Let IDs come in, ClassInfo depends on it
-	_excluded_in_ivars_ = datastructures.ExternalizableInstanceDict._excluded_in_ivars_ - set( ('ID',) )
+	_excluded_in_ivars_ = ExternalizableInstanceDict._excluded_in_ivars_ - set( ('ID',) )
 
 	containerId = None
 
@@ -309,7 +312,7 @@ class SectionInfo( datastructures.PersistentCreatedModDateTrackingObject,
 		result = super(SectionInfo,self).toExternalDictionary( mergeFrom=mergeFrom )
 		#### XXX
 		# Temporary hacks
-		result['Enrolled'] = datastructures.toExternalObject( list(self.Enrolled) )
+		result['Enrolled'] = toExternalObject( list(self.Enrolled) )
 		return _add_accepts( self, result )
 
 
@@ -336,7 +339,7 @@ class SectionInfo( datastructures.PersistentCreatedModDateTrackingObject,
 
 
 class InstructorInfo( Persistent,
-					  datastructures.ExternalizableInstanceDict ):
+					  ExternalizableInstanceDict ):
 	interface.implements(nti_interfaces.IInstructorInfo)
 
 	def __init__( self ):

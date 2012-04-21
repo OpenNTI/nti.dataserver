@@ -3,23 +3,23 @@
 #pylint: disable=W0212,R0904
 
 
-from hamcrest import assert_that,  is_, none, contains, has_entry, has_item
+from hamcrest import assert_that,  is_, contains, has_entry, has_item
 from nti.dataserver.tests import has_attr
 
 from zope import component
 from zope import interface
-from zope.security.permission import Permission
 
 import nti.dataserver.users as users
 import nti.dataserver.interfaces as nti_interfaces
 import nti.chatserver.interfaces as chat_interfaces
-import nti.dataserver.session_consumer
-from nti.dataserver.session_consumer import SessionConsumer
-import nti.dataserver.chat as chat
+from nti.chatserver import _handler as chat_handler, messageinfo
+
+from nti.socketio.session_consumer import SessionConsumer
+
 
 import nti.socketio as socketio
 import nti.socketio.protocol
-import mock_dataserver
+from nti.dataserver.tests import mock_dataserver
 
 class MockSocketIO(object):
 
@@ -48,7 +48,7 @@ class MockSocketIO(object):
 		self.acks.append( (mid,data) )
 
 	def new_protocol( self, h=None ): return self
-	protocol_handler = property(new_protocol)
+	socket = property(new_protocol)
 	def incr_hits(self): pass
 
 class TestSessionConsumer(mock_dataserver.ConfiguringTestBase):
@@ -94,12 +94,12 @@ class TestSessionConsumer(mock_dataserver.ConfiguringTestBase):
 
 	def _auth_user(self):
 		users.User.create_user( self.ds, username='foo@bar' )
-		self.cons._username = 'foo@bar'
-		self.cons._initialize_session( self.socket.session )
+		# self.cons._username = 'foo@bar'
+		# self.cons._initialize_session( self.socket.session )
 
 
-		assert_that( self.cons, has_attr( '_username', 'foo@bar') )
-		assert_that( self.cons, has_attr( '_event_handlers', has_entry( 'chat', [self] ) ) )
+		# assert_that( self.cons, has_attr( '_username', 'foo@bar') )
+		# assert_that( self.cons, has_attr( '_event_handlers', has_entry( 'chat', [self] ) ) )
 
 	@mock_dataserver.WithMockDSTrans
 	def test_auth_user(self):
@@ -107,14 +107,15 @@ class TestSessionConsumer(mock_dataserver.ConfiguringTestBase):
 
 	def test_kill(self):
 		class X(object): pass
-		self.cons._event_handlers['chat'] = [X()]
+
 		class Y(object):
 			destroyed = False
 			def destroy(self): self.destroyed = True
 		y = Y()
-		self.cons._event_handlers['y'] = [y]
+		self.evt_handlers = { 'chat': [X()], 'y': [y] }
 
-		self.cons.kill()
+
+		self.cons.kill(self.socket)
 		assert_that( y, has_attr( 'destroyed', True ) )
 
 	@mock_dataserver.WithMockDSTrans
@@ -131,13 +132,14 @@ class TestSessionConsumer(mock_dataserver.ConfiguringTestBase):
 		# method of another class
 		def theEvent( obj ):
 			x.obj = obj
-		theEvent.im_class = chat._ChatHandler
+		theEvent.im_class = chat_handler._ChatHandler
 		x.theEvent = theEvent
-		self.cons._event_handlers['chat'] = [x]
-		self.cons( self.socket, {'type': 'event', 'name': 'chat_theEvent',
+		self.evt_handlers['chat'] = [x]
+		self.cons( self.socket, {'type': 'event',
+								 'name': 'chat_theEvent',
 								 'args': ({ 'Class': 'MessageInfo' },) } )
 
-		assert_that( x.obj, is_( chat.MessageInfo ) )
+		assert_that( x.obj, is_( messageinfo.MessageInfo ) )
 
 	@mock_dataserver.WithMockDSTrans
 	def test_namespace_event( self ):

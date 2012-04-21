@@ -27,13 +27,12 @@ from geventwebsocket import interfaces as ws_interfaces
 
 import nti.socketio.interfaces
 import nti.dataserver.interfaces as nti_interfaces
-import nti.dataserver.session_consumer
-#from nti.dataserver.socketio_server import Session
+import nti.socketio.session_consumer
 
 
 import nti.dataserver.sessions as _sessions
 
-from nti.socketio import interfaces as socketio_interfaces
+#from nti.socketio import interfaces as socketio_interfaces
 import nti.socketio.protocol
 
 class Session( _sessions.Session ):
@@ -43,11 +42,10 @@ class Session( _sessions.Session ):
 	`self.owner`: An attribute for the user that owns the session.
 	"""
 
-	interface.implements( socketio_interfaces.ISocketIOChannel )
+	# Inherited from superclass:
+	# interface.implements( socketio_interfaces.ISocketSession )
 
 	wsgi_app_greenlet = True # TODO: Needed anymore?
-	message_handler = None
-
 
 	@deprecate("Prefer the `socket` property")
 	def new_protocol( self, handler=None ):
@@ -64,6 +62,10 @@ class Session( _sessions.Session ):
 		#p.session = self
 		return p
 
+	@property
+	def message_handler(self):
+		return nti.socketio.session_consumer.SessionConsumer()
+
 	# The names are odd. put_server_msg is a message TO
 	# the server. That is, a message arriving at the server,
 	# sent from the client. In contrast, put_client_msg
@@ -75,8 +77,7 @@ class Session( _sessions.Session ):
 	def put_server_msg(self, msg):
 		# Putting a server message immediately processes it,
 		# wherever the session is loaded.
-		if callable(self.message_handler):
-			self.message_handler( self.socket, msg )
+		self.message_handler( self, msg )
 
 	def put_client_msg(self, msg):
 		self.session_service.put_client_msg( self.session_id, msg )
@@ -85,8 +86,7 @@ class Session( _sessions.Session ):
 		return self.session_service.get_client_msgs( self.session_id )
 
 	def kill( self ):
-		if hasattr( self.message_handler, 'kill' ):
-			self.message_handler.kill()
+		self.message_handler.kill(self)
 		super(Session,self).kill()
 
 # b/c
@@ -113,7 +113,6 @@ def _after_create_session( session, request ):
 		raise hexc.HTTPUnauthorized()
 	logger.debug( "Creating session handler for '%s'", username )
 	session.owner = username
-	session.message_handler = nti.dataserver.session_consumer.SessionConsumer(username=username,session=session)
 
 
 def _create_new_session(request):

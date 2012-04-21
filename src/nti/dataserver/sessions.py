@@ -14,6 +14,7 @@ import zc.queue
 from zope import interface
 from zope import component
 from zope.event import notify
+from zope.annotation import interfaces as an_interfaces
 
 from nti.zodb import minmax
 
@@ -37,7 +38,7 @@ class Session(Persistent):
 	"""
 	`self.owner`: An attribute for the user that owns the session.
 	"""
-	interface.implements(ISocketSession)
+	interface.implements(ISocketSession,an_interfaces.IAttributeAnnotatable)
 
 	STATE_NEW = "NEW"
 	STATE_CONNECTED = "CONNECTED"
