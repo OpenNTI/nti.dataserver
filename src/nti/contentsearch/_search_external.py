@@ -129,7 +129,7 @@ class _SearchHit(object, UserDict.DictMixin):
 		self._data.pop(key)
 	
 	def toExternalObject(self):
-		return self
+		return dict(self._data)
 		
 class _HighlightSearchHit(_SearchHit):
 	component.adapts( nti_interfaces.IHighlight )
