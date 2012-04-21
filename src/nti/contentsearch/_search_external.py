@@ -89,7 +89,7 @@ class NgramSnippetHighlightDecorator(object):
 # -----------------------------------
 
 class _SearchHit(object, UserDict.DictMixin):
-	interface.implements( nti_interfaces.IExternalObject )
+	interface.implements( search_interfaces.ISearchHit )
 	
 	__external_fields  = (CLASS, CREATOR, TARGET_OID, TYPE, LAST_MODIFIED, NTIID,
 						  CONTAINER_ID, SNIPPET, ID)
