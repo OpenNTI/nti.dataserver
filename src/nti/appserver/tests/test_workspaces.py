@@ -16,7 +16,8 @@ from nti.appserver.workspaces import LibraryCollection
 from nti.appserver import tests
 from nti.appserver import interfaces as app_interfaces
 
-from nti.dataserver import ntiids, links, users, providers
+from nti.ntiids import ntiids
+from nti.dataserver import links, users, providers
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.datastructures import toExternalObject
 from nti.dataserver.tests import mock_dataserver

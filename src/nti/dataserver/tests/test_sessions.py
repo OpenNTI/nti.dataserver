@@ -3,19 +3,15 @@
 #pylint: disable=W0212,R0904
 
 
-from hamcrest import assert_that,  is_, none, contains, has_entry, has_item, is_not
-from nti.dataserver.tests import has_attr
+from hamcrest import assert_that,  is_, none, is_not
+
 
 from zope import component
 from zope import interface
-from zope.security.permission import Permission
 
-import nti.dataserver.users as users
+
 import nti.dataserver.interfaces as nti_interfaces
-import nti.dataserver.session_consumer
 import nti.dataserver.sessions as sessions
-from nti.dataserver.session_consumer import SessionConsumer
-import nti.dataserver.chat as chat
 
 import mock_dataserver
 

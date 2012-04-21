@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 
 """
 Defines traversal views and resources for the dataserver.
@@ -28,14 +28,15 @@ from zope.location.location import LocationProxy
 from nti.dataserver.interfaces import (IDataserver, ILibrary, ISimpleEnclosureContainer, IEnclosedContent)
 import nti.dataserver.interfaces as nti_interfaces
 from nti.dataserver import (users, datastructures)
-from nti.dataserver.datastructures import to_external_ntiid_oid as toExternalOID
-from nti.dataserver.datastructures import StandardInternalFields, StandardExternalFields
-from nti.dataserver import ntiids
+from nti.externalization.oids import to_external_ntiid_oid as toExternalOID
+from nti.externalization.interfaces import StandardInternalFields, StandardExternalFields
+from nti.ntiids import ntiids
+from nti.dataserver.ntiids import find_object_with_ntiid
 from nti.dataserver import enclosures
 from nti.dataserver.mimetype import MIME_BASE, nti_mimetype_from_object, nti_mimetype_with_class
 from nti.dataserver import authorization as nauth
 from nti.dataserver import authorization_acl as nacl
-from . import interfaces as app_interfaces
+from nti.appserver import interfaces as app_interfaces
 
 def _find_request( resource ):
 	request = None
@@ -328,7 +329,7 @@ class _ObjectsContainerResource(_ContainerResource):
 		# traversed to get a correct ACL, and coming in this way that doesn't happen.
 		# NOTE: We do not expect to get a fragment here. Browsers drop fragments in URLs.
 		# Fragment handling will have to be completely client side.
-		return ntiids.find_object_with_ntiid( key, dataserver=ds )
+		return find_object_with_ntiid( key, dataserver=ds )
 
 class _NTIIDsContainerResource(_ObjectsContainerResource):
 	"""

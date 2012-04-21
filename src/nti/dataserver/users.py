@@ -8,12 +8,10 @@ import numbers
 import functools
 import time
 import six
-import random
 
 from zope import interface
 from zope import component
 from zope.component.factory import Factory
-from zope import minmax
 from zope.deprecation import deprecated
 
 import persistent
@@ -21,11 +19,12 @@ import persistent
 import collections
 import urllib
 
+from nti.ntiids import ntiids
+from nti.zodb import minmax
+
 from nti.dataserver import datastructures
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver import ntiids
 from nti.dataserver import enclosures
-from nti.dataserver import links
 from nti.dataserver import mimetype
 from nti.dataserver import sharing
 from nti.dataserver.activitystream_change import Change
@@ -650,7 +649,7 @@ class User(Principal):
 		# When it gets reset, the number of outstanding notifications also
 		# resets. It is writable, number is not
 		self.lastLoginTime = minmax.Maximum(0)
-		self.notificationCount = datastructures.MergingCounter(0)
+		self.notificationCount = minmax.MergingCounter(0)
 
 		# We maintain our own stream. The modification queue posts
 		# items to our stream, we are responsible for organization,

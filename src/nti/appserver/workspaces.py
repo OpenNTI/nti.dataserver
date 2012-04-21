@@ -10,12 +10,15 @@ from zope.location.location import LocationProxy
 
 from nti.dataserver import interfaces as model_interfaces
 from nti.dataserver import datastructures
-from nti.dataserver.datastructures import toExternalObject, toExternalDictionary, isSyntheticKey, StandardExternalFields
-from nti.dataserver import library
+
+
+from nti.externalization.externalization import toExternalObject, toExternalDictionary, isSyntheticKey
+from nti.externalization.interfaces import StandardExternalFields
+
 from nti.dataserver import users
 from nti.dataserver import links
 from nti.dataserver import mimetype
-from nti.dataserver import ntiids
+from nti.ntiids import ntiids
 from nti.dataserver import authorization as nauth
 from nti.dataserver import authorization_acl as nacl
 

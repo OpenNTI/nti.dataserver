@@ -3,8 +3,68 @@ Constants and types for dealing with our unique IDs.
 $Revision$
 """
 
-import zope.deprecation
-zope.deprecation.moved( 'nti.ntiids.ntiids' )
+from zope.deprecation import deprecated
+
+from nti.ntiids.ntiids import TYPE_MEETINGROOM_CLASS
+deprecated( "TYPE_MEETINGROOM_CLASS", "Prefer nti.ntiids.ntiids.TYPE_MEETINGROOM_CLASS" )
+from nti.ntiids.ntiids import unicode_literals
+deprecated( "unicode_literals", "Prefer nti.ntiids.ntiids.unicode_literals" )
+from nti.ntiids.ntiids import InvalidNTIIDError
+deprecated( "InvalidNTIIDError", "Prefer nti.ntiids.ntiids.InvalidNTIIDError" )
+from nti.ntiids.ntiids import datetime
+deprecated( "datetime", "Prefer nti.ntiids.ntiids.datetime" )
+from nti.ntiids.ntiids import TYPE_MEETINGROOM_GROUP
+deprecated( "TYPE_MEETINGROOM_GROUP", "Prefer nti.ntiids.ntiids.TYPE_MEETINGROOM_GROUP" )
+from nti.ntiids.ntiids import TYPE_MEETINGROOM
+deprecated( "TYPE_MEETINGROOM", "Prefer nti.ntiids.ntiids.TYPE_MEETINGROOM" )
+from nti.ntiids.ntiids import numbers
+deprecated( "numbers", "Prefer nti.ntiids.ntiids.numbers" )
+from nti.ntiids.ntiids import TYPE_ROOM
+deprecated( "TYPE_ROOM", "Prefer nti.ntiids.ntiids.TYPE_ROOM" )
+from nti.ntiids.ntiids import DATE
+deprecated( "DATE", "Prefer nti.ntiids.ntiids.DATE" )
+from nti.ntiids.ntiids import TYPE_TRANSCRIPT_SUMMARY
+deprecated( "TYPE_TRANSCRIPT_SUMMARY", "Prefer nti.ntiids.ntiids.TYPE_TRANSCRIPT_SUMMARY" )
+from nti.ntiids.ntiids import validate_ntiid_string
+deprecated( "validate_ntiid_string", "Prefer nti.ntiids.ntiids.validate_ntiid_string" )
+from nti.ntiids.ntiids import TYPE_MEETINGROOM_SECT
+deprecated( "TYPE_MEETINGROOM_SECT", "Prefer nti.ntiids.ntiids.TYPE_MEETINGROOM_SECT" )
+from nti.ntiids.ntiids import TYPE_QUIZ
+deprecated( "TYPE_QUIZ", "Prefer nti.ntiids.ntiids.TYPE_QUIZ" )
+from nti.ntiids.ntiids import TYPE_OID
+deprecated( "TYPE_OID", "Prefer nti.ntiids.ntiids.TYPE_OID" )
+from nti.ntiids.ntiids import is_valid_ntiid_string
+deprecated( "is_valid_ntiid_string", "Prefer nti.ntiids.ntiids.is_valid_ntiid_string" )
+from nti.ntiids.ntiids import NTIID
+deprecated( "NTIID", "Prefer nti.ntiids.ntiids.NTIID" )
+from nti.ntiids.ntiids import collections
+deprecated( "collections", "Prefer nti.ntiids.ntiids.collections" )
+from nti.ntiids.ntiids import ROOT
+deprecated( "ROOT", "Prefer nti.ntiids.ntiids.ROOT" )
+from nti.ntiids.ntiids import get_provider
+deprecated( "get_provider", "Prefer nti.ntiids.ntiids.get_provider" )
+from nti.ntiids.ntiids import is_ntiid_of_type
+deprecated( "is_ntiid_of_type", "Prefer nti.ntiids.ntiids.is_ntiid_of_type" )
+from nti.ntiids.ntiids import escape_provider
+deprecated( "escape_provider", "Prefer nti.ntiids.ntiids.escape_provider" )
+from nti.ntiids.ntiids import TYPE_TRANSCRIPT
+deprecated( "TYPE_TRANSCRIPT", "Prefer nti.ntiids.ntiids.TYPE_TRANSCRIPT" )
+from nti.ntiids.ntiids import get_parts
+deprecated( "get_parts", "Prefer nti.ntiids.ntiids.get_parts" )
+from nti.ntiids.ntiids import print_function
+deprecated( "print_function", "Prefer nti.ntiids.ntiids.print_function" )
+from nti.ntiids.ntiids import TYPE_CLASS_SECTION
+deprecated( "TYPE_CLASS_SECTION", "Prefer nti.ntiids.ntiids.TYPE_CLASS_SECTION" )
+from nti.ntiids.ntiids import get_type
+deprecated( "get_type", "Prefer nti.ntiids.ntiids.get_type" )
+from nti.ntiids.ntiids import time
+deprecated( "time", "Prefer nti.ntiids.ntiids.time" )
+from nti.ntiids.ntiids import make_ntiid
+deprecated( "make_ntiid", "Prefer nti.ntiids.ntiids.make_ntiid" )
+from nti.ntiids.ntiids import TYPE_HTML
+deprecated( "TYPE_HTML", "Prefer nti.ntiids.ntiids.TYPE_HTML" )
+from nti.ntiids.ntiids import TYPE_CLASS
+deprecated( "TYPE_CLASS", "Prefer nti.ntiids.ntiids.TYPE_CLASS" )
 
 
 from nti.dataserver import interfaces as nti_interfaces

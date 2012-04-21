@@ -6,10 +6,10 @@ logger = logging.getLogger(__name__)
 from zope import component
 from zope import interface
 
-from . import users
+from nti.dataserver import users
 from nti.chatserver import interfaces as chat_interfaces
-from . import ntiids
-from . import classes
+from nti.ntiids import ntiids
+from nti.dataserver import classes
 
 class _AbstractMeetingContainerAdapter(object):
 	interface.implements( chat_interfaces.IMeetingContainer )

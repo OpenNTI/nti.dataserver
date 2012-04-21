@@ -19,10 +19,11 @@ import persistent
 import UserList
 
 from nti.dataserver.interfaces import ILibrary
-from nti.dataserver import users, ntiids, datastructures
+from nti.dataserver import users, datastructures
+from nti.ntiids import ntiids
 from nti.dataserver.datastructures import ContainedMixin
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
-from nti.tests import provides
+
 
 from zope import interface
 import nti.dataserver.interfaces as nti_interfaces
@@ -47,7 +48,8 @@ def test_user_pseudo_resources_exist():
 	user = users.User( 'jason.madden@nextthought.com' )
 
 	class Parent(object):
-		pass
+		request = None
+
 
 	def _test( name ):
 		p = Parent()
@@ -92,7 +94,7 @@ class TestUGDViews(ConfiguringTestBase):
 																		'json' )
 		view.getRemoteUser = lambda: user
 		with self.assertRaises(hexc.HTTPConflict):
-			result = view()
+			view()
 
 
 	@WithMockDSTrans

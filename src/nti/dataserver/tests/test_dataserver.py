@@ -6,7 +6,7 @@ from hamcrest import assert_that, equal_to, is_, none, not_none, has_property, n
 import mock_dataserver
 
 import nti.dataserver.users as users
-import nti.dataserver.ntiids as ntiids
+from nti.ntiids import ntiids
 import nti.dataserver.contenttypes as contenttypes
 from nti.dataserver.datastructures import toExternalOID, to_external_ntiid_oid
 import nti.dataserver.interfaces as nti_interfaces

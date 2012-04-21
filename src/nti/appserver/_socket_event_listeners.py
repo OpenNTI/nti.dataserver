@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 
 from nti.dataserver import interfaces as nti_interfaces, users
 from nti.chatserver import interfaces as chat_interfaces
+from nti.socketio import interfaces as sio_interfaces
 from zope import component
 
 def _is_user_online(dataserver, username, ignoring_session=None):
@@ -38,7 +39,7 @@ def _notify_friends_of_presence( session, presence, dataserver=None ):
 	logger.debug( "Notifying %s of presence change of %s to %s", has_me_in_buddy_list, session.owner, presence )
 	chatserver.notify_presence_change( session.owner, presence, has_me_in_buddy_list )
 
-@component.adapter( nti_interfaces.ISocketSession, nti_interfaces.ISocketSessionDisconnectedEvent )
+@component.adapter( sio_interfaces.ISocketSession, sio_interfaces.ISocketSessionDisconnectedEvent )
 def session_disconnected_broadcaster( session, event ):
 	dataserver = component.queryUtility( nti_interfaces.IDataserver )
 	if not (dataserver and dataserver.sessions):
@@ -52,7 +53,7 @@ def session_disconnected_broadcaster( session, event ):
 		logger.debug( "A session (%s) died, but some are still online (%s)", session, online )
 
 
-@component.adapter( nti_interfaces.ISocketSession, nti_interfaces.ISocketSessionConnectedEvent )
+@component.adapter( sio_interfaces.ISocketSession, sio_interfaces.ISocketSessionConnectedEvent )
 def session_connected_broadcaster( session, event ):
 	_notify_friends_of_presence( session, 'Online' )
 

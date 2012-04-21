@@ -1,11 +1,13 @@
+#!/usr/bin/env python
 """ Chatserver functionality. """
+from __future__ import print_function, unicode_literals
 
 import logging
 logger = logging.getLogger( __name__ )
 
-from nti.dataserver import ntiids
+from nti.ntiids import ntiids
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver import chat_interfaces
+from nti.chatserver import interfaces as chat_interfaces
 from nti.dataserver import mimetype
 from nti.dataserver import users
 from nti.dataserver import datastructures

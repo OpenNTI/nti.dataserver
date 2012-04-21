@@ -53,8 +53,27 @@ def _discard( s, k ):
 			s.remove( k ) # OOSet, list
 		except (KeyError,ValueError): pass
 
+class IChatHandlerSessionState(interface.Interface):
+	rooms_i_moderate = interface.Attribute( "Mapping of rooms I moderate" )
+	rooms_im_in = interface.Attribute( "Rooms this session is in" )
 
-class _ChatHandler( Persistent ):
+class _ChatHandlerSessionState(Persistent):
+	"""
+	An annotation for sessions to store the state a chat handler likes to have,
+	since chat handlers have no state for longer than a single event.
+	"""
+	interface.implements(IChatHandlerSessionState)
+	component.adapts( sio_interfaces.ISocketSession )
+
+	def __init__(self):
+		self.rooms_i_moderate = PersistentMapping()
+		self.rooms_im_in = BTrees.OOBTree.Set()
+
+from zope.annotation import factory as an_factory
+def _ChatHandlerSessionStateFactory(session):
+	return an_factory(_ChatHandlerSessionState)(session)
+
+class _ChatHandler(object):
 	"""
 	Class to handle each of the messages sent to or from a client.
 
@@ -75,13 +94,15 @@ class _ChatHandler( Persistent ):
 	def __init__( self, chatserver, session ):
 		""" """
 		self._v_chatserver = chatserver
-		self.session_id = session.session_id
-		self.session_owner = session.owner
-		self.rooms_i_moderate = PersistentMapping()
-		self.rooms_im_in = BTrees.OOBTree.Set()
+		#self.session_id = session.session_id
+		#self.session_owner = session.owner
+		self.session = session
+
+	def __reduce__(self):
+		raise TypeError()
 
 	def __str__( self ):
-		return "%s(%s %s)" % (self.__class__.__name__, self.session_owner, self.session_id)
+		return "%s(%s %s)" % (self.__class__.__name__, self.session.owner, self.session.session_id)
 
 
 	def __setstate__( self, state ):
@@ -100,8 +121,8 @@ class _ChatHandler( Persistent ):
 
 	def postMessage( self, msg_info ):
 		# Ensure that the sender correctly matches.
-		msg_info.Sender = self.session_owner
-		msg_info.sender_sid = self.session_id
+		msg_info.Sender = self.session.owner
+		msg_info.sender_sid = self.session.session_id
 		result = True
 		for room in set(msg_info.rooms):
 			result &= self._chatserver.post_message_to_room( room, msg_info )
@@ -109,7 +130,7 @@ class _ChatHandler( Persistent ):
 
 	def enterRoom( self, room_info ):
 		room = None
-		room_info['Creator'] = self.session_owner
+		room_info['Creator'] = self.session.owner
 		if room_info.get( 'RoomId' ) is not None:
 			# Trying to join an established room
 			# Right now, unsupported.
@@ -118,21 +139,21 @@ class _ChatHandler( Persistent ):
 			# No occupants, but a container ID. This must be for something
 			# that can persistently host meetings. We want
 			# to either create or join it.
-			room_info['Occupants'] = [ (self.session_owner, self.session_id ) ]
+			room_info['Occupants'] = [ (self.session.owner, self.session.session_id ) ]
 			room = self._chatserver.enter_meeting_in_container( room_info )
 		else:
 			# Creating a room to chat with. Make sure I'm in it.
 			# More than that, make sure it's my session, and any
 			# of my friends lists are expanded. Make sure it has an active
 			# occupant besides me
-			_discard( room_info.get('Occupants'), self.session_owner )
+			_discard( room_info.get('Occupants'), self.session.owner )
 			room_info['Occupants'] = list( room_info['Occupants'] )
-			user = users.User.get_user( self.session_owner )
+			user = users.User.get_user( self.session.owner )
 			if user:
 				for i in list(room_info['Occupants']):
 					if i in user.friendsLists:
 						room_info['Occupants'] += [x.username for x in user.friendsLists[i]]
-			room_info['Occupants'].append( (self.session_owner, self.session_id) )
+			room_info['Occupants'].append( (self.session.owner, self.session.session_id) )
 			def sessions_validator(sessions):
 				"""
 				We can only create the ad-hoc room if there is another online occupant.
@@ -141,14 +162,14 @@ class _ChatHandler( Persistent ):
 			room = self._chatserver.create_room_from_dict( room_info, sessions_validator=sessions_validator )
 
 		if room:
-			self.rooms_im_in.add( room.RoomId )
+			IChatHandlerSessionState(self.session).rooms_im_in.add( room.RoomId )
 		else:
-			self.emit_failedToEnterRoom( self.session_owner, room_info )
+			self.emit_failedToEnterRoom( self.session.owner, room_info )
 		return room
 
 	def exitRoom( self, room_id ):
-		result = self._chatserver.exit_meeting( room_id, self.session_owner )
-		_discard( self.rooms_im_in, room_id )
+		result = self._chatserver.exit_meeting( room_id, self.session.owner )
+		_discard( IChatHandlerSessionState(self.session).rooms_im_in, room_id )
 		return result
 
 	def makeModerated( self, room_id, flag ):
@@ -158,10 +179,10 @@ class _ChatHandler( Persistent ):
 			room.Moderated = flag
 			if flag:
 				logger.debug( "%s becoming moderator of room %s", self, room )
-				room.add_moderator( self.session_owner )
-				self.rooms_i_moderate[room.RoomId] = room
+				room.add_moderator( self.session.owner )
+				IChatHandlerSessionState(self.session).rooms_i_moderate[room.RoomId] = room
 			else:
-				self.rooms_i_moderate.pop( room.RoomId, None )
+				IChatHandlerSessionState(self.session).rooms_i_moderate.pop( room.RoomId, None )
 		else:
 			logger.debug( "%s Not changing moderation status of %s (%s) to %s",
 						  self, room, room_id, flag )
@@ -169,7 +190,7 @@ class _ChatHandler( Persistent ):
 
 	def approveMessages( self, m_ids ):
 		for m in m_ids:
-			for room in self.rooms_i_moderate.itervalues():
+			for room in IChatHandlerSessionState(self.session).rooms_i_moderate.itervalues():
 				room.approve_message( m )
 
 	def flagMessagesToUsers( self, m_ids, usernames ):
@@ -195,7 +216,7 @@ class _ChatHandler( Persistent ):
 		return result
 
 	def destroy( self ):
-		for room_in in set( self.rooms_im_in ):
+		for room_in in set( IChatHandlerSessionState(self.session).rooms_im_in ):
 			self.exitRoom( room_in )
 
 
