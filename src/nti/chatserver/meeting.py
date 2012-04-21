@@ -294,16 +294,19 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 			logger.debug( "Not broadcasting (%s) enter/change events for %s in %s",
 						  broadcast, name, self )
 
-	def add_occupant_names( self, names ):
+	def add_occupant_names( self, names, broadcast=True ):
 		"""
 		Adds all sessions contained in the iterable `names` to this group
 		and broadcasts an event to each new member.
+		:param bool broadcast: If ``True`` (the default) an event will
+			be broadcast to all new members and to all old members.
 		"""
 		new_members = set(names).difference( self.occupant_names )
 		old_members = self.occupant_names - new_members
 		self._occupant_names.update( new_members )
-		self.emit_enteredRoom( new_members, self )
-		self.emit_roomMembershipChanged( old_members, self )
+		if broadcast:
+			self.emit_enteredRoom( new_members, self )
+			self.emit_roomMembershipChanged( old_members, self )
 
 	def del_occupant_name( self, name ):
 		if name in self._occupant_names:
