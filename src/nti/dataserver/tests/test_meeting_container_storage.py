@@ -3,7 +3,7 @@
 
 from hamcrest import (assert_that, is_,
 					  has_key,  not_none,
-					    none,
+					    none, has_property, has_entry,
 					  has_item, has_items)
 import unittest
 from zope import (interface, component)
@@ -232,9 +232,18 @@ class TestClassSectionAdapter( ConfiguringTestBase ):
 		assert_that( adapt.enter_active_meeting( None, {'Creator': 'not_enrolled'} ), is_( none() ) )
 
 		# Valid senders work
+		# Student can enter...
 		assert_that( adapt.enter_active_meeting( None, {'Creator': 'chris'} ), is_( self ) )
-		assert_that( adapt.enter_active_meeting( None, {'Creator': 'sjohnson' } ), is_( self ) )
+		# and if the instructor enters, new events are broadcast
+		def add_occupant_names( *args, **kwargs ):
+			assert_that( kwargs, has_entry( 'broadcast',  False ) )
+			self.added_occupants = True
+		self.add_occupant_names = add_occupant_names
+		self.emit_enteredRoom = lambda *args: None
+		self.emit_roomMembershipChanged = lambda *args: None
 
+		assert_that( adapt.enter_active_meeting( None, {'Creator': 'sjohnson' } ), is_( self ) )
+		assert_that( self, has_property( 'added_occupants', True ) )
 
 
 
