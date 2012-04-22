@@ -35,7 +35,7 @@ class SessionConsumer(object):
 			raise UnauthenticatedSessionError()
 
 		event_handlers = self._initialize_session( session )
-		self._on_msg( event_handlers, session.socket, msg )
+		return self._on_msg( event_handlers, session.socket, msg )
 
 	def _initialize_session(self, session):
 		"""
@@ -79,13 +79,17 @@ class SessionConsumer(object):
 		"""
 		:return: A callable object of zero arguments, or None.
 		"""
-		event = message['name']
+		event = message.get( 'name', '' )
 		namespace = event
 		if '_' in event:
 			namespace = event[0:event.index('_')]
 			event = event[event.index('_') + 1:]
 
-		def l(): logger.warning( "Dropping unhandled event '%s' from message %s", event, message )
+		def l():
+			logger.warning( "Dropping unhandled event '%s' from message %s", event, message )
+		if not event:
+			l()
+			return
 
 		handler_list = event_handlers.get(namespace)
 		if not handler_list:
@@ -123,17 +127,20 @@ class SessionConsumer(object):
 		return call
 
 	def _on_msg( self, event_handlers, socket_obj, message ):
+		"""
+		:return: Boolean value indicating success or failure.
+		"""
 		if message is None:
 			# socket has died
 			logger.debug( "Socket has died %s", socket_obj )
-			return
-		if message['type'] != 'event':
+			return False
+		if message.get('type') != 'event':
 			logger.warning( 'Dropping unhandled message of wrong type %s', message )
-			return
+			return False
 
 		handler = self._find_handler( event_handlers, message ) # This logs missing handlers
 		if handler is None:
-			return
+			return False
 
 
 		try:
@@ -145,13 +152,16 @@ class SessionConsumer(object):
 				# to find packet.args as an array)
 				result = [toExternalObject(result)]
 				socket_obj.ack( message['id'], result )
-		except component.ComponentLookupError:
+		except component.ComponentLookupError: # pragma: no cover
 			# This is a programming error we can and should fix
 			raise
 		except Exception as e:
 			# TODO: We should have a system of error codes in place
 			logger.exception( "Exception handling event %s", message )
 			socket_obj.send_event( 'server-error', str(e) )
+			return False
+		else:
+			return True
 
 
 def _convert_message_args_to_objects( handler, message ):
