@@ -14,7 +14,7 @@ import nti.dataserver.interfaces as nti_interfaces
 import nti.chatserver.interfaces as chat_interfaces
 from nti.chatserver import _handler as chat_handler, messageinfo
 
-from nti.socketio.session_consumer import SessionConsumer
+from nti.socketio.session_consumer import SessionConsumer, UnauthenticatedSessionError
 
 
 import nti.socketio as socketio
@@ -62,6 +62,19 @@ class TestSessionConsumer(mock_dataserver.ConfiguringTestBase):
 		self.evt_handlers = {'chat': [self]}
 		self.cons._create_event_handlers = lambda *args: self.evt_handlers
 		self.socket = MockSocketIO()
+
+	def test_bad_messages(self):
+		assert_that( self.cons( self.socket, None ), # Socket death
+					 is_( False ) )
+		assert_that( self.cons( self.socket, {} ), # Non-'event'
+					 is_( False ) )
+		assert_that( self.cons( self.socket, {'type': 'event'} ), # unhandled
+					 is_( False ) )
+
+	def test_unauth_session(self):
+		self.socket.owner = None
+		with self.assertRaises(UnauthenticatedSessionError):
+			self.cons( self.socket, None )
 
 	def test_create_event_handlers(self):
 		# There's no IChatserver registered, so this is all you get
