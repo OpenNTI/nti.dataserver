@@ -153,3 +153,57 @@ class IUserTranscriptStorage(Interface):
 	def transcript_for_meeting( meeting_id ): pass
 
 	def add_message( meeting, msg ): pass
+
+
+class IUserNotificationEvent(Interface):
+	"""
+	An event that is emitted with the intent of resulting in
+	a notification to one or more end users.
+
+	The chatserver will not produce these events, but it will listen
+	for them and attempt to deliver them to the connected target users.
+	"""
+
+	targets = schema.Iterable( title="Iterable of usernames to attempt delivery to." )
+	name = schema.TextLine(	title="The name of the event to deliver" )
+	args = schema.Iterable( title="Iterable of objects to externalize and send as arguments." )
+
+
+class UserNotificationEvent(object):
+	"Base class for user notification events"
+	interface.implements(IUserNotificationEvent)
+
+	def __init__( self, name, targets, *args ):
+		self.name = name
+		self.targets = targets
+		self.args = args
+
+class PresenceChangedUserNotificationEvent(UserNotificationEvent):
+	"""
+	Pre-defined type of user notification for a presence change event.
+	"""
+
+	P_ONLINE  = "Online"
+	P_OFFLINE = "Offline"
+
+	def __init__( self, targets, sender, new_presence ):
+		"""
+		:param string sender: The username whose presence is changing.
+		:param string new_presence: One of the constants from this class designating
+			the new presence state of the user.
+		"""
+		super(PresenceChangedUserNotificationEvent,self).__init__( "chat_presenceOfUserChangedTo",
+																   targets,
+																   sender,
+																   new_presence )
+
+class DataChangedUserNotificationEvent(UserNotificationEvent):
+	"""
+	Pre-defined type of user notification for a change in data.
+	"""
+
+	def __init__( self, targets, change ):
+		"""
+		:param change: An object representing the change.
+		"""
+		super(DataChangedUserNotificationEvent,self).__init__( "data_noticeIncomingChange", targets, change )

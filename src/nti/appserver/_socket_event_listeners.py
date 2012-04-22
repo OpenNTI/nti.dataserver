@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 from nti.dataserver import interfaces as nti_interfaces, users
 from nti.chatserver import interfaces as chat_interfaces
 from nti.socketio import interfaces as sio_interfaces
+from zope.event import notify
 from zope import component
 
 def _is_user_online(dataserver, username, ignoring_session=None):
@@ -21,15 +22,8 @@ def _is_user_online(dataserver, username, ignoring_session=None):
 	if ignoring_session: sessions.discard( ignoring_session )
 	return sessions
 
-def _notify_friends_of_presence( session, presence, dataserver=None ):
-	dataserver = dataserver or component.queryUtility( nti_interfaces.IDataserver )
-	chatserver = component.queryUtility( chat_interfaces.IChatserver )
-	if dataserver is None or chatserver is None:
-		logger.debug( "Unable to broadcast presence notification. DS: %s CS %s", dataserver, chatserver )
-		return
-
-	has_me_in_buddy_list = ()
-	user = users.User.get_user( session.owner, dataserver=dataserver )
+def _notify_friends_of_presence( session, presence ):
+	user = users.User.get_user( session.owner ) if session else None
 	if user is None:
 		logger.error( "Unable to get owner of session %s; not sending presence notification", session )
 		return
@@ -37,7 +31,8 @@ def _notify_friends_of_presence( session, presence, dataserver=None ):
 	# TODO: Better algorithm. Who should this really go to?
 	has_me_in_buddy_list = user.following | set(user._sources_accepted)
 	logger.debug( "Notifying %s of presence change of %s to %s", has_me_in_buddy_list, session.owner, presence )
-	chatserver.notify_presence_change( session.owner, presence, has_me_in_buddy_list )
+	notify( chat_interfaces.PresenceChangedUserNotificationEvent( has_me_in_buddy_list, session.owner, presence ) )
+
 
 @component.adapter( sio_interfaces.ISocketSession, sio_interfaces.ISocketSessionDisconnectedEvent )
 def session_disconnected_broadcaster( session, event ):
@@ -48,17 +43,16 @@ def session_disconnected_broadcaster( session, event ):
 
 	online = _is_user_online( dataserver, session.owner, session )
 	if not online:
-		_notify_friends_of_presence( session, 'Offline' )
+		_notify_friends_of_presence( session, chat_interfaces.PresenceChangedUserNotificationEvent.P_OFFLINE )
 	else:
 		logger.debug( "A session (%s) died, but some are still online (%s)", session, online )
 
 
 @component.adapter( sio_interfaces.ISocketSession, sio_interfaces.ISocketSessionConnectedEvent )
 def session_connected_broadcaster( session, event ):
-	_notify_friends_of_presence( session, 'Online' )
+	_notify_friends_of_presence( session, chat_interfaces.PresenceChangedUserNotificationEvent.P_ONLINE )
 
-## Add presence info to users
-
+## Add presence info to users during externalization
 
 def _UserPresenceExternalDecoratorFactory( user ):
 	# TODO: Presence information will depend on who's asking
@@ -72,3 +66,9 @@ class _UserPresenceExternalDecorator(object):
 
 	def decorateExternalObject( self, user, result ):
 		result['Presence'] =  "Online" if _is_user_online( self.ds, user.username ) else "Offline"
+
+## Listen for data changes and broadcast to connected users
+@component.adapter( nti_interfaces.IUser, nti_interfaces.IStreamChangeEvent )
+def user_change_broadcaster( user, change ):
+	logger.debug( 'Broadcasting incoming change to %s chg: %s', user.username, change.type)
+	notify( chat_interfaces.DataChangedUserNotificationEvent( (user.username,), change ) )

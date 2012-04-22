@@ -11,7 +11,7 @@
 	<subscriber provides="nti.socketio.interfaces.ISocketEventHandler"
 				for="nti.socketio.interfaces.ISocketSession"
 				factory="._handler.ChatHandlerFactory" />
-
+	<subscriber handler=".chatserver._send_notification" />
 
 	<adapter factory="._handler._ChatHandlerSessionStateFactory"
 			 provides="._handler.IChatHandlerSessionState"

@@ -10,7 +10,7 @@ logger = logging.getLogger( __name__ )
 import numbers
 import UserDict
 
-from nti.externalization import datastructures
+from nti.externalization.externalization import toExternalObject
 from nti.externalization import oids
 from nti.externalization.interfaces import StandardExternalFields as XFields
 
@@ -152,37 +152,19 @@ class Chatserver(object):
 	### Low-level IO
 
 	def send_event_to_user( self, username, name, *args ):
+		"""
+		Directs the event named ``name`` to all sessions for the ``username``.
+		The sequence of ``args`` is externalized and send with the event.
+		"""
 		if username:
 			all_sessions = self.sessions.get_sessions_by_owner( username )
-			if not all_sessions:
+			if not all_sessions: # pragma: no cover
 				logger.debug( "No sessions for %s to send event %s to", username, name )
 				return
-			args = [datastructures.toExternalObject( arg ) for arg in args]
+			args = [toExternalObject( arg ) for arg in args]
 			for s in all_sessions:
 				logger.debug( "Dispatching %s to %s", name, s )
 				s.socket.send_event( name, *args )
-
-	### General events
-	# We are directing these events to all sessions connected for the user
-	def _notify_target( self, target, meth_name, *args ):
-		candidates = list( self.sessions.get_sessions_by_owner( target ) )
-		candidates.sort( key=lambda x: x.creation_time, reverse=True )
-		if candidates:
-			try:
-				# TODO: This is weird. We're bouncing out ta a ChatHandler,
-				# which comes right back down to us to send_event_to_user. Why?
-				getattr( ChatHandlerFactory( candidates[0], chatserver=self ),
-						 meth_name )( target, *args )
-			except Exception:
-				logger.exception( "Failed to %s to %s", meth_name, candidates[0] )
-
-	def notify_presence_change( self, sender, new_presence, targets ):
-		for target in set(targets):
-			self._notify_target( target, 'emit_presenceOfUserChangedTo', sender, new_presence )
-
-	@deprecate("We need to replace this with something not directly tied to IChatserver/chat.py")
-	def notify_data_change( self, target, change ):
-		self._notify_target( target, 'emit_data_noticeIncomingChange', change )
 
 	### Rooms
 
@@ -441,3 +423,18 @@ def _save_message_to_transcripts_subscriber( msg_info, event ):
 	chatserver = component.queryUtility( interfaces.IChatserver )
 	if chatserver:
 		chatserver._save_message_to_transcripts( msg_info, event.recipients )
+
+@component.adapter(interfaces.IUserNotificationEvent)
+def _send_notification( user_notification_event ):
+	"""
+	Event handler that sends notifications to connected users.
+	"""
+	chatserver = component.queryUtility( interfaces.IChatserver )
+	if chatserver:
+		for target in user_notification_event.targets:
+			try:
+				chatserver.send_event_to_user( target, user_notification_event.name, *user_notification_event.args )
+			except AttributeError: # pragma: no cover
+				raise
+			except Exception: # pragma: no cover
+				logger.exception( "Failed to send %s to %s", user_notification_event, target )
