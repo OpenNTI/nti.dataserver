@@ -50,6 +50,8 @@
 	<!-- Events -->
 	<subscriber handler="._socket_event_listeners.session_disconnected_broadcaster" />
 	<subscriber handler="._socket_event_listeners.session_connected_broadcaster" />
+	<subscriber handler="._socket_event_listeners.user_change_broadcaster" />
+
 
 	<subscriber factory="._socket_event_listeners._UserPresenceExternalDecoratorFactory"
 				for="nti.dataserver.interfaces.IUser"

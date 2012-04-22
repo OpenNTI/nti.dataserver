@@ -16,12 +16,14 @@ from zope import interface
 from zope import component
 
 from nti.appserver._socket_event_listeners import session_disconnected_broadcaster, session_connected_broadcaster, _notify_friends_of_presence
+from nti.appserver._socket_event_listeners import user_change_broadcaster
+
 
 class MockChatserver(object):
 	interface.implements(chat_interfaces.IChatserver)
 
 	pchange = ()
-	def notify_presence_change( self, *args ):
+	def send_event_to_user( self, *args ):
 		self.pchange = args
 
 class MockSessionManager(object):
@@ -31,6 +33,9 @@ class MockSessionManager(object):
 
 class MockSession(object):
 	owner = None
+
+class MockChange(object):
+	type = "Type"
 
 class TestBroadcasts(ConfiguringTestBase):
 
@@ -56,9 +61,13 @@ class TestBroadcasts(ConfiguringTestBase):
 
 		self.ds.session_manager = MockSessionManager()
 		session_disconnected_broadcaster( session, None )
-		assert_that( cs.pchange, is_( (user.username, 'Offline', set([user2.username]) )) )
+		assert_that( cs.pchange, is_( (user2.username, 'chat_presenceOfUserChangedTo', user.username, 'Offline') ))
 
 		session_connected_broadcaster( session, None )
-		assert_that( cs.pchange, is_( (user.username, 'Online', set([user2.username]) )) )
+		assert_that( cs.pchange, is_( (user2.username, 'chat_presenceOfUserChangedTo', user.username, 'Online') ))
+
+		change = MockChange()
+		user_change_broadcaster( user, change )
+		assert_that( cs.pchange, is_( (user.username, 'data_noticeIncomingChange', change) ) )
 
 		assert_that( component.getGlobalSiteManager().unregisterUtility( cs ), is_( True ) )
