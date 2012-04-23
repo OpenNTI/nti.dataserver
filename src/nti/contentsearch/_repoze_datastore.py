@@ -2,8 +2,8 @@ from zope import interface
 
 from BTrees.OOBTree import OOBTree
 from persistent.mapping import PersistentMapping
-from repoze.catalog.document import DocumentMap
 
+from nti.contentsearch._document import DocumentMap
 from nti.contentsearch.interfaces import IRepozeDataStore
 
 class RepozeDataStore(PersistentMapping):
@@ -110,7 +110,6 @@ class RepozeDataStore(PersistentMapping):
 		docMap = self.docmaps.get(username, None)
 		if docMap:
 			result = docMap.remove_docid(docid)
-
 			return result
 		else:
 			return False
