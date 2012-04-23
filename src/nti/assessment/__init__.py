@@ -147,7 +147,10 @@ def _response_text_to_latex(response):
 
 		response = response.replace( '\\left(', '(' )
 		response = response.replace( '\\right)', ')' )
-
+		# old versions of mathquill emit \: instead of \;
+		response = response.replace( r'\:', ' ' )
+		# However, plasTeX does not understand \;
+		response = response.replace( r'\;', ' ' )
 		response = "\\(" + response + "\\)"
 	return response
 
