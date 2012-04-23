@@ -137,6 +137,15 @@ class TestAssessment(unittest.TestCase):
 		response = "\\text{(0.5,0.5)}"
 		assert_that( grade_one_response( response, answers ), "Text wrapping" )
 
+		answers = (r"$\surd 97 \approx 9.8$",)
+		# Bogus
+		response = r"\surd\:97\:\approx\:9.8"
+		assert_that( grade_one_response( response, answers ), "Broken spacing" )
+
+		response = r"\surd\;97\;\approx\;9.8"
+		assert_that( grade_one_response( response, answers ), "Correct explicit spacing spacing" )
+
+
 	def assertMathNodesEqual(self, math1, math2, message=None):
 		if not message:
 			message = '%s != %s!' % (math1.source, math2.source)
