@@ -90,7 +90,17 @@ class ModeledContentTypeAwareRegistryMetaclass(type):
 			_mm_types.add( new_type )
 		return new_type
 
-
+def ModeledContentTypeMimeFactory( externalized_object ):
+	"""
+	A generic adapter factory to find specific factories (types)
+	based on the mimetype of an object.
+	"""
+	# TODO: An optimization might be to register a specific factory
+	# each time a class is created?
+	mime_name = externalized_object.get('MimeType')
+	for x in _mm_types:
+		if x.mime_type == mime_name and getattr(x, '__external_can_create__', False):
+			return x
 
 def is_nti_mimetype( obj ):
 	"""

@@ -228,6 +228,32 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 		assert_that( n.body[0][0].closed, same_instance( True ) )
 
 	@WithMockDS
+	def test_external_body_mimetypes(self):
+		n = Note()
+		c = Canvas()
+
+		n.body = [c]
+		n.updateLastMod()
+		ext = n.toExternalObject()
+		del ext['Last Modified']
+		del ext['CreatedTime']
+		assert_that( ext, has_entries( "MimeType", "application/vnd.nextthought.note",
+									   "body", only_contains( has_entries('MimeType', 'application/vnd.nextthought.canvas',
+																		  'shapeList', [],
+																		  'CreatedTime', c.createdTime ) ) ) )
+
+		del ext['Class']
+		del ext['body'][0]['Class']
+		n = Note()
+		ds = self.ds
+		with mock_dataserver.mock_db_trans(ds):
+			ds.update_from_external_object( n, ext )
+
+		assert_that( n.body[0], is_( Canvas ) )
+
+
+
+	@WithMockDS
 	def test_update_sharing_only( self ):
 		n = Note()
 		n.body = ['This is the body']
@@ -240,6 +266,7 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 
 
 class TestCanvas(mock_dataserver.ConfiguringTestBase):
+
 
 	@WithMockDS
 	def test_external(self):
