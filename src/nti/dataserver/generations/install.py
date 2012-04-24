@@ -6,7 +6,7 @@ from __future__ import print_function, unicode_literals
 
 __docformat__ = 'restructuredtext'
 
-generation = 9
+generation = 10
 
 from zope.generations.generations import SchemaManager
 
@@ -80,7 +80,7 @@ def install_main( context ):
 	lsm.registerUtility( oid_resolver, provided=nti_interfaces.IOIDResolver )
 
 	sess_conn = conn.get_connection( 'Sessions' )
-	storage = sessions.PersistentSessionServiceStorage()
+	storage = sessions.SessionServiceStorage()
 	sess_conn.add( storage )
 	sess_conn.root()['session_storage'] = storage
 	lsm.registerUtility( storage, provided=nti_interfaces.ISessionServiceStorage )

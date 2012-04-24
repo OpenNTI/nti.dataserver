@@ -641,13 +641,24 @@ class ISessionService(interface.Interface):
 		given ID.
 		"""
 
-class ISessionServiceStorage(IFullMapping):
-	pass
-
-
 from nti.socketio.interfaces import ISocketSession, ISocketSessionEvent, ISocketSessionConnectedEvent, ISocketSessionDisconnectedEvent, ISocketEventHandler
 deprecated( 'ISocketSession', 'Prefer nti.socketio' )
 deprecated( 'ISocketSessionEvent', 'Prefer nti.socketio' )
 deprecated( 'ISocketSessionConnectedEvent', 'Prefer nti.socketio' )
 deprecated( 'ISocketSessionDisconnectedEvent', 'Prefer nti.socketio' )
 deprecated( 'ISocketSessionEventHandler', 'Prefer nti.socketio' )
+
+
+class ISessionServiceStorage(interface.Interface):
+	"""
+	The data stored by the session service.
+	"""
+	session_map = schema.Dict(
+		title="Map from session id to Session object",
+		key_type=schema.TextLine(title="session ids"),
+		value_type=schema.Object(ISocketSession,title="Extant session" ) )
+	session_index = schema.Dict(
+		title="Index from usernames to set of extant session ids",
+		key_type=schema.TextLine(title="Username"),
+		value_type=schema.Set( title="An OOSet of session ids",
+							   value_type=schema.TextLine(title="Session ids") ) )
