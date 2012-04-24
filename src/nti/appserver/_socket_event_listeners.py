@@ -53,6 +53,13 @@ def session_connected_broadcaster( session, event ):
 	_notify_friends_of_presence( session, chat_interfaces.PresenceChangedUserNotificationEvent.P_ONLINE )
 
 ## Add presence info to users during externalization
+## FIXME: This information is transient and so by doing this
+## we invalidate any 'Last Modified' information we're sending at a higher level,
+## (since that's based on the static info) and so this makes
+## certain things that might be cached unreliable in the web app.
+## We've added a workaround for FriendsLists specifically, but
+## it was probably a design mistake to mix the static and dynamic info, and
+## we need separate URLs to correct that.
 
 def _UserPresenceExternalDecoratorFactory( user ):
 	# TODO: Presence information will depend on who's asking
