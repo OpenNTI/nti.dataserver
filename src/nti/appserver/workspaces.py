@@ -109,6 +109,9 @@ class HomogeneousTypedContainerCollection(_ContainerWrapper):
 	def container(self):
 		return self._container
 
+class UncacheableHomogeneousTypedContainerCollection(HomogeneousTypedContainerCollection):
+	interface.implements(app_interfaces.IUncacheableInResponse)
+
 class CollectionContentTypeAware(object):
 	interface.implements(mime_interfaces.IContentTypeAware)
 	component.adapts(app_interfaces.ICollection)

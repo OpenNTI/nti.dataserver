@@ -333,7 +333,7 @@ def render_externalizable(data, system):
 
 	return body
 
-@interface.implementer(app_interfaces.IDataRenderer)
+@interface.implementer(app_interfaces.IResponseRenderer)
 @component.adapter(nti_interfaces.IEnclosedContent)
 def render_enclosure_factory( data ):
 	"""
@@ -351,6 +351,48 @@ def render_enclosure( data, system ):
 	response.content_type = find_content_type( request, data )
 	response.last_modified = data.lastModified
 	return data.data
+
+def default_cache_controller( data, system ):
+	request = system['request']
+	response = request.response
+
+	# Handle Not Modified
+	if response.status_int == 200 and response.last_modified is not None and request.if_modified_since:
+		# Since we know a modification date, respect If-Modified-Since. The spec
+		# says to only do this on a 200 response
+		# This is a pretty poor time to do it, after we've done all this work
+		if response.last_modified <= request.if_modified_since:
+			not_mod = pyramid.httpexceptions.HTTPNotModified()
+			not_mod.last_modified = response.last_modified
+			not_mod.cache_control = 'must-revalidate'
+			not_mod.vary = 'Accept'
+			raise not_mod
+
+	# our responses vary based on the Accept parameter, since
+	# that informs representation
+	response.vary = 'Accept'
+	# We also need these to be revalidated
+	response.cache_control = 'must-revalidate'
+
+	# TODO: ETag support. We would like to have this for If-Match as well,
+	# for better deletion and editing of shared resources. For that to work,
+	# we need to have this be more semantically meaningful, and happen sooner.
+	# It should also be representation independent (?)
+	# Until we have something here, don't bother computing and sending, it implies
+	# false promises
+	# response.md5_etag( body, True )
+
+@interface.implementer(app_interfaces.IResponseCacheController)
+@component.adapter(app_interfaces.IUncacheableInResponse)
+def uncacheable_factory( data ):
+	return uncacheable_cache_controller
+
+def uncacheable_cache_controller( data, system ):
+	request = system['request']
+	response = request.response
+
+	response.cache_control = 'no-store'
+	response.last_modified = None
 
 class REST(object):
 
@@ -378,36 +420,14 @@ class REST(object):
 			# This cannot happen
 			raise Exception( "Can only get here with a body" )
 
-		renderer = request.registry.queryAdapter( data, app_interfaces.IDataRenderer,
+		renderer = request.registry.queryAdapter( data, app_interfaces.IResponseRenderer,
 												 default=render_externalizable )
 		body = renderer( data, system )
+		cacher = request.registry.queryAdapter( data, app_interfaces.IResponseCacheController,
+												default=default_cache_controller )
+		cacher(data, system)
 
 
-		# Handle Not Modified
-		if response.status_int == 200 and response.last_modified is not None and request.if_modified_since:
-			# Since we know a modification date, respect If-Modified-Since. The spec
-			# says to only do this on a 200 response
-			# This is a pretty poor time to do it, after we've done all this work
-			if response.last_modified <= request.if_modified_since:
-				not_mod = pyramid.httpexceptions.HTTPNotModified()
-				not_mod.last_modified = response.last_modified
-				not_mod.cache_control = 'must-revalidate'
-				not_mod.vary = 'Accept'
-				raise not_mod
 
-		response.content_type = find_content_type( request, data )
-		# our responses vary based on the Accept parameter, since
-		# that informs representation
-		response.vary = 'Accept'
-		# We also need these to be revalidated
-		response.cache_control = 'must-revalidate'
-
-		# TODO: ETag support. We would like to have this for If-Match as well,
-		# for better deletion and editing of shared resources. For that to work,
-		# we need to have this be more semantically meaningful, and happen sooner.
-		# It should also be representation independent (?)
-		# Until we have something here, don't bother computing and sending, it implies
-		# false promises
-		# response.md5_etag( body, True )
 
 		return body
