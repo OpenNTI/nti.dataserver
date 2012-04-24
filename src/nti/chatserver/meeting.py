@@ -375,7 +375,11 @@ class _ModeratedMeeting(_Meeting):
 	def _becameModerated( self ):
 		self._moderated_by_names = BTrees.OOBTree.Set()
 		self._shadowed_usernames = BTrees.OOBTree.Set()
-		self._moderation_queue = PersistentMapping()
+		# A BTree isn't necessarily the most efficient way
+		# to implement the moderation queue, but it does work.
+		# We will typically have many writers and one reader--
+		# but that reader, the moderator, is also writing.
+		self._moderation_queue = BTrees.OOBTree.OOBTree()
 
 	def _becomeUnmoderated( self ):
 		del self._moderated_by_names
