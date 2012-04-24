@@ -157,6 +157,8 @@ class ILinked(interface.Interface):
 # TODO: Very much of our home-grown container
 # stuff can be replaced by zope.container
 IContainer = IZContainer
+# Recall that IContainer is an IReadContainer and IWriteContainer, providing:
+# __setitem__, __delitem__, __getitem__, keys()/values()/items()
 IContainerNamesContainer = IZContainerNamesContainer
 
 class IHomogeneousTypeContainer(IContainer):
@@ -466,6 +468,12 @@ class IFriendsList(IModeledContent,IEntity):
 						a 'Username' property.
 
 		"""
+
+class IFriendsListContainer(INamedContainer):
+	"""
+	A named, homogeneously typed container holding just :class:`IFriendsList`
+	objects.
+	"""
 
 class IDevice(IModeledContent): pass
 class ITranscript(IModeledContent): pass

@@ -4,6 +4,7 @@ from zope import interface
 from zope import schema
 
 import nti.dataserver.interfaces as nti_interfaces
+from pyramid import interfaces as pyramid_interfaces
 
 from nti.dataserver.interfaces import ILocation
 
@@ -74,8 +75,9 @@ class ILogonLinkProvider(interface.Interface):
 	def __call__( ):
 		"Returns a single of :class:`nti_interfaces.ILink` object, or None."
 
+### Dealing with responses
 # Data rendering
-class IDataRenderer(interface.Interface):
+class IResponseRenderer(pyramid_interfaces.IRenderer):
 	"""
 	An intermediate layer that exists to transform a content
 	object into data, and suitably mutate the IResponse object.
@@ -83,7 +85,16 @@ class IDataRenderer(interface.Interface):
 	specialized implementations will directly access and return data.
 	"""
 
-	def __call__( data, system ):
-		"""
-		This method matches the pyramid IRenderer interface.
-		"""
+
+class IResponseCacheController(pyramid_interfaces.IRenderer):
+	"""
+	Called as a post-render step with the express intent
+	of altering the caching characteristics of the response.
+	The __call__ method may raise an HTTP exception, such as
+	:class:`pyramid.httpexceptions.HTTPNotModified`.
+	"""
+
+class IUncacheableInResponse(interface.Interface):
+	"""
+	Marker interface for things that should not be cached.
+	"""

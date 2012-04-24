@@ -210,6 +210,14 @@ class TestApplication(ApplicationTestBase):
 		testapp.post( path, data, extra_environ=self._make_extra_environ(), status=409 )
 
 
+	def test_friends_list_uncached(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			_ = self._create_user()
+
+		testapp = TestApp( self.app )
+		res = testapp.get( '/dataserver2/users/sjohnson@nextthought.com/FriendsLists', extra_environ=self._make_extra_environ() )
+		assert_that( res.cache_control, has_property( 'no_store', True ) )
+
 	def test_post_device(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			_ = self._create_user()

@@ -498,6 +498,7 @@ class Device(persistent.Persistent,
 		return self.deviceId.__hash__()
 
 class _FriendsListMap(datastructures.AbstractNamedContainerMap):
+	interface.implements(nti_interfaces.IFriendsListContainer)
 
 	contained_type = nti_interfaces.IFriendsList
 	container_name = 'FriendsLists'

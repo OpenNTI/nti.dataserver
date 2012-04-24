@@ -10,7 +10,18 @@
 			 name='EnrolledClassSections'/>
 
 	<adapter factory=".workspaces._ProviderCollection" />
-	<adapter factory=".workspaces.HomogeneousTypedContainerCollection" />
+	<adapter factory=".workspaces.HomogeneousTypedContainerCollection"
+			 />
+	<!--
+	As it stands now, returning FriendsLists cannot be cached,
+	because they include dynamic presence information
+	-->
+
+	<adapter factory=".workspaces.UncacheableHomogeneousTypedContainerCollection"
+			 for="nti.dataserver.interfaces.IFriendsListContainer"
+			 provides=".interfaces.IContainerCollection" />
+	<adapter factory=".pyramid_renderers.uncacheable_factory" />
+
 	<adapter factory=".workspaces.LibraryWorkspace" />
 	<adapter factory=".workspaces.LibraryCollection" />
 	<adapter factory=".workspaces.WorkspaceExternalizer" />
