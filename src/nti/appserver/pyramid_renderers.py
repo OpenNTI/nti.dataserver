@@ -15,7 +15,8 @@ import pyramid.httpexceptions
 from . import traversal
 from pyramid import security as psec
 
-
+from zope import interface
+from zope import component
 from zope.location import location
 from zope.location.location import LocationProxy
 
@@ -198,6 +199,158 @@ def render_link( parent_resource, link, user_root_resource=None ):
 
 	return result
 
+def render_externalizable(data, system):
+	request = system['request']
+	response = request.response
+
+	lastMod = getattr( data, 'lastModified', 0 )
+	#from IPython.core.debugger import Tracer; debug_here = Tracer()()
+	body = toExternalObject( data, name='', registry=request.registry )
+	try:
+		body.__parent__ = request.context.__parent__
+		body.__name__ = request.context.__name__
+	except AttributeError: pass
+	try:
+		body.setdefault( StandardExternalFields.LINKS, [] )
+	except: pass
+
+	user_root = None
+	if hasattr( request, 'context' ):
+		# TODO: Remove all this reliance on the IUserRootResource
+		# it breaks in several cases that we're hacking around.
+		# In particular, it breaks when the entry point is UserSearch
+		user_root = traversal.find_interface( request.context, app_interfaces.IUserRootResource )
+
+	def writable(obj):
+		"""
+		Is the given object writable by the current user? Yes if the creator matches,
+		or Yes if it is the returned object and we have permission.
+		"""
+		# TODO: This determination probably needs to happen as we walk down to externalize,
+		# when we have the actual objects and potentially their actual ACLs
+		# NOTE: We are mostly doing that now.
+		if hasattr( obj, '__acl__' ):
+			return psec.has_permission( nauth.ACT_UPDATE, obj, request )
+
+		if obj is body:
+			return psec.has_permission( nauth.ACT_UPDATE, data, request )
+
+		return StandardExternalFields.CREATOR in obj \
+			and obj[StandardExternalFields.CREATOR] == psec.authenticated_userid( request )
+
+	def render_links( obj, parent=None ):
+		if obj is None or not obj:
+			# We might get some proxies that are not 'is None'?
+			return
+		try:
+			obj.setdefault( StandardExternalFields.LINKS, [] )
+		except AttributeError: pass
+
+		# If we cannot iterate it, then we don't want to deal with it
+		try:
+			iter(obj)
+		except TypeError:
+			return
+		has_links = False
+		try:
+			has_links = StandardExternalFields.LINKS in obj # Catch lists, weak refs
+		except TypeError:
+			has_links = False
+		if has_links:
+			# Add an Edit link if it's an editable object that we own
+			# and that doesn't already provide one.
+
+			if StandardExternalFields.OID in obj \
+			   and writable( obj ) \
+			   and user_root : # TODO: This breaks for providers, need an iface
+				# TODO: This is weird, assuming knowledge about the URL structure here
+				if not any( [l.rel == 'edit'
+							 for l in obj[StandardExternalFields.LINKS]
+							 if isinstance(l, links.Link) ] ):
+					obj_root = location.Location()
+					obj_root.__parent__ = user_root; obj_root.__name__ = 'Objects'
+					target = location.Location()
+					target.__parent__ = obj_root; target.__name__ = obj[StandardExternalFields.OID]
+					link = links.Link( target, rel='edit' )
+					obj[StandardExternalFields.LINKS].append( link )
+
+					# For cases that we can, make edit and the toplevel href be the same.
+					# this improves caching
+					try:
+						# There are too many cases where we're still not correctly hooked up
+						# to be able to generate 'pretty' URLs to make this the default
+						#href = traversal.normal_resource_path( data ) if (obj is body and data.__name__ and request.method != 'PUT') else None
+						#if href is not None and not href.endswith( urllib.quote(data.__name__) ):
+						#	href = None
+						href = None
+					except AttributeError:
+						href = None
+					# TODO: More hardcoded paths
+					if _is_valid_href(href) and href != '/' and href.startswith( '/dataserver' ):
+						obj['href'] = href
+						link.target = href
+					else:
+						obj['href'] = render_link( parent, link, user_root )['href']
+
+			obj[StandardExternalFields.LINKS] = [render_link(parent, link, user_root) if isinstance( link, links.Link ) else link
+												 for link
+												 in obj[StandardExternalFields.LINKS]]
+			if not obj[StandardExternalFields.LINKS]:
+				del obj[StandardExternalFields.LINKS]
+
+		for v in obj.itervalues() if isinstance( obj, collections.Mapping ) else iter(obj):
+			if isinstance( v, collections.MutableMapping ):
+				render_links( v, obj )
+			elif isinstance( v, collections.MutableSequence ):
+				for vv in v:
+					if isinstance( vv, collections.MutableMapping ):
+						render_links( vv, obj )
+
+	render_links( body, request.context )
+	# Everything possible should have an href on the way out. If we have no other
+	# preference, use the URL that was requested.
+	if isinstance( body, collections.MutableMapping ):
+		if 'href' not in body or not _is_valid_href( body['href'] ):
+			body['href'] = request.path
+
+	# Search for a last modified value.
+	if response.last_modified is None:
+		if lastMod <= 0 and HEADER_LAST_MODIFIED in body:
+			lastMod = body[HEADER_LAST_MODIFIED]
+		if lastMod <= 0 and 'Last Modified' in body:
+			lastMod = body['Last Modified']
+
+		if lastMod > 0:
+			response.last_modified = lastMod
+
+	response.content_type = find_content_type( request, data )
+	if response.content_type.startswith( MIME_BASE ):
+		# Only transform this if it was one of our objects
+		if response.content_type.endswith( 'json' ):
+			body = to_external_representation( body, EXT_FORMAT_JSON )
+		else:
+			body = to_external_representation( body, EXT_FORMAT_PLIST )
+
+	return body
+
+@interface.implementer(app_interfaces.IDataRenderer)
+@component.adapter(nti_interfaces.IEnclosedContent)
+def render_enclosure_factory( data ):
+	"""
+	If the enclosure is pure binary data, not modeled content,
+	we want to simply output it without trying to introspect
+	or perform transformations.
+	"""
+	if not nti_interfaces.IContent.providedBy( data.data ):
+		return render_enclosure
+
+def render_enclosure( data, system ):
+	request = system['request']
+	response = request.response
+
+	response.content_type = find_content_type( request, data )
+	response.last_modified = data.lastModified
+	return data.data
 
 class REST(object):
 
@@ -225,125 +378,10 @@ class REST(object):
 			# This cannot happen
 			raise Exception( "Can only get here with a body" )
 
-		lastMod = getattr( data, 'lastModified', 0 )
-		#from IPython.core.debugger import Tracer; debug_here = Tracer()()
-		body = toExternalObject( data, name='', registry=request.registry )
-		try:
-			body.__parent__ = request.context.__parent__
-			body.__name__ = request.context.__name__
-		except AttributeError: pass
-		try:
-			body.setdefault( StandardExternalFields.LINKS, [] )
-		except: pass
+		renderer = request.registry.queryAdapter( data, app_interfaces.IDataRenderer,
+												 default=render_externalizable )
+		body = renderer( data, system )
 
-		user_root = None
-		if hasattr( request, 'context' ):
-			# TODO: Remove all this reliance on the IUserRootResource
-			# it breaks in several cases that we're hacking around.
-			# In particular, it breaks when the entry point is UserSearch
-			user_root = traversal.find_interface( request.context, app_interfaces.IUserRootResource )
-
-		def writable(obj):
-			"""
-			Is the given object writable by the current user? Yes if the creator matches,
-			or Yes if it is the returned object and we have permission.
-			"""
-			# TODO: This determination probably needs to happen as we walk down to externalize,
-			# when we have the actual objects and potentially their actual ACLs
-			# NOTE: We are mostly doing that now.
-			if hasattr( obj, '__acl__' ):
-				return psec.has_permission( nauth.ACT_UPDATE, obj, request )
-
-			if obj is body:
-				return psec.has_permission( nauth.ACT_UPDATE, data, request )
-
-			return StandardExternalFields.CREATOR in obj \
-				and obj[StandardExternalFields.CREATOR] == psec.authenticated_userid( request )
-
-		def render_links( obj, parent=None ):
-			if obj is None or not obj:
-				# We might get some proxies that are not 'is None'?
-				return
-			try:
-				obj.setdefault( StandardExternalFields.LINKS, [] )
-			except AttributeError: pass
-
-			# If we cannot iterate it, then we don't want to deal with it
-			try:
-				iter(obj)
-			except TypeError:
-				return
-			has_links = False
-			try:
-				has_links = StandardExternalFields.LINKS in obj # Catch lists, weak refs
-			except TypeError:
-				has_links = False
-			if has_links:
-				# Add an Edit link if it's an editable object that we own
-				# and that doesn't already provide one.
-
-				if StandardExternalFields.OID in obj \
-				   and writable( obj ) \
-				   and user_root : # TODO: This breaks for providers, need an iface
-					# TODO: This is weird, assuming knowledge about the URL structure here
-					if not any( [l.rel == 'edit'
-								 for l in obj[StandardExternalFields.LINKS]
-								 if isinstance(l, links.Link) ] ):
-						obj_root = location.Location()
-						obj_root.__parent__ = user_root; obj_root.__name__ = 'Objects'
-						target = location.Location()
-						target.__parent__ = obj_root; target.__name__ = obj[StandardExternalFields.OID]
-						link = links.Link( target, rel='edit' )
-						obj[StandardExternalFields.LINKS].append( link )
-
-						# For cases that we can, make edit and the toplevel href be the same.
-						# this improves caching
-						try:
-							# There are too many cases where we're still not correctly hooked up
-							# to be able to generate 'pretty' URLs to make this the default
-							#href = traversal.normal_resource_path( data ) if (obj is body and data.__name__ and request.method != 'PUT') else None
-							#if href is not None and not href.endswith( urllib.quote(data.__name__) ):
-							#	href = None
-							href = None
-						except AttributeError:
-							href = None
-						# TODO: More hardcoded paths
-						if _is_valid_href(href) and href != '/' and href.startswith( '/dataserver' ):
-							obj['href'] = href
-							link.target = href
-						else:
-							obj['href'] = render_link( parent, link, user_root )['href']
-
-				obj[StandardExternalFields.LINKS] = [render_link(parent, link, user_root) if isinstance( link, links.Link ) else link
-													 for link
-													 in obj[StandardExternalFields.LINKS]]
-				if not obj[StandardExternalFields.LINKS]:
-					del obj[StandardExternalFields.LINKS]
-
-			for v in obj.itervalues() if isinstance( obj, collections.Mapping ) else iter(obj):
-				if isinstance( v, collections.MutableMapping ):
-					render_links( v, obj )
-				elif isinstance( v, collections.MutableSequence ):
-					for vv in v:
-						if isinstance( vv, collections.MutableMapping ):
-							render_links( vv, obj )
-
-		render_links( body, request.context )
-		# Everything possible should have an href on the way out. If we have no other
-		# preference, use the URL that was requested.
-		if isinstance( body, collections.MutableMapping ):
-			if 'href' not in body or not _is_valid_href( body['href'] ):
-				body['href'] = request.path
-
-		# Search for a last modified value.
-		if response.last_modified is None:
-			if lastMod <= 0 and HEADER_LAST_MODIFIED in body:
-				lastMod = body[HEADER_LAST_MODIFIED]
-			if lastMod <= 0 and 'Last Modified' in body:
-				lastMod = body['Last Modified']
-
-			if lastMod > 0:
-				response.last_modified = lastMod
 
 		# Handle Not Modified
 		if response.status_int == 200 and response.last_modified is not None and request.if_modified_since:
@@ -363,12 +401,7 @@ class REST(object):
 		response.vary = 'Accept'
 		# We also need these to be revalidated
 		response.cache_control = 'must-revalidate'
-		if response.content_type.startswith( MIME_BASE ):
-			# Only transform this if it was one of our objects
-			if response.content_type.endswith( 'json' ):
-				body = to_external_representation( body, EXT_FORMAT_JSON )
-			else:
-				body = to_external_representation( body, EXT_FORMAT_PLIST )
+
 		# TODO: ETag support. We would like to have this for If-Match as well,
 		# for better deletion and editing of shared resources. For that to work,
 		# we need to have this be more semantically meaningful, and happen sooner.

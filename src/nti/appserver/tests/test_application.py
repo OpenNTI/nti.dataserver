@@ -551,8 +551,8 @@ class TestApplication(ApplicationTestBase):
 		testapp = TestApp( self.app )
 
 		path = '/dataserver2/providers/OU/Classes/CS2051/'
-		data = 'The simple data'
-		res = testapp.post( path, data, extra_environ=self._make_extra_environ() )
+		data = b'\xFF\xF0\x20\x98\xB1'
+		res = testapp.post( path, data, headers=(('Content-Type','image/png'),), extra_environ=self._make_extra_environ() )
 		assert_that( res.status_int, is_( 201 ) )
 
 
@@ -560,6 +560,9 @@ class TestApplication(ApplicationTestBase):
 		body = json.loads( res.body )
 		assert_that( body, has_entry( 'Links', has_item( has_entry( 'href', '/dataserver2/providers/OU/Classes/CS2051/SimplePersistentEnclosure' ) ) ) )
 
+		res = testapp.get( '/dataserver2/providers/OU/Classes/CS2051/SimplePersistentEnclosure', extra_environ=self._make_extra_environ() )
+		assert_that( res.content_type, is_( 'image/png' ) )
+		assert_that( res.body, is_( data ) )
 
 		res = testapp.post( path, data, extra_environ=self._make_extra_environ() )
 		assert_that( res.status_int, is_( 201 ) )

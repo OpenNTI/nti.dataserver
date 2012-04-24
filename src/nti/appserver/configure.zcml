@@ -28,8 +28,9 @@
 	<adapter factory=".workspaces.LibraryCollectionDetailExternalizer" />
 	<adapter factory=".workspaces.ContainerCollectionDetailExternalizer" />
 	<adapter factory=".workspaces.CollectionContentTypeAware" />
-	<adapter factory="._adapters.EnclosureExternalObject" />
 
+	<adapter factory="._adapters.EnclosureExternalObject" />
+	<adapter factory=".pyramid_renderers.render_enclosure_factory" />
 
 	<!-- Logon -->
 	<subscriber factory=".logon._SimpleExistingUserLinkProvider"
