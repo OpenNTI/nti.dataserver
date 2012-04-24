@@ -69,10 +69,20 @@ class Session(Persistent):
 	def _get_owner( self ):
 		return self._owner
 	def _set_owner( self, o ):
-		if o != self._owner:
-			old_owner = self._owner
-			self._owner = o
-			self.session_service._replace_in_owner_index( self, old_owner )
+		"""
+		Sessions are not allowed to change owners once they have
+		one, because that would require making modifications to the owner index
+		and potentially other places.
+		"""
+		if o == self._owner:
+			return
+		if self._owner is not None:
+			raise ValueError( "Cannot change owner of existing session" )
+
+		self._owner = o
+		ss = self.session_service
+		if ss:
+			ss._put_in_owner_index( self )
 	owner = property( _get_owner, _set_owner )
 
 	@property
@@ -171,7 +181,7 @@ class PersistentSessionServiceStorage(PersistentMapping):
 	def __getattr__(self, name):
 		try:
 			return self[name]
-		except KeyError:
+		except KeyError: # pragma: no cover
 			raise AttributeError(name)
 
 SimpleSessionServiceStorage = PersistentSessionServiceStorage
@@ -188,7 +198,7 @@ class SessionServiceStorage(persistent.Persistent):
 		self.session_index = BTrees.OOBTree.OOBTree()
 
 	@deprecate("Access fields directly")
-	def __getitem__( self, name ):
+	def __getitem__( self, name ): # pragma: no cover
 		"""
 		For compatibility with the old PersistentSessionServiceStorage.
 		"""
@@ -313,13 +323,7 @@ class SessionService(object):
 
 		return session
 
-	def _replace_in_owner_index( self, session, old_owner ):
-		if old_owner is not None:
-			old = self._session_index.get(old_owner)
-			if old:
-				try:
-					old.remove( session.session_id )
-				except (ValueError,KeyError): pass
+	def _put_in_owner_index( self, session ):
 		gnu = self._session_index.get( session.owner )
 		if gnu is None or isinstance(gnu,persistent.list.PersistentList): #migration
 			gnu = BTrees.OOBTree.OOSet( (session.session_id,) )
@@ -345,7 +349,7 @@ class SessionService(object):
 		# Remove the session from the DB
 		try:
 			del self._session_map[s.session_id]
-		except KeyError: pass
+		except KeyError: pass # pragma: no cover
 
 		if sids is None:
 			sids = self._session_index.get( s.owner ) or ()
@@ -397,7 +401,7 @@ class SessionService(object):
 		session_index = self._session_index.get( sess.owner )
 		try:
 			session_index.remove( session_id )
-		except (ValueError,KeyError,TypeError,AttributeError): pass
+		except (ValueError,KeyError,TypeError,AttributeError): pass # pragma: no cover
 
 		sess.kill()
 
