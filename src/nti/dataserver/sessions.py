@@ -15,9 +15,9 @@ from zope import interface
 from zope import component
 from zope.event import notify
 from zope.annotation import interfaces as an_interfaces
+from zope.deprecation import deprecated, deprecate
 
 from nti.zodb import minmax
-
 
 import transaction
 
@@ -159,7 +159,8 @@ def _init_session_storage( session_db ):
 
 class PersistentSessionServiceStorage(PersistentMapping):
 	"""
-	A persistent implementation of session storage.
+	A persistent implementation of session storage based on
+	a map.
 	"""
 	interface.implements( nti_interfaces.ISessionServiceStorage )
 
@@ -167,7 +168,33 @@ class PersistentSessionServiceStorage(PersistentMapping):
 		super(PersistentSessionServiceStorage,self).__init__()
 		_init_session_storage(self)
 
+	def __getattr__(self, name):
+		try:
+			return self[name]
+		except KeyError:
+			raise AttributeError(name)
+
 SimpleSessionServiceStorage = PersistentSessionServiceStorage
+deprecated('SimpleSessionServiceStorage', "Prefer to use SessionServiceStorage")
+deprecated('PersistentSessionServiceStorage', "Prefer to use SessionServiceStorage")
+
+class SessionServiceStorage(persistent.Persistent):
+	"""
+	A simple persistent implementation of session storage.
+	"""
+	interface.implements( nti_interfaces.ISessionServiceStorage )
+	def __init__( self ):
+		self.session_map = BTrees.OOBTree.OOBTree()
+		self.session_index = BTrees.OOBTree.OOBTree()
+
+	@deprecate("Access fields directly")
+	def __getitem__( self, name ):
+		"""
+		For compatibility with the old PersistentSessionServiceStorage.
+		"""
+		if name in ('session_map','session_index'):
+			return self.__dict__[name]
+		raise KeyError( name )
 
 
 class SessionService(object):
@@ -188,15 +215,19 @@ class SessionService(object):
 	def __init__( self ):
 		"""
 		"""
-		@contextlib.contextmanager
-		def cm():
-			yield component.getUtility( nti_interfaces.ISessionServiceStorage )
-
-		self.session_db_cm = cm
-
 		self.proxy_sessions = {}
 		self.pub_socket = None
 		self.cluster_listener = self._spawn_cluster_listener()
+
+	@property
+	def _session_db(self):
+		return component.getUtility( nti_interfaces.ISessionServiceStorage )
+	@property
+	def _session_map(self):
+		return self._session_db.session_map
+	@property
+	def _session_index(self):
+		return self._session_db.session_index
 
 
 	def _spawn_cluster_listener(self):
@@ -250,10 +281,9 @@ class SessionService(object):
 
 	def create_session( self, session_class=Session, watch_session=True, **kwargs ):
 		""" The returned session must not be modified. """
-		with self.session_db_cm() as session_db:
-			session = session_class(session_service=self, **kwargs)
-			session_id = session.session_id
-			session_db['session_map'][session_id] = session
+		session = session_class(session_service=self, **kwargs)
+		session_id = session.session_id
+		self._session_map[session_id] = session
 
 		if watch_session:
 			def watchdog_session():
@@ -284,22 +314,21 @@ class SessionService(object):
 		return session
 
 	def _replace_in_owner_index( self, session, old_owner ):
-		with self.session_db_cm() as session_db:
-			if old_owner is not None:
-				old = session_db['session_index'].get(old_owner)
-				if old:
-					try:
-						old.remove( session.session_id )
-					except (ValueError,KeyError): pass
-			gnu = session_db['session_index'].get( session.owner )
-			if gnu is None or isinstance(gnu,persistent.list.PersistentList): #migration
-				gnu = BTrees.OOBTree.OOSet( (session.session_id,) )
-				session_db['session_index'][session.owner] = gnu
-			else:
-				gnu.add( session.session_id )
+		if old_owner is not None:
+			old = self._session_index.get(old_owner)
+			if old:
+				try:
+					old.remove( session.session_id )
+				except (ValueError,KeyError): pass
+		gnu = self._session_index.get( session.owner )
+		if gnu is None or isinstance(gnu,persistent.list.PersistentList): #migration
+			gnu = BTrees.OOBTree.OOSet( (session.session_id,) )
+			self._session_index[session.owner] = gnu
+		else:
+			gnu.add( session.session_id )
 
-	def _get_session( self, session_db, session_id, map_name='session_map' ):
-		result = session_db[map_name].get( session_id )
+	def _get_session( self, session_db, session_id ):
+		result = self._session_map.get( session_id )
 		if isinstance( result, Session ):
 			result._v_session_service = self
 		return result
@@ -315,11 +344,11 @@ class SessionService(object):
 		""" Cleans up a dead session. """
 		# Remove the session from the DB
 		try:
-			del session_db['session_map'][s.session_id]
+			del self._session_map[s.session_id]
 		except KeyError: pass
 
 		if sids is None:
-			sids = session_db['session_index'].get( s.owner ) or ()
+			sids = self._session_index.get( s.owner ) or ()
 		try:
 			sids.remove( s.session_id )
 		except (KeyError,ValueError,AttributeError): pass
@@ -339,48 +368,44 @@ class SessionService(object):
 		return s
 
 	def get_session( self, session_id ):
-		with self.session_db_cm() as session_db:
-			s = self._validated_session( self._get_session( session_db, session_id ), session_db )
-			if s:
-				s.incr_hits()
-			return s
+		s = self._validated_session( self._get_session( self._session_db, session_id ), self._session_db )
+		if s:
+			s.incr_hits()
+		return s
 
 	def get_sessions_by_owner( self, session_owner ):
 		"""
 		Returns sessions for the given owner that are reasonably likely
 		to be active and alive.
 		"""
-		with self.session_db_cm() as session_db:
-			sids = session_db['session_index'].get(session_owner) or ()
-			result = []
-			for s in list(sids): # copy because we mutate -> validated_session -> session_cleanup
-				s = self._validated_session( self._get_session( session_db, s ),
-											 session_db,
-											 sids )
-				if s: result.append( s )
-			return result
+		sids = self._session_index.get(session_owner) or ()
+		result = []
+		for s in list(sids): # copy because we mutate -> validated_session -> session_cleanup
+			s = self._validated_session( self._get_session( self._session_db, s ),
+										 self._session_db,
+										 sids )
+			if s: result.append( s )
+		return result
 
 	def delete_session( self, session_id ):
-		with self.session_db_cm() as session_db:
-			try:
-				sess = session_db['session_map'][session_id]
-				del session_db['session_map'][session_id]
-			except KeyError:
-				return
+		try:
+			sess = self._session_map[session_id]
+			del self._session_map[session_id]
+		except KeyError:
+			return
 
-			session_index = session_db['session_index'].get( sess.owner )
-			try:
-				session_index.remove( session_id )
-			except (ValueError,KeyError,TypeError,AttributeError): pass
+		session_index = self._session_index.get( sess.owner )
+		try:
+			session_index.remove( session_id )
+		except (ValueError,KeyError,TypeError,AttributeError): pass
 
-			sess.kill()
+		sess.kill()
 
 
 	def _put_msg( self, meth, session_id, msg ):
-		with self.session_db_cm() as session_db:
-			sess = self._get_session( session_db, session_id )
-			if sess:
-				meth( sess, msg )
+		sess = self._get_session( self._session_db, session_id )
+		if sess:
+			meth( sess, msg )
 
 	def _publish_msg( self, name, session_id, msg_str ):
 		assert isinstance( name, str ) # Not Unicode, only byte constants
@@ -416,18 +441,17 @@ class SessionService(object):
 
 	def _get_msgs( self, q_name, session_id ):
 		result = None
-		with self.session_db_cm() as session_db:
-			sess = self._get_session( session_db, session_id )
-			if sess:
-				# Reading messages should not reset the timeout.
-				# Only the session put_server_msg should do so.
-				#sess.clear_disconnect_timeout()
-				result = getattr( sess, q_name )
-				if result:
-					# "pop" them all
-					nresult = list(result)
-					result._data = ()
-					result = nresult
+		sess = self._get_session( self._session_db, session_id )
+		if sess:
+			# Reading messages should not reset the timeout.
+			# Only the session put_server_msg should do so.
+			#sess.clear_disconnect_timeout()
+			result = getattr( sess, q_name )
+			if result:
+				# "pop" them all
+				nresult = list(result)
+				result._data = ()
+				result = nresult
 		return result
 
 	def get_client_msgs( self, session_id ):
