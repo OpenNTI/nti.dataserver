@@ -1,14 +1,16 @@
 from zope import interface
 
 from BTrees.OOBTree import OOBTree
+from persistent import Persistent
 from persistent.mapping import PersistentMapping
 
 from nti.contentsearch._document import DocumentMap
 from nti.contentsearch.interfaces import IRepozeDataStore
 
 class RepozeDataStore(PersistentMapping):
-	interface.implements(IRepozeDataStore)
-	
+	"""
+	deprecated repoze data store
+	"""
 	def __init__(self, users_key='users', docMap_key='docMap'):
 		PersistentMapping.__init__(self)
 		self.users_key = users_key or 'users'
@@ -28,6 +30,14 @@ class RepozeDataStore(PersistentMapping):
 	def docmaps(self):
 		return self[self.docMap_key]
 	
+class PersistentRepozeDataStore(Persistent):
+	interface.implements(IRepozeDataStore)
+	
+	def __init__(self):
+		super(PersistentRepozeDataStore, self).__init__()
+		self.users = OOBTree()
+		self.docmaps = OOBTree()
+
 	def has_user(self, username):
 		return username in self.users
 	

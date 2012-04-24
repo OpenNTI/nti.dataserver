@@ -18,8 +18,9 @@ from nltk.tokenize import RegexpTokenizer
 from nti.ntiids.ntiids import is_valid_ntiid_string
 from nti.externalization import interfaces as ext_interfaces
 
+from nti.chatserver.messageinfo import MessageInfo
+
 from nti.dataserver.users import Entity
-from nti.dataserver.chat import MessageInfo
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.interfaces import ILibrary
 from nti.dataserver.contenttypes import Canvas

@@ -1,6 +1,6 @@
 import unittest
 
-from nti.contentsearch._repoze_datastore import RepozeDataStore
+from nti.contentsearch import create_repoze_datastore
 from nti.contentsearch._repoze_index import create_notes_catalog
 from nti.contentsearch._repoze_index import create_highlight_catalog
 from nti.contentsearch._repoze_index import create_messageinfo_catalog
@@ -10,21 +10,13 @@ from nti.contentsearch.tests import ConfiguringTestBase
 from hamcrest import assert_that
 from hamcrest import is_not
 from hamcrest import is_
-from hamcrest import has_key
 from hamcrest import has_length
 
 class TestDataStore(ConfiguringTestBase):
 
-	def test_ctor(self):
-		store = RepozeDataStore(users_key='_users_', docMap_key='_docMap_')
-		assert_that(store, has_key('_users_'))
-		assert_that(store, has_key('_docMap_'))
-		assert_that(store['_users_'], is_not(None))
-		assert_that(store['_docMap_'], is_not(None))
-
 	def test_add_get_catalog(self):
 		catalog = create_notes_catalog()
-		store = RepozeDataStore()
+		store = create_repoze_datastore()
 
 		store.add_catalog('nt@nt.com', catalog, 'note')
 		c = store.get_catalog('nt@nt.com', 'note')
@@ -37,7 +29,7 @@ class TestDataStore(ConfiguringTestBase):
 		assert_that(c, is_(None))
 		
 	def test_get_catalogs(self):
-		store = RepozeDataStore()
+		store = create_repoze_datastore()
 		for u in xrange(10):
 			username  = 'nt_%s@nt.com' % u
 			for t in xrange(5):
@@ -53,7 +45,7 @@ class TestDataStore(ConfiguringTestBase):
 			assert_that(obj, has_length(5))
 		
 	def test_remove_catalogs(self):
-		store = RepozeDataStore()
+		store = create_repoze_datastore()
 		username  = 'nt@nt.com'
 
 		for t in xrange(5):
@@ -71,7 +63,7 @@ class TestDataStore(ConfiguringTestBase):
 		assert_that(obj, has_length(4))
 		
 	def test_docmap(self):
-		store = RepozeDataStore()
+		store = create_repoze_datastore()
 		username = u'nt@nt.com'
 		address = u'tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.0'
 		store.add_catalog(username, create_notes_catalog(), 'note')

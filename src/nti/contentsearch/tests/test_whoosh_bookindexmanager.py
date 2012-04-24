@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from datetime import datetime
 
-from nti.dataserver.ntiids import make_ntiid
+from nti.ntiids.ntiids import make_ntiid
 
 from nti.contentsearch._whoosh_index import create_book_schema
 from nti.contentsearch._whoosh_indexstorage import create_directory_index

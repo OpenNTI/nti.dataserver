@@ -6,20 +6,21 @@ import unittest
 import tempfile
 from datetime import datetime
 
-from ZODB import DB
-from ZODB.FileStorage import FileStorage
+from zope import component
 
 from nti.dataserver.users import User
 from nti.dataserver.contenttypes import Note
-from nti.dataserver.ntiids import make_ntiid
+
+from nti.ntiids.ntiids import make_ntiid
 
 from nti.contentsearch import QueryObject
+from nti.contentsearch import create_repoze_datastore
+from nti.contentsearch.interfaces import IRepozeDataStore
 from nti.contentsearch.indexmanager import create_index_manager_with_repoze
 from nti.contentsearch.indexmanager import create_index_manager_with_whoosh
 from nti.contentsearch._whoosh_index import create_book_schema
 from nti.contentsearch._whoosh_indexstorage import create_directory_index
 from nti.contentsearch._whoosh_bookindexmanager import WhooshBookIndexManager
-from nti.contentsearch._repoze_datastore import RepozeDataStore
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
@@ -193,7 +194,7 @@ class _BaseIndexManagerTest(object):
 		hits = self.im.user_data_search(query='deviate', username='nt@nti.com', search_on=('Notes',))
 		assert_that(hits, has_entry(HIT_COUNT, 0))
 
-class _TestIndexManagerWithRepoze(_BaseIndexManagerTest, ConfiguringTestBase):
+class TestIndexManagerWithRepoze(_BaseIndexManagerTest, ConfiguringTestBase):
 
 	@classmethod
 	def setUpClass(cls):
@@ -205,14 +206,11 @@ class _TestIndexManagerWithRepoze(_BaseIndexManagerTest, ConfiguringTestBase):
 
 	def setUp(self):
 		ConfiguringTestBase.setUp(self)
-		self.db_dir = tempfile.mkdtemp(dir="/tmp")
-		self.storage = FileStorage(os.path.join(self.db_dir, 'data.fs'))
-		self.db = DB(self.storage)
-		self.repoze = RepozeDataStore(self.db)
+		self.repoze = create_repoze_datastore()
+		component.provideUtility(self.repoze, provides=IRepozeDataStore)
 
 	def tearDown(self):
 		ConfiguringTestBase.tearDown(self)
-		shutil.rmtree(self.db_dir, True)
 
 	def create_index_mananger(self):
 		return create_index_manager_with_repoze(repoze_store=self.repoze)

@@ -4,7 +4,8 @@ import unittest
 
 from nti.dataserver.users import User
 from nti.dataserver.contenttypes import Note
-from nti.dataserver.ntiids import make_ntiid
+
+from nti.ntiids.ntiids import make_ntiid
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans

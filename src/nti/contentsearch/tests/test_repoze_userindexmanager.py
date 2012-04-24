@@ -9,8 +9,8 @@ from nti.externalization.externalization import toExternalObject
 
 from nti.ntiids.ntiids import make_ntiid
 
+from nti.contentsearch import create_repoze_datastore
 from nti.contentsearch.interfaces import IRepozeDataStore
-from nti.contentsearch._repoze_datastore import RepozeDataStore
 from nti.contentsearch._repoze_userindexmanager import RepozeUserIndexManager
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
@@ -28,7 +28,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 
 	def setUp(self):
 		super(TestRepozeUserIndexManager, self).setUp()
-		self.repoze = RepozeDataStore()
+		self.repoze = create_repoze_datastore()
 		component.provideUtility(self.repoze, provides=IRepozeDataStore)
 
 	def tearDown(self):
