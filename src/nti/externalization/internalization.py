@@ -8,6 +8,8 @@ from __future__ import print_function, unicode_literals
 import sys
 import collections
 import inspect
+import six
+import numbers
 
 from zope import component
 from zope import interface
@@ -70,6 +72,10 @@ def _legacy_ext_to_int_map( externalized_object ):
 		if interfaces.StandardExternalFields.MIMETYPE in externalized_object:
 			factory = component.queryAdapter( externalized_object, interfaces.IMimeObjectFactory,
 											  name=externalized_object[interfaces.StandardExternalFields.MIMETYPE] )
+			if not factory:
+				# Is there a default?
+				factory = component.queryAdapter( externalized_object, interfaces.IMimeObjectFactory )
+
 		if not factory and interfaces.StandardExternalFields.CLASS in externalized_object:
 			class_name = externalized_object[interfaces.StandardExternalFields.CLASS]
 			factory = component.queryAdapter( externalized_object, interfaces.IClassObjectFactory,
@@ -136,6 +142,8 @@ def _resolve_externals(containedObject, externalObject, registry=component, cont
 
 			externalObject[key] = value( context, externalObject, externalObject[key] )
 
+# Things we don't bother trying to internalize
+_primitives = six.string_types + (numbers.Number,bool)
 
 def update_from_external_object( containedObject, externalObject,
 								 registry=component, context=None ):
@@ -162,6 +170,9 @@ def update_from_external_object( containedObject, externalObject,
 
 	assert isinstance( externalObject, collections.MutableMapping )
 	for k,v in externalObject.iteritems():
+		if isinstance( v, _primitives ):
+			continue
+
 		factory = None
 		if isinstance( v, collections.MutableSequence ):
 			v = update_from_external_object( (), v, registry, context )
