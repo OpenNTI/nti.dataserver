@@ -73,3 +73,17 @@ class ILogonLinkProvider(interface.Interface):
 
 	def __call__( ):
 		"Returns a single of :class:`nti_interfaces.ILink` object, or None."
+
+# Data rendering
+class IDataRenderer(interface.Interface):
+	"""
+	An intermediate layer that exists to transform a content
+	object into data, and suitably mutate the IResponse object.
+	The default implementation will use the externalization machinery,
+	specialized implementations will directly access and return data.
+	"""
+
+	def __call__( data, system ):
+		"""
+		This method matches the pyramid IRenderer interface.
+		"""
