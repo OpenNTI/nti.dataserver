@@ -507,10 +507,20 @@ class ICanvas(IShareableModeledContent, IThreadable):
 		Adds the shape to the top of the list of shapes.
 		"""
 
+IHIGHLIGHT_STYLE_VOCABULARY = schema.vocabulary.SimpleVocabulary(
+	[schema.vocabulary.SimpleTerm(_x)
+	 for _x
+	 in ('redaction', 'plain',)])
+
 class IHighlight(IShareableModeledContent,IThreadable,IAnchoredRepresentation):
 	"""
 	A highlighted portion of content the user wishes to remember.
 	"""
+	style = schema.Choice(
+		title=u'The style of the highlight',
+		vocabulary=IHIGHLIGHT_STYLE_VOCABULARY,
+		default="plain")
+
 
 class INote(IHighlight):
 	"""
