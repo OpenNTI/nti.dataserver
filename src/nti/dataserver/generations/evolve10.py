@@ -11,7 +11,7 @@ generation = 10
 from zope.generations.utility import findObjectsMatching
 from zope import minmax
 
-from nti.dataserver import sessions
+from nti.dataserver import sessions, interfaces as nti_interfaces
 
 
 def evolve( context ):
