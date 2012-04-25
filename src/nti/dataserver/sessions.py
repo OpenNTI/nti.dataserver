@@ -255,10 +255,12 @@ class SessionService(object):
 				# after we commit (and probably begin its own transaction)
 				# Note that the normal _dispatch_message_to_proxy can be called
 				# already in a transaction
-				transaction.begin()
-				# (session_id, function_name, msg_data)
-				self._dispatch_message_to_proxy( *msgs )
-				transaction.commit()
+
+				try:
+					handled = component.getUtility( nti_interfaces.IDataserverTransactionRunner )( lambda: self._dispatch_message_to_proxy( *msgs ), retries=2 )
+					#logger.debug( "Dispatched incoming cluster message? %s: %s", handled, msgs )
+				except Exception:
+					logger.exception( "Failed to dispatch incoming cluster message." )
 
 		return gevent.spawn( read_incoming )
 

@@ -58,7 +58,7 @@ class IDataserverTransactionRunner(interface.Interface):
 	and its environment.
 	"""
 
-	def __call__(func, retries=0):
+	def __call__(func, retries=0, sleep=None):
 		"""
 		Runs the function given in `func` in a transaction and dataserver local
 		site manager.
@@ -68,7 +68,9 @@ class IDataserverTransactionRunner(interface.Interface):
 			retries are requested, so it should be prepared for that.
 		:param int retries: The number of times to retry the transaction and execution of `func` if
 			:class:`transaction.interfaces.TransientError` is raised when committing.
-			Defaults to one.
+			Defaults to zero (so the job runs once).
+		:param float sleep: If not none, then the greenlet running this function will sleep for
+			this long between retry attempts.
 		:return: The value returned by the first successful invocation of `func`.
 		"""
 

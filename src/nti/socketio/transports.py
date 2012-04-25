@@ -41,6 +41,7 @@ def _decode_packet_to_session( session, sock, data, doom_transaction=True ):
 		elif pkt.msg_type == 2: # heartbeat
 			session.heartbeat()
 		else:
+			#logger.debug( "Session %s received msg %s", session, pkt )
 			session.put_server_msg( pkt )
 
 def _safe_kill_session( session ):
@@ -274,7 +275,14 @@ class WebsocketTransport(BaseTransport):
 				self.message = self.session_proxy.get_client_msg()
 				assert isinstance(self.message, (str,types.NoneType)), "Messages should already be encoded as required"
 
-				listen = run_job_in_site( self._do_send, retries=5 )
+				try:
+					listen = run_job_in_site( self._do_send, retries=10 )
+				except transaction.interfaces.TransientError:
+					# A problem clearing the queue or getting the session.
+					# Generally, these can be ignored, since we'll just try again later
+					logger.debug( "Unable to clear session msgs, ignoring", exc_info=True )
+					listen = (self.message is not None)
+
 
 				if not listen:
 					# Don't send a message if the transactions failed
@@ -282,11 +290,13 @@ class WebsocketTransport(BaseTransport):
 					break
 
 				try:
+					#logger.debug( "Sending session '%s' value '%r'", self.session_id, self.message )
 					self.websocket.send(self.message)
 				except geventwebsocket.exceptions.FrameTooLargeException:
 					logger.warn( "Failed to send message to websocket, %s is too large. Head: %s",
-								 len(message), message[0:50] )
+								 len(self.message), self.message[0:50] )
 				except socket.error:
+					logger.debug( "Stopping sending messages to '%s'", self.session_id, exc_info=True )
 					# The session will be killed of its own accord soon enough.
 					break
 
@@ -320,7 +330,13 @@ class WebsocketTransport(BaseTransport):
 			listen = True
 			while listen:
 				self.message = self.websocket.receive()
-				listen = run_job_in_site( self._do_read, retries=5 )
+				# Try for up to 2 seconds to receive this message. If it fails,
+				# drop it and wait for the next one. That's better than dieing altogether, right?
+				try:
+					listen = run_job_in_site( self._do_read, retries=20, sleep=0.1 )
+				except transaction.interfaces.TransientError:
+					logger.exception( "Failed to receive message (%s) from WS; ignoring and continuing %s",
+									  self.message[0:50], self.session_id )
 
 	class WebSocketPinger(AbstractWebSocketOperator):
 
