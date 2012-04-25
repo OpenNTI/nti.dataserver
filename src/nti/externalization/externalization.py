@@ -202,7 +202,7 @@ def toExternalDictionary( self, mergeFrom=None, name=_ex_name_marker, registry=c
 
 	def _ordered_pick( ext_name, *fields ):
 		for x in fields:
-			if isinstance( x, basestring) and getattr( self, x, ''):
+			if isinstance( x, six.string_types) and getattr( self, x, ''):
 				result[ext_name] = getattr( self, x )
 				if callable( fields[-1] ):
 					result[ext_name] = fields[-1]( result[ext_name] )

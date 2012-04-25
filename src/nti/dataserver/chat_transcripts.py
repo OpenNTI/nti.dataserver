@@ -90,7 +90,7 @@ class _UserTranscriptStorageAdapter(object):
 		# so is subject to GC. Once we have the user indexing
 		# by contained NTIID, we can simply ask it after
 		# deriving the storage_id
-		meeting = component.queryUtility( nti_interfaces.IDataserver ).get_by_oid( meeting_id )
+		meeting = component.queryUtility( nti_interfaces.IDataserver ).get_by_oid( meeting_id, ignore_creator=True )
 		if meeting is not None:
 			storage_id = _transcript_ntiid( meeting, self._user )
 			storage = self._user.getContainedObject( meeting.containerId, storage_id )
