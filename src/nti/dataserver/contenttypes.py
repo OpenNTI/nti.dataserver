@@ -200,10 +200,12 @@ class Highlight(_UserContentRoot,datastructures.ExternalizableInstanceDict):
 	interface.implements( nti_interfaces.IZContained, nti_interfaces.IHighlight )
 	_excluded_in_ivars_ = { 'AutoTags' } | datastructures.ExternalizableInstanceDict._excluded_in_ivars_
 
+	style = 'plain'
 	__parent__ = None
 
 	def __init__( self ):
 		super(Highlight,self).__init__()
+		self.style = 'plain' # To get in the dict for externalization
 		self.top = 0
 		self.left = 0
 		# TODO: Determine the meaning of all these fields.
@@ -237,6 +239,8 @@ class Highlight(_UserContentRoot,datastructures.ExternalizableInstanceDict):
 
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
 		super(Highlight,self).updateFromExternalObject( parsed, *args, **kwargs )
+		if 'style' in parsed:
+			nti_interfaces.IHighlight['style'].validate( parsed['style'] )
 		if 'tags' in parsed:
 			# we lowercase and sanitize tags. Our sanitization here is really
 			# cheap and discards html symbols

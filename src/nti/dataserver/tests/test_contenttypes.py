@@ -19,7 +19,7 @@ from nti.dataserver.contenttypes import Highlight, Note, Canvas, CanvasShape, Ca
 import nti.dataserver as dataserver
 #import nti.dataserver.users
 
-
+import zope.schema.interfaces
 import mock_dataserver
 from mock_dataserver import WithMockDS
 import plistlib
@@ -76,6 +76,17 @@ class HighlightTest(mock_dataserver.ConfiguringTestBase):
 		ext = { 'tags': ['<html>Hi'] }
 		highlight.updateFromExternalObject( ext, self.ds )
 		assert_that( highlight.tags, is_( () ) )
+
+	def test_external_style(self):
+		highlight = Highlight()
+		assert_that( highlight.style, is_( 'plain' ) )
+
+		highlight.updateFromExternalObject( {'style':'redaction'} )
+		assert_that( highlight.style, is_( 'redaction' ) )
+
+		with self.assertRaises(zope.schema.interfaces.ConstraintNotSatisfied):
+			highlight.updateFromExternalObject( {'style':'F00B4R'} )
+
 
 class NoteTest(mock_dataserver.ConfiguringTestBase):
 
