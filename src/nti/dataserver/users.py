@@ -512,7 +512,7 @@ nti_interfaces.IFriendsList.setTaggedValue( nti_interfaces.IHTC_NEW_FACTORY,
 													 interfaces=(nti_interfaces.IFriendsList,)) )
 
 class _DevicesMap(datastructures.AbstractNamedContainerMap):
-
+	interface.implements(nti_interfaces.IDeviceContainer)
 	contained_type = nti_interfaces.IDevice
 	container_name = 'Devices'
 
@@ -528,7 +528,7 @@ nti_interfaces.IDevice.setTaggedValue( nti_interfaces.IHTC_NEW_FACTORY,
 
 
 class _TranscriptsMap(datastructures.AbstractNamedContainerMap):
-
+	interface.implements(nti_interfaces.ITranscriptContainer)
 	contained_type = nti_interfaces.ITranscript
 	container_name = 'Transcripts'
 
