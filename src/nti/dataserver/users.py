@@ -859,7 +859,7 @@ class User(Principal):
 				ntiid_summary = ntiids.make_ntiid( base=container_id,
 												   provider=nti_interfaces.SYSTEM_USER_NAME,
 												   nttype=ntiids.TYPE_OID )
-				meeting = _get_shared_dataserver().get_by_oid( ntiid_summary )
+				meeting = _get_shared_dataserver().get_by_oid( ntiid_summary, ignore_creator=True )
 				result = self.getContainedObject( meeting.containerId,
 												  ntiids.make_ntiid( base=container_id, nttype=ntiids.TYPE_TRANSCRIPT_SUMMARY ) )
 				# Default to returning none if we found no contained object,

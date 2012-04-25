@@ -73,9 +73,10 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 				 'roomMembershipChanged', 'roomModerationChanged' )
 	_prefer_oid_ = False
 
+	Active = True
+	creator = None
 
 	_v_chatserver = None
-	Active = True
 	_moderated = False
 	_occupant_names = ()
 	def __init__( self, chatserver=None ):

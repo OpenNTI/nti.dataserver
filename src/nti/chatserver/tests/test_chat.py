@@ -19,7 +19,7 @@ import os
 from nti.dataserver.contenttypes import Note, Canvas
 
 from nti.externalization.oids import toExternalOID, to_external_ntiid_oid
-from nti.externalization.externalization import to_external_representation, EXT_FORMAT_JSON, EXT_FORMAT_PLIST
+from nti.externalization.externalization import to_external_representation, toExternalObject, EXT_FORMAT_JSON, EXT_FORMAT_PLIST
 from nti.ntiids import ntiids
 
 import nti.dataserver.users as users
@@ -276,7 +276,8 @@ class TestChatserver(ConfiguringTestBase):
 		component.provideUtility( chatserver )
 
 		d = {'Occupants': ['jason', 'chris', 'sjohnson'],
-			 'ContainerId': 'tag:nextthought.com,2011-10:x-y-z' }
+			 'ContainerId': 'tag:nextthought.com,2011-10:x-y-z',
+			 'Creator': 'sjohnson' }
 		if otherDict:
 			d.update( otherDict )
 		room = chatserver.create_room_from_dict( d )
@@ -318,8 +319,11 @@ class TestChatserver(ConfiguringTestBase):
 		sessions[2] = self.Session( 'other' )
 		chatserver = chat.Chatserver( sessions )
 		mock_dataserver.current_transaction.add( chatserver.rooms )
-		assert_that( chat.ChatHandler( chatserver, sessions[1] ).enterRoom( d ),
+		meeting = chat.ChatHandler( chatserver, sessions[1] ).enterRoom( d )
+		assert_that( meeting,
 					 is_( chat.Meeting ) )
+		assert_that( meeting, has_property( 'creator',  'sjohnson' ) )
+		assert_that( toExternalObject( meeting ), has_entry( 'Creator', 'sjohnson' ) )
 
 	@WithMockDSTrans
 	def test_integration_chat_storage_studygroup( self ):
@@ -351,6 +355,7 @@ class TestChatserver(ConfiguringTestBase):
 		# I entered and created.
 		room = foo_handler.enterRoom( {'ContainerId': fl1.NTIID } )
 		assert_that( room, is_( not_none() ) )
+		assert_that( room, has_property( 'creator', 'foo@bar' ) )
 		assert_that( room, has_property( 'occupant_names', set( (foo_handler.session.owner, 'friend@bar') ) ) )
 
 		# A friend can enter and be in the same room.
@@ -473,6 +478,7 @@ class TestChatserver(ConfiguringTestBase):
 		mock_dataserver.current_transaction.add( chatserver.rooms )
 		component.provideUtility( chatserver )
 		room = chatserver.create_room_from_dict( {'Occupants': ['jason', 'chris', 'sjohnson'],
+												  'Creator': 'sjohnson',
 												  'ContainerId': 'tag:nextthought.com,2011-10:x-y-z'} )
 		msg = chat.MessageInfo()
 		msg.Creator = 'jason'
@@ -705,7 +711,7 @@ class TestChatserver(ConfiguringTestBase):
 			# Links
 			assert_that( summary.links, has_length( 1 ) )
 			assert_that( summary.links[0].target, provides( interfaces.ITranscript ) )
-			assert_that( mock_dataserver.current_mock_ds.get_by_oid( room.id ), not_none() )
+			assert_that( mock_dataserver.current_mock_ds.get_by_oid( room.id, ignore_creator=True), not_none() )
 			user = users.User.get_user( user )
 			transcript = user.get_by_ntiid( ntiids.make_ntiid( base=summary.NTIID, nttype=ntiids.TYPE_TRANSCRIPT ) )
 			assert_that( transcript, provides( interfaces.ITranscript ) )
@@ -739,6 +745,7 @@ class TestChatserver(ConfiguringTestBase):
 		room = chatserver.create_room_from_dict( {'Occupants': ['jason', 'sjohnson'],
 												  'ContainerId': 'foobar',
 												  'inReplyTo': n_oid,
+												  'Creator': 'sjohnson',
 												  'Active': False } )
 		msg = chat.MessageInfo()
 		msg.Creator = 'jason'
