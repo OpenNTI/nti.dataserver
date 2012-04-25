@@ -14,7 +14,7 @@ import nti.dataserver.interfaces as nti_interfaces
 import nti.dataserver.sessions as sessions
 
 import mock_dataserver
-
+from zope.deprecation import __show__
 
 
 class MockSessionService(sessions.SessionService):
@@ -84,11 +84,13 @@ class TestSessionService(mock_dataserver.ConfiguringTestBase):
 		assert_that( proxy, has_property( 'c_msg', none() ) )
 
 	def test_create_session_deprecated(self):
+		__show__.off()
 		self.storage = sessions.SimpleSessionServiceStorage()
 		component.provideUtility( self.storage, provides=nti_interfaces.ISessionServiceStorage )
 		session = self.session_service.create_session( watch_session=False )
 		assert_that( session, is_not( none() ) )
 		assert_that( self.session_service.get_session( session.session_id ), is_( session ) )
+		__show__.on()
 
 	def test_create_session(self):
 		session = self.session_service.create_session( watch_session=False )

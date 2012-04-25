@@ -469,14 +469,25 @@ class IFriendsList(IModeledContent,IEntity):
 
 		"""
 
+from zope.container.constraints import contains
+
 class IFriendsListContainer(INamedContainer):
 	"""
 	A named, homogeneously typed container holding just :class:`IFriendsList`
 	objects.
 	"""
 
+	contains(IFriendsList)
+
 class IDevice(IModeledContent): pass
+
+class IDeviceContainer(INamedContainer):
+	contains(IDevice)
+
 class ITranscript(IModeledContent): pass
+class ITranscriptContainer(INamedContainer):
+	contains(ITranscript)
+
 class ITranscriptSummary(IModeledContent): pass
 
 

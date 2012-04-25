@@ -37,6 +37,7 @@ import anyjson as json
 from persistent import Persistent
 from zope import interface
 from zope import component
+from zope.deprecation import __show__
 
 class ContainedExternal(ContainedMixin):
 
@@ -52,6 +53,7 @@ class ApplicationTestBase(ConfiguringTestBase):
 		return Library()
 
 	def setUp(self):
+		__show__.off()
 		super(ApplicationTestBase,self).setUp()
 		self.ds = mock_dataserver.MockDataserver()
 		self.app, self.main = createApplication( 8080, self._setup_library(), create_ds=self.ds, pyramid_config=self.config )
@@ -62,6 +64,9 @@ class ApplicationTestBase(ConfiguringTestBase):
 					   for s in os.listdir( root )
 					   if os.path.isdir( os.path.join( root, s ) )]
 		self.main.setServeFiles( serveFiles )
+	def tearDown(self):
+		__show__.on()
+		super(ApplicationTestBase,self).tearDown()
 
 	def _make_extra_environ(self, user=b'sjohnson@nextthought.com', **kwargs):
 		result = {

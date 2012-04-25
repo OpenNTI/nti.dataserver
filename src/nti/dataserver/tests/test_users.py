@@ -19,7 +19,7 @@ from nti.dataserver.datastructures import (getPersistentState, toExternalOID, to
 									   ContainedStorage, ContainedMixin, CreatedModDateTrackingObject,
 									   to_external_representation, EXT_FORMAT_JSON, EXT_FORMAT_PLIST)
 
-from ..users import User, FriendsList, Device, Community
+from ..users import User, FriendsList, Device, Community, _FriendsListMap as FriendsListContainer
 from ..interfaces import IFriendsList
 from ..contenttypes import Note
 from ..activitystream_change import Change
@@ -27,6 +27,7 @@ from . import provides
 
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
+from zope.container.interfaces import InvalidItemType
 
 import mock_dataserver
 from mock_dataserver import WithMockDSTrans
@@ -54,6 +55,18 @@ def test_create_friends_list_through_registry():
 	yield _test, 'FriendsLists'
 	# case insensitive
 	yield _test, 'friendslists'
+
+from unittest import case
+class AssertRaisesContext(case._AssertRaisesContext):
+	failureException = AssertionError
+	def __init__( self, expected ):
+		super(AssertRaisesContext,self).__init__( expected, self )
+
+def test_adding_wrong_type_to_friendslist():
+	friends = FriendsListContainer()
+	with AssertRaisesContext(InvalidItemType):
+		friends['k'] = 'v'
+
 
 def test_everyone_has_creator():
 	assert_that( users.EVERYONE, has_property( 'creator', nti_interfaces.SYSTEM_USER_NAME ) )
