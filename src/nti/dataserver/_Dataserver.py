@@ -167,7 +167,7 @@ def _site_cm(conn):
 		yield sitemanc
 
 
-def run_job_in_site(func, retries=0,
+def run_job_in_site(func, retries=0, sleep=None,
 					_connection_cm=_connection_cm, _site_cm=_site_cm):
 	"""
 	Runs the function given in `func` in a transaction and dataserver local
@@ -178,7 +178,7 @@ def run_job_in_site(func, retries=0,
 		retries are requested, so it should be prepared for that.
 	:param int retries: The number of times to retry the transaction and execution of `func` if
 		:class:`transaction.interfaces.TransientError` is raised when committing.
-		Defaults to one.
+		Defaults to zero (so the job runs once).
 	:return: The value returned by the first successful invocation of `func`.
 	"""
 	note = func.__doc__
@@ -209,7 +209,9 @@ def run_job_in_site(func, retries=0,
 				if i == retries:
 					# We failed for the last time
 					raise
-				logger.exception( "Retrying transaction %s on exception", t )
+				logger.exception( "Retrying transaction %s on exception", func )
+				if sleep is not None:
+					gevent.sleep( sleep )
 			except transaction.interfaces.DoomedTransaction:
 				raise
 			except:

@@ -246,28 +246,21 @@ def _configure_zeo( env_root ):
 	searchBlobDir, searchDemoBlobDir = _mk_blobdirs( searchDataFile )
 
 	configuration = """
-		%%import zc.zlibstorage
 		<zeo>
 		address %(clientPipe)s
 		</zeo>
-		<serverzlibstorage 1>
 		<filestorage 1>
 		path %(dataFile)s
 		blob-dir %(blobDir)s
 		</filestorage>
-		</serverzlibstorage>
-		<serverzlibstorage 2>
 		<filestorage 2>
 		path %(sessionDataFile)s
 		blob-dir %(sessionBlobDir)s
 		</filestorage>
-		</serverzlibstorage>
-		<serverzlibstorage 3>
 		<filestorage 3>
 		path %(searchDataFile)s
 		blob-dir %(searchBlobDir)s
 		</filestorage>
-		</serverzlibstorage>
 
 		<eventlog>
 		<logfile>
@@ -295,7 +288,7 @@ def _configure_zeo( env_root ):
 	env_root.write_conf_file( 'demo_zeo_conf.xml', demo_conf )
 
 
-	base_uri = 'zlibzeo://%(addr)s?storage=%(storage)s&database_name=%(name)s&blob_dir=%(blob_dir)s&shared_blob_dir=%(shared)s'
+	base_uri = 'zeo://%(addr)s?storage=%(storage)s&database_name=%(name)s&blob_dir=%(blob_dir)s&shared_blob_dir=%(shared)s'
 	file_uri = 'file://%s?database_name=%s&blobstorage_dir=%s'
 
 	uris = []
