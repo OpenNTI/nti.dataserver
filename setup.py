@@ -137,7 +137,9 @@ setup(
 		'zope.traversing',
 		# textindexng3
 		'zopyx.txng3.core',
-		'zopyx.txng3.ext'
+		'zopyx.txng3.ext',
+		# amazon
+		'boto'
 		],
 	extras_require = {'test': ['zope.testing', 'zc.buildout'], 'tools': ['ipython', 'httpie']},
 	dependency_links = ['http://svn.wikimedia.org/svnroot/pywikipedia/trunk/pywikipedia/'],
