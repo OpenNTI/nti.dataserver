@@ -7,7 +7,7 @@ from persistent.mapping import PersistentMapping
 from nti.contentsearch._document import DocumentMap
 from nti.contentsearch.interfaces import IRepozeDataStore
 
-class RepozeDataStore(PersistentMapping):
+class _RepozeDataStore(PersistentMapping):
 	"""
 	deprecated repoze data store
 	"""
@@ -150,3 +150,7 @@ class PersistentRepozeDataStore(Persistent):
 			return docMap.docid_to_address.keys()
 		return []
 		
+
+class RepozeDataStore(_RepozeDataStore,PersistentRepozeDataStore):
+	pass
+
