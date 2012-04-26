@@ -23,7 +23,7 @@ from nti.dataserver import users, datastructures
 from nti.ntiids import ntiids
 from nti.dataserver.datastructures import ContainedMixin
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
-
+from nti.externalization.externalization import to_external_representation
 
 from zope import interface
 import nti.dataserver.interfaces as nti_interfaces
@@ -72,7 +72,7 @@ class TestUGDViews(ConfiguringTestBase):
 		view.request.context = X()
 		view.request.context.resource = user
 		view.request.content_type = 'application/vnd.nextthought+json'
-		view.request.body = datastructures.to_external_representation( {}, 'json' )
+		view.request.body = to_external_representation( {}, 'json' )
 
 		result = view()
 		assert_that( result, is_( dict ) )
@@ -88,10 +88,10 @@ class TestUGDViews(ConfiguringTestBase):
 		view.request.context = X()
 		view.request.context.resource = user
 		view.request.content_type = 'application/vnd.nextthought+json'
-		view.request.body = datastructures.to_external_representation( {'Class': 'FriendsList',
-																		'ID': 'Everyone',
-																		'ContainerId': 'FriendsLists'},
-																		'json' )
+		view.request.body = to_external_representation( {'Class': 'FriendsList',
+														 'ID': 'Everyone',
+														 'ContainerId': 'FriendsLists'},
+														 'json' )
 		view.getRemoteUser = lambda: user
 		with self.assertRaises(hexc.HTTPConflict):
 			view()

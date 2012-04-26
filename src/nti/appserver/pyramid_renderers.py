@@ -25,8 +25,8 @@ HEADER_LAST_MODIFIED = httpheaders.LAST_MODIFIED.name
 
 from zope.mimetype.interfaces import IContentTypeAware
 
-from nti.dataserver.datastructures import (to_external_representation, EXT_FORMAT_JSON, EXT_FORMAT_PLIST,
-										   toExternalObject, StandardExternalFields)
+from nti.externalization.externalization import to_external_representation, toExternalObject, EXT_FORMAT_JSON, EXT_FORMAT_PLIST
+from nti.externalization.interfaces import StandardExternalFields
 from nti.dataserver.mimetype import (MIME_BASE_PLIST, MIME_BASE_JSON,
 									 MIME_EXT_PLIST, MIME_EXT_JSON,
 									 nti_mimetype_from_object,

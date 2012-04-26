@@ -11,7 +11,7 @@ from nti.appserver.workspaces import ContainerEnumerationWorkspace as CEW
 from nti.appserver.workspaces import UserEnumerationWorkspace as UEW
 from nti.appserver.workspaces import HomogeneousTypedContainerCollection as HTCW
 from nti.appserver.workspaces import UserService, _UserEnrolledClassSectionsCollection as _UserClassesCollection, _UserPagesCollection as UserPagesCollection
-from nti.appserver.workspaces import LibraryCollection
+
 
 from nti.appserver import tests
 from nti.appserver import interfaces as app_interfaces
@@ -19,7 +19,8 @@ from nti.appserver import interfaces as app_interfaces
 from nti.ntiids import ntiids
 from nti.dataserver import links, users, providers
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.datastructures import toExternalObject
+from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.externalization import toExternalObject
 from nti.dataserver.tests import mock_dataserver
 
 from zope import interface
@@ -272,13 +273,13 @@ class TestLibraryCollectionDetailExternalizer(tests.ConfiguringTestBase):
 		super(TestLibraryCollectionDetailExternalizer,self).tearDown()
 
 	def test_no_acl_file(self):
-		external = nti_interfaces.IExternalObject( self.library_collection ).toExternalObject()
+		external = ext_interfaces.IExternalObject( self.library_collection ).toExternalObject()
 		assert_that( external, has_entry( 'titles', has_length( 1 ) ) )
 
 	def test_malformed_acl_file_denies_all(self):
 		with open( os.path.join( self.entry_dir, '.nti_acl' ), 'w' ) as f:
 			f.write( "This file is invalid" )
-		external = nti_interfaces.IExternalObject( self.library_collection ).toExternalObject()
+		external = ext_interfaces.IExternalObject( self.library_collection ).toExternalObject()
 		assert_that( external, has_entry( 'titles', has_length( 0 ) ) )
 
 
@@ -286,11 +287,11 @@ class TestLibraryCollectionDetailExternalizer(tests.ConfiguringTestBase):
 		with open( os.path.join( self.entry_dir, '.nti_acl' ), 'w' ) as f:
 			f.write( "Allow:User:[nti.actions.create]" )
 
-		external = nti_interfaces.IExternalObject( self.library_collection ).toExternalObject()
+		external = ext_interfaces.IExternalObject( self.library_collection ).toExternalObject()
 		assert_that( external, has_entry( 'titles', has_length( 0 ) ) )
 
 		with open( os.path.join( self.entry_dir, '.nti_acl' ), 'w' ) as f:
 			f.write( "Allow:jason.madden@nextthought.com:[zope.View]" )
 
-		external = nti_interfaces.IExternalObject( self.library_collection ).toExternalObject()
+		external = ext_interfaces.IExternalObject( self.library_collection ).toExternalObject()
 		assert_that( external, has_entry( 'titles', has_length( 1 ) ) )
