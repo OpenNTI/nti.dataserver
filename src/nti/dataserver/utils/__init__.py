@@ -11,7 +11,8 @@ import nti.dataserver
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver._Dataserver import Dataserver
 
-def run_with_dataserver( environment_dir=None, function=None, as_main=True ):
+def run_with_dataserver( environment_dir=None, function=None, as_main=True,
+						xmlconfig_packages=() ):
 	"""
 	Execute the `function` in the (already running) dataserver
 	environment configured at `environment_dir`.
@@ -22,6 +23,8 @@ def run_with_dataserver( environment_dir=None, function=None, as_main=True ):
 		of a script and configures the complete environment appropriately, including
 		setting up logging.
 
+	:keyword xmlconfig_packages: An iterable of modules to load ``configure.zcml`` from,
+		in addition to ``nti.dataserver.``
 	:return: The results of the function
 	"""
 
@@ -29,6 +32,8 @@ def run_with_dataserver( environment_dir=None, function=None, as_main=True ):
 		logging.basicConfig(level=logging.WARN)
 		setHooks()
 		xmlconfig.file( 'configure.zcml', package=nti.dataserver )
+		for p in xmlconfig_packages:
+			xmlconfig.file( 'configure.zcml', package=p )
 
 	ds = Dataserver( environment_dir )
 	component.provideUtility( ds )
