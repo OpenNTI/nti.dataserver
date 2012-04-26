@@ -221,6 +221,7 @@ These are definitions related to content that a user can generate.
    // leaving all other fields absent.
 
    struct Highlight : Bookmark {
+        string style; // one of 'redaction' or 'plain'. If missing, assume 'plain'
         string startHighlightedFullText;
         string startHighlightedText;
         string endHighlightedText;
