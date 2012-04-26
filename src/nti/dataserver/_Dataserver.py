@@ -40,6 +40,9 @@ from nti.dataserver import users
 from nti.dataserver import interfaces
 
 from nti.chatserver import interfaces as chat_interfaces
+from nti.chatserver.chatserver import Chatserver
+from . import meeting_container_storage
+
 from . import config
 
 
@@ -400,9 +403,6 @@ class Dataserver(MinimalDataserver):
 		return sessions.SessionService()
 
 	def _setup_chat( self, room_name ):
-		# Delayed imports due to cycles
-		from nti.chatserver.chatserver import Chatserver
-		import meeting_container_storage
 		return  Chatserver( self.session_manager,
 							 meeting_storage=_SessionDbMeetingStorage( room_name ),
 							 meeting_container_storage=meeting_container_storage.MeetingContainerStorage( ) )
