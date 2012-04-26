@@ -26,7 +26,7 @@ from nti.dataserver.interfaces import ILibrary
 from nti.dataserver.contenttypes import Canvas
 from nti.dataserver.contenttypes import Highlight
 from nti.dataserver.contenttypes import CanvasTextShape
-from nti.dataserver.datastructures import to_external_ntiid_oid
+from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.contentsearch import to_list
 
