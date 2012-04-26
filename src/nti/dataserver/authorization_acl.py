@@ -13,8 +13,11 @@ import os
 
 from zope import interface
 from zope import component
+
+import pyramid.security
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import authorization as auth
+from nti.externalization import interfaces as ext_interfaces
 
 class _ACE(object):
 	"""
@@ -106,7 +109,7 @@ class _ACE(object):
 		"""
 		return "%s:%s:%s" % (self.action,
 							 self.actor.id,
-							 'All' if self.permission is nti_interfaces.ALL_PERMISSIONS else [x.id for x in self.permission])
+							 'All' if self.permission is nti_interfaces.ALL_PERMISSIONS else [str(x.id) for x in self.permission])
 
 
 	def __eq__(self,other):
@@ -164,6 +167,50 @@ def ACL( obj, default=() ):
 			return nti_interfaces.IACLProvider( obj ).__acl__
 		except TypeError:
 			return default
+
+def has_permission( permission, context, username, **kwargs ):
+	"""
+	Checks to see if the user named by ``username`` has been
+	allowed the ``permission`` on (or in) the ``context``.
+
+	:param permission: A string or :class:`nti_interfaces.IPermission` object to check
+	:param context: An object that the :func:`ACL` function can get an ACL for.
+	:param username: A user object or username designating a user that :func:`auth.effective_principals`
+		can turn into a set of principals. Additional keyword arguments are passed to this
+		function.
+	:return: An object that behaves like a boolean value but provides a description
+		about what was allowed or denied when printed.
+
+	"""
+
+	try:
+		context.__acl__
+	except AttributeError:
+		try:
+			to_check = nti_interfaces.IACLProvider( context )
+		except TypeError:
+			return pyramid.security.Denied( "No ACL found" )
+	else:
+		to_check = context
+
+
+	policy = component.queryUtility(nti_interfaces.IAuthorizationPolicy)
+	if not policy:
+		return pyramid.security.Denied( "No IAuthorizationPolicy installed" )
+	return policy.permits( to_check,
+						   auth.effective_principals( username, **kwargs ),
+						   permission )
+
+
+class ACLDecorator(object):
+	interface.implements(ext_interfaces.IExternalMappingDecorator)
+	component.adapts(object)
+
+	def __init__( self, o ):
+		pass
+
+	def decorateExternalMapping( self, orig, result ):
+		result.__acl__ = ACL( orig )
 
 class _ACL(list):
 	interface.implements(nti_interfaces.IACL)

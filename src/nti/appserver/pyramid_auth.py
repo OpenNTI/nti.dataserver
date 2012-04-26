@@ -16,7 +16,7 @@ from repoze.who.classifiers import default_request_classifier
 from pyramid_who.whov2 import WhoV2AuthenticationPolicy
 
 from nti.dataserver.users import User
-from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver import authorization
 
 # TODO: This decoding stuff is happening too simalarly in the different
 # places. Decide what's really needed and remove what isn't and consolidate
@@ -122,21 +122,14 @@ def _decode_username_identity( identity ):
 
 class _NTIUsers(object):
 
-	def __init__( self, user_callable ):
-		"""
-		:param user_callable: A function of username that returns a User object.
-		"""
-		super(_NTIUsers, self).__init__()
-		self.users = user_callable
-
 	def user_exists( self, username ):
 		if not username or not username.strip(): # username is not None and not empty
 			return False
-		user = self.users( username )
+		user = User.get_user( username )
 		return user is not None
 
 	def user_password( self, username ):
-		userObj = self.users( username )
+		userObj = User.get_user( username )
 		return userObj.password if userObj else None
 
 	def user_has_password( self, username, password ):
@@ -146,25 +139,7 @@ class _NTIUsers(object):
 
 	def _query_groups( self, username, components ):
 		":return: The groups of an authenticated user."
-		result = set()
-		# Query all the available groups for this user
-		for _, adapter in components.getAdapters( (self.users(username),),
-												  nti_interfaces.IGroupMember ):
-			result.update( adapter.groups )
-		# These last three will be duplicates of string-only versions
-		# Ensure that the user is in there as a IPrincipal
-		result.update( (nti_interfaces.IPrincipal(username),) )
-		# Add the authenticated and everyone groups
-		result.add( nti_interfaces.IPrincipal( pyramid.security.Everyone ) )
-		result.add( nti_interfaces.IPrincipal( pyramid.security.Authenticated ) )
-		if '@' in username:
-			# Make the domain portion of the username available as a group
-			# TODO: Prefix this, like we do with roles?
-			domain = username.split( '@', 1 )[-1]
-			result.add( domain )
-			result.add( nti_interfaces.IPrincipal( domain ) )
-		return result
-
+		return authorization.effective_principals( username, registry=components, authenticated=True )
 
 	def __call__( self, userid, request ):
 		result = None
@@ -187,7 +162,7 @@ def _make_user_auth():
 	# In the past, we passed _NTIUSers a
 	# function that automatically created new user accounts, and this was enabled
 	# by default. That's dangerous and is now disabled.
-	return _NTIUsers( User.get_user )
+	return _NTIUsers( )
 
 class NTIUsersAuthenticatorPlugin(object):
 	interface.implements( IAuthenticator )
