@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 from zope import interface, component, lifecycleevent
 from nti.dataserver import interfaces as nti_interfaces
+from nti.externalization import interfaces as ext_interfaces
 from nti.appserver import interfaces as app_interfaces
 
 from nti.dataserver.links import Link
@@ -122,7 +123,7 @@ def ping( request ):
 	return _Pong( links )
 
 class _Pong(dict):
-	interface.implements( nti_interfaces.IExternalObject )
+	interface.implements( ext_interfaces.IExternalObject )
 
 	__external_class_name__ = 'Pong'
 	mime_type = mimetype.nti_mimetype_with_class( 'pong' )
@@ -299,7 +300,7 @@ class _ExistingOpenIdUserLoginLinkProvider(object):
 
 
 class _Handshake(dict):
-	interface.implements( nti_interfaces.IExternalObject )
+	interface.implements( ext_interfaces.IExternalObject )
 
 	__external_class_name__ = 'Handshake'
 	mime_type = mimetype.nti_mimetype_with_class( 'handshake' )

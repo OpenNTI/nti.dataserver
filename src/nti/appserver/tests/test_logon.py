@@ -4,9 +4,10 @@ from __future__ import print_function, unicode_literals
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
-from hamcrest import (assert_that, is_, none, not_none, ends_with, starts_with,
-					  has_entry, has_length, has_key, is_not, has_item,
-					  same_instance, none, greater_than_or_equal_to)
+from hamcrest import (assert_that, is_, none, not_none, ends_with, starts_with,)
+from hamcrest import  has_entry, has_length, has_key,  has_item
+from hamcrest import same_instance, greater_than_or_equal_to
+
 from hamcrest.library import has_property
 from nti.tests import provides
 from zope import component
@@ -20,8 +21,8 @@ from pyramid.threadlocal import get_current_request
 
 import pyramid.testing
 import pyramid.httpexceptions as hexc
-import persistent
-import UserList
+
+
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 #from nti.tests import provides
@@ -29,7 +30,7 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from zope import interface
 import nti.dataserver.interfaces as nti_interfaces
 
-from nti.dataserver import datastructures
+from nti.externalization.externalization import EXT_FORMAT_JSON, to_external_representation
 from nti.dataserver import users
 
 class DummyView(object):
@@ -53,7 +54,7 @@ class TestLogon(ConfiguringTestBase):
 		result = ping( get_current_request() )
 		assert_that( result, has_property( 'links', has_length( 1 ) ) )
 		assert_that( result.links[0].target, ends_with( '/dataserver2/handshake' ) )
-		datastructures.to_external_representation( result, datastructures.EXT_FORMAT_JSON, name='wsgi' )
+		to_external_representation( result, EXT_FORMAT_JSON, name='wsgi' )
 
 	def test_authenticated_ping(self):
 		"An authenticated ping returns two links, to the handshake and the root"

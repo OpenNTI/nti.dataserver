@@ -67,7 +67,7 @@
 
 	<subscriber factory="._socket_event_listeners._UserPresenceExternalDecoratorFactory"
 				for="nti.dataserver.interfaces.IUser"
-				provides="nti.dataserver.interfaces.IExternalObjectDecorator" />
+				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
 
 	<subscriber handler=".logon.add_new_user_to_static_communities" />
 

@@ -13,7 +13,9 @@ from nti.dataserver import datastructures
 
 
 from nti.externalization.externalization import toExternalObject, toExternalDictionary, isSyntheticKey
+from nti.externalization.datastructures import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
+import nti.externalization.interfaces as ext_interfaces
 
 from nti.dataserver import users
 from nti.dataserver import links
@@ -164,7 +166,7 @@ class LibraryCollectionDetailExternalizer(object):
 	"""
 	Externalizes a Library wrapped as a collection.
 	"""
-	interface.implements(model_interfaces.IExternalObject)
+	interface.implements(ext_interfaces.IExternalObject)
 	component.adapts(LibraryCollection)
 
 	# TODO: This doesn't do a good job of externalizing it,
@@ -229,7 +231,7 @@ class GlobalCollection(object):
 		return ()
 
 class CollectionSummaryExternalizer(object):
-	interface.implements(model_interfaces.IExternalObject)
+	interface.implements(ext_interfaces.IExternalObject)
 	component.adapts(app_interfaces.ICollection)
 
 	def __init__( self, collection ):
@@ -237,7 +239,7 @@ class CollectionSummaryExternalizer(object):
 
 	def toExternalObject( self ):
 		collection = self._collection
-		ext_collection = datastructures.LocatedExternalDict()
+		ext_collection = LocatedExternalDict()
 		ext_collection.__name__ = collection.__name__
 		ext_collection.__parent__ = collection.__parent__
 		ext_collection[StandardExternalFields.CLASS] = 'Collection'
@@ -267,7 +269,7 @@ class CollectionSummaryExternalizer(object):
 		return ext_collection
 
 class ContainerCollectionDetailExternalizer(object):
-	interface.implements(model_interfaces.IExternalObject)
+	interface.implements(ext_interfaces.IExternalObject)
 	component.adapts(app_interfaces.IContainerCollection)
 
 	def __init__(self, collection ):
@@ -370,15 +372,15 @@ class ContainerCollectionDetailExternalizer(object):
 
 
 class WorkspaceExternalizer(object):
-	interface.implements(model_interfaces.IExternalObject)
+	interface.implements(ext_interfaces.IExternalObject)
 	component.adapts(app_interfaces.IWorkspace)
 
 	def __init__( self, workspace ):
 		self._workspace = workspace
 
 	def toExternalObject( self ):
-		result = datastructures.LocatedExternalDict()
-		result[datastructures.StandardExternalFields.CLASS] = 'Workspace'
+		result = LocatedExternalDict()
+		result[StandardExternalFields.CLASS] = 'Workspace'
 		result['Title'] = self._workspace.name or getattr( self._workspace, '__name__', None )
 		_collections = [toExternalObject( collection, name='summary' )
 					   for collection
@@ -431,7 +433,7 @@ class ProviderEnumerationWorkspace(_ContainerWrapper):
 
 
 class _NTIIDEntry(object):
-	interface.implements(model_interfaces.IExternalObject,
+	interface.implements(ext_interfaces.IExternalObject,
 						 app_interfaces.ILocation)
 
 	# TODO: This list is defined again in dataserver_pyramid_views.py
@@ -446,7 +448,7 @@ class _NTIIDEntry(object):
 		self._ntiid = ntiid
 
 	def toExternalObject( self ):
-		result = datastructures.LocatedExternalDict()
+		result = LocatedExternalDict()
 		result[StandardExternalFields.LINKS] = []
 		result['ID'] = self._ntiid
 		result['href'] = traversal.normal_resource_path( self.__parent__ )
@@ -652,14 +654,14 @@ class UserService(object):
 		return result
 
 class ServiceExternalizer(object):
-	interface.implements(model_interfaces.IExternalObject)
+	interface.implements(ext_interfaces.IExternalObject)
 	component.adapts(app_interfaces.IService)
 
 	def __init__( self, service ):
 		self._service = service
 
 	def toExternalObject( self ):
-		result = datastructures.LocatedExternalDict()
-		result[datastructures.StandardExternalFields.CLASS] = 'Service'
+		result = LocatedExternalDict()
+		result[StandardExternalFields.CLASS] = 'Service'
 		result['Items'] = [toExternalObject(ws) for ws in self._service.workspaces]
 		return result
