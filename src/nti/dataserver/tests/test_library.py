@@ -1,15 +1,7 @@
 #!/usr/bin/env python2.7
+from hamcrest import (assert_that, is_)
 
-from hamcrest import (assert_that, is_, has_entry, instance_of,
-					  has_key, is_in, not_none, is_not, greater_than,
-					  same_instance)
 import unittest
-
-from nti.dataserver.datastructures import (getPersistentState, toExternalOID, toExternalObject,
-									   ExternalizableDictionaryMixin, CaseInsensitiveModDateTrackingOOBTree,
-									   LastModifiedCopyingUserList, PersistentExternalizableWeakList,
-									   ContainedStorage, ContainedMixin, CreatedModDateTrackingObject,
-									   to_external_representation, EXT_FORMAT_JSON, EXT_FORMAT_PLIST)
 
 import nti.dataserver.library
 

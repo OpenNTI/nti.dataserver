@@ -12,6 +12,7 @@ from nti.dataserver import mimetype
 from nti.dataserver import users
 from nti.dataserver import datastructures
 from nti.dataserver import links
+import nti.externalization.datastructures
 
 from persistent import Persistent
 import BTrees.OOBTree
@@ -137,7 +138,7 @@ def TranscriptSummaryAdapter(meeting_storage):
 		logger.exception( "Meeting object gone missing." )
 		return None
 
-class TranscriptSummary(datastructures.ExternalizableInstanceDict):
+class TranscriptSummary(nti.externalization.datastructures.ExternalizableInstanceDict):
 	"""
 	The transcript summary for a user in a room.
 	"""

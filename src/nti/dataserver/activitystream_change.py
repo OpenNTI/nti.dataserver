@@ -13,6 +13,10 @@ from zope import component
 from nti.dataserver import  datastructures
 from nti.dataserver import interfaces as nti_interfaces
 
+from nti.externalization.datastructures import LocatedExternalDict
+from nti.externalization.oids import toExternalOID
+from nti.externalization.externalization import toExternalObject
+
 class Change(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 	"""
 	A change notification. For convenience, it acts like a
@@ -74,7 +78,7 @@ class _ChangeExternalObject(object):
 		self.change = change
 
 	def toExternalObject(self):
-		result = {}
+		result = LocatedExternalDict()
 		change = self.change
 		result['Last Modified'] = change.lastModified
 		if change.creator:
@@ -84,9 +88,9 @@ class _ChangeExternalObject(object):
 		if change.id:
 			result['ID'] = change.id
 		# OIDs must be unique
-		result['OID'] = datastructures.toExternalOID( change )
+		result['OID'] = toExternalOID( change )
 		if result['OID'] is None:
 			del result['OID']
 		if change.object is not None:
-			result['Item'] = datastructures.toExternalObject( change.object, name=('summary' if change.useSummaryExternalObject else '') )
+			result['Item'] = toExternalObject( change.object, name=('summary' if change.useSummaryExternalObject else '') )
 		return result

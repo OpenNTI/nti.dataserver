@@ -1,22 +1,19 @@
 
-from hamcrest import (assert_that, is_, has_entry, instance_of, is_not, has_entry,
-					  has_key, is_in, not_none, is_not, greater_than, has_item, has_property,
+from hamcrest import (assert_that, is_, has_entry, is_not, has_entry,
+					  has_key,  is_not, has_item, has_property,
 					  same_instance, none, has_entries, only_contains)
-from hamcrest.core.base_matcher import BaseMatcher
+
+
 
 import unittest
 
 
-from nti.dataserver.datastructures import (getPersistentState, toExternalOID, fromExternalOID, toExternalObject,
-									   ExternalizableDictionaryMixin, CaseInsensitiveModDateTrackingOOBTree,
-									   LastModifiedCopyingUserList, PersistentExternalizableWeakList,
-									   ContainedStorage, ContainedMixin, CreatedModDateTrackingObject,
-									   to_external_representation, EXT_FORMAT_JSON, EXT_FORMAT_PLIST,
-									   PersistentExternalizableList, ExternalizableInstanceDict,
-									   to_external_ntiid_oid)
+
 from nti.dataserver import contenttypes
 from nti.dataserver.contenttypes import Highlight, Note, Canvas, CanvasShape, CanvasAffineTransform, CanvasCircleShape, CanvasPolygonShape, CanvasPathShape, CanvasUrlShape, CanvasTextShape
-import nti.dataserver as dataserver
+
+from nti.externalization.oids import to_external_ntiid_oid
+
 #import nti.dataserver.users
 
 import zope.schema.interfaces

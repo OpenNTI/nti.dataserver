@@ -8,6 +8,8 @@ from nti.dataserver.tests import provides
 
 from zope.component import eventtesting
 
+from nti.externalization.externalization import toExternalObject
+from nti.externalization.oids import to_external_ntiid_oid
 from nti.dataserver import datastructures
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.classes import SectionInfo, ClassInfo
@@ -91,7 +93,7 @@ class TestSection(mock_dataserver.ConfiguringTestBase):
 	@mock_dataserver.WithMockDS
 	def test_can_enroll_from_external_ds(self):
 		section = SectionInfo( ID='CS5201.101' )
-		section_ext = datastructures.toExternalObject(section)
+		section_ext = toExternalObject(section)
 		section_ext['Enrolled'] = ['jason.madden@nextthought.com']
 
 		self.ds.update_from_external_object( section, dict(section_ext) )
@@ -113,7 +115,7 @@ class TestSection(mock_dataserver.ConfiguringTestBase):
 		"If Enrolled is not sent, there is no change and no event."
 		section = SectionInfo( ID='CS5201.101' )
 		section.enroll( 'jason.madden@nextthought.com' )
-		section_ext = datastructures.toExternalObject(section)
+		section_ext = toExternalObject(section)
 		clearEvents()
 		del section_ext['Enrolled']
 
@@ -127,7 +129,7 @@ class TestSection(mock_dataserver.ConfiguringTestBase):
 		section = SectionInfo( ID='CS5201.101' )
 		section.enroll( 'jason.madden@nextthought.com' )
 		section.enroll( 'foo@bar' )
-		section_ext = datastructures.toExternalObject(section)
+		section_ext = toExternalObject(section)
 		clearEvents()
 
 		# One still there, one gone, one added
@@ -164,7 +166,7 @@ class TestClass(mock_dataserver.ConfiguringTestBase):
 		section = SectionInfo( ID='CS5201.501' )
 		clazz.add_section( section )
 
-		ext = datastructures.toExternalObject( clazz )
+		ext = toExternalObject( clazz )
 		assert_that( ext, has_entry( 'Sections', has_item( has_entry( 'ID', section.ID ) ) ) )
 
 	def _assert_add_section_to_class( self, clazz, section=None, object_evt_type=IObjectAddedEvent ):
@@ -209,8 +211,8 @@ class TestClass(mock_dataserver.ConfiguringTestBase):
 		clazz.Provider = 'NTI'
 		section = SectionInfo( ID='CS5201.101' )
 
-		clazz_ext = datastructures.toExternalObject( clazz )
-		section_ext = datastructures.toExternalObject( section )
+		clazz_ext = toExternalObject( clazz )
+		section_ext = toExternalObject( section )
 
 		clazz_ext['Sections'] = [section_ext]
 
@@ -224,8 +226,8 @@ class TestClass(mock_dataserver.ConfiguringTestBase):
 		clazz.Provider = 'NTI'
 		section = SectionInfo()
 
-		clazz_ext = datastructures.toExternalObject( clazz )
-		section_ext = datastructures.toExternalObject( section )
+		clazz_ext = toExternalObject( clazz )
+		section_ext = toExternalObject( section )
 
 		clazz_ext['Sections'] = [section_ext]
 
@@ -233,16 +235,16 @@ class TestClass(mock_dataserver.ConfiguringTestBase):
 		section.ID = 'CS5201.1'
 		assert_that( clazz['CS5201.1'], is_( section ) )
 		self._assert_add_section_to_class( clazz, clazz['CS5201.1'] )
-		datastructures.toExternalObject( clazz )
+		toExternalObject( clazz )
 
 		# Then again with a new one, preserving the first
 		clearEvents()
-		clazz_ext['Sections'].append( datastructures.toExternalObject( section ) )
+		clazz_ext['Sections'].append( toExternalObject( section ) )
 		clazz.updateFromExternalObject( clazz_ext )
 		section.ID = 'CS5201.2'
 		assert_that( clazz['CS5201.2'], is_( section ) )
 		self._assert_add_section_to_class( clazz, clazz['CS5201.2'] )
-		datastructures.toExternalObject( clazz )
+		toExternalObject( clazz )
 
 	@mock_dataserver.WithMockDS
 	def test_add_section_via_external_through_ds(self):
@@ -251,8 +253,8 @@ class TestClass(mock_dataserver.ConfiguringTestBase):
 		clazz.Provider = 'NTI'
 		section = SectionInfo()
 
-		clazz_ext = datastructures.toExternalObject( clazz )
-		section_ext = datastructures.toExternalObject( section )
+		clazz_ext = toExternalObject( clazz )
+		section_ext = toExternalObject( section )
 		assert_that( section_ext, is_not( has_key( 'ID' ) ) )
 		clazz_ext['Sections'] = [section_ext]
 		# The dictionary gets modified during this process
@@ -262,11 +264,11 @@ class TestClass(mock_dataserver.ConfiguringTestBase):
 		assert_that( clazz['CS5201.1'], is_( section ) )
 		assert_that( list(clazz.Sections), has_length( 1 ) )
 		self._assert_add_section_to_class( clazz, clazz['CS5201.1'] )
-		datastructures.toExternalObject( clazz )
+		toExternalObject( clazz )
 
 		# Then again with a new one, preserving the first
 		clearEvents()
-		clazz_ext['Sections'].append( datastructures.toExternalObject( section ) )
+		clazz_ext['Sections'].append( toExternalObject( section ) )
 		assert_that( clazz_ext['Sections'][0], is_not( has_key( 'ID' ) ) )
 		assert_that( clazz_ext['Sections'][1], has_key( 'ID' ) )
 
@@ -276,7 +278,7 @@ class TestClass(mock_dataserver.ConfiguringTestBase):
 		section.ID = 'CS5201.2'
 		assert_that( clazz['CS5201.2'], is_( section ) )
 		self._assert_add_section_to_class( clazz, clazz['CS5201.2'] )
-		datastructures.toExternalObject( clazz )
+		toExternalObject( clazz )
 
 	def test_update_section_in_place(self):
 		"Sending data for a section we already have updates existing section."
@@ -286,7 +288,7 @@ class TestClass(mock_dataserver.ConfiguringTestBase):
 
 		clearEvents()
 
-		clazz_ext = datastructures.toExternalObject( clazz )
+		clazz_ext = toExternalObject( clazz )
 		clazz_ext['Sections'][0]['Description'] = 'Cool section'
 
 		clazz.updateFromExternalObject( clazz_ext )
@@ -303,7 +305,7 @@ class TestClass(mock_dataserver.ConfiguringTestBase):
 
 		clearEvents()
 
-		clazz_ext = datastructures.toExternalObject( clazz )
+		clazz_ext = toExternalObject( clazz )
 		clazz_ext['Sections'][0]['Description'] = 'Cool section'
 
 		self.ds.update_from_external_object( clazz, dict( clazz_ext ) )
@@ -318,7 +320,7 @@ class TestClass(mock_dataserver.ConfiguringTestBase):
 		clazz.add_section( section )
 		clearEvents()
 
-		clazz_ext = datastructures.toExternalObject( clazz )
+		clazz_ext = toExternalObject( clazz )
 		del clazz_ext['Sections']
 
 		clazz.updateFromExternalObject( clazz_ext )
@@ -329,12 +331,11 @@ class TestClass(mock_dataserver.ConfiguringTestBase):
 	def test_class_with_ext_oid_id_ntiid(self):
 		"We workaround getting the external OID-based NTIID as our primary ID"
 		clazz = ClassInfo()
-		clazz.id = datastructures.to_external_ntiid_oid( clazz )
-		datastructures.toExternalObject( clazz )
+		clazz.id = to_external_ntiid_oid( clazz )
+		toExternalObject( clazz )
 
 	def test_section_events(self):
 		clazz = ClassInfo( ID='CS5201' )
 		section = SectionInfo( ID='CS5201.501' )
 		clazz.add_section( section )
 		self._assert_add_section_to_class( clazz, section )
-

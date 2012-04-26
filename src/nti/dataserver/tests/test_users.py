@@ -3,27 +3,23 @@
 from hamcrest import (assert_that, is_, has_entry, instance_of,
 					  is_in, not_none, is_not, greater_than_or_equal_to,
 					  has_value, has_property,
-					  same_instance, is_not, none, has_length, has_item,
+					  same_instance, is_not, none, has_length,
 					  contains)
 import unittest
 
-import UserDict
-import collections
 
 import persistent
-import json
-import plistlib
-from nti.dataserver.datastructures import (getPersistentState, toExternalOID, toExternalObject, to_external_ntiid_oid,
-									   ExternalizableDictionaryMixin, CaseInsensitiveModDateTrackingOOBTree,
-									   LastModifiedCopyingUserList, PersistentExternalizableWeakList,
-									   ContainedStorage, ContainedMixin, CreatedModDateTrackingObject,
-									   to_external_representation, EXT_FORMAT_JSON, EXT_FORMAT_PLIST)
 
-from ..users import User, FriendsList, Device, Community, _FriendsListMap as FriendsListContainer
-from ..interfaces import IFriendsList
-from ..contenttypes import Note
-from ..activitystream_change import Change
+from nti.externalization.oids import to_external_ntiid_oid
+
+from nti.dataserver.datastructures import (  ContainedMixin,  )
+from nti.dataserver.users import User, FriendsList, Device, Community, _FriendsListMap as FriendsListContainer
+from nti.dataserver.interfaces import IFriendsList
+from nti.dataserver.contenttypes import Note
+from nti.dataserver.activitystream_change import Change
 from . import provides
+
+from nti.externalization.persistence import getPersistentState
 
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
@@ -151,7 +147,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 				c_note.addSharingTarget( User.get_user( 'fab@bar', dataserver=mock_dataserver.current_mock_ds ),
 										 actor=user1 )
 				assert_that( c_note.getFlattenedSharingTargetNames(), is_( set(['fab@bar']) ) )
-				assert_that( datastructures.getPersistentState( c_note ), is_( persistent.CHANGED ) )
+				assert_that( getPersistentState( c_note ), is_( persistent.CHANGED ) )
 				lm = c_note.lastModified
 			del user1._postNotification
 			assert_that( user1.containers['c1'].lastModified, is_( greater_than_or_equal_to( lm ) ) )
@@ -183,7 +179,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 				c_note = user1.getContainedObject( note.containerId, note.id )
 				assert_that( c_note, is_( same_instance( user1._v_updateSet[0][0] ) ) )
 				user1.deleteContainedObject( c_note.containerId, c_note.id )
-				assert_that( datastructures.getPersistentState( c_note ), is_( persistent.CHANGED ) )
+				assert_that( getPersistentState( c_note ), is_( persistent.CHANGED ) )
 
 			del user1._postNotification
 

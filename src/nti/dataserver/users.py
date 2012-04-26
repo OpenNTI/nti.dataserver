@@ -22,6 +22,9 @@ import urllib
 from nti.ntiids import ntiids
 from nti.zodb import minmax
 
+from nti.externalization.persistence import PersistentExternalizableList, getPersistentState
+from nti.externalization.datastructures import ExternalizableDictionaryMixin
+
 from nti.dataserver import datastructures
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import enclosures
@@ -44,7 +47,7 @@ def _lower(s):
 	return s.lower() if s else s
 
 @functools.total_ordering
-class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject,datastructures.ExternalizableDictionaryMixin):
+class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject,ExternalizableDictionaryMixin):
 	"""
 	The root for things that represent human-like objects.
 	"""
@@ -363,7 +366,7 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 		""" Adding friends causes our creator to follow them. """
 		if friend is None: return
 		# TODO: Why is this a list?
-		if self._friends is None: self._friends = datastructures.PersistentExternalizableList()
+		if self._friends is None: self._friends = PersistentExternalizableList()
 		if isinstance( friend, FriendsList ):
 			# Recurse to generate the correct notifications
 			for other_friend in friend.friends:
@@ -454,7 +457,7 @@ deprecated( 'ShareableMixin', 'Prefer sharing.ShareableMixin' )
 @functools.total_ordering
 class Device(persistent.Persistent,
 			 datastructures.CreatedModDateTrackingObject,
-			 datastructures.ExternalizableDictionaryMixin):
+			 ExternalizableDictionaryMixin):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	interface.implements( nti_interfaces.IDevice )
 	__external_can_create__ = True
@@ -1018,7 +1021,7 @@ class User(Principal):
 				# The object could implement getPersistentState() itself to fix it?
 				# Or the updater could explicitly call updateLastMod() to force
 				# a change on the object itself.
-				updated = updated if datastructures.getPersistentState(updated) == persistent.CHANGED else None
+				updated = updated if getPersistentState(updated) == persistent.CHANGED else None
 				if updated:
 					if hasattr( updated, 'updateLastMod' ):
 						updated.updateLastMod( end_time )
