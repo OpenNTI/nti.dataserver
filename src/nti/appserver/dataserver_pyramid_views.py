@@ -17,6 +17,7 @@ import anyjson as json
 
 from zope import component
 from zope import interface
+from zope.mimetype.interfaces import IContentTypeAware
 
 import pyramid.security as sec
 import pyramid.httpexceptions as hexc
@@ -27,7 +28,10 @@ from zope.location.location import LocationProxy
 
 from nti.dataserver.interfaces import (IDataserver, ILibrary, ISimpleEnclosureContainer, IEnclosedContent)
 import nti.dataserver.interfaces as nti_interfaces
-from nti.dataserver import (users, datastructures)
+from nti.dataserver import users
+from nti.externalization.datastructures import isSyntheticKey
+from nti.externalization.externalization import toExternalObject
+from nti.externalization.datastructures import LocatedExternalDict
 from nti.externalization.oids import to_external_ntiid_oid as toExternalOID
 from nti.externalization.interfaces import StandardInternalFields, StandardExternalFields
 from nti.ntiids import ntiids
@@ -1058,7 +1062,7 @@ class _UGDPutView(_UGDModifyViewBase):
 			# they ever get.
 			# TODO: This should be handled by the renderer. Maybe we set
 			# a name that controls the component lookup?
-			theObject = datastructures.toExternalObject( theObject, 'personal-summary' )
+			theObject = toExternalObject( theObject, 'personal-summary' )
 			self._check_object_exists( theObject, creator, containerId, objId )
 
 		# Hack: See _UGDPostView
@@ -1244,7 +1248,7 @@ class _UserSearchView(object):
 			# if there are no other matches
 			uid_matches = []
 			for maybeMatch in _users.iterkeys():
-				if datastructures._isMagicKey( maybeMatch ): continue
+				if isSyntheticKey( maybeMatch ): continue
 
 				# TODO how expensive is it to actually look inside all these
 				# objects?  This almost certainly wakes them up?
@@ -1273,12 +1277,18 @@ class _UserSearchView(object):
 
 		# Since we are already looking in the object we might as well return the summary form
 		# For this reason, we are doing the externalization ourself.
-		result = [datastructures.toExternalObject( user, name=('personal-summary'
-															   if user == remote_user
-															   else 'summary') )
+		result = [toExternalObject( user, name=('personal-summary'
+												if user == remote_user
+												else 'summary') )
 				  for user in result]
 
-		return {'Last Modified': 0, 'Items': result}
+		# We have no good modification data for this list, due to changing Presence
+		# values of users, so it should not be cached, unfortunately
+		result = LocatedExternalDict( {'Last Modified': 0, 'Items': result} )
+		interface.alsoProvides( result, app_interfaces.IUncacheableInResponse )
+		interface.alsoProvides( result, IContentTypeAware )
+		result.mime_type = nti_mimetype_with_class( None )
+		return result
 
 def _method_not_allowed(request):
 	raise hexc.HTTPMethodNotAllowed()

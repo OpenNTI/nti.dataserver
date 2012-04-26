@@ -271,6 +271,9 @@ class TestApplication(ApplicationTestBase):
 		path = '/dataserver2/UserSearch/sjohnson@nextthought.com'
 		res = testapp.get( path, extra_environ=self._make_extra_environ())
 
+		assert_that( res.content_type, is_( 'application/vnd.nextthought+json' ) )
+		assert_that( res.cache_control, has_property( 'no_store', True ) )
+
 		assert_that( res.body, contains_string( str('sjohnson@nextthought.com') ) )
 		# We should have an edit link
 		body = json.loads( res.body )
