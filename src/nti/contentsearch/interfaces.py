@@ -1,7 +1,8 @@
 from zope import interface
 
 from zope.interface.common.mapping import IFullMapping
-from nti.dataserver import interfaces as nti_interfaces
+
+from nti.externalization import interfaces as ext_interfaces
 
 # -----------------------------
 
@@ -328,6 +329,6 @@ class IWordSnippetHighlight(IHighlightType):
 class INgramSnippetHighlight(IHighlightType):
 	pass
 
-class ISearchHit(nti_interfaces.IExternalObject):
+class ISearchHit(ext_interfaces.IExternalObject):
 	query = interface.Attribute("""query that produced this hit""")
 	pass

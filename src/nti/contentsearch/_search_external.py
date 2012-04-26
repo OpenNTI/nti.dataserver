@@ -5,6 +5,7 @@ from zope import interface
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.chatserver import interfaces as chat_interfaces
+from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.externalization import toExternalObject
 
 from nti.contentsearch import interfaces as search_interfaces
@@ -52,7 +53,7 @@ def NoSnippetHighlightDecoratorFactory(*args):
 	return NoSnippetHighlightDecorator()
 
 class NoSnippetHighlightDecorator(object):
-	interface.implements(nti_interfaces.IExternalObjectDecorator)
+	interface.implements(ext_interfaces.IExternalObjectDecorator)
 	component.adapts(search_interfaces.INoSnippetHighlight)
 
 	def decorateExternalObject(self, original, external):
@@ -62,7 +63,7 @@ def WordSnippetHighlightDecoratorFactory(*args):
 	return WordSnippetHighlightDecorator()
 	
 class WordSnippetHighlightDecorator(object):
-	interface.implements(nti_interfaces.IExternalObjectDecorator)
+	interface.implements(ext_interfaces.IExternalObjectDecorator)
 	component.adapts(search_interfaces.IWordSnippetHighlight)
 
 	def decorateExternalObject(self, original, external):
@@ -76,7 +77,7 @@ def NgramSnippetHighlightDecoratorFactory(*args):
 	return NgramSnippetHighlightDecorator()
 
 class NgramSnippetHighlightDecorator(object):
-	interface.implements(nti_interfaces.IExternalObjectDecorator)
+	interface.implements(ext_interfaces.IExternalObjectDecorator)
 	component.adapts(search_interfaces.INgramSnippetHighlight)
 
 	def decorateExternalObject(self, original, external):
