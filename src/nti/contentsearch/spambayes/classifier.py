@@ -80,11 +80,16 @@ class Classifier(object):
 	# allow a subclass to use a different class for WordInfo
 	WordInfoClass = WordInfo
 
-	def __init__(self, unknown_word_strength=0.45, unknown_word_prob=0.5, mapfactory=dict):
+	def __init__(self, unknown_word_strength=0.45, unknown_word_prob=0.5, 
+				 minimum_prob_strength=0.1, max_discriminators=150, use_bigrams=False, 
+				 mapfactory=dict):
 		self.nspam = self.nham = 0
 		self.wordinfo = mapfactory()
+		self.use_bigrams = use_bigrams
 		self._v_probcache = defaultdict(dict)
 		self.unknown_word_prob = unknown_word_prob
+		self.max_discriminators = max_discriminators
+		self.minimum_prob_strength = minimum_prob_strength
 		self.unknown_word_strength = unknown_word_strength
 			
 	@property
@@ -148,7 +153,7 @@ class Classifier(object):
 				H, e = frexp(H)
 				Hexp += e
 
-		# Compute the natural log of the product = sum of the logs:
+		# compute the natural log of the product = sum of the logs:
 		# ln(x * 2**i) = ln(x) + i * ln(2).
 		S = ln(S) + Sexp * LN2
 		H = ln(H) + Hexp * LN2
@@ -180,7 +185,7 @@ class Classifier(object):
 
 	spamprob = chi2_spamprob
 	
-	def learn(self, wordstream, is_spam, use_bigrams=False):
+	def learn(self, wordstream, is_spam):
 		"""
 		Teach the classifier by example.
 		
@@ -188,16 +193,16 @@ class Classifier(object):
 		True, you're telling the classifier this message is definitely spam,
 		else that it's definitely not spam.
 		"""
-		if use_bigrams:
+		if self.use_bigrams:
 			wordstream = self._enhance_wordstream(wordstream)
 		self._add_msg(wordstream, is_spam)
 
-	def unlearn(self, wordstream, is_spam, use_bigrams=False):
+	def unlearn(self, wordstream, is_spam):
 		"""
 		In case of pilot error, call unlearn ASAP after screwing up.
 		Pass the same arguments you passed to learn().
 		"""
-		if use_bigrams:
+		if self.use_bigrams:
 			wordstream = self._enhance_wordstream(wordstream)
 		self._remove_msg(wordstream, is_spam)
 	
@@ -235,8 +240,7 @@ class Classifier(object):
 		S = self.unknown_word_strength
 		StimesX = S * self.unknown_word_prob
 
-
-		# Now do Robinson's Bayesian adjustment.
+		# now do Robinson's Bayesian adjustment.
 		#
 		#		 s*x + n*p(w)
 		# f(w) = --------------
@@ -259,3 +263,216 @@ class Classifier(object):
 		self.probcache[spamcount][hamcount] = prob
 		
 		return prob
+
+	# note:  Graham's scheme had a strange asymmetry:  when a word appeared
+	# n>1 times in a single message, training added n to the word's hamcount
+	# or spamcount, but predicting scored words only once.  Tests showed
+	# that adding only 1 in training, or scoring more than once when
+	# predicting, hurt under the Graham scheme.
+	# This isn't so under Robinson's scheme, though:  results improve
+	# if training also counts a word only once.  The mean ham score decreases
+	# significantly and consistently, ham score variance decreases likewise,
+	# mean spam score decreases (but less than mean ham score, so the spread
+	# increases), and spam score variance increases.
+	# I (Tim) speculate that adding n times under the Graham scheme helped
+	# because it acted against the various ham biases, giving frequently
+	# repeated spam words (like "Viagra") a quick ramp-up in spamprob; else,
+	# adding only once in training, a word like that was simply ignored until
+	# it appeared in 5 distinct training spams.  Without the ham-favoring
+	# biases, though, and never ignoring words, counting n times introduces
+	# a subtle and unhelpful bias.
+	# There does appear to be some useful info in how many times a word
+	# appears in a msg, but distorting spamprob doesn't appear a correct way
+	# to exploit it.
+	def _add_msg(self, wordstream, is_spam):
+		self.probcache = {}    # nuke the prob cache
+		if is_spam:
+			self.nspam += 1
+		else:
+			self.nham += 1
+
+		for word in set(wordstream):
+			record = self._wordinfoget(word)
+			if record is None:
+				record = self.WordInfoClass()
+
+			if is_spam:
+				record.spamcount += 1
+			else:
+				record.hamcount += 1
+
+			self._wordinfoset(word, record)
+
+		self._post_training()
+	
+	def _remove_msg(self, wordstream, is_spam):
+		self.probcache = {}    # nuke the prob cache
+		if is_spam:
+			if self.nspam <= 0:
+				raise ValueError("spam count would go negative!")
+			self.nspam -= 1
+		else:
+			if self.nham <= 0:
+				raise ValueError("non-spam count would go negative!")
+			self.nham -= 1
+
+		for word in set(wordstream):
+			record = self._wordinfoget(word)
+			if record is not None:
+				if is_spam:
+					if record.spamcount > 0:
+						record.spamcount -= 1
+				else:
+					if record.hamcount > 0:
+						record.hamcount -= 1
+				if record.hamcount == 0 == record.spamcount:
+					self._wordinfodel(word)
+				else:
+					self._wordinfoset(word, record)
+
+		self._post_training()
+		
+	def _post_training(self):
+		"""
+		This is called after training on a wordstream.  Subclasses might
+		want to ensure that their databases are in a consistent state at
+		this point.  Introduced to fix bug #797890.
+		"""
+		pass
+
+	# return list of (prob, word, record) triples, sorted by increasing
+	# prob.  "word" is a token from wordstream; "prob" is its spamprob (a
+	# float in 0.0 through 1.0); and "record" is word's associated
+	# WordInfo record if word is in the training database, or None if it's
+	# not.  No more than max_discriminators items are returned, and have
+	# the strongest (farthest from 0.5) spamprobs of all tokens in wordstream.
+	# Tokens with spamprobs less than minimum_prob_strength away from 0.5
+	# aren't returned.
+	def _getclues(self, wordstream):
+		mindist = self.minimum_prob_strength
+		
+		if self.use_bigrams:
+			# this scheme mixes single tokens with pairs of adjacent tokens.
+			# wordstream is "tiled" into non-overlapping unigrams and
+			# bigrams.  Non-overlap is important to prevent a single original
+			# token from contributing to more than one spamprob returned
+			# (systematic correlation probably isn't a good thing).
+			
+			# First fill list raw with
+			#     (distance, prob, word, record), indices
+			# pairs, one for each unigram and bigram in wordstream.
+			# indices is a tuple containing the indices (0-based relative to
+			# the start of wordstream) of the tokens that went into word.
+			# indices is a 1-tuple for an original token, and a 2-tuple for
+			# a synthesized bigram token.  The indices are needed to detect
+			# overlap later.
+			raw = []
+			push = raw.append
+			last_token = pair = None
+			
+			# keep track of which tokens we've already seen.
+			# Don't use a set here!  This is an innermost loop, so speed is
+			# important here (direct dict fiddling is much quicker than
+			# invoking Python-level set methods; in Python 2.4 that will
+			# change).
+			seen = {pair: 1} # so the bigram token is skipped on 1st loop trip
+			for i, token in enumerate(wordstream):
+				if i:   # not the 1st loop trip, so there is a preceding token
+					# This string interpolation must match the one in
+					# _enhance_wordstream().
+					pair = "bi:%s %s" % (last_token, token)
+				last_token = token
+				for clue, indices in (token, (i,)), (pair, (i-1, i)):
+					if clue not in seen:    # as always, skip duplicates
+						seen[clue] = 1
+						tup = self._worddistanceget(clue)
+						if tup[0] >= mindist:
+							push((tup, indices))
+
+			# sort raw, strongest to weakest spamprob.
+			raw.sort()
+			raw.reverse()
+			
+			# fill clues with the strongest non-overlapping clues.
+			clues = []
+			push = clues.append
+			
+			# keep track of which indices have already contributed to a
+			# clue in clues.
+			seen = {}
+			for tup, indices in raw:
+				overlap = [i for i in indices if i in seen]
+				if not overlap: # no overlap with anything already in clues
+					for i in indices:
+						seen[i] = 1
+					push(tup)
+			# leave sorted from smallest to largest spamprob.
+			clues.reverse()
+		else:
+			# the all-unigram scheme just scores the tokens as-is.  A set()
+			# is used to weed out duplicates at high speed.
+			clues = []
+			push = clues.append
+			for word in set(wordstream):
+				tup = self._worddistanceget(word)
+				if tup[0] >= mindist:
+					push(tup)
+			clues.sort()
+			
+		if len(clues) > self.max_discriminator:
+			del clues[0 : -self.max_discriminators]
+		# return (prob, word, record).
+		return [t[1:] for t in clues]
+		
+	def _worddistanceget(self, word):
+		record = self._wordinfoget(word)
+		if record is None:
+			prob = self.unknown_word_prob
+		else:
+			prob = self.probability(record)
+		distance = abs(prob - 0.5)
+		return distance, prob, word, record
+	
+	def _wordinfoget(self, word):
+		return self.wordinfo.get(word)
+	
+	def _wordinfoset(self, word, record):
+		self.wordinfo[word] = record
+	
+	def _wordinfodel(self, word):
+		del self.wordinfo[word]
+
+	def _wordinfokeys(self):
+		return self.wordinfo.keys()
+	
+	def _enhance_wordstream(self, wordstream):
+		"""
+		Add bigrams to the wordstream.
+		
+		For example, a b c -> a b "a b" c "b c"
+		
+		Note that these are *token* bigrams, and not *word* bigrams - i.e.
+		'synthetic' tokens get bigram'ed, too.
+		
+		The bigram token is simply "bi:unigram1 unigram2" - a space should
+		be sufficient as a separator, since spaces aren't in any other
+		tokens, apart from 'synthetic' ones.  The "bi:" prefix is added
+		to avoid conflict with tokens we generate (like "subject: word",
+		which could be "word" in a subject, or a bigram of "subject:" and
+		"word").
+		
+		If the "Classifier":"use_bigrams" option is removed, this function
+		can be removed, too.
+		"""
+
+		last = None
+		for token in wordstream:
+			yield token
+			if last:
+				# This string interpolation must match the one in
+				# _getclues().
+				yield "bi:%s %s" % (last, token)
+			last = token
+	
+
+Bayes = Classifier
