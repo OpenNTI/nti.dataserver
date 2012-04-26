@@ -4,8 +4,8 @@ from zope import component
 from zope import interface
 
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.datastructures import toExternalOID
-from nti.dataserver.datastructures import fromExternalOID
+from nti.externalization.oids import toExternalOID
+from nti.externalization.oids import fromExternalOID
 
 from nti.contentsearch import interfaces
 from nti.contentsearch import QueryObject
