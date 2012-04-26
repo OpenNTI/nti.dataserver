@@ -11,10 +11,11 @@ from zope.generations.utility import findObjectsProviding
 
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.datastructures import toExternalOID
+from nti.dataserver.utils import run_with_dataserver
+from nti.externalization.oids import toExternalOID
 
+import nti.contentsearch
 from nti.contentsearch.common import get_type_name
-from nti.contentsearch.utils import run_with_dataserver
 from nti.contentsearch.interfaces import IRepozeDataStore
 from nti.contentsearch.common import indexable_type_names
 from nti.contentsearch._repoze_index import create_catalog
@@ -26,31 +27,33 @@ def main():
 
 	env_dir = os.path.expanduser(sys.argv[1])
 	username = sys.argv[2]
-	run_with_dataserver( environment_dir=env_dir, function=lambda: _reindex_user_content(username) )
+	run_with_dataserver( environment_dir=env_dir,
+						 xmlconfig_packages=(nti.contentsearch,),
+						 function=lambda: _reindex_user_content(username) )
 
 def _reindex_user_content( username ):
 	user = users.User.get_user( username )
 	if not user:
 		print( "user '%s' does not exists" % username, file=sys.stderr )
 		sys.exit( 2 )
-	
+
 	# get and register rds
 	lsm = component.getSiteManager()
 	conn = getattr( lsm, '_p_jar', None )
 	search_conn = conn.get_connection( 'Search' )
 	rds = search_conn.root()['repoze_datastore']
 	lsm.registerUtility( rds, provided=IRepozeDataStore )
-	
-	print ('Reindexing object(s) for user %s' % username)
-		
+
+	print('Reindexing object(s) for user', username)
+
 	# remove user catalogs
 	rds.remove_user(username)
-	
+
 	# recreate catalogs
 	for type_name in indexable_type_names:
 		catalog = create_catalog(type_name)
 		rds.add_catalog(username, catalog, type_name)
-		
+
 	counter = 0
 	for obj in findObjectsProviding( user, nti_interfaces.IModeledContent):
 		type_name = get_type_name(obj)
@@ -64,8 +67,8 @@ def _reindex_user_content( username ):
 			except POSKeyError:
 				# broken reference for object
 				pass
-	
-	print('%s object(s) for user %s were reindexed' % (counter, username))
-	
+
+	print( counter, 'object(s) for user', username, 'were reindexed')
+
 if __name__ == '__main__':
 	main()
