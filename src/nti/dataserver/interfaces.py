@@ -256,6 +256,7 @@ ACE_ACT_DENY = "Deny"
 ALL_PERMISSIONS = None
 ACE_DENY_ALL = None
 try:
+	from pyramid.interfaces import IAuthorizationPolicy
 	import pyramid.security as _psec
 	EVERYONE_USER_NAME = _psec.Everyone
 	AUTHENTICATED_GROUP_NAME = _psec.Authenticated
@@ -521,7 +522,7 @@ class IHighlight(IShareableModeledContent,IThreadable,IAnchoredRepresentation):
 		default="plain")
 
 
-class INote(IHighlight):
+class INote(IShareableModeledContent,IThreadable,IAnchoredRepresentation):
 	"""
 	A user-created note attached to other content.
 	"""

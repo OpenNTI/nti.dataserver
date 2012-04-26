@@ -15,7 +15,7 @@ import six
 import urlparse
 import base64
 
-from nti.externalization.interfaces import StandardExternalFields, StandardInternalFields
+from nti.externalization.interfaces import IExternalObject
 from nti.externalization.externalization import stripSyntheticKeysFromExternalDictionary, toExternalObject
 from nti.externalization.oids import to_external_ntiid_oid
 
@@ -23,12 +23,11 @@ from nti.dataserver import datastructures
 from nti.dataserver import mimetype
 from nti.dataserver import sharing
 from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver import users
 
 from zope import interface
 
 def _get_entity( username, dataserver=None ):
-	# importing globally is easily circular
-	from nti.dataserver import users
 	return users.Entity.get_entity( username, dataserver=dataserver )
 
 class ThreadableMixin(object):
@@ -111,7 +110,7 @@ class _UserContentRoot(sharing.ShareableMixin, datastructures.ContainedMixin, da
 
 	"""
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-	interface.implements(nti_interfaces.IModeledContent,nti_interfaces.IExternalObject)
+	interface.implements(nti_interfaces.IModeledContent,IExternalObject)
 
 	canUpdateSharingOnly = True
 	__external_can_create__ = True
@@ -173,30 +172,6 @@ class _UserContentRoot(sharing.ShareableMixin, datastructures.ContainedMixin, da
 		if hasattr( s, 'updateFromExternalObject' ):
 			# Notice we pass on the original dictionary
 			getattr( s, 'updateFromExternalObject' )(ext_parsed, *args, **kwargs )
-
-class _UserArbitraryDataContentRoot(_UserContentRoot, datastructures.IDItemMixin, datastructures.ModDateTrackingPersistentMapping):
-	""" This class is for legacy support. It allows
-	storing any data in this object, using it as a map."""
-
-	def __init__(self):
-		super(_UserArbitraryDataContentRoot,self).__init__()
-
-	def updateFromExternalObject( self, parsed, **kwargs ):
-		super( _UserArbitraryDataContentRoot, self ).updateFromExternalObject( parsed, **kwargs )
-		# The first time in, we need to allow container id (otherwise it may never get set)
-		if not self.containerId:
-			self.containerId = parsed.get( StandardExternalFields.CONTAINER_ID ) or parsed.get( StandardInternalFields.CONTAINER_ID )
-		parsed = datastructures.stripSyntheticKeysFromExternalDictionary( dict( parsed ) )
-		if self._is_update_sharing_only( parsed ):
-			return
-
-		self.clear()
-		self.update( parsed )
-
-	def __setitem__(self, key, value):
-		if key in self.__dict__:
-			return
-		super( _UserArbitraryDataContentRoot, self ).__setitem__( key, value )
 
 class Highlight(_UserContentRoot,datastructures.ExternalizableInstanceDict):
 	# See comments above about being IZContained. We add it here to minimize the impact

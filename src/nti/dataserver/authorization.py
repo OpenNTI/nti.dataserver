@@ -1,4 +1,5 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
+from __future__ import print_function, unicode_literals
 """
 Constants and classes relating to authorisation.
 
@@ -51,18 +52,23 @@ but persistent storage should be strings; conversion is handled by registering
 IPermission objects by name as utilities.
 
 """
+import functools
+
 import persistent
 from BTrees.OOBTree import OOSet
 
 from zope import interface
 from zope import annotation
 from zope import component
+from zope.security.permission import Permission
+import pyramid.security
 
 import nti.dataserver.interfaces as nti_interfaces
-from zope.security.permission import Permission
+from nti.dataserver import users
+
 
 __all__ = ('ACT_CREATE', 'ACT_DELETE', 'ACT_UPDATE', 'ACT_READ',
-		   'ROLE_ADMIN')
+		   'ROLE_ADMIN', 'effective_principals')
 
 # TODO: How does zope normally present these? Side effects of import are Bad
 if not '__str__' in Permission.__dict__:
@@ -82,6 +88,51 @@ ACT_READ   = Permission('zope.View')
 # Groups that are expected to have certain rights
 # in certain areas
 ROLE_ADMIN = 'role:nti.admin'
+
+def effective_principals( username,
+						  registry=component,
+						  authenticated=True,
+						  user_factory=users.User.get_user):
+	"""
+	Find and return the principals for the given username. This will include
+	the username itself (obviously), plus a principal for Everyone, plus
+	any groups the user is in (as found with :class:`nti_interfaces.IGroupMember`)
+
+	:param username: Either a string giving a username to be looked up,
+		or a user object having the ``username`` attribute.
+	:param registry: The component registry to query. Defaults to the global
+		registry.
+	:param bool authenticated: If True (the default) assume this user is properly
+		authenticated, and add the pseudo-group for authenticated people as a
+		principal.
+	:return: An iterable (set) of :class:`nti_interfaces.IPrincipal` objects.
+	"""
+
+	if not username:
+		return ()
+
+	user = username if hasattr(username,'username') else user_factory( username )
+	username = user.username if hasattr(user, 'username') else username # canonicalize
+
+	result = set()
+	# Query all the available groups for this user
+	for _, adapter in registry.getAdapters( (user,),
+											nti_interfaces.IGroupMember ):
+		result.update( adapter.groups )
+	# These last three will be duplicates of string-only versions
+	# Ensure that the user is in there as a IPrincipal
+	result.update( (nti_interfaces.IPrincipal(username),) )
+	# Add the authenticated and everyone groups
+	result.add( nti_interfaces.IPrincipal( pyramid.security.Everyone ) )
+	if authenticated:
+		result.add( nti_interfaces.IPrincipal( pyramid.security.Authenticated ) )
+	if '@' in username:
+		# Make the domain portion of the username available as a group
+		# TODO: Prefix this, like we do with roles?
+		domain = username.split( '@', 1 )[-1]
+		result.add( domain )
+		result.add( nti_interfaces.IPrincipal( domain ) )
+	return result
 
 class _PersistentGroupMember(persistent.Persistent):
 	"""
@@ -105,14 +156,18 @@ def _persistent_group_member_factory( obj ):
 	return annotation.factory(_PersistentGroupMember)(obj)
 
 # Note that principals should be comparable based solely on their ID.
-
+@functools.total_ordering
 class _AbstractPrincipal(object):
 	id = ''
 	def __eq__(self,other):
 		return nti_interfaces.IPrincipal.providedBy(other) \
 			and self.id == getattr(other, 'id', None)
+	def __lt__(self,other):
+		return self.id < other.id
 	def __hash__(self):
 		return hash(self.id)
+	def __str__(self):
+		return self.id
 	def __repr__(self):
 		return "%s('%s')" % (self.__class__.__name__, unicode(self.id).encode('unicode_escape'))
 

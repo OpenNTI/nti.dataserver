@@ -1,14 +1,17 @@
 #!/usr/bin/env python2.7
+from __future__ import print_function, unicode_literals
 #pylint: disable=R0904
 
 import unittest
-from hamcrest import assert_that, has_length, contains_string, is_, same_instance, is_not
+from hamcrest import assert_that, has_length,  is_
+from hamcrest import has_property
+from hamcrest import contains_string
 from hamcrest.core.base_matcher import BaseMatcher
 import tempfile
 import shutil
 import os
 
-from nti.dataserver.tests import has_attr, provides
+from nti.dataserver.tests import  provides
 from zope.interface.verify import verifyObject
 from zope import component
 
@@ -242,6 +245,30 @@ class TestACE(mock_dataserver.ConfiguringTestBase):
 		from_file = auth_acl.acl_from_file( temp_file )
 		assert_that( from_file, is_( acl ) )
 
+class TestHasPermission(mock_dataserver.ConfiguringTestBase):
+
+	def setUp(self):
+		super(TestHasPermission,self).setUp()
+		n = Note()
+		n.creator = 'sjohnson@nextthought.com'
+		self.note = n
+
+	def test_without_policy(self):
+		result = auth_acl.has_permission( auth.ACT_CREATE, self.note, "sjohnson@nextthought.com" )
+		assert_that( bool(result), is_( False ) )
+		assert_that( result, has_property( 'msg', 'No IAuthorizationPolicy installed' ) )
+
+	def test_no_acl(self):
+		result = auth_acl.has_permission( auth.ACT_CREATE, "no acl", "sjohnson@nextthought.com" )
+		assert_that( bool(result), is_( False ) )
+		assert_that( result, has_property( 'msg', 'No ACL found' ) )
+
+	def test_creator_allowed(self):
+		component.provideUtility( ACLAuthorizationPolicy() )
+		result = auth_acl.has_permission( auth.ACT_CREATE, self.note, "sjohnson@nextthought.com", user_factory=lambda s: s )
+		assert_that( bool(result), is_( True ) )
+		assert_that( result, has_property( 'msg', contains_string('ACLAllowed' ) ) )
+
 
 class TestLibraryEntryAclProvider(mock_dataserver.ConfiguringTestBase):
 
@@ -249,6 +276,8 @@ class TestLibraryEntryAclProvider(mock_dataserver.ConfiguringTestBase):
 		super(TestLibraryEntryAclProvider,self).setUp()
 		self.temp_dir = tempfile.mkdtemp()
 		self.library_entry = LibraryEntry( localPath=self.temp_dir )
+
+		component.provideUtility( ACLAuthorizationPolicy() )
 
 	def tearDown(self):
 		shutil.rmtree( self.temp_dir )
@@ -273,6 +302,16 @@ class TestLibraryEntryAclProvider(mock_dataserver.ConfiguringTestBase):
 		acl_prov = nti_interfaces.IACLProvider( self.library_entry )
 		assert_that( acl_prov, permits( "User", auth.ACT_CREATE ) )
 		assert_that( acl_prov, denies( "OtherUser", auth.ACT_CREATE ) )
+
+		assert_that( bool(auth_acl.has_permission(auth.ACT_CREATE, self.library_entry, "User", user_factory=lambda s: s)),
+					 is_( True ) )
+		assert_that( bool(auth_acl.has_permission(auth.ACT_CREATE, self.library_entry, "OtherUser", user_factory=lambda s: s)),
+					 is_( False ) )
+
+		assert_that( bool(auth_acl.has_permission(auth.ACT_CREATE, acl_prov, "User", user_factory=lambda s: s)),
+					 is_( True ) )
+		assert_that( bool(auth_acl.has_permission(auth.ACT_CREATE, acl_prov, "OtherUser", user_factory=lambda s: s)),
+					 is_( False ) )
 
 class Permits(BaseMatcher):
 
