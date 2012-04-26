@@ -13,10 +13,14 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import users
 from nti.dataserver import links
 
+from nti.externalization.interfaces import IExternalObject
+from nti.externalization.externalization import toExternalObject
+from nti.externalization.oids import to_external_ntiid_oid
+
 
 class _EntitySummaryExternalObject(object):
 	component.adapts( nti_interfaces.IEntity )
-	interface.implements( nti_interfaces.IExternalObject )
+	interface.implements( IExternalObject )
 
 	def __init__( self, entity ):
 		self.entity = entity
@@ -65,9 +69,9 @@ class _FriendsListExternalObject(_EntityExternalObject):
 		for friend in iter(self.entity): #iter self to weak refs and dups
 			if isinstance( friend, users.Entity ):
 				if friend == self.entity.creator:
-					friend = datastructures.toExternalObject( friend, name='personal-summary' )
+					friend = toExternalObject( friend, name='personal-summary' )
 				else:
-					friend = datastructures.toExternalObject( friend, name='summary' )
+					friend = toExternalObject( friend, name='summary' )
 				theFriends.append( friend )
 
 		extDict['friends'] = theFriends
@@ -124,7 +128,7 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 					# after things finish running, notably nose's logcapture.
 					e = None
 
-				result.append( datastructures.toExternalObject( e, name='summary' ) if e else name )
+				result.append( toExternalObject( e, name='summary' ) if e else name )
 
 			return result
 
@@ -136,7 +140,7 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 		# as is ignoring and accepting
 		extDict['ignoring'] = ext(self.entity.ignoring_shared_data_from)
 		extDict['accepting'] = ext(self.entity.accepting_shared_data_from)
-		extDict['Links'] = [ links.Link( datastructures.to_external_ntiid_oid( self.entity ), rel='edit' ) ]
+		extDict['Links'] = [ links.Link( to_external_ntiid_oid( self.entity ), rel='edit' ) ]
 		extDict['Last Modified'] = getattr( self.entity, 'lastModified', 0 )
 		return extDict
 

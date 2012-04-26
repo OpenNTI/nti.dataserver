@@ -1,14 +1,15 @@
 #!/usr/bin/env python2.7
 
-import unittest
+
 
 from hamcrest import assert_that, equal_to, is_, none, not_none, has_property, not_none
 import mock_dataserver
 
-import nti.dataserver.users as users
+
 from nti.ntiids import ntiids
 import nti.dataserver.contenttypes as contenttypes
-from nti.dataserver.datastructures import toExternalOID, to_external_ntiid_oid
+
+from nti.externalization.oids import to_external_ntiid_oid, toExternalOID
 import nti.dataserver.interfaces as nti_interfaces
 from nti.dataserver._Dataserver import run_job_in_site
 

@@ -15,8 +15,11 @@ import six
 import urlparse
 import base64
 
+from nti.externalization.interfaces import StandardExternalFields, StandardInternalFields
+from nti.externalization.externalization import stripSyntheticKeysFromExternalDictionary, toExternalObject
+from nti.externalization.oids import to_external_ntiid_oid
+
 from nti.dataserver import datastructures
-from nti.dataserver.datastructures import StandardExternalFields, StandardInternalFields
 from nti.dataserver import mimetype
 from nti.dataserver import sharing
 from nti.dataserver import interfaces as nti_interfaces
@@ -75,11 +78,11 @@ class ThreadableExternalizableMixin(ThreadableMixin):
 		assert isinstance( extDict, collections.Mapping )
 		inReplyTo = self.inReplyTo
 		if inReplyTo is not None:
-			extDict['inReplyTo'] = datastructures.to_external_ntiid_oid( inReplyTo )
+			extDict['inReplyTo'] = to_external_ntiid_oid( inReplyTo )
 
 		extRefs = [] # Order matters
 		for ref in self.references:
-			extRefs.append( datastructures.to_external_ntiid_oid( ref ) )
+			extRefs.append( to_external_ntiid_oid( ref ) )
 		if extRefs:
 			extDict['references'] = extRefs
 		return extDict
@@ -121,7 +124,7 @@ class _UserContentRoot(sharing.ShareableMixin, datastructures.ContainedMixin, da
 		# TODO: Should we do the same resolution and wrapping that
 		# friends lists do? That would be difficult here
 		# Be triply sure this is a unique set.
-		sharedWith = list( set( datastructures.toExternalObject( self.getFlattenedSharingTargetNames() ) ) )
+		sharedWith = list( set( toExternalObject( self.getFlattenedSharingTargetNames() ) ) )
 		if sharedWith:
 			extDict['sharedWith'] = sharedWith
 		return extDict
@@ -134,7 +137,7 @@ class _UserContentRoot(sharing.ShareableMixin, datastructures.ContainedMixin, da
 		"""
 		# TODO: I don't like this. It requires all subclasses
 		# to be complicit
-		parsed = datastructures.stripSyntheticKeysFromExternalDictionary( dict( parsed ) )
+		parsed = stripSyntheticKeysFromExternalDictionary( dict( parsed ) )
 		return len(parsed) == 0 and self.canUpdateSharingOnly and self._p_jar
 
 	def updateFromExternalObject( self, ext_parsed, *args, **kwargs ):
@@ -163,7 +166,7 @@ class _UserContentRoot(sharing.ShareableMixin, datastructures.ContainedMixin, da
 			# object already. If we're not saved already, we cannot
 			# be created with just this
 			pass
-		elif len(datastructures.stripSyntheticKeysFromExternalDictionary( dict( parsed ) )) == 0:
+		elif len(stripSyntheticKeysFromExternalDictionary( dict( parsed ) )) == 0:
 			raise ValueError( "Updating non-saved object: The body must have some data, cannot be empty" )
 
 		s = super(_UserContentRoot,self)

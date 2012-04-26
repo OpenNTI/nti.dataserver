@@ -89,9 +89,8 @@ class IEnvironmentSettings(interface.Interface):
 	pass
 
 from nti.externalization.interfaces import IExternalObject, IExternalObjectDecorator
-if False:
-	deprecated( "IExternalObject", "Use nti.externalization" )
-	deprecated( "IExternalObjectDecorator", "Use nti.externalization" )
+deprecated( "IExternalObject", "Use nti.externalization" )
+deprecated( "IExternalObjectDecorator", "Use nti.externalization" )
 
 class ILibraryTOCEntry(IZContained):
 	href = interface.Attribute( "Relative local path to this item" )
