@@ -1,5 +1,8 @@
 import math
 
+from nti.contentsearch.spambayes import default_hist_nbuckets
+from nti.contentsearch.spambayes import default_hist_percentiles
+
 class Hist(object):
 	"""
 	Simple histograms of float values.
@@ -9,7 +12,7 @@ class Hist(object):
 	# and max values seen.
 	# Note:  nbuckets can be passed for backward compatibility.  The
 	# display() method can be passed a different nbuckets value.
-	def __init__(self, nbuckets=200, lo=0.0, hi=100.0, percentiles= (5, 25, 75, 95)):
+	def __init__(self, nbuckets=default_hist_nbuckets, lo=0.0, hi=100.0, percentiles=default_hist_percentiles):
 		self.data = []  # the raw data points
 		self.lo, self.hi = lo, hi
 		self.nbuckets = nbuckets
