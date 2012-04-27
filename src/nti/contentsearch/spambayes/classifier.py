@@ -35,19 +35,10 @@ from __future__ import generators
 #
 # This implementation is due to Tim Peters et alia.
 
-import re
-import math
 from collections import defaultdict
 
+from nti.contentsearch.spambayes import LN2
 from nti.contentsearch.spambayes.chi2 import chi2Q
-
-# ---------------------------------
-
-DOMAIN_AND_PORT_RE = re.compile(r"([^:/\\]+)(:([\d]+))?")
-HTTP_ERROR_RE = re.compile(r"HTTP Error ([\d]+)")
-URL_KEY_RE = re.compile(r"[\W]")
-
-LN2 = math.log(2)       # used frequently by chi-combining
 
 # ---------------------------------
 
