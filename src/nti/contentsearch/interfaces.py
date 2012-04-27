@@ -16,6 +16,11 @@ class IRepozeDataStore(IFullMapping):
 
 # -----------------------------
 
+class ICloudSearchStore(interface.Interface):
+	pass
+
+# -----------------------------
+
 class ISearcher(interface.Interface):
 	
 	def search(query, *args, **kwargs):
