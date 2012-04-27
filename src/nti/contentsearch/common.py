@@ -74,6 +74,7 @@ title_			= u'title'
 ngrams_			= u'ngrams'
 channel_		= u'channel'
 section_		= u'section'
+username_		= u'username'
 creator_		= unicode(ext_interfaces.StandardInternalFields.CREATOR)
 related_		= u'related'
 content_		= u'content'
