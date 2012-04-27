@@ -1,2 +1,0 @@
-Someone here told me that you need to not delete your SPAM folder as the software needs it to know what is "spam". Is this correct? This would seem to be a flaw as this file will build up dramatically over time and be impossible to manage. 
-Please advise. Can I empty my SPAM folder - or not?
