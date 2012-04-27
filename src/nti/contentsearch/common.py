@@ -64,6 +64,7 @@ id_				= unicode(ext_interfaces.StandardInternalFields.ID)
 oid_			= u'oid'
 body_ 			= u'body'
 text_			= u'text'
+type_			= u'type'
 tags_			= u'tags'
 quick_			= u'quick'
 title_			= u'title'
@@ -97,8 +98,10 @@ last_modified_fields =  [LAST_MODIFIED, ext_interfaces.StandardInternalFields.LA
 
 nti_mimetype_prefix = 'application/vnd.nextthought.'
 
-messageinfo = 'messageinfo'
-indexable_type_names = ('note', 'highlight', messageinfo)
+note_ = u'note'
+highlight_ = u'highlight'
+messageinfo = u'messageinfo'
+indexable_type_names = (note_, highlight_, messageinfo)
 
 WORD_HIGHLIGHT  = "WordHighlight"
 NGRAM_HIGHLIGHT = "NGRAMHighlight"
