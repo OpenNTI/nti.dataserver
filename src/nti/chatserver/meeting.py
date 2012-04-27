@@ -135,6 +135,9 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 		# We have to restore it when the object comes alive.
 		# This is tightly coupled with the implementation of
 		# _becameModerated/_becameUnmoderated
+		# FIXME: We must stop the swizzling. cPersistence.c gives an indication
+		# that assigning to __class__ should not even be allowed so that will
+		# probably break completely in the future.
 		if state.get( '_moderated' ) and self.__class__ == _Meeting:
 			self.__class__ = _ModeratedMeeting
 
@@ -145,6 +148,10 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 				self.__class__ = _Meeting
 
 	def __getattribute__( self, name ):
+		# Note that the first thing we're doing is calling super,
+		# and there are no other __getattribute__ implementations between us and
+		# Persistent. If that ever changes, then we must start calling
+		# _p_getattr() as the first action.
 		result = super(_Meeting,self).__getattribute__( name )
 		# Unghost to guarantee we're the right class. We force this
 		# if a class attribute that's important to moderation is accessed first,
