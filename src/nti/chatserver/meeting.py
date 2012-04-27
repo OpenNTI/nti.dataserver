@@ -61,142 +61,70 @@ def _discard( s, k ):
 			s.remove( k ) # OOSet, list
 		except (KeyError,ValueError): pass
 
-class _Meeting(contenttypes.ThreadableExternalizableMixin,
-				Persistent,
-				datastructures.ExternalizableInstanceDict):
-	"""Class to handle distributing messages to clients. """
+class _ModeratedMeetingState(Persistent):
+
+	def __init__( self ):
+		self._moderated_by_names = BTrees.OOBTree.Set()
+		self._shadowed_usernames = BTrees.OOBTree.Set()
+		# A BTree isn't necessarily the most efficient way
+		# to implement the moderation queue, but it does work.
+		# We will typically have many writers and one reader--
+		# but that reader, the moderator, is also writing.
+		self._moderation_queue = BTrees.OOBTree.OOBTree()
+
+
+	@property
+	def moderated_by_usernames( self ):
+		return frozenset( self._moderated_by_names )
+
+	Moderators = moderated_by_usernames
+
+	def shadowUser( self, username ):
+		"""
+		Causes all messages on non-default channels
+		from or to this sender to be posted to all
+		the moderators as well.
+		"""
+		self._shadowed_usernames.add( username )
+		return True
+
+	@property
+	def shadowed_usernames(self):
+		return frozenset( self._shadowed_usernames )
+
+	def add_moderator( self, mod_name ):
+		self._moderated_by_names.add( mod_name )
+
+	def is_moderated_by( self, mod_name ):
+		return mod_name in self._moderated_by_names
+
+	def hold_message_for_moderation(self, msg_info ):
+		self._moderation_queue[msg_info.MessageId] = msg_info
+		msg_info.Status = STATUS_PENDING
+
+	def approve_message( self, msg_id ):
+		# TODO: Disapprove messages? This queue could get terrifically
+		# large.
+		msg = self._moderation_queue.pop( msg_id, None )
+		if msg:
+			msg.Status = STATUS_POSTED
+		return msg
+
+
+class _MeetingMessagePostPolicy(object):
+	"""Class that actually emits the messages"""
 
 	__metaclass__ = _ChatObjectMeta
 	__emits__ = ('recvMessage', 'enteredRoom', 'exitedRoom',
 				 'roomMembershipChanged', 'roomModerationChanged' )
-	_prefer_oid_ = False
-
-	Active = True
-	creator = None
-
-	_v_chatserver = None
-	_moderated = False
-	_occupant_names = ()
-	def __init__( self, chatserver=None ):
-		super(_Meeting,self).__init__()
-		self._v_chatserver = chatserver
-		self.id = None
-		self.containerId = None
-		self._MessageCount = MergingCounter( 0 )
-		self.CreatedTime = time.time()
-		self._occupant_names = BTrees.OOBTree.Set()
-		# Sometimes a room is created with a subset of the occupants that
-		# should receive transcripts. The most notable case of this is
-		# creating a room in reply to something that's shared: everyone
-		# that it is shared with should get the transcript even if they
-		# didn't participate in the room because they were offline.
-		# TODO: How does this interact with things that are
-		# shared publically and not specific users?
-		self._addl_transcripts_to = BTrees.OOBTree.Set()
 
 
-	def _get_chatserver(self):
-		return self._v_chatserver or component.queryUtility( interfaces.IChatserver )
-	def _set_chatserver( self, cs ):
-		self._v_chatserver = cs
-	_chatserver = property(_get_chatserver, _set_chatserver )
-
-	@property
-	def MessageCount(self):
-		# Can only set this directly, setting as a property
-		# leads to false conflicts
-		return self._MessageCount.value
-
-	def __setstate__( self, state ):
-		# Migration 2012-04-03. Easier than searching these all out
-		if 'MessageCount' in state:
-			state = dict(state)
-			state['_MessageCount'] = MergingCounter( state['MessageCount'] )
-			del state['MessageCount']
-		if '_chatserver' in state:
-			state = dict(state)
-			del state['_chatserver']
-
-		# Migration 2012-04-19
-		if '_occupant_session_ids' in state:
-			state = dict(state)
-			del state['_occupant_session_ids']
-
-		# Missed part of that migration
-		if '_occupant_names' not in state:
-			state = dict(state)
-			state['_occupant_names'] = BTrees.OOBTree.Set()
-
-		super(_Meeting,self).__setstate__( state )
-		# Because we are swizzling classes dynamically at
-		# runtime, that fact may not be persisted in the database.
-		# We have to restore it when the object comes alive.
-		# This is tightly coupled with the implementation of
-		# _becameModerated/_becameUnmoderated
-		# FIXME: We must stop the swizzling. cPersistence.c gives an indication
-		# that assigning to __class__ should not even be allowed so that will
-		# probably break completely in the future.
-		if state.get( '_moderated' ) and self.__class__ == _Meeting:
-			self.__class__ = _ModeratedMeeting
-
-			if not '_moderated_by_names' in state:
-				# Belt and suspenders
-				logger.warn( "Inconsistent state of meeting %s", state )
-				self._moderated = False
-				self.__class__ = _Meeting
-
-	def __getattribute__( self, name ):
-		# Note that the first thing we're doing is calling super,
-		# and there are no other __getattribute__ implementations between us and
-		# Persistent. If that ever changes, then we must start calling
-		# _p_getattr() as the first action.
-		result = super(_Meeting,self).__getattribute__( name )
-		# Unghost to guarantee we're the right class. We force this
-		# if a class attribute that's important to moderation is accessed first,
-		# before an instance var that would normally trigger this
-		if name == 'post_message' and result and super(_Meeting,self).__getattribute__('_p_state') == persistent.GHOST:
-			self._p_activate()
-			result = super(_Meeting,self).__getattribute__('post_message')
-		return result
-
-
-	@property
-	def RoomId(self):
-		return self.id
-	@property
-	def ID(self):
-		return self.id
-
-	def _becameModerated(self): pass
-	def _becomeUnmoderated(self): pass
-
-	def _Moderated( self ):
-		return self._moderated
-
-	def _setModerated( self, flag ):
-		if flag != self._moderated:
-			self._moderated = flag
-			if self._moderated:
-				# become moderated.
-				self.__class__ = _ModeratedMeeting
-				self._becameModerated()
-			else:
-				# become unmoderated.
-				self._becomeUnmoderated()
-				self.__class__ = _Meeting
-			self.emit_roomModerationChanged( self._occupant_names, self )
-
-	Moderated = property( _Moderated, _setModerated )
-	Moderators = ()
-
-	@property
-	def occupant_session_names(self):
-		"""
-		:return: An iterable of the names of all active users in this room.
-			See :meth:`occupant_sessions`.
-		"""
-		return frozenset(self._occupant_names)
-	occupant_names = occupant_session_names
+	def __init__( self, chatserver, room_id=None, occupant_names=(), transcripts_to=(), p_jar=None ):
+		self._room_id = room_id
+		self._chatserver = chatserver
+		self._occupant_names = occupant_names
+		self._addl_transcripts_to = transcripts_to
+		self._p_jar = p_jar
 
 	def _ensure_message_stored( self, msg_info ):
 		"""
@@ -244,16 +172,22 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 		return (msg_info.channel or CHANNEL_DEFAULT) in (CHANNEL_DEFAULT, CHANNEL_WHISPER)
 
 	def post_message( self, msg_info ):
+		"""
+		:return: A value that can be interpreted as a boolean, indicating success of posting
+			the message. If the value is a number and not a bool object, then it is the
+			number by which the general message count of the room should be incremented (currently only one).
+		"""
 		if not self._is_message_on_supported_channel( msg_info ):
 			logger.debug( "Dropping message on unsupported channel %s", msg_info )
 			return False
+		result = True
 		# TODO: How to handle messages from senders that do not occupy this room?
 		# In the ordinary case, would we want to drop them?
 		# It becomes complicated in the moderated case where there may
 		# be a delay involved.
 		msg_info.Status = STATUS_POSTED
 		# Ensure it's this room, thank you.
-		msg_info.containerId = self.ID
+		msg_info.containerId = self._room_id
 		# Ensure there's an OID
 		self._ensure_message_stored( msg_info )
 
@@ -267,7 +201,7 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 		if self._is_message_to_all_occupants( msg_info, recipient_names=recipient_names ):
 			# recipients are ignored for the default channel,
 			# and a message to everyone also counts for incrementing the ids.
-			self._MessageCount.increment()
+			result = 1
 			self.emit_recvMessage( recipient_names, msg_info )
 		else:
 			# On a non-default channel, and not to everyone in the room
@@ -280,7 +214,326 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 		# is considered to be on the sharing list
 		msg_info.sharedWith = set(recipient_names)
 		msg_info.sharedWith = msg_info.sharedWith | transcript_owners
+		return result
+
+def _bypass_for_moderator( f ):
+	@functools.wraps(f)
+	def bypassing( self, msg_info ):
+		if self.is_moderated_by( msg_info.Sender ):
+			super(_ModeratedMeeting,self).post_message( msg_info )
+			return True
+		return f( self, msg_info )
+	return bypassing
+
+def _only_for_moderator( f ):
+	@functools.wraps(f)
+	def enforcing( self, msg_info ):
+		if not self.is_moderated_by( msg_info.Sender ):
+			return False
+		return f( self, msg_info )
+	return enforcing
+
+class _ModeratedMeetingMessagePostPolicy(_MeetingMessagePostPolicy):
+	"""A chat room that moderates messages."""
+
+	__metaclass__ = _ChatObjectMeta
+	__emits__ = ('recvMessageForModeration', 'recvMessageForShadow')
+
+
+	def __init__( self, *args, **kwargs ):
+		self.moderation_state = kwargs.pop('moderation_state')
+		super(_ModeratedMeetingMessagePostPolicy, self).__init__( *args, **kwargs )
+
+	@property
+	def moderated_by_usernames( self ):
+		return self.moderation_state.moderated_by_usernames
+
+	Moderators = moderated_by_usernames
+
+	def shadowUser( self, username ):
+		return self.moderation_state.shadowUser( username )
+
+	@property
+	def shadowed_usernames(self):
+		return self.moderation_state.shadowed_usernames
+
+	def _names_excluded_when_considering_all( self ):
+		"""
+		For purposes of calculating if a message is to everyone,
+		we ignore the moderators. This prevents whispering to the entire
+		room, minus the teachers.
+		"""
+		return self.moderated_by_usernames
+
+	def _is_message_on_supported_channel( self, msg_info ):
+		return (msg_info.channel or CHANNEL_DEFAULT) in CHANNELS
+
+	def post_message( self, msg_info ):
+		# In moderated rooms, we break each channel out
+		# to a separate function for ease of permissioning.
+		msg_info.containerId = self._room_id
+		channel = msg_info.channel or CHANNEL_DEFAULT
+		handler = getattr( self, '_msg_handle_' + str(channel), None )
+		handled = False
+		if handler:
+			# We have a handler, but it still may not pass the pre-conditions,
+			# so we don't store it here.
+			handled = handler( msg_info )
+
+		if not handled:
+			if handler:
+				logger.debug( 'Handler (%s) rejected message (%s) sent by %s/%s (moderators: %s)',
+							  handler, msg_info, msg_info.Sender, msg_info.Sender, self.moderated_by_usernames )
+			else:
+				logger.debug( 'Dropping message on unknown channel %s', msg_info )
+		return handled
+
+	def _can_sender_whisper_to( self, msg_info ):
+		"""
+		Can the sender whisper to the recipients?
+		Use case: The TA can whisper to anyone, students
+		can only whisper to the TA. We do allow
+		one-on-one whispering.
+		"""
+		# Right now we just use one "role" for this concept,
+		# that of moderator. This will probably change.
+		return msg_info.Sender in self.moderated_by_usernames \
+			   or all( [recip in self.moderated_by_usernames
+						for recip in msg_info.recipients_without_sender] ) \
+				or len(msg_info.recipients_without_sender) == 1
+
+	def _do_shadow_message( self, msg_info ):
+		if any( [recip in self.shadowed_usernames
+				 for recip in msg_info.recipients_with_sender] ):
+			msg_info.Status = STATUS_SHADOWED
+			self._ensure_message_stored( msg_info )
+			self.emit_recvMessageForShadow( self.moderated_by_usernames, msg_info )
+			notify( interfaces.MessageInfoPostedToRoomEvent( msg_info, self.moderated_by_usernames ) )
+
+	@_bypass_for_moderator
+	def _msg_handle_WHISPER( self, msg_info ):
+		if self._is_message_to_all_occupants( msg_info ) \
+		   and len(msg_info.recipients_without_sender) > 1:
+			# Whispering to everyone is just like posting to the default
+			# channel. We make a special exception when there's only
+			# one other person besides the moderator in the room,
+			# to enable peer-to-peer whispering
+			return self._msg_handle_DEFAULT( msg_info )
+
+		if self._can_sender_whisper_to( msg_info ):
+			self._do_shadow_message( msg_info )
+			super(_ModeratedMeetingMessagePostPolicy, self).post_message( msg_info )
+			return True
+
+	@_bypass_for_moderator
+	def _msg_handle_DEFAULT( self, msg_info ):
+		self._ensure_message_stored( msg_info )
+		self.moderation_state.hold_message_for_moderation( msg_info )
+		self.emit_recvMessageForModeration( self.moderated_by_usernames, msg_info )
 		return True
+
+	@_only_for_moderator
+	def _msg_handle_CONTENT( self, msg_info ):
+		if not isinstance( msg_info.body, collections.Mapping ) \
+		   or not 'ntiid' in msg_info.body \
+		   or not ntiids.is_valid_ntiid_string( msg_info.body['ntiid'] ):
+			return False
+		# sanitize any keys we don't know about.
+		msg_info.body = {'ntiid': msg_info.body['ntiid'] }
+		# Recipients are ignored, message goes to everyone
+		msg_info.recipients = []
+		# And now broadcast
+		super(_ModeratedMeetingMessagePostPolicy,self).post_message( msg_info )
+		return True
+
+	@_only_for_moderator
+	def _msg_handle_META( self, msg_info ):
+		# Right now, we support two actions. As this grows,
+		# we'll need to refactor appropriately, like with channels.
+		ACTIONS = ('pin', 'clearPinned')
+		if not isinstance( msg_info.body, collections.Mapping ) \
+		   or 'channel' not in msg_info.body or msg_info.body['channel'] not in CHANNELS \
+		   or 'action' not in msg_info.body or msg_info.body['action'] not in ACTIONS:
+			return False
+
+		# In all cases, these are broadcasts
+		msg_info.recipients = ()
+		if msg_info.body['action'] == 'pin':
+			if not ntiids.is_valid_ntiid_string( msg_info.body.get( 'ntiid', None ) ):
+				return False
+			#sanitize the body
+			msg_info.body = { k: msg_info.body[k] for k in ('channel', 'action', 'ntiid') }
+			super(_ModeratedMeetingMessagePostPolicy,self).post_message( msg_info )
+		elif msg_info.body['action'] == 'clearPinned':
+			# sanitize the body
+			msg_info.body = { k: msg_info.body[k] for k in ('channel', 'action') }
+			super(_ModeratedMeetingMessagePostPolicy,self).post_message( msg_info )
+		else:
+			raise NotImplementedError( 'Meta action ' + str(msg_info.body['action']) )
+
+		return True
+
+	def _msg_handle_POLL( self, msg_info ):
+		if self.is_moderated_by( msg_info.Sender ):
+			# TODO: Track the OIDs of these messages so we can
+			# validate replies
+			# TODO: Validate body, when we decide what that is
+			# This is a broadcast (TODO: Always?)
+			msg_info.recipients = ()
+			super(_ModeratedMeetingMessagePostPolicy,self).post_message( msg_info )
+			return True
+
+		if not msg_info.inReplyTo:
+			# TODO: Track replies.
+			return False
+
+		# replies (answers) go only to the moderators
+		msg_info.recipients = self.moderated_by_usernames
+		return super(_ModeratedMeetingMessagePostPolicy,self).post_message( msg_info )
+
+
+	def add_moderator( self, mod_name ):
+		self.moderation_state.add_moderator( mod_name )
+		self.emit_roomModerationChanged( self._occupant_names, self )
+
+	def is_moderated_by( self, mod_name ):
+		return self.moderation_state.is_moderated_by( mod_name )
+
+	def approve_message( self, msg_id ):
+		msg = self.moderation_state.approve_message( msg_id )
+		if msg:
+			return super(_ModeratedMeetingMessagePostPolicy, self).post_message( msg )
+
+
+class _Meeting(contenttypes.ThreadableExternalizableMixin,
+				Persistent,
+				datastructures.ExternalizableInstanceDict):
+	"""Class to handle distributing messages to clients. """
+
+	__metaclass__ = _ChatObjectMeta
+	__emits__ = ('recvMessage', 'enteredRoom', 'exitedRoom',
+				 'roomMembershipChanged', 'roomModerationChanged' )
+	_prefer_oid_ = False
+
+	Active = True
+	creator = None
+
+	_v_chatserver = None
+	_moderation_state = None
+	_occupant_names = ()
+	def __init__( self, chatserver=None ):
+		super(_Meeting,self).__init__()
+		self._v_chatserver = chatserver
+		self.id = None
+		self.containerId = None
+		self._MessageCount = MergingCounter( 0 )
+		self.CreatedTime = time.time()
+		self._occupant_names = BTrees.OOBTree.Set()
+		# Sometimes a room is created with a subset of the occupants that
+		# should receive transcripts. The most notable case of this is
+		# creating a room in reply to something that's shared: everyone
+		# that it is shared with should get the transcript even if they
+		# didn't participate in the room because they were offline.
+		# TODO: How does this interact with things that are
+		# shared publically and not specific users?
+		self._addl_transcripts_to = BTrees.OOBTree.Set()
+
+
+	def _get_chatserver(self):
+		return self._v_chatserver or component.queryUtility( interfaces.IChatserver )
+	def _set_chatserver( self, cs ):
+		self._v_chatserver = cs
+	_chatserver = property(_get_chatserver, _set_chatserver )
+
+	@property
+	def MessageCount(self):
+		# Can only set this directly, setting as a property
+		# leads to false conflicts
+		return self._MessageCount.value
+
+	def __setstate__( self, state ):
+		# Migration 2012-04-03. Easier than searching these all out (because many are
+		# not reachable from the root, due to cross-db refs)
+		if 'MessageCount' in state:
+			state = dict(state)
+			state['_MessageCount'] = MergingCounter( state['MessageCount'] )
+			del state['MessageCount']
+		if '_chatserver' in state:
+			state = dict(state)
+			del state['_chatserver']
+
+		# Migration 2012-04-19
+		if '_occupant_session_ids' in state:
+			state = dict(state)
+			del state['_occupant_session_ids']
+
+		# Missed part of that migration
+		if '_occupant_names' not in state:
+			state = dict(state)
+			state['_occupant_names'] = BTrees.OOBTree.Set()
+
+		if '_moderated' in state:
+			state = dict(state)
+			del state['_moderated']
+
+		super(_Meeting,self).__setstate__( state )
+
+	@property
+	def RoomId(self):
+		return self.id
+	@property
+	def ID(self):
+		return self.id
+
+	def _Moderated( self ):
+		return self._moderation_state is not None
+
+	def _setModerated( self, flag ):
+		if flag and self._moderation_state is None:
+			self._moderation_state = _ModeratedMeetingState()
+			self.emit_roomModerationChanged( self._occupant_names, self )
+		elif not flag and self._moderation_state is not None:
+			self._moderation_state = None
+			self.emit_roomModerationChanged( self._occupant_names, self )
+
+	Moderated = property( _Moderated, _setModerated )
+
+	@property
+	def Moderators(self):
+		return () if self._moderation_state is None else self._moderation_state.moderated_by_usernames
+
+	@property
+	def occupant_session_names(self):
+		"""
+		:return: An iterable of the names of all active users in this room.
+			See :meth:`occupant_sessions`.
+		"""
+		return frozenset(self._occupant_names)
+	occupant_names = occupant_session_names
+
+	def _policy(self):
+		policy = None
+		if self._moderation_state:
+			policy = _ModeratedMeetingMessagePostPolicy( self._chatserver,
+														 room_id=self.ID,
+														 occupant_names=self._occupant_names,
+														 transcripts_to=self._addl_transcripts_to,
+														 p_jar=self._p_jar,
+														 moderation_state=self._moderation_state )
+		else:
+			policy = _MeetingMessagePostPolicy( self._chatserver,
+												room_id=self.ID,
+												occupant_names=self._occupant_names,
+												transcripts_to=self._addl_transcripts_to,
+												p_jar=self._p_jar )
+
+		return policy
+
+	def post_message( self, msg_info ):
+		result = self._policy().post_message( msg_info )
+		if result == 1:
+			self._MessageCount.increment()
+		return result
 
 	def add_additional_transcript_username( self, username ):
 		""" Ensures that the user named `username` will get all appropriate transcripts. """
@@ -325,6 +578,18 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 			self.emit_roomMembershipChanged( self._occupant_names, self )
 			return True
 
+	def add_moderator( self, mod_name ):
+		self._policy().add_moderator( mod_name )
+
+	def is_moderated_by( self, mod_name ):
+		return self._moderated.is_moderated_by( mod_name )
+
+	def approve_message( self, msg_id ):
+		return self._policy().approve_message( msg_id )
+
+	def shadowUser( self, username ):
+		return self._policy().shadowUser( username )
+
 	def toExternalDictionary( self, mergeFrom=None ):
 		result = dict(mergeFrom) if mergeFrom else dict()
 		result['Class'] = 'RoomInfo' # TODO: Use __external_class_name__ ?
@@ -351,219 +616,8 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 
 _ChatRoom = _Meeting
 deprecated('_ChatRoom', 'Prefer _Meeting' )
-
-
-def _bypass_for_moderator( f ):
-	@functools.wraps(f)
-	def bypassing( self, msg_info ):
-		if self.is_moderated_by( msg_info.Sender ):
-			super(_ModeratedMeeting,self).post_message( msg_info )
-			return True
-		return f( self, msg_info )
-	return bypassing
-
-def _only_for_moderator( f ):
-	@functools.wraps(f)
-	def enforcing( self, msg_info ):
-		if not self.is_moderated_by( msg_info.Sender ):
-			return False
-		return f( self, msg_info )
-	return enforcing
-
-class _ModeratedMeeting(_Meeting):
-	"""A chat room that moderates messages."""
-
-	__metaclass__ = _ChatObjectMeta
-	__emits__ = ('recvMessageForModeration', 'recvMessageForShadow')
-
-	_moderation_queue = ()
-	_moderated_by_names = ()
-	_shadowed_usernames = ()
-
-	def __init__( self, *args, **kwargs ):
-		super( _ModeratedMeeting, self ).__init__( *args, **kwargs )
-
-
-	def _becameModerated( self ):
-		self._moderated_by_names = BTrees.OOBTree.Set()
-		self._shadowed_usernames = BTrees.OOBTree.Set()
-		# A BTree isn't necessarily the most efficient way
-		# to implement the moderation queue, but it does work.
-		# We will typically have many writers and one reader--
-		# but that reader, the moderator, is also writing.
-		self._moderation_queue = BTrees.OOBTree.OOBTree()
-
-	def _becomeUnmoderated( self ):
-		del self._moderated_by_names
-		del self._shadowed_usernames
-		del self._moderation_queue
-
-	@property
-	def moderated_by_usernames( self ):
-		return frozenset( self._moderated_by_names )
-
-	Moderators = moderated_by_usernames
-
-	def shadowUser( self, username ):
-		"""
-		Causes all messages on non-default channels
-		from or to this sender to be posted to all
-		the moderators as well.
-		"""
-		self._shadowed_usernames.add( username )
-		return True
-
-	def _names_excluded_when_considering_all( self ):
-		"""
-		For purposes of calculating if a message is to everyone,
-		we ignore the moderators. This prevents whispering to the entire
-		room, minus the teachers.
-		"""
-		return set( self._moderated_by_names )
-
-	def _is_message_on_supported_channel( self, msg_info ):
-		return (msg_info.channel or CHANNEL_DEFAULT) in CHANNELS
-
-	def post_message( self, msg_info ):
-		# In moderated rooms, we break each channel out
-		# to a separate function for ease of permissioning.
-		msg_info.containerId = self.ID
-		channel = msg_info.channel or CHANNEL_DEFAULT
-		handler = getattr( self, '_msg_handle_' + str(channel), None )
-		handled = False
-		if handler:
-			# We have a handler, but it still may not pass the pre-conditions,
-			# so we don't store it here.
-			handled = handler( msg_info )
-
-		if not handled:
-			if handler:
-				logger.debug( 'Handler (%s) rejected message (%s) sent by %s/%s (moderators: %s/%s)',
-							  handler, msg_info, msg_info.Sender, msg_info.Sender, list(self._moderated_by_names), self.moderated_by_usernames )
-			else:
-				logger.debug( 'Dropping message on unknown channel %s', msg_info )
-		return handled
-
-	def _can_sender_whisper_to( self, msg_info ):
-		"""
-		Can the sender whisper to the recipients?
-		Use case: The TA can whisper to anyone, students
-		can only whisper to the TA. We do allow
-		one-on-one whispering.
-		"""
-		# Right now we just use one "role" for this concept,
-		# that of moderator. This will probably change.
-		return msg_info.Sender in self.moderated_by_usernames \
-			   or all( [recip in self.moderated_by_usernames
-						for recip in msg_info.recipients_without_sender] ) \
-				or len(msg_info.recipients_without_sender) == 1
-
-	def _do_shadow_message( self, msg_info ):
-		if any( [recip in self._shadowed_usernames
-				 for recip in msg_info.recipients_with_sender] ):
-			msg_info.Status = STATUS_SHADOWED
-			self._ensure_message_stored( msg_info )
-			self.emit_recvMessageForShadow( self._moderated_by_names, msg_info )
-			notify( interfaces.MessageInfoPostedToRoomEvent( msg_info, self._moderated_by_names ) )
-
-	@_bypass_for_moderator
-	def _msg_handle_WHISPER( self, msg_info ):
-		if self._is_message_to_all_occupants( msg_info ) \
-		   and len(msg_info.recipients_without_sender) > 1:
-			# Whispering to everyone is just like posting to the default
-			# channel. We make a special exception when there's only
-			# one other person besides the moderator in the room,
-			# to enable peer-to-peer whispering
-			return self._msg_handle_DEFAULT( msg_info )
-
-		if self._can_sender_whisper_to( msg_info ):
-			self._do_shadow_message( msg_info )
-			super( _ModeratedMeeting, self ).post_message( msg_info )
-			return True
-
-	@_bypass_for_moderator
-	def _msg_handle_DEFAULT( self, msg_info ):
-		self._ensure_message_stored( msg_info )
-		self._moderation_queue[msg_info.MessageId] = msg_info
-		msg_info.Status = STATUS_PENDING
-		self.emit_recvMessageForModeration( self._moderated_by_names, msg_info )
-		return True
-
-	@_only_for_moderator
-	def _msg_handle_CONTENT( self, msg_info ):
-		if not isinstance( msg_info.body, collections.Mapping ) \
-		   or not 'ntiid' in msg_info.body \
-		   or not ntiids.is_valid_ntiid_string( msg_info.body['ntiid'] ):
-			return False
-		# sanitize any keys we don't know about.
-		msg_info.body = {'ntiid': msg_info.body['ntiid'] }
-		# Recipients are ignored, message goes to everyone
-		msg_info.recipients = []
-		# And now broadcast
-		super(_ModeratedMeeting,self).post_message( msg_info )
-		return True
-
-	@_only_for_moderator
-	def _msg_handle_META( self, msg_info ):
-		# Right now, we support two actions. As this grows,
-		# we'll need to refactor appropriately, like with channels.
-		ACTIONS = ('pin', 'clearPinned')
-		if not isinstance( msg_info.body, collections.Mapping ) \
-		   or 'channel' not in msg_info.body or msg_info.body['channel'] not in CHANNELS \
-		   or 'action' not in msg_info.body or msg_info.body['action'] not in ACTIONS:
-			return False
-
-		# In all cases, these are broadcasts
-		msg_info.recipients = ()
-		if msg_info.body['action'] == 'pin':
-			if not ntiids.is_valid_ntiid_string( msg_info.body.get( 'ntiid', None ) ):
-				return False
-			#sanitize the body
-			msg_info.body = { k: msg_info.body[k] for k in ('channel', 'action', 'ntiid') }
-			super(_ModeratedMeeting,self).post_message( msg_info )
-		elif msg_info.body['action'] == 'clearPinned':
-			# sanitize the body
-			msg_info.body = { k: msg_info.body[k] for k in ('channel', 'action') }
-			super(_ModeratedMeeting,self).post_message( msg_info )
-		else:
-			raise NotImplementedError( 'Meta action ' + str(msg_info.body['action']) )
-
-		return True
-
-	def _msg_handle_POLL( self, msg_info ):
-		if self.is_moderated_by( msg_info.Sender ):
-			# TODO: Track the OIDs of these messages so we can
-			# validate replies
-			# TODO: Validate body, when we decide what that is
-			# This is a broadcast (TODO: Always?)
-			msg_info.recipients = ()
-			super(_ModeratedMeeting,self).post_message( msg_info )
-			return True
-
-		if not msg_info.inReplyTo:
-			# TODO: Track replies.
-			return False
-
-		# replies (answers) go only to the moderators
-		msg_info.recipients = self.moderated_by_usernames
-		super(_ModeratedMeeting,self).post_message( msg_info )
-		return True
-
-
-	def add_moderator( self, mod_name ):
-		self._moderated_by_names.add( mod_name )
-		self.emit_roomModerationChanged( self._occupant_names, self )
-
-	def is_moderated_by( self, mod_name ):
-		return mod_name in self._moderated_by_names
-
-	def approve_message( self, msg_id ):
-		# TODO: Disapprove messages? This queue could get terrifically
-		# large.
-		msg = self._moderation_queue.pop( msg_id, None )
-		if msg:
-			msg.Status = STATUS_POSTED
-			super(_ModeratedMeeting, self).post_message( msg )
+_ModeratedMeeting = _Meeting
+deprecated('_ModeratedMeeting', 'No distinction anymore' )
 
 _ModeratedChatRoom = _ModeratedMeeting
 deprecated('_ModeratedChatRoom', 'Prefer _ModeratedMeeting' )
