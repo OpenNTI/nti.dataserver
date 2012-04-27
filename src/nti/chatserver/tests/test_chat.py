@@ -141,7 +141,7 @@ class TestChatRoom(ConfiguringTestBase):
 		# time an attribute is accessed and we de-ghost the object.
 		assert_that( room, is_( chat.Meeting ) )
 		# A method attribute, not an ivar, triggers this
-		assert_that( room.post_message, is_( not_none() ) )
+		assert_that( room.post_message.im_func, is_( chat.ModeratedMeeting.post_message.im_func ) )
 		assert_that( room, is_( chat.ModeratedMeeting ) )
 		assert_that( room, has_property( '_moderated_by_names', not_none() ) )
 		# Now, we can reverse the property
