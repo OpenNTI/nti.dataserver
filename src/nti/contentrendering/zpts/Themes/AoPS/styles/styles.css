@@ -74,7 +74,6 @@
 
 #NTIContent .navigation div {
 	display: -webkit-box;
-	white-space: nowrap;
 	-webkit-box-orient: horizontal;
 	-webkit-box-align: left;
   	-webkit-box-pack: left;
@@ -139,7 +138,6 @@
 
 #NTIContent .page-contents .title {
 	/* margin-left: -50px; */
-	white-space: nowrap;
 
 	font-weight: bold;
 	font-size: 140%;

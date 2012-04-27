@@ -86,7 +86,6 @@
 #NTIContent #previousattemptlist li {
 	display: block;
 	background: none;
-	white-space: nowrap;
 	padding: 0;
 	margin: 5px;
 	height: auto;
