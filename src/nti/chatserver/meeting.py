@@ -124,6 +124,10 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 			state = dict(state)
 			del state['_occupant_session_ids']
 
+		# Missed part of that migration
+		if '_occupant_names' not in state:
+			state = dict(state)
+			state['_occupant_names'] = BTrees.OOBTree.Set()
 
 		super(_Meeting,self).__setstate__( state )
 		# Because we are swizzling classes dynamically at

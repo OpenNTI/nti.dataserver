@@ -98,8 +98,8 @@ class TestFriendsListAdaptor( ConfiguringTestBase ):
 		assert_that( adapt.create_meeting_from_dict( None, {'Occupants': ['me']}, c ), is_( none() ) )
 
 		# Dict with right occupants and tuple succeeds
-		# creator is just occupant, not owner
-		d = { 'Occupants': [('foo@bar', 1234)], 'Creator': 'friend@bar' }
+		# only the owner can create
+		d = { 'Occupants': [('foo@bar', 1234)], 'Creator': 'foo@bar' }
 		assert_that( adapt.create_meeting_from_dict( None, d, c ), is_(self) )
 		assert_that( d['Occupants'], has_item( 'friend@bar' ) )
 		assert_that( d['Occupants'], has_item( ('foo@bar', 1234 ) ) )
@@ -133,8 +133,8 @@ class TestFriendsListAdaptor( ConfiguringTestBase ):
 		# No active meeting fails.
 		assert_that( adapt.enter_active_meeting( None, {} ), is_( none() ) )
 
-		# Create active meeting
-		d = { 'Occupants': [('foo@bar', 1234)], 'Creator': 'friend@bar' }
+		# Create active meeting. Only the owner can create
+		d = { 'Occupants': [('foo@bar', 1234)], 'Creator': 'foo@bar' }
 		assert_that( adapt.create_meeting_from_dict( None, d, c ), is_(self) )
 
 

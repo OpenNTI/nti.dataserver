@@ -1,10 +1,10 @@
 
-from hamcrest import (assert_that, is_, has_entry, instance_of,
-					  has_key, is_in, not_none, is_not, greater_than,
-					  same_instance, has_length, none, contains, same_instance,
-					  has_entries, only_contains, has_item, has_property)
+from hamcrest import assert_that, is_, has_entry
+from hamcrest import has_key,  not_none, is_not
+from hamcrest import same_instance, has_length, none, contains, same_instance
+from hamcrest import has_entries, only_contains, has_item, has_property
 from nti.tests import verifiably_provides, provides
-import unittest
+
 from zope import interface, component
 from zope.deprecation import deprecate
 import time
@@ -15,6 +15,8 @@ from ZODB.FileStorage import FileStorage
 import transaction
 import os
 
+from nti.dataserver import authorization_acl as auth_acl
+from pyramid.authorization import ACLAuthorizationPolicy
 
 from nti.dataserver.contenttypes import Note, Canvas
 
@@ -298,7 +300,37 @@ class TestChatserver(ConfiguringTestBase):
 	def test_handler_shadow_user( self ):
 		room, chatserver = self._create_moderated_room()
 		sjohn_handler = chat.ChatHandler( chatserver, self.sessions[1] )
+		assert_that( sjohn_handler.shadowUsers( room.ID, ['chris'] ),
+					 is_( False ),
+					"No ACL Found" )
+		room.__acl__ = auth_acl.acl_from_aces( auth_acl.ace_allowing( 'sjohnson', chat_interfaces.ACT_MODERATE ) )
+		component.provideUtility( ACLAuthorizationPolicy() )
 		assert_that( sjohn_handler.shadowUsers( room.ID, ['chris'] ), is_( True ) )
+
+	@WithMockDSTrans
+	def test_multiple_moderators( self ):
+		room, chatserver = self._create_room()
+		sjohn_handler = chat.ChatHandler( chatserver, self.sessions[1] )
+		chris_handler = chat.ChatHandler( chatserver, self.sessions[2] )
+		jason_handler = chat.ChatHandler( chatserver, self.sessions[3] )
+		room.__acl__ = auth_acl.acl_from_aces( auth_acl.ace_allowing( 'sjohnson', chat_interfaces.ACT_MODERATE ),
+											   auth_acl.ace_allowing( 'chris', chat_interfaces.ACT_MODERATE ) )
+		component.provideUtility( ACLAuthorizationPolicy() )
+
+		assert_that( sjohn_handler.makeModerated( room.ID, True ), has_property( 'Moderated', True ) )
+		assert_that( room.Moderators, is_( set(['sjohnson']) ) )
+
+		assert_that( chris_handler.makeModerated( room.ID, True ), has_property( 'Moderated', True ) )
+		assert_that( room.Moderators, is_( set(['sjohnson', 'chris']) ) )
+
+		assert_that( jason_handler.makeModerated( room.ID, True ), has_property( 'Moderated', True ) )
+		assert_that( room.Moderators, is_( set(['sjohnson', 'chris']) ) )
+
+		assert_that( jason_handler.makeModerated( room.ID, False ), has_property( 'Moderated', True ) )
+		assert_that( room.Moderators, is_( set(['sjohnson', 'chris']) ) )
+
+		assert_that( chris_handler.makeModerated( room.ID, False ), has_property( 'Moderated', False ) )
+		assert_that( room.Moderators, is_( () ) )
 
 	@WithMockDSTrans
 	def test_handler_enter_room_no_occupants_online(self):
@@ -408,6 +440,7 @@ class TestChatserver(ConfiguringTestBase):
 
 		# I can become the moderator of this room
 		del sessions[5].socket.events[:]
+		component.provideUtility( ACLAuthorizationPolicy() )
 		assert_that( foo_handler.makeModerated( room3.ID, True ), is_( room3 ) )
 		assert_that( room3.Moderators, is_( set([foo_handler.session.owner])) )
 		assert_that( room3.Moderated, is_(True) )

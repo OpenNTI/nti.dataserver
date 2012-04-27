@@ -10,12 +10,14 @@ from zope.interface import interfaces as z_interfaces
 from zope.interface import Interface
 from zope import interface
 from zope import schema
-
+from zope.security.permission import Permission
 
 from nti.dataserver import interfaces as nti_interfaces
 
 class IChatserver(Interface):
 	pass
+
+ACT_MODERATE = Permission('nti.chatserver.actions.moderate')
 
 CHANNEL_DEFAULT = 'DEFAULT'
 CHANNEL_WHISPER = 'WHISPER'

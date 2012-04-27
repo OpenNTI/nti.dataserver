@@ -6,10 +6,12 @@ logger = logging.getLogger(__name__)
 from zope import component
 from zope import interface
 
+from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import users
 from nti.chatserver import interfaces as chat_interfaces
 from nti.ntiids import ntiids
 from nti.dataserver import classes
+from nti.dataserver import authorization_acl as auth_acl
 
 class _AbstractMeetingContainerAdapter(object):
 	interface.implements( chat_interfaces.IMeetingContainer )
@@ -74,6 +76,9 @@ class _AbstractMeetingContainerAdapter(object):
 
 		result = constructor()
 		setattr( self.container, self.ACTIVE_ROOM_ATTR, result )
+		result.__parent__ = self.container
+		result.__acl__ = auth_acl.acl_from_aces( [auth_acl.ace_allowing( c, chat_interfaces.ACT_MODERATE, type(self)) for c in self._allowed_creators] ) \
+		  + auth_acl.ace_denying( nti_interfaces.EVERYONE_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, type(self))
 		return result
 
 
@@ -106,6 +111,11 @@ class _FriendsListAdapter(_AbstractMeetingContainerAdapter):
 	@property
 	def friends_list(self):
 		return self.container
+
+	@property
+	def _allowed_creators(self):
+		result = set( (self.friends_list.creator.username,) )
+		return result
 
 	@property
 	def _allowed_occupants( self ):
@@ -160,9 +170,9 @@ class _ClassSectionAdapter(_AbstractMeetingContainerAdapter):
 						  meeting_dict.get( 'Creator' ), active_meeting.occupant_names, self._allowed_occupants )
 			# First, silently add everyone to the room
 			active_meeting.add_occupant_names( self._allowed_occupants, broadcast=False )
-			# Now, to everyone except the creator (who will get his own event) broadcast
+			# Now, to everyone, even the creator (who may or may not get his own event) broadcast
 			# that they're in the room and that the room membership has changed
-			event_to =  self._allowed_occupants - set( (meeting_dict.get('Creator'),) )
+			event_to =  self._allowed_occupants
 			active_meeting.emit_enteredRoom( event_to, active_meeting )
 			active_meeting.emit_roomMembershipChanged( event_to, active_meeting )
 

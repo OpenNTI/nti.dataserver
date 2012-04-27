@@ -99,7 +99,7 @@ class _ACE(object):
 
 	# Make them non-picklable
 	def __reduce__( self, *args, **kwargs ):
-		raise TypeError( "ACEs cannot be pickled." )
+		raise TypeError( "ACEs cannot be pickled." ) #pragma: no cover
 	__reduce_ex__ = __reduce__
 
 	def to_external_string(self):
@@ -215,6 +215,14 @@ class ACLDecorator(object):
 class _ACL(list):
 	interface.implements(nti_interfaces.IACL)
 
+	def __add__( self, other ):
+		"We allow concatenating single ACE objects to an ACL to produce a new ACL"
+		if isinstance( other, _ACE ):
+			result = _ACL( self )
+			result.append( other )
+			return result
+		return super(_ACL,self).__add__( other )
+
 	def write_to_file( self, path_or_file ):
 		"""
 		Given a path to a writable file or a file-like object (having the `write` method),
@@ -230,6 +238,18 @@ class _ACL(list):
 				_write(f)
 		else:
 			_write( path_or_file )
+
+def acl_from_aces( *args ):
+	"""
+	Create an ACL from ACEs.
+	Can either provide a list of ACEs, or var-args that are individual ACEs.
+	"""
+	if len(args) == 1:
+		if isinstance(args[0],_ACE):
+			return _ACL( (args[0],) )
+		return _ACL( args[0] )
+
+	return _ACL( args )
 
 
 class _CreatedACLProvider(object):
