@@ -83,9 +83,13 @@ class Classifier(object):
 		self.minimum_prob_strength = minimum_prob_strength
 		self.unknown_word_strength = unknown_word_strength
 			
-	@property
-	def probcache(self):
+	def _get_probcache(self):
 		return self._v_probcache
+	
+	def _set_probcache(self, c):
+		self._v_probcache = c
+	
+	probcache = property(_get_probcache, _set_probcache)
 
 	# spamprob() implementations.  One of the following is aliased to
 	# spamprob, depending on option settings.
@@ -276,7 +280,7 @@ class Classifier(object):
 	# appears in a msg, but distorting spamprob doesn't appear a correct way
 	# to exploit it.
 	def _add_msg(self, wordstream, is_spam):
-		self.probcache = {}    # nuke the prob cache
+		self.probcache = defaultdict(dict)   # nuke the prob cache
 		if is_spam:
 			self.nspam += 1
 		else:
@@ -297,7 +301,7 @@ class Classifier(object):
 		self._post_training()
 	
 	def _remove_msg(self, wordstream, is_spam):
-		self.probcache = {}    # nuke the prob cache
+		self.probcache = defaultdict(dict)    # nuke the prob cache
 		if is_spam:
 			if self.nspam <= 0:
 				raise ValueError("spam count would go negative!")
@@ -410,7 +414,7 @@ class Classifier(object):
 					push(tup)
 			clues.sort()
 			
-		if len(clues) > self.max_discriminator:
+		if len(clues) > self.max_discriminators:
 			del clues[0 : -self.max_discriminators]
 		# return (prob, word, record).
 		return [t[1:] for t in clues]

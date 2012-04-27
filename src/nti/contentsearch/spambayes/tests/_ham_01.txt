@@ -1,0 +1,24 @@
+Did the ini file have the appropriate [Storage] lines in it?  It's meant to add them in there, storing the directories in that directory, too.  You didn't already have an ini file in there, did you?  (It only adds those lines if it's a new file, so that it doesn't overwrite someone's settings).
+
+I'd question whether we need the Stop/Start command - why would I want the tray icon to stay there but the application to not run?
+
+I was thinking this just yesterday. I'm not sure what the original reasoning behind having it was (and it may have been me that put it there ;).
+
++1 to getting rid of it, unless someone does know the reasoning.  We can dump the 'stopped' icon, then, too.  (I'd like to see a '!' icon, though, which appeared when there were important status messages to review).
+
+After training through the web interface, the home page still says "Database has no training information..." even though the stats say "Total emails trained: Spam: 3 Ham: 18".
+
+Good spotting.  I've checked in a fix for this.
+
+Defaulting the "Maximum results" field in the Find pane to 1 seems wrong. It made sense when all you could do was search for a message ID (because they're unique) but if I'm searching for text, I'll want to see all the hits.
+
+Fair enough.  Line 435 of ui.html; change it to whatever you like most :)
+
+The Find pane only looks in the unknown cache, so it won't find anything once you've trained.  It ought to look in the
+ham and spam caches as well.
+
+Are you positive?  The code has it looking in all three, and a quick test here had it finding messages in more than one.
+
+I deliberately induced a false positive (by training on a thousand spams with no hams trained) then corrected it via the Review page, and the statistics now say "1 being false negatives" (plural: ack!) and "0 being false positives". That's the wrong way round.
+
+Opps, my bad.  I've checking in a fix for this.  I think I've fixed all the plurals, too.  If you've still got that false positive statistic around, could you give it a run from cvs?
