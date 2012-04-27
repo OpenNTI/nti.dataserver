@@ -119,8 +119,9 @@ class _MeetingMessagePostPolicy(object):
 				 'roomMembershipChanged', 'roomModerationChanged' )
 
 
-	def __init__( self, chatserver, room_id=None, occupant_names=(), transcripts_to=(), p_jar=None ):
-		self._room_id = room_id
+	def __init__( self, chatserver, room=None, occupant_names=(), transcripts_to=(), p_jar=None ):
+		self._room = room # We need the room so we can emit the right notify() events
+		self._room_id = room.ID
 		self._chatserver = chatserver
 		self._occupant_names = occupant_names
 		self._addl_transcripts_to = transcripts_to
@@ -208,7 +209,7 @@ class _MeetingMessagePostPolicy(object):
 			for name in recipient_names:
 				self.emit_recvMessage( name, msg_info )
 
-		notify( interfaces.MessageInfoPostedToRoomEvent( msg_info, transcript_owners | recipient_names ) )
+		notify( interfaces.MessageInfoPostedToRoomEvent( msg_info, transcript_owners | recipient_names, self._room ) )
 
 		# Everyone who gets the transcript also
 		# is considered to be on the sharing list
@@ -308,7 +309,7 @@ class _ModeratedMeetingMessagePostPolicy(_MeetingMessagePostPolicy):
 			msg_info.Status = STATUS_SHADOWED
 			self._ensure_message_stored( msg_info )
 			self.emit_recvMessageForShadow( self.moderated_by_usernames, msg_info )
-			notify( interfaces.MessageInfoPostedToRoomEvent( msg_info, self.moderated_by_usernames ) )
+			notify( interfaces.MessageInfoPostedToRoomEvent( msg_info, self.moderated_by_usernames, self._room ) )
 
 	@_bypass_for_moderator
 	def _msg_handle_WHISPER( self, msg_info ):
@@ -413,6 +414,9 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 	__metaclass__ = _ChatObjectMeta
 	__emits__ = ('recvMessage', 'enteredRoom', 'exitedRoom',
 				 'roomMembershipChanged', 'roomModerationChanged' )
+
+	interface.implements(interfaces.IMeeting)
+
 	_prefer_oid_ = False
 
 	Active = True
@@ -515,14 +519,14 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 		policy = None
 		if self._moderation_state:
 			policy = _ModeratedMeetingMessagePostPolicy( self._chatserver,
-														 room_id=self.ID,
+														 room=self,
 														 occupant_names=self._occupant_names,
 														 transcripts_to=self._addl_transcripts_to,
 														 p_jar=self._p_jar,
 														 moderation_state=self._moderation_state )
 		else:
 			policy = _MeetingMessagePostPolicy( self._chatserver,
-												room_id=self.ID,
+												room=self,
 												occupant_names=self._occupant_names,
 												transcripts_to=self._addl_transcripts_to,
 												p_jar=self._p_jar )

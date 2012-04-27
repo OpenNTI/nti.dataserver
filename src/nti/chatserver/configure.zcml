@@ -3,9 +3,6 @@
 	<include package="zope.component" />
 	<include package="zope.annotation" />
 
-	<subscriber
-		handler=".chatserver._save_message_to_transcripts_subscriber"
-		/>
 
 	<!-- Socket event handling -->
 	<subscriber provides="nti.socketio.interfaces.ISocketEventHandler"

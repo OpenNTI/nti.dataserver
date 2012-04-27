@@ -31,6 +31,7 @@ from nti.dataserver import enclosures
 from nti.dataserver import mimetype
 from nti.dataserver import sharing
 from nti.dataserver.activitystream_change import Change
+from nti.chatserver import interfaces as chat_interfaces
 from nti import apns
 
 import nti.apns.interfaces
@@ -531,9 +532,9 @@ nti_interfaces.IDevice.setTaggedValue( nti_interfaces.IHTC_NEW_FACTORY,
 
 
 class _TranscriptsMap(datastructures.AbstractNamedContainerMap):
-	interface.implements(nti_interfaces.ITranscriptContainer)
-	contained_type = nti_interfaces.ITranscript
-	container_name = 'Transcripts'
+ 	interface.implements(nti_interfaces.ITranscriptContainer)
+ 	contained_type = nti_interfaces.ITranscript
+ 	container_name = 'Transcripts'
 
 
 class User(Principal):
@@ -557,7 +558,7 @@ class User(Principal):
 	@classmethod
 	def get_user( cls, username, dataserver=None, default=None ):
 		""" Returns the User having `username`, else None. """
-		result = cls.get_entity( username, dataserver=dataserver, default=default )
+		result = cls.get_entity( username, dataserver=dataserver, default=default ) if username else None
 		return result if isinstance( result, User ) else default
 
 	@classmethod
@@ -670,9 +671,6 @@ class User(Principal):
 		self.containers.afterAddContainedObject = self._postCreateNotification
 		self.containers.afterDeleteContainedObject = self._postDeleteNotification
 		self.containers.afterGetContainedObject = self._trackObjectUpdates
-
-	def _p_resolveConflict(self, oldState, savedState, newState):
-		return super(User,self)._p_resolveConflict( oldState, savedState, newState )
 
 	def __setstate__( self, state ):
 		super(User,self).__setstate__( state )
@@ -843,40 +841,27 @@ class User(Principal):
 	# and if any of them belong to us posting a notification? (That seems
 	# convenient but a poor separation of concerns)
 
-	def get_by_ntiid( self, container_id ):
-		result = super(User,self).get_by_ntiid( container_id )
+	def get_by_ntiid( self, object_id ):
+		result = super(User,self).get_by_ntiid( object_id )
 		if not result:
-			if ntiids.is_ntiid_of_type( container_id, ntiids.TYPE_MEETINGROOM ):
+			if ntiids.is_ntiid_of_type( object_id, ntiids.TYPE_MEETINGROOM ):
 			# TODO: Generalize this
 			# TODO: Should we track updates here?
 				for x in self.friendsLists.itervalues():
-					if getattr( x, 'NTIID', None ) == container_id:
+					if getattr( x, 'NTIID', None ) == object_id:
 						result = x
 						break
-			elif ntiids.is_ntiid_of_type( container_id, ntiids.TYPE_TRANSCRIPT ):
-				# TODO: We shouldn't know about transcript summary storage.
-				# This is too closely coupled to chat_transcripts. I could use
-				# an adapter from this to...something, or a utility that takes this
-				# (and possibly the NTIIDs). Not sure how much better that is, since
-				# it still funnels through this object.
-				ntiid_summary = ntiids.make_ntiid( base=container_id,
-												   provider=nti_interfaces.SYSTEM_USER_NAME,
-												   nttype=ntiids.TYPE_OID )
-				meeting = _get_shared_dataserver().get_by_oid( ntiid_summary, ignore_creator=True )
-				result = self.getContainedObject( meeting.containerId,
-												  ntiids.make_ntiid( base=container_id, nttype=ntiids.TYPE_TRANSCRIPT_SUMMARY ) )
-				# Default to returning none if we found no contained object,
-				# ultimately 404
-				result = nti_interfaces.ITranscript(result,None)
-				result or logger.debug( "Failed to find transcript given cid %s meetid %s meet %s",
-										container_id, ntiid_summary, meeting )
+			elif ntiids.is_ntiid_of_type( object_id, ntiids.TYPE_TRANSCRIPT ):
+				result = chat_interfaces.IUserTranscriptStorage(self).transcript_for_meeting( object_id )
+				if not result:
+					logger.debug( "Failed to find transcript given oid: %s", object_id )
 			else:
 				# Try looking up the ntiid by name in each container
 				# TODO: This is terribly expensive
 				for container_name in self.containers.containers:
 					container = self.containers.containers[container_name]
 					if isinstance( container, numbers.Number ): continue
-					result = container.get( container_id )
+					result = container.get( object_id )
 					if result:
 						break
 		return result
@@ -884,43 +869,9 @@ class User(Principal):
 	def getContainedObject( self, containerId, containedId, defaultValue=None ):
 		if containerId == self.containerId: # "Users"
 			return self
-		# TODO Unify this.
-		if containerId == _TranscriptsMap.container_name:
-			# FIXME: Total hack, like getContainer
-			transcript = _get_shared_dataserver().chatserver.transcript_for_user_in_room( self.username, containedId )
-			return transcript or defaultValue
 		return self.containers.getContainedObject( containerId, containedId, defaultValue )
 
 	def getContainer( self, containerId, defaultValue=None ):
-		# TODO: Unify again
-		if containerId == _TranscriptsMap.container_name:
-			# FIXME: This is obviously a quick hack with no thought
-			# given to performance.
-			class FakeTranscripts(object):
-				def __init__( self, u ):
-					self.username = u
-					self.lastModified = 0
-					# capture this in the transaction.
-					self.summaries = _get_shared_dataserver().chatserver.list_transcripts_for_user( self.username )
-
-				def get( self, key, defaultValue=None ):
-					for summary in self.summaries:
-						if summary.RoomInfo.ID == key:
-							return summary
-						return defaultValue
-
-				def iteritems(self):
-					return iter( {summary.RoomInfo.ID: summary for summary in self.summaries} )
-				def iterkeys(self):
-					return iter( [k for k in self.iteritems()] )
-				def __iter__( self ):
-					return self.iterkeys()
-				def __contains__( self, key ):
-					return key in list(self.iterkeys())
-				def toExternalObject( self ):
-					return datastructures.toExternalObject( self.summaries )
-			return FakeTranscripts(self.username)
-
 		stored_value = self.containers.getContainer( containerId, defaultValue )
 		return stored_value
 
