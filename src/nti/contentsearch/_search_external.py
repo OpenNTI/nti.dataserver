@@ -168,6 +168,6 @@ def _provide_highlight_snippet(hit, query=None, highlight_type=WORD_HIGHLIGHT):
 	return hit
 
 def get_search_hit(obj, query=None, highlight_type=WORD_HIGHLIGHT, *args, **kwargs):
-	hit = component.queryAdapter( obj, nti_interfaces.IExternalObject, default=_SearchHit(obj), name='search-hit')
+	hit = component.queryAdapter( obj, ext_interfaces.IExternalObject, default=_SearchHit(obj), name='search-hit')
 	hit = _provide_highlight_snippet(hit, query, highlight_type)
 	return hit
