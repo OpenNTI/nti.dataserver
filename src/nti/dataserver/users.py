@@ -881,18 +881,21 @@ class User(Principal):
 		The returned value *MUST NOT* be modified."""
 		return self.containers.containers
 
-	def values(self):
+	def values(self, of_type=None):
 		"""
 		Returns something that iterates across all contained objects of this user.
 		This is intended for use during migrations (enabling :func:`zope.generations.utility.findObjectsProviding`)
 		and not general use.
+		:param type of_type: If given, then only values that are instances of the given type
+			will be returned.
 		"""
 		# We could simply return getAllContainers().values() and let findObjectsProviding
 		# deal with the traversal, but this way is a tad more general
 		for container in self.getAllContainers().values():
 			if not hasattr( container, 'values' ): continue
 			for o in container.values():
-				yield o
+				if not of_type or isinstance( o, of_type ):
+					yield o
 
 	def _is_container_ntiid( self, containerId ):
 		"""
