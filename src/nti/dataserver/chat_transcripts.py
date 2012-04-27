@@ -66,6 +66,9 @@ def _transcript_ntiid( meeting, creator, nttype=ntiids.TYPE_TRANSCRIPT_SUMMARY )
 	:return: A NTIID string representing the transcript (summary) for the
 		given meeting (chat session) with the given participant.
 	"""
+	# FIXME: The date should not be variable, the date should be fixed to
+	# when this URI was defined. (If the date is zero, then this has the really bad
+	# effect of varying with current time)
 	return ntiids.make_ntiid( base=meeting.id,
 							  date=meeting.CreatedTime,
 							  provider=(creator.username if creator else None),
