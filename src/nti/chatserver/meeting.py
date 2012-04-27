@@ -7,6 +7,7 @@ logger = logging.getLogger( __name__ )
 
 import time
 import collections
+import functools
 
 
 from nti.ntiids import ntiids
@@ -18,7 +19,6 @@ from nti.dataserver import contenttypes
 
 import persistent
 from persistent import Persistent
-from persistent.mapping import PersistentMapping
 import BTrees.OOBTree
 
 from zope import interface
@@ -60,8 +60,6 @@ def _discard( s, k ):
 		try:
 			s.remove( k ) # OOSet, list
 		except (KeyError,ValueError): pass
-
-
 
 class _Meeting(contenttypes.ThreadableExternalizableMixin,
 				Persistent,
@@ -356,6 +354,7 @@ deprecated('_ChatRoom', 'Prefer _Meeting' )
 
 
 def _bypass_for_moderator( f ):
+	@functools.wraps(f)
 	def bypassing( self, msg_info ):
 		if self.is_moderated_by( msg_info.Sender ):
 			super(_ModeratedMeeting,self).post_message( msg_info )
@@ -364,6 +363,7 @@ def _bypass_for_moderator( f ):
 	return bypassing
 
 def _only_for_moderator( f ):
+	@functools.wraps(f)
 	def enforcing( self, msg_info ):
 		if not self.is_moderated_by( msg_info.Sender ):
 			return False
