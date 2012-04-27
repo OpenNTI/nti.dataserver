@@ -6,23 +6,16 @@ __docformat__ = "restructuredtext en"
 import logging
 logger = logging.getLogger( __name__ )
 
-
 import numbers
-import UserDict
 
 from nti.externalization.externalization import toExternalObject
 from nti.externalization import oids
 from nti.externalization.interfaces import StandardExternalFields as XFields
 
-from nti.dataserver.activitystream_change import Change
-from nti.dataserver.activitystream import enqueue_change
-from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
-
 
 from persistent import Persistent
 from persistent.mapping import PersistentMapping
-
 
 from zope import interface
 from zope import component
@@ -30,7 +23,6 @@ from zope.deprecation import deprecate, deprecated
 from zope import minmax
 
 from . import interfaces
-from ._handler import ChatHandlerFactory
 from .meeting import _Meeting
 
 class _AlwaysIn(object):
@@ -345,92 +337,7 @@ class Chatserver(object):
 					del self.rooms[room_id]
 		return result
 
-	### Transcripts
 
-	def _ts_storage_for( self, owner, create_if_missing=True ):
-		storage = None
-		if owner:
-			# TODO: Need a component to resolve users
-			user = users.User.get_user( owner )
-			storage = component.queryAdapter( user, interfaces.IUserTranscriptStorage ) \
-					if user \
-					else None
-		return storage
-
-	def _save_message_to_transcripts( self, msg_info, transcript_names, transcript_owners=() ):
-		"""
-		Adds the message to the transcripts of each user given.
-
-		:param MessageInfo msg_info: The message. Must have a container id.
-		:param iterable transcript_names: Iterable of usernames to post the message to.
-		:param iterable transcript_owners: Iterable of usernames to post the message to.
-		"""
-		owners = set( transcript_owners )
-		owners.update( set(transcript_names) )
-
-		change = Change( Change.CREATED, msg_info )
-		change.creator = msg_info.Sender
-
-		meeting = self.rooms.get( msg_info.containerId )
-		for owner in owners:
-			storage = self._ts_storage_for( owner )
-			storage.add_message( meeting, msg_info )
-
-			enqueue_change( change, username=owner, broadcast=True )
-
-	def transcript_for_user_in_room( self, username, room_id ):
-		"""
-		Returns a :class:`Transcript` for the user in room.
-		If the user wasn't in the room, returns None.
-		"""
-		result = None
-		storage = self._ts_storage_for( username, create_if_missing=False )
-		if storage:
-			result = storage.transcript_for_meeting( room_id )
-		return result
-
-	def transcript_summaries_for_user_in_container( self, username, containerId ):
-		"""
-
-		:return: Map of room/transcript id to :class:`TranscriptSummary` objects for the user that
-			have taken place in the given containerId. The map will have attributes `lastModified`
-			and `creator`.
-
-		EOM
-		"""
-		storage = self._ts_storage_for( username, create_if_missing=False )
-		if not storage:
-			return dict()
-
-		data = {summary.RoomInfo.ID: summary
-				for summary
-				in storage.transcript_summaries
-				if summary.RoomInfo.containerId == containerId}
-		logger.debug( "All summaries %s", data )
-		result = UserDict.UserDict( data )
-		result.creator = username
-		if data:
-			result.lastModified = max( data.itervalues(), key=lambda x: x.LastModified ).LastModified
-		return result
-
-	def list_transcripts_for_user( self, username ):
-		"""
-		Returns an Iterable of :class:`TranscriptSummary` objects for the user.
-		"""
-		storage = self._ts_storage_for( username, create_if_missing=False )
-		if not storage:
-			return ()
-		return storage.transcript_summaries
-
-
-@component.adapter( interfaces.IMessageInfo, interfaces.IMessageInfoPostedToRoomEvent )
-def _save_message_to_transcripts_subscriber( msg_info, event ):
-	"""
-	Event handler that saves messages to the appropriate transcripts.
-	"""
-	chatserver = component.queryUtility( interfaces.IChatserver )
-	if chatserver:
-		chatserver._save_message_to_transcripts( msg_info, event.recipients )
 
 @component.adapter(interfaces.IUserNotificationEvent)
 def _send_notification( user_notification_event ):

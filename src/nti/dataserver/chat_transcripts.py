@@ -6,13 +6,17 @@ import logging
 logger = logging.getLogger( __name__ )
 
 from nti.ntiids import ntiids
+from nti.dataserver.activitystream_change import Change
+from nti.dataserver.activitystream import enqueue_change
 from nti.dataserver import interfaces as nti_interfaces
 from nti.chatserver import interfaces as chat_interfaces
 from nti.dataserver import mimetype
 from nti.dataserver import users
 from nti.dataserver import datastructures
 from nti.dataserver import links
+
 import nti.externalization.datastructures
+from nti.externalization.datastructures import LocatedExternalDict
 
 from persistent import Persistent
 import BTrees.OOBTree
@@ -66,11 +70,7 @@ def _transcript_ntiid( meeting, creator, nttype=ntiids.TYPE_TRANSCRIPT_SUMMARY )
 	:return: A NTIID string representing the transcript (summary) for the
 		given meeting (chat session) with the given participant.
 	"""
-	# FIXME: The date should not be variable, the date should be fixed to
-	# when this URI was defined. (If the date is zero, then this has the really bad
-	# effect of varying with current time)
 	return ntiids.make_ntiid( base=meeting.id,
-							  date=meeting.CreatedTime,
 							  provider=(creator.username if creator else None),
 							  nttype=nttype )
 
@@ -94,12 +94,19 @@ class _UserTranscriptStorageAdapter(object):
 		# so is subject to GC. Once we have the user indexing
 		# by contained NTIID, we can simply ask it after
 		# deriving the storage_id
+
+		if not ntiids.is_ntiid_of_type( meeting_id, ntiids.TYPE_OID ):
+			# We'll take any type, usually a TRANSCRIPT type
+			meeting_id = ntiids.make_ntiid( base=meeting_id,
+											provider=nti_interfaces.SYSTEM_USER_NAME,
+											nttype=ntiids.TYPE_OID )
+
 		meeting = component.queryUtility( nti_interfaces.IDataserver ).get_by_oid( meeting_id, ignore_creator=True )
 		if meeting is not None:
 			storage_id = _transcript_ntiid( meeting, self._user )
 			storage = self._user.getContainedObject( meeting.containerId, storage_id )
 			result = Transcript( storage ) if storage else None
-		else:
+		else: # pragma: no cover
 			logger.debug( "No meeting %s in %s", meeting_id, self._user )
 		return result
 
@@ -110,7 +117,7 @@ class _UserTranscriptStorageAdapter(object):
 			if isinstance( container, float ): continue
 			for storage in container.values():
 				if isinstance(storage, _MeetingTranscriptStorage):
-					result.append( TranscriptSummary( storage ) )
+					result.append( TranscriptSummaryAdapter( storage ) )
 		return result
 
 	def add_message( self, meeting, msg, ):
@@ -119,25 +126,113 @@ class _UserTranscriptStorageAdapter(object):
 		# Our transcript storage we store with the
 		# provider ID of our user
 		storage_id = _transcript_ntiid( meeting, self._user )
-		room = self._user.getContainedObject( meeting.containerId, storage_id )
-		if not room:
+		storage = self._user.getContainedObject( meeting.containerId, storage_id )
+		if not storage:
 			if not meeting.containerId:
 				logger.warn( "Meeting (room) has no container id, will not transcript %s", storage_id )
 				# Because we won't be able to store the room on the user.
 				# This is actually a bug in creating the room.
-				return
+				return False
 
-			room = _MeetingTranscriptStorage( meeting )
-			room.id = storage_id
-			room.containerId = meeting.containerId
-			self._user.addContainedObject( room )
+			storage = _MeetingTranscriptStorage( meeting )
+			storage.id = storage_id
+			storage.containerId = meeting.containerId
+			storage.creator = self._user
+			self._user.addContainedObject( storage )
 
-		room.add_message( msg )
+		storage.add_message( msg )
+
+class _MissingStorage(object):
+	"""
+	A storage that's always empty and blank.
+	"""
+	interface.implements(chat_interfaces.IUserTranscriptStorage)
+
+	def transcript_for_meeting( self, meeting_id ):
+		return None # pragma: no cover
+	@property
+	def transcript_summaries(self):
+		return () # pragma: no cover
+	def add_message( self, meeting, msg ):
+		pass
+
+_BLANK_STORAGE = _MissingStorage()
+
+def _ts_storage_for( owner ):
+	user = users.User.get_user( owner )
+	storage = component.queryAdapter( user, chat_interfaces.IUserTranscriptStorage, default=_BLANK_STORAGE )
+	return storage
+
+def _save_message_to_transcripts( meeting, msg_info, transcript_names, transcript_owners=() ):
+	"""
+	Adds the message to the transcripts of each user given.
+
+	:param MessageInfo msg_info: The message. Must have a container id.
+	:param iterable transcript_names: Iterable of usernames to post the message to.
+	:param iterable transcript_owners: Iterable of usernames to post the message to.
+	"""
+	owners = set( transcript_owners )
+	owners.update( set(transcript_names) )
+
+	change = Change( Change.CREATED, msg_info )
+	change.creator = msg_info.Sender
+
+	for owner in owners:
+		storage = _ts_storage_for( owner )
+		storage.add_message( meeting, msg_info )
+
+		enqueue_change( change, username=owner, broadcast=True )
+
+@component.adapter( chat_interfaces.IMessageInfo, chat_interfaces.IMessageInfoPostedToRoomEvent )
+def _save_message_to_transcripts_subscriber( msg_info, event ):
+	"""
+	Event handler that saves messages to the appropriate transcripts.
+	"""
+	_save_message_to_transcripts( event.room, msg_info, event.recipients )
+
+def transcript_for_user_in_room( username, room_id ):
+	"""
+	Returns a :class:`Transcript` for the user in room.
+	If the user wasn't in the room, returns None.
+	"""
+	storage = _ts_storage_for( username )
+	return storage.transcript_for_meeting( room_id )
+
+
+def transcript_summaries_for_user_in_container( username, containerId ):
+	"""
+	Primarily intended for debugging
+	:return: Map of room/transcript id to :class:`TranscriptSummary` objects for the user that
+		have taken place in the given containerId. The map will have attributes `lastModified`
+		and `creator`.
+
+	EOM
+	"""
+	storage = _ts_storage_for( username )
+
+	data = {summary.RoomInfo.ID: summary
+			for summary
+			in storage.transcript_summaries
+			if summary.RoomInfo.containerId == containerId}
+	logger.debug( "All summaries %s", data )
+	result = LocatedExternalDict( data )
+	result.creator = username
+	if data:
+		result.lastModified = max( data.itervalues(), key=lambda x: x.LastModified ).LastModified
+	return result
+
+def list_transcripts_for_user( username ):
+	"""
+	Returns an Iterable of :class:`TranscriptSummary` objects for the user.
+	"""
+	storage = _ts_storage_for( username )
+	return storage.transcript_summaries
+
 
 def TranscriptSummaryAdapter(meeting_storage):
 	try:
 		return TranscriptSummary(meeting_storage)
-	except ZODB.POSException.POSKeyError:
+	except ZODB.POSException.POSKeyError: # pragma: no cover
 		logger.exception( "Meeting object gone missing." )
 		return None
 
@@ -224,4 +319,3 @@ class Transcript(TranscriptSummary):
 		for m in self.Messages:
 			if m.ID == msg_id:
 				return m
-		return None

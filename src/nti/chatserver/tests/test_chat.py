@@ -26,6 +26,7 @@ from nti.ntiids import ntiids
 
 import nti.dataserver.users as users
 import nti.dataserver.interfaces as interfaces
+from nti.dataserver import chat_transcripts
 nti_interfaces = interfaces
 
 from nti.chatserver import meeting
@@ -518,7 +519,10 @@ class TestChatserver(ConfiguringTestBase):
 		chatserver.post_message_to_room( room.ID, msg )
 
 		for user in ('sjohnson', 'chris', 'jason'):
-			assert_that( chatserver.transcript_for_user_in_room( user, room.ID ).get_message( msg.ID ), is_( msg ) )
+			assert_that( chat_transcripts.transcript_for_user_in_room( user, room.ID ).get_message( msg.ID ), is_( msg ) )
+			user = users.User.get_user( user )
+			tx_id = chat_transcripts._transcript_ntiid( room, user, nttype=ntiids.TYPE_TRANSCRIPT )
+			assert_that( user.get_by_ntiid( tx_id ).get_message( msg.ID ), is_( msg ) )
 
 	@WithMockDSTrans
 	def test_content(self):
@@ -630,12 +634,12 @@ class TestChatserver(ConfiguringTestBase):
 		assert_that( msg.sharedWith, is_( set(['jason', 'chris']) ) )
 
 		# It should now be in the moderator transcript
-		assert_that( chatserver.transcript_for_user_in_room( 'sjohnson', room.ID ).get_message( msg.ID ),
+		assert_that( chat_transcripts.transcript_for_user_in_room( 'sjohnson', room.ID ).get_message( msg.ID ),
 					 is_( msg ) )
 
 		# Every one of them should have it in their TS
 		for user in ('sjohnson', 'chris', 'jason'):
-			assert_that(chatserver.transcript_for_user_in_room( user, room.ID ).get_message( msg.ID ),
+			assert_that(chat_transcripts.transcript_for_user_in_room( user, room.ID ).get_message( msg.ID ),
 						is_(msg))
 
 	@WithMockDSTrans
@@ -651,12 +655,12 @@ class TestChatserver(ConfiguringTestBase):
 		assert_that( msg.sharedWith, is_( set(['jason', 'chris']) ) )
 
 		# It should not be in the moderator transcript
-		assert_that( chatserver.transcript_for_user_in_room( 'sjohnson', room.ID ),
+		assert_that( chat_transcripts.transcript_for_user_in_room( 'sjohnson', room.ID ),
 					 is_( none() ) )
 
 		# Every one of them should have it in their TS
 		for user in ('chris', 'jason'):
-			assert_that(chatserver.transcript_for_user_in_room( user, room.ID ).get_message( msg.ID ),
+			assert_that(chat_transcripts.transcript_for_user_in_room( user, room.ID ).get_message( msg.ID ),
 						is_(msg))
 
 	@WithMockDSTrans
@@ -672,12 +676,12 @@ class TestChatserver(ConfiguringTestBase):
 		assert_that( msg.sharedWith, is_( () ) )
 
 		# It should not be in anyone's transcript
-		assert_that( chatserver.transcript_for_user_in_room( 'sjohnson', room.ID ),
+		assert_that( chat_transcripts.transcript_for_user_in_room( 'sjohnson', room.ID ),
 					 is_( none() ) )
 
 		# Every one of them should have it in their TS
 		for user in ('chris', 'jason', 'sjohnson'):
-			assert_that(chatserver.transcript_for_user_in_room( user, room.ID ),
+			assert_that(chat_transcripts.transcript_for_user_in_room( user, room.ID ),
 						is_( none() ))
 
 	@WithMockDSTrans
@@ -695,7 +699,7 @@ class TestChatserver(ConfiguringTestBase):
 
 		# No one has it, it got dropped.
 		for user in ('chris', 'jason'):
-			assert_that( chatserver.transcript_for_user_in_room( user, room.ID ), is_( none() ) )
+			assert_that( chat_transcripts.transcript_for_user_in_room( user, room.ID ), is_( none() ) )
 
 	@WithMockDSTrans
 	def test_simple_transcript_summary(self):
@@ -709,12 +713,12 @@ class TestChatserver(ConfiguringTestBase):
 		assert_that( msg.sharedWith, is_( set(['jason', 'chris', 'sjohnson']) ) )
 
 		for user in ('sjohnson', 'chris', 'jason'):
-			summaries = chatserver.list_transcripts_for_user( user )
+			summaries = chat_transcripts.list_transcripts_for_user( user )
 			assert_that( summaries, has_length( 1 ) )
 			summary = summaries[0]
 			assert_that( summary.RoomInfo, is_( room ) )
 			assert_that( summary.NTIID, is_( not_none() ) )
-			assert_that( chatserver.transcript_summaries_for_user_in_container( user, 'foobar' ),
+			assert_that( chat_transcripts.transcript_summaries_for_user_in_container( user, 'foobar' ),
 						 has_key( room.ID ) )
 			assert_that( summary.Contributors, is_( set(['jason', 'chris', 'sjohnson']) ) )
 
@@ -731,12 +735,12 @@ class TestChatserver(ConfiguringTestBase):
 		assert_that( msg.sharedWith, is_( set(['jason', 'chris', 'sjohnson']) ) )
 
 		for user in ('sjohnson', 'chris', 'jason'):
-			summaries = chatserver.list_transcripts_for_user( user )
+			summaries = chat_transcripts.list_transcripts_for_user( user )
 			assert_that( summaries, has_length( 1 ) )
 			summary = summaries[0]
 			assert_that( summary.RoomInfo, is_( room ) )
 			assert_that( ntiids.get_type( summary.NTIID ), is_( ntiids.TYPE_TRANSCRIPT_SUMMARY ) )
-			assert_that( chatserver.transcript_summaries_for_user_in_container( user, room.containerId ),
+			assert_that( chat_transcripts.transcript_summaries_for_user_in_container( user, room.containerId ),
 						 has_key( room.ID ) )
 			assert_that( summary.Contributors, is_( set(['jason', 'chris', 'sjohnson']) ) )
 			# Links
@@ -785,11 +789,11 @@ class TestChatserver(ConfiguringTestBase):
 		assert_that( msg.sharedWith, is_( set(['jason', 'chris', 'sjohnson']) ) )
 
 		for user in ('sjohnson', 'chris', 'jason'):
-			summaries = chatserver.list_transcripts_for_user( user )
+			summaries = chat_transcripts.list_transcripts_for_user( user )
 			assert_that( summaries, has_length( 1 ) )
 			summary = summaries[0]
 			assert_that( summary.RoomInfo, is_( room ) )
-			assert_that( chatserver.transcript_summaries_for_user_in_container( user, 'foobar' ),
+			assert_that( chat_transcripts.transcript_summaries_for_user_in_container( user, 'foobar' ),
 						 has_key( room.ID ) )
 		assert_that( summary.Contributors, is_( set(['jason', 'chris', 'sjohnson']) ) )
 

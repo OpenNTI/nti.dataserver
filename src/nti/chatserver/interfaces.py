@@ -36,6 +36,9 @@ STATUSES = (STATUS_INITIAL,STATUS_PENDING,STATUS_POSTED,STATUS_SHADOWED)
 STATUS_VOCABULARY = schema.vocabulary.SimpleVocabulary(
 	[schema.vocabulary.SimpleTerm( _x ) for _x in STATUSES] )
 
+class IMeeting(nti_interfaces.IModeledContent):
+	pass
+
 class IMessageInfo(nti_interfaces.IModeledContent):
 
 	channel = schema.Choice(
@@ -65,12 +68,17 @@ class IMessageInfoPostedToRoomEvent(IMessageInfoEvent):
 			named in the message itself. Includes people who just get the transcript.""",
 		value_type=schema.TextLine() )
 
+	room = schema.Object(IMeeting,
+		title="The room that the message was posted to" )
+
+
 class MessageInfoPostedToRoomEvent(MessageInfoEvent):
 	interface.implements(IMessageInfoPostedToRoomEvent)
 
-	def __init__( self, obj, recipients=() ):
+	def __init__( self, obj, recipients=(), room=None ):
 		super(MessageInfoPostedToRoomEvent,self).__init__( obj )
 		self.recipients = recipients
+		self.room = room
 
 class IMeetingContainer(Interface):
 
