@@ -72,7 +72,7 @@ class TestHammer(unittest.TestCase):
 		Trains and classifies repeatedly.
 		"""
 		# 1000000
-		for i in range(1, 1000):
+		for i in range(1, 100):
 			# train.
 			is_spam = False # random.choice([True, False])
 			self.train(self.make_message(is_spam), is_spam)
