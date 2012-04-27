@@ -16,4 +16,12 @@
 	<adapter factory="._handler._ChatHandlerSessionStateFactory"
 			 provides="._handler.IChatHandlerSessionState"
 			 for="nti.socketio.interfaces.ISocketSession" />
+
+	<!-- ACL/ACE permissions -->
+	<include file="meta.zcml" package="zope.security" />
+
+	<permission
+			id="nti.chatserver.actions.moderate"
+			title="" />
+
 </configure>

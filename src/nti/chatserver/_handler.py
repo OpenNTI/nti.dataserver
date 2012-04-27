@@ -15,6 +15,7 @@ from nti.socketio import interfaces as sio_interfaces
 
 # FIXME: Break this dependency
 from nti.dataserver import users
+from nti.dataserver import authorization_acl as auth_acl
 
 
 from persistent import Persistent
@@ -28,13 +29,6 @@ from zope import minmax
 
 from ._metaclass import _ChatObjectMeta
 from . import interfaces
-
-class _AlwaysIn(object):
-	"""Everything is `in` this class."""
-	def __init__(self): pass
-	def __contains__(self,obj): return True
-
-
 
 
 EVT_ENTERED_ROOM = 'chat_enteredRoom'
@@ -173,19 +167,27 @@ class _ChatHandler(object):
 		return result
 
 	def makeModerated( self, room_id, flag ):
-		# TODO: Roles. Who can moderate?
+
 		room = self._chatserver.get_meeting( room_id )
-		if room and flag != room.Moderated:
-			room.Moderated = flag
-			if flag:
-				logger.debug( "%s becoming moderator of room %s", self, room )
-				room.add_moderator( self.session.owner )
-				IChatHandlerSessionState(self.session).rooms_i_moderate[room.RoomId] = room
-			else:
-				IChatHandlerSessionState(self.session).rooms_i_moderate.pop( room.RoomId, None )
+		can_moderate = auth_acl.has_permission( interfaces.ACT_MODERATE, room, self.session.owner )
+		if not can_moderate:
+			logger.debug( "%s not allowed to moderate room %s: %s", self, room, can_moderate )
+			return room
+
+		if flag:
+			if flag != room.Moderated:
+				room.Moderated = flag
+			logger.debug( "%s becoming a moderator of room %s", self, room )
+			room.add_moderator( self.session.owner )
+			IChatHandlerSessionState(self.session).rooms_i_moderate[room.RoomId] = room
 		else:
-			logger.debug( "%s Not changing moderation status of %s (%s) to %s",
-						  self, room, room_id, flag )
+			# deactivating moderation for the room
+			# TODO: We need to 'pop' rooms_i_moderate in all the other handlers.
+			# Thats only a minor problem, though
+			if flag != room.Moderated:
+				logger.debug( "%s deactivating moderation of %s", self, room )
+				room.Moderated = flag
+			IChatHandlerSessionState(self.session).rooms_i_moderate.pop( room.RoomId, None )
 		return room
 
 	def approveMessages( self, m_ids ):
@@ -206,8 +208,11 @@ class _ChatHandler(object):
 
 	def shadowUsers( self, room_id, usernames ):
 		room = self._chatserver.get_meeting( room_id )
-		# TODO: Roles.
-		warnings.warn( "Allowing anyone to activate shadowing." )
+		can_moderate = auth_acl.has_permission( interfaces.ACT_MODERATE, room, self.session.owner )
+		if not can_moderate:
+			logger.debug( "%s not allowed to shadow in room %s: %s", self, room, can_moderate )
+			return False
+
 		result = False
 		if room and room.Moderated:
 			result = True

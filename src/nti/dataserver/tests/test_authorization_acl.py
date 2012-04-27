@@ -2,8 +2,9 @@
 from __future__ import print_function, unicode_literals
 #pylint: disable=R0904
 
-import unittest
+
 from hamcrest import assert_that, has_length,  is_
+from hamcrest import is_not, same_instance
 from hamcrest import has_property
 from hamcrest import contains_string
 from hamcrest.core.base_matcher import BaseMatcher
@@ -231,12 +232,27 @@ class TestACE(mock_dataserver.ConfiguringTestBase):
 		assert_that( auth_acl.ace_from_string('Allow:User:All' ),
 					 is_( auth_acl.ace_allowing( 'User', nti_interfaces.ALL_PERMISSIONS ) ) )
 
+	def test_default(self):
+		assert_that( auth_acl.ACL( "foo" ), is_( () ) )
+
+	def test_add(self):
+
+		ace1 = auth_acl.ace_allowing( 'User', auth.ACT_CREATE )
+		ace2 = auth_acl.ace_denying( 'system.Everyone', (auth.ACT_CREATE,auth.ACT_UPDATE) )
+
+		acl = auth_acl.acl_from_aces( (ace1,) )
+		acl2 = acl + ace2
+		assert_that( acl2, is_not( same_instance( acl ) ) )
+		assert_that( acl2, has_length( 2 ) )
+		assert_that( acl + acl2, has_length( 3 ) )
+
 	def test_write_to_file( self ):
 		n = Note()
 		n.creator = 'sjohnson@nextthought.com'
 
 		acl_prov = nti_interfaces.IACLProvider( n )
 		acl = acl_prov.__acl__
+		acl.write_to_file( '/dev/null' )
 
 		temp_file = tempfile.TemporaryFile( 'w+' )
 		acl.write_to_file( temp_file )
