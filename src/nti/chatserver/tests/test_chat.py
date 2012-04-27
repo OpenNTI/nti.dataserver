@@ -39,7 +39,7 @@ from zope.annotation import interfaces as an_interfaces
 class chat(object):
 	MessageInfo = messageinfo.MessageInfo
 	Meeting = meeting._Meeting
-	ModeratedMeeting = meeting._ModeratedMeeting
+	ModeratedMeeting = meeting._Meeting
 	ChatHandler = _handler._ChatHandler
 	Chatserver = _chatserver.Chatserver
 	CHANNEL_CONTENT = chat_interfaces.CHANNEL_CONTENT
@@ -102,7 +102,7 @@ class TestChatRoom(ConfiguringTestBase):
 
 		msg = chat.MessageInfo()
 		room.post_message( msg )
-		assert_that( room._moderation_queue, has_key( msg.MessageId ) )
+		assert_that( room._moderation_state._moderation_queue, has_key( msg.MessageId ) )
 
 		# We can externalize a moderated room
 		to_external_representation( room, EXT_FORMAT_JSON )
@@ -127,7 +127,6 @@ class TestChatRoom(ConfiguringTestBase):
 		conn = db.open()
 		room = conn.root()['Room']
 		room.Moderated = True
-		assert_that( room, is_( chat.ModeratedMeeting ) )
 		transaction.commit()
 		conn.close()
 		db.close()
@@ -142,8 +141,7 @@ class TestChatRoom(ConfiguringTestBase):
 		assert_that( room, is_( chat.Meeting ) )
 		# A method attribute, not an ivar, triggers this
 		assert_that( room.post_message.im_func, is_( chat.ModeratedMeeting.post_message.im_func ) )
-		assert_that( room, is_( chat.ModeratedMeeting ) )
-		assert_that( room, has_property( '_moderated_by_names', not_none() ) )
+		assert_that( room._moderation_state, has_property( '_moderated_by_names', not_none() ) )
 		# Now, we can reverse the property
 		room.Moderated = False
 		assert_that( room, is_( chat.Meeting ) )
@@ -210,10 +208,10 @@ class TestChatRoom(ConfiguringTestBase):
 
 		msg = chat.MessageInfo()
 		room.post_message( msg )
-		assert_that( room._moderation_queue, has_key( msg.MessageId ) )
+		assert_that( room._moderation_state._moderation_queue, has_key( msg.MessageId ) )
 
 		room.approve_message(msg.MessageId)
-		assert_that( room._moderation_queue, is_not(has_key(msg.MessageId)))
+		assert_that( room._moderation_state._moderation_queue, is_not(has_key(msg.MessageId)))
 
 class TestChatserver(ConfiguringTestBase):
 
