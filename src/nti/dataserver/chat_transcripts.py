@@ -18,9 +18,11 @@ from nti.dataserver import links
 import nti.externalization.datastructures
 from nti.externalization.datastructures import LocatedExternalDict
 
+import persistent.wref
 from persistent import Persistent
 import BTrees.OOBTree
 import ZODB.POSException
+import copy
 
 from zope import interface
 from zope import component
@@ -40,6 +42,34 @@ from zope import component
 # from that location, as is anything contained there.)
 ####
 
+###
+# A Note on GC
+# Currently, users are stored in a different database than
+# Meeting and MessageInfo objects (which are together with sessions).
+# If that database is packed without using zc.zodbgc to do a multi-GC,
+# then we can lose all our transcripts. It's not as simple as just moving
+# those objects to the User database, either, because we may be sharded.
+# The approach to solving the problem, then, is to keep /explicit/ weak refs and use
+# them as long as possible (TODO: Does that still break with zc.zodbgc?),
+# but also make a copy in our database to fallback on (in some cases, the objects are mutated
+# after being transcripted so the copy may not be perfectly in sync or we'd
+# always just use it).
+###
+
+class _CopyingWeakRef(persistent.wref.WeakRef):
+	"""
+	A weak ref that also stores a one-shot copy of its
+	reference, as a fallback.
+	"""
+	def __init__( self, ob ):
+		super(_CopyingWeakRef,self).__init__( ob )
+		self._copy = copy.copy( ob )
+
+	def __call__( self ):
+		result = super(_CopyingWeakRef,self).__call__( )
+		if result is None: result = self._copy
+		return result
+
 class _MeetingTranscriptStorage(Persistent,datastructures.ContainedMixin,datastructures.CreatedModDateTrackingObject):
 	"""
 	The storage for the transcript of a single session.
@@ -54,14 +84,20 @@ class _MeetingTranscriptStorage(Persistent,datastructures.ContainedMixin,datastr
 		# process. We COULD save the ordered list
 		# after the room is closed.
 		self.messages = BTrees.OOBTree.OOBTree()
-		# TODO: Use an IContainer
-		self.meeting = meeting
+		# TODO: Use an IContainer?
+		self._meeting_ref = _CopyingWeakRef(meeting)
+
+	@property
+	def meeting(self):
+		meeting = self._meeting_ref()
+		return meeting
 
 	def add_message( self, msg ):
-		self.messages[msg.ID] = msg
+		self.messages[msg.ID] = _CopyingWeakRef( msg )
 
 	def itervalues(self):
-		return self.messages.itervalues()
+		return ((msg() if callable(msg) else msg) # b/w compat
+				for msg in self.messages.itervalues())
 
 	values = itervalues # for finding with zope.genartions.findObjectsMatching
 
@@ -73,6 +109,10 @@ def _transcript_ntiid( meeting, creator, nttype=ntiids.TYPE_TRANSCRIPT_SUMMARY )
 	return ntiids.make_ntiid( base=meeting.id,
 							  provider=(creator.username if creator else None),
 							  nttype=nttype )
+
+def _get_by_oid(*args,**kwargs):
+	return None
+_get_by_oid.get_by_oid = _get_by_oid
 
 class _UserTranscriptStorageAdapter(object):
 	"""
@@ -88,26 +128,27 @@ class _UserTranscriptStorageAdapter(object):
 	def __init__( self, user ):
 		self._user = user
 
-	def transcript_for_meeting( self, meeting_id ):
+	def transcript_for_meeting( self, object_id ):
 		result = None
-		# FIXME: The meeting is in a different db and not referenced
-		# so is subject to GC. Once we have the user indexing
-		# by contained NTIID, we can simply ask it after
-		# deriving the storage_id
-
+		meeting_id = object_id
 		if not ntiids.is_ntiid_of_type( meeting_id, ntiids.TYPE_OID ):
 			# We'll take any type, usually a TRANSCRIPT type
 			meeting_id = ntiids.make_ntiid( base=meeting_id,
 											provider=nti_interfaces.SYSTEM_USER_NAME,
 											nttype=ntiids.TYPE_OID )
 
-		meeting = component.queryUtility( nti_interfaces.IDataserver ).get_by_oid( meeting_id, ignore_creator=True )
+		meeting = component.queryUtility( nti_interfaces.IDataserver, default=_get_by_oid ).get_by_oid( meeting_id, ignore_creator=True )
 		if meeting is not None:
 			storage_id = _transcript_ntiid( meeting, self._user )
 			storage = self._user.getContainedObject( meeting.containerId, storage_id )
 			result = Transcript( storage ) if storage else None
-		else: # pragma: no cover
-			logger.debug( "No meeting %s in %s", meeting_id, self._user )
+		else:
+			# OK, the meeting has gone away, GC'd and no longer directly referencable.
+			# Try to find the appropriate storage manually
+			for value in self._user.values( of_type=_MeetingTranscriptStorage ):
+				if value.meeting.ID == meeting_id:
+					result = Transcript( value )
+					break
 		return result
 
 	@property
