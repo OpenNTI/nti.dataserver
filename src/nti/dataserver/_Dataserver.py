@@ -568,15 +568,13 @@ nti.externalization.internalization.register_legacy_search_module( 'nti.chatserv
 
 class PersistentOidResolver(Persistent):
 	interface.implements( interfaces.IOIDResolver )
-	_p_jar = None
-	def get_object_by_oid( self, oid_string, ignore_creator=False ):
-		connection = self._p_jar
-		if connection is None:
-			# Damn! Try a fallback
-			logger.warn( "Persistent object has no jar; connection closed? %s", self.__dict__ )
-			lsm = component.getSiteManager()
-			connection = getattr( lsm, '_p_jar', None )
 
+	def get_object_by_oid( self, oid_string, ignore_creator=False ):
+		# We live with the pylint warning about '_p_jar' not being found on persistent. We cannot
+		# declare a class attribute with that name, because doing so overrides
+		# the getter/setter pair defined in the cPersistence PyTypeObject structure that is Persistent
+		# and we lose access to it
+		connection = self._p_jar
 		return get_object_by_oid( connection, oid_string, ignore_creator=ignore_creator )
 
 def get_object_by_oid( connection, oid_string, ignore_creator=False ):
