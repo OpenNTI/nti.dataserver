@@ -11,11 +11,11 @@ from nti.contentsearch.common import get_highlight_content
 from nti.contentsearch.common import get_messageinfo_content
 
 from nti.contentsearch.common import (	CLASS, CREATOR, ID, OID, last_modified_fields, ntiid_fields, 
-										container_id_fields )
+										container_id_fields, NTIID, CONTAINER_ID )
 
 from nti.contentsearch.common import (	ngrams_, channel_, content_, keywords_, references_, username_,
-										last_modified_, ntiid_, recipients_, sharedWith_, id_, type_,
-										oid_, creator_, containerId_, note_, messageinfo, highlight_)
+										last_modified_, recipients_, sharedWith_, id_,
+										oid_, creator_, note_, messageinfo, highlight_)
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -38,25 +38,24 @@ def create_domain(connection, domain_name, allow_ips=()):
 	# following should be storable fields
 	# type, creator, oid, last modified, ntiid, containerId, content, id
 	
-	domain.create_index_field(type_, 'literal', searchable=True, result=True,
-							  source_attributes=(type_, CLASS))
+	domain.create_index_field(CLASS, 'literal', searchable=True, result=True)
 	
-	domain.create_index_field(creator_, 'literal', searchable=True, result=True, 
+	domain.create_index_field(CREATOR, 'literal', searchable=True, result=True, 
 							  source_attributes=(creator_, CREATOR))
 	
 	domain.create_index_field(last_modified_, 'uint', searchable=True, result=True,
 							  source_attributes=last_modified_fields )
 	
-	domain.create_index_field(ntiid_, 'literal', searchable=True, result=True, 
+	domain.create_index_field(NTIID, 'literal', searchable=True, result=True, 
 							  source_attributes=ntiid_fields)
 	
-	domain.create_index_field(containerId_, 'literal', searchable=True, result=True,
+	domain.create_index_field(CONTAINER_ID, 'literal', searchable=True, result=True,
 							  source_attributes=container_id_fields)
 	
-	domain.create_index_field(id_, 'literal', searchable=True, result=True, 
+	domain.create_index_field(ID, 'literal', searchable=True, result=True, 
 							  source_attributes=(id_, ID))
 	
-	domain.create_index_field(oid_, 'literal', searchable=True, result=True,
+	domain.create_index_field(OID, 'literal', searchable=True, result=True,
 							  source_attributes=(oid_, OID))
 	
 	domain.create_index_field(content_, 'text', searchable=True, result=True)
