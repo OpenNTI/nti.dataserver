@@ -43,5 +43,5 @@ def test_resolve_transcript_manually( ):
 	assert_that( storage.add_message( Meet(), Msg() ), is_( none() ) )
 	# We have no IDataserver, so looking up by OID will fail and we'll have to
 	# use manual traversal
-	asert_that( component.queryUtility( nti_interfaces.IDataserver ), is_( none() ) )
+	assert_that( component.queryUtility( nti_interfaces.IDataserver ), is_( none() ) )
 	assert_that( storage.transcript_for_meeting( Meet.ID ), is_( not_none() ) )
