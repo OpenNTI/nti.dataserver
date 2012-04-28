@@ -184,9 +184,9 @@ class LibraryCollectionDetailExternalizer(object):
 		# TODO: Standardize the way ACLs are applied during external writing
 		# This is weird and bad: we're overwriting what Library itself does
 		library = self._collection.library
-		return { 'icon': library.icon,
-				 'title': library.title,
-				 'titles' : [x.toExternalObject() for x in library.titles if test(x)] }
+		return { #'icon': library.icon,
+				 'title': "Library",
+				 'titles' : [toExternalObject(x) for x in library.titles if test(x)] }
 
 class GlobalWorkspace(object):
 	"""
