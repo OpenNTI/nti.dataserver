@@ -293,6 +293,8 @@ def get_note_content(data):
 		body = to_list(data.get(body_, u''))
 	elif isinstance(data, Note):
 		body = to_list(data.body)
+	else:
+		body =  ()
 		
 	for item in body:
 		c = get_multipart_content(item)
@@ -305,6 +307,8 @@ def get_messageinfo_content(data):
 		body = to_list(data.get(body_, u''))
 	elif isinstance(data, MessageInfo):
 		body = to_list(data.body)
+	else:
+		body =  ()
 	for item in body:
 		c = get_multipart_content(item)
 		if c: result.append(c)
