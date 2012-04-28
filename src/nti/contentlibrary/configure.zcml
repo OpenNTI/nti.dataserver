@@ -1,0 +1,13 @@
+<!-- -*- mode: nxml -*- -->
+<configure xmlns="http://namespaces.zope.org/zope"
+		   i18n_domain="zope">
+	<include package="zope.component" />
+	<include package="zope.location" />
+	<include package="nti.externalization" />
+
+	<!-- Externalization -->
+
+	<adapter factory=".externalization._ContentPackageLibraryExternal" />
+	<adapter factory=".externalization._ContentPackageExternal" />
+
+</configure>

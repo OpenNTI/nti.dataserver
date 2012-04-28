@@ -21,7 +21,7 @@ from nti.dataserver import authorization as auth
 from nti.dataserver import authorization_acl as auth_acl
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.users import User, FriendsList
-from nti.dataserver.library import LibraryEntry
+
 
 from pyramid.authorization import ACLAuthorizationPolicy
 
@@ -285,13 +285,15 @@ class TestHasPermission(mock_dataserver.ConfiguringTestBase):
 		assert_that( bool(result), is_( True ) )
 		assert_that( result, has_property( 'msg', contains_string('ACLAllowed' ) ) )
 
+from nti.contentlibrary.contentunit import FilesystemContentPackage
 
 class TestLibraryEntryAclProvider(mock_dataserver.ConfiguringTestBase):
 
 	def setUp(self):
 		super(TestLibraryEntryAclProvider,self).setUp()
 		self.temp_dir = tempfile.mkdtemp()
-		self.library_entry = LibraryEntry( localPath=self.temp_dir )
+		self.library_entry = FilesystemContentPackage()
+		self.library_entry.filename = os.path.join( self.temp_dir, 'index.html' )
 
 		component.provideUtility( ACLAuthorizationPolicy() )
 

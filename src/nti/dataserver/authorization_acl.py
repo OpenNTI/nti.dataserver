@@ -421,9 +421,10 @@ class _LibraryEntryACLProvider(object):
 
 	def __init__( self, obj ):
 		self._obj = obj
-		if os.path.exists( os.path.join( obj.localPath, '.nti_acl' ) ):
+		acl_file = os.path.join( os.path.dirname( obj.filename ), '.nti_acl' )
+		if os.path.exists( acl_file ):
 			try:
-				self.__acl__ = acl_from_file( os.path.join( obj.localPath, '.nti_acl' ) )
+				self.__acl__ = acl_from_file( acl_file )
 			except:
 				logger.exception( "Failed to read acl from %s; denying all access.", obj )
 				self.__acl__ = _ACL( (ace_denying( nti_interfaces.EVERYONE_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _LibraryEntryACLProvider ), ) )

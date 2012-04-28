@@ -92,37 +92,11 @@ from nti.externalization.interfaces import IExternalObject, IExternalObjectDecor
 deprecated( "IExternalObject", "Use nti.externalization" )
 deprecated( "IExternalObjectDecorator", "Use nti.externalization" )
 
-class ILibraryTOCEntry(IZContained):
-	href = interface.Attribute( "Relative local path to this item" )
-	ntiid = schema.TextLine( title="The NTIID for this item" )
-	label = schema.TextLine( title="The human-readable section name of this item" )
-	children = schema.Iterable( title="Any :class:`ILibraryTOCEntry` objects this item has." )
 
-class ILibraryEntry(interface.Interface):
-
-	href = interface.Attribute( "Path portion of a URL for this content; ends in index.html" )
-	root = interface.Attribute( "Path portion of a URL for this content without index.html")
-	title = interface.Attribute( "Simple name for this entry" )
-	toc = interface.Attribute( "A :class:`ILibraryTOCEntry`" )
-	localPath = interface.Attribute( "The absolute path on disk where the content for this entry resides." )
-
-class ILibrary(interface.Interface):
-
-	def pathToNTIID(ntiid):
-		""" Returns a list of TOCEntry objects in order until
-		the given ntiid is encountered, or None if the id cannot be found."""
-
-	def childrenOfNTIID( ntiid ):
-		""" Returns a flattened list of all the children entries of ntiid
-		in no particular order. If there are no children, returns []"""
-
-	def __getitem__( key ):
-		"""
-		Return the ILibraryEntry having the matching `title` or `ntiid`.
-		"""
-
-	titles = schema.Iterable(
-		title=u'Sequence of :class:`ILibraryEntry`')
+from nti.contentlibrary.interfaces import IContentPackageLibrary as ILibrary, IContentPackage as ILibraryEntry, IContentUnit as ILibraryTOCEntry
+deprecated( "ILibrary", "Use nti.contentlibrary" )
+deprecated( "ILibraryEntry", "Use nti.contentlibrary" )
+deprecated( "ILibraryTOCEntry", "Use nti.contentlibrary" )
 
 ILINK_VOCABULARY = schema.vocabulary.SimpleVocabulary(
 	[schema.vocabulary.SimpleTerm(_x)

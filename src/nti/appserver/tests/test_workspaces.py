@@ -254,7 +254,13 @@ class TestLibraryCollectionDetailExternalizer(tests.ConfiguringTestBase):
 		self.temp_dir = tempfile.mkdtemp()
 		self.entry_dir =  os.path.join( self.temp_dir, 'TheEntry' )
 		os.mkdir( self.entry_dir )
-		open( os.path.join( self.entry_dir, 'eclipse-toc.xml' ), 'w' )
+		with open( os.path.join( self.entry_dir, 'eclipse-toc.xml' ), 'w' ) as f:
+			f.write( """<?xml version="1.0"?>
+			<toc NTIRelativeScrollHeight="58" href="index.html"
+			icon="icons/Faa%20Aviation%20Maintenance%20Technician%20Knowledge%20Test%20Guide-Icon.png"
+			label="FAA Aviation Maintenance Technician Knowledge Test" ntiid="faa-mathcounts-1" thumbnail="./thumbnails/index.png">
+			<topic label="C1" href="faa-index.html"/>
+			</toc>""")
 		self.library = DynamicLibrary( self.temp_dir )
 		self.library_workspace = component.getAdapter( self.library, app_interfaces.IWorkspace )
 		self.library_collection = self.library_workspace.collections[0]
