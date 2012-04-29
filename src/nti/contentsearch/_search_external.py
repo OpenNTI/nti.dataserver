@@ -21,7 +21,7 @@ from nti.contentsearch.common import (	WORD_HIGHLIGHT, NGRAM_HIGHLIGHT)
 from nti.contentsearch.common import (	NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
 										SNIPPET, HIT, ID, BODY, TARGET_OID, OID)
 
-from nti.contentsearch.common import (	body_, startHighlightedFullText_)
+from nti.contentsearch.common import (	body_, startHighlightedFullText_, last_modified_, content_)
 
 
 import logging
@@ -109,6 +109,11 @@ class _SearchHit(object, UserDict.DictMixin):
 			data[TYPE] = data[CLASS]
 		if OID in data:
 			data[TARGET_OID] = data[OID]
+		if last_modified_ in data:
+			data[LAST_MODIFIED] = data[last_modified_]
+		if content_ in data:
+			data[SNIPPET] = data[content_]
+			
 		data[CLASS] = HIT
 		data[NTIID] = data.get(NTIID, None) or data.get(TARGET_OID, None)
 		
