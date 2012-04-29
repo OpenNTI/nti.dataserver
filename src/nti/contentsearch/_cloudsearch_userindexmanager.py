@@ -15,6 +15,7 @@ from nti.contentsearch import interfaces
 #from nti.contentsearch import SearchCallWrapper
 #from nti.contentsearch.interfaces import IUserIndexManagerFactory
 from nti.contentsearch.common import get_type_name
+from nti.contentsearch.common import get_last_modified
 from nti.contentsearch.common import normalize_type_name
 #from nti.contentsearch.common import empty_search_result
 #from nti.contentsearch.common import empty_suggest_result
@@ -22,7 +23,7 @@ from nti.contentsearch.common import normalize_type_name
 #from nti.contentsearch._repoze_query import is_all_query
 #from nti.contentsearch._search_external import get_search_hit
 #from nti.contentsearch.common import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT)
-#from nti.contentsearch.common import (NTIID, LAST_MODIFIED, ITEMS, HIT_COUNT, SUGGESTIONS, content_, ngrams_)
+from nti.contentsearch.common import (LAST_MODIFIED, username_)
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -61,12 +62,19 @@ class CloudSearchUserIndexManager(object):
 	def index_content(self, data, type_name=None, **kwargs):
 		if not data: return None
 		type_name = normalize_type_name(type_name or get_type_name(data))
+		oid  = toExternalOID(data)
 		data = toExternalObject(data)
+		
+		# make sure the user name is always set
+		data[username_] = self.username
+		
+		# get and update the last modified data
+		# cs supports uint ony and we use this number as version also
+		lm = int(get_last_modified(data)) 
+		data[LAST_MODIFIED] = lm
 		pass
-
-	def update_content(self, data, type_name=None, *args, **kwargs):
-		if not data: return None
-		pass
+	
+	update_content = index_content
 
 	def delete_content(self, data, type_name=None, *args, **kwargs):
 		if not data: return None
