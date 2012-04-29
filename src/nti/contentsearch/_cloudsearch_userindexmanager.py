@@ -52,11 +52,8 @@ class CloudSearchUserIndexManager(object):
 		if search_on:
 			search_on = [normalize_type_name(x) for x in search_on]
 		return search_on or self.store.get_catalog_names(self.username)
-
-	def _get_id(self, data):
-		return toExternalOID(data)
 	
-	def _get_document_service(self, endpoint):
+	def _get_document_service(self, endpoint=None):
 		return get_document_service(endpoint=endpoint)
 	
 	def index_content(self, data, type_name=None, **kwargs):
@@ -72,7 +69,13 @@ class CloudSearchUserIndexManager(object):
 		# cs supports uint ony and we use this number as version also
 		lm = int(get_last_modified(data)) 
 		data[LAST_MODIFIED] = lm
-		pass
+		service = self._get_document_service()
+		service.add(oid, lm, data) # Add the user document in SDF style
+		result = service.commit()
+		if result.status == 'error':
+			s = ' '.join(result.errors)
+			raise Exception(s)
+		return result
 	
 	update_content = index_content
 
