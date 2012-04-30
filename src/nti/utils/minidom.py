@@ -4,7 +4,7 @@ Utilities for working with :mod:`xml.dom.minidom` objects.
 $Id$
 """
 from __future__ import print_function, unicode_literals
-
+import io
 
 def minidom_writexml(document, outfile):
 	"""
