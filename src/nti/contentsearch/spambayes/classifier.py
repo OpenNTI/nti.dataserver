@@ -37,6 +37,9 @@ from __future__ import generators
 
 from collections import defaultdict
 
+from persistent import Persistent
+from BTrees.OOBTree import OOBTree
+
 from nti.contentsearch.spambayes import LN2
 from nti.contentsearch.spambayes.chi2 import chi2Q
 
@@ -471,3 +474,13 @@ class Classifier(object):
 	
 
 Bayes = Classifier
+
+class PersistentClassifier(Classifier, Persistent):
+	def __init__(self, unknown_word_strength=0.45, unknown_word_prob=0.5, 
+				 minimum_prob_strength=0.1, max_discriminators=150, use_bigrams=False, 
+				 mapfactory=OOBTree):
+		Classifier.__init__(self, unknown_word_strength, unknown_word_prob, minimum_prob_strength, 
+							max_discriminators, use_bigrams, mapfactory)
+
+			
+PersistentBayes = PersistentClassifier
