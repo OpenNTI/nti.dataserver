@@ -200,7 +200,8 @@ class GlobalWorkspace(object):
 	def __init__(self):
 		super(GlobalWorkspace,self).__init__()
 		# TODO: Hardcoding both these things
-		self.links = (links.Link( 'UserSearch', rel='UserSearch' ),)
+		self.links = (	links.Link( 'UserSearch', rel='UserSearch' ),
+						links.Link( 'Search', rel='Search' ) )
 
 	@property
 	def name(self): return 'Global'
