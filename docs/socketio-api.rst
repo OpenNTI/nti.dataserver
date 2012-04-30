@@ -1,4 +1,4 @@
-Contentrendering API
+SocketIO API
 ====================
 
 
@@ -10,3 +10,4 @@ Contentrendering API
 .. automodule:: nti.socketio
 .. automodule:: nti.socketio.transports
 .. automodule:: nti.socketio.protocol
+.. automodule:: nti.socketio.session_consumer
