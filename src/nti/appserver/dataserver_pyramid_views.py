@@ -1312,6 +1312,7 @@ def _LibraryTOCRedirectView(request):
 		root = traversal.find_interface( request.context, nti_interfaces.ILibraryEntry )
 		href = root.root + '/' + href
 		href = href.replace( '//', '/' )
+		if not href.startswith( '/' ): href = '/' + href
 
 	# If the client asks for a specific type of data,
 	# a link, then give it to them. Otherwis
