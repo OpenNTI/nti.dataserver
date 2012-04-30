@@ -31,6 +31,12 @@ def main():
 						 xmlconfig_packages=(nti.contentsearch,),
 						 function=lambda: _reindex_user_content(username) )
 
+def indexable_objects(user, indexable_types=indexable_type_names):
+	for obj in findObjectsProviding( user, nti_interfaces.IModeledContent):
+		type_name = get_type_name(obj)
+		if type_name and type_name in indexable_types:
+			yield type_name, obj
+			
 def _reindex_user_content( username ):
 	user = users.User.get_user( username )
 	if not user:
@@ -55,18 +61,16 @@ def _reindex_user_content( username ):
 		rds.add_catalog(username, catalog, type_name)
 
 	counter = 0
-	for obj in findObjectsProviding( user, nti_interfaces.IModeledContent):
-		type_name = get_type_name(obj)
-		if type_name and type_name in indexable_type_names:
-			catalog = rds.get_catalog(username, type_name)
-			try:
-				address = toExternalOID(obj)
-				docid = rds.get_or_create_docid_for_address(username, address)
-				catalog.index_doc(docid, obj)
-				counter = counter + 1
-			except POSKeyError:
-				# broken reference for object
-				pass
+	for type_name, obj in indexable_objects(user):
+		catalog = rds.get_catalog(username, type_name)
+		try:
+			address = toExternalOID(obj)
+			docid = rds.get_or_create_docid_for_address(username, address)
+			catalog.index_doc(docid, obj)
+			counter = counter + 1
+		except POSKeyError:
+			# broken reference for object
+			pass
 
 	print( counter, 'object(s) for user', username, 'were reindexed')
 
