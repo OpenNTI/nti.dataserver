@@ -89,8 +89,12 @@ class _MeetingTranscriptStorage(Persistent,datastructures.ContainedMixin,datastr
 
 	@property
 	def meeting(self):
-		meeting = self._meeting_ref()
-		return meeting
+		try:
+			return self._meeting_ref()
+		except AttributeError:
+			# Old data. B/c rather than a migration (?)
+			# If this is broken, it will raise POSKeyError, I think
+			return self.__dict__['meeting']
 
 	def add_message( self, msg ):
 		self.messages[msg.ID] = _CopyingWeakRef( msg )
