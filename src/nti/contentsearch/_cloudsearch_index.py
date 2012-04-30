@@ -73,6 +73,9 @@ def create_domain(connection, domain_name, allow_ips=()):
 	# content fields
 	domain.create_index_field(ngrams_, 'text', searchable=True, result=False)
 
+	# make sure 'content' is the default field
+	domain.update_default_search_field(domain_name, content_)
+	
 	return domain
 
 # -----------------------------------

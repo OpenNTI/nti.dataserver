@@ -1,11 +1,11 @@
-#import contextlib
+import sys
 
 from zope import component
 from zope import interface
 
-from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.users import User
 from nti.externalization.oids import toExternalOID
-#from nti.externalization.oids import fromExternalOID
+from nti.dataserver import interfaces as nti_interfaces
 from nti.externalization.externalization import toExternalObject
 
 from nti.contentsearch.exfm.cloudsearch import get_search_service
@@ -19,17 +19,21 @@ from nti.contentsearch.common import is_all_query
 from nti.contentsearch.common import get_type_name
 from nti.contentsearch.common import get_last_modified
 from nti.contentsearch.common import normalize_type_name
-
-#from nti.contentsearch.common import empty_search_result
-#from nti.contentsearch.common import empty_suggest_result
-#from nti.contentsearch._repoze_query import parse_query
-#from nti.contentsearch._search_external import get_search_hit
+from nti.contentsearch.common import empty_search_result
+from nti.contentsearch.common import empty_suggest_result
+from nti.contentsearch.common import indexable_type_names
+from nti.contentsearch._search_external import get_search_hit
 from nti.contentsearch._search_external import search_external_fields
-from nti.contentsearch.common import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT, CLASS, LAST_MODIFIED)
+from nti.contentsearch.utils.nti_reindex_user_content import indexable_objects
+
+from nti.contentsearch.common import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT, CLASS, LAST_MODIFIED, ITEMS,
+									  NTIID, HIT_COUNT)
 from nti.contentsearch.common import (last_modified_, username_, content_, ngrams_)
 
 import logging
 logger = logging.getLogger( __name__ )
+
+# -----------------------------------
 
 _return_fields=[]
 for field in search_external_fields:
@@ -68,15 +72,39 @@ class CloudSearchUserIndexManager(object):
 		return get_search_service(domain=self.domain)
 	
 	def _do_search(self, field, qo, search_on, highlight_type):
-		bq = ['(and ']
+		results = empty_search_result(qo.term)
+		if qo.is_empty: return results
+		
+		bq = ['(and']
 		bq.append("%s:'%s'" % (username_, self.username))
 		bq.append("%s:'%s'" % (field, qo.term))
-		bq.append('(or ')
+		bq.append('(or')
 		for type_name in search_on:
 			bq.append("%s:'%s'" % (CLASS, type_name))
-		bq.append(')')
+		bq.append('))')
 		service = self.get_search_service()
+		limit = qo.limit or sys.maxint
+		start = qo.get('start', 0)
 		
+		bq = ' '.join(bq)
+		objects = service.search(bq=bq, return_fields=_return_fields, size=limit, start=start)
+		
+		length = len(objects)
+		hits = map(get_search_hit, objects, [qo.term]*length, [highlight_type]*length)
+		
+		# filter if required
+		hits = hits[:limit] if limit else hits
+		
+		# get last modified
+		lm = reduce(lambda x,y: max(x, y.get(LAST_MODIFIED,0)), hits, 0)
+		
+		items = results[ITEMS]
+		for hit in hits:
+			items[hit[NTIID]] = hit
+		
+		results[LAST_MODIFIED] = lm
+		results[HIT_COUNT] = len(items)
+		return results
 	
 	@SearchCallWrapper
 	def search(self, query, *args, **kwargs):
@@ -93,6 +121,15 @@ class CloudSearchUserIndexManager(object):
 		results = self._do_search(ngrams_, qo, search_on, highlight_type)
 		return results
 	quick_search = ngram_search
+	
+	# word suggest does not seem to be supported yet in CS
+	suggest_and_search = search
+
+	def suggest(self, query, *args, **kwargs):
+		qo = QueryObject.create(query, **kwargs)
+		return empty_suggest_result(qo.term)
+		
+	# ---------------------- 
 	
 	def index_content(self, data, type_name=None, **kwargs):
 		if not data: return None
@@ -119,6 +156,7 @@ class CloudSearchUserIndexManager(object):
 			raise Exception(s)
 		return result
 	
+	# we are not versioning so update is add
 	update_content = index_content
 
 	def delete_content(self, data, type_name=None, *args, **kwargs):
@@ -133,4 +171,29 @@ class CloudSearchUserIndexManager(object):
 			return False
 		return True
 
+	def remove_index(self, type_name):
+		user = User.get_user(self.username, dataserver=self.dataserver) if self.dataserver else None
+		if user:
+			service = self._get_document_service()
+			for type_name, obj in indexable_objects(user, (type_name,)):
+				try:
+					oid = toExternalOID(obj)
+					service.delete(oid, 0) 
+				except:
+					pass
+			
+			result = service.commit()
+			if result.errors:
+				s = ' '.join(result.errors)
+				logger.error(s)
+			return result.deletes
+		
+		return 0
+	# ---------------------- 
+		
+	def has_stored_indices(self):
+		return User.get_user(self.username, dataserver=self.dataserver) is not None if self.dataserver else False
+		
+	def get_stored_indices(self):
+		return list(indexable_type_names)
 	
