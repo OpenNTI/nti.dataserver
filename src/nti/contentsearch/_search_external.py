@@ -89,11 +89,12 @@ class NgramSnippetHighlightDecorator(object):
 			
 # -----------------------------------
 
+search_external_fields  = (CLASS, CREATOR, TARGET_OID, TYPE, LAST_MODIFIED, NTIID, CONTAINER_ID, SNIPPET, ID)
+	
 class _SearchHit(object, UserDict.DictMixin):
 	interface.implements( search_interfaces.ISearchHit )
 	
-	__external_fields  = (CLASS, CREATOR, TARGET_OID, TYPE, LAST_MODIFIED, NTIID,
-						  CONTAINER_ID, SNIPPET, ID)
+	__external_fields  = search_external_fields
 	
 	def __init__( self, entity ):
 		if type(entity) == dict:
@@ -119,7 +120,7 @@ class _SearchHit(object, UserDict.DictMixin):
 		
 	def _reduce(self, data):
 		for key in list(data.keys()):
-			if not key in self.__external_fields:
+			if not key in search_external_fields:
 				data.pop(key)
 	
 	def keys(self):

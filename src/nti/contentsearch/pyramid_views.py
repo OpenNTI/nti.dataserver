@@ -11,7 +11,17 @@ from nti.contentsearch.interfaces import IIndexManager
 import logging
 logger = logging.getLogger( __name__ )
 
-class GetSearch(object):
+class Search(object):
+
+	def __init__(self, request):
+		self.request = request
+
+	def __call__( self ):
+		query = get_queryobject(self.request)
+		indexmanager = self.request.registry.getUtility( IIndexManager )
+		return indexmanager.search( query=query, indexname=query.indexname )
+	
+class ContentSearch(object):
 
 	def __init__(self, request):
 		self.request = request
@@ -20,6 +30,7 @@ class GetSearch(object):
 		query = get_queryobject(self.request)
 		indexmanager = self.request.registry.getUtility( IIndexManager )
 		return indexmanager.content_search( query=query, indexname=query.indexname )
+GetSearch = ContentSearch
 
 class UserSearch(object):
 

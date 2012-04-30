@@ -8,6 +8,7 @@ from nti.externalization.oids import toExternalOID
 #from nti.externalization.oids import fromExternalOID
 from nti.externalization.externalization import toExternalObject
 
+from nti.contentsearch.exfm.cloudsearch import get_search_service
 from nti.contentsearch.exfm.cloudsearch import get_document_service
 
 from nti.contentsearch import interfaces
@@ -23,17 +24,24 @@ from nti.contentsearch.common import normalize_type_name
 #from nti.contentsearch.common import empty_suggest_result
 #from nti.contentsearch._repoze_query import parse_query
 #from nti.contentsearch._search_external import get_search_hit
-from nti.contentsearch.common import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT)
-from nti.contentsearch.common import (LAST_MODIFIED, username_, content_)
+from nti.contentsearch._search_external import search_external_fields
+from nti.contentsearch.common import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT, CLASS, LAST_MODIFIED)
+from nti.contentsearch.common import (last_modified_, username_, content_, ngrams_)
 
 import logging
 logger = logging.getLogger( __name__ )
 
+_return_fields=[]
+for field in search_external_fields:
+	field = last_modified_ if field == LAST_MODIFIED else field
+	_return_fields.append(field)
+
 class CloudSearchUserIndexManager(object):
 	interface.implements(interfaces.IUserIndexManager)
 
-	def __init__(self, username):
+	def __init__(self, username, domain=None):
 		self.username = username
+		self.domain = domain
 
 	def __str__( self ):
 		return self.username
@@ -53,11 +61,22 @@ class CloudSearchUserIndexManager(object):
 			search_on = [normalize_type_name(x) for x in search_on]
 		return search_on or self.store.get_catalog_names(self.username)
 	
-	def _get_document_service(self, endpoint=None):
-		return get_document_service(endpoint=endpoint)
+	def _get_document_service(self):
+		return get_document_service(domain=self.domain)
+	
+	def get_search_service(self):	
+		return get_search_service(domain=self.domain)
 	
 	def _do_search(self, field, qo, search_on, highlight_type):
-		query = "username:'%s'" % self.username
+		bq = ['(and ']
+		bq.append("%s:'%s'" % (username_, self.username))
+		bq.append("%s:'%s'" % (field, qo.term))
+		bq.append('(or ')
+		for type_name in search_on:
+			bq.append("%s:'%s'" % (CLASS, type_name))
+		bq.append(')')
+		service = self.get_search_service()
+		
 	
 	@SearchCallWrapper
 	def search(self, query, *args, **kwargs):
@@ -66,6 +85,14 @@ class CloudSearchUserIndexManager(object):
 		highlight_type = None if is_all_query(qo.term) else WORD_HIGHLIGHT
 		results = self._do_search(content_, qo, search_on, highlight_type)
 		return results
+	
+	def ngram_search(self, query, *args, **kwargs):
+		qo = QueryObject.create(query, **kwargs)
+		search_on = self._adapt_search_on_types(qo.search_on)
+		highlight_type = None if is_all_query(qo.term) else NGRAM_HIGHLIGHT
+		results = self._do_search(ngrams_, qo, search_on, highlight_type)
+		return results
+	quick_search = ngram_search
 	
 	def index_content(self, data, type_name=None, **kwargs):
 		if not data: return None
