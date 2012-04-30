@@ -26,8 +26,7 @@ import transaction
 
 from zope.location.location import LocationProxy
 
-from nti.dataserver.interfaces import (IDataserver, ILibrary, ISimpleEnclosureContainer, IEnclosedContent)
-import nti.dataserver.interfaces as nti_interfaces
+from nti.dataserver.interfaces import (IDataserver, ISimpleEnclosureContainer, IEnclosedContent)
 from nti.dataserver import users
 from nti.externalization.datastructures import isSyntheticKey
 from nti.externalization.externalization import toExternalObject
@@ -41,6 +40,8 @@ from nti.dataserver.mimetype import MIME_BASE, nti_mimetype_from_object, nti_mim
 from nti.dataserver import authorization as nauth
 from nti.dataserver import authorization_acl as nacl
 from nti.appserver import interfaces as app_interfaces
+
+from nti.contentlibrary import interfaces as lib_interfaces
 
 def _find_request( resource ):
 	request = None
@@ -307,7 +308,7 @@ class _ObjectsContainerResource(_ContainerResource):
 			raise KeyError( key )
 		return self._wrap_as_resource( key, result )
 
-	_no_wrap_ifaces = {nti_interfaces.ILibraryTOCEntry,nti_interfaces.ILibrary, nti_interfaces.ILibraryEntry}
+	_no_wrap_ifaces = {lib_interfaces.IContentPackageLibrary, lib_interfaces.IContentUnit, lib_interfaces.IContentPackage}
 
 	def _wrap_as_resource( self, key, result ):
 		# FIXME: This is weird. We're whitelisting a few interfaces
@@ -473,7 +474,7 @@ class _LibraryResource(object):
 		# compatibility.
 		self.__parent__ = parent
 		request = _find_request( self )
-		self.resource = request.registry.queryUtility( ILibrary )
+		self.resource = request.registry.queryUtility( lib_interfaces.IContentPackageLibrary )
 
 	def __getitem__( self, key ):
 		return _DirectlyProvidedObjectResource( self, objectid=key, user=None, resource=self.resource[key], containerid='Library' )
@@ -642,7 +643,7 @@ class _RecursiveUGDView(_UGDView):
 		if ntiid == ntiids.ROOT:
 			containers = set(user.iterntiids())
 		else:
-			library = self.request.registry.getUtility( ILibrary )
+			library = self.request.registry.getUtility( lib_interfaces.IContentPackageLibrary )
 			tocEntries = library.childrenOfNTIID( ntiid )
 
 			containers = {toc.ntiid for toc in tocEntries} # children
@@ -1299,7 +1300,7 @@ def _provider_redirect_classes(request):
 
 def _LibraryTOCRedirectView(request):
 	"""
-	Given an :class:`nti_interfaces.ILibraryTOCEntry`, redirect the request to the static content.
+	Given an :class:`lib_interfaces.IContentUnit`, redirect the request to the static content.
 	This allows unifying handling of NTIIDs.
 	If the client uses the Accept header to ask for a Link to the content, though,
 	then return that link; the client will do the redirection manually. (This is helpful
@@ -1307,18 +1308,22 @@ def _LibraryTOCRedirectView(request):
 	that otherwise would swallow it and automatically redirect.)
 	"""
 	href = request.context.href
-	# Right now, the ILibraryTOCEntries always have relative hrefs
+	# Right now, the ILibraryTOCEntries always have relative hrefs,
+	# which may or may not include a leading /.
+	# TODO: We're assuming these map into the URL space
+	# based in their root name. Is that valid? Do we need another mapping layer?
 	if not href.startswith( '/' ):
-		root = traversal.find_interface( request.context, nti_interfaces.ILibraryEntry )
+		root = traversal.find_interface( request.context, lib_interfaces.IContentPackage )
 		href = root.root + '/' + href
 		href = href.replace( '//', '/' )
-		if not href.startswith( '/' ): href = '/' + href
+		if not href.startswith( '/' ):
+			href = '/' + href
 
 	# If the client asks for a specific type of data,
-	# a link, then give it to them. Otherwis
+	# a link, then give it to them. Otherwise...
 	link_json = nti_mimetype_with_class( 'link' ) + '+json'
 	if request.accept and request.accept.best_match( ('text/html',link_json,) ) == link_json:
 		return {"Class": "Link", "href": href}
 
-	# return rather than raise to that webtest works better
+	# ...send a 302. Return rather than raise so that webtest works better
 	return hexc.HTTPSeeOther( location=href )

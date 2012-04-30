@@ -18,7 +18,6 @@ import pyramid.httpexceptions as hexc
 import persistent
 import UserList
 
-from nti.dataserver.interfaces import ILibrary
 from nti.dataserver import users, datastructures
 from nti.ntiids import ntiids
 from nti.dataserver.datastructures import ContainedMixin
@@ -27,6 +26,7 @@ from nti.externalization.externalization import to_external_representation
 
 from zope import interface
 import nti.dataserver.interfaces as nti_interfaces
+from nti.contentlibrary import interfaces as lib_interfaces
 
 
 def test_content_type():
@@ -181,7 +181,7 @@ class TestUGDViews(ConfiguringTestBase):
 			ntiid = child_ntiid
 		class Lib(object):
 			def childrenOfNTIID( self, nti ): return [NID] if nti == ntiids.ROOT else []
-		get_current_request().registry.registerUtility( Lib(), ILibrary )
+		get_current_request().registry.registerUtility( Lib(), lib_interfaces.IContentPackageLibrary )
 		view = _UGDAndRecursiveStreamView( get_current_request() )
 		user = users.User( 'jason.madden@nextthought.com', 'temp001' )
 		# No data and no changes
@@ -292,14 +292,14 @@ class TestNTIIDsContainer(ConfiguringTestBase):
 		child_ntiid = ntiids.make_ntiid( provider='ou', specific='test2', nttype='HTML' )
 
 		class NID(object):
-			interface.implements(nti_interfaces.ILibraryTOCEntry)
+			interface.implements(lib_interfaces.IContentUnit)
 			ntiid = child_ntiid
 			__parent__ = None
 			__name__ = child_ntiid
 		class Lib(object):
 			def pathToNTIID( self, ntiid ): return [NID()] if ntiid == child_ntiid else None
 
-		get_current_request().registry.registerUtility( Lib(), ILibrary )
+		get_current_request().registry.registerUtility( Lib(), lib_interfaces.IContentPackageLibrary )
 		get_current_request().registry.registerUtility( self.ds )
 		cont = _NTIIDsContainerResource( None, None )
 		cont.request = get_current_request()
