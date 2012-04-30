@@ -19,11 +19,14 @@ Contents:
 	whiteboard-apis-v1
 	api
 	chat-apis
+	chatserver
 	interfaces
 	http-rest
 	contentrendering-api
 	socketio-api
 
+
+	assessment-interfaces
 ..	regression-tests
 ..	regression-details
 

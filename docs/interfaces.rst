@@ -14,7 +14,7 @@ Dataserver Interfaces
 .. autointerface:: nti.dataserver.interfaces.IHomogeneousTypeContainer
 .. autointerface:: nti.dataserver.interfaces.IExternalObject
 .. autointerface:: nti.dataserver.interfaces.IPrincipal
-.. autointerface:: nti.dataserver.interfaces.IChatserver
+
 .. autointerface:: nti.dataserver.interfaces.ISimpleEnclosureContainer
 .. autointerface:: nti.dataserver.interfaces.IZContainer
 .. autointerface:: nti.dataserver.interfaces.ITranscriptSummary
