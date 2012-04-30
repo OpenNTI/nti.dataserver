@@ -813,7 +813,7 @@ def _create_class(ds, usernames_to_enroll=()):
 class TestApplicationLibrary(ApplicationTestBase):
 	child_ntiid = ntiids.make_ntiid( provider='ou', specific='test2', nttype='HTML' )
 
-	def _setup_library(self):
+	def _setup_library(self, content_root='/prealgebra/'):
 
 		class NID(object):
 			interface.implements( lib_interfaces.IContentUnit )
@@ -827,7 +827,7 @@ class TestApplicationLibrary(ApplicationTestBase):
 
 		class LibEnt(object):
 			interface.implements( lib_interfaces.IContentPackage )
-			root = '/prealgebra/'
+			root = content_root
 
 		class Lib(object):
 			interface.implements( lib_interfaces.IContentPackageLibrary )
@@ -861,3 +861,8 @@ class TestApplicationLibrary(ApplicationTestBase):
 		res = testapp.get( '/dataserver2/NTIIDs/' + ntiid, extra_environ=self._make_extra_environ() )
 		assert_that( res.status_int, is_( 303 ) )
 		assert_that( res.headers, has_entry( 'Location', 'http://localhost/prealgebra/sect_0002.html' ) )
+
+class TestApplicationLibraryNoSlash(TestApplicationLibrary):
+
+	def _setup_library(self):
+		return super(TestApplicationLibraryNoSlash,self)._setup_library( content_root="prealgebra" )
