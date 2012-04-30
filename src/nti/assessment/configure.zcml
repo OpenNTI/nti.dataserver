@@ -20,5 +20,16 @@
 			 provides=".interfaces.IQTextResponse"
 			 for="float"/>
 
+	<!-- Dealing with LaTeX -->
+	<adapter factory="._latexplastexconverter.factory"
+			 for=".interfaces.IQLatexSymbolicMathSolution .interfaces.IQTextResponse"
+			 provides=".interfaces.IResponseToSymbolicMathConverter" />
+
+	<adapter factory="._latexplastexdomcompare.factory"
+			 for=".interfaces.IQLatexSymbolicMathSolution .interfaces.IQTextResponse"
+			 provides=".interfaces.ISymbolicMathGrader" />
+
+
+
 
 </configure>
