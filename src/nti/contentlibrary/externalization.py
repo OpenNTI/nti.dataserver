@@ -39,12 +39,18 @@ class _ContentPackageExternal(object):
 		# TODO: We're making all kinds of assumptions about where in the
 		# URL space these are
 		def _o( p='' ):
-			return urllib.quote( '/' + os.path.basename( os.path.dirname(self.package.filename) ) + '/' + p )
+			if p is None: return None
+			if ' ' in p:
+				# Generally, we don't want to quote the path portion: it should already
+				# have been quoted with the TOC file was written. However, for
+				# hand-edited TOCs, it is convenient if we do quote it.
+				p = urllib.quote( p )
+			return urllib.quote( '/' + os.path.basename( os.path.dirname(self.package.filename) ) ) + '/' + p
 		result['icon'] = _o( self.package.icon )
 		result['href'] = _o( self.package.href )
 
 		result['root'] = _o()
-		result['index'] = _o( os.path.basename( self.package.index ) )
+		result['index'] = _o( os.path.basename( self.package.index ) ) if self.package.index else None
 		result['title'] = self.package.title
 		result['installable'] = self.package.installable
 		result['version'] = '1.0'

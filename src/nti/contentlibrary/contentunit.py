@@ -31,7 +31,7 @@ class ContentUnit(object):
 
 	def __init__( self, **kwargs ):
 		for k, v in kwargs.items():
-			if hasattr( k ):
+			if hasattr( self, k ):
 				setattr( self, k, v )
 
 	def _get_name(self):
