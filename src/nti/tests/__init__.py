@@ -7,7 +7,31 @@ import sys
 from hamcrest.core.base_matcher import BaseMatcher
 import hamcrest
 
+class BoolMatcher(BaseMatcher):
+	def __init__( self, value ):
+		super(BoolMatcher,self).__init__()
+		self.value = value
 
+	def _matches( self, item ):
+		return bool(item) == self.value
+
+	def describe_to( self, description ):
+		description.append_text( 'object with bool() value ' ).append( str(self.value) )
+
+	def __repr__( self ):
+		return 'object with bool() value ' + str(self.value)
+
+def is_true():
+	"""
+	Matches an object with the bool value of True.
+	"""
+	return BoolMatcher(True)
+
+def is_false():
+	"""
+	Matches an object with the bool() value of False.
+	"""
+	return BoolMatcher(False)
 
 class Provides(BaseMatcher):
 
@@ -88,6 +112,27 @@ import zope.testing.cleanup
 
 class AbstractTestBase(zope.testing.cleanup.CleanUp, unittest.TestCase):
 	pass
+
+
+from zope import component
+from zope.configuration import xmlconfig
+from zope.component.hooks import setHooks, resetHooks
+
+class ConfiguringTestBase(AbstractTestBase):
+	set_up_packages = ()
+	def setUp( self ):
+		super(ConfiguringTestBase,self).setUp()
+		setHooks()
+		# zope.component.globalregistry conveniently adds
+		# a zope.testing.cleanup.CleanUp to reset the globalSiteManager
+		for i in self.set_up_packages:
+			xmlconfig.file( 'configure.zcml', package=i )
+
+	def tearDown( self ):
+		resetHooks()
+		super(ConfiguringTestBase,self).tearDown()
+
+
 
 def main():
 	dirname = os.path.dirname( __file__ )

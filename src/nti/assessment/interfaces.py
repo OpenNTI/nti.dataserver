@@ -137,19 +137,19 @@ class IQuestionSet(interface.Interface):
 	questions = schema.List( title="The ordered questions in the set.",
 							 value_type=schema.Object( IQuestion, title="The questions" ) )
 
-class IResponse(interface.Interface):
+class IQResponse(interface.Interface):
 	"""
 	A response submitted by the student.
 	"""
 
-class ITextResponse(IResponse):
+class IQTextResponse(IQResponse):
 	"""
 	A response submitted as text.
 	"""
 
 	value = schema.Text( title="The response text" )
 
-class IDictResponse(IResponse):
+class IQDictResponse(IQResponse):
 	"""
 	A response submitted as a mapping between kes and values.
 	"""
@@ -157,5 +157,6 @@ class IDictResponse(IResponse):
 						 key_type=schema.TextLine( title="The key" ),
 						 value_type=schema.TextLine(title="The value") )
 
-IQMathSolution.setTaggedValue( 'response_type', ITextResponse )
-IQMatchingSolution.setTaggedValue( 'response_type', IDictResponse )
+IQMathSolution.setTaggedValue( 'response_type', IQTextResponse )
+IQFreeResponseSolution.setTaggedValue( 'response_type', IQTextResponse )
+IQMatchingSolution.setTaggedValue( 'response_type', IQDictResponse )
