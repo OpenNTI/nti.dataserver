@@ -22,28 +22,12 @@ from nti.externalization.oids import toExternalOID, fromExternalOID
 from nti.externalization.externalization import EXT_FORMAT_PLIST, EXT_FORMAT_JSON, to_external_representation, toExternalObject
 from nti.externalization.datastructures import ExternalizableDictionaryMixin
 
-from pyramid.testing import setUp as psetUp
-from pyramid.testing import tearDown as ptearDown
-from pyramid.testing import DummyRequest
 
 from zope import component
-from zope.configuration import xmlconfig
-import zope.testing.cleanup
+import nti.tests
 
-class ConfiguringTestBase(zope.testing.cleanup.CleanUp, unittest.TestCase):
-
-    def setUp( self ):
-        self.request = DummyRequest()
-        self.config = psetUp(request=self.request,hook_zca=False)
-        # Notice that the pyramid testing setup
-        # FAILS to make the sitemanager a child of the global sitemanager.
-        # this breaks the zope component APIs in many bad ways
-        #component.getSiteManager().__bases__ = (component.getGlobalSiteManager(),)
-        xmlconfig.file( 'configure.zcml', package=nti.externalization )
-
-    def tearDown( self ):
-        ptearDown()
-        super(ConfiguringTestBase,self).tearDown()
+class ConfiguringTestBase(nti.tests.ConfiguringTestBase):
+	set_up_packages = (nti.externalization,)
 
 
 

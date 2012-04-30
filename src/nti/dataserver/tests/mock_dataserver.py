@@ -155,31 +155,9 @@ def WithMockDSTrans( func ):
 	return nose.tools.make_decorator( func )( f )
 
 
-import unittest
 
-
-from pyramid.testing import setUp as psetUp
-from pyramid.testing import tearDown as ptearDown
-from pyramid.testing import DummyRequest
-
-from zope import component
-from zope.configuration import xmlconfig
-import zope.testing.cleanup
-
-class ConfiguringTestBase(zope.testing.cleanup.CleanUp, unittest.TestCase):
-
-	def setUp( self ):
-		self.request = DummyRequest()
-		self.config = psetUp(request=self.request,hook_zca=False)
-		# Notice that the pyramid testing setup
-		# FAILS to make the sitemanager a child of the global sitemanager.
-		# this breaks the zope component APIs in many bad ways
-		#component.getSiteManager().__bases__ = (component.getGlobalSiteManager(),)
-		xmlconfig.file( 'configure.zcml', package=dataserver )
-
-	def tearDown( self ):
-		ptearDown()
-		super(ConfiguringTestBase,self).tearDown()
+class ConfiguringTestBase(nti.tests.ConfiguringTestBase):
+	set_up_packages = (dataserver,)
 
 	@property
 	def ds(self):

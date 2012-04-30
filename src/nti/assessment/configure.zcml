@@ -1,0 +1,24 @@
+<!-- -*- mode: nxml -*- -->
+<configure xmlns="http://namespaces.zope.org/zope"
+		   i18n_domain="zope">
+	<include package="zope.component" />
+	<include package="zope.location" />
+
+	<!-- Response types -->
+
+	<adapter factory=".response.QTextResponse"
+			 provides=".interfaces.IQTextResponse"
+			 for="basestring"/>
+
+	<adapter factory=".response.QTextResponse"
+			 provides=".interfaces.IQTextResponse"
+			 for="int"/>
+	<adapter factory=".response.QTextResponse"
+			 provides=".interfaces.IQTextResponse"
+			 for="long"/>
+	<adapter factory=".response.QTextResponse"
+			 provides=".interfaces.IQTextResponse"
+			 for="float"/>
+
+
+</configure>

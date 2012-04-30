@@ -1,9 +1,9 @@
 #!/usr/bin/env python2.7
 
-from nti.appserver import tests
+import unittest
 from nti.dictserver import ChromeDictionary
 
-class TestDictionary(tests.ConfiguringTestBase): 
+class TestDictionary(unittest.TestCase):
 
 	# this test makes sure that when a dict is constructed without a lookup path,
 	# or other bad path of some sort, it fails
@@ -11,4 +11,3 @@ class TestDictionary(tests.ConfiguringTestBase):
 		self.assertRaises(LookupError, ChromeDictionary, '')
 		self.assertRaises(TypeError, ChromeDictionary)
 		self.assertRaises(TypeError, ChromeDictionary, None)
-	
