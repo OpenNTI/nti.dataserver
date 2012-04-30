@@ -11,7 +11,7 @@ from nti.contentsearch.common import get_highlight_content
 from nti.contentsearch.common import get_messageinfo_content
 
 from nti.contentsearch.common import (	CLASS, CREATOR, ID, OID, last_modified_fields, ntiid_fields, 
-										container_id_fields, NTIID, CONTAINER_ID )
+										container_id_fields, NTIID, CONTAINER_ID, TARGET_OID )
 
 from nti.contentsearch.common import (	ngrams_, channel_, content_, keywords_, references_, username_,
 										last_modified_, recipients_, sharedWith_, id_,
@@ -55,8 +55,8 @@ def create_domain(connection, domain_name, allow_ips=()):
 	domain.create_index_field(ID, 'literal', searchable=True, result=True, 
 							  source_attributes=(id_, ID))
 	
-	domain.create_index_field(OID, 'literal', searchable=True, result=True,
-							  source_attributes=(oid_, OID))
+	domain.create_index_field(TARGET_OID, 'literal', searchable=True, result=True,
+							  source_attributes=(oid_, OID, TARGET_OID))
 	
 	domain.create_index_field(content_, 'text', searchable=True, result=True)
 		

@@ -433,7 +433,16 @@ def createApplication( http_port,
 							 view='nti.contentsearch.pyramid_views.UserSearch',
 							 renderer='rest',
 							 permission=nauth.ACT_SEARCH)
-
+	
+	# Unified search for content and user data. It should follow the same
+	# security policies for user data search
+	pyramid_config.add_route( name='search2.unified', pattern='/dataserver2/Search/{term:.*}',
+							  factory=_UserSearchRootFactory)
+	pyramid_config.add_view( route_name='search2.unified',
+							 view='nti.contentsearch.pyramid_views.Search',
+							 renderer='rest',
+							 permission=nauth.ACT_SEARCH)
+	
 	pyramid_config.add_route( name='search2.users', pattern='/dataserver2/UserSearch/{term:.*}',
 							  factory=_ContentSearchRootFactory)
 	pyramid_config.add_view( route_name='search2.users',
