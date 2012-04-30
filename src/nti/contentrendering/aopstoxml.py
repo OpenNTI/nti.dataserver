@@ -248,7 +248,7 @@ def setupResources():
 	from plasTeX.Base import Math
 
 	#The math package does not correctly implement the sqrt macro.	It takes two args
-	Math.sqrt.args='[root]{arg}'
+	Math.sqrt.args = '[root]{arg}'
 
 	inlineMathTypes = ['mathjax_inline']
 	displayMathTypes = ['mathjax_display']
@@ -257,23 +257,23 @@ def setupResources():
 	#displayMathTypes = ['mathjax_display', 'png', 'svg']
 
 	Math.math.resourceTypes = inlineMathTypes
-	Math.ensuremath.resourceTypes=inlineMathTypes
+	Math.ensuremath.resourceTypes = inlineMathTypes
 
 	Math.displaymath.resourceTypes = displayMathTypes
 	Math.EqnarrayStar.resourceTypes = displayMathTypes
+	Math.equation.resourceTypes = displayMathTypes
 
-	# FIXME: Star imports!
-	from plasTeX.Packages.amsmath import align, AlignStar, alignat, AlignatStar, gather, GatherStar
 
 	from plasTeX.Packages.graphicx import includegraphics
 	includegraphics.resourceTypes = ['png']
 
-	align.resourceTypes = displayMathTypes
-	AlignStar.resourceTypes = displayMathTypes
-	alignat.resourceTypes = displayMathTypes
-	AlignatStar.resourceTypes = displayMathTypes
-	gather.resourceTypes = displayMathTypes
-	GatherStar.resourceTypes = displayMathTypes
+	from plasTeX.Packages import amsmath
+	amsmath.align.resourceTypes = displayMathTypes
+	amsmath.AlignStar.resourceTypes = displayMathTypes
+	amsmath.alignat.resourceTypes = displayMathTypes
+	amsmath.AlignatStar.resourceTypes = displayMathTypes
+	amsmath.gather.resourceTypes = displayMathTypes
+	amsmath.GatherStar.resourceTypes = displayMathTypes
 
 	# XXX FIXME If we don't do this, then we can get
 	# a module called graphicx reloaded from this package
