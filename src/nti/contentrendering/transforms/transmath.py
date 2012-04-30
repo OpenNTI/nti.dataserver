@@ -1,17 +1,23 @@
 #!/usr/bin/env python
 # $Id$
+
+from __future__ import print_function, unicode_literals
+
 # Disable pylint warning about "too many methods" on the Command subclasses,
 # and "deprecated string" module
 #pylint: disable=R0904,W0402
-from plasTeX import Node
-import plasTeX.Base
-import string
 
 import logging
 logger = logging.getLogger(__name__)
 
+
+from plasTeX import Node
+import plasTeX.Base
+import string
+
 from zope import interface
-from . import interfaces
+
+from nti.contentrendering import interfaces
 interface.moduleProvides(interfaces.IDocumentTransformer)
 
 
@@ -40,7 +46,7 @@ def transform(document):
 
 def transformSimpleNsuperscript(document):
 	nsuperscripts = []
-	for name in ['nst', 'nnd', 'nrd', 'nth']:
+	for name in ('nst', 'nnd', 'nrd', 'nth'):
 		nsuperscripts.extend(document.getElementsByTagName(name))
 
 	nsuperscriptsinmath = [node for node in nsuperscripts if node.parentNode.mathMode]
@@ -63,43 +69,30 @@ def transformSimpleMath(document):
 	simpleMaths = list(set(simpleMaths))
 
 	for math in simpleMaths:
-		try:
+		text = math.textContent
 
-			text = math.textContent
-
-			#Remove any empty math nodes from the dom.	There are likely none
-			#Note the addition of the childNode check its is not enough to just
-			#check if the textContent is none
-			if not(text):
-				#Found empty mathnode remove it from the parent
-				logger.info( 'Found empty math node' )
-				math.parentNode.removeChild(math)
-			elif all( [c in string.ascii_letters for c in text] ):
-				r = None
-				#print "Found math node %s to mathname" % math.toXML()
-			##	if math.previousSibling:
-			##		prevText = (math.previousSibling.textContent or '').rstrip()
-			##		if prevText.lower().endswith( ' angle' ):
-			##			r = document.createElement( 'mathangle' )
-			##		elif prevText.lower().endswith( ' line') or prevText == 'Line':
-			##			r = document.createElement( 'mathline' )
-			##	if r is None:
-			##		r = document.createElement( 'mathname' )
-				r = document.createElement( 'mathname' )
-				r.attributes['text'] = text
-				r.origMathSource = math.source
-				math.parentNode.replaceChild( r, math )
-			else:
-				#at this point we better have a a number
-				#print 'Replacing mathnumber'
-				float(text)
-				r = document.createElement( 'mathnumber' )
-				r.attributes['text'] = text
-				r.origMathSource = math.source
-				math.parentNode.replaceChild( r, math )
-
-		except ValueError:
-			pass
-		except Exception:
-			logger.exception( 'Unable to replace %s parents children are %s', math, [x for x in enumerate(math.parentNode)] )
-
+		if not(text):
+			# Remove any empty math nodes from the dom.	There are likely none;
+			# their appearance is probably indicative of a problem in the source.
+			logger.warning( 'Found empty math node %s (in %s ...)', math.toXML(), math.parentNode.source[:30] )
+			math.parentNode.removeChild(math)
+		elif all( [c in string.ascii_letters for c in text] ):
+			# A node that's just a next name. Make it more expressive
+			# for transform purposes. Previously we tried to infer
+			# from the preceding text if this was an 'angle' or 'line'
+			# but that was unreliable
+			r = document.createElement( 'mathname' )
+			r.attributes['text'] = text
+			r.origMathSource = math.source
+			math.parentNode.replaceChild( r, math )
+		else:
+			# Not empty, not a name. Let's consider it a "number"
+			try:
+				float(text) # ensure it is a number
+			except ValueError:
+				# not a number. Oh well.
+				continue
+			r = document.createElement( 'mathnumber' )
+			r.attributes['text'] = text
+			r.origMathSource = math.source
+			math.parentNode.replaceChild( r, math )
