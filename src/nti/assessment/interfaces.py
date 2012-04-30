@@ -85,6 +85,29 @@ class IQLatexSymbolicMathSolution(IQSymbolicMathSolution):
 
 	value = schema.TextLine( title="The LaTeX form of the correct answer." )
 
+class IResponseToSymbolicMathConverter(interface.Interface):
+	"""
+	An object that knows how to produce a symbolic (parsed) version
+	of a response. Should be registered as a multi-adapter on the
+	solution and response type.
+	"""
+
+	def convert( response ):
+		"""
+		Produce and return a symbolic version of the response.
+		"""
+
+class ISymbolicMathGrader(interface.Interface):
+	"""
+	An object that knows how to grade symbolic math. Should be registered
+	as a multi-adapter on the solution and response types.
+	"""
+
+	def grade( solution, response ):
+		"""
+		The same contract as :meth:`IQSolution.grade`.
+		"""
+
 class IQMultipleChoiceSolution(IQSolution):
 	"""
 	A solution whose correct answer is drawn from a fixed list

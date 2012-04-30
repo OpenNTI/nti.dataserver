@@ -2,6 +2,7 @@
 from __future__ import print_function, unicode_literals
 
 from zope import interface
+from zope import component
 
 from nti.assessment import interfaces
 
@@ -74,3 +75,26 @@ class QFreeResponseSolution(_TrivialEqualityMixin,QSolution):
 	Simple free-response solution.
 	"""
 	interface.implements(interfaces.IQFreeResponseSolution)
+
+
+class QSymbolicMathSolution(QMathSolution):
+	"""
+	Symbolic math grading is redirected through
+	grading components for extensibility.
+	"""
+	interface.implements(interfaces.IQSymbolicMathSolution)
+
+	def _grade(self, response):
+		grader = component.getMultiAdapter( (self, response), interfaces.ISymbolicMathGrader )
+		return grader.grade( self, response )
+
+
+class QLatexSymbolicMathSolution(QSymbolicMathSolution):
+	"""
+	The answer is defined to be in latex.
+	"""
+
+	interface.implements(interfaces.IQLatexSymbolicMathSolution)
+
+	def __init__( self, value ):
+		self.value = value # TODO: Verification? Minor transforms like adding $$?
