@@ -10,7 +10,8 @@ from hamcrest import (assert_that, is_, none, starts_with,
 
 from hamcrest.library import has_property
 from nti.appserver.application import createApplication
-from nti.dataserver.library import Library
+from nti.contentlibrary.filesystem import Library
+from nti.contentlibrary import interfaces as lib_interfaces
 import nti.contentsearch
 import nti.contentsearch.interfaces
 import pyramid.config
@@ -28,7 +29,9 @@ from nti.dataserver import users, classes, providers
 from nti.ntiids import ntiids
 from nti.dataserver.datastructures import ContainedMixin
 from nti.externalization.oids import to_external_ntiid_oid
-from nti.dataserver import contenttypes, datastructures, interfaces as nti_interfaces
+from nti.dataserver import contenttypes
+from nti.dataserver import datastructures
+from nti.dataserver import interfaces as nti_interfaces
 
 from nti.dataserver.tests import mock_dataserver
 
@@ -813,7 +816,7 @@ class TestApplicationLibrary(ApplicationTestBase):
 	def _setup_library(self):
 
 		class NID(object):
-			interface.implements( nti_interfaces.ILibraryTOCEntry )
+			interface.implements( lib_interfaces.IContentUnit )
 			ntiid = TestApplicationLibrary.child_ntiid
 			href = 'sect_0002.html'
 			__parent__ = None
@@ -823,11 +826,11 @@ class TestApplicationLibrary(ApplicationTestBase):
 				return self
 
 		class LibEnt(object):
-			interface.implements( nti_interfaces.ILibraryEntry )
+			interface.implements( lib_interfaces.IContentPackage )
 			root = '/prealgebra/'
 
 		class Lib(object):
-			interface.implements( nti_interfaces.ILibrary )
+			interface.implements( lib_interfaces.IContentPackageLibrary )
 			titles = ()
 			def pathToNTIID( self, ntiid ):
 				return [NID().with_parent( LibEnt() )] if ntiid == TestApplicationLibrary.child_ntiid else None
