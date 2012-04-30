@@ -502,3 +502,7 @@ class QueryExpr(object):
 	def __repr__( self ):
 		return 'QueryExpr(%s)' % self.expr
 
+_all_re = re.compile('([\?\*])')
+def is_all_query(query):
+	mo = _all_re.search(query)
+	return mo and mo.start(1) == 0

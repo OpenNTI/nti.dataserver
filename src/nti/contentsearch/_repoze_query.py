@@ -1,4 +1,3 @@
-import re
 import sys
 import inspect
 
@@ -9,6 +8,7 @@ from repoze.catalog.query import Contains as IndexContains
 from repoze.catalog.query import DoesNotContain as IndexDoesNotContain
 
 from nti.contentsearch.common import QueryExpr
+from nti.contentsearch.common import is_all_query
 from nti.contentsearch.common import (sharedWith_, containerId_, collectionId_, id_, oid_, ntiid_,
 									  ID, LAST_MODIFIED, CONTAINER_ID, COLLECTION_ID, OID, NTIID, CREATOR)
 from nti.contentsearch.common import (last_modified_fields)
@@ -76,13 +76,6 @@ class DoesNotContain(IndexDoesNotContain):
 	def create_for_indexng3(cls, index_name, value, **kwargs):
 		set_default_indexng3(kwargs)			
 		return DoesNotContain(index_name, value, **kwargs)
-
-# ---------------------------------
-
-_all_re = re.compile('([\?\*])')
-def is_all_query(query):
-	mo = _all_re.search(query)
-	return mo and mo.start(1) == 0
 
 # ---------------------------------
 
