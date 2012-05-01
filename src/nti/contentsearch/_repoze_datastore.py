@@ -7,6 +7,9 @@ from persistent.mapping import PersistentMapping
 from nti.contentsearch._document import DocumentMap
 from nti.contentsearch.interfaces import IRepozeDataStore
 
+import logging
+logger = logging.getLogger( __name__ )
+
 class _RepozeDataStore(PersistentMapping):
 	"""
 	deprecated repoze data store

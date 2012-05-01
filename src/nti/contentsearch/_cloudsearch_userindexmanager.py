@@ -189,11 +189,20 @@ class CloudSearchUserIndexManager(object):
 			return result.deletes
 		
 		return 0
+	
 	# ---------------------- 
 		
 	def has_stored_indices(self):
-		return User.get_user(self.username, dataserver=self.dataserver) is not None if self.dataserver else False
+		try:
+			bq = "%s:'%s'" % (username_, self.username)
+			service = self.get_search_service()
+			objects = service.search(bq=bq, return_fields=_return_fields, size=1, start=0)
+			return True if len(objects) else False
+		except:
+			logger.exception("Error while trying to query for all user documents")
+		return False
 		
 	def get_stored_indices(self):
+		# asume all types are stored
 		return list(indexable_type_names)
 	
