@@ -60,11 +60,16 @@ def _response_text_to_latex(response):
 	return response
 
 def convert( response ):
-	response_doc = _response_text_to_latex( response.value )
-	response = _mathTexToDOMNodes( ( response_doc, ) )
-	if len(response) != 1:
-		return None
-	return response[0]
+	cache_attr = '_v_latexplastexconverter_cache'
+	cached_value = getattr( response, cache_attr, None )
+	if not cached_value or cached_value[0] != response.value:
+		response_doc = _response_text_to_latex( response.value )
+		dom = _mathTexToDOMNodes( ( response_doc, ) )
+		if len(dom) == 1:
+			cached_value = (response.value, dom[0])
+			setattr( response, cache_attr, cached_value )
+
+	return cached_value[1] if cached_value else None
 
 def factory( solution, response ):
 	if response.value:

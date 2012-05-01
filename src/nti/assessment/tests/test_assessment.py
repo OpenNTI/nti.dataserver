@@ -1,10 +1,17 @@
+#!/usr/bin/env python
+from __future__ import print_function, unicode_literals
+
 import unittest
 from hamcrest import assert_that, is_
+import nti.tests
 
-from nti.assessment import *
+import nti.assessment
 
+from nti.assessment import mathTexToDOMNodes, grade_one_response, assess, mathIsEqual
+import plasTeX
 
-class TestAssessment(unittest.TestCase):
+class TestAssessment(nti.tests.ConfiguringTestBase):
+	set_up_packages = (nti.assessment,)
 
 	def test_mathTexToDOM(self):
 		mathStrings = ['$1$','$1+2$','$\\frac{1}{2}$']

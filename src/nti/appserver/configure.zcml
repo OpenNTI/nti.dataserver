@@ -78,4 +78,5 @@
 	<include package="nti.dataserver" />
 	<include package="nti.contentsearch" />
 	<include package="nti.socketio" />
+	<include package="nti.assessment" />
 </configure>
