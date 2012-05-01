@@ -33,8 +33,7 @@ class ResourceSetGenerator(resources.BaseResourceSetGenerator):
 	def __init__(self, compiler, encoding, batch):
 		super(ResourceSetGenerator, self).__init__(compiler, encoding, batch)
 
-		# TODO: Why the check???
-		self.configName = self.mathjaxconfigfile if self.mathjaxconfigname else None
+		self.configName = self.mathjaxconfigfile
 		if not self.configName:
 			print 'Mathjax config has not been provided.'
 		elif not os.path.exists( self.configName ):
@@ -142,5 +141,3 @@ def _processBatchSource(generator, params):
 		return generator.processSource()
 
 	return ()
-
-

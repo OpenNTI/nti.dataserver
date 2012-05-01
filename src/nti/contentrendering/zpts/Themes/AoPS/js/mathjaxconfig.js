@@ -45,6 +45,8 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready",function () {
 									 TEX.Definitions.mathchar0mo.yen = '00A5';
 									 TEX.Definitions.mathchar0mo.textregistered = '00AE';
 									 TEX.Definitions.mathchar0mo.EUR = '20AC';
+									 TEX.Definitions.mathchar0mo.EURO = '20AC';
+									 TEX.Definitions.mathchar0mo.euro = '20AC';
 									 TEX.Definitions.mathchar0mo.smiley = '263A';
 									 TEX.Definitions.mathchar0mo.cent = '00A2';
 
