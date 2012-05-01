@@ -8,8 +8,10 @@ from hamcrest import (assert_that, is_,
 import unittest
 from zope import (interface, component)
 
-
-
+try:
+	import cPickle as pickle
+except ImportError:
+	import pickle
 
 #import nti.chatserver.chat as chat
 from nti.chatserver import interfaces as chat_interfaces
@@ -72,6 +74,11 @@ class TestMeetingContainer(ConfiguringTestBase):
 			assert_that( interface.providedBy( adapt ), has_item( chat_interfaces.IMeetingContainer ) )
 
 
+class MockMeeting(object):
+	Active = True
+	occupant_names = ()
+
+
 class TestFriendsListAdaptor( ConfiguringTestBase ):
 	occupant_names = ()
 	@WithMockDS
@@ -126,8 +133,7 @@ class TestFriendsListAdaptor( ConfiguringTestBase ):
 			fl1.addFriend( ds.root['users']['friend@bar'] )
 			user.addContainedObject( fl1 )
 
-		self.Active = True
-		def c(): return self
+		c = MockMeeting
 		adapt = component.queryAdapter( fl1, chat_interfaces.IMeetingContainer )
 
 		# No active meeting fails.
@@ -135,17 +141,28 @@ class TestFriendsListAdaptor( ConfiguringTestBase ):
 
 		# Create active meeting. Only the owner can create
 		d = { 'Occupants': [('foo@bar', 1234)], 'Creator': 'foo@bar' }
-		assert_that( adapt.create_meeting_from_dict( None, d, c ), is_(self) )
-
-
+		room = adapt.create_meeting_from_dict( None, d, c )
+		assert_that( room, is_(MockMeeting) )
+		# The results have an acl
+		assert_that( room, has_property( '__acl__' ) )
+		# The results can be pickled
+		# ...once we drop the bad __parent__
+		old_p = room.__parent__
+		del room.__parent__
+		s = pickle.dumps( room, pickle.HIGHEST_PROTOCOL )
+		r2 = pickle.loads( s )
+		assert_that( r2.__acl__, is_( room.__acl__ ) )
+		room.__parent__ = old_p
 		# Bad sender fails
 		assert_that( adapt.enter_active_meeting( None, {'Creator': 'me'} ), is_( none() ) )
 
 		# Valid sender works
 		## A friend  reenters an existing room
-		assert_that( adapt.enter_active_meeting( None, {'Creator': 'friend@bar'} ), is_( self ) )
+		assert_that( adapt.enter_active_meeting( None, {'Creator': 'friend@bar'} ), is_( MockMeeting ) )
 		## The creator gets a fresh one
 		assert_that( adapt.enter_active_meeting( None, {'Creator': user.username} ), is_( none() ) )
+
+
 
 class TestClassSectionAdapter( ConfiguringTestBase ):
 	occupant_names = ()
