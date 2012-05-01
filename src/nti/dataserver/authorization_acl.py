@@ -22,7 +22,9 @@ from nti.externalization import interfaces as ext_interfaces
 class _ACE(object):
 	"""
 	Object to hold a single ACE, permitting more descriptive code and
-	prettier string output. These objects must not be persisted.
+	prettier string output.
+
+	These objects are persisted in their string forms.
 	"""
 
 	interface.implements( nti_interfaces.IACE )
@@ -97,10 +99,11 @@ class _ACE(object):
 			self.permission = [x for x in self.permission if x is not None]
 			assert self.permission, "Must provide a permission"
 
-	# Make them non-picklable
-	def __reduce__( self, *args, **kwargs ):
-		raise TypeError( "ACEs cannot be pickled." ) #pragma: no cover
-	__reduce_ex__ = __reduce__
+	def __getstate__( self ):
+		return self.to_external_string()
+	def __setstate__( self, state ):
+		other = self.from_external_string( state, provenance='from pickle' )
+		self.__dict__ = other.__dict__
 
 	def to_external_string(self):
 		"""
@@ -110,7 +113,6 @@ class _ACE(object):
 		return "%s:%s:%s" % (self.action,
 							 self.actor.id,
 							 'All' if self.permission is nti_interfaces.ALL_PERMISSIONS else [str(x.id) for x in self.permission])
-
 
 	def __eq__(self,other):
 		# TODO: Work on this
@@ -124,7 +126,12 @@ class _ACE(object):
 	def __repr__(self):
 		provenance = ''
 		if self._provenance:
-			provenance = self._provenance.__name__ if isinstance(self._provenance,type) else type(self._provenance).__name__
+			if isinstance( self._provenance, six.string_types ):
+				provenance = self._provenance
+			elif isinstance( self._provenance, type ):
+				provenance = self._provenance.__name__
+			else:
+				provenance = type(self._provenance).__name__
 		return "<%s: %s,%s,%s%s>" % (self.__class__.__name__,
 									 self.action,
 									 self.actor.id,
