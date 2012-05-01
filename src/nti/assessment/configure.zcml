@@ -20,6 +20,12 @@
 			 provides=".interfaces.IQTextResponse"
 			 for="float"/>
 
+	<!-- Solution types -->
+	<!-- TODO: This should really be on the ILatexContentFragment -->
+	<adapter factory=".solution.QLatexSymbolicMathSolution"
+			 provides=".interfaces.IQLatexSymbolicMathSolution"
+			 for="basestring"/>
+
 	<!-- Dealing with LaTeX -->
 	<adapter factory="._latexplastexconverter.factory"
 			 for=".interfaces.IQLatexSymbolicMathSolution .interfaces.IQTextResponse"

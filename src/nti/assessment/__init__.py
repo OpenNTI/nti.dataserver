@@ -19,7 +19,7 @@ def grade_one_response(questionResponse, possible_answers):
 		`questionResponse` with.
 	"""
 
-	answers = [solution.QLatexSymbolicMathSolution( t ) for t in possible_answers]
+	answers = [interfaces.IQLatexSymbolicMathSolution( t ) for t in possible_answers]
 
 	match = False
 	for answer in answers:

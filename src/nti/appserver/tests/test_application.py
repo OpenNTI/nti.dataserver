@@ -642,7 +642,7 @@ class TestApplication(ApplicationTestBase):
 
 		quiz, testapp = self._check_class_modeled_enclosure_href( quiz_data, 'application/vnd.nextthought.quiz+json' )
 
-		# We should be able to post a response for grading
+		# We should be able to post a response for grading with raw strings
 		result_data = {"Class": "QuizResult",
 					   "ContainerId": ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' ),
 					   "QuizID": quiz['NTIID'],
@@ -650,6 +650,15 @@ class TestApplication(ApplicationTestBase):
 		testapp.post( '/dataserver2/users/sjohnson@nextthought.com/',
 							   json.dumps( result_data ),
 							   extra_environ=self._make_extra_environ() )
+		# and with wrapped responses
+		result_data = {"Class": "QuizResult",
+					   "ContainerId": ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' ),
+					   "QuizID": quiz['NTIID'],
+					   'Items': {"1": {"ID": "1", "Response": "0"}}}
+		testapp.post( '/dataserver2/users/sjohnson@nextthought.com/',
+							   json.dumps( result_data ),
+							   extra_environ=self._make_extra_environ() )
+
 
 
 	def test_quiz_container_id_auto_mapping(self):
