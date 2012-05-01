@@ -527,6 +527,18 @@ class TestChatserver(ConfiguringTestBase):
 			assert_that( user.get_by_ntiid( tx_id ).get_message( msg.ID ), is_( msg ) )
 
 	@WithMockDSTrans
+	def test_moderator_send_default(self):
+		room, chatserver = self._create_moderated_room()
+
+		msg = chat.MessageInfo()
+		msg.channel = chat.CHANNEL_DEFAULT
+		msg.recipients = ['chris']
+
+		# Only the moderator
+		msg.Creator = 'sjohnson'
+		assert_that( chatserver.post_message_to_room( room.ID, msg ), is_( True ) )
+
+	@WithMockDSTrans
 	def test_content(self):
 		room, chatserver = self._create_moderated_room()
 
