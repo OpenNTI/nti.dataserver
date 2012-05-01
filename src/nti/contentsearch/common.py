@@ -22,11 +22,11 @@ from nti.chatserver.messageinfo import MessageInfo
 
 from nti.dataserver.users import Entity
 from nti.dataserver.contenttypes import Note
-from nti.dataserver.interfaces import ILibrary
 from nti.dataserver.contenttypes import Canvas
 from nti.dataserver.contenttypes import Highlight
 from nti.dataserver.contenttypes import CanvasTextShape
 from nti.externalization.oids import to_external_ntiid_oid
+from nti.contentlibrary.interfaces import IContentPackageLibrary
 
 from nti.contentsearch import to_list
 
@@ -172,7 +172,7 @@ def get_type_name(obj):
 def get_collection(containerId, default=u'prealgebra'):
 	result = default
 	if containerId and is_valid_ntiid_string(containerId):
-		_library = component.queryUtility( ILibrary )
+		_library = component.queryUtility( IContentPackageLibrary )
 		if _library:
 			paths = _library.pathToNTIID(containerId)
 			result = paths[0].label if paths else default
