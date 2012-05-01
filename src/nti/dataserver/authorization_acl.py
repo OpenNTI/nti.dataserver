@@ -17,6 +17,7 @@ from zope import component
 import pyramid.security
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import authorization as auth
+from nti.contentlibrary import interfaces as content_interfaces
 from nti.externalization import interfaces as ext_interfaces
 
 class _ACE(object):
@@ -409,7 +410,7 @@ class _LibraryTOCEntryACLProvider(object):
 	Allows all authenticated users access to library entries.
 	"""
 	interface.implements( nti_interfaces.IACLProvider )
-	component.adapts(nti_interfaces.ILibraryTOCEntry)
+	component.adapts(content_interfaces.IContentUnit)
 
 	def __init__( self, obj ):
 		self._obj = obj
@@ -424,7 +425,7 @@ class _LibraryEntryACLProvider(object):
 	users access.
 	"""
 	interface.implements( nti_interfaces.IACLProvider )
-	component.adapts( nti_interfaces.ILibraryEntry )
+	component.adapts( content_interfaces.IContentPackage )
 
 	def __init__( self, obj ):
 		self._obj = obj

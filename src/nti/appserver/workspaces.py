@@ -8,9 +8,9 @@ from zope.location import location
 from zope.mimetype import interfaces as mime_interfaces
 from zope.location.location import LocationProxy
 
-from nti.dataserver import interfaces as model_interfaces
 from nti.dataserver import datastructures
-
+from nti.dataserver import interfaces as model_interfaces
+from nti.contentlibrary import interfaces as content_interfaces
 
 from nti.externalization.externalization import toExternalObject, toExternalDictionary, isSyntheticKey
 from nti.externalization.datastructures import LocatedExternalDict
@@ -125,7 +125,7 @@ class CollectionContentTypeAware(object):
 
 class LibraryWorkspace(object):
 	interface.implements(app_interfaces.IWorkspace)
-	component.adapts(model_interfaces.ILibrary)
+	component.adapts(content_interfaces.IContentPackageLibrary)
 
 	def __init__( self, lib ):
 		self._library = lib
@@ -144,7 +144,7 @@ class LibraryWorkspace(object):
 
 class LibraryCollection(object):
 	interface.implements(app_interfaces.ICollection)
-	component.adapts(model_interfaces.ILibrary)
+	component.adapts(content_interfaces.IContentPackageLibrary)
 
 	def __init__( self, lib ):
 		self._library = lib
@@ -627,7 +627,7 @@ class UserService(object):
 		global_ws.__parent__ = self.__parent__
 		result.append( global_ws )
 
-		_library = component.queryUtility( model_interfaces.ILibrary )
+		_library = component.queryUtility( content_interfaces.IContentPackageLibrary )
 		if _library:
 			# Inject the library at /users/ME/Library
 			tr = location.Location()
