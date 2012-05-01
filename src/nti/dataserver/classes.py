@@ -71,6 +71,7 @@ class ClassInfo( datastructures.PersistentCreatedModDateTrackingObject,
 				 enclosures.SimpleEnclosureMixin,
 				 datastructures.ContainedMixin):
 
+	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	interface.implements(nti_interfaces.IClassInfo,
 						 nti_interfaces.ISimpleEnclosureContainer,
 						 nti_interfaces.ILocation)
@@ -234,6 +235,7 @@ class SectionInfo( datastructures.PersistentCreatedModDateTrackingObject,
 				   ExternalizableInstanceDict,
 				   enclosures.SimpleEnclosureMixin ):
 
+	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	interface.implements(nti_interfaces.ISectionInfo,
 						 nti_interfaces.ISimpleEnclosureContainer,
 						 nti_interfaces.ILocation )
@@ -340,6 +342,8 @@ class SectionInfo( datastructures.PersistentCreatedModDateTrackingObject,
 
 class InstructorInfo( Persistent,
 					  ExternalizableInstanceDict ):
+
+	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	interface.implements(nti_interfaces.IInstructorInfo)
 
 	def __init__( self ):
