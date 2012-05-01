@@ -221,7 +221,7 @@ def _bypass_for_moderator( f ):
 	@functools.wraps(f)
 	def bypassing( self, msg_info ):
 		if self.is_moderated_by( msg_info.Sender ):
-			super(_ModeratedMeeting,self).post_message( msg_info )
+			super(_ModeratedMeetingMessagePostPolicy,self).post_message( msg_info )
 			return True
 		return f( self, msg_info )
 	return bypassing
