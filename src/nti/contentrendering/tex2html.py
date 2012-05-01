@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 import logging
 logger = logging.getLogger(__name__)
 
@@ -6,19 +6,36 @@ from . import run_phantom_on_page
 import codecs, os
 import resources
 import tempfile
-#import subprocess
+
 import cgi
 import html2mathml
-import warnings
+
 _debug = False
 
 from nti.contentrendering import javascript_path
 from pkg_resources import resource_exists, resource_filename
 def _require_resource_filename( mathjaxconfigname ):
-	if not resource_exists( __name__, 'zpts/Themes/AoPS/js/' + mathjaxconfigname ):
-		raise Exception( "Unable to get mathjax config" )
-	warnings.warn( "MathJax config file has dependency on AoPS path" )
-	return resource_filename( __name__, 'zpts/Themes/AoPS/js/' + mathjaxconfigname )
+	if not resource_exists( __name__, '/js/' + mathjaxconfigname ):
+		raise Exception( "Unable to get default mathjax config" )
+	return resource_filename( __name__, '/js/' + mathjaxconfigname )
+
+def _find_theme_mathjaxconfig(name):
+	"""
+	Looks through the configured themes and returns the first mathjaxconfig found.
+
+	Since we don't have a theme name (and no trivial way to get it) this relies
+	on the fact that we put the job-local Templates directory, which should have
+	one theme, first on the template path.
+	"""
+	for dirname in os.environ.get( 'XHTMLTEMPLATES', '' ).split( os.path.pathsep ):
+		dirname = os.path.join( dirname, 'Themes' )
+		if os.path.exists( dirname ):
+			files = [os.path.join( dirname, x, 'js', name ) for x in os.listdir( dirname )]
+			for f in files:
+				if os.path.exists( f ):
+					return f
+
+
 
 class ResourceSetGenerator(resources.BaseResourceSetGenerator):
 
@@ -26,14 +43,14 @@ class ResourceSetGenerator(resources.BaseResourceSetGenerator):
 	mathjaxconfigname	= 'mathjaxconfig.js'
 	# FIXME: This path assumption is not good.
 	# we should be at least using the jobname?
-	mathjaxconfigfile	= _require_resource_filename(mathjaxconfigname)
+	mathjaxconfigfile	= _require_resource_filename('defaultmathjaxconfig.js')
 
 	wrapInText = False
 
 	def __init__(self, compiler, encoding, batch):
 		super(ResourceSetGenerator, self).__init__(compiler, encoding, batch)
 
-		self.configName = self.mathjaxconfigfile
+		self.configName = _find_theme_mathjaxconfig( self.mathjaxconfigname )
 		if not self.configName:
 			print 'Mathjax config has not been provided.'
 		elif not os.path.exists( self.configName ):
@@ -49,6 +66,7 @@ class ResourceSetGenerator(resources.BaseResourceSetGenerator):
 		<link rel="stylesheet" href="styles/styles.css" />\
 		<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/1.1-latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>')
 
+		self.write('<script type="text/javascript" src="%s"></script>' % self.mathjaxconfigfile)
 		if self.configName:
 			self.write('<script type="text/javascript" src="%s"></script>' % self.configName)
 
@@ -92,17 +110,21 @@ class ResourceSetGenerator(resources.BaseResourceSetGenerator):
 		htmlOutFile = os.path.join(tempdir, self.htmlfile)
 		codecs.open(htmlOutFile, 'w', 'utf-8').write(htmlSource)
 
-		configName = os.path.basename(self.mathjaxconfigfile)
-		configOutFile = os.path.join(tempdir, configName)
+		copied_configs = []
 		try:
-			configOutFile = os.path.join(tempdir, configName)
-			resources.copy(self.mathjaxconfigfile, configOutFile, _debug)
+			for i in (self.mathjaxconfigfile, self.configName):
+				if not i: continue
+				configName = os.path.basename(i)
+				configOutFile = os.path.join(tempdir, configName)
+				resources.copy(i, configOutFile, _debug)
+				copied_configs.append( configOutFile )
 
 			stdout = run_phantom_on_page( htmlOutFile, self.compiler, expect_non_json_output=True )
 
 			return (stdout, tempdir)
 		finally:
-			os.remove(configOutFile)
+			for configOutFile in copied_configs:
+				os.remove(configOutFile)
 
 	def convert(self, output, workdir):
 

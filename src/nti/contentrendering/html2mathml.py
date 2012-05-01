@@ -128,10 +128,21 @@ class ResourceGenerator(resources.BaseResourceGenerator):
 		return True
 
 
-def _processBatchSource(generator, params):
-	if generator.size() > 0:
-		return generator.processSource()
+def _processBatchSource(generator, params, raise_exceptions=False):
+	"""
+	:param bool raise_exceptions: When called an a concurrent.futures pool,
+		then exceptions from the job method (this method) can cause the pool
+		to hang. If ``False`` (the default), then this method will swallow
+		exceptions.
+	"""
+	try:
+		if generator.size() > 0:
+			return generator.processSource()
+	except Exception:
+		# Running in a concurrent.futures, throwing tends to
+		# hang the pool
+		if raise_exceptions:
+			raise
+		import traceback; traceback.print_exc()
 
 	return ()
-
-

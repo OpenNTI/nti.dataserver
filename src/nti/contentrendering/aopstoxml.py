@@ -83,6 +83,7 @@ def main():
 
 
 	# Set up TEXINPUTS to include the current directory for the renderer
+	# Parts of the code (notably html2tex.py) depend on this being first
 	os.environ['TEXINPUTS'] = '%s%s%s%s' % (os.getcwd(), os.pathsep,
 										 os.environ.get('TEXINPUTS',''), os.pathsep)
 	# Likewise for the renderers

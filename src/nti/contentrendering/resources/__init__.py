@@ -389,7 +389,7 @@ class ResourceDB(object):
 
 class BaseResourceSetGenerator(object):
 
-	def __init__(self, compiler='', encoding = '', batch=0):
+	def __init__(self, compiler='', encoding = '', batch=0, **kwargs):
 		self.batch = batch
 		self.writer = StringIO()
 		self.compiler = compiler
@@ -611,4 +611,3 @@ def copy(source, dest, debug=True):
 		shutil.copy(source, dest)
 
 #End copy
-
