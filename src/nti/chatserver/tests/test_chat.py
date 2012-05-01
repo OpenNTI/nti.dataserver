@@ -183,6 +183,7 @@ class TestChatRoom(ConfiguringTestBase):
 		assert_that( ext, has_entry( 'references', only_contains( to_external_ntiid_oid( n ) ) ) )
 		assert_that( ext, has_entry( 'Moderators', [] ) )
 		assert_that( ext, has_entry( 'MessageCount', 0 ) )
+		assert_that( ext, has_entry( 'Moderated', False ) )
 		to_external_representation( room, EXT_FORMAT_JSON )
 		to_external_representation( room, EXT_FORMAT_PLIST )
 
@@ -206,6 +207,7 @@ class TestChatRoom(ConfiguringTestBase):
 		room = chat.Meeting( MockChatServer() )
 		room.Moderated = True
 		assert_that( room, is_( chat.ModeratedMeeting ) )
+		assert_that( room.toExternalObject(), has_entry( 'Moderated', True ) )
 
 		msg = chat.MessageInfo()
 		room.post_message( msg )

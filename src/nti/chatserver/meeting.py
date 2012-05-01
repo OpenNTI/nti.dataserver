@@ -395,7 +395,7 @@ class _ModeratedMeetingMessagePostPolicy(_MeetingMessagePostPolicy):
 
 	def add_moderator( self, mod_name ):
 		self.moderation_state.add_moderator( mod_name )
-		self.emit_roomModerationChanged( self._occupant_names, self )
+		self.emit_roomModerationChanged( self._occupant_names, self._room )
 
 	def is_moderated_by( self, mod_name ):
 		return self.moderation_state.is_moderated_by( mod_name )
