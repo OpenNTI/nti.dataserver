@@ -12,6 +12,8 @@ from persistent.list import PersistentList
 
 from zope import interface
 
+from nti.assessment import interfaces as as_interfaces
+
 from nti.dataserver import datastructures
 
 from nti.externalization.datastructures import ExternalizableDictionaryMixin
@@ -135,6 +137,7 @@ class Quiz(datastructures.ContainedMixin,datastructures.CreatedModDateTrackingOb
 
 
 class QuizQuestionResponse(persistent.Persistent):
+	interface.implements(as_interfaces.IQTextResponse)
 
 	def __init__(self, quizId=None, theId=None, actualValue=None):
 		super(QuizQuestionResponse,self).__init__()
@@ -149,6 +152,7 @@ class QuizQuestionResponse(persistent.Persistent):
 		return self.actualValue
 
 	response = property(getResponse, setResponse)
+	value = property(getResponse,setResponse) # For compliance with IQTextResponse
 
 	def __repr__( self ):
 		return "QuizQuestionResponse('%s')" % self.actualValue
