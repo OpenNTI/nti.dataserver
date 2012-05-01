@@ -60,6 +60,7 @@ setup(
 		'brownie',
 		'coverage',
 		'cython',
+		'futures >= 2.1.2',
 		'gevent == 1.0dev',
 		'gevent-zeromq',
 		'gunicorn == 0.14.2',
