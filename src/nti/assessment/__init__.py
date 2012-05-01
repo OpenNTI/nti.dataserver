@@ -6,6 +6,10 @@ from _latexplastexconverter import _response_text_to_latex
 from _latexplastexconverter import _mathTexToDOMNodes as mathTexToDOMNodes
 from _latexplastexdomcompare import _mathIsEqual as mathIsEqual
 
+import solution
+
+from zope.deprecation import deprecated
+
 def grade_one_response(questionResponse, possible_answers):
 	"""
 	:param questionResponse: The string to evaluate. It may be in latex notation
@@ -14,27 +18,14 @@ def grade_one_response(questionResponse, possible_answers):
 	:param list possible_answers: A sequence of possible answers to compare
 		`questionResponse` with.
 	"""
-	answers = mathTexToDOMNodes( possible_answers )
-	response = str(questionResponse)
-	if not response:
-		#The student skipped this question. Always
-		#a fail.
-		return False
 
-	response_doc = _response_text_to_latex( response )
-	response = mathTexToDOMNodes( ( response_doc, ) )
-
-	if len(response) != 1:
-		# TODO: How to handle this? We need to present
-		# some sort of retry condition?
-		raise Exception( u"Invalid response format '%s' (%s/%s -> %s/%s)" % (questionResponse, response_doc, type(response_doc), len(response), response) )
+	answers = [solution.QLatexSymbolicMathSolution( t ) for t in possible_answers]
 
 	match = False
 	for answer in answers:
-		for rsp in response:
-			match = mathIsEqual( rsp, answer )
-			if match:
-				return True
+		match = answer.grade( questionResponse )
+		if match:
+			return match
 
 	return False
 
@@ -43,3 +34,5 @@ def assess( quiz, responses ):
 	for questionId, questionResponse in responses.iteritems():
 		result[questionId] = grade_one_response( questionResponse, quiz[questionId].answers )
 	return result
+
+#deprecated( "assess", "Prefer ???")
