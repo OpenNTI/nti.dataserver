@@ -4,8 +4,11 @@ from __future__ import unicode_literals, print_function
 from zope import interface
 from zope import schema
 
+class TypedIterable(schema.List):
+	_type = None
+
 # TODO: Should the content portions be specifically modelled as
-# contentrendering.interfaces.IContentFragment?
+# contentrendering.interfaces.IContentFragment? Probably
 
 class IQHint(interface.Interface):
 	"""
@@ -31,11 +34,34 @@ class IQPart(interface.Interface):
 								description="All solutions must be of the same type, and there must be at least one." )
 	explanation = schema.Text( title="An explanation of how the solution is arrived at." )
 
+	def grade( response ):
+		"""
+		Determine the correctness of the given response. Usually this will do its work
+		by delegating to a registered :class:`IQPartGrader`.
+
+		:param response: An :class:`IResponse` object representing the student's input for this
+			part of the question.
+		:return: A value that can be interpreted as a boolean, indicating correct (``True``) or incorrect
+			(``False``) response. A return value of ``None`` indicates no opinion. If solution weights are
+			taken into account, this will be a floating point number between 0.0 (incorrect) and 1.0 (perfect).
+		"""
+
 
 class IQMathPart(IQPart):
 	"""
 	A question part whose answer lies in the math domain.
 	"""
+
+class IQPartGrader(interface.Interface):
+	"""
+	An object that knows how to grade solutions, given a response. Should be registered
+	as a multi-adapter on the question part, solution, and response types.
+	"""
+
+	def __call__( ):
+		"""
+		Implement the contract of :meth:`IQPart.grade`.
+		"""
 
 class IQSolution(interface.Interface):
 
@@ -48,28 +74,13 @@ class IQSolution(interface.Interface):
 						   max=1.0,
 						   default=1.0 )
 
-	def grade( response ):
-		"""
-		Determine the correctness of the given response. Usually this will do its work
-		by delegating to a registered :class:`IQSolutionResponseGrader`.
 
-		:param response: An :class:`IResponse` object representing the student's input for this
-			part of the question.
-		:return: Either a boolean value or a number between 0 and 1 indicating how correct
-			the student's response was. Typically only True and False will be returned.
-		"""
-
-
-class IQSolutionResponseGrader(interface.Interface):
+class IQSingleValuedSolution(IQSolution):
 	"""
-	An object that knows how to grade solutions, given a response. Should be registered
-	as a multi-adapter on the solution and response types.
+	A solution consisting of a single value.
 	"""
+	value = interface.Attribute( "The correct value" )
 
-	def grade( solution, response ):
-		"""
-		The same contract as :meth:`IQSolution.grade`.
-		"""
 
 class IQMathSolution(IQSolution):
 	"""
@@ -77,7 +88,7 @@ class IQMathSolution(IQSolution):
 	specialized.
 	"""
 
-class IQNumericMathSolution(IQMathSolution):
+class IQNumericMathSolution(IQMathSolution,IQSingleValuedSolution):
 	"""
 	A solution whose correct answer is numeric in nature, and
 	should be graded according to numeric equivalence.
@@ -91,8 +102,12 @@ class IQSymbolicMathSolution(IQMathSolution):
 	For example, "twelve pi" or "the square root of two".
 	"""
 
+class IQSymbolicMathPart(IQPart):
+	"""
+	A part whose solutions are symbolic math.
+	"""
 
-class IQLatexSymbolicMathSolution(IQSymbolicMathSolution):
+class IQLatexSymbolicMathSolution(IQSymbolicMathSolution,IQSingleValuedSolution):
 	"""
 	A solution whose correct answer should be interpreted
 	as symbols, parsed from latex.
@@ -112,22 +127,38 @@ class IResponseToSymbolicMathConverter(interface.Interface):
 		Produce and return a symbolic version of the response.
 		"""
 
-class IQSymbolicMathGrader(IQSolutionResponseGrader):
+class IQSymbolicMathGrader(IQPartGrader):
 	"""
 	Specialized grader for symbolic math expressions.
 	"""
 
-class IQMultipleChoiceSolution(IQSolution):
+class IQMultipleChoiceSolution(IQSolution,IQSingleValuedSolution):
 	"""
 	A solution whose correct answer is drawn from a fixed list
 	of possibilities. The student is expected to choose from
 	the options presented. These will typically be used in isolation as a single part.
 	"""
+
+	value = interface.Attribute( "The correct answer as the zero-based index into the choices list." )
+
+class IQMultipleChoicePart(IQPart):
+	"""
+	A question part that asks the student to choose between a fixed set
+	of alternatives.
+	"""
+
 	choices = schema.List( title="The choice strings to present to the user.",
-						  value_type=schema.TextLine( title="A rendered value" ) ) # TODO: Again with the IContentFragment?
+						   value_type=schema.TextLine( title="A rendered value" ) ) # TODO: Again with the IContentFragment?
+	solutions = TypedIterable( title="The multiple-choice solutions",
+							   value_type=schema.Object( IQMultipleChoiceSolution, title="Multiple choice solution" ) )
+
+class IQMultipleChoicePartGrader(IQPartGrader):
+	"""
+	Specialized interface for grading multiple choice questions.
+	"""
 
 
-class IQFreeResponseSolution(IQSolution):
+class IQFreeResponseSolution(IQSolution,IQSingleValuedSolution):
 	"""
 	A solution whose correct answer is simple text.
 	"""
@@ -191,4 +222,26 @@ class IQDictResponse(IQResponse):
 
 IQMathSolution.setTaggedValue( 'response_type', IQTextResponse )
 IQFreeResponseSolution.setTaggedValue( 'response_type', IQTextResponse )
+IQMultipleChoiceSolution.setTaggedValue( 'response_type', IQTextResponse )
 IQMatchingSolution.setTaggedValue( 'response_type', IQDictResponse )
+
+def convert_response_for_solution(solution, response):
+	"""
+	Given a solution and a response, attempt to adapt
+	the response to the type needed by the grader.
+	Uses the `response_type` tagged value on the interfaces implemented
+	by the grader.
+	"""
+	if not IQSolution.providedBy( solution ):
+		# Well, nothing to be done, no info given
+		return response
+
+	for iface in interface.providedBy( solution ).flattened():
+		response_type = iface.queryTaggedValue( 'response_type' )
+		if response_type:
+			result = response_type( response, alternate=None ) # adapt or return if already present
+			if result:
+				response = result
+				break
+
+	return response

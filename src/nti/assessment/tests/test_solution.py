@@ -15,29 +15,29 @@ class TestConvert(ConfiguringTestBase):
 	set_up_packages = (nti.assessment,)
 
 	def test_not_isolution(self):
-		assert_that( solution.convert_response( self, self ), is_( self ) )
+		assert_that( interfaces.convert_response_for_solution( self, self ), is_( self ) )
 		# Because we have no interfaces, no conversion is attempted
-		assert_that( solution.convert_response( self, 42 ), is_( 42 ) )
+		assert_that( interfaces.convert_response_for_solution( self, 42 ), is_( 42 ) )
 
 
 	def test_convert_fails(self):
 		class Soln(object):
 			interface.implements(interfaces.IQMathSolution)
 
-		assert_that( solution.convert_response( Soln(), self ), is_( self ) )
-		assert_that( solution.convert_response( Soln(), self.set_up_packages ), is_( self.set_up_packages ) )
+		assert_that( interfaces.convert_response_for_solution( Soln(), self ), is_( self ) )
+		assert_that( interfaces.convert_response_for_solution( Soln(), self.set_up_packages ), is_( self.set_up_packages ) )
 
 	def test_convert_from_string(self):
 		class Soln(object):
 			interface.implements(interfaces.IQMathSolution)
 
-		assert_that( solution.convert_response( Soln(), "string" ), is_( response.QTextResponse ) )
+		assert_that( interfaces.convert_response_for_solution( Soln(), "string" ), is_( response.QTextResponse ) )
 
 	def test_convert_from_number(self):
 		class Soln(object):
 			interface.implements(interfaces.IQNumericMathSolution)
 
-		assert_that( solution.convert_response( Soln(), 42 ), is_( response.QTextResponse ) )
+		assert_that( interfaces.convert_response_for_solution( Soln(), 42 ), is_( response.QTextResponse ) )
 
 class TestNumericMathSolution(ConfiguringTestBase):
 	set_up_packages = (nti.assessment,)
