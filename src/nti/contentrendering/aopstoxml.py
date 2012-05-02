@@ -236,7 +236,7 @@ def toXml( document, jobname ):
 	with open(outfile,'w') as f:
 		f.write(document.toXML().encode('utf-8'))
 
-from resources import ResourceDB
+from resources import ResourceDB, ResourceTypeOverrides
 
 def setupResources():
 	from plasTeX.Base import Arrays
@@ -285,8 +285,12 @@ def setupResources():
 
 def generateImages(document):
 	### Generates required images ###
-	# Replace this with configuration/use of ZCA
-	overrides = resource_filename(__name__, 'resourceoverrides')
+	# Replace this with configuration/use of ZCA?
+	local_overrides = os.path.join( os.getcwd(), 'nti.resourceoverrides', ResourceTypeOverrides.OVERRIDE_INDEX_NAME )
+	if os.path.exists( local_overrides ):
+		overrides = local_overrides
+	else:
+		overrides = resource_filename(__name__, 'resourceoverrides')
 	db = ResourceDB(document, overridesLocation=overrides)
 	db.generateResourceSets()
 	return db
