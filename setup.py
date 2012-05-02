@@ -75,6 +75,7 @@ setup(
 		'pyramid_tm',
 		'pyramid_traversalwrapper',
 		'pyramid_who',
+		'pyramid_zcml >= 0.9.2',
 		'pyramid_zodbconn >= 0.3',
 		'pyramid-openid',
 		'pytz',
