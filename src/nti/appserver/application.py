@@ -14,11 +14,8 @@ import traceback
 
 import UserDict
 
+import nti.dictserver as dictserver
 import nti.dictserver.dictionary
-import nti.dictserver._pyramid
-dictserver = UserDict.UserDict()
-dictserver.pyramid = nti.dictserver._pyramid
-dictserver.dictionary = nti.dictserver.dictionary
 
 
 #Hmm, these next three MUST be imported. We seem to have a path-dependent import req.
@@ -53,8 +50,9 @@ import pyramid.security
 import pyramid.httpexceptions as hexc
 
 import datetime
-import pyramid_auth
 import pyramid_zodbconn
+
+from . import pyramid_auth
 
 
 # Make the zope interface extend the pyramid interface
@@ -295,6 +293,8 @@ def createApplication( http_port,
 	pyramid_config.add_tween( 'nti.appserver.application.site_tween_factory', under='pyramid_tm.tm_tween_factory' )
 
 
+	pyramid_config.include( 'pyramid_zcml' )
+
 	# The pyramid_openid view requires a session. The repoze.who.plugins.openid plugin
 	# uses a cookie by default to handle this, so it's not horrible to use an unencrypted
 	# cookie session for this purpose. This keeps us from having to have a cross-server
@@ -353,17 +353,12 @@ def createApplication( http_port,
 	pyramid_config.registry.registerAdapter( OUAdminFactory, name='OUAdminFactory' )
 
 
-	if dictserver.pyramid and 'main_dictionary_path' in settings:
+	if 'main_dictionary_path' in settings:
 		try:
 			dictionary = dictserver.dictionary.ChromeDictionary( settings['main_dictionary_path'] )
 			pyramid_config.registry.registerUtility( dictionary )
 			logger.debug( "Adding dictionary" )
-
-			pyramid_config.add_static_view( '/dictionary/static', 'nti.dictserver:static/',
-											cache_max_age=datetime.timedelta(days=1) )
-			pyramid_config.add_route( name='dictionary.word', pattern='/dictionary/{word}',
-									  request_method='GET')
-			pyramid_config.scan( dictserver.pyramid )
+			pyramid_config.load_zcml( 'pyramid.zcml' )
 		except LookupError:
 			logger.exception( "Failed to add dictionary server" )
 
@@ -433,7 +428,7 @@ def createApplication( http_port,
 							 view='nti.contentsearch.pyramid_views.UserSearch',
 							 renderer='rest',
 							 permission=nauth.ACT_SEARCH)
-	
+
 	# Unified search for content and user data. It should follow the same
 	# security policies for user data search
 	pyramid_config.add_route( name='search2.unified', pattern='/dataserver2/Search/{term:.*}',
@@ -442,7 +437,7 @@ def createApplication( http_port,
 							 view='nti.contentsearch.pyramid_views.Search',
 							 renderer='rest',
 							 permission=nauth.ACT_SEARCH)
-	
+
 	pyramid_config.add_route( name='search2.users', pattern='/dataserver2/UserSearch/{term:.*}',
 							  factory=_ContentSearchRootFactory)
 	pyramid_config.add_view( route_name='search2.users',
