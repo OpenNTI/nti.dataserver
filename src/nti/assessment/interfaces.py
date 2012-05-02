@@ -148,6 +148,8 @@ class IQMultipleChoicePart(IQPart):
 	"""
 
 	choices = schema.List( title="The choice strings to present to the user.",
+						   description="""Presentation order may matter, hence the list. But for grading purposes,
+						   the order does not matter and simple existence within the set is sufficient.""",
 						   value_type=schema.TextLine( title="A rendered value" ) ) # TODO: Again with the IContentFragment?
 	solutions = TypedIterable( title="The multiple-choice solutions",
 							   value_type=schema.Object( IQMultipleChoiceSolution, title="Multiple choice solution" ) )
@@ -168,9 +170,20 @@ class IQFreeResponseSolution(IQSolution,IQSingleValuedSolution):
 
 class IQMatchingSolution(IQSolution):
 	"""
-	A solution whose answer is a mapping from options in one column (called `labels` for simplicity)
-	to options in another column (called `values`). The two lists must have the same
-	length.
+	Matching solutions are the correct mapping from keys to values.
+	Generally this will be a mapping of integer locations, but it may also be
+	a mapping of actual keys and values. The response is an IDictResponse of ints or key/values.
+	"""
+
+	value = schema.Dict( title="The correct mapping." )
+
+class IQMatchingPart(IQPart):
+	"""
+	A question part that asks the student to connect items from one column (labels) with
+	items in another column (values) forming a one-to-one and onto mapping.
+
+	The possibilities are represented as two equal-length lists because order of presentation does matter,
+	and to permit easy grading:	responses are submitted as mapping from label position to value position.
 	"""
 
 	labels = schema.List( title="The list of labels",
@@ -178,6 +191,10 @@ class IQMatchingSolution(IQSolution):
 	values = schema.List( title="The list of labels",
 						  value_type=schema.TextLine( title="A value-column value" ) )
 
+class IQMatchingPartGrader(IQPartGrader):
+	"""
+	A grader for matching questions.
+	"""
 
 class IQuestion(interface.Interface):
 	"""

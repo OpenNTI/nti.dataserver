@@ -20,6 +20,10 @@
 			 provides=".interfaces.IQTextResponse"
 			 for="float"/>
 
+	<adapter factory=".response.QDictResponse"
+			 provides=".interfaces.IQDictResponse"
+			 for="dict" />
+
 	<!-- Solution types -->
 	<!-- TODO: This should really be on the ILatexContentFragment -->
 	<adapter factory=".solution.QLatexSymbolicMathSolution"
@@ -45,6 +49,9 @@
 			 for=".interfaces.IQMultipleChoicePart .interfaces.IQSingleValuedSolution .interfaces.IQTextResponse"
 			 provides=".interfaces.IQMultipleChoicePartGrader" />
 
+	<adapter factory=".graders.MatchingPartGrader"
+			 for=".interfaces.IQMatchingPart .interfaces.IQMatchingSolution .interfaces.IQDictResponse"
+			 provides=".interfaces.IQMatchingPartGrader" />
 
 
 
