@@ -21,7 +21,7 @@ class TestLatex(ConfiguringTestBase):
 
 		rsp = response.QTextResponse( soln.value )
 
-		grader = component.getMultiAdapter( (soln, rsp), interfaces.ISymbolicMathGrader )
+		grader = component.getMultiAdapter( (soln, rsp), interfaces.IQSymbolicMathGrader )
 		assert_that( grader.grade( soln, rsp ), is_true() )
 
 		assert_that( soln.grade( soln.value ), is_true() )

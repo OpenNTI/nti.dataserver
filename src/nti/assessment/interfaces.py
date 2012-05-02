@@ -50,16 +50,31 @@ class IQSolution(interface.Interface):
 
 	def grade( response ):
 		"""
-		Determine the correctness of the given response.
+		Determine the correctness of the given response. Usually this will do its work
+		by delegating to a registered :class:`IQSolutionResponseGrader`.
+
 		:param response: An :class:`IResponse` object representing the student's input for this
 			part of the question.
 		:return: Either a boolean value or a number between 0 and 1 indicating how correct
 			the student's response was. Typically only True and False will be returned.
 		"""
 
+
+class IQSolutionResponseGrader(interface.Interface):
+	"""
+	An object that knows how to grade solutions, given a response. Should be registered
+	as a multi-adapter on the solution and response types.
+	"""
+
+	def grade( solution, response ):
+		"""
+		The same contract as :meth:`IQSolution.grade`.
+		"""
+
 class IQMathSolution(IQSolution):
 	"""
-	A solution in the math domain.
+	A solution in the math domain. Generally intended to be abstract and
+	specialized.
 	"""
 
 class IQNumericMathSolution(IQMathSolution):
@@ -97,16 +112,10 @@ class IResponseToSymbolicMathConverter(interface.Interface):
 		Produce and return a symbolic version of the response.
 		"""
 
-class ISymbolicMathGrader(interface.Interface):
+class IQSymbolicMathGrader(IQSolutionResponseGrader):
 	"""
-	An object that knows how to grade symbolic math. Should be registered
-	as a multi-adapter on the solution and response types.
+	Specialized grader for symbolic math expressions.
 	"""
-
-	def grade( solution, response ):
-		"""
-		The same contract as :meth:`IQSolution.grade`.
-		"""
 
 class IQMultipleChoiceSolution(IQSolution):
 	"""

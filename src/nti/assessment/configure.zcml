@@ -33,7 +33,14 @@
 
 	<adapter factory="._latexplastexdomcompare.factory"
 			 for=".interfaces.IQLatexSymbolicMathSolution .interfaces.IQTextResponse"
-			 provides=".interfaces.ISymbolicMathGrader" />
+			 provides=".interfaces.IQSymbolicMathGrader" />
+
+
+	<!-- Generic grading -->
+	<adapter factory=".graders.StringEqualityGrader"
+			 for=".interfaces.IQFreeResponseSolution .interfaces.IQTextResponse" />
+	<adapter factory=".graders.FloatEqualityGrader"
+			 for=".interfaces.IQNumericMathSolution .interfaces.IQTextResponse" />
 
 
 

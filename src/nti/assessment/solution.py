@@ -38,11 +38,17 @@ class QSolution(Persistent):
 
 	interface.implements(interfaces.IQSolution)
 
+	grader_interface = interfaces.IQSolutionResponseGrader
+	grader_name = ''
+
 	def grade( self, response ):
 		return self._grade( convert_response( self, response ) )
 
-	def _grade(self, response ):
-		raise NotImplementedError(type(self), type(self).mro()) # pragma: no cover
+	def _grade(self, response):
+		grader = component.getMultiAdapter( (self, response),
+											self.grader_interface,
+											name=self.grader_name	)
+		return grader.grade( self, response )
 
 class QMathSolution(QSolution):
 	"""
@@ -51,15 +57,12 @@ class QMathSolution(QSolution):
 	interface.implements(interfaces.IQMathSolution)
 
 
-class _TrivialEqualityMixin(object):
-	converter = unicode
+class _TrivialValuedMixin(object):
 	def __init__( self, value ):
 		self.value = value
 
-	def _grade( self, response):
-		return self.value == self.converter(response.value)
 
-class QNumericMathSolution(_TrivialEqualityMixin,QMathSolution):
+class QNumericMathSolution(_TrivialValuedMixin,QMathSolution):
 	"""
 	Numeric math solution.
 
@@ -68,9 +71,9 @@ class QNumericMathSolution(_TrivialEqualityMixin,QMathSolution):
 	"""
 
 	interface.implements(interfaces.IQNumericMathSolution)
-	converter = float
 
-class QFreeResponseSolution(_TrivialEqualityMixin,QSolution):
+
+class QFreeResponseSolution(_TrivialValuedMixin,QSolution):
 	"""
 	Simple free-response solution.
 	"""
@@ -83,18 +86,15 @@ class QSymbolicMathSolution(QMathSolution):
 	grading components for extensibility.
 	"""
 	interface.implements(interfaces.IQSymbolicMathSolution)
-
-	def _grade(self, response):
-		grader = component.getMultiAdapter( (self, response), interfaces.ISymbolicMathGrader )
-		return grader.grade( self, response )
+	grader_interface = interfaces.IQSymbolicMathGrader
 
 
-class QLatexSymbolicMathSolution(QSymbolicMathSolution):
+
+class QLatexSymbolicMathSolution(_TrivialValuedMixin,QSymbolicMathSolution):
 	"""
 	The answer is defined to be in latex.
 	"""
 
 	interface.implements(interfaces.IQLatexSymbolicMathSolution)
 
-	def __init__( self, value ):
-		self.value = value # TODO: Verification? Minor transforms like adding $$?
+	 # TODO: Verification of the value? Minor transforms like adding $$?
