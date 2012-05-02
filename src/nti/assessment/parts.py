@@ -67,3 +67,11 @@ class QMultipleChoicePart(QPart):
 
 	grader_interface = interfaces.IQMultipleChoicePartGrader
 	choices = ()
+
+class QMatchingPart(QPart):
+	interface.implements(interfaces.IQMatchingPart)
+
+	grader_interface = interfaces.IQMatchingPartGrader
+
+	labels = ()
+	values = ()

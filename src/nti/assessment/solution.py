@@ -72,10 +72,11 @@ class QLatexSymbolicMathSolution(_TrivialValuedMixin,QSymbolicMathSolution):
 	"""
 
 	interface.implements(interfaces.IQLatexSymbolicMathSolution)
-
-
-
 	 # TODO: Verification of the value? Minor transforms like adding $$?
+
+
+class QMatchingSolution(_TrivialValuedMixin,QSolution):
+	interface.implements(interfaces.IQMatchingSolution)
 
 class QMultipleChoiceSolution(_TrivialValuedMixin,QSolution):
 	interface.implements(interfaces.IQMultipleChoiceSolution)

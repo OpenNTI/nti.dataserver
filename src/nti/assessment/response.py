@@ -26,3 +26,13 @@ class QTextResponse(QResponse):
 
 	def __init__( self, value=None ):
 		self.value = value
+
+class QDictResponse(QResponse):
+	"""
+	A dictionary response.
+	"""
+	interface.implements(interfaces.IQDictResponse)
+
+
+	def __init__( self, value=None ):
+		self.value = value

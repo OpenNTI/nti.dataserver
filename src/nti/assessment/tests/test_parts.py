@@ -56,3 +56,29 @@ class TestMultipleChoicePart(ConfiguringTestBase):
 		# Submitting the index
 		assert_that( part.grade( 1 ), is_true() )
 		assert_that( part.grade( 0 ), is_false() )
+
+class TestMatchingPart(ConfiguringTestBase):
+	set_up_packages = (nti.assessment,)
+
+	def test_grade(self):
+		labels = ("A","B")
+		values = ("X", "Y")
+
+		solution_keys = {"A": "Y", "B": "X"}
+		solution_nums = {0: 1, 1: 0}
+
+		solution = solutions.QMatchingSolution( solution_keys )
+		part = parts.QMatchingPart( labels=labels, values=values, solutions=(solution,) )
+
+		assert_that( part.grade( solution_keys ), is_true() )
+		assert_that( part.grade( solution_nums ), is_true() )
+
+		assert_that( part.grade( {"A": "Y"} ), is_false() )
+
+		part = parts.QMatchingPart( labels=labels, values=values, solutions=(solutions.QMatchingSolution( solution_nums ),) )
+		assert_that( part.grade( solution_keys ), is_true() )
+		assert_that( part.grade( solution_nums ), is_true() )
+
+		assert_that( part.grade( {"A": "Y"} ), is_false() )
+
+		assert_that( part.grade( {"A": "Z"} ), is_false() )
