@@ -3,11 +3,11 @@
 Support functions for comparing latex Math DOMs using PlasTeX
 """
 from __future__ import print_function, unicode_literals
-import sys
+
 
 from nti.assessment import interfaces
+from zope import interface
 from zope import component
-
 
 def _mathIsEqual(math1, math2):
 	return _mathChildrenAreEqual(math1.childNodes, math2.childNodes)
@@ -32,10 +32,7 @@ def _mathChildIsEqual(child1, child2):
 	if child1 == child2:
 		return True
 
-	if child1.nodeType != child2.nodeType:
-		return False
-
-	if len(child1.childNodes) != len(child2.childNodes):
+	if child1.nodeType != child2.nodeType or len(child1.childNodes) != len(child2.childNodes):
 		return False
 
 	if child1.nodeType == child1.TEXT_NODE:
@@ -44,26 +41,18 @@ def _mathChildIsEqual(child1, child2):
 
 		return type(text1) == type(text2) and text1 == text2
 
-	elif child1.nodeType == child1.ELEMENT_NODE:
-		#Simple case we have no children
+	if child1.nodeType == child1.ELEMENT_NODE:
+		# Check that the arguments and the children are equal
+		return len(child1.arguments) == len(child2.arguments) and \
+		  all( (_mathChildIsEqual(child1.attributes[k.name],child2.attributes[k.name]) for k in child1.arguments) ) and \
+		  _mathChildrenAreEqual(child1.childNodes, child2.childNodes)
 
-		if len(child1.arguments) != len(child2.arguments):
-			return False
-		for arg in child1.arguments:
-			arg1 = child1.attributes[arg.name]
-			arg2 = child2.attributes[arg.name]
-			if not _mathChildIsEqual(arg1, arg2):
-				return False
 
+	if child1.nodeType == child1.DOCUMENT_FRAGMENT_NODE:
 		return _mathChildrenAreEqual(child1.childNodes, child2.childNodes)
 
-
-	elif child1.nodeType == child1.DOCUMENT_FRAGMENT_NODE:
-		return _mathChildrenAreEqual(child1.childNodes, child2.childNodes)
-
-	else:
-		#Fallback to string comparison
-		return _sanitizeTextNodeContent(child1) == _sanitizeTextNodeContent(child2)
+	#Fallback to string comparison
+	return _sanitizeTextNodeContent(child1) == _sanitizeTextNodeContent(child2)
 
 def _stripEmptyChildren(children):
 	newChildren = []
@@ -95,7 +84,12 @@ def grade( solution, response ):
 
 	return _mathIsEqual( solution_dom, response_dom )
 
-def factory( solution, response ):
-	return sys.modules[__name__]
+class Grader(object):
+	interface.implements( interfaces.IQSymbolicMathGrader )
 
-component.moduleProvides(interfaces.IQSymbolicMathGrader)
+	def __init__( self, part, solution, response ):
+		self.solution = solution
+		self.response = response
+
+	def __call__( self ):
+		return grade( self.solution, self.response )

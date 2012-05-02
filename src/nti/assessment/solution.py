@@ -5,29 +5,10 @@ from zope import interface
 from zope import component
 
 from nti.assessment import interfaces
+from nti.assessment import parts
 
 from persistent import Persistent
 
-def convert_response(grader, response):
-	"""
-	Given a grading object and a response, attempt to adapt
-	the response to the type needed by the grader.
-	Uses the `response_type` tagged value on the interfaces implemented
-	by the grader.
-	"""
-	if not interfaces.IQSolution.providedBy( grader ):
-		# Well, nothing to be done, no info given
-		return response
-
-	for iface in interface.providedBy( grader ).flattened():
-		response_type = iface.queryTaggedValue( 'response_type' )
-		if response_type:
-			result = response_type( response, alternate=None ) # adapt or return if already present
-			if result:
-				response = result
-				break
-
-	return response
 
 class QSolution(Persistent):
 	"""
@@ -38,17 +19,14 @@ class QSolution(Persistent):
 
 	interface.implements(interfaces.IQSolution)
 
-	grader_interface = interfaces.IQSolutionResponseGrader
-	grader_name = ''
+	_part_type = parts.QPart
 
 	def grade( self, response ):
-		return self._grade( convert_response( self, response ) )
-
-	def _grade(self, response):
-		grader = component.getMultiAdapter( (self, response),
-											self.grader_interface,
-											name=self.grader_name	)
-		return grader.grade( self, response )
+		"""
+		Convenience method for grading solutions that can be graded independent
+		of their question parts.
+		"""
+		return self._part_type( solutions=(self,) ).grade( response )
 
 class QMathSolution(QSolution):
 	"""
@@ -86,9 +64,7 @@ class QSymbolicMathSolution(QMathSolution):
 	grading components for extensibility.
 	"""
 	interface.implements(interfaces.IQSymbolicMathSolution)
-	grader_interface = interfaces.IQSymbolicMathGrader
-
-
+	_part_type = parts.QSymbolicMathPart
 
 class QLatexSymbolicMathSolution(_TrivialValuedMixin,QSymbolicMathSolution):
 	"""
@@ -97,4 +73,11 @@ class QLatexSymbolicMathSolution(_TrivialValuedMixin,QSymbolicMathSolution):
 
 	interface.implements(interfaces.IQLatexSymbolicMathSolution)
 
+
+
 	 # TODO: Verification of the value? Minor transforms like adding $$?
+
+class QMultipleChoiceSolution(_TrivialValuedMixin,QSolution):
+	interface.implements(interfaces.IQMultipleChoiceSolution)
+
+	_part_type = parts.QMultipleChoicePart
