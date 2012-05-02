@@ -70,7 +70,7 @@ setup(
 		'paste',
 		'pyhamcrest',
 		'pylint',
-		'pyquery',
+		'pyquery >= 1.2',
 		'pyramid >= 1.3' ,
 		'pyramid_tm',
 		'pyramid_traversalwrapper',

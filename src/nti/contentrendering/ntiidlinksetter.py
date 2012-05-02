@@ -27,10 +27,10 @@ def transform( book, save_toc=True ):
 		if dom:
 			hrefs = []
 			# The main body
-			hrefs.extend( dom("a['href']") )
+			hrefs.extend( dom("a[href]") )
 			# next/prev/up links in the header
 			for rel in ('next','up','prev'):
-				hrefs.extend( dom( 'link[href][rel='+rel+']' ) )
+				hrefs.extend( dom( 'link[href][rel="'+rel+'"]' ) )
 
 		for href in hrefs:
 			filename = href.attrib['href']

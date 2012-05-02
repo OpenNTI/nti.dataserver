@@ -69,7 +69,7 @@ class ResourceGenerator(resources.BaseResourceGenerator):
 
 	debug			= False
 
-	concurrency		= 1
+	concurrency		= 4
 	compiler		= 'ttm'
 	resourceType  	= _RESOURCE_TYPE
 	illegalCommands	= [	'\\\\overleftrightarrow',\
