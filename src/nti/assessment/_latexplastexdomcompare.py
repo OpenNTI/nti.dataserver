@@ -98,4 +98,4 @@ def grade( solution, response ):
 def factory( solution, response ):
 	return sys.modules[__name__]
 
-component.moduleProvides(interfaces.ISymbolicMathGrader)
+component.moduleProvides(interfaces.IQSymbolicMathGrader)
