@@ -32,6 +32,10 @@ logger = logging.getLogger( __name__ )
 
 # -----------------------------------
 
+compute_ngrams = True #TODO: set this as part of a config
+
+# -----------------------------------
+
 def get_id(obj, default=None):
 	result = obj if isinstance(obj, six.string_types) else get_attr(obj, [ID])
 	return unicode(result) if result else None
@@ -96,8 +100,11 @@ def get_related(obj, default=None):
 # -----------------------------------
 
 def get_note_ngrams(obj, default=None):
-	source = obj if isinstance(obj, six.string_types) else get_attr(obj, [body_], default)
-	result = ngrams(get_multipart_content(source))
+	if compute_ngrams:
+		source = obj if isinstance(obj, six.string_types) else get_attr(obj, [body_], default)
+		result = ngrams(get_multipart_content(source))
+	else:
+		result = u''
 	return result
 	
 def get_note_content(obj, default=None):
@@ -106,8 +113,11 @@ def get_note_content(obj, default=None):
 	return result.lower() if result else None
 	
 def get_highlight_ngrams(obj, default=None):
-	source = obj if isinstance(obj, six.string_types) else get_attr(obj, [startHighlightedFullText_], default)
-	result = ngrams(get_multipart_content(source))
+	if compute_ngrams:
+		source = obj if isinstance(obj, six.string_types) else get_attr(obj, [startHighlightedFullText_], default)
+		result = ngrams(get_multipart_content(source))
+	else:
+		result = u''
 	return result
 	
 def get_highlight_content(obj, default=None):
@@ -116,8 +126,11 @@ def get_highlight_content(obj, default=None):
 	return result.lower() if result else None
 
 def get_messageinfo_ngrams(obj, default=None):
-	source = obj if isinstance(obj, six.string_types) else get_attr(obj, [BODY], default)
-	result = ngrams(get_multipart_content(source))
+	if compute_ngrams:
+		source = obj if isinstance(obj, six.string_types) else get_attr(obj, [BODY], default)
+		result = ngrams(get_multipart_content(source))
+	else:
+		result = ''
 	return result
 	
 def get_messageinfo_content(obj, default=None):

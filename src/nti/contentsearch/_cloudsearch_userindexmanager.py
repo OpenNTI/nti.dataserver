@@ -23,6 +23,8 @@ from nti.contentsearch.common import empty_search_result
 from nti.contentsearch.common import empty_suggest_result
 from nti.contentsearch.common import indexable_type_names
 from nti.contentsearch._search_external import get_search_hit
+from nti.contentsearch._cloudsearch_index import get_object_ngrams
+from nti.contentsearch._cloudsearch_index import get_object_content
 from nti.contentsearch._search_external import search_external_fields
 from nti.contentsearch.utils.nti_reindex_user_content import indexable_objects
 
@@ -35,10 +37,14 @@ logger = logging.getLogger( __name__ )
 
 # -----------------------------------
 
+compute_ngrams = True #TODO: set this as part of a config
+
 _return_fields=[]
 for field in search_external_fields:
 	field = last_modified_ if field == LAST_MODIFIED else field
 	_return_fields.append(field)
+
+# -----------------------------------
 
 class CloudSearchUserIndexManager(object):
 	interface.implements(interfaces.IUserIndexManager)
@@ -131,25 +137,34 @@ class CloudSearchUserIndexManager(object):
 		
 	# ---------------------- 
 	
-	def index_content(self, data, type_name=None, **kwargs):
-		if not data: return None
-		
-		service = self._get_document_service()
-		
-		type_name = normalize_type_name(type_name or get_type_name(data))
-		oid  = toExternalOID(data)
-		data = toExternalObject(data)
+	def _prepare_index_data(self, obj, type_name):
+		oid  = toExternalOID(obj)
+		data = toExternalObject(obj)
 		
 		# make sure the user name is always set
 		data[username_] = self.username
 		
+		# set content
+		data[content_] = get_object_content(obj, type_name)
+		if compute_ngrams:
+			data[ngrams_] = get_object_ngrams(obj, type_name)
+			
 		# get and update the last modified data
 		# cs supports uint ony and we use this number as version also
 		lm = int(get_last_modified(data)) 
 		data[LAST_MODIFIED] = lm
 		
-		# set 0 as version s
-		service.add(oid, 0, data) 
+		return oid, data
+	
+	def index_content(self, data, type_name=None, **kwargs):
+		if not data: return None
+		
+		service = self._get_document_service()
+		type_name = normalize_type_name(type_name or get_type_name(data))
+		oid, external = self._prepare_index_data(data, type_name)
+		
+		# set 0 as version 
+		service.add(oid, 0, external) 
 		result = service.commit()
 		if result.errors:
 			s = ' '.join(result.errors)
