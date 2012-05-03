@@ -24,6 +24,8 @@ class ntiincludevideo(_OneText):
 		self.attributes['text'] = self.attributes['text'].textContent.replace( "/watch?v=", '/embed/' )
 		return result
 
+class ntipagenum(_OneText):
+	pass
 
 def ProcessOptions( options, document ):
 	pass

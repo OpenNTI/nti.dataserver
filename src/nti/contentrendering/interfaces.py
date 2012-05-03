@@ -142,7 +142,9 @@ class IContentFragment(interface.Interface):
 	be in.
 	"""
 
-class IUnicodeContentFragment(IContentFragment):
+from zope.interface.common import sequence
+
+class IUnicodeContentFragment(IContentFragment,sequence.IReadSequence):
 	"""
 	Content represented as a unicode string.
 	"""
