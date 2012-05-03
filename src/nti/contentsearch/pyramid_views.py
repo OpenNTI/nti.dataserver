@@ -87,7 +87,7 @@ def get_queryobject(request, get_index=True):
 	ntiid = request.matchdict.get('ntiid', None)
 	if ntiid:
 		if not indexname:
-			indexname = get_collection(ntiid, default=None)
+			indexname = get_collection(ntiid, default=None, registry=request.registry)
 			args['indexname'] = indexname
 		else:
 			args['ntiid'] = ntiid
