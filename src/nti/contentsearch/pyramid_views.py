@@ -3,9 +3,11 @@
 from __future__ import print_function, unicode_literals
 
 import re
+
 from pyramid.security import authenticated_userid
 
 from nti.contentsearch import QueryObject
+from nti.contentsearch.common import get_collection
 from nti.contentsearch.interfaces import IIndexManager
 
 import logging
@@ -78,7 +80,16 @@ def get_queryobject(request, get_index=True):
 	if username:
 		args['username'] = username
 
-	if get_index:
+	indexname = get_indexname(request.environ)
+	if get_index and indexname:
 		args['indexname'] = get_indexname(request.environ)
-
+		
+	ntiid = request.matchdict.get('ntiid', None)
+	if ntiid:
+		if not indexname:
+			indexname = get_collection(ntiid, default=None)
+			args['indexname'] = indexname
+		else:
+			args['ntiid'] = ntiid
+		
 	return QueryObject(**args)
