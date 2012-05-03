@@ -169,12 +169,12 @@ def get_type_name(obj):
 		result = None
 	return normalize_type_name(result) if result else u''
 
-def get_collection(containerId, default=u'prealgebra'):
+def get_collection(ntiid, default=u'prealgebra'):
 	result = default
-	if containerId and is_valid_ntiid_string(containerId):
+	if ntiid and is_valid_ntiid_string(ntiid):
 		_library = component.queryUtility( IContentPackageLibrary )
 		if _library:
-			paths = _library.pathToNTIID(containerId)
+			paths = _library.pathToNTIID(ntiid)
 			result = paths[0].label if paths else default
 	return unicode(result.lower()) if result else default
 
