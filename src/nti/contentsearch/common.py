@@ -172,9 +172,10 @@ def get_type_name(obj):
 def get_collection(ntiid, default=u'prealgebra', registry=component):
 	result = default
 	if ntiid and is_valid_ntiid_string(ntiid):
-		_library = registry.getUtility( IContentPackageLibrary )
-		paths = _library.pathToNTIID(ntiid)
-		result = paths[0].label if paths else default
+		_library = registry.queryUtility( IContentPackageLibrary )
+		if _library:
+			paths = _library.pathToNTIID(ntiid)
+			result = paths[0].label if paths else default
 	return unicode(result.lower()) if result else default
 
 # -----------------------------------

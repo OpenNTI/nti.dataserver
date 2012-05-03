@@ -11,6 +11,7 @@ from nti.ntiids.ntiids import make_ntiid
 
 from nti.contentsearch import create_repoze_datastore
 from nti.contentsearch.interfaces import IRepozeDataStore
+from nti.contentsearch import _repoze_index as repoze_index
 from nti.contentsearch._repoze_userindexmanager import RepozeUserIndexManager
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
@@ -23,6 +24,8 @@ from nti.contentsearch.tests import zanpakuto_commands
 from nti.contentsearch.tests import ConfiguringTestBase
 
 from hamcrest import (is_, is_not, has_key, has_item, has_entry, has_length, assert_that)
+
+repoze_index.compute_ngrams = True
 
 class TestRepozeUserIndexManager(ConfiguringTestBase):
 
