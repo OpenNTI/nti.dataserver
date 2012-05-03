@@ -26,6 +26,19 @@ class PutQueueTest(AbstractTestBase):
 
 		assert_that( queue.get(block=False), is_( self ) )
 
+	def test_put_transaction_rollback(self):
+		queue = Queue()
+		transaction.begin()
+		put_nowait( queue, 'aborted' )
+		transaction.abort()
+
+		transaction.begin()
+		put_nowait( queue, 'committed' )
+		transaction.commit()
+
+		assert_that( queue.qsize(), is_( 1 ) )
+		assert_that( queue.get( block=False ), is_( 'committed' ) )
+
 	def test_put_multiple_correct_order(self):
 		# Early builds had a bug where the sort order of the datamanagers
 		# was non-deterministic since it was based on object id, and that's not

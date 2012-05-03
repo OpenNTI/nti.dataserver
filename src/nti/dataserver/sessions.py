@@ -18,6 +18,7 @@ from zope.annotation import interfaces as an_interfaces
 from zope.deprecation import deprecated, deprecate
 
 from nti.zodb import minmax
+from nti.utils import transactions
 
 import transaction
 
@@ -433,7 +434,9 @@ class SessionService(object):
 		# node of the cluster, and to make the WebSockets case non-blocking (gevent). See also
 		# socketio-server
 		if not self._dispatch_message_to_proxy( session_id, name, msg_str ):
-			self.pub_socket.send_multipart( [session_id, name, msg_str] )
+			transactions.do( target=self.pub_socket,
+							 call=self.pub_socket.send_multipart,
+							 args=([session_id, name, msg_str],) )
 
 	def put_server_msg(self, session_id, msg):
 		self._put_msg( Session.do_put_server_msg, session_id, msg )
