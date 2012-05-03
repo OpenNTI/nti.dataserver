@@ -79,7 +79,7 @@ _escapes = [(u'$', u'\\$'),
 			(u'\u201c', u'``'),
 			(u'\u201d', u"''"),
 			(u'\u2022', u'*'),
-			(u'\u2026', u'$\\ldots$'),
+			#(u'\u2026', u'$\\ldots$'),
 			(u'\u20ac', u'\\euro '),
 			(u'\u2192', u'$\\rightarrow$'),
 			(u'\u2212', u'-'),
@@ -98,7 +98,10 @@ _escapes = [(u'$', u'\\$'),
 			(u'\uf032', u'$\\prime$'),
 			(u'\uf044', u'$\\triangle$'),
 			(u'\uf06c', u' '),
-			(u'\uf0d0', u'$\\angle$')]
+			(u'\uf0d0', u'$\\angle$'),
+			(u'. . .',  u'\\ldots'),
+			(u'\u2026', u'\\ldots'),
+			(u'\u00A7', u'\\S')]
 
 def _escape_tex(text):
 	escaped_text = text
@@ -162,7 +165,10 @@ def PlainTextToLatexFragmentConverter(plain_text):
 	# be to extract the math parsing algorithm from plasTeX; we'd still have to
 	# figure out what makes sense, though
 
-	# First, tokenize on whitespace. If the math is poorly delimited, this
+	# First, replace some whitespace sensitive tokens
+	plain_text = plain_text.replace( '. . .', u'\u2026' ) # Ellipsis
+
+	# Then, tokenize on whitespace. If the math is poorly delimited, this
 	# will fail
 	tokens = plain_text.split()
 

@@ -17,6 +17,10 @@
 	<adapter factory=".contentfragments.PlainTextToLatexFragmentConverter"
 			 for=".interfaces.IPlainTextContentFragment"
 			 provides=".interfaces.ILatexContentFragment" />
+	<adapter factory=".contentfragments.PlainTextToLatexFragmentConverter"
+			 for="unicode"
+			 provides=".interfaces.ILatexContentFragment" />
+
 
 	<!-- icon and image finders for the prealgebra book -->
 	<!-- TODO: Move this to a specific package and include it based on
