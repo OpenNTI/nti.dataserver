@@ -32,7 +32,7 @@ logger = logging.getLogger( __name__ )
 
 # -----------------------------------
 
-compute_ngrams = True #TODO: set this as part of a config
+compute_ngrams = False #TODO: set this as part of a config
 
 # -----------------------------------
 

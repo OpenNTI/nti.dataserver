@@ -37,7 +37,7 @@ logger = logging.getLogger( __name__ )
 
 # -----------------------------------
 
-compute_ngrams = True #TODO: set this as part of a config
+compute_ngrams = False #TODO: set this as part of a config
 
 _return_fields=[]
 for field in search_external_fields:
