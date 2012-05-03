@@ -11,6 +11,9 @@ Assessment Interfaces
 
 .. autointerface:: nti.assessment.interfaces.IQPart
 .. autointerface:: nti.assessment.interfaces.IQMathPart
+.. autointerface:: nti.assessment.interfaces.IQMultipleChoicePart
+
+.. autointerface:: nti.assessment.interfaces.IQPartGrader
 
 .. autointerface:: nti.assessment.interfaces.IQSolution
 .. autointerface:: nti.assessment.interfaces.IQFreeResponseSolution
@@ -22,6 +25,6 @@ Assessment Interfaces
 .. autointerface:: nti.assessment.interfaces.IQLatexSymbolicMathSolution
 
 
-.. autointerface:: nti.assessment.interfaces.IResponse
-.. autointerface:: nti.assessment.interfaces.ITextResponse
-.. autointerface:: nti.assessment.interfaces.IDictResponse
+.. autointerface:: nti.assessment.interfaces.IQResponse
+.. autointerface:: nti.assessment.interfaces.IQTextResponse
+.. autointerface:: nti.assessment.interfaces.IQDictResponse

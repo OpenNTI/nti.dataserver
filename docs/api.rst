@@ -27,10 +27,6 @@ Dataserver API documentation
 
 .. automodule:: nti.dataserver.library
 .. automodule:: nti.dataserver.quizzes
-.. automodule:: nti.dataserver.chat
-.. automodule:: nti.dataserver.ntiids
-.. automodule:: nti.dataserver.session_consumer
-.. automodule:: nti.dataserver.wsgi
 .. automodule:: nti.dataserver.sessions
 .. automodule:: nti.dataserver.activitystream
 .. automodule:: nti.dataserver.activitystream_change
