@@ -98,14 +98,14 @@ for name in last_modified_fields:
 	cloud2hit_field_mappings[name] = LAST_MODIFIED
 			
 # create search_hit to cloud
-hit2cloud_field_mappings = {}
+ds2cloud_field_mappings = {}
 for n,v in cloud2hit_field_mappings.items():
-	hit2cloud_field_mappings[v] = n.lower()
+	ds2cloud_field_mappings[v] = n.lower()
 
 # special cases
-hit2cloud_field_mappings.pop(TARGET_OID, None)
-hit2cloud_field_mappings[OID] = oid_
-hit2cloud_field_mappings[LAST_MODIFIED] = last_modified_
+ds2cloud_field_mappings.pop(TARGET_OID, None)
+ds2cloud_field_mappings[OID] = oid_
+ds2cloud_field_mappings[LAST_MODIFIED] = last_modified_
 
 # -----------------------------------
 
@@ -132,9 +132,9 @@ def to_cloud_object(obj, username, type_name):
 		
 	# make sure we remove fields that are not to be indexed
 	for n in list(data.keys()):
-		if n in hit2cloud_field_mappings:
+		if n in ds2cloud_field_mappings:
 			value = data.pop(n)
-			k = hit2cloud_field_mappings[n]
+			k = ds2cloud_field_mappings[n]
 			data[k] = value
 		else:
 			data.pop(n)
