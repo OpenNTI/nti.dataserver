@@ -83,6 +83,7 @@ class TestCloudSearchIndexManager(ConfiguringTestBase):
 	
 	# ---------------------
 	
+	@unittest.skip
 	@WithMockDSTrans
 	def x_test_empty(self):
 		user_id = str(uuid.uuid1())
@@ -90,10 +91,11 @@ class TestCloudSearchIndexManager(ConfiguringTestBase):
 		assert_that(cim.get_stored_indices(), is_(list(indexable_type_names)))
 		assert_that(cim.has_stored_indices(), is_(False))
 		
+	@unittest.skip
 	@WithMockDSTrans
-	def x_test_query_notes(self):
-		_, cim, _, _ = self.add_user_index_notes()
-
+	def test_query_notes(self):
+		#_, cim, _, _ = self.add_user_index_notes()
+		cim = CloudSearchUserIndexManager(self.user_id, self.store.ntisearch)
 		hits = cim.search("shield")
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 		assert_that(hits, has_entry(QUERY, 'shield'))
