@@ -31,6 +31,8 @@ cloudsearch_index.compute_ngrams = True
 
 class TestCloudSearchIndexManager(ConfiguringTestBase):
 	
+	__name__ = "TestCloudSearchIndexManager"
+	
 	aws_access_key_id = 'AKIAJ42UUP2EUMCMCZIQ'
 	aws_secret_access_key = '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'
 
@@ -41,9 +43,11 @@ class TestCloudSearchIndexManager(ConfiguringTestBase):
 		component.provideUtility(self.store, provides=ICloudSearchStore)
 
 	def tearDown(self):
-		super(TestCloudSearchIndexManager, self).tearDown()
-		resetHooks()
-		self._remove_all()
+		try:
+			super(TestCloudSearchIndexManager, self).tearDown()
+			resetHooks()
+		finally:
+			self._remove_all()
 		
 	def _remove_all(self):
 		try:
