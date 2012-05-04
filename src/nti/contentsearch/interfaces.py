@@ -17,7 +17,16 @@ class IRepozeDataStore(IFullMapping):
 # -----------------------------
 
 class ICloudSearchStore(interface.Interface):
-	pass
+	def get_connection():
+		"""
+		return the cloud store connection
+		"""
+	
+	def get_domain(domain_name):
+		"""
+		return the cloud search domain with the specifeid name
+		"""
+		
 
 # -----------------------------
 

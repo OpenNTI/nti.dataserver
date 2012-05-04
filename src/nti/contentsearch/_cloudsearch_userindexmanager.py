@@ -6,7 +6,6 @@ from zope import interface
 from nti.dataserver.users import User
 from nti.externalization.oids import toExternalOID
 from nti.dataserver import interfaces as nti_interfaces
-from nti.externalization.externalization import toExternalObject
 
 from nti.contentsearch.exfm.cloudsearch import get_search_service
 from nti.contentsearch.exfm.cloudsearch import get_document_service
@@ -17,39 +16,30 @@ from nti.contentsearch import SearchCallWrapper
 #from nti.contentsearch.interfaces import IUserIndexManagerFactory
 from nti.contentsearch.common import is_all_query
 from nti.contentsearch.common import get_type_name
-from nti.contentsearch.common import get_last_modified
 from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch.common import empty_search_result
 from nti.contentsearch.common import empty_suggest_result
 from nti.contentsearch.common import indexable_type_names
 from nti.contentsearch._search_external import get_search_hit
-from nti.contentsearch._cloudsearch_index import get_object_ngrams
-from nti.contentsearch._cloudsearch_index import get_object_content
-from nti.contentsearch._search_external import search_external_fields
+from nti.contentsearch._cloudsearch_index import stored_fields
+from nti.contentsearch._cloudsearch_index import to_search_hit
+from nti.contentsearch._cloudsearch_index import to_cloud_object
 from nti.contentsearch.utils.nti_reindex_user_content import indexable_objects
 
 from nti.contentsearch.common import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT, CLASS, LAST_MODIFIED, ITEMS,
 									  NTIID, HIT_COUNT)
-from nti.contentsearch.common import (last_modified_, username_, content_, ngrams_)
+
+from nti.contentsearch.common import (username_, ngrams_,  content_)
 
 import logging
 logger = logging.getLogger( __name__ )
 
 # -----------------------------------
 
-compute_ngrams = False #TODO: set this as part of a config
-
-_return_fields=[]
-for field in search_external_fields:
-	field = last_modified_ if field == LAST_MODIFIED else field
-	_return_fields.append(field)
-
-# -----------------------------------
-
 class CloudSearchUserIndexManager(object):
 	interface.implements(interfaces.IUserIndexManager)
 
-	def __init__(self, username, domain=None):
+	def __init__(self, username, domain):
 		self.username = username
 		self.domain = domain
 
@@ -77,6 +67,10 @@ class CloudSearchUserIndexManager(object):
 	def get_search_service(self):	
 		return get_search_service(domain=self.domain)
 	
+	def _get_search_hit(self, obj, query=None, highlight_type=WORD_HIGHLIGHT):
+		data = to_search_hit(obj)  
+		return get_search_hit(data, query=query, highlight_type=highlight_type)
+		
 	def _do_search(self, field, qo, search_on, highlight_type):
 		results = empty_search_result(qo.term)
 		if qo.is_empty: return results
@@ -93,10 +87,10 @@ class CloudSearchUserIndexManager(object):
 		start = qo.get('start', 0)
 		
 		bq = ' '.join(bq)
-		objects = service.search(bq=bq, return_fields=_return_fields, size=limit, start=start)
+		objects = service.search(bq=bq, return_fields=stored_fields, size=limit, start=start)
 		
 		length = len(objects)
-		hits = map(get_search_hit, objects, [qo.term]*length, [highlight_type]*length)
+		hits = map(self.get_search_hit, objects, [qo.term]*length, [highlight_type]*length)
 		
 		# filter if required
 		hits = hits[:limit] if limit else hits
@@ -136,32 +130,13 @@ class CloudSearchUserIndexManager(object):
 		return empty_suggest_result(qo.term)
 		
 	# ---------------------- 
-	
-	def _prepare_index_data(self, obj, type_name):
-		oid  = toExternalOID(obj)
-		data = toExternalObject(obj)
 		
-		# make sure the user name is always set
-		data[username_] = self.username
-		
-		# set content
-		data[content_] = get_object_content(obj, type_name)
-		if compute_ngrams:
-			data[ngrams_] = get_object_ngrams(obj, type_name)
-			
-		# get and update the last modified data
-		# cs supports uint ony and we use this number as version also
-		lm = int(get_last_modified(data)) 
-		data[LAST_MODIFIED] = lm
-		
-		return oid, data
-	
 	def index_content(self, data, type_name=None, **kwargs):
 		if not data: return None
 		
 		service = self._get_document_service()
 		type_name = normalize_type_name(type_name or get_type_name(data))
-		oid, external = self._prepare_index_data(data, type_name)
+		oid, external = to_cloud_object(data, self.username, type_name)
 		
 		# set 0 as version 
 		service.add(oid, 0, external) 
@@ -211,9 +186,10 @@ class CloudSearchUserIndexManager(object):
 		try:
 			bq = "%s:'%s'" % (username_, self.username)
 			service = self.get_search_service()
-			objects = service.search(bq=bq, return_fields=_return_fields, size=1, start=0)
+			objects = service.search(bq=bq, return_fields=stored_fields, size=1, start=0)
 			return True if len(objects) else False
-		except:
+		except Exception, e:
+			print repr(e)
 			logger.exception("Error while trying to query for all user documents")
 		return False
 		

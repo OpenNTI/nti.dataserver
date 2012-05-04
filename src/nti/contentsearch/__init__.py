@@ -5,10 +5,11 @@ from collections import Iterable
 
 from brownie.caching import LFUCache
 
+from nti.contentsearch._cloudsearch_store import CloudSearchStore
+from nti.contentsearch._repoze_datastore import PersistentRepozeDataStore
+
 import logging
 logger = logging.getLogger( __name__ )
-
-from nti.contentsearch._repoze_datastore import PersistentRepozeDataStore
 
 def to_list(data):
 	if isinstance(data, six.string_types):
@@ -65,6 +66,13 @@ class LFUMap(LFUCache):
 		super(LFUMap, self).__delitem__(key)
 		if self.on_removal_callback:
 			self.on_removal_callback(key, value)
+
+class CaseInsensitiveDict(dict):
+	def __setitem__(self, key, value):
+		super(CaseInsensitiveDict, self).__setitem__(key.lower(), value)
+
+	def __getitem__(self, key):
+		return super(CaseInsensitiveDict, self).__getitem__(key.lower())
 
 
 class QueryObject(object, UserDict.DictMixin):
@@ -247,3 +255,6 @@ class QueryObject(object, UserDict.DictMixin):
 
 def create_repoze_datastore(*args, **kwargs):
 	return PersistentRepozeDataStore()
+
+def create_cloudsearch_store(*args, **kwargs):
+	return CloudSearchStore(*args, **kwargs)
