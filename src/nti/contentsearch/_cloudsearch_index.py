@@ -67,8 +67,8 @@ def create_search_domain(connection, domain_name='ntisearch', allow_ips=()):
 	domain.create_index_field(content_, 'text', searchable=True, result=True)
 		
 	# literal fields
-	domain.create_index_field(username_, 'literal', searchable=False, result=False)
-	domain.create_index_field(channel_, 'literal', searchable=True, result=False)
+	domain.create_index_field(username_, 'literal', searchable=True, result=False, facet=True)
+	domain.create_index_field(channel_, 'literal', searchable=True, result=False, facet=True)
 	
 	# faceted fields
 	domain.create_index_field(keywords_, 'text', searchable=True, result=False, facet=True)
@@ -145,6 +145,9 @@ def to_cloud_object(obj, username, type_name):
 		else:
 			data.pop(n)
 		
+	# we need to normalize the type
+	data[type_] = normalize_type_name(data[type_])
+	
 	# make sure the user name is always set
 	data[username_] = username
 		

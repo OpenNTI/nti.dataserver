@@ -20,6 +20,7 @@ from nti.contentsearch.common import empty_search_result
 from nti.contentsearch.common import empty_suggest_result
 from nti.contentsearch.common import indexable_type_names
 from nti.contentsearch._search_external import get_search_hit
+from nti.contentsearch._cloudsearch_query import parse_query
 from nti.contentsearch._cloudsearch_index import get_object_id
 from nti.contentsearch._cloudsearch_index import to_search_hit
 from nti.contentsearch._cloudsearch_index import to_cloud_object
@@ -29,7 +30,7 @@ from nti.contentsearch.utils.nti_reindex_user_content import indexable_objects
 from nti.contentsearch.common import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT, LAST_MODIFIED, ITEMS,
 									  NTIID, HIT_COUNT)
 
-from nti.contentsearch.common import (username_, ngrams_,  content_, type_)
+from nti.contentsearch.common import (username_, ngrams_,  content_,)
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -55,11 +56,6 @@ class CloudSearchUserIndexManager(object):
 	@property
 	def dataserver(self):
 		return component.getUtility( nti_interfaces.IDataserver )
-
-	def _adapt_search_on_types(self, search_on=None):
-		if search_on:
-			search_on = [normalize_type_name(x) for x in search_on]
-		return search_on or indexable_type_names
 	
 	def _get_document_service(self):
 		return get_document_service(domain=self.domain)
@@ -71,23 +67,15 @@ class CloudSearchUserIndexManager(object):
 		data = to_search_hit(obj)  
 		return get_search_hit(data, query=query, highlight_type=highlight_type)
 		
-	def _do_search(self, field, qo, search_on, highlight_type):
+	def _do_search(self, field, qo, highlight_type):
 		results = empty_search_result(qo.term)
 		if qo.is_empty: return results
 		
-		bq = ['(and']
-		bq.append("%s:'%s'" % (username_, self.username))
-		bq.append("%s:'%s'" % (field, qo.term))
-		bq.append('(or')
-		for type_name in search_on:
-			bq.append("%s:'%s'" % (type_, type_name))
-		bq.append('))')
-		
 		service = self._get_search_service()
-		limit = qo.limit or sys.maxint
-		start = qo.get('start', 0)
 		
-		bq = ' '.join(bq)
+		start = qo.get('start', 0)
+		limit = qo.limit or sys.maxint
+		bq = parse_query(qo, self.username, field)
 		objects = service.search(bq=bq, return_fields=search_stored_fields, size=limit, start=start)
 		
 		length = len(objects)
@@ -110,16 +98,14 @@ class CloudSearchUserIndexManager(object):
 	@SearchCallWrapper
 	def search(self, query, *args, **kwargs):
 		qo = QueryObject.create(query, **kwargs)
-		search_on = self._adapt_search_on_types(qo.search_on)
 		highlight_type = None if is_all_query(qo.term) else WORD_HIGHLIGHT
-		results = self._do_search(content_, qo, search_on, highlight_type)
+		results = self._do_search(content_, qo, highlight_type)
 		return results
 	
 	def ngram_search(self, query, *args, **kwargs):
 		qo = QueryObject.create(query, **kwargs)
-		search_on = self._adapt_search_on_types(qo.search_on)
 		highlight_type = None if is_all_query(qo.term) else NGRAM_HIGHLIGHT
-		results = self._do_search(ngrams_, qo, search_on, highlight_type)
+		results = self._do_search(ngrams_, qo, highlight_type)
 		return results
 	quick_search = ngram_search
 	
