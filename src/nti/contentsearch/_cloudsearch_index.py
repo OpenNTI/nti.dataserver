@@ -170,10 +170,18 @@ def to_cloud_object(obj, username, type_name):
 				
 	return oid, data
 
-def to_search_hit(cloud_data):
+def to_external_dict(cloud_data):
+	# aws seems to return item results in a list
+	for k in cloud_data.keys():
+		v = cloud_data[k]
+		if isinstance(v, (list, tuple)):
+			cloud_data[k] = v[0] if v else u''
+			
+	# map ext fields from cloud fields
 	for n, k in cloud2hit_field_mappings.items():
 		if n in cloud_data:
 			v = cloud_data.pop(n)
-			v = v[0] if isinstance(v, (list, tuple)) else v
+			if k == CLASS and v:
+				v = v.title()
 			cloud_data[k] = v
 	return cloud_data

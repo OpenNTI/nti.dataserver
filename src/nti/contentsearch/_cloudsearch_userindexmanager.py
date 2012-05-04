@@ -22,8 +22,8 @@ from nti.contentsearch.common import indexable_type_names
 from nti.contentsearch._search_external import get_search_hit
 from nti.contentsearch._cloudsearch_query import parse_query
 from nti.contentsearch._cloudsearch_index import get_cloud_oid
-from nti.contentsearch._cloudsearch_index import to_search_hit
 from nti.contentsearch._cloudsearch_index import to_cloud_object
+from nti.contentsearch._cloudsearch_index import to_external_dict
 from nti.contentsearch._cloudsearch_index import search_stored_fields
 
 from nti.contentsearch.common import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT, LAST_MODIFIED, ITEMS,
@@ -63,7 +63,7 @@ class CloudSearchUserIndexManager(object):
 		return get_search_service(domain=self.domain)
 	
 	def _get_search_hit(self, obj, query=None, highlight_type=WORD_HIGHLIGHT):
-		data = to_search_hit(obj['data'])  
+		data = to_external_dict(obj['data'])  
 		return get_search_hit(data, query=query, highlight_type=highlight_type)
 		
 	def _do_search(self, field, qo, highlight_type):

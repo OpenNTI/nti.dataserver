@@ -31,30 +31,26 @@ cloudsearch_index.compute_ngrams = True
 
 class TestCloudSearchIndexManager(ConfiguringTestBase):
 	
-	user_id = unicode(str(uuid.uuid1()))
 	aws_access_key_id = 'AKIAJ42UUP2EUMCMCZIQ'
 	aws_secret_access_key = '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'
-	
-	@classmethod
-	def setUpClass(cls):
-		cls.store = create_cloudsearch_store(cls.aws_access_key_id, cls.aws_secret_access_key)
-		component.provideUtility(cls.store, provides=ICloudSearchStore)
-
-	@classmethod
-	def tearDownClass(cls):
-		pass
 
 	def setUp(self):
 		super(TestCloudSearchIndexManager, self).setUp()
+		self.user_id = unicode(str(uuid.uuid1()) + '@nti.com')
+		self.store = create_cloudsearch_store(self.aws_access_key_id, self.aws_secret_access_key)
 		component.provideUtility(self.store, provides=ICloudSearchStore)
 
 	def tearDown(self):
 		super(TestCloudSearchIndexManager, self).tearDown()
+		resetHooks()
+		self._remove_all()
+		
+	def _remove_all(self):
 		try:
 			CloudSearchUserIndexManager(self.user_id, self.store.ntisearch).remove_index()
-		except:
+		except Exception, e:
+			print repr(e)
 			pass
-		resetHooks()
 		
 	# ---------------------
 	
@@ -123,7 +119,7 @@ class TestCloudSearchIndexManager(ConfiguringTestBase):
 		assert_that(hit, has_entry(TARGET_OID, is_not(None)))
 		assert_that(key, is_(hit[NTIID]))
 		assert_that(hit, has_entry(CONTAINER_ID, 'tag:nextthought.com,2011-10:bleach-manga'))
-		assert_that(hit, has_entry(SNIPPET, 'All Waves Rise now and Become my SHIELD Lightning Strike now and Become my Blade'))
+		assert_that(hit, has_entry(SNIPPET, 'all waves rise now and become my SHIELD lightning strike now and become my blade'))
 
 		hits = cim.search("*")
 		assert_that(hits, has_entry(HIT_COUNT, len(zanpakuto_commands)))
