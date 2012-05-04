@@ -44,6 +44,8 @@ class TestCloudSearchIndexManager(ConfiguringTestBase):
 		super(TestCloudSearchIndexManager, self).tearDown()
 		resetHooks()
 		
+	# ---------------------
+	
 	def create_note(self, msg, username, containerId=None):
 		note = Note()
 		note.creator = username
@@ -56,14 +58,14 @@ class TestCloudSearchIndexManager(ConfiguringTestBase):
 		conn = conn or mock_dataserver.current_transaction
 		usr = usr or User( self.user_id, 'temp' )
 		for x in zanpakuto_commands:
-			note = self._create_note(x, usr.username)
+			note = self.create_note(x, usr.username)
 			if conn: conn.add(note)
 			notes.append(usr.addContainedObject( note ))
 		return notes, usr
 
 	def index_notes(self, dataserver=None, usr=None, conn=None, do_assert=True):
 		result = []
-		notes, usr = self._add_notes(usr=usr, conn=conn)
+		notes, usr = self.add_notes(usr=usr, conn=conn)
 		cim = CloudSearchUserIndexManager (usr.username, self.store.ntisearch)
 		for note in notes:
 			resp = cim.index_content(note)
@@ -71,22 +73,52 @@ class TestCloudSearchIndexManager(ConfiguringTestBase):
 				assert_that(resp, is_not(None))
 			result.append(resp)
 		return cim, notes, result
-
-	def _add_user_index_notes(self, ds=None):
+	
+	def add_user_index_notes(self, ds=None):
 		usr = User( 'nt@nti.com', 'temp' )
 		ds = ds or mock_dataserver.current_mock_ds
 		ds.root['users']['nt@nti.com'] = usr
-		notes, docids, rim = self._index_notes(dataserver=ds, usr=usr, do_assert=False)
-		return usr, rim, docids, notes
-
+		cim, notes, resps = self.index_notes(dataserver=ds, usr=usr, do_assert=False)
+		return usr, cim, notes, resps
+	
+	# ---------------------
+	
 	@WithMockDSTrans
 	def x_test_empty(self):
 		user_id = str(uuid.uuid1())
-		rim = CloudSearchUserIndexManager(user_id, self.store.ntisearch)
-		assert_that(rim.get_stored_indices(), is_(list(indexable_type_names)))
-		assert_that(rim.has_stored_indices(), is_(False))
+		cim = CloudSearchUserIndexManager(user_id, self.store.ntisearch)
+		assert_that(cim.get_stored_indices(), is_(list(indexable_type_names)))
+		assert_that(cim.has_stored_indices(), is_(False))
 		
+	@WithMockDSTrans
+	def x_test_query_notes(self):
+		_, cim, _, _ = self.add_user_index_notes()
 
+		hits = cim.search("shield")
+		assert_that(hits, has_entry(HIT_COUNT, 1))
+		assert_that(hits, has_entry(QUERY, 'shield'))
+		assert_that(hits, has_key(ITEMS))
 
+		items = hits[ITEMS]
+		assert_that(items, has_length(1))
+
+		key = list(items.keys())[0]
+		hit = toExternalObject(items[key])
+		assert_that(hit, has_entry(CLASS, HIT))
+		assert_that(hit, has_entry(NTIID, is_not(None)))
+		assert_that(hit, has_entry(TARGET_OID, is_not(None)))
+		assert_that(key, is_(hit[NTIID]))
+		assert_that(hit, has_entry(CONTAINER_ID, 'tag:nextthought.com,2011-10:bleach-manga'))
+		assert_that(hit, has_entry(SNIPPET, 'All Waves Rise now and Become my SHIELD Lightning Strike now and Become my Blade'))
+
+		hits = cim.search("*")
+		assert_that(hits, has_entry(HIT_COUNT, len(zanpakuto_commands)))
+
+		hits = cim.search("?")
+		assert_that(hits, has_entry(HIT_COUNT, len(zanpakuto_commands)))
+
+		hits = cim.search("ra*")
+		assert_that(hits, has_entry(HIT_COUNT, 3))
+		
 if __name__ == '__main__':
 	unittest.main()
