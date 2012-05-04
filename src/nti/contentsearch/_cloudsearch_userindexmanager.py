@@ -31,7 +31,7 @@ from nti.contentsearch._cloudsearch_index import search_stored_fields
 from nti.contentsearch.common import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT, LAST_MODIFIED, ITEMS,
 									  NTIID, HIT_COUNT)
 
-from nti.contentsearch.common import (username_, ngrams_,  content_, oid_, type_)
+from nti.contentsearch.common import (username_, ngrams_, content_, oid_, type_)
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -134,15 +134,13 @@ class CloudSearchUserIndexManager(object):
 	def _get_errors(self, result, n=5):
 		errors = result.errors[:n]
 		return '\n'.join(errors)
-	
+
 	def index_content(self, data, type_name=None, **kwargs):
 		if not data: return None
-		
 		service = self._get_document_service()
 		type_name = normalize_type_name(type_name or get_type_name(data))
 		oid, external = to_cloud_object(data, self.username, type_name)
-		
-		service.add(oid, self.a_version, external) 
+		service.add(oid, self.a_version,  external) 
 		result = service.commit()
 		if result.errors:
 			s = self._get_errors(result)
@@ -156,7 +154,6 @@ class CloudSearchUserIndexManager(object):
 		if not data: return None
 		service = self._get_document_service()
 		oid = get_cloud_oid(data)
-		
 		service.delete(oid, self.d_version) 
 		result = service.commit()
 		if result.errors:
@@ -168,8 +165,7 @@ class CloudSearchUserIndexManager(object):
 	def remove_index(self, type_name=None):
 		counter = 0
 		service = self._get_document_service()
-		for oid, _ in self.get_aws_oids(type_name=type_name):
-			oid = get_cloud_oid(oid)
+		for oid in self.get_aws_oids(type_name=type_name):
 			service.delete(oid, self.d_version)
 			counter = counter + 1
 		
@@ -196,9 +192,9 @@ class CloudSearchUserIndexManager(object):
 		bq = ' '.join(bq)
 		
 		service = self._get_search_service()
-		results = service.search(bq=bq, return_fields=(oid_,), size=size, start=0)
+		results = service.search(bq=bq, return_fields=[oid_], size=size, start=0)
 		for r in results:
-			yield r['data'][oid_], r['id']
+			yield r['id']
 			
 	# ---------------------- 
 		

@@ -1,3 +1,4 @@
+import time
 import uuid
 import unittest
 
@@ -11,7 +12,6 @@ from nti.externalization.externalization import toExternalObject
 from nti.ntiids.ntiids import make_ntiid
 
 from nti.contentsearch import create_cloudsearch_store
-from nti.contentsearch.common import indexable_type_names
 from nti.contentsearch.interfaces import ICloudSearchStore
 from nti.contentsearch import _cloudsearch_index as cloudsearch_index
 from nti.contentsearch._cloudsearch_userindexmanager import CloudSearchUserIndexManager
@@ -43,15 +43,12 @@ class TestCloudSearchIndexManager(ConfiguringTestBase):
 		component.provideUtility(self.store, provides=ICloudSearchStore)
 
 	def tearDown(self):
-		try:
-			super(TestCloudSearchIndexManager, self).tearDown()
-			resetHooks()
-		finally:
-			self._remove_all()
+		super(TestCloudSearchIndexManager, self).tearDown()
+		resetHooks()
 		
-	def _remove_all(self):
+	def _remove_all(self, cim):
 		try:
-			CloudSearchUserIndexManager(self.user_id, self.store.ntisearch).remove_index()
+			cim.remove_index()
 		except Exception, e:
 			print repr(e)
 			pass
@@ -97,42 +94,37 @@ class TestCloudSearchIndexManager(ConfiguringTestBase):
 	
 	@unittest.skip
 	@WithMockDSTrans
-	def test_empty(self):
-		cim = CloudSearchUserIndexManager(self.user_id)
-		assert_that(cim.get_stored_indices(), is_(list(indexable_type_names)))
-		assert_that(cim.has_stored_indices(), is_(False))
-		
-	@unittest.skip
-	@WithMockDSTrans
 	def test_query_notes(self):
-		
 		_, cim, _, _ = self.add_user_index_notes()
-
-		hits = cim.search("shield")
-		assert_that(hits, has_entry(HIT_COUNT, 1))
-		assert_that(hits, has_entry(QUERY, 'shield'))
-		assert_that(hits, has_key(ITEMS))
-
-		items = hits[ITEMS]
-		assert_that(items, has_length(1))
-
-		key = list(items.keys())[0]
-		hit = toExternalObject(items[key])
-		assert_that(hit, has_entry(CLASS, HIT))
-		assert_that(hit, has_entry(NTIID, is_not(None)))
-		assert_that(hit, has_entry(TARGET_OID, is_not(None)))
-		assert_that(key, is_(hit[NTIID]))
-		assert_that(hit, has_entry(CONTAINER_ID, 'tag:nextthought.com,2011-10:bleach-manga'))
-		assert_that(hit, has_entry(SNIPPET, 'all waves rise now and become my SHIELD lightning strike now and become my blade'))
-
-		hits = cim.search("*")
-		assert_that(hits, has_entry(HIT_COUNT, len(zanpakuto_commands)))
-
-		hits = cim.search("?")
-		assert_that(hits, has_entry(HIT_COUNT, len(zanpakuto_commands)))
-
-		hits = cim.search("ra*")
-		assert_that(hits, has_entry(HIT_COUNT, 3))
+		time.sleep(3)
+		try:
+			hits = cim.search("shield")
+			assert_that(hits, has_entry(HIT_COUNT, 1))
+			assert_that(hits, has_entry(QUERY, 'shield'))
+			assert_that(hits, has_key(ITEMS))
+	
+			items = hits[ITEMS]
+			assert_that(items, has_length(1))
+	
+			key = list(items.keys())[0]
+			hit = toExternalObject(items[key])
+			assert_that(hit, has_entry(CLASS, HIT))
+			assert_that(hit, has_entry(NTIID, is_not(None)))
+			assert_that(hit, has_entry(TARGET_OID, is_not(None)))
+			assert_that(key, is_(hit[NTIID]))
+			assert_that(hit, has_entry(CONTAINER_ID, 'tag:nextthought.com,2011-10:bleach-manga'))
+			assert_that(hit, has_entry(SNIPPET, 'all waves rise now and become my SHIELD lightning strike now and become my blade'))
+	
+			hits = cim.search("*")
+			assert_that(hits, has_entry(HIT_COUNT, len(zanpakuto_commands)))
+	
+			hits = cim.search("?")
+			assert_that(hits, has_entry(HIT_COUNT, len(zanpakuto_commands)))
+	
+			hits = cim.search("ra*")
+			assert_that(hits, has_entry(HIT_COUNT, 3))
+		finally:
+			self._remove_all(cim)
 		
 if __name__ == '__main__':
 	unittest.main()
