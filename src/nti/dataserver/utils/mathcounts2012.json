@@ -801,7 +801,7 @@
                 "Text": "What is the next number in the geometric sequence: -1, 4, -16, 64, . . . ?",
                 "Solution": "Each term in the geometric sequence is -4 times the previous term, so the next term is -4 $\\times$ 64 = -256.",
                 "Answers": [
-                    "$256$"
+                    "$-256$"
                 ],
                 "ID": "63",
                 "CCSS": "F-LE.2",
@@ -1525,7 +1525,7 @@
                 "Text": "Point P(3, 2) lies on the graph of the equation $y = 3x - 7$. What are the coordinates of the image of point P after the line is reflected across the y-axis and translated up 4 units?",
                 "Solution": "Note that we need not worry about the entire line, just P. When the point P(3, 2) is reflected over the y-axis, the x-coordinate changes sign, so the image is P'(-3, 2). Now, when this point is translated up 4 units, the y-coordinate is 4 more than it was, so the final image is P\"(-3, 6).",
                 "Answers": [
-                    "(3, 6)"
+                    "(-3, -6)"
                 ],
                 "ID": "130",
                 "CCSS": "8.G.1",
@@ -1825,7 +1825,7 @@
                 "Text": "A telephone number consists of a three-digit area code followed by a seven-digit local code. Neither the area code nor the local code may have a first digit of 0 or 1. If the codes 800, 888, 877 and 866 are toll-free codes and are not used as area codes, how many ten-digit telephone numbers are possible? Express your answer in scientific notation with four significant digits.",
                 "Solution": "There are 8 possible digits for the first digit of the area code and then 10 possible digits for the next two digits of the area code. That's 8$\\times$10 $\\times 10 = 800$ possible area codes, but we have to subtract the 4 toll-free codes, so there are actually 796 possible area codes. For the local code, there are 8$\\times$106 = 8,000,000 possibilities. Multiplying 796 by 8,000,000, we see that the total number of possible ten-digit phone numbers is 6,368,000,000 = 6.368 $\\times$ 109.",
                 "Answers": [
-                    "$6.368 \\times$ 10^9$"
+                    "$6.368 \\times 10^9$"
                 ],
                 "ID": "142",
                 "CCSS": "7.SP.8",
@@ -2123,7 +2123,7 @@
             },
             "162": {
                 "Domain": "PS",
-                "Text": "A subway arrives at the station every 25 minutes. A train arrives at the station every 45minutes. If the subway and the train each arrive at noon, at what time will they next arrive at the station together?",
+                "Text": "A subway arrives at the station every 25 minutes. A train arrives at the station every 45 minutes. If the subway and the train each arrive at noon, at what time will they next arrive at the station together?",
                 "Solution": "We need to find the least common multiple (LCM) of 25 and 45. Now, $25 = 5 \\times 5$ and $45 = 5 \\times 3 \\times 3$, so the LCM of the two numbers must be $5 \\times 5 \\times 3 \\times 3 = 225$. Dividing 225 by 60, we get 3 remainder 45, so it will be 3:45 pm when the subway and the train next arrive at the station together.",
                 "Answers": [
                     "3:45"
@@ -2504,7 +2504,7 @@
                 "Text": "For what value of x does 218 = ?",
                 "Solution": "We can see that 218 = 2(2 $\\times$ 9) = (22)9 = 49. We also can see that (1/4)x = (4-1)x = 4-x. So if 49 = 4-x, then 9 = -x, and x = -9.",
                 "Answers": [
-                    "$9$"
+                    "$-9$"
                 ],
                 "ID": "193",
                 "CCSS": "N-RN.1",
@@ -3149,7 +3149,7 @@
                 "Text": "Three numbers have a sum of 5 and the sum of their squares is 29. If the product of the three numbers is -10, what is the least of the three numbers? Express your answer in simplest radical form.",
                 "Solution": "Solving this problem requires some tricky algebra. Let the three numbers be a, b and c. From the information given, we have $a + b + c$ =5, $a2 + b2 + c2 = 29$ and abc = -10. If we square each side of the first equation, we get $(a + b +$ c)2 $= 52 \\rightarrow a2 + b2 + c2 +$ 2ab + 2bc + 2ac = 25. Now let's substitute 29 for $a2 + b2 + c2$ in this equation to get 29 + 2ab + 2bc + 2ac = 25. Subtracting 29 from each side and dividing the equation by 2 yields ab + bc + ac = -2. Let's now multiply each side of this equation by c to get abc + bc2 + ac2 = -2c. We can replace abc with -10 to get -10+bc2+ac2= -2c. Now let's factor out c2 on the left side of the equation to get -10 + c2(b + a) = -2c. If $a + b + c = 5$ then $a + b = 5 - c$. Thus, we can replace b+a with 5 - c to get -10 + c2(5 - c) = -2c. Distributing c2 and combining like terms yields -10 = c3 - 5c2 -2c. If we set this cubic equal to 0, the result is c3 - 5c2 -2c $+ 10 = 0$. Factoring this equation yields c2(c - 5) - 2(c $- 5) = 0 \\rightarrow (c2 -$ 2)(c $- 5) = 0$. Now we see that the three solutions are -$\\surd$2, $\\surd$2 and 5, the least of which is -$\\surd$2.",
                 "Answers": [
-                    "$2$"
+                    "$-\\surd 2$"
                 ],
                 "ID": "248",
                 "CCSS": "7.NS.3",
@@ -3569,7 +3569,7 @@
                 "Text": "The 3rd term of an arithmetic sequence is 17, and the 9th term is 83. What is the 1st term?",
                 "Solution": "Let d represent the common difference between consecutive terms in the sequence. Because 17 is the 3rd term and 83 is the 9th term, 17+6d = 83 and $6d = 66$, so $d = 11$. The 1st term must be 17-(2$\\times$11) = -5.",
                 "Answers": [
-                    "$5$"
+                    "$-5$"
                 ],
                 "ID": "289",
                 "CCSS": "F-LE.2",

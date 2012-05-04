@@ -72,17 +72,20 @@ class TestAssessment(nti.tests.ConfiguringTestBase):
 		self.assertMathNodesNotEqual(math1, math2)
 		self.assertMathNodesNotEqual(math3, math4)
 
-	@unittest.skip('Requires parse tree implementation')
 	def test_exprinfractions(self):
 		math1, math2 = mathTexToDOMNodes(['$\\frac{1+x}{2}$','$\\frac{1 + x}{2}$'])
+
 		self.assertMathNodesEqual(math1,math2)
 
-	@unittest.skip('Requires parse tree implementation')
 	def test_expr(self):
 		math1, math2, math3, math4 = mathTexToDOMNodes(['$1 + x$','$1+x$','$x+1$','$x + 1$'])
 		self.assertMathNodesEqual(math1,math2)
-		self.assertMathNodesEqual(math1,math3)
-		self.assertMathNodesEqual(math1,math4)
+		self.assertMathNodesEqual(math3,math4)
+
+		# We are not fully symbolic, at this point. We don't handle arithmetic properties.
+		# We'd need to think about pulling in something like simpy if we need to be fully symbolic
+		self.assertMathNodesNotEqual(math1,math3)
+		self.assertMathNodesNotEqual(math2,math4)
 
 	def test_symbols(self):
 		math1, math2, math3, math4 = mathTexToDOMNodes(['$25\\pi$','$ 25 \\pi$','$25 \\pi $','$ 25\\pi $'])

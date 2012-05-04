@@ -25,6 +25,13 @@ def _mathChildrenAreEqual(children1, children2):
 
 	return True
 
+def _importantChildNodes( childNodes ):
+	"""
+	Given the child nodes of a node, return a fresh list of those
+	that are important for comparison purposes. Spaces are not considered important
+	"""
+	return [x for x in childNodes if x.nodeType != x.TEXT_NODE or x.textContent.strip()]
+
 def _mathChildIsEqual(child1, child2):
 	#If are children aren't even the same type they are probably not equal
 
@@ -32,7 +39,7 @@ def _mathChildIsEqual(child1, child2):
 	if child1 == child2:
 		return True
 
-	if child1.nodeType != child2.nodeType or len(child1.childNodes) != len(child2.childNodes):
+	if child1.nodeType != child2.nodeType or len(_importantChildNodes(child1.childNodes)) != len(_importantChildNodes(child2.childNodes)):
 		return False
 
 	if child1.nodeType == child1.TEXT_NODE:
@@ -54,24 +61,13 @@ def _mathChildIsEqual(child1, child2):
 	#Fallback to string comparison
 	return _sanitizeTextNodeContent(child1) == _sanitizeTextNodeContent(child2)
 
-def _stripEmptyChildren(children):
-	newChildren = []
-
-	for child in children:
-		if child.nodeType == child.TEXT_NODE:
-			text = _sanitizeTextNodeContent(child.textContent)
-
-			if len(text) > 0:
-				newChildren.append(child)
-
-		else:
-			newChildren.append(child)
-
-	return newChildren
+_stripEmptyChildren = _importantChildNodes
 
 def _sanitizeTextNodeContent(textNode):
 	text = textNode.textContent.strip()
 	text = text.replace(',', '')
+	# Whitespace is insignificant
+	text = text.replace( ' ', '' )
 
 	return text
 
