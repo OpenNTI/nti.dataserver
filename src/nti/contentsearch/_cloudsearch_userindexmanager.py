@@ -1,4 +1,6 @@
 import sys
+import time
+from datetime import datetime
 
 from zope import component
 from zope import interface
@@ -116,7 +118,19 @@ class CloudSearchUserIndexManager(object):
 		return empty_suggest_result(qo.term)
 		
 	# ---------------------- 
-		
+	
+	@property
+	def version(self):
+		return int(time.mktime(datetime.utcnow().timetuple()))
+	
+	@property
+	def a_version(self):
+		return self.version - 10
+	
+	@property
+	def d_version(self):
+		return self.version + 1
+	
 	def _get_errors(self, result, n=5):
 		errors = result.errors[:n]
 		return '\n'.join(errors)
@@ -128,8 +142,7 @@ class CloudSearchUserIndexManager(object):
 		type_name = normalize_type_name(type_name or get_type_name(data))
 		oid, external = to_cloud_object(data, self.username, type_name)
 		
-		# set 1 as version 
-		service.add(oid, 1, external) 
+		service.add(oid, self.a_version, external) 
 		result = service.commit()
 		if result.errors:
 			s = self._get_errors(result)
@@ -143,7 +156,8 @@ class CloudSearchUserIndexManager(object):
 		if not data: return None
 		service = self._get_document_service()
 		oid = get_cloud_oid(data)
-		service.delete(oid, 1) 
+		
+		service.delete(oid, self.d_version) 
 		result = service.commit()
 		if result.errors:
 			s = ' '.join(result.errors)
@@ -154,9 +168,9 @@ class CloudSearchUserIndexManager(object):
 	def remove_index(self, type_name=None):
 		counter = 0
 		service = self._get_document_service()
-		for oid in self.get_aws_oids(type_name=type_name):
+		for oid, _ in self.get_aws_oids(type_name=type_name):
 			oid = get_cloud_oid(oid)
-			service.delete(oid, 1) 
+			service.delete(oid, self.d_version)
 			counter = counter + 1
 		
 		if counter:
@@ -184,7 +198,7 @@ class CloudSearchUserIndexManager(object):
 		service = self._get_search_service()
 		results = service.search(bq=bq, return_fields=(oid_,), size=size, start=0)
 		for r in results:
-			yield r['data'][oid_]
+			yield r['data'][oid_], r['id']
 			
 	# ---------------------- 
 		
