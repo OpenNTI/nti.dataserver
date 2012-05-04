@@ -44,6 +44,7 @@ class TestWebSocket(ConfiguringTestBase):
 			session_id, incr_hits = [None] * 2
 			socket = None
 			protocol = None
+			connected = True
 
 		websocket = WebSocket()
 		handler = Handler()
