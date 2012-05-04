@@ -135,8 +135,8 @@ _DATA_QUIZ_1 = {'Class': 'Quiz',
 class ExampleDatabaseInitializer(object):
 	interface.implements(gen_interfaces.IInstallableSchemaManager)
 
-	generation = 7
-	minimum_generation = 7
+	generation = 8
+	minimum_generation = 8
 
 	def __init__( self, *args ):
 		pass
