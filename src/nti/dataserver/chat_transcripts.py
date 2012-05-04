@@ -95,10 +95,13 @@ class _MeetingTranscriptStorage(Persistent,datastructures.ContainedMixin,datastr
 		self.messages[msg.ID] = _CopyingWeakRef( msg )
 
 	def itervalues(self):
-		return (msg()
-				for msg in self.messages.itervalues())
+		return (msg() for msg in self.messages.itervalues())
 
-	values = itervalues # for finding with zope.genartions.findObjectsMatching
+	# for finding MessageInfos with zope.genartions.findObjectsMatching
+	# Currently disabled due to the switch to callable refs: the iterator cannot
+	# iterate non-callable objects, and that breaks generations.findObjectsMatching,
+	# it doesn't catch that exception
+	#values = itervalues
 
 def _transcript_ntiid( meeting, creator, nttype=ntiids.TYPE_TRANSCRIPT_SUMMARY ):
 	"""
