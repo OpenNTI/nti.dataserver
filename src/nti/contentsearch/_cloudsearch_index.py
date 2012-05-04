@@ -1,4 +1,7 @@
+import six
 import hashlib
+
+from persistent.interfaces import IPersistent
 
 from nti.externalization.oids import toExternalOID
 from nti.externalization.externalization import toExternalObject
@@ -111,8 +114,12 @@ ds2cloud_field_mappings[LAST_MODIFIED] = last_modified_
 
 # -----------------------------------
 
-def get_object_id(obj):
-	oid = toExternalOID(obj)
+def get_cloud_oid(obj):
+	if IPersistent.providedBy(obj):
+		obj = toExternalOID(obj)
+	else:
+		obj = obj[0] if isinstance(obj, (list, tuple)) else obj
+	oid = obj if isinstance(obj, six.string_types) else toExternalOID(obj)
 	return hashlib.sha224(oid).hexdigest()
 
 def get_object_content(data, type_name=None):
@@ -133,7 +140,7 @@ def get_object_ngrams(data, type_name=None):
 	return result
 
 def to_cloud_object(obj, username, type_name):
-	oid  = get_object_id(obj)
+	oid  = get_cloud_oid(obj)
 	data = toExternalObject(obj)
 		
 	# make sure we remove fields that are not to be indexed
@@ -163,9 +170,10 @@ def to_cloud_object(obj, username, type_name):
 				
 	return oid, data
 
-def to_search_hit(data):
+def to_search_hit(cloud_data):
 	for n, k in cloud2hit_field_mappings.items():
-		if n in data:
-			v = data.pop(n)
-			data[k] = v
-	return data
+		if n in cloud_data:
+			v = cloud_data.pop(n)
+			v = v[0] if isinstance(v, (list, tuple)) else v
+			cloud_data[k] = v
+	return cloud_data
