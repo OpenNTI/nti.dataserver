@@ -1,15 +1,12 @@
-import six
 import hashlib
 
-from persistent.interfaces import IPersistent
-
-from nti.externalization.oids import toExternalOID
 from nti.externalization.externalization import toExternalObject
 
 from nti.contentsearch import CaseInsensitiveDict
 
 from nti.contentsearch.common import ngrams
 from nti.contentsearch.common import get_type_name
+from nti.contentsearch.common import get_external_oid
 from nti.contentsearch.common import get_note_content
 from nti.contentsearch.common import get_last_modified
 from nti.contentsearch.common import normalize_type_name
@@ -115,11 +112,7 @@ ds2cloud_field_mappings[LAST_MODIFIED] = last_modified_
 # -----------------------------------
 
 def get_cloud_oid(obj):
-	if IPersistent.providedBy(obj):
-		obj = toExternalOID(obj)
-	else:
-		obj = obj[0] if isinstance(obj, (list, tuple)) else obj
-	oid = obj if isinstance(obj, six.string_types) else toExternalOID(obj)
+	oid = get_external_oid(obj)
 	return hashlib.sha224(oid).hexdigest()
 
 def get_object_content(data, type_name=None):
