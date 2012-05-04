@@ -25,13 +25,13 @@ from nti.contentsearch.common import ( 	HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUE
 from nti.contentsearch.tests import zanpakuto_commands
 from nti.contentsearch.tests import ConfiguringTestBase
 
-from hamcrest import (is_, is_not, has_key, has_item, has_entry, has_length, assert_that)
+from hamcrest import (is_, is_not, has_key, has_entry, has_length, assert_that)
 
 cloudsearch_index.compute_ngrams = True
 
 class TestCloudSearchIndexManager(ConfiguringTestBase):
 	
-	user_id = 'nt@nti.com'
+	user_id = u'nt@nti.com'
 	aws_access_key_id = 'AKIAJ42UUP2EUMCMCZIQ'
 	aws_secret_access_key = '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'
 	
@@ -75,9 +75,9 @@ class TestCloudSearchIndexManager(ConfiguringTestBase):
 		return cim, notes, result
 	
 	def add_user_index_notes(self, ds=None):
-		usr = User( 'nt@nti.com', 'temp' )
+		usr = User( self.user_id, 'temp' )
 		ds = ds or mock_dataserver.current_mock_ds
-		ds.root['users']['nt@nti.com'] = usr
+		ds.root['users'][self.user_id] = usr
 		cim, notes, resps = self.index_notes(dataserver=ds, usr=usr, do_assert=False)
 		return usr, cim, notes, resps
 	
