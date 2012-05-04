@@ -4,7 +4,6 @@ from zope import component
 from zope import interface
 
 from nti.dataserver.users import User
-from nti.externalization.oids import toExternalOID
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.contentsearch.exfm.cloudsearch import get_search_service
@@ -21,6 +20,7 @@ from nti.contentsearch.common import empty_search_result
 from nti.contentsearch.common import empty_suggest_result
 from nti.contentsearch.common import indexable_type_names
 from nti.contentsearch._search_external import get_search_hit
+from nti.contentsearch._cloudsearch_index import get_object_id
 from nti.contentsearch._cloudsearch_index import to_search_hit
 from nti.contentsearch._cloudsearch_index import to_cloud_object
 from nti.contentsearch._cloudsearch_index import search_stored_fields
@@ -153,7 +153,7 @@ class CloudSearchUserIndexManager(object):
 	def delete_content(self, data, type_name=None, *args, **kwargs):
 		if not data: return None
 		service = self._get_document_service()
-		oid = toExternalOID(data)
+		oid = get_object_id(data)
 		service.delete(oid, 0) 
 		result = service.commit()
 		if result.errors:
@@ -168,7 +168,7 @@ class CloudSearchUserIndexManager(object):
 			service = self._get_document_service()
 			for type_name, obj in indexable_objects(user, (type_name,)):
 				try:
-					oid = toExternalOID(obj)
+					oid = get_object_id(obj)
 					service.delete(oid, 0) 
 				except:
 					pass
