@@ -7,6 +7,7 @@ from repoze.catalog.query import parse_query
 from repoze.catalog.query import Contains as IndexContains
 from repoze.catalog.query import DoesNotContain as IndexDoesNotContain
 
+from nti.contentsearch import CaseInsensitiveDict
 from nti.contentsearch.common import QueryExpr
 from nti.contentsearch.common import is_all_query
 from nti.contentsearch.common import (sharedWith_, containerId_, collectionId_, id_, oid_, ntiid_,
@@ -79,15 +80,16 @@ class DoesNotContain(IndexDoesNotContain):
 
 # ---------------------------------
 
-_mappings = {sharedWith_.lower()   : sharedWith_, 
-			 containerId_.lower()  : CONTAINER_ID,
-			 collectionId_.lower() : COLLECTION_ID,
-			 CREATOR.lower()       : CREATOR,
-			 id_ : ID,
-			 oid_: OID,
-			 ntiid_ : NTIID }
+_mappings =  CaseInsensitiveDict()
+_mappings[sharedWith_] = sharedWith_
+_mappings[containerId_] = CONTAINER_ID
+_mappings[collectionId_] = COLLECTION_ID
+_mappings[CREATOR] = CREATOR
+_mappings[id_] = ID
+_mappings[oid_] = OID
+_mappings[ntiid_] = NTIID
 for n in last_modified_fields:
-	_mappings[n.lower()] = LAST_MODIFIED
+	_mappings[n] = LAST_MODIFIED
 	
 def map_to_key_names(name, stored_names=()):
 	name = unicode(name) if name else u''

@@ -4,6 +4,7 @@ from whoosh.qparser import QueryParser
 from whoosh.qparser.dateparse import DateParserPlugin
 from whoosh.qparser import (GtLtPlugin, PrefixPlugin, WildcardPlugin)
 
+from nti.contentsearch import CaseInsensitiveDict
 from nti.contentsearch.common import QueryExpr
 from nti.contentsearch.common import (sharedWith_, containerId_, collectionId_, last_modified_)
 from nti.contentsearch.common import (last_modified_fields)
@@ -25,11 +26,12 @@ def create_query_parser(fieldname='foo', schema=None, plugins=default_search_plu
 
 # ----------------------------------
 
-_mappings = {sharedWith_.lower()   : sharedWith_, 
-			 containerId_.lower()  : containerId_,
-			 collectionId_.lower() : collectionId_}
+_mappings = CaseInsensitiveDict()
+_mappings[sharedWith_] = sharedWith_ 
+_mappings[containerId_] = containerId_
+_mappings[collectionId_] =	collectionId_
 for n in last_modified_fields:
-	_mappings[n.lower()] = last_modified_
+	_mappings[n] = last_modified_
 	
 def map_to_schema_names(name, stored_names=()):
 	name = unicode(name) if name else u''

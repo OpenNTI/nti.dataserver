@@ -26,10 +26,10 @@ from nti.contentsearch._cloudsearch_index import to_cloud_object
 from nti.contentsearch._cloudsearch_index import search_stored_fields
 from nti.contentsearch.utils.nti_reindex_user_content import indexable_objects
 
-from nti.contentsearch.common import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT, CLASS, LAST_MODIFIED, ITEMS,
+from nti.contentsearch.common import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT, LAST_MODIFIED, ITEMS,
 									  NTIID, HIT_COUNT)
 
-from nti.contentsearch.common import (username_, ngrams_,  content_)
+from nti.contentsearch.common import (username_, ngrams_,  content_, type_)
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -59,7 +59,7 @@ class CloudSearchUserIndexManager(object):
 	def _adapt_search_on_types(self, search_on=None):
 		if search_on:
 			search_on = [normalize_type_name(x) for x in search_on]
-		return search_on or self.store.get_catalog_names(self.username)
+		return search_on or indexable_type_names
 	
 	def _get_document_service(self):
 		return get_document_service(domain=self.domain)
@@ -80,7 +80,7 @@ class CloudSearchUserIndexManager(object):
 		bq.append("%s:'%s'" % (field, qo.term))
 		bq.append('(or')
 		for type_name in search_on:
-			bq.append("%s:'%s'" % (CLASS, type_name))
+			bq.append("%s:'%s'" % (type_, type_name))
 		bq.append('))')
 		
 		service = self._get_search_service()
@@ -91,7 +91,7 @@ class CloudSearchUserIndexManager(object):
 		objects = service.search(bq=bq, return_fields=search_stored_fields, size=limit, start=start)
 		
 		length = len(objects)
-		hits = map(self.get_search_hit, objects, [qo.term]*length, [highlight_type]*length)
+		hits = map(self._get_search_hit, objects, [qo.term]*length, [highlight_type]*length)
 		
 		# filter if required
 		hits = hits[:limit] if limit else hits
