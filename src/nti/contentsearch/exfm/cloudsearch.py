@@ -282,7 +282,7 @@ class SearchConnection(object):
         if endpoint:
             self.endpoint = endpoint
         else:
-            self.endpoint = domain.doc_service['endpoint']
+            self.endpoint = domain.search_service['endpoint']
 
         if not self.endpoint.startswith('search-'):
             self.endpoint = "search-%s" % self.endpoint
