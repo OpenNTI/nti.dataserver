@@ -34,8 +34,8 @@ compute_ngrams = False #TODO: set this as part of a config
 
 mid_ = u'mid'
 search_stored_fields=[type_, creator_, last_modified_, ntiid_, containerId_.lower(), mid_, oid_, content_]
-search_indexed_fields = search_stored_fields + \
-						[username_, channel_, keywords_, recipients_, references_, sharedWith_.lower(), ngrams_]
+search_faceted_fields = [keywords_, recipients_, references_, sharedWith_.lower()]
+search_indexed_fields = search_stored_fields + search_faceted_fields + [username_, channel_, ngrams_]
 												
 def create_search_domain(connection, domain_name='ntisearch', allow_ips=()):
 	
@@ -174,7 +174,7 @@ def to_external_dict(cloud_data):
 	# aws seems to return item results in a list
 	for k in cloud_data.keys():
 		v = cloud_data[k]
-		if isinstance(v, (list, tuple)):
+		if v not in search_faceted_fields and isinstance(v, (list, tuple)):
 			cloud_data[k] = v[0] if v else u''
 			
 	# map ext fields from cloud fields

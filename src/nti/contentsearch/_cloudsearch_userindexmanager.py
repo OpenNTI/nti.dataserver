@@ -128,8 +128,8 @@ class CloudSearchUserIndexManager(object):
 		type_name = normalize_type_name(type_name or get_type_name(data))
 		oid, external = to_cloud_object(data, self.username, type_name)
 		
-		# set 0 as version 
-		service.add(oid, 0, external) 
+		# set 1 as version 
+		service.add(oid, 1, external) 
 		result = service.commit()
 		if result.errors:
 			s = self._get_errors(result)
@@ -143,7 +143,7 @@ class CloudSearchUserIndexManager(object):
 		if not data: return None
 		service = self._get_document_service()
 		oid = get_cloud_oid(data)
-		service.delete(oid, 0) 
+		service.delete(oid, 1) 
 		result = service.commit()
 		if result.errors:
 			s = ' '.join(result.errors)
@@ -156,7 +156,7 @@ class CloudSearchUserIndexManager(object):
 		service = self._get_document_service()
 		for oid in self.get_aws_oids(type_name=type_name):
 			oid = get_cloud_oid(oid)
-			service.delete(oid, 0) 
+			service.delete(oid, 1) 
 			counter = counter + 1
 		
 		if counter:
