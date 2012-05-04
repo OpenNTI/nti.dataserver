@@ -27,8 +27,11 @@ compute_ngrams = False #TODO: set this as part of a config
 
 # -----------------------------------
 
-stored_fields=[type_, creator_, last_modified_, ntiid_, containerId_.lower(), id_, oid_, content_]
-
+mid_ = u'mid'
+search_stored_fields=[type_, creator_, last_modified_, ntiid_, containerId_.lower(), mid_, oid_, content_]
+search_indexed_fields = search_stored_fields + \
+						[username_, channel_, keywords_, recipients_, references_, sharedWith_.lower(), ngrams_]
+												
 def create_search_domain(connection, domain_name='ntisearch', allow_ips=()):
 	
 	domain = connection.create_domain(domain_name)
@@ -53,7 +56,7 @@ def create_search_domain(connection, domain_name='ntisearch', allow_ips=()):
 	domain.create_index_field(containerId_.lower(), 'literal', searchable=True, result=True,
 							  source_attributes=container_id_fields)
 	
-	domain.create_index_field(id_, 'literal', searchable=True, result=True, 
+	domain.create_index_field(mid_, 'literal', searchable=True, result=True, 
 							  source_attributes=(id_, ID))
 	
 	domain.create_index_field(oid_, 'literal', searchable=True, result=True,
@@ -82,17 +85,30 @@ def create_search_domain(connection, domain_name='ntisearch', allow_ips=()):
 
 # -----------------------------------
 
-_field_mappings = CaseInsensitiveDict()
-_field_mappings[type_] 			= CLASS
-_field_mappings[creator_]		= CREATOR
-_field_mappings[ntiid_]			= NTIID 
-_field_mappings[containerId_]	= CONTAINER_ID
-_field_mappings[id_]			= ID
-_field_mappings[oid_]			= TARGET_OID
-_field_mappings[sharedWith_]	= sharedWith_
+# create field mappings from cloud to search_hit
+cloud2hit_field_mappings = CaseInsensitiveDict()
+cloud2hit_field_mappings[type_] 		= CLASS
+cloud2hit_field_mappings[creator_]		= CREATOR
+cloud2hit_field_mappings[ntiid_]		= NTIID 
+cloud2hit_field_mappings[containerId_]	= CONTAINER_ID
+cloud2hit_field_mappings[mid_]			= ID
+cloud2hit_field_mappings[oid_]			= TARGET_OID
+cloud2hit_field_mappings[sharedWith_]	= sharedWith_
 for name in last_modified_fields:
-	_field_mappings[name] = LAST_MODIFIED
+	cloud2hit_field_mappings[name] = LAST_MODIFIED
 			
+# create search_hit to cloud
+hit2cloud_field_mappings = {}
+for n,v in cloud2hit_field_mappings.items():
+	hit2cloud_field_mappings[v] = n.lower()
+
+# special cases
+hit2cloud_field_mappings.pop(TARGET_OID, None)
+hit2cloud_field_mappings[OID] = oid_
+hit2cloud_field_mappings[LAST_MODIFIED] = last_modified_
+
+# -----------------------------------
+
 def get_object_content(data, type_name=None):
 	type_name = normalize_type_name(type_name or get_type_name(data))
 	if type_name == note_:
@@ -114,6 +130,15 @@ def to_cloud_object(obj, username, type_name):
 	oid  = toExternalOID(obj)
 	data = toExternalObject(obj)
 		
+	# make sure we remove fields that are not to be indexed
+	for n in list(data.keys()):
+		if n in hit2cloud_field_mappings:
+			value = data.pop(n)
+			k = hit2cloud_field_mappings[n]
+			data[k] = value
+		else:
+			data.pop(n)
+		
 	# make sure the user name is always set
 	data[username_] = username
 		
@@ -121,16 +146,16 @@ def to_cloud_object(obj, username, type_name):
 	data[content_] = get_object_content(obj, type_name)
 	if compute_ngrams:
 		data[ngrams_] = get_object_ngrams(obj, type_name)
-			
+		
 	# get and update the last modified data
 	# cs supports uint ony and we use this number as version also
 	lm = int(get_last_modified(data)) 
-	data[LAST_MODIFIED] = lm
-		
+	data[last_modified_] = lm
+				
 	return oid, data
 
 def to_search_hit(data):
-	for n, k in _field_mappings.items():
+	for n, k in cloud2hit_field_mappings.items():
 		if n in data:
 			v = data.pop(n)
 			data[k] = v

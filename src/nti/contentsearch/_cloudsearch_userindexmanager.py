@@ -21,9 +21,9 @@ from nti.contentsearch.common import empty_search_result
 from nti.contentsearch.common import empty_suggest_result
 from nti.contentsearch.common import indexable_type_names
 from nti.contentsearch._search_external import get_search_hit
-from nti.contentsearch._cloudsearch_index import stored_fields
 from nti.contentsearch._cloudsearch_index import to_search_hit
 from nti.contentsearch._cloudsearch_index import to_cloud_object
+from nti.contentsearch._cloudsearch_index import search_stored_fields
 from nti.contentsearch.utils.nti_reindex_user_content import indexable_objects
 
 from nti.contentsearch.common import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT, CLASS, LAST_MODIFIED, ITEMS,
@@ -64,7 +64,7 @@ class CloudSearchUserIndexManager(object):
 	def _get_document_service(self):
 		return get_document_service(domain=self.domain)
 	
-	def get_search_service(self):	
+	def _get_search_service(self):	
 		return get_search_service(domain=self.domain)
 	
 	def _get_search_hit(self, obj, query=None, highlight_type=WORD_HIGHLIGHT):
@@ -82,12 +82,13 @@ class CloudSearchUserIndexManager(object):
 		for type_name in search_on:
 			bq.append("%s:'%s'" % (CLASS, type_name))
 		bq.append('))')
-		service = self.get_search_service()
+		
+		service = self._get_search_service()
 		limit = qo.limit or sys.maxint
 		start = qo.get('start', 0)
 		
 		bq = ' '.join(bq)
-		objects = service.search(bq=bq, return_fields=stored_fields, size=limit, start=start)
+		objects = service.search(bq=bq, return_fields=search_stored_fields, size=limit, start=start)
 		
 		length = len(objects)
 		hits = map(self.get_search_hit, objects, [qo.term]*length, [highlight_type]*length)
@@ -183,15 +184,10 @@ class CloudSearchUserIndexManager(object):
 	# ---------------------- 
 		
 	def has_stored_indices(self):
-		try:
-			bq = "%s:'%s'" % (username_, self.username)
-			service = self.get_search_service()
-			objects = service.search(bq=bq, return_fields=stored_fields, size=1, start=0)
-			return True if len(objects) else False
-		except Exception, e:
-			print repr(e)
-			logger.exception("Error while trying to query for all user documents")
-		return False
+		bq = "%s:'%s'" % (username_, self.username)
+		service = self._get_search_service()
+		objects = service.search(bq=bq, return_fields=search_stored_fields, size=1, start=0)
+		return True if len(objects) else False
 		
 	def get_stored_indices(self):
 		# asume all types are stored
