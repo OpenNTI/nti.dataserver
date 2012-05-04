@@ -19,7 +19,7 @@ class Search(object):
 		self.request = request
 
 	def __call__( self ):
-		query = get_queryobject(self.request)
+		query = get_queryobject(self.request, False, True)
 		indexmanager = self.request.registry.getUtility( IIndexManager )
 		return indexmanager.search( query=query, indexname=query.indexname )
 	
@@ -29,7 +29,7 @@ class ContentSearch(object):
 		self.request = request
 
 	def __call__( self ):
-		query = get_queryobject(self.request)
+		query = get_queryobject(self.request, True, False)
 		indexmanager = self.request.registry.getUtility( IIndexManager )
 		return indexmanager.content_search( query=query, indexname=query.indexname )
 GetSearch = ContentSearch
@@ -40,7 +40,7 @@ class UserSearch(object):
 		self.request = request
 
 	def __call__( self ):
-		query = get_queryobject(self.request, False)
+		query = get_queryobject(self.request, False, False)
 		indexmanager = self.request.registry.getUtility( IIndexManager )
 		return indexmanager.user_data_search( query=query, username=query.username )
 
@@ -51,7 +51,7 @@ def clean_search_query(query):
 	result = re.sub('[*?]', '', query) if query else u''
 	return unicode(result.lower())
 
-def get_indexname(environ):
+def get_indexname_from_path(environ):
 	"""
 	return the book/content index name
 	"""
@@ -69,7 +69,7 @@ def get_indexname(environ):
 
 	return path
 
-def get_queryobject(request, get_index=True):
+def get_queryobject(request, is_content=False, is_unified=False):
 	term = request.matchdict.get('term', None)
 	term = clean_search_query(term)
 	term = term or ''
@@ -80,16 +80,16 @@ def get_queryobject(request, get_index=True):
 	if username:
 		args['username'] = username
 
-	indexname = get_indexname(request.environ)
-	if get_index and indexname:
-		args['indexname'] = get_indexname(request.environ)
-		
-	ntiid = request.matchdict.get('ntiid', None)
-	if ntiid:
-		if not indexname:
-			indexname = get_collection(ntiid, default=None, registry=request.registry)
-			args['indexname'] = indexname
-		else:
-			args['ntiid'] = ntiid
+	if is_content:
+		indexname = get_indexname_from_path(request.environ)
+		args['indexname'] = indexname
+	else:
+		ntiid = request.matchdict.get('ntiid', None)
+		if ntiid:
+			if is_unified:
+				indexname = get_collection(ntiid, default=None, registry=request.registry)
+				args['indexname'] = indexname
+			else:
+				args['ntiid'] = ntiid
 		
 	return QueryObject(**args)
