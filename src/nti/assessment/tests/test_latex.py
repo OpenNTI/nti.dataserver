@@ -61,5 +61,5 @@ class TestLatex(ConfiguringTestBase):
 		assert_that( mce( child1, child2 ), is_true() )
 
 		# diff child nodes
-		child2.childNodes = (1,)
+		child2.childNodes = (MathChild(),)
 		assert_that( mce( child1, child2 ), is_false() )

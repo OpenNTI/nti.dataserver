@@ -89,18 +89,13 @@ class _MeetingTranscriptStorage(Persistent,datastructures.ContainedMixin,datastr
 
 	@property
 	def meeting(self):
-		try:
-			return self._meeting_ref()
-		except AttributeError:
-			# Old data. B/c rather than a migration (?)
-			# If this is broken, it will raise POSKeyError, I think
-			return self.__dict__['meeting']
+		return self._meeting_ref()
 
 	def add_message( self, msg ):
 		self.messages[msg.ID] = _CopyingWeakRef( msg )
 
 	def itervalues(self):
-		return ((msg() if callable(msg) else msg) # b/w compat
+		return (msg()
 				for msg in self.messages.itervalues())
 
 	values = itervalues # for finding with zope.genartions.findObjectsMatching
