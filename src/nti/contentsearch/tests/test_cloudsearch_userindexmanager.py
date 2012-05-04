@@ -31,17 +31,29 @@ cloudsearch_index.compute_ngrams = True
 
 class TestCloudSearchIndexManager(ConfiguringTestBase):
 	
-	user_id = u'nt@nti.com'
+	user_id = unicode(str(uuid.uuid1()))
 	aws_access_key_id = 'AKIAJ42UUP2EUMCMCZIQ'
 	aws_secret_access_key = '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'
 	
+	@classmethod
+	def setUpClass(cls):
+		cls.store = create_cloudsearch_store(cls.aws_access_key_id, cls.aws_secret_access_key)
+		component.provideUtility(cls.store, provides=ICloudSearchStore)
+
+	@classmethod
+	def tearDownClass(cls):
+		pass
+
 	def setUp(self):
 		super(TestCloudSearchIndexManager, self).setUp()
-		self.store = create_cloudsearch_store(self.aws_access_key_id, self.aws_secret_access_key)
 		component.provideUtility(self.store, provides=ICloudSearchStore)
 
 	def tearDown(self):
 		super(TestCloudSearchIndexManager, self).tearDown()
+		try:
+			CloudSearchUserIndexManager(self.user_id, self.store.ntisearch).remove_index()
+		except:
+			pass
 		resetHooks()
 		
 	# ---------------------
@@ -66,7 +78,7 @@ class TestCloudSearchIndexManager(ConfiguringTestBase):
 	def index_notes(self, dataserver=None, usr=None, conn=None, do_assert=True):
 		result = []
 		notes, usr = self.add_notes(usr=usr, conn=conn)
-		cim = CloudSearchUserIndexManager (usr.username, self.store.ntisearch)
+		cim = CloudSearchUserIndexManager (usr.username)
 		for note in notes:
 			resp = cim.index_content(note)
 			if do_assert: 
@@ -85,17 +97,17 @@ class TestCloudSearchIndexManager(ConfiguringTestBase):
 	
 	@unittest.skip
 	@WithMockDSTrans
-	def x_test_empty(self):
-		user_id = str(uuid.uuid1())
-		cim = CloudSearchUserIndexManager(user_id, self.store.ntisearch)
+	def test_empty(self):
+		cim = CloudSearchUserIndexManager(self.user_id)
 		assert_that(cim.get_stored_indices(), is_(list(indexable_type_names)))
 		assert_that(cim.has_stored_indices(), is_(False))
 		
 	@unittest.skip
 	@WithMockDSTrans
 	def test_query_notes(self):
-		#_, cim, _, _ = self.add_user_index_notes()
-		cim = CloudSearchUserIndexManager(self.user_id, self.store.ntisearch)
+		
+		_, cim, _, _ = self.add_user_index_notes()
+
 		hits = cim.search("shield")
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 		assert_that(hits, has_entry(QUERY, 'shield'))
