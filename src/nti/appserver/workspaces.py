@@ -200,8 +200,7 @@ class GlobalWorkspace(object):
 	def __init__(self):
 		super(GlobalWorkspace,self).__init__()
 		# TODO: Hardcoding both these things
-		self.links = (	links.Link( 'UserSearch', rel='UserSearch' ),
-						links.Link( 'Search', rel='Search' ) )
+		self.links = (	links.Link( 'UserSearch', rel='UserSearch' )  )
 
 	@property
 	def name(self): return 'Global'
@@ -497,10 +496,13 @@ class _UserPagesCollection(object):
 		search_parent = location.Location()
 		search_parent.__name__ = 'Search'
 		search_parent.__parent__ = self.__parent__
-		_links = links.Link( 'RecursiveUserGeneratedData', rel='UGDSearch' )
-		_links.__parent__ = search_parent
-		_links.__name__ = _links.target
-		return (_links,)
+		ugd_link = links.Link( 'RecursiveUserGeneratedData', rel='UGDSearch' )
+		unified_link = links.Link( 'UnifiedSearch', rel='UnifiedSearch' )
+		result = (ugd_link, unified_link)
+		for lnk in result:
+			lnk.__parent__ = search_parent
+			lnk.__name__ = lnk.target
+		return result
 
 	@property
 	def container(self):
