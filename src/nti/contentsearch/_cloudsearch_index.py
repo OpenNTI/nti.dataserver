@@ -1,3 +1,5 @@
+import hashlib
+
 from nti.externalization.oids import toExternalOID
 from nti.externalization.externalization import toExternalObject
 
@@ -109,6 +111,10 @@ ds2cloud_field_mappings[LAST_MODIFIED] = last_modified_
 
 # -----------------------------------
 
+def get_object_id(obj):
+	oid = toExternalOID(obj)
+	return hashlib.sha224(oid).hexdigest()
+
 def get_object_content(data, type_name=None):
 	type_name = normalize_type_name(type_name or get_type_name(data))
 	if type_name == note_:
@@ -127,7 +133,7 @@ def get_object_ngrams(data, type_name=None):
 	return result
 
 def to_cloud_object(obj, username, type_name):
-	oid  = toExternalOID(obj)
+	oid  = get_object_id(obj)
 	data = toExternalObject(obj)
 		
 	# make sure we remove fields that are not to be indexed
