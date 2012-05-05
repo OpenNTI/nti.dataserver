@@ -263,14 +263,14 @@ class RepozeUserIndexManager(object):
 	
 # -----------------------------
 
-class ReoozeUserIndexManagerFactory(object):
+class RepozeUserIndexManagerFactory(object):
 	interface.implements(IUserIndexManagerFactory)
 
 	singleton = None
 
 	def __new__(cls, *args, **kwargs):
 		if not cls.singleton:
-			cls.singleton = super(ReoozeUserIndexManagerFactory, cls).__new__(cls, *args, **kwargs)
+			cls.singleton = super(RepozeUserIndexManagerFactory, cls).__new__(cls, *args, **kwargs)
 		return cls.singleton
 
 	def __str__( self ):
@@ -304,4 +304,4 @@ class ReoozeUserIndexManagerFactory(object):
 			logger.exception("Error while closing index manager %s" % key)
 			
 def ruim_factory(*args, **kwargs):
-	return ReoozeUserIndexManagerFactory()
+	return RepozeUserIndexManagerFactory()
