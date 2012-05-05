@@ -10,11 +10,12 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.contentsearch.exfm.cloudsearch import get_search_service
 from nti.contentsearch.exfm.cloudsearch import get_document_service
 
+from nti.contentsearch.interfaces import IUserIndexManagerFactory
+
 from nti.contentsearch import interfaces
 from nti.contentsearch import QueryObject
 from nti.contentsearch import SearchCallWrapper
 from nti.contentsearch.interfaces import ICloudSearchStore
-#from nti.contentsearch.interfaces import IUserIndexManagerFactory
 from nti.contentsearch.common import is_all_query
 from nti.contentsearch.common import get_type_name
 from nti.contentsearch.common import normalize_type_name
@@ -37,6 +38,14 @@ import logging
 logger = logging.getLogger( __name__ )
 
 # -----------------------------------
+		
+def has_stored_indices(username):
+	store = component.getUtility( interfaces.ICloudSearchStore )
+	domain = store.get_domain('ntisearch')
+	bq = "%s:'%s'" % (username_, username)
+	service  = get_search_service(domain=domain) if domain else None
+	results = service.search(bq=bq, return_fields=[oid_], size=1, start=0) if service else ()
+	return True if len(results) else False
 
 class CloudSearchUserIndexManager(object):
 	interface.implements(interfaces.IUserIndexManager)
@@ -199,11 +208,37 @@ class CloudSearchUserIndexManager(object):
 	# ---------------------- 
 		
 	def has_stored_indices(self):
-		gen = self.get_aws_oids(size=1)
-		objects = list(gen)
-		return True if len(objects) else False
+		return has_stored_indices(self.username)
 		
 	def get_stored_indices(self):
 		# asume all types are stored
 		return list(indexable_type_names)
 	
+# -----------------------------------
+
+class CloudSearchIndexManagerFactory(object):
+	interface.implements(IUserIndexManagerFactory)
+
+	singleton = None
+
+	def __new__(cls, *args, **kwargs):
+		if not cls.singleton:
+			cls.singleton = super(CloudSearchIndexManagerFactory, cls).__new__(cls, *args, **kwargs)
+		return cls.singleton
+	
+	def __call__(self, username, *args, **kwargs):
+		create = kwargs.get('create', False)
+		if create or has_stored_indices(username):
+			uim = CloudSearchUserIndexManager(username)
+			return uim
+		else:
+			return None
+	
+	def on_item_removed(self, key, value):
+		try:
+			value.close()
+		except:
+			logger.exception("Error while closing index manager %s" % key)
+			
+def csim_factory(*args, **kwargs):
+	return CloudSearchIndexManagerFactory()
