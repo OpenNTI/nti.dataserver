@@ -41,6 +41,12 @@ from persistent import Persistent
 from BTrees.OOBTree import OOBTree
 
 from nti.contentsearch.spambayes import LN2
+from nti.contentsearch.spambayes import default_use_bigrams
+from nti.contentsearch.spambayes import default_unknown_word_prob
+from nti.contentsearch.spambayes import default_max_discriminators
+from nti.contentsearch.spambayes import default_unknown_word_strength
+from nti.contentsearch.spambayes import default_minimum_prob_strength
+
 from nti.contentsearch.spambayes.chi2 import chi2Q
 
 # ---------------------------------
@@ -74,8 +80,11 @@ class Classifier(object):
 	# allow a subclass to use a different class for WordInfo
 	WordInfoClass = WordInfo
 
-	def __init__(self, unknown_word_strength=0.45, unknown_word_prob=0.5, 
-				 minimum_prob_strength=0.1, max_discriminators=150, use_bigrams=False, 
+	def __init__(self, unknown_word_strength=default_unknown_word_strength, 
+				 unknown_word_prob=default_unknown_word_prob, 
+				 minimum_prob_strength=default_minimum_prob_strength, 
+				 max_discriminators=default_max_discriminators, 
+				 use_bigrams=default_use_bigrams, 
 				 mapfactory=dict):
 		self.nspam = self.nham = 0
 		self.wordinfo = mapfactory()
@@ -475,10 +484,14 @@ class Classifier(object):
 
 Bayes = Classifier
 
-class PersistentClassifier(Classifier, Persistent):
-	def __init__(self, unknown_word_strength=0.45, unknown_word_prob=0.5, 
-				 minimum_prob_strength=0.1, max_discriminators=150, use_bigrams=False, 
+class PersistentClassifier(Persistent, Classifier):
+	def __init__(self, unknown_word_strength=default_unknown_word_strength, 
+				 unknown_word_prob=default_unknown_word_prob, 
+				 minimum_prob_strength=default_minimum_prob_strength, 
+				 max_discriminators=default_max_discriminators, 
+				 use_bigrams=default_use_bigrams, 
 				 mapfactory=OOBTree):
+		
 		Classifier.__init__(self, unknown_word_strength, unknown_word_prob, minimum_prob_strength, 
 							max_discriminators, use_bigrams, mapfactory)
 
