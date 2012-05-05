@@ -31,7 +31,7 @@ class Message(object):
 	id = property(set_id, get_id)
 	
 	def tokenize(self):
-		return tokenize(self)
+		return tokenize(self.text)
 
 	def get_classification(self):
 		return self.c
