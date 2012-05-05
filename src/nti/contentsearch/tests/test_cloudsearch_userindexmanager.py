@@ -34,7 +34,7 @@ class TestCloudSearchIndexManager(ConfiguringTestBase):
 	
 	__name__ = "TestCloudSearchIndexManager"
 	
-	aws_op_delay = 3
+	aws_op_delay = 5
 	aws_access_key_id = 'AKIAJ42UUP2EUMCMCZIQ'
 	aws_secret_access_key = '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'
 
@@ -133,6 +133,8 @@ class TestCloudSearchIndexManager(ConfiguringTestBase):
 		note.body = [u'Blow It Away']
 		self.cim.update_content(note)
 		
+		time.sleep(self.aws_op_delay)
+		
 		hits = self.cim.search("shield")
 		assert_that(hits, has_entry(HIT_COUNT, 0))
 		assert_that(hits, has_entry(QUERY, 'shield'))
@@ -147,7 +149,7 @@ class TestCloudSearchIndexManager(ConfiguringTestBase):
 		note = notes[5]
 		self.cim.delete_content(note)
 		
-		time.sleep(self.aws_op_delay) #time to delete
+		time.sleep(self.aws_op_delay)
 		
 		hits = self.cim.search("shield")
 		assert_that(hits, has_entry(HIT_COUNT, 0))
