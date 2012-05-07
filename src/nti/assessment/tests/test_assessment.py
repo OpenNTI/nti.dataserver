@@ -40,8 +40,13 @@ class TestAssessment(nti.tests.ConfiguringTestBase):
 		self.assertMathNodesEqual(math1, math3)
 		self.assertMathNodesEqual(math1, math4)
 
+		math1, math2 = mathTexToDOMNodes(['$7$','$7.0$'])
+
+		self.assertMathNodesEqual(math1, math2)
+
+
 		#Test things that should NOT be equal are not
-		math1, math2, math3, math4 = mathTexToDOMNodes(['$7$','$7.0$','$9$', '$70$'])
+		math1, math2, math3, math4 = mathTexToDOMNodes(['$7$','$7.01$','$9$', '$70$'])
 
 		self.assertMathNodesNotEqual(math1, math2)
 		self.assertMathNodesNotEqual(math1, math3)
@@ -82,10 +87,8 @@ class TestAssessment(nti.tests.ConfiguringTestBase):
 		self.assertMathNodesEqual(math1,math2)
 		self.assertMathNodesEqual(math3,math4)
 
-		# We are not fully symbolic, at this point. We don't handle arithmetic properties.
-		# We'd need to think about pulling in something like simpy if we need to be fully symbolic
-		self.assertMathNodesNotEqual(math1,math3)
-		self.assertMathNodesNotEqual(math2,math4)
+		self.assertMathNodesEqual(math1,math3)
+		self.assertMathNodesEqual(math2,math4)
 
 	def test_symbols(self):
 		math1, math2, math3, math4 = mathTexToDOMNodes(['$25\\pi$','$ 25 \\pi$','$25 \\pi $','$ 25\\pi $'])

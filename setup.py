@@ -55,7 +55,6 @@ setup(
 		# 'MySQL-python', # mysql adapter
 		# 'RelStorage',
 		'anyjson',
-		'authkit',
 		'boto >= 2.3.0', # amazon
 		'brownie',
 		'coverage',
@@ -89,6 +88,7 @@ setup(
 		'setproctitle',
 		'setuptools',
 		'simplejson',
+		'sympy == 0.7.1', # sympy-docs-html-0.7.1 is currently greater
 		'six',
 		'slimit',
 		'supervisor',
