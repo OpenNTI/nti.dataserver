@@ -72,7 +72,7 @@ class SQL3Classifier(Classifier):
 
 	def _get_row(self, word):
 		c = self.cursor()
-		c.execute("select * from bayes where word=%s", (word,))
+		c.execute("select word, nspam, nham from bayes where word=?", (word,))
 		rows = self.fetchall(c)
 		return rows[0] if rows else {}
 
@@ -80,28 +80,26 @@ class SQL3Classifier(Classifier):
 		c = self.cursor()
 		if self._has_key(word):
 			c.execute("update bayes"
-					  "  set nspam=%s,nham=%s"
-					  "  where word=%s",
+					  "  set nspam=?, nham=?"
+					  "  where word=?",
 					  (nspam, nham, word))
 		else:
-			c.execute("insert into bayes"
-					  "  (nspam, nham, word)"
-					  "  values (%s, %s, %s)",
-					  (nspam, nham, word))
+			c.execute("insert into bayes (nspam, nham, word) "
+					  "values (?, ?, ?)", (nspam, nham, word))
 		self.commit(c)
 
 	def _delete_row(self, word):
 		c = self.cursor()
-		c.execute("delete from bayes where word=%s", (word,))
+		c.execute("delete from bayes where word=?", (word,))
 		self.commit(c)
 
 	def _has_key(self, key):
 		c = self.cursor()
-		c.execute("select word from bayes where word=%s", (key,))
+		c.execute("select word from bayes where word=?", (key,))
 		return len(self.fetchall(c)) > 0
 
 	def _save_state(self):
-		self._set_row(self.statekey, self.nspam, self.nham)
+		self._set_row(self.state_key, self.nspam, self.nham)
 			
 	def _load(self, dbpath):
 		self.db = sql.connect(dbpath)
@@ -109,12 +107,12 @@ class SQL3Classifier(Classifier):
 			c = self.db.cursor()
 			c.execute("select count(*) from bayes")
 		except sql.OperationalError:
-			self.create_bayes()
+			self._create_db()
 
-		if self._has_key(self.statekey):
-			row = self._get_row(self.statekey)
-			self.nspam = row["nspam"]
-			self.nham = row["nham"]
+		if self._has_key(self.state_key):
+			row = self._get_row(self.state_key)
+			self.nspam = row[0]
+			self.nham = row[1]
 		else:
 			self.nham = 0
 			self.nspam = 0
@@ -134,7 +132,7 @@ class SQL3Classifier(Classifier):
 		row = self._get_row(word)
 		if row:
 			item = self.WordInfoClass()
-			item.__setstate__((row["nspam"], row["nham"]))
+			item.update(row[1], row[2])
 			return item
 		else:
 			return self.WordInfoClass()
