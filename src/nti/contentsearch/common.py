@@ -169,7 +169,7 @@ def get_type_name(obj):
 		result = None
 	return normalize_type_name(result) if result else u''
 
-def get_collection(ntiid, default=u'prealgebra', registry=component):
+def get_collection(ntiid, default=None, registry=component):
 	result = default
 	if ntiid and is_valid_ntiid_string(ntiid):
 		_library = registry.queryUtility( IContentPackageLibrary )
