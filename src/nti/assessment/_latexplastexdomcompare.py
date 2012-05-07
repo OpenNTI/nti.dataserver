@@ -4,13 +4,15 @@ Support functions for comparing latex Math DOMs using PlasTeX
 """
 from __future__ import print_function, unicode_literals
 
+from sympy.parsing.sympy_parser import parse_expr, TokenError
 
 from nti.assessment import interfaces
 from zope import interface
 from zope import component
 
 def _mathIsEqual(math1, math2):
-	return _mathChildrenAreEqual(math1.childNodes, math2.childNodes)
+	return _mathChildrenAreEqual(math1.childNodes, math2.childNodes) or \
+		(_all_text_children(math1) and _all_text_children(math2) and _text_content_equal(math1, math2))
 
 def _mathChildrenAreEqual(children1, children2):
 	math1children = _stripEmptyChildren(children1)
@@ -32,6 +34,29 @@ def _importantChildNodes( childNodes ):
 	"""
 	return [x for x in childNodes if x.nodeType != x.TEXT_NODE or x.textContent.strip()]
 
+def _all_text_children( childNode ):
+	return all( (x.nodeType == x.TEXT_NODE for x in childNode.childNodes) )
+
+def _text_content_equal( child1, child2 ):
+	"""
+	Checks to see if the two nodes have equivalent text. If they compare
+	equal from a purely textual standpoint, then that is the answer. Otherwise,
+	we try to compare them from a symbolic version of their text.
+	"""
+	return _sanitizeTextNodeContent(child1) == _sanitizeTextNodeContent(child2) or \
+		_symbolic( child1 ) == _symbolic( child2 )
+
+def _symbolic( child ):
+	"""
+	Returns a symbolic version of the child, if possible. Always
+	returns something that will be valid for an equality test
+	with other objects given to this method (i.e., should not return None).
+	"""
+	try:
+		return parse_expr( child.textContent )
+	except (TokenError,SyntaxError,AttributeError):
+		return child
+
 def _mathChildIsEqual(child1, child2):
 	#If are children aren't even the same type they are probably not equal
 
@@ -52,7 +77,8 @@ def _mathChildIsEqual(child1, child2):
 		# Check that the arguments and the children are equal
 		return len(child1.arguments) == len(child2.arguments) and \
 		  all( (_mathChildIsEqual(child1.attributes[k.name],child2.attributes[k.name]) for k in child1.arguments) ) and \
-		  _mathChildrenAreEqual(child1.childNodes, child2.childNodes)
+		  ((_all_text_children(child1) and _all_text_children(child2) and _text_content_equal(child1, child2)) or
+		   _mathChildrenAreEqual(child1.childNodes, child2.childNodes))
 
 
 	if child1.nodeType == child1.DOCUMENT_FRAGMENT_NODE:
