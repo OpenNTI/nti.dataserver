@@ -63,6 +63,10 @@ class WordInfo(object):
 	def __init__(self):
 		self.__setstate__((0, 0))
 	
+	def update(self, spam, ham):
+		self.spamcount = spam
+		self.hamcount = ham
+		
 	def __repr__(self):
 		return "WordInfo %s" % repr((self.spamcount, self.hamcount))
 	
