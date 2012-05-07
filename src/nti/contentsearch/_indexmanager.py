@@ -11,6 +11,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.contentsearch import QueryObject
 from nti.contentsearch import interfaces
 from nti.contentsearch import SearchCallWrapper
+from nti.contentsearch import CaseInsensitiveDict
 from nti.contentsearch._indexagent import handle_index_event
 
 from nti.contentsearch.common import empty_search_result
@@ -64,7 +65,7 @@ class IndexManager(object):
 		return cls.indexmanager
 
 	def __init__(self, bookidx_manager_factory, useridx_manager_factory, max_users=500, *args, **kwargs):
-		self.books = {}
+		self.books = CaseInsensitiveDict()
 		self.bookidx_manager_factory = bookidx_manager_factory
 		self.useridx_manager_factory = useridx_manager_factory
 
@@ -94,8 +95,6 @@ class IndexManager(object):
 			# search user contentc
 			self._ugd_search_jobs(query, jobs) if username else []
 		
-			logger.info("\nMY BOOKS %s" % self.books)
-			logger.info("HERE %s" % query.books)
 			# search books
 			for indexname in query.books:
 				job = _greenlet_spawn(func=self.content_search, indexname=indexname, query=query)
