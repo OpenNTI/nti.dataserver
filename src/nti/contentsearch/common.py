@@ -175,7 +175,7 @@ def get_collection(ntiid, default=None, registry=component):
 		_library = registry.queryUtility( IContentPackageLibrary )
 		if _library:
 			paths = _library.pathToNTIID(ntiid)
-			result = paths[0].label if paths else default
+			result = paths[0].root if paths else default
 	return unicode(result.lower()) if result else default
 
 # -----------------------------------
