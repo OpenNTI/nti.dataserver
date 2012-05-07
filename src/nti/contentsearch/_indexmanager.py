@@ -185,12 +185,13 @@ class IndexManager(object):
 	def add_book(self, indexname, *args, **kwargs):
 		result = False
 		if not self.books.has_key(indexname):
-			logger.info("ADDING BOOK %s, %s" % (indexname, kwargs))
 			bmi = self.bookidx_manager_factory(indexname=indexname, **kwargs)
-			logger.info("BMI IS %s" % bmi)
 			if bmi:
-				self.books[indexname] = bmi
 				result = True
+				self.books[indexname] = bmi
+				logger.warn("Book index '%s' has been added to index manager" % indexname)
+			else:
+				logger.warn("Could not add book index '%s,%r' to index manager" % (indexname,kwargs))
 		return result
 
 	def content_search(self, query, *args, **kwargs):
