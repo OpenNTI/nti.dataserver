@@ -94,6 +94,8 @@ class IndexManager(object):
 			# search user contentc
 			self._ugd_search_jobs(query, jobs) if username else []
 		
+			logger.info("\nMY BOOKS %s" % self.books)
+			logger.info("HERE %s" % query.books)
 			# search books
 			for indexname in query.books:
 				job = _greenlet_spawn(func=self.content_search, indexname=indexname, query=query)
@@ -184,7 +186,9 @@ class IndexManager(object):
 	def add_book(self, indexname, *args, **kwargs):
 		result = False
 		if not self.books.has_key(indexname):
+			logger.info("ADDING BOOK %s, %s" % (indexname, kwargs))
 			bmi = self.bookidx_manager_factory(indexname=indexname, **kwargs)
+			logger.info("BMI IS %s" % bmi)
 			if bmi:
 				self.books[indexname] = bmi
 				result = True
