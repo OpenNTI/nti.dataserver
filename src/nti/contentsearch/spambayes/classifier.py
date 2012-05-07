@@ -484,7 +484,19 @@ class Classifier(object):
 
 Bayes = Classifier
 
+class PersistentWordInfo(Persistent):
+	
+	def __init__(self):
+		self.spamcount = self.hamcount = 0
+	
+	def __repr__(self):
+		return "WordInfo(%r %r)" % (self.spamcount, self.hamcount)
+	
+	
 class PersistentClassifier(Persistent, Classifier):
+	
+	WordInfoClass = PersistentWordInfo
+	
 	def __init__(self, unknown_word_strength=default_unknown_word_strength, 
 				 unknown_word_prob=default_unknown_word_prob, 
 				 minimum_prob_strength=default_minimum_prob_strength, 
