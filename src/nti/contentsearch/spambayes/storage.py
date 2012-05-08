@@ -50,10 +50,14 @@ class SQL3Classifier(Classifier, ObjectDataManager):
 		Classifier.__init__(self, *args, **kwargs)
 		ObjectDataManager.__init__(self, call=self._do_commit)
 		self.dbpath = dbpath
+		self._registered = False
 		self._load(dbpath)
 
 	def _do_commit(self): 
 		self.db.commit()
+		self._cursor = self.db.cursor()
+	
+	def abort(self, tx):
 		self._cursor = self.db.cursor()
 	
 	def _create_db(self):
@@ -91,6 +95,8 @@ class SQL3Classifier(Classifier, ObjectDataManager):
 	def _load(self, dbpath):
 		self.db = sql.connect(dbpath)
 		self._cursor = self.db.cursor()
+		self._registered = True
+		self.transaction_manager.registerSynch(self)
 		try:
 			self._cursor.execute("select count(*) from bayes")
 		except sql.OperationalError:
@@ -104,6 +110,13 @@ class SQL3Classifier(Classifier, ObjectDataManager):
 			self.nham = 0
 			self.nspam = 0
 
+	def close(self):
+		if self._registered:
+			self.transaction_manager.unregisterSynch(self)
+			
+	def newTransaction(self, t): 
+		t.join(self)
+	
 	# ---------- 
 			
 	def _encode(self, word):
