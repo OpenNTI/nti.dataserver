@@ -28,6 +28,13 @@ class TestLatex(ConfiguringTestBase):
 
 		assert_that( soln.grade( soln.value ), is_true() )
 
+	def test_grade_empty(self):
+		rsp = response.QTextResponse( "" )
+		soln = solution.QLatexSymbolicMathSolution( "$\frac{1}{2}$" )
+
+		grader = component.getMultiAdapter( (None, soln, rsp), interfaces.IQSymbolicMathGrader )
+		assert_that( grader(  ), is_false() )
+
 	def test_math_child_is_equal_cases(self):
 		class MathChild(object):
 			OTHER_NODE = 0
