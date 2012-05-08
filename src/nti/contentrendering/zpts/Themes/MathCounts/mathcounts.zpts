@@ -5,7 +5,8 @@ name: mathcountsproblem
 	 <a tal:attributes="name self/id"/>
 	 <span tal:content="self"/>
 </div>
-<div class="result hidden">  </div>
+<div class="result hidden" tal:content="python: [c for c in self.parentNode.childNodes if c.__class__.__name__ == 'mathcountsresult'][0] if any([c for c in self.parentNode.childNodes if c.__class__.__name__ == 'mathcountsresult']) else ''">
+</div>
 </li>
 
 # We currently must put a hidden result div in the body next to the problem,
