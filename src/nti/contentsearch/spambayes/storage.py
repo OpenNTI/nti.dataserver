@@ -3,6 +3,8 @@ import sqlite3 as sql
 from persistent import Persistent
 from BTrees.OOBTree import OOBTree
 
+from nti.utils.transactions import ObjectDataManager
+
 from nti.contentsearch.spambayes.classifier import Classifier
 
 from nti.contentsearch.spambayes import default_use_bigrams
@@ -40,39 +42,19 @@ PersistentBayes = PersistentClassifier
 # -----------------------------------
 
 
-class SQL3Classifier(Classifier):
+class SQL3Classifier(Classifier, ObjectDataManager):
 	
 	state_key = '__classifier state __'
 	
-	def __init__(self, dbpath, batch_mode=False, *args, **kwargs):
-		super(SQL3Classifier, self).__init__(*args, **kwargs)
+	def __init__(self, dbpath, *args, **kwargs):
+		Classifier.__init__(self, *args, **kwargs)
+		ObjectDataManager.__init__(self, call=self._do_commit)
 		self.dbpath = dbpath
-		self.batch_mode = batch_mode
 		self._load(dbpath)
-	
-	def cursor(self):
-		if self.batch_mode:
-			_cursor = getattr(self, '_cursor', None)
-			if not _cursor:
-				_cursor = self.db.cursor()
-				setattr(self, '_cursor', _cursor)
-		else:
-			_cursor = self.db.cursor()
-		return _cursor
-	
-	def fetchall(self, c):
-		return c.fetchall()
-	
-	def commit(self, c=None):
-		if not self.batch_mode: 
-			self.force_commit(c)
 
-	def force_commit(self, c=None): 
+	def _do_commit(self): 
 		self.db.commit()
-		if self.batch_mode and hasattr(self, '_cursor'):
-			delattr(self, '_cursor')
-		
-	# ---------- 
+		self._cursor = self.db.cursor()
 	
 	def _create_db(self):
 		bayes_table =  ("create table bayes ("
@@ -80,46 +62,37 @@ class SQL3Classifier(Classifier):
 						"  nspam integer not null default 0,"
 						"  nham integer not null default 0,"
 						"  primary key(word)" ");")
-		c = self.cursor()
-		c.execute(bayes_table)
-		self.commit(c)
+		self._cursor.execute(bayes_table)
 
 	def _get_row(self, word):
-		c = self.cursor()
-		c.execute("select word, nspam, nham from bayes where word=?", (word,))
-		rows = self.fetchall(c)
+		self._cursor.execute("select word, nspam, nham from bayes where word=?", (word,))
+		rows = self._cursor.fetchall()
 		return rows[0] if rows else {}
 
 	def _set_row(self, word, nspam, nham):
-		c = self.cursor()
 		if self._has_key(word):
-			c.execute("update bayes"
-					  "  set nspam=?, nham=?"
-					  "  where word=?",
-					  (nspam, nham, word))
+			self._cursor.execute("update bayes set nspam=?, nham=? "
+					  			 "where word=?", (nspam, nham, word))
 		else:
-			c.execute("insert into bayes (nspam, nham, word) "
-					  "values (?, ?, ?)", (nspam, nham, word))
-		self.commit(c)
+			self._cursor.execute("insert into bayes (nspam, nham, word) "
+					  			 "values (?, ?, ?)", (nspam, nham, word))
 
 	def _delete_row(self, word):
-		c = self.cursor()
-		c.execute("delete from bayes where word=?", (word,))
-		self.commit(c)
+		self._cursor.execute("delete from bayes where word=?", (word,))
 
 	def _has_key(self, key):
-		c = self.cursor()
-		c.execute("select word from bayes where word=?", (key,))
-		return len(self.fetchall(c)) > 0
+		self._cursor.execute("select word from bayes where word=?", (key,))
+		rows = self._cursor.fetchall()
+		return len(rows) > 0
 
 	def _save_state(self):
 		self._set_row(self.state_key, self.nspam, self.nham)
 			
 	def _load(self, dbpath):
 		self.db = sql.connect(dbpath)
+		self._cursor = self.db.cursor()
 		try:
-			c = self.db.cursor()
-			c.execute("select count(*) from bayes")
+			self._cursor.execute("select count(*) from bayes")
 		except sql.OperationalError:
 			self._create_db()
 
@@ -162,9 +135,8 @@ class SQL3Classifier(Classifier):
 		self._delete_row(word)
 
 	def _wordinfokeys(self):
-		c = self.cursor()
-		c.execute("select word from bayes")
-		rows = self.fetchall(c)
+		self._cursor.execute("select word from bayes")
+		rows = self._cursor.fetchall()
 		return [r[0] for r in rows if r[0] != self.state_key]
 	
 	@property
