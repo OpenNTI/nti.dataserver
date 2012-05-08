@@ -44,20 +44,34 @@ class SQL3Classifier(Classifier):
 	
 	state_key = '__classifier state __'
 	
-	def __init__(self, dbpath, *args, **kwargs):
+	def __init__(self, dbpath, batch_mode=False, *args, **kwargs):
 		super(SQL3Classifier, self).__init__(*args, **kwargs)
 		self.dbpath = dbpath
+		self.batch_mode = batch_mode
 		self._load(dbpath)
 	
 	def cursor(self):
-		return self.db.cursor()
+		if self.batch_mode:
+			_cursor = getattr(self, '_cursor', None)
+			if not _cursor:
+				_cursor = self.db.cursor()
+				setattr(self, '_cursor', _cursor)
+		else:
+			_cursor = self.db.cursor()
+		return _cursor
 	
 	def fetchall(self, c):
 		return c.fetchall()
 	
-	def commit(self, c):
-		self.db.commit()
+	def commit(self, c=None):
+		if not self.batch_mode: 
+			self.force_commit(c)
 
+	def force_commit(self, c=None): 
+		self.db.commit()
+		if self.batch_mode and hasattr(self, '_cursor'):
+			delattr(self, '_cursor')
+		
 	# ---------- 
 	
 	def _create_db(self):
@@ -137,6 +151,8 @@ class SQL3Classifier(Classifier):
 		else:
 			return self.WordInfoClass()
 		
+	get_record = _wordinfoget
+		
 	def _wordinfoset(self, word, record):
 		word = self._encode(word)
 		self._set_row(word, record.spamcount, record.hamcount)
@@ -150,4 +166,8 @@ class SQL3Classifier(Classifier):
 		c.execute("select word from bayes")
 		rows = self.fetchall(c)
 		return [r[0] for r in rows if r[0] != self.state_key]
+	
+	@property
+	def words(self):
+		return self._wordinfokeys()
 
