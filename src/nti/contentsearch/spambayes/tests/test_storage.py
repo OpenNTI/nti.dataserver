@@ -26,11 +26,8 @@ class TestStorage(unittest.TestCase):
 	def test_trainer( self ):
 		sc = SQL3Classifier(self.db_path)
 		transaction.begin()
-		transaction.get().join(sc)
-		
 		sc.learn(tokenize(self.ham), False)
 		sc.learn(tokenize(self.spam), True)
-		
 		transaction.commit()
 		
 		rc = sc.get_record('context')
