@@ -3,12 +3,15 @@
 Support functions for comparing latex Math DOMs using PlasTeX
 """
 from __future__ import print_function, unicode_literals
+import logging
+logger = logging.getLogger(__name__)
 
 from sympy.parsing.sympy_parser import parse_expr, TokenError
 
 from nti.assessment import interfaces
 from zope import interface
 from zope import component
+from zope.component.interfaces import ComponentLookupError
 
 def _mathIsEqual(math1, math2):
 	return _mathChildrenAreEqual(math1.childNodes, math2.childNodes) or \
@@ -99,7 +102,11 @@ def _sanitizeTextNodeContent(textNode):
 
 
 def grade( solution, response ):
-	converter = component.getMultiAdapter( (solution,response), interfaces.IResponseToSymbolicMathConverter )
+	try:
+		converter = component.getMultiAdapter( (solution,response), interfaces.IResponseToSymbolicMathConverter )
+	except ComponentLookupError:
+		logger.warning( "Unable to grade math, assuming wrong", exc_info=True )
+		return False
 	# TODO: Caching these DOMs based on string values. Parsing them is expensive.
 	solution_dom = converter.convert( solution )
 	response_dom = converter.convert( response )
