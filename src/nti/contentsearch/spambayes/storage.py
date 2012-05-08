@@ -125,8 +125,8 @@ class SQL3Classifier(Classifier):
 
 		if self._has_key(self.state_key):
 			row = self._get_row(self.state_key)
-			self.nspam = row[0]
-			self.nham = row[1]
+			self.nspam = row[1]
+			self.nham = row[2]
 		else:
 			self.nham = 0
 			self.nspam = 0
