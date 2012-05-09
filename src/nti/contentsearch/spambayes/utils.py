@@ -3,11 +3,20 @@ import re
 import six
 import sys
 import email
+import binascii
 import fnmatch
 import traceback
+import transaction
+
+from logging import DEBUG
+
+from nti.contentsearch.spambayes.tokenizer import tokenize
+from nti.contentsearch.spambayes.storage import SQL3Classifier
 
 import logging
 logger = logging.getLogger( __name__ )
+
+# -----------------------------------
 
 def _textparts(msg):
 	"""Return a set of all msg parts with content maintype 'text'."""
@@ -24,6 +33,38 @@ def _extract_message_headers(text):
 		text = ""
 
 	return text
+
+base64_re = re.compile(r"""
+    [ \t]*
+    [a-zA-Z0-9+/]*
+    (=*)
+    [ \t]*
+    \r?
+    \n
+""", re.VERBOSE)
+
+def _repair_damaged_base64(text):
+	i = 0
+	while True:
+		# text[:i] looks like base64.  Does the line starting at i also?
+		m = base64_re.match(text, i)
+		if not m:
+			break
+		i = m.end()
+		if m.group(1):
+			# this line has a trailing '=' -- the base64 part is done.
+			break
+	base64text = ''
+	if i:
+		base64 = text[:i]
+		try:
+			base64text = binascii.a2b_base64(base64)
+		except:
+			# there's no point in tokenizing raw base64 gibberish.
+			pass
+	return base64text + text[i:]
+
+# -----------------------------------
 
 def get_email_message(obj):
 	"""Return an email Message object. """
@@ -103,6 +144,38 @@ def get_email_messages(directory, fnfilter='*', indexfile=None, default_spam=Tru
 					msg = get_email_message(fp)
 					is_spam = index.get(filename, default_spam)
 					yield msg, is_spam, source
-			except:
-				logger.exception("Could not read message in file '%s'" % source)
+			except Exception, e:
+				if logger.isEnabledFor(DEBUG):
+					logger.exception("Could not read message in file '%s'" % source)
+				else:
+					logger.error("Could not read message in file '%s'. %s" % (source, e))
 
+# -----------------------------------
+
+def create_sql3classifer_db(dbpath, directory, include_ham=False, fnfilter='*', indexfile=None,
+							default_spam=True, separator=None, *args, **kwargs):
+	
+	count = 0
+	sql3 = SQL3Classifier(dbpath, *args, **kwargs)
+	for msg, is_spam, _ in get_email_messages(directory, fnfilter, indexfile, default_spam, separator):
+		
+		if not include_ham and not is_spam:
+			continue
+			
+		for part in _textparts(msg):
+			try:
+				text = part.get_payload(decode=True)
+			except:
+				text = part.get_payload(decode=False)
+				text = _repair_damaged_base64(text) if text is not None else None
+				
+			if text:
+				sql3.learn(tokenize(text), is_spam)
+				count = count + 1
+				if count % 500 == 0:
+					transaction.get().commit()
+	
+	if count:
+		transaction.get().commit()
+	
+	logger.info("%s messages(s) processed" % count)
