@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 entry_points = {
 	'console_scripts': [
-		"nti_render = nti.contentrendering.aopstoxml:main",
+		"nti_render = nti.contentrendering.nti_render:main",
 		"nti_init_env = nti.dataserver.config:main",
 		"nti_pubsub_device = nti.dataserver._PubSubDevice:main",
 		"nti_cache_avatars = nti.dataserver.utils.nti_cache_avatars:main",
@@ -60,7 +60,7 @@ setup(
 		'coverage',
 		'cython',
 		'futures >= 2.1.2',
-		'gevent == 1.0dev',
+		#'gevent == 1.0dev', Coming from requirements.txt right now
 		'gevent-zeromq',
 		'gunicorn == 0.14.2',
 		'html5lib == 0.95',

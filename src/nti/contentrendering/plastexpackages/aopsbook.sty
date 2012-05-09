@@ -1,0 +1,626 @@
+%% style file for AoPS Books
+%% (c) 2004,2005 AoPS, Inc.
+%% author: D. Patrick
+%% last modified: 15-Sep-2005
+
+%% mandatory line; the date is fairly arbitrary
+%% our version of TeX is 2003
+\NeedsTeXFormat{LaTeX2e}[1995/12/01]
+
+%% style definition
+\ProvidesPackage{aopsbook}[2005/03/02 v3.0 AoPS Book style sheet]
+
+%% useful when the same symbol is defined in two packages 
+\RequirePackage{savesym}
+
+%% leave figures out for now
+\PassOptionsToPackage{pdftex}{graphicx}
+
+%% require external packages
+\RequirePackage{amsmath}
+\RequirePackage{amssymb}
+\savesymbol{checkmark} % checkmark is defined in amssymb and dingbat
+\RequirePackage{mathdots}
+\RequirePackage{graphicx}
+\RequirePackage{makeidx}
+%%\RequirePackage{rotating}
+%% this makes compiling really slow so get rid of it if not needed
+\PassOptionsToPackage{all}{xypic}
+\RequirePackage{xypic}
+%% we may add this later
+\RequirePackage{fancyhdr}
+
+\RequirePackage{asymptote} % for drawing diagrams
+\RequirePackage{multicol} % for multi-column problems
+\RequirePackage{xlop} % for multiplication/division algorithms
+
+%% Palatino font package
+\RequirePackage{pxfonts}
+
+%% shadow boxes
+\RequirePackage{fancybox}
+
+%% cancellations
+\RequirePackage{cancel}
+
+%% for the strikeouts in Counting Chapter 6
+%\RequirePackage{soul}
+%%\RequirePackage{ulem}
+
+%% for dice in Counting
+\PassOptionsToPackage{misc}{ifsym}
+\RequirePackage{ifsym}
+\savesymbol{Letter} % Letter is defined in ifsym and marvosym
+
+%% for long division in NT
+%\RequirePackage{longdiv}
+
+%% other font/symbol packages
+\RequirePackage{dingbat}
+\RequirePackage{marvosym}
+%% have to comment out \Rightarrow
+\RequirePackage{manfnt}
+\RequirePackage{pifont}
+\RequirePackage{textcomp}
+\RequirePackage{wasysym}
+%\RequirePackage{bbding}
+%\RequirePackage{yhmath}
+\PassOptionsToPackage{a}{esvect}
+\RequirePackage{esvect}
+
+%% for floats
+\RequirePackage{float}
+\RequirePackage{caption}
+\RequirePackage{wrapfig}
+\RequirePackage{picins}
+
+%% for comments
+\RequirePackage{verbatim}
+
+%% for hints
+\RequirePackage{cite}
+
+%% for proper toc
+\PassOptionsToPackage{nottoc,notlof}{tocbibind}
+\RequirePackage{tocbibind}
+
+%% for color
+%%\PassOptionsToPackage{pdftex,dvipsnames}{color}
+%%\RequirePackage{color}
+\PassOptionsToPackage{pdftex,cmyk,dvipsnames}{xcolor}
+\RequirePackage{xcolor}
+
+%% for multiple indexes
+%% this didn't work because \index doesn't expand its argument
+%\RequirePackage{index}
+%\proofmodetrue
+%\newindex{concepts}{ccx}{cnd}{List of Concepts}
+%\newindex{importants}{imx}{imd}{List of Important Items}
+
+%% fancy chapter headings
+\PassOptionsToPackage{Glenn}{fncychap}
+\RequirePackage{fncychap}
+
+%% really fancy ToC
+\RequirePackage{titletoc}
+
+%% for the MetaPost logo
+\RequirePackage{mflogo}
+
+%% for enumerations
+%%\RequirePackage{paralist}
+
+%% for cool array stuff
+\RequirePackage{array}
+
+%% for layouts
+%% I couldn't figure out how to make this work
+%%\RequirePackage{layouts}
+
+%% for labelling during writing/editing
+%%\RequirePackage{showlabels}
+
+%% only use below with ulem package
+%%\normalem
+
+%% can change the master color here
+%% look in xcolor.sty or xcolor.pro or some .def file to find cmyk color definitions
+%% example: \colorlet{cyan}{Plum}
+%\definecolor{spotcolor}{cmyk}{0.88,0,0.57,0.36}
+%\colorlet{cyan}{spotcolor}
+
+%\definecolor{darkblue}{cmyk}{1,0,0,0.5}
+%\definecolor{medblue}{cmyk}{0.3,0,0,0}
+%\definecolor{lightblue}{cmyk}{0.1,0,0,0}
+%\definecolor{cyan}{cmyk}{1,0,0,0}
+%\colorlet{medblue}{cmyk,3:cyan,1;white,2}
+%\definecolor{lightgrey}{cmyk}{0,0,0,0.1}
+%\definecolor{mediumgrey}{cmyk}{0,0,0,0.2}
+%\definecolor{meddarkgrey}{cmyk}{0,0,0,0.3}
+
+\colorlet{darkblue}{cyan!70} % was cyan!70!black
+\colorlet{medblue}{cyan!10} %% was 15
+\colorlet{lightblue}{cyan!10}
+\colorlet{lightgrey}{black!10}
+\colorlet{mediumgrey}{black!10} %% was 20; changed 2/2/06
+\colorlet{meddarkgrey}{black!30}
+\colorlet{grey}{black!50}
+\newcommand\mastercolor{medblue}
+\newcommand\masterlightcolor{lightblue}
+\newcommand\masterdarkcolor{darkblue}
+\newcommand\masterpurecolor{cyan}
+\newcommand\light{\color{medblue}}
+\newcommand\dark{\color{darkblue}}
+\newcommand\pure{\color{\masterpurecolor}}
+\newcommand\black{\color{black}}
+
+%% for including MetaPost PS files
+\DeclareGraphicsRule{*}{mps}{*}{}
+
+\fancypagestyle{plain}{%
+       \fancyhead{}
+       \fancyhead[LE]{\sffamily\leftmark}      % was \leftmark
+       \fancyhead[RO]{\sffamily\rightmark}     % was \rightmark
+       \fancyhead[LO,RE]{\sffamily\textbf{}}
+       \fancyfoot{}
+       \fancyfoot[LE,RO]{\sffamily\thepage}
+       \fancyfoot[LO,RE]{\sffamily\textbf{}}}
+
+%\renewcommand{\headrulewidth}{1pt}
+%\renewcommand{\footrulewidth}{0.5pt}
+\renewcommand{\headrule}{{\color{cyan}\hrule height 2pt width \headwidth \color{black}}}
+\renewcommand{\footrule}{{\color{cyan}\hrule height 1pt width \headwidth \color{black}}}
+
+\pagestyle{plain}
+
+\pdfpagewidth 8.375in%8.5%7.5%8
+\pdfpageheight 10.875in%11%10
+\pdfhorigin 1 true in
+\pdfvorigin 1 true in
+
+%% add 1.4" to binding margin
+\setlength{\parskip}{0.1in}
+% both below were -0.25in
+\setlength{\oddsidemargin}{-0.125in}
+\setlength{\evensidemargin}{-0.375in}
+\setlength{\textwidth}{6.875in}%6in%3.4" margin on both sides?%added .375
+\setlength{\topmargin}{-0.4in}%0
+\setlength{\textheight}{8.625in}%8.5in%added .875
+\setlength{\marginparwidth}{0in}
+\setlength{\marginparsep}{0in}
+\setlength{\headwidth}{\textwidth}
+\setlength{\headheight}{0.25in}%16pt at 8.5x11
+%% this last one is quite experimental
+\setlength{\intextsep}{0pt}
+
+%% ToC stuff
+\makeatletter
+\renewcommand\l@section{\addvspace{-5pt}\@dottedtocline{1}{2em}{3em}}
+% see p. 61 of LaTeX Companion
+\titlecontents{chapter}[0pt]{\addvspace{1.5pc}\bfseries\titlerule[1pt]\filright}%
+       {\sffamily\fontsize{30}{30}\selectfont\thecontentslabel\hspace*{0.25in}\normalfont\Large\bfseries}%
+       {\large\bfseries}%
+       {\hfill\bfseries\large\contentspage}
+\makeatother
+
+%% speed up xypic
+\CompileMatrices
+
+\newsavebox{\probtext}
+\newcounter{probnum}[chapter]
+\newenvironment{problem}{\noindent\refstepcounter{probnum}%
+       \color{\masterdarkcolor}%
+       \begin{lrbox}{\probtext}\begin{minipage}[t]{0.97\textwidth}%
+       \color{black}%
+       \textbf{Problem \arabic{chapter}.\arabic{probnum}: }}%
+       {\end{minipage}\color{\mastercolor}\end{lrbox}%
+       \setlength{\fboxsep}{0pt}%
+       \shadowbox{%
+       \colorbox{\masterlightcolor}{\setlength{\fboxsep}{3pt}\setlength{\fboxrule}{0pt}%
+       \fbox{\usebox{\probtext}}}}\color{black}}
+\newcommand{\probref}[1]{\arabic{chapter}.\ref{#1}}
+%\newenvironment{hint}{\noindent\textit{Hint for Problem \arabic{chapter}.\arabic{probnum}: }}{}
+\newenvironment{solution}{\noindent\textit{Solution for Problem \arabic{chapter}.\arabic{probnum}: }}{$\Box$}
+\newcommand{\beginsol}{\noindent\textit{Solution for Problem \arabic{chapter}.\arabic{probnum}: }}
+\newcommand{\stopsol}{$\Box$}
+\newcommand{\startsol}{\beginsol}
+%\newcommand{\endsol}{\stopsol}
+\newenvironment{picproblem}[1]{\noindent\refstepcounter{probnum}%
+       \color{\masterdarkcolor}%
+       \begin{lrbox}{\probtext}\begin{minipage}[t]{0.97\textwidth}%
+       \color{black}%
+       \vspace*{-0.4\baselineskip}#1%
+       \textbf{Problem \arabic{chapter}.\arabic{probnum}: }}%
+       {\end{minipage}\color{\mastercolor}\end{lrbox}%
+       \setlength{\fboxsep}{0pt}%
+       \shadowbox{%
+       \colorbox{\masterlightcolor}{\setlength{\fboxsep}{3pt}\setlength{\fboxrule}{0pt}%
+       \fbox{\usebox{\probtext}}}}\color{black}}
+
+
+%These 4 enviroments for RR to deal with rlin and rray being too close to the top of the box
+\newlength{\hacklength}
+\setlength{\hacklength}{0.015in}
+\newlength{\hackboxwidth}%
+\setlength{\hackboxwidth}{5pt}
+\newenvironment{problemspec}{\noindent\refstepcounter{probnum}%
+	\color{\masterdarkcolor}%
+	\begin{lrbox}{\probtext}\begin{minipage}[t]{0.97\textwidth}%
+	\color{black}%
+		\vspace*{2\hacklength}
+	\textbf{Problem \arabic{chapter}.\arabic{probnum}: }}%
+	{\end{minipage}\color{\mastercolor}\end{lrbox}%
+	\setlength{\fboxsep}{0pt}%
+	\shadowbox{%
+	\colorbox{\masterlightcolor}{\setlength{\fboxsep}{3pt}\setlength{\fboxrule}{0pt}%
+	\fbox{\usebox{\probtext}}}}\color{black}\vspace*{-4\hacklength}}
+\newenvironment{picproblemspec}[1]{\noindent\refstepcounter{probnum}%
+	\color{\masterdarkcolor}%
+	\begin{lrbox}{\probtext}\begin{minipage}[t]{0.97\textwidth}%
+	\color{black}%
+	\vspace*{3\hacklength}
+	\vspace*{-0.5\baselineskip}#1%
+	\vspace*{0\hacklength}\textbf{Problem \arabic{chapter}.\arabic{probnum}: }}%
+	{\vspace*{4\hacklength}\end{minipage}\color{\mastercolor}\end{lrbox}%
+	\setlength{\fboxsep}{0pt}%
+	\shadowbox{%
+	\colorbox{\masterlightcolor}{\setlength{\fboxsep}{3pt}\setlength{\fboxrule}{0pt}%
+	\fbox{\usebox{\probtext}}}}\color{black}\vspace*{-4\hacklength}}
+\newenvironment{picproblemsmspec}[1]{\noindent\refstepcounter{probnum}%
+	\color{\masterdarkcolor}%
+	\begin{lrbox}{\probtext}\begin{minipage}[t]{0.97\textwidth}%
+	\color{black}%
+	\vspace*{3\hacklength}
+	\vspace*{-0.5\baselineskip}#1%
+	\vspace*{-1.2\hacklength}\textbf{Problem \arabic{chapter}.\arabic{probnum}: }}%
+	{\vspace*{4\hacklength}\end{minipage}\color{\mastercolor}\end{lrbox}%
+	\setlength{\fboxsep}{0pt}%
+	\shadowbox{%
+	\colorbox{\masterlightcolor}{\setlength{\fboxsep}{3pt}\setlength{\fboxrule}{0pt}%
+	\fbox{\usebox{\probtext}}}}\color{black}\vspace*{-4\hacklength}}	\newenvironment{picsecprobspec}[2][1.5in]{\noindent\refstepcounter{probnum}\setlength{\saveprobht}{0in}%
+	\begin{lrbox}{\secprobtext}\begin{minipage}[t]{0.98\textwidth}%
+	\vspace*{-0.5\baselineskip}#2%
+		\vspace*{1.2\hacklength}
+	\textbf{Problem \arabic{chapter}.\arabic{probnum}: }}%
+	{\end{minipage}\end{lrbox}\begin{minipage}[t]{\textwidth}%
+	\fcolorbox{black}{lightgrey}{\usebox{\secprobtext}}
+	\\ \makebox[\textwidth][t]{\rule[-\saveprobht]{0in}{\saveprobht}}\end{minipage}}
+
+
+\newcounter{saveprobnum}
+\newlength{\saveprobht}
+\newsavebox{\secprobtext}
+\newcommand{\sectionproblems}{\noindent\includegraphics[scale=0.65]{../Images/Problems.pdf}%
+       \par\nopagebreak%\section*{Problems}%
+       \raggedbottom\setcounter{saveprobnum}{\value{probnum}}}
+\newcommand{\nomoresectionproblems}{\noindent\parbox[t]{\textwidth}{\rule{\textwidth}{0.5mm}\\%
+       \rule[0.15in]{\textwidth}{0.1mm}}%
+       \setcounter{probnum}{\value{saveprobnum}}}%\flushbuttom deleted
+\newenvironment{secprob}[1][1.5in]{\noindent\refstepcounter{probnum}\setlength{\saveprobht}{0in}%
+       \begin{lrbox}{\secprobtext}\begin{minipage}[t]{0.98\textwidth}%
+       \textbf{Problem \arabic{chapter}.\arabic{probnum}: }}%
+       {\end{minipage}\end{lrbox}\begin{minipage}[t]{\textwidth}%
+       \fcolorbox{black}{lightgrey}{\usebox{\secprobtext}}
+       \\ \makebox[\textwidth][t]{\rule[-\saveprobht]{0in}{\saveprobht}}\end{minipage}}
+\newenvironment{picsecprob}[2][1.5in]{\noindent\refstepcounter{probnum}\setlength{\saveprobht}{0in}%
+       \begin{lrbox}{\secprobtext}\begin{minipage}[t]{0.98\textwidth}%
+       \vspace*{-0.4\baselineskip}#2%
+       \textbf{Problem \arabic{chapter}.\arabic{probnum}: }}%
+       {\end{minipage}\end{lrbox}\begin{minipage}[t]{\textwidth}%
+       \fcolorbox{black}{lightgrey}{\usebox{\secprobtext}}
+       \\ \makebox[\textwidth][t]{\rule[-\saveprobht]{0in}{\saveprobht}}\end{minipage}}
+
+\newcommand{\Defnoindex}[1]{\textbf{#1}}%{\color{\masterdarkcolor}\textbf{#1}\color{black}}}
+\newcommand{\Def}[1]{\Defnoindex{#1}\index{#1}}
+\newsavebox{\deftext}
+\newenvironment{defn}{\noindent\begin{lrbox}{\deftext}\begin{minipage}[t]{0.96\textwidth}%
+       \textbf{Definition: }}%
+       {\end{minipage}\end{lrbox}\begin{minipage}[t]{\textwidth}%
+       \setlength{\fboxsep}{2pt}%
+       \fcolorbox{black}{lightgrey}%
+       {\setlength{\fboxsep}{5pt}\fcolorbox{black}{mediumgrey}{\usebox{\deftext}}}\end{minipage}}
+\newenvironment{picdefn}[1]{\noindent\begin{lrbox}{\deftext}\begin{minipage}[t]{0.96\textwidth}%
+       \vspace*{-0.5\baselineskip}#1%
+       \textbf{Definition: }}%
+       {\end{minipage}\end{lrbox}\begin{minipage}[t]{\textwidth}%
+       \setlength{\fboxsep}{2pt}%
+       \fcolorbox{black}{lightgrey}%
+       {\setlength{\fboxsep}{5pt}\fcolorbox{black}{mediumgrey}{\usebox{\deftext}}}\end{minipage}}
+       \newenvironment{picdefns}[1]{\noindent\begin{lrbox}{\deftext}\begin{minipage}[t]{0.96\textwidth}%
+       \vspace*{-0.5\baselineskip}#1%
+       \textbf{Definitions: }}%
+       {\end{minipage}\end{lrbox}\begin{minipage}[t]{\textwidth}%
+       \setlength{\fboxsep}{2pt}%
+       \fcolorbox{black}{lightgrey}%
+       {\setlength{\fboxsep}{5pt}\fcolorbox{black}{mediumgrey}{\usebox{\deftext}}}\end{minipage}}
+\newenvironment{defns}{\noindent\begin{lrbox}{\deftext}\begin{minipage}[t]{0.96\textwidth}%
+       \textbf{Definitions: }}%
+       {\end{minipage}\end{lrbox}\begin{minipage}[t]{\textwidth}%
+       \setlength{\fboxsep}{2pt}%
+       \fcolorbox{black}{lightgrey}%
+       {\setlength{\fboxsep}{5pt}\fcolorbox{black}{mediumgrey}{\usebox{\deftext}}}\end{minipage}}
+
+\newsavebox{\concepttext}
+%\newcommand{\conceptindex}[1]{\index[concepts]{#1}}
+\newenvironment{concept}{\begin{lrbox}{\concepttext}\begin{minipage}[t]{0.715\textwidth}}%
+       {\end{minipage}\end{lrbox}\noindent\begin{center}%
+       \fcolorbox{\masterdarkcolor}{\mastercolor}{\begin{minipage}[t]{0.115\textwidth}%
+       \textbf{Concept:}\\ \hspace*{1mm}\includegraphics{../Images/xtras.10}\end{minipage}\usebox{\concepttext}}%
+       \end{center}%\conceptindex{\usebox{\concepttext}}
+       }
+\newenvironment{concepts}{\begin{lrbox}{\concepttext}\begin{minipage}[t]{0.715\textwidth}}%
+       {\end{minipage}\end{lrbox}\noindent\begin{center}%
+       \fcolorbox{\masterdarkcolor}{\mastercolor}{\begin{minipage}[t]{0.115\textwidth}%
+       \textbf{Concepts:}\\ \hspace*{1mm}\includegraphics{../Images/xtras.10}\end{minipage}\usebox{\concepttext}}%
+       \end{center}%\conceptindex{\usebox{\concepttext}}
+       }
+
+%% proof environ added DP 8/2/06
+\newsavebox{\prooftext}
+\newenvironment{proof}{\begin{lrbox}{\prooftext}\begin{minipage}[t]{0.91\textwidth}}%
+       {\end{minipage}\end{lrbox}\noindent\begin{center}%
+       \fcolorbox{meddarkgrey}{lightgrey}{\begin{minipage}[t]{0.07\textwidth}%
+       \textbf{Proof:}\\ \hspace*{3.5mm}{\LARGE\Checkedbox}\end{minipage}\usebox{\prooftext}}%
+       \end{center}%\conceptindex{\usebox{\concepttext}}
+       }
+
+%% used to be \rightpointright
+
+\newsavebox{\bogustext}
+\newenvironment{bogus}{\begin{lrbox}{\bogustext}\begin{minipage}[t]{0.65\textwidth}}%
+       {\end{minipage}\end{lrbox}\noindent\begin{center}%
+       \fcolorbox{\masterdarkcolor}{\mastercolor}{\begin{minipage}[t]{0.2\textwidth}%
+       \textbf{Bogus Solution:}\\ \hspace*{1cm}{\Huge{\manimpossiblecube}}\end{minipage}\usebox{\bogustext}}%
+       % was \Frowny
+       \end{center}}
+
+
+\newsavebox{\impdeftext}
+\newenvironment{importantdef}{\begin{lrbox}{\impdeftext}\begin{minipage}[t]{0.695\textwidth}}%
+       {\end{minipage}\end{lrbox}\noindent\begin{center}%
+       \fcolorbox{black}{white}{\begin{minipage}[t]{0.135\textwidth}%
+       \textbf{Important:}\\ \hspace*{6mm}\includegraphics{../Images/xtras.11}\end{minipage}\usebox{\impdeftext}}%was textdbend,manerrarrow
+       \end{center}}
+
+%% the graphic used to be \Huge\Stopsign
+
+\newsavebox{\imptext}
+\newenvironment{important}{\begin{lrbox}{\imptext}\begin{minipage}[t]{0.695\textwidth}}%
+       {\end{minipage}\end{lrbox}\noindent\begin{center}%
+       \fcolorbox{\masterdarkcolor}{\mastercolor}{\begin{minipage}[t]{0.135\textwidth}%
+       \textbf{Important:}\\ \hspace*{6mm}\includegraphics{../Images/xtras.11}\end{minipage}\usebox{\imptext}}%was textdbend,manerrarrow
+       \end{center}}
+
+\newsavebox{\warntext}
+\newenvironment{warning}{\begin{lrbox}{\warntext}\begin{minipage}[t]{0.67\textwidth}}%
+       {\end{minipage}\end{lrbox}\noindent\begin{center}%
+       \fcolorbox{\masterdarkcolor}{\mastercolor}{\begin{minipage}[t]{0.16\textwidth}%
+       \textbf{WARNING!!}\\ \hspace*{9mm}{\Large\Radioactivity}\end{minipage}\usebox{\warntext}}%
+       % was \textreversedvideodbend
+       \end{center}}
+
+\newsavebox{\gametext}
+\newenvironment{game}{\begin{lrbox}{\gametext}\begin{minipage}[t]{0.73\textwidth}}%
+       {\end{minipage}\end{lrbox}\noindent\begin{center}%
+       \fcolorbox{\masterdarkcolor}{\mastercolor}{\begin{minipage}[t]{0.10\textwidth}%
+       \textbf{Game:}\\ \hspace*{3mm}{\Huge{\Football}}\end{minipage}\usebox{\gametext}}%
+       \end{center}}
+
+\newsavebox{\sbtext}
+\newenvironment{sidebar}{\begin{lrbox}{\sbtext}\begin{minipage}[t]{0.72\textwidth}}%
+       {\end{minipage}\end{lrbox}\noindent\begin{center}%
+       \fcolorbox{\masterdarkcolor}{\mastercolor}{\begin{minipage}[t]{0.11\textwidth}%
+       \textbf{Sidenote:}\\[0.5ex]
+       \hspace*{6mm}{\Huge\eighthnote}\end{minipage}\usebox{\sbtext}}%
+       \end{center}}
+
+%% was \Huge\Coffeecup
+
+\newsavebox{\xtratext}
+%\newlength{\xtraheight}
+\newenvironment{xtra}{\vspace*{\fill}%
+       \begin{lrbox}{\xtratext}\begin{minipage}[t]{0.85\textwidth}}%
+       {\end{minipage}\end{lrbox}\noindent\begin{center}%
+       \noindent\rule{\textwidth}{2pt}\\ \colorbox{lightgrey}%
+       {\begin{minipage}[t]{0.11\textwidth}\begin{center}\textbf{Extra!}\\ \large%
+       \ding{224}\ding{224}\ding{224}\ding{224}\end{center}%
+       \end{minipage}\usebox{\xtratext}}\end{center}}
+\newenvironment{xtract}{%\vspace*{\fill}%
+       \begin{lrbox}{\xtratext}\begin{minipage}[t]{0.85\textwidth}}%
+       {\end{minipage}\end{lrbox}\noindent\begin{center}%
+       %\noindent\rule{\textwidth}{2pt}\\
+       \colorbox{lightgrey}%
+       {\begin{minipage}[t]{0.11\textwidth}\begin{center}\textbf{Extra!}\\ \large%
+       \ding{224}\ding{224}\ding{224}\ding{224}\end{center}%
+       \end{minipage}\usebox{\xtratext}}\end{center}}
+
+\newcounter{exnumber}[section]
+\newcommand{\exercises}{\noindent\color{cyan}\rule{\textwidth}{1pt}\color{black}\nopagebreak\\ \noindent\includegraphics[scale=0.65]{../Images/Exercises.pdf}\par\nopagebreak}%\subsection*{Exercises for Section \arabic{chapter}.\arabic{section}}}
+\newcommand{\exer}{\refstepcounter{exnumber}\noindent\textbf{\arabic{chapter}.\arabic{section}.\arabic{exnumber}}\quad}
+\newcommand{\exerhard}{\refstepcounter{exnumber}\noindent\textbf{\arabic{chapter}.\arabic{section}.\arabic{exnumber}$\star$}\quad}
+\newcommand{\printexer}{\arabic{chapter}.\arabic{section}.\arabic{exnumber}}
+
+\newcommand{\reviewprobs}{\bigskip\noindent\color{cyan}\rule{\textwidth}{1.5pt}\color{black}\nopagebreak\\ \noindent\includegraphics{../Images/Review_Problems.pdf}\\%
+\nopagebreak\noindent\color{cyan}\rule[\baselineskip]{\textwidth}{1.5pt}\color{black}\par\nopagebreak%\section*{Review Problems for Chapter \arabic{chapter}}%
+       %\addcontentsline{toc}{section}{Review Problems}
+       \markright{REVIEW PROBLEMS}}
+\newcommand{\revprob}{\refstepcounter{probnum}\noindent\textbf{\arabic{chapter}.\arabic{probnum}}\quad}
+\newcommand{\challengeprobs}{\bigskip\noindent\color{cyan}\rule{\textwidth}{1.5pt}\color{black}\nopagebreak\\ \noindent\includegraphics{../Images/Challenge_Problems.pdf}\\%
+\nopagebreak\noindent\color{cyan}\rule[\baselineskip]{\textwidth}{1.5pt}\color{black}\par\nopagebreak%\section*{Review Problems for Chapter \arabic{chapter}}%
+       %\addcontentsline{toc}{section}{Challenge Problems}
+       \markright{CHALLENGE PROBLEMS}}
+\newcommand{\chall}{\refstepcounter{probnum}\noindent\textbf{\arabic{chapter}.\arabic{probnum}}\quad}
+\newcommand{\challhard}{\refstepcounter{probnum}\noindent\textbf{\arabic{chapter}.\arabic{probnum}$\star$}\quad}
+
+\newcommand{\frontsection}[1]{\chapter*{#1}\markboth{\MakeUppercase{#1}}{\MakeUppercase{#1}}%
+       \addcontentsline{toc}{chapter}{#1}}
+
+%% We need to figure out a good way to do figures (no pun intended)
+%% added by DP 3/10/06 to make figure spacing come out nicer
+\newenvironment{fig}{\vspace*{\baselineskip}\begin{figure}[H]\begin{center}}{\end{center}\end{figure}\vspace*{-\baselineskip}}
+%\newenvironment{fig}{\begin{center}}{\end{center}}
+\newcommand{\placefig}[1]{\fbox{#1}}
+%%\newcommand{\placefig}[1]{\includegraphics{#1}}
+
+\newcommand{\source}[1]{\textsl{(Source: #1)}}
+
+\newcounter{partnum}
+\newenvironment{parts}[1][0]{\begin{list}{(\alph{partnum})\hfill}{\usecounter{partnum}%
+       %%see p. 75 of A Guide to LaTeX for these settings
+       \setlength\leftmargin{0.3in}%WAS 0.4
+       \setlength\labelsep{0.1in}%
+       \setlength\labelwidth{0.2in}%
+       \setlength\listparindent{0.2in}%WAS 0
+       \setlength\itemsep{0in}%
+       \setlength\topsep{0.03in}}%RR added a little nudge here
+       \setlength\partopsep{\parsep}%
+       \setcounter{partnum}{#1}}{\end{list}}
+\renewcommand{\part}{\item}
+\newcommand{\parthard}{\stepcounter{partnum}\item[(\alph{partnum})$\star$]}
+
+\newcommand{\sectionhard}[1]{\renewcommand{\thesection}{\thechapter.\arabic{section}$\star$}%
+       \section{#1}\renewcommand{\thesection}{\thechapter.\arabic{section}}}
+
+%% hints stuff; using built-in biblio commands as a back door
+\renewcommand{\bibname}{Hints to Selected Problems}
+\renewcommand{\citeleft}{}
+\renewcommand{\citeright}{}
+\makeatletter
+\renewcommand{\@biblabel}[1]{#1.}
+\makeatother
+\newcommand{\hint}[1]{\cite{hint:#1}}
+\newcommand{\hints}{\textbf{Hints: }}
+\newcommand{\hintitem}[1]{\bibitem{hint:#1}}
+\newenvironment{thehints}{%\addcontentsline{toc}{chapter}{Hints to Selected Problems}%
+       \begin{thebibliography}{999}}{\end{thebibliography}}
+
+%% for factor trees
+\newcommand{\cnumber}[1]{*++[F]{#1} \ar@{-}[dl] \ar@{-}[dr]}
+\newcommand{\pnumber}[1]{*++[o][F]{#1}}
+
+%% solution book stuff
+\newcommand{\solsection}{\stepcounter{section}%
+       \section*{Exercises for Section \arabic{chapter}.\arabic{section}}%
+       %\addcontentsline{toc}{section}{Section \arabic{chapter}.\arabic{section}}%
+       \markright{Section \arabic{chapter}.\arabic{section}}}
+\newcommand{\solskipsection}{\stepcounter{section}}
+\newcommand{\solreview}{\section*{Review Problems}%
+       %\addcontentsline{toc}{section}{Review Problems}%
+       \markright{Review Problems}}
+\newcommand{\solchall}{\section*{Challenge Problems}%
+       %\addcontentsline{toc}{section}{Challenge Problems}%
+       \markright{Challenge Problems}}
+\newcommand{\solexer}{\refstepcounter{exnumber}\noindent%
+       \textbf{\arabic{chapter}.\arabic{section}.\arabic{exnumber}}\quad}
+\newcommand{\sol}{\stepcounter{probnum}\noindent\textbf{\arabic{chapter}.\arabic{probnum}}\quad}
+
+%% CHAPTER HEADING STUFF
+%% sample chapter type
+
+\newcommand{\CQT}{}
+\newcommand{\CAuth}{}
+\newcommand{\CPic}{}
+\newcommand{\chapterquote}[1]{\renewcommand{\CQT}{#1}}
+\newcommand{\chapterauthor}[1]{\renewcommand{\CAuth}{#1}}
+\newcommand{\chapterpicture}[1]{\renewcommand{\CPic}{#1}}
+
+\newlength{\extrachapterspace}
+
+\makeatletter
+
+%% mostly copied from "Glenn"
+
+ \ChNameVar{\bfseries\large\sf}
+ \ChNumVar{\fontsize{60}{60}\selectfont}
+ \ChTitleVar{\bfseries\LARGE\bf}
+ \ChRuleWidth{2pt}
+ \ChNameUpperCase
+ \ChTitleAsIs
+
+\renewcommand{\DOCH}{%
+   \settoheight{\myhi}{\CTV\FmTi{Test}}
+   \setlength{\py}{\baselineskip}
+   \addtolength{\py}{\RW}
+   \addtolength{\py}{\myhi}
+   \setlength{\pyy}{\py}
+   \addtolength{\pyy}{-1\RW}
+
+   \raggedright
+   \CNV\FmN{\@chapapp}\space\CNoV\thechapter\normalfont
+   \hskip 3pt\mghrulefill{\RW}\rule[-1\pyy]{4\RW}{\py}\\}
+
+\renewcommand{\DOTI}[1]{%
+   \addtolength{\pyy}{-4pt}
+   \settoheight{\myhi}{\CTV\FmTi{#1}}
+   \addtolength{\myhi}{\py}
+   \addtolength{\myhi}{-1\RW}
+   \vspace*{-1\pyy}
+   \rule{4\RW}{\myhi}\mghrulefill{\RW}\hskip 2pt
+   \raggedleft\CTV\FmTi{#1}\par\nobreak
+   \vskip 20\p@}
+
+\renewcommand{\DOTIS}[1]{%
+   \setlength{\py}{25pt}
+   \setlength{\pyy}{\py}
+   \setlength{\backskip}{\py}
+   \addtolength{\backskip}{2pt} %was 2pt
+   \addtolength{\pyy}{\RW}
+   \setlength{\myhi}{\baselineskip}
+   \addtolength{\myhi}{\pyy}
+   \mghrulefill{\RW}\rule[-1\py]{4\RW}{\pyy}\\
+   \vspace*{-1\backskip}
+   \rule{4\RW}{\myhi}\mghrulefill{\RW}\hskip 3pt %
+   \raggedleft\CTV\FmTi{#1}\par\nobreak
+   \vskip 20\p@}
+
+\def\@makechapterhead#1{%
+ %\vspace*{80\p@}%
+ \setlength{\fboxrule}{0pt}%
+       \noindent\parbox[t][120pt]{\textwidth}{% was [120pt] for the height
+ \hspace*{\fill}\includegraphics{\CPic}\\%
+ \noindent\vfill\color{cyan}\emph{\CQT} -- \CAuth\color{black}}%%% WAS \pure before quote; changed 2/2/06
+ % added by DP for extra space
+ \vspace*{\extrachapterspace}%
+ \setlength{\fboxrule}{0.5pt}
+ {\parindent \z@ \raggedright \normalfont
+   \ifnum \c@secnumdepth >\m@ne
+     \if@mainmatter%%%%% Fix for frontmatter, mainmatter, and backmatter 040920
+       \DOCH
+     \fi
+   \fi
+   \interlinepenalty\@M
+   \DOTI{#1}
+ }}
+\def\@schapter#1{\if@twocolumn
+                  \@topnewpage[\@makeschapterhead{#1}]%
+                \else
+                  \@makeschapterhead{#1}%
+                  \@afterheading
+                \fi}
+\def\@makeschapterhead#1{%
+%   \vspace*{25\p@}%
+%  \setlength{\fboxrule}{0pt}%
+%  \noindent\parbox[t][90pt]{\textwidth}{% was [120pt] for the height
+ \hspace*{\fill}%
+        \noindent\includegraphics{\CPic}\par%
+%  \noindent\vfill\pure\emph{\CQT} \black -- \CAuth}
+ \setlength{\fboxrule}{0.5pt}%
+ {\parindent \z@ \raggedright
+   \normalfont
+   \interlinepenalty\@M
+   \DOTIS{#1}
+   \vskip 20\p@
+ }}
+
+\makeatother
+
+%% for summaries
+\newenvironment{summary}{%
+       \renewcommand\labelitemi{\color{\masterpurecolor} \large \ding{228} \color{black}}\begin{itemize}}%
+       {\end{itemize}}
+
+\newcommand{\davesuglyhack}{\protect\parpic[r]{}\hspace*{-0.4025in}}
+\newcommand{\mathewsuglyhack}[1]{\hspace*{\parindent}}
+
+% hack for single-line secprobs
+\newcommand{\slsec}{\vspace*{-0.5\baselineskip}}

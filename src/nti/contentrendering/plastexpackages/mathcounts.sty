@@ -1,0 +1,219 @@
+%% style file for AoPS Books
+%% (c) 2004,2005 AoPS, Inc.
+%% author: D. Patrick
+%% last modified: 15-Sep-2005
+
+%% mandatory line; the date is fairly arbitrary
+%% our version of TeX is 2003
+\NeedsTeXFormat{LaTeX2e}[1995/12/01]
+
+%% style definition
+\ProvidesPackage{mathcounts}[2005/03/02 v3.0 AoPS Book style sheet]
+
+%% useful when the same symbol is defined in two packages
+\RequirePackage{savesym}
+
+%% leave figures out for now
+\PassOptionsToPackage{pdftex}{graphicx}
+
+%% require external packages
+\RequirePackage{amsmath}
+\RequirePackage{amssymb}
+\savesymbol{checkmark} % checkmark is defined in amssymb and dingbat
+\RequirePackage{mathdots}
+\RequirePackage{graphicx}
+\RequirePackage{makeidx}
+%%\RequirePackage{rotating}
+%% this makes compiling really slow so get rid of it if not needed
+\PassOptionsToPackage{all}{xypic}
+\RequirePackage{xypic}
+%% we may add this later
+\RequirePackage{fancyhdr}
+
+\RequirePackage{asymptote} % for drawing diagrams
+\RequirePackage{multicol} % for multi-column problems
+\RequirePackage{xlop} % for multiplication/division algorithms
+
+%% Palatino font package
+\RequirePackage{pxfonts}
+
+%% shadow boxes
+\RequirePackage{fancybox}
+
+%% cancellations
+\RequirePackage{cancel}
+
+%% for the strikeouts in Counting Chapter 6
+%\RequirePackage{soul}
+%%\RequirePackage{ulem}
+
+%% for dice in Counting
+\PassOptionsToPackage{misc}{ifsym}
+\RequirePackage{ifsym}
+\savesymbol{Letter} % Letter is defined in ifsym and marvosym
+
+%% for long division in NT
+%\RequirePackage{longdiv}
+
+%% other font/symbol packages
+\RequirePackage{dingbat}
+\RequirePackage{marvosym}
+%% have to comment out \Rightarrow
+\RequirePackage{manfnt}
+\RequirePackage{pifont}
+\RequirePackage{textcomp}
+\RequirePackage{wasysym}
+%\RequirePackage{bbding}
+%\RequirePackage{yhmath}
+\PassOptionsToPackage{a}{esvect}
+\RequirePackage{esvect}
+
+%% for floats
+\RequirePackage{float}
+\RequirePackage{caption}
+\RequirePackage{wrapfig}
+\RequirePackage{picins}
+
+%% for comments
+\RequirePackage{verbatim}
+
+%% for hints
+\RequirePackage{cite}
+
+%% for proper toc
+\PassOptionsToPackage{nottoc,notlof}{tocbibind}
+\RequirePackage{tocbibind}
+
+%% for color
+%%\PassOptionsToPackage{pdftex,dvipsnames}{color}
+%%\RequirePackage{color}
+\PassOptionsToPackage{pdftex,cmyk,dvipsnames}{xcolor}
+\RequirePackage{xcolor}
+
+%% for multiple indexes
+%% this didn't work because \index doesn't expand its argument
+%\RequirePackage{index}
+%\proofmodetrue
+%\newindex{concepts}{ccx}{cnd}{List of Concepts}
+%\newindex{importants}{imx}{imd}{List of Important Items}
+
+%% fancy chapter headings
+\PassOptionsToPackage{Glenn}{fncychap}
+\RequirePackage{fncychap}
+
+%% really fancy ToC
+\RequirePackage{titletoc}
+
+%% for the MetaPost logo
+\RequirePackage{mflogo}
+
+%% for enumerations
+%%\RequirePackage{paralist}
+
+%% for cool array stuff
+\RequirePackage{array}
+
+%% for layouts
+%% I couldn't figure out how to make this work
+%%\RequirePackage{layouts}
+
+%% for labelling during writing/editing
+%%\RequirePackage{showlabels}
+
+%% only use below with ulem package
+%%\normalem
+
+%% can change the master color here
+%% look in xcolor.sty or xcolor.pro or some .def file to find cmyk color definitions
+%% example: \colorlet{cyan}{Plum}
+%\definecolor{spotcolor}{cmyk}{0.88,0,0.57,0.36}
+%\colorlet{cyan}{spotcolor}
+
+%\definecolor{darkblue}{cmyk}{1,0,0,0.5}
+%\definecolor{medblue}{cmyk}{0.3,0,0,0}
+%\definecolor{lightblue}{cmyk}{0.1,0,0,0}
+%\definecolor{cyan}{cmyk}{1,0,0,0}
+%\colorlet{medblue}{cmyk,3:cyan,1;white,2}
+%\definecolor{lightgrey}{cmyk}{0,0,0,0.1}
+%\definecolor{mediumgrey}{cmyk}{0,0,0,0.2}
+%\definecolor{meddarkgrey}{cmyk}{0,0,0,0.3}
+
+\colorlet{darkblue}{cyan!70} % was cyan!70!black
+\colorlet{medblue}{cyan!10} %% was 15
+\colorlet{lightblue}{cyan!10}
+\colorlet{lightgrey}{black!10}
+\colorlet{mediumgrey}{black!10} %% was 20; changed 2/2/06
+\colorlet{meddarkgrey}{black!30}
+\colorlet{grey}{black!50}
+\newcommand\mastercolor{medblue}
+\newcommand\masterlightcolor{lightblue}
+\newcommand\masterdarkcolor{darkblue}
+\newcommand\masterpurecolor{cyan}
+\newcommand\light{\color{medblue}}
+\newcommand\dark{\color{darkblue}}
+\newcommand\pure{\color{\masterpurecolor}}
+\newcommand\black{\color{black}}
+
+%% for including MetaPost PS files
+\DeclareGraphicsRule{*}{mps}{*}{}
+
+\fancypagestyle{plain}{%
+       \fancyhead{}
+       \fancyhead[LE]{\sffamily\leftmark}      % was \leftmark
+       \fancyhead[RO]{\sffamily\rightmark}     % was \rightmark
+       \fancyhead[LO,RE]{\sffamily\textbf{DRAFT -- not for distribution}}
+       \fancyfoot{}
+       \fancyfoot[LE,RO]{\sffamily\thepage}
+       \fancyfoot[LO,RE]{\sffamily\textbf{DRAFT -- not for distribution}}}
+
+%\renewcommand{\headrulewidth}{1pt}
+%\renewcommand{\footrulewidth}{0.5pt}
+\renewcommand{\headrule}{{\color{cyan}\hrule height 2pt width \headwidth \color{black}}}
+\renewcommand{\footrule}{{\color{cyan}\hrule height 1pt width \headwidth \color{black}}}
+
+\pagestyle{plain}
+
+\pdfpagewidth 8.375in%8.5%7.5%8
+\pdfpageheight 10.875in%11%10
+\pdfhorigin 1 true in
+\pdfvorigin 1 true in
+
+%% add 1.4" to binding margin
+\setlength{\parskip}{0.1in}
+% both below were -0.25in
+\setlength{\oddsidemargin}{-0.125in}
+\setlength{\evensidemargin}{-0.375in}
+\setlength{\textwidth}{6.875in}%6in%3.4" margin on both sides?%added .375
+\setlength{\topmargin}{-0.4in}%0
+\setlength{\textheight}{8.625in}%8.5in%added .875
+\setlength{\marginparwidth}{0in}
+\setlength{\marginparsep}{0in}
+\setlength{\headwidth}{\textwidth}
+\setlength{\headheight}{0.25in}%16pt at 8.5x11
+%% this last one is quite experimental
+\setlength{\intextsep}{0pt}
+
+%% ToC stuff
+\makeatletter
+\renewcommand\l@section{\addvspace{-5pt}\@dottedtocline{1}{2em}{3em}}
+% see p. 61 of LaTeX Companion
+\titlecontents{chapter}[0pt]{\addvspace{1.5pc}\bfseries\titlerule[1pt]\filright}%
+       {\sffamily\fontsize{30}{30}\selectfont\thecontentslabel\hspace*{0.25in}\normalfont\Large\bfseries}%
+       {\large\bfseries}%
+       {\hfill\bfseries\large\contentspage}
+\makeatother
+
+%% speed up xypic
+\CompileMatrices
+
+
+% hack for single-line secprobs
+\newcommand{\slsec}{\vspace*{-0.5\baselineskip}}
+
+\newcommand{\tab}{\hspace{5mm}}
+\newcommand{\leftpic}[1]{\parpic[l]{\includegraphics{#1}}}
+\newcommand{\rightpic}[1]{\parpic[r]{\includegraphics{#1}}}
+\newenvironment{mathcounts_difficulty}{\noindent}{\noindent}
+\newenvironment{mathcounts_question}{\noindent}{\noindent}
+\newenvironment{mathcounts_problem}{\noindent}{\noindent}
+\newenvironment{mathcounts_solution}{\noindent}{\noindent}
