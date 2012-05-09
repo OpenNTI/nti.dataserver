@@ -150,6 +150,7 @@ class YouTubeRelatedVideoAdder(AbstractVideoAdder):
 					for vurl in matches:
 						adder = adders[min(result,1)]
 						result += 1
+						# Watch that this is consistent with ntilatexmacros.zpts
 						adder( '<div class="externalvideo"><iframe src="%s" width="640" height="360" frameborder="0" allowfullscreen /></div>' % vurl )
 
 				if result:
