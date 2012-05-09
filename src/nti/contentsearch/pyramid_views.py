@@ -2,8 +2,6 @@
 
 from __future__ import print_function, unicode_literals
 
-import re
-
 from pyramid.security import authenticated_userid
 
 from nti.contentsearch import QueryObject
@@ -48,8 +46,7 @@ class UserSearch(object):
 def clean_search_query(query):
 	if query in ('*', '?'):
 		return query
-	result = re.sub('[*?]', '', query) if query else u''
-	return unicode(result.lower())
+	return unicode(query.lower())
 
 def get_indexname_from_path(environ):
 	"""
