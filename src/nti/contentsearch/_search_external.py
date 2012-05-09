@@ -34,15 +34,15 @@ def _clean_search_query(query):
 	result = re.sub('[*?]', '', query) if query else u''
 	return unicode(result.lower())
 
-def _word_content_highlight(query=None, text=None):
+def _word_content_highlight(query=None, text=None, default=None):
 	query = _clean_search_query(query) if query else u''
 	content = word_content_highlight(query, text) if query and text else u''
-	return unicode(content) if content else text
+	return unicode(content) if content else default
 
-def _ngram_content_highlight(query=None, text=None):
+def _ngram_content_highlight(query=None, text=None, default=None):
 	query = _clean_search_query(query) if query else u''
 	content = ngram_content_highlight(query, text) if query and text else u''
-	return unicode(content) if content else text
+	return unicode(content) if content else default
 
 def _highlight_content(query=None, text=None, highlight_type=True):
 	content = None
@@ -76,7 +76,7 @@ class WordSnippetHighlightDecorator(object):
 		query = getattr(original, 'query', None)
 		if query:
 			text = external.get(SNIPPET, None)
-			text = _word_content_highlight(query, text)
+			text = _word_content_highlight(query, text, text)
 			external[SNIPPET] = text
 		
 def NgramSnippetHighlightDecoratorFactory(*args):
@@ -90,7 +90,7 @@ class NgramSnippetHighlightDecorator(object):
 		query = getattr(original, 'query', None)
 		if query:
 			text = external.get(SNIPPET, None)
-			text = _ngram_content_highlight(query, text)
+			text = _ngram_content_highlight(query, text, text)
 			external[SNIPPET] = text
 			
 # -----------------------------------
