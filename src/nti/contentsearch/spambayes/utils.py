@@ -122,9 +122,9 @@ def get_email_message_as_string(msg, unixfrom=False):
 
 def get_email_messages(directory, fnfilter='*', indexfile=None, default_spam=True, separator=None):
 	
-	indexfile = os.path.expanduser(indexfile)
 	directory = os.path.expanduser(directory)
-	
+	indexfile = os.path.expanduser(indexfile) if indexfile else indexfile
+		
 	index = {}
 	if indexfile and os.path.exists(indexfile):
 		with open(indexfile, "r") as fp:
@@ -186,6 +186,8 @@ def create_sql3classifer_db(dbpath, directory, include_ham=False, fnfilter='*', 
 		transaction.commit()
 	
 	logger.info("%s messages(s) processed" % total)
+	
+	return sql3
 	
 if __name__ == '__main__':
 	dbpath = "~/Downloads/sample.db"
