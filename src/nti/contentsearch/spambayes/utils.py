@@ -153,10 +153,13 @@ def get_email_messages(directory, fnfilter='*', indexfile=None, default_spam=Tru
 # -----------------------------------
 
 def create_sql3classifer_db(dbpath, directory, include_ham=False, fnfilter='*', indexfile=None,
-							default_spam=True, separator=None, *args, **kwargs):
+							default_spam=True, separator=None, batch_size=1000, *args, **kwargs):
 	
 	count = 0
+	total = 0
+	dbpath = os.path.expanduser(dbpath)
 	sql3 = SQL3Classifier(dbpath, *args, **kwargs)
+
 	for msg, is_spam, _ in get_email_messages(directory, fnfilter, indexfile, default_spam, separator):
 		
 		if not include_ham and not is_spam:
@@ -171,11 +174,21 @@ def create_sql3classifer_db(dbpath, directory, include_ham=False, fnfilter='*', 
 				
 			if text:
 				sql3.learn(tokenize(text), is_spam)
+				total = total + 1
 				count = count + 1
-				if count % 500 == 0:
-					transaction.get().commit()
-	
+				
+				if count == 1:
+					transaction.begin()
+				elif count >= batch_size:
+					transaction.commit()
+					count = 0
 	if count:
-		transaction.get().commit()
+		transaction.commit()
 	
 	logger.info("%s messages(s) processed" % count)
+	
+if __name__ == '__main__':
+	dbpath = "~/Downloads/sample.db"
+	directory = "~/Downloads/trec07p/data"
+	indexfile = "~/Downloads/trec07p/full/index"
+	create_sql3classifer_db(dbpath, directory, indexfile=indexfile)
