@@ -45,7 +45,7 @@ def has_stored_indices(username):
 	bq = "%s:'%s'" % (username_, username)
 	service  = get_search_service(domain=domain) if domain else None
 	results = service.search(bq=bq, return_fields=[oid_], size=1, start=0) if service else ()
-	return True if len(results) else False
+	return len(results) > 0
 
 class CloudSearchUserIndexManager(object):
 	interface.implements(interfaces.IUserIndexManager)
@@ -156,7 +156,7 @@ class CloudSearchUserIndexManager(object):
 			raise Exception(s)
 		return result
 	
-	# we are not versioning so update is add
+	# update is simply and add w/ a different version number
 	update_content = index_content
 
 	def delete_content(self, data, type_name=None, *args, **kwargs):
