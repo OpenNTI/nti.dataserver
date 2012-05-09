@@ -17,13 +17,12 @@ def create_index_manager_with_whoosh(index_storage=None, indexdir=None, use_md5=
 	index_storage = index_storage or MultiDirectoryStorage(indexdir)
 	max_users = kwargs.get('max_users', 100)
 	user_idx_manager = wuim_factory(index_storage, max_users=max_users, use_md5=use_md5)
-	return IndexManager(book_idx_manager, user_idx_manager, dataserver=dataserver, max_users=max_users)
+	return IndexManager(book_idx_manager, user_idx_manager)
 
 def create_index_manager_with_repoze(dataserver=None, *args, **kwargs):
 	book_idx_manager = wbm_factory()
 	user_idx_manager = ruim_factory()
-	max_users = kwargs.get('max_users', 1000)
-	return IndexManager(book_idx_manager, user_idx_manager, max_users=max_users, dataserver=dataserver)
+	return IndexManager(book_idx_manager, user_idx_manager)
 
 # -----------------------------
 

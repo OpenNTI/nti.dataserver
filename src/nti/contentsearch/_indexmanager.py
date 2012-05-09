@@ -64,7 +64,7 @@ class IndexManager(object):
 			cls.indexmanager = super(IndexManager, cls).__new__(cls, *args, **kwargs)
 		return cls.indexmanager
 
-	def __init__(self, bookidx_manager_factory, useridx_manager_factory, max_users=500, *args, **kwargs):
+	def __init__(self, bookidx_manager_factory, useridx_manager_factory, *args, **kwargs):
 		self.books = CaseInsensitiveDict()
 		self.bookidx_manager_factory = bookidx_manager_factory
 		self.useridx_manager_factory = useridx_manager_factory
