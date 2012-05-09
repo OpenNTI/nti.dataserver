@@ -243,7 +243,9 @@ def test_user_pages_collection_accepts_only_external_types():
 import tempfile
 import shutil
 import os
-from nti.dataserver.library import DynamicLibrary
+
+from nti.contentlibrary.filesystem import DynamicLibrary
+
 import pyramid.interfaces
 from pyramid.threadlocal import get_current_request
 

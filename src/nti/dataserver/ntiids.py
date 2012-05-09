@@ -69,6 +69,7 @@ deprecated( "TYPE_CLASS", "Prefer nti.ntiids.ntiids.TYPE_CLASS" )
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import authorization_acl as nacl
+from nti.contentlibrary import interfaces as lib_interfaces
 from zope import component
 
 def find_object_with_ntiid(key, dataserver=None):
@@ -97,7 +98,7 @@ def find_object_with_ntiid(key, dataserver=None):
 		# Nothing we could find specifically using a normal NTIID lookup.
 		# Is it something in the library?
 		# TODO: User-specific libraries
-		library = component.queryUtility( nti_interfaces.ILibrary )
+		library = component.queryUtility( lib_interfaces.IContentPackageLibrary )
 		path = library.pathToNTIID( key ) if library else None
 		if path:
 			result = path[-1]
