@@ -185,7 +185,7 @@ def create_sql3classifer_db(dbpath, directory, include_ham=False, fnfilter='*', 
 	if count:
 		transaction.commit()
 	
-	logger.info("%s messages(s) processed" % count)
+	logger.info("%s messages(s) processed" % total)
 	
 if __name__ == '__main__':
 	dbpath = "~/Downloads/sample.db"
