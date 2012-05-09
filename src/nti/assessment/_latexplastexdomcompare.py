@@ -14,6 +14,10 @@ from zope import component
 from zope.component.interfaces import ComponentLookupError
 
 def _mathIsEqual(math1, math2):
+	if math1 is None or math2 is None:
+		# We follow the rules for NULL: it's not equal to anything,
+		# even itself
+		return False
 	return _mathChildrenAreEqual(math1.childNodes, math2.childNodes) or \
 		(_all_text_children(math1) and _all_text_children(math2) and _text_content_equal(math1, math2))
 

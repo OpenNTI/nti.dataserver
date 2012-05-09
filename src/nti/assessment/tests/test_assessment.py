@@ -139,6 +139,10 @@ class TestAssessment(nti.tests.ConfiguringTestBase):
 		self.assertMathNodesNotEqual(math1, math2)
 		self.assertMathNodesNotEqual(math3, math4)
 
+	def test_an_unparseable(self):
+		math1, math2 = mathTexToDOMNodes( ('$4\\surd$3', "$4\\surd 3$") )
+		self.assertMathNodesNotEqual( None, math2, message="None should not raise error" )
+
 	def test_output_from_mathquill(self):
 		# Some real-life output from mathquil
 
