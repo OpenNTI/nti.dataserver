@@ -6,9 +6,11 @@ import email
 import binascii
 import fnmatch
 import traceback
+import collections
 import transaction
 
 from logging import DEBUG
+from email.message import Message as eMessage
 
 from nti.contentsearch.spambayes.tokenizer import tokenize
 from nti.contentsearch.spambayes.storage import SQL3Classifier
@@ -152,9 +154,29 @@ def get_email_messages(directory, fnfilter='*', indexfile=None, default_spam=Tru
 
 # -----------------------------------
 
+def _get_email_message_text_parts(obj):
+	result = []
+	if isinstance(obj, six.string_types):
+		result.append(obj)
+	elif isinstance(obj, eMessage):
+		for part in _textparts(obj):
+			try:
+				text = part.get_payload(decode=True)
+			except:
+				text = part.get_payload(decode=False)
+				text = _repair_damaged_base64(text) if text is not None else None
+				
+			if text:
+				result.append(text)
+	elif isinstance(obj, collections.Iterable):
+		for m in obj:
+			result.extend(_get_email_message_text_parts(m))
+	elif obj:
+		result.append(repr(obj))
+	return result
+	
 def create_sql3classifer_db(dbpath, directory, include_ham=False, fnfilter='*', indexfile=None,
 							default_spam=True, separator=None, batch_size=1000, *args, **kwargs):
-	
 	count = 0
 	total = 0
 	dbpath = os.path.expanduser(dbpath)
@@ -165,32 +187,19 @@ def create_sql3classifer_db(dbpath, directory, include_ham=False, fnfilter='*', 
 		if not include_ham and not is_spam:
 			continue
 			
-		for part in _textparts(msg):
-			try:
-				text = part.get_payload(decode=True)
-			except:
-				text = part.get_payload(decode=False)
-				text = _repair_damaged_base64(text) if text is not None else None
-				
-			if text:
-				sql3.learn(tokenize(text), is_spam)
-				total = total + 1
-				count = count + 1
-				
-				if count == 1:
-					transaction.begin()
-				elif count >= batch_size:
-					transaction.commit()
-					count = 0
+		for text in _get_email_message_text_parts(msg):
+			sql3.learn(tokenize(text), is_spam)
+			total = total + 1
+			count = count + 1
+			
+			if count == 1:
+				transaction.begin()
+			elif count >= batch_size:
+				transaction.commit()
+				count = 0
 	if count:
 		transaction.commit()
 	
 	logger.info("%s messages(s) processed" % total)
 	
 	return sql3
-	
-if __name__ == '__main__':
-	dbpath = "~/Downloads/sample.db"
-	directory = "~/Downloads/trec07p/data"
-	indexfile = "~/Downloads/trec07p/full/index"
-	create_sql3classifer_db(dbpath, directory, indexfile=indexfile)
