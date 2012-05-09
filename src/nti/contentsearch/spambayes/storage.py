@@ -41,7 +41,6 @@ PersistentBayes = PersistentClassifier
 
 # -----------------------------------
 
-
 class SQL3Classifier(Classifier, ObjectDataManager):
 	
 	state_key = '__classifier state __'
