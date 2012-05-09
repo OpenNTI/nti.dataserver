@@ -1,3 +1,4 @@
+import re
 import UserDict
 
 from zope import component
@@ -29,11 +30,17 @@ logger = logging.getLogger( __name__ )
 
 # -----------------------------------
 
+def _clean_search_query(query):
+	result = re.sub('[*?]', '', query) if query else u''
+	return unicode(result.lower())
+
 def _word_content_highlight(query=None, text=None):
+	query = _clean_search_query(query) if query else u''
 	content = word_content_highlight(query, text) if query and text else u''
 	return unicode(content) if content else text
 
 def _ngram_content_highlight(query=None, text=None):
+	query = _clean_search_query(query) if query else u''
 	content = ngram_content_highlight(query, text) if query and text else u''
 	return unicode(content) if content else text
 
@@ -47,7 +54,6 @@ def _highlight_content(query=None, text=None, highlight_type=True):
 		else:
 			content = text
 	return unicode(content) if content else text
-
 
 def NoSnippetHighlightDecoratorFactory(*args):
 	return NoSnippetHighlightDecorator()
