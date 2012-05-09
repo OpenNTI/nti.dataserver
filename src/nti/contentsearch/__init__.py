@@ -71,6 +71,9 @@ class CaseInsensitiveDict(dict):
 	def __setitem__(self, key, value):
 		super(CaseInsensitiveDict, self).__setitem__(key.lower(), value)
 
+	def get(self, key, default=None):
+		return super(CaseInsensitiveDict, self).get(key.lower(), default)
+
 	def __getitem__(self, key):
 		return super(CaseInsensitiveDict, self).__getitem__(key.lower())
 	
