@@ -8,9 +8,11 @@ from whoosh import fields
 from whoosh import highlight
 from whoosh.searching import Hit
 
+from nti.contentsearch import QueryObject
+from nti.contentsearch import CaseInsensitiveDict
+
 from nti.contentsearch._whoosh_query import parse_query
 
-from nti.contentsearch import QueryObject
 from nti.contentsearch.common import echo
 from nti.contentsearch.common import get_attr
 from nti.contentsearch.common import get_ntiid
@@ -102,6 +104,14 @@ class _SearchableContent(object):
 	
 	__indexable__ = False
 	
+	_mappings = CaseInsensitiveDict()
+	_mappings[ntiid_] = NTIID
+	_mappings[oid_] = TARGET_OID
+	_mappings[title_] = title_.capitalize()
+	_mappings[containerId_] = CONTAINER_ID
+	_mappings[collectionId_] = COLLECTION_ID
+	_mappings[last_modified_] = LAST_MODIFIED
+	
 	@property
 	def schema(self):
 		return self.get_schema()
@@ -110,19 +120,7 @@ class _SearchableContent(object):
 		return getattr(self, '_schema', None)
 	
 	def external_name(self, name):
-		"""
-		external name for the schema field name
-		"""
-		if name ==  ntiid_:
-			return NTIID
-		elif name ==  oid_:
-			return TARGET_OID
-		elif name == title_:
-			return name.capitalize()
-		elif name == last_modified_:
-			return LAST_MODIFIED
-		else:
-			return name
+		return self._mappings.get(name, name)
 		
 	# ---------------
 	
@@ -271,15 +269,9 @@ class UserIndexableContent(_SearchableContent):
 
 	__indexable__ = False
 	
-	def external_name(self, name):
-		if name ==  'creator':
-			return CREATOR
-		elif name ==  'containerId':
-			return CONTAINER_ID
-		elif name == collectionId_:
-			return COLLECTION_ID
-		else:
-			return super(UserIndexableContent, self).external_name(name)
+	_mappings = CaseInsensitiveDict()
+	_mappings[creator_] = CREATOR
+	_mappings.update(_SearchableContent._mappings)
 		
 	def get_index_data(self, data, *args, **kwargs):
 		"""
@@ -486,6 +478,10 @@ class MessageInfo(Note):
 	__indexable__ = True
 	_schema = create_messageinfo_schema()
 
+	_mappings = CaseInsensitiveDict()
+	_mappings[id_] = ID
+	_mappings.update(Note._mappings)
+	
 	def get_index_data(self, data, *args, **kwargs):
 		result = UserIndexableContent.get_index_data(self, data, *args, **kwargs)
 		result[id_] = echo(get_attr(data, ID))
