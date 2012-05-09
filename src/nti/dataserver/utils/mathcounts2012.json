@@ -789,7 +789,7 @@
                 "Text": "Three congruent, coplanar circles overlap so that each center lies on the other two circles. The diameter of each circle is 8 cm. What is the area of the triangle formed by connecting the centers of the circles? Express your answer in simplest radical form.",
                 "Solution": "The triangle formed by connecting the centers of the circles is an equilateral triangle with side length equal to the radius of each circle. Since the diameter of each circle is 8 cm, the radius is 4 cm. If we drop a perpendicular from one vertex of the triangle to the opposite side, it will bisect the side. This gives us two 30-60-90 triangles. We know that the length of the hypotenuse of one of these triangles is 4 cm and the length of the short leg is 2 cm. We can use the Pythagorean theorem to find the length of the longer leg, h (for height), as follows: $22 + h2$ =42 $\\rightarrow$ 4 +h2= $16 \\rightarrow h2 = 16 - 4 \\rightarrow h2 = 12 \\rightarrow h =$ $\\surd$12 $\\rightarrow$ h = 2$\\surd$3. Using this height and a base of 4 cm, we now find that the area of the equilateral triangle is (1/2)$\\times$4$\\times$2$\\surd$3 = 4$\\surd$3 cm2. A nice formula to remember for the area of an equilateral triangle with side length s is A = \u300cs^2 root 3 over 4\u300d. The area of the triangle in this problem is then 42$\\surd$3/4 = 4$\\surd$3 cm2.",
                 "Answers": [
-                    "$4\\surd$3"
+                    "$4\\surd 3$"
                 ],
                 "ID": "62",
                 "CCSS": "8.EE.2",

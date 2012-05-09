@@ -1,0 +1,18 @@
+name: naqsymmathpart
+<div class="naquestionpart naqsymmathpart">
+	 <a tal:attributes="name self/id"/>
+	 <span tal:content="self"/>
+	 <input class="answerblank" ntitype="naqsymmath" tal:attributes="id self/attributes/probnum" />
+</div>
+
+
+
+name: naquestion
+<div class="naquestion">
+	 <span tal:content="self"/>
+	 <a id="submit" onclick="NTISubmitAnswers(event,'input[type]')" href="#" tal:condition="self/attributes/individual">Check</a>
+</div>
+
+
+name: naqsolution
+<a class="helplink"  tal:attributes="href self/attributes/href" tal:content="self" />
