@@ -117,17 +117,12 @@ class SQL3Classifier(Classifier, ObjectDataManager):
 		t.join(self)
 	
 	# ---------- 
-			
-	def _encode(self, word):
-		if isinstance(word, unicode):
-			word = word.encode("utf-8")
-		return word
 	
 	def _post_training(self):
 		self._save_state()
 		
 	def _wordinfoget(self, word):
-		word = self._encode(word)
+		word = unicode(word)
 		row = self._get_row(word)
 		if row:
 			item = self.WordInfoClass()
@@ -139,11 +134,11 @@ class SQL3Classifier(Classifier, ObjectDataManager):
 	get_record = _wordinfoget
 		
 	def _wordinfoset(self, word, record):
-		word = self._encode(word)
+		word = unicode(word)
 		self._set_row(word, record.spamcount, record.hamcount)
 
 	def _wordinfodel(self, word):
-		word = self._encode(word)
+		word = unicode(word)
 		self._delete_row(word)
 
 	def _wordinfokeys(self):
