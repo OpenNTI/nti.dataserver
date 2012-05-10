@@ -16,5 +16,7 @@ class PlastexTraverser(zope.traversing.adapters.DefaultTraversable):
 	def traverse( self, name, furtherPath ):
 		try:
 			return super(PlastexTraverser,self).traverse( name, furtherPath )
-		except LocationError:
+		except (LocationError,IndexError):
+			# IndexError can be raised because the plasTeX objects attempt
+			# to use strings as child numbers
 			return None
