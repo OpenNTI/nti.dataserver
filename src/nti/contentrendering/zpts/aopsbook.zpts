@@ -28,7 +28,7 @@ name: source MOEMS MathCounts AMC
 <span class="source" tal:content="python: '(Source: %s)' % self.attributes['source']" />
 
 name: probref ref
-<a tal:attributes="href self/idref/label/url" tal:content="self/idref/label/ref | self.idref.id" />
+<a tal:attributes="href self/idref/label/url" tal:content="self/idref/label/ref | self/idref/id" />
 
 name: challengeprobs
 <div class="challenge-problems" tal:attributes="id self/id"><span class="headingtext">Challenge Problems</span></div>

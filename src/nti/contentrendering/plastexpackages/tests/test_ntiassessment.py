@@ -48,38 +48,36 @@ def test_macros():
 	assert_that( dom.getElementsByTagName('naquestion'), has_length( 1 ) )
 	assert_that( dom.getElementsByTagName('naquestion')[0], is_( naquestion ) )
 
-def test_render():
-	from plasTeX.Renderers.XHTML import Renderer
-	example = br"""
-	\begin{naquestion}[individual=true]
-		Arbitrary content goes here.
-		\begin{naqsymmathpart}
-		Arbitrary content goes here.
-		\begin{naqsolutions}
-			\naqsolution Some solution
-		\end{naqsolutions}
-		\end{naqsymmathpart}
-	\end{naquestion}
-	"""
+import nti.tests
+import nti.contentrendering
+class TestRenderable(nti.tests.ConfiguringTestBase):
+	set_up_packages = (nti.contentrendering,)
+	def test_render(self):
+		from plasTeX.Renderers.XHTML import Renderer
+		example = br"""
+		\begin{naquestion}[individual=true]
+			Arbitrary content goes here.
+			\begin{naqsymmathpart}
+			Arbitrary content goes here.
+			\begin{naqsolutions}
+				\naqsolution Some solution
+			\end{naqsolutions}
+			\end{naqsymmathpart}
+		\end{naquestion}
+		"""
 
-	dom = _buildDomFromString( _simpleLatexDocument( (example,) ), mkdtemp=True )
-	cwd = os.getcwd()
-	try:
-		os.chdir(dom.config['files']['directory'])
-		render = Renderer()
-		render.importDirectory( os.path.join( os.path.dirname(__file__), '..' ) )
-		render.render( dom )
-		# TODO: Actual validation of the rendering
-		index = open(os.path.join(dom.config['files']['directory'],'index.html'), 'rU' ).read()
-		content = br"""<div><p><div class="naquestion">
-	 <span> Arbitrary content goes here. <div class="naquestionpart naqsymmathpart">
-	 <a name="a0000000002"></a>
-	 <span> Arbitrary content goes here. <a class="helplink"><p>Some solution </p></a> </span>
-	 <input class="answerblank" ntitype="naqsymmath">
-</div> </span>
-	 <a id="submit" onclick="NTISubmitAnswers(event,'input[type]')" href="#">Check</a>
-</div> </p></div>"""
-		assert_that( index, contains_string( content ) )
-	finally:
-		os.chdir( cwd )
-		shutil.rmtree( dom.config['files']['directory'] )
+		dom = _buildDomFromString( _simpleLatexDocument( (example,) ), mkdtemp=True )
+		cwd = os.getcwd()
+		try:
+			os.chdir(dom.config['files']['directory'])
+			render = Renderer()
+			render.importDirectory( os.path.join( os.path.dirname(__file__), '..' ) )
+			render.render( dom )
+			# TODO: Actual validation of the rendering
+			index = open(os.path.join(dom.config['files']['directory'],'index.html'), 'rU' ).read()
+			content = """<div><p><div class="naquestion">\n\t <span> Arbitrary content goes here. <div class="naquestionpart naqsymmathpart">\n\t <a name="a0000000002"/>\n\t <span> Arbitrary content goes here. <a class="helplink"><p>Some solution </p></a> </span>\n\t <input class="answerblank" ntitype="naqsymmath" />\n</div> </span>\n\t <a id="submit" onclick="NTISubmitAnswers(event,'input[type]')" href="#">Check</a>\n</div> </p></div>"""
+
+			assert_that( index, contains_string( content ) )
+		finally:
+			os.chdir( cwd )
+			shutil.rmtree( dom.config['files']['directory'] )
