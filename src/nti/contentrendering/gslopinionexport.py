@@ -69,6 +69,18 @@ class _TextIT(_WrappedElement):
 class _ntipagenum(_WrappedElement):
 	wrapper = 'ntipagenum'
 
+class _href(_Container):
+
+	def __new__( cls, url, text=None ):
+		return super(_href,cls).__new__( cls, '\\href{' + url + '}' )
+
+	def __init__( self, url, text=None ):
+		super(_href,self).__init__( self, '\\href{' + url + '}' )
+		# Note: __new__ does all the actual work, because these are immutable as strings
+		self.add_child( '{' )
+		self.add_child( text )
+		self.add_child( '}' )
+
 def _url_to_pyquery( url ):
 	# Must use requests, not the url= argument, as
 	# that User-Agent is blocked
@@ -90,14 +102,14 @@ def _footnotes_of( doc ):
 	ps = list(small.itersiblings())
 	return ps
 
-def _p_to_content(footnotes, p):
+def _p_to_content(footnotes, p, include_tail=True):
 	accum = []
 	kids = p.getchildren()
 	if not kids:
 		accum.append( _ElementPlainTextContentFragment( p ) )
 	else:
 		def _tail(e):
-			if e.tail and e.tail.strip():
+			if e is not None and e.tail and e.tail.strip():
 				accum.append( interfaces.PlainTextContentFragment( e.tail.strip() ) )
 		# complex element with nested children to deal with.
 		if p.text and p.text.strip():
@@ -114,15 +126,28 @@ def _p_to_content(footnotes, p):
 					pass
 				elif (kid.get( 'href' ) or '').startswith( '#' ):
 					# These are just to footnotes
-					pass
+					kid = None
 					#accum.append( "(DOC LINK: " + _text_of( kid ) + " " + kid.get( 'href' ) + ")")
+				elif kid.get( 'href' ):
+					# \href[options]{URL}{text}
+					# TODO: We're not consistent with when we recurse
+					href = _href( _url_escape(kid.get( 'href' )),
+								  _p_to_content( footnotes, kid, include_tail=False ) )
+
+					accum.append( href )
+					for c in href.children:
+						accum.append( c )
+
 				else:
 					accum.append( _ElementPlainTextContentFragment( kid ) )
+					kid = None
 			elif kid.tag == 'sup':
 				# footnote refs
 				accum.append( _find_footnote( footnotes, kid ) )
 			_tail(kid)
-		_tail(p)
+		if include_tail:
+			_tail(p)
+
 
 	return interfaces.LatexContentFragment( ' '.join( [interfaces.ILatexContentFragment( x ) for x in accum] ) )
 
@@ -140,7 +165,10 @@ def _find_footnote( footnotes, sup ):
 			accum.append( _p_to_content( footnotes, i ) )
 	return  _Footnote( ' '.join( [interfaces.ILatexContentFragment( x ) for x in accum] ) )
 
-def _opinion_to_tex( doc, output=None ):
+def _url_escape(u):
+	return u.replace( '&', '\\&').replace( '_', '\\_' )
+
+def _opinion_to_tex( doc, output=None, base_url=None ):
 	tex = []
 
 	name = _case_name_of( doc )
@@ -172,12 +200,15 @@ def _opinion_to_tex( doc, output=None ):
 		output = sys.stdout
 
 	def _print(node):
-		print( interfaces.ILatexContentFragment(node), file=output )
+		print( interfaces.ILatexContentFragment(node).encode('utf-8'), file=output )
 		print( file=output )
 		for child in getattr( node, 'children', ()):
 			_print( interfaces.ILatexContentFragment(child) )
 
-	lines = [br'\documentclass{book}', br'\usepackage{graphicx}', br'\usepackage{nti.contentrendering.ntilatexmacros}', br'\begin{document}']
+	lines = [br'\documentclass{book}', br'\usepackage{graphicx}', br'\usepackage{nti.contentrendering.ntilatexmacros}', br'\usepackage{hyperref}']
+	if base_url:
+		lines.append( br'\hyperbaseurl{' + _url_escape(base_url) + b'}' )
+	lines.append( br'\begin{document}' )
 	for line in lines:
 		print( line, file=output )
 	for node in tex:
@@ -189,7 +220,7 @@ def main():
 	xmlconfig.file( 'configure.zcml', package=nti.contentrendering )
 	url = sys.argv[1]
 	pq = _url_to_pyquery( url )
-	_opinion_to_tex( pq )
+	_opinion_to_tex( pq, base_url=url )
 
 if __name__ == '__main__':
 	main()
