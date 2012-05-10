@@ -106,7 +106,12 @@ def _p_to_content(footnotes, p, include_tail=True):
 	accum = []
 	kids = p.getchildren()
 	if not kids:
-		accum.append( _ElementPlainTextContentFragment( p ) )
+		if include_tail:
+			# If we fail to include this check, we get
+			# duplicate text in and out of the link
+			accum.append( _ElementPlainTextContentFragment( p ) )
+		elif p.text and p.text.strip():
+			accum.append( interfaces.PlainTextContentFragment( p.text.strip() ) )
 	else:
 		def _tail(e):
 			if e is not None and e.tail and e.tail.strip():
@@ -132,6 +137,8 @@ def _p_to_content(footnotes, p, include_tail=True):
 				elif kid.get( 'href' ):
 					# \href[options]{URL}{text}
 					# TODO: We're not consistent with when we recurse
+					# The tail of the <a> is not part of the link, so make sure
+					# not to treat it as such.
 					href = _href( _url_escape(kid.get( 'href' )),
 								  _p_to_content( footnotes, kid, include_tail=False ) )
 
