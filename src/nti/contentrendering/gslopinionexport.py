@@ -125,8 +125,9 @@ def _p_to_content(footnotes, p, include_tail=True):
 				elif kid.get( 'class' ) == 'gsl_pagenum2':
 					pass
 				elif (kid.get( 'href' ) or '').startswith( '#' ):
-					# These are just to footnotes
-					kid = None
+					# These are just to footnotes, so we don't want to
+					# output anything, but we do want the tail
+					pass
 					#accum.append( "(DOC LINK: " + _text_of( kid ) + " " + kid.get( 'href' ) + ")")
 				elif kid.get( 'href' ):
 					# \href[options]{URL}{text}

@@ -26,3 +26,4 @@ class TestGSL(nti.tests.ConfiguringTestBase):
 		gslopinionexport._opinion_to_tex( pq, out )
 		assert_that( out.getvalue(), contains_string( br'\href{/scholar\_case' ) )
 		assert_that( out.getvalue(), contains_string( br'{ \textit{Bushman,} 1 Cal. 3d, at 773, 463 P. 2d, at 730, }' ) )
+		assert_that( out.getvalue(), contains_string( br'created. \footnote{It is illuminating' ) )
