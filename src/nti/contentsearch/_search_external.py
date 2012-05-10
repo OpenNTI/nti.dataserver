@@ -1,4 +1,3 @@
-import re
 import UserDict
 
 from zope import component
@@ -13,6 +12,7 @@ from nti.contentsearch import interfaces as search_interfaces
 
 from nti.contentsearch.common import get_attr
 from nti.contentsearch.common import get_content
+from nti.contentsearch.common import clean_query
 from nti.contentsearch.common import get_multipart_content
 from nti.contentsearch.common import word_content_highlight
 from nti.contentsearch.common import ngram_content_highlight
@@ -30,17 +30,13 @@ logger = logging.getLogger( __name__ )
 
 # -----------------------------------
 
-def _clean_search_query(query):
-	result = re.sub('[*?]', '', query) if query else u''
-	return unicode(result.lower())
-
 def _word_content_highlight(query=None, text=None, default=None):
-	query = _clean_search_query(query) if query else u''
+	query = clean_query(query) if query else u''
 	content = word_content_highlight(query, text) if query and text else u''
 	return unicode(content) if content else default
 
 def _ngram_content_highlight(query=None, text=None, default=None):
-	query = _clean_search_query(query) if query else u''
+	query = clean_query(query) if query else u''
 	content = ngram_content_highlight(query, text) if query and text else u''
 	return unicode(content) if content else default
 

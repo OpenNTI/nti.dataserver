@@ -367,7 +367,7 @@ def set_matched_filter(tokens, termset, text, multiple_match=True):
 		yield t
 		
 def ngram_content_highlight(query, text, maxchars=300, surround=50, order=highlight.FIRST, top=3, 
-							multiple_match=False, *args, **kwargs):
+							multiple_match=False, minsize=3, *args, **kwargs):
 	"""
 	highlight based on ngrams
 	"""
@@ -378,7 +378,7 @@ def ngram_content_highlight(query, text, maxchars=300, surround=50, order=highli
 	termset = frozenset([query])
 		
 	scorer = highlight.BasicFragmentScorer()
-	tokens = ngram_tokens(text_lower, unique=not multiple_match)
+	tokens = ngram_tokens(text_lower, unique=not multiple_match, minsize=minsize)
 	tokens = set_matched_filter(tokens, termset, text_lower, multiple_match)
 	
 	fragmenter = highlight.ContextFragmenter(maxchars=maxchars, surround=surround)
@@ -506,3 +506,8 @@ _all_re = re.compile('([\?\*])')
 def is_all_query(query):
 	mo = _all_re.search(query)
 	return mo and mo.start(1) == 0
+
+def clean_query(query):
+	result = re.sub('[*?]', '', query) if query else u''
+	return unicode(result.lower())
+
