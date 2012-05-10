@@ -66,6 +66,9 @@ class _Title(_WrappedElement):
 class _TextIT(_WrappedElement):
 	wrapper = 'textit'
 
+class _TextBF(_WrappedElement):
+	wrapper = 'textbf'
+
 class _ntipagenum(_WrappedElement):
 	wrapper = 'ntipagenum'
 
@@ -122,6 +125,8 @@ def _p_to_content(footnotes, p, include_tail=True):
 		for kid in kids:
 			if kid.tag == 'i':
 				accum.append( _TextIT(kid.text) )
+			elif kid.tag == 'b':
+				accum.append( _TextBF(kid.text) )
 			elif kid.tag == 'a':
 				# anchors and links and pagenumbers
 				if kid.get( 'class' ) == 'gsl_pagenum':
