@@ -1,2 +1,2 @@
 import zope.deprecation
-zope.deprecation.moved('nti.contentrendering.plastexstyles.ntilatexmacros')
+zope.deprecation.moved('nti.contentrendering.plastexpackages.ntilatexmacros')
