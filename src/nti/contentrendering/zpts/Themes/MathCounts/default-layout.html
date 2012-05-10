@@ -59,9 +59,14 @@
 		<div id="footnotes" tal:condition="self/footnotes">
 			<div class="label">Footnotes</div>
 			<ol>
-				<li tal:repeat="footnote self/footnotes" tal:content="footnote" tal:attributes="id footnote/id">footnote text</li>
+				<li tal:repeat="footnote self/footnotes"
+					tal:attributes="id footnote/id">
+					<span tal:content="footnote" >Footnote text</span>
+					<a tal:attributes="href string:#m${footnote/id}">↩</a>
+				</li>
 			</ol>
 		</div>
+
 
 	</body>
 </html>
