@@ -3,21 +3,21 @@ name: defn bogus importantdef important concept warning game sidebar defns chapt
 
 name: picdefns
 <div class="picdefns" tal:attributes="id self/id">
-<div tal:replace="self/attributes/Picture"/>
-<div tal:replace="self"/>
+<div tal:replace="self/attributes/Picture"></div>
+<div tal:replace="self"></div>
 </div>
 
 name: boxed
-<span class="boxed" tal:content="self"/>
+<span class="boxed" tal:content="self"></span>
 
 name: phantom
-<span class="phantom hidden" tal:content="self/attributes/tex"/>
+<span class="phantom hidden" tal:content="self/attributes/tex"></span>
 
 name:Def Defnoindex angle
-<span class="def" tal:content='self/attributes/text' />
+<span class="def" tal:content='self/attributes/text' ></span>
 
 name: label
-<a tal:attributes="name self/attributes/label"/>
+<a tal:attributes="name self/attributes/label"></a>
 
 name: parts
 <ol class="parts itemize">
@@ -124,8 +124,8 @@ name: displaymath equation equation* eqnarray eqnarray* align align* gather gath
 #with duplicate anchors.   BlockType elements should contain paragraphs and anchors
 #that are not from blocktype elements so omitting the anchors should work fine?
 name: par
-<a tal:attributes="name self/id" tal:omit-tag="self/blockType"/>
-<p tal:content="self" tal:omit-tag="self/blockType"></p>
+<a tal:attributes="name self/id" ></a>
+<p tal:attributes="id self/id" tal:content="self" tal:omit-tag="self/blockType"></p>
 
 name: Cube BlackCube
 <p tal:condition="python: hasattr(self, 'resource')" tal:replace="self/resource"/>
