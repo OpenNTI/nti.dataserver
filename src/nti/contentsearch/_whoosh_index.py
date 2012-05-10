@@ -17,6 +17,7 @@ from nti.contentsearch.common import echo
 from nti.contentsearch.common import get_attr
 from nti.contentsearch.common import get_ntiid
 from nti.contentsearch.common import epoch_time
+from nti.contentsearch.common import clean_query
 from nti.contentsearch.common import get_creator
 from nti.contentsearch.common import get_content
 from nti.contentsearch.common import get_collection
@@ -169,9 +170,9 @@ class _SearchableContent(object):
 		return result
 
 	def execute_query_and_externalize(self, searcher, search_field, parsed_query, queryobject):
-
-		stored_field = search_field in self.get_schema().stored_names()
-		field_found_in_query = search_field in list(t[0] for t in parsed_query.iter_all_terms())
+		stored_field = search_field in self.get_schema().stored_names()			
+		term_fields = set(t[0] for t in parsed_query.iter_all_terms())
+		field_found_in_query = parsed_query.fieldname == search_field or search_field in term_fields
 		search_hits = searcher.search(parsed_query, limit=queryobject.limit)
 	
 		surround = queryobject.surround
@@ -183,28 +184,31 @@ class _SearchableContent(object):
 		items = result[ITEMS]
 		
 		lm = 0
+		query_term = clean_query(queryobject.term)
 		for hit_count, hit in enumerate(search_hits):
 			d = {}
 			item_id = self.get_data_from_search_hit(hit, d)
 			lm = max (lm, d.get(LAST_MODIFIED, 0))
 	
 			snippet = None
+			context_text = hit.get(content_, u'')
+			
 			if stored_field:
 				if field_found_in_query:
 					snippet = hit.highlights(search_field)
 				else:
-					snippet = get_highlighted_content(queryobject.term, 
-													  hit.get(content_, u''),
+					snippet = get_highlighted_content(query_term, 
+													  context_text,
 													  maxchars=maxchars, 
 													  surround=surround)
 			else:
-				snippet = ngram_content_highlight(queryobject.term, 
-												  hit.get(content_, u''),
+				snippet = ngram_content_highlight(query_term, 
+												  context_text,
 												  maxchars=maxchars, 
 												  surround=surround)
 			
 			if not snippet:
-				snippet = hit.get(content_, u'')
+				snippet = context_text
 
 			d[SNIPPET] = snippet
 			items[item_id or hit_count] = d

@@ -58,6 +58,12 @@ class TestWhooshBookIndexManager(unittest.TestCase):
 		assert_that(items[key], has_entry(CONTAINER_ID, 'tag:nextthought.com,2011-10:bleach-manga'))
 		assert_that(items[key], has_entry(SNIPPET, 'now and Become my SHIELD, Lightning, Strike'))
 		
+	def test_search_start(self):
+		hits = self.bim.search("ra*", limit=None)
+		assert_that(hits, has_entry(HIT_COUNT, 1))
+		assert_that(hits, has_entry(QUERY, 'ra*'))
+		assert_that(hits, has_key(ITEMS))
+		
 	def test_suggest(self):
 		hits = self.bim.suggest("ra")
 		assert_that(hits, has_entry(HIT_COUNT, 4))
