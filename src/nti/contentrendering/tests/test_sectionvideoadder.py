@@ -8,6 +8,16 @@ import tempfile
 import shutil
 from hamcrest import assert_that, is_, same_instance
 
+def test_deprecated_imports():
+	# PlasTeX hide import errors so if the strings
+	# in the deprecation move are wrong silent problems
+	# happen
+	import zope.deprecation
+	zope.deprecation.__show__.off()
+	import nti.contentrendering.aopsbook
+	import nti.contentrendering.ntilatexmacros
+	zope.deprecation.__show__.on()
+
 def test_class_provides():
 	assert_that( sectionvideoadder.YouTubeRelatedVideoAdder, provides(interfaces.IStaticYouTubeEmbedVideoAdder ) )
 
