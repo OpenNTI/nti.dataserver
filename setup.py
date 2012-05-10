@@ -100,6 +100,7 @@ setup(
 		 # adds cryptacular and pbkdf2
 		'z3c.bcrypt',
 		'z3c.coverage',
+		'z3c.pt', # Better ZPT support than plastex
 		'zc.queue',
 		'zc.zlibstorage', # compressed records. Will be built-in to newer ZODB
 		'zetalibrary',

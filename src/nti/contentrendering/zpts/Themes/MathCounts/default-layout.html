@@ -10,10 +10,10 @@
         <meta name="NTIID" tal:condition="python: hasattr(self.ownerDocument,'nextNTIID')" tal:attributes="content python: self.ownerDocument.nextNTIID()"/>
 		<meta name="generator" content="plasTeX" />
 		<meta http-equiv="content-type" tal:attributes="content string:text/html;; charset=${config/files/output-encoding}" />
-		<title tal:content="stripped self/title">Morbi metus pede, imperdiet vitae</title>
-		<link tal:condition="links/next" rel="next" tal:attributes="href links/next/url; title links/next/title/textContent" />
-		<link tal:condition="links/prev" rel="prev" tal:attributes="href links/prev/url; title links/prev/title/textContent" />
-		<link tal:condition="links/up" rel="up" tal:attributes="href links/up/url; title links/up/title/textContent" />
+		<title tal:content="self/title">Morbi metus pede, imperdiet vitae</title>
+		<link tal:condition="links/next" rel="next" tal:attributes="href links/next/url; title links/next/title" />
+		<link tal:condition="links/prev" rel="prev" tal:attributes="href links/prev/url; title links/prev/title" />
+		<link tal:condition="links/up" rel="up" tal:attributes="href links/up/url; title links/up/title" />
 		<link rel="stylesheet" href="styles/styles.css" />
 		<link rel="stylesheet" href="styles/prealgebra.css" />
 		<link rel="stylesheet" href="styles/application.css" />

@@ -2,6 +2,12 @@
 <configure xmlns="http://namespaces.zope.org/zope"
 		   i18n_domain="zope">
 	<include package="zope.component" />
+	<include package="zope.traversing" /> <!-- For rendering -->
+
+	<adapter for='plasTeX.DOM.NamedNodeMap'
+			 factory='.traversing.PlastexTraverser' />
+	<adapter for='plasTeX.DOM.Node'
+			 factory='.traversing.PlastexTraverser' />
 
 	<utility component=".relatedlinksetter.TOCRelatedAdder"
 			 name="TOCRelatedAdder" />

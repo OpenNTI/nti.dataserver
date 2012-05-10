@@ -4,4 +4,4 @@ name: ntiincludevideo
 # refuses to load iframes properly from on-disk files.
 #<video tal:attributes="src self/attributes/text" />
 # NOTE that this must stay consistent with sectionvideoadder.py (TODO: Can we use this template?)
-<div class="externalvideo"><iframe width="640" height="360" tal:attributes="src self/attributes/text" frameborder="0" allowfullscreen /></div>
+<div class="externalvideo"><iframe width="640" height="360" tal:attributes="src self/attributes/text" frameborder="0" allowfullscreen="true" ></iframe></div>
