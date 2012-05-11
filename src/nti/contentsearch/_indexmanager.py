@@ -21,6 +21,8 @@ from nti.contentsearch.common import merge_suggest_results
 from nti.contentsearch.common import empty_suggest_and_search_result
 from nti.contentsearch.common import merge_suggest_and_search_results
 
+from nti.contentsearch.common import HIT_COUNT
+
 import logging
 logger = logging.getLogger( __name__ )
 
@@ -106,6 +108,8 @@ class IndexManager(object):
 		results = None
 		for job in jobs:
 			results = merge_search_results (results, job.value)
+			
+		logger.debug("Query '%s' returned %s hit(s)" % (query.term, results[HIT_COUNT]))
 		return results
 		
 	@SearchCallWrapper
