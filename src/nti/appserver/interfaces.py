@@ -1,4 +1,9 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+$Id$
+"""
+from __future__ import print_function, unicode_literals
 
 from zope import interface
 from zope import schema
@@ -63,7 +68,7 @@ class IService(ILocationAware):
 
 class IMissingUser(interface.Interface):
 	"Stand-in for an :class:`nti_interfaces.IUser` when one does not yet exist."
-
+	# TODO: Convert to zope.authentication.IUnauthenticatedPrincipal?
 	username = schema.TextLine( title=u"The desired username" )
 
 class ILogonLinkProvider(interface.Interface):
@@ -74,6 +79,33 @@ class ILogonLinkProvider(interface.Interface):
 
 	def __call__( ):
 		"Returns a single of :class:`nti_interfaces.ILink` object, or None."
+
+class IUserLogonEvent(interface.interfaces.IObjectEvent):
+	"""
+	Fired when a user has successfully logged on.
+
+	Note that this happens at the end of the authentication process, which,
+	due to cookies and cached credentials, may be rare.
+	"""
+	# Very surprised not to find an analogue of this event in zope.*
+	# or pyramid, so we roll our own.
+	# TODO: Might want to build this on a lower-level (nti_interfaces)
+	# event holding the principal, this level adding the request
+
+	object = schema.Object(nti_interfaces.IUser,
+						   title="The User that just logged on.")
+	request = schema.Object(pyramid_interfaces.IRequest,
+							title="The request that completed the login process.",
+							description="Useful to get IP information and the like.")
+
+class UserLogonEvent(interface.interfaces.ObjectEvent):
+	interface.implements(IUserLogonEvent)
+
+	request = None
+	def __init__( self, object, request=None ):
+		super(UserLogonEvent,self).__init__( object )
+		if request is not None:
+			self.request = request
 
 ### Dealing with responses
 # Data rendering

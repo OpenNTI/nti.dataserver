@@ -6,7 +6,7 @@ from __future__ import print_function, unicode_literals
 
 from hamcrest import (assert_that, is_, none, not_none, ends_with, starts_with,)
 from hamcrest import  has_entry, has_length, has_key,  has_item
-from hamcrest import same_instance, greater_than_or_equal_to
+from hamcrest import same_instance, greater_than_or_equal_to, greater_than
 
 from hamcrest.library import has_property
 from nti.tests import provides
@@ -24,7 +24,7 @@ import pyramid.httpexceptions as hexc
 
 
 
-from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans, WithMockDS
 #from nti.tests import provides
 
 from zope import interface
@@ -169,6 +169,7 @@ class TestLogon(ConfiguringTestBase):
 		assert_that( result.headers, has_entry( "Policy", "Me" ) )
 		assert_that( result, has_property( 'location', '/the/url/to/go/to' ) )
 
+	@WithMockDSTrans
 	def test_password_logon_success(self):
 		class Policy(object):
 			interface.implements( pyramid.interfaces.IAuthenticationPolicy )
@@ -177,9 +178,14 @@ class TestLogon(ConfiguringTestBase):
 			def authenticated_userid( self, request ):
 				return 'jason.madden@nextthought.com'
 		get_current_request().registry.registerUtility( Policy() )
+		user = users.User.create_user( self.ds, username='jason.madden@nextthought.com', password='temp001' )
+		user.lastLoginTime.value = 0
 		result = password_logon( get_current_request() )
 		assert_that( result, is_( hexc.HTTPNoContent ) )
 		assert_that( result.headers, has_entry( "Policy", 'jason.madden@nextthought.com' ) )
+		# The event fired
+		assert_that( user.lastLoginTime,
+					 has_property( 'value', greater_than( 0 ) ) )
 
         # Or a redirect
 		get_current_request().params['success'] = '/the/url/to/go/to'

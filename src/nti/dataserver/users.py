@@ -691,6 +691,9 @@ class User(Principal):
 	def containerId(self):
 		return "Users"
 
+	def update_last_login_time(self):
+		self.lastLoginTime.value = time.time()
+
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
 		with self._NoChangeBroadcast( self ):
 			super(User,self).updateFromExternalObject( parsed, *args, **kwargs )
