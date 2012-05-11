@@ -9,6 +9,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from zope import interface, component, lifecycleevent
+from zope.event import notify
 from nti.dataserver import interfaces as nti_interfaces
 from nti.externalization import interfaces as ext_interfaces
 from nti.appserver import interfaces as app_interfaces
@@ -325,6 +326,12 @@ def _create_success_response( request, userid=None, success=None ):
 		userid = sec.authenticated_userid( request )
 
 	response.headers.extend( sec.remember( request, userid ) )
+
+	# Send the logon event
+	dataserver = request.registry.getUtility(nti_interfaces.IDataserver)
+	user = users.User.get_user( username=userid, dataserver=dataserver )
+	notify( app_interfaces.UserLogonEvent( user, request ) )
+
 	return response
 
 
@@ -450,6 +457,9 @@ def add_new_user_to_static_communities( user, object_added_event ):
 			user.join_community( community )
 			user.follow( community )
 
+@component.adapter(nti_interfaces.IUser,app_interfaces.IUserLogonEvent)
+def _user_did_logon( user, event ):
+	user.update_last_login_time()
 
 
 
