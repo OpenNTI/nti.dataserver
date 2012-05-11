@@ -280,6 +280,11 @@ HTMLSanitizerMixin.sanitize_token = _sanitize_token
 # TODO: Maybe this means now we can parse and serialize in one step?
 HTMLSanitizerMixin.allowed_elements.extend( ['html', 'head', 'body'] )
 
+# We use data: URIs to communicate images and sounds in one
+# step. FIXME: They aren't really safe and we should have tighter restrictions
+# on them, such as by size.
+HTMLSanitizerMixin.acceptable_protocols.append( 'data' )
+
 def _html5lib_tostring(doc,sanitize=True):
 	walker = treewalkers.getTreeWalker("lxml")
 	stream = walker(doc)
