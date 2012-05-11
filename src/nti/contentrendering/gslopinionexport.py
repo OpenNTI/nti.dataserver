@@ -150,13 +150,14 @@ def _p_to_content(footnotes, p, include_tail=True):
 					accum.append( href )
 					for c in href.children:
 						accum.append( c )
-
 				else:
 					accum.append( _ElementPlainTextContentFragment( kid ) )
 					kid = None
 			elif kid.tag == 'sup':
 				# footnote refs
 				accum.append( _find_footnote( footnotes, kid ) )
+			elif kid.tag == 'p':
+				accum.append( _p_to_content( footnotes, kid ) )
 			_tail(kid)
 		if include_tail:
 			_tail(p)
@@ -181,6 +182,9 @@ def _find_footnote( footnotes, sup ):
 def _url_escape(u):
 	return u.replace( '&', '\\&').replace( '_', '\\_' )
 
+CONTAINERS = { 'blockquote': 'quote',
+			   'center': 'center' }
+
 def _opinion_to_tex( doc, output=None, base_url=None ):
 	tex = []
 
@@ -189,18 +193,31 @@ def _opinion_to_tex( doc, output=None, base_url=None ):
 	footnotes = _footnotes_of( doc )
 	for i in footnotes:
 		i.getparent().remove( i )
+
+	# This flattens and expands a list. That was fine before
+	# we did any recursion. Now that there's recursion, it's not
+	# so fine. We need increasing sophistication; for now we
+	# go the first step of ignoring things we encounter as we
+	# traverse.
 	inc_children = _included_children_of( _opinion_of( doc ) )
+	exc_children = set()
 
 	current = _Chapter( name )
 	tex.append( current )
 	for inc_child in inc_children:
-		if inc_child.tag in ('p','center'):
+		if inc_child in exc_children:
+			continue
+
+		if inc_child.tag in ('p',):
 			current.add_child( _p_to_content( footnotes, inc_child ) )
-		elif inc_child.tag in ('blockquote',):
-			container = _Container( "\\begin{quote}" )
-			container.add_child( _p_to_content( footnotes, inc_child ) )
-			container.add_child( interfaces.LatexContentFragment( '\\end{quote}' ) )
-			current.add_child( container )
+		elif inc_child.tag in CONTAINERS:
+			exc_children.update( inc_child.getchildren() )
+			container = _Container( "\\begin{%s}" % CONTAINERS[inc_child.tag] )
+			content = _p_to_content( footnotes, inc_child )
+			container.add_child( content )
+			container.add_child( interfaces.LatexContentFragment( '\\end{%s}' % CONTAINERS[inc_child.tag] ) )
+			if content or getattr( content, 'children', ()):
+				current.add_child( container )
 		elif inc_child.tag == 'h2':
 			section = _Section( _text_of( inc_child ).strip() )
 			if hasattr( current, 'parent' ):
