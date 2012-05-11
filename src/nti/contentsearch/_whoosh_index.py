@@ -172,9 +172,9 @@ class _SearchableContent(object):
 	def execute_query_and_externalize(self, searcher, search_field, parsed_query, queryobject):
 		stored_field = search_field in self.get_schema().stored_names()			
 		term_fields = set(t[0] for t in parsed_query.iter_all_terms())
-		field_found_in_query = parsed_query.fieldname == search_field or search_field in term_fields
 		search_hits = searcher.search(parsed_query, limit=queryobject.limit)
-	
+		field_found_in_query = getattr(parsed_query,'fieldname',None) == search_field or search_field in term_fields
+		
 		surround = queryobject.surround
 		maxchars = queryobject.maxchars
 		search_hits.formatter = highlight.UppercaseFormatter()
