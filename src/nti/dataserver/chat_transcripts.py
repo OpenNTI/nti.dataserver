@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """ Chatserver functionality. """
 from __future__ import print_function, unicode_literals
 
@@ -22,7 +23,6 @@ import persistent.wref
 from persistent import Persistent
 import BTrees.OOBTree
 import ZODB.POSException
-import copy
 
 from zope import interface
 from zope import component
@@ -46,15 +46,20 @@ from zope import component
 # A Note on GC
 # Currently, users are stored in a different database than
 # Meeting and MessageInfo objects (which are together with sessions).
-# If that database is packed without using zc.zodbgc to do a multi-GC,
+# If that database is packed and GC'd without using zc.zodbgc to do a multi-GC,
 # then we can lose all our transcripts. It's not as simple as just moving
 # those objects to the User database, either, because we may be sharded.
 # The approach to solving the problem, then, is to keep /explicit/ weak refs and use
 # them as long as possible (TODO: Does that still break with zc.zodbgc?),
 # but also make a copy in our database to fallback on (in some cases, the objects are mutated
 # after being transcripted so the copy may not be perfectly in sync or we'd
-# always just use it).
+# always just use it). Note that this must be a deep copy: these are persistent
+# objects with sub-objects stored in the same initial database, and a shallow
+# copy would fail after GC for the same reasons as the original object. Consequently,
+# we use zope.copy for its deep-copy approach (via pickling) in addition to its hooks support.
+# This is unfortunately a bit more expensive than strictly necessary.
 ###
+from zope import copy
 
 class _CopyingWeakRef(persistent.wref.WeakRef):
 	"""
