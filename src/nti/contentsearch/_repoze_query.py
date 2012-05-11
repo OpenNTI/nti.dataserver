@@ -80,7 +80,7 @@ class DoesNotContain(IndexDoesNotContain):
 
 # ---------------------------------
 
-_mappings =  CaseInsensitiveDict()
+_mappings = CaseInsensitiveDict()
 _mappings[sharedWith_] = sharedWith_
 _mappings[containerId_] = CONTAINER_ID
 _mappings[collectionId_] = COLLECTION_ID
@@ -94,7 +94,7 @@ for n in last_modified_fields:
 def map_to_key_names(name, stored_names=()):
 	name = unicode(name) if name else u''
 	if not stored_names: return name
-	name = _mappings.get(name.lower(), name)
+	name = _mappings.get(name, name)
 	return name if name in stored_names else None
 
 def get_subqueries(qo, stored_names=(), map_func=map_to_key_names):
