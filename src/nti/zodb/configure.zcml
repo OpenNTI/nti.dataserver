@@ -1,0 +1,9 @@
+<!-- -*- mode: nxml -*- -->
+<configure xmlns="http://namespaces.zope.org/zope"
+		   xmlns:zcml="http://namespaces.zope.org/zcml">
+
+	<include file="meta.zcml" package="zope.component" />
+
+	<adapter zcml:condition="installed zope.copy"
+			 factory=".copy.wref_copy_factory" />
+</configure>
