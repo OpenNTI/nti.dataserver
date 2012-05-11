@@ -41,6 +41,11 @@ def test_sanitize_html():
 	for s in zip(strings,sanitized):
 		yield _check_sanitized, s[0], s[1]
 
+def test_sanitize_data_uri():
+	_check_sanitized( "<audio src='data:foobar' controls />",
+					  u'<html><body><audio controls="" src="data:foobar"></audio></body></html>')
+
+
 def test_sanitize_html_contenttypes():
 	text = '<html><body><span style="color: rgb(0, 0, 0);">Hi, all.  I\'ve found the following </span><font color="#0000ff"><u>video series </u></font>to be very helpful as you learn algebra.  Let me know if questions or if you find others.</body></html>\n'
 	shape = CanvasTextShape()
