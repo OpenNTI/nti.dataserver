@@ -46,7 +46,7 @@ class UserSearch(object):
 def clean_search_query(query):
 	if query in ('*', '?'):
 		return query
-	return unicode(query.lower())
+	return unicode(query)
 
 def get_indexname_from_path(environ):
 	"""

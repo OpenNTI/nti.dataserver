@@ -507,7 +507,8 @@ def is_all_query(query):
 	mo = _all_re.search(query)
 	return mo and mo.start(1) == 0
 
-def clean_query(query):
+def clean_query(query, lower=False):
 	result = re.sub('[*?]', '', query) if query else u''
-	return unicode(result.lower())
+	result = result.lower() if lower and result else result
+	return unicode(result)
 
