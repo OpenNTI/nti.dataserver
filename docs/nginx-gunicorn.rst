@@ -241,15 +241,16 @@ HAProxy
 =======
 
 The 1.5-dev series of haproxy is required for proper proxy support.
-Version 1.5-dev7 is current. On linux, compile with:
+Version 1.5-dev9 is current. On linux, compile with:
 
 ::
 
 	make TARGET=linux26 PREFIX=/opt/nti
 
 If you first install the haproxy RPM, then you can patch
-``/etc/init.d/haproxy`` to use the new binary. The configuration would
-reside in ``/etc/haproxy/haproxy.cfg``:
+``/etc/init.d/haproxy`` to use the new binary (or replace the old
+binary with the new one). The configuration would reside in
+``/etc/haproxy/haproxy.cfg``:
 
 ::
 
@@ -346,12 +347,12 @@ reside in ``/etc/haproxy/haproxy.cfg``:
 Stunnel
 =======
 
-These instructions are for version 4.52; any version greater than 4.44
+These instructions are for version 4.53; any version greater than 4.44
 is required in order to add proxy support so that HAProxy knows the
 originating IP and can pass it on to nginx.
 
-On AWS, first install the available stunnel distribution. Then
-download and compile the latest stunnel like so:
+On AWS, first install the available stunnel distribution (to get setup
+scripts). Then download and compile the latest stunnel like so:
 
 ::
 
@@ -360,7 +361,11 @@ download and compile the latest stunnel like so:
 ::
 
 	cert = /opt/nti/ssl_certs/srv_comb.pem
-
+	# It seems that as of the 2012 AMI, FIPS support is on in OpenSSL
+	# Which leads to a "fingerprint" error (it may be that
+	# regenning the certs could solve that, but turning fips
+	# off is easier)
+	fips = no
 	[https]
 	accept = 443
 	connect = /var/run/ssl-frontend.sock
@@ -369,6 +374,10 @@ download and compile the latest stunnel like so:
 	# by google. Turn them all on. (This probably allows some minimal
 	# security holes?)
 	sslVersion = all
+
+Finally, ``make install`` You probably want to copy/link the binary from
+/opt/nti/bin into /usr/bin. (Likewise for haproxy.)
+
 
 Upstart
 =======
