@@ -17,7 +17,7 @@ from pyquery import PyQuery as pq
 import logging
 logger = logging.getLogger( __name__ )
 
-WGET_CMD = '/opt/local/bin/wget'
+WGET_CMD = '/opt/local/bin/wget -q'
 
 def get_open_port():
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -28,14 +28,13 @@ def get_open_port():
 	finally:
 		s.close()
 
-def main(url_or_path, out_dir="/tmp/mirror",
+def main(url_or_path,
+		 out_dir="/tmp/mirror",
 		 zip_archive=True,
 		 zip_root_dir=None,
 		 process_links=True,
 		 archive_index=False, # The Whoosh search index files, not 'index.html'
 		 port=None):
-
-	global WGET_CMD
 
 	httpd = None
 	port = port or get_open_port()
@@ -53,15 +52,11 @@ def main(url_or_path, out_dir="/tmp/mirror",
 		out_dir = _create_path(out_dir)
 
 		if zip_archive:
-			log_file = tempfile.mktemp()
 			archive_dir = tmp_dir = _create_path(tempfile.mkdtemp())
 		else:
 			tmp_dir = None
 			archive_dir = out_dir
-			log_file = '%s/_wget.log' % archive_dir
 
-		_remove_file(log_file)
-		WGET_CMD = "%s -a %s" % (WGET_CMD, log_file)
 
 		result = _get_url_content(url, archive_dir) and _get_toc_file(url, archive_dir)
 		if result:
@@ -84,12 +79,6 @@ def main(url_or_path, out_dir="/tmp/mirror",
 			if tmp_dir:
 				shutil.rmtree(tmp_dir, ignore_errors=True)
 
-			if zip_archive:
-				lpath = os.path.join(out_dir, '_out.log')
-				_remove_file(lpath)
-				try:
-					os.rename(log_file, lpath)
-				except OSError: pass
 
 def _zip_archive(source_path, out_dir, zip_name="archive.zip", zip_root_dir=None):
 
