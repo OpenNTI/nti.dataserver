@@ -271,7 +271,17 @@ binary with the new one). The configuration would reside in
 	use_backend ssl_backend if TRUE
 
   backend ssl_backend
-	server alphassl alpha.nextthought.com redir https://alpha.nextthought.com
+	timeout server 30000
+	timeout connect 4000
+	# the server redir seems to be broken in 1.5 dev9
+	# It seems to be directly making the server connection and
+	# choking on the SSL response, resulting in empty data for the client
+	#server alphassl alpha.nextthought.com:443 backup redir https://alpha.nextthought.com
+	# Redirect location without HTTP path causes some weird
+	# issues too for the pad in particular
+	# redirect prefix seems to do what we want
+	redirect prefix https://alpha.nextthought.com
+
 
   frontend all 127.0.0.1:8084
 	option httplog

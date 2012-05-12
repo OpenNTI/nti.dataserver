@@ -144,11 +144,12 @@ class TOCRelatedAdder(AbstractRelatedAdder):
 		eclipseTOC = self.book.toc
 		def _error(node):
 			page = eclipseTOC.getPageForDocumentNode(node)
-			attrs = getattr(page, 'attributes')
+			attrs = getattr(page, 'attributes',None)
 			raise ValueError( "No NTIID for entry %s doc node %s page %s attrs %s" % (entry, node, page, attrs) )
-		pages = [self.book.pages[eclipseTOC.getPageForDocumentNode(page).getAttribute('ntiid') or _error(page)]
+		pages = [self.book.pages[(eclipseTOC.getPageForDocumentNode(page).getAttribute('ntiid') or _error(page))]
 				 for page
-				 in entry.pages]
+				 in entry.pages
+				 if eclipseTOC.getPageForDocumentNode(page) is not None]
 		pageIds = [page.ntiid for page in pages if page is not None]
 
 		related = []
