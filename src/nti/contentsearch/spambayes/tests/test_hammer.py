@@ -35,7 +35,7 @@ class TestHammer(unittest.TestCase):
 		tokens = tokenize(text)
 		return self.bayes.spamprob(tokens)
 
-	def make_message(self, is_spam):
+	def make_message(self, is_spam, add_random=True):
 		"""
 		Builds a fake message full of random words taken from a
 		selection of ham and spam messages.
@@ -57,12 +57,13 @@ class TestHammer(unittest.TestCase):
 				section = s[offset:offset+50]
 				body.extend(re.findall(r'[^\s]+', section))
 
-		# add a few purely random words.
-		for i in range(5):
-			aToZ = 'abcdefghijklmnopqrstuvwxyz'
-			word_length = random.randrange(3, 8)
-			word = ''.join([random.choice(aToZ) for _ in range(word_length)])
-			body.append(word)
+		if add_random:
+			# add a few purely random words.
+			for i in range(5):
+				aToZ = 'abcdefghijklmnopqrstuvwxyz'
+				word_length = random.randrange(3, 8)
+				word = ''.join([random.choice(aToZ) for _ in range(word_length)])
+				body.append(word)
 
 		body = '\n'.join(textwrap.wrap(' '.join(body)))
 		return body
