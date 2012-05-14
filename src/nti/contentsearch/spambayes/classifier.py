@@ -67,6 +67,9 @@ class WordInfo(object):
 		self.spamcount = spam
 		self.hamcount = ham
 		
+	def is_empty(self):
+		return self.hamcount == 0 and self.spamcount == 0
+	
 	def __repr__(self):
 		return "WordInfo %s" % repr((self.spamcount, self.hamcount))
 	
@@ -192,7 +195,73 @@ class Classifier(object):
 			return prob
 
 	spamprob = chi2_spamprob
-	
+
+	def arc_spamprob(self, wordstream, limit=15):
+		clues = []
+		records = {}
+		tspam, tham = self._wordcounts()
+		limit = limit or self.max_discriminators
+		
+		def _calc_pspam(word):
+			result = records.get(word, None)
+			if result is None:
+				rc = self._wordinfoget(word) if self.has_word(word) else None
+				if not rc or rc.is_empty():
+					result = self.unknown_word_prob # 0.4 also recommended
+				else:
+					rbad = rc.spamcount / float(tspam)
+					rgood = 2*rc.hamcount / float(tham)
+					result = rbad / (rbad + rgood)
+					
+				# place some limits
+				if result < 0.01:
+					result = 0.01
+				if result > 0.99:
+					result = 0.99
+					
+				# save
+				records[word] = result
+			return result
+			
+		for word in set(wordstream):
+			pspam = _calc_pspam(word)		
+			if not clues:
+				clues.append(word)
+			else:
+				for j in range(0, len(clues)):
+					nw = clues[j]
+					if word == nw:
+						break
+					else:
+						w_i = abs(0.5 - pspam)
+						nw_i = abs(0.5 - _calc_pspam(nw))
+						if w_i > nw_i:
+							clues.insert(j, word)
+							break
+						elif j == len(clues) -1:
+							clues.append(word)
+
+			clues = clues if len(clues) <= limit else clues[0:limit]
+		
+		# apply Bayes' rule (via Graham)
+		pposproduct = 1.0
+		pnegproduct = 1.0
+		
+		# for every word, multiply spam probabilities ("pspam") together
+		# (as well as 1 - pspam)
+		for w in clues:
+			pspam = _calc_pspam(w)
+			pposproduct *= pspam
+			pnegproduct *= (1.0 - pspam)
+		
+		# apply formula
+		pspam = pposproduct / (pposproduct + pnegproduct)
+		
+		# If the computed value is great than 0.9 we have a Spam!!
+		#if pspam > 0.9 return True
+		#else return False
+		return pspam	
+				
 	def learn(self, wordstream, is_spam):
 		"""
 		Teach the classifier by example.
@@ -441,6 +510,9 @@ class Classifier(object):
 		distance = abs(prob - 0.5)
 		return distance, prob, word, record
 	
+	def has_word(self, word):
+		return self.wordinfo.has_key(word)
+	
 	def _wordinfoget(self, word):
 		return self.wordinfo.get(word)
 	
@@ -452,6 +524,17 @@ class Classifier(object):
 
 	def _wordinfokeys(self):
 		return self.wordinfo.keys()
+	
+	def _wordinfosize(self):
+		return len(self.wordinfo)
+	
+	def _wordcounts(self):
+		s, h = (0,0)
+		for word in self._wordinfokeys():
+			rc = self._wordinfoget(word)
+			s += rc.spamcount
+			h += rc.hamcount
+		return (s, h)
 	
 	def _enhance_wordstream(self, wordstream):
 		"""
