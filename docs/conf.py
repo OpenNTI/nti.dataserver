@@ -51,7 +51,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Dataserver'
-copyright = u'2011, NTI'
+copyright = u'2011--2012, NTI'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

@@ -14,6 +14,7 @@ Contents:
 	ipad-localremotebridge
 	ntiid-structure
 	nginx-gunicorn
+	content-in-cdn
 	passenger
 	dataserver-contenttypes
 	whiteboard-apis-v1
