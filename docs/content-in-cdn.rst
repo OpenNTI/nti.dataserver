@@ -177,3 +177,11 @@ the various other bits that are duplicated between projects
 (eclipse-toc.xml, archive.zip). Finally, if we are sharing resource
 data, we need some way to do "garbage collection" of resources that
 are no longer referenced.
+
+.. note:: While we could probably use some sort of "directory-like"
+	identifier for objects in the bucket, much as we lay things out on
+	the filesystem now, that seems to lose a lot of opportunity for
+	sharing, particularly of resources. Even if the resources shared
+	cross-content are few, when we version URLs for CloudFront, the
+	resources shared from one content version to the next are likely
+	to be very many.
