@@ -73,17 +73,23 @@ class TestHammer(unittest.TestCase):
 		Trains and classifies repeatedly.
 		"""
 		# 1000000
-		for i in range(1, 100):
+		length = 100
+		for i in range(1, length):
 			# train.
-			is_spam = False # random.choice([True, False])
+			is_spam = random.choice([True, False])
 			self.train(self.make_message(is_spam), is_spam)
 
 			# classify.
-			is_spam = False # random.choice([True, False])
-			prob = self.classify(self.make_message(is_spam))
+			is_spam = random.choice([True, False])
+			msg = self.make_message(is_spam)
+			prob = self.classify(msg)
 		
 			if i < 10 or i % 100 == 0:
 				print "%6.6d: %d, %.4f" % (i, is_spam, prob)
+				
+			if i == length-1:
+				t = tokenize(msg)
+				print "arc prob %.4f" % self.bayes.arc_spamprob(t)
 
 if __name__ == '__main__':
 	unittest.main()
