@@ -69,9 +69,13 @@ html {
 	font-weight: bold;
 	padding-top: 1em;
 }
-
+/** Some combinations of browsers, servers, copy technologies, etc,
+ ** lead to a unicode left quote and right quote being corrupted 
+ ** to the wrong characters. Pending resolution, these are replaced
+ ** with dump quotes.
+ **/
 #NTIContent .chapterquote:before {
-	content: '“';
+	content: '"';
 	color: gray;
 	font-size: 500%;
 	float: left;
@@ -79,7 +83,7 @@ html {
 
 
 #NTIContent .chapterquote:after {
-	content: '”';
+	content: '"';
 	color: gray;
 	font-size: 500%;
 	float: right;
