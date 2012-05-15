@@ -4,10 +4,10 @@
 <!-- A namespace confuses some clients -->
 <html tal:define="links self/links" lang="en">
 	<head>
-        <meta http-equiv="last-modified" tal:condition="python: self.ownerDocument.userdata.has_key('generated_time')" tal:attributes="content python: self.ownerDocument.userdata['generated_time']"/>
-		<meta name="viewport" content="width=730" />
-        <meta name="NTIRelativeScrollHeight" content="-1" />
-        <meta name="NTIID" tal:condition="python: hasattr(self.ownerDocument,'nextNTIID')" tal:attributes="content python: self.ownerDocument.nextNTIID()"/>
+        <meta http-equiv="last-modified" tal:condition="python: self.ownerDocument.userdata.has_key('generated_time')" tal:attributes="content python: self.ownerDocument.userdata['generated_time']"></meta>
+		<meta name="viewport" content="width=730" ></meta>
+        <meta name="NTIRelativeScrollHeight" content="-1" ></meta>
+        <meta name="NTIID" tal:attributes="content self/ntiid" ></meta>
 		<meta name="generator" content="plasTeX" />
 		<meta http-equiv="content-type" tal:attributes="content string:text/html;; charset=${config/files/output-encoding}" />
 		<title tal:content="self/title/textContent | default">Morbi metus pede, imperdiet vitae</title>
@@ -17,10 +17,11 @@
 		<link rel="stylesheet" href="styles/styles.css" />
 		<link rel="stylesheet" href="styles/prealgebra.css" />
 		<link rel="stylesheet" href="styles/application.css" />
+		<link rel="stylesheet" href="styles/local.css" />
 		<script tal:condition="python: not self.ownerDocument.userdata.has_key('transform_process')" type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 		<script type="text/javascript" src="js/jquery-1.6.1.min.js"></script>
+		<!-- anything in this file that 404s breaks the mirror process -->
         <script tal:condition="python: not self.ownerDocument.userdata.has_key('transform_process')" type="text/javascript" src="js/mathjaxconfig.js"></script>
-        <script type="text/javascript" src="js/prealgebra.js"></script>
 	</head>
 	<body id="NTIContent">
 		<div class="page-contents" tal:content="self">File contents</div>
@@ -67,6 +68,6 @@
 			</ol>
 		</div>
 
-
+		<script type="text/javascript" src="js/local.js"></script>
 	</body>
 </html>
