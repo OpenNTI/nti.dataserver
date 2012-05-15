@@ -310,8 +310,9 @@ binary with the new one). The configuration would reside in
 	acl is_youtube path_beg /get_video_info
 
 	# Block some common attack vectors
-	# TODO: Block access to the indexdir
-	acl is_blocked_name path_end .php .asp .jsp .exe .aspx .nti_acl
+	# and restricted data
+	acl is_blocked_name path_end .php .asp .jsp .exe .aspx
+	acl is_blocked_name path_dir .nti_acl indexdir
 	block if is_blocked_name
 
 	use_backend socket_backend if is_websocket
