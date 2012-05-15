@@ -10,6 +10,7 @@ default_spam_cutoff = 0.90
 
 default_use_bigrams = False
 default_unknown_word_prob = 0.5
+default_arc_discriminators = 50
 default_max_discriminators = 150
 default_unknown_word_strength = 0.45
 default_minimum_prob_strength = 0.10
