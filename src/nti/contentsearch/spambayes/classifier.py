@@ -40,6 +40,7 @@ from collections import defaultdict
 from nti.contentsearch.spambayes import LN2
 from nti.contentsearch.spambayes import default_use_bigrams
 from nti.contentsearch.spambayes import default_unknown_word_prob
+from nti.contentsearch.spambayes import default_arc_discriminators
 from nti.contentsearch.spambayes import default_max_discriminators
 from nti.contentsearch.spambayes import default_unknown_word_strength
 from nti.contentsearch.spambayes import default_minimum_prob_strength
@@ -196,7 +197,7 @@ class Classifier(object):
 
 	spamprob = chi2_spamprob
 
-	def arc_spamprob(self, wordstream, limit=15):
+	def arc_spamprob(self, wordstream, limit=default_arc_discriminators):
 		clues = []
 		records = {}
 		tspam, tham = self._wordcounts()
