@@ -310,7 +310,8 @@ binary with the new one). The configuration would reside in
 	acl is_youtube path_beg /get_video_info
 
 	# Block some common attack vectors
-	acl is_blocked_name path_end .php .asp .jsp .exe .aspx
+	# TODO: Block access to the indexdir
+	acl is_blocked_name path_end .php .asp .jsp .exe .aspx .nti_acl
 	block if is_blocked_name
 
 	use_backend socket_backend if is_websocket
@@ -336,6 +337,9 @@ binary with the new one). The configuration would reside in
 	# to this, which still has Cross Origin issues)
 	reqidel ^Host:.*
 	reqadd Host:\ www.youtube.com
+	# NOTE: Server lines that use DNS names are resolved at (and only
+	# at) startup. If DNS is unavailable, haproxy will fail to start.
+	# If the DNS info later changes haproxy will fail to see the change.
 	server youtube www.youtube.com:80 weight 1 maxconn 1024
 
 
