@@ -83,7 +83,7 @@ setup(
 		'repoze.sphinx.autointerface',
 		'repoze.who',
 		'repoze.zodbconn',
-		'requests >= 0.11.1',
+		'requests >= 0.12.1',
 		'scss',
 		'setproctitle',
 		'setuptools',
