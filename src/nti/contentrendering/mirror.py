@@ -90,7 +90,13 @@ def _zip_archive(source_path, out_dir, zip_name="archive.zip", zip_root_dir=None
 		# If they ask for a zip name (and we do not already match it)
 		# then rename the archive dir to match (in the same directory)
 		new_dir = os.path.join( os.path.split( source_path )[0], zip_root_dir )
-		os.rename( source_path, new_dir )
+		try:
+			os.rename( source_path, new_dir )
+		except OSError:
+			# TODO: This entire approach is very fragile. We're relying
+			# on a directory one level up from the
+			logger.exception( "Failed to rename %s to %s", source_path, new_dir )
+			raise
 		zip_cmd = "cd %s && zip -q -9 -r %s %s && mv %s %s" % (os.path.split( source_path )[0], zip_name, zip_root_dir, zip_name, os.path.realpath( os.curdir ))
 
 	os.system( zip_cmd )

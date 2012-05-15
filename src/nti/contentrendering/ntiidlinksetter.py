@@ -72,7 +72,7 @@ def transform( book, save_toc=True ):
 
 
 			ntiid_topic = book.toc.root_topic.topic_with_filename( filename )
-			if ntiid_topic:
+			if ntiid_topic and ntiid_topic.ntiid:
 				# Fragments are not sent when the browser follows a URL, so
 				# the client will have to handle fragment behaviour
 				href.attrib['href'] = ntiid_topic.ntiid + fragment

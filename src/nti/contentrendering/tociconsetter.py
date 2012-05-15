@@ -47,7 +47,9 @@ def transform( book, save_toc=True ):
 def _handle_toc(toc, book, save_dom):
 	contentLocation = book.contentLocation
 	attributes = toc.attributes
-	attributes['href'] = "index.html"
+	if not attributes.has_key('href'):
+		logger.warn( "Assuming index.html for root node in %s", book )
+		attributes['href'] = "index.html"
 	modified = True
 	# For testing, we return the child nodes we modify
 	# (otherwise don't waste the memory)

@@ -19,6 +19,7 @@ from lxml import etree
 
 import urllib
 from pyquery import PyQuery
+import codecs
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -343,7 +344,7 @@ class _EclipseTOCMiniDomTopic(object):
 											  str(self.location).encode( 'string_escape' ),
 											  self._pageInfo,
 											  str(self.href).encode( 'string_escape' ),
-											  str(self.label).encode( 'string_escape' ))
+											  (self.label or '[MISSING]').encode('utf-8').encode( 'string_escape' ))
 
 	@property
 	@deprecate("Prefer `childTopics`; this returns arbitrary Nodes")
@@ -385,7 +386,10 @@ class _EclipseTOCMiniDomTopic(object):
 	@property
 	def dom(self):
 		# TODO: Under some circumstances we should be discarding this dom for memory reasons
-		if not self._dom and self.sourceFile and os.path.exists( self.sourceFile ):
+		if not self._dom:
+			if not self.sourceFile or not os.path.exists( self.sourceFile ):
+				logger.warn( "Unable to get dom for missing file %s in %s", self.sourceFile, self )
+				return None
 			# By using the HTML5 parser, we can get more consistent results,
 			# regardless of how the templates were setup. And when we write, we'll
 			# be in a normalized form for all browsers. One immediate cost is that
@@ -416,9 +420,11 @@ class _EclipseTOCMiniDomTopic(object):
 		if not self._dom: return
 
 		if self.save_dom or force:
-			with open(self.sourceFile, 'w') as f:
-				f.write( etree.tostring( self._dom[0], method='html', encoding='utf-8' ) ) #dom.outerHtml().encode( "utf-8" ) )
-				#f.write( dom.outerHtml().encode( "utf-8" ) )
+			# This matches nti_render. See rationale there.
+			with codecs.open( self.sourceFile, 'w',
+							  encoding='ascii',
+							  errors='xmlcharrefreplace') as f:
+				f.write( etree.tostring( self._dom[0], method='html', encoding=unicode ) )
 				f.flush()
 
 	def set_ntiid( self ):
