@@ -434,7 +434,7 @@ class _BasePicProblem(Base.Environment):
 	def invoke(self,tex):
 		res = super(_BasePicProblem,self).invoke( tex )
 
-		self.attributes['probnum'] = self.ownerDocument.context.counters['probnum'].value
+		self.attributes['probnum'] = str(self.ownerDocument.context.counters['chapter'].value) + '.' + str(self.ownerDocument.context.counters['probnum'].value)
 
 		#if self.macroMode != Base.Environment.MODE_END:
 		#	self.refstepcounter(tex)
@@ -466,7 +466,7 @@ class problem(Base.Environment):
 
 
 		res = super(problem,self).invoke( tex )
-		self.attributes['probnum'] = self.ownerDocument.context.counters['probnum'].value
+		self.attributes['probnum'] = str(self.ownerDocument.context.counters['chapter'].value) + '.' + str(self.ownerDocument.context.counters['probnum'].value)
 		return res
 
 
@@ -548,7 +548,7 @@ class beginsol( Base.subsection ):
 
 		#We encounter solutions right after the problem therefore our
 		#solutions probnum should be the current value of the probnum counter
-		self.attributes['probnum'] = self.ownerDocument.context.counters['probnum'].value
+		self.attributes['probnum'] = str(self.ownerDocument.context.counters['chapter'].value) + '.' + str(self.ownerDocument.context.counters['probnum'].value)
 
 		return res
 
@@ -568,7 +568,7 @@ class solution( Base.Environment ):
 
 		#We encounter solutions right after the problem therefore our
 		#solutions probnum should be the current value of the probnum counter
-		self.attributes['probnum'] = self.ownerDocument.context.counters['probnum'].value
+		self.attributes['probnum'] = str(self.ownerDocument.context.counters['chapter'].value) + '.' + str(self.ownerDocument.context.counters['probnum'].value)
 
 		return res
 
@@ -625,7 +625,7 @@ class revprob(Base.subsection):
 
 	def invoke( self, tex ):
 		res = super(revprob,self).invoke( tex )
-		self.attributes['probnum'] = self.ownerDocument.context.counters['probnum'].value
+		self.attributes['probnum'] = str(self.ownerDocument.context.counters['chapter'].value) + '.' + str(self.ownerDocument.context.counters['probnum'].value)
 		return res
 
 class chall(Base.subsection):
@@ -634,7 +634,7 @@ class chall(Base.subsection):
 
 	def invoke( self, tex ):
 		res = super(chall,self).invoke( tex )
-		self.attributes['probnum'] = self.ownerDocument.context.counters['probnum'].value
+		self.attributes['probnum'] = str(self.ownerDocument.context.counters['chapter'].value) + '.' + str(self.ownerDocument.context.counters['probnum'].value)
 		return res
 
 class challhard(Base.subsection):
@@ -643,7 +643,7 @@ class challhard(Base.subsection):
 
 	def invoke( self, tex ):
 		res = super(challhard,self).invoke( tex )
-		self.attributes['probnum'] = self.ownerDocument.context.counters['probnum'].value
+		self.attributes['probnum'] = str(self.ownerDocument.context.counters['chapter'].value) + '.' + str(self.ownerDocument.context.counters['probnum'].value)
 		return res
 # This is all handled by the main driver
 from plasTeX.Base import Arrays
