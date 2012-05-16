@@ -16,9 +16,6 @@ name: phantom
 name:Def Defnoindex angle
 <span class="def" tal:content='self/attributes/text' ></span>
 
-name: label
-<a tal:attributes="name self/attributes/label"></a>
-
 name: parts
 <ol class="parts itemize">
 	<li tal:repeat="item self" tal:attributes="class python: type(item).__name__" tal:content="item"></li>
@@ -90,54 +87,10 @@ name: exercises
 </ol>
 <div class="end exercises">End exercises</div>
 
-name: ntixymath
-<div tal:condition="python: hasattr(self, 'resource')" class="ntixymath" tal:content="self/resource"/>
-<div tal:define="style self/style" tal:condition="python: not hasattr(self, 'resource') and not style" tal:attributes="class python: type(self).__name__"><img tal:attributes="src self/image/url; alt self/source; width self/image/width/px; height self/image/height/px" /></div>
-<div tal:define="style self/style" tal:condition="python: not hasattr(self, 'resource') and style" tal:attributes="class python: type(self).__name__"><img tal:attributes="src self/image/url; alt self/source; style self/style/inline" /></div>
-
-name: ntixydisplaymath
-<div class="math equation ntixydisplaymath" tal:attributes="id self/id">
-	<p tal:condition="python: hasattr(self, 'resource')" tal:replace="self/resource"/>
-	<div tal:define="style self/style" tal:condition="python: not hasattr(self, 'resource') and not style" tal:attributes="class python: type(self).__name__"><img tal:attributes="src self/image/url; alt self/source; width self/image/width/px; height self/image/height/px" /></div>
-	<div tal:define="style self/style" tal:condition="python: not hasattr(self, 'resource') and style" tal:attributes="class python: type(self).__name__"><img tal:attributes="src self/image/url; alt self/source; style self/style/inline" /></div>
-	<div tal:condition="self/ref" class="equation-number">(<span tal:content="self/ref">1.1.1</span>)</div>
-</div>
-
 name: nst nnd nrd nth
 <span tal:content="self/attributes/text" /><sup tal:content="python: type(self).__name__[1:]"/>
-
-name: math ensuremath
-<p tal:condition="python: hasattr(self, 'resource')" tal:replace="self/resource"/>
-<span tal:condition="python: not hasattr(self, 'resource')" class="math tex2jax_process mathquill-embedded-latex" tal:content="python: '\\(' + self.source[1:-1] + '\\)'" />
-
-name: displaymath equation equation* eqnarray eqnarray* align align* gather gather* falign falign* \
-      multiline multiline* alignat alignat* split
-<div class="math equation" tal:attributes="id self/id">
-<p tal:condition="python: hasattr(self, 'resource')" tal:replace="self/resource"/>
-<span tal:condition="python: not hasattr(self, 'resource')" class="math tex2jax_process mathquill-embedded-latex" tal:content="python:self.source" />
-<div tal:condition="self/ref" class="equation-number">(<span tal:content="self/ref">1.1.1</span>)</div>
-</div>
-
-
-#We must make sure to obey the blockType attribute for the p tag.  It's not clear to me
-#if we should also omit the anchors for blockType elements.  Leaving them in results in some places
-#with duplicate anchors.   BlockType elements should contain paragraphs and anchors
-#that are not from blocktype elements so omitting the anchors should work fine?
-name: par
-<a tal:attributes="name self/id" tal:condition="self/id" ></a>
-<p tal:attributes="id self/id" tal:content="self" tal:omit-tag="self/blockType"></p>
 
 name: Cube BlackCube
 <p tal:condition="python: hasattr(self, 'resource')" tal:replace="self/resource"/>
 <img align="bottom" tal:define="style self/style" tal:condition="python: not hasattr(self, 'resource') and not style" tal:attributes="src self/image/url; alt self/source; width self/image/width/px; height self/image/height/px" />
 <img align="bottom" tal:define="style self/style" tal:condition="python: not hasattr(self, 'resource') and style" tal:attributes="src self/image/url; alt self/source; style self/style/inline" />
-
-name: tabular tabular* tabularx
-<div tal:attributes="id self/id; class python: type(self).__name__" tal:content="self/resource"/>
-
-name: mathnumber mathname
-<span tal:attributes="class python: type(self).__name__" tal:content="self/attributes/text"/>
-
-#pageref's dont make sense in our rendering.  What to do with them?
-name: pageref
-<a tal:attributes="href self/idref/label/url" class="pageref" tal:content="self/getPageNameForRef">Page Reference</a>
