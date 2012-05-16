@@ -98,7 +98,7 @@ setup(
 		'transaction >= 1.2.0',
 		'webob',
 		'webtest',
-		'whoosh >= 2.4.0',
+		'whoosh == 2.3.2',
 		 # bcrypt/pbkdf2 for zope.password
 		 # adds cryptacular and pbkdf2
 		'z3c.bcrypt',
