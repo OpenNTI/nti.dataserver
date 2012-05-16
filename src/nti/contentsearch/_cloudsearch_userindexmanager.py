@@ -7,9 +7,6 @@ from zope import interface
 
 from nti.dataserver import interfaces as nti_interfaces
 
-from nti.contentsearch.exfm.cloudsearch import get_search_service
-from nti.contentsearch.exfm.cloudsearch import get_document_service
-
 from nti.contentsearch.interfaces import IUserIndexManagerFactory
 
 from nti.contentsearch import interfaces
@@ -27,7 +24,9 @@ from nti.contentsearch._cloudsearch_query import parse_query
 from nti.contentsearch._cloudsearch_index import get_cloud_oid
 from nti.contentsearch._cloudsearch_index import to_cloud_object
 from nti.contentsearch._cloudsearch_index import to_external_dict
+from nti.contentsearch._cloudsearch_store import get_search_service
 from nti.contentsearch._cloudsearch_index import search_stored_fields
+from nti.contentsearch._cloudsearch_store import get_document_service
 
 from nti.contentsearch.common import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT, LAST_MODIFIED, ITEMS,
 									  NTIID, HIT_COUNT)
