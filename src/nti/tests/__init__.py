@@ -132,7 +132,29 @@ class ConfiguringTestBase(AbstractTestBase):
 		resetHooks()
 		super(ConfiguringTestBase,self).tearDown()
 
+import nose.plugins
+class ZopeExceptionLogPatch(nose.plugins.Plugin):
+	name = 'zopeexceptionlogpatch'
+	score = 1000
+	enabled = True # Enabled by default
+	def configure(self, options, conf ):
+		# Force the logcapture plugin, enabled by default,
+		# to use the zope exception formatter.
+		import zope.exceptions.log
+		import logging
+		logging.Formatter = zope.exceptions.log.Formatter
 
+	# Also present failure cases formatted the same way
+	def formatError(self, test, exc_info):
+		t, v, tb = exc_info
+		from zope.exceptions.exceptionformatter import format_exception
+		# Despite what the docs say, you do not return the test.
+		# see logcapture and failuredetail.
+		# Omitting filenames makes things shorter
+		return (t, ''.join(format_exception(t, v, tb, with_filenames=False)), None)
+
+	def formatFailure(self, test, exc_info):
+		return self.formatError( test, exc_info)
 
 def main():
 	dirname = os.path.dirname( __file__ )

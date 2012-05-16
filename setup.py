@@ -23,6 +23,9 @@ entry_points = {
 	],
 	"paste.server_runner": [
 		"http = nti.appserver.standalone:server_runner"
+	],
+	"nose.plugins.0.10" : [
+		"zopeexceptionlogpatch = nti.tests:ZopeExceptionLogPatch"
 	]
 }
 
