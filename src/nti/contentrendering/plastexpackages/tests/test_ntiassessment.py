@@ -75,7 +75,7 @@ class TestRenderable(nti.tests.ConfiguringTestBase):
 			render.render( dom )
 			# TODO: Actual validation of the rendering
 			index = open(os.path.join(dom.config['files']['directory'],'index.html'), 'rU' ).read()
-			content = """<div><p><div class="naquestion">\n\t <span> Arbitrary content goes here. <div class="naquestionpart naqsymmathpart">\n\t <a name="a0000000002"/>\n\t <span> Arbitrary content goes here. <a class="helplink"><p>Some solution </p></a> </span>\n\t <input class="answerblank" ntitype="naqsymmath" />\n</div> </span>\n\t <a id="submit" onclick="NTISubmitAnswers(event,'input[type]')" href="#">Check</a>\n</div> </p></div>"""
+			content = """<div><p><div class="naquestion">\n\t <span> Arbitrary content goes here. <div class="naquestionpart naqsymmathpart">\n\t <a name="a0000000002"/>\n\t <span> Arbitrary content goes here. <div class="helpdiv hidden"><p>Some solution </p></div>\n<a class="helplink hidden">Solution</a> </span>\n\t <div class="rightwrongbox"></div>\n\t <input class="answerblank" ntitype="naqsymmath" />\n</div> </span>\n\t <a id="submit" class="NTIGreenButton NTISubmitAnswer">Check</a>\n\t <a id="tryagain" class="NTIGreenButton NTITryAgain hidden">Try Again...</a>\n</div> </p></div>"""
 
 			assert_that( index, contains_string( content ) )
 		finally:
