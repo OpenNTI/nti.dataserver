@@ -124,7 +124,7 @@ name: displaymath equation equation* eqnarray eqnarray* align align* gather gath
 #with duplicate anchors.   BlockType elements should contain paragraphs and anchors
 #that are not from blocktype elements so omitting the anchors should work fine?
 name: par
-<a tal:attributes="name self/id" ></a>
+<a tal:attributes="name self/id" tal:condition="self/id" ></a>
 <p tal:attributes="id self/id" tal:content="self" tal:omit-tag="self/blockType"></p>
 
 name: Cube BlackCube
@@ -140,5 +140,4 @@ name: mathnumber mathname
 
 #pageref's dont make sense in our rendering.  What to do with them?
 name: pageref
-<a tal:attributes="href self/idref/label/url" tal:content="python: self.getPageNameForRef()">Page Reference</a>
-
+<a tal:attributes="href self/idref/label/url" class="pageref" tal:content="self/getPageNameForRef">Page Reference</a>
