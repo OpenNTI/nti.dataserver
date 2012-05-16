@@ -55,7 +55,7 @@ setup(
 		# 'MySQL-python', # mysql adapter
 		# 'RelStorage',
 		'anyjson',
-		'boto >= 2.3.0', # amazon
+		'boto >= 2.4.1', # amazon
 		'brownie',
 		'coverage',
 		'cython',
