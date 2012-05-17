@@ -69,7 +69,8 @@ class CORSInjector(object):
 				if environ['REQUEST_METHOD'] == 'OPTIONS':
 					theHeaders['Access-Control-Allow-Methods'] = 'POST, GET, PUT, DELETE, OPTIONS'
 					theHeaders['Access-Control-Max-Age'] = "1728000" # 20 days
-					theHeaders['Access-Control-Allow-Headers'] = 'Slug, X-Requested-With, Authorization, If-Modified-Since, Content-Type, Origin, Accept, Cookie'
+					# TODO: Should we inspect the Access-Control-Request-Headers at all?
+					theHeaders['Access-Control-Allow-Headers'] = 'Pragma, Slug, X-Requested-With, Authorization, If-Modified-Since, Content-Type, Origin, Accept, Cookie, Accept-Encoding, Cache-Control'
 					theHeaders['Access-Control-Expose-Headers'] = 'Location, Warning'
 
 				return local_start_request( status, headers, exc_info )
