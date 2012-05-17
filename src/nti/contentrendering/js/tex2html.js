@@ -50,11 +50,9 @@ var onPageOpen = function(status){
 		phantom.exit();
 	}
 	else {
+		page.injectJs( "jquery-1.7.2.min.js" );
 		page.evaluate(processPage);
 	}
 };
 
 page.open(phantom.args[0], onPageOpen);
-
-
-

@@ -9,7 +9,8 @@ page.onConsoleMessage = function (msg, line, source) {
 };
 
 
-var getPageInfo = function(){
+var getPageInfo = function()
+{
 	var pageInfo = {};
 	//Grab some data about the scroll dimensions
 	pageInfo['scrollHeight'] = document.documentElement.scrollHeight;
@@ -30,7 +31,7 @@ var getPageInfo = function(){
 		if(outgoingLink && outgoingLink != '#'){
 			outgoingPages[outgoingLink]=true;
 		}
-							  
+
 	}
 
 	var opArray = [];
@@ -47,7 +48,8 @@ var onPageOpen = function(status){
 	if(status !== 'success'){
 		console.log('Unable to open page ' + status);
 	}
-	else{
+	else {
+		page.injectJs( "jquery-1.7.2.min.js" );
 		var pageinfo = page.evaluate(getPageInfo);
 
 		console.log(JSON.stringify(pageinfo));

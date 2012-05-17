@@ -26,7 +26,8 @@ var onPageOpen = function(status){
 	if(status !== 'success'){
 		console.log('Unable to open page');
 	}
-	else{
+	else {
+		page.injectJs( "jquery-1.7.2.min.js" );
 		var overflowedMath = page.evaluate(findOverflowedMath);
 
 		console.log(JSON.stringify(overflowedMath));
