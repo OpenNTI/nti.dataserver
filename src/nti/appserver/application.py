@@ -387,15 +387,23 @@ def createApplication( http_port,
 	for title in library.titles:
 		indexname = os.path.basename( title.localPath )
 		routename = 'search.book'
-		if indexmanager and indexmanager.add_book(indexname=indexname, indexdir=os.path.join( title.localPath, 'indexdir')):
-			pattern = '/' + indexname + '/Search/{term:.*}'
-			name = routename + '.' + indexname
-			pyramid_config.add_route( name=name, pattern=pattern, factory=_ContentSearchRootFactory )
-			pyramid_config.add_view( route_name=name,
-									 view='nti.contentsearch.pyramid_views.GetSearch',
-									 renderer='rest',
-									 permission=nauth.ACT_SEARCH )
-			logger.debug( 'Added route %s to %s', name, pattern )
+		try:
+			indexdir = os.path.join( title.localPath, 'indexdir' )
+			__traceback_info__ = indexdir
+			if indexmanager and indexmanager.add_book(indexname=indexname, indexdir=os.path.join( title.localPath, 'indexdir')):
+				pattern = '/' + indexname + '/Search/{term:.*}'
+				name = routename + '.' + indexname
+				pyramid_config.add_route( name=name, pattern=pattern, factory=_ContentSearchRootFactory )
+				pyramid_config.add_view( route_name=name,
+										 view='nti.contentsearch.pyramid_views.GetSearch',
+										 renderer='rest',
+										 permission=nauth.ACT_SEARCH )
+				logger.debug( 'Added route %s to %s', name, pattern )
+		except ImportError:
+			# Adding a book on disk loads the Whoosh indexes, which
+			# are implemented as pickles. Incompatible version changes
+			# lead to unloadable pickles. We've seen this manifest as ImportError
+			logger.exception( "Failed to add book search %s", title )
 
 	# TODO: ACLs on searching: only the user should be allowed.
 	class _UserSearchRootFactory(object):

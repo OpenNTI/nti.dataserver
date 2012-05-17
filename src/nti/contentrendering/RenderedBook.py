@@ -239,6 +239,12 @@ class _EclipseTOCMiniDomTopic(object):
 
 	save_dom = True
 
+	modifiedTopic = False
+	modifiedDom = False
+	_dom = None
+	ordinal = 1
+	_childTopics = None
+
 	def __init__( self, topic_dom_node,
 				  contentLocation,
 				  href=None,
@@ -264,15 +270,11 @@ class _EclipseTOCMiniDomTopic(object):
 		self.href = href or os.path.split(self.sourceFile)[-1]
 		self.filename = self.href
 
-		self.modifiedTopic = False
-		self.modifiedDom = False
-		self._dom = None
-		self.ordinal = 1
 
 		self._pageInfo = pageInfo if pageInfo is not None else {}
 
 		self._title = title
-		self._childTopics = None
+
 
 	# TODO: Clean up some of these names.
 
@@ -364,13 +366,17 @@ class _EclipseTOCMiniDomTopic(object):
 	def childTopics(self):
 		"""
 		:return: An iterable of :class:`_EclipseTOCMiniDomTopic` objects representing the topic element children
-			of this object.
+			of this object. Only those topics that have files are returned (if the topic is a reference
+			to a fragment, it is not returned).
 		"""
 		if self._childTopics is None:
 			self._childTopics = []
 			childCount = 1
 			for x in self.topic.childNodes:
-				if x.nodeType == x.ELEMENT_NODE and x.localName == 'topic':
+				# Exclude things with hrefs that look like fragments (but do include things that are missing hrefs altogether)
+				# both of these measures are for backwards compatibility
+				if x.nodeType == x.ELEMENT_NODE and x.localName == 'topic' \
+				  and (not x.attributes.has_key( 'href' ) or '#' not in x.attributes['href'].value):
 					result = self.__class__( x, self.contentLocation )
 					result.ordinal = childCount
 					childCount += 1
@@ -388,7 +394,8 @@ class _EclipseTOCMiniDomTopic(object):
 		# TODO: Under some circumstances we should be discarding this dom for memory reasons
 		if not self._dom:
 			if not self.sourceFile or not os.path.exists( self.sourceFile ):
-				logger.warn( "Unable to get dom for missing file %s in %s", self.sourceFile, self )
+				# Careful with logging here: __repr__ calls this method!
+				logger.warn( "Unable to get dom for missing file %s in %s", self.sourceFile, self.__dict__ )
 				return None
 			# By using the HTML5 parser, we can get more consistent results,
 			# regardless of how the templates were setup. And when we write, we'll
