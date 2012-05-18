@@ -26,6 +26,30 @@
 #NTIContent .answerblank {
 }
 
+#NTIContent .answerblank-right {
+    border-radius: 3px;
+    border: 1px #a4ce50 solid;
+    background: #a4ce50;
+    color: white;
+    padding: 6px 10px;
+    margin-right: 35px;
+}
+
+#NTIContent .answerblank-wrong {
+    border-radius: 3px;
+    border: 1px #f35252 solid;
+    background: #f35252;
+    color: white;
+    padding: 6px 10px;
+    margin-right: 35px;
+}
+
+#NTIContent .answer-text {
+    font-style: italic;
+    font-size: 14px;
+    font-weight: 600;
+}
+
 #NTIContent input {
 	display: inline-block;
 }
@@ -205,9 +229,13 @@
 
 #NTIContent .x-btn-answerblock-wrong {
     background: #ffffff;
-    color: red;
+    color: #f35252;
     font-weight: normal;
     font-style: italic;
+}
+
+#NTIContent .x-btn-inner {
+    font-family: 'Open Sans';
 }
 
 #NTIContent .x-btn-inner-right {
@@ -215,28 +243,40 @@
 }
 
 #NTIContent .x-btn-inner-wrong {
-    color: red;
+    color: #f35252;
 }
+
+#NTIContent .x-btn-submit {
+    position: relative;
+    left: -10px;
+    color: white;
+    font-weight: 600;
+    text-shadow: 0 -1px 0 #688B23;
+}
+
 #NTIContent .quiz-input{
     position: relative;
-    border-radius: 4px;
+    border-radius: 3px;
     border: 1px #A8A8A8 solid;
+    color: #A8A8A8;
     padding: 8px;
     left: -29px;
 }
 
 #NTIContent .quiz-input-right{
     position: relative;
-    border-radius: 4px;
+    border-radius: 3px;
     border: 2px #a4ce50 solid;
+    color: #a4ce50;
     padding: 7px;
     left: -29px;
 }
 
 #NTIContent .quiz-input-wrong{
     position: relative;
-    border-radius: 4px;
-    border: 2px red solid;
+    border-radius: 3px;
+    border: 2px #f35252 solid;
+    color: #f35252;
     padding: 7px;
     left: -29px;
 }
@@ -251,12 +291,29 @@
     left: -29px;
 }
 
+#NTIContent .rightwrongbox-inverse {
+    margin-right: 4px;
+    position: relative;
+    width: 19px;
+    height: 18px;
+    display: inline-block;
+    top: 3px;
+}
+
 #NTIContent .rightbox {
     background: url('../images/quiz/right_green.png');
 }
 
 #NTIContent .wrongbox {
     background: url('../images/quiz/wrong_red.png');
+}
+
+#NTIContent .rightbox-inverted {
+    background: url('../images/quiz/right_white.png');
+}
+
+#NTIContent .wrongbox-inverted {
+    background: url('../images/quiz/wrong_white.png');
 }
 
 #NTIContent span.bubble {
@@ -301,8 +358,8 @@
 
 #NTIContent .page-contents a.why {
     text-decoration: none;
-    font-weight: bold !important;
-    font-size: 11px !important; 
+    font-weight: 600 !important;
+    font-size: 13px !important; 
     color: #f35252;
     position: relative;
     overflow: visible;
@@ -313,4 +370,11 @@
 
 #NTIContent a.bubble span.bubble {
     display: inline-block;
+}
+
+#NTIContent .grey-hoz-bar {
+    height: 2px;
+    background: a8a8a8;
+    margin-top: 20px;
+    margin-bottom: 40px;
 }
