@@ -1,13 +1,52 @@
+# Move the answer portion of the mathcountsproblem template to here.  This
+# allows the new quiz design to render with out any changes to the source
+# files.  The problem is that the problem graphics were at the
+# mathcountsquestion level instead of the mathcounts problem level.  As, a
+# result the image was being rendered after the answer block.
+#
+# This could cause issues if we have to deal with a mathcountsquestion that
+# contains multiple mathcountsproblem sections.  With current MathCounts
+# handbook numbering scheme this is not an issue.
+
+name: mathcountsquestion
+<li tal:attributes="value self/attributes/questionnum">
+  <div class="question">
+    <div class="problems" tal:content="self" /> 
+    <div class="answerblock">
+      <span>
+        <span class="rightwrongbox"></span>
+	<input class="answerblank" type="number" tal:attributes="id self/attributes/probnum" />
+        <span tal:condition="self/individual" class="x-btn x-btn-answerblock x-btn-secondary-medium x-btn-secondary-medium-noicon x-btn-noicon">
+          <em>
+            <button type="button" class="x-btn-center" hidefocus="true" role="button" autocomplete="off">
+              <span class="x-btn-inner">Check</span>
+            </button>
+          </em>
+        </span>
+      </span>
+      <span class="answerblank hidden">
+	<span class="rightwrongbox-inverse"></span>
+	<span class="answer-text">"Your answer" is...</span>
+      </span>
+      <a class="why hidden" href="#">
+        Why?
+        <span class="bubble">
+          <span class="bubble-title">Solution</span>
+          <span class="bubble-text">This is the solution</span>
+        </span>
+      </a>
+    </div>
+    <div class="result hidden" tal:content="python: [c for c in self.parentNode.childNodes if c.__class__.__name__ == 'mathcountsresult'][0] if any([c for c in self.parentNode.childNodes if c.__class__.__name__ == 'mathcountsresult']) else ''">
+    </div>
+  </div>
+</li>
+
+
 name: mathcountsproblem
-<li tal:attributes="value self/attributes/probnum">
 <div class="problem">
-	 <input class="answerblank" type="number" tal:attributes="id self/attributes/probnum" />
-	 <a tal:attributes="name self/id"/>
+	 <a tal:attributes="name self/id"></a>
 	 <span tal:content="self"/>
 </div>
-<div class="result hidden" tal:content="python: [c for c in self.parentNode.childNodes if c.__class__.__name__ == 'mathcountsresult'][0] if any([c for c in self.parentNode.childNodes if c.__class__.__name__ == 'mathcountsresult']) else ''">
-</div>
-</li>
 
 # We currently must put a hidden result div in the body next to the problem,
 # because existing code to show grades depends on this. (Ultimately this should change.)
@@ -39,7 +78,8 @@ name: mathcountsworksheet
 <form>
 <ol class="worksheet-problems itemize" tal:content="self">
 </ol>
-<a id="submit" onclick="NTISubmitAnswers(event,'input[type]')" href="#" >Submit</a>
+<div class="grey-hoz-bar"></div>
+<a id="submit" class="x-btn x-btn-submit x-btn-primary-medium x-btn-primary-medium-noicon x-btn-noicon" onclick="NTISubmitAnswers(event,'input[type]')" href="#" >Submit</a>
 </form>
 
 name: par
