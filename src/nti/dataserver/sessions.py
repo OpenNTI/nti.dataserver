@@ -394,6 +394,17 @@ class SessionService(object):
 			if s: result.append( s )
 		return result
 
+	def delete_sessions( self, session_owner ):
+		"""
+		Delete all sessions for the given owner (active and alive included)
+		"""
+		sids = self._session_index.get(session_owner) or ()
+		result = []
+		for s in list(sids): # copy because we mutate -> delete_session
+			self.delete_session(s)
+			result.append(s)
+		return result
+	
 	def delete_session( self, session_id ):
 		try:
 			sess = self._session_map[session_id]
