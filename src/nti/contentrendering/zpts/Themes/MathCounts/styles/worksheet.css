@@ -23,10 +23,14 @@
 	display: none;
 }
 
+#NTIContent div.result {
+    padding-left: 0px;
+}
+
 #NTIContent .answerblank {
 }
 
-#NTIContent .answerblank-right {
+#NTIContent span.result.correct {
     border-radius: 3px;
     border: 1px #a4ce50 solid;
     background: #a4ce50;
@@ -35,7 +39,7 @@
     margin-right: 35px;
 }
 
-#NTIContent .answerblank-wrong {
+#NTIContent span.result.incorrect {
     border-radius: 3px;
     border: 1px #f35252 solid;
     background: #f35252;
@@ -219,9 +223,13 @@
     margin-bottom: 20px;
 }
 
-#NTIContent .x-btn-answerblock {
+#NTIContent .individual-grade {
     position: relative;
     left: -29px;
+}
+
+#NTIContent .x-btn-answerblock {
+    position: relative;
 }
 
 #NTIContent .x-btn-answerblock-right {
@@ -264,7 +272,6 @@
     border: 1px #A8A8A8 solid;
     color: #A8A8A8;
     padding: 8px;
-    left: -29px;
 }
 
 #NTIContent .quiz-input-right{
@@ -273,7 +280,6 @@
     border: 2px #a4ce50 solid;
     color: #a4ce50;
     padding: 7px;
-    left: -29px;
 }
 
 #NTIContent .quiz-input-wrong{
@@ -282,26 +288,29 @@
     border: 2px #f35252 solid;
     color: #f35252;
     padding: 7px;
-    left: -29px;
+}
+
+#NTIContent span.result img {
+    position: relative;
+    top: 4px;
 }
 
 #NTIContent .rightwrongbox {
     float: left;
-    margin-top: 8px;
+    margin-top: 4px;
     margin-right: 10px;
     position: relative;
     width: 19px;
     height: 18px;
-    left: -29px;
 }
 
 #NTIContent .rightwrongbox-inverse {
-    margin-right: 4px;
-    position: relative;
-    width: 19px;
-    height: 18px;
-    display: inline-block;
-    top: 3px;
+   margin-right: 4px;
+   position: relative;
+   padding-right: 19px;
+   height: 18px;
+   display: inline-block;
+   top: 4px;
 }
 
 #NTIContent .rightbox {
