@@ -581,6 +581,15 @@ class User(Principal):
 
 		return user
 
+	@classmethod
+	def delete_user( cls, username, dataserver=None, **kwargs ):
+		""" Remove a user from the dataserver a new user.
+		You handle the transaction.
+		"""
+		dataserver = dataserver or _get_shared_dataserver()
+		user = dataserver.root['users'].pop(username, None)
+		return True if user else False
+	
 	# External incoming ignoring and accepting can arrive in three ways.
 	# As a list, which replaces the entire contents.
 	# As a single string, which is added to the list.
