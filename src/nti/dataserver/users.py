@@ -587,8 +587,11 @@ class User(Principal):
 		You handle the transaction.
 		"""
 		dataserver = dataserver or _get_shared_dataserver()
-		user = dataserver.root['users'].pop(username, None)
-		return True if user else False
+		try:
+			del dataserver.root['users'][username]
+			return True
+		except KeyError:
+			return False
 	
 	# External incoming ignoring and accepting can arrive in three ways.
 	# As a list, which replaces the entire contents.
