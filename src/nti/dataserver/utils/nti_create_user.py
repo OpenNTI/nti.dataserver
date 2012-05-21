@@ -1,12 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function, unicode_literals
 
-
 import sys
-
-
-from zope import component
-
 
 from nti.dataserver import users
 from . import run_with_dataserver
