@@ -207,7 +207,11 @@
 
 #NTIContent div.figure {
     margin-top: 10px;
-    text-align: left;
+    text-align: left !important;
+}
+
+#NTIContent div.align-center {
+    text-align: left !important;
 }
 
 #NTIContent div.answerblock {
