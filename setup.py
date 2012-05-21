@@ -13,7 +13,7 @@ entry_points = {
 		"nti_sharing_listener = nti.appserver.application:sharing_listener_main",
 		"nti_index_listener = nti.appserver.application:index_listener_main",
 		"nti_reindex_user_content = nti.contentsearch.utils.nti_reindex_user_content:main",
-		"nti_reindex_user_content = nti.contentsearch.utils.nti_reindex_user_content:main"
+		"nti_remove_user_content = nti.contentsearch.utils.nti_remove_user_content:main"
 	],
 	"paste.app_factory": [
 		"main = nti.appserver.standalone:configure_app",
