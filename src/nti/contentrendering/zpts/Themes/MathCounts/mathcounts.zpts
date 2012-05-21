@@ -13,30 +13,9 @@ name: mathcountsquestion
   <div class="question">
     <div class="problems" tal:content="self" /> 
     <div class="answerblock">
-      <span>
-        <span class="rightwrongbox"></span>
-	<input class="answerblank" type="number" tal:attributes="id self/attributes/probnum" />
-        <span tal:condition="self/individual" class="x-btn x-btn-answerblock x-btn-secondary-medium x-btn-secondary-medium-noicon x-btn-noicon">
-          <em>
-            <button type="button" class="x-btn-center" hidefocus="true" role="button" autocomplete="off">
-              <span class="x-btn-inner">Check</span>
-            </button>
-          </em>
-        </span>
-      </span>
-      <span class="answerblank hidden">
-	<span class="rightwrongbox-inverse"></span>
-	<span class="answer-text">"Your answer" is...</span>
-      </span>
-      <a class="why hidden" href="#">
-        Why?
-        <span class="bubble">
-          <span class="bubble-title">Solution</span>
-          <span class="bubble-text">This is the solution</span>
-        </span>
-      </a>
+	<input class="answerblank" type="number" tal:attributes="id self/attributes/questionnum" />
     </div>
-    <div class="result hidden" tal:content="python: [c for c in self.parentNode.childNodes if c.__class__.__name__ == 'mathcountsresult'][0] if any([c for c in self.parentNode.childNodes if c.__class__.__name__ == 'mathcountsresult']) else ''">
+    <div class="result hidden">
     </div>
   </div>
 </li>
