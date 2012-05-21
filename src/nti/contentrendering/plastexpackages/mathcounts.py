@@ -35,7 +35,12 @@ class mathcountsproblem(Base.Environment):
 		return res
 
 class mathcountsquestion(Base.Environment):
-	pass
+	counter = 'questionnum'
+	def invoke(self, tex):
+		res = super(mathcountsquestion, self).invoke(tex)
+		self.attributes['questionnum'] = self.ownerDocument.context.counters['questionnum'].value
+		self.paragraphs()
+		return res
 
 class mathcountsresult(Base.Environment):
 	pass
