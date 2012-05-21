@@ -21,11 +21,11 @@ def main():
 def _remove_user( username ):
 	user = users.User.get_user( username )
 	if not user:
-		print( "User '%s' does not exists", username, file=sys.stderr )
+		print( "User '%s' does not exists" % username, file=sys.stderr )
 		sys.exit( 2 )
 
 	remove_user_content( username=username )
 	#TODO: remove sessions
 	users.User.delete_user( username=username )
 	
-	print( "User '%s' has been removed", username, file=sys.stderr )
+	print( "User '%s' has been removed" % username, file=sys.stderr )
