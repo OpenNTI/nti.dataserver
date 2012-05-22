@@ -22,7 +22,7 @@ import urllib
 from nti.ntiids import ntiids
 from nti.zodb import minmax
 
-from nti.externalization.persistence import PersistentExternalizableList, getPersistentState
+from nti.externalization.persistence import PersistentExternalizableList, getPersistentState, setPersistentStateChanged
 from nti.externalization.datastructures import ExternalizableDictionaryMixin
 
 from nti.dataserver import datastructures
@@ -533,9 +533,9 @@ nti_interfaces.IDevice.setTaggedValue( nti_interfaces.IHTC_NEW_FACTORY,
 
 
 class _TranscriptsMap(datastructures.AbstractNamedContainerMap):
- 	interface.implements(nti_interfaces.ITranscriptContainer)
- 	contained_type = nti_interfaces.ITranscript
- 	container_name = 'Transcripts'
+	interface.implements(nti_interfaces.ITranscriptContainer)
+	contained_type = nti_interfaces.ITranscript
+	container_name = 'Transcripts'
 
 
 class User(Principal):
@@ -971,7 +971,7 @@ class User(Principal):
 	def didUpdateObject( self, *objs ):
 		if getattr(self, '_v_updateDepth', 0) > 0:
 			for obj in objs:
-				datastructures.setPersistentStateChanged( obj )
+				setPersistentStateChanged( obj )
 				self._trackObjectUpdates( obj )
 
 	def endUpdates(self):
