@@ -24,7 +24,7 @@ from nti.contentsearch.common import (	OID, NTIID, CREATOR, LAST_MODIFIED, CONTA
 
 from nti.contentsearch.common import (	ngrams_, channel_, content_, keywords_, references_, title_, 
 										last_modified_, section_, ntiid_, recipients_, sharedWith_, body_, 
-										related_, startHighlightedFullText_)
+										related_, startHighlightedFullText_, note_, highlight_, messageinfo_)
 
 
 import logging
@@ -190,13 +190,13 @@ def create_book_catalog():
 	catalog[section_] = CatalogFieldIndex(get_section)
 	return catalog
 
-def create_catalog(type_name='Notes'):
+def create_catalog(type_name=note_):
 	type_name = normalize_type_name(type_name)
-	if type_name == 'note':
+	if type_name == note_:
 		return create_notes_catalog()
-	elif type_name == 'highlight':
+	elif type_name == highlight_:
 		return create_highlight_catalog()
-	elif type_name =='messageinfo':
+	elif type_name == messageinfo_:
 		return create_messageinfo_catalog()
 	else:
 		return None

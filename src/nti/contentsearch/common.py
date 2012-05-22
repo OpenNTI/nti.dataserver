@@ -101,6 +101,8 @@ nti_mimetype_prefix = 'application/vnd.nextthought.'
 note_ = u'note'
 highlight_ = u'highlight'
 messageinfo = u'messageinfo'
+messageinfo_ = messageinfo
+
 indexable_type_names = (note_, highlight_, messageinfo)
 
 WORD_HIGHLIGHT  = "WordHighlight"
