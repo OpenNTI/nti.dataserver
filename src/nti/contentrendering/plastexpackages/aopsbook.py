@@ -341,6 +341,13 @@ class exer(Base.subsubsection):
 	args = ''
 	counter='exnumber'
 
+	def invoke( self, tex ):
+		res = super(exer,self).invoke( tex )
+
+		self.attributes['exnumber'] = str(self.ownerDocument.context.counters['chapter'].value) + '.' + str(self.ownerDocument.context.counters['section'].value) + '.' + str(self.ownerDocument.context.counters['exnumber'].value)
+
+		return res
+
 	def postParse(self, tex):
 		super(exer, self).postParse(tex)
 
@@ -848,7 +855,7 @@ class index(Index.index):
 
 def ProcessOptions( options, document ):
 
-	document.context.newcounter( 'exnumber' , resetby='chapter')
+	document.context.newcounter( 'exnumber' , resetby='section')
 
 	document.context.newcounter( 'partnum' )
 

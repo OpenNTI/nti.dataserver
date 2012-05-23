@@ -83,7 +83,7 @@ name: fig
 name: exercises
 <div class="exercises" tal:attributes="id self/id"><span class="headingtext">Exercises</span></div>
 <ol class="exercises itemize">
-	<li tal:repeat="item self" tal:content="item"></li>
+	<li tal:repeat="item self" tal:attributes="id self/id; exnumber item/attributes/exnumber" tal:content="item"></li>
 </ol>
 <div class="end exercises">End exercises</div>
 
