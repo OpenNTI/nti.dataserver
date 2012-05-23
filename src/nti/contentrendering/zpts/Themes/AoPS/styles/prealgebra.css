@@ -593,6 +593,7 @@ html {
 #NTIContent .mathnumber {
     font-family: STIXGeneral;
     font-style: italic;
+    padding-right: 3px;
 }
 
 #NTIContent .boxed {
