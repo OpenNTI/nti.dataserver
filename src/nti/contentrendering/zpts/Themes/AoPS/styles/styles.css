@@ -476,5 +476,20 @@
 	margin-bottom: 6pt;
 }
 
+#NTIContent ol.exercises {
+    margin-left: 0px;
+    padding-left: 0px;
+}
+
+#NTIContent ol.exercises li {
+    list-style: none;
+}
+
+#NTIContent ol.exercises li:before {
+    content: attr(exnumber) ".";
+    position: relative;
+    float: left;
+    padding-right: 9px;
+}
 
 
