@@ -63,6 +63,20 @@ class picskip(Base.Command):
 	def digest( self, tokens ):
 		return super(picskip,self).digest( tokens )
 
+# Parses the \multicols environment and produces no output.  The childred of
+# this environment print as if they were not inside the multicols environment.
+class multicols(Base.Environment):
+	args = ' {text:int} '
+
+	def invoke( self, tex ):
+		# There's a {0} or so with this that we need to discard too
+		# TODO: This may not be the best way
+		tex.readGrouping( '{}' )
+		return []
+
+	def digest( self, tokens ):
+		return super(multicols,self).digest( tokens )
+
 ## class newline(Base.Command):
 ##	macroName = '\\'
 
