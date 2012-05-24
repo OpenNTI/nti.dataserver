@@ -66,10 +66,8 @@ class PersistentRepozeDataStore(Persistent):
 	def remove_catalog(self, username, type_name):
 		catalog_map = self.users.get(username, None)
 		if catalog_map:
-			catalog_map.pop(type_name, None)
-			if not catalog_map:
-				self.docmaps.pop(username, None)
-			return True
+			c = catalog_map.pop(type_name, None)
+			return True if c else False
 		return False
 
 	def get_catalog_names(self, username):

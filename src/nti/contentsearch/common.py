@@ -21,6 +21,7 @@ from nti.externalization import interfaces as ext_interfaces
 from nti.chatserver.messageinfo import MessageInfo
 
 from nti.dataserver.users import Entity
+from nti.dataserver.mimetype import MIME_BASE
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.contenttypes import Canvas
 from nti.dataserver.contenttypes import Highlight
@@ -43,7 +44,7 @@ OID 			= unicode(ext_interfaces.StandardExternalFields.OID)
 TYPE 			= u'Type'
 BODY			= u'Body'
 NTIID 			= unicode(ext_interfaces.StandardExternalFields.NTIID)
-CLASS 			= u'Class'
+CLASS 			= unicode(ext_interfaces.StandardExternalFields.CLASS)
 QUERY 			= u'Query'
 ITEMS			= u'Items'
 CONTENT			= u'Content'
@@ -96,7 +97,7 @@ container_id_fields = [CONTAINER_ID, 'ContainerID', containerId_, 'container']
 last_modified_fields =  [LAST_MODIFIED, ext_interfaces.StandardInternalFields.LAST_MODIFIED,
 						 ext_interfaces.StandardInternalFields.LAST_MODIFIEDU, '_lastModified', last_modified_]
 
-nti_mimetype_prefix = 'application/vnd.nextthought.'
+nti_mimetype_prefix = MIME_BASE + '.'
 
 note_ = u'note'
 highlight_ = u'highlight'
