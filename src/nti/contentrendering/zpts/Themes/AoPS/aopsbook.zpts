@@ -55,6 +55,7 @@ name: sectionproblems
 	</li>
 </ol>
 <div class="end section-problems">End section problems</div>
+<div class="black-hoz-bar">&nbsp</div>
 
 name: hintitem
 <span class="hint"><a href="#" onclick="return togglehint(event)">Hint: </a><span class="hint content hidden" tal:content="self" /></span>
@@ -83,7 +84,7 @@ name: fig
 name: exercises
 <div class="exercises" tal:attributes="id self/id"><span class="headingtext">Exercises</span></div>
 <ol class="exercises itemize">
-	<li tal:repeat="item self" tal:attributes="id self/id; exnumber item/attributes/exnumber" tal:content="item"></li>
+	<li class="exercise" tal:repeat="item self" tal:attributes="id self/id; exnumber item/attributes/exnumber" tal:content="item"></li>
 </ol>
 <div class="end exercises">End exercises</div>
 
