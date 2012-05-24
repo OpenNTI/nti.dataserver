@@ -537,12 +537,33 @@ html {
 	position: relative;
 }
 
-#NTIContent ol.parts > ul {
-	list-style-type: circle;
+#NTIContent ol.exercises {
+    margin-left: 0px;
+    padding-left: 0px;
 }
 
-#NTIContent ol.parts > li {
+#NTIContent ol.exercises > li.exercise {
+    list-style: none;
+    text-indent: -50px;
+    margin-left: 50px;
+}
+
+#NTIContent ol.exercises > li.exercise:before {
+    content: attr(exnumber) ".";
+    position: relative;
+    float: left;
+    padding-right: 50px;
+    
+}
+
+#NTIContent ol.parts > ul.part {
+	list-style-type: circle;
+	text-indent: 0px;
+}
+
+#NTIContent ol.parts > li.part {
 	list-style-type: lower-alpha;
+	text-indent: 0px;
 }
 
 /*#NTIContent ol.parts > li.parthard:before {
@@ -631,4 +652,11 @@ html {
 #NTIContent .chapter.title span.label {
 	/* Keep the title from smashing up against the number. */
 	padding-left: 1em;
+}
+
+#NTIContent .black-hoz-bar {
+    height: 2px;
+    background: black;
+    margin-top: 20px;
+    margin-bottom: 20px;
 }
