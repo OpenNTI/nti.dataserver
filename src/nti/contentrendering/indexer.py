@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 # -----------------------------
 
+name_anchor_pattern = re.compile(".+[#a\d+]$")
 ref_pattern = re.compile("<span class=\"ref\">(.*)</span>")
 last_m_pattern = re.compile("<meta content=\"(.*)\" http-equiv=\"last-modified\"")
 page_c_pattern = re.compile("<div class=\"page-contents\">(.*)</body>")
@@ -261,7 +262,9 @@ def _index_node(writer, node, contentPath, optimize=False):
 
 	attributes = node.attributes
 	fileName = str(attributes['href'].value)
-
+	if name_anchor_pattern.match(fileName): # file name ends with an anchor id
+		return
+	
 	content_file = os.path.join(contentPath, str(fileName))
 	if not os.path.exists(content_file):
 		logger.error("content file '%s' does not exists", content_file)
