@@ -97,3 +97,8 @@ name: Cube BlackCube
 <p tal:condition="python: hasattr(self, 'resource')" tal:replace="self/resource"/>
 <img align="bottom" tal:define="style self/style" tal:condition="python: not hasattr(self, 'resource') and not style" tal:attributes="src self/image/url; alt self/source; width self/image/width/px; height self/image/height/px" />
 <img align="bottom" tal:define="style self/style" tal:condition="python: not hasattr(self, 'resource') and style" tal:attributes="src self/image/url; alt self/source; style self/style/inline" />
+
+# Added to prevent extrainious paragraphs from causing display issues.
+name: par
+<a tal:attributes="name self/id" tal:omit-tag=""/>
+<p tal:content="self" tal:omit-tag=""></p>
