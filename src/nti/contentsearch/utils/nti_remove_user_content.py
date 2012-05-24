@@ -39,7 +39,7 @@ def main():
 						 xmlconfig_packages=(nti.contentsearch,),
 						 function=lambda: remove_user_content(username) )
 			
-def remove_user_content( username, indexable_types=indexable_type_names):
+def remove_user_content( username, indexable_types=None):
 	user = users.User.get_user( username )
 	if not user:
 		print( "user '%s' does not exists" % username, file=sys.stderr )
@@ -52,7 +52,8 @@ def remove_user_content( username, indexable_types=indexable_type_names):
 	rds = search_conn.root()['repoze_datastore']
 	lsm.registerUtility( rds, provided=IRepozeDataStore )
 
-	print('Removing search content object(s) for user', username)
+	indexable_types = indexable_type_names if not indexable_types else indexable_types
+	print("Removing search content '%s' object(s) for user '%s'" % (indexable_types, username))
 
 	if indexable_types == indexable_type_names:
 		rds.remove_user(username)
