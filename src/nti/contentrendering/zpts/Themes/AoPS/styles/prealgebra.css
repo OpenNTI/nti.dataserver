@@ -335,10 +335,10 @@ html {
 		/* width: 75%; */
 		text-align: left;
 		/* margin: 1em 7em 1em 1em; */
-		padding: 2em 0.5em 0.5em 3em;
+		padding: 2em 0.5em 0.5em 4em !important;
 		position: relative;
 		margin-bottom: 30px;
-		background: #E7E7E8 url(../styles/sidebar-important.png) no-repeat 10px 5px;
+		background: #E7E7E8 url(../styles/sidebar-important.png) no-repeat 10px 5px !important; 
 }
 
 #NTIContent div.picdefns:after,
@@ -361,7 +361,8 @@ html {
 	padding-left: 3em;
 	height: 2em;
 	width: 100%;
-	font-weight: bold;
+	font-weight: normal;
+	font-size: 18px;
 	margin-left: 1em;
 }
 
@@ -382,38 +383,42 @@ html {
 }
 
 #NTIContent div.problem {
-	background-image: none;
+	background-image: none !important;
+	padding-top: 2em !important;
+	padding-right: 0.5em !important;
+	padding-bottom: 0.5em !important;
+	padding-left: 1.3em !important;
 }
 
 #NTIContent .xtra {
-	background-image: url(sidebar-xtra.png);
+	background-image: url(sidebar-xtra.png) !important;
 }
 
 #NTIContent .warning {
-	background-image: url(sidebar-warning.png);
+	background-image: url(sidebar-warning.png) !important;
 }
 
 #NTIContent .concept {
-	background-image: url(sidebar-key-concept.png);
+	background-image: url(sidebar-key-concept.png) !important;
 }
 
 #NTIContent .sidebar {
-	background-image: url(sidebar-side-note.png);
+	background-image: url(sidebar-side-note.png) !important;
 }
 
 #NTIContent div.importantdef,
 #NTIContent div.picdefns,
 #NTIContent div.defn,
 #NTIContent div.defns {
-	background-image: url(sidebar-definitions.png);
+	background-image: url(sidebar-definitions.png) !important;
 }
 
 #NTIContent .bogus {
-	background-image: url(sidebar-bogus-solutions.png);
+	background-image: url(sidebar-bogus-solutions.png) !important;
 }
 
 #NTIContent .game {
-		background-image: url(sidebar-game.png);
+		background-image: url(sidebar-game.png) !important;
 }
 
 #NTIContent .xtra:after {
@@ -473,6 +478,7 @@ html {
 #NTIContent div.section-problems:before,
 #NTIContent div.review-problems:before,
 #NTIContent div.challenge-problems:before,
+#NTIContent div.section-problems-separator:before,
 #NTIContent div.end.section-problems:before {
 	content: ".";
 	padding-left: 308px;
@@ -481,38 +487,60 @@ html {
 }
 
 #NTIContent div.exercises:before {
-	background: url(yellow-pencil.png) no-repeat;
+	background: url(yellow-pencil.png) no-repeat !important;
 }
 
 #NTIContent div.section-problems:before {
-	background: url(yellow-pencil.png) no-repeat;
+	background: url(yellow-pencil.png) no-repeat !important;
+}
+
+#NTIContent div.section-problems-separator:before {
+	background: url(yellow-pencil.png) no-repeat !important;
 }
 
 #NTIContent div.review-problems:before {
-	background: url(green-pencil.png) no-repeat;
+	background: url(green-pencil.png) no-repeat !important;
 }
 
 #NTIContent div.challenge-problems:before {
-	background: url(red-pencil.png) no-repeat;
+	background: url(red-pencil.png) no-repeat !important;
 }
 
 #NTIContent div.end.section-problems:before {
-	background: url(yellow-pencil.png) no-repeat;
+	background: url(yellow-pencil.png) no-repeat !important;
 }
 
 #NTIContent div.exercises > span.headingtext {
-	position: absolute;
+	position: absolute !important;
 	top: 21px;
 	left: 35px;
+	font-size: 18px;
+	font-weight: normal;
 }
 
 
 #NTIContent div.challenge-problems > span.headingtext,
 #NTIContent div.section-problems > span.headingtext,
 #NTIContent div.review-problems > span.headingtext {
-	position: absolute;
+	position: absolute !important;
 	top: 1px;
 	left: 35px;
+	font-size: 18px;
+	font-weight: normal;
+}
+
+#NTIContent div.section-problems-separator {
+    position: relative;
+    margin-top: 60px;
+    margin-bottom: 5px;
+}
+
+#NTIContent div.section-problems-separator > span.headingtext {
+	position: absolute !important;
+	top: 1px;
+	left: 35px;
+	font-size: 18px;
+	font-weight: normal;
 }
 
 /**#NTIContent div.section-problems > span.headingtext,*/
@@ -535,6 +563,7 @@ html {
 	line-height: 30px;
 	font-weight: bold;
 	position: relative;
+	margin-bottom: 5px;
 }
 
 #NTIContent ol.exercises {

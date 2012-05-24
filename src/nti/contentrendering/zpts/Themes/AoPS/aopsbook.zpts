@@ -55,7 +55,9 @@ name: sectionproblems
 	</li>
 </ol>
 <div class="end section-problems">End section problems</div>
-<div class="black-hoz-bar">&nbsp</div>
+<div class="section-problems-separator">
+        <span class="headingtext">Analysis</span>
+</div>
 
 name: hintitem
 <span class="hint"><a href="#" onclick="return togglehint(event)">Hint: </a><span class="hint content hidden" tal:content="self" /></span>
