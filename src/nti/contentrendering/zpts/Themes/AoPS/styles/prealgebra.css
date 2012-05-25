@@ -339,6 +339,7 @@ html {
 		position: relative;
 		margin-bottom: 30px;
 		background: #E7E7E8 url(../styles/sidebar-important.png) no-repeat 10px 5px !important; 
+		overflow: hidden;
 }
 
 #NTIContent div.picdefns:after,
@@ -670,9 +671,11 @@ html {
 /* He wants things on the left, regardless of what the text
  * says or what the result is.
  */
+/* Changed due to AoPS request.
+ */
 #NTIContent .rightpic{
-	float: left;
-	clear: left;
+	float: right;
+	clear: right;
 }
 #NTIContent .leftpic{
 	float: left;
