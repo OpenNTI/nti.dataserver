@@ -567,6 +567,11 @@ html {
 	margin-bottom: 5px;
 }
 
+#NTIContent div.exercise {
+    overflow: hidden;
+    position: relative;
+}
+
 #NTIContent ol.exercises {
     margin-left: 0px;
     padding-left: 0px;
@@ -574,16 +579,18 @@ html {
 
 #NTIContent ol.exercises > li.exercise {
     list-style: none;
-    text-indent: -50px;
-    margin-left: 50px;
 }
 
 #NTIContent ol.exercises > li.exercise:before {
     content: attr(exnumber) ".";
     position: relative;
     float: left;
-    padding-right: 50px;
-    
+    padding-right: 10px;
+}
+
+#NTIContent ol.parts {
+    margin-left: 0px;
+    float: left;
 }
 
 #NTIContent ol.parts > ul.part {
@@ -596,9 +603,14 @@ html {
 	text-indent: 0px;
 }
 
-/*#NTIContent ol.parts > li.parthard:before {
-	content: '*'
-}*/
+#NTIContent ol.parts > li.parthard {
+	list-style-type: lower-alpha;
+	text-indent: 0px;
+}
+
+#NTIContent ol.parts > li.parthard:before {
+	content: '*';
+}
 
 #NTIContent .solution {
 	font-style: italic;
@@ -660,6 +672,7 @@ html {
 #NTIContent .tabular,
 #NTIContent .equation {
 	text-align: center;
+	overflow: hidden;
 }
 
 /* Per Eric 2011-10-03 */
@@ -676,6 +689,9 @@ html {
 #NTIContent .rightpic{
 	float: right;
 	clear: right;
+	text-indent: 0px;
+	overflow: hidden;
+	margin-top: 0px;
 }
 #NTIContent .leftpic{
 	float: left;
