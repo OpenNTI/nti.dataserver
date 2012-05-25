@@ -96,7 +96,8 @@ class _MeetingTranscriptStorage(Persistent,datastructures.ContainedMixin,datastr
 
 	@property
 	def meeting(self):
-		return self._meeting_ref()
+		call = getattr(self, '_meeting_ref', ZODB.POSException.POSKeyError)
+		return call()
 
 	def add_message( self, msg ):
 		self.messages[msg.ID] = _CopyingWeakRef( msg )
