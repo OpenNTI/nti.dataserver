@@ -86,7 +86,9 @@ name: fig
 name: exercises
 <div class="exercises" tal:attributes="id self/id"><span class="headingtext">Exercises</span></div>
 <ol class="exercises itemize">
-	<li class="exercise" tal:repeat="item self" tal:attributes="id self/id; exnumber item/attributes/exnumber" tal:content="item"></li>
+	<li class="exercise" tal:repeat="item self" tal:attributes="id self/id; exnumber item/attributes/exnumber">
+	        <div class="exercise" tal:content="item"></div>
+	</li>
 </ol>
 <div class="end exercises">End exercises</div>
 
@@ -102,3 +104,7 @@ name: Cube BlackCube
 name: par
 <a tal:attributes="name self/id" tal:omit-tag=""/>
 <p tal:content="self" tal:omit-tag=""></p>
+
+# Override of default minipage renderer.  This is required to compensate for print based fixed sizes in content.
+name: minipage
+<div class="minipage" tal:content="self">minipage</div>
