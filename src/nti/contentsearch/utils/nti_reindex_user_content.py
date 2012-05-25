@@ -10,8 +10,11 @@ from ZODB.POSException import POSKeyError
 from zope.generations.utility import findObjectsProviding
 
 from nti.dataserver import users
-from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.utils import run_with_dataserver
+from nti.dataserver import interfaces as nti_interfaces
+
+from nti.chatserver import interfaces as chat_interfaces
+
 from nti.externalization.oids import toExternalOID
 
 import nti.contentsearch
@@ -36,6 +39,12 @@ def indexable_objects(user, indexable_types=indexable_type_names):
 		type_name = get_type_name(obj)
 		if type_name and type_name in indexable_types:
 			yield type_name, obj
+	
+	for mts in findObjectsProviding( user, chat_interfaces.IMeetingTranscriptStorage):
+		for obj in mts.itervalues():
+			type_name = get_type_name(obj)
+			if type_name and type_name in indexable_types:
+				yield type_name, obj
 			
 def _reindex_user_content( username ):
 	user = users.User.get_user( username )

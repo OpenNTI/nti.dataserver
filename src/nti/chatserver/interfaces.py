@@ -154,6 +154,27 @@ class IMeetingStorage(Interface):
 		raises KeyError.
 		"""
 
+class IMeetingTranscriptStorage(Interface):
+	"""
+	An object that knows how to store messages in a message transcript.
+	"""
+
+	meeting = interface.Attribute(
+		"""
+		The meeting associated wit this storage
+		"""
+		)
+	
+	def add_message( msg ):
+		"""
+		Add the specified message to this storage
+		"""
+
+	def itervalues():
+		"""
+		Return all messages stored in this storage
+		"""
+	
 class IUserTranscriptStorage(Interface):
 	"""
 	An object that knows how to store transcripts for users
