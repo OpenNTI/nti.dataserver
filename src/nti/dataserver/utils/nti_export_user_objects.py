@@ -6,6 +6,7 @@ import os
 import sys
 import json
 import datetime
+from collections import Mapping
 from collections import defaultdict
 
 from zope.component import getAdapter
@@ -16,6 +17,7 @@ from nti.dataserver.utils import run_with_dataserver
 from nti.dataserver import interfaces as nti_interfaces
 from nti.chatserver import interfaces as chat_interfaces
 from nti.externalization.externalization import toExternalObject
+from nti.externalization.interfaces import StandardExternalFields
 
 def get_object_type(obj):
 	result = obj.__class__.__name__
@@ -50,6 +52,8 @@ def export_user_objects( username, object_types=(), export_dir="/tmp"):
 	result = defaultdict(list)
 	for type_name, obj in get_user_objects( user, object_types):		
 		external = toExternalObject(obj)
+		if isinstance(external, Mapping):	
+			external.pop(StandardExternalFields.LINKS, None)
 		result[type_name].append(external)
 
 	counter = 0
