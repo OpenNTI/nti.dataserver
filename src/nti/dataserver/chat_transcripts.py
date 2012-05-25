@@ -326,7 +326,7 @@ class TranscriptSummary(nti.externalization.datastructures.ExternalizableInstanc
 
 		self.Contributors = set()
 		for msg in _messages:
-			self.Contributors.update( msg.sharedWith or () )
+			self.Contributors.update( getattr(msg, 'sharedWith', ()) or () )
 
 		self.links = self._create_links( meeting_storage )
 
