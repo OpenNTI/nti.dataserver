@@ -37,7 +37,7 @@ name: challengeprobs
 
 name: beginsol solution
 <div class="solution" tal:attributes="id self/id" tal:content="python: 'Solution for Problem ' + str(self.attributes['probnum']) + ':'">Solution</div>
-<span tal:content="self" />
+<div class="solution-body" tal:content="self" >Solution Body</div>
 
 name: reviewprobs
 <div class="review-problems" tal:attributes="id self/id"><span class="headingtext">Review Problems</span></div>
@@ -103,7 +103,7 @@ name: Cube BlackCube
 # Added to prevent extrainious paragraphs from causing display issues.
 name: par
 <a tal:attributes="name self/id" tal:omit-tag=""/>
-<p tal:content="self" tal:omit-tag=""></p>
+<p tal:content="self"></p>
 
 # Override of default minipage renderer.  This is required to compensate for print based fixed sizes in content.
 name: minipage
