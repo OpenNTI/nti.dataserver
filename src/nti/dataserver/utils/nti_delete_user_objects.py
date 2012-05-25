@@ -11,12 +11,11 @@ from collections import defaultdict
 from zope.generations.utility import findObjectsProviding
 
 from nti.dataserver import users
+from nti.dataserver.users import Community
 from nti.dataserver.utils import run_with_dataserver
 from nti.dataserver import interfaces as nti_interfaces
 from nti.externalization.externalization import toExternalObject
 from nti.contentsearch.utils.nti_remove_user_content import remove_user_content
-
-type_exceptions = (u'friendslist')
 
 def _normalize_type_name(x, encode=True):
 	result = ''
@@ -42,8 +41,11 @@ def remove_user_objects( username, object_types=(), export_dir=None ):
 		
 	object_types = set(map(lambda x: _normalize_type_name(x), object_types))
 	for obj in findObjectsProviding( user, nti_interfaces.IModeledContent):
-		type_name = _get_object_type(obj)
-		if type_name not in type_exceptions and (not object_types or type_name in object_types):			
+		if isinstance(obj, Community):
+			continue
+		
+		type_name = _get_object_type(obj) 
+		if not object_types or type_name in object_types:			
 			external = toExternalObject(obj)	
 			with user.updates():
 				_id = getattr(obj, 'id', None )		
