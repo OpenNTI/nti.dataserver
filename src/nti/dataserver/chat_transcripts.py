@@ -102,7 +102,13 @@ class _MeetingTranscriptStorage(Persistent,datastructures.ContainedMixin,datastr
 		self.messages[msg.ID] = _CopyingWeakRef( msg )
 
 	def itervalues(self):
-		return (msg() for msg in self.messages.itervalues())
+		result = []
+		for msg in self.messages.itervalues():
+			if callable(msg):
+				result.append(msg())
+			else:
+				result.append(msg)
+		return tuple(result)
 
 	# for finding MessageInfos with zope.genartions.findObjectsMatching
 	# Currently disabled due to the switch to callable refs: the iterator cannot
