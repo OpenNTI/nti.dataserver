@@ -318,7 +318,8 @@ class TranscriptSummary(nti.externalization.datastructures.ExternalizableInstanc
 		# TODO: What should the LastModified be? The room doesn't
 		# currently track it. We're using the max for our messages, which may not be right?
 		if _messages:
-			self.LastModified = max( _messages, key=lambda m: m.LastModified ).LastModified
+			m = max(_messages, key=lambda m: getattr(m, 'LastModified', 0))
+			self.LastModified = getattr(m, 'LastModified', 0 )
 		else:
 			# cannot max() empty sequence
 			self.LastModified = 0
