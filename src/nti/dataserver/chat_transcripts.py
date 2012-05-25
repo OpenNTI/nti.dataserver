@@ -79,6 +79,8 @@ class _MeetingTranscriptStorage(Persistent,datastructures.ContainedMixin,datastr
 	"""
 	The storage for the transcript of a single session.
 	"""
+	interface.implements(chat_interfaces.IMeetingTranscriptStorage)
+		
 	creator = nti_interfaces.SYSTEM_USER_NAME
 
 	def __init__( self, meeting ):
