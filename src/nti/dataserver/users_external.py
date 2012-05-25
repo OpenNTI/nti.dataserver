@@ -8,7 +8,6 @@ import random
 from zope import component
 from zope import interface
 
-from nti.dataserver import datastructures
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import users
 from nti.dataserver import links
@@ -59,9 +58,7 @@ class _EntityExternalObject(_EntitySummaryExternalObject):
 
 
 class _FriendsListExternalObject(_EntityExternalObject):
-
 	component.adapts( nti_interfaces.IFriendsList )
-
 
 	def toExternalObject(self):
 		extDict = super(_FriendsListExternalObject,self).toExternalObject()
@@ -109,7 +106,6 @@ class _UserSummaryExternalObject(_EntitySummaryExternalObject):
 class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 	component.adapts( nti_interfaces.IUser )
 
-
 	def toExternalObject( self ):
 		"""
 		:return: the externalization intended to be sent when requested by this user.
@@ -142,7 +138,7 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 		extDict['accepting'] = ext(self.entity.accepting_shared_data_from)
 		
 		#TODO: Link object has to be made extenalizable first.
-		extDict['Links'] = [] #[ links.Link( to_external_ntiid_oid( self.entity ), rel='edit' ) ]
+		extDict['Links'] = [ links.Link( to_external_ntiid_oid( self.entity ), rel='edit' ) ]
 		extDict['Last Modified'] = getattr( self.entity, 'lastModified', 0 )
 		return extDict
 
