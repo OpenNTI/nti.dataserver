@@ -34,6 +34,14 @@ def get_user_objects(user, object_types=()):
 			adapted = getAdapter(mts, nti_interfaces.ITranscript)
 			yield 'transcript', adapted
 			
+def clean_links(obj):
+	if isinstance(obj, Mapping):	
+		obj.pop(StandardExternalFields.LINKS, None)
+		map(clean_links, obj.values())
+	elif isinstance(obj, (list, tuple)):	
+		map(clean_links, obj)
+	return obj
+	
 def export_user_objects( username, object_types=(), export_dir="/tmp"):
 	user = users.User.get_user( username )
 	if not user:
@@ -52,8 +60,7 @@ def export_user_objects( username, object_types=(), export_dir="/tmp"):
 	result = defaultdict(list)
 	for type_name, obj in get_user_objects( user, object_types):		
 		external = toExternalObject(obj)
-		if isinstance(external, Mapping):	
-			external.pop(StandardExternalFields.LINKS, None)
+		clean_links(external)
 		result[type_name].append(external)
 
 	counter = 0
