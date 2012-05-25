@@ -110,6 +110,7 @@ setup(
 		'z3c.pt', # Better ZPT support than plastex
 		'zc.queue',
 		'zc.zlibstorage', # compressed records. Will be built-in to newer ZODB
+		'zc.zodbdgc',
 		'zetalibrary',
 		'zope.annotation',
 		'zope.broken',
