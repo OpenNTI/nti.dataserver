@@ -235,6 +235,8 @@ def _connect_view( request ):
 	# (Other things might be in that state too)
 	# We have to close the connection and commit the transaction
 	# if we do expect to stick around a long time
+	# TODO: If this process raises and we wind up hitting the retry logic,
+	# how does this react?
 	if 'wsgi.websocket' in environ:
 		# See application.py
 		try:
@@ -242,7 +244,13 @@ def _connect_view( request ):
 		except Exception:
 			# Gotta kill the jobs
 			logger.exception( "Failed to teardown request; aborting" )
-			transaction.doom() # No use trying again
+			try:
+				transaction.doom() # No use trying again
+			except AssertionError:
+				# If the exception was raised while we were actually
+				# committing the transaction, then we won't be able to doom it,
+				# it's too late.
+				pass
 			transport.kill()
 			for job in jobs_or_response:
 				job.kill()
