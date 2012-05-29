@@ -195,6 +195,7 @@ class EclipseTOC(object):
 
 	def getPageNodeWithAttribute(self, name, value=None, node=None):
 		"""
+		:param node: The node to begin the search at. Defaults to the root.
 		:return: A list of DOM nodes.
 		"""
 
@@ -216,7 +217,9 @@ class EclipseTOC(object):
 		return self.dom.getElementsByTagName('toc')[0]
 
 	def getPageNodes(self):
-		return [x for x in self.getPageNodeWithAttribute('href', node=None) if x.hasAttribute('ntiid')]
+		":return: Nodes for all top-level HTML pages. Nodes for interior sections are not returned."
+		return [x for x in self.getPageNodeWithAttribute('href')
+				if (x.hasAttribute('ntiid') and '#' not in x.getAttribute('href'))]
 
 	def save(self):
 		minidom_writexml( self.dom, self.filename )
@@ -436,8 +439,12 @@ class _EclipseTOCMiniDomTopic(object):
 
 	def set_ntiid( self ):
 		"""
-		Set the NTIID for the specifed topic
+		Set the NTIID for the specifed topic if one is not already present.
 		"""
+		if self.topic.attributes.get( 'ntiid' ): # 'in' doesn't work with this dict-like thing
+			# No need to read from the file if it was already present.
+			#logger.info( "Not setting ntiid because %s trumps %s", self.topic.attributes['ntiid'].value, self.read_ntiid() )
+			return False
 
 		ntiid = self.read_ntiid()
 		if ntiid:
