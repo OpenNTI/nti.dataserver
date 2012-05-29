@@ -7,6 +7,7 @@ import sys
 
 from zope import component
 from ZODB.POSException import POSKeyError
+from zope.generations.utility import findObjectsMatching
 from zope.generations.utility import findObjectsProviding
 
 from nti.dataserver import users
@@ -39,7 +40,7 @@ def indexable_objects(user, indexable_types=indexable_type_names):
 		if type_name and type_name in indexable_types:
 			yield type_name, obj
 	
-	for mts in findObjectsProviding( user, MTS):
+	for mts in findObjectsMatching( user, lambda x: isinstance(x,MTS) ):
 		for obj in mts.itervalues():
 			type_name = get_type_name(obj)
 			if type_name and type_name in indexable_types:
