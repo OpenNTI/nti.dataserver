@@ -13,8 +13,6 @@ from nti.dataserver import users
 from nti.dataserver.utils import run_with_dataserver
 from nti.dataserver import interfaces as nti_interfaces
 
-from nti.chatserver import interfaces as chat_interfaces
-
 from nti.externalization.oids import toExternalOID
 
 import nti.contentsearch
@@ -22,6 +20,7 @@ from nti.contentsearch.common import get_type_name
 from nti.contentsearch.interfaces import IRepozeDataStore
 from nti.contentsearch.common import indexable_type_names
 from nti.contentsearch._repoze_index import create_catalog
+from nti.dataserver.chat_transcripts import _MeetingTranscriptStorage as MTS
 
 def main():
 	if len(sys.argv) < 3:
@@ -40,7 +39,7 @@ def indexable_objects(user, indexable_types=indexable_type_names):
 		if type_name and type_name in indexable_types:
 			yield type_name, obj
 	
-	for mts in findObjectsProviding( user, chat_interfaces.IMeetingTranscriptStorage):
+	for mts in findObjectsProviding( user, MTS):
 		for obj in mts.itervalues():
 			type_name = get_type_name(obj)
 			if type_name and type_name in indexable_types:
@@ -58,8 +57,6 @@ def _reindex_user_content( username ):
 	search_conn = conn.get_connection( 'Search' )
 	rds = search_conn.root()['repoze_datastore']
 	lsm.registerUtility( rds, provided=IRepozeDataStore )
-
-	print('Reindexing object(s) for user', username)
 
 	# remove user catalogs
 	rds.remove_user(username)
@@ -80,8 +77,6 @@ def _reindex_user_content( username ):
 		except POSKeyError:
 			# broken reference for object
 			pass
-
-	print( counter, 'object(s) for user', username, 'were reindexed')
 
 if __name__ == '__main__':
 	main()

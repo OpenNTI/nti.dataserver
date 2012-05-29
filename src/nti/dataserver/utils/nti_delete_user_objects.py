@@ -69,8 +69,6 @@ def remove_user_objects( username, object_types=(), export_dir=None ):
 				outname = os.path.join(export_dir, name)
 				with open(outname, "w") as fp:
 					json.dump(objs, fp, indent=4)
-
-		print("%s object(s) were removed from user '%s'" % (counter, username), file=sys.stderr)
 	else:
 		print( "No objects were removed for user '%s'" % username, file=sys.stderr)
 

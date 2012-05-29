@@ -75,7 +75,6 @@ def export_user_objects( username, object_types=(), export_dir="/tmp"):
 			json.dump(objs, fp, indent=4)
 		out_files.append(outname)
 
-	print("%s object(s) were exported from user '%s'" % (counter, username), file=sys.stderr)
 	return out_files
 
 def main():
