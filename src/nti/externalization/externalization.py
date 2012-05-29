@@ -47,7 +47,21 @@ _ex_name_local.name = [_ex_name_marker]
 # Things that can be directly externalized
 _primitives = six.string_types + (numbers.Number,bool)
 
-def toExternalObject( obj, coerceNone=False, name=_ex_name_marker, registry=component ):
+def catch_replace_action( obj, exc ):
+	"""
+	Replaces the external component object `obj` with an object noting a broken object.
+	"""
+	return { "Class": "BrokenExceptionObject" }
+
+# The types that we will treat as sequences for externalization purposes. These
+# all map onto lists. (TODO: Should we just try to iter() it, ignoring strings?)
+_SEQUENCE_TYPES = (persistent.list.PersistentList, collections.Set, list, tuple)
+# The types that we will treat as mappings for externalization purposes. These
+# all map onto a dict.
+_MAPPING_TYPES  = (persistent.mapping.PersistentMapping,BTrees.OOBTree.OOBTree,collections.Mapping)
+
+def toExternalObject( obj, coerceNone=False, name=_ex_name_marker, registry=component,
+					  catch_components=(), catch_component_action=None ):
 	""" Translates the object into a form suitable for
 	external distribution, through some data formatting process.
 
@@ -55,6 +69,14 @@ def toExternalObject( obj, coerceNone=False, name=_ex_name_marker, registry=comp
 		for. Defaults to the empty string (the default adapter). If you provide
 		a name, and an adapter is not found, we will still look for the default name
 		(unless the name you supply is None).
+	:param tuple catch_components: A tuple of exception classes to catch when
+		externalizing sub-objects (e.g., items in a list or dictionary). If one of these
+		exceptions is caught, then `catch_component_action` will be called to raise or replace
+		the value. The default is to catch nothing.
+	:param function catch_component_action: If given with `catch_components`, a function
+		of two arguments, the object being externalized and the exception raised. May return
+		a different object (already externalized) or re-raise the exception. There is no default,
+		but :func:`catch_replace_action` is a good choice.
 
 	"""
 
@@ -69,17 +91,23 @@ def toExternalObject( obj, coerceNone=False, name=_ex_name_marker, registry=comp
 	_ex_name_local.name.append( name )
 
 	try:
-		def recall( obj ):
-			return toExternalObject( obj, coerceNone=coerceNone, name=name, registry=registry )
+		def recall( o ):
+			try:
+				return toExternalObject( o, coerceNone=coerceNone, name=name, registry=registry,
+										 catch_components=catch_components, catch_component_action=catch_component_action )
+			except catch_components as t:
+				# python rocks. catch_components could be an empty tuple, meaning we catch nothing.
+				# or it could be any arbitrary list of exceptions.
+				# NOTE: we cannot try to to-string the object, it may try to call back to us
+				logger.exception("Exception externalizing component object %s", type(o) )
+				return catch_component_action( o, t )
+
 		orig_obj = obj
 		if not IExternalObject.providedBy( obj ) and not hasattr( obj, 'toExternalObject' ):
 			adapter = registry.queryAdapter( obj, IExternalObject, default=None, name=name )
 			if not adapter and name != '':
-				# try for the default, but allow passing name of None to disable
+				# try for the default, but allow passing name of None to disable (?)
 				adapter = registry.queryAdapter( obj, IExternalObject, default=None, name='' )
-			# if not adapter and name == '':
-			# 	# try for the default, but allow passing name of None to disable
-			# 	adapter = registry.queryAdapter( obj, IExternalObject, default=None, name='wsgi' )
 			if adapter:
 				obj = adapter
 
@@ -90,26 +118,22 @@ def toExternalObject( obj, coerceNone=False, name=_ex_name_marker, registry=comp
 			result = obj.toExternalDictionary()
 		elif hasattr( obj, "toExternalList" ):
 			result = obj.toExternalList()
-		elif isinstance(obj, (persistent.mapping.PersistentMapping,BTrees.OOBTree.OOBTree,collections.Mapping)):
+		elif isinstance(obj, _MAPPING_TYPES ):
 			result = toExternalDictionary( obj, name=name, registry=registry )
 			if obj.__class__ == dict: result.pop( 'Class', None )
 			for key, value in obj.iteritems():
 				result[key] = recall( value )
-		elif isinstance( obj, (persistent.list.PersistentList, collections.Set, list, tuple) ):
+		elif isinstance( obj, _SEQUENCE_TYPES ):
 			result = registry.getAdapter( [recall(x) for x in obj], ILocatedExternalSequence )
 		# PList doesn't support None values, JSON does. The closest
 		# coersion I can think of is False.
 		elif obj is None:
 			if coerceNone:
 				result = False
-		elif isinstance( obj, ZODB.broken.PersistentBroken ):
-			# Broken objects mean there's been a persistence
-			# issue
-			logger.debug("Broken object found %s, %s", type(obj), obj)
-			result = { 'Class': 'BrokenObject' }
 		else:
 			# Otherwise, we probably won't be able to
-			# JSON-ify it
+			# JSON-ify it.
+			# TODO: Should this live here, or at a higher level where the ultimate external target/use-case is known?
 			result = registry.queryAdapter( obj, INonExternalizableReplacer, default=DefaultNonExternalizableReplacer )(obj)
 
 		for decorator in registry.subscribers( (orig_obj,), IExternalObjectDecorator ):

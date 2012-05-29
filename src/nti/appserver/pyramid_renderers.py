@@ -25,7 +25,7 @@ HEADER_LAST_MODIFIED = httpheaders.LAST_MODIFIED.name
 
 from zope.mimetype.interfaces import IContentTypeAware
 
-from nti.externalization.externalization import to_external_representation, toExternalObject, EXT_FORMAT_JSON, EXT_FORMAT_PLIST
+from nti.externalization.externalization import to_external_representation, toExternalObject, EXT_FORMAT_JSON, EXT_FORMAT_PLIST, catch_replace_action
 from nti.externalization.interfaces import StandardExternalFields
 from nti.dataserver.mimetype import (MIME_BASE_PLIST, MIME_BASE_JSON,
 									 MIME_EXT_PLIST, MIME_EXT_JSON,
@@ -205,7 +205,14 @@ def render_externalizable(data, system):
 
 	lastMod = getattr( data, 'lastModified', 0 )
 	#from IPython.core.debugger import Tracer; debug_here = Tracer()()
-	body = toExternalObject( data, name='', registry=request.registry )
+	body = toExternalObject( data, name='', registry=request.registry,
+							 # Catch *nested* errors during externalization. We got this far,
+							 # at least send back some data for the main object. The exception will be logged.
+							 # AttributeError is usually a migration problem,
+							 # LookupError is usually a programming problem.
+							 # AssertionError is one or both
+							 catch_components=(AttributeError,LookupError,AssertionError),
+							 catch_component_action=catch_replace_action)
 	try:
 		body.__parent__ = request.context.__parent__
 		body.__name__ = request.context.__name__

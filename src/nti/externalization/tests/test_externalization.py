@@ -1,5 +1,5 @@
 
-from hamcrest import (assert_that, is_, has_entry,
+from hamcrest import (assert_that, is_, has_entry, has_items,
 					  has_key,   is_not )
 
 from hamcrest.library import has_property as has_attr
@@ -11,15 +11,16 @@ import UserDict
 import persistent
 import json
 import plistlib
+from ZODB.broken import Broken
 
-
+from nose.tools import assert_raises
 from nti.tests import has_attr
 
 import nti.externalization
 from nti.externalization.persistence import getPersistentState
 from nti.externalization.oids import toExternalOID, fromExternalOID
 
-from nti.externalization.externalization import EXT_FORMAT_PLIST, EXT_FORMAT_JSON, to_external_representation, toExternalObject
+from nti.externalization.externalization import EXT_FORMAT_PLIST, EXT_FORMAT_JSON, to_external_representation, toExternalObject, catch_replace_action
 from nti.externalization.datastructures import ExternalizableDictionaryMixin
 
 
@@ -93,6 +94,25 @@ class TestFunctions(ConfiguringTestBase):
 		assert_that( toExternalObject( C() ), has_entry( 'Class', 'C' ) )
 		C.__external_class_name__ = 'ExternalC'
 		assert_that( toExternalObject( C() ), has_entry( 'Class', 'ExternalC' ) )
+
+	def test_broken(self):
+		assert_that( toExternalObject( Broken() ),
+					 has_entry( "Class", "NonExternalizableObject" ) )
+
+		assert_that( toExternalObject( [Broken()] ),
+					 has_items( has_entry( "Class", "NonExternalizableObject" ) ) )
+
+	def test_catching_component(self):
+		class Raises(object):
+			def toExternalObject(self):
+				assert False
+
+		assert_that( toExternalObject( [Raises()], catch_components=(AssertionError,), catch_component_action=catch_replace_action ),
+					 is_( [catch_replace_action(None,None)] ) )
+
+		# Default doesn't catch
+		with assert_raises(AssertionError):
+			toExternalObject( [Raises()] )
 
 from nti.externalization.persistence import PersistentExternalizableWeakList
 
