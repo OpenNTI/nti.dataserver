@@ -65,7 +65,7 @@ class QuizQuestion(persistent.Persistent):
 		result['Answers'] = toExternalObject( [answer.value for answer in self.answers] )
 		return result
 
-class Quiz(datastructures.ContainedMixin,datastructures.CreatedModDateTrackingObject,persistent.Persistent):
+class Quiz(datastructures.ZContainedMixin,datastructures.CreatedModDateTrackingObject,persistent.Persistent):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	interface.implements(nti_interfaces.IModeledContent,IExternalObject)
@@ -162,7 +162,7 @@ class QuizQuestionResponse(persistent.Persistent):
 
 from nti.assessment import assess
 
-class QuizResult(datastructures.ContainedMixin,
+class QuizResult(datastructures.ZContainedMixin,
 				 datastructures.CreatedModDateTrackingObject,
 				 persistent.Persistent,
 				 ExternalizableDictionaryMixin):

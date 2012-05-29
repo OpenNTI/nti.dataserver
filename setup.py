@@ -120,7 +120,7 @@ setup(
 		'zope.component >= 3.12.1',
 		'zope.componentvocabulary',
 		'zope.configuration >= 4.0.0',
-		'zope.container',
+		'zope.container >= 3.12.0',
 		'zope.contenttype >= 3.5.5',
 		'zope.copy >= 3.5.0',
 		'zope.datetime',
