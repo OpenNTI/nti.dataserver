@@ -75,7 +75,7 @@ class _CopyingWeakRef(persistent.wref.WeakRef):
 		if result is None: result = self._copy
 		return result
 
-class _MeetingTranscriptStorage(Persistent,datastructures.ContainedMixin,datastructures.CreatedModDateTrackingObject):
+class _MeetingTranscriptStorage(Persistent,datastructures.ZContainedMixin,datastructures.CreatedModDateTrackingObject):
 	"""
 	The storage for the transcript of a single session. Private object, not public.
 	"""
