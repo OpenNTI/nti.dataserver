@@ -1,15 +1,18 @@
 #!/usr/bin/env python2.7
 
-import unittest
+
 from hamcrest import (assert_that, is_)
+from . import ConfiguringTestBase
 
 from pyramid.testing import setUp as psetUp
 from pyramid.testing import tearDown as ptearDown
 from pyramid.request import Request
 
 from nti.appserver.pyramid_renderers import find_content_type
+from nti.externalization.externalization import toExternalObject
+from ZODB.broken import Broken
 
-class TestContentType( unittest.TestCase ):
+class TestContentType(ConfiguringTestBase):
 
 	def setUp( self ):
 		config = psetUp()
@@ -53,3 +56,13 @@ class TestContentType( unittest.TestCase ):
 
 		assert_that( find_content_type( self.request, data=self ),
 					 is_( 'application/vnd.nextthought.testcontenttype+json' ) )
+
+class TestRender(ConfiguringTestBase):
+
+
+	def test_broken(self):
+		assert_that( toExternalObject( Broken() ),
+					 is_( {"Class": "BrokenObject"} ) )
+
+		assert_that( toExternalObject( [Broken()] ),
+					 is_( [{ "Class": "BrokenObject"}] ) )

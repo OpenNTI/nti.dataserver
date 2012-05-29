@@ -41,6 +41,7 @@
 	<adapter factory=".workspaces.CollectionContentTypeAware" />
 
 	<adapter factory="._adapters.EnclosureExternalObject" />
+	<adapter factory="._adapters.BrokenExternalObject" />
 	<adapter factory=".pyramid_renderers.render_enclosure_factory" />
 
 	<!-- Logon -->
