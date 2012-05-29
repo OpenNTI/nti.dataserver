@@ -55,6 +55,7 @@ setup(
 #	tests_require = ['z3c.coverage','zope.testing'],
 	setup_requires = ['nose'],
 	install_requires = [
+		'Chameleon >= 2.8.5',
 		'RestrictedPython',
 		'ZODB3 >= 3.10.5',
 		# ZODB RelStorage:
@@ -77,7 +78,7 @@ setup(
 		'pyhamcrest',
 		'pylint',
 		'pyquery >= 1.2',
-		'pyramid >= 1.3' ,
+		'pyramid >= 1.3.2' ,
 		'pyramid_tm',
 		'pyramid_traversalwrapper',
 		'pyramid_who',
@@ -124,6 +125,7 @@ setup(
 		'zope.contenttype >= 3.5.5',
 		'zope.copy >= 3.5.0',
 		'zope.datetime',
+		'zope.deprecation >= 4.0.0',
 		'zope.dottedname',
 		'zope.event',
 		'zope.exceptions >= 4.0.0.1',
