@@ -16,6 +16,7 @@ def check(book):
 	pagesWithBadMath = 0
 	for (ntiid, _, _), maths in results.items():
 		page = book.pages[ntiid]
+
 		if maths:
 			pagesWithBadMath += 1
 			logger.warn( 'Width of math elements %s is outside the bounds of %s.', maths, page.filename )
