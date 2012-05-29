@@ -23,16 +23,14 @@ def evolve( context ):
 	Evolve generation 10 to generation 11 by finding old chat transcripts and adding the right
 	reference.
 	"""
-	for mts in findObjectsMatching( context.connection.root()['nti.dataserver'].getSiteManager(), lambda x: isinstance(x, MTS) ):
-		mts._p_activate()
-		if 'meeting' in mts.__dict__:
-			try:
-				ref = Ref( mts.__dict__['meeting'] )
-				mts._meeting_ref = ref
-			except KeyError:
-				# Meeting gone
-				mts._meeting_ref = _raises
-			del mts.__dict__['meeting']
+	for mts in findObjectsMatching( context.connection.root()['nti.dataserver'].getSiteManager(), lambda x: isinstance(x, MTS) and 'meeting' in x.__dict__ ):
+		try:
+			ref = Ref( mts.__dict__['meeting'] )
+			mts._meeting_ref = ref
+		except (KeyError,PicklingError) as e:
+			# Meeting gone (KeyError) or...'can't resolve thread.lock' (PickleError, only seen interactively?)
+			mts._meeting_ref = _raises
+		del mts.__dict__['meeting']
 
 		try:
 			for key in list(mts.messages.keys()):

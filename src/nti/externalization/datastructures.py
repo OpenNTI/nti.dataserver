@@ -122,5 +122,5 @@ class ExternalizableInstanceDict(ExternalizableDictionaryMixin):
 			return "%s().__dict__.update( %s )" % (self.__class__.__name__, self.toExternalDictionary() )
 		except ZODB.POSException.ConnectionStateError:
 			return '%s(Ghost)' % self.__class__.__name__
-		except ValueError as e: # Things like invalid NTIID
+		except (ValueError,LookupError) as e: # Things like invalid NTIID, missing registrations
 			return '%s(%s)' % (self.__class__.__name__, e)
