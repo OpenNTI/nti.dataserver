@@ -77,10 +77,9 @@ class _CopyingWeakRef(persistent.wref.WeakRef):
 
 class _MeetingTranscriptStorage(Persistent,datastructures.ContainedMixin,datastructures.CreatedModDateTrackingObject):
 	"""
-	The storage for the transcript of a single session.
+	The storage for the transcript of a single session. Private object, not public.
 	"""
-	interface.implements(chat_interfaces.IMeetingTranscriptStorage)
-		
+
 	creator = nti_interfaces.SYSTEM_USER_NAME
 
 	def __init__( self, meeting ):

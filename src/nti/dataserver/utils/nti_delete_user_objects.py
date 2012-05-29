@@ -9,13 +9,13 @@ import datetime
 from collections import defaultdict
 
 from zope.component import getAdapter
-from zope.generations.utility import findObjectsProviding
+from zope.generations.utility import findObjectsProviding, findObjectsMatching
 
 from nti.dataserver import users
 from nti.dataserver.users import Community
 from nti.dataserver.utils import run_with_dataserver
 from nti.dataserver import interfaces as nti_interfaces
-from nti.chatserver import interfaces as chat_interfaces
+from nti.dataserver.chat_transcripts import _MeetingTranscriptStorage as MTS
 from nti.externalization.externalization import toExternalObject
 from nti.contentsearch.utils.nti_remove_user_content import remove_user_content
 
@@ -26,39 +26,39 @@ def get_object_type(obj):
 def get_user_objects(user, object_types=()):
 	for obj in findObjectsProviding( user, nti_interfaces.IModeledContent):
 		type_name = get_object_type(obj)
-		if (not object_types or type_name in object_types) and not isinstance(obj, Community):	
+		if (not object_types or type_name in object_types) and not isinstance(obj, Community):
 			yield type_name, obj, obj
-	
+
 	if not object_types or 'transcript' in object_types or 'messageinfo' in object_types:
-		for mts in findObjectsProviding( user, chat_interfaces.IMeetingTranscriptStorage):
+		for mts in findObjectsMatching( user, lambda x: isinstance(x,MTS) ):
 			adapted = getAdapter(mts, nti_interfaces.ITranscript)
 			yield 'messageinfo', adapted, mts
-			
+
 def remove_user_objects( username, object_types=(), export_dir=None ):
 	user = users.User.get_user( username )
 	if not user:
 		print( "User '%s' does not exists" % username, file=sys.stderr )
 		sys.exit( 2 )
-		
+
 	# normalize object types
 	object_types = set(map(lambda x: x.lower(), object_types))
-	
-	captured_types = defaultdict(list)	
+
+	captured_types = defaultdict(list)
 	if export_dir:
 		export_dir = os.path.expanduser(export_dir)
 		if not os.path.exists(export_dir):
 			os.makedirs(export_dir)
-		
+
 	counter = 0
-	for type_name, adapted, obj in get_user_objects( user, object_types):			
-		external = toExternalObject(adapted)	
+	for type_name, adapted, obj in get_user_objects( user, object_types):
+		external = toExternalObject(adapted)
 		with user.updates():
-			_id = getattr(obj, 'id', None )		
+			_id = getattr(obj, 'id', None )
 			containerId = getattr(obj, 'containerId', None )
 			if containerId and _id and user.deleteContainedObject( containerId, _id ):
 				captured_types[type_name].append(external)
 				counter = counter +  1
-				
+
 	if captured_types:
 		remove_user_content(username, captured_types.keys())
 		if export_dir:
@@ -69,7 +69,7 @@ def remove_user_objects( username, object_types=(), export_dir=None ):
 				outname = os.path.join(export_dir, name)
 				with open(outname, "w") as fp:
 					json.dump(objs, fp, indent=4)
-					
+
 		print("%s object(s) were removed from user '%s'" % (counter, username), file=sys.stderr)
 	else:
 		print( "No objects were removed for user '%s'" % username, file=sys.stderr)
