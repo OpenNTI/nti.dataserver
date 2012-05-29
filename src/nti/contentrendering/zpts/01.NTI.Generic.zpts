@@ -33,6 +33,8 @@ name: displaymath equation equation* eqnarray eqnarray* align align* gather gath
 #if we should also omit the anchors for blockType elements.  Leaving them in results in some places
 #with duplicate anchors.   BlockType elements should contain paragraphs and anchors
 #that are not from blocktype elements so omitting the anchors should work fine?
+# TODO There is also a isElementContentWhitespace attribute that we might want to check
+# to omit these things entirely.
 
 name: par
 <a tal:attributes="name self/id" tal:condition="self/id" ></a>
