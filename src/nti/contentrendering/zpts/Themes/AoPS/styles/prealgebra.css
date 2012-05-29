@@ -574,6 +574,11 @@ html {
 #NTIContent ol.exercises {
     margin-left: 0px;
     padding-left: 0px;
+    display: inline;
+}
+
+#NTIContent div.exercise p {
+    margin-top: 0px;
 }
 
 #NTIContent ol.exercises > li.exercise {
