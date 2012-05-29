@@ -113,7 +113,6 @@ html {
 /* Mathjax */
 #NTIContent .MathJax {
 	display: inline;
-	font-family: serif;
 	font-style: normal;
 	font-weight: normal;
 	line-height: normal;
@@ -155,7 +154,7 @@ html {
 }
 
 #NTIContent .MathJax .math span {
-	font-family: STIXGeneral,STIXNonUnicode,STIXSizeOneSym;
+/*	font-family: STIXGeneral,STIXNonUnicode,STIXSizeOneSym; */
 }
 
 #NTIContent .navigation {
@@ -652,11 +651,13 @@ html {
 	overflow: hidden;
 }
 
-#NTIContent .mathname,
-#NTIContent .mathnumber {
-    font-family: STIXGeneral;
+#NTIContent .mathname {
+    font-family: STIXGeneral,STIXNonUnicode,STIXSizeOneSym; 
     font-style: italic;
-    padding-right: 3px;
+}
+
+#NTIContent .mathnumber {
+    font-family: STIXGeneral,STIXNonUnicode,STIXSizeOneSym; 
 }
 
 #NTIContent .boxed {
