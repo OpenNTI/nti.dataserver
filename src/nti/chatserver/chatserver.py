@@ -5,6 +5,7 @@ __docformat__ = "restructuredtext en"
 
 import logging
 logger = logging.getLogger( __name__ )
+from ZODB import loglevels
 
 import numbers
 
@@ -152,11 +153,11 @@ class Chatserver(object):
 		if username:
 			all_sessions = self.sessions.get_sessions_by_owner( username )
 			if not all_sessions: # pragma: no cover
-				logger.debug( "No sessions for %s to send event %s to", username, name )
+				logger.log( loglevels.TRACE, "No sessions for %s to send event %s to", username, name )
 				return
 			args = [toExternalObject( arg ) for arg in args]
 			for s in all_sessions:
-				logger.debug( "Dispatching %s to %s", name, s )
+				logger.log( loglevels.TRACE, "Dispatching %s to %s", name, s )
 				s.socket.send_event( name, *args )
 
 	### Rooms

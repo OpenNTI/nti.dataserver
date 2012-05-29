@@ -1,8 +1,12 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 """ Session distribution and management. """
+
+from __future__ import print_function, unicode_literals
 
 import logging
 logger = logging.getLogger( __name__ )
+from ZODB import loglevels
+
 import warnings
 import uuid
 import time
@@ -307,7 +311,7 @@ class SessionService(object):
 				# knowing it has died and doing the best we can across the cluster
 				gevent.sleep( 60 )	# Time? We can detect a dead session no faster than we decide it's dead,
 									# which is SESSION_HEARTBEAT_TIMEOUT
-				logger.debug( "Checking status of session %s", session_id )
+				logger.log( loglevels.TRACE, "Checking status of session %s", session_id )
 
 				try:
 					sess = component.getUtility( nti_interfaces.IDataserverTransactionRunner )( lambda: self.get_session(session_id), retries=2 )
@@ -404,7 +408,7 @@ class SessionService(object):
 			self.delete_session(s)
 			result.append(s)
 		return result
-	
+
 	def delete_session( self, session_id ):
 		try:
 			sess = self._session_map[session_id]
