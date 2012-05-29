@@ -450,6 +450,11 @@ class _NTIIDEntry(object):
 	def toExternalObject( self ):
 		result = LocatedExternalDict()
 		result[StandardExternalFields.LINKS] = []
+		# Add the Class and MimeType; clients depend on them.
+		# We're using a fairly generic 'PageInfo' instead of a descriptive 'PagesCollectionEntry'
+		# because we expect to start returning these objects from NTIID lookups for an HTML NTIID
+		result[StandardExternalFields.CLASS] = 'PageInfo'
+		result[StandardExternalFields.MIMETYPE] = mimetype.nti_mimetype_with_class( result[StandardExternalFields.CLASS] )
 		result['ID'] = self._ntiid
 		result['href'] = traversal.normal_resource_path( self.__parent__ )
 

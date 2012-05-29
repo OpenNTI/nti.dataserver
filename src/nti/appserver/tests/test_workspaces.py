@@ -138,6 +138,8 @@ class TestUserEnumerationWorkspace(tests.ConfiguringTestBase):
 		assert_that( uew.collections[2].container, has_length( 2 ) )
 		root = uew.collections[2].container[0]
 		assert_that( root.toExternalObject(), has_entry( 'ID', ntiids.ROOT ) )
+		assert_that( root.toExternalObject(), has_entry( 'Class', 'PageInfo' ) )
+		assert_that( root.toExternalObject(), has_entry( 'MimeType', 'application/vnd.nextthought.pageinfo' ) )
 		assert_that( root.toExternalObject(), has_entry( 'Links', has_length( 1 ) ) )
 		assert_that( root.toExternalObject()['Links'][0].target.__name__, is_( 'RecursiveStream' ) )
 
