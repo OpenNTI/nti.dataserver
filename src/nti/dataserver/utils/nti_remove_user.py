@@ -27,5 +27,3 @@ def _remove_user( username ):
 	remove_user_content( username=username )
 	#TODO: remove sessions
 	users.User.delete_user( username=username )
-	
-	print( "User '%s' has been removed" % username, file=sys.stderr )

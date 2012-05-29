@@ -53,8 +53,7 @@ def remove_user_content( username, indexable_types=None):
 	lsm.registerUtility( rds, provided=IRepozeDataStore )
 
 	indexable_types = indexable_type_names if not indexable_types else indexable_types
-	print("Removing search content '%s' object(s) for user '%s'" % (indexable_types, username))
-
+	
 	if indexable_types == indexable_type_names:
 		rds.remove_user(username)
 	else:
