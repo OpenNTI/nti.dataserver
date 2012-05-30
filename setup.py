@@ -127,7 +127,7 @@ setup(
 		'zope.datetime',
 		'zope.deprecation >= 4.0.0',
 		'zope.dottedname',
-		'zope.event',
+		'zope.event >= 4.0.0',
 		'zope.exceptions >= 4.0.0.1',
 		'zope.filerepresentation',
 		'zope.formlib',
