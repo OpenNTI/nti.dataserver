@@ -60,6 +60,7 @@ class ContentPackage(ContentUnit):
 	index = None
 	installable = False
 	archive = None
+	renderVersion = 1
 
 class FilesystemContentPackage(ContentPackage,FilesystemContentUnit):
 	"""

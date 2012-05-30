@@ -73,6 +73,8 @@ def EclipseContentPackage( localPath ):
 	content_package = _tocItem( dom.firstChild, localPath, factory=contentunit.FilesystemContentPackage )
 	content_package.root = os.path.basename( localPath )
 	content_package.index = os.path.basename( _TOCPath( localPath ) )
+	if dom.firstChild.hasAttribute( 'renderVersion' ):
+		content_package.renderVersion = int(dom.firstChild.getAttribute( 'renderVersion' ) )
 
 	archive = os.path.join( localPath, ARCHIVE_FILENAME )
 	if os.path.exists( archive ):
