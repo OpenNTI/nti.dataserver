@@ -403,7 +403,7 @@ class _EclipseTOCMiniDomTopic(object):
 			# By using the HTML5 parser, we can get more consistent results,
 			# regardless of how the templates were setup. And when we write, we'll
 			# be in a normalized form for all browsers. One immediate cost is that
-			# it's a bit slower to parse than pyquery's native methods
+			# it's quite a bit slower to parse than pyquery's native methods
 			dom = None
 			p = html5lib.HTMLParser( tree=treebuilders.getTreeBuilder("lxml"), #PyQuery needs lxml doc
 									 namespaceHTMLElements=False )
