@@ -62,6 +62,8 @@ class IContentPackage(IContentUnit):
 	index = schema.TextLine( title="Path portion to an XML file representing this content package" )
 	installable = schema.Bool( title="Whether or not this content package can be installed locally (offline)" )
 	archive = schema.TextLine( title="If this content is installable, this is the relative path to a ZIP archive of the content" )
+	renderVersion = schema.Int( title="Version of the rendering process that produced this package.",
+								default=1, min=1 )
 
 
 class IFilesystemEntry(interface.Interface):

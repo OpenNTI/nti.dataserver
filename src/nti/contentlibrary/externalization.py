@@ -53,7 +53,8 @@ class _ContentPackageExternal(object):
 		result['index'] = _o( os.path.basename( self.package.index ) ) if self.package.index else None
 		result['title'] = self.package.title
 		result['installable'] = self.package.installable
-		result['version'] = '1.0'
+		result['version'] = '1.0' # This field was never defined. What does it mean?  I think we were thinking of generations
+		result['renderVersion'] = self.package.renderVersion
 
 		if self.package.installable:
 			result['archive'] = _o( self.package.archive ) # TODO: Assumptions

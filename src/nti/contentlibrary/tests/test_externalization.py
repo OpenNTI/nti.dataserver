@@ -28,3 +28,6 @@ def test_escape_if_needed():
 
 	assert_that( externalization._ContentPackageExternal(unit).toExternalObject(),
 				 has_entry( 'icon', '/prealgebra/icons/The%20Icon.png' ) )
+
+	assert_that( externalization._ContentPackageExternal(unit).toExternalObject(),
+				 has_entry( 'renderVersion', 1 ) )
