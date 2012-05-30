@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+from __future__ import print_function, unicode_literals
 import os
 import sys
 
@@ -11,6 +11,9 @@ logger = logging.getLogger(__name__)
 from zope import interface
 from zope import component
 from zope.deprecation import deprecate
+from zope.configuration import xmlconfig
+
+import nti.contentrendering
 from . import interfaces
 
 interface.moduleProvides( interfaces.IRenderedBookTransformer )
@@ -19,9 +22,16 @@ def main(args):
 	""" Main program routine """
 
 	contentLocation = args[0]
-	book = RenderedBook.RenderedBook( None, contentLocation )
 
-	transform( book )
+	xmlconfig.file( 'configure.zcml', package=nti.contentrendering )
+	zope_conf_name = os.path.join( contentLocation, '..', 'configure.zcml' )
+	if os.path.exists( zope_conf_name ):
+		xmlconfig.file( os.path.abspath( zope_conf_name ), package=nti.contentrendering )
+
+	context = interfaces.JobComponents( os.path.split( os.path.abspath( contentLocation ) )[-1] )
+
+	book = RenderedBook.RenderedBook( None, contentLocation )
+	transform( book, context=context )
 
 def transform( book, save_toc=True, context=None ):
 	"""
@@ -123,6 +133,7 @@ class SimpleConventionIconFinder(object):
 		# Note that the return is in URL-space using /, but the check
 		# for existence uses local path conventions
 		imagename = 'C' + str(self._topic.ordinal) + '.png'
+
 		path = os.path.join( self._book.contentLocation,
 							 self.path_type,
 							 'chapters',
