@@ -33,12 +33,15 @@ name: displaymath equation equation* eqnarray eqnarray* align align* gather gath
 #if we should also omit the anchors for blockType elements.  Leaving them in results in some places
 #with duplicate anchors.   BlockType elements should contain paragraphs and anchors
 #that are not from blocktype elements so omitting the anchors should work fine?
-# TODO There is also a isElementContentWhitespace attribute that we might want to check
-# to omit these things entirely.
+#
+# Beyond that, we omit these things entirely if there is no source text (whitespace)
+# this is a bit stricter than using self.isElementContentWhitespace.
+# NOTE: Things that use the default renderer and that have no class of their own,
+# like \pdfinfo, \pagestyle, etc, get wrapped in a par, but do have source and so can result in empty paragraphs
 
 name: par
-<a tal:attributes="name self/id" tal:condition="self/id" ></a>
-<p tal:attributes="id self/id" tal:content="self" tal:omit-tag="self/blockType"></p>
+<a tal:attributes="name self/id" tal:condition="python:self.id and self.source.strip()" ></a>
+<p class="par" tal:attributes="id self/id" tal:content="self" tal:condition="self/source/strip" tal:omit-tag="self/blockType"></p>
 
 name: tabular tabular* tabularx
 <div tal:attributes="id self/id; class python: type(self).__name__" tal:content="self/resource"/>
