@@ -10,7 +10,7 @@ from zope import component
 
 from nti.externalization.datastructures import LocatedExternalDict
 from nti.externalization.externalization import toExternalObject
-from nti.externalization.interfaces import IExternalObject
+from nti.externalization.interfaces import IExternalObject, StandardExternalFields
 from nti.contentlibrary import interfaces
 
 class _ContentPackageLibraryExternal(object):
@@ -55,6 +55,7 @@ class _ContentPackageExternal(object):
 		result['installable'] = self.package.installable
 		result['version'] = '1.0' # This field was never defined. What does it mean?  I think we were thinking of generations
 		result['renderVersion'] = self.package.renderVersion
+		result[StandardExternalFields.NTIID] = self.package.ntiid
 
 		if self.package.installable:
 			result['archive'] = _o( self.package.archive ) # TODO: Assumptions

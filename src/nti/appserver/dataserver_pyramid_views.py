@@ -28,6 +28,7 @@ from zope.location.location import LocationProxy
 
 from nti.dataserver.interfaces import (IDataserver, ISimpleEnclosureContainer, IEnclosedContent)
 from nti.dataserver import users
+from nti.dataserver import links
 from nti.externalization.datastructures import isSyntheticKey
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.datastructures import LocatedExternalDict
@@ -1298,6 +1299,18 @@ def _provider_redirect_classes(request):
 	class_path = (request.path + '/Classes') + (('?' + request.query_string) if request.query_string else '')
 	raise hexc.HTTPFound(location=class_path)
 
+
+def _create_page_info(request, href):
+	# Traverse down to the pages collection and use it to create the info.
+	# This way we get the correct link structure
+	remote_user = users.User.get_user( sec.authenticated_userid( request ), dataserver=request.registry.getUtility(IDataserver) )
+	user_service = request.registry.getAdapter( remote_user, app_interfaces.IService )
+	user_workspace = user_service.user_workspace
+	pages_collection = user_workspace.pages_collection
+	info = pages_collection.make_info_for( request.context.ntiid )
+	info.extra_links = (links.Link( href, rel='content' ),) # TODO: The rel?
+	return info
+
 def _LibraryTOCRedirectView(request):
 	"""
 	Given an :class:`lib_interfaces.IContentUnit`, redirect the request to the static content.
@@ -1321,9 +1334,29 @@ def _LibraryTOCRedirectView(request):
 
 	# If the client asks for a specific type of data,
 	# a link, then give it to them. Otherwise...
-	link_json = nti_mimetype_with_class( 'link' ) + '+json'
-	if request.accept and request.accept.best_match( ('text/html',link_json,) ) == link_json:
-		return {"Class": "Link", "href": href}
+	link_mt = nti_mimetype_with_class( 'link' )
+	link_mt_json = link_mt + '+json'
+	json_mt = 'application/json'
+	page_info_mt = nti_mimetype_with_class( 'pageinfo' )
+	page_info_mt_json = page_info_mt + '+json'
+
+	mts = ('text/html',link_mt,link_mt_json,json_mt,page_info_mt,page_info_mt_json)
+	accept_type = 'text/html'
+	if request.accept:
+		accept_type = request.accept.best_match( mts )
+
+	if accept_type in (link_mt, link_mt_json):
+		link = links.Link( href, rel="content" )
+		# We cannot render a raw link using the code in pyramid_renderers, but
+		# we need to return one to get the right mime type header. So we
+		# fake it by rendering here
+		def _t_e_o():
+			return {"Class": "Link", "MimeType": link_mt, "href": href, "rel": "content"}
+		link.toExternalObject = _t_e_o
+		return link
+
+	if accept_type in (json_mt,page_info_mt,page_info_mt_json):
+		return _create_page_info(request, href)
 
 	# ...send a 302. Return rather than raise so that webtest works better
 	return hexc.HTTPSeeOther( location=href )

@@ -322,10 +322,13 @@ def render_externalizable(data, system):
 
 	# Search for a last modified value.
 	if response.last_modified is None:
-		if lastMod <= 0 and HEADER_LAST_MODIFIED in body:
-			lastMod = body[HEADER_LAST_MODIFIED]
-		if lastMod <= 0 and 'Last Modified' in body:
-			lastMod = body['Last Modified']
+		try:
+			if lastMod <= 0 and HEADER_LAST_MODIFIED in body:
+				lastMod = body[HEADER_LAST_MODIFIED]
+			if lastMod <= 0 and 'Last Modified' in body:
+				lastMod = body['Last Modified']
+		except TypeError:
+			pass
 
 		if lastMod > 0:
 			response.last_modified = lastMod
