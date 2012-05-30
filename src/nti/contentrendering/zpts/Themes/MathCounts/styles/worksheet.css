@@ -199,9 +199,8 @@
 
 #NTIContent ol.worksheet-problems {
     position: relative;
-    left: -80;
-    padding-left: 80px;
     margin-left: 0px;
+    padding-left: 30px;
     font-weight: bold;
 }
 
