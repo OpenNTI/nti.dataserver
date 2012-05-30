@@ -1,6 +1,9 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 
-from __future__ import unicode_literals
+from __future__ import unicode_literals, print_function
+
+# disable "super on old-style class for Components, it is new-style"
+#pylint: disable=E1002
 
 from zope import interface
 from zope import component
@@ -177,3 +180,47 @@ class IPlainTextContentFragment(IUnicodeContentFragment):
 
 class PlainTextContentFragment(UnicodeContentFragment):
 	interface.implements(IPlainTextContentFragment)
+
+from zope.interface import registry
+from zope.component import getGlobalSiteManager
+class JobComponents(registry.Components):
+	"""
+	A component registry (IComponentLookup) that automatically attempts to
+	find things using the current job name first when no name is given.
+
+	TODO: In the future, this might also consider the provider.
+
+	"""
+
+	def __init__( self, jobname=None, **kwargs ):
+		self._jobname = jobname
+		assert self._jobname
+		super( JobComponents, self ).__init__( **kwargs )
+		if not self.__bases__:
+			self.__bases__ = (getGlobalSiteManager(),)
+
+	# TODO: Could probably do some meta programming and avoid duplicating the similar patterns
+	def queryUtility(self, provided, name='', default=None):
+		result = default
+		if name == '':
+			result = super(JobComponents,self).queryUtility(provided, self._jobname, default=default )
+			if result is not default:
+				return result
+
+		return super(JobComponents,self).queryUtility(provided,name=name,default=default)
+
+	def queryAdapter(self, obj, interface, name='', default=None):
+		result = default
+		if name == '':
+			result = super(JobComponents,self).queryAdapter(obj, interface, name=self._jobname, default=default)
+			if result is not default:
+				return result
+		return super(JobComponents,self).queryAdapter(obj, interface, name=name, default=default)
+
+	def queryMultiAdapter(self, objects, interface, name='', default=None ):
+		result = default
+		if name == '':
+			result = super(JobComponents,self).queryMultiAdapter(objects, interface, name=self._jobname, default=default)
+			if result is not default:
+				return result
+		return super(JobComponents,self).queryMultiAdapter(objects, interface, name=name, default=default)

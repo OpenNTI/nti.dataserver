@@ -45,9 +45,10 @@ def copy(source, dest, debug=True):
 	except OSError:
 		shutil.copy(source, dest)
 
-def transform(book):
+def transform(book, context=None):
 	"""
-	Generate thumbnails for all pages and stuff them in the toc
+	Generate thumbnails for all pages and stuff them in the toc.
+	:param context: A Zope `IComporentLookup`. Currently unused.
 	"""
 
 	eclipseTOC = book.toc
@@ -85,5 +86,3 @@ def transform(book):
 
 	eclipseTOC.save()
 	shutil.rmtree(tempdir)
-
-

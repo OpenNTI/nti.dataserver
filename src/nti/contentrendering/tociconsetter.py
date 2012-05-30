@@ -25,7 +25,7 @@ def main(args):
 
 	transform( book )
 
-def transform( book, save_toc=True ):
+def transform( book, save_toc=True, context=None ):
 	"""
 	Modifies the TOC dom by: reading NTIIDs out of HTML content and adding them
 	to the TOC, setting icon attributes in the TOC. Also modifies HTML content
@@ -34,7 +34,7 @@ def transform( book, save_toc=True ):
 	dom = book.toc.dom
 	toc = dom.getElementsByTagName("toc")
 	if toc:
-		modified, child_nodes = _handle_toc(toc[0], book, save_toc)
+		modified, child_nodes = _handle_toc(toc[0], book, save_toc, context=context)
 		if save_toc:
 			if modified:
 				book.toc.save()
@@ -44,7 +44,7 @@ def transform( book, save_toc=True ):
 
 	raise Exception( "Failed to transform %s" % (book) )
 
-def _handle_toc(toc, book, save_dom):
+def _handle_toc(toc, book, save_dom, context=None):
 	contentLocation = book.contentLocation
 	attributes = toc.attributes
 	if not attributes.has_key('href'):
@@ -65,29 +65,28 @@ def _handle_toc(toc, book, save_dom):
 
 		for node in index.childTopics:
 			node.save_dom = save_dom
-			_handle_topic( book, node )
+			_handle_topic( book, node, context=context )
 			if not save_dom: child_nodes.append( node )
 
 	return modified, child_nodes
 
-def _query_finder( book, topic, iface ):
-	result = component.queryMultiAdapter( (book,topic), iface, name=book.jobname )
-	if not result and book.jobname != '':
-		# If nothing for the job, query the global default
-		result = component.queryMultiAdapter( (book,topic), iface )
+def _query_finder( book, topic, iface, context=None ):
+	# If nothing for the job, query the global default. This should be handled
+	# by our customized components implementation
+	result = component.queryMultiAdapter( (book,topic), iface, context=context )
 	return result
 
-def _handle_topic( book, _topic ):
+def _handle_topic( book, _topic, context=None ):
 	modified = False
 
 	if _topic.is_chapter():
 		if not _topic.has_icon():
-			icon_finder = _query_finder( book, _topic, interfaces.IIconFinder )
+			icon_finder = _query_finder( book, _topic, interfaces.IIconFinder, context=context )
 			icon_path = icon_finder.find_icon() if icon_finder else None
 			modified = _topic.set_icon( icon_path ) if icon_path else modified
 
 		modified = _topic.set_ntiid() or modified
-		bg_finder = _query_finder( book, _topic, interfaces.IBackgroundImageFinder )
+		bg_finder = _query_finder( book, _topic, interfaces.IBackgroundImageFinder, context=context )
 		bg_path = bg_finder.find_background_image() if bg_finder else None
 		modified |= _topic.set_background_image( bg_path ) if bg_path else modified
 
