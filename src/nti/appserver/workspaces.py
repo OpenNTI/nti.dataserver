@@ -403,11 +403,15 @@ class UserEnumerationWorkspace(ContainerEnumerationWorkspace):
 		super(UserEnumerationWorkspace,self).__init__( user )
 
 	@property
-	def collections(self):
-		result = list(super(UserEnumerationWorkspace,self).collections)
+	def pages_collection(self):
 		pages = app_interfaces.ICollection( self._container )
 		pages.__parent__ = self
-		result.append( pages )
+		return pages
+
+	@property
+	def collections(self):
+		result = list(super(UserEnumerationWorkspace,self).collections)
+		result.append( self.pages_collection )
 
 		classes = component.getAdapter( self._container,
 										app_interfaces.ICollection,
@@ -436,11 +440,16 @@ class _NTIIDEntry(object):
 	interface.implements(ext_interfaces.IExternalObject,
 						 app_interfaces.ILocation)
 
+	external_class = 'PageInfo'
+	mime_type = mimetype.nti_mimetype_with_class( external_class )
+
 	# TODO: This list is defined again in dataserver_pyramid_views.py
 	# in the _PageContainerResource
 	__operations__ = ('UserGeneratedData', 'RecursiveUserGeneratedData',
 					  'Stream', 'RecursiveStream',
 					  'UserGeneratedDataAndRecursiveStream')
+
+	extra_links = ()
 
 	def __init__(self, parent, ntiid):
 		self.__parent__ = parent
@@ -453,8 +462,8 @@ class _NTIIDEntry(object):
 		# Add the Class and MimeType; clients depend on them.
 		# We're using a fairly generic 'PageInfo' instead of a descriptive 'PagesCollectionEntry'
 		# because we expect to start returning these objects from NTIID lookups for an HTML NTIID
-		result[StandardExternalFields.CLASS] = 'PageInfo'
-		result[StandardExternalFields.MIMETYPE] = mimetype.nti_mimetype_with_class( result[StandardExternalFields.CLASS] )
+		result[StandardExternalFields.CLASS] = self.external_class
+		result[StandardExternalFields.MIMETYPE] = self.mime_type
 		result['ID'] = self._ntiid
 		result['href'] = traversal.normal_resource_path( self.__parent__ )
 
@@ -465,6 +474,8 @@ class _NTIIDEntry(object):
 			link = links.Link( target, rel=link )
 			# TODO: Rel should be a URI
 			result[StandardExternalFields.LINKS].append( link )
+
+		result[StandardExternalFields.LINKS].extend( self.extra_links )
 		return result
 
 class _RootNTIIDEntry(_NTIIDEntry):
@@ -509,19 +520,21 @@ class _UserPagesCollection(object):
 			lnk.__name__ = lnk.target
 		return result
 
+	def _make_parent(self, ntiid):
+		ent_parent = location.Location()
+		ent_parent.__name__ = "%s(%s)" % (self.name, ntiid)
+		ent_parent.__parent__ = self.__parent__
+		return ent_parent
+
+	def make_info_for( self, ntiid ):
+		return _NTIIDEntry( self._make_parent(ntiid), ntiid )
+
 	@property
 	def container(self):
-		def make_parent(ntiid):
-			ent_parent = location.Location()
-			ent_parent.__name__ = "%s(%s)" % (self.name, ntiid)
-			ent_parent.__parent__ = self.__parent__
-			return ent_parent
-
 		result = datastructures.LastModifiedCopyingUserList()
-		result.append( _RootNTIIDEntry( make_parent(ntiids.ROOT) ) )
+		result.append( _RootNTIIDEntry( self._make_parent(ntiids.ROOT) ) )
 		for ntiid in self._user.iterntiids():
-			ent = _NTIIDEntry( make_parent(ntiid), ntiid )
-			result.append( ent )
+			result.append( self.make_info_for( ntiid ) )
 
 		return result
 
@@ -623,12 +636,17 @@ class UserService(object):
 		self.__parent__ = None
 
 	@property
-	def workspaces( self ):
+	def user_workspace(self):
 		# The main user workspace lives at /users/ME/
 		user_workspace = UserEnumerationWorkspace( self._user )
 		user_workspace.__name__ = self._user.username
 		user_workspace.__parent__ = self
-		result = [user_workspace]
+		return user_workspace
+
+	@property
+	def workspaces( self ):
+		# The main user workspace lives at /users/ME/
+		result = [self.user_workspace]
 
 		global_ws = GlobalWorkspace()
 		global_ws.__parent__ = self.__parent__

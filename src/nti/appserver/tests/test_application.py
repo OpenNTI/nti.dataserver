@@ -871,6 +871,46 @@ class TestApplicationLibrary(ApplicationTestBase):
 		assert_that( res.status_int, is_( 303 ) )
 		assert_that( res.headers, has_entry( 'Location', 'http://localhost/prealgebra/sect_0002.html' ) )
 
+	def test_library_accept_json(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			self._create_user()
+		testapp = TestApp( self.app )
+
+		for accept_type in ('application/json','application/vnd.nextthought.pageinfo','application/vnd.nextthought.pageinfo+json'):
+
+			res = testapp.get( '/dataserver2/NTIIDs/' + self.child_ntiid,
+							   headers={"Accept": accept_type},
+							   extra_environ=self._make_extra_environ() )
+			assert_that( res.status_int, is_( 200 ) )
+
+			assert_that( res.content_type, is_( 'application/vnd.nextthought.pageinfo+json' ) )
+			assert_that( res.json_body, has_entry( 'MimeType', 'application/vnd.nextthought.pageinfo' ) )
+			assert_that( res.json_body, has_entry( 'Links', has_item( all_of( has_entry( 'rel', 'content' ),
+																			  has_entry( 'href', '/prealgebra/sect_0002.html' ) ) ) ) )
+
+			assert_that( res.json_body, has_entry( 'Links', has_item( all_of( has_entry( 'rel', 'Stream' ),
+																			  has_entry( 'href',
+																						 urllib.quote(
+																						 '/dataserver2/users/sjohnson@nextthought.com/Pages(' + self.child_ntiid + ')/Stream' ) ) ) ) ) )
+
+
+	def test_library_accept_link(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			self._create_user()
+		testapp = TestApp( self.app )
+
+		res = testapp.get( '/dataserver2/NTIIDs/' + self.child_ntiid,
+						   headers={"Accept": "application/vnd.nextthought.link+json"},
+						   extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 200 ) )
+
+		assert_that( res.content_type, is_( 'application/vnd.nextthought.link+json' ) )
+		assert_that( res.json_body, has_entry( 'href', '/prealgebra/sect_0002.html' ) )
+
+
+
+
+
 class TestApplicationLibraryNoSlash(TestApplicationLibrary):
 
 	def _setup_library(self):
