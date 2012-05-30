@@ -5,11 +5,12 @@ logger = logging.getLogger(__name__)
 
 contentSizeName = 'NTIRelativeScrollHeight'
 
-def transform(book):
+def transform(book,context=None):
 	"""
 	Use the toc file to find all the pages in the contentLocation.
 	Use phantomjs and js to render the page and extract the content size.
 	Stuff the contentsize in the page as a meta tag and add it to toc
+	:param context: A zope `IComponentLookup`. Currently unused.
 	"""
 
 	eclipseTOC = book.toc

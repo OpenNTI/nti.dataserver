@@ -52,6 +52,7 @@ class TestTransforms(ConfiguringTestBase):
 		"""With a jobname, only topics with no icon that have an icon on disk are set"""
 		tex_doc = EmptyMockDocument()
 		tex_doc.userdata['jobname'] = 'prealgebra'
+		context = interfaces.JobComponents( 'prealgebra' )
 		bio_dir = os.path.join( os.path.dirname( __file__ ),  'intro-biology-rendered-book' )
 		# First, make sure our filesystem matches our expectations
 		assert_that( os.path.isfile( os.path.join( bio_dir, 'icons', 'chapters', 'C2.png' ) ), is_( True ) )
@@ -61,7 +62,7 @@ class TestTransforms(ConfiguringTestBase):
 		# Throw away the icon for C2
 		self._chapters_of( book )[1].removeAttribute( 'icon' )
 
-		res, nodes = tociconsetter.transform( book, save_toc=False )
+		res, nodes = tociconsetter.transform( book, save_toc=False, context=context )
 
 		assert_that( res, is_( True ) )
 		# Only icons that exist are used
@@ -69,6 +70,3 @@ class TestTransforms(ConfiguringTestBase):
 		assert_that( self._chapters_of(book)[1].getAttribute( 'icon' ), is_( 'icons/chapters/C2.png' ) )
 		assert_that( nodes[0].get_background_image(), is_( none() ) )
 		assert_that( nodes[1].get_background_image(), is_( "background-image: url('images/chapters/C2.png')" ) )
-
-
-
