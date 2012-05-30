@@ -47,6 +47,9 @@ def transform( book, save_toc=True ):
 				# Note that we're not using the nti.dataserver.ntiids module to validate this to
 				# avoid dependencies (which may not be important)
 				continue
+			if filename.startswith( 'http:' ) or filename.startswith( 'https:' ):
+				# An absolute link. Nothing to do for it either
+				continue
 
 			fragment = ''
 			filename_frag = filename.split( '#', 1 )

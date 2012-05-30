@@ -75,10 +75,11 @@ def transform(book, context=None):
 										   [x[0] for x in pageAndOutput],
 										   [x[1] for x in pageAndOutput]):
 			thumbnail = os.path.join(thumbnails, output)
-			copy(os.path.join(tempdir, output), os.path.join(cwd, thumbnail))
+
 			try:
+				copy(os.path.join(tempdir, output), os.path.join(cwd, thumbnail))
 				eclipseTOC.getPageNodeWithNTIID(ntiid).attributes['thumbnail'] = os.path.relpath(thumbnail, start=book.contentLocation)
-			except IndexError:
+			except (IndexError,IOError):
 				logger.debug( "Failed to set thumbnail for %s to %s", ntiid, thumbnail, exc_info=True )
 
 	os.chdir(cwd)
