@@ -23,20 +23,19 @@ from nltk.tokenize import RegexpTokenizer
 import logging
 logger = logging.getLogger(__name__)
 
-# -----------------------------
+
 
 name_anchor_pattern = re.compile(".+[#a\d+]$")
 ref_pattern = re.compile("<span class=\"ref\">(.*)</span>")
 last_m_pattern = re.compile("<meta content=\"(.*)\" http-equiv=\"last-modified\"")
 page_c_pattern = re.compile("<div class=\"page-contents\">(.*)</body>")
-default_tokenizer = RegexpTokenizer(r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-']\w+)*", flags = re.MULTILINE | re.DOTALL) 
+default_tokenizer = RegexpTokenizer(r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-']\w+)*", flags = re.MULTILINE | re.DOTALL)
 
 scope_pattern = re.compile(r'<(\w).*name="(.*)".*itemscope.*itemtype="http://schema.org/CreativeWork".*>',\
 							   re.MULTILINE | re.DOTALL)
-	
+
 prop_pattern = re.compile(r'<(\w).*itemprop="(.*)".*>', re.MULTILINE | re.DOTALL)
-	
-# -----------------------------
+
 
 def get_schema():
 	return create_book_schema()
@@ -57,7 +56,6 @@ def get_or_create_index(indexdir, indexname ='prealgebra', recreate = True):
 
 	return ix
 
-# -----------------------------
 
 def get_ntiid(node):
 	attrs = node.attributes
@@ -172,30 +170,30 @@ class _Node(object):
 
 	def __str__(self):
 		return "<%s,%s,%s>" % ( self.level, self.name, self.properties )
-	
+
 	def __repr__(self):
 		return self.__str__()
-	
+
 	def add_property(self, value):
 		self.properties.append(unicode(value.lower()))
-		
+
 def _peek(stack):
 	return stack[len(stack) -1] if stack else None
 
 def _pop(stack, result):
 	node = stack.pop()
 	result.append(node)
-	if stack: 
+	if stack:
 		_peek(stack).children.append(node)
-			
+
 def get_microdata(html, sort=True):
 	"""
 	returns the NTI provide microdata from the specified html string
-	"""	
+	"""
 	level = 0
 	scopes = []
 	objects = []
-	
+
 	idx = 0
 	length = len(html)
 	element = []
@@ -203,17 +201,17 @@ def get_microdata(html, sort=True):
 		if html[idx] == '<' or html[idx] == '>':
 			if element:
 				if html[idx] == '>':
-					element.append(html[idx])	
+					element.append(html[idx])
 					tag = ''.join(element).strip()
 					element = []
 				else:
 					element.append('>')
 					tag = ''.join(element).strip()
 					element = [html[idx]]
-									
+
 				if not tag.startswith("</"):
 					level = level + 1
-					
+
 					sg = scope_pattern.search(tag)
 					if sg:
 						scopes.append( _Node(sg.groups()[0], sg.groups()[1], level) )
@@ -221,39 +219,38 @@ def get_microdata(html, sort=True):
 						m = prop_pattern.search(tag)
 						if m and scopes:
 							_peek(scopes).add_property(m.groups()[1])
-							
+
 					if tag.endswith("/>"):
 						if sg:
 							_pop(scopes, objects)
-							
+
 						level = level - 1
 				else:
 					if scopes and _peek(scopes).level == level:
 						_pop(scopes, objects)
-						
+
 					level = level - 1
 			else:
 				element.append(html[idx])
-				
+
 		elif element:
 			element.append(html[idx])
-			
-		idx = idx + 1 
-		
+
+		idx = idx + 1
+
 	# check if there are left overs
 	while scopes:
 		_pop(scopes, objects)
-	
+
 	if sort:
-		objects.sort( key=lambda n: n.level) 
-	
+		objects.sort( key=lambda n: n.level)
+
 	result = []
 	for node in objects:
 		result.append( (node.name, node.properties) )
-		
+
 	return result
-		
-# -----------------------------
+
 
 def _index_node(writer, node, contentPath, optimize=False):
 	"""
@@ -262,14 +259,14 @@ def _index_node(writer, node, contentPath, optimize=False):
 
 	attributes = node.attributes
 	fileName = str(attributes['href'].value)
-	if name_anchor_pattern.match(fileName): # file name ends with an anchor id
+	if '#' in fileName: # file name ends with an anchor id
 		return
-	
+
 	content_file = os.path.join(contentPath, str(fileName))
 	if not os.path.exists(content_file):
-		logger.error("content file '%s' does not exists", content_file)
+		logger.warn("content file '%s' does not exists", content_file)
 		return
-		
+
 	title = get_title(node)
 	ntiid = get_ntiid(node)
 
@@ -277,7 +274,7 @@ def _index_node(writer, node, contentPath, optimize=False):
 		return
 
 	related = get_related(node)
-	
+
 	logger.info( "Indexing (%s, %s, %s)", fileName, title, ntiid )
 
 	with open(content_file, "r") as f:
@@ -292,7 +289,7 @@ def _index_node(writer, node, contentPath, optimize=False):
 	keywords = set()
 	for _, properties in get_microdata(rawContent):
 		keywords.update(properties)
-		
+
 	try:
 		as_time = datetime.fromtimestamp(float(last_modified))
 		writer.add_document(ntiid=unicode(ntiid),
@@ -320,26 +317,26 @@ def get_nodes(tocFile):
 
 	return result
 
-# -----------------------------
 
-def main(tocFile, 
+def main(tocFile,
 		 contentPath=None,
 		 indexdir=None,
-		 indexname=None, 
-		 recreate_index=True, 
+		 indexname=None,
+		 recreate_index=True,
 		 optimize=True):
-	""" 
+	"""
 	Main program routine
 	"""
 
 	if not contentPath:
 		contentPath = os.path.dirname(tocFile)
-		
+
 	if not indexdir:
 		indexdir = os.path.join(contentPath, "indexdir")
-		
+
 	indexname = indexname or "prealgebra"
-	
+	# FIXME: Rewrite this process to use RenderedBook which has a better idea of what
+	# constitutes a "page" to index
 	nodes = get_nodes(tocFile)
 	idx = get_or_create_index(indexdir, indexname, recreate=recreate_index)
 
@@ -347,13 +344,13 @@ def main(tocFile,
 											period=None,
 											limit=100,
 											commitargs={'optimize' : False, 'merge': False})
-	
+
 	with ThreadPoolExecutor(multiprocessing.cpu_count()) as pool:
 		for node in nodes:
 			pool.submit( _index_node, writer, node, contentPath)
 
 	writer.commit()
-	
+
 	if optimize:
 		logger.info( "Optimizing index" )
 		idx.optimize()
@@ -375,5 +372,3 @@ if __name__ == '__main__':
 		else:
 			print "Specify a toc-file [chapter-path] [index-directory] [index-name]"
 	_call_main()
-
-
