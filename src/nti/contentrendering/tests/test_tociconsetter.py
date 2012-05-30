@@ -51,8 +51,8 @@ class TestTransforms(ConfiguringTestBase):
 	def test_transforms_with_jobname_on_disk_icon(self):
 		"""With a jobname, only topics with no icon that have an icon on disk are set"""
 		tex_doc = EmptyMockDocument()
-		tex_doc.userdata['jobname'] = 'prealgebra'
-		context = interfaces.JobComponents( 'prealgebra' )
+		tex_doc.userdata['jobname'] = 'testing'
+		context = interfaces.JobComponents( 'testing' )
 		bio_dir = os.path.join( os.path.dirname( __file__ ),  'intro-biology-rendered-book' )
 		# First, make sure our filesystem matches our expectations
 		assert_that( os.path.isfile( os.path.join( bio_dir, 'icons', 'chapters', 'C2.png' ) ), is_( True ) )

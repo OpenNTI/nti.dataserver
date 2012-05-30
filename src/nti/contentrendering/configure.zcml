@@ -28,34 +28,11 @@
 			 provides=".interfaces.ILatexContentFragment" />
 
 
-	<!-- icon and image finders for the prealgebra book -->
-	<!-- TODO: Move this to a specific package and include it based on
-	the jobname. -->
-	<adapter factory=".tociconsetter._PrealgebraIconFinder"
-			 for=".interfaces.IRenderedBook .interfaces.IEclipseMiniDomTopic"
-			 provides=".interfaces.IIconFinder"
-			 name="prealgebra" />
-	<adapter factory=".tociconsetter._PrealgebraBackgroundImageFinder"
-			 for=".interfaces.IRenderedBook .interfaces.IEclipseMiniDomTopic"
-			 provides=".interfaces.IBackgroundImageFinder"
-			 name="prealgebra" />
-	<adapter factory=".tociconsetter._PrealgebraIconFinder"
-			 for=".interfaces.IRenderedBook .interfaces.IEclipseMiniDomTopic"
-			 provides=".interfaces.IIconFinder"
-			 name="mathcounts" />
-	<adapter factory=".tociconsetter._PrealgebraBackgroundImageFinder"
-			 for=".interfaces.IRenderedBook .interfaces.IEclipseMiniDomTopic"
-			 provides=".interfaces.IBackgroundImageFinder"
-			 name="mathcounts" />
-
-	<adapter factory=".tociconsetter._PrealgebraIconFinder"
-			 for=".interfaces.IRenderedBook .interfaces.IEclipseMiniDomTopic"
-			 provides=".interfaces.IIconFinder"
-			 name="mathcounts2012" />
-	<adapter factory=".tociconsetter._PrealgebraBackgroundImageFinder"
-			 for=".interfaces.IRenderedBook .interfaces.IEclipseMiniDomTopic"
-			 provides=".interfaces.IBackgroundImageFinder"
-			 name="mathcounts2012" />
+	<!-- icon and image finders for testing book -->
+	<adapter factory=".tociconsetter.SimpleConventionIconFinder"
+			 name="testing" />
+	<adapter factory=".tociconsetter.SimpleConventionBackgroundImageFinder"
+			 name="testing" />
 
 	<include package=".transforms" />
 	<include package=".contentchecks" />
