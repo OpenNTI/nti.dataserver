@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 
 import os
-import urllib
 import sys
 
-from pyquery import PyQuery
 from . import RenderedBook
 
 import logging
@@ -107,7 +105,14 @@ def _handle_sub_topics(topic):
 
 	return modified
 
-class _PrealgebraIconFinder(object):
+@interface.implementer(interfaces.IIconFinder)
+@component.adapter(interfaces.IRenderedBook,interfaces.IEclipseMiniDomTopic)
+class SimpleConventionIconFinder(object):
+	"""
+	Follows a simple convention to find icons for topics: looks in the
+	'icons/chapters' directory for a file named 'CX.png', where 'X' is the
+	chapter (topic) number.
+	"""
 	path_type = 'icons'
 
 	def __init__( self, book, topic ):
@@ -125,9 +130,14 @@ class _PrealgebraIconFinder(object):
 		if os.path.exists( path ):
 			return self.path_type + '/chapters/' + imagename
 
-class _PrealgebraBackgroundImageFinder(_PrealgebraIconFinder):
+@interface.implementer_only(interfaces.IBackgroundImageFinder)
+@component.adapter(interfaces.IRenderedBook,interfaces.IEclipseMiniDomTopic)
+class SimpleConventionBackgroundImageFinder(SimpleConventionIconFinder):
+	"""
+	Just like the super class, but looks in the 'images/chapters' directory.
+	"""
 	path_type = 'images'
-	find_background_image = _PrealgebraIconFinder.find_icon
+	find_background_image = SimpleConventionIconFinder.find_icon
 
 if __name__ == '__main__':
 	main( sys.argv[1:] )
