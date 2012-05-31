@@ -40,12 +40,12 @@ class _FakeSite(object):
 	def getSiteManager(self):
 		return self.sitemanager
 
-def _greenlet_spawn(func, *args, **kwargs):
+def _greenlet_spawn(spawn, func, *args, **kwargs):
 	local_site = _FakeSite(component.getSiteManager())
 	def runner(f, *fargs, **fkwargs):
 		with site(local_site):
 			return f(*fargs, **fkwargs)
-	greenlet = gevent.spawn(runner, f=func, *args, **kwargs)
+	greenlet = spawn(runner, f=func, *args, **kwargs)
 	return greenlet
 
 # -----------------------------------
@@ -66,8 +66,9 @@ class IndexManager(object):
 			cls.indexmanager = super(IndexManager, cls).__new__(cls, *args, **kwargs)
 		return cls.indexmanager
 
-	def __init__(self, bookidx_manager_factory, useridx_manager_factory, *args, **kwargs):
+	def __init__(self, bookidx_manager_factory, useridx_manager_factory, search_pool_size=5, *args, **kwargs):
 		self.books = CaseInsensitiveDict()
+		self.search_pool = gevent.pool.Pool(search_pool_size)
 		self.bookidx_manager_factory = bookidx_manager_factory
 		self.useridx_manager_factory = useridx_manager_factory
 
@@ -99,7 +100,7 @@ class IndexManager(object):
 		
 			# search books
 			for indexname in query.books:
-				job = _greenlet_spawn(func=self.content_search, indexname=indexname, query=query)
+				job = _greenlet_spawn(spawn=self.search_pool.spawn, func=self.content_search, indexname=indexname, query=query)
 				jobs.append(job)
 		finally:
 			gevent.joinall(jobs)
@@ -109,7 +110,8 @@ class IndexManager(object):
 		for job in jobs:
 			results = merge_search_results (results, job.value)
 			
-		logger.debug("Query '%s' returned %s hit(s)" % (query.term, results[HIT_COUNT]))
+		if results:
+			logger.debug("Query '%s' returned %s hit(s)" % (query.term, results[HIT_COUNT]))
 		return results
 		
 	@SearchCallWrapper
@@ -124,7 +126,7 @@ class IndexManager(object):
 		
 			# search books
 			for indexname in query.books:
-				job = _greenlet_spawn(func=self.content_ngram_search, indexname=indexname, query=query)
+				job = _greenlet_spawn(spawn=self.search_pool.spawn, func=self.content_ngram_search, indexname=indexname, query=query)
 				jobs.append(job)
 		finally:
 			gevent.joinall(jobs)
@@ -147,7 +149,7 @@ class IndexManager(object):
 		
 			# search books
 			for indexname in query.books:
-				job = _greenlet_spawn(func=self.content_suggest_and_search, indexname=indexname, query=query)
+				job = _greenlet_spawn(spawn=self.search_pool.spawn, func=self.content_suggest_and_search, indexname=indexname, query=query)
 				jobs.append(job)
 		finally:
 			gevent.joinall(jobs)
@@ -170,7 +172,7 @@ class IndexManager(object):
 		
 			# search books
 			for indexname in query.books:
-				job = _greenlet_spawn(func=self.content_suggest, indexname=indexname, query=query)
+				job = _greenlet_spawn(spawn=self.search_pool.spawn, func=self.content_suggest, indexname=indexname, query=query)
 				jobs.append(job)
 		finally:
 			gevent.joinall(jobs)
@@ -252,7 +254,7 @@ class IndexManager(object):
 	
 	def _ugd_search_jobs(self, query, jobs=[]):
 		for uim in self._get_search_uims(query.username):
-			job = _greenlet_spawn(func=uim.search, query=query)
+			job = _greenlet_spawn(spawn=self.search_pool.spawn, func=uim.search, query=query)
 			jobs.append(job)
 		return jobs
 		
@@ -273,7 +275,7 @@ class IndexManager(object):
 	
 	def _ugd_ngram_search_jobs(self, query, jobs=[]):
 		for uim in self._get_search_uims(query.username):
-			job = _greenlet_spawn(func=uim.ngram_search, query=query)
+			job = _greenlet_spawn(spawn=self.search_pool.spawn, func=uim.ngram_search, query=query)
 			jobs.append(job)
 		return jobs
 	
@@ -296,7 +298,7 @@ class IndexManager(object):
 	
 	def _ugd_suggest_and_search_jobs(self, query, jobs=[]):
 		for uim in self._get_search_uims(query.username):
-			job = _greenlet_spawn(func=uim.suggest_and_search, query=query)
+			job = _greenlet_spawn(spawn=self.search_pool.spawn, func=uim.suggest_and_search, query=query)
 			jobs.append(job)
 		return jobs
 	
@@ -317,7 +319,7 @@ class IndexManager(object):
 	
 	def _ugd_suggest_jobs(self, query, jobs=[]):
 		for uim in self._get_search_uims(query.username):
-			job = _greenlet_spawn(func=uim.suggest, query=query)
+			job = _greenlet_spawn(spawn=self.search_pool.spawn, func=uim.suggest, query=query)
 			jobs.append(job)
 		return jobs
 	
