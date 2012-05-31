@@ -28,10 +28,15 @@ def _file_contents_equal( path, contents ):
 
 	return result
 
-def write_configuration_file( path, contents ):
+def write_configuration_file( path, contents, overwrite=True ):
 	""" Ensures the contents of `path` contain `contents`.
+	:param bool overwrite: If true (the default), existing files will be replaced. Othewise, existing
+		files will not be modified.
 	:return: The path.
 	"""
+	if not overwrite and os.path.exists( path ):
+		return path
+
 	if not _file_contents_equal( path, contents ):
 		# Must make the file
 		logger.debug( 'Writing config file %s', path )
@@ -118,8 +123,9 @@ class _ReadableEnv(object):
 
 class _Env(_ReadableEnv):
 
-	def __init__( self, root='/', settings=None, create=False ):
+	def __init__( self, root='/', settings=None, create=False, only_new=False ):
 		super(_Env,self).__init__( root=root, settings=settings )
+		self.only_new = only_new
 		if create:
 			os.makedirs( self.env_root )
 			os.makedirs( self.run_dir() )
@@ -140,7 +146,7 @@ class _Env(_ReadableEnv):
 		"""
 		:return: The absolute path to the file written.
 		"""
-		return write_configuration_file( self.conf_file( name ), contents )
+		return write_configuration_file( self.conf_file( name ), contents, overwrite=not self.only_new )
 
 	def write_supervisor_conf_file( self, pserve_ini):
 
@@ -464,11 +470,12 @@ def temp_get_config( root, demo=False ):
 
 	return env
 
-def write_configs(root_dir, pserve_ini):
-	env = _Env( root_dir, create=True )
+def write_configs(root_dir, pserve_ini, update_existing=False):
+	env = _Env( root_dir, create=(not update_existing), only_new=update_existing )
 	xmlconfig.file( 'configure.zcml', package=sys.modules['nti.dataserver'] )
 	uris = _configure_zeo( env )
-	_configure_database( env, uris )
+	if not update_existing:
+		_configure_database( env, uris )
 	_configure_pubsub_changes( env )
 	_configure_pubsub_session( env )
 
@@ -480,8 +487,9 @@ def write_configs(root_dir, pserve_ini):
 	listener.priority = 50
 	env.add_program( listener )
 
-	env.write_supervisor_conf_file( pserve_ini )
-	env.write_main_conf()
+	if not update_existing:
+		env.write_supervisor_conf_file( pserve_ini )
+		env.write_main_conf()
 
 	return env
 
@@ -498,7 +506,7 @@ def main():
 	if not os.path.exists( pserve_ini ):
 		raise OSError( "No ini file " + pserve_ini )
 
-	write_configs(root_dir, pserve_ini)
+	write_configs(root_dir, pserve_ini, '--update_existing' in args)
 
 if __name__ == '__main__':
 	main()
