@@ -364,14 +364,32 @@ def _configure_zeo( env_root ):
 	# blob dir
 	env_root.write_conf_file( 'gc_conf_zeo.xml', gc_zeo_configuration )
 
-	def _relstorage_stanza( name="Users", cacheServers="localhost:11211",
+	def _relstorage_stanza( name="Users", cacheServers=None,
 							blobDir=None,
-							addr="unix_socket /opt/local/var/run/mysql55/mysqld.sock",
+							addr=None,
 							db_name=None, db_username=None, db_passwd=None,
 							storage_only=False):
 		if db_name is None: db_name = name
 		if db_username is None: db_username = db_name
 		if db_passwd is None: db_passwd = db_name
+
+		DEFAULT_ADDR = "unix_socket /opt/local/var/run/mysql55/mysqld.sock"
+		DEFAULT_CACHE = "localhost:11211"
+		if addr is None: addr = DEFAULT_ADDR
+		if cacheServers is None: cacheServers = DEFAULT_CACHE
+
+		# Environment overrides
+		if addr is DEFAULT_ADDR and 'MYSQL_HOST' in os.environ:
+			addr = 'host ' + os.environ['MYSQL_HOST']
+
+		if cacheServers is DEFAULT_CACHE and 'MYSQL_CACHE' in os.environ:
+			cacheServers = os.environ['MYSQL_CACHE']
+
+		if db_username is db_name and 'MYSQL_USER' in os.environ:
+			db_username = os.environ['MYSQL_USER']
+
+		if db_passwd is db_name and 'MYSQL_PASSWD' in os.environ:
+			db_passwd = os.environ['MYSQL_PASSWD']
 
 		result = """
 		<zodb %(name)s>
@@ -429,6 +447,7 @@ def _configure_zeo( env_root ):
 		file_uris.append( file_uri % (data_file, name, blob_dir) )
 		relstorage_uris.append( relstorage_zconfig_uri + '#' + name )
 
+
 		convert_configuration = """
 		<filestorage source>
 			path %s
@@ -437,6 +456,7 @@ def _configure_zeo( env_root ):
 		""" % (data_file, _relstorage_stanza(name='destination', db_name=name, blobDir=blob_dir,storage_only=True))
 		env_root.write_conf_file( 'zodbconvert_%s.xml' % name, convert_configuration )
 
+		env_root.write_conf_file( 'relstorage_pack_%s.xml' %name, _relstorage_stanza( name=name, blobDir=blob_dir, storage_only=True ) )
 
 
 	uri_conf = '[ZODB]\nuris = ' + ' '.join( uris )
