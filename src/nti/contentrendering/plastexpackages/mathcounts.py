@@ -1,5 +1,17 @@
+#!/usr/bin/env python
+from __future__ import print_function, unicode_literals
+
+
+# Disable pylint warning about "too many methods" on the Command subclasses,
+# and "deprecated string" module
+#pylint: disable=R0904,W0402
+
+
 from plasTeX import Base
 
+# FIXME: Necessary to re-export these? See FIXME in aopsbook
+from plasTeX.Packages.graphicx import includegraphics
+from plasTeX.Packages.amsmath import align, AlignStar, alignat, AlignatStar, gather, GatherStar
 
 def _digestAndCollect( self, tokens, until ):
 	self.digestUntil(tokens, until )
@@ -11,15 +23,18 @@ class mathcountsyear(Base.chapter):
 	pass
 
 class mathcountsworksheet(Base.section):
+	# TODO: Now that nti_render is doing meaningful things with
+	# the 'id' (\label) and title to create unique NTIIDs, we can
+	# probably drop the need to specify this? That may depend on how
+	# quizzes get extracted at runtime?
 	args = Base.section.args + ' NTIID:str'
-
 
 	forcePars = True
 
 	def digest(self, tokens):
 		self.paragraphs()
 		super(mathcountsworksheet,self).digest( tokens )
-
+		self.id = self.attributes['NTIID']
 
 class mathcountsdifficulty(Base.Environment):
 	pass
@@ -57,46 +72,11 @@ class mathcountshint(Base.Command):
 class tab(Base.Command):
 	pass
 
-from plasTeX.Base import Math
-
-#The math package does not correctly implement the sqrt macro.  It takes two args
-Math.sqrt.args='[root]{arg}'
-
-#inlineMathTypes=['svg',  'mathjax_inline']
-#displayMathTypes=['svg', 'mathjax_display']
-
-inlineMathTypes = ['mathjax_inline']
-displayMathTypes = ['mathjax_display']
-
-Math.math.resourceTypes = inlineMathTypes
-#Math.ensuremath.resourceTypes=inlineMathTypes
-
-Math.displaymath.resourceTypes = displayMathTypes
-#Math.equation.resourceTypes=displayMathTypes
-#Math.eqnarray.resourceTypes=displayMathTypes
-#Math.EqnarrayStar.resourceTypes=displayMathTypes
-
 
 #TODO this xymatrix junk is not right but it allows us to get past it for now
 class xymatrix(Base.Command):
-	args='text:str'
+	args = 'text:str'
 
-#from plasTeX.Packages.fancybox import *
-
-from plasTeX.Packages.graphicx import includegraphics
-from plasTeX.Packages.amsmath import align, AlignStar, alignat, AlignatStar, gather, GatherStar
-
-align.resourceTypes = displayMathTypes
-AlignStar.resourceTypes = displayMathTypes
-alignat.resourceTypes = displayMathTypes
-AlignatStar.resourceTypes = displayMathTypes
-gather.resourceTypes = displayMathTypes
-GatherStar.resourceTypes = displayMathTypes
-
-#from plasTeX.Packages.multicol import *
-
-#includegraphics.resourceTypes = ['png', 'svg']
-includegraphics.resourceTypes = ['png']
 
 class rightpic(includegraphics):
 	"For our purposes, exactly the same as an includegraphics command. "
