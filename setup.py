@@ -101,8 +101,8 @@ setup(
 		'slimit',
 		'supervisor',
 		'transaction >= 1.3.0',
-		'webob',
-		'webtest',
+		'webob >= 1.2',
+		'webtest >= 1.3.4',
 		'whoosh == 2.3.2',
 		 # bcrypt/pbkdf2 for zope.password
 		 # adds cryptacular and pbkdf2
