@@ -1,8 +1,28 @@
-from plasTeX import Base
+#!/usr/bin/env python
+from __future__ import print_function, unicode_literals
+
 import re
 
+from plasTeX import Base
+from plasTeX.Base.LaTeX import Index
+from plasTeX.Packages import graphicx
+from plasTeX.Base import Crossref
+from plasTeX.Base import Node
+
+###
+# FIXME: star imports!
+# If we don't, then we wind up with some rendering problems (at least the following):
+# - unable to traverse to 'url' on an includegraphics
+# - "No resource types for align* using default renderer <type 'unicode'>"
+###
+from plasTeX.Packages.fancybox import *
+from plasTeX.Packages.graphicx import *
+from plasTeX.Packages.amsmath import *
 
 
+# Disable pylint warning about "too many methods" on the Command subclasses,
+# and "deprecated string" module
+#pylint: disable=R0904,W0402
 
 class _OneText(Base.Command):
 	args = 'text:str'
@@ -34,19 +54,19 @@ class pagebreak(_Ignored):
 #included phantom doesn't allow for tex fragments as args
 class phantom(Base.Space.phantom):
 	args = 'tex'
-	pass
+
 
 class yen(Base.Command):
 	unicode = u'\xA5'
-	pass
+
 
 class textcent(Base.Command):
 	unicode = u'\xA2'
-	pass
+
 
 class Cube(_OneText):
 	resourceTypes = ['png', 'svg']
-	pass
+
 
 class BlackCube(Cube):
 	pass
@@ -86,8 +106,7 @@ class multicols(Base.Environment):
 def digestUntilNextTextSize(self, tokens):
 	return _digestAndCollect( self, tokens, Base.FontSelection.TextSizeDeclaration )
 
-Base.FontSelection.TextSizeDeclaration.digest=digestUntilNextTextSize
-
+Base.FontSelection.TextSizeDeclaration.digest = digestUntilNextTextSize
 
 
 class rule(Base.Boxes.rule):
@@ -131,7 +150,7 @@ class chapterquote(Base.Command):
 	def invoke( self, tex ):
 		#TODO: Can we read the next command, which should be the
 		#\chapterauthor and add that as a child node?
-		tokens, source = tex.readGrouping( '{}', expanded=True, parentNode=self)
+		tokens, _ = tex.readGrouping( '{}', expanded=True, parentNode=self)
 		self += tokens
 		return None
 
@@ -157,7 +176,7 @@ class defns(Base.Environment):
 
 class picdefns(defns):
 	args = '{Picture}'
-	pass
+
 
 class cancel(Base.Command):
 	args = 'text'
@@ -174,19 +193,15 @@ class text(Base.BoxCommand):
 	args = '{self}'
 
 	def __init__(self):
-		self.arguments[0].options['stripLeadingWhitespace']=True
+		super(text,self).__init__()
+		self.arguments[0].options['stripLeadingWhitespace'] = True
 
-	def parse(self, tex):
-		return super(text, self).parse(tex)
-
-	def invoke( self, tex ):
-		return super(text,self).invoke( tex )
 
 
 #TODO does this get handled like ^
 class textsuperscript(Base.Command):
 	args = 'text:str'
-	pass
+
 
 #We would like to be able to normalize math mode
 #at parse time such that expressions like $24$ automatically
@@ -239,7 +254,7 @@ class rlin(Base.Command):
 # Attributions
 class source(Base.Command):
 	args = '{source:str}'
-	pass
+
 
 class MathCounts(source):
 	args = ''
@@ -272,7 +287,7 @@ class parts(Base.List):
 	args = '[ init:int ]'
 
 	def invoke( self, tex ):
-		res = super(parts, self).invoke( tex )
+		_ = super(parts, self).invoke( tex ) # Notice we're not returning (TODO: why?)
 
 		if 'init' in self.attributes and self.attributes['init']:
 			self.ownerDocument.context.counters['partnum'].setcounter( self.attributes['init'] )
@@ -283,7 +298,7 @@ class parts(Base.List):
 		#After digesting loop back over the children moving nodes before
 		#the first item into the first item
 		res = super(parts, self).digest(tokens)
-		if self.macroMode != Environment.MODE_END:
+		if self.macroMode != Base.Environment.MODE_END:
 			nodesToMove = []
 
 			for node in self:
@@ -310,7 +325,7 @@ class part(Base.List.item):
 		self.counter = 'partnum'
 		self.position = self.ownerDocument.context.counters[self.counter].value + 1
 		#ignore the list implementation
-		return Command.invoke(self,tex)
+		return Base.Command.invoke(self,tex)
 
 
 	def digest( self, tex ):
@@ -326,7 +341,8 @@ class exnumber(Base.Command):
 
 class exercises(Base.subsection):
 	args = ''
-	counter= ''
+	counter = ''
+	title = 'exercises'
 
 	#this is used to emulate a list.  Like parts we need to make sure
 	#that the first child in the list is  an exer or exerhard
@@ -334,7 +350,7 @@ class exercises(Base.subsection):
 		#After digesting loop back over the children moving nodes before
 		#the first item into the first item
 		res = super(exercises, self).digest(tokens)
-		if self.macroMode != Environment.MODE_END:
+		if self.macroMode != Base.Environment.MODE_END:
 
 			nodesToMove = []
 
@@ -353,7 +369,8 @@ class exercises(Base.subsection):
 
 class exer(Base.subsubsection):
 	args = ''
-	counter='exnumber'
+	counter = 'exnumber'
+	title = 'exer'
 
 	def invoke( self, tex ):
 		res = super(exer,self).invoke( tex )
@@ -411,7 +428,7 @@ class pdfinfo(Base.Command):
 	#For now we set the title of the document, but we may also want
 	#to do something intelligent with the author
 	def invoke(self, tex):
-		res = super(pdfinfo, self).invoke( tex )
+		_ = super(pdfinfo, self).invoke( tex )
 
 		if 'info' in self.attributes:
 			match = titlepattern.match(self.attributes['info'])
@@ -421,9 +438,9 @@ class pdfinfo(Base.Command):
 			self.ownerDocument.userdata['title'] = title
 			self.ownerDocument.userdata['authors'] = authors
 
-		return res;
+		return [] # But don't put anything in the dom, it doesn't render
 
-from plasTeX.Base import Crossref
+
 
 #TODO do pagerefs even make sense in our dom?
 #Try to find an intelligent page name for the reference
@@ -467,13 +484,9 @@ class _BasePicProblem(Base.Environment):
 class picproblem(_BasePicProblem):
 	pass
 
-class picproblemspec(picproblem):
-	pass
-
 class picsecprob(_BasePicProblem):
 	pass
 
-import pdb
 
 class problem(Base.Environment):
 	args = '[unknown]'
@@ -500,10 +513,11 @@ def _digestAndCollect( self, tokens, until ):
 	if getattr(self, 'forcePars', True):
 		self.paragraphs()
 
-from plasTeX.Base import Node
+
 class sectionproblems(Base.subsection):
 	counter = 'sectionprobsnotused'
 	args = ''
+	title = 'sectionproblems'
 
 	def invoke( self, tex ):
 		self.ownerDocument.context.counters['saveprobnum'].setcounter(
@@ -533,12 +547,10 @@ class sectionproblems(Base.subsection):
 			item = self[i]
 
 			if not ( isinstance(item, problem) or isinstance(item, _BasePicProblem) ):
-				before = item.previousSibling;
+				before = item.previousSibling
 				if before is not None:
 					self.pop(i)
 					before.append(item)
-				else:
-					log.warning('Non problem item %s of %s has no previous sibling' % (item, self))
 
 
 
@@ -565,7 +577,7 @@ class beginsol( Base.subsection ):
 	counter = ''
 
 	def invoke( self, tex ):
-		res = super(solution, self).invoke(tex)
+		res = super(beginsol, self).invoke(tex)
 
 		#We encounter solutions right after the problem therefore our
 		#solutions probnum should be the current value of the probnum counter
@@ -592,57 +604,67 @@ class solution( Base.Environment ):
 		self.attributes['probnum'] = str(self.ownerDocument.context.counters['chapter'].value) + '.' + str(self.ownerDocument.context.counters['probnum'].value)
 
 		return res
+###
+# FIXME The use of section types for individual problems and exercises
+# is probably not right. This causes them to appear in the table of contents,
+# partially, but they don't have real titles. It also causes them to get NTIIDs,
+# which may or may not be right.
+###
 
 # FIXME: These counters are not right?
 # If we don't override the args attribute, these consume one letter of text
 class reviewprobs(Base.section):
 	args = ''
 	#counter = 'probnum'
+	title = 'reviewprobs'
 
 	def invoke(self, tex):
 		#pdb.set_trace();
 		#Attach a title to this "section"
-		docFragment = self.ownerDocument.createDocumentFragment();
-		docFragment.appendText(["Review Problems"]);
-		self.title=docFragment;
+		docFragment = self.ownerDocument.createDocumentFragment()
+		docFragment.appendText(["Review Problems"])
+		self.title = docFragment
 
 		#Save the probnum counter b/c it gets reset in the super
 		self.ownerDocument.context.counters['saveprobnum'].setcounter(
 			self.ownerDocument.context.counters['probnum'] )
 
-		res = super(reviewprobs, self).invoke(tex);
+		res = super(reviewprobs, self).invoke(tex)
 
 		#Restore the probnum counter
 		self.ownerDocument.context.counters['probnum'].setcounter(
 			self.ownerDocument.context.counters['saveprobnum'] )
 
-		return res;
+		return res
 
 class challengeprobs(Base.section):
 	args = ''
 	#counter = 'probnum'
+	title = 'challengeprobs'
+
 	def invoke(self, tex):
 		#pdb.set_trace()
-		docFragment = self.ownerDocument.createDocumentFragment();
-		docFragment.appendText(["Challenge Problems"]);
-		self.title=docFragment;
+		docFragment = self.ownerDocument.createDocumentFragment()
+		docFragment.appendText(["Challenge Problems"])
+		self.title = docFragment
 
 		#Save the probnum counter b/c it gets reset in the super
 		self.ownerDocument.context.counters['saveprobnum'].setcounter(
 			self.ownerDocument.context.counters['probnum'] )
 
-		res = super(challengeprobs, self).invoke(tex);
+		res = super(challengeprobs, self).invoke(tex)
 
 		#Restore the probnum counter
 		self.ownerDocument.context.counters['probnum'].setcounter(
 			self.ownerDocument.context.counters['saveprobnum'] )
 
-		return res;
+		return res
 
 
 class revprob(Base.subsection):
 	args = ''
 	counter = 'probnum'
+	title = 'revprob'
 
 	def invoke( self, tex ):
 		res = super(revprob,self).invoke( tex )
@@ -652,6 +674,7 @@ class revprob(Base.subsection):
 class chall(Base.subsection):
 	args = ''
 	counter = 'probnum'
+	title = 'chall'
 
 	def invoke( self, tex ):
 		res = super(chall,self).invoke( tex )
@@ -661,40 +684,12 @@ class chall(Base.subsection):
 class challhard(Base.subsection):
 	args = ''
 	counter = 'probnum'
+	title = 'challhard'
 
 	def invoke( self, tex ):
 		res = super(challhard,self).invoke( tex )
 		self.attributes['probnum'] = str(self.ownerDocument.context.counters['chapter'].value) + '.' + str(self.ownerDocument.context.counters['probnum'].value)
 		return res
-# This is all handled by the main driver
-from plasTeX.Base import Arrays
-# tabularTypes = ['png', 'svg']
-
-# Arrays.tabular.resourceTypes = tabularTypes
-# Arrays.TabularStar.resourceTypes = tabularTypes
-# Arrays.tabularx.resourceTypes = tabularTypes
-
-from plasTeX.Base import Math
-
-
-# #The math package does not correctly implement the sqrt macro.	It takes two args
-# Math.sqrt.args='[root]{arg}'
-
-# inlineMathTypes = ['mathjax_inline']
-# displayMathTypes = ['mathjax_display']
-
-# #inlineMathTypes = ['mathjax_inline', 'png', 'svg']
-# #displayMathTypes = ['mathjax_display', 'png', 'svg']
-
-# Math.math.resourceTypes = inlineMathTypes
-# #Math.ensuremath.resourceTypes=inlineMathTypes
-
-# Math.displaymath.resourceTypes = displayMathTypes
-# Math.EqnarrayStar.resourceTypes = displayMathTypes
-# #Math.equation.resourceTypes=displayMathTypes
-#Math.eqnarray.resourceTypes=displayMathTypes
-#Math.EqnarrayStar.resourceTypes=displayMathTypes
-
 
 #for \nth, \nst, \nrd, etc..
 class nsuperscript(Base.Command):
@@ -733,27 +728,7 @@ class nrd(nsuperscript):
 class nth(nsuperscript):
 	pass
 
-
-# FIXME: star imports!
-from plasTeX.Packages.fancybox import *
-
-from plasTeX.Packages.graphicx import *
-
-from plasTeX.Packages.amsmath import *
-
-# align.resourceTypes = displayMathTypes
-# AlignStar.resourceTypes = displayMathTypes
-# alignat.resourceTypes = displayMathTypes
-# AlignatStar.resourceTypes = displayMathTypes
-# gather.resourceTypes = displayMathTypes
-# GatherStar.resourceTypes = displayMathTypes
-
-# from plasTeX.Packages.multicol import *
-
-# #includegraphics.resourceTypes = ['png', 'svg']
-# includegraphics.resourceTypes = ['png']
-
-class rightpic(includegraphics):
+class rightpic(graphicx.includegraphics):
 	" For our purposes, exactly the same as an includegraphics command. "
 	packageName = 'aopsbook'
 
@@ -775,17 +750,14 @@ class fig(Base.figure):
 
 class negthinspaceshorthand(Base.Text.negthinspace):
 	macroName = '!'
-	pass
+
 
 ## Hints
 class hints(_Ignored):
 	pass
 
 class hint(Crossref.label):
-
-	def invoke( self, tex ):
-		res = super( hint, self ).invoke( tex )
-		return res
+	pass
 
 class thehints(Base.List):
 	# We keep counters but ignore them
@@ -793,7 +765,7 @@ class thehints(Base.List):
 	args = ''
 
 	def invoke( self, tex ):
-		res = super(thehints, self).invoke( tex )
+		_ = super(thehints, self).invoke( tex ) # Not returning (TODO: Why?)
 
 		if self.macroMode != Base.Environment.MODE_END:
 			self.ownerDocument.context.counters['hintnum'].setcounter(0)
@@ -823,7 +795,7 @@ class hintitem(Crossref.ref):
 #		self.counter = 'hintnum'
 #		self.position = self.ownerDocument.context.counters[self.counter].value + 1
 		#ignore the list implementation
-		return Command.invoke(self,tex)
+		return Base.Command.invoke(self,tex)
 
 	def digest(self, tokens):
 		_digestAndCollect( self, tokens, hintitem )
@@ -831,7 +803,7 @@ class hintitem(Crossref.ref):
 class ntirequires(Base.Command):
 	args = 'rels:dict'
 
-	def toXML(self):
+	def toXML(self, *args, **kwargs):
 		"""
 		<nti:topic rdf:about='...'>
 		  <nti:requires><aops:concept>...</aops:concept></nti:requires>
@@ -854,7 +826,7 @@ class ntirequires(Base.Command):
 			parentNode = parentNode.parentNode
 		return result
 
-from plasTeX.Base.LaTeX import Index
+
 ###
 ### Indexes in math equations turn out to mess up
 ### mathjax rendering. Thus we remove them.
@@ -894,8 +866,5 @@ def ProcessOptions( options, document ):
 	document.context.newcounter( 'hintnum' )
 
 	document.context.newcounter('sectionprobsnotused')
-	document.context.newcounter('challprobsnotused');
+	document.context.newcounter('challprobsnotused')
 	document.context.newcounter('reviewprobsnotused')
-
-
-
