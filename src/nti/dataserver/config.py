@@ -391,6 +391,8 @@ def _configure_zeo( env_root ):
 		if db_passwd is db_name and 'MYSQL_PASSWD' in os.environ:
 			db_passwd = os.environ['MYSQL_PASSWD']
 
+		# Notice that we specify both a section name (<zodb Name>) and
+		# the database-nome. Further explanation below.
 		result = """
 		<zodb %(name)s>
 		pool-size 7
@@ -445,7 +447,15 @@ def _configure_zeo( env_root ):
 		demo_uris.append( uri )
 
 		file_uris.append( file_uri % (data_file, name, blob_dir) )
-		relstorage_uris.append( relstorage_zconfig_uri + '#' + name )
+		# NOTE: The ZConfig parser unconditionally lower cases the names of sections (e.g., <zodb Users> == <zodb users>)
+		# While ZConfig doesn't alter the database-name attribute, repoze.zodbconn.resolvers ignores database-name
+		# in favor of the section name. However, the database-name is what's used internally by the DB
+		# objects to construct and follow the multi-database references. Not all tools suffer from this problem, though,
+		# so section name and database-name have to match. The solution is to lowercase the fragment name in the URI.
+		# This works because we then explicitly lookup databases by their complete, case-correct name when
+		# we return them in a tuple. (Recall that we cannot change the database names once databases exist without
+		# breaking all references, but in the future it would be a good idea to name databases in lower case).
+		relstorage_uris.append( relstorage_zconfig_uri + '#' + name.lower() )
 
 
 		convert_configuration = """
@@ -518,6 +528,7 @@ def temp_get_config( root, demo=False ):
 			db = env.zeo_make_db()
 		else:
 			db = db_from_uri( env.zeo_uris )
+		# See notes in _configure_zeo about names and cases
 		return (db.databases['Users'], db.databases['Sessions'], db.databases['Search'])
 	env.connect_databases = connect_databases
 
