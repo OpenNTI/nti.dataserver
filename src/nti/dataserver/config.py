@@ -331,6 +331,39 @@ def _configure_zeo( env_root ):
 		""" % configuration_dict
 	env_root.write_conf_file( 'gc_conf.xml', gc_configuration )
 
+	# Write one for ZEO access for online GC and diagnosis too
+	gc_zeo_configuration = """
+		<zodb Users>
+		<zeoclient 1>
+		storage 1
+		server %(clientPipe)s
+		blob-dir %(blobDir)s
+		shared-blob-dir true
+		</zeoclient>
+		</zodb>
+		<zodb Sessions>
+		<zeoclient 2>
+		storage 2
+		server %(clientPipe)s
+		blob-dir %(blobDir)s
+		shared-blob-dir true
+		</zeoclient>
+		</zodb>
+		<zodb Search>
+		<zeoclient 3>
+		storage 3
+		server %(clientPipe)s
+		blob-dir %(blobDir)s
+		shared-blob-dir true
+		</zeoclient>
+		</zodb>
+		""" % configuration_dict
+	# TODO: Given this conf, and the possibilitiy of using zconfig:// urls in
+	# repoze.zodbconn, maybe we should, on the DRY principal? Thus avoiding rewriting
+	# stuff in the URI? The reason we haven't so far is the demo URIs differ by
+	# blob dir
+	env_root.write_conf_file( 'gc_conf_zeo.xml', gc_zeo_configuration )
+
 	def _relstorage_stanza( name="Users", cacheServers="localhost:11211",
 							blobDir=None,
 							addr="unix_socket /opt/local/var/run/mysql55/mysqld.sock",
