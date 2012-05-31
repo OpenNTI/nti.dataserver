@@ -29,7 +29,9 @@ def _file_contents_equal( path, contents ):
 	return result
 
 def write_configuration_file( path, contents ):
-	""" Ensures the contents of `path` contain `contents`. """
+	""" Ensures the contents of `path` contain `contents`.
+	:return: The path.
+	"""
 	if not _file_contents_equal( path, contents ):
 		# Must make the file
 		logger.debug( 'Writing config file %s', path )
@@ -38,6 +40,8 @@ def write_configuration_file( path, contents ):
 		except OSError: pass
 		with open( path, 'w' ) as f:
 			print( contents, file=f )
+
+	return path
 
 class _Program(object):
 	cmd_line = None
@@ -64,7 +68,7 @@ class _ReadableEnv(object):
 	programs = ()
 
 	def __init__( self, root='/', settings=None ):
-		self.env_root = os.path.expanduser( root )
+		self.env_root = os.path.abspath( os.path.expanduser( root ) )
 		self.settings = settings if settings is not None else dict(os.environ)
 		self.programs = []
 		self._main_conf = None
@@ -133,7 +137,10 @@ class _Env(_ReadableEnv):
 				self._main_conf.write(fp)
 
 	def write_conf_file( self, name, contents ):
-		write_configuration_file( self.conf_file( name ), contents )
+		"""
+		:return: The absolute path to the file written.
+		"""
+		return write_configuration_file( self.conf_file( name ), contents )
 
 	def write_supervisor_conf_file( self, pserve_ini):
 
@@ -245,6 +252,13 @@ def _configure_zeo( env_root ):
 	searchDataFile = env_root.data_file( 'search.' + dataFileName )
 	searchBlobDir, searchDemoBlobDir = _mk_blobdirs( searchDataFile )
 
+	configuration_dict = {
+		'clientPipe': clientPipe, 'logfile': env_root.log_file( 'zeo.log' ),
+		'dataFile': dataFile,'blobDir': blobDir,
+		'sessionDataFile': sessionDataFile, 'sessionBlobDir': sessionBlobDir,
+		'searchDataFile': searchDataFile, 'searchBlobDir': searchBlobDir
+		}
+
 	configuration = """
 		<zeo>
 		address %(clientPipe)s
@@ -252,10 +266,12 @@ def _configure_zeo( env_root ):
 		<filestorage 1>
 		path %(dataFile)s
 		blob-dir %(blobDir)s
+		pack-gc false
 		</filestorage>
 		<filestorage 2>
 		path %(sessionDataFile)s
 		blob-dir %(sessionBlobDir)s
+		pack-gc false
 		</filestorage>
 		<filestorage 3>
 		path %(searchDataFile)s
@@ -269,11 +285,7 @@ def _configure_zeo( env_root ):
 		level DEBUG
 		</logfile>
 		</eventlog>
-		""" % { 'clientPipe': clientPipe, 'blobDir': blobDir,
-				'dataFile': dataFile, 'logfile': env_root.log_file( 'zeo.log' ),
-				'sessionDataFile': sessionDataFile, 'sessionBlobDir': sessionBlobDir,
-				'searchDataFile': searchDataFile, 'searchBlobDir': searchBlobDir
-				}
+		""" % configuration_dict
 
 	# NOTE: DemoStorage is NOT a ConflictResolvingStorage.
 	# It will not run our _p_resolveConflict methods.
@@ -287,13 +299,85 @@ def _configure_zeo( env_root ):
 	env_root.write_conf_file( 'zeo_conf.xml', configuration )
 	env_root.write_conf_file( 'demo_zeo_conf.xml', demo_conf )
 
+	# Now write a configuration for use with zc.zodbgc, which runs
+	# much faster on raw files
+	gc_configuration = """
+		<zodb Users>
+		<filestorage 1>
+		path %(dataFile)s
+		blob-dir %(blobDir)s
+		pack-gc false
+		</filestorage>
+		</zodb>
+		<zodb Sessions>
+		<filestorage 2>
+		path %(sessionDataFile)s
+		blob-dir %(sessionBlobDir)s
+		pack-gc false
+		</filestorage>
+		</zodb>
+		<zodb Search>
+		<filestorage 3>
+		path %(searchDataFile)s
+		blob-dir %(searchBlobDir)s
+		</filestorage>
+		</zodb>
+		""" % configuration_dict
+	env_root.write_conf_file( 'gc_conf.xml', gc_configuration )
+
+	def _relstorage_stanza( name="Users", cacheServers="localhost:11211",
+							blobDir=None,
+							addr="unix_socket /opt/local/var/run/mysql55/mysqld.sock",
+							db_name=None, db_username=None, db_passwd=None,
+							storage_only=False):
+		if db_name is None: db_name = name
+		if db_username is None: db_username = db_name
+		if db_passwd is None: db_passwd = db_name
+
+		result = """
+		<zodb %(name)s>
+		pool-size 7
+		database-name %(name)s
+		<relstorage %(name)s>
+				blob-dir %(blobDir)s
+				cache-servers %(cacheServers)s
+				cache-prefix %(db_name)s
+				poll-interval 60
+				commit-lock-timeout 6
+				keep-history false
+				pack-gc false
+				<mysql>
+				db %(db_name)s
+				user %(db_username)s
+				passwd %(db_passwd)s
+				%(addr)s
+				</mysql>
+		</relstorage>
+		</zodb>
+		""" % locals()
+		if storage_only:
+			result = '\n'.join( result.splitlines()[4:-2] )
+		return result
+
+	relstorage_configuration = """
+	%%import relstorage
+	%%import zc.zlibstorage
+	%s
+	%s
+	%s
+	""" % (_relstorage_stanza(blobDir=blobDir),
+		   _relstorage_stanza(name="Sessions",blobDir=sessionBlobDir),
+		   _relstorage_stanza(name="Search",blobDir=searchBlobDir) )
+	relstorage_zconfig_path = env_root.write_conf_file( 'relstorage_conf.xml', relstorage_configuration )
 
 	base_uri = 'zeo://%(addr)s?storage=%(storage)s&database_name=%(name)s&blob_dir=%(blob_dir)s&shared_blob_dir=%(shared)s'
 	file_uri = 'file://%s?database_name=%s&blobstorage_dir=%s'
+	relstorage_zconfig_uri = 'zconfig://' + relstorage_zconfig_path
 
 	uris = []
 	demo_uris = []
 	file_uris = []
+	relstorage_uris = []
 	for storage, name, data_file, blob_dir, demo_blob_dir in ((1, 'Users',    dataFile, blobDir, demoBlobDir),
 															  (2, 'Sessions', sessionDataFile, sessionBlobDir, sessionDemoBlobDir),
 															  (3, 'Search',   searchDataFile, searchBlobDir, searchDemoBlobDir)):
@@ -304,13 +388,26 @@ def _configure_zeo( env_root ):
 		demo_uris.append( uri )
 
 		file_uris.append( file_uri % (data_file, name, blob_dir) )
+		relstorage_uris.append( relstorage_zconfig_uri + '#' + name )
+
+		convert_configuration = """
+		<filestorage source>
+			path %s
+		</filestorage>
+		%s
+		""" % (data_file, _relstorage_stanza(name='destination', db_name=name, blobDir=blob_dir,storage_only=True))
+		env_root.write_conf_file( 'zodbconvert_%s.xml' % name, convert_configuration )
+
 
 
 	uri_conf = '[ZODB]\nuris = ' + ' '.join( uris )
 	demo_uri_conf = '[ZODB]\nuris = ' + ' '.join( demo_uris )
+	relstorage_uri_conf = '[ZODB]\nuris = ' + ' '.join( relstorage_uris )
 
 	env_root.write_conf_file( 'zeo_uris.ini', uri_conf )
 	env_root.write_conf_file( 'demo_zeo_uris.ini', demo_uri_conf )
+	env_root.write_conf_file( 'relstorage_uris.ini', relstorage_uri_conf )
+
 
 	# We assume that runzeo is on the path (virtualenv)
 	program = _create_zeo_program(env_root, 'zeo_conf.xml' )
