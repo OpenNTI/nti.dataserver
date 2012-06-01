@@ -6,11 +6,13 @@ RelStorage and Amazon Relational Database Service
 implementation for ZODB that supports multiple clients through the use
 of a SQL server. It is an alternative to ZEO. In addition to pushing
 even more work out to individual clients instead of a central server
-(conflict resolution is performed by RelStorage clients, but on a ZEO
-server) it can use the underlying capabilities of of the SQL server to
-handle replication, backups, and fault-tolerance. Importantly, it also
-supports a history-free database, reducing the need for storage space,
-packing, and garbage collection.
+(conflict resolution is performed by each individual RelStorage
+client, compared to in a single thread on a shared ZEO server for all
+connected clients) it can use the underlying capabilities of of the
+SQL server to handle replication, backups, and fault-tolerance.
+Importantly, it also supports a history-free database, reducing the
+need for storage space, packing, and garbage collection. Anecdotally,
+it is usually faster than ZEO on top of a file storage.
 
 Amazon's `Relational Database Service <http://aws.amazon.com/rds/>`_
 (RDS) is a fully managed SQL service, supporting MySQL, Oracle, and SQL
@@ -23,7 +25,7 @@ patches are automatic) and offers very easy scalability (e.g., one
 command will increase the memory and processor cores of a database).
 
 Together, RDS and RelStorage offer a compelling alternative to using a
-dedicated machine for a ZEO server or servers. RelStorage probably has better
+dedicated machine for a ZEO server (or servers). RelStorage probably has better
 scaling charecteristics, and RDS's hands-off management takes many of
 the worries out of our hands. This document will provide a series of
 notes about the process of setting up RelStorage and RDS in an EC2 instance.
@@ -35,9 +37,10 @@ The first step is to create and configure the AWS services necessary
 to support RelStorage. This consists of at least one RDS DB instance
 running MySQL and one ElastiCache cluster (RelStorage uses Memcache
 for improved efficiency and reduced database load; we could run our
-own memcache server process since RelStorage makes very limited
-demands, but it is anticipated that we will make greater use of
-Memcache moving forward so ElastiCache makes sense).
+own memcache server process on an existing EC2 instance since
+RelStorage makes very limited demands, but it is anticipated that we
+will make greater use of Memcache moving forward so getting experience
+with ElastiCache makes sense).
 
 Security
 --------
@@ -119,7 +122,7 @@ everything needed by RelStorage; an existing environment can have
 these files added by use of the ``--update_existing`` flag. If you
 already have the ElastiCache and RDS instances ready, you can specify
 them on the command line, otherwise you'll have to edit files in the
-environment`s ``etc`` directory::
+environment's ``etc`` directory::
 
 	MYSQL_HOST=the_host MYSQL_CACHE=thecache:11211 MYSQL_USER=user MYSQL_PASSWD=pass nti_init_env /path/to/DsEnv config/development.ini --update_existing
 
@@ -205,7 +208,7 @@ file storages). The ``nti_init_env`` script created migration
 configurations for each database to copy from a file to RelStorage.
 Simply point ``zodbconvert`` to one of these files to copy from a
 local file to the SQL server (to use the file, ZEO cannot be running;
-this is a good idea anyway to be sure that all databases are copied in
+this is a good idea anyway to be sure that all databases are migrated in
 a consistent state)::
 
 	zodbconvert etc/zodbconvert_Search.xml
@@ -213,6 +216,8 @@ a consistent state)::
 In one example, copying 5,500 transactions from a file to the smallest
 RDS storage took 1.4 minutes. The process was network or IO bound as
 neither the EC2 instance CPU nor the RDS instance CPU was saturated.
+(Copying the other way is simply a matter of switching the ``source``
+and ``destination`` names in the configuration file.)
 
 It is convenient to reduce the number of transactions that must be
 copied by running a `multi-database garbage collection
@@ -242,3 +247,5 @@ Operational Notes
   history.
 * Eliminating the ZEO server frees up memory on the EC2 instance,
   memory that can be devoted to RelStorage caches.
+* With a ``pool-size`` of 7, three databases, and 4 workers, the
+  minimum number of MySQL connections consumed is 84.
