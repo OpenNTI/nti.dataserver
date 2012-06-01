@@ -4,6 +4,7 @@ Implementation of the link data type.
 """
 
 from . import interfaces
+from nti.externalization import interfaces as ext_interfaces
 
 from zope import interface
 from zope import component
@@ -42,6 +43,8 @@ class Link(object):
 	def __eq__( self, other ):
 		return other == (self.rel,self.target)
 
+@interface.implementer(ext_interfaces.IExternalObject)
+@component.adapter(Link)
 class NoOpLinkExternalObjectAdapter(object):
 	"""
 	Implementation of :class:`interfaces.IExternalObject` for
@@ -49,9 +52,6 @@ class NoOpLinkExternalObjectAdapter(object):
 	contexts that do not yet understand links (e.g, deprecated code).
 	That is why it is so specific.
 	"""
-
-	interface.implements(interfaces.IExternalObject)
-	component.adapts(Link)
 
 	def __init__( self, link ):
 		pass

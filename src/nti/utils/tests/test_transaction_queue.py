@@ -10,7 +10,9 @@ import transaction
 import gevent.queue
 from gevent.queue import Queue
 
-from nti.utils.transaction_queue import put_nowait
+import nti.deprecated
+with nti.deprecated.hiding_warnings():
+	from nti.utils.transaction_queue import put_nowait
 
 class PutQueueTest(AbstractTestBase):
 

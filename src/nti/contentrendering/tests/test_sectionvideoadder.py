@@ -12,11 +12,11 @@ def test_deprecated_imports():
 	# PlasTeX hide import errors so if the strings
 	# in the deprecation move are wrong silent problems
 	# happen
-	import zope.deprecation
-	zope.deprecation.__show__.off()
-	import nti.contentrendering.aopsbook
-	import nti.contentrendering.ntilatexmacros
-	zope.deprecation.__show__.on()
+	import nti.deprecated
+	with nti.deprecated.hiding_warnings():
+		import nti.contentrendering.aopsbook
+		import nti.contentrendering.ntilatexmacros
+
 
 def test_class_provides():
 	assert_that( sectionvideoadder.YouTubeRelatedVideoAdder, provides(interfaces.IStaticYouTubeEmbedVideoAdder ) )

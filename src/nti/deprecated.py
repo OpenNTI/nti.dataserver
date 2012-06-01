@@ -62,15 +62,26 @@ try:
 	# The easiest way os to patch the warnings module it uses. Fortunately, it only
 	# uses one method
 	class _warnings(object):
-		def warn(self, *args, **kwargs):
+		def warn(self, msg, typ, depth ):
 			if zope.deprecation.__show__():
-				warnings.warn( *args, **kwargs )
+				warnings.warn( msg, typ, depth + 1 )
 
 		def __getattr__( self, name ):
 			# Let everything else flow through to the real module
 			return getattr( warnings, name )
 
 	zope.deprecation.deprecation.__dict__['warnings'] = _warnings()
+
+	class hiding_warnings(object):
+		"""
+		A context manager that executes its body in a context
+		where deprecation warnings are not shown.
+		"""
+		def __enter__(self):
+			zope.deprecation.__show__.off()
+		def __exit__( self, *args ):
+			zope.deprecation.__show__.on()
+
 except ImportError:
 	import traceback
 	traceback.print_exc()

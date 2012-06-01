@@ -16,6 +16,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.externalization.datastructures import LocatedExternalDict
 from nti.externalization.oids import toExternalOID
 from nti.externalization.externalization import toExternalObject
+from nti.externalization import interfaces as ext_interfaces
 
 class Change(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 	"""
@@ -71,7 +72,7 @@ class Change(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 
 
 class _ChangeExternalObject(object):
-	interface.implements(nti_interfaces.IExternalObject)
+	interface.implements(ext_interfaces.IExternalObject)
 	component.adapts(nti_interfaces.IStreamChangeEvent)
 
 	def __init__( self, change ):
