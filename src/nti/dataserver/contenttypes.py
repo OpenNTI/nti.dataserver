@@ -181,6 +181,7 @@ class Highlight(_UserContentRoot,datastructures.ExternalizableInstanceDict):
 	style = 'plain'
 	__parent__ = None
 
+
 	def __init__( self ):
 		super(Highlight,self).__init__()
 		self.style = 'plain' # To get in the dict for externalization
@@ -357,6 +358,14 @@ def sanitize_user_html( user_input, method='html' ):
 class Note(ThreadableExternalizableMixin, Highlight):
 	interface.implements(nti_interfaces.INote)
 
+	# A sequence of properties we would like to copy from the parent
+	# when a child reply is created. If the child already has them, they
+	# are left alone.
+	# This consists of the anchoring properties
+	_inheritable_properties_ = ( 'anchorPoint', 'anchorType', 'left', 'top',
+								 'startXpath', 'startAnchor', 'startOffset',
+								 'endXpath', 'endAnchor', 'endOffset')
+
 	def __init__(self):
 		super(Note,self).__init__()
 		self.body = ("",)
@@ -420,7 +429,7 @@ class Note(ThreadableExternalizableMixin, Highlight):
 				self.addSharingTarget( target, self.creator )
 
 			# Now some other things we want to inherit if possible
-			for copy in ('anchorPoint','anchorType','left','top'):
+			for copy in self._inheritable_properties_:
 				val = getattr( self.inReplyTo, copy, getattr( self, copy, None ) )
 				if val is not None:
 					setattr( self, copy, val )
