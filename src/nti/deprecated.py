@@ -56,6 +56,21 @@ try:
 			return zope.deprecation.deprecate( msg )(oldfun)
 		return outer
 	zope.deprecation.deprecation.__dict__['DeprecationWarning'] = FutureWarning
+
+	# The 'moved' method doesn't pay attention to the 'show' flag, which
+	# produces annoyances in backwards compatibility and test code. Make it do so.
+	# The easiest way os to patch the warnings module it uses. Fortunately, it only
+	# uses one method
+	class _warnings(object):
+		def warn(self, *args, **kwargs):
+			if zope.deprecation.__show__():
+				warnings.warn( *args, **kwargs )
+
+		def __getattr__( self, name ):
+			# Let everything else flow through to the real module
+			return getattr( warnings, name )
+
+	zope.deprecation.deprecation.__dict__['warnings'] = _warnings()
 except ImportError:
 	import traceback
 	traceback.print_exc()

@@ -7,6 +7,9 @@ import sys
 from hamcrest.core.base_matcher import BaseMatcher
 import hamcrest
 
+# Increase verbosity of deprecations
+from nti import deprecated
+
 class BoolMatcher(BaseMatcher):
 	def __init__( self, value ):
 		super(BoolMatcher,self).__init__()
