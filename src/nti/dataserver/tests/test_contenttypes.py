@@ -277,6 +277,21 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 			conn.add( n )
 			n.updateFromExternalObject( ext, dataserver=ds )
 
+	def test_inherit_anchor_properties(self):
+		n = Note()
+		n.anchorType = 'foo'
+		n.left = 1
+		n.startOffset = 10
+
+		child = Note()
+		child.inReplyTo = n
+		child.updateFromExternalObject( {'inReplyTo': n, 'body': ('body') } )
+
+		assert_that( child.anchorType, is_( n.anchorType ) )
+		assert_that( child.left, is_( n.left ) )
+		assert_that( child.startOffset, is_( n.startOffset ) )
+
+
 
 class TestCanvas(mock_dataserver.ConfiguringTestBase):
 
