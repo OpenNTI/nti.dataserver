@@ -18,6 +18,7 @@ import base64
 from nti.externalization.interfaces import IExternalObject
 from nti.externalization.externalization import stripSyntheticKeysFromExternalDictionary, toExternalObject
 from nti.externalization.oids import to_external_ntiid_oid
+from nti.externalization.datastructures import ExternalizableInstanceDict
 
 from nti.dataserver import datastructures
 from nti.dataserver import mimetype
@@ -173,10 +174,10 @@ class _UserContentRoot(sharing.ShareableMixin, datastructures.ContainedMixin, da
 			# Notice we pass on the original dictionary
 			getattr( s, 'updateFromExternalObject' )(ext_parsed, *args, **kwargs )
 
-class Highlight(_UserContentRoot,datastructures.ExternalizableInstanceDict):
+class Highlight(_UserContentRoot,ExternalizableInstanceDict):
 	# See comments above about being IZContained. We add it here to minimize the impact
 	interface.implements( nti_interfaces.IZContained, nti_interfaces.IHighlight )
-	_excluded_in_ivars_ = { 'AutoTags' } | datastructures.ExternalizableInstanceDict._excluded_in_ivars_
+	_excluded_in_ivars_ = { 'AutoTags' } | ExternalizableInstanceDict._excluded_in_ivars_
 
 	style = 'plain'
 	__parent__ = None
@@ -438,7 +439,7 @@ class Note(ThreadableExternalizableMixin, Highlight):
 # Whiteboard shapes
 #####
 
-class Canvas(ThreadableExternalizableMixin, _UserContentRoot, datastructures.ExternalizableInstanceDict):
+class Canvas(ThreadableExternalizableMixin, _UserContentRoot, ExternalizableInstanceDict):
 
 	interface.implements( nti_interfaces.ICanvas )
 	# TODO: We're not trying to resolve any incoming external
@@ -474,7 +475,7 @@ def _make_external_value_object( external ):
 	external.pop( 'Creator', None )
 	return external
 
-class CanvasAffineTransform(datastructures.ExternalizableInstanceDict):
+class CanvasAffineTransform(ExternalizableInstanceDict):
 	"""
 	Represents the 6 values required in an 2-D affine transform:
 	\|a  b  0|
@@ -511,7 +512,7 @@ class CanvasAffineTransform(datastructures.ExternalizableInstanceDict):
 		return all( [getattr(self, x) == getattr(other,x) for x in self.__dict__] )
 
 
-class CanvasShape(_UserContentRoot,datastructures.ExternalizableInstanceDict):
+class CanvasShape(_UserContentRoot,ExternalizableInstanceDict):
 	# We generate the affine transform on demand; we don't store it
 	# to avoid object overhead.
 
