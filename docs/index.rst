@@ -11,9 +11,11 @@ Contents:
 .. toctree::
 	:maxdepth: 2
 
+	nginx-gunicorn
+	relstorage-and-rds
+
 	ipad-localremotebridge
 	ntiid-structure
-	nginx-gunicorn
 	content-in-cdn
 	passenger
 	dataserver-contenttypes
