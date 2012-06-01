@@ -52,7 +52,7 @@ class PersistentContainedExternal(ContainedExternal,Persistent):
 
 class ApplicationTestBase(ConfiguringTestBase):
 
-	def _setup_library(self):
+	def _setup_library(self, *args, **kwargs):
 		return Library()
 
 	def setUp(self):
@@ -411,6 +411,51 @@ class TestApplication(ApplicationTestBase):
 		assert_that( res.status_int, is_( 200 ) )
 		assert_that( json.loads(res.body), has_entry( 'href', path ) )
 		assert_that( json.loads(res.body), has_entry( 'Links', has_item( has_entry( 'rel', 'edit' ) ) ) )
+
+	def test_edit_note_sharing_only(self):
+		"We can POST to a specific sub-URL to change the sharing"
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = self._create_user()
+
+			n = contenttypes.Note()
+			n.containerId = 'tag:nti:foo'
+			user.addContainedObject( n )
+			assert_that( n.sharingTargets, is_( () ) )
+
+		testapp = TestApp( self.app )
+		data = '["Everyone"]'
+
+		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % datastructures.to_external_ntiid_oid( n )
+		field_path = path + '/sharedWith' # The name of the external field
+
+		res = testapp.put( urllib.quote( field_path ),
+						   data,
+						   extra_environ=self._make_extra_environ(),
+						   headers={"Content-Type": "application/json" } )
+		assert_that( res.status_int, is_( 200 ) )
+
+		assert_that( res.json_body, has_entry( "sharedWith", has_item( "Everyone" ) ) )
+
+		assert_that( res.json_body, has_entry( 'href', urllib.quote( path ) ) )
+		assert_that( res.json_body, has_entry( 'Links', has_item( has_entry( 'rel', 'edit' ) ) ) )
+
+	def test_edit_user_password_only(self):
+		"We can POST to a specific sub-URL to change the password"
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = self._create_user()
+
+
+		testapp = TestApp( self.app )
+		data = '"newpassword"'
+
+		path = '/dataserver2/Objects/%s' %datastructures.to_external_ntiid_oid( user )
+		field_path = path + '/password' # The name of the external field
+
+		res = testapp.put( urllib.quote( field_path ),
+						   data,
+						   extra_environ=self._make_extra_environ(),
+						   headers={"Content-Type": "application/json" } )
+		assert_that( res.status_int, is_( 200 ) )
 
 
 
@@ -913,5 +958,5 @@ class TestApplicationLibrary(ApplicationTestBase):
 
 class TestApplicationLibraryNoSlash(TestApplicationLibrary):
 
-	def _setup_library(self):
+	def _setup_library(self, *args, **kwargs):
 		return super(TestApplicationLibraryNoSlash,self)._setup_library( content_root="prealgebra" )

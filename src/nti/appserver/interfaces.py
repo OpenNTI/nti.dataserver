@@ -130,3 +130,25 @@ class IUncacheableInResponse(interface.Interface):
 	"""
 	Marker interface for things that should not be cached.
 	"""
+
+###
+# Traversing into objects
+###
+class IExternalFieldResource(ILocation):
+	"""
+	Marker for objects representing an individually externally updateable field
+	of an object.  The __name__ will be the name of the external field.
+	"""
+
+	resource = interface.Attribute( "The object to be updated." )
+
+class IExternalFieldTraverser(interface.Interface):
+	"""
+	Adapter that understands objects and maps external individually updateable fields
+	to an instance of :class:`IExternalFieldResource`
+	"""
+
+	def __getitem__( key ):
+		"""
+		Given an external key, returns an IExternalFieldResource or raises KeyError.
+		"""
