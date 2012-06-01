@@ -11,6 +11,7 @@ import numbers
 import collections
 import urllib
 import time
+import functools
 
 import plistlib
 import anyjson as json
@@ -128,6 +129,7 @@ def _unquoted( key ):
 	return key
 
 def unquoting( f ):
+	@functools.wraps(f)
 	def unquoted( self, key ):
 		return f( self, _unquoted( key ) )
 	return unquoted
@@ -432,6 +434,14 @@ class _AbstractObjectResource(object):
 			# A missing enclosure is an error.
 			if ISimpleEnclosureContainer.providedBy( cont ):
 				child = cont.get_enclosure( key )
+			else:
+				# Otherwise, update an individual field if possible.
+				# Note this is implemented as mutually exclusive with enclosures
+				field_traverser = app_interfaces.IExternalFieldTraverser( res, None )
+				child = field_traverser[key] if field_traverser is not None else None
+				child.__acl__ = self.__acl__
+				child.__parent__ = self # The parent must be this object so traversal to find IUsersRootResource works
+				proxy = None
 
 		if child is None:
 			raise KeyError( key )
@@ -440,7 +450,7 @@ class _AbstractObjectResource(object):
 		return proxy( child,
 					  res,
 					  key,
-					  nacl.ACL( child, self.__acl__ ) )
+					  nacl.ACL( child, self.__acl__ ) ) if proxy else child
 
 	@property
 	def resource( self ):
@@ -1020,9 +1030,12 @@ class _UGDPutView(_UGDModifyViewBase):
 	def __init__(self, request):
 		super(_UGDPutView,self).__init__(request)
 
+	def _get_object_to_update( self ):
+		return self.request.context.resource
+
 	def __call__(self):
 		context = self.request.context
-		theObject = context.resource
+		theObject = self._get_object_to_update()
 		self._check_object_exists( theObject )
 
 		# Then ensure the users match
@@ -1080,6 +1093,19 @@ class _UGDPutView(_UGDModifyViewBase):
 								 objId,
 								 nacl.ACL( theObject, context.__acl__) )
 
+class _UGDFieldPutView(_UGDPutView):
+	"""
+	PUTting to an object with an external field mutates that object's
+	field. The input data is the value of the field.
+	The context is an `IExternalFieldResource`
+	"""
+
+	def readInput( self ):
+		value = super(_UGDFieldPutView,self).readInput()
+		return { self.request.context.__name__: value }
+
+	def _transformInput( self, value ):
+		return value
 
 def _force_update_modification_time( object, lastModified, max_depth=-1 ):
 	"""Traverse up the parent tree (up to `max_depth` times) updating modification times."""

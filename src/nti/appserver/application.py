@@ -576,9 +576,16 @@ def createApplication( http_port,
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._UGDDeleteView',
 							 renderer='rest', context='nti.appserver.dataserver_pyramid_views._AbstractObjectResource',
 							 permission=nauth.ACT_DELETE, request_method='DELETE' )
+
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._UGDPutView',
 							 renderer='rest', context='nti.appserver.dataserver_pyramid_views._AbstractObjectResource',
 							 permission=nauth.ACT_UPDATE, request_method='PUT' )
+
+
+	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._UGDFieldPutView',
+							 renderer='rest', context='nti.appserver.interfaces.IExternalFieldResource',
+							 permission=nauth.ACT_UPDATE, request_method='PUT' )
+
 
 	# attached resources
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._EnclosurePostView',
