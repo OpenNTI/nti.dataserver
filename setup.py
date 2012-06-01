@@ -70,7 +70,7 @@ setup(
 		'futures >= 2.1.2',
 		#'gevent == 1.0dev', Coming from requirements.txt right now
 		'gevent-zeromq',
-		'gunicorn == 0.14.2', # 0.14.3 is out. Should be a clean upgrade from the diff. Lets us remove 'core' hack
+		'gunicorn >= 0.14.3',
 		'html5lib == 0.95',
 		'logilab-common',
 		'nltk',
