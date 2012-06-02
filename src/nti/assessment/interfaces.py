@@ -5,7 +5,11 @@ from zope import interface
 from zope import schema
 
 class TypedIterable(schema.List):
-	_type = None
+	"""
+	An arbitrary (indexable) iterable, not necessarily a list or tuple.
+	The values may be homogeneous by setting the value_type
+	"""
+	_type = None # Override from super to not force a list
 
 # TODO: Should the content portions be specifically modelled as
 # contentrendering.interfaces.IContentFragment? Probably
