@@ -22,6 +22,8 @@ def _buildDomFromString(docString, mkdtemp=False):
 	document.userdata['jobname'] = 'temp'
 	document.userdata['working-dir'] = tempfile.gettempdir() if not mkdtemp else tempfile.mkdtemp()
 	document.config['files']['directory'] = document.userdata['working-dir']
+	document.config.add_section( "NTI" )
+	document.config.set( "NTI", 'provider', 'testing' )
 	tex.parse()
 	return document
 
@@ -55,7 +57,7 @@ class TestRenderable(nti.tests.ConfiguringTestBase):
 	def test_render(self):
 		from plasTeX.Renderers.XHTML import Renderer
 		example = br"""
-		\begin{naquestion}[individual=true]
+		\begin{naquestion}[individual=true]\label{testquestion}
 			Arbitrary content goes here.
 			\begin{naqsymmathpart}
 			Arbitrary content goes here.
@@ -75,7 +77,7 @@ class TestRenderable(nti.tests.ConfiguringTestBase):
 			render.render( dom )
 			# TODO: Actual validation of the rendering
 			index = open(os.path.join(dom.config['files']['directory'],'index.html'), 'rU' ).read()
-			content = """<div><p><div class="naquestion">\n\t <span> Arbitrary content goes here. <div class="naquestionpart naqsymmathpart">\n\t <a name="a0000000002"/>\n\t <span> Arbitrary content goes here. <div class="helpdiv hidden"><p>Some solution </p></div>\n<a class="helplink hidden">Solution</a> </span>\n\t <div class="rightwrongbox"></div>\n\t <input class="answerblank" ntitype="naqsymmath" />\n</div> </span>\n\t <a id="submit" class="NTIGreenButton NTISubmitAnswer">Check</a>\n\t <a id="tryagain" class="NTIGreenButton NTITryAgain hidden">Try Again...</a>\n</div> </p></div>"""
+			content = """<div><p><object type="application/vnd.nextthought.naquestion" data-ntiid="tag:nextthought.com,2011-10:testing-HTML-temp.testquestion" data="tag:nextthought.com,2011-10:testing-HTML-temp.testquestion">\n<param name="ntiid" value="tag:nextthought.com,2011-10:testing-HTML-temp.testquestion" />\n<div class="naquestion">\n\t <span> Arbitrary content goes here. <div class="naquestionpart naqsymmathpart">\n\t <a name="a0000000002"/>\n\t <span> Arbitrary content goes here. <div class="helpdiv hidden"><p>Some solution </p></div>\n<a class="helplink hidden">Solution</a> </span>\n\t <div class="rightwrongbox"></div>\n\t <input class="answerblank" ntitype="naqsymmath" />\n</div> </span>\n\t <a id="submit" class="NTIGreenButton NTISubmitAnswer">Check</a>\n\t <a id="tryagain" class="NTIGreenButton NTITryAgain hidden">Try Again...</a>\n</div>\n</object> </p></div>"""
 
 			assert_that( index, contains_string( content ) )
 		finally:
