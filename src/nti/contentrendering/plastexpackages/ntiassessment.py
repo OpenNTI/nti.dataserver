@@ -20,12 +20,14 @@ Example::
 	\end{naquestion}
 
 
+$Id$
 """
 # All of these have too many public methods
 #pylint: disable=R0904
 
 from __future__ import print_function, unicode_literals
 
+from nti.contentrendering import plastexids
 from plasTeX import Base
 
 class naqsolutions(Base.List):
@@ -79,9 +81,16 @@ class naqsymmathpart(Base.Environment):
 class naqfreeresponsepart(Base.Environment):
 	pass
 
-class naquestion(Base.Environment):
+class naquestion(Base.Environment,plastexids.NTIIDMixin):
 	args = '[individual:str]'
+	# Only classes with counters can be labeled, and \label sets the
+	# id property, which in turn is used as part of the NTIID (when no NTIID is set explicitly)
+	counter = 'naquestion'
+	_ntiid_cache_map_name = '_naquestion_ntiid_map'
+	_ntiid_allow_missing_title = True
+	_ntiid_suffix = 'naq.'
 
 def ProcessOptions( options, document ):
 
 	document.context.newcounter( 'naqsolutionnum' )
+	document.context.newcounter( 'naquestion' )

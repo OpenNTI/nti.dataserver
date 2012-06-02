@@ -9,11 +9,14 @@ name: naqsymmathpart
 
 
 name: naquestion
+<object type="application/vnd.nextthought.naquestion" data-ntiid="the-ntiid" data="the-ntiid" tal:attributes="data-ntiid self/ntiid; data self/ntiid">
+<param name="ntiid" value="the-ntiid" tal:attributes="value self/ntiid" />
 <div class="naquestion">
 	 <span tal:content="self"/>
 	 <a id="submit" class="NTIGreenButton NTISubmitAnswer" tal:condition="self/attributes/individual">Check</a>
 	 <a id="tryagain" class="NTIGreenButton NTITryAgain hidden">Try Again...</a>
 </div>
+</object>
 
 
 name: naqsolution
