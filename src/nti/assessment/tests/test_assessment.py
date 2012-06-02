@@ -7,7 +7,9 @@ import nti.tests
 
 import nti.assessment
 
-from nti.assessment import mathTexToDOMNodes, grade_one_response, assess, mathIsEqual
+from nti.assessment import grade_one_response, assess
+from nti.assessment._latexplastexconverter import _mathTexToDOMNodes as mathTexToDOMNodes
+from nti.assessment._latexplastexdomcompare import _mathIsEqual as mathIsEqual
 import plasTeX
 
 class TestAssessment(nti.tests.ConfiguringTestBase):

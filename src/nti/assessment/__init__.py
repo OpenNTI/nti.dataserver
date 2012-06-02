@@ -1,14 +1,9 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 
-import plasTeX
+from __future__ import print_function, unicode_literals
 
-from _latexplastexconverter import _response_text_to_latex
-from _latexplastexconverter import _mathTexToDOMNodes as mathTexToDOMNodes
-from _latexplastexdomcompare import _mathIsEqual as mathIsEqual
 
-import solution
-
-from zope.deprecation import deprecated
+from . import interfaces
 
 def grade_one_response(questionResponse, possible_answers):
 	"""
@@ -35,4 +30,5 @@ def assess( quiz, responses ):
 		result[questionId] = grade_one_response( questionResponse, quiz[questionId].answers )
 	return result
 
+#from zope.deprecation import deprecated
 #deprecated( "assess", "Prefer ???")
