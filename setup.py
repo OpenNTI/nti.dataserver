@@ -55,7 +55,7 @@ setup(
 #	tests_require = ['z3c.coverage','zope.testing'],
 	setup_requires = ['nose'],
 	install_requires = [
-		'Chameleon >= 2.8.5',
+		'Chameleon >= 2.9.1',
 		'RestrictedPython',
 		'ZODB3 >= 3.10.5',
 		# ZODB RelStorage:
@@ -108,7 +108,7 @@ setup(
 		 # adds cryptacular and pbkdf2
 		'z3c.bcrypt',
 		'z3c.coverage',
-		'z3c.pt', # Better ZPT support than plastex
+		'z3c.pt', # Better ZPT support than plastex, add-in to Chameleon
 		'zc.queue',
 		'zc.zlibstorage', # compressed records. Will be built-in to newer ZODB
 		'zc.zodbdgc',
@@ -155,7 +155,11 @@ setup(
 		'zopyx.txng3.core',
 		'zopyx.txng3.ext',
 		],
-	extras_require = {'test': ['zope.testing', 'zc.buildout', 'selenium'], 'tools': ['ipython', 'httpie']},
+	extras_require = {'test': ['zope.testing', 'zc.buildout', 'selenium'],
+					  'tools': [
+						  'dblatex >= 0.3.4', # content rendering, convert docbook to tex
+						  'ipython',
+						  'httpie']},
 	dependency_links = ['http://svn.wikimedia.org/svnroot/pywikipedia/trunk/pywikipedia/'],
 	packages = find_packages('src'),
 	package_dir = {'': 'src'},

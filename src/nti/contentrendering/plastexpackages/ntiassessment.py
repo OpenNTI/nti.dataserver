@@ -89,6 +89,14 @@ class naquestion(Base.Environment,plastexids.NTIIDMixin):
 	_ntiid_cache_map_name = '_naquestion_ntiid_map'
 	_ntiid_allow_missing_title = True
 	_ntiid_suffix = 'naq.'
+	_ntiid_title_attr_name = 'ref' # Use our counter to generate IDs if no ID is given
+
+	@property
+	def _ntiid_get_local_part(self):
+		result = self.attributes.get( 'probnum' ) or self.attributes.get( "questionnum" )
+		if not result:
+			result = super(naquestion,self)._ntiid_get_local_part
+		return result
 
 def ProcessOptions( options, document ):
 

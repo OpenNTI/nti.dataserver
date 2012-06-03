@@ -23,6 +23,13 @@ logger = log
 from zope.deprecation import deprecate
 from nti.deprecated import hiding_warnings
 
+def _make_ntiid( document, local, local_prefix='' ):
+	local = unicode(local)
+	local = local.replace( ' ', '_' ).replace( '-', '_' ).replace('?','_').lower()
+	provider = document.config.get( "NTI", "provider" )
+
+	return 'tag:nextthought.com,2011-10:%s-HTML-%s.%s%s' % (provider,document.userdata['jobname'], local_prefix, local)
+
 
 @deprecate("Prefer the section element ntiid attribute")
 def nextID(self, suffix=''):
@@ -31,13 +38,50 @@ def nextID(self, suffix=''):
 	ntiid = ntiid + 1
 
 	setattr(self, 'NTIID', ntiid)
-	provider = self.config.get( "NTI", "provider" )
-	return 'tag:nextthought.com,2011-10:%s-HTML-%s.%s%s' % (provider,self.userdata['jobname'], suffix, ntiid)
+	return _make_ntiid( self,  ntiid, suffix )
+
 
 
 
 # SectionUtils is the (a) parent of chapter, section, ..., paragraph, as well as document
 from plasTeX.Base.LaTeX.Sectioning import SectionUtils
+
+def _ntiid_get_local_part_title(self):
+	title = None
+	attr = getattr( self, '_ntiid_title_attr_name', 'title' )
+	if (hasattr(self, attr) or not getattr( self, '_ntiid_allow_missing_title', False)):
+		title = getattr(self, attr)
+		if title \
+		  and getattr(title, 'textContent', title):
+			# Sometimes title is a string, sometimes its a TexFragment
+			if hasattr(title, 'textContent'):
+				title = title.textContent
+	return title
+
+def _preferred_local_part(self):
+	"""
+	Look for and return the "local" part of an NTIID, based on the preferred
+	value for the object. Typically, this will be the `title` of the element,
+	but this may be overridden. Takes into account duplicates.
+	:raises AttributeError: If the element has no title.
+	"""
+	local = None
+	document = self.ownerDocument
+	title = getattr(self, '_ntiid_get_local_part', None )
+	if title:
+		# TODO: When we need to generate a number, if the object is associated
+		# with a counter, could/should we use the counter?
+		map_name = getattr( self, '_ntiid_cache_map_name', '_section_ntiids_map' )
+		_section_ntiids_map = document.userdata.setdefault( map_name, {} )
+		counter = _section_ntiids_map.setdefault( title, 0 )
+		if counter == 0:
+			local = title
+		else:
+			local = title + '.' + str(counter)
+		_section_ntiids_map[title] = counter + 1
+
+	return local
+
 def _section_ntiid(self):
 
 	# If an NTIID was specified in the source, use that
@@ -49,29 +93,14 @@ def _section_ntiid(self):
 		return getattr(self, "@NTIID")
 
 	document = self.ownerDocument
-	config = document.config
 	# Use an ID if it exists and WAS NOT generated
 	# (see plasTeX/__init__.py; also relied on in Renderers/__init__.py)
+	local = None
 	if not hasattr( self, "@hasgenid" ) and getattr( self, "@id", None ):
 		local = getattr( self, "@id" )
-	elif (hasattr(self, 'title') or not getattr( self, '_ntiid_allow_missing_title', False)) \
-	  and self.title \
-	  and getattr(self.title, 'textContent', self.title):
-		# Sometimes title is a string, sometimes its a TexFragment
-		title = self.title
-		if hasattr(self.title, 'textContent'):
-			title = self.title.textContent
-		# TODO: When we need to generate a number, if the object is associated
-		# with a counter, could/should we use the counter?
-		map_name = getattr( self, '_ntiid_cache_map_name', '_section_ntiids_map' )
-		_section_ntiids_map = document.userdata.setdefault( map_name, {} )
-		counter = _section_ntiids_map.setdefault( title, 0 )
-		if counter == 0:
-			local = title
-		else:
-			local = title + '.' + str(counter)
-		_section_ntiids_map[title] = counter + 1
-	else:
+	if local is None:
+		local = _preferred_local_part(self) # not idempotent, has side effects, call only once
+	if not local:
 		# Hmm. An untitled element that is also not
 		# labeled. This is most likely a paragraph. What can we do for a persistent
 		# name? Does it even matter?
@@ -80,10 +109,7 @@ def _section_ntiid(self):
 			setattr(self, "@NTIID", nextID(document, getattr( self, '_ntiid_suffix', '')))
 		return getattr(self, "@NTIID")
 
-	# TODO: This is a half-assed approach to escaping
-	local = local.replace( ' ', '_' ).replace( '-', '_' ).replace('?','_').lower()
-	provider = config.get( "NTI", "provider" )
-	ntiid = 'tag:nextthought.com,2011-10:%s-HTML-%s.%s' % (provider,document.userdata['jobname'], local)
+	ntiid = _make_ntiid( document, local, getattr( self, '_ntiid_suffix', '' ) )
 	setattr( self, "@NTIID", ntiid )
 	return ntiid
 
@@ -116,6 +142,7 @@ class NTIIDMixin(object):
 	pass
 NTIIDMixin.ntiid = property(_section_ntiid)
 NTIIDMixin.filenameoverride = property(_section_ntiid_filename)
+NTIIDMixin._ntiid_get_local_part = property(_ntiid_get_local_part_title)
 
 
 # Attempt to generate stable IDs for paragraphs. Our current approach
@@ -181,4 +208,5 @@ def patch_all():
 
 	SectionUtils.ntiid = property(catching(_section_ntiid))
 	SectionUtils.filenameoverride = property(catching(_section_ntiid_filename))
+	SectionUtils._ntiid_get_local_part = property(catching(_ntiid_get_local_part_title))
 	plasTeX.TeXDocument.nextNTIID = nextID # Non-desctructive patch
