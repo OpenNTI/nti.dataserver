@@ -1338,37 +1338,44 @@ def _provider_redirect_classes(request):
 	raise hexc.HTTPFound(location=class_path)
 
 
-def _create_page_info(request, href):
+def _create_page_info(request, href, ntiid):
 	# Traverse down to the pages collection and use it to create the info.
 	# This way we get the correct link structure
 	remote_user = users.User.get_user( sec.authenticated_userid( request ), dataserver=request.registry.getUtility(IDataserver) )
 	user_service = request.registry.getAdapter( remote_user, app_interfaces.IService )
 	user_workspace = user_service.user_workspace
 	pages_collection = user_workspace.pages_collection
-	info = pages_collection.make_info_for( request.context.ntiid )
-	info.extra_links = (links.Link( href, rel='content' ),) # TODO: The rel?
+	info = pages_collection.make_info_for( ntiid )
+	if href:
+		info.extra_links = (links.Link( href, rel='content' ),) # TODO: The rel?
 	return info
 
-def _LibraryTOCRedirectView(request):
+
+def _LibraryTOCRedirectView(request, default_href=None, ntiid=None):
 	"""
 	Given an :class:`lib_interfaces.IContentUnit`, redirect the request to the static content.
 	This allows unifying handling of NTIIDs.
+
 	If the client uses the Accept header to ask for a Link to the content, though,
 	then return that link; the client will do the redirection manually. (This is helpful
 	for clients that need to know the URL of the content and which are using libraries
 	that otherwise would swallow it and automatically redirect.)
+
+	This also works when used as a view named for the ROOT ntiid; no href is possible, but the rest
+	of the data can be returned.
 	"""
-	href = request.context.href
+	href = getattr(request.context, 'href', default_href )
 	# Right now, the ILibraryTOCEntries always have relative hrefs,
 	# which may or may not include a leading /.
 	# TODO: We're assuming these map into the URL space
 	# based in their root name. Is that valid? Do we need another mapping layer?
 	if not href.startswith( '/' ):
 		root = traversal.find_interface( request.context, lib_interfaces.IContentPackage )
-		href = root.root + '/' + href
-		href = href.replace( '//', '/' )
-		if not href.startswith( '/' ):
-			href = '/' + href
+		if root: # missing in the root ntiid case
+			href = root.root + '/' + href
+			href = href.replace( '//', '/' )
+			if not href.startswith( '/' ):
+				href = '/' + href
 
 	# If the client asks for a specific type of data,
 	# a link, then give it to them. Otherwise...
@@ -1394,7 +1401,10 @@ def _LibraryTOCRedirectView(request):
 		return link
 
 	if accept_type in (json_mt,page_info_mt,page_info_mt_json):
-		return _create_page_info(request, href)
+		return _create_page_info(request, href, ntiid or request.context.ntiid)
 
 	# ...send a 302. Return rather than raise so that webtest works better
 	return hexc.HTTPSeeOther( location=href )
+
+def _RootLibraryTOCRedirectView(request):
+	return _LibraryTOCRedirectView( request, default_href='', ntiid=request.view_name)
