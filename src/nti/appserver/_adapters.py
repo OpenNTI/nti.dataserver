@@ -61,9 +61,17 @@ class _DefaultExternalFieldResource(object):
 		self.__parent__ = obj
 		self.resource = obj
 
+class _AbstractExternalFieldTraverser(object):
+
+	def get( self, key, default=None ):
+		try:
+			return self[key]
+		except KeyError:
+			return default
+
 @interface.implementer(app_interfaces.IExternalFieldTraverser)
 @component.adapter(nti_interfaces.IShareableModeledContent)
-class SharedWithExternalFieldTraverser(object):
+class SharedWithExternalFieldTraverser(_AbstractExternalFieldTraverser):
 
 	def __init__( self, obj ):
 		self._obj = obj
@@ -76,12 +84,12 @@ class SharedWithExternalFieldTraverser(object):
 
 @interface.implementer(app_interfaces.IExternalFieldTraverser)
 @component.adapter(nti_interfaces.IUser)
-class UserExternalFieldTraverser(object):
+class UserExternalFieldTraverser(_AbstractExternalFieldTraverser):
 
 	def __init__( self, obj ):
 		self._obj = obj
 
 	def __getitem__( self, key ):
-		if key not in ('lastLoginTime', 'password', 'mute_conversation', 'unmute_conversation', 'ignoring', 'accepting'):
+		if key not in ('lastLoginTime', 'password', 'mute_conversation', 'unmute_conversation', 'ignoring', 'accepting', 'NotificationCount'):
 			raise KeyError(key)
 		return _DefaultExternalFieldResource( key, self._obj )

@@ -99,6 +99,22 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		assert_that( user.getContainedObject( created.containerId, created.id ),
 					 is_( created ) )
 
+	def test_clear_notification_count(self):
+		user = User( 'foo@bar', 'temp' )
+		user.lastLoginTime.value = 1
+		user.notificationCount.value = 5
+
+		user.updateFromExternalObject( {'lastLoginTime': 2} )
+		assert_that( user.lastLoginTime, has_property( 'value', 2 ) )
+		assert_that( user.notificationCount, has_property( 'value', 0 ) )
+
+		user.lastLoginTime.value = 1
+		user.notificationCount.value = 5
+		user.updateFromExternalObject( {'NotificationCount': 2} )
+		assert_that( user.lastLoginTime, has_property( 'value', 1 ) )
+		assert_that( user.notificationCount, has_property( 'value', 2 ) )
+
+
 	@WithMockDSTrans
 	def test_share_unshare_note(self):
 		user1 = User( 'foo@bar', 'temp' )

@@ -592,7 +592,7 @@ class User(Principal):
 			return True
 		except KeyError:
 			return False
-	
+
 	# External incoming ignoring and accepting can arrive in three ways.
 	# As a list, which replaces the entire contents.
 	# As a single string, which is added to the list.
@@ -665,8 +665,10 @@ class User(Principal):
 
 		# The last login time is an number of seconds (as with time.time).
 		# When it gets reset, the number of outstanding notifications also
-		# resets. It is writable, number is not
+		# resets. It is writable, number is not...
 		self.lastLoginTime = minmax.Maximum(0)
+		# ...although, pending a more sophisticated notification tracking
+		# mechanism, we are allowing notification count to be set
 		self.notificationCount = minmax.MergingCounter(0)
 
 		# We maintain our own stream. The modification queue posts
@@ -714,6 +716,10 @@ class User(Principal):
 			if isinstance( lastLoginTime, numbers.Number ) and self.lastLoginTime.value < lastLoginTime:
 				self.lastLoginTime.value = lastLoginTime
 				self.notificationCount.value = 0
+
+			notificationCount = parsed.pop( 'NotificationCount', None )
+			if isinstance( notificationCount, numbers.Number ):
+				self.notificationCount.value = notificationCount
 
 			if 'password' in parsed:
 				password = parsed.pop( 'password' )

@@ -152,3 +152,8 @@ class IExternalFieldTraverser(interface.Interface):
 		"""
 		Given an external key, returns an IExternalFieldResource or raises KeyError.
 		"""
+
+	def get( key, default=None ):
+		"""
+		As per the Mapping interface, doesn't raise KeyError.
+		"""
