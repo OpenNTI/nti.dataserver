@@ -91,7 +91,8 @@ setup(
 		'repoze.sphinx.autointerface',
 		'repoze.who',
 		'repoze.zodbconn',
-		'requests >= 0.12.1',
+		'grequests >= 0.1.0', replaces requests.async in 0.13
+		'requests >= 0.13.0', # HTTP
 		'scss',
 		'setproctitle',
 		'setuptools',
