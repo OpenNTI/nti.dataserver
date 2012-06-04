@@ -110,7 +110,7 @@ setup(
 		'z3c.bcrypt',
 		'z3c.coverage',
 		'z3c.pt', # Better ZPT support than plastex, add-in to Chameleon
-		'zc.queue',
+		'zc.queue >= 1.3',
 		'zc.zlibstorage', # compressed records. Will be built-in to newer ZODB
 		'zc.zodbdgc',
 		'zetalibrary',
@@ -132,11 +132,12 @@ setup(
 		'zope.exceptions >= 4.0.0.1',
 		'zope.filerepresentation',
 		'zope.formlib',
-		'zope.generations',
+		'zope.generations >= 3.7.1',
+		'zope.hookable >= 4.0.0', # explicitly list this to ensure we get the fast C version. Used by ZCA.
 		'zope.i18n',
 		'zope.i18nmessageid',
 		'zope.interface >= 4.0.1',
-		'zope.lifecycleevent',
+		'zope.lifecycleevent >= 3.7.0',
 		'zope.location >= 3.9.1',
 		'zope.mimetype',
 		'zope.minmax >= 1.1.2',
