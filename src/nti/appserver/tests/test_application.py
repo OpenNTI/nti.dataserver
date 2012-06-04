@@ -439,23 +439,40 @@ class TestApplication(ApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'href', urllib.quote( path ) ) )
 		assert_that( res.json_body, has_entry( 'Links', has_item( has_entry( 'rel', 'edit' ) ) ) )
 
-	def test_edit_user_password_only(self):
-		"We can POST to a specific sub-URL to change the password"
+	def _edit_user_ext_field( self, field, data ):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = self._create_user()
 
-
 		testapp = TestApp( self.app )
+
+		# This works for both the OID and direct username paths
+		for path in ('/dataserver2/Objects/%s' % datastructures.to_external_ntiid_oid( user ), '/dataserver2/users/' + user.username):
+
+			field_path = path + '/' + field # The name of the external field
+
+			res = testapp.put( urllib.quote( field_path ),
+							   data,
+							   extra_environ=self._make_extra_environ(),
+							   headers={"Content-Type": "application/json" } )
+			assert_that( res.status_int, is_( 200 ) )
+
+			with mock_dataserver.mock_db_trans( self.ds ):
+				# For the case where we change the password, we have to
+				# recreate the user for the next loop iteration to work
+				user.password = 'temp001'
+
+
+
+	def test_edit_user_password_only(self):
+		"We can POST to a specific sub-URL to change the password"
 		data = '"newpassword"'
+		self._edit_user_ext_field( 'password', data )
 
-		path = '/dataserver2/Objects/%s' %datastructures.to_external_ntiid_oid( user )
-		field_path = path + '/password' # The name of the external field
+	def test_edit_user_count_only(self):
+		"We can POST to a specific sub-URL to change the notification count"
 
-		res = testapp.put( urllib.quote( field_path ),
-						   data,
-						   extra_environ=self._make_extra_environ(),
-						   headers={"Content-Type": "application/json" } )
-		assert_that( res.status_int, is_( 200 ) )
+		data = '5'
+		self._edit_user_ext_field( 'NotificationCount', data )
 
 
 

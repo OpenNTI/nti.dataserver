@@ -171,11 +171,23 @@ class _UserResource(object):
 			return self._pseudo_classes_[key]( self, self.user )
 
 
+		resource = None
 		cont = self.user.getContainer( key )
-		if cont is None:
-			resource = _NewContainerResource( self, {}, key, self.user )
-		else:
+		if cont is not None:
 			resource = _ContainerResource( self, cont, key, self.user )
+
+		if resource is None:
+			# Is this an individual field we can update?
+			# NOTE: Container names and field names must not overlap
+			field_traverser = app_interfaces.IExternalFieldTraverser( self.user, None )
+			resource = field_traverser.get(key) if field_traverser is not None else None
+			if resource is not None:
+				resource.__parent__ = self # The parent must be this object so traversal to find IUsersRootResource works
+
+		if resource is None:
+			# OK, assume a new container
+			resource = _NewContainerResource( self, {}, key, self.user )
+
 		# Allow the owner full permissions
 		resource.__acl__ = ( (sec.Allow, self.user.username, sec.ALL_PERMISSIONS), )
 
