@@ -485,7 +485,7 @@ class _RootNTIIDEntry(_NTIIDEntry):
 	"""
 	__operations__ = ('RecursiveStream',)
 
-	def __init__( self, parent ):
+	def __init__( self, parent, _ ):
 		super(_RootNTIIDEntry,self).__init__( parent, ntiids.ROOT )
 
 class _UserPagesCollection(object):
@@ -527,12 +527,13 @@ class _UserPagesCollection(object):
 		return ent_parent
 
 	def make_info_for( self, ntiid ):
-		return _NTIIDEntry( self._make_parent(ntiid), ntiid )
+		factory = _RootNTIIDEntry if ntiid == ntiids.ROOT else _NTIIDEntry
+		return factory( self._make_parent(ntiid), ntiid )
 
 	@property
 	def container(self):
 		result = datastructures.LastModifiedCopyingUserList()
-		result.append( _RootNTIIDEntry( self._make_parent(ntiids.ROOT) ) )
+		result.append( self.make_info_for(ntiids.ROOT) )
 		for ntiid in self._user.iterntiids():
 			result.append( self.make_info_for( ntiid ) )
 
