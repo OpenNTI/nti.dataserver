@@ -1,7 +1,7 @@
 #Templates for resource usage.
 name: nti_resource_image
-<img align="bottom" tal:condition="not:self/style" tal:attributes="src self/image/url; alt self/source; width self/image/width/px; height self/image/height/px" />
-<img align="bottom" tal:condition="self/style" tal:attributes="src self/image/url; alt self/source; style self/style/inline" />
+<img align="bottom" tal:condition="not:self/style" tal:attributes="src self/image/url; alt self/source; id self/id; width self/image/width/px; height self/image/height/px" />
+<img align="bottom" tal:condition="self/style" tal:attributes="src self/image/url; alt self/source; id self/id; style self/style/inline" />
 
 name: nti_resource_inlinemathjaxdom
 <span tal:content="python: self.contents(['mathjax_inline'])" />

@@ -167,7 +167,7 @@ def _par_id_get(self):
 		if child.nodeType != child.TEXT_NODE or child.textContent.strip():
 			break
 
-	if first_non_blank_child.nodeName == 'label' and 'label' in first_non_blank_child.attributes:
+	if first_non_blank_child is not None and first_non_blank_child.nodeName == 'label' and 'label' in first_non_blank_child.attributes:
 		setattr( self, "@id", None )
 		return None
 
@@ -196,6 +196,8 @@ def patch_all():
 	and sections to generate more appropriate filenames.
 	"""
 	plasTeX.Base.par.id = property(_par_id_get,plasTeX.Base.par.id.fset)
+	from plasTeX.Packages.graphicx import includegraphics
+
 	def catching(f):
 		@functools.wraps(f)
 		def y(self):
@@ -205,7 +207,7 @@ def patch_all():
 				logger.exception("Failed to compute NTIID for %s (%s)", type(self), repr(self)[:50] )
 				raise
 		return y
-
+	includegraphics.id =  property(catching(_par_id_get),includegraphics.id.fset) # TODO: Different counters for this than _par_used_ids
 	SectionUtils.ntiid = property(catching(_section_ntiid))
 	SectionUtils.filenameoverride = property(catching(_section_ntiid_filename))
 	SectionUtils._ntiid_get_local_part = property(catching(_ntiid_get_local_part_title))
