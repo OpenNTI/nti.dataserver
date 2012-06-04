@@ -254,17 +254,7 @@ class CollectionSummaryExternalizer(object):
 
 		_links = datastructures.find_links( self._collection )
 		if _links:
-			# Note that we are handling link traversal for
-			# links that are string based here. Somewhere up the line
-			# we're losing context and failing to render if we don't.
-			# We only do this for things that are set up specially in
-			# this module.
-			for l in _links:
-				if l.target == getattr(l, '__name__', None):
-					# We know the ntiid gets used as the href
-					l.ntiid = traversal.normal_resource_path(l)
-					l.target = l
-			ext_collection[StandardExternalFields.LINKS] = _links
+			ext_collection[StandardExternalFields.LINKS] = _magic_link_externalizer( _links )
 
 		return ext_collection
 
@@ -370,6 +360,18 @@ class ContainerCollectionDetailExternalizer(object):
 
 		return ext_collection
 
+def _magic_link_externalizer(_links):
+	# Note that we are handling link traversal for
+	# links that are string based here. Somewhere up the line
+	# we're losing context and failing to render if we don't.
+	# We only do this for things that are set up specially in
+	# this module.
+	for l in _links:
+		if l.target == getattr(l, '__name__', None):
+			# We know the ntiid gets used as the href
+			l.ntiid = traversal.normal_resource_path(l)
+			l.target = l
+	return _links
 
 class WorkspaceExternalizer(object):
 	interface.implements(ext_interfaces.IExternalObject)
@@ -388,7 +390,7 @@ class WorkspaceExternalizer(object):
 		result['Items'] = _collections
 		_links = datastructures.find_links( self._workspace )
 		if _links:
-			result[StandardExternalFields.LINKS] = _links
+			result[StandardExternalFields.LINKS] = _magic_link_externalizer( _links )
 		return result
 
 class UserEnumerationWorkspace(ContainerEnumerationWorkspace):
@@ -407,6 +409,24 @@ class UserEnumerationWorkspace(ContainerEnumerationWorkspace):
 		pages = app_interfaces.ICollection( self._container )
 		pages.__parent__ = self
 		return pages
+
+	@property
+	def links(self):
+		# Note that we are providing a complete link with a target
+		# that is a string and also the name of the link. This is
+		# a bit wonky and cooperates with how the CollectionSummaryExternalizer
+		# wants to deal with links
+		# TODO: Hardcoding both things
+		search_parent = location.Location()
+		search_parent.__name__ = 'Search'
+		search_parent.__parent__ = self
+		ugd_link = links.Link( 'RecursiveUserGeneratedData', rel='UGDSearch' )
+		unified_link = links.Link( 'UnifiedSearch', rel='UnifiedSearch' )
+		result = (ugd_link, unified_link)
+		for lnk in result:
+			lnk.__parent__ = search_parent
+			lnk.__name__ = lnk.target
+		return result
 
 	@property
 	def collections(self):
@@ -509,6 +529,8 @@ class _UserPagesCollection(object):
 		# a bit wonky and cooperates with how the CollectionSummaryExternalizer
 		# wants to deal with links
 		# TODO: Hardcoding both things
+		# TODO: These are deprecated here, as the entire pages collection is
+		# deprecated. They are moved to the user's workspace
 		search_parent = location.Location()
 		search_parent.__name__ = 'Search'
 		search_parent.__parent__ = self.__parent__
