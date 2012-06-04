@@ -89,11 +89,7 @@ class TestRenderable(nti.tests.ConfiguringTestBase):
 			shutil.rmtree( dom.config['files']['directory'] )
 
 	def test_render_id(self):
-		# FIXME: This is order dependent. The first test to run
-		# creates 'index.html', as expected. The second
-		# one creates 'sect0001.html'. There's some global state is plasTeX that
-		# we need to track down and remove.
-		self._do_test_render( br'\label{testquestion}', 'tag:nextthought.com,2011-10:testing-HTML-temp.naq.testquestion', 'sect0001.html' )
+		self._do_test_render( br'\label{testquestion}', 'tag:nextthought.com,2011-10:testing-HTML-temp.naq.testquestion')
 
 	def test_render_counter(self):
 		self._do_test_render( b'', 'tag:nextthought.com,2011-10:testing-HTML-temp.naq.1' )
