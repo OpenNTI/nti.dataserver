@@ -49,13 +49,14 @@ class QNumericMathSolution(_TrivialValuedMixin,QMathSolution):
 	"""
 
 	interface.implements(interfaces.IQNumericMathSolution)
-
+	_part_type = parts.QNumericMathPart
 
 class QFreeResponseSolution(_TrivialValuedMixin,QSolution):
 	"""
 	Simple free-response solution.
 	"""
 	interface.implements(interfaces.IQFreeResponseSolution)
+	_part_type = parts.QFreeResponsePart
 
 
 class QSymbolicMathSolution(QMathSolution):
