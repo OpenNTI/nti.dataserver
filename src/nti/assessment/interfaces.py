@@ -106,9 +106,14 @@ class IQSymbolicMathSolution(IQMathSolution):
 	For example, "twelve pi" or "the square root of two".
 	"""
 
-class IQSymbolicMathPart(IQPart):
+class IQSymbolicMathPart(IQMathPart):
 	"""
 	A part whose solutions are symbolic math.
+	"""
+
+class IQNumericMathPart(IQMathPart):
+	"""
+	A part whose solutions are numeric math.
 	"""
 
 class IQLatexSymbolicMathSolution(IQSymbolicMathSolution,IQSingleValuedSolution):
@@ -171,6 +176,10 @@ class IQFreeResponseSolution(IQSolution,IQSingleValuedSolution):
 
 	value = schema.Text( title="The correct text response" )
 
+class IQFreeResponsePart(IQPart):
+	"""
+	A part whose correct answer is simple text.
+	"""
 
 class IQMatchingSolution(IQSolution):
 	"""

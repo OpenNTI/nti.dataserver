@@ -57,10 +57,18 @@ class QPart(Persistent):
 											name=self.grader_name	)
 		return grader()
 
-class QSymbolicMathPart(QPart):
-	interface.implements(interfaces.IQSymbolicMathPart)
+@interface.implementer(interfaces.IQMathPart)
+class QMathPart(QPart):
+	pass
+
+@interface.implementer(interfaces.IQSymbolicMathPart)
+class QSymbolicMathPart(QMathPart):
 
 	grader_interface = interfaces.IQSymbolicMathGrader
+
+@interface.implementer(interfaces.IQNumericMathPart)
+class QNumericMathPart(QMathPart):
+	pass
 
 class QMultipleChoicePart(QPart):
 	interface.implements(interfaces.IQMultipleChoicePart)
@@ -75,3 +83,7 @@ class QMatchingPart(QPart):
 
 	labels = ()
 	values = ()
+
+@interface.implementer(interfaces.IQFreeResponsePart)
+class QFreeResponsePart(QPart):
+	pass

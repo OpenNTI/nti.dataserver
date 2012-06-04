@@ -51,10 +51,37 @@ def test_macros():
 	assert_that( dom.getElementsByTagName('naquestion'), has_length( 1 ) )
 	assert_that( dom.getElementsByTagName('naquestion')[0], is_( naquestion ) )
 
+def test_multiple_choice_macros():
+	example = br"""
+			\begin{naquestion}
+			Arbitrary prefix content goes here.
+			\begin{naqmultiplechoicepart}
+			   Arbitrary content for this part goes here.
+			   \begin{naqchoices}
+			   		\naqchoice Arbitrary content for the choice.
+					\naqchoice[1] Arbitrary content for this choice; this is the right choice.
+					\naqchoice[0.5] This choice is half correct.
+				\end{naqchoices}
+				\begin{naqsolexplanation}
+					Arbitrary content explaining how the correct solution is arrived at.
+				\end{naqsolexplanation}
+			\end{naqmultiplechoicepart}
+		\end{naquestion}
+		"""
+
+	dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
+	assert_that( dom.getElementsByTagName('naquestion'), has_length( 1 ) )
+	assert_that( dom.getElementsByTagName('naquestion')[0], is_( naquestion ) )
+
+	assert_that( dom.getElementsByTagName('naqchoice'), has_length( 3 ) )
+	assert_that( dom.getElementsByTagName('naqsolution'), has_length( 2 ) )
+
+
+
 import nti.tests
 import nti.contentrendering
 from nti.contentrendering import nti_render
-class TestRenderable(nti.tests.ConfiguringTestBase):
+class TestRenderableSymMathPart(nti.tests.ConfiguringTestBase):
 	set_up_packages = (nti.contentrendering,)
 
 	def _do_test_render( self, label, ntiid, filename='index.html' ):
