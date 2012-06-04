@@ -28,14 +28,15 @@ import logilab.common.cache
 import requests
 import gevent
 from requests.exceptions import RequestException
-# Note that we do not use requests.async.
+# Note that we do not use requests.async/grequests.
 # It wants to monkey patch far too much of the system (on import!)
 # and is not compatible with ZODB (patch to time). We think
 # our patching of socket and ssl in application.py is sufficient (?)
 # TODO: It looks like the incompatibilities are fixed with 1.0. application.py
 # will be doing some work with this. Once confirmed, decide what to do here
 # (the non-async api is prettier, but 'prefetch' might be helpful?)
-#import requests.async
+#import grequests # >= 0.13.0
+#import requests.async # <= 0.12.1
 
 import urllib
 import urlparse
