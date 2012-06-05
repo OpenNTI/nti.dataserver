@@ -192,6 +192,31 @@ def run_job_in_site(func, retries=0, sleep=None,
 
 	with _connection_cm() as conn:
 		for i in xrange(retries + 1):
+
+			# Opening the connection registered it with the transaction manager as an ISynchronizer.
+			# Ultimately this results in newTransaction being called on the connection object
+			# at `transaction.begin` time, which in turn syncs the storage. However,
+			# when multi-databases are used, the other connections DO NOT get this called on them
+			# if they are implicitly loaded during the course of object traversal or even explicitly
+			# loaded by name turing an active transaction. This can lead to extra read conflict errors
+			# (particularly with RelStorage which explicitly polls for invalidations at sync time).
+			# (Once a multi-db connection has been used, then the next time it would be sync'd. A multi-db
+			# connection is associated with the same connection to another database for its lifetime, and
+			# when open()'d will sync all other such connections. Corrollary: ALWAYS go through
+			# a connection object to get access to multi databases; never go through the database object itself.)
+
+			# As a workaround, we iterate across all the databases and sync them manually; this increases the
+			# cost of handling transactions for things that do not use the other connections, but ensures
+			# we stay nicely in sync.
+
+			for db_name in conn.db().databases:
+				c2 = conn.get_connection(db_name)
+				if c2 is conn:
+					continue
+				c2.newTransaction()
+
+			# Now fire 'newTransaction' to the ISynchronizers, including the root connection
+			# This may result in some redundant fires to sub-connections.
 			t = transaction.begin()
 			if i:
 				t.note("%s (retry: %s)" % (note, i))
@@ -212,7 +237,7 @@ def run_job_in_site(func, retries=0, sleep=None,
 				if i == retries:
 					# We failed for the last time
 					raise
-				logger.exception( "Retrying transaction %s on exception", func )
+				logger.warn( "Retrying transaction %s on exception (try: %s)", func, i, exc_info=True )
 				if sleep is not None:
 					gevent.sleep( sleep )
 			except transaction.interfaces.DoomedTransaction:
@@ -245,7 +270,10 @@ class MinimalDataserver(object):
 		self.conf = config.temp_get_config( parentDir, demo=DATASERVER_DEMO )
 		# TODO: We shouldn't be doing this, it should be passed to us
 		component.provideUtility( self.conf )
-		self.db, self.sessionsDB, self.searchDB = self._setup_dbs( parentDir, dataFileName, daemon )
+		# Although _setup_dbs returns a tuple, we don't actually want to hold a ref
+		# to any database except the root database. All access to multi-databases
+		# should go through an open connection.
+		self.db, _, _ = self._setup_dbs( parentDir, dataFileName, daemon )
 
 		# Now, simply broadcasting the DatabaseOpenedWithRoot option
 		# will trigger the installers/evolvers from zope.generations
@@ -316,15 +344,15 @@ class MinimalDataserver(object):
 		raise InappropriateSiteError( "Using Dataserver outside of site manager" )
 
 	def close(self):
-		def _c( n ):
-			if hasattr( self, n ):
-				try:
-					getattr( self, n ).close()
-				except AttributeError:
-					logger.warning( 'Failed to close %s', n, exc_info=True )
-		_c( 'searchDB' )
-		_c( 'sessionsDB' )
-		_c( 'db' )
+		def _c( n, o ):
+			try:
+				o.close()
+			except Exception:
+				logger.warning( 'Failed to close %s', o, exc_info=True )
+				raise
+
+		for k,v in self.db.databases.items():
+			_c( k, v )
 
 	def get_by_oid( self, oid_string, ignore_creator=False ):
 		resolver = component.queryUtility( interfaces.IOIDResolver )
