@@ -23,12 +23,12 @@ logger = log
 from zope.deprecation import deprecate
 from nti.deprecated import hiding_warnings
 
-def _make_ntiid( document, local, local_prefix='' ):
+def _make_ntiid( document, local, local_prefix='', nttype='HTML' ):
 	local = unicode(local)
 	local = local.replace( ' ', '_' ).replace( '-', '_' ).replace('?','_').lower()
 	provider = document.config.get( "NTI", "provider" )
 
-	return 'tag:nextthought.com,2011-10:%s-HTML-%s.%s%s' % (provider,document.userdata['jobname'], local_prefix, local)
+	return 'tag:nextthought.com,2011-10:%s-%s-%s.%s%s' % (provider, nttype, document.userdata['jobname'], local_prefix, local)
 
 
 @deprecate("Prefer the section element ntiid attribute")
@@ -109,7 +109,9 @@ def _section_ntiid(self):
 			setattr(self, "@NTIID", nextID(document, getattr( self, '_ntiid_suffix', '')))
 		return getattr(self, "@NTIID")
 
-	ntiid = _make_ntiid( document, local, getattr( self, '_ntiid_suffix', '' ) )
+	ntiid = _make_ntiid( document, local,
+						 getattr( self, '_ntiid_suffix', '' ),
+						 getattr( self, '_ntiid_type', 'HTML' )	)
 	setattr( self, "@NTIID", ntiid )
 	return ntiid
 
