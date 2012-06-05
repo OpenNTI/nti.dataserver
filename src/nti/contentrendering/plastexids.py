@@ -129,6 +129,15 @@ def _section_ntiid_filename(self):
 	# URLs (tag:) themselves. Escaping is required, but doesn't happen.
 	return self.ntiid.replace( ':', '_' ) if self.ntiid else None
 
+def _catching(f, computing='NTIID'):
+	@functools.wraps(f)
+	def y(self):
+		try:
+			return f(self)
+		except Exception:
+			logger.exception("Failed to compute %s for %s (%s)", computing, type(self), repr(self)[:50] )
+			raise
+	return y
 
 class NTIIDMixin(object):
 	"""
@@ -191,26 +200,25 @@ def _par_id_get(self):
 	setattr( self, "@hasgenid", True )
 	return _id
 
+class StableIDMixin(object):
+	"""
+	Attempts to generate more stable IDs for elements. Can be used when elements
+	have source text or may have a label child.
+	"""
+	pass
+StableIDMixin.id = property(_catching(_par_id_get, 'id'),plasTeX.Macro.id.fset) # TODO: Different counters for this than _par_used_ids?
+
 def patch_all():
 	"""
 	Performs all the patching.
 	In particular, this causes paragraph elements to generate better IDs
 	and sections to generate more appropriate filenames.
 	"""
-	plasTeX.Base.par.id = property(_par_id_get,plasTeX.Base.par.id.fset)
+	plasTeX.Base.par.id = property(_catching(_par_id_get, 'id' ),plasTeX.Base.par.id.fset)
+	plasTeX.Base.Array.id = property(_catching(_par_id_get, 'id'), plasTeX.Base.Array.id.fset)
 	from plasTeX.Packages.graphicx import includegraphics
-
-	def catching(f):
-		@functools.wraps(f)
-		def y(self):
-			try:
-				return f(self)
-			except Exception:
-				logger.exception("Failed to compute NTIID for %s (%s)", type(self), repr(self)[:50] )
-				raise
-		return y
-	includegraphics.id =  property(catching(_par_id_get),includegraphics.id.fset) # TODO: Different counters for this than _par_used_ids
-	SectionUtils.ntiid = property(catching(_section_ntiid))
-	SectionUtils.filenameoverride = property(catching(_section_ntiid_filename))
-	SectionUtils._ntiid_get_local_part = property(catching(_ntiid_get_local_part_title))
+	includegraphics.id =  property(_catching(_par_id_get, 'id'),includegraphics.id.fset) # TODO: Different counters for this than _par_used_ids?
+	SectionUtils.ntiid = property(_catching(_section_ntiid))
+	SectionUtils.filenameoverride = property(_catching(_section_ntiid_filename))
+	SectionUtils._ntiid_get_local_part = property(_catching(_ntiid_get_local_part_title))
 	plasTeX.TeXDocument.nextNTIID = nextID # Non-desctructive patch

@@ -1,7 +1,9 @@
 #Templates for resource usage.
+# When we generated images, that usually comes from something like a tabular environment, which
+# has very long source not directly suitable for use in an alt attribute.
 name: nti_resource_image
-<img align="bottom" tal:condition="not:self/style" tal:attributes="src self/image/url; alt self/source; id self/id; width self/image/width/px; height self/image/height/px" />
-<img align="bottom" tal:condition="self/style" tal:attributes="src self/image/url; alt self/source; id self/id; style self/style/inline" />
+<img class="nti_resource_image" align="bottom" tal:condition="not:self/style" tal:attributes="src self/image/url; alt python: self.source.replace('\n',''); id self/id; width self/image/width/px; height self/image/height/px" />
+<img class="nti_resource_image" align="bottom" tal:condition="self/style" tal:attributes="src self/image/url; alt python: self.source.replace('\n',''); id self/id; style self/style/inline" />
 
 name: nti_resource_inlinemathjaxdom
 <span tal:content="python: self.contents(['mathjax_inline'])" />

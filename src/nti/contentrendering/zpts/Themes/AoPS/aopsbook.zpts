@@ -1,3 +1,4 @@
+# -*- mode: html -*-
 name: defn bogus importantdef important concept warning game sidebar defns chapterquote chapterauthor exer exerhard xtra
 <div tal:condition="self" tal:attributes="class python: type(self).__name__; id self/id" tal:content='self' />
 
@@ -29,9 +30,9 @@ name: probref ref
 
 name: challengeprobs
 <div class="challenge-problems" tal:attributes="id self/id"><span class="headingtext">Challenge Problems</span></div>
-<ol class="challenge-problems itemize">
+<ol class="challenge-problems itemize challenge-problems-itemize">
 	<li tal:repeat="item self">
-		<div class="problem" tal:attributes="id self/id; probnum item/attributes/probnum" tal:content="item"></div>
+		<div class="problem challenge-problem" tal:attributes="id item/id; probnum item/attributes/probnum; data-probnum item/attributes/probnum" tal:content="item"></div>
 	</li>
 </ol>
 
@@ -41,17 +42,17 @@ name: beginsol solution
 
 name: reviewprobs
 <div class="review-problems" tal:attributes="id self/id"><span class="headingtext">Review Problems</span></div>
-<ol class="review-problems itemize">
+<ol class="review-problems itemize review-problems-itemize">
 	<li tal:repeat="item self">
-		<div class="problem" tal:attributes="id self/id; probnum item/attributes/probnum" tal:content="item"></div>
+		<div class="problem review-problem" tal:attributes="id item/id; probnum item/attributes/probnum; data-probnum item/attributes/probnum" tal:content="item"></div>
 	</li>
 </ol>
 
 name: sectionproblems
 <div class="section-problems" tal:attributes="id self/id"><span class="headingtext">Section Problems</span></div>
-<ol class="section-problems itemize">
+<ol class="section-problems itemize section-problems-itemize">
 	<li tal:repeat="item self">
-		<div class="problem" tal:attributes="id self/id; probnum item/attributes/probnum" tal:content="item"></div>
+		<div class="section-problem problem" tal:attributes="id item/id; probnum item/attributes/probnum; data-probnum item/attributes/probnum" tal:content="item"></div>
 	</li>
 </ol>
 <div class="end section-problems">End section problems</div>
@@ -69,10 +70,16 @@ name: hintitem
 name: problem picproblem secprob picsecprob picsecprobspec picproblemspec problemspec
 <div class="problem" tal:attributes="id self/id; probnum self/attributes/probnum; type python: type(self).__name__" tal:content="self"></div>
 
+
+# TODO: Convert to Chameleon switch
 name: rightpic leftpic
-<div tal:condition="python: hasattr(self, 'resource')" tal:attributes="class python: type(self).__name__" tal:content="self/resource"/>
-<div tal:define="style self/style" tal:condition="python: not hasattr(self, 'resource') and not style" tal:attributes="class python: type(self).__name__"><img tal:attributes="src self/image/url; alt self/source; width self/image/width/px; height self/image/height/px" /></div>
-<div tal:define="style self/style" tal:condition="python: not hasattr(self, 'resource') and style" tal:attributes="class python: type(self).__name__"><img tal:attributes="src self/image/url; alt self/source; style self/style/inline" /></div>
+<div tal:condition="python: hasattr(self, 'resource')" tal:attributes="class python: type(self).__name__" tal:content="self/resource"></div>
+<div tal:define="style self/style" tal:condition="python: not hasattr(self, 'resource') and not style" tal:attributes="class python: type(self).__name__">
+	<img tal:attributes="id self/id; src self/image/url; alt self/source; width self/image/width/px; height self/image/height/px" />
+</div>
+<div tal:define="style self/style" tal:condition="python: not hasattr(self, 'resource') and style" tal:attributes="class python: type(self).__name__">
+	<img tal:attributes="id self/id; src self/image/url; alt self/source; style self/style/inline" />
+</div>
 
 #FIXME There are many options to parpic that we are not handling in the templates
 #We only account for the presence of 'r' or 'l' in the options argument
@@ -84,13 +91,13 @@ name: fig
 <div class="figure" tal:attributes="id self/title/id" tal:content="self"></div>
 
 name: exercises
-<div class="exercises" tal:attributes="id self/id"><span class="headingtext">Exercises</span></div>
-<ol class="exercises itemize">
-	<li class="exercise" tal:repeat="item self" tal:attributes="id self/id; exnumber item/attributes/exnumber">
-	        <div class="exercise" tal:content="item"></div>
+<div class="exercises" tal:attributes="id self/id; data-ntiid self/ntiid"><span class="headingtext">Exercises</span></div>
+<ol class="exercises itemize exercises-itemize">
+	<li class="exercise exercise-item" tal:repeat="item self" tal:attributes="id item/id; exnumber item/attributes/exnumber; data-exnumber item/attributes/exnumber">
+	    <div class="exercise" tal:content="item"></div>
 	</li>
 </ol>
-<div class="end exercises">End exercises</div>
+<div class="end exercises end-exercises">End exercises</div>
 
 name: nst nnd nrd nth
 <span tal:content="self/attributes/text" /><sup tal:content="python: type(self).__name__[1:]"/>

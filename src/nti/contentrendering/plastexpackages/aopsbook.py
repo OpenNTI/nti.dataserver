@@ -3,6 +3,8 @@ from __future__ import print_function, unicode_literals
 
 import re
 
+from nti.contentrendering import plastexids
+
 from plasTeX import Base
 from plasTeX.Base.LaTeX import Index
 from plasTeX.Packages import graphicx
@@ -317,7 +319,7 @@ class parts(Base.List):
 
 
 
-class part(Base.List.item):
+class part(plastexids.StableIDMixin,Base.List.item):
 	#Ordinary list items can accept a value, this may or may not be used in AoPS code
 	#args = ''
 
@@ -367,7 +369,7 @@ class exercises(Base.subsection):
 
 		return res
 
-class exer(Base.subsubsection):
+class exer(plastexids.StableIDMixin, Base.subsubsection):
 	args = ''
 	counter = 'exnumber'
 	title = 'exer'
