@@ -111,10 +111,12 @@ html {
 This is due to the application injecting the stylesheets in reverse document 
 order. A fix in the application for this is pending. */
 	font-family: STIXGeneral !important;
+}
+
+#NTIContent div.page-contents {
 	/* !important is a workaround for the !important in main.css */
 	font-size: 16px !important;
 }
-
 
 /* Mathjax */
 #NTIContent .MathJax {
@@ -536,7 +538,7 @@ order. A fix in the application for this is pending. */
 }
 
 #NTIContent div.section-problems-separator {
-	margin-top: 20px;
+/*	margin-top: 20px;*/
 	line-height: 30px;
 	position: relative;
 }
@@ -657,6 +659,7 @@ order. A fix in the application for this is pending. */
 		position: relative;
 		background: none;
 		padding: 2em 0em 0em 0em;
+		margin-top: 10px;
 }
 
 #NTIContent div.xtra,
