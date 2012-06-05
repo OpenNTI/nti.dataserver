@@ -72,6 +72,45 @@ SOCKET_IO_PATH = 'socket.io'
 #TODO: we should do this as configuration
 DATASERVER_WHOOSH_INDEXES = 'DATASERVER_WHOOSH_INDEXES' in os.environ
 
+def dump_stacks():
+	"""
+	:return: A sequence of text lines detailing the stacks of running
+		threads and greenlets. (One greenlet will duplicate one thread,
+		the current thread and greenlet.)
+	"""
+	dump = []
+
+	# threads
+	import threading
+
+	threads = {th.ident: th.name for th in threading.enumerate()}
+
+	for thread, frame in sys._current_frames().items():
+		dump.append('Thread 0x%x (%s)\n' % (thread, threads.get(thread)))
+		dump.append(''.join(traceback.format_stack(frame)))
+		dump.append('\n')
+
+	# greenlets
+	try:
+		from greenlet import greenlet
+	except ImportError:
+		return dump
+
+	import gc
+	# if greenlet is present, let's dump each greenlet stack
+	# Use the gc module to inspect all objects to find the greenlets
+	# since there isn't a global registry
+	for ob in gc.get_objects():
+		if not isinstance(ob, greenlet):
+			continue
+		if not ob:
+			continue   # not running anymore or not started
+		dump.append('Greenlet %s\n' % ob)
+		dump.append(''.join(traceback.format_stack(ob.gr_frame)))
+		dump.append('\n')
+
+	return dump
+
 class _Main(object):
 
 	def __init__(self, pyramid_config, serveFiles=(), http_port=8080):
@@ -125,15 +164,7 @@ class _Main(object):
 		# Chrome 16 is version 13 (which seems to be compatible with 7/8)
 
 		if environ['PATH_INFO'].startswith( '/stacktraces' ):
-			# TODO: Extend to greenlets
-			code = []
-			for threadId, stack in sys._current_frames().items():
-				code.append("\n# ThreadID: %s" % threadId)
-				for filename, lineno, name, line in traceback.extract_stack(stack):
-					code.append('File: "%s", line %d, in %s' % (filename, lineno, name))
-					if line:
-						code.append("  %s" % (line.strip()))
-			body = '\n'.join(code)
+			body = '\n'.join(dump_stacks())
 			print body
 			start_request( '200 OK', [('Content-Type', 'text/plain'),] )
 			return body + '\n'
