@@ -116,7 +116,7 @@ class TestRenderableSymMathPart(nti.tests.ConfiguringTestBase):
 			shutil.rmtree( dom.config['files']['directory'] )
 
 	def test_render_id(self):
-		self._do_test_render( br'\label{testquestion}', 'tag:nextthought.com,2011-10:testing-HTML-temp.naq.testquestion')
+		self._do_test_render( br'\label{testquestion}', 'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.testquestion')
 
 	def test_render_counter(self):
-		self._do_test_render( b'', 'tag:nextthought.com,2011-10:testing-HTML-temp.naq.1' )
+		self._do_test_render( b'', 'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.1' )

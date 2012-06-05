@@ -190,6 +190,8 @@ class naquestion(Base.Environment,plastexids.NTIIDMixin):
 	_ntiid_allow_missing_title = True
 	_ntiid_suffix = 'naq.'
 	_ntiid_title_attr_name = 'ref' # Use our counter to generate IDs if no ID is given
+	_ntiid_type = 'NAQ'
+
 
 	@property
 	def _ntiid_get_local_part(self):
