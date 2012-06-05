@@ -107,6 +107,12 @@ html {
 #NTIContent {
 	background-position: 0px 300px;
 	background-repeat: no-repeat;
+	/* !important is a workaround for style.css being included after us.  
+This is due to the application injecting the stylesheets in reverse document 
+order. A fix in the application for this is pending. */
+	font-family: STIXGeneral !important;
+	/* !important is a workaround for the !important in main.css */
+	font-size: 16px !important;
 }
 
 
@@ -530,9 +536,9 @@ html {
 }
 
 #NTIContent div.section-problems-separator {
-    position: relative;
-    margin-top: 60px;
-    margin-bottom: 5px;
+	margin-top: 20px;
+	line-height: 30px;
+	position: relative;
 }
 
 #NTIContent div.section-problems-separator > span.headingtext {
@@ -594,7 +600,7 @@ html {
 
 #NTIContent ol.parts {
     margin-left: 0px;
-    float: left;
+/*    float: left; */
 }
 
 #NTIContent ol.parts > ul.part {
@@ -616,6 +622,8 @@ html {
 	content: '*';
 }
 
+/*#NTIContent li.parthard
+*/
 #NTIContent .solution {
 	font-style: italic;
 }
@@ -663,6 +671,10 @@ html {
 
 #NTIContent .mathnumber {
     font-family: STIXGeneral,STIXNonUnicode,STIXSizeOneSym; 
+}
+
+#NTIContent .mtext {
+    font-family: "Open Sans", Helvetica, arial, sans-serif; 
 }
 
 #NTIContent .boxed {
