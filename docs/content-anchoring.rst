@@ -6,7 +6,7 @@ This document describes the method in which anchorable content is modeled as suc
 Considerations
 --------------
 
-We have the requirement to anchor various types of user data (at this point the requirement is for notes and highlights) to specific ranges of content within a container.  Beyond the basic explicit requirement made above, two implicit requirements need to be made explicit.
+We have the requirement to anchor various types of user data (at this point the requirement is for notes, highlights, and redactions) to specific ranges of content within a container.  Beyond the basic explicit requirement made above, two implicit requirements need to be made explicit.
 
 First, it is desired that anchors are as robust as possible to content changes such as the addition, removal or reordering of paragraphs, graphics, embedded media, etc. Preferably, even intra-paragraph changes would have minimal effect. This means that anchors need to store redundant information to be used as backup, and they also need to store enough information to know whether or not they have successfully located their target (assumed: highlighting/noting the wrong thing is worse than displaying a "missing highlight" indicator). (As a corollary, it also means that document-global information, such as a DOM range or XPath is not sufficient.)
 
@@ -108,7 +108,7 @@ The generation of context_text is less well defined and may change from anchor t
 
 context_text_offset is then set to the offset in the context_text of the endpoint.  In our example above that would be 22.
 
-NTIContentRangeSpcc to DOM Range
+NTIContentRangeSpec to DOM Range
 ++++++++++++++++++++++++++++++++
 
 When converting DOM Range, range, objects from NTIContentRangeSpec objects, clients should keep in mind that from a user perspective it is much worse to anchor something to the wrong content than to not anchor it at all.  If when reconstructing the range from the NTIContentRangeSpec, a client is unable to locate the startContainer, endContainer, startOffset, or endOffset using all the NTIContentAnchor information provided, the client should abort anchoring the content to a specific location.
