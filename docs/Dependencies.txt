@@ -32,6 +32,7 @@ Dependencies (macports):
 
 Dependencies for content generation:
 - Full TeX distribution (including extras) - macports
+	- graphviz
 	- texlive
 	- texlive-latex
 	- texlive-bibtex-extra
