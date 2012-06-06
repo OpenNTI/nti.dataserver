@@ -477,4 +477,10 @@
 }
 
 
+#NTIContent .inline-math {
+        font-family: STIXGeneral;
+}
 
+#NTIContent .math {
+        font-family: STIXGeneral;
+}
