@@ -76,6 +76,9 @@ the command line. Fortunately, this is exactly the example given in
 the documentation. (Note that the RDS command line tools are a
 separate install from the normal AWS command line tools.)
 
+It may also be helpful (to reduce MySQL 2006 warnings from RelStorage)
+to set the ``wait_timeout`` value to an increased value (such as 600).
+
 Users and schemas
 ~~~~~~~~~~~~~~~~~
 
