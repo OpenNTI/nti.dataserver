@@ -147,8 +147,8 @@ documentation. Here's a complete example::
 			blob-dir /opt/nti/DataserverEnv/data/data.fs.blobs
 			cache-servers zodb.wz3dwu.0001.use1.cache.amazonaws.com:11211
 			cache-prefix Users
-			poll-interval 60
-			commit-lock-timeout 6
+			poll-interval 0
+			commit-lock-timeout 30
 			keep-history false
 			pack-gc false
 			<mysql>
@@ -168,8 +168,8 @@ documentation. Here's a complete example::
 			blob-dir /opt/nti/DataserverEnv/data/sessions.data.fs.blobs
 			cache-servers zodb.wz3dwu.0001.use1.cache.amazonaws.com:11211
 			cache-prefix Sessions
-			poll-interval 60
-			commit-lock-timeout 6
+			poll-interval 0
+			commit-lock-timeout 30
 			keep-history false
 			pack-gc false
 			<mysql>
@@ -189,8 +189,8 @@ documentation. Here's a complete example::
 			blob-dir /opt/nti/DataserverEnv/data/search.data.fs.blobs
 			cache-servers zodb.wz3dwu.0001.use1.cache.amazonaws.com:11211
 			cache-prefix Search
-			poll-interval 60
-			commit-lock-timeout 6
+			poll-interval 0
+			commit-lock-timeout 30
 			keep-history false
 			pack-gc false
 			<mysql>
@@ -252,3 +252,15 @@ Operational Notes
   memory that can be devoted to RelStorage caches.
 * With a ``pool-size`` of 7, three databases, and 4 workers, the
   minimum number of MySQL connections consumed is 84.
+* A ``commit-lock-timeout`` of 30 seconds is the default and seems
+  reasonable.
+* A ``poll-interval`` of 0 is the default and causes invalidation
+  checks to be done every transaction. A larger value (e.g, 60) is
+  more efficient if the database is read-mostly. With a value of 0,
+  the cache is not used (?)
+* Unfortunately, the MySOL library is implemented in C and uses
+  blocking IO, which means it doesn't play nicely with gunicorn and
+  gevent (it prevents switching). Although there are alternate MySQL
+  libraries available that are pure python, RelStorage seems fairly
+  tightly coupled to this particular implementation. *This may be a
+  deal breaker.*

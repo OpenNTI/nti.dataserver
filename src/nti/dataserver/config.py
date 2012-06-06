@@ -401,8 +401,8 @@ def _configure_zeo( env_root ):
 				blob-dir %(blobDir)s
 				cache-servers %(cacheServers)s
 				cache-prefix %(db_name)s
-				poll-interval 60
-				commit-lock-timeout 6
+				poll-interval 0
+				commit-lock-timeout 30
 				keep-history false
 				pack-gc false
 				<mysql>
