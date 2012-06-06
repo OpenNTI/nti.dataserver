@@ -111,7 +111,7 @@ def grade( solution, response ):
 	except ComponentLookupError:
 		logger.warning( "Unable to grade math, assuming wrong", exc_info=True )
 		return False
-	# TODO: Caching these DOMs based on string values. Parsing them is expensive.
+
 	solution_dom = converter.convert( solution )
 	response_dom = converter.convert( response )
 
