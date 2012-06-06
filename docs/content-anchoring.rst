@@ -1,10 +1,13 @@
-Anchoring
-=========
+===========
+ Anchoring
+===========
 
-This document describes the method in which anchorable content is modele, and the methods used to convert NTIAnchorable content to and from dom selections/ranges.
+This document describes the method in which anchorable content is
+modele, and the methods used to convert NTIAnchorable content to and
+from dom selections/ranges.
 
 Considerations
---------------
+==============
 
 We have the requirement to anchor various types of user data (at this
 point the requirement is for notes, highlights, and redactions) to
@@ -46,7 +49,7 @@ Specification, range object, clients need only be concerned with the
 conversion of our modeled anchorable objects to/from range objects.
 
 Modeling Anchorable Content
----------------------------
+===========================
 
 Taking inspiration from the `Dom Range Specification
 <http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#ranges>`_,
@@ -94,10 +97,10 @@ information required to identify content location relative to the
 anchor provided by the abstract base class.
 
 NTIContentAnchor implementations
-++++++++++++++++++++++++++++++++
+--------------------------------
 
 NTIContentAbsoluteAnchor
-************************
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 An NTIContentAbsoluteAnchor adds no information to the abstract base
 class. Its purpose is to identify a node that things can be anchored
@@ -105,7 +108,7 @@ relative to. This type of anchor is most often seen as the ancestor
 portion of an NTIContentRangeSpec.
 
 NTIContentTextAnchor
-********************
+~~~~~~~~~~~~~~~~~~~~
 
 ::
 
@@ -136,14 +139,14 @@ offset into context_text of the edge.
 
 
 NTIContentRangeSpec conversion
-------------------------------
+==============================
 
 To maintain parity between clients it is important the same algorithm
 be used for converting NTIContentRangeSpec objects to and from dom
 ranges.
 
 DOM Range to NTIContentRangeSpec
-++++++++++++++++++++++++++++++++
+--------------------------------
 
 Given a DOM Range, range, clients can only generate
 NTIContentRangeSpec objects if they are able to reference the start
@@ -171,14 +174,14 @@ stores the result in the NTIContentRangeSpec as start and end,
 respectively.
 
 Converting a node to NTIContentAbsoluteAnchor
-*********************************************
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Nodes represented as an NTIContentAbsoluteAnchor *MUST* have both an
 id and tagname. The NTIContentAnchor anchor_dom_id should be set to
 the nodes id, and anchor_tag_name should be set to the nodes tag_name.
 
 Converting a node to NTIContentTextAnchor
-*****************************************
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Only text nodes can be represented by NTIContentTextAnchor objects,
 text anchor. A text anchor consists of a reference point and a set of
@@ -217,7 +220,7 @@ context_text_offset is then set to the offset in the context_text of
 the edge. In our example above that would be 22.
 
 NTIContentRangeSpec to DOM Range
-++++++++++++++++++++++++++++++++
+--------------------------------
 
 When converting DOM Range, range, objects from NTIContentRangeSpec
 objects, clients should keep in mind that from a user perspective it
@@ -245,14 +248,14 @@ range.
 
 
 Converting NTIContentAbsoluteAnchor to a node
-*********************************************
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Given an NTIContentAbsoluteAnchor find the node whose id is
 anchor_dom_id. If a node with that id can't be found or the tagname of
 the node does not match anchor_tag_name return null.
 
 Converting NTIContentTextAnchor to a node
-*****************************************
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 NTIContentTextAnchor resolution should begin by locating the reference
 node. If the reference node cannot be located the client should fail
@@ -271,7 +274,7 @@ identify the text node containing the edge. That textNode and a
 computed offset can be used for the ranges endContainer and endOffset.
 
 Anchor Migration
-----------------
+================
 
 As time goes on and content around anchored items changes, we may need
 some system for migrating/updating/correcting NTIContentRangeSpecs.
