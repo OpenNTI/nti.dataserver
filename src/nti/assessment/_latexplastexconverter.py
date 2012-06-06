@@ -3,6 +3,8 @@
 Convenient functions for creating simple math doms from latex expressions.
 """
 from zope import component
+from zope import interface
+
 import sys
 
 from nti.assessment import interfaces
@@ -60,6 +62,10 @@ def _response_text_to_latex(response):
 	return response
 
 def convert( response ):
+	# Parsing the strings is expensive, so we should cache them. We
+	# currently do that with an attribute on the response object, but these
+	# objects are usually short lived so that's probably not much help.
+	# TODO: This cache should be more global
 	cache_attr = '_v_latexplastexconverter_cache'
 	cached_value = getattr( response, cache_attr, None )
 	if not cached_value or cached_value[0] != response.value:
@@ -71,8 +77,19 @@ def convert( response ):
 
 	return cached_value[1] if cached_value else None
 
+class EmptyResponseConverter(object):
+	"""
+	A converter for empty responses. Returns None, which should then grade out
+	to False.
+	"""
+
+	@classmethod
+	def convert(cls, response):
+		return None
+
+interface.directlyProvides( EmptyResponseConverter, interfaces.IResponseToSymbolicMathConverter )
+
 def factory( solution, response ):
-	if response.value:
-		return sys.modules[__name__]
+	return sys.modules[__name__] if response.value else EmptyResponseConverter
 
 component.moduleProvides( interfaces.IResponseToSymbolicMathConverter )
