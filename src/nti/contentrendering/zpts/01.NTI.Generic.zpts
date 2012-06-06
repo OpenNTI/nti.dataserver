@@ -47,9 +47,10 @@ name: tabular tabular* tabularx
 <div tal:attributes="id self/id; class python: type(self).__name__" tal:content="self/resource"/>
 
 name: mathnumber mathname
-<span tal:attributes="class python: type(self).__name__" tal:content="self/attributes/text"/>
+<span class="inline-math"><span tal:attributes="class python: type(self).__name__" tal:content="self/attributes/text"/></span>
 
 #pageref's dont make sense in our rendering.  What to do with them?
 
 name: pageref
 <a tal:attributes="href self/idref/label/url" class="pageref" tal:content="self/getPageNameForRef">Page Reference</a>
+ 
