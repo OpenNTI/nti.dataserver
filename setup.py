@@ -72,6 +72,13 @@ setup(
 		'gevent-zeromq',
 		'gunicorn >= 0.14.3',
 		'html5lib == 0.95',
+		 # WSGI middleware for profiling. Defaults to storing
+		 # data in a sqlite file. Works across multiple gunicorn workers, does
+		 # OK with websockets and greenlets. Needs trivial patch to work (display results) with
+		 # webob 1.2, collects data ok without patch.
+		 # Depends on the system graphviz installation; an alternative is repoze.profile which has
+		 # fewer dependencies, but less helpful output and doesn't work with multiple workers (?)
+		'linesman >= 0.2.2',
 		'logilab-common',
 		'nltk',
 		'paste',
