@@ -16,6 +16,7 @@ Contents:
 
 	ipad-localremotebridge
 	ntiid-structure
+	content-anchoring
 	content-in-cdn
 	passenger
 	dataserver-contenttypes
