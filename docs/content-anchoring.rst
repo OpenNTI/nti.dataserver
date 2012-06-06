@@ -164,18 +164,26 @@ NTIContentRangeSpec conversion
 ==============================
 
 To maintain parity between clients it is important the same algorithm
-be used for converting NTIContentRangeSpec objects to and from DOM
+be used for converting ``NTIContentRangeSpec`` objects to and from DOM
 ranges. The algorithm to use is detailed here.
 
-We begin by defining a *referenceable* (or *representable*) DOM
-``Node.`` This is a ``Node`` which can supply the information
-necessary to completely create a ``NTIContentAnchor.`` Such a Node is
-either an ``Element`` (because it must have the  `id
-<http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-element-id>`_,
-and `tag_name
-<http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-element-tagname>`_
-properties) with a non-empty ID, or a ``Text`` node that is a
-descendent (not necessarily a direct child) of such an element.
+We begin with some definitions:
+
+*referenceable* (or *representable*) DOM ``Node``
+	A ``Node`` which can supply the information
+	necessary to completely create a ``NTIContentAnchor.``
+
+	This Node is either an ``Element`` (because it must have the  `id
+	<http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-element-id>`_,
+	and `tag_name
+	<http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-element-tagname>`_
+	properties) with a *referenceable ID*, or a ``Text`` node that is a
+	descendent (not necessarily a direct child) of such an ``Element.``
+
+*referenceable ID*
+	The value of an ``id`` property of an ``Element`` which is not null,
+	not the empty string, and does not begin with one of the following
+	excluded prefixes: ``MathJax``.
 
 DOM Range to NTIContentRangeSpec
 --------------------------------
