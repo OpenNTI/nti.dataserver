@@ -493,7 +493,11 @@ def _openidcallback( context, request, success_dict ):
 
 	return _create_success_response( request, userid=email )
 
-
+###
+# TODO: The two facebook methods below could be radically simplified using
+# requests-facebook. As of 0.1.1, it adds no dependencies. (However, it also has no tests in its repo)
+# http://pypi.python.org/pypi/requests-facebook/0.1.1
+###
 
 @view_config( route_name='logon.facebook.oauth1', request_method='GET' )
 def facebook_oauth1( request ):
@@ -535,6 +539,7 @@ def facebook_oauth2(request):
 	# The facebook return value is in ridiculous format.
 	# Are we supposed to try to treat this like a url query value or
 	# something? Yick.
+	# TODO: try urlparse.parse_qsl. We need test cases!
 	text = auth.text
 	token = None
 	for x in text.split( '&'):

@@ -1,4 +1,12 @@
 #!/usr/bin/env python
+"""
+Defines objects for creating and querying on disk, in various forms, representations
+of portions of a document (such as images and math expressions).
+
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals
 
 import logging
 logger = logging.getLogger(__name__)
@@ -32,53 +40,7 @@ RESOURCE_TYPES = {'mathjax_inline': 'nti_resource_inlinemathjaxdom', \
 				  'png': 'nti_resource_image' }
 
 from UserDict import DictMixin
-class ResourceTypeOverrides(DictMixin):
-
-	OVERRIDE_INDEX_NAME = 'resourcetypes.txt'
-
-	def __init__(self, location):
-		self.location = location
-		self._overrides = {}
-		if location:
-			self._loadOverrides()
-
-	def _loadOverrides(self):
-
-		overridesFile = os.path.join(self.location, self.OVERRIDE_INDEX_NAME)
-
-		if not os.path.exists(overridesFile):
-			logger.warning('%s not found.  No resourceType overrides will be applied', overridesFile)
-			return
-
-		with open(overridesFile, 'r') as f:
-			for line in f.readlines():
-				sourceFileName, types = line.split('=')
-				types = types.split(',')
-				types = [t.strip() for t in types]
-
-				sourcePath = os.path.join(self.location, sourceFileName)
-
-				if not os.path.exists(sourcePath):
-					logger.warning('Can\'t apply override for %s.  File does not exist', sourcePath)
-					continue
-
-				with open(sourcePath, 'r') as sourceFile:
-					source = sourceFile.read().strip()
-					source = ''.join(source.split())
-					self[source] = types
-
-	def __getitem__(self, key):
-		return self._overrides[key]
-
-	def __delitem__(self, key):
-		del self._overrides[key]
-
-	def __setitem__(self, key, value):
-		self._overrides[key]  = value
-
-	def keys(self):
-		return self._overrides.keys()
-
+from .resourcetypeoverrides import ResourceTypeOverrides
 
 
 class Resource(object):
@@ -166,7 +128,7 @@ class ResourceDB(object):
 	def __init__(self, document, path=None, overridesLocation=None):
 		self.__document = document
 		self.__config = self.__document.config
-		self.overrides = ResourceTypeOverrides(overridesLocation)
+		self.overrides = ResourceTypeOverrides(overridesLocation, fail_silent=False)
 
 		if not hasattr(Image, '_url'): # Not already patched
 			Image._url = None
