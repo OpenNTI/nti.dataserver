@@ -16,6 +16,9 @@ import copy as cp
 
 from hashlib import sha1
 
+from zope.deprecation import deprecated
+from UserDict import DictMixin
+
 try:
 	import cPickle as mPickle
 except ImportError:
@@ -39,7 +42,7 @@ RESOURCE_TYPES = {'mathjax_inline': 'nti_resource_inlinemathjaxdom', \
 				  'mathjax_display': 'nti_resource_displaymathjaxdom', \
 				  'png': 'nti_resource_image' }
 
-from UserDict import DictMixin
+
 from .resourcetypeoverrides import ResourceTypeOverrides
 
 
@@ -55,36 +58,48 @@ class Resource(object):
 		return '%s' % self.path
 
 
-#key digest cache
-class CachingDigester(object):
-	cachingEnabled = False
 
-	digestCache = {}
+class _ExternalHasher(object):
+	"""
+	Provides methods to create ASCII hashes
+	for use as paths on the filesystem or composite keys
+	in a dictionary.
+	"""
 
 	def digestKeys(self, toDigests):
-		skeys = sorted(map(str, toDigests))
+		"""
+		Hashes all the values in `toDigests` after turning them into strings
+		and sorting them. The sorting is a convenience to the client, allowing
+		multiple clients to be composed together in the creation of a key,
+		or to use datastructures such as a set whose iteration order may
+		change over time.
+		"""
+		skeys = sorted([str(x) for x in toDigests])
 		dkey = ' '.join(skeys)
 
 		return self.digest(dkey)
 
 	def digest(self, toDigest):
 		toDigest = toDigest.encode('ascii', 'backslashreplace')
+		return sha1( toDigest ).hexdigest()
 
-		if toDigest in self.digestCache:
-			return self.digestCache[toDigest]
+digester = _ExternalHasher()
 
-		m = sha1()
-		m.update(toDigest)
-		digest = str(m.hexdigest())
+class ResourceRepresentations(object,DictMixin):
+	"""
+	Collects the various representations of a single resource
+	together and makes them accessible for querying.
 
-		if self.cachingEnabled:
-			self.digestCache[toDigest] = digest
+	In effect, this is a convenience for a dictionary using a multi-part key
+	with an implicit first part being the resource's ``source`` and the remainder of the parts
+	specifying the representation variant.
 
-		return digest
+	..note:: The first part of the representation variant key is required to be one of the
+		supported resource types.
 
-digester = CachingDigester()
-
-class ResourceSet(object):
+	..note:: All parts of the representation variant should be strings or have a reasonable
+		string representation
+	"""
 
 	def __init__(self, source):
 		self.resources = {}
@@ -92,10 +107,6 @@ class ResourceSet(object):
 		self.path = digester.digest(source)
 
 	def setResource(self, resource, keys):
-		# FIXME caching relies on being able to tell which resourceTypes
-		# We have already generated.  We used to just be able to inspect
-		# The resources dict keys but now they are md5
-
 		resource.resourceType = keys[0]
 		self.resources[digester.digestKeys(keys)] = resource
 
@@ -107,9 +118,16 @@ class ResourceSet(object):
 	def hasResource(self, keys):
 		return digester.digestKeys(keys) in self.resources
 
-	def __str__(self):
-		return '%s' % self.resources
+	def keys(self):
+		return self.resurces.keys()
 
+	__getitem__ = getResource
+	__setitem__ = setResource
+	__contains__ = hasResource
+
+
+ResourceSet = ResourceRepresentations
+deprecated( 'ResourceSet', 'Prefer the name ResourceRepresentations')
 
 class ResourceDB(object):
 	"""
@@ -164,13 +182,13 @@ class ResourceDB(object):
 		#set of all nodes we need to generate resources for
 		nodesToGenerate = self.__findNodes(self.__document)
 
-		#Generate a mapping of types to source  {png: [src2, src5], mathml: [src1, src5]}
+		#Generate a mapping of types to source  {png: {src2, src5}, mathml: {src1, src5}}
 		typesToSource = defaultdict(set)
 
 		for node in nodesToGenerate:
 
 			for rType in node.resourceTypes:
-				# We don't want to regenerate for source that already esists
+				# We don't want to regenerate for source that already exists
 				if not node.source in self.__db:
 					typesToSource[rType].add(node.source)
 				else:
@@ -462,7 +480,7 @@ class BaseResourceGenerator(object):
 	def __init__(self, document):
 		self.document = document
 
-	def storeKeys(self):
+	def storeKeys(self): #TODO: Rename. Is a 'representation description'
 		return [self.resourceType]
 
 	def context(self):
