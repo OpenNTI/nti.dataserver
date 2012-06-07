@@ -14,8 +14,6 @@ from plasTeX.Filenames import Filenames
 
 import zope.dottedname.resolve as dottedname
 
-from . import RESOURCE_TYPES
-
 logger = getLogger( __name__ )
 
 def createResourceRenderer(baserenderername, resourcedb):
@@ -40,7 +38,21 @@ def createResourceRenderer(baserenderername, resourcedb):
 
 	factory = type( str('_%sResourceRenderer' % baserenderername), tuple(bases), {} )
 
+	# We also override the template registration method to capture templates
+	# that are registered for rendering a particular type of resource. These
+	# templates should not have names that actually appear in the document.
+	# There can be multiple templates to create a particular type; they will be looked up
+	# using the name of the node (for customization) followed by the template name itself.
+	# The most recent template wins.
+	def _setTemplate(self, template, options, filename=None):
+		result = super(factory,self).setTemplate( template, options, filename=None )
+		if result and 'nti_resource_for' in options:
+			# Register the name of this template for its resource representation
+			self.template_names_by_type.setdefault( options['nti_resource_for'], [] ).insert( 0, options['name'] )
 
+		return result
+
+	factory.setTemplate = _setTemplate
 	renderer = factory()
 	renderer.renderableClass = Renderable
 	renderer.resourcedb = resourcedb
@@ -104,6 +116,11 @@ def renderDocument(self, document, postProcess=None):
 class _ResourceRenderer(object):
 	render = renderDocument
 
+	def __init__( self, *args, **kwargs ):
+		super(_ResourceRenderer,self).__init__( *args, **kwargs )
+		self.template_names_by_type = {}
+
+
 class Renderable(BaseRenderable):
 
 	@property
@@ -138,13 +155,10 @@ class Renderable(BaseRenderable):
 
 		for resourceType in resourceTypes:
 
-			if not resourceType in RESOURCE_TYPES:
-				continue
+			template_names_registered_for_resource_type = renderer.template_names_by_type.get( resourceType, [] )
+			template_names_for_node = ['%s_%s' % (x, self.nodeName) for x in template_names_registered_for_resource_type]
 
-			resourceTemplateName = RESOURCE_TYPES[resourceType]
-			resourceTemplateNameForNode = '%s_%s' % (resourceTemplateName, self.nodeName)
-
-			template = renderer.find([resourceTemplateNameForNode, resourceTemplateName], None)
+			template = renderer.find( template_names_for_node + template_names_registered_for_resource_type, None )
 
 			if template is not None:
 				break

@@ -38,11 +38,6 @@ import zope.dottedname.resolve as dottedname
 
 from collections import defaultdict
 
-RESOURCE_TYPES = {'mathjax_inline': 'nti_resource_inlinemathjaxdom', \
-				  'mathjax_display': 'nti_resource_displaymathjaxdom', \
-				  'png': 'nti_resource_image' }
-
-
 from .resourcetypeoverrides import ResourceTypeOverrides
 
 
