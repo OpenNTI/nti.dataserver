@@ -26,6 +26,13 @@ wrong thing is worse than displaying a "missing highlight" indicator).
 (As a corollary, it also means that document-global information, such
 as a DOM range or XPath is not sufficient by itself.)
 
+.. note::
+	When representing anchored contents as a range, content changes can be
+	broken down into two classes, ``Inside`` and ``Outside``. ``Inside`` changes
+	are those changes in the content that occur in between a ranges endpoints.
+	``Outside`` changes are those changes which occur outside, or surrounding,
+	the ranges endpoints.
+
 Second, it is desired that anchors are as "local" as possible, to
 support "mashups," embedding, and reuse of content. A concrete,
 customer use-case of this the ability to recombine MathCounts problems
@@ -122,12 +129,9 @@ NTIContentTextAnchor
 
 	//Adds redundant information about text content
 	class NTITextContentAnchor : NTIContentAnchor {
-		string node_text; //The nodeValue for the textnode originally used as an anchor
-		string selected_node_text; //The portion of node_text that was originally selected.
-		int node_text_offset; //The offset into node_text of the edge
-		string context_text; //A chunk of test surrounding the edge.  This should be a smaller,
-	                         // more manageable chunk of text than node value and can be used when node_text no longer matches
-		int context_text_offset; //The offset into context_text of the edge
+		string context_text; //A chunk of test surrounding the edge.
+		int context_offset; //The offset from the start or end of nodeValue of context_text
+		int edge_offset; //The offset from the start or end of content_text of the edge
 	}
 
 
@@ -136,28 +140,48 @@ This class should be used to reference portions of DOM `Text nodes
 as ``NTIContentAnchor`` objects, and is useful when a range begins or
 ends inside of ``Text`` content.
 
-* ``node_text`` is the `textContent or nodeValue
+* ``context_text`` is a string contained in the `textContent or nodeValue
   <http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-node-textcontent>`_
   of the ``Text`` node this anchor represents.
-* ``selected_node_text`` is the portion of ``node_text`` that was contained in the selected range; the
-  two *MAY* be equal.
-* ``node_text_offset`` is the index into ``node_text`` of the edge.
-  That is, it is the zero-based index of the first (in the case of
-  ``start``) or last (in the case of ``end``) character of
-  ``selected_node_text`` in ``node_text``.
+* ``context_offset`` is the index of ``context_text`` from the start or end of ``textContent``.
+  If this anchor represents the ``start`` of the ``NTIContentRangeSpec``, ``content_offset`` must be
+  >= 0, and it represents the index from the start of ``textContent``.  If this anchor represents
+  the ``end`` value of the ``NTIContentRangeSpec``, ``content_offset`` must be <=0, and it represents
+  the index from the end of ``textContent``.
+* ``edge_offset`` is index from the start of ``context_text`` to the location of the edge.
 
-In the case where the text local to an anchor does not change, these
-three properties should be enough to relocate the edge of a range.
-However, if the ``Text`` content changes, or the way in which a chunk
-of text is broken into ``Text`` nodes differs across various cross browser, these three
-fields may not be enough. Two additional fields,  ``context_text`` and
-``context_text_offset`` can be used as a fallback.
+.. note::
+	The original ``NTIContentTextAnchor`` specification allowed for ``context_text`` to span
+	multiple nodes.  However, because during resolution, the fallback case of searching from the
+	document root is common, the performance implications of allowing ``context_text`` to span
+	nodes may be difficult to overcome.
 
-* ``context_text`` is a chunk of text surrounding (leading or
-  following) the edge. This text *MAY* contain text that spans
-  adjacent textNodes.
-* ``context_text_offset`` is the offset into ``context_text`` of the
-  edge, as per ``node_text_offset.``
+NTIContentRangeSpec subclasses
+------------------------------
+
+For special types of content ranges NTIContentRangeSpec may be subclassed to provide additional
+information. The only supported subclass of NTIContentRangeSpec is
+``NTIContentSimpleTextRangeSpec``.
+
+NTIContentSimpleTextRangeSpec
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: cpp
+
+	//Adds extra information for ranges contained in one textNode
+	class NTIContentSimpleTextRangeSpec : NTIContentRangeSpec {
+		string selected_text; //The selected text
+		int offset; //The offset from the start of the Text node to selected_text
+	}
+
+This class can be used to help optimize ``NTIContentRangeSpec`` conversion when
+the start and end anchors represent the same ``Text`` node.  ``NTIContentSimpleTextRangeSpec``
+objects *MUST* have NTIContentTextAnchors for both ``start`` and ``end`` that represent
+the same dom node.
+
+* ``selected_text`` is the subsection of the ``Text`` node's nodeValue that falls
+  within the ``start`` and ``end`` of the range spec.
+* ``offset`` is the index into the ``Text`` node's nodeValue of ``selected_text``
 
 
 NTIContentRangeSpec conversion
@@ -223,6 +247,12 @@ A start or end that is a representable ``Text`` Node will be represented with an
 ``NTContentTextAnchor;`` all other endpoints will be represented with
 an ``NTIContentAbsoluteAnchor.``
 
+In the special case where ``start`` and ``end`` are ``NTIContentTextAnchor`` objects that
+represent the same ``Text`` node, the subclass ``NTIContentSimpleTextRangeSpec`` should be
+produced.  In this case ``selected_text`` should be populated from the ``start`` anchors nodeValue
+from the range's ``startOffset`` to ``endOffset``.  ``offset`` should be populated with the range's
+``startOffset``.
+
 Converting an Element to NTIContentAbsoluteAnchor
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -237,7 +267,7 @@ and ``anchor_tag_name`` should be set to the nodes `tag_name
 Converting a Text Node to NTIContentTextAnchor
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When the start or end container in a ``Range`` is a ``Text`` node, the
+When the ``startContainer`` or ``endContainer`` in a ``Range`` is a ``Text`` node, the
 result of conversion will be an ``NTIContentTextAnchor`` (the "text
 anchor"). Because ``Text`` nodes do not have tag names or IDs, a text
 anchor describes a node that does have those properties (a containing
@@ -248,15 +278,41 @@ containing element (reference point). From the text node walk up the
 DOM until a refrenceable node is found. This node's ID and tag name
 become the ``anchor_dom_id`` and ``anchor_tag_name`` respectively.
 
-The anchor's ``node_text``, ``selected_node_text``, and
-``node_text_offset`` can be populated given the ``Text`` node and the
-Range object. ``node_text`` takes the value of the ``Text`` node's
-``textContent`` property. The ``node_text_offset`` is the range's
-``startOffset`` or ``endOffset`` if we are working on the start or end anchor,
-respectively. Finally, ``selected_node_text`` is the substring of
-``node_text`` from beginning to ``node_text_offset`` if we are working on the
-start anchor, or from ``node_text_offset`` to the end if we are working on
-the end anchor.
+The anchor's ``context_text``, ``context_offset``, and
+``edge_offset`` can be populated given the ``Text`` node and the
+Range object. The generation of ``context_text`` may change
+from anchor to anchor based on some set of heuristics.  In order to
+resolve a range endpoints from ``NTIContentTextAnchors``, ``context_text``
+should be large enough to be unique, but small enough such that it is not too
+fragile to content changes near the endpoint.  In general, the more context used,
+the more fragile the ``NTIContentTextAnchor``.
+
+The genration of ``context_text`` should be designed in such a way that the
+heuristics can be easily tweaked.  As a first pass, ``context_text`` should be generated
+such that it contains 6 characters on either side of the endpoint.  In the event that the
+edge is closer than 6 characters to the start or end of the ``Text`` node's nodeValue clients
+should use as many characters as possible.
+
+When working on ``start``, given ``context_text``, ``context_offset`` and ``edge_offset`` can
+be calculated as such:
+
+.. code-block:: javascript
+
+	var context_text = generateContextText(range);
+
+	context_offset = range.startContainer.indexOf(context_text);
+	edge_offset = range.startOffset - contextOffset;
+
+Similarly, when working on ``end``, given ``context_text``, ``context_offset`` and ``edge_offset`` can
+be calculated as such:
+
+.. code-block:: javascript
+
+	var context_text = generateContextText(range);
+
+	context_offset = -1 * (range.endContainer.nodeValue.length
+							- range.endContainer.indexOf(context_text));
+	edge_offset = range.endOffset - range.endContainer.nodeValue.length + contextOffset;
 
 .. note::
   The Range's offsets are specified in terms of the DOM object's node
@@ -270,25 +326,6 @@ the end anchor.
   the process of reconstructing the matching range could be fairly
   inefficient and require much traversal. The performance
   ramifications of this are unclear.
-
-The generation of ``context_text`` is less well defined and may change
-from anchor to anchor based on some set of heuristics. The value of
-``context_text`` *MAY* be text that originally spanned multiple
-consecutive text nodes. It *SHOULD* contain some portion of
-the text that originally surrounded the range's offset. For example
-given the structure below (``<t>`` represents a ``Text`` node and ``|`` marks the
-range start and end), ``context_text`` for the end anchor may be "quick
-brown fox, jumps over the lazy."
-
-.. code-block:: html
-
-	<p id='foo'>
-		<t>|The quick</t><t> brown fox, jumps</t><t> over| the lazy dog</t>
-	</p>
-
-Once ``context_text`` is set, ``context_text_offset`` is then set to
-the offset in the ``context_text`` of the edge. In our example above that
-would be 22.
 
 NTIContentRangeSpec to DOM Range
 --------------------------------
@@ -320,11 +357,51 @@ not come before end (as computed using `compareDocumentPosition
 the ``NTIContentRangeSpec`` is invalid and clients *should* abort
 range creation and anchoring.
 
+NTIContentSimpleTextRangeSpec to DOM Range
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In the event a range spec is actually an ``NTIContentSimpleTextRangeSpec`` a fast first pass can
+be attempted to generate the ``range``.  As above, anchor resolution begins by resolving the
+``ancestor`` component of the ``spec``.  If the ancestor cannot be resolved the ``document.body``
+should be used.  Given the resolved ``ancestor`` as a reference node, clients should search for a
+``Text`` node *beneath* it whose ``textContent`` contains ``selected_text`` at ``offset``. This is
+conveniently done with a `TreeWalker <http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#treewalker>`_:
+
+.. code-block:: javascript
+
+	var simpleTextSpec = ...
+	var ref_node = ...
+
+	var tree_walker = document.createTreeWalker( ref_node, NodeFilter.SHOW_TEXT );
+	var test_node = null;
+	var matchingNodes = [];
+	while( test_node = tree_walker.nextNode() ) {
+	    if( test_node.textContent.indexOf(simpleTextSpec.selected_text) == simpleTextSpec.offset ) {
+	       matchingNodes.push(text_node);
+	    }
+	}
+
+If no ``Text`` nodes are found containing ``selected_text`` at ``offset``, or if more than one
+``Text`` node is found satisfying the condition, ``NTIContentSimpleTextRangeSpec`` resolution
+fails.  In this case clients should fallback to standard ``NTIContentRangeSpec`` resolution by
+constructing a ``range`` object via resolution of the ``start`` and ``end`` anchors.
+
+In the event that a single ``Text`` node satisfying the above conditions is found, a range can be
+constructed from the ``Text`` node and ``NTIContentSimpleTextRangeSpec`` as follows.
+
+.. code-block:: javascript
+
+	var foundNode = ...
+	var simpleTextSpec = ...
+
+	var resolvedRange = document.createRange();
+	resolvedRange.setStart(foundNode, simpleTextSpec.offset);
+	resolvedRange.setEnd(foundNode, simpleTextSpec.offset + simpleTextSpec.selected_text.length);
 
 Converting NTIContentAbsoluteAnchor to a Node
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Given an NTIContentAbsoluteAnchor find the DOM ``ELement`` whose ID is
+Given an NTIContentAbsoluteAnchor find the DOM ``Element`` whose ID is
 ``anchor_dom_id``. If an ``Element`` with that ID can't be found or the tagname of
 the ``Element`` does not match ``anchor_tag_name``, conversion fails
 and the result is null.
@@ -334,48 +411,59 @@ Converting NTIContentTextAnchor to a Node
 
 ``NTIContentTextAnchor`` resolution should begin by locating the
 reference node as per ``NTIContentAbsoluteAnchor``. If the reference
-node cannot be located conversion fails and the result is null.
+node cannot be located ``document.body`` should be used instead.
 
-.. note::
-  In the case of failing to resolve the reference node, we abort the
-  process. We can do better (instead of failing maybe we just have to search
-  from the ancestor/document.body); those heuristics need to be
-  defined here.
-
-Given a reference node, clients should search for a ``Text`` node
-*beneath* it whose ``textContent`` equals ``node_text.`` This is
+Given a reference node, clients should search *beneath* it for the textNode that contains ``context_text``
+most closely to ``context_offset``.  Again this is
 conveniently done with a `TreeWalker <http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#treewalker>`_:
+The example code below demonstrates resolving ``start`` and ``end`` anchors to a textNode
 
 .. code-block:: javascript
 
 	var ref_node    = //...
-	var text_anchor = //...
-	var result_node = //...
+	var anchor = //...
+	var isStart = //...
+
+	var textNode = null
+	var distanceFromOffset = Number.MAX_VALUE;
 
 	var tree_walker = document.createTreeWalker( ref_node, NodeFilter.SHOW_TEXT );
-	var test_node = null;
+
 	while( test_node = tree_walker.nextNode() ) {
-	    if( test_node.textContent == text_anchor.node_text ) {
-	        result_node = test_node;
-	        break;
-	    }
+		var idx = text_node.textContent.indexOf(anchor.context_text);
+		if(idx >= 0){
+			var normalizedOffset = anchor.offset
+			//Recall end anchor offsets are from the right
+			if( !isStart ){
+				normalizedOffset = text_node.nodeValue.length + anchor.context_offset
+			}
+
+			var distance = abs(normalizedOffset - idx);
+	   	 	if( distance < distanceFromOffset ) {
+	        	distanceFromOffset = distance;
+	        	textNode = text_node;
+	    	}
+		}
 	}
 
-If such a ``Text`` node is found it becomes the range's container node
-and the offset stored in ``node_text_offset`` become the range's
-offset for that edge and conversion is complete.
+At this point, if clients are unable to resolve the ``NTIContentTextAnchor`` to a node, it should be treated as
+an anchor that can no longer be resolved.  Future versions of this spec may apply more heuristics and fallbacks.
 
-In the event a ``Text`` node can't be located with equal content,
-clients should search beneath the reference node for ``context_text``. It
-is important to remember that ``context_text`` may span multiple text
-nodes. If ``context_text`` can be located the ``context_text_offset`` should
-be used to identify the text node containing the edge. That ``Text`` node
-and a computed offset can be used for the range's ``endContainer`` and
-``endOffset``.
+Given a textNode that represents a ``start`` or ``end`` the range object can be adapted as follows:
 
-.. note::
-  The fallback case of needing to search for context text is probably
-  common enough that those heuristics need to be defined.
+.. code-block:: javascript
+
+	var node = //...
+	var range = /...
+	var isStart = //..
+	var anchor = //...
+
+	if(isStart){
+		range.setStart(node, node.textValue.indexOf(anchor.context_text) + anchor.edge_offset);
+	}
+	else{
+		range.setEnd(node, node.textValue.indexOf(anchor.context_text) + anchor.edge_offset)l
+	}
 
 Anchor Migration
 ================
