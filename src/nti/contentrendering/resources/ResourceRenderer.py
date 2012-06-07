@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+
+from __future__ import print_function, unicode_literals
+
 import os
 
 from plasTeX.Renderers import Renderable as BaseRenderable
@@ -6,24 +10,39 @@ from plasTeX.Renderers import mixin, unmix
 from plasTeX.DOM import Node
 from plasTeX.Logging import getLogger
 from plasTeX.Filenames import Filenames
+
+
+import zope.dottedname.resolve as dottedname
+
 from . import RESOURCE_TYPES
 
 logger = getLogger( __name__ )
 
 def createResourceRenderer(baserenderername, resourcedb):
-	# Load renderer
-	try:
-		_name = 'plasTeX.Renderers.%s' % baserenderername
-		_module = __import__(_name, globals(), locals(), ['Renderer'], -1)
-	except ImportError:
-		logger.error('Could not import renderer "%s"' % baserenderername)
-		raise
+	"""
+	Returns a new plasTeX Renderer object that will use the given resource database
+	to locate images, vector images, and any uses of the ``resource`` property in templates.
 
-	# it would be nice to patch just the instance but PageTemplates render method
-	# calls BaseRenderer.render method
-	BaseRenderer.render = renderDocument
-	BaseRenderer.renderableClass = Renderable
-	renderer = _module.Renderer()
+	"""
+	# Load renderer
+	factory = dottedname.resolve( 'plasTeX.Renderers.%s.Renderer' % baserenderername )
+
+	# We want to replace the BaseRenderer's render method, but we still need the subclasses
+	# to do their work before they call through to the super class, so we cannot simply
+	# replace the render method on the instance.
+	# Instead, we dynamically derive a new class and insert it into the Method-Resolution-Order
+	# (inheritance tree) just /before/ BaseRender. Our implementation will not call super, and so
+	# we effectively replace BaseRendere. NOTE: This depends on cooperative subclasses that /do/ call
+	# super
+
+	bases = list( factory.__mro__ )
+	bases.insert( bases.index( BaseRenderer ), _ResourceRenderer )
+
+	factory = type( str('_%sResourceRenderer' % baserenderername), tuple(bases), {} )
+
+
+	renderer = factory()
+	renderer.renderableClass = Renderable
 	renderer.resourcedb = resourcedb
 
 	return renderer
@@ -40,6 +59,7 @@ def renderDocument(self, document, postProcess=None):
 	postProcess -- a function that will be called with the content of
 
 	"""
+
 	config = document.config
 
 	# If there are no keys, print a warning.
@@ -48,38 +68,41 @@ def renderDocument(self, document, postProcess=None):
 		logger.warning('There are no keys in the renderer. All objects will use the default rendering method.')
 
 	# Mix in required methods and members
-	mixin(Node, type(self).renderableClass)
+	mixin(Node, self.renderableClass)
 	Node.renderer = self
+	try:
+		# Create a filename generator
+		self.newFilename = Filenames(config['files'].get('filename', raw=True),
+									 (config['files']['bad-chars'],
+									  config['files']['bad-chars-sub']),
+									 {'jobname':document.userdata.get('jobname', '')}, self.fileExtension)
 
-	# Create a filename generator
-	self.newFilename = Filenames(config['files'].get('filename', raw=True),
-								 (config['files']['bad-chars'],
-								  config['files']['bad-chars-sub']),
-								 {'jobname':document.userdata.get('jobname', '')}, self.fileExtension)
-
-	self.cacheFilenames(document)
-
-
-
-	# Invoke the rendering process
-	if type(self).renderMethod:
-		getattr(document, type(self).renderMethod)()
-	else:
-		unicode(document)
+		self.cacheFilenames(document)
 
 
-	# Run any cleanup activities
-	self.cleanup(document, self.files.values(), postProcess=postProcess)
 
-	# Write out auxilliary information
-	pauxname = os.path.join(document.userdata.get('working-dir','.'),
-							'%s.paux' % document.userdata.get('jobname',''))
-	rname = config['general']['renderer']
-	document.context.persist(pauxname, rname)
+		# Invoke the rendering process
+		if self.renderMethod:
+			getattr(document, self.renderMethod)()
+		else:
+			unicode(document)
 
-	# Remove mixins
-	del Node.renderer
-	unmix(Node, type(self).renderableClass)
+
+		# Run any cleanup activities
+		self.cleanup(document, self.files.values(), postProcess=postProcess)
+
+		# Write out auxilliary information
+		pauxname = os.path.join(document.userdata.get('working-dir','.'),
+								'%s.paux' % document.userdata.get('jobname',''))
+		rname = config['general']['renderer']
+		document.context.persist(pauxname, rname)
+	finally:
+		# Remove mixins
+		del Node.renderer
+		unmix(Node, self.renderableClass)
+
+class _ResourceRenderer(object):
+	render = renderDocument
 
 class Renderable(BaseRenderable):
 
@@ -98,11 +121,14 @@ class Renderable(BaseRenderable):
 
 	@property
 	def resource(self):
+		"""
+		The resource property is an NTI extension for use in templates.
+		It's value is the rendered unicode string for the first resource type in this
+		object's `resourceTypes` attribute (preference list) that can be rendered (has a template).
+		"""
 		renderer = Node.renderer
 
-		resourceTypes = None
-		if getattr(self, 'resourceTypes', None):
-			resourceTypes = self.resourceTypes
+		resourceTypes = getattr(self, 'resourceTypes', None)
 
 		if not resourceTypes:
 			logger.warning('No resource types for %s using default renderer %s', self.nodeName, renderer.default )
@@ -140,5 +166,3 @@ class Renderable(BaseRenderable):
 
 	def getResource(self, criteria):
 		return Node.renderer.resourcedb.getResource(self.source, criteria)
-
-
