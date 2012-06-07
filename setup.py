@@ -145,7 +145,7 @@ setup(
 		'zope.i18nmessageid',
 		'zope.interface >= 4.0.1',
 		'zope.lifecycleevent >= 3.7.0',
-		'zope.location >= 3.9.1',
+		'zope.location >= 4.0.0',
 		'zope.mimetype',
 		'zope.minmax >= 1.1.2',
 		'zope.pagetemplate',
