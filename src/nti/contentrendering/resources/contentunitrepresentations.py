@@ -33,7 +33,7 @@ class ContentUnitRepresentations(object,DictMixin):
 	def __init__(self, source):
 		self.resources = {}
 		self.source = source
-		self.path = digester.digest(source)
+		self.path = digester.digest(source) # deprecated, to remove
 
 	def setResource(self, resource, keys):
 		resource.resourceType = keys[0]
@@ -55,3 +55,14 @@ class ContentUnitRepresentations(object,DictMixin):
 	__contains__ = hasResource
 
 ResourceRepresentations = ContentUnitRepresentations
+
+@interface.implementer(interfaces.IContentUnitRepresentation)
+class ContentUnitRepresentation(object):
+
+	resourceSet = None
+	resourceType = None
+	source = None
+	qualifiers = ()
+
+
+Resource = ContentUnitRepresentation

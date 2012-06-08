@@ -120,7 +120,7 @@ ResourceSet = ResourceRepresentations
 deprecated( 'ResourceSet', 'Prefer the name ResourceRepresentations')
 
 from .ResourceDB import ResourceDB
-
+deprecated( 'ResourceDB', 'Prefer the specific module' )
 
 class BaseResourceSetGenerator(object):
 
@@ -333,16 +333,10 @@ class ImagerResourceGenerator(BaseResourceGenerator):
 
 		return newImager
 
+for name in ('BaseResourceSetGenerator', 'BaseResourceGenerator', 'ImagerResourceSetGenerator', 'ImagerResourceGenerator'):
+	deprecated( name, 'Prefer the converters module.')
 
 #End ImagerResourceGenerator
-
-def copy(source, dest, debug=True):
-
-	if not os.path.exists(os.path.dirname(dest)):
-		os.makedirs(os.path.dirname(dest))
-	try:
-		shutil.copy2(source, dest)
-	except OSError:
-		shutil.copy(source, dest)
+from ._util import copy
 
 #End copy

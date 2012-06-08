@@ -43,6 +43,9 @@ class IContentUnitRepresentations(interface.Interface):
 	"""
 	A collection holding the various representations of a
 	particular resource.
+
+	Each representation is unique in the combination of `resourceType`
+	and `qualifiers.`
 	"""
 
 	source = schema.Text( title="The source text that defines the resource.",
@@ -57,3 +60,41 @@ class IContentUnitRepresentation(interface.Interface):
 	# TODO: Should this be necessary?
 	resourceSet = schema.Object( IContentUnitRepresentations,
 								 title="The collection of representations holding this representation.")
+
+	source = schema.Text( title="The source text that defines the resource.",
+						  description="Copied from the resource. Two resources are equivalent if they have equal sources." )
+
+	resourceType = schema.TextLine( title="The primary type (e.g., png) of this representation" )
+	qualifiers = schema.Iterable( title="Additional qualifiers providing refining details of this representation.",
+								  description="Generally these will be strings; they all have equal priority, and order doesn't matter" )
+
+class IContentUnitRepresentationBatchConverter(interface.Interface):
+	"""
+	Something that can produce :class:`IContentUnitRepresentation` objects
+	of a particular format in a batch process.
+	"""
+
+	resourceType = schema.TextLine( title="The primary type of the representations this object produces." )
+
+	def process_batch( content_units ):
+		"""
+		:param content_units: A sequence of :class:`IRepresentableContentUnit` objects
+		:return: A sequence of :class:`IContentUnitRepresentation` objects corresponding
+			to the transformed source of the given content units. This may produce several
+			variants of each content unit, corresponding to multiple returned objects with the same
+			`source` and `resourceType` but different `qualifiers.`
+		"""
+
+class IContentUnitRepresentationBatchCompilingConverter(IContentUnitRepresentationBatchConverter):
+	"""
+	A specialized converter that drives an *external* compiler programe to convert
+	batches of content unit into representations.
+	"""
+
+	compiler = schema.ASCIILine( title="The program name of the compiler command to execute." )
+
+
+class IFilesystemContentUnitRepresentation(IContentUnitRepresentation):
+	"""
+	A representation of the content unit that has been stored in the filesystem.
+	"""
