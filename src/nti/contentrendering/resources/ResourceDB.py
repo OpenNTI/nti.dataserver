@@ -28,7 +28,7 @@ from plasTeX.Imagers import  Image
 from collections import defaultdict
 
 from .resourcetypeoverrides import ResourceTypeOverrides
-from .contentunitrepresentations import ContentUnitRepresentations as ResourceSet
+from .contentunitrepresentations import ContentUnitRepresentations
 from ._util import digester, copy
 from . import interfaces
 
@@ -180,7 +180,7 @@ class ResourceDB(object):
 		self.dirty = True
 
 		if not source in self.__db:
-			self.__db[source] = ResourceSet(source)
+			self.__db[source] = ContentUnitRepresentations(source)
 
 		resourceSet = self.__db[source]
 
