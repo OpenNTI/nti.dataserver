@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+from __future__ import print_function, unicode_literals
+
+
 from plasTeX import Base, Node
 from nti.contentrendering import domutils
 from plasTeX.Base.LaTeX import Math
@@ -8,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 from zope import interface
 from . import interfaces
+from nti.contentrendering.resources import interfaces as res_interfaces
 interface.moduleProvides(interfaces.IDocumentTransformer)
 
 
@@ -16,9 +22,13 @@ class ntixymatrix(Base.Command):
 	def source(self):
 		return self._source
 
+
+@interface.implementer(res_interfaces.IRepresentationPreferences)
 class ntixydisplaymath(Math.displaymath):
 	resourceTypes = ['png', 'svg']
 
+
+@interface.implementer(res_interfaces.IRepresentationPreferences)
 class ntixymath(Math.math):
 	resourceTypes = ['png', 'svg']
 
@@ -99,7 +109,3 @@ def fixxy(document, xy):
 									val.replaceChild(newparent, parent)
 
 				newparent.appendChild(newxy)
-
-
-
-

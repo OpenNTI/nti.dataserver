@@ -26,7 +26,7 @@ except ImportError:
 
 from StringIO import StringIO
 from plasTeX.Filenames import Filenames
-from plasTeX.Imagers import WorkingFile, Image
+from plasTeX.Imagers import WorkingFile
 
 import zope.dottedname.resolve as dottedname
 
@@ -36,48 +36,59 @@ import zope.dottedname.resolve as dottedname
 # except ImportError:
 # 	PILImage = PILImageChops = None
 
-from collections import defaultdict
+from zope import interface
+from . import interfaces
 
-from .resourcetypeoverrides import ResourceTypeOverrides
+from .resourcetypeoverrides import ResourceTypeOverrides #b/c export
 
 
 def _set_default_resource_types():
-	from plasTeX.Base import Arrays
-	tabularTypes = ['png', 'svg']
 
-	Arrays.tabular.resourceTypes = tabularTypes
-	Arrays.TabularStar.resourceTypes = tabularTypes
-	Arrays.tabularx.resourceTypes = tabularTypes
+	def _implement( cls, types ):
+		interface.classImplements( cls,
+								   interfaces.IRepresentableContentUnit,
+								   interfaces.IRepresentationPreferences )
+		cls.resourceTypes = types
 
-	from plasTeX.Base import Math
+
+	Arrays = dottedname.resolve( 'plasTeX.Base.Arrays' )
+
+	tabularTypes = ('png', 'svg')
+	_implement( Arrays.tabular, tabularTypes )
+	_implement( Arrays.TabularStar, tabularTypes )
+	_implement( Arrays.tabularx, tabularTypes )
+
+	Math = dottedname.resolve( 'plasTeX.Base.Math' )
 
 	#The math package does not correctly implement the sqrt macro.	It takes two args
 	Math.sqrt.args = '[root]{arg}'
 
-	inlineMathTypes = ['mathjax_inline']
-	displayMathTypes = ['mathjax_display']
+	inlineMathTypes = ('mathjax_inline', )
+	displayMathTypes = ('mathjax_display', )
 
 	#inlineMathTypes = ['mathjax_inline', 'png', 'svg']
 	#displayMathTypes = ['mathjax_display', 'png', 'svg']
+	_implement( Math.math, inlineMathTypes )
+	_implement( Math.ensuremath, inlineMathTypes )
 
-	Math.math.resourceTypes = inlineMathTypes
-	Math.ensuremath.resourceTypes = inlineMathTypes
-
-	Math.displaymath.resourceTypes = displayMathTypes
-	Math.EqnarrayStar.resourceTypes = displayMathTypes
-	Math.equation.resourceTypes = displayMathTypes
+	_implement( Math.displaymath, displayMathTypes )
+	_implement( Math.EqnarrayStar, displayMathTypes )
+	# TODO: What about eqnarry?
+	_implement( Math.equation, displayMathTypes )
 
 
 	from plasTeX.Packages.graphicx import includegraphics
-	includegraphics.resourceTypes = ['png']
+	_implement( includegraphics, ('png',) )
 
 	from plasTeX.Packages import amsmath
-	amsmath.align.resourceTypes = displayMathTypes
-	amsmath.AlignStar.resourceTypes = displayMathTypes
-	amsmath.alignat.resourceTypes = displayMathTypes
-	amsmath.AlignatStar.resourceTypes = displayMathTypes
-	amsmath.gather.resourceTypes = displayMathTypes
-	amsmath.GatherStar.resourceTypes = displayMathTypes
+	# TODO: Many of these are probably unnecessary as they share
+	# common superclasses
+	_implement( amsmath.align, displayMathTypes )
+	_implement( amsmath.AlignStar, displayMathTypes )
+	_implement( amsmath.alignat, displayMathTypes )
+	_implement( amsmath.AlignatStar, displayMathTypes )
+	_implement( amsmath.gather, displayMathTypes )
+	_implement( amsmath.GatherStar, displayMathTypes )
 
 	# XXX FIXME If we don't do this, then we can get
 	# a module called graphicx reloaded from this package
@@ -90,6 +101,7 @@ def _set_default_resource_types():
 # is extremely unlikely to cause any conflicts or difficulty
 _set_default_resource_types()
 
+@interface.implementer(interfaces.IContentUnitRepresentation)
 class Resource(object):
 
 	def __init__(self, path=None, url=None, resourceSet=None, checksum=None):
@@ -102,313 +114,12 @@ class Resource(object):
 		return '%s' % self.path
 
 
-
-class _ExternalHasher(object):
-	"""
-	Provides methods to create ASCII hashes
-	for use as paths on the filesystem or composite keys
-	in a dictionary.
-	"""
-
-	def digestKeys(self, toDigests):
-		"""
-		Hashes all the values in `toDigests` after turning them into strings
-		and sorting them. The sorting is a convenience to the client, allowing
-		multiple clients to be composed together in the creation of a key,
-		or to use datastructures such as a set whose iteration order may
-		change over time.
-		"""
-		skeys = sorted([str(x) for x in toDigests])
-		dkey = ' '.join(skeys)
-
-		return self.digest(dkey)
-
-	def digest(self, toDigest):
-		toDigest = toDigest.encode('ascii', 'backslashreplace')
-		return sha1( toDigest ).hexdigest()
-
-digester = _ExternalHasher()
-
-class ResourceRepresentations(object,DictMixin):
-	"""
-	Collects the various representations of a single resource
-	together and makes them accessible for querying.
-
-	In effect, this is a convenience for a dictionary using a multi-part key
-	with an implicit first part being the resource's ``source`` and the remainder of the parts
-	specifying the representation variant.
-
-	..note:: The first part of the representation variant key is required to be one of the
-		supported resource types.
-
-	..note:: All parts of the representation variant should be strings or have a reasonable
-		string representation
-	"""
-
-	def __init__(self, source):
-		self.resources = {}
-		self.source = source
-		self.path = digester.digest(source)
-
-	def setResource(self, resource, keys):
-		resource.resourceType = keys[0]
-		self.resources[digester.digestKeys(keys)] = resource
-
-	def getResource(self, keys):
-		if self.hasResource(keys):
-			return self.resources[digester.digestKeys(keys)]
-		return None
-
-	def hasResource(self, keys):
-		return digester.digestKeys(keys) in self.resources
-
-	def keys(self):
-		return self.resurces.keys()
-
-	__getitem__ = getResource
-	__setitem__ = setResource
-	__contains__ = hasResource
-
+from .contentunitrepresentations import ContentUnitRepresentations, ResourceRepresentations
 
 ResourceSet = ResourceRepresentations
 deprecated( 'ResourceSet', 'Prefer the name ResourceRepresentations')
 
-class ResourceDB(object):
-	"""
-	Manages external resources (images, mathml, videos, etc..) for a document
-	"""
-
-	dirty = False
-
-	types = {'mathjax_inline': 'nti.contentrendering.tex2html.ResourceGenerator',
-			 'mathjax_display': 'nti.contentrendering.displaymath2html.ResourceGenerator',
-			 'svg': 'nti.contentrendering.pdf2svg.ResourceGenerator',
-			 'png': 'nti.contentrendering.gspdfpng2.ResourceGenerator',
-			 'mathml': 'nti.contentrendering.html2mathml.ResourceGenerator'}
-
-
-	def __init__(self, document, path=None, overridesLocation=None):
-		self.__document = document
-		self.__config = self.__document.config
-		self.overrides = ResourceTypeOverrides(overridesLocation, fail_silent=False)
-
-		if not hasattr(Image, '_url'): # Not already patched
-			Image._url = None
-			def seturl(self, value):
-				self._url = value
-
-			def geturl(self):
-				return self._url
-
-			Image.url = property(geturl, seturl)
-
-		if not path:
-			path = 'resources'
-
-		self.__dbpath = os.path.join(path, self.__document.userdata['jobname'])
-		self.baseURL = self.__dbpath
-		if not os.path.isdir(self.__dbpath):
-			os.makedirs(self.__dbpath)
-
-		logger.info('Using %s as resource db', self.__dbpath)
-
-		self.__indexPath = os.path.join(self.__dbpath, 'resources.index')
-
-		self.__db = {}
-
-		self.__loadResourceDB()
-
-	def __str__(self):
-		return str(self.__db)
-
-	def generateResourceSets(self):
-
-		#set of all nodes we need to generate resources for
-		nodesToGenerate = self.__findNodes(self.__document)
-
-		#Generate a mapping of types to source  {png: {src2, src5}, mathml: {src1, src5}}
-		typesToSource = defaultdict(set)
-
-		for node in nodesToGenerate:
-
-			for rType in node.resourceTypes:
-				# We don't want to regenerate for source that already exists
-				if not node.source in self.__db:
-					typesToSource[rType].add(node.source)
-				else:
-					hasType = False
-					for resource in self.__db[node.source].resources.values():
-						resourceType = getattr(resource, 'resourceType', None)
-						if resourceType == rType:
-							hasType = True
-							break
-					if not hasType:
-						typesToSource[rType].add(node.source)
-
-		for rType, sources in typesToSource.items():
-			self.__generateResources(rType, sources)
-
-		self.saveResourceDB()
-
-	def __generateResources(self, resourceType, sources):
-		#Load a resource generate
-		generator = self.__loadGenerator(resourceType)
-
-		if not generator:
-			logger.warn( "Not generating resource %s for %s", resourceType, sources )
-			return
-
-		generator.generateResources(sources, self)
-
-	def __loadGenerator(self, resourceType):
-		if not resourceType in self.types:
-			logger.warn('No generator specified for resource type %s', resourceType)
-			return None
-		try:
-			return dottedname.resolve( self.types[resourceType] )(self.__document)
-		except ImportError, msg:
-			logger.warning("Could not load custom imager '%s' because '%s'", resourceType, msg)
-			return None
-
-	def __findNodes(self, node):
-		nodes = []
-
-		#Do we have any overrides
-		#FIXME Be smarter about this.  The source for mathnodes is reconstructed so the
-		#whitespace is all jacked up.  The easiest (not safest) thing to do is strip whitespace
-		source = ''.join(node.source.split())
-		if source in self.overrides:
-			logger.info( 'Applying resourceType override to %s', node )
-			node.resourceTypes = self.overrides[source]
-
-		if getattr(node, 'resourceTypes', None):
-			nodes.append(node)
-
-		if getattr(node, 'attributes', None):
-			for attrval in node.attributes.values():
-				if getattr(attrval, 'childNodes', None):
-					for child in attrval.childNodes:
-						nodes.extend(self.__findNodes(child))
-
-		for child in node.childNodes:
-			nodes.extend(self.__findNodes(child))
-
-		return list(set(nodes))
-
-
-	def __loadResourceDB(self, debug = True):
-		if os.path.isfile(self.__indexPath):
-			try:
-
-				self.__db = mPickle.load(open(self.__indexPath, 'rb'))
-
-				for key, value in self.__db.items():
-
-					if not os.path.exists(os.path.join(self.__dbpath,value.path)):
-						del self.__db[key]
-						continue
-			except ImportError:
-				logger.exception( 'Error loading cache.  Starting from scratch' )
-				os.remove(self.__indexPath)
-				self.__db = {}
-		else:
-			self.__db = {}
-
-
-	def setResource(self, source, keys, resource, debug = False):
-
-		self.dirty = True
-
-		if not source in self.__db:
-			self.__db[source] = ResourceSet(source)
-
-		resourceSet = self.__db[source]
-
-		resourceSet.setResource(self.__storeResource(resourceSet, keys, resource, debug), keys)
-
-
-	def __storeResource(self, rs, keys, origResource, debug = False):
-
-		resource = cp.deepcopy(origResource)
-
-		digest = digester.digestKeys(keys)
-		name = '%s%s' % (digest, os.path.splitext(resource.path)[1])
-
-		relativeToDB = os.path.join(rs.path, name)
-
-		newpath = os.path.join(self.__dbpath, relativeToDB)
-		copy(resource.path, newpath)
-		resource.path = name
-		resource.filename = name
-		resource.resourceSet = rs
-		resource.url = self.urlForResource(resource)
-
-
-		return resource
-
-	def urlForResource(self, resource):
-		if self.baseURL and not self.baseURL.endswith('/'):
-			self.baseURL = '%s/' % self.baseURL
-
-		if not self.baseURL:
-			self.baseURL = ''
-
-		return '%s%s/%s' % (self.baseURL, resource.resourceSet.path, resource.path)
-
-	def saveResourceDB(self):
-		if not os.path.isdir(os.path.dirname(self.__indexPath)):
-			os.makedirs(os.path.dirname(self.__indexPath))
-
-		if not self.dirty:
-			return
-
-		mPickle.dump(self.__db, open(self.__indexPath,'wb'))
-
-	def __getResourceSet(self, source):
-		if source in self.__db:
-			return self.__db[source]
-		return None
-
-	def hasResource(self, source, keys):
-		rsrcSet = self.__getResourceSet(source)
-
-		if not rsrcSet:
-			return None
-
-		return rsrcSet.hasResource(keys)
-
-	def getResourceContent(self, source, keys):
-		path = self.getResourcePath(source, keys)
-		if path:
-			with codecs.open(path, 'r', 'utf-8') as f:
-				return f.read()
-		return None
-
-	def getResource(self, source, keys):
-
-		rsrcSet = self.__db.get(source)
-
-		if rsrcSet == None:
-			return None
-		assert source == rsrcSet.source
-		return rsrcSet.resources[digester.digestKeys(keys)]
-
-	def getResourcePath(self, source, keys):
-		rsrcSet = self.__getResourceSet(source)
-
-		if not rsrcSet:
-			return None
-
-
-		digest = digester.digestKeys(keys)
-		resourcePath = os.path.join(self.__dbpath, rsrcSet.path)
-
-		for name in os.listdir(resourcePath):
-			if name.startswith(digest):
-				path = os.path.join(resourcePath, name)
-				return path
-
-		return None
+from .ResourceDB import ResourceDB
 
 
 class BaseResourceSetGenerator(object):
