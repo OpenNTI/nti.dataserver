@@ -133,12 +133,35 @@ portion of an ``NTIContentRangeSpec``.
 NTIContentTextAnchor
 ~~~~~~~~~~~~~~~~~~~~
 
+When specifying context information for a `NTIContentTextAnchor` the
+following `NTITextContext` will be used.
+
+.. code-block:: cpp
+
+	//Provide a snippet of text context
+	class NTITextContext {
+		string context_text; //A chunk of text that can be used as context
+		int context_offset; //offset of context_text into context_offset's
+							//containing text node
+	}
+
+* ``context_text`` is a string contained in the `textContent or nodeValue
+  <http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-node-textcontent>`_
+  of a ``Text`` node near the ``NTIContentTextAnchor`` this object is
+  providing context for.
+* ``context_offset`` is the index of ``context_text`` from the start or end of ``textContent``.
+  ``content_offset`` *MUST* be an integer greater than or equal to zero.  Negative values are reserved for future use.
+  If this object is providing context for an anchor with a type *EQUAL TO* ``"start"``, ``content_offset``
+  represents the character index from the start (left) of ``textContent``.
+  If this object is providing context for an anchor with a type *EQUAL TO* ``"end"``,
+  ``content_offset`` represents the index from the end (right) of ``textContent``.
+
 .. code-block:: cpp
 
 	//Adds redundant information about text content
 	class NTITextContentAnchor : NTIContentAnchor {
-		string context_text; //A chunk of test surrounding the edge.
-		int context_offset; //The offset from the start or end of nodeValue of context_text
+		NTITextContext[] contexts; //An array of NTITextContext
+		                          //objects providing context for this anchor
 		int edge_offset; //The offset from the start or end of content_text of the edge
 	}
 
@@ -148,24 +171,29 @@ This class should be used to reference portions of DOM `Text nodes
 as ``NTIContentAnchor`` objects, and is useful when a range begins or
 ends inside of ``Text`` content.
 
-* ``context_text`` is a string contained in the `textContent or nodeValue
-  <http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-node-textcontent>`_
-  of the ``Text`` node this anchor references.
-* ``context_offset`` is the index of ``context_text`` from the start or end of ``textContent``.
-  ``content_offset`` *MUST* be an integer greater than or equal to zero.  Negative values are reserved for future use.
-  If this anchor has a type *EQUAL TO* ``"start"``, ``content_offset``
-  represents the character index
-  from the start (left) of ``textContent``.  If this anchor has a type *EQUAL TO* ``"end"``
-  ``content_offset`` represents the index from the end (right) of ``textContent``.
-* ``edge_offset`` is the character index from the start of
-  ``context_text`` to the location of the edge. Its value and
-  interprecation is the same as for ``context_offset.``
 
-.. note::
-	The original ``NTIContentTextAnchor`` specification allowed for ``context_text`` to span
-	multiple nodes.  However, because during resolution, the fallback case of searching from the
-	document root is common, the performance implications of allowing ``context_text`` to span
-	nodes may be difficult to overcome.
+* ``contexts`` is an array of ``NTITextContext`` objects that provide
+  contextual information for the ``range`` endpoint represented by this
+  anchor.  The length of ``contexts`` *MUST* be >= 1.  The first
+  ``NTITextContext`` object in the array provides the ``primary
+  context`` for this anchor, and represents a snippet of text enclosing
+  the ``range`` endpoint identified by this anchor.  Subsequent
+  ``NTITextContext`` objects in the array, provide additional context.
+  Those objects closest to the beggining of the array provide the most
+  specific context while those towards the end provide less specific
+  context. If this anchor has a ``type`` *EQUAL TO* ``start``
+  the additional context objects mirror the ``Text`` nodes returned by
+  repeateadly asking `TreeWalker <http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#treewalker>`_
+  for ``nextNode`` starting from the node used to generate
+  the ``primary context`` object.  Similarily, if this anchor has a
+  ``type`` *EQUAL TO* ``end`` the additional context objects mirror the ``Text`` nodes returned by
+  repeateadly asking `TreeWalker <http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#treewalker>`_
+  for ``previousNode`` starting from the node used to generate
+  the ``primary context`` object.  See ``Converting a Text Node to
+  NTIContentTextAnchor`` for more information.
+* ``edge_offset`` is the character offset from the start of the
+  ``primary context`` object's ``context_text`` string to the location
+  of the edge thie anchor represents.
 
 NTIContentRangeSpec subclasses
 ------------------------------
@@ -285,53 +313,184 @@ When the ``startContainer`` or ``endContainer`` in a ``Range`` is a ``Text`` nod
 result of conversion will be an ``NTIContentTextAnchor`` (the "text
 anchor"). Because ``Text`` nodes do not have tag names or IDs, a text
 anchor describes a node that does have those properties (a containing
-``Element``) plus the location of the text within (beneath) that element.
+``Element``) plus a set of context objects that define the location of
+the text within (beneath) that element.
 
 The first step in generating a text anchor is to identify the
-containing element (reference point). From the text node walk up the
+containing element (reference point). From the text node, walk up the
 DOM until a refrenceable node is found. This node's ID and tag name
 become the ``anchor_dom_id`` and ``anchor_tag_name`` respectively.
 
-The anchor's ``context_text``, ``context_offset``, and ``edge_offset``
-can be populated given the ``Text`` node and the Range object. The
-generation of ``context_text`` may change from anchor to anchor based
-on some set of heuristics. In order to populate a ``Range`` object's
-endpoints from ``NTIContentTextAnchors``, ``context_text`` should be
-large enough to be unique, but small enough such that it is not too
-fragile to content changes near the endpoint. In general, the more
-context used, the more fragile the ``NTIContentTextAnchor``.
+The anchor's ``primary context`` and ``edge_offset``
+can be populated given the ``NTIContentTextAnchor`` and the Range object. The
+generation of ``primary`` and ``subsequent`` ``NTITextContext`` objects may change from anchor to anchor based
+on some set of heuristics. In additon the method for generating the
+``primary context`` object may differ from the method used to generate
+``subsequent`` ``NTITextContext`` objects. In order to populate a ``Range`` object's
+endpoints from ``NTIContentTextAnchors``, ``contexts`` should contain
+enough ``NTITextContent`` objects to uniquely identfiy this anchor
+point beneath the reference node.
 
-The genration of ``context_text`` should be designed in such a way
-that the heuristics can be easily tweaked. As a first pass,
-``context_text`` should be generated such that it contains 6
-characters on either side of the endpoint. In the event that the edge
-is closer than 6 characters to the start or end of the ``Text`` node's
-``textContent``, clients should use as many characters as possible.
-
-.. note:: Remember that ``context_text`` is derived only from the
-   single ``Text`` node indicated in the ``Range`` object.
-
-If the anchor type is *EQUAL TO* ``"start"``, given ``context_text``,
-``context_offset`` and ``edge_offset`` can be calculated as such:
+The generation of ``NTITextContext`` objects should be designed in such a way
+that the heuristics can be easily tweaked. As a first pass we will
+take a word based approach to extracting context from a ``Text`` node.
+Given an anchor and a ``Text`` node to extract context from, the following procedure
+should be used to generate the ``primary context`` object.
 
 .. code-block:: javascript
 
-	var context_text = generateContextText(range);
+	//Extract first word from string
+	function firstWordFromString(str){
+		var word = '';
+		var readingWord = false;
+		for(var i=0; i < str.length; i++){
+			var char = str.charAt(i);
+			if(/\s/.test(char)){
+				if(readingWord){
+					break;
+				}
+				word += char;
+			}
+			else{
+				readingWord = true;
+				word += char;
+			}
+		}
+		return word;
+	}
 
-	context_offset = range.startContainer.indexOf(context_text);
-	edge_offset = range.startOffset - contextOffset;
+	//Extract first word from string
+	function lastWordFromString(str){
+		var word = '';
+		var readingWord = false;
+		for(var i=str.length - 1; i >= 0; i--){
+			var char = str.charAt(i);
+			if(/\s/.test(char)){
+				if(readingWord){
+					break;
+				}
+				word += char;
+			}
+			else{
+				readingWord = true;
+				word += char;
+			}
+		}
+		return word.split("").reverse().join("");
+	}
 
-Similarly, if the anchor type is *EQUAL TO* ``"end"``,
-given ``context_text``, ``context_offset`` and ``edge_offset`` can
-be calculated as such:
+	//Generates the primary context for the given anchor
+	//to model one end of the given range
+	function generatePrimaryContext(anchor, range){
+		var container = anchor.type === 'start' ? range.startContainer: range.endOffset
+		var offset = anchor.type === 'start' ? range.startOffset : range.endOffset
+
+		//For the primary context we want a word on each side of the
+		//range
+		var textContent = container.textContent;
+
+		var prefix = lastWordFromString(textContent.substring(0, offset))
+		var suffix = firstWordFromString(textContent.substring(offset, textContent.length);
+
+		var context_text = prefix+suffix;
+		var context_offset = textContent.indexOf(context_text);
+		if( anchor.type === 'end' ){
+			context_offset = textContent.length - context_offset;
+		}
+
+		NTITextContext ctx = {'context_text': context_text,
+							  'context_offset': context_offset};
+		return ctx;
+}
+
+Given a ``Text`` node and an anchor, ``subsequent``
+``NTITextContext`` objects can be generated as follows
 
 .. code-block:: javascript
 
-	var context_text = generateContextText(range);
+	//Given an anchor and a relative node (next or previous sibling)
+	//depending on the value of anchor.type, generates an
+	//NTITextContext suitable for use as subsequent context
+	function generateSubsequentContext(anchor, relative_node)
+	{
+		var context_text = null;
+		if(anchor.type === 'start'){
+			context_text = lastWordFromString(relative_node.textContent);
+		}
+		else{
+			context_text = firstWordFromString(relative_node.textContent);
+		}
 
-	context_offset =  (range.endContainer.nodeValue.length
-						- range.endContainer.indexOf(context_text));
-	edge_offset = range.endOffset - range.endContainer.nodeValue.length + contextOffset;
+		var offset = relative_node.textContent.indexOf(context_text);
+		if(anchor.type === 'end'){
+			offset = relative_node.textContent.length - offset;
+		}
+
+		NTITextContext ctx = {'context_text': context_text,
+							  'context_offset': offset};
+		return ctx;
+	}
+
+The generation of both ``primary`` and ``subsequent``
+``NTITextContext`` objects are subject to change.  In addition
+the huersitics governing the number of ``subsequent`` context nodes
+to be generated may change.  For this version of the spec,
+subsequent context nodes should be generated until 15 characters or
+5 context nodes have been collected.  Putting this, together with the
+above methods for generating context nodes, turn
+a range endpoint in to a complete ``NTIContentTextAnchor`` object as follows:
+
+.. code-block:: javascript
+
+	//Complete an anchor given a range
+	function populateAnchorWithRange(anchor, range)
+	{
+		var container = anchor.type === 'start' ? range.startContainer: range.endOffset
+		var offset = anchor.type === 'start' ? range.startOffset : range.endOffset
+
+		var contexts = [];
+
+		//First construct the primary context
+		var primaryContext = generatePrimaryContext(anchor, range);
+		contexts.push(primaryContext);
+
+		//Generate the edge offset
+		var normalizedOffset = primaryContext.context_offset;
+		if(anchor.type === 'end'){
+			normalizedOffset = container.textContent.length - normalizedOffset;
+		}
+
+		anchor.edge_offset = offset - normalizedOffset;
+
+		//Now we want to collect subsequent context
+		var collectedCharacters = 0;
+		var maxSubsequentContextObjects = 5;
+		var maxCollectedChars = 15;
+
+		var tree_walker = document.createTreeWalker( container, NodeFilter.SHOW_TEXT );
+		//TODO do we need to stay within the reference node here?
+
+		var nextSiblingFunction = anchor.type === 'start' ? tree_walker.previousNode : tree_walker.nextNode;
+
+		while( sibling = nextSiblingFunction() ) {
+
+			if(   collectedChars >= maxCollectedChars
+			   || contexts.length - 1 >= maxSubsequentContextObjects ){
+			   break;
+			}
+
+			NTITextContext subsequentContext = generateSubsequentContext(anchor, sibling)
+			collectedCharacters += subsequentContext.context_text.length;
+			contexts.push(subsequentContext);
+		}
+
+		anchor.contexts = contexts;
+	}
+
+.. note::
+  In the past, when walking ``Text`` nodes, we have encountered nodes
+  whose textContent is only whitespace.  Should we skip those when
+  walking siblings with the TreeWalker?
 
 .. note::
   The Range's offsets are specified in terms of the DOM object's node
