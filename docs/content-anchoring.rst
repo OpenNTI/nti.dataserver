@@ -152,9 +152,11 @@ following `NTITextContext` will be used.
 * ``context_offset`` is the index of ``context_text`` from the start or end of ``textContent``.
   ``content_offset`` *MUST* be an integer greater than or equal to zero.  Negative values are reserved for future use.
   If this object is providing context for an anchor with a type *EQUAL TO* ``"start"``, ``content_offset``
-  represents the character index from the start (left) of ``textContent``.
+  represents the character index from the end (right) of ``textContent``.
   If this object is providing context for an anchor with a type *EQUAL TO* ``"end"``,
-  ``content_offset`` represents the index from the end (right) of ``textContent``.
+  ``content_offset`` represents the index from the start (left) of
+  ``textContent``.  This keeps keeps indexes closest to the selected
+  range stable.
 
 .. code-block:: cpp
 
@@ -394,7 +396,7 @@ should be used to generate the ``primary context`` object.
 
 		var context_text = prefix+suffix;
 		var context_offset = textContent.indexOf(context_text);
-		if( anchor.type === 'end' ){
+		if( anchor.type === 'start' ){
 			context_offset = textContent.length - context_offset;
 		}
 
@@ -422,7 +424,7 @@ Given a ``Text`` node and an anchor, ``subsequent``
 		}
 
 		var offset = relative_node.textContent.indexOf(context_text);
-		if(anchor.type === 'end'){
+		if(anchor.type === 'start'){
 			offset = relative_node.textContent.length - offset;
 		}
 
@@ -456,7 +458,7 @@ a range endpoint in to a complete ``NTIContentTextAnchor`` object as follows:
 
 		//Generate the edge offset
 		var normalizedOffset = primaryContext.context_offset;
-		if(anchor.type === 'end'){
+		if(anchor.type === 'start'){
 			normalizedOffset = container.textContent.length - normalizedOffset;
 		}
 
@@ -534,7 +536,63 @@ again given an ancestor of the ``documentElement.`` If the start does
 not come before end (as computed using `compareDocumentPosition
 <http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-node-comparedocumentposition>`_),
 the ``NTIContentRangeSpec`` is invalid and clients *should* abort
-range creation and anchoring.
+range creation and anchoring. Given an ``NTIContentRangeSpec`` the
+following procedure should be used to resolve a dom range.
+
+.. code-block:: javascript
+
+	//Given an NTIContentRangeSpec produce a dom
+	//range search beneath ancestor.  Returns nil if the
+	//range spec can't be resolved
+	function resolveSpecBeneathAncestor( rangeSpec, ancestor )
+	{
+		var range = document.createRange();
+
+		//Resolve the start anchor.
+		//see below for details no resolving various
+		//anchor types
+		var success = updateRagneStartForAnchor(rangeSpec.start, ancestor, range);
+
+		//If we can't even resolve the start anchor there
+		//is no point in resolving the end
+		if(!success){
+			return nil;
+		}
+
+		//Resolve the end anchor.
+		//see below for details no resolving various
+		//anchor types
+		success = updateRangeEndForAnchor(rangeSpec.end, ancestor, range);
+
+		if(!success){
+			return nil;
+		}
+
+		return range;
+	}
+
+
+	function rangeFromRangeSpect( rangeSpec )
+	{
+		var ancestorNode = resolveAnchor(rangeSpec.ancestor) || document.body;
+
+		var range;
+		if( rangeSpec is NTIContentSimpleTextRangeSpec ){
+			//See NTIContentSimpleTextRangeSpec to DOM Range
+			range = rangeFromTextRangeSpec(rangeSpec, ancestorNode);
+			if(range){
+				return range;
+			}
+		}
+
+		range = resolveSpecBeneathAncestor(rangeSpec, ancestorNode);
+
+		if( !range && ancestorNode !== document.body ){
+			range = resolveSpecBeneathAncestor( rangeSpec, document.body );
+		}
+
+		return rangeSpec;
+	}
 
 NTIContentSimpleTextRangeSpec to DOM Range
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -586,77 +644,221 @@ Converting NTIContentAbsoluteAnchor to a Node
 Given an NTIContentAbsoluteAnchor find the DOM ``Element`` whose ID is
 ``anchor_dom_id`` within the ancestor. If an ``Element`` with that ID
 can't be found or the tagname of the ``Element`` does not match
-``anchor_tag_name``, conversion fails and the result is null.
+``anchor_tag_name``, conversion fails and the result is null.  Sample
+code for resolving NTIContentAbsoluteAnchor as a start anchor follows:
+
+.. code-block:: javascript
+
+	function updateRangeStartForAnchor(absoluteAnchor, ancestorNode, range){
+		var tree_walker = document.createTreeWalker( ancestorNode, NodeFilter.SHOW_ELEMENT );
+
+		while( test_node = tree_walker.nextNode() ) {
+	    	if(    test_node.id === absoulteAnchor.anchor_dom_id
+			    && test_node.tagName === absoluteAnchor.anchor_tag_name ) {
+	       		range.setStartBefore(test_node);
+				return true;
+	    	}
+		}
+		return false;
+	}
+
+An example of updating the range for an NTIContentAbsoluteAnchor with
+type === ``end`` is as follows.
+
+.. code-block:: javascript
+
+	function updateRangeStartForAnchor(absoluteAnchor, ancestorNode, range){
+		var tree_walker = document.createTreeWalker(ancestorNode, NodeFilter.SHOW_ELEMENT );
+
+		//We want to look after the start node so we reposition the walker
+		var nodeToSearchAfter = range.startContainer;
+		if( nodeToSearchAfter.nodeType != Node.TEXT_NODE){
+			nodeToSearchAfter = nodeToSearchAfter.childNodes[range.startOffset];
+		}
+
+		tree_walker.currentNode = nodeToSearchAfter;
+		while( test_node = tree_walker.nextNode() ) {
+	    	if(    test_node.id === absoulteAnchor.anchor_dom_id
+			    && test_node.tagName === absoluteAnchor.anchor_tag_name ) {
+	       		range.setEndAfter(test_node);
+				return true;
+	    	}
+		}
+		return false;
+	}
+
 
 Converting NTIContentTextAnchor to a Node
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``NTIContentTextAnchor`` resolution should begin by locating the
-reference node as per ``NTIContentAbsoluteAnchor``. If the reference
-node cannot be located, the ancestor should be used.
+The general algorithm for resolving a ``NTIContentTextAnchor`` is a
+follows.  Begin by resolving the ``reference node`` using
+``anchor_dom_id`` and ``anchor_tag_name``.  If the ``reference node``
+can't be resolved, use the ``ancestor`` as the ``reference node``.  Using
+the ``refernce node`` as the root, create a ``Tree Walker`` to
+interate each ``Text`` node, ``textNode``, using the ``nextNode`` method.
 
-Given a reference node, clients should search *beneath* it for the
-textNode that contains ``context_text`` most closely to
-``context_offset``. Again this is conveniently done with a `TreeWalker
-<http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#treewalker>`_:
-The example code below demonstrates resolving ``start`` and ``end``
-anchors to a ``Text`` node:
+For each ``textNode`` check if the ``primary context`` object matches
+``textNode``.  If it does, using a ``Tree Walker`` rootted at
+``reference_node``, compare each ``subsequent context`` object by
+walking the tree using the ``previousNode`` method, if anchor
+``type`` is ``start``, or forward using the ``nextNode`` method, if the anchor ``type`` is
+``end``.  If all context objects match, ``textNode`` will become the range`s
+``startContainer`` if the anchor ``type`` is ``start``, or ``endContainer``
+if the anchor ``type`` is ``end``.  If not all the context objects
+match continue the outter loop by comparing context objects for the
+next ``textNode``.
 
-.. code-block:: javascript
+If a ``textNode`` has been identified as the start or end container, a
+range can be constructed as follows.  If anchor ``type`` is ``start``,
+set the ``ranges`` ``startContainer`` to ``textNode``.  If anchor ``type`` is ``end``,
+set the ``ranges`` ``endContainer`` to ``textNode``.  Calculate the
+text offset by identifying the index of the ``primary context``
+object's ``context_text`` in the container. Adjust the offset by
+anchor's ``edge_offset`` property, and set the range's ``startOffset``,
+if anchor ``type`` == ``start``, or ``endOffset``, if anchor ``type``
+== `end`, to the computed value.
 
-    var ref_node  = //...
-    var anchor = //...
-
-    // The currently matched text node
-    var textNode = null;
-    // The "score" of the current text node, calculated
-    // as a distance in characters from the offset to the index
-    // of the content
-    var closest_distance_from_offset = Number.MAX_VALUE;
-
-    var tree_walker = document.createTreeWalker( ref_node, NodeFilter.SHOW_TEXT );
-
-    while( test_node = tree_walker.nextNode() ) {
-        var idx = text_node.textContent.indexOf(anchor.context_text);
-        if( idx < 0 ) {
-            //not found
-            continue;
-        }
-
-        var normalizedOffset = anchor.offset
-        //Recall end anchor offsets are from the right
-        if( anchor.type === 'end' ){
-            normalizedOffset = text_node.nodeValue.length - anchor.context_offset
-        }
-
-        var distance = abs(normalizedOffset - idx);
-        if( distance < closest_distance_from_offset ) {
-            // a new winner
-            closest_distance_from_offset = distance;
-            textNode = text_node;
-        }
-    }
-
-At this point, if clients are unable to resolve the
-``NTIContentTextAnchor`` to a node, it should be treated as an anchor
-that can no longer be resolved. Future versions of this spec may apply
-more heuristics and fallbacks.
-
-Given a textNode that represents a ``start`` or ``end`` the range
-object can be adapted as follows:
+One such intial implemenation is shown in detail below:
 
 .. code-block:: javascript
 
-    var node = //...
-    var range = /...
-    var anchor = //...
+	function updateRangeStartForAnchor(textAnchor, ancestorNode, range){
+		return updateRangeForAnchor(textAnchor, ancestorNode, range);
+	}
 
-    if(anchor.type === 'start') {
-        range.setStart(node, node.textValue.indexOf(anchor.context_text) + anchor.edge_offset);
-    }
-    else{
-        range.setEnd(node, node.textValue.indexOf(anchor.context_text) + anchor.edge_offset)l
-    }
+	function updateRangeEndForAnchor(textAnchor, ancestorNode, range){
+		return updateRangeForAnchor(textAnchor, ancestorNode, range);
+	}
+
+	function updateRangeForAnchor(textAnchor, ancestorNode, range){
+		//Resolution starts by locating the reference node
+		//for this text anchor.  If it can't be found ancestor is used
+		var referenceNode = resolveAnchor(textAnchor.anchor_dom_id, textAnchor.anchor_tag_name);
+ 		if(!referenceNode){
+			referenceNode = ancestorNode;
+		}
+
+		//A value between 0 and 1 indicating the confidence we
+		//require to match a textNode to an NTITextContext.  A
+		//value of 1 indicates 100% confidence, while a value of 0
+		//indicates 0% confidence
+		var requiredConfidence = 1;
+
+		//We use a tree walker to search beneath the reference node
+		//for textContent matching our primary context with confidence
+		// >= requiredConfidence
+
+		var tree_walker = document.createTreeWalker( referenceNode, NodeFilter.SHOW_TEXT );
+
+		//If we are looking for the end node.  we want to start
+		//looking where the start node ended
+		if( textAnchor.type === 'end' ){
+			tree_walker.currentNode = range.startContainer
+		}
+
+		var textNode;
+
+		if(tree_walker.current_node.nodeType == Node.TEXT_NODE){
+			textNode = tree_walker.current_node;
+		}
+		else{
+			textNode = tree_walker.next_node;
+		}
+
+		var primaryContext = textAnchor.contexts[0];
+		//If we are working on the start anchor, when checking context
+		//we look back at previous nodes.  if we are looking at end we
+		//look forward to next nodes
+		var siblingFunction = textAnchor.type === 'start' ? tree_walker.previousNode : tree_walker.nextNode;
+		while( textNode ) {
+			//Do all our contexts match this textNode
+			var nextNodeToCheck = textNode;
+			var match = true;
+			for( var contextObj in textAnchor.contexts ){
+				//If we are out of nodes to check but we
+				//still have context we fail
+				if(!nextNodeToCheck){
+					match = false;
+					break;
+				}
+				//If we don't match this context with high enough confidence
+				//we also fail
+				if( confidenceForContextMatch(contextObj, textNode, textAnchor.type) < requiredConfidence){
+					match = false;
+					break;
+				}
+
+				//That context matched so we continue verifying.
+				nextNodeToCheck = siblingFunction();
+			}
+
+			//We match all the context
+			if(match){
+				break;
+			}
+			else{
+				//That wasn't it.  Continue searching
+				tree_walker.currentNode = textNode;
+			}
+
+			//Start the context search over in the next textnode
+			textNode = tree_walker.nextNode();
+		}
+
+		//If we made it through the tree without finding
+		//a node we failed
+		if(!textNode){
+			return false;
+		}
+
+
+		//We found what we need.  Set the context
+		var container = textNode;
+		var indexOfContext = container.textContent.indexOf(primaryContext.context_text);
+		indexOfContext += textAnchor.edge_offset;
+
+		var setEndpointFunction = textAnchor.type === 'start' ? range.setStart : range.setEnd;
+
+		setEndpointFunction(container, indexOfContext);
+		return true;
+	}
+
+.. note::
+
+	The specific code sample above makes an assumption of discrete confidence values
+	0 or 1.  Specifically, it will need to be tweaked if we want
+	to support checking for multiple occurences of context_text in a
+	give ``Text`` node. However, this first iteration doesn't require
+	that so we take the straightforward approach.
+
+While the current implementation requires 100% certainty when matching
+all context objects, future implementation of this spec may tweak the
+value of requiredConfidence, or potentially even apply huersistics to
+the value expected.
+
+The huersistics involved in calculating a confidence value for a
+particular context may change, current spec requires exact matches.
+Clients should implement `confidenceForContextMatch` as follows:
+
+.. code-block:: javascript
+
+	//Returns a confidence value of 0 or 1 indicating the confidence we
+	//are in the fact that context matches node.  A
+	//value of 1 indicates 100% confidencee. A value of 0
+	//indicates 0% confidence
+	function confidenceForContextMatch(context, node, anchorType)
+	{
+		var adjustedOffset = context.context_offset;
+		if(anchorType === 'start'){
+			adjustedOffset = node.textContent.length - adjustedOffset;
+		}
+
+		if( node.textContent.indexOf(context.context_text) == adjustedOffset){
+			return 1;
+		}
+		return 0;
+	}
 
 Examples
 --------
@@ -679,6 +881,26 @@ A NTIContentSimpleTextRangeSpec
 .. code-block:: javascript
 
 	// The content range
+	{
+		ancestor: {
+			anchor_dom_id: 'id',
+			anchor_tag_name: 'p',
+		},
+		start: {
+			anchor_dom_id: 'id',
+			anchor_tag_name: 'p',
+			contexts: [{ context_text: 'A', context_offset: 26 }]
+			edge_offset: 0
+		},
+		end: {
+			anchor_dom_id: 'id',
+			anchor_tag_name: 'p',
+			contexts: [{ context_text: 'node', context_offset: 22 }],
+			edge_offset: 4
+		},
+		selected_text: 'A single selected text node',
+		offset: 0
+	}
 
 
 Example 2
@@ -696,6 +918,25 @@ This example spans from one text node to the next.
 .. code-block:: javascript
 
 	// The content range
+	{
+		ancestor: {
+			anchor_dom_id: 'id',
+			anchor_tag_name: 'p',
+		},
+		start: {
+			anchor_dom_id: 'id',
+			anchor_tag_name: 'p',
+			contexts: [{ context_text: 'An', context_offset: 2 }]
+			edge_offset: 0
+		},
+		end: {
+			anchor_dom_id: 'id',
+			anchor_tag_name: 'p',
+			contexts: [{ context_text: 'word.', context_offset: 0 }],
+			edge_offset: 5
+		}
+	}
+
 
 
 Example 3
