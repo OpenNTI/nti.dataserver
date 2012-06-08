@@ -3,7 +3,10 @@ from __future__ import print_function, unicode_literals
 
 import re
 
+from zope import interface
+
 from nti.contentrendering import plastexids
+from nti.contentrendering.resources import interfaces as res_interfaces
 
 from plasTeX import Base
 from plasTeX.Base.LaTeX import Index
@@ -66,6 +69,7 @@ class textcent(Base.Command):
 	unicode = u'\xA2'
 
 
+@interface.implementer(res_interfaces.IRepresentationPreferences)
 class Cube(_OneText):
 	resourceTypes = ['png', 'svg']
 

@@ -13,6 +13,7 @@ from plasTeX.Filenames import Filenames
 
 
 import zope.dottedname.resolve as dottedname
+from . import interfaces
 
 logger = getLogger( __name__ )
 
@@ -148,9 +149,11 @@ class Renderable(BaseRenderable):
 		"""
 		renderer = self.renderer
 
-		resourceTypes = getattr(self, 'resourceTypes', None)
+
+		resourceTypes = interfaces.IRepresentationPreferences( self ).resourceTypes # getattr(self, 'resourceTypes', None)
 		# If something asks for a resource, it better have a defined resourceType
 		assert resourceTypes
+
 		#if not resourceTypes:
 		#	logger.warning('No resource types for %s using default renderer %s', self.nodeName, renderer.default )
 		#	return renderer.default(self)
