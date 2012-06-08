@@ -119,6 +119,10 @@ def _section_ntiid_filename(self):
 	if not hasattr(self, 'config'):
 		return
 
+	override = getattr( self, '@filenameoverride', None )
+	if override:
+		return override
+
 	level = getattr(self, 'splitlevel',	self.config['files']['split-level'])
 
 	# If our level doesn't invoke a split, don't return a filename
@@ -129,11 +133,15 @@ def _section_ntiid_filename(self):
 	# URLs (tag:) themselves. Escaping is required, but doesn't happen.
 	return self.ntiid.replace( ':', '_' ) if self.ntiid else None
 
+def _set_section_ntiid_filename( self, value ):
+	setattr( self, '@filenameoverride', value )
+
+
 def _catching(f, computing='NTIID'):
 	@functools.wraps(f)
-	def y(self):
+	def y(*args):
 		try:
-			return f(self)
+			return f(*args)
 		except Exception:
 			logger.exception("Failed to compute %s for %s (%s)", computing, type(self), repr(self)[:50] )
 			raise
@@ -152,7 +160,7 @@ class NTIIDMixin(object):
 	"""
 	pass
 NTIIDMixin.ntiid = property(_section_ntiid)
-NTIIDMixin.filenameoverride = property(_section_ntiid_filename)
+NTIIDMixin.filenameoverride = property(_section_ntiid_filename,_set_section_ntiid_filename)
 NTIIDMixin._ntiid_get_local_part = property(_ntiid_get_local_part_title)
 
 
@@ -219,6 +227,6 @@ def patch_all():
 	from plasTeX.Packages.graphicx import includegraphics
 	includegraphics.id =  property(_catching(_par_id_get, 'id'),includegraphics.id.fset) # TODO: Different counters for this than _par_used_ids?
 	SectionUtils.ntiid = property(_catching(_section_ntiid))
-	SectionUtils.filenameoverride = property(_catching(_section_ntiid_filename))
+	SectionUtils.filenameoverride = property(_catching(_section_ntiid_filename), _catching(_set_section_ntiid_filename))
 	SectionUtils._ntiid_get_local_part = property(_catching(_ntiid_get_local_part_title))
 	plasTeX.TeXDocument.nextNTIID = nextID # Non-desctructive patch

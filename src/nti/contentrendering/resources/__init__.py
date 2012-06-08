@@ -41,9 +41,58 @@ from collections import defaultdict
 from .resourcetypeoverrides import ResourceTypeOverrides
 
 
+def _set_default_resource_types():
+	from plasTeX.Base import Arrays
+	tabularTypes = ['png', 'svg']
+
+	Arrays.tabular.resourceTypes = tabularTypes
+	Arrays.TabularStar.resourceTypes = tabularTypes
+	Arrays.tabularx.resourceTypes = tabularTypes
+
+	from plasTeX.Base import Math
+
+	#The math package does not correctly implement the sqrt macro.	It takes two args
+	Math.sqrt.args = '[root]{arg}'
+
+	inlineMathTypes = ['mathjax_inline']
+	displayMathTypes = ['mathjax_display']
+
+	#inlineMathTypes = ['mathjax_inline', 'png', 'svg']
+	#displayMathTypes = ['mathjax_display', 'png', 'svg']
+
+	Math.math.resourceTypes = inlineMathTypes
+	Math.ensuremath.resourceTypes = inlineMathTypes
+
+	Math.displaymath.resourceTypes = displayMathTypes
+	Math.EqnarrayStar.resourceTypes = displayMathTypes
+	Math.equation.resourceTypes = displayMathTypes
+
+
+	from plasTeX.Packages.graphicx import includegraphics
+	includegraphics.resourceTypes = ['png']
+
+	from plasTeX.Packages import amsmath
+	amsmath.align.resourceTypes = displayMathTypes
+	amsmath.AlignStar.resourceTypes = displayMathTypes
+	amsmath.alignat.resourceTypes = displayMathTypes
+	amsmath.AlignatStar.resourceTypes = displayMathTypes
+	amsmath.gather.resourceTypes = displayMathTypes
+	amsmath.GatherStar.resourceTypes = displayMathTypes
+
+	# XXX FIXME If we don't do this, then we can get
+	# a module called graphicx reloaded from this package
+	# which doesn't inherit our type. Who is doing that?
+	import sys
+	sys.modules['graphicx'] = sys.modules['plasTeX.Packages.graphicx']
+
+# While import side-effects are usually bad, setting up the default
+# resource types is required to make this package actually work, and
+# is extremely unlikely to cause any conflicts or difficulty
+_set_default_resource_types()
+
 class Resource(object):
 
-	def __init__(self, path, url=None, resourceSet=None, checksum=None):
+	def __init__(self, path=None, url=None, resourceSet=None, checksum=None):
 		self.url = url
 		self.path = path
 		self.checksum = checksum
