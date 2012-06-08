@@ -14,25 +14,13 @@ from plasTeX.TeX import TeX
 
 from ..ntiassessment import naquestion
 
-def _buildDomFromString(docString, mkdtemp=False):
-	document = plasTeX.TeXDocument()
-	strIO = StringIO.StringIO(docString)
-	strIO.name = 'temp'
-	tex = TeX(document,strIO)
-	document.userdata['jobname'] = 'temp'
-	document.userdata['working-dir'] = tempfile.gettempdir() if not mkdtemp else tempfile.mkdtemp()
-	document.config['files']['directory'] = document.userdata['working-dir']
-	document.config.add_section( "NTI" )
-	document.config.set( "NTI", 'provider', 'testing' )
-
-	tex.parse()
-	return document
+from nti.contentrendering.tests import buildDomFromString as _buildDomFromString
+from nti.contentrendering.tests import simpleLatexDocumentText
+from nti.contentrendering.tests import RenderContext
 
 def _simpleLatexDocument(maths):
-	doc = br"""\documentclass[12pt]{article} \usepackage{nti.contentrendering.plastexpackages.ntiassessment} \begin{document} """
-	mathString = '\n'.join( [str(m) for m in maths] )
-	doc = doc + '\n' + mathString + '\n\\end{document}'
-	return doc
+	return simpleLatexDocumentText( preludes=(br'\usepackage{nti.contentrendering.plastexpackages.ntiassessment}',),
+									bodies=maths )
 
 def test_macros():
 	example = br"""
@@ -80,7 +68,7 @@ def test_multiple_choice_macros():
 
 import nti.tests
 import nti.contentrendering
-from nti.contentrendering import nti_render
+
 class TestRenderableSymMathPart(nti.tests.ConfiguringTestBase):
 	set_up_packages = (nti.contentrendering,)
 
@@ -98,22 +86,19 @@ class TestRenderableSymMathPart(nti.tests.ConfiguringTestBase):
 		\end{naquestion}
 		""" % label
 
-		dom = _buildDomFromString( _simpleLatexDocument( (example,) ), mkdtemp=True )
-		cwd = os.getcwd()
-		try:
-			os.chdir(dom.config['files']['directory'])
-			nti_render.setupChameleonCache()
+		with RenderContext(_simpleLatexDocument( (example,) )) as ctx:
+			dom  = ctx.dom
+			dom.getElementsByTagName( 'document' )[0].filenameoverride = 'index'
 			render = Renderer()
 			render.importDirectory( os.path.join( os.path.dirname(__file__), '..' ) )
 			render.render( dom )
 			# TODO: Actual validation of the rendering
-			index = open(os.path.join(dom.config['files']['directory'], filename), 'rU' ).read()
-			content = """<div><p><object type="application/vnd.nextthought.naquestion" data-ntiid="%(ntiid)s" data="%(ntiid)s">\n<param name="ntiid" value="%(ntiid)s" />\n<div class="naquestion">\n\t <span> Arbitrary content goes here. <div class="naquestionpart naqsymmathpart">\n\t <a name="a0000000002"/>\n\t <span> Arbitrary content goes here. <div class="helpdiv hidden"><p>Some solution </p></div>\n<a class="helplink hidden">Solution</a> </span>\n\t <div class="rightwrongbox"></div>\n\t <input class="answerblank" ntitype="naqsymmath" />\n</div> </span>\n\t <a id="submit" class="NTIGreenButton NTISubmitAnswer">Check</a>\n\t <a id="tryagain" class="NTIGreenButton NTITryAgain hidden">Try Again...</a>\n</div>\n</object> </p></div>""" % { 'ntiid': ntiid }
+
+
+			index = open(os.path.join(ctx.docdir, filename), 'rU' ).read()
+			content = """<object type="application/vnd.nextthought.naquestion" data-ntiid="%(ntiid)s" data="%(ntiid)s">\n<param name="ntiid" value="%(ntiid)s" """ % { 'ntiid': ntiid }
 
 			assert_that( index, contains_string( content ) )
-		finally:
-			os.chdir( cwd )
-			shutil.rmtree( dom.config['files']['directory'] )
 
 	def test_render_id(self):
 		self._do_test_render( br'\label{testquestion}', 'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.testquestion')

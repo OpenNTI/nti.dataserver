@@ -213,6 +213,8 @@ class ResourceGenerator(resources.ImagerResourceGenerator):
 
 	def makeImage(self, path, width, height, depth, cropped=True):
 		image = Image(os.path.basename(path), None)
+		# TODO: This is something of an abuse of things. We use this as a
+		# Resource object even though it isn't really.
 		image.path = path
 		image.width = width
 		image.height = height

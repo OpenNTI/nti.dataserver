@@ -45,7 +45,7 @@ def createResourceRenderer(baserenderername, resourcedb):
 	# using the name of the node (for customization) followed by the template name itself.
 	# The most recent template wins.
 	def _setTemplate(self, template, options, filename=None):
-		result = super(factory,self).setTemplate( template, options, filename=None )
+		result = super(factory,self).setTemplate( template, options, filename=filename )
 		if result and 'nti_resource_for' in options:
 			# Register the name of this template for its resource representation
 			self.template_names_by_type.setdefault( options['nti_resource_for'], [] ).insert( 0, options['name'] )
