@@ -59,66 +59,69 @@ def createResourceRenderer(baserenderername, resourcedb):
 
 	return renderer
 
-def renderDocument(self, document, postProcess=None):
-	"""
-	Invoke the rendering process
-
-	This method invokes the rendering process as well as handling
-	the setup and shutdown of image processing.
-
-	Required Arguments:
-	document -- the document object to render
-	postProcess -- a function that will be called with the content of
-
-	"""
-
-	config = document.config
-
-	# If there are no keys, print a warning.
-	# This is most likely a problem.
-	if not self.keys():
-		logger.warning('There are no keys in the renderer. All objects will use the default rendering method.')
-
-	# Mix in required methods and members
-	mixin(Node, self.renderableClass)
-	Node.renderer = self
-	try:
-		# Create a filename generator
-		self.newFilename = Filenames(config['files'].get('filename', raw=True),
-									 (config['files']['bad-chars'],
-									  config['files']['bad-chars-sub']),
-									 {'jobname':document.userdata.get('jobname', '')}, self.fileExtension)
-
-		self.cacheFilenames(document)
-
-
-
-		# Invoke the rendering process
-		if self.renderMethod:
-			getattr(document, self.renderMethod)()
-		else:
-			unicode(document)
-
-
-		# Run any cleanup activities
-		self.cleanup(document, self.files.values(), postProcess=postProcess)
-
-		# Write out auxilliary information
-		pauxname = os.path.join(document.userdata.get('working-dir','.'),
-								'%s.paux' % document.userdata.get('jobname',''))
-		rname = config['general']['renderer']
-		document.context.persist(pauxname, rname)
-	finally:
-		# Remove mixins
-		del Node.renderer
-		unmix(Node, self.renderableClass)
 
 class _ResourceRenderer(object):
-	render = renderDocument
 
 	def __init__( self, *args, **kwargs ):
 		super(_ResourceRenderer,self).__init__( *args, **kwargs )
 		self.template_names_by_type = {}
+
+	def render(self, document, postProcess=None):
+		"""
+		Invoke the rendering process
+
+		This method invokes the rendering process as well as handling
+		the setup and shutdown of image processing.
+
+		Required Arguments:
+		document -- the document object to render
+		postProcess -- a function that will be called with the content of
+
+		"""
+
+		config = document.config
+
+		# If there are no keys, print a warning.
+		# This is most likely a problem.
+		if not self.keys():
+			logger.warning('There are no keys in the renderer. All objects will use the default rendering method.') # pragma: no cover
+
+		# Mix in required methods and members
+		document.renderer = self
+		# FIXME: this is not thread safe
+		mixin(Node, self.renderableClass)
+		try:
+			# Create a filename generator
+			self.newFilename = Filenames(config['files'].get('filename', raw=True),
+										 (config['files']['bad-chars'],
+										  config['files']['bad-chars-sub']),
+										 {'jobname':document.userdata.get('jobname', '')}, self.fileExtension)
+
+			self.cacheFilenames(document)
+
+
+
+			# Invoke the rendering process
+			# Nothing uses the 'renderMethod' key:
+			#if self.renderMethod:
+			#	getattr(document, self.renderMethod)()
+			assert not self.renderMethod
+
+			unicode(document) # relies on side-effects to write the document to files
+
+			# Run any cleanup activities
+			self.cleanup(document, self.files.values(), postProcess=postProcess)
+
+			# Write out auxilliary information
+			pauxname = os.path.join(document.userdata.get('working-dir','.'),
+									'%s.paux' % document.userdata.get('jobname',''))
+			rname = config['general']['renderer']
+			document.context.persist(pauxname, rname)
+		finally:
+			# Remove mixins
+			del document.renderer
+			unmix(Node, self.renderableClass)
+
 
 
 class Renderable(BaseRenderable):
@@ -143,13 +146,14 @@ class Renderable(BaseRenderable):
 		It's value is the rendered unicode string for the first resource type in this
 		object's `resourceTypes` attribute (preference list) that can be rendered (has a template).
 		"""
-		renderer = Node.renderer
+		renderer = self.renderer
 
 		resourceTypes = getattr(self, 'resourceTypes', None)
-
-		if not resourceTypes:
-			logger.warning('No resource types for %s using default renderer %s', self.nodeName, renderer.default )
-			return renderer.default(self)
+		# If something asks for a resource, it better have a defined resourceType
+		assert resourceTypes
+		#if not resourceTypes:
+		#	logger.warning('No resource types for %s using default renderer %s', self.nodeName, renderer.default )
+		#	return renderer.default(self)
 
 		template = None
 
@@ -163,20 +167,23 @@ class Renderable(BaseRenderable):
 			if template is not None:
 				break
 
-		if template is None:
-			logger.warning('Unable to find template from resourcetypes %s for node %s', resourceTypes, self.nodeName )
-			return renderer.default(self)
+		# Resources better be able to find a template. There's
+		# no good defaults for these things.
+		assert template is not None
+		#if template is None:
+		#	logger.warning('Unable to find template from resourcetypes %s for node %s', resourceTypes, self.nodeName )
+		#	return renderer.default(self)
 
 		val = template(self)
 
 		#From Renderer.unicode
 		# If a plain string is returned, we have no idea what
 		# the encoding is, but we'll make a guess.
-		if type(val) is not unicode:
+		if type(val) is not unicode: # pragma: no cover
 			logger.warning('The renderer for %s returned a non-unicode string.	 Using the default input encoding.', type(child).__name__)
 			val = unicode(val, self.config['files']['input-encoding'])
 
 		return val
 
 	def getResource(self, criteria):
-		return Node.renderer.resourcedb.getResource(self.source, criteria)
+		return self.renderer.resourcedb.getResource(self.source, criteria)
