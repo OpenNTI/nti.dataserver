@@ -79,6 +79,7 @@ we can use the following object model to represent anchored content:
 	abstract class NTIContentAnchor {
 		string anchor_dom_id;    //dom id of the anchoring node
 		string anchor_tag_name; //tagname of the anchoring node
+		string type; //The type/kind of anchor this is being used for
 	}
 
 .. note::
@@ -106,6 +107,9 @@ content.
 * ``anchor_dom_id`` is the DOM ID of an arbitrary node in the content.
 * ``anchor_tag_name`` is the tag name for the node identified by
   ``anchor_dom_id``. Both these properties *MUST NOT* be nil.
+* ``type`` specifies how this anchor is to be used.  It *MUST*
+  take one of the following three values: ``"start"``, ``"end"``,
+  ``"ancestor"``
 
 Concrete subclasses of ``NTIContentAnchor`` should provide the
 remaining information required to identify content location relative
@@ -144,10 +148,10 @@ ends inside of ``Text`` content.
   <http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-node-textcontent>`_
   of the ``Text`` node this anchor represents.
 * ``context_offset`` is the index of ``context_text`` from the start or end of ``textContent``.
-  If this anchor represents the ``start`` of the ``NTIContentRangeSpec``, ``content_offset`` must be
-  >= 0, and it represents the index from the start of ``textContent``.  If this anchor represents
-  the ``end`` value of the ``NTIContentRangeSpec``, ``content_offset`` must be <=0, and it represents
-  the index from the end of ``textContent``.
+  ``content_offset`` *MUST* be >= 0.  Negative values are reserved for future use.
+  If this anchor has a type *EQUAL TO* ``"start"``, ``content_offset`` represents the index
+  from the start of ``textContent``.  If this anchor has a type *EQUAL TO* ``"end"``
+  ``content_offset`` represents the index from the end of ``textContent``.
 * ``edge_offset`` is index from the start of ``context_text`` to the location of the edge.
 
 .. note::
@@ -293,7 +297,7 @@ such that it contains 6 characters on either side of the endpoint.  In the event
 edge is closer than 6 characters to the start or end of the ``Text`` node's nodeValue clients
 should use as many characters as possible.
 
-When working on ``start``, given ``context_text``, ``context_offset`` and ``edge_offset`` can
+If the anchor type is *EQUAL TO* ``"start"``, given ``context_text``, ``context_offset`` and ``edge_offset`` can
 be calculated as such:
 
 .. code-block:: javascript
@@ -303,15 +307,16 @@ be calculated as such:
 	context_offset = range.startContainer.indexOf(context_text);
 	edge_offset = range.startOffset - contextOffset;
 
-Similarly, when working on ``end``, given ``context_text``, ``context_offset`` and ``edge_offset`` can
+Similarly, if the anchor type is *EQUAL TO* ``"start"``,
+given ``context_text``, ``context_offset`` and ``edge_offset`` can
 be calculated as such:
 
 .. code-block:: javascript
 
 	var context_text = generateContextText(range);
 
-	context_offset = -1 * (range.endContainer.nodeValue.length
-							- range.endContainer.indexOf(context_text));
+	context_offset =  (range.endContainer.nodeValue.length
+						- range.endContainer.indexOf(context_text));
 	edge_offset = range.endOffset - range.endContainer.nodeValue.length + contextOffset;
 
 .. note::
@@ -422,7 +427,6 @@ The example code below demonstrates resolving ``start`` and ``end`` anchors to a
 
 	var ref_node    = //...
 	var anchor = //...
-	var isStart = //...
 
 	var textNode = null
 	var distanceFromOffset = Number.MAX_VALUE;
@@ -434,8 +438,8 @@ The example code below demonstrates resolving ``start`` and ``end`` anchors to a
 		if(idx >= 0){
 			var normalizedOffset = anchor.offset
 			//Recall end anchor offsets are from the right
-			if( !isStart ){
-				normalizedOffset = text_node.nodeValue.length + anchor.context_offset
+			if( anchor.type === 'end' ){
+				normalizedOffset = text_node.nodeValue.length - anchor.context_offset
 			}
 
 			var distance = abs(normalizedOffset - idx);
@@ -455,10 +459,9 @@ Given a textNode that represents a ``start`` or ``end`` the range object can be 
 
 	var node = //...
 	var range = /...
-	var isStart = //..
 	var anchor = //...
 
-	if(isStart){
+	if(anchor.type === 'start'){
 		range.setStart(node, node.textValue.indexOf(anchor.context_text) + anchor.edge_offset);
 	}
 	else{
