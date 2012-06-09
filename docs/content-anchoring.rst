@@ -510,7 +510,7 @@ a range endpoint in to a complete ``NTIContentTextAnchor`` object as follows:
 NTIContentRangeSpec to DOM Range
 --------------------------------
 
-When creating a DOM Range, ``range``, object from an
+When creating a DOM Range, ``range``, object from ano
 ``NTIContentRangeSpec`` object, clients should keep in mind that from
 a user perspective it is much worse to anchor something to the wrong
 content than to not anchor it at all. If, when reconstructing the range
@@ -519,6 +519,41 @@ locate the ``startContainer``, ``endContainer``, ``startOffset``, or
 ``endOffset`` using all the ``NTIContentAnchor`` information provided,
 the client *should* abort anchoring the content to a specific
 location.
+
+For each type of anchor, clients should implement two functions for
+resolving anchors ``locateRangeStartForAnchor(NTIContentAnchor
+startAnchor, Element ancestor)`` and
+locateRangeEndForAnchor(NTIContentAnchor endAnchor, Element ancestor,
+NTIAnchorResolution startResult)``.  Both these functions should
+return a ``NTIAnchorResolutionResult`` object.
+
+.. code-block:: javascript
+
+	//Encapsulates the result or an anchor resolution
+	//and a confidence value
+	class NTIAnchorResolutionResult{
+		id node; //The node contained in the range
+		int offset; //The offset into containingNode of the edeg
+		float confidence; //A confidence value about the result
+	}
+
+* ``node`` is a ``DOM`` node suitable for inclusion within
+  a range object.  If confidence is > 0 this value *MUST* not be null
+* ``offset`` is the offset into ``node`` where the range
+  should start or end.  If defined ``offset`` must be >=0.  Negative
+  values are reserved for future use.  If undefined the resulting
+  range will start just before, or after, ``node``.
+* ``confidence`` should be a number ``0 <= confidence <= 1`` that can
+  be used as an indication of how confident the algorithm that this
+  result is correct for the given ``NTIContentAnchor``.  A value of
+  ``1`` indicates 100% confidence.  Conversley, a value of `0`
+  indicates 0% confidence.
+
+.. note::
+
+	Although future version of the spec will likely support continous
+	values for confidence.  The current spec expect discrete values of
+	``1`` or ``0``.  Values < 1 will be interpreted as 0, 0% confidence.
 
 Anchor resolution starts by resolving the ancestor
 ``NTIContentAnchor`` to a DOM node (which *must* be an ``Element``).
@@ -546,29 +581,44 @@ following procedure should be used to resolve a dom range.
 	//range spec can't be resolved
 	function resolveSpecBeneathAncestor( rangeSpec, ancestor )
 	{
-		var range = document.createRange();
-
 		//Resolve the start anchor.
 		//see below for details no resolving various
 		//anchor types
-		var success = updateRagneStartForAnchor(rangeSpec.start, ancestor, range);
+		var startResult = locateRangeStartForAnchor(rangeSpec.start, ancestor);
 
 		//If we can't even resolve the start anchor there
 		//is no point in resolving the end
-		if(!success){
+		if(    !startResult.node
+			|| !startResult.hasOwnProperty('confidence')
+			|| startResult.confidence != 1){
 			return nil;
 		}
 
 		//Resolve the end anchor.
 		//see below for details no resolving various
 		//anchor types
-		success = updateRangeEndForAnchor(rangeSpec.end, ancestor, range);
+		var endResult = locateRangeEndForAnchor(rangeSpec.end, ancestor, startResult);
 
-		if(!success){
+		if(    !endResult.node
+			|| !endResult.hasOwnProperty('confidence')
+			|| endResult.confidence != 1){
 			return nil;
+
+
+		var range = document.createRange();
+		if(startResult.hasOwnProperty('confidence')){
+			document.setStart(startResult.node, startResult.offset);
+		}
+		else{
+			document.setStartBefore(startResult.node);
 		}
 
-		return range;
+		if(endResult.hasOwnProperty('confidence')){
+			document.setEnd(endResult.node, endResult.offset);
+		}
+		else{
+			document.setEndAfter(endResult.node);
+		}
 	}
 
 
@@ -593,6 +643,13 @@ following procedure should be used to resolve a dom range.
 
 		return rangeSpec;
 	}
+
+.. note::
+	Although this version of the spec's ``rangeFromRangeSpec``
+	function returns a range if it could successfully recreate the
+	range, or null.  For UI purposes, future versions may return a
+	confidence value and some information about why the confidence
+	value is what it is.
 
 NTIContentSimpleTextRangeSpec to DOM Range
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -649,17 +706,16 @@ code for resolving NTIContentAbsoluteAnchor as a start anchor follows:
 
 .. code-block:: javascript
 
-	function updateRangeStartForAnchor(absoluteAnchor, ancestorNode, range){
+	function locateRangeStartForAnchor(absoluteAnchor, ancestorNode){
 		var tree_walker = document.createTreeWalker( ancestorNode, NodeFilter.SHOW_ELEMENT );
 
 		while( test_node = tree_walker.nextNode() ) {
 	    	if(    test_node.id === absoulteAnchor.anchor_dom_id
 			    && test_node.tagName === absoluteAnchor.anchor_tag_name ) {
-	       		range.setStartBefore(test_node);
-				return true;
+	       		return {node: test_node, confidence: 1};
 	    	}
 		}
-		return false;
+		return {confidence: 0};
 	}
 
 An example of updating the range for an NTIContentAbsoluteAnchor with
@@ -667,24 +723,19 @@ type === ``end`` is as follows.
 
 .. code-block:: javascript
 
-	function updateRangeStartForAnchor(absoluteAnchor, ancestorNode, range){
+	function locateRangeEndForAnchor(absoluteAnchor, ancestorNode, startResult){
 		var tree_walker = document.createTreeWalker(ancestorNode, NodeFilter.SHOW_ELEMENT );
 
 		//We want to look after the start node so we reposition the walker
-		var nodeToSearchAfter = range.startContainer;
-		if( nodeToSearchAfter.nodeType != Node.TEXT_NODE){
-			nodeToSearchAfter = nodeToSearchAfter.childNodes[range.startOffset];
-		}
+		tree_walker.currentNode =  startResult.node;
 
-		tree_walker.currentNode = nodeToSearchAfter;
 		while( test_node = tree_walker.nextNode() ) {
 	    	if(    test_node.id === absoulteAnchor.anchor_dom_id
 			    && test_node.tagName === absoluteAnchor.anchor_tag_name ) {
-	       		range.setEndAfter(test_node);
-				return true;
+				return {node: test_node, confidence: 1};
 	    	}
 		}
-		return false;
+		return {confidence: 0};
 	}
 
 
@@ -723,15 +774,15 @@ One such intial implemenation is shown in detail below:
 
 .. code-block:: javascript
 
-	function updateRangeStartForAnchor(textAnchor, ancestorNode, range){
-		return updateRangeForAnchor(textAnchor, ancestorNode, range);
+	function locateRangeStarForAnchor(textAnchor, ancestorNode){
+		return locateRanageEdgeForAnchor(textAnchor, ancestorNode, null);
 	}
 
-	function updateRangeEndForAnchor(textAnchor, ancestorNode, range){
-		return updateRangeForAnchor(textAnchor, ancestorNode, range);
+	function locateRangeEndForAnchor(textAnchor, ancestorNode, startResult){
+		return locateRanageEdgeForAnchor(textAnchor, ancestorNode, startResult);
 	}
 
-	function updateRangeForAnchor(textAnchor, ancestorNode, range){
+	function locateRanageEdgeForAnchor(textAnchor, ancestorNode, startResult){
 		//Resolution starts by locating the reference node
 		//for this text anchor.  If it can't be found ancestor is used
 		var referenceNode = resolveAnchor(textAnchor.anchor_dom_id, textAnchor.anchor_tag_name);
@@ -754,7 +805,7 @@ One such intial implemenation is shown in detail below:
 		//If we are looking for the end node.  we want to start
 		//looking where the start node ended
 		if( textAnchor.type === 'end' ){
-			tree_walker.currentNode = range.startContainer
+			tree_walker.currentNode = startResult.node;
 		}
 
 		var textNode;
@@ -766,7 +817,7 @@ One such intial implemenation is shown in detail below:
 			textNode = tree_walker.next_node;
 		}
 
-		var primaryContext = textAnchor.contexts[0];
+
 		//If we are working on the start anchor, when checking context
 		//we look back at previous nodes.  if we are looking at end we
 		//look forward to next nodes
@@ -776,14 +827,17 @@ One such intial implemenation is shown in detail below:
 			var nextNodeToCheck = textNode;
 			var match = true;
 			for( var contextObj in textAnchor.contexts ){
-				//If we are out of nodes to check but we
-				//still have context we fail
+				//Right now, if we don't have all the nodes we need to have
+				//for the contexts, we fail.  In the future this
+				//probably changes but that requires looking ahead to
+				//see if there is another node that makes us ambiguous
+				//if we don't apply all the context
 				if(!nextNodeToCheck){
-					match = false;
+				    match = false;
 					break;
 				}
 				//If we don't match this context with high enough confidence
-				//we also fail
+				//we fail
 				if( confidenceForContextMatch(contextObj, textNode, textAnchor.type) < requiredConfidence){
 					match = false;
 					break;
@@ -793,7 +847,8 @@ One such intial implemenation is shown in detail below:
 				nextNodeToCheck = siblingFunction();
 			}
 
-			//We match all the context
+			//We matched as much context is we could,
+			//this is our node
 			if(match){
 				break;
 			}
@@ -809,33 +864,19 @@ One such intial implemenation is shown in detail below:
 		//If we made it through the tree without finding
 		//a node we failed
 		if(!textNode){
-			return false;
+			return {confidence: 0};
 		}
 
 
 		//We found what we need.  Set the context
+		var primaryContext = textAnchor.contexts[0];
+
 		var container = textNode;
 		var indexOfContext = container.textContent.indexOf(primaryContext.context_text);
 		indexOfContext += textAnchor.edge_offset;
-
-		var setEndpointFunction = textAnchor.type === 'start' ? range.setStart : range.setEnd;
-
-		setEndpointFunction(container, indexOfContext);
-		return true;
+		return {node:container, offset: indexOfContext, confidence: 1};
 	}
 
-.. note::
-
-	The specific code sample above makes an assumption of discrete confidence values
-	0 or 1.  Specifically, it will need to be tweaked if we want
-	to support checking for multiple occurences of context_text in a
-	give ``Text`` node. However, this first iteration doesn't require
-	that so we take the straightforward approach.
-
-While the current implementation requires 100% certainty when matching
-all context objects, future implementation of this spec may tweak the
-value of requiredConfidence, or potentially even apply huersistics to
-the value expected.
 
 The huersistics involved in calculating a confidence value for a
 particular context may change, current spec requires exact matches.
@@ -956,7 +997,27 @@ the offsets within a text node are the same. How does it resolve?
 .. code-block:: javascript
 
 	// The content range
-	{"start": {"context_text": "This is ", "context_offset": 7} }
+	{
+		ancestor: {
+			anchor_dom_id: 'id',
+			anchor_tag_name: 'p',
+		},
+		start: {
+			anchor_dom_id: 'id',
+			anchor_tag_name: 'p',
+			contexts: [{ context_text: 'is the', context_offset: 3 },
+					   {context_text: 'sentence.', context_offset: 9},
+					   {context_text: 'first', context_offset: 5},
+					   {context_text: 'the'}, context_offset: 3]
+			edge_offset: 8
+		},
+		end: {
+			anchor_dom_id: 'id',
+			anchor_tag_name: 'p',
+			contexts: [{ context_text: 'sentence.', context_offset: 0 }],
+			edge_offset: 9
+		}
+	}
 
 
 Anchor Migration
