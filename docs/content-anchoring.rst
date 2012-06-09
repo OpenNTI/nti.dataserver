@@ -70,7 +70,7 @@ we can use the following object model to represent anchored content:
 		ContentRangeDescription applicableRange; //AKA anchor
 	}
 
-	class ContentRangeDescription {
+	abstract class ContentRangeDescription {
 		ContentPointer start; //must not be nil
 		ContentPointer end; //must not be nil
 		ContentPointer ancestor; //must not be nil
@@ -78,11 +78,18 @@ we can use the following object model to represent anchored content:
 
 	abstract class ContentPointer {}
 
-	abstract class DomContentPointer {
+	abstract class DomContentPointer : ContentPointer {
 		string elementId;    //dom id of the anchoring node
 		string elementTagName; //tagname of the anchoring node
 		string type; //The type/kind of anchor this is being used for
 	}
+
+	class DomContentRangeDescription : ContentRangeDescription {
+		DomContentPointer start; //must not be nil
+		DomContentPointer end; //must not be nil
+		DomContentPointer ancestor; //must not be nil
+	}
+
 
 .. note::
   In the future, we may want to add supplementary information (such as
@@ -144,7 +151,7 @@ plus some context information used to traverse to the anchored text:
 	class TextDomContentPointer : ContentPointer {
 		TextContext[] contexts; //An array of TextContext
 		                          //objects providing context for this anchor
-		int edge_offset; //The offset from the start or end of content_text of the edge
+		int edgeOffset; //The offset from the start or end of content_text of the edge
 	}
 
 
@@ -175,7 +182,7 @@ ends inside of ``Text`` content.
   for ``nextNode`` starting from the node used to generate the
   *primary context* object. See ``Converting a Text Node to
   TextDomContentPointer`` for more information.
-* ``edge_offset`` is the character offset from the start of the
+* ``edgeOffset`` is the character offset from the start of the
   ``primary context`` object's ``context_text`` string to the location
   of the edge thie anchor represents.
 
@@ -187,16 +194,16 @@ following `TextContext` will be used:
 
 	//Provide a snippet of text context
 	class TextContext {
-		string context_text; //A chunk of text that can be used as context
-		int context_offset; //offset of context_text into context_offset's
+		string contextText; //A chunk of text that can be used as context
+		int context_offset; //offset of contextText into context_offset's
 							//containing text node
 	}
 
-* ``context_text`` is a string contained in the `textContent or nodeValue
+* ``contextText`` is a string contained in the `textContent or nodeValue
   <http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-node-textcontent>`_
   of a ``Text`` node near the ``TextDomContentPointer`` this object is
   providing context for.
-* ``context_offset`` is the index of ``context_text`` from the start or end of ``textContent``.
+* ``context_offset`` is the index of ``contextText`` from the start or end of ``textContent``.
   ``content_offset`` *MUST* be an integer greater than or equal to zero.  Negative values are reserved for future use.
   If this object is providing context for an anchor with a type *EQUAL TO* ``"start"``, ``content_offset``
   represents the character index from the end (right) of ``textContent``.
@@ -301,7 +308,7 @@ become the ``elementId`` and ``elementTagName`` respectively.
 .. JAM: Text about completely undefined heuristics deleted. It's not
 .. an algorithm if there are completely undefined heuristics.
 
-The anchor's *primary context* and ``edge_offset`` can be populated
+The anchor's *primary context* and ``edgeOffset`` can be populated
 given the ``TextDomContentPointer`` and the Range object. The method
 for generating the *primary context* object may differ from the
 method used to generate *additional* ``TextContext`` objects. In
@@ -501,8 +508,8 @@ range can be constructed as follows. If anchor ``type`` is ``start``,
 set the ``ranges`` ``startContainer`` to ``textNode``. If anchor
 ``type`` is ``end``, set the ``ranges`` ``endContainer`` to
 ``textNode``. Calculate the text offset by identifying the index of
-the *primary context* object's ``context_text`` in the container.
-Adjust the offset by anchor's ``edge_offset`` property, and set the
+the *primary context* object's ``contextText`` in the container.
+Adjust the offset by anchor's ``edgeOffset`` property, and set the
 range's ``startOffset``, if anchor ``type`` == ``start``, or
 ``endOffset``, if anchor ``type`` == `end`, to the computed value.
 
@@ -611,8 +618,8 @@ One such example implemenation is shown in detail below:
 		var primaryContext = textAnchor.contexts[0];
 
 		var container = textNode;
-		var indexOfContext = container.textContent.indexOf(primaryContext.context_text);
-		indexOfContext += textAnchor.edge_offset;
+		var indexOfContext = container.textContent.indexOf(primaryContext.contextText);
+		indexOfContext += textAnchor.edgeOffset;
 		return {node:container, offset: indexOfContext, confidence: 1};
 	}
 
@@ -657,14 +664,14 @@ A NTIContentSimpleTextRangeSpec
 		start: {
 			elementId: 'id',
 			elementTagName: 'p',
-			contexts: [{ context_text: 'A', context_offset: 26 }]
-			edge_offset: 0
+			contexts: [{ contextText: 'A', context_offset: 26 }]
+			edgeOffset: 0
 		},
 		end: {
 			elementId: 'id',
 			elementTagName: 'p',
-			contexts: [{ context_text: 'node', context_offset: 22 }],
-			edge_offset: 4
+			contexts: [{ contextText: 'node', context_offset: 22 }],
+			edgeOffset: 4
 		},
 		selected_text: 'A single selected text node',
 		offset: 0
@@ -694,14 +701,14 @@ This example spans from one text node to the next.
 		start: {
 			elementId: 'id',
 			elementTagName: 'p',
-			contexts: [{ context_text: 'An', context_offset: 2 }]
-			edge_offset: 0
+			contexts: [{ contextText: 'An', context_offset: 2 }]
+			edgeOffset: 0
 		},
 		end: {
 			elementId: 'id',
 			elementTagName: 'p',
-			contexts: [{ context_text: 'word.', context_offset: 0 }],
-			edge_offset: 5
+			contexts: [{ contextText: 'word.', context_offset: 0 }],
+			edgeOffset: 5
 		}
 	}
 
@@ -732,17 +739,17 @@ the offsets within a text node are the same. How does it resolve?
 		start: {
 			elementId: 'id',
 			elementTagName: 'p',
-			contexts: [{ context_text: 'is the', context_offset: 3 },
-					   {context_text: 'sentence.', context_offset: 9},
-					   {context_text: 'first', context_offset: 5},
-					   {context_text: 'the'}, context_offset: 3]
-			edge_offset: 8
+			contexts: [{ contextText: 'is the', context_offset: 3 },
+					   {contextText: 'sentence.', context_offset: 9},
+					   {contextText: 'first', context_offset: 5},
+					   {contextText: 'the'}, context_offset: 3]
+			edgeOffset: 8
 		},
 		end: {
 			elementId: 'id',
 			elementTagName: 'p',
-			contexts: [{ context_text: 'sentence.', context_offset: 0 }],
-			edge_offset: 9
+			contexts: [{ contextText: 'sentence.', context_offset: 0 }],
+			edgeOffset: 9
 		}
 	}
 
