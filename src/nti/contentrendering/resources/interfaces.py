@@ -98,3 +98,5 @@ class IFilesystemContentUnitRepresentation(IContentUnitRepresentation):
 	"""
 	A representation of the content unit that has been stored in the filesystem.
 	"""
+
+	path = schema.TextLine( title="The path on disk of the file for this representation." )
