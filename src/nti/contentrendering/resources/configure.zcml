@@ -1,0 +1,33 @@
+<!-- -*- mode: nxml -*- -->
+<configure xmlns="http://namespaces.zope.org/zope"
+		   i18n_domain="zope">
+	<include package="zope.component" />
+
+	<adapter factory=".converter_png.ResourceGenerator"
+			 for="plasTeX.DOM.Node"
+			 provides=".interfaces.IContentUnitRepresentationBatchConverter"
+			 name="png" />
+
+	<adapter factory=".converter_svg.ResourceGenerator"
+			 for="plasTeX.DOM.Node"
+			 provides=".interfaces.IContentUnitRepresentationBatchConverter"
+			 name="svg" />
+
+	<adapter factory=".converter_mathjax_display.ResourceGenerator"
+			 for="plasTeX.DOM.Node"
+			 provides=".interfaces.IContentUnitRepresentationBatchConverter"
+			 name="mathjax_display" />
+
+
+	<adapter factory=".converter_mathjax_inline.ResourceGenerator"
+			 for="plasTeX.DOM.Node"
+			 provides=".interfaces.IContentUnitRepresentationBatchConverter"
+			 name="mathjax_inline" />
+
+	<adapter factory=".converter_mathml.ResourceGenerator"
+			 for="plasTeX.DOM.Node"
+			 provides=".interfaces.IContentUnitRepresentationBatchConverter"
+			 name="mathml" />
+
+
+</configure>

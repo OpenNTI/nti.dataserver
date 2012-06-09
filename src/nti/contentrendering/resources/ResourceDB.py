@@ -14,6 +14,7 @@ from hashlib import sha1
 
 from zope.deprecation import deprecated
 from zope import interface
+from zope import component
 import zope.dottedname.resolve as dottedname
 
 try:
@@ -23,11 +24,9 @@ except ImportError:
 
 
 
-from plasTeX.Imagers import  Image
-
 from collections import defaultdict
 
-from .resourcetypeoverrides import ResourceTypeOverrides
+from .resourcetypeoverrides import ResourceTypeOverrides, normalize_source
 from .contentunitrepresentations import ContentUnitRepresentations
 from ._util import digester, copy
 from . import interfaces
@@ -39,155 +38,138 @@ class ResourceDB(object):
 
 	dirty = False
 
-	types = {'mathjax_inline': 'nti.contentrendering.tex2html.ResourceGenerator',
-			 'mathjax_display': 'nti.contentrendering.displaymath2html.ResourceGenerator',
-			 'svg': 'nti.contentrendering.pdf2svg.ResourceGenerator',
-			 'png': 'nti.contentrendering.gspdfpng2.ResourceGenerator',
-			 'mathml': 'nti.contentrendering.html2mathml.ResourceGenerator'}
-
-
-	def __init__(self, document, path=None, overridesLocation=None):
-		self.__document = document
-		self.__config = self.__document.config
+	def __init__(self, document, path='resources', overridesLocation=None):
+		"""
+		:param document: A plasTeX document we will manage resources for.
+		:param string path: The path into which to store the resource files. Defaults
+			to the relative path "resources". We will create a directory based on the
+			job name within this directory.
+		:param string overridesLocation: If not None, the path to a directory of
+			resource type overrides. See :class:`ResourceTypeOverrides`.
+		"""
+		self._document = document
+		self._config = self._document.config
 		self.overrides = ResourceTypeOverrides(overridesLocation, fail_silent=False) if overridesLocation is not None else {}
-
-		if not hasattr(Image, '_url'): # Not already patched
-			Image._url = None
-			def seturl(self, value):
-				self._url = value
-
-			def geturl(self):
-				return self._url
-
-			Image.url = property(geturl, seturl)
 
 		if not path:
 			path = 'resources'
 
-		self.__dbpath = os.path.join(path, self.__document.userdata['jobname'])
-		self.baseURL = self.__dbpath
-		if not os.path.isdir(self.__dbpath):
-			os.makedirs(self.__dbpath)
+		self._dbpath = os.path.join(path, self._document.userdata['jobname'])
+		self.baseURL = self._dbpath
+		if not os.path.isdir(self._dbpath):
+			os.makedirs(self._dbpath)
 
-		logger.info('Using %s as resource db', self.__dbpath)
+		logger.info('Using %s as resource db', self._dbpath)
 
-		self.__indexPath = os.path.join(self.__dbpath, 'resources.index')
+		self._indexPath = os.path.join(self._dbpath, 'resources.index')
 
-		self.__db = {}
+		self._db = {} # TODO: We should be normalizing the source here just like overrides do?
 
-		self.__loadResourceDB()
+		self._loadResourceDB()
 
 	def __str__(self):
-		return str(self.__db)
+		return str(self._db)
 
 	def generateResourceSets(self):
 
-		#set of all nodes we need to generate resources for
-		nodesToGenerate = self.__findNodes(self.__document)
+		# Generate a mapping of representation names to nodes  {'png': {node1, node2}, 'mathml': {node3, node4}}
+		rep_names_to_nodes = defaultdict(set)
 
-		#Generate a mapping of types to source  {png: {src2, src5}, mathml: {src1, src5}}
-		typesToSource = defaultdict(set)
+		for node in self._locate_representable_nodes(self._document):
+			rep_prefs = interfaces.IRepresentationPreferences( node )
+			for rType in rep_prefs.resourceTypes:
+				# We don't want to regenerate an existing representation for
+				# this same source
+				representations = self._db.get( node.source )
+				if representations is None or not representations.has_representation_of_type( rType ):
+					rep_names_to_nodes[rType].add(node)
 
-		for node in nodesToGenerate:
-
-			for rType in node.resourceTypes:
-				# We don't want to regenerate for source that already exists
-				if not node.source in self.__db:
-					typesToSource[rType].add(node.source)
-				else:
-					hasType = False
-					for resource in self.__db[node.source].resources.values():
-						resourceType = getattr(resource, 'resourceType', None)
-						if resourceType == rType:
-							hasType = True
-							break
-					if not hasType:
-						typesToSource[rType].add(node.source)
-
-		for rType, sources in typesToSource.items():
-			self.__generateResources(rType, sources)
+		for rType, nodes in rep_names_to_nodes.items():
+			self._create_representations(rType, nodes)
 
 		self.saveResourceDB()
 
-	def __generateResources(self, resourceType, sources):
-		#Load a resource generate
-		generator = self.__loadGenerator(resourceType)
+	def _create_representations(self, resourceType, nodes):
+		# Load a resource generate
+		generator = self._loadGenerator(resourceType)
+		new_representations = generator.process_batch( nodes )
+		for new_representation in new_representations:
+			keys = (resourceType,) + tuple(new_representation.qualifiers)
+			self.setResource(new_representation.source, keys, new_representation)
 
-		if not generator:
-			logger.warn( "Not generating resource %s for %s", resourceType, sources )
-			return
+	def _loadGenerator(self, resourceType):
+		return component.getAdapter( self._document,
+									 interfaces.IContentUnitRepresentationBatchConverter,
+									 name=resourceType )
 
-		generator.generateResources(sources, self)
 
-	def __loadGenerator(self, resourceType):
-		if not resourceType in self.types:
-			logger.warn('No generator specified for resource type %s', resourceType)
-			return None
-		try:
-			return dottedname.resolve( self.types[resourceType] )(self.__document)
-		except ImportError, msg:
-			logger.warning("Could not load custom imager '%s' because '%s'", resourceType, msg)
-			return None
+	def _locate_representable_nodes(self, node, _accum=None):
+		"""
+		Starting with a root node, locate and return and return all nodes within it (whether child or attribute)
+		that have a preference about how they are represented as resources, taking into
+		account any registered overrides.
 
-	def __findNodes(self, node):
-		nodes = []
+		:return: A set of nodes that can be adapted to :class:`interfaces.IRepresentationPreferences`
+		"""
 
-		#Do we have any overrides
-		#FIXME Be smarter about this.  The source for mathnodes is reconstructed so the
-		#whitespace is all jacked up.  The easiest (not safest) thing to do is strip whitespace
-		source = ''.join(node.source.split())
+		if _accum is None:
+			# Shared recursive accumulator for efficiency.
+			_accum = set()
+
+
+		# Do we have any overrides?
+		source = normalize_source( node.source )
 		if source in self.overrides:
 			logger.info( 'Applying resourceType override to %s', node )
 			node.resourceTypes = self.overrides[source]
 			interface.alsoProvides( node, interfaces.IRepresentationPreferences )
 
+		# If the node has specific preferences, then
 		if interfaces.IRepresentationPreferences( node, None ) is not None:
-			nodes.append(node)
+			_accum.add(node)
 
-		if getattr(node, 'attributes', None):
-			for attrval in node.attributes.values():
-				if getattr(attrval, 'childNodes', None):
-					for child in attrval.childNodes:
-						nodes.extend(self.__findNodes(child))
+
+		for attrval in (getattr( node, 'attributes', None) or {}).values():
+			for child in getattr( attrval, 'childNodes', () ):
+				self._locate_representable_nodes(child, _accum)
 
 		for child in node.childNodes:
-			nodes.extend(self.__findNodes(child))
+			self._locate_representable_nodes(child, _accum)
 
-		return list(set(nodes))
+		return _accum
 
 
-	def __loadResourceDB(self, debug = True):
-		if os.path.isfile(self.__indexPath):
+	def _loadResourceDB(self, filename=None):
+		"""
+		Loads resources from an external file. The external file is loaded as a pickle
+		and must be iterable with the `items` method. If the `path` of each item exists,
+		it is inserted into the current object's database.
+		"""
+		if filename is None: filename = self._indexPath
+		if os.path.isfile(filename):
 			try:
+				ext_db = mPickle.load(open(filename, 'rb'))
 
-				self.__db = mPickle.load(open(self.__indexPath, 'rb'))
-
-				for key, value in self.__db.items():
-
-					if not os.path.exists(os.path.join(self.__dbpath,value.path)):
-						del self.__db[key]
-						continue
-			except ImportError:
-				logger.exception( 'Error loading cache.  Starting from scratch' )
-				os.remove(self.__indexPath)
-				self.__db = {}
-		else:
-			self.__db = {}
+				for key, value in ext_db.items():
+					if os.path.exists(os.path.join(self._dbpath, value.path)):
+						self._db[key] = value
+			except (ImportError, mPickle.PickleError):
+				logger.exception( 'Error loading cache %s. Starting from scratch', filename )
 
 
-	def setResource(self, source, keys, resource, debug = False):
+	def setResource(self, source, keys, resource):
 
 		self.dirty = True
 
-		if not source in self.__db:
-			self.__db[source] = ContentUnitRepresentations(source)
+		if not source in self._db:
+			self._db[source] = ContentUnitRepresentations(source)
 
-		resourceSet = self.__db[source]
+		resourceSet = self._db[source]
 
-		resourceSet.setResource(self.__storeResource(resourceSet, keys, resource, debug), keys)
+		resourceSet.setResource(self._storeResource(resourceSet, keys, resource), keys)
 
 
-	def __storeResource(self, rs, keys, origResource, debug = False):
+	def _storeResource(self, rs, keys, origResource):
 		resource = _clone(origResource)
 
 		digest = digester.digestKeys(keys)
@@ -195,7 +177,7 @@ class ResourceDB(object):
 
 		relativeToDB = os.path.join(rs.path, name)
 
-		newpath = os.path.join(self.__dbpath, relativeToDB)
+		newpath = os.path.join(self._dbpath, relativeToDB)
 		copy(resource.path, newpath)
 		resource.path = name
 		resource.filename = name
@@ -215,21 +197,20 @@ class ResourceDB(object):
 		return '%s%s/%s' % (self.baseURL, resource.resourceSet.path, resource.path)
 
 	def saveResourceDB(self):
-		if not os.path.isdir(os.path.dirname(self.__indexPath)):
-			os.makedirs(os.path.dirname(self.__indexPath))
+		if not os.path.isdir(os.path.dirname(self._indexPath)):
+			os.makedirs(os.path.dirname(self._indexPath))
 
 		if not self.dirty:
 			return
 
-		mPickle.dump(self.__db, open(self.__indexPath,'wb'))
+		mPickle.dump(self._db, open(self._indexPath,'wb'))
 
-	def __getResourceSet(self, source):
-		if source in self.__db:
-			return self.__db[source]
-		return None
+	def _getResourceSet(self, source):
+		if source in self._db:
+			return self._db[source]
 
 	def hasResource(self, source, keys):
-		rsrcSet = self.__getResourceSet(source)
+		rsrcSet = self._getResourceSet(source)
 
 		if not rsrcSet:
 			return None
@@ -241,11 +222,11 @@ class ResourceDB(object):
 		if path:
 			with codecs.open(path, 'r', 'utf-8') as f:
 				return f.read()
-		return None
+
 
 	def getResource(self, source, keys):
 
-		rsrcSet = self.__db.get(source)
+		rsrcSet = self._db.get(source)
 
 		if rsrcSet == None:
 			return None
@@ -253,18 +234,16 @@ class ResourceDB(object):
 		return rsrcSet.resources[digester.digestKeys(keys)]
 
 	def getResourcePath(self, source, keys):
-		rsrcSet = self.__getResourceSet(source)
+		rsrcSet = self._getResourceSet(source)
 
 		if not rsrcSet:
 			return None
 
 
 		digest = digester.digestKeys(keys)
-		resourcePath = os.path.join(self.__dbpath, rsrcSet.path)
+		resourcePath = os.path.join(self._dbpath, rsrcSet.path)
 
 		for name in os.listdir(resourcePath):
 			if name.startswith(digest):
 				path = os.path.join(resourcePath, name)
 				return path
-
-		return None

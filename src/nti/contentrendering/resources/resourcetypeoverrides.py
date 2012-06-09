@@ -26,7 +26,7 @@ def ResourceTypeOverrides( location, fail_silent=True):
 
 	That file is an index file in ``name=type1,type2`` format. The ``name`` is a relative path to a file
 	giving the source of the resource of which to change the type. The types are the names of representations
-	to generate when that source is encountered.
+	to generate when that source is encountered. See :func:`normalize_source.`
 
 	:param bool fail_silent: If true (the default for backwards compatibility), missing filenames or
 		files not found will not raise exceptions.
@@ -64,11 +64,18 @@ def _load_overrides_from_file(location, warn):
 				continue
 
 			with open(sourcePath, 'r') as sourceFile:
-				# TODO: Why this particular algorithm to make the key?
-				# Is this something plastex does? Or are these steps duplicated in the code somewhere?
-				source = sourceFile.read().strip()
-				source = ''.join(source.split())
-				result[source] = types
+				source = sourceFile.read()
+				result[normalize_source(source)] = types
 
 
 	return result
+
+def normalize_source( source ):
+	"""
+	To improve the odds of matching source after some document transformations,
+	the source that is read from files or pulled from :class:`nti.contentrendering.resources.interfaces.IContentUnit`
+	objects is normalized with this method.
+	"""
+	# TODO: Be smarter about this.  The source for mathnodes is reconstructed so the
+	# whitespace is all jacked up.  The easiest (not safest) thing to do is strip whitespace
+	return ''.join( source.strip().split() )

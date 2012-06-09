@@ -29,12 +29,14 @@ class TestImagerContentUnitRepresentationBatchConverter(ConfiguringTestBase):
 
 
 	def test_generator(self):
+		class Image(object):
+			path = 'path'
 		class Imager(object):
 			fileExtension = '.png'
 			def __init__( self, document ):
 				pass
 			def newImage( self, source ):
-				return source
+				return Image()
 			def close(self): pass
 
 
@@ -44,7 +46,7 @@ class TestImagerContentUnitRepresentationBatchConverter(ConfiguringTestBase):
 		class ContentUnit(object):
 			source = "abc"
 
-		assert_that( converter.process_batch( [ContentUnit] ), is_( [ContentUnit.source] ) )
+		assert_that( converter.process_batch( [ContentUnit] ), contains( verifiably_provides( interfaces.IFilesystemContentUnitRepresentation ) ) )
 		assert_that( converter.process_batch( [] ), is_( () ) )
 
 

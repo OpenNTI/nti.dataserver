@@ -35,6 +35,13 @@ class ContentUnitRepresentations(object,DictMixin):
 		self.source = source
 		self.path = digester.digest(source) # deprecated, to remove
 
+	def has_representation_of_type( self, rep_type_name ):
+		"""
+		Returns a true value if we have a representation of the given type.
+		"""
+		return any( (x.resourceType == rep_type_name for x in self.resources.values()) )
+
+
 	def setResource(self, resource, keys):
 		resource.resourceType = keys[0]
 		self.resources[digester.digestKeys(keys)] = resource
@@ -65,4 +72,14 @@ class ContentUnitRepresentation(object):
 	qualifiers = ()
 
 
+	def __init__( self, **kwargs ):
+		for k, v in kwargs.items():
+			if v is not None and hasattr(self, k):
+				setattr( self, k, v )
+
+
 Resource = ContentUnitRepresentation
+
+@interface.implementer(interfaces.IFilesystemContentUnitRepresentation)
+class FilesystemContentUnitRepresentation(ContentUnitRepresentation):
+	path = None
