@@ -49,7 +49,7 @@ class ResourceDB(object):
 	def __init__(self, document, path=None, overridesLocation=None):
 		self.__document = document
 		self.__config = self.__document.config
-		self.overrides = ResourceTypeOverrides(overridesLocation, fail_silent=False)
+		self.overrides = ResourceTypeOverrides(overridesLocation, fail_silent=False) if overridesLocation is not None else {}
 
 		if not hasattr(Image, '_url'): # Not already patched
 			Image._url = None
@@ -188,7 +188,6 @@ class ResourceDB(object):
 
 
 	def __storeResource(self, rs, keys, origResource, debug = False):
-
 		resource = _clone(origResource)
 
 		digest = digester.digestKeys(keys)
