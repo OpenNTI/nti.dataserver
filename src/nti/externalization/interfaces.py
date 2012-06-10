@@ -43,7 +43,7 @@ class StandardInternalFields(object):
 	CONTAINER_ID = 'containerId'
 
 
-class IExternalObject(interface.Interface):
+class IInternalObjectExternalizer(interface.Interface):
 	"""
 	Implemented by, or adapted from, an object that can
 	be externalized.
@@ -74,12 +74,14 @@ class IExternalObject(interface.Interface):
 	def toExternalObject():
 		""" Optional, see this module's toExternalObject() """
 
-	def updateFromExternalObject( parsed, *args, **kwargs ):
-		""" Optional, updates this object using the parsed input
-		from the external object form. If the object does not implement
-		this method, then if it implements clear() and update() those will be
-		used. The arguments are optional context arguments possibly passed. One
-		common key is dataserver pointing to a Dataserver."""
+	# def updateFromExternalObject( parsed, *args, **kwargs ):
+	# 	""" Optional, updates this object using the parsed input
+	# 	from the external object form. If the object does not implement
+	# 	this method, then if it implements clear() and update() those will be
+	# 	used. The arguments are optional context arguments possibly passed. One
+	# 	common key is dataserver pointing to a Dataserver."""
+
+IExternalObject = IInternalObjectExternalizer # b/c aliase
 
 class INonExternalizableReplacer(interface.Interface):
 	"""
@@ -92,6 +94,12 @@ class INonExternalizableReplacer(interface.Interface):
 		:return: An externalized object to replace the given object. Possibly the
 			given object itself if some higher level will handle it.
 		"""
+
+class INonExternalizableReplacement(interface.Interface):
+	"""
+	This interface may be applied to objects that serve as a replacement
+	for a non-externalized object.
+	"""
 
 class IExternalObjectDecorator(interface.Interface):
 	"""
@@ -191,9 +199,15 @@ class IInternalObjectUpdater(interface.Interface):
 	its externalized representation.
 	"""
 
-	def updateFromExternalObject( externalObject, context=None ):
+	def updateFromExternalObject( externalObject, *args, **kwargs ):
 		"""
 		Update the object this is adapting from the external object.
 		Two alternate signatures are supported, one with ``dataserver`` instead of
 		context, and one with no keyword args.
 		"""
+
+class IInternalObjectIO(IInternalObjectExternalizer,IInternalObjectUpdater):
+	"""
+	A single object responsible for both reading and writing internal objects
+	in external forms.
+	"""

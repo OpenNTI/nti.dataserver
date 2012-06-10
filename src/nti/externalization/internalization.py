@@ -146,10 +146,15 @@ def _resolve_externals(containedObject, externalObject, registry=component, cont
 _primitives = six.string_types + (numbers.Number,bool)
 
 def update_from_external_object( containedObject, externalObject,
-								 registry=component, context=None ):
+								 registry=component, context=None,
+								 require_updater=False ):
 	"""
 	:param context: An object passed to the update methods.
-	:return: `containedObject` after updates from `externalObject`"""
+	:param require_updater: If True (not the default) an exception will be raised
+		if not implementation of :class:`interfaces.IInternalObjectUpdater` can be found
+		for the `containedObject.`
+	:return: `containedObject` after updates from `externalObject`
+	"""
 
 	# Parse any contained objects
 	# TODO: We're (deliberately?) not actually updating any contained
@@ -165,7 +170,7 @@ def update_from_external_object( containedObject, externalObject,
 		tmp = []
 		for i in externalObject:
 			factory = find_factory_for( i )
-			tmp.append( update_from_external_object( factory(), i, registry, context ) if factory else i )
+			tmp.append( update_from_external_object( factory(), i, registry, context=context, require_updater=require_updater ) if factory else i )
 		return tmp
 
 	assert isinstance( externalObject, collections.MutableMapping )
@@ -175,10 +180,10 @@ def update_from_external_object( containedObject, externalObject,
 
 		factory = None
 		if isinstance( v, collections.MutableSequence ):
-			v = update_from_external_object( (), v, registry, context )
+			v = update_from_external_object( (), v, registry, context=context, require_updater=require_updater )
 		else:
 			factory = find_factory_for( v )
-		externalObject[k] = update_from_external_object( factory(), v, registry, context ) if factory else v
+		externalObject[k] = update_from_external_object( factory(), v, registry, context=context, require_updater=require_updater ) if factory else v
 
 
 	_resolve_externals( containedObject, externalObject, registry=registry, context=context )
@@ -186,17 +191,20 @@ def update_from_external_object( containedObject, externalObject,
 	updater = None
 	if hasattr( containedObject, 'updateFromExternalObject' ):
 		updater = containedObject
+	elif require_updater:
+		updater = registry.getAdapter( containedObject, interfaces.IInternalObjectUpdater )
 	else:
-		updater = registry.queryAdapter( containedObject, interfaces.IExternalObjectUpdater )
+		updater = registry.queryAdapter( containedObject, interfaces.IInternalObjectUpdater )
+
 
 	if updater:
 		# The signature may vary.
-		argspec = inspect.getargspec( containedObject.updateFromExternalObject )
+		argspec = inspect.getargspec( updater.updateFromExternalObject )
 		if 'context' in argspec.args or (argspec.keywords and 'dataserver' not in argspec.args):
-			containedObject.updateFromExternalObject( externalObject, context=context )
+			updater.updateFromExternalObject( externalObject, context=context )
 		elif argspec.keywords or 'dataserver' in argspec.args:
-			containedObject.updateFromExternalObject( externalObject, dataserver=context )
+			updater.updateFromExternalObject( externalObject, dataserver=context )
 		else:
-			containedObject.updateFromExternalObject( externalObject )
+			updater.updateFromExternalObject( externalObject )
 
 	return containedObject

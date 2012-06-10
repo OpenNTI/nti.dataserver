@@ -27,6 +27,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import users
 
 from zope import interface
+from zope.deprecation import deprecate
 
 def _get_entity( username, dataserver=None ):
 	return users.Entity.get_entity( username, dataserver=dataserver )
@@ -174,35 +175,39 @@ class _UserContentRoot(sharing.ShareableMixin, datastructures.ContainedMixin, da
 			# Notice we pass on the original dictionary
 			getattr( s, 'updateFromExternalObject' )(ext_parsed, *args, **kwargs )
 
-class Highlight(_UserContentRoot,ExternalizableInstanceDict):
+class _HighlightBWC(object):
+	"""
+	Defines read-only properties that are included in a highlight
+	to help backwards compatibility.
+	"""
+
+	top = left = startOffset = endOffset = property( deprecate( "Use the applicableRange" )( lambda self: 0 ) )
+
+	startHighlightedFullText = startHighlightedText = endHighlightedText = endHighlightedFullText = property( deprecate( "Use the highlightedText" )( lambda self: getattr( self, 'highlightedText' ) ) )
+
+	startXpath = startAnchor = endAnchor = endXpath = anchorPoint = anchorType = property( deprecate( "Use the applicableRange" )( lambda self: '' ) )
+
+
+class Highlight(_UserContentRoot,ExternalizableInstanceDict, _HighlightBWC):
 	# See comments above about being IZContained. We add it here to minimize the impact
 	interface.implements( nti_interfaces.IZContained, nti_interfaces.IHighlight )
 	_excluded_in_ivars_ = { 'AutoTags' } | ExternalizableInstanceDict._excluded_in_ivars_
 
 	style = 'plain'
+	highlightedText = ''
+	applicableRange = None
+	tags = ()
+	AutoTags = ()
+
 	__parent__ = None
 
 
 	def __init__( self ):
 		super(Highlight,self).__init__()
-		self.style = 'plain' # To get in the dict for externalization
-		self.top = 0
-		self.left = 0
-		# TODO: Determine the meaning of all these fields.
-		self.startHighlightedFullText = ''
-		self.startHighlightedText = ''
-		self.startXpath = ''
-		self.startAnchor = ''
-		self.startOffset = 0
-		self.endOffset = 0
-		self.endAnchor = ''
-		self.endXpath = ''
-
-		self.endHighlightedText = ''
-		self.endHighlightedFullText = ''
-
-		self.anchorPoint = ''
-		self.anchorType = ''
+		# To get in the dict for externalization
+		self.style = 'plain'
+		self.highlightedText = ''
+		self.applicableRange = None
 
 		# Tags. It may be better to use objects to represent
 		# the tags and have a single list. The two-field approach
@@ -363,9 +368,7 @@ class Note(ThreadableExternalizableMixin, Highlight):
 	# when a child reply is created. If the child already has them, they
 	# are left alone.
 	# This consists of the anchoring properties
-	_inheritable_properties_ = ( 'anchorPoint', 'anchorType', 'left', 'top',
-								 'startXpath', 'startAnchor', 'startOffset',
-								 'endXpath', 'endAnchor', 'endOffset')
+	_inheritable_properties_ = ( 'applicableRange', )
 
 	def __init__(self):
 		super(Note,self).__init__()
