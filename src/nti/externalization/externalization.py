@@ -27,7 +27,7 @@ from zope import component
 from nti.ntiids import ntiids
 
 from .interfaces import IExternalObject, IExternalObjectDecorator, IExternalMappingDecorator, StandardExternalFields, StandardInternalFields
-from .interfaces import INonExternalizableReplacer
+from .interfaces import INonExternalizableReplacer, INonExternalizableReplacement
 from .interfaces import ILocatedExternalSequence, ILocatedExternalMapping
 from .oids import to_external_ntiid_oid
 
@@ -142,9 +142,12 @@ def toExternalObject( obj, coerceNone=False, name=_ex_name_marker, registry=comp
 	finally:
 		_ex_name_local.name.pop()
 
+@interface.implementer(INonExternalizableReplacement)
+class _NonExternalizableObject(dict): pass
+
 def DefaultNonExternalizableReplacer( obj ):
 	logger.debug( "Asked to externalize non-externalizable object %s, %s", type(obj), obj )
-	result = { 'Class': 'NonExternalizableObject', 'InternalType': str(type(obj)) }
+	result = _NonExternalizableObject( Class='NonExternalizableObject', InternalType=str(type(obj)) )
 	return result
 
 def stripNoneFromExternal( obj ):

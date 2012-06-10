@@ -18,6 +18,8 @@ from zope.location.location import LocationProxy
 
 from zope.interface.common.mapping import IFullMapping
 
+from nti.contentrange import interfaces as rng_interfaces
+
 class ACLLocationProxy(LocationProxy):
 	"""
 	Like :class:`LocationProxy` but also adds transparent storage
@@ -200,7 +202,8 @@ class IAnchoredRepresentation(IContained):
 	of which are not well understood and need to be better documented. See the Highlight class for
 	a list of known fields.
 	"""
-	pass
+	applicableRange = schema.Object(rng_interfaces.IContentRangeDescription,
+									title="The range of content to which this representation applies or is anchored." )
 
 class IContainerIterable(interface.Interface):
 	"""

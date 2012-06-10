@@ -129,6 +129,7 @@ class ConfiguringTestBase(AbstractTestBase):
 		# zope.component.globalregistry conveniently adds
 		# a zope.testing.cleanup.CleanUp to reset the globalSiteManager
 		for i in self.set_up_packages:
+			__traceback_info__ = (i, self)
 			xmlconfig.file( 'configure.zcml', package=i )
 
 	def tearDown( self ):

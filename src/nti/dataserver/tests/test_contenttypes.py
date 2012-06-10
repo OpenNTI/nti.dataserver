@@ -22,6 +22,8 @@ from mock_dataserver import WithMockDS
 import plistlib
 import os
 
+from nti.contentrange.contentrange import DomContentRangeDescription, ElementDomContentPointer
+
 import nti.externalization.internalization
 nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.users' )
 nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.contenttypes' )
@@ -279,17 +281,15 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 
 	def test_inherit_anchor_properties(self):
 		n = Note()
-		n.anchorType = 'foo'
-		n.left = 1
-		n.startOffset = 10
+		n.applicableRange = DomContentRangeDescription( ancestor=ElementDomContentPointer( elementTagName='p' ) )
+
 
 		child = Note()
 		child.inReplyTo = n
 		child.updateFromExternalObject( {'inReplyTo': n, 'body': ('body') } )
 
-		assert_that( child.anchorType, is_( n.anchorType ) )
-		assert_that( child.left, is_( n.left ) )
-		assert_that( child.startOffset, is_( n.startOffset ) )
+		assert_that( child.applicableRange, is_( n.applicableRange ) )
+
 
 
 

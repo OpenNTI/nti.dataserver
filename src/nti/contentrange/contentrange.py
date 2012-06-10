@@ -9,20 +9,33 @@ from zope import interface
 
 from . import interfaces
 
+# FIXME: Note that we are using the legacy class-based
+# functionality to create new internal objects from externals
+
+def _make_init( cls ):
+	"""
+	Returns an init method for cls that takes keyword arguments for the attributes of the
+	object. Assumes that the class or instance will have already set up attributes to match
+	incoming keyword names.
+	"""
+	def __init__( self, **kwargs ):
+		super( cls, self ).__init__()
+		for k, v in kwargs.items():
+			if v is not None and hasattr( self, k ):
+				setattr( self, k, v )
+
+	return __init__
+
 @interface.implementer( interfaces.IContentRangeDescription )
 class ContentRangeDescription(object):
 	"""
 	Implementation of IContentRangeDescription.
 	"""
+	__external_can_create__ = True
+	def __eq__( self, other ):
+		return self is other or isinstance( self, ContentRangeDescription )
 
-def _make_init( cls ):
-	def __init__( self, **kwargs ):
-		super( cls, self ).__init__()
-		for k, v in kwargs:
-			if v and hasattr( self, k ):
-				setattr( self, k, v )
-
-	return __init__
+ContentRangeDescription.__init__ = _make_init( ContentRangeDescription )
 
 
 @interface.implementer(interfaces.IDomContentRangeDescription)
@@ -32,11 +45,14 @@ class DomContentRangeDescription(ContentRangeDescription):
 	end = None
 	ancestor = None
 
-
-DomContentRangeDescription.__init__ = _make_init( DomContentRangeDescription )
+	def __eq__( self, other ):
+		return self is other or (self.start == getattr( other, 'start', None )
+								 and self.end == getattr( other, 'end', None )
+								 and self.ancestor  == getattr( other, 'ancestor', None ))
 
 class ContentPointer(object):
-	pass
+	__external_can_create__ = True
+
 
 @interface.implementer( interfaces.IDomContentPointer )
 class DomContentPointer(ContentPointer):
@@ -46,9 +62,9 @@ class DomContentPointer(ContentPointer):
 	type = None
 
 	def __eq__( self, other ):
-		return self is other or self.elementId == getattr( other, 'elementId', None ) \
-		  and self.elementTagName == getattr( other, 'elementTagName', None ) \
-		  and self.type  == getattr( other, 'type', None )
+		return self is other or (self.elementId == getattr( other, 'elementId', None )
+								 and self.elementTagName == getattr( other, 'elementTagName', None )
+								 and self.type  == getattr( other, 'type', None ))
 
 DomContentPointer.__init__ = _make_init( DomContentPointer )
 
@@ -58,9 +74,14 @@ class ElementDomContentPointer(DomContentPointer):
 
 @interface.implementer(interfaces.ITextContext)
 class TextContext(object):
+	__external_can_create__ = True
 
 	contextText = ''
 	contextOffset = 0
+
+	def __eq__( self, other ):
+		return self is other or (self.contextText == getattr( other, 'contextText', None )
+								 and self.contextOffset == getattr( other, 'contextOffset', None ) )
 
 TextContext.__init__ = _make_init( TextContext )
 
@@ -70,3 +91,8 @@ class TextDomContentPointer(DomContentPointer):
 
 	contexts = ()
 	edgeOffset = 0
+
+	def __eq__( self, other ):
+		return (super(TextDomContentPointer,self).__eq__( other )
+				and self.contexts == getattr( other, 'contexts', None )
+				and self.edgeOffset == getattr( other, 'edgeOffset', None ) )
