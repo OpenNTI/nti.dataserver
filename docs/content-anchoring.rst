@@ -323,7 +323,8 @@ The generation of ``TextContext`` objects is defined here in a
 simplistic manner; in the future, this may be refined, but the
 algorithm must remain capable of intepreting existing data. Here, we
 take a word based approach to extracting context from a ``Text`` node.
-Given an anchor and a ``Text`` node to extract context from, the
+Given an anchor, a ``Text`` node, and an offset into that textnode
+marking an edge of the ragne being anchored, the
 following procedure should be used to generate the ``primary context``
 object:
 
@@ -336,9 +337,56 @@ object:
 .. unclear what is actually being specified (i.e., the data structures
 .. required for interoperability).
 
+Locate the first word to the left of offset in ``textContent``, left_offset_text.  This string *MAY* contain
+trailing whitespace, but *MUST NOT* contain leading whitespace.  If
+the offset identifies the beginning of the textContent, e.g.
+``offset == 0``, left_offset_text *MUST* be empty.  Locate the first
+word to the right of offset, right_offset_text.  This string *MAY*
+contain leading whitespace, but *MUST NOT* contain trailing
+whitespace.  If the offset identifies the end of textContent, e.g.
+``offset = textContent.length``, right_offset_text *MUST* be empty.
+Combine left_offset_text and right_offset_text to populate the ``Text
+Context`` object's ``context_text`` property.  The ``Text Context`` object's
+``context_offset`` property is the index of context_text in textContent.
+If anchor ``type`` is ``start`` this offset is from the right of
+textContent.  If anchor ``type`` is ``end`` this offset is from the
+left of textContnet.
+
+
+Example 1:
+
+.. code-block:: html
+
+	[This text contains a start| endpoint]
+
+
 .. code-block:: javascript
 
-	//Extract first word from string
+	{context_text: 'start endpoint', context_offset: 13}
+
+Example 2:
+
+.. code-block:: html
+
+	[This text |contains a start endpoint]
+
+
+.. code-block:: javascript
+
+	{context_text: 'text contains', context_offset: 23}
+
+
+Example 3:
+
+.. code-block:: html
+
+	[This text contains an end endpoint|]
+
+
+.. code-block:: javascript
+
+	{context_text: 'endpoint', context_offset: 33}
+
 
 
 
