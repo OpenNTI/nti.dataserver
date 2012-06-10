@@ -287,7 +287,7 @@ Elements represented as an ``ElementDomContentPointer`` *MUST* have both
 an ``id`` and ``tagname``. The ``ContentPointer``'s ``elementId``
 *SHOULD* be set to the node's `id
 <http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-element-id>`_,
-and ``elementTagName`` should be set to the node's `tag_name
+and ``elementTagName`` *SHOULD* be set to the node's `tag_name
 <http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-element-tagname>`_.
 
 
@@ -308,12 +308,12 @@ DOM until a refrenceable node is found. This node's ID and tag name
 become the ``elementId`` and ``elementTagName`` respectively.
 
 An anchor's ``contexts`` property is made up of a *primary context*
-object and an optional set of *subsequent context* objects.  The first
+object and an optional set of *additional context* objects.  The first
 ``TextContext`` object in the ``contexts`` array is the anchor's
 *primary context*.  Additional ``TextContext`` objects in the array
-are the anchor's *subsequent context* objects.  An anchor *MUST*
+are the anchor's *additional context* objects.  An anchor *MUST*
 have a *primary context* object and *MAY* have one or more
-*subsequent context* objects.
+*additional context* objects.
 
 The anchor's *primary context* and ``edgeOffset`` can be populated
 given the ``TextDomContentPointer`` and the Range object. The method
@@ -396,7 +396,7 @@ Example 3:
 
 
 Given a ``Text`` node that is contextually relevant to an anchor
-endpoint and an anchor, *subsequent* ``NTITextContext`` objects can be
+endpoint and an anchor, *additional* ``TextContext`` objects can be
 defined as follows.
 
 If the anchor ``type`` is ``start``, ``context_text`` is the last word in the
@@ -421,7 +421,7 @@ node's textContent string.
 	context* object, using a ``TreeWalker's`` ``nextNode`` function.
 
 Given the ability to genreate the *primary context* object,
-*subsequent context* objects and an ``edge_offset`` as outlined
+*additional context* objects and an ``edge_offset`` as outlined
 above, the following procedure can by used to model a range
 endpoint, that exists withing a textNode, as a complete
 ``TextDomContentPointer`` object as follows:
@@ -438,15 +438,15 @@ anchor, generate the anchor's *primary context*.  The anchor's
 object's ``context_text`` property, of the offset from the range object.
 
 Using a ``TreeWalker`` rooted at the reference node, start at container and
-iterate ``Text`` node siblings to generate *subsequent context*
-object's.  Continue to iterate, creating ``NTITextContext`` objects
+iterate ``Text`` node siblings to generate *additional context*
+object's.  Continue to iterate, creating ``TextContext`` objects
 for each sibling until 15 characters have been collected or 5 context objects have been created.
 If anchor type is ``start``, iterate siblings to the left using the
 ``TreeWalker's`` ``previousNode`` method.  If anchor type is ``end``,
 iterate siblings to the right using the ``TreeWalker's`` ``nextNdoe``
 method.  The anchor's ``contexts`` property becomes an array whoes
 head is the *primary context* object, and whose tail is the
-*subsequent context* objects.
+*additional context* objects.
 
 See examples at bottom of page.
 
@@ -535,10 +535,10 @@ code for resolving ElementDomContentPointer as a start anchor follows:
 		while( test_node = tree_walker.nextNode() ) {
 	    	if(    test_node.id === absoulteAnchor.elementId
 			    && test_node.tagName === absoluteAnchor.elementTagName ) {
-	       		return {node: test_node, confidence: 1};
+	       		return text_node;
 	    	}
 		}
-		return {confidence: 0};
+		return null;
 	}
 
 An example of updating the range for an ElementDomContentPointer with
@@ -555,10 +555,10 @@ type === ``end`` is as follows:
 		while( test_node = tree_walker.nextNode() ) {
 	    	if(    test_node.id === absoulteAnchor.elementId
 			    && test_node.tagName === absoluteAnchor.elementTagName ) {
-				return {node: test_node, confidence: 1};
+				return test_node;
 	    	}
 		}
-		return {confidence: 0};
+		return null;
 	}
 
 
