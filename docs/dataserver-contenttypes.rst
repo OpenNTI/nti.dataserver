@@ -179,24 +179,15 @@ UGD Content
 
 These are definitions related to content that a user can generate.
 
+.. note:: The type ``Anchored`` is defined in :doc:`content-anchoring`
+   as a mixin including ``Contained.``
+
 .. code-block:: cpp
 
    mixin Shareable {
 	   Entity sharedWith[]; //Send as usernames (emails)
 	   //TODO Flags
 	   bool prohibitReSharing;
-   }
-
-   //Anchors are far from ideal at this point
-   mixin IdealAnchored<Contained> {
-	   optional point_t coordinates;
-	   //and/or
-	   optional anchor_t anchor;
-   }
-
-   mixin Anchored<Contained> {
-        string anchorPoint;
-        string anchorType;
    }
 
    mixin Taggable {
@@ -214,26 +205,15 @@ These are definitions related to content that a user can generate.
    }
 
    //NOTE: Bookmarks do not currently exist
-   struct Bookmark : Object<Contained,Shareable,Taggable> { }
+   struct Bookmark : Object<Anchored,Shareable,Taggable> { }
 
    // NOTE that it is possible to update only the sharing of a
    // highlight or note, by sending only the 'sharedWith' field and
    // leaving all other fields absent.
 
    struct Highlight : Bookmark {
+        string highlightedText; //As created by the DOM Range object's string value
         string style; // one of 'redaction' or 'plain'. If missing, assume 'plain'
-        string startHighlightedFullText;
-        string startHighlightedText;
-        string endHighlightedText;
-        string endHighlightedFullText;
-        string startXpath;
-        string startAnchor;
-
-        int startOffset;
-        int endOffset;
-
-        string endAnchor;
-        string endXpath;
    }
 
    mixin Threadable {
