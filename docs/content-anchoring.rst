@@ -295,7 +295,7 @@ Converting a Text Node to TextDomContentPointer
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When the ``startContainer`` or ``endContainer`` in a ``Range`` is a
-``Text`` node, the result of conversion will be an
+``Text`` node, the result of conversion will be a
 ``TextDomContentPointer`` (the "text anchor"). Because ``Text`` nodes
 do not have tag names or IDs, a text anchor describes a node that does
 have those properties (a containing ``Element``) plus a set of context
@@ -307,8 +307,13 @@ containing element (reference point). From the text node, walk up the
 DOM until a refrenceable node is found. This node's ID and tag name
 become the ``elementId`` and ``elementTagName`` respectively.
 
-.. JAM: Text about completely undefined heuristics deleted. It's not
-.. an algorithm if there are completely undefined heuristics.
+An anchor's ``contexts`` property is made up of a *primary context*
+object and an optional set of *subsequent context* objects.  The first
+``TextContext`` object in the ``contexts`` array is the anchor's
+*primary context*.  Additional ``TextContext`` objects in the array
+are the anchor's *subsequent context* objects.  An anchor *MUST*
+have a *primary context* object and *MAY* have one or more
+*subsequent context* objects.
 
 The anchor's *primary context* and ``edgeOffset`` can be populated
 given the ``TextDomContentPointer`` and the Range object. The method
@@ -324,8 +329,8 @@ simplistic manner; in the future, this may be refined, but the
 algorithm must remain capable of intepreting existing data. Here, we
 take a word based approach to extracting context from a ``Text`` node.
 Given an anchor, a ``Text`` node, and an offset into that textnode
-marking an edge of the ragne being anchored, the
-following procedure should be used to generate the ``primary context``
+marking an edge of the range being anchored, the
+following procedure should be used to generate the *primary context*
 object:
 
 .. JAM: Define this in words, not an implementation. An implementation
@@ -347,11 +352,13 @@ whitespace.  If the offset identifies the end of textContent, e.g.
 ``offset = textContent.length``, right_offset_text *MUST* be empty.
 Combine left_offset_text and right_offset_text to populate the ``Text
 Context`` object's ``context_text`` property.  The ``Text Context`` object's
-``context_offset`` property is the index of context_text in textContent.
+``context_offset`` property is the index of ``context_text`` in textContent.
 If anchor ``type`` is ``start`` this offset is from the right of
 textContent.  If anchor ``type`` is ``end`` this offset is from the
 left of textContnet.
 
+.. nate::
+	A word is a whitespace delimited set of characters.
 
 Example 1:
 
@@ -388,37 +395,60 @@ Example 3:
 	{context_text: 'endpoint', context_offset: 33}
 
 
+Given a ``Text`` node that is contextually relevant to an anchor
+endpoint and an anchor, *subsequent* ``NTITextContext`` objects can be
+defined as follows.
 
+If the anchor ``type`` is ``start``, ``context_text`` is the last word in the
+``Text`` node's textContent string.  This word *MAY* contain trailing
+whitespace, but *MUST NOT* contain leading whitespace.  ``context_offset``
+is the index of ``context_text`` from the right side of the ``Text``
+node's textContent string.  Likewise, if the anchor ``type`` is ``end``,
+``context_text`` is the first word in the
+``Text`` node's textContent string.  This word *MAY* contain leading
+whitespace, but *MUST NOT* contain trailing whitespace.  ``context_offset``
+is the index of ``context_text`` from the left side of the ``Text``
+node's textContent string.
 
-Given a ``Text`` node and an anchor, additional
-``TextContext`` objects can be generated as follows:
+.. note::
+	A ``Text`` node is considered contextually
+	relevant to an anchor with a type of ``start``, if it can be found by
+	walking from the ``Text`` node modeled by the anchors *primary
+	context* object, using a ``TreeWalker's`` ``previousNode`` function.
+	Similarily, a ``Text`` node is considered contextually
+	relevant to an anchor with a type of ``end``, if it can be found by
+	walking from the ``Text`` node modeled by the anchors *primary
+	context* object, using a ``TreeWalker's`` ``nextNode`` function.
 
-.. JAM: Like the above. This is not a specification.
+Given the ability to genreate the *primary context* object,
+*subsequent context* objects and an ``edge_offset`` as outlined
+above, the following procedure can by used to model a range
+endpoint, that exists withing a textNode, as a complete
+``TextDomContentPointer`` object as follows:
 
-.. code-block:: javascript
+Extract a container and offset from the range object.  If the anchor
+``type`` is ``start`` use the range's ``startContainer`` and ``startOffset``
+properties.  If the anchor ``type`` is ``end`` use the range's
+``endContainer`` and ``endOffset`` properties.  From the container,
+walk up the DOM tree to find a referenceable node. This node's ``id``
+and ``tagName`` become the anchor`s ``elementId`` and
+``elementTagName`` respectively.  Using the container, offset, and
+anchor, generate the anchor's *primary context*.  The anchor's
+``edgeOffset`` property is the index into the *primary context*
+object's ``context_text`` property, of the offset from the range object.
 
-	//Given an anchor and a relative node (next or previous sibling)
-	//depending on the value of anchor.type, generates an
-	//TextContext suitable for use as additional context
-	function generateSubsequentContext(anchor, relative_node)
-	{
+Using a ``TreeWalker`` rooted at the reference node, start at container and
+iterate ``Text`` node siblings to generate *subsequent context*
+object's.  Continue to iterate, creating ``NTITextContext`` objects
+for each sibling until 15 characters have been collected or 5 context objects have been created.
+If anchor type is ``start``, iterate siblings to the left using the
+``TreeWalker's`` ``previousNode`` method.  If anchor type is ``end``,
+iterate siblings to the right using the ``TreeWalker's`` ``nextNdoe``
+method.  The anchor's ``contexts`` property becomes an array whoes
+head is the *primary context* object, and whose tail is the
+*subsequent context* objects.
 
-	}
-
-Additional context nodes should be generated until 15 characters or
-5 context nodes have been collected.  Putting this, together with the
-above methods for generating context nodes, turn
-a range endpoint in to a complete ``TextDomContentPointer`` object as follows:
-
-.. JAM: Again like the above. This is not a specification.
-
-.. code-block:: javascript
-
-	//Complete an anchor given a range
-	function populateAnchorWithRange(anchor, range)
-	{
-
-	}
+See examples at bottom of page.
 
 .. warning::
   In the past, when walking ``Text`` nodes, we have encountered nodes
