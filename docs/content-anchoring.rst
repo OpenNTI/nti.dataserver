@@ -66,9 +66,11 @@ we can use the following object model to represent anchored content:
 .. code-block:: cpp
 
 	// An object associated with some portion of a content unit
-	mixin NTIAnchored : Contained {
+	mixin Anchored<Contained> {
 		ContentRangeDescription applicableRange; //AKA anchor
 	}
+
+	// Notice that these are not Dataserver object (e.g, no OID)
 
 	abstract class ContentRangeDescription {
 		ContentPointer start; //must not be nil
