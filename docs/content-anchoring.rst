@@ -333,15 +333,6 @@ marking an edge of the range being anchored, the
 following procedure should be used to generate the *primary context*
 object:
 
-.. JAM: Define this in words, not an implementation. An implementation
-.. is not a specification. An implementation contains unnecessary
-.. details that distract from what is actually intended, and probably contains bugs.
-.. Pseudo-code is alright for *examples*. A reference implementation
-.. can be provided in addition.
-.. Another problem with mixing in implementations is that it makes it
-.. unclear what is actually being specified (i.e., the data structures
-.. required for interoperability).
-
 Locate the first word to the left of offset in ``textContent``, left_offset_text.  This string *MAY* contain
 trailing whitespace, but *MUST NOT* contain leading whitespace.  If
 the offset identifies the beginning of the textContent, e.g.
@@ -481,16 +472,17 @@ locate the ``startContainer``, ``endContainer``, ``startOffset``, or
 the client *should* abort anchoring the content to a specific
 location.
 
-.. JAM: FIXME: What are we trying to say here? We're not defining an
-.. implementation, we're describing the algorithm.
+.. note::
 
-.. code-block:: javascript
-
-	//deleted
-
+	To maintain consistency across clients, in this version of the
+	spec, confidently means the range produced from a
+	``ContentRangeDescription`` following the procedure
+	in ``ContentRangeDescription to DOM Range``, would produce the same
+	``ContentRangeDescription``  by following the procedure in
+	``DOM Range to ContentRangeDescription``.
 
 Anchor resolution starts by resolving the ancestor
-``ContentPointer`` to a DOM node (which *must* be an ``Element``).
+``ContentPointer`` to a DOM node (which *must* be a *referenceable* ``Element``).
 This provides a starting point when searching for the start and end
 ``ContentPointers``. The ancestor can also be used to validate parts
 of the ``ContentRangeDescription``. For example, the start and end should
@@ -499,24 +491,21 @@ should default to the DOM's `documentElement
 <http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#document-element>`_.
 
 Given an ancestor the DOM can then be traversed for the start and end
-container ``Nodes`` and offsets needed to construct a range. If a start
-and end ``Node`` cannot be located beneath the ancestor, and the ancestor
+container ``Nodes`` and offsets needed to construct a range. The type
+of ``ContentPointer`` used to model the ``start`` and ``end``
+properties of the ``ContentRangeDescription`` will determine how the
+dom is searched beneath the ancestor.
+
+If a start and end ``Node`` and offset cannot be located beneath the ancestor, and the ancestor
 is not already the ``documentElement,`` resolution should be tried
 again given an ancestor of the ``documentElement.`` If the start does
 not come before end (as computed using `compareDocumentPosition
 <http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-node-comparedocumentposition>`_),
 the ``ContentRangeDescription`` is invalid and clients *should* abort
-range creation and anchoring. Given an ``ContentRangeDescription`` the
-following procedure should be used to resolve a dom range.
+range creation and anchoring.
 
-.. JAM: FIXME: Please actually define what we're trying to do.
-
-
-.. code-block:: javascript
-
-	//deleted
-
-
+Details on how the different types of ``ContentPointer`` objects
+should be searched for are discussed below:
 
 Converting ElementDomContentPointer to a Node
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
