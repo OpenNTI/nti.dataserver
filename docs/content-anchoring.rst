@@ -580,140 +580,19 @@ forward using the ``nextNode`` method, if the anchor ``type`` is
 ``end``. If all context objects match, ``textNode`` will become the
 range's ``startContainer`` if the anchor ``type`` is ``start``, or
 ``endContainer`` if the anchor ``type`` is ``end``. If not all the
-context objects match continue the outer loop by comparing context
+context objects match, continue the outer loop by comparing context
 objects for the next ``textNode``.
 
 If a ``textNode`` has been identified as the start or end container, a
 range can be constructed as follows. If anchor ``type`` is ``start``,
 set the ``ranges`` ``startContainer`` to ``textNode``. If anchor
 ``type`` is ``end``, set the ``ranges`` ``endContainer`` to
-``textNode``. Calculate the text offset by identifying the index of
-the *primary context* object's ``contextText`` in the container.
-Adjust the offset by anchor's ``edgeOffset`` property, and set the
+``textNode``. Calculate the text offset by adjusting
+the *primary context* object's ``contextOffset`` by  the anchor's
+``edgeOffset`` property, and set the
 range's ``startOffset``, if anchor ``type`` == ``start``, or
-``endOffset``, if anchor ``type`` == `end`, to the computed value.
+``endOffset``, if anchor ``type`` == ``end``, to the computed value.
 
-.. JAM: The above description is good. It's much more readable than
-.. the code; most people will skip the code.
-
-One such example implemenation is shown in detail below:
-
-.. code-block:: javascript
-
-	function locateRangeStarForAnchor(textAnchor, ancestorNode){
-		return locateRanageEdgeForAnchor(textAnchor, ancestorNode, null);
-	}
-
-	function locateRangeEndForAnchor(textAnchor, ancestorNode, startResult){
-		return locateRanageEdgeForAnchor(textAnchor, ancestorNode, startResult);
-	}
-
-	function locateRanageEdgeForAnchor(textAnchor, ancestorNode, startResult){
-		//Resolution starts by locating the reference node
-		//for this text anchor.  If it can't be found ancestor is used
-		var referenceNode = resolveAnchor(textAnchor.elementId, textAnchor.elementTagName);
- 		if(!referenceNode){
-			referenceNode = ancestorNode;
-		}
-
-		//A value between 0 and 1 indicating the confidence we
-		//require to match a textNode to an TextContext.  A
-		//value of 1 indicates 100% confidence, while a value of 0
-		//indicates 0% confidence
-		var requiredConfidence = 1;
-
-		//We use a tree walker to search beneath the reference node
-		//for textContent matching our primary context with confidence
-		// >= requiredConfidence
-
-		var tree_walker = document.createTreeWalker( referenceNode, NodeFilter.SHOW_TEXT );
-
-		//If we are looking for the end node.  we want to start
-		//looking where the start node ended
-		if( textAnchor.type === 'end' ){
-			tree_walker.currentNode = startResult.node;
-		}
-
-		var textNode;
-
-		if(tree_walker.current_node.nodeType == Node.TEXT_NODE){
-			textNode = tree_walker.current_node;
-		}
-		else{
-			textNode = tree_walker.next_node;
-		}
-
-
-		//If we are working on the start anchor, when checking context
-		//we look back at previous nodes.  if we are looking at end we
-		//look forward to next nodes
-		var siblingFunction = textAnchor.type === 'start' ? tree_walker.previousNode : tree_walker.nextNode;
-		while( textNode ) {
-			//Do all our contexts match this textNode
-			var nextNodeToCheck = textNode;
-			var match = true;
-			for( var contextObj in textAnchor.contexts ){
-				//Right now, if we don't have all the nodes we need to have
-				//for the contexts, we fail.  In the future this
-				//probably changes but that requires looking ahead to
-				//see if there is another node that makes us ambiguous
-				//if we don't apply all the context
-				if(!nextNodeToCheck){
-				    match = false;
-					break;
-				}
-				//If we don't match this context with high enough confidence
-				//we fail
-				if( confidenceForContextMatch(contextObj, textNode, textAnchor.type) < requiredConfidence){
-					match = false;
-					break;
-				}
-
-				//That context matched so we continue verifying.
-				nextNodeToCheck = siblingFunction();
-			}
-
-			//We matched as much context is we could,
-			//this is our node
-			if(match){
-				break;
-			}
-			else{
-				//That wasn't it.  Continue searching
-				tree_walker.currentNode = textNode;
-			}
-
-			//Start the context search over in the next textnode
-			textNode = tree_walker.nextNode();
-		}
-
-		//If we made it through the tree without finding
-		//a node we failed
-		if(!textNode){
-			return {confidence: 0};
-		}
-
-
-		//We found what we need.  Set the context
-		var primaryContext = textAnchor.contexts[0];
-
-		var container = textNode;
-		var indexOfContext = container.textContent.indexOf(primaryContext.contextText);
-		indexOfContext += textAnchor.edgeOffset;
-		return {node:container, offset: indexOfContext, confidence: 1};
-	}
-
-
-The huersistics involved in calculating a confidence value for a
-particular context may change, current spec requires exact matches.
-Clients should implement `confidenceForContextMatch` as follows:
-
-.. JAM: There's that problem of defining a spec using an
-.. implementation again.
-
-.. code-block:: javascript
-
-	//deleted
 
 Examples
 --------
