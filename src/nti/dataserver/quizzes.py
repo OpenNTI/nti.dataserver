@@ -17,7 +17,7 @@ from nti.assessment import interfaces as as_interfaces
 from nti.dataserver import datastructures
 
 from nti.externalization.datastructures import ExternalizableDictionaryMixin
-from nti.externalization.externalization import toExternalDictionary, toExternalObject
+from nti.externalization.externalization import to_standard_external_dictionary, toExternalObject
 from nti.externalization.interfaces import StandardExternalFields, IExternalObject
 from nti.externalization import oids
 
@@ -60,7 +60,7 @@ class QuizQuestion(persistent.Persistent):
 
 
 	def toExternalDictionary( self, mergeFrom=None ):
-		result = toExternalDictionary( self, mergeFrom )
+		result = to_standard_external_dictionary( self, mergeFrom )
 		result['Text'] = self.source
 		result['Answers'] = toExternalObject( [answer.value for answer in self.answers] )
 		return result
@@ -129,7 +129,7 @@ class Quiz(datastructures.ZContainedMixin,datastructures.CreatedModDateTrackingO
 		return self.NTIID
 
 	def toExternalDictionary( self, mergeFrom=None ):
-		result = toExternalDictionary(self, mergeFrom=mergeFrom)
+		result = to_standard_external_dictionary(self, mergeFrom=mergeFrom)
 
 		items = { question.id: question.toExternalDictionary() for question in self.questions.itervalues()}
 		result['Items'] = items
@@ -249,7 +249,7 @@ class QuizResult(datastructures.ZContainedMixin,
 		return self
 
 	def toExternalDictionary( self, mergeFrom=None ):
-		result = toExternalDictionary( self, mergeFrom=mergeFrom )
+		result = to_standard_external_dictionary( self, mergeFrom=mergeFrom )
 		result['QuizID'] = self.QuizID
 
 		items = []
