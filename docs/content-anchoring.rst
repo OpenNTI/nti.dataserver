@@ -3,7 +3,7 @@
 ===========
 
 This document describes the method in which anchorable content is
-modeled, and the methods used to convert ``NTIAnchorable`` content to and
+modeled, and the methods used to convert ``Anchored`` content to and
 from DOM selections/ranges.
 
 Considerations
@@ -52,7 +52,7 @@ to layout changes (e.g., a portion of text originally in the
 main body of a page moving to a callout in the sidebar.)
 
 Assuming clients can perform any rendering or calculations required to
-show NTIAnchored content using objects conforming to the `Dom Range Specification's Range object <http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#ranges>`_,
+show ``Anchored`` content using objects conforming to the `Dom Range Specification's Range object <http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#ranges>`_,
 clients need only be concerned with the
 conversion of our modeled anchorable objects to/from ``Range`` objects.
 
@@ -100,7 +100,7 @@ we can use the following object model to represent anchored content:
   not in this version of the specification, which focuses on simplicity.
 
 
-Anchorable content *MUST* implement the abstract class ``NTIAnchored`` to
+Anchorable content *MUST* implement the abstract class ``Anchored`` to
 specify the ``applicableRange`` it is anchored to. ``ContentRangeDescription``
 objects must have well formed ``ContentPointer`` objects for start, end,
 and ancestor. It *SHOULD* be considered an error if the start, end or
@@ -111,9 +111,9 @@ be used to create well formed DOM Range objects.
 Objects of type ``ContentPointer`` provide the information required to
 identify a location in the content for use as the start or end of a
 range or to identify a node that contains the start and end (common
-ancestor). The abstract base class ``ContentPointer`` contains the
+ancestor). The abstract base class ``DOMContentPointer`` contains the
 minimum amount of information required to identify an anchor in NTI
-content.
+html based content.
 
 * ``elementId`` is the DOM ID of an arbitrary node in the content.
 * ``elementTagName`` is the tag name for the node identified by
@@ -122,14 +122,14 @@ content.
   take one of the following three values: ``"start"``, ``"end"``,
   ``"ancestor"``
 
-Concrete subclasses of ``ContentPointer`` should provide the
+Concrete subclasses of ``DOMContentPointer`` should provide the
 remaining information required to identify content location relative
 to the anchor provided by the abstract base class.
 
-ContentPointer implementations
-------------------------------
+DOMContentPointer implementations
+---------------------------------
 
-The class ``ContentPointer`` is abstract. A few subclasses are
+The class ``DOMContentPointer`` is abstract. A few subclasses are
 specified which provide concrete storage and rules for resolution. In
 the future, more subclasses may be added.
 
@@ -185,7 +185,7 @@ ends inside of ``Text`` content.
   *primary context* object. See ``Converting a Text Node to
   TextDomContentPointer`` for more information.
 * ``edgeOffset`` is the character offset from the start of the
-  ``primary context`` object's ``context_text`` string to the location
+  ``primary context`` object's ``contextText`` string to the location
   of the edge thie anchor represents.
 
 
@@ -197,7 +197,7 @@ following `TextContext` will be used:
 	//Provide a snippet of text context
 	class TextContext {
 		string contextText; //A chunk of text that can be used as context
-		int context_offset; //offset of contextText into context_offset's
+		int contextOffset; //offset of contextText into contextOffset's
 							//containing text node
 	}
 
@@ -205,12 +205,12 @@ following `TextContext` will be used:
   <http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-node-textcontent>`_
   of a ``Text`` node near the ``TextDomContentPointer`` this object is
   providing context for.
-* ``context_offset`` is the index of ``contextText`` from the start or end of ``textContent``.
-  ``content_offset`` *MUST* be an integer greater than or equal to zero.  Negative values are reserved for future use.
-  If this object is providing context for an anchor with a type *EQUAL TO* ``"start"``, ``content_offset``
+* ``contextOffset`` is the index of ``contextText`` from the start or end of ``textContent``.
+  ``contextOffset`` *MUST* be an integer greater than or equal to zero.  Negative values are reserved for future use.
+  If this object is providing context for an anchor with a type *EQUAL TO* ``"start"``, ``contextOffset``
   represents the character index from the end (right) of ``textContent``.
   If this object is providing context for an anchor with a type *EQUAL TO* ``"end"``,
-  ``content_offset`` represents the index from the start (left) of
+  ``contextOffset`` represents the index from the start (left) of
   ``textContent``.  This keeps indexes closest to the selected
   range stable.
 
@@ -230,7 +230,7 @@ We begin with some definitions:
 
 	This Node is either an ``Element`` (because it must have the  `id
 	<http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-element-id>`_,
-	and `tag_name
+	and `tagName
 	<http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-element-tagname>`_
 	properties) with a *referenceable ID*, or a ``Text`` node that is a
 	descendent (not necessarily a direct child) of such an ``Element.``
@@ -246,7 +246,7 @@ DOM Range to ContentRangeDescription
 Given a DOM ``Range``, ``range``, clients can only generate
 ``ContentRangeDescription`` objects if they are able to represent the
 start and end of the ``range`` object using ``ContentPointer``
-objects. If asked to create an ``ContentRangeDescription`` for a range
+objects. If asked to create a ``ContentRangeDescription`` for a range
 whose start or end cannot be represented using an
 ``ContentPointer``, clients should walk the end(s) that are not
 representable inward (i.e., narrowing the range) [#]_ until the
@@ -262,7 +262,7 @@ Given a ``range`` whose edges can by represented by ContentPointers,
 the generation of an ContentRangeDescription is straightforward. As a
 first step the DOM is walked upwards from the range's `commonAncestorComponent
 <http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-range-commonancestorcontainer>`_
-until a node that can be represented as a ``ElementDomContentPointer``
+until a node that can be represented as an ``ElementDomContentPointer``
 is found. This node is then converted to an
 ``ElementDomContentPointer`` as described below and the result becomes
 the ``ancestor`` of the ``ContentRangeDescription``. With the ancestor
@@ -287,7 +287,7 @@ Elements represented as an ``ElementDomContentPointer`` *MUST* have both
 an ``id`` and ``tagname``. The ``ContentPointer``'s ``elementId``
 *SHOULD* be set to the node's `id
 <http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-element-id>`_,
-and ``elementTagName`` *SHOULD* be set to the node's `tag_name
+and ``elementTagName`` *SHOULD* be set to the node's `tagName
 <http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-element-tagname>`_.
 
 
@@ -335,18 +335,18 @@ object:
 
 Locate the first word to the left of offset in ``textContent``, left_offset_text.  This string *MAY* contain
 trailing whitespace, but *MUST NOT* contain leading whitespace.  If
-the offset identifies the beginning of the textContent, e.g.
+the offset identifies the beginning of the ``textContent``, e.g.
 ``offset == 0``, left_offset_text *MUST* be empty.  Locate the first
 word to the right of offset, right_offset_text.  This string *MAY*
 contain leading whitespace, but *MUST NOT* contain trailing
-whitespace.  If the offset identifies the end of textContent, e.g.
+whitespace.  If the offset identifies the end of ``textContent``, e.g.
 ``offset = textContent.length``, right_offset_text *MUST* be empty.
 Combine left_offset_text and right_offset_text to populate the ``Text
-Context`` object's ``context_text`` property.  The ``Text Context`` object's
-``context_offset`` property is the index of ``context_text`` in textContent.
+Context`` object's ``contextText`` property.  The ``TextContext`` object's
+``contextOffset`` property is the index of ``contextText`` in textContent.
 If anchor ``type`` is ``start`` this offset is from the right of
 textContent.  If anchor ``type`` is ``end`` this offset is from the
-left of textContnet.
+left of ``textContext``.
 
 .. nate::
 	A word is a whitespace delimited set of characters.
@@ -360,7 +360,7 @@ Example 1:
 
 .. code-block:: javascript
 
-	{context_text: 'start endpoint', context_offset: 13}
+	{contextText: 'start endpoint', contextOffset: 13}
 
 Example 2:
 
@@ -371,7 +371,7 @@ Example 2:
 
 .. code-block:: javascript
 
-	{context_text: 'text contains', context_offset: 23}
+	{contextText: 'text contains', contextOffset: 23}
 
 
 Example 3:
@@ -383,23 +383,23 @@ Example 3:
 
 .. code-block:: javascript
 
-	{context_text: 'endpoint', context_offset: 33}
+	{contextText: 'endpoint', contextOffset: 33}
 
 
 Given a ``Text`` node that is contextually relevant to an anchor
 endpoint and an anchor, *additional* ``TextContext`` objects can be
 defined as follows.
 
-If the anchor ``type`` is ``start``, ``context_text`` is the last word in the
-``Text`` node's textContent string.  This word *MAY* contain trailing
-whitespace, but *MUST NOT* contain leading whitespace.  ``context_offset``
-is the index of ``context_text`` from the right side of the ``Text``
-node's textContent string.  Likewise, if the anchor ``type`` is ``end``,
-``context_text`` is the first word in the
-``Text`` node's textContent string.  This word *MAY* contain leading
-whitespace, but *MUST NOT* contain trailing whitespace.  ``context_offset``
-is the index of ``context_text`` from the left side of the ``Text``
-node's textContent string.
+If the anchor ``type`` is ``start``, ``contextText`` is the last word in the
+``Text`` node's ``textContent`` string.  This word *MAY* contain trailing
+whitespace, but *MUST NOT* contain leading whitespace.  ``contextOffset``
+is the index of ``contextText`` from the right side of the ``Text``
+node's ``textContent`` string.  Likewise, if the anchor ``type`` is ``end``,
+``contextText`` is the first word in the
+``Text`` node's ``textContent`` string.  This word *MAY* contain leading
+whitespace, but *MUST NOT* contain trailing whitespace.  ``contextOffset``
+is the index of ``contextText`` from the left side of the ``Text``
+node's ``textContent`` string.
 
 .. note::
 	A ``Text`` node is considered contextually
@@ -412,7 +412,7 @@ node's textContent string.
 	context* object, using a ``TreeWalker's`` ``nextNode`` function.
 
 Given the ability to genreate the *primary context* object,
-*additional context* objects and an ``edge_offset`` as outlined
+*additional context* objects and an ``edgeOffset`` as outlined
 above, the following procedure can by used to model a range
 endpoint, that exists withing a textNode, as a complete
 ``TextDomContentPointer`` object as follows:
@@ -426,15 +426,15 @@ and ``tagName`` become the anchor`s ``elementId`` and
 ``elementTagName`` respectively.  Using the container, offset, and
 anchor, generate the anchor's *primary context*.  The anchor's
 ``edgeOffset`` property is the index into the *primary context*
-object's ``context_text`` property, of the offset from the range object.
+object's ``contextText`` property, of the offset from the range object.
 
 Using a ``TreeWalker`` rooted at the reference node, start at container and
 iterate ``Text`` node siblings to generate *additional context*
-object's.  Continue to iterate, creating ``TextContext`` objects
-for each sibling until 15 characters have been collected or 5 context objects have been created.
+object's.  Continue to iterate creating ``TextContext`` objects
+for each sibling until 15 characters have been collected, or 5 context objects have been created.
 If anchor type is ``start``, iterate siblings to the left using the
 ``TreeWalker's`` ``previousNode`` method.  If anchor type is ``end``,
-iterate siblings to the right using the ``TreeWalker's`` ``nextNdoe``
+iterate siblings to the right using the ``TreeWalker's`` ``nextNode``
 method.  The anchor's ``contexts`` property becomes an array whoes
 head is the *primary context* object, and whose tail is the
 *additional context* objects.
@@ -443,7 +443,7 @@ See examples at bottom of page.
 
 .. warning::
   In the past, when walking ``Text`` nodes, we have encountered nodes
-  whose textContent is only whitespace.  Should we skip those when
+  whose ``textContent`` is only whitespace.  Should we skip those when
   walking siblings with the TreeWalker?
 
 .. note::
@@ -490,7 +490,7 @@ be contained in the ancestor. If the ancestor can't be resolved it
 should default to the DOM's `documentElement
 <http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#document-element>`_.
 
-Given an ancestor the DOM can then be traversed for the start and end
+Given an ancestor, the DOM can be traversed for the start and end
 container ``Nodes`` and offsets needed to construct a range. The type
 of ``ContentPointer`` used to model the ``start`` and ``end``
 properties of the ``ContentRangeDescription`` will determine how the
@@ -612,13 +612,13 @@ A NTIContentSimpleTextRangeSpec
 		start: {
 			elementId: 'id',
 			elementTagName: 'p',
-			contexts: [{ contextText: 'A', context_offset: 26 }]
+			contexts: [{ contextText: 'A', contextOffset: 26 }]
 			edgeOffset: 0
 		},
 		end: {
 			elementId: 'id',
 			elementTagName: 'p',
-			contexts: [{ contextText: 'node', context_offset: 22 }],
+			contexts: [{ contextText: 'node', contextOffset: 22 }],
 			edgeOffset: 4
 		},
 		selected_text: 'A single selected text node',
@@ -649,13 +649,13 @@ This example spans from one text node to the next.
 		start: {
 			elementId: 'id',
 			elementTagName: 'p',
-			contexts: [{ contextText: 'An', context_offset: 2 }]
+			contexts: [{ contextText: 'An', contextOffset: 2 }]
 			edgeOffset: 0
 		},
 		end: {
 			elementId: 'id',
 			elementTagName: 'p',
-			contexts: [{ contextText: 'word.', context_offset: 0 }],
+			contexts: [{ contextText: 'word.', contextOffset: 0 }],
 			edgeOffset: 5
 		}
 	}
@@ -687,16 +687,16 @@ the offsets within a text node are the same. How does it resolve?
 		start: {
 			elementId: 'id',
 			elementTagName: 'p',
-			contexts: [{ contextText: 'is the', context_offset: 3 },
-					   {contextText: 'sentence.', context_offset: 9},
-					   {contextText: 'first', context_offset: 5},
-					   {contextText: 'the'}, context_offset: 3]
+			contexts: [{ contextText: 'is the', contextOffset: 3 },
+					   {contextText: 'sentence.', contextOffset: 9},
+					   {contextText: 'first', contextOffset: 5},
+					   {contextText: 'the'}, contextOffset: 3]
 			edgeOffset: 8
 		},
 		end: {
 			elementId: 'id',
 			elementTagName: 'p',
-			contexts: [{ contextText: 'sentence.', context_offset: 0 }],
+			contexts: [{ contextText: 'sentence.', contextOffset: 0 }],
 			edgeOffset: 9
 		}
 	}
@@ -712,3 +712,4 @@ severity of the change, in the worst case, we may want some kind of
 input from the user. Does your highlight or note still make sense here
 even though the content has changed? We should think about if and how
 this sort of thing can happen.
+
