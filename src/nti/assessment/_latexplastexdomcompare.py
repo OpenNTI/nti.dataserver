@@ -117,8 +117,8 @@ def grade( solution, response ):
 
 	return _mathIsEqual( solution_dom, response_dom )
 
+@interface.implementer( interfaces.IQSymbolicMathGrader )
 class Grader(object):
-	interface.implements( interfaces.IQSymbolicMathGrader )
 
 	def __init__( self, part, solution, response ):
 		self.solution = solution

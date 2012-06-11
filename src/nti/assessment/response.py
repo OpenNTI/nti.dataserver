@@ -8,31 +8,27 @@ from nti.assessment import interfaces
 
 from persistent import Persistent
 
-
+@interface.implementer(interfaces.IQResponse)
 class QResponse(Persistent):
 	"""
 	Base class for responses.
 	"""
 
-	interface.implements(interfaces.IQResponse)
 
-
+@interface.implementer(interfaces.IQTextResponse)
 class QTextResponse(QResponse):
 	"""
 	A text response.
 	"""
 
-	interface.implements(interfaces.IQTextResponse)
-
 	def __init__( self, value=None ):
 		self.value = value
 
+@interface.implementer(interfaces.IQDictResponse)
 class QDictResponse(QResponse):
 	"""
 	A dictionary response.
 	"""
-	interface.implements(interfaces.IQDictResponse)
-
 
 	def __init__( self, value=None ):
 		self.value = value

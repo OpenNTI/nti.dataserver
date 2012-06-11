@@ -39,7 +39,9 @@ class QPart(Persistent):
 
 		for k in kwargs.keys():
 			if hasattr(self, k):
-				setattr( self, k, kwargs.pop(k) )
+				v = kwargs.pop( k )
+				if v is not None:
+					setattr( self, k, v )
 		if kwargs:
 			raise ValueError( "Unexpected keyword arguments", kwargs )
 
@@ -70,14 +72,14 @@ class QSymbolicMathPart(QMathPart):
 class QNumericMathPart(QMathPart):
 	pass
 
+@interface.implementer(interfaces.IQMultipleChoicePart)
 class QMultipleChoicePart(QPart):
-	interface.implements(interfaces.IQMultipleChoicePart)
 
 	grader_interface = interfaces.IQMultipleChoicePartGrader
 	choices = ()
 
+@interface.implementer(interfaces.IQMatchingPart)
 class QMatchingPart(QPart):
-	interface.implements(interfaces.IQMatchingPart)
 
 	grader_interface = interfaces.IQMatchingPartGrader
 
