@@ -213,7 +213,6 @@ class AbstractDocumentCompilerDriver(object):
 		:raise subprocess.CalledProcessError: If the command fails
 		"""
 		# Run the compiler
-		os.environ['SHELL'] = '/bin/sh'
 		program = self.compiler
 		# XXX This is fairly dangerous!
 		#return os.system(r"%s %s" % (program, filename))
@@ -311,8 +310,12 @@ class AbstractLatexCompilerDriver(AbstractOneOutputDocumentCompilerDriver):
 	Drives a compiler that takes latex input.
 	"""
 
+	interaction_mode = r'\batchmode'
+
 	def writePreamble(self):
-		self.write('\\scrollmode\n')
+		self.write(self.interaction_mode)
+		self.write( '\n' )
+
 		self.write(getattr(self.document.preamble, 'source', self.document.preamble))
 		self.write('\\makeatletter\\oddsidemargin -0.25in\\evensidemargin -0.25in\n')
 		self.write('\\begin{document}\n')
