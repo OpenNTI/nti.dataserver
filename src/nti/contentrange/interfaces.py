@@ -19,7 +19,7 @@ class IContentRangeDescription(interface.Interface):
     """
 
 
-POINTER_TYPE_VOCABULARY = schema.vocabulary.SimpleVocabulary(
+POINTER_ROLE_VOCABULARY = schema.vocabulary.SimpleVocabulary(
 	[schema.vocabulary.SimpleTerm( 'start' ),
 	 schema.vocabulary.SimpleTerm( 'end' ),
 	 schema.vocabulary.SimpleTerm( 'ancestor' )] )
@@ -28,14 +28,16 @@ class IDomContentPointer(interface.Interface):
 	"""
 	Identifies a specific node within an HTML DOM.
 	"""
+	role = schema.Choice( title="Intended use of this content pointer.",
+						  vocabulary=POINTER_ROLE_VOCABULARY )
+
+
 
 class IElementDomContentPointer(IDomContentPointer):
 	"Identifies a specific Element within a DOM."
 
 	elementId = schema.TextLine( title="The ID of an Element in the DOM. Required" )
 	elementTagName = schema.TextLine( title="The tagname of an Element in the DOM. Required" )
-	type = schema.Choice( title="Intended use of this content pointer.",
-						  vocabulary = POINTER_TYPE_VOCABULARY )
 
 class ITextContext(interface.Interface):
 	contextText = schema.Text( title="Contextual text." )
