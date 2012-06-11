@@ -9,19 +9,7 @@
     "MimeType": "application/vnd.nextthought.highlight", 
     "NTIID": "tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x085a:5573657273", 
     "OID": "tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x085a:5573657273", 
-    "anchorPoint": "", 
-    "anchorType": "", 
-    "endAnchor": "", 
-    "endHighlightedFullText": "You know how to add, subtract, multiply, and divide. In fact, you may already know how to solve many of the problems in this chapter. So why do we start this book with an entire chapter on arithmetic?", 
-    "endHighlightedText": "You know how to add, subtract, multiply, and divide", 
-    "endOffset": 51, 
-    "endXpath": "id(\"NTIContent\")/DIV[1]/P[1]/text()[1]", 
-    "left": 0, 
-    "startAnchor": "a0000000144", 
-    "startHighlightedFullText": "You know how to add, subtract, multiply, and divide. In fact, you may already know how to solve many of the problems in this chapter. So why do we start this book with an entire chapter on arithmetic?", 
-    "startHighlightedText": "divide. In fact, you may already know how to solve many of the problems in this chapter. So why do we start this book with an entire chapter on arithmetic? ", 
-    "startOffset": 45, 
-    "startXpath": "id(\"NTIContent\")/DIV[1]/P[1]/text()[1]", 
-    "tags": ["divide"], 
-    "top": 0
+    "applicableRange": "", 
+    "highlightedText": "You know how to add, subtract, multiply, and divide. In fact, you may already know how to solve many of the problems in this chapter. So why do we start this book with an entire chapter on arithmetic?", 
+    "tags": ["divide"]
 }

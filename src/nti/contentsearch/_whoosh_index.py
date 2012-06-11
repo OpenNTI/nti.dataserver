@@ -34,7 +34,7 @@ from nti.contentsearch.common import (	NTIID, CREATOR, LAST_MODIFIED, TYPE, CLAS
 
 from nti.contentsearch.common import (	color_, quick_, channel_, content_, keywords_, references_, body_, text_,
 										id_, recipients_, sharedWith_, oid_ , ntiid_, title_, last_modified_,
-										creator_, startHighlightedFullText_, containerId_, collectionId_)
+										creator_, highlightedText_, containerId_, collectionId_)
 	
 from nti.contentsearch.common import (	container_id_fields, last_modified_fields)
 		
@@ -385,7 +385,7 @@ class Highlight(UserIndexableContent):
 		result[color_] = echo(get_attr(data, color_))
 		result[keywords_] = get_keywords(get_attr(data, keywords_))
 		result[sharedWith_] = get_keywords(get_attr(data, sharedWith_))
-		result[content_] = get_content(get_attr(data, startHighlightedFullText_))
+		result[content_] = get_content(get_attr(data, highlightedText_))
 		result[quick_] = result[content_]
 		return result
 	

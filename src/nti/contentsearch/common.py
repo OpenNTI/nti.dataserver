@@ -87,7 +87,7 @@ sharedWith_		= u'sharedWith'
 containerId_	= unicode(ext_interfaces.StandardInternalFields.CONTAINER_ID)
 collectionId_	= u'collectionId'
 last_modified_	= u'last_modified'
-startHighlightedFullText_ = 'startHighlightedFullText'
+highlightedText_ = u'highlightedText'
 
 ntiid_fields = [NTIID, ntiid_]
 creator_fields = [CREATOR, creator_]
@@ -271,9 +271,9 @@ def get_multipart_content(source):
 
 def get_highlight_content(data):
 	if isinstance(data, dict):
-		result = data.get(startHighlightedFullText_, u'')
+		result = data.get(highlightedText_, u'')
 	elif isinstance(data, Highlight):
-		result = getattr(data, startHighlightedFullText_, u'')
+		result = getattr(data, highlightedText_, u'')
 	else:
 		result = u''
 	return unicode(result)
