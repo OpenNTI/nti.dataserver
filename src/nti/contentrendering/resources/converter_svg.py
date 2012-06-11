@@ -39,7 +39,10 @@ class PDF2SVG(plasTeX.Imagers.VectorImager):
 	def executeConverter(self, output):
 		open('images.pdf', 'w').write(output.read())
 		#Crop all the pages of the PDF to the exact size
-		os.system( "pdfcrop --hires --margin 0 images.pdf images.pdf" )
+		#os.system( "pdfcrop --hires --margin 0 images.pdf images.pdf" )
+		with open('/dev/null', 'w') as dev_null:
+			subprocess.check_call( ('pdfcrop', '--hires', '--margin', '0', 'images.pdf', 'images.pdf' ),
+								   stdout=dev_null, stderr=dev_null )
 		# We must mark these as cropped
 		for img in self.images.values():
 			img._cropped = True
