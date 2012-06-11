@@ -392,6 +392,7 @@ order. A fix in the application for this is pending. */
 
 #NTIContent div.problem {
 	background-image: none !important;
+	margin-top: 0.5em;
 	padding-top: 2em !important;
 	padding-right: 0.5em !important;
 	padding-bottom: 0.5em !important;
