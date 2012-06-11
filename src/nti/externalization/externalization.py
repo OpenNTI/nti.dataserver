@@ -23,6 +23,7 @@ import numbers
 
 from zope import interface
 from zope import component
+from zope import deprecation
 
 from nti.ntiids import ntiids
 
@@ -208,34 +209,35 @@ def _isMagicKey( key ):
 
 isSyntheticKey = _isMagicKey
 
+def _choose_field( result, self, ext_name, converter=lambda x: x, fields=() ):
+	for x in fields:
+		value = getattr( self, x, None )
+		if value is not None:
+			result[ext_name] = converter(value)
+			break
 
+def to_standard_external_dictionary( self, mergeFrom=None, name=_ex_name_marker, registry=component):
+	"""
+	Returns a dictionary representing the standard externalization of
+	the object. This impl takes care of the standard attributes
+	including OID (from self._p_oid) and ID (from self.id if defined)
+	and Creator (from self.creator).
 
-def toExternalDictionary( self, mergeFrom=None, name=_ex_name_marker, registry=component):
-	""" Returns a dictionary of the object's contents. The super class's
-	implementation MUST be called and your object's values added to it.
-	This impl takes care of adding the standard attributes including
-	OID (from self._p_oid) and ID (from self.id if defined) and
-	Creator (from self.creator).
+	If the object has any :class:`IExternalMappingDecorator` subscribers registered for it,
+	they will be called to decorate the result of this method before it returns.
 
 	For convenience, if mergeFrom is not None, then those values will
-	be added to the dictionary created by this method. This allows a pattern like:
-	def toDictionary(self): return super(MyClass,self).toDictionary( {'key': self.val } )
-	The keys and values in mergeFrom should already be external.
+	be added to the dictionary created by this method. The keys and
+	values in mergeFrom should already be external.
 	"""
 	result = registry.getMultiAdapter( (), ILocatedExternalMapping )
 
 	if mergeFrom:
 		result.update( mergeFrom )
 
-	def _ordered_pick( ext_name, *fields ):
-		for x in fields:
-			if isinstance( x, six.string_types) and getattr( self, x, ''):
-				result[ext_name] = getattr( self, x )
-				if callable( fields[-1] ):
-					result[ext_name] = fields[-1]( result[ext_name] )
-				break
 
-	_ordered_pick( StandardExternalFields.ID, StandardInternalFields.ID, StandardExternalFields.ID )
+	_choose_field( result, self, StandardExternalFields.ID,
+				   fields=(StandardInternalFields.ID, StandardExternalFields.ID) )
 	# As we transition over to structured IDs that contain OIDs, we'll try to use that
 	# for both the ID and OID portions
 	if ntiids.is_ntiid_of_type( result.get( StandardExternalFields.ID ), ntiids.TYPE_OID ):
@@ -245,9 +247,13 @@ def toExternalDictionary( self, mergeFrom=None, name=_ex_name_marker, registry=c
 		if oid:
 			result[StandardExternalFields.OID] = oid
 
-	_ordered_pick( StandardExternalFields.CREATOR, StandardInternalFields.CREATOR, StandardExternalFields.CREATOR, str )
-	_ordered_pick( StandardExternalFields.LAST_MODIFIED, StandardInternalFields.LAST_MODIFIED, StandardInternalFields.LAST_MODIFIEDU )
-	_ordered_pick( StandardExternalFields.CREATED_TIME, StandardInternalFields.CREATED_TIME )
+	_choose_field( result, self, StandardExternalFields.CREATOR,
+				   fields=(StandardInternalFields.CREATOR, StandardExternalFields.CREATOR),
+				   converter=str )
+	_choose_field( result, self, StandardExternalFields.LAST_MODIFIED,
+				   fields=(StandardInternalFields.LAST_MODIFIED, StandardInternalFields.LAST_MODIFIEDU) )
+	_choose_field( result, self, StandardExternalFields.CREATED_TIME,
+				   fields=(StandardInternalFields.CREATED_TIME,) )
 
 
 	if hasattr( self, '__external_class_name__' ):
@@ -256,13 +262,15 @@ def toExternalDictionary( self, mergeFrom=None, name=_ex_name_marker, registry=c
 		   and not self.__class__.__name__.startswith( '_' ):
 		result[StandardExternalFields.CLASS] = self.__class__.__name__
 
-	_ordered_pick( StandardExternalFields.CONTAINER_ID, StandardInternalFields.CONTAINER_ID )
+	_choose_field( result, self, StandardExternalFields.CONTAINER_ID,
+				   fields=(StandardInternalFields.CONTAINER_ID,) )
 	try:
-		_ordered_pick( StandardExternalFields.NTIID, StandardInternalFields.NTIID, StandardExternalFields.NTIID )
+		_choose_field( result, self, StandardExternalFields.NTIID,
+					   fields=(StandardInternalFields.NTIID, StandardExternalFields.NTIID) )
 		# During the transition, if there is not an NTIID, but we can find one as the ID or OID,
 		# provide that
 		if StandardExternalFields.NTIID not in result:
-			for field in (StandardExternalFields.ID,StandardExternalFields.OID):
+			for field in (StandardExternalFields.ID, StandardExternalFields.OID):
 				if ntiids.is_valid_ntiid_string( result.get( field ) ):
 					result[StandardExternalFields.NTIID] = result[field]
 					break
@@ -275,3 +283,6 @@ def toExternalDictionary( self, mergeFrom=None, name=_ex_name_marker, registry=c
 
 
 	return result
+
+toExternalDictionary = to_standard_external_dictionary
+deprecation.deprecated('toExternalDictionary', 'Prefer to_standard_external_dictionary' )

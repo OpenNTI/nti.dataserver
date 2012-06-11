@@ -15,7 +15,7 @@ from zope import component
 from zope.location import ILocation
 
 from .interfaces import IExternalObject, IInternalObjectIO, ILocatedExternalMapping, ILocatedExternalSequence, StandardInternalFields, StandardExternalFields
-from .externalization import toExternalDictionary, toExternalObject
+from .externalization import to_standard_external_dictionary, toExternalObject
 
 def _syntheticKeys( ):
 	return ('OID', 'ID', 'Last Modified', 'Creator', 'ContainerId', 'Class')
@@ -58,7 +58,7 @@ class ExternalizableDictionaryMixin(object):
 		return self
 
 	def toExternalDictionary( self, mergeFrom=None):
-		return toExternalDictionary( self._ext_replacement(), mergeFrom=mergeFrom )
+		return to_standard_external_dictionary( self._ext_replacement(), mergeFrom=mergeFrom )
 
 	def stripSyntheticKeysFromExternalDictionary( self, external ):
 		""" Given a mutable dictionary, removes all the external keys
@@ -69,7 +69,11 @@ class ExternalizableDictionaryMixin(object):
 
 @interface.implementer(IInternalObjectIO)
 class ExternalizableInstanceDict(ExternalizableDictionaryMixin):
-	"""Externalizes to a dictionary containing the members of __dict__ that do not start with an underscore."""
+	"""
+	Externalizes to a dictionary containing the members of __dict__ that do not start with an underscore.
+
+	Meant to be used as a super class; also can be used as an external object superclass.
+	"""
 
 	# TODO: there should be some better way to customize this if desired (an explicit list)
 	# TODO: Play well with __slots__
