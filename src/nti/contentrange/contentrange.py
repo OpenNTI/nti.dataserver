@@ -60,6 +60,14 @@ class ContentPointer(object):
 @interface.implementer( interfaces.IDomContentPointer )
 class DomContentPointer(ContentPointer):
 
+	def __eq__( self, other ):
+		return self is other or isinstance( other, DomContentPointer )
+
+DomContentPointer.__init__ = _make_init( DomContentPointer )
+DomContentPointer.__repr__ = make_repr()
+
+@interface.implementer(interfaces.IElementDomContentPointer)
+class ElementDomContentPointer(DomContentPointer):
 	elementId = None
 	elementTagName = None
 	type = None
@@ -69,12 +77,6 @@ class DomContentPointer(ContentPointer):
 								 and self.elementTagName == getattr( other, 'elementTagName', None )
 								 and self.type  == getattr( other, 'type', None ))
 
-DomContentPointer.__init__ = _make_init( DomContentPointer )
-DomContentPointer.__repr__ = make_repr()
-
-@interface.implementer(interfaces.IElementDomContentPointer)
-class ElementDomContentPointer(DomContentPointer):
-	pass
 
 @interface.implementer(interfaces.ITextContext)
 class TextContext(object):
@@ -94,6 +96,7 @@ TextContext.__repr__ = make_repr()
 @interface.implementer(interfaces.ITextDomContentPointer)
 class TextDomContentPointer(DomContentPointer):
 
+	ancestor = None
 	contexts = ()
 	edgeOffset = 0
 
@@ -102,4 +105,5 @@ class TextDomContentPointer(DomContentPointer):
 				# damn tuples and lists are not ever equal to each other
 				# try to compare tuples, keeping in mind the other object may not have one at all
 				and tuple(self.contexts) == tuple(getattr( other, 'contexts', (1,2,3) ))
+				and self.ancestor == getattr( other, 'ancestor', None )
 				and self.edgeOffset == getattr( other, 'edgeOffset', None ) )

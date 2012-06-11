@@ -29,25 +29,26 @@ class IDomContentPointer(interface.Interface):
 	Identifies a specific node within an HTML DOM.
 	"""
 
+class IElementDomContentPointer(IDomContentPointer):
+	"Identifies a specific Element within a DOM."
+
 	elementId = schema.TextLine( title="The ID of an Element in the DOM. Required" )
 	elementTagName = schema.TextLine( title="The tagname of an Element in the DOM. Required" )
 	type = schema.Choice( title="Intended use of this content pointer.",
 						  vocabulary = POINTER_TYPE_VOCABULARY )
-
-class IElementDomContentPointer(IDomContentPointer):
-	pass
 
 class ITextContext(interface.Interface):
 	contextText = schema.Text( title="Contextual text." )
 	contextOffset = schema.Int( title="Offset from the start or end of the textContent.",
 								min=0 )
 
-class ITextDomContentPointer(IElementDomContentPointer):
+class ITextDomContentPointer(IDomContentPointer):
 	"""
 	Identifies a specific point within a Text node that is a
 	descendent of an Element in a DOM.
 	"""
-
+	ancestor = schema.Object( IElementDomContentPointer,
+							  title="Closest referencable element containing the context; should have type==ancestor." )
 	contexts = schema.List( title="At least size 1, plus additional contexts.",
 							value_type=schema.Object(ITextContext) )
 
