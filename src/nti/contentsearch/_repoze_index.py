@@ -24,7 +24,7 @@ from nti.contentsearch.common import (	OID, NTIID, CREATOR, LAST_MODIFIED, CONTA
 
 from nti.contentsearch.common import (	ngrams_, channel_, content_, keywords_, references_, title_, 
 										last_modified_, section_, ntiid_, recipients_, sharedWith_, body_, 
-										related_, startHighlightedFullText_, note_, highlight_, messageinfo_)
+										related_, highlightedText_, note_, highlight_, messageinfo_)
 
 
 import logging
@@ -114,14 +114,14 @@ def get_note_content(obj, default=None):
 	
 def get_highlight_ngrams(obj, default=None):
 	if compute_ngrams:
-		source = obj if isinstance(obj, six.string_types) else get_attr(obj, [startHighlightedFullText_], default)
+		source = obj if isinstance(obj, six.string_types) else get_attr(obj, [highlightedText_], default)
 		result = ngrams(get_multipart_content(source))
 	else:
 		result = u''
 	return result
 	
 def get_highlight_content(obj, default=None):
-	source = obj if isinstance(obj, six.string_types) else get_attr(obj, [startHighlightedFullText_], default)
+	source = obj if isinstance(obj, six.string_types) else get_attr(obj, [highlightedText_], default)
 	result = get_content(source)
 	return result.lower() if result else None
 
