@@ -110,7 +110,7 @@ be used to create well formed DOM Range objects.
 
 Objects of type ``ContentPointer`` provide the information required to
 identify a location in the content for use as the start or end of a
-range or to identify a node that contains the start and end (common
+range, or to identify a node that contains the start and end (common
 ancestor). The abstract base class ``DOMContentPointer`` contains the
 minimum amount of information required to identify an anchor in NTI
 html based content.
@@ -176,12 +176,12 @@ ends inside of ``Text`` content.
   *EQUAL TO* ``start`` the additional context objects mirror the
   ``Text`` nodes returned by repeateadly asking `TreeWalker
   <http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#treewalker>`_
-  for ``previousNode`` starting from the node used to generate the
+  configured to show ``Text`` nodes for ``previousNode`` starting from the node used to generate the
   *primary context* object. Similarily, if this anchor has a ``type``
   *EQUAL TO* ``end`` the additional context objects mirror the
   ``Text`` nodes returned by repeateadly asking `TreeWalker
   <http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#treewalker>`_
-  for ``nextNode`` starting from the node used to generate the
+  configured to show ``Text`` nodes for ``nextNode`` starting from the node used to generate the
   *primary context* object. See ``Converting a Text Node to
   TextDomContentPointer`` for more information.
 * ``edgeOffset`` is the character offset from the start of the
@@ -258,15 +258,15 @@ range's start and end fall on nodes that can be represented as
   the end, we assume we want the largest representable range contained by the original
   range. That is, we shrink the range inward from the necessary edges.
 
-Given a ``range`` whose edges can by represented by ContentPointers,
-the generation of an ContentRangeDescription is straightforward. As a
+Given a ``range`` whose edges can by represented by ``ContentPointers``,
+the generation of a ``ContentRangeDescription`` is straightforward. As a
 first step the DOM is walked upwards from the range's `commonAncestorComponent
 <http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-range-commonancestorcontainer>`_
 until a node that can be represented as an ``ElementDomContentPointer``
 is found. This node is then converted to an
 ``ElementDomContentPointer`` as described below and the result becomes
 the ``ancestor`` of the ``ContentRangeDescription``. With the ancestor
-conversion complete the client then converts both the range's `startContainer
+conversion complete,%z the client then converts both the range's `startContainer
 <http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-range-startcontainer>`_
 and `endContainer
 <http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-range-endcontainer>`_
@@ -341,8 +341,8 @@ word to the right of offset, right_offset_text.  This string *MAY*
 contain leading whitespace, but *MUST NOT* contain trailing
 whitespace.  If the offset identifies the end of ``textContent``, e.g.
 ``offset = textContent.length``, right_offset_text *MUST* be empty.
-Combine left_offset_text and right_offset_text to populate the ``Text
-Context`` object's ``contextText`` property.  The ``TextContext`` object's
+Combine left_offset_text and right_offset_text to populate the ``TextContext``
+object's ``contextText`` property.  The ``TextContext`` object's
 ``contextOffset`` property is the index of ``contextText`` in textContent.
 If anchor ``type`` is ``start`` this offset is from the right of
 textContent.  If anchor ``type`` is ``end`` this offset is from the
@@ -352,6 +352,9 @@ left of ``textContext``.
 	A word is a whitespace delimited set of characters.
 
 Example 1:
+
+This examples shows the start edge of a range that does not fall
+at the beggining or end of the ``Text`` node.
 
 .. code-block:: html
 
@@ -364,6 +367,9 @@ Example 1:
 
 Example 2:
 
+This example shows the end edge of a range that does not fall
+at the beggning or end of the ``Text`` node.
+
 .. code-block:: html
 
 	[This text |contains a start endpoint]
@@ -375,6 +381,9 @@ Example 2:
 
 
 Example 3:
+
+This example shows the end edge of a range that falls at the end
+of the ``Text`` node.
 
 .. code-block:: html
 
@@ -462,7 +471,7 @@ See examples at bottom of page.
 ContentRangeDescription to DOM Range
 ------------------------------------
 
-When creating a DOM Range, ``range``, object from an
+When creating a DOM Range, ``range``, object from a
 ``ContentRangeDescription`` object, clients should keep in mind that from
 a user perspective it is much worse to anchor something to the wrong
 content than to not anchor it at all. If, when reconstructing the range
@@ -496,7 +505,7 @@ of ``ContentPointer`` used to model the ``start`` and ``end``
 properties of the ``ContentRangeDescription`` will determine how the
 dom is searched beneath the ancestor.
 
-If a start and end ``Node`` and offset cannot be located beneath the ancestor, and the ancestor
+If a start and end ``Node``, and offset, cannot be located beneath the ancestor, and the ancestor
 is not already the ``documentElement,`` resolution should be tried
 again given an ancestor of the ``documentElement.`` If the start does
 not come before end (as computed using `compareDocumentPosition
@@ -564,7 +573,7 @@ interate each ``Text`` node, ``textNode``, using the ``nextNode`` method.
 For each ``textNode`` check if the *primary context* object matches
 ``textNode``. If it does, using a ``TreeWalker`` rooted at *reference
 node*, compare each *additional context* object by walking the tree
-using the ``previousNode`` method, if anchor ``type`` is ``start``, or
+backwards using the ``previousNode`` method, if anchor ``type`` is ``start``, or
 forward using the ``nextNode`` method, if the anchor ``type`` is
 ``end``. If all context objects match, ``textNode`` will become the
 range's ``startContainer`` if the anchor ``type`` is ``start``, or
@@ -574,8 +583,8 @@ objects for the next ``textNode``.
 
 If a ``textNode`` has been identified as the start or end container, a
 range can be constructed as follows. If anchor ``type`` is ``start``,
-set the ``ranges`` ``startContainer`` to ``textNode``. If anchor
-``type`` is ``end``, set the ``ranges`` ``endContainer`` to
+set the ``range's`` ``startContainer`` to ``textNode``. If anchor
+``type`` is ``end``, set the ``range's`` ``endContainer`` to
 ``textNode``. Calculate the text offset by adjusting
 the *primary context* object's ``contextOffset`` by  the anchor's
 ``edgeOffset`` property, and set the
