@@ -80,7 +80,10 @@ we can use the following object model to represent anchored content:
 
 	abstract class ContentPointer {}
 
-	abstract class DomContentPointer : ContentPointer {}
+	abstract class DomContentPointer : ContentPointer {
+		string role; //The role this pointer is playing in the
+		//anchoring process
+	}
 
 	class DomContentRangeDescription : ContentRangeDescription {
 		DomContentPointer start; //must not be nil
@@ -114,6 +117,10 @@ ancestor). The abstract base class ``DOMContentPointer`` contains the
 minimum amount of information required to identify an anchor in NTI
 html based content.
 
+* ``role`` specifies how this anchor is to be used.  It *MUST*
+  take one of the following three values: ``"start"``, ``"end"``,
+  ``"ancestor"``
+
 Concrete subclasses of ``DOMContentPointer`` should provide the
 remaining information required to identify content location relative
 to the anchor provided by the abstract base class.
@@ -139,16 +146,12 @@ portion of an ``ContentRangeDescription`` or a ``TextDomContentPointer``.
 	class ElementDomContentPointer : DomContentPointer{
 		string elementId;    //dom id of the anchoring node
 		string elementTagName; //tagname of the anchoring node
-		string type; //The type/kind of anchor this is being used for
 	}
 
 
 * ``elementId`` is the DOM ID of an arbitrary node in the content.
 * ``elementTagName`` is the tag name for the node identified by
   ``elementId``. Both these properties *MUST NOT* be nil.
-* ``type`` specifies how this anchor is to be used.  It *MUST*
-  take one of the following three values: ``"start"``, ``"end"``,
-  ``"ancestor"``
 
 TextDomContentPointer
 ~~~~~~~~~~~~~~~~~~~~~
@@ -176,7 +179,7 @@ ends inside of ``Text`` content.
 * ``ancestor`` is a ``DomContentPointer`` that represents
   an element who is an ancestor (not necessarily a direct parent) of
   the text represented by this ``TextDomContentPointer`` object.  If
-  ``ancestor`` is a ``ElementDomContentPointer`` its ``type`` will be ``ancestor``.
+  ``ancestor`` is a ``ElementDomContentPointer`` its ``role`` will be ``ancestor``.
 * ``contexts`` is an array of ``TextContext`` objects that provide
   contextual information for the ``range`` endpoint represented by
   this anchor. The length of ``contexts`` *MUST* be at least one. The
@@ -186,12 +189,12 @@ ends inside of ``Text`` content.
   ``TextContext`` objects in the array provide further context.
   Those objects closest to the beginning of the array provide the most
   specific (nearest) context while those towards the end provide less
-  specific (more distant) context. If this anchor has a ``type``
+  specific (more distant) context. If this anchor has a ``role``
   *EQUAL TO* ``start`` the additional context objects mirror the
   ``Text`` nodes returned by repeateadly asking `TreeWalker
   <http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#treewalker>`_
   configured to show ``Text`` nodes for ``previousNode`` starting from the node used to generate the
-  *primary context* object. Similarily, if this anchor has a ``type``
+  *primary context* object. Similarily, if this anchor has a ``role``
   *EQUAL TO* ``end`` the additional context objects mirror the
   ``Text`` nodes returned by repeateadly asking `TreeWalker
   <http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#treewalker>`_
@@ -221,9 +224,9 @@ following `TextContext` will be used:
   providing context for.
 * ``contextOffset`` is the index of ``contextText`` from the start or end of ``textContent``.
   ``contextOffset`` *MUST* be an integer greater than or equal to zero.  Negative values are reserved for future use.
-  If this object is providing context for an anchor with a type *EQUAL TO* ``"start"``, ``contextOffset``
+  If this object is providing context for an anchor with a ``role`` *EQUAL TO* ``"start"``, ``contextOffset``
   represents the character index from the end (right) of ``textContent``.
-  If this object is providing context for an anchor with a type *EQUAL TO* ``"end"``,
+  If this object is providing context for an anchor with a ``role`` *EQUAL TO* ``"end"``,
   ``contextOffset`` represents the index from the start (left) of
   ``textContent``.  This keeps indexes closest to the selected
   range stable.
@@ -359,8 +362,8 @@ whitespace.  If the offset identifies the end of ``textContent``, e.g.
 Combine left_offset_text and right_offset_text to populate the ``TextContext``
 object's ``contextText`` property.  The ``TextContext`` object's
 ``contextOffset`` property is the index of ``contextText`` in textContent.
-If anchor ``type`` is ``start`` this offset is from the right of
-textContent.  If anchor ``type`` is ``end`` this offset is from the
+If anchor ``role`` is ``start`` this offset is from the right of
+textContent.  If anchor ``role`` is ``end`` this offset is from the
 left of ``textContext``.
 
 .. nate::
@@ -414,11 +417,11 @@ Given a ``Text`` node that is contextually relevant to an anchor
 endpoint and an anchor, *additional* ``TextContext`` objects can be
 defined as follows.
 
-If the anchor ``type`` is ``start``, ``contextText`` is the last word in the
+If the anchor ``role`` is ``start``, ``contextText`` is the last word in the
 ``Text`` node's ``textContent`` string.  This word *MAY* contain trailing
 whitespace, but *MUST NOT* contain leading whitespace.  ``contextOffset``
 is the index of ``contextText`` from the right side of the ``Text``
-node's ``textContent`` string.  Likewise, if the anchor ``type`` is ``end``,
+node's ``textContent`` string.  Likewise, if the anchor ``role`` is ``end``,
 ``contextText`` is the first word in the
 ``Text`` node's ``textContent`` string.  This word *MAY* contain leading
 whitespace, but *MUST NOT* contain trailing whitespace.  ``contextOffset``
@@ -427,11 +430,11 @@ node's ``textContent`` string.
 
 .. note::
 	A ``Text`` node is considered contextually
-	relevant to an anchor with a type of ``start``, if it can be found by
+	relevant to an anchor with a ``role`` of ``start``, if it can be found by
 	walking from the ``Text`` node modeled by the anchors *primary
 	context* object, using a ``TreeWalker's`` ``previousNode`` function.
 	Similarily, a ``Text`` node is considered contextually
-	relevant to an anchor with a type of ``end``, if it can be found by
+	relevant to an anchor with a ``role`` of ``end``, if it can be found by
 	walking from the ``Text`` node modeled by the anchors *primary
 	context* object, using a ``TreeWalker's`` ``nextNode`` function.
 
@@ -442,8 +445,8 @@ endpoint, that exists withing a textNode, as a complete
 ``TextDomContentPointer`` object as follows:
 
 Extract a container and offset from the range object.  If the anchor
-``type`` is ``start`` use the range's ``startContainer`` and ``startOffset``
-properties.  If the anchor ``type`` is ``end`` use the range's
+``role`` is ``start`` use the range's ``startContainer`` and ``startOffset``
+properties.  If the anchor ``role`` is ``end`` use the range's
 ``endContainer`` and ``endOffset`` properties.  From the container,
 walk up the DOM tree to find a referenceable node. Generate an
 ``ElementDomContentPointer`` object from this node and set it as this
@@ -456,8 +459,8 @@ Using a ``TreeWalker`` rooted at the anchor's ``ancestor``, start at container a
 iterate ``Text`` node siblings to generate *additional context*
 object's.  Continue to iterate creating ``TextContext`` objects
 for each sibling until 15 characters have been collected, or 5 context objects have been created.
-If anchor type is ``start``, iterate siblings to the left using the
-``TreeWalker's`` ``previousNode`` method.  If anchor type is ``end``,
+If anchor ``role`` is ``start``, iterate siblings to the left using the
+``TreeWalker's`` ``previousNode`` method.  If anchor ``role`` is ``end``,
 iterate siblings to the right using the ``TreeWalker's`` ``nextNode``
 method.  The anchor's ``contexts`` property becomes an array whoes
 head is the *primary context* object, and whose tail is the
@@ -589,23 +592,23 @@ interate each ``Text`` node, ``textNode``, using the ``nextNode`` method.
 For each ``textNode`` check if the *primary context* object matches
 ``textNode``. If it does, using a ``TreeWalker`` rooted at *reference
 node*, compare each *additional context* object by walking the tree
-backwards using the ``previousNode`` method, if anchor ``type`` is ``start``, or
-forward using the ``nextNode`` method, if the anchor ``type`` is
+backwards using the ``previousNode`` method, if anchor ``role`` is ``start``, or
+forward using the ``nextNode`` method, if the anchor ``role`` is
 ``end``. If all context objects match, ``textNode`` will become the
-range's ``startContainer`` if the anchor ``type`` is ``start``, or
-``endContainer`` if the anchor ``type`` is ``end``. If not all the
+range's ``startContainer`` if the anchor ``role`` is ``start``, or
+``endContainer`` if the anchor ``role`` is ``end``. If not all the
 context objects match, continue the outer loop by comparing context
 objects for the next ``textNode``.
 
 If a ``textNode`` has been identified as the start or end container, a
-range can be constructed as follows. If anchor ``type`` is ``start``,
+range can be constructed as follows. If anchor ``role`` is ``start``,
 set the ``range's`` ``startContainer`` to ``textNode``. If anchor
-``type`` is ``end``, set the ``range's`` ``endContainer`` to
+``role`` is ``end``, set the ``range's`` ``endContainer`` to
 ``textNode``. Calculate the text offset by adjusting
 the *primary context* object's ``contextOffset`` by  the anchor's
 ``edgeOffset`` property, and set the
-range's ``startOffset``, if anchor ``type`` == ``start``, or
-``endOffset``, if anchor ``type`` == ``end``, to the computed value.
+range's ``startOffset``, if anchor ``role`` == ``start``, or
+``endOffset``, if anchor ``role`` == ``end``, to the computed value.
 
 
 Examples
