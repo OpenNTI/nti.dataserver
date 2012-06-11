@@ -21,11 +21,11 @@ class _AbstractGrader(object):
 		self.solution = soln
 		self.response = response
 
+@interface.implementer(interfaces.IQPartGrader)
 class EqualityGrader(_AbstractGrader):
 	"""
 	Grader that simply checks for equality using the python equality operator.
 	"""
-	interface.implements(interfaces.IQPartGrader)
 
 	solution_converter = _id
 
@@ -46,6 +46,7 @@ class FloatEqualityGrader(EqualityGrader):
 	"""
 	solution_converter = float
 
+@interface.implementer(interfaces.IQMultipleChoicePartGrader)
 class MultipleChoiceGrader(EqualityGrader):
 	"""
 	Grader that grades multiple choice questions by
@@ -56,8 +57,6 @@ class MultipleChoiceGrader(EqualityGrader):
 	choices (allowing submission of the actual data, which may be
 	convenient in some cases).
 	"""
-
-	interface.implements(interfaces.IQMultipleChoicePartGrader)
 
 	def __call__(self):
 		result = super(MultipleChoiceGrader,self).__call__()
@@ -72,12 +71,12 @@ class MultipleChoiceGrader(EqualityGrader):
 
 		return result
 
+@interface.implementer(interfaces.IQMatchingPartGrader)
 class MatchingPartGrader(_AbstractGrader):
 	"""
 	Grader that deals with matching. Handles all combinations of int and key solutions
 	and int and key dicts.
 	"""
-	interface.implements(interfaces.IQMatchingPartGrader)
 
 	def _to_int_dict( self, the_dict ):
 		result = the_dict

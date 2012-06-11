@@ -244,7 +244,7 @@ class IQTextResponse(IQResponse):
 
 class IQDictResponse(IQResponse):
 	"""
-	A response submitted as a mapping between kes and values.
+	A response submitted as a mapping between keys and values.
 	"""
 	value = schema.Dict( title="The response dictionary",
 						 key_type=schema.TextLine( title="The key" ),
