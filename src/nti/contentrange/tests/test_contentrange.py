@@ -32,7 +32,7 @@ class TestContentRange(ConfiguringTestBase):
 				   'ancestor': contentrange.ElementDomContentPointer( elementId='foo', role='end', elementTagName='p' ),
 				   'elementId': 'baz', 'elementTagName': 'div', 'role': 'start',
 				   'contextText': 'word', 'contextOffset': 4,
-				   'edgeOffset': 9
+				   'edgeOffset': 9, 'contexts': [contentrange.TextContext(contextText='foo')]
 				   }
 
 		seen_ifaces = set()
@@ -66,3 +66,26 @@ class TestContentRange(ConfiguringTestBase):
 		with assert_raises(sch_interfaces.RequiredMissing):
 			# The 'role' attribute is missing and should be required
 			update_from_external_object( edc, {'elementId': 'baz', 'elementTagName': 'div'}, require_updater=True )
+
+		with assert_raises(sch_interfaces.ConstraintNotSatisfied):
+			# A role value outside the schema
+			update_from_external_object( edc, {'role': 'unknown'}, require_updater=True )
+
+
+		with assert_raises(sch_interfaces.TooShort):
+			# Too short an elementId
+			update_from_external_object( edc, {'elementId': ''}, require_updater=True )
+
+
+		with assert_raises(sch_interfaces.TooShort):
+			# Too short an elementTagName
+			update_from_external_object( edc, {'elementTagName': ''}, require_updater=True )
+
+
+		tdc = contentrange.TextDomContentPointer()
+		tdc.ancestor = edc
+		with assert_raises(sch_interfaces.TooSmall):
+			update_from_external_object( tdc, {'edgeOffset': -1 } )
+
+		with assert_raises(sch_interfaces.TooShort):
+			update_from_external_object( tdc, {'contexts': []} )
