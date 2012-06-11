@@ -122,7 +122,8 @@ class IQLatexSymbolicMathSolution(IQSymbolicMathSolution,IQSingleValuedSolution)
 	as symbols, parsed from latex.
 	"""
 
-	value = schema.TextLine( title="The LaTeX form of the correct answer." )
+	value = schema.TextLine( title="The LaTeX form of the correct answer.",
+							 min_length=1 )
 
 class IResponseToSymbolicMathConverter(interface.Interface):
 	"""
@@ -157,10 +158,12 @@ class IQMultipleChoicePart(IQPart):
 	"""
 
 	choices = schema.List( title="The choice strings to present to the user.",
+						   min_length=1,
 						   description="""Presentation order may matter, hence the list. But for grading purposes,
 						   the order does not matter and simple existence within the set is sufficient.""",
 						   value_type=schema.TextLine( title="A rendered value" ) ) # TODO: Again with the IContentFragment?
 	solutions = TypedIterable( title="The multiple-choice solutions",
+							   min_length=1,
 							   value_type=schema.Object( IQMultipleChoiceSolution, title="Multiple choice solution" ) )
 
 class IQMultipleChoicePartGrader(IQPartGrader):
@@ -174,7 +177,7 @@ class IQFreeResponseSolution(IQSolution,IQSingleValuedSolution):
 	A solution whose correct answer is simple text.
 	"""
 
-	value = schema.Text( title="The correct text response" )
+	value = schema.Text( title="The correct text response", min_length=1 )
 
 class IQFreeResponsePart(IQPart):
 	"""
@@ -200,8 +203,10 @@ class IQMatchingPart(IQPart):
 	"""
 
 	labels = schema.List( title="The list of labels",
+						  min_length=2,
 						  value_type=schema.TextLine( title="A label-column value" ) )
 	values = schema.List( title="The list of labels",
+						  min_length=2,
 						  value_type=schema.TextLine( title="A value-column value" ) )
 
 class IQMatchingPartGrader(IQPartGrader):
@@ -219,6 +224,7 @@ class IQuestion(interface.Interface):
 
 	content = schema.Text( title="The content to present to the user, if any." )
 	parts = schema.List( title="The ordered parts of the question.",
+						 min_length=1,
 						 value_type=schema.Object( IQPart, title="A question part" ) )
 
 class IQuestionSet(interface.Interface):
@@ -228,6 +234,7 @@ class IQuestionSet(interface.Interface):
 	"""
 
 	questions = schema.List( title="The ordered questions in the set.",
+							 min_length=1,
 							 value_type=schema.Object( IQuestion, title="The questions" ) )
 
 class IQResponse(interface.Interface):
