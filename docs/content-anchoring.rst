@@ -80,11 +80,7 @@ we can use the following object model to represent anchored content:
 
 	abstract class ContentPointer {}
 
-	abstract class DomContentPointer : ContentPointer {
-		string elementId;    //dom id of the anchoring node
-		string elementTagName; //tagname of the anchoring node
-		string type; //The type/kind of anchor this is being used for
-	}
+	abstract class DomContentPointer : ContentPointer {}
 
 	class DomContentRangeDescription : ContentRangeDescription {
 		DomContentPointer start; //must not be nil
@@ -118,13 +114,6 @@ ancestor). The abstract base class ``DOMContentPointer`` contains the
 minimum amount of information required to identify an anchor in NTI
 html based content.
 
-* ``elementId`` is the DOM ID of an arbitrary node in the content.
-* ``elementTagName`` is the tag name for the node identified by
-  ``elementId``. Both these properties *MUST NOT* be nil.
-* ``type`` specifies how this anchor is to be used.  It *MUST*
-  take one of the following three values: ``"start"``, ``"end"``,
-  ``"ancestor"``
-
 Concrete subclasses of ``DOMContentPointer`` should provide the
 remaining information required to identify content location relative
 to the anchor provided by the abstract base class.
@@ -139,21 +128,40 @@ the future, more subclasses may be added.
 ElementDomContentPointer
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-An ``ElementDomContentPointer`` adds no information to the abstract base
-class ``DOMContentPointer``. Its purpose is to identify a node that things can be anchored
+An ``ElementDomContentPointer`` adds the necessary information to the abstract base
+class ``DOMContentPointer`` to represent a containiner element.
+Its purpose is to identify a node that things can be anchored
 relative to. This type of anchor is most often seen as the ``ancestor``
-portion of an ``ContentRangeDescription``.
+portion of an ``ContentRangeDescription`` or a ``TextDomContentPointer``.
+
+.. code-block:: javascript
+
+	class ElementDomContentPointer : DomContentPointer{
+		string elementId;    //dom id of the anchoring node
+		string elementTagName; //tagname of the anchoring node
+		string type; //The type/kind of anchor this is being used for
+	}
+
+
+* ``elementId`` is the DOM ID of an arbitrary node in the content.
+* ``elementTagName`` is the tag name for the node identified by
+  ``elementId``. Both these properties *MUST NOT* be nil.
+* ``type`` specifies how this anchor is to be used.  It *MUST*
+  take one of the following three values: ``"start"``, ``"end"``,
+  ``"ancestor"``
 
 TextDomContentPointer
 ~~~~~~~~~~~~~~~~~~~~~
 
-Content is anchored within text by describing a containing element,
+Content is anchored within text by describing a containing ancestor element,
 plus some context information used to traverse to the anchored text:
 
 .. code-block:: cpp
 
 	//Adds redundant information about text content
 	class TextDomContentPointer : DOMContentPointer {
+		DomContentPointer ancestor; //Represents the containing element
+									//this text is anchored in.
 		TextContext[] contexts; //An array of TextContext
 		                          //objects providing context for this anchor
 		int edgeOffset; //The offset from the start or end of content_text of the edge
@@ -165,7 +173,10 @@ This class should be used to reference portions of DOM `Text nodes
 as ``ContentPointer`` objects, and is useful when a range begins or
 ends inside of ``Text`` content.
 
-
+* ``ancestor`` is a ``DomContentPointer`` that represents
+  an element who is an ancestor (not necessarily a direct parent) of
+  the text represented by this ``TextDomContentPointer`` object.  If
+  ``ancestor`` is a ``ElementDomContentPointer`` its ``type`` will be ``ancestor``.
 * ``contexts`` is an array of ``TextContext`` objects that provide
   contextual information for the ``range`` endpoint represented by
   this anchor. The length of ``contexts`` *MUST* be at least one. The
@@ -287,7 +298,7 @@ Converting an Element to ElementDomContentPointer
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Elements represented as an ``ElementDomContentPointer`` *MUST* have both
-an ``id`` and ``tagname``. The ``ContentPointer``'s ``elementId``
+an ``id`` and ``tagname``. The ``ElementDomContentPointer``'s ``elementId``
 *SHOULD* be set to the node's `id
 <http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-element-id>`_,
 and ``elementTagName`` *SHOULD* be set to the node's `tagName
@@ -307,8 +318,9 @@ element.
 
 The first step in generating a text anchor is to identify the
 containing element (reference point). From the text node, walk up the
-DOM until a refrenceable node is found. This node's ID and tag name
-become the ``elementId`` and ``elementTagName`` respectively.
+DOM until a refrenceable node is found. This node is converted to an
+``ElementDomContentPointer`` object, and it becomes the
+``TextDomContentPointer``'s ``ancestor``.
 
 An anchor's ``contexts`` property is made up of a *primary context*
 object and an optional set of *additional context* objects.  The first
@@ -433,14 +445,14 @@ Extract a container and offset from the range object.  If the anchor
 ``type`` is ``start`` use the range's ``startContainer`` and ``startOffset``
 properties.  If the anchor ``type`` is ``end`` use the range's
 ``endContainer`` and ``endOffset`` properties.  From the container,
-walk up the DOM tree to find a referenceable node. This node's ``id``
-and ``tagName`` become the anchor`s ``elementId`` and
-``elementTagName`` respectively.  Using the container, offset, and
+walk up the DOM tree to find a referenceable node. Generate an
+``ElementDomContentPointer`` object from this node and set it as this
+object's ``ancestor``.  Using the container, offset, and
 anchor, generate the anchor's *primary context*.  The anchor's
 ``edgeOffset`` property is the index into the *primary context*
 object's ``contextText`` property, of the offset from the range object.
 
-Using a ``TreeWalker`` rooted at the reference node, start at container and
+Using a ``TreeWalker`` rooted at the anchor's ``ancestor``, start at container and
 iterate ``Text`` node siblings to generate *additional context*
 object's.  Continue to iterate creating ``TextContext`` objects
 for each sibling until 15 characters have been collected, or 5 context objects have been created.
@@ -566,11 +578,12 @@ type === ``end`` is as follows:
 Converting TextDomContentPointer to a Node
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The general algorithm for resolving a ``TextDomContentPointer`` is a
-follows.  Begin by resolving the *reference node* using
-``elementId`` and ``elementTagName``.  If the *reference node*
-can't be resolved, use the ``ancestor`` as the *reference node*.  Using
-the *refernce node* as the root, create a ``TreeWalker`` to
+The general algorithm for resolving a ``TextDomContentPointer`` is as
+follows.  Begin by resolving the ``ancestor`` to a containing
+``Element``.  If the ``ancestor`` cannot be resolved, use the
+``ContentRangeDescription``'s ancestor as the containing ``Element``.  This
+containing ``Element`` becomes the *reference node* used when searching for
+text the anchored range. Using the *refernce node* as the root, create a ``TreeWalker`` to
 interate each ``Text`` node, ``textNode``, using the ``nextNode`` method.
 
 For each ``textNode`` check if the *primary context* object matches
@@ -622,14 +635,12 @@ A NTIContentSimpleTextRangeSpec
 			elementTagName: 'p',
 		},
 		start: {
-			elementId: 'id',
-			elementTagName: 'p',
-			contexts: [{ contextText: 'A', contextOffset: 26 }]
+			ancestor : {elementId: 'id', elementTagName: 'p'},
+			contexts: [{ contextText: 'A', contextOffset: 26 }],
 			edgeOffset: 0
 		},
 		end: {
-			elementId: 'id',
-			elementTagName: 'p',
+			ancestor : {elementId: 'id', elementTagName: 'p'},
 			contexts: [{ contextText: 'node', contextOffset: 22 }],
 			edgeOffset: 4
 		},
@@ -659,14 +670,12 @@ This example spans from one text node to the next.
 			elementTagName: 'p',
 		},
 		start: {
-			elementId: 'id',
-			elementTagName: 'p',
-			contexts: [{ contextText: 'An', contextOffset: 2 }]
+			ancestor : {elementId: 'id', elementTagName: 'p'},
+			contexts: [{ contextText: 'An', contextOffset: 2 }],
 			edgeOffset: 0
 		},
 		end: {
-			elementId: 'id',
-			elementTagName: 'p',
+			ancestor : {elementId: 'id', elementTagName: 'p'},
 			contexts: [{ contextText: 'word.', contextOffset: 0 }],
 			edgeOffset: 5
 		}
@@ -697,17 +706,15 @@ the offsets within a text node are the same. How does it resolve?
 			elementTagName: 'p',
 		},
 		start: {
-			elementId: 'id',
-			elementTagName: 'p',
+			ancestor : {elementId: 'id', elementTagName: 'p'},
 			contexts: [{ contextText: 'is the', contextOffset: 3 },
 					   {contextText: 'sentence.', contextOffset: 9},
 					   {contextText: 'first', contextOffset: 5},
-					   {contextText: 'the'}, contextOffset: 3]
+					   {contextText: 'the'}, contextOffset: 3],
 			edgeOffset: 8
 		},
 		end: {
-			elementId: 'id',
-			elementTagName: 'p',
+			ancestor : {elementId: 'id', elementTagName: 'p'},
 			contexts: [{ contextText: 'sentence.', contextOffset: 0 }],
 			edgeOffset: 9
 		}
