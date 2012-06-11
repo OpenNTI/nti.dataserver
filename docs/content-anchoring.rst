@@ -99,6 +99,9 @@ we can use the following object model to represent anchored content:
   faster to reconstruct ranges. Any such supplementary information is
   not in this version of the specification, which focuses on simplicity.
 
+.. note::
+  The definitive dataserver versions of all the datastructures defined in this document
+  are described in :doc:`content-anchoring-interfaces`.
 
 Anchorable content *MUST* implement the abstract class ``Anchored`` to
 specify the ``applicableRange`` it is anchored to. ``ContentRangeDescription``
@@ -721,4 +724,3 @@ severity of the change, in the worst case, we may want some kind of
 input from the user. Does your highlight or note still make sense here
 even though the content has changed? We should think about if and how
 this sort of thing can happen.
-

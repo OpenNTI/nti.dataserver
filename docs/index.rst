@@ -27,6 +27,7 @@ Contents:
 	interfaces
 	http-rest
 	contentrendering-api
+	content-anchoring-interfaces.rst
 	socketio-api
 
 
