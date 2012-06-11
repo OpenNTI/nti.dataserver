@@ -163,8 +163,9 @@ class TestExternalizableInstanceDict(ConfiguringTestBase):
 		obj.A2 = "2"
 
 		# Things that should be excluded dynamically
-		def l(): pass
-		obj.A3 = l
+		# Functions used to be specifically excluded, but not anymore
+		# def l(): pass
+		# obj.A3 = l
 		obj._A4 = 'A'
 		self.A5 = "Not From Init"
 
@@ -176,7 +177,7 @@ class TestExternalizableInstanceDict(ConfiguringTestBase):
 		for attr in set(obj._excluded_out_ivars_) | set(['A5']):
 			assert_that( newObj, does_not( has_attr( attr ) ) )
 		assert_that( ext, does_not( has_key( "A5" ) ) )
-		assert_that( ext, does_not( has_key( 'A3' ) ) )
+		#assert_that( ext, does_not( has_key( 'A3' ) ) )
 		assert_that( ext, does_not( has_key( '_A4' ) ) )
 		assert_that( newObj.A1, is_( 1 ) )
 		assert_that( newObj.A2, is_( "2" ) )

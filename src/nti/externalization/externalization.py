@@ -286,3 +286,14 @@ def to_standard_external_dictionary( self, mergeFrom=None, name=_ex_name_marker,
 
 toExternalDictionary = to_standard_external_dictionary
 deprecation.deprecated('toExternalDictionary', 'Prefer to_standard_external_dictionary' )
+
+
+def make_repr():
+	def __repr__( self ):
+		try:
+			return "%s().__dict__.update( %s )" % (self.__class__.__name__, self.__dict__ )
+		except ZODB.POSException.ConnectionStateError:
+			return '%s(Ghost)' % self.__class__.__name__
+		except (ValueError,LookupError) as e: # Things like invalid NTIID, missing registrations
+			return '%s(%s)' % (self.__class__.__name__, e)
+	return __repr__

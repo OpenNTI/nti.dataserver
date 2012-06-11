@@ -12,7 +12,7 @@ from zope import component
 
 #from nti.externalization.datastructures import LocatedExternalDict
 #from nti.externalization.externalization import toExternalObject
-from nti.externalization.datastructures import ExternalizableInstanceDict
+from nti.externalization.datastructures import InterfaceObjectIO
 from nti.externalization.interfaces import IInternalObjectIO #, StandardExternalFields
 from nti.contentrange import interfaces
 
@@ -21,40 +21,28 @@ register_legacy_search_module('nti.contentrange.contentrange')
 
 @interface.implementer(IInternalObjectIO)
 @component.adapter(interfaces.IDomContentPointer)
-class _DomContentPointerExternal(ExternalizableInstanceDict):
+class _DomContentPointerExternal(InterfaceObjectIO):
 
 	# The known subclasses use ivars that match
 	_update_accepts_type_attrs = True
 	def __init__( self, pointer ):
-		super(_DomContentPointerExternal,self).__init__()
-		self.pointer = pointer
-
-	def _ext_replacement( self ):
-		return self.pointer
+		super(_DomContentPointerExternal,self).__init__( pointer, interfaces.IDomContentPointer )
 
 
 @interface.implementer(IInternalObjectIO)
 @component.adapter(interfaces.ITextContext)
-class _TextContextExternal(ExternalizableInstanceDict):
+class _TextContextExternal(InterfaceObjectIO):
 	_update_accepts_type_attrs = True
 	def __init__( self, context ):
-		super(_TextContextExternal,self).__init__()
-		self.context = context
-
-	def _ext_replacement(self):
-		return self.context
+		super(_TextContextExternal,self).__init__( context, interfaces.ITextContext )
 
 
 @interface.implementer(IInternalObjectIO)
 @component.adapter(interfaces.IContentRangeDescription)
-class _ContentRangeDescriptionExternal(ExternalizableInstanceDict):
+class _ContentRangeDescriptionExternal(InterfaceObjectIO):
 
 	# It so happens that ContentRange and DomContentRange
 	# have ivars that match what we need
 	_update_accepts_type_attrs = True
 	def __init__( self, the_range ):
-		super(_ContentRangeDescriptionExternal,self).__init__()
-		self.the_range = the_range
-
-	def _ext_replacement(self):
-		return self.the_range
+		super(_ContentRangeDescriptionExternal,self).__init__( the_range, interfaces.IContentRangeDescription )

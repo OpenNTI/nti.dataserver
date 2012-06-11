@@ -9,6 +9,8 @@ from zope import interface
 
 from . import interfaces
 
+from nti.externalization.externalization import make_repr
+
 # FIXME: Note that we are using the legacy class-based
 # functionality to create new internal objects from externals
 
@@ -36,6 +38,7 @@ class ContentRangeDescription(object):
 		return self is other or isinstance( self, ContentRangeDescription )
 
 ContentRangeDescription.__init__ = _make_init( ContentRangeDescription )
+ContentRangeDescription.__repr__ = make_repr()
 
 
 @interface.implementer(interfaces.IDomContentRangeDescription)
@@ -67,6 +70,7 @@ class DomContentPointer(ContentPointer):
 								 and self.type  == getattr( other, 'type', None ))
 
 DomContentPointer.__init__ = _make_init( DomContentPointer )
+DomContentPointer.__repr__ = make_repr()
 
 @interface.implementer(interfaces.IElementDomContentPointer)
 class ElementDomContentPointer(DomContentPointer):
@@ -84,6 +88,7 @@ class TextContext(object):
 								 and self.contextOffset == getattr( other, 'contextOffset', None ) )
 
 TextContext.__init__ = _make_init( TextContext )
+TextContext.__repr__ = make_repr()
 
 
 @interface.implementer(interfaces.ITextDomContentPointer)
@@ -94,5 +99,7 @@ class TextDomContentPointer(DomContentPointer):
 
 	def __eq__( self, other ):
 		return (super(TextDomContentPointer,self).__eq__( other )
-				and self.contexts == getattr( other, 'contexts', None )
+				# damn tuples and lists are not ever equal to each other
+				# try to compare tuples, keeping in mind the other object may not have one at all
+				and tuple(self.contexts) == tuple(getattr( other, 'contexts', (1,2,3) ))
 				and self.edgeOffset == getattr( other, 'edgeOffset', None ) )
