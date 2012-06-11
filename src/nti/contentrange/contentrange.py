@@ -59,9 +59,9 @@ class ContentPointer(object):
 
 @interface.implementer( interfaces.IDomContentPointer )
 class DomContentPointer(ContentPointer):
-
+	role = None
 	def __eq__( self, other ):
-		return self is other or isinstance( other, DomContentPointer )
+		return self is other or self.role == getattr( other, 'role', None )
 
 DomContentPointer.__init__ = _make_init( DomContentPointer )
 DomContentPointer.__repr__ = make_repr()
@@ -70,12 +70,11 @@ DomContentPointer.__repr__ = make_repr()
 class ElementDomContentPointer(DomContentPointer):
 	elementId = None
 	elementTagName = None
-	type = None
 
 	def __eq__( self, other ):
 		return self is other or (self.elementId == getattr( other, 'elementId', None )
 								 and self.elementTagName == getattr( other, 'elementTagName', None )
-								 and self.type  == getattr( other, 'type', None ))
+								 and self.role  == getattr( other, 'role', None ))
 
 
 @interface.implementer(interfaces.ITextContext)

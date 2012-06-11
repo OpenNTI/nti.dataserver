@@ -27,10 +27,10 @@ class TestContentRange(ConfiguringTestBase):
 		# implement the interface they claim.
 		# The can also be externalized.
 
-		kwargs = { 'start': contentrange.DomContentPointer( elementId='foo', type='start', elementTagName='p' ),
-				   'end': contentrange.DomContentPointer( elementId='foo', type='end', elementTagName='p' ),
-				   'ancestor': contentrange.ElementDomContentPointer( elementId='foo', type='end', elementTagName='p' ),
-				   'elementId': 'baz', 'elementTagName': 'div', 'type': 'start',
+		kwargs = { 'start': contentrange.DomContentPointer( elementId='foo', role='start', elementTagName='p' ),
+				   'end': contentrange.DomContentPointer( elementId='foo', role='end', elementTagName='p' ),
+				   'ancestor': contentrange.ElementDomContentPointer( elementId='foo', role='end', elementTagName='p' ),
+				   'elementId': 'baz', 'elementTagName': 'div', 'role': 'start',
 				   'contextText': 'word', 'contextOffset': 4,
 				   'edgeOffset': 9
 				   }
@@ -64,5 +64,5 @@ class TestContentRange(ConfiguringTestBase):
 	def test_external_validation(self):
 		edc = contentrange.ElementDomContentPointer()
 		with assert_raises(sch_interfaces.RequiredMissing):
-			# The type element is missing and should be required
+			# The 'role' attribute is missing and should be required
 			update_from_external_object( edc, {'elementId': 'baz', 'elementTagName': 'div'}, require_updater=True )
