@@ -36,11 +36,11 @@ class IDomContentPointer(interface.Interface):
 class IElementDomContentPointer(IDomContentPointer):
 	"Identifies a specific Element within a DOM."
 
-	elementId = schema.TextLine( title="The ID of an Element in the DOM. Required" )
-	elementTagName = schema.TextLine( title="The tagname of an Element in the DOM. Required" )
+	elementId = schema.TextLine( title="The ID of an Element in the DOM. Required", min_length=1 )
+	elementTagName = schema.TextLine( title="The tagname of an Element in the DOM. Required", min_length=1 )
 
 class ITextContext(interface.Interface):
-	contextText = schema.Text( title="Contextual text." )
+	contextText = schema.Text( title="Contextual text.", min_length=1 )
 	contextOffset = schema.Int( title="Offset from the start or end of the textContent.",
 								min=0 )
 
@@ -52,6 +52,7 @@ class ITextDomContentPointer(IDomContentPointer):
 	ancestor = schema.Object( IElementDomContentPointer,
 							  title="Closest referencable element containing the context; should have type==ancestor." )
 	contexts = schema.List( title="At least size 1, plus additional contexts.",
+							min_length=1,
 							value_type=schema.Object(ITextContext) )
 
 	edgeOffset = schema.Int( title="Offset from the start or end of the textContent.",
