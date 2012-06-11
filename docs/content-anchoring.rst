@@ -137,7 +137,7 @@ ElementDomContentPointer
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 An ``ElementDomContentPointer`` adds no information to the abstract base
-class. Its purpose is to identify a node that things can be anchored
+class ``DOMContentPointer``. Its purpose is to identify a node that things can be anchored
 relative to. This type of anchor is most often seen as the ``ancestor``
 portion of an ``ContentRangeDescription``.
 
@@ -150,7 +150,7 @@ plus some context information used to traverse to the anchored text:
 .. code-block:: cpp
 
 	//Adds redundant information about text content
-	class TextDomContentPointer : ContentPointer {
+	class TextDomContentPointer : DOMContentPointer {
 		TextContext[] contexts; //An array of TextContext
 		                          //objects providing context for this anchor
 		int edgeOffset; //The offset from the start or end of content_text of the edge
