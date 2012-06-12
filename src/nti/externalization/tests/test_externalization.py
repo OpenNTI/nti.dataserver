@@ -18,6 +18,7 @@ from nti.tests import has_attr
 
 import nti.externalization
 from nti.externalization.persistence import getPersistentState
+from nti.externalization import externalization
 from nti.externalization.oids import toExternalOID, fromExternalOID
 
 from nti.externalization.externalization import EXT_FORMAT_PLIST, EXT_FORMAT_JSON, to_external_representation, toExternalObject, catch_replace_action
@@ -96,6 +97,10 @@ class TestFunctions(ConfiguringTestBase):
 		assert_that( toExternalObject( C() ), has_entry( 'Class', 'ExternalC' ) )
 
 	def test_broken(self):
+		# Without the devmode hooks
+		gsm = component.getGlobalSiteManager()
+		gsm.unregisterAdapter( factory=externalization._DevmodeNonExternalizableObjectReplacer, required=() )
+
 		assert_that( toExternalObject( Broken() ),
 					 has_entry( "Class", "NonExternalizableObject" ) )
 

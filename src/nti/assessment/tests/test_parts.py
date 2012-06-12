@@ -4,6 +4,7 @@ from __future__ import print_function, unicode_literals
 from hamcrest import assert_that
 from nti.tests import ConfiguringTestBase, is_true, is_false
 from nti.tests import verifiably_provides
+from nti.externalization.tests import externalizes
 from nose.tools import assert_raises
 
 from zope import interface
@@ -33,6 +34,7 @@ class TestMultipleChoicePart(ConfiguringTestBase):
 
 	def test_part_provides(self):
 		assert_that( parts.QMultipleChoicePart(), verifiably_provides( interfaces.IQMultipleChoicePart ) )
+		assert_that( parts.QMultipleChoicePart(), externalizes() )
 
 		# A bad solution type
 		part = parts.QMultipleChoicePart( solutions=("foo",) )
@@ -69,6 +71,7 @@ class TestMatchingPart(ConfiguringTestBase):
 
 		solution = solutions.QMatchingSolution( solution_keys )
 		part = parts.QMatchingPart( labels=labels, values=values, solutions=(solution,) )
+		assert_that( part, externalizes() )
 
 		assert_that( part.grade( solution_keys ), is_true() )
 		assert_that( part.grade( solution_nums ), is_true() )

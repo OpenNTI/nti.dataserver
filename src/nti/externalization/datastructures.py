@@ -249,7 +249,7 @@ class InterfaceObjectIO(AbstractDynamicObjectIO):
 		return self._ext_self
 
 	def _ext_all_possible_keys(self):
-		return list(self._iface)
+		return [n for n in self._iface.names(all=True) if not interface.interfaces.IMethod.providedBy(self._iface[n])]
 
 	def _ext_getattr( self, ext_self, k ):
 		# TODO: Should this be directed through IField.get?

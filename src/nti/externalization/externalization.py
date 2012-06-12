@@ -151,6 +151,17 @@ def DefaultNonExternalizableReplacer( obj ):
 	result = _NonExternalizableObject( Class='NonExternalizableObject', InternalType=str(type(obj)) )
 	return result
 
+
+def DevmodeNonExternalizableObjectReplacer( obj ):
+	"""
+	When devmode is active, non-externalizable objects raise an exception.
+	"""
+	raise TypeError( "Asked to externalize non-externalizable object %s, %s", type(obj), obj )
+
+@interface.implementer(INonExternalizableReplacer)
+def _DevmodeNonExternalizableObjectReplacer( obj ):
+	return DevmodeNonExternalizableObjectReplacer
+
 def stripNoneFromExternal( obj ):
 	""" Given an already externalized object, strips None values. """
 	if isinstance( obj, list ) or isinstance(obj, tuple):

@@ -118,19 +118,26 @@ class AbstractTestBase(zope.testing.cleanup.CleanUp, unittest.TestCase):
 
 
 from zope import component
-from zope.configuration import xmlconfig
+from zope.configuration import xmlconfig, config
 from zope.component.hooks import setHooks, resetHooks
 
 class ConfiguringTestBase(AbstractTestBase):
 	set_up_packages = ()
+	features = ('devmode',)
 	def setUp( self ):
 		super(ConfiguringTestBase,self).setUp()
 		setHooks()
 		# zope.component.globalregistry conveniently adds
 		# a zope.testing.cleanup.CleanUp to reset the globalSiteManager
-		for i in self.set_up_packages:
-			__traceback_info__ = (i, self)
-			xmlconfig.file( 'configure.zcml', package=i )
+		if self.set_up_packages:
+			context = config.ConfigurationMachine()
+			xmlconfig.registerCommonDirectives( context )
+			for feature in self.features:
+				context.provideFeature( feature )
+
+			for i in self.set_up_packages:
+				__traceback_info__ = (i, self)
+				context = xmlconfig.file( 'configure.zcml', package=i, context=context )
 
 	def tearDown( self ):
 		resetHooks()
