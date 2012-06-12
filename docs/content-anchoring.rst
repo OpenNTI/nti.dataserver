@@ -366,7 +366,7 @@ If anchor ``role`` is ``start`` this offset is from the right of
 textContent.  If anchor ``role`` is ``end`` this offset is from the
 left of ``textContext``.
 
-.. nate::
+.. note::
 	A word is a whitespace delimited set of characters.
 
 Example 1:
