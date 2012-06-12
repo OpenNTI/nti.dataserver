@@ -35,7 +35,7 @@ class ContentRangeDescription(object):
 	"""
 	__external_can_create__ = True
 	def __eq__( self, other ):
-		return self is other or isinstance( self, ContentRangeDescription )
+		return self is other or isinstance( other, ContentRangeDescription )
 
 ContentRangeDescription.__init__ = _make_init( ContentRangeDescription )
 ContentRangeDescription.__repr__ = make_repr()

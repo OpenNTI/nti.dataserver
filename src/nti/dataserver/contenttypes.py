@@ -28,6 +28,7 @@ from nti.dataserver import users
 
 from zope import interface
 from zope.deprecation import deprecate
+from zope import schema
 
 def _get_entity( username, dataserver=None ):
 	return users.Entity.get_entity( username, dataserver=dataserver )
@@ -183,30 +184,27 @@ class _HighlightBWC(object):
 
 	top = left = startOffset = endOffset = property( deprecate( "Use the applicableRange" )( lambda self: 0 ) )
 
-	startHighlightedFullText = startHighlightedText = endHighlightedText = endHighlightedFullText = property( deprecate( "Use the highlightedText" )( lambda self: getattr( self, 'highlightedText' ) ) )
+	highlightedText = startHighlightedFullText = startHighlightedText = endHighlightedText = endHighlightedFullText = property( deprecate( "Use the selectedText" )( lambda self: getattr( self, 'selectedText' ) ) )
 
 	startXpath = startAnchor = endAnchor = endXpath = anchorPoint = anchorType = property( deprecate( "Use the applicableRange" )( lambda self: '' ) )
 
-
-class Highlight(_UserContentRoot,ExternalizableInstanceDict, _HighlightBWC):
+@interface.implementer(nti_interfaces.IZContained, nti_interfaces.ISelectedRange)
+class SelectedRange(_UserContentRoot,ExternalizableInstanceDict):
 	# See comments above about being IZContained. We add it here to minimize the impact
-	interface.implements( nti_interfaces.IZContained, nti_interfaces.IHighlight )
+
 	_excluded_in_ivars_ = { 'AutoTags' } | ExternalizableInstanceDict._excluded_in_ivars_
 
-	style = 'plain'
-	highlightedText = ''
+	selectedText = ''
 	applicableRange = None
 	tags = ()
 	AutoTags = ()
 
 	__parent__ = None
 
-
 	def __init__( self ):
-		super(Highlight,self).__init__()
+		super(SelectedRange,self).__init__()
 		# To get in the dict for externalization
-		self.style = 'plain'
-		self.highlightedText = ''
+		self.selectedText = ''
 		self.applicableRange = None
 
 		# Tags. It may be better to use objects to represent
@@ -215,17 +213,14 @@ class Highlight(_UserContentRoot,ExternalizableInstanceDict, _HighlightBWC):
 		self.tags = ()
 		self.AutoTags = ()
 
-	def _get_name(self):
-		return self.id
-	def _set_name(self,name):
-		self.id = name
-	__name__ = property(_get_name,_set_name)
+	__name__ = property(lambda self: getattr( self, 'id'), lambda self, name: setattr( self, 'id', name ))
 
 
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
-		super(Highlight,self).updateFromExternalObject( parsed, *args, **kwargs )
-		if 'style' in parsed:
-			nti_interfaces.IHighlight['style'].validate( parsed['style'] )
+		super(SelectedRange,self).updateFromExternalObject( parsed, *args, **kwargs )
+		nti_interfaces.ISelectedRange['applicableRange'].validate( self.applicableRange )
+		nti_interfaces.ISelectedRange['selectedText'].validate( self.selectedText )
+
 		if 'tags' in parsed:
 			# we lowercase and sanitize tags. Our sanitization here is really
 			# cheap and discards html symbols
@@ -239,7 +234,24 @@ class Highlight(_UserContentRoot,ExternalizableInstanceDict, _HighlightBWC):
 				del self.tags[:]
 				self.tags.extend( temp_tags )
 
+@interface.implementer(nti_interfaces.IHighlight)
+class Highlight(SelectedRange, _HighlightBWC):
 
+	style = 'plain'
+
+	def __init__( self ):
+		super(Highlight,self).__init__()
+		# To get in the dict for externalization
+		self.style = 'plain'
+
+	def updateFromExternalObject( self, parsed, *args, **kwargs ):
+		super(Highlight,self).updateFromExternalObject( parsed, *args, **kwargs )
+		if 'style' in parsed:
+			nti_interfaces.IHighlight['style'].validate( parsed['style'] )
+
+@interface.implementer(nti_interfaces.IRedaction)
+class Redaction(SelectedRange):
+	pass
 
 import html5lib
 from html5lib import treewalkers, serializer, treebuilders
