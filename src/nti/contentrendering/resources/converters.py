@@ -13,6 +13,7 @@ import subprocess
 import time
 from StringIO import StringIO
 import codecs
+import shutil
 import tempfile
 
 from zope import interface
@@ -250,7 +251,13 @@ class AbstractDocumentCompilerDriver(object):
 		with codecs.open(filename,'w',self.encoding ) as out:
 			out.write(self.source().read())
 
-		self._run_compiler_on_file( filename )
+		try:
+			self._run_compiler_on_file( filename )
+		except:
+			__traceback_info__ = self.source().getvalue()
+			# TODO: See Imagers/__init__.py. Can we get log file info here?
+			shutil.rmtree( tempdir, True ) # Try to clean up
+			raise
 
 		return tempdir
 
