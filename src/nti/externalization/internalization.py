@@ -52,15 +52,17 @@ def _search_for_external_factory( typeName ):
 	result = None
 
 	for module_name in LEGACY_FACTORY_SEARCH_MODULES:
-		module = sys.modules.get( module_name )
-		if not module:
+		# Support registering both names and actual module objects
+		mod_dict = getattr( module_name, '__dict__', None )
+		module = sys.modules.get( module_name ) if mod_dict is None else module_name
+		if module is None:
 			try:
 				module = resolve( module_name )
 			except (AttributeError,ImportError):
 				# This is a programming error, so that's why we log it
 				logger.exception( "Failed to resolve legacy factory search module %s", module_name )
 
-		result = _find_class_in_dict( className, getattr( module, '__dict__', _EMPTY_DICT ) )
+		result = _find_class_in_dict( className, getattr( module, '__dict__', _EMPTY_DICT ) if mod_dict is None else mod_dict )
 		if result:
 			break
 

@@ -821,10 +821,23 @@ class _UGDModifyViewBase(object):
 			ext_format = 'plist'
 		try:
 			if ext_format == 'plist':
-				value = plistlib.readPlistFromString( value )
+				# We're officially dropping support for plist values.
+				# primarily due to the lack of support for null values, and
+				# unsure about encoding issues
+				raise hexc.HTTPUnsupportedMediaType('XML no longer supported.')
+				#value = plistlib.readPlistFromString( value )
 			else:
+				# We need all string values to be unicode objects. simplejson (the usual implementation
+				# we get from anyjson) is different from the built-in json and returns strings
+				# that can be represented as ascii as str objects if the input was a bytestring.
+				# The only way to get it to return unicode is if the input is unicode
+				if json.implementation.name == 'simplejson' and type(value) == str:
+					value = unicode(value, self.request.charset)
 				value = json.loads(value)
 			return self._transformInput(  value )
+		except hexc.HTTPException:
+			logger.exception( "Failed to parse/transform value %s %s", ext_format, value )
+			raise
 		except Exception:
 			# Sadly, there's not a good exception list to catch.
 			# plistlib raises undocumented exceptions from xml.parsers.expat
