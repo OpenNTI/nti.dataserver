@@ -218,8 +218,11 @@ class SelectedRange(_UserContentRoot,ExternalizableInstanceDict):
 
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
 		super(SelectedRange,self).updateFromExternalObject( parsed, *args, **kwargs )
-		nti_interfaces.ISelectedRange['applicableRange'].validate( self.applicableRange )
-		nti_interfaces.ISelectedRange['selectedText'].validate( self.selectedText )
+		for k in ('applicableRange', 'selectedText'):
+			value = getattr( self, k )
+			__traceback_info__ = value
+			nti_interfaces.ISelectedRange[k].validate( value )
+
 
 		if 'tags' in parsed:
 			# we lowercase and sanitize tags. Our sanitization here is really
