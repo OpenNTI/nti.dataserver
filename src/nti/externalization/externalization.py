@@ -267,11 +267,13 @@ def to_standard_external_dictionary( self, mergeFrom=None, name=_ex_name_marker,
 				   fields=(StandardInternalFields.CREATED_TIME,) )
 
 
-	if hasattr( self, '__external_class_name__' ):
-		result[StandardExternalFields.CLASS] = getattr( self, '__external_class_name__' )
-	elif self.__class__.__module__ not in ( 'nti.externalization', 'nti.externalization.datastructures', 'nti.externalization.persistence' ) \
-		   and not self.__class__.__name__.startswith( '_' ):
-		result[StandardExternalFields.CLASS] = self.__class__.__name__
+	if StandardExternalFields.CLASS not in result:
+		cls = getattr(self, '__external_class_name__', None)
+		if cls:
+			result[StandardExternalFields.CLASS] = cls
+		elif self.__class__.__module__ not in ( 'nti.externalization', 'nti.externalization.datastructures', 'nti.externalization.persistence' ) \
+			   and not self.__class__.__name__.startswith( '_' ):
+			result[StandardExternalFields.CLASS] = self.__class__.__name__
 
 	_choose_field( result, self, StandardExternalFields.CONTAINER_ID,
 				   fields=(StandardInternalFields.CONTAINER_ID,) )

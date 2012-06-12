@@ -218,6 +218,7 @@ class SelectedRange(_UserContentRoot,ExternalizableInstanceDict):
 
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
 		super(SelectedRange,self).updateFromExternalObject( parsed, *args, **kwargs )
+		__traceback_info__ = parsed
 		for k in ('applicableRange', 'selectedText'):
 			value = getattr( self, k )
 			__traceback_info__ = value

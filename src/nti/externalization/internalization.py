@@ -17,6 +17,8 @@ from zope.dottedname.resolve import resolve
 
 from . import interfaces
 
+logger = __import__('logging').getLogger(__name__)
+
 LEGACY_FACTORY_SEARCH_MODULES = set()
 
 def register_legacy_search_module( module_name ):
@@ -27,6 +29,16 @@ def register_legacy_search_module( module_name ):
 	if module_name:
 		LEGACY_FACTORY_SEARCH_MODULES.add( module_name )
 
+_EMPTY_DICT = {}
+def _find_class_in_dict( className, mod_dict ):
+	clazz = mod_dict.get( className )
+	if not clazz and className.lower() == className:
+		# case-insensitive search of loaded modules if it was lower case.
+		for k in mod_dict:
+			if k.lower() == className:
+				clazz = mod_dict[k]
+				break
+	return clazz if getattr( clazz, '__external_can_create__', False ) else None
 
 def _search_for_external_factory( typeName ):
 	"""
@@ -39,25 +51,16 @@ def _search_for_external_factory( typeName ):
 	className = typeName[0:-1] if typeName.endswith('s') else typeName
 	result = None
 
-	def find_class_in( mod ):
-		clazz = mod.get( className )
-		if not clazz and className.lower() == className:
-			# case-insensitive search of loaded modules if it was lower case.
-			for k in mod:
-				if k.lower() == className:
-					clazz = mod[k]
-					break
-		return clazz if getattr( clazz, '__external_can_create__', False ) else None
-
 	for module_name in LEGACY_FACTORY_SEARCH_MODULES:
 		module = sys.modules.get( module_name )
 		if not module:
 			try:
-				module = resolve( module )
-			except (AttributeError,ImportError): pass
+				module = resolve( module_name )
+			except (AttributeError,ImportError):
+				# This is a programming error, so that's why we log it
+				logger.exception( "Failed to resolve legacy factory search module %s", module_name )
 
-		if hasattr( module, '__dict__' ):
-			result = find_class_in( module.__dict__ )
+		result = _find_class_in_dict( className, getattr( module, '__dict__', _EMPTY_DICT ) )
 		if result:
 			break
 

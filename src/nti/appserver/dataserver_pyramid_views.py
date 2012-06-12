@@ -857,12 +857,13 @@ class _UGDModifyViewBase(object):
 
 	def updateContentObject( self, contentObject, externalValue, set_id=False ):
 		try:
+			__traceback_info__ = contentObject, externalValue
 			containedObject = self.dataserver.update_from_external_object( contentObject, externalValue )
 		except (ValueError,AssertionError,interface.Invalid,TypeError,KeyError):
-			exc_info = sys.exc_info()
 			# These are all 'validation' errors. Raise them as unprocessable entities
 			# interface.Invalid, in particular, is the root class of zope.schema.ValidationError
 			logger.exception( "Failed to update content object, bad input" )
+			exc_info = sys.exc_info()
 			raise HTTPUnprocessableEntity, exc_info[1], exc_info[2]
 		# If they provided an ID, use it if we can and we need to
 		if set_id and StandardExternalFields.ID in externalValue \

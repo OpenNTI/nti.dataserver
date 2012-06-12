@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function, unicode_literals
 
-from hamcrest import assert_that
+from hamcrest import assert_that, has_entry
 from nti.tests import ConfiguringTestBase, is_true, is_false
 from nti.tests import verifiably_provides
 from nti.externalization.tests import externalizes
@@ -71,7 +71,8 @@ class TestMatchingPart(ConfiguringTestBase):
 
 		solution = solutions.QMatchingSolution( solution_keys )
 		part = parts.QMatchingPart( labels=labels, values=values, solutions=(solution,) )
-		assert_that( part, externalizes() )
+		assert_that( part, externalizes( has_entry( 'Class', 'QMatchingPart') ) ) # TODO: This name is not what we want
+
 
 		assert_that( part.grade( solution_keys ), is_true() )
 		assert_that( part.grade( solution_nums ), is_true() )
