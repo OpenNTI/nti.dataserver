@@ -14,19 +14,27 @@ import hamcrest
 
 class Externalizes(BaseMatcher):
 
-	def __init__( self ):
+	def __init__( self, matcher=None ):
 		super(Externalizes,self).__init__( )
+		self.matcher = matcher
 
 	def _matches( self, item ):
 		ext_obj = toExternalObject( item )
-		return ext_obj is not None and not INonExternalizableReplacement.providedBy( ext_obj )
+		result = ext_obj is not None and not INonExternalizableReplacement.providedBy( ext_obj )
+		if result and self.matcher is not None:
+			result = self.matcher.matches( ext_obj )
+		return result
 
 	def describe_to( self, description ):
 		description.append_text( 'object that can be externalized' )
+		if self.matcher is not None:
+			description.append_text( ' to ' ).append_description_of( self.matcher )
 
 
-def externalizes( ):
+def externalizes( matcher=None ):
 	"""
-	Checks that an object can be externalized; doesn't check its contents.
+	Checks that an object can be externalized. You can pass
+	a matcher (such as all_of, any_of, has_entry) to be used to check
+	the externalized object.
 	"""
-	return Externalizes( )
+	return Externalizes( matcher=matcher )
