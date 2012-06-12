@@ -185,7 +185,7 @@ class ExternalizableInstanceDict(AbstractDynamicObjectIO):
 	"""
 
 	# TODO: there should be some better way to customize this if desired (an explicit list)
-	# TODO: Play well with __slots__
+	# TODO: Play well with __slots__? ZODB supports slots, but doesn't recommend them
 	# TODO: This won't evolve well. Need something more sophisticated,
 	# probably a meta class.
 
@@ -224,18 +224,26 @@ class InterfaceObjectIO(AbstractDynamicObjectIO):
 	implements.
 
 	(TODO: In the future extend this to multiple, non-overlapping interfaces, and better
-	interface detection.)
+	interface detection (see :class:`ModuleScopedInterfaceObjectIO` for a limited version of this.)
 	"""
 
-	def __init__( self, ext_self, iface_upper_bound ):
+	def __init__( self, ext_self, iface_upper_bound=None ):
 		super(InterfaceObjectIO, self).__init__( )
 		self._ext_self = ext_self
-		self._iface = iface_upper_bound
+		# TODO: Should we cache the schema we use for a particular type?
+		self._iface = self._ext_find_schema( ext_self, iface_upper_bound )
+
+	def _ext_find_schema( self, ext_self, iface_upper_bound ):
+		_iface = iface_upper_bound
 		# Search for the most derived version of the interface
 		# this object implements and use that.
 		for iface in interface.providedBy( ext_self ):
-			if iface.isOrExtends( self._iface ):
-				self._iface = iface
+			if iface.isOrExtends( _iface ):
+				_iface = iface
+		return _iface
+
+	def _ext_schemas_to_consider( self, ext_self ):
+		return interface.providedBy( ext_self )
 
 	def _ext_replacement( self ):
 		return self._ext_self
@@ -266,3 +274,35 @@ class InterfaceObjectIO(AbstractDynamicObjectIO):
 		errors = schema.getValidationErrors( self._iface, self._ext_self )
 		if errors:
 			raise errors[0][1]
+
+
+class ModuleScopedInterfaceObjectIO(InterfaceObjectIO):
+	"""
+	Only considers the interfaces provided within a given module (usually declared
+	as a class attribute) when searching for the schema to use to externalize an object;
+	the most derived version of interfaces within that module will be used.
+
+	Suitable for use when all the externalizable fields of interest are declared by an
+	interface within a module, and an object does not implement two unrelated interfaces
+	from the same module.
+	"""
+
+	_ext_search_module = None
+
+	def _ext_find_schema( self, ext_self, iface_upper_bound ):
+		# If the upper bound is given, then let the super class handle it all.
+		# Presumably the user has given the correct branch to search.
+		if iface_upper_bound is not None:
+			return super(ModuleScopedInterfaceObjectIO,self)._ext_find_schema( ext_self, iface_upper_bound )
+
+		most_derived = super(ModuleScopedInterfaceObjectIO,self)._ext_find_schema( ext_self, interface.Interface )
+		# In theory, this is now the most derived interface.
+		# If we have a tree that is non-linear, though, it may not be.
+		# In that case, we are not suitable for use with this object
+		for iface in self._ext_schemas_to_consider( ext_self ):
+			if not most_derived.isOrExtends( iface ):
+				raise TypeError( "Non-linear interface tree implemented by %s in %s: %s is not %s" % (type(ext_self),self._ext_search_module, most_derived, iface))
+		return most_derived
+
+	def _ext_schemas_to_consider( self, ext_self ):
+		return (x for x in interface.providedBy( ext_self ) if x.__module__ == self._ext_search_module.__name__)
