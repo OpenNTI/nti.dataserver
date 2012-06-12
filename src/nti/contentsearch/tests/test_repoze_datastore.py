@@ -7,10 +7,10 @@ from nti.contentsearch._repoze_index import create_messageinfo_catalog
 
 from nti.contentsearch.tests import ConfiguringTestBase
 
-from hamcrest import assert_that
-from hamcrest import is_not
 from hamcrest import is_
+from hamcrest import is_not
 from hamcrest import has_length
+from hamcrest import assert_that
 
 class TestDataStore(ConfiguringTestBase):
 
