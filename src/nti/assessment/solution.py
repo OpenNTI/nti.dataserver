@@ -19,6 +19,8 @@ class QSolution(Persistent):
 
 	_part_type = parts.QPart
 
+	weight = 1.0
+
 	def grade( self, response ):
 		"""
 		Convenience method for grading solutions that can be graded independent

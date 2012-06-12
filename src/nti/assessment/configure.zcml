@@ -4,6 +4,8 @@
 	<include package="zope.component" />
 	<include package="zope.location" />
 
+	<include package="nti.externalization" />
+
 	<!-- Response types -->
 
 	<adapter factory=".response.QTextResponse"
@@ -54,5 +56,14 @@
 			 provides=".interfaces.IQMatchingPartGrader" />
 
 
+	<!-- Externalization -->
+	<adapter factory=".externalization._AssessmentInternalObjectIO"
+			 for=".interfaces.IQPart" />
+	<adapter factory=".externalization._AssessmentInternalObjectIO"
+			 for=".interfaces.IQSolution" />
+	<adapter factory=".externalization._AssessmentInternalObjectIO"
+			 for=".interfaces.IQuestion" />
+	<adapter factory=".externalization._AssessmentInternalObjectIO"
+			 for=".interfaces.IQuestionSet" />
 
 </configure>

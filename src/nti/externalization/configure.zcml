@@ -1,11 +1,13 @@
 <!-- -*- mode: nxml -*- -->
-<configure xmlns="http://namespaces.zope.org/zope">
+<configure xmlns="http://namespaces.zope.org/zope"
+		   xmlns:zcml="http://namespaces.zope.org/zcml">
 	<include package="zope.component" />
 
 
 	<adapter for=""
 			 provides=".interfaces.ILocatedExternalMapping"
 			 factory=".datastructures.LocatedExternalDict" />
+
 	<adapter for=""
 			 provides=".interfaces.ILocatedExternalSequence"
 			 factory=".datastructures.LocatedExternalList" />
@@ -14,5 +16,8 @@
 			 provides=".interfaces.ILocatedExternalSequence"
 			 factory=".datastructures.LocatedExternalList" />
 
+	<adapter for=""
+			 factory=".externalization._DevmodeNonExternalizableObjectReplacer"
+			 zcml:condition="have devmode" />
 
 </configure>
