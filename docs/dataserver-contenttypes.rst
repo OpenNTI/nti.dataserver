@@ -211,10 +211,18 @@ These are definitions related to content that a user can generate.
    // highlight or note, by sending only the 'sharedWith' field and
    // leaving all other fields absent.
 
-   struct Highlight : Bookmark {
-        string highlightedText; //As created by the DOM Range object's string value
-        string style; // one of 'redaction' or 'plain'. If missing, assume 'plain'
+   //Created from a DOM Range indicating a user-selection.
+   //NOTE: Does not currently exist as a creatable entity, only
+   //an abstract concept.
+   struct SelectedRange : Bookmark {
+        string selectedText; //Populated from the Range object's string value: http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-range-stringifier
    }
+
+   struct Highlight : SelectedRange {
+        string style; //Variants of highlights. Currently, 'plain' required
+   }
+
+   struct Redaction : SelectedRange {}
 
    mixin Threadable {
 	   oid_t inReplyTo;

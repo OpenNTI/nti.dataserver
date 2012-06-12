@@ -29,6 +29,7 @@ from nti.dataserver import users, classes, providers
 from nti.ntiids import ntiids
 from nti.dataserver.datastructures import ContainedMixin
 from nti.externalization.oids import to_external_ntiid_oid
+from nti.contentrange import contentrange
 from nti.dataserver import contenttypes
 from nti.dataserver import datastructures
 from nti.dataserver import interfaces as nti_interfaces
@@ -399,6 +400,7 @@ class TestApplication(ApplicationTestBase):
 			user = self._create_user()
 
 			n = contenttypes.Note()
+			n.applicableRange = contentrange.ContentRangeDescription()
 			n.containerId = 'tag:nti:foo'
 			user.addContainedObject( n )
 
@@ -418,6 +420,7 @@ class TestApplication(ApplicationTestBase):
 			user = self._create_user()
 
 			n = contenttypes.Note()
+			n.applicableRange = contentrange.ContentRangeDescription()
 			n.containerId = 'tag:nti:foo'
 			user.addContainedObject( n )
 			assert_that( n.sharingTargets, is_( () ) )

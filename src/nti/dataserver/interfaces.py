@@ -484,12 +484,20 @@ class ICanvas(IShareableModeledContent, IThreadable):
 		Adds the shape to the top of the list of shapes.
 		"""
 
+class ISelectedRange(IShareableModeledContent,IThreadable,IAnchoredRepresentation):
+	"""
+	A selected range of content that the user wishes to remember. This interface
+	attaches no semantic meaning to the selection; subclasses will do that.
+	"""
+	# TODO: A field class that handles HTML validation/stripping?
+	selectedText = schema.Text( title="The string representation of the DOM Range the user selected." )
+
 IHIGHLIGHT_STYLE_VOCABULARY = schema.vocabulary.SimpleVocabulary(
 	[schema.vocabulary.SimpleTerm(_x)
 	 for _x
-	 in ('redaction', 'plain',)])
+	 in ('plain',)])
 
-class IHighlight(IShareableModeledContent,IThreadable,IAnchoredRepresentation):
+class IHighlight(ISelectedRange):
 	"""
 	A highlighted portion of content the user wishes to remember.
 	"""
@@ -497,6 +505,12 @@ class IHighlight(IShareableModeledContent,IThreadable,IAnchoredRepresentation):
 		title=u'The style of the highlight',
 		vocabulary=IHIGHLIGHT_STYLE_VOCABULARY,
 		default="plain")
+
+class IRedaction(ISelectedRange):
+	"""
+	A portion of the content the user wishes to ignore or 'un-publish'.
+	TODO: Define replacement content.
+	"""
 
 
 class INote(IShareableModeledContent,IThreadable,IAnchoredRepresentation):

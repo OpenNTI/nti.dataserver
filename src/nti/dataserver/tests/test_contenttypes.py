@@ -10,7 +10,7 @@ import unittest
 
 
 from nti.dataserver import contenttypes
-from nti.dataserver.contenttypes import Highlight, Note, Canvas, CanvasShape, CanvasAffineTransform, CanvasCircleShape, CanvasPolygonShape, CanvasPathShape, CanvasUrlShape, CanvasTextShape
+from nti.dataserver.contenttypes import Redaction, Highlight as _Highlight, Note as _Note, Canvas, CanvasShape, CanvasAffineTransform, CanvasCircleShape, CanvasPolygonShape, CanvasPathShape, CanvasUrlShape, CanvasTextShape
 
 from nti.externalization.oids import to_external_ntiid_oid
 
@@ -59,6 +59,16 @@ def test_normalize_html_text_to_par():
 	exp =  u'<html><body><p style="text-align: left;"><span>The pad replies to my note.</span></p><p style="text-align: left;">The server edits it.</p></body></html>'
 	_check_sanitized( html, exp )
 
+from nti.contentrange.contentrange import ContentRangeDescription
+def Note():
+	n = _Note()
+	n.applicableRange = ContentRangeDescription()
+	return n
+
+def Highlight():
+	h = _Highlight()
+	h.applicableRange = ContentRangeDescription()
+	return h
 
 class HighlightTest(mock_dataserver.ConfiguringTestBase):
 
@@ -85,11 +95,25 @@ class HighlightTest(mock_dataserver.ConfiguringTestBase):
 		highlight = Highlight()
 		assert_that( highlight.style, is_( 'plain' ) )
 
-		highlight.updateFromExternalObject( {'style':'redaction'} )
-		assert_that( highlight.style, is_( 'redaction' ) )
+		with self.assertRaises(zope.schema.interfaces.ConstraintNotSatisfied):
+			highlight.updateFromExternalObject( {'style':'redaction'} )
+
 
 		with self.assertRaises(zope.schema.interfaces.ConstraintNotSatisfied):
 			highlight.updateFromExternalObject( {'style':'F00B4R'} )
+
+	def test_redaction(self):
+		redaction = Redaction()
+
+		with self.assertRaises(zope.schema.interfaces.RequiredMissing):
+			redaction.updateFromExternalObject( {'unknownkey': 'foo'} )
+
+		redaction.updateFromExternalObject( {'applicableRange': ContentRangeDescription(), 'selectedText': u'foo' } )
+		assert_that( redaction.toExternalObject(), has_entry( 'Class', 'Redaction' ) )
+		with self.assertRaises(zope.schema.interfaces.RequiredMissing):
+			redaction.updateFromExternalObject( {'selectedText': None} )
+		with self.assertRaises(zope.schema.interfaces.WrongType):
+			redaction.updateFromExternalObject( {'selectedText': b''} )
 
 
 class NoteTest(mock_dataserver.ConfiguringTestBase):
@@ -270,6 +294,7 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 
 	@WithMockDS
 	def test_update_sharing_only( self ):
+
 		n = Note()
 		n.body = ['This is the body']
 
