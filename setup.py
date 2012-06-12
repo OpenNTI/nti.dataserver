@@ -62,7 +62,7 @@ setup(
 		# 'pylibmc', # for memcached support
 		# 'MySQL-python', # mysql adapter
 		# 'RelStorage',
-		'anyjson',
+		'anyjson >= 0.3.1',
 		'boto >= 2.4.1', # amazon
 		'brownie',
 		'coverage',
@@ -103,7 +103,7 @@ setup(
 		'scss',
 		'setproctitle',
 		'setuptools',
-		'simplejson',
+		'simplejson >= 2.5.2',
 		'sympy == 0.7.1', # sympy-docs-html-0.7.1 is currently greater
 		'six',
 		'slimit',
