@@ -22,7 +22,7 @@ from nti.contentsearch.common import (	WORD_HIGHLIGHT, NGRAM_HIGHLIGHT)
 from nti.contentsearch.common import (	NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
 										SNIPPET, HIT, ID, BODY, TARGET_OID, OID)
 
-from nti.contentsearch.common import (	body_, highlightedText_, last_modified_, content_)
+from nti.contentsearch.common import (	body_, selectedText_, last_modified_, content_)
 
 
 import logging
@@ -145,7 +145,7 @@ class _HighlightSearchHit(_SearchHit):
 	
 	def _supplement(self, data):
 		super(_HighlightSearchHit, self)._supplement(data)
-		text = get_content(get_attr(data, [highlightedText_]))
+		text = get_content(get_attr(data, [selectedText_]))
 		data[SNIPPET] = text
 	
 class _NoteSearchHit(_SearchHit):
