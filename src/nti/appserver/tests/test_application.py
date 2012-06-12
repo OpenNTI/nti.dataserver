@@ -147,18 +147,18 @@ class TestApplication(ApplicationTestBase):
 			containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
 			data = json.serialize( { 'Class': 'Highlight',
 									 'ContainerId': containerId,
-									 'applicableRange': {'Class': 'DomContentRangeDescription'}} )
+									 'applicableRange': {'Class': 'ContentRangeDescription'}} )
 
 		path = '/dataserver2/users/sjohnson@nextthought.com/Pages/'
 		res = testapp.post( path, data, extra_environ=self._make_extra_environ() )
 		assert_that( res.status_int, is_( 201 ) )
-		assert_that( res.body, contains_string( '"Class": "DomContentRangeDescription"' ) )
+		assert_that( res.body, contains_string( '"Class": "ContentRangeDescription"' ) )
 		assert_that( res.headers, has_entry( 'Location', contains_string( 'http://localhost/dataserver2/users/sjohnson%40nextthought.com/Objects/tag:nextthought.com,2011-10:sjohnson@nextthought.com-OID' ) ) )
 		assert_that( res.headers, has_entry( 'Content-Type', contains_string( 'application/vnd.nextthought.highlight+json' ) ) )
 
 		path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + containerId + ')/UserGeneratedData'
 		res = testapp.get( path, extra_environ=self._make_extra_environ())
-		assert_that( res.body, contains_string( '"Class": "DomContentRangeDescription"' ) )
+		assert_that( res.body, contains_string( '"Class": "ContentRangeDescription"' ) )
 
 
 		# The pages collection should have complete URLs
@@ -182,12 +182,12 @@ class TestApplication(ApplicationTestBase):
 		containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
 		data = json.serialize( { 'Class': 'Highlight',
 								 'ContainerId': containerId,
-								 'applicableRange': {'Class': 'DomContentRangeDescription'}} )
+								 'applicableRange': {'Class': 'ContentRangeDescription'}} )
 
 		path = '/dataserver2/users/sjohnson@nextthought.com/Pages/'
 		res = testapp.post( path, data, extra_environ=self._make_extra_environ() )
 		assert_that( res.status_int, is_( 201 ) )
-		assert_that( res.body, contains_string( '"Class": "DomContentRangeDescription"' ) )
+		assert_that( res.body, contains_string( '"Class": "ContentRangeDescription"' ) )
 		assert_that( res.headers, has_entry( 'Location', contains_string( 'http://localhost/dataserver2/users/sjohnson%40nextthought.com/Objects/tag:nextthought.com,2011-10:sjohnson@nextthought.com-OID' ) ) )
 		assert_that( res.headers, has_entry( 'Content-Type', contains_string( 'application/vnd.nextthought.highlight+json' ) ) )
 

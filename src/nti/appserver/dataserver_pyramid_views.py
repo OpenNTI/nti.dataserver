@@ -72,6 +72,11 @@ class HTTPUnprocessableEntity(hexc.HTTPForbidden):
 	title = "Unprocessable Entity"
 	explanation = ('The client sent a well-formed but invalid request body.')
 
+	def __str__( self ):
+		# The super-class simply echoes back self.detail, which
+		# if not a string, causes str() to raise TypeError
+		return str(super(HTTPUnprocessableEntity,self).__str__())
+
 
 from nti.dataserver.interfaces import ACLLocationProxy
 

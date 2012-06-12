@@ -82,6 +82,7 @@
 				for="geventwebsocket.interfaces.IWSWillUpgradeEvent" />
 
 	<include package="nti.dataserver" />
+	<include package="nti.contentrange" />
 	<include package="nti.contentsearch" />
 	<include package="nti.socketio" />
 	<include package="nti.assessment" />
