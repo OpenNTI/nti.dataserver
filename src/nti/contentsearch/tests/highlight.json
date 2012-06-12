@@ -9,8 +9,7 @@
     "MimeType": "application/vnd.nextthought.highlight", 
     "NTIID": "tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x085a:5573657273", 
     "OID": "tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x085a:5573657273", 
-    "applicableRange": "", 
-    "highlightedText": "You know how to add, subtract, multiply, and divide. In fact, you may already know how to solve many of the problems in this chapter. So why do we start this book with an entire chapter on arithmetic?", 
+    "selectedText": "You know how to add, subtract, multiply, and divide. In fact, you may already know how to solve many of the problems in this chapter. So why do we start this book with an entire chapter on arithmetic?", 
     "tags": ["divide"],
     "applicableRange": {"Class": "ContentRangeDescription"}
 }
