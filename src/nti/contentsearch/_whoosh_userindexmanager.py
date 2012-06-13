@@ -1,3 +1,5 @@
+from __future__ import print_function, unicode_literals
+
 import time
 import random
 from hashlib import md5

@@ -1,3 +1,5 @@
+from __future__ import print_function, unicode_literals
+
 from whoosh import fields
 from whoosh.query import Term
 from whoosh.qparser import QueryParser

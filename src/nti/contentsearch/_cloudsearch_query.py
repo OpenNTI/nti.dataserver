@@ -1,3 +1,5 @@
+from __future__ import print_function, unicode_literals
+
 from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch.common import indexable_type_names
 from nti.contentsearch.common import (username_, content_, type_)

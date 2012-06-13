@@ -1,3 +1,5 @@
+from __future__ import print_function, unicode_literals
+
 import math
 
 LN2 = math.log(2)

@@ -1,3 +1,5 @@
+from __future__ import print_function, unicode_literals
+
 import sqlite3 as sql
 
 from persistent import Persistent
