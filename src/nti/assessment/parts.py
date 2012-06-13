@@ -7,6 +7,8 @@ from __future__ import print_function, unicode_literals
 from zope import interface
 from zope import component
 
+from nti.externalization.externalization import make_repr
+
 from nti.assessment import interfaces
 from nti.assessment.interfaces import convert_response_for_solution
 
@@ -29,7 +31,7 @@ class QPart(Persistent):
 	content = ''
 	hints = ()
 	solutions = ()
-	explanation = ()
+	explanation = ''
 
 	def __init__( self, **kwargs ):
 		"""
@@ -59,6 +61,14 @@ class QPart(Persistent):
 											name=self.grader_name	)
 		return grader()
 
+	__repr__ = make_repr()
+
+	def __eq__( self, other ):
+		return self is other or (isinstance(other,QPart) and self.content == other.content and self.hints == other.hints and self.solutions == other.solutions and self.explanation == other.explanation )
+
+	def __ne__( self, other ):
+		return not self == other
+
 @interface.implementer(interfaces.IQMathPart)
 class QMathPart(QPart):
 	pass
@@ -78,6 +88,9 @@ class QMultipleChoicePart(QPart):
 	grader_interface = interfaces.IQMultipleChoicePartGrader
 	choices = ()
 
+	def __eq__( self, other ):
+		return self is other or (super(QMultipleChoicePart,self).__eq__( other ) and isinstance( other, QMultipleChoicePart ) and self.choices == other.choices )
+
 @interface.implementer(interfaces.IQMatchingPart)
 class QMatchingPart(QPart):
 
@@ -85,6 +98,9 @@ class QMatchingPart(QPart):
 
 	labels = ()
 	values = ()
+
+	def __eq__( self, other ):
+		return self is other or (super(QMatchingPart,self).__eq__( other ) and isinstance( other, QMatchingPart ) and self.labels == other.labels and self.values == other.values )
 
 @interface.implementer(interfaces.IQFreeResponsePart)
 class QFreeResponsePart(QPart):

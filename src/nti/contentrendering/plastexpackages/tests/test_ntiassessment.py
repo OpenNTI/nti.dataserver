@@ -3,11 +3,11 @@
 """ """
 from __future__ import print_function, unicode_literals
 import os
-import shutil
 from hamcrest import assert_that, is_, has_length, contains_string
+from hamcrest import has_property
+from hamcrest import contains, has_item
+import unittest
 
-import tempfile
-import StringIO
 
 import plasTeX
 from plasTeX.TeX import TeX
@@ -18,9 +18,18 @@ from nti.contentrendering.tests import buildDomFromString as _buildDomFromString
 from nti.contentrendering.tests import simpleLatexDocumentText
 from nti.contentrendering.tests import RenderContext
 
+import nti.tests
+from nti.tests import verifiably_provides
+import nti.contentrendering
+import nti.assessment
+
 def _simpleLatexDocument(maths):
 	return simpleLatexDocumentText( preludes=(br'\usepackage{nti.contentrendering.plastexpackages.ntiassessment}',),
 									bodies=maths )
+
+# Nose module-level setup and teardown
+setUpModule = lambda: nti.tests.module_setup( set_up_packages=(nti.contentrendering,nti.assessment) )
+tearDownModule = nti.tests.module_teardown
 
 def test_macros():
 	example = br"""
@@ -38,6 +47,18 @@ def test_macros():
 	dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
 	assert_that( dom.getElementsByTagName('naquestion'), has_length( 1 ) )
 	assert_that( dom.getElementsByTagName('naquestion')[0], is_( naquestion ) )
+
+	naq = dom.getElementsByTagName('naquestion')[0]
+	part_el = naq.getElementsByTagName( 'naqsymmathpart' )[0]
+	for item in getattr( part_el, '_asm_solutions' )():
+		assert_that( item, verifiably_provides( part_el.soln_interface ) )
+		assert_that( item, has_property( 'weight', 1.0 ) )
+		assert_that( item, has_property( 'value', 'Some solution' ) )
+
+	part = part_el.assessment_object()
+	assert_that( part, verifiably_provides( part_el.part_interface ) )
+	assert_that( part.content, is_( "Arbitrary content goes here." ) )
+
 
 def test_multiple_choice_macros():
 	example = br"""
@@ -65,12 +86,33 @@ def test_multiple_choice_macros():
 	assert_that( dom.getElementsByTagName('naqsolution'), has_length( 2 ) )
 
 
+	naq = dom.getElementsByTagName('naquestion')[0]
+	part_el = naq.getElementsByTagName( 'naqmultiplechoicepart' )[0]
+	solns = getattr( part_el, '_asm_solutions' )()
 
-import nti.tests
-import nti.contentrendering
 
-class TestRenderableSymMathPart(nti.tests.ConfiguringTestBase):
-	set_up_packages = (nti.contentrendering,)
+	assert_that( solns[0], verifiably_provides( part_el.soln_interface ) )
+	assert_that( solns[0], has_property( 'weight', 1.0 ) )
+
+	assert_that( solns[1], verifiably_provides( part_el.soln_interface ) )
+	assert_that( solns[1], has_property( 'weight', 0.5 ) )
+
+	part = part_el.assessment_object()
+	assert_that( part.solutions, is_( solns ) )
+	assert_that( part, verifiably_provides( part_el.part_interface ) )
+	assert_that( part.content, is_( "Arbitrary content for this part goes here." ) )
+	assert_that( part.explanation, is_( "Arbitrary content explaining how the correct solution is arrived at." ) )
+	assert_that( part, has_property( 'choices', has_length( 3 ) ) )
+	assert_that( part.choices, has_item( 'Arbitrary content for the choice.' ) )
+
+
+	quest_el = dom.getElementsByTagName('naquestion')[0]
+	question = quest_el.assessment_object()
+	assert_that( question.content, is_( 'Arbitrary prefix content goes here.' ) )
+	assert_that( question.parts, contains( part ) )
+
+
+class TestRenderableSymMathPart(unittest.TestCase):
 
 	def _do_test_render( self, label, ntiid, filename='index.html' ):
 		from plasTeX.Renderers.XHTML import Renderer

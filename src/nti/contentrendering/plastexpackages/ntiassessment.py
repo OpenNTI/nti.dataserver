@@ -36,7 +36,9 @@ $Id$
 
 from __future__ import print_function, unicode_literals
 
-from nti.assessment import interfaces as as_interfaces
+from zope import schema
+
+from nti.assessment import interfaces as as_interfaces, parts, question
 from nti.contentrendering import plastexids
 from plasTeX import Base
 
@@ -89,8 +91,23 @@ class naqsolution(Base.List.item):
 		#ignore the list implementation
 		return Base.Command.invoke(self,tex)
 
+
 class naqsolexplanation(Base.Environment):
 	pass
+
+def _asm_local_textcontent(self):
+	"""
+	Collects the text content for nodes that are direct
+	children of `self`, *not* recursively. Returns a `unicode` object,
+	*not* a :class:`plasTeX.DOM.Text` object.
+	"""
+	output = []
+	for item in self.childNodes:
+		if item.nodeType == self.TEXT_NODE:
+			output.append(item)
+		elif getattr(item, 'unicode', None) is not None:
+			output.append(item.unicode)
+	return ''.join( output ).strip()
 
 class _AbstractNAQPart(Base.Environment):
 
@@ -102,12 +119,53 @@ class _AbstractNAQPart(Base.Environment):
 	soln_interface = None
 	part_factory = None
 
+	def _asm_solutions(self):
+		solutions = []
+		solution_els = self.getElementsByTagName( 'naqsolution' )
+		for solution_el in solution_els:
+			solution = self.soln_interface( unicode(solution_el.textContent).strip() )
+			weight = solution_el.attributes['weight']
+			if weight is not None:
+				solution.weight = weight
+			solutions.append( solution )
+
+		return solutions
+
+	def _asm_explanation(self):
+		exp_els = self.getElementsByTagName( 'naqsolexplanation' )
+		assert len(exp_els) <= 1
+		if exp_els:
+			return unicode(exp_els[0].textContent).strip()
+
+	def _asm_hints(self):
+		pass
+
+	_asm_local_textcontent = _asm_local_textcontent
+
+	def _asm_object_kwargs(self):
+		return {}
+
+	def assessment_object( self ):
+		# Be careful to turn textContent into plain unicode objects, not
+		# plastex Text subclasses, which are also expensive nodes.
+		result = self.part_factory( content=self._asm_local_textcontent(),
+									solutions=self._asm_solutions(),
+									explanation=self._asm_explanation(),
+									hints=self._asm_hints(),
+									**self._asm_object_kwargs()	)
+
+		errors = schema.getValidationErrors( self.part_interface, result )
+		if errors: # pragma: no cover
+			raise errors[0][1]
+		return result
+
 class naqnumericmathpart(_AbstractNAQPart):
 	"""
 	Solutions are treated as numbers for the purposes of grading.
 	"""
 
 	part_interface = as_interfaces.IQNumericMathPart
+	part_factory = parts.QNumericMathPart
 	soln_interface = as_interfaces.IQNumericMathSolution
 
 class naqsymmathpart(_AbstractNAQPart):
@@ -116,10 +174,12 @@ class naqsymmathpart(_AbstractNAQPart):
 	"""
 
 	part_interface = as_interfaces.IQSymbolicMathPart
+	part_factory = parts.QSymbolicMathPart
 	soln_interface = as_interfaces.IQLatexSymbolicMathSolution
 
 class naqfreeresponsepart(_AbstractNAQPart):
 	part_interface = as_interfaces.IQFreeResponsePart
+	part_factory = parts.QFreeResponsePart
 	soln_interface = as_interfaces.IQFreeResponseSolution
 
 
@@ -146,9 +206,16 @@ class naqmultiplechoicepart(_AbstractNAQPart):
 	"""
 
 	part_interface = as_interfaces.IQMultipleChoicePart
+	part_factory = parts.QMultipleChoicePart
 	soln_interface = as_interfaces.IQMultipleChoiceSolution
 
 	#forcePars = True
+
+	def _asm_choices(self):
+		return [unicode(x.textContent).strip() for x in self.getElementsByTagName( 'naqchoice' )]
+
+	def _asm_object_kwargs(self):
+		return { 'choices': self._asm_choices() }
 
 	def digest( self, tokens ):
 		res = super(naqmultiplechoicepart,self).digest( tokens )
@@ -198,6 +265,19 @@ class naquestion(Base.Environment,plastexids.NTIIDMixin):
 		result = self.attributes.get( 'probnum' ) or self.attributes.get( "questionnum" )
 		if not result:
 			result = super(naquestion,self)._ntiid_get_local_part
+		return result
+
+	_asm_local_textcontent = _asm_local_textcontent
+
+	def _asm_question_parts(self):
+		return [x.assessment_object() for x in self if hasattr(x,'assessment_object')]
+
+	def assessment_object(self):
+		result = question.QQuestion( content=self._asm_local_textcontent(),
+									 parts=self._asm_question_parts() )
+		errors = schema.getValidationErrors( as_interfaces.IQuestion, result )
+		if errors: # pragma: no cover
+			raise errors[0][1]
 		return result
 
 def ProcessOptions( options, document ):

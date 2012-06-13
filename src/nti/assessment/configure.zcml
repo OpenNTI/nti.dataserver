@@ -32,6 +32,10 @@
 			 provides=".interfaces.IQLatexSymbolicMathSolution"
 			 for="basestring"/>
 
+	<adapter factory="int .solution.QMultipleChoiceSolution"
+			 provides=".interfaces.IQMultipleChoiceSolution"
+			 for="basestring"/>
+
 	<!-- Dealing with LaTeX -->
 	<adapter factory="._latexplastexconverter.factory"
 			 for=".interfaces.IQLatexSymbolicMathSolution .interfaces.IQTextResponse"

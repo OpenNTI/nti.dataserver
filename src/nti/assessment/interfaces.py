@@ -23,6 +23,17 @@ class IQHint(interface.Interface):
 	It my be inline or be a link (reference) to other content.
 	"""
 
+class IQSolution(interface.Interface):
+
+	weight = schema.Float( title="The relative correctness of this solution, from 0 to 1",
+						   description="""If a question has multiple possible solutions, some may
+						   be more right than others. This is captured by the weight field. If there is only
+						   one right answer, then it has a weight of 1.0.
+						   """,
+						   min=0.0,
+						   max=1.0,
+						   default=1.0 )
+
 # It seems like the concepts of domain and range may come into play here,
 # somewhere
 
@@ -33,9 +44,11 @@ class IQPart(interface.Interface):
 	"""
 
 	content = schema.Text( title="The content to present to the user for this portion, if any." )
-	hints = schema.Iterable( title="Any hints that pertain to this part" )
-	solutions = schema.Iterable( title="Acceptable solutions for this question part in no particular order.",
-								description="All solutions must be of the same type, and there must be at least one." )
+	hints = TypedIterable( title="Any hints that pertain to this part",
+						   value_type=schema.Object(IQHint, title="A hint for the part") )
+	solutions = TypedIterable( title="Acceptable solutions for this question part in no particular order.",
+								description="All solutions must be of the same type, and there must be at least one.",
+								value_type=schema.Object(IQSolution, title="A solution for this part")	)
 	explanation = schema.Text( title="An explanation of how the solution is arrived at." )
 
 	def grade( response ):
@@ -66,16 +79,7 @@ class IQPartGrader(interface.Interface):
 		Implement the contract of :meth:`IQPart.grade`.
 		"""
 
-class IQSolution(interface.Interface):
 
-	weight = schema.Float( title="The relative correctness of this solution, from 0 to 1",
-						   description="""If a question has multiple possible solutions, some may
-						   be more right than others. This is captured by the weight field. If there is only
-						   one right answer, then it has a weight of 1.0.
-						   """,
-						   min=0.0,
-						   max=1.0,
-						   default=1.0 )
 
 
 class IQSingleValuedSolution(IQSolution):
