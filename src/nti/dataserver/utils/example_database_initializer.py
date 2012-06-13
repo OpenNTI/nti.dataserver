@@ -162,7 +162,8 @@ class ExampleDatabaseInitializer(object):
 		max_test_users = 101
 		for x in range(1, max_test_users):
 			uid = 'test.user.%s' % x
-			USERS.append( (uid + '@nextthought.com', uid.replace( '.', ' ').title() ) )
+			name = 'Test-%s' % x
+			USERS.append( (uid + '@nextthought.com', name) )
 
 		# Some busey people
 		USERS.append( ('philip@buseygroup.com', 'Philip Busey Jr') )
