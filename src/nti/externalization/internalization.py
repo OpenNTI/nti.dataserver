@@ -40,7 +40,7 @@ def _find_class_in_dict( className, mod_dict ):
 				break
 	return clazz if getattr( clazz, '__external_can_create__', False ) else None
 
-def _search_for_external_factory( typeName ):
+def _search_for_external_factory( typeName, search_set=None ):
 	"""
 	Deprecated, legacy functionality. Given the name of a type, optionally ending in 's' for
 	plural, attempt to locate that type.
@@ -48,10 +48,13 @@ def _search_for_external_factory( typeName ):
 	if not typeName:
 		return None
 
+	if search_set is None:
+		search_set = LEGACY_FACTORY_SEARCH_MODULES
+
 	className = typeName[0:-1] if typeName.endswith('s') else typeName
 	result = None
 
-	for module_name in LEGACY_FACTORY_SEARCH_MODULES:
+	for module_name in search_set:
 		# Support registering both names and actual module objects
 		mod_dict = getattr( module_name, '__dict__', None )
 		module = sys.modules.get( module_name ) if mod_dict is None else module_name

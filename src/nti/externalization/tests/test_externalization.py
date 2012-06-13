@@ -119,6 +119,31 @@ class TestFunctions(ConfiguringTestBase):
 		with assert_raises(AssertionError):
 			toExternalObject( [Raises()] )
 
+	def test_search_for_external(self):
+		class Y(object):
+			__external_can_create__ = True
+		class X(object): pass
+		x = X()
+		x.FooBar = Y
+
+		# Something with a __dict__ already
+		assert_that( _search_for_external_factory( 'FooBar', search_set=[x] ), same_instance( Y ) )
+
+		# Something in sysmodules
+		n = 'MyTestModule'
+		assert n not in sys.modules
+		sys.modules[n] = x
+
+		assert_that( _search_for_external_factory( 'FooBar', search_set=[n] ), same_instance( Y ) )
+
+		del sys.modules[n]
+		# something unresolvable
+		assert_that( _search_for_external_factory( 'FooBar', search_set=[n] ), is_( none() ) )
+
+
+import sys
+from hamcrest import same_instance, none
+from nti.externalization.internalization import _search_for_external_factory
 from nti.externalization.persistence import PersistentExternalizableWeakList
 
 class TestPersistentExternalizableWeakList(unittest.TestCase):
