@@ -64,12 +64,12 @@ setup(
 		# 'RelStorage',
 		'anyjson >= 0.3.1',
 		'boto >= 2.4.1', # amazon
-		'brownie',
-		'coverage',
-		'cython',
+		'brownie >= 0.5.1', # Common utilities
+		'coverage >= 3.5.2', # Test coverage
+		'cython >= 0.16',
 		'futures >= 2.1.2',
 		#'gevent == 1.0dev', Coming from requirements.txt right now
-		'gevent-zeromq',
+		'gevent-zeromq >= 0.2.2',
 		'gunicorn >= 0.14.3',
 		'html5lib == 0.95',
 		 # WSGI middleware for profiling. Defaults to storing
@@ -80,11 +80,12 @@ setup(
 		 # fewer dependencies, but less helpful output and doesn't work with multiple workers (?)
 		'linesman >= 0.2.2',
 		'logilab-common',
-		'nltk',
+		'nltk >= 2.0.1',
+		'numpy >= 1.6.2', # req'd by nltk, but not depended on. sigh.
 		'paste',
 		'pyhamcrest',
 		'pylint',
-		'pyquery >= 1.2',
+		'pyquery >= 1.2.1', # jquery-like traversing of python datastructures. lxml, cssselect
 		'pyramid >= 1.3.2' ,
 		'pyramid_tm',
 		'pyramid_traversalwrapper',
@@ -95,8 +96,8 @@ setup(
 		'pytz',
 		'rdflib',
 		'repoze.catalog',
-		'repoze.sphinx.autointerface',
-		'repoze.who',
+		'repoze.sphinx.autointerface >= 0.6.2',
+		'repoze.who >= 2.0',
 		'repoze.zodbconn',
 		'grequests >= 0.1.0', #replaces requests.async in 0.13
 		'requests >= 0.13.1', # HTTP
@@ -107,7 +108,7 @@ setup(
 		'sympy == 0.7.1', # sympy-docs-html-0.7.1 is currently greater
 		'six >= 1.1.0',
 		'slimit',
-		'supervisor',
+		'supervisor >= 3.0a12',
 		'transaction >= 1.3.0',
 		'webob >= 1.2',
 		'webtest >= 1.3.4',
@@ -146,7 +147,7 @@ setup(
 		'zope.interface >= 4.0.1',
 		'zope.lifecycleevent >= 3.7.0',
 		'zope.location >= 4.0.0',
-		'zope.mimetype',
+		'zope.mimetype >= 1.3.1',
 		'zope.minmax >= 1.1.2',
 		'zope.pagetemplate',
 		'zope.password', # encrypted password management
@@ -158,7 +159,7 @@ setup(
 		'zope.size >= 3.5.0',
 		'zope.tal',
 		'zope.tales',
-		'zope.testing',
+		'zope.testing >= 4.1.1',
 		'zope.traversing >= 3.14.0',
 		# textindexng3
 		'zopyx.txng3.core',
