@@ -1,3 +1,5 @@
+from __future__ import print_function, unicode_literals
+
 from zope import interface
 
 from zope.interface.common.mapping import IFullMapping
@@ -234,7 +236,7 @@ class IIndexManager(interface.Interface):
 		"""
 		perform a user data word suggestion
 		
-		:param  \username: user name
+		:param username: user name
 		:param word: Word fragment
 		:param limit: max number of search hits
 		:param prefix: number of chars in terms for prefix

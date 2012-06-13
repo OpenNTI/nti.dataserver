@@ -1,4 +1,4 @@
-from __future__ import generators
+from __future__ import print_function, unicode_literals, generators
 
 # An implementation of a Bayes-like spam classifier.
 #
