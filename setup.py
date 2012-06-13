@@ -105,7 +105,7 @@ setup(
 		'setuptools',
 		'simplejson >= 2.5.2',
 		'sympy == 0.7.1', # sympy-docs-html-0.7.1 is currently greater
-		'six',
+		'six >= 1.1.0',
 		'slimit',
 		'supervisor',
 		'transaction >= 1.3.0',
@@ -114,14 +114,14 @@ setup(
 		'whoosh == 2.3.2',
 		 # bcrypt/pbkdf2 for zope.password
 		 # adds cryptacular and pbkdf2
-		'z3c.bcrypt',
-		'z3c.coverage',
-		'z3c.pt', # Better ZPT support than plastex, add-in to Chameleon
+		'z3c.bcrypt >= 1.1',
+		'z3c.coverage >= 1.2.0', # TODO: Do we need this?
+		'z3c.pt >= 2.2.3', # Better ZPT support than plastex, add-in to Chameleon
 		'zc.queue >= 1.3',
-		'zc.zlibstorage', # compressed records. Will be built-in to newer ZODB
-		'zc.zodbdgc',
+		'zc.zlibstorage >= 0.1.1', # compressed records. Will be built-in to newer ZODB
+		'zc.zodbdgc >= 0.6.0',
 		'zetalibrary',
-		'zope.annotation',
+		'zope.annotation >= 3.5.0',
 		'zope.broken',
 		'zope.browser',
 		'zope.browserpage',
@@ -132,9 +132,9 @@ setup(
 		'zope.container >= 3.12.0',
 		'zope.contenttype >= 3.5.5',
 		'zope.copy >= 3.5.0',
-		'zope.datetime',
+		'zope.datetime >= 3.4.1',
 		'zope.deprecation >= 4.0.0',
-		'zope.dottedname',
+		'zope.dottedname >= 3.4.6',
 		'zope.event >= 4.0.0',
 		'zope.exceptions >= 4.0.0.1',
 		'zope.filerepresentation',
@@ -154,7 +154,7 @@ setup(
 		'zope.processlifetime',
 		'zope.schema >= 4.2.0',
 		'zope.security >= 3.8.3',
-		'zope.site',
+		'zope.site >= 3.9.2', # local, persistent ZCA sites
 		'zope.size >= 3.5.0',
 		'zope.tal',
 		'zope.tales',

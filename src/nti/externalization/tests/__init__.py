@@ -23,6 +23,10 @@ class Externalizes(BaseMatcher):
 		result = ext_obj is not None and not INonExternalizableReplacement.providedBy( ext_obj )
 		if result and self.matcher is not None:
 			result = self.matcher.matches( ext_obj )
+		if result == bool( ext_obj ):
+			# For convenience, if the truthy value of ext_obj matches the truthy value of result,
+			# return the ext_obj
+			return ext_obj
 		return result
 
 	def describe_to( self, description ):

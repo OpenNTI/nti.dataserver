@@ -50,7 +50,6 @@ class IQPart(interface.Interface):
 			taken into account, this will be a floating point number between 0.0 (incorrect) and 1.0 (perfect).
 		"""
 
-
 class IQMathPart(IQPart):
 	"""
 	A question part whose answer lies in the math domain.
