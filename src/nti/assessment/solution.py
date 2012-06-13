@@ -4,6 +4,8 @@ from __future__ import print_function, unicode_literals
 from zope import interface
 from zope import component
 
+from nti.externalization.externalization import make_repr
+
 from nti.assessment import interfaces
 from nti.assessment import parts
 
@@ -28,6 +30,8 @@ class QSolution(Persistent):
 		"""
 		return self._part_type( solutions=(self,) ).grade( response )
 
+QSolution.__repr__ = make_repr()
+
 @interface.implementer(interfaces.IQMathSolution)
 class QMathSolution(QSolution):
 	"""
@@ -37,6 +41,11 @@ class QMathSolution(QSolution):
 class _TrivialValuedMixin(object):
 	def __init__( self, value ):
 		self.value = value
+
+def _eq_(self, other):
+	return other is self or (self.weight == getattr( other, 'weight', Persistent ) and self.value == getattr( other, 'value', Persistent ))
+def _ne_(self, other):
+	return  other is not self and (self.weight != getattr( other, 'weight', Persistent ) and self.value != getattr( other, 'value', Persistent ))
 
 @interface.implementer(interfaces.IQNumericMathSolution)
 class QNumericMathSolution(_TrivialValuedMixin,QMathSolution):
@@ -49,6 +58,9 @@ class QNumericMathSolution(_TrivialValuedMixin,QMathSolution):
 
 	_part_type = parts.QNumericMathPart
 
+	__eq__ = _eq_
+	__ne__ = _ne_
+
 @interface.implementer(interfaces.IQFreeResponseSolution)
 class QFreeResponseSolution(_TrivialValuedMixin,QSolution):
 	"""
@@ -56,6 +68,9 @@ class QFreeResponseSolution(_TrivialValuedMixin,QSolution):
 	"""
 
 	_part_type = parts.QFreeResponsePart
+
+	__eq__ = _eq_
+	__ne__ = _ne_
 
 
 @interface.implementer(interfaces.IQSymbolicMathSolution)
@@ -73,13 +88,21 @@ class QLatexSymbolicMathSolution(_TrivialValuedMixin,QSymbolicMathSolution):
 	The answer is defined to be in latex.
 	"""
 
-	 # TODO: Verification of the value? Minor transforms like adding $$?
+	# TODO: Verification of the value? Minor transforms like adding $$?
+
+	__eq__ = _eq_
+	__ne__ = _ne_
 
 @interface.implementer(interfaces.IQMatchingSolution)
 class QMatchingSolution(_TrivialValuedMixin,QSolution):
-	pass
+
+	__eq__ = _eq_
+	__ne__ = _ne_
 
 @interface.implementer(interfaces.IQMultipleChoiceSolution)
 class QMultipleChoiceSolution(_TrivialValuedMixin,QSolution):
 
 	_part_type = parts.QMultipleChoicePart
+
+	__eq__ = _eq_
+	__ne__ = _ne_

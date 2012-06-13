@@ -121,27 +121,57 @@ from zope import component
 from zope.configuration import xmlconfig, config
 from zope.component.hooks import setHooks, resetHooks
 
+def _configure(self=None, set_up_packages=(), features=('devmode',)):
+
+	# zope.component.globalregistry conveniently adds
+	# a zope.testing.cleanup.CleanUp to reset the globalSiteManager
+	if set_up_packages:
+		context = config.ConfigurationMachine()
+		xmlconfig.registerCommonDirectives( context )
+		for feature in features:
+			context.provideFeature( feature )
+
+		for i in set_up_packages:
+			__traceback_info__ = (i, self)
+			context = xmlconfig.file( 'configure.zcml', package=i, context=context )
+
 class ConfiguringTestBase(AbstractTestBase):
 	set_up_packages = ()
 	features = ('devmode',)
 	def setUp( self ):
 		super(ConfiguringTestBase,self).setUp()
 		setHooks()
-		# zope.component.globalregistry conveniently adds
-		# a zope.testing.cleanup.CleanUp to reset the globalSiteManager
-		if self.set_up_packages:
-			context = config.ConfigurationMachine()
-			xmlconfig.registerCommonDirectives( context )
-			for feature in self.features:
-				context.provideFeature( feature )
-
-			for i in self.set_up_packages:
-				__traceback_info__ = (i, self)
-				context = xmlconfig.file( 'configure.zcml', package=i, context=context )
+		_configure( self, self.set_up_packages, self.features )
 
 	def tearDown( self ):
 		resetHooks()
 		super(ConfiguringTestBase,self).tearDown()
+
+def module_setup( set_up_packages=(), features=('devmode',)):
+	"""
+	Either import this as ``setUpModule`` at the module level, or call
+	it to perform module level set up from your own function with that name.
+
+	This is an alternative to using :class:`ConfiguringTestBase`; the two should
+	generally not be mixed in a module. It can also be used with Nose's `with_setup` function.
+	"""
+	zope.testing.cleanup.setUp()
+	setHooks()
+	_configure( set_up_packages=set_up_packages, features=features )
+
+def module_teardown():
+	"""
+	Either import this as ``tearDownModule`` at the module level, or call
+	it to perform module level tear down froum your own function with that name.
+
+	This is an alternative to using :class:`ConfiguringTestBase`; the two should
+	generally not be mixed in a module.
+	"""
+
+	resetHooks()
+	zope.testing.cleanup.tearDown()
+
+
 
 import nose.plugins
 class ZopeExceptionLogPatch(nose.plugins.Plugin):
