@@ -48,6 +48,15 @@
     margin-right: 35px;
 }
 
+#NTIContent span.result.noanswer {
+    border-radius: 3px;
+    border: 1px #b2b2b2 solid;
+    background: #b2b2b2;
+    color: white;
+    padding: 6px 10px;
+    margin-right: 35px;
+}
+
 #NTIContent .answer-text {
     font-style: italic;
     font-size: 14px;
