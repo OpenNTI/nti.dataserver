@@ -16,7 +16,12 @@
 			 provides=".interfaces.ILocatedExternalSequence"
 			 factory=".datastructures.LocatedExternalList" />
 
+	<!-- The empty string matches things that don't implement any interface -->
 	<adapter for=""
+			 factory=".externalization._DevmodeNonExternalizableObjectReplacer"
+			 zcml:condition="have devmode" />
+	<!-- The "*" matches things that implement any interface -->
+	<adapter for="*"
 			 factory=".externalization._DevmodeNonExternalizableObjectReplacer"
 			 zcml:condition="have devmode" />
 

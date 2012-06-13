@@ -99,12 +99,13 @@ class TestFunctions(ConfiguringTestBase):
 	def test_broken(self):
 		# Without the devmode hooks
 		gsm = component.getGlobalSiteManager()
-		gsm.unregisterAdapter( factory=externalization._DevmodeNonExternalizableObjectReplacer, required=() )
+		v = gsm.unregisterAdapter( factory=externalization._DevmodeNonExternalizableObjectReplacer, required=() )
+		v = gsm.unregisterAdapter( factory=externalization._DevmodeNonExternalizableObjectReplacer, required=(interface.Interface,) )
 
-		assert_that( toExternalObject( Broken() ),
+		assert_that( toExternalObject( Broken(), registry=gsm ),
 					 has_entry( "Class", "NonExternalizableObject" ) )
 
-		assert_that( toExternalObject( [Broken()] ),
+		assert_that( toExternalObject( [Broken()], registry=gsm ),
 					 has_items( has_entry( "Class", "NonExternalizableObject" ) ) )
 
 	def test_catching_component(self):

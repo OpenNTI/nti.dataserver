@@ -5,8 +5,8 @@ $Revision$
 """
 from __future__ import unicode_literals, print_function
 
-import logging
-logger = logging.getLogger( __name__ )
+import sys
+logger = __import__('logging').getLogger( __name__ )
 
 import ZODB
 
@@ -260,11 +260,30 @@ class InterfaceObjectIO(AbstractDynamicObjectIO):
 
 	def _ext_setattr( self, ext_self, k, value ):
 		field = self._iface[k]
+		__traceback_info__ = k, value
 		if sch_interfaces.IField.providedBy( field ):
 			# A schema field means we have info to validate it.
 			# Do so.
 			field = field.bind( ext_self )
-			field.validate( value )
+			try:
+				field.validate( value )
+			except sch_interfaces.SchemaNotProvided as e:
+				# The object doesn't implement the required interface.
+				# Can we adapt the provided object to the desired interface?
+				# First, capture the details so we can reraise if needed
+				exc_info = sys.exc_info()
+				if not e.args: # zope.schema doesn't fill in the details, which sucks
+					e.args = (k,field.schema)
+
+				try:
+					value = field.schema( value )
+					field.validate( value )
+				except (TypeError,sch_interfaces.ValidationError):
+					# Nope. TypeError means we couldn't adapt, and a
+					# validation error means we could adapt, but it still wasn't
+					# right. Raise the original SchemaValidationError.
+					raise exc_info[0], exc_info[1], exc_info[2]
+
 			field.set( ext_self, value )
 		else:
 			setattr( ext_self, k, value )

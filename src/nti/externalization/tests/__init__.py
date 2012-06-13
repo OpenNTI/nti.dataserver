@@ -18,6 +18,7 @@ class Externalizes(BaseMatcher):
 		super(Externalizes,self).__init__( )
 		self.matcher = matcher
 
+
 	def _matches( self, item ):
 		ext_obj = toExternalObject( item )
 		result = ext_obj is not None and not INonExternalizableReplacement.providedBy( ext_obj )
@@ -34,6 +35,14 @@ class Externalizes(BaseMatcher):
 		if self.matcher is not None:
 			description.append_text( ' to ' ).append_description_of( self.matcher )
 
+	def describe_mismatch( self, item, mismatch_description ):
+		ext_obj = toExternalObject( item )
+		if ext_obj is None:
+			mismatch_description.append_text( 'externalized to none' )
+		elif INonExternalizableReplacement.providedBy( ext_obj ):
+			mismatch_description.append_text( 'was replaced by ' ).append_description_of( ext_obj )
+		else:
+			mismatch_description.append_text( 'was ' ).append_description_of( ext_obj )
 
 def externalizes( matcher=None ):
 	"""
