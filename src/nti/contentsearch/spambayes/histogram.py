@@ -145,11 +145,11 @@ class Hist(object):
 		n = self.n
 		if n == 0:
 			return
-		print "%d items; mean %.2f; sdev %.2f" % (n, self.mean, self.sdev)
-		print "-> <stat> min %g; median %g; max %g" % (self.min, self.median, self.max)
+		print ("%d items; mean %.2f; sdev %.2f" % (n, self.mean, self.sdev))
+		print ("-> <stat> min %g; median %g; max %g" % (self.min, self.median, self.max))
 		
 		pcts = ['%g%% %g' % x for x in self.pct]
-		print "-> <stat> percentiles:", '; '.join(pcts)
+		print ("-> <stat> percentiles:", '; '.join(pcts))
 
 		lo, hi = self.get_lo_hi()
 		if lo > hi:
@@ -162,7 +162,7 @@ class Hist(object):
 		hunit, r = divmod(biggest, WIDTH)
 		if r:
 			hunit += 1
-		print "* =", hunit, "items"
+		print ("* =", hunit, "items")
 		
 		# we need ndigits decimal digits to display the largest bucket count.
 		ndigits = len(str(biggest))
@@ -184,5 +184,5 @@ class Hist(object):
 		bucketwidth = self.get_bucketwidth()
 		for i in range(nbuckets):
 			n = self.buckets[i]
-			print s % (lo + i * bucketwidth, n),
-			print '*' * ((n + hunit - 1) // hunit)
+			print (s % (lo + i * bucketwidth, n)),
+			print ('*' * ((n + hunit - 1) // hunit))
