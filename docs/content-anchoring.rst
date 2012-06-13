@@ -257,6 +257,11 @@ We begin with some definitions:
 	not the empty string, and does not begin with one of the following
 	excluded prefixes: ``MathJax``.
 
+*synthetic node*
+	A ``Node`` not found in the original rendered content.  An example
+	of a *synthetic node* is a ``span`` injected client side as part of
+	highlighting a portion of a ``Text`` node.
+
 DOM Range to ContentRangeDescription
 ------------------------------------
 
@@ -274,6 +279,12 @@ range's start and end fall on nodes that can be represented as
   selecting a chunk of text, in the event we can't anchor the start or
   the end, we assume we want the largest representable range contained by the original
   range. That is, we shrink the range inward from the necessary edges.
+
+When generating ``ContentRangeDescription`` objects, clients *MUST*
+ignore all *synthetic nodes*.  Because it is impossible to know how
+certain clients *MAY* change the content dom as part of
+normal operation, the objects generated to model ``Anchored`` content
+*MUST* be relative to the oringally rendered content.
 
 Given a ``range`` whose edges can by represented by ``ContentPointers``,
 the generation of a ``ContentRangeDescription`` is straightforward. As a
