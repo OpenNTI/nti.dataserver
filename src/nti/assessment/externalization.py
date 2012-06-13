@@ -22,8 +22,12 @@ class _AssessmentInternalObjectIO(ModuleScopedInterfaceObjectIO):
 # Assign external class names to the root classes
 
 def _external_class_name_( iface, impl ):
-	# Strip off 'IQ'
-	return iface.__name__[2:]
+	# Strip off 'IQ' if it's not 'IQuestionXYZ'
+	return iface.__name__[2:] if not iface.__name__.startswith( 'IQuestion' ) else iface.__name__[1:]
 
-for iface in (asm_interfaces.IQPart, asm_interfaces.IQuestion, asm_interfaces.IQSolution):
-	iface.setTaggedValue( '__external_class_name__', _external_class_name_ )
+def _apply_tagged_values():
+	for iface in (asm_interfaces.IQPart, asm_interfaces.IQuestion, asm_interfaces.IQSolution,
+				  asm_interfaces.IQuestionSubmission, asm_interfaces.IQAssessedPart, asm_interfaces.IQAssessedQuestion,
+				  asm_interfaces.IQuestionSetSubmission, asm_interfaces.IQAssessedQuestionSet):
+		iface.setTaggedValue( '__external_class_name__', _external_class_name_ )
+_apply_tagged_values()

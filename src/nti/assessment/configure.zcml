@@ -65,5 +65,15 @@
 			 for=".interfaces.IQuestion" />
 	<adapter factory=".externalization._AssessmentInternalObjectIO"
 			 for=".interfaces.IQuestionSet" />
+	<adapter factory=".externalization._AssessmentInternalObjectIO"
+			 for=".interfaces.IQuestionSubmission" />
+	<adapter factory=".externalization._AssessmentInternalObjectIO"
+			 for=".interfaces.IQAssessedPart" />
+	<adapter factory=".externalization._AssessmentInternalObjectIO"
+			 for=".interfaces.IQAssessedQuestion" />
+	<adapter factory=".externalization._AssessmentInternalObjectIO"
+			 for=".interfaces.IQuestionSetSubmission" />
+	<adapter factory=".externalization._AssessmentInternalObjectIO"
+			 for=".interfaces.IQAssessedQuestionSet" />
 
 </configure>

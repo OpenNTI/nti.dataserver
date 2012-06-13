@@ -156,7 +156,7 @@ def DevmodeNonExternalizableObjectReplacer( obj ):
 	"""
 	When devmode is active, non-externalizable objects raise an exception.
 	"""
-	raise TypeError( "Asked to externalize non-externalizable object %s, %s", type(obj), obj )
+	raise TypeError( "Asked to externalize non-externalizable object %s, %s" % (type(obj), obj ) )
 
 @interface.implementer(INonExternalizableReplacer)
 def _DevmodeNonExternalizableObjectReplacer( obj ):

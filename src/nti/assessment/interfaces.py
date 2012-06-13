@@ -276,8 +276,79 @@ def convert_response_for_solution(solution, response):
 		response_type = iface.queryTaggedValue( 'response_type' )
 		if response_type:
 			result = response_type( response, alternate=None ) # adapt or return if already present
-			if result:
+			if result is not None:
 				response = result
 				break
 
 	return response
+
+###
+# Objects having to do with the assessment process itself.
+# There is a three part lifecycle: The source object,
+# the submission, and finally the assessed value. The three
+# parts have similar structure.
+###
+
+class IQuestionSubmission(interface.Interface):
+	"""
+	A student's submission in response to a question.
+
+	These will typically be transient objects.
+	"""
+
+	questionId = schema.TextLine( title="Identifier of the question being responded to." )
+	parts = TypedIterable( title="Ordered submissions, one for each part of the question.",
+						   description="""The length must match the length of the questions. Each object must be
+						   adaptable into the proper :class:`IQResponse` object.""" )
+
+
+class IQAssessedPart(interface.Interface):
+	"""
+	The assessed value of a single part.
+
+	These will generally be persistent values that are echoed back to clients.
+	"""
+	# TODO: Matching to question?
+
+	submittedResponse = schema.Object( IQResponse,
+									   title="The response as the student submitted it.")
+	assessedValue = schema.Float( title="The relative correctness of the submitted response, from 0.0 (entirely wrong) to 1.0 (perfectly correct)",
+								  min=0.0,
+								  max=1.0,
+								  default=0.0 )
+
+class IQAssessedQuestion(interface.Interface):
+	"""
+	The assessed value of a student's submission for a single question.
+
+	These will typically be persistent values, echoed back to clients.
+	"""
+
+	questionId = schema.TextLine( title="Identifier of the question being responded to." )
+	parts = TypedIterable( title="Ordered assessed values, one for each part of the question.",
+						   value_type=schema.Object( IQAssessedPart, title="The assessment of a part." ) )
+
+
+class IQuestionSetSubmission(interface.Interface):
+	"""
+	A student's submission in response to an entire question set.
+
+	These will generally be transient objects.
+	"""
+
+	questionSetId = schema.TextLine( title="Identifier of the question set being responded to." )
+	questions = TypedIterable( title="Submissions, one for each question in the set.",
+							   description="""Order is not important. Depending on the question set,
+							   missing answers may or may not be allowed; the set may refuse to grade, or simply consider them wrong.""",
+							   value_type=schema.Object( IQuestionSubmission, title="The submission for a particular question.") )
+
+class IQAssessedQuestionSet(interface.Interface):
+	"""
+	The assessed value of a student's submission to an entire question set.
+
+	These will usually be persistent values that are also echoed back to clients.
+	"""
+
+	questionSetId = interface.Attribute( "Identifier of the question set being responded to." )
+	questions = TypedIterable( title="Assessed questions, one for each question in the set.",
+							   value_type=schema.Object( IQAssessedQuestion, title="The assessed value for a particular question.") )
