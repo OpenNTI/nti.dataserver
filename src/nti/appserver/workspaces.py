@@ -12,7 +12,8 @@ from nti.dataserver import datastructures
 from nti.dataserver import interfaces as model_interfaces
 from nti.contentlibrary import interfaces as content_interfaces
 
-from nti.externalization.externalization import toExternalObject, toExternalDictionary, isSyntheticKey
+from nti.externalization.externalization import to_standard_external_dictionary
+from nti.externalization.externalization import toExternalObject, isSyntheticKey
 from nti.externalization.datastructures import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 import nti.externalization.interfaces as ext_interfaces
@@ -274,7 +275,7 @@ class ContainerCollectionDetailExternalizer(object):
 		# that as well
 		summary_collection = toExternalObject( collection, name='summary' )
 		# Copy the basic attributes
-		ext_collection = toExternalDictionary( collection )
+		ext_collection = to_standard_external_dictionary( collection )
 		# Then add the summary info as top-level...
 		ext_collection.update( summary_collection )
 		# ... and nested
