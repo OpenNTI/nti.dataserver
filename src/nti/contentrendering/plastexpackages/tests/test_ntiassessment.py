@@ -6,6 +6,7 @@ import os
 from hamcrest import assert_that, is_, has_length, contains_string
 from hamcrest import has_property
 from hamcrest import contains, has_item
+from hamcrest import has_entry
 import unittest
 
 
@@ -19,16 +20,19 @@ from nti.contentrendering.tests import simpleLatexDocumentText
 from nti.contentrendering.tests import RenderContext
 
 import nti.tests
+from nti.externalization.tests import externalizes
 from nti.tests import verifiably_provides
+
 import nti.contentrendering
 import nti.assessment
+import nti.externalization
 
 def _simpleLatexDocument(maths):
 	return simpleLatexDocumentText( preludes=(br'\usepackage{nti.contentrendering.plastexpackages.ntiassessment}',),
 									bodies=maths )
 
 # Nose module-level setup and teardown
-setUpModule = lambda: nti.tests.module_setup( set_up_packages=(nti.contentrendering,nti.assessment) )
+setUpModule = lambda: nti.tests.module_setup( set_up_packages=(nti.contentrendering,nti.assessment,nti.externalization) )
 tearDownModule = nti.tests.module_teardown
 
 def test_macros():
@@ -110,6 +114,10 @@ def test_multiple_choice_macros():
 	question = quest_el.assessment_object()
 	assert_that( question.content, is_( 'Arbitrary prefix content goes here.' ) )
 	assert_that( question.parts, contains( part ) )
+	assert_that( question, has_property( 'ntiid', 'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.1' ) )
+
+	assert_that( question, externalizes( has_entry( 'NTIID', question.ntiid ) ) )
+
 
 
 class TestRenderableSymMathPart(unittest.TestCase):

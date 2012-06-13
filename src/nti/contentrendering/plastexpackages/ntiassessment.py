@@ -278,6 +278,7 @@ class naquestion(Base.Environment,plastexids.NTIIDMixin):
 		errors = schema.getValidationErrors( as_interfaces.IQuestion, result )
 		if errors: # pragma: no cover
 			raise errors[0][1]
+		result.ntiid = self.ntiid # copy the id
 		return result
 
 def ProcessOptions( options, document ):
