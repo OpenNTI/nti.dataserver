@@ -18,3 +18,12 @@ from nti.externalization.datastructures import ModuleScopedInterfaceObjectIO
 class _AssessmentInternalObjectIO(ModuleScopedInterfaceObjectIO):
 
 	_ext_search_module = asm_interfaces
+
+# Assign external class names to the root classes
+
+def _external_class_name_( iface, impl ):
+	# Strip off 'IQ'
+	return iface.__name__[2:]
+
+for iface in (asm_interfaces.IQPart, asm_interfaces.IQuestion, asm_interfaces.IQSolution):
+	iface.setTaggedValue( '__external_class_name__', _external_class_name_ )

@@ -223,6 +223,9 @@ class InterfaceObjectIO(AbstractDynamicObjectIO):
 	using the most-derived version of the interface given to the constructor that it
 	implements.
 
+	If the interface (or an ancestor) has a tagged value ``_external_class_name,`` it can either be the value to
+	use for the ``Class`` key, or a callable `__external_class_name__( interface, object ) -> name.`
+
 	(TODO: In the future extend this to multiple, non-overlapping interfaces, and better
 	interface detection (see :class:`ModuleScopedInterfaceObjectIO` for a limited version of this.)
 	"""
@@ -274,6 +277,24 @@ class InterfaceObjectIO(AbstractDynamicObjectIO):
 		errors = schema.getValidationErrors( self._iface, self._ext_self )
 		if errors:
 			raise errors[0][1]
+
+	def toExternalObject( self, mergeFrom=None ):
+		ext_class_name = None
+		for iface in self._iface.__iro__:
+			ext_class_name = iface.queryTaggedValue( '__external_class_name__' )
+			if callable(ext_class_name):
+				# Even though the tagged value may have come from a superclass,
+				# give the actual class (interface) we're using
+				ext_class_name = ext_class_name( self._iface, self._ext_replacement )
+			if ext_class_name:
+				break
+
+		if ext_class_name:
+			mergeFrom = mergeFrom or {}
+			mergeFrom[StandardExternalFields.CLASS] = ext_class_name
+
+		result = super(InterfaceObjectIO,self).toExternalObject( mergeFrom=mergeFrom )
+		return result
 
 
 class ModuleScopedInterfaceObjectIO(InterfaceObjectIO):

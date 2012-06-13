@@ -34,7 +34,7 @@ class TestMultipleChoicePart(ConfiguringTestBase):
 
 	def test_part_provides(self):
 		assert_that( parts.QMultipleChoicePart(), verifiably_provides( interfaces.IQMultipleChoicePart ) )
-		assert_that( parts.QMultipleChoicePart(), externalizes() )
+		assert_that( parts.QMultipleChoicePart(), externalizes( has_entry( 'Class', 'MultipleChoicePart' ) ) )
 
 		# A bad solution type
 		part = parts.QMultipleChoicePart( solutions=("foo",) )
@@ -71,7 +71,7 @@ class TestMatchingPart(ConfiguringTestBase):
 
 		solution = solutions.QMatchingSolution( solution_keys )
 		part = parts.QMatchingPart( labels=labels, values=values, solutions=(solution,) )
-		assert_that( part, externalizes( has_entry( 'Class', 'QMatchingPart') ) ) # TODO: This name is not what we want
+		assert_that( part, externalizes( has_entry( 'Class', 'MatchingPart') ) )
 
 
 		assert_that( part.grade( solution_keys ), is_true() )
