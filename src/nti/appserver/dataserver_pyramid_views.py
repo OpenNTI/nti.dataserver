@@ -28,6 +28,7 @@ import transaction
 from zope.location.location import LocationProxy
 
 from nti.dataserver.interfaces import (IDataserver, ISimpleEnclosureContainer, IEnclosedContent)
+from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import users
 from nti.dataserver import links
 from nti.externalization.datastructures import isSyntheticKey
@@ -44,6 +45,7 @@ from nti.dataserver import authorization_acl as nacl
 from nti.appserver import interfaces as app_interfaces
 
 from nti.contentlibrary import interfaces as lib_interfaces
+from nti.assessment import interfaces as asm_interfaces
 
 def _find_request( resource ):
 	request = None
@@ -943,6 +945,11 @@ def class_name_from_content_type( request ):
 	content_type = content_type or ''
 	return nti_mimetype_class( content_type )
 
+def _id(x): return x
+
+def _question_submission_transformer( obj ):
+	# Grade it, by adapting the object into an IAssessedQuestion
+	return asm_interfaces.IQAssessedQuestion
 
 class _UGDPostView(_UGDModifyViewBase):
 	""" HTTP says POST creates a NEW entity under the Request-URI """
@@ -978,6 +985,20 @@ class _UGDPostView(_UGDModifyViewBase):
 		with owner.updates():
 			containedObject.creator = creator
 			self.updateContentObject( containedObject, externalValue, set_id=True )
+			transformedObject = self.request.registry.queryAdapter( containedObject,
+																	app_interfaces.INewObjectTransformer,
+																	default=_id )( containedObject )
+			# If we transformed, copy the container and creator
+			if transformedObject is not containedObject:
+				transformedObject.creator = creator
+				if getattr( containedObject, StandardInternalFields.CONTAINER_ID, None ) \
+				  and not getattr( transformedObject, StandardInternalFields.CONTAINER_ID, None ):
+				  transformedObject.containerId = containedObject.containerId
+				  # TODO: JAM: I really don't like doing this. Straighten out the
+				  # location of IContained so that things like assessment can implement it
+				  if not nti_interfaces.IContained.providedBy( transformedObject ):
+					  interface.alsoProvides( transformedObject, nti_interfaces.IContained )
+				containedObject = transformedObject
 			# TODO: The WSGI code would attempt to infer a containerID from the
 			# path. Should we?
 			if not getattr( containedObject, StandardInternalFields.CONTAINER_ID, None ):

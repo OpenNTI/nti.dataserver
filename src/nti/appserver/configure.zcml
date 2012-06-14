@@ -44,6 +44,12 @@
 	<adapter factory="._adapters.BrokenExternalObject" />
 	<adapter factory=".pyramid_renderers.render_enclosure_factory" />
 
+	<!-- Object transformers -->
+	<adapter factory=".dataserver_pyramid_views._question_submission_transformer"
+			 for="nti.assessment.interfaces.IQuestionSubmission"
+			 provides=".interfaces.INewObjectTransformer" />
+
+
 	<!-- Logon -->
 	<subscriber factory=".logon._SimpleExistingUserLinkProvider"
 				provides=".interfaces.ILogonLinkProvider"/>

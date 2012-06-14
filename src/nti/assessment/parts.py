@@ -49,11 +49,12 @@ class QPart(Persistent):
 
 	def grade( self, response ):
 		for solution in self.solutions:
+			# Graders return a true or false value. We are responsible
+			# for applying weights to that
 			result = self._grade( solution, convert_response_for_solution( solution, response ) )
-			# TODO: Taking weights into account
 			if result:
-				return result
-		return False
+				return 1.0 * solution.weight
+		return 0.0
 
 	def _grade(self, solution, response):
 		grader = component.getMultiAdapter( (self, solution, response),

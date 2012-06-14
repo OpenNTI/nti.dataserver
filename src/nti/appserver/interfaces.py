@@ -165,3 +165,13 @@ from nti.assessment import interfaces as asm_interfaces
 class IFileQuestionMap(asm_interfaces.IQuestionMap):
 	by_file = schema.Dict( key_type=schema.TextLine( title="The complete local path" ),
 						   value_type=schema.List( title="The questions contained in this file" ) )
+
+class INewObjectTransformer(interface.Interface):
+	"""
+	Called to transform an object before storage on the user.
+	"""
+
+	def __call__( posted_object ):
+		"""
+		Given the object posted from external, return the object to actually store.
+		"""

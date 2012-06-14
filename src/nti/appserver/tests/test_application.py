@@ -995,10 +995,11 @@ class TestRootPageEntryLibrary(TestApplicationLibraryBase):
 	_stream_type = 'RecursiveStream'
 
 from nti.contentlibrary.filesystem import DynamicLibrary as FileLibrary
-from nti.assessment import interfaces as asm_interfaces
+from nti.assessment import interfaces as asm_interfaces, parts as asm_parts, question as asm_question, submission as asm_submission
 from nti.tests import verifiably_provides
 from nti.appserver import interfaces as app_interfaces
 from hamcrest import has_key
+from nti.externalization.externalization import toExternalObject
 
 class TestApplicationAssessment(ApplicationTestBase):
 	child_ntiid =  'tag:nextthought.com,2011-10:MN-NAQ-MiladyCosmetology.naq.1'
@@ -1046,3 +1047,16 @@ class TestApplicationAssessment(ApplicationTestBase):
 			assert_that( res.content_type, is_( 'application/vnd.nextthought.pageinfo+json' ) )
 			assert_that( res.json_body, has_entry( 'MimeType', 'application/vnd.nextthought.pageinfo' ) )
 			assert_that( res.json_body, has_entry( 'AssessmentItems', has_item( has_entry( 'NTIID', self.child_ntiid ) ) ) )
+
+	def test_posting_assesses(self):
+
+		with mock_dataserver.mock_db_trans(self.ds):
+			self._create_user()
+		testapp = TestApp( self.app )
+
+		sub = asm_submission.QuestionSubmission( questionId=self.child_ntiid, parts=('correct',) )
+		ext_obj = toExternalObject( sub )
+		ext_obj['ContainerId'] = 'tag:nextthought.com,2011-10:mathcounts-HTML-MN.2012.0'
+		data = json.serialize( ext_obj )
+		res = testapp.post( '/dataserver2/users/sjohnson@nextthought.com', data, extra_environ=self._make_extra_environ() )
+		assert_that( res.json_body, has_entry( 'Class', 'AssessedQuestion' ) )
