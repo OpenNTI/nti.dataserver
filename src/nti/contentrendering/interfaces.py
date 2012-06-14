@@ -43,6 +43,8 @@ class IEclipseMiniDomTopic(interface.Interface):
 
 class IRenderedBook(interface.Interface):
 
+	document = interface.Attribute( "The plasTeX Document object used to create the rendering." )
+
 	contentLocation = schema.TextLine(
 		title=u"The location of the directory on disk containing the content")
 

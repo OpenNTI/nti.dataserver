@@ -36,10 +36,20 @@ $Id$
 
 from __future__ import print_function, unicode_literals
 
+from zope import interface
+from zope import component
 from zope import schema
 
+import os
+
+import simplejson as json
+import codecs
+
+from . import interfaces
+
+from nti.externalization.externalization import toExternalObject
 from nti.assessment import interfaces as as_interfaces, parts, question
-from nti.contentrendering import plastexids
+from nti.contentrendering import plastexids, interfaces as cdr_interfaces
 from plasTeX import Base
 
 class naqsolutions(Base.List):
@@ -285,3 +295,57 @@ def ProcessOptions( options, document ):
 
 	document.context.newcounter( 'naqsolutionnum' )
 	document.context.newcounter( 'naquestion' )
+
+@interface.implementer(interfaces.IAssessmentExtractor)
+@component.adapter(cdr_interfaces.IRenderedBook)
+class _AssessmentExtractor(object):
+
+	def __init__( self, book=None ):
+		# Usable as either a utility factory or an adapter
+		pass
+
+	def transform( self, book ):
+		index = {}
+		self._build_index( book.document.getElementsByTagName( 'document' )[0], index.setdefault( 'Items', {} ) )
+		index['filename'] = index.get( 'filename', 'index.html' )
+		index['href'] = index.get( 'href', 'index.html' )
+		with codecs.open( os.path.join( book.contentLocation, 'assessment_index.json'), 'w', encoding='utf-8' ) as fp:
+			json.dump( index, fp, indent='\t' )
+		return index
+
+	def _build_index( self, element, index ):
+		"""
+		Recurse through the element adding assessment objects to the index,
+		keyed off of NTIIDs.
+		"""
+		ntiid = getattr( element, 'ntiid', None )
+		if not ntiid:
+			# If we hit something without an ntiid, it's not a section-level
+			# element, it's a paragraph or something like it. Thus we collapse into
+			# the parent
+			ntiid_index = index
+		else:
+			ntiid_index = {}
+			index[ntiid] = ntiid_index
+
+			ntiid_index['NTIID'] = ntiid
+			ntiid_index['filename'] = getattr( element, 'filename', None )
+			if not ntiid_index['filename'] and getattr( element, 'filenameoverride', None ):
+				# FIXME: XXX: We are assuming the filename extension. Why aren't we finding
+				# these at filename? See EclipseHelp.zpts for comparison
+				ntiid_index['filename'] = getattr( element, 'filenameoverride' ) + '.html'
+			ntiid_index['href'] = getattr( element, 'url', ntiid_index['filename'] )
+
+		assessment_objects = ntiid_index.setdefault( 'AssessmentItems', {} )
+
+		for child in element.childNodes:
+			ass_obj = getattr( child, 'assessment_object', None )
+			if callable( ass_obj ):
+				assessment_objects[child.ntiid] = toExternalObject( ass_obj())
+				# No need to go into its children, like parts.
+			else:
+				if getattr( child, 'ntiid', None ):
+					child_index = ntiid_index.setdefault( 'Items', {} )
+				else:
+					child_index = ntiid_index
+				self._build_index( child, child_index )

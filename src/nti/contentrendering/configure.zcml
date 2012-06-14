@@ -37,4 +37,5 @@
 	<include package=".transforms" />
 	<include package=".contentchecks" />
 	<include package=".resources" />
+	<include package=".plastexpackages" />
 </configure>
