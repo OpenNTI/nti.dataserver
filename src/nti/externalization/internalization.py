@@ -178,6 +178,7 @@ def update_from_external_object( containedObject, externalObject,
 		tmp = []
 		for i in externalObject:
 			factory = find_factory_for( i )
+			__traceback_info__ = factory, i
 			tmp.append( update_from_external_object( factory(), i, registry, context=context, require_updater=require_updater ) if factory else i )
 		return tmp
 

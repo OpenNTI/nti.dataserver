@@ -240,7 +240,7 @@ class InterfaceObjectIO(AbstractDynamicObjectIO):
 		_iface = iface_upper_bound
 		# Search for the most derived version of the interface
 		# this object implements and use that.
-		for iface in interface.providedBy( ext_self ):
+		for iface in self._ext_schemas_to_consider( ext_self ):
 			if iface.isOrExtends( _iface ):
 				_iface = iface
 		return _iface
@@ -341,7 +341,8 @@ class ModuleScopedInterfaceObjectIO(InterfaceObjectIO):
 		# In that case, we are not suitable for use with this object
 		for iface in self._ext_schemas_to_consider( ext_self ):
 			if not most_derived.isOrExtends( iface ):
-				raise TypeError( "Non-linear interface tree implemented by %s in %s: %s is not %s" % (type(ext_self),self._ext_search_module, most_derived, iface))
+				raise TypeError( "Non-linear interface tree implemented by %s in %s: %s is not %s (%s)"
+								 % (type(ext_self),self._ext_search_module, most_derived, iface, list(self._ext_schemas_to_consider( ext_self ))) )
 		return most_derived
 
 	def _ext_schemas_to_consider( self, ext_self ):

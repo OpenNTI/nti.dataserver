@@ -471,6 +471,7 @@ class _NTIIDEntry(object):
 					  'UserGeneratedDataAndRecursiveStream')
 
 	extra_links = ()
+	extra_data = None
 
 	def __init__(self, parent, ntiid):
 		self.__parent__ = parent
@@ -497,6 +498,9 @@ class _NTIIDEntry(object):
 			result[StandardExternalFields.LINKS].append( link )
 
 		result[StandardExternalFields.LINKS].extend( self.extra_links )
+
+		if self.extra_data:
+			result.update( self.extra_data )
 		return result
 
 class _RootNTIIDEntry(_NTIIDEntry):

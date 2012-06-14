@@ -39,8 +39,10 @@ class QMathSolution(QSolution):
 	"""
 
 class _TrivialValuedMixin(object):
-	def __init__( self, value ):
-		self.value = value
+	value = None
+	def __init__( self, value=None ):
+		if value is not None:
+			self.value = value
 
 def _eq_(self, other):
 	return other is self or (self.weight == getattr( other, 'weight', Persistent ) and self.value == getattr( other, 'value', Persistent ))

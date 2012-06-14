@@ -993,3 +993,56 @@ class TestRootPageEntryLibrary(TestApplicationLibraryBase):
 	child_ntiid = ntiids.ROOT
 	_check_content_link = False
 	_stream_type = 'RecursiveStream'
+
+from nti.contentlibrary.filesystem import DynamicLibrary as FileLibrary
+from nti.assessment import interfaces as asm_interfaces
+from nti.tests import verifiably_provides
+from nti.appserver import interfaces as app_interfaces
+from hamcrest import has_key
+
+class TestApplicationAssessment(ApplicationTestBase):
+	child_ntiid =  'tag:nextthought.com,2011-10:MN-NAQ-MiladyCosmetology.naq.1'
+
+	def _setup_library( self, *args, **kwargs ):
+		return FileLibrary( os.path.join( os.path.dirname(__file__), 'ExLibrary' ) )
+
+	def test_registered_utility(self):
+		qmap = component.getUtility( asm_interfaces.IQuestionMap )
+		assert_that( qmap,
+					 verifiably_provides( app_interfaces.IFileQuestionMap ) )
+		assert_that( qmap,
+					 has_length( 25 ) )
+		assert_that( qmap,
+					 has_key( self.child_ntiid ) )
+		assert_that( qmap.by_file,
+					 has_key( os.path.join( os.path.dirname(__file__), 'ExLibrary', 'WithAssessment', 'tag_nextthought.com,2011-10_mathcounts-HTML-MN.2012.0.html' ) ) )
+
+
+
+	def test_fetch_assessment_question(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			self._create_user()
+		testapp = TestApp( self.app )
+		# These inherit the same ACLs as the content they came with
+		res = testapp.get( '/dataserver2/NTIIDs/' + self.child_ntiid, status=401 )
+
+		res = testapp.get( '/dataserver2/NTIIDs/' + self.child_ntiid, extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 200 ) )
+		assert_that( res.json_body, has_entry( 'Class', 'Question' ) )
+
+	def test_fetch_pageinfo_with_questions(self):
+
+		with mock_dataserver.mock_db_trans(self.ds):
+			self._create_user()
+		testapp = TestApp( self.app )
+
+		for accept_type in ('application/json','application/vnd.nextthought.pageinfo','application/vnd.nextthought.pageinfo+json'):
+
+			res = testapp.get( '/dataserver2/NTIIDs/tag:nextthought.com,2011-10:mathcounts-HTML-MN.2012.0',
+							   headers={"Accept": accept_type},
+							   extra_environ=self._make_extra_environ() )
+			assert_that( res.status_int, is_( 200 ) )
+
+			assert_that( res.content_type, is_( 'application/vnd.nextthought.pageinfo+json' ) )
+			assert_that( res.json_body, has_entry( 'MimeType', 'application/vnd.nextthought.pageinfo' ) )
+			assert_that( res.json_body, has_entry( 'AssessmentItems', has_item( has_entry( 'NTIID', self.child_ntiid ) ) ) )
