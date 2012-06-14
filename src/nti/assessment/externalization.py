@@ -46,7 +46,12 @@ def _find_factories():
 			# Does this implement something that should be externalizable?
 			# If so, register it, chopping off the leading 'Q'
 			if any( (iface.queryTaggedValue( '__external_class_name__') for iface in interface.implementedBy(v)) ):
-				setattr( _ClassNameRegistry, k[1:], v )
-				setattr( v, '__external_can_create__', True )
+				setattr( _ClassNameRegistry, k[1:] if not k.startswith( 'Question' ) else k, v )
+				# Opt in for creating, unless explicitly disallowed
+				if not hasattr( v, '__external_can_create__' ):
+					setattr( v, '__external_can_create__', True )
+					# Let them have containers
+					if not hasattr( v, 'containerId' ):
+						setattr( v, 'containerId', None )
 _find_factories()
 register_legacy_search_module( _ClassNameRegistry )

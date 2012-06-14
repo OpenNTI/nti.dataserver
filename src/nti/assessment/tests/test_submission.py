@@ -4,7 +4,7 @@ $Id$
 """
 from __future__ import print_function, unicode_literals
 
-from hamcrest import assert_that, has_entry, is_, has_property, contains
+from hamcrest import assert_that, has_entry, is_, has_property, contains, same_instance
 from nti.tests import ConfiguringTestBase, is_true, is_false
 from nti.tests import verifiably_provides
 from nti.externalization.tests import externalizes
@@ -15,7 +15,9 @@ from zope import component
 from zope.schema import interfaces as sch_interfaces
 
 import nti.assessment
+from nti.externalization.externalization import toExternalObject
 from nti.externalization.internalization import update_from_external_object
+from nti.externalization import internalization
 
 from nti.assessment import interfaces
 from nti.assessment import submission
@@ -28,6 +30,9 @@ class TestQuestionSubmission(ConfiguringTestBase):
 	def test_externalizes(self):
 		assert_that( submission.QuestionSubmission(), verifiably_provides( interfaces.IQuestionSubmission ) )
 		assert_that( submission.QuestionSubmission(), externalizes( has_entry( 'Class', 'QuestionSubmission' ) ) )
+		assert_that( internalization.find_factory_for( toExternalObject( submission.QuestionSubmission() ) ),
+					 is_( same_instance( submission.QuestionSubmission ) ) )
+
 
 		# No coersion of parts happens yet at this level
 		submiss = submission.QuestionSubmission()

@@ -445,7 +445,7 @@ def createApplication( http_port,
 						self.by_file.setdefault( filename, [] ).append( obj )
 						interface.alsoProvides( obj, lib_interfaces.IFilesystemEntry )
 
-					self[k] = v
+					self[k] = obj
 				if 'Items' in item:
 					self._from_index_entry( item, dirname=dirname )
 

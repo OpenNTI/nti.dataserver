@@ -60,6 +60,11 @@
 			 provides=".interfaces.IQMatchingPartGrader" />
 
 
+	<!-- Submissions can be adapted to assessments -->
+	<adapter factory=".assessed.assess_question_submission"
+			 for=".interfaces.IQuestionSubmission"
+			 provides=".interfaces.IQAssessedQuestion" />
+
 	<!-- Externalization -->
 	<adapter factory=".externalization._AssessmentInternalObjectIO"
 			 for=".interfaces.IQPart" />
