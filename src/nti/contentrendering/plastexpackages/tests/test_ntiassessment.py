@@ -9,6 +9,7 @@ from hamcrest import contains, has_item
 from hamcrest import has_entry
 import unittest
 
+import anyjson as json
 
 import plasTeX
 from plasTeX.TeX import TeX
@@ -118,12 +119,22 @@ def test_multiple_choice_macros():
 
 	assert_that( question, externalizes( has_entry( 'NTIID', question.ntiid ) ) )
 
+from plasTeX.Renderers.XHTML import Renderer
+from nti.contentrendering.plastexpackages import interfaces
+from zope import component
+from zope import interface
+from nti.contentrendering import interfaces as cdr_interfaces
+
+@interface.implementer(cdr_interfaces.IRenderedBook)
+class _MockRenderedBook(object):
+	document = None
+	contentLocation = None
 
 
 class TestRenderableSymMathPart(unittest.TestCase):
 
 	def _do_test_render( self, label, ntiid, filename='index.html' ):
-		from plasTeX.Renderers.XHTML import Renderer
+
 		example = br"""
 		\begin{naquestion}[individual=true]%s
 			Arbitrary content goes here.
@@ -151,7 +162,50 @@ class TestRenderableSymMathPart(unittest.TestCase):
 			assert_that( index, contains_string( content ) )
 
 	def test_render_id(self):
+		"The label for the question becomes part of its NTIID."
 		self._do_test_render( br'\label{testquestion}', 'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.testquestion')
 
 	def test_render_counter(self):
 		self._do_test_render( b'', 'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.1' )
+
+
+	def test_assessment_index(self):
+
+		example = br"""
+		\chapter{Chapter One}
+
+		We have a paragraph.
+
+		\section{Section One}
+
+		\begin{naquestion}[individual=true]\label{testquestion}
+			Arbitrary content goes here.
+			\begin{naqsymmathpart}
+			Arbitrary content goes here.
+			\begin{naqsolutions}
+				\naqsolution Some solution
+			\end{naqsolutions}
+			\end{naqsymmathpart}
+		\end{naquestion}
+		"""
+
+		with RenderContext(_simpleLatexDocument( (example,) )) as ctx:
+			dom  = ctx.dom
+			dom.getElementsByTagName( 'document' )[0].filenameoverride = 'index'
+			render = Renderer()
+			render.importDirectory( os.path.join( os.path.dirname(__file__), '..' ) )
+			render.render( dom )
+
+			rendered_book = _MockRenderedBook()
+			rendered_book.document = dom
+			rendered_book.contentLocation = ctx.docdir
+
+			extractor = component.getAdapter( rendered_book, interfaces.IAssessmentExtractor )
+			extractor.transform( rendered_book )
+
+			jsons = open(os.path.join( ctx.docdir, 'assessment_index.json' ), 'rU' ).read()
+			obj = json.loads( jsons )
+
+			exp_value = {'Items': {'tag:nextthought.com,2011-10:testing-HTML-temp.0': {'filename': 'index.html', 'NTIID': 'tag:nextthought.com,2011-10:testing-HTML-temp.0', 'href': 'index.html', 'AssessmentItems': {}, 'Items': {'tag:nextthought.com,2011-10:testing-HTML-temp.chapter_one': {'filename': 'tag_nextthought.com,2011-10_testing-HTML-temp.chapter_one.html', 'NTIID': 'tag:nextthought.com,2011-10:testing-HTML-temp.chapter_one', 'href': 'tag_nextthought.com,2011-10_testing-HTML-temp.chapter_one.html', 'AssessmentItems': {}, 'Items': {'tag:nextthought.com,2011-10:testing-HTML-temp.section_one': {'NTIID': 'tag:nextthought.com,2011-10:testing-HTML-temp.section_one', 'href': 'tag_nextthought.com,2011-10_testing-HTML-temp.section_one.html', 'AssessmentItems': {'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.testquestion': {'content': 'Arbitrary content goes here.', 'NTIID': 'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.testquestion', 'parts': [{'content': 'Arbitrary content goes here.', 'explanation': '', 'solutions': [{'weight': 1.0, 'Class': 'LatexSymbolicMathSolution', 'value': 'Some solution'}], 'Class': 'SymbolicMathPart', 'hints': []}], 'Class': 'Question'}}, 'filename': 'tag_nextthought.com,2011-10_testing-HTML-temp.section_one.html'}}}}}}, 'href': 'index.html', 'filename': 'index.html'}
+
+			assert_that( obj, is_( exp_value ) )

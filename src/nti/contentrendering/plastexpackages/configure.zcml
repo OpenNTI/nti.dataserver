@@ -1,0 +1,15 @@
+<!-- -*- mode: nxml -*- -->
+<configure xmlns="http://namespaces.zope.org/zope"
+		   i18n_domain="zope">
+	<include package="zope.component" />
+
+	<adapter for="nti.contentrendering.interfaces.IRenderedBook"
+			 factory=".ntiassessment._AssessmentExtractor"
+			 provides=".interfaces.IAssessmentExtractor" />
+
+	<utility factory=".ntiassessment._AssessmentExtractor"
+			 provides=".interfaces.IAssessmentExtractor"
+			 name="AssessmentExtractor" />
+
+	<include package="nti.assessment" />
+</configure>
