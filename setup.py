@@ -132,7 +132,7 @@ setup(
 		'zope.configuration >= 4.0.0',
 		'zope.container >= 3.12.0',
 		'zope.contenttype >= 3.5.5',
-		'zope.copy >= 3.5.0',
+		'zope.copy >= 4.0.0',
 		'zope.datetime >= 3.4.1',
 		'zope.deprecation >= 4.0.0',
 		'zope.dottedname >= 3.4.6',
