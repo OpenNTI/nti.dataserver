@@ -81,7 +81,13 @@ setup(
 		'linesman >= 0.2.2',
 		'logilab-common',
 		'nltk >= 2.0.1',
-		'numpy >= 1.6.2', # req'd by nltk, but not depended on. sigh.
+		# numpy is req'd by nltk, but not depended on. sigh.
+		# This turns out to be because it CANNOT be installed in a setup.py:
+		# Apparently it ships its own distutils. If you try to install from setup.py, you get
+		# Warning: distutils distribution has been initialized, it may be too late to add a subpackage command
+		# followed by compilation failures: fatal error 'Python.h' file not found. So you must
+		# install numpy manually with pip: pip install numpy
+		'numpy >= 1.6.2',
 		'paste',
 		'pyhamcrest',
 		'pylint',
