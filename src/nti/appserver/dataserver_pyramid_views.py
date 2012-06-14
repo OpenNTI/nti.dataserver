@@ -1367,6 +1367,7 @@ def _provider_redirect_classes(request):
 def _create_page_info(request, href, ntiid):
 	# Traverse down to the pages collection and use it to create the info.
 	# This way we get the correct link structure
+
 	remote_user = users.User.get_user( sec.authenticated_userid( request ), dataserver=request.registry.getUtility(IDataserver) )
 	user_service = request.registry.getAdapter( remote_user, app_interfaces.IService )
 	user_workspace = user_service.user_workspace
@@ -1374,6 +1375,13 @@ def _create_page_info(request, href, ntiid):
 	info = pages_collection.make_info_for( ntiid )
 	if href:
 		info.extra_links = (links.Link( href, rel='content' ),) # TODO: The rel?
+
+	questions = request.registry.getUtility( app_interfaces.IFileQuestionMap )
+	for_file = questions.by_file.get( getattr( request.context, 'filename', None ) )
+	if for_file:
+		### XXX FIXME: We need to be sure we don't send back the
+		# solutions and explanations right now
+		info.extra_data = { 'AssessmentItems': for_file }
 	return info
 
 

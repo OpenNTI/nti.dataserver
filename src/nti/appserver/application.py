@@ -12,6 +12,8 @@ import sys
 import os
 import traceback
 
+import anyjson as json
+
 import UserDict
 
 import nti.dictserver as dictserver
@@ -23,6 +25,7 @@ import nti.dataserver._Dataserver
 
 #from nti.dataserver.library import Library
 from nti.dataserver import interfaces as nti_interfaces
+from nti.contentlibrary import interfaces as lib_interfaces
 
 import nti.contentsearch
 contentsearch = nti.contentsearch
@@ -31,6 +34,7 @@ import nti.contentsearch.indexmanager
 import nti.dataserver.users
 from nti.dataserver import authorization as nauth
 from nti.dataserver.interfaces import IDataserver
+from nti.assessment import interfaces as asm_interfaces
 
 
 from zope import interface
@@ -54,7 +58,7 @@ import datetime
 import pyramid_zodbconn
 
 from . import pyramid_auth
-
+from . import interfaces as app_interfaces
 
 # Make the zope interface extend the pyramid interface
 # Although this seems backward, it isn't. The zope location
@@ -416,7 +420,46 @@ def createApplication( http_port,
 	class _ContentSearchRootFactory(dict):
 		__acl__ = ( (pyramid.security.Allow, pyramid.security.Authenticated, pyramid.security.ALL_PERMISSIONS), )
 
+	class _QuestionMap(dict):
+		interface.implements( app_interfaces.IFileQuestionMap )
+
+		def __init__( self ):
+			super(_QuestionMap,self).__init__()
+			self.by_file = {}
+
+		def _from_index_entry(self, index, dirname=None):
+			filename = None
+			if index.get( 'filename' ):
+				filename = os.path.join( dirname, index.get( 'filename' ) ) if dirname else index['filename']
+			for item in index['Items'].values():
+				for k, v in item['AssessmentItems'].items():
+					__traceback_info__ = k, v
+
+					factory = nti.externalization.internalization.find_factory_for( v )
+					assert factory is not None
+					obj = factory()
+					nti.externalization.internalization.update_from_external_object( obj, v, require_updater=True )
+					obj.ntiid = k
+					if filename:
+						obj.filename = filename
+						self.by_file.setdefault( filename, [] ).append( obj )
+						interface.alsoProvides( obj, lib_interfaces.IFilesystemEntry )
+
+					self[k] = v
+				if 'Items' in item:
+					self._from_index_entry( item, dirname=dirname )
+
+
+	question_map = _QuestionMap()
+	pyramid_config.registry.registerUtility( question_map )
 	for title in library.titles:
+		# TODO: This is assuming things are on a local filesystem
+
+		asm_index = os.path.join( title.localPath, 'assessment_index.json' )
+		if os.path.isfile( asm_index ):
+			index = json.loads( unicode(open( asm_index, 'rU' ).read()) )
+			question_map._from_index_entry( index, dirname=title.localPath )
+
 		indexname = os.path.basename( title.localPath )
 		routename = 'search.book'
 		try:

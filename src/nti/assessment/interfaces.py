@@ -4,6 +4,8 @@ from __future__ import unicode_literals, print_function
 from zope import interface
 from zope import schema
 
+NTIID_TYPE = 'NAQ'
+
 class TypedIterable(schema.List):
 	"""
 	An arbitrary (indexable) iterable, not necessarily a list or tuple.
@@ -356,3 +358,8 @@ class IQAssessedQuestionSet(interface.Interface):
 	questionSetId = interface.Attribute( "Identifier of the question set being responded to." )
 	questions = TypedIterable( title="Assessed questions, one for each question in the set.",
 							   value_type=schema.Object( IQAssessedQuestion, title="The assessed value for a particular question.") )
+
+class IQuestionMap(interface.common.mapping.IReadMapping):
+	"""
+	Something to look questions up by their IDs.
+	"""

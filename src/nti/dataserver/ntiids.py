@@ -70,6 +70,7 @@ deprecated( "TYPE_CLASS", "Prefer nti.ntiids.ntiids.TYPE_CLASS" )
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import authorization_acl as nacl
 from nti.contentlibrary import interfaces as lib_interfaces
+from nti.assessment import interfaces as asm_interfaces
 from zope import component
 
 def find_object_with_ntiid(key, dataserver=None):
@@ -103,5 +104,10 @@ def find_object_with_ntiid(key, dataserver=None):
 		if path:
 			result = path[-1]
 			result = nti_interfaces.ACLLocationProxy( result, result.__parent__, result.__name__, nacl.ACL( result ) )
+
+	if result is None and is_ntiid_of_type( key, asm_interfaces.NTIID_TYPE ):
+		result = component.queryUtility( asm_interfaces.IQuestionMap, default={} ).get( key )
+		if result:
+			result = nti_interfaces.ACLLocationProxy( result, None, None, nacl.ACL( result ) )
 
 	return result

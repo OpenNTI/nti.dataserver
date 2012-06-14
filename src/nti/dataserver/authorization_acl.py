@@ -418,14 +418,14 @@ class _LibraryTOCEntryACLProvider(object):
 		# If so, how?
 		self.__acl__ = ( ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _LibraryTOCEntryACLProvider ), )
 
-class _LibraryEntryACLProvider(object):
+@interface.implementer( nti_interfaces.IACLProvider )
+@component.adapter( content_interfaces.IFilesystemEntry )
+class _FilesystemEntryACLProvider(object):
 	"""
-	Checks a library entry for the existence of a '.nti_acl' file, and if present,
+	Checks a filesystem entry for the existence of a '.nti_acl' file, and if present,
 	reads an ACL from it. Otherwise, the ACL allows all authenticated
 	users access.
 	"""
-	interface.implements( nti_interfaces.IACLProvider )
-	component.adapts( content_interfaces.IContentPackage )
 
 	def __init__( self, obj ):
 		self._obj = obj
@@ -435,9 +435,19 @@ class _LibraryEntryACLProvider(object):
 				self.__acl__ = acl_from_file( acl_file )
 			except:
 				logger.exception( "Failed to read acl from %s; denying all access.", obj )
-				self.__acl__ = _ACL( (ace_denying( nti_interfaces.EVERYONE_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _LibraryEntryACLProvider ), ) )
+				self.__acl__ = _ACL( (ace_denying( nti_interfaces.EVERYONE_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _FilesystemEntryACLProvider ), ) )
 		else:
-			self.__acl__ = _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _LibraryTOCEntryACLProvider ), ) )
+			self.__acl__ = _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _FilesystemEntryACLProvider ), ) )
+
+
+class _LibraryEntryACLProvider(_FilesystemEntryACLProvider):
+	"""
+	Checks a library entry for the existence of a '.nti_acl' file, and if present,
+	reads an ACL from it. Otherwise, the ACL allows all authenticated
+	users access.
+	"""
+	interface.implements( nti_interfaces.IACLProvider )
+	component.adapts( content_interfaces.IContentPackage )
 
 
 class _FriendsListACLProvider(_CreatedACLProvider):

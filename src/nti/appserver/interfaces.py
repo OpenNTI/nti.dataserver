@@ -157,3 +157,11 @@ class IExternalFieldTraverser(interface.Interface):
 		"""
 		As per the Mapping interface, doesn't raise KeyError.
 		"""
+
+###
+# Assessment Support
+###
+from nti.assessment import interfaces as asm_interfaces
+class IFileQuestionMap(asm_interfaces.IQuestionMap):
+	by_file = schema.Dict( key_type=schema.TextLine( title="The complete local path" ),
+						   value_type=schema.List( title="The questions contained in this file" ) )
