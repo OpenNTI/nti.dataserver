@@ -26,6 +26,7 @@ from nti.tests import verifiably_provides
 
 import nti.contentrendering
 import nti.assessment
+from nti.assessment import interfaces as asm_interfaces
 import nti.externalization
 
 def _simpleLatexDocument(maths):
@@ -45,6 +46,9 @@ def test_macros():
 		\begin{naqsolutions}
 			\naqsolution Some solution
 		\end{naqsolutions}
+		\begin{naqhints}
+			\naqhint Some hint
+		\end{naqhints}
 		\end{naqsymmathpart}
 	\end{naquestion}
 	"""
@@ -63,7 +67,8 @@ def test_macros():
 	part = part_el.assessment_object()
 	assert_that( part, verifiably_provides( part_el.part_interface ) )
 	assert_that( part.content, is_( "Arbitrary content goes here." ) )
-
+	assert_that( part.hints, has_length( 1 ) )
+	assert_that( part.hints, contains( verifiably_provides( asm_interfaces.IQHint ) ) )
 
 def test_multiple_choice_macros():
 	example = br"""
@@ -185,6 +190,9 @@ class TestRenderableSymMathPart(unittest.TestCase):
 			\begin{naqsolutions}
 				\naqsolution Some solution
 			\end{naqsolutions}
+			\begin{naqhints}
+				\naqhint Some hint
+			\end{naqhints}
 			\end{naqsymmathpart}
 		\end{naquestion}
 		"""
@@ -206,6 +214,6 @@ class TestRenderableSymMathPart(unittest.TestCase):
 			jsons = open(os.path.join( ctx.docdir, 'assessment_index.json' ), 'rU' ).read()
 			obj = json.loads( jsons )
 
-			exp_value = {'Items': {'tag:nextthought.com,2011-10:testing-HTML-temp.0': {'filename': 'index.html', 'NTIID': 'tag:nextthought.com,2011-10:testing-HTML-temp.0', 'href': 'index.html', 'AssessmentItems': {}, 'Items': {'tag:nextthought.com,2011-10:testing-HTML-temp.chapter_one': {'filename': 'tag_nextthought.com,2011-10_testing-HTML-temp.chapter_one.html', 'NTIID': 'tag:nextthought.com,2011-10:testing-HTML-temp.chapter_one', 'href': 'tag_nextthought.com,2011-10_testing-HTML-temp.chapter_one.html', 'AssessmentItems': {}, 'Items': {'tag:nextthought.com,2011-10:testing-HTML-temp.section_one': {'NTIID': 'tag:nextthought.com,2011-10:testing-HTML-temp.section_one', 'href': 'tag_nextthought.com,2011-10_testing-HTML-temp.section_one.html', 'AssessmentItems': {'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.testquestion': {'content': 'Arbitrary content goes here.', 'NTIID': 'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.testquestion', 'parts': [{'content': 'Arbitrary content goes here.', 'explanation': '', 'solutions': [{'weight': 1.0, 'Class': 'LatexSymbolicMathSolution', 'value': 'Some solution'}], 'Class': 'SymbolicMathPart', 'hints': []}], 'Class': 'Question'}}, 'filename': 'tag_nextthought.com,2011-10_testing-HTML-temp.section_one.html'}}}}}}, 'href': 'index.html', 'filename': 'index.html'}
+			exp_value = {'Items': {'tag:nextthought.com,2011-10:testing-HTML-temp.0': {'filename': 'index.html', 'NTIID': 'tag:nextthought.com,2011-10:testing-HTML-temp.0', 'href': 'index.html', 'AssessmentItems': {}, 'Items': {'tag:nextthought.com,2011-10:testing-HTML-temp.chapter_one': {'filename': 'tag_nextthought.com,2011-10_testing-HTML-temp.chapter_one.html', 'NTIID': 'tag:nextthought.com,2011-10:testing-HTML-temp.chapter_one', 'href': 'tag_nextthought.com,2011-10_testing-HTML-temp.chapter_one.html', 'AssessmentItems': {}, 'Items': {'tag:nextthought.com,2011-10:testing-HTML-temp.section_one': {'NTIID': 'tag:nextthought.com,2011-10:testing-HTML-temp.section_one', 'href': 'tag_nextthought.com,2011-10_testing-HTML-temp.section_one.html', 'AssessmentItems': {'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.testquestion': {'content': 'Arbitrary content goes here.', 'NTIID': 'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.testquestion', 'parts': [{'content': 'Arbitrary content goes here.', 'explanation': '', 'solutions': [{'weight': 1.0, 'Class': 'LatexSymbolicMathSolution', 'value': 'Some solution'}], 'Class': 'SymbolicMathPart', 'hints': [{'Class': 'TextHint', 'value': 'Some hint'}]}], 'Class': 'Question'}}, 'filename': 'tag_nextthought.com,2011-10_testing-HTML-temp.section_one.html'}}}}}}, 'href': 'index.html', 'filename': 'index.html'}
 
 			assert_that( obj, is_( exp_value ) )

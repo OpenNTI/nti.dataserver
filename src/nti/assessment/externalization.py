@@ -30,7 +30,8 @@ def _external_class_name_( iface, impl ):
 def _apply_tagged_values():
 	for iface in (asm_interfaces.IQPart, asm_interfaces.IQuestion, asm_interfaces.IQSolution,
 				  asm_interfaces.IQuestionSubmission, asm_interfaces.IQAssessedPart, asm_interfaces.IQAssessedQuestion,
-				  asm_interfaces.IQuestionSetSubmission, asm_interfaces.IQAssessedQuestionSet):
+				  asm_interfaces.IQuestionSetSubmission, asm_interfaces.IQAssessedQuestionSet,
+				  asm_interfaces.IQHint):
 		iface.setTaggedValue( '__external_class_name__', _external_class_name_ )
 _apply_tagged_values()
 
@@ -38,7 +39,7 @@ class _ClassNameRegistry(object): pass
 
 def _find_factories():
 
-	for mod_name in ('assessed', 'parts', 'question', 'response', 'solution', 'submission'):
+	for mod_name in ('hint', 'assessed', 'parts', 'question', 'response', 'solution', 'submission'):
 		mod = dottedname.resolve( 'nti.assessment.' + mod_name )
 		for k, v in mod.__dict__.items():
 			if getattr( v, '__module__', None) != mod.__name__ or type(v) != type:

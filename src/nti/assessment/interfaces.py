@@ -24,6 +24,13 @@ class IQHint(interface.Interface):
 
 	It my be inline or be a link (reference) to other content.
 	"""
+	# TODO: Model this better
+
+class IQTextHint(IQHint):
+	"""
+	A hint represented as text.
+	"""
+	value = schema.Text( title="The hint text" )
 
 class IQSolution(interface.Interface):
 
@@ -305,7 +312,7 @@ class IQuestionSubmission(interface.Interface):
 	questionId = schema.TextLine( title="Identifier of the question being responded to." )
 	parts = TypedIterable( title="Ordered submissions, one for each part of the question.",
 						   description="""The length must match the length of the questions. Each object must be
-						   adaptable into the proper :class:`IQResponse` object.""" )
+						   adaptable into the proper :class:`IQResponse` object (e.g., a string or dict).""" )
 
 
 class IQAssessedPart(interface.Interface):
