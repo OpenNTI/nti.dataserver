@@ -63,7 +63,7 @@ setup(
 		# 'MySQL-python', # mysql adapter
 		# 'RelStorage',
 		'anyjson >= 0.3.1',
-		'boto >= 2.4.1', # amazon
+		'boto >= 2.5.1', # amazon
 		'brownie >= 0.5.1', # Common utilities
 		'coverage >= 3.5.2', # Test coverage
 		'cssselect >= 0.7.1', # Used by pyquery
