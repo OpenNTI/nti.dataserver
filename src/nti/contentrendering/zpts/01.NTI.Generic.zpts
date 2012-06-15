@@ -54,3 +54,5 @@ name: mathnumber mathname
 name: pageref
 <a tal:attributes="href self/idref/label/url" class="pageref" tal:content="self/getPageNameForRef">Page Reference</a>
  
+name: caption*
+<div class="caption"><span tal:content="self">Caption text</span></div>
