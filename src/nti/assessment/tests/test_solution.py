@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function, unicode_literals
 
-from hamcrest import assert_that, is_
+from hamcrest import assert_that, is_, is_not
 from nti.tests import ConfiguringTestBase, is_true, is_false
 
 from zope import interface
@@ -49,6 +49,20 @@ class TestNumericMathSolution(ConfiguringTestBase):
 		# via number-to-text-solution-to-number
 		assert_that( solution.QNumericMathSolution( 1 ).grade( 1 ), is_true( ) )
 		assert_that( solution.QNumericMathSolution( 1 ).grade( 1.2 ), is_false( ) )
+
+	def test_equality( self ):
+		soln = solution.QNumericMathSolution( 1 )
+		soln2 = solution.QNumericMathSolution( 1 )
+		soln3 = solution.QNumericMathSolution( 2 )
+
+		soln4 = solution.QNumericMathSolution( 1 )
+		soln4.weight = 0.5
+
+		assert_that( soln, is_( soln2 ) )
+		assert_that( soln, is_not( soln3 ) )
+		assert_that( soln, is_not( soln4 ) )
+		assert soln != soln4 # hit the ne operator
+
 
 class TestFreeResponseSolution(ConfiguringTestBase):
 	set_up_packages = (nti.assessment,)

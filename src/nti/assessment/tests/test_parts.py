@@ -2,6 +2,7 @@
 from __future__ import print_function, unicode_literals
 
 from hamcrest import assert_that, has_entry
+from hamcrest import is_, is_not
 from nti.tests import ConfiguringTestBase, is_true, is_false
 from nti.tests import verifiably_provides
 from nti.externalization.tests import externalizes
@@ -23,6 +24,10 @@ class TestQPart(ConfiguringTestBase):
 	def test_part_provides(self):
 		part = parts.QPart()
 		assert_that( part, verifiably_provides( interfaces.IQPart ) )
+		assert_that( part, is_( part ) )
+		assert_that( part, is_not( parts.QPart( content='other' ) ) )
+		# hit the ne operator specifically
+		assert part != parts.QPart( content='other' )
 
 	def test_part_badkw(self):
 		with assert_raises(ValueError):
@@ -39,6 +44,7 @@ class TestMultipleChoicePart(ConfiguringTestBase):
 		# A bad solution type
 		part = parts.QMultipleChoicePart( solutions=("foo",) )
 		assert_that( part, verifiably_provides( interfaces.IQMultipleChoicePart ) )
+		assert_that( part, is_( part ) )
 
 		with assert_raises(interface.Invalid):
 			sf = interfaces.IQMultipleChoicePart['solutions']
@@ -71,7 +77,10 @@ class TestMatchingPart(ConfiguringTestBase):
 
 		solution = solutions.QMatchingSolution( solution_keys )
 		part = parts.QMatchingPart( labels=labels, values=values, solutions=(solution,) )
+		part2 = parts.QMatchingPart( labels=labels, values=values, solutions=(solution,) )
 		assert_that( part, externalizes( has_entry( 'Class', 'MatchingPart') ) )
+		assert_that( part, is_( part ) )
+		assert_that( part, is_( part2 ) )
 
 
 		assert_that( part.grade( solution_keys ), is_true() )

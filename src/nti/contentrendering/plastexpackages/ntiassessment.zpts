@@ -1,12 +1,44 @@
+# Rough rendering of parts. The true rendering is
+# reserved for the client
+# All parts have the 'naquestionpart' class
+
 name: naqsymmathpart
-<div class="naquestionpart naqsymmathpart">
+<div class="naquestionpart naqsymmathpart" tal:attributes="id self/id" >
+	 <a tal:attributes="name self/id"/>
+	 <span tal:content="self" />
+	 <div class="rightwrongbox"></div>
+	 <input class="answerblank" data-ntitype="naqsymmath" tal:attributes="id self/attributes/probnum" />
+</div>
+
+name: naqnumericmathpart
+<div class="naquestionpart naqnumericmathpart" tal:attributes="name self/id" >
 	 <a tal:attributes="name self/id"/>
 	 <span tal:content="self"/>
 	 <div class="rightwrongbox"></div>
-	 <input class="answerblank" ntitype="naqsymmath" tal:attributes="id self/attributes/probnum" />
+	 <input class="answerblank" data-ntitype="naqnumericmath" tal:attributes="id self/attributes/probnum" />
 </div>
 
 
+name: naqfreeresponsepart
+<div class="naquestionpart naqfreeresponsepart" tal:attributes="name self/id" >
+	 <a tal:attributes="name self/id"/>
+	 <span tal:content="self"/>
+	 <div class="rightwrongbox"></div>
+	 <input class="answerblank" data-ntitype="naqfreeresponse" tal:attributes="id self/attributes/probnum" />
+</div>
+
+# These and the contained naqchoices should probably be radio buttuns
+name: naqmultiplechoicepart
+<div class="naquestionpart naqmultiplechoicepart" tal:attributes="name self/id" >
+	 <a tal:attributes="name self/id"/>
+	 <span tal:content="self"/>
+	 <div class="rightwrongbox"></div>
+</div>
+
+name: naqchoices
+<ol class="naqchoices">
+	<li tal:repeat="item self" class="naqchoice" tal:content="item" />
+</ol>
 
 name: naquestion
 <object type="application/vnd.nextthought.naquestion" data-ntiid="the-ntiid" data="the-ntiid" tal:attributes="data-ntiid self/ntiid; data self/ntiid">
@@ -18,7 +50,6 @@ name: naquestion
 </div>
 </object>
 
-
-name: naqsolution
-<div class="helpdiv hidden" tal:content="self" />
-<a class="helplink hidden">Solution</a>
+# Things that shouldn't render, just be placeholders
+name: naqsolution naqsolexplanation naqhints naqhint naqsolutions
+<span tal:attributes="class string:${self/__class__/__name__} hidden" />

@@ -4,8 +4,10 @@ r"""
 A macro package to support the writing of assessments inline with
 the rest of content.
 
-At the moment, this ships with template package to render these
-assessments as HTML elements, but that's not part of the long-term plan.
+These are rendered into HTML as ``<object>`` tags with an NTIID
+that matches an object to resolve from the dataserver. The HTML inside the object may or may
+not be usable for basic viewing; client applications will use the Question object
+from the dataserver to guide the ultimate rendering.
 
 Example::
 
@@ -20,10 +22,16 @@ Example::
 		   A part has one or more possible solutions. The solutions are of the same type,
 		   determined implicitly by the part type.
 		   \begin{naqsolutions}
-			   \naqsolution[weight] A possible solution. The weight, defaulting to one, is how "correct" this solution is.
+			   \naqsolution[weight] A possible solution. The weight, defaulting to one,
+				   	is how "correct" this solution is. Some parts may have more compact
+					representations of solutions.
 			\end{naqsolutions}
+			\begin{naqhints}
+				\naqhint Arbitrary content giving a hint for how to arrive at the correct
+					solution.
+			\end{naqhints}
 			\begin{naqsolexplanation}
-			Arbitrary content explaining how the correct solution is arrived at.
+				Arbitrary content explaining how the correct solution is arrived at.
 			\end{naqsolexplanation}
 		\end{naqsymmathpart}
 	\end{naquestion}
@@ -128,6 +136,7 @@ class _AbstractNAQPart(Base.Environment):
 	# into this interface.
 	soln_interface = None
 	part_factory = None
+	hint_interface = as_interfaces.IQTextHint
 
 	def _asm_solutions(self):
 		solutions = []
@@ -148,7 +157,13 @@ class _AbstractNAQPart(Base.Environment):
 			return unicode(exp_els[0].textContent).strip()
 
 	def _asm_hints(self):
-		pass
+		hints = []
+		hint_els = self.getElementsByTagName( 'naqhint' )
+		for hint_el in hint_els:
+			hint = self.hint_interface( unicode(hint_el.textContent).strip() )
+			hints.append( hint )
+
+		return hints
 
 	_asm_local_textcontent = _asm_local_textcontent
 
@@ -257,6 +272,12 @@ class naqchoices(Base.List):
 
 class naqchoice(Base.List.item):
 	args = "[weight:float]"
+
+class naqhints(Base.List):
+	pass
+
+class naqhint(Base.List.item):
+	pass
 
 class naquestion(Base.Environment,plastexids.NTIIDMixin):
 	args = '[individual:str]'

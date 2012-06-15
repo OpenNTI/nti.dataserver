@@ -38,16 +38,12 @@ class QMathSolution(QSolution):
 	Base class for the math hierarchy.
 	"""
 
-class _TrivialValuedMixin(object):
-	value = None
-	def __init__( self, value=None ):
-		if value is not None:
-			self.value = value
+from ._util import TrivialValuedMixin as _TrivialValuedMixin
 
 def _eq_(self, other):
 	return other is self or (self.weight == getattr( other, 'weight', Persistent ) and self.value == getattr( other, 'value', Persistent ))
 def _ne_(self, other):
-	return  other is not self and (self.weight != getattr( other, 'weight', Persistent ) and self.value != getattr( other, 'value', Persistent ))
+	return  other is not self and (self.weight != getattr( other, 'weight', Persistent ) or self.value != getattr( other, 'value', Persistent ))
 
 @interface.implementer(interfaces.IQNumericMathSolution)
 class QNumericMathSolution(_TrivialValuedMixin,QMathSolution):

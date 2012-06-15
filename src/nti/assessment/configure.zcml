@@ -36,6 +36,11 @@
 			 provides=".interfaces.IQMultipleChoiceSolution"
 			 for="basestring"/>
 
+
+	<adapter factory=".hint.QTextHint"
+			 provides=".interfaces.IQTextHint"
+			 for="basestring"/>
+
 	<!-- Dealing with LaTeX -->
 	<adapter factory="._latexplastexconverter.factory"
 			 for=".interfaces.IQLatexSymbolicMathSolution .interfaces.IQTextResponse"
@@ -66,6 +71,8 @@
 			 provides=".interfaces.IQAssessedQuestion" />
 
 	<!-- Externalization -->
+	<adapter factory=".externalization._AssessmentInternalObjectIO"
+			 for=".interfaces.IQHint" />
 	<adapter factory=".externalization._AssessmentInternalObjectIO"
 			 for=".interfaces.IQPart" />
 	<adapter factory=".externalization._AssessmentInternalObjectIO"
