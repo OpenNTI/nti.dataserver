@@ -55,7 +55,7 @@ setup(
 #	tests_require = ['z3c.coverage','zope.testing'],
 	setup_requires = ['nose'],
 	install_requires = [
-		'Chameleon >= 2.9.1',
+		'Chameleon >= 2.9.2',
 		'RestrictedPython',
 		'ZODB3 >= 3.10.5',
 		# ZODB RelStorage:
