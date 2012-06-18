@@ -300,16 +300,14 @@ class Chatserver(object):
 		# we add the sessions, since that will broadcast
 		# events using the room's info
 		room.Active = True
-		# FIXME: For storage to work out correctly, the creator
-		# must not be set when the ID is assigned. (What?) Otherwise
-		# transcripts cannot be found and a test fails. This then causes
-		# a mismatch between the 'creator' and the value in the 'NTIID'/'id', so
-		# everyone must use get_by_oid(ignore_creator=True), which is bad.
-		self.rooms.add_room( room )
 		if not room.creator: # The storage may have set this already, don't override
 			room.creator = room_info_dict['Creator']
 
+		# Must be stored to get an ID assigned
+		self.rooms.add_room( room )
+		# Now broadcast the room to the occupants
 		room.add_occupant_names( occupants )
+
 		return room
 
 	def get_meeting( self, room_id ):

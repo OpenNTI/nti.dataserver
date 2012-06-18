@@ -259,14 +259,13 @@ def acl_from_aces( *args ):
 
 	return _ACL( args )
 
-
+@interface.implementer(nti_interfaces.IACLProvider)
+@component.adapter(nti_interfaces.ICreated)
 class _CreatedACLProvider(object):
 	"""
-	The creator of an object can do anything with it.
+	ACL provider for class:`nti_interfaces.ICreated` objects.
+    The creator of an object is allowed all permissions.
 	"""
-
-	interface.implements( nti_interfaces.IACLProvider )
-	component.adapts( nti_interfaces.ICreated )
 
 	def __init__( self, created ):
 		self._created = created
@@ -291,24 +290,40 @@ class _CreatedACLProvider(object):
 		return acl
 
 
-class _ShareableModeledContentACLProvider(_CreatedACLProvider):
+class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
 	"""
-	Things that are shared can be viewed by those they are
-	shared with.
+	Abstract base class for providing the ACL in the common case of an object that has a creator
+	that should have full access plus others that should have read access (the *sharing targets*).
+	Subclasses of this class will need to implement the method to return an iterable of all
+	the sharing target names.
 	"""
 
-	interface.implements( nti_interfaces.IACLProvider )
-	component.adapts( nti_interfaces.IShareableModeledContent )
-
-	def __init__( self, obj ):
-		super(_ShareableModeledContentACLProvider, self).__init__( obj )
+	def _get_sharing_target_names(self):
+		raise NotImplementedError() # pragma: no cover
 
 	@property
 	def __acl__( self ):
 		result = self._creator_acl()
-		for name in self._created.getFlattenedSharingTargetNames():
+		for name in self._get_sharing_target_names():
 			result.append( ace_allowing( name, auth.ACT_READ, _ShareableModeledContentACLProvider ) )
 		return result
+
+
+@component.adapter(nti_interfaces.IShareableModeledContent)
+class _ShareableModeledContentACLProvider(AbstractCreatedAndSharedACLProvider):
+	"""
+	Extends the ACL for :class:`nti_interfaces.ICreated` objects to things that
+    are shared.
+
+    Those things that are shared can be viewed (:data:`auth.ACT_READ`) by those they are
+	shared with.
+	"""
+
+	def __init__( self, obj ):
+		super(_ShareableModeledContentACLProvider, self).__init__( obj )
+
+	def _get_sharing_target_names( self ):
+		return self._created.getFlattenedSharingTargetNames()
 
 # NOTE: All of the ACLs around classes will change as
 # roles become more defined. E.g., TAs will have some access.
@@ -317,14 +332,12 @@ def _provider_admin_ace( obj ):
 	localname = str(obj.Provider).split('@')[0]
 	return ace_allowing( 'role:' + localname + '.Admin', nti_interfaces.ALL_PERMISSIONS )
 
+@component.adapter(nti_interfaces.ISectionInfo)
 class _SectionInfoACLProvider(_CreatedACLProvider):
 	"""
 	Class sections are viewable by those enrolled in the section;
 	the creator and instructors of the section have full write access.
 	"""
-
-	interface.implements( nti_interfaces.IACLProvider )
-	component.adapts( nti_interfaces.ISectionInfo )
 
 	def __init__( self, obj ):
 		super(_SectionInfoACLProvider,self).__init__(obj)

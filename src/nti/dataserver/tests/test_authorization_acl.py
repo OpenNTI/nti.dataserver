@@ -331,15 +331,18 @@ class TestLibraryEntryAclProvider(mock_dataserver.ConfiguringTestBase):
 		assert_that( bool(auth_acl.has_permission(auth.ACT_CREATE, acl_prov, "OtherUser", user_factory=lambda s: s)),
 					 is_( False ) )
 
+from zope.security.permission import Permission
 class Permits(BaseMatcher):
 
 	def __init__( self, prin, perm, policy=ACLAuthorizationPolicy() ):
 		super(Permits,self).__init__( )
 		self.prin = nti_interfaces.IPrincipal( prin )
-		self.perm = perm
+		self.perm = perm if nti_interfaces.IPermission.providedBy( perm ) else Permission( perm )
 		self.policy = policy
 
 	def _matches( self, item ):
+		if not hasattr( item, '__acl__' ):
+			item = nti_interfaces.IACLProvider( item, default=item )
 		return self.policy.permits( item, [self.prin], self.perm )
 
 	def describe_to( self, description ):
