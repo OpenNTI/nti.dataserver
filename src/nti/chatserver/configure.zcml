@@ -21,4 +21,6 @@
 			id="nti.chatserver.actions.moderate"
 			title="" />
 
+	<adapter factory="._acl._MeetingACLProvider" />
+
 </configure>

@@ -53,6 +53,7 @@ class chat(object):
 
 from nti.dataserver.tests.mock_dataserver import WithMockDS, WithMockDSTrans, ConfiguringTestBase
 from nti.dataserver.tests import mock_dataserver
+from nti.dataserver.tests.test_authorization_acl import permits, denies
 
 import nti.externalization.internalization
 nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.users' )
@@ -352,11 +353,26 @@ class TestChatserver(ConfiguringTestBase):
 		sessions[2] = self.Session( 'other' )
 		chatserver = chat.Chatserver( sessions )
 		mock_dataserver.current_transaction.add( chatserver.rooms )
+
 		meeting = chat.ChatHandler( chatserver, sessions[1] ).enterRoom( d )
 		assert_that( meeting,
 					 is_( chat.Meeting ) )
 		assert_that( meeting, has_property( 'creator',  'sjohnson' ) )
 		assert_that( toExternalObject( meeting ), has_entry( 'Creator', 'sjohnson' ) )
+
+		# The 'other' user should have received notification to enter the room
+		assert_that( sessions[2].socket.events, has_length( 1 ) )
+		assert_that( sessions[2].socket.events[0], has_entry( 'name', 'chat_enteredRoom' ) )
+		assert_that( sessions[2].socket.events[0], has_entry( 'args', has_item( has_entry( 'Class', 'RoomInfo' ) ) ) )
+		assert_that( sessions[2].socket.events[0]['args'][0], has_key( 'ID' ) )
+
+		assert_that( nti_interfaces.IACLProvider( meeting ), permits( 'sjohnson', 'nti.actions.update' ) )
+		assert_that( nti_interfaces.IACLProvider( meeting ), permits( 'sjohnson', 'zope.View' ) )
+
+		assert_that( nti_interfaces.IACLProvider( meeting ), denies( 'other', 'nti.actions.update' ) )
+		assert_that( nti_interfaces.IACLProvider( meeting ), permits( 'other', 'zope.View' ) )
+
+
 
 	@WithMockDSTrans
 	def test_integration_chat_storage_studygroup( self ):
