@@ -8,7 +8,7 @@ import sys
 
 import pkg_resources
 import json
-
+from nti import deprecated
 import nti.dataserver as dataserver
 from nti.dataserver.users import User, Community, FriendsList
 import nti.dataserver.providers as providers
@@ -296,29 +296,30 @@ class ExampleDatabaseInitializer(object):
 			self._install_quizzes( root )
 
 	def _install_quizzes( self, root ):
-		# Quizzes are pretty much immutable and can be
-		# recreated pretty easily
-		# Static Quizzes
-		q = quizzes.Quiz()
-		q.update( _DATA_QUIZ_1 )
+		with deprecated.hiding_warnings():
+			# Quizzes are pretty much immutable and can be
+			# recreated pretty easily
+			# Static Quizzes
+			q = quizzes.Quiz()
+			q.update( _DATA_QUIZ_1 )
 
-		q.id = _DATA_QUIZ_1['ID']
-		root['quizzes']['quizzes'][q.id] = q
+			q.id = _DATA_QUIZ_1['ID']
+			root['quizzes']['quizzes'][q.id] = q
 
-		q = quizzes.Quiz()
-		q.update( _DATA_QUIZ_0 )
+			q = quizzes.Quiz()
+			q.update( _DATA_QUIZ_0 )
 
-		q.id = _DATA_QUIZ_0['ID']
-		root['quizzes']['quizzes'][q.id] = q
+			q.id = _DATA_QUIZ_0['ID']
+			root['quizzes']['quizzes'][q.id] = q
 
-		# loading quiz from mathcounts2012.json
-		with pkg_resources.resource_stream( __name__, 'mathcounts2012.json' ) as data_stream:
-			ext_quizzes = json.load(data_stream)
-			for data in ext_quizzes:
-				q = quizzes.Quiz()
-				q.update( data )
-				q.id = data['ID']
-				root['quizzes']['quizzes'][q.id] = q
+			# loading quiz from mathcounts2012.json
+			with pkg_resources.resource_stream( __name__, 'mathcounts2012.json' ) as data_stream:
+				ext_quizzes = json.load(data_stream)
+				for data in ext_quizzes:
+					q = quizzes.Quiz()
+					q.update( data )
+					q.id = data['ID']
+					root['quizzes']['quizzes'][q.id] = q
 
 
 

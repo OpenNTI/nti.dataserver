@@ -39,8 +39,6 @@ import zope.dottedname.resolve as dottedname
 from zope import interface
 from . import interfaces
 
-from .resourcetypeoverrides import ResourceTypeOverrides #b/c export
-
 
 def _set_default_resource_types():
 
@@ -126,6 +124,3 @@ from .contentunitrepresentations import ContentUnitRepresentations, ResourceRepr
 
 ResourceSet = ResourceRepresentations
 deprecated( 'ResourceSet', 'Prefer the name ResourceRepresentations')
-
-from .ResourceDB import ResourceDB
-deprecated( 'ResourceDB', 'Prefer the specific module' )

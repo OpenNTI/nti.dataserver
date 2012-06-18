@@ -49,7 +49,13 @@ try:
 	import zope.deprecation
 	def deprecated(replacement=None):
 		def outer(oldfun):
-			msg = "%s is deprecated" % oldfun.__name__
+			im_class = getattr( oldfun, 'im_class', None )
+			if im_class:
+				n = '%s.%s.%s' % (im_class.__module__, im_class.__name__, oldfun.__name__)
+			else:
+				n = oldfun.__name__
+
+			msg = "%s is deprecated" % n
 			if replacement is not None:
 				msg += "; use %s instead" % (replacement.__name__)
 			#return zope.deprecation.deprecated( oldfun, msg )
