@@ -217,7 +217,7 @@ class _ChatHandler(object):
 		if room and room.Moderated:
 			result = True
 			for user in usernames:
-				result &= room.shadowUser( user )
+				result &= room.shadow_user( user )
 		return result
 
 	def destroy( self ):

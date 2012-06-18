@@ -37,7 +37,67 @@ STATUS_VOCABULARY = schema.vocabulary.SimpleVocabulary(
 	[schema.vocabulary.SimpleTerm( _x ) for _x in STATUSES] )
 
 class IMeeting(nti_interfaces.IModeledContent):
-	pass
+	"""
+	Provides the storage structure for a meeting.
+
+    Policy decisions about whether and how to post messages, add/remove occupants
+	are delegated to a :class:`IMeetingPolicy` object, which is not expected
+	to be persistent and which is created on demand.
+	"""
+
+	Moderated = schema.Bool( title="Whether the meeting is being moderated or not.",
+							 description="Toggling this changes the policy in use." )
+
+class IMeetingShouldChangeModerationStateEvent(interface.interfaces.IObjectEvent):
+	"""
+	Emitted when the :class:`IMeeting` will be changing moderation state.
+	"""
+
+	moderated = schema.Bool( title="Whether the meeting should become moderated" )
+
+
+@interface.implementer(IMeetingShouldChangeModerationStateEvent)
+class MeetingShouldChangeModerationStateEvent(interface.interfaces.ObjectEvent):
+
+	def __init__( self, o, flag ):
+		super(MeetingShouldChangeModerationStateEvent,self).__init__( o )
+		self.moderated = flag
+
+class IMeetingPolicy(interface.Interface):
+	"""
+	The policy for posting messages to a room. Typically this will
+	be an adapter from an :class:`IMeeting`. Responsible for sending events
+	to connected sockets.
+	"""
+
+	def post_message( msg_info ):
+		"""
+		:param msg_info: An :class:`IMessageInfo` object.
+		:return: A value that can be interpreted as a boolean, indicating success of posting
+			the message. If the value is a number and not a `bool` object, then it is the
+			number by which the general message count of the room should be incremented (currently only one).
+		"""
+
+	def add_moderator( mod_name ):
+		"""
+		Add a moderator to the room.
+		If a moderator was added, emits an event across the sockets of all connected
+		users.
+		"""
+
+	def approve_message( msg_id ):
+		"""
+		Optional; raises an error if not supported.
+		"""
+
+	def shadow_user( username ):
+		"""
+		Cause future messages to the user specified by `username` to be copied
+		to the moderators of this room.
+		:return: Boolean value indicating whether the username was shadowed.
+		"""
+
+	moderated_by_usernames = interface.Attribute( "Iterable of names moderating this meeting." )
 
 class IMessageInfo(nti_interfaces.IModeledContent):
 

@@ -3,6 +3,11 @@
 	<include package="zope.component" />
 	<include package="zope.annotation" />
 
+	<adapter factory="._meeting_post_policy.MeetingPostPolicy"
+			 for=".interfaces.IMeeting"
+			 provides=".interfaces.IMeetingPolicy" />
+	<subscriber handler="._meeting_post_policy.meeting_should_change_moderation_state" />
+
 
 	<!-- Socket event handling -->
 	<subscriber provides="nti.socketio.interfaces.ISocketEventHandler"
