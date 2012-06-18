@@ -1,0 +1,2 @@
+name: bm boldmath
+<span class="math-bold" tal:content="self">math-symbol</span>
