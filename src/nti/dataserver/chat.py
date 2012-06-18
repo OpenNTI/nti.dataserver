@@ -3,10 +3,14 @@
 __docformat__ = "restructuredtext en"
 
 from zope.deprecation import deprecated
+import zope.deprecation
 
 
 from nti.chatserver.interfaces import CHANNELS, CHANNEL_DEFAULT, CHANNEL_WHISPER, CHANNEL_CONTENT, CHANNEL_POLL, CHANNEL_META
 
+# Many of these class names need to stick around to avoid broken objects
+# in old datbases
+zope.deprecation.__show__.off()
 
 from nti.chatserver.messageinfo import MessageInfo
 from nti.chatserver.meeting import _Meeting, _ModeratedMeeting
@@ -27,3 +31,5 @@ deprecated( '_ChatHandler', 'Prefer nti.chatserver' )
 deprecated( 'MessageInfo', 'Prefer nti.chatserver' )
 deprecated( 'Chatserver', 'Prefer nti.chatserver' )
 deprecated( 'PersistentMappingMeetingStorage', 'Prefer nti.chatserver' )
+
+zope.deprecation.__show__.on()

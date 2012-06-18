@@ -11,6 +11,7 @@ from persistent.mapping import PersistentMapping
 from persistent.list import PersistentList
 
 from zope import interface
+import zope.deprecation
 
 from nti.assessment import interfaces as as_interfaces
 
@@ -88,7 +89,7 @@ class Quiz(datastructures.ZContainedMixin,datastructures.CreatedModDateTrackingO
 		self.questions.clear()
 		self.updateLastMod()
 
-	@deprecated()
+	# This entire object is deprecated
 	def update( self, rawValue ):
 		if isinstance( rawValue, Quiz ):
 			self.questions.clear()
@@ -182,10 +183,6 @@ class QuizResult(datastructures.ZContainedMixin,
 		self.assessments[question.id if hasattr(question, 'id') else question] = (question,response,assesment)
 		self.updateLastMod()
 
-	@deprecated()
-	def update( self, rawValue ):
-		return self.updateFromExternalObject( rawValue )
-
 	def updateFromExternalObject( self, rawValue, dataserver=None ):
 		# Only fresh objects can be updated
 		if getattr( self, '_p_jar', None ):
@@ -248,6 +245,8 @@ class QuizResult(datastructures.ZContainedMixin,
 
 		return self
 
+	update = updateFromExternalObject
+
 	def toExternalDictionary( self, mergeFrom=None ):
 		result = to_standard_external_dictionary( self, mergeFrom=mergeFrom )
 		result['QuizID'] = self.QuizID
@@ -268,3 +267,5 @@ class QuizResult(datastructures.ZContainedMixin,
 							"Class": "QuizQuestionResponse"} )
 		result['Items'] = items
 		return result
+
+zope.deprecation.deprecated( "Quiz", "Prefer the nti.assessment package." )
