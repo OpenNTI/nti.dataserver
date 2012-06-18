@@ -7,7 +7,7 @@ logger = logging.getLogger( __name__ )
 import os
 import platform
 
-from nti.dataserver.library import DynamicLibrary
+from nti.contentlibrary.filesystem import DynamicLibrary
 from nti.dataserver import interfaces as nti_interfaces
 from zope import component
 

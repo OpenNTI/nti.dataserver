@@ -653,7 +653,7 @@ class TestChatserver(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_whisper_to_shadow_goes_to_mod_transcript(self):
 		room, chatserver = self._create_moderated_room()
-		room.shadowUser( 'chris' ) # whispers to chris come to sjohnson.
+		room.shadow_user( 'chris' ) # whispers to chris come to sjohnson.
 
 		msg = chat.MessageInfo()
 		msg.Creator = 'jason'
