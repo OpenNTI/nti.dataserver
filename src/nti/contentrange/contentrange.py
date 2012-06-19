@@ -31,19 +31,21 @@ def _make_init( cls ):
 @interface.implementer( interfaces.IContentRangeDescription )
 class ContentRangeDescription(object):
 	"""
-	Implementation of IContentRangeDescription.
+	Implementation of :class:`interfaces.IContentRangeDescription`
 	"""
 	__external_can_create__ = True
 	def __eq__( self, other ):
 		return self is other or isinstance( other, ContentRangeDescription )
 
+	__repr__ = make_repr()
+
 ContentRangeDescription.__init__ = _make_init( ContentRangeDescription )
-ContentRangeDescription.__repr__ = make_repr()
 
 
 @interface.implementer(interfaces.IDomContentRangeDescription)
 class DomContentRangeDescription(ContentRangeDescription):
-
+	"""
+	"""
 	start = None
 	end = None
 	ancestor = None
@@ -59,15 +61,21 @@ class ContentPointer(object):
 
 @interface.implementer( interfaces.IDomContentPointer )
 class DomContentPointer(ContentPointer):
+	"""
+	"""
 	role = None
 	def __eq__( self, other ):
 		return self is other or self.role == getattr( other, 'role', None )
 
+	__repr__ = make_repr()
+
 DomContentPointer.__init__ = _make_init( DomContentPointer )
-DomContentPointer.__repr__ = make_repr()
+
 
 @interface.implementer(interfaces.IElementDomContentPointer)
 class ElementDomContentPointer(DomContentPointer):
+	"""
+	"""
 	elementId = None
 	elementTagName = None
 
@@ -79,6 +87,8 @@ class ElementDomContentPointer(DomContentPointer):
 
 @interface.implementer(interfaces.ITextContext)
 class TextContext(object):
+	"""
+	"""
 	__external_can_create__ = True
 
 	contextText = ''
@@ -87,13 +97,15 @@ class TextContext(object):
 	def __eq__( self, other ):
 		return self is other or (self.contextText == getattr( other, 'contextText', None )
 								 and self.contextOffset == getattr( other, 'contextOffset', None ) )
+	__repr__ = make_repr()
 
 TextContext.__init__ = _make_init( TextContext )
-TextContext.__repr__ = make_repr()
 
 
 @interface.implementer(interfaces.ITextDomContentPointer)
 class TextDomContentPointer(DomContentPointer):
+	"""
+	"""
 
 	ancestor = None
 	contexts = ()

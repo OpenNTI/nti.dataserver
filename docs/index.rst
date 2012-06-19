@@ -27,8 +27,9 @@ Contents:
 	interfaces
 	http-rest
 	contentrendering-api
-	content-anchoring-interfaces.rst
+	content-anchoring-api
 	socketio-api
+	externalization-api
 
 
 	assessment-interfaces

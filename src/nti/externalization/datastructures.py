@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 """
 Datastructures to help externalization.
-$Revision$
+
+$Id$
 """
 from __future__ import unicode_literals, print_function
 
@@ -29,23 +30,24 @@ def _isMagicKey( key ):
 
 isSyntheticKey = _isMagicKey
 
-
+@interface.implementer( ILocatedExternalMapping )
 class LocatedExternalDict(dict):
 	"""
-	A dictionary that implements ILocation. Returned
-	by toExternalDictionary.
+	A dictionary that implements :class:`nti.externalization.interfaces.ILocatedExternalMapping`. Returned
+	by :func:`to_standard_external_dictionary`.
 	"""
-	interface.implements( ILocatedExternalMapping )
+
 	__name__ = ''
 	__parent__ = None
 	__acl__ = ()
 
+interface.implementer( ILocatedExternalSequence )
 class LocatedExternalList(list):
 	"""
-	A list that implements ILocation. Returned
-	by toExternalObject.
+	A list that implements :class:`nti.externalization.interfaces.ILocatedExternalSequence`. Returned
+	by :func:`toExternalObject`.
 	"""
-	interface.implements( ILocatedExternalSequence )
+
 	__name__ = ''
 	__parent__ = None
 	__acl__ = ()
@@ -230,11 +232,19 @@ class InterfaceObjectIO(AbstractDynamicObjectIO):
 	interface detection (see :class:`ModuleScopedInterfaceObjectIO` for a limited version of this.)
 	"""
 
+	_ext_iface_upper_bound = None
+
 	def __init__( self, ext_self, iface_upper_bound=None ):
+		"""
+		:param iface_upper_bound: Subclasses can either override this
+			constructor to pass this parameter (while taking one argument themselves,
+			to be usable as an adapter), or they can define the class
+			attribute ``_ext_iface_upper_bound``
+		"""
 		super(InterfaceObjectIO, self).__init__( )
 		self._ext_self = ext_self
 		# TODO: Should we cache the schema we use for a particular type?
-		self._iface = self._ext_find_schema( ext_self, iface_upper_bound )
+		self._iface = self._ext_find_schema( ext_self, iface_upper_bound or self._ext_iface_upper_bound )
 
 	def _ext_find_schema( self, ext_self, iface_upper_bound ):
 		_iface = iface_upper_bound
@@ -320,7 +330,9 @@ class ModuleScopedInterfaceObjectIO(InterfaceObjectIO):
 	"""
 	Only considers the interfaces provided within a given module (usually declared
 	as a class attribute) when searching for the schema to use to externalize an object;
-	the most derived version of interfaces within that module will be used.
+	the most derived version of interfaces within that module will be used. Subclasses
+	must declare the class attribute ``_ext_search_module`` to be a module (something with the ``__name__``)
+	attribute to locate interfaces in.
 
 	Suitable for use when all the externalizable fields of interest are declared by an
 	interface within a module, and an object does not implement two unrelated interfaces
