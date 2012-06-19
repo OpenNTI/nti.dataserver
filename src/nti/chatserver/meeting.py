@@ -62,9 +62,26 @@ def _discard( s, k ):
 		except (KeyError,ValueError): pass
 
 # bwc with objects stored in the database.
-# TODO: There's a zope utility to take care of movements like this
+# NOTE: There's a zope utility to take care of movements like this
+# called zodbupdate. It needs to be run against raw storages, one at a time, though because
+# it operates at the record level. A tiny patch to it is necessary to make it work
+# correctly in the face of missing records (POSKeyError) if zlibstorage is being used:
+# If zlibstorage is being used, a zconf file must be used to load the storage,
+# and the instance is not FileStorage instance, so make update.py check hasattr(self.storage, '_index')
+# rather than use isinstance().
+# It also requires a small patch to work with relstorage, which
+# does not implement ZODB.interfaces.IStorageCurrentRecordIteration:
+ 		# if not hasattr( self.storage, '_index'):
+		# 	# Only FileStorage has _index (this is not an API defined attribute)
+		# 	if not hasattr( self.storage, 'record_iternext' ):
+		# 	# RelStorage is not IStorageCurrentRecordIteration
+		# 		for trec in self.storage.iterator():
+		# 			for rec in trec:
+		# 				yield rec.oid, rec.tid, cStringIO.StringIO(rec.data)
+		# 	return
+		# 	while True:
 from ._meeting_post_policy import _ModeratedMeetingState
-
+_bwc_renames = { 'nti.chatserver.meeting _ModeratedMeetingState': 'nti.chatserver._meeting_post_policy _ModeratedMeetingState' }
 
 
 

@@ -30,6 +30,9 @@ entry_points = {
 	],
 	"nose.plugins.0.10" : [
 		"zopeexceptionlogpatch = nti.tests:ZopeExceptionLogPatch"
+	],
+	"zodbupdate" : [ # Migrating class names through zodbupdate >= 0.5
+		"chatserver_meetings = nti.chatserver.meeting:_bwc_renames"
 	]
 }
 
@@ -184,7 +187,9 @@ setup(
 			      			'dblatex >= 0.3.4', # content rendering, convert docbook to tex
 			      			'ipython',
 			      			'readline',
-			      			'httpie']},
+			      			'httpie',
+							'zodbupdate >= 0.5'
+							]},
 	dependency_links = ['http://svn.wikimedia.org/svnroot/pywikipedia/trunk/pywikipedia/'],
 	packages = find_packages('src'),
 	package_dir = {'': 'src'},
