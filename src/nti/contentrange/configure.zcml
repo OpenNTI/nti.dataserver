@@ -7,8 +7,8 @@
 
 	<!-- Externalization -->
 
-	<adapter factory=".externalization._DomContentPointerExternal" />
-	<adapter factory=".externalization._TextContextExternal" />
-	<adapter factory=".externalization._ContentRangeDescriptionExternal" />
+	<adapter factory=".externalization.DomContentPointerExternal" />
+	<adapter factory=".externalization.TextContextExternal" />
+	<adapter factory=".externalization.ContentRangeDescriptionExternal" />
 
 </configure>
