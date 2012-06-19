@@ -3,6 +3,7 @@ from __future__ import unicode_literals, print_function
 
 from zope import interface
 from zope import schema
+from nti.utils import schema as dmschema
 
 NTIID_TYPE = 'NAQ'
 
@@ -54,11 +55,12 @@ class IQPart(interface.Interface):
 
 	content = schema.Text( title="The content to present to the user for this portion, if any." )
 	hints = TypedIterable( title="Any hints that pertain to this part",
-						   value_type=schema.Object(IQHint, title="A hint for the part") )
+						   value_type=dmschema.Object(IQHint, title="A hint for the part") )
 	solutions = TypedIterable( title="Acceptable solutions for this question part in no particular order.",
 								description="All solutions must be of the same type, and there must be at least one.",
-								value_type=schema.Object(IQSolution, title="A solution for this part")	)
-	explanation = schema.Text( title="An explanation of how the solution is arrived at." )
+								value_type=dmschema.Object(IQSolution, title="A solution for this part")	)
+	explanation = schema.Text( title="An explanation of how the solution is arrived at.",
+							  default='' )
 
 	def grade( response ):
 		"""
@@ -176,7 +178,7 @@ class IQMultipleChoicePart(IQPart):
 						   value_type=schema.TextLine( title="A rendered value" ) ) # TODO: Again with the IContentFragment?
 	solutions = TypedIterable( title="The multiple-choice solutions",
 							   min_length=1,
-							   value_type=schema.Object( IQMultipleChoiceSolution, title="Multiple choice solution" ) )
+							   value_type=dmschema.Object( IQMultipleChoiceSolution, title="Multiple choice solution" ) )
 
 class IQMultipleChoicePartGrader(IQPartGrader):
 	"""
@@ -237,7 +239,7 @@ class IQuestion(interface.Interface):
 	content = schema.Text( title="The content to present to the user, if any." )
 	parts = schema.List( title="The ordered parts of the question.",
 						 min_length=1,
-						 value_type=schema.Object( IQPart, title="A question part" ) )
+						 value_type=dmschema.Object( IQPart, title="A question part" ) )
 
 class IQuestionSet(interface.Interface):
 	"""
@@ -247,7 +249,7 @@ class IQuestionSet(interface.Interface):
 
 	questions = schema.List( title="The ordered questions in the set.",
 							 min_length=1,
-							 value_type=schema.Object( IQuestion, title="The questions" ) )
+							 value_type=dmschema.Object( IQuestion, title="The questions" ) )
 
 class IQResponse(interface.Interface):
 	"""
@@ -323,7 +325,7 @@ class IQAssessedPart(interface.Interface):
 	"""
 	# TODO: Matching to question?
 
-	submittedResponse = schema.Object( IQResponse,
+	submittedResponse = dmschema.Object( IQResponse,
 									   title="The response as the student submitted it.")
 	assessedValue = schema.Float( title="The relative correctness of the submitted response, from 0.0 (entirely wrong) to 1.0 (perfectly correct)",
 								  min=0.0,
@@ -339,7 +341,7 @@ class IQAssessedQuestion(interface.Interface):
 
 	questionId = schema.TextLine( title="Identifier of the question being responded to." )
 	parts = TypedIterable( title="Ordered assessed values, one for each part of the question.",
-						   value_type=schema.Object( IQAssessedPart, title="The assessment of a part." ) )
+						   value_type=dmschema.Object( IQAssessedPart, title="The assessment of a part." ) )
 
 
 class IQuestionSetSubmission(interface.Interface):
@@ -353,7 +355,7 @@ class IQuestionSetSubmission(interface.Interface):
 	questions = TypedIterable( title="Submissions, one for each question in the set.",
 							   description="""Order is not important. Depending on the question set,
 							   missing answers may or may not be allowed; the set may refuse to grade, or simply consider them wrong.""",
-							   value_type=schema.Object( IQuestionSubmission, title="The submission for a particular question.") )
+							   value_type=dmschema.Object( IQuestionSubmission, title="The submission for a particular question.") )
 
 class IQAssessedQuestionSet(interface.Interface):
 	"""
@@ -364,7 +366,7 @@ class IQAssessedQuestionSet(interface.Interface):
 
 	questionSetId = interface.Attribute( "Identifier of the question set being responded to." )
 	questions = TypedIterable( title="Assessed questions, one for each question in the set.",
-							   value_type=schema.Object( IQAssessedQuestion, title="The assessed value for a particular question.") )
+							   value_type=dmschema.Object( IQAssessedQuestion, title="The assessed value for a particular question.") )
 
 class IQuestionMap(interface.common.mapping.IReadMapping):
 	"""

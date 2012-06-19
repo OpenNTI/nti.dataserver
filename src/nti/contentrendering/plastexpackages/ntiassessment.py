@@ -155,6 +155,7 @@ class _AbstractNAQPart(Base.Environment):
 		assert len(exp_els) <= 1
 		if exp_els:
 			return unicode(exp_els[0].textContent).strip()
+		return ''
 
 	def _asm_hints(self):
 		hints = []
@@ -181,6 +182,7 @@ class _AbstractNAQPart(Base.Environment):
 
 		errors = schema.getValidationErrors( self.part_interface, result )
 		if errors: # pragma: no cover
+			__traceback_info__ = self.part_interface, errors, result
 			raise errors[0][1]
 		return result
 

@@ -10,6 +10,7 @@ from __future__ import print_function, unicode_literals
 
 from zope import interface
 from zope import schema
+from nti.utils import schema as dmschema
 
 class IContentRangeDescription(interface.Interface):
     """
@@ -49,7 +50,7 @@ class ITextDomContentPointer(IDomContentPointer):
 	Identifies a specific point within a Text node that is a
 	descendent of an Element in a DOM.
 	"""
-	ancestor = schema.Object( IElementDomContentPointer,
+	ancestor = dmschema.Object( IElementDomContentPointer,
 							  title="Closest referencable element containing the context; should have type==ancestor." )
 	contexts = schema.List( title="At least size 1, plus additional contexts.",
 							min_length=1,
@@ -63,6 +64,6 @@ class IDomContentRangeDescription(IContentRangeDescription):
 	Base class for content ranges based on a document object model.
 	"""
 
-	start = schema.Object( IDomContentPointer, title="Beginning of the range" )
-	end = schema.Object( IDomContentPointer, title="End of the range" )
-	ancestor = schema.Object( IElementDomContentPointer, title="Common ancestor of start and end." )
+	start = dmschema.Object( IDomContentPointer, title="Beginning of the range" )
+	end = dmschema.Object( IDomContentPointer, title="End of the range" )
+	ancestor = dmschema.Object( IElementDomContentPointer, title="Common ancestor of start and end." )

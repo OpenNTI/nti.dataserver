@@ -229,7 +229,7 @@ These are definitions related to content that a user can generate.
 	   oid_t references[];
    }
 
-   struct Note : Highlight <Threadable, Anchored> {
+   struct Note : Highlight <Threadable, Anchored, Shareable> {
 	   //An ordered list of objects (strings or objects) that make up the body.
 	   //In particular, Canvas objects can appear here as can HTML strings.
 	   Object[] body;

@@ -13,6 +13,7 @@ import numbers
 
 from zope import component
 from zope import interface
+from zope.schema import interfaces as sch_interfaces
 from zope.dottedname.resolve import resolve
 
 from . import interfaces
@@ -217,3 +218,50 @@ def update_from_external_object( containedObject, externalObject,
 			updater.updateFromExternalObject( externalObject )
 
 	return containedObject
+
+def validate_field_value( self, field_name, field, value ):
+	"""
+	Given a :class:`zope.schema.interfaces.IField` object from a schema
+	implemented by `self`, validates that the proposed value can be
+	set. If the value needs to be adapted to the schema type for validation to work,
+	this method will attempt that.
+
+	:raises zope.interface.Invalid: If the field cannot be validated,
+		along with a good reason (typically better than simply provided by the field itself)
+	:return: A callable of no arguments to call to actually set the value (necessary
+		in case the value had to be adapted).
+	"""
+	__traceback_info__ = field_name, value
+	field = field.bind( self )
+	try:
+		field.validate( value )
+	except sch_interfaces.SchemaNotProvided as e:
+		# The object doesn't implement the required interface.
+		# Can we adapt the provided object to the desired interface?
+		# First, capture the details so we can reraise if needed
+		exc_info = sys.exc_info()
+		if not e.args: # zope.schema doesn't fill in the details, which sucks
+			e.args = (field_name,field.schema)
+
+		try:
+			value = field.schema( value )
+			field.validate( value )
+		except (TypeError,sch_interfaces.ValidationError):
+			# Nope. TypeError means we couldn't adapt, and a
+			# validation error means we could adapt, but it still wasn't
+			# right. Raise the original SchemaValidationError.
+			raise exc_info[0], exc_info[1], exc_info[2]
+
+	return lambda: field.set( self, value )
+
+def validate_named_field_value( self, iface, field_name, value ):
+	"""
+	Given a :class:`zope.interface.Interface` and the name of one of its fields,
+	validate that the given ``value`` is appropriate to set. See :func:`validate_field_value`
+	for details.
+	:return: A callable of no arguments to call to actually set the value.
+	"""
+	field = iface[field_name]
+	if sch_interfaces.IField.providedBy( field ):
+		return validate_field_value( self, field_name, field, value )
+	return lambda: setattr( self, field_name, value )

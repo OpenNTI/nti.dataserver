@@ -9,27 +9,14 @@ from zope import interface
 
 from . import interfaces
 
+from nti.utils.schema import PermissiveSchemaConfigured as SchemaConfigured
 from nti.externalization.externalization import make_repr
 
 # FIXME: Note that we are using the legacy class-based
 # functionality to create new internal objects from externals
 
-def _make_init( cls ):
-	"""
-	Returns an init method for cls that takes keyword arguments for the attributes of the
-	object. Assumes that the class or instance will have already set up attributes to match
-	incoming keyword names.
-	"""
-	def __init__( self, **kwargs ):
-		super( cls, self ).__init__()
-		for k, v in kwargs.items():
-			if v is not None and hasattr( self, k ):
-				setattr( self, k, v )
-
-	return __init__
-
 @interface.implementer( interfaces.IContentRangeDescription )
-class ContentRangeDescription(object):
+class ContentRangeDescription(SchemaConfigured):
 	"""
 	Implementation of :class:`interfaces.IContentRangeDescription`
 	"""
@@ -38,8 +25,6 @@ class ContentRangeDescription(object):
 		return self is other or isinstance( other, ContentRangeDescription )
 
 	__repr__ = make_repr()
-
-ContentRangeDescription.__init__ = _make_init( ContentRangeDescription )
 
 
 @interface.implementer(interfaces.IDomContentRangeDescription)
@@ -55,7 +40,7 @@ class DomContentRangeDescription(ContentRangeDescription):
 								 and self.end == getattr( other, 'end', None )
 								 and self.ancestor  == getattr( other, 'ancestor', None ))
 
-class ContentPointer(object):
+class ContentPointer(SchemaConfigured):
 	__external_can_create__ = True
 
 
@@ -68,8 +53,6 @@ class DomContentPointer(ContentPointer):
 		return self is other or self.role == getattr( other, 'role', None )
 
 	__repr__ = make_repr()
-
-DomContentPointer.__init__ = _make_init( DomContentPointer )
 
 
 @interface.implementer(interfaces.IElementDomContentPointer)
@@ -86,7 +69,7 @@ class ElementDomContentPointer(DomContentPointer):
 
 
 @interface.implementer(interfaces.ITextContext)
-class TextContext(object):
+class TextContext(SchemaConfigured):
 	"""
 	"""
 	__external_can_create__ = True
@@ -98,8 +81,6 @@ class TextContext(object):
 		return self is other or (self.contextText == getattr( other, 'contextText', None )
 								 and self.contextOffset == getattr( other, 'contextOffset', None ) )
 	__repr__ = make_repr()
-
-TextContext.__init__ = _make_init( TextContext )
 
 
 @interface.implementer(interfaces.ITextDomContentPointer)

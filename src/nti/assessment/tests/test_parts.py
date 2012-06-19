@@ -30,7 +30,7 @@ class TestQPart(ConfiguringTestBase):
 		assert part != parts.QPart( content='other' )
 
 	def test_part_badkw(self):
-		with assert_raises(ValueError):
+		with assert_raises(TypeError):
 			parts.QPart( bad_kw=1 )
 
 

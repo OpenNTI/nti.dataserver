@@ -6,6 +6,7 @@ from __future__ import print_function, unicode_literals
 
 from zope import interface
 from zope import component
+from dm.zope.schema.schema import SchemaConfigured
 
 from nti.externalization.externalization import make_repr
 
@@ -16,7 +17,7 @@ from persistent import Persistent
 
 
 
-class QPart(Persistent):
+class QPart(SchemaConfigured,Persistent):
 	"""
 	Base class for parts. Its :meth:`grade` method
 	will attempt to transform the input based on the interfaces
@@ -32,20 +33,6 @@ class QPart(Persistent):
 	hints = ()
 	solutions = ()
 	explanation = ''
-
-	def __init__( self, **kwargs ):
-		"""
-		Accepts keyword arguments corresponding to the attributes
-		of the :class:`interfaces.IQPart` interface.
-		"""
-
-		for k in kwargs.keys():
-			if hasattr(self, k):
-				v = kwargs.pop( k )
-				if v is not None:
-					setattr( self, k, v )
-		if kwargs:
-			raise ValueError( "Unexpected keyword arguments", kwargs )
 
 	def grade( self, response ):
 		for solution in self.solutions:
