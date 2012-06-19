@@ -19,6 +19,7 @@ from nti.externalization.interfaces import IExternalObject
 from nti.externalization.externalization import stripSyntheticKeysFromExternalDictionary, toExternalObject
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.datastructures import ExternalizableInstanceDict
+from nti.externalization import internalization
 
 from nti.dataserver import datastructures
 from nti.dataserver import mimetype
@@ -221,8 +222,7 @@ class SelectedRange(_UserContentRoot,ExternalizableInstanceDict):
 		__traceback_info__ = parsed
 		for k in ('applicableRange', 'selectedText'):
 			value = getattr( self, k )
-			__traceback_info__ = value
-			nti_interfaces.ISelectedRange[k].validate( value )
+			internalization.validate_named_field_value( self, nti_interfaces.ISelectedRange, k, value )
 
 
 		if 'tags' in parsed:

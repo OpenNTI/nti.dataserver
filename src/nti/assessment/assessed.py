@@ -11,6 +11,7 @@ from zope import interface
 from zope import component
 import persistent
 
+from nti.utils.schema import PermissiveSchemaConfigured as SchemaConfigured
 from nti.externalization.externalization import make_repr
 # EWW...but we need to be IContained in order to be stored
 # in container data structures
@@ -18,22 +19,9 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from . import interfaces
 
-def _make_init( cls ):
-	"""
-	Returns an init method for cls that takes keyword arguments for the attributes of the
-	object. Assumes that the class or instance will have already set up attributes to match
-	incoming keyword names.
-	"""
-	def __init__( self, **kwargs ):
-		super( cls, self ).__init__()
-		for k, v in kwargs.items():
-			if v is not None and hasattr( self, k ):
-				setattr( self, k, v )
-
-	return __init__
 
 @interface.implementer(interfaces.IQAssessedPart)
-class QAssessedPart(persistent.Persistent):
+class QAssessedPart(SchemaConfigured,persistent.Persistent):
 	submittedResponse = None
 	assessedValue = 0.0
 	__external_can_create__ = False
@@ -44,11 +32,10 @@ class QAssessedPart(persistent.Persistent):
 	def __ne__( self, other ):
 		return not self == other
 
-QAssessedPart.__init__ = _make_init(QAssessedPart)
-QAssessedPart.__repr__ = make_repr()
+	__repr__ = make_repr()
 
 @interface.implementer(interfaces.IQAssessedQuestion, nti_interfaces.IContained, nti_interfaces.IZContained)
-class QAssessedQuestion(persistent.Persistent):
+class QAssessedQuestion(SchemaConfigured,persistent.Persistent):
 	questionId = None
 	parts = ()
 	id = None
@@ -65,12 +52,11 @@ class QAssessedQuestion(persistent.Persistent):
 	def __ne__( self, other ):
 		return not self == other
 
-QAssessedQuestion.__init__ = _make_init(QAssessedQuestion)
-QAssessedQuestion.__repr__ = make_repr()
+	__repr__ = make_repr()
 
 
 @interface.implementer(interfaces.IQAssessedQuestionSet, nti_interfaces.IContained, nti_interfaces.IZContained)
-class QAssessedQuestionSet(persistent.Persistent):
+class QAssessedQuestionSet(SchemaConfigured,persistent.Persistent):
 	questionSetId = None
 	questions = ()
 
@@ -87,8 +73,7 @@ class QAssessedQuestionSet(persistent.Persistent):
 	def __ne__( self, other ):
 		return not self == other
 
-QAssessedQuestionSet.__init__ = _make_init(QAssessedQuestionSet)
-QAssessedQuestionSet.__repr__ = make_repr()
+	__repr__ = make_repr()
 
 
 def assess_question_submission( submission, questions=None ):

@@ -37,8 +37,11 @@ class TestContentRange(ConfiguringTestBase):
 
 		seen_ifaces = set()
 		for x in contentrange.__dict__.values():
-			if type(x) == type:
+		 	if type(x) == type:
 				for iface in interface.implementedBy( x ):
+					if iface.__module__ != interfaces.__name__:
+						continue
+
 					__traceback_info__ = x, iface
 					seen_ifaces.add( x )
 					assert_that( x(**kwargs), verifiably_provides( iface ) )
