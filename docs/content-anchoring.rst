@@ -72,10 +72,8 @@ we can use the following object model to represent anchored content:
 
 	// Notice that these are not Dataserver object (e.g, no OID)
 
-	abstract class ContentRangeDescription {
-		ContentPointer start; //must not be nil
-		ContentPointer end; //must not be nil
-		ContentPointer ancestor; //must not be nil
+	class ContentRangeDescription {
+		// By itself, this class serves to denote an 'empty' range
 	}
 
 	abstract class ContentPointer {}
