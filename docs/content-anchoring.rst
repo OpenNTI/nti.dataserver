@@ -732,6 +732,43 @@ the offsets within a text node are the same. How does it resolve?
 		}
 	}
 
+Example 4
+~~~~~~~~~
+
+This example currently produces a model that is ambiguous, resulting
+in the wrong content being highlighted
+
+.. code-block:: html
+
+	<p id="id">
+		[|This is a sentence]
+		<b class="bfseries"><em>WOW</em></b>
+		[. Another sentence]<em>YIKES</em>[ and ]<em>foo</em>[. |]
+	</p>
+
+.. code-block:: javascript
+
+	// The content range
+	{
+		ancestor: {
+			elementId: 'id',
+			elementTagName: 'p',
+		},
+		start: {
+			ancestor : {elementId: 'id', elementTagName: 'p'},
+			contexts: [{ contextText: 'This', contextOffset: 18 }],
+			edgeOffset: 0
+		},
+		end: {
+			ancestor : {elementId: 'id', elementTagName: 'p'},
+			contexts: [{ contextText: '. ', contextOffset: 0 }],
+			edgeOffset: 1
+		}
+	}
+
+The user desires the entire paragraph to be highlighted.  However,
+when resolving the model, the end context is ambigious and we
+incorrectly end the highlight just after the first '.' folowing 'WOW'.
 
 Anchor Migration
 ================
