@@ -184,18 +184,20 @@ setup(
 		'zopyx.txng3.core',
 		'zopyx.txng3.ext',
 		],
-	extras_require = {'test': [
-								'zope.testing',
-								'zc.buildout',
-								'nose-progressive',
-								'fudge'],
-					'tools': [
-			      			'dblatex >= 0.3.4', # content rendering, convert docbook to tex
-			      			'ipython',
-			      			'readline',
-			      			'httpie',
-							'zodbupdate >= 0.5'
-							]},
+	extras_require = {
+		'test': [
+			'zope.testing',
+			'zc.buildout',
+			'nose-progressive',
+			'fudge'],
+		'tools': [
+			'dblatex >= 0.3.4', # content rendering, convert docbook to tex
+			'ipython',
+			'readline',
+			'httpie',
+			'zodbupdate >= 0.5'
+			]
+	},
 	dependency_links = ['http://svn.wikimedia.org/svnroot/pywikipedia/trunk/pywikipedia/'],
 	packages = find_packages('src'),
 	package_dir = {'': 'src'},
