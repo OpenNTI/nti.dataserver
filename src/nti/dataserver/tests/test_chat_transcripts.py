@@ -89,17 +89,20 @@ def test_resolve_transcript_manually( ):
 
 class TestChatTranscriptEvents(ConfiguringTestBase):
 
+	@unittest.skip("Performance testing only; uses cProfile" )
 	@WithMockDS
-	def _do_cprofile_test_profile_adding_to_transcripts(self):
+	def test_cprofile_adding_to_transcripts(self):
 		import cProfile
-		cProfile.runctx( 'self._do_test_profile_adding_to_transcripts()', globals=globals(), locals=locals(), sort='cumulative' )
+		cProfile.runctx( 'self._do_test_profile_adding_to_transcripts()', globals=globals(), locals=locals(), sort='cumulative', filename='TestChatProfileTE.profile' )
 
-	@unittest.skip("Performance testing only" )
+	@unittest.skip("Performance testing only; use with --with-profile" )
 	@WithMockDS
 	def test_profile_adding_to_transcripts(self):
 		self._do_test_profile_adding_to_transcripts()
 
 	def _do_test_profile_adding_to_transcripts(self):
+		#import pprint, ZODB.serialize
+		import transaction
 		meeting = Meeting()
 		meeting.id = PicklableMeet.ID
 		meeting.containerId = 'the_container'
@@ -110,25 +113,29 @@ class TestChatTranscriptEvents(ConfiguringTestBase):
 			conn.add( meeting )
 			for uname in user_list:
 				users.User.create_user( username=uname )
-
+		#pprint.pprint( ZODB.serialize.ObjectWriter.map )
 		class MockChatserver(object):
 			def send_event_to_user( self, *args ):
 				pass
 
 		component.provideUtility( MockChatserver(), chat_interfaces.IChatserver )
-
+		#ZODB.serialize.ObjectWriter.map.clear()
 		MSG_COUNT = 5000
-		for _ in range(MSG_COUNT):
-			msg = MessageInfo()
-			msg.containerId = meeting.ID
-			# In principle, a shared PersistentList here would
-			# serialize better than a list object.
-			msg.recipients = PersistentList(user_list)
-			msg.Sender = user_list[0]
-			with mock_db_trans():
+		with mock_db_trans():
+			for _ in range(MSG_COUNT):
+				msg = MessageInfo()
+				msg.containerId = meeting.ID
+				# In principle, a shared PersistentList here would
+				# serialize better than a list object.
+				msg.recipients = PersistentList(user_list)
+				msg.Sender = user_list[0]
 				meeting.post_message( msg )
+					#transaction.abort()
+
+		#from IPython.core.debugger import Tracer; debug_here = Tracer()() ## DEBUG ##
 
 
+		#pprint.pprint( ZODB.serialize.ObjectWriter.map )
 		for uname in user_list:
 			with mock_db_trans():
 				assert_that( chat_transcripts.transcript_for_user_in_room( uname, meeting.ID ),

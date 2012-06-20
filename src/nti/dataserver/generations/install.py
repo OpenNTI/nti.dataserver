@@ -22,10 +22,13 @@ def evolve( context ):
 	install_main( context )
 	install_chat( context )
 
+import BTrees
 from BTrees import OOBTree
 from persistent.list import PersistentList
 
 from zope.site import LocalSiteManager, SiteManagerContainer
+import zope.intid
+import zc.intid.utility
 
 from nti.chatserver.chatserver import PersistentMappingMeetingStorage
 from nti.dataserver import datastructures, _Dataserver
@@ -84,3 +87,11 @@ def install_main( context ):
 	sess_conn.add( storage )
 	sess_conn.root()['session_storage'] = storage
 	lsm.registerUtility( storage, provided=nti_interfaces.ISessionServiceStorage )
+
+	# A utility to create intids for any object that needs it
+	# Two choices: With either one of them registered, subscribers
+	# fire forcing objects to be adaptable to IKeyReference.
+	# Int ids are not currently used.
+	#intids = zope.intid.IntIds( family=BTrees.family64 )
+	#intids = zc.intid.utility.IntIds('_ds_intid', family=BTrees.family32 )
+	#lsm.registerUtility( intids, provided=zope.intid.IIntIds )

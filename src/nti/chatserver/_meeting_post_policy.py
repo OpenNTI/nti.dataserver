@@ -133,6 +133,10 @@ class _MeetingMessagePostPolicy(object):
 		# is considered to be on the sharing list
 		msg_info.sharedWith = set(recipient_names)
 		msg_info.sharedWith = msg_info.sharedWith | transcript_owners
+		# In principal, we might be able to share some data and reduce
+		# pickling using a persistent set. In practice, at least for small
+		# sharing lists, it doesn't make any difference.
+		#msg_info.sharedWith = BTrees.OOBTree.OOSet( msg_info.sharedWith )
 		return result
 
 	###

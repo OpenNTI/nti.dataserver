@@ -14,6 +14,8 @@ from zope import component
 from zope.component.factory import Factory
 from zope.deprecation import deprecated
 
+from zope.keyreference.interfaces import IKeyReference
+
 import persistent
 
 import collections
@@ -570,14 +572,20 @@ class User(Principal):
 		the transaction.
 		"""
 		dataserver = dataserver or _get_shared_dataserver()
+		root_users = dataserver.root['users']
+		if 'parent' not in kwargs:
+			kwargs['parent'] = root_users
 		user = cls( **kwargs )
-		dataserver.root['users'][user.username] = user
+		root_users[user.username] = user
 		# When we auto-create users, we need to be sure
 		# they have a database connection so that things that
 		# are added /to them/ (their contained storage) in the same transaction
 		# will also be able to get a database connection and hence
 		# an OID.
-		dataserver.root['users']._p_jar.add( user )
+		# TODO: This can probably go away since these should be adapted
+		IKeyReference( user ) # Ensure it gets added to the database
+		assert getattr( user, '_p_jar', None ), "User should have a connection"
+		#root_users._p_jar.add( user )
 
 		return user
 
@@ -629,11 +637,20 @@ class User(Principal):
 	# send back a gravatar URL for the primary email:
 	# http://www.gravatar.com/avatar/%<Lowercase hex MD5>=44&d=mm
 
-	def __init__(self, username, avatarURL=None, password=None, realname=None):
+	def __init__(self, username, avatarURL=None, password=None, realname=None, parent=None):
 		super(User,self).__init__(username, avatarURL=avatarURL, password=password, realname=realname)
 		# We maintain a Map of our friends lists, organized by
 		# username (only one friend with a username)
+		if parent is not None:
+			# If we pre-set this, then the ObjectAdded event doesn't
+			# fire and an appserver:test_logon test fails. On the other hand, we can't add anything to friendsLists
+			# if an intid utility is installed if we don't have a parent (and thus
+			# cannot be adapted to IKeyReference). We could possibly solve
+			# both things by setting _p_jar immediately, and not set __parent__. Fortunately right
+			# now we don't have an intid utility.
+			pass
 		self.friendsLists = _FriendsListMap()
+		self.friendsLists.__parent__ = self
 
 		# We have a default friends list called Public that
 		# contains Public. It's a real list so the user
