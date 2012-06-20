@@ -51,7 +51,7 @@ class _MeetingMessagePostPolicy(object):
 		to ensure that they have one. Must be called
 		during a transaction.
 		"""
-		if getattr( msg_info, '_p_jar' ) is None and self._p_jar:
+		if getattr( msg_info, '_p_jar', None ) is None and self._p_jar:
 			self._p_jar.add( msg_info )
 
 	def _treat_recipients_like_default_channel( self, msg_info ):

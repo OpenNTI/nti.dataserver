@@ -135,6 +135,7 @@ setup(
 		'z3c.bcrypt >= 1.1',
 		'z3c.coverage >= 1.2.0', # TODO: Do we need this?
 		'z3c.pt >= 2.2.3', # Better ZPT support than plastex, add-in to Chameleon
+		'zc.intid >= 1.0.1',
 		'zc.queue >= 1.3',
 		'zc.zlibstorage >= 0.1.1', # compressed records. Will be built-in to newer ZODB
 		'zc.zodbdgc >= 0.6.0',
@@ -162,6 +163,7 @@ setup(
 		'zope.i18n',
 		'zope.i18nmessageid',
 		'zope.interface >= 4.0.1',
+		'zope.intid >= 3.7.2',
 		'zope.lifecycleevent >= 3.7.0',
 		'zope.location >= 4.0.0',
 		'zope.mimetype >= 1.3.1',

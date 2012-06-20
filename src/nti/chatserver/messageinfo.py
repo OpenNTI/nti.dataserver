@@ -11,6 +11,7 @@ import collections
 import six
 
 from persistent import Persistent
+from persistent.list import PersistentList
 
 from nti.externalization import datastructures
 
@@ -29,12 +30,15 @@ class MessageInfo( contenttypes.ThreadableExternalizableMixin,
 	__external_can_create__ = True
 
 	_excluded_in_ivars_ = { 'MessageId' } | datastructures.ExternalizableInstanceDict._excluded_in_ivars_
-
+	_update_accepts_type_attrs = True
 	_prefer_oid_ = False
 
 	# The usernames of occupants of the initial room, and others
 	# the transcript should go to. Set by policy.
 	sharedWith = ()
+	channel = interfaces.CHANNEL_DEFAULT
+	body = None
+	recipients = ()
 
 	def __init__( self ):
 		super(MessageInfo,self).__init__()
@@ -44,9 +48,6 @@ class MessageInfo( contenttypes.ThreadableExternalizableMixin,
 		self.LastModified = time.time()
 		self.CreatedTime = self.LastModified
 		self.containerId = None
-		self.channel = interfaces.CHANNEL_DEFAULT
-		self.body = None
-		self.recipients = ()
 		self.Status = interfaces.STATUS_INITIAL
 
 	# Aliases (TODO: Need general alias descriptor)
@@ -83,6 +84,7 @@ class MessageInfo( contenttypes.ThreadableExternalizableMixin,
 	def set_sender_sid( self, sid ):
 		setattr( self, '_v_sender_sid', sid )
 	sender_sid = property( get_sender_sid, set_sender_sid )
+
 
 	# Aliases for old code
 	@property
@@ -129,6 +131,12 @@ class MessageInfo( contenttypes.ThreadableExternalizableMixin,
 		if self.body is not None:
 			# alias for old code.
 			result['Body'] = result['body']
+		if 'channel' not in result:
+			# Must not have been in the instance dict
+			# TODO: Switch this to interface-driven
+			result['channel'] = self.channel
+		if 'recipients' not in result:
+			result['recipients'] = self.recipients
 		return result
 
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
@@ -142,3 +150,10 @@ class MessageInfo( contenttypes.ThreadableExternalizableMixin,
 				self.body = [contenttypes.sanitize_user_html( x ) if isinstance(x,six.string_types) else x
 							 for x
 							 in self.body]
+
+		# make recipients be stored as a persistent list.
+		# In theory, this helps when we have to serialize the message object
+		# into the database multiple times, by avoiding extra copies (like when we transcript)
+		# This also results in us copying incoming recipients
+		if self.recipients and 'recipients' in parsed:
+			self.recipients = PersistentList( self.recipients )
