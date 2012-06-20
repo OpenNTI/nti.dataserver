@@ -449,6 +449,7 @@ def add_new_user_to_static_communities( user, object_added_event ):
 	if object_added_event.oldParent:
 		# Only for new users
 		return
+
 	for com_name in STATIC_COMMUNITIES:
 		# If we're fired during migration, we may not be
 		# able to resolve entities (no IDataserver) so we need to

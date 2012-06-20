@@ -539,7 +539,7 @@ class TestChatserver(ConfiguringTestBase):
 		for user in ('sjohnson', 'chris', 'jason'):
 			assert_that( chat_transcripts.transcript_for_user_in_room( user, room.ID ).get_message( msg.ID ), is_( msg ) )
 			user = users.User.get_user( user )
-			tx_id = chat_transcripts._transcript_ntiid( room, user, nttype=ntiids.TYPE_TRANSCRIPT )
+			tx_id = chat_transcripts._transcript_ntiid( room, user, ntiids.TYPE_TRANSCRIPT )
 			assert_that( user.get_by_ntiid( tx_id ).get_message( msg.ID ), is_( msg ) )
 
 	@WithMockDSTrans

@@ -26,6 +26,7 @@ import ZODB.POSException
 
 from zope import interface
 from zope import component
+from zope import intid
 
 from zope.keyreference.persistent import KeyReferenceToPersistent
 
@@ -75,6 +76,12 @@ from zope.keyreference.persistent import KeyReferenceToPersistent
 # zc.zodbcgc or simply having the storage keep all non-historical objects, and that
 # RelStorage reduces the need to run GC anyway, we opt to reverse the previous policy
 # and simply store a weak ref.
+#
+# Experiments with using intids and an IISet in MeetingTranscriptStorage were a wash, as
+# were using an OOTreeSet instead of an OOBTree.
+# The biggest win is simply reducing all the transactions to one.
+# There's probably a big win in unifying the indexes. Try an KeywordIndex.
+
 ###
 from zope import copy
 
@@ -110,15 +117,16 @@ class _MeetingTranscriptStorage(Persistent,datastructures.ZContainedMixin,datast
 		# after the room is closed.
 		self.messages = BTrees.OOBTree.OOBTree()
 		# TODO: Use an IContainer?
-
-		self._meeting_ref = persistent.wref.WeakRef(meeting)
+		self._meeting_ref = persistent.wref.WeakRef( meeting )
 
 	@property
 	def meeting(self):
 		return self._meeting_ref()
 
 	def add_message( self, msg ):
-		#print( msg.__getstate__() )
+		"""
+		Stores the message in this transcript.
+		"""
 		self.messages[msg.ID] = persistent.wref.WeakRef( msg )
 
 	def itervalues(self):
@@ -132,13 +140,15 @@ class _MeetingTranscriptStorage(Persistent,datastructures.ZContainedMixin,datast
 	# Instead, the migration code needs to modify this class dynamically.
 	values = itervalues
 
-def _transcript_ntiid( meeting, creator, nttype=ntiids.TYPE_TRANSCRIPT_SUMMARY ):
+from repoze.lru import lru_cache
+@lru_cache(10000)
+def _transcript_ntiid( meeting, creator_username=None, nttype=ntiids.TYPE_TRANSCRIPT_SUMMARY ):
 	"""
 	:return: A NTIID string representing the transcript (summary) for the
 		given meeting (chat session) with the given participant.
 	"""
 	return ntiids.make_ntiid( base=meeting.id,
-							  provider=(creator.username if creator else None),
+							  provider=creator_username,
 							  nttype=nttype )
 
 def _get_by_oid(*args,**kwargs):
@@ -169,7 +179,7 @@ class _UserTranscriptStorageAdapter(object):
 
 		meeting = component.queryUtility( nti_interfaces.IDataserver, default=_get_by_oid ).get_by_oid( meeting_id, ignore_creator=True )
 		if meeting is not None:
-			storage_id = _transcript_ntiid( meeting, self._user )
+			storage_id = _transcript_ntiid( meeting, self._user.username )
 			storage = self._user.getContainedObject( meeting.containerId, storage_id )
 			result = Transcript( storage ) if storage else None
 		else:
@@ -191,7 +201,7 @@ class _UserTranscriptStorageAdapter(object):
 					result.append( TranscriptSummaryAdapter( storage ) )
 		return result
 
-	def add_message( self, meeting, msg, ):
+	def add_message( self, meeting, msg ):
 		if not meeting.containerId:
 			logger.warn( "Meeting (room) has no container id, will not transcript %s", meeting )
 			# Because we won't be able to store the room on the user.
@@ -200,7 +210,7 @@ class _UserTranscriptStorageAdapter(object):
 
 		# Our transcript storage we store with the
 		# provider ID of our user
-		storage_id = _transcript_ntiid( meeting, self._user )
+		storage_id = _transcript_ntiid( meeting, self._user.username )
 		storage = self._user.getContainedObject( meeting.containerId, storage_id )
 		if storage is None:
 			storage = _MeetingTranscriptStorage( meeting )
@@ -326,7 +336,7 @@ class TranscriptSummary(nti.externalization.datastructures.ExternalizableInstanc
 		self.NTIID = None
 		#if ntiids.is_ntiid_of_type( room.containerId, ntiids.TYPE_MEETINGROOM ):
 			#self.NTIID = _transcript_ntiid( room, self.creator, self._NTIID_TYPE_ )
-		self.NTIID = _transcript_ntiid( room, self.creator, self._NTIID_TYPE_ )
+		self.NTIID = _transcript_ntiid( room, self.creator.username, self._NTIID_TYPE_ )
 		_messages = list( meeting_storage.itervalues() )
 		# TODO: What should the LastModified be? The room doesn't
 		# currently track it. We're using the max for our messages, which may not be right?
