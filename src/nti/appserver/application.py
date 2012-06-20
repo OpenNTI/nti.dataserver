@@ -420,8 +420,8 @@ def createApplication( http_port,
 	class _ContentSearchRootFactory(dict):
 		__acl__ = ( (pyramid.security.Allow, pyramid.security.Authenticated, pyramid.security.ALL_PERMISSIONS), )
 
+	@interface.implementer( app_interfaces.IFileQuestionMap )
 	class _QuestionMap(dict):
-		interface.implements( app_interfaces.IFileQuestionMap )
 
 		def __init__( self ):
 			super(_QuestionMap,self).__init__()
@@ -451,7 +451,7 @@ def createApplication( http_port,
 
 
 	question_map = _QuestionMap()
-	pyramid_config.registry.registerUtility( question_map )
+	pyramid_config.registry.registerUtility( question_map, app_interfaces.IFileQuestionMap )
 	for title in library.titles:
 		# TODO: This is assuming things are on a local filesystem
 
