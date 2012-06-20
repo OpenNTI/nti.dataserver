@@ -596,7 +596,7 @@ follows.  Begin by resolving the ``ancestor`` to a containing
 ``ContentRangeDescription``'s ancestor as the containing ``Element``.  This
 containing ``Element`` becomes the *reference node* used when searching for
 text the anchored range. Using the *refernce node* as the root, create a ``TreeWalker`` to
-interate each ``Text`` node, ``textNode``, using the ``nextNode`` method.
+interate each ``Text`` node, ``textNode``.
 
 For each ``textNode`` check if the *primary context* object matches
 ``textNode``. If it does, using a ``TreeWalker`` rooted at *reference
@@ -608,6 +608,23 @@ range's ``startContainer`` if the anchor ``role`` is ``start``, or
 ``endContainer`` if the anchor ``role`` is ``end``. If not all the
 context objects match, continue the outer loop by comparing context
 objects for the next ``textNode``.
+
+When matcing ``contexts``, if a pointer does not provide the maximum
+amount of contextual information, as defined in ``Converting a Text
+Node to TextDomContentPointer``, clients *SHOULD* interpret that as
+the ``Text`` node this pointer represents did not contain any
+more contextually relevent nodes as defined in ``Converting a Text
+Node to TextDomContentPointer`` to the last ``TextContext`` object available.
+
+.. note::
+
+	In the case where ``contexts`` ambiguously defines a
+	``TextDomContentPointer``, but the pointer's ``ancestor`` has been
+	propertly resolved, clients *SHOULD* resolve to the endpoint that would create the
+	largest range.  In the event ``contexts`` is ambiguous and
+	``ancestor`` can't be resolved, clients *SHOULD* fail to
+	confidently resolve the pointer.
+
 
 If a ``textNode`` has been identified as the start or end container, a
 range can be constructed as follows. If anchor ``role`` is ``start``,
