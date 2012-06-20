@@ -130,8 +130,16 @@ def _section_ntiid_filename(self):
 	if self.level > level:
 		return
 	# It's confusing to have the filenames be valid
-	# URLs (tag:) themselves. Escaping is required, but doesn't happen.
-	return self.ntiid.replace( ':', '_' ) if self.ntiid else None
+	# URLs (tag:) themselves. See Filenames.py and Config.py
+	bad_chars = self.config['files']['bad-chars']
+	bad_chars_replacement = self.config['files']['bad-chars-sub']
+	ntiid = self.ntiid
+	if ntiid:
+		for bad_char in bad_chars:
+			ntiid = ntiid.replace( bad_char, bad_chars_replacement )
+		return ntiid
+
+
 
 def _set_section_ntiid_filename( self, value ):
 	setattr( self, '@filenameoverride', value )
