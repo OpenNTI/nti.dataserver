@@ -75,7 +75,7 @@ import nose.tools
 current_mock_ds = None
 
 from zope.site import LocalSiteManager, SiteManagerContainer
-from zope.component.hooks import site, setHooks, resetHooks
+from zope.component.hooks import site, setHooks, resetHooks, getSite, setSite
 import transaction
 
 def WithMockDS( func ):
@@ -122,6 +122,43 @@ def mock_db_trans(ds=None):
 		yield conn
 		transaction.commit()
 		conn.close()
+
+class faster_mock_db_trans(object):
+	# The class version is moderately faster than the contextlib decorated version,
+	# which is important in benchmarks, but the code is more baroque and possibly
+	# bug prone
+	def __init__( self, ds=None ):
+		self._ds = ds
+		self._old_site = None
+		self._conn = None
+
+	def __enter__( self ):
+		ds = self._ds
+		if ds is None:
+			ds = current_mock_ds
+		transaction.begin()
+		conn = ds.db.open()
+		self._conn = conn
+		global current_transaction
+		current_transaction = conn
+		sitemanc = conn.root()['nti.dataserver']
+
+		self._old_site = getSite()
+		setSite(sitemanc)
+
+		assert component.getSiteManager() == sitemanc.getSiteManager()
+		component.provideUtility( ds )
+		assert component.getUtility( nti_interfaces.IDataserver )
+
+		return conn
+
+	def __exit__( self, t, v, tb ):
+		try:
+			if t is None:
+				transaction.commit()
+				self._conn.close()
+		finally:
+			setSite( self._old_site )
 
 
 current_transaction = None
