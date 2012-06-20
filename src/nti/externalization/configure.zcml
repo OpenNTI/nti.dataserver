@@ -12,7 +12,7 @@
 			 provides=".interfaces.ILocatedExternalSequence"
 			 factory=".datastructures.LocatedExternalList" />
 
-	<adapter for="list"
+	<adapter for="dolmen.builtins.IList"
 			 provides=".interfaces.ILocatedExternalSequence"
 			 factory=".datastructures.LocatedExternalList" />
 
