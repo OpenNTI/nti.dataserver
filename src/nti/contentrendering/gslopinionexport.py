@@ -7,7 +7,7 @@ from __future__ import unicode_literals, print_function
 
 from zope import interface
 import nti.contentrendering
-from . import interfaces
+from nti.contentrendering import interfaces
 
 import requests
 import pyquery
@@ -170,7 +170,15 @@ def _find_footnote( footnotes, sup ):
 	ref_to = sup[0].get( 'href' )[1:]
 	accum = []
 	for i in footnotes:
-		if _text_of( i ).startswith( ref_to ):
+		#Locate the anchor at the begining of the footnote
+		anchor = None
+		if ( len(i.getchildren()) != 0 ) and ( i.getchildren()[0].tag == 'a' ):
+			anchor = i.getchildren()[0]
+
+		if ( anchor != None ) and ( anchor.get( 'name' ) == ref_to ):
+			# found it
+			accum.append( _p_to_content( footnotes, i ) )
+		elif _text_of( i ).startswith( ref_to ):
 			# found it
 			accum.append( _p_to_content( footnotes, i ) )
 		elif _text_of( i ).startswith( '[' ) and accum: # The next one
