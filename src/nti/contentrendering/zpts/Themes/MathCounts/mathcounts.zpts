@@ -1,3 +1,4 @@
+# -*- mode: html -*-
 # Move the answer portion of the mathcountsproblem template to here.  This
 # allows the new quiz design to render with out any changes to the source
 # files.  The problem is that the problem graphics were at the
@@ -9,7 +10,7 @@
 # handbook numbering scheme this is not an issue.
 
 name: mathcountsquestion
-<li tal:attributes="value self/attributes/questionnum">
+<li tal:attributes="value self/attributes/questionnum; id self/id">
   <div class="question">
     <div class="problems" tal:content="self" /> 
     <div class="answerblock">
@@ -22,7 +23,7 @@ name: mathcountsquestion
 
 
 name: mathcountsproblem
-<div class="problem">
+<div class="problem" tal:attributes="id self/id">
 	 <a tal:attributes="name self/id"></a>
 	 <span tal:content="self"/>
 </div>
@@ -53,7 +54,7 @@ name: mathcountssolution mathcountsdifficulty mathcountsresult mathcountssolutio
 #	<li tal:attributes="value PATH/TO/PROBNUM" tal:repeat="item self" tal:content="item" tal:omit-tag="python:not any([c.__class__.__name__.startswith('mathcounts') for c in item.childNodes])"></li>
 
 name: mathcountsworksheet
-<div class="worksheet-title" tal:content="self/title">Title</div>
+<div class="worksheet-title" tal:attributes="id self/id" tal:content="self/title">Title</div>
 <form>
 <ol class="worksheet-problems itemize" tal:content="self">
 </ol>
@@ -61,6 +62,6 @@ name: mathcountsworksheet
 <a id="submit" class="x-btn x-btn-submit x-btn-primary-medium x-btn-primary-medium-noicon x-btn-noicon" onclick="NTISubmitAnswers(event,'input[type]')" href="#" >Submit</a>
 </form>
 
-name: par
-<a tal:attributes="name self/id" tal:omit-tag=""/>
-<p tal:content="self" tal:omit-tag=""></p>
+#name: par
+#<a tal:attributes="name self/id; id self/id" tal:omit-tag=""/>
+#<p tal:content="self" tal:attributes="id self/id" tal:omit-tag=""></p>
