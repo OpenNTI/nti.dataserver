@@ -9,24 +9,24 @@ name: picdefns
 </div>
 
 name: boxed
-<span class="boxed" tal:content="self"></span>
+<span class="boxed" tal:attributes="id self/id" tal:content="self"></span>
 
 name: phantom
 <span class="phantom hidden" tal:content="self/attributes/tex"></span>
 
 name:Def Defnoindex angle
-<span class="def" tal:content='self/attributes/text' ></span>
+<span class="def" tal:attributes="id self/id" tal:content='self/attributes/text' ></span>
 
 name: parts
 <ol class="parts itemize">
-	<li tal:repeat="item self" tal:attributes="class python: type(item).__name__" tal:content="item"></li>
+	<li tal:repeat="item self" tal:attributes="class python: type(item).__name__; id self/id" tal:content="item"></li>
 </ol>
 
 name: source MOEMS MathCounts AMC
-<span class="source" tal:content="python: '(Source: %s)' % self.attributes['source']" />
+<span class="source" tal:attributes="id self/id" tal:content="python: '(Source: %s)' % self.attributes['source']" />
 
 name: probref ref
-<a tal:attributes="href self/idref/label/url" tal:content="self/idref/label/ref | self/idref/id" />
+<a tal:attributes="href self/idref/label/url; id self/id" tal:content="self/idref/label/ref | self/idref/id" />
 
 name: challengeprobs
 <div class="challenge-problems" tal:attributes="id self/id"><span class="headingtext">Challenge Problems</span></div>
@@ -61,7 +61,7 @@ name: sectionproblems
 </div>
 
 name: hintitem
-<span class="hint"><a href="#" onclick="return togglehint(event)">Hint: </a><span class="hint content hidden" tal:content="self" /></span>
+<span class="hint"><a href="#" onclick="return togglehint(event)">Hint: </a><span class="hint content hidden" tal:attributes="id self/id" tal:content="self" /></span>
 
 # Note that the non-standard probnum attribute is used in CSS to label these problems (div.problem:after)
 # TODO: Why can't we handle that in the template?
@@ -104,9 +104,9 @@ name: nst nnd nrd nth
 
 name: Cube BlackCube
 <p tal:condition="python: hasattr(self, 'resource')" tal:replace="self/resource"/>
-<img align="bottom" tal:define="style self/style" tal:condition="python: not hasattr(self, 'resource') and not style" tal:attributes="src self/image/url; alt self/source; width self/image/width/px; height self/image/height/px" />
-<img align="bottom" tal:define="style self/style" tal:condition="python: not hasattr(self, 'resource') and style" tal:attributes="src self/image/url; alt self/source; style self/style/inline" />
+<img align="bottom" tal:define="style self/style" tal:condition="python: not hasattr(self, 'resource') and not style" tal:attributes="id self/id; src self/image/url; alt self/source; width self/image/width/px; height self/image/height/px" />
+<img align="bottom" tal:define="style self/style" tal:condition="python: not hasattr(self, 'resource') and style" tal:attributes="id self/id; src self/image/url; alt self/source; style self/style/inline" />
 
 # Override of default minipage renderer.  This is required to compensate for print based fixed sizes in content.
 name: minipage
-<div class="minipage" tal:content="self">minipage</div>
+<div class="minipage" tal:attributes="id self/id" tal:content="self">minipage</div>
