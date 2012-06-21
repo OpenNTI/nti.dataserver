@@ -1,0 +1,3 @@
+# -*- mode: html -*-
+name: ntipagenum
+<span class="nti.pagenum" style="font-size: smaller; font-weight: bold" tal:attributes="id self/id"  tal:content="self/attributes/text" />
