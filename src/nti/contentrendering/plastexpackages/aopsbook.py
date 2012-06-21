@@ -64,6 +64,9 @@ class phantom(Base.Space.phantom):
 class yen(Base.Command):
 	unicode = u'\xA5'
 
+class eur(Base.Command):
+	macroName = 'EUR'
+	unicode = u'\x20AC'
 
 class textcent(Base.Command):
 	unicode = u'\xA2'
