@@ -26,9 +26,12 @@ class QAssessedPart(SchemaConfigured,persistent.Persistent):
 	assessedValue = 0.0
 	__external_can_create__ = False
 	def __eq__( self, other ):
-		return self is other or (isinstance(other,QAssessedPart)
-								 and self.submittedResponse == other.submittedResponse
+		try:
+			return self is other or (self.submittedResponse == other.submittedResponse
 								 and self.assessedValue == other.assessedValue)
+		except AttributeError:
+			return NotImplemented
+
 	def __ne__( self, other ):
 		return not self == other
 
@@ -45,9 +48,11 @@ class QAssessedQuestion(SchemaConfigured,persistent.Persistent):
 	__external_can_create__ = False
 
 	def __eq__( self, other ):
-		return self is other or (isinstance(other,QAssessedQuestion)
-								 and self.questionId == other.questionId
-								 and self.parts == other.parts)
+		try:
+			return self is other or (self.questionId == other.questionId
+									 and self.parts == other.parts)
+		except AttributeError:
+			return NotImplemented
 
 	def __ne__( self, other ):
 		return not self == other
@@ -66,9 +71,11 @@ class QAssessedQuestionSet(SchemaConfigured,persistent.Persistent):
 	__parent__ = None
 	__external_can_create__ = False
 	def __eq__( self, other ):
-		return self is other or (isinstance(other,QAssessedQuestionSet)
-								 and self.questionSetId == other.questionSetId
-								 and self.questions == other.questions)
+		try:
+			return self is other or (self.questionSetId == other.questionSetId
+									 and self.questions == other.questions)
+		except AttributeError:
+			return NotImplemented
 
 	def __ne__( self, other ):
 		return not self == other

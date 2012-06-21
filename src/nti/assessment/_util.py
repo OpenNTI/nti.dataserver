@@ -15,10 +15,16 @@ class TrivialValuedMixin(object):
 			self.value = value
 
 	def __eq__( self, other ):
-		return self is other or self.value == getattr( other, 'value', _marker)
+		try:
+			return self is other or self.value == other.value
+		except AttributeError:
+			return NotImplemented
 
 	def __ne__( self, other ):
-		return self is not other and self.value != getattr( other, 'value', _marker )
+		try:
+			return self is not other and self.value != other.value
+		except AttributeError:
+			return NotImplemented
 
 	def __hash__( self ):
 		return hash(self.value)

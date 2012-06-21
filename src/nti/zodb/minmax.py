@@ -29,16 +29,25 @@ class AbstractNumericValue(AbstractValue):
 		self.value = value
 
 	def __eq__( self, other ):
-		return other is self or (isinstance(other,AbstractNumericValue) and self.value == other.value)
+		try:
+			return other is self or self.value == other.value
+		except AttributeError: # pragma: no cover
+			return NotImplemented
 
 	def __hash__(self):
 		return self.value
 
 	def __lt__(self, other ):
-		return self.value < other.value
+		try:
+			return self.value < other.value
+		except AttributeError: # pragma: no cover
+			return NotImplemented
 
 	def __gt__(self,other):
-		return self.value > other.value
+		try:
+			return self.value > other.value
+		except AttributeError: # pragma: no cover
+			return NotImplemented
 
 	def __str__( self ):
 		return str(self.value)

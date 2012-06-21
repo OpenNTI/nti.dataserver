@@ -1,7 +1,10 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 """
 Implementation of the link data type.
+
+$Id$
 """
+from __future__ import print_function, unicode_literals
 
 from . import interfaces
 from nti.externalization import interfaces as ext_interfaces
@@ -29,7 +32,7 @@ class Link(object):
 	__reduce_ex__ = __reduce__
 
 	def __repr__( self ):
-		# It's very easy to get into an infinite recursion here
+		# Its very easy to get into an infinite recursion here
 		# if the target wants to print its links
 		return "<Link rel='%s' %s/%s>" % (self.rel, type(self.target), id(self.target))
 
@@ -41,7 +44,10 @@ class Link(object):
 		return hash( self.rel )
 
 	def __eq__( self, other ):
-		return other == (self.rel,self.target)
+		try:
+			return self is other or (self.rel == other.rel and self.target == other.target)
+		except AttributeError:
+			return NotImplemented
 
 @interface.implementer(ext_interfaces.IExternalObject)
 @component.adapter(Link)

@@ -279,10 +279,12 @@ class SectionInfo( datastructures.PersistentCreatedModDateTrackingObject,
 
 
 	def __eq__( self, other ):
-		if isinstance( other, SectionInfo ):
+		try:
 			# Interestingly, BTreeContainer does a poor job implementing __eq__
 			return self.ID == other.ID and self.Provider == other.Provider and self.InstructorInfo == other.InstructorInfo \
 				and list(self._enrolled.keys()) == list(other._enrolled.keys())
+		except AttributeError:
+			return NotImplemented
 
 	def enroll(self, student):
 		self._enrolled[student] = student
@@ -351,5 +353,7 @@ class InstructorInfo( Persistent,
 		self.Instructors = PersistentList() # list of the names of the instructors
 
 	def __eq__( self, other ):
-		if isinstance( other, InstructorInfo ):
+		try:
 			return self.Instructors == other.Instructors
+		except AttributeError:
+			return NotImplemented

@@ -119,7 +119,10 @@ class _ACE(object):
 		# TODO: Work on this
 		# This trick (reversing the order and comparing to a tuple) lets us compare
 		# equal to plain tuples as used in pyramid and that sometimes sneak in
-		return other == (self.action, self.actor.id, self.permission)
+		try:
+			return other == (self.action, self.actor.id, self.permission)
+		except AttributeError:
+			return NotImplemented
 
 	def __iter__(self):
 		return iter( (self.action, self.actor, self.permission) )
