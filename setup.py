@@ -66,7 +66,7 @@ setup(
 		# 'MySQL-python', # mysql adapter
 		# 'RelStorage',
 		'anyjson >= 0.3.1',
-		'boto >= 2.5.1', # amazon
+		'boto >= 2.5.2', # amazon
 		'brownie >= 0.5.1', # Common utilities
 		'coverage >= 3.5.2', # Test coverage
 		'cssselect >= 0.7.1', # Used by pyquery
@@ -78,9 +78,7 @@ setup(
 		'futures >= 2.1.2',
 		#'gevent == 1.0dev', Coming from requirements.txt right now
 		'gevent-zeromq >= 0.2.2',
-		# 0.4.0 fixes some memory leaks and other weirdness.
-		# Not yet available in pypi
-		# 'greenlet >= 0.4.0',
+		'greenlet >= 0.4.0',
 		'gunicorn >= 0.14.3',
 		'html5lib == 0.95',
 		 # WSGI middleware for profiling. Defaults to storing
