@@ -427,7 +427,7 @@ def _deal_with_external_account( request, fname, lname, email, idurl, iface, cre
 			# TODO: Can I assign to persistent object's __class__? Should I?
 		assert getattr( user, url_attr ) == idurl
 	else:
-		# This fires lifecycleevent.IObjectAddedEvent. The oldParent attribute
+		# This fires lifecycleevent.IObjectCreatedEvent and IObjectAddedEvent. The oldParent attribute
 		# will be None
 		kwargs = {'dataserver': dataserver,
 				  'username': email,
@@ -439,16 +439,13 @@ def _deal_with_external_account( request, fname, lname, email, idurl, iface, cre
 	return user
 
 STATIC_COMMUNITIES = ('MathCounts',)
-from zope.lifecycleevent.interfaces import IObjectAddedEvent, IObjectModifiedEvent
-@component.adapter(nti_interfaces.IUser,IObjectAddedEvent)
+from zope.lifecycleevent.interfaces import IObjectCreatedEvent
+@component.adapter(nti_interfaces.IUser,IObjectCreatedEvent)
 def add_new_user_to_static_communities( user, object_added_event ):
 	# Ultimately there should be a bunch of stuff that gets done
 	# when users are added, based on...some heuristics...
 	# in the immediate term, we will add new users to some pre-defined
 	# communities, if they exist
-	if object_added_event.oldParent:
-		# Only for new users
-		return
 
 	for com_name in STATIC_COMMUNITIES:
 		# If we're fired during migration, we may not be

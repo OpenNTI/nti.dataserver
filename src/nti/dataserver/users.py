@@ -13,7 +13,8 @@ from zope import interface
 from zope import component
 from zope.component.factory import Factory
 from zope.deprecation import deprecated
-
+from zope.event import notify
+from zope.lifecycleevent import ObjectCreatedEvent
 from zope.keyreference.interfaces import IKeyReference
 
 import persistent
@@ -591,16 +592,19 @@ class User(Principal):
 		if 'parent' not in kwargs:
 			kwargs['parent'] = root_users
 		user = cls( **kwargs )
-		root_users[user.username] = user
 		# When we auto-create users, we need to be sure
 		# they have a database connection so that things that
 		# are added /to them/ (their contained storage) in the same transaction
 		# will also be able to get a database connection and hence
 		# an OID.
 		# TODO: This can probably go away since these should be adapted
+		root_users._p_jar.add( user ) # Since there's no parent yet
 		IKeyReference( user ) # Ensure it gets added to the database
 		assert getattr( user, '_p_jar', None ), "User should have a connection"
-		#root_users._p_jar.add( user )
+
+
+		notify( ObjectCreatedEvent( user ) ) # Fire created event
+		root_users[user.username] = user # Fire added event
 
 		return user
 
@@ -663,6 +667,7 @@ class User(Principal):
 			# cannot be adapted to IKeyReference). We could possibly solve
 			# both things by setting _p_jar immediately, and not set __parent__. Fortunately right
 			# now we don't have an intid utility.
+			# Update: That test now depends on ObjectCreatedEvent, so it might be safe to set this?
 			pass
 		self.friendsLists = _FriendsListMap()
 		self.friendsLists.__parent__ = self
