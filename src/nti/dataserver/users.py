@@ -958,9 +958,9 @@ class User(Principal):
 		# TODO: Not sure about this. Who should be responsible for
 		# the UGD containers? Should we have some different layout
 		# for that (probably).
-		return (self.containers.containers[k]
-				for k in self.containers.containers
-				if nti_interfaces.INamedContainer.providedBy( self.containers.containers[k] ) )
+		return (v
+				for v in self.containers.containers.itervalues()
+				if nti_interfaces.INamedContainer.providedBy( v ) )
 
 	def beginUpdates(self):
 		# Because the container hooks are volatile, the container object
