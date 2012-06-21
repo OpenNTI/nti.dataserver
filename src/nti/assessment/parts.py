@@ -52,10 +52,16 @@ class QPart(SchemaConfigured,Persistent):
 	__repr__ = make_repr()
 
 	def __eq__( self, other ):
-		return self is other or (isinstance(other,QPart) and self.content == other.content and self.hints == other.hints and self.solutions == other.solutions and self.explanation == other.explanation )
+		try:
+			return self is other or (self.content == other.content
+									 and self.hints == other.hints
+									 and self.solutions == other.solutions
+									 and self.explanation == other.explanation )
+		except AttributeError:
+			return NotImplemented
 
 	def __ne__( self, other ):
-		return not self == other
+		return not (self == other is True)
 
 @interface.implementer(interfaces.IQMathPart)
 class QMathPart(QPart):
@@ -77,7 +83,10 @@ class QMultipleChoicePart(QPart):
 	choices = ()
 
 	def __eq__( self, other ):
-		return self is other or (super(QMultipleChoicePart,self).__eq__( other ) and isinstance( other, QMultipleChoicePart ) and self.choices == other.choices )
+		try:
+			return self is other or (super(QMultipleChoicePart,self).__eq__( other ) is True and self.choices == other.choices )
+		except AttributeError:
+			return NotImplemented
 
 @interface.implementer(interfaces.IQMatchingPart)
 class QMatchingPart(QPart):
@@ -88,7 +97,10 @@ class QMatchingPart(QPart):
 	values = ()
 
 	def __eq__( self, other ):
-		return self is other or (super(QMatchingPart,self).__eq__( other ) and isinstance( other, QMatchingPart ) and self.labels == other.labels and self.values == other.values )
+		try:
+			return self is other or (super(QMatchingPart,self).__eq__( other ) is True and self.labels == other.labels and self.values == other.values )
+		except AttributeError:
+			return NotImplemented
 
 @interface.implementer(interfaces.IQFreeResponsePart)
 class QFreeResponsePart(QPart):

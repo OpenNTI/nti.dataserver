@@ -483,7 +483,10 @@ class Canvas(ThreadableExternalizableMixin, _UserContentRoot, ExternalizableInst
 
 	def __eq__( self, other ):
 		# TODO: Super properties?
-		return isinstance( other, Canvas ) and self.shapeList == other.shapeList
+		try:
+			return self.shapeList == other.shapeList
+		except AttributeError:
+			return NotImplemented
 
 
 def _make_external_value_object( external ):
@@ -527,8 +530,10 @@ class CanvasAffineTransform(ExternalizableInstanceDict):
 		return _make_external_value_object( super(CanvasAffineTransform,self).toExternalDictionary( mergeFrom=mergeFrom ) )
 
 	def __eq__( self, other ):
-		if not isinstance( other, CanvasAffineTransform ): return False
-		return all( [getattr(self, x) == getattr(other,x) for x in self.__dict__] )
+		try:
+			return all( [getattr(self, x) == getattr(other,x) for x in self.__dict__] )
+		except AttributeError:
+			return NotImplemented
 
 
 class CanvasShape(_UserContentRoot,ExternalizableInstanceDict):
@@ -702,6 +707,7 @@ class CanvasShape(_UserContentRoot,ExternalizableInstanceDict):
 	def __eq__( self, other ):
 		# Implementation note: when toExternalDictionary changes,
 		# this method should change too
+		# TODO: This is a lousy comparison
 		return self.__class__ == other.__class__ and self.transform == other.transform
 
 class CanvasCircleShape(CanvasShape): pass

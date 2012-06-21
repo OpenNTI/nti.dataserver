@@ -67,7 +67,11 @@ class Session(Persistent):
 		self._v_session_service = session_service
 
 	def __eq__( self, other ):
-		return other is self or (isinstance( other, Session ) and self.session_id == other.session_id)
+		try:
+			return other is self or self.session_id == other.session_id
+		except AttributeError:
+			return NotImplemented
+
 	def __hash__( self ):
 		return hash(self.session_id)
 

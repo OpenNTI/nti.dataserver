@@ -22,7 +22,14 @@ class ContentRangeDescription(SchemaConfigured):
 	"""
 	__external_can_create__ = True
 	def __eq__( self, other ):
-		return self is other or isinstance( other, ContentRangeDescription )
+		if self is other or isinstance( other, ContentRangeDescription ):
+			return True
+		return NotImplemented
+
+	def __ne__( self, other ):
+		if isinstance( other, ContentRangeDescription ):
+			return False
+		return NotImplemented
 
 	__repr__ = make_repr()
 
@@ -36,9 +43,18 @@ class DomContentRangeDescription(ContentRangeDescription):
 	ancestor = None
 
 	def __eq__( self, other ):
-		return self is other or (self.start == getattr( other, 'start', None )
-								 and self.end == getattr( other, 'end', None )
-								 and self.ancestor  == getattr( other, 'ancestor', None ))
+		try:
+			return self is other or (self.start == other.start
+									 and self.end == other.end
+									 and self.ancestor  == other.ancestor)
+		except AttributeError:
+			return NotImplemented
+
+	def __ne__( self, other ):
+		res = self == other
+		if res in (True,False):
+			return not res
+		return NotImplemented
 
 class ContentPointer(SchemaConfigured):
 	__external_can_create__ = True
@@ -50,7 +66,16 @@ class DomContentPointer(ContentPointer):
 	"""
 	role = None
 	def __eq__( self, other ):
-		return self is other or self.role == getattr( other, 'role', None )
+		try:
+			return self is other or self.role == other.role
+		except AttributeError:
+			return NotImplemented
+
+	def __ne__( self, other ):
+		try:
+			return self is not other and self.role != other.role
+		except AttributeError:
+			return NotImplemented
 
 	__repr__ = make_repr()
 
@@ -63,9 +88,12 @@ class ElementDomContentPointer(DomContentPointer):
 	elementTagName = None
 
 	def __eq__( self, other ):
-		return self is other or (self.elementId == getattr( other, 'elementId', None )
-								 and self.elementTagName == getattr( other, 'elementTagName', None )
-								 and self.role  == getattr( other, 'role', None ))
+		try:
+			return self is other or (self.elementId == other.elementId
+									 and self.elementTagName == other.elementTagName
+									 and self.role  == other.role)
+		except AttributeError:
+			return NotImplemented
 
 
 @interface.implementer(interfaces.ITextContext)
@@ -78,8 +106,12 @@ class TextContext(SchemaConfigured):
 	contextOffset = 0
 
 	def __eq__( self, other ):
-		return self is other or (self.contextText == getattr( other, 'contextText', None )
-								 and self.contextOffset == getattr( other, 'contextOffset', None ) )
+		try:
+			return self is other or (self.contextText == other.contextText
+									 and self.contextOffset == other.contextOffset)
+		except AttributeError:
+			return NotImplemented
+
 	__repr__ = make_repr()
 
 
@@ -93,9 +125,12 @@ class TextDomContentPointer(DomContentPointer):
 	edgeOffset = 0
 
 	def __eq__( self, other ):
-		return (super(TextDomContentPointer,self).__eq__( other )
-				# damn tuples and lists are not ever equal to each other
-				# try to compare tuples, keeping in mind the other object may not have one at all
-				and tuple(self.contexts) == tuple(getattr( other, 'contexts', (1,2,3) ))
-				and self.ancestor == getattr( other, 'ancestor', None )
-				and self.edgeOffset == getattr( other, 'edgeOffset', None ) )
+		try:
+			return (super(TextDomContentPointer,self).__eq__( other ) is True
+					# damn tuples and lists are not ever equal to each other
+					# try to compare tuples, keeping in mind the other object may not have one at all
+					and tuple(self.contexts) == tuple(other.contexts)
+					and self.ancestor == other.ancestor
+					and self.edgeOffset == other.edgeOffset )
+		except AttributeError:
+			return NotImplemented

@@ -183,10 +183,16 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject,E
 	### Comparisons and Hashing ###
 
 	def __eq__(self, other):
-		return other != None and _lower(self.username) == _lower(getattr(other, 'username', None))
+		try:
+			return other != None and _lower(self.username) == _lower(other.username)
+		except AttributeError:
+			return NotImplemented
 
 	def __lt__(self, other):
-		return _lower(self.username) < _lower(other.username)
+		try:
+			return _lower(self.username) < _lower(other.username)
+		except AttributeError:
+			return NotImplemented
 
 	def __hash__(self):
 		return _lower(self.username).__hash__()
@@ -444,12 +450,15 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 
 	def __eq__(self,other):
 		result = super(FriendsList,self).__eq__(other)
-		if result:
-			result = self.friends == getattr(other, 'friends', None)
+		if result is True:
+			try:
+				result = self.friends == other.friends
+			except AttributeError:
+				result = NotImplemented
 		return result
 	def __lt__(self,other):
 		result = super(FriendsList,self).__lt__(other)
-		if result:
+		if result is True:
 			result = self.friends < other.friends
 		return result
 
@@ -496,10 +505,16 @@ class Device(persistent.Persistent,
 		pass
 
 	def __eq__(self, other):
-		return self.deviceId == getattr(other, 'deviceId', None)
+		try:
+			return self.deviceId == other.deviceId
+		except AttributeError:
+			return NotImplemented
 
 	def __lt__(self, other):
-		return self.deviceId < other.deviceId
+		try:
+			return self.deviceId < other.deviceId
+		except AttributeError:
+			return NotImplemented
 
 	def __hash__(self):
 		return self.deviceId.__hash__()
