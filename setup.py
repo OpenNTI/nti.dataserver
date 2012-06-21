@@ -77,7 +77,14 @@ setup(
 		'dolmen.builtins >= 0.3.1', # interfaces for common python types
 		'futures >= 2.1.2',
 		#'gevent == 1.0dev', Coming from requirements.txt right now
-		'gevent-zeromq >= 0.2.2',
+		# NOTE: gevent_zeromq and pyzmq are tightly coupled. Updating pyzmq
+		# usually requires rebuilding gevent_zeromq. You'll get errors about 'Context has wrong size'.
+		# You may be able to fix it with 'pip install -U --force --no-deps gevent_zeromq'. You may not;
+		# if that doesn't work, the solution is to download gevent_zeromq manually, untar it, and
+		# run 'python setup.py install'. It may be necessary to 'pip uninstall' this (and/or remove it from zite-packages)
+		# before running setup.py.
+		# NOTE2: This will go away soon, merged into pyzmq 2.2dev as zmq.green
+		'gevent_zeromq >= 0.2.2',
 		'greenlet >= 0.4.0',
 		'gunicorn >= 0.14.3',
 		'html5lib == 0.95',
@@ -108,12 +115,19 @@ setup(
 		'pyramid_zcml >= 0.9.2',
 		'pyramid_zodbconn >= 0.3',
 		'pyramid-openid',
+		# Best if the system has ZMQ >= 2.2.0. Can work as far back as 2.1.7 (at least). 2.1.10 or better recommended;
+		# I (JAM) *think* the ZMQ libs are all binary compatible so you can upgrade from 2.1 to 2.2
+		# on the fly without touching the python level.
+		# You may have to install this manually, depending on where zmq is installed.
+		# something like:
+		# pip install --install-option="--zmq=/opt/nti" pyzmq
+		'pyzmq >= 2.2.0',
 		'pytz',
 		'rdflib',
 		'repoze.catalog',
 		'repoze.sphinx.autointerface >= 0.6.2',
 		'repoze.who >= 2.0',
-		'repoze.zodbconn',
+		'repoze.zodbconn >= 0.14',
 		'grequests >= 0.1.0', #replaces requests.async in 0.13
 		'requests >= 0.13.1', # HTTP
 		'scss',
