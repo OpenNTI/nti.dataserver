@@ -170,7 +170,7 @@ class AbstractDynamicObjectIO(ExternalizableDictionaryMixin):
 		for k in parsed:
 			if not self._ext_accept_update_key( k, ext_self, ext_keys ):
 				continue
-
+			__traceback_info__ = k
 			self._ext_setattr( ext_self, k, parsed[k] )
 
 		if StandardExternalFields.CONTAINER_ID in parsed and getattr( ext_self, StandardInternalFields.CONTAINER_ID, parsed ) is None:
