@@ -22,7 +22,7 @@ from mock_dataserver import WithMockDS
 import plistlib
 import os
 
-from nti.contentrange.contentrange import DomContentRangeDescription, ElementDomContentPointer
+from nti.contentrange.contentrange import ContentRangeDescription, DomContentRangeDescription, ElementDomContentPointer
 
 import nti.externalization.internalization
 nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.users' )
@@ -71,6 +71,15 @@ def Highlight():
 	return h
 
 class HighlightTest(mock_dataserver.ConfiguringTestBase):
+
+	@mock_dataserver.WithMockDSTrans
+	def test_add_range_to_existing(self):
+		"Old objects that are missing applicableRange/selectedText can be updated"
+		h = Highlight()
+		del h.applicableRange
+		del h.selectedText
+		ext = { 'selectedText': u'', 'applicableRange': ContentRangeDescription() }
+		h.updateFromExternalObject( ext, self.ds )
 
 	@mock_dataserver.WithMockDSTrans
 	def test_external_tags(self):

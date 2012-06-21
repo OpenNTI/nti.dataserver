@@ -199,7 +199,7 @@ class SelectedRange(_UserContentRoot,ExternalizableInstanceDict):
 	applicableRange = None
 	tags = ()
 	AutoTags = ()
-
+	_update_accepts_type_attrs = True
 	__parent__ = None
 
 	def __init__( self ):
@@ -218,6 +218,7 @@ class SelectedRange(_UserContentRoot,ExternalizableInstanceDict):
 
 
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
+		parsed.pop( 'AutoTags', None )
 		super(SelectedRange,self).updateFromExternalObject( parsed, *args, **kwargs )
 		__traceback_info__ = parsed
 		for k in ('applicableRange', 'selectedText'):
