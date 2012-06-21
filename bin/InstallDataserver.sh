@@ -30,7 +30,7 @@ export CFLAGS="-I/opt/local/include -L/opt/local/lib"
 
 echo "Installing pyzmq"
 pip install cython
-pip install --install-option="--zmq=/opt/local" pyzmq
+pip install --install-option="--zmq=/opt/local" "pyzmq>=2.2.0"
 
 PROJECT_PARENT=${2:-~/Projects}
 echo "Checking project out to $PROJECT_PARENT/NextThoughtPlatform"
@@ -71,13 +71,13 @@ if [ "$INSTALL_EXTRAS" ]; then
 	elif [ -f "/opt/local/bin/gfortran-mp-4.4" ]; then
 		ln -s /opt/local/bin/gfortran-mp-4.4 $TMPWK_DIR/gfortran
 	fi
-	
+
 	pip install pyyaml
 	pip install numpy
 	pip install matplotlib
 	pip install scipy
 	pip install pil
-	
+
 	rm -rf $TMPWK_DIR
 fi
 
