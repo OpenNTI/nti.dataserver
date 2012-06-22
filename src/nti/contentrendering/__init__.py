@@ -22,6 +22,8 @@ import anyjson as json
 import logging
 logger = logging.getLogger(__name__)
 warnings.warn( "Using whatever phantomjs is on the path" )
+
+_load_plugins_no = os.getenv( 'NTI_PHANTOMJS_LOAD_PLUGINS_ARG', '' )
 _none_key = object()
 def run_phantom_on_page( htmlFile, scriptName, args=(), key=_none_key, expect_no_output=False, expect_non_json_output=False ):
 	# phantomjs 1.3 will take plain paths to open, 1.4 requires a URL
@@ -35,9 +37,12 @@ def run_phantom_on_page( htmlFile, scriptName, args=(), key=_none_key, expect_no
 	# is not entirely reliable; there seems to be a race condition. We try instead
 	# to parse just the last line
 	# NOTE: This problem is fixed with 1.5, which seems to be backwards compatible entirely
+	# NOTE2: phantomjs 1.6 dropped the --load-plugins=no argument entirely. We temporarily
+	# have an environment variable to control this, but it seems unnecessary on 1.5
 
-	process = "phantomjs --load-plugins=no %s %s %s 2>/dev/null" % (scriptName, htmlFile, " ".join([str(x) for x in args]))
+	process = "phantomjs %s %s %s %s 2>/dev/null" % (_load_plugins_no, scriptName, htmlFile, " ".join([str(x) for x in args]))
 	logger.debug( "Executing %s", process )
+	# TODO: Rewrite this without the shell for safety and speed
 	jsonStr = subprocess.Popen(process, shell=True, stdout=subprocess.PIPE).communicate()[0].strip()
 	result = ''
 	if expect_no_output:
