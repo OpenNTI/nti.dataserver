@@ -33,8 +33,13 @@ Contents:
 
 
 	assessment-interfaces
+
+	zope
+
 ..	regression-tests
 ..	regression-details
+
+
 
 `Epydoc generated doc <./epydoc>`_
 

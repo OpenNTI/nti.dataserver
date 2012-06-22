@@ -125,7 +125,7 @@ setup(
 		'pytz',
 		'rdflib',
 		'repoze.catalog',
-		'repoze.sphinx.autointerface >= 0.6.2',
+
 		'repoze.who >= 2.0',
 		'repoze.zodbconn >= 0.14',
 		'grequests >= 0.1.0', #replaces requests.async in 0.13
@@ -207,7 +207,10 @@ setup(
 			'ipython',
 			'readline',
 			'httpie',
-			'zodbupdate >= 0.5'
+			'zodbupdate >= 0.5',
+			'sphinx >= 1.1.3',
+			'sphinxtheme.readability >= 0.0.5',
+			'repoze.sphinx.autointerface >= 0.7.0'
 			]
 	},
 	dependency_links = ['http://svn.wikimedia.org/svnroot/pywikipedia/trunk/pywikipedia/'],
