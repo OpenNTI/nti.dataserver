@@ -20,7 +20,7 @@ import UserList
 
 from nti.dataserver import users, datastructures
 from nti.ntiids import ntiids
-from nti.dataserver.datastructures import ContainedMixin
+from nti.dataserver.datastructures import ContainedMixin, ZContainedMixin
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.externalization.externalization import to_external_representation
 
@@ -104,7 +104,7 @@ class TestUGDViews(ConfiguringTestBase):
 		with self.assertRaises(hexc.HTTPNotFound):
 			view.getObjectsForId( user, 'foobar' )
 		# Now if there are objects in there, it won't raise.
-		user.addContainedObject( ContainedMixin('foobar') )
+		user.addContainedObject( ZContainedMixin('foobar') )
 		view.getObjectsForId( user, 'foobar' )
 
 	@WithMockDSTrans
@@ -116,7 +116,7 @@ class TestUGDViews(ConfiguringTestBase):
 			view.getObjectsForId( user, ntiids.ROOT )
 		# Any child of the root throws if (1) the root DNE
 		# and (2) the children are empty
-		c = ContainedMixin( ntiids.make_ntiid( provider='ou', specific='test', nttype='test' ) )
+		c = ZContainedMixin( ntiids.make_ntiid( provider='ou', specific='test', nttype='test' ) )
 		user.addContainedObject( c )
 		assert_that( user.getContainedObject( c.containerId, c.id ), is_( c ) )
 		# so this will work, as it is not empty
@@ -141,6 +141,8 @@ class TestUGDViews(ConfiguringTestBase):
 			lastModified = 1
 			creator = 'chris.utz@nextthought.com'
 			object = None
+			__parent__ = None
+			__name__ = None
 		user._addToStream( C() )
 		view.getObjectsForId( user, 'foobar' )
 
@@ -155,9 +157,11 @@ class TestUGDViews(ConfiguringTestBase):
 		# and (2) the children are empty
 		class C(persistent.Persistent):
 			object = None
-			interface.implements(nti_interfaces.IContained)
+			interface.implements(nti_interfaces.IContained, nti_interfaces.IZContained)
 			containerId = ntiids.make_ntiid( provider='ou', specific='test', nttype='test' )
 			id = None
+			__parent__ = None
+			__name__ = None
 			lastModified = 1
 			creator = 'chris.utz@nextthought.com'
 		c1 = C()
@@ -191,9 +195,11 @@ class TestUGDViews(ConfiguringTestBase):
 		# Now if there are objects in there, it won't raise.
 		class C(persistent.Persistent):
 			object = None
-			interface.implements(nti_interfaces.IContained)
+			interface.implements(nti_interfaces.IContained,nti_interfaces.IZContained)
 			containerId = child_ntiid
 			id = None
+			__parent__ = None
+			__name__ = None
 			lastModified = 1
 			creator = 'chris.utz@nextthought.com'
 		c = C()

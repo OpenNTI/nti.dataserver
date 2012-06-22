@@ -9,11 +9,10 @@ from zope import interface, schema
 from zope.deprecation import deprecated
 from zope.mimetype.interfaces import IContentTypeAware, IContentType
 
-from zope.location import ILocation
 
 from zope.container.interfaces import IContainer as IZContainer
 from zope.container.interfaces import IContainerNamesContainer as IZContainerNamesContainer
-from zope.location.interfaces import IContained as IZContained
+from zope.location.interfaces import ILocation, IContained as IZContained
 from zope.location.location import LocationProxy
 
 from zope.interface.common.mapping import IFullMapping

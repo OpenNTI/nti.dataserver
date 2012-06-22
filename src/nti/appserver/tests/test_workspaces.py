@@ -123,7 +123,7 @@ class TestUserEnumerationWorkspace(tests.ConfiguringTestBase):
 	def test_shared_container(self):
 		user = users.User( 'sjohnson@nextthought.com' )
 		class PersistentContained(Persistent):
-			interface.implements(nti_interfaces.IContained)
+			interface.implements(nti_interfaces.IContained,nti_interfaces.IZContained)
 			__name__ = '1'
 			id = __name__
 			__parent__ = None
