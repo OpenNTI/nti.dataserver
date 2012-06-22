@@ -157,7 +157,7 @@ def _get_by_oid(*args,**kwargs):
 _get_by_oid.get_by_oid = _get_by_oid
 
 @interface.implementer(chat_interfaces.IUserTranscriptStorage)
-@component.adapter(users.User)
+@component.adapter(nti_interfaces.IUser)
 class _UserTranscriptStorageAdapter(object):
 	"""
 	The storage for all of a user's transcripts.
@@ -223,11 +223,11 @@ class _UserTranscriptStorageAdapter(object):
 		storage.add_message( msg )
 		return storage
 
+@interface.implementer(chat_interfaces.IUserTranscriptStorage)
 class _MissingStorage(object):
 	"""
 	A storage that's always empty and blank.
 	"""
-	interface.implements(chat_interfaces.IUserTranscriptStorage)
 
 	def transcript_for_meeting( self, meeting_id ):
 		return None # pragma: no cover
