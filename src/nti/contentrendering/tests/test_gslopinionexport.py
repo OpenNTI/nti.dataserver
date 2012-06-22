@@ -17,6 +17,7 @@ except ImportError:
 	import StringIO
 
 import pyquery
+import fudge
 
 class TestGSL(nti.tests.ConfiguringTestBase):
 	set_up_packages = (nti.contentrendering,)
@@ -31,20 +32,9 @@ class TestGSL(nti.tests.ConfiguringTestBase):
 		assert_that( out.getvalue(), contains_string( br'\textbf{403 U.S. 15 (1971)}' ) )
 
 
-	def test_main(self):
-		old = gslopinionexport.requests
-		old_out = sys.stdout
+	@fudge.patch('requests.get', 'nti.contentrendering.gslopinionexport.sys')
+	def test_main(self, fake_get, fake_sys):
+		fake_get.expects_call().returns_fake().has_attr( text=open( os.path.join( os.path.dirname(__file__), 'gslopinion.html' ), 'rU' ).read() )
+		fake_sys.has_attr( argv=['a', 'b'], stdout=fudge.Fake(name='stdout').provides('write') )
 
-		class MockRequests(object):
-			text = None
-			def get(self, url):
-				self.text = open( os.path.join( os.path.dirname(__file__), 'gslopinion.html' ), 'rU' ).read()
-				return self
-
-		try:
-			sys.stdout = StringIO.StringIO()
-			gslopinionexport.requests = MockRequests()
-			gslopinionexport.main()
-		finally:
-			gslopinionexport.requests = old
-			sys.stdout = old_out
+		gslopinionexport.main()
