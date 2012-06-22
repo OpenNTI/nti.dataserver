@@ -12,7 +12,7 @@ import persistent
 
 from nti.externalization.oids import to_external_ntiid_oid
 
-from nti.dataserver.datastructures import (  ContainedMixin,  )
+from nti.dataserver.datastructures import  ZContainedMixin as ContainedMixin
 from nti.dataserver.users import User, FriendsList, Device, Community, _FriendsListMap as FriendsListContainer
 from nti.dataserver.interfaces import IFriendsList
 from nti.dataserver.contenttypes import Note

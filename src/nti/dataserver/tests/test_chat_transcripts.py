@@ -7,7 +7,7 @@ from nose.tools import assert_raises
 from nti.dataserver import users
 from nti.dataserver import chat_transcripts
 from nti.dataserver import interfaces as nti_interfaces
-
+from nti.externalization import interfaces as ext_interfaces
 from zope import component
 import persistent
 import cPickle as pickle
@@ -58,7 +58,11 @@ class TestChatTranscript(ConfiguringTestBase):
 			# If we have copying enabled, then this will raise a pickling error
 			# right away. Otherwise, it will be fine:
 			#with assert_raises(pickle.PicklingError):
-			storage.add_message( Meet(), Msg() )
+			msg_storage = storage.add_message( Meet(), Msg() )
+
+			assert_that( msg_storage, is_( not_none() ) )
+			assert_that( nti_interfaces.ITranscriptSummary( msg_storage ), is_( not_none() ) )
+			assert_that( ext_interfaces.IExternalObject( msg_storage ), is_( not_none() ) )
 
 
 class PicklableMeet(persistent.Persistent):
@@ -79,7 +83,7 @@ def test_resolve_transcript_manually( ):
 
 
 
-	assert_that( storage.add_message( PicklableMeet(), PicklableMsg() ), is_( none() ) )
+	assert_that( storage.add_message( PicklableMeet(), PicklableMsg() ), is_( chat_transcripts._MeetingTranscriptStorage ) )
 	# We have no IDataserver, so looking up by OID will fail and we'll have to
 	# use manual traversal
 	assert_that( component.queryUtility( nti_interfaces.IDataserver ), is_( none() ) )

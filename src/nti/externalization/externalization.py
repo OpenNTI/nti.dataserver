@@ -100,7 +100,9 @@ def toExternalObject( obj, coerceNone=False, name=_ex_name_marker, registry=comp
 				# python rocks. catch_components could be an empty tuple, meaning we catch nothing.
 				# or it could be any arbitrary list of exceptions.
 				# NOTE: we cannot try to to-string the object, it may try to call back to us
-				logger.exception("Exception externalizing component object %s", type(o) )
+				# NOTE2: In case we encounter a proxy (zope.container.contained.ContainedProxy)
+				# the type(o) is not reliable. Only the __class__ is.
+				logger.exception("Exception externalizing component object %s/%s", type(o), o.__class__ )
 				return catch_component_action( o, t )
 
 		orig_obj = obj

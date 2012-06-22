@@ -458,15 +458,16 @@ class Note(ThreadableExternalizableMixin, Highlight):
 #####
 # Whiteboard shapes
 #####
-
+@interface.implementer(nti_interfaces.ICanvas,nti_interfaces.IZContained)
 class Canvas(ThreadableExternalizableMixin, _UserContentRoot, ExternalizableInstanceDict):
 
-	interface.implements( nti_interfaces.ICanvas )
 	# TODO: We're not trying to resolve any incoming external
 	# things. Figure out how we want to do incremental changes
 	# (pushing new shapes while drawing). Should we take the whole thing every
 	# time (and then look for equal object that we already have)? Accept POSTS
 	# of shapes into this object as a "container"?
+	__parent__ = None
+	__name__ = None
 
 	def __init__(self):
 		super(Canvas,self).__init__()

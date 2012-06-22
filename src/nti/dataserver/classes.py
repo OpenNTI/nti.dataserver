@@ -74,7 +74,7 @@ class ClassInfo( datastructures.PersistentCreatedModDateTrackingObject,
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	interface.implements(nti_interfaces.IClassInfo,
 						 nti_interfaces.ISimpleEnclosureContainer,
-						 nti_interfaces.ILocation)
+						 nti_interfaces.IZContained)
 
 	__external_can_create__ = True
 
@@ -97,7 +97,7 @@ class ClassInfo( datastructures.PersistentCreatedModDateTrackingObject,
 		self.Description = ""
 		#self.Provider = 'NTI' # Provider abbreviation, suitable for NTIID
 		self.ID = ID # Provider specific, e.g., CS2051
-		self._v_parent = None
+		#self._v_parent = None
 
 	@property
 	def Sections(self):
@@ -238,7 +238,7 @@ class SectionInfo( datastructures.PersistentCreatedModDateTrackingObject,
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	interface.implements(nti_interfaces.ISectionInfo,
 						 nti_interfaces.ISimpleEnclosureContainer,
-						 nti_interfaces.ILocation )
+						 nti_interfaces.IZContained )
 
 	__external_can_create__ = True
 	# Let IDs come in, ClassInfo depends on it

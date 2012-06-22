@@ -473,8 +473,11 @@ class Device(persistent.Persistent,
 			 datastructures.CreatedModDateTrackingObject,
 			 ExternalizableDictionaryMixin):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-	interface.implements( nti_interfaces.IDevice )
+	interface.implements( nti_interfaces.IDevice, nti_interfaces.IZContained )
 	__external_can_create__ = True
+
+	__name__ = None
+	__parent__ = None
 
 	def __init__(self, deviceId):
 		"""

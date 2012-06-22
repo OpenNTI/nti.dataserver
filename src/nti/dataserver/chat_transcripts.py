@@ -18,6 +18,7 @@ from nti.dataserver import links
 
 import nti.externalization.datastructures
 from nti.externalization.datastructures import LocatedExternalDict
+from nti.externalization import interfaces as ext_interfaces
 
 import persistent.wref
 from persistent import Persistent
@@ -220,6 +221,7 @@ class _UserTranscriptStorageAdapter(object):
 			self._user.addContainedObject( storage )
 
 		storage.add_message( msg )
+		return storage
 
 class _MissingStorage(object):
 	"""
@@ -254,6 +256,7 @@ def _save_message_to_transcripts_subscriber( msg_info, event ):
 	change.creator = msg_info.Sender
 
 	for owner in set(event.recipients):
+		__traceback_info__ = owner
 		storage = _ts_storage_for( owner )
 		storage.add_message( meeting, msg_info )
 
@@ -301,22 +304,33 @@ def list_transcripts_for_user( username ):
 	storage = _ts_storage_for( username )
 	return storage.transcript_summaries
 
-
+@interface.implementer(nti_interfaces.ITranscriptSummary, ext_interfaces.IInternalObjectIO)
+@component.adapter(_MeetingTranscriptStorage)
 def TranscriptSummaryAdapter(meeting_storage):
+	"""
+	Registered as a ZCA adapter factory to get a :class:`nti_interfaces.ITranscriptSummary` (which is incidentally
+	an :class:`ext_interfaces.IInternalObjectIO`).
+
+	Deals gracefully with bad meeting storage objects that are missing components
+	such as a room due to GC.
+	"""
 	try:
-		return TranscriptSummary(meeting_storage)
-	except ZODB.POSException.POSKeyError: # pragma: no cover
+		if meeting_storage is not None and meeting_storage.meeting is not None:
+			return TranscriptSummary(meeting_storage)
+	except (ZODB.POSException.POSKeyError,AssertionError): # pragma: no cover
 		logger.exception( "Meeting object gone missing." )
 		return None
+
 
 class TranscriptSummary(nti.externalization.datastructures.ExternalizableInstanceDict):
 	"""
 	The transcript summary for a user in a room.
 	"""
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-	interface.implements(nti_interfaces.ILocation,
+	interface.implements(nti_interfaces.IZContained,
 						 nti_interfaces.ILinked,
-						 nti_interfaces.ITranscriptSummary)
+						 nti_interfaces.ITranscriptSummary,
+						 ext_interfaces.IInternalObjectIO) # TODO: Strip this out, make schema driven
 
 	__parent__ = None
 	links = ()
