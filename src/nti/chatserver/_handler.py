@@ -98,14 +98,14 @@ class _ChatHandler(object):
 	def __str__( self ):
 		return "%s(%s %s)" % (self.__class__.__name__, self.session.owner, self.session.session_id)
 
+	# None of these should be around anymore
+	# def __setstate__( self, state ):
+	# 	# Migration 2012-04-18. Easier than searching these all out
+	# 	if '_chatserver' in state:
+	# 		state = dict(state)
+	# 		del state['_chatserver']
 
-	def __setstate__( self, state ):
-		# Migration 2012-04-18. Easier than searching these all out
-		if '_chatserver' in state:
-			state = dict(state)
-			del state['_chatserver']
-
-		super(_ChatHandler,self).__setstate__( state )
+	# 	super(_ChatHandler,self).__setstate__( state )
 
 	def _get_chatserver(self):
 		return self._v_chatserver or component.queryUtility( interfaces.IChatserver )

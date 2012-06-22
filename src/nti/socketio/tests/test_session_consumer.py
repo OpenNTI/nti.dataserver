@@ -80,7 +80,7 @@ class TestSessionConsumer(mock_dataserver.ConfiguringTestBase):
 		# There's no IChatserver registered, so this is all you get
 		interface.alsoProvides( self.socket, socketio.interfaces.ISocketIOSocket )
 		class MockChat(object):
-			interface.implements( nti_interfaces.ISocketEventHandler )
+			interface.implements( socketio.interfaces.ISocketEventHandler )
 			component.adapts( socketio.interfaces.ISocketIOSocket )
 
 			def __init__( self, sock ):
