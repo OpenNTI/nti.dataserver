@@ -646,8 +646,8 @@ class ISessionService(interface.Interface):
 
 	def set_proxy_session(session_id, session=None):
 		"""
-		:param session: An :class:`ISocketProxySession`: something
-			with `put_server_msg` and `put_client_msg` methods. If
+		:param session: An :class:`ISocketProxySession` (something
+			with `put_server_msg` and `put_client_msg` methods). If
 			`None`, then a proxy session for the `session_id` will be
 			removed (if any)
 		"""
@@ -664,12 +664,12 @@ class ISessionService(interface.Interface):
 		given ID.
 		"""
 
-from nti.socketio.interfaces import ISocketSession, ISocketSessionEvent, ISocketSessionConnectedEvent, ISocketSessionDisconnectedEvent, ISocketEventHandler
-deprecated( 'ISocketSession', 'Prefer nti.socketio' )
-deprecated( 'ISocketSessionEvent', 'Prefer nti.socketio' )
-deprecated( 'ISocketSessionConnectedEvent', 'Prefer nti.socketio' )
-deprecated( 'ISocketSessionDisconnectedEvent', 'Prefer nti.socketio' )
-deprecated( 'ISocketSessionEventHandler', 'Prefer nti.socketio' )
+# from nti.socketio.interfaces import ISocketSession, ISocketSessionEvent, ISocketSessionConnectedEvent, ISocketSessionDisconnectedEvent, ISocketEventHandler
+# deprecated( 'ISocketSession', 'Prefer nti.socketio' )
+# deprecated( 'ISocketSessionEvent', 'Prefer nti.socketio' )
+# deprecated( 'ISocketSessionConnectedEvent', 'Prefer nti.socketio' )
+# deprecated( 'ISocketSessionDisconnectedEvent', 'Prefer nti.socketio' )
+# deprecated( 'ISocketSessionEventHandler', 'Prefer nti.socketio' )
 
 
 class ISessionServiceStorage(interface.Interface):
@@ -679,7 +679,7 @@ class ISessionServiceStorage(interface.Interface):
 	session_map = schema.Dict(
 		title="Map from session id to Session object",
 		key_type=schema.TextLine(title="session ids"),
-		value_type=schema.Object(ISocketSession,title="Extant session" ) )
+		value_type=schema.Object(nti.socketio.interfaces.ISocketSession,title="Extant session" ) )
 	session_index = schema.Dict(
 		title="Index from usernames to set of extant session ids",
 		key_type=schema.TextLine(title="Username"),
