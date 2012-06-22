@@ -4,13 +4,15 @@
 
 
 from hamcrest import assert_that,  is_, none, is_not, has_property
-
+from hamcrest import has_length
 
 from zope import component
 from zope import interface
+import sys
 
 from nti.tests import verifiably_provides
 import nti.dataserver.interfaces as nti_interfaces
+from nti.socketio import interfaces as sio_interfaces
 import nti.dataserver.sessions as sessions
 
 import mock_dataserver
@@ -125,6 +127,38 @@ class TestSessionService(mock_dataserver.ConfiguringTestBase):
 			session.kill()
 
 			assert_that( self.session_service.get_sessions_by_owner( 'me' ), is_( [] ) )
+
+	def test_many_dead_sessions_broadcast_doesnt_overflow(self):
+		"Having to clean up and notify() that many sessions are dead doesn't cause a stack overflow."
+
+		called = [0]
+		@component.adapter( sio_interfaces.ISocketSession, sio_interfaces.ISocketSessionDisconnectedEvent )
+		def session_disconnected_broadcaster( session, event ):
+			# Emulate what the real listener does, which is ask for other sessions for the user
+			self.session_service.get_sessions_by_owner( session.owner )
+			called[0] += 1
+
+		component.provideHandler( session_disconnected_broadcaster )
+
+		sessions = []
+		recur_limit = sys.getrecursionlimit()
+		for _ in range(recur_limit * 2): # The length needs to be pretty big to ensure recursion fails
+			session = self.session_service.create_session( watch_session=False )
+			session.owner = 'me'
+			sessions.append( session )
+			session.incr_hits()
+
+		# All alive right now
+		assert_that( self.session_service.get_sessions_by_owner( 'me' ), has_length( len( sessions ) ) )
+
+		# Now kill them all, silently
+		for session in sessions:
+			session.creation_time = 0
+			session._last_heartbeat_time.value = 0
+
+		# Now we can request them again, get nothing, and not overflow the stack doing so.
+		assert_that( self.session_service.get_sessions_by_owner( 'me' ), is_( [] ) )
+		assert_that( called[0], is_( len( sessions ) ) )
 
 	def test_delete_session(self):
 		session = self.session_service.create_session( watch_session=False )

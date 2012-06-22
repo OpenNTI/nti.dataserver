@@ -148,13 +148,20 @@ class Session(Persistent):
 	def heartbeat(self):
 		self.clear_disconnect_timeout()
 
-	def kill(self):
+	def kill(self, send_event=True):
+		"""
+		Mark this session as disconnected if not already.
+
+		:param bool send_event: If ``True`` (the default) when this method
+			actually marks the session as disconnected, and the session had a valid
+			owner, an :class:`SocketSessionDisconnectedEvent` will be sent.
+		"""
 		if self.connected:
 			# Mark us as disconnecting, and then send notifications
 			# (otherwise, it's too easy to recurse infinitely here)
 			self.state = self.STATE_DISCONNECTING
 
-			if self.owner:
+			if self.owner and send_event:
 				notify(SocketSessionDisconnectedEvent(self))
 
 			self.do_put_server_msg( None )
@@ -355,8 +362,13 @@ class SessionService(object):
 		return (session.last_heartbeat_time < too_old and session.creation_time < too_old) \
 		  or (session.state in (Session.STATE_DISCONNECTING,Session.STATE_DISCONNECTED))
 
-	def _session_cleanup( self, s, session_db, sids=None ):
-		""" Cleans up a dead session. """
+	def _session_cleanup( self, s, session_db, sids=None, send_event=True ):
+		""" Cleans up a dead session.
+
+		:param bool send_event: If ``True`` (the default) killing the session broadcasts
+			a SocketSessionDisconnectedEvent. Otherwise, no events are sent.
+
+		"""
 		# Remove the session from the DB
 		try:
 			del self._session_map[s.session_id]
@@ -370,15 +382,15 @@ class SessionService(object):
 
 		# Now that the session is unreachable,
 		# make sure the session itself knows it's dead
-		s.kill()
+		s.kill(send_event=send_event)
 		# Let any listeners across the cluster also know it
 		self._publish_msg( b'session_dead', s.session_id, b"42" )
 
 
-	def _validated_session( self, s, session_db, sids=None ):
+	def _validated_session( self, s, session_db, sids=None, send_event=True ):
 		""" Returns a live session or None """
 		if s and self._session_dead( s ):
-			self._session_cleanup( s, session_db, sids )
+			self._session_cleanup( s, session_db, sids, send_event=send_event )
 			return None
 		return s
 
@@ -395,11 +407,24 @@ class SessionService(object):
 		"""
 		sids = self._session_index.get(session_owner) or ()
 		result = []
-		for s in list(sids): # copy because we mutate -> validated_session -> session_cleanup
-			s = self._validated_session( self._get_session( self._session_db, s ),
-										 self._session_db,
-										 sids )
-			if s: result.append( s )
+		# For efficiency, and to avoid recursing too deep in the presence of many dead sessions
+		# and event listeners for dead sessions that also want to know the live sessions and so call us,
+		# we collect all dead sessions before we send any notifications
+		dead_sessions = []
+		for sid in list(sids): # copy because we mutate -> validated_session -> session_cleanup
+			maybe_valid_session = self._get_session( self._session_db, sid )
+			valid_session = self._validated_session( maybe_valid_session,
+													 self._session_db,
+													 sids,
+													 send_event=False )
+			if valid_session:
+				result.append( valid_session )
+			elif maybe_valid_session and maybe_valid_session.owner:
+				dead_sessions.append( maybe_valid_session )
+
+		for dead_session in dead_sessions:
+			notify(SocketSessionDisconnectedEvent( dead_session ) )
+
 		return result
 
 	def delete_sessions( self, session_owner ):

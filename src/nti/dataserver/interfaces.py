@@ -63,6 +63,7 @@ class IDataserverTransactionRunner(interface.Interface):
 		"""
 		Runs the function given in `func` in a transaction and dataserver local
 		site manager.
+
 		:param function func: A function of zero parameters to run. If it has a docstring,
 			that will be used as the transactions note. A transaction will be begun before
 			this function executes, and committed after the function completes. This function may be rerun if
@@ -290,7 +291,7 @@ class IACE(interface.Interface):
 	*action*, the *actor*, and the *permissions*. (Typically,
 	it is implemented as a three-tuple).
 
-	The *action* is either :const:ACE_ACT_ALLOW or :const:ACE_ACT_DENY. The former
+	The *action* is either :const:`ACE_ACT_ALLOW` or :const:`ACE_ACT_DENY`. The former
 	specifically grants the actor the permission. The latter specifically denies
 	it (useful in a hierarchy of ACLs or actors [groups]). The *actor* is the
 	:class:`IPrincipal` that the ACE refers to. Finally, the *permissions* is one (or
@@ -412,6 +413,7 @@ class IShareable(interface.Interface):
 	def addSharingTarget( target, actor=None ):
 		"""
 		Allow `target` to see this object.
+
 		:param target: Iterable of usernames/users, or a single username/user.
 		:param actor: Person attempting to alter sharing. If
 			not the creator of this object, may not be allowed.

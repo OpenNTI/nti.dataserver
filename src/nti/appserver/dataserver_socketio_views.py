@@ -85,9 +85,9 @@ class Session( _sessions.Session ):
 	def get_client_msgs(self):
 		return self.session_service.get_client_msgs( self.session_id )
 
-	def kill( self ):
+	def kill( self, send_event=True ):
 		self.message_handler.kill(self)
-		super(Session,self).kill()
+		super(Session,self).kill(send_event=send_event)
 
 # b/c
 import sys
