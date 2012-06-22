@@ -492,6 +492,9 @@ class _DirectlyProvidedObjectResource(_AbstractObjectResource):
 		super(_DirectlyProvidedObjectResource,self).__init__( parent, containerid, objectid, user )
 		self._resource = resource
 
+	def __repr__(self):
+		return '<_DirectlyProvidedObjectResource wrapping ' + repr(self._resource) + ' >'
+
 	@property
 	def resource( self ):
 		return self._resource

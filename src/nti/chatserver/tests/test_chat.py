@@ -366,11 +366,11 @@ class TestChatserver(ConfiguringTestBase):
 		assert_that( sessions[2].socket.events[0], has_entry( 'args', has_item( has_entry( 'Class', 'RoomInfo' ) ) ) )
 		assert_that( sessions[2].socket.events[0]['args'][0], has_key( 'ID' ) )
 
-		assert_that( nti_interfaces.IACLProvider( meeting ), permits( 'sjohnson', 'nti.actions.update' ) )
-		assert_that( nti_interfaces.IACLProvider( meeting ), permits( 'sjohnson', 'zope.View' ) )
+		assert_that( auth_acl.ACLProvider( meeting ), permits( 'sjohnson', 'nti.actions.update' ) )
+		assert_that( auth_acl.ACLProvider( meeting ), permits( 'sjohnson', 'zope.View' ) )
 
-		assert_that( nti_interfaces.IACLProvider( meeting ), denies( 'other', 'nti.actions.update' ) )
-		assert_that( nti_interfaces.IACLProvider( meeting ), permits( 'other', 'zope.View' ) )
+		assert_that( auth_acl.ACLProvider( meeting ), denies( 'other', 'nti.actions.update' ) )
+		assert_that( auth_acl.ACLProvider( meeting ), permits( 'other', 'zope.View' ) )
 
 
 
@@ -467,6 +467,9 @@ class TestChatserver(ConfiguringTestBase):
 					 contains(
 						has_entry( 'name', 'chat_roomModerationChanged' ),
 						has_entry( 'name', 'chat_roomModerationChanged' ) ) )
+
+		assert_that( auth_acl.ACLProvider(room3), permits( 'foo@bar', 'zope.View' ) )
+		assert_that( auth_acl.ACLProvider(room3), permits( 'friend@bar', 'zope.View' ) )
 
 
 	@WithMockDSTrans

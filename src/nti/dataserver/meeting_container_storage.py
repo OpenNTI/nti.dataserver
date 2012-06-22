@@ -1,7 +1,11 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
+"""
+$Id$
+"""
 
-import logging
-logger = logging.getLogger(__name__)
+from __future__ import print_function, unicode_literals
+
+logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 from zope import interface
@@ -11,6 +15,7 @@ from nti.dataserver import users
 from nti.chatserver import interfaces as chat_interfaces
 from nti.ntiids import ntiids
 from nti.dataserver import classes
+from nti.dataserver import authorization
 from nti.dataserver import authorization_acl as auth_acl
 
 class _AbstractMeetingContainerAdapter(object):
@@ -77,8 +82,19 @@ class _AbstractMeetingContainerAdapter(object):
 		result = constructor()
 		setattr( self.container, self.ACTIVE_ROOM_ATTR, result )
 		result.__parent__ = self.container
-		result.__acl__ = auth_acl.acl_from_aces( [auth_acl.ace_allowing( c, chat_interfaces.ACT_MODERATE, type(self)) for c in self._allowed_creators] ) \
-		  + auth_acl.ace_denying( nti_interfaces.EVERYONE_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, type(self))
+		# Apply an ACL allowing some to moderate
+		# FIXME: XXX: This is overriding the IACLProvider registered for meetings.
+		# We should probably implement this by making the object implement a new derived interface
+		# and registering a provider for that
+
+		aces = [auth_acl.ace_allowing( c, chat_interfaces.ACT_MODERATE, type(self)) for c in self._allowed_creators]
+
+		# We cannot simply use the IACLProvider to get the rest of the permissions, because
+		# the object is not configured yet, so for now we simply match its policy
+		aces.extend( [auth_acl.ace_allowing( c, authorization.ACT_READ, type(self)) for c in self._allowed_creators.union( self._allowed_occupants )] )
+
+		result.__acl__ = auth_acl.acl_from_aces( aces )
+
 		return result
 
 
@@ -154,7 +170,7 @@ class _ClassSectionAdapter(_AbstractMeetingContainerAdapter):
 
 	@property
 	def _allowed_creators( self ):
-		return self.container.InstructorInfo.Instructors
+		return set(self.container.InstructorInfo.Instructors)
 
 	def enter_active_meeting( self, chatserver, meeting_dict ):
 		"""

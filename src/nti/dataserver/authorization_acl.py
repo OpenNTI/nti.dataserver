@@ -171,11 +171,23 @@ def ACL( obj, default=() ):
 	If no ACL can be found, returns an empty iterable (or whatever
 	the value of the `default` parameter is).
 	"""
+	prov = ACLProvider( obj )
+	return prov.__acl__ if prov is not None else default
+
+
+def ACLProvider( obj, default=None ):
+	"""
+	Produce an ACL provider for the given `obj`. If the object already has an ACL,
+	the object is its own provider. Otherwise, if it can be adapted into
+	an :class:`IACLProvider` it will be and that will be returned.
+	If no ACL provider can be found, returns None (or whatever
+	the value of the `default` parameter is).
+	"""
 	try:
-		return obj.__acl__
+		return obj.__acl__ is not None and obj
 	except AttributeError:
 		try:
-			return nti_interfaces.IACLProvider( obj ).__acl__
+			return nti_interfaces.IACLProvider( obj )
 		except TypeError:
 			return default
 
