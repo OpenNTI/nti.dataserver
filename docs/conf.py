@@ -22,6 +22,17 @@ sys.path.insert(0, os.path.abspath('../../main/python'))
 import zope.deprecation
 zope.deprecation.__show__.off()
 
+# JAM: Themes
+try:
+	import sphinxtheme
+
+	readability_path = os.path.dirname(os.path.abspath(sphinxtheme.__file__))
+	relative_path = os.path.relpath(readability_path, os.path.abspath('.'))
+
+	html_theme = 'readability'
+	html_theme_path = [relative_path]
+except ImportError:
+	html_theme = 'agogo'
 
 # -- General configuration -----------------------------------------------------
 
@@ -106,7 +117,7 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'default'
+#html_theme = 'default'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the

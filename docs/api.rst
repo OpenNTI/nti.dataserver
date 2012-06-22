@@ -11,7 +11,6 @@ Dataserver API documentation
 **Dataserver**
 
 .. automodule:: nti.dataserver
-.. automodule:: nti.dataserver.interfaces
 
 *** Users ***
 
