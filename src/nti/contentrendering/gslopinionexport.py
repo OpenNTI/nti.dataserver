@@ -170,15 +170,14 @@ def _find_footnote( footnotes, sup ):
 	ref_to = sup[0].get( 'href' )[1:]
 	accum = []
 	for i in footnotes:
-		#Locate the anchor at the begining of the footnote
-		anchor = None
-		if ( len(i.getchildren()) != 0 ) and ( i.getchildren()[0].tag == 'a' ):
+		# Locate the anchor at the begining of the footnote
+		# This may or may not actually be an anchor element
+		anchor = {}
+		if len(i.getchildren()) and i.getchildren()[0].tag == 'a':
 			anchor = i.getchildren()[0]
 
-		if ( anchor != None ) and ( anchor.get( 'name' ) == ref_to ):
-			# found it
-			accum.append( _p_to_content( footnotes, i ) )
-		elif _text_of( i ).startswith( ref_to ):
+		if anchor.get( 'name' ) == ref_to \
+		  or  _text_of( i ).startswith( ref_to ):
 			# found it
 			accum.append( _p_to_content( footnotes, i ) )
 		elif _text_of( i ).startswith( '[' ) and accum: # The next one
@@ -235,7 +234,7 @@ def _opinion_to_tex( doc, output=None, base_url=None ):
 			current = section
 
 	if output is None:
-		output = sys.stdout
+		output = sys.stdout # Capture this at runtime, it does change
 
 	def _print(node):
 		print( interfaces.ILatexContentFragment(node).encode('utf-8'), file=output )
@@ -260,5 +259,5 @@ def main():
 	pq = _url_to_pyquery( url )
 	_opinion_to_tex( pq, base_url=url )
 
-if __name__ == '__main__':
+if __name__ == '__main__': # pragma: no cover
 	main()
