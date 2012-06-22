@@ -65,7 +65,7 @@ setup(
 		# 'pylibmc', # for memcached support
 		# 'MySQL-python', # mysql adapter
 		# 'RelStorage',
-		'anyjson >= 0.3.1',
+		'anyjson >= 0.3.3',
 		'boto >= 2.5.2', # amazon
 		'brownie >= 0.5.1', # Common utilities
 		'coverage >= 3.5.2', # Test coverage
