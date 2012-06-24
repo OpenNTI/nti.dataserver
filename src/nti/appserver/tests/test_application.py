@@ -287,20 +287,6 @@ class TestApplication(ApplicationTestBase):
 													  has_entry( 'rel', 'edit' ) ) ) ) )
 
 
-	def test_user_search_deprecated_path(self):
-		with mock_dataserver.mock_db_trans(self.ds):
-			contained = ContainedExternal()
-			user = self._create_user()
-			contained.containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
-			user.addContainedObject( contained )
-			assert_that( user.getContainer( contained.containerId ), has_length( 2 ) )
-
-		testapp = TestApp( self.app )
-		path = '/dataserver/UserSearch/sjohnson@nextthought.com'
-		res = testapp.get( path, extra_environ=self._make_extra_environ())
-
-		assert_that( res.body, contains_string( str('sjohnson@nextthought.com') ) )
-
 	def test_search_empty_term_user_ugd_book(self):
 		"Searching with an empty term returns empty results"
 		with mock_dataserver.mock_db_trans( self.ds ):
@@ -314,7 +300,7 @@ class TestApplication(ApplicationTestBase):
 		# The results are not defined across the search types,
 		# we just test that it doesn't raise a 404
 		for search_path in ('UserSearch','users/sjohnson@nextthought.com/Search/RecursiveUserGeneratedData'):
-			for ds_path in ('dataserver', 'dataserver2'):
+			for ds_path in ('dataserver2',):
 				path = '/' + ds_path +'/' + search_path + '/'
 				res = testapp.get( path, extra_environ=self._make_extra_environ())
 				assert_that( res.status_int, is_( 200 ) )
@@ -326,7 +312,7 @@ class TestApplication(ApplicationTestBase):
 			self._create_user()
 		testapp = TestApp( self.app )
 		for search_term in ('', 'term'):
-			for ds_path in ('dataserver', 'dataserver2'):
+			for ds_path in ('dataserver2', ):
 				path = '/' + ds_path +'/users/sjohnson@nextthought.com/Search/RecursiveUserGeneratedData/' + search_term
 				res = testapp.get( path, extra_environ=self._make_extra_environ())
 				assert_that( res.status_int, is_( 200 ) )
@@ -346,7 +332,7 @@ class TestApplication(ApplicationTestBase):
 
 		testapp = TestApp( self.app )
 		for search_term in ('', 'term'):
-			for ds_path in ('dataserver', 'dataserver2'):
+			for ds_path in ('dataserver2',):
 				path = '/' + ds_path +'/users/user@dne.org/Search/RecursiveUserGeneratedData/' + search_term
 				testapp.get( path, extra_environ=self._make_extra_environ(), status=403)
 

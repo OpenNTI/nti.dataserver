@@ -241,7 +241,7 @@ class ExampleDatabaseInitializer(object):
 
 	def install( self, context ):
 		conn = context.connection
-		root = conn.root()['nti.dataserver'].getSiteManager()
+		root = conn.root()['nti.dataserver']
 		ONLY_NEW = '--only-new' in sys.argv
 		if ONLY_NEW:
 			def add_user( u ):

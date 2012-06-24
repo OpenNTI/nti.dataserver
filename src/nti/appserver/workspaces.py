@@ -5,6 +5,7 @@ import collections
 from zope import interface
 from zope import component
 from zope.location import location
+from zope.location import interfaces as loc_interfaces
 from zope.mimetype import interfaces as mime_interfaces
 from zope.location.location import LocationProxy
 
@@ -323,8 +324,10 @@ class ContainerCollectionDetailExternalizer(object):
 			if 'href' not in item and  getattr( v_, '__parent__', None ) is not None:
 				# Let this thing try to produce its
 				# own href
+				# TODO: This if test is probably not needed anymore, with zope.location.traversing
+				# it will either work or raise
 				valid_traversal_path = traversal.normal_resource_path( v_ )
-				if valid_traversal_path and not valid_traversal_path.startswith( '/' ):
+				if valid_traversal_path and valid_traversal_path.startswith( '/' ):
 					item['href'] = valid_traversal_path
 			return item
 
@@ -394,6 +397,24 @@ class WorkspaceExternalizer(object):
 			result[StandardExternalFields.LINKS] = _magic_link_externalizer( _links )
 		return result
 
+def _create_search_links( parent ):
+	# Note that we are providing a complete link with a target
+	# that is a string and also the name of the link. This is
+	# a bit wonky and cooperates with how the CollectionSummaryExternalizer
+	# wants to deal with links
+	# TODO: Hardcoding both things
+	search_parent = location.Location()
+	search_parent.__name__ = 'Search'
+	search_parent.__parent__ = parent
+	ugd_link = links.Link( 'RecursiveUserGeneratedData', rel='UGDSearch' )
+	unified_link = links.Link( 'UnifiedSearch', rel='UnifiedSearch' )
+	result = (ugd_link, unified_link)
+	for lnk in result:
+		lnk.__parent__ = search_parent
+		lnk.__name__ = lnk.target
+		interface.alsoProvides( lnk, loc_interfaces.ILocation )
+	return result
+
 class UserEnumerationWorkspace(ContainerEnumerationWorkspace):
 	"""
 	Extends the user's typed collections with one
@@ -404,6 +425,7 @@ class UserEnumerationWorkspace(ContainerEnumerationWorkspace):
 
 	def __init__( self, user ):
 		super(UserEnumerationWorkspace,self).__init__( user )
+		self.__name__ = user.username
 
 	@property
 	def pages_collection(self):
@@ -413,21 +435,7 @@ class UserEnumerationWorkspace(ContainerEnumerationWorkspace):
 
 	@property
 	def links(self):
-		# Note that we are providing a complete link with a target
-		# that is a string and also the name of the link. This is
-		# a bit wonky and cooperates with how the CollectionSummaryExternalizer
-		# wants to deal with links
-		# TODO: Hardcoding both things
-		search_parent = location.Location()
-		search_parent.__name__ = 'Search'
-		search_parent.__parent__ = self
-		ugd_link = links.Link( 'RecursiveUserGeneratedData', rel='UGDSearch' )
-		unified_link = links.Link( 'UnifiedSearch', rel='UnifiedSearch' )
-		result = (ugd_link, unified_link)
-		for lnk in result:
-			lnk.__parent__ = search_parent
-			lnk.__name__ = lnk.target
-		return result
+		return _create_search_links( self )
 
 	@property
 	def collections(self):
@@ -436,7 +444,7 @@ class UserEnumerationWorkspace(ContainerEnumerationWorkspace):
 
 		classes = component.getAdapter( self._container,
 										app_interfaces.ICollection,
-										name='EnrolledClassSections' )
+										name=_UserEnrolledClassSectionsCollection.name )
 		classes.__parent__ = self
 		result.append( classes )
 		return result
@@ -529,23 +537,9 @@ class _UserPagesCollection(object):
 
 	@property
 	def links(self):
-		# Note that we are providing a complete link with a target
-		# that is a string and also the name of the link. This is
-		# a bit wonky and cooperates with how the CollectionSummaryExternalizer
-		# wants to deal with links
-		# TODO: Hardcoding both things
 		# TODO: These are deprecated here, as the entire pages collection is
 		# deprecated. They are moved to the user's workspace
-		search_parent = location.Location()
-		search_parent.__name__ = 'Search'
-		search_parent.__parent__ = self.__parent__
-		ugd_link = links.Link( 'RecursiveUserGeneratedData', rel='UGDSearch' )
-		unified_link = links.Link( 'UnifiedSearch', rel='UnifiedSearch' )
-		result = (ugd_link, unified_link)
-		for lnk in result:
-			lnk.__parent__ = search_parent
-			lnk.__name__ = lnk.target
-		return result
+		return _create_search_links( self.__parent__ )
 
 	def _make_parent(self, ntiid):
 		ent_parent = location.Location()
@@ -595,6 +589,8 @@ class _UserEnrolledClassSectionsCollection(object):
 
 	def __init__( self, user ):
 		self._user = user
+		self.__parent__ = user
+
 
 	@property
 	def container(self):
@@ -658,10 +654,12 @@ class UserService(object):
 
 	mime_type = mimetype.nti_mimetype_with_class( 'workspace' )
 
+	__name__ = 'users'
+	__parent__ = None
+
 	def __init__( self, user ):
 		self._user = user
-		self.__name__ = 'users'
-		self.__parent__ = None
+		self.__parent__ = component.getUtility( model_interfaces.IDataserver ).root
 
 	@property
 	def user_workspace(self):

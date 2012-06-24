@@ -491,14 +491,14 @@ def createApplication( http_port,
 			self.__acl__ = ( (pyramid.security.Allow, request.matchdict['user'], pyramid.security.ALL_PERMISSIONS),
 							 (pyramid.security.Deny,  pyramid.security.Everyone, pyramid.security.ALL_PERMISSIONS) )
 
-	pyramid_config.add_route( name='search.user', pattern='/dataserver/users/{user}/Search/RecursiveUserGeneratedData/{term:.*}',
+	pyramid_config.add_route( name='search.user', pattern='/dataserver2/users/{user}/Search/RecursiveUserGeneratedData/{term:.*}',
 							  factory=_UserSearchRootFactory)
 	pyramid_config.add_view( route_name='search.user',
 							 view='nti.contentsearch.pyramid_views.UserSearch',
 							 renderer='rest',
 							 permission=nauth.ACT_SEARCH)
 
-	pyramid_config.add_route( name='search.users', pattern='/dataserver/UserSearch/{term:.*}',
+	pyramid_config.add_route( name='search.users', pattern='/dataserver2/UserSearch/{term:.*}',
 							  factory=_ContentSearchRootFactory)
 	pyramid_config.add_view( route_name='search.users',
 							 view='nti.appserver.dataserver_pyramid_views._UserSearchView',

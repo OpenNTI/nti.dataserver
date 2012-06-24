@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 """
 Defines traversal views and resources for the dataserver.
 """
@@ -13,7 +12,6 @@ import urllib
 import time
 import functools
 
-import plistlib
 import anyjson as json
 
 from zope import component
@@ -92,20 +90,17 @@ class EnclosureGetItemACLLocationProxy(ACLLocationProxy):
 		return ACLLocationProxy( enc, self, enc.__name__, nacl.ACL( enc, self.__acl__ ) )
 
 
-
-class _RootResource(object):
-	__name__ = ''
-	__parent__ = None
-
 class _DSResource(object):
 	__acl__ = (
 		(sec.Allow, sec.Authenticated, nauth.ACT_READ),
 		)
-	__name__ = 'dataserver2'
-	__parent__ = _RootResource()
 
 	def __init__( self, request ):
 		self.request = request
+		ds = self.request.registry.getUtility(IDataserver)
+		ds_folder = ds.root
+		self.__name__ = ds_folder.__name__
+		self.__parent__ = ds.root.__parent__
 
 	def __getitem__( self, key ):
 		result = None
@@ -141,8 +136,8 @@ def unquoting( f ):
 		return f( self, _unquoted( key ) )
 	return unquoted
 
+@interface.implementer(app_interfaces.IUserRootResource)
 class _UserResource(object):
-	interface.implements(app_interfaces.IUserRootResource)
 	__acl__ = (
 		# Authenticated can read
 		(sec.Allow, sec.Authenticated, nauth.ACT_READ),
@@ -523,7 +518,7 @@ class _ServiceGetView(object):
 		user = users.User.get_user( username, dataserver=ds )
 
 		service = self.request.registry.getAdapter( user, app_interfaces.IService )
-		service.__parent__ = self.request.context
+		#service.__parent__ = self.request.context
 		return service
 
 

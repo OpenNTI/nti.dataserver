@@ -175,7 +175,7 @@ def render_link( parent_resource, link, user_root_resource=None ):
 				# TODO: Hardcoded paths
 				href = '/dataserver2/' + href
 				result[StandardExternalFields.HREF] = href
-				logger.warn( "Fixing up invalid href %s for link %s parent %s root %s",
+				logger.warn( "Fixed up invalid href %s for link %s parent %s root %s",
 						 href, link, parent_resource, user_root_resource )
 			else:
 				logger.warn( "Generating invalid href %s for link %s target %s target-parent %s parent %s root %s",

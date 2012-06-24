@@ -86,6 +86,8 @@ class ClassInfo( datastructures.PersistentCreatedModDateTrackingObject,
 		self._sections = BTreeContainer()
 
 		# This container is kept unnamed so that URLs come out right
+		# FIXME: This is not really right. We want this to be named for a clean
+		# separation
 		self._sections.__name__ = ''
 		self._sections.__parent__ = self
 		_add_container_iface( self._sections, nti_interfaces.ISectionInfoContainer )
