@@ -25,6 +25,7 @@ from nti.dataserver.tests import mock_dataserver
 
 from zope import interface
 from zope.location import location
+from zope.location import interfaces as loc_interfaces
 from zope import component
 from persistent import Persistent
 
@@ -100,16 +101,23 @@ class TestContainerEnumerationWorkspace(tests.ConfiguringTestBase):
 
 		assert_that( list( cew.collections )[0], is_( Adapter ) )
 
+class MockRoot(object):
+	interface.implements(loc_interfaces.IRoot)
+
 class TestUserEnumerationWorkspace(tests.ConfiguringTestBase):
 
 	def test_root_ntiid(self):
 		class MockUser(object):
 			interface.implements(nti_interfaces.IUser)
+			__name__ = 'user@place'
+			username = 'user@place'
 			def itercontainers(self):
 				return iter( () )
 			def iterntiids(self):
 				return iter( () )
 		uew = UEW( MockUser() )
+
+		uew.__parent__ = MockRoot()
 
 		# Expecting the pages collection at least
 		assert_that( uew.collections, has_length( greater_than_or_equal_to( 1 ) ) )
@@ -120,8 +128,9 @@ class TestUserEnumerationWorkspace(tests.ConfiguringTestBase):
 		assert_that( root.toExternalObject(), has_entry( 'Links', has_length( 1 ) ) )
 		assert_that( root.toExternalObject()['Links'][0].target.__name__, is_( 'RecursiveStream' ) )
 
+	@mock_dataserver.WithMockDSTrans
 	def test_shared_container(self):
-		user = users.User( 'sjohnson@nextthought.com' )
+		user = users.User.create_user( dataserver=self.ds, username='sjohnson@nextthought.com' )
 		class PersistentContained(Persistent):
 			interface.implements(nti_interfaces.IContained,nti_interfaces.IZContained)
 			__name__ = '1'
@@ -183,7 +192,7 @@ class TestUserService(tests.ConfiguringTestBase):
 
 	@mock_dataserver.WithMockDSTrans
 	def test_external(self):
-		user = users.User( 'sjohnson@nextthought.com' )
+		user = users.User.create_user( dataserver=self.ds, username='sjohnson@nextthought.com' )
 		service = UserService( user )
 
 		ext_object = toExternalObject( service )
@@ -196,20 +205,20 @@ class TestUserService(tests.ConfiguringTestBase):
 		user_ws = ext_object['Items'][0]
 		assert_that( user_ws, has_entry( 'Title', user.username ) )
 		assert_that( user_ws, has_entry( 'Items', has_item( all_of( has_entry( 'Title', 'Pages' ),
-																	has_entry( 'href', 'users/sjohnson%40nextthought.com/Pages' ) ) ) ) )
+																	has_entry( 'href', '/dataserver2/users/sjohnson%40nextthought.com/Pages' ) ) ) ) )
 		assert_that( user_ws, has_entry( 'Items', has_item( has_entry( 'Links', has_item( is_(links.Link)) ) ) ) )
 		assert_that( user_ws['Items'][2]['Links'][0].target.ntiid,
-					 is_( 'users/sjohnson%40nextthought.com/Search/RecursiveUserGeneratedData' ) )
+					 is_( '/dataserver2/users/sjohnson%40nextthought.com/Search/RecursiveUserGeneratedData' ) )
 
 		# And a class
 		assert_that( user_ws, has_entry( 'Items', has_item( all_of( has_entry( 'Title', 'EnrolledClassSections' ),
-																	has_entry( 'href', 'users/sjohnson%40nextthought.com/EnrolledClassSections' ) ) ) ) )
+																	has_entry( 'href', '/dataserver2/users/sjohnson%40nextthought.com/EnrolledClassSections' ) ) ) ) )
 
 		# A provider should show in the providers workspace
 		self.ds.root['providers']['OU'] = providers.Provider( 'OU' )
 		ext_object = toExternalObject( service )
 		assert_that( ext_object['Items'], has_item( all_of( has_entry( 'Title', 'providers' ),
-															has_entry( 'Items', has_item( has_entry( 'href', 'providers/OU' ) ) ),
+															has_entry( 'Items', has_item( has_entry( 'href', '/dataserver2/providers/OU' ) ) ),
 															# Because there is no authentication policy in use, we should be able to write to it
 															has_entry( 'Items', has_item( has_entry( 'accepts', has_item( 'application/vnd.nextthought.classinfo' ) ) ) ) ) ) )
 
@@ -217,7 +226,7 @@ class TestUserClassesCollection(tests.ConfiguringTestBase):
 
 	@mock_dataserver.WithMockDSTrans
 	def test_external( self ):
-		user = users.User( 'sjohnson@nextthought.com' )
+		user = users.User.create_user( dataserver=self.ds, username='sjohnson@nextthought.com' )
 		self.ds.root['providers']['OU'] = providers.Provider( 'OU' )
 		# if we're enrolled in a class, that should show in the classes workspace
 		ou = self.ds.root['providers']['OU']
@@ -233,7 +242,7 @@ class TestUserClassesCollection(tests.ConfiguringTestBase):
 
 		ext_object = toExternalObject( _UserClassesCollection( user ) )
 		assert_that( ext_object, has_entry( 'Title', 'EnrolledClassSections' ) )
-		assert_that( ext_object, has_entry( 'Items', has_item( has_entry( 'href', 'providers/OU/Classes/CS5201/CS5201.501' ) ) ) )
+		assert_that( ext_object, has_entry( 'Items', has_item( has_entry( 'href', '/dataserver2/providers/OU/Classes/CS5201/CS5201.501' ) ) ) )
 
 def test_user_pages_collection_accepts_only_external_types():
 	"A user's Pages collection only claims to accept things that are externally creatable."

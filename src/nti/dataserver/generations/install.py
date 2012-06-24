@@ -6,7 +6,7 @@ from __future__ import print_function, unicode_literals
 
 __docformat__ = 'restructuredtext'
 
-generation = 11
+generation = 12
 
 from zope.generations.generations import SchemaManager
 
@@ -22,11 +22,14 @@ def evolve( context ):
 	install_main( context )
 	install_chat( context )
 
-import BTrees
 from BTrees import OOBTree
 from persistent.list import PersistentList
 
-from zope.site import LocalSiteManager, SiteManagerContainer
+from zope.component.interfaces import ISite
+from zope.site import LocalSiteManager
+from zope.site.folder import Folder, rootFolder
+from zope.location.location import locate
+
 import zope.intid
 import zc.intid.utility
 
@@ -51,32 +54,50 @@ def install_main( context ):
 	conn = context.connection
 	root = conn.root()
 
-	container = SiteManagerContainer()
-	lsm = LocalSiteManager( None, default_folder=None ) # No parent
-	container.setSiteManager( lsm )
+	# The root folder
+	root_folder = rootFolder()
+	# The root is generally presumed to be an ISite, so make it so
+	root_sm = LocalSiteManager( None ) # No parent site, so parent == global
+	root_folder.setSiteManager( root_sm )
+	assert ISite.providedBy( root_folder )
 
+	dataserver_folder = Folder()
+	locate( dataserver_folder, root_folder, name='dataserver2' )
+
+	lsm = LocalSiteManager( root_sm )
+	# Change the dataserver_folder from IPossibleSite to ISite
+	dataserver_folder.setSiteManager( lsm )
+	assert ISite.providedBy( dataserver_folder )
+
+	# FIXME: These should almost certainly be IFolder implementations
+	# TODO: the 'users' key should probably be several different keys, one for each type of
+	# Entity object; that way traversal works out much nicer and dataserver_pyramid_views is
+	# simplified through dropping UserRootResource in favor of normal traversal
 	for key in ('users', 'vendors', 'library', 'quizzes', 'providers' ):
-		lsm[key] = datastructures.KeyPreservingCaseInsensitiveModDateTrackingBTreeContainer()
-		lsm[key].__name__ = key
+		dataserver_folder[key] = datastructures.KeyPreservingCaseInsensitiveModDateTrackingBTreeContainer()
+		dataserver_folder[key].__name__ = key
 
-	if 'Everyone' not in lsm['users']:
+	if 'Everyone' not in dataserver_folder['users']:
 		# Hmm. In the case that we're running multiple DS instances in the
 		# same VM, our constant could wind up with different _p_jar
 		# and _p_oid settings. Hence the copy
-		lsm['users']['Everyone'] = copy.deepcopy( users.EVERYONE_PROTO )
+		dataserver_folder['users']['Everyone'] = copy.deepcopy( users.EVERYONE_PROTO )
 	# This is interesting. Must do this to ensure that users
 	# that get created at different times and that have weak refs
 	# to the right thing. What's a better way?
-	users.EVERYONE = lsm['users']['Everyone']
+	# TODO: Probably the better way is through references. See
+	# gocept.reference
+	users.EVERYONE = dataserver_folder['users']['Everyone']
 
 	# By keeping track of changes in one specific place, and weak-referencing
 	# them elsewhere, we can control how much history is kept in one place.
 	# This also solves the problem of 'who owns the change?' We do.
-	if not lsm.has_key( 'changes'):
-		lsm['changes'] = PersistentList()
+	# TODO: This can probably go away now?
+	dataserver_folder['changes'] = PersistentList()
 
 	# Install the site manager and register components
-	root['nti.dataserver'] = container
+	root['nti.dataserver_root'] = root_folder
+	root['nti.dataserver'] = dataserver_folder
 
 	oid_resolver =  _Dataserver.PersistentOidResolver()
 	conn.add( oid_resolver )

@@ -339,8 +339,7 @@ class MinimalDataserver(object):
 		lsm = component.getSiteManager()
 		conn = getattr( lsm, '_p_jar', None )
 		if conn:
-			# Our root is the top-level site manager we are using
-			return conn.root()['nti.dataserver'].getSiteManager()
+			return conn.root()['nti.dataserver']
 		raise InappropriateSiteError( "Using Dataserver outside of site manager" )
 
 	def close(self):
@@ -386,7 +385,7 @@ class Dataserver(MinimalDataserver):
 			# that get created at different times and that have weak refs
 			# to the right thing. What's a better way?
 			# TODO: This is almost certainly wrong given the _p_jar stuff
-			users.EVERYONE = root['nti.dataserver'].getSiteManager()['users']['Everyone']
+			users.EVERYONE = root['nti.dataserver']['users']['Everyone']
 
 
 		room_name = 'meeting_rooms'

@@ -67,7 +67,7 @@ class SimplePersistentEnclosure(datastructures.CreatedModDateTrackingObject, per
 		if not result:
 			result = datastructures.to_external_ntiid_oid( self )
 		return result
-
+from zope.location import locate
 
 class SimpleEnclosureMixin(object):
 	"""
@@ -119,8 +119,11 @@ class SimpleEnclosureMixin(object):
 
 		if self._enclosures is None:
 			self._enclosures = self._new_enclosure_container()
-			self._enclosures.__parent__ = self
-			# But notice that the __name__ is left empty...
+			locate( self._enclosures, self, '' )
+			# Notice that the __name__ is left empty...
+			# We're not requiring any particular namespace inside the parent object,
+			# we claim to be direct descendents.
+			# FIXME: This is wrong
 
 		enclosures = self._enclosures
 		name_chooser = INameChooser(enclosures, None)
