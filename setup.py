@@ -46,11 +46,12 @@ setup(
 	long_description = 'Dataserver README',
 	classifiers=[
 		"Development Status :: 4 - Beta",
-		"Intended Audience :: Developers",
+		"Intended Audience :: Developers :: Education",
 		"Operating System :: OS Independent",
-		"Programming Language :: Python"
-		"Framework :: Pylons",
+		"Programming Language :: Python :: 2.7",
+		"Framework :: Pylons :: ZODB :: Pyramid",
 		"Internet :: WWW/HTTP",
+		"Natural Language :: English",
 		"Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
 		],
 
