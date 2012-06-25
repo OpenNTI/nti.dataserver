@@ -1,5 +1,7 @@
 <!-- -*- mode: nxml -*- -->
-<configure xmlns="http://namespaces.zope.org/zope">
+<configure
+	xmlns="http://namespaces.zope.org/zope"
+	xmlns:zcml="http://namespaces.zope.org/zcml">
 	<include package="zope.component" />
 	<adapter factory=".workspaces.ContainerEnumerationWorkspace" />
 
@@ -69,6 +71,31 @@
 	<!-- Individual field updates -->
 	<adapter factory="._adapters.SharedWithExternalFieldTraverser" />
 	<adapter factory="._adapters.UserExternalFieldTraverser" />
+
+	<!-- Object graph traversal -->
+
+	<!--
+	The default traversable is registered by zope.traversing for no
+	request and zope's request. Here we register it for our request.
+	Note in general that it is necessary to register adapters for both
+	no request and with a request.
+	-->
+
+	<adapter
+		for="* pyramid.interfaces.IRequest"
+		factory="zope.traversing.adapters.DefaultTraversable"
+		provides="zope.traversing.interfaces.ITraversable" />
+	<!--
+	As we traverse down, if we hit ISites, install them, thus letting
+	ZCA registries be as local as needed.
+	-->
+	<subscriber
+		zcml:condition="installed zope.site"
+		for="zope.component.interfaces.ISite
+			 zope.traversing.interfaces.IBeforeTraverseEvent"
+		handler="zope.site.threadSiteSubscriber"
+		/>
+
 
 	<!-- Events -->
 	<subscriber handler="._socket_event_listeners.session_disconnected_broadcaster" />

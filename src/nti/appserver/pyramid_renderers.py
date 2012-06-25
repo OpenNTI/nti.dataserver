@@ -19,6 +19,7 @@ from zope import interface
 from zope import component
 from zope.location import location
 from zope.location.location import LocationProxy
+import zope.traversing.interfaces
 
 from paste import httpheaders
 HEADER_LAST_MODIFIED = httpheaders.LAST_MODIFIED.name
@@ -170,32 +171,35 @@ def render_link( parent_resource, link, user_root_resource=None ):
 			result['type'] = content_type
 		if ntiids.is_valid_ntiid_string( ntiid ):
 			result['ntiid'] = ntiid
-		if not _is_valid_href( href ) and not ntiids.is_valid_ntiid_string( href ):
-			if href and href.startswith( 'users/' ) or href.startswith( 'providers/' ):
-				# TODO: Hardcoded paths
-				href = '/dataserver2/' + href
-				result[StandardExternalFields.HREF] = href
-				logger.warn( "Fixed up invalid href %s for link %s parent %s root %s",
-						 href, link, parent_resource, user_root_resource )
-			else:
-				logger.warn( "Generating invalid href %s for link %s target %s target-parent %s parent %s root %s",
-						 href, link,
-						 target,
-						 getattr( target, '__parent__', None ),
-						 parent_resource, user_root_resource )
-				try:
-					if _is_valid_href( traversal.normal_resource_path( target ) ):
-						href = traversal.normal_resource_path( target )
-						result[StandardExternalFields.HREF] = href
-						logger.warn( "Fixed up invalid href to target %s", href )
-				except AttributeError:
-					pass
+		if not _is_valid_href( href ) and not ntiids.is_valid_ntiid_string( href ): # pragma: no cover
+			# This shouldn't be possible anymore.
+			__traceback_info__ = href, link, target, parent_resource, user_root_resource
+			raise zope.traversing.interfaces.TraversalError(href)
+			# if href and href.startswith( 'users/' ) or href.startswith( 'providers/' ):
+			# 	# TODO: Hardcoded paths
+			# 	href = '/dataserver2/' + href
+			# 	result[StandardExternalFields.HREF] = href
+			# 	logger.warn( "Fixed up invalid href %s for link %s parent %s root %s",
+			# 			 href, link, parent_resource, user_root_resource )
+			# else:
+			# 	logger.warn( "Generating invalid href %s for link %s target %s target-parent %s parent %s root %s",
+			# 			 href, link,
+			# 			 target,
+			# 			 getattr( target, '__parent__', None ),
+			# 			 parent_resource, user_root_resource )
+			# 	try:
+			# 		if _is_valid_href( traversal.normal_resource_path( target ) ):
+			# 			href = traversal.normal_resource_path( target )
+			# 			result[StandardExternalFields.HREF] = href
+			# 			logger.warn( "Fixed up invalid href to target %s", href )
+			# 	except AttributeError:
+			# 		pass
 
-				if href and href.startswith( 'OU/' ):
-					# FIXME More hardcoded paths. WTF are these links broken?
-					href = '/dataserver2/providers/'  + href
-					result[StandardExternalFields.HREF] = href
-					logger.warn( "Fixed up invalid href to %s", href )
+			# 	if href and href.startswith( 'OU/' ):
+			# 		# FIXME More hardcoded paths. WTF are these links broken?
+			# 		href = '/dataserver2/providers/'  + href
+			# 		result[StandardExternalFields.HREF] = href
+			# 		logger.warn( "Fixed up invalid href to %s", href )
 
 	return result
 
