@@ -701,6 +701,8 @@ class User(Principal):
 														  containersType=datastructures.KeyPreservingCaseInsensitiveModDateTrackingOOBTree,
 														  containers={self.friendsLists.container_name: self.friendsLists,
 																	  self.devices.container_name: self.devices })
+		self.containers.__parent__ = self
+		self.containers.__name__ = '' # TODO: This is almost certainly wrong. We hack around it
 		self.__install_container_hooks()
 
 		# The last login time is an number of seconds (as with time.time).

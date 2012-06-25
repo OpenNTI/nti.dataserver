@@ -361,6 +361,7 @@ class TestApplication(ApplicationTestBase):
 
 		body = json.loads( res.body )
 		assert_that( body, has_entry( 'href', starts_with('/dataserver2/users/sjohnson%40nextthought.com/Objects' ) ))
+		#assert_that( body, has_entry( 'href', '/dataserver2/users/sjohnson%40nextthought.com/FriendsLists/boom%40nextthought.com' ) )
 
 	def test_create_friends_list_post_user(self):
 		# Like the previous test, but _UGDPostView wasn't consistent with where it was setting up the phony location proxies,
@@ -379,6 +380,7 @@ class TestApplication(ApplicationTestBase):
 
 		body = json.loads( res.body )
 		assert_that( body, has_entry( 'href', starts_with('/dataserver2/users/sjohnson%40nextthought.com/Objects' ) ))
+		#assert_that( body, has_entry( 'href', '/dataserver2/users/sjohnson%40nextthought.com/FriendsLists/boom%40nextthought.com' ) )
 
 	def test_edit_note_returns_editlink(self):
 		"The object returned by POST should have enough ACL to regenerate its Edit link"
@@ -497,8 +499,8 @@ class TestApplication(ApplicationTestBase):
 
 		body = json.loads( body.text )
 		assert_that( body, has_entry( 'MimeType', 'application/vnd.nextthought.sectioninfo' ) )
-		warnings.warn( "Disabled test for section href" )
 		#assert_that( body, has_entry( 'href', '/dataserver2/providers/OU/Classes/CS2051/CS2051.101' ) )
+		assert_that( body, has_entry( 'href', starts_with( '/dataserver2/providers/OU/Objects/tag' ) ) )
 
 		# We should be able to resolve the parent class of this section
 		assert_that( body, has_entry( 'Links', has_item( has_entry( 'rel', 'parent' ) ) ) )

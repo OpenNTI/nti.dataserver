@@ -317,7 +317,6 @@ class _ObjectsContainerResource(_ContainerResource):
 
 	@unquoting
 	def __getitem__( self, key ):
-		#from IPython.core.debugger import Tracer; debug_here = Tracer()()
 		request = _find_request( self )
 		ds = request.registry.getUtility(IDataserver)
 		result = self._getitem_with_ds( ds, key )
