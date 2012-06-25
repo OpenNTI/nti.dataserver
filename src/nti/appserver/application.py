@@ -59,6 +59,7 @@ import pyramid_zodbconn
 
 from . import pyramid_auth
 from . import interfaces as app_interfaces
+from .traversal import ZopeResourceTreeTraverser
 
 # Make the zope interface extend the pyramid interface
 # Although this seems backward, it isn't. The zope location
@@ -330,6 +331,12 @@ def createApplication( http_port,
 
 
 	pyramid_config.include( 'pyramid_zcml' )
+
+	# Our traversers
+	# TODO: Does doing this get us into any trouble with a non-matching request.resource_url
+	# method? Do we need to install an implementation if IResourceURL?
+	# http://docs.pylonsproject.org/projects/pyramid/en/1.3-branch/narr/hooks.html#changing-how-pyramid-request-request-resource-url-generates-a-url
+	pyramid_config.add_traverser( ZopeResourceTreeTraverser )
 
 	# The pyramid_openid view requires a session. The repoze.who.plugins.openid plugin
 	# uses a cookie by default to handle this, so it's not horrible to use an unencrypted
