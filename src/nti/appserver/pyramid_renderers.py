@@ -144,6 +144,7 @@ def render_link( parent_resource, link, user_root_resource=None ):
 		# replace the actual User object with the userrootresource if we have one,
 		# by injecting it into the lineage. Note that we do this with proxies
 		# to avoid changing the persistent objects.
+		# TODO: This is probably not necessary anymore?
 		if user_root_resource and traversal.find_interface( resource, users.User ):
 			lineage = [user_root_resource if isinstance(x,users.User) else x
 					   for x in traversal.lineage(resource)]
@@ -157,13 +158,14 @@ def render_link( parent_resource, link, user_root_resource=None ):
 				parent = y
 			resource = parent
 
-		try:
-			href = traversal.normal_resource_path( resource )
-		except AttributeError:
-			logger.exception( "Failed to traverse path to %s", resource )
+		# This will raise a LocationError of something is broken
+		# in the chain. That shouldn't happen and needs to be dealt with
+		# at dev time.
+		href = traversal.normal_resource_path( resource )
+
 
 	result = None
-	if href:
+	if href: # TODO: This should be true all the time now, right?
 		result = { StandardExternalFields.CLASS: 'Link',
 				   StandardExternalFields.HREF: href,
 				   'rel': rel }
@@ -275,9 +277,12 @@ def render_externalizable(data, system):
 			   and writable( obj ) \
 			   and user_root : # TODO: This breaks for providers, need an iface
 				# TODO: This is weird, assuming knowledge about the URL structure here
+				# Should probably use request ILocationInfo to traverse back up to the ISite
 				if not any( [l.rel == 'edit'
 							 for l in obj[StandardExternalFields.LINKS]
 							 if isinstance(l, links.Link) ] ):
+					# Create a path through to the *direct* object URL, without
+					# using resource traversal. This remains valid in the event of name changes
 					obj_root = location.Location()
 					obj_root.__parent__ = user_root; obj_root.__name__ = 'Objects'
 					target = location.Location()
@@ -287,21 +292,7 @@ def render_externalizable(data, system):
 
 					# For cases that we can, make edit and the toplevel href be the same.
 					# this improves caching
-					try:
-						# There are too many cases where we're still not correctly hooked up
-						# to be able to generate 'pretty' URLs to make this the default
-						#href = traversal.normal_resource_path( data ) if (obj is body and data.__name__ and request.method != 'PUT') else None
-						#if href is not None and not href.endswith( urllib.quote(data.__name__) ):
-						#	href = None
-						href = None
-					except AttributeError:
-						href = None
-					# TODO: More hardcoded paths
-					if _is_valid_href(href) and href != '/' and href.startswith( '/dataserver' ):
-						obj['href'] = href
-						link.target = href
-					else:
-						obj['href'] = render_link( parent, link, user_root )['href']
+					obj['href'] = render_link( parent, link, user_root )['href']
 
 			obj[StandardExternalFields.LINKS] = [render_link(parent, link, user_root) if isinstance( link, links.Link ) else link
 												 for link
