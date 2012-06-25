@@ -322,16 +322,29 @@ class Chatserver(object):
 		if room:
 			result = room.del_occupant_name( username )
 			if not room.occupant_names:
+				# Note that since chat session handlers are not
+				# tied to sessions, just names, and a name can have multiple
+				# active sessions, and destroying a session
+				# does not automatically cause that session to exit all rooms it was in
+				# having rooms become in-Active is actually probably quite rare, especially for
+				# something like a friends-list container
+				# This has the following consequences:
+				# - We don't drop our reference to it, so our rooms dictionary
+				#   grows ever larger (fortunately, it's a btree)
+				# - Meeting containers will probably keep re-entering the same meeting
+				#   so its ID won't change
+				# - Which in turn means that the transcript for the meeting will keep growing
+				#   Ultimately this could cause problems.
 				room.Active = False
 				container = self.meeting_container_storage.get( room.containerId )
 				if hasattr( container, 'meeting_became_empty' ):
 					container.meeting_became_empty( self, room )
 
-				# We do not have the concept of persistent
+				# We do not (really) have the concept of persistent
 				# meetings, merely persistent meeting containers.
-				# Transcripts keep their own references to meetings,
-				# so when a meeting becomes empty, we are free
-				# to clear our reference to it.
+				# Transcripts are probably in a different database and
+				# so effectively have a weak reference to this meeting,
+				# so GC must take that into account.
 				if not room.Active:
 					del self.rooms[room_id]
 		return result

@@ -20,12 +20,10 @@ from nti.dataserver import authorization_acl as auth_acl
 
 from persistent import Persistent
 from persistent.mapping import PersistentMapping
-import BTrees.OOBTree
 
 from zope import interface
 from zope import component
-from zope.deprecation import deprecate, deprecated
-from zope import minmax
+
 
 from ._metaclass import _ChatObjectMeta
 from . import interfaces
@@ -49,24 +47,23 @@ def _discard( s, k ):
 
 class IChatHandlerSessionState(interface.Interface):
 	rooms_i_moderate = interface.Attribute( "Mapping of rooms I moderate" )
-	rooms_im_in = interface.Attribute( "Rooms this session is in" )
 
+@interface.implementer(IChatHandlerSessionState)
+@component.adapter(sio_interfaces.ISocketSession)
 class _ChatHandlerSessionState(Persistent):
 	"""
 	An annotation for sessions to store the state a chat handler likes to have,
 	since chat handlers have no state for longer than a single event.
 	"""
-	interface.implements(IChatHandlerSessionState)
-	component.adapts( sio_interfaces.ISocketSession )
 
 	def __init__(self):
 		self.rooms_i_moderate = PersistentMapping()
-		self.rooms_im_in = BTrees.OOBTree.Set()
 
 from zope.annotation import factory as an_factory
 def _ChatHandlerSessionStateFactory(session):
 	return an_factory(_ChatHandlerSessionState)(session)
 
+@interface.implementer(sio_interfaces.ISocketEventHandler)
 class _ChatHandler(object):
 	"""
 	Class to handle each of the messages sent to or from a client.
@@ -80,7 +77,7 @@ class _ChatHandler(object):
 				 'data_noticeIncomingChange', 'failedToEnterRoom' )
 	_session_consumer_args_search_ = ('nti.chatserver.meeting','nti.chatserver.messageinfo')
 
-	interface.implements(sio_interfaces.ISocketEventHandler)
+
 	event_prefix = 'chat'
 	_v_chatserver = None
 	# public methods correspond to events
@@ -88,8 +85,6 @@ class _ChatHandler(object):
 	def __init__( self, chatserver, session ):
 		""" """
 		self._v_chatserver = chatserver
-		#self.session_id = session.session_id
-		#self.session_owner = session.owner
 		self.session = session
 
 	def __reduce__(self):
@@ -155,15 +150,12 @@ class _ChatHandler(object):
 				return len(sessions) > 1
 			room = self._chatserver.create_room_from_dict( room_info, sessions_validator=sessions_validator )
 
-		if room:
-			IChatHandlerSessionState(self.session).rooms_im_in.add( room.RoomId )
-		else:
+		if not room:
 			self.emit_failedToEnterRoom( self.session.owner, room_info )
 		return room
 
 	def exitRoom( self, room_id ):
 		result = self._chatserver.exit_meeting( room_id, self.session.owner )
-		_discard( IChatHandlerSessionState(self.session).rooms_im_in, room_id )
 		return result
 
 	def makeModerated( self, room_id, flag ):
@@ -219,10 +211,6 @@ class _ChatHandler(object):
 			for user in usernames:
 				result &= room.shadow_user( user )
 		return result
-
-	def destroy( self ):
-		for room_in in set( IChatHandlerSessionState(self.session).rooms_im_in ):
-			self.exitRoom( room_in )
 
 
 def ChatHandlerFactory( socketio_protocol, chatserver=None ):
