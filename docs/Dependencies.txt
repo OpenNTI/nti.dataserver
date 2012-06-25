@@ -46,6 +46,10 @@ Dependencies for content generation:
 	- ImageMagick
 	- wget
 
+- phantomjs >= 1.5
+  http://phantomjs.org, download and place the phantomjs command somewhere on your path, e.g., 
+  ~/bin/
+
 Dependencies (other):
 - Phusion Passenger # 3.0.9, 2011-10-08
 
