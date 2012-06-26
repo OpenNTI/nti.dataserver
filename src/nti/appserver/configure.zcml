@@ -85,6 +85,32 @@
 		for="* pyramid.interfaces.IRequest"
 		factory="zope.traversing.adapters.DefaultTraversable"
 		provides="zope.traversing.interfaces.ITraversable" />
+	<adapter
+		name="adapter"
+		for="* pyramid.interfaces.IRequest"
+		factory="._adapters.adapter_request"
+		provides="zope.traversing.interfaces.ITraversable" />
+	<adapter
+		name="adapter"
+		for=".dataserver_pyramid_views._AbstractObjectResource pyramid.interfaces.IRequest"
+		factory="._adapters._resource_adapter_request"
+		provides="zope.traversing.interfaces.ITraversable" />
+<!--
+	Note that this object /implements/ ITraversable, but is not
+	registered. Because it's more specific than *, it would trump all
+	access to the many objects that are ISimpleEnclosureContainer.
+	We're not ready for that yet.
+	<adapter
+		for="nti.dataserver.interfaces.ISimpleEnclosureContainer"
+		factory="._adapters.EnclosureTraversable"
+		provides="zope.traversing.interfaces.ITraversable" />
+-->
+	<adapter
+		name="enclosures"
+		for="nti.dataserver.interfaces.ISimpleEnclosureContainer pyramid.interfaces.IRequest"
+		factory="._adapters.EnclosureTraversable"
+		provides="zope.traversing.interfaces.IPathAdapter" />
+
 	<!--
 	As we traverse down, if we hit ISites, install them, thus letting
 	ZCA registries be as local as needed.
