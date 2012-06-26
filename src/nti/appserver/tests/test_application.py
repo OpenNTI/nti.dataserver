@@ -89,6 +89,9 @@ class ApplicationTestBase(ConfiguringTestBase):
 
 class TestApplication(ApplicationTestBase):
 
+	def test_logon_ping(self):
+		testapp = TestApp( self.app )
+		testapp.get( '/dataserver2/logon.ping' )
 
 	def test_path_with_parens(self):
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -272,6 +275,10 @@ class TestApplication(ApplicationTestBase):
 			assert_that( user.getContainer( contained.containerId ), has_length( 2 ) )
 
 		testapp = TestApp( self.app )
+		res = testapp.get( '/dataserver2', extra_environ=self._make_extra_environ())
+		assert_that( res.json_body['Items'], has_item( all_of(
+															has_entry( 'Title', 'Global' ),
+															has_entry( 'Links', has_item( has_entry( 'href', '/dataserver2/UserSearch' ) ) ) ) ) )
 		path = '/dataserver2/UserSearch/sjohnson@nextthought.com'
 		res = testapp.get( path, extra_environ=self._make_extra_environ())
 
@@ -283,7 +290,7 @@ class TestApplication(ApplicationTestBase):
 		body = json.loads( res.body )
 		assert_that( body['Items'][0], has_entry( 'Links',
 												  has_item( all_of(
-													  has_entry( 'href', starts_with( "/dataserver2/Objects/tag:nextthought.com,2011-10:sjohnson@nextthought.com-OID" ) ),
+													  has_entry( 'href', "/dataserver2/users/sjohnson%40nextthought.com" ),
 													  has_entry( 'rel', 'edit' ) ) ) ) )
 
 
@@ -465,9 +472,27 @@ class TestApplication(ApplicationTestBase):
 		data = '5'
 		self._edit_user_ext_field( 'NotificationCount', data )
 
+	def test_put_data_to_user( self ):
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = self._create_user()
+
+		testapp = TestApp( self.app )
+
+		# This works for both the OID and direct username paths
+		for path in ('/dataserver2/Objects/%s' % datastructures.to_external_ntiid_oid( user ), '/dataserver2/users/' + user.username):
+
+			data = json.dumps( {"NotificationCount": 5 } )
+
+			res = testapp.put( urllib.quote( path ),
+							   data,
+							   extra_environ=self._make_extra_environ(),
+							   headers={"Content-Type": "application/json" } )
+			assert_that( res.status_int, is_( 200 ) )
+			assert_that( res.json_body, has_entry( 'NotificationCount', 5 ) )
 
 
-	def test_meth_not_allowed(self):
+
+	def test_get_user_not_allowed(self):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			self._create_user()
 
@@ -552,7 +577,6 @@ class TestApplication(ApplicationTestBase):
 								 'ContainerId': 'Classes',
 								 'ID': 'CS2503' } )
 
-
 		res = testapp.post( path, data, extra_environ=self._make_extra_environ() )
 		assert_that( res.status_int, is_( 201 ) )
 
@@ -612,6 +636,35 @@ class TestApplication(ApplicationTestBase):
 			assert_that( body, has_entry( 'Sections', has_item( has_entry( 'ID', 'CS2503.101' ) ) ) )
 			assert_that( body, has_entry( 'Sections', has_item( has_entry( 'NTIID', 'tag:nextthought.com,2011-10:OU-MeetingRoom:ClassSection-CS2503.101' ) ) ) )
 			assert_that( body, has_entry( 'Sections', has_item( has_entry( 'Enrolled', has_item( 'jason.madden@nextthought.com' ) ) ) ) )
+
+	def test_post_class_section_same_time_uncreated(self):
+		path = '/dataserver2/providers/OU/'
+		get = True
+		with mock_dataserver.mock_db_trans(self.ds):
+			self._create_user()
+			provider = providers.Provider( 'OU' )
+			self.ds.root['providers']['OU'] = provider
+		testapp = TestApp( self.app )
+
+		data = json.serialize( { 'Class': 'ClassInfo',
+								 'ContainerId': 'Classes',
+								 'ID': 'CS2503',
+								 'Sections': [{'ID': 'CS2503.101', 'Class': 'SectionInfo', 'Enrolled': ['jason.madden@nextthought.com']}]} )
+		res = testapp.post( path, data, extra_environ=self._make_extra_environ() )
+
+
+		body = json.loads( res.body )
+		assert_that( body, has_entry( 'ID', 'CS2503' ) )
+		assert_that( body, has_entry( 'Sections', has_item( has_entry( 'ID', 'CS2503.101' ) ) ) )
+		assert_that( body, has_entry( 'Sections', has_item( has_entry( 'NTIID', 'tag:nextthought.com,2011-10:OU-MeetingRoom:ClassSection-CS2503.101' ) ) ) )
+		if get:
+			res = testapp.get( path + 'Classes/CS2503', extra_environ=self._make_extra_environ() )
+			body = json.loads( res.body )
+			assert_that( body, has_entry( 'ID', 'CS2503' ) )
+			assert_that( body, has_entry( 'Sections', has_item( has_entry( 'ID', 'CS2503.101' ) ) ) )
+			assert_that( body, has_entry( 'Sections', has_item( has_entry( 'NTIID', 'tag:nextthought.com,2011-10:OU-MeetingRoom:ClassSection-CS2503.101' ) ) ) )
+			assert_that( body, has_entry( 'Sections', has_item( has_entry( 'Enrolled', has_item( 'jason.madden@nextthought.com' ) ) ) ) )
+
 
 	def test_class_trivial_enclosure_href(self):
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -860,6 +913,7 @@ def _create_class(ds, usernames_to_enroll=()):
 
 	section = classes.SectionInfo()
 	section.ID = 'CS2051.101'
+	section.creator = provider
 	klass.add_section( section )
 	section.InstructorInfo = classes.InstructorInfo()
 	for user in usernames_to_enroll:

@@ -67,6 +67,7 @@ class TestUGDViews(ConfiguringTestBase):
 		"We can put an object that summarizes itself before we get to the renderer"
 		view = _UGDPutView( get_current_request() )
 		user = users.User( 'jason.madden@nextthought.com', 'temp001' )
+		user.__parent__ = 1
 		class X(object):
 			resource = None
 			__acl__ = ()

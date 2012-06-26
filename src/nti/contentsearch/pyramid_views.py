@@ -8,8 +8,16 @@ from nti.contentsearch import QueryObject
 from nti.contentsearch.common import get_collection
 from nti.contentsearch.interfaces import IIndexManager
 
+from nti.externalization.datastructures import LocatedExternalDict
+
 import logging
 logger = logging.getLogger( __name__ )
+
+def _locate(obj, parent, name=None):
+	obj = LocatedExternalDict( obj )
+	obj.__parent__ = parent
+	obj.__name__ = name
+	return obj
 
 class Search(object):
 
@@ -19,8 +27,9 @@ class Search(object):
 	def __call__( self ):
 		query = get_queryobject(self.request, False, True)
 		indexmanager = self.request.registry.getUtility( IIndexManager )
-		return indexmanager.search( query=query, indexname=query.indexname )
-	
+		return _locate( indexmanager.search( query=query, indexname=query.indexname ),
+						self.request.root, 'Search' )
+
 class ContentSearch(object):
 
 	def __init__(self, request):
@@ -29,7 +38,8 @@ class ContentSearch(object):
 	def __call__( self ):
 		query = get_queryobject(self.request, True, False)
 		indexmanager = self.request.registry.getUtility( IIndexManager )
-		return indexmanager.content_search( query=query, indexname=query.indexname )
+		return _locate( indexmanager.content_search( query=query, indexname=query.indexname ),
+						self.request.root, 'ContentSearch' )
 GetSearch = ContentSearch
 
 class UserSearch(object):
@@ -40,7 +50,8 @@ class UserSearch(object):
 	def __call__( self ):
 		query = get_queryobject(self.request, False, False)
 		indexmanager = self.request.registry.getUtility( IIndexManager )
-		return indexmanager.user_data_search( query=query, username=query.username )
+		return _locate( indexmanager.user_data_search( query=query, username=query.username ),
+						self.request.root, 'UserSearch' )
 
 
 def clean_search_query(query):
@@ -90,5 +101,5 @@ def get_queryobject(request, is_content=False, is_unified=False):
 				args['indexname'] = indexname
 			else:
 				args['ntiid'] = ntiid
-		
+
 	return QueryObject(**args)

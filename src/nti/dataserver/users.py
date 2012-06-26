@@ -116,7 +116,10 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject,E
 			return object.__repr__(self)
 
 	def __str__(self):
-		return self.username
+		try:
+			return self.username
+		except ZODB.POSException.ConnectionStateError:
+			return object.__str__(self)
 
 	def _getAvatarURL(self):
 		""" A string giving the URL for an image to be used
@@ -709,6 +712,7 @@ class User(Principal):
 		# We maintain a list of devices associated with this user
 		# TODO: Want a persistent set?
 		self.devices = _DevicesMap()
+		self.devices.__parent__ = self
 
 		self.containers = datastructures.ContainedStorage(create=self,
 														  containersType=datastructures.KeyPreservingCaseInsensitiveModDateTrackingOOBTree,

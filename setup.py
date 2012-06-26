@@ -159,6 +159,7 @@ setup(
 		'zope.browser',
 		'zope.browserpage',
 		'zope.browserresource',
+		'zope.cachedescriptors >= 3.5.1',
 		'zope.component >= 3.12.1',
 		'zope.componentvocabulary',
 		'zope.configuration >= 4.0.0',

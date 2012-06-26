@@ -199,10 +199,16 @@ class GlobalWorkspace(object):
 
 	__parent__ = None
 
-	def __init__(self):
+	def __init__(self, parent=None):
 		super(GlobalWorkspace,self).__init__()
+		if parent:
+			self.__parent__ = parent
 		# TODO: Hardcoding both these things
-		self.links = (	links.Link( 'UserSearch', rel='UserSearch' ),  )
+		link = links.Link( 'UserSearch', rel='UserSearch' )
+		link.__name__ = link.target
+		link.__parent__ = self.__parent__
+		interface.alsoProvides( link, loc_interfaces.ILocation )
+		self.links = (link,)
 
 	@property
 	def name(self): return 'Global'
@@ -674,8 +680,8 @@ class UserService(object):
 		# The main user workspace lives at /users/ME/
 		result = [self.user_workspace]
 
-		global_ws = GlobalWorkspace()
-		global_ws.__parent__ = self.__parent__
+		global_ws = GlobalWorkspace(parent=self.__parent__)
+		assert global_ws.__parent__
 		result.append( global_ws )
 
 		_library = component.queryUtility( content_interfaces.IContentPackageLibrary )

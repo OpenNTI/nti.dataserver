@@ -488,12 +488,16 @@ def createApplication( http_port,
 			logger.exception( "Failed to add book search %s", title )
 
 	# TODO: ACLs on searching: only the user should be allowed.
+	@interface.implementer(ILocation)
 	class _UserSearchRootFactory(object):
 		"""
 		For searching the data of a particular user. We allow only
 		that user to do so.
 		"""
+		__name__ = 'UserSearch'
+		__parent__ = None
 		def __init__( self, request ):
+			self.__parent__ = request.registry.getUtility( nti_interfaces.IDataserver ).root
 			# TODO: IPrincipals here
 			self.__acl__ = ( (pyramid.security.Allow, request.matchdict['user'], pyramid.security.ALL_PERMISSIONS),
 							 (pyramid.security.Deny,  pyramid.security.Everyone, pyramid.security.ALL_PERMISSIONS) )
@@ -667,6 +671,10 @@ def createApplication( http_port,
 
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._UGDPutView',
 							 renderer='rest', context='nti.appserver.dataserver_pyramid_views._AbstractObjectResource',
+							 permission=nauth.ACT_UPDATE, request_method='PUT' )
+	# And the user itself can be put to
+	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._UGDPutView',
+							 renderer='rest', context='nti.appserver.dataserver_pyramid_views._UserResource',
 							 permission=nauth.ACT_UPDATE, request_method='PUT' )
 
 
