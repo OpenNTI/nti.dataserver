@@ -41,92 +41,139 @@
 		  <xsl:value-of select="WordInfo/@word"/>
       </title>
       <style type="text/css"><![CDATA[
-/*============================*/
-/*==== Master base style =====*/
-/*============================*/
-body {
-	font-family:'Baskerville';
-	font-weight:normal;
-	font-size: medium;
-}
 
-/*============================*/
-/*== highlight for anchor ====*/
-/*============================*/
-*[apple_anchor_highlight] {
-	background-color:#cbe6e6;
-}
+		  @import url(http://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic,700italic);
 
-/*===============================*/
-/*== highlight for mouseover ====*/
-/*===============================*/
-*[apple_mouseover_highlight]:hover {
-	color:#2971A7;
-	text-decoration:underline;
-/*	border-bottom-style:dotted;
-	border-bottom-width:1px;
-	border-bottom-color:#0000ff;*/
-	cursor:pointer;
-}
 
-*[apple_mouseover_highlight]:active {
-	color:#2971A7;
-	text-decoration:underline;
-/*	border-bottom-style:dotted;
-	border-bottom-width:1px;
-	border-bottom-color:#ff0000;*/
-	cursor:pointer;
-}
-      body {
-        font-family: "Nimbus Sans L", Arial, sans-serif;
-	font-size: 9pt;
-      }
-      a:link {
- 	color: #1f00ff;
-	text-decoration: none;
-      }
-      a:visited {
- 	color: #1f00ff;
-	text-decoration: none;
-      }
-      a:hover {
- 	color: red;
-      }
-      #menu a {
-        text-decoration: underline;
-      }
-      .i {
-        font-style: italic;
-      }
-      .pre {
-        font-family: monospace;
-        white-space: pre;
-      }
-      ol.decimal {
-        list-style-type: decimal;
-      }
-      ol.lower-alpha {
-        list-style-type: lower-alpha;
-      }
-      .point {
-        color: #cc0000;
-      }
-      #footer {
-        margin-top: 3.5em;
-        font-size: 7pt;
-      }
-	  span.label {
-	  text-style: italic;
-	  }
-	  span.label:before {
-	  content: "(";
-	  }
-	  span.label:after {
-	  content: ")";
-	  }
-	  parsererror {
-	  display: none !important;
-	  }
+		  /*============================*/
+		  /*==== Master base style =====*/
+		  /*============================*/
+		  html, body {
+			  font-family:'Droid Serif', serif;
+			  font-weight:normal;
+			  font-size: 14px;
+			  padding: 0;
+			  margin: 0;
+			  color: #757474;
+			  background: transparent;
+		  }
+
+		  /*============================*/
+		  /*== highlight for anchor ====*/
+		  /*============================*/
+		  *[apple_anchor_highlight] {
+			  background-color:#cbe6e6;
+		  }
+
+		  /*===============================*/
+		  /*== highlight for mouseover ====*/
+		  /*===============================*/
+		  *[apple_mouseover_highlight]:hover {
+			  color:#2971A7;
+			  text-decoration:underline;
+			  cursor:pointer;
+		  }
+
+		  *[apple_mouseover_highlight]:active {
+			  color:#2971A7;
+			  text-decoration:underline;
+			  cursor:pointer;
+		  }
+
+		  /*===============================*/
+		  /*== styles for definition ======*/
+		  /*===============================*/
+		  a:hover, a:visited, a:link {
+			  color: #757474;
+			  text-decoration: underline;
+		  }
+		  h1 {
+			  position: fixed;
+			  top: 0;
+			  left: 0;
+			  width: 100%;
+			  z-index: 100;
+			  display: block;
+			  padding: 12px 18px 12px 18px;
+			  color: #464646;
+			  background: #F7F7F7;
+			  border: 1px solid #E7E7E7;
+			  border-top-width: 0;
+			  border-left-width: 0;
+			  border-right-width: 0;
+			  font-size: 18px;
+			  font-style: italic;
+			  font-weight: 700;
+			  margin: 0;
+			  text-transform: capitalize;
+		  }
+
+		  ol {
+		      counter-reset:li; /* Initiate a counter */
+		      margin-left:0; /* Remove the default left margin */
+		      padding-left:0; /* Remove the default left padding */
+		  }
+		  ol > li {
+		      position:relative; /* Create a positioning context */
+		      margin:0 0 6px 2em; /* Give each list item a left margin to make room for the numbers */
+		      padding:4px 8px; /* Add some spacing around the content */
+		      list-style:none; /* Disable the normal item numbering */
+		  }
+		  ol > li:before {
+		      content:counter(li) "."; /* Use the counter as content */
+		      counter-increment:li; /* Increment the counter by 1 */
+		      /* Position and style the number */
+		      position:absolute;
+		      top:0;
+		      left:-1.7em;
+		      -moz-box-sizing:border-box;
+		      -webkit-box-sizing:border-box;
+		      box-sizing:border-box;
+		      width:2em;
+		      /* Some space between the number and the content in browsers that support
+		         generated content but not positioning it (Camino 2 is one example) */
+		      margin-right:4px;
+		      padding:4px 0 4px 4px;
+		      font-weight:bold;
+			  font-size: bigger;
+		      text-align:right;
+		  }
+		  li ol,
+		  li ul {margin-top:6px;}
+		  ol ol li:last-child {margin-bottom:0;}
+
+		  #footer {
+			  margin-top: 3.5em;
+			  font-size: 7px;
+		  }
+		  span.label {
+			  text-style: italic;
+		  }
+		  span.label:before {
+			  content: "(";
+		  }
+		  span.label:after {
+			  content: ")";
+		  }
+		  .ipa {
+			  margin: 1em 3em;
+		  }
+		  .more {
+			  margin: 1em 3em;
+		  }
+		  .more span {
+			  font-weight: bold;
+		  }
+		  .scroll-body {
+			  width: 100%;
+			  height: 100%;
+			  margin-top: 46px;
+			  overflow-x: hidden;
+			  overflow-y: auto;
+		  }
+		  parsererror {
+			  display: none !important;
+		  }
       ]]></style>
     </head>
     <body>
@@ -137,28 +184,35 @@ body {
 
 <xsl:template match="WordInfo">
 	<h1><xsl:value-of select="@word" /></h1>
-	<xsl:for-each select="ipa">
-		<span style="text-style: bold"><xsl:value-of select="." /></span>
-	</xsl:for-each>
-	<ol>
-		<xsl:for-each select="DictInfo/definition">
-			<li><xsl:apply-templates select="." /></li>
-		</xsl:for-each>
-	</ol>
-	<xsl:apply-templates select="TherInfo" />
-	<xsl:apply-templates select="EtymologyInfo" />
-	<xsl:apply-templates select="LinkInfo" />
+	<div class="scroll-body">
+		<div class="ipa">
+			<xsl:for-each select="ipa">
+				<span><xsl:value-of select="." /></span>
+			</xsl:for-each>
+		</div>
+		<ol>
+			<xsl:for-each select="DictInfo/definition">
+				<li><xsl:apply-templates select="." /></li>
+			</xsl:for-each>
+		</ol>
+		<xsl:apply-templates select="TherInfo" />
+		<xsl:apply-templates select="EtymologyInfo" />
+		<!--<xsl:apply-templates select="LinkInfo" />-->
+	</div>
 </xsl:template>
 
 <xsl:template match="definition">
-	<em><xsl:value-of select="@partOfSpeech"/></em>
-	<xsl:text>&#160;</xsl:text>
-	<xsl:value-of select="text()" disable-output-escaping="yes" />
-	<ol>
-		<xsl:for-each select="example">
-			<li><xsl:apply-templates select="." /></li>
-		</xsl:for-each>
-	</ol>
+	<div class="definition">
+		<em><xsl:value-of select="@partOfSpeech"/>
+			<xsl:text>:&#160;</xsl:text>
+		</em>
+		<xsl:value-of select="text()" disable-output-escaping="yes" />
+		<ol>
+			<xsl:for-each select="example">
+				<li><xsl:apply-templates select="." /></li>
+			</xsl:for-each>
+		</ol>
+	</div>
 </xsl:template>
 
 <xsl:template match="example">
@@ -176,14 +230,14 @@ body {
 </xsl:template>
 
 <xsl:template match="EtymologyInfo">
-	<div><span>Origin&#160;</span><xsl:value-of select="."
+	<div class="more"><span>Origin:&#160;</span><xsl:value-of select="."
 	disable-output-escaping="yes" /></div>
 </xsl:template>
 
 <xsl:template match="TherInfo">
-	<div>Synonyms&#160;
+	<div class="more"><span>Synonyms:&#160;</span>
 	<xsl:for-each select="synonym">
-		<xsl:value-of select="." />&#160;
+		<xsl:value-of select="." />
 	</xsl:for-each>
 	</div>
 </xsl:template>
