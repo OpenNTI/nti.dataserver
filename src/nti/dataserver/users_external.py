@@ -11,6 +11,7 @@ from zope import interface
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import users
 from nti.dataserver import links
+from nti.dataserver import authorization_acl as auth
 
 from nti.externalization.interfaces import IExternalObject
 from nti.externalization.externalization import toExternalObject
@@ -43,6 +44,9 @@ class _EntitySummaryExternalObject(object):
 		extDict['realname'] = entity.realname
 		extDict['alias'] = entity.alias
 		extDict['CreatedTime'] = getattr( self, 'createdTime', 42 ) # for migration
+		extDict.__parent__ = entity.__parent__
+		extDict.__name__ = entity.__name__
+		extDict.__acl__ = auth.ACL( entity )
 		return extDict
 
 
@@ -136,7 +140,8 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 		# as is ignoring and accepting
 		extDict['ignoring'] = ext(self.entity.ignoring_shared_data_from)
 		extDict['accepting'] = ext(self.entity.accepting_shared_data_from)
-		extDict['Links'] = [ links.Link( to_external_ntiid_oid( self.entity ), rel='edit' ) ]
+		#extDict['Links'] = [ links.Link( to_external_ntiid_oid( self.entity ), rel='edit' ) ]
+		extDict['Links'] = [ links.Link( self.entity, rel='edit' ) ]
 		extDict['Last Modified'] = getattr( self.entity, 'lastModified', 0 )
 		return extDict
 

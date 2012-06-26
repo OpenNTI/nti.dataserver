@@ -122,7 +122,6 @@ class OpenMath2Latex(object):
 					print 'Unknown content for %s:%s' % (cdname, opname)
 					return '\\Unknowncontent{%s}{%s}' % (cdname, opname)
 
-				print content
 
 				if isinstance(content, basestring):
 					possibleArgs.append(content)

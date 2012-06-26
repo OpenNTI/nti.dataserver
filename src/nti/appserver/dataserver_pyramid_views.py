@@ -15,6 +15,7 @@ import functools
 import anyjson as json
 
 from zope import component
+from zope.component import interfaces as cmp_interfaces
 from zope import interface
 from zope.mimetype.interfaces import IContentTypeAware
 import zope.security.interfaces
@@ -25,6 +26,7 @@ import pyramid.httpexceptions as hexc
 from pyramid import traversal
 import transaction
 
+from zope.location import interfaces as loc_interfaces
 from zope.location.location import LocationProxy
 
 from nti.dataserver.interfaces import (IDataserver, ISimpleEnclosureContainer, IEnclosedContent)
@@ -92,6 +94,7 @@ class EnclosureGetItemACLLocationProxy(ACLLocationProxy):
 		return ACLLocationProxy( enc, self, enc.__name__, nacl.ACL( enc, self.__acl__ ) )
 
 
+@interface.implementer(loc_interfaces.ILocation)
 class _DSResource(object):
 	__acl__ = (
 		(sec.Allow, sec.Authenticated, nauth.ACT_READ),
@@ -100,9 +103,18 @@ class _DSResource(object):
 	def __init__( self, request ):
 		self.request = request
 		ds = self.request.registry.getUtility(IDataserver)
-		ds_folder = ds.root
-		self.__name__ = ds_folder.__name__
-		self.__parent__ = ds.root.__parent__
+		self.ds_folder = ds.root
+		self.__name__ = self.ds_folder.__name__
+		self.__parent__ = self.ds_folder.__parent__
+		if cmp_interfaces.ISite.providedBy( self.ds_folder ):
+			interface.alsoProvides( self, cmp_interfaces.ISite )
+
+	def getSiteManager(self):
+		"""
+		If the root dataserver folder is a site (which it should be), then we mimic it
+		and provide read-only access to its site manager.
+		"""
+		return self.ds_folder.getSiteManager()
 
 	def __getitem__( self, key ):
 		result = None
@@ -147,10 +159,8 @@ class _UserResource(object):
 		self.request = parent.request
 		self.user = user
 		__traceback_info__ = user, parent, name
-		# Our resource is the user, which for the sake of the weirdness
-		# in the view processing, sits below us. (We like for IUserRootResource
-		# to be in the lineage; that needs to go away)
-		self.resource = LocationProxy( user, self, self.__name__ )
+		# Our resource is the user
+		self.resource = user
 		self.__acl__ = nacl.ACL( self.user )
 		assert self.__acl__, zope.security.interfaces.Forbidden( "Resource had no ACL/provider", user )
 		self._pseudo_classes_ = { 'Objects': _ObjectsContainerResource,
@@ -602,7 +612,7 @@ def lists_and_dicts_to_ext_collection( items ):
 				add = False
 			if add: result.append( x )
 
-	result = { 'Last Modified': lastMod, 'Items': result }
+	result = LocatedExternalDict( { 'Last Modified': lastMod, 'Items': result } )
 	return result
 
 
@@ -618,7 +628,10 @@ class _UGDView(object):
 
 	def __call__( self ):
 		user, ntiid = self.request.context.user, self.request.context.ntiid
-		return lists_and_dicts_to_ext_collection( self.getObjectsForId( user, ntiid ) )
+		result = lists_and_dicts_to_ext_collection( self.getObjectsForId( user, ntiid ) )
+		result.__parent__ = self.request.context
+		result.__name__ = ntiid
+		return result
 
 	def getObjectsForId( self, user, ntiid ):
 		""" Returns a sequence of values that can be passed to
@@ -942,8 +955,15 @@ class _UGDPostView(_UGDModifyViewBase):
 		context = self.request.context
 		# If our context contains a user resource, then that's where we should be trying to
 		# create things
-		owner_root = traversal.find_interface( context, app_interfaces.IUserRootResource )
-		owner = owner_root.user if owner_root else creator
+		owner_root = traversal.find_interface( context, _UserResource )
+		if owner_root is not None:
+			owner_root = owner_root.user
+		if owner_root is None:
+			owner_root = traversal.find_interface( context, nti_interfaces.IUser )
+		if owner_root is None and hasattr( context, 'container' ):
+			owner_root = traversal.find_interface( context.container, nti_interfaces.IUser )
+
+		owner = owner_root if owner_root else creator
 		externalValue = self.readInput()
 		datatype = None
 		# TODO: Which should have priority, class in the data,
@@ -1005,23 +1025,22 @@ class _UGDPostView(_UGDModifyViewBase):
 		self.request.response.status_int = 201
 
 		# Respond with the generic location of the object, within
-		# the user's Objects tree.
-		self.request.response.location = self.request.resource_url( traversal.find_interface( context, app_interfaces.IUserRootResource ),
+		# the owner's Objects tree.
+		self.request.response.location = self.request.resource_url( owner,
 																	'Objects',
 																	toExternalOID( containedObject ) )
-		# TODO: At some point in here we need to be making
-		# sure that the href and edit links are present and match the
-		# Location header. It's probably happening because there's no ACL on this object,
-		# so we can return an ACLLocationProxy with an ACL (one we synthesize or one
-		# based on the ACL of the context?). (Seealso: _UGDPutView) The below may or may not be correct:
-		containedParent = ACLLocationProxy( owner.getContainer( containedObject.containerId ),
-											traversal.find_interface( context, app_interfaces.IUserRootResource ),
-											containedObject.containerId )
 
+		__traceback_info__ = containedObject
+		assert containedObject.__parent__
+		assert containedObject.__name__
+		# TODO: Do we actually need to proxy to preserve the ACL? Or can that happen
+		# automatically now?
+		acl = nacl.ACL( containedObject, default=self )
+		assert acl is not self
 		return ACLLocationProxy( containedObject,
-								 containedParent,
-								 containedObject.id,
-								 nacl.ACL( containedObject, context.__acl__) )
+								 containedObject.__parent__,
+								 containedObject.__name__,
+								 nacl.ACL( containedObject ) )
 
 
 class _UGDDeleteView(_UGDModifyViewBase):
@@ -1118,18 +1137,17 @@ class _UGDPutView(_UGDModifyViewBase):
 			theObject = toExternalObject( theObject, 'personal-summary' )
 			self._check_object_exists( theObject, creator, containerId, objId )
 
-		# Hack: See _UGDPostView
-		try:
-			containedParent = ACLLocationProxy( creator.getContainer( theObject.containerId ),
-												traversal.find_interface( context, app_interfaces.IUserRootResource ),
-												theObject.containerId )
-		except AttributeError:
-			containedParent = context
-
+		__traceback_info__ = theObject
+		assert theObject.__parent__
+		assert theObject.__name__
+		# TODO: Do we need to proxy?
+		acl = nacl.ACL( theObject, default=self )
+		assert acl is not self
 		return ACLLocationProxy( theObject,
-								 containedParent,
-								 objId,
-								 nacl.ACL( theObject, context.__acl__) )
+								 theObject.__parent__,
+								 theObject.__name__,
+								 nacl.ACL( theObject ) )
+
 
 class _UGDFieldPutView(_UGDPutView):
 	"""
@@ -1250,7 +1268,7 @@ class _EnclosurePutView(_UGDModifyViewBase):
 	def __call__( self ):
 		context = self.request.context
 		assert IEnclosedContent.providedBy( context )
-		result = {}
+
 
 		# How should we be dealing with changes to Content-Type?
 		# Changes to Slug are not allowed because that would change the URL
@@ -1259,6 +1277,7 @@ class _EnclosurePutView(_UGDModifyViewBase):
 		if not context.mime_type.startswith( MIME_BASE ):
 			context.data = self._get_body_content()
 			_force_update_modification_time( context, time.time() )
+			result = hexc.HTTPNoContent()
 		else:
 			modeled_content = context.data
 			self.updateContentObject( modeled_content, self.readInput(self._get_body_content()) )
@@ -1354,6 +1373,8 @@ class _UserSearchView(object):
 		interface.alsoProvides( result, app_interfaces.IUncacheableInResponse )
 		interface.alsoProvides( result, IContentTypeAware )
 		result.mime_type = nti_mimetype_with_class( None )
+		result.__parent__ = self.dataserver.root
+		result.__name__ = 'UserSearch' # TODO: Hmm
 		return result
 
 def _method_not_allowed(request):
@@ -1432,6 +1453,10 @@ def _LibraryTOCRedirectView(request, default_href=None, ntiid=None):
 		def _t_e_o():
 			return {"Class": "Link", "MimeType": link_mt, "href": href, "rel": "content"}
 		link.toExternalObject = _t_e_o
+		interface.alsoProvides( link, loc_interfaces.ILocationInfo )
+		link.__parent__ = request.context
+		link.__name__ = href
+		link.getNearestSite = lambda: request.registry.getUtility( IDataserver ).root
 		return link
 
 	if accept_type in (json_mt,page_info_mt,page_info_mt_json):

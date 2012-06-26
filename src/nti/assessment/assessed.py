@@ -37,10 +37,11 @@ class QAssessedPart(SchemaConfigured,persistent.Persistent):
 
 	__repr__ = make_repr()
 
-@interface.implementer(interfaces.IQAssessedQuestion, nti_interfaces.IContained, nti_interfaces.IZContained)
+@interface.implementer(interfaces.IQAssessedQuestion, nti_interfaces.IContained, nti_interfaces.IZContained, nti_interfaces.ICreated)
 class QAssessedQuestion(SchemaConfigured,persistent.Persistent):
 	questionId = None
 	parts = ()
+	creator = None
 	id = None
 	containerId = None
 	__name__ = None
@@ -60,11 +61,11 @@ class QAssessedQuestion(SchemaConfigured,persistent.Persistent):
 	__repr__ = make_repr()
 
 
-@interface.implementer(interfaces.IQAssessedQuestionSet, nti_interfaces.IContained, nti_interfaces.IZContained)
+@interface.implementer(interfaces.IQAssessedQuestionSet, nti_interfaces.IContained, nti_interfaces.IZContained, nti_interfaces.ICreated)
 class QAssessedQuestionSet(SchemaConfigured,persistent.Persistent):
 	questionSetId = None
 	questions = ()
-
+	creator = None
 	id = None
 	containerId = None
 	__name__ = None

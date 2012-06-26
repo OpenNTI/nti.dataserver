@@ -19,6 +19,7 @@ from zope import interface
 from zope import component
 from zope.location import location
 from zope.location.location import LocationProxy
+from zope.location import interfaces as loc_interfaces
 import zope.traversing.interfaces
 
 from paste import httpheaders
@@ -96,7 +97,7 @@ def _is_valid_href( target ):
 	# We really want to check if this is a valid href. How best to do that?
 	return isinstance( target, six.string_types ) and  target.startswith( '/' )
 
-def render_link( parent_resource, link, user_root_resource=None ):
+def render_link( parent_resource, link, nearest_site=None ):
 
 	# TODO: This clearly doesn't work for links that
 	# are nested. What's less obvious is that
@@ -108,6 +109,7 @@ def render_link( parent_resource, link, user_root_resource=None ):
 	# might be referenced in multiple places. We could do OID links for the latter...
 	# Right now, we've hacked something in with traversal after the
 	# fact, and some gratuitous __parent__ attributes.
+	# TODO TODO: The above may no longer be correct at all
 	target = link.target
 	rel = link.rel
 	content_type = nti_mimetype_from_object( target )
@@ -125,8 +127,9 @@ def render_link( parent_resource, link, user_root_resource=None ):
 		# we can.
 		# FIXME: Hardcoded paths.
 		if ntiids.is_valid_ntiid_string( ntiid ):
-			#from IPython.core.debugger import Tracer; debug_here = Tracer()()
-			root = traversal.normal_resource_path( user_root_resource ) if user_root_resource else '/dataserver2'
+			# Place the NTIID reference under the most specific place possible: the owner,
+			# if we can get one, otherwise the global Site
+			root = traversal.normal_resource_path( target.creator ) if nti_interfaces.ICreated.providedBy( target ) and target.creator else traversal.normal_resource_path( nearest_site )
 			if ntiids.is_ntiid_of_type( ntiid, ntiids.TYPE_OID ):
 				href = root + '/Objects/' + ntiid
 			else:
@@ -135,34 +138,10 @@ def render_link( parent_resource, link, user_root_resource=None ):
 	elif _is_valid_href( target ):
 		href = target
 	else:
-		# let the custom URL hook, if any, be used
-		resource = LocationProxy( target,
-								  getattr( target, '__parent__', parent_resource ),
-										   #getattr( link, '__parent__', parent_resource ) ),
-								  getattr( target, '__name__',
-										   getattr( target, 'name', (target if isinstance(target,six.string_types) else None) )) )
-		# replace the actual User object with the userrootresource if we have one,
-		# by injecting it into the lineage. Note that we do this with proxies
-		# to avoid changing the persistent objects.
-		# TODO: This is probably not necessary anymore?
-		if user_root_resource and traversal.find_interface( resource, users.User ):
-			lineage = [user_root_resource if isinstance(x,users.User) else x
-					   for x in traversal.lineage(resource)]
-			lineage.reverse()
-
-			parent = None
-			for y in lineage:
-				if y == user_root_resource:
-					parent = user_root_resource.__parent__
-				y = LocationProxy( y, parent, y.__name__ )
-				parent = y
-			resource = parent
-
-		# This will raise a LocationError of something is broken
+		# This will raise a LocationError if something is broken
 		# in the chain. That shouldn't happen and needs to be dealt with
 		# at dev time.
-		href = traversal.normal_resource_path( resource )
-
+		href = traversal.normal_resource_path( target )
 
 	result = None
 	if href: # TODO: This should be true all the time now, right?
@@ -175,33 +154,8 @@ def render_link( parent_resource, link, user_root_resource=None ):
 			result['ntiid'] = ntiid
 		if not _is_valid_href( href ) and not ntiids.is_valid_ntiid_string( href ): # pragma: no cover
 			# This shouldn't be possible anymore.
-			__traceback_info__ = href, link, target, parent_resource, user_root_resource
+			__traceback_info__ = href, link, target, parent_resource, nearest_site
 			raise zope.traversing.interfaces.TraversalError(href)
-			# if href and href.startswith( 'users/' ) or href.startswith( 'providers/' ):
-			# 	# TODO: Hardcoded paths
-			# 	href = '/dataserver2/' + href
-			# 	result[StandardExternalFields.HREF] = href
-			# 	logger.warn( "Fixed up invalid href %s for link %s parent %s root %s",
-			# 			 href, link, parent_resource, user_root_resource )
-			# else:
-			# 	logger.warn( "Generating invalid href %s for link %s target %s target-parent %s parent %s root %s",
-			# 			 href, link,
-			# 			 target,
-			# 			 getattr( target, '__parent__', None ),
-			# 			 parent_resource, user_root_resource )
-			# 	try:
-			# 		if _is_valid_href( traversal.normal_resource_path( target ) ):
-			# 			href = traversal.normal_resource_path( target )
-			# 			result[StandardExternalFields.HREF] = href
-			# 			logger.warn( "Fixed up invalid href to target %s", href )
-			# 	except AttributeError:
-			# 		pass
-
-			# 	if href and href.startswith( 'OU/' ):
-			# 		# FIXME More hardcoded paths. WTF are these links broken?
-			# 		href = '/dataserver2/providers/'  + href
-			# 		result[StandardExternalFields.HREF] = href
-			# 		logger.warn( "Fixed up invalid href to %s", href )
 
 	return result
 
@@ -210,7 +164,6 @@ def render_externalizable(data, system):
 	response = request.response
 
 	lastMod = getattr( data, 'lastModified', 0 )
-	#from IPython.core.debugger import Tracer; debug_here = Tracer()()
 	body = toExternalObject( data, name='', registry=request.registry,
 							 # Catch *nested* errors during externalization. We got this far,
 							 # at least send back some data for the main object. The exception will be logged.
@@ -227,12 +180,17 @@ def render_externalizable(data, system):
 		body.setdefault( StandardExternalFields.LINKS, [] )
 	except: pass
 
-	user_root = None
-	if hasattr( request, 'context' ):
-		# TODO: Remove all this reliance on the IUserRootResource
-		# it breaks in several cases that we're hacking around.
-		# In particular, it breaks when the entry point is UserSearch
-		user_root = traversal.find_interface( request.context, app_interfaces.IUserRootResource )
+	# Locate the nearest site to use as our base URL for
+	# relative/unbased links
+	try:
+		loc_info = loc_interfaces.ILocationInfo( data )
+	except TypeError:
+		# Not adaptable (not located). Assume the main root.
+		nearest_site = request.registry.getUtility( nti_interfaces.IDataserver ).root
+	else:
+		# Located. Better be able to get a site, otherwise we have a
+		# broken chain.
+		nearest_site = loc_info.getNearestSite()
 
 	def writable(obj):
 		"""
@@ -275,7 +233,7 @@ def render_externalizable(data, system):
 
 			if StandardExternalFields.OID in obj \
 			   and writable( obj ) \
-			   and user_root : # TODO: This breaks for providers, need an iface
+			   and True: #user_root : # TODO: This breaks for providers, need an iface
 				# TODO: This is weird, assuming knowledge about the URL structure here
 				# Should probably use request ILocationInfo to traverse back up to the ISite
 				if not any( [l.rel == 'edit'
@@ -284,17 +242,21 @@ def render_externalizable(data, system):
 					# Create a path through to the *direct* object URL, without
 					# using resource traversal. This remains valid in the event of name changes
 					obj_root = location.Location()
-					obj_root.__parent__ = user_root; obj_root.__name__ = 'Objects'
+					# Prefer a URL relative to the creator if we can get one, otherwise
+					# go for the global one beneath the site
+					obj_root.__parent__ = data.creator if nti_interfaces.ICreated.providedBy( data ) and data.creator else nearest_site
+					obj_root.__name__ = 'Objects'
 					target = location.Location()
-					target.__parent__ = obj_root; target.__name__ = obj[StandardExternalFields.OID]
+					target.__parent__ = obj_root
+					target.__name__ = obj[StandardExternalFields.OID]
 					link = links.Link( target, rel='edit' )
 					obj[StandardExternalFields.LINKS].append( link )
 
 					# For cases that we can, make edit and the toplevel href be the same.
 					# this improves caching
-					obj['href'] = render_link( parent, link, user_root )['href']
+					obj['href'] = render_link( parent, link, nearest_site )['href']
 
-			obj[StandardExternalFields.LINKS] = [render_link(parent, link, user_root) if isinstance( link, links.Link ) else link
+			obj[StandardExternalFields.LINKS] = [render_link(parent, link, nearest_site) if isinstance( link, links.Link ) else link
 												 for link
 												 in obj[StandardExternalFields.LINKS]]
 			if not obj[StandardExternalFields.LINKS]:
