@@ -217,7 +217,8 @@ def site_tween_factory(handler, registry):
 
 		setSite( site )
 		try:
-			# Now (and only now, that the site is setup) record info in the transaction
+			# Now (and only now, that the site is setup since that's when we can access the DB
+			# and get the user) record info in the transaction
 			uid = pyramid.security.authenticated_userid( request )
 			if uid:
 				transaction.get().setUser( uid )
@@ -225,12 +226,14 @@ def site_tween_factory(handler, registry):
 			request.environ['nti.early_request_teardown'] = early_request_teardown
 			response = handler(request)
 			### FIXME:
-			# pyramid_tm <= 0.4 has a bug in that if committing raises a retryable exception,
+			# pyramid_tm <= 0.5 has a bug in that if committing raises a retryable exception,
 			# it doesn't actually retry (because commit is inside the __exit__ of a context
 			# manager, and a normal exit ignores the return value of __exit__, so the loop
 			# doesn't actually loop: the return statement trumps).
 			# Thus, we commit here so that an exception is raised and caught.
 			# See https://github.com/Pylons/pyramid_tm/issues/4
+			# Confirmed and filed against 0.4. Probably still the case with 0.5, but our tests
+			# pass with or without these next two lines. There's no real harm leaving them in (right?)
 			if not transaction.isDoomed() and not pyramid_tm.default_commit_veto( request, response ):
 				transaction.commit()
 			return response

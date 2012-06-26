@@ -111,7 +111,7 @@ setup(
 		'pylint',
 		'pyquery >= 1.2.1', # jquery-like traversing of python datastructures. lxml, cssselect
 		'pyramid >= 1.3.2' ,
-		'pyramid_tm',
+		'pyramid_tm >= 0.5',
 		'pyramid_traversalwrapper',
 		'pyramid_who',
 		'pyramid_zcml >= 0.9.2',
