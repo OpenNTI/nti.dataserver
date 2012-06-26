@@ -275,6 +275,33 @@ def acl_from_aces( *args ):
 	return _ACL( args )
 
 @interface.implementer(nti_interfaces.IACLProvider)
+@component.adapter(nti_interfaces.IEntity)
+class _EntityACLProvider(object):
+	"""
+	ACL provider for class:`nti_interfaces.IEntity` objects.
+    The entity itself is allowed all permissions.
+	"""
+	# TODO: Extend this for other subclasses such as communities?
+	# Define 'roles' and make Users members of roles that represent
+	# their community
+
+	def __init__( self, entity ):
+		self._entity = entity
+
+	@property
+	def __acl__( self ):
+		"""
+		:return: A fresh, mutable list containing exactly three :class:`_ACE`s, giving
+			all rights to the entity, read access to authenticated users (is that right?)
+			and denying all rights to everyone else.
+		"""
+		acl = _ACL([ace_allowing( self._entity.username, nti_interfaces.ALL_PERMISSIONS, self ),
+					ace_allowing( pyramid.security.Authenticated, auth.ACT_READ, self),])
+		# Everyone else can do nothing
+		acl.append( nti_interfaces.ACE_DENY_ALL )
+		return acl
+
+@interface.implementer(nti_interfaces.IACLProvider)
 @component.adapter(nti_interfaces.ICreated)
 class _CreatedACLProvider(object):
 	"""
@@ -373,6 +400,7 @@ class _SectionInfoACLProvider(_CreatedACLProvider):
 		result.append( ace_denying( nti_interfaces.EVERYONE_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _SectionInfoACLProvider ) )
 		return result
 
+@component.adapter( nti_interfaces.IClassInfo )
 class _ClassInfoACLProvider(_CreatedACLProvider):
 	"""
 	Classes are viewable by anyone enrolled in any section;
@@ -380,7 +408,6 @@ class _ClassInfoACLProvider(_CreatedACLProvider):
 	write access; admins of the providing organization have full access.
 	(Obviously this will change.)
 	"""
-	component.adapts( nti_interfaces.IClassInfo )
 
 	def __init__( self, obj ):
 		super(_ClassInfoACLProvider,self).__init__(obj)
@@ -414,12 +441,12 @@ class _ClassInfoACLProvider(_CreatedACLProvider):
 
 		return _ACL(result)
 
+@component.adapter( nti_interfaces.IEnclosedContent )
 class _EnclosedContentACLProvider(_CreatedACLProvider):
 	"""
 	The ACL for enclosed content depends on a few things, most notably
 	whether the content it is enclosing itself has an ACL.
 	"""
-	component.adapts( nti_interfaces.IEnclosedContent )
 
 	def __init__( self, obj ):
 		super(_EnclosedContentACLProvider,self).__init__( obj )

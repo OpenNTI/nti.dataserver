@@ -79,12 +79,12 @@ class Provider(users.User):
 
 		return result
 
+@interface.implementer( nti_interfaces.IACLProvider )
+@component.adapter( nti_interfaces.IProviderOrganization )
 class _ProviderACLProvider(object):
 	"""
-	Creates ACLs using pseudo-roles within the providers namespace.
+	Creates ACLs using pseudo-roles within the provider's namespace.
 	"""
-	interface.implements( nti_interfaces.IACLProvider )
-	component.adapts( nti_interfaces.IProviderOrganization )
 
 	def __init__( self, provider ):
 		self.provider = provider
