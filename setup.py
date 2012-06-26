@@ -61,6 +61,7 @@ setup(
 	install_requires = [
 		'Chameleon >= 2.9.2',
 		'RestrictedPython',
+		'ZConfig >= 2.9.3',
 		'ZODB3 >= 3.10.5',
 		# ZODB RelStorage:
 		# 'pylibmc', # for memcached support
