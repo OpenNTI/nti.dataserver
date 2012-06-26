@@ -46,7 +46,8 @@ def test_content_type():
 
 def test_user_pseudo_resources_exist():
 	user = users.User( 'jason.madden@nextthought.com' )
-
+	# Fake out an ACL for this user since those are required now
+	user.__acl__ = (1,)
 	class Parent(object):
 		request = None
 

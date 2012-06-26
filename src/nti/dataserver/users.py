@@ -1,7 +1,12 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+$Id$
+"""
+from __future__ import print_function, unicode_literals
 
-import logging
-logger = logging.getLogger( __name__ )
+
+logger = __import__( 'logging' ).getLogger( __name__ )
 
 
 import numbers
@@ -18,6 +23,7 @@ from zope.lifecycleevent import ObjectCreatedEvent
 from zope.keyreference.interfaces import IKeyReference
 
 import persistent
+import ZODB.POSException
 
 import collections
 import urllib
@@ -100,7 +106,14 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject,E
 
 
 	def __repr__(self):
-		return '%s("%s","%s","%s","%s")' % (self.__class__.__name__,self.username,self.avatarURL, self.realname, self.alias)
+		try:
+			return '%s("%s","%s","%s","%s")' % (self.__class__.__name__,self.username,self.avatarURL, self.realname, self.alias)
+		except ZODB.POSException.ConnectionStateError:
+			# This most commonly (only?) comes up in unit tests when nose defers logging of an
+			# error until after the transaction has exited. There will
+			# be other log messages about trying to load state when connection is closed,
+			# so we don't need to try to log it as well
+			return object.__repr__(self)
 
 	def __str__(self):
 		return self.username

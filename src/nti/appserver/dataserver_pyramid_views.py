@@ -17,6 +17,8 @@ import anyjson as json
 from zope import component
 from zope import interface
 from zope.mimetype.interfaces import IContentTypeAware
+import zope.security.interfaces
+import zope.cachedescriptors.property
 
 import pyramid.security as sec
 import pyramid.httpexceptions as hexc
@@ -138,32 +140,25 @@ def unquoting( f ):
 
 @interface.implementer(app_interfaces.IUserRootResource)
 class _UserResource(object):
-	__acl__ = (
-		# Authenticated can read
-		(sec.Allow, sec.Authenticated, nauth.ACT_READ),
-		# Everyone else can do nothing
-		(sec.Deny,  sec.Everyone, sec.ALL_PERMISSIONS)
-		)
 
 	def __init__( self, parent, user, name=None ):
 		self.__parent__ = parent
 		self.__name__ = name or user.username
 		self.request = parent.request
 		self.user = user
+		__traceback_info__ = user, parent, name
 		# Our resource is the user, which for the sake of the weirdness
-		# in the view processing, sits below us.
+		# in the view processing, sits below us. (We like for IUserRootResource
+		# to be in the lineage; that needs to go away)
 		self.resource = LocationProxy( user, self, self.__name__ )
-		self._init_acl()
+		self.__acl__ = nacl.ACL( self.user )
+		assert self.__acl__, zope.security.interfaces.Forbidden( "Resource had no ACL/provider", user )
 		self._pseudo_classes_ = { 'Objects': _ObjectsContainerResource,
 								  'NTIIDs': _NTIIDsContainerResource,
 								  'Library': _LibraryResource,
 								  'Pages': _PagesResource,
 								  'EnrolledClassSections': _AbstractUserPseudoContainerResource }
 
-	def _init_acl(self):
-		# Owner can do anything
-		self.__acl__ = [ (sec.Allow, self.user.username, sec.ALL_PERMISSIONS) ]
-		self.__acl__.extend( _UserResource.__acl__ )
 
 	@unquoting
 	def __getitem__( self, key ):
@@ -180,7 +175,7 @@ class _UserResource(object):
 
 		if resource is None:
 			# Is this an individual field we can update?
-			# NOTE: Container names and field names must not overlap
+			# NOTE: Container names and field names and pseudo-classes must not overlap
 			field_traverser = app_interfaces.IExternalFieldTraverser( self.user, None )
 			resource = field_traverser.get(key) if field_traverser is not None else None
 			if resource is not None:
@@ -190,7 +185,8 @@ class _UserResource(object):
 			# OK, assume a new container
 			resource = _NewContainerResource( self, {}, key, self.user )
 
-		# Allow the owner full permissions
+		# Allow the owner full permissions.
+		# TODO: What about others?
 		resource.__acl__ = ( (sec.Allow, self.user.username, sec.ALL_PERMISSIONS), )
 
 		return resource
@@ -203,9 +199,6 @@ class _ProviderResource(_UserResource):
 	def __init__( self, *args, **kwargs ):
 		super(_ProviderResource,self).__init__( *args, **kwargs )
 		del self._pseudo_classes_['EnrolledClassSections']
-
-	def _init_acl( self ):
-		self.__acl__ = nacl.ACL( self.resource )
 
 class _UsersRootResource( object ):
 
@@ -396,26 +389,15 @@ class _AbstractObjectResource(object):
 
 	def _acl_for_resource( self, res ):
 		result = nacl.ACL( res, default=self )
-		if result is self:
-			logger.warn( "An object has no ACL provider: %s", res )
-			# This branch is never hit in the tests, but might be in real life?
-			try:
-				result = [ (sec.Allow, res.creator.username, sec.ALL_PERMISSIONS) ]
-			except (AttributeError,TypeError):
-				# At least make the default mutable
-				result = [] #list(self.__acl__)
+		# At this point, we require every resource we publish to have an
+		# ACL. It's a coding error if it doesn't.
+		# Consequently, this branch should never get hit
+		assert result is not self, zope.security.interfaces.Forbidden( "Resource had no ACL/provider", res )
 
-			# Our defaults go at the end so as not to pre-empt anything we
-			# have established so far
-			result.extend( ( # Authenticated can read
-							 (sec.Allow, sec.Authenticated, nauth.ACT_READ),
-							 # Everyone else can do nothing
-							 (sec.Deny,  sec.Everyone, sec.ALL_PERMISSIONS)
-							))
 		return result
 
 
-	@property
+	@zope.cachedescriptors.property.Lazy
 	def __acl__( self ):
 		return self._acl_for_resource( self.resource )
 
