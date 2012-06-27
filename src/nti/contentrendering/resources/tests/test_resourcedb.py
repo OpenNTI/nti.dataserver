@@ -114,7 +114,6 @@ class TestResourceDBTabular(ConfiguringTestBase):
 		# Our verification is simple, based just on equality to existing files. This is probable
 		# fragile.
 		normalized_source= rdb._db.keys()[0]
-		from IPython.core.debugger import Tracer; debug_here = Tracer()() ## DEBUG ##
 
 		resource_png = rdb.getResourcePath( normalized_source, ('png','orig', 1))
 		resource_svg = rdb.getResourcePath( normalized_source, ('svg',) )
