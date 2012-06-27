@@ -9,17 +9,14 @@ import sys
 import pkg_resources
 import json
 from nti import deprecated
-import nti.dataserver as dataserver
 from nti.dataserver.users import User, Community, FriendsList
 import nti.dataserver.providers as providers
 import nti.dataserver.classes as classes
-import nti.dataserver.datastructures as datastructures
+from nti.dataserver import containers
 import nti.dataserver.quizzes as quizzes
 
-from zope import component
 from zope import interface
 from zope.generations import interfaces as gen_interfaces
-from nti.dataserver import interfaces as nti_interfaces
 
 _DATA_QUIZ_0 = {'Class': 'Quiz',
 				'ID': 'tag:nextthought.com,2011-10:mathcounts-Quiz-mathcounts.2011.0',
@@ -292,7 +289,7 @@ class ExampleDatabaseInitializer(object):
 
 		# Quizzes
 		if not ONLY_NEW or 'quizzes' not in root or 'quizzes' not in root['quizzes']:
-			root['quizzes']['quizzes'] = datastructures.ModDateTrackingOOBTree()
+			root['quizzes']['quizzes'] = containers.LastModifiedBTreeContainer()
 			self._install_quizzes( root )
 
 	def _install_quizzes( self, root ):
@@ -326,7 +323,7 @@ class ExampleDatabaseInitializer(object):
 	def evolve( self, context, generation ):
 		conn = context.connection
 		root = conn.root()
-		root = root['nti.dataserver'].getSiteManager()
+		root = root['nti.dataserver']
 		self._install_quizzes( root )
 
 		# Add a missing community, if needed

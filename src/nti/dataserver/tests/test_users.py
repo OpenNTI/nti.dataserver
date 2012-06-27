@@ -6,6 +6,7 @@ from hamcrest import (assert_that, is_, has_entry, instance_of,
 					  same_instance, is_not, none, has_length,
 					  contains)
 import unittest
+from nose.tools import assert_raises
 
 
 import persistent
@@ -52,16 +53,18 @@ def test_create_friends_list_through_registry():
 	# case insensitive
 	yield _test, 'friendslists'
 
-from unittest import case
-class AssertRaisesContext(case._AssertRaisesContext):
-	failureException = AssertionError
-	def __init__( self, expected ):
-		super(AssertRaisesContext,self).__init__( expected, self )
-
 def test_adding_wrong_type_to_friendslist():
 	friends = FriendsListContainer()
-	with AssertRaisesContext(InvalidItemType):
+	with assert_raises(InvalidItemType):
 		friends['k'] = 'v'
+
+def test_friends_list_case_insensitive():
+	user = User( 'foo@bar', 'temp' )
+	fl = user.maybeCreateContainedObjectWithType( 'FriendsLists', {'Username': 'Friend' } )
+	user.addContainedObject( fl )
+
+	assert_that( user.getContainedObject( "FriendsLists", "Friend" ),
+				 is_( user.getContainedObject( 'FriendsLists', "friend" ) ) )
 
 
 def test_everyone_has_creator():
@@ -354,12 +357,12 @@ class TestFeedbackEvent(mock_dataserver.ConfiguringTestBase):
 		device = user.maybeCreateContainedObjectWithType( 'Devices', 'deadbeef' )
 		user.addContainedObject( device )
 		assert_that( user.devices, has_value( device ) )
-		assert_that( user.devices, has_length( 2 ) ) # Last Modified, Device
+		assert_that( user.devices, has_length( 1 ) )
 
 		event = APNSDeviceFeedback( 5, 'deadbeef'.decode('hex') )
 		notify( event )
 
-		assert_that( user.devices, has_length( 1 ) )
+		assert_that( user.devices, has_length( 0 ) )
 
 if __name__ == '__main__':
 	unittest.main()
