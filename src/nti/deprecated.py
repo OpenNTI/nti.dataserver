@@ -87,6 +87,18 @@ try:
 			zope.deprecation.__show__.off()
 		def __exit__( self, *args ):
 			zope.deprecation.__show__.on()
+	import functools
+
+	def hides_warnings(f):
+		"""
+		A decorator that causes the wrapped function to not show warnings when
+		it executes.
+		"""
+		@functools.wraps(f)
+		def inner(*args, **kwargs):
+			with hiding_warnings():
+				return f(*args,**kwargs)
+		return inner
 
 except ImportError:
 	import traceback

@@ -21,6 +21,7 @@ from zope.deprecation import deprecated
 from zope.event import notify
 from zope.lifecycleevent import ObjectCreatedEvent
 from zope.keyreference.interfaces import IKeyReference
+from zope.location import interfaces as loc_interfaces
 
 import persistent
 import ZODB.POSException
@@ -35,6 +36,7 @@ from nti.externalization.persistence import PersistentExternalizableList, getPer
 from nti.externalization.datastructures import ExternalizableDictionaryMixin
 
 from nti.dataserver import datastructures
+from nti.dataserver import dicts
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import enclosures
 from nti.dataserver import mimetype
@@ -539,21 +541,18 @@ class Device(persistent.Persistent,
 	def __hash__(self):
 		return self.deviceId.__hash__()
 
-class _FriendsListMap(datastructures.AbstractNamedContainerMap):
+class _FriendsListMap(datastructures.AbstractCaseInsensitiveNamedLastModifiedBTreeContainer):
 	interface.implements(nti_interfaces.IFriendsListContainer)
 
 	contained_type = nti_interfaces.IFriendsList
 	container_name = 'FriendsLists'
-
-	def _newContainerData(self):
-		return datastructures.KeyPreservingCaseInsensitiveModDateTrackingOOBTree()
 
 
 nti_interfaces.IFriendsList.setTaggedValue( nti_interfaces.IHTC_NEW_FACTORY,
 											Factory( lambda extDict:  FriendsList( extDict['Username'] if 'Username' in extDict else extDict['ID'] ),
 													 interfaces=(nti_interfaces.IFriendsList,)) )
 
-class _DevicesMap(datastructures.AbstractNamedContainerMap):
+class _DevicesMap(datastructures.AbstractNamedLastModifiedBTreeContainer):
 	interface.implements(nti_interfaces.IDeviceContainer)
 	contained_type = nti_interfaces.IDevice
 	container_name = 'Devices'
@@ -569,7 +568,7 @@ nti_interfaces.IDevice.setTaggedValue( nti_interfaces.IHTC_NEW_FACTORY,
 												interfaces=(nti_interfaces.IDevice,)) )
 
 
-class _TranscriptsMap(datastructures.AbstractNamedContainerMap):
+class _TranscriptsMap(datastructures.AbstractNamedLastModifiedBTreeContainer):
 	interface.implements(nti_interfaces.ITranscriptContainer)
 	contained_type = nti_interfaces.ITranscript
 	container_name = 'Transcripts'
@@ -591,7 +590,8 @@ class User(Principal):
 	method. """
 
 	interface.implements(nti_interfaces.IContainerIterable,
-						 nti_interfaces.IUser)
+						 nti_interfaces.IUser,
+						 loc_interfaces.ISublocations)
 
 	@classmethod
 	def get_user( cls, username, dataserver=None, default=None ):
@@ -715,7 +715,7 @@ class User(Principal):
 		self.devices.__parent__ = self
 
 		self.containers = datastructures.ContainedStorage(create=self,
-														  containersType=datastructures.KeyPreservingCaseInsensitiveModDateTrackingOOBTree,
+														  containersType=dicts.CaseInsensitiveLastModifiedDict,
 														  containers={self.friendsLists.container_name: self.friendsLists,
 																	  self.devices.container_name: self.devices })
 		self.containers.__parent__ = self
@@ -977,6 +977,11 @@ class User(Principal):
 			for o in container.values():
 				if not of_type or isinstance( o, of_type ):
 					yield o
+
+	def sublocations(self):
+		yield self.friendsLists
+		yield self.devices
+		yield self.containers
 
 	def _is_container_ntiid( self, containerId ):
 		"""

@@ -207,7 +207,7 @@ class TestUGDViews(ConfiguringTestBase):
 		c = C()
 		user.addContainedObject( c )
 		assert_that( user.getContainedObject( c.containerId, c.id ), is_( c ) )
-		assert_that( user.getContainer( C.containerId ), has_length( 2 ) )
+		assert_that( user.getContainer( C.containerId ), has_length( 1 ) )
 		view.getObjectsForId( user, C.containerId )
 
 		# Then deleting, does not go back to error

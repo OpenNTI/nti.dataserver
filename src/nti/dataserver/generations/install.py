@@ -6,7 +6,7 @@ from __future__ import print_function, unicode_literals
 
 __docformat__ = 'restructuredtext'
 
-generation = 13
+generation = 14
 
 from zope.generations.generations import SchemaManager
 
@@ -38,6 +38,7 @@ from nti.dataserver import datastructures, _Dataserver
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import sessions
+from nti.dataserver import containers as container
 
 import copy
 def install_chat( context ):
@@ -69,12 +70,12 @@ def install_main( context ):
 	dataserver_folder.setSiteManager( lsm )
 	assert ISite.providedBy( dataserver_folder )
 
-	# FIXME: These should almost certainly be IFolder implementations
+	# FIXME: These should almost certainly be IFolder implementations?
 	# TODO: the 'users' key should probably be several different keys, one for each type of
 	# Entity object; that way traversal works out much nicer and dataserver_pyramid_views is
 	# simplified through dropping UserRootResource in favor of normal traversal
 	for key in ('users', 'vendors', 'library', 'quizzes', 'providers' ):
-		dataserver_folder[key] = datastructures.KeyPreservingCaseInsensitiveModDateTrackingBTreeContainer()
+		dataserver_folder[key] = container.CaseInsensitiveLastModifiedBTreeContainer()
 		dataserver_folder[key].__name__ = key
 
 	if 'Everyone' not in dataserver_folder['users']:

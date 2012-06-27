@@ -12,6 +12,7 @@ from nti.dataserver.generations.evolve12 import evolve
 
 
 import nti.tests
+import nti.deprecated
 from nti.tests import verifiably_provides
 
 from ZODB import DB, MappingStorage
@@ -35,7 +36,8 @@ class TestEvolve12(nti.tests.ConfiguringTestBase):
 		assert_that( context.connection.root()['nti.dataserver'], verifiably_provides( ISite ) )
 		assert_that( context.connection.root()['nti.dataserver'], verifiably_provides( IFolder ) )
 		# has_entry doesn't work with a Folder so do the lookup manually
-		assert_that( context.connection.root()['nti.dataserver']['users'], is_( datastructures.KeyPreservingCaseInsensitiveModDateTrackingBTreeContainer ) )
+		with nti.deprecated.hiding_warnings():
+			assert_that( context.connection.root()['nti.dataserver']['users'], is_( datastructures.KeyPreservingCaseInsensitiveModDateTrackingBTreeContainer ) )
 
 
 		# And the enclosure name is fixed
@@ -74,9 +76,10 @@ def install_main( context ):
 	lsm = LocalSiteManager( None, default_folder=None ) # No parent
 	container.setSiteManager( lsm )
 
-	for key in ('users', 'vendors', 'library', 'quizzes', 'providers' ):
-		lsm[key] = datastructures.KeyPreservingCaseInsensitiveModDateTrackingBTreeContainer()
-		lsm[key].__name__ = key
+	with nti.deprecated.hiding_warnings():
+		for key in ('users', 'vendors', 'library', 'quizzes', 'providers' ):
+			lsm[key] = datastructures.KeyPreservingCaseInsensitiveModDateTrackingBTreeContainer()
+			lsm[key].__name__ = key
 
 	if 'Everyone' not in lsm['users']:
 		# Hmm. In the case that we're running multiple DS instances in the

@@ -149,6 +149,7 @@ setup(
 		'z3c.bcrypt >= 1.1',
 		'z3c.coverage >= 1.2.0', # TODO: Do we need this?
 		'z3c.pt >= 2.2.3', # Better ZPT support than plastex, add-in to Chameleon
+		'zc.dict >= 1.3b1', # BTree based dicts that are subclassable
 		'zc.intid >= 1.0.1',
 		'zc.queue >= 1.3',
 		'zc.zlibstorage >= 0.1.1', # compressed records. Will be built-in to newer ZODB

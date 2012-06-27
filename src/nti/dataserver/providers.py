@@ -10,7 +10,7 @@ from nti.ntiids import ntiids
 from nti.dataserver import authorization as auth
 from nti.dataserver.authorization_acl import ace_allowing, ace_denying
 
-class _ClassMap(datastructures.AbstractNamedContainerMap):
+class _ClassMap(datastructures.AbstractNamedLastModifiedBTreeContainer):
 
 	contained_type = nti_interfaces.IClassInfo
 	container_name = 'Classes'
@@ -34,8 +34,8 @@ class Provider(users.User):
 
 		super(Provider,self).__init__( username, *args, **kwargs )
 		self.classes = _ClassMap()
-		self.classes.__parent__ = self
 		self.containers.addContainer( 'Classes', self.classes )
+		self.classes.__parent__ = self
 		# Strip the '@'
 		self.username = self.username.split( '@' )[0]
 		# Providers don't have friends or devices

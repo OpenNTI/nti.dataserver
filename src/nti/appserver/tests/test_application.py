@@ -100,7 +100,7 @@ class TestApplication(ApplicationTestBase):
 			user = self._create_user( )
 			contained.containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
 			user.addContainedObject( contained )
-			assert_that( user.getContainer( contained.containerId ), has_length( 2 ) )
+			assert_that( user.getContainer( contained.containerId ), has_length( 1 ) )
 
 		testapp = TestApp( self.app )
 		path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + contained.containerId + ')/UserGeneratedData'
@@ -115,7 +115,7 @@ class TestApplication(ApplicationTestBase):
 			user = self._create_user()
 			contained.containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
 			user.addContainedObject( contained )
-			assert_that( user.getContainer( contained.containerId ), has_length( 2 ) )
+			assert_that( user.getContainer( contained.containerId ), has_length( 1 ) )
 
 			user2 = self._create_user( username='foo@bar' )
 			user2._addSharedObject( contained )
@@ -134,7 +134,7 @@ class TestApplication(ApplicationTestBase):
 			user = self._create_user()
 			contained.containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
 			user.addContainedObject( contained )
-			assert_that( user.getContainer( contained.containerId ), has_length( 2 ) )
+			assert_that( user.getContainer( contained.containerId ), has_length( 1 ) )
 
 		testapp = TestApp( self.app )
 		path = '/dataserver2/users/sjohnson@nextthought.com/Pages/' + contained.containerId + '/UserGeneratedData'
@@ -273,7 +273,7 @@ class TestApplication(ApplicationTestBase):
 			user = self._create_user()
 			contained.containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
 			user.addContainedObject( contained )
-			assert_that( user.getContainer( contained.containerId ), has_length( 2 ) )
+			assert_that( user.getContainer( contained.containerId ), has_length( 1 ) )
 
 		testapp = TestApp( self.app )
 		res = testapp.get( '/dataserver2', extra_environ=self._make_extra_environ())
@@ -302,7 +302,7 @@ class TestApplication(ApplicationTestBase):
 			user = self._create_user()
 			contained.containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
 			user.addContainedObject( contained )
-			assert_that( user.getContainer( contained.containerId ), has_length( 2 ) )
+			assert_that( user.getContainer( contained.containerId ), has_length( 1 ) )
 
 		testapp = TestApp( self.app )
 		# The results are not defined across the search types,
