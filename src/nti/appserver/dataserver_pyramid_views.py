@@ -1385,7 +1385,11 @@ def _provider_redirect_classes(request):
 	raise hexc.HTTPFound(location=class_path)
 
 
-def _create_page_info(request, href, ntiid):
+def _create_page_info(request, href, ntiid, last_modified=0):
+	"""
+	:param float last_modified: If greater than 0, the best known date for the
+		modification time of the contents of the `href`.
+	"""
 	# Traverse down to the pages collection and use it to create the info.
 	# This way we get the correct link structure
 
@@ -1403,6 +1407,13 @@ def _create_page_info(request, href, ntiid):
 		### XXX FIXME: We need to be sure we don't send back the
 		# solutions and explanations right now
 		info.extra_data = { 'AssessmentItems': for_file }
+
+	if last_modified:
+		# FIXME: Need to take into account the assessment item times as well
+		# This is probably not huge, because right now they both change at the
+		# same time due to the rendering process. But we can expect that to
+		# decouple
+		info.lastModified = last_modified
 	return info
 
 
@@ -1420,6 +1431,7 @@ def _LibraryTOCRedirectView(request, default_href=None, ntiid=None):
 	of the data can be returned.
 	"""
 	href = getattr(request.context, 'href', default_href )
+	lastModified = 0
 	# Right now, the ILibraryTOCEntries always have relative hrefs,
 	# which may or may not include a leading /.
 	# TODO: We're assuming these map into the URL space
@@ -1427,6 +1439,7 @@ def _LibraryTOCRedirectView(request, default_href=None, ntiid=None):
 	if not href.startswith( '/' ):
 		root = traversal.find_interface( request.context, lib_interfaces.IContentPackage )
 		if root: # missing in the root ntiid case
+			lastModified = getattr( root, 'lastModified', 0 ) # only IFilesystemContentPackage guaranteed to have
 			href = root.root + '/' + href
 			href = href.replace( '//', '/' )
 			if not href.startswith( '/' ):
@@ -1460,7 +1473,7 @@ def _LibraryTOCRedirectView(request, default_href=None, ntiid=None):
 		return link
 
 	if accept_type in (json_mt,page_info_mt,page_info_mt_json):
-		return _create_page_info(request, href, ntiid or request.context.ntiid)
+		return _create_page_info(request, href, ntiid or request.context.ntiid, last_modified=lastModified)
 
 	# ...send a 302. Return rather than raise so that webtest works better
 	return hexc.HTTPSeeOther( location=href )

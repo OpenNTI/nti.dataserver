@@ -78,6 +78,11 @@ class IFilesystemContentUnit(IContentUnit,IFilesystemEntry):
 
 	The values for the `href` and `filename` attributes will be the same.
 	"""
+	# TODO: Consider making this a zope.dublincore.interfaces.IDCTimes subtype,
+	# to get modified and created
+
+	lastModified = schema.Float( title="Time since the epoch this unit was last modified.",
+								 readonly=True )
 
 class IFilesystemContentPackage(IContentPackage,IFilesystemEntry):
 	"""

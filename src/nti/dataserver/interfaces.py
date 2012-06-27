@@ -168,6 +168,7 @@ class ILastModified(interface.Interface):
 	"""
 	Something that tracks a modification timestamp.
 	"""
+	# TODO: Combine/replace this with zope.dublincore.IDCTimes
 	lastModified = schema.Float( title=u"The timestamp at which this object or its contents was last modified." )
 	createdTime = schema.Float( title=u"The timestamp at which this object was created." )
 
