@@ -51,6 +51,14 @@ class FilesystemContentUnit(ContentUnit):
 
 	filename = None
 
+	@property
+	def lastModified( self ):
+		try:
+			return os.stat( self.filename )[os.path.stat.ST_MTIME]
+		except OSError:
+			logger.debug( "Failed to get last modified for %s", self.filename, exc_info=True )
+			return 0
+
 class ContentPackage(ContentUnit):
 	"""
 	Simple implementation of :class:`IContentPackage`.

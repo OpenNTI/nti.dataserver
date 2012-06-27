@@ -486,6 +486,7 @@ class _NTIIDEntry(object):
 
 	extra_links = ()
 	extra_data = None
+	lastModified = 0
 
 	def __init__(self, parent, ntiid):
 		self.__parent__ = parent
@@ -502,6 +503,10 @@ class _NTIIDEntry(object):
 		result[StandardExternalFields.MIMETYPE] = self.mime_type
 		result['ID'] = self._ntiid
 		result['href'] = traversal.normal_resource_path( self.__parent__ )
+
+		if self.lastModified:
+			# TODO: Why aren't we using to_standard_external_dictionary?
+			result[StandardExternalFields.LAST_MODIFIED] = self.lastModified
 
 		for link in self.__operations__:
 			target = location.Location()

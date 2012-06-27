@@ -7,7 +7,8 @@ from __future__ import print_function
 from hamcrest import (assert_that, is_, none, starts_with,
 					  has_entry, has_length, has_item, has_key,
 					  contains_string, ends_with, all_of, has_entries)
-
+from hamcrest import greater_than
+from hamcrest import not_none
 from hamcrest.library import has_property
 from nti.appserver.application import createApplication
 from nti.contentlibrary.filesystem import Library
@@ -1085,10 +1086,12 @@ class TestApplicationAssessment(ApplicationTestBase):
 							   headers={"Accept": accept_type},
 							   extra_environ=self._make_extra_environ() )
 			assert_that( res.status_int, is_( 200 ) )
+			assert_that( res.last_modified, is_( not_none() ) )
 
 			assert_that( res.content_type, is_( 'application/vnd.nextthought.pageinfo+json' ) )
 			assert_that( res.json_body, has_entry( 'MimeType', 'application/vnd.nextthought.pageinfo' ) )
 			assert_that( res.json_body, has_entry( 'AssessmentItems', has_item( has_entry( 'NTIID', self.child_ntiid ) ) ) )
+			assert_that( res.json_body, has_entry( 'Last Modified', greater_than( 0 ) ) )
 
 	def test_posting_assesses(self):
 
