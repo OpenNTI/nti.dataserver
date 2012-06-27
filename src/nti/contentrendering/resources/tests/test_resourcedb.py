@@ -75,36 +75,38 @@ class TestResourceDB(ConfiguringTestBase):
 		rdb = ResourceDB( self.ctx.dom )
 		assert_that( rdb.getResource( '$x^2$', ('mathjax_inline',)), is_( none() ) )
 
-	# def test_simple_system_generate(self):
-	# 	# This runs a full test and actually invokes renderers.
-	# 	rdb = ResourceDB( self.ctx.dom )
-	# 	rdb.overrides['$x^2$'] = ('mathjax_inline',)
-	# 	rdb.overrides['$f^2$'] = ('mathjax_inline',)
-	# 	rdb.overrides['$z^2$'] = ('mathjax_inline',)
-	# 	rdb.overrides[r'\[f\]'] = ('mathjax_inline',)
-	# 	rdb.overrides[r'\[t^3\]'] = ('mathjax_inline',)
-	# 	rdb.generateResourceSets()
 
-	# 	assert_that( rdb.getResource( '$x^2$', ('mathjax_inline',)), is_( not_none() ) )
-	# 	assert_that( rdb.getResource( '$z^2$', ('mathjax_inline',)), is_( not_none() ) )
-	# 	# Note the unnormalized source for display math
-	# 	assert_that( rdb.getResource( r'\[ f \]', ('mathjax_inline',)), is_( not_none() ) )
-	# 	assert_that( rdb.getResource( r'\[ t^3 \]', ('mathjax_inline',)), is_( not_none() ) )
+class TestResourceDBTabular(ConfiguringTestBase):
 
+	body = br"""
+		\begin{center}
+		\begin{tabular}{|l|c|c|c|r|}
+		\multicolumn{5}{c}{Students in Middle School By Grade}\\\hline
+		&$6^{th}$ Grade&$7^{th}$ Grade&$8^{th}$ Grade&Total\\\hline
+		East Middle School & 213 & 241 & 217 & 671 \\\hline
+		West Middle School & 135 & 142 & 120 & \\\hline
+		North Middle School & 230 &130 &  & 534 \\\hline
+		South Middle School & 341 &  & 339 & 1023\\\hline
+		\end{tabular}
+		\end{center}"""
 
-	# 	# and again still works but does nothing
-	# 	res = rdb.getResource( '$x^2$', ('mathjax_inline',))
-	# 	rdb.generateResourceSets()
-	# 	assert_that( rdb.getResource( '$x^2$', ('mathjax_inline',)), is_( same_instance( res ) ) )
+	def setUp( self ):
+		super(TestResourceDBTabular,self).setUp()
+		self.ctx = RenderContext( simpleLatexDocumentText( preludes=(br'\usepackage{graphicx}',br'\usepackage{multicol}'),
+														   bodies=( self.body, ) ) )
+		self.ctx.__enter__()
 
-	# 	# we can reload
-	# 	rdb = ResourceDB( self.ctx.dom )
-	# 	# and have existing resources without regenerating
-	# 	assert_that( rdb.getResource( '$x^2$', ('mathjax_inline',)), is_( not_none() ) )
+	def tearDown( self ):
+		self.ctx.__exit__( None, None, None )
+		super(TestResourceDBTabular,self).tearDown()
 
-	# 	# If we corrupt the resource file, we have to start from scratch
-	# 	with open( rdb._indexPath, 'wb' ) as f:
-	# 		f.write( "invalid pickle" )
+	def test_system_generate(self):
+		# This runs a full test and actually invokes renderers.
+		rdb = ResourceDB( self.ctx.dom )
 
-	# 	rdb = ResourceDB( self.ctx.dom )
-	# 	assert_that( rdb.getResource( '$x^2$', ('mathjax_inline',)), is_( none() ) )
+		# Make sure that we're going to get the number of hlines we want
+		tabular = self.ctx.dom.getElementsByTagName( 'tabular' )[0]
+		assert_that( tabular.source.count( br'\hline' ), is_( self.body.count( br'\hline') ) )
+
+		rdb.generateResourceSets()
+		# TODO: Now verify the output containing lines. We could probably do this for SVG rendering
