@@ -81,12 +81,13 @@ class TestResourceDBTabular(ConfiguringTestBase):
 	body = br"""
 		\begin{center}
 		\begin{tabular}{|l|c|c|c|r|}
-		\multicolumn{5}{c}{Students in Middle School By Grade}\\\hline
-		&$6^{th}$ Grade&$7^{th}$ Grade&$8^{th}$ Grade&Total\\\hline
-		East Middle School & 213 & 241 & 217 & 671 \\\hline
-		West Middle School & 135 & 142 & 120 & \\\hline
-		North Middle School & 230 &130 &  & 534 \\\hline
-		South Middle School & 341 &  & 339 & 1023\\\hline
+		\multicolumn{5}{c}{Students in Middle School By Grade}\\ \hline
+		&$6^{th}$ Grade&$7^{th}$ Grade&$8^{th}$ Grade&Total\\   \hline
+		East Middle School & 213 & 241 & 217 & 671 \\           \hline
+		West Middle School & 135 & 142 & 120 & \\               \hline
+		North Middle School & 230 &130 &  & 534 \\               \hline
+		South Middle School & 341 &  & 339 & 1023\\           \hline
+
 		\end{tabular}
 		\end{center}"""
 
@@ -109,4 +110,18 @@ class TestResourceDBTabular(ConfiguringTestBase):
 		assert_that( tabular.source.count( br'\hline' ), is_( self.body.count( br'\hline') ) )
 
 		rdb.generateResourceSets()
-		# TODO: Now verify the output containing lines. We could probably do this for SVG rendering
+		# Make sure the hlines make it to the resources
+		# Our verification is simple, based just on equality to existing files. This is probable
+		# fragile.
+		normalized_source= rdb._db.keys()[0]
+		from IPython.core.debugger import Tracer; debug_here = Tracer()() ## DEBUG ##
+
+		resource_png = rdb.getResourcePath( normalized_source, ('png','orig', 1))
+		resource_svg = rdb.getResourcePath( normalized_source, ('svg',) )
+
+		# The pngs tend to differ
+	#	assert_that( open( os.path.join( os.path.dirname(__file__), 'tabular_hlines.png' ), 'rb' ).read(),
+	#				 is_( open( resource_png, 'rb' ).read() ) )
+		assert_that( resource_png, is_( not_none() ) )
+		assert_that( open( os.path.join( os.path.dirname(__file__), 'tabular_hlines.svg' ), 'rb' ).read(),
+					 is_( open( resource_svg, 'rb' ).read() ) )
