@@ -1,10 +1,16 @@
-#/usr/bin/env python2.7
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+$Id$
+"""
+
+logger = __import__( 'logging' ).getLogger( __name__ )
 
 import os.path
 from dictionary import ChromeDictionary
 
 import re
-import json
+import anyjson as json
 import warnings
 
 from zope import component
@@ -35,9 +41,16 @@ def lookup( info, dictionary=None ):
 
 
 	s = dictionary.lookup(info.word)
-
-	term = json.loads( s )
-	#term = json.load(urllib2.urlopen("http://dictionary-lookup.org/" + info.word ))
+	__traceback_info__ = s
+	try:
+		term = json.loads( s )
+	except ValueError:
+		# Bad JSON Data
+		logger.exception( "Bad json data for %s", info.word )
+		term = {}
+		# TODO: Assuming we're in the server and gevent is loaded, we could
+		# probably do something like this (we could even store it to fix the bad data)
+		# term = json.load(urllib2.urlopen("http://dictionary-lookup.org/" + info.word ))
 
 	info.ipa = term.get('ipa')
 	info.etymology = __wiki_clean(term.get('etymology'))
@@ -185,6 +198,3 @@ class TherInfo(_InfoRoot):
 			syn = dom.createElement( "synonym" )
 			syn.appendChild( dom.createTextNode( child ) )
 			info.appendChild( syn )
-
-
-
