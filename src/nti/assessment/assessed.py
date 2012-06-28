@@ -25,6 +25,7 @@ class QAssessedPart(SchemaConfigured,persistent.Persistent):
 	submittedResponse = None
 	assessedValue = 0.0
 	__external_can_create__ = False
+
 	def __eq__( self, other ):
 		try:
 			return self is other or (self.submittedResponse == other.submittedResponse
@@ -71,6 +72,8 @@ class QAssessedQuestionSet(SchemaConfigured,persistent.Persistent):
 	__name__ = None
 	__parent__ = None
 	__external_can_create__ = False
+
+
 	def __eq__( self, other ):
 		try:
 			return self is other or (self.questionSetId == other.questionSetId

@@ -4,7 +4,7 @@ from hamcrest import (assert_that, is_, has_entry, has_items,
 
 from hamcrest.library import has_property as has_attr
 import unittest
-
+import numbers
 import UserDict
 
 
@@ -21,7 +21,7 @@ from nti.externalization.persistence import getPersistentState
 from nti.externalization import externalization
 from nti.externalization.oids import toExternalOID, fromExternalOID
 
-from nti.externalization.externalization import EXT_FORMAT_PLIST, EXT_FORMAT_JSON, to_external_representation, toExternalObject, catch_replace_action
+from nti.externalization.externalization import EXT_FORMAT_PLIST, EXT_FORMAT_JSON, to_external_representation, toExternalObject, catch_replace_action, to_standard_external_dictionary
 from nti.externalization.datastructures import ExternalizableDictionaryMixin
 
 
@@ -30,7 +30,6 @@ import nti.tests
 
 class ConfiguringTestBase(nti.tests.ConfiguringTestBase):
 	set_up_packages = (nti.externalization,)
-
 
 
 class TestFunctions(ConfiguringTestBase):
@@ -213,10 +212,12 @@ class TestExternalizableInstanceDict(ConfiguringTestBase):
 		assert_that( newObj.A1, is_( 1 ) )
 		assert_that( newObj.A2, is_( "2" ) )
 
-from zope import interface, component
+from zope import interface
+from zope.dublincore import interfaces as dub_interfaces
+from ..interfaces import IExternalObject, IExternalObjectDecorator, StandardExternalFields
 
-from ..interfaces import IExternalObject, IExternalObjectDecorator
-
+import datetime
+from nti.tests import verifiably_provides
 
 class TestToExternalObject(ConfiguringTestBase):
 
@@ -242,5 +243,16 @@ class TestToExternalObject(ConfiguringTestBase):
 
 		assert_that( toExternalObject( test ), is_( {'test': test } ) )
 
-if __name__ == '__main__':
-	unittest.main()
+
+	def test_to_stand_dict_uses_dubcore(self):
+
+		@interface.implementer(dub_interfaces.IDCTimes)
+		class X(object):
+			created = datetime.datetime.now()
+			modified = datetime.datetime.now()
+
+		assert_that( X(), verifiably_provides( dub_interfaces.IDCTimes ) )
+
+		ex_dic = to_standard_external_dictionary( X() )
+		assert_that( ex_dic, has_entry( StandardExternalFields.LAST_MODIFIED, is_( float ) ) )
+		assert_that( ex_dic, has_entry( StandardExternalFields.CREATED_TIME, is_( float ) ) )

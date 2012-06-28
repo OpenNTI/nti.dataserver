@@ -1,105 +1,65 @@
-# Based on code from http://code.activestate.com/recipes/577819-deprecated-decorator/
-# Under the MIT license.
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals
+
 
 import warnings
+import functools
+import zope.deprecation
 
-def deprecated(replacement=None):
-	"""A decorator which can be used to mark functions as deprecated.
-	replacement is a callable that will be called with the same args
-	as the decorated function.
-
-	>>> @deprecated()
-	... def foo(x):
-	...		return x
-	...
-	>>> ret = foo(1)
-	Warning: foo is deprecated
-	>>> ret
-	1
-	>>>
-	>>>
-	>>> def newfun(x):
-	...		return 0
-	...
-	>>> @deprecated(newfun)
-	... def foo(x):
-	...		return x
-	...
-	>>> ret = foo(1)
-	Warning: foo is deprecated; use newfun instead
-	>>> ret
-	0
-	>>>
-	"""
+def deprecated(replacement=None): # annotation factory
 	def outer(oldfun):
-		def inner(*args, **kwargs):
-			msg = "%s is deprecated" % oldfun.__name__
-			if replacement is not None:
-				msg += "; use %s instead" % (replacement.__name__)
-			warnings.warn(msg, FutureWarning, stacklevel=2)
-			if replacement is not None:
-				return replacement(*args, **kwargs)
-			else:
-				return oldfun(*args, **kwargs)
-		return inner
+		im_class = getattr( oldfun, 'im_class', None )
+		if im_class:
+			n = '%s.%s.%s' % (im_class.__module__, im_class.__name__, oldfun.__name__)
+		else:
+			n = oldfun.__name__
+
+		msg = "%s is deprecated" % n
+		if replacement is not None:
+			msg += "; use %s instead" % (replacement.__name__)
+		#return zope.deprecation.deprecated( oldfun, msg )
+		return zope.deprecation.deprecate( msg )(oldfun)
 	return outer
-# But use zope.deprecation if available. It's
-# more flexible.
-try:
-	import zope.deprecation
-	def deprecated(replacement=None):
-		def outer(oldfun):
-			im_class = getattr( oldfun, 'im_class', None )
-			if im_class:
-				n = '%s.%s.%s' % (im_class.__module__, im_class.__name__, oldfun.__name__)
-			else:
-				n = oldfun.__name__
+zope.deprecation.deprecation.__dict__['DeprecationWarning'] = FutureWarning
 
-			msg = "%s is deprecated" % n
-			if replacement is not None:
-				msg += "; use %s instead" % (replacement.__name__)
-			#return zope.deprecation.deprecated( oldfun, msg )
-			return zope.deprecation.deprecate( msg )(oldfun)
-		return outer
-	zope.deprecation.deprecation.__dict__['DeprecationWarning'] = FutureWarning
+# The 'moved' method doesn't pay attention to the 'show' flag, which
+# produces annoyances in backwards compatibility and test code. Make it do so.
+# The easiest way os to patch the warnings module it uses. Fortunately, it only
+# uses one method
+class _warnings(object):
+	def warn(self, msg, typ, depth ):
+		if zope.deprecation.__show__():
+			warnings.warn( msg, typ, depth + 1 )
 
-	# The 'moved' method doesn't pay attention to the 'show' flag, which
-	# produces annoyances in backwards compatibility and test code. Make it do so.
-	# The easiest way os to patch the warnings module it uses. Fortunately, it only
-	# uses one method
-	class _warnings(object):
-		def warn(self, msg, typ, depth ):
-			if zope.deprecation.__show__():
-				warnings.warn( msg, typ, depth + 1 )
+	def __getattr__( self, name ):
+		# Let everything else flow through to the real module
+		return getattr( warnings, name )
 
-		def __getattr__( self, name ):
-			# Let everything else flow through to the real module
-			return getattr( warnings, name )
+zope.deprecation.deprecation.__dict__['warnings'] = _warnings()
 
-	zope.deprecation.deprecation.__dict__['warnings'] = _warnings()
+class hiding_warnings(object):
+	"""
+	A context manager that executes its body in a context
+	where deprecation warnings are not shown.
+	"""
+	def __enter__(self):
+		zope.deprecation.__show__.off()
+	def __exit__( self, *args ):
+		zope.deprecation.__show__.on()
 
-	class hiding_warnings(object):
-		"""
-		A context manager that executes its body in a context
-		where deprecation warnings are not shown.
-		"""
-		def __enter__(self):
-			zope.deprecation.__show__.off()
-		def __exit__( self, *args ):
-			zope.deprecation.__show__.on()
-	import functools
 
-	def hides_warnings(f):
-		"""
-		A decorator that causes the wrapped function to not show warnings when
-		it executes.
-		"""
-		@functools.wraps(f)
-		def inner(*args, **kwargs):
-			with hiding_warnings():
-				return f(*args,**kwargs)
-		return inner
-
-except ImportError:
-	import traceback
-	traceback.print_exc()
+def hides_warnings(f):
+	"""
+	A decorator that causes the wrapped function to not show warnings when
+	it executes.
+	"""
+	@functools.wraps(f)
+	def inner(*args, **kwargs):
+		with hiding_warnings():
+			return f(*args,**kwargs)
+	return inner

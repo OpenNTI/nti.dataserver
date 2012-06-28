@@ -54,14 +54,17 @@ class PersistentContainedExternal(ContainedExternal,Persistent):
 
 class ApplicationTestBase(ConfiguringTestBase):
 
+	set_up_packages = () # None, because configuring the app will do this
+
 	def _setup_library(self, *args, **kwargs):
 		return Library()
 
 	def setUp(self):
 		__show__.off()
 		super(ApplicationTestBase,self).setUp()
-		self.ds = mock_dataserver.MockDataserver()
-		self.app, self.main = createApplication( 8080, self._setup_library(), create_ds=self.ds, pyramid_config=self.config )
+		#self.ds = mock_dataserver.MockDataserver()
+		self.app, self.main = createApplication( 8080, self._setup_library(), create_ds=mock_dataserver.MockDataserver, pyramid_config=self.config )
+		self.ds = component.getUtility( nti_interfaces.IDataserver )
 		root = '/Library/WebServer/Documents/'
 		# We'll volunteer to serve all the files in the root directory
 		# This SHOULD include 'prealgebra' and 'mathcounts'
@@ -1043,6 +1046,7 @@ from nti.tests import verifiably_provides
 from nti.appserver import interfaces as app_interfaces
 from hamcrest import has_key
 from nti.externalization.externalization import toExternalObject
+from nti.externalization.interfaces import StandardExternalFields
 
 class TestApplicationAssessment(ApplicationTestBase):
 	child_ntiid =  'tag:nextthought.com,2011-10:MN-NAQ-MiladyCosmetology.naq.1'
@@ -1104,4 +1108,8 @@ class TestApplicationAssessment(ApplicationTestBase):
 		ext_obj['ContainerId'] = 'tag:nextthought.com,2011-10:mathcounts-HTML-MN.2012.0'
 		data = json.serialize( ext_obj )
 		res = testapp.post( '/dataserver2/users/sjohnson@nextthought.com', data, extra_environ=self._make_extra_environ() )
-		assert_that( res.json_body, has_entry( 'Class', 'AssessedQuestion' ) )
+
+		assert_that( res.json_body, has_entry( StandardExternalFields.CLASS, 'AssessedQuestion' ) )
+		assert_that( res.json_body, has_entry( StandardExternalFields.CREATED_TIME, is_( float ) ) )
+		assert_that( res.json_body, has_entry( StandardExternalFields.LAST_MODIFIED, is_( float ) ) )
+		assert_that( res.json_body, has_entry( StandardExternalFields.MIMETYPE, 'application/vnd.nextthought.assessment.assessedquestion' ) )

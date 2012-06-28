@@ -20,10 +20,13 @@ import anyjson as json
 
 import six
 import numbers
+import time
 
 from zope import interface
 from zope import component
 from zope import deprecation
+from zope.dublincore import interfaces as dub_interfaces
+
 
 from nti.ntiids import ntiids
 
@@ -222,12 +225,23 @@ def _isMagicKey( key ):
 
 isSyntheticKey = _isMagicKey
 
-def _choose_field( result, self, ext_name, converter=lambda x: x, fields=() ):
+def _datetime_to_epoch( dt ):
+	return time.mktime( dt.timetuple() ) if dt is not None else None
+
+def _choose_field( result, self, ext_name, converter=lambda x: x, fields=(), sup_iface=None, sup_fields=(), sup_converter=lambda x: x ):
 	for x in fields:
 		value = getattr( self, x, None )
 		if value is not None:
 			result[ext_name] = converter(value)
-			break
+			return
+	# Nothing. Can we adapt it?
+	self = sup_iface( self, None ) if sup_iface else None
+	for x in sup_fields:
+		value = getattr( self, x, None )
+		if value is not None:
+			value = sup_converter( value )
+			if value is not None:
+				result[ext_name] = value
 
 def to_standard_external_dictionary( self, mergeFrom=None, name=_ex_name_marker, registry=component):
 	"""
@@ -264,10 +278,11 @@ def to_standard_external_dictionary( self, mergeFrom=None, name=_ex_name_marker,
 				   fields=(StandardInternalFields.CREATOR, StandardExternalFields.CREATOR),
 				   converter=str )
 	_choose_field( result, self, StandardExternalFields.LAST_MODIFIED,
-				   fields=(StandardInternalFields.LAST_MODIFIED, StandardInternalFields.LAST_MODIFIEDU) )
+				   fields=(StandardInternalFields.LAST_MODIFIED, StandardInternalFields.LAST_MODIFIEDU),
+				   sup_iface=dub_interfaces.IDCTimes, sup_fields=('modified',), sup_converter=_datetime_to_epoch)
 	_choose_field( result, self, StandardExternalFields.CREATED_TIME,
-				   fields=(StandardInternalFields.CREATED_TIME,) )
-
+				   fields=(StandardInternalFields.CREATED_TIME,),
+				   sup_iface=dub_interfaces.IDCTimes, sup_fields=('created',), sup_converter=_datetime_to_epoch)
 
 	if StandardExternalFields.CLASS not in result:
 		cls = getattr(self, '__external_class_name__', None)

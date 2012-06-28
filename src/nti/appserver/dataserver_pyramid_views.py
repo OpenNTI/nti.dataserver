@@ -18,6 +18,7 @@ from zope import component
 from zope.component import interfaces as cmp_interfaces
 from zope import interface
 from zope.mimetype.interfaces import IContentTypeAware
+from zope import lifecycleevent
 import zope.security.interfaces
 import zope.cachedescriptors.property
 
@@ -784,9 +785,6 @@ def _createContentObject( dataserver, user, datatype, externalValue ):
 		if result:
 			result = result()
 
-#		result = #dataserver.create_content_type( datatype, create_missing=False )
-#	if not getattr( result, '__external_can_create__', False ):
-#		result = None
 	return result
 
 class _UGDModifyViewBase(object):
@@ -859,13 +857,10 @@ class _UGDModifyViewBase(object):
 		if o is None:
 			raise hexc.HTTPNotFound( "No object %s/%s/%s" % (cr, cid,oid))
 
-	def createContentObject( self, user, datatype, externalValue ):
-		return _createContentObject( self.dataserver, user, datatype, externalValue )
-
-	def updateContentObject( self, contentObject, externalValue, set_id=False ):
+	def updateContentObject( self, contentObject, externalValue, set_id=False, notify=True ):
 		try:
 			__traceback_info__ = contentObject, externalValue
-			containedObject = self.dataserver.update_from_external_object( contentObject, externalValue )
+			containedObject = nti.externalization.internalization.update_from_external_object( contentObject, externalValue, context=self.dataserver, notify=notify )
 		except (ValueError,AssertionError,interface.Invalid,TypeError,KeyError):
 			# These are all 'validation' errors. Raise them as unprocessable entities
 			# interface.Invalid, in particular, is the root class of zope.schema.ValidationError
@@ -950,6 +945,9 @@ class _UGDPostView(_UGDModifyViewBase):
 	def __init__( self, request ):
 		super(_UGDPostView,self).__init__( request )
 
+	def createContentObject( self, user, datatype, externalValue ):
+		return _createContentObject( self.dataserver, user, datatype, externalValue )
+
 	def __call__(self ):
 		creator = self.getRemoteUser()
 		context = self.request.context
@@ -983,7 +981,9 @@ class _UGDPostView(_UGDModifyViewBase):
 
 		with owner.updates():
 			containedObject.creator = creator
-			self.updateContentObject( containedObject, externalValue, set_id=True )
+			# Update the object, but don't fire any modified events. We don't know
+			# if we'll keep this object yet, and we haven't fired a created event
+			self.updateContentObject( containedObject, externalValue, set_id=True, notify=False )
 			transformedObject = self.request.registry.queryAdapter( containedObject,
 																	app_interfaces.INewObjectTransformer,
 																	default=_id )( containedObject )
@@ -1004,6 +1004,9 @@ class _UGDPostView(_UGDModifyViewBase):
 				transaction.doom()
 				logger.debug( "Failing to POST: input of unsupported/missing ContainerId" )
 				raise HTTPUnprocessableEntity( "Unsupported/missing ContainerId" )
+
+			# OK, now that we've got an object, start firing events
+			lifecycleevent.created( containedObject )
 			try:
 				owner.addContainedObject( containedObject )
 			except KeyError:
