@@ -165,6 +165,8 @@ class AbstractDynamicObjectIO(ExternalizableDictionaryMixin):
 
 
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
+		updated = False
+
 		ext_self = self._ext_replacement()
 		ext_keys = self._ext_all_possible_keys()
 		for k in parsed:
@@ -172,11 +174,14 @@ class AbstractDynamicObjectIO(ExternalizableDictionaryMixin):
 				continue
 			__traceback_info__ = k
 			self._ext_setattr( ext_self, k, parsed[k] )
+			updated = True
 
 		if StandardExternalFields.CONTAINER_ID in parsed and getattr( ext_self, StandardInternalFields.CONTAINER_ID, parsed ) is None:
 			setattr( ext_self, StandardInternalFields.CONTAINER_ID, parsed[StandardExternalFields.CONTAINER_ID] )
 		if StandardExternalFields.CREATOR in parsed and getattr( ext_self, StandardExternalFields.CREATOR, parsed ) is None:
 			setattr( ext_self, StandardExternalFields.CREATOR, parsed[StandardExternalFields.CREATOR] )
+
+		return updated
 
 
 @interface.implementer(IInternalObjectIO)

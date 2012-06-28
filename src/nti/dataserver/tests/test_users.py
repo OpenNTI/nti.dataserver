@@ -12,6 +12,7 @@ from nose.tools import assert_raises
 import persistent
 
 from nti.externalization.oids import to_external_ntiid_oid
+from nti.externalization import internalization
 
 from nti.dataserver.datastructures import  ZContainedMixin as ContainedMixin
 from nti.dataserver.users import User, FriendsList, Device, Community, _FriendsListMap as FriendsListContainer
@@ -70,21 +71,23 @@ def test_friends_list_case_insensitive():
 def test_everyone_has_creator():
 	assert_that( users.EVERYONE, has_property( 'creator', nti_interfaces.SYSTEM_USER_NAME ) )
 
-def test_friendslist_updated_through_user_updates_last_mod():
-	user = User( 'foo@bar', 'temp' )
-	fl = user.maybeCreateContainedObjectWithType( 'FriendsLists', {'Username': 'Friend' } )
-	user.addContainedObject( fl )
-	fl.lastModified = 0
-	now = time.time()
-
-	with user.updates():
-		fl2 = user.getContainedObject( fl.containerId, fl.id )
-		fl2.updateFromExternalObject( {'friends': []} )
-
-	assert_that( fl.lastModified, is_( greater_than_or_equal_to( now ) ) )
-	assert_that( user.getContainer( fl.containerId ).lastModified, is_( greater_than_or_equal_to( now ) ) )
 
 class TestUser(mock_dataserver.ConfiguringTestBase):
+
+
+	def test_friendslist_updated_through_user_updates_last_mod(self):
+		user = User( 'foo@bar', 'temp' )
+		fl = user.maybeCreateContainedObjectWithType( 'FriendsLists', {'Username': 'Friend' } )
+		user.addContainedObject( fl )
+		fl.lastModified = 0
+		now = time.time()
+
+		with user.updates():
+			fl2 = user.getContainedObject( fl.containerId, fl.id )
+			internalization.update_from_external_object( fl2, {'friends': []} )
+
+		assert_that( fl.lastModified, is_( greater_than_or_equal_to( now ) ) )
+		assert_that( user.getContainer( fl.containerId ).lastModified, is_( greater_than_or_equal_to( now ) ) )
 
 
 	def test_create_device_through_registry(self):
@@ -170,7 +173,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 				lm = c_note.lastModified
 			del user1._postNotification
 			assert_that( user1.containers['c1'].lastModified, is_( greater_than_or_equal_to( lm ) ) )
-			assert_that( user1.containers['c1'].lastModified, is_( user1.containers['c1'][note.id].lastModified ) )
+			assert_that( user1.containers['c1'].lastModified, is_( greater_than_or_equal_to( user1.containers['c1'][note.id].lastModified ) ) )
 			assert_that( nots, is_( ['Modified', (c_note, set())] ) )
 
 	@mock_dataserver.WithMockDS

@@ -94,6 +94,19 @@ def update_parent_modified_time( modified_object, event ):
 	if interfaces.IZContained.providedBy( modified_object ) and interfaces.ILastModified.providedBy( modified_object.__parent__ ):
 		modified_object.__parent__.updateLastMod()
 
+@component.adapter( interfaces.ILastModified, IObjectModifiedEvent )
+def update_object_modified_time( modified_object, event ):
+	"""
+	Register this handler to update modification times when a container is
+	modified through addition or removal of children.
+	"""
+	try:
+		modified_object.updateLastMod()
+	except AttributeError:
+		# this is optional API
+		pass
+
+
 import functools
 @functools.total_ordering
 class _CaseInsensitiveKey(object):

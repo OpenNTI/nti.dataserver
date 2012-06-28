@@ -13,7 +13,7 @@ from nti.externalization.oids import to_external_ntiid_oid
 from nti.dataserver import datastructures
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.classes import SectionInfo, ClassInfo
-from zope.lifecycleevent import IObjectAddedEvent, IObjectRemovedEvent
+from zope.lifecycleevent import IObjectAddedEvent, IObjectRemovedEvent, IObjectModifiedEvent
 from zope.container.interfaces import IContainerModifiedEvent
 
 import mock_dataserver
@@ -106,7 +106,8 @@ class TestSection(mock_dataserver.ConfiguringTestBase):
 
 		# Doing it a second time does nothing, no changes actually happen
 		clearEvents()
-		self.ds.update_from_external_object( section, dict(section_ext) )
+
+		self.ds.update_from_external_object( section, dict({}) )
 		assert_that( list(section.Enrolled), has_item( 'jason.madden@nextthought.com' ) )
 		assert_that( eventtesting.getEvents(), has_length( 0 ) )
 
@@ -119,7 +120,7 @@ class TestSection(mock_dataserver.ConfiguringTestBase):
 		clearEvents()
 		del section_ext['Enrolled']
 
-		self.ds.update_from_external_object( section, dict(section_ext) )
+		self.ds.update_from_external_object( section, {} )
 		assert_that( eventtesting.getEvents(), has_length( 0 ) )
 		assert_that( list(section.Enrolled), has_item( 'jason.madden@nextthought.com' ) )
 
@@ -140,8 +141,9 @@ class TestSection(mock_dataserver.ConfiguringTestBase):
 		assert_that( list(section.Enrolled),
 					 contains( 'baz@bar', 'jason.madden@nextthought.com' ) )
 
-		# Four events: a pair for added, a pair for removed
-		assert_that( eventtesting.getEvents(), has_length( 4 ) )
+		# Five events: a pair for added, a pair for removed
+		# plus one for the modification
+		assert_that( eventtesting.getEvents(), has_length( 5 ) )
 		assert_that( eventtesting.getEvents( IObjectAddedEvent ),
 					 has_item( has_property( 'newName', 'baz@bar' ) ) )
 
@@ -311,7 +313,8 @@ class TestClass(mock_dataserver.ConfiguringTestBase):
 		self.ds.update_from_external_object( clazz, dict( clazz_ext ) )
 		assert_that( clazz[section.ID], is_( same_instance( section ) ) )
 		assert_that( clazz[section.ID].Description, is_( 'Cool section' ) )
-		assert_that( eventtesting.getEvents(), has_length( 0 ) )
+		assert_that( eventtesting.getEvents(), has_length( 2 ) )
+		assert_that( eventtesting.getEvents(IObjectModifiedEvent), has_length( 2 ) )
 
 	def test_del_section_via_external(self):
 		"Sending sections without a section deletes that section."

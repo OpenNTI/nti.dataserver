@@ -204,6 +204,11 @@ class IInternalObjectUpdater(interface.Interface):
 		Update the object this is adapting from the external object.
 		Two alternate signatures are supported, one with ``dataserver`` instead of
 		context, and one with no keyword args.
+
+		:return: If not ``None``, a value that can be interpreted as a boolean,
+			indicating whether or not the internal object actually
+			underwent updates. If ``None``, no meaning is assigned (to allow older
+			code that doesn't return at all.)
 		"""
 
 class IInternalObjectIO(IInternalObjectExternalizer,IInternalObjectUpdater):

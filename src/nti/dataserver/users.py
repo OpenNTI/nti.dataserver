@@ -64,7 +64,7 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject,E
 	The root for things that represent human-like objects.
 	"""
 
-	interface.implements( nti_interfaces.IEntity )
+	interface.implements( nti_interfaces.IEntity, nti_interfaces.ILastModified )
 
 	@classmethod
 	def get_entity( cls, username, dataserver=None, default=None, _namespace='users' ):
@@ -440,11 +440,13 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
 		super(FriendsList,self).updateFromExternalObject( parsed, *args, **kwargs )
+		updated = None
 		newFriends = parsed.pop('friends', None)
 		# Update, as usual, starts from scratch.
 		# Notice we allow not sending friends to easily change
 		# the realname, alias, etc
 		if newFriends is not None:
+			updated = True
 			self._friends = None
 			for newFriend in newFriends:
 				if isinstance( newFriend, basestring ) and isinstance(self.creator, User):
@@ -456,6 +458,7 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 			self.username = parsed.get( 'Username' )
 		if self.username is None:
 			self.username = parsed.get( 'ID' )
+		return updated
 
 	@classmethod
 	def _resolve_friends( cls, dataserver, parsed, externalFriends ):
@@ -771,18 +774,22 @@ class User(Principal):
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
 		with self._NoChangeBroadcast( self ):
 			super(User,self).updateFromExternalObject( parsed, *args, **kwargs )
+			updated = None
 			lastLoginTime = parsed.pop( 'lastLoginTime', None )
 			if isinstance( lastLoginTime, numbers.Number ) and self.lastLoginTime.value < lastLoginTime:
 				self.lastLoginTime.value = lastLoginTime
 				self.notificationCount.value = 0
+				updated = True
 
 			notificationCount = parsed.pop( 'NotificationCount', None )
 			if isinstance( notificationCount, numbers.Number ):
 				self.notificationCount.value = notificationCount
+				updated = True
 
 			if 'password' in parsed:
 				password = parsed.pop( 'password' )
 				self.password = password
+				updated = True
 
 			# Muting/Unmuting conversations. Notice that we only allow
 			# a single thing to be changed at once. Also notice that we never provide
@@ -793,8 +800,10 @@ class User(Principal):
 			# gmail). Our muted conversations still show up in search results, as in gmail.
 			if 'mute_conversation' in parsed:
 				self.mute_conversation( parsed.pop( 'mute_conversation' ) )
+				updated = True
 			elif 'unmute_conversation' in parsed:
 				self.unmute_conversation( parsed.pop( 'unmute_conversation' ) )
+				updated = True
 
 			# These two arrays cancel each other out. In order to just have to
 			# deal with sending one array or the other, the presence of an entry
@@ -803,12 +812,14 @@ class User(Principal):
 			# See notes on how ignoring and accepting values may arrive
 			def handle_ext( resetAll, reset, add, remove, value ):
 				if isinstance( value, collections.Sequence ):
+					updated = True
 					# replacement list
 					resetAll()
 					for x in value:
 						reset( x )
 						add( x )
 				elif isinstance( value, collections.Mapping ):
+					updated = True
 					# adds and removes
 					# Could be present but None, so be explicit about default
 					for x in (value.get( 'add' ) or ()):
@@ -817,6 +828,7 @@ class User(Principal):
 					for x in (value.get( 'remove') or () ):
 						remove( x )
 				elif value is not None:
+					updated = True
 					# One to add
 					reset( x )
 					add( value )
@@ -841,7 +853,7 @@ class User(Principal):
 						self.accept_shared_data_from,
 						self.stop_accepting_shared_data_from,
 					accepting )
-			self.updateLastMod()
+			return updated
 
 	### Sharing
 
@@ -1063,8 +1075,9 @@ class User(Principal):
 				# a change on the object itself.
 				updated = updated if getPersistentState(updated) == persistent.CHANGED else None
 				if updated:
-					if hasattr( updated, 'updateLastMod' ):
-						updated.updateLastMod( end_time )
+					# updating last mod should be handled by ObjectModifiedEvents now
+					#if hasattr( updated, 'updateLastMod' ):
+					#	updated.updateLastMod( end_time )
 					self._postNotification( Change.MODIFIED, possiblyUpdated )
 					self.containers[updated.containerId].updateLastMod( end_time )
 			del self._v_updateSet
