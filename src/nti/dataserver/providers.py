@@ -10,7 +10,7 @@ from nti.ntiids import ntiids
 from nti.dataserver import authorization as auth
 from nti.dataserver.authorization_acl import ace_allowing, ace_denying
 
-class _ClassMap(datastructures.AbstractNamedLastModifiedBTreeContainer):
+class _ClassMap(datastructures.AbstractCaseInsensitiveNamedLastModifiedBTreeContainer):
 
 	contained_type = nti_interfaces.IClassInfo
 	container_name = 'Classes'

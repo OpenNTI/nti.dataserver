@@ -14,9 +14,11 @@ from __future__ import print_function, unicode_literals
 
 import time
 import collections
+import numbers
 
 from zope import interface
 from zope import component
+from zope.location import interfaces as loc_interfaces
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 from zope.container.interfaces import IContainerModifiedEvent
 from zope.container.btree import BTreeContainer
@@ -25,7 +27,7 @@ from zope.container.contained import uncontained
 
 from . import interfaces
 
-from nti.zodb.minmax import NumericMaximum
+from nti.zodb.minmax import NumericMaximum, ConstantZeroValue
 
 
 @interface.implementer(interfaces.ILastModified)
@@ -38,6 +40,9 @@ class LastModifiedBTreeContainer(BTreeContainer):
 	change those dates; instead, we rely on event listeners to
 	notice ObjectEvents and adjust the times appropriately.
 	"""
+
+	createdTime = 0
+	_lastModified = ConstantZeroValue()
 
 	def __init__( self ):
 		self.createdTime = time.time()
@@ -159,6 +164,7 @@ from repoze.lru import lru_cache
 def _tx_key_insen(key):
 	return _CaseInsensitiveKey( key ) if key is not None else None
 
+@interface.implementer(loc_interfaces.ISublocations)
 class CaseInsensitiveLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 	"""
 	A BTreeContainer that only works with string (unicode) keys, and treats them in a case-insensitive
@@ -209,7 +215,9 @@ class CaseInsensitiveLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 		if key is not None:
 			key = _tx_key_insen( key )
 
-		return ((k.key, v) for k, v in self._SampleContainer__data.items(key))
+		for k, v in self._SampleContainer__data.items(key):
+			yield k.key, v
+
 
 	def keys(self, key=None ):
 		if key is not None:
@@ -220,3 +228,15 @@ class CaseInsensitiveLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 		if key is not None:
 			key = _tx_key_insen( key )
 		return (v for v in self._SampleContainer__data.values(key))
+
+	def sublocations(self):
+		# We directly implement ISublocations instead of using the adapter for two reasons.
+		# First, it's much more efficient as it saves the unwrapping
+		# of all the keys only to rewrap them back up to access the data.
+		# Second, during evolving, as with __iter__, we may be in an inconsistent state
+		# that has keys of different types
+		for v in self._SampleContainer__data.values():
+			# For evolving, reject numbers (Last Modified key)
+			if isinstance( v, numbers.Number ): # pragma: no cover
+				continue
+			yield v

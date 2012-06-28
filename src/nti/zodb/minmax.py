@@ -55,6 +55,27 @@ class AbstractNumericValue(AbstractValue):
 	def __repr__( self ):
 		return "%s(%s)" %(self.__class__.__name__, self.value)
 
+class _ConstantZeroValue(AbstractNumericValue):
+	"""
+	Use this as a class attribute for a default values of zero. The
+	value cannot be changed, and instances cannot be serialized.
+	"""
+
+	def __init__( self, value=0 ):
+		super(_ConstantZeroValue,self).__init__( value=0 )
+		assert 'value' not in self.__dict__
+
+	def __getstate__( self ): raise TypeError()
+	def _p_resolveConflict(self, old, committed, new): raise NotImplementedError()
+
+	value = property( lambda s: 0, lambda s, nv: None )
+
+_czv = _ConstantZeroValue()
+
+def ConstantZeroValue():
+	return _czv
+ConstantZeroValue.__doc__ = _ConstantZeroValue.__doc__
+
 class NumericMaximum(AbstractNumericValue,Maximum):
 	"""
 	Maximizes the number during conflicts.
