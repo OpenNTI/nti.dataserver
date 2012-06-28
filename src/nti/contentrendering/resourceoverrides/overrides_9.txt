@@ -1,4 +1,4 @@
-$$
+\[
 \raisebox{-0.35in}[0in]{\rotatebox{90}{\text{Shirts}}}\;
 \begin{array}{r||c|c|c|c|}
 \multicolumn{5}{c}{\qquad\text{Pants}} \\
@@ -7,4 +7,4 @@ S_1 &  S_1P_1 &  S_1P_2 &  S_1P_3 &  S_1P_4  \\ \hline
 S_2 &  S_2P_1 &  S_2P_2 &  S_2P_3 &  S_2P_4  \\ \hline
 S_3 &  S_3P_1 &  S_3P_2 &  S_3P_3 &  S_3P_4  \\ \hline
 \end{array}
-$$
+\]
