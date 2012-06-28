@@ -45,6 +45,7 @@ from . import meeting_container_storage
 
 from . import config
 
+from nti.deprecated import deprecated
 
 DEFAULT_PASSWORD = "temp001"
 
@@ -556,6 +557,7 @@ class Dataserver(MinimalDataserver):
 	# Dealing with content types
 	# TODO: This should be separated out
 	###
+	@deprecated()
 	def find_content_type( self, typeName=None ):
 		"""
 		Given the name of a type, optionally ending in 's' for
@@ -563,6 +565,7 @@ class Dataserver(MinimalDataserver):
 		"""
 		return nti.externalization.internalization.find_factory_for_class_name( typeName )
 
+	@deprecated()
 	def update_from_external_object( self, containedObject, externalObject ):
 		return nti.externalization.internalization.update_from_external_object( containedObject, externalObject, context=self )
 

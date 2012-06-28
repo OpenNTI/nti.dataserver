@@ -158,18 +158,19 @@ _primitives = six.string_types + (numbers.Number,bool)
 
 def update_from_external_object( containedObject, externalObject,
 								 registry=component, context=None,
-								 require_updater=False ):
+								 require_updater=False,
+								 notify=True ):
 	"""
-	If the updater for the `containedObject` either has no preference
-	(returns None) or indicates that the object has changed,
-	then an :class:`lifecycleevent.IObjectModifiedEvent` will be fired. This may
-	be a recursive process so a top-level call to this object may spawn
-	multiple events.
-
 	:param context: An object passed to the update methods.
 	:param require_updater: If True (not the default) an exception will be raised
 		if not implementation of :class:`interfaces.IInternalObjectUpdater` can be found
 		for the `containedObject.`
+	:param bool notify: If ``True`` (the default), then if the updater for the `containedObject` either has no preference
+		(returns None) or indicates that the object has changed,
+		then an :class:`lifecycleevent.IObjectModifiedEvent` will be fired. This may
+		be a recursive process so a top-level call to this object may spawn
+		multiple events.
+
 	:return: `containedObject` after updates from `externalObject`
 	"""
 
@@ -188,7 +189,7 @@ def update_from_external_object( containedObject, externalObject,
 		for i in externalObject:
 			factory = find_factory_for( i )
 			__traceback_info__ = factory, i
-			tmp.append( update_from_external_object( factory(), i, registry, context=context, require_updater=require_updater ) if factory else i )
+			tmp.append( update_from_external_object( factory(), i, registry, context=context, require_updater=require_updater, notify=notify ) if factory else i )
 		return tmp
 
 	assert isinstance( externalObject, collections.MutableMapping )
@@ -198,10 +199,10 @@ def update_from_external_object( containedObject, externalObject,
 
 		factory = None
 		if isinstance( v, collections.MutableSequence ):
-			v = update_from_external_object( (), v, registry, context=context, require_updater=require_updater )
+			v = update_from_external_object( (), v, registry, context=context, require_updater=require_updater, notify=notify )
 		else:
 			factory = find_factory_for( v )
-		externalObject[k] = update_from_external_object( factory(), v, registry, context=context, require_updater=require_updater ) if factory else v
+		externalObject[k] = update_from_external_object( factory(), v, registry, context=context, require_updater=require_updater, notify=notify ) if factory else v
 
 
 	_resolve_externals( containedObject, externalObject, registry=registry, context=context )
@@ -228,7 +229,7 @@ def update_from_external_object( containedObject, externalObject,
 
 		# Broadcast a modified event if the object seems to have changed. We don't have a specific interface
 		# being modified, it's the whole object. We send along all the keys we can.
-		if updated is None or updated:
+		if notify and (updated is None or updated):
 			lifecycleevent.modified( containedObject, lifecycleevent.Attributes(None, *externalObject) )
 
 	return containedObject

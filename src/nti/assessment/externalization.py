@@ -47,7 +47,11 @@ def _find_factories():
 			# Does this implement something that should be externalizable?
 			# If so, register it, chopping off the leading 'Q'
 			if any( (iface.queryTaggedValue( '__external_class_name__') for iface in interface.implementedBy(v)) ):
-				setattr( _ClassNameRegistry, k[1:] if not k.startswith( 'Question' ) else k, v )
+				ext_class_name = k[1:] if not k.startswith( 'Question' ) else k
+				setattr( _ClassNameRegistry, ext_class_name, v )
+				if not hasattr( v, 'mime_type' ):
+					setattr( v, 'mime_type', 'application/vnd.nextthought.assessment.' + ext_class_name.lower() )
+
 				# Opt in for creating, unless explicitly disallowed
 				if not hasattr( v, '__external_can_create__' ):
 					setattr( v, '__external_can_create__', True )

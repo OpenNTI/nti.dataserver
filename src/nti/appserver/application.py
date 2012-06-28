@@ -270,7 +270,7 @@ def createApplication( http_port,
 			_dataFileName = 'data.fs'
 		server = MockServer()
 	else:
-		ds_class = dataserver._Dataserver.Dataserver
+		ds_class = dataserver._Dataserver.Dataserver if not callable(create_ds) else create_ds
 		if process_args:
 			dataDir = "~/tmp"
 			dataFile = "test.fs"
