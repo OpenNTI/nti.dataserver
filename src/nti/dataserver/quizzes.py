@@ -238,6 +238,7 @@ class QuizResult(datastructures.ZContainedMixin,
 			quiz = dataserver.root.get('quizzes', {}).get('quizzes', {}).get(quizId)
 		if not quiz:
 			raise ValueError( "Unable to locate quiz " + str(quizId ) )
+		__traceback_info__ = quiz, qqRs
 		theAssessments = assess( quiz, qqRs )
 		for qqR in qqRs.itervalues():
 			assessment = theAssessments[qqR.id]
