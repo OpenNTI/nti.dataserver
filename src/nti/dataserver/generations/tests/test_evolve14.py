@@ -6,6 +6,7 @@ $Id$
 from __future__ import print_function, unicode_literals
 
 from hamcrest import assert_that, is_, has_entry, is_not as does_not, has_key
+from hamcrest import not_none
 from hamcrest import has_property
 from hamcrest import same_instance
 
@@ -53,6 +54,11 @@ class TestEvolve14(nti.dataserver.tests.mock_dataserver.ConfiguringTestBase):
 		# Give me some data to migrate over
 		jason.containers.containers = datastructures.KeyPreservingCaseInsensitiveModDateTrackingOOBTree( jason.containers.containers )
 		assert_that( jason.containers.containers, has_key( 'FriendsLists' ) )
+		# Old ones had a 'Last Modified' key and not a _lastModified attribute
+		jason_friends_lists = jason.containers.containers['FriendsLists']
+		jason_friends_lists._SampleContainer__data['Last Modified'] = 1234
+		del jason_friends_lists._lastModified
+
 		jason.streamCache = datastructures.ModDateTrackingOOBTree()
 		jason.containers.containerType = datastructures.ModDateTrackingBTreeContainer
 		c = jason.containers.containers[new_container] = datastructures.ModDateTrackingBTreeContainer()
@@ -95,6 +101,8 @@ class TestEvolve14(nti.dataserver.tests.mock_dataserver.ConfiguringTestBase):
 		assert_that( type( jason.devices._SampleContainer__data), is_( same_instance( OOBTree ) ) )
 		assert_that( jason.devices, is_( same_instance( jason.getContainer( 'Devices' ) ) ) )
 		assert_that( jason.friendsLists, is_( same_instance( jason.getContainer( 'FriendsLists' ) ) ) )
+		assert_that( jason.friendsLists, has_property( 'lastModified', 1234 ) )
+		assert_that( jason.friendsLists['Everyone'], is_( not_none() ) )
 		assert_that( jason.devices, has_property( '__parent__', jason ) )
 		assert_that( jason.friendsLists, has_property( '__parent__', jason ) )
 

@@ -80,8 +80,19 @@ def evolve( context ):
 				assert container.__parent__ is user
 				assert isinstance( container, datastructures.AbstractNamedLastModifiedBTreeContainer )
 				# For these, we want to leave the wrapper alone, since it will now
-				# take care of the case mangling (if necessary). We just want to change the btree
-				container._SampleContainer__data = OOBTree( container._SampleContainer__data )
+				# take care of the case mangling (if necessary). We just want to change the BTree implementation
+				# Unfortunately, we must manually copy it over to get the keys mangled correctly (since in some
+				# cases we're going from case-sensitive to case-insensitive
+				old_data = container._SampleContainer__data
+				lm = old_data.pop( 'Last Modified', 0 )
+				new_data = OOBTree()
+				tx_key = containers._tx_key_insen if isinstance( container, datastructures.AbstractCaseInsensitiveNamedLastModifiedBTreeContainer ) else lambda x: x
+				for k, v in old_data.items():
+					__traceback_info__ = (k, v) + __traceback_info__
+					new_data[tx_key(getattr(k, 'key', k))] = v
+				container._SampleContainer__data = new_data
+				# These will be missing a 'Last Modified' attribute, so make sure they get it
+				container._lastModified = containers.NumericMaximum( lm )
 			else:
 				# Ok, it must be generic
 				assert type(container) == datastructures.ModDateTrackingBTreeContainer
