@@ -75,7 +75,7 @@ def evolve( context ):
 			if nti_interfaces.INamedContainer.providedBy( container ):
 				# In some cases, we missed setting parents on old objects, specifically devices.
 				# If that's so, then reparent it
-				if container.__parent__ is ucontainers and k in ( 'Devices', 'FriendsLists', 'Classes'):
+				if (container.__parent__ is ucontainers or container.__parent__ is None) and k in ( 'Devices', 'FriendsLists', 'Classes'):
 					container.__parent__ = user
 				assert container.__parent__ is user
 				assert isinstance( container, datastructures.AbstractNamedLastModifiedBTreeContainer )
