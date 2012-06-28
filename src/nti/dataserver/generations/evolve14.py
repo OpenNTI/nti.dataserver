@@ -103,7 +103,14 @@ def evolve( context ):
 				for ck, cv in container.items():
 					if ck == 'Last Modified': continue
 					j += 1
-					new_cont[ck] = cv
+					# This has the side effect of loading the data for `cv` and unghosting it to access __parent__ and fire events
+					# If the object is seriously invalid, we won't be able to unghost it...see the test case
+					try:
+						new_cont[ck] = cv
+					except TypeError:
+						logger.exception( "Unable to migrate object %s = %s, dropping for %s", ck, cv, user.username )
+						j -= 1
+
 				del ucontainers.containers[k]
 				ucontainers.addContainer( k, new_cont )
 				logger.debug( "Copied %d items from %s to %s on %s", j, k, new_cont, user.username )

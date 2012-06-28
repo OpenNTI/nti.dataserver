@@ -2,6 +2,9 @@ import unittest
 import sys
 from hamcrest import assert_that, is_, none
 
+from hamcrest import is_not as does_not
+from hamcrest import has_key
+
 from ..mimetype import nti_mimetype_class as class_name_from_content_type
 from ..mimetype import nti_mimetype_from_object as as_mimetype
 
@@ -39,6 +42,17 @@ def test_mimetype_from_object():
 	assert_that( as_mimetype( FriendsList ), is_( FL_MT ) )
 	# instance
 	assert_that( as_mimetype( FriendsList("My FL" ) ), is_( FL_MT ) )
+
+
+def test_mimetype_from_object_doesnt_screw_up_implementedBy_for_callable_objects():
+
+	class Callable(object):
+		def __call__(self): pass
+
+	obj = Callable()
+	as_mimetype( obj )
+
+	assert_that( obj.__dict__, does_not( has_key( '__implemented__' ) ) )
 
 if __name__ == '__main__':
 	unittest.main(sys.argv[1:])

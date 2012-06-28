@@ -171,7 +171,14 @@ def nti_mimetype_from_object( obj, use_class=True ):
 				return nti_mimetype_with_class( iface.__name__[1:] )
 
 	# A class that can become IModeledContent
-	if _safe_by( interfaces.IModeledContent.implementedBy, obj ) and isinstance( obj, type ):
+	# NOTE: It is critically important to only call this on class objects.
+	# If we call it on an instance that happens to be callable, zope.interface
+	# will happily assign to the instance's __dict__ and then we won't be able to
+	# unpickle it if the instance ever becomes non-callable:
+	#   zope.interface-4.0.1-py2.7-macosx-10.7-x86_64.egg/zope/interface/declarations.py", line 189, in implementedByFallback
+	#		raise TypeError("ImplementedBy called for non-factory", cls)
+
+	if isinstance( obj, type) and _safe_by( interfaces.IModeledContent.implementedBy, obj ):
 		for iface in interface.implementedBy( obj ):
 			if iface.extends( interfaces.IModeledContent ):
 				return nti_mimetype_with_class( iface.__name__[1:] )
