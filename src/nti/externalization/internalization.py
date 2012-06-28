@@ -11,10 +11,12 @@ import inspect
 import six
 import numbers
 
+import persistent
 from zope import component
 from zope import interface
 from zope.schema import interfaces as sch_interfaces
 from zope.dottedname.resolve import resolve
+from zope import lifecycleevent
 
 from . import interfaces
 
@@ -158,6 +160,12 @@ def update_from_external_object( containedObject, externalObject,
 								 registry=component, context=None,
 								 require_updater=False ):
 	"""
+	If the updater for the `containedObject` either has no preference
+	(returns None) or indicates that the object has changed,
+	then an :class:`lifecycleevent.IObjectModifiedEvent` will be fired. This may
+	be a recursive process so a top-level call to this object may spawn
+	multiple events.
+
 	:param context: An object passed to the update methods.
 	:param require_updater: If True (not the default) an exception will be raised
 		if not implementation of :class:`interfaces.IInternalObjectUpdater` can be found
@@ -208,14 +216,20 @@ def update_from_external_object( containedObject, externalObject,
 
 
 	if updater:
+		updated = None
 		# The signature may vary.
 		argspec = inspect.getargspec( updater.updateFromExternalObject )
 		if 'context' in argspec.args or (argspec.keywords and 'dataserver' not in argspec.args):
-			updater.updateFromExternalObject( externalObject, context=context )
+			updated = updater.updateFromExternalObject( externalObject, context=context )
 		elif argspec.keywords or 'dataserver' in argspec.args:
-			updater.updateFromExternalObject( externalObject, dataserver=context )
+			updated = updater.updateFromExternalObject( externalObject, dataserver=context )
 		else:
-			updater.updateFromExternalObject( externalObject )
+			updated = updater.updateFromExternalObject( externalObject )
+
+		# Broadcast a modified event if the object seems to have changed. We don't have a specific interface
+		# being modified, it's the whole object. We send along all the keys we can.
+		if updated is None or updated:
+			lifecycleevent.modified( containedObject, lifecycleevent.Attributes(None, *externalObject) )
 
 	return containedObject
 

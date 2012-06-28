@@ -1123,10 +1123,7 @@ class _UGDPutView(_UGDModifyViewBase):
 			self._check_object_exists( theObject, creator, containerId, objId )
 
 			self.updateContentObject( theObject, externalValue )
-			# TODO: We shouldn't be doing this. There's an event listener now. We just
-			# need to make sure that IObjectModified events fire.
-			if callable( getattr( theObject, 'updateLastMod', None ) ):
-				theObject.updateLastMod()
+
 
 		if theObject and theObject == theObject.creator:
 			# Updating a user. Naturally, this is done by

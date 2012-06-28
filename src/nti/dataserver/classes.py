@@ -197,7 +197,7 @@ class ClassInfo( datastructures.PersistentCreatedModDateTrackingObject,
 		super(ClassInfo,self).updateFromExternalObject( parsed, *args, **kwargs )
 		# Anything they didn't send must go
 		sent_sids = []
-
+		updated = False
 		if 'Sections' in parsed:
 			for ext_sect in parsed['Sections']:
 				# The DS doesn't really update the correct nested objects in place, it creates new ones
@@ -217,7 +217,7 @@ class ClassInfo( datastructures.PersistentCreatedModDateTrackingObject,
 
 				sent_sids.append( sid )
 				sect = self[sid] if sid in self._sections else SectionInfo( ID=sid )
-				sect.updateFromExternalObject( ext_sect )
+				updated |= sect.updateFromExternalObject( ext_sect )
 				sect.Provider = self.Provider
 				if sid not in self._sections: self.add_section( sect )
 
@@ -225,7 +225,9 @@ class ClassInfo( datastructures.PersistentCreatedModDateTrackingObject,
 		# dups
 		del_sids = [existing_id for existing_id in self._sections if existing_id not in sent_sids]
 		for k in del_sids:
+			updated = True
 			del self._sections[k]
+		return updated
 
 
 
@@ -327,8 +329,9 @@ class SectionInfo( datastructures.PersistentCreatedModDateTrackingObject,
 		enrolled = parsed.pop( 'Enrolled', None )
 		super(SectionInfo,self).updateFromExternalObject( parsed, *args, **kwargs )
 
+		updated = False # we only consider the domain things we deal with here, not generic stuff
 		if iinfo:
-			self.InstructorInfo.updateFromExternalObject( iinfo )
+			updated |= self.InstructorInfo.updateFromExternalObject( iinfo )
 
 		# TODO: Dealing with enrolled is a bit of a hack right now.
 		# If they don't send enrolled at all, do nothing
@@ -338,10 +341,14 @@ class SectionInfo( datastructures.PersistentCreatedModDateTrackingObject,
 			# Anything else is added
 			for current_student in list(self.Enrolled):
 				if current_student not in enrolled:
+					updated = True
 					del self._enrolled[current_student]
 			for new_student in enrolled:
 				if new_student not in self._enrolled:
+					updated = True
 					self.enroll( new_student )
+
+		return updated
 
 
 class InstructorInfo( Persistent,
