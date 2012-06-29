@@ -54,6 +54,11 @@ class TestDataserver( mock_dataserver.ConfiguringTestBase ):
 
 		assert_that( trv_api.traverseName( {}, u'\u2019', default=1 ), is_( 1 ) )
 
+		# Namespacing works. Note that namespace traversal ignores default values
+		with assert_raises(trv_interfaces.TraversalError):
+			assert_that( trv_api.traverseName( {}, u'++foo++bar', default=1 ), is_( 1 ) )
+
+
 	@mock_dataserver.WithMockDS
 	def test_run_job_in_site(self):
 		runs = [0]
