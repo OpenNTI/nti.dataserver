@@ -88,7 +88,7 @@ setup(
 		# NOTE2: This will go away soon, merged into pyzmq 2.2dev as zmq.green
 		'gevent_zeromq >= 0.2.2',
 		'greenlet >= 0.4.0',
-		'gunicorn >= 0.14.3',
+		'gunicorn >= 0.14.5',
 		'html5lib == 0.95',
 		 # WSGI middleware for profiling. Defaults to storing
 		 # data in a sqlite file. Works across multiple gunicorn workers, does
@@ -97,7 +97,7 @@ setup(
 		 # Depends on the system graphviz installation; an alternative is repoze.profile which has
 		 # fewer dependencies, but less helpful output and doesn't work with multiple workers (?)
 		'linesman >= 0.2.2',
-		'logilab-common',
+		'logilab-common >= 0.57.1',
 		'nltk >= 2.0.1',
 		# numpy is req'd by nltk, but not depended on. sigh.
 		# This turns out to be because it CANNOT be installed in a setup.py:
@@ -124,18 +124,18 @@ setup(
 		# something like:
 		# pip install --install-option="--zmq=/opt/nti" pyzmq
 		'pyzmq >= 2.2.0',
-		'pytz',
+		'pytz >= 2012c',
 		'rdflib',
 		'repoze.catalog',
 
 		'repoze.who >= 2.0',
 		'repoze.zodbconn >= 0.14',
 		'grequests >= 0.1.0', #replaces requests.async in 0.13
-		'requests >= 0.13.1', # HTTP
+		'requests >= 0.13.2', # HTTP
 		'scss',
 		'setproctitle',
 		'setuptools',
-		'simplejson >= 2.5.2',
+		'simplejson >= 2.6.0',
 		'sympy == 0.7.1', # sympy-docs-html-0.7.1 is currently greater
 		'six >= 1.1.0',
 		'slimit',
@@ -156,7 +156,7 @@ setup(
 		'zc.zodbdgc >= 0.6.0',
 		'zetalibrary',
 		'zope.annotation >= 3.5.0',
-		'zope.broken',
+		'zope.broken >= 3.6.0', # This is actually deprecated, use the ZODB import
 		'zope.browser',
 		'zope.browserpage',
 		'zope.browserresource',
@@ -165,7 +165,7 @@ setup(
 		'zope.componentvocabulary',
 		'zope.configuration >= 4.0.0',
 		'zope.container >= 3.12.0',
-		'zope.contenttype >= 3.5.5',
+		'zope.contenttype >= 3.5.5', # A utility module for content-type handling.
 		'zope.copy >= 4.0.0',
 		'zope.datetime >= 3.4.1',
 		'zope.deprecation >= 4.0.0',
@@ -173,7 +173,7 @@ setup(
 		'zope.dublincore >= 3.8.2',
 		'zope.event >= 4.0.0',
 		'zope.exceptions >= 4.0.0.1',
-		'zope.filerepresentation',
+		'zope.filerepresentation >= 3.6.1',
 		'zope.formlib',
 		'zope.generations >= 3.7.1',
 		'zope.hookable >= 4.0.0', # explicitly list this to ensure we get the fast C version. Used by ZCA.
@@ -186,15 +186,15 @@ setup(
 		'zope.mimetype >= 1.3.1',
 		'zope.minmax >= 1.1.2',
 		'zope.pagetemplate',
-		'zope.password', # encrypted password management
+		'zope.password >= 3.6.1', # encrypted password management
 		'zope.publisher',
 		'zope.processlifetime',
 		'zope.schema >= 4.2.0',
 		'zope.security >= 3.8.3',
 		'zope.site >= 3.9.2', # local, persistent ZCA sites
 		'zope.size >= 3.5.0',
-		'zope.tal',
-		'zope.tales',
+		'zope.tal >= 3.6.1',
+		'zope.tales >= 3.5.2',
 		'zope.testing >= 4.1.1',
 		'zope.traversing >= 3.14.0',
 		# textindexng3

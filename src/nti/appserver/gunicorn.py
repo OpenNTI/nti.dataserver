@@ -14,6 +14,7 @@ __name__ = '__main__' # Note that we cannot do this and use from __future__ impo
 # Gunicorn up through 0.14.2 has a bug, assummes gevent
 # automatically imports core. As of 1.0b2, it doesn't, so
 # we must do it ourselves. (The symptom is ggevent.py", line 90, in GeventWorker: AttributeError 'core'
+# TODO: This is probably fixed in 0.14.5
 import gevent.core
 import gunicorn.workers.ggevent as ggevent
 import gunicorn.http.wsgi as wsgi
