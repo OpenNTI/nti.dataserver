@@ -3,6 +3,7 @@ import warnings
 import ZODB
 from ZODB.MappingStorage import MappingStorage
 from ZODB.DemoStorage import DemoStorage
+from ZODB.FileStorage import FileStorage
 
 import nti.dataserver as dataserver
 import nti.dataserver._Dataserver
@@ -14,6 +15,8 @@ from nti.dataserver import interfaces as nti_interfaces
 
 
 class MockDataserver( dataserver._Dataserver.Dataserver ):
+
+	_mock_database = None
 
 	def __init__( self, *args, **kwargs ):
 		super(MockDataserver,self).__init__(*args, **kwargs)
@@ -59,6 +62,8 @@ class MockDataserver( dataserver._Dataserver.Dataserver ):
 			return db
 
 		self.conf.zeo_make_db = make_db
+		if self._mock_database:
+			self.conf.connect_databases = lambda: (self._mock_database.databases['Users'], self._mock_database.databases['Sessions'], self._mock_database.databases['Search'])
 		return super( MockDataserver, self )._setup_dbs( *args )
 
 #	def _setup_storages( self, *args ):
@@ -78,11 +83,15 @@ from zope.site import LocalSiteManager, SiteManagerContainer
 from zope.component.hooks import site, setHooks, resetHooks, getSite, setSite
 import transaction
 
-def WithMockDS( func ):
+import tempfile
+import shutil
+import os
+
+def _mock_ds_wrapper_for( func, factory=MockDataserver, teardown=None ):
 
 	def f( *args ):
 		global current_mock_ds
-		ds = MockDataserver()
+		ds = factory()
 		current_mock_ds = ds
 		sitemanc = SiteManagerContainer()
 		sitemanc.setSiteManager( LocalSiteManager(None) )
@@ -99,8 +108,52 @@ def WithMockDS( func ):
 				current_mock_ds = None
 				ds.close()
 				resetHooks()
+				if teardown:
+					teardown()
 
 	return nose.tools.make_decorator( func )( f )
+
+def WithMockDS( *args, **kwargs ):
+
+	teardown = lambda: None
+	if len(args) == 1 and not kwargs:
+		# Being used as a plain decorator
+		func = args[0]
+
+		return _mock_ds_wrapper_for( func )
+
+	# Being used as a decorator factory
+	if 'database' in kwargs:
+		def factory():
+			md = MockDataserver.__new__(MockDataserver)
+			md._mock_database = kwargs['database']
+			md.__init__()
+			return md
+	elif 'temporary_filestorage' in kwargs and kwargs['temporary_filestorage']:
+
+		td = tempfile.mkdtemp()
+		teardown = lambda: shutil.rmtree( td, ignore_errors=True )
+		def factory():
+
+			databases = {}
+			db = ZODB.DB( FileStorage( os.path.join( td, 'data' ), create=True),
+						  databases=databases,
+						  database_name='Users' )
+			sessionsDB = ZODB.DB( FileStorage(os.path.join( td, 'sessions' ), create=True),
+								  databases=databases,
+								  database_name='Sessions')
+			searchDB = ZODB.DB( FileStorage(os.path.join( td, 'search' ), create=True),
+								databases=databases,
+								database_name='Search')
+			md = MockDataserver.__new__(MockDataserver)
+			md._mock_database = db
+			md.__init__()
+			return md
+
+	return lambda func: _mock_ds_wrapper_for( func, factory, teardown )
+
+
+
 
 import contextlib
 
