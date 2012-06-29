@@ -9,13 +9,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 import os
-import xml.dom.minidom as minidom
-# Sadly, minidom doesn't have its own exceptions
-# and doesn't document what it throws. Thus
-# only by trial and error do we know it's using xml.sax.expat
-from xml.parsers.expat import ExpatError
-
+from lxml import etree
 from . import contentunit
+
+# some direct imports for speed
+from os.path import join as path_join
+from .contentunit import FilesystemContentUnit, FilesystemContentPackage
 
 __all__ = ('Library', 'LibraryEntry', 'TOCEntry')
 
@@ -32,17 +31,18 @@ def _hasTOC( path ):
 def _isTOC( path ):
 	return os.path.basename( path ) == TOC_FILENAME
 
-def _tocItem( node, dirname, factory=contentunit.FilesystemContentUnit ):
-	tocItem = factory()
-	for i in ('NTIRelativeScrollHeight', 'href', 'icon', 'label', 'ntiid'):
-		setattr( tocItem, i, node.getAttribute( i ) )
+_toc_item_attrs = ('NTIRelativeScrollHeight', 'href', 'icon', 'label', 'ntiid')
 
-	tocItem.filename = os.path.join( dirname, tocItem.href )
+def _tocItem( node, dirname, factory=FilesystemContentUnit ):
+	tocItem = factory()
+	for i in _toc_item_attrs:
+		setattr( tocItem, i, node.get( i ) )
+
+	tocItem.filename = path_join( dirname, tocItem.href )
 
 	children = []
 	ordinal = 1
-	for child in [x for x in node.childNodes
-				  if x.nodeType == x.ELEMENT_NODE and x.tagName == 'topic']:
+	for child in node.iterchildren(tag='topic'):
 		child = _tocItem( child, dirname )
 		child.__parent__ = tocItem
 		child.ordinal = ordinal; ordinal += 1
@@ -66,15 +66,18 @@ def EclipseContentPackage( localPath ):
 
 	localPath = os.path.abspath( localPath )
 	try:
-		dom = minidom.parse( _TOCPath( localPath ) )
-	except (IOError,ExpatError):
+		dom = etree.parse( _TOCPath( localPath ) )
+	except (IOError,ExpatErroretree.Error):
 		logger.debug( "Failed to parse TOC at %s", localPath, exc_info=True )
 		return None
-	content_package = _tocItem( dom.firstChild, localPath, factory=contentunit.FilesystemContentPackage )
+	root = dom.getroot()
+	content_package = _tocItem( root, localPath, factory=FilesystemContentPackage )
 	content_package.root = os.path.basename( localPath )
 	content_package.index = os.path.basename( _TOCPath( localPath ) )
-	if dom.firstChild.hasAttribute( 'renderVersion' ):
-		content_package.renderVersion = int(dom.firstChild.getAttribute( 'renderVersion' ) )
+
+	renderVersion = root.get( 'renderVersion' )
+	if renderVersion:
+		content_package.renderVersion = int(renderVersion)
 
 	archive = os.path.join( localPath, ARCHIVE_FILENAME )
 	if os.path.exists( archive ):
