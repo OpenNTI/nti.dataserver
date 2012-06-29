@@ -8,6 +8,7 @@ from nti.dataserver import users
 from nti.dataserver import chat_transcripts
 from nti.dataserver import interfaces as nti_interfaces
 from nti.externalization import interfaces as ext_interfaces
+from nti.externalization import oids
 from zope import component
 import persistent
 import cPickle as pickle
@@ -94,27 +95,27 @@ def test_resolve_transcript_manually( ):
 class TestChatTranscriptEvents(ConfiguringTestBase):
 
 	@unittest.skip("Performance testing only; uses cProfile" )
-	@WithMockDS
 	def test_cprofile_adding_to_transcripts(self):
 		import cProfile
 		cProfile.runctx( 'self._do_test_profile_adding_to_transcripts()', globals=globals(), locals=locals(), sort='cumulative', filename='TestChatProfileTE.profile' )
 
 	@unittest.skip("Performance testing only; use with --with-profile" )
-	@WithMockDS
 	def test_profile_adding_to_transcripts(self):
 		self._do_test_profile_adding_to_transcripts()
 
+	@WithMockDS(temporary_filestorage=True)
 	def _do_test_profile_adding_to_transcripts(self):
 		#import pprint, ZODB.serialize
 		import transaction
 		meeting = Meeting()
-		meeting.id = PicklableMeet.ID
+		#meeting.id = PicklableMeet.ID
 		meeting.containerId = 'the_container'
 
 		user_list = PersistentList( ['user1@nextthought', 'user2@nextthought', 'user3@nextthought', 'user4@nextthought'] )
 		meeting.add_occupant_names( user_list, broadcast=False )
 		with mock_db_trans() as conn:
 			conn.add( meeting )
+			meeting.id = oids.to_external_ntiid_oid( meeting, None )
 			for uname in user_list:
 				users.User.create_user( username=uname )
 		#pprint.pprint( ZODB.serialize.ObjectWriter.map )
@@ -142,5 +143,5 @@ class TestChatTranscriptEvents(ConfiguringTestBase):
 		#pprint.pprint( ZODB.serialize.ObjectWriter.map )
 		for uname in user_list:
 			with mock_db_trans():
-				assert_that( chat_transcripts.transcript_for_user_in_room( uname, meeting.ID ),
+				assert_that( chat_transcripts.transcript_for_user_in_room( uname, str(meeting.ID) ),
 							 has_length( MSG_COUNT ) )
