@@ -141,47 +141,24 @@ class IStaticYouTubeEmbedVideoAdder(IStaticVideoAdder):
 ## Transforming content from one format to another
 ###
 
-class IContentFragment(interface.Interface):
-	"""
-	Base interface representing different formats that content can
-	be in.
-	"""
+from nti.contentfragments.interfaces import IContentFragment
+from nti.contentfragments.interfaces import IUnicodeContentFragment
+from nti.contentfragments.interfaces import ILatexContentFragment
+from nti.contentfragments.interfaces import IHTMLContentFragment
+from nti.contentfragments.interfaces import IPlainTextContentFragment
 
-from zope.interface.common import sequence
+from nti.contentfragments.interfaces import UnicodeContentFragment
+from nti.contentfragments.interfaces import LatexContentFragment
+from nti.contentfragments.interfaces import HTMLContentFragment
+from nti.contentfragments.interfaces import PlainTextContentFragment
 
-class IUnicodeContentFragment(IContentFragment,sequence.IReadSequence):
-	"""
-	Content represented as a unicode string.
-	"""
+from zope.deprecation import deprecated
+deprecated( ['IContentFragment', 'IUnicodeContentFragment', 'ILatexContentFragment',
+			 'IHTMLContentFragment', 'IPlainTextContentFragment',
+			 'UnicodeContentFragment', 'LatexContentFragment', 'HTMLContentFragment',
+			 'PlainTextContentFragment'],
+			 "Moved to nti.contentfragments" )
 
-class UnicodeContentFragment(unicode):
-	interface.implements(IUnicodeContentFragment)
-
-
-class ILatexContentFragment(IUnicodeContentFragment):
-	"""
-	Interface representing content in LaTeX format.
-	"""
-
-class LatexContentFragment(UnicodeContentFragment):
-	interface.implements(ILatexContentFragment)
-
-
-class IHTMLContentFragment(IUnicodeContentFragment):
-	"""
-	Interface representing content in HTML format.
-	"""
-
-class HTMLContentFragment(UnicodeContentFragment):
-	interface.implements(IHTMLContentFragment)
-
-class IPlainTextContentFragment(IUnicodeContentFragment):
-	"""
-	Interface representing content in plain text format.
-	"""
-
-class PlainTextContentFragment(UnicodeContentFragment):
-	interface.implements(IPlainTextContentFragment)
 
 from zope.interface import registry
 from zope.component import getGlobalSiteManager

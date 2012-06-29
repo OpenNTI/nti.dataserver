@@ -19,14 +19,8 @@
 	<utility component=".sectionvideoadder.YouTubeRelatedVideoAdder"
 			 name="YouTubeRelatedVideoAdder" />
 
-	<!-- Content fragment transformation adapters -->
-	<adapter factory=".contentfragments.PlainTextToLatexFragmentConverter"
-			 for=".interfaces.IPlainTextContentFragment"
-			 provides=".interfaces.ILatexContentFragment" />
-	<adapter factory=".contentfragments.PlainTextToLatexFragmentConverter"
-			 for="unicode"
-			 provides=".interfaces.ILatexContentFragment" />
-
+	<!-- Content fragments and conversion -->
+	<include package="nti.contentfragments" />
 
 	<!-- icon and image finders for testing book -->
 	<adapter factory=".tociconsetter.SimpleConventionIconFinder"
