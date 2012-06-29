@@ -4,7 +4,7 @@
 
 from hamcrest import assert_that, equal_to, is_, none, not_none, has_property, not_none
 import mock_dataserver
-
+from nose.tools import assert_raises
 
 from nti.ntiids import ntiids
 import nti.dataserver.contenttypes as contenttypes
@@ -12,12 +12,47 @@ import nti.dataserver.contenttypes as contenttypes
 from nti.externalization.oids import to_external_ntiid_oid, toExternalOID
 import nti.dataserver.interfaces as nti_interfaces
 from nti.dataserver._Dataserver import run_job_in_site
+import nti.dataserver
 
 import transaction
 import persistent
 from zope import component
+from zope import interface
+from zope.traversing import interfaces as trv_interfaces, api as trv_api
+
+
+
 
 class TestDataserver( mock_dataserver.ConfiguringTestBase ):
+
+	def test_patched_traversal_api(self):
+		assert nti.dataserver._patched_traversing, "No fixed version exists"
+
+		@interface.implementer(trv_interfaces.ITraversable)
+		class BrokenTraversable(object):
+			def traverse( self, name, furtherPath ):
+				getattr( self, u'\u2019', None ) # Raise unicode error
+
+
+		with assert_raises(trv_interfaces.TraversalError):
+			# Not a unicode error
+			trv_api.traverseName( BrokenTraversable(), '' )
+
+		assert_that( trv_api.traverseName( BrokenTraversable(), '', default=1 ), is_( 1 ) )
+
+
+
+		with assert_raises(trv_interfaces.TraversalError):
+			# Not a unicode error
+			trv_api.traverseName( object(), u'\u2019' )
+
+		assert_that( trv_api.traverseName( object(), u'\u2019', default=1 ), is_( 1 ) )
+
+		with assert_raises(trv_interfaces.TraversalError):
+			# Not a unicode error
+			trv_api.traverseName( {}, u'\u2019' )
+
+		assert_that( trv_api.traverseName( {}, u'\u2019', default=1 ), is_( 1 ) )
 
 	@mock_dataserver.WithMockDS
 	def test_run_job_in_site(self):
