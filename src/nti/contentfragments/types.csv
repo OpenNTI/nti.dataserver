@@ -1,0 +1,2 @@
+name, title, extensions, mime_types, icon_name, encoded
+IContentTypeTextLatex, LaTeX, .tex .latex, text/x-latex application/x-latex, , yes

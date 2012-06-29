@@ -8,6 +8,7 @@ from __future__ import unicode_literals, print_function
 from zope import interface
 import nti.contentrendering
 from nti.contentrendering import interfaces
+from nti.contentfragments import interfaces as frg_interfaces
 
 import requests
 import pyquery
@@ -17,7 +18,7 @@ import sys
 def _text_of( p ):
 	return etree.tostring( p, encoding=unicode, method='text' )
 
-class _ElementPlainTextContentFragment(interfaces.PlainTextContentFragment):
+class _ElementPlainTextContentFragment(frg_interfaces.PlainTextContentFragment):
 	children = ()
 	def __new__( cls, element ):
 		return super(_ElementPlainTextContentFragment,cls).__new__( cls, _text_of( element ) )
@@ -28,7 +29,7 @@ class _ElementPlainTextContentFragment(interfaces.PlainTextContentFragment):
 		self.element = element
 
 
-class _Container(interfaces.LatexContentFragment):
+class _Container(frg_interfaces.LatexContentFragment):
 
 	children = ()
 
@@ -114,14 +115,14 @@ def _p_to_content(footnotes, p, include_tail=True):
 			# duplicate text in and out of the link
 			accum.append( _ElementPlainTextContentFragment( p ) )
 		elif p.text and p.text.strip():
-			accum.append( interfaces.PlainTextContentFragment( p.text.strip() ) )
+			accum.append( frg_interfaces.PlainTextContentFragment( p.text.strip() ) )
 	else:
 		def _tail(e):
 			if e is not None and e.tail and e.tail.strip():
-				accum.append( interfaces.PlainTextContentFragment( e.tail.strip() ) )
+				accum.append( frg_interfaces.PlainTextContentFragment( e.tail.strip() ) )
 		# complex element with nested children to deal with.
 		if p.text and p.text.strip():
-			accum.append( interfaces.PlainTextContentFragment( p.text ) )
+			accum.append( frg_interfaces.PlainTextContentFragment( p.text ) )
 		for kid in kids:
 			if kid.tag == 'i':
 				accum.append( _TextIT(kid.text) )
@@ -163,7 +164,7 @@ def _p_to_content(footnotes, p, include_tail=True):
 			_tail(p)
 
 
-	return interfaces.LatexContentFragment( ' '.join( [interfaces.ILatexContentFragment( x ) for x in accum] ) )
+	return frg_interfaces.LatexContentFragment( ' '.join( [frg_interfaces.ILatexContentFragment( x ) for x in accum] ) )
 
 def _find_footnote( footnotes, sup ):
 	# footnote refs
@@ -184,7 +185,7 @@ def _find_footnote( footnotes, sup ):
 			break
 		elif accum:
 			accum.append( _p_to_content( footnotes, i ) )
-	return  _Footnote( ' '.join( [interfaces.ILatexContentFragment( x ) for x in accum] ) )
+	return  _Footnote( ' '.join( [frg_interfaces.ILatexContentFragment( x ) for x in accum] ) )
 
 def _url_escape(u):
 	return u.replace( '&', '\\&').replace( '_', '\\_' )
@@ -222,7 +223,7 @@ def _opinion_to_tex( doc, output=None, base_url=None ):
 			container = _Container( "\\begin{%s}" % CONTAINERS[inc_child.tag] )
 			content = _p_to_content( footnotes, inc_child )
 			container.add_child( content )
-			container.add_child( interfaces.LatexContentFragment( '\\end{%s}' % CONTAINERS[inc_child.tag] ) )
+			container.add_child( frg_interfaces.LatexContentFragment( '\\end{%s}' % CONTAINERS[inc_child.tag] ) )
 			if content or getattr( content, 'children', ()):
 				current.add_child( container )
 		elif inc_child.tag == 'h2':
@@ -237,10 +238,10 @@ def _opinion_to_tex( doc, output=None, base_url=None ):
 		output = sys.stdout # Capture this at runtime, it does change
 
 	def _print(node):
-		print( interfaces.ILatexContentFragment(node).encode('utf-8'), file=output )
+		print( frg_interfaces.ILatexContentFragment(node).encode('utf-8'), file=output )
 		print( file=output )
 		for child in getattr( node, 'children', ()):
-			_print( interfaces.ILatexContentFragment(child) )
+			_print( frg_interfaces.ILatexContentFragment(child) )
 
 	lines = [br'\documentclass{book}', br'\usepackage{graphicx}', br'\usepackage{nti.contentrendering.ntilatexmacros}', br'\usepackage{hyperref}']
 	if base_url:

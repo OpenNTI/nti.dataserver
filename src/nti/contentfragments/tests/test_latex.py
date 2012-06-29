@@ -1,9 +1,18 @@
-from __future__ import unicode_literals
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+$Id$
+"""
+from __future__ import print_function, unicode_literals
 
-from . import ConfiguringTestBase
+
+
+from nti.tests import ConfiguringTestBase
 from nti.tests import implements, provides
-from nti.contentrendering import interfaces
-from nti.contentrendering import contentfragments
+
+import nti.contentfragments
+from nti.contentfragments import interfaces
+from nti.contentfragments import latex as contentfragments
 
 from zope import interface
 from zope import component
@@ -22,6 +31,8 @@ def _tex_assert( val, answer ):
 
 
 class TestLatexTransforms(ConfiguringTestBase):
+
+	set_up_packages = (nti.contentfragments,)
 
 	def _convert( self, val ):
 		return _tex_convert( val )

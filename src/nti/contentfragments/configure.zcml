@@ -1,0 +1,21 @@
+<!-- -*- mode: nxml -*- -->
+<configure xmlns="http://namespaces.zope.org/zope"
+		   i18n_domain="zope">
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.mimetype" file="meta.zcml" />
+	<include package="zope.mimetype" />
+
+	<mimeTypes
+		module=".interfaces"
+		file="types.csv"
+		/>
+
+	<!-- Content fragment transformation adapters -->
+	<adapter factory=".latex.PlainTextToLatexFragmentConverter"
+			 for=".interfaces.IPlainTextContentFragment"
+			 provides=".interfaces.ILatexContentFragment" />
+	<adapter factory=".latex.PlainTextToLatexFragmentConverter"
+			 for="unicode"
+			 provides=".interfaces.ILatexContentFragment" />
+
+</configure>
