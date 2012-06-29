@@ -107,8 +107,6 @@ setup(
 		# install numpy manually with pip: pip install numpy
 		'numpy >= 1.6.2',
 		'paste',
-		'pyhamcrest',
-		'pylint',
 		'pyquery >= 1.2.1', # jquery-like traversing of python datastructures. lxml, cssselect
 		'pyramid >= 1.3.2' ,
 		'pyramid_tm >= 0.5',
@@ -195,7 +193,6 @@ setup(
 		'zope.size >= 3.5.0',
 		'zope.tal >= 3.6.1',
 		'zope.tales >= 3.5.2',
-		'zope.testing >= 4.1.1',
 		'zope.traversing >= 3.14.0',
 		# textindexng3
 		'zopyx.txng3.core',
@@ -203,15 +200,17 @@ setup(
 		],
 	extras_require = {
 		'test': [
-			'zope.testing',
+			'zope.testing >= 4.1.1',
 			'zc.buildout',
 			'nose-progressive',
+			'pyhamcrest >= 1.6',
 			'fudge'],
 		'tools': [
 			'dblatex >= 0.3.4', # content rendering, convert docbook to tex
 			'ipython',
 			'readline',
 			'httpie',
+			'pylint >= 0.25.1',
 			'zodbupdate >= 0.5',
 			'sphinx >= 1.1.3',
 			'sphinxtheme.readability >= 0.0.5',
