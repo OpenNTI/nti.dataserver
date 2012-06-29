@@ -72,6 +72,7 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		has forked. Doing it before the fork leads to thread-related problems
 		and a deadlock (the ZEO connection pthreads do not survive the fork, I think).
 		"""
+
 		gevent.hub.get_hub() # init the hub
 		dummy_app = self.app.app
 		wsgi_app = loadwsgi.loadapp( 'config:' + dummy_app.global_conf['__file__'], name='dataserver_gunicorn' )
@@ -79,6 +80,20 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 																	   dummy_app.global_conf,
 																	   port=dummy_app.global_conf['http_port'],
 																	   **dummy_app.kwargs )
+		# Change/update the logging format.
+		# It's impossible to configure this from the ini file because
+		# Paste uses plain ConfigParser, which doesn't understand escaped % chars,
+		# and tries to interpolate the settings for the log file.
+		# For now, we just add on the time in microseconds with %(D)s. Other options include
+		# using a different key with a fake % char, like ^,
+		self.cfg.settings['access_log_format'].set( self.cfg.access_log_format + " %(D)sus" )
+		# Also, if there is a handler set for the gunicorn access log (e.g., '-' for stderr)
+		# Then the default propagation settings mean we get two copies of access logging.
+		# make that stop.
+		gun_logger = logging.getLogger( 'gunicorn.access' )
+		if gun_logger.handlers:
+			gun_logger.propagate = False
+
 		# It's not entirely clear if this is necessary
 		try:
 			self.policy_server = FlashPolicyServer()
