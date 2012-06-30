@@ -9,6 +9,7 @@ $Id$
 from __future__ import print_function, unicode_literals
 
 import os
+import re
 import subprocess
 import time
 from StringIO import StringIO
@@ -49,6 +50,10 @@ class AbstractContentUnitRepresentationBatchConverter(object):
 
 
 	def _new_batch_converter_driver(self, *args, **kwargs):
+		"""
+		Returns an object with a `convert_batch(generatables)` method used to handle
+		a batch conversion.
+		"""
 		raise NotImplementedError # pragma: no cover
 
 	def _can_process( self, content_unit ):
@@ -72,7 +77,8 @@ class AbstractContentUnitRepresentationBatchConverter(object):
 class AbstractCompilingContentUnitRepresentationBatchConverter(AbstractContentUnitRepresentationBatchConverter):
 	"""
 	Implements batch conversion of resources by acting as a wrapper
-	to drive an object that can compile and transform a batch of resources at once.
+	to drive an object (a :class:`AbstractDocumentCompilerDriver`) that can compile and
+	transform a batch of resources at once.
 	"""
 
 	compiler = ''
@@ -124,6 +130,25 @@ class AbstractConcurrentCompilingContentUnitRepresentationBatchConverter(Abstrac
 
 		return results
 
+
+class AbstractConcurrentConditionalCompilingContentUnitRepresentationBatchConverter(AbstractConcurrentCompilingContentUnitRepresentationBatchConverter):
+	"""
+	Extends the generic concurrent compilation process by implementing the :meth:`_can_process`
+	method. By default, checks the contents of `illegalCommands` as a sequence of regular expressions
+	against each source; if it matches, it cannot be processed.
+	"""
+
+	illegalCommands	= ()
+
+	def _can_process(self, content_unit):
+		if not self.illegalCommands:
+			return True
+
+		source = content_unit.source
+		for command in self.illegalCommands:
+			if re.search(command, source):
+				return False
+		return True
 
 
 def _processBatchSource(generator, params, raise_exceptions=False):
@@ -358,6 +383,12 @@ class ImagerContentUnitRepresentationBatchConverterDriver(object):
 
 
 class ImagerContentUnitRepresentationBatchConverter(AbstractContentUnitRepresentationBatchConverter):
+	"""
+	A batch converter that delegates to a plasTeX :class:`plasTeX.Imagers.Imager` object.
+
+	Note that at this time, this object does not add concurrency. If concurrency is desired, it
+	must be implemented integral to the imager.
+	"""
 
 	concurrency = 1
 	imagerClass = None

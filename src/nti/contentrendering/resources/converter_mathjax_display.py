@@ -1,20 +1,32 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+$Id$
+"""
+from __future__ import print_function, unicode_literals
+
 
 import cgi
 
-from nti.contentrendering.resources import converter_mathjax_inline as tex2html
+from nti.contentrendering.resources import converter_mathjax_inline
 
-class ResourceSetGenerator(tex2html.ResourceSetGenerator):
+class MathjaxDisplayCompilerDriver(converter_mathjax_inline.MathjaxInlineCompilerDriver):
 
 	def writeResource(self, source):
-		self.writer.write('%s<span class="mathjax math tex2jax_process mathquill-embedded-latex">%s</span>\n\n' %
-						 ('' , cgi.escape(source)))
+		self.writer.write( '\n' )
+		self.writer.write('<span class="mathjax math tex2jax_process mathquill-embedded-latex">' )
+		self.writer.write( cgi.escape( source ) )
+		self.writer.write( '</span>\n\n' )
 
-class ResourceGenerator(tex2html.ResourceGenerator):
+
+class MathjaxDisplayBatchConverter(converter_mathjax_inline.MathjaxInlineBatchConverter):
 
 	resourceType = 'mathjax_display'
+	compiler_driver = MathjaxDisplayCompilerDriver
 
-	def _new_batch_compile_driver(self, document, compiler='', encoding='utf-8', batch=0):
-		result = ResourceSetGenerator( document, compiler, encoding, batch)
-		result.resourceType = self.resourceType
-		return result
+
+ResourceSetGenerator = MathjaxDisplayCompilerDriver
+ResourceGenerator = MathjaxDisplayBatchConverter
+
+from zope.deprecation import deprecated
+deprecated( ['ResourceGenerator','ResourceSetGenerator'], 'Prefer the new names in this module' )
