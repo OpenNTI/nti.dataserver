@@ -1,14 +1,19 @@
 #!/usr/bin/env python
-import logging
-logger = logging.getLogger(__name__)
+# -*- coding: utf-8 -*-
+"""
+$Id$
+"""
+from __future__ import print_function, unicode_literals
+
+logger = __import__('logging').getLogger(__name__)
 
 from nti.contentrendering import run_phantom_on_page
 import codecs, os
-from nti.contentrendering import resources
+
 import tempfile
 
 import cgi
-from nti.contentrendering.resources import converter_mathml as html2mathml
+
 from nti.contentrendering.resources import converters, _util
 from nti.contentrendering.resources.contentunitrepresentations import FilesystemContentUnitRepresentation
 
@@ -16,8 +21,8 @@ from nti.contentrendering.resources.contentunitrepresentations import Filesystem
 from nti.contentrendering import javascript_path
 from pkg_resources import resource_exists, resource_filename
 def _require_resource_filename( mathjaxconfigname ):
-	if not resource_exists( 'nti.contentrendering', '/js/' + mathjaxconfigname ):
-		raise Exception( "Unable to get default mathjax config" )
+	if not resource_exists( 'nti.contentrendering', '/js/' + mathjaxconfigname ): # pragma: no cover
+		raise EnvironmentError( "Unable to get default mathjax config" )
 	return resource_filename( 'nti.contentrendering', '/js/' + mathjaxconfigname )
 
 def _find_theme_mathjaxconfig(name):
@@ -38,7 +43,7 @@ def _find_theme_mathjaxconfig(name):
 
 
 
-class ResourceSetGenerator(converters.AbstractOneOutputDocumentCompilerDriver):
+class MathjaxInlineCompilerDriver(converters.AbstractOneOutputDocumentCompilerDriver):
 
 	htmlfile 			= 'math.html'
 	mathjaxconfigname	= 'mathjaxconfig.js'
@@ -50,13 +55,11 @@ class ResourceSetGenerator(converters.AbstractOneOutputDocumentCompilerDriver):
 	resourceType = None
 
 	def __init__(self, document, compiler, encoding, batch):
-		super(ResourceSetGenerator, self).__init__(document, compiler, encoding, batch)
+		super(MathjaxInlineCompilerDriver, self).__init__(document, compiler, encoding, batch)
 
 		self.configName = _find_theme_mathjaxconfig( self.mathjaxconfigname )
-		if not self.configName:
-			print 'Mathjax config has not been provided.'
-		elif not os.path.exists( self.configName ):
-			raise Exception( "Config does not exist %s" % self.configName )
+		if not os.path.exists( self.configName ): # pragma: no cover
+			raise EnvironmentError( "Config does not exist %s" % self.configName )
 
 
 	def writePreamble(self):
@@ -122,7 +125,8 @@ class ResourceSetGenerator(converters.AbstractOneOutputDocumentCompilerDriver):
 				copied_configs.append( configOutFile )
 
 			stdout = run_phantom_on_page( htmlOutFile, self.compiler, expect_non_json_output=True )
-
+			if stdout:
+				stdout = stdout.decode( 'utf-8' ) # stdout comes in as bytes, make it unicode
 			return stdout, tempdir
 		finally:
 			for configOutFile in copied_configs:
@@ -139,7 +143,7 @@ class ResourceSetGenerator(converters.AbstractOneOutputDocumentCompilerDriver):
 
 		tempdir = tempfile.mkdtemp()
 
-		maths = [math.strip().decode('utf-8') for math in output.split('\n') if math.strip()]
+		maths = [math.strip() for math in output.split('\n') if math.strip()]
 
 		i = 0
 		files = list()
@@ -153,18 +157,27 @@ class ResourceSetGenerator(converters.AbstractOneOutputDocumentCompilerDriver):
 		return files
 
 
-class ResourceGenerator(html2mathml.ResourceGenerator):
+class MathjaxInlineBatchConverter(converters.AbstractConcurrentConditionalCompilingContentUnitRepresentationBatchConverter):
 
 	concurrency = 4
 	illegalCommands = None
 	resourceType = 'mathjax_inline'
 	javascript = javascript_path( 'tex2html.js' )
 
+	compiler_driver = MathjaxInlineCompilerDriver
+
 	def __init__(self, document):
-		super(ResourceGenerator, self).__init__(document)
+		super(MathjaxInlineBatchConverter, self).__init__(document)
 		self.compiler = self.javascript
 
 	def _new_batch_compile_driver(self, document, compiler='', encoding='utf-8', batch=0):
-		result = ResourceSetGenerator(document, compiler, encoding, batch)
+		result = self.compiler_driver(document, compiler, encoding, batch)
 		result.resourceType = self.resourceType
 		return result
+
+ResourceSetGenerator = MathjaxInlineCompilerDriver
+ResourceGenerator = MathjaxInlineBatchConverter
+
+
+from zope.deprecation import deprecated
+deprecated( ['ResourceGenerator','ResourceSetGenerator'], 'Prefer the new names in this module' )

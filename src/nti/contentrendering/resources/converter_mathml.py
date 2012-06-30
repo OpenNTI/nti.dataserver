@@ -1,10 +1,18 @@
 #!/usr/bin/env python
-import logging
-logger = logging.getLogger( __name__ )
+# -*- coding: utf-8 -*-
+"""
+A resource converter to create MathXML.
+
+..note:: This module is currently not used or tested.
+
+$Id$
+"""
+from __future__ import print_function, unicode_literals
+
+logger = __import__('logging').getLogger(__name__)
 
 import codecs
 import os
-import re
 import sys
 
 
@@ -14,7 +22,7 @@ from xml.dom import minidom
 #from plasTeX.Imagers import *
 
 import nti.contentrendering.resources as resources
-from . import interfaces, converters
+from . import converters
 
 def findfile(path):
 	for dirname in sys.path:
@@ -28,12 +36,9 @@ class MyEntityResolver(xml.sax.handler.EntityResolver):
 	def resolveEntity(self, p, s):
 
 		name = s.split('/')[-1:][0]
-
-		print 'looking for local source %s' % name
 		local = findfile(name)
 
 		if local:
-			print 'Using local source'
 			return InputSource(local)
 
 		return InputSource(s)
@@ -41,7 +46,7 @@ class MyEntityResolver(xml.sax.handler.EntityResolver):
 
 _RESOURCE_TYPE = 'mathml'
 
-class ResourceSetGenerator(converters.AbstractLatexCompilerDriver):
+class XMLMathCompilerDriver(converters.AbstractLatexCompilerDriver):
 
 	fileExtension = '.xml'
 	resourceType = _RESOURCE_TYPE
@@ -70,9 +75,10 @@ class ResourceSetGenerator(converters.AbstractLatexCompilerDriver):
 
 		return minidom.parse(output, parser)
 
-class ResourceGenerator(converters.AbstractConcurrentCompilingContentUnitRepresentationBatchConverter):
-
-	debug			= False
+class TTMBatchConverter(converters.AbstractConcurrentConditionalCompilingContentUnitRepresentationBatchConverter):
+	"""
+	Converts by compiling latex using the TTM command.
+	"""
 
 	concurrency		= 4
 	compiler		= 'ttm'
@@ -84,14 +90,10 @@ class ResourceGenerator(converters.AbstractConcurrentCompilingContentUnitReprese
 					 	'\\\\textregistered']
 
 	def _new_batch_compile_driver(self, document, compiler='', encoding='utf-8', batch=0):
-		return ResourceSetGenerator(document, self.compiler, encoding, batch)
+		return XMLMathCompilerDriver(document, self.compiler, encoding, batch)
 
-	def _can_process(self, content_unit):
-		if not self.illegalCommands:
-			return True
+ResourceGenerator = TTMBatchConverter
+ResourceSetGenerator = XMLMathCompilerDriver
 
-		source = content_unit.source
-		for command in self.illegalCommands:
-			if re.search(command, source):
-				return False
-		return True
+from zope.deprecation import deprecated
+deprecated( ['ResourceGenerator','ResourceSetGenerator'], 'Prefer the new names in this module' )

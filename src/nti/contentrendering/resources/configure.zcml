@@ -3,28 +3,28 @@
 		   i18n_domain="zope">
 	<include package="zope.component" />
 
-	<adapter factory=".converter_png.ResourceGenerator"
+	<adapter factory=".converter_png.GSPDFPNG2BatchConverter"
 			 for="plasTeX.DOM.Node"
 			 provides=".interfaces.IContentUnitRepresentationBatchConverter"
 			 name="png" />
 
-	<adapter factory=".converter_svg.ResourceGenerator"
+	<adapter factory=".converter_svg.PDF2SVGBatchConverter"
 			 for="plasTeX.DOM.Node"
 			 provides=".interfaces.IContentUnitRepresentationBatchConverter"
 			 name="svg" />
 
-	<adapter factory=".converter_mathjax_display.ResourceGenerator"
+	<adapter factory=".converter_mathjax_display.MathjaxDisplayBatchConverter"
 			 for="plasTeX.DOM.Node"
 			 provides=".interfaces.IContentUnitRepresentationBatchConverter"
 			 name="mathjax_display" />
 
 
-	<adapter factory=".converter_mathjax_inline.ResourceGenerator"
+	<adapter factory=".converter_mathjax_inline.MathjaxInlineBatchConverter"
 			 for="plasTeX.DOM.Node"
 			 provides=".interfaces.IContentUnitRepresentationBatchConverter"
 			 name="mathjax_inline" />
 
-	<adapter factory=".converter_mathml.ResourceGenerator"
+	<adapter factory=".converter_mathml.TTMBatchConverter"
 			 for="plasTeX.DOM.Node"
 			 provides=".interfaces.IContentUnitRepresentationBatchConverter"
 			 name="mathml" />

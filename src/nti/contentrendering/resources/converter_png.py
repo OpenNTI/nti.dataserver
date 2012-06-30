@@ -1,31 +1,33 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+A resource converter to create MathXML.
 
-import os,tempfile, re, tempfile
-from plasTeX.Logging import getLogger
-import plasTeX.Imagers
+..note:: This module is currently not used or tested.
+
+$Id$
+"""
+from __future__ import print_function, unicode_literals
+
+logger = __import__('logging').getLogger(__name__)
+
+import os
+import tempfile
+import re
 import glob
-import sys
+import time
 
 from concurrent.futures import ProcessPoolExecutor
 from nti.contentrendering.resources import converters, interfaces
 from zope import interface
 
 
-log = getLogger(__name__)
-depthlog = getLogger('render.images.depth')
-status = getLogger('status')
-imagelog = getLogger('imager')
-
 import plasTeX.Imagers
 from plasTeX.Imagers import Image
 import subprocess
 import math
 
-status = getLogger('status')
-
 gs = 'gs'
-if sys.platform.startswith('win'):
-	gs = 'gswin32c'
 
 import plasTeX.Imagers.gspdfpng
 
@@ -34,6 +36,7 @@ import plasTeX.Imagers.gspdfpng
 ## 	return (key, width_in_pt, height_in_pt)
 
 def _size(key, png):
+	# identify, from ImageMagick, is much easier to work with than pdfinfo --box
 	width_in_pt, height_in_pt = subprocess.Popen( "identify %s | awk '{print $3}'" % (png), shell=True, stdout=subprocess.PIPE).communicate()[0].split('x')
 	return (key, width_in_pt, height_in_pt)
 
@@ -42,8 +45,14 @@ def _scale(input, output, scale, defaultScale):
 	#scale is 1x, 2x, 4x
 	return os.system( 'convert %s -resize %d%% PNG32:%s' % (input, 100*(scale/defaultScale) , output) )
 
-class GSPDFPNG2(plasTeX.Imagers.gspdfpng.GSPDFPNG):
-	""" Imager that uses gs to convert pdf to png, using PDFCROP to handle the scaling """
+class _GSPDFPNG2(plasTeX.Imagers.gspdfpng.GSPDFPNG):
+	"""
+	Imager that uses gs to convert pdf to png, using PDFCROP to handle the scaling.
+
+	Customized to work only with our :class:`GSPDFPNG2BatchConverter` class, so
+	some features are removed.
+
+	"""
 	command = ('%s -q -dSAFER -dBATCH -dNOPAUSE -sDEVICE=pngalpha ' % gs) + \
 			  '-dGraphicsAlphaBits=4 -sOutputFile=img%d.png'
 	compiler = 'pdflatex'
@@ -53,6 +62,9 @@ class GSPDFPNG2(plasTeX.Imagers.gspdfpng.GSPDFPNG):
 	defaultScaleFactor = 4.0
 
 	def executeConverter(self, output):
+		# Must have been called from the converter
+		assert self.scaleFactor is None, "Scaling not supported"
+
 		open('images.out', 'wb').write(output.read())
 		# Now crop
 		# We complain about images being raised above the baseline, yet we have the margin set to 3?
@@ -84,13 +96,8 @@ class GSPDFPNG2(plasTeX.Imagers.gspdfpng.GSPDFPNG):
 					value = '"%s"' % value
 				options += '%s %s ' % (opt, value)
 
+		# FIXME: Convert to subprocess. os.system is unsafe.
 		res = os.system('%s -r%d %s%s' % (self.command, self.size ,options, 'images.out')), None
-
-
-
-
-		if self.scaleFactor != None:
-			self.scaleImages()
 
 		pngs = glob.glob('img*.png')
 		pngs.sort(lambda a,b: cmp(int(re.search(r'(\d+)\.\w+$',a).group(1)),
@@ -111,31 +118,26 @@ class GSPDFPNG2(plasTeX.Imagers.gspdfpng.GSPDFPNG):
 		""" Because we do our own cropping, we don't need the registration mark. Hence, we define that to do nothing; the
 		superclass then does NOT define it. """
 		self.source.write( "\\newcommand{\plasTeXregister}{}" )
-		super(GSPDFPNG2,self).writePreamble( document )
+		super(_GSPDFPNG2,self).writePreamble( document )
 
-	def scaleImages(self):
-		" Uses ImageMagick to scale the images in parallel "
-		with ProcessPoolExecutor() as executor:
-			pngs = glob.glob('img*.png')
-			for _ in executor.map( _scale, pngs, pngs, [self.scaleFactor for x in pngs], [self.defaultScaleFactor for x in pngs]):
-				pass
+	def scaleImages(self): # pragma: no cover
+		raise NotImplementedError("Scaling is done in the converter.")
 
 
-def _invert(input, output):
-	return os.system('convert %s -negate %s' % (input, output))
-
-Imager = GSPDFPNG2
+def _invert(ifile, ofile):
+	return os.system('convert %s -negate %s' % (ifile, ofile))
 
 from ._util import copy
 
 
-class ResourceGenerator(converters.ImagerContentUnitRepresentationBatchConverter):
+class GSPDFPNG2BatchConverter(converters.ImagerContentUnitRepresentationBatchConverter):
 
 	scales = (1,)
 	shouldInvert = False
+	batch = 0
 
 	def __init__(self, document):
-		super(ResourceGenerator, self).__init__(document, Imager)
+		super(GSPDFPNG2BatchConverter, self).__init__(document, _GSPDFPNG2)
 
 	def process_batch(self, content_units):
 
@@ -143,9 +145,14 @@ class ResourceGenerator(converters.ImagerContentUnitRepresentationBatchConverter
 		rsg.imager.scaleFactor = None  #We scale them on our side
 
 		sources = [content_unit.source for content_unit in content_units]
-
+		start = time.time()
 		processed = rsg.convert_batch( sources )
-
+		end = time.time()
+		if len(processed) != len(content_units):
+			raise OSError( 'Expected %s files but only generated %s for batch %s' %
+						   (len(content_units), len(processed), self.batch ) )
+		elapsed = end - start
+		logger.info( "%s resources generated in %sms for batch %s", len(processed), elapsed, self.batch )
 		#origSources, origImages = zip(*processed)
 		#origImages = processed
 
@@ -191,7 +198,7 @@ class ResourceGenerator(converters.ImagerContentUnitRepresentationBatchConverter
 								   [image.path for image in imagesToResizeSource],
 								   [image.path for image in imagesToResizeDest],
 								   [image._scaleFactor for image in imagesToResizeDest],
-								   [rsg.imager.defaultScaleFactor for x in imagesToResizeSource] ):
+								   [rsg.imager.defaultScaleFactor for _ in imagesToResizeSource] ):
 				pass
 
 
