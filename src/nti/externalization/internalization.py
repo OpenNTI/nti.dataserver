@@ -266,6 +266,24 @@ def validate_field_value( self, field_name, field, value ):
 			# validation error means we could adapt, but it still wasn't
 			# right. Raise the original SchemaValidationError.
 			raise exc_info[0], exc_info[1], exc_info[2]
+	except sch_interfaces.WrongContainedType as e:
+		# We failed to set a sequence. This would be of simple (non externalized)
+		# types. Try to adapt each value to what the sequence wants, just as above,
+		# if the error is one that may be solved via simple adaptation
+
+		exc_info = sys.exc_info()
+		if not e.args or not all( (isinstance(x,sch_interfaces.SchemaNotProvided) for x in e.args[0] ) ):
+			raise
+
+		try:
+			value = [field.value_type.schema( v ) for v in value]
+			field.validate( value )
+		except (TypeError,sch_interfaces.ValidationError):
+			# Nope. TypeError means we couldn't adapt, and a
+			# validation error means we could adapt, but it still wasn't
+			# right. Raise the original SchemaValidationError.
+			raise exc_info[0], exc_info[1], exc_info[2]
+
 
 	return lambda: field.set( self, value )
 

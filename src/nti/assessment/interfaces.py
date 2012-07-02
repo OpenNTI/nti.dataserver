@@ -3,7 +3,9 @@ from __future__ import unicode_literals, print_function
 
 from zope import interface
 from zope import schema
+
 from nti.utils import schema as dmschema
+from nti.contentfragments import interfaces as cfg_interfaces
 
 NTIID_TYPE = 'NAQ'
 
@@ -14,8 +16,26 @@ class TypedIterable(schema.List):
 	"""
 	_type = None # Override from super to not force a list
 
-# TODO: Should the content portions be specifically modelled as
-# contentrendering.interfaces.IContentFragment? Probably
+class _ContentFragment(schema.Object,schema.Text):
+
+	def __init__( self, *args, **kwargs ):
+		# We're imported too early for ZCA to be configured and we can't automatically
+		# adapt.
+		if 'default' in kwargs and not cfg_interfaces.IUnicodeContentFragment.providedBy( kwargs['default'] ):
+			kwargs['default'] = cfg_interfaces.UnicodeContentFragment( kwargs['default'] )
+		super(_ContentFragment,self).__init__( cfg_interfaces.IUnicodeContentFragment, *args, **kwargs )
+
+class _ContentFragmentTextLine(schema.Object,schema.TextLine):
+
+	_iface = cfg_interfaces.IContentFragment
+
+	def __init__( self, *args, **kwargs ):
+		super(_ContentFragmentTextLine,self).__init__( self._iface, *args, **kwargs )
+
+
+class _LatexTextLine(_ContentFragmentTextLine):
+	_iface = cfg_interfaces.ILatexContentFragment
+
 
 class IQHint(interface.Interface):
 	"""
@@ -31,7 +51,7 @@ class IQTextHint(IQHint):
 	"""
 	A hint represented as text.
 	"""
-	value = schema.Text( title="The hint text" )
+	value = _ContentFragment( title="The hint text" )
 
 class IQSolution(interface.Interface):
 
@@ -53,14 +73,14 @@ class IQPart(interface.Interface):
 	which requires a response.
 	"""
 
-	content = schema.Text( title="The content to present to the user for this portion, if any." )
+	content = _ContentFragment( title="The content to present to the user for this portion, if any." )
 	hints = TypedIterable( title="Any hints that pertain to this part",
 						   value_type=dmschema.Object(IQHint, title="A hint for the part") )
 	solutions = TypedIterable( title="Acceptable solutions for this question part in no particular order.",
 								description="All solutions must be of the same type, and there must be at least one.",
 								value_type=dmschema.Object(IQSolution, title="A solution for this part")	)
-	explanation = schema.Text( title="An explanation of how the solution is arrived at.",
-							  default='' )
+	explanation = _ContentFragment( title="An explanation of how the solution is arrived at.",
+									default='' )
 
 	def grade( response ):
 		"""
@@ -136,8 +156,8 @@ class IQLatexSymbolicMathSolution(IQSymbolicMathSolution,IQSingleValuedSolution)
 	as symbols, parsed from latex.
 	"""
 
-	value = schema.TextLine( title="The LaTeX form of the correct answer.",
-							 min_length=1 )
+	value = _LatexTextLine( title="The LaTeX form of the correct answer.",
+							min_length=1 )
 
 class IResponseToSymbolicMathConverter(interface.Interface):
 	"""
@@ -175,7 +195,7 @@ class IQMultipleChoicePart(IQPart):
 						   min_length=1,
 						   description="""Presentation order may matter, hence the list. But for grading purposes,
 						   the order does not matter and simple existence within the set is sufficient.""",
-						   value_type=schema.TextLine( title="A rendered value" ) ) # TODO: Again with the IContentFragment?
+						   value_type=_ContentFragment( title="A rendered value" ) )
 	solutions = TypedIterable( title="The multiple-choice solutions",
 							   min_length=1,
 							   value_type=dmschema.Object( IQMultipleChoiceSolution, title="Multiple choice solution" ) )
@@ -218,10 +238,10 @@ class IQMatchingPart(IQPart):
 
 	labels = schema.List( title="The list of labels",
 						  min_length=2,
-						  value_type=schema.TextLine( title="A label-column value" ) )
+						  value_type=_ContentFragmentTextLine( title="A label-column value" ) )
 	values = schema.List( title="The list of labels",
 						  min_length=2,
-						  value_type=schema.TextLine( title="A value-column value" ) )
+						  value_type=_ContentFragmentTextLine( title="A value-column value" ) )
 
 class IQMatchingPartGrader(IQPartGrader):
 	"""

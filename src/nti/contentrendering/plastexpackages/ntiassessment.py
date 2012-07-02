@@ -58,6 +58,7 @@ from . import interfaces
 from nti.externalization.externalization import toExternalObject
 from nti.assessment import interfaces as as_interfaces, parts, question
 from nti.contentrendering import plastexids, interfaces as cdr_interfaces
+from nti.contentfragments import interfaces as cfg_interfaces
 from plasTeX import Base
 
 class naqsolutions(Base.List):
@@ -125,7 +126,7 @@ def _asm_local_textcontent(self):
 			output.append(item)
 		elif getattr(item, 'unicode', None) is not None:
 			output.append(item.unicode)
-	return ''.join( output ).strip()
+	return cfg_interfaces.ILatexContentFragment( ''.join( output ).strip() )
 
 class _AbstractNAQPart(Base.Environment):
 
@@ -142,7 +143,7 @@ class _AbstractNAQPart(Base.Environment):
 		solutions = []
 		solution_els = self.getElementsByTagName( 'naqsolution' )
 		for solution_el in solution_els:
-			solution = self.soln_interface( unicode(solution_el.textContent).strip() )
+			solution = self.soln_interface( cfg_interfaces.ILatexContentFragment( unicode(solution_el.textContent).strip() ) )
 			weight = solution_el.attributes['weight']
 			if weight is not None:
 				solution.weight = weight
@@ -154,14 +155,14 @@ class _AbstractNAQPart(Base.Environment):
 		exp_els = self.getElementsByTagName( 'naqsolexplanation' )
 		assert len(exp_els) <= 1
 		if exp_els:
-			return unicode(exp_els[0].textContent).strip()
-		return ''
+			return cfg_interfaces.ILatexContentFragment( unicode(exp_els[0].textContent).strip() )
+		return cfg_interfaces.ILatexContentFragment( '' )
 
 	def _asm_hints(self):
 		hints = []
 		hint_els = self.getElementsByTagName( 'naqhint' )
 		for hint_el in hint_els:
-			hint = self.hint_interface( unicode(hint_el.textContent).strip() )
+			hint = self.hint_interface( cfg_interfaces.ILatexContentFragment( unicode(hint_el.textContent).strip() ) )
 			hints.append( hint )
 
 		return hints
@@ -239,7 +240,7 @@ class naqmultiplechoicepart(_AbstractNAQPart):
 	#forcePars = True
 
 	def _asm_choices(self):
-		return [unicode(x.textContent).strip() for x in self.getElementsByTagName( 'naqchoice' )]
+		return [cfg_interfaces.ILatexContentFragment(unicode(x.textContent).strip()) for x in self.getElementsByTagName( 'naqchoice' )]
 
 	def _asm_object_kwargs(self):
 		return { 'choices': self._asm_choices() }
