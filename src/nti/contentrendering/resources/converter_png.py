@@ -119,6 +119,8 @@ class _GSPDFPNG2(plasTeX.Imagers.gspdfpng.GSPDFPNG):
 		superclass then does NOT define it. """
 		self.source.write( "\\newcommand{\plasTeXregister}{}" )
 		super(_GSPDFPNG2,self).writePreamble( document )
+		self.source.write('\\usepackage[a0paper]{geometry}\n')
+		self.source.write('\\setlength{\\pdfpagewidth}{84.1cm}\n\\setlength{\\pdfpageheight}{118.9cm}\n')
 
 	def scaleImages(self): # pragma: no cover
 		raise NotImplementedError("Scaling is done in the converter.")
