@@ -5,6 +5,7 @@
 	<include package="zope.location" />
 
 	<include package="nti.externalization" />
+	<include package="nti.contentfragments" />
 
 	<!-- Response types -->
 
