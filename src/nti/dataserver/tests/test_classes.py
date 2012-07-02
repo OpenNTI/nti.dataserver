@@ -9,6 +9,7 @@ from nti.dataserver.tests import provides
 from zope.component import eventtesting
 
 from nti.externalization.externalization import toExternalObject
+from nti.externalization.internalization import update_from_external_object
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.dataserver import datastructures
 from nti.dataserver import interfaces as nti_interfaces
@@ -96,7 +97,7 @@ class TestSection(mock_dataserver.ConfiguringTestBase):
 		section_ext = toExternalObject(section)
 		section_ext['Enrolled'] = ['jason.madden@nextthought.com']
 
-		self.ds.update_from_external_object( section, dict(section_ext) )
+		update_from_external_object( section, dict(section_ext), context=self.ds )
 		assert_that( list(section.Enrolled), has_item( 'jason.madden@nextthought.com' ) )
 		assert_that( eventtesting.getEvents(), has_length( greater_than_or_equal_to( 2 ) ) )
 		assert_that( eventtesting.getEvents( IObjectAddedEvent ),
@@ -107,7 +108,7 @@ class TestSection(mock_dataserver.ConfiguringTestBase):
 		# Doing it a second time does nothing, no changes actually happen
 		clearEvents()
 
-		self.ds.update_from_external_object( section, dict({}) )
+		update_from_external_object( section, dict({}), context=self.ds )
 		assert_that( list(section.Enrolled), has_item( 'jason.madden@nextthought.com' ) )
 		assert_that( eventtesting.getEvents(), has_length( 0 ) )
 
@@ -120,7 +121,7 @@ class TestSection(mock_dataserver.ConfiguringTestBase):
 		clearEvents()
 		del section_ext['Enrolled']
 
-		self.ds.update_from_external_object( section, {} )
+		update_from_external_object( section, {}, context=self.ds )
 		assert_that( eventtesting.getEvents(), has_length( 0 ) )
 		assert_that( list(section.Enrolled), has_item( 'jason.madden@nextthought.com' ) )
 
@@ -136,7 +137,7 @@ class TestSection(mock_dataserver.ConfiguringTestBase):
 		# One still there, one gone, one added
 		section_ext['Enrolled'] = ['jason.madden@nextthought.com', 'baz@bar']
 
-		self.ds.update_from_external_object( section, dict(section_ext) )
+		update_from_external_object( section, dict(section_ext), context=self.ds )
 
 		assert_that( list(section.Enrolled),
 					 contains( 'baz@bar', 'jason.madden@nextthought.com' ) )
@@ -260,7 +261,7 @@ class TestClass(mock_dataserver.ConfiguringTestBase):
 		assert_that( section_ext, is_not( has_key( 'ID' ) ) )
 		clazz_ext['Sections'] = [section_ext]
 		# The dictionary gets modified during this process
-		self.ds.update_from_external_object( clazz, dict(clazz_ext) )
+		update_from_external_object( clazz, dict(clazz_ext), context=self.ds )
 
 		section.ID = 'CS5201.1'
 		assert_that( clazz['CS5201.1'], is_( section ) )
@@ -274,7 +275,7 @@ class TestClass(mock_dataserver.ConfiguringTestBase):
 		assert_that( clazz_ext['Sections'][0], is_not( has_key( 'ID' ) ) )
 		assert_that( clazz_ext['Sections'][1], has_key( 'ID' ) )
 
-		self.ds.update_from_external_object( clazz, dict(clazz_ext) )
+		update_from_external_object( clazz, dict(clazz_ext), context=self.ds )
 		assert_that( list( clazz.Sections ), has_length( 2 ) )
 		assert_that( clazz['CS5201.1'], is_(section) )
 		section.ID = 'CS5201.2'
@@ -310,7 +311,7 @@ class TestClass(mock_dataserver.ConfiguringTestBase):
 		clazz_ext = toExternalObject( clazz )
 		clazz_ext['Sections'][0]['Description'] = 'Cool section'
 
-		self.ds.update_from_external_object( clazz, dict( clazz_ext ) )
+		update_from_external_object( clazz, dict( clazz_ext ), context=self.ds )
 		assert_that( clazz[section.ID], is_( same_instance( section ) ) )
 		assert_that( clazz[section.ID].Description, is_( 'Cool section' ) )
 		assert_that( eventtesting.getEvents(), has_length( 2 ) )

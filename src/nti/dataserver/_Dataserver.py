@@ -29,6 +29,7 @@ import contextlib
 from zope.component.hooks import site, getSite, setSite
 
 
+
 from nti.externalization import oids
 import nti.apns as apns
 from nti.ntiids import ntiids
@@ -45,6 +46,7 @@ from . import meeting_container_storage
 
 from . import config
 
+from nti.deprecated import hiding_warnings as hiding_deprecation_warnings
 from nti.deprecated import deprecated
 
 DEFAULT_PASSWORD = "temp001"
@@ -137,10 +139,10 @@ def _trivial_db_transaction_cm():
 			raise
 		finally:
 			conn.close()
-from zope.deprecation import __show__
-__show__.off()
-interface.directlyProvides( _trivial_db_transaction_cm, interfaces.IDataserverTransactionContextManager )
-__show__.on()
+
+with hiding_deprecation_warnings():
+	interface.directlyProvides( _trivial_db_transaction_cm, interfaces.IDataserverTransactionContextManager )
+
 
 @contextlib.contextmanager
 def _connection_cm():

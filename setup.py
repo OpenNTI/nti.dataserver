@@ -70,6 +70,7 @@ setup(
 		'anyjson >= 0.3.3',
 		'boto >= 2.5.2', # amazon
 		'brownie >= 0.5.1', # Common utilities
+		'contentratings == 1.0', # rating content objects (1.0-rc3 > 1.0 sadly, so specific)
 		'coverage >= 3.5.2', # Test coverage
 		'cssselect >= 0.7.1', # Used by pyquery
 		'cython >= 0.16',
@@ -167,6 +168,7 @@ setup(
 		'zope.copy >= 4.0.0',
 		'zope.datetime >= 3.4.1',
 		'zope.deprecation >= 4.0.0',
+		'zope.deferredimport >= 3.5.3', # useful with zope.deprecation. Req'd by contentratings
 		'zope.dottedname >= 3.4.6',
 		'zope.dublincore >= 3.8.2',
 		'zope.event >= 4.0.0',

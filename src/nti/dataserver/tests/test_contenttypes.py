@@ -25,6 +25,7 @@ import os
 from nti.contentrange.contentrange import ContentRangeDescription, DomContentRangeDescription, ElementDomContentPointer
 
 import nti.externalization.internalization
+from nti.externalization.internalization import update_from_external_object
 nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.users' )
 nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.contenttypes' )
 nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.providers' )
@@ -151,7 +152,7 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 			assert_that( n.inReplyTo, none() )
 
 		with mock_dataserver.mock_db_trans(ds):
-			ds.update_from_external_object( n, ext )
+			update_from_external_object( n, ext, context=ds )
 			assert_that( n.inReplyTo, is_( n2 ) )
 			assert_that( n.references[0], is_( n2 ) )
 
@@ -184,7 +185,7 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 			assert_that( n.inReplyTo, none() )
 
 		with mock_dataserver.mock_db_trans(ds):
-			ds.update_from_external_object( n, ext )
+			update_from_external_object( n, ext, context=ds )
 			assert_that( n.inReplyTo, is_( n2 ) )
 			assert_that( n.references[0], is_( n2 ) )
 
@@ -248,7 +249,7 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 		n = Note()
 		ds = self.ds
 		with mock_dataserver.mock_db_trans(ds):
-			ds.update_from_external_object( n, ext )
+			update_from_external_object( n, ext, context=ds )
 
 		assert_that( n.body[0], is_( Canvas ) )
 
@@ -269,7 +270,7 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 		n = Note()
 		ds = self.ds
 		with mock_dataserver.mock_db_trans(ds):
-			ds.update_from_external_object( n, ext )
+			update_from_external_object( n, ext, context=ds )
 
 		assert_that( n.body[0], is_( Canvas ) )
 		assert_that( n.body[0][0], is_( CanvasPathShape ) )
@@ -295,7 +296,7 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 		n = Note()
 		ds = self.ds
 		with mock_dataserver.mock_db_trans(ds):
-			ds.update_from_external_object( n, ext )
+			update_from_external_object( n, ext, context=ds )
 
 		assert_that( n.body[0], is_( Canvas ) )
 
@@ -376,7 +377,7 @@ class TestCanvas(mock_dataserver.ConfiguringTestBase):
 		canvas2 = Canvas()
 		ds = self.ds
 		with mock_dataserver.mock_db_trans(ds):
-			ds.update_from_external_object( canvas2, ext )
+			update_from_external_object( canvas2, ext, context=ds )
 
 		assert_that( canvas2, is_( canvas ) )
 		assert_that( canvas2.containerId, is_( 'CID' ) )
@@ -384,13 +385,13 @@ class TestCanvas(mock_dataserver.ConfiguringTestBase):
 		shape3 = CanvasPathShape( closed=False, points=[1, 2.5] )
 		shape = CanvasPathShape()
 		with mock_dataserver.mock_db_trans(ds):
-			ds.update_from_external_object( shape, shape3.toExternalObject() )
+			update_from_external_object( shape, shape3.toExternalObject(), context=ds )
 		assert_that( shape, is_( shape3 ) )
 
 		shape3 = CanvasUrlShape( url='data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw==' )
 		shape = CanvasUrlShape()
 		with mock_dataserver.mock_db_trans(ds):
-			ds.update_from_external_object( shape, shape3.toExternalObject() )
+			update_from_external_object( shape, shape3.toExternalObject(), context=ds )
 		assert_that( shape, is_( shape3 ) )
 
 		assert_that( shape.toExternalObject(), has_entry( 'url', 'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw==' ) )

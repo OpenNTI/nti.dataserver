@@ -10,6 +10,7 @@ from nti.ntiids import ntiids
 import nti.dataserver.contenttypes as contenttypes
 
 from nti.externalization.oids import to_external_ntiid_oid, toExternalOID
+from nti.externalization.internalization import find_factory_for_class_name
 import nti.dataserver.interfaces as nti_interfaces
 from nti.dataserver._Dataserver import run_job_in_site
 import nti.dataserver
@@ -113,13 +114,13 @@ class TestDataserver( mock_dataserver.ConfiguringTestBase ):
 	def test_find_content_type( self ):
 		ds =  mock_dataserver.current_mock_ds
 		# is_ doesn't work, that turns into class assertion
-		assert_that( ds.find_content_type( 'Notes' ), equal_to( contenttypes.Note ) )
-		assert_that( ds.find_content_type( 'Note' ), equal_to( contenttypes.Note ) )
-		assert_that( ds.find_content_type( 'notes' ), equal_to( contenttypes.Note ) )
+		assert_that( find_factory_for_class_name( 'Notes' ), equal_to( contenttypes.Note ) )
+		assert_that( find_factory_for_class_name( 'Note' ), equal_to( contenttypes.Note ) )
+		assert_that( find_factory_for_class_name( 'notes' ), equal_to( contenttypes.Note ) )
 
-		assert_that( ds.find_content_type( 'quizresults' ), equal_to( contenttypes.quizresult ) )
+		assert_that( find_factory_for_class_name( 'quizresults' ), equal_to( contenttypes.quizresult ) )
 
-		assert_that( ds.find_content_type( 'TestDataserver' ), is_( none() ) )
+		assert_that( find_factory_for_class_name( 'TestDataserver' ), is_( none() ) )
 
 	@mock_dataserver.WithMockDSTrans
 	def test_get_plain_oid(self):

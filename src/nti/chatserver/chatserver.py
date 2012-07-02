@@ -10,6 +10,7 @@ from ZODB import loglevels
 import numbers
 
 from nti.externalization.externalization import toExternalObject
+from nti.externalization import internalization
 from nti.externalization import oids
 from nti.externalization.interfaces import StandardExternalFields as XFields
 
@@ -295,7 +296,8 @@ class Chatserver(object):
 		# so that we get correct OID resolution
 		room_info_dict.pop( 'Occupants' )
 		room_info_dict.pop( 'Active', None )
-		component.getUtility( nti_interfaces.IDataserver ).update_from_external_object( room, room_info_dict )
+		ds = component.getUtility( nti_interfaces.IDataserver )
+		internalization.update_from_external_object( room, room_info_dict, context=ds )
 		# Make sure the room is all setup before
 		# we add the sessions, since that will broadcast
 		# events using the room's info
