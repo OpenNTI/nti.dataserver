@@ -51,7 +51,6 @@ class MathjaxInlineCompilerDriver(converters.AbstractOneOutputDocumentCompilerDr
 	# we should be at least using the jobname?
 	mathjaxconfigfile	= _require_resource_filename('defaultmathjaxconfig.js')
 
-	wrapInText = False
 	resourceType = None
 
 	def __init__(self, document, compiler, encoding, batch):
@@ -72,8 +71,7 @@ class MathjaxInlineCompilerDriver(converters.AbstractOneOutputDocumentCompilerDr
 		<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/1.1-latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>')
 
 		self.write('<script type="text/javascript" src="%s"></script>' % self.mathjaxconfigfile)
-		if self.configName:
-			self.write('<script type="text/javascript" src="%s"></script>' % self.configName)
+		self.write('<script type="text/javascript" src="%s"></script>' % self.configName)
 
 		self.write('<script type="text/javascript"\
 		src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>\
@@ -82,30 +80,16 @@ class MathjaxInlineCompilerDriver(converters.AbstractOneOutputDocumentCompilerDr
 		</head>\
 		<body>')
 
-	def writeResource(self, source):
-		if self.wrapInText:
-			self.write('Cras vel metus diam, sed molestie risus. Etiam mattis, nisi sed malesuada luctus, arcu purus euismod velit, \
-			eu luctus felis nisi vitae nulla. Vestibulum euismod leo vel mauris commodo egestas. Nullam eu metus vitae velit euismod \
-			eleifend ac vitae nibh.  consectetur commodo.\
-			Nunc tincidunt, lacus sollicitudin vehicula ultricies, odio libero tempus magna, eget pretium nisi neque egestas est. \
-			Nulla mattis, erat quis accumsan ultrices, mi neque feugiat tellus, sed fermentum elit lorem vel lacus. Pellentesque \
-			in nunc dolor ')
-		self.write('%s<span class="mathjax math tex2jax_process mathquill-embedded-latex">\(%s\)</span>' %\
-					('' , cgi.escape(source[1:-1])))
-		if self.wrapInText:
-			self.write('. Cras vel metus diam, sed molestie risus. Etiam mattis, nisi sed malesuada luctus, arcu purus euismod velit, \
-			eu luctus felis nisi vitae nulla. Vestibulum euismod leo vel mauris commodo egestas. Nullam eu metus vitae velit euismod \
-			eleifend ac vitae nibh. Phasellus u diam. Suspendisse condimentum consectetur commodo.\
-			Nunc tincidunt, lacus sollicitudin vehicula ultricies, odio libero tempus magna, eget pretium nisi neque egestas est. \
-			Nulla mattis, erat quis accumsan ultrices, mi neque feugiat tellus, sed fermentum elit lorem vel lacus. Pellentesque \
-			in nunc dolor ')
+	def _compilation_source_for_content_unit( self, content_unit ):
+		tex_without_delimiters = content_unit.source[1:-1]
+		return '<span class="mathjax math tex2jax_process mathquill-embedded-latex">\(%s\)</span>' % cgi.escape(tex_without_delimiters)
 
 	def writePostamble(self):
 		self.write('</body></html>')
 
 	def compileSource(self):
 		# TODO: A lot of this could be shared with the superclass
-		source = self.writer
+		source = self._writer
 		source.seek(0)
 		htmlSource = source.read()
 
@@ -145,14 +129,15 @@ class MathjaxInlineCompilerDriver(converters.AbstractOneOutputDocumentCompilerDr
 
 		maths = [math.strip() for math in output.split('\n') if math.strip()]
 
-		i = 0
 		files = list()
-		for math in maths:
+		for i, math in enumerate(maths):
 			fname = os.path.join(tempdir, ('math_%s.xml' % i))
-			codecs.open(fname, 'w', 'utf-8').write(math)
-			files.append( FilesystemContentUnitRepresentation(path=fname, resourceType=self.resourceType, source=self.generatables[i]) )
-			i += 1
-
+			with codecs.open(fname, 'w', 'utf-8') as f:
+				f.write(math)
+			# Note this is slightly shady. We aren't keeping track of the original source anywhere
+			# except for in the superclass, and the resource DB depends on us handing back the original
+			# source. See superclass for more details
+			files.append( FilesystemContentUnitRepresentation(path=fname, resourceType=self.resourceType, source=self._generatables[i]) )
 
 		return files
 
