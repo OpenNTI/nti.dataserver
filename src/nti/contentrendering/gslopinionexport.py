@@ -14,6 +14,7 @@ import requests
 import pyquery
 from lxml import etree
 import sys
+import re
 
 def _text_of( p ):
 	return etree.tostring( p, encoding=unicode, method='text' )
@@ -88,7 +89,8 @@ class _href(_Container):
 def _url_to_pyquery( url ):
 	# Must use requests, not the url= argument, as
 	# that User-Agent is blocked
-	return pyquery.PyQuery( requests.get( url ).text )
+	# The custom user-agent string is to trick Google into sending UTF-8.
+	return pyquery.PyQuery( requests.get( url, headers={'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_4) AppleWebKit/537.1+ (KHTML, like Gecko) Version/5.1.7 Safari/534.57.2"} ).text )
 
 def _case_name_of( opinion ):
 	return opinion(b"#gsl_case_name").text()
@@ -197,7 +199,7 @@ def _opinion_to_tex( doc, output=None, base_url=None ):
 	tex = []
 
 	name = _case_name_of( doc )
-	tex.append( _Title( name ) )
+#	tex.append( _Title( name ) )
 	footnotes = _footnotes_of( doc )
 	for i in footnotes:
 		i.getparent().remove( i )
@@ -212,11 +214,38 @@ def _opinion_to_tex( doc, output=None, base_url=None ):
 
 	current = _Chapter( name )
 	tex.append( current )
+
+	section = _Section( "Opinion of the Court" )
+	if hasattr( current, 'parent' ):
+		current = getattr( current, 'parent' ) # Close the nesting. This deals with exactly one level
+	current.add_child( section )
+	setattr( section, 'parent', current )
+	current = section
+
 	for inc_child in inc_children:
 		if inc_child in exc_children:
 			continue
 
 		if inc_child.tag in ('p',):
+			if ( re.search( r'^Justice [A-Z]*|^Chief Justice [A-Z]*|^MR. JUSTICE [A-Z]*|^MR. CHIEF JUSTICE [A-Z]*', unicode( inc_child.text ) ) ):
+				if ( re.search( r'concurring|dissenting', unicode( inc_child.text ) ) ):
+					section = _Section( inc_child.text.strip() )
+					if hasattr( current, 'parent' ):
+						current = getattr( current, 'parent' ) # Close the nesting. This deals with exactly one level
+					current.add_child( section )
+					setattr( section, 'parent', current )
+					current = section
+			else:
+				for child in inc_child.getchildren():
+					if ( re.search( r'^\s*Justice [A-Z]*|^\s*Chief Justice [A-Z]*|^\s*MR. JUSTICE [A-Z]*|^\s*MR. CHIEF JUSTICE [A-Z]*', unicode(child.tail) ) ):
+						if ( re.search( r'concurring|dissenting', unicode( child.tail ) ) or
+						     re.search( r'dissent|concur', unicode( _text_of( inc_child.itersiblings().next() ) ) ) ):
+							section = _Section( child.tail.strip() )
+							if hasattr( current, 'parent' ):
+								current = getattr( current, 'parent' ) # Close the nesting. This deals with exactly one level
+							current.add_child( section )
+							setattr( section, 'parent', current )
+							current = section
 			current.add_child( _p_to_content( footnotes, inc_child ) )
 		elif inc_child.tag in CONTAINERS:
 			exc_children.update( inc_child.getchildren() )
@@ -227,12 +256,7 @@ def _opinion_to_tex( doc, output=None, base_url=None ):
 			if content or getattr( content, 'children', ()):
 				current.add_child( container )
 		elif inc_child.tag == 'h2':
-			section = _Section( _text_of( inc_child ).strip() )
-			if hasattr( current, 'parent' ):
-				current = getattr( current, 'parent' ) # Close the nesting. This deals with exactly one level
-			current.add_child( section )
-			setattr( section, 'parent', current )
-			current = section
+			current.add_child( _p_to_content( footnotes, inc_child ) )
 
 	if output is None:
 		output = sys.stdout # Capture this at runtime, it does change
@@ -243,15 +267,8 @@ def _opinion_to_tex( doc, output=None, base_url=None ):
 		for child in getattr( node, 'children', ()):
 			_print( frg_interfaces.ILatexContentFragment(child) )
 
-	lines = [br'\documentclass{book}', br'\usepackage{graphicx}', br'\usepackage{nti.contentrendering.ntilatexmacros}', br'\usepackage{hyperref}']
-	if base_url:
-		lines.append( br'\hyperbaseurl{' + _url_escape(base_url) + b'}' )
-	lines.append( br'\begin{document}' )
-	for line in lines:
-		print( line, file=output )
 	for node in tex:
 		_print( node )
-	print( br'\end{document}', file=output )
 
 def main():
 	from zope.configuration import xmlconfig
