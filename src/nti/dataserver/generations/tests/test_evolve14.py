@@ -42,8 +42,8 @@ new_container = "tag:nexthought.com:abc"
 class TestEvolve14(nti.dataserver.tests.mock_dataserver.ConfiguringTestBase):
 	set_up_packages = (nti.dataserver,)
 
-	@WithMockDS
 	@hides_warnings
+	@WithMockDS
 	def test_evolve14(self):
 		with mock_db_trans( ) as conn:
 			context = fudge.Fake().has_attr( connection=conn )
