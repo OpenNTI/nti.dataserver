@@ -22,6 +22,7 @@ from nti.dataserver.contenttypes import Note, Canvas
 
 from nti.externalization.oids import toExternalOID, to_external_ntiid_oid
 from nti.externalization.externalization import to_external_representation, toExternalObject, EXT_FORMAT_JSON, EXT_FORMAT_PLIST
+from nti.externalization.internalization import update_from_external_object
 from nti.ntiids import ntiids
 
 import nti.dataserver.users as users
@@ -88,7 +89,7 @@ class TestMessageInfo(ConfiguringTestBase):
 		assert_that( ext['Body'][1], has_entries( 'Class', 'Canvas', 'shapeList', [], 'CreatedTime', c.createdTime ) )
 
 		m = chat.MessageInfo()
-		self.ds.update_from_external_object( m, ext )
+		update_from_external_object( m, ext, context=self.ds )
 		assert_that( m.Body[0], is_( 'foo' ) )
 		assert_that( m.Body[1], is_( Canvas ) )
 
@@ -194,7 +195,7 @@ class TestChatRoom(ConfiguringTestBase):
 			assert_that( room.inReplyTo, none() )
 
 		with mock_dataserver.mock_db_trans(ds):
-			ds.update_from_external_object( room, ext )
+			update_from_external_object( room, ext, context=ds )
 			assert_that( room.inReplyTo, is_( n ) )
 			assert_that( room.references[0], is_( n ) )
 

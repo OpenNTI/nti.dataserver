@@ -22,6 +22,7 @@ from zope.site.interfaces import IFolder
 
 class TestEvolve12(nti.tests.ConfiguringTestBase):
 
+	@nti.deprecated.hides_warnings
 	def test_evolve12(self):
 		dbs = {}
 		db = DB( MappingStorage.MappingStorage(), databases=dbs )
@@ -36,8 +37,7 @@ class TestEvolve12(nti.tests.ConfiguringTestBase):
 		assert_that( context.connection.root()['nti.dataserver'], verifiably_provides( ISite ) )
 		assert_that( context.connection.root()['nti.dataserver'], verifiably_provides( IFolder ) )
 		# has_entry doesn't work with a Folder so do the lookup manually
-		with nti.deprecated.hiding_warnings():
-			assert_that( context.connection.root()['nti.dataserver']['users'], is_( datastructures.KeyPreservingCaseInsensitiveModDateTrackingBTreeContainer ) )
+		assert_that( context.connection.root()['nti.dataserver']['users'], is_( datastructures.KeyPreservingCaseInsensitiveModDateTrackingBTreeContainer ) )
 
 
 		# And the enclosure name is fixed
