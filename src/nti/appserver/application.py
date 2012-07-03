@@ -616,15 +616,7 @@ def createApplication( http_port,
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
 							 renderer='rest',
 							 permission=nauth.ACT_READ, request_method='GET' )
-	# Page content
-	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._LibraryTOCRedirectView',
-							 renderer='rest', context='nti.contentlibrary.interfaces.IContentUnit',
-							 permission=nauth.ACT_READ, request_method='GET' )
-	# Page content for the root ntiid. Note that we can't traverse to it (it's not actually in the library)
-	# so we use the view name.
-	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._RootLibraryTOCRedirectView',
-							 renderer='rest', name=ntiids.ROOT,
-							 permission=nauth.ACT_READ, request_method='GET' )
+	pyramid_config.scan( 'nti.appserver.contentlibrary_views' )
 
 	# Generic user object tree traversal
 	# For the Library/Main URL.
