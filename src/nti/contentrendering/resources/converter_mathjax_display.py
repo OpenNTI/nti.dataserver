@@ -12,11 +12,8 @@ from nti.contentrendering.resources import converter_mathjax_inline
 
 class MathjaxDisplayCompilerDriver(converter_mathjax_inline.MathjaxInlineCompilerDriver):
 
-	def writeResource(self, source):
-		self.writer.write( '\n' )
-		self.writer.write('<span class="mathjax math tex2jax_process mathquill-embedded-latex">' )
-		self.writer.write( cgi.escape( source ) )
-		self.writer.write( '</span>\n\n' )
+	def _compilation_source_for_content_unit( self, content_unit ):
+		return '<span class="mathjax math tex2jax_process mathquill-embedded-latex">%s</span>\n\n' % cgi.escape( content_unit.source )
 
 
 class MathjaxDisplayBatchConverter(converter_mathjax_inline.MathjaxInlineBatchConverter):

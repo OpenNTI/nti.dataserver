@@ -146,9 +146,8 @@ class GSPDFPNG2BatchConverter(converters.ImagerContentUnitRepresentationBatchCon
 		rsg = self._new_batch_converter_driver()
 		rsg.imager.scaleFactor = None  #We scale them on our side
 
-		sources = [content_unit.source for content_unit in content_units]
 		start = time.time()
-		processed = rsg.convert_batch( sources )
+		processed = rsg.convert_batch( content_units )
 		end = time.time()
 		if len(processed) != len(content_units):
 			raise OSError( 'Expected %s files but only generated %s for batch %s' %
