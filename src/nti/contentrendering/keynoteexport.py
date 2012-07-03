@@ -7,7 +7,7 @@ from lxml import etree
 from lxml.cssselect import CSSSelector
 
 from zope import interface
-from . import interfaces
+from nti.contentfragments import interfaces as cfg_interfaces
 
 _NAMESPACES = {
 	'sfa': "http://developer.apple.com/namespaces/sfa",
@@ -77,7 +77,7 @@ def _text_of( p ):
 	return etree.tostring( p, encoding=unicode, method='text' )
 
 class _ElementPlainTextContentFragment(unicode):
-	interface.implements(interfaces.IPlainTextContentFragment)
+	interface.implements(cfg_interfaces.IPlainTextContentFragment)
 
 	def __new__( cls, element ):
 		return super(_ElementPlainTextContentFragment,cls).__new__( cls, _text_of( element ) )
@@ -88,7 +88,7 @@ class _ElementPlainTextContentFragment(unicode):
 		self.element = element
 
 class _Image(object):
-	interface.implements(interfaces.ILatexContentFragment)
+	interface.implements(cfg_interfaces.ILatexContentFragment)
 	path = None
 	def __init__( self, path=None ):
 		self.path = path
@@ -97,7 +97,7 @@ class _Image(object):
 		return "\includegraphics[width=400px]{" + self.path + '}'
 
 class _List(object):
-	interface.implements(interfaces.ILatexContentFragment)
+	interface.implements(cfg_interfaces.ILatexContentFragment)
 	level = 1
 	def __init__( self ):
 		self.children = []
@@ -108,13 +108,13 @@ class _List(object):
 			line = '\t' * self.level
 			if not isinstance( kid, _List ) and kid != _FORCED_NEWLINE:
 				line = line + '\item '
-			line = line + unicode( interfaces.ILatexContentFragment( kid ) )
+			line = line + unicode( cfg_interfaces.ILatexContentFragment( kid ) )
 			lines.append( line )
 		lines.append( '\end{itemize}' )
 		return '\n'.join( (unicode(line) for line in lines) )
 
 class _Slide(object):
-	interface.implements(interfaces.ILatexContentFragment)
+	interface.implements(cfg_interfaces.ILatexContentFragment)
 	element = None
 	slide_num = 0
 	def __init__(self):
@@ -129,12 +129,12 @@ class _Slide(object):
 
 	def __str__( self ):
 
-		lines = [u'\section{' + interfaces.ILatexContentFragment( self.text_elements[0] ) + '}'
+		lines = [u'\section{' + cfg_interfaces.ILatexContentFragment( self.text_elements[0] ) + '}'
 				 if self.text_elements
 				 else '']
 
 		for kid in self.text_elements:
-			lines.append( interfaces.ILatexContentFragment( kid ) )
+			lines.append( cfg_interfaces.ILatexContentFragment( kid ) )
 		return '\n'.join( (unicode(line) for line in lines) )
 
 class _MasterSlide(_Slide):
@@ -165,7 +165,7 @@ class _Presentation(object):
 	def to_latex( self ):
 		lines = [br'\documentclass{book}', br'\usepackage{graphicx}', br'\begin{document}']
 		for slide in self.slides:
-			lines.append( interfaces.ILatexContentFragment( slide ) )
+			lines.append( cfg_interfaces.ILatexContentFragment( slide ) )
 		lines.append( r'\end{document}' )
 		return '\n'.join( (unicode(line) for line in lines) )
 
@@ -210,7 +210,7 @@ def extract_text( keynote, jobname, imagedir ):
 		fragments = [_ElementPlainTextContentFragment( p )]
 		try:
 			if p.find( './/{' + _NAMESPACES['sf'] + '}br' ) is not None:
-				fragments.append( interfaces.LatexContentFragment( '\\\\\n' ) )
+				fragments.append( cfg_interfaces.LatexContentFragment( '\\\\\n' ) )
 		except IndexError:
 			pass
 		return fragments
