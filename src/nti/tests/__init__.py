@@ -133,7 +133,16 @@ def _configure(self=None, set_up_packages=(), features=('devmode',)):
 
 		for i in set_up_packages:
 			__traceback_info__ = (i, self)
-			context = xmlconfig.file( 'configure.zcml', package=i, context=context )
+			if isinstance( i, tuple ):
+				filename = i[0]
+				package = i[1]
+			else:
+				filename = 'configure.zcml'
+				package = i
+
+			context = xmlconfig.file( filename, package=package, context=context )
+
+
 
 class ConfiguringTestBase(AbstractTestBase):
 	set_up_packages = ()
@@ -202,21 +211,20 @@ class ZopeExceptionLogPatch(nose.plugins.Plugin):
 	def formatFailure(self, test, exc_info):
 		return self.formatError( test, exc_info)
 
-def main():
-	dirname = os.path.dirname( __file__ )
-	if not dirname:
-		dirname = '.'
-	pardirname = os.path.join( dirname, '..' )
-	pardirname = os.path.abspath( pardirname )
-	for moddir in os.listdir( pardirname ):
-		testfile = os.path.join( pardirname, moddir, 'tests', '__main__.py' )
-		if os.path.exists( testfile ):
-			print testfile
-			env = dict(os.environ)
-			path = list(sys.path)
-			path.insert( 0, pardirname )
-			env['PYTHONPATH'] = os.path.pathsep.join( path )
-			subprocess.call( [sys.executable, testfile], env=env )
+# Zope.mimetype registers hundreds and thousands of objects
+# doing that for each test makes them take SO much longer
+# Unfortunately, as noted above, zope.testing.cleanup.CleanUp
+# installs something to reset the gsm, so it's not possible
+# to simply pre-cache like the below:
+# try:
+# 	import zope.mimetype
+# 	_configure( None, (('meta.zcml',zope.mimetype),
+# 					   ('meta.zcml',zope.component),
+# 					   zope.mimetype) )
+# except ImportError:
+# 	pass
 
-if __name__ == '__main__':
-	main()
+# Attempting to runaround the testing cleanup by
+# using a different base doesn't quite work,
+# some things are still using the old one
+# globalregistry.base = BaseComponents()
