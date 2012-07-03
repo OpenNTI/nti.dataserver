@@ -15,8 +15,16 @@ class IContentPackageLibrary(interface.Interface):
 	"""
 
 	def pathToNTIID(ntiid):
-		""" Returns a list of :class:IContentCollection objects in order until
-		the given ntiid is encountered, or None if the id cannot be found."""
+		"""
+		Returns a list of :class:`IContentUnit` objects in order until
+		the given NTIID is encountered, or :obj:`None` if the ``ntiid`` cannot be found.
+
+		.. attention:: This does not include the
+			:const:`nti.ntiids.ntiids.ROOT` NTIID. That is an implicit
+			element before the first element in the returned sequence.
+
+		.. caution:: Passing the root NTIID will result in a return of None.
+		"""
 
 	def childrenOfNTIID( ntiid ):
 		""" Returns a flattened list of all the children entries of ntiid
@@ -24,7 +32,7 @@ class IContentPackageLibrary(interface.Interface):
 
 	def __getitem__( key ):
 		"""
-		Return the ILibraryEntry having the matching `title` or `ntiid`.
+		Return the :class:`IContentUnit` having the matching ``title`` or ``ntiid``.
 		(Support for titles is a convenience and not to be relied upon).
 		"""
 

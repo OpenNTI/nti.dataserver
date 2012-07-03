@@ -16,6 +16,7 @@ Contents:
 
 	ipad-localremotebridge
 	ntiid-structure
+	ntiids
 	content-anchoring
 	content-in-cdn
 	passenger
@@ -33,6 +34,8 @@ Contents:
 
 
 	assessment-interfaces
+
+	library-interfaces
 
 	zope
 

@@ -41,6 +41,7 @@ class _AbstractLibrary(object):
 
 			path = pathEntry
 			# TODO: We need a factory or something here
+			# TODO: Caching
 			title = eclipse.EclipseContentPackage( path )
 			if title:
 				titles.append( title )
