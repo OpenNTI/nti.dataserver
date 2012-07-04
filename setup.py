@@ -87,7 +87,7 @@ setup(
 		# run 'python setup.py install'. It may be necessary to 'pip uninstall' this (and/or remove it from zite-packages)
 		# before running setup.py.
 		# NOTE2: This will go away soon, merged into pyzmq 2.2dev as zmq.green
-		'gevent_zeromq >= 0.2.2',
+		'gevent_zeromq >= 0.2.3',
 		'greenlet >= 0.4.0',
 		'gunicorn >= 0.14.5',
 		'html5lib == 0.95',
@@ -160,7 +160,7 @@ setup(
 		'zope.browserpage',
 		'zope.browserresource',
 		'zope.cachedescriptors >= 3.5.1',
-		'zope.component >= 3.12.1',
+		'zope.component >= 4.0.0',
 		'zope.componentvocabulary',
 		'zope.configuration >= 4.0.0',
 		'zope.container >= 3.12.0',
@@ -187,7 +187,7 @@ setup(
 		'zope.minmax >= 1.1.2',
 		'zope.pagetemplate',
 		'zope.password >= 3.6.1', # encrypted password management
-		'zope.publisher',
+		'zope.publisher >= 3.13.1',
 		'zope.processlifetime',
 		'zope.schema >= 4.2.0',
 		'zope.security >= 3.8.3',
