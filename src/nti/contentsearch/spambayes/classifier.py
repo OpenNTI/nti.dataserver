@@ -49,7 +49,18 @@ from nti.contentsearch.spambayes.chi2 import chi2Q
 
 # ---------------------------------
 
-class WordInfo(object):
+class _BaseWordInfo(object):
+	def update(self, spam, ham):
+		self.spamcount = spam
+		self.hamcount = ham
+		
+	def is_empty(self):
+		return self.hamcount == 0 and self.spamcount == 0
+	
+	def __repr__(self):
+		return "WordInfo %s" % repr((self.spamcount, self.hamcount))
+	
+class WordInfo(_BaseWordInfo):
 	# A WordInfo is created for each distinct word.  spamcount is the
 	# number of trained spam msgs in which the word appears, and hamcount
 	# the number of trained ham msgs.
@@ -63,16 +74,6 @@ class WordInfo(object):
 	
 	def __init__(self):
 		self.__setstate__((0, 0))
-	
-	def update(self, spam, ham):
-		self.spamcount = spam
-		self.hamcount = ham
-		
-	def is_empty(self):
-		return self.hamcount == 0 and self.spamcount == 0
-	
-	def __repr__(self):
-		return "WordInfo %s" % repr((self.spamcount, self.hamcount))
 	
 	def __getstate__(self):
 		return self.spamcount, self.hamcount

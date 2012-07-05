@@ -7,6 +7,7 @@ from BTrees.OOBTree import OOBTree
 
 from nti.utils.transactions import ObjectDataManager
 
+from nti.contentsearch.spambayes.classifier import _BaseWordInfo
 from nti.contentsearch.spambayes.classifier import Classifier
 
 from nti.contentsearch.spambayes import default_use_bigrams
@@ -15,13 +16,10 @@ from nti.contentsearch.spambayes import default_max_discriminators
 from nti.contentsearch.spambayes import default_unknown_word_strength
 from nti.contentsearch.spambayes import default_minimum_prob_strength
 
-class PersistentWordInfo(Persistent):
+class PersistentWordInfo(Persistent, _BaseWordInfo):
 	
 	def __init__(self):
 		self.spamcount = self.hamcount = 0
-	
-	def __repr__(self):
-		return "WordInfo(%r %r)" % (self.spamcount, self.hamcount)
 	
 	
 class PersistentClassifier(Persistent, Classifier):
