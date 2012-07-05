@@ -37,6 +37,10 @@ Contents:
 
 	library-interfaces
 
+	nti-utils
+	nti-zodb
+
+	gevent
 	zope
 
 ..	regression-tests

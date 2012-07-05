@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 """
-Conflict resolving value/counter implementatinos
-$Revision$
+Conflict resolving value/counter implementations
+
+$Id$
 """
 from __future__ import print_function, unicode_literals
 
@@ -90,7 +91,7 @@ class NumericMinimum(AbstractNumericValue,Minimum):
 
 class MergingCounter(AbstractNumericValue):
 	"""
-	A :module:`zope.minmax` item that resolves conflicts by
+	A :mod:`zope.minmax` item that resolves conflicts by
 	merging the numeric value of the difference in magnitude of changes.
 	Intented to be used for monotonically increasing counters.
 	"""
