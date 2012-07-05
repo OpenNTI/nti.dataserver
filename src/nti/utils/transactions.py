@@ -112,7 +112,7 @@ def put_nowait( queue, obj ):
 	If the queue cannot accept the object because it is full, the transaction
 	will be aborted.
 
-	See :class:`gevent.Queue` and :class:`gevent.queue.Full`.
+	See :class:`gevent.queue.Queue` and :class:`Queue.Full` and :mod:`gevent.queue`.
 	"""
 	transaction.get().join(
 		_QueuePutDataManager( queue,
