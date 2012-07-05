@@ -1,2 +1,8 @@
-Deny:dzaharopol@gmail.com:All
-Allow:system.Authenticated:All
+Allow:nextthought.com:All
+Allow:tests.nextthought.com:All
+Allow:test.nextthought.com:All
+Allow:artofproblemsolving.com:All
+Allow:buseygroup.com:All
+Allow:loudig@gmail.com:All
+Allow:frost13@comcast.net:All
+Allow:brianjasonedwards@gmail.com:All
