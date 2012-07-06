@@ -10,8 +10,6 @@ import pkg_resources
 from zope import interface
 from zope.generations import interfaces as gen_interfaces
 
-from concurrent.futures import ThreadPoolExecutor
-
 import nti.dataserver.quizzes as quizzes
 import nti.dataserver.classes as classes
 import nti.dataserver.providers as providers
@@ -172,12 +170,7 @@ class ExampleDatabaseInitializer(object):
 			self._add_friendslists_to_user( user )
 			add_user( user )
 		
-		futures = []
-		with ThreadPoolExecutor(max_workers=5) as executor:
-			for u in USERS:
-				futures.append(executor.submit(create_add_user, u))
-		
-		for f in futures: f.result()
+		map(create_add_user, USERS)
 		
 
 		provider = providers.Provider( 'OU' )
