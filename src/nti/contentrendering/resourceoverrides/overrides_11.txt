@@ -1,0 +1,13 @@
+\[
+\begin{array}{rcl@{\qquad}rcl@{\qquad}rcl}
+\dfrac12 &=& 0.5 &
+\dfrac13 &=& 0.\overline{3} &
+\dfrac14 &=& 0.25 \\[2ex]
+\dfrac15 &=& 0.2 &
+\dfrac16 &=& 0.1\overline{6} &
+\dfrac17 &=& 0.\overline{142857} \\[2ex]
+\dfrac18 &=& 0.125 &
+\dfrac19 &=& 0.\overline{1} &
+\dfrac{1}{10} &=& 0.1
+\end{array}
+\]

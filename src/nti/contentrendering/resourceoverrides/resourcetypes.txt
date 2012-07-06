@@ -7,3 +7,6 @@ overrides_6.txt=png,svg
 overrides_7.txt=png,svg
 overrides_8.txt=png,svg
 overrides_9.txt=png,svg
+overrides_10.txt=png,svg
+overrides_11.txt=png,svg
+overrides_12.txt=png,svg
