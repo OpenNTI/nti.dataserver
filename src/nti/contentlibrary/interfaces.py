@@ -7,8 +7,6 @@ from zope.location.interfaces import IContained as IZContained
 
 #pylint: disable=E0213,E0211
 
-
-
 class IContentPackageLibrary(interface.Interface):
 	"""
 	A library or catalog of all available packages of content.
@@ -41,10 +39,13 @@ class IContentPackageLibrary(interface.Interface):
 # TODO: I'm not happy with the way paths are handled. How can the 'relative'
 # stuff be done better? This is mostly an issue with the IContentPackage,
 
-
 class IContentUnit(IZContained):
 	"""
 	One identified unit of content.
+
+	The ``__parent__`` of this object will be the containing content unit, which
+	will ultimately be the :class:`IContentPackage`; the containing unit of the package
+	will be the :class:`IContentPackageLibrary`.
 	"""
 	ordinal = schema.Int( title="The number (starting at 1) representing which nth child of the parent I am." )
 	href = schema.TextLine( title="URI for the representation of this item.",

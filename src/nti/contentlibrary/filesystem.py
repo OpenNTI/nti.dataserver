@@ -44,6 +44,7 @@ class _AbstractLibrary(object):
 			# TODO: Caching
 			title = eclipse.EclipseContentPackage( path )
 			if title:
+				title.__parent__ = self
 				titles.append( title )
 
 		return titles
