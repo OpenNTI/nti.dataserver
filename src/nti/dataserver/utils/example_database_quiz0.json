@@ -1,0 +1,99 @@
+{
+    "Last Modified": 1308874590.196118,
+    "Items": {
+        "1": {
+            "Text": "\\\\begin{problem}  1. {\\\\emph{\\\\$ \\\\tab \\\\tab \\\\tab }} If a total of twenty million dollars is to be divided evenly among four million people, how much money, in dollars, will each person receive? \\\\end{problem}",
+            "OID": "0x0944",
+            "Class": "QuizQuestion",
+            "Answers": [
+                "$5$",
+                "$5.0$"
+            ],
+            "ID": "1"
+        },
+        "10": {
+            "Text": "\\\\begin{problem}  10. \\\\emph{\\\\tab \\\\tab \\\\small {sq units}}. Trapezoid ABCD and trapezoid EFGH are congruent. What is the difference between the area of triangle ABC and the area of triangle EFJ? \\\\begin{figure}[htbp]\\\\begin{center}  \\\\includegraphics {images/w1-i3.png} \\\\end{center}\\n\\n\\\\end{figure} \\\\end{problem}",
+            "OID": "0x0943",
+            "Class": "QuizQuestion",
+            "Answers": [
+                "$0$"
+            ],
+            "ID": "10"
+        },
+        "3": {
+            "Text": "\\\\begin{problem}  \\\\leftpic {w1-i2.png} 3. {\\\\emph{\\\\$ \\\\tab \\\\tab \\\\tab }} Wilhelmina went to the store to buy a few groceries. When she paid for the groceries with a \\\\$ 20 bill, she correctly received \\\\$ 4.63 back in change. How much did the groceries cost? \\\\end{problem}",
+            "OID": "0x0945",
+            "Class": "QuizQuestion",
+            "Answers": [
+                "$15.37$"
+            ],
+            "ID": "3"
+        },
+        "2": {
+            "Text": "\\\\begin{problem}  2.\\\\emph{\\\\tab \\\\tab \\\\small {sq cm}}. Triangle XYZ has side XZ = 6 cm. Segment YA is perpendicular to XZ. If AY is 4 cm, what is the area of triangle XYZ? \\\\rightpic {w1-i1.png} \\\\end{problem}",
+            "OID": "0x0946",
+            "Class": "QuizQuestion",
+            "Answers": [
+                "$12$"
+            ],
+            "ID": "2"
+        },
+        "5": {
+            "Text": "\\\\begin{problem}  5. \\\\emph{\\\\tab \\\\tab \\\\tab } A three-digit integer is to be randomly created using each of the digits 2, 3 and 6 once. What is the probability that the number created is even? Express your answer as a common fraction. \\\\end{problem}",
+            "OID": "0x0947",
+            "Class": "QuizQuestion",
+            "Answers": [
+                "$\\\\frac{2}{3}$"
+            ],
+            "ID": "5"
+        },
+        "4": {
+            "Text": "\\\\begin{problem}  4. \\\\emph{\\\\tab \\\\small {multiples}} How many multiples of 8 are between 100 and 175? \\\\end{problem}",
+            "OID": "0x0948",
+            "Class": "QuizQuestion",
+            "Answers": [
+                "$9$"
+            ],
+            "ID": "4"
+        },
+        "7": {
+            "Text": "\\\\begin{problem}  7. \\\\emph{\\\\tab \\\\tab \\\\tab } A particular fraction is equivalent to $\\\\frac{2}{3}$. The sum of its numerator and denominator is 105. What is the numerator of the fraction? \\\\end{problem}",
+            "OID": "0x0949",
+            "Class": "QuizQuestion",
+            "Answers": [
+                "$42$"
+            ],
+            "ID": "7"
+        },
+        "6": {
+            "Text": "\\\\begin{problem}  6. \\\\emph{\\\\tab \\\\tab \\\\tab } In the following arithmetic sequence, what is the value of m? -2, 4, m, 16, . . . \\\\end{problem}",
+            "OID": "0x094a",
+            "Class": "QuizQuestion",
+            "Answers": [
+                "$10$"
+            ],
+            "ID": "6"
+        },
+        "9": {
+            "Text": "\\\\begin{problem}  9. \\\\emph{\\\\tab \\\\tab \\\\small {areas}}. The perimeter of a particular rectangle is 24 inches. If its length and width are positive integers, how many distinct areas could the rectangle have? \\\\end{problem}",
+            "OID": "0x094b",
+            "Class": "QuizQuestion",
+            "Answers": [
+                "$6$"
+            ],
+            "ID": "9"
+        },
+        "8": {
+            "Text": "\\\\begin{problem}  8. \\\\emph{\\\\tab \\\\tab \\\\tab } What is the least natural number that has four distinct prime factors? \\\\end{problem}",
+            "OID": "0x094c",
+            "Class": "QuizQuestion",
+            "Answers": [
+                "$210$"
+            ],
+            "ID": "8"
+        }
+    },
+    "OID": "0x068a",
+    "Class": "Quiz",
+    "ID": "tag:nextthought.com,2011-10:mathcounts-Quiz-mathcounts.2011.0"
+}
