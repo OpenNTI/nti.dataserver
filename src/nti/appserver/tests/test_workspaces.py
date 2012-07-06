@@ -20,7 +20,7 @@ from nti.ntiids import ntiids
 from nti.dataserver import links, users, providers
 from nti.dataserver import interfaces as nti_interfaces
 from nti.externalization import interfaces as ext_interfaces
-from nti.externalization.externalization import toExternalObject
+from nti.externalization.externalization import toExternalObject, to_external_object
 from nti.dataserver.tests import mock_dataserver
 
 from zope import interface
@@ -124,9 +124,10 @@ class TestUserEnumerationWorkspace(tests.ConfiguringTestBase):
 		# which in turn has one container
 		assert_that( uew.collections[0].container, has_length( 1 ) )
 		root = uew.collections[0].container[0]
-		assert_that( root.toExternalObject(), has_entry( 'ID', ntiids.ROOT ) )
-		assert_that( root.toExternalObject(), has_entry( 'Links', has_length( 1 ) ) )
-		assert_that( root.toExternalObject()['Links'][0].target.__name__, is_( 'RecursiveStream' ) )
+		ext_obj = to_external_object( root )
+		assert_that( ext_obj, has_entry( 'ID', ntiids.ROOT ) )
+		assert_that( ext_obj, has_entry( 'Links', has_length( 1 ) ) )
+		assert_that( ext_obj['Links'][0].target.__name__, is_( 'RecursiveStream' ) )
 
 	@mock_dataserver.WithMockDSTrans
 	def test_shared_container(self):
@@ -146,16 +147,18 @@ class TestUserEnumerationWorkspace(tests.ConfiguringTestBase):
 		# which in turn has two containers, the root and the shared
 		assert_that( uew.collections[2].container, has_length( 2 ) )
 		root = uew.collections[2].container[0]
-		assert_that( root.toExternalObject(), has_entry( 'ID', ntiids.ROOT ) )
-		assert_that( root.toExternalObject(), has_entry( 'Class', 'PageInfo' ) )
-		assert_that( root.toExternalObject(), has_entry( 'MimeType', 'application/vnd.nextthought.pageinfo' ) )
-		assert_that( root.toExternalObject(), has_entry( 'Links', has_length( 1 ) ) )
-		assert_that( root.toExternalObject()['Links'][0].target.__name__, is_( 'RecursiveStream' ) )
+		ext_obj = to_external_object( root )
+		assert_that( ext_obj, has_entry( 'ID', ntiids.ROOT ) )
+		assert_that( ext_obj, has_entry( 'Class', 'PageInfo' ) )
+		assert_that( ext_obj, has_entry( 'MimeType', 'application/vnd.nextthought.pageinfo' ) )
+		assert_that( ext_obj, has_entry( 'Links', has_length( 1 ) ) )
+		assert_that( ext_obj['Links'][0].target.__name__, is_( 'RecursiveStream' ) )
 
 		shared = uew.collections[2].container[1]
-		assert_that( shared.toExternalObject(), has_entry( 'ID', PersistentContained.containerId ) )
+		ext_obj = to_external_object( shared )
+		assert_that( ext_obj, has_entry( 'ID', PersistentContained.containerId ) )
 		#['UserGeneratedData', 'RecursiveUserGeneratedData', 'Stream', 'RecursiveStream', 'UserGeneratedDataAndRecursiveStream']
-		assert_that( shared.toExternalObject(), has_entry( 'Links', has_length( 5 ) ) )
+		assert_that( ext_obj, has_entry( 'Links', has_length( 5 ) ) )
 
 
 

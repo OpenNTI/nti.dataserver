@@ -16,8 +16,8 @@ from pyramid import traversal
 from pyramid.view import view_config
 
 from zope import interface
+from zope import component
 from zope.location import interfaces as loc_interfaces
-
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import users
@@ -30,6 +30,8 @@ from nti.appserver import interfaces as app_interfaces
 
 from nti.contentlibrary import interfaces as lib_interfaces
 
+from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.externalization import to_external_object
 
 def _create_page_info(request, href, ntiid, last_modified=0):
 	"""
@@ -47,12 +49,7 @@ def _create_page_info(request, href, ntiid, last_modified=0):
 	if href:
 		info.extra_links = (links.Link( href, rel='content' ),) # TODO: The rel?
 
-	questions = request.registry.getUtility( app_interfaces.IFileQuestionMap )
-	for_file = questions.by_file.get( getattr( request.context, 'filename', None ) )
-	if for_file:
-		### XXX FIXME: We need to be sure we don't send back the
-		# solutions and explanations right now
-		info.extra_data = { 'AssessmentItems': for_file }
+	info.contentUnit = request.context
 
 	if last_modified:
 		# FIXME: Need to take into account the assessment item times as well
@@ -61,6 +58,25 @@ def _create_page_info(request, href, ntiid, last_modified=0):
 		# decouple
 		info.lastModified = last_modified
 	return info
+
+@interface.implementer(ext_interfaces.IExternalMappingDecorator)
+@component.adapter(app_interfaces.IContentUnitInfo)
+class _ContentUnitAssessmentItemDecorator(object):
+
+	def __init__( self, context ):
+		self.context = context
+
+	def decorateExternalMapping( self, context, result_map ):
+		if context.contentUnit is None:
+			return
+
+		questions = component.getUtility( app_interfaces.IFileQuestionMap )
+		for_file = questions.by_file.get( getattr( context.contentUnit, 'filename', None ) )
+		if for_file:
+			### XXX FIXME: We need to be sure we don't send back the
+			# solutions and explanations right now
+			result_map['AssessmentItems'] = to_external_object( for_file  )
+
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',

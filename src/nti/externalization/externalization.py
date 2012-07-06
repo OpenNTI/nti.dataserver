@@ -148,6 +148,8 @@ def toExternalObject( obj, coerceNone=False, name=_ex_name_marker, registry=comp
 	finally:
 		_ex_name_local.name.pop()
 
+to_external_object = toExternalObject
+
 @interface.implementer(INonExternalizableReplacement)
 class _NonExternalizableObject(dict): pass
 
