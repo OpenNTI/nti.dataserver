@@ -70,13 +70,9 @@ We begin by defining the root ``Object``:
 
 
    struct Object {
-	   // The OID is a persistent identifier for a given object. It will always
-	   // refer to the same object. Its scope is across all users within a particular
-	   // environment.
-	   readonly oid_t OID;
-	   readonly string Creator;
-	   readonly time_t LastModified;
-	   readonly time_t CreatedTime;
+	   optional readonly string Creator;
+	   optional readonly time_t LastModified;
+	   optional readonly time_t CreatedTime;
 	   readonly string Class; // deprecated
 	   readonly string MimeType;
 
@@ -86,6 +82,13 @@ We begin by defining the root ``Object``:
 	   // of external metadata? That gets to: do we need a
 	   // 'entry' wrapper object?
 	   readonly optional Link[] Links;
+   }
+
+   struct PersistentObject : Object {
+	   // The OID is a persistent identifier for a given object. It will always
+	   // refer to the same object. Its scope is across all users within a particular
+	   // environment.
+	   readonly oid_t OID;
    }
 
    mixin Contained {
@@ -100,7 +103,7 @@ These objects describe users and things related to users.
 
 .. code-block:: cpp
 
-   struct Entity : Object {
+   struct Entity : PersistentObject {
 	   readonly string Username; //The name is always in email format.
 	   URL avatarUrl;
 	   string realname;
@@ -205,7 +208,7 @@ These are definitions related to content that a user can generate.
    }
 
    //NOTE: Bookmarks do not currently exist
-   struct Bookmark : Object<Anchored,Shareable,Taggable> { }
+   struct Bookmark : PersistentObject<Anchored,Shareable,Taggable> { }
 
    // NOTE that it is possible to update only the sharing of a
    // highlight or note, by sending only the 'sharedWith' field and

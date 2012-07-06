@@ -1,9 +1,20 @@
 <!-- -*- mode: nxml -*- -->
 <configure xmlns="http://namespaces.zope.org/zope"
+		   xmlns:zcml="http://namespaces.zope.org/zcml"
 		   i18n_domain="zope">
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.mimetype" file="meta.zcml" />
-	<include package="zope.mimetype" />
+	<!--
+	loading the mimetypes is slow. Doing so in
+	unit tests over and over is really, really slow.
+	So we don't. Tests that depend on them should drop this
+	feature from the list.
+	The details of this may change in the future.
+	-->
+
+	<configure zcml:condition="not-have devmode">
+		<include package="zope.mimetype" />
+	</configure>
 
 	<mimeTypes
 		module=".interfaces"
