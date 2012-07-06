@@ -950,6 +950,8 @@ class TestApplicationLibraryBase(ApplicationTestBase):
 		class LibEnt(object):
 			interface.implements( lib_interfaces.IContentPackage )
 			root = content_root
+			ntiid = None
+			__parent__ = None
 
 		class Lib(object):
 			interface.implements( lib_interfaces.IContentPackageLibrary )

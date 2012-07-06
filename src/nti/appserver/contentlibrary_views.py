@@ -9,19 +9,23 @@ $Id$
 """
 from __future__ import print_function, unicode_literals
 
+import persistent
 
 import pyramid.security as sec
 import pyramid.httpexceptions as hexc
+from pyramid.threadlocal import get_current_request
 from pyramid import traversal
 from pyramid.view import view_config
 
 from zope import interface
 from zope import component
 from zope.location import interfaces as loc_interfaces
+from zope.annotation.factory import factory as an_factory
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import users
 from nti.dataserver import links
+from nti.dataserver import containers
 from nti.dataserver.mimetype import  nti_mimetype_with_class
 from nti.dataserver import authorization as nauth
 from nti.ntiids import ntiids
@@ -76,6 +80,60 @@ class _ContentUnitAssessmentItemDecorator(object):
 			### XXX FIXME: We need to be sure we don't send back the
 			# solutions and explanations right now
 			result_map['AssessmentItems'] = to_external_object( for_file  )
+
+@interface.implementer(app_interfaces.IContentUnitPreferences)
+@component.adapter(containers.LastModifiedBTreeContainer)
+class _ContentUnitPreferences(persistent.Persistent):
+
+	__parent__ = None
+	__name__ = None
+	sharedWith = None
+
+	def __init__( self ):
+		pass
+
+def _ContainerContentUnitPreferencesFactory(container):
+	# TODO: If we move any of this, we'll need to remember to pass in the key=
+	# argument otherwise we won't have access to the data that already exists
+	return an_factory(_ContentUnitPreferences)(container)
+
+
+@interface.implementer(ext_interfaces.IExternalMappingDecorator)
+@component.adapter(app_interfaces.IContentUnitInfo)
+class _ContentUnitPreferencesDecorator(object):
+
+	def __init__( self, context ):
+		self.context = context
+
+	def decorateExternalMapping( self, context, result_map ):
+		if context.contentUnit is None:
+			return
+
+		request = get_current_request()
+		if not request: return
+		remote_user = users.User.get_user( sec.authenticated_userid( request ),
+										   dataserver=request.registry.getUtility(nti_interfaces.IDataserver) )
+		if not remote_user: return
+
+		# Walk up the parent tree of content units (not including the mythical root)
+		# until we run out, or find preferences
+		prefs = None
+		contentUnit = context.contentUnit
+		while lib_interfaces.IContentUnit.providedBy(contentUnit):
+			container = remote_user.getContainer( contentUnit.ntiid )
+			prefs = app_interfaces.IContentUnitPreferences( container, None )
+			if prefs and prefs.sharedWith:
+				break
+			contentUnit = contentUnit.__parent__
+			prefs = None
+
+		if prefs and prefs.sharedWith:
+			ext_obj = {}
+			ext_obj['State'] = 'set' if contentUnit is context.contentUnit else 'inherited'
+			ext_obj['Provenance'] = contentUnit.ntiid
+			ext_obj['sharedWith'] = prefs.sharedWith
+			ext_obj['Class'] = 'SharingPagePreference'
+			result_map['sharingPreference'] = ext_obj
 
 
 @view_config( route_name='objects.generic.traversal',

@@ -30,9 +30,16 @@
 	<adapter factory=".workspaces.UserService"
 			 provides='.interfaces.IService'/>
 	<adapter factory=".workspaces.ServiceExternalizer" />
+
 	<adapter factory=".workspaces._NTIIDEntryExternalizer" />
 	<subscriber factory=".contentlibrary_views._ContentUnitAssessmentItemDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"/>
+	<adapter factory=".contentlibrary_views._ContainerContentUnitPreferencesFactory"
+			 for="nti.dataserver.containers.LastModifiedBTreeContainer"
+			 provides=".interfaces.IContentUnitPreferences" />
+	<subscriber factory=".contentlibrary_views._ContentUnitPreferencesDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+
 	<adapter factory=".workspaces.CollectionSummaryExternalizer" />
 	<adapter factory=".workspaces.CollectionSummaryExternalizer"
 			 name="summary"/>

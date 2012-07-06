@@ -10,9 +10,12 @@ from zope import schema
 
 import nti.dataserver.interfaces as nti_interfaces
 from pyramid import interfaces as pyramid_interfaces
+
 from nti.contentlibrary import interfaces as lib_interfaces
 from nti.dataserver.interfaces import ILocation
 
+from nti.utils.schema import Object
+from dolmen.builtins import IUnicode
 
 ILocationAware = ILocation # b/c
 
@@ -73,11 +76,18 @@ class IContentUnitInfo(ILocation, nti_interfaces.ILastModified, nti_interfaces.I
 	Information about a particular bit of content and the links it contains.
 	"""
 
-	contentUnit = schema.Object( lib_interfaces.IContentUnit,
-								 title="The IContentUnit this object provides info for, if there is one.",
-								 description=""" Typically this will only be provided for one-off requests.
+	contentUnit = Object( lib_interfaces.IContentUnit,
+						  title="The IContentUnit this object provides info for, if there is one.",
+						  description=""" Typically this will only be provided for one-off requests.
 									Bulk collections/requests will not have it.
 									"""	)
+
+class IContentUnitPreferences(ILocation,nti_interfaces.ILastModified):
+	"""
+	Storage location for preferences related to a content unit.
+	"""
+	sharedWith = schema.List( value_type=Object(IUnicode),
+							  title="List of usernames to share with" )
 
 ###
 # Logon services
