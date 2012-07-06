@@ -23,6 +23,7 @@ from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 from zope.container.interfaces import IContainerModifiedEvent
 from zope.container.btree import BTreeContainer
 from zope.container.contained import uncontained
+from zope.annotation import interfaces as annotation
 
 
 from . import interfaces
@@ -30,7 +31,7 @@ from . import interfaces
 from nti.zodb.minmax import NumericMaximum, ConstantZeroValue
 
 
-@interface.implementer(interfaces.ILastModified)
+@interface.implementer(interfaces.ILastModified,annotation.IAttributeAnnotatable)
 class LastModifiedBTreeContainer(BTreeContainer):
 	"""
 	A BTreeContainer that provides storage for lastModified and created
@@ -39,6 +40,8 @@ class LastModifiedBTreeContainer(BTreeContainer):
 	Note that directly changing keys within this container does not actually
 	change those dates; instead, we rely on event listeners to
 	notice ObjectEvents and adjust the times appropriately.
+
+	These objects are allowed to be annotated (see :mod:`zope.annotation`).
 	"""
 
 	createdTime = 0

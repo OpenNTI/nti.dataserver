@@ -17,10 +17,13 @@ from pyramid.threadlocal import get_current_request
 from pyramid import traversal
 from pyramid.view import view_config
 
+import time
+
 from zope import interface
 from zope import component
 from zope.location import interfaces as loc_interfaces
 from zope.annotation.factory import factory as an_factory
+from zope.traversing import interfaces as trv_interfaces
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import users
@@ -28,6 +31,7 @@ from nti.dataserver import links
 from nti.dataserver import containers
 from nti.dataserver.mimetype import  nti_mimetype_with_class
 from nti.dataserver import authorization as nauth
+from nti.dataserver import authorization_acl as nacl
 from nti.ntiids import ntiids
 
 from nti.appserver import interfaces as app_interfaces
@@ -81,6 +85,13 @@ class _ContentUnitAssessmentItemDecorator(object):
 			# solutions and explanations right now
 			result_map['AssessmentItems'] = to_external_object( for_file  )
 
+###
+# We look for content container preferences. For actual containers, we
+# store the prefs as an annotation on the container.
+# NOTE: This requires that the user must have created at least one object
+# on the page before they can store preferences.
+###
+
 @interface.implementer(app_interfaces.IContentUnitPreferences)
 @component.adapter(containers.LastModifiedBTreeContainer)
 class _ContentUnitPreferences(persistent.Persistent):
@@ -90,7 +101,8 @@ class _ContentUnitPreferences(persistent.Persistent):
 	sharedWith = None
 
 	def __init__( self ):
-		pass
+		self.createdTime = time.time()
+		self.lastModified = self.createdTime
 
 def _ContainerContentUnitPreferencesFactory(container):
 	# TODO: If we move any of this, we'll need to remember to pass in the key=
@@ -135,6 +147,91 @@ class _ContentUnitPreferencesDecorator(object):
 			ext_obj['Class'] = 'SharingPagePreference'
 			result_map['sharingPreference'] = ext_obj
 
+def _with_acl( prefs ):
+	"""
+	Proxies the preferences object to have an ACL
+	that allows only its owner to make changes.
+	"""
+	user = traversal.find_interface( prefs, nti_interfaces.IUser )
+	if user is None:
+		return prefs
+
+	return nti_interfaces.ACLLocationProxy(
+					prefs,
+					prefs.__parent__,
+					prefs.__name__,
+					nacl.acl_from_aces( nacl.ace_allowing( user.username, nti_interfaces.ALL_PERMISSIONS ) ) )
+
+
+@interface.implementer(trv_interfaces.ITraversable)
+@component.adapter(containers.LastModifiedBTreeContainer)
+class _ContainerFieldsTraversable(object):
+	"""
+	An ITraversable for the updateable fields of a container.
+	Register as a namespace traverser for the ``fields`` namespace
+	"""
+
+	def __init__( self, context, request=None ):
+		self.context = context
+
+	def traverse( self, name, remaining_path ):
+		if name == 'sharingPreference':
+			return _with_acl( app_interfaces.IContentUnitPreferences( self.context ) )
+
+		raise KeyError( name )
+
+@interface.implementer(trv_interfaces.ITraversable)
+@component.adapter(lib_interfaces.IContentUnit)
+class _ContentUnitFieldsTraversable(object):
+	"""
+	An ITraversable for the preferences stored on a content unit.
+
+	Register as a namespace traverser for the ``fields`` namespace
+	"""
+
+	def __init__( self, context, request=None ):
+		self.context = context
+		self.request = request
+
+	def traverse( self, name, remaining_path ):
+		if name == 'sharingPreference':
+			request = self.request or get_current_request()
+			remote_user = users.User.get_user( sec.authenticated_userid( request ),
+											   dataserver=request.registry.getUtility(nti_interfaces.IDataserver) )
+			container = remote_user.getContainer( self.context.ntiid )
+			# TODO: Creating missing containers
+			return _with_acl( app_interfaces.IContentUnitPreferences( container ) )
+
+		raise KeyError( name )
+
+from .dataserver_pyramid_views import _UGDModifyViewBase as UGDModifyViewBase
+@view_config( route_name='objects.generic.traversal',
+			  renderer='rest',
+			  context=app_interfaces.IContentUnitPreferences,
+			  permission=nauth.ACT_UPDATE, request_method='PUT' )
+class _ContentUnitPreferencesPutView(UGDModifyViewBase):
+
+	def _transformInput( self, value ):
+		return value
+
+	def _do_update_from_external_object( self, contentObject, externalValue, notify=True ):
+		# At this time, must be a dict containing the 'sharedWith' setting
+		contentObject.sharedWith = externalValue['sharedWith']
+		return contentObject
+
+
+	def __call__(self):
+		value = self.readInput()
+		self.updateContentObject( self.request.context, value )
+
+		# Since we are used as a field updater, we want to return
+		# the object whose field we updated (as is the general rule)
+
+		ntiid = self.request.context.__parent__.__name__
+		content_lib = self.request.registry.getUtility( lib_interfaces.IContentPackageLibrary )
+		content_unit = content_lib[ntiid]
+		self.request.context = content_unit
+		return _LibraryTOCRedirectView( self.request )
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
