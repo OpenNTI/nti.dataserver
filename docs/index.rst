@@ -19,6 +19,7 @@ Contents:
 	ntiids
 	content-anchoring
 	content-in-cdn
+	content-resolving
 	passenger
 	dataserver-contenttypes
 	whiteboard-apis-v1
