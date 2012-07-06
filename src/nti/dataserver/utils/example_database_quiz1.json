@@ -1,0 +1,98 @@
+{
+    "Last Modified": 1308874597.810725,
+    "Items": {
+        "1": {
+            "Text": "\\\\begin{problem}  1.\\\\emph{\\\\tab \\\\tab \\\\small {cartons}}. The bar graph shows the number of cartons of milk sold per day last week at Jones Junior High. What is the positive difference between the mean and median number of cartons of milk sold per day over the five-day period? \\\\rightpic {w2-i1.png} \\\\end{problem}",
+            "OID": "0x0963",
+            "Class": "QuizQuestion",
+            "Answers": [
+                "$1$"
+            ],
+            "ID": "1"
+        },
+        "10": {
+            "Text": "\\\\begin{problem}  10.\\\\emph{\\\\tab \\\\tab \\\\small {degrees}}. Two consecutive angles of a regular octagon are bisected. What is the degree measure of each of the acute angles formed by the intersection of the two angle bisectors? \\\\end{problem}",
+            "OID": "0x0962",
+            "Class": "QuizQuestion",
+            "Answers": [
+                "$45$"
+            ],
+            "ID": "10"
+        },
+        "3": {
+            "Text": "\\\\begin{problem}  \\\\leftpic {w2-i3.png} 3.\\\\emph{\\\\tab \\\\tab \\\\small {boys}}. Currently, $\\\\frac{1}{4}$ of the members of a local club are boys, and there are 80 members. If no one withdraws from the club, what is the minimum number of boys that would need to join to make the club $\\\\frac{1}{3}$ boys? \\\\end{problem}",
+            "OID": "0x0964",
+            "Class": "QuizQuestion",
+            "Answers": [
+                "$10$"
+            ],
+            "ID": "3"
+        },
+        "2": {
+            "Text": "\\\\begin{problem}  \\\\leftpic {w2-i2.png} 2.\\\\emph{\\\\tab \\\\tab \\\\small {inches}}. An equilateral triangle PBJ that measures 2 inches on each side is cut from a larger equilateral triangle ABC that measures 5 inches on each side. What is the perimeter of trapezoid PJCA? \\\\end{problem}",
+            "OID": "0x0965",
+            "Class": "QuizQuestion",
+            "Answers": [
+                "$13$"
+            ],
+            "ID": "2"
+        },
+        "5": {
+            "Text": "\\\\begin{problem}  5.\\\\emph{\\\\tab \\\\tab \\\\small {days}}. Jessica reads 30 pages of her book on the first day. The next day, she reads another 36 pages. On the third day, she reads another 42 pages. If she continues to increase the number of pages she reads each day by 6, how many days will it take her to read a book that has 270 pages? \\\\end{problem}",
+            "OID": "0x0966",
+            "Class": "QuizQuestion",
+            "Answers": [
+                "$6$"
+            ],
+            "ID": "5"
+        },
+        "4": {
+            "Text": "\\\\begin{problem}  4.\\\\emph{\\\\tab \\\\tab \\\\small {outfits}}. If William has 3 pairs of pants and 4 shirts, and an outfit consists of 1 pair of pants and 1 shirt, how many distinct outfits can William create? \\\\end{problem}",
+            "OID": "0x0967",
+            "Class": "QuizQuestion",
+            "Answers": [
+                "$12$"
+            ],
+            "ID": "4"
+        },
+        "7": {
+            "Text": "\\\\begin{problem}  7.\\\\emph{\\\\tab \\\\tab \\\\tab }. What number is halfway between $\\\\frac{5}{8}$ and $\\\\frac{11}{16}$ ? Express your answer as a common fraction. \\\\end{problem}",
+            "OID": "0x0968",
+            "Class": "QuizQuestion",
+            "Answers": [
+                "$\\\\frac{21}{32}$"
+            ],
+            "ID": "7"
+        },
+        "6": {
+            "Text": "\\\\begin{problem}  6.\\\\emph{\\\\tab \\\\tab \\\\tab }. A basket of fruit contains 4 oranges, 5 apples and 6 bananas. If you choose a piece of fruit at random from the basket, what is the probability that it will be a banana? Express your answer as a common fraction. \\\\end{problem}",
+            "OID": "0x0969",
+            "Class": "QuizQuestion",
+            "Answers": [
+                "$\\\\frac{2}{5}$"
+            ],
+            "ID": "6"
+        },
+        "9": {
+            "Text": "\\\\begin{problem}  9.\\\\emph{\\\\tab \\\\tab \\\\small {sq in}}. Four squares are cut from the corners of a rectangular sheet of cardboard. It is then folded as shown to make a box that is 15 inches long, 8 inches wide and 2 inches tall. What was the area of the original piece of cardboard? \\\\begin{figure}[htbp]\\\\begin{center}  \\\\includegraphics {images/w2-i5.png} \\\\end{center}\\n\\n\\\\end{figure} \\\\end{problem}",
+            "OID": "0x096a",
+            "Class": "QuizQuestion",
+            "Answers": [
+                "$228$"
+            ],
+            "ID": "9"
+        },
+        "8": {
+            "Text": "\\\\begin{problem}  \\\\leftpic {w2-i4.png} 8.\\\\emph{\\\\tab \\\\tab \\\\small {pounds}}. Farmer Fred read that his crop needs a fertilizer that is 8\\\\%  nitrate for optimal yield. He needs to apply 4 pounds of nitrate per acre. If his field has 188 acres, how many pounds of fertilizer will Fred use? \\\\end{problem}",
+            "OID": "0x096b",
+            "Class": "QuizQuestion",
+            "Answers": [
+                "$9400$"
+            ],
+            "ID": "8"
+        }
+    },
+    "OID": "0x0922",
+    "Class": "Quiz",
+    "ID": "tag:nextthought.com,2011-10:mathcounts-Quiz-mathcounts.2011.1"
+}
