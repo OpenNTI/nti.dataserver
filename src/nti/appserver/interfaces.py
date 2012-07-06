@@ -10,7 +10,7 @@ from zope import schema
 
 import nti.dataserver.interfaces as nti_interfaces
 from pyramid import interfaces as pyramid_interfaces
-
+from nti.contentlibrary import interfaces as lib_interfaces
 from nti.dataserver.interfaces import ILocation
 
 
@@ -21,6 +21,11 @@ class IUserRootResource(ILocation):
 	Marker interface for the node in a resource
 	tree that represents the user.
 	"""
+
+###
+# OData-inspired objects related to retrieving
+# data for portions of the URL space
+###
 
 class ICollection(ILocation):
 
@@ -63,8 +68,20 @@ class IService(ILocationAware):
 	workspaces = schema.Iterable(
 		u"The workspaces of this service" )
 
+class IContentUnitInfo(ILocation, nti_interfaces.ILastModified, nti_interfaces.ILinked):
+	"""
+	Information about a particular bit of content and the links it contains.
+	"""
 
+	contentUnit = schema.Object( lib_interfaces.IContentUnit,
+								 title="The IContentUnit this object provides info for, if there is one.",
+								 description=""" Typically this will only be provided for one-off requests.
+									Bulk collections/requests will not have it.
+									"""	)
+
+###
 # Logon services
+###
 
 class IMissingUser(interface.Interface):
 	"Stand-in for an :class:`nti_interfaces.IUser` when one does not yet exist."

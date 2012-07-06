@@ -470,13 +470,11 @@ class ProviderEnumerationWorkspace(_ContainerWrapper):
 		providers = [p for k, p in self._container.iteritems() if not isSyntheticKey(k)]
 		return _collections( self, providers )
 
-
+@interface.implementer(app_interfaces.IContentUnitInfo)
 class _NTIIDEntry(object):
-	interface.implements(ext_interfaces.IExternalObject,
-						 app_interfaces.ILocation)
 
-	external_class = 'PageInfo'
-	mime_type = mimetype.nti_mimetype_with_class( external_class )
+	__external_class_name__ = 'PageInfo'
+	mime_type = mimetype.nti_mimetype_with_class( __external_class_name__ )
 
 	# TODO: This list is defined again in dataserver_pyramid_views.py
 	# in the _PageContainerResource
@@ -485,41 +483,39 @@ class _NTIIDEntry(object):
 					  'UserGeneratedDataAndRecursiveStream')
 
 	extra_links = ()
-	extra_data = None
+	contentUnit = None
 	lastModified = 0
 
 	def __init__(self, parent, ntiid):
 		self.__parent__ = parent
 		self.__name__ = ''
-		self._ntiid = ntiid
+		self.ntiid = ntiid
+		self.id = ntiid
 
-	def toExternalObject( self ):
-		result = LocatedExternalDict()
-		result[StandardExternalFields.LINKS] = []
-		# Add the Class and MimeType; clients depend on them.
-		# We're using a fairly generic 'PageInfo' instead of a descriptive 'PagesCollectionEntry'
-		# because we expect to start returning these objects from NTIID lookups for an HTML NTIID
-		result[StandardExternalFields.CLASS] = self.external_class
-		result[StandardExternalFields.MIMETYPE] = self.mime_type
-		result['ID'] = self._ntiid
-		result['href'] = traversal.normal_resource_path( self.__parent__ )
-
-		if self.lastModified:
-			# TODO: Why aren't we using to_standard_external_dictionary?
-			result[StandardExternalFields.LAST_MODIFIED] = self.lastModified
-
+	@property
+	def links(self):
+		result = []
 		for link in self.__operations__:
 			target = location.Location()
 			target.__name__ = link
 			target.__parent__ = self.__parent__
 			link = links.Link( target, rel=link )
 			# TODO: Rel should be a URI
-			result[StandardExternalFields.LINKS].append( link )
+			result.append( link )
 
-		result[StandardExternalFields.LINKS].extend( self.extra_links )
+		result.extend( self.extra_links )
+		return result
 
-		if self.extra_data:
-			result.update( self.extra_data )
+
+@interface.implementer(ext_interfaces.IExternalObject)
+@component.adapter(app_interfaces.IContentUnitInfo)
+class _NTIIDEntryExternalizer(object):
+
+	def __init__( self, context ):
+		self.context = context
+
+	def toExternalObject(self):
+		result = to_standard_external_dictionary( self.context )
 		return result
 
 class _RootNTIIDEntry(_NTIIDEntry):
