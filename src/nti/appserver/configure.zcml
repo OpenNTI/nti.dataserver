@@ -37,6 +37,25 @@
 	<adapter factory=".contentlibrary_views._ContainerContentUnitPreferencesFactory"
 			 for="nti.dataserver.containers.LastModifiedBTreeContainer"
 			 provides=".interfaces.IContentUnitPreferences" />
+	<adapter factory=".contentlibrary_views._ContainerFieldsTraversable"
+			 for="nti.dataserver.containers.LastModifiedBTreeContainer"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 name="fields" />
+	<adapter factory=".contentlibrary_views._ContainerFieldsTraversable"
+			 for="nti.dataserver.containers.LastModifiedBTreeContainer pyramid.interfaces.IRequest"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 name="fields" />
+
+	<adapter factory=".contentlibrary_views._ContentUnitFieldsTraversable"
+			 for="nti.contentlibrary.interfaces.IContentUnit"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 name="fields" />
+	<adapter factory=".contentlibrary_views._ContentUnitFieldsTraversable"
+			 for="nti.contentlibrary.interfaces.IContentUnit pyramid.interfaces.IRequest"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 name="fields" />
+
+
 	<subscriber factory=".contentlibrary_views._ContentUnitPreferencesDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 

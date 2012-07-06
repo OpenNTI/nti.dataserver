@@ -857,10 +857,13 @@ class _UGDModifyViewBase(object):
 		if o is None:
 			raise hexc.HTTPNotFound( "No object %s/%s/%s" % (cr, cid,oid))
 
+	def _do_update_from_external_object( self, contentObject, externalValue, notify=True ):
+		return nti.externalization.internalization.update_from_external_object( contentObject, externalValue, context=self.dataserver, notify=notify )
+
 	def updateContentObject( self, contentObject, externalValue, set_id=False, notify=True ):
 		try:
 			__traceback_info__ = contentObject, externalValue
-			containedObject = nti.externalization.internalization.update_from_external_object( contentObject, externalValue, context=self.dataserver, notify=notify )
+			containedObject = self._do_update_from_external_object( contentObject, externalValue, notify=notify )
 		except (ValueError,AssertionError,interface.Invalid,TypeError,KeyError):
 			# These are all 'validation' errors. Raise them as unprocessable entities
 			# interface.Invalid, in particular, is the root class of zope.schema.ValidationError

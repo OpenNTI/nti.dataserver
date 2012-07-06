@@ -956,6 +956,11 @@ class TestApplicationLibraryBase(ApplicationTestBase):
 		class Lib(object):
 			interface.implements( lib_interfaces.IContentPackageLibrary )
 			titles = ()
+
+			def __getitem__(s, key):
+				if key != self.child_ntiid: raise KeyError( s )
+				return NID().with_parent( LibEnt() )
+
 			def pathToNTIID( self, ntiid ):
 				return [NID().with_parent( LibEnt() )] if ntiid == TestApplicationLibrary.child_ntiid else None
 
@@ -1027,6 +1032,31 @@ class TestApplicationLibrary(TestApplicationLibraryBase):
 
 		assert_that( res.content_type, is_( 'application/vnd.nextthought.link+json' ) )
 		assert_that( res.json_body, has_entry( 'href', '/prealgebra/sect_0002.html' ) )
+
+
+	def test_directly_set_page_shared_settings(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = self._create_user()
+			# First, we must put an object so we have a container
+			note = contenttypes.Note()
+			note.containerId = self.child_ntiid
+			user.addContainedObject( note )
+
+		testapp = TestApp( self.app )
+
+
+		accept_type = 'application/json'
+		data = json.dumps( {"sharedWith": ["a@b"] } )
+
+		res = testapp.put( str('/dataserver2/NTIIDs/' + self.child_ntiid + '/++fields++sharingPreference'),
+						   data,
+						   headers={"Accept": accept_type},
+						   extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 200 ) )
+
+		assert_that( res.content_type, is_( 'application/vnd.nextthought.pageinfo+json' ) )
+		assert_that( res.json_body, has_entry( 'MimeType', 'application/vnd.nextthought.pageinfo' ) )
+		assert_that( res.json_body, has_entry( 'sharingPreference', has_entry( 'sharedWith', ['a@b'] ) ) )
 
 
 

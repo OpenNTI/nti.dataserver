@@ -485,6 +485,7 @@ class _NTIIDEntry(object):
 	extra_links = ()
 	contentUnit = None
 	lastModified = 0
+	createdTime = 0
 
 	def __init__(self, parent, ntiid):
 		self.__parent__ = parent
