@@ -1,0 +1,10 @@
+\[
+\begin{array}{rcl@{\qquad}rcl}
+\dfrac17 &=& 0.\overline{142857}, &
+\dfrac27 &=& 0.\overline{285714}, \\[2ex]
+\dfrac37 &=& 0.\overline{428571}, &
+\dfrac47 &=& 0.\overline{571428}, \\[2ex]
+\dfrac57 &=& 0.\overline{714285}, &
+\dfrac67 &=& 0.\overline{857142}.
+\end{array}
+\]

@@ -1,0 +1,9 @@
+\[
+\begin{array}{rcccccccc@{,}l}
+0.125 
+&=& (1 \cdot 10^{-1}) &+& (2 \cdot 10^{-2}) &+& (5 \cdot 10^{-3}) \\[1ex]
+&=& \dfrac{1}{10} &+& \dfrac{2}{100} &+& \dfrac{5}{1000} \\[2ex]
+&=& \dfrac{100}{1000} &+& \dfrac{20}{1000} &+& \dfrac{5}{1000} 
+&= \dfrac{100+20+5}{1000} = \dfrac{125}{1000} = \dfrac{125}{8 \cdot 125} = \dfrac18.
+\end{array}
+\]
