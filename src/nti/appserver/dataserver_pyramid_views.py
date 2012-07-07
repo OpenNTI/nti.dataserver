@@ -673,6 +673,8 @@ class _RecursiveUGDView(_UGDView):
 			containers.add( ntiid ) # item
 
 		# We always include the unnamed root (which holds things like CIRCLED)
+		# NOTE: This is only in the stream. Normally we cannot store contained
+		# objects with an empty container key, so this takes internal magic
 		containers.add( '' ) # root
 
 		items = []
