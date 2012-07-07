@@ -104,9 +104,12 @@ def _included_children_of( opinion ):
 	return opinion( b"p,center,h2,blockquote" )
 
 def _footnotes_of( doc ):
-	small = doc(b"small")[0]
-	ps = list(small.itersiblings())
-	return ps
+	if len(doc(b"small")):
+		small = doc(b"small")[0]
+		ps = list(small.itersiblings())
+		return ps
+	else:
+		return []
 
 def _p_to_content(footnotes, p, include_tail=True):
 	accum = []
