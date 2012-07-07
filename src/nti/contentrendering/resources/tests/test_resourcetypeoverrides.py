@@ -6,6 +6,7 @@ $Id$
 from __future__ import print_function, unicode_literals
 
 from hamcrest import assert_that, has_length, has_entry, is_
+from hamcrest import greater_than_or_equal_to
 from nose.tools import assert_raises
 
 from pkg_resources import resource_filename
@@ -19,7 +20,7 @@ def test_standardoverrides():
 
 	query = resourcetypeoverrides.ResourceTypeOverrides( overrides_dir )
 
-	assert_that( query, has_length( 9 ) )
+	assert_that( query, has_length( greater_than_or_equal_to( 9 ) ) )
 
 	assert_that( query, has_entry( u'$\\begin{array}{rr@{.}c@{}l}&&5&\\ldots\\\\\\cline{2-4}\\multicolumn{1}{r|}{9}&5&0&\\ldots\\\\&4&5\\\\\\cline{2-3}&0&5\\end{array}$',
 								   ['png','svg']) )
