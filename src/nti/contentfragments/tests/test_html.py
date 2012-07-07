@@ -9,12 +9,20 @@ import os
 import plistlib
 
 from hamcrest import assert_that, is_
+from nti.tests import verifiably_provides
+import nti.tests
+import nti.contentfragments
+setUpModule = lambda: nti.tests.module_setup( set_up_packages=(nti.contentfragments,) )
+tearDownModule = nti.tests.module_teardown
 
-from nti.contentfragments.html import sanitize_user_html
+from nti.contentfragments import interfaces as frg_interfaces
+
 
 def _check_sanitized( inp, expect ):
-	was = sanitize_user_html( inp )
+	was = frg_interfaces.IUnicodeContentFragment( inp )
+	__traceback_info__ = inp, type(inp), was, type(was)
 	assert_that( was, is_( expect.strip() ) )
+	assert_that( was, verifiably_provides( frg_interfaces.IUnicodeContentFragment ) )
 
 def test_sanitize_html():
 	strings = plistlib.readPlist( os.path.join( os.path.dirname(__file__), 'contenttypes-notes-tosanitize.plist' ) )

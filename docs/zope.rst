@@ -6,6 +6,12 @@ This page collects module docs for miscelaneous Zope libraries
 that are not otherwise referenced through Sphinx, letting cross refs
 to them work.
 
+Exceptions
+==========
+
+.. automodule:: zope.exceptions
+.. automodule:: zope.exceptions.interfaces
+
 Interface
 =========
 
@@ -136,6 +142,18 @@ Minmax
 .. automodule:: zope.minmax
 .. automodule:: zope.minmax.interfaces
 .. automodule:: zope.minmax._minmax
+
+Schema
+======
+
+.. automodule:: zope.schema
+.. automodule:: zope.schema.interfaces
+
+Fields
+------
+
+.. automodule:: zope.schema._bootstrapfields
+.. automodule:: zope.schema.fieldproperty
 
 Persistent
 ==========

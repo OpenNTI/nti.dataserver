@@ -185,6 +185,8 @@ These are definitions related to content that a user can generate.
 .. note:: The type ``Anchored`` is defined in :doc:`content-anchoring`
    as a mixin including ``Contained.``
 
+
+
 .. code-block:: cpp
 
    mixin Shareable {
@@ -225,7 +227,10 @@ These are definitions related to content that a user can generate.
         string style; //Variants of highlights. Currently, 'plain' required
    }
 
-   struct Redaction : SelectedRange {}
+   struct Redaction : SelectedRange {
+        optional string replacementContent;
+        optional string redactionExplanation;
+   }
 
    mixin Threadable {
 	   oid_t inReplyTo;
@@ -237,6 +242,9 @@ These are definitions related to content that a user can generate.
 	   //In particular, Canvas objects can appear here as can HTML strings.
 	   Object[] body;
    }
+
+.. note:: For a more full explanation of a Redaction object, see
+   :py:class:`nti.dataserver.interfaces.IRedaction`
 
 Activity Stream
 ---------------

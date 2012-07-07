@@ -78,6 +78,16 @@ def sanitize_user_html( user_input, method='html' ):
 	Given a user input string of plain text, HTML or HTML fragment, sanitize
 	by removing unsupported/dangerous elements and doing some normalization.
 	If it can be represented in plain text, do so.
+
+	:param string method: One of the ``method`` values acceptable to
+		:func:`lxml.etree.tostring`. The default value, ``html``, causes this
+		method to produce either HTML or plain text, whatever is most appropriate.
+		Passing the value ``text`` causes this method to produce only plain text captured
+		by traversing the elements with lxml.
+
+	:return: Something that implements :class:`frg_interfaces.IUnicodeContentFragment`,
+		typically either :class:`frg_interfaces.IPlainTextContentFragment` or
+		:class:`frg_interfaces.ISanitizedHTMLContentFragment`.
 	"""
 	# We cannot sanitize and parse in one step; if there is already
 	# HTML around it, then we wind up with escaped HTML as text:
@@ -129,3 +139,9 @@ def sanitize_user_html( user_input, method='html' ):
 	else:
 		string = frg_interfaces.SanitizedHTMLContentFragment( "<html><body>" + normalized + "</body></html>" )
 	return string
+
+def _sanitize_user_html_to_text( user_input ):
+	"""
+	Registered as an adapter with the name 'text' for convenience.
+	"""
+	return sanitize_user_html( user_input, method='text' )

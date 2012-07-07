@@ -3,8 +3,9 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Dataserver's documentation!
-======================================
+========================================
+ Welcome to Dataserver's documentation!
+========================================
 
 Contents:
 
@@ -20,6 +21,7 @@ Contents:
 	content-anchoring
 	content-in-cdn
 	content-resolving
+	contentfragments
 	passenger
 	dataserver-contenttypes
 	whiteboard-apis-v1
@@ -41,7 +43,14 @@ Contents:
 	nti-utils
 	nti-zodb
 
+Third-Party Cross Refs
+======================
+
+.. toctree::
+	:maxdepth: 2
+
 	gevent
+	lxml
 	zope
 
 ..	regression-tests

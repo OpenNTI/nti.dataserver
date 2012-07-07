@@ -5,7 +5,7 @@ from zope import interface
 from zope import schema
 
 from nti.utils import schema as dmschema
-from nti.contentfragments import interfaces as cfg_interfaces
+
 
 NTIID_TYPE = 'NAQ'
 
@@ -16,26 +16,9 @@ class TypedIterable(schema.List):
 	"""
 	_type = None # Override from super to not force a list
 
-class _ContentFragment(schema.Object,schema.Text):
-
-	def __init__( self, *args, **kwargs ):
-		# We're imported too early for ZCA to be configured and we can't automatically
-		# adapt.
-		if 'default' in kwargs and not cfg_interfaces.IUnicodeContentFragment.providedBy( kwargs['default'] ):
-			kwargs['default'] = cfg_interfaces.UnicodeContentFragment( kwargs['default'] )
-		super(_ContentFragment,self).__init__( cfg_interfaces.IUnicodeContentFragment, *args, **kwargs )
-
-class _ContentFragmentTextLine(schema.Object,schema.TextLine):
-
-	_iface = cfg_interfaces.IContentFragment
-
-	def __init__( self, *args, **kwargs ):
-		super(_ContentFragmentTextLine,self).__init__( self._iface, *args, **kwargs )
-
-
-class _LatexTextLine(_ContentFragmentTextLine):
-	_iface = cfg_interfaces.ILatexContentFragment
-
+from nti.contentfragments.schema import TextUnicodeContentFragment as _ContentFragment
+from nti.contentfragments.schema import TextLineUnicodeContentFragment as _ContentFragmentTextLine
+from nti.contentfragments.schema import LatexFragmentTextLine as _LatexTextLine
 
 class IQHint(interface.Interface):
 	"""

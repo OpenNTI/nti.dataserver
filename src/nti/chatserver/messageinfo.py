@@ -14,6 +14,7 @@ from persistent import Persistent
 from persistent.list import PersistentList
 
 from nti.externalization import datastructures
+from nti.contentfragments import interfaces as frg_interfaces
 
 from nti.dataserver import contenttypes
 
@@ -145,9 +146,9 @@ class MessageInfo( contenttypes.ThreadableExternalizableMixin,
 			self.body = parsed['Body']
 		if 'Body' or 'body' in parsed:
 			if isinstance( self.body, six.string_types ):
-				self.body = contenttypes.sanitize_user_html( self.body )
+				self.body = frg_interfaces.IUnicodeContentFragment( self.body )
 			elif isinstance( self.body, collections.Sequence ):
-				self.body = [contenttypes.sanitize_user_html( x ) if isinstance(x,six.string_types) else x
+				self.body = [frg_interfaces.IUnicodeContentFragment( x ) if isinstance(x,six.string_types) else x
 							 for x
 							 in self.body]
 
