@@ -508,11 +508,32 @@ class IHighlight(ISelectedRange):
 		vocabulary=IHIGHLIGHT_STYLE_VOCABULARY,
 		default="plain")
 
+from nti.contentfragments import schema as frg_schema
+
 class IRedaction(ISelectedRange):
 	"""
 	A portion of the content the user wishes to ignore or 'un-publish'.
-	TODO: Define replacement content.
+	It may optionally be provided with an (inline) :attr:`replacementContent`
+	and/or on (out-of-line) :attr:`redactionExplanation`.
 	"""
+
+	replacementContent = frg_schema.TextUnicodeContentFragment(
+		title="""The replacement content.""",
+		description="Content to render in place of the redacted content.\
+			This may be fully styled (e.g,\
+			an :class:`nti.contentfragments.interfaces.ISanitizedHTMLContentFragment`, \
+			and should be presented 'seamlessly' with the original content",
+		default="",
+		required=False)
+
+	redactionExplanation = frg_schema.TextUnicodeContentFragment(
+		title="""An explanation or summary of the redacted content.""",
+		description="Content to render out-of-line of the original content, explaining \
+			the reason for the redaction and/or summarizing the redacted material in more \
+			depth than is desirable in the replacement content.",
+		default="",
+		required=False)
+
 
 
 class INote(IShareableModeledContent,IThreadable,IAnchoredRepresentation):
@@ -521,7 +542,7 @@ class INote(IShareableModeledContent,IThreadable,IAnchoredRepresentation):
 	"""
 	body = interface.Attribute(
 		"""
-		An ordered sequence of body parts (strings or some kinds
+		An ordered sequence of body parts (:class:`nti.contentfragments.interfaces.IUnicodeContentFragment` or some kinds
 		of :class:`IModeledContent` such as :class:`ICanvas`.
 		"""
 		)

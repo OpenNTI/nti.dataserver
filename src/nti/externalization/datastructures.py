@@ -334,11 +334,11 @@ class ModuleScopedInterfaceObjectIO(InterfaceObjectIO):
 
 		most_derived = super(ModuleScopedInterfaceObjectIO,self)._ext_find_schema( ext_self, interface.Interface )
 		# In theory, this is now the most derived interface.
-		# If we have a tree that is non-linear, though, it may not be.
+		# If we have a graph that is not a tree, though, it may not be.
 		# In that case, we are not suitable for use with this object
 		for iface in self._ext_schemas_to_consider( ext_self ):
 			if not most_derived.isOrExtends( iface ):
-				raise TypeError( "Non-linear interface tree implemented by %s in %s: %s is not %s (%s)"
+				raise TypeError( "Non-tree interface graph implemented by %s in %s: %s is not %s (%s)"
 								 % (type(ext_self),self._ext_search_module, most_derived, iface, list(self._ext_schemas_to_consider( ext_self ))) )
 		return most_derived
 

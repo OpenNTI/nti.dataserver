@@ -27,9 +27,11 @@ from nti.dataserver import sharing
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import users
 
+from nti.contentfragments import interfaces as frg_interfaces
+
 from zope import interface
 from zope.deprecation import deprecate
-from zope import schema
+from zope import component
 
 def _get_entity( username, dataserver=None ):
 	return users.Entity.get_entity( username, dataserver=dataserver )
@@ -216,14 +218,25 @@ class SelectedRange(_UserContentRoot,ExternalizableInstanceDict):
 
 	__name__ = property(lambda self: getattr( self, 'id'), lambda self, name: setattr( self, 'id', name ))
 
+	# While we are transitioning over from instance-dict-based serialization
+	# to schema based serialization and validation, we handle update validation
+	# ourself through these two class attributes. You may extend the list of fields
+	# to validate in your subclass if you also set the schema to the schema that defines
+	# those fields (and inherits from ISelectedRange).
+	# This validation provides an opportunity for adaptation to come into play as well,
+	# automatically taking care of things like sanitizing user input
+	_schema_fields_to_validate_ = ('applicableRange', 'selectedText')
+	_schema_to_validate_ = nti_interfaces.ISelectedRange
 
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
 		parsed.pop( 'AutoTags', None )
 		super(SelectedRange,self).updateFromExternalObject( parsed, *args, **kwargs )
 		__traceback_info__ = parsed
-		for k in ('applicableRange', 'selectedText'):
+		for k in self._schema_fields_to_validate_:
 			value = getattr( self, k )
-			internalization.validate_named_field_value( self, nti_interfaces.ISelectedRange, k, value )
+			# pass the current value, and call the return value (if there's no exception)
+			# in case adaptation took place
+			internalization.validate_named_field_value( self, self._schema_to_validate_, k, value )()
 
 
 		if 'tags' in parsed:
@@ -256,15 +269,11 @@ class Highlight(SelectedRange, _HighlightBWC):
 
 @interface.implementer(nti_interfaces.IRedaction)
 class Redaction(SelectedRange):
-	pass
 
-import zope.deferredimport
-zope.deferredimport.deprecatedFrom(
-	"Import from nti.contentfragments.html",
-	'nti.contentfragments.html',
-	'sanitize_user_html' )
-
-from nti.contentfragments.html import sanitize_user_html as _sanitize_user_html
+	replacementContent = None
+	redactionExplanation = None
+	_schema_fields_to_validate_ = SelectedRange._schema_fields_to_validate_ + ('replacementContent','redactionExplanation')
+	_schema_to_validate_ = nti_interfaces.IRedaction
 
 class Note(ThreadableExternalizableMixin, Highlight):
 	interface.implements(nti_interfaces.INote)
@@ -309,8 +318,9 @@ class Note(ThreadableExternalizableMixin, Highlight):
 			for x in self.body:
 				assert (isinstance(x, six.string_types) and len(x) > 0) or isinstance(x,Canvas)
 
-			# Sanitize the body
-			self.body = [_sanitize_user_html(x) if isinstance(x,six.string_types) else x
+			# Sanitize the body. Anything that can become a fragment, do so, incidentally
+			# sanitizing it along the way.
+			self.body = [frg_interfaces.IUnicodeContentFragment(x, x)
 							for x
 							in self.body]
 
@@ -625,7 +635,7 @@ class CanvasTextShape(CanvasShape):
 		super(CanvasTextShape,self).updateFromExternalObject( *args, **kwargs )
 		assert isinstance( self.text, six.string_types )
 		if self.text != tbf:
-			self.text = _sanitize_user_html( self.text, method='text' )
+			self.text = component.getAdapter( self.text, frg_interfaces.IUnicodeContentFragment, name='text' )
 
 
 class CanvasUrlShape(CanvasShape):

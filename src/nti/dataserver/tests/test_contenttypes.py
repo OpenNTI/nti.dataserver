@@ -6,11 +6,11 @@ from hamcrest import (assert_that, is_, has_entry, is_not, has_entry,
 
 
 import unittest
+from nose.tools import with_setup
+import nti.tests
 
 
-
-from nti.dataserver import contenttypes
-from nti.dataserver.contenttypes import Redaction, Highlight as _Highlight, Note as _Note, Canvas, CanvasShape, CanvasAffineTransform, CanvasCircleShape, CanvasPolygonShape, CanvasPathShape, CanvasUrlShape, CanvasTextShape
+from nti.dataserver.contenttypes import Redaction as _Redaction, Highlight as _Highlight, Note as _Note, Canvas, CanvasShape, CanvasAffineTransform, CanvasCircleShape, CanvasPolygonShape, CanvasPathShape, CanvasUrlShape, CanvasTextShape
 
 from nti.externalization.oids import to_external_ntiid_oid
 
@@ -19,8 +19,9 @@ from nti.externalization.oids import to_external_ntiid_oid
 import zope.schema.interfaces
 import mock_dataserver
 from mock_dataserver import WithMockDS
-import plistlib
-import os
+from nti.tests import verifiably_provides
+from nti.contentfragments import interfaces as frg_interfaces
+
 
 from nti.contentrange.contentrange import ContentRangeDescription, DomContentRangeDescription, ElementDomContentPointer
 
@@ -33,6 +34,8 @@ nti.externalization.internalization.register_legacy_search_module( 'nti.dataserv
 nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.quizzes' )
 nti.externalization.internalization.register_legacy_search_module( 'nti.chatserver.messageinfo' )
 
+
+@with_setup(lambda: nti.tests.module_setup( set_up_packages=(nti.contentfragments,) ), nti.tests.module_teardown )
 def test_sanitize_html_contenttypes():
 	text = '<html><body><span style="color: rgb(0, 0, 0);">Hi, all.  I\'ve found the following </span><font color="#0000ff"><u>video series </u></font>to be very helpful as you learn algebra.  Let me know if questions or if you find others.</body></html>\n'
 	shape = CanvasTextShape()
@@ -50,6 +53,41 @@ def Highlight():
 	h = _Highlight()
 	h.applicableRange = ContentRangeDescription()
 	return h
+
+
+def Redaction():
+	h = _Redaction()
+	h.applicableRange = ContentRangeDescription()
+	return h
+
+class RedactionTest(mock_dataserver.ConfiguringTestBase):
+
+	def test_redaction_external(self):
+		redaction = Redaction()
+		redaction.applicableRange = None
+
+		# Must provide applicable range
+		with self.assertRaises(zope.schema.interfaces.RequiredMissing):
+			redaction.updateFromExternalObject( {'unknownkey': 'foo'} )
+
+		redaction.updateFromExternalObject( {'applicableRange': ContentRangeDescription(), 'selectedText': u'foo' } )
+		assert_that( redaction.toExternalObject(), has_entry( 'Class', 'Redaction' ) )
+		with self.assertRaises(zope.schema.interfaces.RequiredMissing):
+			redaction.updateFromExternalObject( {'selectedText': None} )
+		with self.assertRaises(zope.schema.interfaces.WrongType):
+			redaction.updateFromExternalObject( {'selectedText': b''} )
+
+		redaction.selectedText = u'the text'
+
+		# Setting replacementContent and redactionExplanation
+		# sanitize
+		redaction.updateFromExternalObject( { 'replacementContent': u'<html><body>Hi.</body></html>',
+											  'redactionExplanation': u'<html><body>Hi.</body></html>' } )
+		for k in ('replacementContent','redactionExplanation'):
+			assert_that( redaction, has_property( k, u'Hi.' ) )
+			assert_that( redaction, has_property( k, verifiably_provides( frg_interfaces.IPlainTextContentFragment ) ) )
+
+
 
 class HighlightTest(mock_dataserver.ConfiguringTestBase):
 
@@ -92,18 +130,7 @@ class HighlightTest(mock_dataserver.ConfiguringTestBase):
 		with self.assertRaises(zope.schema.interfaces.ConstraintNotSatisfied):
 			highlight.updateFromExternalObject( {'style':'F00B4R'} )
 
-	def test_redaction(self):
-		redaction = Redaction()
 
-		with self.assertRaises(zope.schema.interfaces.RequiredMissing):
-			redaction.updateFromExternalObject( {'unknownkey': 'foo'} )
-
-		redaction.updateFromExternalObject( {'applicableRange': ContentRangeDescription(), 'selectedText': u'foo' } )
-		assert_that( redaction.toExternalObject(), has_entry( 'Class', 'Redaction' ) )
-		with self.assertRaises(zope.schema.interfaces.RequiredMissing):
-			redaction.updateFromExternalObject( {'selectedText': None} )
-		with self.assertRaises(zope.schema.interfaces.WrongType):
-			redaction.updateFromExternalObject( {'selectedText': b''} )
 
 
 class NoteTest(mock_dataserver.ConfiguringTestBase):
