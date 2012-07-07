@@ -10,6 +10,7 @@ from __future__ import print_function, unicode_literals
 import warnings
 import functools
 import zope.deprecation
+import zope.deferredimport.deferredmodule
 
 def deprecated(replacement=None): # annotation factory
 	def outer(oldfun):
@@ -32,15 +33,19 @@ zope.deprecation.deprecation.__dict__['DeprecationWarning'] = FutureWarning
 # The easiest way os to patch the warnings module it uses. Fortunately, it only
 # uses one method
 class _warnings(object):
-	def warn(self, msg, typ, depth ):
+	def warn(self, msg, typ, stacklevel=0 ):
 		if zope.deprecation.__show__():
-			warnings.warn( msg, typ, depth + 1 )
+			warnings.warn( msg, typ, stacklevel + 1 )
 
 	def __getattr__( self, name ):
 		# Let everything else flow through to the real module
 		return getattr( warnings, name )
 
 zope.deprecation.deprecation.__dict__['warnings'] = _warnings()
+
+# deferred import has the same problems
+zope.deferredimport.deferredmodule.__dict__['DeprecationWarning'] = FutureWarning
+zope.deferredimport.deferredmodule.__dict__['warnings'] = _warnings()
 
 class hiding_warnings(object):
 	"""

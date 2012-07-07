@@ -33,32 +33,12 @@ nti.externalization.internalization.register_legacy_search_module( 'nti.dataserv
 nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.quizzes' )
 nti.externalization.internalization.register_legacy_search_module( 'nti.chatserver.messageinfo' )
 
-
-def _check_sanitized( inp, expect ):
-	was = contenttypes.sanitize_user_html( inp )
-	assert_that( was, is_( expect.strip() ) )
-
-def test_sanitize_html():
-	strings = plistlib.readPlist( os.path.join( os.path.dirname(__file__), 'contenttypes-notes-tosanitize.plist' ) )
-	sanitized = open( os.path.join( os.path.dirname( __file__ ), 'contenttypes-notes-sanitized.txt' ) ).readlines()
-	for s in zip(strings,sanitized):
-		yield _check_sanitized, s[0], s[1]
-
-def test_sanitize_data_uri():
-	_check_sanitized( "<audio src='data:foobar' controls />",
-					  u'<html><body><audio controls="" src="data:foobar"></audio></body></html>')
-
-
 def test_sanitize_html_contenttypes():
 	text = '<html><body><span style="color: rgb(0, 0, 0);">Hi, all.  I\'ve found the following </span><font color="#0000ff"><u>video series </u></font>to be very helpful as you learn algebra.  Let me know if questions or if you find others.</body></html>\n'
 	shape = CanvasTextShape()
 	shape.updateFromExternalObject( {'text': text} )
 	assert_that( shape, has_property( 'text', "Hi, all.  I've found the following video series to be very helpful as you learn algebra.  Let me know if questions or if you find others.\n" ) )
 
-def test_normalize_html_text_to_par():
-	html = u'<html><body><p style=" text-align: left;"><span style="font-family: \'Helvetica\';  font-size: 12pt; color: black;">The pad replies to my note.</span></p>The server edits it.</body></html>'
-	exp =  u'<html><body><p style="text-align: left;"><span>The pad replies to my note.</span></p><p style="text-align: left;">The server edits it.</p></body></html>'
-	_check_sanitized( html, exp )
 
 from nti.contentrange.contentrange import ContentRangeDescription
 def Note():
