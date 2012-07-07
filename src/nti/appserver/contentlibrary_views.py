@@ -18,6 +18,7 @@ from pyramid import traversal
 from pyramid.view import view_config
 
 import time
+import itertools
 
 from zope import interface
 from zope import component
@@ -129,20 +130,26 @@ class _ContentUnitPreferencesDecorator(object):
 
 		# Walk up the parent tree of content units (not including the mythical root)
 		# until we run out, or find preferences
-		prefs = None
-		contentUnit = context.contentUnit
-		while lib_interfaces.IContentUnit.providedBy(contentUnit):
-			container = remote_user.getContainer( contentUnit.ntiid )
+		def units( ):
+			contentUnit = context.contentUnit
+			while lib_interfaces.IContentUnit.providedBy( contentUnit ):
+				yield contentUnit, contentUnit.ntiid, contentUnit.ntiid
+				contentUnit = contentUnit.__parent__
+		# Also include the root
+		root = ((None, '', ntiids.ROOT),)
+		# We will go at least once through this loop
+		contentUnit = provenance = prefs = None
+		for contentUnit, containerId, provenance in itertools.chain( units(), iter(root) ):
+			container = remote_user.getContainer( containerId )
 			prefs = app_interfaces.IContentUnitPreferences( container, None )
 			if prefs and prefs.sharedWith:
 				break
-			contentUnit = contentUnit.__parent__
 			prefs = None
 
 		if prefs and prefs.sharedWith:
 			ext_obj = {}
 			ext_obj['State'] = 'set' if contentUnit is context.contentUnit else 'inherited'
-			ext_obj['Provenance'] = contentUnit.ntiid
+			ext_obj['Provenance'] = provenance
 			ext_obj['sharedWith'] = prefs.sharedWith
 			ext_obj['Class'] = 'SharingPagePreference'
 			result_map['sharingPreference'] = ext_obj
@@ -153,7 +160,7 @@ def _with_acl( prefs ):
 	that allows only its owner to make changes.
 	"""
 	user = traversal.find_interface( prefs, nti_interfaces.IUser )
-	if user is None:
+	if user is None: # pragma: no cover
 		return prefs
 
 	return nti_interfaces.ACLLocationProxy(
@@ -178,7 +185,7 @@ class _ContainerFieldsTraversable(object):
 		if name == 'sharingPreference':
 			return _with_acl( app_interfaces.IContentUnitPreferences( self.context ) )
 
-		raise KeyError( name )
+		raise KeyError( name ) # pragma: no cover
 
 @interface.implementer(trv_interfaces.ITraversable)
 @component.adapter(lib_interfaces.IContentUnit)
@@ -198,11 +205,17 @@ class _ContentUnitFieldsTraversable(object):
 			request = self.request or get_current_request()
 			remote_user = users.User.get_user( sec.authenticated_userid( request ),
 											   dataserver=request.registry.getUtility(nti_interfaces.IDataserver) )
-			container = remote_user.getContainer( self.context.ntiid )
-			# TODO: Creating missing containers
+			# Preferences for the root are actually stored
+			# on the unnamed node
+			ntiid = '' if self.context.ntiid == ntiids.ROOT else self.context.ntiid
+			container = remote_user.getContainer( ntiid )
+			# If we are expecting to write preferences, make sure the
+			# container exists, even if it hasn't been used
+			if container is None and self.request and self.request.method == 'PUT':
+				container = remote_user.containers.getOrCreateContainer(ntiid )
 			return _with_acl( app_interfaces.IContentUnitPreferences( container ) )
 
-		raise KeyError( name )
+		raise KeyError( name ) # pragma: no cover
 
 from .dataserver_pyramid_views import _UGDModifyViewBase as UGDModifyViewBase
 @view_config( route_name='objects.generic.traversal',
@@ -226,8 +239,13 @@ class _ContentUnitPreferencesPutView(UGDModifyViewBase):
 
 		# Since we are used as a field updater, we want to return
 		# the object whose field we updated (as is the general rule)
+		# Recall that the root is special cased as ''
 
-		ntiid = self.request.context.__parent__.__name__
+		ntiid = self.request.context.__parent__.__name__ or ntiids.ROOT
+		if ntiid == ntiids.ROOT:
+			self.request.view_name = ntiids.ROOT
+			return _RootLibraryTOCRedirectView( self.request )
+
 		content_lib = self.request.registry.getUtility( lib_interfaces.IContentPackageLibrary )
 		content_unit = content_lib[ntiid]
 		self.request.context = content_unit

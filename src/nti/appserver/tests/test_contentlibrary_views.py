@@ -5,28 +5,83 @@ $Id$
 """
 from __future__ import print_function, unicode_literals
 
+#pylint: disable=R0904
+
 from hamcrest import assert_that
 from hamcrest import has_property
-from . import ConfiguringTestBase
+from hamcrest import has_entry
+
+from nti.appserver.tests import ConfiguringTestBase
 from nti.tests import verifiably_provides
 from nti.dataserver.tests.mock_dataserver import WithMockDS, WithMockDSTrans
 
 import anyjson as json
 from nti.appserver import interfaces as app_interfaces
 from nti.contentlibrary import interfaces as lib_interfaces
+
 from nti.dataserver import users
 from nti.dataserver.contenttypes import Note
+from nti.ntiids import ntiids
 
 from zope import interface
 from zope.traversing.api import traverse
 
-from nti.appserver.contentlibrary_views import _ContentUnitPreferencesPutView
+from nti.appserver.contentlibrary_views import _ContentUnitPreferencesPutView, _ContentUnitPreferencesDecorator
+
+@interface.implementer(lib_interfaces.IContentUnit)
+class ContentUnit(object):
+	href = 'prealgebra'
+	ntiid = None
+	__parent__ = None
 
 class TestContainerPrefs(ConfiguringTestBase):
 
+	rem_username = 'foo@bar'
+
 	def setUp( self ):
 		config = super(TestContainerPrefs,self).setUp()
-		config.testing_securitypolicy( "foo@bar" )
+		config.testing_securitypolicy( self.rem_username )
+
+	def _do_check_root_inherited(self, ntiid=None, sharedWith=None):
+		class ContentUnitInfo(object):
+			contentUnit = None
+
+		unit = ContentUnit()
+		unit.ntiid = ntiid
+		# Notice that the root is missing from the lineage
+
+		info = ContentUnitInfo()
+		info.contentUnit = unit
+		decorator = _ContentUnitPreferencesDecorator( info )
+		result_map = {}
+
+		decorator.decorateExternalMapping( info, result_map )
+
+		assert_that( result_map, has_entry( 'sharingPreference',
+											has_entry( 'State', 'inherited' ) ) )
+
+		assert_that( result_map, has_entry( 'sharingPreference',
+											has_entry( 'Provenance', ntiids.ROOT ) ) )
+		assert_that( result_map, has_entry( 'sharingPreference',
+											has_entry( 'sharedWith', sharedWith ) ) )
+
+	@WithMockDSTrans
+	def test_decorate_inherit(self):
+		user = users.User.create_user( username=self.rem_username )
+
+		cid = "tag:nextthought.com:foo,bar"
+		root_cid = ''
+
+		# Create the containers
+		for c in (cid,root_cid):
+			user.containers.getOrCreateContainer( c )
+
+		# Add sharing prefs to the root
+		prefs = app_interfaces.IContentUnitPreferences( user.getContainer( root_cid ) )
+		prefs.sharedWith = ['a@b']
+
+		self._do_check_root_inherited( ntiid=cid, sharedWith=['a@b'] )
+
 
 	@WithMockDS
 	def test_traverse_container_to_prefs(self):
@@ -43,44 +98,28 @@ class TestContainerPrefs(ConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_traverse_content_unit_to_prefs(self):
-		user = users.User.create_user( username="foo@bar" )
+		user = users.User.create_user( username=self.rem_username )
 
 		cont_obj = Note()
 		cont_obj.containerId = "tag:nextthought.com:foo,bar"
 
 		user.addContainedObject( cont_obj )
 
-		@interface.implementer(lib_interfaces.IContentUnit)
-		class ContentUnit(object):
-			ntiid = cont_obj.containerId
-
 		content_unit = ContentUnit()
+		content_unit.ntiid = cont_obj.containerId
 
 		prefs = traverse( content_unit, "++fields++sharingPreference", request=self.request )
 		assert_that( prefs, verifiably_provides( app_interfaces.IContentUnitPreferences ) )
 
-	@WithMockDSTrans
-	def test_update_shared_with(self):
-		user = users.User.create_user( username="foo@bar" )
-
-		cont_obj = Note()
-		cont_obj.containerId = "tag:nextthought.com:foo,bar"
-
-		user.addContainedObject( cont_obj )
-
-		@interface.implementer(lib_interfaces.IContentUnit)
-		class ContentUnit(object):
-			ntiid = cont_obj.containerId
-			href = 'prealgebra'
-
-		content_unit = ContentUnit()
-
+	def _do_update_prefs( self, content_unit, sharedWith=None ):
+		self.request.method = 'PUT'
 		prefs = traverse( content_unit, "++fields++sharingPreference", request=self.request )
 		assert_that( prefs, verifiably_provides( app_interfaces.IContentUnitPreferences ) )
 
 		self.request.context = prefs
-		self.request.body = json.dumps( {"sharedWith": ['a','b'] } )
+		self.request.body = json.dumps( {"sharedWith": sharedWith } )
 		self.request.content_type = 'application/json'
+
 
 		class Accept(object):
 			def best_match( self, *args ): return 'application/json'
@@ -96,5 +135,49 @@ class TestContainerPrefs(ConfiguringTestBase):
 
 		result = _ContentUnitPreferencesPutView(self.request)()
 
-		assert_that( prefs, has_property( 'sharedWith', ['a','b'] ) )
+		assert_that( prefs, has_property( 'sharedWith', sharedWith ) )
 		assert_that( result, verifiably_provides( app_interfaces.IContentUnitInfo ) )
+
+	@WithMockDSTrans
+	def test_update_shared_with_in_preexisting_container(self):
+
+		user = users.User.create_user( username=self.rem_username )
+		# Make the container exist
+		cont_obj = Note()
+		cont_obj.containerId = "tag:nextthought.com:foo,bar"
+		user.addContainedObject( cont_obj )
+
+
+		content_unit = ContentUnit()
+		content_unit.ntiid = cont_obj.containerId
+
+		self._do_update_prefs( content_unit, sharedWith=['a','b']  )
+
+	@WithMockDSTrans
+	def test_update_shared_with_in_non_existing_container(self):
+
+		_ = users.User.create_user( username=self.rem_username )
+		# Note the container does not exist
+		containerId = "tag:nextthought.com:foo,bar"
+
+		content_unit = ContentUnit()
+		content_unit.ntiid = containerId
+
+		# The magic actually happens during traversal
+		# That's why the method must be 'PUT' before traversal
+		self._do_update_prefs( content_unit, sharedWith=['a','b'] )
+
+
+	@WithMockDSTrans
+	def test_update_shared_with_in_root_inherits(self):
+
+		_ = users.User.create_user( username=self.rem_username )
+		# Note the container does not exist
+		containerId = "tag:nextthought.com:foo,bar"
+
+		content_unit = ContentUnit()
+		content_unit.ntiid = ntiids.ROOT
+
+		self._do_update_prefs( content_unit, sharedWith=['a','b'] )
+
+		self._do_check_root_inherited( ntiid=containerId, sharedWith=['a','b'] )

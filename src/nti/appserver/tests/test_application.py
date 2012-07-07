@@ -936,10 +936,10 @@ class TestApplicationLibraryBase(ApplicationTestBase):
 	child_ntiid = ntiids.make_ntiid( provider='ou', specific='test2', nttype='HTML' )
 
 	def _setup_library(self, content_root='/prealgebra/'):
-
+		test_self = self
 		class NID(object):
 			interface.implements( lib_interfaces.IContentUnit )
-			ntiid = TestApplicationLibrary.child_ntiid
+			ntiid = test_self.child_ntiid
 			href = 'sect_0002.html'
 			__parent__ = None
 			__name__ = 'The name'
@@ -957,12 +957,13 @@ class TestApplicationLibraryBase(ApplicationTestBase):
 			interface.implements( lib_interfaces.IContentPackageLibrary )
 			titles = ()
 
-			def __getitem__(s, key):
-				if key != self.child_ntiid: raise KeyError( s )
+			def __getitem__(self, key):
+				if key != test_self.child_ntiid:
+					raise KeyError( key )
 				return NID().with_parent( LibEnt() )
 
 			def pathToNTIID( self, ntiid ):
-				return [NID().with_parent( LibEnt() )] if ntiid == TestApplicationLibrary.child_ntiid else None
+				return [NID().with_parent( LibEnt() )] if ntiid == test_self.child_ntiid else None
 
 		return Lib()
 
@@ -1071,6 +1072,39 @@ class TestRootPageEntryLibrary(TestApplicationLibraryBase):
 	child_ntiid = ntiids.ROOT
 	_check_content_link = False
 	_stream_type = 'RecursiveStream'
+
+	def test_set_root_page_prefs_inherits(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			self._create_user()
+
+		testapp = TestApp( self.app )
+
+		# First, put to the root
+		accept_type = 'application/json'
+		data = json.dumps( {"sharedWith": ["a@b"] } )
+
+		res = testapp.put( str('/dataserver2/NTIIDs/' + self.child_ntiid + '/++fields++sharingPreference'),
+						   data,
+						   headers={"Accept": accept_type},
+						   extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 200 ) )
+
+		assert_that( res.content_type, is_( 'application/vnd.nextthought.pageinfo+json' ) )
+		assert_that( res.json_body, has_entry( 'MimeType', 'application/vnd.nextthought.pageinfo' ) )
+		assert_that( res.json_body, has_entry( 'sharingPreference', has_entry( 'sharedWith', ['a@b'] ) ) )
+
+		# Then, reset the library so we have a child, and get the child
+		self.child_ntiid = TestApplicationLibrary.child_ntiid
+		self.config.registry.registerUtility( self._setup_library() )
+
+		testapp = TestApp( self.app )
+		res = testapp.get( '/dataserver2/NTIIDs/' + self.child_ntiid,
+						   headers={"Accept": accept_type },
+						   extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 200 ) )
+		assert_that( res.json_body, has_entry( 'MimeType', 'application/vnd.nextthought.pageinfo' ) )
+		assert_that( res.json_body, has_entry( 'sharingPreference', has_entry( 'sharedWith', ['a@b'] ) ) )
+
 
 from nti.contentlibrary.filesystem import DynamicLibrary as FileLibrary
 from nti.assessment import interfaces as asm_interfaces, parts as asm_parts, question as asm_question, submission as asm_submission
