@@ -8,6 +8,7 @@ from zope.location import location
 from zope.location import interfaces as loc_interfaces
 from zope.mimetype import interfaces as mime_interfaces
 from zope.location.location import LocationProxy
+from zope.componentvocabulary.vocabulary import UtilityVocabulary
 
 from nti.dataserver import datastructures
 from nti.dataserver import interfaces as model_interfaces
@@ -571,15 +572,12 @@ class _UserPagesCollection(object):
 
 	@property
 	def accepts(self):
-		# We're depending on the metaclass as a specific
-		# opt-in way to enumerate the mimetypes.
-		# The other alternative is to use IModeledContent.dependents
-		# and look through those for every implementation (and subimplementation)
-		# of the interface...
 		# We probably need to be more picky, too. Some things like
 		# devices and friendslists are sneaking in here where they
 		# don't belong.
-		return iter(mimetype.ModeledContentTypeAwareRegistryMetaclass.external_mime_types)
+		vocab = UtilityVocabulary(None, interface=ext_interfaces.IMimeObjectFactory, nameOnly=True)
+		return (term.value for term in vocab)
+		#return iter(mimetype.ModeledContentTypeAwareRegistryMetaclass.external_mime_types)
 
 class _UserEnrolledClassSectionsCollection(object):
 	"""

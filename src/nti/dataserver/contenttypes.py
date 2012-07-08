@@ -407,6 +407,8 @@ class CanvasAffineTransform(ExternalizableInstanceDict):
 	Treated are like structs, compared by value, not identity. They are
 	never standalone, so many of their external fields are lacking.
 	"""
+	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
+
 	__external_can_create__ = True
 	def __init__( self ):
 		"""
@@ -473,6 +475,7 @@ class CanvasShape(_UserContentRoot,ExternalizableInstanceDict):
 			setattr( result, x, getattr( self, '_' + x ) )
 		return result
 	def set_transform( self, matrix ):
+		__traceback_info__ = matrix
 		assert isinstance( matrix, CanvasAffineTransform )
 		for x in matrix.__dict__:
 			setattr( self, '_' + x, matrix.__dict__[x] )

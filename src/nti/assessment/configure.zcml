@@ -1,6 +1,8 @@
 <!-- -*- mode: nxml -*- -->
-<configure xmlns="http://namespaces.zope.org/zope"
-		   i18n_domain="zope">
+<configure
+	xmlns="http://namespaces.zope.org/zope"
+	xmlns:ext="http://nextthought.com/ntp/ext"
+	i18n_domain="zope">
 	<include package="zope.component" />
 	<include package="zope.location" />
 
@@ -92,5 +94,13 @@
 			 for=".interfaces.IQuestionSetSubmission" />
 	<adapter factory=".externalization._AssessmentInternalObjectIO"
 			 for=".interfaces.IQAssessedQuestionSet" />
+
+	<!--
+		 Make sure and do this after the .externalization package has
+		 worked its magic.
+	-->
+	<include package="nti.externalization" file="meta.zcml" />
+	<ext:registerMimeFactories module=".submission" />
+
 
 </configure>

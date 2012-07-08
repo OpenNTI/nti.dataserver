@@ -27,12 +27,12 @@ from nti.contentrange.contentrange import ContentRangeDescription, DomContentRan
 
 import nti.externalization.internalization
 from nti.externalization.internalization import update_from_external_object
-nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.users' )
-nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.contenttypes' )
-nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.providers' )
-nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.classes' )
-nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.quizzes' )
-nti.externalization.internalization.register_legacy_search_module( 'nti.chatserver.messageinfo' )
+#nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.users' )
+#nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.contenttypes' )
+#nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.providers' )
+#nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.classes' )
+#nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.quizzes' )
+#nti.externalization.internalization.register_legacy_search_module( 'nti.chatserver.messageinfo' )
 
 
 @with_setup(lambda: nti.tests.module_setup( set_up_packages=(nti.contentfragments,) ), nti.tests.module_teardown )

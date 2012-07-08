@@ -1,7 +1,14 @@
 <!-- -*- mode: nxml -*- -->
-<configure xmlns="http://namespaces.zope.org/zope">
+<configure
+	xmlns="http://namespaces.zope.org/zope"
+	xmlns:ext="http://nextthought.com/ntp/ext" >
 	<include package="zope.component" />
 	<include package="zope.annotation" />
+
+	<include package="nti.externalization" file="meta.zcml" />
+	<include package="nti.externalization" />
+	<ext:registerMimeFactories module=".messageinfo" />
+
 
 	<adapter factory="._meeting_post_policy.MeetingPostPolicy"
 			 for=".interfaces.IMeeting"

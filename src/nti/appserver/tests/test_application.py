@@ -153,7 +153,7 @@ class TestApplication(ApplicationTestBase):
 			_ = self._create_user()
 			testapp = TestApp( self.app )
 			containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
-			data = json.serialize( { 'Class': 'Highlight',
+			data = json.serialize( { 'Class': 'Highlight', 'MimeType': 'application/vnd.nextthought.highlight',
 									 'ContainerId': containerId,
 									 'applicableRange': {'Class': 'ContentRangeDescription'}} )
 
@@ -188,7 +188,7 @@ class TestApplication(ApplicationTestBase):
 
 		testapp = TestApp( self.app )
 		containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
-		data = json.serialize( { 'Class': 'Highlight',
+		data = json.serialize( { 'Class': 'Highlight', 'MimeType': 'application/vnd.nextthought.highlight',
 								 'ContainerId': containerId,
 								 'applicableRange': {'Class': 'ContentRangeDescription'}} )
 
@@ -217,7 +217,7 @@ class TestApplication(ApplicationTestBase):
 
 		testapp = TestApp( self.app )
 
-		data = json.serialize( { 'Class': 'FriendsList',
+		data = json.serialize( { 'Class': 'FriendsList',  'MimeType': 'application/vnd.nextthought.friendslist',
 								 'ContainerId': 'FriendsLists',
 								 'ID': "Foo@bar" } )
 		path = '/dataserver2/users/sjohnson@nextthought.com'
@@ -241,7 +241,7 @@ class TestApplication(ApplicationTestBase):
 
 		testapp = TestApp( self.app )
 
-		data = json.serialize( { 'Class': 'Device',
+		data = json.serialize( { 'Class': 'Device', 'MimeType': 'application/vnd.nextthought.device',
 								 'ContainerId': 'Devices',
 								 'ID': "deadbeef" } )
 		path = '/dataserver2/users/sjohnson@nextthought.com'
@@ -561,7 +561,7 @@ class TestApplication(ApplicationTestBase):
 			self._create_user()
 			_create_class( self.ds, ('sjohnson@nextthought.com',) )
 		testapp = TestApp( self.app )
-		data = json.serialize( { 'Class': 'ClassInfo',
+		data = json.serialize( { 'Class': 'ClassInfo',  'MimeType': 'application/vnd.nextthought.classinfo',
 								 'ContainerId': 'Classes',
 								 'ID': 'CS2502'} )
 
@@ -577,17 +577,19 @@ class TestApplication(ApplicationTestBase):
 			_create_class( self.ds, ('sjohnson@nextthought.com',) )
 
 		testapp = TestApp( self.app )
-		data = json.serialize( { 'Class': 'ClassInfo',
+		data = json.serialize( { 'Class': 'ClassInfo', 'MimeType': 'application/vnd.nextthought.classinfo',
 								 'ContainerId': 'Classes',
 								 'ID': 'CS2503' } )
 
 		res = testapp.post( path, data, extra_environ=self._make_extra_environ() )
 		assert_that( res.status_int, is_( 201 ) )
 
-		data = json.serialize( { 'Class': 'ClassInfo',
+		data = json.serialize( { 'Class': 'ClassInfo', 'MimeType': 'application/vnd.nextthought.classinfo',
 								 'ContainerId': 'Classes',
 								 'ID': 'CS2503',
-								 'Sections': [{'ID': 'CS2503.101', 'Class': 'SectionInfo', 'Enrolled': ['jason.madden@nextthought.com']}]} )
+								 'Sections': [{'ID': 'CS2503.101',
+											   'Class': 'SectionInfo',  'MimeType': 'application/vnd.nextthought.sectioninfo',
+											   'Enrolled': ['jason.madden@nextthought.com']}]} )
 		res = testapp.put( path + 'CS2503', data, extra_environ=self._make_extra_environ() )
 
 		body = json.loads( res.body )
@@ -622,10 +624,12 @@ class TestApplication(ApplicationTestBase):
 
 		testapp = TestApp( self.app )
 
-		data = json.serialize( { 'Class': 'ClassInfo',
+		data = json.serialize( { 'Class': 'ClassInfo', 'MimeType': 'application/vnd.nextthought.classinfo',
 								 'ContainerId': 'Classes',
 								 'ID': 'CS2503',
-								 'Sections': [{'ID': 'CS2503.101', 'Class': 'SectionInfo', 'Enrolled': ['jason.madden@nextthought.com']}]} )
+								 'Sections': [{'ID': 'CS2503.101',
+											   'Class': 'SectionInfo', 'MimeType': 'application/vnd.nextthought.sectioninfo',
+											   'Enrolled': ['jason.madden@nextthought.com']}]} )
 		res = testapp.post( path, data, extra_environ=self._make_extra_environ() )
 
 
@@ -650,7 +654,7 @@ class TestApplication(ApplicationTestBase):
 			self.ds.root['providers']['OU'] = provider
 		testapp = TestApp( self.app )
 
-		data = json.serialize( { 'Class': 'ClassInfo',
+		data = json.serialize( { 'Class': 'ClassInfo', 'MimeType': 'application/vnd.nextthought.classinfo',
 								 'ContainerId': 'Classes',
 								 'ID': 'CS2503',
 								 'Sections': [{'ID': 'CS2503.101', 'Class': 'SectionInfo', 'Enrolled': ['jason.madden@nextthought.com']}]} )
@@ -753,7 +757,7 @@ class TestApplication(ApplicationTestBase):
 		quiz, testapp = self._check_class_modeled_enclosure_href( quiz_data, 'application/vnd.nextthought.quiz+json' )
 
 		# We should be able to post a response for grading with raw strings
-		result_data = {"Class": "QuizResult",
+		result_data = {"Class": "QuizResult", "MimeType":"application/vnd.nextthought.quizresult",
 					   "ContainerId": ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' ),
 					   "QuizID": quiz['NTIID'],
 					   'Items': {"1": "0"}}
@@ -761,7 +765,7 @@ class TestApplication(ApplicationTestBase):
 							   json.dumps( result_data ),
 							   extra_environ=self._make_extra_environ() )
 		# and with wrapped responses
-		result_data = {"Class": "QuizResult",
+		result_data = {"Class": "QuizResult", "MimeType":"application/vnd.nextthought.quizresult",
 					   "ContainerId": ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' ),
 					   "QuizID": quiz['NTIID'],
 					   'Items': {"1": {"ID": "1", "Response": "0"}}}
@@ -791,7 +795,7 @@ class TestApplication(ApplicationTestBase):
 
 		container_id = ntiids.make_ntiid( provider='sjohnson@nextthought.com', nttype=ntiids.TYPE_HTML, specific='0' )
 		# We should be able to post a response for grading
-		result_data = {"Class": "QuizResult",
+		result_data = {"Class": "QuizResult", "MimeType":"application/vnd.nextthought.quizresult",
 					   "ContainerId": container_id,
 					   'Items': {"1": "0"}}
 		testapp.post( '/dataserver2/users/sjohnson@nextthought.com/',
