@@ -136,6 +136,13 @@ zope.component.registry
 .. automodule:: zope.component.registry
 
 
+Component Vocabulary
+====================
+
+.. automodule:: zope.componentvocabulary
+.. automodule:: zope.componentvocabulary.vocabulary
+
+
 Minmax
 ======
 
@@ -154,6 +161,11 @@ Fields
 
 .. automodule:: zope.schema._bootstrapfields
 .. automodule:: zope.schema.fieldproperty
+
+Vocabulary
+----------
+
+.. automodule:: zope.schema.vocabulary
 
 Persistent
 ==========

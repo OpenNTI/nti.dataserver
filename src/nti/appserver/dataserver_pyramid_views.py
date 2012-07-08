@@ -981,7 +981,7 @@ class _UGDPostView(_UGDModifyViewBase):
 		containedObject = self.createContentObject( owner, datatype, externalValue )
 		if containedObject is None:
 			transaction.doom()
-			logger.debug( "Failing to POST: input of unsupported/missing Class" )
+			logger.debug( "Failing to POST: input of unsupported/missing Class: %s %s", datatype, externalValue )
 			raise HTTPUnprocessableEntity( 'Unsupported/missing Class' )
 
 		with owner.updates():
@@ -1205,11 +1205,16 @@ class _EnclosurePostView(_UGDModifyViewBase):
 
 		content = None
 		content_type = self._get_body_type()
+		# Chop a trailing '+json' off if present
+		if '+' in content_type:
+			content_type = content_type[0:content_type.index('+')]
 
 		# First, see if they're giving us something we can model
 		datatype = class_name_from_content_type( content_type )
 		datatype = datatype + 's' if datatype else None
-		modeled_content = nti.externalization.internalization.find_factory_for_class_name( datatype )
+		# Pass in all the information we have, as if it was a full externalized object
+		modeled_content = nti.externalization.internalization.find_factory_for( {StandardExternalFields.MIMETYPE: content_type,
+																				 StandardExternalFields.CLASS: datatype} )
 		if modeled_content:
 			modeled_content = modeled_content()
 		#modeled_content = self.dataserver.create_content_type( datatype, create_missing=False )

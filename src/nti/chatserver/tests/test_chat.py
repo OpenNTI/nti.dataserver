@@ -56,13 +56,13 @@ from nti.dataserver.tests.mock_dataserver import WithMockDS, WithMockDSTrans, Co
 from nti.dataserver.tests import mock_dataserver
 from nti.dataserver.tests.test_authorization_acl import permits, denies
 
-import nti.externalization.internalization
-nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.users' )
-nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.contenttypes' )
-nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.providers' )
-nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.classes' )
-nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.quizzes' )
-nti.externalization.internalization.register_legacy_search_module( 'nti.chatserver.messageinfo' )
+#import nti.externalization.internalization
+# nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.users' )
+# nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.contenttypes' )
+# nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.providers' )
+# nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.classes' )
+# nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.quizzes' )
+# nti.externalization.internalization.register_legacy_search_module( 'nti.chatserver.messageinfo' )
 
 
 class TestMessageInfo(ConfiguringTestBase):

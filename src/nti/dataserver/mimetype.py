@@ -90,6 +90,11 @@ class ModeledContentTypeAwareRegistryMetaclass(type):
 			_mm_types.add( new_type )
 		return new_type
 
+import nti.externalization.interfaces
+import dolmen.builtins
+
+@interface.implementer(nti.externalization.interfaces.IMimeObjectFactory)
+@component.adapter(dolmen.builtins.IDict)
 def ModeledContentTypeMimeFactory( externalized_object ):
 	"""
 	A generic adapter factory to find specific factories (types)

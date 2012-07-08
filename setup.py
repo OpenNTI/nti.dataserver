@@ -59,6 +59,9 @@ setup(
 #	tests_require = ['z3c.coverage','zope.testing'],
 	setup_requires = ['nose'],
 	install_requires = [
+		 # Zope Acquisition; used by contentratings implicitly
+		 # cool concept. Pulls in ExtensionClass (which should not be used)
+		'Acquisition >= 4.0a1',
 		'Chameleon >= 2.9.2',
 		'RestrictedPython',
 		'ZConfig >= 2.9.3',
@@ -161,7 +164,9 @@ setup(
 		'zope.browserresource',
 		'zope.cachedescriptors >= 3.5.1',
 		'zope.component >= 4.0.0',
-		'zope.componentvocabulary',
+		# Schema vocabularies based on querying ZCA; useful
+		# for views and other metadata
+		'zope.componentvocabulary >= 1.0.1',
 		'zope.configuration >= 4.0.0',
 		'zope.container >= 3.12.0',
 		'zope.contenttype >= 3.5.5', # A utility module for content-type handling.
