@@ -102,8 +102,12 @@ class ExampleDatabaseInitializer(object):
 		mathcountsCommunity = Community( 'MathCounts' )
 		mathcountsCommunity.realname = mathcountsCommunity.username
 		mathcountsCommunity.alias = 'MathCounts'
+		
+		testUsersCommunity = Community( 'TestUsers' )
+		testUsersCommunity.realname = testUsersCommunity.username
+		testUsersCommunity.alias = 'TestUsers'
 
-		return (aopsCommunity, drgCommunity, ntiCommunity)
+		return (aopsCommunity, drgCommunity, ntiCommunity, testUsersCommunity)
 
 	def _add_friendslists_to_user( self, for_user ):
 		if for_user.username != 'jason.madden@nextthought.com':
@@ -159,13 +163,16 @@ class ExampleDatabaseInitializer(object):
 		USERS = self._make_usernames()
 		def create_add_user(user_tuple):
 			uname = user_tuple[0]
-			password = 'temp001' if uname.startswith('test.user.') else user_tuple[1].replace( ' ', '.' ).lower()
+			is_test_user =  uname.startswith('test.user.')
+			password = 'temp001' if is_test_user else user_tuple[1].replace( ' ', '.' ).lower()
 			user = User( uname, password=password )
 			user.realname = user_tuple[1]
 			user.alias = user_tuple[1].split()[0]
 			for c in communities:
-				user.join_community( c )
-				user.follow( c )
+				if	(c.alias == 'TestUsers' and is_test_user) or \
+					(c.alias != 'TestUsers' and not is_test_user):
+					user.join_community( c )
+					user.follow( c )
 
 			self._add_friendslists_to_user( user )
 			add_user( user )
