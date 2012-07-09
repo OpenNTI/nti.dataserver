@@ -103,7 +103,7 @@ deprecated( "ILibraryTOCEntry", "Use nti.contentlibrary" )
 ILINK_VOCABULARY = schema.vocabulary.SimpleVocabulary(
 	[schema.vocabulary.SimpleTerm(_x)
 	 for _x
-	 in ('related', 'alternate', 'self', 'enclosure', 'edit')])
+	 in ('related', 'alternate', 'self', 'enclosure', 'edit', 'like', 'unlike', 'content' )])
 
 class ILink(interface.Interface):
 	"""
@@ -122,6 +122,13 @@ class ILink(interface.Interface):
 		May be an actual object of some type or may be a string. If a string,
 		will be interpreted as an absolute or relative URI.
 		""" )
+
+	elements = schema.Iterable(
+		title="Additional path segments to put after the `target`",
+		description="""Each element must be a string and will be a new URL segment.
+
+		This is useful for things like view names or namespace traversals.""")
+
 
 class ILinked(interface.Interface):
 	"""

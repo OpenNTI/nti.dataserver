@@ -14,17 +14,20 @@ from zope import component
 
 import six
 
+@interface.implementer( interfaces.ILink )
 class Link(object):
 	"""
 	Default implementation of ILink.
 	These are non-persistent and should be generated at runtime.
 	"""
 
-	interface.implements( interfaces.ILink )
+	elements = ()
 
-	def __init__( self, target, rel='alternate' ):
+	def __init__( self, target, rel='alternate', elements=() ):
 		self.rel = rel
 		self.target = target
+		if elements:
+			self.elements = elements
 
 	# Make them non-picklable
 	def __reduce__( self, *args, **kwargs ):
@@ -45,7 +48,7 @@ class Link(object):
 
 	def __eq__( self, other ):
 		try:
-			return self is other or (self.rel == other.rel and self.target == other.target)
+			return self is other or (self.rel == other.rel and self.target == other.target and self.elements == other.elements)
 		except AttributeError:
 			return NotImplemented
 

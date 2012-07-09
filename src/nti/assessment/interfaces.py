@@ -9,12 +9,7 @@ from nti.utils import schema as dmschema
 
 NTIID_TYPE = 'NAQ'
 
-class TypedIterable(schema.List):
-	"""
-	An arbitrary (indexable) iterable, not necessarily a list or tuple.
-	The values may be homogeneous by setting the value_type
-	"""
-	_type = None # Override from super to not force a list
+TypedIterable = dmschema.IndexedIterable
 
 from nti.contentfragments.schema import TextUnicodeContentFragment as _ContentFragment
 from nti.contentfragments.schema import TextLineUnicodeContentFragment as _ContentFragmentTextLine
