@@ -8,10 +8,14 @@ $Id$
 """
 from __future__ import print_function, unicode_literals
 
+logger = __import__('logging').getLogger(__name__)
+
 from zope.component.factory import Factory
 import zope.configuration.fields
 from zope import interface
 from zope.component import zcml as component_zcml
+
+import ZODB.POSException
 
 from . import interfaces
 
@@ -46,10 +50,16 @@ def registerMimeFactories( _context, module ):
 	# This is a pretty loose check. We can probably do better. For example,
 	# pass an interface parameter and only register things that provide
 	# that interface
-	for v in module.__dict__.values():
-		mime_type = getattr( v, 'mime_type', None )
-		ext_create = getattr( v, '__external_can_create__', False )
-		v_mod_name = getattr( v, '__module__', None )
+	for k, v in module.__dict__.items():
+		__traceback_info__ = k, v
+		try:
+			mime_type = getattr( v, 'mime_type', None )
+			ext_create = getattr( v, '__external_can_create__', False )
+			v_mod_name = getattr( v, '__module__', None )
+		except ZODB.POSException.POSError:
+			# This is a problem in the module. Module objects shouldn't do this.
+			logger.warn( "Failed to inspect %s in %s", k, module )
+			continue
 
 		if mime_type and ext_create and module.__name__ == v_mod_name:
 			component_zcml.utility( _context,

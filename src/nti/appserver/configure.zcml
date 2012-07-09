@@ -95,6 +95,8 @@
 				provides=".interfaces.ILogonLinkProvider"/>
 	<subscriber factory=".logon._OnlineQueryGoogleLoginLinkProvider"
 				provides=".interfaces.ILogonLinkProvider"/>
+	<subscriber factory=".logon._MissingUserAopsLoginLinkProvider"
+				provides=".interfaces.ILogonLinkProvider" />
 
 	<!-- Individual field updates -->
 	<adapter factory="._adapters.SharedWithExternalFieldTraverser" />
