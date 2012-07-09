@@ -2,14 +2,15 @@
 from hamcrest import (assert_that, is_, has_entry, is_not, has_entry,
 					  has_key,  is_not, has_item, has_property,
 					  same_instance, none, has_entries, only_contains)
-
-
+from hamcrest import has_length
+from zope.annotation import interfaces as an_interfaces
 
 import unittest
 from nose.tools import with_setup
 import nti.tests
+from nti.tests import verifiably_provides
 
-
+from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.contenttypes import Redaction as _Redaction, Highlight as _Highlight, Note as _Note, Canvas, CanvasShape, CanvasAffineTransform, CanvasCircleShape, CanvasPolygonShape, CanvasPathShape, CanvasUrlShape, CanvasTextShape
 
 from nti.externalization.oids import to_external_ntiid_oid
@@ -19,7 +20,6 @@ from nti.externalization.oids import to_external_ntiid_oid
 import zope.schema.interfaces
 import mock_dataserver
 from mock_dataserver import WithMockDS
-from nti.tests import verifiably_provides
 from nti.contentfragments import interfaces as frg_interfaces
 
 
@@ -131,9 +131,43 @@ class HighlightTest(mock_dataserver.ConfiguringTestBase):
 			highlight.updateFromExternalObject( {'style':'F00B4R'} )
 
 
-
+from nti.dataserver import liking
+import contentratings.interfaces
 
 class NoteTest(mock_dataserver.ConfiguringTestBase):
+
+	def test_note_is_likeable(self):
+		"Notes should be likeable, and can become IUserRating"
+		n = Note()
+		assert_that( n, verifiably_provides( nti_interfaces.ILikeable ) )
+		ratings = liking._lookup_like_rating_for_write( n )
+		assert_that( ratings, verifiably_provides( contentratings.interfaces.IUserRating ) )
+		assert_that( ratings, has_property( 'numberOfRatings', 0 ) )
+
+	def test_reading_note_adds_no_annotations(self):
+		"Externalizing a note produces LikeCount attribute, but doesn't add annotations"
+		n = Note()
+		assert_that( n, verifiably_provides( nti_interfaces.ILikeable ) )
+		ratings = liking._lookup_like_rating_for_read( n )
+		assert_that( ratings, is_( none() ) )
+
+		ext = {}
+		liking.LikeDecorator( n ).decorateExternalMapping( n, ext )
+		ratings = liking._lookup_like_rating_for_read( n )
+		assert_that( ratings, is_( none() ) )
+		assert_that( an_interfaces.IAnnotations( n ), has_length( 0 ) )
+
+		assert_that( ext, has_entry( 'LikeCount', 0 ) )
+
+	def test_liking_makes_it_to_ext(self):
+		"Externalizing a note produces LikeCount attribute"
+		n = Note()
+		ratings = liking._lookup_like_rating_for_write( n ).rate( 1, 'foo@bar' )
+		ext = {}
+		liking.LikeDecorator( n ).decorateExternalMapping( n, ext )
+		assert_that( ext, has_entry( 'LikeCount', 1 ) )
+		# Because we are unauth, we get asked to like it.
+		assert_that( ext['Links'], has_item( has_property( 'rel', 'like' ) ) )
 
 	@WithMockDS
 	def test_external_reply_to(self):

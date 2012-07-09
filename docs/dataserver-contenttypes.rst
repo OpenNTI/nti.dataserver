@@ -209,6 +209,15 @@ These are definitions related to content that a user can generate.
        string[] tags;
    }
 
+   mixin Likeable {
+       // Defines things that can be "liked". You post
+       // to the links with rel=like or rel=unlike to like or unlike
+       // something. The presence of one of those (e.g., rel=unlike)
+       // means you have already taken the opposite action (e.g.,
+       // liked the item)
+	   unsigned int LikeCount = 0;
+   }
+
    //NOTE: Bookmarks do not currently exist
    struct Bookmark : PersistentObject<Anchored,Shareable,Taggable> { }
 
@@ -237,7 +246,7 @@ These are definitions related to content that a user can generate.
 	   oid_t references[];
    }
 
-   struct Note : Highlight <Threadable, Anchored, Shareable> {
+   struct Note : Highlight <Threadable, Anchored, Shareable, Likeable> {
 	   //An ordered list of objects (strings or objects) that make up the body.
 	   //In particular, Canvas objects can appear here as can HTML strings.
 	   Object[] body;
