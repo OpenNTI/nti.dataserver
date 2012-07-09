@@ -160,6 +160,7 @@ def handshake(request):
 								dataserver=request.registry.getUtility(nti_interfaces.IDataserver) )
 
 	if user is None:
+		# Use an IMissingUser so we find the right link providers
 		user = NoSuchUser(desired_username)
 
 	links = {}
@@ -171,15 +172,25 @@ def handshake(request):
 			links[link.rel] = link
 
 
+	# Only allow one of login_google and login_openid. Both are
+	# openid based, but login_openid is probably more specific than
+	# the generic google so take that one (e.g., aops.com has both a custom
+	# openid implementation and is also a google apps domain. Our discovery
+	# process finds both, but we really just want the openid value).
+	# This only happens in the case of a missing user (first login)
+	if REL_LOGIN_OPENID in links and REL_LOGIN_GOOGLE in links:
+		assert app_interfaces.IMissingUser.providedBy( user )
+		del links[REL_LOGIN_GOOGLE]
+
 	links = list( links.values() )
 
 	links.extend( _links_for_authenticated_users( request ) )
 
 	return _Handshake( links )
 
+@interface.implementer( app_interfaces.ILogonLinkProvider )
+@component.adapter( nti_interfaces.IUser, pyramid.interfaces.IRequest )
 class _SimpleExistingUserLinkProvider(object):
-	interface.implements( app_interfaces.ILogonLinkProvider )
-	component.adapts( nti_interfaces.IUser, pyramid.interfaces.IRequest )
 
 	rel = REL_LOGIN_NTI_PASSWORD
 
@@ -192,9 +203,9 @@ class _SimpleExistingUserLinkProvider(object):
 			return Link( self.request.route_path( REL_LOGIN_NTI_PASSWORD, _query={'username': self.user.username}),
 						 rel=REL_LOGIN_NTI_PASSWORD )
 
+@interface.implementer( app_interfaces.ILogonLinkProvider )
+@component.adapter( app_interfaces.IMissingUser, pyramid.interfaces.IRequest )
 class _SimpleMissingUserFacebookLinkProvider(object):
-	interface.implements( app_interfaces.ILogonLinkProvider )
-	component.adapts( app_interfaces.IMissingUser, pyramid.interfaces.IRequest )
 
 	rel = REL_LOGIN_FACEBOOK
 
@@ -206,9 +217,9 @@ class _SimpleMissingUserFacebookLinkProvider(object):
 		return Link( self.request.route_path( 'logon.facebook.oauth1', _query={'username': self.user.username} ),
 					 rel=self.rel )
 
+@component.adapter( nti_interfaces.IFacebookUser, pyramid.interfaces.IRequest )
 class _SimpleExistingUserFacebookLinkProvider(_SimpleMissingUserFacebookLinkProvider):
-	component.adapts( nti_interfaces.IFacebookUser, pyramid.interfaces.IRequest )
-
+	pass
 
 def _prepare_oid_link( request, username, rel, params=() ):
 	query = dict(params)
@@ -223,10 +234,12 @@ def _prepare_oid_link( request, username, rel, params=() ):
 		logger.exception( "Unable to direct to route %s", rel )
 		return
 
+@interface.implementer( app_interfaces.ILogonLinkProvider )
+@component.adapter( nti_interfaces.IUser, pyramid.interfaces.IRequest )
 class _WhitelistedDomainGoogleLoginLinkProvider(object):
-	interface.implements( app_interfaces.ILogonLinkProvider )
-	component.adapts( nti_interfaces.IUser, pyramid.interfaces.IRequest )
-
+	"""
+	Provides a Google login link for a predefined list of domains.
+	"""
 	rel = REL_LOGIN_GOOGLE
 
 	def __init__( self, user, req ):
@@ -248,27 +261,43 @@ class _WhitelistedDomainGoogleLoginLinkProvider(object):
 	def params_for( self, user ):
 		return ()
 
+@component.adapter( app_interfaces.IMissingUser, pyramid.interfaces.IRequest )
 class _MissingUserWhitelistedDomainGoogleLoginLinkProvider(_WhitelistedDomainGoogleLoginLinkProvider):
-	component.adapts( app_interfaces.IMissingUser, pyramid.interfaces.IRequest )
+	"""
+	Provides a Google login link for a predefined list of domains
+	when an account needs to be created.
+	"""
+
 
 class _MissingUserAopsLoginLinkProvider(_MissingUserWhitelistedDomainGoogleLoginLinkProvider):
+	"""
+	Offer OpenID for accounts coming from aops.com. Once they successfully
+	login they will just be normal OpenID users.
+	"""
+
+	# TODO: Should we use openid.aops.com? That way its consistent all the way
+	# around
 	domains = ['aops.com']
 	rel = REL_LOGIN_OPENID
-
 
 	def params_for( self, user ):
 		aops_username = self.user.username.split( '@' )[0]
 		oidcsum = str( hash( aops_username ) )
-		return {'openid': 'http://%s.openid.artofproblemsolving.com' % aops_username }
+		# Larry says:
+		# > http://<username>.openid.artofproblemsolving.com
+		# > http://openid.artofproblemsolving.com/<username>
+		# > http://<username>.openid.aops.com
+		# > http://openid.aops.com/<username>
+		# But 3 definitely doesn't work. 1 and 4 do. We use 4
+		return {'openid': 'http://openid.aops.com/%s' % aops_username }
 
+@interface.implementer( app_interfaces.ILogonLinkProvider )
+@component.adapter( app_interfaces.IMissingUser, pyramid.interfaces.IRequest )
 class _OnlineQueryGoogleLoginLinkProvider(object):
 	"""
 	Queries google to see if the domain is an Apps domain that
 	we can expect to use google auth on.
 	"""
-
-	interface.implements( app_interfaces.ILogonLinkProvider )
-	component.adapts( app_interfaces.IMissingUser, pyramid.interfaces.IRequest )
 
 	KNOWN_DOMAIN_CACHE = logilab.common.cache.Cache()
 
@@ -496,10 +525,12 @@ def _openidcallback( context, request, success_dict ):
 	### XXX: FIXME: HACK: Extracting a desired username back from the
 	# identity URL.
 	# This is hardcoded for AoPS
-	if not fname and not lname and not email and idurl and idurl.endswith( 'openid.artofproblemsolving.com/' ):
-		# Derive the username as the first part of the URL
-		# http://<username>.openid.artofproblemsolving.com
-		email = idurl.split( '.' )[0].split( '/' )[-1]
+	# TODO: In general, could we take the hostname from the idurl, assume the username
+	# is the last component, and create <username>@h<hostname>?
+	if not fname and not lname and not email and idurl and idurl.startswith( 'http://openid.aops.com/' ):
+		# Derive the username as the last part of the URL
+		# http://openid.aops.com/<username>
+		email = idurl.split( '/' )[-1]
 		email = email + '@' + _MissingUserAopsLoginLinkProvider.domains[0]
 
 	if str(hash(email)) != oidcsum:
@@ -507,6 +538,8 @@ def _openidcallback( context, request, success_dict ):
 		   return _create_failure_response(request, error='Email checksum mismatch')
 
 	try:
+		# TODO: Make this look the interface and factory to assign up by name (something in the idurl?)
+		# That way we can automatically assign an IAoPSUser and use a users.AoPSUser
 		_deal_with_external_account( request, fname, lname, email, idurl, nti_interfaces.IOpenIdUser, users.OpenIdUser )
 	except Exception as e:
 		return _create_failure_response( request, error=str(e) )
