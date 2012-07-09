@@ -1,26 +1,16 @@
 from __future__ import print_function, unicode_literals
 
 from zope import interface
-from zope.interface.common import sequence
 from zope.interface.common.mapping import IFullMapping
 
 from nti.externalization import interfaces as ext_interfaces
+from nti.contentfragments import interfaces as cfg_interfaces
 
 # -----------------------------
 
-class IContentFragment(interface.Interface):
-	"""
-	Base interface representing different formats that content can
-	be in.
-	"""
-
-class IUnicodeContentFragment(IContentFragment, sequence.IReadSequence):
+class IUnicodeContentFragment(cfg_interfaces.IUnicodeContentFragment):
 	"""
 	Content represented as a unicode string.
-
-	Although it is simplest to subclass :class:`unicode`, that is not required.
-	At a minimum, what is required are the `__getitem__` method (and others
-	declared by :class:`IReadSequence`), plus the `encode` method.
 	"""
 
 # -----------------------------
