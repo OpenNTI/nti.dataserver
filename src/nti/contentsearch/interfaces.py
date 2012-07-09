@@ -4,14 +4,6 @@ from zope import interface
 from zope.interface.common.mapping import IFullMapping
 
 from nti.externalization import interfaces as ext_interfaces
-from nti.contentfragments import interfaces as cfg_interfaces
-
-# -----------------------------
-
-class IUnicodeContentFragment(cfg_interfaces.IUnicodeContentFragment):
-	"""
-	Content represented as a unicode string.
-	"""
 
 # -----------------------------
 
