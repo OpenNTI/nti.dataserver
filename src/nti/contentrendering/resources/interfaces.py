@@ -10,13 +10,7 @@ from __future__ import print_function, unicode_literals
 from zope import interface
 from zope import schema
 
-
-class TypedIterable(schema.List):
-	"""
-	An arbitrary (indexable) iterable, not necessarily a list or tuple.
-	The values may be homogeneous by setting the value_type
-	"""
-	_type = None # Override from super to not force a list
+from nti.utils.schema import IndexedIterable as TypedIterable
 
 
 class IRepresentableContentUnit(interface.Interface):

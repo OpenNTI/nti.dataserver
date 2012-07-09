@@ -36,3 +36,13 @@ class PermissiveSchemaConfigured(SchemaConfigured):
 			super(PermissiveSchemaConfigured,self).__init__( **kwargs )
 
 Object.check_declaration = True
+
+from zope import schema
+
+class IndexedIterable(schema.List):
+	"""
+	An arbitrary (indexable) iterable, not necessarily a list or tuple;
+	either of those would be acceptable at any time.
+	The values may be homogeneous by setting the value_type
+	"""
+	_type = None # Override from super to not force a list
