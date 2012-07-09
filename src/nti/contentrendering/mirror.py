@@ -17,7 +17,7 @@ from pyquery import PyQuery as pq
 import logging
 logger = logging.getLogger( __name__ )
 
-WGET_CMD = '/opt/local/bin/wget -q'
+WGET_CMD = subprocess.check_output(['which','wget']).rstrip() + ' -q'
 
 def get_open_port():
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
