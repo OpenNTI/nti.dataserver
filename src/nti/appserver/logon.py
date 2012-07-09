@@ -210,10 +210,9 @@ class _SimpleExistingUserFacebookLinkProvider(_SimpleMissingUserFacebookLinkProv
 	component.adapts( nti_interfaces.IFacebookUser, pyramid.interfaces.IRequest )
 
 
-def _prepare_oid_link( request, username, rel, params=None ):
-	query = {} if params is None else dict(params)
-	oidcsum = str(hash(username))
-	query['oidcsum'] = oidcsum
+def _prepare_oid_link( request, username, rel, params=() ):
+	query = dict(params)
+	query['oidcsum'] = str(hash(username)) if 'oidcsum' not in query else query['oidcsum']
 	query['username'] = username
 	try:
 		return Link( request.route_path( rel, _query=query ),
@@ -244,10 +243,23 @@ class _WhitelistedDomainGoogleLoginLinkProvider(object):
 
 		domain = self.user.username.split( '@' )[-1]
 		if domain in self.domains:
-			return _prepare_oid_link( self.request, self.user.username, self.rel )
+			return _prepare_oid_link( self.request, self.user.username, self.rel, params=self.params_for(self.user) )
+
+	def params_for( self, user ):
+		return ()
 
 class _MissingUserWhitelistedDomainGoogleLoginLinkProvider(_WhitelistedDomainGoogleLoginLinkProvider):
 	component.adapts( app_interfaces.IMissingUser, pyramid.interfaces.IRequest )
+
+class _MissingUserAopsLoginLinkProvider(_MissingUserWhitelistedDomainGoogleLoginLinkProvider):
+	domains = ['aops.com']
+	rel = REL_LOGIN_OPENID
+
+
+	def params_for( self, user ):
+		aops_username = self.user.username.split( '@' )[0]
+		oidcsum = str( hash( aops_username ) )
+		return {'openid': 'http://%s.openid.artofproblemsolving.com' % aops_username }
 
 class _OnlineQueryGoogleLoginLinkProvider(object):
 	"""
@@ -470,17 +482,28 @@ def _openidcallback( context, request, success_dict ):
 	# indicated you wanted to be signed in as): It's not a security problems because
 	# we use the credentials you actually authenticated with, its just confusing.
 	# To try to prevent this, we are using a basic checksum approach to see if things
-	# match: oidcsum.
+	# match: oidcsum. In some cases we can't do that, though
 
-	# Google only supports AX, sreg is ignored.
+	# Google only supports AX, sreg is ignored. AoPS gives us back nothing
+	# except identity_url
 	# Each of these comes back as a list, for some reason
 	fname = success_dict.get( 'ax', {} ).get('firstname', [''])[0]
 	lname = success_dict.get( 'ax', {} ).get('lastname', [''])[0]
 	email = success_dict.get( 'ax', {} ).get('email', [''])[0]
 	idurl = success_dict.get( 'identity_url' )
 	oidcsum = request.params.get( 'oidcsum' )
+
+	### XXX: FIXME: HACK: Extracting a desired username back from the
+	# identity URL.
+	# This is hardcoded for AoPS
+	if not fname and not lname and not email and idurl and idurl.endswith( 'openid.artofproblemsolving.com/' ):
+		# Derive the username as the first part of the URL
+		# http://<username>.openid.artofproblemsolving.com
+		email = idurl.split( '.' )[0].split( '/' )[-1]
+		email = email + '@' + _MissingUserAopsLoginLinkProvider.domains[0]
+
 	if str(hash(email)) != oidcsum:
-		   logger.warn( "Checksum mismatch. Logged in multiple times?")
+		   logger.warn( "Checksum mismatch. Logged in multiple times? %s %s", oidcsum, success_dict)
 		   return _create_failure_response(request, error='Email checksum mismatch')
 
 	try:
