@@ -8,7 +8,7 @@ import itertools
 from zope import interface, schema
 from zope.deprecation import deprecated
 from zope.mimetype.interfaces import IContentTypeAware, IContentType
-
+from zope.annotation.interfaces import IAnnotatable
 
 from zope.container.interfaces import IContainer as IZContainer
 from zope.container.interfaces import IContainerNamesContainer as IZContainerNamesContainer
@@ -534,6 +534,11 @@ class IRedaction(ISelectedRange):
 		default="",
 		required=False)
 
+class ILikeable(IAnnotatable):
+    """
+	Marker interface that promises that an implementing object may be
+    liked by users using the IUserRating interface.
+    """
 
 
 class INote(IShareableModeledContent,IThreadable,IAnchoredRepresentation):

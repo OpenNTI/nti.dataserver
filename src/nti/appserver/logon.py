@@ -124,8 +124,8 @@ def ping( request ):
 
 	return _Pong( links )
 
+@interface.implementer( ext_interfaces.IExternalObject )
 class _Pong(dict):
-	interface.implements( ext_interfaces.IExternalObject )
 
 	__external_class_name__ = 'Pong'
 	mime_type = mimetype.nti_mimetype_with_class( 'pong' )
@@ -134,8 +134,8 @@ class _Pong(dict):
 		dict.__init__( self )
 		self.links = lnks
 
+@interface.implementer( app_interfaces.IMissingUser )
 class NoSuchUser(object):
-	interface.implements( app_interfaces.IMissingUser )
 
 	def __init__( self, username ):
 		self.username = username
@@ -150,9 +150,6 @@ def handshake(request):
 	desired_username = request.params.get( 'username' )
 	if not desired_username:
 		return hexc.HTTPBadRequest(detail="Must provide username")
-
-	links = []
-
 
 	# TODO: Check for existence in the database before generating these.
 	# We also need to be validating whether we can do a openid login, etc.
@@ -329,8 +326,8 @@ class _OnlineQueryGoogleLoginLinkProvider(object):
 		if allow:
 			return _prepare_oid_link( self.request, self.user.username, self.rel )
 
+@component.adapter( nti_interfaces.IOpenIdUser, pyramid.interfaces.IRequest )
 class _ExistingOpenIdUserLoginLinkProvider(object):
-	component.adapts( nti_interfaces.IOpenIdUser, pyramid.interfaces.IRequest )
 
 	rel = REL_LOGIN_OPENID
 
@@ -339,11 +336,12 @@ class _ExistingOpenIdUserLoginLinkProvider(object):
 		self.user = user
 
 	def __call__( self ):
-		return _prepare_oid_link( self.request, self.user.username, self.rel, params={'openid': self.user.identity_url} )
+		return _prepare_oid_link( self.request, self.user.username, self.rel,
+								  params={'openid': self.user.identity_url} )
 
 
+@interface.implementer( ext_interfaces.IExternalObject )
 class _Handshake(dict):
-	interface.implements( ext_interfaces.IExternalObject )
 
 	__external_class_name__ = 'Handshake'
 	mime_type = mimetype.nti_mimetype_with_class( 'handshake' )

@@ -32,6 +32,7 @@ from nti.contentfragments import interfaces as frg_interfaces
 from zope import interface
 from zope.deprecation import deprecate
 from zope import component
+from zope.annotation import interfaces as an_interfaces
 
 def _get_entity( username, dataserver=None ):
 	return users.Entity.get_entity( username, dataserver=dataserver )
@@ -275,8 +276,13 @@ class Redaction(SelectedRange):
 	_schema_fields_to_validate_ = SelectedRange._schema_fields_to_validate_ + ('replacementContent','redactionExplanation')
 	_schema_to_validate_ = nti_interfaces.IRedaction
 
+@interface.implementer(nti_interfaces.INote,
+					    # requires annotations
+					   nti_interfaces.ILikeable,
+					   # provides annotations
+					   an_interfaces.IAttributeAnnotatable )
 class Note(ThreadableExternalizableMixin, Highlight):
-	interface.implements(nti_interfaces.INote)
+
 
 	# A sequence of properties we would like to copy from the parent
 	# when a child reply is created. If the child already has them, they
