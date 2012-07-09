@@ -405,6 +405,12 @@ def word_content_highlight(query, text, analyzer=None, maxchars=300, surround=50
 
 # -----------------------------------
 
+def _sanitize_user_html_to_text( user_input ):
+	"""
+	Registered as an adapter with the name 'text' for convenience.
+	"""
+	return clean_html( user_input )
+
 def get_content(text, tokenizer=default_tokenizer):
 	"""
 	return the text (words) to be indexed from the specified text
@@ -418,7 +424,7 @@ def get_content(text, tokenizer=default_tokenizer):
 	if not text or not isinstance(text, six.string_types):
 		return u''
 
-	text = clean_html(text)
+	text = _sanitize_user_html_to_text(text)
 	words = tokenizer.tokenize(text)
 	text = ' '.join(words)
 	return unicode(text)
