@@ -4,6 +4,8 @@ import unittest
 import collections
 from datetime import datetime
 
+from nti.contentsearch.tests import ConfiguringTestBase
+
 from nti.contentsearch.common import echo
 from nti.contentsearch.common import epoch_time
 from nti.contentsearch.common import get_content
@@ -20,7 +22,7 @@ from nti.contentsearch.common import empty_suggest_and_search_result
 
 from hamcrest import (assert_that, has_length, is_, less_than_or_equal_to, has_entry)
 
-class TestCommon(unittest.TestCase):
+class TestCommon(ConfiguringTestBase):
 
 	@classmethod
 	def setUpClass(cls):	
