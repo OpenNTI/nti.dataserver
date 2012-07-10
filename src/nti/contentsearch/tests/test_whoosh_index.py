@@ -5,6 +5,7 @@ from datetime import datetime
 
 from whoosh.filedb.filestore import RamStorage
 
+from nti.contentsearch.tests import ConfiguringTestBase
 from nti.contentsearch._whoosh_index import Note
 from nti.contentsearch._whoosh_index import Highlight
 from nti.contentsearch._whoosh_index import MessageInfo
@@ -14,7 +15,7 @@ from nti.contentsearch._whoosh_index import get_text_from_mutil_part_body
 
 from hamcrest import (assert_that, is_, has_entry, has_key, has_length)
 
-class TestWhooshIndex(unittest.TestCase):
+class TestWhooshIndex(ConfiguringTestBase):
 
 	@classmethod
 	def setUpClass(cls):	
