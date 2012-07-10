@@ -331,14 +331,15 @@ class _ObjectsContainerResource(_ContainerResource):
 		# are still using it.
 		return self.__getitem__( name, remaining_path )
 
-#	@unquoting
 	def __getitem__( self, key, remaining_path=() ):
 
 		request = _find_request( self )
 		ds = request.registry.getUtility(IDataserver)
 		result = self._getitem_with_ds( ds, key )
 		if result is None:
-			raise KeyError( key )
+			raise loc_interfaces.LocationError( key )
+			# LocationError is a subclass of KeyError, and compatible
+			# with the traverse() interface
 		if not remaining_path \
 			or len( remaining_path ) != 1 \
 			or not remaining_path[0].startswith( '@' ):
