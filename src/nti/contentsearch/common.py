@@ -418,7 +418,8 @@ def get_content(text, tokenizer=default_tokenizer):
 	if not text or not isinstance(text, six.string_types):
 		return u''
 	else:
-		text = component.getAdapter( text, frg_interfaces.IUnicodeContentFragment, name='text' )
+		text = frg_interfaces.IUnicodeContentFragment(text)
+		text = frg_interfaces.IPlainTextContentFragment(text)
 		words = tokenizer.tokenize(text)
 		text = ' '.join(words)
 		return unicode(text)

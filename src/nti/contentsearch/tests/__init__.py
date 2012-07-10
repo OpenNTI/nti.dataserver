@@ -1,8 +1,9 @@
 from zope import component
 from zope.configuration import xmlconfig
 
-import nti.contentfragments as contentfragments
+import nti.dataserver as dataserver
 import nti.contentsearch as contentsearch
+import nti.contentfragments as contentfragments
 from nti.dataserver.tests.mock_dataserver import ConfiguringTestBase as DSConfiguringTestBase
 
 phrases = (	"Yellow brown", "Blue red green render purple?",
@@ -32,8 +33,4 @@ zanpakuto_commands =  (	"Shoot To Kill",
 
 
 class ConfiguringTestBase(DSConfiguringTestBase):
-
-	def setUp(self):
-		super(ConfiguringTestBase, self).setUp()
-		xmlconfig.file('configure.zcml', package=contentsearch )
-		xmlconfig.file('configure.zcml', package=contentfragments)
+	set_up_packages = (dataserver, contentsearch, contentfragments)
