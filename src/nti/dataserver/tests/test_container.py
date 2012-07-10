@@ -8,6 +8,11 @@ from __future__ import print_function, unicode_literals
 
 from hamcrest import assert_that, is_, greater_than
 from hamcrest import has_property
+from hamcrest import has_length
+from hamcrest import same_instance
+from hamcrest import none
+
+from nose.tools import assert_raises
 
 import nti.tests
 from nti.tests import verifiably_provides, is_true, is_false
@@ -94,3 +99,42 @@ def test_case_insensitive_container():
 	assert_that( list( c.itervalues() ), is_( [child] ) )
 
 	del c['upper']
+
+from zope.component.eventtesting import getEvents, clearEvents
+def test_eventless_container():
+
+	# The container doesn't proxy, fire events, or examine __parent__ or __name__
+	c = container.EventlessLastModifiedBTreeContainer()
+
+	clearEvents()
+
+	value = object()
+	value2 = object()
+	c['key'] = value
+	assert_that( c['key'], is_( same_instance( value ) ) )
+	assert_that( getEvents(), has_length( 0 ) )
+	assert_that( c, has_length( 1 ) )
+
+	# We cannot add duplicates
+	with assert_raises( KeyError ):
+		c['key'] = value2
+
+	# We cannot add None values or non-unicode keys
+	with assert_raises( TypeError ):
+		c['key2'] = None
+
+	with assert_raises( TypeError ):
+		c[None] = value
+
+	with assert_raises( TypeError ):
+		c[b'\xf0\x00\x00\x00'] = value
+
+	# After all that, nothing has changed
+	assert_that( c['key'], is_( same_instance( value ) ) )
+	assert_that( getEvents(), has_length( 0 ) )
+	assert_that( c, has_length( 1 ) )
+
+	del c['key']
+	assert_that( c.get('key'), is_( none() ) )
+	assert_that( getEvents(), has_length( 0 ) )
+	assert_that( c, has_length( 0 ) )

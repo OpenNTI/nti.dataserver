@@ -114,6 +114,48 @@ def update_object_modified_time( modified_object, event ):
 		# this is optional API
 		pass
 
+class EventlessLastModifiedBTreeContainer(LastModifiedBTreeContainer):
+	"""
+	A BTreeContainer that doesn't actually broadcast any events, because
+	it doesn't actually take ownership of the objects. The objects must
+	have their ``__name__`` and ``__parent__`` set by a real container.
+	"""
+
+	def __setitem__( self, key, value ):
+		__traceback_info__ = key, value
+		# Containers don't allow None; keys must be unicode
+		if isinstance(key, str):
+			try:
+				key = unicode(key)
+			except UnicodeError:
+				raise TypeError( 'Key could not be converted to unicode' )
+		elif not isinstance( key, unicode ):
+			raise TypeError( "Key must be unicode" )
+		if value is None:
+			raise TypeError( 'Value must not be None' )
+
+		# Super's _setitemf changes the length, so only do this if
+		# it's not here already. To comply with the containers interface,
+		# we cannot add duplicates
+		old = self.get( key )
+		if old is not None:
+			if old is value:
+				# no op
+				return
+			raise KeyError( key )
+		self._setitemf( key, value )
+		# TODO: Should I enforce anything with the __parent__ and __name__ of
+		# the value? For example, parent is not None and __name__ == key?
+		# We're probably more generally useful without those constraints,
+		# but more specifically useful in certain scenarios with those constraints.
+
+	def __delitem__( self, key ):
+		# Just like the super implementation, but without
+		# firing the 'uncontained' event
+		l = self._BTreeContainer__len
+		del self._SampleContainer__data[key]
+		l.change(-1)
+
 
 import functools
 @functools.total_ordering

@@ -1009,6 +1009,7 @@ class User(Principal):
 		"""
 		Returns an iterable across the NTIIDs that are relevant to this user.
 		"""
+		# TODO: This could be much more efficient: iter( {k for k in itertools.chain( owned, shared )} )?
 		owned = [k for k in self.containers if self._is_container_ntiid( k )]
 		shared = [k for k in self.containersOfShared if self._is_container_ntiid( k )]
 		return iter( set( owned ) | set( shared ) )
