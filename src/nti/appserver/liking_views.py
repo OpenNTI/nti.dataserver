@@ -45,6 +45,13 @@ class _AbstractLikeLinkDecorator(object):
 		if not current_user:
 			return
 
+		# We only do this for parented objects. Otherwise, we won't
+		# be able to render the links. A non-parented object is usually
+		# a weakref to an object that has been left around
+		# in somebody's stream
+		if not context.__parent__:
+			return
+
 		i_like = self.likes_predicate( context, current_user )
 		_links = mapping.setdefault( StandardExternalFields.LINKS, [] )
 		# We're assuming that because you can see it, you can (un)like it.
