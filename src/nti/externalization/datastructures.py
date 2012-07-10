@@ -215,8 +215,8 @@ class ExternalizableInstanceDict(AbstractDynamicObjectIO):
 	def __repr__( self ):
 		try:
 			return "%s().__dict__.update( %s )" % (self.__class__.__name__, self.toExternalDictionary() )
-		except ZODB.POSException.ConnectionStateError:
-			return '%s(Ghost)' % self.__class__.__name__
+		except ZODB.POSException.ConnectionStateError as cse:
+			return '%s(Ghost, %s)' % (self.__class__.__name__, cse)
 		except (ValueError,LookupError) as e: # Things like invalid NTIID, missing registrations
 			return '%s(%s)' % (self.__class__.__name__, e)
 
