@@ -29,6 +29,7 @@ import transaction
 
 from zope.location import interfaces as loc_interfaces
 from zope.location.location import LocationProxy
+from zope.traversing import interfaces as trv_interfaces
 
 from nti.dataserver.interfaces import (IDataserver, ISimpleEnclosureContainer, IEnclosedContent)
 from nti.dataserver import interfaces as nti_interfaces
@@ -83,7 +84,7 @@ class HTTPUnprocessableEntity(hexc.HTTPForbidden):
 		return str(super(HTTPUnprocessableEntity,self).__str__())
 
 
-from nti.dataserver.interfaces import ACLLocationProxy
+from nti.dataserver.interfaces import ACLLocationProxy, ACLProxy
 
 
 class EnclosureGetItemACLLocationProxy(ACLLocationProxy):
@@ -314,19 +315,39 @@ class _ContainerResource(object):
 
 class _NewContainerResource(_ContainerResource): pass
 
+@interface.implementer(trv_interfaces.ITraversable)
 class _ObjectsContainerResource(_ContainerResource):
 
 	def __init__( self, parent, user, name='Objects' ):
 		super(_ObjectsContainerResource,self).__init__( parent, None, name, user )
 
-	@unquoting
-	def __getitem__( self, key ):
+	def traverse( self, name, remaining_path ):
+		# See _wrap_as_resource. This is getting hella complicated.
+		# In the usual case, if we're not going directly to a view,
+		# we want to wrap a resource so that we get our external field
+		# traversal behaviour. In the other case, though,
+		# we don't want to wrap.
+		# This calls through to __getitem__ in case any subclasses
+		# are still using it.
+		return self.__getitem__( name, remaining_path )
+
+#	@unquoting
+	def __getitem__( self, key, remaining_path=() ):
+
 		request = _find_request( self )
 		ds = request.registry.getUtility(IDataserver)
 		result = self._getitem_with_ds( ds, key )
 		if result is None:
 			raise KeyError( key )
-		return self._wrap_as_resource( key, result )
+		if not remaining_path \
+			or len( remaining_path ) != 1 \
+			or not remaining_path[0].startswith( '@' ):
+			result = self._wrap_as_resource( key, result )
+		else:
+			# not wrapped as resource, but does it need ACL?
+			if not hasattr( result, '__acl__' ):
+				result = ACLProxy( result, nacl.ACL( result ) )
+		return result
 
 	_no_wrap_ifaces = {lib_interfaces.IContentPackageLibrary, lib_interfaces.IContentUnit, lib_interfaces.IContentPackage}
 
@@ -340,6 +361,11 @@ class _ObjectsContainerResource(_ContainerResource):
 		provided = interface.providedBy( result )
 		for iface in self._no_wrap_ifaces:
 			if iface in provided:
+				# But it may need an ACL?
+				# TODO: I gotta write a security policy that handles adapting
+				# to find the ACL
+				if not hasattr( result, '__acl__' ):
+					result = ACLProxy( result, nacl.ACL( result ) )
 				return result
 		result = _DirectlyProvidedObjectResource( self, objectid=key, user=self.user, resource=result, containerid=self.__name__ )
 		return result

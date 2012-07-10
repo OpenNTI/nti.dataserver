@@ -162,12 +162,26 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 	def test_liking_makes_it_to_ext(self):
 		"Externalizing a note produces LikeCount attribute"
 		n = Note()
-		ratings = liking._lookup_like_rating_for_write( n ).rate( 1, 'foo@bar' )
+		# first time does something
+		assert_that( liking.like_object( n, 'foo@bar' ), verifiably_provides( contentratings.interfaces.IUserRating ) )
+		# second time no-op
+		assert_that( liking.like_object( n, 'foo@bar' ), is_( none() ) )
+
 		ext = {}
 		liking.LikeDecorator( n ).decorateExternalMapping( n, ext )
 		assert_that( ext, has_entry( 'LikeCount', 1 ) )
-		# Because we are unauth, we get asked to like it.
-		assert_that( ext['Links'], has_item( has_property( 'rel', 'like' ) ) )
+
+
+		# first time does something
+		assert_that( liking.unlike_object( n, 'foo@bar' ), verifiably_provides( contentratings.interfaces.IUserRating ) )
+		# second time no-op
+		assert_that( liking.unlike_object( n, 'foo@bar' ), is_( none() ) )
+
+		ext = {}
+		liking.LikeDecorator( n ).decorateExternalMapping( n, ext )
+		assert_that( ext, has_entry( 'LikeCount', 0 ) )
+
+
 
 	@WithMockDS
 	def test_external_reply_to(self):

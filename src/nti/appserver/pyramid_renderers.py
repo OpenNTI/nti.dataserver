@@ -145,6 +145,10 @@ def render_link( parent_resource, link, nearest_site=None ):
 
 	result = None
 	if href: # TODO: This should be true all the time now, right?
+		# Join any additional path segments that were requested
+		if link.elements:
+			href = href + '/' + '/'.join( link.elements )
+			# TODO: quoting
 		result = { StandardExternalFields.CLASS: 'Link',
 				   StandardExternalFields.HREF: href,
 				   'rel': rel }

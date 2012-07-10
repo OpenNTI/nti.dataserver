@@ -253,7 +253,11 @@ def createApplication( http_port,
 	"""
 	server = None
 	# Configure subscribers, etc.
-	xmlconfig.file( 'configure.zcml', package=nti.appserver )
+	xml_conf_machine = xmlconfig.ConfigurationMachine()
+	xmlconfig.registerCommonDirectives( xml_conf_machine )
+	if 'devmode' in settings and settings['devmode']:
+		xml_conf_machine.provideFeature( 'devmode' )
+	xmlconfig.file( 'configure.zcml', package=nti.appserver, context=xml_conf_machine )
 
 	# Notify of startup. (Note that configuring the packages loads zope.component:configure.zcml
 	# which in turn hooks up zope.component.event to zope.event for event dispatching)
@@ -617,6 +621,7 @@ def createApplication( http_port,
 							 renderer='rest',
 							 permission=nauth.ACT_READ, request_method='GET' )
 	pyramid_config.scan( 'nti.appserver.contentlibrary_views' )
+	pyramid_config.scan( 'nti.appserver.liking_views' )
 
 	# Generic user object tree traversal
 	# For the Library/Main URL.
