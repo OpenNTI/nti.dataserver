@@ -9,7 +9,8 @@ $Id$
 """
 from __future__ import print_function, unicode_literals
 
-from . import interfaces as frg_interfaces
+from zope import interface
+from zope import component
 
 import html5lib
 from html5lib import treewalkers, serializer, treebuilders
@@ -17,6 +18,7 @@ from html5lib import treewalkers, serializer, treebuilders
 #from html5lib.filters import sanitizer
 import lxml.etree
 
+from nti.contentfragments import interfaces as frg_interfaces
 
 class _SliceDict(dict):
 	"""
@@ -30,7 +32,7 @@ class _SliceDict(dict):
 		# recognize the reversing slice, [::-1]
 		if isinstance(key,slice) and key.start is None and key.stop is None and key.step == -1:
 			return self.items()[::-1]
-		return super(_SliceDict,self).__getitem__( key )
+		return dict.__getitem__( self, key )
 
 from html5lib.sanitizer import HTMLSanitizerMixin
 # There is a bug in 0.95: the sanitizer converts attribute dicts
@@ -73,6 +75,24 @@ def _html5lib_tostring(doc,sanitize=True):
 	string = ''.join(list(output_generator))
 	return string
 
+def _to_sanitized_doc( user_input ):
+	# We cannot sanitize and parse in one step; if there is already
+	# HTML around it, then we wind up with escaped HTML as text:
+	# <html>...</html> => <html><body>&lthtml&gt...&lt/html&gt</html>
+	p = html5lib.HTMLParser( tree=treebuilders.getTreeBuilder("lxml"), namespaceHTMLElements=False )
+	doc = p.parse( user_input )
+	string = _html5lib_tostring( doc, sanitize=True )
+
+	# Our normalization is pathetic.
+	# replace unicode nbsps
+	string = string.replace(u'\u00A0', ' ' )
+
+	# Back to lxml to do some dom manipulation
+	p = html5lib.HTMLParser( tree=treebuilders.getTreeBuilder("lxml"), namespaceHTMLElements=False )
+	doc = p.parse( string )
+
+	return doc
+
 def sanitize_user_html( user_input, method='html' ):
 	"""
 	Given a user input string of plain text, HTML or HTML fragment, sanitize
@@ -89,20 +109,8 @@ def sanitize_user_html( user_input, method='html' ):
 		typically either :class:`frg_interfaces.IPlainTextContentFragment` or
 		:class:`frg_interfaces.ISanitizedHTMLContentFragment`.
 	"""
-	# We cannot sanitize and parse in one step; if there is already
-	# HTML around it, then we wind up with escaped HTML as text:
-	# <html>...</html> => <html><body>&lthtml&gt...&lt/html&gt</html>
-	p = html5lib.HTMLParser( tree=treebuilders.getTreeBuilder("lxml"), namespaceHTMLElements=False )
-	doc = p.parse( user_input )
-	string = _html5lib_tostring( doc, sanitize=True )
 
-	# Our normalization is pathetic.
-	# replace unicode nbsps
-	string = string.replace(u'\u00A0', ' ' )
-
-	# Back to lxml to do some dom manipulation
-	p = html5lib.HTMLParser( tree=treebuilders.getTreeBuilder("lxml"), namespaceHTMLElements=False )
-	doc = p.parse( string )
+	doc = _to_sanitized_doc( user_input )
 
 	for node in doc.iter():
 		# Turn top-level text nodes into paragraphs.
@@ -140,8 +148,29 @@ def sanitize_user_html( user_input, method='html' ):
 		string = frg_interfaces.SanitizedHTMLContentFragment( "<html><body>" + normalized + "</body></html>" )
 	return string
 
+@interface.implementer(frg_interfaces.IUnicodeContentFragment)
+@component.adapter(unicode)
 def _sanitize_user_html_to_text( user_input ):
 	"""
 	Registered as an adapter with the name 'text' for convenience.
+
+	Produces either an :class:`frg_interfaces.ISanitizedHTMLContentFragment`
+	or (if representable without information loss) an :class:`frg_interfaces.IPlainTextContentFragment`.
+
+	See :func:`sanitize_user_html`.
 	"""
 	return sanitize_user_html( user_input, method='text' )
+
+@interface.implementer(frg_interfaces.IPlainTextContentFragment)
+@component.adapter(frg_interfaces.IHTMLContentFragment)
+def _html_to_sanitized_text( html ):
+	return frg_interfaces.PlainTextContentFragment(
+					lxml.etree.tostring( _to_sanitized_doc( html ), method='text' ) )
+
+@interface.implementer(frg_interfaces.IPlainTextContentFragment)
+@component.adapter(frg_interfaces.ISanitizedHTMLContentFragment)
+def _sanitized_html_to_text( sanitized_html ):
+	p = html5lib.HTMLParser( tree=treebuilders.getTreeBuilder("lxml"), namespaceHTMLElements=False )
+	doc = p.parse( sanitized_html )
+
+	return frg_interfaces.PlainTextContentFragment( lxml.etree.tostring( doc, method='text' ) )

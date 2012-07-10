@@ -8,8 +8,6 @@ $Id$
 """
 from __future__ import print_function, unicode_literals
 
-
-
 from pyramid.security import authenticated_userid
 from pyramid.threadlocal import get_current_request
 
