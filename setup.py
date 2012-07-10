@@ -157,6 +157,7 @@ setup(
 		'zc.zlibstorage >= 0.1.1', # compressed records. Will be built-in to newer ZODB
 		'zc.zodbdgc >= 0.6.0',
 		'zetalibrary',
+		'zope.app.component >= 3.9.3', # bwc only, DO NOT IMPORT. pulled in by contentratings
 		'zope.annotation >= 3.5.0',
 		'zope.broken >= 3.6.0', # This is actually deprecated, use the ZODB import
 		'zope.browser',
@@ -219,6 +220,7 @@ setup(
 			'httpie',
 			'pylint >= 0.25.1',
 			'zodbupdate >= 0.5',
+			'zodbbrowser >= 0.10.0',
 			'sphinx >= 1.1.3',
 			'sphinxtheme.readability >= 0.0.5',
 			'repoze.sphinx.autointerface >= 0.7.0'
