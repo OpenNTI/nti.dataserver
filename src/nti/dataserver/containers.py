@@ -219,8 +219,11 @@ class CaseInsensitiveLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 			key = _tx_key_insen( key )
 
 		for k, v in self._SampleContainer__data.items(key):
-			yield k.key, v
-
+			try:
+				yield k.key, v
+			except AttributeError: # pragma: no cover
+				if k == 'Last Modified': continue
+				yield k, v
 
 	def keys(self, key=None ):
 		if key is not None:
