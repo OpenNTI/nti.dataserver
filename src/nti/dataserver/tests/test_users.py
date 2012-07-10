@@ -42,6 +42,9 @@ class PersistentContainedThreadable(ContainedMixin,persistent.Persistent):
 	def isSharedWith( self, other ):
 		return self.shared_with
 
+	def __repr__(self):
+		return repr( (self.__class__.__name__, self.containerId, self.id) )
+
 def test_create_friends_list_through_registry():
 	def _test( name ):
 		user = User( 'foo@bar', 'temp' )
@@ -223,7 +226,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		# Deleting it, we get back the now-empty container, not the default
 		# value
 		user._removeSharedObject( c )
-		assert_that( user.getSharedContainer( 'foo', 42 ), has_length( 0 ) )
+		assert_that( list(user.getSharedContainer( 'foo', 42 )), has_length( 0 ) )
 
 	@WithMockDSTrans
 	def test_mute_conversation( self ):
@@ -233,7 +236,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		c.containerId = 'foo'
 		c.id = 'a'
 
-		change = Change( Change.SHARED, c )
+		change = Change( Change.CREATED, c )
 		user._acceptIncomingChange( change )
 		assert_that( user.getSharedContainer( 'foo' ), has_length( 1 ) )
 		assert_that( user.getContainedStream( 'foo' ), has_length( 1 ) )
@@ -241,7 +244,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		user.mute_conversation( to_external_ntiid_oid( c ) )
 
 		# Now, the shared container is empty
-		assert_that( user.getSharedContainer( 'foo', 42 ), has_length( 0 ) )
+		assert_that( list(user.getSharedContainer( 'foo', 42 )), has_length( 0 ) )
 		assert_that( user.getContainedStream( 'foo' ), has_length( 0 ) )
 
 		# Stays empty as we reply
@@ -254,7 +257,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 
 
 
-		assert_that( user.getSharedContainer( 'foo', 42 ), has_length( 0 ) )
+		assert_that( list(user.getSharedContainer( 'foo', 42 )), has_length( 0 ) )
 		assert_that( user.getContainedStream( 'foo' ), has_length( 0 ) )
 
 		# Stays empty as we reference
@@ -266,17 +269,17 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		user._noticeChange( change )
 
 
-		assert_that( user.getSharedContainer( 'foo', 42 ), has_length( 0 ) )
+		assert_that( list(user.getSharedContainer( 'foo', 42 )), has_length( 0 ) )
 		assert_that( user.getContainedStream( 'foo' ), has_length( 0 ) )
 
 		# But unmuting it brings all the objects back
 		user.unmute_conversation( to_external_ntiid_oid( c ) )
-		assert_that( user.getSharedContainer( 'foo' ), has_length( 3 ) )
+		assert_that( list(user.getSharedContainer( 'foo' )), has_length( 3 ) )
 		assert_that( user.getContainedStream( 'foo' ), has_length( 3 ) )
 
 		user.mute_conversation( to_external_ntiid_oid( c ) )
 		# and they can all go away
-		assert_that( user.getSharedContainer( 'foo', 42 ), has_length( 0 ) )
+		assert_that( list(user.getSharedContainer( 'foo', 42 )), has_length( 0 ) )
 		assert_that( user.getContainedStream( 'foo' ), has_length( 0 ) )
 		# If a DELETE arrives while muted, then it is still missing when unmuted
 		change = Change( Change.DELETED, reference )
