@@ -151,7 +151,7 @@ def _catching(f, computing='NTIID'):
 		try:
 			return f(*args)
 		except Exception:
-			logger.exception("Failed to compute %s for %s (%s)", computing, type(self), repr(self)[:50] )
+			logger.exception("Failed to compute %s for %s (%s)", computing, type(args[0]), repr(args[0])[:50] )
 			raise
 	return y
 
