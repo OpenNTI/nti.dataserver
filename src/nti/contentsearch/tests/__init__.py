@@ -1,6 +1,7 @@
 from zope import component
 from zope.configuration import xmlconfig
 
+import nti.contentfragments as contentfragments
 import nti.contentsearch as contentsearch
 from nti.dataserver.tests.mock_dataserver import ConfiguringTestBase as DSConfiguringTestBase
 
@@ -35,3 +36,4 @@ class ConfiguringTestBase(DSConfiguringTestBase):
 	def setUp(self):
 		super(ConfiguringTestBase, self).setUp()
 		xmlconfig.file('configure.zcml', package=contentsearch )
+		xmlconfig.file('configure.zcml', package=contentfragments)
