@@ -14,11 +14,11 @@ import collections
 import pyramid.httpexceptions
 from . import traversal
 from pyramid import security as psec
+import pyramid.traversal
 
 from zope import interface
 from zope import component
 from zope.location import location
-from zope.location.location import LocationProxy
 from zope.location import interfaces as loc_interfaces
 import zope.traversing.interfaces
 
@@ -141,8 +141,9 @@ def render_link( parent_resource, link, nearest_site=None ):
 		# This will raise a LocationError if something is broken
 		# in the chain. That shouldn't happen and needs to be dealt with
 		# at dev time.
-		__traceback_info__ = rel # next fun puts target in __traceback_info__
+		__traceback_info__ = rel, link.elements # next fun puts target in __traceback_info__
 		href = traversal.normal_resource_path( target )
+
 
 	result = None
 	if href: # TODO: This should be true all the time now, right?
