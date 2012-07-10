@@ -4,8 +4,8 @@
 """
 Contains renderers for the REST api.
 """
-import logging
-logger = logging.getLogger(__name__)
+
+logger = __import__('logging').getLogger(__name__)
 
 import six
 import collections
@@ -141,6 +141,7 @@ def render_link( parent_resource, link, nearest_site=None ):
 		# This will raise a LocationError if something is broken
 		# in the chain. That shouldn't happen and needs to be dealt with
 		# at dev time.
+		__traceback_info__ = rel # next fun puts target in __traceback_info__
 		href = traversal.normal_resource_path( target )
 
 	result = None
