@@ -14,11 +14,11 @@ from persistent.interfaces import IPersistent
 from whoosh import analysis
 from whoosh import highlight
 
-from nltk import clean_html
 from nltk.tokenize import RegexpTokenizer
 
 from nti.ntiids.ntiids import is_valid_ntiid_string
 from nti.externalization import interfaces as ext_interfaces
+from nti.contentfragments import interfaces as frg_interfaces
 
 from nti.chatserver.messageinfo import MessageInfo
 
@@ -405,12 +405,6 @@ def word_content_highlight(query, text, analyzer=None, maxchars=300, surround=50
 
 # -----------------------------------
 
-def _sanitize_user_html_to_text( user_input ):
-	"""
-	Registered as an adapter with the name 'text' for convenience.
-	"""
-	return clean_html( user_input )
-
 def get_content(text, tokenizer=default_tokenizer):
 	"""
 	return the text (words) to be indexed from the specified text
@@ -423,11 +417,11 @@ def get_content(text, tokenizer=default_tokenizer):
 	
 	if not text or not isinstance(text, six.string_types):
 		return u''
-
-	text = _sanitize_user_html_to_text(text)
-	words = tokenizer.tokenize(text)
-	text = ' '.join(words)
-	return unicode(text)
+	else:
+		text = component.getAdapter( text, frg_interfaces.IUnicodeContentFragment, name='text' )
+		words = tokenizer.tokenize(text)
+		text = ' '.join(words)
+		return unicode(text)
 
 # -----------------------------------
 

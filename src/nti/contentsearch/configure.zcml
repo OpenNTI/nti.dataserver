@@ -3,16 +3,6 @@
 	<include package="zope.component" />
 	<include package="zopyx.txng3.core" file="configure.zcml" />
 	<include package="nti.contentfragments" file="configure.zcml" />
-
-	<adapter factory=".common._sanitize_user_html_to_text"
-			 for="str"
-			 name="cs-text"
-			 provides="nti.contentfragments.interfaces.IUnicodeContentFragment" />
-	
-	<adapter factory=".common._sanitize_user_html_to_text"
-			 for="unicode"
-			 name="cs-text"
-			 provides="nti.contentfragments.interfaces.IUnicodeContentFragment" />
 			 	
 	<!-- Database creation and migration -->
 	<utility factory=".generations.install._ContentSearchSchemaManager"
