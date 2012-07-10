@@ -48,5 +48,12 @@
 			 name="text"
 			 provides=".interfaces.IUnicodeContentFragment" />
 
+	<!--
+	We can (more cheaply) convert things that are already
+	HTML to plain text.
+	-->
+	<adapter factory=".html._html_to_sanitized_text" />
+	<adapter factory=".html._sanitized_html_to_text" />
+
 
 </configure>
