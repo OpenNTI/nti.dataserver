@@ -64,15 +64,28 @@ HTMLSanitizerMixin.allowed_elements.extend( ['html', 'head', 'body'] )
 HTMLSanitizerMixin.acceptable_protocols.append( 'data' )
 
 def _html5lib_tostring(doc,sanitize=True):
+	"""
+	:return: A unicode string representing the document in normalized
+		HTML5 form, parseable as XML.
+	"""
 	walker = treewalkers.getTreeWalker("lxml")
 	stream = walker(doc)
 	# We can easily subclass filters.HTMLSanitizer to add more
 	# forbidden tags, and some CSS things to filter. Then
 	# we pass a treewalker over it to the XHTMLSerializer instead
 	# of using the keyword arg.
-	s = serializer.xhtmlserializer.XHTMLSerializer(inject_meta_charset=False,omit_optional_tags=False,sanitize=sanitize,quote_attr_values=True)
-	output_generator = s.serialize(stream)
-	string = ''.join(list(output_generator))
+	# We want to produce parseable XML so that it's easy to deal with
+	# outside a browser
+	# TODO: What about stripping excess whitespace? Seems like a good idea...
+	s = serializer.xhtmlserializer.XHTMLSerializer(inject_meta_charset=False,
+												   omit_optional_tags=False,
+												   quote_attr_values=True,
+												   strip_whitespace=False,
+												   use_trailing_solidus=True,
+												   space_before_trailing_solidus=True,
+												   sanitize=sanitize )
+	output_generator = s.serialize(stream) # By not passing the 'encoding' arg, we get a unicode string
+	string = u''.join( output_generator )
 	return string
 
 def _to_sanitized_doc( user_input ):
@@ -92,6 +105,14 @@ def _to_sanitized_doc( user_input ):
 	doc = p.parse( string )
 
 	return doc
+
+def _doc_to_plain_text( doc ):
+	string = lxml.etree.tostring( doc,
+								  method='text',
+								  encoding=unicode )
+	return frg_interfaces.PlainTextContentFragment( string )
+
+
 
 def sanitize_user_html( user_input, method='html' ):
 	"""
@@ -132,8 +153,7 @@ def sanitize_user_html( user_input, method='html' ):
 			del node.attrib['style']
 
 	if method == 'text':
-		return frg_interfaces.PlainTextContentFragment(
-					lxml.etree.tostring( doc, method='text' ) )
+		return _doc_to_plain_text( doc )
 
 	string = _html5lib_tostring( doc, sanitize=False )
 	# If we can go back to plain text, do so.
@@ -164,8 +184,8 @@ def _sanitize_user_html_to_text( user_input ):
 @interface.implementer(frg_interfaces.IPlainTextContentFragment)
 @component.adapter(frg_interfaces.IHTMLContentFragment)
 def _html_to_sanitized_text( html ):
-	return frg_interfaces.PlainTextContentFragment(
-					lxml.etree.tostring( _to_sanitized_doc( html ), method='text' ) )
+	return _doc_to_plain_text( _to_sanitized_doc( html ) )
+
 
 @interface.implementer(frg_interfaces.IPlainTextContentFragment)
 @component.adapter(frg_interfaces.ISanitizedHTMLContentFragment)
@@ -173,4 +193,4 @@ def _sanitized_html_to_text( sanitized_html ):
 	p = html5lib.HTMLParser( tree=treebuilders.getTreeBuilder("lxml"), namespaceHTMLElements=False )
 	doc = p.parse( sanitized_html )
 
-	return frg_interfaces.PlainTextContentFragment( lxml.etree.tostring( doc, method='text' ) )
+	return _doc_to_plain_text( doc )
