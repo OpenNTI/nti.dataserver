@@ -27,13 +27,19 @@ from nti.dataserver import authorization as nauth
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.interfaces import StandardExternalFields
 
-
-@interface.implementer(ext_interfaces.IExternalMappingDecorator)
-@component.adapter(nti_interfaces.ILikeable)
-class LikeLinkDecorator(object):
+class _AbstractLikeLinkDecorator(object):
 	"""
 	Adds the appropriate like or unlike link.
+
+	.. note:: This causes the returned objects to be user-specific,
+		which may screw with caching.
 	"""
+
+	like_view = 'like'
+	unlike_view = 'unlike'
+
+	likes_predicate = staticmethod(liking.likes_object)
+
 	def __init__( self, ctx ): pass
 
 	def decorateExternalMapping( self, context, mapping ):
@@ -41,16 +47,24 @@ class LikeLinkDecorator(object):
 		if not current_user:
 			return
 
-		i_like = liking.likes_object( context, current_user )
+		i_like = self.likes_predicate( context, current_user )
 		_links = mapping.setdefault( StandardExternalFields.LINKS, [] )
 		# We're assuming that because you can see it, you can (un)like it.
 		# this matches the views
-		rel = 'unlike' if i_like else 'like'
+		rel = self.unlike_view if i_like else self.like_view
 		link = links.Link( context, rel=rel, elements=('@@' + rel,) )
 		interface.alsoProvides( link, ILocation )
 		link.__name__ = ''
 		link.__parent__ = context
 		_links.append( link )
+
+
+@interface.implementer(ext_interfaces.IExternalMappingDecorator)
+@component.adapter(nti_interfaces.ILikeable)
+class LikeLinkDecorator(_AbstractLikeLinkDecorator):
+	"""
+	Adds the appropriate like or unlike link.
+	"""
 
 
 @view_config( route_name='objects.generic.traversal',
@@ -88,4 +102,54 @@ def _UnlikeView(request):
 	"""
 
 	liking.unlike_object( request.context, authenticated_userid( request ) )
+	return request.context
+
+
+@interface.implementer(ext_interfaces.IExternalMappingDecorator)
+@component.adapter(nti_interfaces.IFavoritable)
+class FavoriteLinkDecorator(_AbstractLikeLinkDecorator):
+	"""
+	Adds the appropriate favorite or unfavorite link.
+	"""
+
+	like_view = 'favorite'
+	unlike_view = 'unfavorite'
+	likes_predicate = staticmethod(liking.favorites_object)
+
+
+@view_config( route_name='objects.generic.traversal',
+			  renderer='rest',
+			  context=nti_interfaces.IFavoritable,
+			  permission=nauth.ACT_READ, # anyone logged in...
+			  request_method='POST',
+			  name='favorite')
+def _FavoriteView(request):
+	"""
+	Given an :class:`nti_interfaces.IFavoritable`, make the
+	current user favorite the object, and return it.
+
+	Registered as a named view, so invoked via the @@favorite syntax.
+
+	"""
+
+	liking.favorite_object( request.context, authenticated_userid( request ) )
+	return request.context
+
+
+@view_config( route_name='objects.generic.traversal',
+			  renderer='rest',
+			  context=nti_interfaces.IFavoritable,
+			  permission=nauth.ACT_READ, # anyone logged in...
+			  request_method='POST',
+			  name='unfavorite')
+def _UnfavoriteView(request):
+	"""
+	Given an :class:`nti_interfaces.IFavoritable`, make the
+	current user no longer favorite the object, and return it.
+
+	Registered as a named view, so invoked via the @@unlike syntax.
+
+	"""
+
+	liking.unfavorite_object( request.context, authenticated_userid( request ) )
 	return request.context

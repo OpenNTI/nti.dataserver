@@ -218,6 +218,13 @@ These are definitions related to content that a user can generate.
 	   unsigned int LikeCount = 0;
    }
 
+   mixin Favoritable {
+       // Defines things that can be "favorited" (bookmarked). You post
+       // to the links with rel=favorite or rel=unfavorite to favorite or un
+       // something. The presence of one of those
+       // means you have already taken the opposite action
+   }
+
    //NOTE: Bookmarks do not currently exist
    struct Bookmark : PersistentObject<Anchored,Shareable,Taggable> { }
 
@@ -246,7 +253,7 @@ These are definitions related to content that a user can generate.
 	   oid_t references[];
    }
 
-   struct Note : Highlight <Threadable, Anchored, Shareable, Likeable> {
+   struct Note : Highlight <Threadable, Anchored, Shareable, Likeable, Favoritable> {
 	   //An ordered list of objects (strings or objects) that make up the body.
 	   //In particular, Canvas objects can appear here as can HTML strings.
 	   Object[] body;

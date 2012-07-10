@@ -279,6 +279,7 @@ class Redaction(SelectedRange):
 @interface.implementer(nti_interfaces.INote,
 					    # requires annotations
 					   nti_interfaces.ILikeable,
+					   nti_interfaces.IFavoritable,
 					   # provides annotations
 					   an_interfaces.IAttributeAnnotatable )
 class Note(ThreadableExternalizableMixin, Highlight):

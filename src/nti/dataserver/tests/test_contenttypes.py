@@ -9,6 +9,7 @@ import unittest
 from nose.tools import with_setup
 import nti.tests
 from nti.tests import verifiably_provides
+from nti.tests import is_true
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.contenttypes import Redaction as _Redaction, Highlight as _Highlight, Note as _Note, Canvas, CanvasShape, CanvasAffineTransform, CanvasCircleShape, CanvasPolygonShape, CanvasPathShape, CanvasUrlShape, CanvasTextShape
@@ -136,6 +137,15 @@ import contentratings.interfaces
 
 class NoteTest(mock_dataserver.ConfiguringTestBase):
 
+	def test_note_is_favoritable(self):
+		"Notes should be favoritable, and can become IUserRating"
+		n = Note()
+		assert_that( n, verifiably_provides( nti_interfaces.IFavoritable ) )
+		ratings = liking._lookup_like_rating_for_write( n, liking.FAVR_CAT_NAME )
+		assert_that( ratings, verifiably_provides( contentratings.interfaces.IUserRating ) )
+		assert_that( ratings, has_property( 'numberOfRatings', 0 ) )
+
+
 	def test_note_is_likeable(self):
 		"Notes should be likeable, and can become IUserRating"
 		n = Note()
@@ -180,6 +190,21 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 		ext = {}
 		liking.LikeDecorator( n ).decorateExternalMapping( n, ext )
 		assert_that( ext, has_entry( 'LikeCount', 0 ) )
+
+	def test_favoriting(self):
+		"Notes can be favorited and unfavorited"
+		n = Note()
+		# first time does something
+		assert_that( liking.favorite_object( n, 'foo@bar' ), verifiably_provides( contentratings.interfaces.IUserRating ) )
+		# second time no-op
+		assert_that( liking.favorite_object( n, 'foo@bar' ), is_( none() ) )
+
+		assert_that( liking.favorites_object( n, 'foo@bar' ), is_true() )
+
+		# first time does something
+		assert_that( liking.unfavorite_object( n, 'foo@bar' ), verifiably_provides( contentratings.interfaces.IUserRating ) )
+		# second time no-op
+		assert_that( liking.unfavorite_object( n, 'foo@bar' ), is_( none() ) )
 
 
 
