@@ -22,12 +22,7 @@ from contentratings.category import BASE_KEY
 from contentratings.storage import UserRatingStorage
 
 from . import interfaces
-from . import links
-from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization import interfaces as ext_interfaces
-
-from pyramid.security import authenticated_userid
-from pyramid.threadlocal import get_current_request
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
 @component.adapter(interfaces.ILikeable)
@@ -37,23 +32,11 @@ class LikeDecorator(object):
 
 	def decorateExternalMapping( self, context, mapping ):
 		like_count = 0
-		i_like = False
 		rating = _lookup_like_rating_for_read( context )
 		if rating:
-
 			like_count = rating.numberOfRatings
-			# TODO: The 'unlike' and 'like' links
-			# TODO: What's the best way to get this info? The
-			# rating object has a userid, but to make that work we have to
-			# subclass
-			uid = authenticated_userid( get_current_request() )
-			i_like = rating.userRating( uid ) if uid else False
 
 		mapping['LikeCount'] = like_count
-		link = links.Link( context, rel=('unlike' if i_like else 'like') )
-		_links = mapping.setdefault( StandardExternalFields.LINKS, [] )
-		_links.append( link )
-
 
 CAT_NAME = 'likes'
 
@@ -84,3 +67,48 @@ def _lookup_like_rating_for_read( context ):
 
 def _lookup_like_rating_for_write( context ):
 	return component.getAdapter( context, contentratings.interfaces.IUserRating, name=CAT_NAME )
+
+# We define likes simply as a rating of 1, and unlikes remove
+# the user from the list
+
+def like_object( context, username ):
+	"""
+	Like the `context` idempotently.
+	:param context: An class:`nti_interfaces.ILikeable` object.
+	:param username: The name of the user liking the object. Should not be
+		empty.
+	:return: An object with a boolean value; if action was taken, the value is True-y.
+	:raises TypeError: If the `context` is not really likeable.
+	"""
+
+	rating = _lookup_like_rating_for_write( context )
+	if rating.userRating( username ) is None:
+		rating.rate( 1, username )
+		return rating
+
+def unlike_object( context, username ):
+	"""
+	Unlike the `object`, idempotently.
+	:param context: An class:`nti_interfaces.ILikeable` object.
+	:param username: The name of the user liking the object. Should not be
+		empty.
+	:return: An object with a boolean value; if action was taken, the value is True-y.
+	:raises TypeError: If the `context` is not really likeable.
+	"""
+
+	rating = _lookup_like_rating_for_read( context )
+	if rating and rating.userRating( username ) is not None:
+		rating.remove_rating( username )
+		return rating
+
+def likes_object( context, username ):
+	"""
+	Determine if the `username` likes the `context`.
+	:param context: An class:`nti_interfaces.ILikeable` object.
+	:param username: The name of the user liking the object. Should not be
+		empty.
+	:return: An object with a boolean value; if the user likes the object, the value is True-y.
+	"""
+	rating = _lookup_like_rating_for_read( context )
+	if rating and rating.userRating( username ) is not None:
+		return rating

@@ -63,7 +63,7 @@ class ApplicationTestBase(ConfiguringTestBase):
 		__show__.off()
 		super(ApplicationTestBase,self).setUp()
 		#self.ds = mock_dataserver.MockDataserver()
-		self.app, self.main = createApplication( 8080, self._setup_library(), create_ds=mock_dataserver.MockDataserver, pyramid_config=self.config )
+		self.app, self.main = createApplication( 8080, self._setup_library(), create_ds=mock_dataserver.MockDataserver, pyramid_config=self.config, devmode=True )
 		self.ds = component.getUtility( nti_interfaces.IDataserver )
 		root = '/Library/WebServer/Documents/'
 		# We'll volunteer to serve all the files in the root directory
@@ -412,6 +412,45 @@ class TestApplication(ApplicationTestBase):
 		assert_that( res.status_int, is_( 200 ) )
 		assert_that( json.loads(res.body), has_entry( 'href', path ) )
 		assert_that( json.loads(res.body), has_entry( 'Links', has_item( has_entry( 'rel', 'edit' ) ) ) )
+
+	def test_like_unlike_note(self):
+		"We get the appropriate @@like or @@unlike links for a note"
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = self._create_user()
+
+			n = contenttypes.Note()
+			n.applicableRange = contentrange.ContentRangeDescription()
+			n.containerId = 'tag:nti:foo'
+			user.addContainedObject( n )
+
+		testapp = TestApp( self.app )
+		data = ''
+		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % datastructures.to_external_ntiid_oid( n )
+		path = urllib.quote( path )
+		# Initially, unliked, I get asked to like
+		res = testapp.get( path, extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 200 ) )
+		assert_that( res.json_body, has_entry( 'LikeCount', 0 ) )
+		assert_that( json.loads(res.body), has_entry( 'Links', has_item( has_entry( 'rel', 'like' ) ) ) )
+
+		# So I do
+		res = testapp.post( path + '/@@like', data, extra_environ=self._make_extra_environ() )
+		# and now I'm asked to unlike
+		assert_that( res.status_int, is_( 200 ) )
+		assert_that( res.json_body, has_entry( 'LikeCount', 1 ) )
+		assert_that( res.json_body, has_entry( 'Links', has_item( has_entry( 'rel', 'unlike' ) ) ) )
+
+		# Same again
+		res = testapp.post( path + '/@@like', data, extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 200 ) )
+		assert_that( res.json_body, has_entry( 'Links', has_item( has_entry( 'rel', 'unlike' ) ) ) )
+
+		# And I can unlike
+		res = testapp.post( path + '/@@unlike', data, extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 200 ) )
+		assert_that( res.json_body, has_entry( 'LikeCount', 0 ) )
+		assert_that( res.json_body, has_entry( 'Links', has_item( has_entry( 'rel', 'like' ) ) ) )
+
 
 	def test_edit_note_sharing_only(self):
 		"We can POST to a specific sub-URL to change the sharing"
