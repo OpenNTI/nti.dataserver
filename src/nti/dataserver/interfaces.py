@@ -519,7 +519,7 @@ class ISelectedRange(IShareableModeledContent,IThreadable,IAnchoredRepresentatio
 IHIGHLIGHT_STYLE_VOCABULARY = schema.vocabulary.SimpleVocabulary(
 	[schema.vocabulary.SimpleTerm(_x)
 	 for _x
-	 in ('plain',)])
+	 in ('plain','suppressed')])
 
 class IHighlight(ISelectedRange):
 	"""
@@ -569,7 +569,7 @@ class IFavoritable(IAnnotatable):
     favorited by users using the IUserRating interface.
     """
 
-class INote(IShareableModeledContent,IThreadable,IAnchoredRepresentation):
+class INote(IHighlight):
 	"""
 	A user-created note attached to other content.
 	"""

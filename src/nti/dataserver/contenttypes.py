@@ -261,7 +261,7 @@ class Highlight(SelectedRange, _HighlightBWC):
 	def __init__( self ):
 		super(Highlight,self).__init__()
 		# To get in the dict for externalization
-		self.style = 'plain'
+		self.style = self.style
 
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
 		super(Highlight,self).updateFromExternalObject( parsed, *args, **kwargs )
@@ -290,6 +290,7 @@ class Note(ThreadableExternalizableMixin, Highlight):
 	# are left alone.
 	# This consists of the anchoring properties
 	_inheritable_properties_ = ( 'applicableRange', )
+	style = 'suppressed'
 
 	def __init__(self):
 		super(Note,self).__init__()

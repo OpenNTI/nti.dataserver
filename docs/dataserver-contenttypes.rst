@@ -240,7 +240,10 @@ These are definitions related to content that a user can generate.
    }
 
    struct Highlight : SelectedRange {
-        string style; //Variants of highlights. Currently, 'plain' required
+        //Variants of highlights. Currently, 'plain' or 'suppressed';
+        //suppressed is useful for subclasses that may or may not always
+        //want to display the highlight portion
+        string style;
    }
 
    struct Redaction : SelectedRange {
