@@ -451,6 +451,46 @@ class TestApplication(ApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'LikeCount', 0 ) )
 		assert_that( res.json_body, has_entry( 'Links', has_item( has_entry( 'rel', 'like' ) ) ) )
 
+	def test_favorite_unfavorite_note(self):
+		"We get the appropriate @@favorite or @@unfavorite links for a note"
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = self._create_user()
+
+			n = contenttypes.Note()
+			n.applicableRange = contentrange.ContentRangeDescription()
+			n.containerId = 'tag:nti:foo'
+			user.addContainedObject( n )
+
+		testapp = TestApp( self.app )
+		data = ''
+		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % datastructures.to_external_ntiid_oid( n )
+		path = urllib.quote( path )
+		# Initially, unliked, I get asked to favorite
+		res = testapp.get( path, extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 200 ) )
+		assert_that( res.json_body, has_entry( 'LikeCount', 0 ) )
+		assert_that( json.loads(res.body), has_entry( 'Links', has_item( has_entry( 'rel', 'favorite' ) ) ) )
+
+		# So I do
+		res = testapp.post( path + '/@@favorite', data, extra_environ=self._make_extra_environ() )
+		# and now I'm asked to unlike
+		assert_that( res.status_int, is_( 200 ) )
+		# like count doesn't change
+		assert_that( res.json_body, has_entry( 'LikeCount',  0 ) )
+		assert_that( res.json_body, has_entry( 'Links', has_item( has_entry( 'rel', 'unfavorite' ) ) ) )
+		assert_that( res.json_body, has_entry( 'Links', has_item( has_entry( 'rel', 'like' ) ) ) )
+
+		# Same again
+		res = testapp.post( path + '/@@favorite', data, extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 200 ) )
+		assert_that( res.json_body, has_entry( 'Links', has_item( has_entry( 'rel', 'unfavorite' ) ) ) )
+
+		# And I can unlike
+		res = testapp.post( path + '/@@unfavorite', data, extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 200 ) )
+		assert_that( res.json_body, has_entry( 'LikeCount', 0 ) )
+		assert_that( res.json_body, has_entry( 'Links', has_item( has_entry( 'rel', 'like' ) ) ) )
+		assert_that( json.loads(res.body), has_entry( 'Links', has_item( has_entry( 'rel', 'favorite' ) ) ) )
 
 	def test_edit_note_sharing_only(self):
 		"We can POST to a specific sub-URL to change the sharing"

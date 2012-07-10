@@ -158,6 +158,7 @@ setup(
 		'zc.zodbdgc >= 0.6.0',
 		'zetalibrary',
 		'zope.app.component >= 3.9.3', # bwc only, DO NOT IMPORT. pulled in by contentratings
+		'zope.app.interface >= 3.6.0', # bwc only, DO NOT IMPORT. pulled in by contentratings
 		'zope.annotation >= 3.5.0',
 		'zope.broken >= 3.6.0', # This is actually deprecated, use the ZODB import
 		'zope.browser',

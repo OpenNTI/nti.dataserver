@@ -563,6 +563,12 @@ class ILikeable(IAnnotatable):
     """
 
 
+class IFavoritable(IAnnotatable):
+    """
+	Marker interface that promises that an implementing object may be
+    favorited by users using the IUserRating interface.
+    """
+
 class INote(IShareableModeledContent,IThreadable,IAnchoredRepresentation):
 	"""
 	A user-created note attached to other content.
