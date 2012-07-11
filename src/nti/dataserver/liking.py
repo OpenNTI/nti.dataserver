@@ -166,3 +166,87 @@ def favorites_object( context, username ):
 	:return: An object with a boolean value; if the user likes the object, the value is True-y.
 	"""
 	return _rates_object( context, username, FAVR_CAT_NAME )
+
+
+
+from zope.app.container.contained import Contained
+from persistent import Persistent
+import BTrees
+from BTrees.Length import Length
+from contentratings.rating import Rating
+
+
+@interface.implementer(contentratings.interfaces.IUserRating,contentratings.interfaces.IRatingStorage)
+class _BinaryUserRatings(Contained, Persistent):
+	"""
+	BTree-based storage for binary user ratings, where a user can either have rated
+	(with a 1) or not; no other value is permitted. Furthermore, the anonymous
+	user is prohibited. This allows for optimizations in
+	storage and implementation.
+
+	Compare with :class:`contentratings.storage.UserRatingStorage` for a full implementation.
+	"""
+
+	scale = 1
+
+	def __init__(self):
+		super(_BinaryUserRatings,self).__init__()
+		# Since we are simply recording the presence or absence of a user,
+		# can can use a simple set
+		self._ratings = BTrees.family64.OO.TreeSet()
+		self._length = Length()
+
+
+	def rate(self, rating, username=None, session_key=None):
+		"""Set a rating for a particular user"""
+		if rating != 1 or not username or session_key: # pragma: no cover
+			__traceback_info__ = rating, username, session_key
+			raise ValueError( "Rating must be 1, only username must be given" )
+
+		if username not in self._ratings:
+			self._ratings.add( username )
+			self._length.change(1)
+
+		return Rating( 1, username )
+
+	def userRating(self, username=None):
+		"""Retreive the rating for the specified user, which must be provided."""
+		if not username: raise ValueError( "Must give username" ) #pragma: no cover
+		if username in self._ratings:
+			return Rating( 1, username )
+
+	def remove_rating(self, username):
+		"""Remove the rating for a given user"""
+		self._ratings.remove(username)
+		self._length.change(-1)
+		return Rating( 1, username )
+
+	def all_user_ratings(self, include_anon=False):
+		"""
+		:param bool include_anon: Ignored.
+		"""
+		return (Rating( 1, username) for username in self.all_raters)
+
+	@property
+	def all_raters(self):
+		return self._ratings.keys()
+
+	@property
+	def numberOfRatings(self):
+		return self._length()
+
+	@property
+	def averageRating(self):
+		return 1 if self._length() else 0
+
+	def last_anon_rating(self, session_key):
+		"""Returns a timestamp indicating the last time the anonymous user
+		with the given session_key rated the object."""
+		raise NotImplementedError() # pragma: no cover
+		#return datetime.utcnow()
+
+	@property
+	def most_recent(self):
+		""" We don't track this and don't use it. """
+		# But it is a validated part of the interface, so we can't raise
+		return None

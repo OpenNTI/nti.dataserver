@@ -180,6 +180,8 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 		ext = {}
 		liking.LikeDecorator( n ).decorateExternalMapping( n, ext )
 		assert_that( ext, has_entry( 'LikeCount', 1 ) )
+		ratings = liking._lookup_like_rating_for_read( n )
+		assert_that( list(ratings.all_user_ratings()), has_length( 1 ) )
 
 
 		# first time does something
