@@ -84,7 +84,7 @@ class HTTPUnprocessableEntity(hexc.HTTPForbidden):
 		return str(super(HTTPUnprocessableEntity,self).__str__())
 
 
-from nti.dataserver.interfaces import ACLLocationProxy, ACLProxy
+from nti.dataserver.interfaces import ACLLocationProxy
 
 
 class EnclosureGetItemACLLocationProxy(ACLLocationProxy):
@@ -344,10 +344,7 @@ class _ObjectsContainerResource(_ContainerResource):
 			or len( remaining_path ) != 1 \
 			or not remaining_path[0].startswith( '@' ):
 			result = self._wrap_as_resource( key, result )
-		else:
-			# not wrapped as resource, but does it need ACL?
-			if not hasattr( result, '__acl__' ):
-				result = ACLProxy( result, nacl.ACL( result ) )
+
 		return result
 
 	_no_wrap_ifaces = {lib_interfaces.IContentPackageLibrary, lib_interfaces.IContentUnit, lib_interfaces.IContentPackage}
@@ -362,11 +359,6 @@ class _ObjectsContainerResource(_ContainerResource):
 		provided = interface.providedBy( result )
 		for iface in self._no_wrap_ifaces:
 			if iface in provided:
-				# But it may need an ACL?
-				# TODO: I gotta write a security policy that handles adapting
-				# to find the ACL
-				if not hasattr( result, '__acl__' ):
-					result = ACLProxy( result, nacl.ACL( result ) )
 				return result
 		result = _DirectlyProvidedObjectResource( self, objectid=key, user=self.user, resource=result, containerid=self.__name__ )
 		return result
