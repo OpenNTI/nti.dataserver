@@ -559,14 +559,14 @@ class IRedaction(ISelectedRange):
 class ILikeable(IAnnotatable):
     """
 	Marker interface that promises that an implementing object may be
-    liked by users using the IUserRating interface.
+	liked by users using the :class:`contentratings.interfaces.IUserRating` interface.
     """
 
 
 class IFavoritable(IAnnotatable):
     """
 	Marker interface that promises that an implementing object may be
-    favorited by users using the IUserRating interface.
+	favorited by users using the :class:`contentratings.interfaces.IUserRating` interface.
     """
 
 class INote(IHighlight):

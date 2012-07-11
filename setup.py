@@ -57,7 +57,13 @@ setup(
 
 	# Support unit tests of package
 #	tests_require = ['z3c.coverage','zope.testing'],
-	setup_requires = ['nose'],
+	setup_requires = [
+		'nose >= 1.1.2',
+		# In theory this should make it possible to get
+		# the svn revision number from svn 1.7. Doesn't seem
+		# to work (with distribute?)
+		'setuptools_subversion >= 1.8'
+	],
 	install_requires = [
 		 # Zope Acquisition; used by contentratings implicitly
 		 # cool concept. Pulls in ExtensionClass (which should not be used)

@@ -21,7 +21,7 @@ import contentratings.interfaces
 from contentratings.category import BASE_KEY
 from contentratings.storage import UserRatingStorage
 
-from . import interfaces
+from nti.dataserver import interfaces
 from nti.externalization import interfaces as ext_interfaces
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
@@ -45,8 +45,10 @@ def _lookup_like_rating_for_read( context, cat_name=LIKE_CAT_NAME ):
 	"""
 	:param context: Something that is :class:`interfaces.ILikeable`
 		and, for now, can be adapted to an :class:`contentratings.IUserRating`
-		with the name of 'like'.
-	:return: A user rating object, if one already exists. Otherwise None.
+		with the name of `cat_name`.
+	:param string cat_name: The name of the ratings category to look up. One of
+		:const:`LIKE_CAT_NAME` or :const:`FAVR_CAT_NAME`.
+	:return: A user rating object, if one already exists. Otherwise :const:`None`.
 	"""
 
 	# While we're using the default storage objects, as soon as they
@@ -101,7 +103,8 @@ def _rates_object( context, username, cat_name ):
 def like_object( context, username ):
 	"""
 	Like the `context` idempotently.
-	:param context: An class:`nti_interfaces.ILikeable` object.
+
+	:param context: An :class:`interfaces.ILikeable` object.
 	:param username: The name of the user liking the object. Should not be
 		empty.
 	:return: An object with a boolean value; if action was taken, the value is True-y.
@@ -113,7 +116,8 @@ def like_object( context, username ):
 def unlike_object( context, username ):
 	"""
 	Unlike the `object`, idempotently.
-	:param context: An class:`nti_interfaces.ILikeable` object.
+
+	:param context: An :class:`interfaces.ILikeable` object.
 	:param username: The name of the user liking the object. Should not be
 		empty.
 	:return: An object with a boolean value; if action was taken, the value is True-y.
@@ -125,7 +129,8 @@ def unlike_object( context, username ):
 def likes_object( context, username ):
 	"""
 	Determine if the `username` likes the `context`.
-	:param context: An class:`nti_interfaces.ILikeable` object.
+
+	:param context: An :class:`interfaces.ILikeable` object.
 	:param username: The name of the user liking the object. Should not be
 		empty.
 	:return: An object with a boolean value; if the user likes the object, the value is True-y.
@@ -136,7 +141,8 @@ def likes_object( context, username ):
 def favorite_object( context, username ):
 	"""
 	Favorite the `context` idempotently.
-	:param context: An class:`nti_interfaces.IFavoritable` object.
+
+	:param context: An :class:`interfaces.IFavoritable` object.
 	:param username: The name of the user favoriting the object. Should not be
 		empty.
 	:return: An object with a boolean value; if action was taken, the value is True-y.
@@ -148,7 +154,8 @@ def favorite_object( context, username ):
 def unfavorite_object( context, username ):
 	"""
 	Unfavorite the `object`, idempotently.
-	:param context: An class:`nti_interfaces.IFavoritable` object.
+
+	:param context: An :class:`interfaces.IFavoritable` object.
 	:param username: The name of the user unfavoriting the object. Should not be
 		empty.
 	:return: An object with a boolean value; if action was taken, the value is True-y.
@@ -160,7 +167,8 @@ def unfavorite_object( context, username ):
 def favorites_object( context, username ):
 	"""
 	Determine if the `username` has favorited the `context`.
-	:param context: An class:`nti_interfaces.IFavoritable` object.
+
+	:param context: An :class:`interfaces.IFavoritable` object.
 	:param username: The name of the user possibly favoriting the object. Should not be
 		empty.
 	:return: An object with a boolean value; if the user likes the object, the value is True-y.
