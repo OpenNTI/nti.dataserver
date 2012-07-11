@@ -1,157 +1,115 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+"""
+$Id$
+"""
+
 import xml.dom
 import sys
 
+class position(object):
+	node, offset = None, 0
+	def __init__(self,node=None,offset=None,parent=None):
+		self.parent = parent
+		if node is not None and offset is not None: self.set(node,offset)
+
+	def updating(f):
+		# Call parent range's update function after setting start or end nodes
+		def inner_func(*args, **kwargs):
+			f(*args, **kwargs)
+			if args[0].parent is not None: args[0].parent.update()
+		return inner_func
+
+	@updating
+	def set(self, node, offset):
+		self.node, self.offset = node,offset
+		if node is not None and node.nodeType == node.TEXT_NODE and \
+					self.offset > len(node.data):
+			self.offset = len(node.data)
+
+	@updating
+	def set_before(self,node):
+		self.node, self.offset = node.parentNode, childIndex(node)
+
+	@updating
+	def set_after(self,node):
+		self.node, self.offset = node.parentNode, childIndex(node) + 1
+
+	def __cmp__(self, other):
+		if self.node == other.node: 
+			return (self.offset).__cmp__(other.offset)
+		self_index, other_index = -1,-1
+		ancestor = find_common_ancestor(self.node,other.node)
+		if ancestor is None:
+			return None
+		for i,c in enumerate(ancestor.childNodes):
+			if is_ancestor(c,self.node): self_index = i
+			if is_ancestor(c,other.node): other_index = i
+		if is_ancestor(self.node,other.node):
+			if other_index < self.offset: return 1
+			return -1
+		if is_ancestor(other.node,self.node):
+			if self_index < other.offset: return -1
+			return 1
+		if other_index < self_index: return 1
+		return -1
+
 class Range(object):
 
-	detached = False
 	ancestor = None
-	start_node = None
-	end_node = None
-	start_offset = None
-	end_offset = None
 	collapsed = False;
 	START_TO_START = 0
 	START_TO_END = 1
 	END_TO_START = 2
 	END_TO_END = 3
 
-	def is_ancestor(self,ancestor,descendant):
-		if ancestor == descendant: 
-			return True
-		
-		if ancestor == None or descendant == None:
-			return False
+	def __init__(self, sn=None, so=None, fn=None, fo=None):
+		self.start = position(parent=self)
+		self.end = position(parent=self)
+		if sn is not None and so is not None: self.set_start(sn,so)
+		if fn is not None and fo is not None: self.set_end(fn,fo)
 
-		return self.is_ancestor(ancestor,descendant.parentNode)
-
-
-
-	def find_common_ancestor(self,a,b):
-		ancestor = a
-		while ancestor is not None and self.is_ancestor(ancestor,b) == False:
-			ancestor = ancestor.parentNode
-		return ancestor
-
-	def childIndex(self,node):
-		children = node.parentNode.childNodes
-		for i,c in enumerate(children):
-			if c == node:
-				return i
-
-	def compare(self, a, a_offset,b,b_offset): 
-		# Result of 1 equivalent to a > b, 0 equal, -1 b > a
-		if a == b: 
-			if a_offset < b_offset:
-				return -1 
-			if a_offset > b_offset:
-				return 1
-			return 0
-
-		a_index, b_index = -1,-1
-		ancestor = self.find_common_ancestor(a,b)
-		if ancestor is None:
-			return None
-
-		children = ancestor.childNodes
-		for i,c in enumerate(children):
-			if self.is_ancestor(c,a):
-				a_index = i
-			if self.is_ancestor(c,b):
-				b_index = i
-
-		if self.is_ancestor(a,b):
-			if b_index < a_offset:
-				return 1
-			return -1
-
-		if self.is_ancestor(b,a):
-			if a_index < b_offset:
-				return -1
-			return 1
-
-		if b_index < a_index: 
-			return 1
-
-		return -1;
+	def update(self):
+		if self.start.node is not None and self.end.node is not None:
+			self.ancestor = find_common_ancestor(self.start.node,self.end.node)
+		self.collapsed = self.end .__cmp__(self.start) in (0, -1)
 
 	def pointInside(self, node, offset):
-		cl = self.compare(self.start_node,self.start_offset,node,offset)
-		cr = self.compare(self.end_node,self.end_offset,node,offset)
-		return cl <= 0 and cr >= 0
+		p = position(node,offset)
+		return self.start <= p and self.end >= p
 
 	def compareBoundaryPoints(self, how, other):
 		if how == self.START_TO_START:
-			c = self.compare(self.start_node,self.start_offset,
-							other.start_node,other.start_offset)
+			return (self.start).__cmp__(other.start)
 		if how == self.START_TO_END:
-			c = self.compare(self.start_node,self.start_offset,
-							other.end_node,other.end_offset)
+			return (self.start).__cmp__(other.end)
 		if how == self.END_TO_START:
-			c = self.compare(self.end_node,self.end_offset,
-							other.start_node,other.start_offset)
+			return (self.end).__cmp__(other.start)
 		if how == self.END_TO_END:
-			c = self.compare(self.end_node,self.end_offset,
-							other.end_node,other.end_offset)
-		return c
+			return (self.end).__cmp__(other.end)
 
-	def update(self):
-		if self.start_node is not None and self.end_node is not None:
-			self.ancestor = self.find_common_ancestor(self.start_node,self.end_node)
-		if self.compare(self.end_node,self.end_offset,self.start_node,self.start_offset) in (0,-1):
-			self.collapsed = True
+	def set_start(self,node,offset): self.start.set(node,offset)
+	def set_end(self,node,offset): self.end.set(node,offset)
+	def set_start_before(self,node): self.start.set_before(node)
+	def set_start_after(self,node): self.start.set_after(node)
+	def set_end_before(self,node): self.end.set_before(node)
+	def set_end_after(self,node): self.end.set_after(node)
 
-	def set_start(self,node,offset):
-		self.start_node = node
-		self.start_offset = offset
-		if self.start_node.nodeType == self.start_node.TEXT_NODE:
-			if self.start_offset > len(self.start_node.data):
-				self.start_offset = len(self.start_node.data)
-		self.update()
-
-	def set_end(self,node,offset):
-		self.end_node = node
-		self.end_offset = offset
-		if self.end_node.nodeType == self.end_node.TEXT_NODE:
-			if self.end_offset > len(self.end_node.data):
-				self.end_offset = len(self.end_node.data)
-		self.update()
-
-	def set_start_before(self,node):
-		self.start_node = node.parentNode
-		self.start_offset = self.childIndex(node)
-		self.update()
-
-	def set_start_after(self,node):
-		self.start_node = node.parentNode
-		self.start_offset = self.childIndex(node) + 1
-		self.update()
-
-	def set_end_before(self,node):
-		self.end_node = node.parentNode
-		self.end_offset = self.childIndex(node)
-		self.update()
-
-	def set_end_after(self,node):
-		self.end_node = node.parentNode
-		self.end_offset = self.childIndex(node) + 1
-		self.update()
+	def get_root(self): return get_root(self.ancestor)
 
 	def collapse(self,to_start):
 		if to_start:
-			self.end_node = self.start_node
-			self.end_offset = self.start_offset
+			self.end.set(self.start.node, self.start.offset)
 		else:
-			self.start_node = self.end_node
-			self.end_offset = self.start_offset
-		self.ancestor = self.start_node
-		self.collapsed = True
+			self.start.set(self.end.node, self.end.offset)
 
 	# Mainly for debugging purposes
 	"""def path_from_root(self,node):
 		cn = node
 		result = []
 		while cn.parentNode is not None:
-			result = [self.childIndex(cn)] + result
+			result = [childIndex(cn)] + result
 			cn = cn.parentNode
 		return result"""
 
@@ -161,26 +119,49 @@ class Range(object):
 		if self.collapsed:
 			return ""
 		if self.ancestor is None: raise Exception("No common ancestor found")
-		cur_node,cur_offset = self.start_node, self.start_offset
+		cur_node,cur_offset = self.start.node, self.start.offset
 		result = []
 		while True:
 			if cur_node.nodeType == cur_node.TEXT_NODE:
-				if cur_node == self.end_node:
-					result.append(cur_node.data[cur_offset:self.end_offset])
+				if cur_node == self.end.node:
+					result.append(cur_node.data[cur_offset:self.end.offset])
 					break
 				else:
 					result.append(cur_node.data[cur_offset:])
+					cur_offset = childIndex(cur_node) + 1
 					cur_node = cur_node.parentNode
-					cur_offset = self.childIndex(cur_node) + 1
 			else:
-				if cur_node == self.end_node and cur_offset == self.end_offset:
+				if cur_node == self.end.node and cur_offset == self.end.offset:
 					break
 				if cur_offset < len(cur_node.childNodes):
 					cur_node = cur_node.childNodes[cur_offset]
 					cur_offset = 0
 				else:
-					cur_offset = self.childIndex(cur_node) + 1
+					cur_offset = childIndex(cur_node) + 1
 					cur_node = cur_node.parentNode
 		return ''.join(result)
 
 	__str__ = stringify
+
+def is_ancestor(ancestor,descendant):
+	if ancestor == descendant: 
+		return True
+	if ancestor == None or descendant == None:
+		return False
+	return is_ancestor(ancestor,descendant.parentNode)
+
+def find_common_ancestor(a,b):
+	ancestor = a
+	while ancestor is not None and is_ancestor(ancestor,b) == False:
+		ancestor = ancestor.parentNode
+	return ancestor
+
+def childIndex(node):
+	children = node.parentNode.childNodes
+	for i,c in enumerate(children):
+		if c == node:
+			return i
+
+def get_root(node):
+	if node.parentNode is None or node.parentNode.nodeType == node.DOCUMENT_NODE: return node
+	return get_root(node.parentNode)

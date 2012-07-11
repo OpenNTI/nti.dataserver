@@ -1,0 +1,839 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Anchoring &mdash; Dataserver Alpha documentation</title>
+    
+    <link rel="stylesheet" href="../_static/agogo.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     'Alpha',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Dataserver Alpha documentation" href="../" />
+    <link rel="next" title="Serving Content from a CDN" href="../content-in-cdn/" />
+    <link rel="prev" title="NTIID Tag Structure" href="../ntiid-structure/" /> 
+  </head>
+  <body>
+    <div class="header-wrapper">
+      <div class="header">
+        <div class="headertitle"><a
+          href="../">Dataserver Alpha documentation</a></div>
+        <div class="rel">
+          <a href="../ntiid-structure/" title="NTIID Tag Structure"
+             accesskey="P">previous</a> |
+          <a href="../content-in-cdn/" title="Serving Content from a CDN"
+             accesskey="N">next</a> |
+          <a href="../py-modindex/" title="Python Module Index"
+             >modules</a> |
+          <a href="../genindex/" title="General Index"
+             accesskey="I">index</a>
+        </div>
+       </div>
+    </div>
+
+    <div class="content-wrapper">
+      <div class="content">
+        <div class="document">
+            
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="anchoring">
+<h1>Anchoring<a class="headerlink" href="#anchoring" title="Permalink to this headline">¶</a></h1>
+<p>This document describes the method in which anchorable content is
+modeled, and the methods used to convert <tt class="docutils literal"><span class="pre">Anchored</span></tt> content to and
+from DOM selections/ranges.</p>
+<div class="section" id="considerations">
+<h2>Considerations<a class="headerlink" href="#considerations" title="Permalink to this headline">¶</a></h2>
+<p>We have the requirement to anchor various types of user data (at this
+point the requirement is for notes, highlights, and redactions) to
+specific ranges of content within a container. Beyond the basic
+explicit requirement made above, two implicit requirements need to be
+made explicit.</p>
+<p>First, it is desired that anchors are as robust as possible to content
+changes such as the addition, removal or reordering of paragraphs,
+graphics, embedded media, etc. Preferably, even intra-paragraph
+changes would have minimal effect. This means that anchors need to
+store redundant information to be used as backup, and they also need
+to store enough information to know whether or not they have
+successfully located their target (assumed: highlighting/noting/redacting the
+wrong thing is worse than displaying a &#8220;missing highlight&#8221; indicator).
+(As a corollary, it also means that document-global information, such
+as a DOM range or XPath is not sufficient by itself.)</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">When representing anchored contents as a range, content changes can be
+broken down into two classes, <em>inside</em> and <em>outside</em>. <em>Inside</em> changes
+are those changes in the content that occur in between a range&#8217;s endpoints.
+<em>Outside</em> changes are those changes which occur outside, or surrounding,
+the range&#8217;s endpoints.</p>
+</div>
+<p>Second, it is desired that anchors are as &#8220;local&#8221; as possible, to
+support &#8220;mashups,&#8221; embedding, and reuse of content. A concrete,
+customer use-case of this the ability to recombine MathCounts problems
+from their own worksheets into custom worksheets (&#8220;I want to search
+for all problems about circles and make that a worksheet&#8221;). When this
+happens, notes/discussions attached to the questions should be able to
+come along. This ties in to the corollary of the first point.</p>
+<p>To best support these two requirements we want to anchor objects to
+authored content (authored content is that which came from the source
+document, not that which is an artifact of rendering to a specific
+format) whenever possible. For example, anchors should be tied to
+authored paragraphs, questions, or images rather than their containing
+<tt class="docutils literal"><span class="pre">div</span></tt> s used for layouts. Not only does this allow for robustness and
+mashups as described above, doing this should also make anchors robust
+to layout changes (e.g., a portion of text originally in the
+main body of a page moving to a callout in the sidebar.)</p>
+<p>Assuming clients can perform any rendering or calculations required to
+show <tt class="docutils literal"><span class="pre">Anchored</span></tt> content using objects conforming to the <a class="reference external" href="http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#ranges">Dom Range Specification&#8217;s Range object</a>,
+clients need only be concerned with the
+conversion of our modeled anchorable objects to/from <tt class="docutils literal"><span class="pre">Range</span></tt> objects.</p>
+</div>
+<div class="section" id="modeling-anchorable-content">
+<h2>Modeling Anchorable Content<a class="headerlink" href="#modeling-anchorable-content" title="Permalink to this headline">¶</a></h2>
+<p>Taking inspiration from the <a class="reference external" href="http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#ranges">Dom Range Specification</a>,
+we can use the following object model to represent anchored content:</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="c1">// An object associated with some portion of a content unit</span>
+<span class="n">mixin</span> <span class="n">Anchored</span><span class="o">&lt;</span><span class="n">Contained</span><span class="o">&gt;</span> <span class="p">{</span>
+        <span class="n">ContentRangeDescription</span> <span class="n">applicableRange</span><span class="p">;</span> <span class="c1">//AKA anchor</span>
+<span class="p">}</span>
+
+<span class="c1">// Notice that these are not Dataserver object (e.g, no OID)</span>
+
+<span class="k">class</span> <span class="nc">ContentRangeDescription</span> <span class="p">{</span>
+        <span class="c1">// By itself, this class serves to denote an &#39;empty&#39; range</span>
+<span class="p">}</span>
+
+<span class="n">abstract</span> <span class="k">class</span> <span class="nc">ContentPointer</span> <span class="p">{}</span>
+
+<span class="n">abstract</span> <span class="k">class</span> <span class="nc">DomContentPointer</span> <span class="o">:</span> <span class="n">ContentPointer</span> <span class="p">{</span>
+        <span class="n">string</span> <span class="n">role</span><span class="p">;</span> <span class="c1">//The role this pointer is playing in the</span>
+        <span class="c1">//anchoring process</span>
+<span class="p">}</span>
+
+<span class="k">class</span> <span class="nc">DomContentRangeDescription</span> <span class="o">:</span> <span class="n">ContentRangeDescription</span> <span class="p">{</span>
+        <span class="n">DomContentPointer</span> <span class="n">start</span><span class="p">;</span> <span class="c1">//must not be nil</span>
+        <span class="n">DomContentPointer</span> <span class="n">end</span><span class="p">;</span> <span class="c1">//must not be nil</span>
+        <span class="n">DomContentPointer</span> <span class="n">ancestor</span><span class="p">;</span> <span class="c1">//must not be nil</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">In the future, we may want to add supplementary information (such as
+an XPath) given an absolute or relative location to a selected Node to make it
+faster to reconstruct ranges. Any such supplementary information is
+not in this version of the specification, which focuses on simplicity.</p>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The definitive dataserver versions of all the datastructures defined in this document
+are described in <a class="reference internal" href="../content-anchoring-interfaces/"><em>Content Anchoring (range) Interfaces</em></a>.</p>
+</div>
+<p>Anchorable content <em>MUST</em> implement the abstract class <tt class="docutils literal"><span class="pre">Anchored</span></tt> to
+specify the <tt class="docutils literal"><span class="pre">applicableRange</span></tt> it is anchored to. <tt class="docutils literal"><span class="pre">ContentRangeDescription</span></tt>
+objects must have well formed <tt class="docutils literal"><span class="pre">ContentPointer</span></tt> objects for start, end,
+and ancestor. It <em>SHOULD</em> be considered an error if the start, end or
+ancestor of a ContentRangeDescription object is undefined. A well formed
+ContentRangeDescription with valid start, end, and ancestor values should
+be used to create well formed DOM Range objects.</p>
+<p>Objects of type <tt class="docutils literal"><span class="pre">ContentPointer</span></tt> provide the information required to
+identify a location in the content for use as the start or end of a
+range, or to identify a node that contains the start and end (common
+ancestor). The abstract base class <tt class="docutils literal"><span class="pre">DOMContentPointer</span></tt> contains the
+minimum amount of information required to identify an anchor in NTI
+html based content.</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">role</span></tt> specifies how this anchor is to be used.  It <em>MUST</em>
+take one of the following three values: <tt class="docutils literal"><span class="pre">&quot;start&quot;</span></tt>, <tt class="docutils literal"><span class="pre">&quot;end&quot;</span></tt>,
+<tt class="docutils literal"><span class="pre">&quot;ancestor&quot;</span></tt></li>
+</ul>
+<p>Concrete subclasses of <tt class="docutils literal"><span class="pre">DOMContentPointer</span></tt> should provide the
+remaining information required to identify content location relative
+to the anchor provided by the abstract base class.</p>
+<div class="section" id="domcontentpointer-implementations">
+<h3>DOMContentPointer implementations<a class="headerlink" href="#domcontentpointer-implementations" title="Permalink to this headline">¶</a></h3>
+<p>The class <tt class="docutils literal"><span class="pre">DOMContentPointer</span></tt> is abstract. A few subclasses are
+specified which provide concrete storage and rules for resolution. In
+the future, more subclasses may be added.</p>
+<div class="section" id="elementdomcontentpointer">
+<h4>ElementDomContentPointer<a class="headerlink" href="#elementdomcontentpointer" title="Permalink to this headline">¶</a></h4>
+<p>An <tt class="docutils literal"><span class="pre">ElementDomContentPointer</span></tt> adds the necessary information to the abstract base
+class <tt class="docutils literal"><span class="pre">DOMContentPointer</span></tt> to represent a containiner element.
+Its purpose is to identify a node that things can be anchored
+relative to. This type of anchor is most often seen as the <tt class="docutils literal"><span class="pre">ancestor</span></tt>
+portion of an <tt class="docutils literal"><span class="pre">ContentRangeDescription</span></tt> or a <tt class="docutils literal"><span class="pre">TextDomContentPointer</span></tt>.</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="kr">class</span> <span class="nx">ElementDomContentPointer</span> <span class="o">:</span> <span class="nx">DomContentPointer</span><span class="p">{</span>
+        <span class="nx">string</span> <span class="nx">elementId</span><span class="p">;</span>    <span class="c1">//dom id of the anchoring node</span>
+        <span class="nx">string</span> <span class="nx">elementTagName</span><span class="p">;</span> <span class="c1">//tagname of the anchoring node</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">elementId</span></tt> is the DOM ID of an arbitrary node in the content.</li>
+<li><tt class="docutils literal"><span class="pre">elementTagName</span></tt> is the tag name for the node identified by
+<tt class="docutils literal"><span class="pre">elementId</span></tt>. Both these properties <em>MUST NOT</em> be nil.</li>
+</ul>
+</div>
+<div class="section" id="textdomcontentpointer">
+<h4>TextDomContentPointer<a class="headerlink" href="#textdomcontentpointer" title="Permalink to this headline">¶</a></h4>
+<p>Content is anchored within text by describing a containing ancestor element,
+plus some context information used to traverse to the anchored text:</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="c1">//Adds redundant information about text content</span>
+<span class="k">class</span> <span class="nc">TextDomContentPointer</span> <span class="o">:</span> <span class="n">DOMContentPointer</span> <span class="p">{</span>
+        <span class="n">DomContentPointer</span> <span class="n">ancestor</span><span class="p">;</span> <span class="c1">//Represents the containing element</span>
+                                                                <span class="c1">//this text is anchored in.</span>
+        <span class="n">TextContext</span><span class="p">[]</span> <span class="n">contexts</span><span class="p">;</span> <span class="c1">//An array of TextContext</span>
+                                  <span class="c1">//objects providing context for this anchor</span>
+        <span class="kt">int</span> <span class="n">edgeOffset</span><span class="p">;</span> <span class="c1">//The offset from the start or end of content_text of the edge</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>This class should be used to reference portions of DOM <a class="reference external" href="http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#interface-text">Text nodes</a>
+as <tt class="docutils literal"><span class="pre">ContentPointer</span></tt> objects, and is useful when a range begins or
+ends inside of <tt class="docutils literal"><span class="pre">Text</span></tt> content.</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">ancestor</span></tt> is a <tt class="docutils literal"><span class="pre">DomContentPointer</span></tt> that represents
+an element who is an ancestor (not necessarily a direct parent) of
+the text represented by this <tt class="docutils literal"><span class="pre">TextDomContentPointer</span></tt> object.  If
+<tt class="docutils literal"><span class="pre">ancestor</span></tt> is a <tt class="docutils literal"><span class="pre">ElementDomContentPointer</span></tt> its <tt class="docutils literal"><span class="pre">role</span></tt> will be <tt class="docutils literal"><span class="pre">ancestor</span></tt>.</li>
+<li><tt class="docutils literal"><span class="pre">contexts</span></tt> is an array of <tt class="docutils literal"><span class="pre">TextContext</span></tt> objects that provide
+contextual information for the <tt class="docutils literal"><span class="pre">range</span></tt> endpoint represented by
+this anchor. The length of <tt class="docutils literal"><span class="pre">contexts</span></tt> <em>MUST</em> be at least one. The
+first <tt class="docutils literal"><span class="pre">TextContext</span></tt> object in the array provides the <em>primary
+context</em> for this anchor, and represents a snippet of text adjacent
+to the <tt class="docutils literal"><span class="pre">range</span></tt> endpoint identified by this anchor. Additional
+<tt class="docutils literal"><span class="pre">TextContext</span></tt> objects in the array provide further context.
+Those objects closest to the beginning of the array provide the most
+specific (nearest) context while those towards the end provide less
+specific (more distant) context. If this anchor has a <tt class="docutils literal"><span class="pre">role</span></tt>
+<em>EQUAL TO</em> <tt class="docutils literal"><span class="pre">start</span></tt> the additional context objects mirror the
+<tt class="docutils literal"><span class="pre">Text</span></tt> nodes returned by repeateadly asking <a class="reference external" href="http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#treewalker">TreeWalker</a>
+configured to show <tt class="docutils literal"><span class="pre">Text</span></tt> nodes for <tt class="docutils literal"><span class="pre">previousNode</span></tt> starting from the node used to generate the
+<em>primary context</em> object. Similarily, if this anchor has a <tt class="docutils literal"><span class="pre">role</span></tt>
+<em>EQUAL TO</em> <tt class="docutils literal"><span class="pre">end</span></tt> the additional context objects mirror the
+<tt class="docutils literal"><span class="pre">Text</span></tt> nodes returned by repeateadly asking <a class="reference external" href="http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#treewalker">TreeWalker</a>
+configured to show <tt class="docutils literal"><span class="pre">Text</span></tt> nodes for <tt class="docutils literal"><span class="pre">nextNode</span></tt> starting from the node used to generate the
+<em>primary context</em> object. See <tt class="docutils literal"><span class="pre">Converting</span> <span class="pre">a</span> <span class="pre">Text</span> <span class="pre">Node</span> <span class="pre">to</span>
+<span class="pre">TextDomContentPointer</span></tt> for more information.</li>
+<li><tt class="docutils literal"><span class="pre">edgeOffset</span></tt> is the character offset from the start of the
+<tt class="docutils literal"><span class="pre">primary</span> <span class="pre">context</span></tt> object&#8217;s <tt class="docutils literal"><span class="pre">contextText</span></tt> string to the location
+of the edge thie anchor represents.</li>
+</ul>
+<p>When specifying context information for a <cite>TextDomContentPointer</cite> the
+following <cite>TextContext</cite> will be used:</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="c1">//Provide a snippet of text context</span>
+<span class="k">class</span> <span class="nc">TextContext</span> <span class="p">{</span>
+        <span class="n">string</span> <span class="n">contextText</span><span class="p">;</span> <span class="c1">//A chunk of text that can be used as context</span>
+        <span class="kt">int</span> <span class="n">contextOffset</span><span class="p">;</span> <span class="c1">//offset of contextText into contextOffset&#39;s</span>
+                                                <span class="c1">//containing text node</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">contextText</span></tt> is a string contained in the <a class="reference external" href="http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-node-textcontent">textContent or nodeValue</a>
+of a <tt class="docutils literal"><span class="pre">Text</span></tt> node near the <tt class="docutils literal"><span class="pre">TextDomContentPointer</span></tt> this object is
+providing context for.</li>
+<li><tt class="docutils literal"><span class="pre">contextOffset</span></tt> is the index of <tt class="docutils literal"><span class="pre">contextText</span></tt> from the start or end of <tt class="docutils literal"><span class="pre">textContent</span></tt>.
+<tt class="docutils literal"><span class="pre">contextOffset</span></tt> <em>MUST</em> be an integer greater than or equal to zero.  Negative values are reserved for future use.
+If this object is providing context for an anchor with a <tt class="docutils literal"><span class="pre">role</span></tt> <em>EQUAL TO</em> <tt class="docutils literal"><span class="pre">&quot;start&quot;</span></tt>, <tt class="docutils literal"><span class="pre">contextOffset</span></tt>
+represents the character index from the end (right) of <tt class="docutils literal"><span class="pre">textContent</span></tt>.
+If this object is providing context for an anchor with a <tt class="docutils literal"><span class="pre">role</span></tt> <em>EQUAL TO</em> <tt class="docutils literal"><span class="pre">&quot;end&quot;</span></tt>,
+<tt class="docutils literal"><span class="pre">contextOffset</span></tt> represents the index from the start (left) of
+<tt class="docutils literal"><span class="pre">textContent</span></tt>.  This keeps indexes closest to the selected
+range stable.</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="section" id="contentrangedescription-conversion">
+<h2>ContentRangeDescription conversion<a class="headerlink" href="#contentrangedescription-conversion" title="Permalink to this headline">¶</a></h2>
+<p>To maintain parity between clients it is important the same algorithm
+be used for converting <tt class="docutils literal"><span class="pre">ContentRangeDescription</span></tt> objects to and from DOM
+ranges. The algorithm to use is detailed here.</p>
+<p>We begin with some definitions:</p>
+<dl class="docutils">
+<dt><em>referenceable</em> (or <em>representable</em>) DOM <tt class="docutils literal"><span class="pre">Node</span></tt></dt>
+<dd><p class="first">A <tt class="docutils literal"><span class="pre">Node</span></tt> which can supply the information
+necessary to completely create a <tt class="docutils literal"><span class="pre">ContentPointer.</span></tt></p>
+<p class="last">This Node is either an <tt class="docutils literal"><span class="pre">Element</span></tt> (because it must have the  <a class="reference external" href="http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-element-id">id</a>,
+and <a class="reference external" href="http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-element-tagname">tagName</a>
+properties) with a <em>referenceable ID</em>, or a <tt class="docutils literal"><span class="pre">Text</span></tt> node that is a
+descendent (not necessarily a direct child) of such an <tt class="docutils literal"><span class="pre">Element.</span></tt></p>
+</dd>
+<dt><em>referenceable ID</em></dt>
+<dd>The value of an <tt class="docutils literal"><span class="pre">id</span></tt> property of an <tt class="docutils literal"><span class="pre">Element</span></tt> which is not null,
+not the empty string, and does not begin with one of the following
+excluded prefixes: <tt class="docutils literal"><span class="pre">MathJax</span></tt>.</dd>
+<dt><em>synthetic node</em></dt>
+<dd>A <tt class="docutils literal"><span class="pre">Node</span></tt> not found in the original rendered content.  An example
+of a <em>synthetic node</em> is a <tt class="docutils literal"><span class="pre">span</span></tt> injected client side as part of
+highlighting a portion of a <tt class="docutils literal"><span class="pre">Text</span></tt> node.</dd>
+</dl>
+<div class="section" id="dom-range-to-contentrangedescription">
+<h3>DOM Range to ContentRangeDescription<a class="headerlink" href="#dom-range-to-contentrangedescription" title="Permalink to this headline">¶</a></h3>
+<p>Given a DOM <tt class="docutils literal"><span class="pre">Range</span></tt>, <tt class="docutils literal"><span class="pre">range</span></tt>, clients can only generate
+<tt class="docutils literal"><span class="pre">ContentRangeDescription</span></tt> objects if they are able to represent the
+start and end of the <tt class="docutils literal"><span class="pre">range</span></tt> object using <tt class="docutils literal"><span class="pre">ContentPointer</span></tt>
+objects. If asked to create a <tt class="docutils literal"><span class="pre">ContentRangeDescription</span></tt> for a range
+whose start or end cannot be represented using an
+<tt class="docutils literal"><span class="pre">ContentPointer</span></tt>, clients should walk the end(s) that are not
+representable inward (i.e., narrowing the range) <a class="footnote-reference" href="#id3" id="id2">[1]</a> until the
+range&#8217;s start and end fall on nodes that can be represented as
+<tt class="docutils literal"><span class="pre">ContentPointers.</span></tt></p>
+<table class="docutils footnote" frame="void" id="id3" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id2">[1]</a></td><td>Because this usually takes place in the context of a user
+selecting a chunk of text, in the event we can&#8217;t anchor the start or
+the end, we assume we want the largest representable range contained by the original
+range. That is, we shrink the range inward from the necessary edges.</td></tr>
+</tbody>
+</table>
+<p>When generating <tt class="docutils literal"><span class="pre">ContentRangeDescription</span></tt> objects, clients <em>MUST</em>
+ignore all <em>synthetic nodes</em>.  Because it is impossible to know how
+certain clients <em>MAY</em> change the content dom as part of
+normal operation, the objects generated to model <tt class="docutils literal"><span class="pre">Anchored</span></tt> content
+<em>MUST</em> be relative to the oringally rendered content.</p>
+<p>Given a <tt class="docutils literal"><span class="pre">range</span></tt> whose edges can by represented by <tt class="docutils literal"><span class="pre">ContentPointers</span></tt>,
+the generation of a <tt class="docutils literal"><span class="pre">ContentRangeDescription</span></tt> is straightforward. As a
+first step the DOM is walked upwards from the range&#8217;s <a class="reference external" href="http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-range-commonancestorcontainer">commonAncestorComponent</a>
+until a node that can be represented as an <tt class="docutils literal"><span class="pre">ElementDomContentPointer</span></tt>
+is found. This node is then converted to an
+<tt class="docutils literal"><span class="pre">ElementDomContentPointer</span></tt> as described below and the result becomes
+the <tt class="docutils literal"><span class="pre">ancestor</span></tt> of the <tt class="docutils literal"><span class="pre">ContentRangeDescription</span></tt>. With the ancestor
+conversion complete,%z the client then converts both the range&#8217;s <a class="reference external" href="http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-range-startcontainer">startContainer</a>
+and <a class="reference external" href="http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-range-endcontainer">endContainer</a>
+(at this point both of which we know can be represented by an
+<tt class="docutils literal"><span class="pre">ContentPointer</span></tt>), and stores the result in the
+<tt class="docutils literal"><span class="pre">ContentRangeDescription</span></tt> as <tt class="docutils literal"><span class="pre">start</span></tt> and <tt class="docutils literal"><span class="pre">end</span></tt>, respectively.</p>
+<p>A start or end that is a representable <tt class="docutils literal"><span class="pre">Text</span></tt> Node will be represented with an
+<tt class="docutils literal"><span class="pre">TextDomContentPointer;</span></tt> all other endpoints will be represented with
+an <tt class="docutils literal"><span class="pre">ElementDomContentPointer.</span></tt></p>
+<div class="section" id="converting-an-element-to-elementdomcontentpointer">
+<h4>Converting an Element to ElementDomContentPointer<a class="headerlink" href="#converting-an-element-to-elementdomcontentpointer" title="Permalink to this headline">¶</a></h4>
+<p>Elements represented as an <tt class="docutils literal"><span class="pre">ElementDomContentPointer</span></tt> <em>MUST</em> have both
+an <tt class="docutils literal"><span class="pre">id</span></tt> and <tt class="docutils literal"><span class="pre">tagname</span></tt>. The <tt class="docutils literal"><span class="pre">ElementDomContentPointer</span></tt>&#8216;s <tt class="docutils literal"><span class="pre">elementId</span></tt>
+<em>SHOULD</em> be set to the node&#8217;s <a class="reference external" href="http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-element-id">id</a>,
+and <tt class="docutils literal"><span class="pre">elementTagName</span></tt> <em>SHOULD</em> be set to the node&#8217;s <a class="reference external" href="http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-element-tagname">tagName</a>.</p>
+</div>
+<div class="section" id="converting-a-text-node-to-textdomcontentpointer">
+<h4>Converting a Text Node to TextDomContentPointer<a class="headerlink" href="#converting-a-text-node-to-textdomcontentpointer" title="Permalink to this headline">¶</a></h4>
+<p>When the <tt class="docutils literal"><span class="pre">startContainer</span></tt> or <tt class="docutils literal"><span class="pre">endContainer</span></tt> in a <tt class="docutils literal"><span class="pre">Range</span></tt> is a
+<tt class="docutils literal"><span class="pre">Text</span></tt> node, the result of conversion will be a
+<tt class="docutils literal"><span class="pre">TextDomContentPointer</span></tt> (the &#8220;text anchor&#8221;). Because <tt class="docutils literal"><span class="pre">Text</span></tt> nodes
+do not have tag names or IDs, a text anchor describes a node that does
+have those properties (a containing <tt class="docutils literal"><span class="pre">Element</span></tt>) plus a set of context
+objects that define the location of the text within (beneath) that
+element.</p>
+<p>The first step in generating a text anchor is to identify the
+containing element (reference point). From the text node, walk up the
+DOM until a refrenceable node is found. This node is converted to an
+<tt class="docutils literal"><span class="pre">ElementDomContentPointer</span></tt> object, and it becomes the
+<tt class="docutils literal"><span class="pre">TextDomContentPointer</span></tt>&#8216;s <tt class="docutils literal"><span class="pre">ancestor</span></tt>.</p>
+<p>An anchor&#8217;s <tt class="docutils literal"><span class="pre">contexts</span></tt> property is made up of a <em>primary context</em>
+object and an optional set of <em>additional context</em> objects.  The first
+<tt class="docutils literal"><span class="pre">TextContext</span></tt> object in the <tt class="docutils literal"><span class="pre">contexts</span></tt> array is the anchor&#8217;s
+<em>primary context</em>.  Additional <tt class="docutils literal"><span class="pre">TextContext</span></tt> objects in the array
+are the anchor&#8217;s <em>additional context</em> objects.  An anchor <em>MUST</em>
+have a <em>primary context</em> object and <em>MAY</em> have one or more
+<em>additional context</em> objects.</p>
+<p>The anchor&#8217;s <em>primary context</em> and <tt class="docutils literal"><span class="pre">edgeOffset</span></tt> can be populated
+given the <tt class="docutils literal"><span class="pre">TextDomContentPointer</span></tt> and the Range object. The method
+for generating the <em>primary context</em> object may differ from the
+method used to generate <em>additional</em> <tt class="docutils literal"><span class="pre">TextContext</span></tt> objects. In
+order to populate a <tt class="docutils literal"><span class="pre">Range</span></tt> object&#8217;s endpoints from
+<tt class="docutils literal"><span class="pre">TextDomContentPointers</span></tt>, <tt class="docutils literal"><span class="pre">contexts</span></tt> should contain enough
+<tt class="docutils literal"><span class="pre">NTITextContent</span></tt> objects to uniquely identfiy this anchor point
+beneath the reference node.</p>
+<p>The generation of <tt class="docutils literal"><span class="pre">TextContext</span></tt> objects is defined here in a
+simplistic manner; in the future, this may be refined, but the
+algorithm must remain capable of intepreting existing data. Here, we
+take a word based approach to extracting context from a <tt class="docutils literal"><span class="pre">Text</span></tt> node.
+Given an anchor, a <tt class="docutils literal"><span class="pre">Text</span></tt> node, and an offset into that textnode
+marking an edge of the range being anchored, the
+following procedure should be used to generate the <em>primary context</em>
+object:</p>
+<p>Locate the first word to the left of offset in <tt class="docutils literal"><span class="pre">textContent</span></tt>, left_offset_text.  This string <em>MAY</em> contain
+trailing whitespace, but <em>MUST NOT</em> contain leading whitespace.  If
+the offset identifies the beginning of the <tt class="docutils literal"><span class="pre">textContent</span></tt>, e.g.
+<tt class="docutils literal"><span class="pre">offset</span> <span class="pre">==</span> <span class="pre">0</span></tt>, left_offset_text <em>MUST</em> be empty.  Locate the first
+word to the right of offset, right_offset_text.  This string <em>MAY</em>
+contain leading whitespace, but <em>MUST NOT</em> contain trailing
+whitespace.  If the offset identifies the end of <tt class="docutils literal"><span class="pre">textContent</span></tt>, e.g.
+<tt class="docutils literal"><span class="pre">offset</span> <span class="pre">=</span> <span class="pre">textContent.length</span></tt>, right_offset_text <em>MUST</em> be empty.
+Combine left_offset_text and right_offset_text to populate the <tt class="docutils literal"><span class="pre">TextContext</span></tt>
+object&#8217;s <tt class="docutils literal"><span class="pre">contextText</span></tt> property.  The <tt class="docutils literal"><span class="pre">TextContext</span></tt> object&#8217;s
+<tt class="docutils literal"><span class="pre">contextOffset</span></tt> property is the index of <tt class="docutils literal"><span class="pre">contextText</span></tt> in textContent.
+If anchor <tt class="docutils literal"><span class="pre">role</span></tt> is <tt class="docutils literal"><span class="pre">start</span></tt> this offset is from the right of
+textContent.  If anchor <tt class="docutils literal"><span class="pre">role</span></tt> is <tt class="docutils literal"><span class="pre">end</span></tt> this offset is from the
+left of <tt class="docutils literal"><span class="pre">textContext</span></tt>.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">A word is a whitespace delimited set of characters.</p>
+</div>
+<p>Example 1:</p>
+<p>This examples shows the start edge of a range that does not fall
+at the beggining or end of the <tt class="docutils literal"><span class="pre">Text</span></tt> node.</p>
+<div class="highlight-html"><div class="highlight"><pre>[This text contains a start| endpoint]
+</pre></div>
+</div>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span><span class="nx">contextText</span><span class="o">:</span> <span class="s1">&#39;start endpoint&#39;</span><span class="p">,</span> <span class="nx">contextOffset</span><span class="o">:</span> <span class="mi">13</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>Example 2:</p>
+<p>This example shows the end edge of a range that does not fall
+at the beggning or end of the <tt class="docutils literal"><span class="pre">Text</span></tt> node.</p>
+<div class="highlight-html"><div class="highlight"><pre>[This text |contains a start endpoint]
+</pre></div>
+</div>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span><span class="nx">contextText</span><span class="o">:</span> <span class="s1">&#39;text contains&#39;</span><span class="p">,</span> <span class="nx">contextOffset</span><span class="o">:</span> <span class="mi">23</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>Example 3:</p>
+<p>This example shows the end edge of a range that falls at the end
+of the <tt class="docutils literal"><span class="pre">Text</span></tt> node.</p>
+<div class="highlight-html"><div class="highlight"><pre>[This text contains an end endpoint|]
+</pre></div>
+</div>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span><span class="nx">contextText</span><span class="o">:</span> <span class="s1">&#39;endpoint&#39;</span><span class="p">,</span> <span class="nx">contextOffset</span><span class="o">:</span> <span class="mi">33</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>Given a <tt class="docutils literal"><span class="pre">Text</span></tt> node that is contextually relevant to an anchor
+endpoint and an anchor, <em>additional</em> <tt class="docutils literal"><span class="pre">TextContext</span></tt> objects can be
+defined as follows.</p>
+<p>If the anchor <tt class="docutils literal"><span class="pre">role</span></tt> is <tt class="docutils literal"><span class="pre">start</span></tt>, <tt class="docutils literal"><span class="pre">contextText</span></tt> is the last word in the
+<tt class="docutils literal"><span class="pre">Text</span></tt> node&#8217;s <tt class="docutils literal"><span class="pre">textContent</span></tt> string.  This word <em>MAY</em> contain trailing
+whitespace, but <em>MUST NOT</em> contain leading whitespace.  <tt class="docutils literal"><span class="pre">contextOffset</span></tt>
+is the index of <tt class="docutils literal"><span class="pre">contextText</span></tt> from the right side of the <tt class="docutils literal"><span class="pre">Text</span></tt>
+node&#8217;s <tt class="docutils literal"><span class="pre">textContent</span></tt> string.  Likewise, if the anchor <tt class="docutils literal"><span class="pre">role</span></tt> is <tt class="docutils literal"><span class="pre">end</span></tt>,
+<tt class="docutils literal"><span class="pre">contextText</span></tt> is the first word in the
+<tt class="docutils literal"><span class="pre">Text</span></tt> node&#8217;s <tt class="docutils literal"><span class="pre">textContent</span></tt> string.  This word <em>MAY</em> contain leading
+whitespace, but <em>MUST NOT</em> contain trailing whitespace.  <tt class="docutils literal"><span class="pre">contextOffset</span></tt>
+is the index of <tt class="docutils literal"><span class="pre">contextText</span></tt> from the left side of the <tt class="docutils literal"><span class="pre">Text</span></tt>
+node&#8217;s <tt class="docutils literal"><span class="pre">textContent</span></tt> string.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">A <tt class="docutils literal"><span class="pre">Text</span></tt> node is considered contextually
+relevant to an anchor with a <tt class="docutils literal"><span class="pre">role</span></tt> of <tt class="docutils literal"><span class="pre">start</span></tt>, if it can be found by
+walking from the <tt class="docutils literal"><span class="pre">Text</span></tt> node modeled by the anchors <em>primary
+context</em> object, using a <tt class="docutils literal"><span class="pre">TreeWalker's</span></tt> <tt class="docutils literal"><span class="pre">previousNode</span></tt> function.
+Similarily, a <tt class="docutils literal"><span class="pre">Text</span></tt> node is considered contextually
+relevant to an anchor with a <tt class="docutils literal"><span class="pre">role</span></tt> of <tt class="docutils literal"><span class="pre">end</span></tt>, if it can be found by
+walking from the <tt class="docutils literal"><span class="pre">Text</span></tt> node modeled by the anchors <em>primary
+context</em> object, using a <tt class="docutils literal"><span class="pre">TreeWalker's</span></tt> <tt class="docutils literal"><span class="pre">nextNode</span></tt> function.</p>
+</div>
+<p>Given the ability to genreate the <em>primary context</em> object,
+<em>additional context</em> objects and an <tt class="docutils literal"><span class="pre">edgeOffset</span></tt> as outlined
+above, the following procedure can by used to model a range
+endpoint, that exists withing a textNode, as a complete
+<tt class="docutils literal"><span class="pre">TextDomContentPointer</span></tt> object as follows:</p>
+<p>Extract a container and offset from the range object.  If the anchor
+<tt class="docutils literal"><span class="pre">role</span></tt> is <tt class="docutils literal"><span class="pre">start</span></tt> use the range&#8217;s <tt class="docutils literal"><span class="pre">startContainer</span></tt> and <tt class="docutils literal"><span class="pre">startOffset</span></tt>
+properties.  If the anchor <tt class="docutils literal"><span class="pre">role</span></tt> is <tt class="docutils literal"><span class="pre">end</span></tt> use the range&#8217;s
+<tt class="docutils literal"><span class="pre">endContainer</span></tt> and <tt class="docutils literal"><span class="pre">endOffset</span></tt> properties.  From the container,
+walk up the DOM tree to find a referenceable node. Generate an
+<tt class="docutils literal"><span class="pre">ElementDomContentPointer</span></tt> object from this node and set it as this
+object&#8217;s <tt class="docutils literal"><span class="pre">ancestor</span></tt>.  Using the container, offset, and
+anchor, generate the anchor&#8217;s <em>primary context</em>.  The anchor&#8217;s
+<tt class="docutils literal"><span class="pre">edgeOffset</span></tt> property is the index into the <em>primary context</em>
+object&#8217;s <tt class="docutils literal"><span class="pre">contextText</span></tt> property, of the offset from the range object.</p>
+<p>Using a <tt class="docutils literal"><span class="pre">TreeWalker</span></tt> rooted at the anchor&#8217;s <tt class="docutils literal"><span class="pre">ancestor</span></tt>, start at container and
+iterate <tt class="docutils literal"><span class="pre">Text</span></tt> node siblings to generate <em>additional context</em>
+object&#8217;s.  Continue to iterate creating <tt class="docutils literal"><span class="pre">TextContext</span></tt> objects
+for each sibling until 15 characters have been collected, or 5 context objects have been created.
+If anchor <tt class="docutils literal"><span class="pre">role</span></tt> is <tt class="docutils literal"><span class="pre">start</span></tt>, iterate siblings to the left using the
+<tt class="docutils literal"><span class="pre">TreeWalker's</span></tt> <tt class="docutils literal"><span class="pre">previousNode</span></tt> method.  If anchor <tt class="docutils literal"><span class="pre">role</span></tt> is <tt class="docutils literal"><span class="pre">end</span></tt>,
+iterate siblings to the right using the <tt class="docutils literal"><span class="pre">TreeWalker's</span></tt> <tt class="docutils literal"><span class="pre">nextNode</span></tt>
+method.  The anchor&#8217;s <tt class="docutils literal"><span class="pre">contexts</span></tt> property becomes an array whoes
+head is the <em>primary context</em> object, and whose tail is the
+<em>additional context</em> objects.</p>
+<p>See examples at bottom of page.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">In the past, when walking <tt class="docutils literal"><span class="pre">Text</span></tt> nodes, we have encountered nodes
+whose <tt class="docutils literal"><span class="pre">textContent</span></tt> is only whitespace.  Should we skip those when
+walking siblings with the TreeWalker?</p>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The Range&#8217;s offsets are specified in terms of the DOM object&#8217;s node
+length. For a Text node, its length is defined as unicode code
+points or characters.</p>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">If it was necessary to traverse upward many nodes in order to find
+one that is referenceable, then, because we are only storing a text
+node&#8217;s content and the offset, not any sort of path information,
+the process of reconstructing the matching range could be fairly
+inefficient and require much traversal. The performance
+ramifications of this are unclear.</p>
+</div>
+</div>
+</div>
+<div class="section" id="contentrangedescription-to-dom-range">
+<h3>ContentRangeDescription to DOM Range<a class="headerlink" href="#contentrangedescription-to-dom-range" title="Permalink to this headline">¶</a></h3>
+<p>When creating a DOM Range, <tt class="docutils literal"><span class="pre">range</span></tt>, object from a
+<tt class="docutils literal"><span class="pre">ContentRangeDescription</span></tt> object, clients should keep in mind that from
+a user perspective it is much worse to anchor something to the wrong
+content than to not anchor it at all. If, when reconstructing the range
+from the <tt class="docutils literal"><span class="pre">ContentRangeDescription</span></tt>, a client is unable to confidently
+locate the <tt class="docutils literal"><span class="pre">startContainer</span></tt>, <tt class="docutils literal"><span class="pre">endContainer</span></tt>, <tt class="docutils literal"><span class="pre">startOffset</span></tt>, or
+<tt class="docutils literal"><span class="pre">endOffset</span></tt> using all the <tt class="docutils literal"><span class="pre">ContentPointer</span></tt> information provided,
+the client <em>should</em> abort anchoring the content to a specific
+location.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">To maintain consistency across clients, in this version of the
+spec, confidently means the range produced from a
+<tt class="docutils literal"><span class="pre">ContentRangeDescription</span></tt> following the procedure
+in <tt class="docutils literal"><span class="pre">ContentRangeDescription</span> <span class="pre">to</span> <span class="pre">DOM</span> <span class="pre">Range</span></tt>, would produce the same
+<tt class="docutils literal"><span class="pre">ContentRangeDescription</span></tt>  by following the procedure in
+<tt class="docutils literal"><span class="pre">DOM</span> <span class="pre">Range</span> <span class="pre">to</span> <span class="pre">ContentRangeDescription</span></tt>.</p>
+</div>
+<p>Anchor resolution starts by resolving the ancestor
+<tt class="docutils literal"><span class="pre">ContentPointer</span></tt> to a DOM node (which <em>must</em> be a <em>referenceable</em> <tt class="docutils literal"><span class="pre">Element</span></tt>).
+This provides a starting point when searching for the start and end
+<tt class="docutils literal"><span class="pre">ContentPointers</span></tt>. The ancestor can also be used to validate parts
+of the <tt class="docutils literal"><span class="pre">ContentRangeDescription</span></tt>. For example, the start and end should
+be contained in the ancestor. If the ancestor can&#8217;t be resolved it
+should default to the DOM&#8217;s <a class="reference external" href="http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#document-element">documentElement</a>.</p>
+<p>Given an ancestor, the DOM can be traversed for the start and end
+container <tt class="docutils literal"><span class="pre">Nodes</span></tt> and offsets needed to construct a range. The type
+of <tt class="docutils literal"><span class="pre">ContentPointer</span></tt> used to model the <tt class="docutils literal"><span class="pre">start</span></tt> and <tt class="docutils literal"><span class="pre">end</span></tt>
+properties of the <tt class="docutils literal"><span class="pre">ContentRangeDescription</span></tt> will determine how the
+dom is searched beneath the ancestor.</p>
+<p>If a start and end <tt class="docutils literal"><span class="pre">Node</span></tt>, and offset, cannot be located beneath the ancestor, and the ancestor
+is not already the <tt class="docutils literal"><span class="pre">documentElement,</span></tt> resolution should be tried
+again given an ancestor of the <tt class="docutils literal"><span class="pre">documentElement.</span></tt> If the start does
+not come before end (as computed using <a class="reference external" href="http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-node-comparedocumentposition">compareDocumentPosition</a>),
+the <tt class="docutils literal"><span class="pre">ContentRangeDescription</span></tt> is invalid and clients <em>should</em> abort
+range creation and anchoring.</p>
+<p>Details on how the different types of <tt class="docutils literal"><span class="pre">ContentPointer</span></tt> objects
+should be searched for are discussed below:</p>
+<div class="section" id="converting-elementdomcontentpointer-to-a-node">
+<h4>Converting ElementDomContentPointer to a Node<a class="headerlink" href="#converting-elementdomcontentpointer-to-a-node" title="Permalink to this headline">¶</a></h4>
+<p>Given an ElementDomContentPointer find the DOM <tt class="docutils literal"><span class="pre">Element</span></tt> whose ID is
+<tt class="docutils literal"><span class="pre">elementId</span></tt> within the ancestor. If an <tt class="docutils literal"><span class="pre">Element</span></tt> with that ID
+can&#8217;t be found or the tagname of the <tt class="docutils literal"><span class="pre">Element</span></tt> does not match
+<tt class="docutils literal"><span class="pre">elementTagName</span></tt>, conversion fails and the result is null.  Example
+code for resolving ElementDomContentPointer as a start anchor follows:</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="kd">function</span> <span class="nx">locateRangeStartForAnchor</span><span class="p">(</span><span class="nx">absoluteAnchor</span><span class="p">,</span> <span class="nx">ancestorNode</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">tree_walker</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createTreeWalker</span><span class="p">(</span> <span class="nx">ancestorNode</span><span class="p">,</span> <span class="nx">NodeFilter</span><span class="p">.</span><span class="nx">SHOW_ELEMENT</span> <span class="p">);</span>
+
+        <span class="k">while</span><span class="p">(</span> <span class="nx">test_node</span> <span class="o">=</span> <span class="nx">tree_walker</span><span class="p">.</span><span class="nx">nextNode</span><span class="p">()</span> <span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span><span class="p">(</span>    <span class="nx">test_node</span><span class="p">.</span><span class="nx">id</span> <span class="o">===</span> <span class="nx">absoulteAnchor</span><span class="p">.</span><span class="nx">elementId</span>
+                    <span class="o">&amp;&amp;</span> <span class="nx">test_node</span><span class="p">.</span><span class="nx">tagName</span> <span class="o">===</span> <span class="nx">absoluteAnchor</span><span class="p">.</span><span class="nx">elementTagName</span> <span class="p">)</span> <span class="p">{</span>
+                <span class="k">return</span> <span class="nx">text_node</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="kc">null</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>An example of updating the range for an ElementDomContentPointer with
+type === <tt class="docutils literal"><span class="pre">end</span></tt> is as follows:</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="kd">function</span> <span class="nx">locateRangeEndForAnchor</span><span class="p">(</span><span class="nx">absoluteAnchor</span><span class="p">,</span> <span class="nx">ancestorNode</span><span class="p">,</span> <span class="nx">startResult</span><span class="p">){</span>
+        <span class="kd">var</span> <span class="nx">tree_walker</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createTreeWalker</span><span class="p">(</span><span class="nx">ancestorNode</span><span class="p">,</span> <span class="nx">NodeFilter</span><span class="p">.</span><span class="nx">SHOW_ELEMENT</span> <span class="p">);</span>
+
+        <span class="c1">//We want to look after the start node so we reposition the walker</span>
+        <span class="nx">tree_walker</span><span class="p">.</span><span class="nx">currentNode</span> <span class="o">=</span>  <span class="nx">startResult</span><span class="p">.</span><span class="nx">node</span><span class="p">;</span>
+
+        <span class="k">while</span><span class="p">(</span> <span class="nx">test_node</span> <span class="o">=</span> <span class="nx">tree_walker</span><span class="p">.</span><span class="nx">nextNode</span><span class="p">()</span> <span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span><span class="p">(</span>    <span class="nx">test_node</span><span class="p">.</span><span class="nx">id</span> <span class="o">===</span> <span class="nx">absoulteAnchor</span><span class="p">.</span><span class="nx">elementId</span>
+                    <span class="o">&amp;&amp;</span> <span class="nx">test_node</span><span class="p">.</span><span class="nx">tagName</span> <span class="o">===</span> <span class="nx">absoluteAnchor</span><span class="p">.</span><span class="nx">elementTagName</span> <span class="p">)</span> <span class="p">{</span>
+                        <span class="k">return</span> <span class="nx">test_node</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="kc">null</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="converting-textdomcontentpointer-to-a-node">
+<h4>Converting TextDomContentPointer to a Node<a class="headerlink" href="#converting-textdomcontentpointer-to-a-node" title="Permalink to this headline">¶</a></h4>
+<p>The general algorithm for resolving a <tt class="docutils literal"><span class="pre">TextDomContentPointer</span></tt> is as
+follows.  Begin by resolving the <tt class="docutils literal"><span class="pre">ancestor</span></tt> to a containing
+<tt class="docutils literal"><span class="pre">Element</span></tt>.  If the <tt class="docutils literal"><span class="pre">ancestor</span></tt> cannot be resolved, use the
+<tt class="docutils literal"><span class="pre">ContentRangeDescription</span></tt>&#8216;s ancestor as the containing <tt class="docutils literal"><span class="pre">Element</span></tt>.  This
+containing <tt class="docutils literal"><span class="pre">Element</span></tt> becomes the <em>reference node</em> used when searching for
+text the anchored range. Using the <em>refernce node</em> as the root, create a <tt class="docutils literal"><span class="pre">TreeWalker</span></tt> to
+interate each <tt class="docutils literal"><span class="pre">Text</span></tt> node, <tt class="docutils literal"><span class="pre">textNode</span></tt>.</p>
+<p>For each <tt class="docutils literal"><span class="pre">textNode</span></tt> check if the <em>primary context</em> object matches
+<tt class="docutils literal"><span class="pre">textNode</span></tt>. If it does, using a <tt class="docutils literal"><span class="pre">TreeWalker</span></tt> rooted at <em>reference
+node</em>, compare each <em>additional context</em> object by walking the tree
+backwards using the <tt class="docutils literal"><span class="pre">previousNode</span></tt> method, if anchor <tt class="docutils literal"><span class="pre">role</span></tt> is <tt class="docutils literal"><span class="pre">start</span></tt>, or
+forward using the <tt class="docutils literal"><span class="pre">nextNode</span></tt> method, if the anchor <tt class="docutils literal"><span class="pre">role</span></tt> is
+<tt class="docutils literal"><span class="pre">end</span></tt>. If all context objects match, <tt class="docutils literal"><span class="pre">textNode</span></tt> will become the
+range&#8217;s <tt class="docutils literal"><span class="pre">startContainer</span></tt> if the anchor <tt class="docutils literal"><span class="pre">role</span></tt> is <tt class="docutils literal"><span class="pre">start</span></tt>, or
+<tt class="docutils literal"><span class="pre">endContainer</span></tt> if the anchor <tt class="docutils literal"><span class="pre">role</span></tt> is <tt class="docutils literal"><span class="pre">end</span></tt>. If not all the
+context objects match, continue the outer loop by comparing context
+objects for the next <tt class="docutils literal"><span class="pre">textNode</span></tt>.</p>
+<p>When matcing <tt class="docutils literal"><span class="pre">contexts</span></tt>, if a pointer does not provide the maximum
+amount of contextual information, as defined in <tt class="docutils literal"><span class="pre">Converting</span> <span class="pre">a</span> <span class="pre">Text</span>
+<span class="pre">Node</span> <span class="pre">to</span> <span class="pre">TextDomContentPointer</span></tt>, clients <em>SHOULD</em> interpret that as
+the <tt class="docutils literal"><span class="pre">Text</span></tt> node this pointer represents did not contain any
+more contextually relevent nodes as defined in <tt class="docutils literal"><span class="pre">Converting</span> <span class="pre">a</span> <span class="pre">Text</span>
+<span class="pre">Node</span> <span class="pre">to</span> <span class="pre">TextDomContentPointer</span></tt> to the last <tt class="docutils literal"><span class="pre">TextContext</span></tt> object available.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">In the case where <tt class="docutils literal"><span class="pre">contexts</span></tt> ambiguously defines a
+<tt class="docutils literal"><span class="pre">TextDomContentPointer</span></tt>, but the pointer&#8217;s <tt class="docutils literal"><span class="pre">ancestor</span></tt> has been
+propertly resolved, clients <em>SHOULD</em> resolve to the endpoint that would create the
+largest range.  In the event <tt class="docutils literal"><span class="pre">contexts</span></tt> is ambiguous and
+<tt class="docutils literal"><span class="pre">ancestor</span></tt> can&#8217;t be resolved, clients <em>SHOULD</em> fail to
+confidently resolve the pointer.</p>
+</div>
+<p>If a <tt class="docutils literal"><span class="pre">textNode</span></tt> has been identified as the start or end container, a
+range can be constructed as follows. If anchor <tt class="docutils literal"><span class="pre">role</span></tt> is <tt class="docutils literal"><span class="pre">start</span></tt>,
+set the <tt class="docutils literal"><span class="pre">range's</span></tt> <tt class="docutils literal"><span class="pre">startContainer</span></tt> to <tt class="docutils literal"><span class="pre">textNode</span></tt>. If anchor
+<tt class="docutils literal"><span class="pre">role</span></tt> is <tt class="docutils literal"><span class="pre">end</span></tt>, set the <tt class="docutils literal"><span class="pre">range's</span></tt> <tt class="docutils literal"><span class="pre">endContainer</span></tt> to
+<tt class="docutils literal"><span class="pre">textNode</span></tt>. Calculate the text offset by adjusting
+the <em>primary context</em> object&#8217;s <tt class="docutils literal"><span class="pre">contextOffset</span></tt> by  the anchor&#8217;s
+<tt class="docutils literal"><span class="pre">edgeOffset</span></tt> property, and set the
+range&#8217;s <tt class="docutils literal"><span class="pre">startOffset</span></tt>, if anchor <tt class="docutils literal"><span class="pre">role</span></tt> == <tt class="docutils literal"><span class="pre">start</span></tt>, or
+<tt class="docutils literal"><span class="pre">endOffset</span></tt>, if anchor <tt class="docutils literal"><span class="pre">role</span></tt> == <tt class="docutils literal"><span class="pre">end</span></tt>, to the computed value.</p>
+</div>
+</div>
+<div class="section" id="examples">
+<h3>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h3>
+<p>This section will provide example HTML documents with a selection, a representation of
+their DOM, and the resulting <tt class="docutils literal"><span class="pre">ContentRangeDescription</span></tt> created (in JSON
+notation). Within the HTML, individual <tt class="docutils literal"><span class="pre">Text</span></tt> nodes are surrounded
+with square brackets; the selection is demarcated with the vertical
+pipe <tt class="docutils literal"><span class="pre">|</span></tt>.</p>
+<div class="section" id="a-nticontentsimpletextrangespec">
+<h4>A NTIContentSimpleTextRangeSpec<a class="headerlink" href="#a-nticontentsimpletextrangespec" title="Permalink to this headline">¶</a></h4>
+<div class="highlight-html"><div class="highlight"><pre><span class="nt">&lt;p</span> <span class="na">id=</span><span class="s">&quot;id&quot;</span><span class="nt">&gt;</span>
+        [|A single selected text node|]
+<span class="nt">&lt;/p&gt;</span>
+</pre></div>
+</div>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="c1">// The content range</span>
+<span class="p">{</span>
+        <span class="nx">ancestor</span><span class="o">:</span> <span class="p">{</span>
+                <span class="nx">elementId</span><span class="o">:</span> <span class="s1">&#39;id&#39;</span><span class="p">,</span>
+                <span class="nx">elementTagName</span><span class="o">:</span> <span class="s1">&#39;p&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="nx">start</span><span class="o">:</span> <span class="p">{</span>
+                <span class="nx">ancestor</span> <span class="o">:</span> <span class="p">{</span><span class="nx">elementId</span><span class="o">:</span> <span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="nx">elementTagName</span><span class="o">:</span> <span class="s1">&#39;p&#39;</span><span class="p">},</span>
+                <span class="nx">contexts</span><span class="o">:</span> <span class="p">[{</span> <span class="nx">contextText</span><span class="o">:</span> <span class="s1">&#39;A&#39;</span><span class="p">,</span> <span class="nx">contextOffset</span><span class="o">:</span> <span class="mi">26</span> <span class="p">}],</span>
+                <span class="nx">edgeOffset</span><span class="o">:</span> <span class="mi">0</span>
+        <span class="p">},</span>
+        <span class="nx">end</span><span class="o">:</span> <span class="p">{</span>
+                <span class="nx">ancestor</span> <span class="o">:</span> <span class="p">{</span><span class="nx">elementId</span><span class="o">:</span> <span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="nx">elementTagName</span><span class="o">:</span> <span class="s1">&#39;p&#39;</span><span class="p">},</span>
+                <span class="nx">contexts</span><span class="o">:</span> <span class="p">[{</span> <span class="nx">contextText</span><span class="o">:</span> <span class="s1">&#39;node&#39;</span><span class="p">,</span> <span class="nx">contextOffset</span><span class="o">:</span> <span class="mi">22</span> <span class="p">}],</span>
+                <span class="nx">edgeOffset</span><span class="o">:</span> <span class="mi">4</span>
+        <span class="p">},</span>
+        <span class="nx">selected_text</span><span class="o">:</span> <span class="s1">&#39;A single selected text node&#39;</span><span class="p">,</span>
+        <span class="nx">offset</span><span class="o">:</span> <span class="mi">0</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="example-2">
+<h4>Example 2<a class="headerlink" href="#example-2" title="Permalink to this headline">¶</a></h4>
+<p>This example spans from one text node to the next.</p>
+<div class="highlight-html"><div class="highlight"><pre><span class="nt">&lt;p</span> <span class="na">id=</span><span class="s">&quot;id&quot;</span><span class="nt">&gt;</span>
+        [|An] <span class="nt">&lt;i&gt;</span>[italic]<span class="nt">&lt;/i&gt;</span> [word.]|
+<span class="nt">&lt;/p&gt;</span>
+</pre></div>
+</div>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="c1">// The content range</span>
+<span class="p">{</span>
+        <span class="nx">ancestor</span><span class="o">:</span> <span class="p">{</span>
+                <span class="nx">elementId</span><span class="o">:</span> <span class="s1">&#39;id&#39;</span><span class="p">,</span>
+                <span class="nx">elementTagName</span><span class="o">:</span> <span class="s1">&#39;p&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="nx">start</span><span class="o">:</span> <span class="p">{</span>
+                <span class="nx">ancestor</span> <span class="o">:</span> <span class="p">{</span><span class="nx">elementId</span><span class="o">:</span> <span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="nx">elementTagName</span><span class="o">:</span> <span class="s1">&#39;p&#39;</span><span class="p">},</span>
+                <span class="nx">contexts</span><span class="o">:</span> <span class="p">[{</span> <span class="nx">contextText</span><span class="o">:</span> <span class="s1">&#39;An&#39;</span><span class="p">,</span> <span class="nx">contextOffset</span><span class="o">:</span> <span class="mi">2</span> <span class="p">}],</span>
+                <span class="nx">edgeOffset</span><span class="o">:</span> <span class="mi">0</span>
+        <span class="p">},</span>
+        <span class="nx">end</span><span class="o">:</span> <span class="p">{</span>
+                <span class="nx">ancestor</span> <span class="o">:</span> <span class="p">{</span><span class="nx">elementId</span><span class="o">:</span> <span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="nx">elementTagName</span><span class="o">:</span> <span class="s1">&#39;p&#39;</span><span class="p">},</span>
+                <span class="nx">contexts</span><span class="o">:</span> <span class="p">[{</span> <span class="nx">contextText</span><span class="o">:</span> <span class="s1">&#39;word.&#39;</span><span class="p">,</span> <span class="nx">contextOffset</span><span class="o">:</span> <span class="mi">0</span> <span class="p">}],</span>
+                <span class="nx">edgeOffset</span><span class="o">:</span> <span class="mi">5</span>
+        <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="example-3">
+<h4>Example 3<a class="headerlink" href="#example-3" title="Permalink to this headline">¶</a></h4>
+<p>This example has multiple text nodes that match. Notice that
+the offsets within a text node are the same. How does it resolve?</p>
+<div class="highlight-html"><div class="highlight"><pre><span class="nt">&lt;p</span> <span class="na">id=</span><span class="s">&quot;id&quot;</span><span class="nt">&gt;</span>
+        [This is the] <span class="nt">&lt;i&gt;</span>[first]<span class="nt">&lt;/i&gt;</span> [sentence.]
+        <span class="nt">&lt;span&gt;</span> [This is |the] <span class="nt">&lt;i&gt;</span>second<span class="nt">&lt;/i&gt;</span> [sentence.|]<span class="nt">&lt;/span&gt;</span>
+<span class="nt">&lt;/p&gt;</span>
+</pre></div>
+</div>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="c1">// The content range</span>
+<span class="p">{</span>
+        <span class="nx">ancestor</span><span class="o">:</span> <span class="p">{</span>
+                <span class="nx">elementId</span><span class="o">:</span> <span class="s1">&#39;id&#39;</span><span class="p">,</span>
+                <span class="nx">elementTagName</span><span class="o">:</span> <span class="s1">&#39;p&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="nx">start</span><span class="o">:</span> <span class="p">{</span>
+                <span class="nx">ancestor</span> <span class="o">:</span> <span class="p">{</span><span class="nx">elementId</span><span class="o">:</span> <span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="nx">elementTagName</span><span class="o">:</span> <span class="s1">&#39;p&#39;</span><span class="p">},</span>
+                <span class="nx">contexts</span><span class="o">:</span> <span class="p">[{</span> <span class="nx">contextText</span><span class="o">:</span> <span class="s1">&#39;is the&#39;</span><span class="p">,</span> <span class="nx">contextOffset</span><span class="o">:</span> <span class="mi">3</span> <span class="p">},</span>
+                                   <span class="p">{</span><span class="nx">contextText</span><span class="o">:</span> <span class="s1">&#39;sentence.&#39;</span><span class="p">,</span> <span class="nx">contextOffset</span><span class="o">:</span> <span class="mi">9</span><span class="p">},</span>
+                                   <span class="p">{</span><span class="nx">contextText</span><span class="o">:</span> <span class="s1">&#39;first&#39;</span><span class="p">,</span> <span class="nx">contextOffset</span><span class="o">:</span> <span class="mi">5</span><span class="p">},</span>
+                                   <span class="p">{</span><span class="nx">contextText</span><span class="o">:</span> <span class="s1">&#39;the&#39;</span><span class="p">},</span> <span class="nx">contextOffset</span><span class="o">:</span> <span class="mi">3</span><span class="p">],</span>
+                <span class="nx">edgeOffset</span><span class="o">:</span> <span class="mi">8</span>
+        <span class="p">},</span>
+        <span class="nx">end</span><span class="o">:</span> <span class="p">{</span>
+                <span class="nx">ancestor</span> <span class="o">:</span> <span class="p">{</span><span class="nx">elementId</span><span class="o">:</span> <span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="nx">elementTagName</span><span class="o">:</span> <span class="s1">&#39;p&#39;</span><span class="p">},</span>
+                <span class="nx">contexts</span><span class="o">:</span> <span class="p">[{</span> <span class="nx">contextText</span><span class="o">:</span> <span class="s1">&#39;sentence.&#39;</span><span class="p">,</span> <span class="nx">contextOffset</span><span class="o">:</span> <span class="mi">0</span> <span class="p">}],</span>
+                <span class="nx">edgeOffset</span><span class="o">:</span> <span class="mi">9</span>
+        <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="example-4">
+<h4>Example 4<a class="headerlink" href="#example-4" title="Permalink to this headline">¶</a></h4>
+<p>This example currently produces a model that is ambiguous, resulting
+in the wrong content being highlighted</p>
+<div class="highlight-html"><div class="highlight"><pre><span class="nt">&lt;p</span> <span class="na">id=</span><span class="s">&quot;id&quot;</span><span class="nt">&gt;</span>
+        [|This is a sentence]
+        <span class="nt">&lt;b</span> <span class="na">class=</span><span class="s">&quot;bfseries&quot;</span><span class="nt">&gt;&lt;em&gt;</span>WOW<span class="nt">&lt;/em&gt;&lt;/b&gt;</span>
+        [. Another sentence]<span class="nt">&lt;em&gt;</span>YIKES<span class="nt">&lt;/em&gt;</span>[ and ]<span class="nt">&lt;em&gt;</span>foo<span class="nt">&lt;/em&gt;</span>[. |]
+<span class="nt">&lt;/p&gt;</span>
+</pre></div>
+</div>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="c1">// The content range</span>
+<span class="p">{</span>
+        <span class="nx">ancestor</span><span class="o">:</span> <span class="p">{</span>
+                <span class="nx">elementId</span><span class="o">:</span> <span class="s1">&#39;id&#39;</span><span class="p">,</span>
+                <span class="nx">elementTagName</span><span class="o">:</span> <span class="s1">&#39;p&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="nx">start</span><span class="o">:</span> <span class="p">{</span>
+                <span class="nx">ancestor</span> <span class="o">:</span> <span class="p">{</span><span class="nx">elementId</span><span class="o">:</span> <span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="nx">elementTagName</span><span class="o">:</span> <span class="s1">&#39;p&#39;</span><span class="p">},</span>
+                <span class="nx">contexts</span><span class="o">:</span> <span class="p">[{</span> <span class="nx">contextText</span><span class="o">:</span> <span class="s1">&#39;This&#39;</span><span class="p">,</span> <span class="nx">contextOffset</span><span class="o">:</span> <span class="mi">18</span> <span class="p">}],</span>
+                <span class="nx">edgeOffset</span><span class="o">:</span> <span class="mi">0</span>
+        <span class="p">},</span>
+        <span class="nx">end</span><span class="o">:</span> <span class="p">{</span>
+                <span class="nx">ancestor</span> <span class="o">:</span> <span class="p">{</span><span class="nx">elementId</span><span class="o">:</span> <span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="nx">elementTagName</span><span class="o">:</span> <span class="s1">&#39;p&#39;</span><span class="p">},</span>
+                <span class="nx">contexts</span><span class="o">:</span> <span class="p">[{</span> <span class="nx">contextText</span><span class="o">:</span> <span class="s1">&#39;. &#39;</span><span class="p">,</span> <span class="nx">contextOffset</span><span class="o">:</span> <span class="mi">0</span> <span class="p">}],</span>
+                <span class="nx">edgeOffset</span><span class="o">:</span> <span class="mi">1</span>
+        <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The user desires the entire paragraph to be highlighted.  However,
+when resolving the model, the end context is ambigious and we
+incorrectly end the highlight just after the first &#8216;.&#8217; folowing &#8216;WOW&#8217;.</p>
+</div>
+</div>
+</div>
+<div class="section" id="anchor-migration">
+<h2>Anchor Migration<a class="headerlink" href="#anchor-migration" title="Permalink to this headline">¶</a></h2>
+<p>As time goes on and content around anchored items changes, we may need
+some system for migrating/updating/correcting <tt class="docutils literal"><span class="pre">ContentRangeDescriptions</span></tt>.
+This likely has to happen on the client side and depending on the
+severity of the change, in the worst case, we may want some kind of
+input from the user. Does your highlight or note still make sense here
+even though the content has changed? We should think about if and how
+this sort of thing can happen.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+        </div>
+        <div class="sidebar">
+          <h3>Table Of Contents</h3>
+          <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../nginx-gunicorn/">nginx, gunicorn haproxy, and stunnel Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../relstorage-and-rds/">RelStorage and Amazon Relational Database Service</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ipad-localremotebridge/">IPad Local Remote User Data Storage Bridge</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ntiid-structure/">NTIID Tag Structure</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Anchoring</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#considerations">Considerations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#modeling-anchorable-content">Modeling Anchorable Content</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#contentrangedescription-conversion">ContentRangeDescription conversion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#anchor-migration">Anchor Migration</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../content-in-cdn/">Serving Content from a CDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../passenger/">Passenger Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dataserver-contenttypes/">Content Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../whiteboard-apis-v1/">Whiteboard API v1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/">Dataserver API documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../chat-apis/">Chat Protocal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../chatserver/">Chat API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../interfaces/">Dataserver Interfaces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../http-rest/">Dataserver HTTP and REST Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contentrendering-api/">Contentrendering API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../content-anchoring-api/">Content Anchoring API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../socketio-api/">SocketIO API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../externalization-api/">Externalization API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../assessment-interfaces/">Assessment Interfaces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../zope/">Zope Libraries</a></li>
+</ul>
+
+          <h3 style="margin-top: 1.5em;">Search</h3>
+          <form class="search" action="../search/" method="get">
+            <input type="text" name="q" />
+            <input type="submit" value="Go" />
+            <input type="hidden" name="check_keywords" value="yes" />
+            <input type="hidden" name="area" value="default" />
+          </form>
+          <p class="searchtip" style="font-size: 90%">
+            Enter search terms or a module, class or function name.
+          </p>
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+    <div class="footer-wrapper">
+      <div class="footer">
+        <div class="left">
+          <a href="../ntiid-structure/" title="NTIID Tag Structure"
+             >previous</a> |
+          <a href="../content-in-cdn/" title="Serving Content from a CDN"
+             >next</a> |
+          <a href="../py-modindex/" title="Python Module Index"
+             >modules</a> |
+          <a href="../genindex/" title="General Index"
+             >index</a>
+            <br/>
+            <a href="../_sources/content-anchoring.txt"
+               rel="nofollow">Show Source</a>
+        </div>
+
+        <div class="right">
+          
+    <div class="footer">
+        &copy; Copyright 2011--2012, NTI.
+      Last updated on Jun 27, 2012.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+  </body>
+</html>
