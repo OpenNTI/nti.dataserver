@@ -14,8 +14,6 @@ import traceback
 
 import anyjson as json
 
-import UserDict
-
 import nti.dictserver as dictserver
 import nti.dictserver.dictionary
 
@@ -34,8 +32,6 @@ import nti.contentsearch.indexmanager
 import nti.dataserver.users
 from nti.dataserver import authorization as nauth
 from nti.dataserver.interfaces import IDataserver
-from nti.assessment import interfaces as asm_interfaces
-
 
 from zope import interface
 from zope import component
@@ -47,19 +43,20 @@ assert gevent.local.local in type(siteinfo).__bases__
 import transaction
 
 import nti.appserver.workspaces
-from nti.ntiids import ntiids
+
 
 import pyramid.config
 import pyramid.authorization
 import pyramid.security
 import pyramid.httpexceptions as hexc
 
-import datetime
+
 import pyramid_zodbconn
 
-from . import pyramid_auth
-from . import interfaces as app_interfaces
-from .traversal import ZopeResourceTreeTraverser
+from nti.appserver import pyramid_auth
+from nti.appserver import interfaces as app_interfaces
+from nti.appserver.traversal import ZopeResourceTreeTraverser
+from nti.appserver import pyramid_authorization
 
 # Make the zope interface extend the pyramid interface
 # Although this seems backward, it isn't. The zope location
@@ -359,7 +356,7 @@ def createApplication( http_port,
 	my_session_factory = UnencryptedCookieSessionFactoryConfig('ntidataservercookiesecretpass')
 	pyramid_config.set_session_factory( my_session_factory )
 
-	pyramid_config.set_authorization_policy( pyramid.authorization.ACLAuthorizationPolicy() )
+	pyramid_config.set_authorization_policy( pyramid_authorization.ACLAuthorizationPolicy() )
 	pyramid_config.set_authentication_policy( pyramid_auth.create_authentication_policy() )
 
 	pyramid_config.add_route( name='logon.ping', pattern='/dataserver2/logon.ping' )

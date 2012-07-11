@@ -44,3 +44,22 @@ class ConfiguringTestBase(nti.tests.ConfiguringTestBase):
 		"setable for backwards compat"
 		self._ds = ds
 	ds = property( get_ds, set_ds )
+
+	def has_permission( self, permission ):
+		return HasPermission( True, permission, self.request )
+
+	def doesnt_have_permission( self, permission ):
+		return HasPermission( False, permission, self.request )
+
+
+from pyramid.security import has_permission
+
+class HasPermission(nti.tests.BoolMatcher):
+
+	def __init__( self, value, permission, request ):
+		super(HasPermission,self).__init__( value )
+		self.permission = permission
+		self.request = request
+
+	def _matches(self, item):
+		return super(HasPermission,self)._matches( has_permission( self.permission, item, self.request ) )
