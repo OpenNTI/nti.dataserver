@@ -43,7 +43,7 @@ class TestMeetingContainer(ConfiguringTestBase):
 	def test_entity_no_list( self ):
 		ds = self.ds
 		with mock_dataserver.mock_db_trans(ds):
-			ds.root['users']['foo@bar'] = users.User( 'foo@bar', 'temp001' )
+			users.User.create_user( ds, username='foo@bar', password='temp001' )
 
 		mc = mcs.MeetingContainerStorage( ds )
 		with mock_dataserver.mock_db_trans(ds):
@@ -55,7 +55,7 @@ class TestMeetingContainer(ConfiguringTestBase):
 	def test_entity_with_list( self ):
 		ds = self.ds
 		with mock_dataserver.mock_db_trans(ds):
-			user = users.User( 'foo@bar', 'temp001' )
+			user = users.User.create_user( ds, username='foo@bar', password='temp001' )
 			ds.root['users']['foo@bar'] = user
 			ds.root['users']['friend@bar'] = users.User( 'friend@bar', 'temp001' )
 			fl1 = user.maybeCreateContainedObjectWithType(  'FriendsLists', { 'Username': 'fl1', 'friends': ['friend@bar'] } )
@@ -86,7 +86,7 @@ class TestFriendsListAdaptor( ConfiguringTestBase ):
 		ds = self.ds
 		mcs.MeetingContainerStorage( ds )
 		with mock_dataserver.mock_db_trans(ds):
-			user = users.User( 'foo@bar', 'temp001' )
+			user = users.User.create_user( ds, username='foo@bar', password='temp001' )
 			ds.root['users']['foo@bar'] = user
 			ds.root['users']['friend@bar'] = users.User( 'friend@bar', 'temp001' )
 			fl1 = user.maybeCreateContainedObjectWithType(  'FriendsLists', { 'Username': 'fl1', 'friends': ['friend@bar'] } )
@@ -177,6 +177,7 @@ class TestClassSectionAdapter( ConfiguringTestBase ):
 			fl1.containerId = 'Classes'
 			fl1.ID = 'CS2051'
 			fl1.Description = 'CS Class'
+			user.addContainedObject( fl1 )
 
 			section = classes.SectionInfo()
 			section.ID = 'CS2051.101'
@@ -186,7 +187,7 @@ class TestClassSectionAdapter( ConfiguringTestBase ):
 			section.InstructorInfo.Instructors.append( 'sjohnson' )
 			section.Provider = 'OU'
 
-			user.addContainedObject( fl1 )
+
 			fl1 = fl1.Sections[0]
 
 		self.Active = True
@@ -223,7 +224,7 @@ class TestClassSectionAdapter( ConfiguringTestBase ):
 			fl1.containerId = 'Classes'
 			fl1.ID = 'CS2051'
 			fl1.Description = 'CS Class'
-
+			user.addContainedObject( fl1 )
 			section = classes.SectionInfo()
 			section.ID = 'CS2051.101'
 			fl1.add_section( section )
@@ -231,7 +232,7 @@ class TestClassSectionAdapter( ConfiguringTestBase ):
 			section.enroll( 'chris' )
 			section.InstructorInfo.Instructors.append( 'sjohnson' )
 			section.Provider = 'OU'
-			user.addContainedObject( fl1 )
+
 			fl1 = fl1.Sections[0]
 
 		self.Active = True

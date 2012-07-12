@@ -73,23 +73,29 @@ class TestSection(mock_dataserver.ConfiguringTestBase):
 		clearEvents()
 		super(TestSection,self).tearDown()
 
+	# The enrolled events need to be rethought. We cannot use containers
+	# without creating bunches of ContainedProxy objects around strings, which I'd rather not
+	# do. Plus that runs into problems with IIntIds, since they're not really
+	# objects we want to reference (ick!) So for now, events are disabled in new objects,
+	# which just use a plain mapping.
+
 	def test_migration(self):
 		section = SectionInfo( ID='CS5201.101' )
 		state = section.__getstate__()
-		del state['_enrolled']
-		state['Enrolled'] = ['jason.madden@nextthought.com']
+		# del state['_enrolled']
+		# state['Enrolled'] = ['jason.madden@nextthought.com']
 
-		section.__setstate__( state )
-		assert_that( list(section.Enrolled), has_item( 'jason.madden@nextthought.com' ) )
-		assert_that( eventtesting.getEvents(), has_length( 2 ) )
-		assert_that( eventtesting.getEvents( IObjectAddedEvent ),
-					 has_item( has_property( 'newName', 'jason.madden@nextthought.com' ) ) )
-		assert_that( eventtesting.getEvents( IContainerModifiedEvent )[0],
-					 has_property( 'object', provides( nti_interfaces.IEnrolledContainer ) ) )
+		# section.__setstate__( state )
+		# assert_that( list(section.Enrolled), has_item( 'jason.madden@nextthought.com' ) )
+		# assert_that( eventtesting.getEvents(), has_length( 2 ) )
+		# assert_that( eventtesting.getEvents( IObjectAddedEvent ),
+		# 			 has_item( has_property( 'newName', 'jason.madden@nextthought.com' ) ) )
+		# assert_that( eventtesting.getEvents( IContainerModifiedEvent )[0],
+		# 			 has_property( 'object', provides( nti_interfaces.IEnrolledContainer ) ) )
 
-		assert_that( _section_filtered_events,
-					 has_item( contains( provides( nti_interfaces.IEnrolledContainer ),
-										 provides( IContainerModifiedEvent ) ) ) )
+		# assert_that( _section_filtered_events,
+		# 			 has_item( contains( provides( nti_interfaces.IEnrolledContainer ),
+		# 								 provides( IContainerModifiedEvent ) ) ) )
 
 	@mock_dataserver.WithMockDS
 	def test_can_enroll_from_external_ds(self):
@@ -99,11 +105,11 @@ class TestSection(mock_dataserver.ConfiguringTestBase):
 
 		update_from_external_object( section, dict(section_ext), context=self.ds )
 		assert_that( list(section.Enrolled), has_item( 'jason.madden@nextthought.com' ) )
-		assert_that( eventtesting.getEvents(), has_length( greater_than_or_equal_to( 2 ) ) )
-		assert_that( eventtesting.getEvents( IObjectAddedEvent ),
-					 has_item( has_property( 'newName', 'jason.madden@nextthought.com' ) ) )
-		assert_that( eventtesting.getEvents( IContainerModifiedEvent ),
-					 has_item( has_property( 'object', provides( nti_interfaces.IEnrolledContainer ) ) ) )
+		# assert_that( eventtesting.getEvents(), has_length( greater_than_or_equal_to( 2 ) ) )
+		# assert_that( eventtesting.getEvents( IObjectAddedEvent ),
+		# 			 has_item( has_property( 'newName', 'jason.madden@nextthought.com' ) ) )
+		# assert_that( eventtesting.getEvents( IContainerModifiedEvent ),
+		# 			 has_item( has_property( 'object', provides( nti_interfaces.IEnrolledContainer ) ) ) )
 
 		# Doing it a second time does nothing, no changes actually happen
 		clearEvents()
@@ -142,14 +148,14 @@ class TestSection(mock_dataserver.ConfiguringTestBase):
 		assert_that( list(section.Enrolled),
 					 contains( 'baz@bar', 'jason.madden@nextthought.com' ) )
 
-		# Five events: a pair for added, a pair for removed
-		# plus one for the modification
-		assert_that( eventtesting.getEvents(), has_length( 5 ) )
-		assert_that( eventtesting.getEvents( IObjectAddedEvent ),
-					 has_item( has_property( 'newName', 'baz@bar' ) ) )
+		# # Five events: a pair for added, a pair for removed
+		# # plus one for the modification
+		# assert_that( eventtesting.getEvents(), has_length( 5 ) )
+		# assert_that( eventtesting.getEvents( IObjectAddedEvent ),
+		# 			 has_item( has_property( 'newName', 'baz@bar' ) ) )
 
-		assert_that( eventtesting.getEvents( IObjectRemovedEvent ),
-					 has_item( has_property( 'oldName', 'foo@bar' ) ) )
+		# assert_that( eventtesting.getEvents( IObjectRemovedEvent ),
+		# 			 has_item( has_property( 'oldName', 'foo@bar' ) ) )
 
 
 class TestClass(mock_dataserver.ConfiguringTestBase):

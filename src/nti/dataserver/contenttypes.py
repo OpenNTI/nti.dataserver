@@ -336,7 +336,7 @@ class Note(ThreadableExternalizableMixin, Highlight):
 		# we want to use our policy settings to determine the sharing
 		# of the new note. This is because our policy settings
 		# may be user/community/context specific.
-		if not self._p_jar and self.inReplyTo:
+		if not self._p_mtime and self.inReplyTo:
 			self.clearSharingTargets() # ignore anything incoming
 			creatorName = getattr( self.creator, 'username', None )
 			# Current policy is to copy the sharing settings

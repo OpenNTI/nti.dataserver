@@ -7,8 +7,8 @@ logger = logging.getLogger( __name__ )
 from zope import interface
 from zope.component.factory import Factory
 from zope.container.btree import BTreeContainer
-
-
+import BTrees
+from nti.dataserver import containers
 # pylint chokes on from . import ... stuff,
 # which means it assumes old-style classes, which
 # is annoying.
@@ -259,27 +259,30 @@ class SectionInfo( datastructures.PersistentCreatedModDateTrackingObject,
 		self.OpenDate = None # Date the section opens/starts
 		self.CloseDate = None # Date the section completes/finishes
 		self.Description = "" # Section specific description
-		# The enrolled list is a IContainer
-		# so it fires events so students can know when they are enrolled.
-		self._enrolled = BTreeContainer()
-		self._enrolled.__name__ = 'Enrolled'
-		self._enrolled.__parent__ = self
-		_add_container_iface( self._enrolled, nti_interfaces.IEnrolledContainer )
-		self._enrolled.container_name = self._enrolled.__name__
+		# NOTE: The below is wrong:
+		# ...The enrolled list is a IContainer
+		# ...so it fires events so students can know when they are enrolled.
+		# It was an abuse of containers, leading to ContainedProxies wrapped around strings(!)
+		# and gratuitious intids. This needs rethought. New objects use plain maps.
+		self._enrolled = BTrees.family64.OO.BTree() #containers.EventlessBTreeContainer()
+#		self._enrolled.__name__ = 'Enrolled'
+#		self._enrolled.__parent__ = self
+		# _add_container_iface( self._enrolled, nti_interfaces.IEnrolledContainer )
+		#self._enrolled.container_name = self._enrolled.__name__
 		self.__name__ = self.ID
 		self.__parent__ = None
 
-	def __setstate__( self, state ):
-		if state.get( 'Enrolled', None ) is not None:
-			self._enrolled = BTreeContainer()
-			self._enrolled.__name__ = 'Enrolled'
-			self._enrolled.__parent__ = self
-			_add_container_iface( self._enrolled, nti_interfaces.IEnrolledContainer )
-			for n in state['Enrolled']: self._enrolled[n] = n
-			del state['Enrolled']
-			state['_enrolled'] = self._enrolled
-		super(SectionInfo,self).__setstate__( state )
-		_add_container_iface( self._enrolled, nti_interfaces.IEnrolledContainer )
+	# def __setstate__( self, state ):
+	# 	if state.get( 'Enrolled', None ) is not None:
+	# 		self._enrolled = BTreeContainer()
+	# 		self._enrolled.__name__ = 'Enrolled'
+	# 		self._enrolled.__parent__ = self
+	# 		_add_container_iface( self._enrolled, nti_interfaces.IEnrolledContainer )
+	# 		for n in state['Enrolled']: self._enrolled[n] = n
+	# 		del state['Enrolled']
+	# 		state['_enrolled'] = self._enrolled
+	# 	super(SectionInfo,self).__setstate__( state )
+	# 	_add_container_iface( self._enrolled, nti_interfaces.IEnrolledContainer )
 
 
 	def __eq__( self, other ):

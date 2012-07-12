@@ -46,7 +46,7 @@ class TestLogon(ConfiguringTestBase):
 	def setUp(self):
 		super(TestLogon,self).setUp()
 		eventtesting.clearEvents()
-		del _user_added_events[:]
+		del _user_created_events[:]
 
 	def test_unathenticated_ping(self):
 		"An unauthenticated ping returns one link, to the handshake."
@@ -197,7 +197,7 @@ class TestLogon(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_create_from_external( self ):
 		component.provideHandler( eventtesting.events.append, (None,) )
-		component.provideHandler( _handle_user_add_event )
+		component.provideHandler( _handle_user_create_event )
 		# For now, we are adding to some predefined communities
 		mc = users.Community( 'MathCounts' )
 		self.ds.root['users'][mc.username] = mc
@@ -218,9 +218,8 @@ class TestLogon(ConfiguringTestBase):
 
 		# The creation of this user caused events to fire
 		assert_that( eventtesting.getEvents(), has_length( greater_than_or_equal_to( 1 ) ) )
-		assert_that( _user_added_events, has_length( 1 ) )
-		assert_that( _user_added_events[0][0], is_( same_instance( user ) ) )
-		assert_that( _user_added_events[0][1], has_property( 'oldParent', none() ) )
+		assert_that( _user_created_events, has_length( 1 ) )
+		assert_that( _user_created_events[0][0], is_( same_instance( user ) ) )
 
 		# Can also auth as facebook
 		fb_user = logon._deal_with_external_account( get_current_request(),
@@ -244,9 +243,9 @@ class TestLogon(ConfiguringTestBase):
 
 
 
-from zope.lifecycleevent.interfaces import IObjectAddedEvent, IObjectModifiedEvent
-_user_added_events = []
-@component.adapter(nti_interfaces.IUser,IObjectAddedEvent)
-def _handle_user_add_event( user, object_added ):
+from zope.lifecycleevent.interfaces import IObjectCreatedEvent, IObjectModifiedEvent
+_user_created_events = []
+@component.adapter(nti_interfaces.IUser,IObjectCreatedEvent)
+def _handle_user_create_event( user, object_added ):
 
-	_user_added_events.append( (user,object_added) )
+	_user_created_events.append( (user,object_added) )

@@ -8,7 +8,7 @@ from __future__ import print_function, unicode_literals
 
 logger = __import__( 'logging' ).getLogger( __name__ )
 
-
+import warnings
 import numbers
 import functools
 import time
@@ -22,6 +22,7 @@ from zope.event import notify
 from zope.lifecycleevent import ObjectCreatedEvent
 from zope.keyreference.interfaces import IKeyReference
 from zope.location import interfaces as loc_interfaces
+import zope.intid
 
 import persistent
 import ZODB.POSException
@@ -682,15 +683,19 @@ class User(Principal):
 		super(User,self).__init__(username, avatarURL=avatarURL, password=password, realname=realname)
 		# We maintain a Map of our friends lists, organized by
 		# username (only one friend with a username)
+		_create_fl = True
 		if parent is not None:
 			# If we pre-set this, then the ObjectAdded event doesn't
-			# fire and an appserver:test_logon test fails. On the other hand, we can't add anything to friendsLists
+			# fire (the ObjectCreatedEvent does). On the other hand, we can't add anything to friendsLists
 			# if an intid utility is installed if we don't have a parent (and thus
-			# cannot be adapted to IKeyReference). We could possibly solve
-			# both things by setting _p_jar immediately, and not set __parent__. Fortunately right
-			# now we don't have an intid utility.
-			# Update: That test now depends on ObjectCreatedEvent, so it might be safe to set this?
-			pass
+			# cannot be adapted to IKeyReference).
+			self.__parent__ = parent
+
+		if not self.__parent__ and component.queryUtility( zope.intid.IIntIds ) is not None:
+			warnings.warn( "No parent provided. User will have no Everyone list; either use User.create_user or provide parent kwarg", stacklevel=2 )
+			_create_fl = False
+
+
 		self.friendsLists = _FriendsListMap()
 		self.friendsLists.__parent__ = self
 
@@ -706,8 +711,10 @@ class User(Principal):
 		publicList.alias = 'Public'
 		publicList.realname = 'Everyone'
 		publicList.avatarURL = 'http://www.gravatar.com/avatar/dfa1147926ce6416f9f731dcd14c0260?s=128&d=retro'
-		publicList.addFriend( EVERYONE )
-		self.friendsLists['Everyone'] = publicList
+		publicList.addFriend( EVERYONE ) # TODO: This is wrong. Constant objects aren't.
+		if _create_fl:
+			self.friendsLists['Everyone'] = publicList
+
 
 		# Join our default community
 		self.join_community( EVERYONE )
@@ -924,7 +931,7 @@ class User(Principal):
 								 if ( isinstance(x,tuple) and x[0] != obj ) or (not isinstance(x,tuple) and x != obj)]
 
 	def deleteContainedObject( self, containerId, containedId ):
-		if self._p_jar:
+		if self._p_jar and self.containers._p_jar:
 			self._p_jar.readCurrent( self.containers )
 		return self.containers.deleteContainedObject( containerId, containedId )
 

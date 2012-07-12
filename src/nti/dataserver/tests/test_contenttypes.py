@@ -3,6 +3,7 @@ from hamcrest import (assert_that, is_, has_entry, is_not, has_entry,
 					  has_key,  is_not, has_item, has_property,
 					  same_instance, none, has_entries, only_contains)
 from hamcrest import has_length
+from hamcrest import not_none
 from zope.annotation import interfaces as an_interfaces
 
 import unittest
@@ -407,6 +408,22 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 
 		assert_that( child.applicableRange, is_( n.applicableRange ) )
 
+	@WithMockDS
+	def test_inherit_anchor_properties_if_note_already_has_jar(self):
+		"Notes created through the app will have a __parent__ and be a KeyRef and so have a jar"
+		n = Note()
+		n.applicableRange = DomContentRangeDescription( ancestor=ElementDomContentPointer( elementTagName='p' ) )
+
+		with mock_dataserver.mock_db_trans(self.ds) as conn:
+			conn.add( n )
+
+			child = Note()
+			child.inReplyTo = n
+			conn.add( child )
+			assert_that( child, has_property( '_p_jar', not_none() ) )
+			child.updateFromExternalObject( {'inReplyTo': n, 'body': ('body') } )
+
+			assert_that( child.applicableRange, is_( n.applicableRange ) )
 
 
 

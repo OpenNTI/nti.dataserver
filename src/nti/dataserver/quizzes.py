@@ -185,8 +185,10 @@ class QuizResult(datastructures.ZContainedMixin,
 
 	def updateFromExternalObject( self, rawValue, dataserver=None ):
 		# Only fresh objects can be updated
-		if getattr( self, '_p_jar', None ):
-			raise ValueError( "Can only update new results." )
+		# if getattr( self, '_p_jar', None ):
+		#	raise ValueError( "Can only update new results." )
+		# TODO: If that's a desired condition, then don't implement it with
+		# _p_jar, which is not reliable. Change the ACL
 
 		self.containerId = rawValue.get( StandardExternalFields.CONTAINER_ID, self.containerId )
 

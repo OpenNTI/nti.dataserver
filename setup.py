@@ -134,7 +134,7 @@ setup(
 		'pyzmq >= 2.2.0',
 		'pytz >= 2012c',
 		'rdflib',
-		'repoze.catalog',
+		'repoze.catalog >= 0.8.2',
 
 		'repoze.who >= 2.0',
 		'repoze.zodbconn >= 0.14',

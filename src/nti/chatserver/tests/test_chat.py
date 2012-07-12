@@ -480,12 +480,13 @@ class TestChatserver(ConfiguringTestBase):
 		import nti.dataserver.classes as classes
 		import nti.dataserver.meeting_container_storage as mcs
 
-		user = providers.Provider( 'OU' )
+		user = providers.Provider( 'OU', parent=ds.root['providers'] )
 		ds.root['providers']['OU'] = user
 		fl1 = user.maybeCreateContainedObjectWithType(  'Classes', None )
 		fl1.containerId = 'Classes'
 		fl1.ID = 'CS2051'
 		fl1.Description = 'CS Class'
+		user.addContainedObject( fl1 )
 
 		section = classes.SectionInfo()
 		section.ID = 'CS2051.101'
@@ -495,7 +496,7 @@ class TestChatserver(ConfiguringTestBase):
 		section.InstructorInfo.Instructors.append( 'sjohnson' )
 		section.Provider = 'OU'
 
-		user.addContainedObject( fl1 )
+
 		fl1 = fl1.Sections[0]
 
 		mc = mcs.MeetingContainerStorage( ds )

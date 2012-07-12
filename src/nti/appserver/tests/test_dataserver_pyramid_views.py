@@ -71,7 +71,7 @@ class TestUGDViews(ConfiguringTestBase):
 	def test_put_summary_obj(self):
 		"We can put an object that summarizes itself before we get to the renderer"
 		view = _UGDPutView( get_current_request() )
-		user = users.User( 'jason.madden@nextthought.com', 'temp001' )
+		user = users.User.create_user( self.ds, username='jason.madden@nextthought.com', password='temp001' )
 		user.__parent__ = 1
 		class X(object):
 			resource = None
@@ -91,7 +91,7 @@ class TestUGDViews(ConfiguringTestBase):
 		component.provideHandler( eventtesting.events.append, (None,) )
 
 		view = _UGDPutView( get_current_request() )
-		user = users.User( 'jason.madden@nextthought.com', 'temp001' )
+		user = users.User.create_user( self.ds, username='jason.madden@nextthought.com', password='temp001' )
 		user.__parent__ = 1
 
 		class X(object):
@@ -165,7 +165,7 @@ class TestUGDViews(ConfiguringTestBase):
 	def test_post_existing_friendslist_id(self):
 		"We get a good error posting to a friendslist that already exists"
 		view = _UGDPostView( get_current_request() )
-		user = users.User( 'jason.madden@nextthought.com', 'temp001' )
+		user = users.User.create_user( self.ds, username='jason.madden@nextthought.com', password='temp001' )
 		class X(object):
 			resource = None
 			__acl__ = ()
@@ -184,7 +184,7 @@ class TestUGDViews(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_ugd_not_found_404(self):
 		view = _UGDView( get_current_request() )
-		user = users.User( 'jason.madden@nextthought.com', 'temp001' )
+		user = users.User.create_user( self.ds, username='jason.madden@nextthought.com', password='temp001' )
 		with self.assertRaises(hexc.HTTPNotFound):
 			view.getObjectsForId( user, 'foobar' )
 		# Now if there are objects in there, it won't raise.
@@ -194,7 +194,7 @@ class TestUGDViews(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_rugd_not_found_404(self):
 		view = _RecursiveUGDView( get_current_request() )
-		user = users.User( 'jason.madden@nextthought.com', 'temp001' )
+		user = users.User.create_user( self.ds, username='jason.madden@nextthought.com')
 		# The root item throws if there is nothing found
 		with self.assertRaises(hexc.HTTPNotFound):
 			view.getObjectsForId( user, ntiids.ROOT )
@@ -214,7 +214,7 @@ class TestUGDViews(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_stream_not_found_404(self):
 		view = _UGDStreamView( get_current_request() )
-		user = users.User( 'jason.madden@nextthought.com', 'temp001' )
+		user = users.User.create_user( self.ds, username='jason.madden@nextthought.com')
 		with self.assertRaises(hexc.HTTPNotFound):
 			view.getObjectsForId( user, 'foobar' )
 		# Now if there are objects in there, it won't raise.
@@ -233,7 +233,7 @@ class TestUGDViews(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_rstream_not_found_404(self):
 		view = _RecursiveUGDStreamView( get_current_request() )
-		user = users.User( 'jason.madden@nextthought.com', 'temp001' )
+		user = users.User.create_user( self.ds, username='jason.madden@nextthought.com')
 		# The root item throws if there is nothing found
 		with self.assertRaises(hexc.HTTPNotFound):
 			view.getObjectsForId( user, ntiids.ROOT )
@@ -271,7 +271,7 @@ class TestUGDViews(ConfiguringTestBase):
 			def childrenOfNTIID( self, nti ): return [NID] if nti == ntiids.ROOT else []
 		get_current_request().registry.registerUtility( Lib(), lib_interfaces.IContentPackageLibrary )
 		view = _UGDAndRecursiveStreamView( get_current_request() )
-		user = users.User( 'jason.madden@nextthought.com', 'temp001' )
+		user = users.User.create_user( self.ds, username='jason.madden@nextthought.com')
 		# No data and no changes
 		with self.assertRaises(hexc.HTTPNotFound):
 			view.getObjectsForId( user, ntiids.ROOT )
@@ -320,8 +320,8 @@ class TestUGDViews(ConfiguringTestBase):
 	def test_rstream_circled(self):
 		"Requesting the root NTIID includes your circling."
 		view = _RecursiveUGDStreamView( get_current_request() )
-		user = users.User( 'jason.madden@nextthought.com', 'temp001' )
-		actor = users.User( 'carlos.sanchez@nextthought.com', 'temp001' )
+		user = users.User.create_user( self.ds,  username='jason.madden@nextthought.com' )
+		actor = users.User.create_user( self.ds,  username='carlos.sanchez@nextthought.com' )
 
 		# Broadcast
 		change = user.accept_shared_data_from( actor )
