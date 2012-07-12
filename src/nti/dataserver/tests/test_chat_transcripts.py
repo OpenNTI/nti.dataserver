@@ -41,29 +41,29 @@ class TestChatTranscript(ConfiguringTestBase):
 
 	@WithMockDS
 	def test_store_non_picklable(self):
-		with mock_db_trans():
-			user = users.User( "sjohnson@nextthought.com" )
-			storage = chat_transcripts._UserTranscriptStorageAdapter( user )
+		with assert_raises(pickle.PicklingError):
+			with mock_db_trans():
+				user = users.User.create_user( username="sjohnson@nextthought.com" )
+				storage = chat_transcripts._UserTranscriptStorageAdapter( user )
 
-			class Meet(persistent.Persistent):
-				containerId = 'the_container'
-				ID = 'tag:nextthought.com,2011-10:sjohnson@nextthought.com-OID-1'
-				id = ID
+				class Meet(persistent.Persistent):
+					containerId = 'the_container'
+					ID = 'tag:nextthought.com,2011-10:sjohnson@nextthought.com-OID-1'
+					id = ID
 
-			class Msg(persistent.Persistent):
-				containerId = Meet.ID
-				ID = 42
-				LastModified = 1
-				sharedWith = ()
+				class Msg(persistent.Persistent):
+					containerId = Meet.ID
+					ID = 42
+					LastModified = 1
+					sharedWith = ()
 
-			# If we have copying enabled, then this will raise a pickling error
-			# right away. Otherwise, it will be fine:
-			#with assert_raises(pickle.PicklingError):
-			msg_storage = storage.add_message( Meet(), Msg() )
+				# If we have copying enabled, then this will raise a pickling error
+				# right away. Otherwise, it will be fine until the transaction commits
+				msg_storage = storage.add_message( Meet(), Msg() )
 
-			assert_that( msg_storage, is_( not_none() ) )
-			assert_that( nti_interfaces.ITranscriptSummary( msg_storage ), is_( not_none() ) )
-			assert_that( ext_interfaces.IExternalObject( msg_storage ), is_( not_none() ) )
+				assert_that( msg_storage, is_( not_none() ) )
+				assert_that( nti_interfaces.ITranscriptSummary( msg_storage ), is_( not_none() ) )
+				assert_that( ext_interfaces.IExternalObject( msg_storage ), is_( not_none() ) )
 
 
 class PicklableMeet(persistent.Persistent):

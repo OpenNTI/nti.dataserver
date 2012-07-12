@@ -237,10 +237,11 @@ class TestUserClassesCollection(tests.ConfiguringTestBase):
 
 		clazz = ClassInfo( ID='CS5201' )
 		clazz.containerId = 'Classes'
+		ou.addContainedObject( clazz )
 		section = SectionInfo( ID='CS5201.501' )
 		clazz.add_section( section )
 		section.enroll( 'sjohnson@nextthought.com' )
-		ou.addContainedObject( clazz )
+
 		assert_that( clazz.__parent__, is_not( none() ) )
 
 		ext_object = toExternalObject( _UserClassesCollection( user ) )

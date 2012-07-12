@@ -21,15 +21,9 @@ class ContentRangeDescription(SchemaConfigured):
 	Implementation of :class:`interfaces.IContentRangeDescription`
 	"""
 	__external_can_create__ = True
-	def __eq__( self, other ):
-		if self is other or isinstance( other, ContentRangeDescription ):
-			return True
-		return NotImplemented
 
-	def __ne__( self, other ):
-		if isinstance( other, ContentRangeDescription ):
-			return False
-		return NotImplemented
+	# Including base equality here makes us falsely compare
+	# equal to subclasses...it's confusing and screws up tests
 
 	__repr__ = make_repr()
 

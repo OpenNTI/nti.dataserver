@@ -22,6 +22,7 @@ def evolve( context ):
 	install_main( context )
 	install_chat( context )
 
+import BTrees
 from BTrees import OOBTree
 from persistent.list import PersistentList
 
@@ -58,12 +59,17 @@ def install_main( context ):
 	# The root folder
 	root_folder = rootFolder()
 	# The root is generally presumed to be an ISite, so make it so
-	root_sm = LocalSiteManager( None ) # No parent site, so parent == global
+	root_sm = LocalSiteManager( None, default_folder=False ) # No parent site, so parent == global
+	conn.add( root_sm ) # Ensure we have a connection so we can become KeyRefs
+	conn.add( root_folder ) # Ensure we have a connection so we can become KeyRefs
 	root_folder.setSiteManager( root_sm )
 	assert ISite.providedBy( root_folder )
 
 	dataserver_folder = Folder()
-	locate( dataserver_folder, root_folder, name='dataserver2' )
+	#locate( dataserver_folder, root_folder, name='dataserver2' )
+	root_folder['dataserver2'] = dataserver_folder
+	assert dataserver_folder.__parent__ is root_folder
+	assert dataserver_folder.__name__ == 'dataserver2'
 
 	lsm = LocalSiteManager( root_sm )
 	# Change the dataserver_folder from IPossibleSite to ISite
@@ -113,7 +119,8 @@ def install_main( context ):
 	# A utility to create intids for any object that needs it
 	# Two choices: With either one of them registered, subscribers
 	# fire forcing objects to be adaptable to IKeyReference.
-	# Int ids are not currently used.
+	# Int ids are not currently being used, but plans are for the
+	# near future. A migration path will have to be established.
 	#intids = zope.intid.IntIds( family=BTrees.family64 )
-	#intids = zc.intid.utility.IntIds('_ds_intid', family=BTrees.family32 )
-	#lsm.registerUtility( intids, provided=zope.intid.IIntIds )
+	intids = zc.intid.utility.IntIds('_ds_intid', family=BTrees.family64 )
+	lsm.registerUtility( intids, provided=zope.intid.IIntIds )

@@ -126,8 +126,8 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_share_unshare_note(self):
-		user1 = User( 'foo@bar', 'temp' )
-		user2 = User( 'fab@bar', 'temp' )
+		user1 = User.create_user( self.ds, username='foo@bar', password='temp' )
+		user2 = User.create_user( self.ds, username='fab@bar', password='temp' )
 
 		note = Note()
 		note.body = ['text']
@@ -213,7 +213,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_getSharedContainer_defaults( self ):
-		user = User( 'sjohnson@nextthought.com', 'temp001' )
+		user = User.create_user( self.ds, username='sjohnson@nextthought.com', password='temp001' )
 		assert_that( user.getSharedContainer( 'foo', 42 ), is_( 42 ) )
 
 		c = ContainedMixin()
@@ -230,7 +230,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_mute_conversation( self ):
-		user = User( 'sjohnson@nextthought.com', 'temp001' )
+		user = User.create_user( self.ds, username='sjohnson@nextthought.com', password='temp001' )
 
 		c = PersistentContainedThreadable()
 		c.containerId = 'foo'

@@ -102,7 +102,7 @@ class ExampleDatabaseInitializer(object):
 		mathcountsCommunity = Community( 'MathCounts' )
 		mathcountsCommunity.realname = mathcountsCommunity.username
 		mathcountsCommunity.alias = 'MathCounts'
-		
+
 		testUsersCommunity = Community( 'TestUsers' )
 		testUsersCommunity.realname = testUsersCommunity.username
 		testUsersCommunity.alias = 'TestUsers'
@@ -143,14 +143,14 @@ class ExampleDatabaseInitializer(object):
 	def install( self, context ):
 		conn = context.connection
 		root = conn.root()['nti.dataserver']
-		ONLY_NEW = '--only-new' in sys.argv
-		if ONLY_NEW:
-			def add_user( u ):
-				if u.username not in root['users']:
-					root['users'][u.username] = u
-		else:
-			def add_user( u ):
-				root['users'][u.username] = u
+		# ONLY_NEW = '--only-new' in sys.argv
+		# if ONLY_NEW:
+		# 	def add_user( u ):
+		# 		if u.username not in root['users']:
+		# 			root['users'][u.username] = u
+		# else:
+		def add_user( u ):
+			root['users'][u.username] = u
 
 
 
@@ -158,14 +158,17 @@ class ExampleDatabaseInitializer(object):
 		for c in communities:
 			add_user( c )
 
-		# create users	
-				
+		# create users
+		class mock_dataserver(object):
+			pass
+		mock_dataserver.root = root
 		USERS = self._make_usernames()
 		def create_add_user(user_tuple):
 			uname = user_tuple[0]
 			is_test_user =  uname.startswith('test.user.')
 			password = 'temp001' if is_test_user else user_tuple[1].replace( ' ', '.' ).lower()
-			user = User( uname, password=password )
+
+			user = User.create_user( username=uname, password=password, dataserver=mock_dataserver )
 			user.realname = user_tuple[1]
 			user.alias = user_tuple[1].split()[0]
 			for c in communities:
@@ -175,17 +178,18 @@ class ExampleDatabaseInitializer(object):
 					user.follow( c )
 
 			self._add_friendslists_to_user( user )
-			add_user( user )
-		
-		map(create_add_user, USERS)
-		
+			#add_user( user )
 
-		provider = providers.Provider( 'OU' )
+		map(create_add_user, USERS)
+
+
+		provider = providers.Provider( 'OU', parent=root['providers'] )
 		root['providers']['OU'] = provider
 		klass = provider.maybeCreateContainedObjectWithType(  'Classes', None )
 		klass.containerId = 'Classes'
 		klass.ID = 'CS2051'
 		klass.Description = 'CS Class'
+		provider.addContainedObject( klass )
 
 		section = classes.SectionInfo()
 		section.ID = 'CS2051.101'
@@ -195,11 +199,11 @@ class ExampleDatabaseInitializer(object):
 			section.enroll( username )
 		section.InstructorInfo.Instructors.append( 'jason.madden@nextthought.com' )
 		section.Provider = 'OU'
-		provider.addContainedObject( klass )
+
 
 
 		# Quizzes
-		if not ONLY_NEW or 'quizzes' not in root or 'quizzes' not in root['quizzes']:
+		if 'quizzes' not in root or 'quizzes' not in root['quizzes']:
 			root['quizzes']['quizzes'] = containers.LastModifiedBTreeContainer()
 			self._install_quizzes( root )
 
