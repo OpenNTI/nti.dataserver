@@ -28,6 +28,7 @@ import ZODB.POSException
 from zope import interface
 from zope import component
 from zope import intid
+from zope.cachedescriptors.property import CachedProperty
 
 from zope.keyreference.persistent import KeyReferenceToPersistent
 
@@ -102,7 +103,11 @@ class _CopyingWeakRef(persistent.wref.WeakRef):
 		if result is None: result = self._copy
 		return result
 
-class _MeetingTranscriptStorage(Persistent,datastructures.ZContainedMixin,datastructures.CreatedModDateTrackingObject):
+class _IMeetingTranscriptStorage(interface.Interface):
+	pass
+
+@interface.implementer(_IMeetingTranscriptStorage)
+class _AbstractMeetingTranscriptStorage(Persistent,datastructures.ZContainedMixin,datastructures.CreatedModDateTrackingObject):
 	"""
 	The storage for the transcript of a single session. Private object, not public.
 	"""
@@ -110,19 +115,47 @@ class _MeetingTranscriptStorage(Persistent,datastructures.ZContainedMixin,datast
 	creator = nti_interfaces.SYSTEM_USER_NAME
 
 	def __init__( self, meeting ):
-		super(_MeetingTranscriptStorage,self).__init__()
-		# To help avoid conflicts, messages
-		# are stored keyed by their ID.
-		# Getting an ordered list as thus an expensive
-		# process. We COULD save the ordered list
-		# after the room is closed.
-		self.messages = BTrees.OOBTree.OOBTree()
-		# TODO: Use an IContainer?
+		super(_AbstractMeetingTranscriptStorage,self).__init__()
 		self._meeting_ref = persistent.wref.WeakRef( meeting )
 
 	@property
 	def meeting(self):
 		return self._meeting_ref()
+
+	def add_message( self, msg ):
+		"""
+		Stores the message in this transcript.
+		"""
+		raise NotImplementedError()
+
+	def itervalues(self):
+		raise NotImplementedError()
+
+	# for finding MessageInfos with zope.genartions.findObjectsMatching
+	# In some (early!) migration cases, it may be needed to disable this due to the switch to callable refs: the iterator cannot
+	# iterate non-callable objects, and that breaks generations.findObjectsMatching,
+	# it doesn't catch that exception.
+	# Instead, the migration code needs to modify this class dynamically.
+	def values(self):
+		return self.itervalues()
+
+
+
+@interface.implementer(_IMeetingTranscriptStorage)
+class _MeetingTranscriptStorage(_AbstractMeetingTranscriptStorage):
+	"""
+	The storage for the transcript of a single session. Private object, not public.
+	"""
+
+	def __init__( self, meeting ):
+		super(_MeetingTranscriptStorage,self).__init__(meeting)
+		# To help avoid conflicts, messages
+		# are stored keyed by their ID.
+		# Getting an ordered list as thus an expensive
+		# process. We COULD save the ordered list
+		# after the room is closed, but right now rooms
+		# are very rarely closed
+		self.messages = BTrees.OOBTree.OOBTree()
 
 	def add_message( self, msg ):
 		"""
@@ -134,12 +167,34 @@ class _MeetingTranscriptStorage(Persistent,datastructures.ZContainedMixin,datast
 		return (msg() for msg in self.messages.itervalues())
 
 
-	# for finding MessageInfos with zope.genartions.findObjectsMatching
-	# In some (early!) migration cases, it may be needed to disable this due to the switch to callable refs: the iterator cannot
-	# iterate non-callable objects, and that breaks generations.findObjectsMatching,
-	# it doesn't catch that exception.
-	# Instead, the migration code needs to modify this class dynamically.
-	values = itervalues
+@interface.implementer(_IMeetingTranscriptStorage)
+class _DocidMeetingTranscriptStorage(_AbstractMeetingTranscriptStorage):
+	"""
+	The storage for the transcript of a single session based on docids. Private object, not public.
+	"""
+
+	def __init__( self, meeting ):
+		super(_DocidMeetingTranscriptStorage,self).__init__(meeting)
+		self.messages = BTrees.family64.II.TreeSet()
+
+	def add_message( self, msg ):
+		"""
+		Stores the message in this transcript.
+		"""
+		self.messages.add( self._intids.register( msg ) )
+
+	def itervalues(self):
+		intids = self._intids
+		for iid in self.messages:
+			msg = intids.queryObject( iid )
+			if msg is not None:
+				yield msg
+
+
+	@CachedProperty
+	def _intids(self):
+		return component.getUtility( intid.IIntIds )
+
 
 from repoze.lru import lru_cache
 @lru_cache(10000)
@@ -186,7 +241,7 @@ class _UserTranscriptStorageAdapter(object):
 		else:
 			# OK, the meeting has gone away, GC'd and no longer directly referencable.
 			# Try to find the appropriate storage manually
-			for value in self._user.values( of_type=_MeetingTranscriptStorage ):
+			for value in self._user.values( of_type=_IMeetingTranscriptStorage ):
 				if value.meeting.ID == meeting_id:
 					result = Transcript( value )
 					break
@@ -198,7 +253,7 @@ class _UserTranscriptStorageAdapter(object):
 		for container in self._user.getAllContainers().values():
 			if isinstance( container, float ): continue
 			for storage in container.values():
-				if isinstance(storage, _MeetingTranscriptStorage):
+				if _IMeetingTranscriptStorage.providedBy( storage ):
 					result.append( TranscriptSummaryAdapter( storage ) )
 		return result
 
@@ -214,7 +269,10 @@ class _UserTranscriptStorageAdapter(object):
 		storage_id = _transcript_ntiid( meeting, self._user.username )
 		storage = self._user.getContainedObject( meeting.containerId, storage_id )
 		if storage is None:
-			storage = _MeetingTranscriptStorage( meeting )
+			# For old tests and old databases that are not migrated yet
+			# we can make the switch at runtime
+			storage_factory = _DocidMeetingTranscriptStorage if component.queryUtility( intid.IIntIds ) is not None else _MeetingTranscriptStorage
+			storage = storage_factory( meeting )
 			storage.id = storage_id
 			storage.containerId = meeting.containerId
 			storage.creator = self._user
@@ -305,7 +363,7 @@ def list_transcripts_for_user( username ):
 	return storage.transcript_summaries
 
 @interface.implementer(nti_interfaces.ITranscriptSummary, ext_interfaces.IInternalObjectIO)
-@component.adapter(_MeetingTranscriptStorage)
+@component.adapter(_IMeetingTranscriptStorage)
 def TranscriptSummaryAdapter(meeting_storage):
 	"""
 	Registered as a ZCA adapter factory to get a :class:`nti_interfaces.ITranscriptSummary` (which is incidentally
@@ -338,7 +396,7 @@ class TranscriptSummary(nti.externalization.datastructures.ExternalizableInstanc
 
 	def __init__( self, meeting_storage ):
 		"""
-		:param _MeetingTranscriptStorage meeting_storage: The storage for the user in the room.
+		:param _IMeetingTranscriptStorage meeting_storage: The storage for the user in the room.
 		"""
 		super(TranscriptSummary,self).__init__( )
 		room = meeting_storage.meeting
