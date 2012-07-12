@@ -60,8 +60,21 @@ def createResourceRenderer(baserenderername, resourcedb):
 
 	return renderer
 
+class _EnabledMockImager(object):
+	"""
+	An object with the 'enabled' property.
+
+	This is useful to support expressions in existing TAL templates
+	such as ``not self/renderer/vectorImager/enabled``. Our renderers
+	are always enabled.
+	"""
+
+	enabled = True
 
 class _ResourceRenderer(object):
+
+	vectorImager = _EnabledMockImager
+	imager = _EnabledMockImager
 
 	def __init__( self, *args, **kwargs ):
 		super(_ResourceRenderer,self).__init__( *args, **kwargs )
@@ -100,7 +113,7 @@ class _ResourceRenderer(object):
 
 			self.cacheFilenames(document)
 
-
+			logger.info( "Using ResourceDB for images; imagers always enabled" ) # TODO: Should that be config?
 
 			# Invoke the rendering process
 			# Nothing uses the 'renderMethod' key:
