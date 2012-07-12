@@ -73,9 +73,6 @@ class _EnabledMockImager(object):
 
 class _ResourceRenderer(object):
 
-	vectorImager = _EnabledMockImager
-	imager = _EnabledMockImager
-
 	def __init__( self, *args, **kwargs ):
 		super(_ResourceRenderer,self).__init__( *args, **kwargs )
 		self.template_names_by_type = {}
@@ -114,6 +111,10 @@ class _ResourceRenderer(object):
 			self.cacheFilenames(document)
 
 			logger.info( "Using ResourceDB for images; imagers always enabled" ) # TODO: Should that be config?
+			# note that these must be instance attributes because we come after BaseRenderer,
+			# which sets them as instance attributes of None at __init__ time (so we can't set them in our __init__ either)
+			self.vectorImager = _EnabledMockImager
+			self.imager = _EnabledMockImager
 
 			# Invoke the rendering process
 			# Nothing uses the 'renderMethod' key:
