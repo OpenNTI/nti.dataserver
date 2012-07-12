@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*- 
                                                                                          
 """                                                                                       
-$Id$                                                                                      
+$Id$
 """
 
 from __future__ import print_function, unicode_literals
@@ -80,14 +80,14 @@ class ConversionTests(unittest.TestCase):
 							['is the',0,'sentence.',0,'id',None],
 							[None,'img'],
 							[None,None,None,None,"ThisIdIsTheBest",None]]
-		self.cr = test_helpers.range_conversion_test(self.ranges,self.solutions)
+		self.cr = test_helpers.range_conversion_check(self.ranges,self.solutions)
 
 	def contentrange_to_dom_tests(self):
 		self.bk_solutions = ['A single selected text node',
 							'An italic word.',
 							'the second sentence.',
 							self.NO_CHECK]
-		cr,bk = test_helpers.round_trip_test(self.ranges,None,self.bk_solutions)
+		cr,bk = test_helpers.round_trip_check(self.ranges,None,self.bk_solutions)
 		cpnull = contentrange.DomContentRangeDescription()
 		cpbroken = cr[3]
 		cpbroken.start.elementId="wegrhstrytjh"
@@ -128,7 +128,7 @@ class ConversionTests(unittest.TestCase):
 			</span>
 		</div>""")
 		r = _domrange.Range(doc.downpath([0,0,0]),3,doc.downpath([0,0,0]),6)
-		test_helpers.range_conversion_test(r,['This',13,None,None])
+		test_helpers.range_conversion_check(r,['This',13,None,None])
 
 		doc = test_helpers.Document("""
 		<div id="123">
@@ -160,7 +160,7 @@ class ConversionTests(unittest.TestCase):
 			</div>
 		</body>""")
 		r = _domrange.Range(doc.downpath([0,0,0]),0,doc.downpath([0,1,0]),18)
-		cr, bk = test_helpers.round_trip_test(r)
+		cr, bk = test_helpers.round_trip_check(r)
 		assert_that ( cr.ancestor.elementId, is_( "123" ) )
 
 		# Element pointer there and back test
@@ -172,7 +172,7 @@ class ConversionTests(unittest.TestCase):
 			<span>789</span>
 		</div>""")
 		r = _domrange.Range(doc.root.childNodes[1],0,doc.root.childNodes[3],0)
-		test_helpers.round_trip_test(r)
+		test_helpers.round_trip_check(r)
 
 	def walker_tests(self):
 		doc = test_helpers.Document("""
@@ -237,5 +237,5 @@ class ConversionTests(unittest.TestCase):
 				"somewhat but probably not particularly long text for readers"
 				" with short attention spans. Here are some extra words in a"
 				" span. This is some more text"]
-		test_helpers.round_trip_test(r,new_doc1,sln1)
-		test_helpers.round_trip_test(r,new_doc2,sln2)
+		test_helpers.round_trip_check(r,new_doc1,sln1)
+		test_helpers.round_trip_check(r,new_doc2,sln2)

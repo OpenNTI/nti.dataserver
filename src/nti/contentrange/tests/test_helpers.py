@@ -14,10 +14,35 @@ from hamcrest import assert_that, is_, none
 from hamcrest.core.base_matcher import BaseMatcher
 from nti.contentrange import _domrange, _convertrange
 
-def range_comparison_test(r1,r2,how,desired):
+def range_comparison_check(r1,r2,how,desired):
 	assert_that( r1.compareBoundaryPoints(how,r2), is_(desired) )
-def point_in_range_test(r,node,offset,desired):
+def point_in_range_check(r,node,offset,desired):
 	assert_that( r.pointInside(node,offset), is_(desired) )
+
+def range_conversion_check(r,solution):
+	if hasattr(r,'__iter__') and hasattr(solution,'__iter__'):
+		return [range_conversion_check(x,sln) for x,sln in zip(r,solution)]
+	cr = _convertrange.domToContentRange(r)
+	if solution is not None:
+		assert_that( cr, is_( context_check(*solution) ) )
+	return cr
+
+def round_trip_check(r,newdoc=None,solution=None):
+	NO_CHECK = 0
+	if hasattr(r,'__iter__'):
+		if hasattr(solution,'__iter__'):
+			return zip(*[round_trip_check(x,newdoc,sln) for x,sln in zip(r,solution)])
+		return zip(*[round_trip_check(x,newdoc) for x in r])
+	cr = _convertrange.domToContentRange(r)
+	if newdoc is None:
+		bk = _convertrange.contentToDomRange(cr,r.get_root())
+		if solution is None: assert_that ( str(bk), is_( str(r) ) )
+	else:
+		if hasattr(newdoc,'nodeType') == False: newdoc = newdoc.root
+		bk = _convertrange.contentToDomRange(cr,newdoc)
+	if solution is not None and solution != NO_CHECK:
+		assert_that ( str(bk), is_( solution ) )
+	return cr, bk
 
 class Document(object):
 	def __init__(self,string,strip=True):
@@ -85,27 +110,4 @@ class ContextChecker(BaseMatcher):
 def context_check(st=None, so=None, ft=None, fo=None, anc_id=None, anc_tag=None):
 	return ContextChecker(st, so, ft, fo, anc_id, anc_tag)
 
-def range_conversion_test(r,solution):
-	if hasattr(r,'__iter__') and hasattr(solution,'__iter__'):
-		return [range_conversion_test(x,sln) for x,sln in zip(r,solution)]
-	cr = _convertrange.domToContentRange(r)
-	if solution is not None:
-		assert_that( cr, is_( context_check(*solution) ) )
-	return cr
 
-def round_trip_test(r,newdoc=None,solution=None):
-	NO_CHECK = 0
-	if hasattr(r,'__iter__'):
-		if hasattr(solution,'__iter__'):
-			return zip(*[round_trip_test(x,newdoc,sln) for x,sln in zip(r,solution)])
-		return zip(*[round_trip_test(x,newdoc) for x in r])
-	cr = _convertrange.domToContentRange(r)
-	if newdoc is None:
-		bk = _convertrange.contentToDomRange(cr,r.get_root())
-		if solution is None: assert_that ( str(bk), is_( str(r) ) )
-	else:
-		if hasattr(newdoc,'nodeType') == False: newdoc = newdoc.root
-		bk = _convertrange.contentToDomRange(cr,newdoc)
-	if solution is not None and solution != NO_CHECK:
-		assert_that ( str(bk), is_( solution ) )
-	return cr, bk

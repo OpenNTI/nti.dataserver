@@ -77,7 +77,7 @@ class DomTests(unittest.TestCase):
 						# Node versus its own parent
 						[r[0], self.el1, 0, False],
 						[r[0], self.el1, 1, True]]
-		for c in comparisons: test_helpers.point_in_range_test(*c)
+		for c in comparisons: test_helpers.point_in_range_check(*c)
 
 	def test_range_comparisons(self):
 		r = self.r
@@ -101,7 +101,7 @@ class DomTests(unittest.TestCase):
 						# Where offsets matter
 						(r[2],r[4],self.END_TO_START,self.AFTER),
 						(r[2],r[4],self.END_TO_END,self.BEFORE)]
-		for c in comparisons: test_helpers.range_comparison_test(*c)
+		for c in comparisons: test_helpers.range_comparison_check(*c)
 
 	def test_stringifies(self):
 		assert_that( str(self.r[0]), is_( '6abc' ) )
