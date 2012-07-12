@@ -8,6 +8,7 @@ from __future__ import print_function, unicode_literals
 import os
 import shutil
 from hamcrest import assert_that, is_, has_length, contains_string
+from hamcrest import has_property
 
 import tempfile
 import StringIO
@@ -47,3 +48,7 @@ class TestResourceRenderer(ConfiguringTestBase):
 			renderer = ResourceRenderer.createResourceRenderer( 'XHTML', MockResourceDB() )
 
 			renderer.render( ctx.dom )
+
+			# Its renderers should now claim to be enabled
+			assert_that( renderer, has_property( 'vectorImager', has_property( 'enabled', True ) ) )
+			assert_that( renderer, has_property( 'imager', has_property( 'enabled', True ) ) )
