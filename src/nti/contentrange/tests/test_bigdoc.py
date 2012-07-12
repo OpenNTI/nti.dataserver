@@ -69,6 +69,6 @@ class BigDocTests(unittest.TestCase):
 					['effect. This', None, 'outside', None],
 					[],
 					['TextDomContentPointer', None, 'nil.', None]]
-		ct, br = test_helpers.round_trip_test(r)
+		ct, br = test_helpers.round_trip_check(r)
 		# Main context in ct[4] will be blank, secondaries will be the distinguishing factor
 		assert_that (True in ["Notice that" in c.contextText for c in ct[4].end.contexts], True )
