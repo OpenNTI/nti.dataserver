@@ -4,11 +4,13 @@ from hamcrest import has_key,  not_none, is_not
 from hamcrest import same_instance, has_length, none, contains, same_instance
 from hamcrest import has_entries, only_contains, has_item, has_property
 from nti.tests import verifiably_provides, provides
+from nose.tools import assert_raises
 
 from zope import interface, component
 from zope.deprecation import deprecate
 import time
 import tempfile
+import anyjson as json
 
 from ZODB.DB import DB
 from ZODB.FileStorage import FileStorage
@@ -23,11 +25,13 @@ from nti.dataserver.contenttypes import Note, Canvas
 from nti.externalization.oids import toExternalOID, to_external_ntiid_oid
 from nti.externalization.externalization import to_external_representation, toExternalObject, EXT_FORMAT_JSON, EXT_FORMAT_PLIST
 from nti.externalization.internalization import update_from_external_object
+from nti.externalization import externalization
 from nti.ntiids import ntiids
 
 import nti.dataserver.users as users
 import nti.dataserver.interfaces as interfaces
 from nti.dataserver import chat_transcripts
+from nti.dataserver import links
 nti_interfaces = interfaces
 
 from nti.chatserver import meeting
@@ -221,16 +225,20 @@ class TestChatRoom(ConfiguringTestBase):
 class TestChatserver(ConfiguringTestBase):
 
 	class PH(object):
-		def __init__( self ):
+		def __init__( self, strict_events=False ):
 			self.events = []
+			self.strict_events = strict_events
 		def send_event( self, name, *args ):
-			self.events.append( {'name':name, 'args':args} )
+			event =  {'name':name, 'args':args}
+			if self.strict_events:
+				json.dumps( event )
+			self.events.append( event )
 
 
 	class MockSession(object):
 		interface.implements(sio_interfaces.ISocketSession,an_interfaces.IAttributeAnnotatable)
-		def __init__( self, owner ):
-			self.socket = TestChatserver.PH()
+		def __init__( self, owner, strict_events=False ):
+			self.socket = TestChatserver.PH(strict_events=strict_events)
 			self.owner = owner
 			self.creation_time = time.time()
 			self.session_id = None
@@ -847,3 +855,34 @@ class TestChatserver(ConfiguringTestBase):
 
 		subs = component.subscribers( (socket,), sio_interfaces.ISocketEventHandler )
 		assert_that( subs, has_item( is_( chat.ChatHandler ) ) )
+
+	@WithMockDSTrans
+	def test_send_event_to_user_non_external_errors(self):
+		sessions = self.Sessions()
+		sessions[1] = self.Session( 'sjohnson' )
+		chatserver = chat.Chatserver( sessions )
+
+		# Top-level
+		with assert_raises( externalization.NonExternalizableObjectError ):
+			chatserver.send_event_to_user( 'sjohnson', 'event', object() )
+
+
+		# Nested
+		with assert_raises( externalization.NonExternalizableObjectError ):
+			chatserver.send_event_to_user( 'sjohnson', 'event', [object()] )
+
+	@WithMockDSTrans
+	def test_send_event_to_user_links(self):
+		sessions = self.Sessions()
+		sessions[1] = self.Session( 'sjohnson', strict_events=True )
+		chatserver = chat.Chatserver( sessions )
+
+		link = links.Link( 'http://foo', rel='favorite' )
+		# Top-level
+		chatserver.send_event_to_user( 'sjohnson', 'event', link )
+		# Unfortunalety, right now, links are being
+		# dropped until we make that code more generic
+		assert_that( sessions[1].socket.events, has_length( 1 ) )
+		assert_that( sessions[1].socket.events[0], has_entry( 'args', (None,) ) )
+		# Nested
+		chatserver.send_event_to_user( 'sjohnson', 'event', [link] )

@@ -57,6 +57,27 @@ def catch_replace_action( obj, exc ):
 	"""
 	return { "Class": "BrokenExceptionObject" }
 
+
+@interface.implementer(INonExternalizableReplacement)
+class _NonExternalizableObject(dict): pass
+
+def DefaultNonExternalizableReplacer( obj ):
+	logger.debug( "Asked to externalize non-externalizable object %s, %s", type(obj), obj )
+	result = _NonExternalizableObject( Class='NonExternalizableObject', InternalType=str(type(obj)) )
+	return result
+
+class NonExternalizableObjectError(TypeError): pass
+
+def DevmodeNonExternalizableObjectReplacer( obj ):
+	"""
+	When devmode is active, non-externalizable objects raise an exception.
+	"""
+	raise NonExternalizableObjectError( "Asked to externalize non-externalizable object %s, %s" % (type(obj), obj ) )
+
+@interface.implementer(INonExternalizableReplacer)
+def _DevmodeNonExternalizableObjectReplacer( obj ):
+	return DevmodeNonExternalizableObjectReplacer
+
 # The types that we will treat as sequences for externalization purposes. These
 # all map onto lists. (TODO: Should we just try to iter() it, ignoring strings?)
 _SEQUENCE_TYPES = (persistent.list.PersistentList, collections.Set, list, tuple)
@@ -65,7 +86,8 @@ _SEQUENCE_TYPES = (persistent.list.PersistentList, collections.Set, list, tuple)
 _MAPPING_TYPES  = (persistent.mapping.PersistentMapping,BTrees.OOBTree.OOBTree,collections.Mapping)
 
 def toExternalObject( obj, coerceNone=False, name=_ex_name_marker, registry=component,
-					  catch_components=(), catch_component_action=None ):
+					  catch_components=(), catch_component_action=None,
+					  default_non_externalizable_replacer=DefaultNonExternalizableReplacer):
 	""" Translates the object into a form suitable for
 	external distribution, through some data formatting process.
 
@@ -81,6 +103,9 @@ def toExternalObject( obj, coerceNone=False, name=_ex_name_marker, registry=comp
 		of two arguments, the object being externalized and the exception raised. May return
 		a different object (already externalized) or re-raise the exception. There is no default,
 		but :func:`catch_replace_action` is a good choice.
+	:param callable default_non_externalizable_replacer: If we are asked to externalize an object
+		and cannot, and there is no :class:`INonExternalizableReplacer` registered for it,
+		then call this object and use the results.
 
 	"""
 
@@ -98,7 +123,8 @@ def toExternalObject( obj, coerceNone=False, name=_ex_name_marker, registry=comp
 		def recall( o ):
 			try:
 				return toExternalObject( o, coerceNone=coerceNone, name=name, registry=registry,
-										 catch_components=catch_components, catch_component_action=catch_component_action )
+										 catch_components=catch_components, catch_component_action=catch_component_action,
+										 default_non_externalizable_replacer=default_non_externalizable_replacer )
 			except catch_components as t:
 				# python rocks. catch_components could be an empty tuple, meaning we catch nothing.
 				# or it could be any arbitrary list of exceptions.
@@ -140,7 +166,7 @@ def toExternalObject( obj, coerceNone=False, name=_ex_name_marker, registry=comp
 			# Otherwise, we probably won't be able to
 			# JSON-ify it.
 			# TODO: Should this live here, or at a higher level where the ultimate external target/use-case is known?
-			result = registry.queryAdapter( obj, INonExternalizableReplacer, default=DefaultNonExternalizableReplacer )(obj)
+			result = registry.queryAdapter( obj, INonExternalizableReplacer, default=default_non_externalizable_replacer )(obj)
 
 		for decorator in registry.subscribers( (orig_obj,), IExternalObjectDecorator ):
 			decorator.decorateExternalObject( orig_obj, result )
@@ -149,25 +175,6 @@ def toExternalObject( obj, coerceNone=False, name=_ex_name_marker, registry=comp
 		_ex_name_local.name.pop()
 
 to_external_object = toExternalObject
-
-@interface.implementer(INonExternalizableReplacement)
-class _NonExternalizableObject(dict): pass
-
-def DefaultNonExternalizableReplacer( obj ):
-	logger.debug( "Asked to externalize non-externalizable object %s, %s", type(obj), obj )
-	result = _NonExternalizableObject( Class='NonExternalizableObject', InternalType=str(type(obj)) )
-	return result
-
-
-def DevmodeNonExternalizableObjectReplacer( obj ):
-	"""
-	When devmode is active, non-externalizable objects raise an exception.
-	"""
-	raise TypeError( "Asked to externalize non-externalizable object %s, %s" % (type(obj), obj ) )
-
-@interface.implementer(INonExternalizableReplacer)
-def _DevmodeNonExternalizableObjectReplacer( obj ):
-	return DevmodeNonExternalizableObjectReplacer
 
 def stripNoneFromExternal( obj ):
 	""" Given an already externalized object, strips None values. """

@@ -9,9 +9,10 @@ from ZODB import loglevels
 
 import numbers
 
-from nti.externalization.externalization import toExternalObject
+from nti.externalization.externalization import toExternalObject, DevmodeNonExternalizableObjectReplacer
 from nti.externalization import internalization
 from nti.externalization import oids
+from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.interfaces import StandardExternalFields as XFields
 
 from nti.dataserver import interfaces as nti_interfaces
@@ -19,10 +20,12 @@ from nti.dataserver import interfaces as nti_interfaces
 from persistent import Persistent
 from persistent.mapping import PersistentMapping
 
+import zope.interface.registry
 from zope import interface
 from zope import component
 from zope.deprecation import deprecate, deprecated
 from zope import minmax
+import zope.site.site
 
 from . import interfaces
 from .meeting import _Meeting
@@ -149,14 +152,31 @@ class Chatserver(object):
 	def send_event_to_user( self, username, name, *args ):
 		"""
 		Directs the event named ``name`` to all sessions for the ``username``.
-		The sequence of ``args`` is externalized and send with the event.
+		The sequence of ``args`` is externalized and sent with the event.
 		"""
 		if username:
 			all_sessions = self.sessions.get_sessions_by_owner( username )
 			if not all_sessions: # pragma: no cover
 				logger.log( loglevels.TRACE, "No sessions for %s to send event %s to", username, name )
 				return
-			args = [toExternalObject( arg ) for arg in args]
+			# HACK: FIXME: Overriding externalization of Links here, until we can
+			# render them properly (we probably can, just needs testing)
+			registry = zope.site.site.LocalSiteManager(component.getSiteManager(), default_folder=False)
+
+			registry.registerAdapter( lambda link: lambda l2: None,
+									  required=(nti_interfaces.ILink,),
+									  provided=ext_interfaces.INonExternalizableReplacer )
+			try:
+				# Trap externalization errors /now/ rather than later during
+				# the process
+				args = [toExternalObject( arg,
+										  registry=registry,
+										  default_non_externalizable_replacer=DevmodeNonExternalizableObjectReplacer )
+						  for arg in args]
+			finally:
+				# A site manager likes to keep track of its subs (for some reason)?
+				# So make sure and remove them
+				registry.__bases__ = ()
 			for s in all_sessions:
 				logger.log( loglevels.TRACE, "Dispatching %s to %s", name, s )
 				s.socket.send_event( name, *args )
