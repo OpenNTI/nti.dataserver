@@ -56,6 +56,10 @@ def _set_default_resource_types():
 	_implement( Arrays.TabularStar, tabularTypes )
 	_implement( Arrays.tabularx, tabularTypes )
 
+	Boxes = dottedname.resolve( 'plasTeX.Base.Boxes' )
+
+	_implement( Boxes.raisebox, ( 'png','svg' ) )
+
 	Math = dottedname.resolve( 'plasTeX.Base.Math' )
 
 	#The math package does not correctly implement the sqrt macro.	It takes two args
