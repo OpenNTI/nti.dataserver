@@ -22,8 +22,14 @@ class ContentRangeDescription(SchemaConfigured):
 	"""
 	__external_can_create__ = True
 
-	# Including base equality here makes us falsely compare
-	# equal to subclasses...it's confusing and screws up tests
+	# Including base equality here with issubclass makes us falsely compare
+	# equal to subclasses...it's confusing and screws up tests...
+	# so we violate best practices a bit and check equal types directly
+	def __eq__( self, other ):
+		return type(self) is type(other) and type(other) is ContentRangeDescription
+	def __ne__( self, other ):
+		return not self.__eq__( other )
+
 
 	__repr__ = make_repr()
 

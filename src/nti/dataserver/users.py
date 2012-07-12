@@ -988,13 +988,21 @@ class User(Principal):
 		and not general use.
 		:param type of_type: If given, then only values that are instances of the given type
 			will be returned.
+		:type of_type: A class or interface.
 		"""
 		# We could simply return getAllContainers().values() and let findObjectsProviding
 		# deal with the traversal, but this way is a tad more general
+		if interface.interfaces.IInterface.providedBy( of_type ):
+			test = of_type.providedBy
+		elif isinstance(of_type, six.class_types):
+			test = lambda x: isinstance( x, of_type )
+		else:
+			test = lambda x: True
+
 		for container in self.getAllContainers().values():
 			if not hasattr( container, 'values' ): continue
 			for o in container.values():
-				if not of_type or isinstance( o, of_type ):
+				if test(o):
 					yield o
 
 	def sublocations(self):
