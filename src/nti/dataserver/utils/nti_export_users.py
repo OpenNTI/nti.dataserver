@@ -9,8 +9,8 @@ import datetime
 from collections import Mapping
 
 from zope import component
-from zope.generations.utility import findObjectsMatching
 
+from nti.dataserver import users
 from nti.dataserver.utils import run_with_dataserver
 from nti.dataserver import interfaces as nti_interfaces
 from nti.externalization.externalization import toExternalObject
@@ -30,17 +30,22 @@ def export_users(export_dir="/tmp", users_2_export=()):
 	if not os.path.exists(export_dir):
 		os.makedirs(export_dir)
 		
+	ds = component.getUtility( nti_interfaces.IDataserver )
+			
 	utc_datetime = datetime.datetime.utcnow()
 	s = utc_datetime.strftime("%Y-%m-%d-%H%M%SZ")
 	outfile = os.path.join(export_dir, 'users-%s.json' % s)
-	with open(outfile, "w") as fp:	
-		ds = component.getUtility( nti_interfaces.IDataserver )
-		for user in findObjectsMatching(ds.root, lambda x: nti_interfaces.IUser.providedBy( x )):
-			if not users_2_export or user.username in users_2_export:
-				external = toExternalObject(user)
-				clean_links(external)
-				json.dump(external, fp, indent=4)
-			
+	
+	with open(outfile, "w") as fp:		
+		_users = ds.root['users']
+		for username in _users.iterkeys():
+			if not users_2_export or username in users_2_export:
+				user = users.User.get_user( username )
+				if user:
+					external = toExternalObject(user)
+					clean_links(external)
+					json.dump(external, fp, indent=4)
+						
 	return True
 	
 def main():
