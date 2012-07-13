@@ -250,11 +250,19 @@ def createApplication( http_port,
 	"""
 	server = None
 	# Configure subscribers, etc.
-	xml_conf_machine = xmlconfig.ConfigurationMachine()
-	xmlconfig.registerCommonDirectives( xml_conf_machine )
-	if 'devmode' in settings and settings['devmode']:
-		xml_conf_machine.provideFeature( 'devmode' )
-	xmlconfig.file( 'configure.zcml', package=nti.appserver, context=xml_conf_machine )
+	try:
+		xml_conf_machine = xmlconfig.ConfigurationMachine()
+		xmlconfig.registerCommonDirectives( xml_conf_machine )
+		if 'devmode' in settings and settings['devmode']:
+			logger.debug( "Enabling devmode" )
+			xml_conf_machine.provideFeature( 'devmode' )
+		xml_conf_machine = xmlconfig.file( 'configure.zcml', package=nti.appserver, context=xml_conf_machine )
+		if 'site_zcml' in settings:
+			logger.debug( "Loading site settings from %s", settings['site_zcml'] )
+			xmlconfig.file( settings['site_zcml'],  package=nti.appserver, context=xml_conf_machine )
+	except Exception:
+		logger.exception( "Failed to load config. Settings: %s", settings )
+		raise
 
 	# Notify of startup. (Note that configuring the packages loads zope.component:configure.zcml
 	# which in turn hooks up zope.component.event to zope.event for event dispatching)
