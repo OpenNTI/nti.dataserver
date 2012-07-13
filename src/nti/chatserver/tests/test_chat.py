@@ -877,12 +877,12 @@ class TestChatserver(ConfiguringTestBase):
 		sessions[1] = self.Session( 'sjohnson', strict_events=True )
 		chatserver = chat.Chatserver( sessions )
 
-		link = links.Link( 'http://foo', rel='favorite' )
-		# Top-level
-		chatserver.send_event_to_user( 'sjohnson', 'event', link )
-		# Unfortunalety, right now, links are being
-		# dropped until we make that code more generic
-		assert_that( sessions[1].socket.events, has_length( 1 ) )
-		assert_that( sessions[1].socket.events[0], has_entry( 'args', (None,) ) )
-		# Nested
+		link = links.Link( '/foo', rel='favorite' )
+		# Top-level still fails
+		with assert_raises( TypeError ):
+			chatserver.send_event_to_user( 'sjohnson', 'event', link )
+
+
+		# Nested works, though
 		chatserver.send_event_to_user( 'sjohnson', 'event', [link] )
+		assert_that( sessions[1].socket.events, has_length( 1 ) )

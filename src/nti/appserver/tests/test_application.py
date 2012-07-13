@@ -432,7 +432,12 @@ class TestApplication(ApplicationTestBase):
 		assert_that( res.status_int, is_( 200 ) )
 		assert_that( res.json_body, has_entry( 'LikeCount', 0 ) )
 		assert_that( json.loads(res.body), has_entry( 'Links', has_item( has_entry( 'rel', 'like' ) ) ) )
-		assert_that( json.loads(res.body), has_entry( 'Links', has_item( has_entry( 'href', '/dataserver2/Objects/' + datastructures.to_external_ntiid_oid( n ) + '/@@like' ) ) ) )
+		assert_that( json.loads(res.body),
+					 has_entry( 'Links',
+								has_item(
+									has_entry(
+										'href',
+										'/dataserver2/Objects/' + urllib.quote(datastructures.to_external_ntiid_oid( n )) + '/@@like' ) ) ) )
 
 		# So I do
 		res = testapp.post( path + '/@@like', data, extra_environ=self._make_extra_environ() )
@@ -622,7 +627,9 @@ class TestApplication(ApplicationTestBase):
 
 		body = testapp.get( '/dataserver2/providers/OU/Classes/', extra_environ=self._make_extra_environ() )
 		body = json.loads( body.text )
-		assert_that( body, has_entry( 'href', '/dataserver2/providers/OU/Classes' ) )
+		assert_that( body, has_entry( 'href',
+									 # '/dataserver2/providers/OU/Objects/%s' % urllib.quote(to_external_ntiid_oid(clazz))))
+									  '/dataserver2/providers/OU/Classes' ) )
 
 		assert_that( body, has_entry( 'Items', has_length( 1 ) ) )
 
@@ -631,7 +638,8 @@ class TestApplication(ApplicationTestBase):
 		# The edit href is complete
 		assert_that( body, has_entry( 'Links',
 									  has_item( has_entries( rel='edit',
-															 href='/dataserver2/providers/OU/Classes/CS2051' ) ) ) )
+															 #href='/dataserver2/providers/OU/Classes/CS2051' ) ) ) )
+															 href='/dataserver2/providers/OU/Objects/%s' % urllib.quote(to_external_ntiid_oid(clazz)) ) ) ) )
 		# And the top-level href matches the edit href
 		assert_that( body, has_entry( 'href', body['Links'][0]['href'] ) )
 

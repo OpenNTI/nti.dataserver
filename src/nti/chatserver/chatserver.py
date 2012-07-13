@@ -159,24 +159,14 @@ class Chatserver(object):
 			if not all_sessions: # pragma: no cover
 				logger.log( loglevels.TRACE, "No sessions for %s to send event %s to", username, name )
 				return
-			# HACK: FIXME: Overriding externalization of Links here, until we can
-			# render them properly (we probably can, just needs testing)
-			registry = zope.site.site.LocalSiteManager(component.getSiteManager(), default_folder=False)
 
-			registry.registerAdapter( lambda link: lambda l2: None,
-									  required=(nti_interfaces.ILink,),
-									  provided=ext_interfaces.INonExternalizableReplacer )
-			try:
-				# Trap externalization errors /now/ rather than later during
-				# the process
-				args = [toExternalObject( arg,
-										  registry=registry,
-										  default_non_externalizable_replacer=DevmodeNonExternalizableObjectReplacer )
-						  for arg in args]
-			finally:
-				# A site manager likes to keep track of its subs (for some reason)?
-				# So make sure and remove them
-				registry.__bases__ = ()
+
+			# Trap externalization errors /now/ rather than later during
+			# the process
+			args = [toExternalObject( arg,
+									  default_non_externalizable_replacer=DevmodeNonExternalizableObjectReplacer )
+					  for arg in args]
+
 			for s in all_sessions:
 				logger.log( loglevels.TRACE, "Dispatching %s to %s", name, s )
 				s.socket.send_event( name, *args )

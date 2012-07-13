@@ -10,11 +10,16 @@ from __future__ import print_function, unicode_literals
 
 logger = __import__( 'logging' ).getLogger(__name__)
 
+from nti.dataserver.authorization import ACT_UPDATE
 from nti.dataserver.authorization_acl import ACL
 from nti.dataserver.interfaces import ACLProxy
 
+from nti.externalization.interfaces import StandardExternalFields, IExternalizedObject
+
 import pyramid.authorization
+import pyramid.security as psec
 from pyramid.traversal import lineage as _pyramid_lineage
+from pyramid.threadlocal import get_current_request
 # Hope nobody is monkey patching this after we're imported
 
 def ACLAuthorizationPolicy():
@@ -66,3 +71,16 @@ def _acl_adding_lineage(obj):
 			else:
 				# Yes we can. So do so
 				yield ACLProxy( location, acl )
+
+def is_writable(obj, request=None):
+	"""
+	Is the given object writable by the current user? Yes if the creator matches,
+	or Yes if it is the returned object and we have permission.
+	"""
+	if request is None:
+		request = get_current_request()
+
+	return psec.has_permission( ACT_UPDATE, obj, request ) \
+	  or (IExternalizedObject.providedBy( obj )
+		  and StandardExternalFields.CREATOR in obj
+		  and obj[StandardExternalFields.CREATOR] == psec.authenticated_userid( request ) )

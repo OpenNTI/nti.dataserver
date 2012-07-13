@@ -21,6 +21,7 @@ from nti.dataserver import links, users, providers
 from nti.dataserver import interfaces as nti_interfaces
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.externalization import toExternalObject, to_external_object
+from nti.externalization import oids as ext_oids
 from nti.dataserver.tests import mock_dataserver
 
 from zope import interface
@@ -28,6 +29,7 @@ from zope.location import location
 from zope.location import interfaces as loc_interfaces
 from zope import component
 from persistent import Persistent
+import urllib
 
 class TestContainerEnumerationWorkspace(tests.ConfiguringTestBase):
 
@@ -127,7 +129,7 @@ class TestUserEnumerationWorkspace(tests.ConfiguringTestBase):
 		ext_obj = to_external_object( root )
 		assert_that( ext_obj, has_entry( 'ID', ntiids.ROOT ) )
 		assert_that( ext_obj, has_entry( 'Links', has_length( 1 ) ) )
-		assert_that( ext_obj['Links'][0].target.__name__, is_( 'RecursiveStream' ) )
+		assert_that( ext_obj['Links'][0], has_entry( 'rel', 'RecursiveStream' ) )
 
 	@mock_dataserver.WithMockDSTrans
 	def test_shared_container(self):
@@ -152,7 +154,8 @@ class TestUserEnumerationWorkspace(tests.ConfiguringTestBase):
 		assert_that( ext_obj, has_entry( 'Class', 'PageInfo' ) )
 		assert_that( ext_obj, has_entry( 'MimeType', 'application/vnd.nextthought.pageinfo' ) )
 		assert_that( ext_obj, has_entry( 'Links', has_length( 1 ) ) )
-		assert_that( ext_obj['Links'][0].target.__name__, is_( 'RecursiveStream' ) )
+		assert_that( ext_obj['Links'][0], has_entry( 'rel', 'RecursiveStream' ) )
+
 
 		shared = uew.collections[2].container[1]
 		ext_obj = to_external_object( shared )
@@ -201,7 +204,7 @@ class TestUserService(tests.ConfiguringTestBase):
 		ext_object = toExternalObject( service )
 		# The global workspace should have a Link
 		assert_that( ext_object['Items'][1], has_entry( 'Title', 'Global' ) )
-		assert_that( ext_object['Items'][1], has_entry( 'Links', has_item( is_(links.Link) ) ) )
+		assert_that( ext_object['Items'][1], has_entry( 'Links', has_item( has_entry( 'href', '/dataserver2/UserSearch' ) ) ) )
 
 		# And the User resource should have a Pages collection that also has
 		# a link--this one pre-rendered
@@ -209,9 +212,9 @@ class TestUserService(tests.ConfiguringTestBase):
 		assert_that( user_ws, has_entry( 'Title', user.username ) )
 		assert_that( user_ws, has_entry( 'Items', has_item( all_of( has_entry( 'Title', 'Pages' ),
 																	has_entry( 'href', '/dataserver2/users/sjohnson%40nextthought.com/Pages' ) ) ) ) )
-		assert_that( user_ws, has_entry( 'Items', has_item( has_entry( 'Links', has_item( is_(links.Link)) ) ) ) )
-		assert_that( user_ws['Items'][2]['Links'][0].target.ntiid,
-					 is_( '/dataserver2/users/sjohnson%40nextthought.com/Search/RecursiveUserGeneratedData' ) )
+		assert_that( user_ws, has_entry( 'Items', has_item( has_entry( 'Links', has_item( has_entry('Class', 'Link')) ) ) ) )
+		assert_that( user_ws['Items'][2]['Links'][0],
+					 has_entry( 'href', '/dataserver2/users/sjohnson%40nextthought.com/Search/RecursiveUserGeneratedData' ) )
 
 		# And a class
 		assert_that( user_ws, has_entry( 'Items', has_item( all_of( has_entry( 'Title', 'EnrolledClassSections' ),
@@ -246,7 +249,10 @@ class TestUserClassesCollection(tests.ConfiguringTestBase):
 
 		ext_object = toExternalObject( _UserClassesCollection( user ) )
 		assert_that( ext_object, has_entry( 'Title', 'EnrolledClassSections' ) )
-		assert_that( ext_object, has_entry( 'Items', has_item( has_entry( 'href', '/dataserver2/providers/OU/Classes/CS5201/CS5201.501' ) ) ) )
+		assert_that( ext_object, has_entry( 'Items',
+											has_item( has_entry( 'href',
+																 '/dataserver2/Objects/' + urllib.quote( ext_oids.to_external_ntiid_oid( section ) ) ) ) ) )
+																# '/dataserver2/providers/OU/Classes/CS5201/CS5201.501' ) ) ) )
 
 def test_user_pages_collection_accepts_only_external_types():
 	"A user's Pages collection only claims to accept things that are externally creatable."
