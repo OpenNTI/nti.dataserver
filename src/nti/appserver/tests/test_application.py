@@ -425,13 +425,14 @@ class TestApplication(ApplicationTestBase):
 
 		testapp = TestApp( self.app )
 		data = ''
-		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % datastructures.to_external_ntiid_oid( n )
+		path = '/dataserver2/Objects/%s' % datastructures.to_external_ntiid_oid( n )
 		path = urllib.quote( path )
 		# Initially, unliked, I get asked to like
 		res = testapp.get( path, extra_environ=self._make_extra_environ() )
 		assert_that( res.status_int, is_( 200 ) )
 		assert_that( res.json_body, has_entry( 'LikeCount', 0 ) )
 		assert_that( json.loads(res.body), has_entry( 'Links', has_item( has_entry( 'rel', 'like' ) ) ) )
+		assert_that( json.loads(res.body), has_entry( 'Links', has_item( has_entry( 'href', '/dataserver2/Objects/' + datastructures.to_external_ntiid_oid( n ) + '/@@like' ) ) ) )
 
 		# So I do
 		res = testapp.post( path + '/@@like', data, extra_environ=self._make_extra_environ() )

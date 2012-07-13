@@ -24,6 +24,7 @@ from nti.dataserver import authorization as nauth
 
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization import oids as ext_oids
 
 class _AbstractLikeLinkDecorator(object):
 	"""
@@ -57,7 +58,9 @@ class _AbstractLikeLinkDecorator(object):
 		# We're assuming that because you can see it, you can (un)like it.
 		# this matches the views
 		rel = self.unlike_view if i_like else self.like_view
-		link = links.Link( context, rel=rel, elements=('@@' + rel,) )
+		# Use the NTIID rather than the 'physical' path because the 'physical'
+		# path may not quite be traversable at this point
+		link = links.Link( ext_oids.to_external_ntiid_oid( context ), rel=rel, elements=('@@' + rel,) )
 		interface.alsoProvides( link, ILocation )
 		link.__name__ = ''
 		link.__parent__ = context
