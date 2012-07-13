@@ -151,9 +151,14 @@ def toExternalObject( obj, coerceNone=False, name=_ex_name_marker, registry=comp
 		elif hasattr( obj, "toExternalList" ):
 			result = obj.toExternalList()
 		elif isinstance(obj, _MAPPING_TYPES ):
-			result = toExternalDictionary( obj, name=name, registry=registry )
-			if obj.__class__ == dict: result.pop( 'Class', None )
-			for key, value in obj.iteritems():
+			result = to_standard_external_dictionary( obj, name=name, registry=registry )
+			if obj.__class__ is dict:
+				result.pop( 'Class', None )
+			# Note that we recurse on the original items, not the things newly
+			# added.
+			# NOTE: This means that Links added here will not be externalized. There
+			# is an IExternalObjectDecorator that does that
+			for key, value in obj.items():
 				result[key] = recall( value )
 		elif isinstance( obj, _SEQUENCE_TYPES ):
 			result = registry.getAdapter( [recall(x) for x in obj], ILocatedExternalSequence )

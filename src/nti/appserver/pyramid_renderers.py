@@ -1,5 +1,5 @@
 
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 
 """
 Contains renderers for the REST api.
@@ -7,26 +7,22 @@ Contains renderers for the REST api.
 
 logger = __import__('logging').getLogger(__name__)
 
-import six
 import collections
 
-
 import pyramid.httpexceptions
-from . import traversal
-from pyramid import security as psec
 import pyramid.traversal
 
 from zope import interface
 from zope import component
-from zope.location import location
 from zope.location import interfaces as loc_interfaces
-import zope.traversing.interfaces
 
 from paste import httpheaders
 HEADER_LAST_MODIFIED = httpheaders.LAST_MODIFIED.name
 
 from zope.mimetype.interfaces import IContentTypeAware
 
+from nti.externalization import oids as ext_oids
+from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.externalization import to_external_representation, toExternalObject, EXT_FORMAT_JSON, EXT_FORMAT_PLIST, catch_replace_action
 from nti.externalization.interfaces import StandardExternalFields
 from nti.dataserver.mimetype import (MIME_BASE_PLIST, MIME_BASE_JSON,
@@ -35,11 +31,12 @@ from nti.dataserver.mimetype import (MIME_BASE_PLIST, MIME_BASE_JSON,
 									 MIME_BASE)
 
 from nti.dataserver import links
-from nti.dataserver import users
-from nti.ntiids import ntiids
-from nti.dataserver import authorization as nauth
+from nti.dataserver import traversal as nti_traversal
+
+
 
 import nti.appserver.interfaces as app_interfaces
+from nti.appserver.pyramid_authorization import is_writable
 import nti.dataserver.interfaces as nti_interfaces
 
 def find_content_type( request, data=None ):
@@ -93,77 +90,7 @@ def find_content_type( request, data=None ):
 
 	return best_match or MIME_BASE_JSON
 
-def _is_valid_href( target ):
-	# We really want to check if this is a valid href. How best to do that?
-	return isinstance( target, six.string_types ) and  target.startswith( '/' )
-
-def render_link( parent_resource, link, nearest_site=None ):
-
-	# TODO: This clearly doesn't work for links that
-	# are nested. What's less obvious is that
-	# trying to do the replacement during the original
-	# recursion of toExternalObject doesn't work either, because the
-	# hrefs can be path dependent, and we may not have a valid/correct
-	# __parent__ at that time. How to fix this? This needs to
-	# work for byte enclosures and object enclosures, some of which
-	# might be referenced in multiple places. We could do OID links for the latter...
-	# Right now, we've hacked something in with traversal after the
-	# fact, and some gratuitous __parent__ attributes.
-	# TODO TODO: The above may no longer be correct at all
-	target = link.target
-	rel = link.rel
-	content_type = nti_mimetype_from_object( target )
-
-	href = None
-	ntiid = getattr( target, 'ntiid', None ) \
-		or getattr( target, 'NTIID', None ) \
-		or (isinstance(target,six.string_types) and ntiids.is_valid_ntiid_string(target) and target)
-	if ntiid and not nti_interfaces.IEnclosedContent.providedBy( target ):
-		# Although enclosures have an NTIID, we want to avoid using it
-		# if possible because it has a much nicer pretty url.
-		href = ntiid
-		# We're using ntiid as a backdoor for arbitrary strings.
-		# But if it really is an NTIID, then direct it specially if
-		# we can.
-		# FIXME: Hardcoded paths.
-		if ntiids.is_valid_ntiid_string( ntiid ):
-			# Place the NTIID reference under the most specific place possible: the owner,
-			# if we can get one, otherwise the global Site
-			root = traversal.normal_resource_path( target.creator ) if nti_interfaces.ICreated.providedBy( target ) and target.creator else traversal.normal_resource_path( nearest_site )
-			if ntiids.is_ntiid_of_type( ntiid, ntiids.TYPE_OID ):
-				href = root + '/Objects/' + ntiid
-			else:
-				href = root + '/NTIIDs/' + ntiid
-
-	elif _is_valid_href( target ):
-		href = target
-	else:
-		# This will raise a LocationError if something is broken
-		# in the chain. That shouldn't happen and needs to be dealt with
-		# at dev time.
-		__traceback_info__ = rel, link.elements # next fun puts target in __traceback_info__
-		href = traversal.normal_resource_path( target )
-
-
-	result = None
-	if href: # TODO: This should be true all the time now, right?
-		# Join any additional path segments that were requested
-		if link.elements:
-			href = href + '/' + '/'.join( link.elements )
-			# TODO: quoting
-		result = { StandardExternalFields.CLASS: 'Link',
-				   StandardExternalFields.HREF: href,
-				   'rel': rel }
-		if content_type:
-			result['type'] = content_type
-		if ntiids.is_valid_ntiid_string( ntiid ):
-			result['ntiid'] = ntiid
-		if not _is_valid_href( href ) and not ntiids.is_valid_ntiid_string( href ): # pragma: no cover
-			# This shouldn't be possible anymore.
-			__traceback_info__ = href, link, target, parent_resource, nearest_site
-			raise zope.traversing.interfaces.TraversalError(href)
-
-	return result
+from nti.dataserver.links_external import render_link
 
 def render_externalizable(data, system):
 	request = system['request']
@@ -182,105 +109,11 @@ def render_externalizable(data, system):
 		body.__parent__ = request.context.__parent__
 		body.__name__ = request.context.__name__
 	except AttributeError: pass
-	try:
-		body.setdefault( StandardExternalFields.LINKS, [] )
-	except: pass
 
-	# Locate the nearest site to use as our base URL for
-	# relative/unbased links
-	try:
-		loc_info = loc_interfaces.ILocationInfo( data )
-	except TypeError:
-		# Not adaptable (not located). Assume the main root.
-		nearest_site = request.registry.getUtility( nti_interfaces.IDataserver ).root
-	else:
-		# Located. Better be able to get a site, otherwise we have a
-		# broken chain.
-		nearest_site = loc_info.getNearestSite()
-
-	def writable(obj):
-		"""
-		Is the given object writable by the current user? Yes if the creator matches,
-		or Yes if it is the returned object and we have permission.
-		"""
-		# TODO: This determination probably needs to happen as we walk down to externalize,
-		# when we have the actual objects and potentially their actual ACLs
-		# NOTE: We are mostly doing that now.
-		if hasattr( obj, '__acl__' ):
-			return psec.has_permission( nauth.ACT_UPDATE, obj, request )
-
-		if obj is body:
-			return psec.has_permission( nauth.ACT_UPDATE, data, request )
-
-		return StandardExternalFields.CREATOR in obj \
-			and obj[StandardExternalFields.CREATOR] == psec.authenticated_userid( request )
-
-	def render_links( obj, parent=None ):
-		if obj is None or not obj:
-			# We might get some proxies that are not 'is None'?
-			return
-		try:
-			obj.setdefault( StandardExternalFields.LINKS, [] )
-		except AttributeError: pass
-
-		# If we cannot iterate it, then we don't want to deal with it
-		try:
-			iter(obj)
-		except TypeError:
-			return
-		has_links = False
-		try:
-			has_links = StandardExternalFields.LINKS in obj # Catch lists, weak refs
-		except TypeError:
-			has_links = False
-		if has_links:
-			# Add an Edit link if it's an editable object that we own
-			# and that doesn't already provide one.
-
-			if StandardExternalFields.OID in obj \
-			   and writable( obj ) \
-			   and True: #user_root : # TODO: This breaks for providers, need an iface
-				# TODO: This is weird, assuming knowledge about the URL structure here
-				# Should probably use request ILocationInfo to traverse back up to the ISite
-				if not any( [l.rel == 'edit'
-							 for l in obj[StandardExternalFields.LINKS]
-							 if isinstance(l, links.Link) ] ):
-					# Create a path through to the *direct* object URL, without
-					# using resource traversal. This remains valid in the event of name changes
-					obj_root = location.Location()
-					# Prefer a URL relative to the creator if we can get one, otherwise
-					# go for the global one beneath the site
-					obj_root.__parent__ = data.creator if nti_interfaces.ICreated.providedBy( data ) and data.creator else nearest_site
-					obj_root.__name__ = 'Objects'
-					target = location.Location()
-					target.__parent__ = obj_root
-					target.__name__ = obj[StandardExternalFields.OID]
-					link = links.Link( target, rel='edit' )
-					obj[StandardExternalFields.LINKS].append( link )
-
-					# For cases that we can, make edit and the toplevel href be the same.
-					# this improves caching
-					obj['href'] = render_link( parent, link, nearest_site )['href']
-
-			obj[StandardExternalFields.LINKS] = [render_link(parent, link, nearest_site) if isinstance( link, links.Link ) else link
-												 for link
-												 in obj[StandardExternalFields.LINKS]]
-			if not obj[StandardExternalFields.LINKS]:
-				del obj[StandardExternalFields.LINKS]
-
-		for v in obj.itervalues() if isinstance( obj, collections.Mapping ) else iter(obj):
-			if isinstance( v, collections.MutableMapping ):
-				render_links( v, obj )
-			elif isinstance( v, collections.MutableSequence ):
-				for vv in v:
-					if isinstance( vv, collections.MutableMapping ):
-						render_links( vv, obj )
-
-	render_links( body, request.context )
 	# Everything possible should have an href on the way out. If we have no other
 	# preference, use the URL that was requested.
 	if isinstance( body, collections.MutableMapping ):
-		if 'href' not in body or not _is_valid_href( body['href'] ):
+		if 'href' not in body or not nti_traversal.is_valid_resource_path( body['href'] ):
 			body['href'] = request.path
 
 	# Search for a last modified value.
@@ -366,6 +199,52 @@ def uncacheable_cache_controller( data, system ):
 
 	response.cache_control = 'no-store'
 	response.last_modified = None
+
+
+import persistent.interfaces
+
+@interface.implementer(ext_interfaces.IExternalMappingDecorator)
+@component.adapter(persistent.interfaces.IPersistent) # TODO: IModeledContent?
+class EditLinkDecorator(object):
+
+	def __init__( self, context ): pass
+
+	def decorateExternalMapping( self, context, mapping ):
+		if is_writable( context ) and getattr( context, '_p_jar'):
+
+			# TODO: This is weird, assuming knowledge about the URL structure here
+			# Should probably use request ILocationInfo to traverse back up to the ISite
+			if not any( [l.rel == 'edit'
+						 for l in mapping.get(StandardExternalFields.LINKS, ())
+						 if nti_interfaces.ILink.providedBy(l) ] ):
+				__traceback_info__ = context, mapping
+				try:
+					# Some objects are not in the traversal tree. Specifically,
+					# chatserver.IMeeting (which is IModeledContent and IPersistent)
+					# Our options are to either catch that here, or introduce an
+					# opt-in interface that everything that wants 'edit' implements
+					nearest_site = nti_traversal.find_nearest_site( context )
+				except TypeError:
+					nearest_site = None
+
+				if nearest_site is None:
+					logger.debug( "Not providing edit links, could not find site" )
+					return
+
+				mapping.setdefault( StandardExternalFields.LINKS, [] )
+				link = links.Link( ext_oids.to_external_ntiid_oid( context ), rel='edit' )
+				link.__parent__ = context
+				link.__name__ = ''
+				interface.alsoProvides( link, loc_interfaces.ILocation )
+				if nti_interfaces.ICreated.providedBy( context ):
+					interface.alsoProvides( link, nti_interfaces.ICreated )
+					link.creator = context.creator
+				mapping[StandardExternalFields.LINKS].append( link )
+
+				# For cases that we can, make edit and the toplevel href be the same.
+				# this improves caching
+				mapping['href'] = render_link( link, nearest_site=nearest_site )['href']
+
 
 class REST(object):
 

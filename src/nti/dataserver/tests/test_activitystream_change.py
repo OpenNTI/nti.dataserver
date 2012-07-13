@@ -17,7 +17,7 @@ class TestChange(ConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_to_external(self):
-		user = User( 'jason.madden@nextthought.com' )
+		user = User.create_user( self.ds, username='jason.madden@nextthought.com' )
 
 		change = Change( Change.CIRCLED, user )
 		assert_that( change.object, is_( user ) )

@@ -12,6 +12,7 @@ from zope.componentvocabulary.vocabulary import UtilityVocabulary
 
 from nti.dataserver import datastructures
 from nti.dataserver import interfaces as model_interfaces
+nti_interfaces = model_interfaces
 from nti.contentlibrary import interfaces as content_interfaces
 
 from nti.externalization.externalization import to_standard_external_dictionary
@@ -305,7 +306,7 @@ class ContainerCollectionDetailExternalizer(object):
 		def fixup( v_, item ):
 			# FIXME: This is similar to the renderer. See comments in the renderer.
 			if StandardExternalFields.LINKS in item:
-				item[StandardExternalFields.LINKS] = [rest.render_link(v_, link)
+				item[StandardExternalFields.LINKS] = [rest.render_link(link) if nti_interfaces.ILink.providedBy( link ) else link
 													  for link
 													  in item[StandardExternalFields.LINKS]]
 			# TODO: The externalization process and/or the renderer should be handling

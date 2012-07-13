@@ -170,8 +170,10 @@ class TestClass(mock_dataserver.ConfiguringTestBase):
 		clearEvents()
 		super(TestClass,self).tearDown()
 
+	@mock_dataserver.WithMockDSTrans
 	def test_external(self):
 		clazz = ClassInfo( ID='CS5201' )
+		clazz.__parent__ = self.ds.root
 		section = SectionInfo( ID='CS5201.501' )
 		clazz.add_section( section )
 
@@ -213,10 +215,11 @@ class TestClass(mock_dataserver.ConfiguringTestBase):
 		clazz.__setstate__( state )
 		self._assert_add_section_to_class( clazz, section )
 
-
+	@mock_dataserver.WithMockDSTrans
 	def test_add_section_via_external(self):
 		"We can add a section from the external dict. It fires events."
 		clazz = ClassInfo( ID='CS5201' )
+		clazz.__parent__ = self.ds.root
 		clazz.Provider = 'NTI'
 		section = SectionInfo( ID='CS5201.101' )
 
@@ -229,9 +232,11 @@ class TestClass(mock_dataserver.ConfiguringTestBase):
 		assert_that( clazz[section.ID], is_( section ) )
 		self._assert_add_section_to_class( clazz, clazz[section.ID] )
 
+	@mock_dataserver.WithMockDSTrans
 	def test_add_section_via_external_generates_id(self):
 		"We can add a section from the external dict even if it has no ID. It fires events."
 		clazz = ClassInfo( ID='CS5201' )
+		clazz.__parent__ = self.ds.root
 		clazz.Provider = 'NTI'
 		section = SectionInfo()
 
@@ -255,10 +260,11 @@ class TestClass(mock_dataserver.ConfiguringTestBase):
 		self._assert_add_section_to_class( clazz, clazz['CS5201.2'] )
 		toExternalObject( clazz )
 
-	@mock_dataserver.WithMockDS
+	@mock_dataserver.WithMockDSTrans
 	def test_add_section_via_external_through_ds(self):
 		"We can add a section from the external dict using the DS even if it has no ID. It fires events."
 		clazz = ClassInfo( ID='CS5201' )
+		clazz.__parent__ = self.ds.root
 		clazz.Provider = 'NTI'
 		section = SectionInfo()
 
@@ -289,9 +295,11 @@ class TestClass(mock_dataserver.ConfiguringTestBase):
 		self._assert_add_section_to_class( clazz, clazz['CS5201.2'] )
 		toExternalObject( clazz )
 
+	@mock_dataserver.WithMockDSTrans
 	def test_update_section_in_place(self):
 		"Sending data for a section we already have updates existing section."
 		clazz = ClassInfo( ID='CS5201' )
+		clazz.__parent__ = self.ds.root
 		section = SectionInfo( ID='CS5201.501' )
 		clazz.add_section( section )
 
@@ -305,10 +313,11 @@ class TestClass(mock_dataserver.ConfiguringTestBase):
 		assert_that( clazz[section.ID].Description, is_( 'Cool section' ) )
 		assert_that( eventtesting.getEvents(), has_length( 0 ) )
 
-	@mock_dataserver.WithMockDS
+	@mock_dataserver.WithMockDSTrans
 	def test_update_section_in_place_via_ds(self):
 		"Sending data through the DS for a section we already have updates existing section."
 		clazz = ClassInfo( ID='CS5201' )
+		clazz.__parent__ = self.ds.root
 		section = SectionInfo( ID='CS5201.501' )
 		clazz.add_section( section )
 
@@ -323,9 +332,11 @@ class TestClass(mock_dataserver.ConfiguringTestBase):
 		assert_that( eventtesting.getEvents(), has_length( 2 ) )
 		assert_that( eventtesting.getEvents(IObjectModifiedEvent), has_length( 2 ) )
 
+	@mock_dataserver.WithMockDSTrans
 	def test_del_section_via_external(self):
 		"Sending sections without a section deletes that section."
 		clazz = ClassInfo( ID='CS5201' )
+		clazz.__parent__ = self.ds.root
 		section = SectionInfo( ID='CS5201.501' )
 		clazz.add_section( section )
 		clearEvents()
@@ -335,7 +346,7 @@ class TestClass(mock_dataserver.ConfiguringTestBase):
 
 		clazz.updateFromExternalObject( clazz_ext )
 		assert_that( clazz._sections, has_length( 0 ) )
-		assert_that( eventtesting.getEvents(), has_length( 2 ) )
+		assert_that( eventtesting.getEvents(), has_length( 3 ) )
 		self._assert_add_section_to_class( clazz, section, IObjectRemovedEvent )
 
 	def test_class_with_ext_oid_id_ntiid(self):
