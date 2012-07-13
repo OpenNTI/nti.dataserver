@@ -605,7 +605,7 @@ order. A fix in the application for this is pending. */
 
 #NTIContent ol.parts {
     margin-left: 0px;
-/*    float: left; */
+    padding-left: 0px;
 }
 
 #NTIContent ol.parts > ul.part {
@@ -616,8 +616,6 @@ order. A fix in the application for this is pending. */
 #NTIContent ol.parts > li.part {
 	list-style-type: none;
 	text-indent: 0px;
-	position: relative;
-	left: -40px;
 	display: block;
 }
 
@@ -634,8 +632,6 @@ order. A fix in the application for this is pending. */
 #NTIContent ol.parts > li.parthard {
 	list-style-type: none;
 	text-indent: 0px;
-	position: relative;
-	left: -40px;
 	display: block;
 }
 
