@@ -27,5 +27,17 @@ class ntiincludevideo(_OneText):
 class ntipagenum(_OneText):
 	pass
 
+class textsuperscript(Base.Command):
+	args = 'self'
+
+class textsubscript(Base.Command):
+	args = 'self'
+
+class texttrademark(Base.Command):
+	unicode = u'\u2122'
+
+class textregistered(Base.Command):
+	unicode = u'\u00AE'
+
 def ProcessOptions( options, document ):
 	pass
