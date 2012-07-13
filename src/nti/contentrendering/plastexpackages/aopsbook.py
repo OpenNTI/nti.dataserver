@@ -323,6 +323,11 @@ class parts(Base.List):
 
 		return res
 
+def _number_to_lower_alpha_list(index):
+	if ( index  ):
+		return _number_to_lower_alpha_list( (index - 1) / 26 ) + chr( (index - 1) % 26 + 97 )
+	else:
+		return ''
 
 
 
@@ -333,6 +338,7 @@ class part(plastexids.StableIDMixin,Base.List.item):
 	def invoke( self, tex ):
 		self.counter = 'partnum'
 		self.position = self.ownerDocument.context.counters[self.counter].value + 1
+		self.alpha = _number_to_lower_alpha_list( self.position )
 		#ignore the list implementation
 		return Base.Command.invoke(self,tex)
 

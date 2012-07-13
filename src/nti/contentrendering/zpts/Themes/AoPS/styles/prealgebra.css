@@ -203,6 +203,7 @@ order. A fix in the application for this is pending. */
 #NTIContent span.hint span.hint {
 	margin-left: 2em;
 	-webkit-box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.5);
+	box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.5);
 	padding: 0.5em;
 }
 /**
@@ -223,6 +224,7 @@ order. A fix in the application for this is pending. */
 	position: absolute;
 	width: 200px;
 	-webkit-box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.5);
+	box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.5);
 }
 
 #NTIContent .inlinenote
@@ -612,21 +614,41 @@ order. A fix in the application for this is pending. */
 }
 
 #NTIContent ol.parts > li.part {
-	list-style-type: lower-alpha;
+	list-style-type: none;
 	text-indent: 0px;
+	position: relative;
+	left: -40px;
+	display: block;
+}
+
+#NTIContent ol.parts > li.part:before {
+	content: "(" attr(partnum) ") ";
+	position: relative;
+	padding-right: 0.5em;
+}
+
+#NTIContent li.part > p.par {
+	display: inline;
 }
 
 #NTIContent ol.parts > li.parthard {
-	list-style-type: lower-alpha;
+	list-style-type: none;
 	text-indent: 0px;
+	position: relative;
+	left: -40px;
+	display: block;
 }
 
 #NTIContent ol.parts > li.parthard:before {
-	content: '*';
+	content: "(" attr(partnum) ") * ";
+	position: relative;
+	padding-right: 0.5em;
 }
 
-/*#NTIContent li.parthard
-*/
+#NTIContent li.parthard > p.par {
+	display: inline;
+}
+
 #NTIContent .solution {
 	font-style: italic;
 }

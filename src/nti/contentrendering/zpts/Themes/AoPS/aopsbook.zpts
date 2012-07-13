@@ -19,7 +19,7 @@ name:Def Defnoindex angle
 
 name: parts
 <ol class="parts itemize">
-	<li tal:repeat="item self" tal:attributes="class python: type(item).__name__; id self/id" tal:content="item"></li>
+	<li tal:repeat="item self" tal:attributes="class python: type(item).__name__; id self/id; partnum item/alpha" tal:content="item"></li>
 </ol>
 
 name: source MOEMS MathCounts AMC
