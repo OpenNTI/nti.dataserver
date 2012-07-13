@@ -15,8 +15,10 @@ from pyramid.view import view_config
 
 from zope import interface
 from zope import component
+from zope.proxy import ProxyBase as Proxy
 from zope.location.interfaces import ILocation
 
+from nti.appserver import interfaces as app_interfaces
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import liking
 from nti.dataserver import links
@@ -74,6 +76,10 @@ class LikeLinkDecorator(_AbstractLikeLinkDecorator):
 	Adds the appropriate like or unlike link.
 	"""
 
+def _uncached_response( context ):
+	context = Proxy( context )
+	interface.alsoProvides( context, app_interfaces.IUncacheableInResponse )
+	return context
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
@@ -91,7 +97,7 @@ def _LikeView(request):
 	"""
 
 	liking.like_object( request.context, authenticated_userid( request ) )
-	return request.context
+	return _uncached_response( request.context )
 
 
 @view_config( route_name='objects.generic.traversal',
@@ -110,8 +116,7 @@ def _UnlikeView(request):
 	"""
 
 	liking.unlike_object( request.context, authenticated_userid( request ) )
-	return request.context
-
+	return _uncached_response( request.context )
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
 @component.adapter(nti_interfaces.IFavoritable)
@@ -141,8 +146,7 @@ def _FavoriteView(request):
 	"""
 
 	liking.favorite_object( request.context, authenticated_userid( request ) )
-	return request.context
-
+	return _uncached_response( request.context )
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
@@ -160,4 +164,4 @@ def _UnfavoriteView(request):
 	"""
 
 	liking.unfavorite_object( request.context, authenticated_userid( request ) )
-	return request.context
+	return _uncached_response( request.context )
