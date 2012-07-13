@@ -177,7 +177,7 @@ def _get_email_message_text_parts(obj):
 		result.append(repr(obj))
 	return result
 	
-def create_sql3classifer_db(dbpath, directory, include_ham=False, fnfilter='*', indexfile=None,
+def create_sql3classifier_db(dbpath, directory, include_ham=False, fnfilter='*', indexfile=None,
 							default_spam=True, separator=None, batch_size=1000, *args, **kwargs):
 	count = 0
 	total = 0
