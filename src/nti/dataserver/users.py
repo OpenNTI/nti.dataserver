@@ -24,6 +24,8 @@ from zope.keyreference.interfaces import IKeyReference
 from zope.location import interfaces as loc_interfaces
 import zope.intid
 
+from repoze.lru import lru_cache
+
 import persistent
 import ZODB.POSException
 
@@ -55,7 +57,7 @@ def _get_shared_dataserver(context=None,default=None):
 		return component.queryUtility( nti_interfaces.IDataserver, context=context, default=default )
 	return component.getUtility( nti_interfaces.IDataserver, context=context )
 
-
+@lru_cache(10000)
 def _lower(s):
 	return s.lower() if s else s
 
@@ -204,7 +206,7 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject,E
 
 	def __eq__(self, other):
 		try:
-			return other != None and _lower(self.username) == _lower(other.username)
+			return other is self or _lower(self.username) == _lower(other.username)
 		except AttributeError:
 			return NotImplemented
 
