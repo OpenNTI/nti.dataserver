@@ -73,10 +73,9 @@ if [ "$INSTALL_EXTRAS" ]; then
 	fi
 
 	pip install pyyaml
-	pip install numpy
-	pip install matplotlib
-	pip install scipy
+	pip install numpy matplotlib scipy
 	pip install pil
+	pip install py
 
 	rm -rf $TMPWK_DIR
 fi
