@@ -26,7 +26,7 @@ class TestChatTranscript(ConfiguringTestBase):
 	@WithMockDS
 	def test_add_msg_no_container(self):
 		with mock_db_trans():
-			user = users.User( "sjohnson@nextthought.com" )
+			user = users.User.create_user( self.ds, username="sjohnson@nextthought.com" )
 			storage = chat_transcripts._UserTranscriptStorageAdapter( user )
 
 			class Meet(object):

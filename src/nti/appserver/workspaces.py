@@ -27,6 +27,7 @@ from nti.dataserver import mimetype
 from nti.ntiids import ntiids
 from nti.dataserver import authorization as nauth
 from nti.dataserver import authorization_acl as nacl
+from nti.dataserver import traversal as nti_traversal
 
 import nti.appserver.interfaces as app_interfaces
 import nti.appserver.pyramid_renderers as rest
@@ -254,7 +255,7 @@ class CollectionSummaryExternalizer(object):
 		ext_collection.__parent__ = collection.__parent__
 		ext_collection[StandardExternalFields.CLASS] = 'Collection'
 		ext_collection['Title'] = collection.name
-		ext_collection['href'] = traversal.normal_resource_path( collection )
+		ext_collection['href'] = nti_traversal.normal_resource_path( collection )
 		accepts = collection.accepts
 		if accepts is not None:
 			ext_collection['accepts'] = [mimetype.nti_mimetype_from_object( x ) for x in accepts]
@@ -381,7 +382,7 @@ def _magic_link_externalizer(_links):
 	for l in _links:
 		if l.target == getattr(l, '__name__', None):
 			# We know the ntiid gets used as the href
-			l.ntiid = traversal.normal_resource_path(l)
+			l.ntiid = nti_traversal.normal_resource_path(l)
 			l.target = l
 	return _links
 

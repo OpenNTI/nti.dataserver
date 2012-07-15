@@ -221,7 +221,7 @@ class TestUserService(tests.ConfiguringTestBase):
 																	has_entry( 'href', '/dataserver2/users/sjohnson%40nextthought.com/EnrolledClassSections' ) ) ) ) )
 
 		# A provider should show in the providers workspace
-		self.ds.root['providers']['OU'] = providers.Provider( 'OU' )
+		providers.Provider.create_provider( self.ds, username='OU' )
 		ext_object = toExternalObject( service )
 		assert_that( ext_object['Items'], has_item( all_of( has_entry( 'Title', 'providers' ),
 															has_entry( 'Items', has_item( has_entry( 'href', '/dataserver2/providers/OU' ) ) ),
@@ -233,10 +233,7 @@ class TestUserClassesCollection(tests.ConfiguringTestBase):
 	@mock_dataserver.WithMockDSTrans
 	def test_external( self ):
 		user = users.User.create_user( dataserver=self.ds, username='sjohnson@nextthought.com' )
-		self.ds.root['providers']['OU'] = providers.Provider( 'OU' )
-		# if we're enrolled in a class, that should show in the classes workspace
-		ou = self.ds.root['providers']['OU']
-		ou.__parent__ = self.ds.root['providers']
+		ou = providers.Provider.create_provider( self.ds, username='OU' )
 
 		clazz = ClassInfo( ID='CS5201' )
 		clazz.containerId = 'Classes'

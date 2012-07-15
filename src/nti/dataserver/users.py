@@ -62,15 +62,16 @@ def _lower(s):
 	return s.lower() if s else s
 
 @functools.total_ordering
+@interface.implementer( nti_interfaces.IEntity, nti_interfaces.ILastModified )
 class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject,ExternalizableDictionaryMixin):
 	"""
 	The root for things that represent human-like objects.
 	"""
 
-	interface.implements( nti_interfaces.IEntity, nti_interfaces.ILastModified )
+	_ds_namespace = 'users' # TODO: This doesn't really belong here
 
 	@classmethod
-	def get_entity( cls, username, dataserver=None, default=None, _namespace='users' ):
+	def get_entity( cls, username, dataserver=None, default=None, _namespace=None ):
 		"""
 		Returns an existing entity with the given username or None. If the
 		dataserver is not given, then the global dataserver will be used.
@@ -80,7 +81,7 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject,E
 		username = urllib.unquote( username )
 		dataserver = dataserver or _get_shared_dataserver(default=default)
 		if dataserver is not default:
-			return dataserver.root[_namespace].get( username, default )
+			return dataserver.root[_namespace or cls._ds_namespace].get( username, default )
 		return default
 
 	creator = nti_interfaces.SYSTEM_USER_NAME
@@ -599,6 +600,8 @@ class User(Principal):
 						 nti_interfaces.IUser,
 						 loc_interfaces.ISublocations)
 
+	_ds_namespace = 'users'
+
 	@classmethod
 	def get_user( cls, username, dataserver=None, default=None ):
 		""" Returns the User having `username`, else None. """
@@ -612,8 +615,9 @@ class User(Principal):
 		the User constructor takes. Overwrites an existing user. You handle
 		the transaction.
 		"""
+
 		dataserver = dataserver or _get_shared_dataserver()
-		root_users = dataserver.root['users']
+		root_users = dataserver.root[cls._ds_namespace]
 		if 'parent' not in kwargs:
 			kwargs['parent'] = root_users
 		user = cls( **kwargs )
@@ -681,7 +685,7 @@ class User(Principal):
 	# send back a gravatar URL for the primary email:
 	# http://www.gravatar.com/avatar/%<Lowercase hex MD5>=44&d=mm
 
-	def __init__(self, username, avatarURL=None, password=None, realname=None, parent=None):
+	def __init__(self, username, avatarURL=None, password=None, realname=None, parent=None, _stack_adjust=0):
 		super(User,self).__init__(username, avatarURL=avatarURL, password=password, realname=realname)
 		# We maintain a Map of our friends lists, organized by
 		# username (only one friend with a username)
@@ -693,8 +697,9 @@ class User(Principal):
 			# cannot be adapted to IKeyReference).
 			self.__parent__ = parent
 
-		if not self.__parent__ and component.queryUtility( zope.intid.IIntIds ) is not None:
-			warnings.warn( "No parent provided. User will have no Everyone list; either use User.create_user or provide parent kwarg", stacklevel=2 )
+		if self.__parent__ is None and component.queryUtility( zope.intid.IIntIds ) is not None:
+			warnings.warn( "No parent provided. User will have no Everyone list; either use User.create_user or provide parent kwarg",
+						   stacklevel=(2 if type(self) == User else 3) + _stack_adjust )
 			_create_fl = False
 
 
@@ -1064,7 +1069,7 @@ class User(Principal):
 			# The updateSet consists of either the object, or, if it as a
 			# shared object, (object, sharedSet). This allows us to be
 			# smart about how we distribute notifications.
-			self._v_updateSet.append( (obj,obj.getFlattenedSharingTargetNames())
+			self._v_updateSet.append( (obj,obj.flattenedSharingTargetNames)
 									  if isinstance( obj, ShareableMixin)
 									  else obj )
 
@@ -1155,7 +1160,7 @@ class User(Principal):
 			# If we can't get sharing, then there's no point in trying
 			# to do anything--the object could never go anywhere
 			try:
-				origSharing = obj.getFlattenedSharingTargetNames()
+				origSharing = obj.flattenedSharingTargetNames
 			except AttributeError:
 				logger.debug( "Failed to get sharing targets on obj of type %s; no one to target change to", type(obj) )
 				return
@@ -1170,7 +1175,7 @@ class User(Principal):
 			change.creator = self
 			self._broadcast_change_to( change, broadcast=True, username=self.username )
 
-		newSharing = obj.getFlattenedSharingTargetNames()
+		newSharing = obj.flattenedSharingTargetNames
 		seenUsernames = set()
 		def sendChangeToUser( username, theChange ):
 			""" Sends at most one change to a user, taking

@@ -389,9 +389,9 @@ class TestChatserver(ConfiguringTestBase):
 		import nti.dataserver.users as users
 		import nti.dataserver.meeting_container_storage as mcs
 
-		user = users.User( 'foo@bar', 'temp001' )
+		user = users.User.create_user( ds, username='foo@bar', password='temp001' )
 		ds.root['users']['foo@bar'] = user
-		ds.root['users']['friend@bar'] = users.User( 'friend@bar', 'temp001' )
+		ds.root['users']['friend@bar'] = users.User.create_user( ds, username='friend@bar', password='temp001' )
 		fl1 = user.maybeCreateContainedObjectWithType(  'FriendsLists', { 'Username': 'fl1', 'friends': ['friend@bar'] } )
 		fl1.containerId = 'FriendsLists'
 		fl1.creator = user
@@ -814,7 +814,7 @@ class TestChatserver(ConfiguringTestBase):
 		n.addSharingTarget( 'sjohnson' )
 		n.addSharingTarget( 'jason' )
 		n.addSharingTarget( 'chris' )
-		assert_that( n.getFlattenedSharingTargetNames(), is_( set( ['jason','chris','sjohnson'] ) ) )
+		assert_that( n.flattenedSharingTargetNames, is_( set( ['jason','chris','sjohnson'] ) ) )
 		conn.add( n )
 		conn.root()['Note'] = n
 		n_oid = toExternalOID( n )

@@ -275,7 +275,7 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 		try:
 			if addl_ts_needs_reset is not None and self.inReplyTo != addl_ts_needs_reset:
 				self._addl_transcripts_to.clear()
-			new_targets = self.inReplyTo.getFlattenedSharingTargetNames()
+			new_targets = self.inReplyTo.flattenedSharingTargetNames
 			self._addl_transcripts_to.update( new_targets )
 		except AttributeError: pass
 
