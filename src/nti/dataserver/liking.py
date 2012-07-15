@@ -15,9 +15,11 @@ from __future__ import print_function, unicode_literals
 
 from zope import interface
 from zope import component
+from zope.event import notify
 from zope.annotation import interfaces as an_interfaces
 
 import contentratings.interfaces
+import contentratings.events
 from contentratings.category import BASE_KEY
 from contentratings.storage import UserRatingStorage
 
@@ -78,7 +80,9 @@ def _lookup_like_rating_for_write( context, cat_name=LIKE_CAT_NAME ):
 # have the user query for his favorites (such an index can be maintained
 # by listening for the ObjectRatedEvents sent by a RatingCategory; NOTE: this
 # only seems to fire when ratings are added, not when ratings are removed so it's not
-# quite sufficient to maintain an index).
+# quite sufficient to maintain an index). Our _unrate_object method fires
+# such an event...the rating value will be None, so that's how a listener can
+# distinguish "rating added" from "rating removed"
 
 def _rate_object( context, username, cat_name ):
 
@@ -92,6 +96,9 @@ def _unrate_object( context, username, cat_name ):
 	rating = _lookup_like_rating_for_read( context, cat_name )
 	if rating and rating.userRating( username ) is not None:
 		rating.remove_rating( username )
+		# NOTE: The default implementation of a category does not
+		# fire an event on unrating, so we do.
+		notify( contentratings.events.ObjectRatedEvent(context, None, cat_name ) )
 		return rating
 
 def _rates_object( context, username, cat_name ):
@@ -258,3 +265,23 @@ class _BinaryUserRatings(Contained, Persistent):
 		""" We don't track this and don't use it. """
 		# But it is a validated part of the interface, so we can't raise
 		return None
+
+@component.adapter( interfaces.ILastModified, contentratings.interfaces.IObjectRatedEvent )
+def update_last_mod_on_rated( modified_object, event ):
+	"""
+	When an object is rated, its last modified time, and that of its parent,
+	should be updated.
+	"""
+
+
+	# An alternative to this would be to transform IObjectRatedEvent
+	# into IObjectModified event and let the normal handlers for that take over.
+	# But (in the future) there may be listeners to ObjectModified that do other things we wouldn't
+	# want to happen for a rating
+
+	last_mod = modified_object.updateLastMod()
+	try:
+		modified_object.__parent__.updateLastMod( last_mod )
+	except AttributeError:
+		# not contained or not contained in a ILastModified container
+		pass

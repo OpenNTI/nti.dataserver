@@ -4,6 +4,7 @@ from hamcrest import (assert_that, is_, has_entry, is_not, has_entry,
 					  same_instance, none, has_entries, only_contains)
 from hamcrest import has_length
 from hamcrest import not_none
+from hamcrest import greater_than
 from zope.annotation import interfaces as an_interfaces
 
 import unittest
@@ -23,7 +24,7 @@ import zope.schema.interfaces
 import mock_dataserver
 from mock_dataserver import WithMockDS
 from nti.contentfragments import interfaces as frg_interfaces
-
+from nti.dataserver import containers
 
 from nti.contentrange.contentrange import ContentRangeDescription, DomContentRangeDescription, ElementDomContentPointer
 
@@ -171,7 +172,7 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 		assert_that( ext, has_entry( 'LikeCount', 0 ) )
 
 	def test_liking_makes_it_to_ext(self):
-		"Externalizing a note produces LikeCount attribute"
+		"Externalizing a note produces correct LikeCount attribute"
 		n = Note()
 		# first time does something
 		assert_that( liking.like_object( n, 'foo@bar' ), verifiably_provides( contentratings.interfaces.IUserRating ) )
@@ -193,6 +194,44 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 		ext = {}
 		liking.LikeDecorator( n ).decorateExternalMapping( n, ext )
 		assert_that( ext, has_entry( 'LikeCount', 0 ) )
+
+	def _do_test_rate_changes_last_mod( self, like, unlike ):
+		container = containers.LastModifiedBTreeContainer()
+		n = Note()
+		container['Note'] = n
+
+		n.lastModified = 0
+		container.lastModified = 0
+
+		assert_that( like( n, 'foo@bar' ), verifiably_provides( contentratings.interfaces.IUserRating ) )
+
+		assert_that( n, has_property( 'lastModified', greater_than( 0 ) ) )
+		assert_that( container, has_property( 'lastModified', greater_than( 0 ) ) )
+
+		# Doesn't change on the second time, though,
+		# as it is idempotent
+		n.lastModified = 0
+		container.lastModified = 0
+
+		assert_that( like( n, 'foo@bar' ), is_( none() ) )
+		assert_that( n, has_property( 'lastModified', 0 ) )
+		assert_that( container, has_property( 'lastModified', 0 ) )
+
+		# Unliking, however, does
+		assert_that( unlike( n, 'foo@bar' ), verifiably_provides( contentratings.interfaces.IUserRating ) )
+
+		assert_that( n, has_property( 'lastModified', greater_than( 0 ) ) )
+		assert_that( container, has_property( 'lastModified', greater_than( 0 ) ) )
+
+
+	def test_liking_changes_last_mod(self):
+		"Liking an object changes its modification time and that of its container"
+		self._do_test_rate_changes_last_mod( liking.like_object, liking.unlike_object )
+
+	def test_favoriting_changes_last_mod(self):
+		"Liking an object changes its modification time and that of its container"
+		self._do_test_rate_changes_last_mod( liking.favorite_object, liking.unfavorite_object )
+
 
 	def test_favoriting(self):
 		"Notes can be favorited and unfavorited"
