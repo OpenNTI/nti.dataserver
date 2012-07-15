@@ -156,7 +156,7 @@ class _UserContentRoot(sharing.ShareableMixin, datastructures.ContainedMixin, da
 
 		# Replace sharing with the incoming data.
 		sharedWith = parsed.pop( 'sharedWith', () )
-		self.clearSharingTargets()
+		targets = set()
 		for s in sharedWith or ():
 			target = s
 			warnings.warn( "Assuming datastructure layout" )
@@ -164,7 +164,15 @@ class _UserContentRoot(sharing.ShareableMixin, datastructures.ContainedMixin, da
 				target = _get_entity( s )
 			elif hasattr( self.creator, 'getFriendsList' ):
 				target = self.creator.getFriendsList( s )
-			self.addSharingTarget( target or s, self.creator )
+			targets.add( target or s )
+		self.updateSharingTargets( targets )
+
+		### FIXME:
+		# updateSharingTargets is now good about only changing our mod date
+		# if anything actually changed. However, some tests (general_purpose)
+		# seem to assume it always changes simply by a POST. This appeases
+		# them, but we shouldn't have to do it.
+		self.updateLastMod()
 
 		if self._is_update_sharing_only( parsed ):
 			# In this state, we have received an update only for sharing.

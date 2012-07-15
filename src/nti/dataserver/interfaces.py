@@ -6,7 +6,7 @@ import warnings
 import itertools
 
 from zope import interface, schema
-from zope.deprecation import deprecated
+from zope.deprecation import deprecated, deprecate
 from zope.mimetype.interfaces import IContentTypeAware, IContentType
 from zope.annotation.interfaces import IAnnotatable
 
@@ -435,19 +435,33 @@ class IShareable(interface.Interface):
 
 	def addSharingTarget( target, actor=None ):
 		"""
-		Allow `target` to see this object.
+		Allow `target` to see this object. This does not actually make that so,
+		simply records the fact that the target should be able to see this
+		object.
 
 		:param target: Iterable of usernames/users, or a single username/user.
-		:param actor: Person attempting to alter sharing. If
-			not the creator of this object, may not be allowed.
+		:param actor: Ignored, deprecated. In the past, it was used
+			for security purposes, but ACLs should be used
+			for that now.
 
-		EOD
 		"""
 
+	def clearSharingTargets():
+		"""
+		Mark this object as being shared with no one (visible only to the creator).
+		Does not actually change any visibilities. Causes `flattenedSharingTargetNames`
+		to be empty.
+		"""
+
+	@deprecate("Use the attribute")
 	def getFlattenedSharingTargetNames():
 		"""
 		:return: Set of usernames this object is shared with.
 		"""
+
+	flattenedSharingTargetNames = schema.Set(
+		title="The usernames of all the users (including communities, etc) this obj is shared with.",
+		value_type=schema.TextLine(title="The username" ) )
 
 class IShareableModeledContent(IShareable,IModeledContent):
 	"""

@@ -69,7 +69,7 @@ class TestShareableACLProvider(mock_dataserver.ConfiguringTestBase):
 		action, actor, permission = acl[1]
 		assert_that( action, is_( nti_interfaces.ACE_ACT_ALLOW ) )
 		assert_that( actor, provides( nti_interfaces.IPrincipal ) )
-		assert_that( actor.id, is_( n.sharingTargets[0] ) )
+		assert_that( actor.id, is_( list(n.sharingTargets)[0] ) )
 		assert_that( permission, has_length( 1 ) )
 		assert_that( permission[0], provides( nti_interfaces.IPermission ) )
 		assert_that( permission[0].id, is_( 'zope.View' ) )
