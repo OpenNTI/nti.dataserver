@@ -57,7 +57,7 @@ class TestMeetingContainer(ConfiguringTestBase):
 		with mock_dataserver.mock_db_trans(ds):
 			user = users.User.create_user( ds, username='foo@bar', password='temp001' )
 			ds.root['users']['foo@bar'] = user
-			ds.root['users']['friend@bar'] = users.User( 'friend@bar', 'temp001' )
+			ds.root['users']['friend@bar'] = users.User.create_user( ds, username='friend@bar', password='temp001' )
 			fl1 = user.maybeCreateContainedObjectWithType(  'FriendsLists', { 'Username': 'fl1', 'friends': ['friend@bar'] } )
 			fl1.containerId = 'FriendsLists'
 			user.addContainedObject( fl1 )
@@ -88,7 +88,7 @@ class TestFriendsListAdaptor( ConfiguringTestBase ):
 		with mock_dataserver.mock_db_trans(ds):
 			user = users.User.create_user( ds, username='foo@bar', password='temp001' )
 			ds.root['users']['foo@bar'] = user
-			ds.root['users']['friend@bar'] = users.User( 'friend@bar', 'temp001' )
+			ds.root['users']['friend@bar'] = users.User.create_user( ds, username='friend@bar', password='temp001' )
 			fl1 = user.maybeCreateContainedObjectWithType(  'FriendsLists', { 'Username': 'fl1', 'friends': ['friend@bar'] } )
 			fl1.containerId = 'FriendsLists'
 			fl1.creator = user
@@ -124,9 +124,9 @@ class TestFriendsListAdaptor( ConfiguringTestBase ):
 		ds = self.ds
 		mcs.MeetingContainerStorage( ds )
 		with mock_dataserver.mock_db_trans(ds):
-			user = users.User( 'foo@bar', 'temp001' )
+			user = users.User.create_user( ds, username='foo@bar', password='temp001' )
 			ds.root['users']['foo@bar'] = user
-			ds.root['users']['friend@bar'] = users.User( 'friend@bar', 'temp001' )
+			ds.root['users']['friend@bar'] = users.User.create_user( ds, username='friend@bar', password='temp001' )
 			fl1 = user.maybeCreateContainedObjectWithType(  'FriendsLists', { 'Username': 'fl1', 'friends': ['friend@bar'] } )
 			fl1.containerId = 'FriendsLists'
 			fl1.creator = user
@@ -171,7 +171,7 @@ class TestClassSectionAdapter( ConfiguringTestBase ):
 		ds = self.ds
 		mcs.MeetingContainerStorage( ds )
 		with mock_dataserver.mock_db_trans(ds):
-			user = providers.Provider( 'OU' )
+			user = providers.Provider.create_provider( ds, username='OU' )
 			ds.root['providers']['OU'] = user
 			fl1 = user.maybeCreateContainedObjectWithType(  'Classes', None )
 			fl1.containerId = 'Classes'
@@ -218,7 +218,7 @@ class TestClassSectionAdapter( ConfiguringTestBase ):
 		ds = self.ds
 		mcs.MeetingContainerStorage( ds )
 		with mock_dataserver.mock_db_trans(ds):
-			user = providers.Provider( 'OU' )
+			user = providers.Provider.create_provider( ds, username='OU' )
 			ds.root['providers']['OU'] = user
 			fl1 = user.maybeCreateContainedObjectWithType(  'Classes', None )
 			fl1.containerId = 'Classes'

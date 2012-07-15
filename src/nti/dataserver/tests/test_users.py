@@ -171,7 +171,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 				assert_that( c_note, is_( same_instance( user1._v_updateSet[0][0] ) ) )
 				c_note.addSharingTarget( User.get_user( 'fab@bar', dataserver=mock_dataserver.current_mock_ds ),
 										 actor=user1 )
-				assert_that( list(c_note.getFlattenedSharingTargetNames()), is_( ['fab@bar'] ) )
+				assert_that( list(c_note.flattenedSharingTargetNames), is_( ['fab@bar'] ) )
 				assert_that( getPersistentState( c_note ), is_( persistent.CHANGED ) )
 				lm = c_note.lastModified
 			del user1._postNotification

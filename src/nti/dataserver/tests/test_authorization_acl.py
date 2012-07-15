@@ -193,8 +193,8 @@ class TestFriendsListACLProvider(mock_dataserver.ConfiguringTestBase):
 
 		# Given a creator and a member, the creator has all access
 		# and the friend has read
-		creator = User( 'sjohnson@baz' )
-		friend = User( 'friend@baz' )
+		creator = User.create_user( self.ds, username='sjohnson@baz' )
+		friend = User.create_user( self.ds, username='friend@baz' )
 
 		friends_list.creator = creator
 		friends_list.addFriend( friend )

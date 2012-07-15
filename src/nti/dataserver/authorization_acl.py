@@ -365,7 +365,7 @@ class _ShareableModeledContentACLProvider(AbstractCreatedAndSharedACLProvider):
 		super(_ShareableModeledContentACLProvider, self).__init__( obj )
 
 	def _get_sharing_target_names( self ):
-		return self._created.getFlattenedSharingTargetNames()
+		return self._created.flattenedSharingTargetNames
 
 # NOTE: All of the ACLs around classes will change as
 # roles become more defined. E.g., TAs will have some access.

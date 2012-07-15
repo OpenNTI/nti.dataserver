@@ -33,4 +33,4 @@ zanpakuto_commands =  (	"Shoot To Kill",
 
 
 class ConfiguringTestBase(DSConfiguringTestBase):
-	set_up_packages = (dataserver, contentsearch, contentfragments)
+	set_up_packages = (dataserver, contentsearch)

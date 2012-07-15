@@ -738,8 +738,7 @@ class TestApplication(ApplicationTestBase):
 		get = True
 		with mock_dataserver.mock_db_trans(self.ds):
 			self._create_user()
-			provider = providers.Provider( 'OU' )
-			self.ds.root['providers']['OU'] = provider
+			provider = providers.Provider.create_provider( self.ds, username='OU' )
 		testapp = TestApp( self.app )
 
 		data = json.serialize( { 'Class': 'ClassInfo', 'MimeType': 'application/vnd.nextthought.classinfo',
@@ -997,8 +996,7 @@ class TestApplication(ApplicationTestBase):
 
 
 def _create_class(ds, usernames_to_enroll=()):
-	provider = providers.Provider( 'OU' )
-	ds.root['providers']['OU'] = provider
+	provider = providers.Provider.create_provider( ds, username='OU' )
 	klass = provider.maybeCreateContainedObjectWithType(  'Classes', None )
 	klass.containerId = 'Classes'
 	klass.ID = 'CS2051'

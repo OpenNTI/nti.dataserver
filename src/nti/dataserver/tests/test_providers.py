@@ -20,13 +20,13 @@ class TestProvider(mock_dataserver.ConfiguringTestBase):
 
 	@mock_dataserver.WithMockDSTrans
 	def test_provider_iface(self):
-		provider = Provider( "OU" )
+		provider = Provider.create_provider( self.ds, username="OU" )
 		assert_that( provider, provides( nti_interfaces.IProviderOrganization ) )
 		verifyObject( nti_interfaces.IProviderOrganization, provider )
 
 	@mock_dataserver.WithMockDSTrans
 	def test_provider_acl(self):
-		provider = Provider( "OU" )
+		provider = Provider.create_provider( self.ds, username="OU" )
 
 		acl_prov = nti_interfaces.IACLProvider( provider )
 		assert_that( acl_prov, provides( nti_interfaces.IACLProvider ) )

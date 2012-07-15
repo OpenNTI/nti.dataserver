@@ -1,4 +1,9 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+$Id$
+"""
+from __future__ import print_function, unicode_literals
 
 from zope import interface
 from zope import component
@@ -16,12 +21,17 @@ class _ClassMap(datastructures.AbstractCaseInsensitiveNamedLastModifiedBTreeCont
 	container_name = 'Classes'
 	__name__ = container_name
 
+@interface.implementer( nti_interfaces.IProviderOrganization )
 class Provider(users.User):
 	"""
 	Represents a provider in the system.
 	"""
 
-	interface.implements( nti_interfaces.IProviderOrganization )
+	_ds_namespace = 'providers'
+
+	@classmethod
+	def create_provider( cls, *args, **kwargs ):
+		return cls.create_user( *args, _stack_adjust=2, **kwargs )
 
 	# For now, we model providers as user
 	# objects so that they can act as resource containers and

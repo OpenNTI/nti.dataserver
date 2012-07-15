@@ -37,7 +37,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 	def tearDown(self):
 		super(TestRepozeUserIndexManager, self).tearDown()
 		resetHooks()
-		
+
 	def _create_note(self, msg, username, containerId=None):
 		note = Note()
 		note.body = [unicode(msg)]
@@ -48,7 +48,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 	def _add_notes(self, usr=None, conn=None):
 		notes = []
 		conn = conn or mock_dataserver.current_transaction
-		usr = usr or User( 'nt@nti.com', 'temp' )
+		usr = usr or User.create_user( mock_dataserver.current_mock_ds, username='nt@nti.com', password='temp' )
 		for x in zanpakuto_commands:
 			note = self._create_note(x, usr.username)
 			if conn: conn.add(note)
@@ -66,9 +66,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		return notes, docids, rim
 
 	def _add_user_index_notes(self, ds=None):
-		usr = User( 'nt@nti.com', 'temp' )
-		ds = ds or mock_dataserver.current_mock_ds
-		ds.root['users']['nt@nti.com'] = usr
+		usr = User.create_user( ds, username='nt@nti.com', password='temp' )
 		notes, docids, rim = self._index_notes(dataserver=ds, usr=usr, do_assert=False)
 		return usr, rim, docids, notes
 
@@ -77,7 +75,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		rim = RepozeUserIndexManager ('nt@nti.com')
 		assert_that(rim.get_stored_indices(), is_([]))
 		assert_that(rim.has_stored_indices(), is_(False))
-		
+
 	@WithMockDSTrans
 	def test_index_notes(self):
 		_, _, rim, = self._index_notes()
@@ -116,7 +114,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_update_note(self):
-		_, rim, _, notes = self._add_user_index_notes()
+		_, rim, _, notes = self._add_user_index_notes(self.ds)
 		note = notes[5]
 		note.body = [u'Blow It Away']
 		rim.update_content(note)

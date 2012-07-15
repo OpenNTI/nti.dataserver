@@ -35,7 +35,7 @@ from zope import component
 from zope.annotation import interfaces as an_interfaces
 
 def _get_entity( username, dataserver=None ):
-	return users.Entity.get_entity( username, dataserver=dataserver )
+	return users.Entity.get_entity( username, dataserver=dataserver, _namespace=users.User._ds_namespace )
 
 class ThreadableMixin(object):
 	""" Defines an object that is client-side threadable. These objects are
@@ -130,7 +130,7 @@ class _UserContentRoot(sharing.ShareableMixin, datastructures.ContainedMixin, da
 		# TODO: Should we do the same resolution and wrapping that
 		# friends lists do? That would be difficult here
 		# Be triply sure this is a unique set.
-		sharedWith = list( set( toExternalObject( self.getFlattenedSharingTargetNames() ) ) )
+		sharedWith = list( set( toExternalObject( self.flattenedSharingTargetNames ) ) )
 		if sharedWith:
 			extDict['sharedWith'] = sharedWith
 		return extDict
@@ -159,7 +159,6 @@ class _UserContentRoot(sharing.ShareableMixin, datastructures.ContainedMixin, da
 		targets = set()
 		for s in sharedWith or ():
 			target = s
-			warnings.warn( "Assuming datastructure layout" )
 			if _get_entity( s ):
 				target = _get_entity( s )
 			elif hasattr( self.creator, 'getFriendsList' ):
@@ -351,9 +350,9 @@ class Note(ThreadableExternalizableMixin, Highlight):
 			# of the parent, and share back to the parent's creator,
 			# only making sure not to share with ourself since that's weird
 			# (Be a bit defensive about bad inReplyTo)
-			if not hasattr( self.inReplyTo, 'getFlattenedSharingTargetNames' ):
+			if not hasattr( self.inReplyTo, 'flattenedSharingTargetNames' ):
 				raise AttributeError( 'Illegal value for inReplyTo: %s (%s)' % datastructures.toExternalOID(self.inReplyTo), self.inReplyTo )
-			sharingTargetNames = set( self.inReplyTo.getFlattenedSharingTargetNames() )
+			sharingTargetNames = set( self.inReplyTo.flattenedSharingTargetNames )
 			sharingTargetNames.add( getattr( self.inReplyTo.creator, 'username', None ) )
 			sharingTargetNames.discard( creatorName )
 			sharingTargetNames.discard( None )
