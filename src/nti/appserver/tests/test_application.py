@@ -507,7 +507,7 @@ class TestApplication(ApplicationTestBase):
 			n.applicableRange = contentrange.ContentRangeDescription()
 			n.containerId = 'tag:nti:foo'
 			user.addContainedObject( n )
-			assert_that( n.sharingTargets, is_( () ) )
+			assert_that( n.sharingTargets, is_( set() ) )
 
 		testapp = TestApp( self.app )
 		data = '["Everyone"]'
