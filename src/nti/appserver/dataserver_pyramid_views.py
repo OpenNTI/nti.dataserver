@@ -1039,6 +1039,8 @@ class _UGDPostView(_UGDModifyViewBase):
 				logger.debug( "Failing to POST: input of unsupported/missing ContainerId" )
 				raise HTTPUnprocessableEntity( "Unsupported/missing ContainerId" )
 
+			if hasattr( containedObject, 'updateLastMod' ):
+				containedObject.updateLastMod()
 			# OK, now that we've got an object, start firing events
 			lifecycleevent.created( containedObject )
 			try:
