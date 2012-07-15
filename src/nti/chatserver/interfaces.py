@@ -8,7 +8,6 @@ from __future__ import unicode_literals
 from zope import interface
 from zope.interface import interfaces as z_interfaces
 from zope.interface import Interface
-from zope import interface
 from zope import schema
 from zope.security.permission import Permission
 
