@@ -5,12 +5,16 @@ $Revision$
 """
 from __future__ import print_function, unicode_literals
 
+logger = __import__('logging').getLogger(__name__)
+
 import datetime
 import numbers
 import time
 import collections
+import warnings
 
 from zope import interface
+from zope import component
 from nti.ntiids import interfaces
 
 # Well-known IDs
@@ -190,3 +194,30 @@ def get_parts( ntiid ):
 	EOD
 	"""
 	return _parse( ntiid )
+
+def find_object_with_ntiid(key, **kwargs):
+	"""
+	Attempts to find an object with the given NTIID. No security is implied; traversal is not
+	necessarily used.
+
+	:param string key: The NTIID to find.
+	:return: The object found, or None if no object can be found or the ntiid passed is invalid.
+	"""
+
+	if not is_valid_ntiid_string( key ):
+		logger.warn( "Invalid ntiid string %s", key )
+		return None
+	if kwargs:
+		warnings.warn( "Function currently takes no kwargs" )
+
+	result = None
+	ntiid = _parse( key )
+
+	resolver = component.queryUtility( interfaces.INTIIDResolver, name=ntiid.nttype )
+
+	if not resolver:
+		logger.warn( "No ntiid resolver for '%s' in '%s'", ntiid.nttype, key )
+		return None
+
+
+	return resolver.resolve( key )

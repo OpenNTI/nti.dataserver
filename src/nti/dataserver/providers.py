@@ -66,28 +66,6 @@ class Provider(users.User):
 		if self.classes.__parent__ is None:
 			self.classes.__parent__ = self
 
-	def get_by_ntiid( self, container_id ):
-		result = super(Provider,self).get_by_ntiid( container_id )
-		if not result:
-			id_type = ntiids.get_type( container_id )
-			def _match( x ):
-				return x if getattr( x, 'NTIID', None ) == container_id else None
-
-			# TODO: Generalize this
-			# TODO: Should we track updates here?
-			# TODO: Why are there two id_type that mean the same?
-			if id_type in (ntiids.TYPE_MEETINGROOM_CLASS, ntiids.TYPE_CLASS):
-				for x in self.classes.itervalues():
-					result = _match( x )
-					if result: break
-			elif id_type == ntiids.TYPE_MEETINGROOM_SECT:
-				for c in self.classes.itervalues():
-					for s in getattr( c, 'Sections', () ):
-						result = _match( s )
-						if result: break
-					if result: break
-
-		return result
 
 @interface.implementer( nti_interfaces.IACLProvider )
 @component.adapter( nti_interfaces.IProviderOrganization )
