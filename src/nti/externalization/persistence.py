@@ -124,6 +124,12 @@ class PersistentExternalizableWeakList(PersistentExternalizableList):
 	Any weak references added to the list will be treated the same.
 	"""
 
+	def __init__(self, initlist=None):
+		if initlist is not None:
+			initlist = [self.__wrap( x ) for x in initlist]
+		super(PersistentExternalizableWeakList,self).__init__(initlist)
+
+
 	def __getitem__(self, i ):
 		return super(PersistentExternalizableWeakList,self).__getitem__( i )()
 
@@ -157,7 +163,7 @@ class PersistentExternalizableWeakList(PersistentExternalizableList):
 
 
 	def __setslice__(self, i, j, other):
-		raise TypeError( 'Not supported' )
+		raise TypeError( 'Not supported' ) # pragma: no cover
 
 	# Unfortunately, these are not implemented in terms of the primitives, so
 	# we need to overide each one. They can throw exceptions, so we're careful
