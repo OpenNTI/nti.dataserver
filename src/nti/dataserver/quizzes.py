@@ -22,10 +22,9 @@ from nti.externalization.externalization import to_standard_external_dictionary,
 from nti.externalization.interfaces import StandardExternalFields, IExternalObject
 from nti.externalization import oids
 
-from nti.deprecated import deprecated
 import mimetype
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.ntiids import find_object_with_ntiid
+from nti.ntiids.ntiids import find_object_with_ntiid
 from nti.ntiids import ntiids
 
 # TODO: These need interfaces and modeling.
