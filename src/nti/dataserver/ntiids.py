@@ -3,6 +3,8 @@ Constants and types for dealing with our unique IDs.
 $Revision$
 """
 
+logger = __import__('logging').getLogger(__name__)
+
 from zope.deprecation import deprecated
 
 from nti.ntiids.ntiids import TYPE_MEETINGROOM_CLASS
@@ -66,48 +68,124 @@ deprecated( "TYPE_HTML", "Prefer nti.ntiids.ntiids.TYPE_HTML" )
 from nti.ntiids.ntiids import TYPE_CLASS
 deprecated( "TYPE_CLASS", "Prefer nti.ntiids.ntiids.TYPE_CLASS" )
 
+from nti.ntiids.ntiids import find_object_with_ntiid
+deprecated( "find_object_with_ntiid", "Prefer nti.ntiids.ntiids.find_object_with_ntiid" )
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import authorization_acl as nacl
 from nti.contentlibrary import interfaces as lib_interfaces
 from nti.assessment import interfaces as asm_interfaces
+from nti.ntiids import interfaces as nid_interfaces
+
 from zope import component
+from zope import interface
 
-def find_object_with_ntiid(key, dataserver=None):
-	"Attempts to find an object with the given NTIID. No security is implied."
-	# TODO: Where should this live? Should we have registered adapters or something
-	# for every type of NTIID? Probably yes
-	if not is_valid_ntiid_string( key ):
-		return None
+@interface.implementer( nid_interfaces.INTIIDResolver )
+class _OIDResolver(object):
 
-	result = None
-	dataserver = dataserver or component.queryUtility( nti_interfaces.IDataserver )
-	if dataserver:
-		if is_ntiid_of_type( key, TYPE_OID ):
-			result = dataserver.get_by_oid( key, ignore_creator=True )
-		else:
+	def resolve( self, key ):
+		dataserver = component.queryUtility( nti_interfaces.IDataserver )
+		return dataserver.get_by_oid( key, ignore_creator=True ) if dataserver else None
+
+def _match( x, container_id ):
+	return x if getattr( x, 'NTIID', None ) == container_id else None
+
+class _AbstractUserBasedResolver(object):
+
+	namespace = 'users'
+
+	def resolve( self, key ):
+		dataserver = component.queryUtility( nti_interfaces.IDataserver )
+		user = None
+		if dataserver:
 			provider = get_provider( key )
-			# TODO: Knowledge about where providers are
-			user = dataserver.root['users'].get( provider )
-			if not user:
-				# Is it a Provider?
-				user = dataserver.root['providers'].get( provider )
-			if user:
-				result = user.get_by_ntiid( key )
+			user = dataserver.root[self.namespace].get( provider )
+		if user:
+			return self._resolve( key, user )
 
-	if result is None:
-		# Nothing we could find specifically using a normal NTIID lookup.
-		# Is it something in the library?
-		# TODO: User-specific libraries
+	def _resolve( self, key, user ):
+		raise NotImplementedError()
+
+@interface.implementer( nid_interfaces.INTIIDResolver )
+class _ClassResolver(_AbstractUserBasedResolver):
+
+	namespace = 'providers'
+	def _resolve(self, key, provider):
+		# TODO: Generalize this
+		# TODO: Should we track updates here?
+		# TODO: Why are there two id_type that mean the same?
+		result = None
+		for x in provider.classes.itervalues():
+			result = _match( x, key )
+			if result: break
+		return result
+
+@interface.implementer( nid_interfaces.INTIIDResolver )
+class _SectionResolver(_AbstractUserBasedResolver):
+
+	namespace = 'providers'
+	def _resolve(self, key, provider ):
+		result = None
+		for c in provider.classes.itervalues():
+			for s in getattr( c, 'Sections', () ):
+				result = _match( s, key )
+				if result: break
+			if result: break
+		return result
+
+@interface.implementer( nid_interfaces.INTIIDResolver )
+class _ContentResolver(object):
+
+	def resolve( self, key ):
 		library = component.queryUtility( lib_interfaces.IContentPackageLibrary )
 		path = library.pathToNTIID( key ) if library else None
 		if path:
 			result = path[-1]
+			# TODO: ACL Proxy can probably go away
 			result = nti_interfaces.ACLLocationProxy( result, result.__parent__, result.__name__, nacl.ACL( result ) )
 
-	if result is None and is_ntiid_of_type( key, asm_interfaces.NTIID_TYPE ):
+@interface.implementer( nid_interfaces.INTIIDResolver )
+class _AssessmentResolver(object):
+
+	def resolve( self, key ):
 		result = component.queryUtility( asm_interfaces.IQuestionMap, default={} ).get( key )
 		if result:
+			# TODO: ACL Proxy can probably go away
 			result = nti_interfaces.ACLLocationProxy( result, None, None, nacl.ACL( result ) )
 
-	return result
+@interface.implementer( nid_interfaces.INTIIDResolver )
+class _MeetingRoomResolver(_AbstractUserBasedResolver):
+
+	def _resolve( self, key, user ):
+		result = None
+		for x in user.friendsLists.itervalues():
+			if _match( x, key ):
+				result = x
+				break
+		return result
+
+from nti.chatserver import interfaces as chat_interfaces
+
+@interface.implementer( nid_interfaces.INTIIDResolver )
+class _TranscriptResolver(_AbstractUserBasedResolver):
+
+	def _resolve( self, key, user ):
+		result = chat_interfaces.IUserTranscriptStorage(user).transcript_for_meeting( key )
+		if not result:
+			logger.debug( "Failed to find transcript given oid: %s", key )
+		return result
+
+@interface.implementer( nid_interfaces.INTIIDResolver )
+class _UGDResolver(_AbstractUserBasedResolver):
+
+	def _resolve( self, key, user ):
+		# Try looking up the ntiid by name in each container
+		# TODO: This is terribly expensive
+		result = None
+		for container_name in user.containers.containers:
+			container = user.containers.containers[container_name]
+			if isinstance( container, numbers.Number ): continue
+			result = container.get( key )
+			if result:
+				break
+		return result

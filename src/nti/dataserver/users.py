@@ -184,14 +184,6 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject,E
 		""" Our ID is a synonym for our username"""
 		return self.username
 
-	def get_by_ntiid( self, container_id ):
-		"""
-		Return something that belongs to this object based on looking
-		up its NTIID, or None.
-		"""
-		assert _lower(ntiids.get_provider( container_id )) == _lower(self.username), ("%s %s should never load '%s'" %(self.__class__.__name__, self.username, container_id))
-		return None
-
 	### Externalization ###
 
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
@@ -947,31 +939,6 @@ class User(Principal):
 	# What about monitoring the resources associated with the transaction
 	# and if any of them belong to us posting a notification? (That seems
 	# convenient but a poor separation of concerns)
-
-	def get_by_ntiid( self, object_id ):
-		result = super(User,self).get_by_ntiid( object_id )
-		if not result:
-			if ntiids.is_ntiid_of_type( object_id, ntiids.TYPE_MEETINGROOM ):
-			# TODO: Generalize this
-			# TODO: Should we track updates here?
-				for x in self.friendsLists.itervalues():
-					if getattr( x, 'NTIID', None ) == object_id:
-						result = x
-						break
-			elif ntiids.is_ntiid_of_type( object_id, ntiids.TYPE_TRANSCRIPT ):
-				result = chat_interfaces.IUserTranscriptStorage(self).transcript_for_meeting( object_id )
-				if not result:
-					logger.debug( "Failed to find transcript given oid: %s", object_id )
-			else:
-				# Try looking up the ntiid by name in each container
-				# TODO: This is terribly expensive
-				for container_name in self.containers.containers:
-					container = self.containers.containers[container_name]
-					if isinstance( container, numbers.Number ): continue
-					result = container.get( object_id )
-					if result:
-						break
-		return result
 
 	def getContainedObject( self, containerId, containedId, defaultValue=None ):
 		if containerId == self.containerId: # "Users"

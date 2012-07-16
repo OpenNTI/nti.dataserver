@@ -208,22 +208,11 @@ class MeetingContainerStorage(object):
 		"""
 		self.server = server
 
-	def get_by_ntiid( self, container_id ):
-		"""
-		Make us look like an Entity for our purposes to avoid None handling.
-		"""
-		return None
-
 	def get( self, container_id, default=None ):
 		result = None
 		provider = ntiids.get_provider( container_id )
 		if provider and ntiids.is_ntiid_of_type( container_id, ntiids.TYPE_MEETINGROOM ):
-			# TODO: Providers and users are in two different namespaces.
-			# We're only distinguishing that now by the presence or absence of a @ in their
-			# name. What's right?
-			entity = users.Entity.get_entity( provider, self.server, default=self,
-											  _namespace=('users' if '@' in provider else 'providers') )
-			container = entity.get_by_ntiid( container_id )
+			container = ntiids.find_object_with_ntiid( container_id )
 			result = component.queryAdapter( container, chat_interfaces.IMeetingContainer )
 
 		return result or default

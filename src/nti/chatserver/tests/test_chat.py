@@ -553,7 +553,7 @@ class TestChatserver(ConfiguringTestBase):
 			assert_that( chat_transcripts.transcript_for_user_in_room( user, room.ID ).get_message( msg.ID ), is_( msg ) )
 			user = users.User.get_user( user )
 			tx_id = chat_transcripts._transcript_ntiid( room, user, ntiids.TYPE_TRANSCRIPT )
-			assert_that( user.get_by_ntiid( tx_id ).get_message( msg.ID ), is_( msg ) )
+			assert_that( ntiids.find_object_with_ntiid( tx_id ).get_message( msg.ID ), is_( msg ) )
 
 	@WithMockDSTrans
 	def test_moderator_send_default(self):
@@ -791,7 +791,7 @@ class TestChatserver(ConfiguringTestBase):
 			assert_that( summary.links[0].target, provides( interfaces.ITranscript ) )
 			assert_that( mock_dataserver.current_mock_ds.get_by_oid( room.id, ignore_creator=True), not_none() )
 			user = users.User.get_user( user )
-			transcript = user.get_by_ntiid( ntiids.make_ntiid( base=summary.NTIID, nttype=ntiids.TYPE_TRANSCRIPT ) )
+			transcript = ntiids.find_object_with_ntiid( ntiids.make_ntiid( base=summary.NTIID, nttype=ntiids.TYPE_TRANSCRIPT ) )
 			assert_that( transcript, provides( interfaces.ITranscript ) )
 
 	@WithMockDSTrans

@@ -373,7 +373,7 @@ class _ObjectsContainerResource(_ContainerResource):
 		# traversed to get a correct ACL, and coming in this way that doesn't happen.
 		# NOTE: We do not expect to get a fragment here. Browsers drop fragments in URLs.
 		# Fragment handling will have to be completely client side.
-		return find_object_with_ntiid( key, dataserver=ds )
+		return find_object_with_ntiid( key )
 
 class _NTIIDsContainerResource(_ObjectsContainerResource):
 	"""
