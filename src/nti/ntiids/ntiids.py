@@ -10,6 +10,8 @@ import numbers
 import time
 import collections
 
+from zope import interface
+from nti.ntiids import interfaces
 
 # Well-known IDs
 DATE = "2011-10"
@@ -147,6 +149,7 @@ def make_ntiid( date=DATE, provider=None, nttype=None, specific=None, base=None 
 	return result
 
 NTIID = collections.namedtuple( 'NTIID', 'provider, nttype, specific,date' )
+interface.classImplements( NTIID, interfaces.INTIID )
 
 def _parse( ntiid ):
 	"""
@@ -181,8 +184,8 @@ def get_type( ntiid ):
 
 def get_parts( ntiid ):
 	"""
-	:return: An NTIID named three-tuple (provider, type, type-specific) if the ntiid could be parsed,
-		or named three-tuple of None.
+	:return: An NTIID named four-tuple (provider, type, type-specific, date) if the ntiid could be parsed,
+		or named four-tuple of None.
 
 	EOD
 	"""

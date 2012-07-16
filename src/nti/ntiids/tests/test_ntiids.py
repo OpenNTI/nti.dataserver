@@ -6,7 +6,9 @@ import unittest
 import datetime
 import time
 
+from nti.tests import verifiably_provides
 import nti.ntiids.ntiids as ntiids
+from nti.ntiids import interfaces
 
 
 class TestNTIIDS(unittest.TestCase):
@@ -25,6 +27,9 @@ class TestNTIIDS(unittest.TestCase):
 		assert_that( ntiids.make_ntiid( date=None, nttype='Test', provider='TestP', specific='Bar' ),
 					 is_( 'tag:nextthought.com,%s:TestP-Test-Bar' % iso_now ) )
 
+	def test_parse_ntiid( self ):
+		ntiid = ntiids.get_parts( ntiids.ROOT )
+		assert_that( ntiid, verifiably_provides( interfaces.INTIID ) )
 
 	def test_utc_date( self ):
 		"A timestamp should always be interpreted UTC."
