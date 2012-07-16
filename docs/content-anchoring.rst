@@ -665,12 +665,12 @@ A NTIContentSimpleTextRangeSpec
 		},
 		start: {
 			ancestor : {elementId: 'id', elementTagName: 'p'},
-			contexts: [{ contextText: 'A', contextOffset: 26 }],
+			contexts: [{ contextText: 'A', contextOffset: 27 }],
 			edgeOffset: 0
 		},
 		end: {
 			ancestor : {elementId: 'id', elementTagName: 'p'},
-			contexts: [{ contextText: 'node', contextOffset: 22 }],
+			contexts: [{ contextText: 'node', contextOffset: 23 }],
 			edgeOffset: 4
 		},
 		selected_text: 'A single selected text node',
@@ -686,7 +686,7 @@ This example spans from one text node to the next.
 .. code-block:: html
 
 	<p id="id">
-		[|An] <i>[italic]</i> [word.]|
+		[|An ]<i>[italic]</i>[ word.]|
 	</p>
 
 
@@ -700,12 +700,12 @@ This example spans from one text node to the next.
 		},
 		start: {
 			ancestor : {elementId: 'id', elementTagName: 'p'},
-			contexts: [{ contextText: 'An', contextOffset: 2 }],
+			contexts: [{ contextText: 'An', contextOffset: 3 }],
 			edgeOffset: 0
 		},
 		end: {
 			ancestor : {elementId: 'id', elementTagName: 'p'},
-			contexts: [{ contextText: 'word.', contextOffset: 0 }],
+			contexts: [{ contextText: 'word.', contextOffset: 1 }],
 			edgeOffset: 5
 		}
 	}
@@ -721,8 +721,8 @@ the offsets within a text node are the same. How does it resolve?
 .. code-block:: html
 
 	<p id="id">
-		[This is the] <i>[first]</i> [sentence.]
-		<span> [This is |the] <i>second</i> [sentence.|]</span>
+		[This is the ]<i>[first]</i>[ sentence. ]
+		<span>[This is |the ]<i>second</i>[ sentence.|]</span>
 	</p>
 
 
@@ -736,15 +736,14 @@ the offsets within a text node are the same. How does it resolve?
 		},
 		start: {
 			ancestor : {elementId: 'id', elementTagName: 'p'},
-			contexts: [{ contextText: 'is the', contextOffset: 3 },
-					   {contextText: 'sentence.', contextOffset: 9},
-					   {contextText: 'first', contextOffset: 5},
-					   {contextText: 'the'}, contextOffset: 3],
-			edgeOffset: 8
+			contexts: [{ contextText: 'is the', contextOffset: 7 },
+					   {contextText: 'sentence. ', contextOffset: 10},
+					   {contextText: 'first', contextOffset: 5}],
+			edgeOffset: 3
 		},
 		end: {
 			ancestor : {elementId: 'id', elementTagName: 'p'},
-			contexts: [{ contextText: 'sentence.', contextOffset: 0 }],
+			contexts: [{ contextText: 'sentence.', contextOffset: 1 }],
 			edgeOffset: 9
 		}
 	}
@@ -779,13 +778,13 @@ in the wrong content being highlighted
 		end: {
 			ancestor : {elementId: 'id', elementTagName: 'p'},
 			contexts: [{ contextText: '. ', contextOffset: 0 }],
-			edgeOffset: 1
+			edgeOffset: 2
 		}
 	}
 
 The user desires the entire paragraph to be highlighted.  However,
 when resolving the model, the end context is ambigious and we
-incorrectly end the highlight just after the first '.' folowing 'WOW'.
+incorrectly end the highlight just after the first '.' following 'WOW'.
 
 Anchor Migration
 ================
