@@ -67,6 +67,13 @@ class Change(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 		or None if the object no longer exists. """
 		return self.objectReference()
 
+	def values(self):
+		"""
+		For migration compatibility with :mod:`zope.generations.utility`, this
+		method returns the same thing as :meth:`object`.
+		"""
+		yield self.object
+
 	def __repr__(self):
 		return "%s('%s',%s)" % (self.__class__.__name__,self.type,type(self.object).__name__)
 
