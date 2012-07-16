@@ -993,6 +993,9 @@ class User(Principal):
 		Returns something that iterates across all contained objects of this user.
 		This is intended for use during migrations (enabling :func:`zope.generations.utility.findObjectsProviding`)
 		and not general use.
+
+		.. note:: Use of this function may result in some duplicated objects being found.
+
 		:param type of_type: If given, then only values that are instances of the given type
 			will be returned.
 		:type of_type: A class or interface.
@@ -1009,6 +1012,29 @@ class User(Principal):
 		for container in self.getAllContainers().values():
 			if not hasattr( container, 'values' ): continue
 			for o in container.values():
+				if test(o):
+					yield o
+
+		# We do not directly own these objects; they are weak refs
+		# to the objects of others. But if they have been deleted from the DB,
+		# and the DB hasn't been packed, we may be the only path to them
+		for container in self.streamCache.values():
+			if not hasattr( container, 'values' ): continue
+			for o in container.values():
+				if o is None: continue
+				if test(o):
+					# We could have Change 'Circled' referring to us, which
+					# leads to infinite recursion
+					if isinstance( o.object, User ):
+						continue
+					yield o
+
+		for container in self.containersOfShared.containers.values():
+			if not hasattr( container, 'values' ): continue
+			for o in container.values():
+				if isinstance( o, persistent.wref.WeakRef ):
+					o = o()
+				if o is None: continue
 				if test(o):
 					yield o
 

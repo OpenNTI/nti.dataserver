@@ -109,6 +109,13 @@ class PersistentExternalizableList(persistent.list.PersistentList):
 		result = [toExternalObject(x) for x in self if x is not None]
 		return result
 
+	def values(self):
+		"""
+		For compatibility with :mod:`zope.generations.utility`, this object
+		defines a `values` method which does nothing but return itself. That
+		makes these objects transparent and suitable for migrations.
+		"""
+		return self
 
 
 class PersistentExternalizableWeakList(PersistentExternalizableList):
@@ -120,8 +127,8 @@ class PersistentExternalizableWeakList(PersistentExternalizableList):
 	def __getitem__(self, i ):
 		return super(PersistentExternalizableWeakList,self).__getitem__( i )()
 
-	# __iter__ is implemented with __getitem__. However, __eq__ isn't, it wants
-	# to directly compare lists
+	# NOTE: __iter__ is implemented with __getitem__ so we don't reimplement.
+	# However, __eq__ isn't, it wants to directly compare lists
 	def __eq__( self, other ):
 		# If we just compare lists, weak refs will fail badly
 		# if they're compared with non-weak refs
