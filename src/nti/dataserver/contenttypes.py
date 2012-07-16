@@ -127,10 +127,8 @@ class _UserContentRoot(sharing.ShareableMixin, datastructures.ContainedMixin, da
 
 	def toExternalObject( self ):
 		extDict = getattr( self, 'toExternalDictionary' )()
-		# TODO: Should we do the same resolution and wrapping that
-		# friends lists do? That would be difficult here
-		# Be triply sure this is a unique set.
-		sharedWith = list( set( toExternalObject( self.flattenedSharingTargetNames ) ) )
+
+		sharedWith = toExternalObject( self.flattenedSharingTargetNames )
 		if sharedWith:
 			extDict['sharedWith'] = sharedWith
 		return extDict

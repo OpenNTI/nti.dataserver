@@ -521,6 +521,7 @@ def temp_get_config( root, demo=False ):
 	ini.read( env.zeo_client_conf )
 
 	def connect_databases(  ):
+		__traceback_info__ = root, env.zeo_conf, env.zeo_client_conf, ini
 		env.zeo_launched = True
 		if not hasattr( env, 'zeo_uris' ):
 			env.zeo_uris = ini.get( 'ZODB', 'uris' )

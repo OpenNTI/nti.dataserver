@@ -73,13 +73,19 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		and a deadlock (the ZEO connection pthreads do not survive the fork, I think).
 		"""
 
-		gevent.hub.get_hub() # init the hub
-		dummy_app = self.app.app
-		wsgi_app = loadwsgi.loadapp( 'config:' + dummy_app.global_conf['__file__'], name='dataserver_gunicorn' )
-		self.app_server = nti.appserver.standalone._create_app_server( wsgi_app,
+		try:
+			gevent.hub.get_hub() # init the hub
+			dummy_app = self.app.app
+			wsgi_app = loadwsgi.loadapp( 'config:' + dummy_app.global_conf['__file__'], name='dataserver_gunicorn' )
+
+			self.app_server = nti.appserver.standalone._create_app_server( wsgi_app,
 																	   dummy_app.global_conf,
 																	   port=dummy_app.global_conf['http_port'],
 																	   **dummy_app.kwargs )
+		except Exception:
+			logger.exception( "Failed to create appserver" )
+			raise
+
 		# Change/update the logging format.
 		# It's impossible to configure this from the ini file because
 		# Paste uses plain ConfigParser, which doesn't understand escaped % chars,

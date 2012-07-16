@@ -90,6 +90,9 @@ class RedactionTest(mock_dataserver.ConfiguringTestBase):
 			assert_that( redaction, has_property( k, u'Hi.' ) )
 			assert_that( redaction, has_property( k, verifiably_provides( frg_interfaces.IPlainTextContentFragment ) ) )
 
+		redaction.addSharingTarget( 'joe@ou.edu' )
+		ext = redaction.toExternalObject()
+		assert_that( ext, has_entry( 'sharedWith', ['joe@ou.edu'] ) )
 
 
 class HighlightTest(mock_dataserver.ConfiguringTestBase):
