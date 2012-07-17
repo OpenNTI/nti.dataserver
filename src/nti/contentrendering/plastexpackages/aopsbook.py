@@ -24,6 +24,7 @@ from plasTeX.Packages.fancybox import *
 from plasTeX.Packages.graphicx import *
 from plasTeX.Packages.amsmath import *
 
+import pdb
 
 # Disable pylint warning about "too many methods" on the Command subclasses,
 # and "deprecated string" module
@@ -686,39 +687,24 @@ class revprob(Base.subsection):
 		self.attributes['probnum'] = str(self.ownerDocument.context.counters['chapter'].value) + '.' + str(self.ownerDocument.context.counters['probnum'].value)
 		return res
 
-class challProb(Base.subsection):
+class _ChallProb(Base.subsection):
 	args = ''
 	
-	def invoke(self, tex ):
-		return super(challProb,self).invoke( tex )
-	
 	def digest(self, tokens):
-		super(challProb,self).digest( tokens )
 		""" Where we have two consecutive hints, we would like to remove the separating ',' (Fix renegade commas issue)
 			We have observed two patterns of this issue: <hint>','<hint> and <hint>',''~'<hint>
 			and in both cases, we want to omit the comma. 
 		"""
-		for child in self.childNodes:
-			hintsList = child.getElementsByTagName('hint')	
-			if hintsList != None and len(hintsList) > 1:		
-				for aHint in hintsList:					
-					try:
-						hindex = child.childNodes.index(aHint)
-						if hindex!= None and len(child.childNodes) > hindex + 2 :
-							# check for this pattern: <hint>,<hint>
-							if isinstance( child.childNodes[hindex+2], aHint.__class__ ) and child.childNodes[hindex+1] == ', ':
-								child.childNodes.pop(hindex+1)
-							# check for this pattern: <hint>,~ <hint>
-							elif len(child.childNodes) > hindex + 3 and \
-								isinstance( child.childNodes[hindex+3], aHint.__class__ ) and  \
-								child.childNodes[hindex+1] == ',' and \
-								child.childNodes[hindex+2].source == '~ ':
-								child.childNodes.pop(hindex+1)
-														
-					except ValueError:
-						pass 
+		super(_ChallProb,self).digest( tokens )
+		hintName = 'hint'
+		for node in self.childNodes:
+			for child in node.childNodes:
+				if child.nodeName == hintName and child.nextSibling == ', ' and child.nextSibling.nextSibling.nodeName == hintName:
+					node.removeChild(child.nextSibling)
+				elif child.nodeName == hintName and child.nextSibling == ',' and child.nextSibling.nextSibling.source == '~ ' and child.nextSibling.nextSibling.nextSibling.nodeName == hintName:
+					node.removeChild(child.nextSibling)
 
-class chall(challProb):
+class chall(_ChallProb):
 	args = ''
 	counter = 'probnum'
 	title = 'chall'
@@ -728,7 +714,7 @@ class chall(challProb):
 		self.attributes['probnum'] = str(self.ownerDocument.context.counters['chapter'].value) + '.' + str(self.ownerDocument.context.counters['probnum'].value)
 		return res
 
-class challhard(challProb):
+class challhard(_ChallProb):
 	args = ''
 	counter = 'probnum'
 	title = 'challhard'
