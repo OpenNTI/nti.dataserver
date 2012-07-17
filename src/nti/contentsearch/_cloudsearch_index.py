@@ -13,6 +13,7 @@ from nti.contentsearch.common import get_note_content
 from nti.contentsearch.common import get_last_modified
 from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch.common import get_highlight_content
+from nti.contentsearch.common import get_redaction_content
 from nti.contentsearch.common import get_messageinfo_content
 
 from nti.contentsearch.common import (	CLASS, CREATOR, ID, OID, last_modified_fields, ntiid_fields, 
@@ -20,7 +21,8 @@ from nti.contentsearch.common import (	CLASS, CREATOR, ID, OID, last_modified_fi
 
 from nti.contentsearch.common import (	ngrams_, channel_, content_, keywords_, references_, username_,
 										last_modified_, recipients_, sharedWith_, id_, ntiid_, type_,
-										oid_, creator_, note_, messageinfo, highlight_, containerId_)
+										oid_, creator_, note_, messageinfo, highlight_, containerId_,
+										redaction_)
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -123,6 +125,8 @@ def get_object_content(data, type_name=None):
 		result = get_note_content(data)
 	elif type_name == highlight_:
 		result = get_highlight_content(data)
+	elif type_name == redaction_:
+		result = get_redaction_content(data)
 	elif type_name == messageinfo:
 		result = get_messageinfo_content(data)
 	else:
