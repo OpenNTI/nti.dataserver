@@ -94,12 +94,14 @@ class Classifier(object):
 				 mapfactory=dict):
 		self.nspam = self.nham = 0
 		self.wordinfo = mapfactory()
-		self.use_bigrams = use_bigrams
 		self._v_probcache = defaultdict(dict)
 		self.unknown_word_prob = unknown_word_prob
 		self.max_discriminators = max_discriminators
 		self.minimum_prob_strength = minimum_prob_strength
 		self.unknown_word_strength = unknown_word_strength
+		
+		# vars that force re-learning
+		self.use_bigrams = use_bigrams
 			
 	def _get_probcache(self):
 		return self._v_probcache
