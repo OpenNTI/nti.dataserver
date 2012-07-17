@@ -4,24 +4,39 @@ from __future__ import print_function, unicode_literals
 import sys
 
 from nti.dataserver import users
+from nti.dataserver import providers
 from . import run_with_dataserver
 
+import argparse
+
+_type_map = { 'user': users.User.create_user,
+			  'provider': providers.Provider.create_provider }
+
 def main():
-	if len(sys.argv) < 2:
-		print( "Usage %s env_dir username [password]" % sys.argv[0] )
-		sys.exit( 1 )
+	arg_parser = argparse.ArgumentParser( description="Create a user-type object" )
+	arg_parser.add_argument( 'env_dir', help="Dataserver environment root directory" )
+	arg_parser.add_argument( 'username', help="The username to create" )
+	arg_parser.add_argument( 'password', nargs='?' )
+	arg_parser.add_argument( '-t', '--type',
+							 dest='type',
+							 choices=_type_map,
+							 default='user',
+							 help="The type of user object to create" )
 
-	env_dir = sys.argv[1]
-	username = sys.argv[2]
-	password = sys.argv[3] if len(sys.argv) > 3 else None
+	args = arg_parser.parse_args()
+
+	env_dir = args.env_dir
+	username = args.username
+	password = args.password
 
 
-	run_with_dataserver( environment_dir=env_dir, function=lambda: _create_user(username,password) )
+	run_with_dataserver( environment_dir=env_dir, function=lambda: _create_user(_type_map[args.type], username, password) )
 
 
-def _create_user( username, password ):
-	user = users.User.get_user( username )
+def _create_user( factory, username, password ):
+	user = factory.im_self.get_entity( username )
 	if user:
-		print( "Not overwriting existing user", repr(user), file=sys.stderr )
+		print( "Not overwriting existing entity", repr(user), file=sys.stderr )
 		sys.exit( 2 )
-	users.User.create_user( username=username, password=password )
+
+	factory( username=username, password=password )
