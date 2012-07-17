@@ -994,6 +994,38 @@ class TestApplication(ApplicationTestBase):
 					 extra_environ=self._make_extra_environ(),
 					 status=404	)
 
+	def test_share_note_with_class(self):
+		"We can share with the NTIID of a class we are enrolled in to get to the other students and instructors."
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = self._create_user()
+			self._create_user( username='jason.madden@nextthought.com' )
+
+			klass = _create_class( self.ds, ('sjohnson@nextthought.com','jason.madden@nextthought.com') )
+			sect = list(klass.Sections)[0]
+			sect_ntiid = sect.NTIID
+			sect.InstructorInfo.Instructors.append( 'foo@bar' )
+
+			n = contenttypes.Note()
+			n.applicableRange = contentrange.ContentRangeDescription()
+			n.containerId = 'tag:nti:foo'
+			user.addContainedObject( n )
+			assert_that( n.sharingTargets, is_( set() ) )
+
+		testapp = TestApp( self.app )
+		data = '["' + sect_ntiid + '"]'
+
+		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % datastructures.to_external_ntiid_oid( n )
+		field_path = path + '/sharedWith' # The name of the external field
+
+		res = testapp.put( urllib.quote( field_path ),
+						   data,
+						   extra_environ=self._make_extra_environ(),
+						   headers={"Content-Type": "application/json" } )
+		assert_that( res.status_int, is_( 200 ) )
+		assert_that( res.json_body, has_entry( 'sharedWith', ['foo@bar', 'jason.madden@nextthought.com'] ) )
+
+
+
 
 def _create_class(ds, usernames_to_enroll=()):
 	provider = providers.Provider.create_provider( ds, username='OU' )

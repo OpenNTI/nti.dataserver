@@ -137,12 +137,14 @@ class _SectionResolver(_AbstractUserBasedResolver):
 class _ContentResolver(object):
 
 	def resolve( self, key ):
+		result = None
 		library = component.queryUtility( lib_interfaces.IContentPackageLibrary )
 		path = library.pathToNTIID( key ) if library else None
 		if path:
 			result = path[-1]
 			# TODO: ACL Proxy can probably go away
 			result = nti_interfaces.ACLLocationProxy( result, result.__parent__, result.__name__, nacl.ACL( result ) )
+		return result
 
 @interface.implementer( nid_interfaces.INTIIDResolver )
 class _AssessmentResolver(object):
@@ -152,6 +154,7 @@ class _AssessmentResolver(object):
 		if result:
 			# TODO: ACL Proxy can probably go away
 			result = nti_interfaces.ACLLocationProxy( result, None, None, nacl.ACL( result ) )
+		return result
 
 @interface.implementer( nid_interfaces.INTIIDResolver )
 class _MeetingRoomResolver(_AbstractUserBasedResolver):

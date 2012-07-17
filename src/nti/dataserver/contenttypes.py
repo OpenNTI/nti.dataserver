@@ -26,6 +26,7 @@ from nti.dataserver import mimetype
 from nti.dataserver import sharing
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import users
+from nti.ntiids import ntiids
 
 from nti.contentfragments import interfaces as frg_interfaces
 
@@ -160,7 +161,27 @@ class _UserContentRoot(sharing.ShareableMixin, datastructures.ContainedMixin, da
 			if _get_entity( s ):
 				target = _get_entity( s )
 			elif hasattr( self.creator, 'getFriendsList' ):
+				# This branch is semi-deprecated. They should send in
+				# the NTIID of the list...once we apply security here
 				target = self.creator.getFriendsList( s )
+
+			if (target is s or target is None) and ntiids.is_valid_ntiid_string( s ):
+				# Any thing else that is a username iterable,
+				# in which we are contained (e.g., a class section we are enrolled in)
+				# This last clause is our nod to security; need to be firmer
+
+				obj = ntiids.find_object_with_ntiid( s )
+				obj = nti_interfaces.IUsernameIterable( obj, None )
+				if obj:
+					obj = tuple(obj) # expand the iterable to something hashable
+					if getattr( self.creator, 'username', self.creator) in obj and self.creator is not None:
+						target = obj
+					else:
+						target = s = None
+
+			# TODO: We should really only add target, and only if it
+			# is non-none, right? Otherwise we are falsely implying sharing
+			# happened when it really didn't
 			targets.add( target or s )
 		self.updateSharingTargets( targets )
 

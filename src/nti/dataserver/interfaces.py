@@ -290,6 +290,18 @@ class IUser(IEntity):
 	This interface needs finished and fleshed out.
 	"""
 
+class IUsernameIterable(interface.Interface):
+	"""
+	Something that can iterate across usernames belonging to system :class:`IUser`, typically
+	usernames somehow contained in or stored in this object (or its context).
+	"""
+
+	def __iter__():
+		"""
+		Return iterator across username strings. The usernames may refer to users
+		that have already been deleted.
+		"""
+
 class IOpenIdUser(IUser):
 	"""
 	A user of the system with a known OpenID identity URL.
