@@ -43,59 +43,59 @@ else
 	svn co https://svn.nextthought.com/repository/NextThoughtPlatform/trunk $PROJECT_PARENT/NextThoughtPlatform
 fi
 
-export INSTALL_EXTRAS="True"
-
-cd $PROJECT_PARENT/NextThoughtPlatform/nti.dataserver
-
 # NOTE: On AWS, you will need to yum install libxml2-devel and libxslt-devel,
 # and probably add /usr/includ/libxml2/ to CFLAGS
 
+# create a temo work directory
+TMPWK_DIR=`mktemp -d -t tmpwork`
+chmod 777 $TMPWK_DIR
+export PATH=$TMPWK_DIR:$PATH
+	
+# set the "UMFPACK" variable to install scipy
+export UMFPACK="None"
+	
+# make sure we have suitable fortran compiler to install scipy
+pkgs=( g95 gfortran `seq -f "gfortran-mp-4.%g" 4 7` )
+for p in "${pkgs[@]}"
+do
+	cmp=`which $p`
+	if [ -n "$cmp" ]; then
+		ln -s $cmp $TMPWK_DIR/gfortran
+		break
+	elif [ -f "/opt/local/bin/$p" ]; then
+		ln -s "/opt/local/bin/$p" $TMPWK_DIR/gfortran
+		break
+	fi
+done
+
+# let's try to use GNU gcc compiler
+pkgs=( `seq -f "gcc-mp-4.%g" 4 7` )
+for p in "${pkgs[@]}"
+do
+	cmp=`which $p`
+	if [ -n "$cmp" ]; then
+		ln -s $cmp $TMPWK_DIR/gcc
+		break
+	elif [ -f "/opt/local/bin/$p" ]; then
+		ln -s "/opt/local/bin/$p" $TMPWK_DIR/gcc
+		break
+	fi
+done
+
+# install extra packages
+extrap_pkgs=(pyyaml numpy matplotlib scipy pil py scikits.learn)
+for p in "${extrap_pkgs[@]}"
+do
+	echo "Installing $p"
+	pip install -U ${p}
+done
+
+cd $PROJECT_PARENT/NextThoughtPlatform/nti.dataserver
 pip install -r requirements.txt
-
-if [ "$INSTALL_EXTRAS" ]; then
-
-	echo "Installing extras"
-
-	if [ -z "$UMFPACK" ]; then
-		export UMFPACK="None"
-	fi
-
-	TMPWK_DIR=`mktemp -d -t tmpwork`
-	chmod 777 $TMPWK_DIR
-	export PATH=$TMPWK_DIR:$PATH
-
-	if [ -f "/opt/local/bin/g95" ]; then
-		ln -s /opt/local/bin/g95 $TMPWK_DIR/g95
-	elif [ -f "/opt/local/bin/gfortran" ]; then
-		ln -s /opt/local/bin/gfortran $TMPWK_DIR/gfortran
-	else
-		for n in `seq 4 7`; do	
-			if [ -f "/opt/local/bin/gfortran-mp-4.$n" ]; then
-				ln -s /opt/local/bin/gfortran-mp-4.$n $TMPWK_DIR/gfortran
-			fi
-		done
-	fi
-	alias gcc='gcc'
-	for n in `seq 4 7`; do	
-		 if [ -f "/opt/local/bin/gcc-mp-4.$n" ]; then
-			alias gcc="/opt/local/bin/gcc-mp-4.$n"
-		fi
-	done
-
-	pip install pyyaml
-	pip install numpy matplotlib scipy
-	pip install pil
-	pip install py
-	pip install scikits.learn
-	git clone 'https://github.com/muricoca/crab'
-	cd crab
-	python setup.py install
-	cd ..
-
-	rm -rf $TMPWK_DIR
-fi
-
 python setup.py develop
+
+# clean
+rm -rf $TMPWK_DIR
 
 echo "Done."
 echo "Be sure to include the following lines in your .bash_profile:"
