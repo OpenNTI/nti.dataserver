@@ -253,8 +253,9 @@ class _ContentUnitPreferencesPutView(UGDModifyViewBase):
 			return _RootLibraryTOCRedirectView( self.request )
 
 		content_lib = self.request.registry.getUtility( lib_interfaces.IContentPackageLibrary )
-		content_unit = content_lib[ntiid]
-		self.request.context = content_unit
+
+		content_units = content_lib.pathToNTIID(ntiid)
+		self.request.context = content_units[-1]
 		return _LibraryTOCRedirectView( self.request )
 
 @view_config( route_name='objects.generic.traversal',

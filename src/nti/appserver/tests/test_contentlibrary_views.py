@@ -131,11 +131,12 @@ class TestContainerPrefs(ConfiguringTestBase):
 			def best_match( self, *args ): return 'application/json'
 
 		self.request.accept = Accept()
+
 		interface.implementer( lib_interfaces.IContentPackageLibrary )
 		class Lib(object):
 			titles = ()
-			def __getitem__( self, ntiid ):
-				return content_unit
+			def pathToNTIID( self, ntiid ):
+				return [content_unit]
 
 		self.request.registry.registerUtility( Lib(), lib_interfaces.IContentPackageLibrary )
 
