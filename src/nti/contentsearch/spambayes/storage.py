@@ -1,15 +1,17 @@
 from __future__ import print_function, unicode_literals
 
-import collections
+import time
 import sqlite3 as sql
+
+from zope.annotation import interfaces as an_interfaces
 
 from persistent import Persistent
 from BTrees.OOBTree import OOBTree
 
 from nti.utils.transactions import ObjectDataManager
 
-from nti.contentsearch.spambayes.classifier import _BaseWordInfo
 from nti.contentsearch.spambayes.classifier import Classifier
+from nti.contentsearch.spambayes.classifier import _BaseWordInfo
 
 from nti.contentsearch.spambayes import default_use_bigrams
 from nti.contentsearch.spambayes import default_unknown_word_prob
@@ -17,11 +19,13 @@ from nti.contentsearch.spambayes import default_max_discriminators
 from nti.contentsearch.spambayes import default_unknown_word_strength
 from nti.contentsearch.spambayes import default_minimum_prob_strength
 
+# -----------------------------------
+
+_ann_prefix = '_spbc_'
+
 class PersistentWordInfo(Persistent, _BaseWordInfo):
-	
 	def __init__(self):
 		self.spamcount = self.hamcount = 0
-	
 	
 class PersistentClassifier(Persistent, Classifier):
 	
@@ -37,52 +41,44 @@ class PersistentClassifier(Persistent, Classifier):
 		Classifier.__init__(self, unknown_word_strength, unknown_word_prob, minimum_prob_strength, 
 							max_discriminators, use_bigrams, mapfactory)
 		
-		self.objid_to_metadata = OOBTree()
+	def mark_spam(self, context):
+		""" mark the specified object as spam"""
+		return self.add_metadata(context, spam=True, markedAt=time.time())
+	
+	def remove_spam(self, context):
+		""" remove the spam marker for the specifed object"""
+		return self.remove_metadata(context, 'spam', 'markedAt')
+	
+	def add_metadata(self, context, **args):
+		""" add related classifier metadata for a given object """
 		
-	def add_metadata(self, objid, data):
-		""" Add metadata related to a given obj id
-		
-		``data`` must be a mapping, such as a dictionary.
-		
-		For each key/value pair in ``data`` insert a metadata key/value pair
-		into the metadata stored for ``docid``.
-		
-		Overwrite any existing values for the keys in ``data``, leaving values
-		unchanged for other existing keys.
-		
-		"""
-		if data and isinstance(data, collections.Mapping):
-			meta = self.objid_to_metadata.setdefault(objid, OOBTree())
-			for k in data:
-				meta[k] = data[k]
+		annotations = an_interfaces.IAnnotations(context)
+		for k, v in args.items():
+			k = k if k.startswith(_ann_prefix) else _ann_prefix + k
+			annotations[k] = v
 
-	def remove_metadata(self, objid, *keys):
-		""" Remove metadata related to a given obj id.
+	def remove_metadata(self, context, *keys):
+		""" remove related classifier metadata for a given object """
 		
-		For each key in ``keys``, remove the metadata value for the
-		docid related to that key.
-		
-		If no keys are specified, remove all metadata related to the docid.
-		"""
+		annotations = an_interfaces.IAnnotations(context)
 		if keys:
-			meta = self.objid_to_metadata.get(objid, None)
-			if meta is not None:
-				for k in keys:
-					if k in meta:
-						del meta[k]
-			if not meta:
-				del self.metadata[objid]
+			for k in keys:
+				k = k if k.startswith(_ann_prefix) else _ann_prefix + k
+				if k in annotations:
+					del annotations[k]
 		else:
-			if objid in self.objid_to_metadata:
-				del self.objid_to_metadata[objid]
+			for k in list(annotations.keys()):
+				if k.startswith(_ann_prefix):
+					del annotations[k]
 
-	def get_metadata(self, objid):
-		""" Return the metadata for a given obj id.
-		
-		Return a mapping of the keys and values set using ``add_metadata``.
-		"""
-		meta = self.objid_to_metadata.get(objid, None)
-		return meta
+	def get_metadata(self, context):
+		result = {}
+		annotations = an_interfaces.IAnnotations(context)
+		for k, v in annotations.items():
+			if k.startswith(_ann_prefix):
+				k = k[len(_ann_prefix):]
+				result[k] = v
+		return result
 
 PersistentBayes = PersistentClassifier
 
