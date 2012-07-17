@@ -1411,6 +1411,7 @@ class _UserSearchView(object):
 
 		# Since we are already looking in the object we might as well return the summary form
 		# For this reason, we are doing the externalization ourself.
+
 		result = [toExternalObject( user, name=('personal-summary'
 												if user == remote_user
 												else 'summary') )
