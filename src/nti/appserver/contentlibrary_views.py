@@ -152,6 +152,11 @@ class _ContentUnitPreferencesDecorator(object):
 			ext_obj['Provenance'] = provenance
 			ext_obj['sharedWith'] = prefs.sharedWith
 			ext_obj['Class'] = 'SharingPagePreference'
+
+			if prefs.lastModified > context.lastModified:
+				result_map['Last Modified'] = prefs.lastModified
+				context.lastModified = prefs.lastModified
+
 			result_map['sharingPreference'] = ext_obj
 
 def _with_acl( prefs ):
@@ -230,6 +235,7 @@ class _ContentUnitPreferencesPutView(UGDModifyViewBase):
 	def _do_update_from_external_object( self, contentObject, externalValue, notify=True ):
 		# At this time, must be a dict containing the 'sharedWith' setting
 		contentObject.sharedWith = externalValue['sharedWith']
+		contentObject.lastModified = time.time()
 		return contentObject
 
 

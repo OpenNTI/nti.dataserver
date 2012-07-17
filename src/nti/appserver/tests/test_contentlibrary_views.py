@@ -10,6 +10,8 @@ from __future__ import print_function, unicode_literals
 from hamcrest import assert_that
 from hamcrest import has_property
 from hamcrest import has_entry
+from hamcrest import has_key
+from hamcrest import greater_than
 
 from nti.appserver.tests import ConfiguringTestBase
 from nti.tests import verifiably_provides
@@ -45,6 +47,7 @@ class TestContainerPrefs(ConfiguringTestBase):
 	def _do_check_root_inherited(self, ntiid=None, sharedWith=None):
 		class ContentUnitInfo(object):
 			contentUnit = None
+			lastModified = 0
 
 		unit = ContentUnit()
 		unit.ntiid = ntiid
@@ -64,6 +67,9 @@ class TestContainerPrefs(ConfiguringTestBase):
 											has_entry( 'Provenance', ntiids.ROOT ) ) )
 		assert_that( result_map, has_entry( 'sharingPreference',
 											has_entry( 'sharedWith', sharedWith ) ) )
+		if sharedWith:
+			assert_that( result_map, has_key( 'Last Modified' ) )
+			assert_that( info, has_property( 'lastModified', greater_than( 0 ) ) )
 
 	@WithMockDSTrans
 	def test_decorate_inherit(self):
