@@ -480,6 +480,16 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 			result = self.friends < other.friends
 		return result
 
+@interface.implementer(nti_interfaces.IUsernameIterable)
+@component.adapter(nti_interfaces.IFriendsList)
+class _FriendsListUsernameIterable(object):
+
+	def __init__( self, context ):
+		self.context = context
+
+	def __iter__(self):
+		return (x.username for x in self.context)
+
 ShareableMixin = sharing.ShareableMixin
 deprecated( 'ShareableMixin', 'Prefer sharing.ShareableMixin' )
 

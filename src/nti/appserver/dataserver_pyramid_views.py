@@ -41,7 +41,7 @@ from nti.externalization.datastructures import LocatedExternalDict
 from nti.externalization.oids import to_external_ntiid_oid as toExternalOID
 from nti.externalization.interfaces import StandardInternalFields, StandardExternalFields
 from nti.ntiids import ntiids
-from nti.dataserver.ntiids import find_object_with_ntiid
+
 from nti.dataserver import enclosures
 from nti.dataserver.mimetype import MIME_BASE, nti_mimetype_from_object, nti_mimetype_with_class
 from nti.dataserver import authorization as nauth
@@ -373,7 +373,7 @@ class _ObjectsContainerResource(_ContainerResource):
 		# traversed to get a correct ACL, and coming in this way that doesn't happen.
 		# NOTE: We do not expect to get a fragment here. Browsers drop fragments in URLs.
 		# Fragment handling will have to be completely client side.
-		return find_object_with_ntiid( key )
+		return ntiids.find_object_with_ntiid( key )
 
 class _NTIIDsContainerResource(_ObjectsContainerResource):
 	"""
@@ -1400,6 +1400,12 @@ class _UserSearchView(object):
 					   or partialMatch in (fl.realname or '').lower() \
 					   or partialMatch in (fl.alias or '').lower():
 						result.append( fl )
+				# Also add enrolled classes
+				enrolled_sections = component.getAdapter( remote_user, app_interfaces.IContainerCollection, name='EnrolledClassSections' )
+				for section in enrolled_sections.container:
+					if partialMatch in section.ID.lower():
+						result.append( section )
+
 			if not result:
 				result += uid_matches
 

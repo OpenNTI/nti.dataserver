@@ -4,6 +4,8 @@ Objects for classrooms.
 import logging
 logger = logging.getLogger( __name__ )
 
+import itertools
+
 from zope import interface
 from zope.component.factory import Factory
 from zope.container.btree import BTreeContainer
@@ -104,7 +106,6 @@ class ClassInfo( datastructures.PersistentCreatedModDateTrackingObject,
 	@property
 	def Sections(self):
 		return self._sections.values()
-
 
 	def _get_Provider(self):
 		return self.creator
@@ -235,14 +236,15 @@ nti_interfaces.IClassInfo.setTaggedValue( nti_interfaces.IHTC_NEW_FACTORY,
 										  Factory( lambda extDict: ClassInfo(),
 												   interfaces=(nti_interfaces.IClassInfo,)) )
 
+@interface.implementer(nti_interfaces.ISectionInfo,
+					   nti_interfaces.ISimpleEnclosureContainer,
+					   nti_interfaces.IZContained,
+					   nti_interfaces.IUsernameIterable)
 class SectionInfo( datastructures.PersistentCreatedModDateTrackingObject,
 				   ExternalizableInstanceDict,
 				   enclosures.SimpleEnclosureMixin ):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-	interface.implements(nti_interfaces.ISectionInfo,
-						 nti_interfaces.ISimpleEnclosureContainer,
-						 nti_interfaces.IZContained )
 
 	__external_can_create__ = True
 	# Let IDs come in, ClassInfo depends on it
@@ -306,6 +308,10 @@ class SectionInfo( datastructures.PersistentCreatedModDateTrackingObject,
 	@property
 	def Enrolled(self):
 		return self._enrolled.keys()
+
+	def __iter__(self):
+		# IUsernameIterable
+		return itertools.chain( iter(self.Enrolled), self.InstructorInfo.Instructors)
 
 	@property
 	def NTIID(self):

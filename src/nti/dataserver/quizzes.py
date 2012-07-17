@@ -22,9 +22,9 @@ from nti.externalization.externalization import to_standard_external_dictionary,
 from nti.externalization.interfaces import StandardExternalFields, IExternalObject
 from nti.externalization import oids
 
+from nti.deprecated import deprecated
 import mimetype
 from nti.dataserver import interfaces as nti_interfaces
-from nti.ntiids.ntiids import find_object_with_ntiid
 from nti.ntiids import ntiids
 
 # TODO: These need interfaces and modeling.
@@ -233,7 +233,7 @@ class QuizResult(datastructures.ZContainedMixin,
 
 		# FIXME: Looking up the quiz is being handled in a weird way.
 		# We begin by looking
-		quiz = find_object_with_ntiid( quizId )
+		quiz = ntiids.find_object_with_ntiid( quizId )
 		if not quiz:
 			# FIXME: This double nesting is weird ard wrong. QuizTree sets things up funny.
 			quiz = dataserver.root.get('quizzes', {}).get('quizzes', {}).get(quizId)
