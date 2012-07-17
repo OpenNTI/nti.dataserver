@@ -63,7 +63,8 @@ def _do_create_class(
 					  section_id=None,
 					  section_instructors=(),
 					  usernames_to_enroll=()):
-	klass = provider.maybeCreateContainedObjectWithType(  'Classes', None )
+
+	klass = provider.maybeCreateContainedObjectWithType( 'Classes', None )
 	klass.containerId = 'Classes'
 	klass.ID = class_id
 	klass.Description = class_name or class_id
@@ -72,6 +73,7 @@ def _do_create_class(
 		section = classes.SectionInfo()
 		section.ID = section_id
 		section.creator = provider
+		section.Description = (class_name + ' ' + class_id + '-' + section_id) if class_name else (class_id + '-' + section_id)
 		klass.add_section( section )
 		section.InstructorInfo = classes.InstructorInfo()
 		for user in usernames_to_enroll:

@@ -22,6 +22,9 @@ def main():
 							 choices=_type_map,
 							 default='user',
 							 help="The type of user object to create" )
+	arg_parser.add_argument( '-n', '--name',
+							 dest='name',
+							 help="The realname of the user" )
 
 	args = arg_parser.parse_args()
 
@@ -30,13 +33,13 @@ def main():
 	password = args.password
 
 
-	run_with_dataserver( environment_dir=env_dir, function=lambda: _create_user(_type_map[args.type], username, password) )
+	run_with_dataserver( environment_dir=env_dir, function=lambda: _create_user(_type_map[args.type], username, password, args.name ) )
+	sys.exit( 0 )
 
-
-def _create_user( factory, username, password ):
+def _create_user( factory, username, password, realname ):
 	user = factory.im_self.get_entity( username )
 	if user:
 		print( "Not overwriting existing entity", repr(user), file=sys.stderr )
 		sys.exit( 2 )
 
-	factory( username=username, password=password )
+	factory( username=username, password=password, realname=realname )
