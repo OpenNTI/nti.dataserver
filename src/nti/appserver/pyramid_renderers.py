@@ -96,7 +96,6 @@ def render_externalizable(data, system):
 	request = system['request']
 	response = request.response
 
-	lastMod = getattr( data, 'lastModified', 0 )
 	body = toExternalObject( data, name='', registry=request.registry,
 							 # Catch *nested* errors during externalization. We got this far,
 							 # at least send back some data for the main object. The exception will be logged.
@@ -105,6 +104,9 @@ def render_externalizable(data, system):
 							 # AssertionError is one or both
 							 catch_components=(AttributeError,LookupError,AssertionError),
 							 catch_component_action=catch_replace_action)
+	# There's some possibility that externalizing an object alters its
+	# modification date (usually decorators do this), so check it after externalizing
+	lastMod = getattr( data, 'lastModified', 0 )
 	try:
 		body.__parent__ = request.context.__parent__
 		body.__name__ = request.context.__name__
@@ -117,17 +119,18 @@ def render_externalizable(data, system):
 			body['href'] = request.path
 
 	# Search for a last modified value.
+	# We take the most recent one we can find
 	if response.last_modified is None:
 		try:
-			if lastMod <= 0 and HEADER_LAST_MODIFIED in body:
-				lastMod = body[HEADER_LAST_MODIFIED]
-			if lastMod <= 0 and 'Last Modified' in body:
-				lastMod = body['Last Modified']
+			if 'Last Modified' in body:
+				lastMod = max( body['Last Modified'], lastMod )
 		except TypeError:
 			pass
 
 		if lastMod > 0:
 			response.last_modified = lastMod
+			if isinstance( body, collections.MutableMapping ):
+				body['Last Modified'] = lastMod
 
 	response.content_type = find_content_type( request, data )
 	if response.content_type.startswith( MIME_BASE ):

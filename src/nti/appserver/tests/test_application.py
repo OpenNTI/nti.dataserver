@@ -1086,7 +1086,7 @@ class TestApplicationLibraryBase(ApplicationTestBase):
 	_stream_type = 'Stream'
 	child_ntiid = ntiids.make_ntiid( provider='ou', specific='test2', nttype='HTML' )
 
-	def _setup_library(self, content_root='/prealgebra/'):
+	def _setup_library(self, content_root='/prealgebra/', lastModified=None):
 		test_self = self
 		class NID(object):
 			interface.implements( lib_interfaces.IContentUnit )
@@ -1103,6 +1103,11 @@ class TestApplicationLibraryBase(ApplicationTestBase):
 			root = content_root
 			ntiid = None
 			__parent__ = None
+
+
+		if lastModified is not None:
+			NID.lastModified = lastModified
+			LibEnt.lastModified = lastModified
 
 		class Lib(object):
 			interface.implements( lib_interfaces.IContentPackageLibrary )
@@ -1194,13 +1199,16 @@ class TestApplicationLibrary(TestApplicationLibraryBase):
 			note.containerId = self.child_ntiid
 			user.addContainedObject( note )
 
+		# Ensure we have modification dates on our _NTIIDEntries
+		# so that our trump behaviour works as expected
+		self.config.registry.registerUtility( self._setup_library(lastModified=1000) )
 		accept_type = 'application/json'
 		testapp = TestApp( self.app )
 		# To start with, there is no modification info
 		res = testapp.get( str('/dataserver2/NTIIDs/' + self.child_ntiid),
 						   headers={"Accept": accept_type},
 						   extra_environ=self._make_extra_environ() )
-		assert_that( res.last_modified, is_( none() ) )
+		assert_that( res.last_modified, is_( datetime.datetime.fromtimestamp( 1000, webob.datetime_utils.UTC ) ) )
 
 
 		data = json.dumps( {"sharedWith": ["a@b"] } )
@@ -1232,7 +1240,7 @@ class TestApplicationLibrary(TestApplicationLibraryBase):
 class TestApplicationLibraryNoSlash(TestApplicationLibrary):
 
 	def _setup_library(self, *args, **kwargs):
-		return super(TestApplicationLibraryNoSlash,self)._setup_library( content_root="prealgebra" )
+		return super(TestApplicationLibraryNoSlash,self)._setup_library( content_root="prealgebra", **kwargs )
 
 class TestRootPageEntryLibrary(TestApplicationLibraryBase):
 	child_ntiid = ntiids.ROOT

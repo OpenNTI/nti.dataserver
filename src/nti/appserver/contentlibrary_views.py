@@ -286,14 +286,16 @@ def _LibraryTOCRedirectView(request, default_href=None, ntiid=None):
 	# which may or may not include a leading /.
 	# TODO: We're assuming these map into the URL space
 	# based in their root name. Is that valid? Do we need another mapping layer?
+	root = traversal.find_interface( request.context, lib_interfaces.IContentPackage )
 	if not href.startswith( '/' ):
-		root = traversal.find_interface( request.context, lib_interfaces.IContentPackage )
 		if root: # missing in the root ntiid case
-			lastModified = getattr( root, 'lastModified', 0 ) # only IFilesystemContentPackage guaranteed to have
 			href = root.root + '/' + href
 			href = href.replace( '//', '/' )
 			if not href.startswith( '/' ):
 				href = '/' + href
+
+	if root: # missing in the root ntiid case
+		lastModified = getattr( root, 'lastModified', 0 )  # only IFilesystemContentPackage guaranteed to have
 
 	# If the client asks for a specific type of data,
 	# a link, then give it to them. Otherwise...
