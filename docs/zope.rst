@@ -62,6 +62,27 @@ zope.location.location
 
 .. automodule:: zope.location.location
 
+Traversing
+==========
+
+.. automodule:: zope.traversing
+.. automodule:: zope.traversing.interfaces
+
+API
+---
+
+.. automodule:: zope.traversing.api
+
+Adapters
+--------
+
+.. automodule:: zope.traversing.adapters
+
+zope.traversing.namespace
+-------------------------
+
+.. automodule:: zope.traversing.namespace
+
 Container
 =========
 

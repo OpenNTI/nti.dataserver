@@ -179,7 +179,7 @@ def _with_acl( prefs ):
 @component.adapter(containers.LastModifiedBTreeContainer)
 class _ContainerFieldsTraversable(object):
 	"""
-	An ITraversable for the updateable fields of a container.
+	An :class:`zope.traversing.interfaces.ITraversable` for the updateable fields of a container.
 	Register as a namespace traverser for the ``fields`` namespace
 	"""
 
@@ -196,7 +196,7 @@ class _ContainerFieldsTraversable(object):
 @component.adapter(lib_interfaces.IContentUnit)
 class _ContentUnitFieldsTraversable(object):
 	"""
-	An ITraversable for the preferences stored on a content unit.
+	An :class:`zope.traversing.interfaces.ITraversable` for the preferences stored on a content unit.
 
 	Register as a namespace traverser for the ``fields`` namespace
 	"""
