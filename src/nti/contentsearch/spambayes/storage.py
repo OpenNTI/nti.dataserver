@@ -1,5 +1,6 @@
 from __future__ import print_function, unicode_literals
 
+import collections
 import sqlite3 as sql
 
 from persistent import Persistent
@@ -35,8 +36,54 @@ class PersistentClassifier(Persistent, Classifier):
 		
 		Classifier.__init__(self, unknown_word_strength, unknown_word_prob, minimum_prob_strength, 
 							max_discriminators, use_bigrams, mapfactory)
+		
+		self.objid_to_metadata = OOBTree()
+		
+	def add_metadata(self, objid, data):
+		""" Add metadata related to a given obj id
+		
+		``data`` must be a mapping, such as a dictionary.
+		
+		For each key/value pair in ``data`` insert a metadata key/value pair
+		into the metadata stored for ``docid``.
+		
+		Overwrite any existing values for the keys in ``data``, leaving values
+		unchanged for other existing keys.
+		
+		"""
+		if data and isinstance(data, collections.Mapping):
+			meta = self.objid_to_metadata.setdefault(objid, OOBTree())
+			for k in data:
+				meta[k] = data[k]
 
-			
+	def remove_metadata(self, objid, *keys):
+		""" Remove metadata related to a given obj id.
+		
+		For each key in ``keys``, remove the metadata value for the
+		docid related to that key.
+		
+		If no keys are specified, remove all metadata related to the docid.
+		"""
+		if keys:
+			meta = self.objid_to_metadata.get(objid, None)
+			if meta is not None:
+				for k in keys:
+					if k in meta:
+						del meta[k]
+			if not meta:
+				del self.metadata[objid]
+		else:
+			if objid in self.objid_to_metadata:
+				del self.objid_to_metadata[objid]
+
+	def get_metadata(self, objid):
+		""" Return the metadata for a given obj id.
+		
+		Return a mapping of the keys and values set using ``add_metadata``.
+		"""
+		meta = self.objid_to_metadata.get(objid, None)
+		return meta
+
 PersistentBayes = PersistentClassifier
 
 # -----------------------------------
