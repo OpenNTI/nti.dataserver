@@ -65,6 +65,7 @@ def _create_page_info(request, href, ntiid, last_modified=0):
 		# This is probably not huge, because right now they both change at the
 		# same time due to the rendering process. But we can expect that to
 		# decouple
+		# NOTE: The preferences decorator may change this
 		info.lastModified = last_modified
 	return info
 
@@ -153,11 +154,15 @@ class _ContentUnitPreferencesDecorator(object):
 			ext_obj['sharedWith'] = prefs.sharedWith
 			ext_obj['Class'] = 'SharingPagePreference'
 
+			result_map['sharingPreference'] = ext_obj
+
+		if prefs:
+			# We found one, but it specified no sharing settings.
+			# we still want to copy its last modified
 			if prefs.lastModified > context.lastModified:
 				result_map['Last Modified'] = prefs.lastModified
 				context.lastModified = prefs.lastModified
 
-			result_map['sharingPreference'] = ext_obj
 
 def _with_acl( prefs ):
 	"""
@@ -232,11 +237,11 @@ class _ContentUnitPreferencesPutView(UGDModifyViewBase):
 	def _transformInput( self, value ):
 		return value
 
-	def _do_update_from_external_object( self, contentObject, externalValue, notify=True ):
-		# At this time, must be a dict containing the 'sharedWith' setting
-		contentObject.sharedWith = externalValue['sharedWith']
-		contentObject.lastModified = time.time()
-		return contentObject
+	def _do_update_from_external_object( self, unit_prefs, externalValue, notify=True ):
+		# At this time, externalValue must be a dict containing the 'sharedWith' setting
+		unit_prefs.sharedWith = externalValue['sharedWith']
+		unit_prefs.lastModified = time.time()
+		return unit_prefs
 
 
 	def __call__(self):
