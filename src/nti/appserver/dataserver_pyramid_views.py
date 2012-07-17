@@ -340,9 +340,11 @@ class _ObjectsContainerResource(_ContainerResource):
 			raise loc_interfaces.LocationError( key )
 			# LocationError is a subclass of KeyError, and compatible
 			# with the traverse() interface
+		# If we're going to traverse with the special namespace support for views
+		# or namespaces, don't wrap the resource
 		if not remaining_path \
 			or len( remaining_path ) != 1 \
-			or not remaining_path[0].startswith( '@' ):
+			or not (remaining_path[0].startswith( '@' ) or remaining_path[0].startswith( '+' )):
 			result = self._wrap_as_resource( key, result )
 
 		return result

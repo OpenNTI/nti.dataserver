@@ -396,6 +396,30 @@ class TestApplication(ApplicationTestBase):
 		assert_that( body, has_entry( 'href', starts_with('/dataserver2/users/sjohnson%40nextthought.com/Objects' ) ))
 		#assert_that( body, has_entry( 'href', '/dataserver2/users/sjohnson%40nextthought.com/FriendsLists/boom%40nextthought.com' ) )
 
+	def test_post_friendslist_friends_field(self):
+		"We can put to ++fields++friends"
+		with mock_dataserver.mock_db_trans( self.ds ):
+			self._create_user()
+			self._create_user('troy.daley@nextthought.com')
+		testapp = TestApp( self.app )
+		# Make one
+		data = '{"Last Modified":1323788728,"ContainerId":"FriendsLists","Username": "boom@nextthought.com","friends":["steve.johnson@nextthought.com"],"realname":"boom"}'
+		path = '/dataserver2/users/sjohnson@nextthought.com'
+		res = testapp.post( path, data, extra_environ=self._make_extra_environ(), headers={'Content-Type': 'application/vnd.nextthought.friendslist+json' } )
+
+		# Edit it
+		data = '["troy.daley@nextthought.com"]'
+		path = res.json_body['href'] + '/++fields++friends'
+
+		res = testapp.put( str(path),
+						   data,
+						   extra_environ=self._make_extra_environ(),
+						   headers={'Content-Type': 'application/vnd.nextthought.friendslist+json' } )
+		assert_that( res.status_int, is_( 200 ) )
+		assert_that( res.json_body, has_entry( 'friends', has_item( has_entry( 'Username', 'troy.daley@nextthought.com' ) ) ) )
+		assert_that( res.headers, has_entry( 'Content-Type', contains_string( 'application/vnd.nextthought.friendslist+json' ) ) )
+
+
 	def test_edit_note_returns_editlink(self):
 		"The object returned by POST should have enough ACL to regenerate its Edit link"
 		with mock_dataserver.mock_db_trans( self.ds ):
