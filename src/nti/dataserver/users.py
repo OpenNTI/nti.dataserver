@@ -163,7 +163,7 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject,E
 	realname = property( _getRealname, _setRealname )
 
 	def _getAlias(self):
-		return getattr(self, '_alias', None) or self.username
+		return getattr(self, '_alias', None) or getattr( self, '_realname', None ) or self.username
 
 	def _setAlias( self, value ):
 		self._alias = value

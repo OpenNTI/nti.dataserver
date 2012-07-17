@@ -3,6 +3,9 @@ from __future__ import print_function, unicode_literals
 
 import logging
 
+import sys
+
+from zope.exceptions.exceptionformatter import print_exception
 from zope import component
 from zope.component.hooks import setHooks
 from zope.configuration import xmlconfig
@@ -37,7 +40,18 @@ def run_with_dataserver( environment_dir=None, function=None, as_main=True,
 
 	ds = Dataserver( environment_dir )
 	component.provideUtility( ds )
+
+	def fun():
+		"""Run the user-given function in the environment; print exceptions
+		in this env too."""
+		try:
+			function()
+		except Exception:
+			print_exception( *sys.exc_info() )
+			raise
 	try:
-		return component.getUtility( nti_interfaces.IDataserverTransactionRunner )( function )
+		return component.getUtility( nti_interfaces.IDataserverTransactionRunner )( fun )
+	except Exception:
+		pass
 	finally:
 		component.getSiteManager().unregisterUtility( ds )

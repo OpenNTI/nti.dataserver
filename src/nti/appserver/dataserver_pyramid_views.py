@@ -1405,7 +1405,9 @@ class _UserSearchView(object):
 				# Also add enrolled classes
 				enrolled_sections = component.getAdapter( remote_user, app_interfaces.IContainerCollection, name='EnrolledClassSections' )
 				for section in enrolled_sections.container:
-					if partialMatch in section.ID.lower():
+					# TODO: We really want to be searching the class as well, but
+					# we cannot get there from here
+					if partialMatch in section.ID.lower() or partialMatch in section.Description.lower():
 						result.append( section )
 
 			if not result:

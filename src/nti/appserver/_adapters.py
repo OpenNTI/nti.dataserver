@@ -174,6 +174,6 @@ class _SectionInfoUserLikeDecorator(object):
 			external['Username'] = original.NTIID
 		for k in ('realname', 'alias' ):
 			if k not in external:
-				external[k] = original.ID
+				external[k] = original.Description if original.Description else original.ID
 		if 'avatarURL' not in external:
 			external['avatarURL'] = create_gravatar_url( original.ID, 'identicon' )
