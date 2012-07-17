@@ -224,7 +224,7 @@ setup(
 			'dblatex >= 0.3.4', # content rendering, convert docbook to tex
 			'ipython[notebook] >= 0.13', # notebook is web based, pulls in tornado
 			'readline',
-			'httpie',
+			'httpie >= 0.2.5',
 			'pylint >= 0.25.1',
 			'zodbupdate >= 0.5',
 			'zodbbrowser >= 0.10.0',
