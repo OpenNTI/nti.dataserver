@@ -68,14 +68,29 @@ if [ "$INSTALL_EXTRAS" ]; then
 		ln -s /opt/local/bin/g95 $TMPWK_DIR/g95
 	elif [ -f "/opt/local/bin/gfortran" ]; then
 		ln -s /opt/local/bin/gfortran $TMPWK_DIR/gfortran
-	elif [ -f "/opt/local/bin/gfortran-mp-4.4" ]; then
-		ln -s /opt/local/bin/gfortran-mp-4.4 $TMPWK_DIR/gfortran
+	else
+		for n in `seq 4 7`; do	
+			if [ -f "/opt/local/bin/gfortran-mp-4.$n" ]; then
+				ln -s /opt/local/bin/gfortran-mp-4.$n $TMPWK_DIR/gfortran
+			fi
+		done
 	fi
+	alias gcc='gcc'
+	for n in `seq 4 7`; do	
+		 if [ -f "/opt/local/bin/gcc-mp-4.$n" ]; then
+			alias gcc="/opt/local/bin/gcc-mp-4.$n"
+		fi
+	done
 
 	pip install pyyaml
 	pip install numpy matplotlib scipy
 	pip install pil
 	pip install py
+	pip install scikits.learn
+	git clone 'https://github.com/muricoca/crab'
+	cd crab
+	python setup.py install
+	cd ..
 
 	rm -rf $TMPWK_DIR
 fi
