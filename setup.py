@@ -9,6 +9,7 @@ entry_points = {
 		"nti_pubsub_device = nti.dataserver._PubSubDevice:main",
 		"nti_cache_avatars = nti.dataserver.utils.nti_cache_avatars:main",
 		"nti_create_user = nti.dataserver.utils.nti_create_user:main",
+		"nti_create_class = nti.dataserver.utils.nti_create_class:main",
 		"nti_remove_user = nti.dataserver.utils.nti_remove_user:main",
 		"nti_delete_user_objects = nti.dataserver.utils.nti_delete_user_objects:main",
 		"nti_export_user_objects = nti.dataserver.utils.nti_export_user_objects:main",
