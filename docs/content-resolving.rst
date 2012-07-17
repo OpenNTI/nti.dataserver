@@ -83,5 +83,16 @@ Editing Preferences
 
 To edit the preferences for a page of content (and its descendents
 that have not overridden the preferences), follow the usual rules to
-update a single field of an object and POST to the field's URL, e.g.,
+update a single field of an object and PUT to the field's URL, e.g.,
 ``/dataserver2/Objects/tag:nextthought.com,2011-10:Provider-HTML-Contnet/++fields++sharingPreference``
+
+
+Views
+=====
+
+The views that implement this behaviour are in
+``nti.appserver.contentlibrary_views``.
+
+.. automodule:: nti.appserver.contentlibrary_views
+	:members:
+	:private-members:
