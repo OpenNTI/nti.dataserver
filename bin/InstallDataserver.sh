@@ -68,7 +68,16 @@ do
 	fi
 done
 
-# let's try to use GNU gcc compiler
+# install extra packages
+extrap_pkgs=(pyyaml numpy matplotlib scipy pil py)
+for p in "${extrap_pkgs[@]}"
+do
+	echo "Installing $p"
+	pip install -U ${p}
+done
+
+# let's try to use GNU gcc compiler to install scikits.learn
+
 pkgs=( `seq -f "gcc-mp-4.%g" 4 7` )
 for p in "${pkgs[@]}"
 do
@@ -82,13 +91,7 @@ do
 	fi
 done
 
-# install extra packages
-extrap_pkgs=(pyyaml numpy matplotlib scipy pil py scikits.learn)
-for p in "${extrap_pkgs[@]}"
-do
-	echo "Installing $p"
-	pip install -U ${p}
-done
+pip install -U scikits.learn
 
 cd $PROJECT_PARENT/NextThoughtPlatform/nti.dataserver
 pip install -r requirements.txt
