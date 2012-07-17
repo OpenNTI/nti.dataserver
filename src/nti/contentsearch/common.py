@@ -27,6 +27,7 @@ from nti.dataserver.mimetype import MIME_BASE
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.contenttypes import Canvas
 from nti.dataserver.contenttypes import Highlight
+from nti.dataserver.contenttypes import Redaction
 from nti.dataserver.contenttypes import CanvasTextShape
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.contentlibrary.interfaces import IContentPackageLibrary
@@ -90,6 +91,8 @@ selectedText_ = u'selectedText'
 containerId_	= unicode(ext_interfaces.StandardInternalFields.CONTAINER_ID)
 collectionId_	= u'collectionId'
 last_modified_	= u'last_modified'
+replacementContent_ = u'replacementContent'
+redactionExplanation_ = u'redactionExplanation'
 
 ntiid_fields = [NTIID, ntiid_]
 creator_fields = [CREATOR, creator_]
@@ -103,6 +106,7 @@ nti_mimetype_prefix = MIME_BASE + '.'
 
 note_ = u'note'
 highlight_ = u'highlight'
+redaction_ = u'redaction'
 messageinfo = u'messageinfo'
 messageinfo_ = messageinfo
 
@@ -278,6 +282,17 @@ def get_highlight_content(data):
 		result = getattr(data, selectedText_, u'')
 	else:
 		result = u''
+	return unicode(result)
+
+def get_redaction_content(data):
+	result = []
+	for field in (replacementContent_, redactionExplanation_, selectedText_):
+		if isinstance(data, dict):
+			result.append(data.get(field, u''))
+		elif isinstance(data, Redaction):
+			result.append(getattr(data, field, u''))
+	
+	result = ' '.join(result)
 	return unicode(result)
 
 def get_canvas_content(data):

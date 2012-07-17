@@ -26,7 +26,8 @@ from nti.contentsearch.common import (	OID, NTIID, CREATOR, LAST_MODIFIED, CONTA
 
 from nti.contentsearch.common import (	ngrams_, channel_, content_, keywords_, references_, title_, 
 										last_modified_, section_, ntiid_, recipients_, sharedWith_, body_, 
-										related_, selectedText_, note_, highlight_, messageinfo_)
+										related_, selectedText_, note_, highlight_, messageinfo_, replacementContent_,
+										redactionExplanation_, redaction_)
 
 
 import logging
@@ -127,6 +128,18 @@ def get_highlight_content(obj, default=None):
 	result = get_content(source)
 	return result.lower() if result else None
 
+def get_redaction_ngrams(obj, default=None):
+	if compute_ngrams:
+		source = get_multipart_content(obj)
+		result = ngrams(source)
+	else:
+		result = u''
+	return result
+	
+def get_redaction_content(obj, default=None):
+	result = get_multipart_content(obj)
+	return result.lower() if result else None
+
 def get_messageinfo_ngrams(obj, default=None):
 	if compute_ngrams:
 		source = obj if isinstance(obj, six.string_types) else get_attr(obj, [BODY], default)
@@ -134,6 +147,16 @@ def get_messageinfo_ngrams(obj, default=None):
 	else:
 		result = ''
 	return result
+
+def get_replacement_content(obj, default=None):
+	source = obj if isinstance(obj, six.string_types) else get_attr(obj, [replacementContent_], default)
+	result = get_content(source)
+	return result.lower() if result else None
+	
+def get_redaction_explanation(obj, default=None):
+	source = obj if isinstance(obj, six.string_types) else get_attr(obj, [redactionExplanation_], default)
+	result = get_content(source)
+	return result.lower() if result else None
 	
 def get_messageinfo_content(obj, default=None):
 	source = obj if isinstance(obj, six.string_types) else get_attr(obj, [BODY], default)
@@ -170,6 +193,14 @@ def create_highlight_catalog():
 	catalog[content_] = _create_text_index(content_, get_highlight_content)
 	return catalog
 
+def create_redaction_catalog():
+	catalog = _create_treadable_mixin_catalog()
+	catalog[ngrams_] = _create_text_index(ngrams_, get_redaction_ngrams)
+	catalog[content_] = _create_text_index(content_, get_redaction_content)
+	catalog[replacementContent_] = _create_text_index(replacementContent_, get_replacement_content)
+	catalog[redactionExplanation_] = _create_text_index(redactionExplanation_, get_redaction_explanation)
+	return catalog
+
 def create_messageinfo_catalog():
 	catalog = _create_treadable_mixin_catalog()
 	catalog[ID] = CatalogFieldIndex(get_id)
@@ -198,6 +229,8 @@ def create_catalog(type_name=note_):
 		return create_notes_catalog()
 	elif type_name == highlight_:
 		return create_highlight_catalog()
+	elif type_name == redaction_:
+		return create_redaction_catalog()
 	elif type_name == messageinfo_:
 		return create_messageinfo_catalog()
 	else:

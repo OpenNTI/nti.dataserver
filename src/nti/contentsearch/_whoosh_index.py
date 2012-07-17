@@ -36,7 +36,8 @@ from nti.contentsearch.common import (	NTIID, CREATOR, LAST_MODIFIED, TYPE, CLAS
 
 from nti.contentsearch.common import (	color_, quick_, channel_, content_, keywords_, references_, body_, text_,
 										id_, recipients_, sharedWith_, oid_ , ntiid_, title_, last_modified_,
-										creator_, selectedText_, containerId_, collectionId_)
+										creator_, selectedText_, containerId_, collectionId_, replacementContent_,
+										redactionExplanation_)
 	
 from nti.contentsearch.common import (	container_id_fields, last_modified_fields)
 		
@@ -388,6 +389,58 @@ class Highlight(UserIndexableContent):
 		result[keywords_] = get_keywords(get_attr(data, keywords_))
 		result[sharedWith_] = get_keywords(get_attr(data, sharedWith_))
 		result[content_] = get_content(get_attr(data, selectedText_))
+		result[quick_] = result[content_]
+		return result
+	
+# ----------------------------------
+
+def create_redaction_schema():
+	"""
+	Redaction index schema
+
+	collectionId: Book/Library that the redaction belongs to
+	ntiid: Redaction nti id
+	oid: Redaction object id
+	creator: Redaction creator username
+	last_modified: Redaction last modification time
+	content: Redaction selected text
+	sharedWith: Redaction shared users
+	replacementContent: Redaction color
+	redactionExplanation: Redaction explanation
+	quick: Redaction text ngrams
+	keywords: Redaction key words
+	"""
+	
+	schema = fields.Schema(	collectionId = fields.ID(stored=True),
+							oid = fields.ID(stored=True, unique=True),
+							containerId = fields.ID(stored=True),
+							creator = fields.ID(stored=True),
+				  			last_modified = fields.DATETIME(stored=True),
+				  			content = fields.TEXT(stored=True, spelling=True),
+				  			sharedWith = fields.KEYWORD(stored=False), 
+				  			replacementContent = fields.TEXT(stored=True, spelling=True),
+				  			redactionExplanation = fields.TEXT(stored=True, spelling=True),
+				 			quick = fields.NGRAM(maxsize=10),
+				 			keywords = fields.KEYWORD(stored=True),
+				 			ntiid = fields.ID(stored=True))
+	return schema
+
+class Redaction(UserIndexableContent):
+	"""
+	Base clase for Redaction indexable content.
+	"""
+	
+	__indexable__ = True
+	_schema = create_redaction_schema()
+
+	def get_index_data(self, data, *args, **kwargs):
+		result = UserIndexableContent.get_index_data(self, data, *args, **kwargs)
+		result[color_] = echo(get_attr(data, color_))
+		result[keywords_] = get_keywords(get_attr(data, keywords_))
+		result[sharedWith_] = get_keywords(get_attr(data, sharedWith_))
+		result[content_] = get_content(get_attr(data, selectedText_))
+		result[replacementContent_] = get_content(get_attr(data, replacementContent_))
+		result[redactionExplanation_] = get_content(get_attr(data, redactionExplanation_))
 		result[quick_] = result[content_]
 		return result
 	
