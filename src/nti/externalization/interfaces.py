@@ -129,7 +129,7 @@ class IExternalMappingDecorator(interface.Interface):
 	operate by mutating the external object.
 	"""
 
-	def decorateExternalMapping( origial, external ):
+	def decorateExternalMapping( original, external ):
 		"""
 		:param original: The object that is being externalized.
 			Passed to facilitate using non-classes as decorators.

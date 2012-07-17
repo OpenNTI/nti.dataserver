@@ -1024,6 +1024,32 @@ class TestApplication(ApplicationTestBase):
 		assert_that( res.status_int, is_( 200 ) )
 		assert_that( res.json_body, has_entry( 'sharedWith', ['foo@bar', 'jason.madden@nextthought.com'] ) )
 
+	def test_user_search_returns_enrolled_classes(self):
+		"We can find class sections we are enrolled in with a search"
+		with mock_dataserver.mock_db_trans( self.ds ):
+			self._create_user()
+			self._create_user( username='jason.madden@nextthought.com' )
+
+			klass = _create_class( self.ds, ('sjohnson@nextthought.com','jason.madden@nextthought.com') )
+			sect = list(klass.Sections)[0]
+			sect_name = sect.ID
+			sect_ntiid = sect.NTIID
+
+		testapp = TestApp( self.app )
+
+		path = '/dataserver2/UserSearch/' + sect_name
+
+		res = testapp.get( urllib.quote( path ),
+						   extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 200 ) )
+
+		assert_that( res.json_body, has_entry( 'Items', has_item( has_entry( 'Class', 'SectionInfo' ) ) ) )
+		sect_info = res.json_body['Items'][0]
+
+		assert_that( sect_info, has_entry( 'Username', sect_ntiid ) )
+		assert_that( sect_info, has_entry( 'alias', sect_name ) )
+		assert_that( sect_info, has_key( 'avatarURL' ) )
+
 
 
 
