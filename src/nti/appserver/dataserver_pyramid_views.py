@@ -152,6 +152,20 @@ def unquoting( f ):
 		return f( self, _unquoted( key ) )
 	return unquoted
 
+def _traverse_should_wrap_resource( remaining_path ):
+	"""
+	In the usual case, if we're not going directly to a view, or
+	namespace traversal, we want to wrap a resource so that we get our
+	external field traversal behaviour. In the other case, though, we
+	don't want to wrap so that the correct adapters are found.
+
+	Note that "the usual case" is becoming the less common case, and is the deprecated
+	case. Normal traversal should be becoming the rule.
+	"""
+	return not remaining_path \
+	  or len( remaining_path ) != 1 \
+	  or not (remaining_path[0].startswith( '@' ) or remaining_path[0].startswith( '+' ))
+
 @interface.implementer(app_interfaces.IUserRootResource)
 class _UserResource(object):
 
@@ -187,6 +201,7 @@ class _UserResource(object):
 
 		if resource is None:
 			# Is this an individual field we can update?
+			# NOTE: This is deprecated. The fields namespace is preferred to solve the next problem:
 			# NOTE: Container names and field names and pseudo-classes must not overlap
 			field_traverser = app_interfaces.IExternalFieldTraverser( self.user, None )
 			resource = field_traverser.get(key) if field_traverser is not None else None
@@ -212,6 +227,7 @@ class _ProviderResource(_UserResource):
 		super(_ProviderResource,self).__init__( *args, **kwargs )
 		del self._pseudo_classes_['EnrolledClassSections']
 
+@interface.implementer(trv_interfaces.ITraversable)
 class _UsersRootResource( object ):
 
 	__acl__ = (
@@ -228,12 +244,17 @@ class _UsersRootResource( object ):
 	def _get_from_ds( self, key, ds ):
 		return users.User.get_user( key, dataserver=ds )
 
-	@unquoting
-	def __getitem__( self, key ):
+	def traverse( self, key, remaining_path ):
 		ds = self.request.registry.getUtility(IDataserver)
 		user = self._get_from_ds( key, ds )
-		if not user: raise KeyError(key)
-		return self._resource_type_(self, user)
+		if not user:
+			raise loc_interfaces.LocationError( key )
+
+		if _traverse_should_wrap_resource( remaining_path ):
+			user = self._resource_type_(self, user)
+
+		return user
+
 
 class _ProvidersRootResource( _UsersRootResource ):
 
@@ -284,6 +305,7 @@ class _PagesResource(_AbstractUserPseudoContainerResource):
 		return resource
 
 
+@interface.implementer(trv_interfaces.ITraversable)
 class _ContainerResource(object):
 
 	__acl__ = ()
@@ -301,50 +323,35 @@ class _ContainerResource(object):
 	def datatype( self ):
 		return self.ntiid
 
-	@unquoting
-	def __getitem__( self, key ):
-		# Throw KeyError
-		#self.container.__getitem__(key)
+	def traverse( self, key, remaining_path ):
 		contained_object = self.user.getContainedObject( self.ntiid, key )
 		if contained_object is None:
-			raise KeyError( key )
+			# LocationError is a subclass of KeyError, and compatible
+			# with the traverse() interface
+			raise loc_interfaces.LocationError( key )
 		# The owner has full rights, authenticated can read,
 		# and deny everything to everyone else (so we don't recurse up the tree)
+		# TODO: The need for this wrapping is probably gone. Everything
+		# has its own ACL now, and we should have a consistent traversal tree.
 		result = _ACLAndLocationForcingObjectResource( self, self.ntiid, key, self.user )
 		return result
 
 class _NewContainerResource(_ContainerResource): pass
 
-@interface.implementer(trv_interfaces.ITraversable)
+
 class _ObjectsContainerResource(_ContainerResource):
 
 	def __init__( self, parent, user, name='Objects' ):
 		super(_ObjectsContainerResource,self).__init__( parent, None, name, user )
 
-	def traverse( self, name, remaining_path ):
-		# See _wrap_as_resource. This is getting hella complicated.
-		# In the usual case, if we're not going directly to a view,
-		# we want to wrap a resource so that we get our external field
-		# traversal behaviour. In the other case, though,
-		# we don't want to wrap.
-		# This calls through to __getitem__ in case any subclasses
-		# are still using it.
-		return self.__getitem__( name, remaining_path )
-
-	def __getitem__( self, key, remaining_path=() ):
-
+	def traverse( self, key, remaining_path ):
 		request = _find_request( self )
 		ds = request.registry.getUtility(IDataserver)
 		result = self._getitem_with_ds( ds, key )
 		if result is None:
 			raise loc_interfaces.LocationError( key )
-			# LocationError is a subclass of KeyError, and compatible
-			# with the traverse() interface
-		# If we're going to traverse with the special namespace support for views
-		# or namespaces, don't wrap the resource
-		if not remaining_path \
-			or len( remaining_path ) != 1 \
-			or not (remaining_path[0].startswith( '@' ) or remaining_path[0].startswith( '+' )):
+
+		if _traverse_should_wrap_resource( remaining_path ):
 			result = self._wrap_as_resource( key, result )
 
 		return result
@@ -402,7 +409,7 @@ class _PageContainerResource(_ContainerResource):
 						   'UserGeneratedDataAndRecursiveStream': _UGDAndRecursiveStreamView }
 
 
-	def __getitem__(self,key):
+	def traverse( self, key, remaining_path ):
 		clazz = self.__types__[key]
 		inst = clazz(_find_request(self))
 		inst.request.context = self
@@ -463,7 +470,8 @@ class _AbstractObjectResource(object):
 				child = cont.get_enclosure( key )
 			else:
 				# Otherwise, update an individual field if possible.
-				# Note this is implemented as mutually exclusive with enclosures
+				# NOTE this is implemented as mutually exclusive with enclosures
+				# NOTE: This is deprecated in favor of the ++fields namespace
 				field_traverser = app_interfaces.IExternalFieldTraverser( res, None )
 				child = field_traverser[key] if field_traverser is not None else None
 				child.__acl__ = self.__acl__

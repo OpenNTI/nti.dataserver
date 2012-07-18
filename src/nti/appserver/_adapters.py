@@ -64,7 +64,20 @@ class _DefaultExternalFieldResource(object):
 		self.__parent__ = obj
 		self.resource = obj
 
+@interface.implementer(trv_interfaces.ITraversable)
 class _AbstractExternalFieldTraverser(object):
+	"""
+	Subclasses may also be registered in the ``fields`` namespace
+	as traversers for their particular objects to support legacy
+	paths as well as new paths.
+	"""
+
+	def __init__( self, context, request=None ):
+		self.context = context
+		self.request = request
+
+	def __getitem__( self, key ):
+		raise NotImplementedError()
 
 	def get( self, key, default=None ):
 		try:
@@ -72,30 +85,31 @@ class _AbstractExternalFieldTraverser(object):
 		except KeyError:
 			return default
 
+	def traverse( self, name, further_path ):
+		try:
+			return self[name]
+		except KeyError:
+			raise loc_interfaces.LocationError( self.context, name )
+
 @interface.implementer(app_interfaces.IExternalFieldTraverser)
 @component.adapter(nti_interfaces.IShareableModeledContent)
 class SharedWithExternalFieldTraverser(_AbstractExternalFieldTraverser):
 
-	def __init__( self, obj ):
-		self._obj = obj
 
 	def __getitem__( self, key ):
 		if key != 'sharedWith':
 			raise KeyError(key)
-		return _DefaultExternalFieldResource( key, self._obj )
+		return _DefaultExternalFieldResource( key, self.context )
 
 
 @interface.implementer(app_interfaces.IExternalFieldTraverser)
 @component.adapter(nti_interfaces.IUser)
 class UserExternalFieldTraverser(_AbstractExternalFieldTraverser):
 
-	def __init__( self, obj ):
-		self._obj = obj
-
 	def __getitem__( self, key ):
 		if key not in ('lastLoginTime', 'password', 'mute_conversation', 'unmute_conversation', 'ignoring', 'accepting', 'NotificationCount'):
 			raise KeyError(key)
-		return _DefaultExternalFieldResource( key, self._obj )
+		return _DefaultExternalFieldResource( key, self.context )
 
 
 ## Attachments/Enclosures
@@ -140,7 +154,10 @@ class _resource_adapter_request(adapter_request):
 class EnclosureTraversable(object):
 	"""
 	Intended to be registered as an object in the adapter namespace to
-	provide access to attachments.
+	provide access to attachments. (We implement :class:`zope.traversing.interfaces.IPathAdapter`
+	to work with the default ``++adapter`` handler, :class:`zope.traversing.namespaces.adapter`,
+	and then we further implement :class:`zope.traversing.interfaces.ITraversable` so we
+	can find further resources.)
 	"""
 	__parent__ = None
 	__name__ = None

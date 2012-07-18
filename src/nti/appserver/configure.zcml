@@ -108,8 +108,33 @@
 				provides=".interfaces.ILogonLinkProvider" />
 
 	<!-- Individual field updates -->
-	<adapter factory="._adapters.SharedWithExternalFieldTraverser" />
-	<adapter factory="._adapters.UserExternalFieldTraverser" />
+	<!-- Legacy support -->
+	<adapter factory="._adapters.SharedWithExternalFieldTraverser"
+			 provides=".interfaces.IExternalFieldTraverser"/>
+	<adapter factory="._adapters.UserExternalFieldTraverser"
+			 provides=".interfaces.IExternalFieldTraverser"/>
+
+	<!-- Normal traversing of the fields namespace, both with and
+	without request -->
+	<adapter factory="._adapters.SharedWithExternalFieldTraverser"
+			 for="nti.dataserver.interfaces.IShareableModeledContent pyramid.interfaces.IRequest"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 name="fields" />
+	<adapter factory="._adapters.UserExternalFieldTraverser"
+			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 name="fields" />
+
+	<adapter factory="._adapters.SharedWithExternalFieldTraverser"
+			 for="nti.dataserver.interfaces.IShareableModeledContent"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 name="fields" />
+	<adapter factory="._adapters.UserExternalFieldTraverser"
+			 for="nti.dataserver.interfaces.IUser"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 name="fields" />
+
+
 
 	<!-- Object graph traversal -->
 
