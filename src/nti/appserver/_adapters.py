@@ -79,19 +79,13 @@ class _AbstractExternalFieldTraverser(object):
 	def __getitem__( self, key ):
 		raise NotImplementedError()
 
-	def get( self, key, default=None ):
-		try:
-			return self[key]
-		except KeyError:
-			return default
-
 	def traverse( self, name, further_path ):
 		try:
 			return self[name]
 		except KeyError:
 			raise loc_interfaces.LocationError( self.context, name )
 
-@interface.implementer(app_interfaces.IExternalFieldTraverser)
+@interface.implementer(app_interfaces.IExternalFieldTraversable)
 @component.adapter(nti_interfaces.IShareableModeledContent)
 class SharedWithExternalFieldTraverser(_AbstractExternalFieldTraverser):
 
@@ -102,7 +96,7 @@ class SharedWithExternalFieldTraverser(_AbstractExternalFieldTraverser):
 		return _DefaultExternalFieldResource( key, self.context )
 
 
-@interface.implementer(app_interfaces.IExternalFieldTraverser)
+@interface.implementer(app_interfaces.IExternalFieldTraversable)
 @component.adapter(nti_interfaces.IUser)
 class UserExternalFieldTraverser(_AbstractExternalFieldTraverser):
 

@@ -23,8 +23,11 @@ import zope.security.interfaces
 import zope.cachedescriptors.property
 
 import pyramid.security as sec
-import pyramid.httpexceptions as hexc
+from nti.appserver import httpexceptions as hexc
+from nti.appserver.httpexceptions import HTTPUnprocessableEntity
 from pyramid import traversal
+import pyramid.traversal
+import pyramid.interfaces
 import transaction
 
 from zope.location import interfaces as loc_interfaces
@@ -34,7 +37,8 @@ from zope.traversing import interfaces as trv_interfaces
 from nti.dataserver.interfaces import (IDataserver, ISimpleEnclosureContainer, IEnclosedContent)
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import users
-from nti.dataserver import links
+from nti.dataserver import providers
+
 from nti.externalization.datastructures import isSyntheticKey
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.datastructures import LocatedExternalDict
@@ -51,50 +55,13 @@ from nti.appserver import interfaces as app_interfaces
 from nti.contentlibrary import interfaces as lib_interfaces
 from nti.assessment import interfaces as asm_interfaces
 
-def _find_request( resource ):
-	request = None
-	p = resource
-	while p and request is None:
-		request = getattr( p, 'request', None )
-		p = getattr( p, '__parent__', None )
-	return request
-
-class HTTPUnprocessableEntity(hexc.HTTPForbidden):
-	"""
-	WebDAV extension for bad client input.
-
-	The 422 (Unprocessable Entity) status code means the server
-	understands the content type of the request entity (hence a
-	415(Unsupported Media Type) status code is inappropriate), and the
-	syntax of the request entity is correct (thus a 400 (Bad Request)
-	status code is inappropriate) but was unable to process the contained
-	instructions.  For example, this error condition may occur if an XML
-	request body contains well-formed (i.e., syntactically correct), but
-	semantically erroneous, XML instructions.
-
-	http://tools.ietf.org/html/rfc4918#section-11.2
-	"""
-	code = 422
-	title = "Unprocessable Entity"
-	explanation = ('The client sent a well-formed but invalid request body.')
-
-	def __str__( self ):
-		# The super-class simply echoes back self.detail, which
-		# if not a string, causes str() to raise TypeError
-		return str(super(HTTPUnprocessableEntity,self).__str__())
+from nti.appserver._dataserver_pyramid_traversal import find_request as _find_request
 
 
 from nti.dataserver.interfaces import ACLLocationProxy
 
 
-class EnclosureGetItemACLLocationProxy(ACLLocationProxy):
-	"""
-	Use this for leaves of the tree that do not contain anything except enclosures.
-	"""
-	def __getitem__(self, key ):
-		enc = self.get_enclosure( key )
-		return ACLLocationProxy( enc, self, enc.__name__, nacl.ACL( enc, self.__acl__ ) )
-
+from nti.appserver._dataserver_pyramid_traversal import EnclosureGetItemACLLocationProxy
 
 @interface.implementer(loc_interfaces.ILocation)
 class _DSResource(object):
@@ -166,7 +133,7 @@ def _traverse_should_wrap_resource( remaining_path ):
 	  or len( remaining_path ) != 1 \
 	  or not (remaining_path[0].startswith( '@' ) or remaining_path[0].startswith( '+' ))
 
-@interface.implementer(app_interfaces.IUserRootResource)
+@interface.implementer(loc_interfaces.ILocation)
 class _UserResource(object):
 
 	def __init__( self, parent, user, name=None ):
@@ -198,15 +165,6 @@ class _UserResource(object):
 		cont = self.user.getContainer( key )
 		if cont is not None:
 			resource = _ContainerResource( self, cont, key, self.user )
-
-		if resource is None:
-			# Is this an individual field we can update?
-			# NOTE: This is deprecated. The fields namespace is preferred to solve the next problem:
-			# NOTE: Container names and field names and pseudo-classes must not overlap
-			field_traverser = app_interfaces.IExternalFieldTraverser( self.user, None )
-			resource = field_traverser.get(key) if field_traverser is not None else None
-			if resource is not None:
-				resource.__parent__ = self # The parent must be this object so traversal to find IUsersRootResource works
 
 		if resource is None:
 			# OK, assume a new container
@@ -263,8 +221,7 @@ class _ProvidersRootResource( _UsersRootResource ):
 	_resource_type_ = _ProviderResource
 
 	def _get_from_ds( self, key, ds ):
-		# TODO: Need better way for this.
-		return ds.root['providers'][key]
+		return providers.Provider.get_entity( key, dataserver=ds )
 
 class _AbstractUserPseudoContainerResource(object):
 	"""
@@ -393,28 +350,18 @@ class _NTIIDsContainerResource(_ObjectsContainerResource):
 		super(_NTIIDsContainerResource,self).__init__( parent, user, name='NTIIDs' )
 
 
-
 class _PageContainerResource(_ContainerResource):
 	"""
-	Dispatches based on the type of URL requested for a page's data.
-	We re-use the same classes that can handle the legacy URL structure.
+	A leaf on the traversal tree. Exists to be a named thing that
+	we can match view names with. Should be followed by the view name.
 	"""
 
 	def __init__( self, parent, container, ntiid, user ):
 		super(_PageContainerResource,self).__init__( parent, container, ntiid, user )
-		self.__types__ = { 'UserGeneratedData': _UGDView,
-						   'RecursiveUserGeneratedData': _RecursiveUGDView,
-						   'Stream': _UGDStreamView,
-						   'RecursiveStream': _RecursiveUGDStreamView,
-						   'UserGeneratedDataAndRecursiveStream': _UGDAndRecursiveStreamView }
-
 
 	def traverse( self, key, remaining_path ):
-		clazz = self.__types__[key]
-		inst = clazz(_find_request(self))
-		inst.request.context = self
-		result = LocationProxy( inst(), self, self.ntiid )
-		return result
+		raise loc_interfaces.LocationError( key )
+
 
 class _AbstractObjectResource(object):
 
@@ -468,15 +415,6 @@ class _AbstractObjectResource(object):
 			# A missing enclosure is an error.
 			if ISimpleEnclosureContainer.providedBy( cont ):
 				child = cont.get_enclosure( key )
-			else:
-				# Otherwise, update an individual field if possible.
-				# NOTE this is implemented as mutually exclusive with enclosures
-				# NOTE: This is deprecated in favor of the ++fields namespace
-				field_traverser = app_interfaces.IExternalFieldTraverser( res, None )
-				child = field_traverser[key] if field_traverser is not None else None
-				child.__acl__ = self.__acl__
-				child.__parent__ = self # The parent must be this object so traversal to find IUsersRootResource works
-				proxy = None
 
 		if child is None:
 			raise KeyError( key )

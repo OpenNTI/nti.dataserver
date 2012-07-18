@@ -7,6 +7,7 @@ from __future__ import print_function, unicode_literals
 
 from zope import interface
 from zope import schema
+from zope.traversing import interfaces as trv_interfaces
 
 import nti.dataserver.interfaces as nti_interfaces
 from pyramid import interfaces as pyramid_interfaces
@@ -164,26 +165,18 @@ class IUncacheableInResponse(interface.Interface):
 class IExternalFieldResource(ILocation):
 	"""
 	Marker for objects representing an individually externally updateable field
-	of an object.  The __name__ will be the name of the external field.
+	of an object.  The __name__ will be the name of the external field; the __parent__
+	should be the actual object to update.
 	"""
 
 	resource = interface.Attribute( "The object to be updated." )
 
-class IExternalFieldTraverser(interface.Interface):
+class IExternalFieldTraversable(trv_interfaces.ITraversable):
 	"""
-	Adapter that understands objects and maps external individually updateable fields
-	to an instance of :class:`IExternalFieldResource`
+	Marker interface that says that this object traverses into the externally visible
+	fields or properties of an object. It generally will produce instances of :class:`IExternalFieldResource`,
+	but not necessarily.
 	"""
-
-	def __getitem__( key ):
-		"""
-		Given an external key, returns an IExternalFieldResource or raises KeyError.
-		"""
-
-	def get( key, default=None ):
-		"""
-		As per the Mapping interface, doesn't raise KeyError.
-		"""
 
 ###
 # Assessment Support

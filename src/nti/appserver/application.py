@@ -598,6 +598,8 @@ def createApplication( http_port,
 							 name='', renderer='rest',
 							 permission=nauth.ACT_READ, request_method='GET' )
 
+
+
 	# Service
 	pyramid_config.add_route( name='user.root.service', pattern='/dataserver2{_:/?}',
 							  factory='nti.appserver.dataserver_pyramid_views._DSResource' )
@@ -635,6 +637,21 @@ def createApplication( http_port,
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
 							 renderer='rest', name='Main', context='nti.appserver.dataserver_pyramid_views._LibraryResource',
 							 permission=nauth.ACT_READ, request_method='GET' )
+
+	for name, view in { 'UserGeneratedData': '_UGDView',
+						'RecursiveUserGeneratedData': '_RecursiveUGDView',
+						'Stream': '_UGDStreamView',
+						'RecursiveStream': '_RecursiveUGDStreamView',
+						'UserGeneratedDataAndRecursiveStream': '_UGDAndRecursiveStreamView' }.items():
+		for route in ('objects.generic.traversal', 'user.pages.odata.traversal'):
+			pyramid_config.add_view(
+				route_name=route, view='nti.appserver.dataserver_pyramid_views.' + view,
+				context='nti.appserver.dataserver_pyramid_views._PageContainerResource',
+				name=name, renderer='rest',
+				permission=nauth.ACT_READ, request_method='GET' )
+
+
+
 
 	# Modifying UGD
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._UGDDeleteView',
