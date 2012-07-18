@@ -540,7 +540,7 @@ class TestApplication(ApplicationTestBase):
 		data = '["Everyone"]'
 
 		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % datastructures.to_external_ntiid_oid( n )
-		field_path = path + '/sharedWith' # The name of the external field
+		field_path = path + '/++fields++sharedWith' # The name of the external field
 
 		res = testapp.put( urllib.quote( field_path ),
 						   data,
@@ -562,7 +562,8 @@ class TestApplication(ApplicationTestBase):
 		# This works for both the OID and direct username paths
 		for path in ('/dataserver2/Objects/%s' % datastructures.to_external_ntiid_oid( user ), '/dataserver2/users/' + user.username):
 			# Both the classic (direct) and the namespace approach
-			for field_segment in (field,'++fields++' + field ):
+			# ONly the namespace is supported
+			for field_segment in ('++fields++' + field, ):
 				field_path = path + '/' + field_segment # The name of the external field
 
 				res = testapp.put( urllib.quote( field_path ),
@@ -1043,7 +1044,7 @@ class TestApplication(ApplicationTestBase):
 		data = '["' + sect_ntiid + '"]'
 
 		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % datastructures.to_external_ntiid_oid( n )
-		field_path = path + '/sharedWith' # The name of the external field
+		field_path = path + '/++fields++sharedWith' # The name of the external field
 
 		res = testapp.put( urllib.quote( field_path ),
 						   data,
