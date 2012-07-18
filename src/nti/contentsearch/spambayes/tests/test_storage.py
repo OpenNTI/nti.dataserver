@@ -4,12 +4,26 @@ import unittest
 import tempfile
 import transaction
 
+from zope import interface
+from persistent import Persistent
+from zope.annotation.interfaces import IAttributeAnnotatable
+
+from nti.dataserver import interfaces as nti_interfaces
+
 from nti.contentsearch.spambayes.tokenizer import tokenize
 from nti.contentsearch.spambayes.storage import SQL3Classifier
+from nti.contentsearch.spambayes.storage import PersistentClassifier
+from nti.contentsearch.spambayes.interfaces import IObjectClassifierMetaData
+
+from nti.contentsearch.spambayes.tests import ConfiguringTestBase
 
 from hamcrest import (assert_that, is_, has_length)
 
-class TestStorage(unittest.TestCase):
+@interface.implementer(nti_interfaces.IModeledContent, IAttributeAnnotatable)
+class Foo(Persistent):
+	pass
+
+class TestStorage(ConfiguringTestBase):
 
 	ham = """Use the param function in list context"""
 	spam = """Youtube delete your video context and can only be accessed on the link posted below"""
@@ -23,7 +37,7 @@ class TestStorage(unittest.TestCase):
 		super(TestStorage, self).tearDown()
 		shutil.rmtree(self.path, True)
 		
-	def test_trainer( self ):
+	def xtest_trainer( self ):
 		sc = SQL3Classifier(self.db_path)
 		transaction.begin()
 		sc.learn(tokenize(self.ham), False)
@@ -40,5 +54,12 @@ class TestStorage(unittest.TestCase):
 		assert_that(sc2.nspam, is_(1))
 		assert_that(sc2.words, has_length(17))
 
+	def test_persistent_classifier(self):
+		pc = PersistentClassifier()
+		foo = Foo()
+		pc.mark_spam(foo)
+		a = IObjectClassifierMetaData(foo, None)
+		assert_that(a.is_spam, is_(True))
+		
 if __name__ == '__main__':
 	unittest.main()
