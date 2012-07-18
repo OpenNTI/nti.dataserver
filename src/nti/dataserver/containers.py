@@ -105,8 +105,8 @@ def update_parent_modified_time( modified_object, event ):
 @component.adapter( interfaces.ILastModified, IObjectModifiedEvent )
 def update_object_modified_time( modified_object, event ):
 	"""
-	Register this handler to update modification times when a container is
-	modified through addition or removal of children.
+	Register this handler to update modification times when an object
+	itself is modified.
 	"""
 	try:
 		modified_object.updateLastMod()
