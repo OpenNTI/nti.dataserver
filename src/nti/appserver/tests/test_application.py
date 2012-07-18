@@ -24,6 +24,7 @@ from nti.appserver.tests import ConfiguringTestBase
 from webtest import TestApp
 import webob.datetime_utils
 import datetime
+import time
 
 import os
 import os.path
@@ -373,8 +374,7 @@ class TestApplication(ApplicationTestBase):
 		assert_that( res.body, contains_string( '"boom@nextthought.com"' ) )
 		assert_that( res.headers, has_entry( 'Content-Type', contains_string( 'application/vnd.nextthought.friendslist+json' ) ) )
 
-		body = json.loads( res.body )
-		assert_that( body, has_entry( 'href', starts_with('/dataserver2/users/sjohnson%40nextthought.com/Objects' ) ))
+		assert_that( res.json_body, has_entry( 'href', starts_with('/dataserver2/users/sjohnson%40nextthought.com/Objects' ) ))
 		#assert_that( body, has_entry( 'href', '/dataserver2/users/sjohnson%40nextthought.com/FriendsLists/boom%40nextthought.com' ) )
 
 	def test_create_friends_list_post_user(self):
@@ -392,9 +392,8 @@ class TestApplication(ApplicationTestBase):
 		assert_that( res.body, contains_string( '"boom@nextthought.com"' ) )
 		assert_that( res.headers, has_entry( 'Content-Type', contains_string( 'application/vnd.nextthought.friendslist+json' ) ) )
 
-		body = json.loads( res.body )
-		assert_that( body, has_entry( 'href', starts_with('/dataserver2/users/sjohnson%40nextthought.com/Objects' ) ))
-		#assert_that( body, has_entry( 'href', '/dataserver2/users/sjohnson%40nextthought.com/FriendsLists/boom%40nextthought.com' ) )
+		assert_that( res.json_body, has_entry( 'href', starts_with('/dataserver2/users/sjohnson%40nextthought.com/Objects' ) ))
+
 
 	def test_post_friendslist_friends_field(self):
 		"We can put to ++fields++friends"
@@ -406,6 +405,8 @@ class TestApplication(ApplicationTestBase):
 		data = '{"Last Modified":1323788728,"ContainerId":"FriendsLists","Username": "boom@nextthought.com","friends":["steve.johnson@nextthought.com"],"realname":"boom"}'
 		path = '/dataserver2/users/sjohnson@nextthought.com'
 		res = testapp.post( path, data, extra_environ=self._make_extra_environ(), headers={'Content-Type': 'application/vnd.nextthought.friendslist+json' } )
+
+		now = time.time()
 
 		# Edit it
 		data = '["troy.daley@nextthought.com"]'
@@ -419,6 +420,27 @@ class TestApplication(ApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'friends', has_item( has_entry( 'Username', 'troy.daley@nextthought.com' ) ) ) )
 		assert_that( res.headers, has_entry( 'Content-Type', contains_string( 'application/vnd.nextthought.friendslist+json' ) ) )
 
+		# the object itself is uncachable as far as HTTP goes
+		assert_that( res.last_modified, is_( none() ) )
+		# But the last modified value is preserved in the body, and did update
+		# when we PUT
+		assert_that( res.json_body, has_entry( 'Last Modified', greater_than( now ) ) )
+
+		# We can fetch the object and get the same info
+		last_mod = res.json_body['Last Modified']
+		href = res.json_body['href']
+
+		res = testapp.get( href, extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 200 ) )
+		assert_that( res.last_modified, is_( none() ) )
+		assert_that( res.json_body,	has_entries( 'Last Modified', last_mod, 'href', href ) )
+
+		# And likewise for the collection
+		res = testapp.get( '/dataserver2/users/sjohnson@nextthought.com/FriendsLists', extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 200 ) )
+		assert_that( res.last_modified, is_( none() ) )
+		assert_that( res.json_body['Items'], has_entry( 'boom@nextthought.com',
+														has_entries( 'Last Modified', last_mod, 'href', href ) ) )
 
 	def test_edit_note_returns_editlink(self):
 		"The object returned by POST should have enough ACL to regenerate its Edit link"

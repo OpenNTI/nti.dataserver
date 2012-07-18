@@ -199,6 +199,12 @@
 				for="geventwebsocket.interfaces.IWSWillUpgradeEvent" />
 
 	<include package="nti.dataserver" />
+	<!-- Friends Lists are uncachable due to the nested user changing
+	presence -->
+	<class class="nti.dataserver.users.FriendsList">
+		<implements interface=".interfaces.IUncacheableInResponse" />
+	</class>
+
 	<include package="nti.contentrange" />
 	<include package="nti.contentsearch" />
 	<include package="nti.socketio" />

@@ -56,7 +56,7 @@ class _EntityExternalObject(_EntitySummaryExternalObject):
 		""" :return: The value of :meth:`toSummaryExternalObject` """
 		result = super(_EntityExternalObject,self).toExternalObject()
 		# restore last modified since we are the true representation
-		result['Last Modified'] = getattr( self, 'lastModified', 0 )
+		result['Last Modified'] = getattr( self.entity, 'lastModified', 0 )
 		return result
 
 
