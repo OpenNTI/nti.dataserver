@@ -6,7 +6,6 @@ import sqlite3 as sql
 from zope import component
 from zope import interface
 from zope.annotation import factory
-from zope.annotation import interfaces as an_interfaces
 
 from persistent import Persistent
 from BTrees.OOBTree import OOBTree
@@ -24,21 +23,15 @@ from nti.contentsearch.spambayes import default_max_discriminators
 from nti.contentsearch.spambayes import default_unknown_word_strength
 from nti.contentsearch.spambayes import default_minimum_prob_strength
 
-# -----------------------------------
-
+@interface.implementer(IObjectClassifierMetaData)
+@component.adapter(nti_interfaces.IModeledContent)
 class _ObjectClassifierMetaData(Persistent):
-	interface.implements(IObjectClassifierMetaData)
-	component.adapts(nti_interfaces.IModeledContent)
-	def __init__(self):
-		self.is_spam = False
+	is_spam = False
+	def __init__(self, *args, **kwargs):
 		self.classified_at = time.time()
 		
 component.provideAdapter(factory(_ObjectClassifierMetaData))
-
-# -----------------------------------
-
-_ann_prefix = '_spbc_'
-
+	
 class PersistentWordInfo(Persistent, _BaseWordInfo):
 	def __init__(self):
 		self.spamcount = self.hamcount = 0
@@ -58,47 +51,16 @@ class PersistentClassifier(Persistent, Classifier):
 							max_discriminators, use_bigrams, mapfactory)
 		
 	def mark_spam(self, context):
-		""" mark the specified object as spam"""
-		return self.add_metadata(context, spam=True, markedAt=time.time())
-	
+		md = IObjectClassifierMetaData(context)
+		md.is_spam = True
+		md.classified_at = time.time()
+		
 	def remove_spam(self, context):
-		""" remove the spam marker for the specifed object"""
-		return self.remove_metadata(context, 'spam', 'markedAt')
-	
-	def add_metadata(self, context, **args):
-		""" add related classifier metadata for a given object """
-		
-		annotations = an_interfaces.IAnnotations(context)
-		for k, v in args.items():
-			k = k if k.startswith(_ann_prefix) else _ann_prefix + k
-			annotations[k] = v
-
-	def remove_metadata(self, context, *keys):
-		""" remove related classifier metadata for a given object """
-		
-		annotations = an_interfaces.IAnnotations(context)
-		if keys:
-			for k in keys:
-				k = k if k.startswith(_ann_prefix) else _ann_prefix + k
-				if k in annotations:
-					del annotations[k]
-		else:
-			for k in list(annotations.keys()):
-				if k.startswith(_ann_prefix):
-					del annotations[k]
-
-	def get_metadata(self, context):
-		result = {}
-		annotations = an_interfaces.IAnnotations(context)
-		for k, v in annotations.items():
-			if k.startswith(_ann_prefix):
-				k = k[len(_ann_prefix):]
-				result[k] = v
-		return result
+		md = IObjectClassifierMetaData(context)
+		md.is_spam = False
+		md.classified_at = time.time()
 
 PersistentBayes = PersistentClassifier
-
-# -----------------------------------
 
 class SQL3Classifier(Classifier, ObjectDataManager):
 	
@@ -174,8 +136,6 @@ class SQL3Classifier(Classifier, ObjectDataManager):
 			
 	def newTransaction(self, t): 
 		t.join(self)
-	
-	# ---------- 
 	
 	def _post_training(self):
 		self._save_state()
