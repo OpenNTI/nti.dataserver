@@ -1,6 +1,9 @@
 # -*- mode: html -*-
-name: defn bogus importantdef important concept warning game sidebar defns chapterquote chapterauthor exer exerhard xtra
+name: defn bogus importantdef important concept warning game sidebar defns chapterquote chapterauthor exer exerhard 
 <div tal:condition="self" tal:attributes="class python: type(self).__name__; id self/id" tal:content='self' />
+
+name: xtra
+<div tal:condition="not:self" tal:attributes="class python: type(self).__name__; id self/id" tal:content='self' />
 
 name: picdefns
 <div class="picdefns" tal:attributes="id self/id">
