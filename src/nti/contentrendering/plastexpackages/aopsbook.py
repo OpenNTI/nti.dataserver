@@ -8,7 +8,7 @@ from zope import interface
 from nti.contentrendering import plastexids
 from nti.contentrendering.resources import interfaces as res_interfaces
 
-from plasTeX import Base
+from plasTeX import Base, Command
 from plasTeX.Base.LaTeX import Index
 from plasTeX.Packages import graphicx
 from plasTeX.Base import Crossref
@@ -80,18 +80,6 @@ class Cube(_OneText):
 
 class BlackCube(Cube):
 	pass
-
-class picskip(Base.Command):
-	args = ' {text:int} '
-
-	def invoke( self, tex ):
-		# There's a {0} or so with this that we need to discard too
-		# TODO: This may not be the best way
-		tex.readGrouping( '{}' )
-		return []
-
-	def digest( self, tokens ):
-		return super(picskip,self).digest( tokens )
 
 # Parses the \multicols environment and produces no output.  The childred of
 # this environment print as if they were not inside the multicols environment.
@@ -340,6 +328,9 @@ class part(plastexids.StableIDMixin,Base.List.item):
 		self.counter = 'partnum'
 		self.position = self.ownerDocument.context.counters[self.counter].value + 1
 		self.alpha = _number_to_lower_alpha_list( self.position )
+		self.attributes['probnum'] = \
+		    str(self.ownerDocument.context.counters['chapter'].value) + '.'+ \
+		    str(self.ownerDocument.context.counters['probnum'].value) + ".(" + self.alpha +")"
 		#ignore the list implementation
 		return Base.Command.invoke(self,tex)
 
@@ -479,8 +470,8 @@ class pageref(Crossref.pageref):
 
 		return None
 
-class probref(Crossref.ref):
-	pass
+class probref(Command):
+	args = 'label:idref'
 
 class _BasePicProblem(Base.Environment):
 	args = 'pic'
