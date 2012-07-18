@@ -5,7 +5,7 @@ import sqlite3 as sql
 
 from zope import component
 from zope import interface
-from zope.annotation import factory
+from zope.annotation import factory as an_factory
 
 from persistent import Persistent
 from BTrees.OOBTree import OOBTree
@@ -26,12 +26,13 @@ from nti.contentsearch.spambayes import default_minimum_prob_strength
 @interface.implementer(IObjectClassifierMetaData)
 @component.adapter(nti_interfaces.IModeledContent)
 class _ObjectClassifierMetaData(Persistent):
-	is_spam = False
-	def __init__(self, *args, **kwargs):
+	def __init__(self):
+		self.is_spam = False
 		self.classified_at = time.time()
 		
-component.provideAdapter(factory(_ObjectClassifierMetaData))
-	
+def _ObjectClassifierMetaDataFactory(container):
+	return an_factory(_ObjectClassifierMetaData)(container)
+
 class PersistentWordInfo(Persistent, _BaseWordInfo):
 	def __init__(self):
 		self.spamcount = self.hamcount = 0
@@ -51,14 +52,12 @@ class PersistentClassifier(Persistent, Classifier):
 							max_discriminators, use_bigrams, mapfactory)
 		
 	def mark_spam(self, context):
-		md = IObjectClassifierMetaData(context)
+		md = IObjectClassifierMetaData(context, None)
 		md.is_spam = True
-		md.classified_at = time.time()
-		
+
 	def remove_spam(self, context):
-		md = IObjectClassifierMetaData(context)
+		md = IObjectClassifierMetaData(context, None)
 		md.is_spam = False
-		md.classified_at = time.time()
 
 PersistentBayes = PersistentClassifier
 

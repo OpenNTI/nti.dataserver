@@ -4,8 +4,9 @@
 	xmlns:ext="http://nextthought.com/ntp/ext"
 	i18n_domain="zope">
 	<include package="zope.component" />
-	<include package="zope.annotation" />
 
-	<adapter factory=".storage._ObjectClassifierMetaData" />
+	<adapter factory=".storage._ObjectClassifierMetaDataFactory"
+			 for="nti.dataserver.interfaces.IModeledContent"
+			 provides=".interfaces.IObjectClassifierMetaData" />
 
 </configure>
