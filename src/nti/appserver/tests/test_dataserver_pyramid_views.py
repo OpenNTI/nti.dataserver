@@ -394,4 +394,4 @@ class TestNTIIDsContainer(ConfiguringTestBase):
 		cont = _NTIIDsContainerResource( None, None )
 		cont.request = get_current_request()
 
-		assert_that( cont[child_ntiid], is_( NID ) )
+		assert_that( cont.traverse(child_ntiid, ()), is_( NID ) )

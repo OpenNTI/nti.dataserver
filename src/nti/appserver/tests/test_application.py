@@ -561,20 +561,21 @@ class TestApplication(ApplicationTestBase):
 
 		# This works for both the OID and direct username paths
 		for path in ('/dataserver2/Objects/%s' % datastructures.to_external_ntiid_oid( user ), '/dataserver2/users/' + user.username):
+			# Both the classic (direct) and the namespace approach
+			for field_segment in (field,'++fields++' + field ):
+				field_path = path + '/' + field_segment # The name of the external field
 
-			field_path = path + '/' + field # The name of the external field
+				res = testapp.put( urllib.quote( field_path ),
+								   data,
+								   extra_environ=self._make_extra_environ(),
+								   headers={"Content-Type": "application/json" } )
+				assert_that( res.status_int, is_( 200 ) )
 
-			res = testapp.put( urllib.quote( field_path ),
-							   data,
-							   extra_environ=self._make_extra_environ(),
-							   headers={"Content-Type": "application/json" } )
-			assert_that( res.status_int, is_( 200 ) )
-
-			with mock_dataserver.mock_db_trans( self.ds ):
-				# For the case where we change the password, we have to
-				# recreate the user for the next loop iteration to work
-				user.password = 'temp001'
-
+				with mock_dataserver.mock_db_trans( self.ds ):
+					# For the case where we change the password, we have to
+					# recreate the user for the next loop iteration to work
+					user.password = 'temp001'
+		return res
 
 
 	def test_edit_user_password_only(self):
