@@ -57,6 +57,15 @@ def test_multipleTrailingComma():
     #Check if we don't have a trailing comma at the end.
     assert_that( dom.textContent, is_(" Arbitrary content goes here.  "))
     
-
+def test_oneHint():
+    example = br"""
+    \challhard
+    Arbitrary content goes here. \hints~\hint{cCount:3circles.1}
+    """
+    dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
+    assert_that( dom.getElementsByTagName('hint'), has_length( 1 ) )
+    
+    #Check if we don't have a trailing comma at the end.
+    assert_that( dom.textContent, is_(" Arbitrary content goes here.  "))
 
 

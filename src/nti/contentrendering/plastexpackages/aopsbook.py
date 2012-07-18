@@ -699,10 +699,11 @@ class _ChallProb(Base.subsection):
 		hintName = 'hint'
 		for node in self.childNodes:
 			for child in node.childNodes:
-				if child.nodeName == hintName and child.nextSibling == ', ' and child.nextSibling.nextSibling.nodeName == hintName:
-					node.removeChild(child.nextSibling)
-				elif child.nodeName == hintName and child.nextSibling == ',' and child.nextSibling.nextSibling.source == '~ ' and child.nextSibling.nextSibling.nextSibling.nodeName == hintName:
-					node.removeChild(child.nextSibling)
+				if child.nextSibling != None and child.nextSibling.nextSibling != None:	
+					if child.nodeName == hintName and child.nextSibling == ', ' and child.nextSibling.nextSibling.nodeName == hintName:
+						node.removeChild(child.nextSibling)
+					elif child.nodeName == hintName and child.nextSibling == ',' and child.nextSibling.nextSibling.source == '~ ' and child.nextSibling.nextSibling.nextSibling != None and child.nextSibling.nextSibling.nextSibling.nodeName == hintName:
+						node.removeChild(child.nextSibling)
 
 class chall(_ChallProb):
 	args = ''
