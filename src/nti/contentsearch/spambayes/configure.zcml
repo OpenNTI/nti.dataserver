@@ -1,0 +1,11 @@
+<!-- -*- mode: nxml -*- -->
+<configure
+	xmlns="http://namespaces.zope.org/zope"
+	xmlns:ext="http://nextthought.com/ntp/ext"
+	i18n_domain="zope">
+	<include package="zope.component" />
+	<include package="zope.annotation" />
+
+	<adapter factory=".storage._ObjectClassifierMetaData" />
+
+</configure>
