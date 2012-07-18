@@ -109,7 +109,7 @@ setup(
 		 # Depends on the system graphviz installation; an alternative is repoze.profile which has
 		 # fewer dependencies, but less helpful output and doesn't work with multiple workers (?)
 		'linesman >= 0.2.2',
-		'logilab-common >= 0.57.1',
+		'logilab-common >= 0.58.1',
 		'nltk >= 2.0.2',
 		# numpy is req'd by nltk, but not depended on. sigh.
 		# This turns out to be because it CANNOT be installed in a setup.py:
@@ -227,7 +227,8 @@ setup(
 			'ipython[notebook] >= 0.13', # notebook is web based, pulls in tornado
 			'readline',
 			'httpie >= 0.2.5',
-			'pylint >= 0.25.1',
+			'logilab_astng >= 0.24.0',
+			'pylint >= 0.25.2',
 			'zodbupdate >= 0.5',
 			'zodbbrowser >= 0.10.0',
 			'sphinx >= 1.1.3',
