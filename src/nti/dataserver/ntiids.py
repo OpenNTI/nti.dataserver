@@ -184,6 +184,13 @@ class _UGDResolver(_AbstractUserBasedResolver):
 	def _resolve( self, key, user ):
 		# Try looking up the ntiid by name in each container
 		# TODO: This is terribly expensive
+		if not nti_interfaces.IUser.providedBy( user ):
+			# NOTE: We are abusing this interface. We actually look
+			# at a property not defined by this interface, user.containers.
+			# We really want nti_interfaces.IContainerIterable, but cannot use it.
+			# This is because of the inconsistency in the way it is defined and implemented.
+			return None
+
 		result = None
 		for container_name in user.containers.containers:
 			container = user.containers.containers[container_name]
