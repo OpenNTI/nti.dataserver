@@ -3,21 +3,37 @@ from __future__ import print_function, unicode_literals
 import time
 import sqlite3 as sql
 
+from zope import component
+from zope import interface
+from zope.annotation import factory
 from zope.annotation import interfaces as an_interfaces
 
 from persistent import Persistent
 from BTrees.OOBTree import OOBTree
 
+from nti.dataserver import interfaces as nti_interfaces
 from nti.utils.transactions import ObjectDataManager
 
 from nti.contentsearch.spambayes.classifier import Classifier
 from nti.contentsearch.spambayes.classifier import _BaseWordInfo
+from nti.contentsearch.spambayes.interfaces import IObjectClassifierMetaData
 
 from nti.contentsearch.spambayes import default_use_bigrams
 from nti.contentsearch.spambayes import default_unknown_word_prob
 from nti.contentsearch.spambayes import default_max_discriminators
 from nti.contentsearch.spambayes import default_unknown_word_strength
 from nti.contentsearch.spambayes import default_minimum_prob_strength
+
+# -----------------------------------
+
+class _ObjectClassifierMetaData(Persistent):
+	interface.implements(IObjectClassifierMetaData)
+	component.adapts(nti_interfaces.IModeledContent)
+	def __init__(self):
+		self.is_spam = False
+		self.classified_at = time.time()
+		
+component.provideAdapter(factory(_ObjectClassifierMetaData))
 
 # -----------------------------------
 
