@@ -233,7 +233,8 @@ class IContainerIterable(interface.Interface):
 	Something that can enumerate the containers (collections)
 	it contains.
 	"""
-
+	# FIXME: This is ill-defined. One would expect it to be all containers,
+	# but the only implementation (users.User) actually limits it to named containers
 	def itercontainers():
 		"""
 		:return: An iteration across the containers held in this object.
@@ -284,7 +285,7 @@ IGroupAwarePrincipal.__bases__ = tuple( itertools.chain( IGroupAwarePrincipal.__
 class IEntity(IZContained):
 	username = schema.TextLine( title=u'The username' )
 
-class IUser(IEntity):
+class IUser(IEntity,IContainerIterable):
 	"""
 	A user of the system. Notice this is not an IPrincipal.
 	This interface needs finished and fleshed out.

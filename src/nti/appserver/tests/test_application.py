@@ -119,6 +119,7 @@ class TestApplication(ApplicationTestBase):
 	def test_pages_with_only_shared_not_404(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			contained = PersistentContainedExternal()
+			contained.lastModified = 0
 			user = self._create_user()
 			contained.containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
 			user.addContainedObject( contained )
@@ -133,6 +134,10 @@ class TestApplication(ApplicationTestBase):
 		res = testapp.get( path, extra_environ=self._make_extra_environ(user='foo@bar'))
 
 		assert_that( res.body, contains_string( str(contained) ) )
+
+		# It should also show up in the RecursiveStream
+		path = '/dataserver2/users/foo@bar/Pages(' + ntiids.ROOT + ')/RecursiveStream'
+		testapp.get( path, extra_environ=self._make_extra_environ(user='foo@bar'))
 
 
 	def test_deprecated_path_with_slash(self):

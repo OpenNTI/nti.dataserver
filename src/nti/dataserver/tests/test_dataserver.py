@@ -231,3 +231,18 @@ class TestDataserver( mock_dataserver.ConfiguringTestBase ):
 		assert_that( ntiids.get_provider( oid ), is_( 'someoneelse@nextthought.com' ) )
 
 		assert_that( mock_dataserver.current_mock_ds.get_by_oid( oid ), is_( none() ) )
+
+	@mock_dataserver.WithMockDSTrans
+	def test_get_ntiid_community_none(self):
+		"""
+		Attempting to access something through a user that is not a user fails gracefully
+		"""
+		obj = contenttypes.Note()
+		obj.creator = 'sjohnson@nextthought.com'
+		mock_dataserver.current_transaction.add( obj )
+
+		oid = to_external_ntiid_oid( obj )
+		oid = ntiids.make_ntiid( provider='Everyone', nttype='Quiz', base=oid )
+		assert_that( ntiids.get_provider( oid ), is_( 'Everyone' ) )
+
+		assert_that( ntiids.find_object_with_ntiid( oid ), is_( none() ) )
