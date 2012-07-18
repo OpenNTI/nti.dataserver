@@ -1,6 +1,5 @@
 file:../lib/pywikipedia/#egg=pywikipedia
 -e hg+https://bitbucket.org/denis/gevent#egg=gevent
--e git+https://github.com/muricoca/crab#egg=crab
 ## Sadly, issue 328 prevents us from using local paths for these things,
 ## if we include the egg name. If we're otherwise very careful, 
 ## local paths can be made to work
