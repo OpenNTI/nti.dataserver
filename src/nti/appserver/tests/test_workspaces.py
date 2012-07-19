@@ -105,6 +105,8 @@ class TestContainerEnumerationWorkspace(tests.ConfiguringTestBase):
 
 class MockRoot(object):
 	interface.implements(loc_interfaces.IRoot)
+	__parent__ = None
+	__name__ = None
 
 class TestUserEnumerationWorkspace(tests.ConfiguringTestBase):
 
