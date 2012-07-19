@@ -98,7 +98,8 @@ def get_queryobject(request, is_content=False, is_unified=False):
 				indexname = get_collection(ntiid, default=None, registry=request.registry)
 				if indexname is None:
 					logger.debug("Could not find collection for ntiid '%s'" % ntiid)
-				args['indexname'] = indexname
+				else:
+					args['indexname'] = indexname
 			else:
 				args['ntiid'] = ntiid
 
