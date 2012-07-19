@@ -733,11 +733,14 @@ def createApplication( http_port,
 							 renderer='rest',context='nti.dataserver.interfaces.ISimpleEnclosureContainer',
 							 permission=nauth.ACT_READ, request_method='GET' )
 
-	# ClassInfo conflicts with enclosures for PUT somehow
+	# ClassInfo conflicts with enclosures for PUT/POST somehow
 	# TODO: This will all go away when we get to ++enclosures
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._UGDPutView',
 							 renderer='rest', context='nti.dataserver.interfaces.IClassInfo',
 							 permission=nauth.ACT_UPDATE, request_method='PUT' )
+	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._EnclosurePostView',
+							 renderer='rest', context='nti.dataserver.interfaces.IClassInfo',
+							 permission=nauth.ACT_CREATE, request_method='POST' )
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
 							 renderer='rest',context='nti.dataserver.interfaces.IClassInfo',
 							 permission=nauth.ACT_READ, request_method='GET' )

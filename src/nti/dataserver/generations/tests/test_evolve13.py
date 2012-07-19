@@ -49,7 +49,7 @@ class TestEvolve13(nti.tests.ConfiguringTestBase):
 
 		# And the enclosure name is fixed
 		assert_that( context.connection.root()['nti.dataserver']['providers']['OU'].getContainedObject( 'Classes', 'CS5201' ),
-					 has_property( '_enclosures', has_property( '__name__', '' ) ) )
+					 has_property( '_enclosures', has_property( '__name__', '++adapter++enclosures' ) ) )
 
 
 

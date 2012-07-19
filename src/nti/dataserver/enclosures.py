@@ -14,6 +14,7 @@ from zope.container.btree import BTreeContainer
 
 from nti.dataserver import interfaces
 from nti.dataserver import datastructures
+from nti.dataserver import containers
 
 
 class SimplePersistentEnclosure(datastructures.CreatedModDateTrackingObject, persistent.Persistent):
@@ -87,16 +88,11 @@ class SimpleEnclosureMixin(object):
 	# on demand
 
 	def _new_enclosure_container(self):
-		return BTreeContainer()
+		return containers.CaseInsensitiveLastModifiedBTreeContainer()
 
 	def iterenclosures( self ):
 		enc = self._enclosures or {} # In case of None
 		return iter( enc.values() )
-
-	def __setstate__(self,state):
-		super(SimpleEnclosureMixin,self).__setstate__(state)
-		if self._enclosures is not None and self._enclosures.__parent__ is None:
-			self._enclosures.__parent__ = self
 
 	def add_enclosure( self, content ):
 		"""
@@ -119,11 +115,7 @@ class SimpleEnclosureMixin(object):
 
 		if self._enclosures is None:
 			self._enclosures = self._new_enclosure_container()
-			locate( self._enclosures, self, '' )
-			# Notice that the __name__ is left empty...
-			# We're not requiring any particular namespace inside the parent object,
-			# we claim to be direct descendents.
-			# FIXME: This is wrong
+			locate( self._enclosures, self, '++adapter++enclosures' )
 
 		enclosures = self._enclosures
 		name_chooser = INameChooser(enclosures, None)

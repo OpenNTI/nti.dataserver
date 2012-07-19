@@ -413,3 +413,65 @@ class _PagesResource(_AbstractUserPseudoContainerResource):
 
 		resource = _PageContainerResource( self, cont, key, self.user )
 		return resource
+
+## Attachments/Enclosures
+from zope.traversing.namespace import adapter
+
+class adapter_request(adapter):
+	"""
+	Implementation of the adapter namespace that attempts to pass the request along when getting an adapter.
+	"""
+
+	def __init__( self, context, request=None ):
+		adapter.__init__( self, context, request )
+		self.request = request
+
+	def traverse( self, name, ignored ):
+		result = None
+		if self.request is not None:
+			result = component.queryMultiAdapter( (self.context, self.request),
+												  trv_interfaces.IPathAdapter,
+												  name )
+
+		if result is None:
+			# Look for the single-adapter. Or raise location error
+			result = adapter.traverse( self, name, ignored )
+
+		if nti_interfaces.IZContained.providedBy( result ) and result.__parent__ is None:
+			result.__parent__ = self.context
+			result.__name__ = name
+
+		return result
+
+class _resource_adapter_request(adapter_request):
+	"""
+	Unwraps some of the things done in dataserver_pyramid_views
+	when we need to work directly with the model objects.
+	"""
+
+	def __init__( self, context, request=None ):
+		adapter_request.__init__( self, context.resource, request=request )
+
+
+@interface.implementer(trv_interfaces.IPathAdapter,trv_interfaces.ITraversable,nti_interfaces.IZContained)
+@component.adapter(nti_interfaces.ISimpleEnclosureContainer)
+class EnclosureTraversable(object):
+	"""
+	Intended to be registered as an object in the adapter namespace to
+	provide access to attachments. (We implement :class:`zope.traversing.interfaces.IPathAdapter`
+	to work with the default ``++adapter`` handler, :class:`zope.traversing.namespaces.adapter`,
+	and then we further implement :class:`zope.traversing.interfaces.ITraversable` so we
+	can find further resources.)
+	"""
+	__parent__ = None
+	__name__ = None
+
+	def __init__( self, context, request=None ):
+		self.context = context
+		self.request = request
+
+	def traverse( self, name, further_path ):
+		try:
+			return self.context.get_enclosure( name )
+		except KeyError:
+			raise loc_interfaces.LocationError( self.context, name )
