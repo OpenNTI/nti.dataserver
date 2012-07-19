@@ -1086,7 +1086,8 @@ class _UGDPutView(_UGDModifyViewBase):
 
 	def __call__(self):
 		context = self.request.context
-		theObject = self._get_object_to_update()
+		object_to_update = self._get_object_to_update()
+		theObject = object_to_update
 		self._check_object_exists( theObject )
 
 		# Then ensure the users match
@@ -1109,9 +1110,9 @@ class _UGDPutView(_UGDModifyViewBase):
 			# FIXME: This is terrible. We are dispatching again if we cannot resolve the object.
 			# We would have arrived here through the 'Objects' path and found
 			# (the child of) an 'enclosure' object, not an object actually contained by the user
-			if theObject is None and traversal.find_interface( self.request.context.resource, IEnclosedContent ):
+			if theObject is None and traversal.find_interface( object_to_update, IEnclosedContent ):
 				# should be self.request.context.resource.__parent__
-				self.request.context = traversal.find_interface( self.request.context.resource, IEnclosedContent )
+				self.request.context = traversal.find_interface( object_to_update, IEnclosedContent )
 				return _EnclosurePutView( self.request )()
 
 			self._check_object_exists( theObject, creator, containerId, objId )
@@ -1253,7 +1254,8 @@ class _EnclosurePostView(_UGDModifyViewBase):
 																					   enclosure.name ) )
 		# TODO: We need to return some representation of this object
 		# just created. We need an 'Entry' wrapper.
-		return ACLLocationProxy( enclosure, context, enclosure.name, nacl.ACL( enclosure, context.__acl__ ) )
+		#return ACLLocationProxy( enclosure, context, enclosure.name, nacl.ACL( enclosure, context.__acl__ ) )
+		return enclosure
 
 class _EnclosurePutView(_UGDModifyViewBase):
 	"""
