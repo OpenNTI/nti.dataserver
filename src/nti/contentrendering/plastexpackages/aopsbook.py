@@ -321,10 +321,16 @@ def _number_to_lower_alpha_list(index):
 
 
 class part(plastexids.StableIDMixin,Base.List.item):
+	args = ' [noshow] '
 	#Ordinary list items can accept a value, this may or may not be used in AoPS code
 	#args = ''
 
 	def invoke( self, tex ):
+		self.parse(tex)
+		# Prevet the rendering of instances of \part[]
+		if ( self.attributes['noshow'] is not None ):
+			return []
+
 		self.counter = 'partnum'
 		self.position = self.ownerDocument.context.counters[self.counter].value + 1
 		self.alpha = _number_to_lower_alpha_list( self.position )
@@ -334,9 +340,6 @@ class part(plastexids.StableIDMixin,Base.List.item):
 		#ignore the list implementation
 		return Base.Command.invoke(self,tex)
 
-
-	def digest( self, tex ):
-		super( part, self ).digest( tex )
 
 class parthard(part):
 	pass
