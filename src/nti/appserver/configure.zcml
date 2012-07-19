@@ -49,6 +49,8 @@
 				/>
 
 	<adapter factory=".workspaces._NTIIDEntryExternalizer" />
+	<subscriber factory=".workspaces.ContentUnitInfoHrefDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"/>
 	<subscriber factory=".contentlibrary_views._ContentUnitAssessmentItemDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"/>
 	<adapter factory=".contentlibrary_views._ContainerContentUnitPreferencesFactory"
