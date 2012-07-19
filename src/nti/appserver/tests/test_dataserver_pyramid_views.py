@@ -1,8 +1,13 @@
 #!/usr/bin/env python2.7
 
 
-from hamcrest import (assert_that, is_, none,
-					  has_entry, has_length, has_key, is_not)
+from hamcrest import assert_that
+from hamcrest import is_
+from hamcrest import none
+from hamcrest import has_entry
+from hamcrest import has_length
+from hamcrest import has_key
+#from hamcrest import is_not
 from hamcrest import has_property
 from hamcrest import greater_than
 
@@ -10,19 +15,18 @@ from nti.appserver.dataserver_pyramid_views import (class_name_from_content_type
 													_UGDView, _RecursiveUGDView, _UGDPutView,
 													_UGDPostView,
 													_UGDStreamView, _RecursiveUGDStreamView,
-													_UGDAndRecursiveStreamView, _UserResource,
-													_NTIIDsContainerResource,
+													_UGDAndRecursiveStreamView,
+
 													lists_and_dicts_to_ext_collection)
 from nti.appserver.tests import ConfiguringTestBase
 from pyramid.threadlocal import get_current_request
-import pyramid.testing
 import pyramid.httpexceptions as hexc
 import persistent
 import UserList
 
-from nti.dataserver import users, datastructures
+from nti.dataserver import users
 from nti.ntiids import ntiids
-from nti.dataserver.datastructures import ContainedMixin, ZContainedMixin
+from nti.dataserver.datastructures import ZContainedMixin
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.externalization.externalization import to_external_representation
 
@@ -46,21 +50,21 @@ def test_content_type():
 	assert_that( class_name_from_content_type( 'application/vnd.nextthought.version.flag.class' ),
 				 is_( 'class' ) )
 
-def test_user_pseudo_resources_exist():
-	user = users.User( 'jason.madden@nextthought.com' )
-	# Fake out an ACL for this user since those are required now
-	user.__acl__ = (1,)
-	class Parent(object):
-		request = None
+# def test_user_pseudo_resources_exist():
+# 	user = users.User( 'jason.madden@nextthought.com' )
+# 	# Fake out an ACL for this user since those are required now
+# 	user.__acl__ = (1,)
+# 	class Parent(object):
+# 		request = None
 
 
-	def _test( name ):
-		p = Parent()
-		p.request = pyramid.testing.DummyRequest()
-		assert_that( _UserResource( p, user )[name], is_not( none() ) )
+# 	def _test( name ):
+# 		p = Parent()
+# 		p.request = pyramid.testing.DummyRequest()
+# 		assert_that( _UserResource( p, user )[name], is_not( none() ) )
 
-	for k in ('Objects', 'NTIIDs', 'Library', 'Pages', 'Classes'):
-		yield _test, k
+# 	for k in ('Objects', 'NTIIDs', 'Library', 'Pages', 'Classes'):
+# 		yield _test, k
 
 from zope.component import eventtesting
 from zope import component
@@ -374,6 +378,7 @@ def test_lists_and_dicts_to_collection():
 	col1.append( o )
 	yield _check_items, (col1,col2), [o], 42
 
+from nti.appserver._dataserver_pyramid_traversal import _NTIIDsContainerResource
 
 class TestNTIIDsContainer(ConfiguringTestBase):
 

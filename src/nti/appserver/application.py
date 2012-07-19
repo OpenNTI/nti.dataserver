@@ -555,7 +555,7 @@ def createApplication( http_port,
 
 	# User-generated data
 	pyramid_config.add_route( name='user.pages.traversal', pattern='/dataserver2/users/{user}/Pages/{group}/UserGeneratedData{_:/?}',
-							  factory='nti.appserver.dataserver_pyramid_views._UsersRootResource',
+							  factory='nti.appserver._dataserver_pyramid_traversal.users_root_resource_factory',
 							  traverse='/{user}/{group}'
 							  )
 	pyramid_config.add_view( route_name='user.pages.traversal', view='nti.appserver.dataserver_pyramid_views._UGDView',
@@ -564,7 +564,7 @@ def createApplication( http_port,
 
 	# Recursive UGD
 	pyramid_config.add_route( name='user.pages.recursivetraversal', pattern='/dataserver2/users/{user}/Pages/{group}/RecursiveUserGeneratedData{_:/?}',
-							  factory='nti.appserver.dataserver_pyramid_views._UsersRootResource',
+							  factory='nti.appserver._dataserver_pyramid_traversal.users_root_resource_factory',
 							  traverse='/{user}/{group}'
 							  )
 	pyramid_config.add_view( route_name='user.pages.recursivetraversal', view='nti.appserver.dataserver_pyramid_views._RecursiveUGDView',
@@ -573,7 +573,7 @@ def createApplication( http_port,
 
 	# Stream
 	pyramid_config.add_route( name='user.pages.stream', pattern='/dataserver2/users/{user}/Pages/{group}/Stream{_:/?}',
-							  factory='nti.appserver.dataserver_pyramid_views._UsersRootResource',
+							  factory='nti.appserver._dataserver_pyramid_traversal.users_root_resource_factory',
 							  traverse='/{user}/{group}'
 							  )
 	pyramid_config.add_view( route_name='user.pages.stream', view='nti.appserver.dataserver_pyramid_views._UGDStreamView',
@@ -582,7 +582,7 @@ def createApplication( http_port,
 
 	# Recursive Stream
 	pyramid_config.add_route( name='user.pages.recursivestream', pattern='/dataserver2/users/{user}/Pages/{group}/RecursiveStream{_:/?}',
-							  factory='nti.appserver.dataserver_pyramid_views._UsersRootResource',
+							  factory='nti.appserver._dataserver_pyramid_traversal.users_root_resource_factory',
 							  traverse='/{user}/{group}'
 							  )
 	pyramid_config.add_view( route_name='user.pages.recursivestream', view='nti.appserver.dataserver_pyramid_views._RecursiveUGDStreamView',
@@ -591,7 +591,7 @@ def createApplication( http_port,
 
 	# UGD and recursive stream
 	pyramid_config.add_route( name='user.pages.ugdandrecursivestream', pattern='/dataserver2/users/{user}/Pages/{group}/UserGeneratedDataAndRecursiveStream{_:/?}',
-							  factory='nti.appserver.dataserver_pyramid_views._UsersRootResource',
+							  factory='nti.appserver._dataserver_pyramid_traversal.users_root_resource_factory',
 							  traverse='/{user}/{group}'
 							  )
 	pyramid_config.add_view( route_name='user.pages.ugdandrecursivestream', view='nti.appserver.dataserver_pyramid_views._RecursiveUGDStreamView',
@@ -602,8 +602,8 @@ def createApplication( http_port,
 
 	# Service
 	pyramid_config.add_route( name='user.root.service', pattern='/dataserver2{_:/?}',
-							  factory='nti.appserver.dataserver_pyramid_views._DSResource' )
-							  #factory='nti.appserver._dataserver_pyramid_traversal.dataserver2_root_resource_factory' )
+							  #factory='nti.appserver.dataserver_pyramid_views._DSResource' )
+							  factory='nti.appserver._dataserver_pyramid_traversal.dataserver2_root_resource_factory' )
 	pyramid_config.add_view( route_name='user.root.service', view='nti.appserver.dataserver_pyramid_views._ServiceGetView',
 							 name='', renderer='rest',
 							 permission=nauth.ACT_READ, request_method='GET'  )
@@ -611,7 +611,7 @@ def createApplication( http_port,
 	# UGD in OData style
 	# Note: Objects should be parenthesized like this too.
 	pyramid_config.add_route( name='user.pages.odata.traversal', pattern='/dataserver2/users/{user}/Pages({group:[^)/].*})/{type}{_:/?}',
-							  factory='nti.appserver.dataserver_pyramid_views._UsersRootResource',
+							  factory='nti.appserver._dataserver_pyramid_traversal.users_root_resource_factory',
 							  traverse='/{user}/Pages/{group}/{type}'
 							  )
 	pyramid_config.add_view( route_name='user.pages.odata.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
@@ -624,8 +624,8 @@ def createApplication( http_port,
 	# user.generic.traversal route, yes? And simply rely
 	# on the context discriminators?
 	pyramid_config.add_route( name='objects.generic.traversal', pattern='/dataserver2/*traverse',
-							  factory='nti.appserver.dataserver_pyramid_views._DSResource' )
-							  #factory='nti.appserver._dataserver_pyramid_traversal.dataserver2_root_resource_factory' )
+							  #factory='nti.appserver.dataserver_pyramid_views._DSResource' )
+							  factory='nti.appserver._dataserver_pyramid_traversal.dataserver2_root_resource_factory' )
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
 							 renderer='rest',
 							 permission=nauth.ACT_READ, request_method='GET' )
@@ -637,7 +637,7 @@ def createApplication( http_port,
 	# For the Library/Main URL.
 	# Gee it sure would be nice if the default (no-name) view would get used.
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
-							 renderer='rest', name='Main', context='nti.appserver.dataserver_pyramid_views._LibraryResource',
+							 renderer='rest', name='Main', context='nti.contentlibrary.interfaces.IContentPackageLibrary',
 							 permission=nauth.ACT_READ, request_method='GET' )
 
 	for name, view in { 'UserGeneratedData': '_UGDView',
@@ -670,10 +670,10 @@ def createApplication( http_port,
 							 renderer='rest', context='nti.appserver.interfaces.IUserResource',
 							 permission=nauth.ACT_READ, request_method='GET' )
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._UGDPostView',
-							 renderer='rest', context='nti.appserver.dataserver_pyramid_views._ProviderResource',
+							 renderer='rest', context='nti.dataserver.interfaces.IProviderOrganization',
 							 permission=nauth.ACT_CREATE, request_method='POST' )
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._provider_redirect_classes',
-							 renderer='rest', context='nti.appserver.dataserver_pyramid_views._ProviderResource',
+							 renderer='rest', context='nti.dataserver.interfaces.IProviderOrganization',
 							 permission=nauth.ACT_READ, request_method='GET' )
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._UGDPostView',
 							 renderer='rest', context='nti.appserver.interfaces.IContainerResource',
@@ -744,6 +744,23 @@ def createApplication( http_port,
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
 							 renderer='rest',context='nti.dataserver.interfaces.IClassInfo',
 							 permission=nauth.ACT_READ, request_method='GET' )
+	# TODO: Delete might be broken here as well
+
+	# Restore DELETE for IFriendsList.
+	# It is-a ISimpleEnclosureContainer, and that trumps before the request_method, sadly
+	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._UGDDeleteView',
+							 renderer='rest', context='nti.dataserver.interfaces.IFriendsList',
+							 permission=nauth.ACT_DELETE, request_method='DELETE' )
+	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._UGDPutView',
+							 renderer='rest', context='nti.dataserver.interfaces.IFriendsList',
+							 permission=nauth.ACT_UPDATE, request_method='PUT' )
+	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._EnclosurePostView',
+							 renderer='rest', context='nti.dataserver.interfaces.IFriendsList',
+							 permission=nauth.ACT_CREATE, request_method='POST' )
+	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
+							 renderer='rest',context='nti.dataserver.interfaces.IFriendsList',
+							 permission=nauth.ACT_READ, request_method='GET' )
+
 
 
 	# Make 401 come back as appropriate. Otherwise we get 403

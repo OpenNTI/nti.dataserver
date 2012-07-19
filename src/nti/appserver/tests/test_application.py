@@ -101,6 +101,12 @@ class TestApplication(ApplicationTestBase):
 		testapp = TestApp( self.app )
 		testapp.get( '/dataserver2/logon.ping' )
 
+	def test_library_main(self):
+		with mock_dataserver.mock_db_trans( self.ds ):
+			self._create_user()
+		testapp = TestApp( self.app )
+		testapp.get( '/dataserver2/users/sjohnson@nextthought.com/Library/Main', extra_environ=self._make_extra_environ() )
+
 	def test_path_with_parens(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			contained = ContainedExternal()
@@ -170,6 +176,7 @@ class TestApplication(ApplicationTestBase):
 		res = testapp.post( path, data, extra_environ=self._make_extra_environ() )
 		assert_that( res.status_int, is_( 201 ) )
 		assert_that( res.body, contains_string( '"Class": "ContentRangeDescription"' ) )
+		href = res.json_body['href']
 		assert_that( res.headers, has_entry( 'Location', contains_string( 'http://localhost/dataserver2/users/sjohnson%40nextthought.com/Objects/tag:nextthought.com,2011-10:sjohnson@nextthought.com-OID' ) ) )
 		assert_that( res.headers, has_entry( 'Content-Type', contains_string( 'application/vnd.nextthought.highlight+json' ) ) )
 
@@ -190,6 +197,9 @@ class TestApplication(ApplicationTestBase):
 			links = item['Links']
 			assert_that( links, has_item( has_entry( 'href',
 														 urllib.quote( '/dataserver2/users/sjohnson@nextthought.com/Pages(%s)/RecursiveStream' % item_id ) ) ) )
+
+		# I can now delete that item
+		testapp.delete( str(href), extra_environ=self._make_extra_environ())
 
 	def test_get_highlight_by_oid_has_links(self):
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -399,6 +409,7 @@ class TestApplication(ApplicationTestBase):
 
 		assert_that( res.json_body, has_entry( 'href', starts_with('/dataserver2/users/sjohnson%40nextthought.com/Objects' ) ))
 
+		testapp.delete( str(res.json_body['href']), extra_environ=self._make_extra_environ() )
 
 	def test_post_friendslist_friends_field(self):
 		"We can put to ++fields++friends"

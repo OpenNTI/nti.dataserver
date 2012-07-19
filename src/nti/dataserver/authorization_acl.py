@@ -530,3 +530,11 @@ class _DataserverFolderACLProvider(object):
 	def __init__( self, context ):
 		# Got to be here after the components are registered
 		self.__acl__ = _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, auth.ACT_READ, _DataserverFolderACLProvider ), ) )
+
+@interface.implementer( nti_interfaces.IACLProvider )
+@component.adapter(content_interfaces.IContentPackageLibrary)
+class _ContentPackageLibraryACLProvider(object):
+
+	def __init__( self, context ):
+		# Got to be here after the components are registered
+		self.__acl__ = _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, auth.ACT_READ, _ContentPackageLibraryACLProvider ), ) )
