@@ -162,11 +162,11 @@
 		for="* pyramid.interfaces.IRequest"
 		factory="._dataserver_pyramid_traversal.adapter_request"
 		provides="zope.traversing.interfaces.ITraversable" />
-	<adapter
-		name="adapter"
-		for=".dataserver_pyramid_views._AbstractObjectResource pyramid.interfaces.IRequest"
-		factory="._dataserver_pyramid_traversal._resource_adapter_request"
-		provides="zope.traversing.interfaces.ITraversable" />
+	<!-- <adapter -->
+	<!-- 	name="adapter" -->
+	<!-- 	for=".dataserver_pyramid_views._AbstractObjectResource pyramid.interfaces.IRequest" -->
+	<!-- 	factory="._dataserver_pyramid_traversal._resource_adapter_request" -->
+	<!-- 	provides="zope.traversing.interfaces.ITraversable" /> -->
 <!--
 	Note that this object /implements/ ITraversable, but is not
 	registered. Because it's more specific than *, it would trump all

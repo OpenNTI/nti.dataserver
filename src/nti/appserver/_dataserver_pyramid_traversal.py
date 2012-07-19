@@ -9,13 +9,10 @@ $Id$
 """
 from __future__ import print_function, unicode_literals
 
-from zope import site
 from zope import interface
 from zope import component
 from zope.traversing import interfaces as trv_interfaces
 from zope.location import interfaces as loc_interfaces
-import zope.site.interfaces
-import zope.cachedescriptors.property
 
 
 import pyramid.traversal
@@ -28,7 +25,6 @@ from nti.ntiids import ntiids
 from nti.contentlibrary import interfaces as lib_interfaces
 
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver import authorization as nauth
 from nti.dataserver import authorization_acl as nacl
 
 from nti.appserver import interfaces
@@ -51,16 +47,6 @@ def users_root_resource_factory( request ):
 	dataserver = request.registry.getUtility( nti_interfaces.IDataserver )
 	return dataserver.root['users']
 
-
-def providers_root_resource_factory( request ):
-	"""
-	Returns the object that represents the ``/dataserver2/providers``
-	portion of the URL.
-	"""
-
-	dataserver = request.registry.getUtility( nti_interfaces.IDataserver )
-	return dataserver.root['providers']
-
 def find_request( resource ):
 	"""
 	Given one of the resources in this class, walk through the
@@ -73,20 +59,6 @@ def find_request( resource ):
 
 	return get_current_request()
 
-def _traverse_should_wrap_resource( remaining_path ):
-	"""
-	In the usual case, if we're not going directly to a view, or
-	namespace traversal, we want to wrap a resource so that we get our
-	external field traversal behaviour. In the other case, though, we
-	don't want to wrap so that the correct adapters are found.
-
-	Note that "the usual case" is becoming the less common case, and is the deprecated
-	case. Normal traversal should be becoming the rule.
-	"""
-	return not remaining_path \
-	  or len( remaining_path ) != 1 \
-	  or not (remaining_path[0].startswith( '@' ) or remaining_path[0].startswith( '+' ))
-
 def _objects_pseudo_traverse( pseudo_parent, key, remaining_path ):
 	if key == 'Objects':
 		return _ObjectsContainerResource( pseudo_parent, None )
@@ -95,14 +67,6 @@ def _objects_pseudo_traverse( pseudo_parent, key, remaining_path ):
 		return _NTIIDsContainerResource( pseudo_parent, None )
 
 	raise loc_interfaces.LocationError( key )
-
-class EnclosureGetItemACLLocationProxy(nti_interfaces.ACLLocationProxy):
-	"""
-	Use this for leaves of the tree that do not contain anything except enclosures.
-	"""
-	def __getitem__(self, key ):
-		enc = self.get_enclosure( key )
-		return nti_interfaces.ACLLocationProxy( enc, self, enc.__name__, nacl.ACL( enc, self.__acl__ ) )
 
 
 @interface.implementer(trv_interfaces.ITraversable)
@@ -125,10 +89,7 @@ class Dataserver2RootTraversable(object):
 
 	def traverse( self, key, remaining_path ):
 		if key in self.allowed_keys:
-			try:
-				return self.context[key]
-			except KeyError:
-				raise loc_interfaces.LocationError( key )
+			return self.context[key] # Better be there. Otherwise, KeyError, which fails traversal
 		return _objects_pseudo_traverse( self.context, key, remaining_path )
 
 
@@ -145,10 +106,6 @@ class _ContainerResource(object):
 		self.resource = container
 		self.container = container
 		self.ntiid = ntiid
-
-	@property
-	def datatype( self ):
-		return self.ntiid
 
 	def traverse( self, key, remaining_path ):
 		contained_object = self.user.getContainedObject( self.ntiid, key )
@@ -189,7 +146,7 @@ class _ObjectsContainerResource(_ContainerResource):
 		request = find_request( self )
 		ds = request.registry.getUtility(nti_interfaces.IDataserver)
 		result = self._getitem_with_ds( ds, key )
-		if result is None:
+		if result is None: # pragma: no cover
 			raise loc_interfaces.LocationError( key )
 
 		return result
@@ -214,95 +171,6 @@ class _NTIIDsContainerResource(_ObjectsContainerResource):
 	def __init__( self, parent, user ):
 		super(_NTIIDsContainerResource,self).__init__( parent, user, name='NTIIDs' )
 
-
-class _AbstractObjectResource(object):
-
-	def __init__( self, parent, containerid, objectid, user ):
-		super(_AbstractObjectResource,self).__init__()
-		self.__parent__ = parent
-		self.__name__ = objectid
-		self.ntiid = containerid
-		self.objectid = objectid
-		self.user = user
-
-	def _acl_for_resource( self, res ):
-		result = nacl.ACL( res, default=self )
-		# At this point, we require every resource we publish to have an
-		# ACL. It's a coding error if it doesn't.
-		# Consequently, this branch should never get hit
-		assert result is not self, zope.security.interfaces.Forbidden( "Resource had no ACL/provider", res )
-
-		return result
-
-
-	@zope.cachedescriptors.property.Lazy
-	def __acl__( self ):
-		return self._acl_for_resource( self.resource )
-
-	def __getitem__( self, key ):
-		res = self.resource
-		child = None
-		# The result we return needs to support ACLs
-		proxy = nti_interfaces.ACLLocationProxy
-		try:
-			# Return something that's a direct child, if possible.
-			# If not, then we'll go for enclosures.
-			child = res[key]
-			# In the case we returned something directly,
-			# we're assuming that it cannot further contain any items
-			# of its own (Why?) Therefore we return an object
-			# that implements __getitem__ to return enclosures
-			# (TODO: Weird. This needs to be unified into a Grand Traversal Theory.
-			# Pyramid's traversal factory objects may help here)
-			proxy = EnclosureGetItemACLLocationProxy
-		except (KeyError,TypeError):
-			# If no direct child, then does it contain enclosures?
-			req = find_request( self )
-			cont = req.registry.queryAdapter( res, nti_interfaces.ISimpleEnclosureContainer ) \
-				if not nti_interfaces.ISimpleEnclosureContainer.providedBy( res ) \
-				else res
-
-			# If it claims to provide enclosures, let it do so.
-			# A missing enclosure is an error.
-			if nti_interfaces.ISimpleEnclosureContainer.providedBy( cont ):
-				child = cont.get_enclosure( key )
-
-		if child is None:
-			raise KeyError( key )
-
-
-		return proxy( child,
-					  res,
-					  key,
-					  nacl.ACL( child, self.__acl__ ) ) if proxy else child
-
-	@property
-	def resource( self ):
-		raise NotImplementedError()
-
-class _ACLAndLocationForcingObjectResource(_AbstractObjectResource):
-
-	@property
-	def resource( self ):
-		res = self.user.getContainedObject( self.ntiid, self.objectid )
-		return nti_interfaces.ACLLocationProxy(
-				res,
-				self.__parent__,
-				self.objectid,
-				self._acl_for_resource( res ) )
-
-class _DirectlyProvidedObjectResource(_AbstractObjectResource):
-
-	def __init__( self, parent, containerid='Objects', objectid=None, user=None, resource=None ):
-		super(_DirectlyProvidedObjectResource,self).__init__( parent, containerid, objectid, user )
-		self._resource = resource
-
-	def __repr__(self):
-		return '<_DirectlyProvidedObjectResource wrapping ' + repr(self._resource) + ' >'
-
-	@property
-	def resource( self ):
-		return self._resource
 
 @interface.implementer(trv_interfaces.ITraversable)
 @component.adapter(nti_interfaces.IUser, pyramid.interfaces.IRequest)
@@ -409,7 +277,7 @@ class _PagesResource(_AbstractUserPseudoContainerResource):
 			# much, the _PageContainerResource only supports a few child items
 			cont = self.user.getSharedContainer(key, defaultValue=None)
 			if cont is None:
-				raise KeyError()
+				raise loc_interfaces.LocationError(key)
 
 		resource = _PageContainerResource( self, cont, key, self.user )
 		return resource
