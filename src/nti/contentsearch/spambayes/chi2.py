@@ -1,11 +1,10 @@
 #!/usr/bin/env python
+
 from __future__ import print_function, unicode_literals
 
 import sys
 import random
 import math as _math
-
-# ---------------------------------
 
 def chi2Q(x2, v, exp=_math.exp, minf=min):
 	"""
@@ -99,7 +98,6 @@ def normIP(p):
 	# One Newton step should double the # of good digits.
 	return z + (p - normP(z)) / normZ(z)
 
-# ---------------------------------
 
 def main():
 	

@@ -20,7 +20,6 @@ from nti.contentsearch.spambayes.storage import SQL3Classifier
 import logging
 logger = logging.getLogger( __name__ )
 
-# -----------------------------------
 
 def _textparts(msg):
 	"""Return a set of all msg parts with content maintype 'text'."""
@@ -68,7 +67,7 @@ def _repair_damaged_base64(text):
 			pass
 	return base64text + text[i:]
 
-# -----------------------------------
+
 
 def get_email_message(obj):
 	"""Return an email Message object. """
@@ -154,7 +153,6 @@ def get_email_messages(directory, fnfilter='*', indexfile=None, default_spam=Tru
 				else:
 					logger.error("Could not read message in file '%s'. %s" % (source, e))
 
-# -----------------------------------
 
 def _get_email_message_text_parts(obj):
 	result = []
