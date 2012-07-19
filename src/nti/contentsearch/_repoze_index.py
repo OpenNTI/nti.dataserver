@@ -67,7 +67,7 @@ get_oid = get_external_oid
 get_objectId = get_external_oid
 
 def _parse_words(obj, fields, default=None):
-	words = obj if isinstance(obj, six.string_types) else get_attr(obj, fields, default)
+	words = obj if isinstance(obj, six.string_types) else get_attr(obj, fields)
 	if words:
 		if isinstance(words, six.string_types):
 			words = [unicode(w.lower()) for w in words.split()]
@@ -96,27 +96,27 @@ def get_related(obj, default=None):
 
 def get_note_ngrams(obj, default=None):
 	if compute_ngrams:
-		source = obj if isinstance(obj, six.string_types) else get_attr(obj, [body_], default)
+		source = obj if isinstance(obj, six.string_types) else get_attr(obj, [body_])
 		result = ngrams(get_multipart_content(source))
 	else:
 		result = u''
 	return result
 	
 def get_note_content(obj, default=None):
-	source = obj if isinstance(obj, six.string_types) else get_attr(obj, [body_], default)
+	source = obj if isinstance(obj, six.string_types) else get_attr(obj, [body_])
 	result = get_multipart_content(source)
 	return result.lower() if result else None
 	
 def get_highlight_ngrams(obj, default=None):
 	if compute_ngrams:
-		source = obj if isinstance(obj, six.string_types) else get_attr(obj, [selectedText_], default)
+		source = obj if isinstance(obj, six.string_types) else get_attr(obj, [selectedText_])
 		result = ngrams(get_multipart_content(source))
 	else:
 		result = u''
 	return result
 	
 def get_highlight_content(obj, default=None):
-	source = obj if isinstance(obj, six.string_types) else get_attr(obj, [selectedText_], default)
+	source = obj if isinstance(obj, six.string_types) else get_attr(obj, [selectedText_])
 	result = get_content(source)
 	return result.lower() if result else None
 
@@ -134,24 +134,24 @@ def get_redaction_content(obj, default=None):
 
 def get_messageinfo_ngrams(obj, default=None):
 	if compute_ngrams:
-		source = obj if isinstance(obj, six.string_types) else get_attr(obj, [BODY], default)
+		source = obj if isinstance(obj, six.string_types) else get_attr(obj, [BODY])
 		result = ngrams(get_multipart_content(source))
 	else:
 		result = ''
 	return result
 
 def get_replacement_content(obj, default=None):
-	source = obj if isinstance(obj, six.string_types) else get_attr(obj, [replacementContent_], default)
-	result = get_content(source)
+	source = obj if isinstance(obj, six.string_types) else get_attr(obj, [replacementContent_])
+	result = get_content(source) if source else None
 	return result.lower() if result else None
 	
 def get_redaction_explanation(obj, default=None):
-	source = obj if isinstance(obj, six.string_types) else get_attr(obj, [redactionExplanation_], default)
-	result = get_content(source)
+	source = obj if isinstance(obj, six.string_types) else get_attr(obj, [redactionExplanation_])
+	result = get_content(source) if source else None
 	return result.lower() if result else None
 	
 def get_messageinfo_content(obj, default=None):
-	source = obj if isinstance(obj, six.string_types) else get_attr(obj, [BODY], default)
+	source = obj if isinstance(obj, six.string_types) else get_attr(obj, [BODY])
 	result = get_multipart_content(source)
 	return result.lower() if result else None
 

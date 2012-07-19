@@ -28,7 +28,10 @@ logger = logging.getLogger(__name__)
 
 class _Proxy(object):
 	def __init__(self, fields, data):
-		data =  unicode(str(data)) if data else u''
+		if  isinstance(data, six.string_types):
+			data = unicode(data)
+		else:
+			data = unicode(repr(data)) if data else u''
 		for field in fields or []:
 			self.__dict__[field] = data
 

@@ -202,7 +202,7 @@ def get_creator(obj, default=None):
 	return unicode(result) if result else None
 
 def get_references(obj, default=None):
-	objects = obj.split() if hasattr(obj, 'split') else get_attr(obj, [references_], default)
+	objects = obj.split() if hasattr(obj, 'split') else get_attr(obj, [references_], ())
 	try:
 		iterable = iter(objects)
 	except TypeError:
@@ -219,7 +219,7 @@ def get_references(obj, default=None):
 	return list(result) if result else []
 
 def get_last_modified(obj, default=None):
-	value = get_attr(obj, last_modified_fields, default)
+	value = get_attr(obj, last_modified_fields)
 	if value:
 		if isinstance(value, six.string_types):
 			value = float(value)
@@ -278,9 +278,11 @@ def get_redaction_content(data):
 	result = []
 	for field in (replacementContent_, redactionExplanation_, selectedText_):
 		if isinstance(data, dict):
-			result.append(data.get(field, u''))
+			d = data.get(field, u'')
+			if d: result.append(d)
 		elif isinstance(data, Redaction):
-			result.append(getattr(data, field, u''))
+			d = getattr(data, field, u'')
+			if d: result.append(d)
 	
 	result = ' '.join([x for x in result if x is not None])
 	return unicode(result)
