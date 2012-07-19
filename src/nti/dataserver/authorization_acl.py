@@ -522,3 +522,11 @@ class _FriendsListACLProvider(_CreatedACLProvider):
 		# And finally nobody else gets jack squat
 		result.append( ace_denying( nti_interfaces.EVERYONE_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _SectionInfoACLProvider ) )
 		return result
+
+@interface.implementer( nti_interfaces.IACLProvider )
+@component.adapter(nti_interfaces.IDataserverFolder)
+class _DataserverFolderACLProvider(object):
+
+	def __init__( self, context ):
+		# Got to be here after the components are registered
+		self.__acl__ = _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, auth.ACT_READ, _DataserverFolderACLProvider ), ) )

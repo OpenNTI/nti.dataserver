@@ -603,6 +603,7 @@ def createApplication( http_port,
 	# Service
 	pyramid_config.add_route( name='user.root.service', pattern='/dataserver2{_:/?}',
 							  factory='nti.appserver.dataserver_pyramid_views._DSResource' )
+							  #factory='nti.appserver._dataserver_pyramid_traversal.dataserver2_root_resource_factory' )
 	pyramid_config.add_view( route_name='user.root.service', view='nti.appserver.dataserver_pyramid_views._ServiceGetView',
 							 name='', renderer='rest',
 							 permission=nauth.ACT_READ, request_method='GET'  )
@@ -624,6 +625,7 @@ def createApplication( http_port,
 	# on the context discriminators?
 	pyramid_config.add_route( name='objects.generic.traversal', pattern='/dataserver2/*traverse',
 							  factory='nti.appserver.dataserver_pyramid_views._DSResource' )
+							  #factory='nti.appserver._dataserver_pyramid_traversal.dataserver2_root_resource_factory' )
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
 							 renderer='rest',
 							 permission=nauth.ACT_READ, request_method='GET' )
@@ -646,7 +648,7 @@ def createApplication( http_port,
 		for route in ('objects.generic.traversal', 'user.pages.odata.traversal'):
 			pyramid_config.add_view(
 				route_name=route, view='nti.appserver.dataserver_pyramid_views.' + view,
-				context='nti.appserver.dataserver_pyramid_views._PageContainerResource',
+				context='nti.appserver.interfaces.IPageContainerResource',
 				name=name, renderer='rest',
 				permission=nauth.ACT_READ, request_method='GET' )
 
@@ -659,13 +661,13 @@ def createApplication( http_port,
 							 permission=nauth.ACT_DELETE, request_method='DELETE' )
 
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._EmptyContainerGetView',
-							 renderer='rest', context='nti.appserver.dataserver_pyramid_views._NewContainerResource',
+							 renderer='rest', context='nti.appserver.interfaces.INewContainerResource',
 							 permission=nauth.ACT_READ, request_method='GET' )
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._UGDPostView',
-							 renderer='rest', context='nti.appserver.dataserver_pyramid_views._UserResource',
+							 renderer='rest', context='nti.appserver.interfaces.IUserResource',
 							 permission=nauth.ACT_CREATE, request_method='POST' )
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._method_not_allowed',
-							 renderer='rest', context='nti.appserver.dataserver_pyramid_views._UserResource',
+							 renderer='rest', context='nti.appserver.interfaces.IUserResource',
 							 permission=nauth.ACT_READ, request_method='GET' )
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._UGDPostView',
 							 renderer='rest', context='nti.appserver.dataserver_pyramid_views._ProviderResource',
@@ -674,30 +676,30 @@ def createApplication( http_port,
 							 renderer='rest', context='nti.appserver.dataserver_pyramid_views._ProviderResource',
 							 permission=nauth.ACT_READ, request_method='GET' )
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._UGDPostView',
-							 renderer='rest', context='nti.appserver.dataserver_pyramid_views._ContainerResource',
+							 renderer='rest', context='nti.appserver.interfaces.IContainerResource',
 							 permission=nauth.ACT_CREATE, request_method='POST' )
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
-							 renderer='rest', context='nti.appserver.dataserver_pyramid_views._ContainerResource',
+							 renderer='rest', context='nti.appserver.interfaces.IContainerResource',
 							 permission=nauth.ACT_READ, request_method='GET' )
 
 	# Modifying UGD beneath the Pages structure
 
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._UGDPostView',
-							 renderer='rest', context='nti.appserver.dataserver_pyramid_views._PagesResource',
+							 renderer='rest', context='nti.appserver.interfaces.IPagesResource',
 							 permission=nauth.ACT_CREATE, request_method='POST' )
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
-							 renderer='rest', context='nti.appserver.dataserver_pyramid_views._PagesResource',
+							 renderer='rest', context='nti.appserver.interfaces.IPagesResource',
 							 permission=nauth.ACT_READ, request_method='GET' )
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._UGDDeleteView',
-							 renderer='rest', context='nti.appserver.dataserver_pyramid_views._AbstractObjectResource',
+							 renderer='rest', context='zope.container.interfaces.IContained',
 							 permission=nauth.ACT_DELETE, request_method='DELETE' )
 
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._UGDPutView',
-							 renderer='rest', context='nti.appserver.dataserver_pyramid_views._AbstractObjectResource',
+							 renderer='rest', context='zope.container.interfaces.IContained',
 							 permission=nauth.ACT_UPDATE, request_method='PUT' )
 	# And the user itself can be put to
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._UGDPutView',
-							 renderer='rest', context='nti.appserver.dataserver_pyramid_views._UserResource',
+							 renderer='rest', context='nti.appserver.interfaces.IUserResource',
 							 permission=nauth.ACT_UPDATE, request_method='PUT' )
 
 
@@ -708,7 +710,7 @@ def createApplication( http_port,
 
 	# attached resources
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._EnclosurePostView',
-							 renderer='rest', context='nti.appserver.dataserver_pyramid_views._AbstractObjectResource',
+							 renderer='rest', context='zope.container.interfaces.IContained',
 							 permission=nauth.ACT_CREATE, request_method='POST' )
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._EnclosurePostView',
 							 renderer='rest', context='nti.dataserver.interfaces.ISimpleEnclosureContainer',
@@ -725,10 +727,19 @@ def createApplication( http_port,
 
 	# Restore GET for the things we can POST enclosures to
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
-							 renderer='rest',context='nti.appserver.dataserver_pyramid_views._AbstractObjectResource',
+							 renderer='rest',context='zope.container.interfaces.IContained',
 							 permission=nauth.ACT_READ, request_method='GET' )
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
 							 renderer='rest',context='nti.dataserver.interfaces.ISimpleEnclosureContainer',
+							 permission=nauth.ACT_READ, request_method='GET' )
+
+	# ClassInfo conflicts with enclosures for PUT somehow
+	# TODO: This will all go away when we get to ++enclosures
+	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._UGDPutView',
+							 renderer='rest', context='nti.dataserver.interfaces.IClassInfo',
+							 permission=nauth.ACT_UPDATE, request_method='PUT' )
+	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
+							 renderer='rest',context='nti.dataserver.interfaces.IClassInfo',
 							 permission=nauth.ACT_READ, request_method='GET' )
 
 

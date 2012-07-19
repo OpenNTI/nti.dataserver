@@ -133,7 +133,7 @@ def _traverse_should_wrap_resource( remaining_path ):
 	  or len( remaining_path ) != 1 \
 	  or not (remaining_path[0].startswith( '@' ) or remaining_path[0].startswith( '+' ))
 
-@interface.implementer(loc_interfaces.ILocation)
+@interface.implementer(loc_interfaces.ILocation,app_interfaces.IUserResource)
 class _UserResource(object):
 
 	def __init__( self, parent, user, name=None ):
@@ -236,7 +236,7 @@ class _AbstractUserPseudoContainerResource(object):
 		self.__acl__ = [ (sec.Allow, self.user.username, sec.ALL_PERMISSIONS),
 						 (sec.Deny, sec.Everyone, sec.ALL_PERMISSIONS) ]
 
-
+@interface.implementer(app_interfaces.IPagesResource)
 class _PagesResource(_AbstractUserPseudoContainerResource):
 	"""
 	When requesting /Pages or /Pages(ID), we go through this resource.
@@ -262,7 +262,7 @@ class _PagesResource(_AbstractUserPseudoContainerResource):
 		return resource
 
 
-@interface.implementer(trv_interfaces.ITraversable)
+@interface.implementer(trv_interfaces.ITraversable,app_interfaces.IContainerResource)
 class _ContainerResource(object):
 
 	__acl__ = ()
@@ -293,6 +293,7 @@ class _ContainerResource(object):
 		result = _ACLAndLocationForcingObjectResource( self, self.ntiid, key, self.user )
 		return result
 
+@interface.implementer(app_interfaces.INewContainerResource)
 class _NewContainerResource(_ContainerResource): pass
 
 
@@ -349,7 +350,7 @@ class _NTIIDsContainerResource(_ObjectsContainerResource):
 	def __init__( self, parent, user ):
 		super(_NTIIDsContainerResource,self).__init__( parent, user, name='NTIIDs' )
 
-
+@interface.implementer(app_interfaces.IPageContainerResource)
 class _PageContainerResource(_ContainerResource):
 	"""
 	A leaf on the traversal tree. Exists to be a named thing that
@@ -362,7 +363,7 @@ class _PageContainerResource(_ContainerResource):
 	def traverse( self, key, remaining_path ):
 		raise loc_interfaces.LocationError( key )
 
-
+@interface.implementer(nti_interfaces.IZContained)
 class _AbstractObjectResource(object):
 
 	def __init__( self, parent, containerid, objectid, user ):
@@ -925,9 +926,9 @@ class _UGDPostView(_UGDModifyViewBase):
 		context = self.request.context
 		# If our context contains a user resource, then that's where we should be trying to
 		# create things
-		owner_root = traversal.find_interface( context, _UserResource )
+		owner_root = traversal.find_interface( context, app_interfaces.IUserResource )
 		if owner_root is not None:
-			owner_root = owner_root.user
+			owner_root = getattr( owner_root, 'user', owner_root ) # migration compat
 		if owner_root is None:
 			owner_root = traversal.find_interface( context, nti_interfaces.IUser )
 		if owner_root is None and hasattr( context, 'container' ):
@@ -1075,7 +1076,13 @@ class _UGDPutView(_UGDModifyViewBase):
 		super(_UGDPutView,self).__init__(request)
 
 	def _get_object_to_update( self ):
-		return self.request.context.resource
+		try:
+			return self.request.context.resource
+		except AttributeError:
+			# TODO: Legacy compat. The 'resource' property is deprecated
+			if nti_interfaces.IZContained.providedBy( self.request.context ):
+				return self.request.context
+			raise
 
 	def __call__(self):
 		context = self.request.context

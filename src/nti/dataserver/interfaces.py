@@ -15,6 +15,7 @@ from zope.container.interfaces import IContainerNamesContainer as IZContainerNam
 from zope.location.interfaces import ILocation, IContained as IZContained
 from zope.location.location import LocationProxy
 from zope.proxy import ProxyBase
+import zope.site.interfaces
 
 from zope.interface.common.mapping import IFullMapping
 
@@ -52,6 +53,9 @@ class ACLProxy(ProxyBase):
 #pylint: disable=E0213,E0211
 
 class IDataserver(interface.Interface):
+	pass
+
+class IDataserverFolder(zope.site.interfaces.IFolder):
 	pass
 
 class IDataserverTransactionContextManager(interface.Interface):
