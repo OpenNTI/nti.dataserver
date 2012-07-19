@@ -1082,7 +1082,7 @@ class TestApplicationLibrary(TestApplicationLibraryBase):
 		assert_that( res.content_type, is_( 'application/vnd.nextthought.pageinfo+json' ) )
 		assert_that( res.json_body, has_entry( 'MimeType', 'application/vnd.nextthought.pageinfo' ) )
 		assert_that( res.json_body, has_entry( 'sharingPreference', has_entry( 'sharedWith', ['a@b'] ) ) )
-
+		assert_that( res.json_body, has_entry( 'href', '/dataserver2/Objects/' + self.child_ntiid ) )
 		# Now there is modification
 		assert_that( res.last_modified, is_( greater_than_or_equal_to( now ) ) )
 		last_mod = res.last_modified
@@ -1127,6 +1127,7 @@ class TestRootPageEntryLibrary(TestApplicationLibraryBase):
 		assert_that( res.content_type, is_( 'application/vnd.nextthought.pageinfo+json' ) )
 		assert_that( res.json_body, has_entry( 'MimeType', 'application/vnd.nextthought.pageinfo' ) )
 		assert_that( res.json_body, has_entry( 'sharingPreference', has_entry( 'sharedWith', ['a@b'] ) ) )
+		assert_that( res.json_body, has_entry( 'href', '/dataserver2/Objects/' + ntiids.ROOT ) )
 
 		# Then, reset the library so we have a child, and get the child
 		self.child_ntiid = TestApplicationLibrary.child_ntiid

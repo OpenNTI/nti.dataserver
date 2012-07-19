@@ -522,6 +522,39 @@ class _NTIIDEntryExternalizer(object):
 		result = to_standard_external_dictionary( self.context )
 		return result
 
+from nti.dataserver.links_external import render_link
+
+@interface.implementer(ext_interfaces.IExternalMappingDecorator)
+@component.adapter(app_interfaces.IContentUnitInfo) # TODO: IModeledContent?
+class ContentUnitInfoHrefDecorator(object):
+
+	def __init__( self, context ): pass
+
+	def decorateExternalMapping( self, context, mapping ):
+		if 'href' in mapping:
+			return
+
+		try:
+			# Some objects are not in the traversal tree. Specifically,
+			# chatserver.IMeeting (which is IModeledContent and IPersistent)
+			# Our options are to either catch that here, or introduce an
+			# opt-in interface that everything that wants 'edit' implements
+			nearest_site = nti_traversal.find_nearest_site( context )
+		except TypeError:
+			nearest_site = None
+
+		if nearest_site is None:
+			logger.debug( "Not providing href links for %s, could not find site", type(context) )
+			return
+
+		link = links.Link( nearest_site, elements=('Objects', context.ntiid) )
+		link.__parent__ = nearest_site.__parent__
+		link.__name__ = ''
+		interface.alsoProvides( link, loc_interfaces.ILocation )
+
+
+		mapping['href'] = render_link( link, nearest_site=nearest_site )['href']
+
 class _RootNTIIDEntry(_NTIIDEntry):
 	"""
 	Defines the collection entry for the root pseudo-NTIID, which
