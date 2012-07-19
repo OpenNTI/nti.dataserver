@@ -43,7 +43,7 @@ def _do_convert(  page ):
 
 	#Then remove the width and height boxes since this interacts badly with
 	#HTML embedding
-	os.system( "sed -i '' 's/width=.*pt\"//' %s" % filename )
+	os.system( "sed -i -e 's/width=.*pt\"//' %s" % filename )
 
 	# Get the width and height from the media box since we're not cropping it
 	# in Python code
