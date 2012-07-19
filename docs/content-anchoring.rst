@@ -598,33 +598,57 @@ containing ``Element`` becomes the *reference node* used when searching for
 text the anchored range. Using the *refernce node* as the root, create a ``TreeWalker`` to
 interate each ``Text`` node, ``textNode``.
 
-For each ``textNode`` check if the *primary context* object matches
-``textNode``. If it does, using a ``TreeWalker`` rooted at *reference
-node*, compare each *additional context* object by walking the tree
-backwards using the ``previousNode`` method, if anchor ``role`` is ``start``, or
-forward using the ``nextNode`` method, if the anchor ``role`` is
-``end``. If all context objects match, ``textNode`` will become the
-range's ``startContainer`` if the anchor ``role`` is ``start``, or
-``endContainer`` if the anchor ``role`` is ``end``. If not all the
-context objects match, continue the outer loop by comparing context
-objects for the next ``textNode``.
+For each ``textNode`` create a list of all matches within that node
+to the *primary context*. Assign each match a score in ``(0,1]`` based 
+on the difference between the primary context's ``contextOffset``,
+(flipped to a start-based index if it's stored as an end-based index
+due to the pointer's role being ``start``) and the index of the
+``contextText`` within the ``textNode``'s data. If the two are
+identical, it should return 1, and aside from that it should return
+lower scores the further the difference is. The current formula is:
 
-When matcing ``contexts``, if a pointer does not provide the maximum
-amount of contextual information, as defined in ``Converting a Text
-Node to TextDomContentPointer``, clients *SHOULD* interpret that as
-the ``Text`` node this pointer represents did not contain any
-more contextually relevent nodes as defined in ``Converting a Text
-Node to TextDomContentPointer`` to the last ``TextContext`` object available.
+``score = max(f / (f + abs(contextOffset - index of match)), 0.25)``
 
-.. note::
+where ``f`` is ``sqrt(textNode.contentText.length) * 2 + 1``, but
+this is not set in stone; different implementations across different
+platforms will only cause different users to see their highlights
+fail or mis-resolve under different sets of circumstances and pose
+no fundamental compatibility problems. The rationale behind making
+ ``f`` dependent on the textNode's length is that larger paragraphs
+are likely to have larger and more changes, although more changes
+are more likely to cancel each other out hence the square root
+scaling.
 
-	In the case where ``contexts`` ambiguously defines a
-	``TextDomContentPointer``, but the pointer's ``ancestor`` has been
-	propertly resolved, clients *SHOULD* resolve to the endpoint that would create the
-	largest range.  In the event ``contexts`` is ambiguous and
-	``ancestor`` can't be resolved, clients *SHOULD* fail to
-	confidently resolve the pointer.
+Note that multiple matches within a text node are possible - "I see 
+a dog. I do not see a cat." for the ``contextText`` "see a" is one such
+example, with matches at indices 2 and 22.
 
+Then, evaluate the secondary contexts to create a secondary
+score (this will be the same for all matches since all
+matches are in the same node and thus generate their secondary
+contexts from the same place). If a match fails at context object
+index *i*, this score is ``i / (i + 0.5)`` (fixed coefficient once
+again not set in stone) - 0.66 if the first secondary context fails,
+0.8 if the second does, etc. If all secondary contexts match, check
+happens if the context object has a small number of secondary
+contexts (< 15 chars and < 5 contexts). This should only happen if
+the secondary context generation algorithm ran into the end of the
+document, meaning that the *nth* text node in the DOM after the 
+current node should be null. If the number of secondary contexts is
+small and this is not the case, set the secondary score to ``n / (n + 0.5)``
+(*n* being the number of total context objects). All scores for individual
+matches are multiplied by this common secondary score, and all matches
+are sent off with the matching node, the matching offset and the score -
+something like:
+
+``[(node: <DOM Object>, offset: 2, score: 0.40), (node: <DOM Object>, offset: 22, score: 0.33)]``
+
+in our dog and cat example.
+
+Collect all matches from all examples. If any of them have a perfect
+score, then return that match. If not, then if the ancestor node
+resolves, return the highest-scoring match. If not, return a failure
+(consider changing this in the future).
 
 If a ``textNode`` has been identified as the start or end container, a
 range can be constructed as follows. If anchor ``role`` is ``start``,
