@@ -26,6 +26,7 @@ import BTrees
 from BTrees import OOBTree
 from persistent.list import PersistentList
 
+from zope import interface
 from zope.component.interfaces import ISite
 from zope.site import LocalSiteManager
 from zope.site.folder import Folder, rootFolder
@@ -66,6 +67,7 @@ def install_main( context ):
 	assert ISite.providedBy( root_folder )
 
 	dataserver_folder = Folder()
+	interface.alsoProvides( dataserver_folder, nti_interfaces.IDataserverFolder )
 	#locate( dataserver_folder, root_folder, name='dataserver2' )
 	root_folder['dataserver2'] = dataserver_folder
 	assert dataserver_folder.__parent__ is root_folder

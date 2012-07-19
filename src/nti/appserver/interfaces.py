@@ -179,6 +179,25 @@ class IExternalFieldTraversable(trv_interfaces.ITraversable):
 	"""
 
 ###
+# Resources.
+###
+# This is mostly a migration thing
+
+class IContainerResource(interface.Interface):
+	pass
+
+class IPageContainerResource(interface.Interface):
+	pass
+
+class INewContainerResource(interface.Interface):
+	pass
+
+class IUserResource(interface.Interface):
+	pass
+
+class IPagesResource(interface.Interface):
+	pass
+###
 # Assessment Support
 ###
 from nti.assessment import interfaces as asm_interfaces

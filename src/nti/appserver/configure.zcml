@@ -3,6 +3,21 @@
 	xmlns="http://namespaces.zope.org/zope"
 	xmlns:zcml="http://namespaces.zope.org/zcml">
 	<include package="zope.component" />
+	<include package="nti.dataserver" />
+
+	<!-- Resource traversal -->
+	<adapter factory="._dataserver_pyramid_traversal.Dataserver2RootTraversable"
+			 provides="zope.traversing.interfaces.ITraversable" />
+	<adapter factory="._dataserver_pyramid_traversal.UserTraversable"
+			 provides="zope.traversing.interfaces.ITraversable" />
+
+	<adapter factory="._dataserver_pyramid_traversal.ProviderTraversable"
+			 provides="zope.traversing.interfaces.ITraversable" />
+	<class class="nti.dataserver.users.User">
+		<!-- Migration -->
+		<implements interface="nti.appserver.interfaces.IUserResource" />
+	</class>
+
 	<adapter factory=".workspaces.ContainerEnumerationWorkspace" />
 
 	<adapter factory=".workspaces._UserPagesCollection" name='Pages'/>
@@ -18,7 +33,6 @@
 	As it stands now, returning FriendsLists cannot be cached,
 	because they include dynamic presence information
 	-->
-
 	<adapter factory=".workspaces.UncacheableHomogeneousTypedContainerCollection"
 			 for="nti.dataserver.interfaces.IFriendsListContainer"
 			 provides=".interfaces.IContainerCollection" />
@@ -198,7 +212,6 @@
 				provides="geventwebsocket.interfaces.IWSWillUpgradeVeto"
 				for="geventwebsocket.interfaces.IWSWillUpgradeEvent" />
 
-	<include package="nti.dataserver" />
 	<!-- Friends Lists are uncachable due to the nested user changing
 	presence -->
 	<class class="nti.dataserver.users.FriendsList">

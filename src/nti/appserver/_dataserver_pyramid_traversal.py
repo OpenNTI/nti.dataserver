@@ -15,6 +15,8 @@ from zope import component
 from zope.traversing import interfaces as trv_interfaces
 from zope.location import interfaces as loc_interfaces
 import zope.site.interfaces
+import zope.cachedescriptors.property
+
 
 import pyramid.traversal
 import pyramid.interfaces
@@ -29,6 +31,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import authorization as nauth
 from nti.dataserver import authorization_acl as nacl
 
+from nti.appserver import interfaces
 
 def dataserver2_root_resource_factory( request ):
 	"""
@@ -36,7 +39,7 @@ def dataserver2_root_resource_factory( request ):
 	portion of the url. Used when that part of the URL has been pre-traversed.
 	"""
 
-	dataserver = request.registry.getComponent( nti_interfaces.IDataserver )
+	dataserver = request.registry.getUtility( nti_interfaces.IDataserver )
 	return dataserver.root
 
 def users_root_resource_factory( request ):
@@ -45,7 +48,7 @@ def users_root_resource_factory( request ):
 	portion of the URL.
 	"""
 
-	dataserver = request.registry.getComponent( nti_interfaces.IDataserver )
+	dataserver = request.registry.getUtility( nti_interfaces.IDataserver )
 	return dataserver.root['users']
 
 
@@ -55,7 +58,7 @@ def providers_root_resource_factory( request ):
 	portion of the URL.
 	"""
 
-	dataserver = request.registry.getComponent( nti_interfaces.IDataserver )
+	dataserver = request.registry.getUtility( nti_interfaces.IDataserver )
 	return dataserver.root['providers']
 
 def find_request( resource ):
@@ -103,7 +106,7 @@ class EnclosureGetItemACLLocationProxy(nti_interfaces.ACLLocationProxy):
 
 
 @interface.implementer(trv_interfaces.ITraversable)
-@component.adapter(site.interfaces.IFolder, pyramid.interfaces.IRequest)
+@component.adapter(nti_interfaces.IDataserverFolder, pyramid.interfaces.IRequest)
 class Dataserver2RootTraversable(object):
 	"""
 	A traversable for the root folder in the dataserver, providing access to a few
@@ -111,7 +114,6 @@ class Dataserver2RootTraversable(object):
 	implied resources (Objects and NTIIDs).
 	"""
 
-	# TODO: This is not a very specific adapter. It should only match at the root right now.
 	# TODO: The implied resources could (should) actually be persistent. That way
 	# they fit nicely and automatically in the resource tree.
 
@@ -130,7 +132,7 @@ class Dataserver2RootTraversable(object):
 		return _objects_pseudo_traverse( self.context, key, remaining_path )
 
 
-@interface.implementer(trv_interfaces.ITraversable)
+@interface.implementer(trv_interfaces.ITraversable,interfaces.IContainerResource)
 class _ContainerResource(object):
 
 	__acl__ = ()
@@ -158,32 +160,25 @@ class _ContainerResource(object):
 		# and deny everything to everyone else (so we don't recurse up the tree)
 		# TODO: The need for this wrapping is probably gone. Everything
 		# has its own ACL now, and we should have a consistent traversal tree.
-		result = _ACLAndLocationForcingObjectResource( self, self.ntiid, key, self.user )
-		return result
+		#result = _ACLAndLocationForcingObjectResource( self.container, self.ntiid, key, self.user )
+		#return result
+		return contained_object
 
+@interface.implementer(interfaces.INewContainerResource)
 class _NewContainerResource(_ContainerResource): pass
 
+@interface.implementer(interfaces.IPageContainerResource)
 class _PageContainerResource(_ContainerResource):
 	"""
-	Dispatches based on the type of URL requested for a page's data.
-	We re-use the same classes that can handle the legacy URL structure.
+	A leaf on the traversal tree. Exists to be a named thing that
+	we can match view names with. Should be followed by the view name.
 	"""
 
 	def __init__( self, parent, container, ntiid, user ):
 		super(_PageContainerResource,self).__init__( parent, container, ntiid, user )
-		self.__types__ = { 'UserGeneratedData': _UGDView,
-						   'RecursiveUserGeneratedData': _RecursiveUGDView,
-						   'Stream': _UGDStreamView,
-						   'RecursiveStream': _RecursiveUGDStreamView,
-						   'UserGeneratedDataAndRecursiveStream': _UGDAndRecursiveStreamView }
-
 
 	def traverse( self, key, remaining_path ):
-		view_clazz = self.__types__[key]
-		view = view_clazz(find_request(self))
-		view.request.context = self
-		result = LocationProxy( view(), self, self.ntiid )
-		return result
+		raise loc_interfaces.LocationError( key )
 
 class _ObjectsContainerResource(_ContainerResource):
 
@@ -197,25 +192,6 @@ class _ObjectsContainerResource(_ContainerResource):
 		if result is None:
 			raise loc_interfaces.LocationError( key )
 
-		if _traverse_should_wrap_resource( remaining_path ):
-			result = self._wrap_as_resource( key, result )
-
-		return result
-
-	_no_wrap_ifaces = {lib_interfaces.IContentPackageLibrary, lib_interfaces.IContentUnit, lib_interfaces.IContentPackage}
-
-	def _wrap_as_resource( self, key, result ):
-		# FIXME: This is weird. We're whitelisting a few interfaces
-		# we don't want to wrap in a _DirectlyProvidedObjectResource:
-		# It doesn't proxy interfaces and such, but that probably actually
-		# doesn't matter because these interfaces wind up falling through to GenericGetView
-		# anyway....which knows to use either the request.context or request.context.resource, as appropriate.
-		# So this can probably stop altogether, pending a few test updates
-		provided = interface.providedBy( result )
-		for iface in self._no_wrap_ifaces:
-			if iface in provided:
-				return result
-		result = _DirectlyProvidedObjectResource( self, objectid=key, user=self.user, resource=result, containerid=self.__name__ )
 		return result
 
 	def _getitem_with_ds( self, ds, key ):
@@ -344,6 +320,7 @@ class UserTraversable(object):
 
 
 	def traverse( self, key, remaining_path ):
+
 		# First, some pseudo things the user
 		# doesn't actually have
 		try:
@@ -355,18 +332,18 @@ class UserTraversable(object):
 			if interface.interfaces.IInterface.providedBy( value ):
 				# TODO: In some cases, we'll need to proxy this to add the name?
 				# And/Or ACL?s
-				return self.request.registry.getComponent( value )
+				return self.request.registry.getUtility( value )
 			return self._pseudo_classes_[key]( self.context, self.request )
 
 
 		resource = None
 		cont = self.user.getContainer( key )
 		if cont is not None:
-			resource = _ContainerResource( self, cont, key, self.user )
+			resource = _ContainerResource( self.context, cont, key, self.user )
 
 		if resource is None:
 			# OK, assume a new container
-			resource = _NewContainerResource( self, {}, key, self.user )
+			resource = _NewContainerResource( self.context, {}, key, self.user )
 
 		# Allow the owner full permissions.
 		# TODO: What about others?
@@ -413,7 +390,7 @@ class _AbstractUserPseudoContainerResource(object):
 						 (sec.Deny, sec.Everyone, sec.ALL_PERMISSIONS) ]
 
 
-@interface.implementer(trv_interfaces.ITraversable)
+@interface.implementer(trv_interfaces.ITraversable, interfaces.IPagesResource)
 class _PagesResource(_AbstractUserPseudoContainerResource):
 	"""
 	When requesting /Pages or /Pages(ID), we go through this resource.
