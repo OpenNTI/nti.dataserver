@@ -19,6 +19,9 @@
 			 
 	<adapter factory="._search_external._MessageInfoSearchHit"
 			 name="search-hit" />
+			 
+	<adapter factory="._search_external._RedactionSearchHit"
+			 name="search-hit" />
 			  
 	<subscriber factory="._search_external.NoSnippetHighlightDecoratorFactory"
 				for=".interfaces.INoSnippetHighlight"

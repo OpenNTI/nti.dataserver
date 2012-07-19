@@ -4,10 +4,13 @@ import unittest
 
 from nti.externalization.externalization import toExternalObject
 
+from nti.contentsearch import _repoze_index as repoze_index
+
 from nti.contentsearch.common import get_type_name
 from nti.contentsearch._search_external import get_search_hit
 from nti.contentsearch._search_external import _NoteSearchHit
 from nti.contentsearch._search_external import _HighlightSearchHit
+from nti.contentsearch._search_external import _RedactionSearchHit
 from nti.contentsearch._search_external import _MessageInfoSearchHit
 from nti.contentsearch._search_external import _provide_highlight_snippet
 
@@ -24,10 +27,12 @@ from nti.contentsearch._repoze_index import get_note_content
 from nti.contentsearch._repoze_index import get_last_modified
 from nti.contentsearch._repoze_index import get_highlight_ngrams
 from nti.contentsearch._repoze_index import get_highlight_content
+from nti.contentsearch._repoze_index import get_redaction_content
 from nti.contentsearch._repoze_index import create_notes_catalog
 from nti.contentsearch._repoze_index import get_messageinfo_ngrams
 from nti.contentsearch._repoze_index import get_messageinfo_content
 from nti.contentsearch._repoze_index import create_highlight_catalog
+from nti.contentsearch._repoze_index import create_redaction_catalog
 from nti.contentsearch._repoze_index import create_messageinfo_catalog
 
 from nti.contentsearch.tests import ConfiguringTestBase
@@ -45,7 +50,9 @@ from nti.contentsearch.common import (	OID, NTIID, CREATOR, LAST_MODIFIED, CONTA
 										COLLECTION_ID, ID, CLASS, HIT, SNIPPET, TARGET_OID)
 
 from nti.contentsearch.common import (	ngrams_, channel_, content_, keywords_, references_,
-										recipients_, sharedWith_)
+										recipients_, sharedWith_, replacementContent_, redactionExplanation_)
+
+repoze_index.compute_ngrams = True
 
 class TestRepozeIndex(ConfiguringTestBase):
 		
@@ -66,6 +73,10 @@ class TestRepozeIndex(ConfiguringTestBase):
 		path = os.path.join(os.path.dirname(__file__), 'message_info.json')
 		with open(path, "r") as f:
 			cls.messageinfo = json.load(f)
+			
+		path = os.path.join(os.path.dirname(__file__), 'redaction.json')
+		with open(path, "r") as f:
+			cls.redaction = json.load(f)
 			
 	def _test_common_catalog(self, catalog):
 		assert_that(catalog, has_key(OID))
@@ -93,6 +104,14 @@ class TestRepozeIndex(ConfiguringTestBase):
 		self._test_common_catalog(catalog)
 		assert_that(catalog, has_key(ngrams_))
 		assert_that(catalog, has_key(content_))
+		
+	def test_redaction_catalog(self):
+		catalog = create_redaction_catalog()
+		self._test_common_catalog(catalog)
+		assert_that(catalog, has_key(ngrams_))
+		assert_that(catalog, has_key(content_))
+		assert_that(catalog, has_key(replacementContent_))
+		assert_that(catalog, has_key(redactionExplanation_))
 	
 	def test_messageinf_catalog(self):
 		catalog = create_messageinfo_catalog()
@@ -103,8 +122,6 @@ class TestRepozeIndex(ConfiguringTestBase):
 		assert_that(catalog, has_key(references_))
 		assert_that(catalog, has_key(ngrams_))
 		assert_that(catalog, has_key(content_))
-		
-	# -------------
 
 	def test_highlight(self):
 		obj = self.hightlight
@@ -120,6 +137,19 @@ class TestRepozeIndex(ConfiguringTestBase):
 		assert_that(get_last_modified(obj), is_(close_to(1331922120.97, 0.05)))
 		assert_that(get_highlight_content(obj), has_length(greater_than_or_equal_to(190)))
 		assert_that(get_highlight_ngrams(obj).split(), has_length(69))
+		
+	def test_redaction(self):
+		obj = self.redaction
+		id_str = 'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x1876:5573657273'
+		assert_that(get_id(obj), is_(id_str))
+		assert_that(get_oid(obj), is_(id_str))
+		assert_that(get_ntiid(obj), is_(id_str))
+		assert_that(get_creator(obj), is_('carlos.sanchez@nextthought.com'))
+		assert_that(get_keywords(obj), is_([]))
+		assert_that(get_sharedWith(obj), is_([]))
+		assert_that(get_containerId(obj), is_('tag:nextthought.com,2011-10:AOPS-HTML-Howes_converted.0'))
+		assert_that(get_last_modified(obj), is_(close_to(1342646298.92, 0.05)))
+		assert_that(get_redaction_content(obj), has_length(greater_than_or_equal_to(47)))
 		
 	def test_note(self):
 		obj = self.note
@@ -181,6 +211,15 @@ class TestRepozeIndex(ConfiguringTestBase):
 		assert_that(d, has_entry(TARGET_OID, u'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x085a:5573657273'))
 		assert_that(d,
 			has_entry(SNIPPET, u'You know how to add subtract multiply and DIVIDE In fact you may already know how to solve many of the problems'))
+		
+	def test_get_index_hit_from_redaction(self):
+		d = self._externalize(_RedactionSearchHit, self.redaction, '')
+		assert_that(d, has_entry(CLASS, HIT))
+		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:AOPS-HTML-Howes_converted.0'))
+		assert_that(d, has_entry(CREATOR, u'carlos.sanchez@nextthought.com'))
+		assert_that(d, has_entry(NTIID, u'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x1876:5573657273'))
+		assert_that(d, has_entry(TARGET_OID, u'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x1876:5573657273'))
+		assert_that(d, has_entry(SNIPPET, u'redaction serving a sentence in a Michigan jail'))
 		
 	def test_get_index_hit_from_note(self):
 		d = self._externalize(_NoteSearchHit, self.note, 'waves')
