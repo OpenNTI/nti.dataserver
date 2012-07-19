@@ -47,8 +47,6 @@ from nti.contentsearch.spambayes import default_minimum_prob_strength
 
 from nti.contentsearch.spambayes.chi2 import chi2Q
 
-# ---------------------------------
-
 class _BaseWordInfo(object):
 	def update(self, spam, ham):
 		self.spamcount = spam
@@ -571,5 +569,3 @@ class Classifier(object):
 	
 
 Bayes = Classifier
-
-

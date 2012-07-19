@@ -5,15 +5,11 @@ from __future__ import print_function, unicode_literals, generators
 import re
 import math
 
-# ----------------------------------
-
 # patch encodings.aliases to recognize 'ansi_x3_4_1968'
 from encodings.aliases import aliases # The aliases dictionary
 if not aliases.has_key('ansi_x3_4_1968'):
 	aliases['ansi_x3_4_1968'] = 'ascii'
 del aliases # Not needed any more
-
-# ----------------------------------
 
 has_highbit_char = re.compile(r"[\x80-\xff]").search
 
@@ -81,8 +77,6 @@ class Stripper(object):
 	def tokenize(self, match_object):
 		# override this if you want to suck info out of the start pattern.
 		return []
-
-# ----------------------------------
 
 fname_sep_re = re.compile(r'[/\\:]')
 
@@ -171,8 +165,6 @@ class URLStripper(Stripper):
 received_complaints_re = re.compile(r'\([a-z]+(?:\s+[a-z]+)+\)')
 crack_urls = URLStripper().analyze
 	
-# ----------------------------------
-
 # remove html <style gimmicks.
 html_style_start_re = re.compile(r"""
     < \s* style\b [^>]* >
@@ -185,8 +177,6 @@ class StyleStripper(Stripper):
 
 crack_html_style = StyleStripper().analyze
 
-# ----------------------------------
-
 # remove html comments.
 class CommentStripper(Stripper):
 	def __init__(self):
@@ -196,8 +186,6 @@ class CommentStripper(Stripper):
 
 crack_html_comment = CommentStripper().analyze
 
-# ----------------------------------
-
 # remove stuff between <noframes> </noframes> tags.
 class NoframesStripper(Stripper):
 	def __init__(self):
@@ -206,8 +194,6 @@ class NoframesStripper(Stripper):
 						  re.compile(r"</noframes\s*>").search)
 
 crack_noframes = NoframesStripper().analyze
-
-# ----------------------------------
 
 # can html for constructs often seen in viruses and worms.
 # <script  </script
@@ -225,8 +211,6 @@ def find_html_virus_clues(text):
 	for bingo in virus_re.findall(text):
 		yield bingo
 
-# ----------------------------------
-
 numeric_entity_re = re.compile(r'&#(\d+);')
 
 def numeric_entity_replacer(m):
@@ -234,8 +218,6 @@ def numeric_entity_replacer(m):
 		return chr(int(m.group(1)))
 	except:
 		return '?'
-
-# ----------------------------------
 
 breaking_entity_re = re.compile(r"""
     &nbsp;
@@ -297,6 +279,7 @@ def tokenize_word(word, _len=len, maxword=default_skip_max_word_size, generate_l
 						hicount += 1
 					yield "8bit%%:%d" % round(hicount * 100.0 / len(word))
 
+
 def tokenize_text(text, maxword=default_skip_max_word_size, generate_long_skips=True, 
 				  do_short_runs=False):
 	"""
@@ -326,7 +309,8 @@ def tokenize_text(text, maxword=default_skip_max_word_size, generate_long_skips=
 					yield t
 	if short_runs and do_short_runs:
 		yield "short:%d" % int(log2(max(short_runs)))
-			
+	
+		
 def tokenize(text, maxword=default_skip_max_word_size, replace_nonascii_chars=False,
 			 generate_long_skips=True, short_runs=False):
 
@@ -369,5 +353,4 @@ def tokenize(text, maxword=default_skip_max_word_size, replace_nonascii_chars=Fa
 	for t in tokenize_text(	text, maxword=maxword, 
 							generate_long_skips=generate_long_skips, do_short_runs=short_runs):
 		yield t
-
 
