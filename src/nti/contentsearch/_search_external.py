@@ -15,6 +15,7 @@ from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch.common import get_attr
 from nti.contentsearch.common import get_content
 from nti.contentsearch.common import clean_query
+from nti.contentsearch.common import get_redaction_content
 from nti.contentsearch.common import get_multipart_content
 from nti.contentsearch.common import word_content_highlight
 from nti.contentsearch.common import ngram_content_highlight
@@ -150,6 +151,14 @@ class _HighlightSearchHit(_SearchHit):
 		text = get_content(get_attr(data, [selectedText_]))
 		data[SNIPPET] = text
 	
+class _RedactionSearchHit(_SearchHit):
+	component.adapts( nti_interfaces.IRedaction )
+	
+	def _supplement(self, data):
+		super(_RedactionSearchHit, self)._supplement(data)
+		text = get_redaction_content(data)
+		data[SNIPPET] = text
+		
 class _NoteSearchHit(_SearchHit):
 	component.adapts( nti_interfaces.INote )
 

@@ -5,8 +5,6 @@ from zope.interface.common.mapping import IFullMapping
 
 from nti.externalization import interfaces as ext_interfaces
 
-# -----------------------------
-
 class IRepozeDataStore(IFullMapping):
 	def has_user(username):
 		"""
@@ -14,9 +12,7 @@ class IRepozeDataStore(IFullMapping):
 		
 		:param user: username
 		"""
-
-# -----------------------------
-
+		
 class ICloudSearchStore(interface.Interface):
 	def get_connection():
 		"""
@@ -28,9 +24,6 @@ class ICloudSearchStore(interface.Interface):
 		return the cloud search domain with the specifeid name
 		"""
 		
-
-# -----------------------------
-
 class ISearcher(interface.Interface):
 	
 	def search(query, *args, **kwargs):
@@ -70,14 +63,10 @@ class ISearcher(interface.Interface):
 		:param search_on: type items to search
 		"""
 	
-# -----------------------------
-
 class IBookIndexManager(ISearcher):
 	def get_indexname(self):
 		return self.bookidx.indexname
 	
-# -----------------------------
-
 class IUserIndexManager(ISearcher):
 	
 		
@@ -127,16 +116,12 @@ class IUserIndexManager(ISearcher):
 		:param type_name: index type
 		"""
 	
-# -----------------------------
-
 class IUserIndexManagerFactory(interface.Interface):
 	def __call__(username, *args, **kwargs):
 		"""
 		return a user index manager for the specified user
 		"""
 		
-# -----------------------------
-	
 class IIndexManager(interface.Interface):
 	
 	def search(query, *args, **kwargs):
@@ -267,8 +252,6 @@ class IIndexManager(interface.Interface):
 		:param data: data to remove from index
 		:param type_name: data type
 		"""
-
-# -----------------------------
 	
 class IWhooshIndexStorage(interface.Interface):
 
@@ -329,8 +312,6 @@ class IWhooshIndexStorage(interface.Interface):
 		"""
 		return a dictionary with the arguments to be passed to an index writer commit method
 		""" 
-
-# -----------------------------
 
 class IHighlightType(interface.Interface):
 	pass

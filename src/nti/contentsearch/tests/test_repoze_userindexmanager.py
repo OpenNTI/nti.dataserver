@@ -5,6 +5,7 @@ from zope.component.hooks import resetHooks
 
 from nti.dataserver.users import User
 from nti.dataserver.contenttypes import Note
+from nti.dataserver.contenttypes import Redaction
 from nti.externalization.externalization import toExternalObject
 
 from nti.ntiids.ntiids import make_ntiid
@@ -187,6 +188,30 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 				hits = rims[x].search("ichigo", limit=None)
 				assert_that(hits, has_entry(HIT_COUNT, 1))
 
-
+	@WithMockDSTrans
+	def test_create_redaction(self):
+		username = 'kuchiki@bleach.com'
+		user = User.create_user(mock_dataserver.current_mock_ds, username=username, password='temp' )
+		redaction = Redaction()
+		redaction.selectedText = u'Fear'
+		redaction.replacementContent = 'redaction'
+		redaction.redactionExplanation = 'Have overcome it everytime I have been on the verge of death'
+		redaction.creator = username
+		redaction.containerId = make_ntiid(nttype='bleach', specific='manga')
+		redaction = user.addContainedObject( redaction )
+		
+		rim = RepozeUserIndexManager (username)
+		docid = rim.index_content(redaction)
+		assert_that(docid, is_not(None))
+		
+		hits = rim.search("fear", limit=None)
+		assert_that(hits, has_entry(HIT_COUNT, 1))
+		
+		hits = rim.search("death", limit=None)
+		assert_that(hits, has_entry(HIT_COUNT, 1))
+		
+		hits = rim.search("redaction", limit=None)
+		assert_that(hits, has_entry(HIT_COUNT, 1))
+				
 if __name__ == '__main__':
 	unittest.main()

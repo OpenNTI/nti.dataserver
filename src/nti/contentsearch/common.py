@@ -37,8 +37,6 @@ from nti.contentsearch import to_list
 import logging
 logger = logging.getLogger( __name__ )
 
-# -----------------------------------
-
 default_tokenizer = RegexpTokenizer(r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-']\w+)*", flags = re.MULTILINE | re.DOTALL)
 	
 ID 				= unicode(ext_interfaces.StandardExternalFields.ID)
@@ -110,12 +108,10 @@ redaction_ = u'redaction'
 messageinfo = u'messageinfo'
 messageinfo_ = messageinfo
 
-indexable_type_names = (note_, highlight_, messageinfo)
+indexable_type_names = (note_, highlight_, messageinfo, redaction_)
 
 WORD_HIGHLIGHT  = "WordHighlight"
 NGRAM_HIGHLIGHT = "NGRAMHighlight"
-
-# -----------------------------------
 
 def get_attr(obj, names, default=None):
 	if not obj: return default
@@ -157,8 +153,6 @@ def get_keywords(records):
 		result = ','.join(records)
 	return unicode(result)
 
-# -----------------------------------
-
 def normalize_type_name(x, encode=True):
 	result = ''
 	if x:
@@ -186,8 +180,6 @@ def get_collection(ntiid, default=None, registry=component):
 			paths = _library.pathToNTIID(ntiid)
 			result = paths[0].root if paths else default
 	return unicode(result.lower()) if result else default
-
-# -----------------------------------
 
 def get_external_oid(obj, default=None):
 	if IPersistent.providedBy(obj):
@@ -236,8 +228,6 @@ def get_last_modified(obj, default=None):
 	else:
 		value = 0
 	return value
-
-# -----------------------------------
 
 def get_multipart_content(source):
 	
@@ -292,7 +282,7 @@ def get_redaction_content(data):
 		elif isinstance(data, Redaction):
 			result.append(getattr(data, field, u''))
 	
-	result = ' '.join(result)
+	result = ' '.join([x for x in result if x is not None])
 	return unicode(result)
 
 def get_canvas_content(data):
@@ -343,8 +333,6 @@ def get_canvastextshape_content(data):
 		result = u''
 	return unicode(result)
 
-# -----------------------------------
-
 def ngram_tokens(text, minsize=3, maxsize=10, at='start', unique=True):
 	rext = analysis.RegexTokenizer()
 	ngf = analysis.NgramFilter(minsize=minsize, maxsize=maxsize, at=at)
@@ -360,7 +348,6 @@ def ngrams(text):
 	result = ' '.join(sorted(result, cmp=lambda x,y: cmp(x, y)))
 	return unicode(result)
 
-# -----------------------------------
 
 def set_matched_filter(tokens, termset, text, multiple_match=True):
 	index = {} if multiple_match else None
@@ -418,8 +405,6 @@ def word_content_highlight(query, text, analyzer=None, maxchars=300, surround=50
 	formatter = highlight.UppercaseFormatter()
 	return highlight.highlight(text, terms, analyzer, fragmenter, formatter)
 
-# -----------------------------------
-
 def get_content(text, tokenizer=default_tokenizer):
 	"""
 	return the text (words) to be indexed from the specified text
@@ -438,8 +423,6 @@ def get_content(text, tokenizer=default_tokenizer):
 		words = tokenizer.tokenize(text)
 		text = ' '.join(words)
 		return unicode(text)
-
-# -----------------------------------
 
 def _empty_result(query, is_suggest=False):
 	result = {}
@@ -509,8 +492,6 @@ def merge_suggest_results(a, b):
 	a[ITEMS] = list(a_set)
 	a[HIT_COUNT] = len(a[ITEMS])
 	return a
-
-# -----------------------------------
 
 class QueryExpr(object):
 	def __init__(self, expr):

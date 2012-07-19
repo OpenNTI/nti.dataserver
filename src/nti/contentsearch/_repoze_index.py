@@ -33,11 +33,7 @@ from nti.contentsearch.common import (	ngrams_, channel_, content_, keywords_, r
 import logging
 logger = logging.getLogger( __name__ )
 
-# -----------------------------------
-
 compute_ngrams = False #TODO: set this as part of a config
-
-# -----------------------------------
 
 def get_id(obj, default=None):
 	result = obj if isinstance(obj, six.string_types) else get_attr(obj, [ID])
@@ -70,8 +66,6 @@ def get_none(obj, default=None):
 get_oid = get_external_oid
 get_objectId = get_external_oid
 
-# -----------------------------------
-
 def _parse_words(obj, fields, default=None):
 	words = obj if isinstance(obj, six.string_types) else get_attr(obj, fields, default)
 	if words:
@@ -99,8 +93,6 @@ def get_sharedWith(obj, default=None):
 
 def get_related(obj, default=None):
 	return _parse_words(obj, [related_])
-
-# -----------------------------------
 
 def get_note_ngrams(obj, default=None):
 	if compute_ngrams:
@@ -162,8 +154,6 @@ def get_messageinfo_content(obj, default=None):
 	source = obj if isinstance(obj, six.string_types) else get_attr(obj, [BODY], default)
 	result = get_multipart_content(source)
 	return result.lower() if result else None
-
-# -----------------------------------
 
 def _create_text_index(field, discriminator):
 	return CatalogTextIndexNG3(field, discriminator)
