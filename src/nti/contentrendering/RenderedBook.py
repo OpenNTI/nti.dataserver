@@ -245,6 +245,7 @@ class _EclipseTOCMiniDomTopic(object):
 	modifiedTopic = False
 	modifiedDom = False
 	_dom = None
+	_doc = None
 	ordinal = 1
 	_childTopics = None
 
@@ -422,7 +423,7 @@ class _EclipseTOCMiniDomTopic(object):
 			# 	logger.warn( "Failed to parse %s as XML. Will try HTML.", self.sourceFile, exc_info=False )
 			# if body_len != 1:
 			# 	dom = PyQuery( filename=self.sourceFile, parser="html" )
-
+			self._doc = doc
 			self._dom = dom
 		return self._dom
 
@@ -434,7 +435,25 @@ class _EclipseTOCMiniDomTopic(object):
 			with codecs.open( self.sourceFile, 'w',
 							  encoding='ascii',
 							  errors='xmlcharrefreplace') as f:
-				f.write( etree.tostring( self._dom[0], method='html', encoding=unicode ) )
+				# We parsed with html5lib, we need to write with html5lib
+				# If we don't, if we write with etree:
+				# ... etree.tostring( self._doc, method='html', encoding=unicode )
+				# we wind up with things that break in HTML5. Specifically, <SVG> nodes
+				# wind up with a namespace, which is not acceptable
+				walker = treewalkers.getTreeWalker("lxml")
+				# Write the original, whole doc, which will reflect the PyQuery modifications (not self._dom)
+				# This way we get the doctype
+				stream = walker(self._doc)
+				s = serializer.xhtmlserializer.XHTMLSerializer(inject_meta_charset=False,
+															   omit_optional_tags=False,
+															   quote_attr_values=True,
+															   strip_whitespace=True,
+															   use_trailing_solidus=True,
+															   space_before_trailing_solidus=True,
+															   sanitize=False )
+				for i in s.serialize(stream):
+					f.write( i )
+
 				f.flush()
 
 	def set_ntiid( self ):
