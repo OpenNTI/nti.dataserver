@@ -69,3 +69,30 @@ def test_oneHint():
     assert_that( dom.textContent, is_(" Arbitrary content goes here.  "))
 
 
+def test_part():
+    example = br"""
+    \begin{parts}
+    \part part a.
+    \part part b.
+    \part part c.
+    \part part d.
+    \part part e.
+    \part part f.
+    \end{parts}
+    """
+    dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
+    assert_that( dom.getElementsByTagName('part'), has_length( 6 ) )
+
+def test_omit_part():
+    example = br"""
+    \begin{parts}
+    \part part a.
+    \part part b.
+    \part part c.
+    \part part d.
+    \part part e.
+    \part[]
+    \end{parts}
+    """
+    dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
+    assert_that( dom.getElementsByTagName('part'), has_length( 5 ) )
