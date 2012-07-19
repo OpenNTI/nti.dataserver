@@ -548,7 +548,7 @@ class ContentUnitInfoHrefDecorator(object):
 			return
 
 		link = links.Link( nearest_site, elements=('Objects', context.ntiid) )
-		link.__parent__ = nearest_site.__parent__
+		link.__parent__ = getattr(nearest_site, '__parent__', None) # Nearest site may be IRoot, which has no __parent__
 		link.__name__ = ''
 		interface.alsoProvides( link, loc_interfaces.ILocation )
 
