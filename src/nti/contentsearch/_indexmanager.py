@@ -98,7 +98,7 @@ class IndexManager(object):
 	
 		jobs = []
 		try:
-			# search user contentc
+			# search user content
 			self._ugd_search_jobs(query, jobs) if username else []
 		
 			# search books
@@ -109,13 +109,12 @@ class IndexManager(object):
 			gevent.joinall(jobs)
 		
 		# merge results
-		results = None
+		results = empty_search_result(query.term)
 		for job in jobs:
 			results = merge_search_results (results, job.value)
 			
-		if results:
-			logger.debug("Query '%s' returned %s hit(s)" % (query.term, results[HIT_COUNT]))
-		return results
+		logger.debug("Query '%s' returned %s hit(s)" % (query.term, results[HIT_COUNT]))
+		return results 
 		
 	@SearchCallWrapper
 	def ngram_search(self, query, *args, **kwargs):
@@ -135,7 +134,7 @@ class IndexManager(object):
 			gevent.joinall(jobs)
 		
 		# merge results
-		results = None
+		results = empty_search_result(query.term)
 		for job in jobs:
 			results = merge_search_results (results, job.value)
 		return results
@@ -158,7 +157,7 @@ class IndexManager(object):
 			gevent.joinall(jobs)
 		
 		# merge results
-		results = None
+		results = empty_suggest_and_search_result(query.term)
 		for job in jobs:
 			results = merge_suggest_and_search_results(results, job.value)
 		return results
@@ -181,7 +180,7 @@ class IndexManager(object):
 			gevent.joinall(jobs)
 		
 		# merge results
-		results = None
+		results = empty_suggest_result(query.term)
 		for job in jobs:
 			results = merge_suggest_results(results, job.value)
 		return results
@@ -198,7 +197,7 @@ class IndexManager(object):
 			if bmi:
 				result = True
 				self.books[indexname] = bmi
-				logger.warn("Book index '%s' has been added to index manager" % indexname)
+				logger.info("Book index '%s' has been added to index manager" % indexname)
 			else:
 				logger.warn("Could not add book index '%s,%r' to index manager" % (indexname,kwargs))
 		return result
