@@ -11,6 +11,9 @@ import xml.dom.minidom
 import sys
 import contentrange
 import _domrange
+import re
+import math
+import time
 
 class treewalker(object):
 	"""
@@ -22,6 +25,14 @@ class treewalker(object):
 		Goes to next or previous node in the order that nodes come in the XML
 		representation of the tree
 		"""
+		cur_node = node
+		while cur_node is not None and self.near_sibling(cur_node) is None:
+			cur_node = cur_node.parentNode
+		if cur_node is None: return None
+		cur_node = self.near_sibling(cur_node)
+		while len(cur_node.childNodes) > 0:
+			cur_node = self.near_child(cur_node)
+		return cur_node
 		if self.near_sibling(node) is not None:
 			output = self.near_sibling(node)
 			while len(output.childNodes) > 0:
@@ -30,32 +41,10 @@ class treewalker(object):
 		if node.parentNode is None:
 			return None
 		return self.onestep(node.parentNode)
-	def one_word_grab(self,node,offset):
-		""" 
-		Moves one word forward or back and returns that word
-		"""
-		if node is None:
+	def first_word(self,node):
+		if node is None or node.nodeType != node.TEXT_NODE:
 			 return '', node, offset
-		if node.nodeType != node.TEXT_NODE or offset > len(node.data):
-			return self.one_word_grab(self.onestep(node), 0)
-		if offset == -1:
-			offset = self.beginning(node.data)
-		next_space = self.find_space(node.data, offset)
-		if next_space >= 0:
-			low,high = min(offset,next_space), max(offset,next_space)
-			return node.data[low:high], node, next_space
-		else:
-			new_node = self.onestep(node)
-			low = min(offset,self.end(node.data))
-			high = max(offset,self.end(node.data))
-			return node.data[low:high], new_node, -1
-	def n_words(self, node, offset, n):
-		wordlist,nd,os = [], node, offset
-		for i in range(n):
-			new_word, nd, os = self.one_word_grab(nd, os)
-			if new_word.strip():
-				self.insert(wordlist,new_word.strip())
-		return wordlist
+		return re.search(self.first_word_regexp,node.data).group(0)
 	def near_child(self,node): return node.childNodes[self.front_element]
 	def remove(self,x): return x.pop(self.front_element)
 	def insert(self,x,e): x.insert(self.end(x),e)
@@ -63,15 +52,16 @@ class treewalker(object):
 class backward(treewalker):
 	role = "start"
 	front_element = -1
+	first_word_regexp = '\S*\s?$'
 	def beginning(self,a_list): return len(a_list)
 	def end(self,a_list): return 0
 	def near_sibling(self,node): return node.previousSibling
 	def find_space(self,string,offset): return string.rfind(' ',0,offset - 1)
-	def context_offset(self,node,lastspace,ctx):
-		return len(node.data) - lastspace - len(ctx.contextText)
+	def context_offset(self,node,lastspace,ctx): return len(node.data) - lastspace
 class forward(treewalker):
 	role = "end"
 	front_element = 0
+	first_word_regexp = '^\s?\S*'
 	def beginning(self,a_list): return 0
 	def end(self,a_list): return len(a_list)
 	def near_sibling(self,node): return node.nextSibling
@@ -98,6 +88,12 @@ def is_anchorable (node):
 			if node.getAttribute('id').startswith(x): return False
 		return True
 	return False
+
+def list_all_children (node):
+	if len(node.childNodes) == 0: return [node]
+	total = []
+	for c in node.childNodes: total.extend(list_all_children(c))
+	return total
 
 def get_anchorable_ancestor(a,b=None):
 	if b is not None:
@@ -139,21 +135,18 @@ def domToContentRange(domrange):
 		return_ctx.contextText = left+right
 		return_ctx.contextOffset = \
 				 directionals.context_offset(node,lastspace,return_ctx)
-		# Append additional contexts until 15 characters or 5 contexts
+		# Append additional contexts until 15 characters or 5 secondary contexts
 		return_ptr = contentrange.TextDomContentPointer()
 		return_ptr.contexts = [return_ctx]
-		total_chars = len(left)
+		total_chars = 0
 		cur_node = directionals.onestep(node)
 		# Cycle through successive nodes to get our additional contexts
-		while cur_node is not None and total_chars < 15 and len(return_ptr.contexts) < 5:
-			while cur_node is not None and \
-					cur_node.nodeType != cur_node.TEXT_NODE:
-				cur_node = directionals.onestep(cur_node)
-			new_context = []
-			remainder = cur_node.data.split(' ')
-			while total_chars + len(' '.join(new_context)) < 15 and len(remainder) > 0:
-				directionals.insert(new_context, directionals.remove(remainder))
-			new_ctx_string = ' '.join(new_context).strip()
+		while cur_node is not None and total_chars < 15 and len(return_ptr.contexts) <= 5:
+			if cur_node is None: break
+		 	if cur_node.nodeType != cur_node.TEXT_NODE:
+				new_ctx_string = ''
+			else:
+				new_ctx_string = directionals.first_word(cur_node)
 			new_ctx = contentrange.TextContext()
 			new_ctx.contextText = new_ctx_string
 			total_chars += len(new_ctx_string)
@@ -176,7 +169,6 @@ def domToContentRange(domrange):
 	return output
 
 def contentToDomRange(contentrange,document):
-
 	def seek_dom_element (ancestor,ptr):
 		if ancestor.nodeType == ancestor.ELEMENT_NODE and \
 				ancestor.getAttribute('id') == ptr.elementId and \
@@ -194,47 +186,71 @@ def contentToDomRange(contentrange,document):
 		else:
 			# Text pointer case
 			ancestor = seek_dom_element(document,contentrange.ancestor)
+			treewalk = {"start":backward(), "end":forward()}[point.role].onestep
 
-			def seek_text (node, point, start_limit=None):
+			def get_matches (node, point, start_limit=None):
 				if node.nodeType == node.TEXT_NODE:
-					back_textnodes = [node.data]
+					# Get all matches for the primary context
+					allmatches, left = [], -1
+					while 1:
+						left = node.data.find(point.contexts[0].contextText,left+1)
+						if left == -1: break
+						f = math.sqrt(len(node.data)) * 2 + 1.0
+						if point.role == "start":
+							offset = len(node.data) - point.contexts[0].contextOffset
+						else:
+							offset = point.contexts[0].contextOffset
+						score = f / (f + abs(left - offset))
+						allmatches.append((left,score))
+					# Check additional contexts
+					score_multiplier = 1
 					cur_node = node
-					treewalk = {"start":backward(), "end":forward()}[point.role].onestep
-					while len(back_textnodes) < len(point.contexts):
+					failed = False
+					for i,cxt in enumerate(point.contexts[1:]):
 						cur_node = treewalk(cur_node)
-						if cur_node == None:
-							return None 
-						if cur_node.nodeType == cur_node.TEXT_NODE:
-							back_textnodes.append(cur_node.data)
-					for i,cxt in enumerate(point.contexts):
-						if back_textnodes[i].find(cxt.contextText)  == -1:
-							return None
-					pos = node.data.find(point.contexts[0].contextText) + point.edgeOffset
-					output = _domrange.position(node,pos)
-					# Some checks based on the information that we can gain
-					# based on the given start node (start_limit)
-					if start_limit is None: return output
-					# Check if the ancestor is what it should be
-					anc = get_anchorable_ancestor(start_limit.node,node)
-					if anc.attributes == None or \
-							anc.getAttribute("id") != contentrange.ancestor.elementId:
-						return None
-					# Is the end we found after the start?
-					if output > start_limit: return output
-					return None
+						if cur_node is None: failed = True
+						elif cur_node.nodeType == cur_node.TEXT_NODE and \
+								cur_node.data.find(cxt.contextText) == -1: failed = True
+						elif cur_node.nodeType == cur_node.ELEMENT_NODE and \
+								cxt.contextText != '': failed = True
+						if failed:
+							# Differs from the spec's i/i+0.5 formula because i
+							# is the index only among _secondary_ contexts
+							score_multiplier = (i + 1) / (i + 1.5)
+							break
+					cur_node = treewalk(cur_node)
+					nsc = len(point.contexts) - 1
+					totalchars = sum([len(c.contextText) for c in point.contexts[1:]])
+					if score_multiplier == 1 and nsc < 5 and totalchars < 15:
+						if cur_node is not None:
+							score_multiplier = (nsc + 1) / (nsc + 1.5)
+					outputs = [(_domrange.position(node,o[0] + point.edgeOffset),o[1] * score_multiplier)
+									 for o in allmatches]
+					if start_limit is None: return outputs
+					return filter(lambda x: x[0] > start_limit, outputs)
 				else:
+					child_results = []
+					sl = start_limit
+					if start_limit is not None:
+						if _domrange.position(node,999999) < start_limit:
+							return []
+						elif _domrange.position(node,0) > start_limit:
+							sl = None
 					for c in node.childNodes:
-						child_result = seek_text(c,point,start_limit)
-						if child_result is not None:
-							return child_result
-				return None
+						a = get_matches(c,point,sl)
+						if a is not None: child_results.extend(a)
+					return child_results
+				return []
 
-			return_pos = seek_text(ancestor,point,start_limit)
-			return return_pos
+			all_matches = sorted(get_matches(ancestor,point,start_limit),key=lambda x:x[1])
+			#print ("All: ",all_matches)
+			#print ("Contexts: ",[c.contextText+'/'+str(c.contextOffset) for c in point.contexts])
+			return all_matches[-1][0] if len(all_matches) > 0 else None
+
 
 	output = _domrange.Range()
 	point = point_convert(contentrange.start)
-	if point.node is None: return None
+	if point is None or point.node is None: return None
 	output.start.set(point.node,point.offset)
 	point = point_convert(contentrange.end,point)
 	if point is None: return None
