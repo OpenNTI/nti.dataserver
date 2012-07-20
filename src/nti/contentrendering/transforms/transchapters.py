@@ -28,3 +28,17 @@ def transform(document):
 			chapterquote.parentNode.removeChild( chapterquote )
 			parent.nextSibling.insert( 0, chapterquote )
 			parent.nextSibling.insert( 1, chapterauthor )
+			
+	for rightpic in document.getElementsByTagName( 'rightpic' ):
+		if rightpic.parentNode.parentNode.nodeName == 'exer':
+			exerParent = rightpic.parentNode.parentNode
+			
+			#make sure that it's indeed the rightpic that we should move
+			if exerParent.lastChild.firstChild == rightpic and exerParent.nextSibling != None and exerParent.nextSibling.nodeName == 'exer':
+				#move it down a level
+				logger.info( "Moving rightpic %s of exercise %s down a level to exercise %s", rightpic, exerParent, exerParent.nextSibling )
+				#step 1: rm
+				exerParent.lastChild.removeChild(rightpic)
+				#step2: add it to the next sibling
+				exerParent.nextSibling.firstChild.appendChild(rightpic)
+	
