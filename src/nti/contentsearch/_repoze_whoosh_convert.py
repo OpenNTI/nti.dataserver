@@ -1,11 +1,17 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+$Id$
+"""
 from __future__ import print_function, unicode_literals
 
-import re
-import datetime
-
-from whoosh import fields
-
+from repoze.catalog.catalog import FileStorageCatalogFactory
+from repoze.catalog.catalog import ConnectionManager
 import repoze.catalog.query as repquery
+import datetime
+from whoosh import fields
+import re
+import numbers
 
 class QueryConverter(object):
 	
@@ -15,10 +21,9 @@ class QueryConverter(object):
 					'lastmodified': 'last_modified', 'lm': 'last_modified',
 					'keywords': 'keywords', 'kw': 'keywords', 
 					'creator': 'creator', 'containerid': 'containerId'}
-	months = ['','january','february','march','april','may','june','july',
-				'august','september','october','november','december']
-	
-	#keywords:keywords,content:content,quick:quick,last_modified:last_modified
+	months = ('','january','february','march','april','may','june','july',
+				'august','september','october','november','december')
+    #keywords:keywords,content:content,quick:quick,last_modified:last_modified
 	
 	def __init__(self, schema=None, catalog=None):
 		self.schema = schema
@@ -39,19 +44,16 @@ class QueryConverter(object):
 	def convert_base_query(self,q):
 
 		def date_convert(timestamp):
-			d = datetime.datetime(1,1,1).fromtimestamp(timestamp)
+			d = datetime.datetime.fromtimestamp(timestamp)
 			y,m,d = str(d.year), self.months[d.month], str(d.day)
 			return d + ' ' + m + ' ' + y
 
 		def translate(index):
 			stripped = re.sub('[^A-Za-z]','',index).lower()
-			if stripped in self.translations:
-				return self.translations[stripped]
-			else:
-				return index
+			return self.translations.get(stripped, index)
 
 		def process(val):
-			if isinstance(val,int) or isinstance(val,float):
+			if isinstance(val, numbers.Real):
 				return str(val)
 			if ' ' in val:
 				return "'"+val+"'"
@@ -59,10 +61,10 @@ class QueryConverter(object):
 
 		for it in self.iteratives:
 			if isinstance(q,it):
-				symbol = 'OR' if it in (repquery.Any, repquery.NotAny) else 'AND'
+				symbol = 'OR' if it in (repquery.Any, repquery.NotAny) else AND
 				output = ''
 				for i,v in enumerate(q.value):
-					output += self.convert_base_query(repquery.Eq(q.index_name,v))
+					output += self.convert_base_query(Eq(q.index_name,v))
 					if i < len(q.value) - 1: output += ' ' + symbol + ' '
 				if it in (repquery.NotAny, repquery.NotAll):
 					output = 'NOT (' + output + ')'
