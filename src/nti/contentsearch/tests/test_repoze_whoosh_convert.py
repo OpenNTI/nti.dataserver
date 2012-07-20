@@ -1,5 +1,9 @@
 #!/usr/bin/env python																	 
 # -*- coding: utf-8 -*-
+"""
+$Id$
+"""
+from __future__ import print_function, unicode_literals
 
 from repoze.catalog.catalog import FileStorageCatalogFactory							  
 from repoze.catalog.catalog import ConnectionManager									  
@@ -93,7 +97,3 @@ class RepozeWhooshConversionTests(unittest.TestCase):
 		assert_that(self.q.convert_query(query)[:6], is_("ntiid:"))
 		query = repquery.Eq('kw','keyword')
 		assert_that(self.q.convert_query(query)[:9], is_("keywords:"))
-		
-
-if __name__ == '__main__':
-	unittest.main()
