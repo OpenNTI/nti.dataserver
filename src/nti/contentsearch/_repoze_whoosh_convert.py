@@ -4,7 +4,7 @@ from __future__ import print_function, unicode_literals
 
 import re
 import numbers
-import datetime
+from datetime import datetime
 
 from whoosh import fields
 import repoze.catalog.query as repquery
@@ -41,7 +41,7 @@ class QueryConverter(object):
 	def convert_base_query(self,q):
 
 		def date_convert(timestamp):
-			d = datetime.datetime.fromtimestamp(timestamp)
+			d = datetime.fromtimestamp(timestamp)
 			y,m,d = str(d.year), self.months[d.month], str(d.day)
 			return d + ' ' + m + ' ' + y
 
@@ -52,9 +52,10 @@ class QueryConverter(object):
 		def process(val):
 			if isinstance(val, numbers.Real):
 				return str(val)
-			if ' ' in val:
-				return "'"+val+"'"
-			return val
+			elif ' ' in val:
+				return "'" + val + "'"
+			else:
+				return val
 
 		for it in self.iteratives:
 			if isinstance(q,it):
