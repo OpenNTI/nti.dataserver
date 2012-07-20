@@ -377,7 +377,26 @@ class exercises(Base.subsection):
 
 		return res
 
-class exer(plastexids.StableIDMixin, Base.subsubsection):
+
+class _SubSectionWithHint(Base.subsection):
+	args = ''
+	
+	def digest(self, tokens):
+		""" Where we have two consecutive hints, we would like to remove the separating ',' (Fix renegade commas issue)
+			We have observed two patterns of this issue: <hint>','<hint> and <hint>',''~'<hint>
+			and in both cases, we want to omit the comma. 
+		"""
+		super(_SubSectionWithHint,self).digest( tokens )
+		hintName = 'hint'
+		for node in self.childNodes:
+			for child in node.childNodes:
+				if child.nextSibling != None and child.nextSibling.nextSibling != None:	
+					if child.nodeName == hintName and child.nextSibling == ', ' and child.nextSibling.nextSibling.nodeName == hintName:
+						node.removeChild(child.nextSibling)
+					elif child.nodeName == hintName and child.nextSibling == ',' and child.nextSibling.nextSibling.source == '~ ' and child.nextSibling.nextSibling.nextSibling != None and child.nextSibling.nextSibling.nextSibling.nodeName == hintName:
+						node.removeChild(child.nextSibling)
+
+class exer(plastexids.StableIDMixin, _SubSectionWithHint):
 	args = ''
 	counter = 'exnumber'
 	title = 'exer'
@@ -671,7 +690,7 @@ class challengeprobs(Base.section):
 		return res
 
 
-class revprob(Base.subsection):
+class revprob(_SubSectionWithHint):
 	args = ''
 	counter = 'probnum'
 	title = 'revprob'
@@ -681,25 +700,7 @@ class revprob(Base.subsection):
 		self.attributes['probnum'] = str(self.ownerDocument.context.counters['chapter'].value) + '.' + str(self.ownerDocument.context.counters['probnum'].value)
 		return res
 
-class _ChallProb(Base.subsection):
-	args = ''
-	
-	def digest(self, tokens):
-		""" Where we have two consecutive hints, we would like to remove the separating ',' (Fix renegade commas issue)
-			We have observed two patterns of this issue: <hint>','<hint> and <hint>',''~'<hint>
-			and in both cases, we want to omit the comma. 
-		"""
-		super(_ChallProb,self).digest( tokens )
-		hintName = 'hint'
-		for node in self.childNodes:
-			for child in node.childNodes:
-				if child.nextSibling != None and child.nextSibling.nextSibling != None:	
-					if child.nodeName == hintName and child.nextSibling == ', ' and child.nextSibling.nextSibling.nodeName == hintName:
-						node.removeChild(child.nextSibling)
-					elif child.nodeName == hintName and child.nextSibling == ',' and child.nextSibling.nextSibling.source == '~ ' and child.nextSibling.nextSibling.nextSibling != None and child.nextSibling.nextSibling.nextSibling.nodeName == hintName:
-						node.removeChild(child.nextSibling)
-
-class chall(_ChallProb):
+class chall(_SubSectionWithHint):
 	args = ''
 	counter = 'probnum'
 	title = 'chall'
@@ -709,7 +710,7 @@ class chall(_ChallProb):
 		self.attributes['probnum'] = str(self.ownerDocument.context.counters['chapter'].value) + '.' + str(self.ownerDocument.context.counters['probnum'].value)
 		return res
 
-class challhard(_ChallProb):
+class challhard(_SubSectionWithHint):
 	args = ''
 	counter = 'probnum'
 	title = 'challhard'
