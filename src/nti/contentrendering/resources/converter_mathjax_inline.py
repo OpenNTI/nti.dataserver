@@ -82,7 +82,7 @@ class MathjaxInlineCompilerDriver(converters.AbstractOneOutputDocumentCompilerDr
 
 	def _compilation_source_for_content_unit( self, content_unit ):
 		tex_without_delimiters = content_unit.source[1:-1]
-		return '<span class="mathjax math tex2jax_process mathquill-embedded-latex">\(%s\)</span>' % cgi.escape(tex_without_delimiters)
+		return '<span class="mathjax math tex2jax_process">\(%s\)</span>' % cgi.escape(tex_without_delimiters)
 
 	def writePostamble(self):
 		self.write('</body></html>')
