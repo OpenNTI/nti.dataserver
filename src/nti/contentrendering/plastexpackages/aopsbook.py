@@ -377,26 +377,17 @@ class exercises(Base.subsection):
 
 		return res
 
+def removeCommasFromSectionWithHints(subsection):
+	hintName = 'hint'
+	for node in subsection.childNodes:
+		for child in node.childNodes:
+			if child.nextSibling != None and child.nextSibling.nextSibling != None:	
+				if child.nodeName == hintName and child.nextSibling == ', ' and child.nextSibling.nextSibling.nodeName == hintName:
+					node.removeChild(child.nextSibling)
+				elif child.nodeName == hintName and child.nextSibling == ',' and child.nextSibling.nextSibling.source == '~ ' and child.nextSibling.nextSibling.nextSibling != None and child.nextSibling.nextSibling.nextSibling.nodeName == hintName:
+					node.removeChild(child.nextSibling)
 
-class _SubSectionWithHint(Base.subsection):
-	args = ''
-	
-	def digest(self, tokens):
-		""" Where we have two consecutive hints, we would like to remove the separating ',' (Fix renegade commas issue)
-			We have observed two patterns of this issue: <hint>','<hint> and <hint>',''~'<hint>
-			and in both cases, we want to omit the comma. 
-		"""
-		super(_SubSectionWithHint,self).digest( tokens )
-		hintName = 'hint'
-		for node in self.childNodes:
-			for child in node.childNodes:
-				if child.nextSibling != None and child.nextSibling.nextSibling != None:	
-					if child.nodeName == hintName and child.nextSibling == ', ' and child.nextSibling.nextSibling.nodeName == hintName:
-						node.removeChild(child.nextSibling)
-					elif child.nodeName == hintName and child.nextSibling == ',' and child.nextSibling.nextSibling.source == '~ ' and child.nextSibling.nextSibling.nextSibling != None and child.nextSibling.nextSibling.nextSibling.nodeName == hintName:
-						node.removeChild(child.nextSibling)
-
-class exer(plastexids.StableIDMixin, _SubSectionWithHint):
+class exer(plastexids.StableIDMixin, Base.subsection):
 	args = ''
 	counter = 'exnumber'
 	title = 'exer'
@@ -407,6 +398,10 @@ class exer(plastexids.StableIDMixin, _SubSectionWithHint):
 		self.attributes['exnumber'] = str(self.ownerDocument.context.counters['chapter'].value) + '.' + str(self.ownerDocument.context.counters['section'].value) + '.' + str(self.ownerDocument.context.counters['exnumber'].value)
 
 		return res
+	
+	def digest(self, tokens):
+		super(exer, self).digest( tokens )
+		removeCommasFromSectionWithHints(self)
 
 	def postParse(self, tex):
 		super(exer, self).postParse(tex)
@@ -690,7 +685,7 @@ class challengeprobs(Base.section):
 		return res
 
 
-class revprob(_SubSectionWithHint):
+class revprob(Base.subsection):
 	args = ''
 	counter = 'probnum'
 	title = 'revprob'
@@ -699,8 +694,12 @@ class revprob(_SubSectionWithHint):
 		res = super(revprob,self).invoke( tex )
 		self.attributes['probnum'] = str(self.ownerDocument.context.counters['chapter'].value) + '.' + str(self.ownerDocument.context.counters['probnum'].value)
 		return res
+	
+	def digest(self, tokens):
+		super(revprob, self).digest( tokens )
+		removeCommasFromSectionWithHints( self )
 
-class chall(_SubSectionWithHint):
+class chall(Base.subsection):
 	args = ''
 	counter = 'probnum'
 	title = 'chall'
@@ -709,8 +708,12 @@ class chall(_SubSectionWithHint):
 		res = super(chall,self).invoke( tex )
 		self.attributes['probnum'] = str(self.ownerDocument.context.counters['chapter'].value) + '.' + str(self.ownerDocument.context.counters['probnum'].value)
 		return res
+	
+	def digest(self, tokens):
+		super(chall, self).digest( tokens )
+		removeCommasFromSectionWithHints( self )
 
-class challhard(_SubSectionWithHint):
+class challhard(Base.subsection):
 	args = ''
 	counter = 'probnum'
 	title = 'challhard'
@@ -719,6 +722,10 @@ class challhard(_SubSectionWithHint):
 		res = super(challhard,self).invoke( tex )
 		self.attributes['probnum'] = str(self.ownerDocument.context.counters['chapter'].value) + '.' + str(self.ownerDocument.context.counters['probnum'].value)
 		return res
+	
+	def digest(self, tokens):
+		super(challhard, self).digest( tokens )
+		removeCommasFromSectionWithHints( self )
 
 #for \nth, \nst, \nrd, etc..
 class nsuperscript(Base.Command):
