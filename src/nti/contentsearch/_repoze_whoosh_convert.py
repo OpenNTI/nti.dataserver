@@ -1,9 +1,11 @@
-from repoze.catalog.catalog import FileStorageCatalogFactory
-from repoze.catalog.catalog import ConnectionManager
-import repoze.catalog.query as repquery
-import datetime
-from whoosh import fields
+from __future__ import print_function, unicode_literals
+
 import re
+import datetime
+
+from whoosh import fields
+
+import repoze.catalog.query as repquery
 
 class QueryConverter(object):
 	
@@ -15,7 +17,8 @@ class QueryConverter(object):
 					'creator': 'creator', 'containerid': 'containerId'}
 	months = ['','january','february','march','april','may','june','july',
 				'august','september','october','november','december']
-    #keywords:keywords,content:content,quick:quick,last_modified:last_modified
+	
+	#keywords:keywords,content:content,quick:quick,last_modified:last_modified
 	
 	def __init__(self, schema=None, catalog=None):
 		self.schema = schema
@@ -56,10 +59,10 @@ class QueryConverter(object):
 
 		for it in self.iteratives:
 			if isinstance(q,it):
-				symbol = 'OR' if it in (repquery.Any, repquery.NotAny) else AND
+				symbol = 'OR' if it in (repquery.Any, repquery.NotAny) else 'AND'
 				output = ''
 				for i,v in enumerate(q.value):
-					output += self.convert_base_query(Eq(q.index_name,v))
+					output += self.convert_base_query(repquery.Eq(q.index_name,v))
 					if i < len(q.value) - 1: output += ' ' + symbol + ' '
 				if it in (repquery.NotAny, repquery.NotAll):
 					output = 'NOT (' + output + ')'
