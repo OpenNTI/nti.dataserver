@@ -387,7 +387,7 @@ def removeCommasFromSectionWithHints(subsection):
 				elif child.nodeName == hintName and child.nextSibling == ',' and child.nextSibling.nextSibling.source == '~ ' and child.nextSibling.nextSibling.nextSibling != None and child.nextSibling.nextSibling.nextSibling.nodeName == hintName:
 					node.removeChild(child.nextSibling)
 
-class exer(plastexids.StableIDMixin, Base.subsection):
+class exer(plastexids.StableIDMixin, Base.subsubsection):
 	args = ''
 	counter = 'exnumber'
 	title = 'exer'
