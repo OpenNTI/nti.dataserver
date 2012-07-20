@@ -623,32 +623,35 @@ Note that multiple matches within a text node are possible - "I see
 a dog. I do not see a cat." for the ``contextText`` "see a" is one such
 example, with matches at indices 2 and 22.
 
-Then, evaluate the secondary contexts to create a secondary
-score (this will be the same for all matches since all
-matches are in the same node and thus generate their secondary
-contexts from the same place). If a match fails at context object
-index *i*, this score is ``i / (i + 0.5)`` (fixed coefficient once
-again not set in stone) - 0.66 if the first secondary context fails,
-0.8 if the second does, etc. If all secondary contexts match, check
-happens if the context object has a small number of secondary
-contexts (< 15 chars and < 5 contexts). This should only happen if
-the secondary context generation algorithm ran into the end of the
-document, meaning that the *nth* text node in the DOM after the 
-current node should be null. If the number of secondary contexts is
-small and this is not the case, set the secondary score to ``n / (n + 0.5)``
-(*n* being the number of total context objects). All scores for individual
-matches are multiplied by this common secondary score, and all matches
-are sent off with the matching node, the matching offset and the score -
-something like:
+Then, create a *score multiplier* for each text node according to the
+following algorithm.
 
-``[(node: <DOM Object>, offset: 2, score: 0.40), (node: <DOM Object>, offset: 22, score: 0.33)]``
+1. Go through all of the secondary contexts and attempt to match them
+against the corresponding node. Matches need to be exact, with the
+exact offset given by the context object's ``contextOffset`` property,
+to pass (which should not be a problem since the ``contextOffset`` is
+essentially just the length of the first or last word).
 
-in our dog and cat example.
+a. If context object index *i* fails to match, set the *score
+multiplier* to ``i / (i + 0.5)`` (0.66 if the first secondary context
+ fails, 0.8 if the second does, etc) and break.   
+b. If all secondary contexts match, check if the number of secondary
+contexts is maximal (ie. either 15+ chars or 5+ secondary contexts). If
+it is, set the *score multiplier* to 1. If it is not, that implies
+that the secondary context generation algorithm was prevented from
+finishing because it reached the beginning or end of the document, and
+therefore must have finished at a null node. Check this assumption. If
+it turns out to be false, set the *score multiplier* to ``n / (n + 0.5)``
+(``n`` being the number of context objects, including the primary).
 
-Collect all matches from all examples. If any of them have a perfect
-score, then return that match. If not, then if the ancestor node
-resolves, return the highest-scoring match. If not, return a failure
-(consider changing this in the future).
+For each text node, multiply the scores of all of the matches for that
+text node by the text node's calculated *score multiplier*.
+
+If any match from any of the visited ``textNodes`` has a perfect score, 
+return that match. If not, then if the ancestor node resolves, return the
+highest-scoring match out of all the matches from all visited ``textNodes``. 
+If the ancestor node does not resolve, return a failure (consider changing 
+this in the future).
 
 If a ``textNode`` has been identified as the start or end container, a
 range can be constructed as follows. If anchor ``role`` is ``start``,
