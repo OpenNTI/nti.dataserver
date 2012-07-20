@@ -44,7 +44,7 @@ class TestContainerPrefs(ConfiguringTestBase):
 		config = super(TestContainerPrefs,self).setUp()
 		config.testing_securitypolicy( self.rem_username )
 
-	def _do_check_root_inherited(self, ntiid=None, sharedWith=None):
+	def _do_check_root_inherited(self, ntiid=None, sharedWith=None, state='inherited', provenance=ntiids.ROOT):
 		class ContentUnitInfo(object):
 			contentUnit = None
 			lastModified = 0
@@ -61,10 +61,10 @@ class TestContainerPrefs(ConfiguringTestBase):
 		decorator.decorateExternalMapping( info, result_map )
 
 		assert_that( result_map, has_entry( 'sharingPreference',
-											has_entry( 'State', 'inherited' ) ) )
+											has_entry( 'State', state ) ) )
 
 		assert_that( result_map, has_entry( 'sharingPreference',
-											has_entry( 'Provenance', ntiids.ROOT ) ) )
+											has_entry( 'Provenance', provenance ) ) )
 		assert_that( result_map, has_entry( 'sharingPreference',
 											has_entry( 'sharedWith', sharedWith ) ) )
 		if sharedWith:
@@ -86,6 +86,21 @@ class TestContainerPrefs(ConfiguringTestBase):
 		prefs = app_interfaces.IContentUnitPreferences( user.getContainer( root_cid ) )
 		prefs.sharedWith = ['a@b']
 
+		self._do_check_root_inherited( ntiid=cid, sharedWith=['a@b'] )
+
+		# Now, if we set something at the leaf node, then it trumps
+		cid_prefs = app_interfaces.IContentUnitPreferences( user.getContainer( cid ) )
+		cid_prefs.sharedWith = ['leaf']
+
+		self._do_check_root_inherited( ntiid=cid, sharedWith=['leaf'], state='set', provenance=cid )
+
+		# Even setting something blank at the leaf trumps
+		cid_prefs.sharedWith = []
+
+		self._do_check_root_inherited( ntiid=cid, sharedWith=[], state='set', provenance=cid )
+
+		# But if we delete it from the leaf, we're back to the root
+		cid_prefs.sharedWith = None
 		self._do_check_root_inherited( ntiid=cid, sharedWith=['a@b'] )
 
 

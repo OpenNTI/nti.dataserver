@@ -111,6 +111,13 @@ def _ContainerContentUnitPreferencesFactory(container):
 	# argument otherwise we won't have access to the data that already exists
 	return an_factory(_ContentUnitPreferences)(container)
 
+def _prefs_present( prefs ):
+	"""
+	Does `prefs` represent a valid preference stored by the user?
+	Note that even a blank, empty set of targets is a valid preference;
+	a None value removes the preference.
+	"""
+	return prefs and prefs.sharedWith is not None
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
 @component.adapter(app_interfaces.IContentUnitInfo)
@@ -143,11 +150,11 @@ class _ContentUnitPreferencesDecorator(object):
 		for contentUnit, containerId, provenance in itertools.chain( units(), iter(root) ):
 			container = remote_user.getContainer( containerId )
 			prefs = app_interfaces.IContentUnitPreferences( container, None )
-			if prefs and prefs.sharedWith:
+			if _prefs_present( prefs ):
 				break
 			prefs = None
 
-		if prefs and prefs.sharedWith:
+		if _prefs_present( prefs ):
 			ext_obj = {}
 			ext_obj['State'] = 'set' if contentUnit is context.contentUnit else 'inherited'
 			ext_obj['Provenance'] = provenance
