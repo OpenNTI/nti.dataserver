@@ -243,6 +243,7 @@ def _connect_view( request ):
 			environ['nti.early_request_teardown'](request)
 		except Exception:
 			# Gotta kill the jobs
+			exc_info = sys.exc_info()
 			logger.exception( "Failed to teardown request; aborting" )
 			try:
 				transaction.doom() # No use trying again
@@ -254,7 +255,8 @@ def _connect_view( request ):
 			transport.kill()
 			for job in jobs_or_response:
 				job.kill()
-			raise
+			# Re-raise the original, not the assertionError that probably fired
+			raise exc_info[0], None, exc_info[2]
 
 
 	if jobs_or_response:
