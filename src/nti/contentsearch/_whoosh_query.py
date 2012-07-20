@@ -14,19 +14,14 @@ from nti.contentsearch.common import (last_modified_fields)
 import logging
 logger = logging.getLogger( __name__ )
 
-# ----------------------------------
 
 default_search_plugins =  (GtLtPlugin, DateParserPlugin, PrefixPlugin, WildcardPlugin)
-
-# ----------------------------------
 
 def create_query_parser(fieldname='foo', schema=None, plugins=default_search_plugins):
 	qparser = QueryParser(fieldname, schema=schema)
 	for pg in plugins or ():
 		qparser.add_plugin(pg())
 	return qparser
-
-# ----------------------------------
 
 _mappings = CaseInsensitiveDict()
 _mappings[sharedWith_] = sharedWith_ 
