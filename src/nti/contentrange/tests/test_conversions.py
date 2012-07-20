@@ -75,9 +75,9 @@ class ConversionTests(unittest.TestCase):
 		self.ranges.append(r1)
 
 	def dom_to_contentrange_tests(self):
-		self.solutions  =  [['A',26,'node',23,'id',None],
-							['An',0,'word.',0,'id',None],
-							['is the',0,'sentence.',0,'id',None],
+		self.solutions  =  [['A',27,'node',23,'id',None],
+							['An',2,'word.',0,'id',None],
+							['is the',6,'sentence.',0,'id',None],
 							[None,'img'],
 							[None,None,None,None,"ThisIdIsTheBest",None]]
 		self.cr = test_helpers.range_conversion_check(self.ranges,self.solutions)
@@ -128,7 +128,7 @@ class ConversionTests(unittest.TestCase):
 			</span>
 		</div>""")
 		r = _domrange.Range(doc.downpath([0,0,0]),3,doc.downpath([0,0,0]),6)
-		test_helpers.range_conversion_check(r,['This',13,None,None])
+		test_helpers.range_conversion_check(r,['This',17,None,None])
 
 		doc = test_helpers.Document("""
 		<div id="123">
@@ -173,20 +173,6 @@ class ConversionTests(unittest.TestCase):
 		</div>""")
 		r = _domrange.Range(doc.root.childNodes[1],0,doc.root.childNodes[3],0)
 		test_helpers.round_trip_check(r)
-
-	def walker_tests(self):
-		doc = test_helpers.Document("""
-		<div id="123">
-			<p id="intruder">Ugh. Why so many words??</p>
-			<p id="45">This is some decently long text. </p>
-			<img src="whackamole.jpg"></img>
-			<p id="67">This is some more text containing many uninteresting words.</p>
-		</div>""")
-		p,o = doc.text_hunt("some decently long text."), 13
-		previous_words = _convertrange.backward().n_words(p,o,10)
-		next_words = _convertrange.forward().n_words(p,o,10)
-		assert_that ( ' '.join(previous_words), is_( "Ugh. Why so many words?? This is some" ) )
-		assert_that ( ' '.join(next_words[:5]), is_( "decently long text. This is" ) )
 
 	def shifting_document_tests(self):
 		original_doc = test_helpers.Document("""
@@ -233,7 +219,7 @@ class ConversionTests(unittest.TestCase):
 			</p>
 		</div>""")
 		# Known bug; should be "somewhat but probably not particularly long"
-		sln2 = ["None",
+		sln2 = ["somewhat but probably not particularly long",
 				"somewhat but probably not particularly long text for readers"
 				" with short attention spans. Here are some extra words in a"
 				" span. This is some more text"]
