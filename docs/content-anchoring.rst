@@ -599,7 +599,15 @@ text the anchored range. Using the *refernce node* as the root, create a ``TreeW
 interate each ``Text`` node, ``textNode``.
 
 For each ``textNode`` create a list of all matches within that node
-to the *primary context*. Assign each match a score in ``(0,1]`` based 
+to the *primary context*.
+
+.. note::
+
+	Multiple matches within a text node are possible. "I see
+	a dog. I do not see a cat." for the ``contextText`` "see a" is one such
+	example, with matches at indices 2 and 22.
+
+Assign each match a score in ``(0,1]`` based
 on the difference between the primary context's ``contextOffset``,
 (flipped to a start-based index if it's stored as an end-based index
 due to the pointer's role being ``start``) and the index of the
@@ -607,24 +615,26 @@ due to the pointer's role being ``start``) and the index of the
 identical, it should return 1, and aside from that it should return
 lower scores the further the difference is. The current formula is:
 
-``score = max(f / (f + abs(contextOffset - index of match)), 0.25)``
+.. code-block:: javascript
 
-where ``f`` is ``sqrt(textNode.contentText.length) * 2 + 1``, but
-this is not set in stone; different implementations across different
-platforms will only cause different users to see their highlights
-fail or mis-resolve under different sets of circumstances and pose
-no fundamental compatibility problems. The rationale behind making
- ``f`` dependent on the textNode's length is that larger paragraphs
-are likely to have larger and more changes, although more changes
-are more likely to cancel each other out hence the square root
-scaling.
+	score = max(f / (f + abs(contextOffset - index of match)), 0.25)
 
-Note that multiple matches within a text node are possible - "I see 
-a dog. I do not see a cat." for the ``contextText`` "see a" is one such
-example, with matches at indices 2 and 22.
+where ``f`` is defined as
 
-Then, create a *score multiplier* for each text node according to the
-following algorithm.
+.. code-block:: javascript
+
+	sqrt(textNode.contentText.length) * 2 + 1
+
+.. note::
+	These scoring functions are subject to change. The rationale
+	behind making ``f`` dependent on the textNode's length is that
+	larger paragraphs are likely to have larger and more changes,
+	although more changes are more likely to cancel each other out
+	hence the square root scaling.
+
+Given a set of matches for the primary context, the secondary context
+objects can be used to create a *score multiplier* for each text node.
+*score multiplier* can be computing using the following algorithm:
 
 1. Go through all of the secondary contexts and attempt to match them
 against the corresponding node. Matches need to be exact, with the
@@ -632,25 +642,32 @@ exact offset given by the context object's ``contextOffset`` property,
 to pass (which should not be a problem since the ``contextOffset`` is
 essentially just the length of the first or last word).
 
-a. If context object index *i* fails to match, set the *score
-multiplier* to ``i / (i + 0.5)`` (0.66 if the first secondary context
- fails, 0.8 if the second does, etc) and break.   
-b. If all secondary contexts match, check if the number of secondary
-contexts is maximal (ie. either 15+ chars or 5+ secondary contexts). If
-it is, set the *score multiplier* to 1. If it is not, that implies
-that the secondary context generation algorithm was prevented from
-finishing because it reached the beginning or end of the document, and
-therefore must have finished at a null node. Check this assumption. If
-it turns out to be false, set the *score multiplier* to ``n / (n + 0.5)``
-(``n`` being the number of context objects, including the primary).
+	a. If context object index *i* fails to match, set the *score
+	multiplier* to ``i / (i + 0.5)`` (0.66 if the first secondary context
+ 	fails, 0.8 if the second does, etc) and break.
+
+	b. If all secondary contexts match, check if the number of secondary
+	contexts is maximal (ie. either 15+ chars or 5+ secondary contexts). If
+	it is, set the *score multiplier* to 1. If it is not, that implies
+	that the secondary context generation algorithm was prevented from
+	finishing because it reached the beginning or end of the document, and
+	therefore must have finished at a null node. Check this assumption. If
+	it turns out to be false, set the *score multiplier* to ``n / (n + 0.5)``
+	(``n`` being the number of context objects, including the
+	primary).
+
+.. warning::
+	CUTZ - The number of secondary context objects not being maximal
+	doesn't necessarily imply the begining or end of the document.
+	Rather it implies the beginning or end of the reference node.
 
 For each text node, multiply the scores of all of the matches for that
 text node by the text node's calculated *score multiplier*.
 
-If any match from any of the visited ``textNodes`` has a perfect score, 
+If any match from any of the visited ``textNodes`` has a perfect score,
 return that match. If not, then if the ancestor node resolves, return the
-highest-scoring match out of all the matches from all visited ``textNodes``. 
-If the ancestor node does not resolve, return a failure (consider changing 
+highest-scoring match out of all the matches from all visited ``textNodes``.
+If the ancestor node does not resolve, return a failure (consider changing
 this in the future).
 
 If a ``textNode`` has been identified as the start or end container, a
