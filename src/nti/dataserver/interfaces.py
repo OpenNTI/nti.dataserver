@@ -260,19 +260,44 @@ ACE_ACT_ALLOW = "Allow"
 ACE_ACT_DENY = "Deny"
 ALL_PERMISSIONS = None
 ACE_DENY_ALL = None
-try:
-	from pyramid.interfaces import IAuthorizationPolicy
-	from pyramid.interfaces import IAuthenticationPolicy
-	import pyramid.security as _psec
-	EVERYONE_USER_NAME = _psec.Everyone
-	AUTHENTICATED_GROUP_NAME = _psec.Authenticated
-	ACE_ACT_ALLOW = _psec.Allow
-	ACT_ACT_DENY = _psec.Deny
-	ALL_PERMISSIONS = _psec.ALL_PERMISSIONS
-	ACE_DENY_ALL = _psec.DENY_ALL
-	interface.directlyProvides( ALL_PERMISSIONS, IPermission )
-except ImportError:
-	warnings.warn( "Pyramid not found" )
+
+from pyramid.interfaces import IAuthorizationPolicy
+from pyramid.interfaces import IAuthenticationPolicy
+import pyramid.security as _psec
+EVERYONE_USER_NAME = _psec.Everyone
+AUTHENTICATED_GROUP_NAME = _psec.Authenticated
+ACE_ACT_ALLOW = _psec.Allow
+ACT_ACT_DENY = _psec.Deny
+ALL_PERMISSIONS = _psec.ALL_PERMISSIONS
+ACE_DENY_ALL = _psec.DENY_ALL
+interface.directlyProvides( ALL_PERMISSIONS, IPermission )
+
+class IImpersonatedAuthenticationPolicy(IAuthenticationPolicy):
+	"""
+	Authentication policy that can be divorced from the request and instead
+	act on behalf of some other fixed user. When this impersonation is active,
+	the :meth:`IAuthenticationPolicy.remember` and :meth:`forget` methods will raise
+	:class:`NotImplementedError`.
+
+	The primary authentication policy is registered as a utility object in ZCA;
+	due to performance and design concerns we do not switch out or dynamically derive
+	new component registeries from the main ZCA. This interface, then, is implemented by the
+	main utility to allow it to provide thread-aware context-sensitive principals for
+	portions of the app that need it.
+
+	.. note:: Much of this could probably be better handled with :mod:`zope.security`.
+	"""
+
+	def impersonating_userid( userid ):
+		"""
+		Use this method in a ``with`` statement to make a thread (greenlet) local
+		authentication change. With this in place, the return from :meth:`authenticated_userid`
+		and :meth:`effective_principals` will be for the given userid, *not* the value
+		found in the ``request`` parameter.
+
+		:return: A context manager callable.
+		"""
+
 
 class IGroupMember(interface.Interface):
 	"""

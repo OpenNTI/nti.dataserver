@@ -17,6 +17,7 @@ from pyramid_who.whov2 import WhoV2AuthenticationPolicy
 
 from nti.dataserver.users import User
 from nti.dataserver import authorization
+from nti.dataserver import authentication as nti_authentication
 
 # TODO: This decoding stuff is happening too simalarly in the different
 # places. Decide what's really needed and remove what isn't and consolidate
@@ -213,6 +214,8 @@ def create_authentication_policy( ):
 	middleware = _create_middleware()
 	result = NTIAuthenticationPolicy()
 	result.api_factory = middleware.api_factory
+	# And make it capable of impersonation
+	result = nti_authentication.DelegatingImpersonatedAuthenticationPolicy( result )
 	return result
 
 class NTIAuthenticationPolicy(WhoV2AuthenticationPolicy):

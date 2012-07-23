@@ -89,50 +89,12 @@ ACT_READ   = Permission('zope.View')
 # in certain areas
 ROLE_ADMIN = 'role:nti.admin'
 
-def effective_principals( username,
-						  registry=component,
-						  authenticated=True,
-						  user_factory=users.User.get_user):
-	"""
-	Find and return the principals for the given username. This will include
-	the username itself (obviously), plus a principal for Everyone, plus
-	any groups the user is in (as found with :class:`nti_interfaces.IGroupMember`)
+import zope.deferredimport
 
-	:param username: Either a string giving a username to be looked up,
-		or a user object having the ``username`` attribute.
-	:param registry: The component registry to query. Defaults to the global
-		registry.
-	:param bool authenticated: If True (the default) assume this user is properly
-		authenticated, and add the pseudo-group for authenticated people as a
-		principal.
-	:return: An iterable (set) of :class:`nti_interfaces.IPrincipal` objects.
-	"""
-
-	if not username:
-		return ()
-
-	user = username if hasattr(username,'username') else user_factory( username )
-	username = user.username if hasattr(user, 'username') else username # canonicalize
-
-	result = set()
-	# Query all the available groups for this user
-	for _, adapter in registry.getAdapters( (user,),
-											nti_interfaces.IGroupMember ):
-		result.update( adapter.groups )
-	# These last three will be duplicates of string-only versions
-	# Ensure that the user is in there as a IPrincipal
-	result.update( (nti_interfaces.IPrincipal(username),) )
-	# Add the authenticated and everyone groups
-	result.add( nti_interfaces.IPrincipal( pyramid.security.Everyone ) )
-	if authenticated:
-		result.add( nti_interfaces.IPrincipal( pyramid.security.Authenticated ) )
-	if '@' in username:
-		# Make the domain portion of the username available as a group
-		# TODO: Prefix this, like we do with roles?
-		domain = username.split( '@', 1 )[-1]
-		result.add( domain )
-		result.add( nti_interfaces.IPrincipal( domain ) )
-	return result
+zope.deferredimport.deprecatedFrom(
+	"Prefer nti.dataserver.authentication",
+	"nti.dataserver.authentication",
+	"effective_principals" )
 
 class _PersistentGroupMember(persistent.Persistent):
 	"""

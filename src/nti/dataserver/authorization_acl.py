@@ -17,6 +17,7 @@ from zope import component
 import pyramid.security
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import authorization as auth
+from nti.dataserver import authentication
 from nti.contentlibrary import interfaces as content_interfaces
 from nti.externalization import interfaces as ext_interfaces
 
@@ -198,10 +199,10 @@ def has_permission( permission, context, username, **kwargs ):
 
 	:param permission: A string or :class:`nti_interfaces.IPermission` object to check
 	:param context: An object that the :func:`ACL` function can get an ACL for.
-	:param username: A user object or username designating a user that :func:`auth.effective_principals`
+	:param username: A user object or username designating a user that :func:`authentication.effective_principals`
 		can turn into a set of principals. Additional keyword arguments are passed to this
 		function.
-	:param kwargs: Keyword arguments passed to :func:`auth.effective_principals`.
+	:param kwargs: Keyword arguments passed to :func:`authentication.effective_principals`.
 
 
 	:return: An object that behaves like a boolean value but provides a description
@@ -224,7 +225,7 @@ def has_permission( permission, context, username, **kwargs ):
 	if not policy:
 		return pyramid.security.Denied( "No IAuthorizationPolicy installed" )
 	return policy.permits( to_check,
-						   auth.effective_principals( username, **kwargs ),
+						   authentication.effective_principals( username, **kwargs ),
 						   permission )
 
 def is_writable( context, username, **kwargs ):
