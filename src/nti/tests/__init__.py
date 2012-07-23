@@ -114,6 +114,11 @@ import unittest
 import zope.testing.cleanup
 
 class AbstractTestBase(zope.testing.cleanup.CleanUp, unittest.TestCase):
+	"""
+	Base class for testing. Inherits the setup and teardown functions for
+	:class:`zope.testing.cleanup.CleanUp`; one effect this has is to cause
+	the component registry to be reset after every test.
+	"""
 	pass
 
 
@@ -121,13 +126,14 @@ from zope import component
 from zope.configuration import xmlconfig, config
 from zope.component.hooks import setHooks, resetHooks
 
-def _configure(self=None, set_up_packages=(), features=('devmode',)):
+def _configure(self=None, set_up_packages=(), features=('devmode',), context=None):
 
 	# zope.component.globalregistry conveniently adds
 	# a zope.testing.cleanup.CleanUp to reset the globalSiteManager
 	if set_up_packages:
-		context = config.ConfigurationMachine()
-		xmlconfig.registerCommonDirectives( context )
+		if context is None:
+			context = config.ConfigurationMachine()
+			xmlconfig.registerCommonDirectives( context )
 		for feature in features:
 			context.provideFeature( feature )
 
@@ -142,15 +148,44 @@ def _configure(self=None, set_up_packages=(), features=('devmode',)):
 
 			context = xmlconfig.file( filename, package=package, context=context )
 
+		return context
 
 
 class ConfiguringTestBase(AbstractTestBase):
+	"""
+	Test case that can be subclassed when ZCML configuration is desired.
+
+	This class defines two class level attributes:
+
+	.. py:attribute:: set_up_packages
+		A sequence of package objects. These will be configured, in order, using
+		ZCML. The ``configure.zcml`` package from each package will be loaded. Instead
+		of a package object, each item can be a tuple of (filename, package); in that case,
+		the given file (usually ``meta.zcml``) will be loaded from the given package.
+
+	.. py:attribute:: features
+		A sequence of strings to be added as features before loading the configuration. By default,
+		this is ``devmode``.
+
+	When the meth:`setUp` method runs, one instance attribute is defined:
+
+	.. py:attribute:: configuration_context
+		The :class:`config.ConfigurationMachine` that was used to load configuration data (if any).
+		This can be used by individual methods to load more configuration data.
+
+
+	"""
 	set_up_packages = ()
 	features = ('devmode',)
+	configuration_context = None
 	def setUp( self ):
 		super(ConfiguringTestBase,self).setUp()
 		setHooks()
-		_configure( self, self.set_up_packages, self.features )
+		self.configuration_context = self.configure_packages( self.set_up_packages, self.features, self.configuration_context )
+
+	def configure_packages(self, set_up_packages=(), features=(), context=None ):
+		self.configuration_context = _configure( self, set_up_packages, features, context or self.configuration_context )
+		return self.configuration_context
 
 	def tearDown( self ):
 		resetHooks()

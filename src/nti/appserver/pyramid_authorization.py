@@ -10,9 +10,11 @@ from __future__ import print_function, unicode_literals
 
 logger = __import__( 'logging' ).getLogger(__name__)
 
+from zope import component
+
 from nti.dataserver.authorization import ACT_UPDATE
 from nti.dataserver.authorization_acl import ACL
-from nti.dataserver.interfaces import ACLProxy
+from nti.dataserver.interfaces import ACLProxy, IAuthenticationPolicy, IAuthorizationPolicy
 
 from nti.externalization.interfaces import StandardExternalFields, IExternalizedObject
 
@@ -80,7 +82,30 @@ def is_writable(obj, request=None):
 	if request is None:
 		request = get_current_request()
 
-	return psec.has_permission( ACT_UPDATE, obj, request ) \
+	# Using psec itself is "broken": It doesn't respect the current site
+	# components, even if the request itself does not have a registry.
+	# One way to fix this (mostly) would be to have a traversal listener
+	# like the zope.site.threadSiteSubscriber that does the same thing for
+	# pyramid.threadlocal. Here we cheap out
+	# and re-implement has_permission to use the desired registry.
+	return _has_permission( ACT_UPDATE, obj, request ) \
 	  or (IExternalizedObject.providedBy( obj )
 		  and StandardExternalFields.CREATOR in obj
 		  and obj[StandardExternalFields.CREATOR] == psec.authenticated_userid( request ) )
+
+def _has_permission( permission, context, request ):
+	try:
+		reg = request.registry
+	except AttributeError:
+		reg = component.getSiteManager()
+
+	authn_policy = reg.queryUtility(IAuthenticationPolicy)
+	if authn_policy is None:
+		return psec.Allowed('No authentication policy in use.')
+
+	authz_policy = reg.queryUtility(IAuthorizationPolicy)
+	if authz_policy is None: # pragma: no cover
+		raise ValueError('Authentication policy registered without '
+						 'authorization policy') # should never happen
+	principals = authn_policy.effective_principals(request)
+	return authz_policy.permits(context, principals, permission)

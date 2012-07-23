@@ -201,6 +201,9 @@ def has_permission( permission, context, username, **kwargs ):
 	:param username: A user object or username designating a user that :func:`auth.effective_principals`
 		can turn into a set of principals. Additional keyword arguments are passed to this
 		function.
+	:param kwargs: Keyword arguments passed to :func:`auth.effective_principals`.
+
+
 	:return: An object that behaves like a boolean value but provides a description
 		about what was allowed or denied when printed.
 
@@ -223,6 +226,16 @@ def has_permission( permission, context, username, **kwargs ):
 	return policy.permits( to_check,
 						   auth.effective_principals( username, **kwargs ),
 						   permission )
+
+def is_writable( context, username, **kwargs ):
+	"""
+	Is the ``context`` object writable by the ``username``? The ``context`` object should
+	generally not be an already-externalized object.
+
+	A shortcut to :func:``has_permission``; see its docs for details.
+	"""
+
+	return has_permission( auth.ACT_UPDATE, context, username, **kwargs )
 
 
 class ACLDecorator(object):
