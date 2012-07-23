@@ -33,6 +33,7 @@ import nti.dataserver.interfaces as interfaces
 from nti.dataserver import chat_transcripts
 from nti.dataserver import links
 from nti.dataserver import authorization as auth
+from nti.dataserver import authentication as nti_authentication
 nti_interfaces = interfaces
 
 from nti.chatserver import meeting
@@ -906,6 +907,7 @@ class TestChatserver(ConfiguringTestBase):
 		config.setup_registry()
 		config.testing_securitypolicy( nti_interfaces.IPrincipal( 'sjohnson' ) )
 		config.set_authorization_policy( acl_fact() )
+		config.set_authentication_policy( nti_authentication.DelegatingImpersonatedAuthenticationPolicy( config.registry.getUtility(nti_interfaces.IAuthenticationPolicy) ) )
 		try:
 			sessions = self.Sessions()
 			sessions[1] = self.Session( 'sjohnson', strict_events=True )
