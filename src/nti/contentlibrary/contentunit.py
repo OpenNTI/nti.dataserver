@@ -4,21 +4,21 @@ Generic implementations of IContentUnit functions
 """
 from __future__ import print_function, unicode_literals
 import os
-import logging
-logger = logging.getLogger(__name__)
+import datetime
+logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 from zope.deprecation import deprecate
+from zope.cachedescriptors.property import Lazy
 
 
 from nti.contentlibrary.interfaces import IContentUnit, IFilesystemContentUnit, IContentPackage, IFilesystemContentPackage
 
-
+@interface.implementer(IContentUnit)
 class ContentUnit(object):
 	"""
-	Simple implementation of :class:IContentUnit.
+	Simple implementation of :class:`IContentUnit`.
 	"""
-	interface.implements(IContentUnit)
 
 	ordinal = 1
 	href = None
@@ -42,16 +42,15 @@ class ContentUnit(object):
 	label = __name__
 
 
-
+@interface.implementer(IFilesystemContentUnit)
 class FilesystemContentUnit(ContentUnit):
 	"""
 	Adds the 'filename' property.
 	"""
-	interface.implements(IFilesystemContentUnit)
 
 	filename = None
 
-	@property
+	@Lazy
 	def lastModified( self ):
 		try:
 			return os.stat( self.filename )[os.path.stat.ST_MTIME]
@@ -59,22 +58,38 @@ class FilesystemContentUnit(ContentUnit):
 			logger.debug( "Failed to get last modified for %s", self.filename, exc_info=True )
 			return 0
 
+	@Lazy
+	def modified(self):
+		return datetime.datetime.utcfromtimestamp( self.lastModified )
+
+	@Lazy
+	def created(self):
+		try:
+			return datetime.datetime.utcfromtimestamp( os.stat( self.filename )[os.path.stat.ST_CTIME] )
+		except OSError:
+			logger.debug( "Failed to get created for %s", self.filename, exc_info=True )
+			return datetime.datetime.utcfromtimestamp( 0 )
+
+
+@interface.implementer(IContentPackage)
 class ContentPackage(ContentUnit):
 	"""
 	Simple implementation of :class:`IContentPackage`.
 	"""
-	interface.implements(IContentPackage)
+
 	root = None
 	index = None
 	installable = False
 	archive = None
 	renderVersion = 1
 
+@interface.implementer(IFilesystemContentPackage)
 class FilesystemContentPackage(ContentPackage,FilesystemContentUnit):
 	"""
 	Adds the `filename` property to the ContentPackage.
 	"""
-	interface.implements(IFilesystemContentPackage)
+
+	index_last_modified = None
 
 	@property
 	@deprecate("Unclear what the replacement is yet.")

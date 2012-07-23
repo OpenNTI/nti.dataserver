@@ -102,14 +102,37 @@ class _ContentUnitPreferences(persistent.Persistent):
 	__name__ = None
 	sharedWith = None
 
-	def __init__( self ):
-		self.createdTime = time.time()
-		self.lastModified = self.createdTime
+	def __init__( self, createdTime=None, lastModified=None, sharedWith=None ):
+		self.createdTime = createdTime if createdTime is not None else time.time()
+		self.lastModified = lastModified if lastModified is not None else self.createdTime
+		if sharedWith is not None:
+			self.sharedWith = sharedWith
 
+@interface.implementer(app_interfaces.IContentUnitPreferences)
+@component.adapter(containers.LastModifiedBTreeContainer)
 def _ContainerContentUnitPreferencesFactory(container):
 	# TODO: If we move any of this, we'll need to remember to pass in the key=
 	# argument otherwise we won't have access to the data that already exists
 	return an_factory(_ContentUnitPreferences)(container)
+
+###
+# We can also look for preferences on the actual content unit
+# itself. We provide an adapter for IFilesystemContentUnit, because
+# we know that :mod:`nti.contentlibrary.eclipse` may set up sharedWith
+# values for us.
+###
+@interface.implementer(app_interfaces.IContentUnitPreferences)
+@component.adapter(lib_interfaces.IFilesystemContentUnit)
+def _FilesystemContentUnitPreferencesFactory(content_unit):
+	sharedWith = getattr( content_unit, 'sharedWith', None )
+	if sharedWith is None:
+		return None
+
+	prefs = _ContentUnitPreferences( createdTime=time.mktime(content_unit.created.timetuple()),
+									 lastModified=time.mktime(content_unit.modified.timetuple()),
+									 sharedWith=content_unit.sharedWith )
+	prefs.__parent__ = content_unit
+	return prefs
 
 def _prefs_present( prefs ):
 	"""
@@ -153,6 +176,15 @@ class _ContentUnitPreferencesDecorator(object):
 			if _prefs_present( prefs ):
 				break
 			prefs = None
+
+		if not _prefs_present( prefs ):
+			# OK, nothing found by querying the user. What about looking at
+			# the units themselves?
+			for contentUnit, containerId, provenance in units():
+				prefs = app_interfaces.IContentUnitPreferences( contentUnit, None )
+				if _prefs_present( prefs ):
+					break
+				prefs = None
 
 		if _prefs_present( prefs ):
 			ext_obj = {}
