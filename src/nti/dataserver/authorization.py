@@ -118,6 +118,7 @@ def _persistent_group_member_factory( obj ):
 	return annotation.factory(_PersistentGroupMember)(obj)
 
 # Note that principals should be comparable based solely on their ID.
+# TODO: Should we enforce case-insensitivity here?
 @functools.total_ordering
 class _AbstractPrincipal(object):
 	id = ''
