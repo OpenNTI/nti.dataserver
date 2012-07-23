@@ -125,3 +125,22 @@ class IPlainTextContentFragment(IUnicodeContentFragment,mime_types.IContentTypeT
 @interface.implementer(IPlainTextContentFragment)
 class PlainTextContentFragment(UnicodeContentFragment):
 	pass
+
+class ICensoredUnicodeContentFragment(IUnicodeContentFragment):
+	"""
+	A content fragment that has passed through a censoring process to
+	attempt to ensure it is safe for display to its intended audience (e.g.,
+	profanity has been removed if the expected audience is underage/sensitive to
+	that).
+
+	The rules for censoring content will be very context specific. In
+	particular, it will depend on *who* you are, and *where* you are
+	adding/editing content. The *who* is important to differentiate
+	between, e.g., students and teachers. The *where* is important to
+	differentiate between, say, a public forum, and your private notes, or
+	between your Human Sexuality textbook and your Calculus textbook.
+
+	For this reason, the censoring process will typically utilize
+	multi-adapters registered on (user, content_unit). Contrast this with
+	sanitizing HTML, which always follows the same process.
+	"""

@@ -942,6 +942,7 @@ class _UserSearchView(object):
 					   or partialMatch in (fl.alias or '').lower():
 						result.append( fl )
 				# Also add enrolled classes
+				# TODO: What about instructors?
 				enrolled_sections = component.getAdapter( remote_user, app_interfaces.IContainerCollection, name='EnrolledClassSections' )
 				for section in enrolled_sections.container:
 					# TODO: We really want to be searching the class as well, but

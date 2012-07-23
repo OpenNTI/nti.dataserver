@@ -7,7 +7,7 @@ $Id$
 logger = __import__( 'logging' ).getLogger( __name__ )
 
 import os.path
-from dictionary import ChromeDictionary
+from nti.dictserver.dictionary import SQLiteJsonDictionary
 
 import re
 import anyjson as json
@@ -26,25 +26,24 @@ def lookup( info, dictionary=None ):
 	Given a WordInfo, fills it in.
 
 	:param info: A :class:`WordInfo` or a string.
-	:param dictionary: Implementation of :class:`interfaces.IDictionary` or None.
+	:param dictionary: Implementation of :class:`interfaces.IJsonDictionary` or None.
 	:return: A :class:`WordInfo` with the definition filled in.
 	"""
 	if isinstance( info, basestring ):
 		info = WordInfo( info )
 
 	if dictionary is None:
-		dictionary = component.queryUtility( interfaces.IDictionary )
-	if dictionary is None:
-		warnings.warn( "Trying to use static dictionary path; please register one with ZCA." )
-		dictionary = ChromeDictionary(os.path.dirname(__file__) + '/../../wiktionary/dict.db')
-		component.provideUtility( dictionary )
+		dictionary = component.queryUtility( interfaces.IJsonDictionary )
+
+	if dictionary is None: # pragma: no cover
+		logger.debug( "No dictionary, returning empty results" )
 
 
-	s = dictionary.lookup(info.word)
+	s = dictionary.lookup(info.word) if dictionary is not None else None
 	__traceback_info__ = s
 	try:
 		term = json.loads( s )
-	except ValueError:
+	except (ValueError,TypeError):
 		# Bad JSON Data
 		logger.exception( "Bad json data for %s", info.word )
 		term = {}
@@ -134,7 +133,7 @@ class WordInfo(_InfoRoot):
 			top_element.appendChild( ety )
 		for child in self:
 			child.toXML( dom, top_element )
-		# TODO: Could use Pyramid to construct this URL
+		# TODO: Could/should use Pyramid to construct this URL
 		stylesheet = dom.createProcessingInstruction(
 			'xml-stylesheet', 'href="static/style.xsl" type="text/xsl"')
 		dom.insertBefore( stylesheet, top_element )
