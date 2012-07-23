@@ -133,9 +133,6 @@ def test_challProbRightPicTransform():
 
 	"""
 	dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
-	
-	import pdb
-	pdb.set_trace()
 	_domTransform( dom )
 	#We expect the rightpic to have been moved down a level and belong to the last review problem as opposed to the first one.
 	revProbWithPic = dom.getElementsByTagName( 'chall')[2];
