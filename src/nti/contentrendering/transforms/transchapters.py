@@ -40,6 +40,5 @@ def transform(document):
 				logger.info( "Moving rightpic %s of %s %s down a level to %s %s", rightpic, parentType, rightpicContainer, parentType, rightpicContainer.nextSibling )
 				#step 1: rm
 				rightpicContainer.lastChild.removeChild( rightpic )
-				#step2: add it to the next sibling
-				rightpicContainer.nextSibling.firstChild.appendChild( rightpic )
-	
+				#step2: add it to the next sibling as the first child
+				rightpicContainer.nextSibling.firstChild.insert( 0, rightpic )
