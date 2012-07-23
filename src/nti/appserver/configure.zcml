@@ -56,6 +56,10 @@
 	<adapter factory=".contentlibrary_views._ContainerContentUnitPreferencesFactory"
 			 for="nti.dataserver.containers.LastModifiedBTreeContainer"
 			 provides=".interfaces.IContentUnitPreferences" />
+
+	<adapter factory=".contentlibrary_views._FilesystemContentUnitPreferencesFactory"
+			 provides=".interfaces.IContentUnitPreferences" />
+
 	<adapter factory=".contentlibrary_views._ContainerFieldsTraversable"
 			 for="nti.dataserver.containers.LastModifiedBTreeContainer"
 			 provides="zope.traversing.interfaces.ITraversable"

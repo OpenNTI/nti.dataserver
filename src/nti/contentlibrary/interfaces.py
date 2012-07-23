@@ -4,6 +4,7 @@ from __future__ import print_function, unicode_literals
 from zope import interface
 from zope import schema
 from zope.location.interfaces import IContained as IZContained
+from zope.dublincore.interfaces import IDCTimes
 
 #pylint: disable=E0213,E0211
 
@@ -69,17 +70,29 @@ class IContentPackage(IContentUnit):
 
 	root = interface.Attribute( "Path portion of a uri for this object" )
 	index = schema.TextLine( title="Path portion to an XML file representing this content package" )
+	index_last_modified = schema.Float( title="Time since the epoch the index for this package was last modified.",
+										description="This is currently the best indication of when this package as a whole may have changed.",
+										readonly=True )
 	installable = schema.Bool( title="Whether or not this content package can be installed locally (offline)" )
 	archive = schema.TextLine( title="If this content is installable, this is the relative path to a ZIP archive of the content" )
 	renderVersion = schema.Int( title="Version of the rendering process that produced this package.",
 								default=1, min=1 )
 
 
-class IFilesystemEntry(interface.Interface):
+class IFilesystemEntry(interface.Interface,IDCTimes):
 	"""
 	A mixin interface for things that are backed by items on the filesystem.
+
+	The timestamp values defined here refer to the actual item on the filesystem,
+	e.g., the times for the content unit itself.
+
 	"""
 	filename = schema.TextLine( title="The absolute path to the file" )
+
+	# @deprecated: Prefer IDCTimes
+	lastModified = schema.Float( title="Time since the epoch this unit was last modified.",
+								 readonly=True )
+
 
 class IFilesystemContentUnit(IContentUnit,IFilesystemEntry):
 	"""
@@ -87,11 +100,6 @@ class IFilesystemContentUnit(IContentUnit,IFilesystemEntry):
 
 	The values for the `href` and `filename` attributes will be the same.
 	"""
-	# TODO: Consider making this a zope.dublincore.interfaces.IDCTimes subtype,
-	# to get modified and created
-
-	lastModified = schema.Float( title="Time since the epoch this unit was last modified.",
-								 readonly=True )
 
 class IFilesystemContentPackage(IContentPackage,IFilesystemEntry):
 	"""
