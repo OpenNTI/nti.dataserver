@@ -52,6 +52,7 @@ Third-Party Cross Refs
 
 	gevent
 	lxml
+	pyramid-interfaces
 	zope
 
 ..	regression-tests
