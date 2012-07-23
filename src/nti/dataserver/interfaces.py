@@ -262,6 +262,7 @@ ALL_PERMISSIONS = None
 ACE_DENY_ALL = None
 try:
 	from pyramid.interfaces import IAuthorizationPolicy
+	from pyramid.interfaces import IAuthenticationPolicy
 	import pyramid.security as _psec
 	EVERYONE_USER_NAME = _psec.Everyone
 	AUTHENTICATED_GROUP_NAME = _psec.Authenticated

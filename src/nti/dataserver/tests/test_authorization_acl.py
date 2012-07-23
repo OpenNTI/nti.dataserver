@@ -342,7 +342,7 @@ class Permits(BaseMatcher):
 
 	def _matches( self, item ):
 		if not hasattr( item, '__acl__' ):
-			item = nti_interfaces.IACLProvider( item, default=item )
+			item = nti_interfaces.IACLProvider( item, item )
 		return self.policy.permits( item, [self.prin], self.perm )
 
 	def describe_to( self, description ):

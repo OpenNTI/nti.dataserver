@@ -218,7 +218,7 @@ current_transaction = None
 
 def WithMockDSTrans( func ):
 
-	def f( *args, **kwargs ):
+	def with_mock_ds_trans( *args, **kwargs ):
 		global current_transaction
 		global current_mock_ds
 		ds = MockDataserver()
@@ -242,11 +242,17 @@ def WithMockDSTrans( func ):
 				ds.close()
 				resetHooks()
 
-	return nose.tools.make_decorator( func )( f )
+	return nose.tools.make_decorator( func )( with_mock_ds_trans )
 
 
 
 class ConfiguringTestBase(nti.tests.ConfiguringTestBase):
+	"""
+	A test base that does two things: first, sets up the :mod:`nti.dataserver` module
+	during setUp, and second, makes the value of :data:`current_mock_ds` available
+	as a property on this object (when used inside a function decorated with :func:`WithMockDS`
+	or :func:`WithMockDSTrans`).
+	"""
 	set_up_packages = (dataserver,)
 
 	@property

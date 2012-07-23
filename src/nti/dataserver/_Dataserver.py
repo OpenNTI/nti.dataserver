@@ -10,7 +10,7 @@ import six
 import gevent.queue
 import gevent.local
 
-
+import ZODB.interfaces
 from zope import interface
 from zope import component
 from zope.configuration import xmlconfig
@@ -340,9 +340,13 @@ class MinimalDataserver(object):
 		# We expect to be in a transaction and have a site manager
 		# installed that came from the database
 		lsm = component.getSiteManager()
-		conn = getattr( lsm, '_p_jar', None )
+		# zope.keyreference installs an IConnection adapter that
+		# can traverse the lineage. That's important if we're using a nested,
+		# transient site manager
+		conn = ZODB.interfaces.IConnection( lsm, None )
 		if conn:
 			return conn.root()['nti.dataserver']
+
 		raise InappropriateSiteError( "Using Dataserver outside of site manager" )
 
 	def close(self):

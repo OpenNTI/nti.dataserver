@@ -32,6 +32,7 @@ import nti.dataserver.users as users
 import nti.dataserver.interfaces as interfaces
 from nti.dataserver import chat_transcripts
 from nti.dataserver import links
+from nti.dataserver import authorization as auth
 nti_interfaces = interfaces
 
 from nti.chatserver import meeting
@@ -59,6 +60,11 @@ class chat(object):
 from nti.dataserver.tests.mock_dataserver import WithMockDS, WithMockDSTrans, ConfiguringTestBase
 from nti.dataserver.tests import mock_dataserver
 from nti.dataserver.tests.test_authorization_acl import permits, denies
+from zope.dottedname import resolve as dottedname
+
+from pyramid.testing import setUp as psetUp
+from pyramid.testing import tearDown as ptearDown
+from pyramid.testing import DummyRequest
 
 #import nti.externalization.internalization
 # nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.users' )
@@ -886,3 +892,45 @@ class TestChatserver(ConfiguringTestBase):
 		# Nested works, though
 		chatserver.send_event_to_user( 'sjohnson', 'event', [link] )
 		assert_that( sessions[1].socket.events, has_length( 1 ) )
+
+	@WithMockDSTrans
+	def test_send_event_to_users_correct_edit_links(self):
+		"An Edit link is only sent to users that have write permissions."
+		# This is a high-level test involving the appserver as well
+		appserver = dottedname.resolve( 'nti.appserver' )
+		acl_fact = dottedname.resolve('nti.appserver.pyramid_authorization.ACLAuthorizationPolicy' )
+		req_fact = dottedname.resolve( 'pyramid.request.Request' )
+		self.configure_packages( (appserver,) )
+		request = req_fact.blank( '/' )
+		config = psetUp(registry=component.getSiteManager(),request=request,hook_zca=False)
+		config.setup_registry()
+		config.testing_securitypolicy( nti_interfaces.IPrincipal( 'sjohnson' ) )
+		config.set_authorization_policy( acl_fact() )
+		try:
+			sessions = self.Sessions()
+			sessions[1] = self.Session( 'sjohnson', strict_events=True )
+			sessions[2] = self.Session( 'jason', strict_events=True )
+			chatserver = chat.Chatserver( sessions )
+
+			note = Note()
+			note.creator = 'sjohnson'
+			note.addSharingTarget( 'jason' )
+			self.ds.root._p_jar.add( note )
+			note.__parent__ = self.ds.root
+
+			assert_that( note, permits( 'sjohnson', auth.ACT_UPDATE ) )
+			assert_that( note, denies( 'jason', auth.ACT_UPDATE ) )
+			assert_that( note, permits( 'jason', auth.ACT_READ ) )
+
+			chatserver.send_event_to_user( 'sjohnson', 'event', note )
+			assert_that( sessions[1].socket.events, has_length( 1 ) )
+			ext_note = sessions[1].socket.events[0]['args'][0]
+			assert_that( ext_note, has_entry( 'Links', has_item( has_entry( 'rel', 'edit' ) ) ) )
+
+			chatserver.send_event_to_user( 'jason', 'event', note )
+			assert_that( sessions[2].socket.events, has_length( 1 ) )
+			ext_note2 = sessions[2].socket.events[0]['args'][0]
+			assert_that( ext_note, is_not( ext_note2 ) )
+			assert_that( ext_note2, has_entry( 'Links', is_not( has_item( has_entry( 'rel', 'edit' ) ) ) ) )
+		finally:
+			ptearDown()

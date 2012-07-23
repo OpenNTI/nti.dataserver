@@ -16,6 +16,7 @@ from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.interfaces import StandardExternalFields as XFields
 
 from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver import authorization as auth
 
 from persistent import Persistent
 from persistent.mapping import PersistentMapping
@@ -23,6 +24,7 @@ from persistent.mapping import PersistentMapping
 import zope.interface.registry
 from zope import interface
 from zope import component
+from zope.component.hooks import site
 from zope.deprecation import deprecate, deprecated
 from zope import minmax
 import zope.site.site
@@ -34,6 +36,33 @@ class _AlwaysIn(object):
 	"""Everything is `in` this class."""
 	def __init__(self): pass
 	def __contains__(self,obj): return True
+
+@interface.implementer(nti_interfaces.IAuthenticationPolicy)
+class _FixedUserAuthenticationPolicy(object):
+	"""
+	See :func:`Chatserver.send_event_to_user`.
+	We implement only the minimum required.
+	"""
+
+	def __init__( self, username ):
+		self.auth_user = username
+
+	def authenticated_userid( self, request ):
+		return self.auth_user
+
+	def effective_principals( self, request ):
+		return auth.effective_principals( self.auth_user )
+
+class _NonSubTrackingLSM(zope.site.site.LocalSiteManager):
+	"""
+	A normal LSM notifies its parent when the parent is used as a base.
+	That leads to conflicts since we're doing that rapidly.
+	(Which we know is BAD anyway and we shouldn't do!) This class
+	stops that behaviour.
+	"""
+
+	def _setBases( self, bases ):
+		zope.interface.registry.Components._setBases( self, bases )
 
 ####
 # A note on the object model:
@@ -160,12 +189,33 @@ class Chatserver(object):
 				logger.log( loglevels.TRACE, "No sessions for %s to send event %s to", username, name )
 				return
 
+			# When sending an event to a user, we need to write the object
+			# in the form particular to that user, since the information we transmit
+			# (in particular links like the presence/absence of the Edit link or the @@like and @@favorite links)
+			# depends on who is asking.
+			# "Who is asking" depends on the current IAuthenticationPolicy, which in turn depends on the current
+			# request--the later of those is implicit and thread local; the former we can control
+			# in the registry, so the approach we take is to register a new IAuthenticationPolicy in a derived
+			# registry and override the global request-based one.
+			# TODO: This can be beter handled with the zope security interaction stuff, yes?
+			registry = _NonSubTrackingLSM(component.getSiteManager(), default_folder=False)
+			# See the class definition for rationale for the subclass. A side effect is that it eliminates the need to clear
+			# bases below when we discard registry (registry.__bases__ = () calls removeSub() on the parent)
+			# NOTE: This is a HACK. This should tell us that SiteMans really aren't meant to be used this way
+			registry.__bases__ = (component.getSiteManager(),) # TODO: I think i'm passing the wrong thing to the constructor?
+			registry.registerUtility( _FixedUserAuthenticationPolicy( username ) )
+			registry.__name__ = '++etc++chatserver_policy'
 
-			# Trap externalization errors /now/ rather than later during
-			# the process
-			args = [toExternalObject( arg,
-									  default_non_externalizable_replacer=DevmodeNonExternalizableObjectReplacer )
-					  for arg in args]
+			site_man = zope.site.site.SiteManagerContainer(  )
+			site_man.setSiteManager( registry )
+			with site( site_man ):
+				assert component.getSiteManager() is registry
+				# Trap externalization errors /now/ rather than later during
+				# the process
+				args = [toExternalObject( arg,
+										  registry=registry,
+										  default_non_externalizable_replacer=DevmodeNonExternalizableObjectReplacer )
+						  for arg in args]
 
 			for s in all_sessions:
 				logger.log( loglevels.TRACE, "Dispatching %s to %s", name, s )
