@@ -188,6 +188,12 @@ Vocabulary
 
 .. automodule:: zope.schema.vocabulary
 
+Security
+========
+
+.. automodule:: zope.security
+.. automodule:: zope.security.interfaces
+
 Persistent
 ==========
 
