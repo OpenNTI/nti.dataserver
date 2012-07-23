@@ -30,15 +30,16 @@ def transform(document):
 			parent.nextSibling.insert( 1, chapterauthor )
 			
 	for rightpic in document.getElementsByTagName( 'rightpic' ):
-		if rightpic.parentNode.parentNode.nodeName == 'exer':
-			exerParent = rightpic.parentNode.parentNode
+		if rightpic.parentNode.parentNode.nodeName == 'exer' or rightpic.parentNode.parentNode.nodeName == 'revprob' or rightpic.parentNode.parentNode.nodeName == 'chall' or rightpic.parentNode.parentNode.nodeName == 'challhard':
+			rightpicContainer = rightpic.parentNode.parentNode
+			parentType = rightpic.parentNode.parentNode.nodeName
 			
 			#make sure that it's indeed the rightpic that we should move
-			if exerParent.lastChild.firstChild == rightpic and exerParent.nextSibling != None and exerParent.nextSibling.nodeName == 'exer':
+			if rightpicContainer.lastChild.firstChild == rightpic and rightpicContainer.nextSibling != None and rightpicContainer.nextSibling.nodeName == parentType :
 				#move it down a level
-				logger.info( "Moving rightpic %s of exercise %s down a level to exercise %s", rightpic, exerParent, exerParent.nextSibling )
+				logger.info( "Moving rightpic %s of %s %s down a level to %s %s", rightpic, parentType, rightpicContainer, parentType, rightpicContainer.nextSibling )
 				#step 1: rm
-				exerParent.lastChild.removeChild(rightpic)
+				rightpicContainer.lastChild.removeChild( rightpic )
 				#step2: add it to the next sibling
-				exerParent.nextSibling.firstChild.appendChild(rightpic)
+				rightpicContainer.nextSibling.firstChild.appendChild( rightpic )
 	
