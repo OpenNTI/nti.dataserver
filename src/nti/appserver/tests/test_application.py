@@ -80,7 +80,11 @@ class ApplicationTestBase(ConfiguringTestBase):
 		__show__.on()
 		super(ApplicationTestBase,self).tearDown()
 
-	def _make_extra_environ(self, user=b'sjohnson@nextthought.com', **kwargs):
+	def _make_extra_environ(self, user=b'sjohnson@nextthought.COM', **kwargs):
+		"""
+		The default username is a case-modified version of the default user in :meth:`_create_user`,
+		to test case-insensitive ACLs and login.
+		"""
 		result = {
 			b'HTTP_AUTHORIZATION': b'Basic ' + (user + ':temp001').encode('base64'),
 			}

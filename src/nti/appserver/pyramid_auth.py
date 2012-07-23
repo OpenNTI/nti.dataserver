@@ -1,8 +1,14 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+$Id$
+"""
+from __future__ import print_function, unicode_literals
+
+
 import binascii
 import logging
 
-import pyramid.security
 from pyramid.interfaces import IAuthenticationPolicy
 
 from zope import interface
@@ -16,7 +22,6 @@ from repoze.who.classifiers import default_request_classifier
 from pyramid_who.whov2 import WhoV2AuthenticationPolicy
 
 from nti.dataserver.users import User
-from nti.dataserver import authorization
 from nti.dataserver import authentication as nti_authentication
 
 # TODO: This decoding stuff is happening too simalarly in the different
@@ -58,9 +63,10 @@ def _get_basicauth_credentials_environ( environ ):
 	return (username, password)
 
 def _get_username( username ):
-	if username and '%40' in username:
-		username = username.replace( '%40', '@' )
-
+	if username:
+		if '%40' in username:
+			username = username.replace( '%40', '@' )
+		username = username.lower() # Canonicalize the username
 	return username
 
 def _decode_username( request ):
@@ -140,7 +146,7 @@ class _NTIUsers(object):
 
 	def _query_groups( self, username, components ):
 		":return: The groups of an authenticated user."
-		return authorization.effective_principals( username, registry=components, authenticated=True )
+		return nti_authentication.effective_principals( username, registry=components, authenticated=True )
 
 	def __call__( self, userid, request ):
 		result = None
@@ -165,14 +171,13 @@ def _make_user_auth():
 	# by default. That's dangerous and is now disabled.
 	return _NTIUsers( )
 
+@interface.implementer( IAuthenticator )
 class NTIUsersAuthenticatorPlugin(object):
-	interface.implements( IAuthenticator )
 
-	def __init__( self ):
-		pass
 
 	def authenticate( self, environ, identity ):
-		if 'login' not in identity or 'password' not in identity: return None
+		if 'login' not in identity or 'password' not in identity:
+			return None
 		_decode_username_environ( environ )
 		_decode_username_identity( identity )
 		if _make_user_auth().user_has_password( identity['login'], identity['password'] ):
@@ -218,9 +223,8 @@ def create_authentication_policy( ):
 	result = nti_authentication.DelegatingImpersonatedAuthenticationPolicy( result )
 	return result
 
+@interface.implementer( IAuthenticationPolicy )
 class NTIAuthenticationPolicy(WhoV2AuthenticationPolicy):
-
-	interface.implements( IAuthenticationPolicy )
 
 	def __init__( self ):
 		# configfile is ignored, second argument is identifier_id, which must match one of the

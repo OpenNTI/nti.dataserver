@@ -44,6 +44,7 @@ def fromExternalOID( ext_oid ):
 	:return: A tuple of OID, database name. Name may be empty.
 	:param string ext_oid: As produced by :func:`toExternalOID`.
 	"""
+	__traceback_info__ = ext_oid
 	oid_string, name_s = ext_oid.split( ':' ) if ':' in ext_oid else (ext_oid, "")
 	# Translate the external format if needed
 	if oid_string.startswith( '0x' ):
