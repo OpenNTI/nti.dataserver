@@ -56,7 +56,7 @@ def test_rightpicTransform():
 	#run the transform
 	_domTransform( dom )
 	
-	assert_that( exers[1].firstChild.lastChild.nodeName, is_( 'rightpic' ) )
+	assert_that( exers[1].firstChild.firstChild.nodeName, is_( 'rightpic' ) )
 	
 def test_startRightPicTransform():
 	example = br"""
@@ -101,7 +101,7 @@ def test_revProbRightPicTransform():
 	_domTransform( dom )
 	#We expect the rightpic to have been moved down a level and belong to the last review problem as opposed to the first one.
 	revProbWithPic = dom.getElementsByTagName( 'revprob')[1];
-	assert_that( revProbWithPic.firstChild.lastChild.nodeName, is_( 'rightpic' )) 
+	assert_that( revProbWithPic.firstChild.firstChild.nodeName, is_( 'rightpic' )) 
 	
 def test_challProbRightPicTransform():
 	example = br"""
@@ -136,4 +136,4 @@ def test_challProbRightPicTransform():
 	_domTransform( dom )
 	#We expect the rightpic to have been moved down a level and belong to the last review problem as opposed to the first one.
 	revProbWithPic = dom.getElementsByTagName( 'chall')[2];
-	assert_that( revProbWithPic.firstChild.lastChild.nodeName, is_( 'rightpic' ))
+	assert_that( revProbWithPic.firstChild.firstChild.nodeName, is_( 'rightpic' ))
