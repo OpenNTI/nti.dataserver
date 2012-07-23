@@ -409,11 +409,11 @@ def createApplication( http_port,
 
 	if 'main_dictionary_path' in settings:
 		try:
-			dictionary = dictserver.dictionary.ChromeDictionary( settings['main_dictionary_path'] )
+			dictionary = dictserver.dictionary.SQLiteJsonDictionary( settings['main_dictionary_path'] )
 			pyramid_config.registry.registerUtility( dictionary )
 			logger.debug( "Adding dictionary" )
 			pyramid_config.load_zcml( 'pyramid.zcml' )
-		except LookupError:
+		except Exception:
 			logger.exception( "Failed to add dictionary server" )
 
 	pyramid_config.add_renderer( name='rest', factory='nti.appserver.pyramid_renderers.REST' )
