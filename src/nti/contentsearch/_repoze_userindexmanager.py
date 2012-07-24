@@ -100,10 +100,11 @@ class RepozeUserIndexManager(object):
 
 	def _do_catalog_query(self, catalog, fieldname, qo):
 		is_all_query, queryobject = parse_query(catalog, fieldname, qo)
-		if is_all_query and not queryobject:
-			queryobject = QueryObject.create('*')  # all
-		limit = qo.limit
-		return catalog.query(queryobject, limit=limit)
+		if is_all_query:
+			return 0, []
+		else:
+			limit = qo.limit
+			return catalog.query(queryobject, limit=limit)
 
 	def _do_search(self, fieldname, qo, search_on=(), highlight_type=None):
 		
