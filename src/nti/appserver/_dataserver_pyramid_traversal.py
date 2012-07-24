@@ -98,17 +98,19 @@ class _ContainerResource(object):
 
 	__acl__ = ()
 
-	def __init__( self, parent, container, ntiid, user ):
+	def __init__( self, parent, container, name, user ):
 		super(_ContainerResource,self).__init__()
 		self.__parent__ = parent
-		self.__name__ = ntiid
+		self.__name__ = name
 		self.user = user
 		self.resource = container
 		self.container = container
-		self.ntiid = ntiid
+
+
+	ntiid = property(lambda self: getattr( self, '__name__' ) )
 
 	def traverse( self, key, remaining_path ):
-		contained_object = self.user.getContainedObject( self.ntiid, key )
+		contained_object = self.user.getContainedObject( self.__name__, key )
 		if contained_object is None:
 			# LocationError is a subclass of KeyError, and compatible
 			# with the traverse() interface
@@ -121,8 +123,20 @@ class _ContainerResource(object):
 		#return result
 		return contained_object
 
+# TODO: These next two classes inherit from _ContainerResource and hence
+# implement IContainerResource, but that doesn't match the interface
+# hierarchy. They should probably be separate.
 @interface.implementer(interfaces.INewContainerResource)
-class _NewContainerResource(_ContainerResource): pass
+class _NewContainerResource(_ContainerResource):
+	"""
+	A leaf on the traversal tree. Exists to be a named thing that
+	we can match views with. Generally we only POST to this thing;
+	everything behind it (with a few exceptions, like glossaries) will be 404.
+	"""
+
+	def traverse( self, key, remaining_path ):
+		raise loc_interfaces.LocationError( key )
+
 
 @interface.implementer(interfaces.IPageContainerResource)
 class _PageContainerResource(_ContainerResource):
@@ -130,9 +144,6 @@ class _PageContainerResource(_ContainerResource):
 	A leaf on the traversal tree. Exists to be a named thing that
 	we can match view names with. Should be followed by the view name.
 	"""
-
-	def __init__( self, parent, container, ntiid, user ):
-		super(_PageContainerResource,self).__init__( parent, container, ntiid, user )
 
 	def traverse( self, key, remaining_path ):
 		raise loc_interfaces.LocationError( key )
@@ -211,7 +222,7 @@ class UserTraversable(object):
 
 		if resource is None:
 			# OK, assume a new container
-			resource = _NewContainerResource( self.context, {}, key, self.user )
+			resource = _NewContainerResource( self.context, None, key, self.user )
 
 		# Allow the owner full permissions.
 		# TODO: What about others?
@@ -243,6 +254,8 @@ class LibraryTraversable(object):
 		except KeyError:
 			raise loc_interfaces.LocationError( key )
 
+
+@component.adapter(nti_interfaces.IUser, pyramid.interfaces.IRequest)
 class _AbstractUserPseudoContainerResource(object):
 	"""
 	Base class for things that represent pseudo-containers under a user.
@@ -277,6 +290,8 @@ class _PagesResource(_AbstractUserPseudoContainerResource):
 			# much, the _PageContainerResource only supports a few child items
 			cont = self.user.getSharedContainer(key, defaultValue=None)
 			if cont is None:
+				# TODO: A user is a sharing.SharingSourceMixin which
+				# seems to never return the default value
 				raise loc_interfaces.LocationError(key)
 
 		resource = _PageContainerResource( self, cont, key, self.user )
