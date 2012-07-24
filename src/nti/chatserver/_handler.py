@@ -36,14 +36,7 @@ EVT_RECV_MESSAGE = 'chat_recvMessage'
 
 
 
-
-def _discard( s, k ):
-	try:
-		s.discard( k ) # python sets
-	except AttributeError:
-		try:
-			s.remove( k ) # OOSet, list
-		except (KeyError,ValueError): pass
+from nti.utils.sets import discard as _discard
 
 class IChatHandlerSessionState(interface.Interface):
 	rooms_i_moderate = interface.Attribute( "Mapping of rooms I moderate" )

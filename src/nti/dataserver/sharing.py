@@ -19,9 +19,10 @@ from nti.dataserver.activitystream_change import Change
 from nti.dataserver import datastructures
 from nti.dataserver import containers
 
-from nti.externalization.persistence import PersistentExternalizableList, PersistentExternalizableWeakList
+from nti.externalization.persistence import PersistentExternalizableWeakList
 from nti.externalization.oids import to_external_ntiid_oid
 
+from nti.utils import sets
 
 class SharingTargetMixin(object):
 	"""
@@ -110,14 +111,6 @@ class SharingTargetMixin(object):
 		# TODO: Rethink this. It's terribly inefficient.
 		self.streamCache = OOBTree()
 
-	def _discard( self, s, k ):
-		try:
-			s.remove( k )
-			self._p_changed = True
-			return True
-		except KeyError:
-			return False
-
 	def __manage_mute( self, mute=True ):
 		# TODO: Horribly inefficient
 		if self._p_jar and self.containersOfShared._p_jar:
@@ -167,7 +160,7 @@ class SharingTargetMixin(object):
 
 
 	def unmute_conversation( self, root_ntiid_oid ):
-		if self._discard( self.muted_oids, root_ntiid_oid ):
+		if sets.discard_p( self.muted_oids, root_ntiid_oid ):
 			# Now unmute anything required
 			self.__manage_mute( mute=False )
 
@@ -207,15 +200,13 @@ class SharingTargetMixin(object):
 			implement ignoring).
 		"""
 		if not source: return False
-		self._discard( self._sources_not_accepted,  source.username )
+		sets.discard( self._sources_not_accepted,  source.username )
 		self._sources_accepted.add( source.username )
-		# FIXME: Why are we having to do this?
-		self._p_changed = True
 		return True
 
 	def stop_accepting_shared_data_from( self, source ):
 		if not source: return False
-		self._discard( self._sources_accepted, source.username )
+		sets.discard( self._sources_accepted, source.username )
 		return True
 
 	@property
@@ -231,14 +222,13 @@ class SharingTargetMixin(object):
 		object (e.g., by the user this object represents).
 		"""
 		if not source: return False
-		self._discard( self._sources_accepted, source.username )
+		sets.discard( self._sources_accepted, source.username )
 		self._sources_not_accepted.add( source.username )
-		self._p_changed = True
 		return True
 
 	def stop_ignoring_shared_data_from( self, source ):
 		if not source: return False
-		self._discard( self._sources_not_accepted, source.username )
+		sets.discard( self._sources_not_accepted, source.username )
 		return True
 
 	def reset_shared_data_from( self, source ):
@@ -252,8 +242,8 @@ class SharingTargetMixin(object):
 			reset. This implementation returns True if source is valid.
 		"""
 		if not source: return False
-		self._discard( self._sources_accepted, source.username )
-		self._discard( self._sources_not_accepted, source.username )
+		sets.discard( self._sources_accepted, source.username )
+		sets.discard( self._sources_not_accepted, source.username )
 
 	def reset_all_shared_data( self ):
 		"""
@@ -268,14 +258,12 @@ class SharingTargetMixin(object):
 		Causes this object to forget all ignored settings.
 		"""
 		self._sources_not_accepted.clear()
-		self._p_changed = True
 
 	def reset_accepted_shared_data( self ):
 		"""
 		Causes this object to forget all accepted users.
 		"""
 		self._sources_accepted.clear()
-		self._p_changed = True
 
 	@property
 	def ignoring_shared_data_from( self ):
