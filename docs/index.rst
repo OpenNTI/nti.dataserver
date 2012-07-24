@@ -16,8 +16,12 @@ Contents:
 	relstorage-and-rds
 
 	ipad-localremotebridge
+
 	ntiid-structure
 	ntiids
+
+	authorization
+
 	content-anchoring
 	content-in-cdn
 	content-resolving

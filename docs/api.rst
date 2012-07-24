@@ -29,7 +29,6 @@ Dataserver API documentation
 .. automodule:: nti.dataserver.classes
 .. automodule:: nti.dataserver.mimetype
 .. automodule:: nti.dataserver._Dataserver
-.. automodule:: nti.dataserver.authorization
 
 ** Content search **
 
