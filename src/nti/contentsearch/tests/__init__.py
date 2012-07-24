@@ -33,4 +33,9 @@ zanpakuto_commands =  (	"Shoot To Kill",
 
 
 class ConfiguringTestBase(DSConfiguringTestBase):
-	set_up_packages = (dataserver, contentsearch)
+	set_up_packages = (dataserver, contentsearch, contentfragments)
+	
+	def setUp(self):
+		super(ConfiguringTestBase, self).setUp()
+		xmlconfig.file('configure.zcml', package=contentsearch )
+		xmlconfig.file('configure.zcml', package=contentfragments)
