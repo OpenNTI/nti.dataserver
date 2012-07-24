@@ -87,6 +87,13 @@ class _BasicRepozeDataStore(Persistent):
 		values = list(pm.values())
 		return values
 	
+	def get_docids(self, username):
+		result = set()
+		for catalog in self.get_catalogs(username):
+			fld = list(catalog.values())[0] # get first field as pivot
+			result.update(fld.docids()) # use CatalogField.docids()
+		return result
+	
 class PersistentRepozeDataStore(_BasicRepozeDataStore):
 	
 	def __init__(self):
