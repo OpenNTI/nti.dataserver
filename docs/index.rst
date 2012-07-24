@@ -21,6 +21,7 @@ Contents:
 	content-anchoring
 	content-in-cdn
 	content-resolving
+	content-glossaries
 	liking
 	contentfragments
 	passenger

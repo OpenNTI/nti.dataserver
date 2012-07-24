@@ -139,8 +139,8 @@ class WordInfo(_InfoRoot):
 		dom.insertBefore( stylesheet, top_element )
 		return dom
 
-	def toXMLString(self):
-		return self.toXML().toxml( "UTF-8" )
+	def toXMLString(self,encoding='UTF-8'):
+		return self.toXML().toxml( encoding=encoding )
 
 	def writeXML(self, writer ):
 		self.toXML().writexml( writer )
