@@ -25,6 +25,10 @@ def main():
 	arg_parser.add_argument( '-n', '--name',
 							 dest='name',
 							 help="The realname of the user" )
+	arg_parser.add_argument( '-c', '--communities',
+							 dest='communities',
+							 nargs="+",
+							 help="The names of communities to add the user to" )
 
 	args = arg_parser.parse_args()
 
@@ -33,13 +37,18 @@ def main():
 	password = args.password
 
 
-	run_with_dataserver( environment_dir=env_dir, function=lambda: _create_user(_type_map[args.type], username, password, args.name ) )
+	run_with_dataserver( environment_dir=env_dir, function=lambda: _create_user(_type_map[args.type], username, password, args.name, args.communities ) )
 	sys.exit( 0 )
 
-def _create_user( factory, username, password, realname ):
+def _create_user( factory, username, password, realname, communities=() ):
 	user = factory.im_self.get_entity( username )
 	if user:
 		print( "Not overwriting existing entity", repr(user), file=sys.stderr )
 		sys.exit( 2 )
 
-	factory( username=username, password=password, realname=realname )
+	user = factory( username=username, password=password, realname=realname )
+	for com_name in communities:
+		community = users.Entity.get_entity( com_name, default='' )
+		if community:
+			user.join_community( community )
+			user.follow( community )
