@@ -47,6 +47,10 @@ zope.deprecation.deprecation.__dict__['warnings'] = _warnings()
 zope.deferredimport.deferredmodule.__dict__['DeprecationWarning'] = FutureWarning
 zope.deferredimport.deferredmodule.__dict__['warnings'] = _warnings()
 
+# NOTE: There is a substantial problem with zope.deferredimport.deferredmodule/deprecatedFrom
+# and the like: it loses access to the module __doc__, which makes Sphinx and the like useless
+# For this reason, prefer zope.deprecation.
+
 class hiding_warnings(object):
 	"""
 	A context manager that executes its body in a context

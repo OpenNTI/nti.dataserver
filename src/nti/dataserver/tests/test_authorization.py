@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 
 #pylint: disable=R0904,W0402
-from hamcrest import assert_that, has_length, contains_string, is_, same_instance, is_not, is_in
+from hamcrest import assert_that, has_length, contains_string, is_, same_instance, is_not
 from nti.dataserver.tests import has_attr, provides
 from nti.tests import verifiably_provides
 
@@ -74,22 +74,6 @@ class TestPrincipals(mock_dataserver.ConfiguringTestBase):
 		assert_that( iprin.title, is_( u.username ) )
 		assert_that( repr(iprin), is_("_UserPrincipal('sjohnson@nextthought.com')") )
 		assert_that( str(iprin), is_('sjohnson@nextthought.com') )
-
-	@mock_dataserver.WithMockDSTrans
-	def test_effective_principals(self):
-		assert_that( nauth.effective_principals( None ), is_( () ) )
-		u = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
-
-		with_u = nauth.effective_principals( u )
-		by_name = nauth.effective_principals( u.username )
-
-		assert_that( with_u, is_( by_name ) )
-		# Domain
-		assert_that( nti_interfaces.IPrincipal( 'nextthought.com' ),
-					 is_in( with_u ) )
-		# user
-		assert_that( nti_interfaces.IPrincipal( u ),
-					 is_in( with_u ) )
 
 
 

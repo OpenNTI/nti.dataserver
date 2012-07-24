@@ -47,6 +47,16 @@ def effective_principals( username,
 	for _, adapter in registry.getAdapters( (user,),
 											nti_interfaces.IGroupMember ):
 		result.update( adapter.groups )
+
+	# Add principals for all the communities that the user is in
+	# These are valid ACL targets because they are in the same namespace
+	# as users (so no need to prefix with community_ or something like that)
+	for community in getattr( user, 'communities', ()): # Mostly tests pass in a non-User user_factory
+		# Make sure it's a valid community
+		community = users.Entity.get_entity( community )
+		if isinstance( community, users.Community ) and not isinstance( community, users.Everyone ): # TODO interface?
+			result.add( nti_interfaces.IPrincipal( community ) )
+
 	# These last three will be duplicates of string-only versions
 	# Ensure that the user is in there as a IPrincipal
 	result.update( (nti_interfaces.IPrincipal(username),) )

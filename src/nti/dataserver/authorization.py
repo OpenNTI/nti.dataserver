@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+
 """
 Constants and classes relating to authorisation.
 
@@ -51,7 +52,11 @@ Likewise, the permissions in an ACL entry should be IPermission objects,
 but persistent storage should be strings; conversion is handled by registering
 IPermission objects by name as utilities.
 
+$Id$
 """
+
+from __future__ import print_function, unicode_literals
+
 import functools
 
 import persistent
@@ -65,10 +70,6 @@ import pyramid.security
 
 import nti.dataserver.interfaces as nti_interfaces
 from nti.dataserver import users
-
-
-__all__ = ('ACT_CREATE', 'ACT_DELETE', 'ACT_UPDATE', 'ACT_READ',
-		   'ROLE_ADMIN', 'effective_principals')
 
 # TODO: How does zope normally present these? Side effects of import are Bad
 if not '__str__' in Permission.__dict__:
@@ -89,12 +90,6 @@ ACT_READ   = Permission('zope.View')
 # in certain areas
 ROLE_ADMIN = 'role:nti.admin'
 
-import zope.deferredimport
-
-zope.deferredimport.deprecatedFrom(
-	"Prefer nti.dataserver.authentication",
-	"nti.dataserver.authentication",
-	"effective_principals" )
 
 class _PersistentGroupMember(persistent.Persistent):
 	"""
@@ -121,6 +116,9 @@ def _persistent_group_member_factory( obj ):
 # TODO: Should we enforce case-insensitivity here?
 @functools.total_ordering
 class _AbstractPrincipal(object):
+	"""
+	Root for all actual :class:`nti_interfaces.IPrincipal` implementations.
+	"""
 	id = ''
 	def __eq__(self,other):
 		return nti_interfaces.IPrincipal.providedBy(other) \
@@ -151,21 +149,25 @@ def _system_user_factory( string ):
 	assert string == nti_interfaces.SYSTEM_USER_NAME
 	return nti_interfaces.system_user
 
+@interface.implementer(nti_interfaces.IGroup)
+@component.adapter(basestring)
 class _EveryoneGroup(_StringPrincipal):
-	interface.implements(nti_interfaces.IGroup)
-	component.adapts(basestring)
+	"Everyone, authenticated or not."
 
-	description = u"Everyone, authenticated or not."
 	REQUIRED_NAME = nti_interfaces.EVERYONE_GROUP_NAME
 	def __init__( self, string ):
 		assert string == self.REQUIRED_NAME
 		super(_EveryoneGroup,self).__init__( string )
 		self.title = self.description
 
-class _AuthenticatedGroup(_EveryoneGroup):
+_EveryoneGroup.description = _EveryoneGroup.__doc__
 
-	description = u"The subset of everyone that is authenticated"
+class _AuthenticatedGroup(_EveryoneGroup):
+	"The subset of everyone that is authenticated"
+
 	REQUIRED_NAME = nti_interfaces.AUTHENTICATED_GROUP_NAME
+
+_AuthenticatedGroup.description = _AuthenticatedGroup.__doc__
 
 def _string_principal_factory( name ):
 	# Check for a named adapter first, since we are the no-name factory.
@@ -177,8 +179,12 @@ def _string_principal_factory( name ):
 
 	return result
 
+@interface.implementer(nti_interfaces.IPrincipal)
+@component.adapter(nti_interfaces.IUser)
 class _UserPrincipal(_AbstractPrincipal):
-	interface.implements(nti_interfaces.IPrincipal)
+	"""
+	Adapter from an :class:`nti_interfaces.IUser` to an :class:`nti_interfaces.IPrincipal`.
+	"""
 
 	def __init__( self, user ):
 		self._user = user
@@ -189,4 +195,7 @@ class _UserPrincipal(_AbstractPrincipal):
 	title = id
 	description = id
 
+@interface.implementer(nti_interfaces.IPrincipal)
+class _CommunityGroup(_UserPrincipal): # IGroup extends IPrincipal
+	pass
 # IACLProvider implementations live in authorization_acl
