@@ -119,7 +119,6 @@ class RepozeUserIndexManager(object):
 				if catalog:
 					_, docids = self._do_catalog_query(catalog, fieldname, qo)
 					hits, hits_lm = self._get_hits_from_docids(qo, docids, highlight_type)
-
 					lm = max(lm, hits_lm)
 					for hit in hits:
 						items[hit[NTIID]] = hit
