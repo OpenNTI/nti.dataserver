@@ -62,40 +62,6 @@ class TestDataStore(ConfiguringTestBase):
 		obj = store.get_catalog_names(username)
 		assert_that(obj, has_length(4))
 		
-	def test_docmap(self):
-		store = create_repoze_datastore()
-		username = u'nt@nt.com'
-		address = u'tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.0'
-		store.add_catalog(username, create_notes_catalog(), 'note')
-		
-		docid = store.add_address(username, address)
-		assert_that(docid, is_not(None))
-		
-		xaddress = store.address_for_docid(username, docid)
-		assert_that(xaddress, is_(address))
-		
-		xdocid = store.docid_for_address(username, address)
-		assert_that(xdocid, is_(docid))
-		
-		counter = 0
-		docids = store.get_docids(username)
-		for _ in docids:
-			counter = counter + 1 
-		assert_that(counter, is_(1))
-		
-		store.remove_docid(username, docid)
-		
-		xdocid = store.docid_for_address(username, address)
-		assert_that(xdocid, is_(None))
-		
-		xaddress = store.address_for_docid(username, docid)
-		assert_that(xaddress, is_(None))
-		
-		counter = 0
-		docids = store.get_docids(username)
-		for _ in docids:
-			counter = counter + 1 
-		assert_that(counter, is_(0))
-		
+
 if __name__ == '__main__':
 	unittest.main()

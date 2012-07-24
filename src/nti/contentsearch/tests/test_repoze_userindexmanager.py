@@ -72,13 +72,13 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		return usr, rim, docids, notes
 
 	@WithMockDSTrans
-	def test_empty(self):
+	def xtest_empty(self):
 		rim = RepozeUserIndexManager ('nt@nti.com')
 		assert_that(rim.get_stored_indices(), is_([]))
 		assert_that(rim.has_stored_indices(), is_(False))
 
 	@WithMockDSTrans
-	def test_index_notes(self):
+	def xtest_index_notes(self):
 		_, _, rim, = self._index_notes()
 		assert_that(rim.get_stored_indices(), is_([u'note']))
 		assert_that(rim.has_stored_indices(), is_(True))
@@ -114,7 +114,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		assert_that(hits, has_entry(HIT_COUNT, 3))
 
 	@WithMockDSTrans
-	def test_update_note(self):
+	def xtest_update_note(self):
 		_, rim, _, notes = self._add_user_index_notes(self.ds)
 		note = notes[5]
 		note.body = [u'Blow It Away']
@@ -129,7 +129,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		assert_that(hits, has_entry(QUERY, 'blow'))
 
 	@WithMockDSTrans
-	def test_delete_note(self):
+	def xtest_delete_note(self):
 		_, rim, _, notes = self._add_user_index_notes()
 		note = notes[5]
 		rim.delete_content(note)
@@ -139,7 +139,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		assert_that(hits, has_entry(QUERY, 'shield'))
 
 	@WithMockDSTrans
-	def test_suggest(self):
+	def xtest_suggest(self):
 		_, rim, _, _ = self._add_user_index_notes()
 		hits = rim.suggest("ra")
 		assert_that(hits, has_entry(HIT_COUNT, 4))
@@ -154,7 +154,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		assert_that(items, has_item('rage'))
 
 	@WithMockDSTrans
-	def test_ngram_search(self):
+	def xtest_ngram_search(self):
 		_, rim, _, _ = self._add_user_index_notes()
 		hits = rim.ngram_search("sea")
 		assert_that(hits, has_entry(HIT_COUNT, 1))
@@ -163,7 +163,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		assert_that(hits[ITEMS], has_length(1))
 
 	@mock_dataserver.WithMockDS
-	def test_note_index_to_two_users(self):
+	def xtest_note_index_to_two_users(self):
 		ds = mock_dataserver.current_mock_ds
 		users = []
 		with mock_dataserver.mock_db_trans( ds ):
@@ -189,7 +189,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 				assert_that(hits, has_entry(HIT_COUNT, 1))
 
 	@WithMockDSTrans
-	def test_create_redaction(self):
+	def xtest_create_redaction(self):
 		username = 'kuchiki@bleach.com'
 		user = User.create_user(mock_dataserver.current_mock_ds, username=username, password='temp' )
 		redaction = Redaction()

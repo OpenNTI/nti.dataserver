@@ -6,7 +6,7 @@ from collections import Iterable
 from brownie.caching import LFUCache
 
 from nti.contentsearch._cloudsearch_store import CloudSearchStore
-from nti.contentsearch._repoze_datastore import PersistentRepozeDataStore
+from nti.contentsearch._repoze_datastore import RepozeCatalogDataStore
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -260,7 +260,7 @@ class QueryObject(object, UserDict.DictMixin):
 		return queryobject
 
 def create_repoze_datastore(*args, **kwargs):
-	return PersistentRepozeDataStore()
+	return RepozeCatalogDataStore()
 
 def create_cloudsearch_store(*args, **kwargs):
 	return CloudSearchStore(*args, **kwargs)

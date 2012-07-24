@@ -12,7 +12,7 @@ from nti.dataserver import users
 from zope import component
 from ZODB.DB import ContextManager as DBContext
 from nti.dataserver import interfaces as nti_interfaces
-
+from nti.tests import ConfiguringTestBase as _BaseConfiguringTestBase
 
 class MockDataserver( dataserver._Dataserver.Dataserver ):
 
@@ -246,7 +246,7 @@ def WithMockDSTrans( func ):
 
 
 
-class ConfiguringTestBase(nti.tests.ConfiguringTestBase):
+class ConfiguringTestBase(_BaseConfiguringTestBase):
 	"""
 	A test base that does two things: first, sets up the :mod:`nti.dataserver` module
 	during setUp, and second, makes the value of :data:`current_mock_ds` available

@@ -2,12 +2,11 @@ from __future__ import print_function, unicode_literals
 
 import contextlib
 
+import zope.intid
 from zope import component
 from zope import interface
 
 from nti.dataserver import interfaces as nti_interfaces
-from nti.externalization.oids import toExternalOID
-from nti.externalization.oids import fromExternalOID
 
 from nti.contentsearch import interfaces
 from nti.contentsearch import QueryObject
@@ -40,19 +39,6 @@ def get_stored_indices(username):
 def has_stored_indices(username):
 	names = get_stored_indices(username)
 	return True if names else False
-	
-def get_by_oid(oid_string):
-	if not oid_string: return None
-	lsm = component.getSiteManager()
-	connection = getattr( lsm, '_p_jar', None )
-	oid_string, database_name = fromExternalOID( oid_string )
-	try:
-		if database_name: connection = connection.get_connection( database_name )
-		result = connection[oid_string]
-	except:
-		logger.exception( "Failed to resolve oid '%s' using '%s'", oid_string.encode('hex'), connection )
-		result = None
-	return result
 
 class RepozeUserIndexManager(object):
 	interface.implements(interfaces.IUserIndexManager)
@@ -74,6 +60,14 @@ class RepozeUserIndexManager(object):
 		return component.getUtility( interfaces.IRepozeDataStore )
 	datastore = store
 	
+	def get_uid(self, obj):
+		_ds_intid = component.getUtility( zope.intid.IIntIds )
+		return _ds_intid.getId(obj)
+	
+	def get_object(self, uid):
+		_ds_intid = component.getUtility( zope.intid.IIntIds )
+		return _ds_intid.getObject(uid)
+		
 	@property
 	def dataserver(self):
 		return component.getUtility( nti_interfaces.IDataserver )
@@ -89,11 +83,8 @@ class RepozeUserIndexManager(object):
 		if not docids:
 			return [], 0
 		
-		# get the oid from the doc ids
-		oids = map(self.store.address_for_docid, [self.username]*len(docids), docids)
-		
 		# get all objects from the ds
-		objects = map(get_by_oid, oids)
+		objects = map(self.get_object, docids)
 		
 		# get all index hits
 		length = len(objects)
@@ -204,43 +195,32 @@ class RepozeUserIndexManager(object):
 			if catalog:
 				self.store.add_catalog(self.username, catalog, type_name)
 		return catalog
-
-	def _get_id(self, data):
-		return toExternalOID(data)
 	
 	def index_content(self, data, type_name=None, **kwargs):
 		if not data: return None
-		docid = None
-		_oid = self._get_id(data)
+		docid = self.get_uid(data)
 		with repoze_context_manager():
 			catalog = self._get_create_catalog(data, type_name)
-			if catalog and _oid:
-				docid = self.store.get_or_create_docid_for_address(self.username, _oid)
+			if catalog:
 				catalog.index_doc(docid, data)
 		return docid
 
 	def update_content(self, data, type_name=None, *args, **kwargs):
 		if not data: return None
-		_oid = self._get_id(data)
-		if not _oid: return None
+		docid = self.get_uid(data)
 		with repoze_context_manager():
-			docid = self.store.docid_for_address(self.username, _oid)
-			if docid:
-				catalog = self._get_create_catalog(data, type_name)
+			catalog = self._get_create_catalog(data, type_name)
+			if catalog:
 				catalog.reindex_doc(docid, data)
-			else:
-				docid = self.index_content(data, type_name)
 		return docid
 
 	def delete_content(self, data, type_name=None, *args, **kwargs):
 		if not data: return None
-		_oid = self._get_id(data)
-		if not _oid: return None
+		docid = self.get_uid(data)
 		with repoze_context_manager():
-			docid = self.store.docid_for_address(self.username, _oid)
-			if docid:
-				catalog = self._get_create_catalog(data, type_name, create=False)
-				if catalog: catalog.unindex_doc(docid)
+			catalog = self._get_create_catalog(data, type_name, create=False)
+			if catalog: 
+				catalog.unindex_doc(docid)
 				self.store.remove_docid(self.username, docid)
 		return docid
 
@@ -248,11 +228,6 @@ class RepozeUserIndexManager(object):
 		with repoze_context_manager():
 			result = self.store.remove_catalog(self.username, type_name)
 			return result
-
-	def docid_for_address(self, address):
-		with repoze_context_manager():
-			docid = self.store.docid_for_address(self.username, address)
-			return docid
 		
 	def get_stored_indices(self):
 		names = get_stored_indices(self.username)
@@ -263,8 +238,6 @@ class RepozeUserIndexManager(object):
 		result = has_stored_indices(self.username)
 		return result
 	
-# -----------------------------
-
 class RepozeUserIndexManagerFactory(object):
 	interface.implements(IUserIndexManagerFactory)
 
