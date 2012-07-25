@@ -806,6 +806,11 @@ class thehints(Base.List):
 		if self.macroMode != Base.Environment.MODE_END:
 			self.ownerDocument.context.counters['hintnum'].setcounter(0)
 
+	def hintToreplace( self, hintItem ):
+		for hint in hintItem.idref['label'].getElementsByTagName( 'hint' ):
+			if hint.attributes['label'] == hintItem.attributes['label']:
+				return hint
+
 	def digest( self, tokens ):
 		super(thehints,self).digest( tokens )
 		# When we end the hints, go back and fixup the references and
@@ -818,7 +823,10 @@ class thehints(Base.List):
 				# we are the current parent, the label needs to be the
 				# new parent
 				self.removeChild( child )
-				child.idref['label'].appendChild( child )
+				replaceHint = self.hintToreplace( child )
+				# How is possible that we sometimes get a hintitem with no corresponding hint?
+				if replaceHint != None:
+					replaceHint.parentNode.replaceChild( child, replaceHint )
 			else:
 				# for now, if it doesn't refer to anything, delete it
 				self.removeChild( child )
