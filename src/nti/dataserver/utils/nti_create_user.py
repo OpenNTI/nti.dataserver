@@ -3,8 +3,11 @@ from __future__ import print_function, unicode_literals
 
 import sys
 
+from zope import interface
+
 from nti.dataserver import users
 from nti.dataserver import providers
+from nti.dataserver import interfaces as nti_interfaces
 from . import run_with_dataserver
 
 import argparse
@@ -31,6 +34,11 @@ def main():
 							 nargs="+",
 							 default=(),
 							 help="The names of communities to add the user to" )
+	arg_parser.add_argument( '--coppa',
+							 dest='coppa',
+							 action='store_true',
+							 default=False,
+							 help="Creating a user to whom COPPA applies (under 13)" )
 
 	args = arg_parser.parse_args()
 
@@ -39,10 +47,11 @@ def main():
 	password = args.password
 
 
-	run_with_dataserver( environment_dir=env_dir, function=lambda: _create_user(_type_map[args.type], username, password, args.name, args.communities ) )
+	run_with_dataserver( environment_dir=env_dir, function=lambda: _create_user(_type_map[args.type], username, password, args.name, args.communities, args.coppa ) )
 	sys.exit( 0 )
 
-def _create_user( factory, username, password, realname, communities=() ):
+def _create_user( factory, username, password, realname, communities=(), coppa=False ):
+	__traceback_info__ = locals().items()
 	user = factory.im_self.get_entity( username )
 	if user:
 		print( "Not overwriting existing entity", repr(user), file=sys.stderr )
@@ -54,8 +63,12 @@ def _create_user( factory, username, password, realname, communities=() ):
 	if password:
 		args['password'] = password
 	user = factory( **args )
-	for com_name in communities:
-		community = users.Entity.get_entity( com_name, default='' )
-		if community:
-			user.join_community( community )
-			user.follow( community )
+	if nti_interfaces.IUser.providedBy( user ):
+		for com_name in communities:
+			community = users.Entity.get_entity( com_name, default='' )
+			if community:
+				user.join_community( community )
+				user.follow( community )
+
+		if coppa:
+			interface.alsoProvides( user, nti_interfaces.ICoppaUser )

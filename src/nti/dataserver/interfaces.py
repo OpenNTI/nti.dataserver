@@ -348,6 +348,17 @@ class IFacebookUser(IUser):
 
 	facebook_url = schema.TextLine( title=u"The user's claimed identity URL" )
 
+class ICoppaUser(IUser):
+	"""
+	A marker interface to denote users to whom the United States COPPA
+	policy should apply.
+
+	As this is a temporary, age-based condition, it should not be applied at a class
+	level. Instead, it should either be available through an adapter (when we know
+	the user's age) or added and removed via :func:`interface.alsoProvides`
+	and :func:`interface.noLongerProvides`.
+	"""
+
 
 class IACE(interface.Interface):
 	"""
