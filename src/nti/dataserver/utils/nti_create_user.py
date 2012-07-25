@@ -10,7 +10,8 @@ from . import run_with_dataserver
 import argparse
 
 _type_map = { 'user': users.User.create_user,
-			  'provider': providers.Provider.create_provider }
+			  'provider': providers.Provider.create_provider,
+			  'community': users.Community.create_community }
 
 def main():
 	arg_parser = argparse.ArgumentParser( description="Create a user-type object" )
@@ -46,7 +47,12 @@ def _create_user( factory, username, password, realname, communities=() ):
 		print( "Not overwriting existing entity", repr(user), file=sys.stderr )
 		sys.exit( 2 )
 
-	user = factory( username=username, password=password, realname=realname )
+	args = {'username': username}
+	if realname:
+		args['realname'] = realname
+	if password:
+		args['password'] = password
+	user = factory( **args )
 	for com_name in communities:
 		community = users.Entity.get_entity( com_name, default='' )
 		if community:

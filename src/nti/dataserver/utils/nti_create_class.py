@@ -14,9 +14,6 @@ from . import run_with_dataserver
 
 import argparse
 
-_type_map = { 'user': users.User.create_user,
-			  'provider': providers.Provider.create_provider }
-
 def main():
 	arg_parser = argparse.ArgumentParser( description="Create a class with a section" )
 	arg_parser.add_argument( 'env_dir', help="Dataserver environment root directory" )
