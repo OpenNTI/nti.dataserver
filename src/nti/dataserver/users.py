@@ -84,10 +84,40 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject,E
 			return dataserver.root[_namespace or cls._ds_namespace].get( username, default )
 		return default
 
+	@classmethod
+	def create_entity( cls, dataserver=None, **kwargs ):
+		"""
+		Creates (and returns) and places in the dataserver a new entity,
+		constructed using the keyword arguments given, the same as those
+		the User constructor takes. Overwrites an existing user. You handle
+		the transaction.
+		"""
+
+		dataserver = dataserver or _get_shared_dataserver()
+		root_users = dataserver.root[cls._ds_namespace]
+		if 'parent' not in kwargs:
+			kwargs['parent'] = root_users
+		user = cls( **kwargs )
+		# When we auto-create users, we need to be sure
+		# they have a database connection so that things that
+		# are added /to them/ (their contained storage) in the same transaction
+		# will also be able to get a database connection and hence
+		# an OID.
+		# TODO: This can probably go away since these should be adapted
+		root_users._p_jar.add( user ) # Since there's no parent yet
+		IKeyReference( user ) # Ensure it gets added to the database
+		assert getattr( user, '_p_jar', None ), "User should have a connection"
+
+
+		notify( ObjectCreatedEvent( user ) ) # Fire created event
+		root_users[user.username] = user # Fire added event
+
+		return user
+
 	creator = nti_interfaces.SYSTEM_USER_NAME
 	__parent__ = None
 
-	def __init__(self, username, avatarURL=None, realname=None, alias=None):
+	def __init__(self, username, avatarURL=None, realname=None, alias=None, parent=None):
 		super(Entity,self).__init__()
 		if not username or '%' in username:
 			# % is illegal because we sometimes have to
@@ -103,6 +133,14 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject,E
 		# time...this implies there are never temporary objects of this type
 		# and that this type represents a fully formed object after construction
 		self.createdTime = self.updateLastMod()
+
+		if parent is not None:
+			# If we pre-set this, then the ObjectAdded event doesn't
+			# fire (the ObjectCreatedEvent does). On the other hand, we can't add anything to friendsLists
+			# if an intid utility is installed if we don't have a parent (and thus
+			# cannot be adapted to IKeyReference).
+			self.__parent__ = parent
+
 
 	def _get__name__(self):
 		return self.username
@@ -271,9 +309,10 @@ class Principal(Entity,sharing.SharingSourceMixin):
 				 username=None,
 				 avatarURL=None,
 				 password=None,
-				 realname=None):
+				 realname=None,
+				 parent=None):
 
-		super(Principal,self).__init__(username,avatarURL,realname=realname)
+		super(Principal,self).__init__(username,avatarURL,realname=realname,parent=parent)
 		if not username or '@' not in username:
 			raise ValueError( 'Illegal username ' + username )
 		self.__dict__['password'] = None # establish default (missing)
@@ -292,6 +331,13 @@ class Principal(Entity,sharing.SharingSourceMixin):
 
 
 class Community(Entity,sharing.DynamicSharingTargetMixin):
+
+	@classmethod
+	def create_community( cls, dataserver=None, **kwargs ):
+		""" Creates (and returns) and places in the dataserver a new community.
+		"""
+		return cls.create_entity( dataserver=dataserver, **kwargs )
+
 
 	# We override these methods for space efficiency.
 	# TODO: Should we track membership here? If so, membership
@@ -617,27 +663,7 @@ class User(Principal):
 		the User constructor takes. Overwrites an existing user. You handle
 		the transaction.
 		"""
-
-		dataserver = dataserver or _get_shared_dataserver()
-		root_users = dataserver.root[cls._ds_namespace]
-		if 'parent' not in kwargs:
-			kwargs['parent'] = root_users
-		user = cls( **kwargs )
-		# When we auto-create users, we need to be sure
-		# they have a database connection so that things that
-		# are added /to them/ (their contained storage) in the same transaction
-		# will also be able to get a database connection and hence
-		# an OID.
-		# TODO: This can probably go away since these should be adapted
-		root_users._p_jar.add( user ) # Since there's no parent yet
-		IKeyReference( user ) # Ensure it gets added to the database
-		assert getattr( user, '_p_jar', None ), "User should have a connection"
-
-
-		notify( ObjectCreatedEvent( user ) ) # Fire created event
-		root_users[user.username] = user # Fire added event
-
-		return user
+		return cls.create_entity( dataserver=dataserver, **kwargs )
 
 	@classmethod
 	def delete_user( cls, username, dataserver=None, **kwargs ):
@@ -688,16 +714,10 @@ class User(Principal):
 	# http://www.gravatar.com/avatar/%<Lowercase hex MD5>=44&d=mm
 
 	def __init__(self, username, avatarURL=None, password=None, realname=None, parent=None, _stack_adjust=0):
-		super(User,self).__init__(username, avatarURL=avatarURL, password=password, realname=realname)
+		super(User,self).__init__(username, avatarURL=avatarURL, password=password, realname=realname, parent=parent)
 		# We maintain a Map of our friends lists, organized by
 		# username (only one friend with a username)
 		_create_fl = True
-		if parent is not None:
-			# If we pre-set this, then the ObjectAdded event doesn't
-			# fire (the ObjectCreatedEvent does). On the other hand, we can't add anything to friendsLists
-			# if an intid utility is installed if we don't have a parent (and thus
-			# cannot be adapted to IKeyReference).
-			self.__parent__ = parent
 
 		if self.__parent__ is None and component.queryUtility( zope.intid.IIntIds ) is not None:
 			warnings.warn( "No parent provided. User will have no Everyone list; either use User.create_user or provide parent kwarg",
