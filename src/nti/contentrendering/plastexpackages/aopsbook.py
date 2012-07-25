@@ -312,6 +312,16 @@ class parts(Base.List):
 
 		return res
 
+def removeCommasFromSectionWithHints(subsection):
+	hintName = 'hint'
+	for node in subsection.childNodes:
+		for child in node.childNodes:
+			if child.nextSibling != None and child.nextSibling.nextSibling != None:	
+				if child.nodeName == hintName and child.nextSibling == ', ' and child.nextSibling.nextSibling.nodeName == hintName:
+					node.removeChild(child.nextSibling)
+				elif child.nodeName == hintName and child.nextSibling == ',' and child.nextSibling.nextSibling.source == '~ ' and child.nextSibling.nextSibling.nextSibling != None and child.nextSibling.nextSibling.nextSibling.nodeName == hintName:
+					node.removeChild(child.nextSibling)
+
 def _number_to_lower_alpha_list(index):
 	if ( index  ):
 		return _number_to_lower_alpha_list( (index - 1) / 26 ) + chr( (index - 1) % 26 + 97 )
@@ -339,7 +349,11 @@ class part(plastexids.StableIDMixin,Base.List.item):
 		    str(self.ownerDocument.context.counters['probnum'].value) + ".(" + self.alpha +")"
 		#ignore the list implementation
 		return Base.Command.invoke(self,tex)
-
+	
+	def digest(self, tokens):
+		super(part, self).digest(tokens)
+		#Remove trailing commas that we have in some parts
+		removeCommasFromSectionWithHints(self)
 
 class parthard(part):
 	pass
@@ -376,16 +390,6 @@ class exercises(Base.subsection):
 				nodesToMove.append(node)
 
 		return res
-
-def removeCommasFromSectionWithHints(subsection):
-	hintName = 'hint'
-	for node in subsection.childNodes:
-		for child in node.childNodes:
-			if child.nextSibling != None and child.nextSibling.nextSibling != None:	
-				if child.nodeName == hintName and child.nextSibling == ', ' and child.nextSibling.nextSibling.nodeName == hintName:
-					node.removeChild(child.nextSibling)
-				elif child.nodeName == hintName and child.nextSibling == ',' and child.nextSibling.nextSibling.source == '~ ' and child.nextSibling.nextSibling.nextSibling != None and child.nextSibling.nextSibling.nextSibling.nodeName == hintName:
-					node.removeChild(child.nextSibling)
 
 class exer(plastexids.StableIDMixin, Base.subsubsection):
 	args = ''
