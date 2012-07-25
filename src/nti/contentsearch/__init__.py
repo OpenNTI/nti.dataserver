@@ -5,8 +5,6 @@ from collections import Iterable
 
 from brownie.caching import LFUCache
 
-from nti.contentsearch import zopyxtxng3corelogger
-
 from nti.contentsearch._cloudsearch_store import CloudSearchStore
 from nti.contentsearch._repoze_datastore import RepozeCatalogDataStore
 
