@@ -1,9 +1,11 @@
 from __future__ import print_function, unicode_literals
 
 import six
+import BTrees
 from collections import Iterable
 
 from repoze.catalog.catalog import Catalog
+from repoze.catalog.indexes.common import CatalogIndex
 from repoze.catalog.indexes.field import CatalogFieldIndex
 from repoze.catalog.indexes.keyword import CatalogKeywordIndex
 
@@ -33,7 +35,11 @@ from nti.contentsearch.common import (	ngrams_, channel_, content_, keywords_, r
 import logging
 logger = logging.getLogger( __name__ )
 
-compute_ngrams = False #TODO: set this as part of a config
+# want to make sure change the family for all catalog index fields
+CatalogIndex.family = BTrees.family64
+
+#TODO: set this as part of a config
+compute_ngrams = False 
 
 def get_id(obj, default=None):
 	result = obj if isinstance(obj, six.string_types) else get_attr(obj, [ID])
@@ -159,7 +165,7 @@ def _create_text_index(field, discriminator):
 	return CatalogTextIndexNG3(field, discriminator)
 
 def _create_treadable_mixin_catalog():
-	catalog = Catalog()
+	catalog = Catalog(family=BTrees.family64)
 	catalog[NTIID] = CatalogFieldIndex(get_ntiid)
 	catalog[OID] = CatalogFieldIndex(get_external_oid)
 	catalog[CREATOR] = CatalogFieldIndex(get_creator)
@@ -202,7 +208,7 @@ def create_messageinfo_catalog():
 	return catalog
 
 def create_book_catalog():
-	catalog = Catalog()
+	catalog = Catalog(family=BTrees.family64)
 	catalog[ntiid_] = CatalogFieldIndex(get_ntiid)
 	catalog[title_] = CatalogFieldIndex(get_title)
 	catalog[last_modified_] = CatalogFieldIndex(get_last_modified)

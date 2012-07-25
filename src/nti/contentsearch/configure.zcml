@@ -5,6 +5,7 @@
 	<include package="nti.contentfragments" file="configure.zcml" />
 			 	
 	<!-- Database creation and migration -->
+	
 	<utility factory=".generations.install._ContentSearchSchemaManager"
 			 name="nti.dataserver-contentsearch"
 			 provides="zope.generations.interfaces.IInstallableSchemaManager"/>
@@ -34,5 +35,22 @@
 	<subscriber factory="._search_external.NgramSnippetHighlightDecoratorFactory"
 				for=".interfaces.INgramSnippetHighlight"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
-					
+			
+	<!-- zopyx Storage -->
+
+	<utility	provides="zopyx.txng3.core.interfaces.IStorage"
+				factory=".zopyxtxng3corestorage.StorageFactory"
+				name="txng.storages.default" />
+
+	<utility	provides="zope.component.interfaces.IFactory"
+				component=".zopyxtxng3corestorage.StorageFactory"
+				name="txng.storages.default" />
+
+	<utility	provides="zopyx.txng3.core.interfaces.IStorage"
+				factory=".zopyxtxng3corestorage.StorageWithTermFrequencyFactory"
+				name="txng.storages.term_frequencies" />
+
+	<utility	provides="zope.component.interfaces.IFactory"
+				component=".zopyxtxng3corestorage.StorageWithTermFrequencyFactory"
+				name="txng.storages.term_frequencies" />		
 </configure>

@@ -236,8 +236,8 @@ class ZopeExceptionLogPatch(nose.plugins.Plugin):
 		# Despite what the docs say, you do not return the test.
 		# see logcapture and failuredetail.
 		# Omitting filenames makes things shorter
-        # and generally more readable, but when the last part of the traceback
-        # is in initializing a module, then the filename is the only discriminator
+		# and generally more readable, but when the last part of the traceback
+		# is in initializing a module, then the filename is the only discriminator
 		formatted_tb = ''.join(format_exception(t, v, tb, with_filenames=False))
 		if 'Module None' in formatted_tb:
 			formatted_tb = ''.join(format_exception(t, v, tb, with_filenames=True))
