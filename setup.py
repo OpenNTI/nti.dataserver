@@ -13,6 +13,7 @@ entry_points = {
 		"nti_enroll_class = nti.dataserver.utils.nti_enroll_class:main",
 		"nti_set_generation = nti.dataserver.utils.nti_set_generation:main",
 		"nti_set_password = nti.dataserver.utils.nti_set_password:main",
+		"nti_follow_entity = nti.dataserver.utils.nti_follow_entity:main",
 		"nti_remove_user = nti.dataserver.utils.nti_remove_user:main",
 		"nti_delete_user_objects = nti.dataserver.utils.nti_delete_user_objects:main",
 		"nti_export_user_objects = nti.dataserver.utils.nti_export_user_objects:main",
