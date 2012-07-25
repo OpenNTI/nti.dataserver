@@ -117,7 +117,7 @@ setup(
 		 # webob 1.2, collects data ok without patch.
 		 # Depends on the system graphviz installation; an alternative is repoze.profile which has
 		 # fewer dependencies, but less helpful output and doesn't work with multiple workers (?)
-		'linesman >= 0.2.2',
+		#'linesman >= 0.2.2', # Conflicts with Pillow. Modify requires.txt as part of the patch
 		'logilab-common >= 0.58.1',
 		'nltk >= 2.0.2',
 		# numpy is req'd by nltk, but not depended on. sigh.
