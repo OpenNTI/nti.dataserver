@@ -22,6 +22,8 @@ Contents:
 
 	authorization
 
+	object-refs
+
 	content-anchoring
 	content-in-cdn
 	content-resolving
