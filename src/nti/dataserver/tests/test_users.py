@@ -10,6 +10,8 @@ from nose.tools import assert_raises
 
 
 import persistent
+from zope import component
+import zc.intid
 
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization import internalization
@@ -216,9 +218,10 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		user = User.create_user( self.ds, username='sjohnson@nextthought.com', password='temp001' )
 		assert_that( user.getSharedContainer( 'foo', 42 ), is_( 42 ) )
 
-		c = ContainedMixin()
+		c = PersistentContainedThreadable()
 		c.containerId = 'foo'
 		c.id = 'a'
+		component.getUtility( zc.intid.IIntIds ).register( c )
 
 		user._addSharedObject( c )
 		assert_that( user.getSharedContainer( 'foo' ), has_length( 1 ) )
@@ -235,7 +238,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		c = PersistentContainedThreadable()
 		c.containerId = 'foo'
 		c.id = 'a'
-
+		component.getUtility( zc.intid.IIntIds ).register( c )
 		change = Change( Change.CREATED, c )
 		user._acceptIncomingChange( change )
 		assert_that( user.getSharedContainer( 'foo' ), has_length( 1 ) )
@@ -252,6 +255,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		reply.containerId = 'foo'
 		reply.id = 'b'
 		reply.inReplyTo = c
+		component.getUtility( zc.intid.IIntIds ).register( reply )
 		change = Change( Change.SHARED, reply )
 		user._noticeChange( change )
 
@@ -265,6 +269,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		reference.containerId = 'foo'
 		reference.id = '3'
 		reference.references = [c]
+		component.getUtility( zc.intid.IIntIds ).register( reference )
 		change = Change( Change.SHARED, reference )
 		user._noticeChange( change )
 

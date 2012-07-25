@@ -3,17 +3,23 @@
 import logging
 logger = logging.getLogger( __name__ )
 
-
+import sys
 import numbers
 import collections
 
 from zope import interface
 from zope import component
 from zope.deprecation import deprecate
+from zope.cachedescriptors.property import Lazy
 
+from zc import intid as zc_intid
+
+import persistent
 import BTrees
 from BTrees.OOBTree import OOTreeSet, OOBTree
 from ZODB import loglevels
+
+import UserDict
 
 from nti.dataserver.activitystream_change import Change
 from nti.dataserver import datastructures
@@ -23,6 +29,103 @@ from nti.externalization.persistence import PersistentExternalizableWeakList
 from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.utils import sets
+
+# TODO: This all needs refactored. The different pieces need to be broken into
+# different interfaces and adapters, probably using annotations, to get most
+# of this out of the core object structure, and to make more things possible.
+
+class _SharedContainedObjectStorageValue(object):
+	"""
+	The exposed view of the container that we use. Mimics a
+	list of WeakRefs because that is what we used to store.
+	"""
+
+	def __init__( self, iiset ):
+		self._container_set = iiset
+
+	def __iter__( self ):
+		intids = component.getUtility( zc_intid.IIntIds )
+		for iid in self._container_set:
+			yield persistent.wref.WeakRef(intids.getObject( iid ))
+
+	def __len__( self ):
+		return len(self._container_set)
+
+class _SharedContainedObjectStorageContainers(object):
+	"""
+	Transient object to implement the 'values' support
+	"""
+
+	def __init__( self, _containers ):
+		self._containers = _containers
+
+	def values(self):
+		for v in self._containers.values():
+			yield _SharedContainedObjectStorageValue( v )
+
+class _SharedContainedObjectStorage(persistent.Persistent):
+	"""
+	An object that implements something like the interface of :class:`datastructures.ContainedStorage`,
+	but in a simpler form using only intids, and assuming that we never
+	need to look objects up by container/localID pairs.
+	"""
+
+	family = BTrees.family64
+
+	def __init__( self, family=None ):
+		if family is not None:
+			self.family = family
+		else:
+			intids = component.queryUtility( zc_intid.IIntIds )
+			if intids:
+				self.family = intids.family
+
+		# Map from string container ids to self.family.II.TreeSet
+		# The values in the TreeSet are the intids of the shared
+		# objects
+		self._containers = self.family.OO.BTree()
+
+	def __iter__( self ):
+		return iter(self._containers)
+
+	@property
+	def containers(self):
+		"""
+		Returns an object that has a `values` method that iterates
+		the dict-like (immutable) containers.
+		"""
+		return _SharedContainedObjectStorageContainers( self._containers )
+
+	def _getId( self, contained ):
+		try:
+			return component.getUtility( zc_intid.IIntIds ).getId( contained )
+		except KeyError:
+			_, _, tb = sys.exc_info()
+			raise datastructures._ContainedObjectValueError( "No registered ID", contained ), None, tb
+
+	def addContainedObject( self, contained ):
+		datastructures.check_contained_object_for_storage( contained )
+
+		container_set = self._containers.get( contained.containerId )
+		if container_set is None:
+			container_set = self.family.II.TreeSet()
+			self._containers[contained.containerId] = container_set
+		container_set.add( self._getId( contained ) )
+		return contained
+
+	def deleteEqualContainedObject( self, contained, log_level=None ):
+		datastructures.check_contained_object_for_storage( contained )
+		container_set = self._containers.get( contained.containerId )
+		if container_set is not None:
+			if sets.discard_p( container_set, self._getId( contained ) ):
+				return contained
+			logger.debug( "Found set, did not find item" )
+
+
+	def getContainer( self, containerId, defaultValue=None ):
+		container_set = self._containers.get( containerId )
+		return _SharedContainedObjectStorageValue( container_set ) if container_set is not None else defaultValue
+
 
 class SharingTargetMixin(object):
 	"""
@@ -76,40 +179,37 @@ class SharingTargetMixin(object):
 		#quiet ignore.
 
 
-		# For things that are shared explicitly with me, we maintain a structure
-		# that parallels the contained items map. The first level is
-		# from container ID to a list of weak references to shared objects.
-		# (Un-sharing something, which requires removal from an arbitrary
-		# position in the list, should be rare.) Notice that we must NOT
-		# have the shared storage set or use IDs, because these objects
-		# are not owned by us.
-		# TODO: Specialize these data structures
-		self.containersOfShared = datastructures.ContainedStorage( weak=True,
-																   create=False,
-																   containerType=containers.EventlessLastModifiedBTreeContainer,
-																   set_ids=False )
-
-		# For muted conversations, which can be unmuted, there is an
-		# identical structure. References are moved in and out of this
-		# container as conversations are un/muted. The goal of this structure
-		# is to keep reads fast. Only writes--changing the muted status--are slow
-		self.containers_of_muted = datastructures.ContainedStorage( weak=True,
-																   create=False,
-																   containerType=containers.EventlessLastModifiedBTreeContainer,
-																   set_ids=False )
 		# This maintains the strings of external NTIID OIDs whose conversations are muted.
 		self.muted_oids = OOTreeSet()
-
-		# These items are not using 'real' containers, so they don't become parents,
-		# so giving them navigable names is safe (and pretty)
-		self.containersOfShared.__name__ = '++containersOfShared'
-		self.containers_of_muted.__name__ = '++containersOfMuted'
 
 		# A cache of recent items that make of the stream. Going back
 		# further than this requires walking through the containersOfShared.
 		# Map from containerId -> PersistentExternalizableWeakList
 		# TODO: Rethink this. It's terribly inefficient.
 		self.streamCache = OOBTree()
+
+	@Lazy
+	def containersOfShared(self):
+		"""For things that are shared explicitly with me, we maintain a structure
+		 that parallels the contained items map. The first level is
+		 from container ID to a list of weak references to shared objects.
+		 (Un-sharing something, which requires removal from an arbitrary
+		 position in the list, should be rare.) Notice that we must NOT
+		 have the shared storage set or use IDs, because these objects
+		 are not owned by us.
+		"""
+		# TODO: Might need to set self._p_changed when we do this (cf zope.container.btree)
+		# Might also need to add this object to self._p_jar?
+		return _SharedContainedObjectStorage()
+
+	@Lazy
+	def containers_of_muted(self):
+		""" For muted conversations, which can be unmuted, there is an
+		identical structure. References are moved in and out of this
+		container as conversations are un/muted. The goal of this structure
+		is to keep reads fast. Only writes--changing the muted status--are slow"""
+		return _SharedContainedObjectStorage()
+
 
 	def __manage_mute( self, mute=True ):
 		# TODO: Horribly inefficient
@@ -125,17 +225,15 @@ class SharingTargetMixin(object):
 		for container in _from.containers.values():
 			if isinstance( container, numbers.Number ): continue
 			for obj in container:
-				# TODO: Temporary migration code. Old objects had lists as `container`
-				# while the new objects are BTrees. Do a database migration when the changes
-				# are finished.
-				if isinstance( obj, basestring ): obj = container[obj]()
+				# TODO: Temporary migration code. We're emulating the weak-ref nature
+				# of the old containers
+				obj = obj()
 
 				if mute:
 					if self.is_muted( obj ):
 						to_move.append( obj )
 				elif not self.is_muted( obj ):
 					to_move.append( obj )
-
 
 		for x in to_move:
 			_from.deleteEqualContainedObject( x )

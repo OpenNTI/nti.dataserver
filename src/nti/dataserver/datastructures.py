@@ -638,6 +638,16 @@ class _ContainedObjectValueError(ValueError):
 			cstr = '{%s}' % e
 		super(_ContainedObjectValueError,self).__init__( "%s [type: %s repr %s]" % (string, ctype, cstr) )
 
+def check_contained_object_for_storage( contained ):
+	if not nti_interfaces.IContained.providedBy( contained ):
+		raise _ContainedObjectValueError( "Contained object is not IContained", contained )
+	if not nti_interfaces.IZContained.providedBy( contained ):
+		raise _ContainedObjectValueError( "Contained object is not IZContained", contained )
+
+	if not getattr( contained, 'containerId' ):
+		raise _ContainedObjectValueError( "Contained object has empty containerId", contained )
+
+
 from zope.location import locate
 
 @interface.implementer(nti_interfaces.IZContained, loc_interfaces.ISublocations)
@@ -844,13 +854,7 @@ class ContainedStorage(persistent.Persistent,ModDateTrackingObject):
 		# (and would do automatically for IZContained). That results in extra objects
 		# in the database and some confusing messages. Easier to ensure that all objects
 		# meet our requirements
-		if not nti_interfaces.IContained.providedBy( contained ):
-			raise _ContainedObjectValueError( "Contained object is not IContained", contained )
-		if not nti_interfaces.IZContained.providedBy( contained ):
-			raise _ContainedObjectValueError( "Contained object is not IZContained", contained )
-
-		if not getattr( contained, 'containerId' ):
-			raise _ContainedObjectValueError( "Contained object has empty containerId", contained )
+		check_contained_object_for_storage( contained )
 
 		container = self.getOrCreateContainer( contained.containerId )
 

@@ -28,6 +28,7 @@ from zope import interface
 from zope.location import location
 from zope.location import interfaces as loc_interfaces
 from zope import component
+from zc import intid as zc_intid
 from persistent import Persistent
 import urllib
 
@@ -143,7 +144,9 @@ class TestUserEnumerationWorkspace(tests.ConfiguringTestBase):
 			__parent__ = None
 			containerId = 'tag:nextthought.com,2011-10:test.user.1@nextthought.com-OID-0x0bd6:5573657273'
 
-		user._addSharedObject( PersistentContained() )
+		pc = PersistentContained()
+		component.getUtility( zc_intid.IIntIds ).register( pc )
+		user._addSharedObject( pc )
 		uew = UEW( user )
 
 		# Expecting pages collection, devices, friends lists
