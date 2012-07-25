@@ -4,6 +4,8 @@ import six
 import BTrees
 from collections import Iterable
 
+from zope.index.text.baseindex import BaseIndex
+
 from repoze.catalog.catalog import Catalog
 from repoze.catalog.indexes.common import CatalogIndex
 from repoze.catalog.indexes.field import CatalogFieldIndex
@@ -36,6 +38,7 @@ import logging
 logger = logging.getLogger( __name__ )
 
 # want to make sure change the family for all catalog index fields
+BaseIndex.family = BTrees.family64
 CatalogIndex.family = BTrees.family64
 
 #TODO: set this as part of a config
