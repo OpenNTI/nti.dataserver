@@ -43,7 +43,7 @@ def test_challProb():
     hints = dom.getElementsByTagName('hint')
     assert_that(hints[0].nodeName, is_( hints[0].nextSibling.nodeName ))
     #Check if we don't have a trailing comma at the end.
-    assert_that( dom.textContent, is_(" In Park School grade, 33 students and 12 teachers like none of these sports.  "))
+    assert_that( dom.textContent.strip(), is_("In Park School grade, 33 students and 12 teachers like none of these sports."))
     
 def test_multipleTrailingComma():
     example = br"""
@@ -55,7 +55,7 @@ def test_multipleTrailingComma():
     assert_that( dom.getElementsByTagName('hint'), has_length( 3 ) )
     
     #Check if we don't have a trailing comma at the end.
-    assert_that( dom.textContent, is_(" Arbitrary content goes here.  "))
+    assert_that( dom.textContent.strip(), is_("Arbitrary content goes here."))
     
 def test_oneHint():
     example = br"""
@@ -66,7 +66,7 @@ def test_oneHint():
     assert_that( dom.getElementsByTagName('hint'), has_length( 1 ) )
     
     #Check if we don't have a trailing comma at the end.
-    assert_that( dom.textContent, is_(" Arbitrary content goes here.  "))
+    assert_that( dom.textContent.strip(), is_("Arbitrary content goes here."))
 
 
 def test_part():

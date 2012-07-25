@@ -27,7 +27,3 @@ def transform( document ):
                 lastChildNode.removeChild( rightpic )
                 #step2: add it to the next sibling as the first child
                 rightpicContainer.nextSibling.firstChild.insert( 0, rightpic )
-
-
-
-
