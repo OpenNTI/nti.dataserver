@@ -60,10 +60,10 @@ if [ "$INSTALL_EXTRAS" ]; then
 	TMPWK_DIR=`mktemp -d -t tmpwork`
 	chmod 777 $TMPWK_DIR
 	export PATH=$TMPWK_DIR:$PATH
-		
+
 	# set the "UMFPACK" variable to install scipy
 	export UMFPACK="None"
-		
+
 	# make sure we have suitable fortran compiler to install scipy
 	pkgs=( g95 gfortran `seq -f "gfortran-mp-4.%g" 4 7` )
 	for p in "${pkgs[@]}"
@@ -77,15 +77,15 @@ if [ "$INSTALL_EXTRAS" ]; then
 			break
 		fi
 	done
-	
+
 	# install extra packages
-	extrap_pkgs=(pyyaml numpy matplotlib scipy pil py)
+	extrap_pkgs=(pyyaml numpy matplotlib scipy py)
 	for p in "${extrap_pkgs[@]}"
 	do
 		echo "Installing $p"
 		pip install -U ${p}
 	done
-	
+
 	# clean
 	rm -rf $TMPWK_DIR
 fi

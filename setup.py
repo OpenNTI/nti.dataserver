@@ -63,22 +63,29 @@ setup(
 #	tests_require = ['z3c.coverage','zope.testing'],
 	setup_requires = [
 		'nose >= 1.1.2',
+		#'distribute >= 0.6.28', # Can't seem to include that anywhere
 		# In theory this should make it possible to get
 		# the svn revision number from svn 1.7. Doesn't seem
 		# to work (with distribute?)
-		'setuptools_subversion >= 1.8'
+		#'setuptools_subversion >= 1.8'
 	],
 	install_requires = [
 		 # Zope Acquisition; used by contentratings implicitly
 		 # cool concept. Pulls in ExtensionClass (which should not be used)
 		'Acquisition >= 4.0a1',
 		'Chameleon >= 2.9.2',
+		 # 'friendly' fork of PIL, developed by Zope/Plone.
+		 # PIL is currently (as of 2012-07) at version 1.1.7 (from 2009), which
+		 # is the version that Pillow forked from in 2010 as version 1.0. So
+		 # Pillow is currently way ahead of PIL
+		'Pillow >= 1.7.7',
 		'RestrictedPython',
 		'ZConfig >= 2.9.3',
 		'ZODB3 >= 3.10.5',
 		# ZODB RelStorage:
 		# 'pylibmc', # for memcached support
 		# 'MySQL-python', # mysql adapter
+		# # See also umysqldb for a mysql adapter that should be gevent compat, with same API
 		# 'RelStorage',
 		'anyjson >= 0.3.3',
 		'boto >= 2.5.2', # amazon
@@ -153,7 +160,7 @@ setup(
 		'slimit',
 		'supervisor >= 3.0a12',
 		'transaction >= 1.3.0',
-		'webob >= 1.2',
+		'webob >= 1.2.1',
 		'webtest >= 1.3.4',
 		'whoosh >= 2.4.1',
 		 # bcrypt/pbkdf2 for zope.password
