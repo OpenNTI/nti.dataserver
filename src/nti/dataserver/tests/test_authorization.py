@@ -37,6 +37,9 @@ class TestPrincipals(mock_dataserver.ConfiguringTestBase):
 		assert_that( iprin, provides( nti_interfaces.IPrincipal ) )
 		verifyObject( nti_interfaces.IPrincipal, iprin )
 
+		#empty-string
+		assert_that( nti_interfaces.IPrincipal( '', self ), is_(same_instance(self)))
+
 		# named system, as component
 		assert_that( component.getAdapter( nti_interfaces.SYSTEM_USER_NAME,
 										   nti_interfaces.IPrincipal,
