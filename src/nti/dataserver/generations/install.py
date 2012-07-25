@@ -33,6 +33,7 @@ from zope.site.folder import Folder, rootFolder
 from zope.location.location import locate
 
 import zope.intid
+import zc.intid
 import zc.intid.utility
 
 from nti.chatserver.chatserver import PersistentMappingMeetingStorage
@@ -126,3 +127,5 @@ def install_main( context ):
 	#intids = zope.intid.IntIds( family=BTrees.family64 )
 	intids = zc.intid.utility.IntIds('_ds_intid', family=BTrees.family64 )
 	lsm.registerUtility( intids, provided=zope.intid.IIntIds )
+	# Make sure to register it as both types of utility, one is a subclass of the other
+	lsm.registerUtility( intids, provided=zc.intid.IIntIds )
