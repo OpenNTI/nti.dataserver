@@ -29,6 +29,7 @@ def main():
 	arg_parser.add_argument( '-c', '--communities',
 							 dest='communities',
 							 nargs="+",
+							 default=(),
 							 help="The names of communities to add the user to" )
 
 	args = arg_parser.parse_args()
