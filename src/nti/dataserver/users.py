@@ -1147,7 +1147,10 @@ class User(Principal):
 			self.user.beginUpdates()
 
 		def __exit__( self, t, value, traceback ):
-			self.user.endUpdates()
+			if t is None:
+				# Only do this if we're not in the process of throwing
+				# an exception
+				self.user.endUpdates()
 
 	def updates( self ):
 		"""

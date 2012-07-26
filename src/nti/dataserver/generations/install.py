@@ -34,7 +34,7 @@ from zope.location.location import locate
 
 import zope.intid
 import zc.intid
-import zc.intid.utility
+
 
 from nti.chatserver.chatserver import PersistentMappingMeetingStorage
 from nti.dataserver import datastructures, _Dataserver
@@ -42,6 +42,7 @@ from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import sessions
 from nti.dataserver import containers as container
+from nti.dataserver import intid_utility
 
 import copy
 def install_chat( context ):
@@ -125,7 +126,7 @@ def install_main( context ):
 	# Int ids are not currently being used, but plans are for the
 	# near future. A migration path will have to be established.
 	#intids = zope.intid.IntIds( family=BTrees.family64 )
-	intids = zc.intid.utility.IntIds('_ds_intid', family=BTrees.family64 )
+	intids = intid_utility.IntIds('_ds_intid', family=BTrees.family64 )
 	lsm.registerUtility( intids, provided=zope.intid.IIntIds )
 	# Make sure to register it as both types of utility, one is a subclass of the other
 	lsm.registerUtility( intids, provided=zc.intid.IIntIds )
