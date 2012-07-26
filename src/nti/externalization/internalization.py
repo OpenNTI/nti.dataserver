@@ -84,8 +84,14 @@ def _legacy_ext_to_int_map( externalized_object ):
 			factory = component.queryAdapter( externalized_object, interfaces.IMimeObjectFactory,
 											  name=externalized_object[interfaces.StandardExternalFields.MIMETYPE] )
 			if not factory:
+				# What about a named utility?
+				factory = component.queryUtility( interfaces.IMimeObjectFactory,
+												  name=externalized_object[interfaces.StandardExternalFields.MIMETYPE] )
+
+			if not factory:
 				# Is there a default?
 				factory = component.queryAdapter( externalized_object, interfaces.IMimeObjectFactory )
+
 
 		if not factory and interfaces.StandardExternalFields.CLASS in externalized_object:
 			class_name = externalized_object[interfaces.StandardExternalFields.CLASS]
