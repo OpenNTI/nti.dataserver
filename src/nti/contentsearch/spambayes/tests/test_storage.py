@@ -10,6 +10,7 @@ from zope.annotation.interfaces import IAttributeAnnotatable
 
 from nti.dataserver import interfaces as nti_interfaces
 
+from nti.contentsearch.spambayes import PERSISTENT_SPAM_INT
 from nti.contentsearch.spambayes.tokenizer import tokenize
 from nti.contentsearch.spambayes.storage import SQL3Classifier
 from nti.contentsearch.spambayes.storage import PersistentClassifier
@@ -37,7 +38,7 @@ class TestStorage(ConfiguringTestBase):
 		super(TestStorage, self).tearDown()
 		shutil.rmtree(self.path, True)
 		
-	def xtest_trainer( self ):
+	def test_trainer( self ):
 		sc = SQL3Classifier(self.db_path)
 		transaction.begin()
 		sc.learn(tokenize(self.ham), False)
@@ -59,7 +60,7 @@ class TestStorage(ConfiguringTestBase):
 		foo = Foo()
 		pc.mark_spam(foo)
 		a = IObjectClassifierMetaData(foo, None)
-		assert_that(a.is_spam, is_(True))
+		assert_that(a.spam_classification, is_(PERSISTENT_SPAM_INT))
 		
 if __name__ == '__main__':
 	unittest.main()

@@ -17,7 +17,10 @@ from nti.contentsearch.spambayes.classifier import Classifier
 from nti.contentsearch.spambayes.classifier import _BaseWordInfo
 from nti.contentsearch.spambayes.interfaces import IObjectClassifierMetaData
 
+from nti.contentsearch.spambayes import PERSISTENT_HAM_INT
+from nti.contentsearch.spambayes import PERSISTENT_SPAM_INT
 from nti.contentsearch.spambayes import default_use_bigrams
+from nti.contentsearch.spambayes import PERSISTENT_UNSURE_INT
 from nti.contentsearch.spambayes import default_unknown_word_prob
 from nti.contentsearch.spambayes import default_max_discriminators
 from nti.contentsearch.spambayes import default_unknown_word_strength
@@ -53,11 +56,18 @@ class PersistentClassifier(Persistent, Classifier):
 		
 	def mark_spam(self, context):
 		md = IObjectClassifierMetaData(context, None)
-		md.is_spam = True
+		md.spam_classification = PERSISTENT_SPAM_INT
+		md.spam_classification_time = time.time()
 
-	def remove_spam(self, context):
+	def mark_ham(self, context):
 		md = IObjectClassifierMetaData(context, None)
-		md.is_spam = False
+		md.spam_classification = PERSISTENT_HAM_INT
+		md.spam_classification_time = time.time()
+		
+	def mark_unsure(self, context):
+		md = IObjectClassifierMetaData(context, None)
+		md.spam_classification = PERSISTENT_UNSURE_INT
+		md.spam_classification_time = time.time()
 
 PersistentBayes = PersistentClassifier
 
