@@ -8,6 +8,9 @@ from zope import interface
 from nti.contentrendering import plastexids
 from nti.contentrendering.resources import interfaces as res_interfaces
 
+from amsopn import DeclareMathOperator
+from picins import picskip,parpic
+
 from plasTeX import Base, Command
 from plasTeX.Base.LaTeX import Index
 from plasTeX.Packages import graphicx
@@ -874,6 +877,16 @@ class ntirequires(Base.Command):
 			parentNode = parentNode.parentNode
 		return result
 
+
+# AoPS Custom Math Operators
+
+class lcm(Command):
+	args = ''
+
+# AoPS 'Hacks'
+
+class davesuglyhack(Command):
+	args = ''
 
 ###
 ### Indexes in math equations turn out to mess up
