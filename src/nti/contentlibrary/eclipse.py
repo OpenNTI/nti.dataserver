@@ -37,7 +37,9 @@ def _tocItem( node, dirname, factory=FilesystemContentUnit ):
 	for i in _toc_item_attrs:
 		setattr( tocItem, i, node.get( i ) )
 
-	setattr( tocItem, 'sharedWith', node.get( 'sharedWith', '' ).split( ' ' ) )
+	if node.get( 'sharedWith', ''):
+		tocItem.sharedWith = node.get( 'sharedWith' ).split( ' ' )
+
 	tocItem.filename = path_join( dirname, tocItem.href )
 
 	children = []
