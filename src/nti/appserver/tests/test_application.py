@@ -248,8 +248,9 @@ class TestApplication(ApplicationTestBase):
 		testapp.delete( str(href), extra_environ=self._make_extra_environ())
 
 		# And it is no longer available
-		res = testapp.get( str(path), extra_environ=self._make_extra_environ())
-		assert_that( res.body, does_not( contains_string( "This is the selected text" ) ) )
+		res = testapp.get( str(path), extra_environ=self._make_extra_environ(user=b'foo@bar'),
+						   status=404)
+
 
 	test_post_share_delete_highlight.mock_ds_factory = mock_dataserver.ChangePassingMockDataserver
 

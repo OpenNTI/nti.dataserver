@@ -790,8 +790,9 @@ class User(Principal):
 
 	def __install_container_hooks(self):
 		self.containers.afterAddContainedObject = self._postCreateNotification
-		self.containers.afterDeleteContainedObject = self._postDeleteNotification
 		self.containers.afterGetContainedObject = self._trackObjectUpdates
+		# Deleting is handled with events.
+		# TODO: Make the rest use events as well
 
 	def __setstate__( self, state ):
 		super(User,self).__setstate__( state )
@@ -1316,6 +1317,15 @@ class FacebookUser(User):
 		super(FacebookUser,self).__init__(username,**kwargs)
 		if id_url:
 			self.facebook_url = id_url
+
+@component.adapter(nti_interfaces.IContained, zope.intid.interfaces.IIntIdRemovedEvent)
+def user_willRemoveIntIdForContainedObject( contained, event ):
+
+	# Make the containing owner broadcast the DELETED event /now/,
+	# while we can still get an ID, to keep catalogs and whatnot
+	# up-to-date.
+	if hasattr( contained.creator, '_postDeleteNotification' ):
+		contained.creator._postDeleteNotification( contained )
 
 
 @component.adapter(nti.apns.interfaces.IDeviceFeedbackEvent)
