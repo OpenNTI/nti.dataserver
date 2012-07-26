@@ -17,25 +17,25 @@ default_max_discriminators = 150
 default_unknown_word_strength = 0.45
 default_minimum_prob_strength = 0.10
 
-PERSISTENT_HAM_STRING = u'ham'
-PERSISTENT_SPAM_STRING = u'spam'
-PERSISTENT_UNSURE_STRING = u'unsure'
+PERSISTENT_HAM_INT = 1
+PERSISTENT_SPAM_INT = 2
+PERSISTENT_UNSURE_INT = 0
 
 def is_spam(disposition):
-	return disposition == PERSISTENT_SPAM_STRING
+	return disposition == PERSISTENT_SPAM_INT
 
 def is_ham(disposition):
-	return disposition == PERSISTENT_HAM_STRING
+	return disposition == PERSISTENT_HAM_INT
 
-def is_unsure(disposition):
-	return disposition == PERSISTENT_UNSURE_STRING
+def is_unsure(disposition=None):
+	return disposition is None or disposition == PERSISTENT_UNSURE_INT
 
 def classify(prob, ham_cutoff=default_ham_cutoff, spam_cutoff=default_spam_cutoff):
 	if prob < ham_cutoff:
-		disposition = PERSISTENT_HAM_STRING
+		disposition = PERSISTENT_HAM_INT
 	elif prob > spam_cutoff:
-		disposition = PERSISTENT_SPAM_STRING
+		disposition = PERSISTENT_SPAM_INT
 	else:
-		disposition = PERSISTENT_UNSURE_STRING
+		disposition = PERSISTENT_UNSURE_INT
 	return disposition
 		
