@@ -14,16 +14,12 @@ from ZODB.DB import ContextManager as DBContext
 from nti.dataserver import interfaces as nti_interfaces
 from nti.tests import ConfiguringTestBase as _BaseConfiguringTestBase
 
-class MockDataserver( dataserver._Dataserver.Dataserver ):
+class ChangePassingMockDataserver(dataserver._Dataserver.Dataserver ):
 
 	_mock_database = None
 
 	def __init__( self, *args, **kwargs ):
-		super(MockDataserver,self).__init__(*args, **kwargs)
-
-
-	def enqueue_change( self, change, **kwargs ):
-		pass
+		super(ChangePassingMockDataserver,self).__init__(*args, **kwargs)
 
 	def _setup_change_distribution( self ):
 		return (None, None)
@@ -64,7 +60,7 @@ class MockDataserver( dataserver._Dataserver.Dataserver ):
 		self.conf.zeo_make_db = make_db
 		if self._mock_database:
 			self.conf.connect_databases = lambda: (self._mock_database.databases['Users'], self._mock_database.databases['Sessions'], self._mock_database.databases['Search'])
-		return super( MockDataserver, self )._setup_dbs( *args )
+		return super( ChangePassingMockDataserver, self )._setup_dbs( *args )
 
 #	def _setup_storages( self, *args ):
 #		return ( self._setup_storage(), self._setup_storage(), self._setup_storage() )
@@ -74,6 +70,12 @@ class MockDataserver( dataserver._Dataserver.Dataserver ):
 	#		return "Online"
 
 	#	users.User.presence = property(getPresence)
+
+class MockDataserver(ChangePassingMockDataserver):
+
+	def enqueue_change( self, change, **kwargs ):
+		pass
+
 
 import nose.tools
 
@@ -123,9 +125,13 @@ def WithMockDS( *args, **kwargs ):
 		return _mock_ds_wrapper_for( func )
 
 	# Being used as a decorator factory
+	mock_ds_factory = MockDataserver
+	if kwargs.get( 'with_changes', None ):
+		mock_ds_factory = ChangePassingMockDataserver
+
 	if 'database' in kwargs:
 		def factory():
-			md = MockDataserver.__new__(MockDataserver)
+			md = mock_ds_factory.__new__(mock_ds_factory)
 			md._mock_database = kwargs['database']
 			md.__init__()
 			return md
@@ -145,7 +151,7 @@ def WithMockDS( *args, **kwargs ):
 			searchDB = ZODB.DB( FileStorage(os.path.join( td, 'search' ), create=True),
 								databases=databases,
 								database_name='Search')
-			md = MockDataserver.__new__(MockDataserver)
+			md = mock_ds_factory.__new__(mock_ds_factory)
 			md._mock_database = db
 			md.__init__()
 			return md

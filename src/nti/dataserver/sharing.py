@@ -294,7 +294,6 @@ class SharingTargetMixin(object):
 		"""
 		# Map from containerId -> PersistentExternalizableWeakList
 		# TODO: Rethink this. It's terribly inefficient.
-
 		return _SharedStreamCache()
 
 	@Lazy
