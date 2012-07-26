@@ -1199,10 +1199,9 @@ class TestRootPageEntryLibrary(TestApplicationLibraryBase):
 
 
 from nti.contentlibrary.filesystem import DynamicLibrary as FileLibrary
-from nti.assessment import interfaces as asm_interfaces, parts as asm_parts, question as asm_question, submission as asm_submission
+from nti.assessment import interfaces as asm_interfaces, submission as asm_submission
 from nti.tests import verifiably_provides
 from nti.appserver import interfaces as app_interfaces
-from hamcrest import has_key
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.interfaces import StandardExternalFields
 
@@ -1255,7 +1254,13 @@ class TestApplicationAssessment(ApplicationTestBase):
 			assert_that( res.json_body, has_entry( 'AssessmentItems', has_item( has_entry( 'NTIID', self.child_ntiid ) ) ) )
 			assert_that( res.json_body, has_entry( 'Last Modified', greater_than( 0 ) ) )
 
-	def test_posting_assesses(self):
+	def _check_submission( self, res ):
+		assert_that( res.json_body, has_entry( StandardExternalFields.CLASS, 'AssessedQuestion' ) )
+		assert_that( res.json_body, has_entry( StandardExternalFields.CREATED_TIME, is_( float ) ) )
+		assert_that( res.json_body, has_entry( StandardExternalFields.LAST_MODIFIED, is_( float ) ) )
+		assert_that( res.json_body, has_entry( StandardExternalFields.MIMETYPE, 'application/vnd.nextthought.assessment.assessedquestion' ) )
+
+	def test_posting_assesses_mimetype_only(self):
 
 		with mock_dataserver.mock_db_trans(self.ds):
 			self._create_user()
@@ -1263,11 +1268,27 @@ class TestApplicationAssessment(ApplicationTestBase):
 
 		sub = asm_submission.QuestionSubmission( questionId=self.child_ntiid, parts=('correct',) )
 		ext_obj = toExternalObject( sub )
+
 		ext_obj['ContainerId'] = 'tag:nextthought.com,2011-10:mathcounts-HTML-MN.2012.0'
+		# Submit mimetype only, just to be sure it works
+		ext_obj.pop( 'Class' )
 		data = json.serialize( ext_obj )
 		res = testapp.post( '/dataserver2/users/sjohnson@nextthought.com', data, extra_environ=self._make_extra_environ() )
+		self._check_submission( res )
 
-		assert_that( res.json_body, has_entry( StandardExternalFields.CLASS, 'AssessedQuestion' ) )
-		assert_that( res.json_body, has_entry( StandardExternalFields.CREATED_TIME, is_( float ) ) )
-		assert_that( res.json_body, has_entry( StandardExternalFields.LAST_MODIFIED, is_( float ) ) )
-		assert_that( res.json_body, has_entry( StandardExternalFields.MIMETYPE, 'application/vnd.nextthought.assessment.assessedquestion' ) )
+
+	def test_posting_assesses_class_only(self):
+
+		with mock_dataserver.mock_db_trans(self.ds):
+			self._create_user()
+		testapp = TestApp( self.app )
+
+		sub = asm_submission.QuestionSubmission( questionId=self.child_ntiid, parts=('correct',) )
+		ext_obj = toExternalObject( sub )
+
+		ext_obj['ContainerId'] = 'tag:nextthought.com,2011-10:mathcounts-HTML-MN.2012.0'
+		# Submit Class only, just to be sure it works
+		ext_obj.pop( 'MimeType' )
+		data = json.serialize( ext_obj )
+		res = testapp.post( '/dataserver2/users/sjohnson@nextthought.com', data, extra_environ=self._make_extra_environ() )
+		self._check_submission( res )
