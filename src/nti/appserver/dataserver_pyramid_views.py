@@ -329,10 +329,13 @@ class _UGDAndRecursiveStreamView(_UGDView):
 
 import nti.externalization.internalization
 def _createContentObject( dataserver, user, datatype, externalValue ):
-	if datatype is None or externalValue is None: return None
-	result = user.maybeCreateContainedObjectWithType( datatype, externalValue ) \
-			 if user \
-			 else None
+	# The datatype can legit be null if we are MimeType-only
+	if externalValue is None:
+		return None
+
+	result = None
+	if datatype is not None and user is not None:
+		result = user.maybeCreateContainedObjectWithType( datatype, externalValue )
 
 	if result is None:
 		result = nti.externalization.internalization.find_factory_for( externalValue )
@@ -522,7 +525,7 @@ class _UGDPostView(_UGDModifyViewBase):
 		externalValue = self.readInput()
 		datatype = None
 		# TODO: Which should have priority, class in the data,
-		# or mime-type in the headers?
+		# or mime-type in the headers (or data?)?
 		if 'Class' in externalValue and externalValue['Class']:
 			# Convert unicode to ascii
 			datatype = str( externalValue['Class'] ) + 's'

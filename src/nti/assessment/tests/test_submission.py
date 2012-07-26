@@ -5,6 +5,8 @@ $Id$
 from __future__ import print_function, unicode_literals
 
 from hamcrest import assert_that, has_entry, is_, has_property, contains, same_instance
+from hamcrest import has_key
+from hamcrest import not_none
 from nti.tests import ConfiguringTestBase, is_true, is_false
 from nti.tests import verifiably_provides
 from nti.externalization.tests import externalizes
@@ -13,11 +15,13 @@ from nose.tools import assert_raises
 from zope import interface
 from zope import component
 from zope.schema import interfaces as sch_interfaces
+from zope.dottedname import resolve as dottedname
 
 import nti.assessment
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.internalization import update_from_external_object
 from nti.externalization import internalization
+from nti.externalization import interfaces as ext_interfaces
 
 from nti.assessment import interfaces
 from nti.assessment import submission
@@ -32,6 +36,17 @@ class TestQuestionSubmission(ConfiguringTestBase):
 		assert_that( submission.QuestionSubmission(), externalizes( has_entry( 'Class', 'QuestionSubmission' ) ) )
 		assert_that( internalization.find_factory_for( toExternalObject( submission.QuestionSubmission() ) ),
 					 is_( same_instance( submission.QuestionSubmission ) ) )
+
+
+		# Now verify the same for the mimetype-only version
+		mtd = dottedname.resolve( 'nti.dataserver.datastructures.MimeTypeDecorator' )
+		component.provideSubscriptionAdapter( mtd, provides=ext_interfaces.IExternalMappingDecorator )
+		assert_that( submission.QuestionSubmission(), externalizes( has_key( 'MimeType' ) ) )
+		ext_obj_no_class = toExternalObject( submission.QuestionSubmission() )
+		ext_obj_no_class.pop( 'Class' )
+
+		assert_that( internalization.find_factory_for( ext_obj_no_class ),
+					 is_( not_none() ) )
 
 
 		# No coersion of parts happens yet at this level
