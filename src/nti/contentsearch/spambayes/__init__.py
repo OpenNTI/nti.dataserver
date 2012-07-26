@@ -21,6 +21,15 @@ PERSISTENT_HAM_STRING = u'ham'
 PERSISTENT_SPAM_STRING = u'spam'
 PERSISTENT_UNSURE_STRING = u'unsure'
 
+def is_spam(disposition):
+	return disposition == PERSISTENT_SPAM_STRING
+
+def is_ham(disposition):
+	return disposition == PERSISTENT_HAM_STRING
+
+def is_unsure(disposition):
+	return disposition == PERSISTENT_UNSURE_STRING
+
 def classify(prob, ham_cutoff=default_ham_cutoff, spam_cutoff=default_spam_cutoff):
 	if prob < ham_cutoff:
 		disposition = PERSISTENT_HAM_STRING
