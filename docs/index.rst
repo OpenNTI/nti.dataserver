@@ -34,8 +34,11 @@ Contents:
 	dataserver-contenttypes
 	whiteboard-apis-v1
 	api
+
 	chat-apis
 	chatserver
+	chat-transcripts
+
 	interfaces
 	http-rest
 	contentrendering-api
