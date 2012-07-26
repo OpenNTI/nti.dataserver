@@ -31,8 +31,10 @@ from zope.container.interfaces import InvalidItemType
 
 import mock_dataserver
 from mock_dataserver import WithMockDSTrans
+from mock_dataserver import WithMockDS
 import persistent.wref
 from nti.dataserver import datastructures
+from nti.dataserver import users
 import time
 
 class PersistentContainedThreadable(ContainedMixin,persistent.Persistent):
@@ -125,6 +127,21 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		assert_that( user.lastLoginTime, has_property( 'value', 1 ) )
 		assert_that( user.notificationCount, has_property( 'value', 2 ) )
 
+
+	@WithMockDS(with_changes=True)
+	def test_creating_friendslist_goes_to_stream(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			self.ds.add_change_listener( users.onChange )
+
+			user = User.create_user( self.ds, username='foo@bar' )
+			user2 = User.create_user( self.ds, username='friend@bar' )
+			with user.updates( ):
+				fl = user.maybeCreateContainedObjectWithType( 'FriendsLists', {'Username': 'Friends' } )
+				user.addContainedObject( fl )
+				fl.updateFromExternalObject( {'friends':  ['friend@bar'] } )
+
+			user2_stream = user2.getContainedStream( '' )
+			assert_that( user2_stream, has_length( 1 ) )
 
 	@WithMockDSTrans
 	def test_share_unshare_note(self):

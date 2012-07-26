@@ -150,13 +150,18 @@ class ExampleDatabaseInitializer(object):
 		# 		if u.username not in root['users']:
 		# 			root['users'][u.username] = u
 		# else:
+		def register_user( u ):
+			# Because we're not in that site, we need to make sure the events
+			# go to the right place
+			utility = root.getSiteManager().getUtility( zc_intid.IIntIds )
+			_id = utility.register( u )
+			assert utility.getObject( _id ) is u
+
+
 		def add_user( u ):
 			assert u.__parent__ is root['users']
 			root['users'][u.username] = u
-			# Because we're not in that site, we need to make sure the events
-			# go to the right place
-			root.getSiteManager().getUtility( zc_intid.IIntIds ).register( u )
-			# TODO: This doesn't seem to work correctly
+			register_user( u )
 
 		# TODO: Switch to using Community.create_entity
 		communities = self._make_communities()
@@ -175,6 +180,7 @@ class ExampleDatabaseInitializer(object):
 			password = 'temp001' if is_test_user else user_tuple[1].replace( ' ', '.' ).lower()
 
 			user = User.create_user( username=uname, password=password, dataserver=mock_dataserver )
+			register_user( user )
 			user.realname = user_tuple[1]
 			user.alias = user_tuple[1].split()[0]
 			for c in communities:

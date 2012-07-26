@@ -20,7 +20,7 @@ class Link(object):
 	Default implementation of ILink.
 	These are non-persistent and should be generated at runtime.
 	"""
-
+	mime_type = 'application/vnd.nextthought.link'
 	elements = ()
 
 	def __init__( self, target, rel='alternate', elements=() ):

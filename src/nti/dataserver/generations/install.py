@@ -127,6 +127,8 @@ def install_main( context ):
 	# near future. A migration path will have to be established.
 	#intids = zope.intid.IntIds( family=BTrees.family64 )
 	intids = intid_utility.IntIds('_ds_intid', family=BTrees.family64 )
+	intids.__name__ = '++etc++intids'
+	intids.__parent__ = dataserver_folder
 	lsm.registerUtility( intids, provided=zope.intid.IIntIds )
 	# Make sure to register it as both types of utility, one is a subclass of the other
 	lsm.registerUtility( intids, provided=zc.intid.IIntIds )

@@ -629,14 +629,14 @@ class _ContainedObjectValueError(ValueError):
 	"""
 	A more naturally descriptive exception for contained objects.
 	"""
-	def __init__( self, string, contained=None ):
+	def __init__( self, string, contained=None, **kwargs ):
 		ctype = type(contained)
 		cstr = 'Unable to determine'
 		try:
 			cstr = repr(contained)
 		except Exception as e:
 			cstr = '{%s}' % e
-		super(_ContainedObjectValueError,self).__init__( "%s [type: %s repr %s]" % (string, ctype, cstr) )
+		super(_ContainedObjectValueError,self).__init__( "%s [type: %s repr %s]%s" % (string, ctype, cstr, kwargs) )
 
 def check_contained_object_for_storage( contained ):
 	if not nti_interfaces.IContained.providedBy( contained ):

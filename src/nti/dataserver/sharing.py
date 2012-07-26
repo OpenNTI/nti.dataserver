@@ -82,12 +82,8 @@ _marker = object()
 def _getId( contained, when_none=_marker ):
 	if contained is None and when_none is not _marker:
 		return when_none
-	try:
-		return component.getUtility( zc_intid.IIntIds ).getId( contained )
-	except KeyError:
-		_, _, tb = sys.exc_info()
-		raise datastructures._ContainedObjectValueError( "No registered ID", contained ), None, tb
 
+	return component.getUtility( zc_intid.IIntIds ).getId( contained )
 
 class _SharedContainedObjectStorage(persistent.Persistent):
 	"""
@@ -142,8 +138,6 @@ class _SharedContainedObjectStorage(persistent.Persistent):
 			if sets.discard_p( container_set, _getId( contained ) ):
 				return contained
 
-
-
 	def getContainer( self, containerId, defaultValue=None ):
 		container_set = self._containers.get( containerId )
 		return _SharedContainedObjectStorageValue( container_set ) if container_set is not None else defaultValue
@@ -196,15 +190,9 @@ class _SharedStreamCache(persistent.Persistent):
 		if container_map is None:
 			container_map = self.family.IO.BTree()
 			self._containers[change.containerId] = container_map
-		try:
-			container_map[_getId(change.object, -1)] = change
-		except ValueError:
-			# Meaning that the change object isn't registered, has no id.
-			# How'd that happen?
-			# TODO: Migration code. We really don't want to have to do this
-			# it only manifests with the users created by the example_database_initializer
-			# during integration tests
-			logger.exception( "Failed to save change in stream: %s", change )
+
+		container_map[_getId(change.object, -1)] = change
+
 		return change
 
 	def deleteEqualContainedObject( self, contained, log_level=None ):
@@ -510,7 +498,7 @@ class SharingTargetMixin(object):
 		# Remove from both muted and normal, just in case
 		result = False
 		for containers in (self.containersOfShared,self.containers_of_muted):
-			# Drop the logging to trace because at least one of these will be missing
+			# Drop the logging to TRACE because at least one of these will be missing
 			result = containers.deleteEqualContainedObject( contained, log_level=loglevels.TRACE ) or result
 		return result
 

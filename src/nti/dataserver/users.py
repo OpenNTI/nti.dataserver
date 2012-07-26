@@ -906,6 +906,7 @@ class User(Principal):
 		""" Accepts if not ignored; auto-follows as well.
 		:return: A truth value. If this was the initial add, it will be the Change.
 			If the source is ignored, it will be False."""
+
 		if self.is_ignoring_shared_data_from( source ):
 			return False
 		already_accepting = super(User,self).is_accepting_shared_data_from( source )
@@ -1115,8 +1116,8 @@ class User(Principal):
 		""" Commits any outstanding transaction and posts notifications
 		referring to the updated objects. """
 		if not hasattr(self, '_v_updateSet') or not hasattr(self,'_v_updateDepth'):
-			logger.warn( 'Update depth inconsistent' )
-			return
+			raise Exception( 'Update depth inconsistent' )
+
 		self._v_updateDepth -= 1
 		if self._v_updateDepth <= 0:
 			self._v_updateDepth = 0
@@ -1138,7 +1139,9 @@ class User(Principal):
 			del self._v_updateSet
 			del self._v_updateDepth
 		else:
-			logger.debug( "Still batching updates at depth %s" % (self._v_updateDepth) )
+			__traceback_info__ = self._v_updateDepth, self._v_updateSet
+			raise Exception( "Nesting not allowed" )
+			#logger.debug( "Still batching updates at depth %s" % (self._v_updateDepth) )
 
 	class _Updater(object):
 		def __init__( self, user ):
@@ -1150,8 +1153,16 @@ class User(Principal):
 		def __exit__( self, t, value, traceback ):
 			if t is None:
 				# Only do this if we're not in the process of throwing
-				# an exception
+				# an exception, as it might raise again
 				self.user.endUpdates()
+			else:
+				# However, we must be sure that the update depth
+				# regains consistency
+				# FIXME: This is jacked up.
+				if hasattr( self.user, '_v_updateSet' ):
+					del self.user._v_updateSet
+				if hasattr( self.user, '_v_updateDepth' ):
+					del self.user._v_updateDepth
 
 	def updates( self ):
 		"""

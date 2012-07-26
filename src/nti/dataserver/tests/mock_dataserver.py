@@ -155,6 +155,9 @@ def WithMockDS( *args, **kwargs ):
 			md._mock_database = db
 			md.__init__()
 			return md
+	else:
+		def factory():
+			return mock_ds_factory()
 
 	return lambda func: _mock_ds_wrapper_for( func, factory, teardown )
 
