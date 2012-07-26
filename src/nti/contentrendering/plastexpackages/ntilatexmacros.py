@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 #pylint: disable=R0904
 
-from plasTeX import Base
+from plasTeX import Base, Command
 
 
 class _OneText(Base.Command):
@@ -38,6 +38,14 @@ class texttrademark(Base.Command):
 
 class textregistered(Base.Command):
 	unicode = u'\u00AE'
+
+# Handle pdfLatex primatives
+class pdfminorversion(Command):
+	args = 'version:int'
+
+# Handle latex commands that make no sense in a web layout
+class flushbottom(Command):
+	args = ''
 
 def ProcessOptions( options, document ):
 	pass
