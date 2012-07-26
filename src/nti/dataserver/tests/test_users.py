@@ -344,7 +344,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		change = Change( Change.SHARED, note )
 		change.creator = 42
 		comm._noticeChange( change )
-		del comm.streamCache.get( 'foo' )[:]
+		comm.streamCache.clearContainer( 'foo' )
 
 		assert_that( user.getContainedStream('foo'), is_not( contains( change ) ) )
 		# This one is synthesized

@@ -7,6 +7,7 @@ import sys
 import json
 import pkg_resources
 
+from zc import intid as zc_intid
 from zope import interface
 from zope.generations import interfaces as gen_interfaces
 
@@ -150,12 +151,17 @@ class ExampleDatabaseInitializer(object):
 		# 			root['users'][u.username] = u
 		# else:
 		def add_user( u ):
+			assert u.__parent__ is root['users']
 			root['users'][u.username] = u
+			# Because we're not in that site, we need to make sure the events
+			# go to the right place
+			root.getSiteManager().getUtility( zc_intid.IIntIds ).register( u )
+			# TODO: This doesn't seem to work correctly
 
-
-
+		# TODO: Switch to using Community.create_entity
 		communities = self._make_communities()
 		for c in communities:
+			c.__parent__ = root['users']
 			add_user( c )
 
 		# create users

@@ -34,19 +34,29 @@ from nti.utils import sets
 # different interfaces and adapters, probably using annotations, to get most
 # of this out of the core object structure, and to make more things possible.
 
+def _getObject( intids, intid ):
+	return intids.getObject( intid )
+
 class _SharedContainedObjectStorageValue(object):
 	"""
 	The exposed view of the container that we use. Mimics a
 	list of WeakRefs because that is what we used to store.
 	"""
+	wrapper = persistent.wref.WeakRef
 
-	def __init__( self, iiset ):
+	def __init__( self, iiset, wrapper=None, finder=_getObject ):
 		self._container_set = iiset
+		if wrapper:
+			self.wrapper = wrapper
+		if finder:
+			self.finder = finder
+		else:
+			self.finder = _getObject
 
 	def __iter__( self ):
 		intids = component.getUtility( zc_intid.IIntIds )
 		for iid in self._container_set:
-			yield persistent.wref.WeakRef(intids.getObject( iid ))
+			yield self.wrapper( self.finder( intids, iid ) )
 
 	def __len__( self ):
 		return len(self._container_set)
@@ -55,13 +65,29 @@ class _SharedContainedObjectStorageContainers(object):
 	"""
 	Transient object to implement the 'values' support
 	"""
-
-	def __init__( self, _containers ):
+	leaf_wrapper = None
+	leaf_finder = None
+	def __init__( self, _containers, leaf_wrapper=None, leaf_finder=None ):
 		self._containers = _containers
+		if leaf_wrapper:
+			self.leaf_wrapper = leaf_wrapper
+		if leaf_finder:
+			self.leaf_finder = leaf_finder
 
 	def values(self):
 		for v in self._containers.values():
-			yield _SharedContainedObjectStorageValue( v )
+			yield _SharedContainedObjectStorageValue( v, wrapper=self.leaf_wrapper, finder=self.leaf_finder )
+
+_marker = object()
+def _getId( contained, when_none=_marker ):
+	if contained is None and when_none is not _marker:
+		return when_none
+	try:
+		return component.getUtility( zc_intid.IIntIds ).getId( contained )
+	except KeyError:
+		_, _, tb = sys.exc_info()
+		raise datastructures._ContainedObjectValueError( "No registered ID", contained ), None, tb
+
 
 class _SharedContainedObjectStorage(persistent.Persistent):
 	"""
@@ -96,36 +122,112 @@ class _SharedContainedObjectStorage(persistent.Persistent):
 		"""
 		return _SharedContainedObjectStorageContainers( self._containers )
 
-	def _getId( self, contained ):
-		try:
-			return component.getUtility( zc_intid.IIntIds ).getId( contained )
-		except KeyError:
-			_, _, tb = sys.exc_info()
-			raise datastructures._ContainedObjectValueError( "No registered ID", contained ), None, tb
+	def _check_contained_object_for_storage( self, contained ):
+		datastructures.check_contained_object_for_storage( contained )
 
 	def addContainedObject( self, contained ):
-		datastructures.check_contained_object_for_storage( contained )
+		self._check_contained_object_for_storage( contained )
 
 		container_set = self._containers.get( contained.containerId )
 		if container_set is None:
 			container_set = self.family.II.TreeSet()
 			self._containers[contained.containerId] = container_set
-		container_set.add( self._getId( contained ) )
+		container_set.add( _getId( contained ) )
 		return contained
 
 	def deleteEqualContainedObject( self, contained, log_level=None ):
-		datastructures.check_contained_object_for_storage( contained )
+		self._check_contained_object_for_storage( contained )
 		container_set = self._containers.get( contained.containerId )
 		if container_set is not None:
-			if sets.discard_p( container_set, self._getId( contained ) ):
+			if sets.discard_p( container_set, _getId( contained ) ):
 				return contained
-			logger.debug( "Found set, did not find item" )
+
 
 
 	def getContainer( self, containerId, defaultValue=None ):
 		container_set = self._containers.get( containerId )
 		return _SharedContainedObjectStorageValue( container_set ) if container_set is not None else defaultValue
 
+class _SharedStreamCache(persistent.Persistent):
+	"""
+	Implements the stream cache for users. Stores activitystream_change.Change
+	objects, which are not IContained and don't fit anywhere in the traversal
+	tree; hence we avoid the IContained checks.
+
+	We store them keyed by their object's intid. This means that we can only
+	store one change per object: the most recent.
+	"""
+	# TODO: We store Change objects indefinitely while
+	# they are in our stream. This keeps a weak ref to
+	# the object they are holding, which may otherwise go away.
+	# Should we be listening for the intid events and notice when an
+	# intid we care about vanishes?
+	# TODO: Should the originating user own the change? So that
+
+	# TODO: Capping the size. I think we'll implement that by
+	# keeping a parallel set of containers from float (last modified) to int
+	# and we can efficiently do range queries on that. Or maybe we just iterate and
+	# pop, since the expected size is small
+
+	family = BTrees.family64
+
+	def __init__( self, family=None ):
+		if family is not None:
+			self.family = family
+		else:
+			intids = component.queryUtility( zc_intid.IIntIds )
+			if intids:
+				self.family = intids.family
+
+		# Map from string container ids to self.family.II.TreeSet
+		# The values in the TreeSet are the intids of the shared
+		# objects
+		self._containers = self.family.OO.BTree()
+
+	# def __iter__( self ):
+	# 	return iter(self._containers)
+
+
+	# We use -1 as values for None. This is common in test cases
+	# and possibly for deleted objects (there can only be one of these)
+
+	def addContainedObject( self, change ):
+		container_map = self._containers.get( change.containerId )
+		if container_map is None:
+			container_map = self.family.IO.BTree()
+			self._containers[change.containerId] = container_map
+		try:
+			container_map[_getId(change.object, -1)] = change
+		except ValueError:
+			# Meaning that the change object isn't registered, has no id.
+			# How'd that happen?
+			# TODO: Migration code. We really don't want to have to do this
+			# it only manifests with the users created by the example_database_initializer
+			# during integration tests
+			logger.exception( "Failed to save change in stream: %s", change )
+		return change
+
+	def deleteEqualContainedObject( self, contained, log_level=None ):
+		container_map = self._containers.get( contained.containerId )
+		if container_map is not None:
+			if container_map.pop( _getId( contained ), None ) is not None:
+				return contained
+
+	def clearContainer( self, containerId ):
+		self._containers.pop( containerId, None )
+
+	def clear( self ):
+		self._containers.clear()
+
+	def getContainer( self, containerId, defaultValue=None ):
+		container_map = self._containers.get( containerId )
+		return _SharedContainedObjectStorageValue( container_map.values(), wrapper=_identity, finder=lambda intids, iid: iid ) if container_map is not None else defaultValue
+
+	def values( self ):
+		for k in self._containers:
+			yield self.getContainer( k )
+
+def _identity(x): return x
 
 class SharingTargetMixin(object):
 	"""
@@ -182,11 +284,18 @@ class SharingTargetMixin(object):
 		# This maintains the strings of external NTIID OIDs whose conversations are muted.
 		self.muted_oids = OOTreeSet()
 
-		# A cache of recent items that make of the stream. Going back
-		# further than this requires walking through the containersOfShared.
+
+
+	@Lazy
+	def streamCache(self):
+		"""
+		A cache of recent items that make of the stream. Going back
+		further than this requires walking through the containersOfShared.
+		"""
 		# Map from containerId -> PersistentExternalizableWeakList
 		# TODO: Rethink this. It's terribly inefficient.
-		self.streamCache = OOBTree()
+
+		return _SharedStreamCache()
 
 	@Lazy
 	def containersOfShared(self):
@@ -241,14 +350,8 @@ class SharingTargetMixin(object):
 
 			if not mute: continue
 
-			stream = self.streamCache.get( x.containerId )
-			if stream is not None:
-				change = None
-				for change in stream:
-					if change.object == x:
-						break
-				if change is not None:
-					stream.remove( change )
+			self.streamCache.deleteEqualContainedObject( x )
+
 
 	def mute_conversation( self, root_ntiid_oid ):
 		self.muted_oids.add( root_ntiid_oid )
@@ -420,19 +523,12 @@ class SharingTargetMixin(object):
 		if self.is_muted( change.object ):
 			return False
 
-		container = self.streamCache.get( change.containerId )
-		if container is None:
-			container = PersistentExternalizableWeakList()
-			self.streamCache[change.containerId] = container
-		if len(container) >= self.MAX_STREAM_SIZE:
-			container.pop( 0 )
-
-		container.append( change )
+		self.streamCache.addContainedObject( change )
 		return True
 
 	def _get_stream_cache_containers( self, containerId ):
 		""" Return a sequence of stream cache containers for the id. """
-		return (self.streamCache.get( containerId, () ),)
+		return (self.streamCache.getContainer( containerId, () ),)
 
 	def getContainedStream( self, containerId, minAge=-1, maxCount=MAX_STREAM_SIZE ):
 		# The contained stream is an amalgamation of the traffic explicitly
@@ -584,7 +680,7 @@ class SharingSourceMixin(SharingTargetMixin):
 
 	def _get_stream_cache_containers( self, containerId ):
 		# start with ours
-		result = [self.streamCache.get( containerId, () )]
+		result = [self.streamCache.getContainer( containerId, () )]
 
 		# add everything we follow. If it's a community, we take the
 		# whole thing (ignores are filtered in the parent method). If
@@ -603,7 +699,7 @@ class SharingSourceMixin(SharingTargetMixin):
 		for comm in self._communities:
 			comm = self.get_entity( comm )
 			if comm is None: continue
-			result.append( [x for x in comm.streamCache.get( containerId, () )
+			result.append( [x for x in comm.streamCache.getContainer( containerId, () )
 							if x is not None and x.creator in persons_following] )
 
 
