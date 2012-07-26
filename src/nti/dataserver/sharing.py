@@ -42,12 +42,10 @@ class _SharedContainedObjectStorageValue(object):
 	The exposed view of the container that we use. Mimics a
 	list of WeakRefs because that is what we used to store.
 	"""
-	wrapper = persistent.wref.WeakRef
 
-	def __init__( self, iiset, wrapper=None, finder=_getObject ):
+	def __init__( self, iiset, finder=_getObject ):
 		self._container_set = iiset
-		if wrapper:
-			self.wrapper = wrapper
+
 		if finder:
 			self.finder = finder
 		else:
@@ -56,7 +54,7 @@ class _SharedContainedObjectStorageValue(object):
 	def __iter__( self ):
 		intids = component.getUtility( zc_intid.IIntIds )
 		for iid in self._container_set:
-			yield self.wrapper( self.finder( intids, iid ) )
+			yield self.finder( intids, iid )
 
 	def __len__( self ):
 		return len(self._container_set)
@@ -65,18 +63,15 @@ class _SharedContainedObjectStorageContainers(object):
 	"""
 	Transient object to implement the 'values' support
 	"""
-	leaf_wrapper = None
 	leaf_finder = None
-	def __init__( self, _containers, leaf_wrapper=None, leaf_finder=None ):
+	def __init__( self, _containers, leaf_finder=None ):
 		self._containers = _containers
-		if leaf_wrapper:
-			self.leaf_wrapper = leaf_wrapper
 		if leaf_finder:
 			self.leaf_finder = leaf_finder
 
 	def values(self):
 		for v in self._containers.values():
-			yield _SharedContainedObjectStorageValue( v, wrapper=self.leaf_wrapper, finder=self.leaf_finder )
+			yield _SharedContainedObjectStorageValue( v, finder=self.leaf_finder )
 
 _marker = object()
 def _getId( contained, when_none=_marker ):
@@ -209,13 +204,12 @@ class _SharedStreamCache(persistent.Persistent):
 
 	def getContainer( self, containerId, defaultValue=None ):
 		container_map = self._containers.get( containerId )
-		return _SharedContainedObjectStorageValue( container_map.values(), wrapper=_identity, finder=lambda intids, iid: iid ) if container_map is not None else defaultValue
+		return _SharedContainedObjectStorageValue( container_map.values(), finder=lambda intids, iid: iid ) if container_map is not None else defaultValue
 
 	def values( self ):
 		for k in self._containers:
 			yield self.getContainer( k )
 
-def _identity(x): return x
 
 class SharingTargetMixin(object):
 	"""
@@ -321,10 +315,6 @@ class SharingTargetMixin(object):
 		for container in _from.containers.values():
 			if isinstance( container, numbers.Number ): continue
 			for obj in container:
-				# TODO: Temporary migration code. We're emulating the weak-ref nature
-				# of the old containers
-				obj = obj()
-
 				if mute:
 					if self.is_muted( obj ):
 						to_move.append( obj )
@@ -553,8 +543,6 @@ class SharingTargetMixin(object):
 				if x.object == item: return True
 			return False
 		for item in self.getSharedContainer( containerId ):
-			# These items are callables, weak refs
-			item = item()
 			if item and item.lastModified > minAge and not dup( item ):
 				change = Change( Change.SHARED, item )
 				change.creator = item.creator or self
@@ -715,10 +703,9 @@ class SharingSourceMixin(SharingTargetMixin):
 			if following is None: continue
 			if isinstance( following, DynamicSharingTargetMixin ):
 				communities_seen.append( following )
-				for ref in following.getSharedContainer( containerId ):
-					x = ref()
+				for x in following.getSharedContainer( containerId ):
 					if x is not None and not self.is_ignoring_shared_data_from( x.creator ):
-						result.append( ref )
+						result.append( x )
 						result.updateLastModIfGreater( x.lastModified )
 			else:
 				persons_following.append( following )
@@ -726,10 +713,9 @@ class SharingSourceMixin(SharingTargetMixin):
 		for comm in self._communities:
 			comm = self.get_entity( comm )
 			if comm is None or comm in communities_seen: continue
-			for ref in comm.getSharedContainer( containerId ):
-				x = ref()
+			for x in comm.getSharedContainer( containerId ):
 				if x and x.creator in persons_following:
-					result.append( ref )
+					result.append( x )
 					result.updateLastModIfGreater( x.lastModified )
 
 		# If we made no modifications, return the default
