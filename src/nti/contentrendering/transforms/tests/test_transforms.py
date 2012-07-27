@@ -1,7 +1,7 @@
 from . import ConfiguringTestBase
 from .. import performTransforms
 
-from nti.contentrendering.transforms.transchapters import transform as _domTransform
+from nti.contentrendering.transforms.transrightpics_aopsbook import transform as rightpicTransform
 
 from hamcrest import assert_that, has_length, greater_than_or_equal_to, is_
 import anyjson as json
@@ -54,7 +54,7 @@ def test_rightpicTransform():
 	assert_that( exers, has_length(2))
 	assert_that( exers[0].lastChild.firstChild.nodeName, is_( 'rightpic' ) )
 	#run the transform
-	_domTransform( dom )
+	rightpicTransform( dom )
 
 	assert_that( exers[1].firstChild.firstChild.nodeName, is_( 'rightpic' ) )
 
@@ -76,7 +76,7 @@ def test_startRightPicTransform():
 	assert_that( exers[0].firstChild.firstChild.nodeName, is_( 'rightpic' ) )
 
 	#run the transform
-	_domTransform( dom )
+	rightpicTransform( dom )
 	exers = dom.getElementsByTagName('exer')
 
 	#after: We expect the image to stay right where it was. no movement.
@@ -98,7 +98,7 @@ def test_revProbRightPicTransform():
 
 	dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
 
-	_domTransform( dom )
+	rightpicTransform( dom )
 	#We expect the rightpic to have been moved down a level and belong to the last review problem as opposed to the first one.
 	revProbWithPic = dom.getElementsByTagName( 'revprob')[1];
 	assert_that( revProbWithPic.firstChild.firstChild.nodeName, is_( 'rightpic' ))
@@ -133,7 +133,7 @@ def test_challProbRightPicTransform():
 
 	"""
 	dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
-	_domTransform( dom )
+	rightpicTransform( dom )
 	#We expect the rightpic to have been moved down a level and belong to the last review problem as opposed to the first one.
 	revProbWithPic = dom.getElementsByTagName( 'chall')[2];
 	assert_that( revProbWithPic.firstChild.firstChild.nodeName, is_( 'rightpic' ))
