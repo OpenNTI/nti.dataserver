@@ -1,13 +1,17 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Classes related to managing the sharing process.
 
-import logging
-logger = logging.getLogger( __name__ )
+$Id$
+"""
+from __future__ import print_function, unicode_literals
 
-import sys
-import numbers
+
+logger = __import__('logging').getLogger( __name__ )
+
 import collections
 
-from zope import interface
 from zope import component
 from zope.deprecation import deprecate
 from zope.cachedescriptors.property import Lazy
@@ -16,16 +20,13 @@ from zc import intid as zc_intid
 
 import persistent
 import BTrees
-from BTrees.OOBTree import OOTreeSet, OOBTree
+from BTrees.OOBTree import OOTreeSet
 from ZODB import loglevels
-
-import UserDict
 
 from nti.dataserver.activitystream_change import Change
 from nti.dataserver import datastructures
-from nti.dataserver import containers
+#from nti.dataserver import containers
 
-from nti.externalization.persistence import PersistentExternalizableWeakList
 from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.utils import sets
@@ -37,41 +38,35 @@ from nti.utils import sets
 def _getObject( intids, intid ):
 	return intids.getObject( intid )
 
-class _SharedContainedObjectStorageValue(object):
+class _SCOSContainerFacade(object):
 	"""
-	The exposed view of the container that we use. Mimics a
-	list of WeakRefs because that is what we used to store.
+	Public facade for a single container in
+	shared contained object storage. Exists to hide the details
+	of looking up an object from its intid number.
 	"""
 
-	def __init__( self, iiset, finder=_getObject ):
+	def __init__( self, iiset ):
 		self._container_set = iiset
-
-		if finder:
-			self.finder = finder
-		else:
-			self.finder = _getObject
 
 	def __iter__( self ):
 		intids = component.queryUtility( zc_intid.IIntIds )
 		for iid in self._container_set:
-			yield self.finder( intids, iid )
+			yield intids.getObject( iid )
 
 	def __len__( self ):
 		return len(self._container_set)
 
-class _SharedContainedObjectStorageContainers(object):
+class _SCOSContainersFacade(object):
 	"""
-	Transient object to implement the 'values' support
+	Transient object to implement the `values` support
+	by returning each actual value wrapped in a :class:`_SCOSContainerFacade`
 	"""
-	leaf_finder = None
-	def __init__( self, _containers, leaf_finder=None ):
+
+	def __init__( self, _containers ):
 		self._containers = _containers
-		if leaf_finder:
-			self.leaf_finder = leaf_finder
 
 	def values(self):
-		for v in self._containers.values():
-			yield _SharedContainedObjectStorageValue( v, finder=self.leaf_finder )
+		return (_SCOSContainerFacade( v ) for v in self._containers.values())
 
 _marker = object()
 def _getId( contained, when_none=_marker ):
@@ -111,7 +106,7 @@ class _SharedContainedObjectStorage(persistent.Persistent):
 		Returns an object that has a `values` method that iterates
 		the dict-like (immutable) containers.
 		"""
-		return _SharedContainedObjectStorageContainers( self._containers )
+		return _SCOSContainersFacade( self._containers )
 
 	def _check_contained_object_for_storage( self, contained ):
 		datastructures.check_contained_object_for_storage( contained )
@@ -135,7 +130,7 @@ class _SharedContainedObjectStorage(persistent.Persistent):
 
 	def getContainer( self, containerId, defaultValue=None ):
 		container_set = self._containers.get( containerId )
-		return _SharedContainedObjectStorageValue( container_set ) if container_set is not None else defaultValue
+		return _SCOSContainerFacade( container_set ) if container_set is not None else defaultValue
 
 import struct
 def _time_to_64bit_int( value ):
@@ -145,7 +140,7 @@ def _time_to_64bit_int( value ):
 	# anywhere (doesn't matter), but also causes the sizes to be
 	# standard, which may matter between 32 and 64 bit machines
 	# Q is 64-bit unsigned int, d is 64-bit double
-	return struct.unpack( '!Q', struct.pack('!d', value))[0]
+	return struct.unpack( b'!Q', struct.pack( b'!d', value ) )[0]
 
 class _SharedStreamCache(persistent.Persistent):
 	"""
@@ -249,7 +244,10 @@ class _SharedStreamCache(persistent.Persistent):
 		container_map = self._containers.get( containerId )
 		# TODO: If needed, we could get a 'Last Modified' value for
 		# this returned object using self._containers_modified
-		return _SharedContainedObjectStorageValue( container_map.values(), finder=lambda intids, iid: iid ) if container_map is not None else defaultValue
+		# NOTE: The returned BTreeItems object does not actually have a
+		# __len__ method, as such; even though len() works just fine on it,
+		# it means that hamcrest has_length does not work
+		return container_map.values() if container_map else defaultValue
 
 	def values( self ):
 		for k in self._containers: # Iter the keys and call getContainer to get wrapping1
@@ -358,7 +356,6 @@ class SharingTargetMixin(object):
 
 		to_move = []
 		for container in _from.containers.values():
-			if isinstance( container, numbers.Number ): continue
 			for obj in container:
 				if mute:
 					if self.is_muted( obj ):
@@ -370,9 +367,8 @@ class SharingTargetMixin(object):
 			_from.deleteEqualContainedObject( x )
 			_to.addContainedObject( x )
 
-			if not mute: continue
-
-			self.streamCache.deleteEqualContainedObject( x )
+			if mute:
+				self.streamCache.deleteEqualContainedObject( x )
 
 
 	def mute_conversation( self, root_ntiid_oid ):
@@ -422,13 +418,15 @@ class SharingTargetMixin(object):
 			`source` is valid, subclasses may differ (this class doesn't
 			implement ignoring).
 		"""
-		if not source: return False
+		if not source:
+			return False
 		sets.discard( self._sources_not_accepted,  source.username )
 		self._sources_accepted.add( source.username )
 		return True
 
 	def stop_accepting_shared_data_from( self, source ):
-		if not source: return False
+		if not source:
+			return False
 		sets.discard( self._sources_accepted, source.username )
 		return True
 
@@ -444,13 +442,15 @@ class SharingTargetMixin(object):
 		This method is usually called on the object on behalf of this
 		object (e.g., by the user this object represents).
 		"""
-		if not source: return False
+		if not source:
+			return False
 		sets.discard( self._sources_accepted, source.username )
 		self._sources_not_accepted.add( source.username )
 		return True
 
 	def stop_ignoring_shared_data_from( self, source ):
-		if not source: return False
+		if not source:
+			return False
 		sets.discard( self._sources_not_accepted, source.username )
 		return True
 
@@ -464,7 +464,8 @@ class SharingTargetMixin(object):
 		:returns: A truth value of whether or not we accepted the
 			reset. This implementation returns True if source is valid.
 		"""
-		if not source: return False
+		if not source:
+			return False
 		sets.discard( self._sources_accepted, source.username )
 		sets.discard( self._sources_not_accepted, source.username )
 
@@ -510,16 +511,13 @@ class SharingTargetMixin(object):
 
 	# TODO: In addition to the actual explicitly shared objects that I've
 	# accepted because I'm not ignoring, we need the "incoming" group
-	# for things I haven't yet accepted by are still shared with me.
+	# for things I haven't yet accepted but are still shared with me.
 	def getSharedContainer( self, containerId, defaultValue=() ):
 		"""
 		:return: If the containerId is found, an iterable of callable objects (weak refs);
 			calling the objects will either return the actual shared object, or None.
 		"""
 		result = self.containersOfShared.getContainer( containerId, defaultValue )
-		# TODO: Temporary migration code
-		if isinstance( result, containers.EventlessLastModifiedBTreeContainer ):
-			result = result.values()
 		return result
 
 	def _addSharedObject( self, contained ):
@@ -745,7 +743,8 @@ class SharingSourceMixin(SharingTargetMixin):
 		communities_seen = []
 		for following in self._following:
 			following = self.get_entity( following )
-			if following is None: continue
+			if following is None:
+				continue
 			if isinstance( following, DynamicSharingTargetMixin ):
 				communities_seen.append( following )
 				for x in following.getSharedContainer( containerId ):
@@ -757,7 +756,8 @@ class SharingSourceMixin(SharingTargetMixin):
 
 		for comm in self._communities:
 			comm = self.get_entity( comm )
-			if comm is None or comm in communities_seen: continue
+			if comm is None or comm in communities_seen:
+				continue
 			for x in comm.getSharedContainer( containerId ):
 				if x and x.creator in persons_following:
 					result.append( x )
@@ -800,7 +800,7 @@ class ShareableMixin(datastructures.CreatedModDateTrackingObject):
 
 	def clearSharingTargets( self ):
 		if self._sharingTargets is not None:
-			self._sharingTargets.clear()
+			self._sharingTargets.clear() # Preserve existing object
 
 			self.updateLastMod()
 

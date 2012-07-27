@@ -49,8 +49,7 @@ class TestStreamSharedCache(ConfiguringTestBase):
 		cache.addContainedObject( c1 )
 		cache.addContainedObject( c2 )
 		cache.addContainedObject( c3 )
-
-		assert_that( cache.getContainer( c1.containerId ), has_length( 3 ) )
+		assert_that( list(cache.getContainer( c1.containerId )), has_length( 3 ) )
 
 		# OK. At max.
 		# Adding a newer change for the same object will replace the existing
@@ -60,14 +59,15 @@ class TestStreamSharedCache(ConfiguringTestBase):
 		def values():
 			return list( cache._containers[c1.containerId].values() )
 		cache.addContainedObject( c32 )
-		assert_that( cache.getContainer( c1.containerId ), has_length( 3 ) )
+
+		assert_that( list(cache.getContainer( c1.containerId )), has_length( 3 ) )
 		for i in (c1, c2, c32):
 			assert_that( values(), has_item( i ) )
 			assert_that( keys(), has_item( i.id ) )
 
 		# An even newer change will bump the oldest object
 		cache.addContainedObject( c4 )
-		assert_that( cache.getContainer( c1.containerId ), has_length( 3 ) )
+		assert_that( list(cache.getContainer( c1.containerId )), has_length( 3 ) )
 		for i in (c2, c32, c4):
 			assert_that( values(), has_item( i ) )
 			assert_that( keys(), has_item( i.id ) )
@@ -75,7 +75,7 @@ class TestStreamSharedCache(ConfiguringTestBase):
 		c5 = Change(); c5.id = 5; c5.lastModified = 6
 		# If we delete an item, we can add a new one
 		cache.deleteEqualContainedObject( c4 )
-		assert_that( cache.getContainer( c1.containerId ), has_length( 2 ) )
+		assert_that( list(cache.getContainer( c1.containerId )), has_length( 2 ) )
 		cache.addContainedObject( c5 )
 		assert_that( list(cache.getContainer( c1.containerId )), has_length( 3 ) )
 		for i in (c2, c32, c5):
