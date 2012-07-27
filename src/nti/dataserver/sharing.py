@@ -52,7 +52,7 @@ class _SharedContainedObjectStorageValue(object):
 			self.finder = _getObject
 
 	def __iter__( self ):
-		intids = component.getUtility( zc_intid.IIntIds )
+		intids = component.queryUtility( zc_intid.IIntIds )
 		for iid in self._container_set:
 			yield self.finder( intids, iid )
 
@@ -137,6 +137,16 @@ class _SharedContainedObjectStorage(persistent.Persistent):
 		container_set = self._containers.get( containerId )
 		return _SharedContainedObjectStorageValue( container_set ) if container_set is not None else defaultValue
 
+import struct
+def _time_to_64bit_int( value ):
+	if value is None: # pragma: no cover
+		raise ValueError("For consistency, you must supply the lastModified value" )
+	# ! means network byte order, in case we cross architectures
+	# anywhere (doesn't matter), but also causes the sizes to be
+	# standard, which may matter between 32 and 64 bit machines
+	# Q is 64-bit unsigned int, d is 64-bit double
+	return struct.unpack( '!Q', struct.pack('!d', value))[0]
+
 class _SharedStreamCache(persistent.Persistent):
 	"""
 	Implements the stream cache for users. Stores activitystream_change.Change
@@ -153,57 +163,96 @@ class _SharedStreamCache(persistent.Persistent):
 	# intid we care about vanishes?
 	# TODO: Should the originating user own the change? So that
 
-	# TODO: Capping the size. I think we'll implement that by
-	# keeping a parallel set of containers from float (last modified) to int
-	# and we can efficiently do range queries on that. Or maybe we just iterate and
-	# pop, since the expected size is small
-
 	family = BTrees.family64
+	stream_cache_size = 50
 
 	def __init__( self, family=None ):
-		if family is not None:
+		if family is not None: # pragma: no cover
 			self.family = family
 		else:
 			intids = component.queryUtility( zc_intid.IIntIds )
-			if intids:
+			if intids is not None:
 				self.family = intids.family
 
-		# Map from string container ids to self.family.II.TreeSet
-		# The values in the TreeSet are the intids of the shared
-		# objects
+		# Map from string container ids to self.family.IO.BTree
+		# The keys in the BTree leaves are the intids of the objects,
+		# the corresponding values are the change
+		# TODO: Do this with an IISet and require the Changes to have
+		# intids as well. The question then is: Who owns the Change and
+		# when does it get deleted?
 		self._containers = self.family.OO.BTree()
+
+		# Map from string container ids to self.family.II.BTree
+		# The keys are the float times at which we added a change
+		# When we fill up a container, we pop the oldest entry using
+		# this info, an operation that's efficient on a btree.
+		# The float times are converted to their corresponding 64-bit int
+		# values-as-bits. I believe these are more-or-less monotonically increasing
+		# (TODO: Right?)
+		self._containers_modified = self.family.OO.BTree()
+
 
 	# We use -1 as values for None. This is common in test cases
 	# and possibly for deleted objects (there can only be one of these)
 
 	def addContainedObject( self, change ):
-		container_map = self._containers.get( change.containerId )
-		if container_map is None:
-			container_map = self.family.IO.BTree()
-			self._containers[change.containerId] = container_map
+		for _containers, factory in ( (self._containers_modified, BTrees.family64.II.BTree),
+									  (self._containers, self.family.IO.BTree) ):
 
-		container_map[_getId(change.object, -1)] = change
+			container_map = _containers.get( change.containerId )
+			if container_map is None:
+				container_map = factory()
+				_containers[change.containerId] = container_map
+
+		obj_id = _getId( change.object, -1 )
+		old_change = container_map.get( obj_id )
+		container_map[obj_id] = change
+
+		# Now save the modification info.
+		# Note that container_map is basically a set on change.object, but
+		# we might actually get many different changes for a given object.
+		# that's why we have to get the one we're replacing (if any)
+		# and remove that timestamp from the modified map
+		modified_map = self._containers_modified[change.containerId]
+		if old_change is not None:
+			modified_map.pop( _time_to_64bit_int( old_change.lastModified ), None )
+
+		modified_map[_time_to_64bit_int(change.lastModified)] = obj_id
+
+		# If we're too big, start trimming
+		while len(modified_map) > self.stream_cache_size:
+			oldest_id = modified_map.pop( modified_map.minKey() )
+			container_map.pop( oldest_id ) # If this pop fails, we are somehow corrupted
 
 		return change
 
 	def deleteEqualContainedObject( self, contained, log_level=None ):
+		obj_id = _getId( contained )
+		modified_map = self._containers_modified.get( contained.containerId )
+		if modified_map is not None:
+			modified_map.pop( _time_to_64bit_int( contained.lastModified ), None )
+
 		container_map = self._containers.get( contained.containerId )
 		if container_map is not None:
-			if container_map.pop( _getId( contained ), None ) is not None:
+			if container_map.pop( obj_id, None ) is not None:
 				return contained
 
 	def clearContainer( self, containerId ):
 		self._containers.pop( containerId, None )
+		self._containers_modified.pop( containerId, None )
 
 	def clear( self ):
 		self._containers.clear()
+		self._containers_modified.clear()
 
 	def getContainer( self, containerId, defaultValue=None ):
 		container_map = self._containers.get( containerId )
+		# TODO: If needed, we could get a 'Last Modified' value for
+		# this returned object using self._containers_modified
 		return _SharedContainedObjectStorageValue( container_map.values(), finder=lambda intids, iid: iid ) if container_map is not None else defaultValue
 
 	def values( self ):
-		for k in self._containers:
+		for k in self._containers: # Iter the keys and call getContainer to get wrapping1
 			yield self.getContainer( k )
 
 
@@ -270,9 +319,9 @@ class SharingTargetMixin(object):
 		A cache of recent items that make of the stream. Going back
 		further than this requires walking through the containersOfShared.
 		"""
-		# Map from containerId -> PersistentExternalizableWeakList
-		# TODO: Rethink this. It's terribly inefficient.
-		return _SharedStreamCache()
+		cache = _SharedStreamCache()
+		cache.stream_cache_size = self.MAX_STREAM_SIZE
+		return cache
 
 	@Lazy
 	def containersOfShared(self):
