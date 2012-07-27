@@ -40,8 +40,8 @@ name: probref
 name: challengeprobs
 <div class="challenge-problems" tal:attributes="id self/id"><span class="headingtext">Challenge Problems</span></div>
 <ol class="challenge-problems itemize challenge-problems-itemize">
-	<li tal:repeat="item self">
-		<div class="problem challenge-problem" tal:attributes="id item/id; probnum item/attributes/probnum; data-probnum item/attributes/probnum" tal:content="item"></div>
+	<li tal:attributes="class python: type(item).__name__; id item/id; probnum item/attributes/probnum; data-probnum item/attributes/probnum" tal:repeat="item self">
+		<div tal:replace="item"></div>
 	</li>
 </ol>
 
@@ -52,8 +52,8 @@ name: beginsol solution
 name: reviewprobs
 <div class="review-problems" tal:attributes="id self/id"><span class="headingtext">Review Problems</span></div>
 <ol class="review-problems itemize review-problems-itemize">
-	<li tal:repeat="item self">
-		<div class="problem review-problem" tal:attributes="id item/id; probnum item/attributes/probnum; data-probnum item/attributes/probnum" tal:content="item"></div>
+	<li tal:attributes="class python: type(item).__name__; id item/id; probnum item/attributes/probnum; data-probnum item/attributes/probnum" tal:repeat="item self">
+		<div tal:replace="item"></div>
 	</li>
 </ol>
 
@@ -102,7 +102,7 @@ name: fig
 name: exercises
 <div class="exercises" tal:attributes="id self/id; data-ntiid self/ntiid"><span class="headingtext">Exercises</span></div>
 <ol class="exercises itemize exercises-itemize">
-	<li class="exercise exercise-item" tal:repeat="item self" tal:attributes="id item/id; exnumber item/attributes/exnumber; data-exnumber item/attributes/exnumber">
+	<li tal:repeat="item self" tal:attributes="class python: type(item).__name__; id item/id; exnumber item/attributes/exnumber; data-exnumber item/attributes/exnumber">
 	    <div class="exercise" tal:content="item"></div>
 	</li>
 </ol>

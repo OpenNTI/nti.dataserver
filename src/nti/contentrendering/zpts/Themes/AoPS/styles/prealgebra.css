@@ -592,12 +592,23 @@ order. A fix in the application for this is pending. */
     margin-top: 0px;
 }
 
-#NTIContent ol.exercises > li.exercise {
+#NTIContent ol.exercises > li.exer {
     list-style: none;
 }
 
-#NTIContent ol.exercises > li.exercise:before {
+#NTIContent ol.exercises > li.exerhard {
+    list-style: none;
+}
+
+#NTIContent ol.exercises > li.exer:before {
     content: attr(exnumber);
+    position: relative;
+    float: left;
+    padding-right: 0.5em;
+}
+
+#NTIContent ol.exercises > li.exerhard:before {
+    content: attr(exnumber) " * ";
     position: relative;
     float: left;
     padding-right: 0.5em;
@@ -636,7 +647,7 @@ order. A fix in the application for this is pending. */
 }
 
 #NTIContent ol.parts > li.parthard:before {
-	content: "(" attr(partnum) ") * ";
+	content: attr(partnum) " * ";
 	position: relative;
 	padding-right: 0.5em;
 }
@@ -658,14 +669,40 @@ order. A fix in the application for this is pending. */
 	padding-left: 0px;
 }*/
 
-#NTIContent ol.review-problems > li {
+#NTIContent ol.review-problems > li.revprob {
 	list-style-type: none;
 	margin-left: 0px;
 }
 
-#NTIContent ol.challenge-problems > li {
+#NTIContent ol.review-problems > li.revprob:before {
+    content: attr(probnum);
+    position: relative;
+    float: left;
+    padding-right: 0.5em;
+}
+
+#NTIContent ol.challenge-problems > li.chall {
 	list-style-type: none;
 	margin-left: 0px;
+}
+
+#NTIContent ol.challenge-problems > li.challhard {
+	list-style-type: none;
+	margin-left: 0px;
+}
+
+#NTIContent ol.challenge-problems > li.chall:before {
+    content: attr(probnum);
+    position: relative;
+    float: left;
+    padding-right: 0.5em;
+}
+
+#NTIContent ol.challenge-problems > li.challhard:before {
+    content: attr(probnum) " * ";
+    position: relative;
+    float: left;
+    padding-right: 0.5em;
 }
 
 #NTIContent ol.challenge-problems div.problem,
