@@ -83,7 +83,7 @@ def test_part():
     dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
     assert_that( dom.getElementsByTagName('part'), has_length( 6 ) )
 
-def test_omit_part():
+def test_part_no_title():
     example = br"""
     \begin{parts}
     \part part a.
@@ -95,4 +95,32 @@ def test_omit_part():
     \end{parts}
     """
     dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
-    assert_that( dom.getElementsByTagName('part'), has_length( 5 ) )
+    assert_that( dom.getElementsByTagName('part'), has_length( 6 ) )
+
+def test_part_title():
+    example = br"""
+    \begin{parts}
+    \part part a.
+    \part part b.
+    \part part c.
+    \part part d.
+    \part part e.
+    \part[Something]
+    \end{parts}
+    """
+    dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
+    assert_that( dom.getElementsByTagName('part'), has_length( 6 ) )
+
+def test_lcm():
+    example = br"""
+    $\lcm[45, 60, 75]$
+    """
+    dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
+    assert_that( dom.getElementsByTagName('lcm'), has_length( 1 ) )
+
+def test_davesuglyhack():
+    example = br"""
+    \davesuglyhack
+    """
+    dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
+    assert_that( dom.getElementsByTagName('davesuglyhack'), has_length( 1 ) )
