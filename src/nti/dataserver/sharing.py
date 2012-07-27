@@ -173,10 +173,6 @@ class _SharedStreamCache(persistent.Persistent):
 		# objects
 		self._containers = self.family.OO.BTree()
 
-	# def __iter__( self ):
-	# 	return iter(self._containers)
-
-
 	# We use -1 as values for None. This is common in test cases
 	# and possibly for deleted objects (there can only be one of these)
 

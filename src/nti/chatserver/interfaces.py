@@ -1,5 +1,10 @@
-#!/usr/bin/env python2.7
-"""Interfaces having to do with chat."""
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Interfaces having to do with chat.
+
+$Id$
+"""
 
 from __future__ import unicode_literals
 
@@ -35,7 +40,7 @@ STATUSES = (STATUS_INITIAL,STATUS_PENDING,STATUS_POSTED,STATUS_SHADOWED)
 STATUS_VOCABULARY = schema.vocabulary.SimpleVocabulary(
 	[schema.vocabulary.SimpleTerm( _x ) for _x in STATUSES] )
 
-class IMeeting(nti_interfaces.IModeledContent):
+class IMeeting(nti_interfaces.IModeledContent, nti_interfaces.IZContained):
 	"""
 	Provides the storage structure for a meeting.
 
@@ -98,7 +103,7 @@ class IMeetingPolicy(interface.Interface):
 
 	moderated_by_usernames = interface.Attribute( "Iterable of names moderating this meeting." )
 
-class IMessageInfo(nti_interfaces.IModeledContent):
+class IMessageInfo(nti_interfaces.IModeledContent, nti_interfaces.IZContained):
 
 	channel = schema.Choice(
 		title="The channel the message was sent to.",

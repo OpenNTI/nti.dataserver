@@ -15,10 +15,13 @@ import functools
 
 from persistent import Persistent
 import BTrees.OOBTree
+from ZODB.interfaces import IConnection
 
 from zope import interface
 from zope import component
 from zope.event import notify
+from zope import lifecycleevent
+from zope.location import locate
 
 
 from nti.ntiids import ntiids
@@ -37,22 +40,29 @@ class _MeetingMessagePostPolicy(object):
 				 'roomMembershipChanged', 'roomModerationChanged' )
 
 
-	def __init__( self, chatserver=None, room=None, occupant_names=(), transcripts_to=(), p_jar=None ):
+	def __init__( self, chatserver=None, room=None, occupant_names=(), transcripts_to=() ):
 		self._room = room # We need the room so we can emit the right notify() events
 		self._room_id = room.ID if room is not None else None
 		self._chatserver = chatserver
 		self._occupant_names = occupant_names
 		self._addl_transcripts_to = transcripts_to
-		self._p_jar = p_jar
 
 	def _ensure_message_stored( self, msg_info ):
 		"""
-		For messages that can take an OID, call this
-		to ensure that they have one. Must be called
-		during a transaction.
+		For messages that can take an OID, call this to ensure that
+		they have one. Must be called during a transaction.
+
+		.. note:: FIXME: This is badly broken. Messages currently have
+			no actual home; nothing owns them or is their location. They
+			badly need one, a real container. Then all of this goes away.
 		"""
-		if getattr( msg_info, '_p_jar', None ) is None and self._p_jar:
-			self._p_jar.add( msg_info )
+		locate( msg_info, self._room, msg_info.ID )
+		conn = IConnection( msg_info, None ) # Depend on zope.keyreference to find the IConnection
+		if conn:
+			conn.add( msg_info )
+		# Give it an intid
+		lifecycleevent.added( msg_info, self._room, msg_info.ID )
+
 
 	def _treat_recipients_like_default_channel( self, msg_info ):
 		return msg_info.is_default_channel() or not msg_info.recipients_without_sender
@@ -108,7 +118,8 @@ class _MeetingMessagePostPolicy(object):
 		# Ensure it's this room, thank you.
 		msg_info.containerId = self._room_id
 		# Ensure there's an OID
-		self._ensure_message_stored( msg_info )
+		if msg_info.__parent__ is None:
+			self._ensure_message_stored( msg_info )
 
 		transcript_owners = set(self._addl_transcripts_to)
 		transcript_owners.add( msg_info.Sender )
@@ -127,6 +138,9 @@ class _MeetingMessagePostPolicy(object):
 			for name in recipient_names:
 				self.emit_recvMessage( name, msg_info )
 
+		# Emit events
+		# ObjectAdded ensures registered for intid, but we're actually doing that in _ensure_stored
+		#lifecycleevent.added( msg_info, msg_info.__parent__, msg_info.__name__ )
 		notify( interfaces.MessageInfoPostedToRoomEvent( msg_info, transcript_owners | recipient_names, self._room ) )
 
 		# Everyone who gets the transcript also
@@ -165,6 +179,7 @@ class _ModeratedMeetingState(Persistent):
 		# to implement the moderation queue, but it does work.
 		# We will typically have many writers and one reader--
 		# but that reader, the moderator, is also writing.
+		# TODO: Convert this to intids
 		self._moderation_queue = BTrees.OOBTree.OOBTree()
 
 
@@ -420,12 +435,10 @@ def MeetingPostPolicy(self):
 													 room=self,
 													 occupant_names=self._occupant_names,
 													 transcripts_to=self._addl_transcripts_to,
-													 p_jar=self._p_jar,
 													 moderation_state=self._moderation_state )
 	else:
 		policy = _MeetingMessagePostPolicy( self._chatserver,
 											room=self,
 											occupant_names=self._occupant_names,
-											transcripts_to=self._addl_transcripts_to,
-											p_jar=self._p_jar )
+											transcripts_to=self._addl_transcripts_to )
 	return policy

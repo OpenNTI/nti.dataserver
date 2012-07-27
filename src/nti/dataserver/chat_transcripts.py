@@ -183,7 +183,7 @@ class _DocidMeetingTranscriptStorage(_AbstractMeetingTranscriptStorage):
 		"""
 		# TODO: Can/Should we start assuming this object exists
 		# and use getId?
-		self.messages.add( self._intids.register( msg ) )
+		self.messages.add( self._intids.getId( msg ) )
 
 	def itervalues(self):
 		intids = self._intids
