@@ -1,0 +1,14 @@
+#NTIContent .subsection.title {
+	    font-size: 175% !important;
+}
+
+#NTIContent .itemize,
+	    .enumerate {
+	    line-height: 1.5em;
+}
+
+#NTIContent .itemize > li > p.par,
+	    .enumerate > li > p.par {
+	    margin-top: 0.5em;
+	    margin-bottom: 0.5em;
+}
