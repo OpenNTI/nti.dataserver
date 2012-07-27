@@ -597,10 +597,10 @@ order. A fix in the application for this is pending. */
 }
 
 #NTIContent ol.exercises > li.exercise:before {
-    content: attr(exnumber) ".";
+    content: attr(exnumber);
     position: relative;
     float: left;
-    padding-right: 10px;
+    padding-right: 0.5em;
 }
 
 #NTIContent ol.parts {
@@ -620,7 +620,7 @@ order. A fix in the application for this is pending. */
 }
 
 #NTIContent ol.parts > li.part:before {
-	content: "(" attr(partnum) ") ";
+	content: attr(partnum);
 	position: relative;
 	padding-right: 0.5em;
 }
