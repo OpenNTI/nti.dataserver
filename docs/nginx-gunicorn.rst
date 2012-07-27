@@ -1,6 +1,6 @@
-===========================================
+============================================
  nginx, gunicorn haproxy, and stunnel Setup
-===========================================
+============================================
 
 The combination of the nginx HTTP server, gunicorn WSGI server, and
 pound reverse proxy is a popular one in the Python world. `nginx
@@ -358,6 +358,45 @@ binary with the new one). The configuration would reside in
     timeout server 86400000
     timeout connect 86400000
     server dataserver 127.0.0.1:8081 weight 1 maxconn 1024
+
+Logging
+-------
+
+Haproxy can produce incredibly detailed logs that are very useful for
+performance tuning in a situation with multiple backends (like ours).
+They are verbose, though, and clutter things up by default. On Linux,
+we want to clean things up by editing the syslog configuration and
+enabling logrotate. (This assumes the logging configuration from above.)
+
+First, syslog. Disable haproxy from writing to the standard message
+file and put it in its own file:
+
+::
+
+  # Find the line like this and add 'local2.none'
+  *.info;mail.none;authpriv.none;cron.none;local2.none  /var/log/messages
+
+  # Add a line like this
+  local2.*                                              /var/log/haproxy
+
+
+Then in ``/etc/logrotate.d/haproxy``, but this configuration:
+
+::
+
+  /var/log/haproxy {
+    daily
+    rotate 10
+    missingok
+    notifempty
+    compress
+    create 644 root root
+    sharedscripts
+    postrotate
+        /bin/kill -HUP `cat /var/run/syslogd.pid 2> /dev/null` 2> /dev/null || true
+        /bin/kill -HUP `cat /var/run/rsyslogd.pid 2> /dev/null` 2> /dev/null || true
+    endscript
+  }
 
 Stunnel
 =======
