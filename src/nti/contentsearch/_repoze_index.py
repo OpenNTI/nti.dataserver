@@ -11,26 +11,29 @@ from repoze.catalog.indexes.common import CatalogIndex
 from repoze.catalog.indexes.field import CatalogFieldIndex
 from repoze.catalog.indexes.keyword import CatalogKeywordIndex
 
+from nti.contentsearch._content_utils import get_content
+from nti.contentsearch._content_utils import get_note_content
+from nti.contentsearch._content_utils import get_highlight_content
+from nti.contentsearch._content_utils import get_redaction_content
+from nti.contentsearch._content_utils import get_messageinfo_content
+
 from nti.contentsearch.common import ngrams
 from nti.contentsearch.common import get_attr
 from nti.contentsearch.common import get_ntiid
-from nti.contentsearch.common import get_content
 from nti.contentsearch.common import get_creator
-from nti.contentsearch.common import get_collection
 from nti.contentsearch.common import get_references
 from nti.contentsearch.common import get_external_oid
 from nti.contentsearch.common import get_last_modified
 from nti.contentsearch.common import normalize_type_name
-from nti.contentsearch.common import get_multipart_content
 from nti.contentsearch.textindexng3 import CatalogTextIndexNG3
 
 from nti.contentsearch.common import (	container_id_fields, keyword_fields)
 
-from nti.contentsearch.common import (	OID, NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, COLLECTION_ID, ID, BODY)
+from nti.contentsearch.common import (	OID, NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, COLLECTION_ID, ID)
 
 from nti.contentsearch.common import (	ngrams_, channel_, content_, keywords_, references_, title_, 
-										last_modified_, section_, ntiid_, recipients_, sharedWith_, body_, 
-										related_, selectedText_, note_, highlight_, messageinfo_, replacementContent_,
+										last_modified_, section_, ntiid_, recipients_, sharedWith_,  
+										related_,  note_, highlight_, messageinfo_, replacementContent_,
 										redactionExplanation_, redaction_)
 
 
@@ -44,29 +47,24 @@ CatalogIndex.family = BTrees.family64
 #TODO: set this as part of a config
 compute_ngrams = False 
 
-def get_id(obj, default=None):
-	result = obj if isinstance(obj, six.string_types) else get_attr(obj, [ID])
+def _get_text(obj, names):
+	result = obj if isinstance(obj, six.string_types) else get_attr(obj, names)
 	return unicode(result) if result else None
+
+def get_id(obj, default=None):
+	return _get_text(obj, [ID])
 
 def get_title(obj, default=None):
-	result = obj if isinstance(obj, six.string_types) else get_attr(obj, [title_])
-	return unicode(result) if result else None
+	return _get_text(obj, [title_])
 
 def get_section(obj, default=None):
-	result = obj if isinstance(obj, six.string_types) else get_attr(obj, [section_])
-	return unicode(result) if result else None
+	return _get_text(obj, [section_])
 
 def get_channel(obj, default=None):
-	result = obj if isinstance(obj, six.string_types) else get_attr(obj, [channel_])
-	return unicode(result) if result else None
+	return _get_text(obj, [channel_])
 
 def get_containerId(obj, default=None):
-	result = obj if isinstance(obj, six.string_types) else get_attr(obj, container_id_fields)
-	return unicode(result) if result else None
-
-def get_collectionId(obj, default=None):
-	containerId = get_containerId(obj, default)
-	return get_collection(containerId) if containerId else None
+	return _get_text(obj, container_id_fields)
 
 def get_none(obj, default=None):
 	return None
@@ -104,66 +102,27 @@ def get_related(obj, default=None):
 	return _parse_words(obj, [related_])
 
 def get_note_ngrams(obj, default=None):
-	if compute_ngrams:
-		source = obj if isinstance(obj, six.string_types) else get_attr(obj, [body_])
-		result = ngrams(get_multipart_content(source))
-	else:
-		result = u''
-	return result
-	
-def get_note_content(obj, default=None):
-	source = obj if isinstance(obj, six.string_types) else get_attr(obj, [body_])
-	result = get_multipart_content(source)
-	return result.lower() if result else None
-	
+	return ngrams(get_note_content(obj)) if compute_ngrams else u''
+		
 def get_highlight_ngrams(obj, default=None):
-	if compute_ngrams:
-		source = obj if isinstance(obj, six.string_types) else get_attr(obj, [selectedText_])
-		result = ngrams(get_multipart_content(source))
-	else:
-		result = u''
-	return result
-	
-def get_highlight_content(obj, default=None):
-	source = obj if isinstance(obj, six.string_types) else get_attr(obj, [selectedText_])
-	result = get_content(source)
-	return result.lower() if result else None
+	return ngrams(get_highlight_content(obj)) if compute_ngrams else u''
 
 def get_redaction_ngrams(obj, default=None):
-	if compute_ngrams:
-		source = get_multipart_content(obj)
-		result = ngrams(source)
-	else:
-		result = u''
-	return result
-	
-def get_redaction_content(obj, default=None):
-	result = get_multipart_content(obj)
-	return result.lower() if result else None
+	return ngrams(get_redaction_content(obj)) if compute_ngrams else u''
 
 def get_messageinfo_ngrams(obj, default=None):
-	if compute_ngrams:
-		source = obj if isinstance(obj, six.string_types) else get_attr(obj, [BODY])
-		result = ngrams(get_multipart_content(source))
-	else:
-		result = ''
-	return result
+	return ngrams(get_messageinfo_content(obj)) if compute_ngrams else u''
 
 def get_replacement_content(obj, default=None):
-	source = obj if isinstance(obj, six.string_types) else get_attr(obj, [replacementContent_])
+	source = _get_text(obj, [replacementContent_])
 	result = get_content(source) if source else None
 	return result.lower() if result else None
 	
 def get_redaction_explanation(obj, default=None):
-	source = obj if isinstance(obj, six.string_types) else get_attr(obj, [redactionExplanation_])
+	source = _get_text(obj, [redactionExplanation_])
 	result = get_content(source) if source else None
 	return result.lower() if result else None
 	
-def get_messageinfo_content(obj, default=None):
-	source = obj if isinstance(obj, six.string_types) else get_attr(obj, [BODY])
-	result = get_multipart_content(source)
-	return result.lower() if result else None
-
 def _create_text_index(field, discriminator):
 	return CatalogTextIndexNG3(field, discriminator)
 

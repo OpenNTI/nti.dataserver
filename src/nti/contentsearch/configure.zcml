@@ -36,6 +36,19 @@
 				for=".interfaces.INgramSnippetHighlight"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
 			
+	<!-- Content Resolvers -->
+	
+	<utility factory="._content_utils._HighLightContentResolver" name="highlight" />
+	<utility factory="._content_utils._RedactionContentResolver" name="redaction" />
+	<utility factory="._content_utils._NoteContentResolver" name="note" />
+	<utility factory="._content_utils._CanvasShapeContentResolver" name="canvas" />
+	<utility factory="._content_utils._CanvasTextShapeContentResolver" name="canvastextshape" />
+	<utility factory="._content_utils._MessageInfoContentResolver" name="messageinfo" />
+
+	<!-- Content tokenizer -->
+	
+	<utility factory="._content_utils._ContentTokenizer"  />
+	
 	<!-- zopyx Storage -->
 
 	<utility	provides="zopyx.txng3.core.interfaces.IStorage"

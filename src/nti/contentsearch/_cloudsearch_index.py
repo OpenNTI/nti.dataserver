@@ -5,16 +5,16 @@ import hashlib
 from nti.externalization.externalization import toExternalObject
 
 from nti.contentsearch import CaseInsensitiveDict
+from nti.contentsearch._content_utils import get_note_content
+from nti.contentsearch._content_utils import get_highlight_content
+from nti.contentsearch._content_utils import get_redaction_content
+from nti.contentsearch._content_utils import get_messageinfo_content
 
 from nti.contentsearch.common import ngrams
 from nti.contentsearch.common import get_type_name
 from nti.contentsearch.common import get_external_oid
-from nti.contentsearch.common import get_note_content
 from nti.contentsearch.common import get_last_modified
 from nti.contentsearch.common import normalize_type_name
-from nti.contentsearch.common import get_highlight_content
-from nti.contentsearch.common import get_redaction_content
-from nti.contentsearch.common import get_messageinfo_content
 
 from nti.contentsearch.common import (	CLASS, CREATOR, ID, OID, last_modified_fields, ntiid_fields, 
 										container_id_fields, NTIID, CONTAINER_ID, TARGET_OID, LAST_MODIFIED)
