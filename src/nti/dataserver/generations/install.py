@@ -6,7 +6,7 @@ from __future__ import print_function, unicode_literals
 
 __docformat__ = 'restructuredtext'
 
-generation = 16
+generation = 17
 
 from zope.generations.generations import SchemaManager
 
@@ -19,8 +19,9 @@ class _DataserverSchemaManager(SchemaManager):
 
 
 def evolve( context ):
-	install_main( context )
+	result = install_main( context )
 	install_chat( context )
+	return result
 
 import BTrees
 from BTrees import OOBTree
@@ -120,6 +121,12 @@ def install_main( context ):
 	sess_conn.root()['session_storage'] = storage
 	lsm.registerUtility( storage, provided=nti_interfaces.ISessionServiceStorage )
 
+	install_intids( dataserver_folder )
+
+	return dataserver_folder
+
+def install_intids( dataserver_folder ):
+	lsm = dataserver_folder.getSiteManager()
 	# A utility to create intids for any object that needs it
 	# Two choices: With either one of them registered, subscribers
 	# fire forcing objects to be adaptable to IKeyReference.
@@ -132,3 +139,4 @@ def install_main( context ):
 	lsm.registerUtility( intids, provided=zope.intid.IIntIds )
 	# Make sure to register it as both types of utility, one is a subclass of the other
 	lsm.registerUtility( intids, provided=zc.intid.IIntIds )
+	return intids

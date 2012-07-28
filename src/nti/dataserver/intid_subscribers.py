@@ -87,10 +87,15 @@ def removeIntIdSubscriber(ob, event):
 		key = IKeyReference(ob, None)
 		# Register only objects that adapt to key reference
 		if key is not None:
-			# Notify the catalogs that this object is about to be removed.
-			notify(zope_intid_interfaces.IntIdRemovedEvent(ob, event))
+			# Notify the catalogs that this object is about to be removed,
+			# if we actually find something to remove
+			fired_event = False
+
 			for utility in utilities:
 				try:
+					if not fired_event and utility.queryId( ob ) is not None:
+						fired_event = True
+						notify(zope_intid_interfaces.IntIdRemovedEvent(ob, event))
 					utility.unregister(ob)
 				except KeyError:
 					pass

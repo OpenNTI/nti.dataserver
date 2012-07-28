@@ -153,9 +153,11 @@ class ExampleDatabaseInitializer(object):
 		def register_user( u ):
 			# Because we're not in that site, we need to make sure the events
 			# go to the right place
-			utility = root.getSiteManager().getUtility( zc_intid.IIntIds )
-			_id = utility.register( u )
-			assert utility.getObject( _id ) is u
+			utility = root.getSiteManager().queryUtility( zc_intid.IIntIds )
+			if utility is not None:
+				# Support it being missing for the sake of tests (test_evolve17)
+				_id = utility.register( u )
+				assert utility.getObject( _id ) is u
 
 
 		def add_user( u ):

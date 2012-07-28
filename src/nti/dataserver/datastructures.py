@@ -1054,6 +1054,14 @@ class ContainedStorage(persistent.Persistent,ModDateTrackingObject):
 	def itervalues(self):
 		return self.containers.itervalues()
 
+	values = itervalues
+
+	def iter_all_contained_objects(self):
+		""" Only works for dict-like containers """
+		for container in self.itervalues():
+			for v in container.values():
+				yield v
+
 	def sublocations(self):
 		return (container for container in self.itervalues() if loc_interfaces.ILocation.providedBy(container))
 
