@@ -29,10 +29,18 @@ from nti.contentsearch.spambayes import default_minimum_prob_strength
 @interface.implementer(IObjectClassifierMetaData)
 @component.adapter(nti_interfaces.IModeledContent)
 class _ObjectClassifierMetaData(Persistent):
-	def __init__(self):
-		self.is_spam = False
-		self.classified_at = time.time()
+	
+	spam_classification = PERSISTENT_HAM_INT
+	spam_classification_time = time.time()
 		
+	@property
+	def classification(self):
+		return self.spam_classification
+	
+	@property
+	def classified_at(self):
+		return self.spam_classification_time
+	
 def _ObjectClassifierMetaDataFactory(container):
 	return an_factory(_ObjectClassifierMetaData)(container)
 

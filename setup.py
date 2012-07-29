@@ -13,6 +13,7 @@ entry_points = {
 		"nti_enroll_class = nti.dataserver.utils.nti_enroll_class:main",
 		"nti_set_generation = nti.dataserver.utils.nti_set_generation:main",
 		"nti_set_password = nti.dataserver.utils.nti_set_password:main",
+		"nti_follow_entity = nti.dataserver.utils.nti_follow_entity:main",
 		"nti_remove_user = nti.dataserver.utils.nti_remove_user:main",
 		"nti_delete_user_objects = nti.dataserver.utils.nti_delete_user_objects:main",
 		"nti_export_user_objects = nti.dataserver.utils.nti_export_user_objects:main",
@@ -117,7 +118,7 @@ setup(
 		 # webob 1.2, collects data ok without patch.
 		 # Depends on the system graphviz installation; an alternative is repoze.profile which has
 		 # fewer dependencies, but less helpful output and doesn't work with multiple workers (?)
-		'linesman >= 0.2.2',
+		#'linesman >= 0.2.2', # Conflicts with Pillow. Modify requires.txt as part of the patch
 		'logilab-common >= 0.58.1',
 		'nltk >= 2.0.2',
 		# numpy is req'd by nltk, but not depended on. sigh.
@@ -150,7 +151,7 @@ setup(
 		'repoze.who >= 2.0',
 		'repoze.zodbconn >= 0.14',
 		'grequests >= 0.1.0', #replaces requests.async in 0.13
-		'requests >= 0.13.3', # HTTP
+		'requests >= 0.13.5', # HTTP
 		'scss',
 		'setproctitle >= 1.1.6',
 		'setuptools',

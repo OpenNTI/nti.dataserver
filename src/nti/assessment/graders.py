@@ -59,15 +59,29 @@ class MultipleChoiceGrader(EqualityGrader):
 	"""
 
 	def __call__(self):
+		# Does it exactly match?
 		result = super(MultipleChoiceGrader,self).__call__()
 		if not result:
+			# No. Ok, did they send us the actual value?
 			index = None
 			try:
 				index = self.part.choices.index( self.response.value )
 			except ValueError:
-				result = False
-			else:
-				result = index == self.solution.value
+				# The value they sent isn't present. Maybe they sent an
+				# int string?
+				try:
+					index = int( self.response.value )
+					# They sent an int. We can take this, if the actual value they sent
+					# is not an option. If the choices are "0", "2", "3", with index 1, value "2"
+					# being correct, and they send "1", we shouldn't accept that
+					# TODO: Handle that case. Fortunately, it's a corner case
+				except ValueError:
+					# Nope, not an int. So this won't match
+					index = None
+
+
+
+			result = (index == self.solution.value)
 
 		return result
 

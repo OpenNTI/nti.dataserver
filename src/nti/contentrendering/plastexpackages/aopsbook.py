@@ -8,6 +8,9 @@ from zope import interface
 from nti.contentrendering import plastexids
 from nti.contentrendering.resources import interfaces as res_interfaces
 
+from amsopn import DeclareMathOperator
+from picins import picskip,parpic
+
 from plasTeX import Base, Command
 from plasTeX.Base.LaTeX import Index
 from plasTeX.Packages import graphicx
@@ -276,13 +279,53 @@ class AMC(source):
 		return res
 
 # Counters
-class partnum(Base.Command):
+class partnumname(Base.Command):
 	unicode = ''
 
 class parts(Base.List):
 
 	counters = ['partnum']
 	args = '[ init:int ]'
+
+	class part(plastexids.StableIDMixin,Base.List.item):
+		args = ' [title] '
+	        #Ordinary list items can accept a value, this may or may not be used in AoPS code
+	        #args = ''
+		counter = 'partnum'
+
+		def invoke( self, tex ):
+                        #ignore the list implementation this also increments the counter.
+			_t = Base.Command.invoke(self,tex)
+
+			# Prevet the rendering of instances of \part[]
+			self.alpha = None
+			self.title = None
+			if ( self.attributes['title'] is not None ):
+				if ( self.attributes['title'].source != '' ):
+					self.title = self.attributes['title']
+
+				#self.ownerDocument.context.counters[self.counter].value = self.ownerDocument.context.counters[self.counter].value - 1
+				self.ownerDocument.context.counters[self.counter].value -= 1
+			else:
+				self.position = self.ownerDocument.context.counters[self.counter].value
+				self.alpha = "(" + _number_to_lower_alpha_list( self.position ) + ")"
+
+			self.attributes['probnum'] = \
+			    str(self.ownerDocument.context.counters['chapter'].value) + '.'+ \
+			    str(self.ownerDocument.context.counters['probnum'].value)
+
+			if (self.alpha is not None):
+				self.attributes['probnum'] = self.attributes['probnum'] + "." + self.alpha
+
+			return _t
+	
+		def digest(self, tokens):
+			super(parts.part, self).digest(tokens)
+                        #Remove trailing commas that we have in some parts
+			removeCommasFromSectionWithHints(self)
+
+	class parthard(part):
+		pass
 
 	def invoke( self, tex ):
 		_ = super(parts, self).invoke( tex ) # Notice we're not returning (TODO: why?)
@@ -312,6 +355,16 @@ class parts(Base.List):
 
 		return res
 
+def removeCommasFromSectionWithHints(subsection):
+	hintName = 'hint'
+	for node in subsection.childNodes:
+		for child in node.childNodes:
+			if child.nextSibling != None and child.nextSibling.nextSibling != None:	
+				if child.nodeName == hintName and child.nextSibling == ', ' and child.nextSibling.nextSibling.nodeName == hintName:
+					node.removeChild(child.nextSibling)
+				elif child.nodeName == hintName and child.nextSibling == ',' and child.nextSibling.nextSibling.source == '~ ' and child.nextSibling.nextSibling.nextSibling != None and child.nextSibling.nextSibling.nextSibling.nodeName == hintName:
+					node.removeChild(child.nextSibling)
+
 def _number_to_lower_alpha_list(index):
 	if ( index  ):
 		return _number_to_lower_alpha_list( (index - 1) / 26 ) + chr( (index - 1) % 26 + 97 )
@@ -319,30 +372,6 @@ def _number_to_lower_alpha_list(index):
 		return ''
 
 
-
-class part(plastexids.StableIDMixin,Base.List.item):
-	args = ' [noshow] '
-	#Ordinary list items can accept a value, this may or may not be used in AoPS code
-	#args = ''
-
-	def invoke( self, tex ):
-		self.parse(tex)
-		# Prevet the rendering of instances of \part[]
-		if ( self.attributes['noshow'] is not None ):
-			return []
-
-		self.counter = 'partnum'
-		self.position = self.ownerDocument.context.counters[self.counter].value + 1
-		self.alpha = _number_to_lower_alpha_list( self.position )
-		self.attributes['probnum'] = \
-		    str(self.ownerDocument.context.counters['chapter'].value) + '.'+ \
-		    str(self.ownerDocument.context.counters['probnum'].value) + ".(" + self.alpha +")"
-		#ignore the list implementation
-		return Base.Command.invoke(self,tex)
-
-
-class parthard(part):
-	pass
 
 #Exercises exist at the end of a section and are started with \exercises.  There is
 #no explicit stop.	Exercises end when a new section starts
@@ -376,16 +405,6 @@ class exercises(Base.subsection):
 				nodesToMove.append(node)
 
 		return res
-
-def removeCommasFromSectionWithHints(subsection):
-	hintName = 'hint'
-	for node in subsection.childNodes:
-		for child in node.childNodes:
-			if child.nextSibling != None and child.nextSibling.nextSibling != None:	
-				if child.nodeName == hintName and child.nextSibling == ', ' and child.nextSibling.nextSibling.nodeName == hintName:
-					node.removeChild(child.nextSibling)
-				elif child.nodeName == hintName and child.nextSibling == ',' and child.nextSibling.nextSibling.source == '~ ' and child.nextSibling.nextSibling.nextSibling != None and child.nextSibling.nextSibling.nextSibling.nodeName == hintName:
-					node.removeChild(child.nextSibling)
 
 class exer(plastexids.StableIDMixin, Base.subsubsection):
 	args = ''
@@ -806,6 +825,11 @@ class thehints(Base.List):
 		if self.macroMode != Base.Environment.MODE_END:
 			self.ownerDocument.context.counters['hintnum'].setcounter(0)
 
+	def hintToreplace( self, hintItem ):
+		for hint in hintItem.idref['label'].getElementsByTagName( 'hint' ):
+			if hint.attributes['label'] == hintItem.attributes['label']:
+				return hint
+
 	def digest( self, tokens ):
 		super(thehints,self).digest( tokens )
 		# When we end the hints, go back and fixup the references and
@@ -818,7 +842,10 @@ class thehints(Base.List):
 				# we are the current parent, the label needs to be the
 				# new parent
 				self.removeChild( child )
-				child.idref['label'].appendChild( child )
+				replaceHint = self.hintToreplace( child )
+				# How is possible that we sometimes get a hintitem with no corresponding hint?
+				if replaceHint != None:
+					replaceHint.parentNode.replaceChild( child, replaceHint )
 			else:
 				# for now, if it doesn't refer to anything, delete it
 				self.removeChild( child )
@@ -862,6 +889,16 @@ class ntirequires(Base.Command):
 			parentNode = parentNode.parentNode
 		return result
 
+
+# AoPS Custom Math Operators
+
+class lcm(Command):
+	args = ''
+
+# AoPS 'Hacks'
+
+class davesuglyhack(Command):
+	args = ''
 
 ###
 ### Indexes in math equations turn out to mess up

@@ -22,9 +22,9 @@
 									"filename": null
 								}
 							},
-							"href": "tag_nextthought.com,2011-10_MN-HTML-MiladyCosmetology.career_paths_for_cosmetologists.html",
+							"href": "tag_nextthought_com_2011-10_MN-HTML-MiladyCosmetology_career_paths_for_cosmetologists.html",
 							"AssessmentItems": {},
-							"filename": "tag_nextthought.com,2011-10_MN-HTML-MiladyCosmetology.career_paths_for_cosmetologists.html"
+							"filename": "tag_nextthought_com_2011-10_MN-HTML-MiladyCosmetology_career_paths_for_cosmetologists.html"
 						},
 						"tag:nextthought.com,2011-10:MN-HTML-MiladyCosmetology.brief_history_of_cosmetology": {
 							"NTIID": "tag:nextthought.com,2011-10:MN-HTML-MiladyCosmetology.brief_history_of_cosmetology",
@@ -116,9 +116,9 @@
 									"filename": null
 								}
 							},
-							"href": "tag_nextthought.com,2011-10_MN-HTML-MiladyCosmetology.brief_history_of_cosmetology.html",
+							"href": "tag_nextthought_com_2011-10_MN-HTML-MiladyCosmetology_brief_history_of_cosmetology.html",
 							"AssessmentItems": {},
-							"filename": "tag_nextthought.com,2011-10_MN-HTML-MiladyCosmetology.brief_history_of_cosmetology.html"
+							"filename": "tag_nextthought_com_2011-10_MN-HTML-MiladyCosmetology_brief_history_of_cosmetology.html"
 						},
 						"tag:nextthought.com,2011-10:mathcounts-HTML-MN.2012.0": {
 							"NTIID": "tag:nextthought.com,2011-10:mathcounts-HTML-MN.2012.0",
@@ -417,11 +417,22 @@
 											"NTIID": "tag:nextthought.com,2011-10:MN-NAQ-MiladyCosmetology.naq.20",
 											"parts": [
 												{
-													"content": "During the Middle Ages, where did women not wear colored makeup?",
 													"explanation": "",
-													"hints": [],
-													"Class": "FreeResponsePart",
-													"solutions": []
+													"choices": [
+														"Lips",
+														"Cheeks",
+														"Eyes"
+													],
+													"content": "During the Middle Ages, where did women not wear colored makeup?",
+													"solutions": [
+														{
+															"value": 0,
+															"Class": "MultipleChoiceSolution",
+															"weight": 1.0
+														}
+													],
+													"Class": "MultipleChoicePart",
+													"hints": []
 												}
 											],
 											"Class": "Question"
@@ -431,11 +442,23 @@
 											"NTIID": "tag:nextthought.com,2011-10:MN-NAQ-MiladyCosmetology.naq.21",
 											"parts": [
 												{
-													"content": "Which of the following techniques was originally developed by a physician during the Middle Ages?",
 													"explanation": "",
-													"hints": [],
-													"Class": "FreeResponsePart",
-													"solutions": []
+													"choices": [
+														"Croquignole wrapping technique",
+														"Steam distillation",
+														"Henna-based hair dyes",
+														"Cold waving"
+													],
+													"content": "Which of the following techniques was originally developed by a physician during the Middle Ages?",
+													"solutions": [
+														{
+															"value": 1,
+															"Class": "MultipleChoiceSolution",
+															"weight": 1.0
+														}
+													],
+													"Class": "MultipleChoicePart",
+													"hints": []
 												}
 											],
 											"Class": "Question"
@@ -500,9 +523,9 @@
 									"filename": null
 								}
 							},
-							"href": "tag_nextthought.com,2011-10_mathcounts-HTML-MN.2012.0.html",
+							"href": "tag_nextthought_com_2011-10_mathcounts-HTML-MN_2012_0.html",
 							"AssessmentItems": {},
-							"filename": "tag_nextthought.com,2011-10_mathcounts-HTML-MN.2012.0.html"
+							"filename": "tag_nextthought_com_2011-10_mathcounts-HTML-MN_2012_0.html"
 						},
 						"tag:nextthought.com,2011-10:MN-HTML-MiladyCosmetology.introduction": {
 							"NTIID": "tag:nextthought.com,2011-10:MN-HTML-MiladyCosmetology.introduction",
@@ -514,14 +537,14 @@
 									"filename": null
 								}
 							},
-							"href": "tag_nextthought.com,2011-10_MN-HTML-MiladyCosmetology.introduction.html",
+							"href": "tag_nextthought_com_2011-10_MN-HTML-MiladyCosmetology_introduction.html",
 							"AssessmentItems": {},
-							"filename": "tag_nextthought.com,2011-10_MN-HTML-MiladyCosmetology.introduction.html"
+							"filename": "tag_nextthought_com_2011-10_MN-HTML-MiladyCosmetology_introduction.html"
 						}
 					},
-					"href": "tag_nextthought.com,2011-10_MN-HTML-MiladyCosmetology.history_and_career_opportuniities.html",
+					"href": "tag_nextthought_com_2011-10_MN-HTML-MiladyCosmetology_history_and_career_opportuniities.html",
 					"AssessmentItems": {},
-					"filename": "tag_nextthought.com,2011-10_MN-HTML-MiladyCosmetology.history_and_career_opportuniities.html"
+					"filename": "tag_nextthought_com_2011-10_MN-HTML-MiladyCosmetology_history_and_career_opportuniities.html"
 				}
 			},
 			"href": "index.html",

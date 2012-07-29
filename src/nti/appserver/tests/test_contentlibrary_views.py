@@ -35,6 +35,12 @@ class ContentUnit(object):
 	href = 'prealgebra'
 	ntiid = None
 	__parent__ = None
+	lastModified = 0
+
+class ContentUnitInfo(object):
+	contentUnit = None
+	lastModified = 0
+
 
 class TestContainerPrefs(ConfiguringTestBase):
 
@@ -45,9 +51,6 @@ class TestContainerPrefs(ConfiguringTestBase):
 		config.testing_securitypolicy( self.rem_username )
 
 	def _do_check_root_inherited(self, ntiid=None, sharedWith=None, state='inherited', provenance=ntiids.ROOT):
-		class ContentUnitInfo(object):
-			contentUnit = None
-			lastModified = 0
 
 		unit = ContentUnit()
 		unit.ntiid = ntiid
@@ -203,3 +206,29 @@ class TestContainerPrefs(ConfiguringTestBase):
 		self._do_update_prefs( content_unit, sharedWith=['a','b'] )
 
 		self._do_check_root_inherited( ntiid=containerId, sharedWith=['a','b'] )
+
+
+	@WithMockDSTrans
+	def test_prefs_from_content_unit(self):
+		_ = users.User.create_user( username=self.rem_username )
+		# Note the container does not exist
+		containerId = "tag:nextthought.com:foo,bar"
+
+		content_unit = ContentUnit()
+		content_unit.ntiid = ntiids.ROOT
+
+		interface.alsoProvides( content_unit, app_interfaces.IContentUnitPreferences )
+		content_unit.sharedWith = ['2@3']
+
+		info = ContentUnitInfo()
+		info.contentUnit = content_unit
+		decorator = _ContentUnitPreferencesDecorator( info )
+		result_map = {}
+
+		decorator.decorateExternalMapping( info, result_map )
+
+		assert_that( result_map, has_entry( 'sharingPreference',
+											has_entry( 'State', 'set' ) ) )
+
+		assert_that( result_map, has_entry( 'sharingPreference',
+											has_entry( 'sharedWith', ['2@3'] ) ) )

@@ -43,7 +43,7 @@ def test_challProb():
     hints = dom.getElementsByTagName('hint')
     assert_that(hints[0].nodeName, is_( hints[0].nextSibling.nodeName ))
     #Check if we don't have a trailing comma at the end.
-    assert_that( dom.textContent, is_(" In Park School grade, 33 students and 12 teachers like none of these sports.  "))
+    assert_that( dom.textContent.strip(), is_("In Park School grade, 33 students and 12 teachers like none of these sports."))
     
 def test_multipleTrailingComma():
     example = br"""
@@ -55,7 +55,7 @@ def test_multipleTrailingComma():
     assert_that( dom.getElementsByTagName('hint'), has_length( 3 ) )
     
     #Check if we don't have a trailing comma at the end.
-    assert_that( dom.textContent, is_(" Arbitrary content goes here.  "))
+    assert_that( dom.textContent.strip(), is_("Arbitrary content goes here."))
     
 def test_oneHint():
     example = br"""
@@ -66,7 +66,7 @@ def test_oneHint():
     assert_that( dom.getElementsByTagName('hint'), has_length( 1 ) )
     
     #Check if we don't have a trailing comma at the end.
-    assert_that( dom.textContent, is_(" Arbitrary content goes here.  "))
+    assert_that( dom.textContent.strip(), is_("Arbitrary content goes here."))
 
 
 def test_part():
@@ -83,7 +83,7 @@ def test_part():
     dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
     assert_that( dom.getElementsByTagName('part'), has_length( 6 ) )
 
-def test_omit_part():
+def test_part_no_title():
     example = br"""
     \begin{parts}
     \part part a.
@@ -95,4 +95,32 @@ def test_omit_part():
     \end{parts}
     """
     dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
-    assert_that( dom.getElementsByTagName('part'), has_length( 5 ) )
+    assert_that( dom.getElementsByTagName('part'), has_length( 6 ) )
+
+def test_part_title():
+    example = br"""
+    \begin{parts}
+    \part part a.
+    \part part b.
+    \part part c.
+    \part part d.
+    \part part e.
+    \part[Something]
+    \end{parts}
+    """
+    dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
+    assert_that( dom.getElementsByTagName('part'), has_length( 6 ) )
+
+def test_lcm():
+    example = br"""
+    $\lcm[45, 60, 75]$
+    """
+    dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
+    assert_that( dom.getElementsByTagName('lcm'), has_length( 1 ) )
+
+def test_davesuglyhack():
+    example = br"""
+    \davesuglyhack
+    """
+    dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
+    assert_that( dom.getElementsByTagName('davesuglyhack'), has_length( 1 ) )

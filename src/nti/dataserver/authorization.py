@@ -170,6 +170,9 @@ class _AuthenticatedGroup(_EveryoneGroup):
 _AuthenticatedGroup.description = _AuthenticatedGroup.__doc__
 
 def _string_principal_factory( name ):
+	if not name:
+		return None
+
 	# Check for a named adapter first, since we are the no-name factory.
 	result = component.queryAdapter( name,
 									 nti_interfaces.IPrincipal,

@@ -138,7 +138,7 @@ class APNS(object):
 	def _watch( self, connection ):
 		""" Looks for the connection to become invalid
 		or have something written by APNs"""
-
+		# TODO: Reevaluate this. Base directly on gevent.
 		apns = self
 		def on_event( fd, events ):
 			# anytime we get here it was due to error
@@ -152,9 +152,7 @@ class APNS(object):
 				connection.setblocking( True )
 				response = connection.recv(  )
 				try:
-					print 'Response: ', response
 					cmd, status, ident = struct.unpack( '!bBI', response )
-					print 'Command', cmd, 'Status', status, 'ident', ident
 				finally:
 					apns.connection = None
 
@@ -179,17 +177,18 @@ class APNS(object):
 				sock = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
 				self.connection = ssl.wrap_socket( sock, certfile=self.certFile )
 				self.connection.connect( (self.host,self.port) )
-				print self.host, self.port, self.certFile
 				self._watch( self.connection )
 				self._readFeedback()
-			except IOError:
+			except (IOError,TypeError):
+				# TypeError: must be _socket.socket, not closedsocket
 				logger.exception( "Failed to connect to APNS" )
+				self.connection = None
 		return self.connection
 
 	def sendNotification( self, deviceId, payload ):
-		""" Directs a notification with the `payload' to the given
-		`deviceId'. The notification may be sent now or it
-		may be batched up and sent later. `payload' is an APNSPayload object."""
+		""" Directs a notification with the ``payload`` to the given
+		``deviceId``. The notification may be sent now or it
+		may be batched up and sent later. ``payload`` is an :class:`APNSPayload` object."""
 
 		# For now, we send immediately
 		connection = self._makeConnection()
@@ -220,19 +219,25 @@ class APNS(object):
 	def reset(self, c=None):
 		connection = c or self.connection
 		try:
-			connection.shutdown( socket.SHUT_RDWR )
-		except IOError: pass
+			try:
+				connection.shutdown( socket.SHUT_RDWR )
+			except IOError:
+				pass
+			finally:
+				try:
+					connection.close()
+				except IOError:
+					pass
+
+			if self.selecting:
+				try:
+					IOLoop.instance().remove_handler( self.selecting )
+				except KeyError:
+					pass
+
 		finally:
-			try:
-				connection.close()
-			except IOError: pass
-		if self.selecting:
-			try:
-				IOLoop.instance().remove_handler( self.selecting )
-			except KeyError: pass
 			self.selecting = None
-		self.connection = None
+			self.connection = None
 
 	def close( self ):
 		self.reset()
-
