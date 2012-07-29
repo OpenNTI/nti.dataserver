@@ -132,10 +132,10 @@ setup(
 		'pyramid >= 1.3.2' ,
 		'pyramid_tm >= 0.5',
 		'pyramid_traversalwrapper',
-		'pyramid_who',
+		'pyramid_who >= 0.3',
 		'pyramid_zcml >= 0.9.2',
 		'pyramid_zodbconn >= 0.3',
-		'pyramid-openid',
+		'pyramid-openid >= 0.3.4',
 		# Best if the system has ZMQ >= 2.2.0. Can work as far back as 2.1.7 (at least). 2.1.10 or better recommended;
 		# I (JAM) *think* the ZMQ libs are all binary compatible so you can upgrade from 2.1 to 2.2
 		# on the fly without touching the python level.
@@ -146,15 +146,15 @@ setup(
 		'pytz >= 2012c',
 		'rdflib',
 		'repoze.catalog >= 0.8.2',
-
+		'repoze.lru >= 0.6', # LRU caching. Dep of Pyramid
 		'repoze.who >= 2.0',
 		'repoze.zodbconn >= 0.14',
 		'grequests >= 0.1.0', #replaces requests.async in 0.13
 		'requests >= 0.13.3', # HTTP
 		'scss',
-		'setproctitle',
+		'setproctitle >= 1.1.6',
 		'setuptools',
-		'simplejson >= 2.6.0',
+		'simplejson >= 2.6.1',
 		'sympy == 0.7.1', # sympy-docs-html-0.7.1 is currently greater
 		'six >= 1.1.0',
 		'slimit',
