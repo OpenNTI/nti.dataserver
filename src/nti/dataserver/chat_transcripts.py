@@ -1,6 +1,75 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-""" Chatserver functionality. """
+"""
+Transcripts for chats as stored on users.
+
+The object model
+================
+
+The concept of a meeting room is something that can contain resources.
+Meeting rooms hold meetings (at most one meeting at a time). The
+meetings are transcripted and this transcript is attached as a
+resource to the room. A meeting's ContainerID is the ID of the room.
+Within a meeting, a MessageInfo's ContainerID is the ID of the
+meeting. Some meetings take place "in the hallway" or "around the
+cooler" and as such belong to no room. When they finish, the
+transcript is accessible just to the users that participated. (These
+meetings may still have ContainerIDs of other content, and they will
+be accessible from that location, as is anything contained there.)
+
+
+Garbage Collection
+===================
+
+Currently, users are stored in a different database than Meeting and
+MessageInfo objects (which are together with sessions). If that
+database is packed and GC'd without using zc.zodbgc to do a multi-GC,
+then we can lose all our transcripts. It's not as simple as just
+moving those objects to the User database, either, because we may be
+sharded. The approach to solving the problem, then, is to keep
+/explicit/ weak refs and use them as long as possible (TODO: Does that
+still break with zc.zodbgc?), but also make a copy in our database to
+fallback on (in some cases, the objects are mutated after being
+transcripted so the copy may not be perfectly in sync or we'd always
+just use it). Note that this must be a deep copy: these are persistent
+objects with sub-objects stored in the same initial database, and a
+shallow copy would fail after GC for the same reasons as the original
+object. Consequently, we use zope.copy for its deep-copy approach (via
+pickling) in addition to its hooks support.
+
+This is unfortunately quite a bit more expensive than strictly necessary:
+
+* Profiling shows that the reference and the copy **double** the
+  amount of time spent storing transcripts. Most of that time is in
+  the copy itself
+* Using a KeyReferenceToPersistent as the messages key amounts to a
+  third of the cost.
+* Using int ids for the messages an 64-bit IOBTree shaves 20% or so of
+  the cost relative to an OOBTree and the string UUID of the message
+* In a 12-second, 5000 msg, 4 user test (without copy), half the time
+  is in committing, and one third is spent in serializing so
+  simplifying the MessageInfo objects might be worth it, but there's
+  not much to simplify.
+* As of 2012-07-26, that same 5000 msg, 4-user test, through the use
+  of pervasive intids, and sharing datastructure changes, is down to
+  5.5 seconds instead of 12.
+* Making MessageInfo non-Persistent substantially increases the
+  runtime (back to copy levels, because it does amount to making
+  copies)
+
+In light of this info, given that transcript storage is a performance
+sensitive operation, and that (a) we know how to run GCs cross
+database without losing refs either using zc.zodbcgc or simply having
+the storage keep all non-historical objects, and that RelStorage
+reduces the need to run GC anyway, we opt to reverse the previous
+policy and simply store a weak ref.
+
+Experiments with using intids and an IISet in MeetingTranscriptStorage
+were a wash, as were using an OOTreeSet instead of an OOBTree. The
+biggest win is simply reducing all the transactions to one. There's
+probably a big win in unifying the indexes. Try an KeywordIndex.
+
+"""
 from __future__ import print_function, unicode_literals
 
 import logging
@@ -30,78 +99,8 @@ from zope import component
 from zope import intid
 from zope.cachedescriptors.property import CachedProperty
 
-from zope.keyreference.persistent import KeyReferenceToPersistent
 
-####
-# A note on the object model:
-# The concept of a meeting room is something that can contain resources.
-# Meeting rooms hold meetings (at most one meeting at a time). The meetings
-# are transcripted and this transcript is attached as a resource to the room.
-# A meeting's ContainerID is the ID of the room. Within a meeting, a MessageInfo's
-# ContainerID is the ID of the meeting.
-# Some meetings take place "in the hallway" or "around the cooler" and
-# as such belong to no room. When they finish, the transcript is
-# accessible just to the users that participated. (These meetings
-# may still have ContainerIDs of other content, and they will be accessible
-# from that location, as is anything contained there.)
-####
-
-###
-# A Note on GC
-# Currently, users are stored in a different database than
-# Meeting and MessageInfo objects (which are together with sessions).
-# If that database is packed and GC'd without using zc.zodbgc to do a multi-GC,
-# then we can lose all our transcripts. It's not as simple as just moving
-# those objects to the User database, either, because we may be sharded.
-# The approach to solving the problem, then, is to keep /explicit/ weak refs and use
-# them as long as possible (TODO: Does that still break with zc.zodbgc?),
-# but also make a copy in our database to fallback on (in some cases, the objects are mutated
-# after being transcripted so the copy may not be perfectly in sync or we'd
-# always just use it). Note that this must be a deep copy: these are persistent
-# objects with sub-objects stored in the same initial database, and a shallow
-# copy would fail after GC for the same reasons as the original object. Consequently,
-# we use zope.copy for its deep-copy approach (via pickling) in addition to its hooks support.
-
-# This is unfortunately quite a bit more expensive than strictly necessary:
-# Profiling shows that the reference and the copy DOUBLE the amount of time spent storing
-#   transcripts. Most of that time is in the copy itself
-# Using a KeyReferenceToPersistent as the messages key amounts to a third of the cost.
-# Using int ids for the messages an 64-bit IOBTree shaves 10% or so of the cost relative to an OOBTree and the
-#  string UUID of the message
-# In a 12-second, 5000 msg, 4 user test (without copy), half the time is in committing, and one third is spent in serializing
-#   so simplifying the MessageInfo objects
-#  might be worth it, but there's not much to simplify. Making MessageInfo non-Persistent substantially increases
-#  the runtime (back to copy levels, because it does amount to making copies)
-
-# In light of this info, given that transcript storage is a performance sensitive operation, and
-# that (a) we know how to run GCs cross database without losing refs either using
-# zc.zodbcgc or simply having the storage keep all non-historical objects, and that
-# RelStorage reduces the need to run GC anyway, we opt to reverse the previous policy
-# and simply store a weak ref.
-#
-# Experiments with using intids and an IISet in MeetingTranscriptStorage were a wash, as
-# were using an OOTreeSet instead of an OOBTree.
-# The biggest win is simply reducing all the transactions to one.
-# There's probably a big win in unifying the indexes. Try an KeywordIndex.
-
-###
-from zope import copy
-
-class _CopyingWeakRef(persistent.wref.WeakRef):
-	"""
-	A weak ref that also stores a one-shot copy of its
-	reference, as a fallback.
-
-	Not currently used, kept for old compatibility.
-	"""
-	def __init__( self, ob ):
-		super(_CopyingWeakRef,self).__init__( ob )
-		self._copy = copy.copy( ob )
-
-	def __call__( self ):
-		result = super(_CopyingWeakRef,self).__call__( )
-		if result is None: result = self._copy
-		return result
+from nti.zodb.wref import CopyingWeakRef as _CopyingWeakRef # bwc for things in the database
 
 class _IMeetingTranscriptStorage(interface.Interface):
 	pass
@@ -175,13 +174,16 @@ class _DocidMeetingTranscriptStorage(_AbstractMeetingTranscriptStorage):
 
 	def __init__( self, meeting ):
 		super(_DocidMeetingTranscriptStorage,self).__init__(meeting)
-		self.messages = BTrees.family64.II.TreeSet()
+		family = getattr( self._intids, 'family', BTrees.family64 )
+		self.messages = family.II.TreeSet()
 
 	def add_message( self, msg ):
 		"""
 		Stores the message in this transcript.
 		"""
-		self.messages.add( self._intids.register( msg ) )
+		# TODO: Can/Should we start assuming this object exists
+		# and use getId?
+		self.messages.add( self._intids.getId( msg ) )
 
 	def itervalues(self):
 		intids = self._intids
@@ -189,7 +191,6 @@ class _DocidMeetingTranscriptStorage(_AbstractMeetingTranscriptStorage):
 			msg = intids.queryObject( iid )
 			if msg is not None:
 				yield msg
-
 
 	@CachedProperty
 	def _intids(self):
@@ -336,11 +337,11 @@ def transcript_for_user_in_room( username, room_id ):
 def transcript_summaries_for_user_in_container( username, containerId ):
 	"""
 	Primarily intended for debugging
+
 	:return: Map of room/transcript id to :class:`TranscriptSummary` objects for the user that
 		have taken place in the given containerId. The map will have attributes `lastModified`
 		and `creator`.
 
-	EOM
 	"""
 	storage = _ts_storage_for( username )
 

@@ -5,15 +5,14 @@ import collections
 from datetime import datetime
 
 from nti.contentsearch.tests import ConfiguringTestBase
+from nti.contentsearch._content_utils import get_content
 
 from nti.contentsearch.common import echo
 from nti.contentsearch.common import epoch_time
-from nti.contentsearch.common import get_content
 from nti.contentsearch.common import get_datetime
 from nti.contentsearch.common import get_keywords
 from nti.contentsearch.common import word_content_highlight
 from nti.contentsearch.common import ngram_content_highlight
-from nti.contentsearch.common import get_multipart_content
 from nti.contentsearch.common import merge_search_results
 from nti.contentsearch.common import merge_suggest_results
 from nti.contentsearch.common import empty_search_result
@@ -46,31 +45,10 @@ class TestCommon(ConfiguringTestBase):
 		assert_that(get_datetime(f), is_(get_datetime(s)))
 		assert_that(datetime.now(), less_than_or_equal_to(get_datetime()))
 
-	def test_get_content(self):
-		assert_that(get_content(None), is_(u''))
-		assert_that(get_content({}), is_(u''))
-		assert_that(get_content('Zanpakuto Zangetsu'), is_('Zanpakuto Zangetsu'))
-		assert_that(get_content('\n\tZanpakuto,Zangetsu'), is_('Zanpakuto Zangetsu'))
-		assert_that(get_content('<html><b>Zangetsu</b></html>'), is_('Zangetsu'))
-		assert_that( get_content('orange-haired'), is_('orange-haired'))
-
-		assert_that(get_content('U.S.A. vs Japan'), is_('U.S.A. vs Japan'))
-		assert_that(get_content('$12.45'), is_('$12.45'))
-		assert_that(get_content('82%'), is_('82%'))
-
-		u = unichr(40960) + u'bleach' + unichr(1972)
-		assert_that(get_content(u), is_('bleach'))
-
 	def test_get_keywords(self):
 		assert_that(get_keywords(None), is_(''))
 		assert_that(get_keywords(''), is_(''))
 		assert_that(get_keywords(('Zanpakuto', 'Zangetsu')), is_('Zanpakuto,Zangetsu'))
-
-	def test_get_text_from_mutil_part_body(self):
-		js = self.messageinfo
-		msg = get_multipart_content(js['Body'])
-		assert_that(msg, is_(u'Zanpakuto and Zangetsu'))
-		assert_that(get_multipart_content('Soul Reaper'), is_(u'Soul Reaper'))
 
 	def test_word_content_highlight(self):
 		text = unicode(get_content("""

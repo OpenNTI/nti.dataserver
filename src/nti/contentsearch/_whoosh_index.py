@@ -12,8 +12,8 @@ from whoosh.searching import Hit
 
 from nti.contentsearch import QueryObject
 from nti.contentsearch import CaseInsensitiveDict
-
 from nti.contentsearch._whoosh_query import parse_query
+from nti.contentsearch._content_utils import get_content
 
 from nti.contentsearch.common import echo
 from nti.contentsearch.common import get_attr
@@ -21,7 +21,6 @@ from nti.contentsearch.common import get_ntiid
 from nti.contentsearch.common import epoch_time
 from nti.contentsearch.common import clean_query
 from nti.contentsearch.common import get_creator
-from nti.contentsearch.common import get_content
 from nti.contentsearch.common import get_collection
 from nti.contentsearch.common import get_references
 from nti.contentsearch.common import get_external_oid

@@ -328,3 +328,12 @@ class INgramSnippetHighlight(IHighlightType):
 class ISearchHit(ext_interfaces.IExternalObject):
 	query = interface.Attribute("""query that produced this hit""")
 	pass
+
+class IContentResolver(interface.Interface):
+	def get_content(data):
+		"""return the indexable text content associated with the specified data object"""
+
+class IContentTokenizer(interface.Interface):
+	def tokenize(data):
+		"""tokenize the specifeid text data"""
+		

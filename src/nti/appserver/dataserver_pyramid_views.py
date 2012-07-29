@@ -192,6 +192,7 @@ class _UGDView(object):
 
 		:raise :class:`hexc.HTTPNotFound`: If no actual objects can be found.
 		"""
+		__traceback_info__ = user, ntiid
 		mystuffDict = self.get_owned( user, ntiid ) if self.get_owned else ()
 		sharedstuffList = self.get_shared( user, ntiid) if self.get_shared else ()
 		publicDict = self.get_public( user, ntiid ) if self.get_public else ()

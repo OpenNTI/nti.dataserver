@@ -28,12 +28,16 @@ from hamcrest import (is_, is_not, has_key, has_item, has_entry, has_length, ass
 
 repoze_index.compute_ngrams = True
 
+#from zope.app.container.interfaces import IObjectAddedEvent
+#from zope.component.eventtesting import setUp, getEvents
+
 class TestRepozeUserIndexManager(ConfiguringTestBase):
 
 	def setUp(self):
 		super(TestRepozeUserIndexManager, self).setUp()
 		self.repoze = create_repoze_datastore()
 		component.provideUtility(self.repoze, provides=IRepozeDataStore)
+		# setUp()
 
 	def tearDown(self):
 		super(TestRepozeUserIndexManager, self).tearDown()
@@ -53,7 +57,9 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		for x in zanpakuto_commands:
 			note = self._create_note(x, usr.username)
 			if conn: conn.add(note)
-			notes.append(usr.addContainedObject( note ))
+			note = usr.addContainedObject( note ) 
+			#getEvents(IObjectAddedEvent)
+			notes.append(note)
 		return notes, usr
 
 	def _index_notes(self, dataserver=None, usr=None, conn=None, do_assert=True):
@@ -105,10 +111,10 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		assert_that(hit, has_entry(SNIPPET, 'All Waves Rise now and Become my SHIELD Lightning Strike now and Become my Blade'))
 
 		hits = rim.search("*", limit=None)
-		assert_that(hits, has_entry(HIT_COUNT, len(zanpakuto_commands)))
+		assert_that(hits, has_entry(HIT_COUNT, 0))
 
 		hits = rim.search("?", limit=None)
-		assert_that(hits, has_entry(HIT_COUNT, len(zanpakuto_commands)))
+		assert_that(hits, has_entry(HIT_COUNT, 0))
 
 		hits = rim.search("ra*", limit=None)
 		assert_that(hits, has_entry(HIT_COUNT, 3))

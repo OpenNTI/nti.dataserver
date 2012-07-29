@@ -11,27 +11,25 @@ from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.externalization import toExternalObject
 
 from nti.contentsearch import interfaces as search_interfaces
+from nti.contentsearch._content_utils import get_note_content
+from nti.contentsearch._content_utils import get_highlight_content
+from nti.contentsearch._content_utils import get_redaction_content
+from nti.contentsearch._content_utils import get_messageinfo_content
 
-from nti.contentsearch.common import get_attr
-from nti.contentsearch.common import get_content
 from nti.contentsearch.common import clean_query
-from nti.contentsearch.common import get_redaction_content
-from nti.contentsearch.common import get_multipart_content
 from nti.contentsearch.common import word_content_highlight
 from nti.contentsearch.common import ngram_content_highlight
 
 from nti.contentsearch.common import (	WORD_HIGHLIGHT, NGRAM_HIGHLIGHT)
 
 from nti.contentsearch.common import (	NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
-										SNIPPET, HIT, ID, BODY, TARGET_OID, OID)
+										SNIPPET, HIT, ID, TARGET_OID, OID)
 
-from nti.contentsearch.common import (	body_, selectedText_, last_modified_, content_)
+from nti.contentsearch.common import ( last_modified_, content_)
 
 
 import logging
 logger = logging.getLogger( __name__ )
-
-# -----------------------------------
 
 def _word_content_highlight(query=None, text=None, default=None):
 	query = clean_query(query) if query else u''
@@ -148,7 +146,7 @@ class _HighlightSearchHit(_SearchHit):
 	
 	def _supplement(self, data):
 		super(_HighlightSearchHit, self)._supplement(data)
-		text = get_content(get_attr(data, [selectedText_]))
+		text = get_highlight_content(data, lower=False)
 		data[SNIPPET] = text
 	
 class _RedactionSearchHit(_SearchHit):
@@ -156,7 +154,7 @@ class _RedactionSearchHit(_SearchHit):
 	
 	def _supplement(self, data):
 		super(_RedactionSearchHit, self)._supplement(data)
-		text = get_redaction_content(data)
+		text = get_redaction_content(data, lower=False)
 		data[SNIPPET] = text
 		
 class _NoteSearchHit(_SearchHit):
@@ -164,7 +162,7 @@ class _NoteSearchHit(_SearchHit):
 
 	def _supplement(self, data):
 		super(_NoteSearchHit, self)._supplement(data)
-		text = get_multipart_content(get_attr(data, [body_]))
+		text = get_note_content(data, lower=False)
 		data[SNIPPET] = text
 	
 class _MessageInfoSearchHit(_SearchHit):
@@ -172,7 +170,7 @@ class _MessageInfoSearchHit(_SearchHit):
 
 	def _supplement(self, data):
 		super(_MessageInfoSearchHit, self)._supplement(data)
-		text = get_multipart_content(get_attr(data, [BODY]))
+		text = get_messageinfo_content(data, lower=False)
 		data[SNIPPET] = text
 		
 def _provide_highlight_snippet(hit, query=None, highlight_type=WORD_HIGHLIGHT):

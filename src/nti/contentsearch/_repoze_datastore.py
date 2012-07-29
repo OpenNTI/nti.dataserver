@@ -34,31 +34,36 @@ class _RepozeDataStore(PersistentMapping):
 	@property
 	def docmaps(self):
 		return self[self.docMap_key]
-	
-class PersistentRepozeDataStore(Persistent):
-	interface.implements(IRepozeDataStore)
-	
-	def __init__(self):
-		super(PersistentRepozeDataStore, self).__init__()
-		self.users = OOBTree()
-		self.docmaps = OOBTree()
 
+class _BasicRepozeDataStore(Persistent):
+	def __init__(self):
+		super(_BasicRepozeDataStore, self).__init__()
+		self.users = OOBTree()
+
+	def add_user(self, username):
+		if username not in self.users:
+			self.users[username] = OOBTree()
+			return True
+		else:
+			return False
+		
 	def has_user(self, username):
 		return username in self.users
 	
 	def remove_user(self, username):
 		if username in self.users:
 			self.users.pop(username, None)
-		if username in self.docmaps:
-			self.docmaps.pop(username, None)
+			return True
+		else:
+			return False
 			
 	def add_catalog(self, username, catalog, type_name):
-		if username not in self.users:
-			self.users[username] = OOBTree()
-			self.docmaps[username] = DocumentMap()
-			
+		self.add_user(username)
 		if type_name not in self.users[username]:
 			self.users[username][type_name] = catalog
+			return True
+		else:
+			return False
 
 	def get_catalog(self, username, type_name):
 		pm = self.users.get(username, {})
@@ -82,6 +87,23 @@ class PersistentRepozeDataStore(Persistent):
 		values = list(pm.values())
 		return values
 	
+	def get_docids(self, username):
+		result = set()
+		for catalog in self.get_catalogs(username):
+			fld = list(catalog.values())[0] # get first field as pivot
+			result.update(fld.docids()) # use CatalogField.docids()
+		return result
+	
+class PersistentRepozeDataStore(_BasicRepozeDataStore):
+	
+	def __init__(self):
+		super(PersistentRepozeDataStore, self).__init__()
+		self.docmaps = OOBTree()
+	
+	def add_user(self, username):
+		if super(PersistentRepozeDataStore, self).add_user(username):
+			self.docmaps[username] = DocumentMap()
+			
 	def add_metadata(self, username, docid, meta):
 		docMap = self.docmaps.get(username, None)
 		if docMap and meta:
@@ -153,7 +175,9 @@ class PersistentRepozeDataStore(Persistent):
 			return docMap.docid_to_address.keys()
 		return []
 		
-
-class RepozeDataStore(_RepozeDataStore,PersistentRepozeDataStore):
+class RepozeDataStore(_RepozeDataStore, PersistentRepozeDataStore):
 	pass
 
+class RepozeCatalogDataStore(_BasicRepozeDataStore):
+	interface.implements(IRepozeDataStore)
+	pass

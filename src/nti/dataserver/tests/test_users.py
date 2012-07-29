@@ -10,6 +10,8 @@ from nose.tools import assert_raises
 
 
 import persistent
+from zope import component
+import zc.intid
 
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization import internalization
@@ -29,8 +31,10 @@ from zope.container.interfaces import InvalidItemType
 
 import mock_dataserver
 from mock_dataserver import WithMockDSTrans
+from mock_dataserver import WithMockDS
 import persistent.wref
 from nti.dataserver import datastructures
+from nti.dataserver import users
 import time
 
 class PersistentContainedThreadable(ContainedMixin,persistent.Persistent):
@@ -124,6 +128,21 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		assert_that( user.notificationCount, has_property( 'value', 2 ) )
 
 
+	@WithMockDS(with_changes=True)
+	def test_creating_friendslist_goes_to_stream(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			self.ds.add_change_listener( users.onChange )
+
+			user = User.create_user( self.ds, username='foo@bar' )
+			user2 = User.create_user( self.ds, username='friend@bar' )
+			with user.updates( ):
+				fl = user.maybeCreateContainedObjectWithType( 'FriendsLists', {'Username': 'Friends' } )
+				user.addContainedObject( fl )
+				fl.updateFromExternalObject( {'friends':  ['friend@bar'] } )
+
+			user2_stream = user2.getContainedStream( '' )
+			assert_that( user2_stream, has_length( 1 ) )
+
 	@WithMockDSTrans
 	def test_share_unshare_note(self):
 		user1 = User.create_user( self.ds, username='foo@bar', password='temp' )
@@ -141,7 +160,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		note.id = 'foobar' # to ensure it doesn't get used or changed by the sharing process
 		user2._noticeChange( Change( Change.SHARED, note ) )
 		assert_that( note.id, is_( 'foobar' ) )
-		assert_that( persistent.wref.WeakRef( note ), is_in( user2.getSharedContainer( 'c1' ) ) )
+		assert_that( note, is_in( user2.getSharedContainer( 'c1' ) ) )
 
 		user2._noticeChange( Change( Change.DELETED, note ) )
 		assert_that( persistent.wref.WeakRef( note ), is_not( is_in( user2.getSharedContainer( 'c1' ) ) ) )
@@ -216,9 +235,10 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		user = User.create_user( self.ds, username='sjohnson@nextthought.com', password='temp001' )
 		assert_that( user.getSharedContainer( 'foo', 42 ), is_( 42 ) )
 
-		c = ContainedMixin()
+		c = PersistentContainedThreadable()
 		c.containerId = 'foo'
 		c.id = 'a'
+		component.getUtility( zc.intid.IIntIds ).register( c )
 
 		user._addSharedObject( c )
 		assert_that( user.getSharedContainer( 'foo' ), has_length( 1 ) )
@@ -235,7 +255,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		c = PersistentContainedThreadable()
 		c.containerId = 'foo'
 		c.id = 'a'
-
+		component.getUtility( zc.intid.IIntIds ).register( c )
 		change = Change( Change.CREATED, c )
 		user._acceptIncomingChange( change )
 		assert_that( user.getSharedContainer( 'foo' ), has_length( 1 ) )
@@ -252,6 +272,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		reply.containerId = 'foo'
 		reply.id = 'b'
 		reply.inReplyTo = c
+		component.getUtility( zc.intid.IIntIds ).register( reply )
 		change = Change( Change.SHARED, reply )
 		user._noticeChange( change )
 
@@ -265,6 +286,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		reference.containerId = 'foo'
 		reference.id = '3'
 		reference.references = [c]
+		component.getUtility( zc.intid.IIntIds ).register( reference )
 		change = Change( Change.SHARED, reference )
 		user._noticeChange( change )
 
@@ -339,7 +361,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		change = Change( Change.SHARED, note )
 		change.creator = 42
 		comm._noticeChange( change )
-		del comm.streamCache.get( 'foo' )[:]
+		comm.streamCache.clearContainer( 'foo' )
 
 		assert_that( user.getContainedStream('foo'), is_not( contains( change ) ) )
 		# This one is synthesized

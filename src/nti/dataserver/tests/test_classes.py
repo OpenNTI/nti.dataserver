@@ -346,7 +346,7 @@ class TestClass(mock_dataserver.ConfiguringTestBase):
 
 		clazz.updateFromExternalObject( clazz_ext )
 		assert_that( clazz._sections, has_length( 0 ) )
-		assert_that( eventtesting.getEvents(), has_length( 3 ) )
+		assert_that( eventtesting.getEvents(), has_length( greater_than_or_equal_to( 3 ) ) )
 		self._assert_add_section_to_class( clazz, section, IObjectRemovedEvent )
 
 	def test_class_with_ext_oid_id_ntiid(self):

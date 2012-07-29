@@ -24,10 +24,13 @@ from zope import component
 
 from . import interfaces
 
+@interface.implementer( interfaces.IMessageInfo )
 class MessageInfo( contenttypes.ThreadableExternalizableMixin,
 				   Persistent,
 				   datastructures.ExternalizableInstanceDict ):
-	interface.implements( interfaces.IMessageInfo )
+
+	__parent__ = None
+
 	__external_can_create__ = True
 
 	_excluded_in_ivars_ = { 'MessageId' } | datastructures.ExternalizableInstanceDict._excluded_in_ivars_
@@ -62,6 +65,9 @@ class MessageInfo( contenttypes.ThreadableExternalizableMixin,
 	@property
 	def id(self):
 		return self.ID
+	MessageId = id # bwc
+
+	__name__ = property(lambda self: self.ID, lambda self, nn: setattr( self, 'ID', nn ))
 
 	def get_createdTime(self):
 		return self.CreatedTime
@@ -74,6 +80,7 @@ class MessageInfo( contenttypes.ThreadableExternalizableMixin,
 	def set_lastModified(self,lm):
 		self.LastModified = lm
 	lastModified = property(get_lastModified,set_lastModified)
+	Timestamp = lastModified # bwc
 
 	def get_sender_sid( self ):
 		"""
@@ -88,13 +95,13 @@ class MessageInfo( contenttypes.ThreadableExternalizableMixin,
 
 
 	# Aliases for old code
-	@property
-	def MessageId( self ):
-		return self.ID
+	# @property
+	# def MessageId( self ):
+	# 	return self.ID
 
-	@property
-	def Timestamp(self):
-		return self.LastModified
+	# @property
+	# def Timestamp(self):
+	# 	return self.LastModified
 
 	@property
 	def rooms( self ):
