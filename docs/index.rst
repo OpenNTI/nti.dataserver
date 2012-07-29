@@ -22,6 +22,8 @@ Contents:
 
 	authorization
 
+	object-refs
+
 	content-anchoring
 	content-in-cdn
 	content-resolving
@@ -32,8 +34,11 @@ Contents:
 	dataserver-contenttypes
 	whiteboard-apis-v1
 	api
+
 	chat-apis
 	chatserver
+	chat-transcripts
+
 	interfaces
 	http-rest
 	contentrendering-api
