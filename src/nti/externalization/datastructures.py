@@ -219,6 +219,8 @@ class ExternalizableInstanceDict(AbstractDynamicObjectIO):
 			return '<%s(Ghost, %s)>' % (self.__class__.__name__, cse)
 		except (ValueError,LookupError) as e: # Things like invalid NTIID, missing registrations
 			return '<%s(%s)>' % (self.__class__.__name__, e)
+		except (AttributeError) as e: # Another weird database-related issue
+			return '<%s(%s)>' % (self.__class__.__name__, e)
 
 @interface.implementer(IInternalObjectIO)
 class InterfaceObjectIO(AbstractDynamicObjectIO):

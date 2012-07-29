@@ -3,7 +3,6 @@ from zope.configuration import xmlconfig
 
 import nti.dataserver as dataserver
 import nti.contentsearch as contentsearch
-import nti.contentfragments as contentfragments
 from nti.dataserver.tests.mock_dataserver import ConfiguringTestBase as DSConfiguringTestBase
 
 phrases = (	"Yellow brown", "Blue red green render purple?",
@@ -34,3 +33,4 @@ zanpakuto_commands =  (	"Shoot To Kill",
 
 class ConfiguringTestBase(DSConfiguringTestBase):
 	set_up_packages = (dataserver, contentsearch)
+	pass

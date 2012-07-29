@@ -9,8 +9,8 @@ from nti.ntiids.ntiids import make_ntiid
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
-from nti.dataserver.tests.mock_dataserver import ConfiguringTestBase
 
+from nti.contentsearch.tests import ConfiguringTestBase
 from nti.contentsearch._whoosh_userindexmanager import WhooshUserIndexManager
 from nti.contentsearch._whoosh_indexstorage import create_directory_index_storage
 

@@ -19,6 +19,7 @@ from zope import component
 from zope.component.factory import Factory
 from zope.deprecation import deprecated
 from zope.event import notify
+from zope import lifecycleevent
 from zope.lifecycleevent import ObjectCreatedEvent
 from zope.keyreference.interfaces import IKeyReference
 from zope.location import interfaces as loc_interfaces
@@ -110,7 +111,14 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject,E
 
 
 		notify( ObjectCreatedEvent( user ) ) # Fire created event
-		root_users[user.username] = user # Fire added event
+		# Must manually fire added event if parent was given
+		if kwargs['parent'] is not None:
+			lifecycleevent.added( user, kwargs['parent'], user.username )
+
+		# Now store it. If there was no parent given or parent was none,
+		# this will fire ObjectAdded. If parent was given and is different than root_users,
+		# this will fire ObjectMoved
+		root_users[user.username] = user
 
 		return user
 
@@ -152,7 +160,7 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject,E
 	def __repr__(self):
 		try:
 			return '%s("%s","%s","%s","%s")' % (self.__class__.__name__,self.username,self.avatarURL, self.realname, self.alias)
-		except ZODB.POSException.ConnectionStateError:
+		except (ZODB.POSException.ConnectionStateError,AttributeError):
 			# This most commonly (only?) comes up in unit tests when nose defers logging of an
 			# error until after the transaction has exited. There will
 			# be other log messages about trying to load state when connection is closed,
@@ -782,8 +790,9 @@ class User(Principal):
 
 	def __install_container_hooks(self):
 		self.containers.afterAddContainedObject = self._postCreateNotification
-		self.containers.afterDeleteContainedObject = self._postDeleteNotification
 		self.containers.afterGetContainedObject = self._trackObjectUpdates
+		# Deleting is handled with events.
+		# TODO: Make the rest use events as well
 
 	def __setstate__( self, state ):
 		super(User,self).__setstate__( state )
@@ -897,6 +906,7 @@ class User(Principal):
 		""" Accepts if not ignored; auto-follows as well.
 		:return: A truth value. If this was the initial add, it will be the Change.
 			If the source is ignored, it will be False."""
+
 		if self.is_ignoring_shared_data_from( source ):
 			return False
 		already_accepting = super(User,self).is_accepting_shared_data_from( source )
@@ -1106,8 +1116,8 @@ class User(Principal):
 		""" Commits any outstanding transaction and posts notifications
 		referring to the updated objects. """
 		if not hasattr(self, '_v_updateSet') or not hasattr(self,'_v_updateDepth'):
-			logger.warn( 'Update depth inconsistent' )
-			return
+			raise Exception( 'Update depth inconsistent' )
+
 		self._v_updateDepth -= 1
 		if self._v_updateDepth <= 0:
 			self._v_updateDepth = 0
@@ -1129,7 +1139,9 @@ class User(Principal):
 			del self._v_updateSet
 			del self._v_updateDepth
 		else:
-			logger.debug( "Still batching updates at depth %s" % (self._v_updateDepth) )
+			__traceback_info__ = self._v_updateDepth, self._v_updateSet
+			raise Exception( "Nesting not allowed" )
+			#logger.debug( "Still batching updates at depth %s" % (self._v_updateDepth) )
 
 	class _Updater(object):
 		def __init__( self, user ):
@@ -1139,7 +1151,18 @@ class User(Principal):
 			self.user.beginUpdates()
 
 		def __exit__( self, t, value, traceback ):
-			self.user.endUpdates()
+			if t is None:
+				# Only do this if we're not in the process of throwing
+				# an exception, as it might raise again
+				self.user.endUpdates()
+			else:
+				# However, we must be sure that the update depth
+				# regains consistency
+				# FIXME: This is jacked up.
+				if hasattr( self.user, '_v_updateSet' ):
+					del self.user._v_updateSet
+				if hasattr( self.user, '_v_updateDepth' ):
+					del self.user._v_updateDepth
 
 	def updates( self ):
 		"""
@@ -1305,6 +1328,15 @@ class FacebookUser(User):
 		super(FacebookUser,self).__init__(username,**kwargs)
 		if id_url:
 			self.facebook_url = id_url
+
+@component.adapter(nti_interfaces.IContained, zope.intid.interfaces.IIntIdRemovedEvent)
+def user_willRemoveIntIdForContainedObject( contained, event ):
+
+	# Make the containing owner broadcast the DELETED event /now/,
+	# while we can still get an ID, to keep catalogs and whatnot
+	# up-to-date.
+	if hasattr( contained.creator, '_postDeleteNotification' ):
+		contained.creator._postDeleteNotification( contained )
 
 
 @component.adapter(nti.apns.interfaces.IDeviceFeedbackEvent)

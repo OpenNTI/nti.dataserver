@@ -10,6 +10,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization import oids
 from zope import component
+from zc import intid as zc_intid
 import persistent
 import cPickle as pickle
 
@@ -57,9 +58,11 @@ class TestChatTranscript(ConfiguringTestBase):
 					LastModified = 1
 					sharedWith = ()
 
+				msg = Msg()
+				component.getUtility( zc_intid.IIntIds ).register( msg )
 				# If we have copying enabled, then this will raise a pickling error
 				# right away. Otherwise, it will be fine until the transaction commits
-				msg_storage = storage.add_message( Meet(), Msg() )
+				msg_storage = storage.add_message( Meet(), msg )
 
 				assert_that( msg_storage, is_( not_none() ) )
 				assert_that( nti_interfaces.ITranscriptSummary( msg_storage ), is_( not_none() ) )

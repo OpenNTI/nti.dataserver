@@ -5,6 +5,7 @@
 	<include package="nti.contentfragments" file="configure.zcml" />
 			 	
 	<!-- Database creation and migration -->
+	
 	<utility factory=".generations.install._ContentSearchSchemaManager"
 			 name="nti.dataserver-contentsearch"
 			 provides="zope.generations.interfaces.IInstallableSchemaManager"/>
@@ -34,5 +35,35 @@
 	<subscriber factory="._search_external.NgramSnippetHighlightDecoratorFactory"
 				for=".interfaces.INgramSnippetHighlight"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
-					
+			
+	<!-- Content Resolvers -->
+	
+	<utility factory="._content_utils._HighLightContentResolver" name="highlight" />
+	<utility factory="._content_utils._RedactionContentResolver" name="redaction" />
+	<utility factory="._content_utils._NoteContentResolver" name="note" />
+	<utility factory="._content_utils._CanvasShapeContentResolver" name="canvas" />
+	<utility factory="._content_utils._CanvasTextShapeContentResolver" name="canvastextshape" />
+	<utility factory="._content_utils._MessageInfoContentResolver" name="messageinfo" />
+
+	<!-- Content tokenizer -->
+	
+	<utility factory="._content_utils._ContentTokenizer"  />
+	
+	<!-- zopyx Storage -->
+
+	<utility	provides="zopyx.txng3.core.interfaces.IStorage"
+				factory=".zopyxtxng3corestorage.StorageFactory"
+				name="txng.storages.default" />
+
+	<utility	provides="zope.component.interfaces.IFactory"
+				component=".zopyxtxng3corestorage.StorageFactory"
+				name="txng.storages.default" />
+
+	<utility	provides="zopyx.txng3.core.interfaces.IStorage"
+				factory=".zopyxtxng3corestorage.StorageWithTermFrequencyFactory"
+				name="txng.storages.term_frequencies" />
+
+	<utility	provides="zope.component.interfaces.IFactory"
+				component=".zopyxtxng3corestorage.StorageWithTermFrequencyFactory"
+				name="txng.storages.term_frequencies" />		
 </configure>

@@ -50,8 +50,9 @@ def evolve( context ):
 	# All of the rest of the changed data is within the user/provider objects
 	for user in findObjectsMatching( dataserver_folder, lambda x: isinstance(x,users.User) ):
 		# First an easy one: the stream cache
-		user.streamCache = OOBTree( user.streamCache )
-		user.streamCache.pop( 'Last Modified', None )
+		if 'streamCache' in user.__dict__ and hasattr( user.__dict__['streamCache'], 'items' ): # Account for test migrations when there is no stream cache or its of the wrong type
+			user.streamCache = OOBTree( user.streamCache )
+			user.streamCache.pop( 'Last Modified', None )
 
 		ucontainers = user.containers
 		# Switch the type for newly created containers

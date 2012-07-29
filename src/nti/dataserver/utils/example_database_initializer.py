@@ -7,6 +7,7 @@ import sys
 import json
 import pkg_resources
 
+from zc import intid as zc_intid
 from zope import interface
 from zope.generations import interfaces as gen_interfaces
 
@@ -149,13 +150,25 @@ class ExampleDatabaseInitializer(object):
 		# 		if u.username not in root['users']:
 		# 			root['users'][u.username] = u
 		# else:
+		def register_user( u ):
+			# Because we're not in that site, we need to make sure the events
+			# go to the right place
+			utility = root.getSiteManager().queryUtility( zc_intid.IIntIds )
+			if utility is not None:
+				# Support it being missing for the sake of tests (test_evolve17)
+				_id = utility.register( u )
+				assert utility.getObject( _id ) is u
+
+
 		def add_user( u ):
+			assert u.__parent__ is root['users']
 			root['users'][u.username] = u
+			register_user( u )
 
-
-
+		# TODO: Switch to using Community.create_entity
 		communities = self._make_communities()
 		for c in communities:
+			c.__parent__ = root['users']
 			add_user( c )
 
 		# create users
@@ -169,6 +182,7 @@ class ExampleDatabaseInitializer(object):
 			password = 'temp001' if is_test_user else user_tuple[1].replace( ' ', '.' ).lower()
 
 			user = User.create_user( username=uname, password=password, dataserver=mock_dataserver )
+			register_user( user )
 			user.realname = user_tuple[1]
 			user.alias = user_tuple[1].split()[0]
 			for c in communities:

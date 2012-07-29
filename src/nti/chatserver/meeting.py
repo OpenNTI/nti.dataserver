@@ -134,39 +134,13 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 		# leads to false conflicts
 		return self._MessageCount.value
 
-	def __setstate__( self, state ):
-		# Migration 2012-04-03. Easier than searching these all out (because many are
-		# not reachable from the root, due to cross-db refs)
-		if 'MessageCount' in state:
-			state = dict(state)
-			state['_MessageCount'] = MergingCounter( state['MessageCount'] )
-			del state['MessageCount']
-		if '_chatserver' in state:
-			state = dict(state)
-			del state['_chatserver']
-
-		# Migration 2012-04-19
-		if '_occupant_session_ids' in state:
-			state = dict(state)
-			del state['_occupant_session_ids']
-
-		# Missed part of that migration
-		if '_occupant_names' not in state:
-			state = dict(state)
-			state['_occupant_names'] = BTrees.OOBTree.Set()
-
-		if '_moderated' in state:
-			state = dict(state)
-			del state['_moderated']
-
-		super(_Meeting,self).__setstate__( state )
-
 	@property
 	def RoomId(self):
 		return self.id
-	@property
-	def ID(self):
-		return self.id
+	ID = RoomId
+	# IZContained
+	__name__ = ID
+	__parent__ = None
 
 	def _Moderated( self ):
 		return self._moderation_state is not None

@@ -11,6 +11,8 @@ from hamcrest import greater_than
 from hamcrest import not_none
 from hamcrest.library import has_property
 from hamcrest import greater_than_or_equal_to
+from hamcrest import is_not
+does_not = is_not
 
 from nti.appserver.application import createApplication
 from nti.contentlibrary.filesystem import Library
@@ -67,7 +69,10 @@ class ApplicationTestBase(ConfiguringTestBase):
 		__show__.off()
 		super(ApplicationTestBase,self).setUp()
 		#self.ds = mock_dataserver.MockDataserver()
-		self.app, self.main = createApplication( 8080, self._setup_library(), create_ds=mock_dataserver.MockDataserver, pyramid_config=self.config, devmode=True )
+		test_func = getattr( self, self._testMethodName )
+		ds_factory = getattr( test_func, 'mock_ds_factory', mock_dataserver.MockDataserver )
+
+		self.app, self.main = createApplication( 8080, self._setup_library(), create_ds=ds_factory, pyramid_config=self.config, devmode=True )
 		self.ds = component.getUtility( nti_interfaces.IDataserver )
 		root = '/Library/WebServer/Documents/'
 		# We'll volunteer to serve all the files in the root directory
@@ -204,6 +209,51 @@ class TestApplication(ApplicationTestBase):
 
 		# I can now delete that item
 		testapp.delete( str(href), extra_environ=self._make_extra_environ())
+
+	def test_post_share_delete_highlight(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			_ = self._create_user()
+			self._create_user( username='foo@bar' )
+			testapp = TestApp( self.app )
+			containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
+			data = json.serialize( { 'Class': 'Highlight', 'MimeType': 'application/vnd.nextthought.highlight',
+									 'ContainerId': containerId,
+									 'selectedText': "This is the selected text",
+									 'applicableRange': {'Class': 'ContentRangeDescription'}} )
+
+		path = '/dataserver2/users/sjohnson@nextthought.com/Pages/'
+		res = testapp.post( path, data, extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 201 ) )
+		assert_that( res.body, contains_string( '"Class": "ContentRangeDescription"' ) )
+		href = res.json_body['href']
+		assert_that( res.headers, has_entry( 'Location', contains_string( 'http://localhost/dataserver2/users/sjohnson%40nextthought.com/Objects/tag:nextthought.com,2011-10:sjohnson@nextthought.com-OID' ) ) )
+		assert_that( res.headers, has_entry( 'Content-Type', contains_string( 'application/vnd.nextthought.highlight+json' ) ) )
+
+		path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + containerId + ')/UserGeneratedData'
+		res = testapp.get( path, extra_environ=self._make_extra_environ())
+		assert_that( res.body, contains_string( '"Class": "ContentRangeDescription"' ) )
+
+		# I can share the item
+		path = href + '/++fields++sharedWith'
+		data = json.dumps( ['foo@bar'] )
+		res = testapp.put( str(path), data, extra_environ=self._make_extra_environ() )
+		assert_that( res.json_body, has_entry( 'sharedWith', ['foo@bar'] ) )
+
+		# And the recipient can see it
+		path = '/dataserver2/users/foo@bar/Pages(' + containerId + ')/UserGeneratedData'
+		res = testapp.get( str(path), extra_environ=self._make_extra_environ(user=b'foo@bar'))
+		assert_that( res.body, contains_string( "This is the selected text" ) )
+
+		# I can now delete that item
+		testapp.delete( str(href), extra_environ=self._make_extra_environ())
+
+		# And it is no longer available
+		res = testapp.get( str(path), extra_environ=self._make_extra_environ(user=b'foo@bar'),
+						   status=404)
+
+
+	test_post_share_delete_highlight.mock_ds_factory = mock_dataserver.ChangePassingMockDataserver
+
 
 	def test_get_highlight_by_oid_has_links(self):
 		with mock_dataserver.mock_db_trans(self.ds):

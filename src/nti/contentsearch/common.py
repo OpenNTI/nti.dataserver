@@ -5,7 +5,6 @@ import six
 import time
 from time import mktime
 from datetime import datetime
-from collections import Iterable
 from collections import OrderedDict
 
 from zope import component
@@ -14,21 +13,11 @@ from persistent.interfaces import IPersistent
 from whoosh import analysis
 from whoosh import highlight
 
-from nltk.tokenize import RegexpTokenizer
-
 from nti.ntiids.ntiids import is_valid_ntiid_string
 from nti.externalization import interfaces as ext_interfaces
-from nti.contentfragments import interfaces as frg_interfaces
-
-from nti.chatserver.messageinfo import MessageInfo
 
 from nti.dataserver.users import Entity
 from nti.dataserver.mimetype import MIME_BASE
-from nti.dataserver.contenttypes import Note
-from nti.dataserver.contenttypes import Canvas
-from nti.dataserver.contenttypes import Highlight
-from nti.dataserver.contenttypes import Redaction
-from nti.dataserver.contenttypes import CanvasTextShape
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 
@@ -37,7 +26,6 @@ from nti.contentsearch import to_list
 import logging
 logger = logging.getLogger( __name__ )
 
-default_tokenizer = RegexpTokenizer(r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-']\w+)*", flags = re.MULTILINE | re.DOTALL)
 	
 ID 				= unicode(ext_interfaces.StandardExternalFields.ID)
 HIT 			= u'Hit'
@@ -229,112 +217,6 @@ def get_last_modified(obj, default=None):
 		value = 0
 	return value
 
-def get_multipart_content(source):
-	
-	gbls = globals()
-			
-	if isinstance(source, six.string_types):
-		return get_content(source)
-	elif IPersistent.providedBy(source):
-		clazz = source.__class__.__name__
-		name = "get_%s_content" % clazz.lower()
-		if name in gbls:
-			return gbls[name](source)
-	elif isinstance(source, Iterable):
-		
-		def process_dict(d):
-			clazz = d.get(CLASS, None)
-			if clazz:
-				name = "get_%s_content" % clazz.lower()
-				if name in gbls:
-					return gbls[name](d)
-			return u''
-		
-		items = []
-		if isinstance(source, dict):
-			items.append(process_dict(source))
-		else:
-			for item in source:
-				if isinstance(item, six.string_types) and item:
-					items.append(item)
-					continue
-				elif isinstance(item, dict):
-					items.append(process_dict(item))
-				else:
-					items.append(get_multipart_content(item))
-		return get_content(' '.join(items))
-	return u''
-
-def get_highlight_content(data):
-	if isinstance(data, dict):
-		result = data.get(selectedText_, u'')
-	elif isinstance(data, Highlight):
-		result = getattr(data, selectedText_, u'')
-	else:
-		result = u''
-	return unicode(result)
-
-def get_redaction_content(data):
-	result = []
-	for field in (replacementContent_, redactionExplanation_, selectedText_):
-		if isinstance(data, dict):
-			d = data.get(field, u'')
-			if d: result.append(d)
-		elif isinstance(data, Redaction):
-			d = getattr(data, field, u'')
-			if d: result.append(d)
-	
-	result = ' '.join([x for x in result if x is not None])
-	return unicode(result)
-
-def get_canvas_content(data):
-	result = []
-	if isinstance(data, dict):
-		shapes = data.get('shapeList', [])
-	elif isinstance(data, Canvas):
-		shapes = data.shapeList
-		
-	for s in shapes:
-		c = get_multipart_content(s)
-		if c: result.append(c)
-	return unicode(' '.join(result))
-
-def get_note_content(data):
-	result = []
-	if isinstance(data, dict):
-		body = to_list(data.get(body_, u''))
-	elif isinstance(data, Note):
-		body = to_list(data.body)
-	else:
-		body =  ()
-		
-	for item in body:
-		c = get_multipart_content(item)
-		if c: result.append(c)
-	return unicode(' '.join(result))
-
-def get_messageinfo_content(data):
-	result = []
-	if isinstance(data, dict):
-		body = to_list(data.get(body_, u''))
-	elif isinstance(data, MessageInfo):
-		body = to_list(data.body)
-	else:
-		body =  ()
-	for item in body:
-		c = get_multipart_content(item)
-		if c: result.append(c)
-	return unicode(' '.join(result))
-
-def get_canvastextshape_content(data):
-	if isinstance(data, dict):
-		result = data.get(text_, u'')
-	elif isinstance(data, CanvasTextShape):
-		result = data.text
-	else:
-		result = u''
-	return unicode(result)
-
 def ngram_tokens(text, minsize=3, maxsize=10, at='start', unique=True):
 	rext = analysis.RegexTokenizer()
 	ngf = analysis.NgramFilter(minsize=minsize, maxsize=maxsize, at=at)
@@ -346,10 +228,12 @@ def ngram_tokens(text, minsize=3, maxsize=10, at='start', unique=True):
 	return result
 		
 def ngrams(text):
-	result = [token.text for token in ngram_tokens(text)]
-	result = ' '.join(sorted(result, cmp=lambda x,y: cmp(x, y)))
+	if text:
+		result = [token.text for token in ngram_tokens(text)]
+		result = ' '.join(sorted(result, cmp=lambda x,y: cmp(x, y)))
+	else:
+		result = u''
 	return unicode(result)
-
 
 def set_matched_filter(tokens, termset, text, multiple_match=True):
 	index = {} if multiple_match else None
@@ -406,25 +290,6 @@ def word_content_highlight(query, text, analyzer=None, maxchars=300, surround=50
 	fragmenter = highlight.ContextFragmenter(maxchars=maxchars, surround=surround)
 	formatter = highlight.UppercaseFormatter()
 	return highlight.highlight(text, terms, analyzer, fragmenter, formatter)
-
-def get_content(text, tokenizer=default_tokenizer):
-	"""
-	return the text (words) to be indexed from the specified text
-
-	the text is cleaned from any html tags then tokenized
-	with the specified tokenizer.
-
-	Based on nltk. Tokenizer should be domain specific
-	"""
-	
-	if not text or not isinstance(text, six.string_types):
-		return u''
-	else:
-		text = frg_interfaces.IUnicodeContentFragment(text)
-		text = frg_interfaces.IPlainTextContentFragment(text)
-		words = tokenizer.tokenize(text)
-		text = ' '.join(words)
-		return unicode(text)
 
 def _empty_result(query, is_suggest=False):
 	result = {}
