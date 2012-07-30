@@ -110,7 +110,7 @@ setup(
 		# NOTE2: This will go away soon, merged into pyzmq 2.2dev as zmq.green
 		'gevent_zeromq >= 0.2.4',
 		'greenlet >= 0.4.0',
-		'gunicorn >= 0.14.5',
+		'gunicorn >= 0.14.6',
 		'html5lib == 0.95',
 		 # WSGI middleware for profiling. Defaults to storing
 		 # data in a sqlite file. Works across multiple gunicorn workers, does
@@ -144,7 +144,7 @@ setup(
 		# something like:
 		# pip install --install-option="--zmq=/opt/nti" pyzmq
 		'pyzmq >= 2.2.0',
-		'pytz >= 2012c',
+		'pytz >= 2012d',
 		'rdflib',
 		'repoze.catalog >= 0.8.2',
 		'repoze.lru >= 0.6', # LRU caching. Dep of Pyramid
