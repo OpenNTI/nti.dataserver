@@ -90,11 +90,14 @@ last_modified_fields =  [LAST_MODIFIED, ext_interfaces.StandardInternalFields.LA
 
 nti_mimetype_prefix = MIME_BASE + '.'
 
+
 note_ = u'note'
+canvas_ = u'canvas'
 highlight_ = u'highlight'
 redaction_ = u'redaction'
 messageinfo = u'messageinfo'
-messageinfo_ = messageinfo
+messageinfo_ = u'messageinfo'
+canvastextshape_ = 'canvastextshape'
 
 indexable_type_names = (note_, highlight_, messageinfo, redaction_)
 

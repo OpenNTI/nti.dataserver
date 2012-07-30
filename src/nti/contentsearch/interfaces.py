@@ -329,6 +329,31 @@ class ISearchHit(ext_interfaces.IExternalObject):
 	query = interface.Attribute("""query that produced this hit""")
 	pass
 
+class IContentResolver2(interface.Interface):
+	def get_content():
+		"""return the text content"""
+		
+	def get_ntiid():
+		"""return the NTI identifier"""
+		
+	def get_external_oid():
+		"""return the external object identifier"""
+	
+	def get_creator():
+		"""return the creator"""
+	
+	def get_containerId():
+		"""return the container identifier"""
+
+	def get_keywords():
+		"""return the key words"""
+	
+	def get_sharedWith():
+		"""return the share with users"""
+	
+	def get_last_modified():
+		"""return the last modified"""
+		
 class IContentResolver(interface.Interface):
 	def get_content(data):
 		"""return the indexable text content associated with the specified data object"""

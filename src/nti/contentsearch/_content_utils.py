@@ -8,6 +8,8 @@ from zope import component
 from zope import interface
 from persistent.interfaces import IPersistent
 
+from dolmen.builtins import IDict
+
 from nltk.tokenize import RegexpTokenizer
 
 from nti.contentfragments import interfaces as frg_interfaces
@@ -18,15 +20,229 @@ from nti.dataserver.contenttypes import Canvas
 from nti.dataserver.contenttypes import CanvasTextShape
 from nti.dataserver import interfaces as nti_interfaces
 
+from nti.externalization.oids import to_external_ntiid_oid
+
 from nti.contentsearch import to_list
-from nti.contentsearch.interfaces import IContentResolver
+from nti.contentsearch.interfaces import IContentResolver, IContentResolver2
 from nti.contentsearch.interfaces import IContentTokenizer
+from nti.contentsearch.common import get_attr
 from nti.contentsearch.common import (CLASS, BODY)
-from nti.contentsearch.common import (text_, body_, selectedText_, replacementContent_, redactionExplanation_)
+from nti.contentsearch.common import (text_, body_, selectedText_, replacementContent_, redactionExplanation_, 
+									  creator_fields, keyword_fields, last_modified_fields, sharedWith_, 
+									  container_id_fields, ntiid_fields, oid_fields, highlight_, note_,
+									  messageinfo_, redaction_, canvas_, canvastextshape_)
+
+
 
 def get_content(text=None):
 	result = component.getUtility(IContentTokenizer).tokenize(text) if text else u''
 	return unicode(result)
+
+@interface.implementer(IContentResolver2)
+@component.adapter(basestring)
+class _StringContentResolver(object):
+
+	def __init__( self, content ):
+		self.content = content
+
+	def get_content(self):
+		return unicode(self.content) if self.content else None
+	
+def _get_any_attr(obj, attrs):
+	for a in attrs:
+		try:
+			value = getattr(obj, a, None)
+		except:
+			value = None
+		if value: return value
+	return None
+
+def _process_words(words):
+	if words:
+		if isinstance(words, six.string_types):
+			words = [unicode(w.lower()) for w in words.split()]
+		elif isinstance(words, collections.Iterable):
+			words = [unicode(w.lower()) for w in words]
+		else:
+			words = []
+	return words or []
+
+@interface.implementer(IContentResolver2)
+class _AbstractIndexDataResolver(object):
+	def __init__( self, obj ):
+		self.obj = obj
+		
+	def get_ntiid(self):
+		return to_external_ntiid_oid( self.obj )
+		
+	def get_external_oid(self):
+		return to_external_ntiid_oid( self.obj )
+	get_oid = get_external_oid
+	get_objectId = get_external_oid
+	
+	def get_creator(self):
+		return get_attr(self.obj, creator_fields)
+	
+	def get_containerId(self):
+		result = _get_any_attr(self.obj, container_id_fields) 
+		return unicode(result) if result else None
+
+	def get_keywords(self):
+		result = set()
+		for name in keyword_fields:
+			data = _get_any_attr(self.obj, [name])
+			result.update(_process_words(data))
+		return result if result else []
+	
+	def get_sharedWith(self):
+		data = _get_any_attr(self.obj, [sharedWith_])
+		return _process_words(data)
+	
+	def get_last_modified(self):
+		return _get_any_attr(self.obj, last_modified_fields)
+	
+@component.adapter(nti_interfaces.IHighlight)
+class _HighLightContentResolver2(_AbstractIndexDataResolver):
+
+	def get_content(self):
+		result = self.obj.selectedText
+		return get_content(result)
+
+@component.adapter(nti_interfaces.IRedaction)
+class _RedactionContentResolver2(_AbstractIndexDataResolver):
+
+	def get_content(self):
+		result = []
+		for field in (replacementContent_, redactionExplanation_, selectedText_):
+			d = getattr(self.obj, field, u'')
+			if d: result.append(d)
+		
+		result = ' '.join([x for x in result if x is not None])
+		return get_content(result)
+
+class _PartsContentResolver(_AbstractIndexDataResolver):
+	
+	def _resolve(self, data):
+		items = to_list(data)
+		result = []
+		for item in items:
+			adapted = component.queryAdapter(item, IContentResolver2)
+			result.append( adapted.get_content()  if adapted else u'')
+		result = ' '.join([x for x in result if x is not None])
+		return get_content(result)
+	
+@component.adapter(nti_interfaces.INote)
+class _NoteContentResolver2(_PartsContentResolver):
+	def get_content(self):
+		return self._resolve(self.obj.body)
+	
+@component.adapter(chat_interfaces.IMessageInfo)
+class _MessageInfoContentResolver2(_PartsContentResolver):
+	def get_content(self):
+		return self._resolve(self.obj.Body)
+	
+@component.adapter(Canvas)
+class _CanvasShapeContentResolver2(_PartsContentResolver):
+	def get_content(self):
+		return self._resolve(self.obj.shapeList)
+
+@component.adapter(CanvasTextShape)
+class _CanvasTextShapeContentResolver2(_AbstractIndexDataResolver):
+	def get_content(self):
+		return unicode(self.obj.text)
+	
+@interface.implementer(IContentResolver2)
+@component.adapter(IDict)
+class _DictContentResolver(object):
+	
+	def __init__( self, obj ):
+		self.obj = obj
+	
+	def _get_attr(self, names, default=None):
+		for name in names:
+			value = self.obj.get(name, None)
+			if value: return value
+		return default
+	
+	def get_ntiid(self):
+		return self._get_attr(ntiid_fields)
+		
+	def get_external_oid(self):
+		return self._get_attr(oid_fields)
+	get_oid = get_external_oid
+	get_objectId = get_external_oid
+	
+	def get_creator(self):
+		return self._get_attr(creator_fields)
+	
+	def get_containerId(self):
+		return self._get_attr(container_id_fields)
+
+	def get_keywords(self):
+		result = set()
+		for name in keyword_fields:
+			data = self._get_attr([name])
+			result.update(_process_words(data))
+		return result if result else []
+	
+	def get_sharedWith(self):
+		data = self._get_attr([sharedWith_])
+		return _process_words(data)
+	
+	def get_last_modified(self):
+		return self._get_attr(last_modified_fields)
+	
+	def get_content(self):
+		return unicode(self.obj.text)
+	
+	def get_multipart_content(self, source):
+		if isinstance(source, six.string_types):
+			result = source
+		elif isinstance(source, collections.Mapping):
+			clazz = source.get(CLASS, u'').lower()
+			if clazz == highlight_:
+				result = self.obj.get(selectedText_, u'')
+			elif clazz == redaction_:
+				result = []
+				for field in (replacementContent_, redactionExplanation_, selectedText_):
+					d = self.obj.get(field, u'')
+					if d: result.append(d)
+				result = ' '.join([x for x in result if x is not None])
+			elif clazz == messageinfo_ or clazz == note_:
+				pass
+			elif clazz == canvas_:
+				pass
+			elif clazz == canvastextshape_:
+				pass
+			else:
+				result = u''
+		elif isinstance(source, collections.Iterable):
+			items = []
+			for item in source:
+				items.append(self.get_multipart_content(item))
+			result = ' '.join(items)
+		else:
+			result = u''
+
+		result = get_content(result) if result else u''
+		return unicode(result)
+	
+@interface.implementer( IContentTokenizer )
+class _ContentTokenizer(object):
+	tokenizer = RegexpTokenizer(r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-']\w+)*", flags = re.MULTILINE | re.DOTALL)
+
+	def tokenize(self, text):
+		if not text or not isinstance(text, six.string_types):
+			return u''
+		else:
+			text = frg_interfaces.IUnicodeContentFragment(text)
+			text = frg_interfaces.IPlainTextContentFragment(text)
+			words = self.tokenizer.tokenize(text)
+			text = ' '.join(words)
+			return unicode(text)
+
+
+# --------- 
 
 @interface.implementer( IContentResolver )
 class _HighLightContentResolver(object):
@@ -120,20 +336,6 @@ class _MessageInfoContentResolver(object):
 			c = get_multipart_content(item)
 			if c: result.append(c)
 		return get_content(' '.join(result))
-
-@interface.implementer( IContentTokenizer )
-class _ContentTokenizer(object):
-	tokenizer = RegexpTokenizer(r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-']\w+)*", flags = re.MULTILINE | re.DOTALL)
-
-	def tokenize(self, text):
-		if not text or not isinstance(text, six.string_types):
-			return u''
-		else:
-			text = frg_interfaces.IUnicodeContentFragment(text)
-			text = frg_interfaces.IPlainTextContentFragment(text)
-			words = self.tokenizer.tokenize(text)
-			text = ' '.join(words)
-			return unicode(text)
 
 def get_multipart_content(source):
 	if isinstance(source, six.string_types):
