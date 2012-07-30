@@ -446,7 +446,7 @@ order. A fix in the application for this is pending. */
 }
 
 #NTIContent .sidebar:after {
-	content: "Side Note:";
+	content: "Sidenote:";
 }
 
 #NTIContent div.picdefns:after,
