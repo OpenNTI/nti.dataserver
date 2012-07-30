@@ -45,6 +45,30 @@
 	<utility factory="._content_utils._CanvasTextShapeContentResolver" name="canvastextshape" />
 	<utility factory="._content_utils._MessageInfoContentResolver" name="messageinfo" />
 
+	<adapter factory="._content_utils._HighLightContentResolver2"
+			 provides=".interfaces.IContentResolver2"
+			 for="nti.dataserver.interfaces.IHighlight" />
+			
+	<adapter factory="._content_utils._RedactionContentResolver2"
+			 provides=".interfaces.IContentResolver2"
+			 for="nti.dataserver.interfaces.IRedaction" />
+			 
+	<adapter factory="._content_utils._NoteContentResolver2"
+			 provides=".interfaces.IContentResolver2"
+			 for="nti.dataserver.interfaces.INote" />
+		
+	<adapter factory="._content_utils._MessageInfoContentResolver2"
+			 provides=".interfaces.IContentResolver2"
+			 for="nti.chatserver.interfaces.IMessageInfo" />
+			 
+	<adapter factory="._content_utils._CanvasShapeContentResolver2"
+			 provides=".interfaces.IContentResolver2"
+			 for="nti.dataserver.contenttypes.Canvas" />
+			 
+	<adapter factory="._content_utils._CanvasTextShapeContentResolver2"
+			 provides=".interfaces.IContentResolver2"
+			 for="nti.dataserver.contenttypes.CanvasTextShape" />
+			 	  
 	<!-- Content tokenizer -->
 	
 	<utility factory="._content_utils._ContentTokenizer"  />
