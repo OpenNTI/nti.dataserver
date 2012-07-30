@@ -1,0 +1,4 @@
+\[
+\underset{\;\text{\raisebox{0.2in}{\includegraphics{../Images/decimals_arrow_left.pdf}}}}{\phantom{0}36.\!}\,7 \quad\rightarrow\quad 0.0367
+\]
+

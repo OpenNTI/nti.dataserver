@@ -10,3 +10,5 @@ overrides_9.txt=png,svg
 overrides_10.txt=png,svg
 overrides_11.txt=png,svg
 overrides_12.txt=png,svg
+overrides_13.txt=png,svg
+overrides_14.txt=png,svg
