@@ -1,5 +1,5 @@
 file:../lib/pywikipedia/#egg=pywikipedia
--e hg+https://bitbucket.org/denis/gevent#egg=gevent
+-e hg+https://bitbucket.org/denis/gevent@1.0b3#egg=gevent
 ## Sadly, issue 328 prevents us from using local paths for these things,
 ## if we include the egg name. If we're otherwise very careful, 
 ## local paths can be made to work
