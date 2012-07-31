@@ -45,6 +45,14 @@
 	<utility factory="._content_utils._CanvasTextShapeContentResolver" name="canvastextshape" />
 	<utility factory="._content_utils._MessageInfoContentResolver" name="messageinfo" />
 
+	<adapter factory="._content_utils._StringContentResolver"
+			 provides=".interfaces.IContentResolver2"
+			 for="basestring" />
+			 
+	<adapter factory="._content_utils._DictContentResolver"
+			 provides=".interfaces.IContentResolver2"
+			 for="dict" />
+			 
 	<adapter factory="._content_utils._HighLightContentResolver2"
 			 provides=".interfaces.IHighlightContentResolver"
 			 for="nti.dataserver.interfaces.IHighlight" />

@@ -30,8 +30,7 @@ from nti.contentsearch.common import (text_, body_, selectedText_, replacementCo
 									  creator_fields, keyword_fields, last_modified_fields, sharedWith_, 
 									  container_id_fields, ntiid_fields, oid_fields, highlight_, note_,
 									  messageinfo_, redaction_, canvas_, canvastextshape_, references_,
-									  inReplyTo_)
-
+									  inReplyTo_, recipients_, channel_)
 
 
 def get_content(text=None):
@@ -46,7 +45,8 @@ class _StringContentResolver(object):
 		self.content = content
 
 	def get_content(self):
-		return unicode(self.content) if self.content else None
+		result = get_content(self.content) 
+		return result if result else None
 	
 def _get_any_attr(obj, attrs):
 	for a in attrs:
@@ -54,7 +54,7 @@ def _get_any_attr(obj, attrs):
 			value = getattr(obj, a, None)
 		except:
 			value = None
-		if value: return value
+		if value is not None: return value
 	return None
 
 def _process_words(words):
@@ -83,7 +83,8 @@ class _AbstractIndexDataResolver(_BasicContentaResolver):
 	get_objectId = get_external_oid
 	
 	def get_creator(self):
-		return _get_any_attr(self.obj, creator_fields)
+		usr = _get_any_attr(self.obj, creator_fields)
+		return usr.username if usr else None
 	
 	def get_containerId(self):
 		result = _get_any_attr(self.obj, container_id_fields) 
@@ -94,7 +95,7 @@ class _AbstractIndexDataResolver(_BasicContentaResolver):
 		for name in keyword_fields:
 			data = _get_any_attr(self.obj, [name])
 			result.update(_process_words(data))
-		return result if result else []
+		return list(result) if result else []
 	
 	def get_sharedWith(self):
 		data = _get_any_attr(self.obj, [sharedWith_])
@@ -108,7 +109,7 @@ class _ThreadableContentResolver(_AbstractIndexDataResolver):
 	def get_references(self):
 		items = to_list(_get_any_attr(self.obj, [references_]))
 		result = set()
-		for obj in items:
+		for obj in items or ():
 			adapted = component.queryAdapter(obj, IContentResolver2)
 			ntiid = adapted.get_ntiid() if adapted else u''
 			if ntiid: result.add(ntiid)
@@ -147,9 +148,9 @@ class _RedactionContentResolver2(_HighLightContentResolver2):
 class _PartsContentResolver(object):
 	
 	def _resolve(self, data):
-		items = to_list(data)
 		result = []
-		for item in items:
+		items = to_list(data)
+		for item in items or ():
 			adapted = component.queryAdapter(item, IContentResolver2)
 			result.append( adapted.get_content()  if adapted else u'')
 		result = ' '.join([x for x in result if x is not None])
@@ -165,6 +166,14 @@ class _MessageInfoContentResolver2(_ThreadableContentResolver, _PartsContentReso
 	def get_content(self):
 		return self._resolve(self.obj.Body)
 	
+	def get_channel(self):
+		result = self.obj.channel_
+		return unicode(result) if result else None
+
+	def get_recipients(self):
+		data = _get_any_attr(self.obj, [recipients_])
+		return _process_words(data)
+	
 @component.adapter(Canvas)
 class _CanvasShapeContentResolver2(_BasicContentaResolver, _PartsContentResolver):
 	def get_content(self):
@@ -173,7 +182,7 @@ class _CanvasShapeContentResolver2(_BasicContentaResolver, _PartsContentResolver
 @component.adapter(CanvasTextShape)
 class _CanvasTextShapeContentResolver2(_BasicContentaResolver):
 	def get_content(self):
-		return unicode(self.obj.text)
+		return get_content(self.obj.text)
 	
 @interface.implementer(IContentResolver2)
 @component.adapter(IDict)
@@ -199,28 +208,29 @@ class _DictContentResolver(object):
 		elif isinstance(source, collections.Mapping):
 			clazz = source.get(CLASS, u'').lower()
 			if clazz == highlight_:
-				result = self.obj.get(selectedText_, u'')
+				result = source.get(selectedText_, u'')
 			elif clazz == redaction_:
 				result = []
 				for field in (replacementContent_, redactionExplanation_, selectedText_):
-					d = self.obj.get(field, u'')
+					d = source.get(field, u'')
 					if d: result.append(d)
 				result = ' '.join([x for x in result if x is not None])
 			elif clazz == messageinfo_ or clazz == note_:
 				result = []
-				data = self.obj.get(body_, u'') if clazz == note_ else self.obj.get(BODY, u'')
-				for item in to_list(data):
+				data = source.get(body_, u'') if clazz == note_ else source.get(BODY, u'')
+				for item in to_list(data) or ():
 					d = self.get_multipart_content(item)
 					if d: result.append(d)
 				result = ' '.join([x for x in result if x is not None])
 			elif clazz == canvas_:
-				shapes = data.get('shapeList', [])
-				for s in shapes:
+				result = []
+				shapes = source.get('shapeList', [])
+				for s in shapes or ():
 					d = self.get_multipart_content(s)
 					if d: result.append(d)
 				result = ' '.join([x for x in result if x is not None])
 			elif clazz == canvastextshape_:
-				result = self.obj.get(text_, u'')
+				result = source.get(text_, u'')
 			else:
 				result = u''
 		elif isinstance(source, collections.Iterable):
@@ -255,7 +265,7 @@ class _DictContentResolver(object):
 		for name in keyword_fields:
 			data = self._get_attr([name])
 			result.update(_process_words(data))
-		return result if result else []
+		return list(result) if result else []
 	
 	def get_sharedWith(self):
 		data = self._get_attr([sharedWith_])
@@ -273,7 +283,7 @@ class _DictContentResolver(object):
 		data = self.obj.get(references_, u'')
 		objects = data.split() if hasattr(data, 'split') else data
 		result = set()
-		for s in to_list(objects):
+		for s in to_list(objects) or ():
 			result.add(unicode(s))
 		return list(result) if result else []
 	
@@ -283,13 +293,22 @@ class _DictContentResolver(object):
 	# redaction content resolver
 	
 	def get_replacement_content(self):
-		result = self.obj.replacementContent
+		result = self.obj.get(replacementContent_, u'')
 		return get_content(result) if result else None
 		
 	def get_redaction_explanation(self):
-		result = self.obj.redactionExplanation
+		result = self.obj.get(redactionExplanation_, u'')
 		return get_content(result) if result else None
 	
+	# redaction content resolver
+	
+	def get_channel(self):
+		result = self.obj.get(channel_, u'')
+		return unicode(result) if result else None
+
+	def get_recipients(self):
+		data = self.obj.get(recipients_, None)
+		return _process_words(data)
 	
 	
 @interface.implementer( IContentTokenizer )
