@@ -14,13 +14,13 @@ from nti.contentsearch.interfaces import IUserIndexManager
 from nti.contentsearch.interfaces import IUserIndexManagerFactory
 from nti.contentsearch.common import get_type_name
 from nti.contentsearch.common import normalize_type_name
-from nti.contentsearch.common import empty_search_result
 from nti.contentsearch.common import indexable_type_names
-from nti.contentsearch.common import empty_suggest_result
-from nti.contentsearch.common import merge_search_results
-from nti.contentsearch.common import merge_suggest_results
-from nti.contentsearch.common import empty_suggest_and_search_result
-from nti.contentsearch.common import merge_suggest_and_search_results
+from nti.contentsearch._search_results import empty_search_result
+from nti.contentsearch._search_results import empty_suggest_result
+from nti.contentsearch._search_results import merge_search_results
+from nti.contentsearch._search_results import merge_suggest_results
+from nti.contentsearch._search_results import empty_suggest_and_search_result
+from nti.contentsearch._search_results import merge_suggest_and_search_results
 from nti.contentsearch._whoosh_index import get_indexables
 from nti.contentsearch._whoosh_index import get_indexable_object
 

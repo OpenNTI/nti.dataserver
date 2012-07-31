@@ -24,10 +24,10 @@ from nti.contentsearch.common import get_creator
 from nti.contentsearch.common import get_collection
 from nti.contentsearch.common import get_references
 from nti.contentsearch.common import get_external_oid
-from nti.contentsearch.common import empty_search_result
-from nti.contentsearch.common import empty_suggest_result
 from nti.contentsearch.common import word_content_highlight
 from nti.contentsearch.common import ngram_content_highlight
+from nti.contentsearch._search_results import empty_search_result
+from nti.contentsearch._search_results import empty_suggest_result
 
 from nti.contentsearch.common import (	NTIID, CREATOR, LAST_MODIFIED, TYPE, CLASS, ID, 
 										COLLECTION_ID, ITEMS, SNIPPET, HIT, HIT_COUNT, SUGGESTIONS, 

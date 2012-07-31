@@ -17,12 +17,12 @@ from nti.contentsearch import SearchCallWrapper
 from nti.contentsearch import CaseInsensitiveDict
 from nti.contentsearch._indexagent import handle_index_event
 
-from nti.contentsearch.common import empty_search_result
-from nti.contentsearch.common import empty_suggest_result
-from nti.contentsearch.common import merge_search_results
-from nti.contentsearch.common import merge_suggest_results
-from nti.contentsearch.common import empty_suggest_and_search_result
-from nti.contentsearch.common import merge_suggest_and_search_results
+from nti.contentsearch._search_results import empty_search_result
+from nti.contentsearch._search_results import empty_suggest_result
+from nti.contentsearch._search_results import merge_search_results
+from nti.contentsearch._search_results import merge_suggest_results
+from nti.contentsearch._search_results import empty_suggest_and_search_result
+from nti.contentsearch._search_results import merge_suggest_and_search_results
 
 from nti.contentsearch.common import HIT_COUNT
 
