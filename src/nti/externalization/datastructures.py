@@ -173,6 +173,7 @@ class AbstractDynamicObjectIO(ExternalizableDictionaryMixin):
 			if not self._ext_accept_update_key( k, ext_self, ext_keys ):
 				continue
 			__traceback_info__ = k
+			print(k)
 			self._ext_setattr( ext_self, k, parsed[k] )
 			updated = True
 
