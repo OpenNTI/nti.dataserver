@@ -331,7 +331,9 @@ class ISearchHit(ext_interfaces.IExternalObject):
 
 class IContentResolver2(interface.Interface):
 	def get_content():
-		"""return the text content"""
+		"""return the text content to index"""
+		
+class IUserContentResolver(IContentResolver2):
 		
 	def get_ntiid():
 		"""return the NTI identifier"""
@@ -353,7 +355,27 @@ class IContentResolver2(interface.Interface):
 	
 	def get_last_modified():
 		"""return the last modified"""
+	
+class IThreadableContentResolver(IUserContentResolver):
+	def get_references():
+		"""return the nttids of the objects its refers"""
+	
+	def get_inReplyTo():
+		"""return the inReplyTo nttid"""
 		
+class IHighlightContentResolver(IThreadableContentResolver):
+	pass
+	
+class IRedactionContentResolver(IHighlightContentResolver):
+	def get_replacement_content():
+		"""return the replacement content"""
+		
+	def get_redaction_explanation():
+		"""return the redaction explanation content"""
+	
+class INoteContentResolver(IHighlightContentResolver):
+	pass
+	
 class IContentResolver(interface.Interface):
 	def get_content(data):
 		"""return the indexable text content associated with the specified data object"""
