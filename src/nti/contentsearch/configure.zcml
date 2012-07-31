@@ -37,44 +37,37 @@
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
 			
 	<!-- Content Resolvers -->
-	
-	<utility factory="._content_utils._HighLightContentResolver" name="highlight" />
-	<utility factory="._content_utils._RedactionContentResolver" name="redaction" />
-	<utility factory="._content_utils._NoteContentResolver" name="note" />
-	<utility factory="._content_utils._CanvasShapeContentResolver" name="canvas" />
-	<utility factory="._content_utils._CanvasTextShapeContentResolver" name="canvastextshape" />
-	<utility factory="._content_utils._MessageInfoContentResolver" name="messageinfo" />
 
 	<adapter factory="._content_utils._StringContentResolver"
-			 provides=".interfaces.IContentResolver2"
+			 provides=".interfaces.IContentResolver"
 			 for="basestring" />
 			 
 	<adapter factory="._content_utils._DictContentResolver"
-			 provides=".interfaces.IContentResolver2"
+			 provides=".interfaces.IContentResolver"
 			 for="dict" />
 			 
-	<adapter factory="._content_utils._HighLightContentResolver2"
+	<adapter factory="._content_utils._HighLightContentResolver"
 			 provides=".interfaces.IHighlightContentResolver"
 			 for="nti.dataserver.interfaces.IHighlight" />
 			
-	<adapter factory="._content_utils._RedactionContentResolver2"
+	<adapter factory="._content_utils._RedactionContentResolver"
 			 provides=".interfaces.IRedactionContentResolver"
 			 for="nti.dataserver.interfaces.IRedaction" />
 			 
-	<adapter factory="._content_utils._NoteContentResolver2"
-			 provides=".interfaces.IContentResolver2"
+	<adapter factory="._content_utils._NoteContentResolver"
+			 provides=".interfaces.IContentResolver"
 			 for="nti.dataserver.interfaces.INote" />
 		
-	<adapter factory="._content_utils._MessageInfoContentResolver2"
-			 provides=".interfaces.IContentResolver2"
+	<adapter factory="._content_utils._MessageInfoContentResolver"
+			 provides=".interfaces.IContentResolver"
 			 for="nti.chatserver.interfaces.IMessageInfo" />
 			 
-	<adapter factory="._content_utils._CanvasShapeContentResolver2"
-			 provides=".interfaces.IContentResolver2"
+	<adapter factory="._content_utils._CanvasShapeContentResolver"
+			 provides=".interfaces.IContentResolver"
 			 for="nti.dataserver.contenttypes.Canvas" />
 			 
-	<adapter factory="._content_utils._CanvasTextShapeContentResolver2"
-			 provides=".interfaces.IContentResolver2"
+	<adapter factory="._content_utils._CanvasTextShapeContentResolver"
+			 provides=".interfaces.IContentResolver"
 			 for="nti.dataserver.contenttypes.CanvasTextShape" />
 			 	  
 	<!-- Content tokenizer -->

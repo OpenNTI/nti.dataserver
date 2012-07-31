@@ -4,6 +4,7 @@ import UserDict
 
 from zope import component
 from zope import interface
+from persistent.interfaces import IPersistent
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.chatserver import interfaces as chat_interfaces
@@ -11,10 +12,6 @@ from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.externalization import toExternalObject
 
 from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch._content_utils import get_note_content
-from nti.contentsearch._content_utils import get_highlight_content
-from nti.contentsearch._content_utils import get_redaction_content
-from nti.contentsearch._content_utils import get_messageinfo_content
 
 from nti.contentsearch.common import clean_query
 from nti.contentsearch.common import word_content_highlight
@@ -94,32 +91,36 @@ class NgramSnippetHighlightDecorator(object):
 
 search_external_fields  = (CLASS, CREATOR, TARGET_OID, TYPE, LAST_MODIFIED, NTIID, CONTAINER_ID, SNIPPET, ID)
 	
+def get_content(obj):
+	adapted = component.queryAdapter(obj, search_interfaces.IContentResolver)
+	result = adapted.get_content() if adapted else u''
+	return result
+
 class _SearchHit(object, UserDict.DictMixin):
 	interface.implements( search_interfaces.ISearchHit )
 	
-	__external_fields  = search_external_fields
+	_s_mappings =  ( (CLASS, TYPE), (OID, TARGET_OID), \
+					 (last_modified_, LAST_MODIFIED), (content_, SNIPPET) )
 	
-	def __init__( self, entity ):
-		if type(entity) == dict:
-			self._data = dict(entity)
+	def __init__( self, original ):
+		if IPersistent.providedBy(original):
+			self._data = toExternalObject(original)
 		else:
-			self._data = toExternalObject(entity) if entity else {}
-		self._supplement(self._data)
+			self._data = dict(original) if original else {}
+			
+		self._supplement(original, self._data)
 		self._reduce(self._data)
 		self.query = None
 	
-	def _supplement(self, data):
-		if CLASS in data:
-			data[TYPE] = data[CLASS]
-		if OID in data:
-			data[TARGET_OID] = data[OID]
-		if last_modified_ in data:
-			data[LAST_MODIFIED] = data[last_modified_]
-		if content_ in data:
-			data[SNIPPET] = data[content_]
-			
-		data[CLASS] = HIT
-		data[NTIID] = data.get(NTIID, None) or data.get(TARGET_OID, None)
+	def _supplement(self, original, external):
+		for k, r in self._s_mappings:
+			if k in external:
+				external[r] = external[k]
+				
+		if SNIPPET not in external:
+			external[SNIPPET] = get_content(original)
+		external[CLASS] = HIT
+		external[NTIID] = external.get(NTIID, None) or external.get(TARGET_OID, None)
 		
 	def _reduce(self, data):
 		for key in list(data.keys()):
@@ -143,35 +144,19 @@ class _SearchHit(object, UserDict.DictMixin):
 		
 class _HighlightSearchHit(_SearchHit):
 	component.adapts( nti_interfaces.IHighlight )
-	
-	def _supplement(self, data):
-		super(_HighlightSearchHit, self)._supplement(data)
-		text = get_highlight_content(data, lower=False)
-		data[SNIPPET] = text
+	pass
 	
 class _RedactionSearchHit(_SearchHit):
 	component.adapts( nti_interfaces.IRedaction )
-	
-	def _supplement(self, data):
-		super(_RedactionSearchHit, self)._supplement(data)
-		text = get_redaction_content(data, lower=False)
-		data[SNIPPET] = text
+	pass
 		
 class _NoteSearchHit(_SearchHit):
 	component.adapts( nti_interfaces.INote )
-
-	def _supplement(self, data):
-		super(_NoteSearchHit, self)._supplement(data)
-		text = get_note_content(data, lower=False)
-		data[SNIPPET] = text
+	pass
 	
 class _MessageInfoSearchHit(_SearchHit):
 	component.adapts( chat_interfaces.IMessageInfo )
-
-	def _supplement(self, data):
-		super(_MessageInfoSearchHit, self)._supplement(data)
-		text = get_messageinfo_content(data, lower=False)
-		data[SNIPPET] = text
+	pass
 		
 def _provide_highlight_snippet(hit, query=None, highlight_type=WORD_HIGHLIGHT):
 	if hit is not None:

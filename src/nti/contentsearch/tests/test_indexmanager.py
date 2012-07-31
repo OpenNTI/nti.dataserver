@@ -76,7 +76,7 @@ class _BaseIndexManagerTest(object):
 	def tearDownClass(cls):
 		shutil.rmtree(cls.book_idx_dir, True)
 
-	# ----------------sec
+	# ----------------
 
 	@WithMockDSTrans
 	def test_add_book(self):

@@ -11,6 +11,8 @@ from nti.contentsearch._repoze_datastore import RepozeCatalogDataStore
 import logging
 logger = logging.getLogger( __name__ )
 
+compute_ngrams = False #TODO: set this as part of a config
+
 def to_list(data):
 	if isinstance(data, six.string_types):
 		data = [data]

@@ -16,9 +16,8 @@ from nti.dataserver.contenttypes import CanvasTextShape
 from nti.ntiids.ntiids import make_ntiid
 
 from nti.contentsearch.tests import ConfiguringTestBase
-from nti.contentsearch.interfaces import IContentResolver2
+from nti.contentsearch.interfaces import IContentResolver
 from nti.contentsearch._content_utils import get_content
-from nti.contentsearch._content_utils import get_multipart_content
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
@@ -69,7 +68,7 @@ class TestContentUtils(ConfiguringTestBase):
 		note = self._create_note('nothing can be explained', usr.username, containerId)
 		mock_dataserver.current_transaction.add(note)
 		note = usr.addContainedObject( note ) 
-		adapted = component.getAdapter(note, IContentResolver2)
+		adapted = component.getAdapter(note, IContentResolver)
 		assert_that(adapted.get_content(), is_('nothing can be explained'))
 		assert_that(adapted.get_references(), is_([]))
 		assert_that(adapted.get_ntiid(), is_not(None))
@@ -91,7 +90,7 @@ class TestContentUtils(ConfiguringTestBase):
 		note = self._create_note('New Age', usr.username, containerId, canvas=c)
 		mock_dataserver.current_transaction.add(note)
 		note = usr.addContainedObject( note ) 
-		adapted = component.getAdapter(note, IContentResolver2)
+		adapted = component.getAdapter(note, IContentResolver)
 		assert_that(adapted.get_content(), is_('New Age Mike Wyzgowski'))
 		
 	@WithMockDSTrans
@@ -106,7 +105,7 @@ class TestContentUtils(ConfiguringTestBase):
 		redaction.creator = username
 		redaction.containerId = containerId
 		redaction = user.addContainedObject( redaction )
-		adapted = component.getAdapter(redaction, IContentResolver2)
+		adapted = component.getAdapter(redaction, IContentResolver)
 		assert_that(adapted.get_content(), is_('redaction Have overcome it everytime I have been on the verge of death Fear'))
 		assert_that(adapted.get_references(), is_([]))
 		assert_that(adapted.get_ntiid(), is_not(None))
@@ -127,7 +126,7 @@ class TestContentUtils(ConfiguringTestBase):
 		highlight.creator = username
 		highlight.containerId = containerId
 		highlight = user.addContainedObject( highlight )
-		adapted = component.getAdapter(highlight, IContentResolver2)
+		adapted = component.getAdapter(highlight, IContentResolver)
 		assert_that(adapted.get_content(), is_('Kon saw it The Secret of a Beautiful Office Lady'))
 		assert_that(adapted.get_references(), is_([]))
 		assert_that(adapted.get_ntiid(), is_not(None))
@@ -146,11 +145,11 @@ class TestContentUtils(ConfiguringTestBase):
 		c.append(ct)
 		mi = MessageInfo()
 		mi.Body = ['Beginning of Despair, the Unreachable Blade', c]
-		adapted = component.getAdapter(mi, IContentResolver2)
+		adapted = component.getAdapter(mi, IContentResolver)
 		assert_that(adapted.get_content(), is_('Beginning of Despair the Unreachable Blade Ichigo VS Ulquiorra'))
 		
 	def test_dict_adpater(self):
-		adapted = component.getAdapter(self.note, IContentResolver2)
+		adapted = component.getAdapter(self.note, IContentResolver)
 		assert_that(adapted.get_content(), is_('Eddard Stark Lord of Winterfell'))
 		assert_that(adapted.get_references(), is_([]))
 		assert_that(adapted.get_ntiid(), is_('tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x0932:5573657273'))
@@ -161,11 +160,5 @@ class TestContentUtils(ConfiguringTestBase):
 		assert_that(adapted.get_sharedWith(), is_([]))
 		assert_that(adapted.get_last_modified(), is_(close_to(1334000544.120, 0.05)))
 		
-	def xtest_get_text_from_mutil_part_body(self):
-		js = self.messageinfo
-		msg = get_multipart_content(js['Body'])
-		assert_that(msg, is_(u'Zanpakuto and Zangetsu'))
-		assert_that(get_multipart_content('Soul Reaper'), is_(u'Soul Reaper'))
-
 if __name__ == '__main__':
 	unittest.main()

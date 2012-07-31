@@ -313,6 +313,8 @@ class IWhooshIndexStorage(interface.Interface):
 		return a dictionary with the arguments to be passed to an index writer commit method
 		""" 
 
+# text highlight types
+
 class IHighlightType(interface.Interface):
 	pass
 
@@ -329,11 +331,13 @@ class ISearchHit(ext_interfaces.IExternalObject):
 	query = interface.Attribute("""query that produced this hit""")
 	pass
 
-class IContentResolver2(interface.Interface):
+# user generated content resolvers
+
+class IContentResolver(interface.Interface):
 	def get_content():
 		"""return the text content to index"""
 		
-class IUserContentResolver(IContentResolver2):
+class IUserContentResolver(IContentResolver):
 		
 	def get_ntiid():
 		"""return the NTI identifier"""
@@ -376,9 +380,17 @@ class IRedactionContentResolver(IHighlightContentResolver):
 class INoteContentResolver(IHighlightContentResolver):
 	pass
 	
-class IContentResolver(interface.Interface):
-	def get_content(data):
-		"""return the indexable text content associated with the specified data object"""
+class IMessageInfoContentResolver(IThreadableContentResolver):
+	def get_id():
+		"""return the message id"""
+		
+	def get_channel():
+		"""return the message channel"""
+		
+	def get_recipients():
+		"""return the message recipients"""
+
+# text tokenizer
 
 class IContentTokenizer(interface.Interface):
 	def tokenize(data):

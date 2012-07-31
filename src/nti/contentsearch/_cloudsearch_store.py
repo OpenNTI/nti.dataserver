@@ -87,11 +87,3 @@ class CloudSearchStore(Persistent):
 		domain = self._v_domains.get(domain_name, None)
 		return domain
 	
-if __name__ == '__main__':
-	import os
-	AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID', 'AKIAJ42UUP2EUMCMCZIQ')
-	AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY', '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')
-	cs = CloudSearchStore(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
-	
-	from nti.contentsearch._cloudsearch_index import create_search_domain
-	create_search_domain(cs.connection)

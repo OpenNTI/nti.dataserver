@@ -43,8 +43,6 @@ from nti.contentsearch.common import (	container_id_fields, last_modified_fields
 import logging
 logger = logging.getLogger( __name__ )
 
-# ----------------------------------
-
 def get_datetime(x=None):
 	f = time.time()
 	if x:
