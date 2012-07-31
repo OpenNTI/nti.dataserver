@@ -59,7 +59,7 @@ class TestRepozeIndex(ConfiguringTestBase):
 		assert_that(d,
 			has_entry(SNIPPET, u'You know how to add subtract multiply and DIVIDE In fact you may already know how to solve many of the problems'))
 		
-	def test_searh_hit_redaction_dict(self):
+	def test_seach_hit_redaction_dict(self):
 		d = self._externalize(_RedactionSearchHit, self.redaction, '')
 		assert_that(d, has_entry(CLASS, HIT))
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:AOPS-HTML-Howes_converted.0'))
