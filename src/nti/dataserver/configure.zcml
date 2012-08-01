@@ -172,6 +172,12 @@
 	<class class=".users.User">
 		<implements interface="zope.annotation.interfaces.IAttributeAnnotatable" />
 	</class>
+	<class class=".users.FriendsList">
+		<implements interface="zope.annotation.interfaces.IAttributeAnnotatable" />
+	</class>
+	<class class=".classes.SectionInfo">
+		<implements interface="zope.annotation.interfaces.IAttributeAnnotatable" />
+	</class>
 	<!-- As we add more of these (rule based) we'll need to give them names -->
 	<!-- TODO: Couldn't we use subscribers for this instead of names? -->
 	<adapter factory=".authorization._persistent_group_member_factory"

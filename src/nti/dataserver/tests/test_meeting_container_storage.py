@@ -5,6 +5,8 @@ from hamcrest import (assert_that, is_,
 					  has_key,  not_none,
 					    none, has_property, has_entry,
 					  has_item, has_items)
+from hamcrest import is_not
+does_not = is_not
 import unittest
 from zope import (interface, component)
 
@@ -21,7 +23,7 @@ import nti.dataserver.providers as providers
 import nti.dataserver.classes as classes
 from nti.ntiids import ntiids
 import nti.dataserver.meeting_container_storage as mcs
-
+from zope.annotation import interfaces as ant_interfaces
 
 from mock_dataserver import WithMockDS, ConfiguringTestBase
 import mock_dataserver
@@ -110,14 +112,16 @@ class TestFriendsListAdaptor( ConfiguringTestBase ):
 		assert_that( adapt.create_meeting_from_dict( None, d, c ), is_(self) )
 		assert_that( d['Occupants'], has_item( 'friend@bar' ) )
 		assert_that( d['Occupants'], has_item( ('foo@bar', 1234 ) ) )
-		assert_that( getattr( fl1, adapt.ACTIVE_ROOM_ATTR ), is_( self ) )
+		assert_that( ant_interfaces.IAnnotations( fl1 ), has_entry( adapt.ACTIVE_ROOM_ATTR, self ) )
+
 
 		# And again fails because room is still active.
 		d = { 'Occupants': [('foo@bar', 1234)], 'Creator': 'friend@bar' }
 		assert_that( adapt.create_meeting_from_dict( None, d, c ), is_( none() ) )
 
 		adapt.meeting_became_empty( None, self )
-		assert_that( getattr( fl1, adapt.ACTIVE_ROOM_ATTR, 42 ), is_( 42 ) )
+		assert_that( ant_interfaces.IAnnotations( fl1 ), does_not( has_key( adapt.ACTIVE_ROOM_ATTR ) ) )
+
 
 	@WithMockDS
 	def test_enter_active( self ):
@@ -204,14 +208,16 @@ class TestClassSectionAdapter( ConfiguringTestBase ):
 		d = { 'Occupants': [('foo@bar', 1234)], 'Creator': 'sjohnson' }
 		assert_that( adapt.create_meeting_from_dict( None, d, c ), is_(self) )
 		assert_that( d['Occupants'], has_items( 'chris', 'sjohnson' ) )
-		assert_that( getattr( fl1, adapt.ACTIVE_ROOM_ATTR ), is_( self ) )
+		assert_that( ant_interfaces.IAnnotations( fl1 ), has_entry( adapt.ACTIVE_ROOM_ATTR, self ) )
+
 
 		# And again fails because room is still active.
 		d = { 'Occupants': [('foo@bar', 1234)], 'Creator': 'sjohnson' }
 		assert_that( adapt.create_meeting_from_dict( None, d, c ), is_( none() ) )
 
 		adapt.meeting_became_empty( None, self )
-		assert_that( getattr( fl1, adapt.ACTIVE_ROOM_ATTR, 42 ), is_( 42 ) )
+		assert_that( ant_interfaces.IAnnotations( fl1 ), does_not( has_key( adapt.ACTIVE_ROOM_ATTR ) ) )
+
 
 	@WithMockDS
 	def test_enter_active( self ):
