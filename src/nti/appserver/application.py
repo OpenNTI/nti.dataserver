@@ -39,6 +39,7 @@ from zope.configuration import xmlconfig
 from zope.event import notify
 from zope.processlifetime import ProcessStarting
 from zope.component.hooks import setSite, getSite, setHooks, siteinfo
+import zope.interface.exceptions
 assert gevent.local.local in type(siteinfo).__bases__
 import transaction
 
@@ -475,8 +476,15 @@ def createApplication( http_port,
 
 		asm_index = os.path.join( title.localPath, 'assessment_index.json' )
 		if os.path.isfile( asm_index ):
+			__traceback_info__ = asm_index
 			index = json.loads( unicode(open( asm_index, 'rU' ).read()) )
-			question_map._from_index_entry( index, dirname=title.localPath )
+			try:
+				question_map._from_index_entry( index, dirname=title.localPath )
+			except (zope.interface.exceptions.Invalid, ValueError):
+				# Because the map is updated in place, depending on where the error
+				# was, we might have some data...that's not good, but it's not a show stopper either,
+				# since we shouldn't get content like this out of the rendering process
+				logger.exception( "Failed to load assessment items, invalid assessment_index for %s", title )
 
 		indexname = os.path.basename( title.localPath )
 		routename = 'search.book'
