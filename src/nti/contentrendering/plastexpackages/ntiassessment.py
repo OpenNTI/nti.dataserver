@@ -55,6 +55,7 @@ import codecs
 
 from . import interfaces
 
+import nti.externalization.internalization
 from nti.externalization.externalization import toExternalObject
 from nti.assessment import interfaces as as_interfaces, parts, question
 from nti.contentrendering import plastexids, interfaces as cdr_interfaces
@@ -365,8 +366,15 @@ class _AssessmentExtractor(object):
 		for child in element.childNodes:
 			ass_obj = getattr( child, 'assessment_object', None )
 			if callable( ass_obj ):
-				assessment_objects[child.ntiid] = toExternalObject( ass_obj())
-				# No need to go into its children, like parts.
+				# Verify that we can round-trip this object
+				int_obj = ass_obj()
+				ext_obj = toExternalObject( int_obj ) # No need to go into its children, like parts.
+				__traceback_info__ = child, int_obj, ext_obj
+				raw_int_obj = type(int_obj)() # Use the class of the object returned as a factory.
+				nti.externalization.internalization.update_from_external_object( raw_int_obj, ext_obj, require_updater=True )
+				# The ext_obj was mutated by the internalization process, so we need to externalize
+				# again. Or run a deep copy (?)
+				assessment_objects[child.ntiid] = toExternalObject( int_obj )
 			else:
 				if getattr( child, 'ntiid', None ):
 					child_index = ntiid_index.setdefault( 'Items', {} )
