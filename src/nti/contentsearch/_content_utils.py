@@ -87,7 +87,7 @@ class _AbstractIndexDataResolver(_BasicContentaResolver):
 	
 	def get_creator(self):
 		usr = _get_any_attr(self.obj, creator_fields)
-		return usr.username if usr else None
+		return unicode(usr.username) if usr else None
 	
 	def get_containerId(self):
 		result = _get_any_attr(self.obj, container_id_fields) 
@@ -115,7 +115,7 @@ class _ThreadableContentResolver(_AbstractIndexDataResolver):
 		for obj in items or ():
 			adapted = component.queryAdapter(obj, IContentResolver)
 			ntiid = adapted.get_ntiid() if adapted else u''
-			if ntiid: result.add(ntiid)
+			if ntiid: result.add(unicode(ntiid))
 		return list(result) if result else []
 	
 	def get_inReplyTo(self):

@@ -13,6 +13,7 @@ from nti.externalization.externalization import toExternalObject
 
 from nti.contentsearch import interfaces as search_interfaces
 
+from nti.contentsearch.common import epoch_time
 from nti.contentsearch.common import clean_query
 from nti.contentsearch.common import word_content_highlight
 from nti.contentsearch.common import ngram_content_highlight
@@ -20,9 +21,9 @@ from nti.contentsearch.common import ngram_content_highlight
 from nti.contentsearch.common import (	WORD_HIGHLIGHT, NGRAM_HIGHLIGHT)
 
 from nti.contentsearch.common import (	NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
-										SNIPPET, HIT, ID, TARGET_OID, OID)
+										SNIPPET, HIT, ID, TARGET_OID, OID, CONTENT)
 
-from nti.contentsearch.common import ( last_modified_, content_)
+from nti.contentsearch.common import ( last_modified_, content_, title_, ntiid_)
 
 
 import logging
@@ -158,6 +159,23 @@ class _MessageInfoSearchHit(_SearchHit):
 	component.adapts( chat_interfaces.IMessageInfo )
 	pass
 		
+class _WhooshBookSearchHit(_SearchHit):
+	component.adapts( search_interfaces.IWhooshBookContent )
+	
+	def __init__( self, hit ):
+		self._data = {}	
+		self._supplement(hit, self._data)
+		self.query = None
+	
+	def _supplement(self, hit, external):
+		external[CLASS] = HIT	
+		external[TYPE] = CONTENT
+		external[NTIID] = hit[ntiid_]
+		external[SNIPPET] = hit[content_]
+		external[CONTAINER_ID] = hit[ntiid_]
+		external[title_.capitalize()] = hit[title_]
+		external[LAST_MODIFIED] = epoch_time(hit[last_modified_])
+
 def _provide_highlight_snippet(hit, query=None, highlight_type=WORD_HIGHLIGHT):
 	if hit is not None:
 		hit.query = query

@@ -64,8 +64,8 @@ class ISearcher(interface.Interface):
 		"""
 	
 class IBookIndexManager(ISearcher):
-	def get_indexname(self):
-		return self.bookidx.indexname
+	def get_indexname():
+		"return the index name"
 	
 class IUserIndexManager(ISearcher):
 	
@@ -313,6 +313,11 @@ class IWhooshIndexStorage(interface.Interface):
 		return a dictionary with the arguments to be passed to an index writer commit method
 		""" 
 
+# book content
+
+class IWhooshBookContent(interface.Interface):
+	pass
+
 # text highlight types
 
 class IHighlightType(interface.Interface):
@@ -334,6 +339,7 @@ class ISearchHit(ext_interfaces.IExternalObject):
 # user generated content resolvers
 
 class IContentResolver(interface.Interface):
+	
 	def get_content():
 		"""return the text content to index"""
 		
@@ -350,19 +356,17 @@ class IUserContentResolver(IContentResolver):
 	
 	def get_containerId():
 		"""return the container identifier"""
-
-	def get_keywords():
-		"""return the key words"""
-	
-	def get_sharedWith():
-		"""return the share with users"""
 	
 	def get_last_modified():
 		"""return the last modified"""
 	
 class IThreadableContentResolver(IUserContentResolver):
-	def get_references():
-		"""return the nttids of the objects its refers"""
+	
+	def get_keywords():
+		"""return the key words"""
+	
+	def get_sharedWith():
+		"""return the share with users"""
 	
 	def get_inReplyTo():
 		"""return the inReplyTo nttid"""
@@ -371,6 +375,7 @@ class IHighlightContentResolver(IThreadableContentResolver):
 	pass
 	
 class IRedactionContentResolver(IHighlightContentResolver):
+	
 	def get_replacement_content():
 		"""return the replacement content"""
 		
@@ -378,9 +383,12 @@ class IRedactionContentResolver(IHighlightContentResolver):
 		"""return the redaction explanation content"""
 	
 class INoteContentResolver(IHighlightContentResolver):
-	pass
+	
+	def get_references():
+		"""return the nttids of the objects its refers"""
 	
 class IMessageInfoContentResolver(IThreadableContentResolver):
+	
 	def get_id():
 		"""return the message id"""
 		
@@ -393,6 +401,7 @@ class IMessageInfoContentResolver(IThreadableContentResolver):
 # text tokenizer
 
 class IContentTokenizer(interface.Interface):
+	
 	def tokenize(data):
 		"""tokenize the specifeid text data"""
 		

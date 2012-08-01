@@ -24,6 +24,9 @@
 	<adapter factory="._search_external._RedactionSearchHit"
 			 name="search-hit" />
 			  
+	<adapter factory="._search_external._WhooshBookSearchHit"
+			 name="search-hit" />
+			 
 	<subscriber factory="._search_external.NoSnippetHighlightDecoratorFactory"
 				for=".interfaces.INoSnippetHighlight"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />

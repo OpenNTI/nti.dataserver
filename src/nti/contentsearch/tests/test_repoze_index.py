@@ -6,8 +6,8 @@ from nti.dataserver.contenttypes import Note
 from nti.ntiids.ntiids import make_ntiid
 
 from nti.contentsearch import _repoze_index
-from nti.contentsearch._repoze_index import get_object_content
 from nti.contentsearch._repoze_index import get_note_ngrams
+from nti.contentsearch._repoze_index import get_object_content
 from nti.contentsearch._repoze_index import create_notes_catalog
 from nti.contentsearch._repoze_index import create_highlight_catalog
 from nti.contentsearch._repoze_index import create_redaction_catalog

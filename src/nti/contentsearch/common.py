@@ -58,6 +58,7 @@ type_			= u'type'
 tags_			= u'tags'
 quick_			= u'quick'
 title_			= u'title'
+intid_			= u'intid'
 ntiid_			= unicode(ext_interfaces.StandardInternalFields.NTIID)
 color_			= u'color'
 p_oid_			= u'_p_oid'

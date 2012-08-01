@@ -14,15 +14,14 @@ from nti.contentsearch.interfaces import IUserIndexManager
 from nti.contentsearch.interfaces import IUserIndexManagerFactory
 from nti.contentsearch.common import get_type_name
 from nti.contentsearch.common import normalize_type_name
-from nti.contentsearch.common import indexable_type_names
+from nti.contentsearch._whoosh_index import get_indexables
+from nti.contentsearch._whoosh_index import get_indexable_object
 from nti.contentsearch._search_results import empty_search_result
 from nti.contentsearch._search_results import empty_suggest_result
 from nti.contentsearch._search_results import merge_search_results
 from nti.contentsearch._search_results import merge_suggest_results
 from nti.contentsearch._search_results import empty_suggest_and_search_result
 from nti.contentsearch._search_results import merge_suggest_and_search_results
-from nti.contentsearch._whoosh_index import get_indexables
-from nti.contentsearch._whoosh_index import get_indexable_object
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -43,7 +42,7 @@ def get_indexname(username, type_name, use_md5=True):
 def get_stored_indices(username, storage, use_md5=True):
 	result = []
 	with storage.dbTrans():
-		for type_name in indexable_type_names:
+		for type_name in get_indexables():
 			type_name = normalize_type_name(type_name)
 			index_name = get_indexname(username, type_name, use_md5)
 			if storage.index_exists(index_name, username=username):

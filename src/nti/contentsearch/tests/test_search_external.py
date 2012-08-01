@@ -1,6 +1,8 @@
 import os
 import json
+import time
 import unittest
+from datetime import datetime
 
 from nti.dataserver.users import User
 from nti.dataserver.contenttypes import Note
@@ -17,6 +19,7 @@ from nti.contentsearch._search_external import get_search_hit
 from nti.contentsearch._search_external import _NoteSearchHit
 from nti.contentsearch._search_external import _HighlightSearchHit
 from nti.contentsearch._search_external import _RedactionSearchHit
+from nti.contentsearch._search_external import _WhooshBookSearchHit
 from nti.contentsearch._search_external import _MessageInfoSearchHit
 from nti.contentsearch._search_external import _provide_highlight_snippet
 
@@ -25,7 +28,8 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from nti.contentsearch.tests import ConfiguringTestBase
 from nti.contentsearch.common import (NTIID, CREATOR, CONTAINER_ID, CLASS, TYPE, HIT, SNIPPET, TARGET_OID)
-
+from nti.contentsearch.common import (ntiid_, content_, title_, last_modified_)
+									
 from hamcrest import (assert_that, is_, is_not, has_entry)
 
 class TestRepozeIndex(ConfiguringTestBase):
@@ -155,5 +159,19 @@ class TestRepozeIndex(ConfiguringTestBase):
 		assert_that(d, has_entry(TARGET_OID, oidstr))
 		assert_that(d, has_entry(SNIPPET, u'overcome it everytime I have been on the verge of DEATH Fear'))
 
+	def test_search_hit_book(self):
+		containerId = make_ntiid(nttype='bleach', specific='manga')	
+		hit = {}
+		hit[title_] = 'Bleach'
+		hit[ntiid_] = containerId
+		hit[last_modified_] = datetime.fromtimestamp(time.time())
+		hit[content_] = u'All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade'
+		d = self._externalize(_WhooshBookSearchHit, hit, 'shield')
+		assert_that(d, has_entry(CLASS, HIT))
+		assert_that(d, has_entry(TYPE, 'Content'))
+		assert_that(d, has_entry(CONTAINER_ID, containerId))
+		assert_that(d, has_entry(NTIID, containerId))
+		assert_that(d, has_entry(SNIPPET, u'All Waves, Rise now and Become my SHIELD, Lightning, Strike now and Become my Blade'))
+		
 if __name__ == '__main__':
 	unittest.main()
