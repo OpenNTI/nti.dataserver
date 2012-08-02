@@ -11,7 +11,17 @@ def transform( document ):
     # they need to move down a level into their respective containers. 
 
     for rightpic in document.getElementsByTagName( 'rightpic' ):
-        if rightpic.parentNode.parentNode.nodeName == 'exer' or rightpic.parentNode.parentNode.nodeName == 'revprob' or rightpic.parentNode.parentNode.nodeName == 'chall' or rightpic.parentNode.parentNode.nodeName == 'challhard':
+        # Move the rightpic from right before a solution to inside of the solution.
+        if rightpic.parentNode.parentNode.nodeName == 'section' and rightpic.parentNode.nextSibling.firstChild.nodeName == 'solution':
+            rightpicContainer = rightpic.parentNode
+            logger.info("Moving right pic, %s, into solution %s", rightpic, rightpicContainer.nextSibling.firstChild)
+            # add rightpic to new parent
+            rightpicContainer.nextSibling.firstChild.insert(0, rightpic)
+            # remove rightpic from original parent
+            rightpicContainer.removeChild(rightpic)
+
+        # Move rightpics down into the approriate exer, exerhard, revprob, chall, or challhard node.
+        elif rightpic.parentNode.parentNode.nodeName in ['exer', 'exerhard', 'revprob', 'chall', 'challhard']:
             rightpicContainer = rightpic.parentNode.parentNode
             parentType = rightpic.parentNode.parentNode.nodeName
 
