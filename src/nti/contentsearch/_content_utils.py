@@ -189,7 +189,7 @@ class _MessageInfoContentResolver(_ThreadableContentResolver, _PartsContentResol
 		return unicode(result) if result else None
 	
 	def get_channel(self):
-		result = self.obj.channel_
+		result = self.obj.channel
 		return unicode(result) if result else None
 
 	def get_recipients(self):
