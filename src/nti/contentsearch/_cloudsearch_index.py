@@ -8,7 +8,7 @@ from nti.contentsearch import compute_ngrams
 from nti.contentsearch import CaseInsensitiveDict
 from nti.contentsearch.interfaces import IContentResolver
 
-from nti.contentsearch.common import ngrams
+from nti.contentsearch._ngrams_utils import ngrams
 from nti.contentsearch.common import normalize_type_name
 
 from nti.contentsearch.common import (	CLASS, CREATOR, ID, OID, last_modified_fields, ntiid_fields, 

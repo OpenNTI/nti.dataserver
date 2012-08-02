@@ -15,16 +15,13 @@ from nti.contentsearch import interfaces as search_interfaces
 
 from nti.contentsearch.common import epoch_time
 from nti.contentsearch.common import clean_query
-from nti.contentsearch.common import word_content_highlight
-from nti.contentsearch.common import ngram_content_highlight
-
-from nti.contentsearch.common import (	WORD_HIGHLIGHT, NGRAM_HIGHLIGHT, WHOOSH_HIGHLIGHT)
+from nti.contentsearch._search_highlights import (word_content_highlight, ngram_content_highlight)
+from nti.contentsearch._search_highlights import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT, WHOOSH_HIGHLIGHT)
 
 from nti.contentsearch.common import (	NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
 										SNIPPET, HIT, ID, TARGET_OID, OID, CONTENT)
 
 from nti.contentsearch.common import ( last_modified_, content_, title_, ntiid_)
-
 
 import logging
 logger = logging.getLogger( __name__ )

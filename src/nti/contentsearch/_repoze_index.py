@@ -13,7 +13,9 @@ from repoze.catalog.indexes.keyword import CatalogKeywordIndex
 from nti.contentsearch import compute_ngrams
 from nti.contentsearch.interfaces import IContentResolver
 from nti.contentsearch.textindexng3 import CatalogTextIndexNG3
-from nti.contentsearch.common import ngrams
+
+from nti.contentsearch._ngrams_utils import ngrams
+
 from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch.common import (	OID, NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, COLLECTION_ID, ID)
 from nti.contentsearch.common import (	ngrams_, channel_, content_, keywords_, 

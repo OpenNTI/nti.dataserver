@@ -27,10 +27,8 @@ from nti.contentsearch._cloudsearch_index import to_external_dict
 from nti.contentsearch._cloudsearch_store import get_search_service
 from nti.contentsearch._cloudsearch_index import search_stored_fields
 from nti.contentsearch._cloudsearch_store import get_document_service
-
-from nti.contentsearch.common import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT, LAST_MODIFIED, ITEMS,
-									  NTIID, HIT_COUNT)
-
+from nti.contentsearch._search_highlights import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT)
+from nti.contentsearch.common import ( LAST_MODIFIED, ITEMS, NTIID, HIT_COUNT)
 from nti.contentsearch.common import (username_, ngrams_, content_, oid_, type_)
 
 import logging

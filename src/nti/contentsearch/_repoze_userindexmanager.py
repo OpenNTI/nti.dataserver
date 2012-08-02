@@ -18,10 +18,10 @@ from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch._repoze_index import create_catalog
 from nti.contentsearch._search_external import get_search_hit
 from nti.contentsearch.textindexng3 import CatalogTextIndexNG3
+from nti.contentsearch.interfaces import IUserIndexManagerFactory
 from nti.contentsearch._search_results import empty_search_result
 from nti.contentsearch._search_results import empty_suggest_result
-from nti.contentsearch.interfaces import IUserIndexManagerFactory
-from nti.contentsearch.common import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT)
+from nti.contentsearch._search_highlights import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT)
 from nti.contentsearch.common import (NTIID, LAST_MODIFIED, ITEMS, HIT_COUNT, SUGGESTIONS, content_, ngrams_)
 
 import logging

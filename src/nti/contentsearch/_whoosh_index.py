@@ -18,14 +18,11 @@ from nti.contentsearch.interfaces import IContentResolver
 from nti.contentsearch.interfaces import IWhooshBookContent
 from nti.contentsearch._search_external import get_search_hit
 
-from nti.contentsearch.common import WORD_HIGHLIGHT
-from nti.contentsearch.common import NGRAM_HIGHLIGHT
-from nti.contentsearch.common import WHOOSH_HIGHLIGHT
 from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch._search_results import empty_search_result
 from nti.contentsearch._search_results import empty_suggest_result
-
 from nti.contentsearch.common import (NTIID, LAST_MODIFIED, ITEMS, HIT_COUNT, SUGGESTIONS)
+from nti.contentsearch._search_highlights import ( WORD_HIGHLIGHT, NGRAM_HIGHLIGHT, WHOOSH_HIGHLIGHT)
 
 from nti.contentsearch.common import (	quick_, channel_, content_, keywords_, references_, 
 										id_, recipients_, sharedWith_, oid_ , ntiid_, last_modified_,

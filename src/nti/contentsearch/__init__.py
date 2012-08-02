@@ -8,6 +8,10 @@ from brownie.caching import LFUCache
 from nti.contentsearch._cloudsearch_store import CloudSearchStore
 from nti.contentsearch._repoze_datastore import RepozeCatalogDataStore
 
+from nti.contentsearch._ngrams_utils import (ngrams, ngram_tokens)
+from nti.contentsearch._search_highlights import (ngram_content_highlight, word_content_highlight)
+from nti.contentsearch._search_highlights import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT, WHOOSH_HIGHLIGHT)
+
 import logging
 logger = logging.getLogger( __name__ )
 
@@ -23,7 +27,6 @@ def to_list(data):
 	elif data is not None:
 		data = [data]
 	return data
-
 
 class NoOpCM(object):
 
