@@ -176,9 +176,11 @@
 
 
 #NTIContent .minipage {
-	float: left;
-	clear: right;
-	margin: 1.5em;
+	display: inline-block;
+	margin-top: .5em;
+	margin-right: .25em;
+	margin-bottom: .5em;
+	margin-left: .25em;
 }
 
 #NTIContent p:empty{ clear: both; margin: 0; padding: 0; }
