@@ -18,7 +18,7 @@ from nti.contentsearch.common import clean_query
 from nti.contentsearch.common import word_content_highlight
 from nti.contentsearch.common import ngram_content_highlight
 
-from nti.contentsearch.common import (	WORD_HIGHLIGHT, NGRAM_HIGHLIGHT)
+from nti.contentsearch.common import (	WORD_HIGHLIGHT, NGRAM_HIGHLIGHT, WHOOSH_HIGHLIGHT)
 
 from nti.contentsearch.common import (	NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
 										SNIPPET, HIT, ID, TARGET_OID, OID, CONTENT)
@@ -28,6 +28,8 @@ from nti.contentsearch.common import ( last_modified_, content_, title_, ntiid_)
 
 import logging
 logger = logging.getLogger( __name__ )
+
+# hilight decorators
 
 def _word_content_highlight(query=None, text=None, default=None):
 	query = clean_query(query) if query else u''
@@ -39,17 +41,6 @@ def _ngram_content_highlight(query=None, text=None, default=None):
 	content = ngram_content_highlight(query, text) if query and text else u''
 	return unicode(content) if content else default
 
-def _highlight_content(query=None, text=None, highlight_type=True):
-	content = None
-	if query and text:
-		if highlight_type == WORD_HIGHLIGHT:
-			content = _word_content_highlight(query, text)
-		elif highlight_type == NGRAM_HIGHLIGHT:
-			content = _ngram_content_highlight(query, text)
-		else:
-			content = text
-	return unicode(content) if content else text
-
 def NoSnippetHighlightDecoratorFactory(*args):
 	return NoSnippetHighlightDecorator()
 
@@ -59,21 +50,7 @@ class NoSnippetHighlightDecorator(object):
 
 	def decorateExternalObject(self, original, external):
 		pass
-			
-def WordSnippetHighlightDecoratorFactory(*args):
-	return WordSnippetHighlightDecorator()
-	
-class WordSnippetHighlightDecorator(object):
-	interface.implements(ext_interfaces.IExternalObjectDecorator)
-	component.adapts(search_interfaces.IWordSnippetHighlight)
-
-	def decorateExternalObject(self, original, external):
-		query = getattr(original, 'query', None)
-		if query:
-			text = external.get(SNIPPET, None)
-			text = _word_content_highlight(query, text, text)
-			external[SNIPPET] = text
-		
+					
 def NgramSnippetHighlightDecoratorFactory(*args):
 	return NgramSnippetHighlightDecorator()
 
@@ -87,11 +64,42 @@ class NgramSnippetHighlightDecorator(object):
 			text = external.get(SNIPPET, None)
 			text = _ngram_content_highlight(query, text, text)
 			external[SNIPPET] = text
+		
+def WhooshHighlightDecoratorFactory(*args):
+	return WhooshHighlightDecorator()
+	
+def WordSnippetHighlightDecoratorFactory(*args):
+	return WordSnippetHighlightDecorator()
+	
+class _BaseWordSnippetHighlightDecorator(object):
+	interface.implements(ext_interfaces.IExternalObjectDecorator)
+	def decorateExternalObject(self, original, external):
+		query = getattr(original, 'query', None)
+		if query:
+			text = external.get(SNIPPET, None)
+			text = _word_content_highlight(query, text, text)
+			external[SNIPPET] = text
 			
-# -----------------------------------
+class WordSnippetHighlightDecorator(_BaseWordSnippetHighlightDecorator):
+	component.adapts(search_interfaces.IWordSnippetHighlight)
+	pass
+	
+class WhooshHighlightDecorator(_BaseWordSnippetHighlightDecorator):
+	component.adapts(search_interfaces.IWhooshSnippetHighlight)
+
+	def decorateExternalObject(self, original, external):
+		whoosh_highlight = getattr(original, 'whoosh_highlight', None)
+		if whoosh_highlight:
+			external[SNIPPET] = whoosh_highlight
+		else:
+			super(WhooshHighlightDecorator, self).decorateExternalObject(original, external)
+
+# search hits
 
 search_external_fields  = (CLASS, CREATOR, TARGET_OID, TYPE, LAST_MODIFIED, NTIID, CONTAINER_ID, SNIPPET, ID)
 	
+default_search_hit_mappings =  ((CLASS, TYPE), (OID, TARGET_OID), \
+								(last_modified_, LAST_MODIFIED), (content_, SNIPPET) )
 def get_content(obj):
 	adapted = component.queryAdapter(obj, search_interfaces.IContentResolver)
 	result = adapted.get_content() if adapted else u''
@@ -99,9 +107,6 @@ def get_content(obj):
 
 class _SearchHit(object, UserDict.DictMixin):
 	interface.implements( search_interfaces.ISearchHit )
-	
-	_s_mappings =  ( (CLASS, TYPE), (OID, TARGET_OID), \
-					 (last_modified_, LAST_MODIFIED), (content_, SNIPPET) )
 	
 	def __init__( self, original ):
 		if IPersistent.providedBy(original):
@@ -114,7 +119,7 @@ class _SearchHit(object, UserDict.DictMixin):
 		self.query = None
 	
 	def _supplement(self, original, external):
-		for k, r in self._s_mappings:
+		for k, r in default_search_hit_mappings:
 			if k in external:
 				external[r] = external[k]
 				
@@ -164,8 +169,9 @@ class _WhooshBookSearchHit(_SearchHit):
 	
 	def __init__( self, hit ):
 		self._data = {}	
-		self._supplement(hit, self._data)
 		self.query = None
+		self.whoosh_highlight = None
+		self._supplement(hit, self._data)
 	
 	def _supplement(self, hit, external):
 		external[CLASS] = HIT	
@@ -175,7 +181,16 @@ class _WhooshBookSearchHit(_SearchHit):
 		external[CONTAINER_ID] = hit[ntiid_]
 		external[title_.capitalize()] = hit[title_]
 		external[LAST_MODIFIED] = epoch_time(hit[last_modified_])
+		self.set_whoosh_highlight(hit, external)
 
+	def set_whoosh_highlight(self, hit, external):
+		search_field = getattr(hit, 'search_field', None)
+		if search_field:
+			try:
+				self.whoosh_highlight = hit.highlights(search_field)
+			except:
+				pass
+		
 def _provide_highlight_snippet(hit, query=None, highlight_type=WORD_HIGHLIGHT):
 	if hit is not None:
 		hit.query = query
@@ -183,6 +198,8 @@ def _provide_highlight_snippet(hit, query=None, highlight_type=WORD_HIGHLIGHT):
 			interface.alsoProvides( hit, search_interfaces.INgramSnippetHighlight )
 		elif highlight_type == WORD_HIGHLIGHT:
 			interface.alsoProvides( hit, search_interfaces.IWordSnippetHighlight )
+		elif highlight_type == WHOOSH_HIGHLIGHT:
+			interface.alsoProvides( hit, search_interfaces.IWhooshSnippetHighlight )
 		else:
 			interface.alsoProvides( hit, search_interfaces.INoSnippetHighlight )
 	return hit

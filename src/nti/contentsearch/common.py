@@ -105,6 +105,7 @@ indexable_type_names = (note_, highlight_, messageinfo, redaction_)
 
 WORD_HIGHLIGHT  = "WordHighlight"
 NGRAM_HIGHLIGHT = "NGRAMHighlight"
+WHOOSH_HIGHLIGHT = "WhooshHighlight"
 
 def get_attr(obj, names, default=None):
 	if not obj: return default

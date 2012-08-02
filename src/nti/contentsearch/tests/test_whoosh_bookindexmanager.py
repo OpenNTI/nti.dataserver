@@ -65,7 +65,7 @@ class TestWhooshBookIndexManager(ConfiguringTestBase):
 		assert_that(item, has_entry(CONTAINER_ID,  is_not(None)))
 		
 		item = toExternalObject(item)
-		assert_that(item, has_entry(SNIPPET, 'All Waves, Rise now and Become my SHIELD, Lightning, Strike now and Become my Blade'))
+		assert_that(item, has_entry(SNIPPET, 'now and Become my SHIELD, Lightning, Strike'))
 		
 	def test_search_start(self):
 		hits = self.bim.search("ra*", limit=None)

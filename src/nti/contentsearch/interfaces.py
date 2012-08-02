@@ -332,6 +332,9 @@ class IWordSnippetHighlight(IHighlightType):
 class INgramSnippetHighlight(IHighlightType):
 	pass
 
+class IWhooshSnippetHighlight(IHighlightType):
+	pass
+
 class ISearchHit(ext_interfaces.IExternalObject):
 	query = interface.Attribute("""query that produced this hit""")
 	pass

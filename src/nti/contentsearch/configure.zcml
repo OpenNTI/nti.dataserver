@@ -39,6 +39,10 @@
 				for=".interfaces.INgramSnippetHighlight"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
 			
+	<subscriber factory="._search_external.WhooshHighlightDecoratorFactory"
+				for=".interfaces.IWhooshSnippetHighlight"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
+				
 	<!-- Content Resolvers -->
 
 	<adapter factory="._content_utils._StringContentResolver"

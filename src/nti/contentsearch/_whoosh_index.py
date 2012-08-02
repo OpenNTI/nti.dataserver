@@ -8,6 +8,7 @@ from zope import interface
 from zope import component
 
 from whoosh import fields
+from whoosh import highlight
 
 from nti.contentsearch import QueryObject
 from nti.contentsearch import compute_ngrams
@@ -19,6 +20,7 @@ from nti.contentsearch._search_external import get_search_hit
 
 from nti.contentsearch.common import WORD_HIGHLIGHT
 from nti.contentsearch.common import NGRAM_HIGHLIGHT
+from nti.contentsearch.common import WHOOSH_HIGHLIGHT
 from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch._search_results import empty_search_result
 from nti.contentsearch._search_results import empty_suggest_result
@@ -51,13 +53,17 @@ class _SearchableContent(object):
 		parsed_query = parse_query(fieldname, qo, self.get_schema())
 		return qo, parsed_query
 	
+	def get_search_highlight_type(self):
+		return WORD_HIGHLIGHT
+	
 	def search(self, searcher, query, *args, **kwargs):
 		qo, parsed_query = self._parse_query(content_, query, **kwargs)
-		return self.execute_query_and_externalize(searcher, parsed_query, qo, WORD_HIGHLIGHT)
+		return self.execute_query_and_externalize(searcher, content_, parsed_query, qo,
+												  self.get_search_highlight_type())
 		
 	def ngram_search(self, searcher, query, *args, **kwargs):
 		qo, parsed_query = self._parse_query(quick_, query, **kwargs)
-		return self.execute_query_and_externalize(searcher, parsed_query, qo, NGRAM_HIGHLIGHT)
+		return self.execute_query_and_externalize(searcher, quick_, parsed_query, qo, NGRAM_HIGHLIGHT)
 	
 	def suggest_and_search(self, searcher, query, *args, **kwargs):
 		qo = QueryObject.create(query, **kwargs)
@@ -88,9 +94,17 @@ class _SearchableContent(object):
 		result[HIT_COUNT] = len(records)
 		return result
 
-	def execute_query_and_externalize(self, searcher, parsed_query, queryobject, highlight_type=None):
+	def execute_query_and_externalize(self, searcher, search_field, parsed_query, queryobject, highlight_type=None):
 
+		# execute search
 		search_hits = searcher.search(parsed_query, limit = queryobject.limit)
+		
+		# set highlight type
+		surround = queryobject.surround
+		maxchars = queryobject.maxchars
+		search_hits.formatter = highlight.UppercaseFormatter()
+		search_hits.fragmenter = highlight.ContextFragmenter(maxchars=maxchars, surround=surround)
+		
 		length = len(search_hits)
 		query_term = queryobject.term
 		result = empty_search_result(query_term)
@@ -100,7 +114,7 @@ class _SearchableContent(object):
 		items = result[ITEMS]
 		
 		# return all source objects
-		objects = self.get_objects_from_whoosh_hits(search_hits)
+		objects = self.get_objects_from_whoosh_hits(search_hits, search_field)
 		
 		# get all index hits
 		hits = map(get_search_hit, objects, [query_term]*length, [highlight_type]*length)
@@ -114,7 +128,7 @@ class _SearchableContent(object):
 		result[HIT_COUNT] = length
 		return result
 
-	def get_objects_from_whoosh_hits(self, search_hits):
+	def get_objects_from_whoosh_hits(self, search_hits, search_field):
 		return search_hits
 	
 # book content
@@ -147,10 +161,14 @@ class Book(_SearchableContent):
 
 	_schema = create_book_schema()
 	
-	def get_objects_from_whoosh_hits(self, search_hits):
+	def get_search_highlight_type(self):
+		return WHOOSH_HIGHLIGHT
+	
+	def get_objects_from_whoosh_hits(self, search_hits, search_field):
 		result = []
 		for hit in search_hits:
 			result.append(hit)
+			hit.search_field = search_field
 			interface.alsoProvides( hit, IWhooshBookContent )
 		return result
 
@@ -239,6 +257,9 @@ def _create_user_indexable_content_schema():
 	
 class UserIndexableContent(_SearchableContent):
 
+	def get_search_highlight_type(self):
+		return WORD_HIGHLIGHT
+	
 	def get_index_data(self, data, *args, **kwargs):
 		"""
 		return a dictonary with the info to be stored in the index
@@ -252,7 +273,7 @@ class UserIndexableContent(_SearchableContent):
 		result[last_modified_] = get_last_modified(data)
 		return result
 
-	def get_objects_from_whoosh_hits(self, search_hits):
+	def get_objects_from_whoosh_hits(self, search_hits, search_field):
 		result = map(self._get_object, search_hits)
 		return result
 	
