@@ -6,6 +6,7 @@ import collections
 
 from zope import component
 from zope import interface
+from persistent.interfaces import IPersistent
 
 from dolmen.builtins import IDict
 
@@ -86,8 +87,14 @@ class _AbstractIndexDataResolver(_BasicContentaResolver):
 	get_objectId = get_external_oid
 	
 	def get_creator(self):
-		usr = _get_any_attr(self.obj, creator_fields)
-		return unicode(usr.username) if usr else None
+		result = _get_any_attr(self.obj, creator_fields)
+		if nti_interfaces.IEntity.providedBy(result):
+			result = unicode(result.username)
+		elif isinstance(result, six.string_types):
+			result = unicode(result)
+		else:
+			result = None
+		return result
 	
 	def get_containerId(self):
 		result = _get_any_attr(self.obj, container_id_fields) 
@@ -113,9 +120,15 @@ class _ThreadableContentResolver(_AbstractIndexDataResolver):
 		items = to_list(_get_any_attr(self.obj, [references_]))
 		result = set()
 		for obj in items or ():
+			ntiid = None
 			adapted = component.queryAdapter(obj, IContentResolver)
-			ntiid = adapted.get_ntiid() if adapted else u''
-			if ntiid: result.add(unicode(ntiid))
+			if adapted:
+				if IPersistent.providedBy(obj):
+					ntiid = adapted.get_ntiid()
+				else:
+					ntiid = adapted.get_content()
+			if ntiid:
+				result.add(unicode(ntiid))
 		return list(result) if result else []
 	
 	def get_inReplyTo(self):
