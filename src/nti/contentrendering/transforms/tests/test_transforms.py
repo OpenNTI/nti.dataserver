@@ -137,3 +137,37 @@ def test_challProbRightPicTransform():
 	#We expect the rightpic to have been moved down a level and belong to the last review problem as opposed to the first one.
 	revProbWithPic = dom.getElementsByTagName( 'chall')[2];
 	assert_that( revProbWithPic.firstChild.firstChild.nodeName, is_( 'rightpic' ))
+
+def test_solutionRightPicTransform():
+	example = br"""
+
+\section{Some section}
+
+\begin{problem}{}%\rightpic{chap2diag.108}}                                                                             
+In the figure below, $AOB$ is a straight line.  What is the measure of $\angle AOB$?
+
+\centpic{geometry_29.pdf}\end{problem}
+
+
+
+\rightpic{geometry_86.pdf}
+\begin{solution}
+If we don't see the answer right away, we can try to figure out what portion
+of a circle the angle cuts off.  We draw a circle with center $O$ as
+in the diagram to the right.  Now we can see that the angle cuts off
+half a circle (whichever side of the line we pick).  So,
+\[\angle AOB =
+\frac{1}{2}(360\dgg) = 180\dgg.\]
+
+This angle's name is easy to remember: a \Def{straight angle}
+ is an angle that is really a straight line\index{angle!straight}.
+\end{solution}
+
+	"""
+
+	dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
+
+	rightpicTransform( dom )
+	#We expect the rightpic to have been moved down a level and belong to the last review problem as opposed to the first one.
+	solutionWithPic = dom.getElementsByTagName( 'solution')[0];
+	assert_that( solutionWithPic.firstChild.nodeName, is_( 'rightpic' ))
