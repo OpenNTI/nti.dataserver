@@ -44,7 +44,11 @@ def test_macros():
 		\begin{naqsymmathpart}
 		Arbitrary content goes here.
 		\begin{naqsolutions}
-			\naqsolution $\frac{1}{2}$
+			\naqsolution $420$
+			\naqsolution $\frac{5}{8}$
+			\naqsolution $\left(3x+2\right)\left(2x+3\right)$
+			\naqsolution $\surd2$
+			\naqsolution $\frac{\surd\left(8x+5\right)\left(12x+12\right)}{\approx152318}+1204$
 		\end{naqsolutions}
 		\begin{naqhints}
 			\naqhint Some hint
@@ -59,10 +63,17 @@ def test_macros():
 
 	naq = dom.getElementsByTagName('naquestion')[0]
 	part_el = naq.getElementsByTagName( 'naqsymmathpart' )[0]
-	for item in getattr( part_el, '_asm_solutions' )():
+	import sys
+	values 	=  ['420',
+				r'\frac{5}{8}',
+				'\\left(3x+2\\right)\\left(2x+3\\right)',
+				'\\surd 2',
+				'\\frac{\\surd \\left(8x+5\\right)\\left(12x+12\\right)}{\\approx 152318}+1204']
+	for index,item in enumerate(getattr( part_el, '_asm_solutions' )()):
+		print (item, file=sys.stderr)
 		assert_that( item, verifiably_provides( part_el.soln_interface ) )
 		assert_that( item, has_property( 'weight', 1.0 ) )
-		assert_that( item, has_property( 'value', '\\frac{1}{2}' ) )
+		assert_that( item, has_property( 'value', values[index] ) )
 
 	part = part_el.assessment_object()
 	assert_that( part, verifiably_provides( part_el.part_interface ) )
