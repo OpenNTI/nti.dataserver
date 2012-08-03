@@ -139,7 +139,10 @@ class _RedactionContentResolver2(_HighLightContentResolver2):
 	
 	def get_replacement_content(self):
 		result = self.obj.replacementContent
-		return get_content(result) if result else None
+		result = get_content(result) if result else None
+		if result and result.lower() == redaction_:
+			result = None
+		return result
 		
 	def get_redaction_explanation(self):
 		result = self.obj.redactionExplanation
