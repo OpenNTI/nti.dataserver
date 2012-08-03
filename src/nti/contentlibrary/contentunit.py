@@ -23,8 +23,12 @@ class ContentUnit(object):
 	ordinal = 1
 	href = None
 	ntiid = None
-	title = None
 	icon = None
+
+	# DCDescriptiveProperties
+	title = None
+	description = None
+
 
 	children = ()
 	__parent__ = None
@@ -82,6 +86,12 @@ class ContentPackage(ContentUnit):
 	installable = False
 	archive = None
 	renderVersion = 1
+
+	# IDCExtended
+	creators = ()
+	subjects = ()
+	contributors = ()
+	publisher = ''
 
 @interface.implementer(IFilesystemContentPackage)
 class FilesystemContentPackage(ContentPackage,FilesystemContentUnit):
