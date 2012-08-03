@@ -45,7 +45,7 @@ from nti.contentsearch.spambayes import default_max_discriminators
 from nti.contentsearch.spambayes import default_unknown_word_strength
 from nti.contentsearch.spambayes import default_minimum_prob_strength
 
-from nti.contentsearch.spambayes.utils.chi2 import chi2Q
+from nti.contentsearch.spambayes.statistics.chi2 import chi2Q
 
 class _BaseWordInfo(object):
 	def update(self, spam, ham):
