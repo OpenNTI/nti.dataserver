@@ -4,7 +4,7 @@ import unittest
 import tempfile
 
 from nti.contentsearch.spambayes.tokenizer import tokenize
-from nti.contentsearch.spambayes.utils import create_sql3classifier_db
+from nti.contentsearch.spambayes.utils.emessage import create_sql3classifier_db
 
 from hamcrest import (assert_that, is_, greater_than_or_equal_to, has_length)
 

@@ -20,9 +20,8 @@ from nti.contentsearch.spambayes.storage_classifier import SQL3Classifier
 import logging
 logger = logging.getLogger( __name__ )
 
-
 def _textparts(msg):
-	"""Return a set of all msg parts with content maintype 'text'."""
+	"""return a set of all msg parts with content maintype 'text'."""
 	return set(filter(lambda part: part.get_content_maintype() == 'text', msg.walk()))
 
 header_break_re = re.compile(r"\r?\n(\r?\n)")
@@ -67,10 +66,8 @@ def _repair_damaged_base64(text):
 			pass
 	return base64text + text[i:]
 
-
-
 def get_email_message(obj):
-	"""Return an email Message object. """
+	"""return an email message object. """
 
 	if isinstance(obj, email.Message.Message):
 		return obj
@@ -90,7 +87,7 @@ def get_email_message(obj):
 	return msg
 
 def get_email_message_as_string(msg, unixfrom=False):
-	"""Convert a Message object to a string"""
+	"""convert a message object to a string"""
 
 	if isinstance(msg, six.string_types):
 		return msg
@@ -177,6 +174,8 @@ def _get_email_message_text_parts(obj):
 	
 def create_sql3classifier_db(dbpath, directory, include_ham=False, fnfilter='*', indexfile=None,
 							default_spam=True, separator=None, batch_size=1000, *args, **kwargs):
+	"""crearte a sql3classifier from a list of email message files"""
+	
 	count = 0
 	total = 0
 	dbpath = os.path.expanduser(dbpath)
