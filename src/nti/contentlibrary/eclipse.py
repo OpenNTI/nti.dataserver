@@ -11,14 +11,16 @@ logger = logging.getLogger(__name__)
 import os
 from lxml import etree
 
+from zope.dublincore import xmlmetadata
+
 # some direct imports for speed
 from os.path import join as path_join
 from .contentunit import FilesystemContentUnit, FilesystemContentPackage
 
-__all__ = ('Library', 'LibraryEntry', 'TOCEntry')
 
 TOC_FILENAME = 'eclipse-toc.xml'
 ARCHIVE_FILENAME = 'archive.zip'
+DCMETA_FILENAME = 'dc_metadata.xml'
 
 def _TOCPath( path ):
 	return os.path.abspath( path_join( path, TOC_FILENAME ))
@@ -109,6 +111,12 @@ def EclipseContentPackage( localPath ):
 	if os.path.exists( archive ):
 		content_package.archive = ARCHIVE_FILENAME
 		content_package.installable = True
+
+	dcmetafile = path_join( localPath, DCMETA_FILENAME )
+	if os.path.exists( dcmetafile ):
+		metadata = xmlmetadata.parse( dcmetafile )
+		if 'Creator' in metadata:
+			content_package.creators = metadata['Creator']
 
 	_cache.put( toc_path, content_package )
 

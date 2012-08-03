@@ -4,7 +4,7 @@ from __future__ import print_function, unicode_literals
 from zope import interface
 from zope import schema
 from zope.location.interfaces import IContained as IZContained
-from zope.dublincore.interfaces import IDCTimes
+from zope.dublincore import interfaces as dub_interfaces
 
 #pylint: disable=E0213,E0211
 
@@ -40,7 +40,7 @@ class IContentPackageLibrary(interface.Interface):
 # TODO: I'm not happy with the way paths are handled. How can the 'relative'
 # stuff be done better? This is mostly an issue with the IContentPackage,
 
-class IContentUnit(IZContained):
+class IContentUnit(IZContained, dub_interfaces.IDCDescriptiveProperties):
 	"""
 	One identified unit of content.
 
@@ -52,12 +52,12 @@ class IContentUnit(IZContained):
 	href = schema.TextLine( title="URI for the representation of this item.",
 						description="If this unit is within a package, then this is a relative path" )
 	ntiid = schema.TextLine( title="The NTIID for this item" )
-	title = schema.TextLine( title="The human-readable section name of this item; alias for `__parent__`" )
+	title = schema.TextLine( title="The human-readable section name of this item; alias for `__name__`" ) # also defined by IDCDescriptiveProperties
 	icon = schema.TextLine( title="URI for an image for this item, or None" )
 	children = schema.Iterable( title="Any :class:`IContentUnit` objects this item has." )
 
 
-class IContentPackage(IContentUnit):
+class IContentPackage(IContentUnit, dub_interfaces.IDCExtended):
 	"""
 	An identified collection of content treated as a unit.
 	The package starts with a root unit (this object).
@@ -79,7 +79,7 @@ class IContentPackage(IContentUnit):
 								default=1, min=1 )
 
 
-class IFilesystemEntry(interface.Interface,IDCTimes):
+class IFilesystemEntry(interface.Interface,dub_interfaces.IDCTimes):
 	"""
 	A mixin interface for things that are backed by items on the filesystem.
 

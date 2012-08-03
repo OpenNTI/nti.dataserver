@@ -9,9 +9,16 @@ from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import none
 from hamcrest import has_property
+from hamcrest import has_entry
 from nti.tests import verifiably_provides, ConfiguringTestBase
 
-from nti.contentlibrary import contentunit, interfaces
+from nti.contentlibrary import contentunit, interfaces, eclipse
+import nti.contentlibrary
+import nti.externalization
+import nti.externalization.externalization
+
+import anyjson as json
+import os.path
 
 class TestFilesystemContentUnit(ConfiguringTestBase):
 
@@ -45,3 +52,14 @@ class TestFilesystemContentUnit(ConfiguringTestBase):
 
 		assert_that( IPrefs( unit ), verifiably_provides( IPrefs ) )
 		assert_that( IPrefs( unit ), has_property( '__parent__', unit ) )
+
+	def test_from_filesystem(self):
+		package = eclipse.EclipseContentPackage( os.path.join( os.path.dirname( __file__ ), 'TestFilesystem' ) )
+		assert_that( package.creators, is_( ('Jason',) ) )
+
+		self.configure_packages( set_up_packages=(nti.externalization,nti.contentlibrary) )
+		ext_package = nti.externalization.externalization.toExternalObject( package )
+		assert_that( ext_package, has_entry( 'DCCreator', ('Jason',) ) )
+		assert_that( ext_package, has_entry( 'Creator', 'Jason') )
+
+		json.loads( json.dumps( ext_package ) ) # Round trips through JSON
