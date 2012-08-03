@@ -21,7 +21,7 @@ from BTrees.IIBTree import difference as difference32
 
 from BTrees.LOBTree import LOBTree
 from BTrees.LLBTree import union as union64
-from BTrees.LLBTree import LLTreeSet, LLBTree
+from BTrees.LLBTree import LLBTree
 
 from zope.component.interfaces import IFactory
 from zope.interface import implements, implementedBy
@@ -35,14 +35,11 @@ from nti.contentsearch.zopyxtxng3coredoclist import DocidList
 
 # monkey patch 
 
-from nti.contentsearch.zopyxtxng3coreresultset import unionResultSets 
-from nti.contentsearch.zopyxtxng3coreresultset import inverseResultSet
-from nti.contentsearch.zopyxtxng3coreresultset import intersectionResultSets
-
-import zopyx.txng3.core.index
-zopyx.txng3.core.index.unionResultSets = unionResultSets
-zopyx.txng3.core.index.inverseResultSet = inverseResultSet
-zopyx.txng3.core.index.intersectionResultSets = intersectionResultSets
+import zopyx.txng3.core.index as zopycoreidx
+from nti.contentsearch import zopyxtxng3coreresultset as ntizopyrs
+zopycoreidx.unionResultSets = ntizopyrs.unionResultSets
+zopycoreidx.inverseResultSet = ntizopyrs.inverseResultSet
+zopycoreidx.intersectionResultSets = ntizopyrs.intersectionResultSets
 
 class Storage(ZOPYStorage):
 	
