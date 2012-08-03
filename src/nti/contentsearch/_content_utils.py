@@ -38,7 +38,8 @@ from nti.contentsearch.common import (text_, body_, selectedText_, replacementCo
 									  inReplyTo_, recipients_, channel_)
 
 def get_content(text=None):
-	result = component.getUtility(IContentTokenizer).tokenize(text) if text else u''
+	tokenizer = component.getUtility(IContentTokenizer)
+	result = tokenizer.tokenize(text) if text else u''
 	return unicode(result)
 
 @interface.implementer(IContentResolver)
