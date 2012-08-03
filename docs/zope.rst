@@ -205,3 +205,41 @@ Transaction
 
 .. automodule:: transaction
 .. automodule:: transaction.interfaces
+
+Dublincore
+==========
+
+.. automodule:: zope.dublincore
+
+Interfaces
+----------
+
+.. automodule:: zope.dublincore.interfaces
+
+Property
+--------
+
+.. automodule:: zope.dublincore.property
+
+Annotations
+-----------
+
+.. automodule:: zope.dublincore.annotatableadapter
+.. automodule:: zope.dublincore.creatorannotator
+.. automodule:: zope.dublincore.timeannotators
+
+
+XML
+---
+
+.. automodule:: zope.dublincore.xmlmetadata
+.. autoclass:: zope.dublincore.xmlmetadata.DublinCoreHandler
+.. autofunction:: zope.dublincore.xmlmetadata.dumpString
+.. autofunction:: zope.dublincore.xmlmetadata.parseString
+.. autofunction:: zope.dublincore.xmlmetadata.parse
+
+
+Zope Dublin Core
+----------------
+
+.. automodule:: zope.dublincore.zopedublincore
