@@ -3,6 +3,7 @@ from __future__ import print_function, unicode_literals
 import six
 import sys
 
+# monkey patch logger
 import zopyxtxng3corelogger
 sys.modules["zopyx.txng3.core.logger"] = zopyxtxng3corelogger
 
@@ -24,8 +25,6 @@ from repoze.catalog.indexes.common import CatalogIndex
 import logging
 logger = logging.getLogger(__name__)
 		
-# -----------------------------------
-
 class _Proxy(object):
 	def __init__(self, fields, data):
 		if  isinstance(data, six.string_types):
@@ -164,9 +163,6 @@ class TextIndexNG3(object):
 	
 	def get_index_source_names(self):
 		return self.fields
-
-
-# -----------------------------------
 
 class CatalogTextIndexNG3(CatalogIndex, TextIndexNG3):
 	""" 

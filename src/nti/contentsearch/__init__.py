@@ -1,4 +1,5 @@
 import six
+import sys
 import time
 import UserDict
 from collections import Iterable
@@ -14,6 +15,11 @@ from nti.contentsearch._search_highlights import (WORD_HIGHLIGHT, NGRAM_HIGHLIGH
 
 import logging
 logger = logging.getLogger( __name__ )
+
+# monkey patch
+
+import zopyxtxng3corelogger
+sys.modules["zopyx.txng3.core.logger"] = zopyxtxng3corelogger
 
 compute_ngrams = False #TODO: set this as part of a config
 
