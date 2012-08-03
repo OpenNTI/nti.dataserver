@@ -1,6 +1,5 @@
 from __future__ import print_function, unicode_literals
 
-import time
 import random
 import sqlite3 as sql
 
@@ -14,12 +13,8 @@ from nti.contentsearch.spambayes import default_spam_cutoff
 from nti.contentsearch.spambayes.tokenizer import tokenize
 from nti.contentsearch.spambayes.classifier import Classifier
 from nti.contentsearch.spambayes.classifier import _BaseWordInfo
-from nti.contentsearch.spambayes.interfaces import IObjectClassifierMetaData
 
-from nti.contentsearch.spambayes import PERSISTENT_HAM_INT
-from nti.contentsearch.spambayes import PERSISTENT_SPAM_INT
 from nti.contentsearch.spambayes import default_use_bigrams
-from nti.contentsearch.spambayes import PERSISTENT_UNSURE_INT
 from nti.contentsearch.spambayes import default_unknown_word_prob
 from nti.contentsearch.spambayes import default_max_discriminators
 from nti.contentsearch.spambayes import default_unknown_word_strength
@@ -48,20 +43,6 @@ class Trainer(Classifier):
 		else:
 			return random.uniform(default_ham_cutoff, default_spam_cutoff)
 	
-	def mark_spam(self, context):
-		md = IObjectClassifierMetaData(context, None)
-		md.spam_classification = PERSISTENT_SPAM_INT
-		md.spam_classification_time = time.time()
-
-	def mark_ham(self, context):
-		md = IObjectClassifierMetaData(context, None)
-		md.spam_classification = PERSISTENT_HAM_INT
-		md.spam_classification_time = time.time()
-		
-	def mark_unsure(self, context):
-		md = IObjectClassifierMetaData(context, None)
-		md.spam_classification = PERSISTENT_UNSURE_INT
-		md.spam_classification_time = time.time()
 
 class PersistentClassifier(Persistent, Trainer):
 	
