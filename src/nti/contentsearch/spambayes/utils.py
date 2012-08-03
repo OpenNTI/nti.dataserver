@@ -15,7 +15,7 @@ from logging import DEBUG
 from email.message import Message as eMessage
 
 from nti.contentsearch.spambayes.tokenizer import tokenize
-from nti.contentsearch.spambayes.storage import SQL3Classifier
+from nti.contentsearch.spambayes.storage_classifier import SQL3Classifier
 
 import logging
 logger = logging.getLogger( __name__ )

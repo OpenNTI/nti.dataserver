@@ -9,7 +9,7 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.contentsearch.spambayes import PERSISTENT_SPAM_INT
 
-from nti.contentsearch.spambayes.storage import Trainer
+from nti.contentsearch.spambayes.storage_classifier import Trainer
 from nti.contentsearch.spambayes.interfaces import IUserSpamClassifier
 from nti.contentsearch.spambayes.interfaces import IObjectClassifierMetaData
 

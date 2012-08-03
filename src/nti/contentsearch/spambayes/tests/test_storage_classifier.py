@@ -5,7 +5,7 @@ import tempfile
 import transaction
 
 from nti.contentsearch.spambayes.tokenizer import tokenize
-from nti.contentsearch.spambayes.storage import SQL3Classifier
+from nti.contentsearch.spambayes.storage_classifier import SQL3Classifier
 
 from nti.contentsearch.spambayes.tests import ConfiguringTestBase
 

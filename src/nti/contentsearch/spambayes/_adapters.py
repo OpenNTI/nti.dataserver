@@ -11,9 +11,8 @@ from persistent import Persistent
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.contentsearch.spambayes import PERSISTENT_HAM_INT
-from nti.contentsearch.spambayes.storage import PersistentClassifier
 from nti.contentsearch.spambayes import interfaces as sps_interfaces
-
+from nti.contentsearch.spambayes.storage_classifier import PersistentClassifier
 
 @interface.implementer(sps_interfaces.IObjectClassifierMetaData)
 @component.adapter(nti_interfaces.IModeledContent)
