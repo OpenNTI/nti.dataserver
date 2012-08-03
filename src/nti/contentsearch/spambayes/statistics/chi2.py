@@ -6,6 +6,8 @@ import sys
 import random
 import math as _math
 
+from histogram import Hist
+
 def chi2Q(x2, v, exp=_math.exp, minf=min):
 	"""
 	Return prob(chisq >= x2, with v degrees of freedom).
@@ -101,8 +103,6 @@ def normIP(p):
 
 def main():
 	
-	from nti.contentsearch.spambayes.histogram import Hist
-
 	class WrappedRandom:
 		# There's no way W-H is equidistributed in 50 dimensions, so use
 		# Marsaglia-wrapping to shuffle it more.
