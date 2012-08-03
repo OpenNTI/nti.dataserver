@@ -669,36 +669,36 @@ order. A fix in the application for this is pending. */
 	padding-left: 0px;
 }*/
 
-#NTIContent ol.review-problems > li.revprob {
+#NTIContent li.revprob {
 	list-style-type: none;
 	margin-left: 0px;
 }
 
-#NTIContent ol.review-problems > li.revprob:before {
+#NTIContent li.revprob:before {
     content: attr(probnum);
     position: relative;
     float: left;
     padding-right: 0.5em;
 }
 
-#NTIContent ol.challenge-problems > li.chall {
+#NTIContent li.chall {
 	list-style-type: none;
 	margin-left: 0px;
 }
 
-#NTIContent ol.challenge-problems > li.challhard {
+#NTIContent li.challhard {
 	list-style-type: none;
 	margin-left: 0px;
 }
 
-#NTIContent ol.challenge-problems > li.chall:before {
+#NTIContent li.chall:before {
     content: attr(probnum);
     position: relative;
     float: left;
     padding-right: 0.5em;
 }
 
-#NTIContent ol.challenge-problems > li.challhard:before {
+#NTIContent li.challhard:before {
     content: attr(probnum) " * ";
     position: relative;
     float: left;
