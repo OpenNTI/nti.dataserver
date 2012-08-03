@@ -24,7 +24,7 @@ from hamcrest import (assert_that, is_)
 class Foo(Persistent):
 	pass
 
-class TestStorage(ConfiguringTestBase):
+class TestAdapters(ConfiguringTestBase):
 
 	def test_classifier_metadata(self):
 		foo = Foo()

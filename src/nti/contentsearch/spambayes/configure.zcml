@@ -12,5 +12,8 @@
 	<adapter factory="._adapters._UserSpamClassifierFactory"
 			 for="nti.dataserver.interfaces.IUser"
 			 provides=".interfaces.IUserSpamClassifier" />
-			 
+	
+	<utility factory=".tokenizer._ContentTokenizer" 
+			 name="spam_tokenizer" />
+		 
 </configure>
