@@ -63,14 +63,12 @@ def test_macros():
 
 	naq = dom.getElementsByTagName('naquestion')[0]
 	part_el = naq.getElementsByTagName( 'naqsymmathpart' )[0]
-	import sys
 	values 	=  ['420',
 				r'\frac{5}{8}',
 				'\\left(3x+2\\right)\\left(2x+3\\right)',
 				'\\surd 2',
 				'\\frac{\\surd \\left(8x+5\\right)\\left(12x+12\\right)}{\\approx 152318}+1204']
 	for index,item in enumerate(getattr( part_el, '_asm_solutions' )()):
-		print (item, file=sys.stderr)
 		assert_that( item, verifiably_provides( part_el.soln_interface ) )
 		assert_that( item, has_property( 'weight', 1.0 ) )
 		assert_that( item, has_property( 'value', values[index] ) )
@@ -80,6 +78,44 @@ def test_macros():
 	assert_that( part.content, is_( "Arbitrary content goes here." ) )
 	assert_that( part.hints, has_length( 1 ) )
 	assert_that( part.hints, contains( verifiably_provides( asm_interfaces.IQHint ) ) )
+
+def test_free_response_macros():
+	example = br"""
+	\begin{naquestion}[individual=true]
+		Arbitrary content goes here.
+		\begin{naqfreeresponsepart}
+		Arbitrary content goes here.
+		\begin{naqsolutions}
+			\naqsolution This is a solution.
+				It may require multiple lines.
+
+				It may span paragraphs.
+			\naqsolution This is another solution.
+			\naqsolution In some cases, \textit{it} may be complicated: $i$.
+
+		\end{naqsolutions}
+		\begin{naqhints}
+			\naqhint Some hint
+		\end{naqhints}
+		\end{naqfreeresponsepart}
+	\end{naquestion}
+	"""
+
+	dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
+	assert_that( dom.getElementsByTagName('naquestion'), has_length( 1 ) )
+	assert_that( dom.getElementsByTagName('naquestion')[0], is_( naquestion ) )
+	naq = dom.getElementsByTagName('naquestion')[0]
+	part_el = naq.getElementsByTagName( 'naqfreeresponsepart' )[0]
+
+	part = part_el.assessment_object()
+	assert_that( part, verifiably_provides( part_el.part_interface ) )
+	assert_that( part.content, is_( "Arbitrary content goes here." ) )
+	assert_that( part.solutions[0], has_property( "value", "This is a solution. It may require multiple lines. It may span paragraphs." ) )
+
+
+
+
+
 
 def test_multiple_choice_macros():
 	example = br"""

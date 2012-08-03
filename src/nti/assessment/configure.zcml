@@ -38,7 +38,9 @@
 	<adapter factory="int .solution.QMultipleChoiceSolution"
 			 provides=".interfaces.IQMultipleChoiceSolution"
 			 for="basestring"/>
-
+	<adapter factory=".solution.QFreeResponseSolution"
+			 provides=".interfaces.IQFreeResponseSolution"
+			 for="basestring"/>
 
 	<adapter factory=".hint.QTextHint"
 			 provides=".interfaces.IQTextHint"
