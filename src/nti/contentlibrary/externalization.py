@@ -35,6 +35,7 @@ class _ContentPackageExternal(object):
 		result = to_standard_external_dictionary( self.package )
 		result.__name__ = self.package.__name__
 		result.__parent__ = self.package.__parent__
+
 		# TODO: We're making all kinds of assumptions about where in the
 		# URL space these are
 		def _o( p='' ):
@@ -50,7 +51,7 @@ class _ContentPackageExternal(object):
 
 		result['root'] = _o()
 		result['index'] = _o( os.path.basename( self.package.index ) ) if self.package.index else None
-		result['title'] = self.package.title
+		result['title'] = self.package.title # Matches result['DCTitle']
 		result['installable'] = self.package.installable
 		result['version'] = '1.0' # This field was never defined. What does it mean?  I think we were thinking of generations
 		result['renderVersion'] = self.package.renderVersion
