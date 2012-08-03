@@ -144,12 +144,14 @@ class _AbstractNAQPart(Base.Environment):
 		solutions = []
 		solution_els = self.getElementsByTagName( 'naqsolution' )
 		for solution_el in solution_els:
-			print (solution_el.source, solution_el.childNodes)
-			content = solution_el.childNodes[0].source
-			if len(solution_el.childNodes[0].childNodes) > 0: 
-				content = solution_el.childNodes[0].childNodes[0].source
-			if content[0] == '$' and content[len(content)-1] == '$': content = content[1:-1]
-			solution = self.soln_interface( cfg_interfaces.ILatexContentFragment( unicode(content).strip() ) )
+			solution = self.soln_interface( cfg_interfaces.ILatexContentFragment( unicode(solution_el.textContent).strip() ) 
+			# FIXME: Please explain.
+			# FIXME: Please provide a test case
+			#content = solution_el.childNodes[0].source
+			#if len(solution_el.childNodes[0].childNodes) > 0: 
+			#	content = solution_el.childNodes[0].childNodes[0].source
+			#if content[0] == '$' and content[len(content)-1] == '$': content = content[1:-1]
+			#solution = self.soln_interface( cfg_interfaces.ILatexContentFragment( unicode(content).strip() ) )
 			weight = solution_el.attributes['weight']
 			if weight is not None:
 				solution.weight = weight
