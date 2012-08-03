@@ -108,7 +108,7 @@ setup(
 		# run 'python setup.py install'. It may be necessary to 'pip uninstall' this (and/or remove it from zite-packages)
 		# before running setup.py.
 		# NOTE2: This will go away soon, merged into pyzmq 2.2dev as zmq.green
-		'gevent_zeromq >= 0.2.4',
+		'gevent_zeromq >= 0.2.5',
 		'greenlet >= 0.4.0',
 		'gunicorn >= 0.14.6',
 		'html5lib == 0.95',
