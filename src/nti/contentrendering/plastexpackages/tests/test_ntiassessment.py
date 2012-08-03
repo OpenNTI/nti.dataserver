@@ -44,7 +44,7 @@ def test_macros():
 		\begin{naqsymmathpart}
 		Arbitrary content goes here.
 		\begin{naqsolutions}
-			\naqsolution Some solution
+			\naqsolution $\frac{1}{2}$
 		\end{naqsolutions}
 		\begin{naqhints}
 			\naqhint Some hint
@@ -62,7 +62,7 @@ def test_macros():
 	for item in getattr( part_el, '_asm_solutions' )():
 		assert_that( item, verifiably_provides( part_el.soln_interface ) )
 		assert_that( item, has_property( 'weight', 1.0 ) )
-		assert_that( item, has_property( 'value', 'Some solution' ) )
+		assert_that( item, has_property( 'value', '\\frac{1}{2}' ) )
 
 	part = part_el.assessment_object()
 	assert_that( part, verifiably_provides( part_el.part_interface ) )
