@@ -146,7 +146,7 @@ class _AbstractNAQPart(Base.Environment):
 		for solution_el in solution_els:
 			#  If the textContent is taken instead of the source of the child element, the
 			#  code fails on Latex solutions like $\frac{1}{2}$
-			content = solution_el.childNodes[0].source.strip()
+			content = ' '.join([c.source.strip() for c in solution_el.childNodes]).strip()
 			if content[0] == '$' and content[len(content)-1] == '$':
 				 content = content[1:-1]
 			solution = self.soln_interface( cfg_interfaces.ILatexContentFragment( unicode(content).strip() ) )
