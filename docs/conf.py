@@ -48,8 +48,8 @@ autodoc_default_flags = ['members', 'show-inheritance']
 autoclass_content = 'both'
 intersphinx_mapping = {
 	'python':  ('http://python.readthedocs.org/en/v2.7.2/', None),
-	'zodb':    ('http://zodb.readthedocs.org/en/latest/', None),
-	'pyramid': ('http://docs.pylonsproject.org/projects/pyramid/en/latest/', None),
+#	'zodb':    ('http://zodb.readthedocs.org/en/latest/', None),
+#	'pyramid': ('http://docs.pylonsproject.org/projects/pyramid/en/latest/', None),
 	'pyquery': ('http://packages.python.org/pyquery/', None) }
 intersphinx_cache_limit = -1
 todo_include_todos = True

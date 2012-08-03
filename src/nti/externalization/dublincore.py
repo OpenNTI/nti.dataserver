@@ -4,6 +4,10 @@
 Externalization support for things that implement the interfaces
 of :mod:`zope.dublincore.interfaces`.
 
+.. note:: We are "namespacing" the dublincore properties, since they have
+  defined meanings we don't control. We are currently doing this by simply prefixing
+  them with 'DC'. This can probably be done better.
+
 
 $Id$
 """
@@ -19,15 +23,18 @@ from zope.dublincore import interfaces as dub_interfaces
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
 @component.adapter(dub_interfaces.IDCExtended)
 class DCExtendedExternalMappingDecorator(object):
+	"""
+	Adds the extended properties of dublincore to external objects
+	as defined by :class:`zope.dublincore.interfaces.IDCExtended`.
+
+	.. note:: We are currently only mapping 'Creator' since that's the only field that ever gets populated.
+	"""
 
 	def __init__( self, context ):
 		pass
 
 	def decorateExternalMapping( self, original, external ):
 		# TODO: Where should we get constants for this?
-		# TODO: Should we be namespacing these things, since they have
-		# a defined meaning? We are...
-		# TODO: We are only doing a subset of these that we care about now
 		if 'DCCreator' not in external:
 			external['DCCreator'] = original.creators
 		if StandardExternalFields.CREATOR not in external and original.creators:
@@ -37,6 +44,10 @@ class DCExtendedExternalMappingDecorator(object):
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
 @component.adapter(dub_interfaces.IDCDescriptiveProperties)
 class DCDescriptivePropertiesExternalMappingDecorator(object):
+	"""
+	Supports the 'DCTitle' and 'DCDescription' fields, as defined in
+	:class:`zope.dublincore.interfaces.IDCDescriptiveProperties`.
+	"""
 
 	def __init__( self, context ):
 		pass

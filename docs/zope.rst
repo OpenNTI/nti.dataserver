@@ -163,6 +163,15 @@ Component Vocabulary
 .. automodule:: zope.componentvocabulary
 .. automodule:: zope.componentvocabulary.vocabulary
 
+Generations
+===========
+
+.. automodule:: zope.generations
+
+Generation utilities
+--------------------
+
+.. automodule:: zope.generations.utility
 
 Minmax
 ======
@@ -198,7 +207,26 @@ Persistent
 ==========
 
 .. automodule:: persistent
+.. autoclass:: persistent.Persistent
+
+
+Interfaces
+----------
 .. automodule:: persistent.interfaces
+
+
+Persistent List
+---------------
+
+.. automodule:: persistent.list
+.. autoclass:: persistent.list.PersistentList
+
+Persistent Mapping
+------------------
+
+.. automodule:: persistent.mapping
+
+
 
 Transaction
 ===========
