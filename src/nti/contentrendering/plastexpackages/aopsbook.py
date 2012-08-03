@@ -318,7 +318,7 @@ class parts(Base.List):
 				self.attributes['probnum'] = self.attributes['probnum'] + "." + self.alpha
 
 			return _t
-	
+
 		def digest(self, tokens):
 			super(parts.part, self).digest(tokens)
                         #Remove trailing commas that we have in some parts
@@ -359,7 +359,7 @@ def removeCommasFromSectionWithHints(subsection):
 	hintName = 'hint'
 	for node in subsection.childNodes:
 		for child in node.childNodes:
-			if child.nextSibling != None and child.nextSibling.nextSibling != None:	
+			if child.nextSibling != None and child.nextSibling.nextSibling != None:
 				if child.nodeName == hintName and child.nextSibling == ', ' and child.nextSibling.nextSibling.nodeName == hintName:
 					node.removeChild(child.nextSibling)
 				elif child.nodeName == hintName and child.nextSibling == ',' and child.nextSibling.nextSibling.source == '~ ' and child.nextSibling.nextSibling.nextSibling != None and child.nextSibling.nextSibling.nextSibling.nodeName == hintName:
@@ -417,7 +417,7 @@ class exer(plastexids.StableIDMixin, Base.subsubsection):
 		self.attributes['exnumber'] = str(self.ownerDocument.context.counters['chapter'].value) + '.' + str(self.ownerDocument.context.counters['section'].value) + '.' + str(self.ownerDocument.context.counters['exnumber'].value)
 
 		return res
-	
+
 	def digest(self, tokens):
 		super(exer, self).digest( tokens )
 		removeCommasFromSectionWithHints(self)
@@ -478,8 +478,12 @@ class pdfinfo(Base.Command):
 			title = match.group('title')
 			authors = match.group('authors')
 
-			self.ownerDocument.userdata['title'] = title
-			self.ownerDocument.userdata['authors'] = authors
+			# Prefer to accept the values created by the \title and \author
+			# commands over what is in pdfinfo
+			if 'title' not in self.ownerDocument.userdata:
+				self.ownerDocument.userdata['title'] = title
+			if 'authors' not in self.ownerDocument.userdata:
+				self.ownerDocument.userdata['authors'] = authors
 
 		return [] # But don't put anything in the dom, it doesn't render
 
@@ -713,7 +717,7 @@ class revprob(Base.subsection):
 		res = super(revprob,self).invoke( tex )
 		self.attributes['probnum'] = str(self.ownerDocument.context.counters['chapter'].value) + '.' + str(self.ownerDocument.context.counters['probnum'].value)
 		return res
-	
+
 	def digest(self, tokens):
 		super(revprob, self).digest( tokens )
 		removeCommasFromSectionWithHints( self )
@@ -727,7 +731,7 @@ class chall(Base.subsection):
 		res = super(chall,self).invoke( tex )
 		self.attributes['probnum'] = str(self.ownerDocument.context.counters['chapter'].value) + '.' + str(self.ownerDocument.context.counters['probnum'].value)
 		return res
-	
+
 	def digest(self, tokens):
 		super(chall, self).digest( tokens )
 		removeCommasFromSectionWithHints( self )
@@ -741,7 +745,7 @@ class challhard(Base.subsection):
 		res = super(challhard,self).invoke( tex )
 		self.attributes['probnum'] = str(self.ownerDocument.context.counters['chapter'].value) + '.' + str(self.ownerDocument.context.counters['probnum'].value)
 		return res
-	
+
 	def digest(self, tokens):
 		super(challhard, self).digest( tokens )
 		removeCommasFromSectionWithHints( self )
