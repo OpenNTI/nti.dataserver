@@ -5,8 +5,15 @@
 	i18n_domain="zope">
 	<include package="zope.component" />
 
-	<adapter factory=".storage._ObjectClassifierMetaDataFactory"
+	<adapter factory="._adapters._ObjectClassifierMetaDataFactory"
 			 for="nti.dataserver.interfaces.IModeledContent"
 			 provides=".interfaces.IObjectClassifierMetaData" />
 
+	<adapter factory="._adapters._UserSpamClassifierFactory"
+			 for="nti.dataserver.interfaces.IUser"
+			 provides=".interfaces.IUserSpamClassifier" />
+	
+	<utility factory=".tokenizer._ContentTokenizer" 
+			 name="spam_tokenizer" />
+		 
 </configure>

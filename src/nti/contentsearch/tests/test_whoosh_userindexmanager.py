@@ -10,16 +10,19 @@ from nti.ntiids.ntiids import make_ntiid
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
+from nti.contentsearch import _whoosh_index
 from nti.contentsearch.tests import ConfiguringTestBase
 from nti.contentsearch._whoosh_userindexmanager import WhooshUserIndexManager
 from nti.contentsearch._whoosh_indexstorage import create_directory_index_storage
 
-from nti.contentsearch.common import ( 	HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, SNIPPET,
+from nti.contentsearch.common import ( 	HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS,
 										NTIID, TARGET_OID)
 
 from nti.contentsearch.tests import zanpakuto_commands
 
 from hamcrest import (assert_that, is_, has_key, has_entry, has_length, is_not, has_item)
+
+_whoosh_index.compute_ngrams = True
 
 class TestWhooshUserIndexManager(ConfiguringTestBase):
 
@@ -90,7 +93,6 @@ class TestWhooshUserIndexManager(ConfiguringTestBase):
 		assert_that(items[key], has_entry(TARGET_OID, is_not(None)))
 		assert_that(key, is_(items[key][NTIID]))
 		assert_that(items[key], has_entry(CONTAINER_ID, 'tag:nextthought.com,2011-10:bleach-manga'))
-		assert_that(items[key], has_entry(SNIPPET, 'now and Become my SHIELD Lightning Strike'))
 
 		hits = self.uim.search("*", limit=None)
 		assert_that(hits, has_entry(HIT_COUNT, len(zanpakuto_commands)))

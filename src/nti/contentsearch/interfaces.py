@@ -64,8 +64,8 @@ class ISearcher(interface.Interface):
 		"""
 	
 class IBookIndexManager(ISearcher):
-	def get_indexname(self):
-		return self.bookidx.indexname
+	def get_indexname():
+		"return the index name"
 	
 class IUserIndexManager(ISearcher):
 	
@@ -313,6 +313,13 @@ class IWhooshIndexStorage(interface.Interface):
 		return a dictionary with the arguments to be passed to an index writer commit method
 		""" 
 
+# book content
+
+class IWhooshBookContent(interface.Interface):
+	pass
+
+# text highlight types
+
 class IHighlightType(interface.Interface):
 	pass
 
@@ -325,15 +332,21 @@ class IWordSnippetHighlight(IHighlightType):
 class INgramSnippetHighlight(IHighlightType):
 	pass
 
+class IWhooshSnippetHighlight(IHighlightType):
+	pass
+
 class ISearchHit(ext_interfaces.IExternalObject):
 	query = interface.Attribute("""query that produced this hit""")
 	pass
 
-class IContentResolver2(interface.Interface):
+# user generated content resolvers
+
+class IContentResolver(interface.Interface):
+	
 	def get_content():
 		"""return the text content to index"""
 		
-class IUserContentResolver(IContentResolver2):
+class IUserContentResolver(IContentResolver):
 		
 	def get_ntiid():
 		"""return the NTI identifier"""
@@ -346,19 +359,17 @@ class IUserContentResolver(IContentResolver2):
 	
 	def get_containerId():
 		"""return the container identifier"""
-
-	def get_keywords():
-		"""return the key words"""
-	
-	def get_sharedWith():
-		"""return the share with users"""
 	
 	def get_last_modified():
 		"""return the last modified"""
 	
 class IThreadableContentResolver(IUserContentResolver):
-	def get_references():
-		"""return the nttids of the objects its refers"""
+	
+	def get_keywords():
+		"""return the key words"""
+	
+	def get_sharedWith():
+		"""return the share with users"""
 	
 	def get_inReplyTo():
 		"""return the inReplyTo nttid"""
@@ -367,6 +378,7 @@ class IHighlightContentResolver(IThreadableContentResolver):
 	pass
 	
 class IRedactionContentResolver(IHighlightContentResolver):
+	
 	def get_replacement_content():
 		"""return the replacement content"""
 		
@@ -374,13 +386,25 @@ class IRedactionContentResolver(IHighlightContentResolver):
 		"""return the redaction explanation content"""
 	
 class INoteContentResolver(IHighlightContentResolver):
-	pass
 	
-class IContentResolver(interface.Interface):
-	def get_content(data):
-		"""return the indexable text content associated with the specified data object"""
+	def get_references():
+		"""return the nttids of the objects its refers"""
+	
+class IMessageInfoContentResolver(IThreadableContentResolver):
+	
+	def get_id():
+		"""return the message id"""
+		
+	def get_channel():
+		"""return the message channel"""
+		
+	def get_recipients():
+		"""return the message recipients"""
+
+# text tokenizer
 
 class IContentTokenizer(interface.Interface):
+	
 	def tokenize(data):
 		"""tokenize the specifeid text data"""
 		

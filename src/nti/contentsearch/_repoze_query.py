@@ -19,8 +19,6 @@ from nti.contentsearch.common import (last_modified_fields)
 import logging
 logger = logging.getLogger( __name__ )
 
-# ----------------------------------
-
 def allow_keywords(f):
 	spec = inspect.getargspec(f)
 	return True if spec.keywords else False

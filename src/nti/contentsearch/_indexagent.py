@@ -2,6 +2,8 @@
 
 from __future__ import print_function, unicode_literals
 
+from ZODB import loglevels
+
 from nti.dataserver.activitystream_change import Change
 
 from nti.contentsearch.common import normalize_type_name
@@ -9,7 +11,6 @@ from nti.contentsearch.common import indexable_type_names
 
 import logging
 logger = logging.getLogger(__name__)
-from ZODB import loglevels
 
 _event_types = { Change.CREATED: 'index_user_content',
 				 Change.SHARED:  'index_user_content',

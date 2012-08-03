@@ -200,7 +200,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		user = User.create_user(mock_dataserver.current_mock_ds, username=username, password='temp' )
 		redaction = Redaction()
 		redaction.selectedText = u'Fear'
-		redaction.replacementContent = 'redaction'
+		redaction.replacementContent = 'Ichigo'
 		redaction.redactionExplanation = 'Have overcome it everytime I have been on the verge of death'
 		redaction.creator = username
 		redaction.containerId = make_ntiid(nttype='bleach', specific='manga')
@@ -216,7 +216,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		hits = rim.search("death", limit=None)
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 		
-		hits = rim.search("redaction", limit=None)
+		hits = rim.search("ichigo", limit=None)
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 				
 if __name__ == '__main__':
