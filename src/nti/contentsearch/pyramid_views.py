@@ -2,16 +2,28 @@
 
 from __future__ import print_function, unicode_literals
 
+from zope import component
 from pyramid.security import authenticated_userid
 
+from nti.ntiids.ntiids import is_valid_ntiid_string
+from nti.contentlibrary.interfaces import IContentPackageLibrary
+
 from nti.contentsearch import QueryObject
-from nti.contentsearch.common import get_collection
 from nti.contentsearch.interfaces import IIndexManager
 
 from nti.externalization.datastructures import LocatedExternalDict
 
 import logging
 logger = logging.getLogger( __name__ )
+
+def get_collection(ntiid, default=None, registry=component):
+	result = default
+	if ntiid and is_valid_ntiid_string(ntiid):
+		_library = registry.queryUtility( IContentPackageLibrary )
+		if _library:
+			paths = _library.pathToNTIID(ntiid)
+			result = paths[0].root if paths else default
+	return unicode(result.lower()) if result else default
 
 def _locate(obj, parent, name=None):
 	obj = LocatedExternalDict( obj )

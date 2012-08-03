@@ -16,7 +16,11 @@
 
 from __future__ import print_function, unicode_literals
 
+from zope.deprecation import deprecated
+
 from repoze.catalog.document import DocumentMap as rcDocumentMap
+
+deprecated( 'DocumentMap', 'Use lastest index implementation' )
 
 class DocumentMap(rcDocumentMap):
 
@@ -32,6 +36,8 @@ class DocumentMap(rcDocumentMap):
 		while True:
 			if self._v_nextid is None:
 				self._v_nextid = self._randrange(self.family.minint, self.family.maxint)
+				
+			# reverse to reduce collisions
 			uid = self._reverse(self._v_nextid)
 			self._v_nextid += 1
 			if uid not in self.docid_to_address:

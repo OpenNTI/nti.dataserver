@@ -12,8 +12,6 @@ from nti.contentsearch.tests import domain
 from nti.contentsearch._whoosh_indexstorage import DirectoryStorage
 from nti.contentsearch._whoosh_indexstorage import MultiDirectoryStorage
 
-# ------------------------
-
 sample_schema = fields.Schema(id=fields.ID(stored=True, unique=True), content=fields.TEXT(stored=True))
 
 class _IndexStorageTest(object):
@@ -96,9 +94,6 @@ class _IndexStorageTest(object):
 				results = s.search(q,limit=None)
 				self.assertTrue(len(results) == 0)
 			
-
-# ------------------------
-		
 class TestDirectoryStorage(_IndexStorageTest, unittest.TestCase):
 		
 	@classmethod
@@ -106,16 +101,12 @@ class TestDirectoryStorage(_IndexStorageTest, unittest.TestCase):
 		cls.indexdir = tempfile.mkdtemp(dir="/tmp")
 		cls.idx_storage = DirectoryStorage(cls.indexdir)
 		
-# ------------------------
-
 class TestMultiDirectoryStorage(_IndexStorageTest, unittest.TestCase):
 		
 	@classmethod
 	def setUpClass(cls):
 		cls.indexdir = tempfile.mkdtemp(dir="/tmp")
 		cls.idx_storage = MultiDirectoryStorage(cls.indexdir)
-
-# ------------------------
 	
 if __name__ == '__main__':
 	unittest.main()

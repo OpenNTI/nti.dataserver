@@ -14,11 +14,9 @@ from nti.contentsearch.interfaces import IUserIndexManagerFactory
 from nti.contentsearch import interfaces
 from nti.contentsearch import QueryObject
 from nti.contentsearch import SearchCallWrapper
-from nti.contentsearch.interfaces import ICloudSearchStore
 from nti.contentsearch.common import is_all_query
 from nti.contentsearch.common import get_type_name
 from nti.contentsearch.common import normalize_type_name
-from nti.contentsearch.common import indexable_type_names
 from nti.contentsearch._search_external import get_search_hit
 from nti.contentsearch._search_results import empty_search_result
 from nti.contentsearch._search_results import empty_suggest_result
@@ -29,10 +27,8 @@ from nti.contentsearch._cloudsearch_index import to_external_dict
 from nti.contentsearch._cloudsearch_store import get_search_service
 from nti.contentsearch._cloudsearch_index import search_stored_fields
 from nti.contentsearch._cloudsearch_store import get_document_service
-
-from nti.contentsearch.common import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT, LAST_MODIFIED, ITEMS,
-									  NTIID, HIT_COUNT)
-
+from nti.contentsearch._search_highlights import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT)
+from nti.contentsearch.common import ( LAST_MODIFIED, ITEMS, NTIID, HIT_COUNT)
 from nti.contentsearch.common import (username_, ngrams_, content_, oid_, type_)
 
 import logging
@@ -53,7 +49,7 @@ class CloudSearchUserIndexManager(object):
 
 	def __init__(self, username, ntisearch=None):
 		self.username = username
-		self.domain = ntisearch or component.getUtility(ICloudSearchStore).get_domain('ntisearch')
+		self.domain = ntisearch or component.getUtility(interfaces.ICloudSearchStore).get_domain('ntisearch')
 
 	def __str__( self ):
 		return self.username
@@ -212,8 +208,7 @@ class CloudSearchUserIndexManager(object):
 		return has_stored_indices(self.username)
 		
 	def get_stored_indices(self):
-		# asume all types are stored
-		return list(indexable_type_names)
+		return ()
 	
 # -----------------------------------
 
