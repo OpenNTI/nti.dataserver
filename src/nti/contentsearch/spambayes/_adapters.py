@@ -47,8 +47,8 @@ class _UserSpamManager(_UserSpamClassifier):
 				text = adapted.get_content()
 				self.train(text, True)
 	
-	def unmark_spam(self, obj, mtime=None, untrain=False):
-		if obj and self.spam_mamanger.mark_spam(obj, mtime) and untrain:
+	def unmark_spam(self, obj, untrain=False):
+		if obj and self.spam_mamanger.mark_spam(obj) and untrain:
 			adapted = component.queryAdapter(obj, cts_interfaces.IContentResolver)
 			if adapted:
 				text = adapted.get_content()
