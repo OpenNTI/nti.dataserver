@@ -18,7 +18,7 @@ class ISpamManager(ISpamClassifier):
 	def mark_spam(obj, mtime=None, train=False):
 		"""mark the specified object as spam"""
 	
-	def unmark_spam(obj, mtime=None, untrain=False):
+	def unmark_spam(obj, untrain=False):
 		"""unmark the specified object as ham"""
 		
 	def mark_ham(obj):
