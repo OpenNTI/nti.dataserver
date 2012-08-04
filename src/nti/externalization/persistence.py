@@ -1,9 +1,11 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Classes and functions for dealing with persistence in an external context.
-$Revision$
-"""
 
+$Id$
+"""
+from __future__ import print_function, unicode_literals
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -34,12 +36,15 @@ from .oids import toExternalOID
 
 
 def getPersistentState( obj ):
-	""" For a Persistent object, returns one of the
+	"""
+	For a :class:`persistent.Persistent` object, returns one of the
 	constants from the persistent module for its state:
-	CHANGED and UPTODATE being the most useful. If the object
-	is not Persistent and doesn't implement a 'getPersistentState' method,
+	:const:`persistent.CHANGED` and :const:`persistent.UPTODATE` being the most useful.
+
+	If the object is not Persistent and doesn't implement a ``getPersistentState`` method,
 	this method will be pessimistic and assume the object has
-	been CHANGED."""
+	been :const:`persistent.CHANGED`.
+	"""
 	if hasattr( obj, '_p_changed' ):
 		if getattr(obj, '_p_changed', False ):
 			# Trust the changed value ahead of the state value,
@@ -89,7 +94,11 @@ persistent.wref.WeakRef.toExternalOID = _weakRef_toExternalOID
 
 
 class PersistentExternalizableDictionary(persistent.mapping.PersistentMapping,datastructures.ExternalizableDictionaryMixin):
-
+	"""
+	Dictionary mixin that provides :meth:`toExternalDictionary` to return a new dictionary
+	with each value in the dict having been externalized with
+	:func:`toExternalObject`.
+	"""
 	def __init__(self, dict=None, **kwargs ):
 		super(PersistentExternalizableDictionary, self).__init__( dict, **kwargs )
 
@@ -100,6 +109,11 @@ class PersistentExternalizableDictionary(persistent.mapping.PersistentMapping,da
 		return result
 
 class PersistentExternalizableList(persistent.list.PersistentList):
+	"""
+	List mixin that provides :meth:`toExternalList` to return a new list
+	with each element in the sequence having been externalized with
+	:func:`toExternalObject`.
+	"""
 
 	def __init__(self, initlist=None):
 		# Must use new-style super call to get right behaviour
@@ -122,6 +136,9 @@ class PersistentExternalizableWeakList(PersistentExternalizableList):
 	"""
 	Stores :class:`persistent.Persistent` objects as weak references, invisibly to the user.
 	Any weak references added to the list will be treated the same.
+
+	Weak references are resolved on access; if the referrant has been deleted, then that
+	access will return ``None``.
 	"""
 
 	def __init__(self, initlist=None):

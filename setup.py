@@ -68,7 +68,7 @@ setup(
 		# In theory this should make it possible to get
 		# the svn revision number from svn 1.7. Doesn't seem
 		# to work (with distribute?)
-		#'setuptools_subversion >= 1.8'
+		#'setuptools_subversion >= 2.0'
 	],
 	install_requires = [
 		 # Zope Acquisition; used by contentratings implicitly
@@ -91,7 +91,10 @@ setup(
 		'anyjson >= 0.3.3',
 		'boto >= 2.5.2', # amazon
 		'brownie >= 0.5.1', # Common utilities
-		'contentratings == 1.0', # rating content objects (1.0-rc3 > 1.0 sadly, so specific)
+		 # rating content objects (1.0-rc3 > 1.0 sadly, so specific)
+		 # See also collective.subscribe for a different take, useful when we need
+		 # this stuff globally (https://github.com/collective/collective.subscribe/tree/master/collective/subscribe)
+		'contentratings == 1.0',
 		'coverage >= 3.5.2', # Test coverage
 		'cssselect >= 0.7.1', # Used by pyquery
 		'cython >= 0.16',
@@ -108,7 +111,7 @@ setup(
 		# run 'python setup.py install'. It may be necessary to 'pip uninstall' this (and/or remove it from zite-packages)
 		# before running setup.py.
 		# NOTE2: This will go away soon, merged into pyzmq 2.2dev as zmq.green
-		'gevent_zeromq >= 0.2.4',
+		'gevent_zeromq >= 0.2.5',
 		'greenlet >= 0.4.0',
 		'gunicorn >= 0.14.6',
 		'html5lib == 0.95',

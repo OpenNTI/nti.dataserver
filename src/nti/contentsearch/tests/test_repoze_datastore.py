@@ -7,10 +7,7 @@ from nti.contentsearch._repoze_index import create_messageinfo_catalog
 
 from nti.contentsearch.tests import ConfiguringTestBase
 
-from hamcrest import is_
-from hamcrest import is_not
-from hamcrest import has_length
-from hamcrest import assert_that
+from hamcrest import (assert_that, is_, is_not, has_length) 
 
 class TestDataStore(ConfiguringTestBase):
 
@@ -46,7 +43,7 @@ class TestDataStore(ConfiguringTestBase):
 		
 	def test_remove_catalogs(self):
 		store = create_repoze_datastore()
-		username  = 'nt@nt.com'
+		username = 'nt@nt.com'
 
 		for t in xrange(5):
 			type_ = 'message_info_%s' % t
@@ -62,6 +59,5 @@ class TestDataStore(ConfiguringTestBase):
 		obj = store.get_catalog_names(username)
 		assert_that(obj, has_length(4))
 		
-
 if __name__ == '__main__':
 	unittest.main()

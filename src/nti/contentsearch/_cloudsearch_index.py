@@ -1,19 +1,14 @@
 from __future__ import print_function, unicode_literals
 
 import hashlib
-
+from zope import component
 from nti.externalization.externalization import toExternalObject
 
+from nti.contentsearch import compute_ngrams
 from nti.contentsearch import CaseInsensitiveDict
-from nti.contentsearch._content_utils import get_note_content
-from nti.contentsearch._content_utils import get_highlight_content
-from nti.contentsearch._content_utils import get_redaction_content
-from nti.contentsearch._content_utils import get_messageinfo_content
+from nti.contentsearch.interfaces import IContentResolver
 
-from nti.contentsearch.common import ngrams
-from nti.contentsearch.common import get_type_name
-from nti.contentsearch.common import get_external_oid
-from nti.contentsearch.common import get_last_modified
+from nti.contentsearch._ngrams_utils import ngrams
 from nti.contentsearch.common import normalize_type_name
 
 from nti.contentsearch.common import (	CLASS, CREATOR, ID, OID, last_modified_fields, ntiid_fields, 
@@ -21,20 +16,14 @@ from nti.contentsearch.common import (	CLASS, CREATOR, ID, OID, last_modified_fi
 
 from nti.contentsearch.common import (	ngrams_, channel_, content_, keywords_, references_, username_,
 										last_modified_, recipients_, sharedWith_, id_, ntiid_, type_,
-										oid_, creator_, note_, messageinfo, highlight_, containerId_,
-										redaction_)
+										oid_, creator_, containerId_,) 
 
 import logging
 logger = logging.getLogger( __name__ )
 
-# -----------------------------------
 
-compute_ngrams = False #TODO: set this as part of a config
-
-# -----------------------------------
-
-mid_ = u'mid'
-search_stored_fields=[type_, creator_, last_modified_, ntiid_, containerId_.lower(), mid_, oid_, content_]
+_message_id = u'mid'
+search_stored_fields=[type_, creator_, last_modified_, ntiid_, containerId_.lower(), _message_id, oid_, content_]
 search_faceted_fields = [keywords_, recipients_, references_, sharedWith_.lower()]
 search_indexed_fields = search_stored_fields + search_faceted_fields + [username_, channel_, ngrams_]
 												
@@ -62,7 +51,7 @@ def create_search_domain(connection, domain_name='ntisearch', allow_ips=()):
 	domain.create_index_field(containerId_.lower(), 'literal', searchable=True, result=True,
 							  source_attributes=container_id_fields)
 	
-	domain.create_index_field(mid_, 'literal', searchable=True, result=True, 
+	domain.create_index_field(_message_id, 'literal', searchable=True, result=True, 
 							  source_attributes=(id_, ID))
 	
 	domain.create_index_field(oid_, 'literal', searchable=True, result=True,
@@ -97,7 +86,7 @@ cloud2hit_field_mappings[type_] 		= CLASS
 cloud2hit_field_mappings[creator_]		= CREATOR
 cloud2hit_field_mappings[ntiid_]		= NTIID 
 cloud2hit_field_mappings[containerId_]	= CONTAINER_ID
-cloud2hit_field_mappings[mid_]			= ID
+cloud2hit_field_mappings[_message_id]	= ID
 cloud2hit_field_mappings[oid_]			= TARGET_OID
 cloud2hit_field_mappings[sharedWith_]	= sharedWith_
 for name in last_modified_fields:
@@ -113,25 +102,20 @@ ds2cloud_field_mappings.pop(TARGET_OID, None)
 ds2cloud_field_mappings[OID] = oid_
 ds2cloud_field_mappings[LAST_MODIFIED] = last_modified_
 
-# -----------------------------------
-
 def get_cloud_oid(obj):
-	oid = get_external_oid(obj)
+	adapted = component.getAdapter(obj, IContentResolver)
+	oid = adapted.get_external_oid(obj)
 	return hashlib.sha224(oid).hexdigest()
 
-def get_object_content(data, type_name=None):
-	type_name = normalize_type_name(type_name or get_type_name(data))
-	if type_name == note_:
-		result = get_note_content(data)
-	elif type_name == highlight_:
-		result = get_highlight_content(data)
-	elif type_name == redaction_:
-		result = get_redaction_content(data)
-	elif type_name == messageinfo:
-		result = get_messageinfo_content(data)
-	else:
-		result = u''
+def get_object_content(data):
+	adapted = component.getAdapter(data, IContentResolver)
+	result = adapted.get_content()
 	return result.lower() if result else None
+
+def get_last_modified(data):
+	adapted = component.getAdapter(data, IContentResolver)
+	result = adapted.get_last_modified()
+	return result if result else None
 
 def get_object_ngrams(data, type_name=None):
 	content = get_object_content(data, type_name)

@@ -5,23 +5,10 @@ import six
 import time
 from time import mktime
 from datetime import datetime
-from collections import OrderedDict
 
-from zope import component
-from persistent.interfaces import IPersistent
-
-from whoosh import analysis
-from whoosh import highlight
-
-from nti.ntiids.ntiids import is_valid_ntiid_string
 from nti.externalization import interfaces as ext_interfaces
 
-from nti.dataserver.users import Entity
 from nti.dataserver.mimetype import MIME_BASE
-from nti.externalization.oids import to_external_ntiid_oid
-from nti.contentlibrary.interfaces import IContentPackageLibrary
-
-from nti.contentsearch import to_list
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -58,6 +45,7 @@ type_			= u'type'
 tags_			= u'tags'
 quick_			= u'quick'
 title_			= u'title'
+intid_			= u'intid'
 ntiid_			= unicode(ext_interfaces.StandardInternalFields.NTIID)
 color_			= u'color'
 p_oid_			= u'_p_oid'
@@ -91,7 +79,6 @@ last_modified_fields =  [LAST_MODIFIED, ext_interfaces.StandardInternalFields.LA
 
 nti_mimetype_prefix = MIME_BASE + '.'
 
-
 note_ = u'note'
 canvas_ = u'canvas'
 highlight_ = u'highlight'
@@ -102,26 +89,6 @@ canvastextshape_ = 'canvastextshape'
 
 indexable_type_names = (note_, highlight_, messageinfo, redaction_)
 
-WORD_HIGHLIGHT  = "WordHighlight"
-NGRAM_HIGHLIGHT = "NGRAMHighlight"
-
-def get_attr(obj, names, default=None):
-	if not obj: return default
-	
-	names = to_list(names)
-	if isinstance(obj, dict):
-		for name in names:
-			value = obj.get(name,None)
-			if value: return value
-	else:
-		for name in names:
-			try:
-				value = getattr(obj, name, None)
-			except:
-				value = None
-			if value: return value
-	return default
-
 def epoch_time(dt):
 	if dt:
 		seconds = mktime(dt.timetuple())
@@ -129,21 +96,12 @@ def epoch_time(dt):
 		return seconds
 	else:
 		return 0
-	
-def echo(x):
-	return unicode(x) if x else u''
 
 def get_datetime(x=None):
 	f = time.time()
 	if x:
 		f = float(x) if isinstance(x, six.string_types) else x
 	return datetime.fromtimestamp(f)
-
-def get_keywords(records):
-	result = ''
-	if records:
-		result = ','.join(records)
-	return unicode(result)
 
 def normalize_type_name(x, encode=True):
 	result = ''
@@ -163,137 +121,6 @@ def get_type_name(obj):
 	else:
 		result = None
 	return normalize_type_name(result) if result else u''
-
-def get_collection(ntiid, default=None, registry=component):
-	result = default
-	if ntiid and is_valid_ntiid_string(ntiid):
-		_library = registry.queryUtility( IContentPackageLibrary )
-		if _library:
-			paths = _library.pathToNTIID(ntiid)
-			result = paths[0].root if paths else default
-	return unicode(result.lower()) if result else default
-
-def get_external_oid(obj, default=None):
-	if IPersistent.providedBy(obj):
-		result = to_external_ntiid_oid( obj )
-	else:
-		result = obj if isinstance(obj, six.string_types) else get_attr(obj, oid_fields)
-	return unicode(result) if result else None
-		
-def get_ntiid(obj, default=None):
-	if IPersistent.providedBy(obj):
-		result = to_external_ntiid_oid( obj )
-	else:
-		result = obj if isinstance(obj, six.string_types) else get_attr(obj, ntiid_fields)
-	return unicode(result) if result else None
-
-def get_creator(obj, default=None):
-	result = obj if isinstance(obj, six.string_types) else get_attr(obj, creator_fields)
-	if isinstance(result, Entity):
-		result = result.username
-	return unicode(result) if result else None
-
-def get_references(obj, default=None):
-	objects = obj.split() if hasattr(obj, 'split') else get_attr(obj, [references_], ())
-	try:
-		iterable = iter(objects)
-	except TypeError:
-		iterable = (objects,)
-
-	result = set()
-	for obj in iterable:
-		if isinstance(obj, six.string_types):
-			for s in obj.split():
-				result.add(unicode(s))
-		else:
-			ntiid = get_ntiid(obj)
-			if ntiid: result.add(ntiid)
-	return list(result) if result else []
-
-def get_last_modified(obj, default=None):
-	value = get_attr(obj, last_modified_fields)
-	if value:
-		if isinstance(value, six.string_types):
-			value = float(value)
-		elif isinstance(value, datetime):
-			value = epoch_time(value)
-	else:
-		value = 0
-	return value
-
-def ngram_tokens(text, minsize=3, maxsize=10, at='start', unique=True):
-	rext = analysis.RegexTokenizer()
-	ngf = analysis.NgramFilter(minsize=minsize, maxsize=maxsize, at=at)
-	stream = rext(unicode(text.lower()))
-	if not unique:
-		result = [token.copy() for token in ngf(stream)]
-	else:
-		result = OrderedDict( {token.text:token.copy() for token in ngf(stream)}).values()
-	return result
-		
-def ngrams(text):
-	if text:
-		result = [token.text for token in ngram_tokens(text)]
-		result = ' '.join(sorted(result, cmp=lambda x,y: cmp(x, y)))
-	else:
-		result = u''
-	return unicode(result)
-
-def set_matched_filter(tokens, termset, text, multiple_match=True):
-	index = {} if multiple_match else None
-	for t in tokens:
-		t.matched = t.text in termset
-		if t.matched:
-			
-			idx = 0
-			if multiple_match:
-				a = index.get(t.text, None)
-				if not a:
-					a = [0]
-					index[t.text] = a
-				idx = a[-1]
-				
-			t.startchar = text.find(t.text, idx)
-			t.endchar = t.startchar + len(t.text)
-			
-			if multiple_match:
-				a.append(t.startchar+1)
-		else:
-			t.startchar = 0
-			t.endchar = len(text)
-		yield t
-		
-def ngram_content_highlight(query, text, maxchars=300, surround=50, order=highlight.FIRST, top=3, 
-							multiple_match=False, minsize=3, *args, **kwargs):
-	"""
-	highlight based on ngrams
-	"""
-	text = unicode(text)
-	text_lower = unicode(text.lower())
-	
-	query = unicode(query.lower())
-	termset = frozenset([query])
-		
-	scorer = highlight.BasicFragmentScorer()
-	tokens = ngram_tokens(text_lower, unique=not multiple_match, minsize=minsize)
-	tokens = set_matched_filter(tokens, termset, text_lower, multiple_match)
-	
-	fragmenter = highlight.ContextFragmenter(maxchars=maxchars, surround=surround)
-	fragments = fragmenter.fragment_tokens(text, tokens)
-	fragments = highlight.top_fragments(fragments, top, scorer, order)
-	
-	formatter = highlight.UppercaseFormatter()
-	return formatter(text, fragments)
-
-def word_content_highlight(query, text, analyzer=None, maxchars=300, surround=50, *args, **kwargs):
-	"""
-	whoosh highlight based on words
-	"""
-	terms = frozenset([query])
-	analyzer = analyzer or analysis.SimpleAnalyzer()
-	fragmenter = highlight.ContextFragmenter(maxchars=maxchars, surround=surround)
-	formatter = highlight.UppercaseFormatter()
-	return highlight.highlight(text, terms, analyzer, fragmenter, formatter)
 
 class QueryExpr(object):
 	def __init__(self, expr):

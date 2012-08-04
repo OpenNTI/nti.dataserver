@@ -1,0 +1,46 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{ntiassessment}[2012/07/31 NTI Assessment support package]
+
+\RequirePackage{comment}% Used to prevent solutions, hints, and solution explanations from being typeset.
+% Since this package uses the comment package, the [fragile] option is required for use in beamer frames.
+
+
+%% Define the counters
+\newcounter{naquestion}% Define naquestion counter
+\newcounter{naquestionpart}[naquestion]% Define naquestionpart counter. This counter is reset to 0 when counter naquestion is incremented.
+\newcounter{naqchoice}[naquestionpart]% Define naqchoice counter. This counter is reset to 0 when counter naquestionpart is incremented.
+
+%% Define the environments
+% Define the naquestion environment
+\newenvironment{naquestion}[1][true]
+{\stepcounter{naquestion}\@@par\noindent\textbf{\arabic{naquestion}. }}
+{\vspace{8pt}}
+
+% Define the naqnumericmathpart environment
+\newenvironment{naqnumericmathpart}
+{\stepcounter{naquestionpart}\@@par\noindent(\alph{naquestionpart}) }
+{}
+
+% Define the naqsymmathpart environment
+\newenvironment{naqsymmathpart}
+{\stepcounter{naquestionpart}\@@par\noindent(\alph{naquestionpart}) }
+{}
+
+% Define the naqnumericmathpart environment
+\newenvironment{naqmultiplechoicepart}
+{\stepcounter{naquestionpart}\@@par\noindent(\alph{naquestionpart}) }
+{}
+
+%% Define the naqsolutions environment as a comment block
+\excludecomment{naqsolutions}
+
+%% Define the naqsolutions environment as a comment block
+\excludecomment{naqhints}
+
+%% Define the naqsolutions environment as a comment block
+\excludecomment{naqsolexplanation}
+
+\newenvironment{naqchoices}{}{}
+
+%% Define the commands
+\newcommand{\naqchoice}[1][1]{\stepcounter{naqchoice}\@@par\alph{naqchoice}. \ignorespaces}

@@ -9,26 +9,19 @@ Support for running the application with gunicorn. You must use our worker, conf
 	workers = 1
 """
 
-__old__ = __name__ # Force absolute import for gunicorn, since we shadow its name
-__name__ = '__main__' # Note that we cannot do this and use from __future__ imports
-# Gunicorn up through 0.14.2 has a bug, assummes gevent
-# automatically imports core. As of 1.0b2, it doesn't, so
-# we must do it ourselves. (The symptom is ggevent.py", line 90, in GeventWorker: AttributeError 'core'
-# TODO: This is probably fixed in 0.14.5
-import gevent.core
+from __future__ import print_function, unicode_literals, absolute_import
+
+import logging
+logger = logging.getLogger(__name__)
+
 import gunicorn.workers.ggevent as ggevent
-import gunicorn.http.wsgi as wsgi
-__name__ = __old__
+import gunicorn.http.wsgi
+import gunicorn.sock
 
 import gevent
 import gevent.socket
 from gevent.server import StreamServer
-import logging
-logger = logging.getLogger(__name__)
-import warnings
 
-import sys
-from datetime import datetime
 import nti.appserver.standalone
 from paste.deploy import loadwsgi
 
@@ -55,15 +48,32 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 	app = None
 	server_class = None
 	socket = None
+	policy_server = None
 
 	@classmethod
 	def setup(cls):
 		"""
-		We cannot patch the entire system to work with gevent due to issues
-		with ZODB (but see application.py)
-		Instead, we patch just our socket when we create it.
+		We cannot patch the entire system to work with gevent due to
+		issues with ZODB (but see application.py). Instead, we patch
+		just our socket when we create it. So this method DOES NOT call
+		super (which patches the whole system).
 		"""
 		pass
+
+
+	def __init__( self, *args, **kwargs ):
+		# These objects are instantiated by the master process (arbiter)
+		# in the parent process, pre-fork, once for every worker
+		super(GeventApplicationWorker,self).__init__( *args, **kwargs )
+		# Now we have access to self.cfg and the rest
+		policy_server_sock = getattr( self.cfg, 'policy_server_sock', None )
+		if policy_server_sock is None:
+			cfg = self.cfg
+			class FlashConf(object):
+				address = ('0.0.0.0',10843)
+				def __getattr__( self, name ):
+					return getattr( cfg, name )
+			self.cfg.policy_server_sock = gunicorn.sock.create_socket( FlashConf(), logger )
 
 
 	def init_process(self):
@@ -74,17 +84,21 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		"""
 
 		try:
-			gevent.hub.get_hub() # init the hub
+			gevent.hub.get_hub() # init the hub in this new thread/process
 			dummy_app = self.app.app
 			wsgi_app = loadwsgi.loadapp( 'config:' + dummy_app.global_conf['__file__'], name='dataserver_gunicorn' )
-
+			# Note that this is creating the SockeIO server class as well as initializing
+			# the Pyramid/Dataserver application
 			self.app_server = nti.appserver.standalone._create_app_server( wsgi_app,
-																	   dummy_app.global_conf,
-																	   port=dummy_app.global_conf['http_port'],
-																	   **dummy_app.kwargs )
+																		   dummy_app.global_conf,
+																		   port=dummy_app.global_conf['http_port'],
+																		   **dummy_app.kwargs )
+			self.wsgi_handler = self.app_server.handler_class
+
 		except Exception:
 			logger.exception( "Failed to create appserver" )
 			raise
+
 
 		# Change/update the logging format.
 		# It's impossible to configure this from the ini file because
@@ -100,104 +114,127 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		if gun_logger.handlers:
 			gun_logger.propagate = False
 
-		# It's not entirely clear if this is necessary
-		try:
-			self.policy_server = FlashPolicyServer()
-			self.policy_server.start()
-		except:
-			logger.exception( "Failed to start policy server." )
-
-		def factory(*args,**kwargs):
-			# The super class will provide a Pool based on the
-			# worker_connections setting
-			self.app_server.set_spawn(kwargs['spawn'])
-			# We want to log with the appropriate logger, which
-			# has monitoring info attached to it
-			self.app_server.log = kwargs['log']
-			#self.app_server.handler_class.log_request = l_r
-			# The super class will set the socket to blocking because
-			# it thinks it has monkey patched the system. It hasn't.
-			# Therefore the socket must be non-blocking or we get
-			# the dreaded 'cannot switch to MAINLOOP from MAINLOOP'
-			# (Non blocking is how gevent's baseserver:_tcp_listener sets things up)
-			self.app_server.socket.setblocking(0)
-			# Now, for logging to actually work, we need to replace
-			# the handler class with one that sets up the required values in the
-			# environment, as per ggevent.
-			worker = self
-			class PhonyRequest(object):
-				headers = ()
-
-
-			class HandlerClass(self.app_server.handler_class,ggevent.PyWSGIHandler):
-
-				def log_request(self):
-					try:
-						ggevent.PyWSGIHandler.log_request( self )
-					except (TypeError, AttributeError):
-						# This was expected in 0.14.1, should be fixed in
-						# 0.14.2. Any remaining cases we need to handle
-						logger.exception( "Not logging results of request to %s", self.environ )
-
-				# We are using the SocketIO server and the Gevent Worker
-				# Only the Sync and Async workers setup the environment
-				# and deal with things like x-forwarded-for. So we
-				# must override the default pywsgi environment creation
-				# to use that provided by gunicorn to get these features
-				# The plain WSGIHandler uses prepare_env. The pywsgi handler
-				# uses get_environ
-				def prepare_env(self):
-					req = self.request
-					req.body = req.input_buffer
-					req.method = req.typestr
-					if '?' in req.uri:
-						path, query = req.uri.split('?', 1)
-					else:
-						path, query = req.uri, ''
-					req.query = query
-					req.headers = getattr( req, 'headers', None ) or req.get_input_headers()
-					rsp, env = wsgi.create(req, self.socket, self.client_address, worker.address, worker.cfg)
-					return env
-				def get_environ(self):
-					if not getattr( self, 'request', None ):
-						self.request = PhonyRequest()
-						self.request.input_buffer = None
-						self.request.typestr = self.command
-						self.request.uri = self.path
-						self.request.headers = []
-						self.request.path = self.path
-						for header in self.headers.headers:
-							k, v = header.split( ':', 1)
-							self.request.headers.append( (k.upper(), v.strip()) )
-
-						self.request.version = (1,0)
-					env = self.prepare_env()
-					# This does everything except it screws with REMOTE_ADDR
-					# and some other values we want gunicorn to rule
-					ws_env = super(HandlerClass,self).get_environ()
-					for k in ('RAW_URI', 'wsgi.errors', 'wsgi.file_wrapper',
-							  'REMOTE_ADDR','SERVER_SOFTWARE',
-							  'SERVER_NAME', 'SERVER_PORT',
-							  'wsgi.url_scheme'):
-						ws_env[k] = env[k]
-					ws_env['gunicorn.sock'] = self.socket
-					ws_env['gunicorn.socket'] = self.socket
-					return ws_env
-			self.app_server.handler_class = HandlerClass
-			self.app_server.base_env = ggevent.PyWSGIServer.base_env
-			return self.app_server
-
-		self.server_class = factory
+		self.server_class = _ServerFactory( self )
 		self.socket = gevent.socket.socket(_sock=self.socket)
 		self.app_server.socket = self.socket
 		# Everything must be complete and ready to go before we call into
 		# the super, it in turn calls run()
 		super(GeventApplicationWorker,self).init_process()
 
+class _PhonyRequest(object):
+	headers = ()
+	input_buffer = None
+	typestr = None
+	uri = None
+	path = None
+	version = (1,0)
+	def get_input_headers(self):
+		raise Exception("Not implemented for phony request")
+
+class _ServerFactory(object):
+	"""
+	Given a worker that has already created the app server, does
+	what's necessary to finish initializing it for running (such as
+	messing with socket blocking and adjusting handler classes).
+	Serves as the 'server_class' value.
+	"""
+
+	def __init__( self, worker ):
+		self.worker = worker
+
+
+	def __call__( self,  socket, application=None, spawn=None, log=None,
+				  handler_class=None):
+		worker = self.worker
+		# Launch the flash policy listener
+		worker.policy_server = FlashPolicyServer( worker.cfg.policy_server_sock )
+		worker.cfg.policy_server_sock.setblocking( 0 )
+		worker.policy_server.start()
+
+		# The super class will provide a Pool based on the
+		# worker_connections setting
+		worker.app_server.set_spawn(spawn)
+		# We want to log with the appropriate logger, which
+		# has monitoring info attached to it
+		worker.app_server.log = log
+
+		# The super class will set the socket to blocking because
+		# it thinks it has monkey patched the system. It hasn't.
+		# Therefore the socket must be non-blocking or we get
+		# the dreaded 'cannot switch to MAINLOOP from MAINLOOP'
+		# (Non blocking is how gevent's baseserver:_tcp_listener sets things up)
+		worker.app_server.socket.setblocking(0)
+		# Now, for logging to actually work, we need to replace
+		# the handler class with one that sets up the required values in the
+		# environment, as per ggevent.
+
+		class HandlerClass(worker.app_server.handler_class,ggevent.PyWSGIHandler):
+			request = None
+
+			# Things to copy out of the our prepared environment
+			# into the environment created by the super's get_environment
+			ENV_TO_COPY = ('RAW_URI', 'wsgi.errors', 'wsgi.file_wrapper',
+						   'REMOTE_ADDR','SERVER_SOFTWARE',
+						   'SERVER_NAME', 'SERVER_PORT',
+						   'wsgi.url_scheme')
+
+
+			# We are using the SocketIO server and the Gevent Worker
+			# Only the Sync and Async workers setup the environment
+			# and deal with things like x-forwarded-for. So we
+			# must override the default pywsgi environment creation
+			# to use that provided by gunicorn to get these features
+			# The plain WSGIHandler uses prepare_env. The pywsgi handler
+			# uses get_environ
+			def prepare_env(self):
+				req = self.request
+				req.body = req.input_buffer
+				req.method = req.typestr
+				if '?' in req.uri:
+					_, query = req.uri.split('?', 1)
+				else:
+					_, query = req.uri, ''
+				req.query = query
+				req.headers = getattr( req, 'headers', None ) or req.get_input_headers()
+				_, env = gunicorn.http.wsgi.create(req, self.socket, self.client_address, worker.address, worker.cfg)
+				return env
+
+
+			def get_environ(self):
+				if not getattr( self, 'request', None ):
+					# gevent.pywsgi can call this before gunicorn has a chance to
+					# assign a request object.
+					self.request = _PhonyRequest()
+					self.request.typestr = self.command
+					self.request.uri = self.path
+					self.request.headers = []
+					self.request.path = self.path
+					for header in self.headers.headers:
+						k, v = header.split( ':', 1)
+						self.request.headers.append( (k.upper(), v.strip()) )
+
+
+				env = self.prepare_env()
+				# This does everything except it screws with REMOTE_ADDR
+				# and some other values we want gunicorn to rule
+				ws_env = super(HandlerClass,self).get_environ()
+				for k in self.ENV_TO_COPY:
+					ws_env[k] = env[k]
+				ws_env['gunicorn.sock'] = self.socket
+				ws_env['gunicorn.socket'] = self.socket
+				return ws_env
+
+
+		worker.app_server.handler_class = HandlerClass
+		worker.app_server.base_env = ggevent.PyWSGIServer.base_env
+		return worker.app_server
 
 class FlashPolicyServer(StreamServer):
-	policy = """<?xml version="1.0"?><!DOCTYPE cross-domain-policy SYSTEM "http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd">
-<cross-domain-policy><allow-access-from domain="*" to-ports="*"/></cross-domain-policy>"""
+	policy = b"""<?xml version="1.0" encoding="utf-8"?>
+	<!DOCTYPE cross-domain-policy SYSTEM "http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd">
+	<cross-domain-policy>
+		<allow-access-from domain="*" to-ports="*"/>
+	</cross-domain-policy>\n"""
 
 	def __init__(self, listener=None, backlog=None):
 		if listener is None:

@@ -1,54 +1,50 @@
 from __future__ import print_function, unicode_literals
 
-import time
+import random
 import sqlite3 as sql
-
-from zope import component
-from zope import interface
-from zope.annotation import factory as an_factory
 
 from persistent import Persistent
 from BTrees.OOBTree import OOBTree
 
-from nti.dataserver import interfaces as nti_interfaces
 from nti.utils.transactions import ObjectDataManager
 
+from nti.contentsearch.spambayes import default_ham_cutoff
+from nti.contentsearch.spambayes import default_spam_cutoff
+from nti.contentsearch.spambayes.tokenizer import tokenize
 from nti.contentsearch.spambayes.classifier import Classifier
 from nti.contentsearch.spambayes.classifier import _BaseWordInfo
-from nti.contentsearch.spambayes.interfaces import IObjectClassifierMetaData
 
-from nti.contentsearch.spambayes import PERSISTENT_HAM_INT
-from nti.contentsearch.spambayes import PERSISTENT_SPAM_INT
 from nti.contentsearch.spambayes import default_use_bigrams
-from nti.contentsearch.spambayes import PERSISTENT_UNSURE_INT
 from nti.contentsearch.spambayes import default_unknown_word_prob
 from nti.contentsearch.spambayes import default_max_discriminators
 from nti.contentsearch.spambayes import default_unknown_word_strength
 from nti.contentsearch.spambayes import default_minimum_prob_strength
 
-@interface.implementer(IObjectClassifierMetaData)
-@component.adapter(nti_interfaces.IModeledContent)
-class _ObjectClassifierMetaData(Persistent):
-	
-	spam_classification = PERSISTENT_HAM_INT
-	spam_classification_time = time.time()
-		
-	@property
-	def classification(self):
-		return self.spam_classification
-	
-	@property
-	def classified_at(self):
-		return self.spam_classification_time
-	
-def _ObjectClassifierMetaDataFactory(container):
-	return an_factory(_ObjectClassifierMetaData)(container)
-
 class PersistentWordInfo(Persistent, _BaseWordInfo):
 	def __init__(self):
 		self.spamcount = self.hamcount = 0
 	
-class PersistentClassifier(Persistent, Classifier):
+class Trainer(Classifier):
+	
+	def train(self, text, is_spam=True):
+		if text:
+			tokens = tokenize(unicode(text))
+			self.learn(tokens, is_spam)
+	
+	def untrain(self, text, is_spam=True):
+		if text:
+			tokens = tokenize(unicode(text))
+			self.unlearn(tokens, is_spam)
+		
+	def classify(self, text):
+		if text:
+			tokens = tokenize(unicode(text))
+			return self.spamprob(tokens)
+		else:
+			return random.uniform(default_ham_cutoff, default_spam_cutoff)
+	
+
+class PersistentClassifier(Persistent, Trainer):
 	
 	WordInfoClass = PersistentWordInfo
 	
@@ -59,32 +55,17 @@ class PersistentClassifier(Persistent, Classifier):
 				 use_bigrams=default_use_bigrams, 
 				 mapfactory=OOBTree):
 		
-		Classifier.__init__(self, unknown_word_strength, unknown_word_prob, minimum_prob_strength, 
-							max_discriminators, use_bigrams, mapfactory)
-		
-	def mark_spam(self, context):
-		md = IObjectClassifierMetaData(context, None)
-		md.spam_classification = PERSISTENT_SPAM_INT
-		md.spam_classification_time = time.time()
-
-	def mark_ham(self, context):
-		md = IObjectClassifierMetaData(context, None)
-		md.spam_classification = PERSISTENT_HAM_INT
-		md.spam_classification_time = time.time()
-		
-	def mark_unsure(self, context):
-		md = IObjectClassifierMetaData(context, None)
-		md.spam_classification = PERSISTENT_UNSURE_INT
-		md.spam_classification_time = time.time()
+		Trainer.__init__(self, unknown_word_strength, unknown_word_prob, minimum_prob_strength, 
+						 max_discriminators, use_bigrams, mapfactory)
 
 PersistentBayes = PersistentClassifier
 
-class SQL3Classifier(Classifier, ObjectDataManager):
+class SQL3Classifier(Trainer, ObjectDataManager):
 	
 	state_key = '__classifier state __'
 	
 	def __init__(self, dbpath, *args, **kwargs):
-		Classifier.__init__(self, *args, **kwargs)
+		Trainer.__init__(self, *args, **kwargs)
 		ObjectDataManager.__init__(self, call=self._do_commit)
 		self.dbpath = dbpath
 		self._registered = False

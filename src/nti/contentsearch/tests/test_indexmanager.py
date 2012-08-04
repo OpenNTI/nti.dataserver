@@ -1,5 +1,3 @@
-import os
-import json
 import time
 import shutil
 import unittest
@@ -13,6 +11,9 @@ from nti.dataserver.contenttypes import Note
 
 from nti.ntiids.ntiids import make_ntiid
 
+import nti.contentsearch as _contentsearch
+from nti.contentsearch import _repoze_index
+from nti.contentsearch import _whoosh_index
 from nti.contentsearch import QueryObject
 from nti.contentsearch import create_repoze_datastore
 from nti.contentsearch.interfaces import IRepozeDataStore
@@ -33,24 +34,15 @@ from nti.contentsearch.tests import ConfiguringTestBase
 
 from hamcrest import (is_, has_entry, assert_that)
 
+_whoosh_index.compute_ngrams = True
+_repoze_index.compute_ngrams = True
+_contentsearch.compute_ngrams = True
+
 class _BaseIndexManagerTest(object):
 
 	@classmethod
 	def setUpClass(cls):
 		cls.now = time.time()
-
-		path = os.path.join(os.path.dirname(__file__), 'highlight.json')
-		with open(path, "r") as f:
-			cls.hightlight = json.load(f)
-
-		path = os.path.join(os.path.dirname(__file__), 'note.json')
-		with open(path, "r") as f:
-			cls.note = json.load(f)
-
-		path = os.path.join(os.path.dirname(__file__), 'message_info.json')
-		with open(path, "r") as f:
-			cls.messageinfo = json.load(f)
-
 		cls._add_book_data()
 
 	@classmethod
@@ -62,8 +54,8 @@ class _BaseIndexManagerTest(object):
 
 		idx = cls.bim.bookidx
 		writer = idx.writer()
-		for x in phrases:
-			writer.add_document(ntiid = unicode(make_ntiid(nttype='bleach', specific='manga')),
+		for k, x in enumerate(phrases):
+			writer.add_document(ntiid = unicode(make_ntiid(provider=str(k), nttype='bleach', specific='manga')),
 								title = unicode(x),
 								content = unicode(x),
 								quick = unicode(x),
@@ -76,7 +68,7 @@ class _BaseIndexManagerTest(object):
 	def tearDownClass(cls):
 		shutil.rmtree(cls.book_idx_dir, True)
 
-	# ----------------sec
+	# ----------------
 
 	@WithMockDSTrans
 	def test_add_book(self):
@@ -93,7 +85,7 @@ class _BaseIndexManagerTest(object):
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 
 		hits = self.im.content_ngram_search(indexname='bleach', query='ren')
-		assert_that(hits, has_entry(HIT_COUNT, 1))
+		assert_that(hits, has_entry(HIT_COUNT, 3))
 
 		hits = self.im.content_suggest_and_search(indexname='bleach', query='wen')
 		assert_that(hits, has_entry(HIT_COUNT, 1))

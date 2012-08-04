@@ -21,30 +21,25 @@ from BTrees.IIBTree import difference as difference32
 
 from BTrees.LOBTree import LOBTree
 from BTrees.LLBTree import union as union64
-from BTrees.LLBTree import LLTreeSet, LLBTree
+from BTrees.LLBTree import LLBTree
 
 from zope.component.interfaces import IFactory
 from zope.interface import implements, implementedBy
 
-from zopyx.txng3.core.storage import _PS
-from zopyx.txng3.core.widcode import encode, decode
-from zopyx.txng3.core.storage import Storage as ZOPYStorage
+from zopyx.txng3.core import index as zopycoreidx
+from zopyx.txng3.core import widcode as zopywidcode
+from zopyx.txng3.core import storage as zopystorage
 from zopyx.txng3.core.interfaces import IStorageWithTermFrequency
 
 from nti.contentsearch.zopyxtxng3coredoclist import DocidList
+from nti.contentsearch import zopyxtxng3coreresultset as ntizopyrs
 
 # monkey patch 
+zopycoreidx.unionResultSets = ntizopyrs.unionResultSets
+zopycoreidx.inverseResultSet = ntizopyrs.inverseResultSet
+zopycoreidx.intersectionResultSets = ntizopyrs.intersectionResultSets
 
-from nti.contentsearch.zopyxtxng3coreresultset import unionResultSets 
-from nti.contentsearch.zopyxtxng3coreresultset import inverseResultSet
-from nti.contentsearch.zopyxtxng3coreresultset import intersectionResultSets
-
-import zopyx.txng3.core.index
-zopyx.txng3.core.index.unionResultSets = unionResultSets
-zopyx.txng3.core.index.inverseResultSet = inverseResultSet
-zopyx.txng3.core.index.intersectionResultSets = intersectionResultSets
-
-class Storage(ZOPYStorage):
+class Storage(zopystorage.Storage):
 	
 	def clear(self):
 		self._doc2wid = LOBTree()   # docid -> [wordids]
@@ -57,16 +52,16 @@ class Storage(ZOPYStorage):
 		if not self._doc2wid.has_key(docid):
 			self._length.change(1)
 	
-		enc_widlist = encode(widlist)
+		enc_widlist = zopywidcode.encode(widlist)
 		old_enc_widlist = self._doc2wid.get(docid)
 		if old_enc_widlist is not None:
 			old_enc_widlist = old_enc_widlist.get() # unwrap _PS instance
 	
 		removed_wordids = []
 		if old_enc_widlist != enc_widlist :
-			self._doc2wid[docid] = _PS(enc_widlist)
+			self._doc2wid[docid] = zopystorage._PS(enc_widlist)
 			if old_enc_widlist is not None:
-				old_widlist = IISet(decode(old_enc_widlist))
+				old_widlist = IISet(zopywidcode.decode(old_enc_widlist))
 				removed_wordids = difference32(old_widlist, IISet(widlist))
 	
 		tree = self._wid2doc

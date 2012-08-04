@@ -1,17 +1,18 @@
 from __future__ import print_function, unicode_literals
 
 from zope import interface
+from zope.deprecation import deprecated
 
 from BTrees.OOBTree import OOBTree
 from persistent import Persistent
 from persistent.mapping import PersistentMapping
 
-from nti.contentsearch._document import DocumentMap
 from nti.contentsearch.interfaces import IRepozeDataStore
 
 import logging
 logger = logging.getLogger( __name__ )
 
+deprecated( '_RepozeDataStore', 'Use RepozeCatalogDataStore' )
 class _RepozeDataStore(PersistentMapping):
 	"""
 	deprecated repoze data store
@@ -94,6 +95,7 @@ class _BasicRepozeDataStore(Persistent):
 			result.update(fld.docids()) # use CatalogField.docids()
 		return result
 	
+deprecated( 'PersistentRepozeDataStore', 'Use RepozeCatalogDataStore' )
 class PersistentRepozeDataStore(_BasicRepozeDataStore):
 	
 	def __init__(self):
@@ -101,6 +103,7 @@ class PersistentRepozeDataStore(_BasicRepozeDataStore):
 		self.docmaps = OOBTree()
 	
 	def add_user(self, username):
+		from nti.contentsearch._document import DocumentMap
 		if super(PersistentRepozeDataStore, self).add_user(username):
 			self.docmaps[username] = DocumentMap()
 			
@@ -174,7 +177,8 @@ class PersistentRepozeDataStore(_BasicRepozeDataStore):
 		if docMap:
 			return docMap.docid_to_address.keys()
 		return []
-		
+	
+deprecated( 'RepozeDataStore', 'Use RepozeCatalogDataStore' )	
 class RepozeDataStore(_RepozeDataStore, PersistentRepozeDataStore):
 	pass
 

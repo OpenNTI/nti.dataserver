@@ -8,8 +8,7 @@ import os
 from zope import interface
 from zope import component
 
-from nti.externalization.datastructures import LocatedExternalDict
-from nti.externalization.externalization import toExternalObject
+from nti.externalization.externalization import toExternalObject, to_standard_external_dictionary
 from nti.externalization.interfaces import IExternalObject, StandardExternalFields
 from nti.contentlibrary import interfaces
 
@@ -25,17 +24,18 @@ class _ContentPackageLibraryExternal(object):
 				 'title': "Library",
 				 'titles' : [toExternalObject(x) for x in self.library.titles] }
 
+@interface.implementer(IExternalObject)
+@component.adapter(interfaces.IFilesystemContentPackage)
 class _ContentPackageExternal(object):
-	interface.implements(IExternalObject)
-	component.adapts(interfaces.IFilesystemContentPackage)
 
 	def __init__( self, package ):
 		self.package = package
 
 	def toExternalObject( self ):
-		result = LocatedExternalDict()
+		result = to_standard_external_dictionary( self.package )
 		result.__name__ = self.package.__name__
 		result.__parent__ = self.package.__parent__
+
 		# TODO: We're making all kinds of assumptions about where in the
 		# URL space these are
 		def _o( p='' ):
@@ -51,7 +51,7 @@ class _ContentPackageExternal(object):
 
 		result['root'] = _o()
 		result['index'] = _o( os.path.basename( self.package.index ) ) if self.package.index else None
-		result['title'] = self.package.title
+		result['title'] = self.package.title # Matches result['DCTitle']
 		result['installable'] = self.package.installable
 		result['version'] = '1.0' # This field was never defined. What does it mean?  I think we were thinking of generations
 		result['renderVersion'] = self.package.renderVersion

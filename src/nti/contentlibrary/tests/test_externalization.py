@@ -6,7 +6,13 @@ from hamcrest import assert_that, has_entry
 from nti.contentlibrary import externalization
 from nti.contentlibrary import contentunit
 
+import nti.tests
+import nti.contentlibrary
+import nti.externalization
 
+# Nose module-level setup and teardown
+setUpModule = lambda: nti.tests.module_setup( set_up_packages=(nti.contentlibrary,nti.externalization) )
+tearDownModule = nti.tests.module_teardown
 
 def test_doesnt_dual_escape():
 	unit = contentunit.FilesystemContentPackage(

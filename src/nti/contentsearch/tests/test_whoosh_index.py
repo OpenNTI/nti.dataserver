@@ -1,164 +1,134 @@
-import os
-import json
+import time
 import unittest
 from datetime import datetime
 
 from whoosh.filedb.filestore import RamStorage
 
-from nti.contentsearch.tests import ConfiguringTestBase
+from nti.dataserver.users import User
+from nti.dataserver.contenttypes import Note as dsNote
+from nti.dataserver.contenttypes import Highlight as dsHighlight
+from nti.dataserver.contenttypes import Redaction as dsRedaction
+
+from nti.ntiids.ntiids import make_ntiid
+
+from nti.contentsearch import _whoosh_index
 from nti.contentsearch._whoosh_index import Note
+from nti.contentsearch._whoosh_index import Book
 from nti.contentsearch._whoosh_index import Highlight
-from nti.contentsearch._whoosh_index import MessageInfo
-from nti.contentsearch._whoosh_index import get_datetime
-from nti.contentsearch._whoosh_index import get_keywords
-from nti.contentsearch._whoosh_index import get_text_from_mutil_part_body
+from nti.contentsearch._whoosh_index import Redaction
+from nti.contentsearch.tests import ConfiguringTestBase
+
+from nti.contentsearch.common import (HIT_COUNT, QUERY, ITEMS)
+
+from nti.contentsearch.tests import zanpakuto_commands
+
+import nti.dataserver.tests.mock_dataserver as mock_dataserver
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from hamcrest import (assert_that, is_, has_entry, has_key, has_length)
 
+_whoosh_index.compute_ngrams = True
+
 class TestWhooshIndex(ConfiguringTestBase):
 
-	@classmethod
-	def setUpClass(cls):	
-		path = os.path.join(os.path.dirname(__file__), 'highlight.json')
-		with open(path, "r") as f:
-			cls.highlight = json.load(f)
-			
-		path = os.path.join(os.path.dirname(__file__), 'note.json')
-		with open(path, "r") as f:
-			cls.note = json.load(f)
-				
-		path = os.path.join(os.path.dirname(__file__), 'note2.json')
-		with open(path, "r") as f:
-			cls.note2 = json.load(f)
-			
-		path = os.path.join(os.path.dirname(__file__), 'message_info.json')
-		with open(path, "r") as f:
-			cls.messageinfo = json.load(f)
-			
-		path = os.path.join(os.path.dirname(__file__), 'transcript.json')
-		with open(path, "r") as f:
-			cls.transcript = json.load(f)
-
-	def test_get_datetime(self):
-		f = 1321391468.411328
-		s = '1321391468.411328'
-		assert_that(get_datetime(f), is_(get_datetime(s)))
-
-	def test_get_keywords(self):
-		self.assertEqual('', get_keywords(None))
-		self.assertEqual('', get_keywords(''))
-		self.assertEqual('Zanpakuto,Zangetsu', get_keywords(('Zanpakuto', 'Zangetsu')))
-
-	def test_get_text_from_mutil_part_body(self):
-		msg = get_text_from_mutil_part_body(self.messageinfo['Body'])
-		self.assertEqual(u'Zanpakuto and Zangetsu', msg)
-		self.assertEqual('Soul Reaper', get_text_from_mutil_part_body('Soul Reaper'))
-
-	def test_highlight_index_data(self):
-		hi = Highlight()
-		d = hi.get_index_data(self.highlight)
-		assert_that(d, has_entry('containerId', 'tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.0' ))
-		assert_that(d, has_entry('creator', 'carlos.sanchez@nextthought.com' ))
-		assert_that(d, has_entry('oid', 'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x085a:5573657273' ))
-		assert_that(d, has_entry('ntiid', 'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x085a:5573657273' ))
-		assert_that(d, has_entry('content', 
-			'You know how to add subtract multiply and divide In fact you may already know how to solve many of the '
-			'problems in this chapter So why do we start this book with an entire chapter on arithmetic' ))
-		assert_that(d, has_entry('last_modified', datetime(2012, 3, 16, 13, 22, 0, 967309)))
-				
-	def test_note_index_data(self):
-		no = Note()
-		d = no.get_index_data(self.note)
-		assert_that(d, has_entry('containerId', 'tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.0' ))
-		assert_that(d, has_entry('creator', 'carlos.sanchez@nextthought.com' ))
-		assert_that(d, has_entry('oid', 'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x0860:5573657273' ))
-		assert_that(d, has_entry('ntiid', 'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x0860:5573657273' ))
-		assert_that(d, has_entry('content', 
-			'All Waves Rise now and Become my Shield Lightning Strike now and Become my Blade'))
-		assert_that(d, has_entry('last_modified', datetime(2012, 3, 16, 13, 23, 21, 926812)))
-		
-	def test_note2_index_data(self):
-		no = Note()
-		d = no.get_index_data(self.note2)
-		assert_that(d, has_entry('containerId', 'tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.0' ))
-		assert_that(d, has_entry('creator', 'carlos.sanchez@nextthought.com' ))
-		assert_that(d, has_entry('oid', 'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x0932:5573657273' ))
-		assert_that(d, has_entry('ntiid', 'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x0932:5573657273' ))
-		assert_that(d, has_entry('content', 'Eddard Stark Lord of Winterfell'))
-		assert_that(d, has_entry('last_modified', datetime(2012, 4, 9, 14, 42, 24, 120455)))
-		
-	def test_messageinfo_index_data(self):
-		mi = MessageInfo()
-		d = mi.get_index_data(self.messageinfo)
-		assert_that(d, has_entry('containerId', 'tag:nextthought.com,2011-10:zope.security.management.system_user-OID-0x82:53657373696f6e73' ))
-		assert_that(d, has_entry('creator', 'troy.daley@nextthought.com' ))
-		assert_that(d, has_entry('oid', 'tag:nextthought.com,2011-10:zope.security.management.system_user-OID-0x8a:53657373696f6e73' ))
-		assert_that(d, has_entry('ntiid', 'tag:nextthought.com,2011-10:zope.security.management.system_user-OID-0x8a:53657373696f6e73' ))
-		assert_that(d, has_entry('content', 'Zanpakuto and Zangetsu' ))
-		assert_that(d, has_entry('sharedWith', 'troy.daley@nextthought.com,carlos.sanchez@nextthought.com'))
-		assert_that(d, has_entry('id', '0d7ba380e77241508204a9d737625e04'))
-		assert_that(d, has_entry('channel', 'DEFAULT'))
-		assert_that(d, has_entry('last_modified', datetime(2011, 11, 15, 15, 11, 8, 411328)))
-		
+	def _create_ds_note(self):
+		username='nt@nti.com'
+		usr = User.create_user( mock_dataserver.current_mock_ds, username=username, password='temp' )
+		note = dsNote()
+		note.creator = username
+		note.body = [u'All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade']
+		note.containerId = make_ntiid(nttype='bleach', specific='manga')
+		mock_dataserver.current_transaction.add(note)
+		note = usr.addContainedObject( note ) 
+		return note
+	
+	@WithMockDSTrans
+	def test_index_note(self):
+		note = Note()
+		schema = note.get_schema()
+		idx = RamStorage().create_index(schema)
+		note.index_content(idx.writer(), self._create_ds_note())
+		with idx.searcher() as s:
+			assert_that(s.doc_count(), is_(1))
+			d = note.search(s, "rise")
+			assert_that(d, has_entry(HIT_COUNT, 1))
+			assert_that(d, has_entry(QUERY, 'rise'))
+			assert_that(d, has_key(ITEMS))
+			items = d[ITEMS]
+			assert_that(items, has_length(1))
+	
+	def _create_ds_highlight(self):
+		username='nt@nti.com'
+		usr = User.create_user( mock_dataserver.current_mock_ds, username=username, password='temp' )
+		highlight = dsHighlight()
+		highlight.selectedText = u'You know how to add, subtract, multiply, and divide'
+		highlight.creator = usr.username
+		highlight.containerId =  make_ntiid(nttype='bleach', specific='manga')
+		mock_dataserver.current_transaction.add(highlight) 
+		highlight = usr.addContainedObject( highlight )
+		return highlight
+	
+	@WithMockDSTrans
 	def test_index_highlight(self):
-					
 		hi = Highlight()
 		schema = hi.get_schema()
 		idx = RamStorage().create_index(schema)
-		hi.index_content(idx.writer(), self.highlight)
-		
+		hi.index_content(idx.writer(), self._create_ds_highlight())
 		with idx.searcher() as s:
 			assert_that(s.doc_count(), is_(1))
-
 			d = hi.search(s, "divide")
-			assert_that(d, has_entry('Hit Count', 1))
-			assert_that(d, has_entry('Query', 'divide'))
-			assert_that(d, has_entry('Last Modified', 1331922120.967309))
-			assert_that(d, has_key('Items'))
+			assert_that(d, has_entry(HIT_COUNT, 1))
+			assert_that(d, has_entry(QUERY, 'divide'))
+			assert_that(d, has_key(ITEMS))
+
+	def _create_ds_redaction(self):
+		usr = User.create_user( mock_dataserver.current_mock_ds, username='nt@nti.com', password='temp' )
+		redaction = dsRedaction()
+		redaction.selectedText = u'Lord of Winterfell'
+		redaction.replacementContent = 'Game of Thrones'
+		redaction.redactionExplanation = 'Eddard Stark'
+		redaction.creator = usr.username
+		redaction.containerId =  make_ntiid(nttype='bleach', specific='manga')
+		mock_dataserver.current_transaction.add(redaction) 
+		redaction = usr.addContainedObject( redaction )
+		return redaction
+		
+	@WithMockDSTrans	
+	def test_index_redaction(self):
+		rd = Redaction()
+		schema = rd.get_schema()
+		idx = RamStorage().create_index(schema)
+		rd.index_content(idx.writer(), self._create_ds_redaction())
+		with idx.searcher() as s:
+			assert_that(s.doc_count(), is_(1))
+			d = rd.search(s, "stark")
+			assert_that(d, has_entry(HIT_COUNT, 1))
+			assert_that(d, has_entry(QUERY, 'stark'))
+			assert_that(d, has_key(ITEMS))
 			
-			items = d['Items']
-			assert_that(items, has_length(1))
-			assert_that(items, has_key('tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x085a:5573657273'))
-			
-			item = items['tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x085a:5573657273']
-			assert_that(item, has_entry('Class', 'Hit'))
-			assert_that(item, has_entry('Type', 'Highlight'))
-			# assert_that(item, has_entry('CollectionId', 'prealgebra'))
-			assert_that(item, has_entry('TargetOID', 'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x085a:5573657273'))
-			assert_that(item, has_entry('NTIID', 'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x085a:5573657273'))
-			assert_that(item, has_entry('Snippet', 'multiply and DIVIDE In fact you may already'))
-			assert_that(item, has_entry('ContainerId', 'tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.0'))
-			
-	def test_index_messageinfo(self):
-					
-		mi = MessageInfo()
-		schema = mi.get_schema()
+	def test_whoosh_book(self):
+		bk = Book()
+		now = time.time()
+		schema = bk.get_schema()
 		idx = RamStorage().create_index(schema)
 		writer = idx.writer()
-		for m in self.transcript['Messages']:
-			mi.index_content(writer, m, auto_commit=False)
+		for x in zanpakuto_commands:
+			writer.add_document(ntiid = unicode(make_ntiid(nttype='bleach', specific='manga')),
+								title = unicode(x),
+								content = unicode(x),
+								quick = unicode(x),
+								related= u'',
+								section= u'',
+								last_modified=datetime.fromtimestamp(now))
 		writer.commit()
 		
 		with idx.searcher() as s:
-			assert_that(s.doc_count(), is_(72))
-
-			d = mi.search(s, "hacker")
-			assert_that(d, has_entry('Hit Count', 16))
-			assert_that(d, has_entry('Query', "hacker"))
-			assert_that(d, has_key('Items'))
+			d = bk.search(s, "shield")
+			assert_that(d, has_entry(HIT_COUNT, 1))
+			assert_that(d, has_entry(QUERY, 'shield'))
+			assert_that(d, has_key(ITEMS))
+			items = d[ITEMS]
+			assert_that(items, has_length(1))
 			
-			items = d['Items']
-			assert_that(items, has_length(16))
-			assert_that(items, has_key('0xd8:53657373696f6e73'))
-
-			item = items['0xd8:53657373696f6e73']
-			assert_that(item, has_entry('Snippet', 'Chicken HACKER'))
-			assert_that(item, has_entry('Last Modified', 1318543995.504597))
-			assert_that(item, has_entry('Type', 'MessageInfo'))
-			assert_that(item, has_entry('Class', 'Hit'))
-			assert_that(item, has_entry('ID', "06c35b96bae5458793c0c505f255f94b"))
-			assert_that(item, has_entry('NTIID', '0xd8:53657373696f6e73'))
-
-
 if __name__ == '__main__':
 	unittest.main()

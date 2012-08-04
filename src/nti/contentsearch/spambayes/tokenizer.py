@@ -3,6 +3,7 @@
 from __future__ import print_function, unicode_literals, generators
 
 import re
+import six	
 import math
 
 # patch encodings.aliases to recognize 'ansi_x3_4_1968'
@@ -10,6 +11,9 @@ from encodings.aliases import aliases # The aliases dictionary
 if not aliases.has_key('ansi_x3_4_1968'):
 	aliases['ansi_x3_4_1968'] = 'ascii'
 del aliases # Not needed any more
+
+from zope import interface
+from nti.contentsearch import interfaces as cs_interfaces
 
 has_highbit_char = re.compile(r"[\x80-\xff]").search
 
@@ -227,7 +231,8 @@ breaking_entity_re = re.compile(r"""
     >
 """, re.VERBOSE)
 
-default_skip_max_word_size = 12
+from nti.contentsearch.spambayes import default_tkn_skip_max_word_size
+from nti.contentsearch.spambayes import default_tkn_min_lengh_word_size as _word_min_len
 
 # for support of the replace_nonascii_chars option, build a string.translate
 # table that maps all high-bit chars and control chars to a '?' character.
@@ -247,13 +252,13 @@ non_ascii_translate_tab = ''.join(non_ascii_translate_tab)
 def log2(n, log=math.log, c=math.log(2)):
 	return log(n)/c
 
-def tokenize_word(word, _len=len, maxword=default_skip_max_word_size, generate_long_skips=True):
+def tokenize_word(word, _len=len, maxword=default_tkn_skip_max_word_size, generate_long_skips=True):
 	n = _len(word)
 	# make sure this range matches in tokenize().
-	if 3 <= n <= maxword:
+	if _word_min_len <= n <= maxword:
 		yield word
 
-	elif n >= 3:
+	elif n >= _word_min_len:
 		# a long word.
 		
 		# don't want to skip embedded email addresses.
@@ -280,7 +285,7 @@ def tokenize_word(word, _len=len, maxword=default_skip_max_word_size, generate_l
 					yield "8bit%%:%d" % round(hicount * 100.0 / len(word))
 
 
-def tokenize_text(text, maxword=default_skip_max_word_size, generate_long_skips=True, 
+def tokenize_text(text, maxword=default_tkn_skip_max_word_size, generate_long_skips=True, 
 				  do_short_runs=False):
 	"""
 	Tokenize everything in the chunk of text we were handed.
@@ -304,14 +309,14 @@ def tokenize_text(text, maxword=default_skip_max_word_size, generate_long_skips=
 			if 3 <= n <= maxword:
 				yield w
 
-			elif n >= 3:
-				for t in tokenize_word(w, maxword=maxword):
+			elif n >= _word_min_len:
+				for t in tokenize_word(w, maxword=maxword, generate_long_skips=generate_long_skips):
 					yield t
 	if short_runs and do_short_runs:
 		yield "short:%d" % int(log2(max(short_runs)))
 	
 		
-def tokenize(text, maxword=default_skip_max_word_size, replace_nonascii_chars=False,
+def tokenize(text, maxword=default_tkn_skip_max_word_size, replace_nonascii_chars=False,
 			 generate_long_skips=True, short_runs=False):
 
 	# replace numeric character entities (like &#97; for the letter # 'a').
@@ -353,4 +358,17 @@ def tokenize(text, maxword=default_skip_max_word_size, replace_nonascii_chars=Fa
 	for t in tokenize_text(	text, maxword=maxword, 
 							generate_long_skips=generate_long_skips, do_short_runs=short_runs):
 		yield t
+		
+
+# create a content tokenizer
+	
+@interface.implementer( cs_interfaces.IContentTokenizer )
+class _ContentTokenizer(object):
+	
+	def tokenize(self, text, *args, **kwargs):
+		if not text or not isinstance(text, six.string_types):
+			return u''
+		else:
+			result = list(tokenize(text, *args,  **kwargs))
+			return unicode(' '.join(result))
 

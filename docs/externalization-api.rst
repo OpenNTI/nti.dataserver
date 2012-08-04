@@ -29,3 +29,8 @@ OIDs
 Persistence
 ===========
 .. automodule:: nti.externalization.persistence
+
+Dublincore
+==========
+
+.. automodule:: nti.externalization.dublincore

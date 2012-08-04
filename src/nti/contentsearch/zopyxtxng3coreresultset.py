@@ -36,7 +36,6 @@ def intersectionResultSets(sets):
         words.extend(s.words)
     return ResultSet(docids, words)
 
-
 def unionResultSets(sets):
     """ perform intersection of ResultSets """
     

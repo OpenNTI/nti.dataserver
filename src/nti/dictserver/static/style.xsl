@@ -42,7 +42,7 @@
       </title>
       <style type="text/css"><![CDATA[
 
-		  @import url(http://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic,700italic);
+		  @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic,700italic);
 
 
 		  /*============================*/
