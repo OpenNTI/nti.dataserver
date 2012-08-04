@@ -22,6 +22,8 @@ DATE = "2011-10"
 ROOT = "tag:nextthought.com,2011-10:Root"
 
 TYPE_OID = 'OID'
+TYPE_UUID = 'UUID'
+TYPE_INTID = 'INTID' # TODO: Add a resolver for intids
 
 TYPE_ROOM = 'MeetingRoom'
 TYPE_MEETINGROOM = TYPE_ROOM
@@ -59,7 +61,7 @@ def validate_ntiid_string( string ):
 		raise InvalidNTIIDError( "String contains non-ascii values " + repr(string) )
 
 	if not string or not string.startswith( 'tag:nextthought.com,20' ):
-		raise InvalidNTIIDError( 'Missing start value: ' + str(string) )
+		raise InvalidNTIIDError( 'Missing correct start value: ' + str(string) )
 
 
 	parts = string.split( ':', 2 ) # Split twice. Allow for : in the specific part
@@ -122,10 +124,15 @@ def make_ntiid( date=DATE, provider=None, nttype=None, specific=None, base=None 
 	:param string nttype: Required NTIID type (if no base is given)
 	:param string specific: Optional type-specific part.
 	:param string base: If given, an NTIID string from which provider, nttype, specific, and date
-		will be taken if they are not directly specified.
+		will be taken if they are not directly specified. If not a valid NTIID, will be ignored.
 	"""
+
+	if base is not None and not is_valid_ntiid_string( base ):
+		base = None
+
 	if not nttype and not base:
 		raise ValueError( 'Must supply type' )
+
 
 	date_string = None
 	if date is DATE and base is not None:
@@ -141,6 +148,10 @@ def make_ntiid( date=DATE, provider=None, nttype=None, specific=None, base=None 
 		date = datetime.date( *time.gmtime(date_seconds)[0:3] )
 		date_string = date.isoformat()
 
+	if date_string is None:
+		__traceback_info__ = date, base
+		raise ValueError( "Unable to derive date string" )
+
 	base_parts = get_parts( base )
 
 	# TODO: This is not a reversible transformation. Who should do this?
@@ -148,7 +159,8 @@ def make_ntiid( date=DATE, provider=None, nttype=None, specific=None, base=None 
 	specific = '-' + specific if specific else ('-' + base_parts.specific if base_parts.specific else '')
 	nttype = nttype or base_parts.nttype
 
-	result = 'tag:nextthought.com,%s:%s%s%s' % (date_string, provider, nttype, specific )
+	__traceback_info__ =  (date_string, provider, nttype, specific )
+	result = 'tag:nextthought.com,%s:%s%s%s' % __traceback_info__
 	validate_ntiid_string( result )
 	return result
 
@@ -186,6 +198,12 @@ def get_type( ntiid ):
 	"""
 	return _parse( ntiid ).nttype
 
+def get_specific( ntiid ):
+	"""
+	:return: The string of the type-specific part of the ntiid if it could be parsed, else None.
+	"""
+	return _parse( ntiid ).specific
+
 def get_parts( ntiid ):
 	"""
 	:return: An NTIID named four-tuple (provider, type, type-specific, date) if the ntiid could be parsed,
@@ -201,6 +219,8 @@ def find_object_with_ntiid(key, **kwargs):
 	necessarily used.
 
 	:param string key: The NTIID to find.
+	:param dict kwargs: Keyword arguments; this is to assist translation from legacy APIs and
+		they are not currently used. If you send any, :mod:`warnings` will issue a warning.
 	:return: The object found, or None if no object can be found or the ntiid passed is invalid.
 	"""
 

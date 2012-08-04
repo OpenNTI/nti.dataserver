@@ -121,6 +121,10 @@
 		handler=".chat_transcripts._save_message_to_transcripts_subscriber"
 		/>
 
+	<adapter factory=".meeting_storage.EntityMeetingContainerAnnotation" />
+	<adapter factory=".meeting_storage.EntityMessageInfoContainerAnnotation" />
+	<adapter factory=".meeting_storage.CreatorBasedAnnotationMessageInfoStorage" />
+
 	<adapter factory=".mimetype.ModeledContentTypeAwareAdapter" />
 
 	<!-- Externalization -->

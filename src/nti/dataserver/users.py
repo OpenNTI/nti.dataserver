@@ -1022,9 +1022,11 @@ class User(Principal):
 				if test(o):
 					yield o
 
+
 		# We do not directly own these objects; they are weak refs
 		# to the objects of others. But if they have been deleted from the DB,
 		# and the DB hasn't been packed, we may be the only path to them
+		# TODO: Re-evaluate this with the intid sharing changes.
 		for container in self.streamCache.values():
 			if not hasattr( container, 'values' ): continue
 			for o in container.values():
@@ -1044,11 +1046,22 @@ class User(Principal):
 				if o is None: continue
 				if test(o):
 					yield o
+		# TODO: This should probably be returning the annotations, too, just like
+		# sublocations does, yes?
 
 	def sublocations(self):
 		yield self.friendsLists
 		yield self.devices
 		yield self.containers
+		# If we have annotations, then if the annotated value thinks of
+		# us as a parent, we need to return that. See zope.annotation.factory
+		annotations = zope.annotation.interfaces.IAnnotations(self, {})
+
+		# Technically, IAnnotations doesn't have to be iterable of values,
+		# but it always is (see zope.annotation.attribute)
+		for val in annotations.values():
+			if getattr( val, '__parent__', None ) is self:
+				yield val
 
 	def _is_container_ntiid( self, containerId ):
 		"""

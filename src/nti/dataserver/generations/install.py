@@ -31,14 +31,12 @@ from zope import interface
 from zope.component.interfaces import ISite
 from zope.site import LocalSiteManager
 from zope.site.folder import Folder, rootFolder
-from zope.location.location import locate
+
 
 import zope.intid
 import zc.intid
 
-
-from nti.chatserver.chatserver import PersistentMappingMeetingStorage
-from nti.dataserver import datastructures, _Dataserver
+from nti.dataserver import _Dataserver
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import sessions
@@ -47,14 +45,8 @@ from nti.dataserver import intid_utility
 
 import copy
 def install_chat( context ):
+	pass
 
-	conn = context.connection
-	room_name = 'meeting_rooms'
-	sess_conn = conn.get_connection( 'Sessions' )
-	sess_root = sess_conn.root()
-
-	if room_name not in sess_root:
-		sess_root[room_name] = PersistentMappingMeetingStorage( OOBTree.OOBTree )
 
 def install_main( context ):
 	conn = context.connection

@@ -58,7 +58,6 @@ import zope.intid
 import zc.intid.utility
 import copy
 
-from nti.chatserver.chatserver import PersistentMappingMeetingStorage
 from nti.dataserver import datastructures, _Dataserver
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
