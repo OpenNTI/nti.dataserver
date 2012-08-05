@@ -43,6 +43,7 @@ from nti.dataserver import interfaces
 from nti.chatserver import interfaces as chat_interfaces
 from nti.chatserver.chatserver import Chatserver
 from . import meeting_container_storage
+from . import meeting_storage
 
 from . import config
 
@@ -71,37 +72,6 @@ class _Change(Persistent):
 	def __repr__( self ):
 		return '_Change( %s, %s )' % (self.change, self.meta)
 
-class _SessionDbMeetingStorage( object ):
-	interface.implements(chat_interfaces.IMeetingStorage)
-
-	def __init__( self, name ):
-		"""
-		:param string name: The name of the stored dict object.
-		"""
-		self.name = name
-
-	def sdb(self):
-		lsm = component.getSiteManager()
-		conn = getattr( lsm, '_p_jar', None )
-		if conn:
-			# Our root is the top-level site manager we are using
-			return conn.get_connection( 'Sessions' )
-		#return _ContextManager.contextManager().conn.get_connection( 'Sessions' )
-
-	def get( self, key ):
-		return self.sdb().root()[self.name].get( key )
-
-	def __getitem__( self, key ):
-		return self.sdb().root()[self.name][key]
-
-	def add_room( self, room ):
-		self.sdb().root()[self.name].add_room( room )
-
-	def __delitem__( self, k ):
-		del self.sdb().root()[self.name][k]
-
-	def __str__(self):
-		return "<%s %s %s>" % ( self.__class__, self.name, hex(id(self)) )
 
 @contextlib.contextmanager
 def _trivial_db_transaction_cm():
@@ -212,7 +182,10 @@ def run_job_in_site(func, retries=0, sleep=None,
 			# cost of handling transactions for things that do not use the other connections, but ensures
 			# we stay nicely in sync.
 
-			for db_name in conn.db().databases:
+			for db_name, db in conn.db().databases.items():
+				__traceback_info__ = i, db_name, db, func
+				if db is None: # For compatibility with databases we no longer use
+					continue
 				c2 = conn.get_connection(db_name)
 				if c2 is conn:
 					continue
@@ -438,7 +411,7 @@ class Dataserver(MinimalDataserver):
 
 	def _setup_chat( self, room_name ):
 		return  Chatserver( self.session_manager,
-							 meeting_storage=_SessionDbMeetingStorage( room_name ),
+							 meeting_storage=meeting_storage.CreatorBasedAnnotationMeetingStorage(),
 							 meeting_container_storage=meeting_container_storage.MeetingContainerStorage( ) )
 
 

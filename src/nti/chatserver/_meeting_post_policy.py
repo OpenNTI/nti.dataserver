@@ -15,14 +15,14 @@ import functools
 
 from persistent import Persistent
 import BTrees.OOBTree
-from ZODB.interfaces import IConnection
+import BTrees
 
 from zope import interface
 from zope import component
 from zope.event import notify
-from zope import lifecycleevent
-from zope.location import locate
 
+
+from zc import intid as zc_intid
 
 from nti.ntiids import ntiids
 from . import interfaces
@@ -55,13 +55,11 @@ class _MeetingMessagePostPolicy(object):
 		.. note:: FIXME: This is badly broken. Messages currently have
 			no actual home; nothing owns them or is their location. They
 			badly need one, a real container. Then all of this goes away.
+
+		:return: Undefined.
 		"""
-		locate( msg_info, self._room, msg_info.ID )
-		conn = IConnection( msg_info, None ) # Depend on zope.keyreference to find the IConnection
-		if conn:
-			conn.add( msg_info )
-		# Give it an intid
-		lifecycleevent.added( msg_info, self._room, msg_info.ID )
+		storage = interfaces.IMessageInfoStorage( msg_info )
+		storage.add_message( msg_info )
 
 
 	def _treat_recipients_like_default_channel( self, msg_info ):
@@ -172,15 +170,23 @@ class _MeetingMessagePostPolicy(object):
 
 class _ModeratedMeetingState(Persistent):
 
-	def __init__( self ):
+	family = BTrees.family64
+
+	def __init__( self, family=None ):
 		self._moderated_by_names = BTrees.OOBTree.Set()
 		self._shadowed_usernames = BTrees.OOBTree.Set()
 		# A BTree isn't necessarily the most efficient way
 		# to implement the moderation queue, but it does work.
 		# We will typically have many writers and one reader--
 		# but that reader, the moderator, is also writing.
-		# TODO: Convert this to intids
-		self._moderation_queue = BTrees.OOBTree.OOBTree()
+		if family is not None:
+			self.family = family
+		else:
+			intids = component.queryUtility( zc_intid.IIntIds )
+			if intids:
+				self.family = intids.family
+
+		self._moderation_queue = self.family.OI.BTree()
 
 
 	@property
@@ -213,13 +219,17 @@ class _ModeratedMeetingState(Persistent):
 		# overlap (I think we are, they are UUIDs, we should probably add
 		# a check
 		assert msg_info.MessageId and msg_info.MessageId not in self._moderation_queue
-		self._moderation_queue[msg_info.MessageId] = msg_info
+		self._moderation_queue[msg_info.MessageId] = component.getUtility( zc_intid.IIntIds ).getId( msg_info )
 		msg_info.Status = STATUS_PENDING
 
 	def approve_message( self, msg_id ):
 		# TODO: Disapprove messages? This queue could get terrifically
 		# large.
-		msg = self._moderation_queue.pop( msg_id, None )
+		msg = None
+		msg_iid = self._moderation_queue.pop( msg_id, None )
+		if msg_iid:
+			msg = component.getUtility( zc_intid.IIntIds ).queryObject( msg_iid )
+
 		if msg:
 			msg.Status = STATUS_POSTED
 		else:

@@ -227,14 +227,14 @@ class _UserTranscriptStorageAdapter(object):
 
 	def transcript_for_meeting( self, object_id ):
 		result = None
-		meeting_id = object_id
-		if not ntiids.is_ntiid_of_type( meeting_id, ntiids.TYPE_OID ):
+		meeting_oid = object_id
+		if not ntiids.is_ntiid_of_type( meeting_oid, ntiids.TYPE_OID ):
 			# We'll take any type, usually a TRANSCRIPT type
-			meeting_id = ntiids.make_ntiid( base=meeting_id,
-											provider=nti_interfaces.SYSTEM_USER_NAME,
-											nttype=ntiids.TYPE_OID )
+			meeting_oid = ntiids.make_ntiid( base=meeting_oid,
+											 provider=nti_interfaces.SYSTEM_USER_NAME,
+											 nttype=ntiids.TYPE_OID )
 
-		meeting = component.queryUtility( nti_interfaces.IDataserver, default=_get_by_oid ).get_by_oid( meeting_id, ignore_creator=True )
+		meeting = ntiids.find_object_with_ntiid( meeting_oid )
 		if meeting is not None:
 			storage_id = _transcript_ntiid( meeting, self._user.username )
 			storage = self._user.getContainedObject( meeting.containerId, storage_id )
@@ -242,10 +242,24 @@ class _UserTranscriptStorageAdapter(object):
 		else:
 			# OK, the meeting has gone away, GC'd and no longer directly referencable.
 			# Try to find the appropriate storage manually
+			# TODO: finish converting this all to intids
+
+			# We will accept either a match for the OID (unlikely at this point)
+			# the original object_id (commonly a UUID during testing), or,
+			# if we were given a TRANSCRIPT type, then we make a UUID (again,
+			# for testing). We also accept a provider-mismatch for UUID values (again, testing)
+			acceptable_oids = (meeting_oid, object_id)
+			specific = ntiids.get_specific( object_id )
+			if ntiids.is_ntiid_of_type( object_id, ntiids.TYPE_TRANSCRIPT ):
+				acceptable_oids += (ntiids.make_ntiid( base=object_id, nttype=ntiids.TYPE_UUID ), )
+
 			for value in self._user.values( of_type=_IMeetingTranscriptStorage ):
-				if value.meeting.ID == meeting_id:
+				value_meeting_id = value.meeting.ID
+				if value_meeting_id in acceptable_oids or (ntiids.is_ntiid_of_type(value_meeting_id, ntiids.TYPE_UUID)
+														   and ntiids.get_specific( value_meeting_id ) == specific ):
 					result = Transcript( value )
 					break
+
 		return result
 
 	@property

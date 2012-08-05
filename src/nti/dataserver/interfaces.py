@@ -799,12 +799,49 @@ class ISessionServiceStorage(interface.Interface):
 	"""
 	The data stored by the session service.
 	"""
-	session_map = schema.Dict(
-		title="Map from session id to Session object",
-		key_type=schema.TextLine(title="session ids"),
-		value_type=schema.Object(nti.socketio.interfaces.ISocketSession,title="Extant session" ) )
-	session_index = schema.Dict(
-		title="Index from usernames to set of extant session ids",
-		key_type=schema.TextLine(title="Username"),
-		value_type=schema.Set( title="An OOSet of session ids",
-							   value_type=schema.TextLine(title="Session ids") ) )
+
+	def register_session( session ):
+		"""
+		Register the given session for storage. When this method
+		returns, the ``session`` will have a unique, ASCII string, ``id``
+		value. It will be retrievable from :meth:`get_session` and
+		:meth:`get_sessions_by_owner`. See also :meth:`unregister_session`.
+
+		:param session: The session to register.
+		:type session: :class:`nti.socketio.interfaces.ISocketSession`
+		:return: Undefined.
+		"""
+
+	def unregister_session( session ):
+		"""
+		Cause the given session to no longer be registered with this object.
+		It will no longer be retrievable from :meth:`get_session` and
+		:meth:`get_sessions_by_owner`. If the session was not actually registered
+		with this object, has no effect.
+
+		:param session: The session to unregister.
+		:type session: :class:`nti.socketio.interfaces.ISocketSession`
+		:return: Undefined.
+		"""
+
+	def get_session( session_id ):
+		"""
+		Return a :class:`nti.socketio.interfaces.ISocketSession` registered with this object
+		whose ``id`` property matches the `session_id`.
+
+		:param str session_id: The session ID to find. This is the value of ``session.id``
+			after the session was registered with :meth:`register_session`
+		:return: The :class:`nti.socketio.interfaces.ISocketSession` for that session id,
+			or, if not registered, None.
+		"""
+
+	def get_sessions_by_owner( session_owner ):
+		"""
+		Return a sequence of session objects registered with this object
+		for the given owner.
+		:param str session_owner: The name of the session owner. If the owner
+			does not exist or otherwise has no sessions registered, returns an empty
+			sequence.
+		:return: A sequence (possibly a generator) of session objects belonging to
+			the given user.
+		"""

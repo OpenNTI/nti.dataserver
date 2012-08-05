@@ -11,18 +11,16 @@ from zope import component
 from zope import interface
 
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver import users
 from nti.chatserver import interfaces as chat_interfaces
 from nti.ntiids import ntiids
-from nti.dataserver import classes
 from nti.dataserver import authorization
 from nti.dataserver import authorization_acl as auth_acl
+from zope.annotation import interfaces as ant_interfaces
 
+@interface.implementer( chat_interfaces.IMeetingContainer )
 class _AbstractMeetingContainerAdapter(object):
-	interface.implements( chat_interfaces.IMeetingContainer )
 
-	# TODO: Should probably redo this using zope.annotation
-	ACTIVE_ROOM_ATTR = '_mr_active_room'
+	ACTIVE_ROOM_ATTR = __name__ + '.' + '_mr_active_room'
 
 	def __init__( self, container ):
 		self.container = container
@@ -31,7 +29,7 @@ class _AbstractMeetingContainerAdapter(object):
 		"""
 		:return: An active meeting, or None.
 		"""
-		active_meeting = getattr( self.container, self.ACTIVE_ROOM_ATTR, None )
+		active_meeting = ant_interfaces.IAnnotations(  self.container ).get( self.ACTIVE_ROOM_ATTR, None )
 		if active_meeting and active_meeting.Active:
 			return active_meeting
 		return None
@@ -80,7 +78,8 @@ class _AbstractMeetingContainerAdapter(object):
 		meeting_dict['Occupants'] = occupants
 
 		result = constructor()
-		setattr( self.container, self.ACTIVE_ROOM_ATTR, result )
+		ant_interfaces.IAnnotations( self.container )[self.ACTIVE_ROOM_ATTR] = result
+
 		result.__parent__ = self.container
 		# Apply an ACL allowing some to moderate
 		# FIXME: XXX: This is overriding the IACLProvider registered for meetings.
@@ -114,12 +113,12 @@ class _AbstractMeetingContainerAdapter(object):
 
 	def meeting_became_empty( self, chatserver, meeting ):
 		try:
-			delattr( self.container, self.ACTIVE_ROOM_ATTR )
-		except AttributeError:
+			del ant_interfaces.IAnnotations(self.container)[self.ACTIVE_ROOM_ATTR]
+		except KeyError:
 			pass
 
+@component.adapter( nti_interfaces.IFriendsList )
 class _FriendsListAdapter(_AbstractMeetingContainerAdapter):
-	component.adapts( users.FriendsList )
 
 	def __init__( self, friends_list ):
 		super(_FriendsListAdapter, self).__init__( friends_list )
@@ -156,8 +155,8 @@ class _FriendsListAdapter(_AbstractMeetingContainerAdapter):
 
 		return active_meeting
 
+@component.adapter( nti_interfaces.ISectionInfo )
 class _ClassSectionAdapter(_AbstractMeetingContainerAdapter):
-	component.adapts( classes.SectionInfo )
 
 	def __init__( self, section ):
 		super(_ClassSectionAdapter,self).__init__( section )

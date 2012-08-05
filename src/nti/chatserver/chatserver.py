@@ -9,11 +9,15 @@ from ZODB import loglevels
 
 import numbers
 import contextlib
+import uuid
+
+from zope.deprecation import deprecated
 
 from nti.externalization.externalization import toExternalObject, DevmodeNonExternalizableObjectReplacer
 from nti.externalization import internalization
-from nti.externalization import oids
 from nti.externalization.interfaces import StandardExternalFields as XFields
+
+from nti.ntiids import ntiids
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import authorization as auth
@@ -21,10 +25,8 @@ from nti.dataserver import authorization as auth
 from persistent import Persistent
 from persistent.mapping import PersistentMapping
 
-
 from zope import interface
 from zope import component
-
 
 from . import interfaces
 from .meeting import _Meeting
@@ -74,14 +76,21 @@ EVT_RECV_MESSAGE = 'chat_recvMessage'
 
 class PersistentMappingMeetingStorage(Persistent):
 	"""
-	An implementation of :class:`chat_interfaces.IMeetingStorage` using
-	some sort of persistent mapping. The default is in fact
-	:class:`PersistentMapping`, but this may be changed at construction.
+	Deprecated stub having no functionality anymore.
 	"""
-	interface.implements(interfaces.IMeetingStorage)
 
-	def __init__( self, mapping_factory=PersistentMapping ):
-		self.meetings = mapping_factory()
+
+deprecated( "PersistentMappingMeetingStorage", "This class is a stub for bwc only." )
+
+@interface.implementer(interfaces.IMeetingStorage)
+class TestingMappingMeetingStorage(object):
+	"""
+	An implementation of :class:`chat_interfaces.IMeetingStorage` suitable
+	for use in transient, testing scenarios.
+	"""
+
+	def __init__( self ):
+		self.meetings = dict()
 
 	def __delitem__( self, room_id ):
 		del self.meetings[room_id]
@@ -90,14 +99,9 @@ class PersistentMappingMeetingStorage(Persistent):
 		return self.meetings[room_id]
 
 	def add_room( self, room ):
-		if getattr( self, '_p_jar', None ) \
-			and getattr( room, '_p_jar', self ) is None:
-			getattr( self, '_p_jar' ).add( room )
-
-		room.id = oids.to_external_ntiid_oid( room, None )
-
-		if room.id is None:
-			raise ValueError( "Unable to assign ID, not persistent" )
+		room.id = ntiids.make_ntiid( provider=room.creator,
+									 nttype=ntiids.TYPE_UUID,
+									 specific=uuid.uuid4().hex )
 		self.meetings[room.id] = room
 
 	def get( self, room_id ):
@@ -108,10 +112,10 @@ def _NOP_CM():
 	yield
 
 
+@interface.implementer( interfaces.IChatserver )
 class Chatserver(object):
 	""" Collection of all the state related to the chatserver, including active rooms, etc. """
 
-	interface.implements( interfaces.IChatserver )
 
 	def __init__( self,
 				  user_sessions,
@@ -123,18 +127,16 @@ class Chatserver(object):
 		:param user_sessions: Supports :meth:`get_session` for session_id and :meth:`get_sessions_by_owner` for
 			getting all sessions for a given user. A session has a `protocol_handler` attribute
 			which has a `send_event` method.
-		:param meeting_storage: Storage for meeting instances, supports get, __getitem__, and __delitem__. If not
-			given, we use a dictionary.
-		:param Mapping meeting_container_storage: Read-only dictionary used to look up containers
+		:param meeting_storage: Storage for meeting instances.
+		:type meeting_storage: :class:`chat_interfaces.IMeetingStorage`
+		:param dict meeting_container_storage: Read-only dictionary used to look up containers
 			of meetings. If the result is a :class:`IMeetingContainer`, it will be called to create the room.
 
 		"""
 		super(Chatserver,self).__init__()
 		self.sessions = user_sessions
 		# Mapping from room id to room.
-		self.rooms = meeting_storage \
-					 if meeting_storage is not None \
-					 else PersistentMappingMeetingStorage()
+		self.rooms = meeting_storage
 		self.meeting_container_storage = meeting_container_storage \
 										 if meeting_container_storage is not None \
 										 else PersistentMapping()

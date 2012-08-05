@@ -6,7 +6,7 @@ from __future__ import print_function, unicode_literals
 
 __docformat__ = 'restructuredtext'
 
-generation = 17
+generation = 18
 
 from zope.generations.generations import SchemaManager
 
@@ -24,37 +24,28 @@ def evolve( context ):
 	return result
 
 import BTrees
-from BTrees import OOBTree
 from persistent.list import PersistentList
 
 from zope import interface
 from zope.component.interfaces import ISite
 from zope.site import LocalSiteManager
 from zope.site.folder import Folder, rootFolder
-from zope.location.location import locate
+
 
 import zope.intid
 import zc.intid
 
-
-from nti.chatserver.chatserver import PersistentMappingMeetingStorage
-from nti.dataserver import datastructures, _Dataserver
+from nti.dataserver import _Dataserver
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver import sessions
+from nti.dataserver import session_storage
 from nti.dataserver import containers as container
 from nti.dataserver import intid_utility
 
 import copy
 def install_chat( context ):
+	pass
 
-	conn = context.connection
-	room_name = 'meeting_rooms'
-	sess_conn = conn.get_connection( 'Sessions' )
-	sess_root = sess_conn.root()
-
-	if room_name not in sess_root:
-		sess_root[room_name] = PersistentMappingMeetingStorage( OOBTree.OOBTree )
 
 def install_main( context ):
 	conn = context.connection
@@ -115,11 +106,8 @@ def install_main( context ):
 	conn.add( oid_resolver )
 	lsm.registerUtility( oid_resolver, provided=nti_interfaces.IOIDResolver )
 
-	sess_conn = conn.get_connection( 'Sessions' )
-	storage = sessions.SessionServiceStorage()
-	sess_conn.add( storage )
-	sess_conn.root()['session_storage'] = storage
-	lsm.registerUtility( storage, provided=nti_interfaces.ISessionServiceStorage )
+	sess_storage = session_storage.OwnerBasedAnnotationSessionServiceStorage()
+	lsm.registerUtility( sess_storage, provided=nti_interfaces.ISessionServiceStorage )
 
 	install_intids( dataserver_folder )
 

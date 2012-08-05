@@ -106,23 +106,16 @@ URL_HANDSHAKE = '/socket.io/1/'
 # We could use different hard-coded urls for the connect
 URL_CONNECT = '/socket.io/1/{transport}/{session_id}'
 
-def _after_create_session( session, request ):
+
+def _create_new_session(request):
 	username = sec.authenticated_userid( request )
 	if not username:
 		logger.debug( "Unauthenticated session request" )
 		raise hexc.HTTPUnauthorized()
 	logger.debug( "Creating session handler for '%s'", username )
-	session.owner = username
-
-
-def _create_new_session(request):
-	def factory(**kwargs):
-		s = Session(**kwargs)
-		_after_create_session( s, request )
-		return s
 
 	session_manager = component.getUtility( nti_interfaces.IDataserver ).session_manager
-	session = session_manager.create_session( session_class=factory )
+	session = session_manager.create_session( session_class=Session, owner=username )
 	logger.debug( "Created new session %s", session )
 	return session
 
