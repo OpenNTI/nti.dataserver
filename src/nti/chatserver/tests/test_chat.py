@@ -50,6 +50,7 @@ class chat(object):
 	ModeratedMeeting = meeting._Meeting
 	ChatHandler = _handler._ChatHandler
 	Chatserver = _chatserver.Chatserver
+	TestingMappingMeetingStorage = _chatserver.TestingMappingMeetingStorage
 	CHANNEL_CONTENT = chat_interfaces.CHANNEL_CONTENT
 	CHANNEL_META = chat_interfaces.CHANNEL_META
 	CHANNEL_DEFAULT = chat_interfaces.CHANNEL_DEFAULT
@@ -108,13 +109,17 @@ class TestMessageInfo(ConfiguringTestBase):
 
 class TestChatRoom(ConfiguringTestBase):
 
+	@WithMockDSTrans
 	def test_become_moderated(self):
+		users.User.create_user( username='sjohnson@nti' )
 		room = chat.Meeting( None )
 		assert_that( room.Moderated, is_(False))
 		room.Moderated = True
+		room.id = 'foo'
 		assert_that( room, is_( chat.ModeratedMeeting ) )
 
 		msg = chat.MessageInfo()
+		msg.creator = 'sjohnson@nti'
 		room.post_message( msg )
 		assert_that( room._moderation_state._moderation_queue, has_key( msg.MessageId ) )
 
@@ -212,17 +217,22 @@ class TestChatRoom(ConfiguringTestBase):
 
 		ds.close()
 
+	@WithMockDSTrans
 	def test_approve_moderated_removes_from_queue(self):
+		users.User.create_user( username='sjohnson@nti' )
 		class MockChatServer(object):
 			def _save_message_to_transcripts(*args, **kwargs):
 				pass
 
 		room = chat.Meeting( MockChatServer() )
 		room.Moderated = True
+		room.id = 'foo:bar'
 		assert_that( room, is_( chat.ModeratedMeeting ) )
 		assert_that( room.toExternalObject(), has_entry( 'Moderated', True ) )
 
 		msg = chat.MessageInfo()
+		msg.containerId = room.id
+		msg.creator = 'sjohnson@nti'
 		room.post_message( msg )
 		assert_that( room._moderation_state._moderation_queue, has_key( msg.MessageId ) )
 
@@ -268,7 +278,7 @@ class TestChatserver(ConfiguringTestBase):
 			v.session_id = k
 			if not users.User.get_user( v.owner ):
 				user = users.User.create_user( username=(v.owner if '@' in v.owner else v.owner + '@nextthought.com') )
-				users._get_shared_dataserver().root['users'][v.owner] = user
+				users._get_shared_dataserver().root['users'][v.owner] = user # Establish an alias if '@' wasn't in the name
 
 		def __getitem__( self, k ):
 			return self.sessions[k]
@@ -282,7 +292,7 @@ class TestChatserver(ConfiguringTestBase):
 		def get_sessions_by_owner( self, owner ):
 			return [x for x in self.sessions.values() if x.owner == owner]
 
-	def _create_room( self, otherDict=None ):
+	def _create_room( self, otherDict=None, meeting_storage_factory=chat.TestingMappingMeetingStorage ):
 		"""
 		Returns a room.
 		"""
@@ -291,8 +301,8 @@ class TestChatserver(ConfiguringTestBase):
 		sessions[2] = self.Session( 'chris' )
 		sessions[3] = self.Session( 'jason' )
 		self.sessions = sessions
-		chatserver = chat.Chatserver( sessions )
-		mock_dataserver.current_transaction.add( chatserver.rooms )
+		chatserver = chat.Chatserver( sessions, meeting_storage_factory() )
+		#mock_dataserver.current_transaction.add( chatserver.rooms )
 		component.provideUtility( chatserver )
 
 		d = {'Occupants': ['jason', 'chris', 'sjohnson'],
@@ -367,8 +377,7 @@ class TestChatserver(ConfiguringTestBase):
 		sessions = self.Sessions()
 		sessions[1] = self.Session( 'sjohnson' )
 		sessions[2] = self.Session( 'other' )
-		chatserver = chat.Chatserver( sessions )
-		mock_dataserver.current_transaction.add( chatserver.rooms )
+		chatserver = chat.Chatserver( sessions, chat.TestingMappingMeetingStorage() )
 
 		meeting = chat.ChatHandler( chatserver, sessions[1] ).enterRoom( d )
 		assert_that( meeting,
@@ -410,8 +419,7 @@ class TestChatserver(ConfiguringTestBase):
 		sessions[1] = self.Session( 'sjohnson' )
 		sessions[2] = self.Session( 'friend@bar' )
 		sessions[3] = self.Session( 'foo@bar' )
-		chatserver = chat.Chatserver( sessions, meeting_container_storage=mc )
-		mock_dataserver.current_transaction.add( chatserver.rooms )
+		chatserver = chat.Chatserver( sessions, chat.TestingMappingMeetingStorage(), meeting_container_storage=mc )
 		foo_handler = chat.ChatHandler( chatserver, sessions[3] )
 		friend_handler = chat.ChatHandler( chatserver, sessions[2] )
 		sj_handler = chat.ChatHandler( chatserver, sessions[1] )
@@ -519,8 +527,7 @@ class TestChatserver(ConfiguringTestBase):
 		sessions[1] = self.Session( 'sjohnson' )
 		sessions[2] = self.Session( 'chris' )
 		sessions[3] = self.Session( 'jason' )
-		chatserver = chat.Chatserver( sessions, meeting_container_storage=mc )
-		mock_dataserver.current_transaction.add( chatserver.rooms )
+		chatserver = chat.Chatserver( sessions, chat.TestingMappingMeetingStorage(), meeting_container_storage=mc )
 		other = chat.ChatHandler( chatserver, sessions[3] )
 		student = chat.ChatHandler( chatserver, sessions[2] )
 		instructor = chat.ChatHandler( chatserver, sessions[1] )
@@ -544,8 +551,7 @@ class TestChatserver(ConfiguringTestBase):
 		sessions[1] = self.Session( 'sjohnson' )
 		sessions[2] = self.Session( 'chris' )
 		sessions[3] = self.Session( 'jason' )
-		chatserver = chat.Chatserver( sessions )
-		mock_dataserver.current_transaction.add( chatserver.rooms )
+		chatserver = chat.Chatserver( sessions, chat.TestingMappingMeetingStorage() )
 		component.provideUtility( chatserver )
 		room = chatserver.create_room_from_dict( {'Occupants': ['jason', 'chris', 'sjohnson'],
 												  'Creator': 'sjohnson',
@@ -580,14 +586,14 @@ class TestChatserver(ConfiguringTestBase):
 
 		msg = chat.MessageInfo()
 		msg.channel = chat.CHANNEL_CONTENT
-		msg.recipients = ['chris']
+		msg.recipients = ['chris@nextthought.com']
 
 		# Only the moderator
-		msg.Creator = 'jason'
+		msg.Creator = 'jason' # Not the moderator
 		assert_that( chatserver.post_message_to_room( room.ID, msg ), is_( False ) )
 
 		# Body must be a mapping with a valid NTIID
-		msg.Creator = 'sjohnson'
+		msg.Creator = 'sjohnson' # The moderator
 		msg.sender_sid = 1
 		msg.Body = {}
 		assert_that( chatserver.post_message_to_room( room.ID, msg ), is_( False ) )
@@ -774,9 +780,12 @@ class TestChatserver(ConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_transcript_summary_for_room_has_ntiid(self):
+		from zope import dottedname
+		user_meeting_storage = dottedname.resolve.resolve( 'nti.dataserver.meeting_storage.CreatorBasedAnnotationMeetingStorage' )
 		room, chatserver = self._create_room( {
 			'ContainerId': 'tag:nextthought.com,2011-11:OU-MeetingRoom-CS101.1',
-			'Active': False } )
+			'Active': False },
+			meeting_storage_factory=user_meeting_storage	)
 		assert_that( room.containerId, is_( not_none() ) )
 		msg = chat.MessageInfo()
 		msg.Creator = 'jason'
@@ -811,10 +820,9 @@ class TestChatserver(ConfiguringTestBase):
 		# Create a user, but remove the session
 		sessions[2] = self.Session( 'chris' )
 		del sessions[2]
-		chatserver = chat.Chatserver( sessions )
+		chatserver = chat.Chatserver( sessions, chat.TestingMappingMeetingStorage() )
 
 		conn = mock_dataserver.current_transaction
-		conn.add( chatserver.rooms )
 		component.provideUtility( chatserver )
 
 		n = Note()

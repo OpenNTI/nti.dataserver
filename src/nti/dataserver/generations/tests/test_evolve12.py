@@ -58,7 +58,6 @@ import zope.intid
 import zc.intid.utility
 import copy
 
-from nti.chatserver.chatserver import PersistentMappingMeetingStorage
 from nti.dataserver import datastructures, _Dataserver
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
@@ -104,11 +103,11 @@ def install_main( context ):
 	conn.add( oid_resolver )
 	lsm.registerUtility( oid_resolver, provided=nti_interfaces.IOIDResolver )
 
-	sess_conn = conn.get_connection( 'Sessions' )
-	storage = sessions.SessionServiceStorage()
-	sess_conn.add( storage )
-	sess_conn.root()['session_storage'] = storage
-	lsm.registerUtility( storage, provided=nti_interfaces.ISessionServiceStorage )
+	# sess_conn = conn.get_connection( 'Sessions' )
+	# storage = sessions.SessionServiceStorage()
+	# sess_conn.add( storage )
+	# sess_conn.root()['session_storage'] = storage
+	# lsm.registerUtility( storage, provided=nti_interfaces.ISessionServiceStorage )
 
 from nti.dataserver import providers
 from nti.dataserver import enclosures

@@ -191,8 +191,11 @@ class IMeetingContainer(Interface):
 
 class IMeetingStorage(Interface):
 	"""
-	An object for the temporary shared storage of meetings
-	that are active.
+	An object for the storage of meetings. The general
+	contract is that meetings will be added to this object when
+	they are created, and when they become unactive, they will
+	be deleted. (However, a storage instance is allowed to let
+	the room's lifetime extend beyond that).
 	"""
 
 	def get(room_id):
@@ -209,13 +212,37 @@ class IMeetingStorage(Interface):
 	def add_room(room):
 		"""
 		Stores a room in this object. Sets the room's (an IContained)
-		`id` property to be in the form produced by :func:`datatstructures.to_external_ntiid_oid`.
+		``id`` property to be in the form produced by
+		:func:`nti.externalization.oids.to_external_ntiid_oid` (or,
+		at a minimum, to be a valid NTIID, probably of type :const:`nti.ntiids.ntiids.TYPE_UUID`).
+
+		Ensures that the room is persistently stored before returning.
+		May also register the room with ``intid`` utilities.
 		"""
+		# Consumers of Meetings (e.g., chat_transcripts) depend on the ID being
+		# a valid NTIID. They like to be able to find the object later based just on
+		# this NTIID. They also like to be able to deriver new IDs from this
+		# NTIID (all of that is weird)
 
 	def __delitem__(room_id):
 		"""
 		Removes the room stored in this object with the given id or
-		raises KeyError.
+		raises KeyError. May be ignored.
+		"""
+
+class IMessageInfoStorage(Interface):
+	"""
+	Something that can persistently store chat messages that are
+	being sent.
+	Ideally, there will be an adapter registered to connect messages
+	to users and hang the messages off of the user.
+	"""
+
+	def add_message( msg_info ):
+		"""
+		Cause the message to be stored. Typically, this will
+		be done using a :class:`zope.container.interfaces.IContainer`
+		and so events will be emitted and ``intids``  will be assigned.
 		"""
 
 class IUserTranscriptStorage(Interface):

@@ -1,4 +1,12 @@
-""" Chatserver functionality. """
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+
+
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
 
 __docformat__ = "restructuredtext en"
 
@@ -55,11 +63,7 @@ class MessageInfo( contenttypes.ThreadableExternalizableMixin,
 		self.Status = interfaces.STATUS_INITIAL
 
 	# Aliases (TODO: Need general alias descriptor)
-	def get_Sender(self):
-		return self.Creator
-	def set_Sender(self,s):
-		self.Creator = s
-	Sender = property( get_Sender, set_Sender )
+	Sender = property( lambda self: self.Creator, lambda self, s: setattr( self, 'Creator', s ) )
 	creator = Sender
 
 	@property

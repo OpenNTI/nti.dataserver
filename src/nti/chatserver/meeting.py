@@ -134,9 +134,8 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 		# leads to false conflicts
 		return self._MessageCount.value
 
-	@property
-	def RoomId(self):
-		return self.id
+	RoomId = property( lambda x: x.id, lambda x, y: setattr( x, 'id', y ) )
+
 	ID = RoomId
 	# IZContained
 	__name__ = ID

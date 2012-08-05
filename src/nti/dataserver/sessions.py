@@ -54,10 +54,9 @@ class Session(Persistent):
 	_owner = None
 	_broadcast_connect = False
 	state = STATE_NEW
+	session_id = None # The session id must be plain ascii for sending across sockets
 
-	def __init__(self, session_service=None):
-		# The session id must be plain ascii for sending across sockets
-		self.session_id = uuid.uuid4().hex.encode('ascii')
+	def __init__(self, session_service=None, owner=None):
 		self.creation_time = time.time()
 		self.client_queue = zc.queue.Queue() # queue for messages to client
 		self.server_queue = zc.queue.Queue() # queue for messages to server
@@ -65,6 +64,7 @@ class Session(Persistent):
 		self._hits = minmax.MergingCounter( 0 )
 		self._last_heartbeat_time = minmax.NumericMaximum( 0 )
 		self._v_session_service = session_service
+		self.__dict__['owner'] = owner
 
 	def __eq__( self, other ):
 		try:
@@ -75,24 +75,9 @@ class Session(Persistent):
 	def __hash__( self ):
 		return hash(self.session_id)
 
-	def _get_owner( self ):
-		return self._owner
-	def _set_owner( self, o ):
-		"""
-		Sessions are not allowed to change owners once they have
-		one, because that would require making modifications to the owner index
-		and potentially other places.
-		"""
-		if o == self._owner:
-			return
-		if self._owner is not None:
-			raise ValueError( "Cannot change owner of existing session" )
-
-		self._owner = o
-		ss = self.session_service
-		if ss:
-			ss._put_in_owner_index( self )
-	owner = property( _get_owner, _set_owner )
+	owner = property(lambda self: self.__dict__['owner'] )
+	# ID is an alias for session_id
+	id = property(lambda self: self.session_id, lambda self, nid: setattr( self, 'session_id', nid ) )
 
 	@property
 	def last_heartbeat_time(self):
@@ -178,51 +163,20 @@ class Session(Persistent):
 			self.clear_disconnect_timeout()
 		self.client_queue.put( msg )
 
-def _init_session_storage( session_db ):
-	for k in ('session_map', 'session_index'):
-		if not session_db.has_key( k ):
-			session_db[k] = BTrees.OOBTree.OOBTree()
 
-class PersistentSessionServiceStorage(PersistentMapping):
-	"""
-	A persistent implementation of session storage based on
-	a map.
-	"""
-	interface.implements( nti_interfaces.ISessionServiceStorage )
+# class PersistentSessionServiceStorage(object):
+# 	pass
 
-	def __init__( self ):
-		super(PersistentSessionServiceStorage,self).__init__()
-		_init_session_storage(self)
+# SimpleSessionServiceStorage = PersistentSessionServiceStorage
+# SessionServiceStorage = PersistentSessionServiceStorage
+# deprecated('SimpleSessionServiceStorage', "Prefer to use SessionServiceStorage")
+# deprecated('PersistentSessionServiceStorage', "Prefer to use SessionServiceStorage")
+# deprecated( "SessionServiceStorage", "Prefer _OwnerAnnotationBasedServiceStorage" )
 
-	def __getattr__(self, name):
-		try:
-			return self[name]
-		except KeyError: # pragma: no cover
-			raise AttributeError(name)
-
-SimpleSessionServiceStorage = PersistentSessionServiceStorage
-deprecated('SimpleSessionServiceStorage', "Prefer to use SessionServiceStorage")
-deprecated('PersistentSessionServiceStorage', "Prefer to use SessionServiceStorage")
-
-class SessionServiceStorage(persistent.Persistent):
-	"""
-	A simple persistent implementation of session storage.
-	"""
-	interface.implements( nti_interfaces.ISessionServiceStorage )
-	def __init__( self ):
-		self.session_map = BTrees.OOBTree.OOBTree()
-		self.session_index = BTrees.OOBTree.OOBTree()
-
-	@deprecate("Access fields directly")
-	def __getitem__( self, name ): # pragma: no cover
-		"""
-		For compatibility with the old PersistentSessionServiceStorage.
-		"""
-		if name in ('session_map','session_index'):
-			return self.__dict__[name]
-		raise KeyError( name )
+# We can just let the above be broken objects. No one refs them.
 
 
+@interface.implementer( nti_interfaces.ISessionService )
 class SessionService(object):
 	"""
 	Manages the open sessions within the system.
@@ -236,8 +190,6 @@ class SessionService(object):
 
 	"""
 
-	interface.implements( nti_interfaces.ISessionService )
-
 	def __init__( self ):
 		"""
 		"""
@@ -248,13 +200,6 @@ class SessionService(object):
 	@property
 	def _session_db(self):
 		return component.getUtility( nti_interfaces.ISessionServiceStorage )
-	@property
-	def _session_map(self):
-		return self._session_db.session_map
-	@property
-	def _session_index(self):
-		return self._session_db.session_index
-
 
 	def _spawn_cluster_listener(self):
 		env_settings = component.getUtility( nti_interfaces.IEnvironmentSettings )
@@ -273,7 +218,7 @@ class SessionService(object):
 				# already in a transaction
 
 				try:
-					handled = component.getUtility( nti_interfaces.IDataserverTransactionRunner )( lambda: self._dispatch_message_to_proxy( *msgs ), retries=2 )
+					_ = component.getUtility( nti_interfaces.IDataserverTransactionRunner )( lambda: self._dispatch_message_to_proxy( *msgs ), retries=2 )
 					#logger.debug( "Dispatched incoming cluster message? %s: %s", handled, msgs )
 				except Exception:
 					logger.exception( "Failed to dispatch incoming cluster message." )
@@ -309,9 +254,11 @@ class SessionService(object):
 
 	def create_session( self, session_class=Session, watch_session=True, **kwargs ):
 		""" The returned session must not be modified. """
+		if 'owner' not in kwargs:
+			raise ValueError( "Neglected to provide owner" )
 		session = session_class(session_service=self, **kwargs)
+		self._session_db.register_session( session )
 		session_id = session.session_id
-		self._session_map[session_id] = session
 
 		if watch_session:
 			def watchdog_session():
@@ -341,44 +288,28 @@ class SessionService(object):
 
 		return session
 
-	def _put_in_owner_index( self, session ):
-		gnu = self._session_index.get( session.owner )
-		if gnu is None or isinstance(gnu,persistent.list.PersistentList): #migration
-			gnu = BTrees.OOBTree.OOSet( (session.session_id,) )
-			self._session_index[session.owner] = gnu
-		else:
-			gnu.add( session.session_id )
-
-	def _get_session( self, session_db, session_id ):
-		result = self._session_map.get( session_id )
+	def _get_session( self, session_id ):
+		result = self._session_db.get_session( session_id )
 		if isinstance( result, Session ):
 			result._v_session_service = self
 		return result
 
 	SESSION_HEARTBEAT_TIMEOUT = 60 * 2
 
-	def _session_dead( self, session, max_age=SESSION_HEARTBEAT_TIMEOUT ):
+	def _is_session_dead( self, session, max_age=SESSION_HEARTBEAT_TIMEOUT ):
 		too_old = time.time() - max_age
 		return (session.last_heartbeat_time < too_old and session.creation_time < too_old) \
 		  or (session.state in (Session.STATE_DISCONNECTING,Session.STATE_DISCONNECTED))
 
-	def _session_cleanup( self, s, session_db, sids=None, send_event=True ):
-		""" Cleans up a dead session.
+	def _session_cleanup( self, s, send_event=True ):
+		"""
+		Cleans up a dead session.
 
 		:param bool send_event: If ``True`` (the default) killing the session broadcasts
 			a SocketSessionDisconnectedEvent. Otherwise, no events are sent.
 
 		"""
-		# Remove the session from the DB
-		try:
-			del self._session_map[s.session_id]
-		except KeyError: pass # pragma: no cover
-
-		if sids is None:
-			sids = self._session_index.get( s.owner ) or ()
-		try:
-			sids.remove( s.session_id )
-		except (KeyError,ValueError,AttributeError): pass
+		self._session_db.unregister_session( s )
 
 		# Now that the session is unreachable,
 		# make sure the session itself knows it's dead
@@ -387,15 +318,15 @@ class SessionService(object):
 		self._publish_msg( b'session_dead', s.session_id, b"42" )
 
 
-	def _validated_session( self, s, session_db, sids=None, send_event=True ):
+	def _validated_session( self, s, send_event=True ):
 		""" Returns a live session or None """
-		if s and self._session_dead( s ):
-			self._session_cleanup( s, session_db, sids, send_event=send_event )
+		if s and self._is_session_dead( s ):
+			self._session_cleanup( s, send_event=send_event )
 			return None
 		return s
 
 	def get_session( self, session_id ):
-		s = self._validated_session( self._get_session( self._session_db, session_id ), self._session_db )
+		s = self._validated_session( self._get_session( session_id ) )
 		if s:
 			s.incr_hits()
 		return s
@@ -405,17 +336,14 @@ class SessionService(object):
 		Returns sessions for the given owner that are reasonably likely
 		to be active and alive.
 		"""
-		sids = self._session_index.get(session_owner) or ()
+		maybe_valid_sessions = self._session_db.get_sessions_by_owner( session_owner )
 		result = []
 		# For efficiency, and to avoid recursing too deep in the presence of many dead sessions
 		# and event listeners for dead sessions that also want to know the live sessions and so call us,
 		# we collect all dead sessions before we send any notifications
 		dead_sessions = []
-		for sid in list(sids): # copy because we mutate -> validated_session -> session_cleanup
-			maybe_valid_session = self._get_session( self._session_db, sid )
+		for maybe_valid_session in list(maybe_valid_sessions): # copy because we mutate -> validated_session -> session_cleanup
 			valid_session = self._validated_session( maybe_valid_session,
-													 self._session_db,
-													 sids,
 													 send_event=False )
 			if valid_session:
 				result.append( valid_session )
@@ -430,31 +358,22 @@ class SessionService(object):
 	def delete_sessions( self, session_owner ):
 		"""
 		Delete all sessions for the given owner (active and alive included)
+		:return: All deleted sessions.
 		"""
-		sids = self._session_index.get(session_owner) or ()
-		result = []
-		for s in list(sids): # copy because we mutate -> delete_session
-			self.delete_session(s)
-			result.append(s)
+		result = list( self._session_db.get_sessions_by_owner( session_owner ) )
+		for s in result:
+			self.delete_session(s.id)
 		return result
 
 	def delete_session( self, session_id ):
-		try:
-			sess = self._session_map[session_id]
-			del self._session_map[session_id]
-		except KeyError:
-			return
-
-		session_index = self._session_index.get( sess.owner )
-		try:
-			session_index.remove( session_id )
-		except (ValueError,KeyError,TypeError,AttributeError): pass # pragma: no cover
-
-		sess.kill()
+		sess = self._session_db.get_session( session_id )
+		self._session_db.unregister_session( sess )
+		if sess:
+			sess.kill()
 
 
 	def _put_msg( self, meth, session_id, msg ):
-		sess = self._get_session( self._session_db, session_id )
+		sess = self._get_session( session_id )
 		if sess:
 			meth( sess, msg )
 
@@ -494,7 +413,7 @@ class SessionService(object):
 
 	def _get_msgs( self, q_name, session_id ):
 		result = None
-		sess = self._get_session( self._session_db, session_id )
+		sess = self._get_session( session_id )
 		if sess:
 			# Reading messages should not reset the timeout.
 			# Only the session put_server_msg should do so.
