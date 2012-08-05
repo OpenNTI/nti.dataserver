@@ -14,7 +14,8 @@ from whoosh.filedb.structfile import StructFile
 from nti.contentsearch import NoOpCM
 from nti.contentsearch.interfaces import IWhooshIndexStorage
 
-# -----------------------------
+import logging
+logger = logging.getLogger( __name__ )
 
 max_segments = 10
 merge_first_segments = 5
@@ -84,8 +85,6 @@ class IndexStorage(object):
 		""" 
 		return self.default_commit_args
 
-# -----------------------------
-
 class DirectoryStorage(IndexStorage):
 	
 	def __init__(self, indexdir="/tmp"):
@@ -142,8 +141,6 @@ class DirectoryStorage(IndexStorage):
 	def get_folder(self, **kwargs):
 		return self.folder
 
-# -----------------------------
-
 class MultiDirectoryStorage(DirectoryStorage):
 	
 	def __init__(self, indexdir="/tmp", max_level=2):
@@ -186,7 +183,6 @@ class MultiDirectoryStorage(DirectoryStorage):
 			if count >= max_bytes: break
 		return os.path.sep.join(directories)
 	
-	
 def open_file(self, name, *args, **kwargs):
 	try:
 		f = open(self._fpath(name), "rb")
@@ -196,9 +192,7 @@ def open_file(self, name, *args, **kwargs):
 		return StructFile(f, name=name, *args, **kwargs)
 	except:
 		raise
-		
-# -----------------------------
-	
+			
 def create_directory_index_storage(indexdir='/tmp/indicies'):
 	indexdir = os.path.expanduser(indexdir)
 	if not os.path.exists(indexdir):

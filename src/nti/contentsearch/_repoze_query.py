@@ -78,8 +78,6 @@ class DoesNotContain(IndexDoesNotContain):
 		set_default_indexng3(kwargs)			
 		return DoesNotContain(index_name, value, **kwargs)
 
-# ---------------------------------
-
 _mappings = CaseInsensitiveDict()
 _mappings[sharedWith_] = sharedWith_
 _mappings[containerId_] = CONTAINER_ID

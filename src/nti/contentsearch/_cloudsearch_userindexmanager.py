@@ -33,8 +33,6 @@ from nti.contentsearch.common import (username_, ngrams_, content_, oid_, type_)
 
 import logging
 logger = logging.getLogger( __name__ )
-
-# -----------------------------------
 		
 def has_stored_indices(username):
 	store = component.getUtility( interfaces.ICloudSearchStore )
@@ -210,8 +208,6 @@ class CloudSearchUserIndexManager(object):
 	def get_stored_indices(self):
 		return ()
 	
-# -----------------------------------
-
 class CloudSearchIndexManagerFactory(object):
 	interface.implements(IUserIndexManagerFactory)
 

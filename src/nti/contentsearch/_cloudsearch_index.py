@@ -21,7 +21,6 @@ from nti.contentsearch.common import (	ngrams_, channel_, content_, keywords_, r
 import logging
 logger = logging.getLogger( __name__ )
 
-
 _message_id = u'mid'
 search_stored_fields=[type_, creator_, last_modified_, ntiid_, containerId_.lower(), _message_id, oid_, content_]
 search_faceted_fields = [keywords_, recipients_, references_, sharedWith_.lower()]

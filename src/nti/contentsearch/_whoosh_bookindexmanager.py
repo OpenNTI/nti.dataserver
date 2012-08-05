@@ -13,8 +13,6 @@ from nti.contentsearch._whoosh_indexstorage import create_directory_index_storag
 import logging
 logger = logging.getLogger( __name__ )
 
-# ----------------------------------
-
 class WhooshBookIndexManager(object):
 	interface.implements( interfaces.IBookIndexManager )
 	
@@ -88,8 +86,6 @@ class WhooshBookIndexManager(object):
 			self.close()
 		except:
 			pass
-
-# -----------------------------
 
 def wbm_factory(*args, **kwargs):
 	def f(indexname, *fargs, **fkwargs):
