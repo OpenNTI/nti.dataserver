@@ -29,8 +29,6 @@ from nti.contentsearch.common import HIT_COUNT
 import logging
 logger = logging.getLogger( __name__ )
 
-# -----------------------------
-
 class _FakeSite(object):
 	interface.implements(ISite)
 	
@@ -50,8 +48,6 @@ def _greenlet_spawn(spawn, func, *args, **kwargs):
 			return f(*fargs, **fkwargs)
 	greenlet = spawn(runner, f=func, *args, **kwargs)
 	return greenlet
-
-# -----------------------------------
 	
 class IndexManager(object):
 	interface.implements(interfaces.IIndexManager)

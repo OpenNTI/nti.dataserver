@@ -16,8 +16,6 @@ from nti.contentsearch.interfaces import ICloudSearchStore
 import logging
 logger = logging.getLogger( __name__ )
 	
-# -----------------------------------
-
 AWS_CS_PARAMS = {'aws_access_key_id': (str, None),
 				 'aws_secret_access_key': (str, None),
 				 'is_secure': (bool, True),

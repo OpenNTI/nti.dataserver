@@ -12,8 +12,6 @@ from nti.contentsearch._whoosh_indexstorage import create_directory_index_storag
 import logging
 logger = logging.getLogger( __name__ )
 
-# -----------------------------
-
 def create_index_manager_with_whoosh(index_storage=None, indexdir=None, use_md5=True, dataserver=None, *args, **kwargs):
 	book_idx_manager = wbm_factory()
 	index_storage = index_storage or MultiDirectoryStorage(indexdir)
@@ -25,8 +23,6 @@ def create_index_manager_with_repoze(dataserver=None, *args, **kwargs):
 	book_idx_manager = wbm_factory()
 	user_idx_manager = ruim_factory()
 	return IndexManager(book_idx_manager, user_idx_manager)
-
-# -----------------------------
 
 def create_directory_index_manager(user_index_dir="/tmp",  use_md5=True, dataserver=None, *args, **kwargs):
 	"""
@@ -44,8 +40,6 @@ def create_directory_index_manager(user_index_dir="/tmp",  use_md5=True, dataser
 	storage = create_directory_index_storage(user_index_dir)
 	im = create_index_manager_with_whoosh(storage, use_md5=use_md5, dataserver=dataserver)
 	return im
-
-# -----------------------------
 
 create_index_manager = create_directory_index_manager
 create_repoze_index_manager = create_index_manager_with_repoze

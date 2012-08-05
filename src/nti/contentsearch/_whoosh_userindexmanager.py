@@ -25,8 +25,6 @@ from nti.contentsearch._search_results import merge_suggest_and_search_results
 
 import logging
 logger = logging.getLogger( __name__ )
-
-# -----------------------------
 	
 def get_indexname(username, type_name, use_md5=True):
 	type_name = normalize_type_name(type_name)
@@ -290,8 +288,6 @@ class WhooshUserIndexManager(object):
 			self.close()
 		except:
 			pass
-
-# -----------------------------
 
 class WhooshUserIndexManagerFactory(object):
 	interface.implements(IUserIndexManagerFactory)
