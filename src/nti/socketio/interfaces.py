@@ -163,6 +163,11 @@ class ISocketIOChannel(interface.Interface):
 		A message, ``msg``, is ready to be sent to the remote client.
 		"""
 
+SESSION_STATE_NEW = "NEW"
+SESSION_STATE_CONNECTED = "CONNECTED"
+SESSION_STATE_DISCONNECTING = "DISCONNECTING"
+SESSION_STATE_DISCONNECTED = "DISCONNECTED"
+
 class ISocketSession(ISocketIOChannel, an_interfaces.IAnnotatable):
 	"""
 	A higher-level abstraction on top of io channels containing some state.
@@ -178,10 +183,25 @@ class ISocketSession(ISocketIOChannel, an_interfaces.IAnnotatable):
 		ISocketIOSocket,
 		title="The :class:`ISocketIOSocket` this session is connected with" )
 
+	state = schema.Choice( title=u"The state of the session",
+						   values=(
+							  SESSION_STATE_NEW, SESSION_STATE_CONNECTED,
+							  SESSION_STATE_DISCONNECTING, SESSION_STATE_DISCONNECTED
+							  ),
+						   default=SESSION_STATE_NEW)
+
 	def heartbeat():
 		pass
-	def kill():
-		pass
+	def kill(send_event=True):
+		"""
+		Mark this session as disconnected if not already.
+
+		:param bool send_event: If ``True`` (the default) when this method
+			actually marks the session as disconnected, and the session had a valid
+			owner, an :class:`SocketSessionDisconnectedEvent` will be sent.
+		"""
+
+
 
 class ISocketSessionEvent(interface.interfaces.IObjectEvent):
 	"""

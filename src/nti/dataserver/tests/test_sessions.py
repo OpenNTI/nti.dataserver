@@ -96,7 +96,7 @@ class TestSessionService(mock_dataserver.ConfiguringTestBase):
 		session = self.session_service.create_session( watch_session=False )
 		assert_that( session, is_not( none() ) )
 		assert_that( self.session_service.get_session( session.session_id ), is_( session ) )
-		assert_that( session, has_property( 'session_service', self.session_service ) )
+
 
 	@WithMockDSTrans
 	def test_get_dead_session(self):

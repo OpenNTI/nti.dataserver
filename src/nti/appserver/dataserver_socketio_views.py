@@ -57,12 +57,6 @@ class Session( _sessions.Session ):
 		return self.socket
 
 	@property
-	def socket(self):
-		p = nti.socketio.protocol.SocketIOSocket( self )
-		#p.session = self
-		return p
-
-	@property
 	def message_handler(self):
 		return nti.socketio.session_consumer.SessionConsumer()
 
@@ -80,10 +74,12 @@ class Session( _sessions.Session ):
 		self.message_handler( self, msg )
 
 	def put_client_msg(self, msg):
-		self.session_service.put_client_msg( self.session_id, msg )
+		session_service = component.getUtility( nti_interfaces.IDataserver ).session_manager
+		session_service.put_client_msg( self.session_id, msg )
 
 	def get_client_msgs(self):
-		return self.session_service.get_client_msgs( self.session_id )
+		session_service = component.getUtility( nti_interfaces.IDataserver ).session_manager
+		return session_service.get_client_msgs( self.session_id )
 
 	def kill( self, send_event=True ):
 		self.message_handler.kill(self)

@@ -9,7 +9,7 @@ import time
 import collections
 import functools
 
-
+from nti.utils.property import alias
 from nti.ntiids import ntiids
 from nti.externalization import datastructures
 from nti.zodb.minmax import MergingCounter
@@ -134,7 +134,7 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 		# leads to false conflicts
 		return self._MessageCount.value
 
-	RoomId = property( lambda x: x.id, lambda x, y: setattr( x, 'id', y ) )
+	RoomId = alias( 'id' )
 
 	ID = RoomId
 	# IZContained
