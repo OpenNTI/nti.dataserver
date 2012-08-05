@@ -9,6 +9,11 @@ minidom
 
 .. automodule:: nti.utils.minidom
 
+property
+========
+
+.. automodule:: nti.utils.property
+
 schema
 ======
 

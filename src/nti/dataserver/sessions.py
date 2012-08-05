@@ -8,172 +8,21 @@ logger = logging.getLogger( __name__ )
 from ZODB import loglevels
 
 import warnings
-import uuid
 import time
-import contextlib
+import anyjson as json
 
 import gevent
 
-import zc.queue
 from zope import interface
 from zope import component
 from zope.event import notify
-from zope.annotation import interfaces as an_interfaces
-from zope.deprecation import deprecated, deprecate
 
-from nti.zodb import minmax
 from nti.utils import transactions
-
 import transaction
 
-import anyjson as json
-
-
-# Persistence
-from persistent import Persistent
-import persistent.list
-from persistent.mapping import PersistentMapping
-import BTrees.OOBTree
-
 from nti.dataserver import interfaces as nti_interfaces
-from nti.socketio.interfaces import ISocketSession
-from nti.socketio.interfaces import SocketSessionConnectedEvent, SocketSessionDisconnectedEvent
-
-class Session(Persistent):
-	"""
-	`self.owner`: An attribute for the user that owns the session.
-	"""
-	interface.implements(ISocketSession,an_interfaces.IAttributeAnnotatable)
-
-	STATE_NEW = "NEW"
-	STATE_CONNECTED = "CONNECTED"
-	STATE_DISCONNECTING = "DISCONNECTING"
-	STATE_DISCONNECTED = "DISCONNECTED"
-
-	connection_confirmed = False
-	_owner = None
-	_broadcast_connect = False
-	state = STATE_NEW
-	session_id = None # The session id must be plain ascii for sending across sockets
-
-	def __init__(self, session_service=None, owner=None):
-		self.creation_time = time.time()
-		self.client_queue = zc.queue.Queue() # queue for messages to client
-		self.server_queue = zc.queue.Queue() # queue for messages to server
-
-		self._hits = minmax.MergingCounter( 0 )
-		self._last_heartbeat_time = minmax.NumericMaximum( 0 )
-		self._v_session_service = session_service
-		self.__dict__['owner'] = owner
-
-	def __eq__( self, other ):
-		try:
-			return other is self or self.session_id == other.session_id
-		except AttributeError:
-			return NotImplemented
-
-	def __hash__( self ):
-		return hash(self.session_id)
-
-	owner = property(lambda self: self.__dict__['owner'] )
-	# ID is an alias for session_id
-	id = property(lambda self: self.session_id, lambda self, nid: setattr( self, 'session_id', nid ) )
-
-	@property
-	def last_heartbeat_time(self):
-		# Can only read as a property, setting as a property
-		# leads to false conflicts
-		return self._last_heartbeat_time.value
-
-	def __str__(self):
-		result = ['[session_id=%r' % self.session_id]
-		result.append(self.state)
-		result.append( 'owner=%s' % self.owner )
-		result.append( 'client_queue[%s]' % len(self.client_queue))
-		result.append( 'server_queue[%s]' % len(self.server_queue))
-		result.append( 'hits=%s' % self._hits.value)
-		result.append( 'confirmed=%s' % self.connection_confirmed )
-		result.append( 'id=%s]'% id(self) )
-		return ' '.join(result)
-
-	def __repr__(self):
-		result = '<%s/%s/%s at %s>' % (type(self), self.session_id, self.state, id(self))
-		return result
-
-	@property
-	def connected(self):
-		return self.state == self.STATE_CONNECTED
-
-	@property
-	def session_service( self ):
-		return getattr( self, '_v_session_service', None )
-
-	def incr_hits(self):
-		# We don't really need to track this once
-		# we're going, and not doing so
-		# reduces chances of conflict.
-
-		if self._hits.value + 1 == 1:
-			self.state = self.STATE_CONNECTED
-			self._hits.value = 1
-		if self.connected and self.connection_confirmed and self.owner and not self._broadcast_connect:
-			self._broadcast_connect = True
-			notify( SocketSessionConnectedEvent( self ) )
-
-	def clear_disconnect_timeout(self):
-		# Putting server messages/client messages
-		# should not clear this. We wind up writing to session
-		# state from background processes, which
-		# leads to conflicts.
-		# Directly set the .value, avoiding the property, because
-		# the property still causes this object to be considered modified (?)
-		self._last_heartbeat_time.set( time.time() )
-
-
-	def heartbeat(self):
-		self.clear_disconnect_timeout()
-
-	def kill(self, send_event=True):
-		"""
-		Mark this session as disconnected if not already.
-
-		:param bool send_event: If ``True`` (the default) when this method
-			actually marks the session as disconnected, and the session had a valid
-			owner, an :class:`SocketSessionDisconnectedEvent` will be sent.
-		"""
-		if self.connected:
-			# Mark us as disconnecting, and then send notifications
-			# (otherwise, it's too easy to recurse infinitely here)
-			self.state = self.STATE_DISCONNECTING
-
-			if self.owner and send_event:
-				notify(SocketSessionDisconnectedEvent(self))
-
-			self.do_put_server_msg( None )
-			self.do_put_client_msg( None )
-
-
-	def do_put_server_msg(self, msg):
-		self.server_queue.put( msg )
-
-	def do_put_client_msg(self, msg):
-		if msg is not None:
-			# When we get a message from the client, reset our
-			# heartbeat timer. (Don't do this for our termination message)
-			self.clear_disconnect_timeout()
-		self.client_queue.put( msg )
-
-
-# class PersistentSessionServiceStorage(object):
-# 	pass
-
-# SimpleSessionServiceStorage = PersistentSessionServiceStorage
-# SessionServiceStorage = PersistentSessionServiceStorage
-# deprecated('SimpleSessionServiceStorage', "Prefer to use SessionServiceStorage")
-# deprecated('PersistentSessionServiceStorage', "Prefer to use SessionServiceStorage")
-# deprecated( "SessionServiceStorage", "Prefer _OwnerAnnotationBasedServiceStorage" )
-
-# We can just let the above be broken objects. No one refs them.
+from nti.socketio.interfaces import  SocketSessionDisconnectedEvent
+from nti.socketio.persistent_session import AbstractSession as Session
 
 
 @interface.implementer( nti_interfaces.ISessionService )
@@ -256,7 +105,7 @@ class SessionService(object):
 		""" The returned session must not be modified. """
 		if 'owner' not in kwargs:
 			raise ValueError( "Neglected to provide owner" )
-		session = session_class(session_service=self, **kwargs)
+		session = session_class(**kwargs)
 		self._session_db.register_session( session )
 		session_id = session.session_id
 
@@ -402,12 +251,12 @@ class SessionService(object):
 							 args=([session_id, name, msg_str],) )
 
 	def put_server_msg(self, session_id, msg):
-		self._put_msg( Session.do_put_server_msg, session_id, msg )
+		self._put_msg( Session.enqueue_server_msg, session_id, msg )
 		self._publish_msg( b'put_server_msg', session_id, json.dumps( msg ) )
 
 
 	def put_client_msg(self, session_id, msg):
-		self._put_msg( Session.do_put_client_msg, session_id, msg )
+		self._put_msg( Session.enqueue_client_msg, session_id, msg )
 		self._publish_msg( b'put_client_msg', session_id, msg )
 
 

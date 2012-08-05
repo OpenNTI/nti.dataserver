@@ -21,6 +21,8 @@ import six
 from persistent import Persistent
 from persistent.list import PersistentList
 
+from nti.utils.property import alias, read_alias
+
 from nti.externalization import datastructures
 from nti.contentfragments import interfaces as frg_interfaces
 
@@ -63,28 +65,16 @@ class MessageInfo( contenttypes.ThreadableExternalizableMixin,
 		self.Status = interfaces.STATUS_INITIAL
 
 	# Aliases (TODO: Need general alias descriptor)
-	Sender = property( lambda self: self.Creator, lambda self, s: setattr( self, 'Creator', s ) )
-	creator = Sender
+	Sender = alias('Creator')
+	creator = alias('Creator')
 
-	@property
-	def id(self):
-		return self.ID
-	MessageId = id # bwc
+	id = read_alias('ID')
+	MessageId = read_alias('ID') # bwc
+	__name__ = alias('ID')
 
-	__name__ = property(lambda self: self.ID, lambda self, nn: setattr( self, 'ID', nn ))
-
-	def get_createdTime(self):
-		return self.CreatedTime
-	def set_createdTime(self,st):
-		self.CreatedTime = st
-	createdTime = property(get_createdTime,set_createdTime)
-
-	def get_lastModified(self):
-		return self.LastModified
-	def set_lastModified(self,lm):
-		self.LastModified = lm
-	lastModified = property(get_lastModified,set_lastModified)
-	Timestamp = lastModified # bwc
+	createdTime = alias('CreatedTime')
+	lastModified = alias('LastModified')
+	Timestamp = alias('LastModified') # bwc
 
 	def get_sender_sid( self ):
 		"""
@@ -97,25 +87,11 @@ class MessageInfo( contenttypes.ThreadableExternalizableMixin,
 		setattr( self, '_v_sender_sid', sid )
 	sender_sid = property( get_sender_sid, set_sender_sid )
 
-
-	# Aliases for old code
-	# @property
-	# def MessageId( self ):
-	# 	return self.ID
-
-	# @property
-	# def Timestamp(self):
-	# 	return self.LastModified
-
 	@property
 	def rooms( self ):
 		return [self.containerId]
 
-	def get_Body( self ):
-		return self.body
-	def set_Body( self, body ):
-		self.body = body
-	Body = property( get_Body, set_Body )
+	Body = alias( 'body' )
 
 	@property
 	def recipients_without_sender(self):
