@@ -182,7 +182,10 @@ def run_job_in_site(func, retries=0, sleep=None,
 			# cost of handling transactions for things that do not use the other connections, but ensures
 			# we stay nicely in sync.
 
-			for db_name in conn.db().databases:
+			for db_name, db in conn.db().databases.items():
+				__traceback_info__ = i, db_name, db, func
+				if db is None: # For compatibility with databases we no longer use
+					continue
 				c2 = conn.get_connection(db_name)
 				if c2 is conn:
 					continue

@@ -657,6 +657,7 @@ class User(Principal):
 						 loc_interfaces.ISublocations)
 
 	_ds_namespace = 'users'
+	mime_type = 'application/vnd.nextthought.user'
 
 	@classmethod
 	def get_user( cls, username, dataserver=None, default=None ):

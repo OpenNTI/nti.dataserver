@@ -5,6 +5,7 @@
 
 from hamcrest import assert_that,  is_, none, is_not, has_property
 from hamcrest import has_length
+from nose.tools import assert_raises
 
 from zope import component
 from zope import interface
@@ -14,8 +15,11 @@ from nti.tests import verifiably_provides
 import nti.dataserver.interfaces as nti_interfaces
 from nti.socketio import interfaces as sio_interfaces
 import nti.dataserver.sessions as sessions
+from nti.dataserver import session_storage
+from nti.dataserver import users
 
 import mock_dataserver
+from mock_dataserver import WithMockDSTrans
 from zope.deprecation import __show__
 
 
@@ -27,27 +31,28 @@ class MockSessionService(sessions.SessionService):
 		self.pub_socket = PubSocket()
 		return None
 
+	default_owner = 'sjohnson@nti'
+
+	def create_session( self, *args, **kwargs ):
+		if 'owner' not in kwargs:
+			kwargs['owner'] = self.default_owner
+			if users.User.get_user( kwargs['owner'] ) is None:
+				users.User.create_user( username=kwargs['owner'] )
+		return sessions.SessionService.create_session( self, *args, **kwargs )
+
 def test_session_cannot_change_owner():
 	s = sessions.Session()
 	assert_that( s, has_property( 'owner', none() ) )
-	s.owner = 'me'
-	assert_that( s, has_property( 'owner', 'me') )
-
-	s.owner = 'me' # no change, allowed
-	assert_that( s, has_property( 'owner', 'me') )
-
-	try:
-		s.owner = 'you' # not allowed
-	except ValueError: pass
-	else:
-		assert_that( True, is_( False ), "Should raise ValueError" )
+	with assert_raises( AttributeError ):
+		s.owner = 'me'
+		# Must be assigned at creation time
 
 class TestSessionService(mock_dataserver.ConfiguringTestBase):
 
 	def setUp(self):
 		super(TestSessionService,self).setUp()
 		self.session_service = MockSessionService()
-		self.storage = sessions.SessionServiceStorage()
+		self.storage = session_storage.OwnerBasedAnnotationSessionServiceStorage()
 		component.provideUtility( self.storage, provides=nti_interfaces.ISessionServiceStorage )
 
 	def test_get_set_proxy_session(self):
@@ -85,21 +90,15 @@ class TestSessionService(mock_dataserver.ConfiguringTestBase):
 		assert_that( proxy, has_property( 's_msg', none() ) )
 		assert_that( proxy, has_property( 'c_msg', none() ) )
 
-	def test_create_session_deprecated(self):
-		__show__.off()
-		self.storage = sessions.SimpleSessionServiceStorage()
-		component.provideUtility( self.storage, provides=nti_interfaces.ISessionServiceStorage )
-		session = self.session_service.create_session( watch_session=False )
-		assert_that( session, is_not( none() ) )
-		assert_that( self.session_service.get_session( session.session_id ), is_( session ) )
-		__show__.on()
 
+	@WithMockDSTrans
 	def test_create_session(self):
 		session = self.session_service.create_session( watch_session=False )
 		assert_that( session, is_not( none() ) )
 		assert_that( self.session_service.get_session( session.session_id ), is_( session ) )
 		assert_that( session, has_property( 'session_service', self.session_service ) )
 
+	@WithMockDSTrans
 	def test_get_dead_session(self):
 		session = self.session_service.create_session( watch_session=False )
 		assert_that( self.session_service.get_session( session.session_id ), is_( session ) )
@@ -113,21 +112,20 @@ class TestSessionService(mock_dataserver.ConfiguringTestBase):
 		# No longer able to get
 		assert_that( self.session_service.get_session( session.session_id ), is_( none() ) )
 
+	@WithMockDSTrans
 	def test_get_by_owner(self):
 		for _ in range(2): # multi times to create and modify datastructures
 			session = self.session_service.create_session( watch_session=False )
 			assert_that( self.session_service.get_session( session.session_id ), is_( session ) )
-			assert_that( self.session_service.get_sessions_by_owner( 'me' ), is_( [] ) )
-
-			session.owner = 'me'
-			assert_that( self.session_service.get_sessions_by_owner( 'me' ), is_( [session] ) )
+			assert_that( self.session_service.get_sessions_by_owner( session.owner ), is_( [session] ) )
 
 			# now dead
 			session.incr_hits()
 			session.kill()
 
-			assert_that( self.session_service.get_sessions_by_owner( 'me' ), is_( [] ) )
+			assert_that( self.session_service.get_sessions_by_owner( session.owner ), is_( [] ) )
 
+	@WithMockDSTrans
 	def test_many_dead_sessions_broadcast_doesnt_overflow(self):
 		"Having to clean up and notify() that many sessions are dead doesn't cause a stack overflow."
 
@@ -144,12 +142,11 @@ class TestSessionService(mock_dataserver.ConfiguringTestBase):
 		recur_limit = sys.getrecursionlimit()
 		for _ in range(recur_limit * 2): # The length needs to be pretty big to ensure recursion fails
 			session = self.session_service.create_session( watch_session=False )
-			session.owner = 'me'
 			sessions.append( session )
 			session.incr_hits()
 
 		# All alive right now
-		assert_that( self.session_service.get_sessions_by_owner( 'me' ), has_length( len( sessions ) ) )
+		assert_that( self.session_service.get_sessions_by_owner( session.owner ), has_length( len( sessions ) ) )
 
 		# Now kill them all, silently
 		for session in sessions:
@@ -157,16 +154,16 @@ class TestSessionService(mock_dataserver.ConfiguringTestBase):
 			session._last_heartbeat_time.value = 0
 
 		# Now we can request them again, get nothing, and not overflow the stack doing so.
-		assert_that( self.session_service.get_sessions_by_owner( 'me' ), is_( [] ) )
+		assert_that( self.session_service.get_sessions_by_owner( session.owner ), is_( [] ) )
 		assert_that( called[0], is_( len( sessions ) ) )
 
+	@WithMockDSTrans
 	def test_delete_session(self):
 		session = self.session_service.create_session( watch_session=False )
-		session.owner = 'me' # give it an owner so its in the index
 
 		self.session_service.delete_session( session.session_id )
 		assert_that( self.session_service.get_session( session.session_id ), is_( none() ) )
-		assert_that( self.session_service.get_sessions_by_owner( 'me' ), is_( [] ) )
+		assert_that( self.session_service.get_sessions_by_owner( session.owner ), is_( [] ) )
 
 		# Delete some foobar session
 		self.session_service.delete_session( 42 )
@@ -174,4 +171,4 @@ class TestSessionService(mock_dataserver.ConfiguringTestBase):
 
 
 def test_session_service_storage():
-	assert_that( sessions.SessionServiceStorage(), verifiably_provides( nti_interfaces.ISessionServiceStorage ) )
+	assert_that( session_storage.OwnerBasedAnnotationSessionServiceStorage(), verifiably_provides( nti_interfaces.ISessionServiceStorage ) )
