@@ -52,8 +52,6 @@ html {
 }
 
 #NTIContent .chapter.title span.label {
-	border-top: 2px solid black;
-	width: 100%;
 	padding-left: 0;
 	font-size: larger;
 	padding-bottom: 2em;
