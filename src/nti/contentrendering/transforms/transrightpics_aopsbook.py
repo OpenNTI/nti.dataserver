@@ -17,7 +17,7 @@ def transform( document ):
 
         if rightpic.nextSibling and rightpic.nextSibling.source.strip() == '':
             logger.debug("Removing empty sibling.")
-            rightpic.parentNode.removeChild(rightpic.nextSibling)
+            parentNode.removeChild(rightpic.nextSibling)
 
         # Move the rightpic from right before a solution to inside of the solution.
         if rightpic.parentNode.parentNode.nodeName == 'section' and \
@@ -45,7 +45,7 @@ def transform( document ):
             parentNode.removeChild( rightpic )
 
         # Move rightpics down into the approriate exer, exerhard, revprob, chall, or challhard node.
-        elif rightpic.parentNode.parentNode.nodeName in problemElements:
+        elif parentNode.parentNode.nodeName in problemElements:
             rightpicContainer = rightpic.parentNode.parentNode
             parentType = rightpic.parentNode.parentNode.nodeName
 
@@ -54,7 +54,7 @@ def transform( document ):
                 lastChildNode = lastChildNode.previousChild
 
             #make sure that it's indeed the rightpic that we should move
-            if _isChild(lastChildNode, rightpic ) and len(rightpicContainer.childNodes) > 1 and rightpicContainer.nextSibling != None and rightpicContainer.nextSibling.nodeName in problemElements:
+            if lastChildNode.lastChild == rightpic  and rightpicContainer.nextSibling is not None and rightpicContainer.nextSibling.nodeName in problemElements:
                 #move it to the parent's next sibling
                 logger.info( "Moving rightpic %s of %s %s to its parent's next sibling, %s %s", rightpic, parentType, rightpicContainer, parentType, rightpicContainer.nextSibling )
                 #step 1: rm
@@ -62,16 +62,15 @@ def transform( document ):
                 #step2: add it to the next sibling as the first child
                 rightpicContainer.nextSibling.firstChild.insert( 0, rightpic )
 
+        # If the rightpic is the only element of a par node merge it with the parent's next sibling, if it exists,
+        # to prevent the creation of <p></p> elements.
+        elif len(parentNode.childNodes) == 1 and parentNode.nextSibling is not None:
+            logger.debug("Merging rightpic %s into it's parent nodes next sibling %s.", rightpic, parentNode.nextSibling)
+            parentNode.nextSibling.insert( 0, rightpic )
+            parentNode.removeChild( rightpic )
+
         # Remove empty parents
         if parentNode.childNodes == []:
             logger.debug("Removing the empty former rightpic parent node.")
             _t = parentNode.parentNode
             _t.removeChild(parentNode)
-
-def _isChild(parentNode, potentialChild):
-    if parentNode is None:
-        return False
-    for child in parentNode.childNodes:
-        if child == potentialChild:
-            return True
-    return False
