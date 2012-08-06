@@ -1,0 +1,20 @@
+# -*- mode: html -*-
+# This template is a work around for when the renderer reorders the following:
+## \small
+## \begin{itemize}
+## \item
+## \end{itemize}
+#
+# to:
+#
+## <ul>
+##     <small>
+##         <li></li>
+##     </small>
+## </ul>
+#
+# This reordering causes problems in Chrome and Firefox.
+#
+
+name: small
+<small class="small" tal:replace="self">small text</small>
