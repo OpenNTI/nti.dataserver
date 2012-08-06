@@ -42,7 +42,7 @@ def test_macros():
 	\begin{naquestion}[individual=true]
 		Arbitrary content goes here.
 		\begin{naqsymmathpart}
-		Arbitrary content goes here, including math equations like $2 \times (3 + 4)$. Special characters like \$ are 100\% escaped.
+		Arbitrary content goes here.
 		\begin{naqsolutions}
 			\naqsolution $420$
 			\naqsolution $\frac{5}{8}$
@@ -75,7 +75,7 @@ def test_macros():
 
 	part = part_el.assessment_object()
 	assert_that( part, verifiably_provides( part_el.part_interface ) )
-	assert_that( part.content, is_( "Arbitrary content goes here, including math equations like $2 \\times (3 + 4)$ . Special characters like \\$ are 100 \\%\\ escaped." ) )
+	assert_that( part.content, is_( "Arbitrary content goes here." ) )
 	assert_that( part.hints, has_length( 1 ) )
 	assert_that( part.hints, contains( verifiably_provides( asm_interfaces.IQHint ) ) )
 
