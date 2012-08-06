@@ -9,7 +9,13 @@
 	<utility factory=".generations.install._ContentSearchSchemaManager"
 			 name="nti.dataserver-contentsearch"
 			 provides="zope.generations.interfaces.IInstallableSchemaManager"/>
-			
+		
+	<!-- Index managers -->
+		
+	<adapter factory="._repoze_adpater._RepozeUserIndexManagerFactory"
+			 for="nti.dataserver.interfaces.IUser"
+			 provides=".interfaces.IRepozeUserIndexManager" />
+			 
 	<!-- Externalization -->
 
 	<adapter factory="._search_external._HighlightSearchHit"
