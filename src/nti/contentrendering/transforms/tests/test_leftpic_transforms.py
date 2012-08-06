@@ -236,6 +236,35 @@ area of right triangles.
 	partWithPic = dom.getElementsByTagName( 'part')[1];
 	assert_that( partWithPic.firstChild.firstChild.nodeName, is_( 'leftpic' ))
 
+def test_partLeftPicTransformMerged():
+	example = br"""
+\begin{parts}
+\part
+First, we note that all three angles of an equilateral triangle must be equal, because any two
+of the angles are opposite equal sides of a triangle.\index{triangle!equilateral}\index{equilateral triangle!angles}  So, all three
+angles of an equilateral triangle have measure $180\dgg/3 = 60\dgg$.
+Therefore, when we
+drew an altitude in the equilateral triangle in
+Problem~\probref{prob:equilateralarea}, we formed a right triangle in which one of the acute angles
+is $60\dgg$.
+The acute angles of a right triangle sum to $90\dgg$, so the other acute angle has measure
+$90\dgg- 60\dgg = 30\dgg$.
+\leftpic{geometry_93.pdf}
+\part
+Inspired by our observation in part (a),
+ we see that we can make an equilateral triangle by attaching two identical 30-60-90
+ triangles along the longer legs of the triangles.  This is shown
+at the right, where we have combined right triangles $ABD$ and $ACD$ to form equilateral triangle $ABC$.
+
+\end{parts}
+	"""
+
+	dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
+	leftpicTransform( dom )
+	#We expect the leftpic to have been moved down a level and belong to the last part as opposed to the first one.
+	partWithPic = dom.getElementsByTagName( 'part')[1];
+	assert_that( partWithPic.firstChild.firstChild.nodeName, is_( 'leftpic' ))
+
 def test_partLeftPicTransformNoMove():
 	example = br"""
 \begin{parts}
@@ -262,3 +291,22 @@ area of right triangles.
 	#We expect the leftpic to be were it started.
 	partWithPic = dom.getElementsByTagName( 'part')[0]
 	assert_that( partWithPic.firstChild.firstChild.nodeName, is_( 'leftpic' ))
+
+def test_bodyLeftPicTransform():
+	example = br"""
+
+\leftpic{geometry_326.pdf}
+
+This solution is incorrect because it applies the Pythagorean Theorem incorrectly.
+Side $\seg{BC}$ is a leg, not the hypotenuse.  Applying the Pythagorean Theorem to $\tri ABC$ correctly
+gives
+\[AC^2 + BC^2 = AB^2.\]
+
+	"""
+
+	dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
+
+	leftpicTransform( dom )
+	#We expect the rightpic to be were it started.
+	parWithPic = dom.getElementsByTagName( 'par')[0]
+	assert_that( parWithPic.firstChild.nodeName, is_( 'leftpic' ))
