@@ -122,11 +122,9 @@ def _asm_local_textcontent(self):
 	*not* a :class:`plasTeX.DOM.Text` object.
 	"""
 	output = []
-	import sys
 	for item in self.childNodes:
-		inner = item.source.strip()
-		if item.nodeType == self.TEXT_NODE or (inner[0] == '$' and inner[-1] == '$'):
-			output.append(item.textContent)
+		if item.nodeType == self.TEXT_NODE:
+			output.append(item)
 		elif getattr(item, 'unicode', None) is not None:
 			output.append(item.unicode)
 	return cfg_interfaces.ILatexContentFragment( ''.join( output ).strip() )
