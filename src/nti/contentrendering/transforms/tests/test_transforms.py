@@ -163,6 +163,23 @@ def test_challProbRightPicTransform():
 	revProbWithPic = dom.getElementsByTagName( 'chall')[2];
 	assert_that( revProbWithPic.firstChild.firstChild.nodeName, is_( 'rightpic' ))
 
+def test_challRightPicTransformFirstElementOwnPar():
+	example = br"""
+\challengeprobs
+
+
+\rightpic{geometry_216.pdf}
+\chall In the diagram at the left, $O$ is the center of the circle, $MNOP$ is a
+rectangle, and the area of the circle is $100\pi$.  What is the length of
+diagonal $\seg{NP}$ of the rectangle?
+	"""
+
+	dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
+	rightpicTransform( dom )
+        #We expect the rightpic to have been moved down a level and belong to the last part as opposed to the first one.
+	challWithPic = dom.getElementsByTagName( 'chall' )[0]
+	assert_that( challWithPic.firstChild.firstChild.nodeName, is_( 'rightpic' ))
+
 def test_solutionRightPicTransform():
 	example = br"""
 
