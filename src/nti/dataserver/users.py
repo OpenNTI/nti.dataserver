@@ -46,7 +46,6 @@ from nti.dataserver import enclosures
 from nti.dataserver import mimetype
 from nti.dataserver import sharing
 from nti.dataserver.activitystream_change import Change
-from nti.chatserver import interfaces as chat_interfaces
 from nti import apns
 
 import nti.apns.interfaces
@@ -122,6 +121,20 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject,E
 
 		return user
 
+	@classmethod
+	def delete_entity( cls, username, dataserver=None ):
+		"""
+		Delete the entity (in this class's namespace) given by `username`. If the entity
+		doesn't exist, raises :class:`KeyError`.
+		:return: The user that was deleted.
+		"""
+		dataserver = dataserver or _get_shared_dataserver()
+		root_users = dataserver.root[cls._ds_namespace]
+
+		user = root_users[username]
+		del root_users[username]
+		return user
+
 	creator = nti_interfaces.SYSTEM_USER_NAME
 	__parent__ = None
 
@@ -153,7 +166,10 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject,E
 	def _get__name__(self):
 		return self.username
 	def _set__name__(self,new_name):
-		self.username = new_name
+		if new_name:
+			# Deleting from a container wants to remove our name.
+			# We cannot allow that.
+			self.username = new_name
 	__name__ = property(_get__name__, _set__name__ )
 
 
@@ -674,17 +690,7 @@ class User(Principal):
 		"""
 		return cls.create_entity( dataserver=dataserver, **kwargs )
 
-	@classmethod
-	def delete_user( cls, username, dataserver=None, **kwargs ):
-		""" Remove a user from the dataserver a new user.
-		You handle the transaction.
-		"""
-		dataserver = dataserver or _get_shared_dataserver()
-		try:
-			del dataserver.root['users'][username]
-			return True
-		except KeyError:
-			return False
+	delete_user = Principal.delete_entity
 
 	# External incoming ignoring and accepting can arrive in three ways.
 	# As a list, which replaces the entire contents.
