@@ -73,6 +73,12 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 				address = ('0.0.0.0',10843)
 				def __getattr__( self, name ):
 					return getattr( cfg, name )
+			# TODO: We cannot use create_socket directly (naively), as it fails the integration tests if something is
+			# already using that port (a real instance): it calls sys.exit().
+			# Either switch to another method, or detect when we are not running
+			# on "the usual" http ports and switch ports here, or allow
+			# a configuration for it too and make the int tests configure a random port
+			# for this as well
 			self.cfg.policy_server_sock = gunicorn.sock.create_socket( FlashConf(), logger )
 
 
