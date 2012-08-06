@@ -25,6 +25,10 @@ from zope.deprecation import __show__
 
 class MockSessionService(sessions.SessionService):
 
+	def __init__( self ):
+		super(MockSessionService,self).__init__()
+		self.created_users = []
+
 	def _spawn_cluster_listener(self):
 		class PubSocket(object):
 			def send_multipart( self, o ): pass
@@ -37,7 +41,9 @@ class MockSessionService(sessions.SessionService):
 		if 'owner' not in kwargs:
 			kwargs['owner'] = self.default_owner
 			if users.User.get_user( kwargs['owner'] ) is None:
-				users.User.create_user( username=kwargs['owner'] )
+				created = users.User.create_user( username=kwargs['owner'] )
+				self.created_users.append( created )
+
 		return sessions.SessionService.create_session( self, *args, **kwargs )
 
 def test_session_cannot_change_owner():
@@ -92,11 +98,19 @@ class TestSessionService(mock_dataserver.ConfiguringTestBase):
 
 
 	@WithMockDSTrans
-	def test_create_session(self):
+	def test_create_delete_session(self):
 		session = self.session_service.create_session( watch_session=False )
 		assert_that( session, is_not( none() ) )
 		assert_that( self.session_service.get_session( session.session_id ), is_( session ) )
 
+		# If we delete the user, the sessions are no longer accessible
+		assert_that( self.session_service.created_users, has_length( 1 ) )
+		assert_that( self.session_service.created_users[0], has_property( 'username', session.owner ) )
+
+		deleted_user = users.User.delete_user( session.owner )
+		assert_that( deleted_user, is_( self.session_service.created_users[0] ) )
+
+		assert_that( self.session_service.get_session( session.session_id ), is_( none() ) )
 
 	@WithMockDSTrans
 	def test_get_dead_session(self):

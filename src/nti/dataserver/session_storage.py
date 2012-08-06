@@ -12,6 +12,8 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
+from zope import component
+from zope.lifecycleevent import IObjectRemovedEvent
 from zope.annotation import IAnnotations
 
 import persistent
@@ -25,18 +27,24 @@ from nti.dataserver import interfaces as nti_interfaces
 
 _OWNED_SESSIONS_KEY = __name__ + '.' + '_OwnerAnnotationBasedServiceStorage' + '.' + 'session_set'
 
-def _session_id_set_for_session_owner( session_owner, family, default=None ):
+def _session_id_set_for_session_owner( session_owner_or_user, family, default=None, create=True ):
 	"""
 	:param dict default: If not none, this will be used as the :class:`IAnnotations` value
 		if the session's owner cannot be found or adapted to annotations.
+	:param bool create: If True (the default) a new set will be created (and stored
+		in the annotations) if needed; otherwise, an empty tuple will be returned
+		(and not stored anywhere)
 	"""
-	__traceback_info__ = session_owner, default
-	user = users.User.get_user( session_owner )
+	__traceback_info__ = session_owner_or_user, default
+	user = users.User.get_user( session_owner_or_user ) if not nti_interfaces.IUser.providedBy( session_owner_or_user ) else session_owner_or_user
 	annotations = IAnnotations( user ) if default is None else IAnnotations( user, default )
 	try:
 		session_set = annotations[_OWNED_SESSIONS_KEY]
 	except KeyError:
-		session_set = annotations.setdefault( _OWNED_SESSIONS_KEY, family.II.TreeSet() )
+		if create:
+			session_set = annotations.setdefault( _OWNED_SESSIONS_KEY, family.II.TreeSet() )
+		else:
+			session_set = ()
 
 	return session_set
 
@@ -102,3 +110,19 @@ class OwnerBasedAnnotationSessionServiceStorage(persistent.Persistent):
 		discard( _session_id_set_for_session_owner( session.owner, self.family ),
 				 session_id )
 		self.intids.unregister( session )
+
+	def unregister_all_sessions_for_owner( self, session_owner ):
+		session_ids = _session_id_set_for_session_owner( session_owner, None, default={}, create=False )
+		if session_ids:
+			for sid in session_ids:
+				session = self.intids.getObject( sid )
+				self.intids.unregister( session )
+			session_ids.clear()
+
+@component.adapter(nti_interfaces.IUser, IObjectRemovedEvent)
+def _remove_sessions_for_removed_user( user, event ):
+
+	storage = component.queryUtility( nti_interfaces.ISessionServiceStorage )
+	# This is tightly coupled to OwnerBasedAnnotationSessionServiceStorage
+	if hasattr( storage, 'unregister_all_sessions_for_owner' ):
+		storage.unregister_all_sessions_for_owner( user )
