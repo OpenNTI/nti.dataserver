@@ -100,7 +100,7 @@ setup(
 		'cython >= 0.16',
 		# support for defining and evolving classes based on schemas
 		# pulls in dm.reuse
-		'dm.zope.schema >= 2.0',
+		'dm.zope.schema >= 2.0.1',
 		'dolmen.builtins >= 0.3.1', # interfaces for common python types
 		'futures >= 2.1.2',
 		#'gevent == 1.0dev', Coming from requirements.txt right now
