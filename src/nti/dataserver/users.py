@@ -768,6 +768,8 @@ class User(Principal):
 		self.devices = _DevicesMap()
 		self.devices.__parent__ = self
 
+		# Create the containers, along with the initial set of contents.
+		# Note that this doesn't reparent them, they stay parented by us
 		self.containers = datastructures.ContainedStorage(create=self,
 														  containersType=dicts.CaseInsensitiveLastModifiedDict,
 														  containers={self.friendsLists.container_name: self.friendsLists,
@@ -1004,11 +1006,9 @@ class User(Principal):
 
 	def values(self, of_type=None):
 		"""
-		Returns something that iterates across all contained objects of this user.
+		Returns something that iterates across all contained (owned) objects of this user.
 		This is intended for use during migrations (enabling :func:`zope.generations.utility.findObjectsProviding`)
 		and not general use.
-
-		.. note:: Use of this function may result in some duplicated objects being found.
 
 		:param type of_type: If given, then only values that are instances of the given type
 			will be returned.
@@ -1029,34 +1029,22 @@ class User(Principal):
 				if test(o):
 					yield o
 
-
-		# We do not directly own these objects; they are weak refs
-		# to the objects of others. But if they have been deleted from the DB,
-		# and the DB hasn't been packed, we may be the only path to them
-		# TODO: Re-evaluate this with the intid sharing changes.
-		for container in self.streamCache.values():
-			if not hasattr( container, 'values' ): continue
-			for o in container.values():
-				if o is None: continue
-				if test(o):
-					# We could have Change 'Circled' referring to us, which
-					# leads to infinite recursion
-					if isinstance( o.object, User ):
-						continue
-					yield o
-
-		for container in self.containersOfShared.containers.values():
-			if not hasattr( container, 'values' ): continue
-			for o in container.values():
-				if isinstance( o, persistent.wref.WeakRef ):
-					o = o()
-				if o is None: continue
-				if test(o):
-					yield o
 		# TODO: This should probably be returning the annotations, too, just like
 		# sublocations does, yes?
 
 	def sublocations(self):
+		"""
+		The sublocations of a user are his FriendsLists, his Devices,
+		all the contained things he has created, and anything annotated
+		on him that was in ILocation (see :mod:`zope.annotation.factory`).
+
+		Note that this is used during the processing of :class:`zope.lifecycleevent.IObjectMovedEvent`,
+		when :func:`zope.container.contained.dispatchToSublocations` comes through
+		and recursively lets all the children know about the event. Also note that :class:`zope.lifecycleevent.IObjectRemovedEvent`
+		is a kind of `IObjectMovedEvent`, so when the user is deleted, events are fired for all
+		of his contained objects as well, allowing things like intid cleanup to work.
+		"""
+
 		yield self.friendsLists
 		yield self.devices
 		yield self.containers
