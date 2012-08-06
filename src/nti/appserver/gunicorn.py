@@ -14,6 +14,9 @@ from __future__ import print_function, unicode_literals, absolute_import
 import logging
 logger = logging.getLogger(__name__)
 
+import socket
+import errno
+
 import gunicorn.workers.ggevent as ggevent
 import gunicorn.http.wsgi
 import gunicorn.sock
@@ -21,6 +24,8 @@ import gunicorn.sock
 import gevent
 import gevent.socket
 from gevent.server import StreamServer
+
+from zope.dottedname import resolve as dottedname
 
 import nti.appserver.standalone
 from paste.deploy import loadwsgi
@@ -40,6 +45,52 @@ def dummy_app_factory(global_conf, **kwargs):
 	app.global_conf = global_conf
 	app.kwargs = kwargs
 	return app
+
+def _create_flash_socket(cfg, log):
+	"""
+	Create a new socket for the flash policy server (which has to run on a known TCP port)
+	Cribbed from :func:`gunicorn.sock.create_socket`, but without
+	the retries, looking for an existing file descriptor,
+	and the call to sys.exit on failure.
+
+	:raises socket.error: If we fail to create the socket.
+
+	"""
+	# We cannot use create_socket directly (naively), as it fails the integration tests if something is
+	# already using that port (a real instance): it calls sys.exit().
+	# Plus it wants to reuse an existing FD in the environment, which would be the
+	# wrong one.
+
+	util = dottedname.resolve( 'gunicorn.util' )
+	TCP6Socket = dottedname.resolve( 'gunicorn.sock.TCP6Socket' )
+	TCPSocket = dottedname.resolve( 'gunicorn.sock.TCPSocket' )
+
+	class FlashConf(object):
+		address = ('0.0.0.0',10843)
+		def __getattr__( self, name ):
+			return getattr( cfg, name )
+	conf = FlashConf( )
+
+	# get it only once
+	addr = conf.address
+
+	if util.is_ipv6(addr[0]):
+		sock_type = TCP6Socket
+	else:
+		sock_type = TCPSocket
+
+	try:
+		result = sock_type(conf, log)
+		log.info( "Listening at %s", result )
+		return result
+	except socket.error, e:
+		if e[0] == errno.EADDRINUSE:
+			log.error("Connection in use: %s", str(addr))
+		elif e[0] == errno.EADDRNOTAVAIL:
+			log.error("Invalid address: %s", str(addr))
+
+		raise
+
 
 
 class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
@@ -68,18 +119,10 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		# Now we have access to self.cfg and the rest
 		policy_server_sock = getattr( self.cfg, 'policy_server_sock', None )
 		if policy_server_sock is None:
-			cfg = self.cfg
-			class FlashConf(object):
-				address = ('0.0.0.0',10843)
-				def __getattr__( self, name ):
-					return getattr( cfg, name )
-			# TODO: We cannot use create_socket directly (naively), as it fails the integration tests if something is
-			# already using that port (a real instance): it calls sys.exit().
-			# Either switch to another method, or detect when we are not running
-			# on "the usual" http ports and switch ports here, or allow
-			# a configuration for it too and make the int tests configure a random port
-			# for this as well
-			self.cfg.policy_server_sock = gunicorn.sock.create_socket( FlashConf(), logger )
+			try:
+				self.cfg.policy_server_sock = _create_flash_socket( self.cfg, logger )
+			except socket.error:
+				logger.error( "Failed to create flash policy socket" )
 
 
 	def init_process(self):
@@ -152,10 +195,13 @@ class _ServerFactory(object):
 	def __call__( self,  socket, application=None, spawn=None, log=None,
 				  handler_class=None):
 		worker = self.worker
-		# Launch the flash policy listener
-		worker.policy_server = FlashPolicyServer( worker.cfg.policy_server_sock )
-		worker.cfg.policy_server_sock.setblocking( 0 )
-		worker.policy_server.start()
+		# Launch the flash policy listener if we could create it
+		policy_server_sock = getattr( worker.cfg, 'policy_server_sock', None )
+		if policy_server_sock is not None:
+			worker.policy_server = FlashPolicyServer( policy_server_sock )
+			policy_server_sock.setblocking( 0 )
+			worker.policy_server.start()
+			logger.info( "Created flash policy server on %s", policy_server_sock )
 
 		# The super class will provide a Pool based on the
 		# worker_connections setting
