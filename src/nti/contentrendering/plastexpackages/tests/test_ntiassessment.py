@@ -79,6 +79,32 @@ def test_macros():
 	assert_that( part.hints, has_length( 1 ) )
 	assert_that( part.hints, contains( verifiably_provides( asm_interfaces.IQHint ) ) )
 
+def test_content_adaptation():
+	doc = br"""
+	\begin{naquestion}[individual=true]
+		\begin{naqsymmathpart}
+		%s
+		\begin{naqsolutions}
+			\naqsolution Hello
+		\end{naqsolutions}
+		\end{naqsymmathpart}
+	\end{naquestion}
+	"""
+	def assert_content(content, output):
+		dom = _buildDomFromString( _simpleLatexDocument( (doc % content,) ) )
+		naq = dom.getElementsByTagName('naquestion')[0]
+		part_el = naq.getElementsByTagName( 'naqsymmathpart' )[0]
+		part = part_el.assessment_object()
+		assert_that( part, verifiably_provides( part_el.part_interface ) )
+		assert_that( part.content, is_( output ) )
+
+	assert_content("Arbitrary content goes here.","Arbitrary content goes here.")
+	assert_content( br"Equation: $123 \times 456$.","Equation: ." ) # Fails currently
+	assert_content( br"Complex object \begin{tabular}{cc} \\ 1 & 2 \\3 & 4\\ \end{tabular}",
+					br"Complex object" ) # Fails currently
+	assert_content( br"Figure \begin{figure}[htbp]\begin{center}\includegraphics[width=100px]{images/wu1_square=3=by=x-2.pdf}\end{center}\end{figure}", br"Figure" ) # Fails currently
+
+
 def test_free_response_macros():
 	example = br"""
 	\begin{naquestion}[individual=true]
