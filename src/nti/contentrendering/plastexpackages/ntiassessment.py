@@ -118,21 +118,16 @@ class naqsolexplanation(Base.Environment):
 def _asm_local_textcontent(self):
 	"""
 	Collects the text content for nodes that are direct
-	children of `self`, *not* recursively, leaving math nodes alone
-	but LaTeX-escaping normal text nodes. Returns a `unicode` object,
+	children of `self`, *not* recursively. Returns a `unicode` object,
 	*not* a :class:`plasTeX.DOM.Text` object.
 	"""
 	output = []
 	for item in self.childNodes:
-		inner = item.source.strip()
 		if item.nodeType == self.TEXT_NODE:
-			output.append(cfg_interfaces.ILatexContentFragment(item.textContent))
-		elif inner[0] == '$' and inner[-1] == '$':
-			output.append(unicode(inner))
+			output.append(item)
 		elif getattr(item, 'unicode', None) is not None:
-			output.append(cfg_interfaces.ILatexContentFragment(''+item.unicode))
-	return cfg_interfaces.IUnicodeContentFragment( ' '.join( output ).strip() )
-
+			output.append(item.unicode)
+	return cfg_interfaces.ILatexContentFragment( ''.join( output ).strip() )
 
 class _AbstractNAQPart(Base.Environment):
 
