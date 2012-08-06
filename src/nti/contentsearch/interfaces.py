@@ -116,6 +116,9 @@ class IUserIndexManager(ISearcher):
 		:param type_name: index type
 		"""
 	
+class IRepozeUserIndexManager(IUserIndexManager):
+	pass
+
 class IUserIndexManagerFactory(interface.Interface):
 	def __call__(username, *args, **kwargs):
 		"""
