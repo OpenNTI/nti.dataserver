@@ -238,6 +238,8 @@ setup(
 		'tools': [
 			'dblatex >= 0.3.4', # content rendering, convert docbook to tex
 			'ipython[notebook] >= 0.13', # notebook is web based, pulls in tornado
+			'pudb', # Python full screen console debugger. Beats ipython's: import pudb; pdb.set_trace()
+			'nose-pudb >= 0.1.2', # Nose integration: --pudb --pudb-failures. 0.1.2 requires trivial patch
 			'readline',
 			'httpie >= 0.2.6',
 			'logilab_astng >= 0.24.0',
