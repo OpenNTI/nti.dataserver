@@ -5,6 +5,8 @@ from hamcrest import (assert_that, is_, has_entry, instance_of,
 					  has_value, has_property,
 					  same_instance, is_not, none, has_length,
 					  contains)
+does_not = is_not
+from hamcrest import has_item
 import unittest
 from nose.tools import assert_raises
 
@@ -28,6 +30,8 @@ from nti.externalization.persistence import getPersistentState
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 from zope.container.interfaces import InvalidItemType
+from zope.component import eventtesting
+from zope.location import interfaces as loc_interfaces
 
 import mock_dataserver
 from mock_dataserver import WithMockDSTrans
@@ -368,7 +372,90 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		assert_that( user.getContainedStream('foo')[0].creator, is_( user2 ) )
 		assert_that( user.getContainedStream('foo')[0].object, is_( note ) )
 
-from zope.component import eventtesting
+	@WithMockDSTrans
+	def test_deleting_user_with_contained_objects_removes_intids(self):
+		user1 = User.create_user( self.ds, username='foo@bar', password='temp' )
+
+		note = Note()
+		note.body = ['text']
+		note.containerId = 'c1'
+		note.creator = user1.username
+
+		user1.addContainedObject( note )
+		assert_that( note.id, is_not( none() ) )
+
+		intids = component.getUtility( zc.intid.IIntIds )
+		assert_that( intids.getId( note ), is_not( none() ) )
+		intid = intids.getId( note )
+
+		eventtesting.setUp()
+		eventtesting.clearEvents()
+
+		User.delete_user( user1.username )
+
+		# This works because IObjectRemovedEvent is a type of IObjectMovedEvent,
+		# and IObjectMovedEvent is dispatched to sublocations, thanks to zope.container.
+		assert_that( intids.queryId( note ), is_( none() ) )
+		assert_that( intids.queryObject( intid ), is_( none() ) )
+
+	@WithMockDSTrans
+	def test_sublocations_are_set(self):
+		"We should never get duplicate values for sublocations"
+		user1 = User.create_user( self.ds, username='foo@bar', password='temp' )
+
+		note = Note()
+		note.body = ['text']
+		note.containerId = 'c1'
+		note.creator = user1.username
+
+		user1.addContainedObject( note )
+
+		sublocs = set()
+		def _traverse( o ):
+			assert_that( sublocs, does_not( has_item( o ) ) )
+			sublocs.add( o )
+			subs = loc_interfaces.ISublocations( o, None )
+			if subs:
+				for sub in subs.sublocations():
+					_traverse( sub )
+
+		_traverse( user1 )
+
+
+		assert_that( sublocs, has_item( user1.getContainer( note.containerId ) ) )
+		assert_that( sublocs, has_item( user1.friendsLists ) )
+
+
+	@WithMockDSTrans
+	def test_sublocations_include_annotations(self):
+		user1 = User.create_user( self.ds, username='foo@bar', password='temp' )
+
+		import nti.chatserver.messageinfo as chat_msg
+		import nti.chatserver.interfaces as chat_interfaces
+
+		msg_info = chat_msg.MessageInfo()
+		msg_info.creator = user1.username
+		msg_info.containerId = 'c1'
+
+		storage = chat_interfaces.IMessageInfoStorage( msg_info )
+		storage.add_message( msg_info )
+
+		sublocs = set()
+		for x in user1.sublocations():
+			assert_that( sublocs, does_not( has_item( x ) ) )
+			sublocs.add( x )
+
+		assert_that( sublocs, has_item( storage ) )
+		intids = component.getUtility( zc.intid.IIntIds )
+		assert_that( intids.getId( msg_info ), is_not( none() ) )
+		intid = intids.getId( msg_info )
+
+		# Deleting the user clears this intid too
+		User.delete_user( user1.username )
+		assert_that( intids.queryId( msg_info ), is_( none() ) )
+		assert_that( intids.queryObject( intid ), is_( none() ) )
+
+
 from zope.event import notify
 from nti.apns import APNSDeviceFeedback
 
