@@ -19,7 +19,7 @@ from nti.contentsearch._repoze_index import create_catalog
 import logging
 logger = logging.getLogger( __name__ )
 
-def _reindex(ds_conn, rds, user, ds_intid):
+def reindex(ds_conn, rds, user, ds_intid, ignore_errors=False):
 	username = user.username
 	logger.debug('Reindexing object(s) for user %s' % username)
 
@@ -39,6 +39,10 @@ def _reindex(ds_conn, rds, user, ds_intid):
 				counter = counter + 1
 			except POSKeyError:
 				# broken reference for object
+				pass
+			except Exception:
+				if not ignore_errors:
+					raise
 				pass
 
 	logger.debug('%s object(s) for user %s were reindexed' % (counter, username))
@@ -69,6 +73,6 @@ def evolve( context ):
 	rds_users = set(old_rds.users.keys())
 	for user in context.connection.root()['nti.dataserver']['users'].values():
 		if user.username in rds_users:
-			_reindex(connection, repoze_datastore, user, ds_intid)
+			reindex(connection, repoze_datastore, user, ds_intid)
 
 
