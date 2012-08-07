@@ -12,6 +12,7 @@ __docformat__ = "restructuredtext en"
 from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import none
+from hamcrest import contains
 
 from zope import component
 from zope.intid import interfaces as intid_interfaces
@@ -47,6 +48,7 @@ class TestFlagging(ConfiguringTestBase):
 		assert_that( flagging.flag_object( n, 'foo@bar' ), is_( none() ) )
 
 		assert_that( flagging.flags_object( n, 'foo@bar' ), is_true() )
+		assert_that( list(component.getAdapter( n, nti_interfaces.IGlobalFlagStorage ).iterflagged()), contains( n ) )
 
 		# first time does something
 		assert_that( flagging.unflag_object( n, 'foo@bar' ), is_( none() ) )
