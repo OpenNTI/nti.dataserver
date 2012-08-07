@@ -1,12 +1,21 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Views and data models relating to the login process.
+
+$Id$
 """
 
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 import logging
 logger = logging.getLogger(__name__)
+# Clean up the logging of openid, which writes to stderr by default. This is actually
+# the recommended approach
+import openid.oidutil
+openid.oidutil.log = logging.getLogger('openid').info
+
 
 from zope import interface, component, lifecycleevent
 from zope.event import notify
