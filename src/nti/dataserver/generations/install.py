@@ -41,6 +41,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import session_storage
 from nti.dataserver import containers as container
 from nti.dataserver import intid_utility
+from nti.dataserver import flagging
 
 import copy
 def install_chat( context ):
@@ -111,6 +112,8 @@ def install_main( context ):
 
 	install_intids( dataserver_folder )
 
+	install_flag_storage( dataserver_folder )
+
 	return dataserver_folder
 
 def install_intids( dataserver_folder ):
@@ -128,3 +131,8 @@ def install_intids( dataserver_folder ):
 	# Make sure to register it as both types of utility, one is a subclass of the other
 	lsm.registerUtility( intids, provided=zc.intid.IIntIds )
 	return intids
+
+def install_flag_storage( dataserver_folder ):
+	lsm = dataserver_folder.getSiteManager()
+
+	lsm.registerUtility( flagging.IntIdGlobalFlagStorage(), provided=nti_interfaces.IGlobalFlagStorage )

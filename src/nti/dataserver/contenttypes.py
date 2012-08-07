@@ -299,6 +299,7 @@ class Redaction(SelectedRange):
 					    # requires annotations
 					   nti_interfaces.ILikeable,
 					   nti_interfaces.IFavoritable,
+					   nti_interfaces.IFlaggable,
 					   # provides annotations
 					   an_interfaces.IAttributeAnnotatable )
 class Note(ThreadableExternalizableMixin, Highlight):
