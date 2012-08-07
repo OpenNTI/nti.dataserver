@@ -14,6 +14,7 @@ TypedIterable = dmschema.IndexedIterable
 from nti.contentfragments.schema import TextUnicodeContentFragment as _ContentFragment
 from nti.contentfragments.schema import TextLineUnicodeContentFragment as _ContentFragmentTextLine
 from nti.contentfragments.schema import LatexFragmentTextLine as _LatexTextLine
+from nti.contentfragments.schema import HTMLContentFragment as _HTMLContentFragment
 
 class IQHint(interface.Interface):
 	"""
@@ -30,6 +31,12 @@ class IQTextHint(IQHint):
 	A hint represented as text.
 	"""
 	value = _ContentFragment( title="The hint text" )
+
+class IQHTMLHint(IQHint):
+	"""
+	A hint represented as html.
+	"""
+	value = _HTMLContentFragment( title="The hint html" )
 
 class IQSolution(interface.Interface):
 

@@ -30,6 +30,14 @@
 			 provides=".interfaces.ILatexContentFragment" />
 
 	<!--
+	We can treat arbitrary strings like they are unsanitized HTML
+	TODO: Is this right?
+	-->
+	<adapter factory=".interfaces.HTMLContentFragment"
+			 for="unicode"
+			 provides=".interfaces.IHTMLContentFragment" />
+
+	<!--
 	We can convert arbitrary strings to a unicode content fragment.
 	This will either create a plain text or HTML fragment.
 	-->

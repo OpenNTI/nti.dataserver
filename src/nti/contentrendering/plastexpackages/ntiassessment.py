@@ -47,9 +47,10 @@ from __future__ import print_function, unicode_literals
 from zope import interface
 from zope import component
 from zope import schema
+from zope.cachedescriptors.property import readproperty
 
 import os
-
+import itertools
 import simplejson as json
 import codecs
 
@@ -60,7 +61,54 @@ from nti.externalization.externalization import toExternalObject
 from nti.assessment import interfaces as as_interfaces, parts, question
 from nti.contentrendering import plastexids, interfaces as cdr_interfaces
 from nti.contentfragments import interfaces as cfg_interfaces
+
 from plasTeX import Base
+from plasTeX.Renderers import render_children
+
+def _asm_local_textcontent(self):
+	"""
+	Collects the text content for nodes that are direct
+	children of `self`, *not* recursively. Returns a `unicode` object,
+	*not* a :class:`plasTeX.DOM.Text` object.
+	"""
+	output = []
+	for item in self.childNodes:
+		if item.nodeType == self.TEXT_NODE:
+			output.append(unicode(item))
+		elif getattr(item, 'unicode', None) is not None:
+			output.append(item.unicode)
+	return cfg_interfaces.ILatexContentFragment( ''.join( output ).strip() )
+
+def _asm_rendered_textcontent(self):
+	"""
+	Collects the rendered values of the children of self. Can only be used
+	while in the rendering process. Returns a `unicode` object.
+	"""
+	childNodes = []
+	for item in self.childNodes:
+		# Skipping the parts and solutions that come from this module
+		if type(item).__module__ == __name__:
+			continue
+		childNodes.append( item )
+
+	output = render_children( self.renderer, childNodes )
+	return cfg_interfaces.HTMLContentFragment( ''.join( output ).strip() )
+
+class _LocalContentMixin(object):
+	"""
+	Something that can collect local content. Defines one property,
+	`_asm_local_content` to be the value of the local content. If this object
+	has never been through the rendering pipline, this will be a LaTeX fragment
+	(probably with missing information and mostly useful for debuging).
+	If this object has been rendered, then it will be an HTML content fragment
+	according to the templates.
+
+	Mixin order matters, this needs to be first.
+	"""
+
+	_asm_local_content = readproperty(_asm_local_textcontent)
+	def _after_render( self, rendered ):
+		self._asm_local_content = _asm_rendered_textcontent( self )
 
 class naqsolutions(Base.List):
 
@@ -112,24 +160,10 @@ class naqsolution(Base.List.item):
 		return Base.Command.invoke(self,tex)
 
 
-class naqsolexplanation(Base.Environment):
+class naqsolexplanation(_LocalContentMixin, Base.Environment):
 	pass
 
-def _asm_local_textcontent(self):
-	"""
-	Collects the text content for nodes that are direct
-	children of `self`, *not* recursively. Returns a `unicode` object,
-	*not* a :class:`plasTeX.DOM.Text` object.
-	"""
-	output = []
-	for item in self.childNodes:
-		if item.nodeType == self.TEXT_NODE:
-			output.append(item)
-		elif getattr(item, 'unicode', None) is not None:
-			output.append(item.unicode)
-	return cfg_interfaces.ILatexContentFragment( ''.join( output ).strip() )
-
-class _AbstractNAQPart(Base.Environment):
+class _AbstractNAQPart(_LocalContentMixin,Base.Environment):
 
 	# Defines the type of part this maps too
 	part_interface = None
@@ -138,7 +172,7 @@ class _AbstractNAQPart(Base.Environment):
 	# into this interface.
 	soln_interface = None
 	part_factory = None
-	hint_interface = as_interfaces.IQTextHint
+	hint_interface = as_interfaces.IQHTMLHint
 
 	def _asm_solutions(self):
 		solutions = []
@@ -146,6 +180,7 @@ class _AbstractNAQPart(Base.Environment):
 		for solution_el in solution_els:
 			#  If the textContent is taken instead of the source of the child element, the
 			#  code fails on Latex solutions like $\frac{1}{2}$
+			# TODO: Should this be rendered? In some cases yes, in some cases no?
 			content = ' '.join([c.source.strip() for c in solution_el.childNodes]).strip()
 			if content[0] == '$' and content[len(content)-1] == '$':
 				 content = content[1:-1]
@@ -161,19 +196,17 @@ class _AbstractNAQPart(Base.Environment):
 		exp_els = self.getElementsByTagName( 'naqsolexplanation' )
 		assert len(exp_els) <= 1
 		if exp_els:
-			return cfg_interfaces.ILatexContentFragment( unicode(exp_els[0].textContent).strip() )
+			return exp_els[0]._asm_local_content
 		return cfg_interfaces.ILatexContentFragment( '' )
 
 	def _asm_hints(self):
 		hints = []
 		hint_els = self.getElementsByTagName( 'naqhint' )
 		for hint_el in hint_els:
-			hint = self.hint_interface( cfg_interfaces.ILatexContentFragment( unicode(hint_el.textContent).strip() ) )
+			hint = self.hint_interface( hint_el._asm_local_content )
 			hints.append( hint )
 
 		return hints
-
-	_asm_local_textcontent = _asm_local_textcontent
 
 	def _asm_object_kwargs(self):
 		return {}
@@ -181,7 +214,7 @@ class _AbstractNAQPart(Base.Environment):
 	def assessment_object( self ):
 		# Be careful to turn textContent into plain unicode objects, not
 		# plastex Text subclasses, which are also expensive nodes.
-		result = self.part_factory( content=self._asm_local_textcontent(),
+		result = self.part_factory( content=self._asm_local_content,
 									solutions=self._asm_solutions(),
 									explanation=self._asm_explanation(),
 									hints=self._asm_hints(),
@@ -192,6 +225,17 @@ class _AbstractNAQPart(Base.Environment):
 			__traceback_info__ = self.part_interface, errors, result
 			raise errors[0][1]
 		return result
+
+	def _after_render( self, rendered ):
+		super(_AbstractNAQPart,self)._after_render( rendered )
+		# The hints and explanations don't normally get rendered
+		# by the templates, so make sure they do
+		for x in itertools.chain( self.getElementsByTagName( 'naqsolexplanation' ),
+								  self.getElementsByTagName( 'naqsolution' ),
+								  self.getElementsByTagName( 'naqhint' ),
+								  self.getElementsByTagName( 'naqchoice' ) ):
+			unicode(x)
+
 
 class naqnumericmathpart(_AbstractNAQPart):
 	"""
@@ -210,6 +254,7 @@ class naqsymmathpart(_AbstractNAQPart):
 	part_interface = as_interfaces.IQSymbolicMathPart
 	part_factory = parts.QSymbolicMathPart
 	soln_interface = as_interfaces.IQLatexSymbolicMathSolution
+
 
 class naqfreeresponsepart(_AbstractNAQPart):
 	part_interface = as_interfaces.IQFreeResponsePart
@@ -246,7 +291,7 @@ class naqmultiplechoicepart(_AbstractNAQPart):
 	#forcePars = True
 
 	def _asm_choices(self):
-		return [cfg_interfaces.ILatexContentFragment(unicode(x.textContent).strip()) for x in self.getElementsByTagName( 'naqchoice' )]
+		return [x._asm_local_content for x in self.getElementsByTagName( 'naqchoice' )]
 
 	def _asm_object_kwargs(self):
 		return { 'choices': self._asm_choices() }
@@ -279,16 +324,24 @@ class naqmultiplechoicepart(_AbstractNAQPart):
 class naqchoices(Base.List):
 	pass
 
-class naqchoice(Base.List.item):
+class naqchoice(_LocalContentMixin,Base.List.item):
 	args = "[weight:float]"
+
+	@readproperty
+	def _asm_local_content(self):
+		return cfg_interfaces.ILatexContentFragment(unicode(self.textContent).strip())
+
 
 class naqhints(Base.List):
 	pass
 
-class naqhint(Base.List.item):
-	pass
+class naqhint(_LocalContentMixin,Base.List.item):
 
-class naquestion(Base.Environment,plastexids.NTIIDMixin):
+	def _after_render( self, rendered ):
+		self._asm_local_content = rendered
+
+
+class naquestion(_LocalContentMixin,Base.Environment,plastexids.NTIIDMixin):
 	args = '[individual:str]'
 	# Only classes with counters can be labeled, and \label sets the
 	# id property, which in turn is used as part of the NTIID (when no NTIID is set explicitly)
@@ -307,13 +360,11 @@ class naquestion(Base.Environment,plastexids.NTIIDMixin):
 			result = super(naquestion,self)._ntiid_get_local_part
 		return result
 
-	_asm_local_textcontent = _asm_local_textcontent
-
 	def _asm_question_parts(self):
 		return [x.assessment_object() for x in self if hasattr(x,'assessment_object')]
 
 	def assessment_object(self):
-		result = question.QQuestion( content=self._asm_local_textcontent(),
+		result = question.QQuestion( content=self._asm_local_content,
 									 parts=self._asm_question_parts() )
 		errors = schema.getValidationErrors( as_interfaces.IQuestion, result )
 		if errors: # pragma: no cover

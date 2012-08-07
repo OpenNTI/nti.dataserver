@@ -46,6 +46,10 @@
 			 provides=".interfaces.IQTextHint"
 			 for="basestring"/>
 
+	<adapter factory=".hint.QHTMLHint"
+			 provides=".interfaces.IQHTMLHint"
+			 for="basestring"/>
+
 	<!-- Dealing with LaTeX -->
 	<adapter factory="._latexplastexconverter.factory"
 			 for=".interfaces.IQLatexSymbolicMathSolution .interfaces.IQTextResponse"

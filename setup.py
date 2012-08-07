@@ -203,7 +203,7 @@ setup(
 		'zope.event >= 4.0.0',
 		'zope.exceptions >= 4.0.0.1',
 		'zope.filerepresentation >= 3.6.1',
-		'zope.formlib',
+		'zope.formlib >= 4.1.1', # Req'd by zope.mimetype among others,
 		'zope.generations >= 3.7.1',
 		'zope.hookable >= 4.0.0', # explicitly list this to ensure we get the fast C version. Used by ZCA.
 		'zope.i18n',

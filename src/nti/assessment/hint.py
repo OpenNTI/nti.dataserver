@@ -25,3 +25,10 @@ class QTextHint(TrivialValuedMixin,QHint):
 	"""
 	A text hint.
 	"""
+
+
+@interface.implementer(interfaces.IQHTMLHint)
+class QHTMLHint(TrivialValuedMixin,QHint):
+	"""
+	A text hint.
+	"""
