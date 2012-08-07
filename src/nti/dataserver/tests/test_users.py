@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 
 from hamcrest import (assert_that, is_, has_entry, instance_of,
 					  is_in, not_none, is_not, greater_than_or_equal_to,
@@ -9,7 +9,6 @@ does_not = is_not
 from hamcrest import has_item
 import unittest
 from nose.tools import assert_raises
-
 
 import persistent
 from zope import component
@@ -478,6 +477,3 @@ class TestFeedbackEvent(mock_dataserver.ConfiguringTestBase):
 		notify( event )
 
 		assert_that( user.devices, has_length( 0 ) )
-
-if __name__ == '__main__':
-	unittest.main()
