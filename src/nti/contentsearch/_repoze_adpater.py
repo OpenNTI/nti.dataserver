@@ -8,7 +8,7 @@ from zope.interface.common.mapping import IFullMapping
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch._search_userindexmanager import _SearchUserIndexManager
+from nti.contentsearch._search_indexmanager import _SearchUserIndexManager
 
 from nti.contentsearch import QueryObject
 from nti.contentsearch import SearchCallWrapper
@@ -23,7 +23,6 @@ from nti.contentsearch._search_results import empty_search_result
 from nti.contentsearch._search_results import empty_suggest_result
 from nti.contentsearch._search_highlights import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT)
 from nti.contentsearch.common import (NTIID, LAST_MODIFIED, ITEMS, HIT_COUNT, SUGGESTIONS, content_, ngrams_)
-
 
 import logging
 logger = logging.getLogger( __name__ )
