@@ -13,14 +13,14 @@ generation = 17
 
 logger = __import__('logging').getLogger( __name__ )
 
-from zope.generations.utility import findObjectsMatching
 
 from BTrees.OOBTree import OOBTree
 import zc.intid
 from zope import component
+from ZODB.interfaces import IBroken
 from nti.dataserver import datastructures
+from nti.dataserver.chat_transcripts import _IMeetingTranscriptStorage
 from nti.dataserver.generations.install import install_intids
-from nti.dataserver.chat_transcripts import _MeetingTranscriptStorage as MTS
 
 from zope.container.contained import getProxiedObject
 
@@ -62,7 +62,7 @@ def evolve( context ):
 					__traceback_info__ = type_, user, container, obj
 					if isinstance( obj, float ): #pragma: no cover
 						pass
-					elif isinstance( obj, MTS ):
+					elif IBroken.providedBy( obj ) or _IMeetingTranscriptStorage.providedBy( obj ):
 						to_drop.append( obj )
 					# change contained proxies to the real object
 					elif getProxiedObject( obj ) is not obj: # pragma: no cover
@@ -80,7 +80,10 @@ def evolve( context ):
 
 
 			for obj in to_drop: # 4. (idempotent)
-				user.deleteContainedObject( obj.containerId, obj.id )
+				try:
+					user.deleteContainedObject( obj.containerId, obj.id )
+				except: # pragma: no cover
+					pass # if it was IBroken, we probably cannot actually do this
 
 			if to_re_add:
 				user.containers.afterAddContainedObject = lambda *args: False

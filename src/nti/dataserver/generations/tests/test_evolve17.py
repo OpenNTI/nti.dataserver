@@ -19,7 +19,7 @@ from nti.dataserver.generations.evolve17 import evolve
 
 from nti.dataserver import containers, datastructures
 from nti.dataserver.contenttypes import Note
-from nti.externalization.persistence import PersistentExternalizableList, PersistentExternalizableWeakList
+from nti.externalization.persistence import PersistentExternalizableWeakList
 from nti.dataserver.activitystream_change import Change
 
 
@@ -28,7 +28,6 @@ import nti.dataserver
 
 import nti.dataserver.tests.mock_dataserver
 from nti.dataserver.tests.mock_dataserver import  mock_db_trans, WithMockDS
-from nti.dataserver.chat_transcripts import _MeetingTranscriptStorage as MTS
 from BTrees.OOBTree import OOBTree
 
 import fudge
@@ -38,6 +37,9 @@ from nti.deprecated import hides_warnings
 import zope.intid
 import zc.intid
 from zope import component
+from zope import interface
+from ZODB.interfaces import IBroken
+
 
 class TestEvolve17(nti.dataserver.tests.mock_dataserver.ConfiguringTestBase):
 	set_up_packages = (nti.dataserver,)
@@ -68,7 +70,8 @@ class TestEvolve17(nti.dataserver.tests.mock_dataserver.ConfiguringTestBase):
 			note_id = note.id
 			assert_that( note, does_not( has_property( '_ds_intid' ) ) )
 
-			mts = MTS(note)
+			mts = datastructures.ContainedMixin()
+			interface.alsoProvides( mts, IBroken )
 			mts.containerId = 'foo:bar'
 			jason.addContainedObject( note )
 			mts_id = mts.id

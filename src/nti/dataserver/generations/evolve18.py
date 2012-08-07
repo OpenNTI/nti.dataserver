@@ -26,3 +26,7 @@ def evolve( context ):
 	# This overwrites the previous definition, which at this point
 	# is a broken object.
 	lsm.registerUtility( sess_storage, provided=nti_interfaces.ISessionServiceStorage )
+
+	# TODO: we probably need to add a step to drop all chat_transcript._IMeetingTranscriptStorage
+	# again. Those are probably all full of broken objects now (once the Sessions database goes away),
+	# and we need to clean up the intid storage from them
