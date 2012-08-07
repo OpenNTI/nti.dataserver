@@ -94,6 +94,11 @@ class IntIdGlobalFlagStorage(persistent.Persistent):
 	def unflag( self, context ):
 		sets.discard( self.flagged, self._intids.queryId( context ))
 
+	def iterflagged( self ):
+		intids = self._intids
+		for iid in self.flagged:
+			yield intids.getObject( iid ) # If this fails we are out of sync
+
 	@CachedProperty
 	def _intids(self):
 		return component.getUtility( intid.IIntIds )

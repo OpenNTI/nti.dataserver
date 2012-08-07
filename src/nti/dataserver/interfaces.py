@@ -660,6 +660,12 @@ class IGlobalFlagStorage(interface.Interface):
 		Return a truth value indicating whether the context object has been flagged.
 		"""
 
+	def iterflagged():
+		"""
+		Return an iterator across the flagged objects in
+		this storage.
+		"""
+
 class INote(IHighlight):
 	"""
 	A user-created note attached to other content.
