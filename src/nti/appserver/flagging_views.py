@@ -93,3 +93,12 @@ def _UnFlagView(request):
 ## flagged objects and presents two checkboxes: delete to remove the object,
 ## and 'unflag' to unflag the object. The view code will accept the POST of that
 ## form and take the appropriate actions.
+
+@view_config( route_name='objects.generic.traversal',
+			  renderer='templates/moderation_admin.pt',
+			  permission=nauth.ACT_MODERATE,
+			  request_method='GET',
+			  name='moderation_admin')
+def moderation_admin( request ):
+	# Seems chameleon/tal can't repeat on a generator/iterator?
+	return list(component.getUtility( nti_interfaces.IGlobalFlagStorage ).iterflagged())

@@ -66,3 +66,30 @@ class TestApplicationGlossary(ApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'Links', has_item( has_entry( 'rel', 'like' ) ) ) )
 		assert_that( res.json_body, has_entry( 'Links', has_item( has_entry( 'rel', 'favorite' ) ) ) )
 		assert_that( res.json_body, has_entry( 'Links', has_item( has_entry( 'rel', 'flag.metoo' ) ) ) )
+
+
+	def test_flag_moderation(self):
+		"Basic tests of the moderation admin page"
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = self._create_user()
+			n = contenttypes.Note()
+			n.body = ['The first part']
+			n.applicableRange = contentrange.ContentRangeDescription()
+			n.containerId = 'tag:nti:foo'
+			user.addContainedObject( n )
+
+		testapp = TestApp( self.app )
+
+		# First, give us something to flag
+		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % to_external_ntiid_oid( n )
+		path = UQ( path )
+		testapp.post( path + '/@@flag', '', extra_environ=self._make_extra_environ() )
+
+
+		path = '/dataserver2/@@moderation_admin'
+
+		res = testapp.get( path, extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 200 ) )
+
+		assert_that( res.content_type, is_( 'text/html' ) )
+		assert_that( res.body, contains_string( 'The first part' ) )
