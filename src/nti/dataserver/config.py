@@ -250,19 +250,9 @@ def _configure_zeo( env_root ):
 	dataFile = env_root.data_file( dataFileName )
 	blobDir, demoBlobDir = _mk_blobdirs( dataFile )
 
-
-	sessionDataFile = env_root.data_file( 'sessions.' + dataFileName )
-	sessionBlobDir, sessionDemoBlobDir = _mk_blobdirs( sessionDataFile )
-
-
-	searchDataFile = env_root.data_file( 'search.' + dataFileName )
-	searchBlobDir, searchDemoBlobDir = _mk_blobdirs( searchDataFile )
-
 	configuration_dict = {
 		'clientPipe': clientPipe, 'logfile': env_root.log_file( 'zeo.log' ),
 		'dataFile': dataFile,'blobDir': blobDir,
-		'sessionDataFile': sessionDataFile, 'sessionBlobDir': sessionBlobDir,
-		'searchDataFile': searchDataFile, 'searchBlobDir': searchBlobDir
 		}
 
 	configuration = """
@@ -273,15 +263,6 @@ def _configure_zeo( env_root ):
 		path %(dataFile)s
 		blob-dir %(blobDir)s
 		pack-gc false
-		</filestorage>
-		<filestorage 2>
-		path %(sessionDataFile)s
-		blob-dir %(sessionBlobDir)s
-		pack-gc false
-		</filestorage>
-		<filestorage 3>
-		path %(searchDataFile)s
-		blob-dir %(searchBlobDir)s
 		</filestorage>
 
 		<eventlog>
@@ -455,13 +436,11 @@ def _configure_zeo( env_root ):
 from repoze.zodbconn.uri import db_from_uri
 from zope.configuration import xmlconfig
 from zope import component
-from ZODB.DB import ContextManager as DBContext
-import ZODB.interfaces
+
+
 
 from zope.event import notify
 from zope.processlifetime import DatabaseOpenedWithRoot
-
-from nti.dataserver import interfaces as nti_interfaces
 
 def _configure_database( env, uris ):
 	install_zlib_client_resolver()
