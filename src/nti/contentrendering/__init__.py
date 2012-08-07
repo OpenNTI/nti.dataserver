@@ -1,8 +1,17 @@
-from __future__ import unicode_literals, print_function
-import io
-from pkg_resources import resource_exists, resource_filename
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
 
-from nti.utils.minidom import minidom_writexml # re-export
+
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
+from pkg_resources import resource_exists, resource_filename
 
 def javascript_path( js_name ):
 	"""
@@ -19,28 +28,25 @@ import warnings
 import os
 import subprocess
 import anyjson as json
-import logging
-logger = logging.getLogger(__name__)
+import urllib
+
 warnings.warn( "Using whatever phantomjs is on the path" )
 
-_load_plugins_no = os.getenv( 'NTI_PHANTOMJS_LOAD_PLUGINS_ARG', '' )
+
 _none_key = object()
 def run_phantom_on_page( htmlFile, scriptName, args=(), key=_none_key, expect_no_output=False, expect_non_json_output=False ):
-	# phantomjs 1.3 will take plain paths to open, 1.4 requires a URL
-	# This is a pretty lousy way to get a URL and probably has escaping problems
+	# As of phantomjs 1.4, the html argument must be a URL
 	if not htmlFile.startswith( 'file:' ):
-		htmlFile = 'file://' + os.path.abspath( htmlFile )
-	# They claim that loading plugins is off by default, but that doesn't
-	# seem to be true. And some plugins produce output during the loading process,
-	# which screws up or JSON parsing. Worse, an unloadable plugin can crash the
-	# entire process. So we attempt to force disable plugin loading: However, this
-	# is not entirely reliable; there seems to be a race condition. We try instead
-	# to parse just the last line
-	# NOTE: This problem is fixed with 1.5, which seems to be backwards compatible entirely
-	# NOTE2: phantomjs 1.6 dropped the --load-plugins=no argument entirely. We temporarily
-	# have an environment variable to control this, but it seems unnecessary on 1.5
+		htmlFile = urllib.basejoin( 'file://', urllib.pathname2url( os.path.abspath( htmlFile ) ) )
 
-	process = "phantomjs %s %s %s %s 2>/dev/null" % (_load_plugins_no, scriptName, htmlFile, " ".join([str(x) for x in args]))
+	# Prior to 1.5, a --load-plugins=no was necessary to prohibit loading
+	# plugins, some of which produced console output that screwed our parsing.
+	# In 1.6, this is off by default and the arg is gone.
+
+	# TODO: Rewrite the scripts to use the built-in webserver and communicate
+	# over a socket as opposed to stdout/stderr? As of 1.6, I think this is the recommended approach
+
+	process = "phantomjs %s %s %s 2>/dev/null" % (scriptName, htmlFile, " ".join([str(x) for x in args]))
 	logger.debug( "Executing %s", process )
 	# TODO: Rewrite this without the shell for safety and speed
 	jsonStr = subprocess.Popen(process, shell=True, stdout=subprocess.PIPE).communicate()[0].strip()
@@ -56,6 +62,9 @@ def run_phantom_on_page( htmlFile, scriptName, args=(), key=_none_key, expect_no
 				result = json.loads(jsonStr)
 			except ValueError:
 				if jsonStr:
+					__traceback_info__ = htmlFile, scriptName
+					# TODO: This should no longer be necessary on 1.6, yes?
+					logger.exception( "Got unparseable output. Trying again" )
 					# We got output. Perhaps there was plugin junk above? Try
 					# again with just the last line.
 					result = json.loads( jsonStr.splitlines()[-1] )
