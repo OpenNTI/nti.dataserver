@@ -50,7 +50,7 @@ class TestEvolve14(nti.dataserver.tests.mock_dataserver.ConfiguringTestBase):
 
 
 			install( context )
-			ExampleDatabaseInitializer().install( context )
+			ExampleDatabaseInitializer(max_test_users=0,skip_passwords=True).install( context )
 
 			ds_folder = context.connection.root()['nti.dataserver']
 			jason = ds_folder['users']['jason.madden@nextthought.com']
