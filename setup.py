@@ -250,7 +250,7 @@ setup(
 			'sphinx >= 1.1.3',
 			'sphinxtheme.readability >= 0.0.5',
 			'repoze.sphinx.autointerface >= 0.7.0',
-			'rope >= 0.9.4' # refactoring library. c.f. ropemacs
+			'rope >= 0.9.4', # refactoring library. c.f. ropemacs
 			'ropemode >= 0.2' # IDE helper for rope
 			]
 	},
