@@ -6,11 +6,6 @@ generation = 12
 
 from zope.generations.generations import SchemaManager
 
-from nti.dataserver import interfaces as nti_interfaces
-
-from nti.contentsearch import create_repoze_datastore
-from nti.contentsearch.interfaces import IRepozeDataStore
-
 import logging
 logger = logging.getLogger( __name__ )
 
@@ -22,21 +17,5 @@ class _ContentSearchSchemaManager(SchemaManager):
 														 	package_name='nti.contentsearch.generations')
 
 def evolve( context ):
-	install_search( context )
+	pass
 
-def install_search( context ):
-	conn = context.connection
-	root = conn.root()
-	
-	container = root['nti.dataserver']
-	lsm = container.getSiteManager()
-	
-	repoze_datastore = create_repoze_datastore()
-	search_conn = conn.get_connection( 'Search' )
-	search_conn.add(repoze_datastore)
-	search_conn.root()['repoze_datastore'] = repoze_datastore
-	lsm.registerUtility( repoze_datastore, provided=IRepozeDataStore )
-	
-	rsv = lsm.getUtility( nti_interfaces.IOIDResolver )
-	if rsv._p_jar is None:
-		rsv._p_jar = conn
