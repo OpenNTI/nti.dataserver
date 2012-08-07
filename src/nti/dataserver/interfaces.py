@@ -637,6 +637,29 @@ class IFavoritable(IAnnotatable):
 	favorited by users using the :class:`contentratings.interfaces.IUserRating` interface.
     """
 
+class IFlaggable(IAnnotatable):
+	"""
+	Marker interface that promises that an implementing object
+	can be flagged for moderation
+	"""
+
+class IGlobalFlagStorage(interface.Interface):
+
+	def flag( context ):
+		"""
+		Cause `context`, which should be IFLaggable, to be marked as flagged.
+		"""
+
+	def unflag( context ):
+		"""
+		Cause `context` to no longer be marked as flagged (if it was)
+		"""
+
+	def is_flagged( context ):
+		"""
+		Return a truth value indicating whether the context object has been flagged.
+		"""
+
 class INote(IHighlight):
 	"""
 	A user-created note attached to other content.
