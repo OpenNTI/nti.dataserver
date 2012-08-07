@@ -638,6 +638,7 @@ def createApplication( http_port,
 							 permission=nauth.ACT_READ, request_method='GET' )
 	pyramid_config.scan( 'nti.appserver.contentlibrary_views' )
 	pyramid_config.scan( 'nti.appserver.liking_views' )
+	pyramid_config.scan( 'nti.appserver.flagging_views' )
 	pyramid_config.scan( 'nti.appserver._hacks' )
 
 	# Generic user object tree traversal

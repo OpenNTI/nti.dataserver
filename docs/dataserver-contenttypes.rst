@@ -225,6 +225,15 @@ These are definitions related to content that a user can generate.
        // means you have already taken the opposite action
    }
 
+   mixin Flaggable {
+       // Defines things that can be "flagged" for moderation. You post
+       // to the links with rel=flag or rel=flag.metoo to flag
+       // something or flag it again. (Unflagging something can only
+       // be done by moderators.) Thus the rel=flag link means no one
+	   // has flagged it, while rel=flag.metoo means at least one
+       // person has already flagged it.
+   }
+
    //NOTE: Bookmarks do not currently exist
    struct Bookmark : PersistentObject<Anchored,Shareable,Taggable> { }
 
@@ -256,7 +265,7 @@ These are definitions related to content that a user can generate.
 	   oid_t references[];
    }
 
-   struct Note : Highlight <Threadable, Anchored, Shareable, Likeable, Favoritable> {
+   struct Note : Highlight <Threadable, Anchored, Shareable, Likeable, Favoritable, Flaggable> {
 	   //An ordered list of objects (strings or objects) that make up the body.
 	   //In particular, Canvas objects can appear here as can HTML strings.
 	   Object[] body;

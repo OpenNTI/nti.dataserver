@@ -80,11 +80,12 @@ if not '__eq__' in Permission.__dict__:
 	Permission.__eq__ = lambda x, y: x.id == getattr( y, 'id', Permission )
 
 # These are also registered in configure.zcml
-ACT_CREATE = Permission('nti.actions.create')
-ACT_DELETE = Permission('nti.actions.delete')
-ACT_UPDATE = Permission('nti.actions.update')
-ACT_SEARCH = Permission('nti.actions.search')
-ACT_READ   = Permission('zope.View')
+ACT_CREATE   = Permission('nti.actions.create')
+ACT_DELETE   = Permission('nti.actions.delete')
+ACT_UPDATE   = Permission('nti.actions.update')
+ACT_SEARCH   = Permission('nti.actions.search')
+ACT_MODERATE = Permission('nti.actions.moderate')
+ACT_READ     = Permission('zope.View')
 
 # Groups that are expected to have certain rights
 # in certain areas

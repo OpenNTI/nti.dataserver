@@ -78,6 +78,9 @@
 			 provides="zope.traversing.interfaces.ITraversable"
 			 name="fields" />
 
+
+	<subscriber factory=".flagging_views.FlagLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 	<subscriber factory=".liking_views.FavoriteLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 	<subscriber factory=".liking_views.LikeLinkDecorator"
