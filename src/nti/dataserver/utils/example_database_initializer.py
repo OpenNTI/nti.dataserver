@@ -34,9 +34,16 @@ class ExampleDatabaseInitializer(object):
 
 	generation = 8
 	minimum_generation = 8
+	max_test_users = 101
+	skip_passwords = False
 
-	def __init__( self, *args ):
-		pass
+	def __init__( self, *args, **kwargs ):
+		"""
+		:param int max_test_users: The number of test users to create.
+		"""
+		for k in ('max_test_users', 'skip_passwords'):
+			if k in kwargs:
+				setattr( self, k, kwargs.pop( k ) )
 
 	def _make_usernames(self):
 		"""
@@ -56,7 +63,7 @@ class ExampleDatabaseInitializer(object):
 			USERS.append( (uid + '@nextthought.com', uid.replace( '.', ' ').title() ) )
 
 		# Add test users
-		max_test_users = 101
+		max_test_users = self.max_test_users
 		for x in range(1, max_test_users):
 			uid = 'test.user.%s' % x
 			name = 'Test-%s' % x
@@ -179,6 +186,9 @@ class ExampleDatabaseInitializer(object):
 			uname = user_tuple[0]
 			is_test_user =  uname.startswith('test.user.')
 			password = 'temp001' if is_test_user else user_tuple[1].replace( ' ', '.' ).lower()
+			if self.skip_passwords:
+				# this can speed up creation a lot, the encrpytion is slow. This matters for test cases.
+				password = None
 
 			user = User.create_user( username=uname, password=password, dataserver=mock_dataserver )
 			register_user( user )

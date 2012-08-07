@@ -58,7 +58,7 @@ class TestEvolve17(nti.dataserver.tests.mock_dataserver.ConfiguringTestBase):
 				lsm.unregisterUtility( provided=zope.intid.IIntIds )
 				lsm.unregisterUtility( provided=zc.intid.IIntIds )
 
-			ExampleDatabaseInitializer().install( context )
+			ExampleDatabaseInitializer(max_test_users=0,skip_passwords=True).install( context )
 
 
 			jason = dataserver_folder['users']['jason.madden@nextthought.com']
