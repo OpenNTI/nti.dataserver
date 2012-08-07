@@ -5,6 +5,8 @@ from zope import interface
 from zope.annotation import factory as an_factory
 from zope.interface.common.mapping import IFullMapping
 
+from persistent.mapping import PersistentMapping
+
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.contentsearch import interfaces as search_interfaces
@@ -28,9 +30,12 @@ import logging
 logger = logging.getLogger( __name__ )
 
 @component.adapter(nti_interfaces.IUser)
-class _RepozeUserIndexManager(_SearchUserIndexManager):
+class _RepozeUserIndexManager(PersistentMapping, _SearchUserIndexManager):
 	interface.implements(search_interfaces.IRepozeUserIndexManager, IFullMapping)
 	
+	def __init__(self):
+		PersistentMapping.__init__(self)
+
 	def add_catalog(self, catalog, type_name):
 		if type_name not in self:
 			self[type_name] = catalog
@@ -226,4 +231,5 @@ class _RepozeUserIndexManager(_SearchUserIndexManager):
 		return len(self.get_catalog_names()) > 0
 	
 def _RepozeUserIndexManagerFactory(user):
-	return an_factory(_RepozeUserIndexManager)(user)
+	result = an_factory(_RepozeUserIndexManager)(user)
+	return result

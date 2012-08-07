@@ -3,8 +3,7 @@ from __future__ import print_function, unicode_literals
 import zope.intid
 from zope import component
 from zope import interface
-
-from persistent.mapping import PersistentMapping
+from zope.location.interfaces import ILocation
 
 from nti.dataserver import interfaces as nti_interfaces
 
@@ -13,8 +12,8 @@ from nti.contentsearch import interfaces
 import logging
 logger = logging.getLogger( __name__ )
 
-class _SearchUserIndexManager(PersistentMapping):
-	interface.implements(interfaces.IUserIndexManager)
+class _SearchUserIndexManager(object):
+	interface.implements(interfaces.IUserIndexManager, ILocation)
 	
 	def get_uid(self, obj):
 		_ds_intid = component.getUtility( zope.intid.IIntIds )
