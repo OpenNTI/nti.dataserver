@@ -315,12 +315,6 @@ def _configure_zeo( env_root ):
 		pack-gc false
 		</filestorage>
 		</zodb>
-		<zodb Search>
-		<filestorage 3>
-		path %(searchDataFile)s
-		blob-dir %(searchBlobDir)s
-		</filestorage>
-		</zodb>
 		""" % configuration_dict
 	env_root.write_conf_file( 'gc_conf.xml', gc_configuration )
 
@@ -329,14 +323,6 @@ def _configure_zeo( env_root ):
 		<zodb Users>
 		<zeoclient 1>
 		storage 1
-		server %(clientPipe)s
-		blob-dir %(blobDir)s
-		shared-blob-dir true
-		</zeoclient>
-		</zodb>
-		<zodb Search>
-		<zeoclient 3>
-		storage 3
 		server %(clientPipe)s
 		blob-dir %(blobDir)s
 		shared-blob-dir true
@@ -407,9 +393,7 @@ def _configure_zeo( env_root ):
 	%%import relstorage
 	%%import zc.zlibstorage
 	%s
-	%s
-	""" % (_relstorage_stanza(blobDir=blobDir),
-		   _relstorage_stanza(name="Search",blobDir=searchBlobDir) )
+	""" % (_relstorage_stanza(blobDir=blobDir),)
 	relstorage_zconfig_path = env_root.write_conf_file( 'relstorage_conf.xml', relstorage_configuration )
 
 	base_uri = 'zeo://%(addr)s?storage=%(storage)s&database_name=%(name)s&blob_dir=%(blob_dir)s&shared_blob_dir=%(shared)s'
@@ -420,9 +404,9 @@ def _configure_zeo( env_root ):
 	demo_uris = []
 	file_uris = []
 	relstorage_uris = []
-	for storage, name, data_file, blob_dir, demo_blob_dir in ((1, 'Users',    dataFile, blobDir, demoBlobDir),
+	for storage, name, data_file, blob_dir, demo_blob_dir in ((1, 'Users',    dataFile, blobDir, demoBlobDir),):
 															  #(2, 'Sessions', sessionDataFile, sessionBlobDir, sessionDemoBlobDir),
-															  (3, 'Search',   searchDataFile, searchBlobDir, searchDemoBlobDir)):
+															  #(3, 'Search',   searchDataFile, searchBlobDir, searchDemoBlobDir)):
 		uri = base_uri % {'addr': clientPipe, 'storage': storage, 'name': name, 'blob_dir': blob_dir, 'shared': True }
 		uris.append( uri )
 
@@ -513,10 +497,11 @@ def temp_get_config( root, demo=False ):
 		else:
 			db = db_from_uri( env.zeo_uris )
 		# See notes in _configure_zeo about names and cases
-		# Sessions DB has gone. Provide access to it if it is still in the config, otherwise
+		# Sessions/Search DB has gone. Provide access to it if it is still in the config, otherwise
 		# fake it
-		if 'Sessions' not in db.databases:
-			db.databases['Sessions'] = None # db.databases['Users']
+		for k in ('Sessions','Search'):
+			if k not in db.databases:
+				db.databases[k] = None
 		return (db.databases['Users'], db.databases['Sessions'], db.databases['Search'])
 	env.connect_databases = connect_databases
 
