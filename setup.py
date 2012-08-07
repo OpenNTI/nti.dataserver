@@ -123,6 +123,7 @@ setup(
 		 # fewer dependencies, but less helpful output and doesn't work with multiple workers (?)
 		#'linesman >= 0.2.2', # Conflicts with Pillow. Modify requires.txt as part of the patch
 		'logilab-common >= 0.58.1',
+		'lxml >= 2.3.5', # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
 		'nltk >= 2.0.2',
 		# numpy is req'd by nltk, but not depended on. sigh.
 		# This turns out to be because it CANNOT be installed in a setup.py:
