@@ -4,19 +4,16 @@ import unittest
 import tempfile
 from datetime import datetime
 
-from zope import component
 
 from nti.dataserver.users import User
 from nti.dataserver.contenttypes import Note
 
 from nti.ntiids.ntiids import make_ntiid
 
+from nti.contentsearch import QueryObject
 import nti.contentsearch as _contentsearch
 from nti.contentsearch import _repoze_index
 from nti.contentsearch import _whoosh_index
-from nti.contentsearch import QueryObject
-from nti.contentsearch import create_repoze_datastore
-from nti.contentsearch.interfaces import IRepozeDataStore
 from nti.contentsearch.indexmanager import create_index_manager_with_repoze
 from nti.contentsearch.indexmanager import create_index_manager_with_whoosh
 from nti.contentsearch._whoosh_index import create_book_schema
@@ -195,15 +192,14 @@ class TestIndexManagerWithRepoze(_BaseIndexManagerTest, ConfiguringTestBase):
 
 	def setUp(self):
 		ConfiguringTestBase.setUp(self)
-		self.repoze = create_repoze_datastore()
-		component.provideUtility(self.repoze, provides=IRepozeDataStore)
 
 	def tearDown(self):
 		ConfiguringTestBase.tearDown(self)
 
 	def create_index_mananger(self):
-		return create_index_manager_with_repoze(repoze_store=self.repoze)
+		return create_index_manager_with_repoze()
 
+@unittest.skip
 class TestIndexManagerWithWhoosh(_BaseIndexManagerTest, ConfiguringTestBase):
 
 	@classmethod

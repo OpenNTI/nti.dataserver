@@ -3,9 +3,9 @@ from __future__ import print_function, unicode_literals
 import os
 
 from nti.contentsearch._indexmanager import IndexManager
+from nti.contentsearch.interfaces import IRepozeUserIndexManager
 from nti.contentsearch._whoosh_bookindexmanager import wbm_factory
 from nti.contentsearch._whoosh_userindexmanager import wuim_factory
-from nti.contentsearch._repoze_userindexmanager import ruim_factory
 from nti.contentsearch._whoosh_indexstorage import MultiDirectoryStorage
 from nti.contentsearch._whoosh_indexstorage import create_directory_index_storage
 
@@ -21,8 +21,7 @@ def create_index_manager_with_whoosh(index_storage=None, indexdir=None, use_md5=
 
 def create_index_manager_with_repoze(dataserver=None, *args, **kwargs):
 	book_idx_manager = wbm_factory()
-	user_idx_manager = ruim_factory()
-	return IndexManager(book_idx_manager, user_idx_manager)
+	return IndexManager(book_idx_manager, IRepozeUserIndexManager)
 
 def create_directory_index_manager(user_index_dir="/tmp",  use_md5=True, dataserver=None, *args, **kwargs):
 	"""

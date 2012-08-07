@@ -12,10 +12,10 @@ from nti.dataserver.users import User
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.contentsearch import QueryObject
-from nti.contentsearch import interfaces
 from nti.contentsearch import SearchCallWrapper
 from nti.contentsearch import CaseInsensitiveDict
 from nti.contentsearch._indexagent import handle_index_event
+from nti.contentsearch import interfaces as seach_interfaces
 
 from nti.contentsearch._search_results import empty_search_result
 from nti.contentsearch._search_results import empty_suggest_result
@@ -50,7 +50,7 @@ def _greenlet_spawn(spawn, func, *args, **kwargs):
 	return greenlet
 	
 class IndexManager(object):
-	interface.implements(interfaces.IIndexManager)
+	interface.implements(seach_interfaces.IIndexManager)
 
 	# -------------------
 
@@ -65,26 +65,34 @@ class IndexManager(object):
 			cls.indexmanager = super(IndexManager, cls).__new__(cls, *args, **kwargs)
 		return cls.indexmanager
 
-	def __init__(self, bookidx_manager_factory, useridx_manager_factory, search_pool_size=5, *args, **kwargs):
+	def __init__(self, bookidx_manager_factory, useridx_manager_adapter, search_pool_size=5, *args, **kwargs):
 		self.books = CaseInsensitiveDict()
 		self.search_pool = gevent.pool.Pool(search_pool_size)
 		self.bookidx_manager_factory = bookidx_manager_factory
-		self.useridx_manager_factory = useridx_manager_factory
+		self.useridx_manager_adapter = useridx_manager_adapter
 
 	def __str__( self ):
 		return self.__repr__()
 
 	def __repr__( self ):
-		return 'IndexManager(books=%s, %s)' % (len(self.books), self.useridx_manager_factory)
+		return 'IndexManager(books=%s, %s)' % (len(self.books), self.useridx_manager_adapter)
 
 	@property
 	def dataserver(self):
 		return component.queryUtility( nti_interfaces.IDataserver )
 
+	def get_user(self, username):
+		result = User.get_user(username, dataserver=self.dataserver) 
+		return result
+	
 	def users_exists(self, username):
-		result = User.get_user(username, dataserver=self.dataserver) if self.dataserver else None
+		result = self.get_user(username)
 		return result is not None
-
+	
+	def get_user_communities(self, username):
+		user = self.get_user(username)
+		return list(user.communities) if user else []
+	
 	# -------------------
 	
 	@SearchCallWrapper
@@ -99,7 +107,8 @@ class IndexManager(object):
 		
 			# search books
 			for indexname in query.books:
-				job = _greenlet_spawn(spawn=self.search_pool.spawn, func=self.content_search, indexname=indexname, query=query)
+				job = _greenlet_spawn(spawn=self.search_pool.spawn, func=self.content_search, \
+									  indexname=indexname, query=query)
 				jobs.append(job)
 		finally:
 			gevent.joinall(jobs)
@@ -124,7 +133,8 @@ class IndexManager(object):
 		
 			# search books
 			for indexname in query.books:
-				job = _greenlet_spawn(spawn=self.search_pool.spawn, func=self.content_ngram_search, indexname=indexname, query=query)
+				job = _greenlet_spawn(spawn=self.search_pool.spawn, func=self.content_ngram_search, \
+									  indexname=indexname, query=query)
 				jobs.append(job)
 		finally:
 			gevent.joinall(jobs)
@@ -147,7 +157,8 @@ class IndexManager(object):
 		
 			# search books
 			for indexname in query.books:
-				job = _greenlet_spawn(spawn=self.search_pool.spawn, func=self.content_suggest_and_search, indexname=indexname, query=query)
+				job = _greenlet_spawn(spawn=self.search_pool.spawn, func=self.content_suggest_and_search, \
+									  indexname=indexname, query=query)
 				jobs.append(job)
 		finally:
 			gevent.joinall(jobs)
@@ -170,7 +181,8 @@ class IndexManager(object):
 		
 			# search books
 			for indexname in query.books:
-				job = _greenlet_spawn(spawn=self.search_pool.spawn, func=self.content_suggest, indexname=indexname, query=query)
+				job = _greenlet_spawn(spawn=self.search_pool.spawn, func=self.content_suggest, \
+									  indexname=indexname, query=query)
 				jobs.append(job)
 		finally:
 			gevent.joinall(jobs)
@@ -190,7 +202,7 @@ class IndexManager(object):
 		result = False
 		if not self.books.has_key(indexname):
 			bmi = self.bookidx_manager_factory(indexname=indexname, **kwargs)
-			if bmi:
+			if bmi is not None:
 				result = True
 				self.books[indexname] = bmi
 				logger.info("Book index '%s' has been added to index manager" % indexname)
@@ -201,25 +213,25 @@ class IndexManager(object):
 	def content_search(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
 		bm = self.get_book_index_manager(query.indexname)
-		results = bm.search(query) if (bm and not query.is_empty) else None
+		results = bm.search(query) if (bm is not None and not query.is_empty) else None
 		return results if results else empty_search_result(query.term)
 
 	def content_ngram_search(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
 		bm = self.get_book_index_manager(query.indexname)
-		results = bm.ngram_search(query) if (bm and not query.is_empty) else None
+		results = bm.ngram_search(query) if (bm is not None and not query.is_empty) else None
 		return results if results else empty_search_result(query.term)
 
 	def content_suggest_and_search(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
 		bm = self.get_book_index_manager(query.indexname)
-		results = bm.suggest_and_search(query) if (bm and not query.is_empty) else None
+		results = bm.suggest_and_search(query) if (bm is not None and not query.is_empty) else None
 		return results if results else empty_suggest_and_search_result(query.term)
 
 	def content_suggest(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
 		bm = self.get_book_index_manager(query.indexname)
-		results = bm.suggest(query) if (bm and not query.is_empty) else None
+		results = bm.suggest(query) if (bm is not None and not query.is_empty) else None
 		return results if results else empty_suggest_result(query.term)
 
 	quick_search = content_ngram_search
@@ -227,25 +239,15 @@ class IndexManager(object):
 	
 	# -------------------
 
-	def _get_user_index_manager(self, username, create=False):
-		result = None
-		if self.users_exists(username):
-			result = self.useridx_manager_factory(username=username, create=create)
-		return result
-
-	def _get_user_object(self, username):
-		result = User.get_user(username, dataserver=self.dataserver) if self.dataserver else None
-		return result
-
-	def _get_user_communities(self, username):
-		user = self._get_user_object(username)
-		return list(user.communities) if user else []
+	def _get_user_index_manager(self, username):
+		user = self.get_user(username)
+		return self.useridx_manager_adapter(user, None) if user else None
 
 	def _get_search_uims(self, username):
 		result = []
-		for name in [username] + self._get_user_communities(username):
+		for name in [username] + self.get_user_communities(username):
 			uim = self._get_user_index_manager(name)
-			if uim: result.append(uim)
+			if uim is not None: result.append(uim)
 		return result
 		
 	# -------------------
@@ -344,27 +346,27 @@ class IndexManager(object):
 		return result
 
 	def index_user_content(self, username, type_name=None, *args, **kwargs):
-		data = self._get_data(kwargs)
 		um = None
-		if data:
-			um = self._get_user_index_manager(username, create=True)
-		if um and data:
+		data = self._get_data(kwargs)
+		if data is not None:
+			um = self._get_user_index_manager(username)
+		if um is not None and data is not None:
 			return um.index_content(data, type_name, *args, **kwargs)
 
 	def update_user_content(self, username, type_name=None, *args, **kwargs):
-		data = self._get_data(kwargs)
 		um = None
-		if data:
-			um = self._get_user_index_manager(username,create=True)
-		if um and data:
+		data = self._get_data(kwargs)
+		if data is not None:
+			um = self._get_user_index_manager(username)
+		if um is not None and data is not None:
 			return um.update_content(data, type_name, *args, **kwargs)
 
 	def delete_user_content(self, username, type_name=None, *args, **kwargs):
-		data = self._get_data(kwargs)
 		um = None
-		if data:
-			um = self._get_user_index_manager(username,create=True)
-		if um and data:
+		data = self._get_data(kwargs)
+		if data is not None:
+			um = self._get_user_index_manager(username)
+		if um is not None and data is not None:
 			return um.delete_content(data, type_name, *args, **kwargs)
 
 	@classmethod
