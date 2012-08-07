@@ -69,6 +69,15 @@ Third-Party Cross Refs
 ..	regression-tests
 ..	regression-details
 
+Templating Cross Refs
+=====================
+
+.. toctree::
+	:maxdepth: 2
+
+
+	chameleon
+	z3c_pt
 
 
 `Epydoc generated doc <./epydoc>`_

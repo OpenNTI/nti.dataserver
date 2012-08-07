@@ -537,13 +537,17 @@ class _FriendsListACLProvider(_CreatedACLProvider):
 		result.append( ace_denying( nti_interfaces.EVERYONE_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _SectionInfoACLProvider ) )
 		return result
 
+import warnings
 @interface.implementer( nti_interfaces.IACLProvider )
 @component.adapter(nti_interfaces.IDataserverFolder)
 class _DataserverFolderACLProvider(object):
 
 	def __init__( self, context ):
+		warnings.warn( "Temporary hack allowing @nextthought.com users all permissions." )
 		# Got to be here after the components are registered
-		self.__acl__ = _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, auth.ACT_READ, _DataserverFolderACLProvider ), ) )
+		self.__acl__ = _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, auth.ACT_READ, _DataserverFolderACLProvider ),
+							  # TEMP Hack allowing nextthought.com users full permissions
+							  ace_allowing( 'nextthought.com', nti_interfaces.ALL_PERMISSIONS, _DataserverFolderACLProvider ) ) )
 
 @interface.implementer( nti_interfaces.IACLProvider )
 @component.adapter(content_interfaces.IContentPackageLibrary)
