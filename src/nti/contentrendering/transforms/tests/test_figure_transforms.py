@@ -1,7 +1,7 @@
 from . import ConfiguringTestBase
 from .. import performTransforms
 
-from nti.contentrendering.transforms.transrightpics_aopsbook import transform as rightpicTransform
+from nti.contentrendering.transforms.trans_figures_aops import transform as figureTransform
 
 from hamcrest import assert_that, has_length, greater_than_or_equal_to, is_
 import anyjson as json
@@ -32,7 +32,7 @@ def _simpleLatexDocument(maths):
     return simpleLatexDocumentText( preludes=(br'\usepackage{nti.contentrendering.plastexpackages.aopsbook}',),
                                     bodies=maths )
 
-def test_rightpicTransform():
+def test_exerciseRightPicTransform():
 	example = br"""
 	\exercises
 
@@ -47,18 +47,15 @@ def test_rightpicTransform():
 
 	dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
 
-#	import pdb
-#	pdb.set_trace()
-
 	exers = dom.getElementsByTagName('exer')
 	assert_that( exers, has_length(2))
 	assert_that( exers[0].lastChild.firstChild.nodeName, is_( 'rightpic' ) )
 	#run the transform
-	rightpicTransform( dom )
+	figureTransform( dom )
 
 	assert_that( exers[1].firstChild.firstChild.nodeName, is_( 'rightpic' ) )
 
-def test_startRightPicTransform():
+def test_exerciseRightPicTransformFirstElement():
 	example = br"""
 	\exercises
 
@@ -77,7 +74,7 @@ def test_startRightPicTransform():
 	assert_that( exers[0].firstChild.firstChild.nodeName, is_( 'rightpic' ) )
 
 	#run the transform
-	rightpicTransform( dom )
+	figureTransform( dom )
 	exers = dom.getElementsByTagName('exer')
 
 	#after: We expect the image to still be the first child of the first child, but to be merged into
@@ -85,7 +82,7 @@ def test_startRightPicTransform():
 	assert_that( len(exers[0].childNodes), is_( 1 ) )
 	assert_that( exers[0].firstChild.firstChild.nodeName, is_( 'rightpic' ) )
 
-def test_revProbRightPicTransform():
+def test_revprobLeftPicTransform():
 	example = br"""
 	\reviewprobs
 
@@ -94,24 +91,24 @@ def test_revProbRightPicTransform():
 	\MOEMS % Set 14 2E
 
 
-	\rightpic{geometry_136.pdf}
+	\leftpic{geometry_136.pdf}
 	\revprob
 	If adjacent sides meet at right angles in the figure at the right, what is the number of centimeters in the perimeter of the figure? \MathCounts
 	"""
 
 	dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
-	rightpicTransform( dom )
-	#We expect the rightpic to have been moved down a level and belong to the last review problem as opposed to the first one.
+	figureTransform( dom )
+	#We expect the leftpic to have been moved down a level and belong to the last review problem as opposed to the first one.
 
 	revProbWithPic = dom.getElementsByTagName( 'revprob')[1];
-	assert_that( revProbWithPic.firstChild.firstChild.nodeName, is_( 'rightpic' ))
+	assert_that( revProbWithPic.firstChild.firstChild.nodeName, is_( 'leftpic' ))
 
-def test_revProbRightPicTransformNoMove():
+def test_revProbParPicTransformNoMove():
 	example = br"""
 	\reviewprobs
 
 	\revprob
-	\rightpic{geometry_136.pdf}
+	\parpic[l]{geometry_136.pdf}
 	Square tiles 9~inches on a side exactly cover the floor of a rectangular room.  The border tiles are white and all other tiles are blue.  The room measures 18~feet by 15~feet.  How many tiles are white?
 	\MOEMS % Set 14 2E
 
@@ -122,13 +119,13 @@ def test_revProbRightPicTransformNoMove():
 
 	dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
 
-	rightpicTransform( dom )
-	#We expect the rightpic to be where it started.
+	figureTransform( dom )
+	#We expect the leftpic to be where it started.
 
 	revProbWithPic = dom.getElementsByTagName( 'revprob')[0]
-	assert_that( revProbWithPic.firstChild.firstChild.nodeName, is_( 'rightpic' ))
+	assert_that( revProbWithPic.firstChild.firstChild.nodeName, is_( 'parpic' ))
 
-def test_challProbRightPicTransform():
+def test_challProbParPicTransform():
 	example = br"""
 	\challengeprobs
 
@@ -142,7 +139,7 @@ def test_challProbRightPicTransform():
 
 
 
-	\rightpic{geometry_179.pdf}
+	\parpic[r]{geometry_179.pdf}
 	\chall\label{prob:wxyzandtri}
 	In the diagram on the right, $WXYZ$ is a rectangle. The area of triangle $ZXA$ is 36, and $ZA=3AY$.
 
@@ -158,41 +155,41 @@ def test_challProbRightPicTransform():
 
 	"""
 	dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
-	rightpicTransform( dom )
-	#We expect the rightpic to have been moved down a level and belong to the last challenge problem as opposed to the first one.
+	figureTransform( dom )
+	#We expect the leftpic to have been moved down a level and belong to the last challenge problem as opposed to the first one.
 	revProbWithPic = dom.getElementsByTagName( 'chall')[2];
-	assert_that( revProbWithPic.firstChild.firstChild.nodeName, is_( 'rightpic' ))
+	assert_that( revProbWithPic.firstChild.firstChild.nodeName, is_( 'parpic' ))
 
-def test_challRightPicTransformFirstElementOwnPar():
+def test_challLeftPicTransformFirstElementOwnPar():
 	example = br"""
 \challengeprobs
 
 
-\rightpic{geometry_216.pdf}
+\leftpic{geometry_216.pdf}
 \chall In the diagram at the left, $O$ is the center of the circle, $MNOP$ is a
 rectangle, and the area of the circle is $100\pi$.  What is the length of
 diagonal $\seg{NP}$ of the rectangle?
 	"""
 
 	dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
-	rightpicTransform( dom )
-        #We expect the rightpic to have been moved down a level and belong to the last part as opposed to the first one.
+	figureTransform( dom )
+	#We expect the leftpic to have been moved down a level and belong to the last part as opposed to the first one.
 	challWithPic = dom.getElementsByTagName( 'chall' )[0]
-	assert_that( challWithPic.firstChild.firstChild.nodeName, is_( 'rightpic' ))
+	assert_that( challWithPic.firstChild.firstChild.nodeName, is_( 'leftpic' ))
 
-def test_solutionRightPicTransform():
+def test_solutionParPicTransform():
 	example = br"""
 
 \section{Some section}
 
-\begin{problem}{}%\rightpic{chap2diag.108}}                                                                             
+\begin{problem}{}%\leftpic{chap2diag.108}}                                                                             
 In the figure below, $AOB$ is a straight line.  What is the measure of $\angle AOB$?
 
 \centpic{geometry_29.pdf}\end{problem}
 
 
 
-\rightpic{geometry_86.pdf}
+\parpic[l]{geometry_86.pdf}
 \begin{solution}
 If we don't see the answer right away, we can try to figure out what portion
 of a circle the angle cuts off.  We draw a circle with center $O$ as
@@ -209,10 +206,10 @@ This angle's name is easy to remember: a \Def{straight angle}
 
 	dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
 
-	rightpicTransform( dom )
-	#We expect the rightpic to have been moved down into the solution.
+	figureTransform( dom )
+	#We expect the leftpic to have been moved down into the solution.
 	solutionWithPic = dom.getElementsByTagName( 'solution')[0];
-	assert_that( solutionWithPic.firstChild.nodeName, is_( 'rightpic' ))
+	assert_that( solutionWithPic.firstChild.nodeName, is_( 'parpic' ))
 
 def test_partRightPicTransform():
 	example = br"""
@@ -234,12 +231,12 @@ area of right triangles.
 	"""
 
 	dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
-	rightpicTransform( dom )
-	#We expect the rightpic to have been moved down a level and belong to the last part as opposed to the first one.
+	figureTransform( dom )
+	#We expect the leftpic to have been moved down a level and belong to the last part as opposed to the first one.
 	partWithPic = dom.getElementsByTagName( 'part')[1];
 	assert_that( partWithPic.firstChild.firstChild.nodeName, is_( 'rightpic' ))
 
-def test_partRightPicTransformMerged():
+def test_partLeftPicTransformMerged():
 	example = br"""
 \begin{parts}
 \part
@@ -252,7 +249,7 @@ Problem~\probref{prob:equilateralarea}, we formed a right triangle in which one 
 is $60\dgg$.
 The acute angles of a right triangle sum to $90\dgg$, so the other acute angle has measure
 $90\dgg- 60\dgg = 30\dgg$.
-\rightpic{geometry_93.pdf}
+\leftpic{geometry_93.pdf}
 \part
 Inspired by our observation in part (a),
  we see that we can make an equilateral triangle by attaching two identical 30-60-90
@@ -263,10 +260,10 @@ at the right, where we have combined right triangles $ABD$ and $ACD$ to form equ
 	"""
 
 	dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
-	rightpicTransform( dom )
-	#We expect the rightpic to have been moved down a level and belong to the last part as opposed to the first one.
+	figureTransform( dom )
+	#We expect the leftpic to have been moved down a level and belong to the last part as opposed to the first one.
 	partWithPic = dom.getElementsByTagName( 'part')[1];
-	assert_that( partWithPic.firstChild.firstChild.nodeName, is_( 'rightpic' ))
+	assert_that( partWithPic.firstChild.firstChild.nodeName, is_( 'leftpic' ))
 
 def test_partRightPicTransformNoMove():
 	example = br"""
@@ -290,15 +287,15 @@ area of right triangles.
 
 	dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
 
-	rightpicTransform( dom )
-	#We expect the rightpic to be were it started.
+	figureTransform( dom )
+	#We expect the leftpic to be were it started.
 	partWithPic = dom.getElementsByTagName( 'part')[0]
 	assert_that( partWithPic.firstChild.firstChild.nodeName, is_( 'rightpic' ))
 
-def test_bodyRightPicTransform():
+def test_bodyLeftPicTransform():
 	example = br"""
 
-\rightpic{geometry_326.pdf}
+\leftpic{geometry_326.pdf}
 
 This solution is incorrect because it applies the Pythagorean Theorem incorrectly.
 Side $\seg{BC}$ is a leg, not the hypotenuse.  Applying the Pythagorean Theorem to $\tri ABC$ correctly
@@ -309,7 +306,7 @@ gives
 
 	dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
 
-	rightpicTransform( dom )
+	figureTransform( dom )
 	#We expect the rightpic to be were it started.
 	parWithPic = dom.getElementsByTagName( 'par')[0]
-	assert_that( parWithPic.firstChild.nodeName, is_( 'rightpic' ))
+	assert_that( parWithPic.firstChild.nodeName, is_( 'leftpic' ))
