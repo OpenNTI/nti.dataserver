@@ -239,9 +239,12 @@ class IndexManager(object):
 	
 	# -------------------
 
-	def _get_user_index_manager(self, username):
-		user = self.get_user(username)
-		return self.useridx_manager_adapter(user, None) if user else None
+	def _get_user_index_manager(self, username, create=True):
+		result = None
+		if self.users_exists(username):
+			user = self.get_user(username)
+			result = self.useridx_manager_adapter(user, None) if user and create else None
+		return result
 
 	def _get_search_uims(self, username):
 		result = []
