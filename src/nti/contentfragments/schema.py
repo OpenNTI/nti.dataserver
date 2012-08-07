@@ -59,3 +59,8 @@ class LatexFragmentTextLine(TextLineUnicodeContentFragment):
 	"""
 	_iface = interfaces.ILatexContentFragment
 	_impl = interfaces.LatexContentFragment
+
+class HTMLContentFragment(TextUnicodeContentFragment):
+
+	_iface = interfaces.IHTMLContentFragment
+	_imple = interfaces.HTMLContentFragment

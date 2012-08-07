@@ -6,7 +6,7 @@ import os
 
 from plasTeX.Renderers import Renderable as BaseRenderable
 from plasTeX.Renderers import Renderer as BaseRenderer
-from plasTeX.Renderers import mixin, unmix
+from plasTeX.Renderers import mixin, unmix, renderable_as_unicode
 from plasTeX.DOM import Node
 from plasTeX.Logging import getLogger
 from plasTeX.Filenames import Filenames
@@ -17,10 +17,17 @@ from . import interfaces
 
 logger = getLogger( __name__ )
 
-def createResourceRenderer(baserenderername, resourcedb):
+def createResourceRenderer(baserenderername, resourcedb, unmix=True):
 	"""
 	Returns a new plasTeX Renderer object that will use the given resource database
 	to locate images, vector images, and any uses of the ``resource`` property in templates.
+
+	:param bool unmix: Rendering depends on mixing in various properties to the plasTeX DOM
+		Node class so that all elements in the DOM have them, including the current renderer.
+		If this is True (the default) then the rendering process will clean up this mixing
+		before returning from :meth:`_ResourceRenderer.render`. If ``False``, then the mixins
+		will be left; this is suitable only for one-off, single process applications (the entire
+		mixing thing is suitable only for one-off processes.)
 
 	"""
 	# Load renderer
@@ -57,6 +64,8 @@ def createResourceRenderer(baserenderername, resourcedb):
 	renderer = factory()
 	renderer.renderableClass = Renderable
 	renderer.resourcedb = resourcedb
+	if not unmix:
+		renderer.unmix_after_render = unmix
 
 	return renderer
 
@@ -72,6 +81,8 @@ class _EnabledMockImager(object):
 	enabled = True
 
 class _ResourceRenderer(object):
+
+	unmix_after_render = True
 
 	def __init__( self, *args, **kwargs ):
 		super(_ResourceRenderer,self).__init__( *args, **kwargs )
@@ -133,13 +144,44 @@ class _ResourceRenderer(object):
 			rname = config['general']['renderer']
 			document.context.persist(pauxname, rname)
 		finally:
-			# Remove mixins
-			del document.renderer
-			unmix(Node, self.renderableClass)
+			if self.unmix_after_render:
+				# Remove mixins
+				del document.renderer
+				unmix(Node, self.renderableClass)
 
 
 
 class Renderable(BaseRenderable):
+
+	def __unicode__( self ):
+		"""
+		Like the superclass, but calls methods before and after rendering,
+		and caches the rendered value.
+		"""
+		# The mixin process won't overwrite these things if they already exist
+		cached_value = getattr( self, '_cached_unicode_tuple', (None,None) )
+		if cached_value[0] == self.renderer:
+			return cached_value[1]
+
+		self._before_render()
+		__traceback_info__ = self, type(self)
+		result = renderable_as_unicode( self )
+		after_result = self._after_render( result )
+		if after_result is not None:
+			result = after_result
+
+		setattr( self, '_cached_unicode_tuple', (self.renderer, result) )
+		return result
+
+	def _before_render(self):
+		pass
+	def _after_render( self, rendered_unicode ):
+		"""
+		If you return from this method, it should be the value to use instead of
+		`rendered_unicode`.
+		If you fail to return (or return None), then `rendered_unicode` will be the result.
+		"""
+		return rendered_unicode
 
 	@property
 	def image(self):

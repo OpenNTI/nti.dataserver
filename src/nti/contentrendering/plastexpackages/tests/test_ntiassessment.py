@@ -202,6 +202,7 @@ from nti.contentrendering.plastexpackages import interfaces
 from zope import component
 from zope import interface
 from nti.contentrendering import interfaces as cdr_interfaces
+from nti.contentrendering.resources import ResourceRenderer
 
 @interface.implementer(cdr_interfaces.IRenderedBook)
 class _MockRenderedBook(object):
@@ -274,6 +275,7 @@ class TestRenderableSymMathPart(unittest.TestCase):
 			dom  = ctx.dom
 			dom.getElementsByTagName( 'document' )[0].filenameoverride = 'index'
 			render = Renderer()
+			render.renderableClass = ResourceRenderer.Renderable
 			render.importDirectory( os.path.join( os.path.dirname(__file__), '..' ) )
 			render.render( dom )
 
@@ -287,6 +289,29 @@ class TestRenderableSymMathPart(unittest.TestCase):
 			jsons = open(os.path.join( ctx.docdir, 'assessment_index.json' ), 'rU' ).read()
 			obj = json.loads( jsons )
 
-			exp_value = {'Items': {'tag:nextthought.com,2011-10:testing-HTML-temp.0': {'filename': 'index.html', 'NTIID': 'tag:nextthought.com,2011-10:testing-HTML-temp.0', 'href': 'index.html', 'AssessmentItems': {}, 'Items': {'tag:nextthought.com,2011-10:testing-HTML-temp.chapter_one': {'filename': 'tag_nextthought_com_2011-10_testing-HTML-temp_chapter_one.html', 'NTIID': 'tag:nextthought.com,2011-10:testing-HTML-temp.chapter_one', 'href': 'tag_nextthought_com_2011-10_testing-HTML-temp_chapter_one.html', 'AssessmentItems': {}, 'Items': {'tag:nextthought.com,2011-10:testing-HTML-temp.section_one': {'NTIID': 'tag:nextthought.com,2011-10:testing-HTML-temp.section_one', 'href': 'tag_nextthought_com_2011-10_testing-HTML-temp_section_one.html', 'AssessmentItems': {'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.testquestion': {'content': 'Arbitrary content goes here.', 'NTIID': 'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.testquestion', 'parts': [{'content': 'Arbitrary content goes here.', 'explanation': '', 'solutions': [{'weight': 1.0, 'Class': 'LatexSymbolicMathSolution', 'value': 'Some solution'}], 'Class': 'SymbolicMathPart', 'hints': [{'Class': 'TextHint', 'value': 'Some hint'}]}], 'Class': 'Question'}}, 'filename': 'tag_nextthought_com_2011-10_testing-HTML-temp_section_one.html'}}}}}}, 'href': 'index.html', 'filename': 'index.html'}
+			exp_value = {'Items': {'tag:nextthought.com,2011-10:testing-HTML-temp.0': {'AssessmentItems': {},
+																					   'Items': {'tag:nextthought.com,2011-10:testing-HTML-temp.chapter_one': {'AssessmentItems': {},
+																					   'Items': {'tag:nextthought.com,2011-10:testing-HTML-temp.section_one': {'AssessmentItems': {'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.testquestion': {'Class': 'Question',
+																																																													 'NTIID': 'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.testquestion',
+			'content': '<a name="testquestion"></a> Arbitrary content goes here.',
+			'parts': [{'Class': 'SymbolicMathPart',
+			'content': 'Arbitrary content goes here.',
+			'explanation': '',
+			'hints': [{'Class': 'HTMLHint',
+			'value': '<a name="a1e8744a89e9bf4e115903c4322d92e1" ></a>\n<p class="par" id="a1e8744a89e9bf4e115903c4322d92e1">Some hint </p>'}],
+			'solutions': [{'Class': 'LatexSymbolicMathSolution',
+			'value': 'Some solution',
+			'weight': 1.0}]}]}},
+			'NTIID': 'tag:nextthought.com,2011-10:testing-HTML-temp.section_one',
+			'filename': 'tag_nextthought_com_2011-10_testing-HTML-temp_section_one.html',
+			'href': 'tag_nextthought_com_2011-10_testing-HTML-temp_section_one.html'}},
+			'NTIID': 'tag:nextthought.com,2011-10:testing-HTML-temp.chapter_one',
+			'filename': 'tag_nextthought_com_2011-10_testing-HTML-temp_chapter_one.html',
+			'href': 'tag_nextthought_com_2011-10_testing-HTML-temp_chapter_one.html'}},
+			'NTIID': 'tag:nextthought.com,2011-10:testing-HTML-temp.0',
+			'filename': 'index.html',
+			'href': 'index.html'}},
+			'filename': 'index.html',
+			'href': 'index.html'}
 
 			assert_that( obj, is_( exp_value ) )
