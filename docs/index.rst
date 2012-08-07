@@ -29,6 +29,7 @@ Contents:
 	content-resolving
 	content-glossaries
 	liking
+	flagging
 	contentfragments
 	passenger
 	dataserver-contenttypes
