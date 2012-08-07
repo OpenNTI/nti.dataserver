@@ -80,18 +80,6 @@ class PicklableMsg(persistent.Persistent):
 	LastModified = 1
 	sharedWith = ()
 
-def test_resolve_transcript_manually( ):
-
-	user = users.User( "sjohnson@nextthought.com" )
-	storage = chat_transcripts._UserTranscriptStorageAdapter( user )
-
-
-
-	assert_that( storage.add_message( PicklableMeet(), PicklableMsg() ), is_( chat_transcripts._MeetingTranscriptStorage ) )
-	# We have no IDataserver, so looking up by OID will fail and we'll have to
-	# use manual traversal
-	assert_that( component.queryUtility( nti_interfaces.IDataserver ), is_( none() ) )
-	assert_that( storage.transcript_for_meeting( PicklableMeet.ID ), is_( not_none() ) )
 
 
 

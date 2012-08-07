@@ -21,6 +21,10 @@ be accessible from that location, as is anything contained there.)
 Garbage Collection
 ===================
 
+.. note:: Much of the following information should be considered outdated, as
+   messages are now stored on the user, and always use intids.
+   See :mod:`nti.dataserver.meeting_storage`
+
 Currently, users are stored in a different database than Meeting and
 MessageInfo objects (which are together with sessions). If that
 database is packed and GC'd without using zc.zodbgc to do a multi-GC,
@@ -100,8 +104,6 @@ from zope import intid
 from zope.cachedescriptors.property import CachedProperty
 
 
-from nti.zodb.wref import CopyingWeakRef as _CopyingWeakRef # bwc for things in the database
-
 class _IMeetingTranscriptStorage(interface.Interface):
 	pass
 
@@ -115,7 +117,7 @@ class _AbstractMeetingTranscriptStorage(Persistent,datastructures.ZContainedMixi
 
 	def __init__( self, meeting ):
 		super(_AbstractMeetingTranscriptStorage,self).__init__()
-		self._meeting_ref = persistent.wref.WeakRef( meeting )
+		self._meeting_ref = persistent.wref.WeakRef( meeting ) # TODO: This should now be int-id based
 
 	@property
 	def meeting(self):
@@ -138,33 +140,16 @@ class _AbstractMeetingTranscriptStorage(Persistent,datastructures.ZContainedMixi
 	def values(self):
 		return self.itervalues()
 
-
-
+# The class _MeetingTranscriptStorage extended AbstractMeetingTranscriptStorage and
+# stored messages in an OOBTree as WeakRefs keyed by message ID. With the move
+# to user-based message storage, it should have gotten dropped and all instances left
+# in the old Sessions DB. Old migration code that happens to encounter them
+# will instead encounter these objects that are not iterable and will be ignored...they are just
+# enough skeletons to enable them to be deleted from the user...this is temporary
+# likewise for from nti.zodb.wref import CopyingWeakRef as _CopyingWeakRef # bwc for things in the database
 @interface.implementer(_IMeetingTranscriptStorage)
-class _MeetingTranscriptStorage(_AbstractMeetingTranscriptStorage):
-	"""
-	The storage for the transcript of a single session. Private object, not public.
-	"""
-
-	def __init__( self, meeting ):
-		super(_MeetingTranscriptStorage,self).__init__(meeting)
-		# To help avoid conflicts, messages
-		# are stored keyed by their ID.
-		# Getting an ordered list as thus an expensive
-		# process. We COULD save the ordered list
-		# after the room is closed, but right now rooms
-		# are very rarely closed
-		self.messages = BTrees.OOBTree.OOBTree()
-
-	def add_message( self, msg ):
-		"""
-		Stores the message in this transcript.
-		"""
-		self.messages[msg.ID] = persistent.wref.WeakRef( msg )
-
-	def itervalues(self):
-		return (msg() for msg in self.messages.itervalues())
-
+class _MeetingTranscriptStorage(Persistent,datastructures.ZContainedMixin):
+	pass
 
 @interface.implementer(_IMeetingTranscriptStorage)
 class _DocidMeetingTranscriptStorage(_AbstractMeetingTranscriptStorage):
@@ -284,10 +269,7 @@ class _UserTranscriptStorageAdapter(object):
 		storage_id = _transcript_ntiid( meeting, self._user.username )
 		storage = self._user.getContainedObject( meeting.containerId, storage_id )
 		if storage is None:
-			# For old tests and old databases that are not migrated yet
-			# we can make the switch at runtime
-			storage_factory = _DocidMeetingTranscriptStorage if component.queryUtility( intid.IIntIds ) is not None else _MeetingTranscriptStorage
-			storage = storage_factory( meeting )
+			storage = _DocidMeetingTranscriptStorage( meeting )
 			storage.id = storage_id
 			storage.containerId = meeting.containerId
 			storage.creator = self._user
