@@ -65,7 +65,7 @@ class _RepozeUserIndexManager(PersistentMapping, _SearchUserIndexManager):
 			result.update(fld.docids()) # use CatalogField.docids()
 		return result
 	
-	def _get_create_catalog(self, data, type_name=None, create=True):
+	def get_create_catalog(self, data, type_name=None, create=True):
 		type_name = normalize_type_name(type_name or get_type_name(data))
 		catalog = self.get_catalog(type_name)
 		if not catalog and create:
@@ -200,7 +200,7 @@ class _RepozeUserIndexManager(PersistentMapping, _SearchUserIndexManager):
 	def index_content(self, data, type_name=None, **kwargs):
 		if not data: return None
 		docid = self.get_uid(data)
-		catalog = self._get_create_catalog(data, type_name)
+		catalog = self.get_create_catalog(data, type_name)
 		if catalog:
 			catalog.index_doc(docid, data)
 		return docid
@@ -208,7 +208,7 @@ class _RepozeUserIndexManager(PersistentMapping, _SearchUserIndexManager):
 	def update_content(self, data, type_name=None, *args, **kwargs):
 		if not data: return None
 		docid = self.get_uid(data)
-		catalog = self._get_create_catalog(data, type_name)
+		catalog = self.get_create_catalog(data, type_name)
 		if catalog:
 			catalog.reindex_doc(docid, data)
 		return docid
@@ -216,7 +216,7 @@ class _RepozeUserIndexManager(PersistentMapping, _SearchUserIndexManager):
 	def delete_content(self, data, type_name=None, *args, **kwargs):
 		if not data: return None
 		docid = self.get_uid(data)
-		catalog = self._get_create_catalog(data, type_name, create=False)
+		catalog = self.get_create_catalog(data, type_name, create=False)
 		if catalog: 
 			catalog.unindex_doc(docid)
 		return docid

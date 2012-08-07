@@ -35,7 +35,7 @@ from nti.contentsearch.common import (text_, body_, selectedText_, replacementCo
 									  creator_fields, keyword_fields, last_modified_fields, sharedWith_, 
 									  container_id_fields, ntiid_fields, oid_fields, highlight_, note_,
 									  messageinfo_, redaction_, canvas_, canvastextshape_, references_,
-									  inReplyTo_, recipients_, channel_)
+									  inReplyTo_, recipients_, channel_, flattenedSharingTargetNames_)
 
 def get_content(text=None):
 	tokenizer = component.getUtility(IContentTokenizer)
@@ -109,7 +109,7 @@ class _AbstractIndexDataResolver(_BasicContentaResolver):
 		return list(result) if result else []
 	
 	def get_sharedWith(self):
-		data = _get_any_attr(self.obj, [sharedWith_])
+		data = _get_any_attr(self.obj, [flattenedSharingTargetNames_, sharedWith_])
 		return _process_words(data)
 	
 	def get_last_modified(self):
@@ -294,7 +294,7 @@ class _DictContentResolver(object):
 		return list(result) if result else []
 	
 	def get_sharedWith(self):
-		data = self.obj.get(sharedWith_, ())
+		data = self.obj.get(sharedWith_, ()) or self.obj.get(flattenedSharingTargetNames_, ())
 		return _process_words(data)
 	
 	def get_last_modified(self):

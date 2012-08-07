@@ -1,19 +1,15 @@
-#!/usr/bin/env python																	 
-# -*- coding: utf-8 -*-
-"""
-$Id$
-"""
 from __future__ import print_function, unicode_literals
+		
+import time 
+import datetime
+import unittest						  
 
-from repoze.catalog.catalog import FileStorageCatalogFactory							  
-from repoze.catalog.catalog import ConnectionManager									  
-import repoze.catalog.query as repquery
+from repoze.catalog import query as repquery
+
 from nti.contentsearch import _repoze_whoosh_convert
-import unittest
-import hamcrest																		   
-from hamcrest import assert_that, is_, none, any_of
+
+from hamcrest import assert_that, is_, any_of
 from hamcrest.core.base_matcher import BaseMatcher
-import time, datetime
 
 class isLikeMatcher(BaseMatcher):														
 	def __init__ (self, string):														   

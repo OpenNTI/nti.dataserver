@@ -68,6 +68,7 @@ collectionId_	= u'collectionId'
 last_modified_	= u'last_modified'
 replacementContent_ = u'replacementContent'
 redactionExplanation_ = u'redactionExplanation'
+flattenedSharingTargetNames_ = u'flattenedSharingTargetNames'
 
 ntiid_fields = [NTIID, ntiid_]
 creator_fields = [CREATOR, creator_]
