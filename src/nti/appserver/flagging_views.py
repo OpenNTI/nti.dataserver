@@ -101,4 +101,5 @@ def _UnFlagView(request):
 			  name='moderation_admin')
 def moderation_admin( request ):
 	# Seems chameleon/tal can't repeat on a generator/iterator?
+	# TODO: z3c.table
 	return list(component.getUtility( nti_interfaces.IGlobalFlagStorage ).iterflagged())
