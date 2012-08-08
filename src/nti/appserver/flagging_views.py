@@ -101,5 +101,44 @@ def _UnFlagView(request):
 			  name='moderation_admin')
 def moderation_admin( request ):
 	# Seems chameleon/tal can't repeat on a generator/iterator?
-	# TODO: z3c.table
-	return list(component.getUtility( nti_interfaces.IGlobalFlagStorage ).iterflagged())
+	the_table = ModerationAdminTable( component.getUtility( nti_interfaces.IGlobalFlagStorage ).iterflagged(),
+									  request )
+	the_table.update()
+
+	return the_table
+
+from z3c.table import column, table
+from zope.dublincore import interfaces as dc_interfaces
+from zope.proxy import ProxyBase
+
+
+class ModerationAdminTable(table.SequenceTable):
+	pass
+
+@component.adapter(None,None,ModerationAdminTable)
+class NoteBodyColumn(column.GetAttrColumn):
+
+	header = 'Content'
+	attrName = 'body'
+
+	def renderCell( self, item ):
+		content = super(NoteBodyColumn,self).renderCell( item )
+		return ''.join( content )
+
+def fake_dc_core_for_times( item ):
+	times = dc_interfaces.IDCTimes( item, None )
+	if times is None:
+		return item
+
+	times = ProxyBase( times )
+	interface.alsoProvides( times, dc_interfaces.IZopeDublinCore )
+	return times
+
+
+class CreatedColumn(column.CreatedColumn):
+	def renderCell(self, item):
+		return super(CreatedColumn,self).renderCell( fake_dc_core_for_times( item ) )
+
+class ModifiedColumn(column.ModifiedColumn):
+	def renderCell(self, item):
+		return super(ModifiedColumn,self).renderCell( fake_dc_core_for_times( item ) )

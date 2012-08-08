@@ -7,8 +7,6 @@
 		<title>Moderation Admin</title>
 	</head>
 	<body>
-		<ol>
-			<li tal:repeat="item options/here" tal:content="item/body" />
-		</ol>
+		<p tal:replace="structure python:options['here'].render()" />
 	</body>
 </html>

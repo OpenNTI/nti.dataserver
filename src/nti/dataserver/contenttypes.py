@@ -108,6 +108,7 @@ class ThreadableExternalizableMixin(ThreadableMixin):
 # TODO: These objects should probably implement IZContained (__name__,__parent__). Otherwise they
 # often wind up wrapped in container proxy objects, which is confusing. There may be
 # traversal implications to that though, that need to be considered. See also classes.py
+@interface.implementer(nti_interfaces.IModeledContent,IExternalObject)
 class _UserContentRoot(sharing.ShareableMixin, datastructures.ContainedMixin, datastructures.CreatedModDateTrackingObject, persistent.Persistent):
 	""" By default, if an update comes in with only new sharing information,
 	and we have been previously saved, then we do not clear our
@@ -118,7 +119,7 @@ class _UserContentRoot(sharing.ShareableMixin, datastructures.ContainedMixin, da
 
 	"""
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-	interface.implements(nti_interfaces.IModeledContent,IExternalObject)
+
 
 	canUpdateSharingOnly = True
 	__external_can_create__ = True

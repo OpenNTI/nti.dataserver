@@ -13,9 +13,11 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
+from zope.i18n.locales import locales
 
 from z3c.pt.pagetemplate import ViewPageTemplateFile
 
+from pyramid.i18n import get_locale_name
 from pyramid.interfaces import ITemplateRenderer
 from pyramid.decorator import reify
 from pyramid import renderers
@@ -60,6 +62,10 @@ class ZPTTemplateRenderer(object):
 			system['here'] = value
 			# See plasTeX/Renderers/__init__.py for comments about how 'self' is a problem
 		# Compatibility with the expected Request/Response values from Zope
-		system['request'].response.getHeader = lambda k: system['request'].response.headers[k]
+		request = system['request']
+		request.response.getHeader = lambda k: request.response.headers[k]
+		request.locale = locales.getLocale( *get_locale_name( request ).split( '-' ) )
+
 		result = self.template.bind( system['view'] )( **system )
+
 		return result
