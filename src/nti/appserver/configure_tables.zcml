@@ -1,0 +1,30 @@
+<!-- -*- mode: nxml -*- -->
+<configure
+	xmlns="http://namespaces.zope.org/zope"
+	xmlns:zcml="http://namespaces.zope.org/zcml">
+	<include package="zope.component" />
+	<include package="z3c.table" />
+
+	<adapter factory=".flagging_views.NoteBodyColumn"
+			 provides="z3c.table.interfaces.IColumn" />
+
+	<adapter factory=".flagging_views.CreatedColumn"
+			 provides="z3c.table.interfaces.IColumn"
+			 for="* * .flagging_views.ModerationAdminTable"
+			 name="note-created"/>
+
+	<adapter factory=".flagging_views.ModifiedColumn"
+			 provides="z3c.table.interfaces.IColumn"
+			 for="* * .flagging_views.ModerationAdminTable"
+			 name="note-modified" />
+
+
+	<class class="pyramid.request.Request">
+		<implements
+			interface="zope.publisher.interfaces.browser.IBrowserRequest"
+			/>
+	</class>
+
+
+
+</configure>
