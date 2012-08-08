@@ -29,7 +29,7 @@ from nti.contentsearch.common import (NTIID, LAST_MODIFIED, ITEMS, HIT_COUNT, SU
 import logging
 logger = logging.getLogger( __name__ )
 
-@component.adapter(nti_interfaces.IUser)
+@component.adapter(nti_interfaces.IEntity)
 class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 	interface.implements(search_interfaces.IRepozeEntityIndexManager, IFullMapping)
 	
