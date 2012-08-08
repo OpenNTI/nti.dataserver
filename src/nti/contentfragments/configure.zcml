@@ -64,4 +64,9 @@
 	<adapter factory=".html._sanitized_html_to_text" />
 
 
+	<!-- Censoring -->
+	<!-- Defaults -->
+	<utility factory=".censor.DefaultTrivialProfanityScanner" />
+	<utility factory=".censor.SimpleReplacementCensoredContentStrategy" />
+
 </configure>
