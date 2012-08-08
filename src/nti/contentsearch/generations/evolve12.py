@@ -76,6 +76,7 @@ def evolve(context):
 	users = context.connection.root()['nti.dataserver']['users']
 	
 	ds_intid = lsm.getUtility( provided=zope.intid.IIntIds )
+	component.provideUtility(ds_intid)
 	for user in users.values():
 		_reindex(user, users, ds_intid)
 		
