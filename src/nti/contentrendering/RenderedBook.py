@@ -464,7 +464,7 @@ class _EclipseTOCMiniDomTopic(object):
 		"""
 		Set the NTIID for the specifed topic if one is not already present.
 		"""
-		if self.topic.attributes.get( 'ntiid' ): # 'in' doesn't work with this dict-like thing
+		if self.topic.attributes.get( b'ntiid' ): # 'in' doesn't work with this dict-like thing
 			# No need to read from the file if it was already present.
 			#logger.info( "Not setting ntiid because %s trumps %s", self.topic.attributes['ntiid'].value, self.read_ntiid() )
 			return False
@@ -472,7 +472,7 @@ class _EclipseTOCMiniDomTopic(object):
 		ntiid = self.read_ntiid()
 		if ntiid:
 			self.topic.attributes[b"ntiid"] = ntiid
-			self._pageInfo['ntiid'] = ntiid
+			self._pageInfo[b'ntiid'] = ntiid
 			self.modifiedTopic = True
 
 		return self.modifiedTopic
@@ -488,7 +488,7 @@ class _EclipseTOCMiniDomTopic(object):
 			return None
 
 	def get_title( self ):
-		return self.dom("title").text()
+		return self.dom(b"title").text()
 
 	def get_topic_filename( self ):
 		if self.topic.attributes and self.topic.attributes.get(b'href'):
@@ -538,7 +538,7 @@ class _EclipseTOCMiniDomTopic(object):
 		return True
 
 	def has_icon( self ):
-		return (self.topic.attributes and self.topic.attributes.get('icon'))
+		return (self.topic.attributes and self.topic.attributes.get(b'icon'))
 
 	def set_icon( self, icon ):
 		self.topic.attributes[b'icon'] = urllib.quote( icon )
@@ -546,7 +546,7 @@ class _EclipseTOCMiniDomTopic(object):
 		return self.modifiedTopic
 
 	def set_label( self, label ):
-		self.topic.attributes['label'] = label
+		self.topic.attributes[b'label'] = label
 		self.modifiedTopic = True
 		return self.modifiedTopic
 
