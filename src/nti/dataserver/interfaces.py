@@ -8,7 +8,7 @@ import itertools
 from zope import interface, schema
 from zope.deprecation import deprecated, deprecate
 from zope.mimetype.interfaces import IContentTypeAware, IContentType
-from zope.annotation.interfaces import IAnnotatable
+from zope.annotation.interfaces import IAnnotatable, IAttributeAnnotatable
 
 from zope.container.interfaces import IContainer as IZContainer
 from zope.container.interfaces import IContainerNamesContainer as IZContainerNamesContainer
@@ -312,7 +312,7 @@ class IGroupMember(interface.Interface):
 IGroupAwarePrincipal.__bases__ = tuple( itertools.chain( IGroupAwarePrincipal.__bases__,
 														 (IGroupMember,) ))
 
-class IEntity(IZContained):
+class IEntity(IZContained, IAttributeAnnotatable):
 	username = schema.TextLine( title=u'The username' )
 
 class IUser(IEntity,IContainerIterable):
