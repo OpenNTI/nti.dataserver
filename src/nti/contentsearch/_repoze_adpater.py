@@ -10,7 +10,7 @@ from persistent.mapping import PersistentMapping
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch._search_indexmanager import _SearchUserIndexManager
+from nti.contentsearch._search_indexmanager import _SearchEntityIndexManager
 
 from nti.contentsearch import QueryObject
 from nti.contentsearch import SearchCallWrapper
@@ -30,8 +30,8 @@ import logging
 logger = logging.getLogger( __name__ )
 
 @component.adapter(nti_interfaces.IUser)
-class _RepozeUserIndexManager(PersistentMapping, _SearchUserIndexManager):
-	interface.implements(search_interfaces.IRepozeUserIndexManager, IFullMapping)
+class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
+	interface.implements(search_interfaces.IRepozeEntityIndexManager, IFullMapping)
 	
 	def __init__(self):
 		PersistentMapping.__init__(self)
@@ -230,6 +230,6 @@ class _RepozeUserIndexManager(PersistentMapping, _SearchUserIndexManager):
 	def has_stored_indices(self):
 		return len(self.get_catalog_names()) > 0
 	
-def _RepozeUserIndexManagerFactory(user):
-	result = an_factory(_RepozeUserIndexManager)(user)
+def _RepozeEntityIndexManagerFactory(user):
+	result = an_factory(_RepozeEntityIndexManager)(user)
 	return result

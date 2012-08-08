@@ -36,7 +36,7 @@ def _reindex(user, users, ds_intid, ignore_errors=False):
 	logger.debug('Reindexing object(s) for user %s' % username)
 	
 	counter = 0
-	rim = search_interfaces.IRepozeUserIndexManager(user, None)
+	rim = search_interfaces.IRepozeEntityIndexManager(user, None)
 	for obj in findObjectsProviding( user, nti_interfaces.IModeledContent):
 		
 		# ignore friends lists
@@ -49,8 +49,9 @@ def _reindex(user, users, ds_intid, ignore_errors=False):
 				for uname in get_sharedWith(obj):
 					sharing_user = users.get(uname, None)
 					if sharing_user and uname != username: 
-						srim = search_interfaces.IRepozeUserIndexManager(sharing_user, None)
-						_index(srim, obj, ds_intid)
+						srim = search_interfaces.IRepozeEntityIndexManager(sharing_user, None)
+						if srim:
+							_index(srim, obj, ds_intid)
 		except POSKeyError:
 			pass # broken reference for object
 		except Exception:
@@ -75,7 +76,6 @@ def evolve(context):
 	users = context.connection.root()['nti.dataserver']['users']
 	
 	ds_intid = lsm.getUtility( provided=zope.intid.IIntIds )
-	
 	for user in users.values():
 		_reindex(user, users, ds_intid)
 		

@@ -116,7 +116,7 @@ class IUserIndexManager(ISearcher):
 		:param type_name: index type
 		"""
 	
-class IRepozeUserIndexManager(IUserIndexManager):
+class IRepozeEntityIndexManager(IUserIndexManager):
 	pass
 
 class IUserIndexManagerFactory(interface.Interface):
