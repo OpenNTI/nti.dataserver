@@ -68,7 +68,7 @@ setup(
 		# In theory this should make it possible to get
 		# the svn revision number from svn 1.7. Doesn't seem
 		# to work (with distribute?)
-		#'setuptools_subversion >= 2.0'
+		#'setuptools_subversion >= 2.1'
 	],
 	install_requires = [
 		 # Zope Acquisition; used by contentratings implicitly
@@ -173,6 +173,7 @@ setup(
 		'z3c.bcrypt >= 1.1',
 		'z3c.coverage >= 1.2.0', # TODO: Do we need this?
 		'z3c.pt >= 2.2.3', # Better ZPT support than plastex, add-in to Chameleon
+		'z3c.table >= 0.9.1', # Flexible table rendering
 		'zc.dict >= 1.3b1', # BTree based dicts that are subclassable
 		'zc.intid >= 1.0.1',
 		'zc.queue >= 1.3',
@@ -231,6 +232,7 @@ setup(
 		],
 	extras_require = {
 		'test': [
+			'nose >= 1.1.2',
 			'zope.testing >= 4.1.1',
 			'zc.buildout',
 			'nose-progressive',
@@ -247,9 +249,10 @@ setup(
 			'pylint >= 0.25.2',
 			'zodbupdate >= 0.5',
 			'zodbbrowser >= 0.10.0',
-			'sphinx >= 1.1.3',
+			'sphinx >= 1.1.3', # Narrative docs
 			'sphinxtheme.readability >= 0.0.5',
 			'repoze.sphinx.autointerface >= 0.7.0',
+			'epydoc >= 3.0.1', # auto-api docs
 			'rope >= 0.9.4', # refactoring library. c.f. ropemacs
 			'ropemode >= 0.2' # IDE helper for rope
 			]
