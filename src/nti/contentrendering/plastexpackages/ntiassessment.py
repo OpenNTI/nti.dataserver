@@ -371,7 +371,7 @@ class naqmatchingpart(_AbstractNAQPart):
 		solutions = []
 		solution_els = self.getElementsByTagName( 'naqsolution' )
 		for solution_el in solution_els:
-			solution = self.soln_interface( solution_el.getAttribute("answer") )
+			solution = self.soln_interface( solution_el.answer )
 			weight = solution_el.attributes['weight']
 			if weight is not None:
 				solution.weight = weight
@@ -407,7 +407,7 @@ class naqmatchingpart(_AbstractNAQPart):
 		_naqsoln.attributes['weight'] = 1.0
 		# Also put the attribute into the argument source, for presentation
 		_naqsoln.argSource = '[%s]' % _naqsoln.attributes['weight']
-		_naqsoln.setAttribute('answer',answer)
+		_naqsoln.answer = answer
 		_naqsolns.appendChild( _naqsoln )
 		self.insertAfter( _naqsolns, _naqmvalues)
 		return res
