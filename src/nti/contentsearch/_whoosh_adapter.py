@@ -5,12 +5,15 @@ import random
 from hashlib import md5
 
 from zope import interface
+from zope import component
 from zope.annotation import factory as an_factory
 from zope.interface.common.mapping import IFullMapping
 
 from persistent.mapping import PersistentMapping
 
 from whoosh.store import LockError
+
+from nti.dataserver import interfaces as nti_interfaces
 
 from nti.contentsearch import LFUMap
 from nti.contentsearch import QueryObject
@@ -33,6 +36,27 @@ from nti.contentsearch._search_indexmanager import _SearchEntityIndexManager
 import logging
 logger = logging.getLogger( __name__ )
 	
+max_segments = 10
+merge_first_segments = 5
+
+def segment_merge(writer, segments):
+		
+	from whoosh.filedb.filereading import SegmentReader
+	if len(segments) <= max_segments:
+		return segments
+	
+	newsegments = []
+	sorted_segment_list = sorted(segments, key=lambda s: s.doc_count_all())
+
+	for i, s in enumerate(sorted_segment_list):
+		if i < merge_first_segments:
+			reader = SegmentReader(writer.storage, writer.schema, s)
+			writer.add_reader(reader)
+			reader.close()
+		else:
+			newsegments.append(s)
+	return newsegments
+
 def get_indexname(username, type_name, use_md5=True):
 	type_name = normalize_type_name(type_name)
 	if use_md5:
@@ -58,11 +82,15 @@ def has_stored_indices(username, storage, use_md5=True):
 	names = get_stored_indices(username, storage, use_md5)
 	return True if names else False
 	
+@component.adapter(nti_interfaces.IEntity)
 class WhooshUserIndexManager(PersistentMapping, _SearchEntityIndexManager):
 	interface.implements(search_interfaces.IRepozeEntityIndexManager, IFullMapping)
 
-	# -------------------
-
+	# limitmb: http://packages.python.org/Whoosh/batch.html
+	default_ctor_args = {'limitmb':96}
+	
+	default_commit_args = {'merge':False, 'optimize':False, 'mergetype':segment_merge}
+	
 	@property
 	def username(self):
 		return self.__parent__.username
@@ -73,11 +101,11 @@ class WhooshUserIndexManager(PersistentMapping, _SearchEntityIndexManager):
 		
 	@property
 	def writer_ctor_args(self):
-		return self.storage.ctor_args(username=self.username)
+		return self.default_ctor_args
 
 	@property
 	def writer_commit_args(self):
-		return self.storage.commit_args(username=self.username)
+		return self.default_commit_args
 		
 	# -------------------
 	
