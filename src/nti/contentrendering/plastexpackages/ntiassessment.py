@@ -367,13 +367,23 @@ class naqmatchingpart(_AbstractNAQPart):
 		return { 'labels': self._asm_labels(),
 				 'values': self._asm_values() }
 
+	def _asm_solutions(self):
+		solutions = []
+		solution_els = self.getElementsByTagName( 'naqsolution' )
+		for solution_el in solution_els:
+			solution = self.soln_interface( solution_el.getAttribute("answer") )
+			weight = solution_el.attributes['weight']
+			if weight is not None:
+				solution.weight = weight
+			solutions.append( solution )
+
+		return solutions
+
 	def digest( self, tokens ):
 		res = super(naqmatchingpart,self).digest( tokens )
-		return res
-
-	def _asm_solutions(self):
-		# Validate the document structure: we have a naqchoices child with
-		# at least two of its own children, and at least one weight == 1. There is no explicit solution
+		# Validate the document structure: we have a naqlabels child with
+		# at least two of its own children, an naqvalues child of equal length
+		# and a proper matching between the two
 		_naqmlabels = self.getElementsByTagName( 'naqmlabels' )
 		assert len(_naqmlabels) == 1
 		_naqmlabels = _naqmlabels[0]
@@ -388,12 +398,19 @@ class naqmatchingpart(_AbstractNAQPart):
 		assert len(self.getElementsByTagName( 'naqsolutions' )) == 0
 
 		# Tranform the implicit solutions into an array
+		_naqsolns = self.ownerDocument.createElement( 'naqsolutions' )
+		_naqsolns.macroMode = _naqsolns.MODE_BEGIN
 		answer = {}
 		for i, _naqmlabel in enumerate(_naqmlabels):
 			answer[i] = _naqmlabel.attributes['answer']
-		solution = self.soln_interface( answer )
-		solution.weight = 1.0
-		return [solution]
+		_naqsoln = self.ownerDocument.createElement( 'naqsolution' )
+		_naqsoln.attributes['weight'] = 1.0
+		# Also put the attribute into the argument source, for presentation
+		_naqsoln.argSource = '[%s]' % _naqsoln.attributes['weight']
+		_naqsoln.setAttribute('answer',answer)
+		_naqsolns.appendChild( _naqsoln )
+		self.insertAfter( _naqsolns, _naqmvalues)
+		return res
 
 class naqchoices(Base.List):
 	pass
