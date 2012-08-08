@@ -12,7 +12,7 @@ from nti.contentsearch import interfaces
 import logging
 logger = logging.getLogger( __name__ )
 
-class _SearchUserIndexManager(object):
+class _SearchEntityIndexManager(object):
 	interface.implements(interfaces.IUserIndexManager, ILocation)
 	
 	def get_uid(self, obj):

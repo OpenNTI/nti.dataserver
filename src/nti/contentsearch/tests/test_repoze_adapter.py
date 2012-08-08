@@ -46,7 +46,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 	def _index_notes(self, dataserver=None, usr=None, conn=None, do_assert=True):
 		docids = []
 		notes, usr = self._add_notes(usr=usr, conn=conn)
-		rim = search_interfaces.IRepozeUserIndexManager(usr, None)
+		rim = search_interfaces.IRepozeEntityIndexManager(usr, None)
 		for note in notes:
 			docid = rim.index_content(note)
 			if do_assert:
@@ -62,21 +62,21 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_empty(self):
 		usr = User.create_user( mock_dataserver.current_mock_ds, username='nt@nti.com', password='temp' )
-		rim = search_interfaces.IRepozeUserIndexManager(usr, None)
+		rim = search_interfaces.IRepozeEntityIndexManager(usr, None)
 		assert_that(rim.get_stored_indices(), is_([]))
 		assert_that(rim.has_stored_indices(), is_(False))
 
 	@WithMockDSTrans
 	def test_index_notes(self):
 		usr, _, _, = self._index_notes()
-		rim = search_interfaces.IRepozeUserIndexManager(usr, None)
+		rim = search_interfaces.IRepozeEntityIndexManager(usr, None)
 		assert_that(rim.get_stored_indices(), is_([u'note']))
 		assert_that(rim.has_stored_indices(), is_(True))
 
 	@WithMockDSTrans
 	def test_delete_catalog(self):
 		usr, _, _, = self._index_notes()
-		rim = search_interfaces.IRepozeUserIndexManager(usr, None)
+		rim = search_interfaces.IRepozeEntityIndexManager(usr, None)
 		assert_that(rim.get_stored_indices(), is_([u'note']))
 		rim.remove_index('note')
 		assert_that(rim.get_stored_indices(), is_([]))
@@ -84,7 +84,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_query_notes(self):
 		usr, _, _ = self._add_user_index_notes()
-		rim = search_interfaces.IRepozeUserIndexManager(usr, None)
+		rim = search_interfaces.IRepozeEntityIndexManager(usr, None)
 		
 		hits = rim.search("shield", limit=None)
 		assert_that(hits, has_entry(HIT_COUNT, 1))
@@ -115,7 +115,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_update_note(self):
 		usr, _, notes = self._add_user_index_notes()
-		rim = search_interfaces.IRepozeUserIndexManager(usr, None)
+		rim = search_interfaces.IRepozeEntityIndexManager(usr, None)
 		note = notes[5]
 		note.body = [u'Blow It Away']
 		rim.update_content(note)
@@ -131,7 +131,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_delete_note(self):
 		usr, _, notes = self._add_user_index_notes()
-		rim = search_interfaces.IRepozeUserIndexManager(usr, None)
+		rim = search_interfaces.IRepozeEntityIndexManager(usr, None)
 		
 		note = notes[5]
 		rim.delete_content(note)
@@ -143,7 +143,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_suggest(self):
 		usr, _, _ = self._add_user_index_notes()
-		rim = search_interfaces.IRepozeUserIndexManager(usr, None)
+		rim = search_interfaces.IRepozeEntityIndexManager(usr, None)
 		
 		hits = rim.suggest("ra")
 		assert_that(hits, has_entry(HIT_COUNT, 4))
@@ -160,7 +160,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_ngram_search(self):
 		usr, _, _ = self._add_user_index_notes()
-		rim = search_interfaces.IRepozeUserIndexManager(usr, None)
+		rim = search_interfaces.IRepozeEntityIndexManager(usr, None)
 		
 		hits = rim.ngram_search("sea")
 		assert_that(hits, has_entry(HIT_COUNT, 1))
@@ -185,7 +185,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		for x in range(2):
 			with mock_dataserver.mock_db_trans( ds ):
 				usr = users[x]
-				rim = search_interfaces.IRepozeUserIndexManager(usr, None)
+				rim = search_interfaces.IRepozeEntityIndexManager(usr, None)
 				rims.append(rim)
 				rim.index_content(note)
 
@@ -206,7 +206,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		redaction.containerId = make_ntiid(nttype='bleach', specific='manga')
 		redaction = user.addContainedObject( redaction )
 		
-		rim = search_interfaces.IRepozeUserIndexManager(user, None)
+		rim = search_interfaces.IRepozeEntityIndexManager(user, None)
 		docid = rim.index_content(redaction)
 		assert_that(docid, is_not(None))
 		

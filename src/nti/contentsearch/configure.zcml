@@ -12,9 +12,9 @@
 		
 	<!-- Index managers -->
 		
-	<adapter factory="._repoze_adpater._RepozeUserIndexManagerFactory"
-			 for="nti.dataserver.interfaces.IUser"
-			 provides=".interfaces.IRepozeUserIndexManager" />
+	<adapter factory="._repoze_adpater._RepozeEntityIndexManagerFactory"
+			 for="nti.dataserver.interfaces.IEntity"
+			 provides=".interfaces.IRepozeEntityIndexManager" />
 			 
 	<!-- Externalization -->
 
