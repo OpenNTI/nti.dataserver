@@ -85,15 +85,26 @@ class IHTMLContentFragment(IUnicodeContentFragment, mime_types.IContentTypeTextH
 # copies as possible
 ###
 
-@interface.implementer(IHTMLContentFragment)
-class HTMLContentFragment(UnicodeContentFragment):
-	def __add__( self, other ):
-		result = unicode.__add__( self, other )
-		if IHTMLContentFragment.providedBy( other ):
-			result = HTMLContentFragment( result )
-		# TODO: What about the rules for the other types?
-		return result
+def _add_( self, other, tuples ):
+	result = unicode.__add__( self, other )
+	for pair in tuples:
+		if pair[0].providedBy( other ):
+			result = pair[1]( result )
+			break
+	return result
 
+class _AddMixin(object):
+	_add_rules = ()
+
+	def __add__( self, other ):
+		return _add_( self, other, self._add_rules )
+
+
+@interface.implementer(IHTMLContentFragment)
+class HTMLContentFragment(_AddMixin,UnicodeContentFragment):
+	pass
+
+HTMLContentFragment._add_rules =  ((IHTMLContentFragment, HTMLContentFragment),)
 
 
 class ISanitizedHTMLContentFragment(IHTMLContentFragment):
@@ -107,15 +118,11 @@ class ISanitizedHTMLContentFragment(IHTMLContentFragment):
 
 @interface.implementer(ISanitizedHTMLContentFragment)
 class SanitizedHTMLContentFragment(HTMLContentFragment):
+	pass
 
-	def __add__( self, other ):
-		result = unicode.__add__( self, other )
-		if ISanitizedHTMLContentFragment.providedBy( other ):
-			result = SanitizedHTMLContentFragment( result )
-		elif IHTMLContentFragment.providedBy( other ):
-			result = HTMLContentFragment( result )
-		# TODO: What about the rules for the other types?
-		return result
+# TODO: What about the rules for the other types?
+SanitizedHTMLContentFragment._add_rules = ( (ISanitizedHTMLContentFragment, SanitizedHTMLContentFragment), ) + HTMLContentFragment._add_rules
+
 
 class IPlainTextContentFragment(IUnicodeContentFragment,mime_types.IContentTypeTextPlain):
 	"""
@@ -141,6 +148,90 @@ class ICensoredUnicodeContentFragment(IUnicodeContentFragment):
 	between your Human Sexuality textbook and your Calculus textbook.
 
 	For this reason, the censoring process will typically utilize
-	multi-adapters registered on (user, content_unit). Contrast this with
+	multi-adapters registered on (creator, content_unit). Contrast this with
 	sanitizing HTML, which always follows the same process.
 	"""
+
+class CensoredUnicodeContentFragment(_AddMixin,UnicodeContentFragment):
+	pass
+
+CensoredUnicodeContentFragment._add_rules = ((ICensoredUnicodeContentFragment,CensoredUnicodeContentFragment),
+											 (IUnicodeContentFragment,UnicodeContentFragment))
+
+class ICensoredHTMLContentFragment(IHTMLContentFragment,ICensoredUnicodeContentFragment):
+	pass
+
+@interface.implementer(ICensoredHTMLContentFragment)
+class CensoredHTMLContentFragment(HTMLContentFragment):
+	pass
+
+CensoredHTMLContentFragment._add_rules = ((ICensoredHTMLContentFragment,CensoredHTMLContentFragment),) + CensoredUnicodeContentFragment._add_rules
+CensoredHTMLContentFragment.censored = lambda s, n: CensoredHTMLContentFragment( n )
+
+class ICensoredSanitizedHTMLContentFragment(ISanitizedHTMLContentFragment,ICensoredHTMLContentFragment):
+	pass
+
+@interface.implementer(ICensoredSanitizedHTMLContentFragment)
+class CensoredSanitizedHTMLContentFragment(CensoredHTMLContentFragment):
+	pass
+
+# The rules here place sanitization ahead of censoring, because sanitization
+# can cause security problems for end users; censoring is just offensive
+CensoredSanitizedHTMLContentFragment._add_rules = ( ((ICensoredSanitizedHTMLContentFragment,CensoredSanitizedHTMLContentFragment),
+													 (ISanitizedHTMLContentFragment,SanitizedHTMLContentFragment),)
+													 + CensoredHTMLContentFragment._add_rules
+													 + HTMLContentFragment._add_rules )
+
+UnicodeContentFragment.censored = lambda s, n: CensoredUnicodeContentFragment( n )
+HTMLContentFragment.censored = lambda s, n: CensoredHTMLContentFragment( n )
+SanitizedHTMLContentFragment.censored = lambda s, n: CensoredSanitizedHTMLContentFragment( n )
+CensoredSanitizedHTMLContentFragment.censored = lambda s, n: CensoredSanitizedHTMLContentFragment( n )
+
+# See http://code.google.com/p/py-contentfilter/
+# and https://hkn.eecs.berkeley.edu/~dyoo/python/ahocorasick/
+
+class ICensoredContentScanner(interface.Interface):
+	"""
+	Something that can perform censoring.
+
+	Variations of censoring scanners will be registered
+	as named utilities. Particular censoring solutions (the adapters discussed
+	in :class:`ICensoredUnicodeContentFragment`) will put together
+	a combination of these utilities to produce the desired result.
+
+	The censoring process can further be broken down into two parts:
+	detection of unwanted content, and reacting to unwanted content. For example,
+	reacting might consist of replacing the content with asterisks in plain text,
+	or a special span in HTML, or it might throw an exception to disallow the content
+	altogether. This object performs the first part.
+
+	The names may be something like MPAA ratings, or they may follow other categories.
+
+	"""
+
+	def scan( content_fragment ):
+		"""
+		Scan the given content fragment for censored terms and return
+		their positions as a sequence (iterator) of two-tuples (start,
+		end). The returned tuples should be non-overlapping.
+		"""
+
+class ICensoredContentStrategy(interface.Interface):
+	"""
+	The other half of the content censoring process explained in
+	:class:`ICensoredContentScanner`, responsible for taking action
+	on censoring content.
+	"""
+
+	def censor( content_fragment, censored_ranges ):
+		"""
+		Censors the content fragment appropriately and returns the censored value.
+		:param content_fragment: The fragment being censored.
+		:param censored_ranges: The ranges of illicit content as produced by
+			:meth:`ICensoredContentScanner.scan`; they are not guaranteed to be in any
+			particular order so you may need to sort them with :func:`sorted` (in reverse)
+		:return: The censored content fragment, if any censoring was done to it.
+			May also raise a :class:`ValueError` if censoring is not
+			allowed and the content should be thrown away.
+
+		"""
