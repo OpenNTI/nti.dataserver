@@ -223,10 +223,13 @@ class IQMatchingPart(IQPart):
 
 	labels = schema.List( title="The list of labels",
 						  min_length=2,
-						  value_type=_ContentFragmentTextLine( title="A label-column value" ) )
-	values = schema.List( title="The list of labels",
+						  value_type=_ContentFragment( title="A label-column value" ) )
+	values = schema.List( title="The list of values",
 						  min_length=2,
-						  value_type=_ContentFragmentTextLine( title="A value-column value" ) )
+						  value_type=_ContentFragment( title="A value-column value" ) )
+	solutions = TypedIterable( title="The matching solution",
+							   min_length=1,
+							   value_type=dmschema.Object( IQMatchingSolution, title="Matching solution" ) )
 
 class IQMatchingPartGrader(IQPartGrader):
 	"""

@@ -94,6 +94,8 @@ class QLatexSymbolicMathSolution(_TrivialValuedMixin,QSymbolicMathSolution):
 @interface.implementer(interfaces.IQMatchingSolution)
 class QMatchingSolution(_TrivialValuedMixin,QSolution):
 
+	_part_type = parts.QMatchingPart
+
 	__eq__ = _eq_
 	__ne__ = _ne_
 

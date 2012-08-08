@@ -38,6 +38,11 @@
 	<adapter factory="int .solution.QMultipleChoiceSolution"
 			 provides=".interfaces.IQMultipleChoiceSolution"
 			 for="basestring"/>
+
+	<adapter factory="dict .solution.QMatchingSolution"
+			 provides=".interfaces.IQMatchingSolution"
+			 for="dict"/>
+
 	<adapter factory=".solution.QFreeResponseSolution"
 			 provides=".interfaces.IQFreeResponseSolution"
 			 for="basestring"/>

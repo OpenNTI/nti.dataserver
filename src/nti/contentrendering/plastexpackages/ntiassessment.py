@@ -53,6 +53,7 @@ import os
 import itertools
 import simplejson as json
 import codecs
+import ast
 
 from . import interfaces
 
@@ -233,7 +234,9 @@ class _AbstractNAQPart(_LocalContentMixin,Base.Environment):
 		for x in itertools.chain( self.getElementsByTagName( 'naqsolexplanation' ),
 								  self.getElementsByTagName( 'naqsolution' ),
 								  self.getElementsByTagName( 'naqhint' ),
-								  self.getElementsByTagName( 'naqchoice' ) ):
+								  self.getElementsByTagName( 'naqchoice' ),
+								  self.getElementsByTagName( 'naqmlabel' ),
+								  self.getElementsByTagName( 'naqmvalue' ) ):
 			unicode(x)
 
 
@@ -321,16 +324,118 @@ class naqmultiplechoicepart(_AbstractNAQPart):
 		self.insertAfter( _naqsolns, _naqchoices )
 		return res
 
+class naqmatchingpart(_AbstractNAQPart):
+	"""
+	A matching part (usually used as the sole part to a question).
+	It must have two children, one listing the possible labels, with the
+	correct solution's index in brackets, and the other listing the possible
+	values::
+
+		\begin{naquestion}
+			Arbitrary prefix content goes here.
+			\begin{naqmatchingpart}
+			   Arbitrary content for this part goes here.
+			   \begin{naqmlabels}
+			   		\naqmlabel[2] What is three times two?
+					\naqmlabel[0] What is four times three?
+					\naqmlabel[1] What is five times two thousand?
+				\end{naqmlabels}
+				\begin{naqmchoices}
+					\naqmchoice Twelve
+					\naqmchoice Ten thousand
+					\naqmchoice Six
+				\end{naqmchoices}
+				\begin{naqsolexplanation}
+					Arbitrary content explaining how the correct solution is arrived at.
+				\end{naqsolexplanation}
+			\end{naqmatchingpart}
+		\end{naquestion}
+	"""
+
+	part_interface = as_interfaces.IQMatchingPart
+	part_factory = parts.QMatchingPart
+	soln_interface = as_interfaces.IQMatchingSolution
+
+	#forcePars = True
+
+	def _asm_labels(self):
+		return [x._asm_local_content for x in self.getElementsByTagName( 'naqmlabel' )]
+
+	def _asm_values(self):
+		return [x._asm_local_content for x in self.getElementsByTagName( 'naqmvalue' )]
+
+	def _asm_object_kwargs(self):
+		return { 'labels': self._asm_labels(),
+				 'values': self._asm_values() }
+
+	def _asm_solutions(self):
+		solutions = []
+		solution_els = self.getElementsByTagName( 'naqsolution' )
+		for solution_el in solution_els:
+			content = ' '.join([c.source.strip() for c in solution_el.childNodes]).strip()
+			solution = self.soln_interface( ast.literal_eval(content) )
+			weight = solution_el.attributes['weight']
+			if weight is not None:
+				solution.weight = weight
+			solutions.append( solution )
+
+		return solutions
+
+	def digest( self, tokens ):
+		res = super(naqmatchingpart,self).digest( tokens )
+		# Validate the document structure: we have a naqchoices child with
+		# at least two of its own children, and at least one weight == 1. There is no explicit solution
+		_naqmlabels = self.getElementsByTagName( 'naqmlabels' )
+		assert len(_naqmlabels) == 1
+		_naqmlabels = _naqmlabels[0]
+		assert len(_naqmlabels) > 1, "Must have more than one label; instead got: " + str([x for x in _naqmlabels])
+		_naqmvalues = self.getElementsByTagName( 'naqmvalues' )
+		assert len(_naqmvalues) == 1
+		_naqmvalues = _naqmvalues[0]
+		assert len(_naqmvalues) == len(_naqmlabels), "Must have exactly one value per label"
+
+		for i in range(len(_naqmlabels)):
+			assert any( (_naqmlabel.attributes['answer'] == i for _naqmlabel in _naqmlabels) )
+		assert len(self.getElementsByTagName( 'naqsolutions' )) == 0
+
+		# Tranform the implicit solutions into an array
+		_naqsolns = self.ownerDocument.createElement( 'naqsolutions' )
+		_naqsolns.macroMode = _naqsolns.MODE_BEGIN
+		answer = {}
+		for i, _naqmlabel in enumerate(_naqmlabels):
+			answer[i] = _naqmlabel.attributes['answer']
+		_naqsoln = self.ownerDocument.createElement( 'naqsolution' )
+		_naqsoln.attributes['weight'] = 1.0
+		# Also put the attribute into the argument source, for presentation
+		_naqsoln.argSource = '[%s]' % _naqsoln.attributes['weight']
+		_naqsoln.appendChild( self.ownerDocument.createTextNode( str(answer) ) )
+		_naqsolns.appendChild( _naqsoln )
+		self.insertAfter( _naqsolns, _naqmlabels)
+		self.insertAfter( _naqsolns, _naqmvalues)
+		return res
+
 class naqchoices(Base.List):
 	pass
 
-class naqchoice(_LocalContentMixin,Base.List.item):
-	args = "[weight:float]"
+class naqmlabels(Base.List):
+	pass
 
+class naqmvalues(Base.List):
+	pass
+
+class naqvalue(_LocalContentMixin,Base.List.item):
 	@readproperty
 	def _asm_local_content(self):
 		return cfg_interfaces.ILatexContentFragment(unicode(self.textContent).strip())
 
+class naqchoice(naqvalue):
+	args = "[weight:float]"
+
+class naqmlabel(naqvalue):
+	args = "[answer:int]"
+
+class naqmvalue(naqvalue):
+	pass
 
 class naqhints(Base.List):
 	pass
