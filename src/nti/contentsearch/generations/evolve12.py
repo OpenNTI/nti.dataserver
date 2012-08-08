@@ -46,6 +46,7 @@ def _reindex(user, users, ds_intid, ignore_errors=False):
 		# index object
 		try:
 			if _index(rim, obj, ds_intid):
+				counter = counter + 1
 				for uname in get_sharedWith(obj):
 					sharing_user = users.get(uname, None)
 					if sharing_user and uname != username: 
