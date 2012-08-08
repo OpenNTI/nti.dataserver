@@ -53,7 +53,6 @@ import os
 import itertools
 import simplejson as json
 import codecs
-import ast
 
 from . import interfaces
 
@@ -340,11 +339,11 @@ class naqmatchingpart(_AbstractNAQPart):
 					\naqmlabel[0] What is four times three?
 					\naqmlabel[1] What is five times two thousand?
 				\end{naqmlabels}
-				\begin{naqmchoices}
-					\naqmchoice Twelve
-					\naqmchoice Ten thousand
-					\naqmchoice Six
-				\end{naqmchoices}
+				\begin{naqmvalues}
+					\naqmvalue Twelve
+					\naqmvalue Ten thousand
+					\naqmvalue Six
+				\end{naqmvalues}
 				\begin{naqsolexplanation}
 					Arbitrary content explaining how the correct solution is arrived at.
 				\end{naqsolexplanation}
@@ -368,21 +367,11 @@ class naqmatchingpart(_AbstractNAQPart):
 		return { 'labels': self._asm_labels(),
 				 'values': self._asm_values() }
 
-	def _asm_solutions(self):
-		solutions = []
-		solution_els = self.getElementsByTagName( 'naqsolution' )
-		for solution_el in solution_els:
-			content = ' '.join([c.source.strip() for c in solution_el.childNodes]).strip()
-			solution = self.soln_interface( ast.literal_eval(content) )
-			weight = solution_el.attributes['weight']
-			if weight is not None:
-				solution.weight = weight
-			solutions.append( solution )
-
-		return solutions
-
 	def digest( self, tokens ):
 		res = super(naqmatchingpart,self).digest( tokens )
+		return res
+
+	def _asm_solutions(self):
 		# Validate the document structure: we have a naqchoices child with
 		# at least two of its own children, and at least one weight == 1. There is no explicit solution
 		_naqmlabels = self.getElementsByTagName( 'naqmlabels' )
@@ -399,20 +388,12 @@ class naqmatchingpart(_AbstractNAQPart):
 		assert len(self.getElementsByTagName( 'naqsolutions' )) == 0
 
 		# Tranform the implicit solutions into an array
-		_naqsolns = self.ownerDocument.createElement( 'naqsolutions' )
-		_naqsolns.macroMode = _naqsolns.MODE_BEGIN
 		answer = {}
 		for i, _naqmlabel in enumerate(_naqmlabels):
 			answer[i] = _naqmlabel.attributes['answer']
-		_naqsoln = self.ownerDocument.createElement( 'naqsolution' )
-		_naqsoln.attributes['weight'] = 1.0
-		# Also put the attribute into the argument source, for presentation
-		_naqsoln.argSource = '[%s]' % _naqsoln.attributes['weight']
-		_naqsoln.appendChild( self.ownerDocument.createTextNode( str(answer) ) )
-		_naqsolns.appendChild( _naqsoln )
-		self.insertAfter( _naqsolns, _naqmlabels)
-		self.insertAfter( _naqsolns, _naqmvalues)
-		return res
+		solution = self.soln_interface( answer )
+		solution.weight = 1.0
+		return [solution]
 
 class naqchoices(Base.List):
 	pass

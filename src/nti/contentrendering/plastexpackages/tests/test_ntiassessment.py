@@ -227,7 +227,6 @@ def test_matching_macros():
 
 	assert_that( dom.getElementsByTagName('naqmlabel'), has_length( 3 ) )
 	assert_that( dom.getElementsByTagName('naqmvalue'), has_length( 3 ) )
-	assert_that( dom.getElementsByTagName('naqsolution'), has_length( 1 ) )
 
 
 	naq = dom.getElementsByTagName('naquestion')[0]
