@@ -17,7 +17,7 @@ logger = logging.getLogger( __name__ )
 def get_sharedWith(obj):
 	# from IPython.core.debugger import Tracer;  Tracer()() ## DEBUG ##
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
-	if adapted and hasattr(adapted,"get_sharedWith"):
+	if adapted and hasattr(adapted, "get_sharedWith"):
 		result = adapted.get_sharedWith()
 	else:
 		result = ()
@@ -50,7 +50,7 @@ def _reindex(user, users, ds_intid, ignore_errors=False):
 					sharing_user = users.get(uname, None)
 					if sharing_user and uname != username: 
 						srim = search_interfaces.IRepozeEntityIndexManager(sharing_user, None)
-						if srim:
+						if srim is not None:
 							_index(srim, obj, ds_intid)
 		except POSKeyError:
 			pass # broken reference for object
@@ -61,22 +61,26 @@ def _reindex(user, users, ds_intid, ignore_errors=False):
 
 	logger.debug('%s object(s) for user %s were reindexed' % (counter, username))
 	
+def do_evolve(context):
+	conn = context.connection
+	root = conn.root()
+	container = root['nti.dataserver']
+	lsm = container.getSiteManager()
+	users = context.connection.root()['nti.dataserver']['users']
+	
+	ds_intid = lsm.getUtility( provided=zope.intid.IIntIds )
+	
+	# make sure we register/provide the intid so it can be found
+	component.provideUtility(ds_intid, zope.intid.IIntIds )
+	for user in users.values():
+		_reindex(user, users, ds_intid)
+		
 def evolve(context):
 	"""
 	Evolve generation 11 to generation 12 by reindexing in the user space
 	"""
 	conn = context.connection
-	root = conn.root()
-	
-	container = root['nti.dataserver']
-	lsm = container.getSiteManager()
-	
 	search_conn = conn.get_connection( 'Search' )
 	search_conn.root().pop('repoze_datastore', None)
-	users = context.connection.root()['nti.dataserver']['users']
-	
-	ds_intid = lsm.getUtility( provided=zope.intid.IIntIds )
-	component.provideUtility(ds_intid, zope.intid.IIntIds )
-	for user in users.values():
-		_reindex(user, users, ds_intid)
+	do_evolve(context)
 		
