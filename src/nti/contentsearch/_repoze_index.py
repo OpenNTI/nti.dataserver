@@ -34,50 +34,61 @@ def get_none(obj, default=None):
 	return None
 
 def get_id(obj, default=None):
-	adapted = component.getAdapter(obj, IContentResolver)
-	return adapted.get_id()
+	#adapted = component.getAdapter(obj, IContentResolver)
+	#return adapted.get_id()
+	return None
 
 def get_channel(obj, default=None):
-	adapted = component.getAdapter(obj, IContentResolver)
-	return adapted.get_channel()
+	#adapted = component.getAdapter(obj, IContentResolver)
+	#return adapted.get_channel()
+	return None
 
 def get_containerId(obj, default=None):
-	adapted = component.getAdapter(obj, IContentResolver)
-	return adapted.get_containerId()
+	#adapted = component.getAdapter(obj, IContentResolver)
+	#return adapted.get_containerId()
+	return None
 
 def get_external_oid(obj, default=None):
-	adapted = component.getAdapter(obj, IContentResolver)
-	return adapted.get_external_oid()
+	#adapted = component.getAdapter(obj, IContentResolver)
+	#return adapted.get_external_oid()
+	return None
 get_oid = get_external_oid
 get_objectId = get_external_oid
 
 def get_ntiid(obj, default=None):
-	adapted = component.getAdapter(obj, IContentResolver)
-	return adapted.get_ntiid()
+	#adapted = component.getAdapter(obj, IContentResolver)
+	#return adapted.get_ntiid()
+	return None
 
 def get_creator(obj, default=None):
-	adapted = component.getAdapter(obj, IContentResolver)
-	return adapted.get_creator()
+	#adapted = component.getAdapter(obj, IContentResolver)
+	#return adapted.get_creator()
+	return None
 
 def get_references(obj, default=None):
-	adapted = component.getAdapter(obj, IContentResolver)
-	return adapted.get_references()
+	#adapted = component.getAdapter(obj, IContentResolver)
+	#return adapted.get_references()
+	return None
 
 def get_last_modified(obj, default=None):
-	adapted = component.getAdapter(obj, IContentResolver)
-	return adapted.get_last_modified()
+	#adapted = component.getAdapter(obj, IContentResolver)
+	#return adapted.get_last_modified()
+	return None
 	
 def get_keywords(obj, default=None):
-	adapted = component.getAdapter(obj, IContentResolver)
-	return adapted.get_keywords()
+	#adapted = component.getAdapter(obj, IContentResolver)
+	#return adapted.get_keywords()
+	return None
 
 def get_recipients(obj, default=None):
-	adapted = component.getAdapter(obj, IContentResolver)
-	return adapted.get_recipients()
+	#adapted = component.getAdapter(obj, IContentResolver)
+	#return adapted.get_recipients()
+	return None
 
 def get_sharedWith(obj, default=None):
-	adapted = component.getAdapter(obj, IContentResolver)
-	return adapted.get_sharedWith()
+	#adapted = component.getAdapter(obj, IContentResolver)
+	#return adapted.get_sharedWith()
+	return None
 
 def get_object_content(obj, default=None):
 	adapted = component.getAdapter(obj, IContentResolver)
@@ -97,14 +108,16 @@ def get_messageinfo_ngrams(obj, default=None):
 	return ngrams(get_object_content(obj)) if compute_ngrams else u''
 
 def get_replacement_content(obj, default=None):
-	adapted = component.getAdapter(obj, IContentResolver)
-	result = adapted.get_replacement_content()
-	return result.lower() if result else None
+	#adapted = component.getAdapter(obj, IContentResolver)
+	#result = adapted.get_replacement_content()
+	#return result.lower() if result else None
+	return None
 	
 def get_redaction_explanation(obj, default=None):
-	adapted = component.getAdapter(obj, IContentResolver)
-	result = adapted.get_redaction_explanation()
-	return result.lower() if result else None
+	#adapted = component.getAdapter(obj, IContentResolver)
+	#result = adapted.get_redaction_explanation()
+	#return result.lower() if result else None
+	return None
 	
 def _create_text_index(field, discriminator):
 	return CatalogTextIndexNG3(field, discriminator)
