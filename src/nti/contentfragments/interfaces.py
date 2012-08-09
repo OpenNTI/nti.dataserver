@@ -9,6 +9,7 @@ $Id$
 from __future__ import print_function, unicode_literals
 
 from zope import interface
+from zope import component
 from zope.mimetype import types as mime_types
 mime_types.setup() # register interface classes and utilities if not already
 
@@ -132,6 +133,11 @@ class IPlainTextContentFragment(IUnicodeContentFragment,mime_types.IContentTypeT
 @interface.implementer(IPlainTextContentFragment)
 class PlainTextContentFragment(UnicodeContentFragment):
 	pass
+
+@interface.implementer(IPlainTextContentFragment)
+@component.adapter(IPlainTextContentFragment)
+def _plain_text_to_plain_text( text ):
+	return text
 
 class ICensoredUnicodeContentFragment(IUnicodeContentFragment):
 	"""

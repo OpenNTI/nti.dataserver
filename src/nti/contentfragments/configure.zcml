@@ -44,24 +44,36 @@
 	<adapter factory=".html.sanitize_user_html"
 			 for="str"
 			 provides=".interfaces.IUnicodeContentFragment" />
-	<adapter factory=".html._sanitize_user_html_to_text"
-			 for="str"
-			 name="text"
-			 provides=".interfaces.IUnicodeContentFragment" />
 	<adapter factory=".html.sanitize_user_html"
 			 for="unicode"
 			 provides=".interfaces.IUnicodeContentFragment" />
+
+	<adapter factory=".html._sanitize_user_html_to_text"
+			 for="str"
+			 name="text"
+			 provides=".interfaces.IPlainTextContentFragment" />
 	<adapter factory=".html._sanitize_user_html_to_text"
 			 for="unicode"
 			 name="text"
-			 provides=".interfaces.IUnicodeContentFragment" />
+			 provides=".interfaces.IPlainTextContentFragment" />
 
 	<!--
 	We can (more cheaply) convert things that are already
 	HTML to plain text.
 	-->
-	<adapter factory=".html._html_to_sanitized_text" />
-	<adapter factory=".html._sanitized_html_to_text" />
+	<adapter factory=".html._html_to_sanitized_text"
+			 provides=".interfaces.IPlainTextContentFragment" />
+	<adapter factory=".html._sanitized_html_to_sanitized_text"
+			 provides=".interfaces.IPlainTextContentFragment" />
+	<!-- Register these with the text name too for convenience. -->
+	<adapter factory=".html._html_to_sanitized_text"
+			 name="text"
+			 provides=".interfaces.IPlainTextContentFragment" />
+	<adapter factory=".html._sanitized_html_to_sanitized_text"
+			 name="text"
+			 provides=".interfaces.IPlainTextContentFragment" />
+	<adapter factory=".interfaces._plain_text_to_plain_text"
+			 name="text" />
 
 
 	<!-- Censoring -->

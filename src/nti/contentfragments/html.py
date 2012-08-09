@@ -189,7 +189,7 @@ def _html_to_sanitized_text( html ):
 
 @interface.implementer(frg_interfaces.IPlainTextContentFragment)
 @component.adapter(frg_interfaces.ISanitizedHTMLContentFragment)
-def _sanitized_html_to_text( sanitized_html ):
+def _sanitized_html_to_sanitized_text( sanitized_html ):
 	p = html5lib.HTMLParser( tree=treebuilders.getTreeBuilder("lxml"), namespaceHTMLElements=False )
 	doc = p.parse( sanitized_html )
 
