@@ -40,6 +40,13 @@ name: naqchoices
 	<li tal:repeat="item self" class="naqchoice" tal:content="item" />
 </ol>
 
+name: naqmatchingpart
+<div class="naquestionpart naqmatchingpart" tal:attributes="name self/id" >
+	 <a tal:attributes="name self/id"/>
+	 <span tal:content="self"/>
+	 <div class="rightwrongbox"></div>
+</div>
+
 name: naquestion
 <object type="application/vnd.nextthought.naquestion" data-ntiid="the-ntiid" data="the-ntiid" tal:attributes="data-ntiid self/ntiid; data self/ntiid">
 <param name="ntiid" value="the-ntiid" tal:attributes="value self/ntiid" />
