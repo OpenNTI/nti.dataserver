@@ -8,8 +8,8 @@ from zope import interface
 
 from whoosh import index
 from whoosh.index import _DEF_INDEX_NAME
-from whoosh.filedb.filestore import FileStorage as WhooshFileStorage
 from whoosh.filedb.structfile import StructFile
+from whoosh.filedb.filestore import FileStorage as WhooshFileStorage
 
 from nti.contentsearch import NoOpCM
 from nti.contentsearch.interfaces import IWhooshIndexStorage
@@ -17,6 +17,19 @@ from nti.contentsearch.interfaces import IWhooshIndexStorage
 import logging
 logger = logging.getLogger( __name__ )
 
+def oid_to_path(oid, max_bytes=2):
+	"""
+	Taken from ZODB/blob.py/BushyLayout
+	"""
+	count = 0
+	directories = []
+	for byte in str(oid):
+		count = count+1
+		directories.append('0x%s' % binascii.hexlify(byte))
+		if count >= max_bytes: break
+	return os.path.sep.join(directories)
+	
+# segment writer
 max_segments = 10
 merge_first_segments = 5
 
@@ -38,52 +51,47 @@ def segment_merge(writer, segments):
 			newsegments.append(s)
 	return newsegments
 
+# limitmb: http://packages.python.org/Whoosh/batch.html
+default_ctor_args = {'limitmb':96}
+default_commit_args = {'merge':False, 'optimize':False, 'mergetype':segment_merge}
+	
 class IndexStorage(object):
 	interface.implements(IWhooshIndexStorage)
 	
-	"""
-	Defines a basic index index storage object
-	"""
-	
-	# limitmb: http://packages.python.org/Whoosh/batch.html
-	default_ctor_args = {'limitmb':96}
-	
-	default_commit_args = {'merge':False, 'optimize':False, 'mergetype':segment_merge}
-	
-	def create_index(self, indexname, schema, **kwargs):
+	def create_index(self, indexname, schema, *args, **kwargs):
 		raise NotImplementedError()
 	
-	def index_exists(self, indexname, **kwargs):
+	def index_exists(self, indexname, *args, **kwargs):
 		raise NotImplementedError()
 	
-	def get_index(self, indexname, **kwargs):
+	def get_index(self, indexname, *args, **kwargs):
 		raise NotImplementedError()
 	
-	def get_or_create_index(self, indexname, schema=None, recreate=True, **kwargs):
+	def get_or_create_index(self, indexname, schema=None, recreate=True, *args, **kwargs):
 		raise NotImplementedError()
 	
-	def open_index(self, indexname, schema=None, **kwargs):
+	def open_index(self, indexname, schema=None, *args, **kwargs):
 		raise NotImplementedError()
 	
 	def dbTrans(self):
 		raise NotImplementedError()
 	
-	def storage(self, **kwargs):
+	def storage(self, *args, **kwargs):
 		raise NotImplementedError()
 	
-	def ctor_args(self, **kwargs):
+	def ctor_args(self, *args, **kwargs):
 		"""
 		Return a dictionary with the arguments to be passed to an 
 		index writer constructor
 		""" 
-		return self.default_ctor_args
+		return default_ctor_args
 	
-	def commit_args(self, **kwargs):
+	def commit_args(self, *args, **kwargs):
 		"""
 		Return a dictionary with the arguments to be passed to an 
 		index writer commit method
 		""" 
-		return self.default_commit_args
+		return default_commit_args
 
 class DirectoryStorage(IndexStorage):
 	
@@ -95,50 +103,50 @@ class DirectoryStorage(IndexStorage):
 	def dbTrans(self):
 		return NoOpCM()
 	
-	def create_index(self, schema, indexname=_DEF_INDEX_NAME, **kwargs):
+	def create_index(self, schema, indexname=_DEF_INDEX_NAME, *args, **kwargs):
 		self.makedirs(**kwargs)
 		return self.storage(**kwargs).create_index(schema, indexname)
 		
-	def index_exists(self, indexname=_DEF_INDEX_NAME, **kwargs):
+	def index_exists(self, indexname=_DEF_INDEX_NAME, *args, **kwargs):
 		path = self.get_folder(**kwargs)
 		return index.exists_in(path, indexname)
 	
-	def get_index(self, indexname=_DEF_INDEX_NAME, **kwargs):
+	def get_index(self, indexname=_DEF_INDEX_NAME, *args, **kwargs):
 		if self.index_exists(indexname, **kwargs):
-			return self.open_index(indexname=indexname, **kwargs)
+			return self.open_index(indexname=indexname, *args, **kwargs)
 		else:
 			return None
 	
-	def get_or_create_index(self, indexname=_DEF_INDEX_NAME, schema=None, recreate=False, **kwargs):
+	def get_or_create_index(self, indexname=_DEF_INDEX_NAME, schema=None, recreate=False, *args, **kwargs):
 		recreate = self.makedirs(**kwargs) or recreate
-		if not self.index_exists(indexname, **kwargs):
+		if not self.index_exists(indexname, *args, **kwargs):
 			recreate = True
 			
 		if recreate:
-			return self.create_index(schema=schema, indexname=indexname, **kwargs)
+			return self.create_index(schema=schema, indexname=indexname, *args, **kwargs)
 		else:
 			return self.open_index(indexname=indexname, **kwargs)
 
-	def open_index(self, indexname, schema=None, **kwargs):
+	def open_index(self, indexname, schema=None, *args, **kwargs):
 		return self.storage(**kwargs).open_index(indexname=indexname)
 	
-	def storage(self, **kwargs):
+	def storage(self, *args, **kwargs):
 		s = getattr(self, "_storage", None)
 		if not s:
-			path = self.get_folder(**kwargs)
+			path = self.get_folder(*args, **kwargs)
 			self._storage = WhooshFileStorage(path)
 			s = self._storage
 		return s
 	
-	def makedirs(self, **kwargs):
-		path = self.get_folder(**kwargs)
+	def makedirs(self, *args, **kwargs):
+		path = self.get_folder(*args, **kwargs)
 		if not os.path.exists(path):
 			os.makedirs(path)
 			return True
 		else:
 			return False
 		
-	def get_folder(self, **kwargs):
+	def get_folder(self, *args, **kwargs):
 		return self.folder
 
 class MultiDirectoryStorage(DirectoryStorage):
@@ -172,16 +180,7 @@ class MultiDirectoryStorage(DirectoryStorage):
 			return self.folder
 	
 	def oid_to_path(self, oid, max_bytes=2):
-		"""
-		Taken from ZODB/blob.py/BushyLayout
-		"""
-		count = 0
-		directories = []
-		for byte in str(oid):
-			count = count+1
-			directories.append('0x%s' % binascii.hexlify(byte))
-			if count >= max_bytes: break
-		return os.path.sep.join(directories)
+		return oid_to_path(oid, max_bytes)
 	
 def open_file(self, name, *args, **kwargs):
 	try:
