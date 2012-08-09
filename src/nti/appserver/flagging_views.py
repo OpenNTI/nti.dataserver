@@ -94,22 +94,38 @@ def _UnFlagView(request):
 ## and 'unflag' to unflag the object. The view code will accept the POST of that
 ## form and take the appropriate actions.
 
+
+from z3c.table import column, table
+from zope.dublincore import interfaces as dc_interfaces
+from zope.proxy import ProxyBase
+from nti.appserver.z3c_zpt import PyramidZopeRequestProxy
+
 @view_config( route_name='objects.generic.traversal',
 			  renderer='templates/moderation_admin.pt',
 			  permission=nauth.ACT_MODERATE,
 			  request_method='GET',
 			  name='moderation_admin')
 def moderation_admin( request ):
-	# Seems chameleon/tal can't repeat on a generator/iterator?
-	the_table = ModerationAdminTable( component.getUtility( nti_interfaces.IGlobalFlagStorage ).iterflagged(),
-									  request )
+	content = component.getUtility( nti_interfaces.IGlobalFlagStorage ).iterflagged()
+	# content = list(content)
+	# if not content:
+	# 	from nti.dataserver.contenttypes import Note
+	# 	n1 = Note()
+	# 	n1.body = ['Body1']
+	# 	n1.createdTime = 5000
+
+	# 	n2 = Note()
+	# 	n2.body = ['Body2']
+	# 	n2.createdTime = 9000
+	# 	content = [n1,n2]
+
+	the_table = ModerationAdminTable( content,
+									  PyramidZopeRequestProxy( request ) )
+
 	the_table.update()
 
 	return the_table
 
-from z3c.table import column, table
-from zope.dublincore import interfaces as dc_interfaces
-from zope.proxy import ProxyBase
 
 
 class ModerationAdminTable(table.SequenceTable):
@@ -136,9 +152,17 @@ def fake_dc_core_for_times( item ):
 
 
 class CreatedColumn(column.CreatedColumn):
+
+	def getSortKey( self, item ):
+		return item.createdTime
+
 	def renderCell(self, item):
 		return super(CreatedColumn,self).renderCell( fake_dc_core_for_times( item ) )
 
 class ModifiedColumn(column.ModifiedColumn):
+
+	def getSortKey( self, item ):
+		return item.lastModified
+
 	def renderCell(self, item):
 		return super(ModifiedColumn,self).renderCell( fake_dc_core_for_times( item ) )

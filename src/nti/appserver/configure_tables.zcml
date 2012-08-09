@@ -18,13 +18,14 @@
 			 for="* * .flagging_views.ModerationAdminTable"
 			 name="note-modified" />
 
+	<adapter factory="z3c.table.header.SortingColumnHeader"
+			 provides="z3c.table.interfaces.IColumnHeader"
+			 for="* * * .flagging_views.ModifiedColumn"
+			 />
 
-	<class class="pyramid.request.Request">
-		<implements
-			interface="zope.publisher.interfaces.browser.IBrowserRequest"
-			/>
-	</class>
-
-
+	<adapter factory="z3c.table.header.SortingColumnHeader"
+			 provides="z3c.table.interfaces.IColumnHeader"
+			 for="* * * .flagging_views.CreatedColumn"
+			 />
 
 </configure>
