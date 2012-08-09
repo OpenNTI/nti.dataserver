@@ -1,4 +1,15 @@
-from __future__ import print_function, unicode_literals
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+
+
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import re
 import six
@@ -31,8 +42,8 @@ from nti.contentsearch.interfaces import IRedactionContentResolver
 from nti.contentsearch.interfaces import IMessageInfoContentResolver
 
 from nti.contentsearch.common import (CLASS, BODY, ID)
-from nti.contentsearch.common import (text_, body_, selectedText_, replacementContent_, redactionExplanation_, 
-									  creator_fields, keyword_fields, last_modified_fields, sharedWith_, 
+from nti.contentsearch.common import (text_, body_, selectedText_, replacementContent_, redactionExplanation_,
+									  creator_fields, keyword_fields, last_modified_fields, sharedWith_,
 									  container_id_fields, ntiid_fields, oid_fields, highlight_, note_,
 									  messageinfo_, redaction_, canvas_, canvastextshape_, references_,
 									  inReplyTo_, recipients_, channel_, flattenedSharingTargetNames_)
@@ -50,9 +61,9 @@ class _StringContentResolver(object):
 		self.content = content
 
 	def get_content(self):
-		result = get_content(self.content) 
+		result = get_content(self.content)
 		return result if result else None
-	
+
 def _get_any_attr(obj, attrs):
 	for a in attrs:
 		try:
@@ -76,17 +87,17 @@ def _process_words(words):
 class _BasicContentaResolver(object):
 	def __init__( self, obj ):
 		self.obj = obj
-		
+
 class _AbstractIndexDataResolver(_BasicContentaResolver):
-		
+
 	def get_ntiid(self):
 		return to_external_ntiid_oid( self.obj )
-		
+
 	def get_external_oid(self):
 		return to_external_ntiid_oid( self.obj )
 	get_oid = get_external_oid
 	get_objectId = get_external_oid
-	
+
 	def get_creator(self):
 		result = _get_any_attr(self.obj, creator_fields)
 		if nti_interfaces.IEntity.providedBy(result):
@@ -96,9 +107,9 @@ class _AbstractIndexDataResolver(_BasicContentaResolver):
 		else:
 			result = None
 		return result
-	
+
 	def get_containerId(self):
-		result = _get_any_attr(self.obj, container_id_fields) 
+		result = _get_any_attr(self.obj, container_id_fields)
 		return unicode(result) if result else None
 
 	def get_keywords(self):
@@ -107,16 +118,16 @@ class _AbstractIndexDataResolver(_BasicContentaResolver):
 			data = _get_any_attr(self.obj, [name])
 			result.update(_process_words(data))
 		return list(result) if result else []
-	
+
 	def get_sharedWith(self):
 		data = _get_any_attr(self.obj, [flattenedSharingTargetNames_, sharedWith_])
 		return _process_words(data)
-	
+
 	def get_last_modified(self):
 		return _get_any_attr(self.obj, last_modified_fields)
-	
+
 class _ThreadableContentResolver(_AbstractIndexDataResolver):
-	
+
 	def get_references(self):
 		items = to_list(_get_any_attr(self.obj, [references_]))
 		result = set()
@@ -131,11 +142,11 @@ class _ThreadableContentResolver(_AbstractIndexDataResolver):
 			if ntiid:
 				result.add(unicode(ntiid))
 		return list(result) if result else []
-	
+
 	def get_inReplyTo(self):
-		result = _get_any_attr(self.obj, [inReplyTo_]) 
+		result = _get_any_attr(self.obj, [inReplyTo_])
 		return unicode(result) if result else None
-	
+
 @component.adapter(nti_interfaces.IHighlight)
 @interface.implementer(IHighlightContentResolver)
 class _HighLightContentResolver(_ThreadableContentResolver):
@@ -153,20 +164,20 @@ class _RedactionContentResolver(_HighLightContentResolver):
 		result.append(self.obj.selectedText)
 		result = ' '.join([x for x in result if x is not None])
 		return get_content(result)
-	
+
 	def get_replacement_content(self):
 		result = self.obj.replacementContent
 		result = get_content(result) if result else None
 		if result and result.lower() == redaction_:
 			result = None
 		return result
-		
+
 	def get_redaction_explanation(self):
 		result = self.obj.redactionExplanation
 		return get_content(result) if result else None
 
 class _PartsContentResolver(object):
-	
+
 	def _resolve(self, data):
 		result = []
 		items = to_list(data)
@@ -175,23 +186,23 @@ class _PartsContentResolver(object):
 			result.append( adapted.get_content()  if adapted else u'')
 		result = ' '.join([x for x in result if x is not None])
 		return get_content(result)
-	
+
 @component.adapter(nti_interfaces.INote)
 @interface.implementer(INoteContentResolver)
 class _NoteContentResolver(_ThreadableContentResolver, _PartsContentResolver):
 	def get_content(self):
 		return self._resolve(self.obj.body)
-	
+
 @component.adapter(chat_interfaces.IMessageInfo)
 @interface.implementer(IMessageInfoContentResolver)
 class _MessageInfoContentResolver(_ThreadableContentResolver, _PartsContentResolver):
 	def get_content(self):
 		return self._resolve(self.obj.Body)
-	
+
 	def get_id(self):
 		result = self.obj.ID
 		return unicode(result) if result else None
-	
+
 	def get_channel(self):
 		result = self.obj.channel
 		return unicode(result) if result else None
@@ -199,7 +210,7 @@ class _MessageInfoContentResolver(_ThreadableContentResolver, _PartsContentResol
 	def get_recipients(self):
 		data = _get_any_attr(self.obj, [recipients_])
 		return _process_words(data)
-	
+
 @component.adapter(Canvas)
 class _CanvasShapeContentResolver(_BasicContentaResolver, _PartsContentResolver):
 	def get_content(self):
@@ -209,25 +220,25 @@ class _CanvasShapeContentResolver(_BasicContentaResolver, _PartsContentResolver)
 class _CanvasTextShapeContentResolver(_BasicContentaResolver):
 	def get_content(self):
 		return get_content(self.obj.text)
-	
+
 @interface.implementer(IContentResolver)
 @component.adapter(IDict)
 class _DictContentResolver(object):
-	
+
 	def __init__( self, obj ):
 		self.obj = obj
-	
+
 	def _get_attr(self, names, default=None):
 		for name in names:
 			value = self.obj.get(name, None)
 			if value is not None: return value
 		return default
-	
+
 	# content resolver
-	
+
 	def get_content(self):
 		return self.get_multipart_content(self.obj)
-	
+
 	def get_multipart_content(self, source):
 		if isinstance(source, six.string_types):
 			result = source
@@ -269,19 +280,19 @@ class _DictContentResolver(object):
 
 		result = get_content(result) if result else u''
 		return unicode(result)
-	
+
 	# user content resolver
-	
+
 	def get_ntiid(self):
 		return self._get_attr(ntiid_fields)
-		
+
 	def get_external_oid(self):
 		return self._get_attr(oid_fields)
-	
+
 	def get_creator(self):
 		result = self._get_attr(creator_fields)
 		return unicode(result) if result else None
-	
+
 	def get_containerId(self):
 		result =  self._get_attr(container_id_fields)
 		return unicode(result) if result else None
@@ -292,19 +303,19 @@ class _DictContentResolver(object):
 			data = self._get_attr([name])
 			result.update(_process_words(data))
 		return list(result) if result else []
-	
+
 	def get_sharedWith(self):
 		data = self.obj.get(sharedWith_, ()) or self.obj.get(flattenedSharingTargetNames_, ())
 		return _process_words(data)
-	
+
 	def get_last_modified(self):
 		return self._get_attr(last_modified_fields)
-		
+
 	get_oid = get_external_oid
 	get_objectId = get_external_oid
-	
-	# treadable content resolver 
-	
+
+	# treadable content resolver
+
 	def get_references(self):
 		data = self.obj.get(references_, u'')
 		objects = data.split() if hasattr(data, 'split') else data
@@ -312,27 +323,27 @@ class _DictContentResolver(object):
 		for s in to_list(objects) or ():
 			result.add(unicode(s))
 		return list(result) if result else []
-	
+
 	def get_inReplyTo(self):
 		result = self.obj.get(inReplyTo_, u'')
 		return get_content(result) if result else None
-	
+
 	# redaction content resolver
-	
+
 	def get_replacement_content(self):
 		result = self.obj.get(replacementContent_, u'')
 		return get_content(result) if result else None
-		
+
 	def get_redaction_explanation(self):
 		result = self.obj.get(redactionExplanation_, u'')
 		return get_content(result) if result else None
-	
+
 	# redaction content resolver
-	
+
 	def get_id(self):
 		result = self.obj.get(ID, None)
 		return unicode(result) if result else None
-	
+
 	def get_channel(self):
 		result = self.obj.get(channel_, None)
 		return unicode(result) if result else None
@@ -340,17 +351,15 @@ class _DictContentResolver(object):
 	def get_recipients(self):
 		data = self.obj.get(recipients_, ())
 		return _process_words(data)
-	
+
 @interface.implementer( IContentTokenizer )
 class _ContentTokenizer(object):
 	tokenizer = RegexpTokenizer(r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-']\w+)*", flags = re.MULTILINE | re.DOTALL)
 
-	def tokenize(self, text):
-		if not text or not isinstance(text, six.string_types):
-			return u''
-		else:
-			text = frg_interfaces.IUnicodeContentFragment(text)
-			text = frg_interfaces.IPlainTextContentFragment(text)
-			words = self.tokenizer.tokenize(text)
-			text = ' '.join(words)
-			return unicode(text)
+	def tokenize(self, content):
+		if not content or not isinstance(content, six.string_types):
+			return ''
+
+		plain_text = component.getAdapter( content, frg_interfaces.IPlainTextContentFragment, name='text' )
+		words = self.tokenizer.tokenize(plain_text)
+		return ' '.join(words)
