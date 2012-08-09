@@ -78,12 +78,19 @@ class TestApplicationGlossary(ApplicationTestBase):
 			n.containerId = 'tag:nti:foo'
 			user.addContainedObject( n )
 
+			n2 = contenttypes.Note()
+			n2.body = ['The second part']
+			n2.applicableRange = contentrange.ContentRangeDescription()
+			n2.containerId = 'tag:nti:foo'
+			user.addContainedObject( n2 )
+
 		testapp = TestApp( self.app )
 
 		# First, give us something to flag
-		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % to_external_ntiid_oid( n )
-		path = UQ( path )
-		testapp.post( path + '/@@flag', '', extra_environ=self._make_extra_environ() )
+		for i in (n, n2):
+			path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % to_external_ntiid_oid( i )
+			path = UQ( path )
+			testapp.post( path + '/@@flag', '', extra_environ=self._make_extra_environ() )
 
 
 		path = '/dataserver2/@@moderation_admin'
@@ -93,3 +100,13 @@ class TestApplicationGlossary(ApplicationTestBase):
 
 		assert_that( res.content_type, is_( 'text/html' ) )
 		assert_that( res.body, contains_string( 'The first part' ) )
+		assert_that( res.body, contains_string( 'The second part' ) )
+
+		# Initially ascending
+		assert_that( res.body, contains_string( '?table-sortOrder=ascending&table-sortOn=table-note-created-1' ) )
+		# So request that
+		res = testapp.get( path + '?table-sortOrder=ascending&table-sortOn=table-note-created-1', extra_environ=self._make_extra_environ() )
+		# and we get the reverse link
+		assert_that( res.body, contains_string( '?table-sortOrder=descending&table-sortOn=table-note-created-1' ) )
+
+		res = testapp.get( path + '?table-sortOrder=ascending&table-sortOn=table-note-modified-2', extra_environ=self._make_extra_environ() )

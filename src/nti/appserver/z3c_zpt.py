@@ -44,7 +44,7 @@ class ZPTTemplateRenderer(object):
 									debug=self.lookup.debug,
 									translate=self.lookup.translate)
 
-	def implementation(self):
+	def implementation(self): # pragma: no cover
 		return self.template
 
 	def __call__(self, value, system):
@@ -61,11 +61,44 @@ class ZPTTemplateRenderer(object):
 			#raise ValueError('renderer was passed non-dictionary as value')
 			system['here'] = value
 			# See plasTeX/Renderers/__init__.py for comments about how 'self' is a problem
-		# Compatibility with the expected Request/Response values from Zope
-		request = system['request']
-		request.response.getHeader = lambda k: request.response.headers[k]
-		request.locale = locales.getLocale( *get_locale_name( request ).split( '-' ) )
+
+
+		request = PyramidZopeRequestProxy( system['request'] )
+		system['request'] = request
 
 		result = self.template.bind( system['view'] )( **system )
-
+		#print(result)
 		return result
+
+from zope.proxy import non_overridable
+from zope.proxy.decorator import SpecificationDecoratorBase
+import zope.publisher.interfaces.browser
+@interface.implementer(zope.publisher.interfaces.browser.IBrowserRequest)
+class PyramidZopeRequestProxy(SpecificationDecoratorBase):
+	"""
+	Makes a Pyramid IRequest object look like a Zope request
+	for purposes of rendering.
+
+	.. note:: Most of this behaviour is added from reverse-engineering what
+		existing zope code, most notably :mod:`z3c.table.table` uses.
+	"""
+
+	def __init__( self, base ):
+		SpecificationDecoratorBase.__init__( self, base )
+		base.response.getHeader = lambda k: base.response.headers[k]
+
+	@non_overridable
+	def get( self, key, default=None ):
+		"""
+		Returns GET params. (TODO: Also POST? GET is the only thing z3c.table cares
+		about right now)
+
+		Pyramid's IRequest has a deprecated method that exposes
+		the WSGI environ, making the request dict-like for the environ.
+		Hence the need to mark this method non_overridable.
+		"""
+		return self.GET.get( key, default=default )
+
+	@property
+	def locale(self):
+		return locales.getLocale( *get_locale_name( self ).split( '-' ) )
