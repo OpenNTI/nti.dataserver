@@ -104,7 +104,7 @@ class MatchingPartGrader(_AbstractGrader):
 				# Try string to int conversion
 				try:
 					result = { int(k) : int(v) for k,v in the_dict.items() }
-				except:
+				except ValueError:
 					# Ooh, too bad. A wrong key/value
 					result = {}
 		return result
