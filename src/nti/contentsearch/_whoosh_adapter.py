@@ -4,6 +4,8 @@ import time
 import random
 from hashlib import md5
 
+from gevent.coros import RLock
+
 from zope import interface
 from zope import component
 from zope.annotation import factory as an_factory
@@ -21,6 +23,8 @@ from nti.contentsearch.interfaces import IUserIndexManager
 from nti.contentsearch.interfaces import IUserIndexManagerFactory
 from nti.contentsearch.common import get_type_name
 from nti.contentsearch.common import normalize_type_name
+from nti.contentsearch._whoosh_indexstorage import default_ctor_args
+from nti.contentsearch._whoosh_indexstorage import default_commit_args
 from nti.contentsearch._whoosh_index import get_indexables
 from nti.contentsearch._whoosh_index import get_indexable_object
 from nti.contentsearch._search_results import empty_search_result
@@ -36,27 +40,6 @@ from nti.contentsearch._search_indexmanager import _SearchEntityIndexManager
 import logging
 logger = logging.getLogger( __name__ )
 	
-max_segments = 10
-merge_first_segments = 5
-
-def segment_merge(writer, segments):
-		
-	from whoosh.filedb.filereading import SegmentReader
-	if len(segments) <= max_segments:
-		return segments
-	
-	newsegments = []
-	sorted_segment_list = sorted(segments, key=lambda s: s.doc_count_all())
-
-	for i, s in enumerate(sorted_segment_list):
-		if i < merge_first_segments:
-			reader = SegmentReader(writer.storage, writer.schema, s)
-			writer.add_reader(reader)
-			reader.close()
-		else:
-			newsegments.append(s)
-	return newsegments
-
 def get_indexname(username, type_name, use_md5=True):
 	type_name = normalize_type_name(type_name)
 	if use_md5:
@@ -68,44 +51,72 @@ def get_indexname(username, type_name, use_md5=True):
 		indexname = "%s_%s" % (username, type_name)
 	return indexname
 
+def get_index_writer(index, writer_ctor_args, maxiters, delay):
+	counter = 0
+	writer = None
+	while writer is None:
+		try:
+			writer = index.writer(**writer_ctor_args)
+		except LockError, e:
+			counter += 1
+			if counter <= maxiters:
+				x = random.uniform(0.1, delay)
+				time.sleep(x)
+			else:
+				raise e
+	return writer
+	
 def get_stored_indices(username, storage, use_md5=True):
 	result = []
-	with storage.dbTrans():
-		for type_name in get_indexables():
-			type_name = normalize_type_name(type_name)
-			index_name = get_indexname(username, type_name, use_md5)
-			if storage.index_exists(index_name, username=username):
-				result.append(type_name)
+	for type_name in get_indexables():
+		type_name = normalize_type_name(type_name)
+		index_name = get_indexname(username, type_name, use_md5)
+		if storage.index_exists(index_name, username=username):
+			result.append(type_name)
 	return result
 	
 def has_stored_indices(username, storage, use_md5=True):
 	names = get_stored_indices(username, storage, use_md5)
 	return True if names else False
 	
+class _Proxy(object):
+	def __init__(self, index):
+		self.index = index
+		self.rlock = RLock()
+	
+	def __getattr__(self, name):
+		if name in ('__exit__', '__enter__', 'index','rlock'):
+			return object.__getattribute__(name)
+		return getattr(self.index, name)
+
+	def __enter__(self):
+		return self.rlock.__enter__()
+
+	def __exit__(self, *args, **kwargs):
+		return self.rlock.__exit__(*args, **kwargs)
+		
 @component.adapter(nti_interfaces.IEntity)
 class WhooshUserIndexManager(PersistentMapping, _SearchEntityIndexManager):
 	interface.implements(search_interfaces.IRepozeEntityIndexManager, IFullMapping)
-
-	# limitmb: http://packages.python.org/Whoosh/batch.html
-	default_ctor_args = {'limitmb':96}
 	
-	default_commit_args = {'merge':False, 'optimize':False, 'mergetype':segment_merge}
-	
+	def __init__(self):
+		self._v_index_storage = None
+		
 	@property
 	def username(self):
 		return self.__parent__.username
 	
 	@property
 	def storage(self):
-		return self.index_storage
+		return self._v_index_storage
 		
 	@property
 	def writer_ctor_args(self):
-		return self.default_ctor_args
+		return default_ctor_args
 
 	@property
 	def writer_commit_args(self):
-		return self.default_commit_args
+		return default_commit_args
 		
 	# -------------------
 	
@@ -116,7 +127,7 @@ class WhooshUserIndexManager(PersistentMapping, _SearchEntityIndexManager):
 	def _get_or_create_index(self, type_name):
 		type_name = normalize_type_name(type_name)
 		indexname = self._get_indexname(type_name)
-		index = self.indices.get(indexname, None)
+		index = self.get(indexname, None)
 		if not index:
 			indexable = get_indexable_object(type_name)
 			schema = indexable.get_schema()
@@ -125,19 +136,7 @@ class WhooshUserIndexManager(PersistentMapping, _SearchEntityIndexManager):
 		return index
 	
 	def _get_index_writer(self, index):
-		writer = None
-		counter = 0
-		while writer is None:
-			try:
-				writer = index.writer(**self.writer_ctor_args)
-			except LockError, e:
-				counter += 1
-				if counter <= self.maxiters:
-					x = random.uniform(0.1, self.delay)
-					time.sleep(x)
-				else:
-					raise e
-		return writer
+		return get_index_writer(index, default_ctor_args, self.maxiters, self.delay)
 	
 	# -------------------
 
@@ -230,7 +229,7 @@ class WhooshUserIndexManager(PersistentMapping, _SearchEntityIndexManager):
 		if index:
 			indexable = get_indexable_object(type_name)
 			writer = self._get_index_writer(index)
-			if not indexable.index_content(writer, data, **self.writer_commit_args):
+			if not indexable.index_content(writer, data, **default_commit_args):
 				writer.cancel()
 			else:
 				return True
@@ -243,7 +242,7 @@ class WhooshUserIndexManager(PersistentMapping, _SearchEntityIndexManager):
 		if index:
 			indexable = get_indexable_object(type_name)
 			writer = self._get_index_writer(index)
-			if not indexable.update_content(writer, data, **self.writer_commit_args):
+			if not indexable.update_content(writer, data, **default_commit_args):
 				writer.cancel()
 			else:
 				return True
@@ -256,7 +255,7 @@ class WhooshUserIndexManager(PersistentMapping, _SearchEntityIndexManager):
 		if index:
 			indexable = get_indexable_object(type_name)
 			writer = self._get_index_writer(index)
-			if not indexable.delete_content(writer, data, **self.writer_commit_args):
+			if not indexable.delete_content(writer, data, **default_commit_args):
 				writer.cancel()
 			else:
 				return True
@@ -294,11 +293,6 @@ class WhooshUserIndexManager(PersistentMapping, _SearchEntityIndexManager):
 		return True if names else False
 	
 	# -------------------
-	
-	@TraxWrapper
-	def optimize(self):
-		for index in self.indices.itervalues():
-			index.optimize()
 		
 	def close(self):
 		for index in self.indices.itervalues():
