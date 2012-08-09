@@ -1,4 +1,23 @@
 # -*- mode: html -*-
+
+# SAJ: TODO: Need to add to app stylesheets handling for this as a span
+name: ttfamily texttt
+<tt class="ttfamily" tal:content="self">typewriter text</tt>
+
+# SAJ: TODO: Need to add to app stylesheets handling for this as a span
+name: tt
+<tt class="tt" tal:content="self">tt</tt>
+
+# SAJ: Is it proper to use the small tag here?  From the HTML5 docs it does not appear so.
+name: tiny
+<small class="tiny" tal:content="self">tiny text</small>
+
+name: scriptsize
+<small class="scriptsize" tal:content="self">scriptsize text</small>
+
+name: footnotesize
+<small class="footnotesize" tal:content="self">footnotesize text</small>
+
 # This template is a work around for when the renderer reorders the following:
 ## \small
 ## \begin{itemize}
@@ -15,6 +34,22 @@
 #
 # This reordering causes problems in Chrome and Firefox.
 #
-
+#name: small
+#<small class="small" tal:content="self">small text</small>
 name: small
 <small class="small" tal:replace="self">small text</small>
+
+name: large
+<span class="large" tal:content="self">large text</span>
+
+name: Large
+<span class="xlarge" tal:content="self">Large text</span>
+
+name: LARGE
+<span class="xxlarge" tal:content="self">LARGE text</span>
+
+name: huge
+<span class="huge" tal:content="self">huge text</span>
+
+name: Huge
+<span class="xhuge" tal:content="self">Huge text</span>
