@@ -101,8 +101,12 @@ class MatchingPartGrader(_AbstractGrader):
 						   for k, v
 						   in the_dict.items() }
 			except ValueError:
-				# Ooh, too bad. A wrong key/value
-				result = {}
+				# Try string to int conversion
+				try:
+					result = { int(k) : int(v) for k,v in the_dict.items() }
+				except:
+					# Ooh, too bad. A wrong key/value
+					result = {}
 		return result
 
 	def __call__( self ):
