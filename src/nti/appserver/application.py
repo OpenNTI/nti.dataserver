@@ -13,6 +13,7 @@ import os
 import traceback
 
 import anyjson as json
+import simplejson
 
 import nti.dictserver as dictserver
 import nti.dictserver.dictionary
@@ -24,6 +25,7 @@ import nti.dataserver._Dataserver
 #from nti.dataserver.library import Library
 from nti.dataserver import interfaces as nti_interfaces
 from nti.contentlibrary import interfaces as lib_interfaces
+from nti.contentfragments import interfaces as cfg_interfaces
 
 import nti.contentsearch
 contentsearch = nti.contentsearch
@@ -480,7 +482,17 @@ def createApplication( http_port,
 		asm_index = os.path.join( title.localPath, 'assessment_index.json' )
 		if os.path.isfile( asm_index ):
 			__traceback_info__ = asm_index
-			index = json.loads( unicode(open( asm_index, 'rU' ).read()) )
+			# In this one specific case, we know that these are already
+			# content fragments (probably HTML content fragments)
+			# If we go through the normal adapter process from string to
+			# fragment, we will wind up with sanitized HTML, which is not what
+			# we want, in this case
+			# TODO: Needs specific test cases
+			def hook(o):
+				return dict( (k,cfg_interfaces.UnicodeContentFragment(v) if isinstance(v, unicode) else v) for k, v in o )
+
+			index = simplejson.loads( unicode(open( asm_index, 'rU' ).read()),
+									  object_pairs_hook=hook )
 			try:
 				question_map._from_index_entry( index, dirname=title.localPath )
 			except (zope.interface.exceptions.Invalid, ValueError):
