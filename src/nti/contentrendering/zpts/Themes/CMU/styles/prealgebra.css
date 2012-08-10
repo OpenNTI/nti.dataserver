@@ -1,14 +1,3 @@
-/* Temporary workaround for 12-year old gecko bug.  This code should be in the app, but so that it can be released sooner for Hedda it is here. I will be committing the neccessary changes to the WebApp's CSS in the morning. */
-.x-gecko li {
-	    margin-top: 0.5em;
-	    margin-bottom: 0.5em;
-}
-
-.x-gecko li > p.par {
-	    display: inline;
-}
-/* End of workaround. */
-
 #NTIContent .subsection.title {
 	    font-size: 175% !important;
 }
