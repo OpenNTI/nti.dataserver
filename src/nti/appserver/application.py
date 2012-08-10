@@ -306,11 +306,12 @@ def createApplication( http_port,
 		pyramid_config = pyramid.config.Configurator( registry=component.getGlobalSiteManager(),
 													  debug_logger=logging.getLogger( 'pyramid' ),
 													  settings=settings)
+		# Note that because we're using the global registre, the Configurator doesn't
+		# set it up. So all the arguments it would pass we must pass.
+		# If we fail to do this, things like 'pyramid.includes' don't get processed
+		pyramid_config.setup_registry(debug_logger=logging.getLogger( 'pyramid' ),
+									  settings=settings)
 
-		pyramid_config.setup_registry()
-		# Because we're using the global registry, the settings almost certainly
-		# get trounced, so reinstall them
-		pyramid_config.registry.settings.update( settings )
 
 	# Our addons
 	# First, ensure that each request is wrapped in default global transaction

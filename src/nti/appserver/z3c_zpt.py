@@ -90,14 +90,21 @@ class PyramidZopeRequestProxy(SpecificationDecoratorBase):
 	@non_overridable
 	def get( self, key, default=None ):
 		"""
-		Returns GET params. (TODO: Also POST? GET is the only thing z3c.table cares
-		about right now)
+		Returns GET and POST params. Multiple values are returned as lists.
 
 		Pyramid's IRequest has a deprecated method that exposes
 		the WSGI environ, making the request dict-like for the environ.
 		Hence the need to mark this method non_overridable.
 		"""
-		return self.GET.get( key, default=default )
+		dict_of_lists = self.GET.dict_of_lists()
+		dict_of_lists.update( self.POST.dict_of_lists() )
+		val = dict_of_lists.get( key )
+		if val:
+			if len(val) == 1:
+				val = val[0] # de-list things that only appeared once
+		else:
+			val = default
+		return val
 
 	@property
 	def locale(self):

@@ -7,6 +7,21 @@
 		<title>Moderation Admin</title>
 	</head>
 	<body>
-		<p tal:replace="structure python:options['here'].render()" />
+		<form action="" method="post"
+			  enctype="multipart/form-data"
+			  class="edit-form"
+			  name="subFormTable" id="subFormTable">
+
+			<table tal:replace="structure python:options['here'].render()" />
+
+			<input id="subFormTable-buttons-unflag"
+				   name="subFormTable.buttons.unflag"
+				   class="submit-widget button-field" value="Unflag"
+				   type="submit" />
+			<input id="subFormTable-buttons-delete"
+				   name="subFormTable.buttons.delete"
+				   class="submit-widget button-field" value="Delete"
+				   type="submit" />
+		</form>
 	</body>
 </html>
