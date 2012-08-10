@@ -2,16 +2,19 @@ from __future__ import print_function, unicode_literals
 
 import BTrees
 
+from zope import interface
 from zope import component
 from zope.index.text.baseindex import BaseIndex
 
 from repoze.catalog.catalog import Catalog
 from repoze.catalog.indexes.common import CatalogIndex
-# from repoze.catalog.indexes.field import CatalogFieldIndex
-#from repoze.catalog.indexes.keyword import CatalogKeywordIndex
+from repoze.catalog.indexes.text import CatalogTextIndex
+from repoze.catalog.indexes.field import CatalogFieldIndex
+from repoze.catalog.indexes.keyword import CatalogKeywordIndex
+
 
 from nti.contentsearch import compute_ngrams
-from nti.contentsearch.interfaces import IContentResolver
+from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch.textindexng3 import CatalogTextIndexNG3
 
 from nti.contentsearch._ngrams_utils import ngrams
@@ -31,59 +34,65 @@ logger = logging.getLogger( __name__ )
 BaseIndex.family = BTrees.family64
 CatalogIndex.family = BTrees.family64
 
-def get_none(obj, default=None):
-	return None
+def get_id(obj, default):
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	return adapted.get_id() or default
 
-def get_id(obj, default=None):
-	adapted = component.getAdapter(obj, IContentResolver)
-	return adapted.get_id()
+def get_channel(obj, default):
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	return adapted.get_channel() or default
 
-def get_channel(obj, default=None):
-	adapted = component.getAdapter(obj, IContentResolver)
-	return adapted.get_channel()
+def get_containerId(obj, default):
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	return adapted.get_containerId() or default
 
-def get_containerId(obj, default=None):
-	adapted = component.getAdapter(obj, IContentResolver)
-	return adapted.get_containerId()
-
-def get_external_oid(obj, default=None):
-	adapted = component.getAdapter(obj, IContentResolver)
-	return adapted.get_external_oid()
+def get_external_oid(obj, default):
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	return adapted.get_external_oid() or default
 get_oid = get_external_oid
 get_objectId = get_external_oid
 
-def get_ntiid(obj, default=None):
-	adapted = component.getAdapter(obj, IContentResolver)
-	return adapted.get_ntiid()
+def get_ntiid(obj, default):
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	return adapted.get_ntiid() or default
 
-def get_creator(obj, default=None):
-	adapted = component.getAdapter(obj, IContentResolver)
-	return adapted.get_creator()
+def get_creator(obj, default):
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	return adapted.get_creator() or default
 
-def get_references(obj, default=None):
-	adapted = component.getAdapter(obj, IContentResolver)
-	return adapted.get_references()
+def get_references(obj, default):
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	return adapted.get_references() or default
 
-def get_last_modified(obj, default=None):
-	adapted = component.getAdapter(obj, IContentResolver)
-	return adapted.get_last_modified()
+def get_last_modified(obj, default):
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	return adapted.get_last_modified() or default
 	
-def get_keywords(obj, default=None):
-	adapted = component.getAdapter(obj, IContentResolver)
-	return adapted.get_keywords()
+def get_keywords(obj, default):
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	return adapted.get_keywords() or default
 
-def get_recipients(obj, default=None):
-	adapted = component.getAdapter(obj, IContentResolver)
-	return adapted.get_recipients()
+def get_recipients(obj, default):
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	result = adapted.get_recipients()
+	result = ' '.join(result) if result else default
+	return result
 
-def get_sharedWith(obj, default=None):
-	adapted = component.getAdapter(obj, IContentResolver)
-	return adapted.get_sharedWith()
+def get_sharedWith(obj, default):
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	result = adapted.get_sharedWith()
+	result = ' '.join(result) if result else default
+	return result
 
 def get_object_content(obj, default=None):
-	adapted = component.getAdapter(obj, IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	result = adapted.get_content()
 	return result.lower() if result else None
+get_content = get_object_content
+
+def get_object_ngrams(obj, default=None):
+	return ngrams(get_object_content(obj), default)
+get_ngrams = get_object_ngrams
 
 def get_note_ngrams(obj, default=None):
 	return ngrams(get_object_content(obj)) if compute_ngrams else u''
@@ -98,12 +107,12 @@ def get_messageinfo_ngrams(obj, default=None):
 	return ngrams(get_object_content(obj)) if compute_ngrams else u''
 
 def get_replacement_content(obj, default=None):
-	adapted = component.getAdapter(obj, IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	result = adapted.get_replacement_content()
 	return result.lower() if result else None
 	
 def get_redaction_explanation(obj, default=None):
-	adapted = component.getAdapter(obj, IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	result = adapted.get_redaction_explanation()
 	return result.lower() if result else None
 	
@@ -152,16 +161,56 @@ def create_messageinfo_catalog():
 	catalog[content_] = _create_text_index(content_, get_object_content)
 	return catalog
 
-def create_catalog(type_name=note_):
-	type_name = normalize_type_name(type_name)
-	if type_name == note_:
-		return create_notes_catalog()
-	elif type_name == highlight_:
-		return create_highlight_catalog()
-	elif type_name == redaction_:
-		return create_redaction_catalog()
-	elif type_name == messageinfo_:
-		return create_messageinfo_catalog()
-	else:
-		return None
+def create_catalog(type_name):
+	creator = component.queryUtility(search_interfaces.IRepozeCatalogCreator,  name=type_name)
+	return creator.create() if creator else None
+
+# catalog creators
+
+@interface.implementer(search_interfaces.IRepozeCatalogCreator)
+class _RepozeCatalogCreator(object):
+	def create(self):
+		catalog = Catalog()
+		for name, func in component.getUtilitiesFor( self._iface ):
+			func( catalog, name,  self._iface  )		
+		return catalog
+		
+class _RepozeNoteCatalogCreator(_RepozeCatalogCreator):
+	_iface = search_interfaces.INoteRepozeCatalogCreator
+
+class _RepozeHighlightCatalogCreator(_RepozeCatalogCreator):
+	_iface = search_interfaces.IHighlightRepozeCatalogCreator
+
+class _RepozeRedactionCatalogCreator(_RepozeCatalogCreator):
+	_iface = search_interfaces.IRedactionRepozeCatalogCreator
+
+class _RepozeMessageInfoCatalogCreator(_RepozeCatalogCreator):
+	_iface = search_interfaces.IMessageInfoRepozeCatalogCreator
+
+# repoze index field creators
+
+def _get_discriminator(name):
+	result = globals().get("get_%s" % name, None)
+	if not result or not callable(result):
+		result = name
+	return result
+
+def _zopytext_field_creator(catalog, name, iface):
+	discriminator = _get_discriminator(name)
+	catalog[name] = CatalogTextIndexNG3(name, discriminator)
+	
+def _text_field_creator(catalog, name, iface):
+	discriminator = _get_discriminator(name)
+	catalog[name] = CatalogTextIndex(discriminator)
+	
+def _named_field_creator(catalog, name, iface ):
+	discriminator = _get_discriminator(name)
+	catalog[name] = CatalogFieldIndex( discriminator )
+
+def _keyword_field_creator(catalog, name, iface ):
+	discriminator = _get_discriminator(name)
+	catalog[name] = CatalogKeywordIndex( discriminator )
+
+def _ngrams_field_creator(catalog, name, iface):
+	catalog[name] = CatalogTextIndexNG3(name, get_ngrams)
 
