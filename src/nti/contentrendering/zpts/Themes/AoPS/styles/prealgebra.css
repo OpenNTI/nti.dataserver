@@ -703,6 +703,20 @@ order. A fix in the application for this is pending. */
     padding-right: 0.5em;
 }
 
+#NTIContent div.revprob,
+#NTIContent div.revprobhard,
+#NTIContent div.chall,
+#NTIContent div.challhard {
+    overflow: hidden;
+}
+
+#NTIContent div.revprob > p.par,
+#NTIContent div.revprobhard > p.par,
+#NTIContent div.chall > p.par,
+#NTIContent div.challhard > p.par {
+    margin-top: 0;
+}
+
 #NTIContent ol.challenge-problems div.problem,
 #NTIContent ol.review-problems div.problem {
 		display: block;
