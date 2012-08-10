@@ -1322,3 +1322,10 @@ class TestApplicationAssessment(ApplicationTestBase):
 			res = testapp.post( '/dataserver2/users/sjohnson@nextthought.com', data, extra_environ=self._make_extra_environ() )
 			self._check_submission( res )
 			assert_that( res.json_body, has_entry( 'parts', has_item( has_entries( 'assessedValue', 1.0, 'submittedResponse', submittedResponse ) ) ) )
+
+import nti.appserver._util
+
+def test_dump_stacks():
+	seq = nti.appserver._util.dump_stacks()
+
+	assert_that( seq, has_item( contains_string( 'dump_stacks' ) ) )

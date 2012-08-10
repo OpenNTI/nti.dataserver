@@ -1,6 +1,13 @@
-#!/usr/bin/env python2.7
-"""Interfaces supporting socket.io"""
-from __future__ import unicode_literals
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Interfaces supporting socket.io
+
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 from zope import interface, schema
 from zope.interface.common import mapping

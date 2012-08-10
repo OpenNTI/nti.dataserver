@@ -14,7 +14,8 @@ import nti.tests
 class ConfiguringTestBase(nti.tests.ConfiguringTestBase):
 	"""
 	Attributes:
-	self.config A pyramid configurator
+	self.config A pyramid configurator. Note that it does not have a
+		package associated with it.
 	self.request A pyramid request
 	"""
 
@@ -22,7 +23,7 @@ class ConfiguringTestBase(nti.tests.ConfiguringTestBase):
 
 	def setUp( self ):
 		"""
-		:return: The `Configurator`.
+		:return: The `Configurator`, which is also in ``self.config``.
 		"""
 
 		super(ConfiguringTestBase,self).setUp()

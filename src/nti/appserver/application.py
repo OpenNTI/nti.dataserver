@@ -60,6 +60,7 @@ from nti.appserver import pyramid_auth
 from nti.appserver import interfaces as app_interfaces
 from nti.appserver.traversal import ZopeResourceTreeTraverser
 from nti.appserver import pyramid_authorization
+from nti.appserver import _util
 
 # Make the zope interface extend the pyramid interface
 # Although this seems backward, it isn't. The zope location
@@ -77,44 +78,7 @@ SOCKET_IO_PATH = 'socket.io'
 #TODO: we should do this as configuration
 DATASERVER_WHOOSH_INDEXES = 'DATASERVER_WHOOSH_INDEXES' in os.environ
 
-def dump_stacks():
-	"""
-	:return: A sequence of text lines detailing the stacks of running
-		threads and greenlets. (One greenlet will duplicate one thread,
-		the current thread and greenlet.)
-	"""
-	dump = []
 
-	# threads
-	import threading
-
-	threads = {th.ident: th.name for th in threading.enumerate()}
-
-	for thread, frame in sys._current_frames().items():
-		dump.append('Thread 0x%x (%s)\n' % (thread, threads.get(thread)))
-		dump.append(''.join(traceback.format_stack(frame)))
-		dump.append('\n')
-
-	# greenlets
-	try:
-		from greenlet import greenlet
-	except ImportError:
-		return dump
-
-	import gc
-	# if greenlet is present, let's dump each greenlet stack
-	# Use the gc module to inspect all objects to find the greenlets
-	# since there isn't a global registry
-	for ob in gc.get_objects():
-		if not isinstance(ob, greenlet):
-			continue
-		if not ob:
-			continue   # not running anymore or not started
-		dump.append('Greenlet %s\n' % ob)
-		dump.append(''.join(traceback.format_stack(ob.gr_frame)))
-		dump.append('\n')
-
-	return dump
 
 class _Main(object):
 
@@ -144,36 +108,13 @@ class _Main(object):
 		# For CORS preflight requests, we must support the OPTIONS
 		# method.
 		# TODO: The OPTIONS method should be better implemented.
+		# TODO: This should probably be moved to the cors.py filter/tween
 		if environ['REQUEST_METHOD'] == 'OPTIONS':
 			start_request( '200 OK', [('Content-Type', 'text/plain')] )
 			return [""]
 
-
-		# Nothing seems to actually be supporting the same
-		# WebSocket protocol versions.
-
-		# Firefox 5 and 6 have nothing. Socket.io uses
-		# long-connections with xhr-multipart for it.
-
-		# All tested versions of Safari (5.1 lion, 5.0 on lion,
-		# nightly) seems to run version 76 of the protocol (KEY1
-		# and KEY2), and so it connects just fine over websockets.
-		# NOTE: the source document must be served over HTTP.
-		# Local files don't work without a hack to avoid checking HTTP_ORIGIN
-
-		# Safari on iOS 5 is the same as desktop.
-
-		# Chrome 14.0.835.122 beta is the new version 7 or 8.
-		# Chrome 15.0.865.0 dev is the same as Chrome 14.
-		# Chrome 16 is version 13 (which seems to be compatible with 7/8)
-
-		if environ['PATH_INFO'].startswith( '/stacktraces' ):
-			body = '\n'.join(dump_stacks())
-			print body
-			start_request( '200 OK', [('Content-Type', 'text/plain'),] )
-			return body + '\n'
-
 		return self.pyramid_app( environ, start_request )
+
 import pyramid_tm
 def site_tween_factory(handler, registry):
 	# Our site setup
@@ -241,6 +182,14 @@ def site_tween_factory(handler, registry):
 
 	return site_tween
 
+def _create_xml_conf_machine( settings ):
+	xml_conf_machine = xmlconfig.ConfigurationMachine()
+	xmlconfig.registerCommonDirectives( xml_conf_machine )
+	if 'devmode' in settings and settings['devmode']:
+		logger.debug( "Enabling devmode" )
+		xml_conf_machine.provideFeature( 'devmode' )
+	return xml_conf_machine
+
 def createApplication( http_port,
 					   library,
 					   process_args=False,
@@ -253,11 +202,7 @@ def createApplication( http_port,
 	server = None
 	# Configure subscribers, etc.
 	try:
-		xml_conf_machine = xmlconfig.ConfigurationMachine()
-		xmlconfig.registerCommonDirectives( xml_conf_machine )
-		if 'devmode' in settings and settings['devmode']:
-			logger.debug( "Enabling devmode" )
-			xml_conf_machine.provideFeature( 'devmode' )
+		xml_conf_machine = _create_xml_conf_machine( settings )
 		xml_conf_machine = xmlconfig.file( 'configure.zcml', package=nti.appserver, context=xml_conf_machine )
 		if 'site_zcml' in settings:
 			logger.debug( "Loading site settings from %s", settings['site_zcml'] )
@@ -305,6 +250,7 @@ def createApplication( http_port,
 
 		pyramid_config = pyramid.config.Configurator( registry=component.getGlobalSiteManager(),
 													  debug_logger=logging.getLogger( 'pyramid' ),
+													  package=nti.appserver,
 													  settings=settings)
 		# Note that because we're using the global registre, the Configurator doesn't
 		# set it up. So all the arguments it would pass we must pass.
@@ -346,6 +292,9 @@ def createApplication( http_port,
 
 
 	pyramid_config.include( 'pyramid_zcml' )
+	import pyramid_zcml
+	# make it respect the features we choose to provide
+	pyramid_zcml.ConfigurationMachine = lambda: _create_xml_conf_machine( settings )
 
 	# Our traversers
 	# TODO: Does doing this get us into any trouble with a non-matching request.resource_url
@@ -416,10 +365,10 @@ def createApplication( http_port,
 			dictionary = dictserver.dictionary.SQLiteJsonDictionary( settings['main_dictionary_path'] )
 			pyramid_config.registry.registerUtility( dictionary )
 			logger.debug( "Adding dictionary" )
-			pyramid_config.load_zcml( 'pyramid.zcml' )
 		except Exception:
 			logger.exception( "Failed to add dictionary server" )
 
+	pyramid_config.load_zcml( 'nti.appserver:pyramid.zcml' ) # must use full spec, we may not have created the pyramid_config
 	pyramid_config.add_renderer( name='rest', factory='nti.appserver.pyramid_renderers.REST' )
 	# Override the stock Chameleon template renderer to use z3c.pt for better compatibility with
 	# the existing Zope stuff
@@ -802,6 +751,8 @@ def createApplication( http_port,
 
 	# register change listeners
 	# Now, fork off the change listeners
+	# TODO: Make these be utilities so they can be registered
+	# in config and the expensive parts turned off in config dynamically.
 	if create_ds:
 		logger.info( 'Adding synchronous change listeners.' )
 		server.add_change_listener( nti.dataserver.users.onChange )
@@ -811,18 +762,9 @@ def createApplication( http_port,
 		logger.info( 'Finished adding listeners' )
 
 
-	# Our application needs to be innermost, before all the authkit stuff,
-	# so we define this before that happens
 	main = _Main( pyramid_config, http_port=http_port )
-	#TODO: Tmp hacks
-	main.addServeFiles( ('/Search/RecursiveUserGeneratedData/', 'contains') )
-	main.addServeFiles( ('/dataserver/UserSearch/', None) )
-	main.addServeFiles( ('/dataserver2', None) )
 
-	application = main
-	#application = pyramid_auth.wrap_repoze_middleware( application )
-
-	return (application,main)
+	return (main,main) # bwc
 
 import geventwebsocket.handler
 
