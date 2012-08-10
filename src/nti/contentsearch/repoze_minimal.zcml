@@ -1,0 +1,11 @@
+<!-- -*- mode: nxml -*- -->
+<configure xmlns="http://namespaces.zope.org/zope" i18n_domain="zope">
+	<include package="zope.component" />
+	<include file="repoze_common.zcml" />
+			 
+	<utility name="content" provides=".interfaces.INoteRepozeCatalogCreator" component="._repoze_index._zopytext_field_creator" />	
+	<utility name="content" provides=".interfaces.IHighlightRepozeCatalogCreator" component="._repoze_index._zopytext_field_creator" />	
+	<utility name="content" provides=".interfaces.IRedactionRepozeCatalogCreator" component="._repoze_index._zopytext_field_creator" />	
+	<utility name="content" provides=".interfaces.IMessageInfoRepozeCatalogCreator" component="._repoze_index._zopytext_field_creator" />	
+	
+</configure>

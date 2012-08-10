@@ -1,0 +1,24 @@
+<!-- -*- mode: nxml -*- -->
+<configure xmlns="http://namespaces.zope.org/zope" i18n_domain="zope">
+	<include package="zope.component" />
+	
+	<!-- Database creation and migration -->
+	
+	<utility factory=".generations.install._ContentSearchSchemaManager"
+			 name="nti.dataserver-contentsearch"
+			 provides="zope.generations.interfaces.IInstallableSchemaManager"/>
+		
+	<!-- Index managers -->
+		
+	<adapter factory="._repoze_adpater._RepozeEntityIndexManagerFactory"
+			 for="nti.dataserver.interfaces.IEntity"
+			 provides=".interfaces.IRepozeEntityIndexManager" />
+	
+	<!-- Catalog Creators -->
+	
+	<utility factory="._repoze_index._RepozeNoteCatalogCreator" name="note" />
+	<utility factory="._repoze_index._RepozeHighlightCatalogCreator" name="highlight" />
+	<utility factory="._repoze_index._RepozeRedactionCatalogCreator" name="redaction" />
+	<utility factory="._repoze_index._RepozeMessageInfoCatalogCreator" name="messageinfo" />
+
+</configure>

@@ -1,0 +1,69 @@
+<!-- -*- mode: nxml -*- -->
+<configure xmlns="http://namespaces.zope.org/zope" i18n_domain="zope">
+	<include package="zope.component" />
+	<include file="repoze_minimal.zcml" />
+	
+	<!-- highlight index field creators -->
+	
+	<utility name="ngrams" provides=".interfaces.IHighlightRepozeCatalogCreator" component="._repoze_index._ngrams_field_creator" />
+		
+	<utility name="sharedWith" provides=".interfaces.IHighlightRepozeCatalogCreator" component="._repoze_index._text_field_creator" />
+	
+	<utility name="keywords" provides=".interfaces.IHighlightRepozeCatalogCreator" component="._repoze_index._keyword_field_creator" />	
+	
+	<utility name="oid" provides=".interfaces.IHighlightRepozeCatalogCreator" component="._repoze_index._named_field_creator" />
+	<utility name="ntiid" provides=".interfaces.IHighlightRepozeCatalogCreator" component="._repoze_index._named_field_creator" />
+	<utility name="creator" provides=".interfaces.IHighlightRepozeCatalogCreator" component="._repoze_index._named_field_creator" />	
+	<utility name="containerId" provides=".interfaces.IHighlightRepozeCatalogCreator" component="._repoze_index._named_field_creator" />
+	<utility name="last_modified" provides=".interfaces.IHighlightRepozeCatalogCreator" component="._repoze_index._named_field_creator" />
+	
+	<!-- redaction index field creators -->
+	
+	<utility name="ngrams" provides=".interfaces.IRedactionRepozeCatalogCreator" component="._repoze_index._ngrams_field_creator" />
+	
+	<utility name="sharedWith" provides=".interfaces.IRedactionRepozeCatalogCreator" component="._repoze_index._text_field_creator" />
+	
+	<utility name="keywords" provides=".interfaces.IRedactionRepozeCatalogCreator" component="._repoze_index._keyword_field_creator" />	
+		
+	<utility name="oid" provides=".interfaces.IRedactionRepozeCatalogCreator" component="._repoze_index._named_field_creator" />
+	<utility name="ntiid" provides=".interfaces.IRedactionRepozeCatalogCreator" component="._repoze_index._named_field_creator" />
+	<utility name="creator" provides=".interfaces.IRedactionRepozeCatalogCreator" component="._repoze_index._named_field_creator" />	
+	<utility name="containerId" provides=".interfaces.IRedactionRepozeCatalogCreator" component="._repoze_index._named_field_creator" />
+	<utility name="last_modified" provides=".interfaces.IRedactionRepozeCatalogCreator" component="._repoze_index._named_field_creator" />
+	<utility name="replacementContent" provides=".interfaces.IRedactionRepozeCatalogCreator" component="._repoze_index._text_field_creator" />
+	<utility name="redactionExplanation" provides=".interfaces.IRedactionRepozeCatalogCreator" component="._repoze_index._text_field_creator" />
+	
+	<!-- note index field creators -->
+	
+	<utility name="ngrams" provides=".interfaces.INoteRepozeCatalogCreator" component="._repoze_index._ngrams_field_creator" />
+		
+	<utility name="sharedWith" provides=".interfaces.INoteRepozeCatalogCreator" component="._repoze_index._text_field_creator" />
+	
+	<utility name="keywords" provides=".interfaces.INoteRepozeCatalogCreator" component="._repoze_index._keyword_field_creator" />
+		
+	<utility name="oid" provides=".interfaces.INoteRepozeCatalogCreator" component="._repoze_index._named_field_creator" />
+	<utility name="ntiid" provides=".interfaces.INoteRepozeCatalogCreator" component="._repoze_index._named_field_creator" />
+	<utility name="creator" provides=".interfaces.INoteRepozeCatalogCreator" component="._repoze_index._named_field_creator" />	
+	<utility name="containerId" provides=".interfaces.INoteRepozeCatalogCreator" component="._repoze_index._named_field_creator" />
+	<utility name="references" provides=".interfaces.INoteRepozeCatalogCreator" component="._repoze_index._keyword_field_creator" />
+	<utility name="last_modified" provides=".interfaces.INoteRepozeCatalogCreator" component="._repoze_index._named_field_creator" />
+	
+	<!-- note index field creators -->
+	
+	<utility name="ngrams" provides=".interfaces.IMessageInfoRepozeCatalogCreator" component="._repoze_index._ngrams_field_creator" />
+		
+	<utility name="sharedWith" provides=".interfaces.IMessageInfoRepozeCatalogCreator" component="._repoze_index._text_field_creator" />	
+	<utility name="recipients" provides=".interfaces.IMessageInfoRepozeCatalogCreator" component="._repoze_index._text_field_creator" />
+	
+	<utility name="keywords" provides=".interfaces.IMessageInfoRepozeCatalogCreator" component="._repoze_index._keyword_field_creator" />	
+		
+	<utility name="id" provides=".interfaces.IMessageInfoRepozeCatalogCreator" component="._repoze_index._named_field_creator" />
+	<utility name="oid" provides=".interfaces.IMessageInfoRepozeCatalogCreator" component="._repoze_index._named_field_creator" />
+	<utility name="ntiid" provides=".interfaces.IMessageInfoRepozeCatalogCreator" component="._repoze_index._named_field_creator" />
+	<utility name="channel" provides=".interfaces.IMessageInfoRepozeCatalogCreator" component="._repoze_index._named_field_creator" />
+	<utility name="creator" provides=".interfaces.IMessageInfoRepozeCatalogCreator" component="._repoze_index._named_field_creator" />	
+	<utility name="references" provides=".interfaces.IMessageInfoRepozeCatalogCreator" component="._repoze_index._named_field_creator" />	
+	<utility name="containerId" provides=".interfaces.IMessageInfoRepozeCatalogCreator" component="._repoze_index._named_field_creator" />
+	<utility name="last_modified" provides=".interfaces.IMessageInfoRepozeCatalogCreator" component="._repoze_index._named_field_creator" />
+	
+</configure>

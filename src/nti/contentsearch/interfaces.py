@@ -411,3 +411,22 @@ class IContentTokenizer(interface.Interface):
 	def tokenize(data):
 		"""tokenize the specifeid text data"""
 		
+# Catalog creators
+	
+class IRepozeCatalogCreator(interface.Interface):
+	pass
+
+class INoteRepozeCatalogCreator(IRepozeCatalogCreator):
+	pass
+
+class IHighlightRepozeCatalogCreator(IRepozeCatalogCreator):
+	pass
+
+class IRedactionRepozeCatalogCreator(IRepozeCatalogCreator):
+	pass
+
+class IMessageInfoRepozeCatalogCreator(IRepozeCatalogCreator):
+	pass
+
+
+
