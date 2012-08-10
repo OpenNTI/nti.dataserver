@@ -1,5 +1,5 @@
 # -*- mode: html -*-
-name: defn bogus importantdef important concept warning game sidebar defns chapterquote chapterauthor exer exerhard 
+name: defn bogus importantdef important concept warning game sidebar defns chapterquote chapterauthor
 <div tal:condition="self" tal:attributes="class python: type(self).__name__; id self/id" tal:content='self' />
 
 name: xtra
@@ -41,7 +41,7 @@ name: challengeprobs
 <div class="challenge-problems" tal:attributes="id self/id"><span class="headingtext">Challenge Problems</span></div>
 <ol class="challenge-problems itemize challenge-problems-itemize">
 	<li tal:attributes="class python: type(item).__name__; id item/id; probnum item/attributes/probnum; data-probnum item/attributes/probnum" tal:repeat="item self">
-		<div tal:replace="item"></div>
+		<div tal:attributes="class python: type(item).__name__" tal:content="item"></div>
 	</li>
 </ol>
 
@@ -53,7 +53,7 @@ name: reviewprobs
 <div class="review-problems" tal:attributes="id self/id"><span class="headingtext">Review Problems</span></div>
 <ol class="review-problems itemize review-problems-itemize">
 	<li tal:attributes="class python: type(item).__name__; id item/id; probnum item/attributes/probnum; data-probnum item/attributes/probnum" tal:repeat="item self">
-		<div tal:replace="item"></div>
+		<div tal:attributes="class python: type(item).__name__" tal:content="item"></div>
 	</li>
 </ol>
 
@@ -70,7 +70,7 @@ name: sectionproblems
 </div>
 
 name: hintitem
-<span class="hint"><a href="#" onclick="return togglehint(event)">Hint: </a><span class="hint content hidden" tal:attributes="id self/id" tal:content="self" /></span>
+<span class="hint"><a href="#" onclick="return togglehint(event)">Hint: </a><span class="hint content hidden" tal:attributes="id self/id" tal:content="self"></span></span>
 
 # Note that the non-standard probnum attribute is used in CSS to label these problems (div.problem:after)
 # TODO: Why can't we handle that in the template?
