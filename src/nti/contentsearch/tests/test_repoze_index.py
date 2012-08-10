@@ -25,6 +25,7 @@ from hamcrest import (assert_that, has_key )
 
 _repoze_index.compute_ngrams = True
 
+@unittest.skip
 class TestRepozeIndex(ConfiguringTestBase):
 			
 	def _test_common_catalog(self, catalog):

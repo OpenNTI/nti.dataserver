@@ -21,7 +21,7 @@ from nti.contentsearch.tests import ConfiguringTestBase
 
 from hamcrest import (is_, is_not, has_key, has_item, has_entry, has_length, assert_that)
 
-repoze_index.compute_ngrams = True
+repoze_index.compute_ngrams = False
 
 class TestRepozeUserIndexManager(ConfiguringTestBase):
 
@@ -140,6 +140,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		assert_that(hits, has_entry(HIT_COUNT, 0))
 		assert_that(hits, has_entry(QUERY, 'shield'))
 
+	@unittest.skipIf(repoze_index.compute_ngrams == False, '')
 	@WithMockDSTrans
 	def test_suggest(self):
 		usr, _, _ = self._add_user_index_notes()
@@ -157,6 +158,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		assert_that(items, has_item('rain'))
 		assert_that(items, has_item('rage'))
 
+	@unittest.skipIf(repoze_index.compute_ngrams == False, '')
 	@WithMockDSTrans
 	def test_ngram_search(self):
 		usr, _, _ = self._add_user_index_notes()
