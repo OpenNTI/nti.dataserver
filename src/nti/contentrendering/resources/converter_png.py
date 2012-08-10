@@ -108,8 +108,8 @@ class _GSPDFPNG2(plasTeX.Imagers.gspdfpng.GSPDFPNG):
 			for the_tuple in executor.map( _size, self.images.keys(), pngs ):
 				img = self.images[the_tuple[0]]
 				img._cropped = True
-				img.width = math.ceil( float(the_tuple[1]) ) / 1.3
-				img.height = math.ceil( float(the_tuple[2]) ) / 1.3
+				img.width = math.ceil( float(the_tuple[1]) / 1.3 )
+				img.height = math.ceil( float(the_tuple[2]) / 1.3 )
 				#img.depth = -3
 
 		return res
