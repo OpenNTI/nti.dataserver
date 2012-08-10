@@ -770,7 +770,6 @@ order. A fix in the application for this is pending. */
 }
 #NTIContent .leftpic{
 	float: left;
-	clear: left;
 }
 #NTIContent .chapter.title span.label {
 	/* Keep the title from smashing up against the number. */
