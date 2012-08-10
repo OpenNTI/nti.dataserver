@@ -3,6 +3,12 @@
 
 from plasTeX import Base, Command
 
+# Monkey patching time
+# SAJ: The following are set to render properly nested HTML.
+Base.figure.forcePars = False
+Base.minipage.blockType = True
+Base.parbox.blockType = True
+Base.centerline.blockType = True
 
 class _OneText(Base.Command):
 	args = 'text:str'

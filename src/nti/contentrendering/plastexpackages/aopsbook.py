@@ -147,6 +147,7 @@ class chapterpicture(_OneText):
 
 class chapterquote(Base.Command):
 	args = ''
+	blockType = True
 
 	def invoke( self, tex ):
 		#TODO: Can we read the next command, which should be the
@@ -157,6 +158,7 @@ class chapterquote(Base.Command):
 
 class chapterauthor(Base.Command):
 	args = ''
+	blockType = True
 
 	def invoke( self, tex ):
 		self += tex.readGrouping( '{}', expanded=True, parentNode=self)[0]
@@ -170,10 +172,10 @@ class Defnoindex(_OneText):
 	args = 'text'
 
 class defn(Base.Environment):
-	pass
+	blockType = True
 
 class defns(Base.Environment):
-	pass
+	blockType = True
 
 class picdefns(defns):
 	args = '{Picture}'
@@ -410,6 +412,7 @@ class exer(plastexids.StableIDMixin, Base.subsubsection):
 	args = ''
 	counter = 'exnumber'
 	title = 'exer'
+	blockType = True
 
 	def invoke( self, tex ):
 		res = super(exer,self).invoke( tex )
@@ -439,28 +442,28 @@ class exerhard(exer):
 	pass
 
 class bogus(Base.Environment):
-	pass
+	blockType = True
 
 class importantdef(Base.Environment):
-	pass
+	blockType = True
 
 class important(Base.Environment):
-	pass
+	blockType = True
 
 class concept(Base.Environment):
-	pass
+	blockType = True
 
 class warning(Base.Environment):
-	pass
+	blockType = True
 
 class game(Base.Environment):
-	pass
+	blockType = True
 
 class sidebar(Base.Environment):
-	pass
+	blockType = True
 
 class xtra(Base.Environment):
-	pass
+	blockType = True
 
 titlepattern = re.compile(r'/Title\s+\((?P<title>.*?)\)\s+/Author\s+\((?P<authors>.*?)\).*')
 
@@ -516,6 +519,8 @@ class probref(Command):
 class _BasePicProblem(Base.Environment):
 	args = 'pic'
 	counter = 'probnum'
+	blockType = True
+
 	def invoke(self,tex):
 		res = super(_BasePicProblem,self).invoke( tex )
 
@@ -538,7 +543,6 @@ class picsecprob(_BasePicProblem):
 class problem(Base.Environment):
 	args = '[unknown]'
 	counter = 'probnum'
-	forcePars = True
 	blockType = True
 
 	def invoke( self, tex ):
@@ -790,6 +794,7 @@ class nth(nsuperscript):
 class rightpic(graphicx.includegraphics):
 	" For our purposes, exactly the same as an includegraphics command. "
 	packageName = 'aopsbook'
+	blockType = True
 
 class leftpic(rightpic):
 	pass
@@ -797,6 +802,7 @@ class leftpic(rightpic):
 
 class parpic(Base.Command):
 	args = '( size:dimen ) ( offset:dimen ) [Options:str] [Position] {Picture}'
+	blockType = True
 
 	def invoke(self, tex):
 		res = super( parpic, self).invoke(tex)
@@ -850,6 +856,18 @@ class thehints(Base.List):
 				# How is possible that we sometimes get a hintitem with no corresponding hint?
 				if replaceHint != None:
 					replaceHint.parentNode.replaceChild( child, replaceHint )
+					# SAJ: child sometimes contains par elements. If they are not removed, invalid
+					# markup is produced. The child elements can contain the par elements because
+					# we model them in a list environment and items in a list environment can 
+					# contain block elements. However when we perform the replacement above, we 
+					# are taking the node and placing it inside of an element that will be modeled
+					# as an HTML5 p element, which cannot contain block, or in HTML5 speak 'flow',
+					# elements.
+					#
+					# Since we never print the hints as a list or otherwise use them in a list 
+					# fashion, we should look at changing how we model the hints.
+					for node in child.getElementsByTagName('par'):
+						child.removeChild( node )
 			else:
 				# for now, if it doesn't refer to anything, delete it
 				self.removeChild( child )
