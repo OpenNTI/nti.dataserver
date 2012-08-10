@@ -168,14 +168,21 @@ def sanitize_user_html( user_input, method='html' ):
 		string = frg_interfaces.SanitizedHTMLContentFragment( "<html><body>" + normalized + "</body></html>" )
 	return string
 
-@interface.implementer(frg_interfaces.IUnicodeContentFragment)
-@component.adapter(unicode)
+from repoze.lru import lru_cache
+
+# Caching these can be quite effective, especially during
+# content indexing operations when the same content is indexed
+# for multiple users. Both input and output are immutable
+# TODO: For the non-basestring cases, we could actually cache the representation
+# in a non-persistent field of the object? (But the objects aren't Persistent, so
+# _v fields might not work?)
+
+@interface.implementer(frg_interfaces.IPlainTextContentFragment)
+@component.adapter(basestring)
+@lru_cache(10000)
 def _sanitize_user_html_to_text( user_input ):
 	"""
 	Registered as an adapter with the name 'text' for convenience.
-
-	Produces either an :class:`frg_interfaces.ISanitizedHTMLContentFragment`
-	or (if representable without information loss) an :class:`frg_interfaces.IPlainTextContentFragment`.
 
 	See :func:`sanitize_user_html`.
 	"""
@@ -183,12 +190,14 @@ def _sanitize_user_html_to_text( user_input ):
 
 @interface.implementer(frg_interfaces.IPlainTextContentFragment)
 @component.adapter(frg_interfaces.IHTMLContentFragment)
+@lru_cache(10000)
 def _html_to_sanitized_text( html ):
 	return _doc_to_plain_text( _to_sanitized_doc( html ) )
 
 
 @interface.implementer(frg_interfaces.IPlainTextContentFragment)
 @component.adapter(frg_interfaces.ISanitizedHTMLContentFragment)
+@lru_cache(10000)
 def _sanitized_html_to_sanitized_text( sanitized_html ):
 	p = html5lib.HTMLParser( tree=treebuilders.getTreeBuilder("lxml"), namespaceHTMLElements=False )
 	doc = p.parse( sanitized_html )
