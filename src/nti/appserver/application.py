@@ -1,5 +1,9 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
 
+$Id$
+"""
 import logging
 logger = logging.getLogger( __name__ )
 
@@ -10,25 +14,19 @@ import gevent.local
 
 import sys
 import os
-import traceback
-
-import anyjson as json
 import simplejson
 
 import nti.dictserver as dictserver
 import nti.dictserver.dictionary
 
 
-#Hmm, these next three MUST be imported. We seem to have a path-dependent import req.
 import nti.dataserver._Dataserver
 
-#from nti.dataserver.library import Library
 from nti.dataserver import interfaces as nti_interfaces
 from nti.contentlibrary import interfaces as lib_interfaces
 from nti.contentfragments import interfaces as cfg_interfaces
 
 import nti.contentsearch
-contentsearch = nti.contentsearch
 import nti.contentsearch.indexmanager
 
 import nti.dataserver.users
@@ -40,13 +38,12 @@ from zope import component
 from zope.configuration import xmlconfig
 from zope.event import notify
 from zope.processlifetime import ProcessStarting
-from zope.component.hooks import setSite, getSite, setHooks, siteinfo
-import zope.interface.exceptions
+
+# Make sure our thread-local monkey patch has been applied
+from zope.component.hooks import siteinfo
 assert gevent.local.local in type(siteinfo).__bases__
-import transaction
 
-import nti.appserver.workspaces
-
+import zope.interface.exceptions
 
 import pyramid.config
 import pyramid.authorization
@@ -54,13 +51,12 @@ import pyramid.security
 import pyramid.httpexceptions as hexc
 
 
-import pyramid_zodbconn
-
+import nti.appserver.workspaces
 from nti.appserver import pyramid_auth
 from nti.appserver import interfaces as app_interfaces
 from nti.appserver.traversal import ZopeResourceTreeTraverser
 from nti.appserver import pyramid_authorization
-from nti.appserver import _util
+
 
 # Make the zope interface extend the pyramid interface
 # Although this seems backward, it isn't. The zope location
@@ -70,14 +66,11 @@ from pyramid.interfaces import ILocation
 from zope.location.interfaces import ILocation as IZLocation
 IZLocation.__bases__ = (ILocation,)
 
-#from zope import container as zcontainer
-#from zope import location as zlocation
 
 SOCKET_IO_PATH = 'socket.io'
 
 #TODO: we should do this as configuration
 DATASERVER_WHOOSH_INDEXES = 'DATASERVER_WHOOSH_INDEXES' in os.environ
-
 
 
 class _Main(object):
@@ -114,73 +107,6 @@ class _Main(object):
 			return [""]
 
 		return self.pyramid_app( environ, start_request )
-
-import pyramid_tm
-def site_tween_factory(handler, registry):
-	# Our site setup
-	# If we wanted to, we could be setting sites up as we traverse as well
-	setHooks()
-	def early_request_teardown(request):
-		"""
-		Clean up all the things set up by our new request handler and the
-		tweens. Call this function if the request thread will not be returning,
-		but these resources should be cleaned up.
-		"""
-		transaction.commit()
-		pyramid_zodbconn.get_connection(request).close()
-		setSite( None )
-		# Remove the close action that pyramid_zodbconn wants to do.
-		# The connection might have been reused by then.
-		for callback in request.finished_callbacks:
-			if getattr( callback, '__module__', None ) == pyramid_zodbconn.__name__:
-				request.finished_callbacks.remove( callback )
-				break
-
-	def site_tween( request ):
-		"""
-		Within the scope of a transaction, gets a connection and installs our
-		site manager. Records the active user and URL in the transaction.
-		"""
-		conn = pyramid_zodbconn.get_connection( request )
-		conn.sync()
-		site = conn.root()['nti.dataserver']
-		old_site = getSite()
-		# Not sure what circumstances lead to already having a site
-		# here. Have seen it at startup. Force it back to none (?)
-		# It is very bad to raise an exception here, it interacts
-		# badly with logging
-		try:
-			assert old_site is None, "Should not have a site already in place"
-		except AssertionError:
-			logger.exception( "Should not have a site already in place: %s", old_site )
-			old_site = None
-
-		setSite( site )
-		try:
-			# Now (and only now, that the site is setup since that's when we can access the DB
-			# and get the user) record info in the transaction
-			uid = pyramid.security.authenticated_userid( request )
-			if uid:
-				transaction.get().setUser( uid )
-			transaction.get().note( request.url )
-			request.environ['nti.early_request_teardown'] = early_request_teardown
-			response = handler(request)
-			### FIXME:
-			# pyramid_tm <= 0.5 has a bug in that if committing raises a retryable exception,
-			# it doesn't actually retry (because commit is inside the __exit__ of a context
-			# manager, and a normal exit ignores the return value of __exit__, so the loop
-			# doesn't actually loop: the return statement trumps).
-			# Thus, we commit here so that an exception is raised and caught.
-			# See https://github.com/Pylons/pyramid_tm/issues/4
-			# Confirmed and filed against 0.4. Probably still the case with 0.5, but our tests
-			# pass with or without these next two lines. There's no real harm leaving them in (right?)
-			if not transaction.isDoomed() and not pyramid_tm.default_commit_veto( request, response ):
-				transaction.commit()
-			return response
-		finally:
-			setSite()
-
-	return site_tween
 
 def _create_xml_conf_machine( settings ):
 	xml_conf_machine = xmlconfig.ConfigurationMachine()
@@ -264,16 +190,9 @@ def createApplication( http_port,
 	pyramid_config.include( 'pyramid_tm' )
 	# ...which will veto commit on a 4xx or 5xx response
 	pyramid_config.registry.settings['tm.commit_veto'] = 'pyramid_tm.default_commit_veto'
+	# ...and which will retry a few times. Note this requires the request to be fully buffered
 	pyramid_config.registry.settings['tm.attempts'] = 5
-	# ...and which will retry a few times
-	# NOTE: This is disabled because retry means that the entire request body must be
-	# buffered, something that cannot happen with websockets. (However, the way the handlers
-	# are set up, we may never get to the pyramid object on a websocket request, so
-	# it probably doesn't matter. Verify).
-	# TODO: This retry and transaction logic is very nice...how to integrate it with
-	# the socketio_server and websocket handling? That all happens before we get down this
-	# far
-	#pyramid_config.registry.settings['tm.attempts'] = 3
+
 	# Arrange for a db connection to be opened with each request
 	# if pyramid_zodbconn.get_connection() is called (until called, this does nothing)
 	pyramid_config.include( 'pyramid_zodbconn' )
@@ -286,9 +205,10 @@ def createApplication( http_port,
 	# I think the DS will want to be a transaction.interfaces.ISynchronizer and/or an IDataManager
 	pyramid_config.registry.zodb_database = server.db # 0.2
 	pyramid_config.registry._zodb_databases = { '': server.db } # 0.3
-	#pyramid_config.registry.settings('zodbconn.uri') =
 
-	pyramid_config.add_tween( 'nti.appserver.application.site_tween_factory', under='pyramid_tm.tm_tween_factory' )
+	# Add a tween that ensures we are within a SiteManager. This also has
+	# some logic to clean up some bad transaction handling in pyramid_tm.
+	pyramid_config.add_tween( 'nti.appserver.zope_site_tween.site_tween_factory', under='pyramid_tm.tm_tween_factory' )
 
 
 	pyramid_config.include( 'pyramid_zcml' )
@@ -789,13 +709,6 @@ def create_index_manager(server, use_whosh_storage=None, user_indices_dir=None):
 		logger.debug( 'Creating Repoze-Catalog based index manager' )
 		ixman = nti.contentsearch.indexmanager.create_repoze_index_manager(dataserver=server)
 
-	#else:
-	#	logger.debug( 'Creating ZEO based index manager' )
-	#	indicesKey, blobsKey = '__indices', "__blobs"
-	#	ixman = nti.contentsearch.indexmanager.create_zodb_index_manager(db = server.searchDB,
-	#																	 indicesKey = indicesKey,
-	#																	 blobsKey = blobsKey,
-	#																	 dataserver = server)
 
 	return ixman
 
