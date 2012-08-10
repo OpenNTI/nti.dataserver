@@ -31,9 +31,7 @@ from nti.contentsearch.tests import ConfiguringTestBase
 
 from hamcrest import (is_, has_entry, assert_that)
 
-_whoosh_index.compute_ngrams = True
-_repoze_index.compute_ngrams = True
-_contentsearch.compute_ngrams = True
+_contentsearch.compute_ngrams = _repoze_index.compute_ngrams  = _whoosh_index.compute_ngrams = False
 
 class _BaseIndexManagerTest(object):
 
@@ -103,7 +101,14 @@ class _BaseIndexManagerTest(object):
 		hits = self.im.search(q)
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 
-		q.term = 'coff'
+
+	@unittest.skipIf(_contentsearch.compute_ngrams == False, '')
+	@WithMockDSTrans
+	def test_unified_search_ngrams(self):
+		self._add_notes_and_index(('omega radicals', 'the queen of coffee'))
+		self.im.add_book(indexname='bleach', indexdir=self.book_idx_dir)
+
+		q = QueryObject(term='coff', indexname='bleach', username='nt@nti.com')
 		hits = self.im.ngram_search(q)
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 
@@ -113,7 +118,27 @@ class _BaseIndexManagerTest(object):
 
 		hits = self.im.suggest_and_search(q)
 		assert_that(hits, has_entry(HIT_COUNT, 2))
+		
+	@unittest.skipIf(_contentsearch.compute_ngrams == False, '')
+	@WithMockDSTrans
+	def test_unified_search_suggest(self):
+		self._add_notes_and_index(('omega radicals', 'the queen of coffee'))
+		self.im.add_book(indexname='bleach', indexdir=self.book_idx_dir)
 
+		q = QueryObject(term='omeg', indexname='bleach', username='nt@nti.com')
+		hits = self.im.suggest(q)
+		assert_that(hits, has_entry(HIT_COUNT, 1))
+
+	@unittest.skipIf(_contentsearch.compute_ngrams == False, '')
+	@WithMockDSTrans
+	def test_unified_search_suggest_and_search(self):
+		self._add_notes_and_index(('omega radicals', 'the queen of coffee'))
+		self.im.add_book(indexname='bleach', indexdir=self.book_idx_dir)
+
+		q = QueryObject(term='omeg', indexname='bleach', username='nt@nti.com')
+		hits = self.im.suggest_and_search(q)
+		assert_that(hits, has_entry(HIT_COUNT, 2))
+		
 	# ----------------
 
 	def _add_notes_to_ds(self, strings=zanpakuto_commands):
@@ -155,14 +180,27 @@ class _BaseIndexManagerTest(object):
 
 		hits = self.im.user_data_search(query='rage', username='nt@nti.com', search_on=('Notes',))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
+		
+	@unittest.skipIf(_contentsearch.compute_ngrams == False, '')
+	@WithMockDSTrans
+	def test_search_notes_ngrams(self):
+		self._add_notes_and_index()
 
 		hits = self.im.user_data_ngram_search(query='deat', username='nt@nti.com', search_on=('note',))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 
-		hits = self.im.user_data_suggest_and_search(query='creat', username='nt@nti.com', search_on=('note',))
-		assert_that(hits, has_entry(HIT_COUNT, 1))
-
+	@unittest.skipIf(_contentsearch.compute_ngrams == False, '')
+	@WithMockDSTrans
+	def test_search_notes_suggest(self):
+		self._add_notes_and_index()
 		hits = self.im.user_data_suggest(username='nt@nti.com', search_on=('note',), query='flow')
+		assert_that(hits, has_entry(HIT_COUNT, 1))
+		
+	@unittest.skipIf(_contentsearch.compute_ngrams == False, '')
+	@WithMockDSTrans
+	def test_search_notes_suggest_and_search(self):
+		self._add_notes_and_index()
+		hits = self.im.user_data_suggest_and_search(query='creat', username='nt@nti.com', search_on=('note',))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 
 	@WithMockDSTrans
