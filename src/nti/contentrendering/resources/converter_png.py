@@ -110,6 +110,8 @@ class _GSPDFPNG2(plasTeX.Imagers.gspdfpng.GSPDFPNG):
 				img._cropped = True
 				img.width = math.ceil( float(the_tuple[1]) / 1.3 )
 				img.height = math.ceil( float(the_tuple[2]) / 1.3 )
+				print("~~~~~~")
+				print( (the_tuple, img.width, img.height) )
 				#img.depth = -3
 
 		return res
@@ -174,8 +176,8 @@ class GSPDFPNG2BatchConverter(converters.ImagerContentUnitRepresentationBatchCon
 														 self.__newNameFromOrig(image.path,
 																				scale,
 																				False)),
-											image.width * (scale / rsg.imager.defaultScaleFactor),
-											image.height * (scale/rsg.imager.defaultScaleFactor),
+											math.ceil(image.width * (scale / rsg.imager.defaultScaleFactor)),
+											math.ceil(image.height * (scale/rsg.imager.defaultScaleFactor)),
 											image.depth )
 
 				newImage._scaleFactor = scale
