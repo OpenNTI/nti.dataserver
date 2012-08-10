@@ -53,7 +53,7 @@ def test_exerciseRightPicTransform():
 	#run the transform
 	figureTransform( dom )
 
-	assert_that( exers[1].firstChild.firstChild.nodeName, is_( 'rightpic' ) )
+	assert_that( exers[1].firstChild.nodeName, is_( 'rightpic' ) )
 
 def test_exerciseRightPicTransformFirstElement():
 	example = br"""
@@ -70,7 +70,6 @@ def test_exerciseRightPicTransformFirstElement():
 	dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
 	exers = dom.getElementsByTagName('exer')
 	#before
-	assert_that( len(exers[0].childNodes), is_( 2 ) )
 	assert_that( exers[0].firstChild.firstChild.nodeName, is_( 'rightpic' ) )
 
 	#run the transform
@@ -79,7 +78,6 @@ def test_exerciseRightPicTransformFirstElement():
 
 	#after: We expect the image to still be the first child of the first child, but to be merged into
 	# the main par element of the exer node.
-	assert_that( len(exers[0].childNodes), is_( 1 ) )
 	assert_that( exers[0].firstChild.firstChild.nodeName, is_( 'rightpic' ) )
 
 def test_revprobLeftPicTransform():
@@ -101,7 +99,7 @@ def test_revprobLeftPicTransform():
 	#We expect the leftpic to have been moved down a level and belong to the last review problem as opposed to the first one.
 
 	revProbWithPic = dom.getElementsByTagName( 'revprob')[1];
-	assert_that( revProbWithPic.firstChild.firstChild.nodeName, is_( 'leftpic' ))
+	assert_that( revProbWithPic.firstChild.nodeName, is_( 'leftpic' ))
 
 def test_revProbParPicTransformNoMove():
 	example = br"""
@@ -158,7 +156,7 @@ def test_challProbParPicTransform():
 	figureTransform( dom )
 	#We expect the leftpic to have been moved down a level and belong to the last challenge problem as opposed to the first one.
 	revProbWithPic = dom.getElementsByTagName( 'chall')[2];
-	assert_that( revProbWithPic.firstChild.firstChild.nodeName, is_( 'parpic' ))
+	assert_that( revProbWithPic.firstChild.nodeName, is_( 'parpic' ))
 
 def test_challLeftPicTransformFirstElementOwnPar():
 	example = br"""
@@ -175,7 +173,7 @@ diagonal $\seg{NP}$ of the rectangle?
 	figureTransform( dom )
 	#We expect the leftpic to have been moved down a level and belong to the last part as opposed to the first one.
 	challWithPic = dom.getElementsByTagName( 'chall' )[0]
-	assert_that( challWithPic.firstChild.firstChild.nodeName, is_( 'leftpic' ))
+	assert_that( challWithPic.firstChild.nodeName, is_( 'leftpic' ))
 
 def test_solutionParPicTransform():
 	example = br"""
@@ -234,7 +232,7 @@ area of right triangles.
 	figureTransform( dom )
 	#We expect the leftpic to have been moved down a level and belong to the last part as opposed to the first one.
 	partWithPic = dom.getElementsByTagName( 'part')[1];
-	assert_that( partWithPic.firstChild.firstChild.nodeName, is_( 'rightpic' ))
+	assert_that( partWithPic.firstChild.nodeName, is_( 'rightpic' ))
 
 def test_partLeftPicTransformMerged():
 	example = br"""
@@ -263,7 +261,7 @@ at the right, where we have combined right triangles $ABD$ and $ACD$ to form equ
 	figureTransform( dom )
 	#We expect the leftpic to have been moved down a level and belong to the last part as opposed to the first one.
 	partWithPic = dom.getElementsByTagName( 'part')[1];
-	assert_that( partWithPic.firstChild.firstChild.nodeName, is_( 'leftpic' ))
+	assert_that( partWithPic.firstChild.nodeName, is_( 'leftpic' ))
 
 def test_partRightPicTransformNoMove():
 	example = br"""

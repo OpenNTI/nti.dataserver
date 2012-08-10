@@ -17,11 +17,6 @@ def transform( document ):
         for node in document.getElementsByTagName( nodeType ):
             parentNode = node.parentNode
 
-            # If thde *pic node is followed by and whitespace text node, remove the whitespace node.
-            if node.nextSibling and node.nextSibling.source.strip() == '':
-                logger.debug("Removing empty sibling.")
-                parentNode.removeChild( node.nextSibling )
-
             # Move the *pic node from right before a solution to inside of the solution.
             if parentNode.parentNode.nodeName == 'section' and \
                     parentNode.nextSibling.firstChild.nodeName == 'solution':
@@ -32,18 +27,9 @@ def transform( document ):
             # Handle cases where the *pic node is in a separate par element before the first node of a set.
             elif len(parentNode.childNodes) == 1 and parentNode.parentNode.firstChild == parentNode and \
                     parentNode.nextSibling.nodeName in problemElements:
-                logger.debug("Moving %s, %s, into the first node, %s , in the set of %s", nodeType, node, 
+                logger.info("Moving %s, %s, into the first node, %s , in the set of %s", nodeType, node, 
                              parentNode.nextSibling, parentNode.nextSibling.nodeName)
-                parentNode.nextSibling.firstChild.insert( 0, node )
-                parentNode.removeChild( node )
-
-            # Handle cases where the *pic node is before the first node of a set, but has been grouped as a separate
-            # par element inside the first node.  This case moves the parpic into the main body of the node.
-            elif len(parentNode.childNodes) == 1 and parentNode.parentNode.firstChild == parentNode and \
-                    parentNode.parentNode.nodeName in problemElements:
-                logger.debug("Moving %s, %s, into the main body of node, %s , in the set of %s", nodeType, node, 
-                             parentNode.parentNode, parentNode.parentNode.nodeName)
-                parentNode.parentNode.childNodes[1].insert( 0, node )
+                parentNode.nextSibling.insert( 0, node )
                 parentNode.removeChild( node )
 
             # Move *pics down into the approriate container node.
@@ -59,17 +45,10 @@ def transform( document ):
                 if lastChildNode.lastChild == node and nodeContainer.nextSibling != None and \
                         nodeContainer.nextSibling.nodeName in problemElements:
                     #move it to the parent's next sibling
-                    logger.info( "Moving %s %s of %s %s to its parent's next sibling, %s %s", nodeType, node, 
+                    logger.debug( "Moving %s %s of %s %s to its parent's next sibling, %s %s", nodeType, node, 
                                  parentType, nodeContainer, parentType, nodeContainer.nextSibling )
                     lastChildNode.removeChild( node )
-                    nodeContainer.nextSibling.firstChild.insert( 0, node )
-
-            # If the *pic is the only element of a par node merge it with the parent's next sibling, if it exists.
-            elif len(parentNode.childNodes) == 1 and parentNode.nextSibling is not None:
-                logger.debug( "Merging %s %s into it's parent nodes next sibling %s.", nodeType, node, 
-                              parentNode.nextSibling )
-                parentNode.nextSibling.insert( 0, node )
-                parentNode.removeChild( node )
+                    nodeContainer.nextSibling.insert( 0, node )
 
             # Remove empty parents
             if parentNode.childNodes == []:
