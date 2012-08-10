@@ -182,6 +182,7 @@ deprecated( 'RepozeDataStore', 'Use RepozeCatalogDataStore' )
 class RepozeDataStore(_RepozeDataStore, PersistentRepozeDataStore):
 	pass
 
+deprecated( 'RepozeCatalogDataStore', 'Use IRepozeEntityIndexManager' )	
 class RepozeCatalogDataStore(_BasicRepozeDataStore):
 	interface.implements(IRepozeDataStore)
 	pass
