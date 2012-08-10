@@ -93,3 +93,50 @@ def uncached_in_response( context ):
 	context = Proxy( context )
 	interface.alsoProvides( context, app_interfaces.IUncacheableInResponse )
 	return context
+
+
+def dump_stacks():
+	"""
+	:return: A sequence of text lines detailing the stacks of running
+		threads and greenlets. (One greenlet will duplicate one thread,
+		the current thread and greenlet.)
+	"""
+	dump = []
+
+	# threads
+	import threading # Late import this stuff because it may get monkey-patched
+	import sys
+	import gc
+	import traceback
+	from greenlet import greenlet
+
+	threads = {th.ident: th.name for th in threading.enumerate()}
+
+	for thread, frame in sys._current_frames().items():
+		dump.append('Thread 0x%x (%s)\n' % (thread, threads.get(thread)))
+		dump.append(''.join(traceback.format_stack(frame)))
+		dump.append('\n')
+
+	# greenlets
+
+
+	# if greenlet is present, let's dump each greenlet stack
+	# Use the gc module to inspect all objects to find the greenlets
+	# since there isn't a global registry
+	for ob in gc.get_objects():
+		if not isinstance(ob, greenlet):
+			continue
+		if not ob:
+			continue   # not running anymore or not started
+		dump.append('Greenlet %s\n' % ob)
+		dump.append(''.join(traceback.format_stack(ob.gr_frame)))
+		dump.append('\n')
+
+	return dump
+
+def dump_stacks_view(request):
+	body = '\n'.join(dump_stacks())
+	print( body )
+	request.response.text = body
+	request.response.content_type = 'text/plain'
+	return request.response
