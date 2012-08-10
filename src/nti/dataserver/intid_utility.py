@@ -43,4 +43,6 @@ class IntIds(zc_utility.IntIds):
 			raise ObjectMissingError( id, self )
 
 	def __repr__( self ):
-		return "<%s.%s %s/%s>" % (self.__class__.__module__, self.__class__.__name__, self.__parent__, self.__name__)
+		return "<%s.%s (%s) %s/%s>" % (self.__class__.__module__, self.__class__.__name__,
+									   self.attribute,
+									   self.__parent__, self.__name__)

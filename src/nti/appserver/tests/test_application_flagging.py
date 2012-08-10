@@ -11,6 +11,7 @@ from hamcrest import greater_than
 from hamcrest import not_none
 from hamcrest.library import has_property
 from hamcrest import greater_than_or_equal_to
+from hamcrest import is_not as does_not
 
 
 from webtest import TestApp
@@ -103,10 +104,32 @@ class TestApplicationGlossary(ApplicationTestBase):
 		assert_that( res.body, contains_string( 'The second part' ) )
 
 		# Initially ascending
-		assert_that( res.body, contains_string( '?table-sortOrder=ascending&table-sortOn=table-note-created-1' ) )
+		assert_that( res.body, contains_string( '?table-sortOrder=ascending&table-sortOn=table-note-created-' ) )
 		# So request that
-		res = testapp.get( path + '?table-sortOrder=ascending&table-sortOn=table-note-created-1', extra_environ=self._make_extra_environ() )
+		res = testapp.get( path + '?table-sortOrder=ascending&table-sortOn=table-note-created-2', extra_environ=self._make_extra_environ() )
 		# and we get the reverse link
-		assert_that( res.body, contains_string( '?table-sortOrder=descending&table-sortOn=table-note-created-1' ) )
+		assert_that( res.body, contains_string( '?table-sortOrder=descending&table-sortOn=table-note-created-2' ) )
 
-		res = testapp.get( path + '?table-sortOrder=ascending&table-sortOn=table-note-modified-2', extra_environ=self._make_extra_environ() )
+		res = testapp.get( path + '?table-sortOrder=ascending&table-sortOn=table-note-modified-3', extra_environ=self._make_extra_environ() )
+
+		# OK, now let's delete one obj and unflag the other, and then we should have an empty page
+
+		form = res.form
+		form.set( 'table-note-selected-0-selectedItems', True, index=0 )
+		res = form.submit( 'subFormTable.buttons.unflag', extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 302 ) )
+
+		res = testapp.get( path, extra_environ=self._make_extra_environ() )
+		assert_that( res.content_type, is_( 'text/html' ) )
+		assert_that( res.body, does_not( contains_string( 'The first part' ) ) )
+		assert_that( res.body, contains_string( 'The second part' ) )
+
+		form = res.form
+		form.set( 'table-note-selected-0-selectedItems', True, index=0 )
+		res = form.submit( 'subFormTable.buttons.delete', extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 302 ) )
+
+		res = testapp.get( path, extra_environ=self._make_extra_environ() )
+		assert_that( res.content_type, is_( 'text/html' ) )
+		assert_that( res.body, does_not( contains_string( 'The first part' ) ) )
+		assert_that( res.body, does_not( contains_string( 'The second part' ) ) )
