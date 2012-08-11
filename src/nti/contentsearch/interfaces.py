@@ -416,16 +416,19 @@ class IContentTokenizer(interface.Interface):
 class IRepozeCatalogCreator(interface.Interface):
 	pass
 
-class INoteRepozeCatalogCreator(IRepozeCatalogCreator):
+class IRepozeCatalogFieldCreator(interface.Interface):
 	pass
 
-class IHighlightRepozeCatalogCreator(IRepozeCatalogCreator):
+class INoteRepozeCatalogFieldCreator(interface.Interface):
 	pass
 
-class IRedactionRepozeCatalogCreator(IRepozeCatalogCreator):
+class IHighlightRepozeCatalogFieldCreator(interface.Interface):
 	pass
 
-class IMessageInfoRepozeCatalogCreator(IRepozeCatalogCreator):
+class IRedactionRepozeCatalogFieldCreator(interface.Interface):
+	pass
+
+class IMessageInfoRepozeCatalogFieldCreator(interface.Interface):
 	pass
 
 

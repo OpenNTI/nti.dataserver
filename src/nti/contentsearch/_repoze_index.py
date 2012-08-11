@@ -12,20 +12,10 @@ from repoze.catalog.indexes.text import CatalogTextIndex
 from repoze.catalog.indexes.field import CatalogFieldIndex
 from repoze.catalog.indexes.keyword import CatalogKeywordIndex
 
-
-from nti.contentsearch import compute_ngrams
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch.textindexng3 import CatalogTextIndexNG3
 
 from nti.contentsearch._ngrams_utils import ngrams
-
-from nti.contentsearch.common import normalize_type_name
-from nti.contentsearch.common import (	note_, highlight_, messageinfo_, redaction_, content_ )
-# from nti.contentsearch.common import (	OID, NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, COLLECTION_ID, ID)
-#from nti.contentsearch.common import (	note_, highlight_, messageinfo_, redaction_ )
-#										references_, recipients_, sharedWith_,  
-#										note_, highlight_, messageinfo_, redaction_, 
-#										replacementContent_, redactionExplanation_ )
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -60,10 +50,6 @@ def get_creator(obj, default):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	return adapted.get_creator() or default
 
-def get_references(obj, default):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
-	return adapted.get_references() or default
-
 def get_last_modified(obj, default):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	return adapted.get_last_modified() or default
@@ -72,17 +58,24 @@ def get_keywords(obj, default):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	return adapted.get_keywords() or default
 
+def _flatten_list(result, default):
+	result = ' '.join(result) if result else default
+	return result
+
+def get_references(obj, default):
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	result = adapted.get_references()
+	return _flatten_list(result, default)
+
 def get_recipients(obj, default):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	result = adapted.get_recipients()
-	result = ' '.join(result) if result else default
-	return result
+	return _flatten_list(result, default)
 
 def get_sharedWith(obj, default):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	result = adapted.get_sharedWith()
-	result = ' '.join(result) if result else default
-	return result
+	return _flatten_list(result, default)
 
 def get_object_content(obj, default=None):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
@@ -91,75 +84,20 @@ def get_object_content(obj, default=None):
 get_content = get_object_content
 
 def get_object_ngrams(obj, default=None):
-	return ngrams(get_object_content(obj), default)
+	return ngrams(get_object_content(obj)) or default
 get_ngrams = get_object_ngrams
-
-def get_note_ngrams(obj, default=None):
-	return ngrams(get_object_content(obj)) if compute_ngrams else u''
-		
-def get_highlight_ngrams(obj, default=None):
-	return ngrams(get_object_content(obj)) if compute_ngrams else u''
-
-def get_redaction_ngrams(obj, default=None):
-	return ngrams(get_object_content(obj)) if compute_ngrams else u''
-
-def get_messageinfo_ngrams(obj, default=None):
-	return ngrams(get_object_content(obj)) if compute_ngrams else u''
 
 def get_replacement_content(obj, default=None):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	result = adapted.get_replacement_content()
 	return result.lower() if result else None
-	
+get_replacementContent = get_replacement_content
+
 def get_redaction_explanation(obj, default=None):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	result = adapted.get_redaction_explanation()
 	return result.lower() if result else None
-	
-def _create_text_index(field, discriminator):
-	return CatalogTextIndexNG3(field, discriminator)
-
-def _create_treadable_mixin_catalog():
-	catalog = Catalog(family=BTrees.family64)
-	#catalog[NTIID] = CatalogFieldIndex(get_ntiid)
-	#catalog[OID] = CatalogFieldIndex(get_external_oid)
-	#catalog[CREATOR] = CatalogFieldIndex(get_creator)
-	#catalog[keywords_] = CatalogKeywordIndex(get_keywords)
-	#catalog[sharedWith_] = CatalogKeywordIndex(get_sharedWith)
-	#catalog[CONTAINER_ID] = CatalogFieldIndex(get_containerId)
-	#catalog[LAST_MODIFIED] = CatalogFieldIndex(get_last_modified)
-	return catalog
-
-def create_notes_catalog():
-	catalog = _create_treadable_mixin_catalog()
-	#catalog[references_] = CatalogKeywordIndex(get_references)
-	#catalog[ngrams_] = _create_text_index(ngrams_, get_note_ngrams)
-	catalog[content_] = _create_text_index(content_, get_object_content)
-	return catalog
-	
-def create_highlight_catalog():
-	catalog = _create_treadable_mixin_catalog()
-	#catalog[ngrams_] = _create_text_index(ngrams_, get_highlight_ngrams)
-	catalog[content_] = _create_text_index(content_, get_object_content)
-	return catalog
-
-def create_redaction_catalog():
-	catalog = _create_treadable_mixin_catalog()
-	#catalog[ngrams_] = _create_text_index(ngrams_, get_redaction_ngrams)
-	catalog[content_] = _create_text_index(content_, get_object_content)
-	#catalog[replacementContent_] = _create_text_index(replacementContent_, get_replacement_content)
-	#catalog[redactionExplanation_] = _create_text_index(redactionExplanation_, get_redaction_explanation)
-	return catalog
-
-def create_messageinfo_catalog():
-	catalog = _create_treadable_mixin_catalog()
-	#catalog[ID] = CatalogFieldIndex(get_id)
-	#catalog[channel_] = CatalogFieldIndex(get_channel)
-	#catalog[recipients_] = CatalogKeywordIndex(get_recipients)
-	#catalog[references_] = CatalogKeywordIndex(get_references)
-	#catalog[ngrams_] = _create_text_index(ngrams_, get_messageinfo_ngrams)
-	catalog[content_] = _create_text_index(content_, get_object_content)
-	return catalog
+get_redactionExplanation = get_redaction_explanation
 
 def create_catalog(type_name):
 	creator = component.queryUtility(search_interfaces.IRepozeCatalogCreator,  name=type_name)
@@ -171,21 +109,25 @@ def create_catalog(type_name):
 class _RepozeCatalogCreator(object):
 	def create(self):
 		catalog = Catalog()
-		for name, func in component.getUtilitiesFor( self._iface ):
-			func( catalog, name,  self._iface  )		
+		self._set4(catalog, search_interfaces.IRepozeCatalogFieldCreator)
+		self._set4(catalog, self._iface)
 		return catalog
-		
+
+	def _set4(self, catalog, iface):
+		for name, func in component.getUtilitiesFor(iface):
+			func( catalog, name, iface)		
+	
 class _RepozeNoteCatalogCreator(_RepozeCatalogCreator):
-	_iface = search_interfaces.INoteRepozeCatalogCreator
+	_iface = search_interfaces.INoteRepozeCatalogFieldCreator
 
 class _RepozeHighlightCatalogCreator(_RepozeCatalogCreator):
-	_iface = search_interfaces.IHighlightRepozeCatalogCreator
+	_iface = search_interfaces.IHighlightRepozeCatalogFieldCreator
 
 class _RepozeRedactionCatalogCreator(_RepozeCatalogCreator):
-	_iface = search_interfaces.IRedactionRepozeCatalogCreator
+	_iface = search_interfaces.IRedactionRepozeCatalogFieldCreator
 
 class _RepozeMessageInfoCatalogCreator(_RepozeCatalogCreator):
-	_iface = search_interfaces.IMessageInfoRepozeCatalogCreator
+	_iface = search_interfaces.IMessageInfoRepozeCatalogFieldCreator
 
 # repoze index field creators
 
