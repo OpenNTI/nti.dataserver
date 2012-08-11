@@ -244,7 +244,9 @@ class InterfaceObjectIO(AbstractDynamicObjectIO):
 
 	def __init__( self, ext_self, iface_upper_bound=None ):
 		"""
-		:param iface_upper_bound: Subclasses can either override this
+		:param iface_upper_bound: The upper bound on the schema to use
+			to externalize `ext_self`; we will use the most derived sub-interface
+			of this interface that the object implements. Subclasses can either override this
 			constructor to pass this parameter (while taking one argument themselves,
 			to be usable as an adapter), or they can define the class
 			attribute ``_ext_iface_upper_bound``

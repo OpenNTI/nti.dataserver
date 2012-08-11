@@ -247,6 +247,11 @@ def validate_field_value( self, field_name, field, value ):
 	set. If the value needs to be adapted to the schema type for validation to work,
 	this method will attempt that.
 
+	:param string field_name: The name of the field we are setting. This
+		implementation currently only uses this for informative purposes.
+	:param field: The schema field to use to validate (and set) the value.
+	:type field: :class:`zope.schema.interfaces.IField`
+
 	:raises zope.interface.Invalid: If the field cannot be validated,
 		along with a good reason (typically better than simply provided by the field itself)
 	:return: A callable of no arguments to call to actually set the value (necessary
@@ -295,9 +300,14 @@ def validate_field_value( self, field_name, field, value ):
 
 def validate_named_field_value( self, iface, field_name, value ):
 	"""
-	Given a :class:`zope.interface.Interface` and the name of one of its fields,
+	Given a :class:`zope.interface.Interface` and the name of one of its attributes,
 	validate that the given ``value`` is appropriate to set. See :func:`validate_field_value`
 	for details.
+
+	:param string field_name: The name of a field contained in `iface`. May name
+		a regular :class:`zope.interface.Attribute`, or a :class:`zope.schema.interfaces.IField`;
+		if the latter, extra validation will be possible.
+
 	:return: A callable of no arguments to call to actually set the value.
 	"""
 	field = iface[field_name]

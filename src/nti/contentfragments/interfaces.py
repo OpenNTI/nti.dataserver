@@ -164,6 +164,16 @@ class CensoredUnicodeContentFragment(_AddMixin,UnicodeContentFragment):
 CensoredUnicodeContentFragment._add_rules = ((ICensoredUnicodeContentFragment,CensoredUnicodeContentFragment),
 											 (IUnicodeContentFragment,UnicodeContentFragment))
 
+class ICensoredPlainTextContentFragment(IPlainTextContentFragment,ICensoredUnicodeContentFragment):
+	pass
+
+@interface.implementer(ICensoredPlainTextContentFragment)
+class CensoredPlainTextContentFragment(PlainTextContentFragment):
+	pass
+
+PlainTextContentFragment.censored = lambda s, n: CensoredPlainTextContentFragment( n )
+CensoredPlainTextContentFragment.censored = lambda s, n: CensoredPlainTextContentFragment( n )
+
 class ICensoredHTMLContentFragment(IHTMLContentFragment,ICensoredUnicodeContentFragment):
 	pass
 
@@ -229,13 +239,32 @@ class ICensoredContentStrategy(interface.Interface):
 	on censoring content.
 	"""
 
-	def censor( content_fragment, censored_ranges ):
+	def censor_ranges( content_fragment, censored_ranges ):
 		"""
 		Censors the content fragment appropriately and returns the censored value.
 		:param content_fragment: The fragment being censored.
 		:param censored_ranges: The ranges of illicit content as produced by
 			:meth:`ICensoredContentScanner.scan`; they are not guaranteed to be in any
 			particular order so you may need to sort them with :func:`sorted` (in reverse)
+		:return: The censored content fragment, if any censoring was done to it.
+			May also raise a :class:`ValueError` if censoring is not
+			allowed and the content should be thrown away.
+
+		"""
+
+class ICensoredContentPolicy(interface.Interface):
+	"""
+	A top-level policy puts together detection of content ranges
+	to censor with a strategy to censor them
+	"""
+
+	def censor( content_fragment, context ):
+		"""
+		Censors the content fragment appropriately and returns the censored value.
+		:param content_fragment: The fragment being censored.
+		:param context: The object that this content fragment should be censored
+			with regard to. For example, the fragment's container or composite
+			object that will hold the fragment.
 		:return: The censored content fragment, if any censoring was done to it.
 			May also raise a :class:`ValueError` if censoring is not
 			allowed and the content should be thrown away.

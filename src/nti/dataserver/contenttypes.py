@@ -29,6 +29,7 @@ from nti.dataserver import users
 from nti.ntiids import ntiids
 
 from nti.contentfragments import interfaces as frg_interfaces
+from nti.contentfragments import censor
 
 from zope import interface
 from zope.deprecation import deprecate
@@ -349,8 +350,8 @@ class Note(ThreadableExternalizableMixin, Highlight):
 				assert (isinstance(x, six.string_types) and len(x) > 0) or isinstance(x,Canvas)
 
 			# Sanitize the body. Anything that can become a fragment, do so, incidentally
-			# sanitizing it along the way.
-			self.body = [frg_interfaces.IUnicodeContentFragment(x, x)
+			# sanitizing and censoring it along the way.
+			self.body = [censor.censor_assign( frg_interfaces.IUnicodeContentFragment( x, x ), self, 'body' )
 							for x
 							in self.body]
 

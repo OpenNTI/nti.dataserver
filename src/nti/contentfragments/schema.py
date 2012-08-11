@@ -39,7 +39,6 @@ class TextLineUnicodeContentFragment(Object,TextLine):
 
 	Pass the keyword arguments for :class:`TextLine` to the constructor; the ``schema``
 	argument for :class:`Object` is already handled.
-	"""	"""
 	"""
 
 	_iface = interfaces.IContentFragment
@@ -56,11 +55,21 @@ class TextLineUnicodeContentFragment(Object,TextLine):
 class LatexFragmentTextLine(TextLineUnicodeContentFragment):
 	"""
 	A TextLine that requires content to be in LaTeX format.
+
+	Pass the keyword arguments for :class:`TextLine` to the constructor; the ``schema``
+	argument for :class:`Object` is already handled.
 	"""
 	_iface = interfaces.ILatexContentFragment
 	_impl = interfaces.LatexContentFragment
 
 class HTMLContentFragment(TextUnicodeContentFragment):
+	"""
+	A :class:`Text` type that also requires the object implement
+	an interface descending from :class:`interfaces.IHTMLContentFragment`.
+
+	Pass the keyword arguments for :class:`Text` to the constructor; the ``schema``
+	argument for :class:`Object` is already handled.
+	"""
 
 	_iface = interfaces.IHTMLContentFragment
-	_imple = interfaces.HTMLContentFragment
+	_impl = interfaces.HTMLContentFragment

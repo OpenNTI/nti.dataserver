@@ -118,8 +118,6 @@ class TestApplication(ApplicationTestBase):
 	def test_options_request( self ):
 		testapp = TestApp( self.app )
 		res = testapp.options( '/dataserver2/logon.ping', extra_environ=self._make_extra_environ() )
-		from IPython.core.debugger import Tracer; Tracer()() ## DEBUG ##
-
 		assert_that( res.headers, has_key( 'Access-Control-Allow-Methods' ) )
 
 	def test_logon_ping(self):

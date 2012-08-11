@@ -14,7 +14,9 @@ logger = __import__('logging').getLogger(__name__)
 from pkg_resources import resource_filename
 
 from zope import interface
+from zope import component
 
+from zope.schema import interfaces as sch_interfaces
 from nti.contentfragments import interfaces
 
 # The algorithms contained in here are trivially simple.
@@ -32,7 +34,7 @@ class SimpleReplacementCensoredContentStrategy(object):
 		self.replacement_char = replacement_char
 		assert len(self.replacement_char) == 1
 
-	def censor( self, content_fragment, censored_ranges ):
+	def censor_ranges( self, content_fragment, censored_ranges ):
 		# Since we will be replacing each range with its equal length
 		# of content and not shortening, then sorting the ranges doesn't matter
 		buf = list(content_fragment)
@@ -89,3 +91,59 @@ def TrivialMatchScannerExternalFile( file_path ):
 @interface.implementer(interfaces.ICensoredContentScanner)
 def DefaultTrivialProfanityScanner():
 	return TrivialMatchScannerExternalFile( resource_filename( __name__, 'profanity_list.txt' ) )
+
+
+@interface.implementer(interfaces.ICensoredContentPolicy)
+class DefaultCensoredContentPolicy(object):
+	"""
+	A content censoring policy that looks up the default
+	scanner and strategy and uses them.
+
+	This package does not register this policy as an adapter for anything,
+	you must do that yourself.
+	"""
+
+	def __init__( self, fragment, target ):
+		pass
+
+	def censor( self, fragment, target ):
+		scanner = component.getUtility( interfaces.ICensoredContentScanner )
+		strat = component.getUtility( interfaces.ICensoredContentStrategy )
+
+		return strat.censor_ranges( fragment, scanner.scan( fragment ) )
+
+
+@component.adapter(interfaces.IUnicodeContentFragment, interface.Interface, sch_interfaces.IBeforeObjectAssignedEvent)
+def censor_before_object_assigned( fragment, target, event ):
+	"""
+	Watches for field values to be assigned, and looks for specific policies for the
+	given object and field name to handle censoring. If such a policy is found and returns
+	something that is not the original fragment, the event is updated (and so the value
+	assigned to the target is also updated).
+	"""
+
+	if interfaces.ICensoredUnicodeContentFragment.providedBy( fragment ):
+		# Nothing to do, already censored
+		return
+
+	# Does somebody want to censor assigning values of fragments' type to objects of
+	# target's type to the field named event.name?
+	policy = component.queryMultiAdapter( (fragment, target),
+										  interfaces.ICensoredContentPolicy,
+										  name=event.name )
+	if policy is not None:
+		censored_fragment = policy.censor( fragment, target )
+		if censored_fragment != fragment:
+			event.object = censored_fragment
+
+from zope.schema._field import BeforeObjectAssignedEvent
+from zope.event import notify
+
+def censor_assign( fragment, target, field_name ):
+	"""
+	Perform manual censoring of assigning an object to a field.
+	"""
+
+	evt = BeforeObjectAssignedEvent( fragment, field_name, target )
+	notify( evt )
+	return evt.object

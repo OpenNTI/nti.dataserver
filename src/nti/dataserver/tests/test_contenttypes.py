@@ -6,7 +6,7 @@ from hamcrest import has_length
 from hamcrest import not_none
 from hamcrest import greater_than
 from zope.annotation import interfaces as an_interfaces
-
+from zope import component
 import unittest
 from nose.tools import with_setup
 import nti.tests
@@ -24,6 +24,7 @@ import zope.schema.interfaces
 import mock_dataserver
 from mock_dataserver import WithMockDS
 from nti.contentfragments import interfaces as frg_interfaces
+import nti.contentfragments.censor
 from nti.dataserver import containers
 
 from nti.contentrange.contentrange import ContentRangeDescription, DomContentRangeDescription, ElementDomContentPointer
@@ -90,9 +91,26 @@ class RedactionTest(mock_dataserver.ConfiguringTestBase):
 			assert_that( redaction, has_property( k, u'Hi.' ) )
 			assert_that( redaction, has_property( k, verifiably_provides( frg_interfaces.IPlainTextContentFragment ) ) )
 
+		# and also censors
+		for k in ('replacementContent','redactionExplanation'):
+			component.provideAdapter( nti.contentfragments.censor.DefaultCensoredContentPolicy,
+									  adapts=(unicode,nti_interfaces.IRedaction),
+									  provides=nti.contentfragments.interfaces.ICensoredContentPolicy,
+									  name=k )
+
+		bad_val = nti.contentfragments.interfaces.PlainTextContentFragment( 'Guvf vf shpxvat fghcvq, lbh ZbgureShpxre onfgneq'.encode( 'rot13' ) )
+
+		redaction.updateFromExternalObject( { 'replacementContent': bad_val,
+											  'redactionExplanation': bad_val } )
+		for k in ('replacementContent','redactionExplanation'):
+			assert_that( redaction, has_property( k,  'This is ******* stupid, you ************ *******' ) )
+			assert_that( redaction, has_property( k, verifiably_provides( frg_interfaces.ICensoredPlainTextContentFragment ) ) )
+
 		redaction.addSharingTarget( 'joe@ou.edu' )
 		ext = redaction.toExternalObject()
 		assert_that( ext, has_entry( 'sharedWith', ['joe@ou.edu'] ) )
+
+
 
 
 class HighlightTest(mock_dataserver.ConfiguringTestBase):
