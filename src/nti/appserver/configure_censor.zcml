@@ -1,0 +1,24 @@
+<!-- -*- mode: nxml -*- -->
+<configure
+	xmlns="http://namespaces.zope.org/zope"
+	xmlns:zcml="http://namespaces.zope.org/zcml">
+	<include package="zope.component" />
+
+	<!--
+	Our dispatcher. Apply it to all the 'body' fields (note and chat message), as well as
+	the replacementContent and redactionExplanation fields
+	(IRedaction)
+	-->
+	<adapter factory=".censor_policies.creator_and_location_censor_policy"
+			 name="body" />
+	<adapter factory=".censor_policies.creator_and_location_censor_policy"
+			 name="replacementContent" />
+	<adapter factory=".censor_policies.creator_and_location_censor_policy"
+			 name="redactionExplanation" />
+
+	<adapter factory=".censor_policies.coppa_user_censor_policy" />
+	<adapter factory=".censor_policies.user_filesystem_censor_policy" />
+	<adapter factory="nti.contentfragments.censor.DefaultCensoredContentPolicy"
+			 for="nti.dataserver.interfaces.IUser *" />
+
+</configure>

@@ -60,6 +60,11 @@ class _AbstractLibrary(object):
 				return title
 		raise KeyError( key )
 
+	def get( self, key, default=None ):
+		try:
+			return self[key]
+		except KeyError:
+			return default
 
 	def pathToNTIID(self, ntiid):
 		""" Returns a list of TOCEntry objects in order until

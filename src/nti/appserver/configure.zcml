@@ -236,5 +236,7 @@
 	<!-- UI Rendering -->
 	<include package="." file="configure_tables.zcml" />
 
+	<!-- Content censoring -->
+	<include package="." file="configure_censor.zcml" />
 
 </configure>
