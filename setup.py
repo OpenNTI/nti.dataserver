@@ -28,7 +28,8 @@ entry_points = {
 	],
 
 	"paste.filter_app_factory": [
-		"cors = nti.appserver.cors:cors_filter_factory"
+		"cors = nti.appserver.cors:cors_filter_factory",
+		"cors_options = nti.appserver.cors:cors_option_filter_factory"
 	],
 	"paste.server_runner": [
 		"http = nti.appserver.standalone:server_runner"

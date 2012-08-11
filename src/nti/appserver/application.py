@@ -98,14 +98,6 @@ class _Main(object):
 		self.pyramid_app = self.pyramid_config.make_wsgi_app()
 
 	def __call__(self, environ, start_request):
-		# For CORS preflight requests, we must support the OPTIONS
-		# method.
-		# TODO: The OPTIONS method should be better implemented.
-		# TODO: This should probably be moved to the cors.py filter/tween
-		if environ['REQUEST_METHOD'] == 'OPTIONS':
-			start_request( '200 OK', [('Content-Type', 'text/plain')] )
-			return [""]
-
 		return self.pyramid_app( environ, start_request )
 
 def _create_xml_conf_machine( settings ):
