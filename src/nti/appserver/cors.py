@@ -80,11 +80,12 @@ class CORSInjector(object):
 		try:
 			environ.setdefault( 'paste.expected_exceptions', [] ).append( transaction.interfaces.DoomedTransaction )
 			environ.setdefault( 'paste.expected_exceptions', [] ).append( pyramid.httpexceptions.HTTPException )
+
 			result = self.captured( environ, the_start_request )
-		except transaction.interfaces.DoomedTransaction:
+		except transaction.interfaces.DoomedTransaction: # pragma: no cover
 			# No biggie, let the real response go out.
 			pass
-		except pyramid.httpexceptions.HTTPException:
+		except pyramid.httpexceptions.HTTPException: # pragma: no cover
 			raise
 		except Exception as e:
 			# The vast majority of these we expect to be caught by paste.
@@ -95,5 +96,32 @@ class CORSInjector(object):
 
 		return result
 
-def cors_filter_factory( app, global_conf ):
+def cors_filter_factory( app, global_conf=None ):
 	return CORSInjector(app)
+
+class CORSOptionHandler(object):
+	"""
+	Handle OPTIONS requests by simply swallowing them and not letting
+	them come through to the following app.
+
+	This is useful with the :func:`cors_filter_factory` and should be
+	beneath it. Only use this if the rest of the pipeline doesn't
+	handle OPTIONS requests.
+	"""
+
+	def __init__( self, app ):
+		self.captured = app
+
+	def __call__( self, environ, start_response ):
+		# TODO: The OPTIONS method should be better implemented. We are
+		# swallowing all OPTION requests at this level.
+
+		if environ['REQUEST_METHOD'] == 'OPTIONS':
+			start_response( '200 OK', [('Content-Type', 'text/plain')] )
+			result = ("",)
+		else:
+			result = self.captured( environ, start_response )
+		return result
+
+def cors_option_filter_factory( app, global_conf=None ):
+	return CORSOptionHandler( app )

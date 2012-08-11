@@ -90,6 +90,7 @@ def _zip_archive(source_path, out_dir, zip_name="archive.zip", zip_root_dir=None
 		# If they ask for a zip name (and we do not already match it)
 		# then rename the archive dir to match (in the same directory)
 		new_dir = os.path.join( os.path.split( source_path )[0], zip_root_dir )
+		__traceback_info__ = locals()
 		try:
 			os.rename( source_path, new_dir )
 		except OSError:

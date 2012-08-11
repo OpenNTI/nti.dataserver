@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 from __future__ import print_function
 
 #disable: accessing protected members, too many methods
@@ -20,10 +20,10 @@ from nti.contentlibrary import interfaces as lib_interfaces
 import nti.contentsearch
 import nti.contentsearch.interfaces
 import pyramid.config
-import pyramid.httpexceptions as hexc
+
 
 from nti.appserver.tests import ConfiguringTestBase
-from webtest import TestApp
+from webtest import TestApp as _TestApp
 import webob.datetime_utils
 import datetime
 import time
@@ -34,7 +34,7 @@ import os.path
 import urllib
 from nti.dataserver import users, classes, providers
 from nti.ntiids import ntiids
-from nti.dataserver.datastructures import ContainedMixin, ZContainedMixin
+from nti.dataserver.datastructures import ZContainedMixin
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.contentrange import contentrange
 from nti.dataserver import contenttypes
@@ -57,6 +57,14 @@ class ContainedExternal(ZContainedMixin):
 
 class PersistentContainedExternal(ContainedExternal,Persistent):
 	pass
+
+from nti.appserver.cors import cors_filter_factory as CORSInjector, cors_option_filter_factory as CORSOptionHandler
+def TestApp(app=_TestApp):
+	# Nose may call this with zero args
+	if app is _TestApp:
+		return None
+
+	return _TestApp( CORSInjector( CORSOptionHandler( app ) ) )
 
 class ApplicationTestBase(ConfiguringTestBase):
 
@@ -92,6 +100,7 @@ class ApplicationTestBase(ConfiguringTestBase):
 		"""
 		result = {
 			b'HTTP_AUTHORIZATION': b'Basic ' + (user + ':temp001').encode('base64'),
+			b'HTTP_ORIGIN': b'localhost' # To trigger CORS
 			}
 		for k, v in kwargs.items():
 			k = str(k)
@@ -105,6 +114,13 @@ class ApplicationTestBase(ConfiguringTestBase):
 
 
 class TestApplication(ApplicationTestBase):
+
+	def test_options_request( self ):
+		testapp = TestApp( self.app )
+		res = testapp.options( '/dataserver2/logon.ping', extra_environ=self._make_extra_environ() )
+		from IPython.core.debugger import Tracer; Tracer()() ## DEBUG ##
+
+		assert_that( res.headers, has_key( 'Access-Control-Allow-Methods' ) )
 
 	def test_logon_ping(self):
 		testapp = TestApp( self.app )
