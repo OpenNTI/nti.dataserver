@@ -3,6 +3,7 @@
 		   xmlns:zcml="http://namespaces.zope.org/zcml"
 		   i18n_domain="zope">
 	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.component" />
 	<include package="zope.mimetype" file="meta.zcml" />
 	<!--
 	loading the mimetypes is slow. Doing so in
@@ -21,6 +22,10 @@
 			file="types.csv"
 			/>
 	</configure>
+
+	<!-- Event assignment dispatching. Used in censoring. -->
+	<include package="nti.utils" />
+
 	<!-- Content fragment transformation adapters -->
 	<adapter factory=".latex.PlainTextToLatexFragmentConverter"
 			 for=".interfaces.IPlainTextContentFragment"
@@ -80,5 +85,6 @@
 	<!-- Defaults -->
 	<utility factory=".censor.DefaultTrivialProfanityScanner" />
 	<utility factory=".censor.SimpleReplacementCensoredContentStrategy" />
+	<subscriber handler=".censor.censor_before_object_assigned" />
 
 </configure>

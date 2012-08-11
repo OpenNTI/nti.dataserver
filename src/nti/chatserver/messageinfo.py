@@ -25,6 +25,7 @@ from nti.utils.property import alias, read_alias
 
 from nti.externalization import datastructures
 from nti.contentfragments import interfaces as frg_interfaces
+from nti.contentfragments import censor
 
 from nti.dataserver import contenttypes
 
@@ -132,10 +133,11 @@ class MessageInfo( contenttypes.ThreadableExternalizableMixin,
 		if 'Body' in parsed and 'body' not in parsed:
 			self.body = parsed['Body']
 		if 'Body' or 'body' in parsed:
+			# TODO: Switch to InterfaceIO to avoid doing this manually.
 			if isinstance( self.body, six.string_types ):
-				self.body = frg_interfaces.IUnicodeContentFragment( self.body )
+				self.body = censor.censor_assign( frg_interfaces.IUnicodeContentFragment( self.body ), self, 'body' )
 			elif isinstance( self.body, collections.Sequence ):
-				self.body = [frg_interfaces.IUnicodeContentFragment( x ) if isinstance(x,six.string_types) else x
+				self.body = [censor.censor_assign( frg_interfaces.IUnicodeContentFragment( x ), self, 'body' ) if isinstance(x,six.string_types) else x
 							 for x
 							 in self.body]
 

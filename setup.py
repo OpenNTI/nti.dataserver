@@ -83,7 +83,7 @@ setup(
 		'Pillow >= 1.7.7',
 		'RestrictedPython',
 		'ZConfig >= 2.9.3',
-		'ZODB3 >= 3.10.5',
+		'ZODB3 >= 3.10.5', # NOTE: Soon need to include persistent >= 4.0.0, being pulled out of ZODB
 		# ZODB RelStorage:
 		# 'pylibmc', # for memcached support
 		# 'MySQL-python', # mysql adapter
@@ -135,7 +135,7 @@ setup(
 		'numpy >= 1.6.2',
 		'paste',
 		'pyquery >= 1.2.1', # jquery-like traversing of python datastructures. lxml, cssselect
-		'pyramid >= 1.3.2' ,
+		'pyramid >= 1.3.3' ,
 		'pyramid_tm >= 0.5',
 		'pyramid_traversalwrapper',
 		'pyramid_who >= 0.3',

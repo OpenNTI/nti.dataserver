@@ -38,6 +38,9 @@ class PermissiveSchemaConfigured(SchemaConfigured):
 Object.check_declaration = True
 
 from zope import schema
+from zope import component
+from zope.schema import interfaces as sch_interfaces
+
 
 class IndexedIterable(schema.List):
 	"""
@@ -46,3 +49,16 @@ class IndexedIterable(schema.List):
 	The values may be homogeneous by setting the value_type
 	"""
 	_type = None # Override from super to not force a list
+
+
+@component.adapter(sch_interfaces.IBeforeObjectAssignedEvent)
+def before_object_assigned_event_dispatcher(event):
+	"""
+	Listens for :mod:`zope.schema` to fire :class:`zope.schema.interfaces.IBeforeObjectAssignedEvent`,
+	and re-dispatches these events based on the value being assigned, the object being assigned to,
+	and of course the event.
+
+	This is analogous to :func:`zope.component.event.objectEventNotify`
+	"""
+
+	component.subscribers( (event.object, event.context, event), None )
