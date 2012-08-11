@@ -103,7 +103,7 @@ class DefaultCensoredContentPolicy(object):
 	you must do that yourself.
 	"""
 
-	def __init__( self, fragment, target ):
+	def __init__( self, fragment=None, target=None ):
 		pass
 
 	def censor( self, fragment, target ):

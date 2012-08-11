@@ -35,7 +35,7 @@ class IContentPackageLibrary(interface.Interface):
 		(Support for titles is a convenience and not to be relied upon).
 		"""
 
-	contentPackages = schema.Iterable( title=u'Sequence of :class:`IContentPackage`')
+	contentPackages = schema.Iterable( title=u'Sequence of all known :class:`IContentPackage`')
 
 # TODO: I'm not happy with the way paths are handled. How can the 'relative'
 # stuff be done better? This is mostly an issue with the IContentPackage,

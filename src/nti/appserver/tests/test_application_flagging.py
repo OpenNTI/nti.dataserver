@@ -31,7 +31,7 @@ from .test_application import ApplicationTestBase
 
 from urllib import quote as UQ
 
-class TestApplicationGlossary(ApplicationTestBase):
+class TestApplicationFlagging(ApplicationTestBase):
 
 
 	def test_flag_note(self):
