@@ -6,12 +6,7 @@ from nti.dataserver.contenttypes import Note
 from nti.ntiids.ntiids import make_ntiid
 
 from nti.contentsearch import _repoze_index
-from nti.contentsearch._repoze_index import get_note_ngrams
 from nti.contentsearch._repoze_index import get_object_content
-from nti.contentsearch._repoze_index import create_notes_catalog
-from nti.contentsearch._repoze_index import create_highlight_catalog
-from nti.contentsearch._repoze_index import create_redaction_catalog
-from nti.contentsearch._repoze_index import create_messageinfo_catalog
 
 from nti.contentsearch.tests import ConfiguringTestBase
 from nti.contentsearch.common import (	OID, NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, COLLECTION_ID, ID)
@@ -39,20 +34,20 @@ class TestRepozeIndex(ConfiguringTestBase):
 		assert_that(catalog, has_key(LAST_MODIFIED))
 		
 	def test_notes_catalog(self):
-		catalog = create_notes_catalog()
+		catalog = {}
 		self._test_common_catalog(catalog)
 		assert_that(catalog, has_key(references_))
 		assert_that(catalog, has_key(ngrams_))
 		assert_that(catalog, has_key(content_))
 		
 	def test_highlight_catalog(self):
-		catalog = create_highlight_catalog()
+		catalog = {}
 		self._test_common_catalog(catalog)
 		assert_that(catalog, has_key(ngrams_))
 		assert_that(catalog, has_key(content_))
 		
 	def test_redaction_catalog(self):
-		catalog = create_redaction_catalog()
+		catalog = {}
 		self._test_common_catalog(catalog)
 		assert_that(catalog, has_key(ngrams_))
 		assert_that(catalog, has_key(content_))
@@ -60,7 +55,7 @@ class TestRepozeIndex(ConfiguringTestBase):
 		assert_that(catalog, has_key(redactionExplanation_))
 	
 	def test_messageinf_catalog(self):
-		catalog = create_messageinfo_catalog()
+		catalog = {}
 		self._test_common_catalog(catalog)
 		assert_that(catalog, has_key(ID))
 		assert_that(catalog, has_key(channel_))
@@ -79,7 +74,7 @@ class TestRepozeIndex(ConfiguringTestBase):
 		mock_dataserver.current_transaction.add(note)
 		note = usr.addContainedObject( note ) 
 		assert_that(get_object_content(note), 'i think therefore i am')
-		assert_that(get_note_ngrams(note), 'the ther there theref therefo therefor therefore thi thin think')
+		#assert_that(get_note_ngrams(note), 'the ther there theref therefo therefor therefore thi thin think')
 	
 if __name__ == '__main__':
 	unittest.main()
