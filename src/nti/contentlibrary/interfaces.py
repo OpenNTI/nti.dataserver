@@ -78,8 +78,42 @@ class IContentPackage(IContentUnit, dub_interfaces.IDCExtended):
 	renderVersion = schema.Int( title="Version of the rendering process that produced this package.",
 								default=1, min=1 )
 
+class IDelimitedHierarchyEntry(interface.Interface):
+	"""
+	Similar to an :class:`IFilesystemEntry`, but not tied to the local (or mounted)
+	filesystem. Each entry is named by a ``/`` delimited key analogous to a filesystem
+	path, but those keys are not necessarily usable with the functions of :mod:`os.path`,
+	and the relative expense of operations may not be the same.
 
-class IFilesystemEntry(interface.Interface,dub_interfaces.IDCTimes):
+	The primary reason for this interface is as a facade supporting both local
+	filesystem storage and Amazon S3 (:mod:`boto`) storage.
+
+	"""
+
+	key = interface.Attribute( "The key designating this entry in the hierarchy." )
+	# Needs further definition. In the filesystem case, this is `filename`. In the boto case,
+	# this is `key`
+
+	def read_contents_of_sibling_entry( sibling_name ):
+		"""
+		Read and return, as a sequence of bytes, the contents of an entry in the same
+		level of the hierarchy as this entry.
+
+		:param string sibling_name: The local, undelimited, name of a sibling entry (e.g., ``foo.txt``).
+
+		:return: Either the byte string of the contents of the entry, or if there is no such entry,
+			`None`.
+
+		"""
+
+class IDelimitedHierarchyContentUnit(IContentUnit,IDelimitedHierarchyEntry):
+	pass
+
+class IDelimitedHierarchyContentPackage(IContentPackage,IDelimitedHierarchyEntry):
+	pass
+
+
+class IFilesystemEntry(interface.Interface,dub_interfaces.IDCTimes,IDelimitedHierarchyEntry):
 	"""
 	A mixin interface for things that are backed by items on the filesystem.
 
@@ -94,14 +128,14 @@ class IFilesystemEntry(interface.Interface,dub_interfaces.IDCTimes):
 								 readonly=True )
 
 
-class IFilesystemContentUnit(IContentUnit,IFilesystemEntry):
+class IFilesystemContentUnit(IDelimitedHierarchyContentUnit,IFilesystemEntry):
 	"""
 	A content unit backed by a file on disk.
 
 	The values for the `href` and `filename` attributes will be the same.
 	"""
 
-class IFilesystemContentPackage(IContentPackage,IFilesystemEntry):
+class IFilesystemContentPackage(IDelimitedHierarchyContentPackage,IFilesystemEntry):
 	"""
 	A content package backed by a file on disk.
 

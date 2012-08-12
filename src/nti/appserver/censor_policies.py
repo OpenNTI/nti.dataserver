@@ -85,7 +85,7 @@ def coppa_user_censor_policy( user, content_unit ):
 	return censor.DefaultCensoredContentPolicy()
 
 @interface.implementer(frg_interfaces.ICensoredContentPolicy)
-@component.adapter(nti_interfaces.IUser,lib_interfaces.IFilesystemContentUnit)
+@component.adapter(nti_interfaces.IUser,lib_interfaces.IDelimitedHierarchyContentUnit)
 def user_filesystem_censor_policy( user, file_content_unit ):
 	"""
 	Profanity filtering may be turned off in specific content units
@@ -93,7 +93,6 @@ def user_filesystem_censor_policy( user, file_content_unit ):
 	"""
 	# TODO: maybe this could be handled with an ACL entry? The permission
 	# to post uncensored things?
-	no_censor_file = os.path.join( os.path.dirname( file_content_unit.filename ), '.nti_disable_censoring' )
-	if os.path.exists( no_censor_file ):
+	if file_content_unit.read_contents_of_sibling_entry( '.nti_disable_censoring' ) is not None:
 		return None
 	return coppa_user_censor_policy( user, file_content_unit )

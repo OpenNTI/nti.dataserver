@@ -11,6 +11,7 @@ from zope import interface
 from zope.deprecation import deprecate
 from zope.cachedescriptors.property import Lazy
 
+from nti.utils.property import alias
 
 from nti.contentlibrary.interfaces import IContentUnit, IFilesystemContentUnit, IContentPackage, IFilesystemContentPackage
 
@@ -49,10 +50,11 @@ class ContentUnit(object):
 @interface.implementer(IFilesystemContentUnit)
 class FilesystemContentUnit(ContentUnit):
 	"""
-	Adds the 'filename' property.
+	Adds the `filename` property, an alias of the `key` property
 	"""
 
 	filename = None
+	key = alias('filename')
 
 	@Lazy
 	def lastModified( self ):
@@ -73,6 +75,13 @@ class FilesystemContentUnit(ContentUnit):
 		except OSError:
 			logger.debug( "Failed to get created for %s", self.filename, exc_info=True )
 			return datetime.datetime.utcfromtimestamp( 0 )
+
+	def read_contents_of_sibling_entry( self, sibling_name ):
+		if self.filename:
+			try:
+				return open( os.path.join( os.path.dirname( self.filename ), sibling_name ), 'r' ).read()
+			except (OSError,IOError):
+				return None
 
 
 @interface.implementer(IContentPackage)
