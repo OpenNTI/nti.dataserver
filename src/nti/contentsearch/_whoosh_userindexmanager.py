@@ -39,12 +39,11 @@ def get_indexname(username, type_name, use_md5=True):
 
 def get_stored_indices(username, storage, use_md5=True):
 	result = []
-	with storage.dbTrans():
-		for type_name in get_indexables():
-			type_name = normalize_type_name(type_name)
-			index_name = get_indexname(username, type_name, use_md5)
-			if storage.index_exists(index_name, username=username):
-				result.append(type_name)
+	for type_name in get_indexables():
+		type_name = normalize_type_name(type_name)
+		index_name = get_indexname(username, type_name, use_md5)
+		if storage.index_exists(index_name, username=username):
+			result.append(type_name)
 	return result
 	
 def has_stored_indices(username, storage, use_md5=True):
@@ -124,8 +123,7 @@ class WhooshUserIndexManager(object):
 			self.func = func
 
 		def __call__(self, *args, **kargs):
-			with self.storage.dbTrans():
-				return self.func(*args, **kargs)
+			return self.func(*args, **kargs)
 
 		def __get__(self, instance, owner):
 			def wrapper(*args, **kargs):

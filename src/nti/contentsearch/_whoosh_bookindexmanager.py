@@ -49,9 +49,8 @@ class WhooshBookIndexManager(object):
 	@SearchCallWrapper
 	def search(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
-		with self.storage.dbTrans():
-			with self.bookidx.searcher() as s:
-				results = self.book.search(s, query)
+		with self.bookidx.searcher() as s:
+			results = self.book.search(s, query)
 		return results
 
 	def ngram_search(self, query, limit=None, *args, **kwargs):
@@ -62,16 +61,14 @@ class WhooshBookIndexManager(object):
 
 	def suggest_and_search(self, query, limit=None, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
-		with self.storage.dbTrans():
-			with self.bookidx.searcher() as s:
-				results = self.book.suggest_and_search(s, query)
+		with self.bookidx.searcher() as s:
+			results = self.book.suggest_and_search(s, query)
 		return results
 
 	def suggest(self, term, *args, **kwargs):
 		query = QueryObject.create(term, **kwargs)
-		with self.storage.dbTrans():
-			with self.bookidx.searcher() as s:
-				results = self.book.suggest(s, query)
+		with self.bookidx.searcher() as s:
+			results = self.book.suggest(s, query)
 		return results
 
 	quick_search = ngram_search

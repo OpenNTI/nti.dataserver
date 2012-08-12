@@ -11,7 +11,6 @@ from whoosh.index import _DEF_INDEX_NAME
 from whoosh.filedb.structfile import StructFile
 from whoosh.filedb.filestore import FileStorage as WhooshFileStorage
 
-from nti.contentsearch import NoOpCM
 from nti.contentsearch.interfaces import IWhooshIndexStorage
 
 import logging
@@ -73,9 +72,6 @@ class IndexStorage(object):
 	def open_index(self, indexname, schema=None, *args, **kwargs):
 		raise NotImplementedError()
 	
-	def dbTrans(self):
-		raise NotImplementedError()
-	
 	def storage(self, *args, **kwargs):
 		raise NotImplementedError()
 	
@@ -99,9 +95,6 @@ class DirectoryStorage(IndexStorage):
 		if not os.path.exists(indexdir):
 			os.makedirs(indexdir)
 		self.folder = indexdir
-	
-	def dbTrans(self):
-		return NoOpCM()
 	
 	def create_index(self, schema, indexname=_DEF_INDEX_NAME, *args, **kwargs):
 		self.makedirs(**kwargs)

@@ -24,34 +24,28 @@ class _IndexStorageTest(object):
 	def storage(self):
 		return self.idx_storage
 	
-	def dbTrans(self):
-		return self.storage.dbTrans()
-	
 	def _add_2_index(self, indexname, entries=None):
 		
-		with self.dbTrans():
-			index = self.storage.get_or_create_index(indexname=indexname, schema=sample_schema)
+		index = self.storage.get_or_create_index(indexname=indexname, schema=sample_schema)
+		writer = index.writer()
 			
-		with self.dbTrans():
-			writer = index.writer()
-			
-			ids = list()
-			count = 0
-			entries = entries or random.randint(1, 10)
-			for _ in xrange(entries):
-				content = u(" ").join(random.sample(domain, random.randint(5, 20)))
-				oid = str(uuid.uuid1())
-				ids.append(oid)
-				writer.add_document(id=text_type(oid), content=content)
-				count += 1
-			
-			writer.commit()
+		ids = list()
+		count = 0
+		entries = entries or random.randint(1, 10)
+		for _ in xrange(entries):
+			content = u(" ").join(random.sample(domain, random.randint(5, 20)))
+			oid = str(uuid.uuid1())
+			ids.append(oid)
+			writer.add_document(id=text_type(oid), content=content)
+			count += 1
+		
+		writer.commit()
 		
 		return (index, ids)
 	
 	def test_add_entries(self):
 		idx, ids = self._add_2_index("sample1")
-		with self.dbTrans(), idx.searcher() as s:
+		with idx.searcher() as s:
 			cnt = len(ids)
 			self.assertEqual(cnt, s.doc_count())
 			
@@ -61,38 +55,35 @@ class _IndexStorageTest(object):
 			
 	def test_open_index(self):
 		self._add_2_index("sample2")
-		with self.dbTrans():
-			try:
-				self.idx_storage.open_index(indexname="sample2")
-			except:
-				self.fail()
+		try:
+			self.idx_storage.open_index(indexname="sample2")
+		except:
+			self.fail()
 			
 	def test_optimize_index(self):
 		idx, _ = self._add_2_index("sample3")
-		with self.dbTrans():
-			try:
-				idx.optimize()
-			except:
-				self.fail()
+		try:
+			idx.optimize()
+		except:
+			self.fail()
 			
 	def test_search_index(self):
 		index, _ = self._add_2_index("sample4", 400)
-		with self.dbTrans(), index.searcher() as s:
+		with index.searcher() as s:
 			q = query.Term("content", random.choice(domain))
 			results = s.search(q,limit=None)
 			self.assertTrue(len(results)>0)
 			
 	def test_delete_index(self):
 		index, ids = self._add_2_index("sample5", 50)
-		with self.dbTrans():
-			writer = index.writer()
-			writer.delete_by_term('id', unicode(ids[0]))
-			writer.commit()
-			
-			with index.searcher() as s:
-				q = query.Term("id", unicode(ids[0]))
-				results = s.search(q,limit=None)
-				self.assertTrue(len(results) == 0)
+		writer = index.writer()
+		writer.delete_by_term('id', unicode(ids[0]))
+		writer.commit()
+		
+		with index.searcher() as s:
+			q = query.Term("id", unicode(ids[0]))
+			results = s.search(q,limit=None)
+			self.assertTrue(len(results) == 0)
 			
 class TestDirectoryStorage(_IndexStorageTest, unittest.TestCase):
 		
