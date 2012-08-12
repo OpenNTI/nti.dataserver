@@ -7,7 +7,6 @@ from collections import Iterable
 from brownie.caching import LFUCache
 
 from nti.contentsearch._cloudsearch_store import CloudSearchStore
-from nti.contentsearch._repoze_datastore import RepozeCatalogDataStore
 
 from nti.contentsearch._ngrams_utils import (ngrams, ngram_tokens)
 from nti.contentsearch._search_highlights import (ngram_content_highlight, word_content_highlight)
@@ -269,9 +268,6 @@ class QueryObject(object, UserDict.DictMixin):
 				queryobject[k] = v
 
 		return queryobject
-
-def create_repoze_datastore(*args, **kwargs):
-	return RepozeCatalogDataStore()
 
 def create_cloudsearch_store(*args, **kwargs):
 	return CloudSearchStore(*args, **kwargs)
