@@ -488,8 +488,8 @@ class _LibraryTOCEntryACLProvider(object):
 		self.__acl__ = ( ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _LibraryTOCEntryACLProvider ), )
 
 @interface.implementer( nti_interfaces.IACLProvider )
-@component.adapter( content_interfaces.IFilesystemEntry )
-class _FilesystemEntryACLProvider(object):
+@component.adapter( content_interfaces.IDelimitedHierarchyEntry )
+class _DelimitedHierarchyEntryACLProvider(object):
 	"""
 	Checks a filesystem entry for the existence of a '.nti_acl' file, and if present,
 	reads an ACL from it. Otherwise, the ACL allows all authenticated
@@ -498,26 +498,15 @@ class _FilesystemEntryACLProvider(object):
 
 	def __init__( self, obj ):
 		self._obj = obj
-		acl_file = os.path.join( os.path.dirname( obj.filename ), '.nti_acl' )
-		if os.path.exists( acl_file ):
+		acl_string = obj.read_contents_of_sibling_entry( '.nti_acl' )
+		if acl_string is not None:
 			try:
-				self.__acl__ = acl_from_file( acl_file )
+				self.__acl__ = acl_from_aces( [ace_from_string( x.strip(), provenance=obj) for x in acl_string.splitlines()] )
 			except:
 				logger.exception( "Failed to read acl from %s; denying all access.", obj )
-				self.__acl__ = _ACL( (ace_denying( nti_interfaces.EVERYONE_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _FilesystemEntryACLProvider ), ) )
+				self.__acl__ = _ACL( (ace_denying( nti_interfaces.EVERYONE_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _DelimitedHierarchyEntryACLProvider ), ) )
 		else:
-			self.__acl__ = _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _FilesystemEntryACLProvider ), ) )
-
-
-class _LibraryEntryACLProvider(_FilesystemEntryACLProvider):
-	"""
-	Checks a library entry for the existence of a '.nti_acl' file, and if present,
-	reads an ACL from it. Otherwise, the ACL allows all authenticated
-	users access.
-	"""
-	interface.implements( nti_interfaces.IACLProvider )
-	component.adapts( content_interfaces.IContentPackage )
-
+			self.__acl__ = _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _DelimitedHierarchyEntryACLProvider ), ) )
 
 class _FriendsListACLProvider(_CreatedACLProvider):
 	"""

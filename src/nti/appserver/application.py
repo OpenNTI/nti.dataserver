@@ -327,8 +327,17 @@ def createApplication( http_port,
 					nti.externalization.internalization.update_from_external_object( obj, v, require_updater=True )
 					obj.ntiid = k
 					if filename:
-						obj.filename = filename
 						self.by_file.setdefault( filename, [] ).append( obj )
+						# Hack in ACL support. We are piggybacking off of
+						# IDelimitedEntry's support in authorization_acl.py
+						def read_contents_of_sibling_entry( sibling_name ):
+							try:
+								return open( os.path.join( os.path.dirname( filename ), sibling_name ), 'r' ).read()
+							except (OSError,IOError):
+								return None
+
+						obj.filename = filename
+						obj.read_contents_of_sibling_entry = read_contents_of_sibling_entry
 						interface.alsoProvides( obj, lib_interfaces.IFilesystemEntry )
 
 					self[k] = obj
@@ -339,11 +348,9 @@ def createApplication( http_port,
 	question_map = _QuestionMap()
 	pyramid_config.registry.registerUtility( question_map, app_interfaces.IFileQuestionMap )
 	for title in library.titles:
-		# TODO: This is assuming things are on a local filesystem
-
-		asm_index = os.path.join( title.localPath, 'assessment_index.json' )
-		if os.path.isfile( asm_index ):
-			__traceback_info__ = asm_index
+		asm_index_text = title.read_contents_of_sibling_entry( 'assessment_index.json' )
+		if asm_index_text:
+			asm_index_text = unicode(asm_index_text)
 			# In this one specific case, we know that these are already
 			# content fragments (probably HTML content fragments)
 			# If we go through the normal adapter process from string to
@@ -353,7 +360,7 @@ def createApplication( http_port,
 			def hook(o):
 				return dict( (k,cfg_interfaces.UnicodeContentFragment(v) if isinstance(v, unicode) else v) for k, v in o )
 
-			index = simplejson.loads( unicode(open( asm_index, 'rU' ).read()),
+			index = simplejson.loads( asm_index_text,
 									  object_pairs_hook=hook )
 			try:
 				question_map._from_index_entry( index, dirname=title.localPath )
