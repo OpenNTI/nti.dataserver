@@ -56,10 +56,7 @@ name: mathcountssolution mathcountsdifficulty mathcountsresult mathcountssolutio
 name: mathcountsworksheet
 <div class="worksheet-title" tal:attributes="id self/id" tal:content="self/title">Title</div>
 <form>
-<ol class="worksheet-problems itemize" tal:content="self">
-</ol>
-<div class="grey-hoz-bar"></div>
-<a id="submit" class="x-btn x-btn-submit x-btn-primary-medium x-btn-primary-medium-noicon x-btn-noicon" onclick="NTISubmitAnswers(event,'input[type]')" href="#" >Submit</a>
+<div class="worksheet-problems itemize" tal:content="self"></div>
 </form>
 
 #name: par
