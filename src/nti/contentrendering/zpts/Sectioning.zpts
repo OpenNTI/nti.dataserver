@@ -21,6 +21,7 @@ name: part chapter section
 	<span class="label" tal:content="self/title"></span>
 </div>
 <div tal:condition="not:self/ref" class="chapter title" tal:attributes="id self/id; ntiid self/ntiid" tal:content="self/fullTitle">Morbi metus pede, imperdiet vitae</div>
+<p class="placeholder"></p>
 <p tal:replace="self"></p>
 
 
