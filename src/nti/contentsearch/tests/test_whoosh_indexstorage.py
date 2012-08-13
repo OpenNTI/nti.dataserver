@@ -12,10 +12,15 @@ from nti.contentsearch.tests import domain
 from nti.contentsearch._whoosh_indexstorage import DirectoryStorage
 from nti.contentsearch._whoosh_indexstorage import MultiDirectoryStorage
 
+from nti.contentsearch.tests import ConfiguringTestBase
+
 sample_schema = fields.Schema(id=fields.ID(stored=True, unique=True), content=fields.TEXT(stored=True))
 
 class _IndexStorageTest(object):
 
+	indexdir  = None
+	idx_storage = None
+	
 	@classmethod
 	def tearDownClass(cls):
 		shutil.rmtree(cls.indexdir, True)
@@ -85,14 +90,14 @@ class _IndexStorageTest(object):
 			results = s.search(q,limit=None)
 			self.assertTrue(len(results) == 0)
 			
-class TestDirectoryStorage(_IndexStorageTest, unittest.TestCase):
+class TestDirectoryStorage(ConfiguringTestBase, _IndexStorageTest):
 		
 	@classmethod
 	def setUpClass(cls):
 		cls.indexdir = tempfile.mkdtemp(dir="/tmp")
 		cls.idx_storage = DirectoryStorage(cls.indexdir)
 		
-class TestMultiDirectoryStorage(_IndexStorageTest, unittest.TestCase):
+class TestMultiDirectoryStorage(ConfiguringTestBase, _IndexStorageTest):
 		
 	@classmethod
 	def setUpClass(cls):

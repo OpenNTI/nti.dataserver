@@ -258,7 +258,7 @@ class IIndexManager(interface.Interface):
 	
 class IWhooshIndexStorage(interface.Interface):
 
-	def create_index(indexname, schema, **kwargs):
+	def create_index(indexname, schema):
 		"""
 		create the an index with the specified index an schema
 				
@@ -266,21 +266,21 @@ class IWhooshIndexStorage(interface.Interface):
 		:param schema: whoosh schema
 		"""	
 	
-	def index_exists(indexname, **kwargs):
+	def index_exists(indexname):
 		"""
 		check if the specified index exists
 				
 		:param indexname: index name
 		"""	
 	
-	def get_index(indexname, **kwargs):
+	def get_index(indexname):
 		"""
 		return the whoosh index with the specified index name
 				
 		:param indexname: index name
 		"""	
 	
-	def get_or_create_index(indexname, schema=None, recreate=True, **kwargs):
+	def get_or_create_index(indexname, schema=None, recreate=True):
 		"""
 		get or create the index the specified index name
 				
@@ -288,7 +288,7 @@ class IWhooshIndexStorage(interface.Interface):
 		:param schema: whoosh schema
 		"""	
 	
-	def open_index(indexname, schema=None, **kwargs):
+	def open_index(indexname, schema=None):
 		"""
 		open the index with the specified name
 				
@@ -296,22 +296,17 @@ class IWhooshIndexStorage(interface.Interface):
 		:param schema: whoosh schema
 		"""	
 	
-	def dbTrans():
-		"""
-		return a context manager (db/io transaction) to perform an index operation
-		"""	
-	
-	def storage(**kwargs):
+	def storage():
 		"""
 		return a index underlying [file] data storage
 		"""	
 	
-	def ctor_args(**kwargs):
+	def ctor_args():
 		"""
 		return a dictionary with the arguments to be passed to an index writer constructor
 		""" 
 	
-	def commit_args(**kwargs):
+	def commit_args():
 		"""
 		return a dictionary with the arguments to be passed to an index writer commit method
 		""" 
