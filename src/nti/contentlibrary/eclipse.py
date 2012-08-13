@@ -107,14 +107,13 @@ def EclipseContentPackage( localPath ):
 	if renderVersion:
 		content_package.renderVersion = int(renderVersion)
 
-	archive = path_join( localPath, ARCHIVE_FILENAME )
-	if os.path.exists( archive ):
+	if content_package.does_sibling_entry_exist( ARCHIVE_FILENAME ):
 		content_package.archive = ARCHIVE_FILENAME
 		content_package.installable = True
 
-	dcmetafile = path_join( localPath, DCMETA_FILENAME )
-	if os.path.exists( dcmetafile ):
-		metadata = xmlmetadata.parse( dcmetafile )
+	dcmetafile_contents = content_package.read_contents_of_sibling_entry( DCMETA_FILENAME )
+	if dcmetafile_contents:
+		metadata = xmlmetadata.parseString( dcmetafile_contents )
 		if 'Creator' in metadata:
 			content_package.creators = metadata['Creator']
 

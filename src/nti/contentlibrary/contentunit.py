@@ -14,6 +14,7 @@ from zope.cachedescriptors.property import Lazy
 from nti.utils.property import alias
 
 from nti.contentlibrary.interfaces import IContentUnit, IFilesystemContentUnit, IContentPackage, IFilesystemContentPackage
+from nti.contentlibrary.interfaces import IDelimitedHierarchyContentUnit, IDelimitedHierarchyContentPackage
 
 @interface.implementer(IContentUnit)
 class ContentUnit(object):
@@ -83,6 +84,9 @@ class FilesystemContentUnit(ContentUnit):
 			except (OSError,IOError):
 				return None
 
+	def does_sibling_entry_exist( self, sibling_name ):
+		return os.path.exists( os.path.join( os.path.dirname( self.filename ), sibling_name ) )
+
 
 @interface.implementer(IContentPackage)
 class ContentPackage(ContentUnit):
@@ -92,6 +96,7 @@ class ContentPackage(ContentUnit):
 
 	root = None
 	index = None
+	index_last_modified = None
 	installable = False
 	archive = None
 	renderVersion = 1
@@ -108,29 +113,62 @@ class FilesystemContentPackage(ContentPackage,FilesystemContentUnit):
 	Adds the `filename` property to the ContentPackage.
 	"""
 
-	index_last_modified = None
-
 	@property
 	@deprecate("Unclear what the replacement is yet.")
 	def localPath( self ):
 		if self.filename:
 			return os.path.dirname( self.filename )
 
+import rfc822
+import time
 
-def pathToPropertyValue( unit, prop, value ):
+@interface.implementer(IDelimitedHierarchyContentUnit)
+class BotoS3ContentUnit(ContentUnit):
 	"""
-	A convenience function for returning, in order from the root down,
-	the sequence of children required to reach one with a property equal to
-	the given value.
+
+	.. py:attribute:: key
+		The :class:`boto.s3.key.Key` for this unit.
+
 	"""
-	if getattr( unit, prop, None ) == value:
-		return [unit]
-	for child in unit.children:
-		childPath = pathToPropertyValue( child, prop, value )
-		if childPath:
-			# We very inefficiently append to the front
-			# each time, rather than trying to find when recursion ends
-			# and reverse
-			childPath.insert( 0, unit )
-			return childPath
-	return None
+
+	key = None
+
+	@Lazy
+	def lastModified( self ):
+		result = rfc822.parsedate_tz( self.key.last_modified )
+		if result is not None:
+			result = rfc822.mktime_tz(result)
+			# This is supposed to be coming in rfc822 format (see boto.s3.key)
+			# But it doesn't always. So try to parse it ourself if we have to
+		elif self.key.last_modified:
+			# 2012-05-12T23:15:24.000Z
+			result = datetime.datetime.strptime( self.key.last_modified, '%Y-%m-%dT%H:%M:%S.%fZ' )
+			result = time.mktime( result )
+		return result
+
+
+	@Lazy
+	def modified(self):
+		return datetime.datetime.utcfromtimestamp( self.lastModified )
+
+	created = modified
+
+	def _sibling_key( self, sibling_name ):
+		split = self.key.name.split( '/' )
+		split[-1] = sibling_name
+		new_key = type(self.key)( bucket=self.key.bucket, name='/'.join( split ) )
+		return new_key
+
+
+	def read_contents_of_sibling_entry( self, sibling_name ):
+		if self.key:
+			new_key =  self._sibling_key( sibling_name )
+			return new_key.get_contents_as_string()
+
+	def does_sibling_entry_exist( self, sibling_name ):
+		return self.key.bucket.get_key( self._sibling_key( sibling_name ).name )
+
+
+@interface.implementer(IDelimitedHierarchyContentPackage)
+class BotoS3ContentPackage(ContentPackage,BotoS3ContentUnit):
+	pass
