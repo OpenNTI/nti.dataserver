@@ -13,12 +13,11 @@ from nti.contentrendering.resources import converter_mathjax_inline
 class MathjaxDisplayCompilerDriver(converter_mathjax_inline.MathjaxInlineCompilerDriver):
 
 	def _compilation_source_for_content_unit( self, content_unit ):
-		tex_without_delimiters = content_unit.source[1:-1]
 
-                # Filter spaceing / formatting bits that MathJax does not handle
-                tex_without_delimiters = re.sub(r'\[[0-9][0-9]*ex\]', '', tex_without_delimiters)
+		# Filter spaceing / formatting bits that MathJax does not handle
+		tex = re.sub(r'\[[0-9][0-9]*ex\]', '', content_unit.source)
 
-		return '<span class="mathjax math tex2jax_process">%s</span>\n\n' % cgi.escape( tex_without_delimiters )
+		return '<span class="mathjax math tex2jax_process">%s</span>\n\n' % cgi.escape( tex )
 
 
 class MathjaxDisplayBatchConverter(converter_mathjax_inline.MathjaxInlineBatchConverter):
