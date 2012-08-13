@@ -11,12 +11,10 @@ from whoosh import fields
 from whoosh import highlight
 
 from nti.contentsearch import QueryObject
-from nti.contentsearch import compute_ngrams
 from nti.contentsearch import CaseInsensitiveDict
 from nti.contentsearch._whoosh_query import parse_query
-from nti.contentsearch.interfaces import IContentResolver
-from nti.contentsearch.interfaces import IWhooshBookContent
 from nti.contentsearch._search_external import get_search_hit
+from nti.contentsearch import interfaces as search_interfaces
 
 from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch._search_results import empty_search_result
@@ -166,71 +164,71 @@ class Book(_SearchableContent):
 		for hit in search_hits:
 			result.append(hit)
 			hit.search_field = search_field
-			interface.alsoProvides( hit, IWhooshBookContent )
+			interface.alsoProvides( hit, search_interfaces.IWhooshBookContent )
 		return result
 
 # ugd content getter 
 
 def get_id(obj):
-	adapted = component.getAdapter(obj, IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	return adapted.get_id()
 
 def get_channel(obj):
-	adapted = component.getAdapter(obj, IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	return adapted.get_channel()
 
 def get_containerId(obj):
-	adapted = component.getAdapter(obj, IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	return adapted.get_containerId()
 
 def get_external_oid(obj):
-	adapted = component.getAdapter(obj, IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	return adapted.get_external_oid()
 
 def get_ntiid(obj):
-	adapted = component.getAdapter(obj, IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	return adapted.get_ntiid()
 
 def get_creator(obj):
-	adapted = component.getAdapter(obj, IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	return adapted.get_creator()
 
 def get_last_modified(obj):
-	adapted = component.getAdapter(obj, IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	return datetime.fromtimestamp(adapted.get_last_modified())
 	
 def get_references(obj):
-	adapted = component.getAdapter(obj, IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	result = adapted.get_references()
 	return unicode(','.join(result)) if result else None
 
 def get_keywords(obj):
-	adapted = component.getAdapter(obj, IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	words = adapted.get_keywords()
 	return unicode(','.join(words)) if words else None
 
 def get_recipients(obj):
-	adapted = component.getAdapter(obj, IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	result = adapted.get_recipients()
 	return unicode(','.join(result)) if result else None
 
 def get_sharedWith(obj):
-	adapted = component.getAdapter(obj, IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	result = adapted.get_sharedWith()
 	return unicode(','.join(result)) if result else None
 
 def get_object_content(obj):
-	adapted = component.getAdapter(obj, IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	result = adapted.get_content()
 	return result if result else None
 
 def get_replacement_content(obj):
-	adapted = component.getAdapter(obj, IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	result = adapted.get_replacement_content()
 	return result if result else None
 	
 def get_redaction_explanation(obj):
-	adapted = component.getAdapter(obj, IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	result = adapted.get_redaction_explanation()
 	return result if result else None
 
@@ -241,6 +239,10 @@ def get_uid(obj):
 def get_object(uid):
 	_ds_intid = component.getUtility( zope.intid.IIntIds )
 	return _ds_intid.getObject(long(uid))
+
+def is_ngram_search_supported():
+	features = component.getUtility( search_interfaces.ISearchFeatures )
+	return features.is_ngram_search_supported
 
 def _create_user_indexable_content_schema():
 	
@@ -317,7 +319,7 @@ class UserIndexableContent(_SearchableContent):
 def _create_treadable_schema():
 	schema = _create_user_indexable_content_schema()
 	schema.add(keywords_, fields.KEYWORD(stored=False) )
-	schema.add(sharedWith_, fields.KEYWORD(stored=False) )
+	schema.add(sharedWith_, fields.TEXT(stored=False) )
 	return schema
 
 class TreadableIndexableContent(UserIndexableContent):
@@ -346,7 +348,7 @@ class Highlight(TreadableIndexableContent):
 	def get_index_data(self, data, *args, **kwargs):
 		result = super(Highlight, self).get_index_data(data,  *args, **kwargs)
 		result[content_] = get_object_content(data)
-		result[quick_] = result[content_] if compute_ngrams else None
+		result[quick_] = result[content_] if is_ngram_search_supported() else None
 		return result
 	
 # redaction
@@ -389,7 +391,7 @@ def create_messageinfo_schema():
 	schema = create_note_schema()
 	schema.add(channel_, fields.ID(stored=False))
 	schema.add(id_, fields.ID(stored=False, unique=True))
-	schema.add(recipients_, fields.KEYWORD(stored=False))
+	schema.add(recipients_, fields.TEXT(stored=False))
 	return schema
 
 class MessageInfo(Note):

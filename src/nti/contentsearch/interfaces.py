@@ -24,7 +24,9 @@ class ICloudSearchStore(interface.Interface):
 		"""
 		return the cloud search domain with the specifeid name
 		"""
-		
+	
+# searcher
+	
 class ISearcher(interface.Interface):
 	
 	def search(query, *args, **kwargs):
@@ -121,7 +123,12 @@ class IUserIndexManager(ISearcher):
 		:param type_name: index type
 		"""
 	
+# entity adapters
+
 class IRepozeEntityIndexManager(IUserIndexManager):
+	pass
+
+class IWhooshEntityIndexManager(IUserIndexManager):
 	pass
 
 class IUserIndexManagerFactory(interface.Interface):
@@ -129,7 +136,9 @@ class IUserIndexManagerFactory(interface.Interface):
 		"""
 		return a user index manager for the specified user
 		"""
-		
+
+# index manager
+	
 class IIndexManager(interface.Interface):
 	
 	def search(query, *args, **kwargs):
@@ -261,6 +270,8 @@ class IIndexManager(interface.Interface):
 		:param type_name: data type
 		"""
 	
+# whoosh index storage
+
 class IWhooshIndexStorage(interface.Interface):
 
 	def create_index(indexname, schema):
@@ -341,7 +352,7 @@ class IWhooshSnippetHighlight(IHighlightType):
 class ISearchHit(ext_interfaces.IExternalObject):
 	query = interface.Attribute("""query that produced this hit""")
 	pass
-
+	
 # user generated content resolvers
 
 class IContentResolver(interface.Interface):
