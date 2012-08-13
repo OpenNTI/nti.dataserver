@@ -93,5 +93,11 @@
 
 	<utility	provides="zope.component.interfaces.IFactory"
 				component=".zopyxtxng3corestorage.StorageWithTermFrequencyFactory"
-				name="txng.storages.term_frequencies" />		
+				name="txng.storages.term_frequencies" />	
+				
+	<!-- Whoosh storage -->
+	
+	<utility component="._whoosh_indexstorage.create_directory_index_storage" 
+			 provides=".interfaces.IWhooshIndexStorage" />
+	
 </configure>

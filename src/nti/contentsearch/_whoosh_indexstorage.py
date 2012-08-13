@@ -1,14 +1,12 @@
 from __future__ import print_function, unicode_literals
 
 import os
-import fcntl
 import binascii
 
 from zope import interface
 
 from whoosh import index
 from whoosh.index import _DEF_INDEX_NAME
-from whoosh.filedb.structfile import StructFile
 from whoosh.filedb.filestore import FileStorage as WhooshFileStorage
 
 from nti.contentsearch.interfaces import IWhooshIndexStorage
@@ -174,18 +172,9 @@ class MultiDirectoryStorage(DirectoryStorage):
 	
 	def oid_to_path(self, oid, max_bytes=2):
 		return oid_to_path(oid, max_bytes)
-	
-def open_file(self, name, *args, **kwargs):
-	try:
-		f = open(self._fpath(name), "rb")
-		fd = f.fileno()
-		fl = fcntl.fcntl(fd, fcntl.F_GETFL)
-		fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
-		return StructFile(f, name=name, *args, **kwargs)
-	except:
-		raise
-			
-def create_directory_index_storage(indexdir='/tmp/indicies'):
+		
+def create_directory_index_storage(indexdir=None):
+	indexdir = os.path.join(os.getenv('DATASERVER_DIR', "/tmp"), "indicies") if not indexdir else indexdir
 	indexdir = os.path.expanduser(indexdir)
 	if not os.path.exists(indexdir):
 		os.makedirs(indexdir)
