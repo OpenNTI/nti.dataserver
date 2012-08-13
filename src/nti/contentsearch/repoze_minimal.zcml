@@ -7,4 +7,7 @@
 			 provides=".interfaces.IRepozeCatalogFieldCreator" 
 			 component="._repoze_index._zopytext_field_creator" />	
 	
+	<utility component="._repoze_index._DefaultRepozeSearchFeatures" 
+			 provides=".interfaces.ISearchFeatures" />
+			 
 </configure>

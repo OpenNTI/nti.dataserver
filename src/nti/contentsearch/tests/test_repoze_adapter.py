@@ -1,5 +1,7 @@
 import unittest
 
+from zope import component
+
 from nti.dataserver.users import User
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.contenttypes import Redaction
@@ -7,7 +9,6 @@ from nti.externalization.externalization import toExternalObject
 
 from nti.ntiids.ntiids import make_ntiid
 
-from nti.contentsearch import _repoze_index as repoze_index
 from nti.contentsearch import interfaces as search_interfaces
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
@@ -21,10 +22,16 @@ from nti.contentsearch.tests import ConfiguringTestBase
 
 from hamcrest import (is_, is_not, has_key, has_item, has_entry, has_length, assert_that)
 
-repoze_index.compute_ngrams = False
-
 class TestRepozeUserIndexManager(ConfiguringTestBase):
 
+	def is_ngram_search_supported(self):
+		features = component.getUtility(search_interfaces.ISearchFeatures)
+		return features.is_ngram_search_supported
+	
+	def is_word_suggest_supported(self):
+		features = component.getUtility(search_interfaces.ISearchFeatures)
+		return features.is_word_suggest_supported
+	
 	def _create_note(self, msg, username, containerId=None):
 		note = Note()
 		note.body = [unicode(msg)]
@@ -140,9 +147,12 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		assert_that(hits, has_entry(HIT_COUNT, 0))
 		assert_that(hits, has_entry(QUERY, 'shield'))
 
-	@unittest.skipIf(repoze_index.compute_ngrams == False, '')
 	@WithMockDSTrans
 	def test_suggest(self):
+		
+		if not self.is_word_suggest_supported():
+			return
+		
 		usr, _, _ = self._add_user_index_notes()
 		rim = search_interfaces.IRepozeEntityIndexManager(usr, None)
 		
@@ -158,9 +168,12 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		assert_that(items, has_item('rain'))
 		assert_that(items, has_item('rage'))
 
-	@unittest.skipIf(repoze_index.compute_ngrams == False, '')
 	@WithMockDSTrans
 	def test_ngram_search(self):
+		
+		if not self.is_ngram_search_supported():
+			return
+		
 		usr, _, _ = self._add_user_index_notes()
 		rim = search_interfaces.IRepozeEntityIndexManager(usr, None)
 		

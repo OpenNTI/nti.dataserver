@@ -155,4 +155,15 @@ def _keyword_field_creator(catalog, name, iface ):
 
 def _ngrams_field_creator(catalog, name, iface):
 	catalog[name] = CatalogTextIndexNG3(name, get_ngrams)
+	
+@interface.implementer(search_interfaces.ISearchFeatures)
+class _DefaultRepozeSearchFeatures(object):
+	is_ngram_search_supported = False
+	is_word_suggest_supported = False
+	
+@interface.implementer(search_interfaces.ISearchFeatures)
+class _FullRepozeSearchFeatures(object):
+	is_ngram_search_supported = True
+	is_word_suggest_supported = True
 
+	

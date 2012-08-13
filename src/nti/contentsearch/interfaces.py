@@ -1,5 +1,6 @@
 from __future__ import print_function, unicode_literals
 
+from zope import schema
 from zope import interface
 from zope.interface.common.mapping import IFullMapping
 
@@ -62,6 +63,10 @@ class ISearcher(interface.Interface):
 		:param limit: max number of search hits
 		:param search_on: type items to search
 		"""
+	
+class ISearchFeatures(interface.Interface):
+	is_ngram_search_supported = schema.Bool(title="Property for ngram search support.", default=False)
+	is_word_suggest_supported = schema.Bool(title="Property for word suggestion support.", default=False)
 	
 class IBookIndexManager(ISearcher):
 	def get_indexname():
