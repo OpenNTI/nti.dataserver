@@ -4,6 +4,7 @@ import unittest
 import tempfile
 from datetime import datetime
 
+from zope import component
 
 from nti.dataserver.users import User
 from nti.dataserver.contenttypes import Note
@@ -11,13 +12,11 @@ from nti.dataserver.contenttypes import Note
 from nti.ntiids.ntiids import make_ntiid
 
 from nti.contentsearch import QueryObject
-import nti.contentsearch as _contentsearch
-from nti.contentsearch import _repoze_index
-from nti.contentsearch import _whoosh_index
-from nti.contentsearch.indexmanager import create_index_manager_with_repoze
-from nti.contentsearch.indexmanager import create_index_manager_with_whoosh
+from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch._whoosh_index import create_book_schema
 from nti.contentsearch._whoosh_indexstorage import create_directory_index
+from nti.contentsearch.indexmanager import create_index_manager_with_repoze
+from nti.contentsearch.indexmanager import create_index_manager_with_whoosh
 from nti.contentsearch._whoosh_bookindexmanager import WhooshBookIndexManager
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
@@ -30,8 +29,6 @@ from nti.contentsearch.tests import zanpakuto_commands
 from nti.contentsearch.tests import ConfiguringTestBase
 
 from hamcrest import (is_, has_entry, assert_that)
-
-_contentsearch.compute_ngrams = _repoze_index.compute_ngrams  = _whoosh_index.compute_ngrams = False
 
 class _BaseIndexManagerTest(object):
 
@@ -65,6 +62,14 @@ class _BaseIndexManagerTest(object):
 
 	# ----------------
 
+	def is_ngram_search_supported(self):
+		features = component.getUtility(search_interfaces.ISearchFeatures)
+		return features.is_ngram_search_supported
+	
+	def is_word_suggest_supported(self):
+		features = component.getUtility(search_interfaces.ISearchFeatures)
+		return features.is_word_suggest_supported
+	
 	@WithMockDSTrans
 	def test_add_book(self):
 		self.im = self.create_index_mananger()
@@ -100,11 +105,13 @@ class _BaseIndexManagerTest(object):
 		q.term = 'coffee'
 		hits = self.im.search(q)
 		assert_that(hits, has_entry(HIT_COUNT, 1))
-
-
-	@unittest.skipIf(_contentsearch.compute_ngrams == False, '')
+		
 	@WithMockDSTrans
 	def test_unified_search_ngrams(self):
+		
+		if not self.is_ngram_search_supported():
+			return
+		
 		self._add_notes_and_index(('omega radicals', 'the queen of coffee'))
 		self.im.add_book(indexname='bleach', indexdir=self.book_idx_dir)
 
@@ -119,9 +126,12 @@ class _BaseIndexManagerTest(object):
 		hits = self.im.suggest_and_search(q)
 		assert_that(hits, has_entry(HIT_COUNT, 2))
 		
-	@unittest.skipIf(_contentsearch.compute_ngrams == False, '')
 	@WithMockDSTrans
 	def test_unified_search_suggest(self):
+		
+		if not self.is_word_suggest_supported():
+			return
+		
 		self._add_notes_and_index(('omega radicals', 'the queen of coffee'))
 		self.im.add_book(indexname='bleach', indexdir=self.book_idx_dir)
 
@@ -129,9 +139,12 @@ class _BaseIndexManagerTest(object):
 		hits = self.im.suggest(q)
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 
-	@unittest.skipIf(_contentsearch.compute_ngrams == False, '')
 	@WithMockDSTrans
 	def test_unified_search_suggest_and_search(self):
+		
+		if not self.is_word_suggest_supported():
+			return
+		
 		self._add_notes_and_index(('omega radicals', 'the queen of coffee'))
 		self.im.add_book(indexname='bleach', indexdir=self.book_idx_dir)
 
@@ -181,24 +194,32 @@ class _BaseIndexManagerTest(object):
 		hits = self.im.user_data_search(query='rage', username='nt@nti.com', search_on=('Notes',))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 		
-	@unittest.skipIf(_contentsearch.compute_ngrams == False, '')
 	@WithMockDSTrans
 	def test_search_notes_ngrams(self):
+		
+		if not self.is_ngram_search_supported():
+			return
+		
 		self._add_notes_and_index()
-
 		hits = self.im.user_data_ngram_search(query='deat', username='nt@nti.com', search_on=('note',))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 
-	@unittest.skipIf(_contentsearch.compute_ngrams == False, '')
 	@WithMockDSTrans
 	def test_search_notes_suggest(self):
+		
+		if not self.is_word_suggest_supported():
+			return
+		
 		self._add_notes_and_index()
 		hits = self.im.user_data_suggest(username='nt@nti.com', search_on=('note',), query='flow')
 		assert_that(hits, has_entry(HIT_COUNT, 1))
-		
-	@unittest.skipIf(_contentsearch.compute_ngrams == False, '')
+
 	@WithMockDSTrans
 	def test_search_notes_suggest_and_search(self):
+		
+		if not self.is_word_suggest_supported():
+			return
+		
 		self._add_notes_and_index()
 		hits = self.im.user_data_suggest_and_search(query='creat', username='nt@nti.com', search_on=('note',))
 		assert_that(hits, has_entry(HIT_COUNT, 1))

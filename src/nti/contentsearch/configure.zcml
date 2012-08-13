@@ -99,5 +99,8 @@
 	
 	<utility component="._whoosh_indexstorage.create_directory_index_storage" 
 			 provides=".interfaces.IWhooshIndexStorage" />
+			 
+	<utility component="._repoze_index._DefaultRepozeSearchFeatures" 
+			 provides=".interfaces.ISearchFeatures" />
 	
 </configure>

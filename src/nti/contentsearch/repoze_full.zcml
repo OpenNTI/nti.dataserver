@@ -31,4 +31,7 @@
 	<utility name="recipients" provides=".interfaces.IMessageInfoRepozeCatalogFieldCreator" component="._repoze_index._text_field_creator" />
 	<utility name="references" provides=".interfaces.IMessageInfoRepozeCatalogFieldCreator" component="._repoze_index._text_field_creator" />
 	
+	<utility component="._repoze_index._FullRepozeSearchFeatures" 
+			 provides=".interfaces.ISearchFeatures" />
+			 
 </configure>
