@@ -4,14 +4,17 @@ import shutil
 import unittest
 import tempfile
 
+from zope import component
+
 from whoosh import fields
 from whoosh import query
 from whoosh.compat import ( u, text_type )
 
-from nti.contentsearch.tests import domain
+from nti.contentsearch.interfaces import IWhooshIndexStorage
 from nti.contentsearch._whoosh_indexstorage import DirectoryStorage
 from nti.contentsearch._whoosh_indexstorage import MultiDirectoryStorage
 
+from nti.contentsearch.tests import domain
 from nti.contentsearch.tests import ConfiguringTestBase
 
 sample_schema = fields.Schema(id=fields.ID(stored=True, unique=True), content=fields.TEXT(stored=True))
@@ -89,6 +92,10 @@ class _IndexStorageTest(object):
 			q = query.Term("id", unicode(ids[0]))
 			results = s.search(q,limit=None)
 			self.assertTrue(len(results) == 0)
+			
+	def test_component(self):
+		storage = component.getUtility(IWhooshIndexStorage)
+		self.assertTrue(storage != None)
 			
 class TestDirectoryStorage(ConfiguringTestBase, _IndexStorageTest):
 		
