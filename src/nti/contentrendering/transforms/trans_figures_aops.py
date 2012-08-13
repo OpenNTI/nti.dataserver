@@ -20,14 +20,14 @@ def transform( document ):
             # Move the *pic node from right before a solution to inside of the solution.
             if parentNode.parentNode.nodeName == 'section' and \
                     parentNode.nextSibling.firstChild.nodeName == 'solution':
-                logger.info("Moving %s, %s, into solution %s", nodeType, node, parentNode.nextSibling.firstChild)
+                logger.debug("Moving %s, %s, into solution %s", nodeType, node, parentNode.nextSibling.firstChild)
                 parentNode.nextSibling.firstChild.insert( 0, node )
                 parentNode.removeChild( node )
 
             # Handle cases where the *pic node is in a separate par element before the first node of a set.
             elif len(parentNode.childNodes) == 1 and parentNode.parentNode.firstChild == parentNode and \
                     parentNode.nextSibling.nodeName in problemElements:
-                logger.info("Moving %s, %s, into the first node, %s , in the set of %s", nodeType, node, 
+                logger.debug("Moving %s, %s, into the first node, %s , in the set of %s", nodeType, node, 
                              parentNode.nextSibling, parentNode.nextSibling.nodeName)
                 parentNode.nextSibling.insert( 0, node )
                 parentNode.removeChild( node )
