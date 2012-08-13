@@ -1,42 +1,11 @@
 /**
  * $Revision$
  **/
-/*
- * the @font-face directive is only used to define fonts,
- * so if we want to suppress their definition, we can simply
- * comment out the entire directive.
-
-@font-face {
-  font-family: "Open Sans";
-  src: url(fonts/OpenSans-Regular.ttf) format("truetype");
-}
-@font-face {
-  font-family: "Open Sans";
-  font-weight: bold;
-  src: url(fonts/OpenSans-Bold.ttf) format("truetype");
-}
-@font-face {
-  font-family: "Open Sans";
-  font-style: italic;
-  src: url(fonts/OpenSans-Italic.ttf) format("truetype");
-}
-@font-face {
-  font-family: "Open Sans";
-  font-style: italic;
-  font-weight: bold;
-  src: url(fonts/OpenSans-BoldItalic.ttf) format("truetype");
-}
-*/
 /**
  * Important: Using the * descendent selector will
  * cause problems with dynamically changing font settings.
  * Only apply the setting to the root.
  */
-#NTIContent
-{
-	/*Stating a font that is not available will gracefully fall down the chain.*/
-	font-family: 'Open Sans', 'Helvetica', arial, sans-serif;
-}
 
 #NTIContent {
 	position: relative;/*make absolutely positioned elements anchor to this node*/
@@ -122,9 +91,6 @@
 	margin-right: 25px;
 	margin-top: 50px;
 
-	font-weight: lighter;
-	font-size: 130%;
-	letter-spacing: 0px;
 	line-height: 2.2em;
 	/* optimizeLegibility is really slow
 	* on the device.  Also, the fonst
@@ -425,17 +391,8 @@
     text-align: center
 }
 
-
 #NTIContent .rightpic, .leftpic {
 	margin: 1.5em;
-}
-
-#NTIContent .rightpic{
-	float: right;
-	clear: right;
-}
-#NTIContent .leftpic{
-	float: left;
 }
 
 #NTIContent .align-center {
@@ -475,12 +432,4 @@
 	margin: 0;
 	padding: 0;
 	margin-bottom: 6pt;
-}
-
-#NTIContent .inline-math {
-	font-family: STIXGeneral;
-}
-
-#NTIContent .math {
-	font-family: STIXGeneral;
 }
