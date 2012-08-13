@@ -112,8 +112,7 @@ order. A fix in the application for this is pending. */
 }
 
 #NTIContent div.page-contents {
-	/* !important is a workaround for the !important in main.css */
-	font-size: 16px !important;
+	font-size: 1.14em;
 }
 
 /* Mathjax */
@@ -317,8 +316,8 @@ order. A fix in the application for this is pending. */
 }
 
 #NTIContent .highlightHidden {
-	background-color: transparent !important;
-    background-image: none !important;
+	background-color: transparent;
+    background-image: none;
 }
 
 
@@ -342,10 +341,10 @@ order. A fix in the application for this is pending. */
 		/* width: 75%; */
 		text-align: left;
 		/* margin: 1em 7em 1em 1em; */
-		padding: 2em 0.5em 0.5em 4em !important;
+		padding: 2em 0.5em 0.5em 4em;
 		position: relative;
 		margin-bottom: 30px;
-		background: #E7E7E8 url(../styles/sidebar-important.png) no-repeat 10px 5px !important; 
+		background: #E7E7E8 url(../styles/sidebar-important.png) no-repeat 10px 5px; 
 		overflow: hidden;
 }
 
@@ -391,43 +390,43 @@ order. A fix in the application for this is pending. */
 }
 
 #NTIContent div.problem {
-	background-image: none !important;
+	background-image: none;
 	margin-top: 0.5em;
-	padding-top: 2em !important;
-	padding-right: 0.5em !important;
-	padding-bottom: 0.5em !important;
-	padding-left: 1.3em !important;
+	padding-top: 2em;
+	padding-right: 0.5em;
+	padding-bottom: 0.5em;
+	padding-left: 1.3em;
 }
 
 #NTIContent .xtra {
-	background-image: url(sidebar-xtra.png) !important;
+	background-image: url(sidebar-xtra.png);
 }
 
 #NTIContent .warning {
-	background-image: url(sidebar-warning.png) !important;
+	background-image: url(sidebar-warning.png);
 }
 
 #NTIContent .concept {
-	background-image: url(sidebar-key-concept.png) !important;
+	background-image: url(sidebar-key-concept.png);
 }
 
 #NTIContent .sidebar {
-	background-image: url(sidebar-side-note.png) !important;
+	background-image: url(sidebar-side-note.png);
 }
 
 #NTIContent div.importantdef,
 #NTIContent div.picdefns,
 #NTIContent div.defn,
 #NTIContent div.defns {
-	background-image: url(sidebar-definitions.png) !important;
+	background-image: url(sidebar-definitions.png);
 }
 
 #NTIContent .bogus {
-	background-image: url(sidebar-bogus-solutions.png) !important;
+	background-image: url(sidebar-bogus-solutions.png);
 }
 
 #NTIContent .game {
-		background-image: url(sidebar-game.png) !important;
+		background-image: url(sidebar-game.png);
 }
 
 #NTIContent .xtra:after {
@@ -496,27 +495,27 @@ order. A fix in the application for this is pending. */
 }
 
 #NTIContent div.exercises:before {
-	background: url(yellow-pencil.png) no-repeat !important;
+	background: url(yellow-pencil.png) no-repeat;
 }
 
 #NTIContent div.section-problems:before {
-	background: url(yellow-pencil.png) no-repeat !important;
+	background: url(yellow-pencil.png) no-repeat;
 }
 
 #NTIContent div.section-problems-separator:before {
-	background: url(yellow-pencil.png) no-repeat !important;
+	background: url(yellow-pencil.png) no-repeat;
 }
 
 #NTIContent div.review-problems:before {
-	background: url(green-pencil.png) no-repeat !important;
+	background: url(green-pencil.png) no-repeat;
 }
 
 #NTIContent div.challenge-problems:before {
-	background: url(red-pencil.png) no-repeat !important;
+	background: url(red-pencil.png) no-repeat;
 }
 
 #NTIContent div.end.section-problems:before {
-	background: url(yellow-pencil.png) no-repeat !important;
+	background: url(yellow-pencil.png) no-repeat;
 }
 
 #NTIContent div.exercises > span.headingtext {
