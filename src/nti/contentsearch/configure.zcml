@@ -5,7 +5,7 @@
 	<include package="nti.contentfragments" file="configure.zcml" />
 		
 	<include file="repoze_minimal.zcml" />
-		 				 
+					 
 	<!-- Externalization -->
 
 	<adapter factory="._search_external._HighlightSearchHit"
@@ -99,8 +99,14 @@
 	
 	<utility component="._whoosh_indexstorage.create_directory_index_storage" 
 			 provides=".interfaces.IWhooshIndexStorage" />
+	
+	<adapter factory="._whoosh_adapter._WhooshEntityIndexManagerFactory"
+			 for="nti.dataserver.interfaces.IEntity"
+			 provides=".interfaces.IWhooshEntityIndexManager" />
 			 
+	<!-- Search features -->
+	
 	<utility component="._repoze_index._DefaultRepozeSearchFeatures" 
 			 provides=".interfaces.ISearchFeatures" />
-	
+
 </configure>

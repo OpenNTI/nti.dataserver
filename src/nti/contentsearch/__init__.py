@@ -7,8 +7,8 @@ from collections import Iterable
 from brownie.caching import LFUCache
 
 from nti.contentsearch._cloudsearch_store import CloudSearchStore
-
 from nti.contentsearch._ngrams_utils import (ngrams, ngram_tokens)
+from nti.contentsearch.common import (note_, highlight_, redaction_, messageinfo_)
 from nti.contentsearch._search_highlights import (ngram_content_highlight, word_content_highlight)
 from nti.contentsearch._search_highlights import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT, WHOOSH_HIGHLIGHT)
 
@@ -20,7 +20,8 @@ logger = logging.getLogger( __name__ )
 import zopyxtxng3corelogger
 sys.modules["zopyx.txng3.core.logger"] = zopyxtxng3corelogger
 
-compute_ngrams = False #TODO: set this as part of a config
+def get_indexable_types():
+	return (note_, highlight_, redaction_, messageinfo_)
 
 def to_list(data):
 	if isinstance(data, six.string_types):

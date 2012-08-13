@@ -12,7 +12,7 @@ from whoosh.compat import ( u, text_type )
 
 from nti.contentsearch.interfaces import IWhooshIndexStorage
 from nti.contentsearch._whoosh_indexstorage import DirectoryStorage
-from nti.contentsearch._whoosh_indexstorage import MultiDirectoryStorage
+from nti.contentsearch._whoosh_indexstorage import UserNameDirectoryStorage
 
 from nti.contentsearch.tests import domain
 from nti.contentsearch.tests import ConfiguringTestBase
@@ -104,12 +104,12 @@ class TestDirectoryStorage(ConfiguringTestBase, _IndexStorageTest):
 		cls.indexdir = tempfile.mkdtemp(dir="/tmp")
 		cls.idx_storage = DirectoryStorage(cls.indexdir)
 		
-class TestMultiDirectoryStorage(ConfiguringTestBase, _IndexStorageTest):
+class TestUserNameDirectoryStorage(ConfiguringTestBase, _IndexStorageTest):
 		
 	@classmethod
 	def setUpClass(cls):
 		cls.indexdir = tempfile.mkdtemp(dir="/tmp")
-		cls.idx_storage = MultiDirectoryStorage(cls.indexdir)
+		cls.idx_storage = UserNameDirectoryStorage(cls.indexdir)
 	
 if __name__ == '__main__':
 	unittest.main()

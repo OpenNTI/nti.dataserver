@@ -4,7 +4,6 @@ import hashlib
 from zope import component
 from nti.externalization.externalization import toExternalObject
 
-from nti.contentsearch import compute_ngrams
 from nti.contentsearch import CaseInsensitiveDict
 from nti.contentsearch.interfaces import IContentResolver
 
@@ -142,8 +141,7 @@ def to_cloud_object(obj, username, type_name):
 		
 	# set content
 	data[content_] = get_object_content(obj, type_name)
-	if compute_ngrams:
-		data[ngrams_] = get_object_ngrams(obj, type_name)
+	data[ngrams_] = get_object_ngrams(obj, type_name)
 		
 	# get and update the last modified data
 	# cs supports uint ony and we use this number as version also

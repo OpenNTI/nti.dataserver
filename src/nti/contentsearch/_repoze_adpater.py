@@ -79,7 +79,7 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 	def _adapt_search_on_types(self, search_on=None):
 		catnames = self.get_catalog_names()
 		if search_on:
-			search_on = [normalize_type_name(x) for x in search_on if x in catnames]
+			search_on = [normalize_type_name(x) for x in search_on if normalize_type_name(x) in catnames]
 		return search_on or catnames
 
 	def _get_hits_from_docids(self, qo, docids, highlight_type=None):

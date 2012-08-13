@@ -10,7 +10,6 @@ from nti.ntiids.ntiids import make_ntiid
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from nti.contentsearch import _whoosh_index
 from nti.contentsearch.tests import ConfiguringTestBase
 from nti.contentsearch._whoosh_userindexmanager import WhooshUserIndexManager
 from nti.contentsearch._whoosh_indexstorage import create_directory_index_storage
@@ -21,8 +20,6 @@ from nti.contentsearch.common import ( 	HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUE
 from nti.contentsearch.tests import zanpakuto_commands
 
 from hamcrest import (assert_that, is_, has_key, has_entry, has_length, is_not, has_item)
-
-_whoosh_index.compute_ngrams = True
 
 class TestWhooshUserIndexManager(ConfiguringTestBase):
 
