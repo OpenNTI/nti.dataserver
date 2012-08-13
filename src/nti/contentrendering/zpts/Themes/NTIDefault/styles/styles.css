@@ -106,14 +106,8 @@
 	/* margin-left: -50px; */
 
 	font-weight: bold;
-	font-size: 140%;
 	/* font-style: italic; */
 
-	border-top: 2px solid black;
-	display: -webkit-box;
-	-webkit-box-orient: horizontal;
-	-webkit-box-align: left;
-  	-webkit-box-pack: left;
 }
 
 #NTIContent .page-contents .title .ref {
@@ -130,11 +124,9 @@
 #NTIContent .chapter.title {}
 #NTIContent .subsection.title {
 	border-top: none;
-	font-size: 125%;
 }
 #NTIContent .subsubsection.title {
 	border-top: none;
-	font-size: 100%;
 }
 #NTIContent .paragraph.title {}
 #NTIContent .subparagraph.title{}
