@@ -15,7 +15,7 @@ from hamcrest import is_not
 does_not = is_not
 
 from nti.appserver.application import createApplication
-from nti.contentlibrary.filesystem import Library
+from nti.contentlibrary.filesystem import StaticFilesystemLibrary as Library
 from nti.contentlibrary import interfaces as lib_interfaces
 import nti.contentsearch
 import nti.contentsearch.interfaces
@@ -1212,7 +1212,7 @@ class TestRootPageEntryLibrary(TestApplicationLibraryBase):
 		assert_that( res.last_modified, is_( greater_than_or_equal_to( now ) ) )
 
 
-from nti.contentlibrary.filesystem import DynamicLibrary as FileLibrary
+from nti.contentlibrary.filesystem import DynamicFilesystemLibrary as FileLibrary
 from nti.assessment import interfaces as asm_interfaces, submission as asm_submission
 from nti.tests import verifiably_provides
 from nti.appserver import interfaces as app_interfaces

@@ -106,6 +106,12 @@ class IDelimitedHierarchyEntry(interface.Interface):
 
 		"""
 
+	def does_sibling_entry_exist( sibling_name ):
+		"""
+		Ask if the sibling entry named by `sibling_name` exists. Returns a true value
+		if it does, a false value if it doesn't.
+		"""
+
 class IDelimitedHierarchyContentUnit(IContentUnit,IDelimitedHierarchyEntry):
 	pass
 

@@ -267,7 +267,7 @@ import tempfile
 import shutil
 import os
 
-from nti.contentlibrary.filesystem import DynamicLibrary
+from nti.contentlibrary.filesystem import DynamicFilesystemLibrary as DynamicLibrary
 
 import pyramid.interfaces
 from pyramid.threadlocal import get_current_request

@@ -24,7 +24,7 @@ from .test_application import ApplicationTestBase
 
 from urllib import quote as UQ
 
-from nti.contentlibrary.filesystem import DynamicLibrary as FileLibrary
+from nti.contentlibrary.filesystem import DynamicFilesystemLibrary as FileLibrary
 from nti.dataserver import interfaces as nti_interfaces
 
 class TestApplicationAssessment(ApplicationTestBase):
