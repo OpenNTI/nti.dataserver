@@ -35,15 +35,12 @@ def _isTOC( path ):
 	return os.path.basename( path ) == eclipse.TOC_FILENAME
 
 
-def _package_factory( localPath ):
-	if _isTOC( localPath ):
-		localPath = os.path.dirname( localPath )
-
-	if not _hasTOC( localPath ):
+def _package_factory( directory ):
+	if not _hasTOC( directory ):
 		return None
 
-	localPath = os.path.abspath( localPath )
-	toc_path = _TOCPath( localPath )
+	directory = os.path.abspath( directory )
+	toc_path = _TOCPath( directory )
 	temp_entry = FilesystemContentUnit( filename=toc_path )
 	return eclipse.EclipseContentPackage( temp_entry, FilesystemContentPackage, FilesystemContentUnit )
 
@@ -118,6 +115,9 @@ class FilesystemContentUnit(ContentUnit):
 			return open( self.filename, 'r' ).read()
 		except IOError:
 			return None
+
+	def get_parent_key( self ):
+		return os.path.dirname( self.filename )
 
 	def make_sibling_key( self, sibling_name ):
 		return os.path.join( os.path.dirname( self.filename ), sibling_name )

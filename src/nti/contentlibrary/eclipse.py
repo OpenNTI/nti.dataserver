@@ -91,8 +91,8 @@ def EclipseContentPackage( toc_entry,
 	# TODO: root and index should probably be replaced with IDelimitedHierarchyEntry objects.
 	# NOTE: IDelimitedHierarchyEntry is specified as '/' delimited. This means that when we are working with
 	# filesystem objects we have path-dependencies. We won't work on windows
-	content_package.root = toc_entry.key.split( '/' )[-2]
-	content_package.index = toc_entry.key.split( '/' )[-1]
+	content_package.root = toc_entry.get_parent_key()
+	content_package.index = toc_entry.key
 	content_package.index_last_modified = toc_last_modified
 
 	renderVersion = root.get( 'renderVersion' )
