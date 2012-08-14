@@ -15,10 +15,9 @@ from pyramid.security import authenticated_userid
 from pyramid.threadlocal import get_current_request
 
 from zope import interface
-from zope.proxy import ProxyBase as Proxy
+from zope.proxy.decorator import SpecificationDecoratorBase
 from zope.location.interfaces import ILocation
 
-from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization import oids as ext_oids
 
@@ -81,6 +80,16 @@ class AbstractTwoStateViewLinkDecorator(object):
 		link.__parent__ = context
 		_links.append( link )
 
+@interface.implementer(app_interfaces.IUncacheableInResponse)
+class _UncacheableInResponseProxy(SpecificationDecoratorBase):
+	"""
+	A proxy that itself implements UncacheableInResponse. Note
+	that we must extend SpecificationDecoratorBase if we're going
+	to be implementing things, otherwise if we try to do `interface.alsoProvides`
+	on a plain ProxyBase object it falls through to the original object,
+	which defeats the point.
+	"""
+
 
 def uncached_in_response( context ):
 	"""
@@ -90,9 +99,7 @@ def uncached_in_response( context ):
 	Because the context object is likely to be persistent, this uses
 	a proxy and causes the proxy to also implement :class:`nti.appserver.interfaces.IUncacheableInResponse`
 	"""
-	context = Proxy( context )
-	interface.alsoProvides( context, app_interfaces.IUncacheableInResponse )
-	return context
+	return _UncacheableInResponseProxy( context )
 
 
 def dump_stacks():

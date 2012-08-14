@@ -98,8 +98,12 @@ def _UnFlagView(request):
 
 from z3c.table import column, table
 from zope.dublincore import interfaces as dc_interfaces
-from zope.proxy import ProxyBase
+from zope.proxy.decorator import SpecificationDecoratorBase
 from nti.appserver.z3c_zpt import PyramidZopeRequestProxy
+
+@interface.implementer(dc_interfaces.IZopeDublinCore)
+class _FakeDublinCoreProxy(SpecificationDecoratorBase):
+	pass
 
 def _moderation_table( request ):
 	content = component.getUtility( nti_interfaces.IGlobalFlagStorage ).iterflagged()
@@ -166,11 +170,9 @@ class IntIdCheckBoxColumn(column.CheckBoxColumn):
 def fake_dc_core_for_times( item ):
 	times = dc_interfaces.IDCTimes( item, None )
 	if times is None:
-		return item
+		return item # No values to proxy from, no point in doing so
 
-	times = ProxyBase( times )
-	interface.alsoProvides( times, dc_interfaces.IZopeDublinCore )
-	return times
+	return _FakeDublinCoreProxy( times )
 
 
 class CreatedColumn(column.CreatedColumn):

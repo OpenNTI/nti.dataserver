@@ -20,6 +20,10 @@ from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.interfaces import StandardExternalFields
 from zope.dublincore import interfaces as dub_interfaces
 
+# Note that its fairly common for things to claim to implement these interfaces,
+# but only provide a subset of the properties. (mostly due to programming errors).
+# Hence the use of getattr below, to protect against this.
+
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
 @component.adapter(dub_interfaces.IDCExtended)
 class DCExtendedExternalMappingDecorator(object):
@@ -35,10 +39,11 @@ class DCExtendedExternalMappingDecorator(object):
 
 	def decorateExternalMapping( self, original, external ):
 		# TODO: Where should we get constants for this?
+		creators = getattr( original, 'creators', None )
 		if 'DCCreator' not in external:
-			external['DCCreator'] = original.creators
-		if StandardExternalFields.CREATOR not in external and original.creators:
-			external[StandardExternalFields.CREATOR] = original.creators[0]
+			external['DCCreator'] = creators
+		if StandardExternalFields.CREATOR not in external and creators:
+			external[StandardExternalFields.CREATOR] = creators[0]
 
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
@@ -54,6 +59,6 @@ class DCDescriptivePropertiesExternalMappingDecorator(object):
 
 	def decorateExternalMapping( self, original, external ):
 		if 'DCTitle' not in external:
-			external['DCTitle'] = original.title
+			external['DCTitle'] = getattr( original, 'title', None )
 		if 'DCDescription' not in external:
-			external['DCDescription'] = original.description
+			external['DCDescription'] = getattr( original, 'description', None )
