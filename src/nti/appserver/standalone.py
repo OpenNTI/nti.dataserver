@@ -7,10 +7,12 @@ logger = logging.getLogger( __name__ )
 import os
 import platform
 
+import boto
+
 from nti.contentlibrary.filesystem import DynamicLibrary
+from nti.contentlibrary.boto_s3 import BotoS3BucketContentLibrary
 from nti.dataserver import interfaces as nti_interfaces
 from zope import component
-
 
 from application import createApplication, AppServer
 from paste.deploy.converters import asbool
@@ -28,17 +30,24 @@ def configure_app( global_config,
 				   **settings ):
 	":return: A WSGI callable."
 
-	# We'll volunteer to serve all the files in the root directory
-	# Note that this is not dynamic (the library is)
-	# but in production we expect to have static files served by
-	# nginx/apache
-	serveFiles = [ ('/' + s, os.path.join( deploy_root, s) )
-				   for s in os.listdir( deploy_root )
-				   if os.path.isdir( os.path.join( deploy_root, s ) )]
-
+	# Quick hack to switch on or off the library: if the root is a path
+	# then we use a filesystem view. If it's not, then we assume it must be a bucket
+	if '/' in deploy_root:
+		library = DynamicLibrary( deploy_root )
+		# We'll volunteer to serve all the files in the root directory
+		# Note that this is not dynamic (the library is)
+		# but in production we expect to have static files served by
+		# nginx/apache
+		serveFiles = [ ('/' + s, os.path.join( deploy_root, s) )
+					   for s in os.listdir( deploy_root )
+					   if os.path.isdir( os.path.join( deploy_root, s ) )]
+	else:
+		serveFiles = ()
+		boto_bucket = boto.connect_s3().get_bucket( deploy_root )
+		library = BotoS3BucketContentLibrary( boto_bucket )
 
 	application,main = createApplication( int(settings.get('http_port','8081')),
-										  DynamicLibrary( deploy_root ),
+										  library,
 										  process_args=True,
 										  create_ds=nti_create_ds,
 										  sync_changes=asbool(sync_changes),
