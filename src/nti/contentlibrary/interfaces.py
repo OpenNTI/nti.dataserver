@@ -148,6 +148,12 @@ class IDelimitedHierarchyContentPackage(IContentPackage,IDelimitedHierarchyEntry
 	pass
 
 
+class IS3ContentUnit(IDelimitedHierarchyContentUnit):
+	pass
+
+class IS3ContentPackage(IDelimitedHierarchyContentPackage,IS3ContentUnit):
+	pass
+
 class IFilesystemEntry(interface.Interface,dub_interfaces.IDCTimes,IDelimitedHierarchyEntry):
 	"""
 	A mixin interface for things that are backed by items on the filesystem.
@@ -167,7 +173,10 @@ class IFilesystemContentUnit(IDelimitedHierarchyContentUnit,IFilesystemEntry):
 	"""
 	A content unit backed by a file on disk.
 
-	The values for the `href` and `filename` attributes will be the same.
+	The values for the `href` and `filename` attributes will be the same, when the mapping
+	between file and content unit is one-to-one. If the mapping is deeper than that, then the
+	href attribute may include a fragment identifier but the filename will still be a single
+	file.
 	"""
 
 class IFilesystemContentPackage(IDelimitedHierarchyContentPackage,IFilesystemEntry):
@@ -177,3 +186,14 @@ class IFilesystemContentPackage(IDelimitedHierarchyContentPackage,IFilesystemEnt
 	The `root` attribute can be derived from the :func:`os.path.dirname` of the
 	`filename` attribute.
 	"""
+
+class IContentUnitHrefMapper(interface.Interface):
+	"""
+	Register these as adapters to produce the best HREF value for a given content
+	unit in URL space.
+
+	.. note:: This isn't quite the right concept or right idea. This should probably
+		be combined somehow with ILink, and/or made more specific. You may
+		want to register these as multi-adapters depending on the current request.
+	"""
+	href = interface.Attribute( "The best HREF, something a client can resolve." )

@@ -13,7 +13,8 @@ from zope.cachedescriptors.property import Lazy
 
 from nti.utils.property import alias
 
-from .interfaces import IDelimitedHierarchyContentUnit, IDelimitedHierarchyContentPackage
+from .interfaces import IS3ContentUnit
+from .interfaces import IS3ContentPackage
 from .contentunit import ContentUnit, ContentPackage
 from . import library
 from . import eclipse
@@ -21,7 +22,7 @@ from . import eclipse
 import rfc822
 import time
 
-@interface.implementer(IDelimitedHierarchyContentUnit)
+@interface.implementer(IS3ContentUnit)
 class BotoS3ContentUnit(ContentUnit):
 	"""
 
@@ -33,8 +34,17 @@ class BotoS3ContentUnit(ContentUnit):
 
 	key = None
 
+	def _connect_key(self):
+		"""
+		Ensure the key, which may have been created in a disconnected
+		state, is open enough for the purposes of this object.
+		"""
+		if self.key and self.key.last_modified is None and self.key.bucket:
+			self.key.open()
+
 	@Lazy
 	def lastModified( self ):
+		self._connect_key( )
 		result = rfc822.parsedate_tz( self.key.last_modified )
 		if result is not None:
 			result = rfc822.mktime_tz(result)
@@ -77,7 +87,7 @@ class BotoS3ContentUnit(ContentUnit):
 		return self.key.bucket.get_key( self.make_sibling_key( sibling_name ).name )
 
 
-@interface.implementer(IDelimitedHierarchyContentPackage)
+@interface.implementer(IS3ContentPackage)
 class BotoS3ContentPackage(ContentPackage,BotoS3ContentUnit):
 	pass
 
@@ -93,7 +103,12 @@ class BotoS3BucketContentLibrary(library.AbstractCachedStaticLibrary):
 	Enumerates the first level of a '/' delimited bucket and treats each
 	entry as a possible content package. Content packages are cached.
 
-	TODO: Need some level of dynamism here.
+	.. warning:: This is completely static right now, enumerated just once.
+		We need some level of dynamism here.
+
+	.. warning:: We probably generate content units that are invalid and incapable of
+		getting their last modified dates when hrefs contain fragment identifiers, since
+		those do not correspond to files in the filesystem or objects in the bucket.
 	"""
 
 	package_factory = staticmethod(_package_factory)

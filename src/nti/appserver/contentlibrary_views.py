@@ -328,13 +328,17 @@ def _LibraryTOCRedirectView(request, default_href=None, ntiid=None):
 	# based in their root name. Is that valid? Do we need another mapping layer?
 	root_package = traversal.find_interface( request.context, lib_interfaces.IContentPackage )
 	if not href.startswith( '/' ) and '://' not in href: # Is it a relative path?
-		if root_package: # missing in the Root ntiid case
-			warnings.warn( "Assuming mapping of content unit href into URL space." )
-			__traceback_info__ = root_package, href
-			href = root_package.root + '/' + href
-			href = href.replace( '//', '/' )
-			if not href.startswith( '/' ):
-				href = '/' + href
+		mapper = component.queryAdapter( request.context, lib_interfaces.IContentUnitHrefMapper )
+		if mapper:
+			href = mapper.href or href
+		elif root_package: # missing in the Root ntiid case
+			# TODO: JAM: I think this only arises in elderly test code now?
+		 	warnings.warn( "Assuming mapping of content unit href into URL space." )
+		 	__traceback_info__ = root_package, href
+		 	href = root_package.root + '/' + href
+		 	href = href.replace( '//', '/' )
+		 	if not href.startswith( '/' ):
+		 		href = '/' + href
 
 	if root_package: # missing in the root ntiid case
 		lastModified = getattr( root_package, 'lastModified', 0 )  # only IFilesystemContentPackage guaranteed to have
@@ -378,14 +382,3 @@ def _LibraryTOCRedirectView(request, default_href=None, ntiid=None):
 			  permission=nauth.ACT_READ, request_method='GET' )
 def _RootLibraryTOCRedirectView(request):
 	return _LibraryTOCRedirectView( request, default_href='', ntiid=request.view_name)
-
-# @component.adapter(lib_interfaces.IFilesystemContentUnit,pyramid.interfaces.IRequest)
-# @interface.implementer(interfaces.IContentUnitHrefMapper)
-# class FilesystemContentUnitHrefMapper(object):
-
-# 	def __init__( self, unit, request ):
-# 		href = unit.root + '/' + unit.href
-# 		href = href.replace( '//', '/' )
-# 		if not href.startswith( '/' ):
-# 			href = '/' + href
-# 		self.href = href

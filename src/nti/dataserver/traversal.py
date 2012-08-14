@@ -58,7 +58,7 @@ def normal_resource_path( res ):
 def is_valid_resource_path( target ):
 	# We really want to check if this is a valid HTTP URL path. How best to do that?
 	# Not documented until we figure it out.
-	return isinstance( target, basestring ) and  target.startswith( '/' )
+	return isinstance( target, basestring ) and  (target.startswith( '/' ) or target.startswith( 'http://' ) or target.startswith( 'https://' ) )
 
 
 def find_nearest_site(context):
