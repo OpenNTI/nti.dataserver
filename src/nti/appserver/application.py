@@ -316,10 +316,10 @@ def createApplication( http_port,
 			super(_QuestionMap,self).__init__()
 			self.by_file = {}
 
-		def _from_index_entry(self, index, dirname=None):
+		def _from_index_entry(self, index, hierarchy_entry):
 			filename = None
 			if index.get( 'filename' ):
-				filename = os.path.join( dirname, index.get( 'filename' ) ) if dirname else index['filename']
+				filename = hierarchy_entry.make_sibling_key( index['filename'] )
 			for item in index['Items'].values():
 				for k, v in item['AssessmentItems'].items():
 					__traceback_info__ = k, v
@@ -339,13 +339,14 @@ def createApplication( http_port,
 							except (OSError,IOError):
 								return None
 
+						# FIXME: This is so very, very wrong
 						obj.filename = filename
 						obj.read_contents_of_sibling_entry = read_contents_of_sibling_entry
 						interface.alsoProvides( obj, lib_interfaces.IFilesystemEntry )
 
 					self[k] = obj
 				if 'Items' in item:
-					self._from_index_entry( item, dirname=dirname )
+					self._from_index_entry( item, hierarchy_entry )
 
 
 	question_map = _QuestionMap()
@@ -366,7 +367,7 @@ def createApplication( http_port,
 			index = simplejson.loads( asm_index_text,
 									  object_pairs_hook=hook )
 			try:
-				question_map._from_index_entry( index, dirname=getattr(title, 'localPath', None) )
+				question_map._from_index_entry( index, title )
 			except (zope.interface.exceptions.Invalid, ValueError):
 				# Because the map is updated in place, depending on where the error
 				# was, we might have some data...that's not good, but it's not a show stopper either,

@@ -120,6 +120,7 @@ class FilesystemContentUnit(ContentUnit):
 		return os.path.dirname( self.filename )
 
 	def make_sibling_key( self, sibling_name ):
+		__traceback_info__ = self.filename, sibling_name
 		return os.path.join( os.path.dirname( self.filename ), sibling_name )
 
 	def read_contents_of_sibling_entry( self, sibling_name ):
