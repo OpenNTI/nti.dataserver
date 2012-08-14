@@ -13,6 +13,7 @@ from hamcrest.library import has_property
 from hamcrest import greater_than_or_equal_to
 from hamcrest import is_not as does_not
 
+from zope import interface
 
 from webtest import TestApp
 
@@ -22,7 +23,7 @@ import urllib
 
 from nti.ntiids import ntiids
 from nti.externalization.oids import to_external_ntiid_oid
-from nti.dataserver import contenttypes
+from nti.dataserver import contenttypes, users
 from nti.contentrange import contentrange
 
 from nti.dataserver.tests import mock_dataserver
@@ -78,6 +79,7 @@ class TestApplicationFlagging(ApplicationTestBase):
 			n.applicableRange = contentrange.ContentRangeDescription()
 			n.containerId = 'tag:nti:foo'
 			user.addContainedObject( n )
+			provided_by_n = list(interface.providedBy( n ).flattened())
 
 			n2 = contenttypes.Note()
 			n2.body = ['The second part']
@@ -102,6 +104,13 @@ class TestApplicationFlagging(ApplicationTestBase):
 		assert_that( res.content_type, is_( 'text/html' ) )
 		assert_that( res.body, contains_string( 'The first part' ) )
 		assert_that( res.body, contains_string( 'The second part' ) )
+
+		# This should not have changed the implemented/provided lists of the objects
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = users.User.get_user( user.username, dataserver=self.ds )
+			new_n = user.getContainedObject( n.containerId, n.id )
+			assert_that( list( interface.providedBy( new_n ).flattened() ),
+						 is_( provided_by_n ) )
 
 		# Initially ascending
 		assert_that( res.body, contains_string( '?table-sortOrder=ascending&table-sortOn=table-note-created-' ) )
