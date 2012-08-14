@@ -2,6 +2,7 @@ from __future__ import print_function, unicode_literals
 
 import UserDict
 
+import zope.intid
 from zope import component
 from zope import interface
 from persistent.interfaces import IPersistent
@@ -19,7 +20,7 @@ from nti.contentsearch._search_highlights import (word_content_highlight, ngram_
 from nti.contentsearch._search_highlights import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT, WHOOSH_HIGHLIGHT)
 
 from nti.contentsearch.common import (	NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
-										SNIPPET, HIT, ID, TARGET_OID, OID, CONTENT)
+										SNIPPET, HIT, ID, TARGET_OID, OID, CONTENT, INTID)
 
 from nti.contentsearch.common import ( last_modified_, content_, title_, ntiid_)
 
@@ -93,7 +94,8 @@ class WhooshHighlightDecorator(_BaseWordSnippetHighlightDecorator):
 
 # search hits
 
-search_external_fields  = (CLASS, CREATOR, TARGET_OID, TYPE, LAST_MODIFIED, NTIID, CONTAINER_ID, SNIPPET, ID)
+search_external_fields  = (	CLASS, CREATOR, TARGET_OID, TYPE, LAST_MODIFIED, NTIID, \
+							CONTAINER_ID, SNIPPET, ID, INTID)
 	
 default_search_hit_mappings =  ((CLASS, TYPE), (OID, TARGET_OID), \
 								(last_modified_, LAST_MODIFIED), (content_, SNIPPET) )
@@ -101,6 +103,11 @@ def get_content(obj):
 	adapted = component.queryAdapter(obj, search_interfaces.IContentResolver)
 	result = adapted.get_content() if adapted else u''
 	return result
+
+def get_uid(obj):
+	_ds_intid = component.getUtility( zope.intid.IIntIds )
+	uid = _ds_intid.getId(obj)
+	return uid
 
 class _SearchHit(object, UserDict.DictMixin):
 	interface.implements( search_interfaces.ISearchHit )
@@ -115,13 +122,17 @@ class _SearchHit(object, UserDict.DictMixin):
 		self._reduce(self._data)
 		self.query = None
 	
-	def _supplement(self, original, external):
+	def _supplement(self, original, external, intid=None):
 		for k, r in default_search_hit_mappings:
 			if k in external:
 				external[r] = external[k]
 				
 		if SNIPPET not in external:
 			external[SNIPPET] = get_content(original)
+		
+		if intid is not None:
+			external[INTID] = intid
+			
 		external[CLASS] = HIT
 		external[NTIID] = external.get(NTIID, None) or external.get(TARGET_OID, None)
 		
@@ -170,7 +181,7 @@ class _WhooshBookSearchHit(_SearchHit):
 		self.whoosh_highlight = None
 		self._supplement(hit, self._data)
 	
-	def _supplement(self, hit, external):
+	def _supplement(self, hit, external, *args, **kwargs):
 		external[CLASS] = HIT	
 		external[TYPE] = CONTENT
 		external[NTIID] = hit[ntiid_]

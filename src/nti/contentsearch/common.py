@@ -20,6 +20,7 @@ HIT 			= u'Hit'
 OID 			= unicode(ext_interfaces.StandardExternalFields.OID)
 TYPE 			= u'Type'
 BODY			= u'Body'
+INTID			= u'INTID'
 NTIID 			= unicode(ext_interfaces.StandardExternalFields.NTIID)
 CLASS 			= unicode(ext_interfaces.StandardExternalFields.CLASS)
 QUERY 			= u'Query'
