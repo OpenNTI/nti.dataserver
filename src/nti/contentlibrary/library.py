@@ -7,7 +7,6 @@ from __future__ import print_function, unicode_literals
 from zope import interface
 
 from . import interfaces
-from . import contentunit
 
 
 @interface.implementer(interfaces.IContentPackageLibrary)
@@ -16,6 +15,7 @@ class AbstractLibrary(object):
 	Base class for a Library. Subclasses must define the `paths` to inspect.
 
 	.. py:attribute:: possible_content_packages
+
 		A sequence of objects to introspect for :class:`interfaces.IContentPackage` objects.
 	"""
 

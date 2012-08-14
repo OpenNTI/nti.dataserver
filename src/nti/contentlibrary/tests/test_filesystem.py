@@ -12,7 +12,7 @@ from hamcrest import has_property
 from hamcrest import has_entry
 from nti.tests import verifiably_provides, ConfiguringTestBase
 
-from nti.contentlibrary import contentunit, interfaces, eclipse
+from nti.contentlibrary import interfaces, eclipse, filesystem
 import nti.contentlibrary
 import nti.externalization
 import nti.externalization.externalization
@@ -24,7 +24,7 @@ class TestFilesystemContentUnit(ConfiguringTestBase):
 
 	def test_filesystem_content_interfaces(self):
 
-		unit = contentunit.FilesystemContentPackage(
+		unit = filesystem.FilesystemContentPackage(
 			filename='prealgebra/index.html',
 			href = 'index.html',
 			root = 'prealgebra',
@@ -40,7 +40,7 @@ class TestFilesystemContentUnit(ConfiguringTestBase):
 
 		self.configure_packages( set_up_packages=(appserver,) )
 
-		unit = contentunit.FilesystemContentPackage(
+		unit = filesystem.FilesystemContentPackage(
 			filename='prealgebra/index.html',
 			href = 'index.html',
 			root = 'prealgebra',
@@ -54,7 +54,7 @@ class TestFilesystemContentUnit(ConfiguringTestBase):
 		assert_that( IPrefs( unit ), has_property( '__parent__', unit ) )
 
 	def test_from_filesystem(self):
-		package = eclipse.EclipseContentPackage( os.path.join( os.path.dirname( __file__ ), 'TestFilesystem' ) )
+		package = filesystem._package_factory( os.path.join( os.path.dirname( __file__ ), 'TestFilesystem' ) )
 		assert_that( package.creators, is_( ('Jason',) ) )
 
 		self.configure_packages( set_up_packages=(nti.externalization,nti.contentlibrary) )

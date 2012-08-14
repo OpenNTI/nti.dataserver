@@ -27,7 +27,7 @@ class IContentPackageLibrary(interface.Interface):
 
 	def childrenOfNTIID( ntiid ):
 		""" Returns a flattened list of all the children entries of ntiid
-		in no particular order. If there are no children, returns []"""
+		in no particular order. If there are no children, returns ``[]``"""
 
 	def __getitem__( key ):
 		"""
@@ -38,7 +38,8 @@ class IContentPackageLibrary(interface.Interface):
 	contentPackages = schema.Iterable( title=u'Sequence of all known :class:`IContentPackage`')
 
 # TODO: I'm not happy with the way paths are handled. How can the 'relative'
-# stuff be done better? This is mostly an issue with the IContentPackage,
+# stuff be done better? This is mostly an issue with the IContentPackage and its 'root'
+# attribute. That's mostly confined to externalization.py now.
 
 class IContentUnit(IZContained, dub_interfaces.IDCDescriptiveProperties):
 	"""
@@ -50,7 +51,7 @@ class IContentUnit(IZContained, dub_interfaces.IDCDescriptiveProperties):
 	"""
 	ordinal = schema.Int( title="The number (starting at 1) representing which nth child of the parent I am." )
 	href = schema.TextLine( title="URI for the representation of this item.",
-						description="If this unit is within a package, then this is a relative path" )
+							description="If this unit is within a package, then this is potentially a relative path" )
 	ntiid = schema.TextLine( title="The NTIID for this item" )
 	title = schema.TextLine( title="The human-readable section name of this item; alias for `__name__`" ) # also defined by IDCDescriptiveProperties
 	icon = schema.TextLine( title="URI for an image for this item, or None" )
@@ -62,13 +63,17 @@ class IContentPackage(IContentUnit, dub_interfaces.IDCExtended):
 	An identified collection of content treated as a unit.
 	The package starts with a root unit (this object).
 
-	Typically, this object's `href` attribute will end in `index.html`. The
+	Typically, this object's ``href`` attribute will end in ``index.html``. The
 	:class:`IContentUnit` objects that reside as children within this object
-	will usually have `href` and `icon` attributes that are relative to this
-	object's `root`.
+	will usually have ``href`` and ``icon`` attributes that are relative to this
+	object's ``root`` (if they are not absolute URLs).
+
+	.. note:: The ``root`` attribute should be considered deprecated, as should
+		all resolving of content relative to it. It will probably be becoming
+		a :class:`IDelimitedHierarchyEntry` object when that stabilizes more.
 	"""
 
-	root = interface.Attribute( "Path portion of a uri for this object" )
+	root = interface.Attribute( "Path portion of a uri for this object." )
 	index = schema.TextLine( title="Path portion to an XML file representing this content package" )
 	index_last_modified = schema.Float( title="Time since the epoch the index for this package was last modified.",
 										description="This is currently the best indication of when this package as a whole may have changed.",
@@ -78,7 +83,7 @@ class IContentPackage(IContentUnit, dub_interfaces.IDCExtended):
 	renderVersion = schema.Int( title="Version of the rendering process that produced this package.",
 								default=1, min=1 )
 
-class IDelimitedHierarchyEntry(interface.Interface):
+class IDelimitedHierarchyEntry(interface.Interface,dub_interfaces.IDCTimes):
 	"""
 	Similar to an :class:`IFilesystemEntry`, but not tied to the local (or mounted)
 	filesystem. Each entry is named by a ``/`` delimited key analogous to a filesystem
@@ -93,6 +98,20 @@ class IDelimitedHierarchyEntry(interface.Interface):
 	key = interface.Attribute( "The key designating this entry in the hierarchy." )
 	# Needs further definition. In the filesystem case, this is `filename`. In the boto case,
 	# this is `key`
+
+	def read_contents():
+		"""
+		Read and return, as a sequence of bytes, the contents of this entry.
+
+		:return: Either the byte string of the contents of the entry, or if there is no such entry,
+			`None`.
+		"""
+
+	def make_sibling_key( sibling_name ):
+		"""
+		Create a value suitable for use as the ``key`` attribute of this or a similar
+		object having the given `sibling_name`.
+		"""
 
 	def read_contents_of_sibling_entry( sibling_name ):
 		"""
