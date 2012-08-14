@@ -66,16 +66,25 @@ class CreatorBasedAnnotationMeetingStorage(object):
 
 	def add_room( self, room ):
 		check_contained_object_for_storage( room )
-		creator_name = room.creator
-		creator = users.Entity.get_entity( creator_name )
+		# At this point we know we have a containerId
 
+
+		creator = users.Entity.get_entity( room.creator )
 		meeting_container = IMeetingContainer(creator)
 
-		# Ensure that we can get an NTIID
-		if IConnection( room, None ) is None:
+		# Ensure that we can get an NTIID OID by making
+		# sure that the room is stored by the connection that created
+		# the user. Note that we specifically check just on the room
+		# object for its jar, we don't use the IConnection adapter, which
+		# would traverse up the parent hierarchy and might find something
+		# we don't want it to.
+		if getattr( room, '_p_jar', None ) is None:
 			IConnection( creator ).add( room )
 
 		room.id = oids.to_external_ntiid_oid( room, None )
+		if room.id is None:
+			__traceback_info__ = creator, meeting_container, room
+			raise ValueError( "Unable to get OID for room" )
 
 		meeting_container[room.id] = room
 
