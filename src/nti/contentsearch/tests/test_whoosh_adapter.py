@@ -1,4 +1,5 @@
 import os
+import uuid
 import shutil
 import tempfile
 import unittest
@@ -23,60 +24,60 @@ from hamcrest import (assert_that, is_, has_key, has_entry, has_length, is_not, 
 
 class TestWhooshUserAdapter(ConfiguringTestBase):
 
-	def setUp(self):
-		ConfiguringTestBase.setUp(self)
-		self.db_dir = tempfile.mkdtemp(dir="/tmp")
-		os.putenv('DATASERVER_DIR', self.db_dir)
+	@classmethod
+	def setUpClass(cls):
+		cls.db_dir = tempfile.mkdtemp(dir="/tmp")
+		os.environ['DATASERVER_DIR']= cls.db_dir
+	
+	@classmethod
+	def tearDownClass(cls):
+		shutil.rmtree(cls.db_dir, True)
 
-	def tearDown(self):
-		ConfiguringTestBase.tearDown(self)
-		shutil.rmtree(self.db_dir, True)
-
-	def _add_notes(self, usr=None, conn=None):
+	def _add_notes(self, usr):
 		notes = []
-		conn = conn or mock_dataserver.current_transaction
-		usr = usr or User.create_user( mock_dataserver.current_mock_ds, username='nt@nti.com', password='temp' )
+		conn = mock_dataserver.current_transaction
 		for x in zanpakuto_commands:
 			note = Note()
 			note.body = [unicode(x)]
 			note.creator = usr.username
 			note.containerId = make_ntiid(nttype='bleach', specific='manga')
 			if conn: conn.add(note)
-			notes.append(usr.addContainedObject( note ))
-		return notes, usr
+			note = usr.addContainedObject( note ) 
+			notes.append(note)
+		return notes
 
-	def _index_notes(self, usr=None, conn=None, do_assert=True):
-		notes, usr = self._add_notes(usr=usr, conn=conn)
+	def _add_user_index_notes(self, do_assert=False):
+		username = str(uuid.uuid4()).split('-')[-1] + '@nti.com' 
+		usr = User.create_user(  mock_dataserver.current_mock_ds, username=username, password='temp' )
+		notes = self._add_notes(usr)
+		uim = search_interfaces.IWhooshEntityIndexManager(usr, None)
 		for note in notes:
-			result = self.uim.index_content(note)
+			result = uim.index_content(note)
 			if do_assert:
 				assert_that(result, is_(True))
 		return notes, usr
 
-	def _add_user_index_notes(self, ds=None):
-		ds = ds or mock_dataserver.current_mock_ds
-		usr = User.create_user( ds, username='nt@nti.com', password='temp' )
-		notes, _  = self._index_notes(usr=usr, do_assert=False)
-		return notes, usr
-
 	@WithMockDSTrans
-	def xtest_empty(self):
-		usr = User.create_user( mock_dataserver.current_mock_ds, username='nt@nti.com', password='temp' )
+	def test_empty(self):
+		username = str(uuid.uuid4()).split('-')[-1] + '@nti.com' 
+		usr = User.create_user(  mock_dataserver.current_mock_ds, username=username, password='temp' )
 		uim = search_interfaces.IWhooshEntityIndexManager(usr, None)
 		assert_that(uim.get_stored_indices(), is_([]))
 		assert_that(uim.has_stored_indices(), is_(False))
 
 	@WithMockDSTrans
-	def xtest_index_notes(self):
-		self._index_notes()
-		assert_that(self.uim.get_stored_indices(), is_(['note']))
-		assert_that(self.uim.has_stored_indices(), is_(True))
+	def test_index_notes(self):
+		_, usr = self._add_user_index_notes(True)
+		uim = search_interfaces.IWhooshEntityIndexManager(usr, None)
+		assert_that(uim.get_stored_indices(), is_(['note']))
+		assert_that(uim.has_stored_indices(), is_(True))
 
 	@WithMockDSTrans
-	def xtest_query_notes(self):
-		self._add_user_index_notes()
-
-		hits = self.uim.search("shield", limit=None)
+	def test_query_notes(self):
+		_, usr = self._add_user_index_notes()
+		uim = search_interfaces.IWhooshEntityIndexManager(usr, None)
+		
+		hits = uim.search("shield", limit=None)
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 		assert_that(hits, has_entry(QUERY, 'shield'))
 		assert_that(hits, has_key(ITEMS))
@@ -91,44 +92,50 @@ class TestWhooshUserAdapter(ConfiguringTestBase):
 		assert_that(key, is_(items[key][NTIID]))
 		assert_that(items[key], has_entry(CONTAINER_ID, 'tag:nextthought.com,2011-10:bleach-manga'))
 
-		hits = self.uim.search("*", limit=None)
+		hits = uim.search("*", limit=None)
 		assert_that(hits, has_entry(HIT_COUNT, len(zanpakuto_commands)))
 
-		hits = self.uim.search("ra*", limit=None)
+		hits = uim.search("ra*", limit=None)
 		assert_that(hits, has_entry(HIT_COUNT, 3))
 
-		hits = self.uim.search(">ichigo")
+		hits = uim.search(">ichigo")
 		assert_that(hits, has_entry(HIT_COUNT, 0))
 
 	@WithMockDSTrans
-	def xtest_update_note(self):
-		notes, _ = self._add_user_index_notes()
+	def test_update_note(self):
+		notes, usr = self._add_user_index_notes()
+		uim = search_interfaces.IWhooshEntityIndexManager(usr, None)
+		
 		note = notes[5]
 		note.body = [u'Blow It Away']
-		self.uim.update_content(note)
+		uim.update_content(note)
 
-		hits = self.uim.search("shield", limit=None)
+		hits = uim.search("shield", limit=None)
 		assert_that(hits, has_entry(HIT_COUNT, 0))
 		assert_that(hits, has_entry(QUERY, 'shield'))
 
-		hits = self.uim.search("blow", limit=None)
+		hits = uim.search("blow", limit=None)
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 		assert_that(hits, has_entry(QUERY, 'blow'))
 
 	@WithMockDSTrans
-	def xtest_delete_note(self):
-		notes, _  = self._add_user_index_notes()
+	def test_delete_note(self):
+		notes, usr  = self._add_user_index_notes()
+		uim = search_interfaces.IWhooshEntityIndexManager(usr, None)
+		
 		note = notes[5]
-		self.uim.delete_content(note)
+		uim.delete_content(note)
 
-		hits = self.uim.search("shield", limit=None)
+		hits = uim.search("shield", limit=None)
 		assert_that(hits, has_entry(HIT_COUNT, 0))
 		assert_that(hits, has_entry(QUERY, 'shield'))
 
 	@WithMockDSTrans
-	def xtest_suggest(self):
-		self._add_user_index_notes()
-		hits = self.uim.suggest("ra")
+	def test_suggest(self):
+		_, usr = self._add_user_index_notes()
+		uim = search_interfaces.IWhooshEntityIndexManager(usr, None)
+		
+		hits = uim.suggest("ra")
 		assert_that(hits, has_entry(HIT_COUNT, 4))
 		assert_that(hits, has_entry(QUERY, 'ra'))
 		assert_that(hits, has_key(ITEMS))
@@ -141,9 +148,10 @@ class TestWhooshUserAdapter(ConfiguringTestBase):
 		assert_that(items, has_item('rage'))
 
 	@WithMockDSTrans
-	def xtest_ngram_search(self):
-		self._add_user_index_notes()
-		hits = self.uim.ngram_search("sea")
+	def test_ngram_search(self):
+		_, usr = self._add_user_index_notes()
+		uim = search_interfaces.IWhooshEntityIndexManager(usr, None)
+		hits = uim.ngram_search("sea")
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 		assert_that(hits, has_entry(QUERY, 'sea'))
 		assert_that(hits, has_key(ITEMS))

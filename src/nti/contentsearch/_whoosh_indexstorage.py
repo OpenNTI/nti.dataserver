@@ -88,7 +88,8 @@ class IndexStorage(object):
 		return self.default_commit_args
 
 def prepare_index_directory(indexdir=None):
-	indexdir = os.path.join(os.getenv('DATASERVER_DIR', "/tmp"), "indicies") if not indexdir else indexdir
+	dsdir = os.getenv('DATASERVER_DIR', "/tmp")
+	indexdir = os.path.join(dsdir, "indicies") if not indexdir else indexdir
 	indexdir = os.path.expanduser(indexdir)
 	if not os.path.exists(indexdir):
 		os.makedirs(indexdir)

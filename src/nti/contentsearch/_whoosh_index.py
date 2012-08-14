@@ -234,11 +234,13 @@ def get_redaction_explanation(obj):
 
 def get_uid(obj):
 	_ds_intid = component.getUtility( zope.intid.IIntIds )
-	return unicode(str(_ds_intid.getId(obj)))
+	uid = _ds_intid.getId(obj)
+	return unicode(str(uid))
 	
 def get_object(uid):
 	_ds_intid = component.getUtility( zope.intid.IIntIds )
-	return _ds_intid.getObject(long(uid))
+	uid = int(uid)
+	return _ds_intid.getObject(uid)
 
 def is_ngram_search_supported():
 	features = component.getUtility( search_interfaces.ISearchFeatures )
