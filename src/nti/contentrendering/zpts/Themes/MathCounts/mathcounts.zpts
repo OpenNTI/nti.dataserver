@@ -54,7 +54,7 @@ name: mathcountssolution mathcountsdifficulty mathcountsresult mathcountssolutio
 #	<li tal:attributes="value PATH/TO/PROBNUM" tal:repeat="item self" tal:content="item" tal:omit-tag="python:not any([c.__class__.__name__.startswith('mathcounts') for c in item.childNodes])"></li>
 
 name: mathcountsworksheet
-<div class="worksheet-title" tal:attributes="id self/id" tal:content="self/title">Title</div>
+<div class="worksheet-title" tal:attributes="data-ntiid self/id" tal:content="self/title">Title</div>
 <form>
 <div class="worksheet-problems itemize" tal:content="self"></div>
 </form>
