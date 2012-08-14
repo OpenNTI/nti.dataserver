@@ -11,7 +11,7 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.contentsearch.interfaces import IUserIndexManagerFactory
 
-from nti.contentsearch import interfaces
+from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch import QueryObject
 from nti.contentsearch import SearchCallWrapper
 from nti.contentsearch.common import is_all_query
@@ -35,7 +35,7 @@ import logging
 logger = logging.getLogger( __name__ )
 		
 def has_stored_indices(username):
-	store = component.getUtility( interfaces.ICloudSearchStore )
+	store = component.getUtility( search_interfaces.ICloudSearchStore )
 	domain = store.get_domain('ntisearch')
 	bq = "%s:'%s'" % (username_, username)
 	service  = get_search_service(domain=domain) if domain else None
@@ -43,11 +43,11 @@ def has_stored_indices(username):
 	return len(results) > 0
 
 class CloudSearchUserIndexManager(object):
-	interface.implements(interfaces.IUserIndexManager)
+	interface.implements(search_interfaces.IEntityIndexManager)
 
 	def __init__(self, username, ntisearch=None):
 		self.username = username
-		self.domain = ntisearch or component.getUtility(interfaces.ICloudSearchStore).get_domain('ntisearch')
+		self.domain = ntisearch or component.getUtility(search_interfaces.ICloudSearchStore).get_domain('ntisearch')
 
 	def __str__( self ):
 		return self.username

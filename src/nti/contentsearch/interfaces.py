@@ -74,13 +74,7 @@ class IBookIndexManager(ISearcher):
 	def get_indexname():
 		"return the index name"
 	
-class IUserIndexManager(ISearcher):
-	
-		
-	def get_username():
-		"""
-		return the user for this manager
-		"""
+class IEntityIndexManager(ISearcher):
 
 	def has_stored_indices():
 		"""
@@ -125,10 +119,10 @@ class IUserIndexManager(ISearcher):
 	
 # entity adapters
 
-class IRepozeEntityIndexManager(IUserIndexManager):
+class IRepozeEntityIndexManager(IEntityIndexManager):
 	pass
 
-class IWhooshEntityIndexManager(IUserIndexManager):
+class IWhooshEntityIndexManager(IEntityIndexManager):
 	pass
 
 class IUserIndexManagerFactory(interface.Interface):

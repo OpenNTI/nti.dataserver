@@ -24,10 +24,6 @@ logger = logging.getLogger( __name__ )
 BaseIndex.family = BTrees.family64
 CatalogIndex.family = BTrees.family64
 
-def get_id(obj, default):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
-	return adapted.get_id() or default
-
 def get_channel(obj, default):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	return adapted.get_channel() or default
@@ -52,7 +48,8 @@ def get_creator(obj, default):
 
 def get_last_modified(obj, default):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
-	return adapted.get_last_modified() or default
+	result = adapted.get_last_modified()
+	return result or default
 	
 def get_keywords(obj, default):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)

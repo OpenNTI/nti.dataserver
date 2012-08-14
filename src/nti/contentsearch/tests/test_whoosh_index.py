@@ -1,4 +1,7 @@
+import os
 import time
+import shutil
+import tempfile
 import unittest
 from datetime import datetime
 
@@ -30,7 +33,16 @@ from hamcrest import (assert_that, is_, has_entry, has_key, has_length)
 _whoosh_index.compute_ngrams = True
 
 class TestWhooshIndex(ConfiguringTestBase):
-
+	
+	@classmethod
+	def setUpClass(cls):
+		cls.db_dir = tempfile.mkdtemp(dir="/tmp")
+		os.environ['DATASERVER_DIR']= cls.db_dir
+	
+	@classmethod
+	def tearDownClass(cls):
+		shutil.rmtree(cls.db_dir, True)
+		
 	def _create_ds_note(self):
 		username='nt@nti.com'
 		usr = User.create_user( mock_dataserver.current_mock_ds, username=username, password='temp' )

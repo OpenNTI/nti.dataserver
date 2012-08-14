@@ -72,13 +72,13 @@ replacementContent_ = u'replacementContent'
 redactionExplanation_ = u'redactionExplanation'
 flattenedSharingTargetNames_ = u'flattenedSharingTargetNames'
 
-ntiid_fields = [NTIID, ntiid_]
-creator_fields = [CREATOR, creator_]
-oid_fields = [OID, p_oid_, oid_, id_]
-keyword_fields = [keywords_, tags_, AUTO_TAGS]
-container_id_fields = [CONTAINER_ID, 'ContainerID', containerId_, 'container']
-last_modified_fields =  [LAST_MODIFIED, ext_interfaces.StandardInternalFields.LAST_MODIFIED,
-						 ext_interfaces.StandardInternalFields.LAST_MODIFIEDU, '_lastModified', last_modified_]
+ntiid_fields = (NTIID, ntiid_)
+creator_fields = (CREATOR, creator_)
+oid_fields = (OID, p_oid_, oid_, id_)
+keyword_fields = (keywords_, tags_, AUTO_TAGS)
+container_id_fields = (CONTAINER_ID, 'ContainerID', containerId_, 'container')
+last_modified_fields =  (LAST_MODIFIED, ext_interfaces.StandardInternalFields.LAST_MODIFIEDU,
+						 '_lastModified', last_modified_)
 
 nti_mimetype_prefix = MIME_BASE + '.'
 

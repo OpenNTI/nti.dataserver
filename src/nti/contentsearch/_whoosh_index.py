@@ -23,7 +23,7 @@ from nti.contentsearch.common import (NTIID, LAST_MODIFIED, ITEMS, HIT_COUNT, SU
 from nti.contentsearch._search_highlights import ( WORD_HIGHLIGHT, NGRAM_HIGHLIGHT, WHOOSH_HIGHLIGHT)
 
 from nti.contentsearch.common import (	quick_, channel_, content_, keywords_, references_, 
-										id_, recipients_, sharedWith_, oid_ , ntiid_, last_modified_,
+										recipients_, sharedWith_, ntiid_, last_modified_,
 										creator_, containerId_, replacementContent_,
 										redactionExplanation_, intid_)
 		
@@ -169,10 +169,6 @@ class Book(_SearchableContent):
 
 # ugd content getter 
 
-def get_id(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
-	return adapted.get_id()
-
 def get_channel(obj):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	return adapted.get_channel()
@@ -180,10 +176,6 @@ def get_channel(obj):
 def get_containerId(obj):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	return adapted.get_containerId()
-
-def get_external_oid(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
-	return adapted.get_external_oid()
 
 def get_ntiid(obj):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
@@ -195,7 +187,8 @@ def get_creator(obj):
 
 def get_last_modified(obj):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
-	return datetime.fromtimestamp(adapted.get_last_modified())
+	result = adapted.get_last_modified()
+	return datetime.fromtimestamp(result) if result is not None else None
 	
 def get_references(obj):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
@@ -249,7 +242,6 @@ def is_ngram_search_supported():
 def _create_user_indexable_content_schema():
 	
 	schema = fields.Schema(	intid = fields.ID(stored=True, unique=True),
-							oid = fields.ID(unique=True, stored=False),
 							containerId = fields.ID(stored=False),
 							creator = fields.ID(stored=False),
 				  			last_modified = fields.DATETIME(stored=False),
@@ -269,7 +261,6 @@ class UserIndexableContent(_SearchableContent):
 		result[intid_] = get_uid(data)
 		result[ntiid_] = get_ntiid(data)
 		result[creator_] = get_creator(data)
-		result[oid_] = get_external_oid(data)
 		result[containerId_] = get_containerId(data)
 		result[last_modified_] = get_last_modified(data)
 		return result
@@ -392,7 +383,6 @@ class Note(Highlight):
 def create_messageinfo_schema():
 	schema = create_note_schema()
 	schema.add(channel_, fields.ID(stored=False))
-	schema.add(id_, fields.ID(stored=False, unique=True))
 	schema.add(recipients_, fields.TEXT(stored=False))
 	return schema
 
@@ -402,7 +392,6 @@ class MessageInfo(Note):
 
 	def get_index_data(self, data, *args, **kwargs):
 		result = super(MessageInfo, self).get_index_data(data,  *args, **kwargs)
-		result[id_] = get_id(data)
 		result[channel_] = get_channel(data)
 		result[references_] = get_references(data)
 		return result

@@ -1,15 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-"""
-
-
-$Id$
-"""
-
 from __future__ import print_function, unicode_literals, absolute_import
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
 
 import re
 import six
@@ -17,6 +6,7 @@ import collections
 
 from zope import component
 from zope import interface
+from zope.minmax._minmax import AbstractValue
 from persistent.interfaces import IPersistent
 
 from dolmen.builtins import IDict
@@ -42,6 +32,9 @@ from nti.contentsearch.common import (text_, body_, selectedText_, replacementCo
 									  container_id_fields, ntiid_fields, oid_fields, highlight_, note_,
 									  messageinfo_, redaction_, canvas_, canvastextshape_, references_,
 									  inReplyTo_, recipients_, channel_, flattenedSharingTargetNames_)
+
+import logging
+logger = logging.getLogger( __name__ )
 
 def get_content(text=None):
 	tokenizer = component.getUtility(search_interfaces.IContentTokenizer)
@@ -119,7 +112,10 @@ class _AbstractIndexDataResolver(_BasicContentaResolver):
 		return _process_words(data)
 
 	def get_last_modified(self):
-		return _get_any_attr(self.obj, last_modified_fields)
+		result = _get_any_attr(self.obj, last_modified_fields)
+		result = result.value if isinstance(result, AbstractValue) else result
+		result = float(result) if result is not None else result
+		return result
 
 class _ThreadableContentResolver(_AbstractIndexDataResolver):
 
