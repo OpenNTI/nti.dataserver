@@ -19,6 +19,7 @@ from pyramid.view import view_config
 
 import time
 import itertools
+import warnings
 
 from zope import interface
 from zope import component
@@ -323,18 +324,20 @@ def _LibraryTOCRedirectView(request, default_href=None, ntiid=None):
 	lastModified = 0
 	# Right now, the ILibraryTOCEntries always have relative hrefs,
 	# which may or may not include a leading /.
-	# TODO: We're assuming these map into the URL space
+	# FIXME: We're assuming these map into the URL space
 	# based in their root name. Is that valid? Do we need another mapping layer?
-	root = traversal.find_interface( request.context, lib_interfaces.IContentPackage )
-	if not href.startswith( '/' ):
-		if root: # missing in the root ntiid case
-			href = root.root + '/' + href
+	root_package = traversal.find_interface( request.context, lib_interfaces.IContentPackage )
+	if not href.startswith( '/' ) and '://' not in href: # Is it a relative path?
+		if root_package: # missing in the Root ntiid case
+			warnings.warn( "Assuming mapping of content unit href into URL space." )
+			__traceback_info__ = root_package, href
+			href = root_package.root + '/' + href
 			href = href.replace( '//', '/' )
 			if not href.startswith( '/' ):
 				href = '/' + href
 
-	if root: # missing in the root ntiid case
-		lastModified = getattr( root, 'lastModified', 0 )  # only IFilesystemContentPackage guaranteed to have
+	if root_package: # missing in the root ntiid case
+		lastModified = getattr( root_package, 'lastModified', 0 )  # only IFilesystemContentPackage guaranteed to have
 
 	# If the client asks for a specific type of data,
 	# a link, then give it to them. Otherwise...
@@ -375,3 +378,14 @@ def _LibraryTOCRedirectView(request, default_href=None, ntiid=None):
 			  permission=nauth.ACT_READ, request_method='GET' )
 def _RootLibraryTOCRedirectView(request):
 	return _LibraryTOCRedirectView( request, default_href='', ntiid=request.view_name)
+
+# @component.adapter(lib_interfaces.IFilesystemContentUnit,pyramid.interfaces.IRequest)
+# @interface.implementer(interfaces.IContentUnitHrefMapper)
+# class FilesystemContentUnitHrefMapper(object):
+
+# 	def __init__( self, unit, request ):
+# 		href = unit.root + '/' + unit.href
+# 		href = href.replace( '//', '/' )
+# 		if not href.startswith( '/' ):
+# 			href = '/' + href
+# 		self.href = href

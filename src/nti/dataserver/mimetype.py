@@ -1,10 +1,15 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
-Having to do with MIME types.
+Having to do with mime types.
+
+$Id$
 """
 
-import logging
-logger = logging.getLogger( __name__ )
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import weakref
 
@@ -164,9 +169,11 @@ def nti_mimetype_from_object( obj, use_class=True ):
 		will be a candidate if nothing else matches.
 	"""
 	# IContentTypeAware
-	if hasattr( obj, 'mime_type' ): return getattr( obj, 'mime_type' )
+	if hasattr( obj, 'mime_type' ):
+		return getattr( obj, 'mime_type' )
 	content_type_aware = IContentTypeAware( obj, None )
-	if content_type_aware: return content_type_aware.mime_type
+	if content_type_aware:
+		return content_type_aware.mime_type
 
 	if _safe_by( interfaces.IModeledContent.providedBy, obj ):
 		# Find the IModeledContent subtype that it implements.
@@ -182,20 +189,21 @@ def nti_mimetype_from_object( obj, use_class=True ):
 	# unpickle it if the instance ever becomes non-callable:
 	#   zope.interface-4.0.1-py2.7-macosx-10.7-x86_64.egg/zope/interface/declarations.py", line 189, in implementedByFallback
 	#		raise TypeError("ImplementedBy called for non-factory", cls)
-
-	if isinstance( obj, type) and _safe_by( interfaces.IModeledContent.implementedBy, obj ):
+	obj_is_type = isinstance( obj, type )
+	if obj_is_type and _safe_by( interfaces.IModeledContent.implementedBy, obj ):
 		for iface in interface.implementedBy( obj ):
 			if iface.extends( interfaces.IModeledContent ):
 				return nti_mimetype_with_class( iface.__name__[1:] )
 
 
-	clazz = obj if isinstance( obj, type ) else type(obj)
+	clazz = obj if obj_is_type else type(obj)
 	if use_class and clazz.__module__.startswith( 'nti.' ):
 		# NOTE: Must be very careful not to try to print the object in this
 		# function. Printing some objects tries to get their external
 		# representation, which wants the mimetype, which gets to this function.
 		# Infinite recursion.
-		logger.warn( "Falling back to class to get MIME for %s", type(obj) )
+		# But do log the __class__ value in case the type has been proxied
+		logger.warn( "Falling back to class to get MIME for %s/%s", clazz, getattr(obj, '__class__', clazz ) )
 		return nti_mimetype_with_class( clazz.__name__ )
 
 	if isinstance( obj, basestring ) and mimeTypeConstraint( obj ):

@@ -8,33 +8,21 @@ from __future__ import print_function, unicode_literals
 import logging
 logger = logging.getLogger(__name__)
 
-import os
 from lxml import etree
 
 from zope.dublincore import xmlmetadata
 
 # some direct imports for speed
-from os.path import join as path_join
-from .contentunit import FilesystemContentUnit, FilesystemContentPackage
+#from os.path import join as path_join
 
 
 TOC_FILENAME = 'eclipse-toc.xml'
 ARCHIVE_FILENAME = 'archive.zip'
 DCMETA_FILENAME = 'dc_metadata.xml'
 
-def _TOCPath( path ):
-	return os.path.abspath( path_join( path, TOC_FILENAME ))
-
-def _hasTOC( path ):
-	""" Does the given path point to a directory containing a TOC file?"""
-	return os.path.exists( _TOCPath( path ) )
-
-def _isTOC( path ):
-	return os.path.basename( path ) == TOC_FILENAME
-
 _toc_item_attrs = ('NTIRelativeScrollHeight', 'href', 'icon', 'label', 'ntiid',)
 
-def _tocItem( node, dirname, factory=FilesystemContentUnit ):
+def _tocItem( node, toc_entry, factory=None, child_factory=None ):
 	tocItem = factory()
 	for i in _toc_item_attrs:
 		setattr( tocItem, i, node.get( i ) )
@@ -42,22 +30,18 @@ def _tocItem( node, dirname, factory=FilesystemContentUnit ):
 	if node.get( 'sharedWith', ''):
 		tocItem.sharedWith = node.get( 'sharedWith' ).split( ' ' )
 
-	tocItem.filename = path_join( dirname, tocItem.href )
+	tocItem.key = toc_entry.make_sibling_key( tocItem.href )
 
 	children = []
 	ordinal = 1
 	for child in node.iterchildren(tag='topic'):
-		child = _tocItem( child, dirname )
+		child = _tocItem( child, toc_entry, factory=child_factory, child_factory=child_factory )
 		child.__parent__ = tocItem
 		child.ordinal = ordinal; ordinal += 1
 		children.append( child )
 
 	tocItem.children = children
 	return tocItem
-
-
-def _last_modified( filename ):
-	return os.stat( filename )[os.path.stat.ST_MTIME]
 
 # Cache for content packages
 # In basic profiling, the cache can provide 3X or more speedups,
@@ -67,10 +51,13 @@ import zope.testing.cleanup
 _cache = LRUCache( 1000 ) # TODO: Constant for the cache size
 zope.testing.cleanup.addCleanUp( _cache.clear )
 
-def EclipseContentPackage( localPath ):
+def EclipseContentPackage( toc_entry,
+						   package_factory=None,
+						   unit_factory=None ):
 	"""
-	Given a path to an eclipse TOC file, or a directory containing one,
-	parse and return the TOC as a :class:`IFilesystemContentPackage`.
+	Given a :class:`nti.contentlibrary.interfaces.IDelimitedHierarchyEntry` pointing
+	to an Eclipse TOC XML file, parse it and return the :class:`IContentPackage`
+	tree.
 
 	If parsing fails, returns None.
 
@@ -78,29 +65,34 @@ def EclipseContentPackage( localPath ):
 	defining the default value that should be used for sharing within that content if
 	no other preference is specified. (See :class:`nti.appserver.interfaces.IContentUnitPreferences`;
 	an adapter should be registered.)
+
+	:param toc_entry: The hierarchy entry we will use to read the XML from. We make certain
+		assumptions about the hierarchy this tree came from, notably that it is only one level
+		deep (or rather, it is at least two levels deep and we will be able to access it
+		given just the parent entry). (TODO: That property should probably become an IDelimitedHierarchyEntry)
+	:param package_factory: A callable of no arguments that produces an :class:`nti.contentlibrary.interfaces.IContentPackage`
+	:param unit_factory: A callable of no arguments that cooperates with the `package_factory` and produces
+		:class:`nti.contentlibrary.interfaces.IContentUnit` objects that can be part of the content package.
 	"""
-	if _isTOC( localPath ):
-		localPath = os.path.dirname( localPath )
 
-	if not _hasTOC( localPath ):
-		return None
-
-	localPath = os.path.abspath( localPath )
-	toc_path = _TOCPath( localPath )
 	try:
-		toc_last_modified = _last_modified( toc_path )
-		content_package = _cache.get( toc_path )
+		toc_last_modified = toc_entry.lastModified
+		content_package = _cache.get( toc_entry.key )
 		if content_package is not None and content_package.index_last_modified <= toc_last_modified:
 			return content_package
 
-		dom = etree.parse( _TOCPath( localPath ) )
+		root = etree.fromstring( toc_entry.read_contents() )
 	except (IOError,etree.Error):
-		logger.debug( "Failed to parse TOC at %s", localPath, exc_info=True )
+		logger.debug( "Failed to parse TOC at %s", toc_entry, exc_info=True )
 		return None
-	root = dom.getroot()
-	content_package = _tocItem( root, localPath, factory=FilesystemContentPackage )
-	content_package.root = os.path.basename( localPath )
-	content_package.index = os.path.basename( _TOCPath( localPath ) )
+
+	content_package = _tocItem( root, toc_entry, factory=package_factory, child_factory=unit_factory )
+	# NOTE: assuming only one level of hierarchy (or at least the accessibility given just the parent)
+	# TODO: root and index should probably be replaced with IDelimitedHierarchyEntry objects.
+	# NOTE: IDelimitedHierarchyEntry is specified as '/' delimited. This means that when we are working with
+	# filesystem objects we have path-dependencies. We won't work on windows
+	content_package.root = toc_entry.key.split( '/' )[-2]
+	content_package.index = toc_entry.key.split( '/' )[-1]
 	content_package.index_last_modified = toc_last_modified
 
 	renderVersion = root.get( 'renderVersion' )
@@ -117,6 +109,6 @@ def EclipseContentPackage( localPath ):
 		if 'Creator' in metadata:
 			content_package.creators = metadata['Creator']
 
-	_cache.put( toc_path, content_package )
+	_cache.put( toc_entry.key, content_package )
 
 	return content_package

@@ -4,7 +4,7 @@ from hamcrest import assert_that, has_entry
 
 
 from nti.contentlibrary import externalization
-from nti.contentlibrary import contentunit
+from nti.contentlibrary import filesystem
 
 import nti.tests
 import nti.contentlibrary
@@ -15,7 +15,7 @@ setUpModule = lambda: nti.tests.module_setup( set_up_packages=(nti.contentlibrar
 tearDownModule = nti.tests.module_teardown
 
 def test_doesnt_dual_escape():
-	unit = contentunit.FilesystemContentPackage(
+	unit = filesystem.FilesystemContentPackage(
 		filename='prealgebra/index.html',
 		href = 'index.html',
 		root = 'prealgebra',
@@ -26,7 +26,7 @@ def test_doesnt_dual_escape():
 
 
 def test_escape_if_needed():
-	unit = contentunit.FilesystemContentPackage(
+	unit = filesystem.FilesystemContentPackage(
 		filename='prealgebra/index.html',
 		href = 'index.html',
 		root = 'prealgebra',

@@ -285,7 +285,7 @@ class TestHasPermission(mock_dataserver.ConfiguringTestBase):
 		assert_that( bool(result), is_( True ) )
 		assert_that( result, has_property( 'msg', contains_string('ACLAllowed' ) ) )
 
-from nti.contentlibrary.contentunit import FilesystemContentPackage
+from nti.contentlibrary.filesystem import FilesystemContentPackage
 
 class TestLibraryEntryAclProvider(mock_dataserver.ConfiguringTestBase):
 
