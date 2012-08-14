@@ -1,21 +1,26 @@
 from __future__ import print_function, unicode_literals
 
 import hashlib
-from zope import component
-from nti.externalization.externalization import toExternalObject
 
-from nti.contentsearch._datastructures import CaseInsensitiveDict
-from nti.contentsearch.interfaces import IContentResolver
+import zope.intid
+from zope import interface
+from zope import component
+
+from nti.dataserver import interfaces as nti_interfaces
+
+from nti.chatserver import interfaces as chat_interfaces
+
+from nti.contentsearch import interfaces as search_interfaces
 
 from nti.contentsearch._ngrams_utils import ngrams
-from nti.contentsearch.common import normalize_type_name
+from nti.contentsearch.common import get_type_name
 
-from nti.contentsearch.common import (	CLASS, CREATOR, OID, last_modified_fields, ntiid_fields, INTID, 
-										container_id_fields, NTIID, CONTAINER_ID, TARGET_OID, LAST_MODIFIED)
+from nti.contentsearch.common import (	CLASS, CREATOR, last_modified_fields, ntiid_fields, INTID, 
+										container_id_fields)
 
 from nti.contentsearch.common import (	ngrams_, channel_, content_, keywords_, references_, username_,
 										last_modified_, recipients_, sharedWith_, ntiid_, type_,
-										oid_, creator_, containerId_, intid_) 
+										creator_, containerId_, intid_) 
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -32,7 +37,7 @@ search_common_fields = (type_, creator_, last_modified_, ntiid_, _container_id, 
 
 search_faceted_fields = (keywords_, references_, username_, channel_ )
 
-search_indexed_fields = search_stored_fields + search_faceted_fields 
+search_indexed_fields = search_stored_fields + search_common_fields + search_faceted_fields 
 												
 def create_search_domain(connection, domain_name='ntisearch', allow_ips=()):
 	
@@ -40,9 +45,7 @@ def create_search_domain(connection, domain_name='ntisearch', allow_ips=()):
 	for ip in allow_ips:
 		domain.allow_ip(ip)
 		
-	# following should be storable fields
-	# intid_, type, creator, oid, last modified, ntiid, containerId, content, id
-
+	# storable field
 	domain.create_index_field(intid_, 'uint', searchable=False, result=True,
 							  source_attributes=(INTID, intid_))
 		
@@ -81,91 +84,126 @@ def create_search_domain(connection, domain_name='ntisearch', allow_ips=()):
 	
 	return domain
 
-# -----------------------------------
-
-# create field mappings from cloud to search_hit
-cloud2hit_field_mappings = CaseInsensitiveDict()
-cloud2hit_field_mappings[type_] 		= CLASS
-cloud2hit_field_mappings[ntiid_]		= NTIID
-cloud2hit_field_mappings[intid_]		= INTID
-cloud2hit_field_mappings[creator_]		= CREATOR 
-cloud2hit_field_mappings[sharedWith_]	= sharedWith_
-cloud2hit_field_mappings[containerId_]	= CONTAINER_ID
-for name in last_modified_fields:
-	cloud2hit_field_mappings[name] = LAST_MODIFIED
-			
-# create search_hit to cloud
-ds2cloud_field_mappings = {}
-for n,v in cloud2hit_field_mappings.items():
-	ds2cloud_field_mappings[v] = n.lower()
-
-# special cases
-ds2cloud_field_mappings.pop(TARGET_OID, None)
-ds2cloud_field_mappings[OID] = oid_
-ds2cloud_field_mappings[LAST_MODIFIED] = last_modified_
+def is_ngram_search_supported():
+	features = component.getUtility( search_interfaces.ISearchFeatures )
+	return features.is_ngram_search_supported
 
 def get_cloud_oid(obj):
-	adapted = component.getAdapter(obj, IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	oid = adapted.get_external_oid(obj)
 	return hashlib.sha224(oid).hexdigest()
 
 def get_object_content(data):
-	adapted = component.getAdapter(data, IContentResolver)
+	adapted = component.getAdapter(data, search_interfaces.IContentResolver)
 	result = adapted.get_content()
 	return result.lower() if result else None
 
 def get_last_modified(data):
-	adapted = component.getAdapter(data, IContentResolver)
+	adapted = component.getAdapter(data, search_interfaces.IContentResolver)
 	result = adapted.get_last_modified()
-	return result if result else None
+	return int(result) if result else None
 
 def get_object_ngrams(data, type_name=None):
-	content = get_object_content(data, type_name)
-	result = ngrams(content)
+	content = get_object_content(data, type_name) if is_ngram_search_supported() else None
+	result = ngrams(content)  if content else None
 	return result
 
-def to_cloud_object(obj, username, type_name):
-	oid  = get_cloud_oid(obj)
-	data = toExternalObject(obj)
-		
-	# make sure we remove fields that are not to be indexed
-	for n in list(data.keys()):
-		if n in ds2cloud_field_mappings:
-			value = data.pop(n)
-			k = ds2cloud_field_mappings[n]
-			data[k] = value
-		else:
-			data.pop(n)
-		
-	# we need to normalize the type
-	data[type_] = normalize_type_name(data[type_])
+def get_channel(obj):
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	return adapted.get_channel()
+
+def get_containerId(obj):
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	return adapted.get_containerId()
+
+def get_ntiid(obj):
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	return adapted.get_ntiid()
+
+def get_creator(obj):
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	return adapted.get_creator()
+
+def get_recipients(obj):
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	result = adapted.get_recipients()
+	return unicode(' '.join(result)) if result else None
+
+def get_sharedWith(obj):
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	result = adapted.get_sharedWith()
+	return unicode(' '.join(result)) if result else None
+
+def get_references(obj):
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	result = adapted.get_references()
+	return unicode(','.join(result)) if result else None
+
+def get_keywords(obj):
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	words = adapted.get_keywords()
+	return unicode(','.join(words)) if words else None
+
+def get_uid(obj):
+	_ds_intid = component.getUtility( zope.intid.IIntIds )
+	uid = _ds_intid.getId(obj)
+	return int(uid)
 	
-	# make sure the user name is always set
+def get_object(uid):
+	_ds_intid = component.getUtility( zope.intid.IIntIds )
+	return _ds_intid.getObject(int(uid))
+
+@interface.implementer(search_interfaces.ICloudSearchObject)
+class _AbstractCSObject(dict):
+	def __init__( self, src ):
+		self._set_items(src)
+		self._prune(src)
+	
+	def _set_items(self, src):
+		self[intid_] = get_uid(src)
+		self[ntiid_] = get_ntiid(src)
+		self[type_] = get_type_name(src)
+		self[creator_] = get_creator(src)
+		self[keywords_] = get_keywords(src)
+		self[ngrams_] = get_object_ngrams(src)
+		self[content_] = get_object_content(src)
+		self[_shared_with] = get_sharedWith(src)
+		self[_container_id] = get_containerId(src)
+		self[last_modified_] = get_last_modified(src)
+		
+	def _prune(self, src):
+		for k in list(self.keys()):
+			if self[k] is None:
+				self.pop(k)
+		
+@component.adapter(nti_interfaces.INote)	
+class _CSNote(_AbstractCSObject):
+	def _set_items(self, src):
+		super(_CSNote, self)._set_items(src)
+		self[references_] = get_references(src)
+
+@component.adapter(nti_interfaces.IHighlight)	
+class _CSHighlight(_AbstractCSObject):
+	pass
+
+@component.adapter(nti_interfaces.IRedaction)	
+class _CSRedaction(_AbstractCSObject):
+	pass
+
+@component.adapter(chat_interfaces.IMessageInfo)	
+class _CSMessageInfo(_AbstractCSObject):
+	def _set_items(self, src):
+		super(_CSMessageInfo, self)._set_items(src)
+		self[recipients_] = get_recipients(src)
+		self[references_] = get_references(src)
+
+def to_cloud_object(obj, username):
+	oid = get_cloud_oid(obj)
+	data = search_interfaces.ICloudSearchObject(obj)
 	data[username_] = username
-		
-	# set content
-	data[content_] = get_object_content(obj, type_name)
-	data[ngrams_] = get_object_ngrams(obj, type_name)
-		
-	# get and update the last modified data
-	# cs supports uint ony and we use this number as version also
-	lm = int(get_last_modified(data)) 
-	data[last_modified_] = lm
-				
 	return oid, data
 
-def to_external_dict(cloud_data):
-	# aws seems to return item results in a list
-	for k in cloud_data.keys():
-		v = cloud_data[k]
-		if v not in search_faceted_fields and isinstance(v, (list, tuple)):
-			cloud_data[k] = v[0] if v else u''
-			
-	# map ext fields from cloud fields
-	for n, k in cloud2hit_field_mappings.items():
-		if n in cloud_data:
-			v = cloud_data.pop(n)
-			if k == CLASS and v:
-				v = v.title()
-			cloud_data[k] = v
-	return cloud_data
+def to_ds_object(cloud_data):
+	uid = cloud_data.get(intid_, None)
+	result = get_object(uid) if uid is not None else None
+	return result

@@ -6,7 +6,6 @@ import collections
 
 from zope import component
 from zope import interface
-from zope.minmax._minmax import AbstractValue
 from persistent.interfaces import IPersistent
 
 from dolmen.builtins import IDict
@@ -113,7 +112,6 @@ class _AbstractIndexDataResolver(_BasicContentaResolver):
 
 	def get_last_modified(self):
 		result = _get_any_attr(self.obj, last_modified_fields)
-		result = result.value if isinstance(result, AbstractValue) else result
 		result = float(result) if result is not None else result
 		return result
 
