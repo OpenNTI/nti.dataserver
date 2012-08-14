@@ -382,7 +382,7 @@ class Note(Highlight):
 
 def create_messageinfo_schema():
 	schema = create_note_schema()
-	schema.add(channel_, fields.ID(stored=False))
+	schema.add(channel_, fields.KEYWORD(stored=False))
 	schema.add(recipients_, fields.TEXT(stored=False))
 	return schema
 

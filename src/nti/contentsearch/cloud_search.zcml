@@ -1,0 +1,20 @@
+<!-- -*- mode: nxml -*- -->
+<configure xmlns="http://namespaces.zope.org/zope" i18n_domain="zope">
+
+	<adapter factory="._cloudsearch_index._CSHighlight"
+			 provides=".interfaces.ICloudSearchObject"
+			 for="nti.dataserver.interfaces.IHighlight" />
+		
+	<adapter factory="._cloudsearch_index._CSNote"
+			 provides=".interfaces.ICloudSearchObject"
+			 for="nti.dataserver.interfaces.INote" />
+			 	 
+	<adapter factory="._cloudsearch_index._CSRedaction"
+			 provides=".interfaces.ICloudSearchObject"
+			 for="nti.dataserver.interfaces.IRedaction" />
+			 
+	<adapter factory="._cloudsearch_index._CSMessageInfo"
+			 provides=".interfaces.ICloudSearchObject"
+			 for="nti.chatserver.interfaces.IMessageInfo" />
+			 
+</configure>

@@ -4,6 +4,8 @@ from zope import schema
 from zope import interface
 from zope.interface.common.mapping import IFullMapping
 
+from dolmen.builtins import IDict
+
 from nti.externalization import interfaces as ext_interfaces
 
 class IRepozeDataStore(IFullMapping):
@@ -13,18 +15,6 @@ class IRepozeDataStore(IFullMapping):
 		
 		:param user: username
 		"""
-		
-class ICloudSearchStore(interface.Interface):
-	def get_connection():
-		"""
-		return the cloud store connection
-		"""
-	
-	def get_domain(domain_name):
-		"""
-		return the cloud search domain with the specifeid name
-		"""
-	
 # searcher
 	
 class ISearcher(interface.Interface):
@@ -436,5 +426,21 @@ class IRedactionRepozeCatalogFieldCreator(interface.Interface):
 class IMessageInfoRepozeCatalogFieldCreator(interface.Interface):
 	pass
 
+# cloud search
 
+class ICloudSearchObject(IDict):
+	pass
+	
+class ICloudSearchStore(interface.Interface):
+	
+	def get_connection():
+		"""
+		return the cloud store connection
+		"""
+	
+	def get_domain(domain_name):
+		"""
+		return the cloud search domain with the specifeid name
+		"""
+	
 

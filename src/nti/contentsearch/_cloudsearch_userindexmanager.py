@@ -18,12 +18,12 @@ from nti.contentsearch.common import is_all_query
 from nti.contentsearch.common import get_type_name
 from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch._search_external import get_search_hit
-from nti.contentsearch._search_results import empty_search_result
-from nti.contentsearch._search_results import empty_suggest_result
 from nti.contentsearch._cloudsearch_query import parse_query
+from nti.contentsearch._cloudsearch_index import to_ds_object
 from nti.contentsearch._cloudsearch_index import get_cloud_oid
 from nti.contentsearch._cloudsearch_index import to_cloud_object
-from nti.contentsearch._cloudsearch_index import to_external_dict
+from nti.contentsearch._search_results import empty_search_result
+from nti.contentsearch._search_results import empty_suggest_result
 from nti.contentsearch._cloudsearch_store import get_search_service
 from nti.contentsearch._cloudsearch_index import search_stored_fields
 from nti.contentsearch._cloudsearch_store import get_document_service
@@ -69,7 +69,7 @@ class CloudSearchUserIndexManager(object):
 		return get_search_service(domain=self.domain)
 	
 	def _get_search_hit(self, obj, query=None, highlight_type=WORD_HIGHLIGHT):
-		data = to_external_dict(obj['data'])  
+		data = to_ds_object(obj['data'])  
 		return get_search_hit(data, query=query, highlight_type=highlight_type)
 		
 	def _do_search(self, field, qo, highlight_type):

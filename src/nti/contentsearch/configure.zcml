@@ -5,7 +5,7 @@
 	<include package="nti.contentfragments" file="configure.zcml" />
 		
 	<include file="repoze_minimal.zcml" />
-					 
+							 
 	<!-- Externalization -->
 
 	<adapter factory="._search_external._HighlightSearchHit"
@@ -108,5 +108,6 @@
 	
 	<utility component="._repoze_index._DefaultRepozeSearchFeatures" 
 			 provides=".interfaces.ISearchFeatures" />
-			 
+			
+	<include file="cloud_search.zcml" />
 </configure>
