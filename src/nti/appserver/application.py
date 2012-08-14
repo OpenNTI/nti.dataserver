@@ -703,10 +703,10 @@ def create_index_manager(server, use_whosh_storage=None, user_indices_dir=None):
 	if use_whosh_storage:
 		logger.debug( 'Creating Whoosh based index manager' )
 		user_indices_dir = user_indices_dir or os.path.join( server._parentDir, 'indices' )
-		ixman = nti.contentsearch.indexmanager.create_index_manager(user_indices_dir, dataserver=server)
+		ixman = nti.contentsearch.indexmanager.create_index_manager(user_indices_dir)
 	else:
 		logger.debug( 'Creating Repoze-Catalog based index manager' )
-		ixman = nti.contentsearch.indexmanager.create_repoze_index_manager(dataserver=server)
+		ixman = nti.contentsearch.indexmanager.create_repoze_index_manager()
 
 
 	return ixman
