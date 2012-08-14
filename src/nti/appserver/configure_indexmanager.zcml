@@ -1,0 +1,28 @@
+<!-- -*- mode: nxml -*- -->
+<!--
+Configure the index manager to use.
+This file is included after site.zcml. If customization is desired,
+it will usually be done there and this file excluded.
+
+However, this file does make use of the whoosh_indexmanager and repoze_indexmanager
+features, choosing the repoze_indexmanager by default since that's the
+only one that can be constructed without any parameters. (NOTE: This
+may get dropped.)
+-->
+<configure
+	xmlns="http://namespaces.zope.org/zope"
+	xmlns:zcml="http://namespaces.zope.org/zcml">
+	<include package="zope.component" />
+
+	<utility
+		zcml:condition="not-have whoosh_indexmanager"
+		factory="nti.contentsearch.indexmanager.create_repoze_index_manager"
+		provides="nti.contentsearch.interfaces.IIndexManager" />
+
+	<utility
+		zcml:condition="have whoosh_indexmanager"
+		factory="nti.contentsearch.indexmanager.create_index_manager"
+		provides="nti.contentsearch.interfaces.IIndexManager" />
+
+
+</configure>

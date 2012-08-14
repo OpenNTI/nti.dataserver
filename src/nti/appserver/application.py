@@ -69,8 +69,7 @@ IZLocation.__bases__ = (ILocation,)
 
 SOCKET_IO_PATH = 'socket.io'
 
-#TODO: we should do this as configuration
-DATASERVER_WHOOSH_INDEXES = 'DATASERVER_WHOOSH_INDEXES' in os.environ
+
 
 
 class _Main(object):
@@ -124,7 +123,9 @@ def createApplication( http_port,
 		xml_conf_machine = xmlconfig.file( 'configure.zcml', package=nti.appserver, context=xml_conf_machine )
 		if 'site_zcml' in settings:
 			logger.debug( "Loading site settings from %s", settings['site_zcml'] )
-			xmlconfig.file( settings['site_zcml'],  package=nti.appserver, context=xml_conf_machine )
+			xml_conf_machine = xmlconfig.file( settings['site_zcml'],  package=nti.appserver, context=xml_conf_machine )
+			# Preserve the conf machine so that when we load other files later any
+			# exclude settings get processed
 	except Exception:
 		logger.exception( "Failed to load config. Settings: %s", settings )
 		raise
@@ -288,10 +289,12 @@ def createApplication( http_port,
 
 	indexmanager = None
 	if create_ds:
-		indexmanager = create_index_manager(server, use_whoosh_index_storage())
+		# This may be excluded by a previous setting in site.zcml, and replaced with something else
+		xml_conf_machine = xmlconfig.file( 'configure_indexmanager.zcml',  package=nti.appserver, context=xml_conf_machine )
+
+	indexmanager = component.queryUtility( nti.contentsearch.interfaces.IIndexManager )
 
 	if server:
-		pyramid_config.registry.registerUtility( indexmanager, nti.contentsearch.interfaces.IIndexManager )
 		pyramid_config.registry.registerUtility( server )
 		if server.chatserver:
 			pyramid_config.registry.registerUtility( server.chatserver )
@@ -692,24 +695,6 @@ class AppServer(gevent.pywsgi.WSGIServer):
 		kwargs['handler_class'] = geventwebsocket.handler.WebSocketHandler
 		super(AppServer,self).__init__(*args, **kwargs)
 
-def use_whoosh_index_storage():
-	return DATASERVER_WHOOSH_INDEXES
-
-def create_index_manager(server, use_whosh_storage=None, user_indices_dir=None):
-
-	if use_whosh_storage is None:
-		use_whosh_storage = use_whoosh_index_storage()
-
-	if use_whosh_storage:
-		logger.debug( 'Creating Whoosh based index manager' )
-		user_indices_dir = user_indices_dir or os.path.join( server._parentDir, 'indices' )
-		ixman = nti.contentsearch.indexmanager.create_index_manager(user_indices_dir)
-	else:
-		logger.debug( 'Creating Repoze-Catalog based index manager' )
-		ixman = nti.contentsearch.indexmanager.create_repoze_index_manager()
-
-
-	return ixman
 
 # These two functions exist for the sake of the installed executables
 # but they do nothing these days
