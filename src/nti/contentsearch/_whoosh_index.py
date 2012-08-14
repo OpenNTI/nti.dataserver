@@ -10,11 +10,11 @@ from zope import component
 from whoosh import fields
 from whoosh import highlight
 
-from nti.contentsearch import QueryObject
-from nti.contentsearch import CaseInsensitiveDict
+from nti.contentsearch._search_query import QueryObject
 from nti.contentsearch._whoosh_query import parse_query
 from nti.contentsearch._search_external import get_search_hit
 from nti.contentsearch import interfaces as search_interfaces
+from nti.contentsearch._datastructures import CaseInsensitiveDict
 
 from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch._search_results import empty_search_result

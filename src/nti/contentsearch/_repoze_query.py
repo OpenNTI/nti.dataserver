@@ -9,12 +9,12 @@ from repoze.catalog.query import parse_query
 from repoze.catalog.query import Contains as IndexContains
 from repoze.catalog.query import DoesNotContain as IndexDoesNotContain
 
-from nti.contentsearch import CaseInsensitiveDict
 from nti.contentsearch.common import QueryExpr
 from nti.contentsearch.common import is_all_query
 from nti.contentsearch.common import (sharedWith_, containerId_, collectionId_, id_, oid_, ntiid_,
 									  ID, LAST_MODIFIED, CONTAINER_ID, COLLECTION_ID, OID, NTIID, CREATOR)
 from nti.contentsearch.common import (last_modified_fields)
+from nti.contentsearch._datastructures import CaseInsensitiveDict
 
 import logging
 logger = logging.getLogger( __name__ )

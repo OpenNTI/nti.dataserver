@@ -11,11 +11,11 @@ from zope.component.interfaces import ISite
 from nti.dataserver.users import User
 from nti.dataserver import interfaces as nti_interfaces
 
-from nti.contentsearch import QueryObject
 from nti.contentsearch import SearchCallWrapper
-from nti.contentsearch import CaseInsensitiveDict
+from nti.contentsearch._search_query import QueryObject
 from nti.contentsearch._indexagent import handle_index_event
 from nti.contentsearch import interfaces as seach_interfaces
+from nti.contentsearch._datastructures import CaseInsensitiveDict
 
 from nti.contentsearch._search_results import empty_search_result
 from nti.contentsearch._search_results import empty_suggest_result
