@@ -6,10 +6,10 @@ from whoosh.qparser import QueryParser
 from whoosh.qparser.dateparse import DateParserPlugin
 from whoosh.qparser import (GtLtPlugin, PrefixPlugin, WildcardPlugin)
 
-from nti.contentsearch import CaseInsensitiveDict
 from nti.contentsearch.common import QueryExpr
 from nti.contentsearch.common import (sharedWith_, containerId_, collectionId_, last_modified_)
 from nti.contentsearch.common import (last_modified_fields)
+from nti.contentsearch._datastructures import CaseInsensitiveDict
 		
 import logging
 logger = logging.getLogger( __name__ )

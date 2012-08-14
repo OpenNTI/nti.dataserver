@@ -4,7 +4,7 @@ import hashlib
 from zope import component
 from nti.externalization.externalization import toExternalObject
 
-from nti.contentsearch import CaseInsensitiveDict
+from nti.contentsearch._datastructures import CaseInsensitiveDict
 from nti.contentsearch.interfaces import IContentResolver
 
 from nti.contentsearch._ngrams_utils import ngrams
