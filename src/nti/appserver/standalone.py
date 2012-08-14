@@ -1,8 +1,15 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
 
-import logging
-logger = logging.getLogger( __name__ )
 
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import os
 import platform
@@ -14,7 +21,7 @@ from nti.contentlibrary.boto_s3 import BotoS3BucketContentLibrary
 from nti.dataserver import interfaces as nti_interfaces
 from zope import component
 
-from application import createApplication, AppServer
+from .application import createApplication, AppServer
 from paste.deploy.converters import asbool
 
 

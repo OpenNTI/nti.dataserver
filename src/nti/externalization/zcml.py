@@ -16,6 +16,7 @@ from zope import interface
 from zope.component import zcml as component_zcml
 
 import ZODB.POSException
+from ZODB import loglevels
 
 from . import interfaces
 
@@ -62,7 +63,7 @@ def registerMimeFactories( _context, module ):
 			continue
 
 		if mime_type and ext_create and module.__name__ == v_mod_name:
-			logger.debug( "Registered mime factory utility %s = %s (%s)", k, v, mime_type)
+			logger.log( loglevels.TRACE, "Registered mime factory utility %s = %s (%s)", k, v, mime_type)
 			component_zcml.utility( _context,
 									provides=interfaces.IMimeObjectFactory,
 									component=_MimeObjectFactory( v, interfaces=list(interface.implementedBy( v )) ),
@@ -70,4 +71,4 @@ def registerMimeFactories( _context, module ):
 		elif module.__name__ == v_mod_name and (mime_type or ext_create):
 			# There will be lots of things that don't get registered.
 			# Only complain if it looks like they tried and got it half right
-			logger.debug( "Nothing to register on %s (%s %s %s)", k, mime_type, ext_create, v_mod_name)
+			logger.log( loglevels.TRACE, "Nothing to register on %s (%s %s %s)", k, mime_type, ext_create, v_mod_name)
