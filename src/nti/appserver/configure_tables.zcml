@@ -17,6 +17,10 @@
 			 provides="z3c.table.interfaces.IColumn"
 			 for="* * .flagging_views.ModerationAdminTable"
 			 name="note-modified" />
+	<adapter factory=".flagging_views.CreatorColumn"
+			 provides="z3c.table.interfaces.IColumn"
+			 for="* * .flagging_views.ModerationAdminTable"
+			 name="note-creator" />
 
 	<adapter factory=".flagging_views.IntIdCheckBoxColumn"
 			 provides="z3c.table.interfaces.IColumn"
@@ -31,6 +35,10 @@
 	<adapter factory="z3c.table.header.SortingColumnHeader"
 			 provides="z3c.table.interfaces.IColumnHeader"
 			 for="* * * .flagging_views.CreatedColumn"
+			 />
+	<adapter factory="z3c.table.header.SortingColumnHeader"
+			 provides="z3c.table.interfaces.IColumnHeader"
+			 for="* * * .flagging_views.CreatorColumn"
 			 />
 
 </configure>

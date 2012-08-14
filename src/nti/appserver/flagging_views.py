@@ -176,7 +176,7 @@ def fake_dc_core_for_times( item ):
 
 
 class CreatedColumn(column.CreatedColumn):
-
+	weight = 3
 	def getSortKey( self, item ):
 		return item.createdTime
 
@@ -184,9 +184,15 @@ class CreatedColumn(column.CreatedColumn):
 		return super(CreatedColumn,self).renderCell( fake_dc_core_for_times( item ) )
 
 class ModifiedColumn(column.ModifiedColumn):
+	weight = 4
 
 	def getSortKey( self, item ):
 		return item.lastModified
 
 	def renderCell(self, item):
 		return super(ModifiedColumn,self).renderCell( fake_dc_core_for_times( item ) )
+
+class CreatorColumn(column.GetAttrColumn):
+	weight = 10
+	header = 'Creator'
+	attrName = 'creator'
