@@ -15,7 +15,8 @@ from nti.utils.property import alias
 
 from .interfaces import IDelimitedHierarchyContentUnit, IDelimitedHierarchyContentPackage
 from .contentunit import ContentUnit, ContentPackage
-
+from . import library
+from . import eclipse
 
 import rfc822
 import time
@@ -58,6 +59,11 @@ class BotoS3ContentUnit(ContentUnit):
 		new_key = type(self.key)( bucket=self.key.bucket, name='/'.join( split ) )
 		return new_key
 
+	def get_parent_key( self ):
+		split = self.key.name.split( '/' )
+		parent_part = split[0:-1]
+		new_key = type(self.key)( bucket=self.key.bucket, name='/'.join( parent_part ) )
+		return new_key
 
 	def read_contents( self ):
 		return self.key.get_contents_as_string()
@@ -74,3 +80,26 @@ class BotoS3ContentUnit(ContentUnit):
 @interface.implementer(IDelimitedHierarchyContentPackage)
 class BotoS3ContentPackage(ContentPackage,BotoS3ContentUnit):
 	pass
+
+def _package_factory( key ):
+	toc_key = key.bucket.get_key( (key.name + '/' + eclipse.TOC_FILENAME).replace( '//', '/') )
+
+	if toc_key:
+		temp_entry = BotoS3ContentUnit( key=toc_key )
+		return eclipse.EclipseContentPackage( temp_entry, BotoS3ContentPackage, BotoS3ContentUnit )
+
+class BotoS3BucketContentLibrary(library.AbstractCachedStaticLibrary):
+	"""
+	Enumerates the first level of a '/' delimited bucket and treats each
+	entry as a possible content package. Content packages are cached.
+
+	TODO: Need some level of dynamism here.
+	"""
+
+	package_factory = staticmethod(_package_factory)
+
+	def __init__( self, bucket ):
+		"""
+		:param bucket: The bucket to enumerate.
+		"""
+		super(BotoS3BucketContentLibrary,self).__init__( list( bucket.list( delimiter='/' ) ) )

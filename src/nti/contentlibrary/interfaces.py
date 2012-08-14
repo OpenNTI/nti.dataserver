@@ -99,6 +99,16 @@ class IDelimitedHierarchyEntry(interface.Interface,dub_interfaces.IDCTimes):
 	# Needs further definition. In the filesystem case, this is `filename`. In the boto case,
 	# this is `key`
 
+	def get_parent_key( ):
+		"""
+		Return the parent key in the hierarchy, if there is one. Otherwise returns None.
+		"""
+
+	# def get_local_key_name( ):
+	# 	"""
+	# 	Return the local (most derived) portion of the key name.
+	# 	"""
+
 	def read_contents():
 		"""
 		Read and return, as a sequence of bytes, the contents of this entry.

@@ -4,10 +4,14 @@ Classes useful for working with libraries.
 """
 from __future__ import print_function, unicode_literals
 
+#pylint: disable=E1102
+
 from zope import interface
+from zope.cachedescriptors.property import Lazy
 
 from . import interfaces
 
+from nti.utils.property import alias
 
 @interface.implementer(interfaces.IContentPackageLibrary)
 class AbstractLibrary(object):
@@ -97,6 +101,16 @@ class AbstractStaticLibrary(AbstractLibrary):
 		"""
 		super(AbstractStaticLibrary,self).__init__()
 		self.possible_content_packages = paths
+
+
+class AbstractCachedStaticLibrary(AbstractStaticLibrary):
+	"""
+	A static library that will lazily cache the results
+	of enumerating the content packages.
+	"""
+
+	contentPackages = Lazy(AbstractLibrary.contentPackages.fget)
+	titles = alias('contentPackages' )
 
 def pathToPropertyValue( unit, prop, value ):
 	"""
