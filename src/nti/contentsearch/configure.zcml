@@ -109,9 +109,4 @@
 	<utility component="._repoze_index._DefaultRepozeSearchFeatures" 
 			 provides=".interfaces.ISearchFeatures" />
 			 
-	<!-- Index managers -->
-	
-	<utility component=".indexmanager._DefaultIndexManager" 
-			 provides=".interfaces.IUserIndexManager" />
-			 
 </configure>
