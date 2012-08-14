@@ -366,16 +366,18 @@ def createApplication( http_port,
 			index = simplejson.loads( asm_index_text,
 									  object_pairs_hook=hook )
 			try:
-				question_map._from_index_entry( index, dirname=title.localPath )
+				question_map._from_index_entry( index, dirname=getattr(title, 'localPath', None) )
 			except (zope.interface.exceptions.Invalid, ValueError):
 				# Because the map is updated in place, depending on where the error
 				# was, we might have some data...that's not good, but it's not a show stopper either,
 				# since we shouldn't get content like this out of the rendering process
 				logger.exception( "Failed to load assessment items, invalid assessment_index for %s", title )
 
-		indexname = os.path.basename( title.localPath )
-		routename = 'search.book'
+		# FIXME: This fails for non-local content. Need caching of indexes
 		try:
+			indexname = os.path.basename( title.localPath )
+			routename = 'search.book'
+
 			indexdir = os.path.join( title.localPath, 'indexdir' )
 			__traceback_info__ = indexdir
 			if indexmanager and indexmanager.add_book(indexname=indexname, indexdir=os.path.join( title.localPath, 'indexdir')):
@@ -387,6 +389,9 @@ def createApplication( http_port,
 										 renderer='rest',
 										 permission=nauth.ACT_SEARCH )
 				logger.debug( 'Added route %s to %s', name, pattern )
+		except AttributeError:
+			# Temp hack while these things do not have local paths
+			logger.debug( "Failed to add book search entry" )
 		except ImportError:
 			# Adding a book on disk loads the Whoosh indexes, which
 			# are implemented as pickles. Incompatible version changes
