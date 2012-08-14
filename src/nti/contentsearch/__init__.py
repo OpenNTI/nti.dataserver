@@ -39,3 +39,7 @@ class SearchCallWrapper(object):
 
 def create_cloudsearch_store(*args, **kwargs):
 	return CloudSearchStore(*args, **kwargs)
+
+def create_repoze_datastore():
+	from nti.contentsearch._repoze_datastore import RepozeCatalogDataStore
+	return RepozeCatalogDataStore()
