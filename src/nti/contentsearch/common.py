@@ -3,6 +3,7 @@ from __future__ import print_function, unicode_literals
 import re
 import six
 import time
+import collections
 from time import mktime
 from datetime import datetime
 
@@ -144,3 +145,13 @@ def clean_query(query, lower=False):
 	result = result.lower() if lower and result else result
 	return unicode(result)
 
+def to_list(data):
+	if isinstance(data, six.string_types):
+		data = [data]
+	elif isinstance(data, list):
+		pass
+	elif isinstance(data, collections.Iterable):
+		data = list(data)
+	elif data is not None:
+		data = [data]
+	return data

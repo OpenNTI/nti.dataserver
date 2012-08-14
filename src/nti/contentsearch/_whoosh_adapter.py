@@ -111,7 +111,8 @@ class _WhooshEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 		
 	delay = 0.25
 	maxiters = 40
-	
+	use_md5 = True
+		
 	@property
 	def username(self):
 		return self.__parent__.username

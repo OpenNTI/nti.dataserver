@@ -1,3 +1,4 @@
+import os
 import shutil
 import tempfile
 import unittest
@@ -10,29 +11,25 @@ from nti.ntiids.ntiids import make_ntiid
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from nti.contentsearch.tests import ConfiguringTestBase
-from nti.contentsearch._whoosh_userindexmanager import WhooshUserIndexManager
-#from nti.contentsearch._whoosh_indexstorage import create_username_directory_storage
+from nti.contentsearch import interfaces as search_interfaces
 
 from nti.contentsearch.common import ( 	HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS,
 										NTIID, TARGET_OID)
 
 from nti.contentsearch.tests import zanpakuto_commands
+from nti.contentsearch.tests import ConfiguringTestBase
 
 from hamcrest import (assert_that, is_, has_key, has_entry, has_length, is_not, has_item)
 
-@unittest.skip
-class TestWhooshUserIndexManager(ConfiguringTestBase):
+class TestWhooshUserAdapter(ConfiguringTestBase):
 
 	def setUp(self):
 		ConfiguringTestBase.setUp(self)
 		self.db_dir = tempfile.mkdtemp(dir="/tmp")
-		self.storage = WhooshUserIndexManager(self.db_dir)
-		self.uim = WhooshUserIndexManager('nt@nt.dev', self.storage)
+		os.putenv('DATASERVER_DIR', self.db_dir)
 
 	def tearDown(self):
 		ConfiguringTestBase.tearDown(self)
-		self.uim.close()
 		shutil.rmtree(self.db_dir, True)
 
 	def _add_notes(self, usr=None, conn=None):
@@ -63,18 +60,20 @@ class TestWhooshUserIndexManager(ConfiguringTestBase):
 		return notes, usr
 
 	@WithMockDSTrans
-	def test_empty(self):
-		assert_that(self.uim.get_stored_indices(), is_([]))
-		assert_that(self.uim.has_stored_indices(), is_(False))
+	def xtest_empty(self):
+		usr = User.create_user( mock_dataserver.current_mock_ds, username='nt@nti.com', password='temp' )
+		uim = search_interfaces.IWhooshEntityIndexManager(usr, None)
+		assert_that(uim.get_stored_indices(), is_([]))
+		assert_that(uim.has_stored_indices(), is_(False))
 
 	@WithMockDSTrans
-	def test_index_notes(self):
+	def xtest_index_notes(self):
 		self._index_notes()
 		assert_that(self.uim.get_stored_indices(), is_(['note']))
 		assert_that(self.uim.has_stored_indices(), is_(True))
 
 	@WithMockDSTrans
-	def test_query_notes(self):
+	def xtest_query_notes(self):
 		self._add_user_index_notes()
 
 		hits = self.uim.search("shield", limit=None)
@@ -102,7 +101,7 @@ class TestWhooshUserIndexManager(ConfiguringTestBase):
 		assert_that(hits, has_entry(HIT_COUNT, 0))
 
 	@WithMockDSTrans
-	def test_update_note(self):
+	def xtest_update_note(self):
 		notes, _ = self._add_user_index_notes()
 		note = notes[5]
 		note.body = [u'Blow It Away']
@@ -117,7 +116,7 @@ class TestWhooshUserIndexManager(ConfiguringTestBase):
 		assert_that(hits, has_entry(QUERY, 'blow'))
 
 	@WithMockDSTrans
-	def test_delete_note(self):
+	def xtest_delete_note(self):
 		notes, _  = self._add_user_index_notes()
 		note = notes[5]
 		self.uim.delete_content(note)
@@ -127,7 +126,7 @@ class TestWhooshUserIndexManager(ConfiguringTestBase):
 		assert_that(hits, has_entry(QUERY, 'shield'))
 
 	@WithMockDSTrans
-	def test_suggest(self):
+	def xtest_suggest(self):
 		self._add_user_index_notes()
 		hits = self.uim.suggest("ra")
 		assert_that(hits, has_entry(HIT_COUNT, 4))
@@ -142,7 +141,7 @@ class TestWhooshUserIndexManager(ConfiguringTestBase):
 		assert_that(items, has_item('rage'))
 
 	@WithMockDSTrans
-	def test_ngram_search(self):
+	def xtest_ngram_search(self):
 		self._add_user_index_notes()
 		hits = self.uim.ngram_search("sea")
 		assert_that(hits, has_entry(HIT_COUNT, 1))

@@ -33,13 +33,8 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.externalization.oids import to_external_ntiid_oid
 
-from nti.contentsearch import to_list
-from nti.contentsearch.interfaces import IContentResolver
-from nti.contentsearch.interfaces import IContentTokenizer
-from nti.contentsearch.interfaces import INoteContentResolver
-from nti.contentsearch.interfaces import IHighlightContentResolver
-from nti.contentsearch.interfaces import IRedactionContentResolver
-from nti.contentsearch.interfaces import IMessageInfoContentResolver
+from nti.contentsearch.common import to_list
+from nti.contentsearch import interfaces as search_interfaces
 
 from nti.contentsearch.common import (CLASS, BODY, ID)
 from nti.contentsearch.common import (text_, body_, selectedText_, replacementContent_, redactionExplanation_,
@@ -49,11 +44,11 @@ from nti.contentsearch.common import (text_, body_, selectedText_, replacementCo
 									  inReplyTo_, recipients_, channel_, flattenedSharingTargetNames_)
 
 def get_content(text=None):
-	tokenizer = component.getUtility(IContentTokenizer)
+	tokenizer = component.getUtility(search_interfaces.IContentTokenizer)
 	result = tokenizer.tokenize(text) if text else u''
 	return unicode(result)
 
-@interface.implementer(IContentResolver)
+@interface.implementer(search_interfaces.IContentResolver)
 @component.adapter(basestring)
 class _StringContentResolver(object):
 
@@ -83,7 +78,7 @@ def _process_words(words):
 			words = []
 	return words or []
 
-@interface.implementer(IContentResolver)
+@interface.implementer(search_interfaces.IContentResolver)
 class _BasicContentaResolver(object):
 	def __init__( self, obj ):
 		self.obj = obj
@@ -133,7 +128,7 @@ class _ThreadableContentResolver(_AbstractIndexDataResolver):
 		result = set()
 		for obj in items or ():
 			ntiid = None
-			adapted = component.queryAdapter(obj, IContentResolver)
+			adapted = component.queryAdapter(obj, search_interfaces.IContentResolver)
 			if adapted:
 				if IPersistent.providedBy(obj):
 					ntiid = adapted.get_ntiid()
@@ -148,7 +143,7 @@ class _ThreadableContentResolver(_AbstractIndexDataResolver):
 		return unicode(result) if result else None
 
 @component.adapter(nti_interfaces.IHighlight)
-@interface.implementer(IHighlightContentResolver)
+@interface.implementer(search_interfaces.IHighlightContentResolver)
 class _HighLightContentResolver(_ThreadableContentResolver):
 
 	def get_content(self):
@@ -156,7 +151,7 @@ class _HighLightContentResolver(_ThreadableContentResolver):
 		return get_content(result)
 
 @component.adapter(nti_interfaces.IRedaction)
-@interface.implementer(IRedactionContentResolver)
+@interface.implementer(search_interfaces.IRedactionContentResolver)
 class _RedactionContentResolver(_HighLightContentResolver):
 
 	def get_content(self):
@@ -182,19 +177,19 @@ class _PartsContentResolver(object):
 		result = []
 		items = to_list(data)
 		for item in items or ():
-			adapted = component.queryAdapter(item, IContentResolver)
+			adapted = component.queryAdapter(item, search_interfaces.IContentResolver)
 			result.append( adapted.get_content()  if adapted else u'')
 		result = ' '.join([x for x in result if x is not None])
 		return get_content(result)
 
 @component.adapter(nti_interfaces.INote)
-@interface.implementer(INoteContentResolver)
+@interface.implementer(search_interfaces.INoteContentResolver)
 class _NoteContentResolver(_ThreadableContentResolver, _PartsContentResolver):
 	def get_content(self):
 		return self._resolve(self.obj.body)
 
 @component.adapter(chat_interfaces.IMessageInfo)
-@interface.implementer(IMessageInfoContentResolver)
+@interface.implementer(search_interfaces.IMessageInfoContentResolver)
 class _MessageInfoContentResolver(_ThreadableContentResolver, _PartsContentResolver):
 	def get_content(self):
 		return self._resolve(self.obj.Body)
@@ -221,7 +216,7 @@ class _CanvasTextShapeContentResolver(_BasicContentaResolver):
 	def get_content(self):
 		return get_content(self.obj.text)
 
-@interface.implementer(IContentResolver)
+@interface.implementer(search_interfaces.IContentResolver)
 @component.adapter(IDict)
 class _DictContentResolver(object):
 
@@ -352,7 +347,7 @@ class _DictContentResolver(object):
 		data = self.obj.get(recipients_, ())
 		return _process_words(data)
 
-@interface.implementer( IContentTokenizer )
+@interface.implementer( search_interfaces.IContentTokenizer )
 class _ContentTokenizer(object):
 	tokenizer = RegexpTokenizer(r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-']\w+)*", flags = re.MULTILINE | re.DOTALL)
 

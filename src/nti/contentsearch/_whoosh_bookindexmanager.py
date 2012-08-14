@@ -8,7 +8,7 @@ from nti.contentsearch import interfaces
 from nti.contentsearch import QueryObject
 from nti.contentsearch import SearchCallWrapper
 from nti.contentsearch._whoosh_index import Book
-from nti.contentsearch._whoosh_indexstorage import create_directory_index_storage
+from nti.contentsearch._whoosh_indexstorage import DirectoryStorage
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -16,11 +16,8 @@ logger = logging.getLogger( __name__ )
 class WhooshBookIndexManager(object):
 	interface.implements( interfaces.IBookIndexManager )
 	
-	def __init__(self, indexname, *args, **kwargs):
-		self.indexdir = kwargs.get('indexdir', None)
-		self.storage = kwargs.get('storage', None) or kwargs.get('index_storage', None) 
-		assert self.storage or self.indexdir, "must specified a index directory or an index storage"
-		self.storage = self.storage or create_directory_index_storage(self.indexdir)
+	def __init__(self, indexname, storage=None, indexdir=None):
+		self.storage = storage if storage else DirectoryStorage(indexdir)
 		self._book = (Book(), self.storage.get_index(indexname) )
 
 	@property
@@ -70,8 +67,6 @@ class WhooshBookIndexManager(object):
 		with self.bookidx.searcher() as s:
 			results = self.book.suggest(s, query)
 		return results
-
-	quick_search = ngram_search
 	
 	# ---------------
 
@@ -88,7 +83,8 @@ def wbm_factory(*args, **kwargs):
 	def f(indexname, *fargs, **fkwargs):
 		indexdir = fkwargs.get('indexdir', None)
 		if indexdir and index.exists_in(indexdir, indexname=indexname):
-			return WhooshBookIndexManager(indexname=indexname, **fkwargs)
+			storage = DirectoryStorage(indexdir)
+			return WhooshBookIndexManager(indexname=indexname, storage=storage)
 		else:
 			return None
 	return f
