@@ -1,6 +1,6 @@
 from __future__ import print_function, unicode_literals
 
-from nti.contentsearch.common import QUERY, HIT_COUNT, ITEMS, LAST_MODIFIED, SUGGESTIONS
+from nti.contentsearch.common import (QUERY, HIT_COUNT, ITEMS, LAST_MODIFIED, SUGGESTIONS)
 
 import logging
 logger = logging.getLogger( __name__ )

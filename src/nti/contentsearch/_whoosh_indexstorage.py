@@ -87,12 +87,17 @@ class IndexStorage(object):
 		""" 
 		return self.default_commit_args
 
+def prepare_index_directory(indexdir=None):
+	indexdir = os.path.join(os.getenv('DATASERVER_DIR', "/tmp"), "indicies") if not indexdir else indexdir
+	indexdir = os.path.expanduser(indexdir)
+	if not os.path.exists(indexdir):
+		os.makedirs(indexdir)
+	return indexdir
+
 class DirectoryStorage(IndexStorage):
 	
-	def __init__(self, indexdir="/tmp"):
-		if not os.path.exists(indexdir):
-			os.makedirs(indexdir)
-		self.folder = indexdir
+	def __init__(self, indexdir=None):
+		self.folder = prepare_index_directory(indexdir)
 	
 	def create_index(self, schema, indexname=_DEF_INDEX_NAME, **kwargs):
 		self.makedirs(**kwargs)
@@ -140,17 +145,17 @@ class DirectoryStorage(IndexStorage):
 	def get_folder(self, **kwargs):
 		return self.folder
 
-class UserNameDirectoryStorage(DirectoryStorage):
+class UserDirectoryStorage(DirectoryStorage):
 	
-	def __init__(self, indexdir="/tmp", max_level=2):
-		super(UserNameDirectoryStorage, self).__init__(indexdir=indexdir)
+	def __init__(self, indexdir=None, max_level=2):
+		super(UserDirectoryStorage, self).__init__(indexdir)
 		self.stores = {}
 		self.max_level = max_level
 	
 	def storage(self, **kwargs):
 		username = kwargs.get('username', None)
 		if not username:
-			return super(UserNameDirectoryStorage, self).storage() 
+			return super(UserDirectoryStorage, self).storage() 
 		else:
 			key = self.oid_to_path(username, self.max_level)
 			if not self.stores.has_key(key):
@@ -168,17 +173,13 @@ class UserNameDirectoryStorage(DirectoryStorage):
 	
 	def oid_to_path(self, oid, max_bytes=2):
 		return oid_to_path(oid, max_bytes)
-		
-def create_directory_index_storage(indexdir=None):
-	indexdir = os.path.join(os.getenv('DATASERVER_DIR', "/tmp"), "indicies") if not indexdir else indexdir
-	indexdir = os.path.expanduser(indexdir)
-	if not os.path.exists(indexdir):
-		os.makedirs(indexdir)
-	return UserNameDirectoryStorage(indexdir)
 	
-def create_directory_index(indexname, schema, indexdir='/tmp/indicies'):
+	
+def create_directory_index(indexname, schema, indexdir=None):
 	storage = DirectoryStorage(indexdir)
 	idx = storage.get_or_create_index(indexname=indexname, schema=schema)
 	idx.close()
-	return idx, storage
+	return idx, storage	
+	
+_DefaultDirectoryStorage = UserDirectoryStorage()
 

@@ -97,7 +97,7 @@
 				
 	<!-- Whoosh storage -->
 	
-	<utility component="._whoosh_indexstorage.create_directory_index_storage" 
+	<utility component="._whoosh_indexstorage._DefaultDirectoryStorage" 
 			 provides=".interfaces.IWhooshIndexStorage" />
 	
 	<adapter factory="._whoosh_adapter._WhooshEntityIndexManagerFactory"
@@ -108,5 +108,10 @@
 	
 	<utility component="._repoze_index._DefaultRepozeSearchFeatures" 
 			 provides=".interfaces.ISearchFeatures" />
-
+			 
+	<!-- Index managers -->
+	
+	<utility component=".indexmanager._DefaultIndexManager" 
+			 provides=".interfaces.IUserIndexManager" />
+			 
 </configure>
