@@ -10,8 +10,6 @@
 	<utility name="ngrams" provides=".interfaces.IRepozeCatalogFieldCreator" component="._repoze_index._ngrams_field_creator" />
 	<utility name="sharedWith" provides=".interfaces.IRepozeCatalogFieldCreator" component="._repoze_index._text_field_creator" />
 	<utility name="keywords" provides=".interfaces.IRepozeCatalogFieldCreator" component="._repoze_index._keyword_field_creator" />	
-	
-	<utility name="oid" provides=".interfaces.IRepozeCatalogFieldCreator" component="._repoze_index._named_field_creator" />
 	<utility name="ntiid" provides=".interfaces.IRepozeCatalogFieldCreator" component="._repoze_index._named_field_creator" />
 	<utility name="creator" provides=".interfaces.IRepozeCatalogFieldCreator" component="._repoze_index._named_field_creator" />	
 	<utility name="containerId" provides=".interfaces.IRepozeCatalogFieldCreator" component="._repoze_index._named_field_creator" />

@@ -7,13 +7,13 @@ from zope.location.interfaces import ILocation
 
 from nti.dataserver import interfaces as nti_interfaces
 
-from nti.contentsearch import interfaces
+from nti.contentsearch import interfaces as search_interfaces
 
 import logging
 logger = logging.getLogger( __name__ )
 
 class _SearchEntityIndexManager(object):
-	interface.implements(interfaces.IUserIndexManager, ILocation)
+	interface.implements(search_interfaces.IEntityIndexManager, ILocation)
 	
 	def get_uid(self, obj):
 		_ds_intid = component.getUtility( zope.intid.IIntIds )

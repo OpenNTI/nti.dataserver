@@ -10,20 +10,29 @@ from nti.contentsearch.interfaces import IContentResolver
 from nti.contentsearch._ngrams_utils import ngrams
 from nti.contentsearch.common import normalize_type_name
 
-from nti.contentsearch.common import (	CLASS, CREATOR, ID, OID, last_modified_fields, ntiid_fields, 
+from nti.contentsearch.common import (	CLASS, CREATOR, OID, last_modified_fields, ntiid_fields, INTID, 
 										container_id_fields, NTIID, CONTAINER_ID, TARGET_OID, LAST_MODIFIED)
 
 from nti.contentsearch.common import (	ngrams_, channel_, content_, keywords_, references_, username_,
-										last_modified_, recipients_, sharedWith_, id_, ntiid_, type_,
-										oid_, creator_, containerId_,) 
+										last_modified_, recipients_, sharedWith_, ntiid_, type_,
+										oid_, creator_, containerId_, intid_) 
 
 import logging
 logger = logging.getLogger( __name__ )
 
-_message_id = u'mid'
-search_stored_fields=[type_, creator_, last_modified_, ntiid_, containerId_.lower(), _message_id, oid_, content_]
-search_faceted_fields = [keywords_, recipients_, references_, sharedWith_.lower()]
-search_indexed_fields = search_stored_fields + search_faceted_fields + [username_, channel_, ngrams_]
+# define search fields
+
+_shared_with = sharedWith_.lower()
+_container_id = containerId_.lower()
+
+search_stored_fields =  (intid_,)
+
+search_common_fields = (type_, creator_, last_modified_, ntiid_, _container_id,  content_,
+						_shared_with, recipients_, ngrams_)
+
+search_faceted_fields = (keywords_, references_, username_, channel_ )
+
+search_indexed_fields = search_stored_fields + search_faceted_fields 
 												
 def create_search_domain(connection, domain_name='ntisearch', allow_ips=()):
 	
@@ -32,44 +41,40 @@ def create_search_domain(connection, domain_name='ntisearch', allow_ips=()):
 		domain.allow_ip(ip)
 		
 	# following should be storable fields
-	# type, creator, oid, last modified, ntiid, containerId, content, id
+	# intid_, type, creator, oid, last modified, ntiid, containerId, content, id
 
-	domain.create_index_field(type_, 'literal', searchable=True, result=True,
+	domain.create_index_field(intid_, 'uint', searchable=False, result=True,
+							  source_attributes=(INTID, intid_))
+		
+	domain.create_index_field(type_, 'literal', searchable=True, result=False,
 							  source_attributes=(type_, CLASS))
 	
-	domain.create_index_field(creator_, 'literal', searchable=True, result=True, 
+	domain.create_index_field(creator_, 'literal', searchable=True, result=False, 
 							  source_attributes=(creator_, CREATOR))
 	
-	domain.create_index_field(last_modified_, 'uint', searchable=True, result=True,
+	domain.create_index_field(last_modified_, 'uint', searchable=True, result=False,
 							  source_attributes=last_modified_fields, default=0 )
 	
 	domain.create_index_field(ntiid_, 'literal', searchable=True, result=True, 
 							  source_attributes=ntiid_fields)
 	
-	domain.create_index_field(containerId_.lower(), 'literal', searchable=True, result=True,
+	domain.create_index_field(_container_id, 'literal', searchable=True, result=False,
 							  source_attributes=container_id_fields)
 	
-	domain.create_index_field(_message_id, 'literal', searchable=True, result=True, 
-							  source_attributes=(id_, ID))
+	# content fields
+	domain.create_index_field(content_, 'text', searchable=True, result=False)
+	domain.create_index_field(ngrams_, 'text', searchable=True, result=False)
 	
-	domain.create_index_field(oid_, 'literal', searchable=True, result=True,
-							  source_attributes=(oid_, OID, TARGET_OID))
+	domain.create_index_field(recipients_, 'text', searchable=True, result=False)
+	domain.create_index_field(_shared_with, 'text', searchable=True, result=False, source_attributes=(sharedWith_,))
 	
-	domain.create_index_field(content_, 'text', searchable=True, result=True)
-		
 	# literal fields
 	domain.create_index_field(username_, 'literal', searchable=True, result=False, facet=True)
 	domain.create_index_field(channel_, 'literal', searchable=True, result=False, facet=True)
 	
 	# faceted fields
 	domain.create_index_field(keywords_, 'text', searchable=True, result=False, facet=True)
-	domain.create_index_field(recipients_, 'text', searchable=True, result=False, facet=True)
 	domain.create_index_field(references_, 'text', searchable=True, result=False, facet=True)
-	domain.create_index_field(sharedWith_.lower(), 'text', searchable=True, result=False, facet=True,
-							  source_attributes=(sharedWith_,))
-	
-	# content fields
-	domain.create_index_field(ngrams_, 'text', searchable=True, result=False)
 
 	# make sure 'content' is the default field if its result=False
 	# connection.update_default_search_field(domain_name, content_)
@@ -81,12 +86,11 @@ def create_search_domain(connection, domain_name='ntisearch', allow_ips=()):
 # create field mappings from cloud to search_hit
 cloud2hit_field_mappings = CaseInsensitiveDict()
 cloud2hit_field_mappings[type_] 		= CLASS
-cloud2hit_field_mappings[creator_]		= CREATOR
-cloud2hit_field_mappings[ntiid_]		= NTIID 
-cloud2hit_field_mappings[containerId_]	= CONTAINER_ID
-cloud2hit_field_mappings[_message_id]	= ID
-cloud2hit_field_mappings[oid_]			= TARGET_OID
+cloud2hit_field_mappings[ntiid_]		= NTIID
+cloud2hit_field_mappings[intid_]		= INTID
+cloud2hit_field_mappings[creator_]		= CREATOR 
 cloud2hit_field_mappings[sharedWith_]	= sharedWith_
+cloud2hit_field_mappings[containerId_]	= CONTAINER_ID
 for name in last_modified_fields:
 	cloud2hit_field_mappings[name] = LAST_MODIFIED
 			
