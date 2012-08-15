@@ -15,7 +15,8 @@ from nti.dataserver import authorization_acl as auth
 
 from nti.externalization.interfaces import IExternalObject
 from nti.externalization.externalization import toExternalObject
-from nti.externalization.oids import to_external_ntiid_oid
+from nti.externalization.externalization import to_standard_external_dictionary
+
 
 
 class _EntitySummaryExternalObject(object):
@@ -34,7 +35,7 @@ class _EntitySummaryExternalObject(object):
 		EOD
 		"""
 		entity = self.entity
-		extDict = entity.toExternalDictionary( )
+		extDict = to_standard_external_dictionary( entity )
 		# Notice that we delete the last modified date. Because this is
 		# not a real representation of the object, we don't want people to cache based
 		# on it.

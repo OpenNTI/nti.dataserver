@@ -64,7 +64,7 @@ def _lower(s):
 
 @functools.total_ordering
 @interface.implementer( nti_interfaces.IEntity, nti_interfaces.ILastModified, an_interfaces.IAttributeAnnotatable)
-class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject,ExternalizableDictionaryMixin):
+class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 	"""
 	The root for things that represent human-like objects.
 	"""
