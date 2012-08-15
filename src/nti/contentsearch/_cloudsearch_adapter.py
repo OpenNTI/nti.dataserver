@@ -6,15 +6,12 @@ from datetime import datetime
 
 from zope import interface
 from zope import component
-from zope.proxy import ProxyBase
 from zope.annotation import factory as an_factory
-from zope.interface.common.mapping import IFullMapping
+
+from persistent import Persistent
 
 from nti.dataserver import interfaces as nti_interfaces
 
-from nti.contentsearch.interfaces import IUserIndexManagerFactory
-
-from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch import QueryObject
 from nti.contentsearch import SearchCallWrapper
 from nti.contentsearch.common import is_all_query
@@ -22,6 +19,7 @@ from nti.contentsearch.common import get_type_name
 from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch._search_external import get_search_hit
 from nti.contentsearch._cloudsearch_query import parse_query
+from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch._cloudsearch_index import to_ds_object
 from nti.contentsearch._cloudsearch_index import get_cloud_oid
 from nti.contentsearch._cloudsearch_index import to_cloud_object
@@ -30,6 +28,7 @@ from nti.contentsearch._search_results import empty_suggest_result
 from nti.contentsearch._cloudsearch_store import get_search_service
 from nti.contentsearch._cloudsearch_index import search_stored_fields
 from nti.contentsearch._cloudsearch_store import get_document_service
+from nti.contentsearch._search_indexmanager import _SearchEntityIndexManager
 from nti.contentsearch._search_highlights import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT)
 from nti.contentsearch.common import ( LAST_MODIFIED, ITEMS, NTIID, HIT_COUNT)
 from nti.contentsearch.common import (username_, ngrams_, content_, oid_, type_)
@@ -37,13 +36,23 @@ from nti.contentsearch.common import (username_, ngrams_, content_, oid_, type_)
 import logging
 logger = logging.getLogger( __name__ )
 		
+def has_stored_indices(username):
+	store = component.getUtility( search_interfaces.ICloudSearchStore )
+	domain = store.get_domain('ntisearch')
+	bq = "%s:'%s'" % (username_, username)
+	service  = get_search_service(domain=domain) if domain else None
+	results = service.search(bq=bq, return_fields=[oid_], size=1, start=0) if service else ()
+	return len(results) > 0
+
 @component.adapter(nti_interfaces.IEntity)
-class _CloudSearchEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
-	interface.implements(search_interfaces.IRepozeEntityIndexManager, IFullMapping)
+class _CloudSearchEntityIndexManager(Persistent, _SearchEntityIndexManager):
+	interface.implements(search_interfaces.ICloudSearchEntityIndexManager)
 
 	@property
 	def domain(self):
-		return self.domain
+		cs = component.getUtility(search_interfaces.ICloudSearchStore)
+		result = cs.get_search_domain()
+		return result
 	
 	@property
 	def username(self):
@@ -102,15 +111,14 @@ class _CloudSearchEntityIndexManager(PersistentMapping, _SearchEntityIndexManage
 		highlight_type = None if is_all_query(qo.term) else NGRAM_HIGHLIGHT
 		results = self._do_search(ngrams_, qo, highlight_type)
 		return results
-	quick_search = ngram_search
-	
-	# word suggest does not seem to be supported yet in CS
-	suggest_and_search = search
 
 	def suggest(self, query, *args, **kwargs):
 		qo = QueryObject.create(query, **kwargs)
 		return empty_suggest_result(qo.term)
 		
+	# word suggest does not seem to be supported yet in cloud search
+	suggest_and_search = search
+	
 	# ---------------------- 
 	
 	@property
@@ -198,3 +206,6 @@ class _CloudSearchEntityIndexManager(PersistentMapping, _SearchEntityIndexManage
 	def get_stored_indices(self):
 		return ()
 
+def _CloudSearchEntityIndexManagerFactory(user):
+	result = an_factory(_CloudSearchEntityIndexManager)(user)
+	return result
