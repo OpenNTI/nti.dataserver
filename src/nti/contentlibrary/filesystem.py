@@ -138,9 +138,3 @@ class FilesystemContentPackage(ContentPackage,FilesystemContentUnit):
 	"""
 	Adds the `filename` property to the ContentPackage.
 	"""
-
-	@property
-	@deprecate("Unclear what the replacement is yet.")
-	def localPath( self ):
-		if self.filename:
-			return os.path.dirname( self.filename )
