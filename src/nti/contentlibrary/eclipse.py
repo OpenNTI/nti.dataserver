@@ -102,7 +102,9 @@ def EclipseContentPackage( toc_entry,
 	if content_package.does_sibling_entry_exist( ARCHIVE_FILENAME ):
 		content_package.archive = ARCHIVE_FILENAME
 		content_package.installable = True
-		content_package.archive_unit = unit_factory( key=content_package.make_sibling_key( ARCHIVE_FILENAME ) )
+		content_package.archive_unit = unit_factory( key=content_package.make_sibling_key( ARCHIVE_FILENAME ),
+													 href=ARCHIVE_FILENAME,
+													 title='Content Archive' )
 		content_package.archive_unit.__parent__ = content_package
 
 	dcmetafile_contents = content_package.read_contents_of_sibling_entry( DCMETA_FILENAME )
