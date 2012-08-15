@@ -33,7 +33,7 @@ def add_filesystem_index( title, event ):
 		indexname = os.path.basename( title.localPath )
 		indexdir = os.path.join( title.localPath, 'indexdir' )
 		__traceback_info__ = indexdir, indexmanager, indexname
-		if indexmanager.add_book(indexname=indexname, indexdir=indexdir ):
+		if indexmanager.add_book( indexname=indexname, indexdir=indexdir, ntiid=title.ntiid ):
 			logger.debug( 'Added book %s to %s', indexname, indexmanager )
 	except ImportError: # pragma: no cover
 		# Adding a book on disk loads the Whoosh indexes, which
@@ -86,5 +86,5 @@ def add_s3_index( title, event ):
 		lm = last_modified or key_last_modified( indexdir_key ) # See comments above
 		os.utime( local_file, (lm,lm) )
 
-	if indexmanager.add_book(indexname=index_name, indexdir=title_index_cache_dir ):
+	if indexmanager.add_book(indexname=index_name, indexdir=title_index_cache_dir, ntiid=title.ntiid ):
 		logger.debug( 'Added book %s to %s', index_name, indexmanager )
