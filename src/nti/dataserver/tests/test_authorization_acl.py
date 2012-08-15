@@ -316,7 +316,11 @@ class TestLibraryEntryAclProvider(mock_dataserver.ConfiguringTestBase):
 
 	def test_specific_acl_file(self):
 		with open( os.path.join( self.temp_dir, '.nti_acl' ), 'w' ) as f:
-			f.write( "Allow:User:[nti.actions.create]" )
+			f.write( "Allow:User:[nti.actions.create]\n" )
+			f.write( " # This line has a comment\n" )
+			f.write( "  \n" ) #This line is blank
+			f.flush()
+
 		acl_prov = nti_interfaces.IACLProvider( self.library_entry )
 		assert_that( acl_prov, permits( "User", auth.ACT_CREATE ) )
 		assert_that( acl_prov, denies( "OtherUser", auth.ACT_CREATE ) )

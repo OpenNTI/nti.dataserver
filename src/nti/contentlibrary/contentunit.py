@@ -7,6 +7,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
+from nti.utils.property import alias
 from nti.contentlibrary.interfaces import IContentUnit, IContentPackage
 
 
@@ -15,6 +16,8 @@ class ContentUnit(object):
 	"""
 	Simple implementation of :class:`IContentUnit`.
 	"""
+
+	_external_class_name_ = 'ContentUnit'
 
 	ordinal = 1
 	href = None
@@ -34,12 +37,13 @@ class ContentUnit(object):
 			if hasattr( self, k ):
 				setattr( self, k, v )
 
-	def _get_name(self):
-		return self.title
-	def _set_name(self,n):
-		self.title = n
-	__name__ = property(_get_name,_set_name, None, "a synonym for title")
-	label = __name__
+	__name__ = alias( 'title' )
+	label = alias( 'title' )
+
+
+	def __repr__( self ):
+		return "<%s.%s '%s' '%s'>" % (self.__class__.__module__, self.__class__.__name__,
+									  self.__name__, self.href )
 
 
 @interface.implementer(IContentPackage)
@@ -48,11 +52,14 @@ class ContentPackage(ContentUnit):
 	Simple implementation of :class:`IContentPackage`.
 	"""
 
+	_external_class_name_ = 'ContentPackage'
+
 	root = None
 	index = None
 	index_last_modified = None
 	installable = False
 	archive = None
+	archive_unit = None
 	renderVersion = 1
 
 	# IDCExtended

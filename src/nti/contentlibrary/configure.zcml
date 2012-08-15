@@ -8,10 +8,11 @@
 	<!-- Externalization -->
 
 	<adapter factory=".externalization._ContentPackageLibraryExternal" />
-	<adapter factory=".externalization._ContentPackageExternal" />
+	<adapter factory=".externalization._FilesystemContentPackageExternal" />
 	<adapter factory=".externalization._S3ContentPackageExternal" />
 
 	<adapter factory=".externalization._FilesystemContentUnitHrefMapper" />
 	<adapter factory=".externalization._S3ContentUnitHrefMapper" />
+	<adapter factory=".externalization._S3KeyHrefMapper" />
 
 </configure>

@@ -152,7 +152,8 @@ def acl_from_file( path_or_file ):
 	"""
 	Return an ACL parsed from reading the contents of the given file.
 	:param path_or_file: Either a string giving a path to a readable file,
-		or a file-like object supporting :meth:`file.readlines`.
+		or a file-like object supporting :meth:`file.readlines`. Each non-blank,
+		non-commented (has a leading #) line will be parsed as an ace using :func:`ace_from_string`.
 	"""
 	if isinstance(path_or_file, six.string_types):
 		with open(path_or_file, 'rU') as f:
@@ -162,7 +163,12 @@ def acl_from_file( path_or_file ):
 		lines = path_or_file.readlines()
 		provenance = getattr( path_or_file, 'name', str(path_or_file) )
 
-	return _ACL( [ace_from_string(x.strip(),provenance=provenance) for x in lines] )
+	return _acl_from_ace_lines( lines, provenance )
+
+def _acl_from_ace_lines( lines, provenance ):
+	return _ACL( [ace_from_string(x.strip(),provenance=provenance)
+				  for x in lines
+				  if x and x.strip() and not x.strip().startswith( '#' )] )
 
 def ACL( obj, default=() ):
 	"""
@@ -501,8 +507,8 @@ class _DelimitedHierarchyEntryACLProvider(object):
 		acl_string = obj.read_contents_of_sibling_entry( '.nti_acl' )
 		if acl_string is not None:
 			try:
-				self.__acl__ = acl_from_aces( [ace_from_string( x.strip(), provenance=obj) for x in acl_string.splitlines()] )
-			except:
+				self.__acl__ = _acl_from_ace_lines( acl_string.splitlines(), obj )
+			except (ValueError,AssertionError,TypeError):
 				logger.exception( "Failed to read acl from %s; denying all access.", obj )
 				self.__acl__ = _ACL( (ace_denying( nti_interfaces.EVERYONE_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _DelimitedHierarchyEntryACLProvider ), ) )
 		else:

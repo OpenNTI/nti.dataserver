@@ -3,24 +3,41 @@
 Generic implementations of IContentUnit functions
 """
 from __future__ import print_function, unicode_literals
-import os
 import datetime
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
-from zope.deprecation import deprecate
 from zope.cachedescriptors.property import Lazy
 
 from nti.utils.property import alias
 
 from .interfaces import IS3ContentUnit
 from .interfaces import IS3ContentPackage
+from .interfaces import IS3Bucket
+from .interfaces import IS3Key
 from .contentunit import ContentUnit, ContentPackage
 from . import library
 from . import eclipse
 
 import rfc822
 import time
+import numbers
+
+# Make the boto classes fit better with Zope, including making them
+# ILocation like and giving them interfaces
+import boto.s3.bucket
+import boto.s3.key
+
+interface.classImplements( boto.s3.bucket.Bucket, IS3Bucket )
+interface.classImplements( boto.s3.key.Key, IS3Key )
+class _WithName: # NOTE: Not new-style
+	__name__ = alias('name')
+
+boto.s3.bucket.Bucket.__bases__ += _WithName,
+boto.s3.bucket.Bucket.__parent__ = alias( 'connection' )
+
+boto.s3.key.Key.__bases__ += _WithName,
+boto.s3.key.Key.__parent__ = alias( 'bucket' )
 
 @interface.implementer(IS3ContentUnit)
 class BotoS3ContentUnit(ContentUnit):
@@ -45,6 +62,8 @@ class BotoS3ContentUnit(ContentUnit):
 	@Lazy
 	def lastModified( self ):
 		self._connect_key( )
+		if isinstance( self.key.last_modified, numbers.Number ):
+			return self.key.last_modified # Mainly for tests
 		result = rfc822.parsedate_tz( self.key.last_modified )
 		if result is not None:
 			result = rfc822.mktime_tz(result)
