@@ -203,8 +203,8 @@ class ExampleDatabaseInitializer(object):
 			user.realname = user_tuple[1]
 			user.alias = user_tuple[1].split()[0]
 			for c in communities:
-				if	(c.alias == 'TestUsers' and is_test_user) or \
-					(c.alias != 'TestUsers' and not is_test_user):
+				if	(c.alias == self.nti_testers and is_test_user) or \
+					(c.alias != self.nti_testers and not is_test_user):
 					user.join_community( c )
 					user.follow( c )
 
