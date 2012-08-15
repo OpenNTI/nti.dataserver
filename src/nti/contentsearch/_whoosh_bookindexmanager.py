@@ -16,7 +16,8 @@ logger = logging.getLogger( __name__ )
 class WhooshBookIndexManager(object):
 	interface.implements( interfaces.IBookIndexManager )
 	
-	def __init__(self, indexname, storage=None, indexdir=None):
+	def __init__(self, indexname, ntiid=None, storage=None, indexdir=None):
+		self.ntiid = ntiid if ntiid else indexname
 		self.storage = storage if storage else DirectoryStorage(indexdir)
 		self._book = (Book(), self.storage.get_index(indexname) )
 
@@ -28,6 +29,10 @@ class WhooshBookIndexManager(object):
 	def bookidx(self):
 		return self._book[1]
 
+	@property
+	def indexid(self):
+		return self.ntiid
+	
 	@property
 	def indexname(self):
 		return self.get_indexname()
@@ -81,10 +86,11 @@ class WhooshBookIndexManager(object):
 
 def wbm_factory(*args, **kwargs):
 	def f(indexname, *fargs, **fkwargs):
+		ntiid = fkwargs.get('ntiid', None)
 		indexdir = fkwargs.get('indexdir', None)
 		if indexdir and index.exists_in(indexdir, indexname=indexname):
 			storage = DirectoryStorage(indexdir)
-			return WhooshBookIndexManager(indexname=indexname, storage=storage)
+			return WhooshBookIndexManager(indexname=indexname, ntiid=ntiid, storage=storage)
 		else:
 			return None
 	return f

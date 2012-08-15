@@ -52,8 +52,6 @@ def _greenlet_spawn(spawn, func, *args, **kwargs):
 class IndexManager(object):
 	interface.implements(seach_interfaces.IIndexManager)
 
-	# -------------------
-
 	indexmanager = None
 
 	@classmethod
@@ -106,9 +104,9 @@ class IndexManager(object):
 			self._ugd_search_jobs(query, jobs) if username else []
 		
 			# search books
-			for indexname in query.books:
+			for indexid in query.books:
 				job = _greenlet_spawn(spawn=self.search_pool.spawn, func=self.content_search, \
-									  indexname=indexname, query=query)
+									  indexid=indexid, query=query)
 				jobs.append(job)
 		finally:
 			gevent.joinall(jobs)
@@ -132,9 +130,9 @@ class IndexManager(object):
 			self._ugd_ngram_search_jobs(query, jobs) if username else []
 		
 			# search books
-			for indexname in query.books:
+			for indexid in query.books:
 				job = _greenlet_spawn(spawn=self.search_pool.spawn, func=self.content_ngram_search, \
-									  indexname=indexname, query=query)
+									  indexid=indexid, query=query)
 				jobs.append(job)
 		finally:
 			gevent.joinall(jobs)
@@ -156,9 +154,9 @@ class IndexManager(object):
 			self._ugd_suggest_and_search_jobs(query, jobs) if username else []
 		
 			# search books
-			for indexname in query.books:
+			for indexid in query.books:
 				job = _greenlet_spawn(spawn=self.search_pool.spawn, func=self.content_suggest_and_search, \
-									  indexname=indexname, query=query)
+									  indexid=indexid, query=query)
 				jobs.append(job)
 		finally:
 			gevent.joinall(jobs)
@@ -180,9 +178,9 @@ class IndexManager(object):
 			self._ugd_suggest_jobs(query, jobs) if username else []
 		
 			# search books
-			for indexname in query.books:
+			for indexid in query.books:
 				job = _greenlet_spawn(spawn=self.search_pool.spawn, func=self.content_suggest, \
-									  indexname=indexname, query=query)
+									  indexid=indexid, query=query)
 				jobs.append(job)
 		finally:
 			gevent.joinall(jobs)
@@ -195,42 +193,43 @@ class IndexManager(object):
 	
 	# -------------------
 
-	def get_book_index_manager(self, indexname):
-		return self.books.get(indexname, None)
+	def get_book_index_manager(self, indexid):
+		return self.books.get(indexid, None)
 
-	def add_book(self, indexname, *args, **kwargs):
+	def add_book(self, indexname, ntiid=None, *args, **kwargs):
 		result = False
-		if not self.books.has_key(indexname):
-			bmi = self.bookidx_manager_factory(indexname=indexname, **kwargs)
+		indexid = indexname if not ntiid else ntiid
+		if not self.books.has_key(indexid):
+			bmi = self.bookidx_manager_factory(indexname=indexname, ntiid=ntiid, **kwargs)
 			if bmi is not None:
 				result = True
-				self.books[indexname] = bmi
-				logger.info("Book index '%s' has been added to index manager" % indexname)
+				self.books[indexid] = bmi
+				logger.info("Book index '%s,%r' has been added to index manager" % (indexname, ntiid))
 			else:
-				logger.warn("Could not add book index '%s,%r' to index manager" % (indexname,kwargs))
+				logger.warn("Could not add book index '%s,%r,%r' to index manager" % (indexname, ntiid, kwargs))
 		return result
 
 	def content_search(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
-		bm = self.get_book_index_manager(query.indexname)
+		bm = self.get_book_index_manager(query.indexid)
 		results = bm.search(query) if (bm is not None and not query.is_empty) else None
 		return results if results else empty_search_result(query.term)
 
 	def content_ngram_search(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
-		bm = self.get_book_index_manager(query.indexname)
+		bm = self.get_book_index_manager(query.indexid)
 		results = bm.ngram_search(query) if (bm is not None and not query.is_empty) else None
 		return results if results else empty_search_result(query.term)
 
 	def content_suggest_and_search(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
-		bm = self.get_book_index_manager(query.indexname)
+		bm = self.get_book_index_manager(query.indexid)
 		results = bm.suggest_and_search(query) if (bm is not None and not query.is_empty) else None
 		return results if results else empty_suggest_and_search_result(query.term)
 
 	def content_suggest(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
-		bm = self.get_book_index_manager(query.indexname)
+		bm = self.get_book_index_manager(query.indexid)
 		results = bm.suggest(query) if (bm is not None and not query.is_empty) else None
 		return results if results else empty_suggest_result(query.term)
 

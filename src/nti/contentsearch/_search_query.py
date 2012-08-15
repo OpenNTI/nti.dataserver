@@ -9,7 +9,7 @@ class QueryObject(object, UserDict.DictMixin):
 
 	__float_properties__ = ('threshold',)
 	__int_properties__ 	 = ('limit', 'maxdist', 'prefix', 'surround', 'maxchars')
-	__properties__ 		 = ('term', 'query', 'books', 'indexname', 'search_on') + __int_properties__ + __float_properties__
+	__properties__ 		 = ('term', 'query', 'books', 'indexid', 'search_on') + __int_properties__ + __float_properties__
 
 	def __init__(self, *args, **kwargs):
 		term = None
@@ -41,6 +41,9 @@ class QueryObject(object, UserDict.DictMixin):
 		return self._data[key]
 
 	def __setitem__(self, key, val):
+		if key.lower() == 'indexname': # backwards compatible
+			key = 'indexid'
+			
 		if key.lower() in self.__properties__:
 			key = key.lower()
 			if key in ('query', 'term'):
@@ -57,16 +60,16 @@ class QueryObject(object, UserDict.DictMixin):
 	# -- search --
 
 	@property
-	def indexname(self):
-		return self._data.get('indexname', None)
+	def indexid(self):
+		return self._data.get('indexid', None)
 
 	@property
 	def books(self):
-		books = self._data.get('books', [])
+		books = self._data.get('books', ())
 		if not books:
-			indexname = self._data.get('indexname', None)
-			if indexname:
-				books = [indexname]
+			indexid = self._data.get('indexid', None)
+			if indexid:
+				books = (indexid,)
 		return books
 
 	@property
