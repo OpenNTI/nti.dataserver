@@ -103,6 +103,7 @@ setup(
 		# pulls in dm.reuse
 		'dm.zope.schema >= 2.0.1',
 		'dolmen.builtins >= 0.3.1', # interfaces for common python types
+		'filechunkio >= 1.5', # Req'd for multi-put in boto == 2.5.2
 		'futures >= 2.1.2',
 		#'gevent == 1.0dev', Coming from requirements.txt right now
 		# NOTE: gevent_zeromq and pyzmq are tightly coupled. Updating pyzmq
