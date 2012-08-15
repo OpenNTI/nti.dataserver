@@ -115,11 +115,8 @@ class IRepozeEntityIndexManager(IEntityIndexManager):
 class IWhooshEntityIndexManager(IEntityIndexManager):
 	pass
 
-class IUserIndexManagerFactory(interface.Interface):
-	def __call__(username, *args, **kwargs):
-		"""
-		return a user index manager for the specified user
-		"""
+class ICloudSearchEntityIndexManager(IEntityIndexManager):
+	pass
 
 # index manager
 	
@@ -433,14 +430,13 @@ class ICloudSearchObject(IDict):
 	
 class ICloudSearchStore(interface.Interface):
 	
-	def get_connection():
-		"""
-		return the cloud store connection
-		"""
+	def get_search_domain():
+		"""return the aws search domain"""
 	
+	def get_aws_domains():
+		"""return all aws search domains"""
+		
 	def get_domain(domain_name):
-		"""
-		return the cloud search domain with the specifeid name
-		"""
+		"""return the aws domain w/ the specified name"""
 	
 

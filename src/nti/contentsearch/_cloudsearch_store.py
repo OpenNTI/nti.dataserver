@@ -72,7 +72,7 @@ class _CloudSearchStore(object):
 	def __init__(self, region=None, search_domain='ntisearch', **kwargs):
 		super(_CloudSearchStore, self).__init__()
 		region = find_aws_region(region)
-		self.search_domain = search_domain
+		self._search_domain = search_domain
 		self.connection = connect_to_region(region.name, **kwargs)
 		self._set_aws_domains(self._v_connection)
 
@@ -80,11 +80,10 @@ class _CloudSearchStore(object):
 		self.domains = {}
 		for d in self.get_aws_domains():
 			self.domains[d['domain_name']] = Domain(connection, d)
-					
-	@property
-	def ntisearch(self):
-		return self.get_domain(domain_name=self.search_domain)
 		
+	def get_search_domain(self):
+		return self.get_domain(domain_name=self._search_domain)
+	
 	def get_aws_domains(self):
 		domains = self.connection.describe_domains()
 		return domains
