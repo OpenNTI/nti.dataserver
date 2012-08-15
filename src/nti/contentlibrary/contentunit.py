@@ -17,7 +17,7 @@ class ContentUnit(object):
 	Simple implementation of :class:`IContentUnit`.
 	"""
 
-	_external_class_name_ = 'ContentUnit'
+	__external_class_name__ = 'ContentUnit'
 
 	ordinal = 1
 	href = None
@@ -52,7 +52,7 @@ class ContentPackage(ContentUnit):
 	Simple implementation of :class:`IContentPackage`.
 	"""
 
-	_external_class_name_ = 'ContentPackage'
+	__external_class_name__ = 'ContentPackage'
 
 	root = None
 	index = None
