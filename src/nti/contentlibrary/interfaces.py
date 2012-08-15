@@ -71,6 +71,8 @@ class IContentPackage(IContentUnit, dub_interfaces.IDCExtended):
 	.. note:: The ``root`` attribute should be considered deprecated, as should
 		all resolving of content relative to it. It will probably be becoming
 		a :class:`IDelimitedHierarchyEntry` object when that stabilizes more.
+		In subintefaces that are :class:`IDelimitedHierarchyEntry`, the root
+		becomes an alias for :meth:`IDelimitedHierarchyEntry.get_parent_key`.
 	"""
 
 	root = interface.Attribute( "Path portion of a uri for this object." )
@@ -91,7 +93,7 @@ class IDelimitedHierarchyEntry(interface.Interface,dub_interfaces.IDCTimes):
 	and the relative expense of operations may not be the same.
 
 	The primary reason for this interface is as a facade supporting both local
-	filesystem storage and Amazon S3 (:mod:`boto`) storage.
+	filesystem storage and Amazon S3 (:mod:`boto.s3`) storage.
 
 	"""
 
@@ -103,11 +105,6 @@ class IDelimitedHierarchyEntry(interface.Interface,dub_interfaces.IDCTimes):
 		"""
 		Return the parent key in the hierarchy, if there is one. Otherwise returns None.
 		"""
-
-	# def get_local_key_name( ):
-	# 	"""
-	# 	Return the local (most derived) portion of the key name.
-	# 	"""
 
 	def read_contents():
 		"""

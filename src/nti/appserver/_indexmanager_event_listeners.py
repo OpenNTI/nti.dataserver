@@ -30,8 +30,8 @@ def add_filesystem_index( title, event ):
 		return
 
 	try:
-		indexname = os.path.basename( title.localPath )
-		indexdir = os.path.join( title.localPath, 'indexdir' )
+		indexname = os.path.basename( title.get_parent_key() )
+		indexdir = title.make_sibling_key( 'indexdir' )
 		__traceback_info__ = indexdir, indexmanager, indexname
 		if indexmanager.add_book( indexname=indexname, indexdir=indexdir, ntiid=title.ntiid ):
 			logger.debug( 'Added book %s to %s', indexname, indexmanager )
