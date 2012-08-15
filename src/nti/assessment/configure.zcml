@@ -39,6 +39,10 @@
 			 provides=".interfaces.IQMultipleChoiceSolution"
 			 for="basestring"/>
 
+	<adapter factory="float .solution.QNumericMathSolution"
+			 provides=".interfaces.IQNumericMathSolution"
+			 for="basestring"/>
+
 	<adapter factory="dict .solution.QMatchingSolution"
 			 provides=".interfaces.IQMatchingSolution"
 			 for="dict"/>
