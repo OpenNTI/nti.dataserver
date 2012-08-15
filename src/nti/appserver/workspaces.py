@@ -1,4 +1,16 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Service document and user workspaces support.
+
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
 
 import collections
 
@@ -7,7 +19,6 @@ from zope import component
 from zope.location import location
 from zope.location import interfaces as loc_interfaces
 from zope.mimetype import interfaces as mime_interfaces
-from zope.location.location import LocationProxy
 from zope.componentvocabulary.vocabulary import UtilityVocabulary
 
 from nti.dataserver import datastructures
@@ -26,7 +37,6 @@ from nti.dataserver import links
 from nti.dataserver import mimetype
 from nti.ntiids import ntiids
 from nti.dataserver import authorization as nauth
-from nti.dataserver import authorization_acl as nacl
 from nti.dataserver import traversal as nti_traversal
 
 import nti.appserver.interfaces as app_interfaces
@@ -41,7 +51,6 @@ def _find_name( obj ):
 		   or getattr( obj, '__name__', None ) \
 		   or getattr( obj, 'container_name', None )
 
-from nti.dataserver.interfaces import ACLLocationProxy
 
 class _ContainerWrapper(object):
 	"""
@@ -330,7 +339,7 @@ class ContainerCollectionDetailExternalizer(object):
 						item[StandardExternalFields.LINKS].append( links.Link( valid_traversal_path,
 																			   rel='edit' ) )
 
-			if 'href' not in item and  getattr( v_, '__parent__', None ) is not None:
+			if 'href' not in item and getattr( v_, '__parent__', None ) is not None:
 				# Let this thing try to produce its
 				# own href
 				# TODO: This if test is probably not needed anymore, with zope.location.traversing
@@ -340,25 +349,11 @@ class ContainerCollectionDetailExternalizer(object):
 					item['href'] = valid_traversal_path
 			return item
 
-		def acl_wrapped(v):
-			# TODO: This isn't right. We really want to be maintaining this
-			# during the actual iteration/extraction process itself. We're
-			# compromising here.
-			# Note we assume that if there's an acl there are also parents
-			if hasattr(v, '__acl__' ):
-				return v
-			acl = nacl.ACL( v )
-			return ACLLocationProxy( v,
-									 collection,
-									 # Pick, in order, id, ID, or __name__
-									 getattr( v, 'id', getattr( v, 'ID', getattr( v, '__name__', None ))),
-									 acl )
-
 		if isinstance( container, collections.Mapping ):
-			ext_collection['Items'] = { k: fixup(acl_wrapped(v),toExternalObject(v)) for k,v in container.iteritems()
+			ext_collection['Items'] = { k: fixup(v,toExternalObject(v)) for k,v in container.iteritems()
 										if not isSyntheticKey( k )}
 		else:
-			ext_collection['Items'] = [fixup(acl_wrapped(v),toExternalObject(v)) for v in container]
+			ext_collection['Items'] = [fixup(v,toExternalObject(v)) for v in container]
 
 		# Need to add hrefs to each item.
 		# In the near future, this will be taken care of automatically.
@@ -614,6 +609,13 @@ class _UserPagesCollection(object):
 		return (term.value for term in vocab)
 		#return iter(mimetype.ModeledContentTypeAwareRegistryMetaclass.external_mime_types)
 
+# class _CreatableMimeObjectVocabulary(UtilityVocabulary):
+# 	nameOnly = True
+# 	interface = ext_interfaces.IMimeObjectFactory
+
+# 	def __init__( self, context ):
+# 		super(_CreatableMimeObjectVocabulary,self).__init__( context )
+
 class _UserEnrolledClassSectionsCollection(object):
 	"""
 	Turns a User into an ICollection of data about the individual classes
@@ -648,12 +650,7 @@ class _UserEnrolledClassSectionsCollection(object):
 				if not hasattr( clazz, 'Sections' ): continue
 				for section in clazz.Sections:
 					if self._user.username in section.Enrolled:
-						# correct the parent
-						# Note we must also supply the ACL now or the code in CCDetailExternalizer
-						# will override our choices
-						acl = nacl.ACL( section )
-						l = ACLLocationProxy( section, clazz, section.__name__, acl )
-						result.append( l )
+						result.append( section )
 
 		return result
 

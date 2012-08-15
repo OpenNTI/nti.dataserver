@@ -3,7 +3,7 @@
 	xmlns="http://namespaces.zope.org/zope"
 	xmlns:zcml="http://namespaces.zope.org/zcml">
 	<include package="zope.component" />
-
+	<include package="zope.componentvocabulary" />
 	<include package="nti.dataserver" />
 
 	<!-- Resource traversal -->
