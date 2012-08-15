@@ -1,6 +1,7 @@
 from __future__ import print_function, unicode_literals
 
 import hmac
+import uuid
 import base64
 import hashlib
 
@@ -21,27 +22,30 @@ class _FPSPaymentManager(object):
                                              aws_secret_access_key=self.aws_secret_access_key)
         return self._connection
     
-    def signature(self, msg):
+    def signature(self, msg=None):
         """return unique digital signature for the specified msg"""
+        msg = msg or str(uuid.uuid1())
         dig = hmac.new(self.aws_secret_access_key, msg=msg, digestmod=hashlib.sha256).digest()
         return base64.b64encode(dig).decode() 
    
-    def get_cbui_url(self, amount, reference, returnURL, paymentReason=None, pipelineName='SingleUse'):
+    def get_cbui_url(self, amount, reference, returnURL, currency='USD', paymentReason=None, pipelineName='SingleUse'):
         """
         return an [aws-fps] url to start a payment process
         
         amount : transaction amount
-        reference: buyer/caller/nti transaction reference id
+        reference: buyer/caller/NTI transaction reference id
         returnURL: URL to return to after payment operation (submit/cancalation)
         pipelineName: Type of payment (see FPSConnection#cbui_url)
         """
         paymentReason = paymentReason or ''
         inputs = {
                 'transactionAmount':    amount,
+                'currencyCode':         currency,
                 'pipelineName':         pipelineName,
                 'returnURL':            returnURL,
                 'paymentReason':        paymentReason,
                 'callerReference':      reference,
+                'signature':            self.signature()
         }
         url = self.connection.cbui_url(**inputs)
         return url
