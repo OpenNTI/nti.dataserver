@@ -357,34 +357,6 @@ class TestApplication(ApplicationTestBase):
 		testapp.put( path, data, extra_environ=self._make_extra_environ(), status=200 )
 
 
-	def test_user_search(self):
-		with mock_dataserver.mock_db_trans(self.ds):
-			contained = ContainedExternal()
-			user = self._create_user()
-			contained.containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
-			user.addContainedObject( contained )
-			assert_that( user.getContainer( contained.containerId ), has_length( 1 ) )
-
-		testapp = TestApp( self.app )
-		res = testapp.get( '/dataserver2', extra_environ=self._make_extra_environ())
-		assert_that( res.json_body['Items'], has_item( all_of(
-															has_entry( 'Title', 'Global' ),
-															has_entry( 'Links', has_item( has_entry( 'href', '/dataserver2/UserSearch' ) ) ) ) ) )
-		path = '/dataserver2/UserSearch/sjohnson@nextthought.com'
-		res = testapp.get( path, extra_environ=self._make_extra_environ())
-
-		assert_that( res.content_type, is_( 'application/vnd.nextthought+json' ) )
-		assert_that( res.cache_control, has_property( 'no_store', True ) )
-
-		assert_that( res.body, contains_string( str('sjohnson@nextthought.com') ) )
-		# We should have an edit link
-		body = json.loads( res.body )
-		assert_that( body['Items'][0], has_entry( 'Links',
-												  has_item( all_of(
-													  has_entry( 'href', "/dataserver2/users/sjohnson%40nextthought.com" ),
-													  has_entry( 'rel', 'edit' ) ) ) ) )
-
-
 	def test_search_empty_term_user_ugd_book(self):
 		"Searching with an empty term returns empty results"
 		with mock_dataserver.mock_db_trans( self.ds ):
@@ -397,7 +369,7 @@ class TestApplication(ApplicationTestBase):
 		testapp = TestApp( self.app )
 		# The results are not defined across the search types,
 		# we just test that it doesn't raise a 404
-		for search_path in ('UserSearch','users/sjohnson@nextthought.com/Search/RecursiveUserGeneratedData'):
+		for search_path in ('users/sjohnson@nextthought.com/Search/RecursiveUserGeneratedData',):
 			for ds_path in ('dataserver2',):
 				path = '/' + ds_path +'/' + search_path + '/'
 				res = testapp.get( path, extra_environ=self._make_extra_environ())

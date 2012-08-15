@@ -337,10 +337,12 @@ def createApplication( http_port,
 
 	pyramid_config.add_route( name='search.users', pattern='/dataserver2/UserSearch/{term:.*}',
 							  factory=_ContentSearchRootFactory)
-	pyramid_config.add_view( route_name='search.users',
-							 view='nti.appserver.dataserver_pyramid_views._UserSearchView',
-							 renderer='rest',
-							 permission=nauth.ACT_SEARCH)
+	pyramid_config.scan( 'nti.appserver.usersearch_views' )
+
+	# pyramid_config.add_view( route_name='search.users',
+	# 						 view='nti.appserver.dataserver_pyramid_views._UserSearchView',
+	# 						 renderer='rest',
+	# 						 permission=nauth.ACT_SEARCH)
 
 	pyramid_config.add_route( name='search2.user', pattern='/dataserver2/users/{user}/Search/RecursiveUserGeneratedData/{term:.*}',
 							  factory=_UserSearchRootFactory)
@@ -358,12 +360,12 @@ def createApplication( http_port,
 							 renderer='rest',
 							 permission=nauth.ACT_SEARCH)
 
-	pyramid_config.add_route( name='search2.users', pattern='/dataserver2/UserSearch/{term:.*}',
-							  factory=_ContentSearchRootFactory)
-	pyramid_config.add_view( route_name='search2.users',
-							 view='nti.appserver.dataserver_pyramid_views._UserSearchView',
-							 renderer='rest',
-							 permission=nauth.ACT_SEARCH)
+	# pyramid_config.add_route( name='search2.users', pattern='/dataserver2/UserSearch/{term:.*}',
+	# 						  factory=_ContentSearchRootFactory)
+	# pyramid_config.add_view( route_name='search2.users',
+	# 						 view='nti.appserver.dataserver_pyramid_views._UserSearchView',
+	# 						 renderer='rest',
+	# 						 permission=nauth.ACT_SEARCH)
 
 	logger.debug( 'Finished creating search' )
 
