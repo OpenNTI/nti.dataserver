@@ -147,12 +147,35 @@ class IDelimitedHierarchyContentUnit(IContentUnit,IDelimitedHierarchyEntry):
 class IDelimitedHierarchyContentPackage(IContentPackage,IDelimitedHierarchyEntry):
 	pass
 
+class IS3Bucket(IZContained): # .boto_s3 will patch these to be IZContained
+	"""
+	See :class:`boto.s3.bucket.Bucket`.
+
+	.. note:: This should define a subset of things we want to use, hopefully
+		compatible with both :mod:`boto.s3.bucket` and :mod:`boto.file.bucket`.
+	"""
+
+	name = schema.TextLine( title="The name of this bucket; globally unique" )
+
+class IS3Key(IZContained):
+	"""
+	See :class:`boto.s3.key.Key`.
+
+	.. note:: This should define a subset of things we want to use, hopefully
+		compatible with both :mod:`boto.s3.bucket` and :mod:`boto.file.bucket`.
+	"""
+
+	bucket = schema.Object( IS3Bucket, title="The bucket to which this key belongs" )
+
+	name = schema.TextLine( title="The name of this key; unique within the bucket" )
 
 class IS3ContentUnit(IDelimitedHierarchyContentUnit):
-	pass
+
+	key = schema.Object( IS3Key, title="The key identifying the unit of content this belongs to." )
 
 class IS3ContentPackage(IDelimitedHierarchyContentPackage,IS3ContentUnit):
 	pass
+
 
 class IFilesystemEntry(interface.Interface,dub_interfaces.IDCTimes,IDelimitedHierarchyEntry):
 	"""
@@ -197,3 +220,9 @@ class IContentUnitHrefMapper(interface.Interface):
 		want to register these as multi-adapters depending on the current request.
 	"""
 	href = interface.Attribute( "The best HREF, something a client can resolve." )
+
+class IAbsoluteContentUnitHrefMapper(IContentUnitHrefMapper):
+	"""
+	A type of href mapper that produces absolute hrefs, not relative
+	to anything, even the host.
+	"""
