@@ -255,7 +255,7 @@ setup(
 			'zodbupdate >= 0.5',
 			'zodbbrowser >= 0.10.0',
 			'sphinx >= 1.1.3', # Narrative docs
-			'sphinxtheme.readability >= 0.0.5',
+			'sphinxtheme.readability >= 0.0.6',
 			'repoze.sphinx.autointerface >= 0.7.0',
 			'epydoc >= 3.0.1', # auto-api docs
 			'rope >= 0.9.4', # refactoring library. c.f. ropemacs
