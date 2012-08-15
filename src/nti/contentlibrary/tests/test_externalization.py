@@ -25,7 +25,7 @@ def test_doesnt_dual_escape():
 				 has_entry( 'icon', '/prealgebra/icons/The%20Icon.png' ) )
 
 
-def _do_test_escape_if_needed(factory, key, index='eclipse-toc.xml', archive_unit=None, prefix=''):
+def _do_test_escape_if_needed(factory, key, index='eclipse-toc.xml', archive_unit=None, prefix='', installable=True):
 	unit = factory(
 		key=key,
 		href = 'index.html',
@@ -54,7 +54,8 @@ def _do_test_escape_if_needed(factory, key, index='eclipse-toc.xml', archive_uni
 							  'index', prefix + '/prealgebra/eclipse-toc.xml',
 							  'root', prefix + '/prealgebra/',
 							  'archive', prefix + '/prealgebra/archive.zip',
-							  'version', '1.0' ) )
+							  'version', '1.0',
+							  'installable', installable ) )
 	return unit
 
 def test_escape_if_needed_filesystem_rel_path():
@@ -64,8 +65,9 @@ def test_escape_if_needed_filesystem_rel_path():
 
 def test_escape_if_needed_filesystem_full_path():
 	_do_test_escape_if_needed( filesystem.FilesystemContentPackage,
-							   key='/Library/WebServer/Documents/prealgebra/index.html',
-							   archive_unit=filesystem.FilesystemContentUnit( filename='archive.zip', href='archive.zip' ) )
+							   key='/DNE/Library/WebServer/Documents/prealgebra/index.html',
+							   archive_unit=filesystem.FilesystemContentUnit( filename='archive.zip', href='archive.zip' ),
+							   installable=True	)
 
 
 import boto.s3.bucket
@@ -81,4 +83,5 @@ def test_escape_if_needed_boto(fake_connect):
 	index = boto.s3.key.Key( bucket=bucket, name='prealgebra/eclipse-toc.xml' )
 
 	_do_test_escape_if_needed( boto_s3.BotoS3ContentPackage, key=key, index=index, prefix='http://content.nextthought.com',
-							  archive_unit=boto_s3.BotoS3ContentUnit( key=boto.s3.key.Key( bucket=bucket, name='prealgebra/archive.zip' ) ) )
+							  archive_unit=boto_s3.BotoS3ContentUnit( key=boto.s3.key.Key( bucket=bucket, name='prealgebra/archive.zip' ) ),
+							  installable=True	)
