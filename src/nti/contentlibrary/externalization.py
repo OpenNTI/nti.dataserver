@@ -68,6 +68,7 @@ class _ContentPackageExternal(object):
 		result['renderVersion'] = self.package.renderVersion
 		result[StandardExternalFields.NTIID] = self.package.ntiid
 
+		result['installable'] = self.package.installable
 		if self.package.installable:
 			result['archive'] = interfaces.IContentUnitHrefMapper( self.package.archive_unit ).href
 			result['Archive Last Modified'] = self.package.archive_unit.lastModified
