@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from hamcrest import assert_that, has_entry, has_entries
-
+from hamcrest import greater_than_or_equal_to
 
 from nti.contentlibrary import filesystem, boto_s3
 
@@ -50,15 +50,23 @@ def _do_test_escape_if_needed(factory, key, index='eclipse-toc.xml', archive_uni
 	assert_that( result,
 				 has_entries( 'DCCreator', (),
 							  'DCTitle', 'Prealgebra',
-							  'Last Modified', 0,
+							  'Last Modified', greater_than_or_equal_to( 0 ),
 							  'index', prefix + '/prealgebra/eclipse-toc.xml',
 							  'root', prefix + '/prealgebra/',
 							  'archive', prefix + '/prealgebra/archive.zip',
 							  'version', '1.0' ) )
+	return unit
 
-def test_escape_if_needed_filesystem():
-	_do_test_escape_if_needed( filesystem.FilesystemContentPackage, key='prealgebra/index.html',
-							  archive_unit=filesystem.FilesystemContentUnit( filename='archive.zip', href='archive.zip' ) )
+def test_escape_if_needed_filesystem_rel_path():
+	_do_test_escape_if_needed( filesystem.FilesystemContentPackage,
+							   key='prealgebra/index.html',
+							   archive_unit=filesystem.FilesystemContentUnit( filename='archive.zip', href='archive.zip' ) )
+
+def test_escape_if_needed_filesystem_full_path():
+	_do_test_escape_if_needed( filesystem.FilesystemContentPackage,
+							   key='/Library/WebServer/Documents/prealgebra/index.html',
+							   archive_unit=filesystem.FilesystemContentUnit( filename='archive.zip', href='archive.zip' ) )
+
 
 import boto.s3.bucket
 import boto.s3.key

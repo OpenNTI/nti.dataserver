@@ -40,7 +40,7 @@ def _root_url_of_unit( unit ):
 	if mapper:
 		href = mapper.href
 	else:
-		href = '/' + unit.get_parent_key()
+		href = '/' + unit.get_parent_key().split( '/' )[-1]
 	return href + ('' if href.endswith( '/' ) else '/')  # trailing slash is important for urljoin
 
 @interface.implementer(IExternalObject)
