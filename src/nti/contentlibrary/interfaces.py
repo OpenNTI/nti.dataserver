@@ -226,3 +226,7 @@ class IAbsoluteContentUnitHrefMapper(IContentUnitHrefMapper):
 	A type of href mapper that produces absolute hrefs, not relative
 	to anything, even the host.
 	"""
+
+######
+## Events
+##
