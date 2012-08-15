@@ -560,12 +560,12 @@ class _RootNTIIDEntry(_NTIIDEntry):
 	def __init__( self, parent, _ ):
 		super(_RootNTIIDEntry,self).__init__( parent, ntiids.ROOT )
 
+@interface.implementer(app_interfaces.IContainerCollection)
+@component.adapter(model_interfaces.IUser)
 class _UserPagesCollection(object):
 	"""
 	Turns a User into a ICollection of data for their pages (individual containers).
 	"""
-	interface.implements(app_interfaces.IContainerCollection)
-	component.adapts(model_interfaces.IUser)
 
 	name = 'Pages'
 	__name__ = name
@@ -604,17 +604,41 @@ class _UserPagesCollection(object):
 	def accepts(self):
 		# We probably need to be more picky, too. Some things like
 		# devices and friendslists are sneaking in here where they
-		# don't belong.
-		vocab = UtilityVocabulary(None, interface=ext_interfaces.IMimeObjectFactory, nameOnly=True)
-		return (term.value for term in vocab)
-		#return iter(mimetype.ModeledContentTypeAwareRegistryMetaclass.external_mime_types)
+		# don't belong...even though they can be posted here (?)
+		return (term.value for term in _CreatableMimeObjectVocabulary(self._user))
 
-# class _CreatableMimeObjectVocabulary(UtilityVocabulary):
-# 	nameOnly = True
-# 	interface = ext_interfaces.IMimeObjectFactory
+# TODO: This same thing needs to be done in dataserver_pyramid_views where we
+# go to create objects. As it stands, even though we don't let the UI know about
+# them, it is still possible to create them
+class _CreatableMimeObjectVocabulary(UtilityVocabulary):
+	"""
+	A vocabulary that reports the names (MIME types) of installed
+	:class:`nti.externalization.interfaces.IMimeObjectFactory` objects.
+	There
+	"""
+ 	nameOnly = True
+ 	interface = ext_interfaces.IMimeObjectFactory
 
-# 	def __init__( self, context ):
-# 		super(_CreatableMimeObjectVocabulary,self).__init__( context )
+ 	def __init__( self, context ):
+ 		super(_CreatableMimeObjectVocabulary,self).__init__( context )
+		term_filter = component.queryAdapter(context, app_interfaces.ICreatableObjectFilter, context=context)
+		if term_filter:
+			self._terms = term_filter.filter_creatable_objects( self._terms )
+
+@interface.implementer(app_interfaces.ICreatableObjectFilter)
+class _SimpleRestrictedContentObjectFilter(object):
+
+	RESTRICTED = ('application/vnd.nextthought.canvasurlshape', #images
+				  'application/vnd.nextthought.redaction' )
+
+	def __init__( self, context=None ):
+		pass
+
+	def filter_creatable_objects( self, terms ):
+		for name in self.RESTRICTED:
+			terms.pop( name, None )
+		return terms
+
 
 class _UserEnrolledClassSectionsCollection(object):
 	"""

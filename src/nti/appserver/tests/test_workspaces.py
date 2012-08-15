@@ -233,6 +233,27 @@ class TestUserService(tests.ConfiguringTestBase):
 															# Because there is no authentication policy in use, we should be able to write to it
 															has_entry( 'Items', has_item( has_entry( 'accepts', has_item( 'application/vnd.nextthought.classinfo' ) ) ) ) ) ) )
 
+	def test_user_pages_collection_accepts_only_external_types(self):
+		"A user's Pages collection only claims to accept things that are externally creatable."
+		# We prove this via a negative, so unfortunately this is not such
+		# a great test
+
+		assert_that( 'application/vnd.nextthought.transcriptsummary', is_not( is_in( list(UserPagesCollection(None).accepts) ) ) )
+		assert_that( 'application/vnd.nextthought.canvasurlshape', is_in( list(UserPagesCollection(None).accepts) ) )
+
+	@mock_dataserver.WithMockDSTrans
+	def test_user_pages_collection_restricted(self):
+		"A set of restrictions apply by default to what can be created"
+
+		user = users.User.create_user( dataserver=self.ds, username='sjohnson@nextthought.com' )
+		assert_that( 'application/vnd.nextthought.canvasurlshape', is_in( list(UserPagesCollection(user).accepts) ) )
+
+		# Making it ICoppaUser cuts that out
+		interface.alsoProvides( user, nti_interfaces.ICoppaUser )
+		assert_that( 'application/vnd.nextthought.canvasurlshape', is_not( is_in( list(UserPagesCollection(user).accepts) ) ) )
+
+
+
 class TestUserClassesCollection(tests.ConfiguringTestBase):
 
 	@mock_dataserver.WithMockDSTrans
@@ -256,12 +277,6 @@ class TestUserClassesCollection(tests.ConfiguringTestBase):
 																 '/dataserver2/Objects/' + urllib.quote( ext_oids.to_external_ntiid_oid( section ) ) ) ) ) )
 																# '/dataserver2/providers/OU/Classes/CS5201/CS5201.501' ) ) ) )
 
-def test_user_pages_collection_accepts_only_external_types():
-	"A user's Pages collection only claims to accept things that are externally creatable."
-	# We prove this via a negative, so unfortunately this is not such
-	# a great test
-
-	assert_that( 'application/vnd.nextthought.transcriptsummary', is_not( is_in( list(UserPagesCollection(None).accepts) ) ) )
 
 import tempfile
 import shutil
