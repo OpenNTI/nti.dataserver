@@ -382,14 +382,14 @@ def createApplication( http_port,
 			indexdir = os.path.join( title.localPath, 'indexdir' )
 			__traceback_info__ = indexdir
 			if indexmanager and indexmanager.add_book(indexname=indexname, indexdir=os.path.join( title.localPath, 'indexdir')):
-				pattern = '/' + indexname + '/Search/{term:.*}'
-				name = routename + '.' + indexname
-				pyramid_config.add_route( name=name, pattern=pattern, factory=_ContentSearchRootFactory )
-				pyramid_config.add_view( route_name=name,
-										 view='nti.contentsearch.pyramid_views.GetSearch',
-										 renderer='rest',
-										 permission=nauth.ACT_SEARCH )
-				logger.debug( 'Added route %s to %s', name, pattern )
+				# pattern = '/' + indexname + '/Search/{term:.*}'
+				# name = routename + '.' + indexname
+				# pyramid_config.add_route( name=name, pattern=pattern, factory=_ContentSearchRootFactory )
+				# pyramid_config.add_view( route_name=name,
+				# 						 view='nti.contentsearch.pyramid_views.GetSearch',
+				# 						 renderer='rest',
+				# 						 permission=nauth.ACT_SEARCH )
+				logger.debug( 'Added book %s to %s', indexname, indexmanager )
 		except AttributeError:
 			# Temp hack while these things do not have local paths
 			logger.debug( "Failed to add book search entry" )
