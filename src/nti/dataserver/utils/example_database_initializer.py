@@ -33,10 +33,11 @@ class ExampleDatabaseInitializer(object):
 	interface.implements(gen_interfaces.IInstallableSchemaManager)
 
 	generation = 8
-	minimum_generation = 8
 	max_test_users = 101
 	skip_passwords = False
-
+	minimum_generation = 8
+	nti_testers = "NTI_TESTERS"
+	
 	def __init__( self, *args, **kwargs ):
 		"""
 		:param int max_test_users: The number of test users to create.
@@ -110,9 +111,9 @@ class ExampleDatabaseInitializer(object):
 		mathcountsCommunity.realname = mathcountsCommunity.username
 		mathcountsCommunity.alias = 'MathCounts'
 
-		testUsersCommunity = Community( 'TestUsers' )
+		testUsersCommunity = Community( self.nti_testers)
 		testUsersCommunity.realname = testUsersCommunity.username
-		testUsersCommunity.alias = 'TestUsers'
+		testUsersCommunity.alias = self.nti_testers
 
 		return (aopsCommunity, drgCommunity, ntiCommunity, testUsersCommunity)
 
@@ -146,6 +147,13 @@ class ExampleDatabaseInitializer(object):
 		fl.containerId = 'FriendsLists'
 		for_user.addContainedObject( fl )
 
+	def _add_test_user_friendlist(self, for_user):
+		fl = FriendsList( self.nti_testers)
+		for x in range(1, self.max_test_users):
+			uid = 'test.user.%s@nextthought.com' % x
+			if uid != for_user.username:
+				fl.addFriend( uid )
+		for_user.addContainedObject( fl )
 
 	def install( self, context ):
 		conn = context.connection
@@ -200,8 +208,10 @@ class ExampleDatabaseInitializer(object):
 					user.join_community( c )
 					user.follow( c )
 
-			self._add_friendslists_to_user( user )
-			#add_user( user )
+			if not is_test_user:
+				self._add_friendslists_to_user( user )
+			else:
+				self._add_test_user_friendlist(user)
 
 		map(create_add_user, USERS)
 
