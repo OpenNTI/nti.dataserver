@@ -13,7 +13,7 @@ from nti.ntiids.ntiids import make_ntiid
 
 from nti.contentsearch.interfaces import ICloudSearchStore
 from nti.contentsearch import _cloudsearch_index as cloudsearch_index
-from nti.contentsearch._cloudsearch_userindexmanager import CloudSearchUserIndexManager
+#from nti.contentsearch._cloudsearch_userindexmanager import CloudSearchUserIndexManager
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
@@ -42,7 +42,7 @@ class TestCloudSearchIndexManager(ConfiguringTestBase):
 		self.user_id = unicode(str(uuid.uuid1()) + '@nti.com')
 		#self.store = create_cloudsearch_store(self.aws_access_key_id, self.aws_secret_access_key)
 		component.provideUtility(self.store, provides=ICloudSearchStore)
-		self.cim = CloudSearchUserIndexManager(self.user_id)
+		#self.cim = CloudSearchUserIndexManager(self.user_id)
 
 	def tearDown(self):
 		self._remove_all(self.cim)

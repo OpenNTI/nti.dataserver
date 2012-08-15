@@ -31,19 +31,11 @@ from nti.contentsearch._cloudsearch_store import get_document_service
 from nti.contentsearch._search_indexmanager import _SearchEntityIndexManager
 from nti.contentsearch._search_highlights import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT)
 from nti.contentsearch.common import ( LAST_MODIFIED, ITEMS, NTIID, HIT_COUNT)
-from nti.contentsearch.common import (username_, ngrams_, content_, oid_, type_)
+from nti.contentsearch.common import (username_, ngrams_, content_, intid_, type_)
 
 import logging
 logger = logging.getLogger( __name__ )
-		
-def has_stored_indices(username):
-	store = component.getUtility( search_interfaces.ICloudSearchStore )
-	domain = store.get_domain('ntisearch')
-	bq = "%s:'%s'" % (username_, username)
-	service  = get_search_service(domain=domain) if domain else None
-	results = service.search(bq=bq, return_fields=[oid_], size=1, start=0) if service else ()
-	return len(results) > 0
-
+	
 @component.adapter(nti_interfaces.IEntity)
 class _CloudSearchEntityIndexManager(Persistent, _SearchEntityIndexManager):
 	interface.implements(search_interfaces.ICloudSearchEntityIndexManager)
@@ -182,7 +174,7 @@ class _CloudSearchEntityIndexManager(Persistent, _SearchEntityIndexManager):
 		
 	def get_aws_oids(self, type_name=None, size=sys.maxint):
 		"""
-		return a generator w/ object id of the objects indexed in aws
+		return a generator w/ int ids of the objects indexed in aws
 		"""
 		
 		# prepare query
@@ -194,14 +186,17 @@ class _CloudSearchEntityIndexManager(Persistent, _SearchEntityIndexManager):
 		bq = ' '.join(bq)
 		
 		service = self._get_search_service()
-		results = service.search(bq=bq, return_fields=[oid_], size=size, start=0)
+		results = service.search(bq=bq, return_fields=[intid_], size=size, start=0)
 		for r in results:
 			yield r['id']
 			
 	# ---------------------- 
 		
 	def has_stored_indices(self):
-		return True
+		bq = unicode("%s:'%s'" % (username_, self.username))
+		service  = self._get_search_service()
+		results = service.search(bq=bq, return_fields=[intid_], size=1, start=0) if service else ()
+		return len(results) > 0
 		
 	def get_stored_indices(self):
 		return ()

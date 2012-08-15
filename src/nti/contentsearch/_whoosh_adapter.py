@@ -264,10 +264,19 @@ class _WhooshEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 					return True
 		return False
 
+	def remove_index(self, type_name, *args, **kwargs):
+		type_name = normalize_type_name(type_name)
+		index = self._get_or_create_index(type_name)
+		if index is not None:
+			with index:
+				self.pop(type_name, None)
+				whoosh_indices.pop(type_name, None)
+				_safe_index_close(index)
+	
 	# -------------------
 	
 	def get_stored_indices(self):
-		result = get_stored_indices(self.username, self.storage, self.use_md5)
+		result =  list(self.keys())#s get_stored_indices(self.username, self.storage, self.use_md5)
 		return result
 	
 	def has_stored_indices(self):

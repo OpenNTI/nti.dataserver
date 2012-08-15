@@ -150,7 +150,6 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 		highlight_type = None if is_all_query(qo.term) else NGRAM_HIGHLIGHT
 		results = self._do_search(ngrams_, qo, search_on, highlight_type)
 		return results
-	quick_search = ngram_search
 
 	def suggest(self, query, *args, **kwargs):
 		qo = QueryObject.create(query, **kwargs)
