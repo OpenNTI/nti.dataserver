@@ -63,6 +63,9 @@ class ISearchFeatures(interface.Interface):
 class IBookIndexManager(ISearcher):
 	def get_indexname():
 		"return the index name"
+		
+	def get_ntiid():
+		"return the index ntiid"
 	
 class IEntityIndexManager(ISearcher):
 

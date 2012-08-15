@@ -42,7 +42,7 @@ class _BaseIndexManagerTest(object):
 		cls.now = time.time()
 		cls.book_idx_dir = tempfile.mkdtemp(dir="/tmp")
 		create_directory_index('bleach', create_book_schema(), cls.book_idx_dir)
-		cls.bim = WhooshBookIndexManager('bleach', indexdir=cls.book_idx_dir)
+		cls.bim = WhooshBookIndexManager('bleach', 'bleach', indexdir=cls.book_idx_dir)
 
 		idx = cls.bim.bookidx
 		writer = idx.writer()
@@ -73,32 +73,32 @@ class _BaseIndexManagerTest(object):
 	@WithMockDSTrans
 	def test_add_book(self):
 		self.im = self.create_index_mananger()
-		assert_that(self.im.add_book(indexname='bleach', indexdir=self.book_idx_dir), is_(True))
-		assert_that(self.im.add_book(indexname='unknown', indexdir='/tmp'), is_(False))
+		assert_that(self.im.add_book(indexname='bleach', ntiid='bleach', indexdir=self.book_idx_dir), is_(True))
+		assert_that(self.im.add_book(indexname='unknown', ntiid='unknown', indexdir='/tmp'), is_(False))
 
 	@WithMockDSTrans
 	def test_search_book(self):
 		self.im = self.create_index_mananger()
-		self.im.add_book(indexname='bleach', indexdir=self.book_idx_dir)
+		self.im.add_book(indexname='bleach', ntiid='bleach', indexdir=self.book_idx_dir)
 
-		hits = self.im.content_search(indexname='bleach', query='omega')
+		hits = self.im.content_search(indexid='bleach', query='omega')
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 
-		hits = self.im.content_ngram_search(indexname='bleach', query='ren')
+		hits = self.im.content_ngram_search(indexid='bleach', query='ren')
 		assert_that(hits, has_entry(HIT_COUNT, 3))
 
-		hits = self.im.content_suggest_and_search(indexname='bleach', query='wen')
+		hits = self.im.content_suggest_and_search(indexid='bleach', query='wen')
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 
-		hits = self.im.content_suggest(indexname='bleach', query='extre')
+		hits = self.im.content_suggest(indexid='bleach', query='extre')
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 
 	@WithMockDSTrans
 	def test_unified_search(self):
 		self._add_notes_and_index(('omega radicals', 'the queen of coffee'))
-		self.im.add_book(indexname='bleach', indexdir=self.book_idx_dir)
+		self.im.add_book(indexname='bleach', ntiid='bleach', indexdir=self.book_idx_dir)
 
-		q = QueryObject(term='omega', indexname='bleach', username='nt@nti.com')
+		q = QueryObject(term='omega', indexid='bleach', username='nt@nti.com')
 		hits = self.im.search(q)
 		assert_that(hits, has_entry(HIT_COUNT, 2))
 
@@ -115,7 +115,7 @@ class _BaseIndexManagerTest(object):
 		self._add_notes_and_index(('omega radicals', 'the queen of coffee'))
 		self.im.add_book(indexname='bleach', indexdir=self.book_idx_dir)
 
-		q = QueryObject(term='coff', indexname='bleach', username='nt@nti.com')
+		q = QueryObject(term='coff', indexid='bleach', username='nt@nti.com')
 		hits = self.im.ngram_search(q)
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 
@@ -135,7 +135,7 @@ class _BaseIndexManagerTest(object):
 		self._add_notes_and_index(('omega radicals', 'the queen of coffee'))
 		self.im.add_book(indexname='bleach', indexdir=self.book_idx_dir)
 
-		q = QueryObject(term='omeg', indexname='bleach', username='nt@nti.com')
+		q = QueryObject(term='omeg', indexid='bleach', username='nt@nti.com')
 		hits = self.im.suggest(q)
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 
@@ -148,7 +148,7 @@ class _BaseIndexManagerTest(object):
 		self._add_notes_and_index(('omega radicals', 'the queen of coffee'))
 		self.im.add_book(indexname='bleach', indexdir=self.book_idx_dir)
 
-		q = QueryObject(term='omeg', indexname='bleach', username='nt@nti.com')
+		q = QueryObject(term='omeg', indexid='bleach', username='nt@nti.com')
 		hits = self.im.suggest_and_search(q)
 		assert_that(hits, has_entry(HIT_COUNT, 2))
 		
