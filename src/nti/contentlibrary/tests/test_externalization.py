@@ -45,6 +45,7 @@ def _do_test_escape_if_needed(factory, key, index='eclipse-toc.xml', archive_uni
 
 	assert_that( result,
 				 has_entry( 'renderVersion', 1 ) )
+	assert_that( result, has_entry( 'Class', 'ContentPackage' ) )
 
 	# More coverage
 	assert_that( result,
