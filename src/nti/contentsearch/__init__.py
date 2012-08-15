@@ -3,7 +3,6 @@ import time
 
 from nti.contentsearch.common import to_list
 from nti.contentsearch._search_query import QueryObject
-from nti.contentsearch._cloudsearch_store import CloudSearchStore
 from nti.contentsearch._ngrams_utils import (ngrams, ngram_tokens)
 from nti.contentsearch._datastructures import LFUMap, CaseInsensitiveDict
 from nti.contentsearch.common import (note_, highlight_, redaction_, messageinfo_)
@@ -36,9 +35,6 @@ class SearchCallWrapper(object):
 		def wrapper(*args, **kargs):
 			return self(instance, *args, **kargs)
 		return wrapper
-
-def create_cloudsearch_store(*args, **kwargs):
-	return CloudSearchStore(*args, **kwargs)
 
 def create_repoze_datastore():
 	from nti.contentsearch._repoze_datastore import RepozeCatalogDataStore
