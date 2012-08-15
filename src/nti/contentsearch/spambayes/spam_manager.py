@@ -25,6 +25,14 @@ logger = logging.getLogger( __name__ )
 BaseIndex.family = BTrees.family64
 CatalogIndex.family = BTrees.family64
 
+def get_uid(self, context):
+	_ds_intid = component.getUtility( zope.intid.IIntIds )
+	return _ds_intid.getId(context)
+	
+def get_context(self, uid):
+	_ds_intid = component.getUtility( zope.intid.IIntIds )
+	return _ds_intid.getObject(uid)
+	
 def _create_catalog():
 	catalog = Catalog(family=BTrees.family64)
 	catalog[intid_] =  CatalogFieldIndex(intid_)
@@ -44,7 +52,7 @@ class SpamManager(Persistent):
 	def mark_spam(self, context, mtime=None):
 		m_time = mtime or time.time()
 		if nti_interfaces.IModeledContent.providedBy(context):
-			uid = self.get_uid(context)
+			uid = get_uid(context)
 			if not self._is_marked( uid ):
 				proxy = _Proxy(uid, m_time)
 				self._catalog.index_doc(uid, proxy)
@@ -53,23 +61,17 @@ class SpamManager(Persistent):
 				
 	def unmark_spam(self, context):
 		if nti_interfaces.IModeledContent.providedBy(context):
-			uid = self.get_uid(context)
+			uid = get_uid(context)
 			if self._is_marked( uid ):
 				self._catalog.unindex_doc(uid)
 				return True
 		return False
 
 	def _is_marked(self, uid):
-		result = uid in self._catalog[intid_]._rev_index 
+		rev_index = self._catalog[intid_]._rev_index 
+		result = uid in rev_index 
 		return result
-	
-	def get_uid(self, context):
-		_ds_intid = component.getUtility( zope.intid.IIntIds )
-		return _ds_intid.getId(context)
-	
-	def get_context(self, uid):
-		_ds_intid = component.getUtility( zope.intid.IIntIds )
-		return _ds_intid.getObject(uid)
+
 
 	
 

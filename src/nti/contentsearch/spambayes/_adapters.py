@@ -9,13 +9,13 @@ from persistent import Persistent
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.contentsearch import interfaces as cts_interfaces
-from nti.contentsearch.spambayes import interfaces as sps_interfaces
 from nti.contentsearch.spambayes.spam_manager import SpamManager
+from nti.contentsearch.spambayes import interfaces as sps_interfaces
 from nti.contentsearch.spambayes.storage_classifier import PersistentClassifier
 
 @interface.implementer(sps_interfaces.ISpamClassifier)
-@component.adapter(nti_interfaces.IUser)
-class _UserSpamClassifier(Persistent):
+@component.adapter(nti_interfaces.IEntity)
+class _EntitySpamClassifier(Persistent):
 	
 	def __init__(self):
 		self.spam_classifier= PersistentClassifier()
@@ -29,15 +29,15 @@ class _UserSpamClassifier(Persistent):
 	def classify(self, text):
 		return self.spam_classifier.classify(text)
 	
-def _UserSpamClassifierFactory(user):
-	return an_factory(_UserSpamClassifier)(user)
+def _EntitySpamClassifierFactory(user):
+	return an_factory(_EntitySpamClassifier)(user)
 
 @interface.implementer(sps_interfaces.ISpamManager)
-@component.adapter(nti_interfaces.IUser)
-class _UserSpamManager(_UserSpamClassifier):
+@component.adapter(nti_interfaces.IEntity)
+class _EnitySpamManager(_EntitySpamClassifier):
 	
 	def __init__(self):
-		super(_UserSpamManager, self).__init__()
+		super(_EnitySpamManager, self).__init__()
 		self.spam_mamanger= SpamManager()
 	
 	def mark_spam(self, obj, mtime=None, train=False):
@@ -60,6 +60,6 @@ class _UserSpamManager(_UserSpamClassifier):
 			text = adapted.get_content()
 			self.train(text, False)
 	
-def _UserSpamManagerFactory(user):
-	return an_factory(_UserSpamManager)(user)
+def _EntitySpamManagerFactory(user):
+	return an_factory(_EnitySpamManager)(user)
 
