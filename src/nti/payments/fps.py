@@ -59,14 +59,14 @@ class _FPSPaymentManager(object):
         """
         return meta informacion for the specied token
         
-        token: tokenID return by AWS-fps after a payment operation (cbi)
+        token: senderTokenID return by AWS-fps after a payment operation (cbi)
         reference: buyer/caller/NTI transaction reference id
         """
         assert reference or token
         
         fps = self.connection
         if token:
-            result = fps.get_token_by_caller(TokenId=token )
+            result = fps.get_token_by_caller(TokenId=token)
         elif reference:
             result = fps.get_token_by_caller(CallerReference=reference)
         else:
@@ -74,6 +74,7 @@ class _FPSPaymentManager(object):
         return result
     
     def get_account_balance(self):
+        #TODO: adapter to external object
         response = self.connection.get_account_balance()
         return response
     
