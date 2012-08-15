@@ -14,17 +14,14 @@ import anyjson as json
 
 from zope import component
 from zope import interface
-from zope.mimetype.interfaces import IContentTypeAware
+
 from zope import lifecycleevent
-import zope.security.interfaces
-import zope.cachedescriptors.property
 
 import pyramid.security as sec
 from nti.appserver import httpexceptions as hexc
 from nti.appserver.httpexceptions import HTTPUnprocessableEntity
+
 from pyramid import traversal
-import pyramid.traversal
-import pyramid.interfaces
 import transaction
 
 from zope.location.location import LocationProxy
@@ -35,7 +32,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import users
 
 
-from nti.externalization.datastructures import isSyntheticKey
+
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.datastructures import LocatedExternalDict
 from nti.externalization.oids import to_external_ntiid_oid as toExternalOID
@@ -43,7 +40,7 @@ from nti.externalization.interfaces import StandardInternalFields, StandardExter
 from nti.ntiids import ntiids
 
 from nti.dataserver import enclosures
-from nti.dataserver.mimetype import MIME_BASE, nti_mimetype_from_object, nti_mimetype_with_class
+from nti.dataserver.mimetype import MIME_BASE, nti_mimetype_from_object
 from nti.dataserver import authorization_acl as nacl
 from nti.appserver import interfaces as app_interfaces
 
@@ -889,90 +886,6 @@ class _EnclosureDeleteView(object):
 		container.del_enclosure( context.name )
 
 		result = hexc.HTTPNoContent()
-		return result
-
-class _UserSearchView(object):
-
-	def __init__(self,request):
-		self.request = request
-		self.dataserver = self.request.registry.getUtility(IDataserver)
-
-	def __call__(self):
-		remote_user = users.User.get_user( sec.authenticated_userid( self.request ), dataserver=self.dataserver )
-		partialMatch = self.request.matchdict['term']
-		partialMatch = partialMatch.lower()
-		# We tend to use this API as a user-resolution service, so
-		# optimize for that case--avoid waking all other users up
-		result = []
-
-		_users = self.dataserver.root['users']
-		if not partialMatch:
-			pass
-		elif partialMatch in _users:
-			# NOTE: If the partial match is an exact match but also a component
-			# it cannot be searched for. For example, a community named 'NextThought'
-			# prevents searching for 'nextthought' if you expect to match '@nextthought.com'
-			result.append( _users[partialMatch] )
-		else:
-			# Searching the userid is generally not what we want
-			# now that we have username and alias (e.g,
-			# tfandango@gmail.com -> Troy Daley. Search for "Dan" and get Troy and
-			# be very confused.). As a compromise, we include them
-			# if there are no other matches
-			uid_matches = []
-			for maybeMatch in _users.iterkeys():
-				if isSyntheticKey( maybeMatch ): continue
-
-				# TODO how expensive is it to actually look inside all these
-				# objects?  This almost certainly wakes them up?
-				# Our class name is UserMatchingGet, but we actually
-				# search across all entities, like Communities
-				userObj = users.Entity.get_entity( maybeMatch, dataserver=self.dataserver )
-				if not userObj: continue
-
-				if partialMatch in maybeMatch.lower():
-					uid_matches.append( userObj )
-
-				if partialMatch in getattr(userObj, 'realname', '').lower() \
-					   or partialMatch in getattr(userObj, 'alias', '').lower():
-					result.append( userObj )
-
-			if remote_user:
-				# Given a remote user, add matching friends lists, too
-				for fl in remote_user.friendsLists.values():
-					if not isinstance( fl, users.Entity ): continue
-					if partialMatch in fl.username.lower() \
-					   or partialMatch in (fl.realname or '').lower() \
-					   or partialMatch in (fl.alias or '').lower():
-						result.append( fl )
-				# Also add enrolled classes
-				# TODO: What about instructors?
-				enrolled_sections = component.getAdapter( remote_user, app_interfaces.IContainerCollection, name='EnrolledClassSections' )
-				for section in enrolled_sections.container:
-					# TODO: We really want to be searching the class as well, but
-					# we cannot get there from here
-					if partialMatch in section.ID.lower() or partialMatch in section.Description.lower():
-						result.append( section )
-
-			if not result:
-				result += uid_matches
-
-		# Since we are already looking in the object we might as well return the summary form
-		# For this reason, we are doing the externalization ourself.
-
-		result = [toExternalObject( user, name=('personal-summary'
-												if user == remote_user
-												else 'summary') )
-				  for user in result]
-
-		# We have no good modification data for this list, due to changing Presence
-		# values of users, so it should not be cached, unfortunately
-		result = LocatedExternalDict( {'Last Modified': 0, 'Items': result} )
-		interface.alsoProvides( result, app_interfaces.IUncacheableInResponse )
-		interface.alsoProvides( result, IContentTypeAware )
-		result.mime_type = nti_mimetype_with_class( None )
-		result.__parent__ = self.dataserver.root
-		result.__name__ = 'UserSearch' # TODO: Hmm
 		return result
 
 def _method_not_allowed(request):
