@@ -14,7 +14,6 @@ import gevent.local
 
 import sys
 import os
-import simplejson
 
 import nti.dictserver as dictserver
 import nti.dictserver.dictionary
@@ -23,8 +22,6 @@ import nti.dictserver.dictionary
 import nti.dataserver._Dataserver
 
 from nti.dataserver import interfaces as nti_interfaces
-from nti.contentlibrary import interfaces as lib_interfaces
-from nti.contentfragments import interfaces as cfg_interfaces
 
 import nti.contentsearch
 import nti.contentsearch.indexmanager
@@ -38,12 +35,12 @@ from zope import component
 from zope.configuration import xmlconfig
 from zope.event import notify
 from zope.processlifetime import ProcessStarting
+from zope import lifecycleevent
 
 # Make sure our thread-local monkey patch has been applied
 from zope.component.hooks import siteinfo
 assert gevent.local.local in type(siteinfo).__bases__
 
-import zope.interface.exceptions
 
 import pyramid.config
 import pyramid.authorization
@@ -56,6 +53,7 @@ from nti.appserver import pyramid_auth
 from nti.appserver import interfaces as app_interfaces
 from nti.appserver.traversal import ZopeResourceTreeTraverser
 from nti.appserver import pyramid_authorization
+from nti.appserver import _question_map
 
 
 # Make the zope interface extend the pyramid interface
@@ -309,70 +307,11 @@ def createApplication( http_port,
 	class _ContentSearchRootFactory(dict):
 		__acl__ = ( (pyramid.security.Allow, pyramid.security.Authenticated, pyramid.security.ALL_PERMISSIONS), )
 
-	@interface.implementer( app_interfaces.IFileQuestionMap )
-	class _QuestionMap(dict):
 
-		def __init__( self ):
-			super(_QuestionMap,self).__init__()
-			self.by_file = {}
-
-		def _from_index_entry(self, index, hierarchy_entry):
-			filename = None
-			if index.get( 'filename' ):
-				filename = hierarchy_entry.make_sibling_key( index['filename'] )
-			for item in index['Items'].values():
-				for k, v in item['AssessmentItems'].items():
-					__traceback_info__ = k, v
-
-					factory = nti.externalization.internalization.find_factory_for( v )
-					assert factory is not None
-					obj = factory()
-					nti.externalization.internalization.update_from_external_object( obj, v, require_updater=True )
-					obj.ntiid = k
-					if filename:
-						self.by_file.setdefault( filename, [] ).append( obj )
-						# Hack in ACL support. We are piggybacking off of
-						# IDelimitedEntry's support in authorization_acl.py
-						def read_contents_of_sibling_entry( sibling_name ):
-							try:
-								return open( os.path.join( os.path.dirname( filename ), sibling_name ), 'r' ).read()
-							except (OSError,IOError):
-								return None
-
-						# FIXME: This is so very, very wrong
-						obj.filename = filename
-						obj.read_contents_of_sibling_entry = read_contents_of_sibling_entry
-						interface.alsoProvides( obj, lib_interfaces.IFilesystemEntry )
-
-					self[k] = obj
-				if 'Items' in item:
-					self._from_index_entry( item, hierarchy_entry )
-
-
-	question_map = _QuestionMap()
+	question_map = _question_map.QuestionMap()
 	pyramid_config.registry.registerUtility( question_map, app_interfaces.IFileQuestionMap )
 	for title in library.titles:
-		asm_index_text = title.read_contents_of_sibling_entry( 'assessment_index.json' )
-		if asm_index_text:
-			asm_index_text = unicode(asm_index_text)
-			# In this one specific case, we know that these are already
-			# content fragments (probably HTML content fragments)
-			# If we go through the normal adapter process from string to
-			# fragment, we will wind up with sanitized HTML, which is not what
-			# we want, in this case
-			# TODO: Needs specific test cases
-			def hook(o):
-				return dict( (k,cfg_interfaces.UnicodeContentFragment(v) if isinstance(v, unicode) else v) for k, v in o )
-
-			index = simplejson.loads( asm_index_text,
-									  object_pairs_hook=hook )
-			try:
-				question_map._from_index_entry( index, title )
-			except (zope.interface.exceptions.Invalid, ValueError):
-				# Because the map is updated in place, depending on where the error
-				# was, we might have some data...that's not good, but it's not a show stopper either,
-				# since we shouldn't get content like this out of the rendering process
-				logger.exception( "Failed to load assessment items, invalid assessment_index for %s", title )
+		lifecycleevent.created( title )
 
 		# FIXME: This fails for non-local content. Need caching of indexes
 		try:

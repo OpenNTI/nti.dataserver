@@ -107,10 +107,13 @@
 	<adapter factory="._adapters.BrokenExternalObject" />
 	<adapter factory=".pyramid_renderers.render_enclosure_factory" />
 
+	<!-- Assessment -->
 	<!-- Object transformers -->
 	<adapter factory=".dataserver_pyramid_views._question_submission_transformer"
 			 for="nti.assessment.interfaces.IQuestionSubmission"
 			 provides=".interfaces.INewObjectTransformer" />
+	<!-- Events -->
+	<subscriber	handler="._question_map.add_assessment_items_from_new_content" />
 
 
 	<!-- Logon -->
