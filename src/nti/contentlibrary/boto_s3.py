@@ -22,6 +22,7 @@ from . import eclipse
 import rfc822
 import time
 import numbers
+import webob.datetime_utils
 
 # Make the boto classes fit better with Zope, including making them
 # ILocation like and giving them interfaces
@@ -38,6 +39,27 @@ boto.s3.bucket.Bucket.__parent__ = alias( 'connection' )
 
 boto.s3.key.Key.__bases__ += _WithName,
 boto.s3.key.Key.__parent__ = alias( 'bucket' )
+
+def key_last_modified( key ):
+	"""
+	Return the last modified value of the key in some form thats actually
+	useful, not a goddamn arbitrary format string.
+	:return: A float, or None.
+	"""
+	__traceback_info__ = key, key.last_modified
+	if isinstance( key.last_modified, numbers.Number ):
+		return key.last_modified # Mainly for tests
+	result = rfc822.parsedate_tz( key.last_modified )
+	if result is not None:
+		result = rfc822.mktime_tz(result)
+		# This is supposed to be coming in rfc822 format (see boto.s3.key)
+		# But it doesn't always. So try to parse it ourself if we have to
+	elif key.last_modified:
+		# 2012-05-12T23:15:24.000Z
+		result = datetime.datetime.strptime( key.last_modified, '%Y-%m-%dT%H:%M:%S.%fZ' )
+		result = result.replace( tzinfo=webob.datetime_utils.UTC )
+		result = time.mktime( result.timetuple() )
+	return result
 
 @interface.implementer(IS3ContentUnit)
 class BotoS3ContentUnit(ContentUnit):
@@ -62,19 +84,7 @@ class BotoS3ContentUnit(ContentUnit):
 	@Lazy
 	def lastModified( self ):
 		self._connect_key( )
-		if isinstance( self.key.last_modified, numbers.Number ):
-			return self.key.last_modified # Mainly for tests
-		result = rfc822.parsedate_tz( self.key.last_modified )
-		if result is not None:
-			result = rfc822.mktime_tz(result)
-			# This is supposed to be coming in rfc822 format (see boto.s3.key)
-			# But it doesn't always. So try to parse it ourself if we have to
-		elif self.key.last_modified:
-			# 2012-05-12T23:15:24.000Z
-			result = datetime.datetime.strptime( self.key.last_modified, '%Y-%m-%dT%H:%M:%S.%fZ' )
-			result = time.mktime( result )
-		return result
-
+		return key_last_modified( self.key )
 
 	@Lazy
 	def modified(self):

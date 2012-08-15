@@ -115,6 +115,8 @@
 	<!-- Events -->
 	<subscriber	handler="._question_map.add_assessment_items_from_new_content" />
 
+	<subscriber handler="._indexmanager_event_listeners.add_filesystem_index" />
+	<subscriber handler="._indexmanager_event_listeners.add_s3_index" />
 
 	<!-- Logon -->
 	<subscriber factory=".logon._SimpleExistingUserLinkProvider"
