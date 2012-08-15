@@ -9,7 +9,7 @@ it will usually be done there and this file excluded.
 	xmlns:zcml="http://namespaces.zope.org/zcml">
 	<include package="zope.component" />
 	
-	<utility component="nti.contentsearch.indexmanager._DefaultIndexManager" 
+	<utility factory="nti.contentsearch.indexmanager.create_index_manager_with_repoze" 
 			 provides="nti.contentsearch.interfaces.IIndexManager" />
 
 </configure>
