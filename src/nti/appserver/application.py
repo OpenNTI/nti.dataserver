@@ -54,6 +54,7 @@ from nti.appserver import interfaces as app_interfaces
 from nti.appserver.traversal import ZopeResourceTreeTraverser
 from nti.appserver import pyramid_authorization
 from nti.appserver import _question_map
+from nti.appserver import dataserver_socketio_views
 
 
 # Make the zope interface extend the pyramid interface
@@ -253,7 +254,6 @@ def createApplication( http_port,
 	pyramid_config.add_view( name='verify_openid', route_name='verify_openid', view='pyramid_openid.verify_openid' )
 
 
-	import dataserver_socketio_views
 	pyramid_config.add_route( name=dataserver_socketio_views.RT_HANDSHAKE, pattern=dataserver_socketio_views.URL_HANDSHAKE )
 	pyramid_config.add_route( name=dataserver_socketio_views.RT_CONNECT, pattern=dataserver_socketio_views.URL_CONNECT )
 	pyramid_config.scan( dataserver_socketio_views )
@@ -312,31 +312,6 @@ def createApplication( http_port,
 	pyramid_config.registry.registerUtility( question_map, app_interfaces.IFileQuestionMap )
 	for title in library.titles:
 		lifecycleevent.created( title )
-
-		# FIXME: This fails for non-local content. Need caching of indexes
-		try:
-			indexname = os.path.basename( title.localPath )
-			routename = 'search.book'
-
-			indexdir = os.path.join( title.localPath, 'indexdir' )
-			__traceback_info__ = indexdir
-			if indexmanager and indexmanager.add_book(indexname=indexname, indexdir=os.path.join( title.localPath, 'indexdir')):
-				# pattern = '/' + indexname + '/Search/{term:.*}'
-				# name = routename + '.' + indexname
-				# pyramid_config.add_route( name=name, pattern=pattern, factory=_ContentSearchRootFactory )
-				# pyramid_config.add_view( route_name=name,
-				# 						 view='nti.contentsearch.pyramid_views.GetSearch',
-				# 						 renderer='rest',
-				# 						 permission=nauth.ACT_SEARCH )
-				logger.debug( 'Added book %s to %s', indexname, indexmanager )
-		except AttributeError:
-			# Temp hack while these things do not have local paths
-			logger.debug( "Failed to add book search entry" )
-		except ImportError:
-			# Adding a book on disk loads the Whoosh indexes, which
-			# are implemented as pickles. Incompatible version changes
-			# lead to unloadable pickles. We've seen this manifest as ImportError
-			logger.exception( "Failed to add book search %s", title )
 
 	# TODO: ACLs on searching: only the user should be allowed.
 	@interface.implementer(ILocation)
