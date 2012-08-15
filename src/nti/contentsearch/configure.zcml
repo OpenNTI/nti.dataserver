@@ -4,8 +4,6 @@
 	<include package="zopyx.txng3.core" file="configure.zcml" />
 	<include package="nti.contentfragments" file="configure.zcml" />
 		
-	<include file="repoze_minimal.zcml" />
-							 
 	<!-- Externalization -->
 
 	<adapter factory="._search_external._HighlightSearchHit"
@@ -94,20 +92,8 @@
 	<utility	provides="zope.component.interfaces.IFactory"
 				component=".zopyxtxng3corestorage.StorageWithTermFrequencyFactory"
 				name="txng.storages.term_frequencies" />	
-				
-	<!-- Whoosh storage -->
-	
-	<utility component="._whoosh_indexstorage._DefaultDirectoryStorage" 
-			 provides=".interfaces.IWhooshIndexStorage" />
-	
-	<adapter factory="._whoosh_adapter._WhooshEntityIndexManagerFactory"
-			 for="nti.dataserver.interfaces.IEntity"
-			 provides=".interfaces.IWhooshEntityIndexManager" />
-			 
-	<!-- Search features -->
-	
-	<utility component="._repoze_index._DefaultRepozeSearchFeatures" 
-			 provides=".interfaces.ISearchFeatures" />
 			
+	<include file="repoze_minimal.zcml" />
+	<include file="whoosh.zcml" />
 	<include file="cloud_search.zcml" />
 </configure>

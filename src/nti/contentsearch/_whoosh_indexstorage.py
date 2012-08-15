@@ -182,5 +182,8 @@ def create_directory_index(indexname, schema, indexdir=None):
 	idx.close()
 	return idx, storage	
 	
-_DefaultDirectoryStorage = UserDirectoryStorage()
+def _create_default_whoosh_storage():
+	if os.getenv('DATASERVER_DIR', None):
+		return UserDirectoryStorage()
+	return None
 

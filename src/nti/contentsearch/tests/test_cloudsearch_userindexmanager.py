@@ -11,7 +11,6 @@ from nti.externalization.externalization import toExternalObject
 
 from nti.ntiids.ntiids import make_ntiid
 
-from nti.contentsearch import create_cloudsearch_store
 from nti.contentsearch.interfaces import ICloudSearchStore
 from nti.contentsearch import _cloudsearch_index as cloudsearch_index
 from nti.contentsearch._cloudsearch_userindexmanager import CloudSearchUserIndexManager
@@ -41,7 +40,7 @@ class TestCloudSearchIndexManager(ConfiguringTestBase):
 	def setUp(self):
 		super(TestCloudSearchIndexManager, self).setUp()
 		self.user_id = unicode(str(uuid.uuid1()) + '@nti.com')
-		self.store = create_cloudsearch_store(self.aws_access_key_id, self.aws_secret_access_key)
+		#self.store = create_cloudsearch_store(self.aws_access_key_id, self.aws_secret_access_key)
 		component.provideUtility(self.store, provides=ICloudSearchStore)
 		self.cim = CloudSearchUserIndexManager(self.user_id)
 
