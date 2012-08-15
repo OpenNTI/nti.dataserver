@@ -244,4 +244,7 @@
 	<!-- Content censoring -->
 	<include package="." file="configure_censor.zcml" />
 
+	<!-- Content restrictions -->
+	<include package="." file="configure_restricted_contenttypes.zcml" />
+
 </configure>

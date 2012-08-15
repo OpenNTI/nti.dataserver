@@ -43,6 +43,20 @@ class ICollection(ILocation):
 		accept any input.
 		""")
 
+class ICreatableObjectFilter(interface.Interface):
+	"""
+	Object, usually registered as an adapter on a user, that serves
+	to filter the available list of objects that user is allowed to create.
+	"""
+
+	def filter_creatable_object_terms( terms ):
+		"""
+		Given a dictionary of vocabulary terms, filter them to remove the objects
+		that are not acceptable.
+
+		:return: Dictionary of filtered terms.
+		"""
+
 class IContainerCollection(ICollection):
 	"""
 	An :class:ICollection based of an :class:nti.dataserver.interfaces.IContainer.
