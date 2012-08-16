@@ -562,6 +562,8 @@ class _AssessmentExtractor(object):
 				__traceback_info__ = child, int_obj, ext_obj
 				raw_int_obj = type(int_obj)() # Use the class of the object returned as a factory.
 				nti.externalization.internalization.update_from_external_object( raw_int_obj, ext_obj, require_updater=True )
+				factory = nti.externalization.internalization.find_factory_for( toExternalObject( int_obj ) ) # Also be sure factories can be found
+				assert factory is not None
 				# The ext_obj was mutated by the internalization process, so we need to externalize
 				# again. Or run a deep copy (?)
 				assessment_objects[child.ntiid] = toExternalObject( int_obj )

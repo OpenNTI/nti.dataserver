@@ -120,6 +120,7 @@
 	-->
 	<include package="nti.externalization" file="meta.zcml" />
 	<ext:registerMimeFactories module=".submission" />
+	<ext:registerMimeFactories module=".question" />
 
 
 </configure>
