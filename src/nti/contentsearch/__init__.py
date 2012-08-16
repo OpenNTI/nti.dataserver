@@ -3,6 +3,8 @@ import time
 
 from nti.contentsearch.common import to_list
 from nti.contentsearch._search_query import QueryObject
+from nti.contentsearch.common import normalize_type_name
+from nti.contentsearch.common import indexable_type_names
 from nti.contentsearch._ngrams_utils import (ngrams, ngram_tokens)
 from nti.contentsearch._datastructures import LFUMap, CaseInsensitiveDict
 from nti.contentsearch.common import (note_, highlight_, redaction_, messageinfo_)
@@ -18,7 +20,7 @@ import zopyxtxng3corelogger
 sys.modules["zopyx.txng3.core.logger"] = zopyxtxng3corelogger
 
 def get_indexable_types():
-	return (note_, highlight_, redaction_, messageinfo_)
+	return indexable_type_names
 
 class SearchCallWrapper(object):
 	def __init__(self, func):
