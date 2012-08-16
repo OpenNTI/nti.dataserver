@@ -239,7 +239,7 @@ setup(
 		'test': [
 			'nose >= 1.1.2',
 			'zope.testing >= 4.1.1',
-			'zc.buildout',
+			'zc.buildout == 1.6.0',
 			'nose-progressive',
 			'pyhamcrest >= 1.6',
 			'fudge'],
