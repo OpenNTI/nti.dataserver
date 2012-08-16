@@ -6,16 +6,12 @@ name: naqsymmathpart
 <div class="naquestionpart naqsymmathpart" tal:attributes="id self/id" >
 	 <a tal:attributes="name self/id"/>
 	 <span tal:content="self" />
-	 <div class="rightwrongbox"></div>
-	 <input class="answerblank" data-ntitype="naqsymmath" tal:attributes="id self/attributes/probnum" />
 </div>
 
 name: naqnumericmathpart
 <div class="naquestionpart naqnumericmathpart" tal:attributes="name self/id" >
 	 <a tal:attributes="name self/id"/>
 	 <span tal:content="self"/>
-	 <div class="rightwrongbox"></div>
-	 <input class="answerblank" data-ntitype="naqnumericmath" tal:attributes="id self/attributes/probnum" />
 </div>
 
 
@@ -23,8 +19,6 @@ name: naqfreeresponsepart
 <div class="naquestionpart naqfreeresponsepart" tal:attributes="name self/id" >
 	 <a tal:attributes="name self/id"/>
 	 <span tal:content="self"/>
-	 <div class="rightwrongbox"></div>
-	 <input class="answerblank" data-ntitype="naqfreeresponse" tal:attributes="id self/attributes/probnum" />
 </div>
 
 # These and the contained naqchoices should probably be radio buttuns
@@ -32,7 +26,6 @@ name: naqmultiplechoicepart
 <div class="naquestionpart naqmultiplechoicepart" tal:attributes="name self/id" >
 	 <a tal:attributes="name self/id"/>
 	 <span tal:content="self"/>
-	 <div class="rightwrongbox"></div>
 </div>
 
 name: naqchoices
@@ -44,19 +37,17 @@ name: naqmatchingpart
 <div class="naquestionpart naqmatchingpart" tal:attributes="name self/id" >
 	 <a tal:attributes="name self/id"/>
 	 <span tal:content="self"/>
-	 <div class="rightwrongbox"></div>
 </div>
 
 name: naquestion
-<object type="application/vnd.nextthought.naquestion" data-ntiid="the-ntiid" data="the-ntiid" tal:attributes="data-ntiid self/ntiid; data self/ntiid">
-<param name="ntiid" value="the-ntiid" tal:attributes="value self/ntiid" />
+<object type="application/vnd.nextthought.naquestion" data-ntiid="the-ntiid" data="the-ntiid" data-canindividual="false" tal:attributes="data-ntiid self/ntiid; data self/ntiid; data-canindividual self/attributes/individual | default">
+<param name="ntiid"         value="the-ntiid" tal:attributes="value self/ntiid" />
+<param name="canindividual" value="false"      tal:attributes="value self/attributes/individual | default" />
 <div class="naquestion">
 	 <span tal:content="self"/>
-	 <a id="submit" class="NTIGreenButton NTISubmitAnswer" tal:condition="self/attributes/individual">Check</a>
-	 <a id="tryagain" class="NTIGreenButton NTITryAgain hidden">Try Again...</a>
 </div>
 </object>
 
 # Things that shouldn't render, just be placeholders
-name: naqsolution naqsolexplanation naqhints naqhint naqsolutions
+name: naqsolution naqsolexplanation naqhints naqhint naqsolutions naquestionset
 <span tal:attributes="class string:${self/__class__/__name__} hidden" />
