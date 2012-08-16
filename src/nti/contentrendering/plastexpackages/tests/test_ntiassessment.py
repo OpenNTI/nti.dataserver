@@ -14,7 +14,7 @@ import anyjson as json
 import plasTeX
 from plasTeX.TeX import TeX
 
-from ..ntiassessment import naquestion
+from ..ntiassessment import naquestion, naquestionset
 
 from nti.contentrendering.tests import buildDomFromString as _buildDomFromString
 from nti.contentrendering.tests import simpleLatexDocumentText
@@ -78,6 +78,44 @@ def test_macros():
 	assert_that( part.content, is_( "Arbitrary content goes here." ) )
 	assert_that( part.hints, has_length( 1 ) )
 	assert_that( part.hints, contains( verifiably_provides( asm_interfaces.IQHint ) ) )
+
+def test_question_set_macros():
+	example = br"""
+	\begin{naquestion}[individual=true]
+		\label{question}
+		Arbitrary content goes here.
+		\begin{naqsymmathpart}
+		Arbitrary content goes here.
+		\begin{naqsolutions}
+			\naqsolution $420$
+			\naqsolution $\frac{5}{8}$
+			\naqsolution $\left(3x+2\right)\left(2x+3\right)$
+			\naqsolution $\surd2$
+			\naqsolution $\frac{\surd\left(8x+5\right)\left(12x+12\right)}{\approx152318}+1204$
+		\end{naqsolutions}
+		\begin{naqhints}
+			\naqhint Some hint
+		\end{naqhints}
+		\end{naqsymmathpart}
+	\end{naquestion}
+
+	\begin{naquestionset}
+		\label{set}
+		\naquestionref{question}
+	\end{naquestionset}
+
+	"""
+
+	dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
+	assert_that( dom.getElementsByTagName('naquestion'), has_length( 1 ) )
+	assert_that( dom.getElementsByTagName('naquestion')[0], is_( naquestion ) )
+
+	assert_that( dom.getElementsByTagName('naquestionset'), has_length( 1 ) )
+	assert_that( dom.getElementsByTagName('naquestionset')[0], is_( naquestionset ) )
+
+	qset_object = dom.getElementsByTagName( 'naquestionset' )[0].assessment_object()
+	assert_that( qset_object.questions, has_length( 1 ) )
+	assert_that( qset_object.ntiid, contains_string( 'set' ) )
 
 def test_content_adaptation():
 	doc = br"""
@@ -317,6 +355,10 @@ class TestRenderableSymMathPart(unittest.TestCase):
 			\end{naqhints}
 			\end{naqsymmathpart}
 		\end{naquestion}
+
+		\begin{naquestionset}\label{testset}
+			\naquestionref{testquestion}
+		\end{naquestionset}
 		"""
 
 		with RenderContext(_simpleLatexDocument( (example,) )) as ctx:
@@ -338,28 +380,40 @@ class TestRenderableSymMathPart(unittest.TestCase):
 			obj = json.loads( jsons )
 
 			exp_value = {'Items': {'tag:nextthought.com,2011-10:testing-HTML-temp.0': {'AssessmentItems': {},
-																					   'Items': {'tag:nextthought.com,2011-10:testing-HTML-temp.chapter_one': {'AssessmentItems': {},
-																					   'Items': {'tag:nextthought.com,2011-10:testing-HTML-temp.section_one': {'AssessmentItems': {'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.testquestion': {'Class': 'Question',
-																																																													 'NTIID': 'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.testquestion',
-			'content': '<a name="testquestion"></a> Arbitrary content goes here.',
-			'parts': [{'Class': 'SymbolicMathPart',
-			'content': 'Arbitrary content goes here.',
-			'explanation': '',
-			'hints': [{'Class': 'HTMLHint',
-			'value': '<a name="a1e8744a89e9bf4e115903c4322d92e1" ></a>\n<p class="par" id="a1e8744a89e9bf4e115903c4322d92e1">Some hint </p>'}],
-			'solutions': [{'Class': 'LatexSymbolicMathSolution',
-			'value': 'Some solution',
-			'weight': 1.0}]}]}},
-			'NTIID': 'tag:nextthought.com,2011-10:testing-HTML-temp.section_one',
-			'filename': 'tag_nextthought_com_2011-10_testing-HTML-temp_section_one.html',
-			'href': 'tag_nextthought_com_2011-10_testing-HTML-temp_section_one.html'}},
-			'NTIID': 'tag:nextthought.com,2011-10:testing-HTML-temp.chapter_one',
-			'filename': 'tag_nextthought_com_2011-10_testing-HTML-temp_chapter_one.html',
-			'href': 'tag_nextthought_com_2011-10_testing-HTML-temp_chapter_one.html'}},
-			'NTIID': 'tag:nextthought.com,2011-10:testing-HTML-temp.0',
-			'filename': 'index.html',
-			'href': 'index.html'}},
-			'filename': 'index.html',
-			'href': 'index.html'}
-
+						   'Items': {'tag:nextthought.com,2011-10:testing-HTML-temp.chapter_one': {'AssessmentItems': {},
+							 'Items': {'tag:nextthought.com,2011-10:testing-HTML-temp.section_one': {'AssessmentItems': {'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.testquestion': {'Class': 'Question',
+								 'NTIID': 'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.testquestion',
+								 'content': '<a name="testquestion"></a> Arbitrary content goes here.',
+								 'parts': [{'Class': 'SymbolicMathPart',
+								   'content': 'Arbitrary content goes here.',
+								   'explanation': '',
+								   'hints': [{'Class': 'HTMLHint',
+									 'value': '<a name="a1e8744a89e9bf4e115903c4322d92e1" ></a>\n<p class="par" id="a1e8744a89e9bf4e115903c4322d92e1">Some hint </p>'}],
+								   'solutions': [{'Class': 'LatexSymbolicMathSolution',
+									 'value': 'Some solution',
+									 'weight': 1.0}]}]},
+								'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.testset': {'Class': 'QuestionSet',
+								 'NTIID': 'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.testset',
+								 'questions': [{'Class': 'Question',
+								   'NTIID': 'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.testquestion',
+								   'content': '<a name="testquestion"></a> Arbitrary content goes here.',
+								   'parts': [{'Class': 'SymbolicMathPart',
+									 'content': 'Arbitrary content goes here.',
+									 'explanation': '',
+									 'hints': [{'Class': 'HTMLHint',
+									   'value': '<a name="a1e8744a89e9bf4e115903c4322d92e1" ></a>\n<p class="par" id="a1e8744a89e9bf4e115903c4322d92e1">Some hint </p>'}],
+									 'solutions': [{'Class': 'LatexSymbolicMathSolution',
+									   'value': 'Some solution',
+									   'weight': 1.0}]}]}]}},
+							   'NTIID': 'tag:nextthought.com,2011-10:testing-HTML-temp.section_one',
+							   'filename': 'tag_nextthought_com_2011-10_testing-HTML-temp_section_one.html',
+							   'href': 'tag_nextthought_com_2011-10_testing-HTML-temp_section_one.html'}},
+							 'NTIID': 'tag:nextthought.com,2011-10:testing-HTML-temp.chapter_one',
+							 'filename': 'tag_nextthought_com_2011-10_testing-HTML-temp_chapter_one.html',
+							 'href': 'tag_nextthought_com_2011-10_testing-HTML-temp_chapter_one.html'}},
+						   'NTIID': 'tag:nextthought.com,2011-10:testing-HTML-temp.0',
+						   'filename': 'index.html',
+						   'href': 'index.html'}},
+						 'filename': 'index.html',
+						 'href': 'index.html'}
 			assert_that( obj, is_( exp_value ) )

@@ -112,6 +112,10 @@
 	<adapter factory=".dataserver_pyramid_views._question_submission_transformer"
 			 for="nti.assessment.interfaces.IQuestionSubmission"
 			 provides=".interfaces.INewObjectTransformer" />
+	<adapter factory=".dataserver_pyramid_views._question_set_submission_transformer"
+			 for="nti.assessment.interfaces.IQuestionSetSubmission"
+			 provides=".interfaces.INewObjectTransformer" />
+
 	<!-- Events -->
 	<subscriber	handler="._question_map.add_assessment_items_from_new_content" />
 
