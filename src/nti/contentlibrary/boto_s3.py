@@ -61,6 +61,16 @@ def key_last_modified( key ):
 		result = time.mktime( result.timetuple() )
 	return result
 
+# TODO: We need to do caching of does_sibling_entry_exist and read_contents.
+# does_exist is used by appserver/censor_policies on every object creation/edit
+# which quickly adds up.
+# Right now, our policy for does_exist is a very simple, very dumb cache that we share
+# with all content units, caching questions for 10 minutes
+import repoze.lru
+_exist_cache = repoze.lru.ExpiringLRUCache( 1000, default_timeout=600 )
+import zope.testing.cleanup
+zope.testing.cleanup.addCleanUp( _exist_cache.clear )
+
 @interface.implementer(IS3ContentUnit)
 class BotoS3ContentUnit(ContentUnit):
 	"""
@@ -109,10 +119,15 @@ class BotoS3ContentUnit(ContentUnit):
 
 	def read_contents_of_sibling_entry( self, sibling_name ):
 		if self.key:
-			new_key =  self.make_sibling_key( sibling_name )
-			return new_key.get_contents_as_string()
+			new_key = self.does_sibling_entry_exist( sibling_name )
+			return new_key.get_contents_as_string() if new_key else None
 
+	@repoze.lru.lru_cache( 1, cache=_exist_cache )
 	def does_sibling_entry_exist( self, sibling_name ):
+		"""
+		:return: Either a Key containing some information about an existing sibling (and which is True)
+			or None for an absent sibling (False).
+		"""
 		return self.key.bucket.get_key( self.make_sibling_key( sibling_name ).name )
 
 
