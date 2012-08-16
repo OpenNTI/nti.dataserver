@@ -6,6 +6,7 @@ $Id$
 from __future__ import print_function, unicode_literals
 
 from hamcrest import assert_that, has_length, is_
+from hamcrest import has_key
 from nose.tools import assert_raises
 
 from zope import interface
@@ -47,6 +48,8 @@ class TestContentRange(ConfiguringTestBase):
 					assert_that( x(**kwargs), verifiably_provides( iface ) )
 					assert_that( x(**kwargs), externalizes() )
 					__traceback_info__ = x, iface, x(**kwargs)
+					# MimeType is added by an external decorator we don't have at this layer
+					#assert_that( toExternalObject( x() ), has_key( 'MimeType' ) )
 					assert_that( update_from_external_object( x(),
 															  toExternalObject( x(**kwargs) ),
 															  require_updater=True),

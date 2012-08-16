@@ -21,6 +21,7 @@ class ContentRangeDescription(SchemaConfigured):
 	Implementation of :class:`interfaces.IContentRangeDescription`
 	"""
 	__external_can_create__ = True
+	mime_type = 'application/vnd.nextthought.contentrange.contentrangedescription'
 
 	# Including base equality here with issubclass makes us falsely compare
 	# equal to subclasses...it's confusing and screws up tests...
@@ -38,6 +39,7 @@ class ContentRangeDescription(SchemaConfigured):
 class DomContentRangeDescription(ContentRangeDescription):
 	"""
 	"""
+	mime_type = 'application/vnd.nextthought.contentrange.domcontentrangedescription'
 	start = None
 	end = None
 	ancestor = None
@@ -58,12 +60,14 @@ class DomContentRangeDescription(ContentRangeDescription):
 
 class ContentPointer(SchemaConfigured):
 	__external_can_create__ = True
+	mime_type = 'application/vnd.nextthought.contentrange.contentpointer'
 
 
 @interface.implementer( interfaces.IDomContentPointer )
 class DomContentPointer(ContentPointer):
 	"""
 	"""
+	mime_type = 'application/vnd.nextthought.contentrange.domcontentpointer'
 	role = None
 	def __eq__( self, other ):
 		try:
@@ -84,6 +88,8 @@ class DomContentPointer(ContentPointer):
 class ElementDomContentPointer(DomContentPointer):
 	"""
 	"""
+	mime_type = 'application/vnd.nextthought.contentrange.elementdomcontentpointer'
+
 	elementId = None
 	elementTagName = None
 
@@ -100,6 +106,7 @@ class ElementDomContentPointer(DomContentPointer):
 class TextContext(SchemaConfigured):
 	"""
 	"""
+	mime_type = 'application/vnd.nextthought.contentrange.textcontext'
 	__external_can_create__ = True
 
 	contextText = ''
@@ -119,7 +126,7 @@ class TextContext(SchemaConfigured):
 class TextDomContentPointer(DomContentPointer):
 	"""
 	"""
-
+	mime_type = 'application/vnd.nextthought.contentrange.textdomcontentpointer'
 	ancestor = None
 	contexts = ()
 	edgeOffset = 0

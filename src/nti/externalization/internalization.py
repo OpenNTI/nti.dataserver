@@ -74,8 +74,8 @@ def _search_for_external_factory( typeName, search_set=None ):
 
 	return result
 
-@interface.implementer(interfaces.IExternalizedObjectFactoryFinder)
-def _legacy_ext_to_int_map( externalized_object ):
+@interface.implementer(interfaces.IFactory)
+def default_externalized_object_factory_finder( externalized_object ):
 	factory = None
 	# We use specialized interfaces instead of plain IFactory to make it clear
 	# that these are being created from external data
@@ -104,7 +104,12 @@ def _legacy_ext_to_int_map( externalized_object ):
 
 	return factory
 
-_legacy_ext_to_int_map.find_factory = _legacy_ext_to_int_map
+default_externalized_object_factory_finder.find_factory = default_externalized_object_factory_finder
+
+@interface.implementer(interfaces.IExternalizedObjectFactoryFinder)
+def default_externalized_object_factory_finder_factory( externalized_object ):
+	return default_externalized_object_factory_finder
+
 
 def find_factory_for_class_name( class_name ):
 	factory = component.queryUtility( interfaces.IClassObjectFactory,
@@ -121,9 +126,8 @@ def find_factory_for( externalized_object, registry=component ):
 	Given a :class:`IExternalizedObject`, locate and return a factory
 	to produce a Python object to hold its contents.
 	"""
+	factory_finder = registry.getAdapter( externalized_object, interfaces.IExternalizedObjectFactoryFinder )
 
-	factory_finder = registry.queryAdapter( externalized_object, interfaces.IExternalizedObjectFactoryFinder,
-											default=_legacy_ext_to_int_map )
 	return factory_finder.find_factory(externalized_object)
 
 
@@ -193,7 +197,7 @@ def update_from_external_object( containedObject, externalObject,
 	if isinstance( externalObject, collections.MutableSequence ):
 		tmp = []
 		for i in externalObject:
-			factory = find_factory_for( i )
+			factory = find_factory_for( i, registry=registry )
 			__traceback_info__ = factory, i
 			tmp.append( update_from_external_object( factory(), i, registry, context=context, require_updater=require_updater, notify=notify ) if factory else i )
 		return tmp
@@ -207,7 +211,7 @@ def update_from_external_object( containedObject, externalObject,
 		if isinstance( v, collections.MutableSequence ):
 			v = update_from_external_object( (), v, registry, context=context, require_updater=require_updater, notify=notify )
 		else:
-			factory = find_factory_for( v )
+			factory = find_factory_for( v, registry=registry )
 		externalObject[k] = update_from_external_object( factory(), v, registry, context=context, require_updater=require_updater, notify=notify ) if factory else v
 
 

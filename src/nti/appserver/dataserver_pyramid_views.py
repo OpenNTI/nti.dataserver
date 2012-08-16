@@ -326,14 +326,19 @@ class _UGDAndRecursiveStreamView(_UGDView):
 		return all_data
 
 import nti.externalization.internalization
-def _createContentObject( dataserver, user, datatype, externalValue ):
+def _createContentObject( dataserver, owner, datatype, externalValue, creator ):
+	"""
+	:param owner: The entity which will contain the object.
+	:param creator: The user attempting to create the object. Possibly separate from the
+		owner. Permissions will be checked for the creator
+	"""
 	# The datatype can legit be null if we are MimeType-only
 	if externalValue is None:
 		return None
 
 	result = None
-	if datatype is not None and user is not None:
-		result = user.maybeCreateContainedObjectWithType( datatype, externalValue )
+	if datatype is not None and owner is not None:
+		result = owner.maybeCreateContainedObjectWithType( datatype, externalValue )
 
 	if result is None:
 		result = nti.externalization.internalization.find_factory_for( externalValue )
@@ -503,8 +508,8 @@ class _UGDPostView(_UGDModifyViewBase):
 	def __init__( self, request ):
 		super(_UGDPostView,self).__init__( request )
 
-	def createContentObject( self, user, datatype, externalValue ):
-		return _createContentObject( self.dataserver, user, datatype, externalValue )
+	def createContentObject( self, user, datatype, externalValue, creator ):
+		return _createContentObject( self.dataserver, user, datatype, externalValue, creator )
 
 	def __call__(self ):
 		creator = self.getRemoteUser()
@@ -531,7 +536,7 @@ class _UGDPostView(_UGDModifyViewBase):
 			datatype = class_name_from_content_type( self.request )
 			datatype = datatype + 's' if datatype else None
 
-		containedObject = self.createContentObject( owner, datatype, externalValue )
+		containedObject = self.createContentObject( owner, datatype, externalValue, creator )
 		if containedObject is None:
 			transaction.doom()
 			logger.debug( "Failing to POST: input of unsupported/missing Class: %s %s", datatype, externalValue )
