@@ -8,14 +8,11 @@ import sys
 import zope.intid
 from zope import component
 from ZODB.POSException import POSKeyError
-from zope.generations.utility import findObjectsMatching
 from zope.generations.utility import findObjectsProviding
 
 from nti.dataserver import users
 from nti.dataserver.utils import run_with_dataserver
 from nti.dataserver import interfaces as nti_interfaces
-
-from nti.dataserver.chat_transcripts import _MeetingTranscriptStorage as MTS
 
 import nti.contentsearch
 from nti.contentsearch.common import get_type_name
@@ -28,7 +25,6 @@ def _get_uid(obj):
 	return result
 
 def _get_sharedWith(obj):
-	# from IPython.core.debugger import Tracer;  Tracer()() ## DEBUG ##
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	if adapted and hasattr(adapted, "get_sharedWith"):
 		result = adapted.get_sharedWith()
@@ -36,32 +32,24 @@ def _get_sharedWith(obj):
 		result = ()
 	return result
 
-def _get_indeaxable_objects(user, users, process_shared=True):
+def _get_indeaxable_objects(user):
 	username = user.username
-	
-	from IPython.core.debugger import Tracer;  Tracer()() ## DEBUG ##
+
 	rim = search_interfaces.IRepozeEntityIndexManager(user, None)
 	for obj in findObjectsProviding( user, nti_interfaces.IModeledContent):
 		
-		# ignore friends lists
-		if nti_interfaces.IFriendsList.providedBy(obj):
+		if get_type_name(obj) not in get_indexable_types():
 			continue
 		
 		yield (rim, obj)
 		
 		for uname in _get_sharedWith(obj):
-			sharing_user = users.get(uname, None)
+			sharing_user = users.User.get_user(uname)
 			if sharing_user and uname != username: 
 				srim = search_interfaces.IRepozeEntityIndexManager(sharing_user, None)
 				if srim is not None:
 					yield (srim, obj)
 		
-	for mts in findObjectsMatching( user, lambda x: isinstance(x,MTS) ):
-		for obj in mts.itervalues():
-			type_name = get_type_name(obj)
-			if type_name in get_indexable_types():
-				yield (rim, obj)			
-	
 def _index(rim, obj):
 	catalog = rim.get_create_catalog(obj)
 	if catalog:
@@ -84,8 +72,8 @@ def _reindex_user_content( username ):
 	counter = 0
 	for rim, obj in _get_indeaxable_objects(user):
 		try:
-			_index(rim, obj)
-			counter = counter + 1
+			if _index(rim, obj):
+				counter = counter + 1
 		except POSKeyError:
 			# broken reference for object
 			pass
