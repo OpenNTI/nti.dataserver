@@ -5,14 +5,12 @@ from __future__ import print_function, unicode_literals
 import os
 import sys
 
-from zope import component
-
 from nti.dataserver import users
 from nti.dataserver.utils import run_with_dataserver
 
 import nti.contentsearch
-from nti.contentsearch.interfaces import IRepozeDataStore
-from nti.contentsearch.common import indexable_type_names
+from nti.contentsearch import get_indexable_types
+from nti.contentsearch import interfaces as search_interfaces
 
 def main():
 	if len(sys.argv) < 3:
@@ -23,12 +21,12 @@ def main():
 	username = sys.argv[2]
 	idx_types = sys.argv[3:]
 	if not idx_types:
-		content_types = idx_types
+		content_types = get_indexable_types()
 	else:
 		content_types = set()
 		for tname in idx_types:
 			tname = tname.lower()
-			if tname in indexable_type_names:
+			if tname in get_indexable_types():
 				content_types.append(tname)
 		
 		if not content_types:
@@ -37,28 +35,18 @@ def main():
 			
 	run_with_dataserver( environment_dir=env_dir,
 						 xmlconfig_packages=(nti.contentsearch,),
-						 function=lambda: remove_user_content(username) )
+						 function=lambda: remove_user_content(username, content_types) )
 			
-def remove_user_content( username, indexable_types=None):
+def remove_user_content( username, content_types):
 	user = users.User.get_user( username )
 	if not user:
 		print( "user '%s' does not exists" % username, file=sys.stderr )
 		sys.exit( 3 )
 
-	# get and register rds
-	lsm = component.getSiteManager()
-	conn = getattr( lsm, '_p_jar', None )
-	search_conn = conn.get_connection( 'Search' )
-	rds = search_conn.root()['repoze_datastore']
-	lsm.registerUtility( rds, provided=IRepozeDataStore )
-
-	indexable_types = indexable_type_names if not indexable_types else indexable_types
-	
-	if indexable_types == indexable_type_names:
-		rds.remove_user(username)
-	else:
-		for tname in indexable_types:
-			rds.remove_catalog(username, tname)
+	rim = search_interfaces.IRepozeEntityIndexManager(user)
+	for key in list(rim.keys()):
+		if key in content_types:
+			rim.pop(key, None)
 
 if __name__ == '__main__':
 	main()
