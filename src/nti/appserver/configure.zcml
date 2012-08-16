@@ -258,4 +258,6 @@
 
 	<include package="." file="configure_restricted_contenttypes.zcml" />
 
+	<includeOverrides file="overrides.zcml" />
+
 </configure>

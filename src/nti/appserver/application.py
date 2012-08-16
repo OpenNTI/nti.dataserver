@@ -68,6 +68,27 @@ IZLocation.__bases__ = (ILocation,)
 
 SOCKET_IO_PATH = 'socket.io'
 
+from nti.contentlibrary import interfaces as lib_interfaces
+from pyramid.threadlocal import get_current_request
+
+@component.adapter(lib_interfaces.IS3Key)
+@interface.implementer(lib_interfaces.IAbsoluteContentUnitHrefMapper)
+class _RequestAwareS3KeyHrefMapper(object):
+	"""
+	Produces HTTP URLs for keys in buckets.
+	"""
+	href = None
+
+ 	def __init__( self, key ):
+		# TODO: The following may not be the case?
+		# We have to force HTTP here, because using https (or protocol relative)
+		# falls down for the browser: the certs on the CNAME we redirect to, *.s3.aws.amazon.com
+		# don't match for bucket.name host
+		request = get_current_request()
+		if request:
+			self.href = 'http://' + request.host + '/' + key.key
+		else:
+			self.href = 'http://' + key.bucket.name + '/' + key.key
 
 
 
