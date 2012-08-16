@@ -31,7 +31,6 @@ class QQuestionSet(Persistent):
 	mime_type = 'application/vnd.nextthought.naquestionset'
 
 	questions = ()
-	__external_class_name__ = 'QuestionSet' # TODO: This shouldn't be needed
 
 	def __init__( self, questions=None ):
 		if questions:

@@ -12,4 +12,7 @@
 			 name="AssessmentExtractor" />
 
 	<include package="nti.assessment" />
+	<subscriber factory="nti.dataserver.datastructures.MimeTypeDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+
 </configure>

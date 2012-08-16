@@ -7,6 +7,10 @@ $Id$
 """
 from __future__ import print_function, unicode_literals
 
+import logging
+logger = logging.getLogger( __name__ )
+
+
 from zope import interface
 from zope.dottedname import resolve as dottedname
 
@@ -31,7 +35,7 @@ def _apply_tagged_values():
 	for iface in (asm_interfaces.IQPart, asm_interfaces.IQuestion, asm_interfaces.IQSolution,
 				  asm_interfaces.IQuestionSubmission, asm_interfaces.IQAssessedPart, asm_interfaces.IQAssessedQuestion,
 				  asm_interfaces.IQuestionSetSubmission, asm_interfaces.IQAssessedQuestionSet,
-				  asm_interfaces.IQHint):
+				  asm_interfaces.IQHint, asm_interfaces.IQuestionSet):
 		iface.setTaggedValue( '__external_class_name__', _external_class_name_ )
 _apply_tagged_values()
 
