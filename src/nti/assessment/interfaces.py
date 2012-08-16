@@ -255,9 +255,9 @@ class IQuestionSet(interface.Interface):
 	completed as a unit (aka, a Quiz or worksheet).
 	"""
 
-	questions = schema.List( title="The ordered questions in the set.",
-							 min_length=1,
-							 value_type=dmschema.Object( IQuestion, title="The questions" ) )
+	questions = TypedIterable( title="The ordered questions in the set.",
+							   min_length=1,
+							   value_type=dmschema.Object( IQuestion, title="The questions" ) )
 
 class IQResponse(interface.Interface):
 	"""
@@ -372,11 +372,11 @@ class IQAssessedQuestionSet(interface.Interface):
 	These will usually be persistent values that are also echoed back to clients.
 	"""
 
-	questionSetId = interface.Attribute( "Identifier of the question set being responded to." )
+	questionSetId = schema.TextLine( title="Identifier of the question set being responded to." )
 	questions = TypedIterable( title="Assessed questions, one for each question in the set.",
 							   value_type=dmschema.Object( IQAssessedQuestion, title="The assessed value for a particular question.") )
 
 class IQuestionMap(interface.common.mapping.IReadMapping):
 	"""
-	Something to look questions up by their IDs.
+	Something to look questions/question sets up by their IDs.
 	"""

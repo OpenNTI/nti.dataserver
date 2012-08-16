@@ -501,6 +501,11 @@ def _question_submission_transformer( obj ):
 	# Grade it, by adapting the object into an IAssessedQuestion
 	return asm_interfaces.IQAssessedQuestion
 
+def _question_set_submission_transformer( obj ):
+	# Grade it, by adapting the object into an IAssessedQuestionSet
+	return asm_interfaces.IQAssessedQuestionSet
+
+
 class _UGDPostView(_UGDModifyViewBase):
 	""" HTTP says POST creates a NEW entity under the Request-URI """
 	# Therefore our context is a container, and we should respond created.

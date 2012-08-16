@@ -41,6 +41,10 @@ $Id$
 """
 # All of these have too many public methods
 #pylint: disable=R0904
+# "not callable" for the default values of None
+#pylint: disable=E1102
+# access to protected members -> _asm_local_content defined in this module
+#pylint: disable=W0212
 
 from __future__ import print_function, unicode_literals
 
@@ -63,6 +67,7 @@ from nti.contentrendering import plastexids, interfaces as cdr_interfaces
 from nti.contentfragments import interfaces as cfg_interfaces
 
 from plasTeX import Base
+from plasTeX.Base import Crossref
 from plasTeX.Renderers import render_children
 
 def _asm_local_textcontent(self):
@@ -470,6 +475,32 @@ class naquestion(_LocalContentMixin,Base.Environment,plastexids.NTIIDMixin):
 		result = question.QQuestion( content=self._asm_local_content,
 									 parts=self._asm_question_parts() )
 		errors = schema.getValidationErrors( as_interfaces.IQuestion, result )
+		if errors: # pragma: no cover
+			raise errors[0][1]
+		result.ntiid = self.ntiid # copy the id
+		return result
+
+class naquestionref(Crossref.ref):
+	pass
+
+from persistent.list import PersistentList
+class naquestionset(Base.List,plastexids.NTIIDMixin):
+
+	# Only classes with counters can be labeled, and \label sets the
+	# id property, which in turn is used as part of the NTIID (when no NTIID is set explicitly)
+	counter = 'naquestionset'
+	_ntiid_cache_map_name = '_naquestionset_ntiid_map'
+	_ntiid_allow_missing_title = True
+	_ntiid_suffix = 'naq.'
+	_ntiid_title_attr_name = 'ref' # Use our counter to generate IDs if no ID is given
+	_ntiid_type = as_interfaces.NTIID_TYPE
+
+
+	def assessment_object(self):
+		questions = [qref.idref['label'].assessment_object() for qref in self.getElementsByTagName( 'naquestionref' )]
+		questions = PersistentList( questions )
+		result = question.QQuestionSet( questions )
+		errors = schema.getValidationErrors( as_interfaces.IQuestionSet, result )
 		if errors: # pragma: no cover
 			raise errors[0][1]
 		result.ntiid = self.ntiid # copy the id

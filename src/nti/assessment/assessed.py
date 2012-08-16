@@ -109,3 +109,29 @@ def assess_question_submission( submission, questions=None ):
 		assessed_parts.append( QAssessedPart( submittedResponse=sub_part, assessedValue=grade ) )
 
 	return QAssessedQuestion( questionId=submission.questionId, parts=assessed_parts )
+
+def assess_question_set_submission( set_submission, questions=None ):
+	"""
+	Assess the given question set submission.
+	:return: An :class:`interfaces.IQAssessedQuestionSet`.
+	:param questions: If given, an :class:`interfaces.IQuestionMap`. If
+		not given, one will be looked up from the component registry.
+	:raises KeyError: If no question can be found for the submission.
+	"""
+
+	if questions is None:
+		questions = component.getUtility( interfaces.IQuestionMap )
+
+	question_set = questions[set_submission.questionSetId]
+	# NOTE: At this point we need to decide what to do for missing values
+	# We are currently not really grading them at all, which is what we
+	# did for the old legacy quiz stuff
+
+	assessed = []
+	for sub_question in set_submission.questions:
+		question = questions[sub_question.questionId]
+		if question in question_set.questions:
+			assessed.append( interfaces.IQAssessedQuestion( sub_question ) )
+
+	# NOTE: We're not really creating some sort of aggregate grade here
+	return QAssessedQuestionSet( questionSetId=set_submission.questionSetId, questions=assessed )

@@ -26,7 +26,7 @@ from nti.assessment import response
 from nti.assessment import submission
 from nti.assessment import assessed
 from nti.assessment import solution as solutions
-from nti.assessment.question import QQuestion
+from nti.assessment.question import QQuestion, QQuestionSet
 
 
 #pylint: disable=R0904
@@ -60,11 +60,12 @@ class TestAssessedQuestion(ConfiguringTestBase):
 	def test_assess( self ):
 		part = parts.QFreeResponsePart(solutions=(solutions.QFreeResponseSolution(value='correct'),))
 		question = QQuestion( parts=(part,) )
-		questions = {1: question}
+		question_map = {1: question}
+		component.provideUtility( question_map, provides=interfaces.IQuestionMap )
 
 		sub = submission.QuestionSubmission( questionId=1, parts=('correct',) )
 
-		result = assessed.assess_question_submission( sub, questions )
+		result = interfaces.IQAssessedQuestion( sub )
 		assert_that( result, has_property( 'questionId', 1 ) )
 		assert_that( result, has_property( 'parts', contains( assessed.QAssessedPart( submittedResponse='correct', assessedValue=1.0 ) ) ) )
 
@@ -76,3 +77,21 @@ class TestAssessedQuestionSet(ConfiguringTestBase):
 		assert_that( assessed.QAssessedQuestionSet(), externalizes( has_entry( 'Class', 'AssessedQuestionSet' ) ) )
 		assert_that( internalization.find_factory_for( toExternalObject( assessed.QAssessedQuestionSet() ) ),
 					 is_( none() ) )
+
+	def test_assess( self ):
+		part = parts.QFreeResponsePart(solutions=(solutions.QFreeResponseSolution(value='correct'),))
+		question = QQuestion( parts=(part,) )
+		question_set = QQuestionSet( questions=(question,) )
+
+		question_map = {1: question, 2: question_set}
+		component.provideUtility( question_map, provides=interfaces.IQuestionMap )
+
+		sub = submission.QuestionSubmission( questionId=1, parts=('correct',) )
+		set_sub = submission.QuestionSetSubmission( questionSetId=2, questions=(sub,) )
+
+		result = interfaces.IQAssessedQuestionSet( set_sub )
+
+		assert_that( result, has_property( 'questionSetId', 2 ) )
+		assert_that( result, has_property( 'questions',
+										   contains(
+											   has_property( 'parts', contains( assessed.QAssessedPart( submittedResponse='correct', assessedValue=1.0 ) ) ) ) ) )
