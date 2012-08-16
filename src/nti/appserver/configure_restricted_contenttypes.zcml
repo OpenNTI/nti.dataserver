@@ -4,8 +4,31 @@
 	xmlns:zcml="http://namespaces.zope.org/zcml">
 	<include package="zope.component" />
 
+	<!--
+		 First, set the internalization process to go through our hooks which checks
+		 a filtered vocabulary.
+	-->
+
+	<utility
+		component="._creatable_mime_object_vocabulary._user_sensitive_factory_finder"
+		provides="nti.externalization.interfaces.IExternalizedObjectFactoryFinder" />
+
+	<includeOverrides file="restricted_overrides.zcml" />
+
+	<!--
+	Then, install a vocabulary that filters
+	-->
+	<utility
+		factory="._creatable_mime_object_vocabulary._UserCreatableMimeObjectVocabularyFactory"
+		provides="zope.schema.interfaces.IVocabularyFactory"
+		name="Creatable External Object Types" />
+
+	<!--
+	Last, install a filter
+	-->
 	<adapter
-		factory=".workspaces._SimpleRestrictedContentObjectFilter"
+		factory="._creatable_mime_object_vocabulary._SimpleRestrictedContentObjectFilter"
 		for="nti.dataserver.interfaces.ICoppaUser" />
+
 
 </configure>

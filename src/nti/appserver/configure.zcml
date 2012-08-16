@@ -245,6 +245,13 @@
 	<include package="." file="configure_censor.zcml" />
 
 	<!-- Content restrictions -->
+	<!--
+		Sadly, the include overrides only works at the top-level (?)
+		So we cannot do this from the file we ourselves include.
+		(We do, but without also doing it here, we get conflict errors)
+	-->
+	<includeOverrides file="restricted_overrides.zcml" />
+
 	<include package="." file="configure_restricted_contenttypes.zcml" />
 
 </configure>

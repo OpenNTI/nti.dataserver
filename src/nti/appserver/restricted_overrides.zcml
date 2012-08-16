@@ -1,0 +1,14 @@
+<!-- -*- mode: nxml -*- -->
+<configure
+	xmlns="http://namespaces.zope.org/zope"
+	xmlns:zcml="http://namespaces.zope.org/zcml">
+
+	<adapter for="*"
+			 factory="._creatable_mime_object_vocabulary._user_sensitive_factory_finder_factory"
+			 provides="nti.externalization.interfaces.IExternalizedObjectFactoryFinder" />
+	<!-- The empty string matches things that don't implement any interface -->
+	<adapter for=""
+			 factory="._creatable_mime_object_vocabulary._user_sensitive_factory_finder_factory"
+			 provides="nti.externalization.interfaces.IExternalizedObjectFactoryFinder" />
+
+</configure>

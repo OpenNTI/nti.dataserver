@@ -19,7 +19,7 @@ from zope import component
 from zope.location import location
 from zope.location import interfaces as loc_interfaces
 from zope.mimetype import interfaces as mime_interfaces
-from zope.componentvocabulary.vocabulary import UtilityVocabulary
+from zope.schema import interfaces as sch_interfaces
 
 from nti.dataserver import datastructures
 from nti.dataserver import interfaces as model_interfaces
@@ -605,40 +605,8 @@ class _UserPagesCollection(object):
 		# We probably need to be more picky, too. Some things like
 		# devices and friendslists are sneaking in here where they
 		# don't belong...even though they can be posted here (?)
-		return (term.value for term in _CreatableMimeObjectVocabulary(self._user))
-
-# TODO: This same thing needs to be done in dataserver_pyramid_views where we
-# go to create objects. As it stands, even though we don't let the UI know about
-# them, it is still possible to create them
-class _CreatableMimeObjectVocabulary(UtilityVocabulary):
-	"""
-	A vocabulary that reports the names (MIME types) of installed
-	:class:`nti.externalization.interfaces.IMimeObjectFactory` objects.
-	There
-	"""
- 	nameOnly = True
- 	interface = ext_interfaces.IMimeObjectFactory
-
- 	def __init__( self, context ):
- 		super(_CreatableMimeObjectVocabulary,self).__init__( context )
-		term_filter = component.queryAdapter(context, app_interfaces.ICreatableObjectFilter, context=context)
-		if term_filter:
-			self._terms = term_filter.filter_creatable_objects( self._terms )
-
-@interface.implementer(app_interfaces.ICreatableObjectFilter)
-class _SimpleRestrictedContentObjectFilter(object):
-
-	RESTRICTED = ('application/vnd.nextthought.canvasurlshape', #images
-				  'application/vnd.nextthought.redaction' )
-
-	def __init__( self, context=None ):
-		pass
-
-	def filter_creatable_objects( self, terms ):
-		for name in self.RESTRICTED:
-			terms.pop( name, None )
-		return terms
-
+		vocab = component.getUtility( sch_interfaces.IVocabularyFactory, "Creatable External Object Types" )( self._user )
+		return (term.token for term in vocab)
 
 class _UserEnrolledClassSectionsCollection(object):
 	"""

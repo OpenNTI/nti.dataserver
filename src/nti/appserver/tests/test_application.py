@@ -357,6 +357,34 @@ class TestApplication(ApplicationTestBase):
 		testapp.put( path, data, extra_environ=self._make_extra_environ(), status=200 )
 
 
+	def test_post_restricted_types(self):
+		data = {u'Class': 'Canvas',
+				'ContainerId': 'tag:foo:bar',
+				u'MimeType': u'application/vnd.nextthought.canvas',
+				'shapeList': [{u'Class': 'CanvasUrlShape',
+							   u'MimeType': u'application/vnd.nextthought.canvasurlshape',
+							   u'url': u'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw=='}]}
+
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = self._create_user()
+
+
+		json_data = json.serialize( data )
+
+		testapp = TestApp( self.app )
+
+		# Without restrictions, we can post it
+		testapp.post( '/dataserver2/users/sjohnson@nextthought.com', json_data, extra_environ=self._make_extra_environ() )
+
+		# If we become restricted, we cannot post it
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = users.User.get_user( 'sjohnson@nextthought.com' )
+			interface.alsoProvides( user, nti_interfaces.ICoppaUser )
+
+		testapp.post( '/dataserver2/users/sjohnson@nextthought.com', json_data,
+					  extra_environ=self._make_extra_environ(),
+					  status=403 ) # Forbidden!
+
 	def test_search_empty_term_user_ugd_book(self):
 		"Searching with an empty term returns empty results"
 		with mock_dataserver.mock_db_trans( self.ds ):

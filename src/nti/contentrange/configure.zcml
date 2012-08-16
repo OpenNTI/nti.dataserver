@@ -1,6 +1,7 @@
 <!-- -*- mode: nxml -*- -->
 <configure xmlns="http://namespaces.zope.org/zope"
-		   i18n_domain="zope">
+	xmlns:ext="http://nextthought.com/ntp/ext"
+	i18n_domain="zope">
 	<include package="zope.component" />
 	<include package="zope.location" />
 	<include package="nti.externalization" />
@@ -10,5 +11,8 @@
 	<adapter factory=".externalization.DomContentPointerExternal" />
 	<adapter factory=".externalization.TextContextExternal" />
 	<adapter factory=".externalization.ContentRangeDescriptionExternal" />
+
+	<include package="nti.externalization" file="meta.zcml" />
+	<ext:registerMimeFactories module=".contentrange" />
 
 </configure>
