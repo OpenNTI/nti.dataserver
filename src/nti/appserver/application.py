@@ -76,6 +76,8 @@ from pyramid.threadlocal import get_current_request
 class _RequestAwareS3KeyHrefMapper(object):
 	"""
 	Produces HTTP URLs for keys in buckets.
+
+	Takes steps to work with CORS and other distribution strategies.
 	"""
 	href = None
 
@@ -86,7 +88,15 @@ class _RequestAwareS3KeyHrefMapper(object):
 		# don't match for bucket.name host
 		request = get_current_request()
 		if request:
-			self.href = 'http://' + request.host + '/' + key.key
+			# In the CORS case, we may be coming from an origin, to the dataserver
+			# and serving content which ought to come back from the origin CDN. We cannot use
+			# the request.host (Host) header, because that would name the dataserver, which
+			# might not be the content origin.
+			if 'origin' in request.headers:
+				self.href = request.headers['origin'] + '/' + key.key
+				self.href = self.href.replace( 'https://', 'http://' )
+			else:
+				self.href = 'http://' + request.host + '/' + key.key
 		else:
 			self.href = 'http://' + key.bucket.name + '/' + key.key
 
