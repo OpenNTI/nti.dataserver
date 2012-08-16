@@ -6,8 +6,9 @@ from ZODB import loglevels
 
 from nti.dataserver.activitystream_change import Change
 
+from nti.contentsearch import get_indexable_types
 from nti.contentsearch.common import normalize_type_name
-from nti.contentsearch.common import indexable_type_names
+
 
 import logging
 logger = logging.getLogger(__name__)
@@ -18,7 +19,7 @@ _event_types = { Change.CREATED: 'index_user_content',
 				 Change.DELETED: 'delete_user_content' }
 
 def _process_event(indexmanager, creator, change_type, data_type, data):
-	if 	change_type in _event_types and normalize_type_name(data_type) in indexable_type_names:
+	if 	change_type in _event_types and normalize_type_name(data_type) in get_indexable_types():
 
 		logger.log( loglevels.TRACE, 'Index event ("%s", "%s", "%s") received', creator, change_type, data_type)
 
