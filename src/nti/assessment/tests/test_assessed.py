@@ -6,6 +6,7 @@ from __future__ import print_function, unicode_literals
 
 from hamcrest import assert_that, has_entry, is_, has_property, contains
 from hamcrest import none
+from hamcrest import is_not
 from hamcrest import has_length
 from nti.tests import ConfiguringTestBase, is_true, is_false
 from nti.tests import verifiably_provides
@@ -96,6 +97,37 @@ class TestAssessedQuestionSet(ConfiguringTestBase):
 		assert_that( result, has_property( 'questions',
 										   contains(
 											   has_property( 'parts', contains( assessed.QAssessedPart( submittedResponse='correct', assessedValue=1.0 ) ) ) ) ) )
+
+
+		ext_obj = toExternalObject( result )
+		assert_that( ext_obj, has_entry( 'questions', has_length( 1 ) ) )
+
+	def test_assess_not_same_instance_question_but_id_matches( self ):
+		part = parts.QFreeResponsePart(solutions=(solutions.QFreeResponseSolution(value='correct'),))
+		question = QQuestion( parts=(part,) )
+		question.ntiid = 'abc'
+		question_set = QQuestionSet( questions=(question,) )
+
+		# New instance
+		part = parts.QFreeResponsePart(solutions=(solutions.QFreeResponseSolution(value='correct2'),))
+		question = QQuestion( parts=(part,) )
+		question.ntiid = 'abc'
+
+		# When this starts to fail, then our ntiid workaround can go away
+		assert_that( question, is_not( question_set.questions[0] ) )
+
+		question_map = {'abc': question, 2: question_set}
+		component.provideUtility( question_map, provides=interfaces.IQuestionMap )
+
+		sub = submission.QuestionSubmission( questionId='abc', parts=('correct2',) )
+		set_sub = submission.QuestionSetSubmission( questionSetId=2, questions=(sub,) )
+
+		result = interfaces.IQAssessedQuestionSet( set_sub )
+
+		assert_that( result, has_property( 'questionSetId', 2 ) )
+		assert_that( result, has_property( 'questions',
+										   contains(
+											   has_property( 'parts', contains( assessed.QAssessedPart( submittedResponse='correct2', assessedValue=1.0 ) ) ) ) ) )
 
 
 		ext_obj = toExternalObject( result )
