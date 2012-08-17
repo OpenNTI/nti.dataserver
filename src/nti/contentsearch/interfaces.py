@@ -2,14 +2,12 @@ from __future__ import print_function, unicode_literals
 
 from zope import schema
 from zope import interface
-from zope.deprecation import deprecated
 from zope.interface.common.mapping import IFullMapping
 
 from dolmen.builtins import IDict
 
 from nti.externalization import interfaces as ext_interfaces
 
-@deprecated()
 class IRepozeDataStore(IFullMapping):
 	def has_user(username):
 		"""
