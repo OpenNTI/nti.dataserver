@@ -51,6 +51,16 @@ class _WrappedElement(_Container):
 		# Note: __new__ does all the actual work, because these are immutable as strings
 		super(_WrappedElement,self).__init__( self, '\\' + self.wrapper + '{' + text + '}' )
 
+class _WrappedElement2Arg(_Container):
+	wrapper = None
+
+	def __new__( cls, text1, text2 ):
+		return super(_WrappedElement2Arg,cls).__new__( cls, '\\' + cls.wrapper + '{' + text1 + '}{' + text2 + '}' )
+
+	def __init__( self, text1=None, text2=None ):
+		# Note: __new__ does all the actual work, because these are immutable as strings
+		super(_WrappedElement2Arg,self).__init__( self, '\\' + self.wrapper + '{' + text1 + '}{' + text2 +'}' )
+
 class _Footnote(_WrappedElement):
 	wrapper = 'footnote'
 
@@ -62,6 +72,9 @@ class _ChapterStar(_WrappedElement):
 
 class _Section(_WrappedElement):
 	wrapper = 'section'
+
+class _SubSection(_WrappedElement):
+	wrapper = 'subsection'
 
 class _Label(_WrappedElement):
 	wrapper = 'label'
@@ -77,6 +90,18 @@ class _TextIT(_WrappedElement):
 
 class _TextBF(_WrappedElement):
 	wrapper = 'textbf'
+
+class _MATHCOUNTSWorksheet(_WrappedElement2Arg):
+	wrapper = 'mathcountsworksheet'
+
+	def __new__( cls, text ):
+		text2 = "tag:nextthought.com,2011-10:mathcounts-HTML-mathcounts2013." + re.sub(r'[\s-]', '_', text.lower())
+		return super(_MATHCOUNTSWorksheet,cls).__new__( cls, text, text2 )
+
+	def __init__( self, text=None ):
+		# Note: __new__ does all the actual work, because these are immutable as strings
+		text2 = "tag:nextthought.com,2011-10:mathcounts-HTML-mathcounts2013." + re.sub(r'[\s-]', '_', text.lower())
+		super(_MATHCOUNTSWorksheet,self).__init__( text, text2 )
 
 class _href(_Container):
 
@@ -177,6 +202,7 @@ class _Worksheet(object):
 
 	def __init__(self):
 		self.title = None
+		self.header = None
 		self.problems = []
 
 def _extract_problems( doc, worksheets ):
@@ -188,6 +214,9 @@ def _extract_problems( doc, worksheets ):
 			continue
 		worksheet = _Worksheet()
 		worksheet.title = worksheet_title
+		worksheet_header = (pyquery.PyQuery(story))(b"p.regular-text").text()
+		if worksheet_header is not None:
+			worksheet.header = worksheet_header
 		for problem in (pyquery.PyQuery(story))(b"p.problems"):
 			_t = re.search(r'^[0-9]*\.', problem.getchildren()[0].text)
 			if _t is not None:
@@ -203,6 +232,11 @@ def _extract_problems( doc, worksheets ):
 		
 		worksheets.extend([worksheet])
 
+	return worksheets
+
+def _extract_stretchs( docs, worksheets ):
+	for doc in docs:
+		worksheets = _extract_problems( doc, worksheets )
 	return worksheets
 
 def _extract_answers( doc, worksheets ):
@@ -248,6 +282,7 @@ def _output_master_file( worksheets ):
 \\documentclass[a4paper]{book}
 \\usepackage{ntilatexmacros}
 \\usepackage{ntiassessment}
+\\usepackage{mathcounts}
 \\usepackage{graphicx}
 \\title{MATHCOUNTS 2012-2013}
 \\author{MATHCOUNTS Foundation}
@@ -268,7 +303,10 @@ def _output_tex( worksheets ):
 	for worksheet in worksheets:
 		tex = []
 		qset = []
-		tex.extend([_ChapterStar( worksheet.title)])		
+		tex.extend([_MATHCOUNTSWorksheet( worksheet.title )])
+		if worksheet.header is not None:
+			tex.extend([ worksheet.header ])
+		tex.extend([_SubSection( 'Questions' )])
 		for problem in worksheet.problems:
 			qset.extend([_NAQuestionRef('qid.' + unicode(problem.number))])
 			tex.extend(['%% Question ' + unicode(problem.number) + '.'])
@@ -297,13 +335,19 @@ def main():
 	workbook_file = sys.argv[1]
 	answers_file = sys.argv[2]
 	solutions_file = sys.argv[3]
+	stretch_files = [sys.argv[4], sys.argv[5], sys.argv[6]]
 
 	workbook_pq = _file_to_pyquery( workbook_file )
 	answers_pq = _file_to_pyquery( answers_file )
 	solutions_pq = _file_to_pyquery( solutions_file )
+	stretch_pqs = []
+	stretch_pqs.extend([_file_to_pyquery( stretch_files[0] )])
+	stretch_pqs.extend([_file_to_pyquery( stretch_files[1] )])
+	stretch_pqs.extend([_file_to_pyquery( stretch_files[2] )])
 
 	worksheets = []
 	worksheets = _extract_problems( workbook_pq, worksheets )
+	worksheets = _extract_stretchs( stretch_pqs, worksheets )
 	worksheets = _extract_answers( answers_pq, worksheets ) 
 	worksheets = _extract_solutions( solutions_pq, worksheets ) 
 
