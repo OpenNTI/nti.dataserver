@@ -1,29 +1,45 @@
 #!/usr/bin/env python
+
 from __future__ import print_function, unicode_literals
 
 import sys
 
 from nti.dataserver import users
-from . import run_with_dataserver
+from nti.dataserver import providers
+from nti.dataserver.utils import run_with_dataserver
 
-from nti.contentsearch.utils.nti_remove_user_content import remove_user_content
+import argparse
+
+_type_map = { 'user': users.User.create_user,
+			  'provider': providers.Provider.create_provider,
+			  'community': users.Community.create_community }
 
 def main():
-	if len(sys.argv) < 2:
-		print( "Usage %s env_dir username" % sys.argv[0] )
-		sys.exit( 1 )
+	arg_parser = argparse.ArgumentParser( description="Delete a user-type object" )
+	arg_parser.add_argument( 'env_dir', help="Dataserver environment root directory" )
+	arg_parser.add_argument( 'username', help="The username to delete" )
+	arg_parser.add_argument( '-t', '--type',
+							 dest='type',
+							 choices=_type_map,
+							 default='user',
+							 help="The type of user object to delete" )
 
-	env_dir = sys.argv[1]
-	username = sys.argv[2]
+	args = arg_parser.parse_args()
 
-	run_with_dataserver( environment_dir=env_dir, function=lambda: _remove_user(username) )
+	env_dir = args.env_dir
+	username = args.username
 
-def _remove_user( username ):
-	user = users.User.get_user( username )
+	run_with_dataserver( environment_dir=env_dir,
+						 function=lambda: _delete_user(_type_map[args.type], username ) )
+	sys.exit( 0 )
+
+def _delete_user( factory, username ):
+	__traceback_info__ = locals().items()
+	user = factory.get_entity(username)
 	if not user:
-		print( "User '%s' does not exists" % username, file=sys.stderr )
-		sys.exit( 2 )
-
-	remove_user_content( username=username )
-	#TODO: remove sessions
-	users.User.delete_user( username=username )
+		print( "User does not exists", repr(user), file=sys.stderr )
+		sys.exit(-2)
+	factory.im_self.delete_entity( username )
+	
+if __name__ == '__main__':
+	main()
