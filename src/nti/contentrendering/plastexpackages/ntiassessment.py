@@ -58,7 +58,7 @@ import itertools
 import simplejson as json
 import codecs
 
-from . import interfaces
+from nti.contentrendering.plastexpackages import interfaces
 
 import nti.externalization.internalization
 from nti.externalization.externalization import toExternalObject
@@ -460,6 +460,11 @@ class naquestion(_LocalContentMixin,Base.Environment,plastexids.NTIIDMixin):
 	_ntiid_title_attr_name = 'ref' # Use our counter to generate IDs if no ID is given
 	_ntiid_type = as_interfaces.NTIID_TYPE
 
+	def invoke( self, tex ):
+		_t = super(naquestion,self).invoke(tex)
+		if 'individual' in self.attributes and self.attributes['individual'] == 'individual=true':
+			self.attributes['individual'] = 'true'
+		return _t
 
 	@property
 	def _ntiid_get_local_part(self):
