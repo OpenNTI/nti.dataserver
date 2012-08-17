@@ -4,7 +4,7 @@ from whoosh import fields
 from whoosh.query import Term
 from whoosh.qparser import QueryParser
 from whoosh.qparser.dateparse import DateParserPlugin
-from whoosh.qparser import (GtLtPlugin, PrefixPlugin, WildcardPlugin)
+from whoosh.qparser import (GtLtPlugin, PrefixPlugin, PhrasePlugin)
 
 from nti.contentsearch.common import QueryExpr
 from nti.contentsearch.common import (sharedWith_, containerId_, collectionId_, last_modified_)
@@ -14,7 +14,7 @@ from nti.contentsearch._datastructures import CaseInsensitiveDict
 import logging
 logger = logging.getLogger( __name__ )
 
-default_search_plugins =  (GtLtPlugin, DateParserPlugin, PrefixPlugin, WildcardPlugin)
+default_search_plugins =  (GtLtPlugin, DateParserPlugin, PrefixPlugin, PhrasePlugin)
 
 def create_query_parser(fieldname='foo', schema=None, plugins=default_search_plugins):
 	qparser = QueryParser(fieldname, schema=schema)
