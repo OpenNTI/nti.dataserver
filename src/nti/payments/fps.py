@@ -5,8 +5,13 @@ import uuid
 import base64
 import hashlib
 
+from zope import interface
+
 from boto.fps.connection import FPSConnection
 
+from nti.payments import interfaces as pys_interfaces
+
+@interface.implementer(pys_interfaces.ICoBrandedPaymentManager)
 class _FPSPaymentManager(object):
 	def __init__(self, aws_access_key_id, aws_secret_access_key, host='fps.sandbox.amazonaws.com'):
 		self._connection = None
