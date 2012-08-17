@@ -1347,20 +1347,29 @@ def user_willRemoveIntIdForContainedObject( contained, event ):
 	if hasattr( contained.creator, '_postDeleteNotification' ):
 		contained.creator._postDeleteNotification( contained )
 
-
+from ZODB.interfaces import IConnection
+from .interfaces import IDataserverTransactionRunner
 @component.adapter(nti.apns.interfaces.IDeviceFeedbackEvent)
 def user_devicefeedback( msg ):
-	deviceId = msg.deviceId
-	hexDeviceId = deviceId.encode( 'hex' )
-	# TODO: Very inefficient
-	# Switch this to ZCatalog/repoze.catalog
-	if msg.timestamp < 0: return
-	datasvr = _get_shared_dataserver()
-	logger.debug( 'Searching for device %s', hexDeviceId )
-	for user in (u for u in datasvr.root['users'].itervalues() if isinstance(u,User)):
-		if hexDeviceId in user.devices:
-			logger.debug( 'Found device id %s in user %s', hexDeviceId, user )
-			del user.devices[hexDeviceId]
+	def feedback():
+		deviceId = msg.deviceId
+		hexDeviceId = deviceId.encode( 'hex' )
+		# TODO: Very inefficient
+		# Switch this to ZCatalog/repoze.catalog
+		if msg.timestamp < 0: return
+		datasvr = _get_shared_dataserver()
+		logger.debug( 'Searching for device %s', hexDeviceId )
+		for user in (u for u in datasvr.root['users'].itervalues() if isinstance(u,User)):
+			if hexDeviceId in user.devices:
+				logger.debug( 'Found device id %s in user %s', hexDeviceId, user )
+				del user.devices[hexDeviceId]
+
+	# Be sure we run in the right site and transaction.
+	# Our usual caller is in nti.apns and knows nothing about that.
+	if IConnection( component.getSiteManager(), None ):
+		feedback()
+	else:
+		component.getUtility( IDataserverTransactionRunner )( feedback )
 
 
 def onChange( datasvr, msg, username=None, broadcast=None, **kwargs ):

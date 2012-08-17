@@ -51,6 +51,7 @@ Contents:
 	assessment-interfaces
 
 	library-interfaces
+	apns
 
 	nti-utils
 	nti-zodb
