@@ -45,6 +45,7 @@ Dependencies for content generation:
 	- pdf2svg
 	- ImageMagick
 	- wget
+	- xpdf (optional)
 
 - phantomjs >= 1.5
   http://phantomjs.org, download and place the phantomjs command somewhere on your path, e.g., 

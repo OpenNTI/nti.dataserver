@@ -79,7 +79,7 @@ if [ "$INSTALL_EXTRAS" ]; then
 	done
 
 	# install extra packages
-	extrap_pkgs=(pyyaml numpy matplotlib scipy py)
+	extrap_pkgs=(pyyaml numpy matplotlib scipy py rtf2xml)
 	for p in "${extrap_pkgs[@]}"
 	do
 		echo "Installing $p"
