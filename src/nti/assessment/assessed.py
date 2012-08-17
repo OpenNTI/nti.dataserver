@@ -7,9 +7,14 @@ $Id$
 """
 from __future__ import print_function, unicode_literals
 
+
+logger = __import__('logging').getLogger(__name__)
+
+
 from zope import interface
 from zope import component
 import persistent
+import persistent.list
 
 from nti.utils.schema import PermissiveSchemaConfigured as SchemaConfigured
 from nti.externalization.externalization import make_repr
@@ -103,7 +108,7 @@ def assess_question_submission( submission, questions=None ):
 	if len(question.parts) != len(submission.parts):
 		raise ValueError( "Question and submission have different numbers of parts." )
 
-	assessed_parts = []
+	assessed_parts = persistent.list.PersistentList()
 	for sub_part, q_part in zip( submission.parts, question.parts ):
 		grade = q_part.grade( sub_part )
 		assessed_parts.append( QAssessedPart( submittedResponse=sub_part, assessedValue=grade ) )
@@ -127,11 +132,13 @@ def assess_question_set_submission( set_submission, questions=None ):
 	# We are currently not really grading them at all, which is what we
 	# did for the old legacy quiz stuff
 
-	assessed = []
+	assessed = persistent.list.PersistentList()
 	for sub_question in set_submission.questions:
 		question = questions[sub_question.questionId]
 		if question in question_set.questions:
 			assessed.append( interfaces.IQAssessedQuestion( sub_question ) )
+		else:
+			logger.debug( "Bad input, question (%s) not in question set (%s) (kownn: %s)", question, question_set, question_set.questions )
 
 	# NOTE: We're not really creating some sort of aggregate grade here
 	return QAssessedQuestionSet( questionSetId=set_submission.questionSetId, questions=assessed )

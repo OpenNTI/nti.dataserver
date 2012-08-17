@@ -6,6 +6,7 @@ from __future__ import print_function, unicode_literals
 
 from hamcrest import assert_that, has_entry, is_, has_property, contains
 from hamcrest import none
+from hamcrest import has_length
 from nti.tests import ConfiguringTestBase, is_true, is_false
 from nti.tests import verifiably_provides
 from nti.externalization.tests import externalizes
@@ -95,3 +96,7 @@ class TestAssessedQuestionSet(ConfiguringTestBase):
 		assert_that( result, has_property( 'questions',
 										   contains(
 											   has_property( 'parts', contains( assessed.QAssessedPart( submittedResponse='correct', assessedValue=1.0 ) ) ) ) ) )
+
+
+		ext_obj = toExternalObject( result )
+		assert_that( ext_obj, has_entry( 'questions', has_length( 1 ) ) )
