@@ -135,7 +135,9 @@ def assess_question_set_submission( set_submission, questions=None ):
 	assessed = persistent.list.PersistentList()
 	for sub_question in set_submission.questions:
 		question = questions[sub_question.questionId]
-		if question in question_set.questions:
+		# FIXME: Checking an 'ntiid' property that is not defined here is a hack
+		# because we have an equality bug. It should go away as soon as equality is fixed
+		if question in question_set.questions or getattr( question, 'ntiid', None) == sub_question.questionId:
 			assessed.append( interfaces.IQAssessedQuestion( sub_question ) )
 		else:
 			logger.debug( "Bad input, question (%s) not in question set (%s) (kownn: %s)", question, question_set, question_set.questions )
