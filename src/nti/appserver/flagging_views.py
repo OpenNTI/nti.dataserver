@@ -158,7 +158,9 @@ class NoteBodyColumn(column.GetAttrColumn):
 
 	def renderCell( self, item ):
 		content = super(NoteBodyColumn,self).renderCell( item )
-		return ''.join( content )
+		# TODO: This easily produces invalid HTML. And for things like
+		# a Canvas, it breaks the rendering: <canvas at ...>
+		return ''.join( unicode(content) )
 
 class IntIdCheckBoxColumn(column.CheckBoxColumn):
 	weight = 0
