@@ -75,15 +75,15 @@ class TestApplicationFlagging(ApplicationTestBase):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = self._create_user()
 			n = contenttypes.Note()
-			n.body = ['The first part']
 			n.applicableRange = contentrange.ContentRangeDescription()
 			n.containerId = 'tag:nti:foo'
+			n.updateFromExternalObject( {'body': ['The first part']} )
 			user.addContainedObject( n )
 			provided_by_n = list(interface.providedBy( n ).flattened())
 
 			n2 = contenttypes.Note()
-			n2.body = ['<p><em>This</em> part is HTML</p>', contenttypes.Canvas()]
 			n2.applicableRange = contentrange.ContentRangeDescription()
+			n2.updateFromExternalObject( {'body': [u'<p><em>This</em> part is HTML</p>', contenttypes.Canvas()]} )
 			n2.containerId = 'tag:nti:foo'
 			user.addContainedObject( n2 )
 
@@ -103,7 +103,7 @@ class TestApplicationFlagging(ApplicationTestBase):
 
 		assert_that( res.content_type, is_( 'text/html' ) )
 		assert_that( res.body, contains_string( 'The first part' ) )
-		assert_that( res.body, contains_string( '<p><em>This</em> part is HTML</p>' ) )
+		assert_that( res.body, contains_string( 'This part is HTML' ) )
 
 		# This should not have changed the implemented/provided lists of the objects
 		with mock_dataserver.mock_db_trans( self.ds ):
@@ -131,7 +131,7 @@ class TestApplicationFlagging(ApplicationTestBase):
 		res = testapp.get( path, extra_environ=self._make_extra_environ() )
 		assert_that( res.content_type, is_( 'text/html' ) )
 		assert_that( res.body, does_not( contains_string( 'The first part' ) ) )
-		assert_that( res.body, contains_string( '<p><em>This</em> part is HTML</p>' ) )
+		assert_that( res.body, contains_string( 'This part is HTML' ) )
 
 		form = res.form
 		form.set( 'table-note-selected-0-selectedItems', True, index=0 )
@@ -141,4 +141,35 @@ class TestApplicationFlagging(ApplicationTestBase):
 		res = testapp.get( path, extra_environ=self._make_extra_environ() )
 		assert_that( res.content_type, is_( 'text/html' ) )
 		assert_that( res.body, does_not( contains_string( 'The first part' ) ) )
-		assert_that( res.body, does_not( contains_string( '<p><em>This</em> part is HTML</p>' ) ) )
+		assert_that( res.body, does_not( contains_string( 'This part is HTML' ) ) )
+
+	def test_flag_moderation_note_content(self):
+		"Basic tests of the moderation admin page"
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = self._create_user()
+
+			n2 = contenttypes.Note()
+			n2.applicableRange = contentrange.ContentRangeDescription()
+			n2.containerId = 'tag:nti:foo'
+			n2.updateFromExternalObject( {'body': ['<p><em>This</em> part is HTML</p><p>And spreads across paragraphs.</p>',
+												   contenttypes.Canvas()] } )
+			user.addContainedObject( n2 )
+
+		testapp = TestApp( self.app )
+
+		# First, give us something to flag
+		for i in (n2,):
+			path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % to_external_ntiid_oid( i )
+			path = UQ( path )
+			testapp.post( path + '/@@flag', '', extra_environ=self._make_extra_environ() )
+
+
+		path = '/dataserver2/@@moderation_admin'
+
+		res = testapp.get( path, extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 200 ) )
+
+		assert_that( res.content_type, is_( 'text/html' ) )
+
+		# TODO: Note that our plain-textification is screwing up at paragraph boundaries.
+		assert_that( res.body, contains_string( 'This part is HTMLAnd spreads across paragraphs.<br />&lt;CANVAS OBJECT&gt;' ) )

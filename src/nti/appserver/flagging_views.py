@@ -23,6 +23,7 @@ from nti.dataserver import flagging
 from nti.dataserver import authorization as nauth
 
 from nti.externalization import interfaces as ext_interfaces
+from nti.contentfragments import interfaces as frg_interfaces
 
 FLAG_VIEW = 'flag'
 FLAG_AGAIN_VIEW = 'flag.metoo'
@@ -158,9 +159,14 @@ class NoteBodyColumn(column.GetAttrColumn):
 
 	def renderCell( self, item ):
 		content = super(NoteBodyColumn,self).renderCell( item )
-		# TODO: This easily produces invalid HTML. And for things like
-		# a Canvas, it breaks the rendering: <canvas at ...>
-		return ''.join( unicode(content) )
+		parts = []
+		for part in content:
+			if nti_interfaces.ICanvas.providedBy( part ):
+				# TODO: Inspect about the presence of images, etc
+				parts.append( "&lt;CANVAS OBJECT&gt;" )
+			else:
+				parts.append( frg_interfaces.IPlainTextContentFragment( part ) )
+		return '<br />'.join( parts )
 
 class IntIdCheckBoxColumn(column.CheckBoxColumn):
 	weight = 0
