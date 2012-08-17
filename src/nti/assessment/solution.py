@@ -40,10 +40,17 @@ class QMathSolution(QSolution):
 
 from ._util import TrivialValuedMixin as _TrivialValuedMixin
 
+
 def _eq_(self, other):
-	return other is self or (self.weight == getattr( other, 'weight', Persistent ) and self.value == getattr( other, 'value', Persistent ))
+	try:
+		return other is self or (self._part_type == other._part_type
+								 and self.weight == other.weight
+								 and self.value == other.value)
+	except AttributeError: #pragma: no cover
+		return NotImplemented
+
 def _ne_(self, other):
-	return  other is not self and (self.weight != getattr( other, 'weight', Persistent ) or self.value != getattr( other, 'value', Persistent ))
+	return not (self == other) is True
 
 @interface.implementer(interfaces.IQNumericMathSolution)
 class QNumericMathSolution(_TrivialValuedMixin,QMathSolution):

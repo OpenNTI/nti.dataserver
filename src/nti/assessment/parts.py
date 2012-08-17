@@ -12,11 +12,12 @@ from nti.externalization.externalization import make_repr
 
 from nti.assessment import interfaces
 from nti.assessment.interfaces import convert_response_for_solution
+from nti.assessment._util import superhash
 
 from persistent import Persistent
 
 
-
+@interface.implementer(interfaces.IQPart)
 class QPart(SchemaConfigured,Persistent):
 	"""
 	Base class for parts. Its :meth:`grade` method
@@ -24,7 +25,7 @@ class QPart(SchemaConfigured,Persistent):
 	this object implements and then call the :meth:`_grade` method.
 	"""
 
-	interface.implements(interfaces.IQPart)
+
 
 	grader_interface = interfaces.IQPartGrader
 	grader_name = ''
@@ -56,25 +57,56 @@ class QPart(SchemaConfigured,Persistent):
 			return self is other or (self.content == other.content
 									 and self.hints == other.hints
 									 and self.solutions == other.solutions
-									 and self.explanation == other.explanation )
-		except AttributeError:
+									 and self.explanation == other.explanation
+									 and self.grader_interface == other.grader_interface
+									 and self.grader_name == other.grader_name)
+		except AttributeError: #pragma: no cover
 			return NotImplemented
 
 	def __ne__( self, other ):
 		return not (self == other is True)
 
+	def __hash__( self ):
+		xhash = 47
+		xhash ^= hash(self.content)
+		xhash ^= superhash(self.hints)
+		xhash ^= superhash(self.solutions)
+		xhash ^= hash(self.explanation) << 5
+		return xhash
+
 @interface.implementer(interfaces.IQMathPart)
 class QMathPart(QPart):
-	pass
+
+	def __eq__( self, other ):
+		try:
+			return self is other or (isinstance(other,QMathPart)
+									 and super(QMathPart,self).__eq__( other ) is True)
+		except AttributeError: # pragma: no cover
+			return NotImplemented
 
 @interface.implementer(interfaces.IQSymbolicMathPart)
 class QSymbolicMathPart(QMathPart):
 
 	grader_interface = interfaces.IQSymbolicMathGrader
 
+
+	def __eq__( self, other ):
+		try:
+			return self is other or (isinstance(other,QSymbolicMathPart)
+									 and super(QSymbolicMathPart,self).__eq__( other ) is True)
+		except AttributeError: # pragma: no cover
+			return NotImplemented
+
+
 @interface.implementer(interfaces.IQNumericMathPart)
 class QNumericMathPart(QMathPart):
-	pass
+
+	def __eq__( self, other ):
+		try:
+			return self is other or (isinstance(other,QNumericMathPart)
+									 and super(QNumericMathPart,self).__eq__( other ) is True)
+		except AttributeError: # pragma: no cover
+			return NotImplemented
 
 @interface.implementer(interfaces.IQMultipleChoicePart)
 class QMultipleChoicePart(QPart):
@@ -84,8 +116,10 @@ class QMultipleChoicePart(QPart):
 
 	def __eq__( self, other ):
 		try:
-			return self is other or (super(QMultipleChoicePart,self).__eq__( other ) is True and self.choices == other.choices )
-		except AttributeError:
+			return self is other or (isinstance(other,QMultipleChoicePart)
+									 and super(QMultipleChoicePart,self).__eq__( other ) is True
+									 and self.choices == other.choices )
+		except AttributeError: # pragma: no cover
 			return NotImplemented
 
 @interface.implementer(interfaces.IQMatchingPart)
@@ -98,10 +132,18 @@ class QMatchingPart(QPart):
 
 	def __eq__( self, other ):
 		try:
-			return self is other or (super(QMatchingPart,self).__eq__( other ) is True and self.labels == other.labels and self.values == other.values )
-		except AttributeError:
+			return self is other or (isinstance(other, QMatchingPart)
+									 and super(QMatchingPart,self).__eq__( other ) is True
+									 and self.labels == other.labels
+									 and self.values == other.values )
+		except AttributeError: #pragma: no cover
 			return NotImplemented
 
 @interface.implementer(interfaces.IQFreeResponsePart)
 class QFreeResponsePart(QPart):
-	pass
+	def __eq__( self, other ):
+		try:
+			return self is other or (isinstance(other,QFreeResponsePart)
+									 and super(QFreeResponsePart,self).__eq__( other ) is True)
+		except AttributeError: # pragma: no cover
+			return NotImplemented

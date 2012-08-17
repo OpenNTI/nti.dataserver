@@ -12,6 +12,7 @@ from zope.mimetype import interfaces as mime_interfaces
 from persistent import Persistent
 
 from . import interfaces
+from ._util import superhash
 
 @interface.implementer(interfaces.IQuestion,mime_interfaces.IContentTypeAware)
 class QQuestion(Persistent):
@@ -26,6 +27,17 @@ class QQuestion(Persistent):
 		if parts:
 			self.parts = parts
 
+	def __eq__( self, other ):
+		return other is self or (isinstance(other,QQuestion)
+								 and self.content == other.content
+								 and self.parts == other.parts)
+	def __ne__( self, other ):
+		return not (self == other)
+
+	def __hash__( self ):
+		return 47 + (superhash(self.content) << 2) ^ superhash(self.parts)
+
+
 @interface.implementer(interfaces.IQuestionSet, mime_interfaces.IContentTypeAware)
 class QQuestionSet(Persistent):
 	mime_type = 'application/vnd.nextthought.naquestionset'
@@ -35,3 +47,12 @@ class QQuestionSet(Persistent):
 	def __init__( self, questions=None ):
 		if questions:
 			self.questions = questions
+
+	def __eq__( self, other ):
+		return other is self or (isinstance(other,QQuestionSet)
+								 and self.questions == other.questions)
+	def __ne__( self, other ):
+		return not (self == other)
+
+	def __hash__( self ):
+		return 47 + (superhash(self.questions) << 2)

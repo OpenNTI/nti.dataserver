@@ -113,7 +113,6 @@ class TestAssessedQuestionSet(ConfiguringTestBase):
 		question = QQuestion( parts=(part,) )
 		question.ntiid = 'abc'
 
-		# When this starts to fail, then our ntiid workaround can go away
 		assert_that( question, is_not( question_set.questions[0] ) )
 
 		question_map = {'abc': question, 2: question_set}
@@ -128,6 +127,40 @@ class TestAssessedQuestionSet(ConfiguringTestBase):
 		assert_that( result, has_property( 'questions',
 										   contains(
 											   has_property( 'parts', contains( assessed.QAssessedPart( submittedResponse='correct2', assessedValue=1.0 ) ) ) ) ) )
+
+
+		ext_obj = toExternalObject( result )
+		assert_that( ext_obj, has_entry( 'questions', has_length( 1 ) ) )
+
+	def test_assess_not_same_instance_question_but_equals( self ):
+		part = parts.QFreeResponsePart(solutions=(solutions.QFreeResponseSolution(value='correct'),))
+		question = QQuestion( content='foo', parts=(part,) )
+		question_set = QQuestionSet( questions=(question,) )
+
+		# New instance
+		part = parts.QFreeResponsePart(solutions=(solutions.QFreeResponseSolution(value='correct'),))
+		question = QQuestion( content='foo', parts=(part,) )
+
+		assert_that( question, is_( question_set.questions[0] ) )
+		# Some quick coverage things
+		assert_that( hash( question ), is_( hash( question_set.questions[0] ) ) )
+		hash( question_set )
+		assert_that( question != question, is_false() )
+		assert_that( question_set != question_set, is_false() )
+
+
+		question_map = {'abc': question, 2: question_set}
+		component.provideUtility( question_map, provides=interfaces.IQuestionMap )
+
+		sub = submission.QuestionSubmission( questionId='abc', parts=('correct',) )
+		set_sub = submission.QuestionSetSubmission( questionSetId=2, questions=(sub,) )
+
+		result = interfaces.IQAssessedQuestionSet( set_sub )
+
+		assert_that( result, has_property( 'questionSetId', 2 ) )
+		assert_that( result, has_property( 'questions',
+										   contains(
+											   has_property( 'parts', contains( assessed.QAssessedPart( submittedResponse='correct', assessedValue=1.0 ) ) ) ) ) )
 
 
 		ext_obj = toExternalObject( result )
