@@ -23,8 +23,25 @@ class TrivialValuedMixin(object):
 	def __ne__( self, other ):
 		try:
 			return self is not other and self.value != other.value
-		except AttributeError:
+		except AttributeError: #pragma: no cover
 			return NotImplemented
 
 	def __hash__( self ):
-		return hash(self.value)
+		return superhash( self.value )
+
+def superhash( value ):
+	try:
+		return hash(value)
+	except TypeError:
+		# Dict
+		xhash = 4201029
+		try:
+			# Sort these, they have no order
+			for item in sorted( value.items() ):
+				xhash ^= superhash(item)
+			return xhash
+		except AttributeError:
+			# Iterable which must be unsorted
+			for item in value:
+				xhash ^= superhash( item )
+			return xhash
