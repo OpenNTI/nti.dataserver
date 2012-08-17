@@ -454,6 +454,7 @@ class naquestion(_LocalContentMixin,Base.Environment,plastexids.NTIIDMixin):
 	# Only classes with counters can be labeled, and \label sets the
 	# id property, which in turn is used as part of the NTIID (when no NTIID is set explicitly)
 	counter = 'naquestion'
+	blockType = True
 	_ntiid_cache_map_name = '_naquestion_ntiid_map'
 	_ntiid_allow_missing_title = True
 	_ntiid_suffix = 'naq.'
