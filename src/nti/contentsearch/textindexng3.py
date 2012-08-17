@@ -7,6 +7,8 @@ import sys
 import zopyxtxng3corelogger
 sys.modules["zopyx.txng3.core.logger"] = zopyxtxng3corelogger
 
+from persistent import Persistent
+
 from zope.interface import implements
 from zope.index.interfaces import IInjection
 from zope.index.interfaces import IStatistics
@@ -34,7 +36,7 @@ class _Proxy(object):
 		for field in fields or []:
 			self.__dict__[field] = data
 
-class TextIndexNG3(object):
+class TextIndexNG3(Persistent, object):
 	implements(IInjection, IIndexSearch, IStatistics)
 	
 	meta_type = 'TextIndexNG3'
