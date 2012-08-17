@@ -528,7 +528,7 @@ class _AssessmentExtractor(object):
 	def transform( self, book ):
 		index = {}
 		self._build_index( book.document.getElementsByTagName( 'document' )[0], index.setdefault( 'Items', {} ) )
-		index['filename'] = index.get( 'filename', 'index.html' )
+		#index['filename'] = index.get( 'filename', 'index.html' ) # This leads to duplicate data
 		index['href'] = index.get( 'href', 'index.html' )
 		with codecs.open( os.path.join( book.contentLocation, 'assessment_index.json'), 'w', encoding='utf-8' ) as fp:
 			json.dump( index, fp, indent='\t' )

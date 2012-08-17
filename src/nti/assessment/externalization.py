@@ -53,7 +53,11 @@ def _find_factories():
 			if any( (iface.queryTaggedValue( '__external_class_name__') for iface in interface.implementedBy(v)) ):
 				ext_class_name = k[1:] if not k.startswith( 'Question' ) else k
 				setattr( _ClassNameRegistry, ext_class_name, v )
-				if not hasattr( v, 'mime_type' ):
+				if not 'mime_type' in v.__dict__:
+					# NOT hasattr. We don't use hasattr because inheritance would
+					# throw us off. It could be something we added, and iteration order
+					# is not defined (if we got the subclass first we're good, we fail if we
+					# got superclass first)
 					setattr( v, 'mime_type', 'application/vnd.nextthought.assessment.' + ext_class_name.lower() )
 
 				# Opt in for creating, unless explicitly disallowed

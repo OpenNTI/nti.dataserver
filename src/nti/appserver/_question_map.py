@@ -24,6 +24,15 @@ from . import interfaces as app_interfaces
 from nti.contentfragments import interfaces as cfg_interfaces
 from nti.contentlibrary import interfaces as lib_interfaces
 
+def _ntiid_object_hook( k, v, x ):
+	"""
+	In this one, rare, case, we are reading things from external
+	sources and need to preserve an NTIID value.
+	"""
+	if 'NTIID' in x and not getattr( v, 'ntiid', None ):
+		v.ntiid = x['NTIID']
+	return v
+
 @interface.implementer( app_interfaces.IFileQuestionMap )
 class QuestionMap(dict):
 
@@ -31,49 +40,49 @@ class QuestionMap(dict):
 		super(QuestionMap,self).__init__()
 		self.by_file = {}
 
+	def __process_assessments( self, assessment_item_dict, containing_filename, hierarchy_entry ):
+		for k, v in assessment_item_dict.items():
+			__traceback_info__ = k, v
+
+			factory = nti.externalization.internalization.find_factory_for( v )
+			assert factory is not None
+			obj = factory()
+			nti.externalization.internalization.update_from_external_object( obj, v, require_updater=True, notify=False, object_hook=_ntiid_object_hook )
+			obj.ntiid = k
+			self[k] = obj
+
+			if containing_filename:
+				self.by_file[containing_filename].append( obj )
+				# Hack in ACL support. We are piggybacking off of
+				# IDelimitedEntry's support in authorization_acl.py
+				def read_contents_of_sibling_entry( sibling_name ):
+					return hierarchy_entry.read_contents_of_sibling_entry( sibling_name )
+
+				# FIXME: This is so very, very wrong
+				obj.filename = containing_filename
+				obj.read_contents_of_sibling_entry = read_contents_of_sibling_entry
+				interface.alsoProvides( obj, lib_interfaces.IFilesystemEntry )
+
 	def _from_index_entry(self, index, hierarchy_entry):
 		filename = None
 		if index.get( 'filename' ):
 			filename = hierarchy_entry.make_sibling_key( index['filename'] )
+			factory = list
+			if filename in self.by_file:
+				# Across all indexes, every filename key should be unique.
+				# We rely on this property when we lookup the objects to return
+				# We make an exception for index.html, due to a duplicate bug in
+				# old versions of the exporter, but we ensure we can't put any questions on it
+				if index['filename'] == 'index.html':
+					factory = tuple
+					logger.warning( "Duplicate 'index.html' entry in %s; update content", hierarchy_entry )
+				else: # pragma: no cover
+					raise ValueError( filename, "Found a second entry for the same file" )
+			self.by_file[filename] = factory()
+
 		for item in index['Items'].values():
-			for k, v in item['AssessmentItems'].items():
-				__traceback_info__ = k, v
+			self.__process_assessments( item.get( "AssessmentItems", {} ), filename, hierarchy_entry )
 
-				factory = nti.externalization.internalization.find_factory_for( v )
-				assert factory is not None
-				obj = factory()
-				orig_v = None
-				if 'questions' in v:
-					# FIXME: See below. Must save before internalization updates in place.
-					orig_v = dict( v )
-
-				nti.externalization.internalization.update_from_external_object( obj, v, require_updater=True )
-				obj.ntiid = k
-
-				# FIXME: The below (and above) is a hack to try to get questions loaded in QuestionSets
-				# to have NTIIDS. The right fix is to probably have update_from_external_object accept the
-				# same sort of hook functions that simplejson does
-
-				if 'questions' in v and hasattr( obj, 'questions' ):
-					for quest_num, quest_dict in enumerate( orig_v['questions'] ):
-						obj.questions[quest_num].ntiid = quest_dict['NTIID']
-
-				if filename:
-					self.by_file.setdefault( filename, [] ).append( obj )
-					# Hack in ACL support. We are piggybacking off of
-					# IDelimitedEntry's support in authorization_acl.py
-					def read_contents_of_sibling_entry( sibling_name ):
-						try:
-							return open( os.path.join( os.path.dirname( filename ), sibling_name ), 'r' ).read()
-						except (OSError,IOError):
-							return None
-
-					# FIXME: This is so very, very wrong
-					obj.filename = filename
-					obj.read_contents_of_sibling_entry = read_contents_of_sibling_entry
-					interface.alsoProvides( obj, lib_interfaces.IFilesystemEntry )
-
-				self[k] = obj
 			if 'Items' in item:
 				self._from_index_entry( item, hierarchy_entry )
 
@@ -85,6 +94,9 @@ def add_assessment_items_from_new_content( title, event ):
 		return
 
 	asm_index_text = title.read_contents_of_sibling_entry( 'assessment_index.json' )
+	_populate_question_map_from_text( question_map, asm_index_text, title )
+
+def _populate_question_map_from_text( question_map, asm_index_text, title ):
 	if asm_index_text:
 		asm_index_text = unicode(asm_index_text)
 		# In this one specific case, we know that these are already

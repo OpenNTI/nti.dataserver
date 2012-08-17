@@ -166,10 +166,18 @@ def _resolve_externals(containedObject, externalObject, registry=component, cont
 # Things we don't bother trying to internalize
 _primitives = six.string_types + (numbers.Number,bool)
 
+def _object_hook( k, v, x ):
+	return v
+
+def _recall( k, obj, ext_obj, kwargs ):
+	obj = update_from_external_object( obj, ext_obj, **kwargs )
+	obj = kwargs['object_hook']( k, obj, ext_obj )
+	return obj
+
 def update_from_external_object( containedObject, externalObject,
 								 registry=component, context=None,
 								 require_updater=False,
-								 notify=True ):
+								 notify=True, object_hook=_object_hook ):
 	"""
 	:param context: An object passed to the update methods.
 	:param require_updater: If True (not the default) an exception will be raised
@@ -180,9 +188,15 @@ def update_from_external_object( containedObject, externalObject,
 		then an :class:`lifecycleevent.IObjectModifiedEvent` will be fired. This may
 		be a recursive process so a top-level call to this object may spawn
 		multiple events.
+	:param callable object_hook: If given, called with the results of every nested object
+		as it has been updated. The return value will be used instead of the nested object.
+		Signature ``f(k,v,x)`` where ``k`` is either the key name, or None in the case of a sequence,
+		``v`` is the newly-updated value, and ``x`` is the external object used to update ``v``.
 
 	:return: `containedObject` after updates from `externalObject`
 	"""
+
+	kwargs = dict( registry=registry, context=context, require_updater=require_updater, notify=notify, object_hook=object_hook )
 
 	# Parse any contained objects
 	# TODO: We're (deliberately?) not actually updating any contained
@@ -199,7 +213,7 @@ def update_from_external_object( containedObject, externalObject,
 		for i in externalObject:
 			factory = find_factory_for( i, registry=registry )
 			__traceback_info__ = factory, i
-			tmp.append( update_from_external_object( factory(), i, registry, context=context, require_updater=require_updater, notify=notify ) if factory else i )
+			tmp.append( _recall( None, factory(), i, kwargs ) if factory else i )
 		return tmp
 
 	assert isinstance( externalObject, collections.MutableMapping )
@@ -207,12 +221,13 @@ def update_from_external_object( containedObject, externalObject,
 		if isinstance( v, _primitives ):
 			continue
 
-		factory = None
 		if isinstance( v, collections.MutableSequence ):
-			v = update_from_external_object( (), v, registry, context=context, require_updater=require_updater, notify=notify )
+			# Update the sequence in-place
+			v = _recall( k, (), v, kwargs )
+			externalObject[k] = v
 		else:
 			factory = find_factory_for( v, registry=registry )
-		externalObject[k] = update_from_external_object( factory(), v, registry, context=context, require_updater=require_updater, notify=notify ) if factory else v
+			externalObject[k] = _recall( k, factory(), v, kwargs ) if factory else v
 
 
 	_resolve_externals( containedObject, externalObject, registry=registry, context=context )
