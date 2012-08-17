@@ -82,7 +82,7 @@ class TestApplicationFlagging(ApplicationTestBase):
 			provided_by_n = list(interface.providedBy( n ).flattened())
 
 			n2 = contenttypes.Note()
-			n2.body = ['The second part']
+			n2.body = ['<p><em>This</em> part is HTML</p>', contenttypes.Canvas()]
 			n2.applicableRange = contentrange.ContentRangeDescription()
 			n2.containerId = 'tag:nti:foo'
 			user.addContainedObject( n2 )
@@ -103,7 +103,7 @@ class TestApplicationFlagging(ApplicationTestBase):
 
 		assert_that( res.content_type, is_( 'text/html' ) )
 		assert_that( res.body, contains_string( 'The first part' ) )
-		assert_that( res.body, contains_string( 'The second part' ) )
+		assert_that( res.body, contains_string( '<p><em>This</em> part is HTML</p>' ) )
 
 		# This should not have changed the implemented/provided lists of the objects
 		with mock_dataserver.mock_db_trans( self.ds ):
@@ -131,7 +131,7 @@ class TestApplicationFlagging(ApplicationTestBase):
 		res = testapp.get( path, extra_environ=self._make_extra_environ() )
 		assert_that( res.content_type, is_( 'text/html' ) )
 		assert_that( res.body, does_not( contains_string( 'The first part' ) ) )
-		assert_that( res.body, contains_string( 'The second part' ) )
+		assert_that( res.body, contains_string( '<p><em>This</em> part is HTML</p>' ) )
 
 		form = res.form
 		form.set( 'table-note-selected-0-selectedItems', True, index=0 )
@@ -141,4 +141,4 @@ class TestApplicationFlagging(ApplicationTestBase):
 		res = testapp.get( path, extra_environ=self._make_extra_environ() )
 		assert_that( res.content_type, is_( 'text/html' ) )
 		assert_that( res.body, does_not( contains_string( 'The first part' ) ) )
-		assert_that( res.body, does_not( contains_string( 'The second part' ) ) )
+		assert_that( res.body, does_not( contains_string( '<p><em>This</em> part is HTML</p>' ) ) )
