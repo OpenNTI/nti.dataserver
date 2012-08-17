@@ -15,22 +15,23 @@ from zope.generations.utility import findObjectsProviding, findObjectsMatching
 from nti.dataserver import users
 from nti.dataserver.utils import run_with_dataserver
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.chat_transcripts import _MeetingTranscriptStorage as MTS
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.interfaces import StandardExternalFields
+from nti.dataserver.chat_transcripts import _DocidMeetingTranscriptStorage as DMTS
 
 def get_object_type(obj):
 	result = obj.__class__.__name__
 	return result.lower() if result else u''
 
 def get_user_objects(user, object_types=()):
+	
 	for obj in findObjectsProviding( user, nti_interfaces.IModeledContent):
 		type_name = get_object_type(obj)
 		if not object_types or type_name in object_types:
 			yield type_name, obj
 
 	if not object_types or 'transcript' in object_types or 'messageinfo' in object_types:
-		for mts in findObjectsMatching( user, lambda x: isinstance(x,MTS) ):
+		for mts in findObjectsMatching( user, lambda x: isinstance(x, DMTS) ):
 			adapted = getAdapter(mts, nti_interfaces.ITranscript)
 			yield 'transcript', adapted
 
@@ -89,7 +90,8 @@ def main():
 	object_types = set(sys.argv[4:])
 
 	# run export
-	run_with_dataserver( environment_dir=env_dir, function=lambda: export_user_objects(username, object_types, export_dir) )
+	run_with_dataserver(environment_dir=env_dir, 
+						function=lambda: export_user_objects(username, object_types, export_dir) )
 
 if __name__ == '__main__':
 	main()

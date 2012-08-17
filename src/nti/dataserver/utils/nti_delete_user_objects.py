@@ -15,9 +15,9 @@ from nti.dataserver import users
 from nti.dataserver.users import Community
 from nti.dataserver.utils import run_with_dataserver
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.chat_transcripts import _MeetingTranscriptStorage as MTS
 from nti.externalization.externalization import toExternalObject
 from nti.contentsearch.utils.nti_remove_user_content import remove_user_content
+from nti.dataserver.chat_transcripts import _DocidMeetingTranscriptStorage as DMTS
 
 def get_object_type(obj):
 	result = obj.__class__.__name__
@@ -30,7 +30,7 @@ def get_user_objects(user, object_types=()):
 			yield type_name, obj, obj
 
 	if not object_types or 'transcript' in object_types or 'messageinfo' in object_types:
-		for mts in findObjectsMatching( user, lambda x: isinstance(x,MTS) ):
+		for mts in findObjectsMatching( user, lambda x: isinstance(x, DMTS) ):
 			adapted = getAdapter(mts, nti_interfaces.ITranscript)
 			yield 'messageinfo', adapted, mts
 
