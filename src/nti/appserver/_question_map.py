@@ -42,8 +42,22 @@ class QuestionMap(dict):
 				factory = nti.externalization.internalization.find_factory_for( v )
 				assert factory is not None
 				obj = factory()
+				orig_v = None
+				if 'questions' in v:
+					# FIXME: See below. Must save before internalization updates in place.
+					orig_v = dict( v )
+
 				nti.externalization.internalization.update_from_external_object( obj, v, require_updater=True )
 				obj.ntiid = k
+
+				# FIXME: The below (and above) is a hack to try to get questions loaded in QuestionSets
+				# to have NTIIDS. The right fix is to probably have update_from_external_object accept the
+				# same sort of hook functions that simplejson does
+
+				if 'questions' in v and hasattr( obj, 'questions' ):
+					for quest_num, quest_dict in enumerate( orig_v['questions'] ):
+						obj.questions[quest_num].ntiid = quest_dict['NTIID']
+
 				if filename:
 					self.by_file.setdefault( filename, [] ).append( obj )
 					# Hack in ACL support. We are piggybacking off of
