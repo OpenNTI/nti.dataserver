@@ -19,6 +19,7 @@ MathJax.Hub.Config({
 			lcm: '\\text{lcm}',
 			rule:['', 2],
 			bm: ['\\boldsymbol{#1}', 1],
+		    ensuremath: ['{#1}', 1],
 			textsuperscript: ['^{\\text{#1}}', 1]
 		}
 	}
