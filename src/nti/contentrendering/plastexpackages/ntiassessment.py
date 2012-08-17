@@ -491,7 +491,7 @@ class naquestionset(Base.List,plastexids.NTIIDMixin):
 	counter = 'naquestionset'
 	_ntiid_cache_map_name = '_naquestionset_ntiid_map'
 	_ntiid_allow_missing_title = True
-	_ntiid_suffix = 'naq.'
+	_ntiid_suffix = 'naq.set.'
 	_ntiid_title_attr_name = 'ref' # Use our counter to generate IDs if no ID is given
 	_ntiid_type = as_interfaces.NTIID_TYPE
 
