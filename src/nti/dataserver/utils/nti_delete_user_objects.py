@@ -8,31 +8,11 @@ import json
 import datetime
 from collections import defaultdict
 
-from zope.component import getAdapter
-from zope.generations.utility import findObjectsProviding, findObjectsMatching
-
 from nti.dataserver import users
-from nti.dataserver.users import Community
 from nti.dataserver.utils import run_with_dataserver
-from nti.dataserver import interfaces as nti_interfaces
-from nti.externalization.externalization import toExternalObject
 from nti.contentsearch.utils.nti_remove_user_content import remove_user_content
-from nti.dataserver.chat_transcripts import _DocidMeetingTranscriptStorage as DMTS
 
-def get_object_type(obj):
-	result = obj.__class__.__name__
-	return result.lower() if result else u''
-
-def get_user_objects(user, object_types=()):
-	for obj in findObjectsProviding( user, nti_interfaces.IModeledContent):
-		type_name = get_object_type(obj)
-		if (not object_types or type_name in object_types) and not isinstance(obj, Community):
-			yield type_name, obj, obj
-
-	if not object_types or 'transcript' in object_types or 'messageinfo' in object_types:
-		for mts in findObjectsMatching( user, lambda x: isinstance(x, DMTS) ):
-			adapted = getAdapter(mts, nti_interfaces.ITranscript)
-			yield 'messageinfo', adapted, mts
+from nti.dataserver.utils.nti_export_user_objects import get_user_objects, to_external_object
 
 def remove_user_objects( username, object_types=(), export_dir=None ):
 	user = users.User.get_user( username )
@@ -51,7 +31,7 @@ def remove_user_objects( username, object_types=(), export_dir=None ):
 
 	counter = 0
 	for type_name, adapted, obj in get_user_objects( user, object_types):
-		external = toExternalObject(adapted)
+		external = to_external_object(adapted)
 		with user.updates():
 			_id = getattr(obj, 'id', None )
 			containerId = getattr(obj, 'containerId', None )

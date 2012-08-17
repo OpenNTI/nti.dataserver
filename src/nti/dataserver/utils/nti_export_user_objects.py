@@ -19,29 +19,37 @@ from nti.externalization.externalization import toExternalObject
 from nti.externalization.interfaces import StandardExternalFields
 from nti.dataserver.chat_transcripts import _DocidMeetingTranscriptStorage as DMTS
 
-def get_object_type(obj):
+def _get_object_type(obj):
 	result = obj.__class__.__name__
 	return result.lower() if result else u''
+
+def _is_transcript(type_name):
+	return type_name in ('transcript', 'messageinfo')
+
+def _clean_links(obj):
+	if isinstance(obj, Mapping):
+		obj.pop(StandardExternalFields.LINKS, None)
+		map(_clean_links, obj.values())
+	elif isinstance(obj, (list, tuple)):
+		map(_clean_links, obj)
+	return obj
 
 def get_user_objects(user, object_types=()):
 	
 	for obj in findObjectsProviding( user, nti_interfaces.IModeledContent):
-		type_name = get_object_type(obj)
-		if not object_types or type_name in object_types:
-			yield type_name, obj
+		type_name = _get_object_type(obj)
+		if (not object_types or type_name in object_types) and not _is_transcript(type_name):
+			yield type_name, obj, obj
 
 	if not object_types or 'transcript' in object_types or 'messageinfo' in object_types:
 		for mts in findObjectsMatching( user, lambda x: isinstance(x, DMTS) ):
 			adapted = getAdapter(mts, nti_interfaces.ITranscript)
-			yield 'transcript', adapted
-
-def clean_links(obj):
-	if isinstance(obj, Mapping):
-		obj.pop(StandardExternalFields.LINKS, None)
-		map(clean_links, obj.values())
-	elif isinstance(obj, (list, tuple)):
-		map(clean_links, obj)
-	return obj
+			yield 'transcript', adapted, obj
+			
+def to_external_object(obj):
+	external = toExternalObject(obj)
+	_clean_links(external)
+	return external
 
 def export_user_objects( username, object_types=(), export_dir="/tmp"):
 	user = users.User.get_user( username )
@@ -59,9 +67,8 @@ def export_user_objects( username, object_types=(), export_dir="/tmp"):
 	object_types = set(map(lambda x: x.lower(), object_types))
 
 	result = defaultdict(list)
-	for type_name, obj in get_user_objects( user, object_types):
-		external = toExternalObject(obj)
-		clean_links(external)
+	for type_name, adapted, _ in get_user_objects( user, object_types):
+		external = to_external_object(adapted)
 		result[type_name].append(external)
 
 	counter = 0
