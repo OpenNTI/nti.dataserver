@@ -37,7 +37,3 @@ class SearchCallWrapper(object):
 		def wrapper(*args, **kargs):
 			return self(instance, *args, **kargs)
 		return wrapper
-
-def create_repoze_datastore():
-	from nti.contentsearch._repoze_datastore import RepozeCatalogDataStore
-	return RepozeCatalogDataStore()
