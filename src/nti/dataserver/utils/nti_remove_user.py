@@ -10,9 +10,9 @@ from nti.dataserver.utils import run_with_dataserver
 
 import argparse
 
-_type_map = { 'user': users.User.create_user,
-			  'provider': providers.Provider.create_provider,
-			  'community': users.Community.create_community }
+_type_map = { 'user': (users.User.get_user, users.User.delete_user),
+			  'provider': (providers.Provider.get_entity, providers.Provider.delete_entity),
+			  'community': (users.Community.get_entity,  users.Community.delete_entity) }
 
 def main():
 	arg_parser = argparse.ArgumentParser( description="Delete a user-type object" )
@@ -35,11 +35,12 @@ def main():
 
 def _delete_user( factory, username ):
 	__traceback_info__ = locals().items()
-	user = factory.get_entity(username)
-	if not user:
-		print( "User does not exists", repr(user), file=sys.stderr )
-		sys.exit(-2)
-	factory.im_self.delete_entity( username )
-	
+	getter, deleter = factory
+	entity = getter(username)
+	if not entity:
+		print( "Entity '%s' does not exists" % username, file=sys.stderr )
+		sys.exit( 2 )
+	return deleter(username)
+
 if __name__ == '__main__':
 	main()
