@@ -17,6 +17,7 @@ from pyramid.threadlocal import get_current_request
 from pyramid import traversal
 from pyramid.view import view_config
 
+import sys
 import time
 import itertools
 import warnings
@@ -277,12 +278,15 @@ class _ContentUnitPreferencesPutView(UGDModifyViewBase):
 	def _transformInput( self, value ):
 		return value
 
-	def _do_update_from_external_object( self, unit_prefs, externalValue, notify=True ):
+	def updateContentObject( self, unit_prefs, externalValue, set_id=False, notify=True ):
 		# At this time, externalValue must be a dict containing the 'sharedWith' setting
-		unit_prefs.sharedWith = externalValue['sharedWith']
-		unit_prefs.lastModified = time.time()
-		return unit_prefs
-
+		try:
+			unit_prefs.sharedWith = externalValue['sharedWith']
+			unit_prefs.lastModified = time.time()
+			return unit_prefs
+		except KeyError:
+			exc_info = sys.exc_info()
+			raise hexc.HTTPUnprocessableEntity, exc_info[1], exc_info[2]
 
 	def __call__(self):
 		value = self.readInput()

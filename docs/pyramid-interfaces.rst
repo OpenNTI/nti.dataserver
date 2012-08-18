@@ -9,3 +9,8 @@ pyramid.interfaces
 ==================
 
 .. automodule:: pyramid.interfaces
+
+pyramid.httpexceptions
+======================
+
+.. automodule:: pyramid.httpexceptions

@@ -22,12 +22,21 @@ class Link(object):
 	"""
 	mime_type = 'application/vnd.nextthought.link'
 	elements = ()
+	target_mime_type = None
 
-	def __init__( self, target, rel='alternate', elements=() ):
+	def __init__( self, target, rel='alternate', elements=(), target_mime_type=None ):
+		"""
+		:param elements: Additional path components that should be added
+			after the target when a URL is generated
+		:param target_mime_type: If known and given, the mime type that
+			can be expected to be found after following the link.
+		"""
 		self.rel = rel
 		self.target = target
 		if elements:
 			self.elements = elements
+		if target_mime_type:
+			self.target_mime_type = target_mime_type
 
 	# Make them non-picklable
 	def __reduce__( self, *args, **kwargs ):

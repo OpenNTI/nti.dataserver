@@ -48,7 +48,7 @@ from nti.contentlibrary import interfaces as lib_interfaces
 from nti.assessment import interfaces as asm_interfaces
 
 from nti.dataserver.interfaces import ACLLocationProxy
-
+from nti.appserver import _external_object_io as obj_io
 
 class _ServiceGetView(object):
 
@@ -349,10 +349,11 @@ def _createContentObject( dataserver, owner, datatype, externalValue, creator ):
 
 class _UGDModifyViewBase(object):
 
+	inputClass = dict
 	def __init__( self, request ):
 		self.request = request
 		self.dataserver = self.request.registry.getUtility(IDataserver)
-		self.inputClass = dict
+
 
 	def readInput(self, value=None):
 		""" Returns the object specified by self.inputClass object. The data from the
@@ -362,31 +363,9 @@ class _UGDModifyViewBase(object):
 		:raises hexc.HTTPBadRequest: If there is an error parsing/transforming the
 			client request.
 		"""
-		value = value if value is not None else self.request.body
-		ext_format = 'json'
-		if (self.request.content_type or '').endswith( 'plist' ) \
-			   or (self.request.content_type or '') == 'application/xml' \
-			   or self.request.GET.get('format') == 'plist':
-			ext_format = 'plist'
-		if ext_format != 'plist' and value and value[0] == '<':
-			logger.warn( "Client send plist data with wrong content type %s", self.request.content_type )
-			ext_format = 'plist'
+		result = obj_io.read_body_as_external_object( self.request, input_data=value, expected_type=self.inputClass )
 		try:
-			if ext_format == 'plist':
-				# We're officially dropping support for plist values.
-				# primarily due to the lack of support for null values, and
-				# unsure about encoding issues
-				raise hexc.HTTPUnsupportedMediaType('XML no longer supported.')
-				#value = plistlib.readPlistFromString( value )
-			else:
-				# We need all string values to be unicode objects. simplejson (the usual implementation
-				# we get from anyjson) is different from the built-in json and returns strings
-				# that can be represented as ascii as str objects if the input was a bytestring.
-				# The only way to get it to return unicode is if the input is unicode
-				if json.implementation.name == 'simplejson' and type(value) == str:
-					value = unicode(value, self.request.charset)
-				value = json.loads(value)
-			return self._transformInput(  value )
+			return self._transformInput( result )
 		except hexc.HTTPException:
 			logger.exception( "Failed to parse/transform value %s %s", ext_format, value )
 			raise
@@ -402,34 +381,19 @@ class _UGDModifyViewBase(object):
 			ex = hexc.HTTPBadRequest()
 			raise ex, None, tb
 
-
 	def getRemoteUser( self ):
 		return users.User.get_user( sec.authenticated_userid( self.request ), dataserver=self.dataserver )
 
 	def _transformInput( self, value ):
-		pm = self.inputClass( )
-		pm.update( value )
-		if hasattr( pm, 'creator'):
-			setattr( pm, 'creator', self.getRemoteUser() )
-		return pm
+		return value
 
 	def _check_object_exists(self, o, cr='', cid='', oid=''):
 		if o is None:
 			raise hexc.HTTPNotFound( "No object %s/%s/%s" % (cr, cid,oid))
 
-	def _do_update_from_external_object( self, contentObject, externalValue, notify=True ):
-		return nti.externalization.internalization.update_from_external_object( contentObject, externalValue, context=self.dataserver, notify=notify )
-
 	def updateContentObject( self, contentObject, externalValue, set_id=False, notify=True ):
-		try:
-			__traceback_info__ = contentObject, externalValue
-			containedObject = self._do_update_from_external_object( contentObject, externalValue, notify=notify )
-		except (ValueError,AssertionError,interface.Invalid,TypeError,KeyError):
-			# These are all 'validation' errors. Raise them as unprocessable entities
-			# interface.Invalid, in particular, is the root class of zope.schema.ValidationError
-			logger.exception( "Failed to update content object, bad input" )
-			exc_info = sys.exc_info()
-			raise HTTPUnprocessableEntity, exc_info[1], exc_info[2]
+		containedObject = obj_io.update_object_from_external_object( contentObject, externalValue, notify=notify )
+
 		# If they provided an ID, use it if we can and we need to
 		if set_id and StandardExternalFields.ID in externalValue \
 			and hasattr( containedObject, StandardInternalFields.ID ) \
@@ -745,12 +709,12 @@ class _UGDFieldPutView(_UGDPutView):
 	The context is an `IExternalFieldResource`
 	"""
 
-	def readInput( self ):
-		value = super(_UGDFieldPutView,self).readInput()
+	inputClass = object
+
+	def readInput( self, value=None ):
+		value = super(_UGDFieldPutView,self).readInput(value=value)
 		return { self.request.context.__name__: value }
 
-	def _transformInput( self, value ):
-		return value
 
 def _force_update_modification_time( object, lastModified, max_depth=-1 ):
 	"""Traverse up the parent tree (up to `max_depth` times) updating modification times."""

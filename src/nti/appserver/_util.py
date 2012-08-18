@@ -11,10 +11,11 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from pyramid.security import authenticated_userid
+from pyramid.security import authenticated_userid, remember
 from pyramid.threadlocal import get_current_request
 
 from zope import interface
+from zope.event import notify
 from zope.proxy.decorator import SpecificationDecoratorBase
 from zope.location.interfaces import ILocation
 
@@ -22,7 +23,9 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization import oids as ext_oids
 
 from nti.dataserver import links
+from nti.dataserver import users
 
+from nti.dataserver import interfaces as nti_interfaces
 from nti.appserver import interfaces as app_interfaces
 
 class AbstractTwoStateViewLinkDecorator(object):
@@ -37,9 +40,11 @@ class AbstractTwoStateViewLinkDecorator(object):
 	.. py:attribute:: predicate
 
 		The function of two paramaters (object and username) to call
+
 	.. py:attribute:: false_view
 
 		The name of the view to use when the predicate is false.
+
 	.. py:attribute:: true_view
 
 		The name of the view to use when the predicate is true.
@@ -99,11 +104,34 @@ def uncached_in_response( context ):
 	Because the context object is likely to be persistent, this uses
 	a proxy and causes the proxy to also implement :class:`nti.appserver.interfaces.IUncacheableInResponse`
 	"""
-	return _UncacheableInResponseProxy( context )
+	return context if app_interfaces.IUncacheableInResponse.providedBy(context) else _UncacheableInResponseProxy( context )
 
+def logon_userid_with_request( userid, request, response=None ):
+	"""
+	Mark that the user has logged in. This is done by notifying a :class:`nti.appserver.interfaces.IUserLogonEvent`.
+
+	:param basestring userid: The account name that should be logged in.
+	:param request: Pyramid request that is active and responsible for the login.
+	:param response: If given, then the response will be given the headers
+		to remember the logon.
+	:raise ValueError: If the userid does not belong to a valid user.
+	"""
+
+	# Send the logon event
+	dataserver = request.registry.getUtility(nti_interfaces.IDataserver)
+	user = users.User.get_user( username=userid, dataserver=dataserver )
+	if not user:
+		raise ValueError( "No user found for %s" % userid )
+
+	notify( app_interfaces.UserLogonEvent( user, request ) )
+
+	if response:
+		response.headers.extend( remember( request, user.username.encode('utf-8') ) )
 
 def dump_stacks():
 	"""
+	Request information about the running threads of the current process.
+
 	:return: A sequence of text lines detailing the stacks of running
 		threads and greenlets. (One greenlet will duplicate one thread,
 		the current thread and greenlet.)

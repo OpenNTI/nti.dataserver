@@ -147,6 +147,13 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 			assert_that( user2_stream, has_length( 1 ) )
 
 	@WithMockDSTrans
+	def test_cannot_create_twice(self):
+		user1 = User.create_user( self.ds, username='foo@bar', password='temp' )
+		with assert_raises(KeyError):
+			User.create_user( self.ds, username=user1.username, password='temp' )
+
+
+	@WithMockDSTrans
 	def test_share_unshare_note(self):
 		user1 = User.create_user( self.ds, username='foo@bar', password='temp' )
 		user2 = User.create_user( self.ds, username='fab@bar', password='temp' )

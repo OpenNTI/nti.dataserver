@@ -18,9 +18,7 @@ from zope import interface
 from zope import component
 from zope.component.factory import Factory
 from zope.deprecation import deprecated
-from zope.event import notify
 from zope import lifecycleevent
-from zope.lifecycleevent import ObjectCreatedEvent
 from zope.keyreference.interfaces import IKeyReference
 from zope.location import interfaces as loc_interfaces
 from zope.annotation import interfaces as an_interfaces
@@ -90,8 +88,8 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 		"""
 		Creates (and returns) and places in the dataserver a new entity,
 		constructed using the keyword arguments given, the same as those
-		the User constructor takes. Overwrites an existing user. You handle
-		the transaction.
+		the User constructor takes. If an user already exists with that name,
+		raises a :class:`KeyError`. You handle the transaction.
 		"""
 
 		dataserver = dataserver or _get_shared_dataserver()
@@ -109,15 +107,14 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 		IKeyReference( user ) # Ensure it gets added to the database
 		assert getattr( user, '_p_jar', None ), "User should have a connection"
 
-
-		notify( ObjectCreatedEvent( user ) ) # Fire created event
+		lifecycleevent.created( user ) # Fire created event
 		# Must manually fire added event if parent was given
 		if kwargs['parent'] is not None:
 			lifecycleevent.added( user, kwargs['parent'], user.username )
 
 		# Now store it. If there was no parent given or parent was none,
 		# this will fire ObjectAdded. If parent was given and is different than root_users,
-		# this will fire ObjectMoved
+		# this will fire ObjectMoved. If the user already exists, raises a KeyError
 		root_users[user.username] = user
 
 		return user
@@ -684,10 +681,11 @@ class User(Principal):
 
 	@classmethod
 	def create_user( cls, dataserver=None, **kwargs ):
-		""" Creates (and returns) and places in the dataserver a new user,
-		constructed using the keyword arguments given, the same as those
-		the User constructor takes. Overwrites an existing user. You handle
-		the transaction.
+		"""
+		Creates (and returns) and places in the dataserver a new user,
+		constructed using the keyword arguments given, the same as
+		those the User constructor takes. Raises a :class:`KeyError`
+		if the user already exists. You handle the transaction.
 		"""
 		return cls.create_entity( dataserver=dataserver, **kwargs )
 

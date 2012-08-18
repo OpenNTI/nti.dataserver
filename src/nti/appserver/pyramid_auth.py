@@ -30,6 +30,8 @@ from nti.dataserver import authentication as nti_authentication
 
 def _get_basicauth_credentials( request ):
 	"""
+	Check the request for credentials.
+
 	:return: Tuple (user,pass) if present and valid in the
 		request. Does not modify the request.
 	"""
@@ -47,6 +49,8 @@ def _get_basicauth_credentials( request ):
 
 def _get_basicauth_credentials_environ( environ ):
 	"""
+	Check the environment for credentials.
+
 	:return: Tuple (user,pass) if present and valid in the
 		request. Does not modify the request.
 	"""
@@ -79,6 +83,7 @@ def _decode_username( request ):
 	so clients often workaround this by percent-encoding the username.
 	Reverse that step here. This should be an outer layer before
 	authkit gets to do anything.
+
 	:return: Tuple (user,pass).
 	"""
 	username, password = _get_basicauth_credentials( request )
@@ -99,6 +104,7 @@ def _decode_username_environ( environ ):
 	so clients often workaround this by percent-encoding the username.
 	Reverse that step here. This should be an outer layer before
 	authkit gets to do anything.
+
 	:return: Tuple (user,pass).
 	"""
 	username, password = _get_basicauth_credentials_environ( environ )
@@ -119,6 +125,7 @@ def _decode_username_identity( identity ):
 	so clients often workaround this by percent-encoding the username.
 	Reverse that step here. This should be an outer layer before
 	authkit gets to do anything.
+
 	:return: Tuple (user,pass).
 	"""
 	username, password = identity['login'], identity['password']
@@ -186,7 +193,10 @@ class NTIUsersAuthenticatorPlugin(object):
 def _create_middleware( app=None ):
 	user_auth = NTIUsersAuthenticatorPlugin()
 	basicauth = BasicAuthPlugin('NTI')
-	auth_tkt = AuthTktCookiePlugin('secret', 'nti.auth_tkt', timeout=30*24*60*60, reissue_time=600)
+	# Note that the cookie name needs to be bytes, not unicode. Otherwise we wind up with
+	# unicode objects in the headers, which are supposed to be ascii. Things like the Cookie
+	# module (used by webtest) then fail
+	auth_tkt = AuthTktCookiePlugin('secret', b'nti.auth_tkt', timeout=30*24*60*60, reissue_time=600)
 	# For testing, we let basic-auth set cookies. We don't want to do this
 	# generally.
 	#basicauth.include_ip = False
