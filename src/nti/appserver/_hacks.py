@@ -30,12 +30,10 @@ class _FriendsListsFriendsFieldUpdateView(UGDPutView):
 	after a friends list.
 	"""
 
-	def _transformInput( self, value ):
-		return value
+	inputClass = list
 
 	def _get_object_to_update( self ):
 		return self.request.context
 
-	def _do_update_from_external_object( self, unit_prefs, externalValue, notify=True ):
-		externalValue = {"friends": externalValue}
-		return super(_FriendsListsFriendsFieldUpdateView,self)._do_update_from_external_object( unit_prefs, externalValue, notify=notify )
+	def _transformInput( self, externalValue ):
+		return {"friends": externalValue}

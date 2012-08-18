@@ -3,45 +3,88 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-========================================
- Welcome to Dataserver's documentation!
-========================================
+====================================
+ NextThought Platform Documentation
+====================================
 
-Contents:
+
+Conceptual Documentation
+========================
 
 .. toctree::
 	:maxdepth: 2
 
-	nginx-gunicorn
-	relstorage-and-rds
 
 	ipad-localremotebridge
-
 	ntiid-structure
-	ntiids
-
 	authorization
-
 	object-refs
+	dataserver-contenttypes
+	http-rest
+
+Content
+-------
+
+.. toctree::
+	:maxdepth: 2
+
 
 	content-anchoring
-	content-in-cdn
 	content-resolving
 	content-glossaries
+
+
+Deployment and Setup
+====================
+
+.. toctree::
+	:maxdepth: 2
+
+
+	nginx-gunicorn
+	relstorage-and-rds
+	content-in-cdn
+	passenger
+
+Users and Logon
+===============
+
+.. toctree::
+	:maxdepth: 2
+
+	user_logon
+
+Tasks
+=====
+
+.. toctree::
+	:maxdepth: 2
+
 	liking
 	flagging
-	contentfragments
-	passenger
-	dataserver-contenttypes
-	whiteboard-apis-v1
-	api
+
+Chat
+====
+
+.. toctree::
+	:maxdepth: 2
+
 
 	chat-apis
 	chatserver
 	chat-transcripts
 
+
+Other Documents
+===============
+
+.. toctree::
+	:maxdepth: 2
+
+
+	ntiids
 	interfaces
-	http-rest
+
 	contentrendering-api
 	content-anchoring-api
 	socketio-api
@@ -55,6 +98,13 @@ Contents:
 
 	nti-utils
 	nti-zodb
+
+	contentfragments
+
+	whiteboard-apis-v1
+	api
+
+
 
 Third-Party Cross Refs
 ======================

@@ -3,6 +3,12 @@
 """
 Views and data models relating to the login process.
 
+Login begins with :func:`ping`, possibly proceeding to :func:`handshake` and
+from there, depending on the user account type, to one of :func:`google_login`, :func:`facebook_oauth1`,
+or :func:`password_login`.
+
+A login session is terminated with :func:`logout`.
+
 $Id$
 """
 
@@ -16,9 +22,8 @@ logger = logging.getLogger(__name__)
 import openid.oidutil
 openid.oidutil.log = logging.getLogger('openid').info
 
-
 from zope import interface, component, lifecycleevent
-from zope.event import notify
+
 from nti.dataserver import interfaces as nti_interfaces
 from nti.externalization import interfaces as ext_interfaces
 from nti.appserver import interfaces as app_interfaces
@@ -26,6 +31,9 @@ from nti.appserver import interfaces as app_interfaces
 from nti.dataserver.links import Link
 from nti.dataserver import mimetype
 from nti.dataserver import users
+
+from nti.appserver._util import logon_userid_with_request
+from nti.appserver.account_creation_views import REL_CREATE_ACCOUNT
 
 from pyramid.view import view_config
 from pyramid import security as sec
@@ -81,7 +89,39 @@ def _links_for_authenticated_users( request ):
 
 	return links
 
+def _links_for_unauthenticated_users( request ):
+	"""
+	If a request is unauthenticated, returns links that should
+	go to anonymous users.
+
+	In particular, this will provide a link to be able to create accounts.
+	"""
+	links = ()
+	remote_user_name = sec.authenticated_userid( request )
+	if not remote_user_name:
+		create_account = request.route_path( 'objects.generic.traversal', traverse=('users') )
+		link = Link( create_account, rel=REL_CREATE_ACCOUNT,
+					 target_mime_type=mimetype.nti_mimetype_from_object( users.User ),
+					 elements=('@@' + REL_CREATE_ACCOUNT,))
+
+		links = (link,)
+
+	return links
+
 def _forgetting( request, redirect_param_name, no_param_class, redirect_value=None, error=None ):
+	"""
+	:param redirect_param_name: The name of the request parameter we look for to provide
+		a redirect URL.
+	:param no_param_class: A factory to use to produce a response if no redirect
+		has been specified. Commonly :class:`pyramid.httpexceptions.HTTPNoContent`
+		or :class:`pyramid.httpexceptions.HTTPUnauthorized`.
+	:type no_param_class: Callable of no arguments
+	:keyword redirect_value: If given, this will be the redirect URL to use; `redirect_param_name`
+		will be ignored.
+	:keyword error: A string to add to the redirect URL as the ``error`` parameter.
+	:return: The response object, set up for the redirect. The view (our caller) will return
+		this.
+	"""
 	response = None
 	if not redirect_value:
 		redirect_value = request.params.get( redirect_param_name )
@@ -112,6 +152,8 @@ def _forgetting( request, redirect_param_name, no_param_class, redirect_value=No
 
 @view_config(route_name=REL_LOGIN_LOGOUT, request_method='GET')
 def logout(request):
+	"Cause the response to the request to terminate the authentication."
+
 	# Terminate any sessions they have open
 	# TODO: We need to associate the socket.io session somehow
 	# so we can terminate just that one session (we cannot terminate all,
@@ -124,12 +166,13 @@ def ping( request ):
 	The first step in authentication.
 
 	:return: An externalizable object containing a link to the handshake URL, and potentially
-	to the continue URL if authentication was valid.
+		to the continue URL if authentication was provided and valid.
 	"""
 	links = []
 	handshake_href = request.route_path( 'logon.handshake' )
 	links.append( Link( handshake_href, rel=REL_HANDSHAKE ) )
 	links.extend( _links_for_authenticated_users( request ) )
+	links.extend( _links_for_unauthenticated_users( request ) )
 
 	return _Pong( links )
 
@@ -191,6 +234,7 @@ def handshake(request):
 	links = list( links.values() )
 
 	links.extend( _links_for_authenticated_users( request ) )
+	links.extend( _links_for_unauthenticated_users( request ) )
 
 	return _Handshake( links )
 
@@ -324,8 +368,8 @@ class _OnlineQueryGoogleLoginLinkProvider(object):
 				google_rsp = requests.get( 'https://www.google.com/accounts/o8/.well-known/host-meta',
 										   params={'hd': domain},
 										   timeout=_REQUEST_TIMEOUT )
-			except RequestException:
-				# Timeout, no resolution, nothing to cache
+			except (IOError,RequestException):
+				# Timeout or invalid network connection, no resolution, nothing to cache
 				logger.info( "Timeout checking Google apps account for %s", domain )
 				return None
 			else:
@@ -374,12 +418,7 @@ def _create_success_response( request, userid=None, success=None ):
 	if userid is None:
 		userid = sec.authenticated_userid( request )
 
-	response.headers.extend( sec.remember( request, userid ) )
-
-	# Send the logon event
-	dataserver = request.registry.getUtility(nti_interfaces.IDataserver)
-	user = users.User.get_user( username=userid, dataserver=dataserver )
-	notify( app_interfaces.UserLogonEvent( user, request ) )
+	logon_userid_with_request( userid, request, response )
 
 	return response
 

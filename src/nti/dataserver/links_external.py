@@ -63,7 +63,7 @@ def render_link( link, nearest_site=None ):
 
 	target = link.target
 	rel = link.rel
-	content_type = nti_mimetype_from_object( target )
+	content_type = link.target_mime_type or nti_mimetype_from_object( target )
 
 	href = None
 	ntiid = getattr( target, 'ntiid', None ) \

@@ -18,6 +18,7 @@ from zope.proxy import ProxyBase
 import zope.site.interfaces
 
 from zope.interface.common.mapping import IFullMapping
+from zope.mimetype import interfaces as mime_interfaces
 
 from nti.contentrange import interfaces as rng_interfaces
 
@@ -147,6 +148,13 @@ class ILink(interface.Interface):
 		description="""Each element must be a string and will be a new URL segment.
 
 		This is useful for things like view names or namespace traversals.""")
+
+	target_mime_type = schema.TextLine(
+		title='Target Mime Type',
+		description="The mime type explicitly specified for the target object, if any",
+		constraint=mime_interfaces.mimeTypeConstraint,
+		required=False )
+
 
 
 class ILinked(interface.Interface):

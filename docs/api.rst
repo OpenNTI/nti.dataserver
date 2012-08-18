@@ -49,5 +49,3 @@ Dataserver API documentation
 .. automodule:: nti.appserver.workspaces
 .. automodule:: nti.appserver.dataserver_pyramid_views
 .. automodule:: nti.appserver.dataserver_socketio_views
-.. automodule:: nti.appserver.logon
-.. automodule:: nti.appserver.pyramid_auth
