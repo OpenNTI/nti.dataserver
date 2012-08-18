@@ -23,19 +23,11 @@ from nltk.tokenize import RegexpTokenizer
 import logging
 logger = logging.getLogger(__name__)
 
-
-
 name_anchor_pattern = re.compile(".+[#a\d+]$")
 ref_pattern = re.compile("<span class=\"ref\">(.*)</span>")
 last_m_pattern = re.compile("<meta content=\"(.*)\" http-equiv=\"last-modified\"")
 page_c_pattern = re.compile("<div class=\"page-contents\">(.*)</body>")
 default_tokenizer = RegexpTokenizer(r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-']\w+)*", flags = re.MULTILINE | re.DOTALL)
-
-scope_pattern = re.compile(r'<(\w).*name="(.*)".*itemscope.*itemtype="http://schema.org/CreativeWork".*>',\
-							   re.MULTILINE | re.DOTALL)
-
-prop_pattern = re.compile(r'<(\w).*itemprop="(.*)".*>', re.MULTILINE | re.DOTALL)
-
 
 def get_schema():
 	return create_book_schema()
@@ -158,100 +150,6 @@ def get_first_paragraph(text):
 			return content
 	return ''
 
-# -----------------------------
-
-class _Node(object):
-	def __init__(self, tag, name, level):
-		self.tag = tag
-		self.level = level
-		self.children = []
-		self.properties = []
-		self.name = unicode(name)
-
-	def __str__(self):
-		return "<%s,%s,%s>" % ( self.level, self.name, self.properties )
-
-	def __repr__(self):
-		return self.__str__()
-
-	def add_property(self, value):
-		self.properties.append(unicode(value.lower()))
-
-def _peek(stack):
-	return stack[len(stack) -1] if stack else None
-
-def _pop(stack, result):
-	node = stack.pop()
-	result.append(node)
-	if stack:
-		_peek(stack).children.append(node)
-
-def get_microdata(html, sort=True):
-	"""
-	returns the NTI provide microdata from the specified html string
-	"""
-	level = 0
-	scopes = []
-	objects = []
-
-	idx = 0
-	length = len(html)
-	element = []
-	while idx < length:
-		if html[idx] == '<' or html[idx] == '>':
-			if element:
-				if html[idx] == '>':
-					element.append(html[idx])
-					tag = ''.join(element).strip()
-					element = []
-				else:
-					element.append('>')
-					tag = ''.join(element).strip()
-					element = [html[idx]]
-
-				if not tag.startswith("</"):
-					level = level + 1
-
-					sg = scope_pattern.search(tag)
-					if sg:
-						scopes.append( _Node(sg.groups()[0], sg.groups()[1], level) )
-					else:
-						m = prop_pattern.search(tag)
-						if m and scopes:
-							_peek(scopes).add_property(m.groups()[1])
-
-					if tag.endswith("/>"):
-						if sg:
-							_pop(scopes, objects)
-
-						level = level - 1
-				else:
-					if scopes and _peek(scopes).level == level:
-						_pop(scopes, objects)
-
-					level = level - 1
-			else:
-				element.append(html[idx])
-
-		elif element:
-			element.append(html[idx])
-
-		idx = idx + 1
-
-	# check if there are left overs
-	while scopes:
-		_pop(scopes, objects)
-
-	if sort:
-		objects.sort( key=lambda n: n.level)
-
-	result = []
-	for node in objects:
-		result.append( (node.name, node.properties) )
-
-	return result
-
-
 def _index_node(writer, node, contentPath, optimize=False):
 	"""
 	Index a the information for a toc node
@@ -287,9 +185,6 @@ def _index_node(writer, node, contentPath, optimize=False):
 	content = ' '.join(word_splitter(pageRawContent))
 
 	keywords = set()
-	for _, properties in get_microdata(rawContent):
-		keywords.update(properties)
-
 	try:
 		as_time = datetime.fromtimestamp(float(last_modified))
 		writer.add_document(ntiid=unicode(ntiid),
