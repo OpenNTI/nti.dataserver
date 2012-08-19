@@ -27,8 +27,8 @@ class TestEvolve13(nti.tests.ConfiguringTestBase):
 	@fudge.patch( 'nti.dataserver.users._get_shared_dataserver' )
 	def test_evolve13(self, mock_ds):
 		dbs = {}
-		db = DB( MappingStorage.MappingStorage(), databases=dbs )
-		DB( MappingStorage.MappingStorage(), databases=dbs, database_name='Sessions' )
+		db = DB( MappingStorage.MappingStorage(), databases=dbs, database_name='Root' )
+		_sdb = DB( MappingStorage.MappingStorage(), databases=dbs, database_name='Sessions' )
 		context = fudge.Fake().has_attr( connection=db.open() )
 
 		mock_ds.is_callable().returns_fake().is_a_stub()

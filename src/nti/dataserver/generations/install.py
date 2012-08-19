@@ -42,6 +42,7 @@ from nti.dataserver import session_storage
 from nti.dataserver import containers as container
 from nti.dataserver import intid_utility
 from nti.dataserver import flagging
+from nti.dataserver import shards as ds_shards
 
 import copy
 def install_chat( context ):
@@ -73,13 +74,20 @@ def install_main( context ):
 	dataserver_folder.setSiteManager( lsm )
 	assert ISite.providedBy( dataserver_folder )
 
-	# FIXME: These should almost certainly be IFolder implementations?
+	# Set up the shard directory, and add this object to it
+	# Shard objects contain information about the shard, including
+	# object placement policies (?). They live in the main database
+	shards = container.LastModifiedBTreeContainer()
+	dataserver_folder['shards'] = shards
+	shards[conn.db().database_name] = ds_shards.ShardInfo()
+	assert conn.db().database_name != 'unnamed', "Must give a name"
+	assert shards[conn.db().database_name].__name__
+
+
 	# TODO: the 'users' key should probably be several different keys, one for each type of
 	# Entity object; that way traversal works out much nicer and dataserver_pyramid_views is
 	# simplified through dropping UserRootResource in favor of normal traversal
-	for key in ('users', 'vendors', 'library', 'quizzes', 'providers' ):
-		dataserver_folder[key] = container.CaseInsensitiveLastModifiedBTreeContainer()
-		dataserver_folder[key].__name__ = key
+	install_root_folders( dataserver_folder )
 
 	if 'Everyone' not in dataserver_folder['users']:
 		# Hmm. In the case that we're running multiple DS instances in the
@@ -93,11 +101,6 @@ def install_main( context ):
 	# gocept.reference
 	users.EVERYONE = dataserver_folder['users']['Everyone']
 
-	# By keeping track of changes in one specific place, and weak-referencing
-	# them elsewhere, we can control how much history is kept in one place.
-	# This also solves the problem of 'who owns the change?' We do.
-	# TODO: This can probably go away now?
-	dataserver_folder['changes'] = PersistentList()
 
 	# Install the site manager and register components
 	root['nti.dataserver_root'] = root_folder
@@ -136,3 +139,46 @@ def install_flag_storage( dataserver_folder ):
 	lsm = dataserver_folder.getSiteManager()
 
 	lsm.registerUtility( flagging.IntIdGlobalFlagStorage(), provided=nti_interfaces.IGlobalFlagStorage )
+
+def install_root_folders( parent_folder,
+						  folder_type=container.CaseInsensitiveLastModifiedBTreeFolder,
+						  folder_names=('users', 'providers', 'quizzes'),  # TODO: Drop quizzes
+						  extra_folder_names=(),
+						  exclude_folder_names=() ):
+	for key in set( ('users', 'providers', 'quizzes' ) + extra_folder_names) - set( exclude_folder_names ):
+		parent_folder[key] = folder_type()
+		parent_folder[key].__name__ = key
+
+from nti.dataserver.interfaces import IShardLayout
+def install_shard( root_conn, new_shard_name ):
+	"""
+	Given a root connection that is already modified to include a shard database
+	connection having the given name, set up the datastructures for that new
+	name to be a shard.
+	"""
+	# TODO: The tests for this live up in appserver/account_creation_views
+	root_layout = IShardLayout( root_conn )
+	shards = root_layout.shards
+	if new_shard_name in shards:
+		raise KeyError( "Shard already exists", new_shard_name )
+
+	shard_conn = root_conn.get_connection( new_shard_name )
+	shard_root = shard_conn.root()
+	# TODO: Within this, how much of the site structure do we need/want to mirror?
+	# Right now, I'm making the new dataserver_folder a child of the main root folder and giving it
+	# a shard name. But I'm not setting up any site managers
+	root_folder = root_layout.root_folder
+
+	dataserver_folder = Folder()
+	interface.alsoProvides( dataserver_folder, nti_interfaces.IDataserverFolder )
+	shard_conn.add( dataserver_folder ) # Put it in the right DB
+	shard_root['nti.dataserver'] = dataserver_folder
+	# make it a child of the root folder (TODO: Yes? This gets some cross-db stuff into the root
+	# folder, which may not be good. We deliberately avoided that for the 'shards' key)
+	root_folder[new_shard_name] = dataserver_folder
+	shards[new_shard_name] = ds_shards.ShardInfo()
+	# Put the same things in there, but they must not take ownership or generate
+	# events
+	install_root_folders( dataserver_folder,
+						  folder_type=container.EventlessLastModifiedBTreeContainer,
+						  exclude_folder_names=('quizzes',) )

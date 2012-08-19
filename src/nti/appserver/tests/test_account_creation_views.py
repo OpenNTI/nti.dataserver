@@ -35,7 +35,9 @@ from nti.appserver.tests import ConfiguringTestBase
 
 import pyramid.httpexceptions as hexc
 
-
+from nti.dataserver.interfaces import IShardLayout, INewUserPlacer
+import nti.dataserver.tests.mock_dataserver
+from nti.dataserver import shards
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.externalization.externalization import to_json_representation
 
@@ -70,7 +72,7 @@ class TestCreateView(ConfiguringTestBase):
 		component.provideHandler( eventtesting.events.append, (None,) )
 		self.request.content_type = 'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason@nextthought.com',
-														 'password': 'password' } )
+													 'password': 'password' } )
 
 
 		new_user = account_create_view( self.request )
@@ -94,6 +96,42 @@ class TestCreateView(ConfiguringTestBase):
 
 		with assert_raises( hexc.HTTPConflict ):
 			account_create_view( self.request )
+
+	@WithMockDSTrans
+	def test_create_shard_matches_request_host( self ):
+		assert_that( self.request.host, is_( 'example.com:80' ) )
+		mock_dataserver.add_memory_shard( self.ds, 'example.com' )
+
+		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.body = to_json_representation( {'Username': 'jason@nextthought.com',
+													 'password': 'password' } )
+
+
+		new_user = account_create_view( self.request )
+
+		assert_that( new_user._p_jar.db(), has_property( 'database_name', 'example.com' ) )
+
+		assert_that( new_user, has_property( '__parent__', IShardLayout( mock_dataserver.current_transaction ).users_folder ) )
+
+	@WithMockDSTrans
+	def test_create_component_matches_request_host( self ):
+		assert_that( self.request.host, is_( 'example.com:80' ) )
+		mock_dataserver.add_memory_shard( self.ds, 'FOOBAR' )
+		class Placer(shards.AbstractShardPlacer):
+			def placeNewUser( self, user, users_directory, _shards ):
+				self.place_user_in_shard_named( user, users_directory, 'FOOBAR' )
+		component.provideUtility( Placer(), provides=INewUserPlacer, name='example.com' )
+
+		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.body = to_json_representation( {'Username': 'jason@nextthought.com',
+													 'password': 'password' } )
+
+
+		new_user = account_create_view( self.request )
+
+		assert_that( new_user._p_jar.db(), has_property( 'database_name', 'FOOBAR' ) )
+
+		assert_that( new_user, has_property( '__parent__', IShardLayout( mock_dataserver.current_transaction ).users_folder ) )
 
 from .test_application import ApplicationTestBase
 from webtest import TestApp

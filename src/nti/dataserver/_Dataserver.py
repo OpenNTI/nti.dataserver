@@ -226,7 +226,7 @@ interface.directlyProvides( run_job_in_site, interfaces.IDataserverTransactionRu
 
 DATASERVER_DEMO = 'DATASERVER_DEMO' in os.environ and 'DATASERVER_NO_DEMO' not in os.environ
 
-
+interface.implementer(interfaces.IShardLayout)
 class MinimalDataserver(object):
 	"""
 	Represents the basic connections and nothing more.
@@ -322,10 +322,27 @@ class MinimalDataserver(object):
 
 		raise InappropriateSiteError( "Using Dataserver outside of site manager" )
 
+	@property
+	def root_connection(self):
+		"Returns the connection to the root database, the one containing the shard map."
+		return self.root._p_jar
+
+	@property
+	def shards(self):
+		"Returns the map of known database shards."
+		return self.root['shards']
+
+	dataserver_folder = root
+
+	@property
+	def users_folder(self):
+		return self.dataserver_folder['users']
+
 	def close(self):
 		def _c( n, o ):
 			try:
-				o.close()
+				if o is not None:
+					o.close()
 			except Exception:
 				logger.warning( 'Failed to close %s', o, exc_info=True )
 				raise
@@ -339,9 +356,9 @@ class MinimalDataserver(object):
 			logger.warn( "Using dataserver without a proper ISiteManager configuration." )
 		return resolver.get_object_by_oid( oid_string, ignore_creator=ignore_creator ) if resolver else None
 
-class Dataserver(MinimalDataserver):
 
-	interface.implements(interfaces.IDataserver)
+@interface.implementer(interfaces.IDataserver)
+class Dataserver(MinimalDataserver):
 
 	def __init__(self, parentDir = "~/tmp", dataFileName="test.fs", classFactory=None, apnsCertFile=None, daemon=None  ):
 		super(Dataserver, self).__init__(parentDir, dataFileName, classFactory, apnsCertFile, daemon )

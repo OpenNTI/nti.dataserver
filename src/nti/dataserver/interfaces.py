@@ -59,6 +59,46 @@ class IDataserver(interface.Interface):
 class IDataserverFolder(zope.site.interfaces.IFolder):
 	pass
 
+class IShardInfo(zope.component.interfaces.IPossibleSite,zope.container.interfaces.IContained):
+	"""
+	Information about a database shared.
+
+	.. py:attribute:: __name__
+
+		The name of this object is also the name of the shard and the name of the
+		database.
+	"""
+
+class IShardLayout(interface.Interface):
+
+	dataserver_folder = schema.Object(IDataserverFolder,
+									  title="The root folder for the dataserver in this shard")
+
+	users_folder = schema.Object(zope.site.interfaces.IFolder,
+								 title="The folder containing users that live in this shard." )
+
+	shards = schema.Object( zope.container.interfaces.IContained,
+							title="The root shard will contain a shards folder.",
+							required=False)
+	root_folder = schema.Object( zope.site.interfaces.IRootFolder,
+								 title="The root shard will contain the root folder",
+								 required=False )
+
+class INewUserPlacer(interface.Interface):
+
+	def placeNewUser( user, root_users_folder, shards ):
+		"""
+		Put the `user` into an :class:`ZODB.interfaces.IConnection`, thus establishing
+		the home database of the user.
+
+		:param user: A new user.
+		:param root_users_folder: The main users folder. This will ultimately become the parent
+			of this user; this method should not establish a parent relationship for the object.
+		:param shards: A folder/map of :class:`IShardInfo` objects describing
+			all known shards. They may or may not all be available and active at this time.
+		:return: Undefined.
+		"""
+
 class IDataserverTransactionContextManager(interface.Interface):
 	"""
 	Something that manages the setup needed for transactions and

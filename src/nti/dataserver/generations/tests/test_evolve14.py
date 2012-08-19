@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
@@ -87,7 +88,7 @@ class TestEvolve14(nti.dataserver.tests.mock_dataserver.ConfiguringTestBase):
 		# Reset the databases, ensure nothing is cached
 		mock_ds = nti.dataserver.tests.mock_dataserver.current_mock_ds
 		mock_db = mock_ds.db
-		mock_storages = { k: db.storage for k, db in mock_db.databases.items() }
+		mock_storages = { k: db.storage for k, db in mock_db.databases.items() if db }
 		for db in mock_db.databases.values():
 			db.close()
 		mock_dbs = {}
@@ -120,7 +121,8 @@ class TestEvolve14(nti.dataserver.tests.mock_dataserver.ConfiguringTestBase):
 			ds_folder = context.connection.root()['nti.dataserver']
 			# First, the root folders got updated
 			for k in  ('users', 'vendors', 'library', 'quizzes', 'providers'):
-				v = ds_folder[k]
+				v = ds_folder.get( k, None )
+				if v is None: continue
 				assert_that( v, is_( containers.CaseInsensitiveLastModifiedBTreeContainer ) )
 
 			# The provider relationships are all good

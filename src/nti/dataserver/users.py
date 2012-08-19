@@ -90,22 +90,40 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 		constructed using the keyword arguments given, the same as those
 		the User constructor takes. If an user already exists with that name,
 		raises a :class:`KeyError`. You handle the transaction.
+
+		The newly-created user will be placed in a shard through use of a
+		:class:`nti.dataserver.interfaces.INewUserPlacer`. If the unnamed (default)
+		utility is available, it will be used. Otherwise, the utility named
+		``default`` (which is configured by this package) will be used.
 		"""
 
 		dataserver = dataserver or _get_shared_dataserver()
 		root_users = dataserver.root[cls._ds_namespace]
 		if 'parent' not in kwargs:
 			kwargs['parent'] = root_users
-		user = cls( **kwargs )
+
 		# When we auto-create users, we need to be sure
 		# they have a database connection so that things that
 		# are added /to them/ (their contained storage) in the same transaction
 		# will also be able to get a database connection and hence
 		# an OID.
-		# TODO: This can probably go away since these should be adapted
-		root_users._p_jar.add( user ) # Since there's no parent yet
+		# NOTE: This is also where we decide which database shard the user lives in
+		# First we create the skeleton object
+		user = cls.__new__( cls )
+		user.username = kwargs['username']
+		# Then we place it in a database. It's important to do this before any code
+		# runs so that subobjects which might go looking through their parents
+		# to find a IConnection find the user's IConnection *first*, before they find
+		# the `root_users` connection
+		placer = component.queryUtility( nti_interfaces.INewUserPlacer ) or component.getUtility( nti_interfaces.INewUserPlacer, name='default' )
+		placer.placeNewUser( user, root_users, dataserver.shards )
+
 		IKeyReference( user ) # Ensure it gets added to the database
 		assert getattr( user, '_p_jar', None ), "User should have a connection"
+
+		# Finally, we init the user
+		user.__init__( **kwargs )
+		assert getattr( user, '_p_jar', None ), "User should still have a connection"
 
 		lifecycleevent.created( user ) # Fire created event
 		# Must manually fire added event if parent was given
@@ -131,6 +149,11 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 
 		user = root_users[username]
 		del root_users[username]
+
+		# Also clean it up from whatever shard it happened to come from
+		home_shard = nti_interfaces.IShardLayout( IConnection( user ) )
+		if username in home_shard.users_folder:
+			del home_shard.users_folder[username]
 		return user
 
 	creator = nti_interfaces.SYSTEM_USER_NAME

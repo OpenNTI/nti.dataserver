@@ -6,6 +6,9 @@
 	<include package="zope.componentvocabulary" />
 	<include package="nti.dataserver" />
 
+	<!-- Acconut Creation -->
+	<utility factory=".account_creation_views.RequestAwareUserPlacer" />
+
 	<!-- Resource traversal -->
 	<adapter factory="._dataserver_pyramid_traversal.Dataserver2RootTraversable"
 			 provides="zope.traversing.interfaces.ITraversable" />

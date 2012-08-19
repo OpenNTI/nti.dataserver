@@ -288,3 +288,12 @@ class CaseInsensitiveLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 			if isinstance( v, numbers.Number ): # pragma: no cover
 				continue
 			yield v
+
+from zope.site.interfaces import IFolder
+from zope.site.site import SiteManagerContainer
+
+@interface.implementer(IFolder)
+class CaseInsensitiveLastModifiedBTreeFolder(CaseInsensitiveLastModifiedBTreeContainer, SiteManagerContainer):
+	"""
+	Scalable case-insensitive :class:`IFolder` implementation.
+	"""
