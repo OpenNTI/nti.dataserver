@@ -186,6 +186,7 @@ class TestChatRoom(ConfiguringTestBase):
 			n = Note()
 			room = chat.Meeting( None )
 			conn.add( n )
+			mock_dataserver.add_memory_shard( ds, 'Sessions' )
 			sconn = conn.get_connection( 'Sessions' )
 			sconn.add( room )
 			room.inReplyTo = n

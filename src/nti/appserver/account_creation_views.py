@@ -25,13 +25,19 @@ logger = __import__('logging').getLogger(__name__)
 
 import sys
 
+from zope import interface
+from zope import component
+
 from nti.dataserver import users
+from nti.dataserver import shards as nti_shards
+from nti.dataserver import interfaces as nti_interfaces
 
 from nti.appserver._util import logon_userid_with_request
 from nti.appserver import _external_object_io as obj_io
 
 from pyramid.view import view_config
 from pyramid import security as sec
+from pyramid.threadlocal import get_current_request
 
 import nti.appserver.httpexceptions as hexc
 
@@ -93,3 +99,37 @@ def account_create_view(request):
 	logon_userid_with_request( new_user.username, request, request.response )
 
 	return new_user
+
+@interface.implementer(nti_interfaces.INewUserPlacer)
+class RequestAwareUserPlacer(nti_shards.AbstractShardPlacer):
+	"""
+	A user placer that takes the current request (if there is one)
+	into account.
+
+	The policy defined by this object is currently very simple and likely to evolve.
+	These are the steps we take to place a user:
+
+	#. If there is a utility named the same as the host name, then we defer to that.
+	   This allows configuration to trump any decisions we would make here.
+	#. If there is a shard matching the host name, then the user will be placed in that
+	   shard.
+	#. If none of the previous conditions hold (or there is no request), then we will defer to the ``default``
+	   utility.
+
+	"""
+
+	def placeNewUser( self, user, users_directory, shards ):
+		placed = False
+		request = get_current_request()
+		if request:
+			host_name_no_port = request.host.split( ":" )[0]
+			placer = component.queryUtility( nti_interfaces.INewUserPlacer, name=host_name_no_port )
+			if placer:
+				placed = True
+				placer.placeNewUser( user, users_directory, shards )
+			else:
+				if host_name_no_port in shards:
+					placed = self.place_user_in_shard_named( user, users_directory, host_name_no_port )
+
+		if not placed:
+			component.getUtility( nti_interfaces.INewUserPlacer, name='default' ).placeNewUser( user, users_directory, shards )

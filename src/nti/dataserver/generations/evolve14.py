@@ -38,7 +38,8 @@ def evolve( context ):
 
 	# alright, first the root folders
 	for k in  ('users', 'vendors', 'library', 'quizzes', 'providers'):
-		old_container = dataserver_folder[k]
+		old_container = dataserver_folder.get(k, None)
+		if old_container is None: continue
 		del dataserver_folder[k]
 		dataserver_folder[k] = containers.CaseInsensitiveLastModifiedBTreeContainer()
 		for ck, cv in old_container.items():

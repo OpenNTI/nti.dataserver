@@ -60,7 +60,7 @@ from __future__ import print_function, unicode_literals
 
 from zope import component
 
-from zope.component import getAllUtilitiesRegisteredFor, subscribers
+from zope.component import getAllUtilitiesRegisteredFor, subscribers, handle
 from zope.event import notify
 from zope.keyreference.interfaces import IKeyReference
 
@@ -122,6 +122,4 @@ def addIntIdSubscriber(ob, event):
 @component.adapter(zope_intid_interfaces.IIntIdEvent)
 def intIdEventNotify(event):
 	"""Event subscriber to dispatch IntIdEvent to interested adapters."""
-	adapters = subscribers((event.object, event), None)
-	for _ in adapters:
-		pass # getting them does the work
+	handle(event.object, event)

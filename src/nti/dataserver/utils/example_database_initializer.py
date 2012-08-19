@@ -37,7 +37,7 @@ class ExampleDatabaseInitializer(object):
 	skip_passwords = False
 	minimum_generation = 8
 	nti_testers = "NTI_TESTERS"
-	
+
 	def __init__( self, *args, **kwargs ):
 		"""
 		:param int max_test_users: The number of test users to create.
@@ -189,6 +189,7 @@ class ExampleDatabaseInitializer(object):
 		class mock_dataserver(object):
 			pass
 		mock_dataserver.root = root
+		mock_dataserver.shards = root['shards']
 		USERS = self._make_usernames()
 		def create_add_user(user_tuple):
 			uname = user_tuple[0]

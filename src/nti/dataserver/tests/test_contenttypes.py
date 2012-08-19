@@ -308,6 +308,7 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 			n = Note()
 			n2 = Note()
 			conn.add( n )
+			mock_dataserver.add_memory_shard( ds, 'Sessions' )
 			sconn = conn.get_connection( 'Sessions' )
 			sconn.add( n2 )
 			n.inReplyTo = n2

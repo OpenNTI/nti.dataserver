@@ -478,10 +478,7 @@ def temp_get_config( root, demo=False ):
 		# See notes in _configure_zeo about names and cases
 		# Sessions/Search DB has gone. Provide access to it if it is still in the config, otherwise
 		# fake it
-		for k in ('Sessions','Search'):
-			if k not in db.databases:
-				db.databases[k] = None
-		return (db.databases['Users'], db.databases['Sessions'], db.databases['Search'])
+		return (db.databases['Users'], db.databases.get('Sessions'), db.databases.get('Search'))
 	env.connect_databases = connect_databases
 
 	return env

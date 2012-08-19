@@ -39,27 +39,16 @@ class ChangePassingMockDataserver(dataserver._Dataserver.Dataserver ):
 
 	def _setup_dbs( self, *args ):
 		self.conf.zeo_uris = ["memory://1?database_name=Users&demostorage=true",
-							  "memory://2?database_name=Sessions&demostorage=true",
-							  "memory://3?database_name=Search&demostorage=true",]
+							  ]
 		self.conf.zeo_launched = True
 		def make_db():
 			databases = {}
 			db = ZODB.DB( DemoStorage(), databases=databases, database_name='Users' )
-			# db.classFactory = _ClassFactory( classFactory, db.classFactory )
-
-			sessionsDB = ZODB.DB( DemoStorage(),
-								  databases=databases,
-								  database_name='Sessions')
-#			sessionsDB.classFactory = _ClassFactory( classFactory, sessionsDB.classFactory )
-
-			searchDB = ZODB.DB( DemoStorage(),
-								databases=databases,
-								database_name='Search')
 			return db
 
 		self.conf.zeo_make_db = make_db
 		if self._mock_database:
-			self.conf.connect_databases = lambda: (self._mock_database.databases['Users'], self._mock_database.databases['Sessions'], self._mock_database.databases['Search'])
+			self.conf.connect_databases = lambda: (self._mock_database.databases['Users'], None, None )
 		return super( ChangePassingMockDataserver, self )._setup_dbs( *args )
 
 #	def _setup_storages( self, *args ):
@@ -76,6 +65,19 @@ class MockDataserver(ChangePassingMockDataserver):
 	def enqueue_change( self, change, **kwargs ):
 		pass
 
+from zope.dottedname import resolve as dottedname
+def add_memory_shard( mock_ds, new_shard_name ):
+	"""
+	Operating within the scope of a transaction, add a new shard with the given
+	name to the configuration of the given mock dataserver.
+	"""
+
+	new_db = ZODB.DB( DemoStorage(), databases=mock_ds.db.databases, database_name=new_shard_name )
+
+	current_conn = mock_ds.root._p_jar
+	installer = dottedname.resolve( 'nti.dataserver.generations.install.install_shard' )
+
+	installer( current_conn, new_db.database_name )
 
 import nose.tools
 
@@ -145,12 +147,6 @@ def WithMockDS( *args, **kwargs ):
 			db = ZODB.DB( FileStorage( os.path.join( td, 'data' ), create=True),
 						  databases=databases,
 						  database_name='Users' )
-			sessionsDB = ZODB.DB( FileStorage(os.path.join( td, 'sessions' ), create=True),
-								  databases=databases,
-								  database_name='Sessions')
-			searchDB = ZODB.DB( FileStorage(os.path.join( td, 'search' ), create=True),
-								databases=databases,
-								database_name='Search')
 			md = mock_ds_factory.__new__(mock_ds_factory)
 			md._mock_database = db
 			md.__init__()
