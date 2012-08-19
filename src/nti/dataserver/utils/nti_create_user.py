@@ -4,7 +4,9 @@ from __future__ import print_function, unicode_literals
 import sys
 
 from zope import interface
+from zope import component
 
+from nti.dataserver import shards as nti_shards
 from nti.dataserver import users
 from nti.dataserver import providers
 from nti.dataserver import interfaces as nti_interfaces
@@ -29,6 +31,9 @@ def main():
 	arg_parser.add_argument( '-n', '--name',
 							 dest='name',
 							 help="The realname of the user" )
+	arg_parser.add_argument( '-s', '--shard',
+							 dest='shard',
+							 help="The name of the shard to put the user in. Overrides any automatic policy." )
 	arg_parser.add_argument( '-c', '--communities',
 							 dest='communities',
 							 nargs="+",
@@ -47,11 +52,20 @@ def main():
 	password = args.password
 
 
-	run_with_dataserver( environment_dir=env_dir, function=lambda: _create_user(_type_map[args.type], username, password, args.name, args.communities, args.coppa ) )
+	run_with_dataserver( environment_dir=env_dir, function=lambda: _create_user(_type_map[args.type], username, password, args.name, args.communities, args.coppa, args.shard ) )
 	sys.exit( 0 )
 
-def _create_user( factory, username, password, realname, communities=(), coppa=False ):
+def _create_user( factory, username, password, realname, communities=(), coppa=False, shard=None ):
 	__traceback_info__ = locals().items()
+
+	if shard:
+		# Provide the unnamed, default utility to do this
+		class FixedShardPlacer(nti_shards.AbstractShardPlacer):
+			def placeNewUser( self, user, user_directory, *args ):
+				self.place_user_in_shard_named( user, user_directory, shard )
+
+		component.provideUtility( FixedShardPlacer(), provides=nti_interfaces.INewUserPlacer )
+
 	user = factory.im_self.get_entity( username )
 	if user:
 		print( "Not overwriting existing entity", repr(user), file=sys.stderr )
