@@ -157,7 +157,7 @@ setup(
 		'repoze.who >= 2.0',
 		'repoze.zodbconn >= 0.14',
 		'grequests >= 0.1.0', #replaces requests.async in 0.13
-		'requests >= 0.13.7', # HTTP
+		'requests >= 0.13.8', # HTTP
 		'scss',
 		'setproctitle >= 1.1.6',
 		'setuptools',
@@ -206,7 +206,7 @@ setup(
 		'zope.dottedname >= 3.4.6',
 		'zope.dublincore >= 3.8.2',
 		'zope.event >= 4.0.0',
-		'zope.exceptions >= 4.0.0.1',
+		'zope.exceptions >= 4.0.1',
 		'zope.filerepresentation >= 3.6.1',
 		'zope.formlib >= 4.1.1', # Req'd by zope.mimetype among others,
 		'zope.generations >= 3.7.1',
