@@ -20,14 +20,18 @@ class ConfiguringTestBase(nti.tests.ConfiguringTestBase):
 	"""
 
 	set_up_packages = (nti.appserver,)
+	config = None
+	request = None
 
-	def setUp( self ):
+	def setUp( self, pyramid_request=True ):
 		"""
 		:return: The `Configurator`, which is also in ``self.config``.
 		"""
 
 		super(ConfiguringTestBase,self).setUp()
-		self.request = DummyRequest()
+
+		if pyramid_request:
+			self.request = DummyRequest()
 		self.config = psetUp(registry=component.getGlobalSiteManager(),request=self.request,hook_zca=False)
 		self.config.setup_registry()
 		return self.config

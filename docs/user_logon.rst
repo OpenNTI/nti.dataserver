@@ -13,6 +13,8 @@ Accounts can be created through the ReST interface.
 .. automodule:: nti.appserver.account_creation_views
 	:private-members:
 
+.. autoclass:: nti.appserver.site_policies.RequestAwareUserPlacer
+
 Command Line
 ------------
 

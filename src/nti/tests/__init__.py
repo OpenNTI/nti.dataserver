@@ -125,6 +125,7 @@ class AbstractTestBase(zope.testing.cleanup.CleanUp, unittest.TestCase):
 from zope import component
 from zope.configuration import xmlconfig, config
 from zope.component.hooks import setHooks, resetHooks
+from zope.dottedname import resolve as dottedname
 
 def _configure(self=None, set_up_packages=(), features=('devmode',), context=None):
 

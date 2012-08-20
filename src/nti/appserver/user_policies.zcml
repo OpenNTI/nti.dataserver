@@ -1,0 +1,13 @@
+<!-- -*- mode: nxml -*- -->
+<configure
+	xmlns="http://namespaces.zope.org/zope"
+	xmlns:zcml="http://namespaces.zope.org/zcml">
+	<include package="zope.component" />
+
+	<subscriber handler=".user_policies.dispatch_content_created_to_user_policies" />
+	<subscriber handler=".user_policies.dispatch_content_edited_to_user_policies" />
+
+	<subscriber handler=".user_policies.veto_sharing_for_unsigned_coppa_create" />
+	<subscriber handler=".user_policies.veto_sharing_for_unsigned_coppa_edit" />
+
+</configure>

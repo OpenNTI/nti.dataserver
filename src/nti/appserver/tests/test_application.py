@@ -17,6 +17,7 @@ does_not = is_not
 from nti.appserver.application import createApplication
 from nti.contentlibrary.filesystem import StaticFilesystemLibrary as Library
 from nti.contentlibrary import interfaces as lib_interfaces
+from nti.externalization.externalization import to_json_representation
 import nti.contentsearch
 import nti.contentsearch.interfaces
 import pyramid.config
@@ -68,14 +69,14 @@ def TestApp(app=_TestApp):
 
 class ApplicationTestBase(ConfiguringTestBase):
 
-	set_up_packages = () # None, because configuring the app will do this
+	set_up_packages = ('nti.appserver',) # None, because configuring the app will do this
 
 	def _setup_library(self, *args, **kwargs):
 		return Library()
 
 	def setUp(self):
 		__show__.off()
-		super(ApplicationTestBase,self).setUp()
+		super(ApplicationTestBase,self).setUp(pyramid_request=True)
 		#self.ds = mock_dataserver.MockDataserver()
 		test_func = getattr( self, self._testMethodName )
 		ds_factory = getattr( test_func, 'mock_ds_factory', mock_dataserver.MockDataserver )
@@ -89,23 +90,35 @@ class ApplicationTestBase(ConfiguringTestBase):
 					   for s in os.listdir( root )
 					   if os.path.isdir( os.path.join( root, s ) )]
 		self.main.setServeFiles( serveFiles )
+
+		# If we try to externalize things outside of an active request, but
+		# the get_current_request method returns the mock request we just set up,
+		# then if the environ doesn't have these things in it we can get an AssertionError
+		# from paste.httpheaders n behalf of repoze.who's request classifier
+		self.request.environ[b'HTTP_USER_AGENT'] = b'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_3) AppleWebKit/537.6 (KHTML, like Gecko) Chrome/23.0.1239.0 Safari/537.6'
+		self.request.environ[b'wsgi.version'] = '1.0'
+
 	def tearDown(self):
 		__show__.on()
 		super(ApplicationTestBase,self).tearDown()
 
-	def _make_extra_environ(self, user=b'sjohnson@nextthought.COM', **kwargs):
+	def _make_extra_environ(self, user=b'sjohnson@nextthought.COM', update_request=False, **kwargs):
 		"""
 		The default username is a case-modified version of the default user in :meth:`_create_user`,
 		to test case-insensitive ACLs and login.
 		"""
 		result = {
 			b'HTTP_AUTHORIZATION': b'Basic ' + (user + ':temp001').encode('base64'),
-			b'HTTP_ORIGIN': b'localhost' # To trigger CORS
+			b'HTTP_ORIGIN': b'localhost', # To trigger CORS
+			b'HTTP_USER_AGENT': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_3) AppleWebKit/537.6 (KHTML, like Gecko) Chrome/23.0.1239.0 Safari/537.6'
 			}
 		for k, v in kwargs.items():
 			k = str(k)
 			k.replace( '_', '-' )
 			result[k] = v
+
+		if update_request:
+			self.request.environ.update( result )
 
 		return result
 
@@ -630,6 +643,54 @@ class TestApplication(ApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'LikeCount', 0 ) )
 		assert_that( res.json_body, has_entry( 'Links', has_item( has_entry( 'rel', 'like' ) ) ) )
 		assert_that( json.loads(res.body), has_entry( 'Links', has_item( has_entry( 'rel', 'favorite' ) ) ) )
+
+	def test_edit_note_sharing_coppa_user(self):
+		"Unsigned coppa users cannot share anything after creation"
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = self._create_user()
+			interface.alsoProvides( user, nti_interfaces.ICoppaUserWithoutAgreement )
+
+			n = contenttypes.Note()
+			n.applicableRange = contentrange.ContentRangeDescription()
+			n.containerId = 'tag:nti:foo'
+			user.addContainedObject( n )
+			assert_that( n.sharingTargets, is_( set() ) )
+
+		testapp = TestApp( self.app )
+		data = '["Everyone"]'
+
+		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % datastructures.to_external_ntiid_oid( n )
+		field_path = path + '/++fields++sharedWith' # The name of the external field
+
+		_ = testapp.put( urllib.quote( field_path ),
+						   data,
+						   extra_environ=self._make_extra_environ(),
+						   headers={"Content-Type": "application/json" },
+						   status=403	)
+
+	def test_create_note_sharing_coppa_user(self):
+		"Unsigned coppa users cannot share anything at creation"
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = self._create_user()
+			interface.alsoProvides( user, nti_interfaces.ICoppaUserWithoutAgreement )
+
+
+		testapp = TestApp( self.app )
+		n = contenttypes.Note()
+		n.applicableRange = contentrange.ContentRangeDescription()
+		n.containerId = 'tag:nti:foo'
+		n.sharedWith = ['Everyone']
+
+		data  = to_json_representation( n )
+
+		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/'
+
+		_ = testapp.post( urllib.quote( path ),
+						   data,
+						   extra_environ=self._make_extra_environ(update_request=True),
+						   headers={"Content-Type": "application/json" },
+						   status=403	)
+
 
 	def test_edit_note_sharing_only(self):
 		"We can POST to a specific sub-URL to change the sharing"

@@ -161,6 +161,7 @@ class ISitePolicyUserEventListener(interface.Interface):
 		"""
 
 from zope.lifecycleevent.interfaces import IObjectCreatedEvent
+
 @component.adapter(nti_interfaces.IUser,IObjectCreatedEvent)
 def dispatch_user_created_to_site_policy( user, event ):
 	for site_name in get_possible_site_names():

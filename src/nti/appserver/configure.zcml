@@ -262,5 +262,7 @@
 
 	<!-- Named site policies -->
 	<include package="." file="site_policies.zcml" />
+	<!-- User-type policies -->
+	<include package="." file="user_policies.zcml" />
 
 </configure>
