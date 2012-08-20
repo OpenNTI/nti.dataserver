@@ -6,7 +6,7 @@
 	<include package="zope.componentvocabulary" />
 	<include package="nti.dataserver" />
 
-	<!-- Acconut Creation -->
+	<!-- Account Creation -->
 	<utility factory=".account_creation_views.RequestAwareUserPlacer" />
 
 	<!-- Resource traversal -->
