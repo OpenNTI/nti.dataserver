@@ -4,6 +4,6 @@
 	xmlns:zcml="http://namespaces.zope.org/zcml">
 	<include package="zope.component" />
 
-	<adapter factory=".application._RequestAwareS3KeyHrefMapper" />
+	<adapter factory=".site_policies.RequestAwareS3KeyHrefMapper" />
 
 </configure>
