@@ -17,8 +17,16 @@
 			 name="redactionExplanation" />
 
 	<adapter factory=".censor_policies.coppa_user_censor_policy" />
-	<adapter factory=".censor_policies.user_filesystem_censor_policy" />
+
+
+	<!--
+	The policy for censoring things from regular, non-coppa
+	users by default isn't enabled. If desired, it can be added in a
+	site configuration.
+	-->
+	<!--
 	<adapter factory="nti.contentfragments.censor.DefaultCensoredContentPolicy"
 			 for="nti.dataserver.interfaces.IUser *" />
-
+	<adapter factory=".censor_policies.user_filesystem_censor_policy" />
+	-->
 </configure>

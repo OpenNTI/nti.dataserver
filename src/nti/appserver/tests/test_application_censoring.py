@@ -12,6 +12,7 @@ import anyjson as json
 import os
 from webtest import TestApp
 from zope import interface
+from zope import component
 
 
 from nti.externalization.oids import to_external_ntiid_oid
@@ -26,6 +27,9 @@ from urllib import quote as UQ
 
 from nti.contentlibrary.filesystem import DynamicFilesystemLibrary as FileLibrary
 from nti.dataserver import interfaces as nti_interfaces
+
+import nti.appserver.censor_policies
+import nti.contentfragments.censor
 
 class TestApplicationAssessment(ApplicationTestBase):
 	child_ntiid =  'tag:nextthought.com,2011-10:MN-NAQ-MiladyCosmetology.naq.1'
@@ -63,15 +67,33 @@ class TestApplicationCensoring(ApplicationTestBase):
 					 has_entry( 'body',
 								['This is ******* stupid, you ************ *******' if censored else bad_val ] ) )
 
-	def test_censor_note_default(self):
-		"If we post a note to a container we don't recognize, we still get censored."
-		self._do_test_censor_note( 'tag:not_in_library' )
+	def test_censor_note_not_in_library_disabled_by_default(self):
+		"If we post a note to a container we don't recognize, we don't get censored."
+		self._do_test_censor_note( 'tag:not_in_library', censored=False )
+
+	def test_censoring_disabled_by_default( self ):
+		self._do_test_censor_note( "tag:nextthought.com,2011-10:MN-HTML-Uncensored.cosmetology", censored=False )
 
 	def test_censoring_can_be_disabled( self ):
+		component.provideAdapter( nti.contentfragments.censor.DefaultCensoredContentPolicy,
+								  adapts=(nti.dataserver.interfaces.IUser, None) )
+		component.provideAdapter( nti.appserver.censor_policies.user_filesystem_censor_policy )
 		self._do_test_censor_note( "tag:nextthought.com,2011-10:MN-HTML-Uncensored.cosmetology", censored=False )
 
 	def test_censoring_cannot_be_disabled_for_kids( self ):
 		# The ICoppaUser flag trumps the no-censoring flag
+		component.provideAdapter( nti.contentfragments.censor.DefaultCensoredContentPolicy,
+								  adapts=(nti.dataserver.interfaces.IUser, None) )
+		component.provideAdapter( nti.appserver.censor_policies.user_filesystem_censor_policy )
 		self._do_test_censor_note( "tag:nextthought.com,2011-10:MN-HTML-Uncensored.cosmetology",
+								   censored=True,
+								   extra_ifaces=(nti_interfaces.ICoppaUser,) )
+
+	def test_censor_note_not_in_library_enabled_for_kids(self):
+		"If we post a note to a container we don't recognize, we  get censored if we are a kid"
+		component.provideAdapter( nti.contentfragments.censor.DefaultCensoredContentPolicy,
+								  adapts=(nti.dataserver.interfaces.IUser, None) )
+		component.provideAdapter( nti.appserver.censor_policies.user_filesystem_censor_policy )
+		self._do_test_censor_note( 'tag:not_in_library',
 								   censored=True,
 								   extra_ifaces=(nti_interfaces.ICoppaUser,) )
