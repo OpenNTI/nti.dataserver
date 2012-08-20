@@ -27,6 +27,14 @@ from nti.contentfragments import interfaces
 # If efficiency really matters, and we have many different filters we are
 # applying, we would need to do a better job pipelining to avoid copies
 
+def _get_censored_fragment(org_fragment, new_fragment):
+	try:
+		result = org_fragment.censored( new_fragment )
+	except AttributeError:
+		result = interfaces.CensoredUnicodeContentFragment( new_fragment )
+		interface.alsoProvides( result, interfaces.ICensoredUnicodeContentFragment )
+	return result
+
 @interface.implementer(interfaces.ICensoredContentStrategy)
 class SimpleReplacementCensoredContentStrategy(object):
 
@@ -43,13 +51,8 @@ class SimpleReplacementCensoredContentStrategy(object):
 			buf[start:end] = self.replacement_char * (end - start)
 
 		new_fragment = ''.join( buf )
-		try:
-			return content_fragment.censored( new_fragment )
-		except AttributeError:
-			result = interfaces.CensoredUnicodeContentFragment( new_fragment )
-			interface.alsoProvides( result, interfaces.ICensoredUnicodeContentFragment )
-			return result
-
+		return _get_censored_fragment(content_fragment, new_fragment)
+	
 @interface.implementer(interfaces.ICensoredContentScanner)
 class TrivialMatchScanner(object):
 
@@ -89,10 +92,25 @@ def TrivialMatchScannerExternalFile( file_path ):
 	return TrivialMatchScanner( (x.encode('rot13').strip() for x in open(file_path, 'rU').readlines() ) )
 
 @interface.implementer(interfaces.ICensoredContentScanner)
+class WordMatchScanner(object):
+
+	def __init__( self, words_to_match=() ):
+		self.words_to_match = set([x.lower() for x in words_to_match if x]) if words_to_match else ()
+
+	def scan( self, content_fragment ):
+		content_fragment = content_fragment.lower()		
+		for x in self.words_to_match:
+			idx = content_fragment.find( x, 0 )
+			while (idx != -1):
+				match_range = (idx, idx + len(x))
+				yield match_range
+				idx = content_fragment.find( x, idx + len(x) )
+					
+@interface.implementer(interfaces.ICensoredContentScanner)
 def DefaultTrivialProfanityScanner():
 	return TrivialMatchScannerExternalFile( resource_filename( __name__, 'profanity_list.txt' ) )
 
-
+					
 @interface.implementer(interfaces.ICensoredContentPolicy)
 class DefaultCensoredContentPolicy(object):
 	"""

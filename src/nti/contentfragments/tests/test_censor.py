@@ -16,12 +16,13 @@ from zope import interface
 from zope.schema.fieldproperty import FieldPropertyStoredThroughField
 
 import nti.contentfragments
-import nti.contentfragments.interfaces
 import nti.contentfragments.schema
+import nti.contentfragments.interfaces
+from nti.contentfragments.censor import WordMatchScanner
 
 import nti.tests
-from hamcrest import assert_that
 from hamcrest import is_
+from hamcrest import assert_that
 
 setUpModule = lambda: nti.tests.module_setup( set_up_packages=(nti.contentfragments,) )
 
@@ -35,6 +36,14 @@ def test_defaults():
 				 is_( 'This is ******* stupid, you ************ *******' ) )
 
 
+def test_mord_match_scanner():
+	wm = WordMatchScanner(['lost','like'])
+	bad_val = """So I feel a little like, a child who's lost, a little like, (everything's changed) a
+			  lot, I didn't like all of the pain"""
+
+	ranges = list(wm.scan(bad_val))
+	assert_that(ranges, is_([(19, 23), (54, 58), (104, 108), (39, 43)]))
+	
 def test_schema_event_censoring():
 
 	class ICensored(interface.Interface):
