@@ -1,6 +1,15 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
 
-from __future__ import unicode_literals
+
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+#logger = __import__('logging').getLogger(__name__)
 
 import warnings
 import itertools
@@ -405,8 +414,27 @@ class ICoppaUser(IUser):
 	level. Instead, it should either be available through an adapter (when we know
 	the user's age) or added and removed via :func:`interface.alsoProvides`
 	and :func:`interface.noLongerProvides`.
+
+	Typically, one of the sub-interfaces :class:`ICoppaUserWithAgreement` or
+	:class:`ICoppaUserWithoutAgreement` will be used instead.
 	"""
 
+class ICoppaUserWithAgreement(ICoppaUser):
+	"""
+	A user to which COPPA applies, and that our organization has
+	a parental agreement with. In general, users will transition from
+	:class:`ICoppaUserWithoutAgreement` to this state, and the two states are mutually
+	exclusive.
+	"""
+
+
+class ICoppaUserWithoutAgreement(ICoppaUser):
+	"""
+	A user to which COPPA applies, and that our organization *does not have*
+	a parental agreement with. In general, users will begin in this state, and
+	then transition to :class:`ICoppaUserWithAgreement`,
+	and the two states are mutually exclusive.
+	"""
 
 class IACE(interface.Interface):
 	"""

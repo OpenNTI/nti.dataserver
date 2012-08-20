@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python
 from __future__ import print_function, unicode_literals
 
@@ -85,4 +86,4 @@ def _create_user( factory, username, password, realname, communities=(), coppa=F
 				user.follow( community )
 
 		if coppa:
-			interface.alsoProvides( user, nti_interfaces.ICoppaUser )
+			interface.alsoProvides( user, nti_interfaces.ICoppaUserWithoutAgreement )

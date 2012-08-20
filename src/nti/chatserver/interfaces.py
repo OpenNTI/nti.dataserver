@@ -17,9 +17,17 @@ from zope import schema
 from zope.security.permission import Permission
 
 from nti.dataserver import interfaces as nti_interfaces
+from nti.socketio import interfaces as sio_interfaces
 
 class IChatserver(Interface):
 	pass
+
+class IChatEventHandler(sio_interfaces.ISocketEventHandler):
+	"""
+	Marker interface for objects designed specifically as chat
+	event handlers. These will typically be registered as a multi-adapter
+	on the combination ``(user, session, chatserver)``.
+	"""
 
 ACT_MODERATE = Permission('nti.chatserver.actions.moderate')
 

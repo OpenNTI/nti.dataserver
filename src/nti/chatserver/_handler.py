@@ -11,9 +11,12 @@ import warnings
 
 
 from nti.externalization.interfaces import StandardExternalFields as XFields
+from nti.chatserver import interfaces as chat_interfaces
 from nti.socketio import interfaces as sio_interfaces
+from nti.dataserver import interfaces as nti_interfaces
 
 # FIXME: Break this dependency
+
 from nti.dataserver import users
 from nti.dataserver import authorization_acl as auth_acl
 
@@ -56,7 +59,8 @@ from zope.annotation import factory as an_factory
 def _ChatHandlerSessionStateFactory(session):
 	return an_factory(_ChatHandlerSessionState)(session)
 
-@interface.implementer(sio_interfaces.ISocketEventHandler)
+@interface.implementer(chat_interfaces.IChatEventHandler)
+@component.adapter(nti_interfaces.IUser,sio_interfaces.ISocketSession,chat_interfaces.IChatserver)
 class _ChatHandler(object):
 	"""
 	Class to handle each of the messages sent to or from a client.
@@ -72,13 +76,25 @@ class _ChatHandler(object):
 
 
 	event_prefix = 'chat'
-	_v_chatserver = None
+
+	chatserver = None
+	session_user = None
+	session = None
 	# public methods correspond to events
 
-	def __init__( self, chatserver, session ):
-		""" """
-		self._v_chatserver = chatserver
-		self.session = session
+	def __init__( self, *args):
+		# For backwards compat, we accept either two args or three, as specified
+		# in our adapter contract
+		if len( args ) == 3:
+			self.session_user = args[0]
+			self.session = args[1]
+			self.chatserver = args[2]
+		else:
+			assert len(args) == 2
+			warnings.warn( "Use an adapter", DeprecationWarning, stacklevel=2 )
+			self.chatserver = args[0]
+			self.session = args[1]
+			self.session_user = users.User.get_user( self.session.owner )
 
 	def __reduce__(self):
 		raise TypeError()
@@ -86,19 +102,11 @@ class _ChatHandler(object):
 	def __str__( self ):
 		return "%s(%s %s)" % (self.__class__.__name__, self.session.owner, self.session.session_id)
 
-	# None of these should be around anymore
-	# def __setstate__( self, state ):
-	# 	# Migration 2012-04-18. Easier than searching these all out
-	# 	if '_chatserver' in state:
-	# 		state = dict(state)
-	# 		del state['_chatserver']
-
-	# 	super(_ChatHandler,self).__setstate__( state )
 
 	def _get_chatserver(self):
-		return self._v_chatserver or component.queryUtility( interfaces.IChatserver )
+		return self.chatserver or component.queryUtility( interfaces.IChatserver )
 	def _set_chatserver( self, cs ):
-		self._v_chatserver = cs
+		self.chatserver = cs
 	_chatserver = property(_get_chatserver, _set_chatserver )
 
 	def postMessage( self, msg_info ):
@@ -130,7 +138,7 @@ class _ChatHandler(object):
 			# occupant besides me
 			_discard( room_info.get('Occupants'), self.session.owner )
 			room_info['Occupants'] = list( room_info['Occupants'] )
-			user = users.User.get_user( self.session.owner )
+			user = self.session_user
 			if user:
 				for i in list(room_info['Occupants']):
 					if i in user.friendsLists:
@@ -205,11 +213,18 @@ class _ChatHandler(object):
 				result &= room.shadow_user( user )
 		return result
 
+@interface.implementer(chat_interfaces.IChatEventHandler)
+@component.adapter(nti_interfaces.ICoppaUserWithoutAgreement,sio_interfaces.ISocketSession,chat_interfaces.IChatserver)
+def ChatHandlerNotAvailable(*args):
+	return None
 
 def ChatHandlerFactory( socketio_protocol, chatserver=None ):
 	session = socketio_protocol.session if hasattr( socketio_protocol, 'session' ) else socketio_protocol
 	if session:
 		chatserver = component.queryUtility( interfaces.IChatserver ) if not chatserver else chatserver
-	if session and chatserver:
+		user = users.User.get_user( session.owner )
+	if session and chatserver and user:
+		component.getMultiAdapter( (user, session, chatserver), chat_interfaces.IChatEventHandler )
 		return _ChatHandler( chatserver, session )
-	logger.warning( "No session (%s) or chatserver (%s); could not create event handler.", session, chatserver )
+	logger.warning( "No session (%s) or chatserver (%s) or user (%r=%s); could not create event handler.",
+					session, chatserver, getattr( session, 'owner', None ), user )
