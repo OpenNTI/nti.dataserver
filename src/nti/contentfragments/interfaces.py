@@ -26,6 +26,7 @@ def _setup():
 
 _setup()
 
+	
 class IContentFragment(interface.Interface):
 	"""
 	Base interface representing different formats that content can
@@ -139,6 +140,11 @@ class PlainTextContentFragment(UnicodeContentFragment):
 def _plain_text_to_plain_text( text ):
 	return text
 
+class ICensoredTerm(interface.Interface):
+	"""
+	Base interface for a censored term
+	"""
+	
 class ICensoredUnicodeContentFragment(IUnicodeContentFragment):
 	"""
 	A content fragment that has passed through a censoring process to
