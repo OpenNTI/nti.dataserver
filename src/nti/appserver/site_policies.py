@@ -166,6 +166,7 @@ def dispatch_user_created_to_site_policy( user, event ):
 	for site_name in get_possible_site_names():
 		utility = component.queryUtility( ISitePolicyUserEventListener, name=site_name )
 		if utility:
+			logger.info( "Site %s wants to handle user creation event with %s", site_name, utility )
 			utility.user_created( user, event )
 			break
 
