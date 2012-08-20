@@ -8,7 +8,7 @@ class IAuthorization(interface.Interface):
 									description='NTI transaction id',
 							  		required=True)
 	
-class ICoAuthorization(IAuthorization):
+class ICoBrandedAuthorization(IAuthorization):
 	cbuiURL = schema.TextLine(title='CoBranded UI URL',
 							  description='URL for payment processor',
 							  required=True)
