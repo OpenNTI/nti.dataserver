@@ -164,8 +164,6 @@
 			 provides="zope.traversing.interfaces.ITraversable"
 			 name="fields" />
 
-
-
 	<!-- Object graph traversal -->
 
 	<!--
@@ -227,7 +225,6 @@
 				for="nti.dataserver.interfaces.IUser"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
 
-	<subscriber handler=".logon.add_new_user_to_static_communities" />
 	<subscriber handler=".logon._user_did_logon" />
 
 	<subscriber factory=".dataserver_socketio_views._WSWillUpgradeVeto"
@@ -262,5 +259,8 @@
 	<include package="." file="configure_restricted_contenttypes.zcml" />
 
 	<includeOverrides file="overrides.zcml" />
+
+	<!-- Named site policies -->
+	<include package="." file="site_policies.zcml" />
 
 </configure>

@@ -1,0 +1,12 @@
+<!-- -*- mode: nxml -*- -->
+<configure
+	xmlns="http://namespaces.zope.org/zope"
+	xmlns:zcml="http://namespaces.zope.org/zcml">
+	<include package="zope.component" />
+
+	<subscriber handler=".site_policies.dispatch_user_created_to_site_policy" />
+
+	<utility factory=".site_policies.MathcountsSitePolicyEventListener"
+			 name="mathcounts.nextthought.com"/>
+
+</configure>
