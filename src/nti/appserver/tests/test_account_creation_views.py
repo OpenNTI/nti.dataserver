@@ -25,7 +25,9 @@ from hamcrest import contains_string
 #from hamcrest import is_not
 from hamcrest import has_property
 from hamcrest import greater_than
+from hamcrest import has_item
 
+from nti.tests import verifiably_provides
 from nose.tools import assert_raises
 
 from nti.appserver import interfaces as app_interfaces
@@ -36,6 +38,7 @@ from nti.appserver.tests import ConfiguringTestBase
 import pyramid.httpexceptions as hexc
 
 from nti.dataserver.interfaces import IShardLayout, INewUserPlacer
+from nti.dataserver import interfaces as nti_interfaces
 import nti.dataserver.tests.mock_dataserver
 from nti.dataserver import shards
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
@@ -129,6 +132,23 @@ class TestCreateView(ConfiguringTestBase):
 		assert_that( new_user._p_jar.db(), has_property( 'database_name', 'content.nextthought.com' ) )
 
 		assert_that( new_user, has_property( '__parent__', IShardLayout( mock_dataserver.current_transaction ).users_folder ) )
+
+	@WithMockDSTrans
+	def test_create_mathcounts_policy( self ):
+		# see site_policies.[py|zcml]
+		assert_that( self.request.host, is_( 'example.com:80' ) )
+		self.request.headers['origin'] = 'http://mathcounts.nextthought.com'
+
+		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.body = to_json_representation( {'Username': 'jason@nextthought.com',
+													 'password': 'password' } )
+
+		new_user = account_create_view( self.request )
+
+		assert_that( new_user, verifiably_provides( nti_interfaces.ICoppaUserWithoutAgreement ) )
+		assert_that( new_user, has_property( 'communities', has_item( 'MathCounts' ) ) )
+
+
 
 	@WithMockDSTrans
 	def test_create_component_matches_request_host( self ):

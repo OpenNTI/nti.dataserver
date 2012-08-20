@@ -525,24 +525,6 @@ def _deal_with_external_account( request, fname, lname, email, idurl, iface, cre
 		assert getattr( user, url_attr ) == idurl
 	return user
 
-STATIC_COMMUNITIES = ('MathCounts',)
-from zope.lifecycleevent.interfaces import IObjectCreatedEvent
-@component.adapter(nti_interfaces.IUser,IObjectCreatedEvent)
-def add_new_user_to_static_communities( user, object_added_event ):
-	# Ultimately there should be a bunch of stuff that gets done
-	# when users are added, based on...some heuristics...
-	# in the immediate term, we will add new users to some pre-defined
-	# communities, if they exist
-
-	for com_name in STATIC_COMMUNITIES:
-		# If we're fired during migration, we may not be
-		# able to resolve entities (no IDataserver) so we need to
-		# provide a non-None default
-		community = users.Entity.get_entity( com_name, default='' )
-		if community:
-			user.join_community( community )
-			user.follow( community )
-
 @component.adapter(nti_interfaces.IUser,app_interfaces.IUserLogonEvent)
 def _user_did_logon( user, event ):
 	user.update_last_login_time()

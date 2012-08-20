@@ -206,6 +206,7 @@ class TestLogon(ConfiguringTestBase):
 	def test_create_from_external( self ):
 		component.provideHandler( eventtesting.events.append, (None,) )
 		component.provideHandler( _handle_user_create_event )
+		self.request.headers['origin'] = 'http://mathcounts.nextthought.com'
 		# For now, we are adding to some predefined communities
 		mc = users.Community( 'MathCounts' )
 		self.ds.root['users'][mc.username] = mc
