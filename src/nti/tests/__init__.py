@@ -146,6 +146,8 @@ def _configure(self=None, set_up_packages=(), features=('devmode',), context=Non
 				filename = 'configure.zcml'
 				package = i
 
+			if isinstance( package, basestring ):
+				package = dottedname.resolve( package )
 			context = xmlconfig.file( filename, package=package, context=context )
 
 		return context
@@ -158,7 +160,7 @@ class ConfiguringTestBase(AbstractTestBase):
 	This class defines two class level attributes:
 
 	.. py:attribute:: set_up_packages
-		A sequence of package objects. These will be configured, in order, using
+		A sequence of package objects or strings naming packages. These will be configured, in order, using
 		ZCML. The ``configure.zcml`` package from each package will be loaded. Instead
 		of a package object, each item can be a tuple of (filename, package); in that case,
 		the given file (usually ``meta.zcml``) will be loaded from the given package.
