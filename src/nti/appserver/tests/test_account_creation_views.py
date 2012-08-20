@@ -114,6 +114,23 @@ class TestCreateView(ConfiguringTestBase):
 		assert_that( new_user, has_property( '__parent__', IShardLayout( mock_dataserver.current_transaction ).users_folder ) )
 
 	@WithMockDSTrans
+	def test_create_shard_matches_request_origin( self ):
+		assert_that( self.request.host, is_( 'example.com:80' ) )
+		self.request.headers['origin'] = 'http://content.nextthought.com'
+		mock_dataserver.add_memory_shard( self.ds, 'content.nextthought.com' )
+
+		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.body = to_json_representation( {'Username': 'jason@nextthought.com',
+													 'password': 'password' } )
+
+
+		new_user = account_create_view( self.request )
+
+		assert_that( new_user._p_jar.db(), has_property( 'database_name', 'content.nextthought.com' ) )
+
+		assert_that( new_user, has_property( '__parent__', IShardLayout( mock_dataserver.current_transaction ).users_folder ) )
+
+	@WithMockDSTrans
 	def test_create_component_matches_request_host( self ):
 		assert_that( self.request.host, is_( 'example.com:80' ) )
 		mock_dataserver.add_memory_shard( self.ds, 'FOOBAR' )

@@ -7,7 +7,7 @@
 	<include package="nti.dataserver" />
 
 	<!-- Account Creation -->
-	<utility factory=".account_creation_views.RequestAwareUserPlacer" />
+	<utility factory=".site_policies.RequestAwareUserPlacer" />
 
 	<!-- Resource traversal -->
 	<adapter factory="._dataserver_pyramid_traversal.Dataserver2RootTraversable"
