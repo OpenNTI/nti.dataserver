@@ -82,6 +82,8 @@ class AbstractShardPlacer(object):
 
 	def place_user_in_shard_named( self, user, user_directory, shard_name ):
 		"""
+		Place the given user in a shard having the given name.
+
 		:return: A `True` value if we could place the user in the requested shard,
 			otherwise a `False` value.
 		"""
