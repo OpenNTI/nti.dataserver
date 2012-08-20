@@ -72,7 +72,6 @@ def creator_and_location_censor_policy( fragment, target ):
 		if content_units:
 			location = content_units[-1]
 
-
 	return component.queryMultiAdapter( (creator, location), frg_interfaces.ICensoredContentPolicy )
 
 
