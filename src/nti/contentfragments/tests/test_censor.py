@@ -39,13 +39,17 @@ def test_defaults():
 	assert_that( strat.censor_ranges( bad_val, scanner.scan( bad_val ) ),
 				 is_( 'This is ******* stupid, you ************ *******' ) )
 
-def test_mord_match_scanner():
+def test_word_match_scanner():
 	wm = WordMatchScanner(['lost','like'])
 	bad_val = """So I feel a little like, a child who's lost, a little like, (everything's changed) a
 			  lot, I didn't like all of the pain"""
 
 	ranges = list(wm.scan(bad_val))
 	assert_that(ranges, is_([(19, 23), (54, 58), (104, 108), (39, 43)]))
+	
+	wm = WordMatchScanner(['thought'])
+	ranges = list(wm.scan(bad_val))
+	assert_that(ranges, is_([]))
 	
 def test_trivial_and_word_match_scanner():
 	
