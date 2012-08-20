@@ -36,7 +36,7 @@ Dataserver API documentation
 
 ** SocketIO **
 
-.. automodule:: socketio
+.. automodule:: nti.socketio
 
 .. automodule:: nti.dictserver
 

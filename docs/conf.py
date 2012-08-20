@@ -42,7 +42,8 @@ except ImportError:
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.todo', 'sphinx.ext.viewcode', 'sphinx.ext.intersphinx',
-				'repoze.sphinx.autointerface']
+				'repoze.sphinx.autointerface',
+				'sphinxcontrib.programoutput']
 # epydoc is better at inherited members than sphinx, so leave that out of the defaults
 autodoc_default_flags = ['members', 'show-inheritance']
 autoclass_content = 'both'
