@@ -20,6 +20,11 @@
 	<subscriber provides="nti.socketio.interfaces.ISocketEventHandler"
 				for="nti.socketio.interfaces.ISocketSession"
 				factory="._handler.ChatHandlerFactory" />
+	<!-- For the normal user -->
+	<adapter factory="._handler._ChatHandler" />
+	<!-- For unsigned COPPA users -->
+	<adapter factory="._handler.ChatHandlerNotAvailable" />
+
 	<subscriber handler=".chatserver._send_notification" />
 
 	<adapter factory="._handler._ChatHandlerSessionStateFactory"

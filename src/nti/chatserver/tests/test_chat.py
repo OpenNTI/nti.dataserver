@@ -856,13 +856,11 @@ class TestChatserver(ConfiguringTestBase):
 						 has_key( room.ID ) )
 		assert_that( summary.Contributors, is_( set(['jason', 'chris', 'sjohnson']) ) )
 
-
+	@WithMockDSTrans
 	def test_chat_handler_adapter(self):
-		class Sock(object):
-			interface.implements( sio_interfaces.ISocketSession )
-			session_id = ''
-			owner = ''
-		socket = Sock()
+		sessions = self.Sessions()
+		sessions[1] = self.Session( 'sjohnson' )
+		socket = sessions[1]
 
 		class CServer(object):
 			interface.implements( chat_interfaces.IChatserver )
