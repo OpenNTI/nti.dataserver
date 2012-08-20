@@ -12,6 +12,7 @@ from xml.dom.minidom import Node
 from whoosh import index
 
 from concurrent.futures import ThreadPoolExecutor
+from nti.contentfragments.html import _sanitize_user_html_to_text
 from nti.contentsearch.whoosh_contenttypes import create_book_schema
 
 import whoosh.writing
@@ -133,22 +134,13 @@ def word_splitter(text, tokenizer=default_tokenizer):
 	"""
 	remove all html related tags and returs a list of words
 	"""
-	text = clean_html(text.lower())
+	# user ds sanitizer
+	text = _sanitize_user_html_to_text(text.lower())
+	# remove any html (i.e. meta, link) that is not removed
+	text = clean_html(text)
+	# tokenize words
 	words = tokenizer.tokenize(text)
 	return words
-
-def get_first_paragraph(text):
-	"""
-	Get the first paragraph with text in the specified content"
-	"""
-	s = re.sub("<p>","\n<p>", text)
-	hits = re.findall("<p>.*", s)
-	for p in hits:
-		content = word_splitter(p)
-		content = ' '.join(content)
-		if len(content) > 0:
-			return content
-	return ''
 
 def _index_node(writer, node, contentPath, optimize=False):
 	"""
