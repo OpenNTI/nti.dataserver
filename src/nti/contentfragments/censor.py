@@ -52,7 +52,7 @@ class SimpleReplacementCensoredContentStrategy(object):
 
 		new_fragment = ''.join( buf )
 		return _get_censored_fragment(content_fragment, new_fragment)
-	
+
 @interface.implementer(interfaces.ICensoredContentScanner)
 class TrivialMatchScanner(object):
 
@@ -62,11 +62,8 @@ class TrivialMatchScanner(object):
 		# clearly go at the front of the list
 		self.prohibited_values = [x.lower() for x in prohibited_values if x]
 
-	def scan( self, content_fragment ):
-		content_fragment = content_fragment.lower()
-		#len_content_fragment = len(content_fragment)
-
-		yielded = [] # A simple, inefficient way of making sure we don't send overlapping ranges
+	def _do_scan(self, content_fragment, yielded):
+		
 		def test(v):
 			for t in yielded:
 				if v[0] >= t[0] and v[1] <= t[1]:
@@ -82,6 +79,11 @@ class TrivialMatchScanner(object):
 				if test(match_range):
 					yielded.append( match_range )
 					yield  match_range
+					
+	def scan( self, content_fragment ):
+		content_fragment = content_fragment.lower()
+		yielded = [] # A simple, inefficient way of making sure we don't send overlapping ranges
+		return self._do_scan(content_fragment, yielded)
 
 @interface.implementer(interfaces.ICensoredContentScanner)
 def TrivialMatchScannerExternalFile( file_path ):
@@ -97,20 +99,48 @@ class WordMatchScanner(object):
 	def __init__( self, words_to_match=() ):
 		self.words_to_match = set([x.lower() for x in words_to_match if x]) if words_to_match else ()
 
-	def scan( self, content_fragment ):
-		content_fragment = content_fragment.lower()		
+	def _do_scan(self, content_fragment):
 		for x in self.words_to_match:
 			idx = content_fragment.find( x, 0 )
 			while (idx != -1):
 				match_range = (idx, idx + len(x))
 				yield match_range
 				idx = content_fragment.find( x, idx + len(x) )
-					
+				
+	def scan( self, content_fragment ):
+		content_fragment = content_fragment.lower()
+		return self._do_scan(content_fragment)
+		
+@interface.implementer(interfaces.ICensoredContentScanner)
+class WordPlusTrivialMatchScanner(WordMatchScanner, TrivialMatchScanner):
+
+	def __init__( self, words_to_match=(), prohibited_values=()):
+		WordMatchScanner.__init__(self, words_to_match)
+		TrivialMatchScanner.__init__(self, prohibited_values)
+		
+	def scan( self, content_fragment ):
+		yielded = []
+		content_fragment = content_fragment.lower()
+		word_ranges = WordMatchScanner._do_scan(self, content_fragment)
+		for match_range in word_ranges:
+			yielded.append(match_range)
+			yield match_range
+			
+		trivial_ranges = TrivialMatchScanner._do_scan(self, content_fragment, yielded)
+		for match_range in trivial_ranges:
+			yield match_range
+		
+@interface.implementer(interfaces.ICensoredContentScanner)
+def ExternalWordPlusTrivialMatchScannerFiles( profanity_path, word_list_path ):
+	word_list = (x.strip() for x in open(word_list_path, 'rU').readlines() )
+	profanity_list = (x.encode('rot13').strip() for x in open(profanity_path, 'rU').readlines() )
+	return WordPlusTrivialMatchScanner(word_list, profanity_list)
+
 @interface.implementer(interfaces.ICensoredContentScanner)
 def DefaultTrivialProfanityScanner():
 	return TrivialMatchScannerExternalFile( resource_filename( __name__, 'profanity_list.txt' ) )
 
-					
+
 @interface.implementer(interfaces.ICensoredContentPolicy)
 class DefaultCensoredContentPolicy(object):
 	"""
