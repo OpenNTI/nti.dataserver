@@ -1,8 +1,22 @@
 from __future__ import print_function, unicode_literals
 
-#from zope import schema
+from zope import schema
 from zope import interface
 
+class IAuthorization(interface.Interface):
+	transactionId = schema.TextLine(title='Transaction id',
+									description='NTI transaction id',
+							  		required=True)
+	
+class ICoAuthorization(IAuthorization):
+	cbuiURL = schema.TextLine(title='CoBranded UI URL',
+							  description='URL for payment processor',
+							  required=True)
+	
+	returnURL = schema.TextLine(title='Return UI URL',
+							  	description='URL for payment processor',
+								required=True)
+	
 class IPaymentManager(interface.Interface):
 	
 	def get_transaction(traxId):
@@ -18,7 +32,7 @@ class ICoBrandedPaymentManager(IPaymentManager):
 						  **kwargs):
 		"""
 		return an autorization for the specified request. 
-		The autorization has a payment proceessor (ppURL)
+		The autorization has a payment proceessor (cbuiURL)
 		for redirection and dataserver transaction id.
 		
 		amount: Authorization amount
