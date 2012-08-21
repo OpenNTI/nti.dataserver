@@ -62,7 +62,7 @@ class TestCreateView(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_create_missing_username( self ):
 		self.request.content_type = 'application/vnd.nextthought+json'
-		self.request.body = to_json_representation( {'password': 'password' } )
+		self.request.body = to_json_representation( {'password': 'pass123word' } )
 		with assert_raises( hexc.HTTPUnprocessableEntity ):
 			account_create_view( self.request )
 
@@ -75,7 +75,7 @@ class TestCreateView(ConfiguringTestBase):
 		component.provideHandler( eventtesting.events.append, (None,) )
 		self.request.content_type = 'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason@nextthought.com',
-													 'password': 'password' } )
+													 'password': 'pass123word' } )
 
 
 		new_user = account_create_view( self.request )
@@ -93,7 +93,7 @@ class TestCreateView(ConfiguringTestBase):
 	def test_create_duplicate( self ):
 		self.request.content_type = 'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason@nextthought.com',
-													 'password': 'password' } )
+													 'password': 'pass132word' } )
 
 		account_create_view( self.request )
 
@@ -107,7 +107,7 @@ class TestCreateView(ConfiguringTestBase):
 
 		self.request.content_type = 'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason@nextthought.com',
-													 'password': 'password' } )
+													 'password': 'pass123word' } )
 
 
 		new_user = account_create_view( self.request )
@@ -124,7 +124,7 @@ class TestCreateView(ConfiguringTestBase):
 
 		self.request.content_type = 'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason@nextthought.com',
-													 'password': 'password' } )
+													 'password': 'pass123word' } )
 
 
 		new_user = account_create_view( self.request )
@@ -141,7 +141,7 @@ class TestCreateView(ConfiguringTestBase):
 
 		self.request.content_type = 'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason@nextthought.com',
-													 'password': 'password' } )
+													 'password': 'pass123word' } )
 
 		new_user = account_create_view( self.request )
 
@@ -161,7 +161,7 @@ class TestCreateView(ConfiguringTestBase):
 
 		self.request.content_type = 'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason@nextthought.com',
-													 'password': 'password' } )
+													 'password': 'pass123word' } )
 
 
 		new_user = account_create_view( self.request )
