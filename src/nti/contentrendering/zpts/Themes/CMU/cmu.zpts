@@ -2,20 +2,12 @@
 
 
 name: lecture
-<div tal:condition="self/ref" class="chapter title" tal:attributes="id self/id; ntiid self/ntiid">
-        <span class="ref" tal:content="self/ref"></span>
-        <span class="label" tal:content="self/title"></span>
-</div>
-<div tal:condition="not:self/ref" class="chapter title" tal:attributes="id self/id; ntiid self/ntiid" tal:content="self/fullTitle">Donec elementum mauris vel urna</div>
+<div class="chapter title" tal:attributes="id self/id; ntiid self/ntiid" tal:content="self/title">Donec elementum mauris vel urna</div>
 <p tal:replace="self"></p>
 
 
 name: frametitle
-<div tal:condition="self/ref" class="paragraph title" tal:attributes="id self/id; ntiid self/ntiid">
-        <span class="ref" tal:content="self/ref"></span>
-        <span class="label" tal:content="self/title"></span>
-</div>
-<div tal:condition="not:self/ref" class="paragraph title" tal:attributes="id self/id; ntiid self/ntiid" tal:content="self/fullTitle">Donec elementum mauris vel urna</div>
+<div class="paragraph title" tal:attributes="id self/id; ntiid self/ntiid" tal:content="self/title">Donec elementum mauris vel urna</div>
 <p tal:replace="self"></p>
 
 

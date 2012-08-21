@@ -16,55 +16,31 @@ name: maketitle
 # TODO: Should we use HTML5 microdata to include the NTIID?
 
 name: part chapter section
-<div tal:condition="self/ref" class="chapter title" tal:attributes="id self/id; ntiid self/ntiid">
-	<span class="ref" tal:content="self/ref"></span>
-	<span class="label" tal:content="self/title"></span>
-</div>
-<div tal:condition="not:self/ref" class="chapter title" tal:attributes="id self/id; ntiid self/ntiid" tal:content="self/fullTitle">Morbi metus pede, imperdiet vitae</div>
+<div class="chapter title" tal:attributes="id self/id; ntiid self/ntiid" tal:content="self/title">Morbi metus pede, imperdiet vitae</div>
 <p class="placeholder"></p>
 <p tal:replace="self"></p>
 
 
 name: subsection
-<div tal:condition="self/ref" class="subsection title" tal:attributes="id self/id; ntiid self/ntiid">
-	<span class="ref" tal:content="self/ref"></span>
-	<span class="label" tal:content="self/title"></span>
-</div>
-<div tal:condition="not:self/ref" class="subsection title" tal:attributes="id self/id; ntiid self/ntiid" tal:content="self/fullTitle">Cras dignissim</div>
+<div class="subsection title" tal:attributes="id self/id; ntiid self/ntiid" tal:content="self/title">Cras dignissim</div>
 <p tal:replace="self"></p>
 
 
 name: subsubsection
-<div tal:condition="self/ref" class="subsubsection title" tal:attributes="id self/id; ntiid self/ntiid">
-	<span class="ref" tal:content="self/ref"></span>
-	<span class="label" tal:content="self/title"></span>
-</div>
-<div tal:condition="not:self/ref" class="subsubsection title" tal:attributes="id self/id; ntiid self/ntiid" tal:content="self/fullTitle">Velit id pharetra</div>
+<div class="subsubsection title" tal:attributes="id self/id; ntiid self/ntiid" tal:content="self/title">Velit id pharetra</div>
 <p tal:replace="self"></p>
 
 
 name: paragraph
-<div tal:condition="self/ref" class="paragraph title" tal:attributes="id self/id; ntiid self/ntiid">
-	<span class="ref" tal:content="self/ref"></span>
-	<span class="label" tal:content="self/title"></span>
-</div>
-<div tal:condition="not:self/ref" class="paragraph title" tal:attributes="id self/id; ntiid self/ntiid" tal:content="self/fullTitle">Donec elementum mauris vel urna</div>
+<div class="paragraph title" tal:attributes="id self/id; ntiid self/ntiid" tal:content="self/title">Donec elementum mauris vel urna</div>
 <p tal:replace="self"></p>
 
 
 name: subparagraph
-<div tal:condition="self/ref" class="subparagraph title" tal:attributes="id self/id; ntiid self/ntiid">
-	<span class="ref" tal:content="self/ref"></span>
-	<span class="label" tal:content="self/title"></span>
-</div>
-<div tal:condition="not:self/ref" class="subparagraph title" tal:attributes="id self/id; ntiid self/ntiid" tal:content="self/fullTitle">Duis orci</div>
+<div class="subparagraph title" tal:attributes="id self/id; ntiid self/ntiid" tal:content="self/title">Duis orci</div>
 <p tal:replace="self"></p>
 
 
 name: subsubparagraph
-<div tal:condition="self/ref" class="subsubparagraph title" tal:attributes="id self/id; ntiid self/ntiid">
-	<span class="ref" tal:content="self/ref"></span>
-	<span class="label" tal:content="self/title"></span>
-</div>
-<div tal:condition="not:self/ref" class="subsubparagraph title" tal:attributes="id self/id; ntiid self/ntiid" tal:content="self/fullTitle">Mauris fringilla, metus</div>
+<div class="subsubparagraph title" tal:attributes="id self/id; ntiid self/ntiid" tal:content="self/title">Mauris fringilla, metus</div>
 <p tal:replace="self"></p>
