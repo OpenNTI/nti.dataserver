@@ -48,6 +48,7 @@ from nti.externalization.externalization import to_json_representation
 from zope.component import eventtesting
 from zope import component
 from zope.lifecycleevent import IObjectCreatedEvent, IObjectAddedEvent
+import zope.schema
 
 class TestCreateView(ConfiguringTestBase):
 
@@ -143,8 +144,23 @@ class TestCreateView(ConfiguringTestBase):
 		self.request.body = to_json_representation( {'Username': 'jason@nextthought.com',
 													 'password': 'pass123word' } )
 
-		new_user = account_create_view( self.request )
 
+		with assert_raises( hexc.HTTPUnprocessableEntity ):
+			# Cannot include username
+			account_create_view( self.request )
+
+		self.request.body = to_json_representation( {'Username': 'jason@nextthought.com',
+													 'password': 'pass123word',
+													 'realname': 'Joe Bananna'} )
+		with assert_raises( hexc.HTTPUnprocessableEntity ):
+			# username and displayname must match
+			account_create_view( self.request )
+
+		self.request.body = to_json_representation( {'Username': 'jason@nextthought.com',
+													 'password': 'pass123word',
+													 'realname': 'Joe Bananna',
+													 'alias': 'jason@nextthought.com'} )
+		new_user = account_create_view( self.request )
 		assert_that( new_user, verifiably_provides( nti_interfaces.ICoppaUserWithoutAgreement ) )
 		assert_that( new_user, has_property( 'communities', has_item( 'MathCounts' ) ) )
 

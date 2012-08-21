@@ -74,8 +74,14 @@ def account_create_view(request):
 		raise hexc.HTTPUnprocessableEntity, exc_info[1], exc_info[2]
 
 	try:
-		# Now create the user, firing Created and Added events as appropriate
-		new_user = users.User.create_user( username=desired_userid ) # May throw KeyError
+		# Now create the user, firing Created and Added events as appropriate.
+		# Must pass all the arguments that a policy might want to expect to the factory
+		# function since it may want to inspect things like username and realname
+		# TODO: Should probably pass the entire externalValue and let the factory
+		# handle that too, before firing the created and added events.
+		new_user = users.User.create_user( username=desired_userid,
+										   realname=externalValue.get('realname'),
+										   alias=externalValue.get('alias') ) # May throw validation error
 
 		obj_io.update_object_from_external_object( new_user, externalValue ) # May throw validation error
 	except zope.schema.ValidationError:
