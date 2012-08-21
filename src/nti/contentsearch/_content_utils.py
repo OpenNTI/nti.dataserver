@@ -343,7 +343,8 @@ class _DictContentResolver(object):
 
 @interface.implementer( search_interfaces.IContentTokenizer )
 class _ContentTokenizer(object):
-	tokenizer = RegexpTokenizer(r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-']\w+)*", flags = re.MULTILINE | re.DOTALL)
+	tokenizer = RegexpTokenizer(r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-']\w+)*", 
+								flags = re.MULTILINE | re.DOTALL | re.UNICODE)
 
 	def tokenize(self, content):
 		if not content or not isinstance(content, six.string_types):

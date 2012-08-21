@@ -28,7 +28,8 @@ name_anchor_pattern = re.compile(".+[#a\d+]$")
 ref_pattern = re.compile("<span class=\"ref\">(.*)</span>")
 last_m_pattern = re.compile("<meta content=\"(.*)\" http-equiv=\"last-modified\"")
 page_c_pattern = re.compile("<div class=\"page-contents\">(.*)</body>")
-default_tokenizer = RegexpTokenizer(r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-']\w+)*", flags = re.MULTILINE | re.DOTALL)
+default_tokenizer = RegexpTokenizer(r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-']\w+)*",
+									flags = re.MULTILINE | re.DOTALL | re.UNICODE)
 
 def get_schema():
 	return create_book_schema()
