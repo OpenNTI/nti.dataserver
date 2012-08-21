@@ -89,6 +89,6 @@
 
 	<utility provides="zope.schema.interfaces.IVocabularyFactory"
       		 factory=".censor._default_profanity_terms"
-			 name="default-profanity-vocabulary" />
+			 name="default-profanity-vocabulary-en" />
       
 </configure>
