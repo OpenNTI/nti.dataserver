@@ -140,9 +140,16 @@ class PlainTextContentFragment(UnicodeContentFragment):
 def _plain_text_to_plain_text( text ):
 	return text
 
-class ICensoredTerm(interface.Interface):
+from zope.schema.interfaces import ITokenizedTerm
+
+class ICensoredTerm(ITokenizedTerm):
 	"""
 	Base interface for a censored term
+	"""
+	
+class IProfanityTerm(ICensoredTerm):
+	"""
+	Base interface for a profanity term
 	"""
 	
 class ICensoredUnicodeContentFragment(IUnicodeContentFragment):
