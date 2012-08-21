@@ -172,7 +172,7 @@ def dispatch_user_created_to_site_policy( user, event ):
 			break
 
 from nti.dataserver import users
-
+import zope.schema
 @interface.implementer(ISitePolicyUserEventListener)
 class MathcountsSitePolicyEventListener(object):
 	"""
@@ -199,3 +199,16 @@ class MathcountsSitePolicyEventListener(object):
 
 		interface.alsoProvides( user, nti_interfaces.ICoppaUser )
 		interface.alsoProvides( user, nti_interfaces.ICoppaUserWithoutAgreement )
+
+		if user.alias != user.username:
+			raise zope.schema.ValidationError("Display name %s and username %s must match." % (user.alias, user.username))
+
+		if any( (x.lower() in user.username.lower() for x in user.realname.split( )) ):
+			raise zope.schema.ValidationError("Username %s cannot include any part of the real name %s" %
+											 (user.username, user.realname) )
+
+		# TODO: Censor
+
+		if '@' in user.username:
+			# This has to go away when those restrictions do
+			logger.warning( "Allowing '@' in username for Koppa Kid %s", user )

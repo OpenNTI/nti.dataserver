@@ -359,9 +359,10 @@ class Principal(Entity,sharing.SharingSourceMixin):
 				 avatarURL=None,
 				 password=None,
 				 realname=None,
+				 alias=None,
 				 parent=None):
 
-		super(Principal,self).__init__(username,avatarURL,realname=realname,parent=parent)
+		super(Principal,self).__init__(username,avatarURL,realname=realname,alias=alias,parent=parent)
 		if not username or '@' not in username:
 			raise ValueError( 'Illegal username ' + username )
 
@@ -756,8 +757,8 @@ class User(Principal):
 	# send back a gravatar URL for the primary email:
 	# http://www.gravatar.com/avatar/%<Lowercase hex MD5>=44&d=mm
 
-	def __init__(self, username, avatarURL=None, password=None, realname=None, parent=None, _stack_adjust=0):
-		super(User,self).__init__(username, avatarURL=avatarURL, password=password, realname=realname, parent=parent)
+	def __init__(self, username, avatarURL=None, password=None, realname=None, alias=None, parent=None, _stack_adjust=0):
+		super(User,self).__init__(username, avatarURL=avatarURL, password=password, realname=realname, alias=alias, parent=parent)
 		# We maintain a Map of our friends lists, organized by
 		# username (only one friend with a username)
 		_create_fl = True
