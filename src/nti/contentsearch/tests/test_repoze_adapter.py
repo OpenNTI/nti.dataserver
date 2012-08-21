@@ -24,6 +24,11 @@ from hamcrest import (is_, is_not, has_key, has_item, has_entry, has_length, ass
 
 class TestRepozeUserIndexManager(ConfiguringTestBase):
 
+	def _create_user(self, ds=None, username='nt@nti.com', password='temp001'):
+		ds = ds or mock_dataserver.current_mock_ds
+		usr = User.create_user( ds, username=username, password=password)
+		return usr
+	
 	def is_ngram_search_supported(self):
 		features = component.getUtility(search_interfaces.ISearchFeatures)
 		return features.is_ngram_search_supported
@@ -42,7 +47,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 	def _add_notes(self, usr=None, conn=None):
 		notes = []
 		conn = conn or mock_dataserver.current_transaction
-		usr = usr or User.create_user( mock_dataserver.current_mock_ds, username='nt@nti.com', password='temp' )
+		usr = usr or self._create_user()
 		for x in zanpakuto_commands:
 			note = self._create_note(x, usr.username)
 			if conn: conn.add(note)
@@ -62,13 +67,13 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		return usr, notes, docids
 
 	def _add_user_index_notes(self, ds=None):
-		usr = User.create_user( ds, username='nt@nti.com', password='temp' )
+		usr = self._create_user()
 		_, notes, docids = self._index_notes(dataserver=ds, usr=usr, do_assert=False)
 		return usr, docids, notes
 
 	@WithMockDSTrans
 	def test_empty(self):
-		usr = User.create_user( mock_dataserver.current_mock_ds, username='nt@nti.com', password='temp' )
+		usr = self._create_user()
 		rim = search_interfaces.IRepozeEntityIndexManager(usr, None)
 		assert_that(rim.get_stored_indices(), is_([]))
 		assert_that(rim.has_stored_indices(), is_(False))
@@ -190,7 +195,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 		with mock_dataserver.mock_db_trans( ds ):
 			for x in range(2):
 				username = 'nt%s@nti.com' % x
-				user = User.create_user( ds, username=username, password='temp' )
+				user = self._create_user(ds, username=username )
 				users.append(user)
 
 			note = self._create_note('ichigo', users[0].username)
@@ -212,7 +217,7 @@ class TestRepozeUserIndexManager(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_create_redaction(self):
 		username = 'kuchiki@bleach.com'
-		user = User.create_user(mock_dataserver.current_mock_ds, username=username, password='temp' )
+		user =self._create_user(username=username )
 		redaction = Redaction()
 		redaction.selectedText = u'Fear'
 		redaction.replacementContent = 'Ichigo'

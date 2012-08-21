@@ -158,7 +158,7 @@ class _BaseIndexManagerTest(object):
 		notes = []
 		conn = mock_dataserver.current_transaction
 
-		usr = User.create_user( mock_dataserver.current_mock_ds, username='nt@nti.com', password='temp' )
+		usr = User.create_user( mock_dataserver.current_mock_ds, username='nt@nti.com', password='temp001' )
 
 		for x in strings:
 			note = Note()

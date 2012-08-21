@@ -74,6 +74,7 @@
 	<!-- Content tokenizer -->
 	
 	<utility factory="._content_utils._ContentTokenizer"  />
+	<utility factory="._content_utils._ContentTokenizer" name="en" />
 	
 	<!-- zopyx Storage -->
 

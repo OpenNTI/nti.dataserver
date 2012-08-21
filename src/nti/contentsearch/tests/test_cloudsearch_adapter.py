@@ -68,7 +68,7 @@ class TestCloudSearchIndexManager(ConfiguringTestBase):
 	
 	def add_user_index_notes(self, ds=None):
 		username = unicode(str(uuid.uuid1())) + '@nti.com' 
-		usr = User.create_user(mock_dataserver.current_mock_ds, username=username, password='temp' )
+		usr = User.create_user(mock_dataserver.current_mock_ds, username=username, password='temp001' )
 		notes, resps = self.index_notes(usr=usr, do_assert=False)
 		time.sleep(self.aws_op_delay)
 		return usr, notes, resps

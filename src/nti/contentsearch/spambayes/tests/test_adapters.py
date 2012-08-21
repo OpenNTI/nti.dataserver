@@ -14,7 +14,7 @@ class TestAdapters(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_user_classifer(self):
 		ds = mock_dataserver.current_mock_ds
-		usr = User.create_user(ds, username='nt@nti.com', password='temp' )
+		usr = User.create_user(ds, username='nt@nti.com', password='temp001' )
 		usp = ISpamClassifier(usr, None)
 		usp.train(u'test string', True)
 		usp.train(u'another text', True)
