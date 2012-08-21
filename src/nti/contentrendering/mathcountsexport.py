@@ -51,16 +51,6 @@ class _WrappedElement(_Container):
 		# Note: __new__ does all the actual work, because these are immutable as strings
 		super(_WrappedElement,self).__init__( self, '\\' + self.wrapper + '{' + text + '}' )
 
-class _WrappedElement2Arg(_Container):
-	wrapper = None
-
-	def __new__( cls, text1, text2 ):
-		return super(_WrappedElement2Arg,cls).__new__( cls, '\\' + cls.wrapper + '{' + text1 + '}{' + text2 + '}' )
-
-	def __init__( self, text1=None, text2=None ):
-		# Note: __new__ does all the actual work, because these are immutable as strings
-		super(_WrappedElement2Arg,self).__init__( self, '\\' + self.wrapper + '{' + text1 + '}{' + text2 +'}' )
-
 class _Footnote(_WrappedElement):
 	wrapper = 'footnote'
 
@@ -90,18 +80,6 @@ class _TextIT(_WrappedElement):
 
 class _TextBF(_WrappedElement):
 	wrapper = 'textbf'
-
-class _MATHCOUNTSWorksheet(_WrappedElement2Arg):
-	wrapper = 'mathcountsworksheet'
-
-	def __new__( cls, text ):
-		text2 = "tag:nextthought.com,2011-10:mathcounts-HTML-mathcounts2013." + re.sub(r'[\s-]', '_', text.lower())
-		return super(_MATHCOUNTSWorksheet,cls).__new__( cls, text, text2 )
-
-	def __init__( self, text=None ):
-		# Note: __new__ does all the actual work, because these are immutable as strings
-		text2 = "tag:nextthought.com,2011-10:mathcounts-HTML-mathcounts2013." + re.sub(r'[\s-]', '_', text.lower())
-		super(_MATHCOUNTSWorksheet,self).__init__( text, text2 )
 
 class _href(_Container):
 
@@ -303,7 +281,7 @@ def _output_tex( worksheets ):
 	for worksheet in worksheets:
 		tex = []
 		qset = []
-		tex.extend([_MATHCOUNTSWorksheet( worksheet.title )])
+		tex.extend([_Chapter( worksheet.title )])
 		if worksheet.header is not None:
 			tex.extend([ worksheet.header ])
 		tex.extend([_SubSection( 'Questions' )])
