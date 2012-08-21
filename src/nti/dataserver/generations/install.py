@@ -6,7 +6,7 @@ from __future__ import print_function, unicode_literals
 
 __docformat__ = 'restructuredtext'
 
-generation = 20
+generation = 21
 
 from zope.generations.generations import SchemaManager
 
@@ -24,7 +24,6 @@ def evolve( context ):
 	return result
 
 import BTrees
-from persistent.list import PersistentList
 
 from zope import interface
 from zope.component.interfaces import ISite
@@ -34,6 +33,7 @@ from zope.site.folder import Folder, rootFolder
 
 import zope.intid
 import zc.intid
+import z3c.password.interfaces
 
 from nti.dataserver import _Dataserver
 from nti.dataserver import users
@@ -43,6 +43,8 @@ from nti.dataserver import containers as container
 from nti.dataserver import intid_utility
 from nti.dataserver import flagging
 from nti.dataserver import shards as ds_shards
+from nti.dataserver import password_utility
+
 
 import copy
 def install_chat( context ):
@@ -117,6 +119,8 @@ def install_main( context ):
 
 	install_flag_storage( dataserver_folder )
 
+	install_password_utility( dataserver_folder )
+
 	return dataserver_folder
 
 def install_intids( dataserver_folder ):
@@ -134,6 +138,14 @@ def install_intids( dataserver_folder ):
 	# Make sure to register it as both types of utility, one is a subclass of the other
 	lsm.registerUtility( intids, provided=zc.intid.IIntIds )
 	return intids
+
+def install_password_utility( dataserver_folder ):
+	lsm = dataserver_folder.getSiteManager()
+	policy = password_utility.HighSecurityPasswordUtility()
+	policy.__name__ = '++etc++password_utility'
+	policy.__parent__ = dataserver_folder
+	policy.maxLength = 100
+	lsm.registerUtility( policy, provided=z3c.password.interfaces.IPasswordUtility )
 
 def install_flag_storage( dataserver_folder ):
 	lsm = dataserver_folder.getSiteManager()
