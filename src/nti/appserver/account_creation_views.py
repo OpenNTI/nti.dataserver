@@ -24,6 +24,9 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import sys
+
+import zope.schema
+
 from nti.dataserver import users
 
 from nti.appserver._util import logon_userid_with_request
@@ -61,8 +64,10 @@ def account_create_view(request):
 
 	try:
 		desired_userid = externalValue['Username'] # May throw KeyError
-		# TODO: Hook in z3c.password policies. For now, we're just requiring
-		# that it be present
+		# Require the password to be present. We will check it with the policy
+		# below.
+		# TODO: See comments in the user about needing to use site policies vs the default
+		# Not sure if that is required
 		_ = externalValue['password']
 	except KeyError:
 		exc_info = sys.exc_info()
@@ -72,7 +77,11 @@ def account_create_view(request):
 		# Now create the user, firing Created and Added events as appropriate
 		new_user = users.User.create_user( username=desired_userid ) # May throw KeyError
 
-		obj_io.update_object_from_external_object( new_user, externalValue )
+		obj_io.update_object_from_external_object( new_user, externalValue ) # May throw validation error
+	except zope.schema.ValidationError:
+		# Validation error may be many things, including invalid password by the policy
+		exc_info = sys.exc_info()
+		raise hexc.HTTPUnprocessableEntity, exc_info[1], exc_info[2]
 	except KeyError:
 		exc_info = sys.exc_info()
 		raise hexc.HTTPConflict, exc_info[1], exc_info[2]

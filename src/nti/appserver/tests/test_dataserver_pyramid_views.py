@@ -104,7 +104,7 @@ class TestUGDViews(ConfiguringTestBase):
 		view.request.context = X()
 		view.request.context.resource = user
 		view.request.content_type = 'application/vnd.nextthought+json'
-		view.request.body = to_external_representation( { 'password': 'temp002' }, 'json' )
+		view.request.body = to_external_representation( { 'password': 'uniqPass123', 'old_password': 'temp001' }, 'json' )
 
 		eventtesting.clearEvents()
 		user.lastModified = 0

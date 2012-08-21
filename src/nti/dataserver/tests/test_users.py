@@ -148,15 +148,15 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_cannot_create_twice(self):
-		user1 = User.create_user( self.ds, username='foo@bar', password='temp' )
+		user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
 		with assert_raises(KeyError):
-			User.create_user( self.ds, username=user1.username, password='temp' )
+			User.create_user( self.ds, username=user1.username, password='temp001' )
 
 
 	@WithMockDSTrans
 	def test_share_unshare_note(self):
-		user1 = User.create_user( self.ds, username='foo@bar', password='temp' )
-		user2 = User.create_user( self.ds, username='fab@bar', password='temp' )
+		user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
+		user2 = User.create_user( self.ds, username='fab@bar', password='temp001' )
 
 		note = Note()
 		note.body = ['text']
@@ -380,7 +380,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_deleting_user_with_contained_objects_removes_intids(self):
-		user1 = User.create_user( self.ds, username='foo@bar', password='temp' )
+		user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
 
 		note = Note()
 		note.body = ['text']
@@ -407,7 +407,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_sublocations_are_set(self):
 		"We should never get duplicate values for sublocations"
-		user1 = User.create_user( self.ds, username='foo@bar', password='temp' )
+		user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
 
 		note = Note()
 		note.body = ['text']
@@ -434,7 +434,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_sublocations_include_annotations(self):
-		user1 = User.create_user( self.ds, username='foo@bar', password='temp' )
+		user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
 
 		import nti.chatserver.messageinfo as chat_msg
 		import nti.chatserver.interfaces as chat_interfaces

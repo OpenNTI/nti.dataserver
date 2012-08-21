@@ -24,6 +24,8 @@ from zope.location import interfaces as loc_interfaces
 from zope.annotation import interfaces as an_interfaces
 import zope.intid
 
+from z3c.password import interfaces as pwd_interfaces
+
 from repoze.lru import lru_cache
 
 import persistent
@@ -350,6 +352,8 @@ class Principal(Entity,sharing.SharingSourceMixin):
 		A password object. Not comparable, only supports a `checkPassword` operation.
 	"""
 
+	# TODO: Continue migrating this towards zope.security.principal, the zope principalfolder
+	# concept.
 	def __init__(self,
 				 username=None,
 				 avatarURL=None,
@@ -360,17 +364,19 @@ class Principal(Entity,sharing.SharingSourceMixin):
 		super(Principal,self).__init__(username,avatarURL,realname=realname,parent=parent)
 		if not username or '@' not in username:
 			raise ValueError( 'Illegal username ' + username )
-		self.__dict__['password'] = None # establish default (missing)
-		self.password = password
+
+		if password:
+			self.password = password
 
 	def has_password(self):
 		return bool(self.password)
 
 	def _get_password(self):
-		return self.__dict__['password']
+		return self.__dict__.get('password', None)
 	def _set_password(self,np):
-		if np:
-			self.__dict__['password'] = _Password(np)
+		# TODO: Names for these
+		component.getUtility( pwd_interfaces.IPasswordUtility ).verify( np )
+		self.__dict__['password'] = _Password(np)
 		# otherwise, no change
 	password = property(_get_password,_set_password)
 
@@ -863,8 +869,18 @@ class User(Principal):
 				updated = True
 
 			if 'password' in parsed:
+				old_pw = None
+				if self.has_password():
+					# To change an existing password, you must send the old
+					# password
+					old_pw = parsed.pop( 'old_password')
+					# And it must match
+					if not self.password.checkPassword( old_pw ):
+						raise ValueError( "Old password does not match" )
 				password = parsed.pop( 'password' )
-				self.password = password
+				# TODO: Names/sites for these? That are distinct from the containment structure?
+				component.getUtility( pwd_interfaces.IPasswordUtility ).verify( password, old_pw )
+				self.password = password # NOTE: This re-verifies
 				updated = True
 
 			# Muting/Unmuting conversations. Notice that we only allow
