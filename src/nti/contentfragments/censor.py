@@ -17,6 +17,8 @@ from zope import interface
 from zope import component
 
 from zope.schema import interfaces as sch_interfaces
+from zope.schema.vocabulary import SimpleVocabulary, SimpleTerm
+
 from nti.contentfragments import interfaces
 
 # The algorithms contained in here are trivially simple.
@@ -91,7 +93,8 @@ def TrivialMatchScannerExternalFile( file_path ):
 	External files are stored in rot13.
 	"""
 	# TODO: Does rot13 unicode?
-	return TrivialMatchScanner( (x.encode('rot13').strip() for x in open(file_path, 'rU').readlines() ) )
+	with open(file_path, 'rU') as src:
+		return TrivialMatchScanner((x.encode('rot13').strip() for x in src.readlines()))
 
 @interface.implementer(interfaces.ICensoredContentScanner)
 class WordMatchScanner(object):
@@ -195,3 +198,11 @@ def censor_assign( fragment, target, field_name ):
 	evt = BeforeObjectAssignedEvent( fragment, field_name, target )
 	notify( evt )
 	return evt.object
+
+def _default_profanity_terms():
+	file_path = resource_filename( __name__, 'profanity_list.txt' ) 
+	with open(file_path, 'rU') as src:
+		words = (unicode(x.encode('rot13').strip()) for x in src.readlines() )
+	terms = [ SimpleTerm(value=word, token=repr(word)) for word in words ]
+	map(lambda x: interface.alsoProvides( x, interfaces.IProfanityTerm ), terms)
+	return SimpleVocabulary(terms)
