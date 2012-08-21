@@ -45,6 +45,9 @@ class texttrademark(Base.Command):
 class textregistered(Base.Command):
 	unicode = u'\u00AE'
 
+class textdegree(Base.Command):
+	unicode = u'\u00B0'
+
 # Handle pdfLatex primatives
 class pdfminorversion(Command):
 	args = 'version:int'
