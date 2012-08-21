@@ -1,6 +1,6 @@
-===========================================
-Serving Content from a CDN
-===========================================
+============================
+ Serving Content from a CDN
+============================
 
 This document will outline some notes and observations on how we can
 serve content from a high-capacity data store and CDN, specifically
@@ -84,7 +84,10 @@ stored data, that would tend to defeat the point of having static
 content in S3 to start with, as all traffic would be forced through
 the dataserver front end, which would inevitably be slower than a
 native S3 request (plus adding extra data transfer charges). For
-CloudFront, it would completely negate the benefit of the edge caching.
+CloudFront, it would also tend to negate the benefit of the edge
+caching, without aggressive cache headers that let CloudFront serve
+content locally without validating against the dataserver very often
+(such headers would be recommended anyway).
 
 Thus, to effectively store and serve static content from
 S3/CloudFront, an application will be talking to (a minimum of) two
@@ -149,15 +152,49 @@ Dataserver           dynamic.nextthought.com
 ===================  ==============================
 
 Kindle Cloud Reader
-+++++++++++++++++++
+~~~~~~~~~~~~~~~~~~~
 
 For what its worth, this is the approach that Kindle Cloud Reader
 takes. Each book is broken into fragments which are GZIPped and
 base-64'd and placed into a JSONP wrapper. These fragments are placed
 into S3, and CloudFront is put in front of S3. The browser application
-is served from ``read.amazon.com`` and makes XHR requests to a
-``cloudfront.net`` domain to fetch the fragments. Doubtlessly the
-fragments are self-expiring S3 items.
+is served from ``read.amazon.com``, which is a CloudFront
+distribution, and makes XHR requests to a ``cloudfront.net`` domain to
+fetch the fragments. The fragments are in a CloudFront distribution on
+top of an S3 bucket (and are probably self-expiring S3 items). (We can
+glean all of this from the HTTP response headers.)
+
+SSL and HTTPs
+~~~~~~~~~~~~~
+
+A CNAME that is either a CloudFront CNAME or an S3 bucket CNAME *does
+not* support SSL/HTTPS. (Technically it does or can be configured to,
+but the certificates used will not match the host names and the
+browser will produce a warning.) It does not seem possible to serve an
+entire site of content directly from CloudFront or S3 with a pretty
+CNAME *and* use SSL. The communication with the dataserver could still
+be SSL, however, though the user wouldn't see the green URL bar in the browser.
+
+Therefore, if SSL and pretty CNAMEs are a requirement together, then
+the first option (content and browser app from one domain) is ruled
+out, leaving only the second, JSONP option (browser app and dataserver
+in one domain, content in a second). Even the approach of using the
+dataserver as a proxy fails when CloudFront is involved. Putting
+CloudFront in front of a dynamic application still has the browser
+negotiating SSL connections to a CNAME that CloudFront doesn't have a
+certificate for and so the browser app couldn't be served from
+the CDN.
+
+.. note:: The relaxed same-origin policy for script tags that makes
+   JSONP possible might also make it possible to serve some of the
+   browser code from the CDN at a non-pretty CNAME, but the main
+   ``index.html`` would have to come directly from the dataserver
+   machine. It's an open question about other types of resources such
+   as CSS and images.
+
+Amazon uses CloudFront on top of ``read.amazon.com`` and also serves
+that site over SSL. How is this possible? Simple, they're Amazon and
+are able to equip the CDN with whatever host certificate they want.
 
 Resources and Naming
 --------------------
