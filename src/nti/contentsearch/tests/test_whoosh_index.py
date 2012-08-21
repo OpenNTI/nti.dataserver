@@ -43,9 +43,14 @@ class TestWhooshIndex(ConfiguringTestBase):
 	def tearDownClass(cls):
 		shutil.rmtree(cls.db_dir, True)
 		
+	def _create_user(self, ds=None, username='nt@nti.com', password='temp001'):
+		ds = ds or mock_dataserver.current_mock_ds
+		usr = User.create_user( ds, username=username, password=password)
+		return usr
+	
 	def _create_ds_note(self):
 		username='nt@nti.com'
-		usr = User.create_user( mock_dataserver.current_mock_ds, username=username, password='temp' )
+		usr = self._create_user(username=username)
 		note = dsNote()
 		note.creator = username
 		note.body = [u'All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade']
@@ -71,7 +76,7 @@ class TestWhooshIndex(ConfiguringTestBase):
 	
 	def _create_ds_highlight(self):
 		username='nt@nti.com'
-		usr = User.create_user( mock_dataserver.current_mock_ds, username=username, password='temp' )
+		usr = self._create_user(username=username)
 		highlight = dsHighlight()
 		highlight.selectedText = u'You know how to add, subtract, multiply, and divide'
 		highlight.creator = usr.username
@@ -94,7 +99,7 @@ class TestWhooshIndex(ConfiguringTestBase):
 			assert_that(d, has_key(ITEMS))
 
 	def _create_ds_redaction(self):
-		usr = User.create_user( mock_dataserver.current_mock_ds, username='nt@nti.com', password='temp' )
+		usr = self._create_user()
 		redaction = dsRedaction()
 		redaction.selectedText = u'Lord of Winterfell'
 		redaction.replacementContent = 'Game of Thrones'

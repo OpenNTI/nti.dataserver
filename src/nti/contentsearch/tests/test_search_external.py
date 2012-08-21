@@ -52,6 +52,11 @@ class TestRepozeIndex(ConfiguringTestBase):
 		with open(path, "r") as f:
 			cls.redaction = json.load(f)
 			
+	def _create_user(self, ds=None, username='nt@nti.com', password='temp001'):
+		ds = ds or mock_dataserver.current_mock_ds
+		usr = User.create_user( ds, username=username, password=password)
+		return usr
+	
 	def _externalize(self, clazz, data, query):
 		d = _provide_highlight_snippet(clazz(data), query)
 		return toExternalObject(d)
@@ -104,7 +109,7 @@ class TestRepozeIndex(ConfiguringTestBase):
 		
 	@WithMockDSTrans
 	def test_search_hit_note_ds(self):
-		usr = User.create_user( mock_dataserver.current_mock_ds, username='nt@nti.com', password='temp' )
+		usr = self._create_user()
 		note = Note()
 		note.body = [u'It is not enough to mean well, we actually have to do well']
 		note.creator =  usr.username
@@ -123,7 +128,7 @@ class TestRepozeIndex(ConfiguringTestBase):
 		
 	@WithMockDSTrans
 	def test_search_hit_hightlight_ds(self):
-		usr = User.create_user( mock_dataserver.current_mock_ds, username='nt@nti.com', password='temp' )
+		usr = self._create_user()
 		highlight = Highlight()
 		highlight.selectedText = u'Kon saw it! The Secret of a Beautiful Office Lady'
 		highlight.creator = usr.username
@@ -141,7 +146,7 @@ class TestRepozeIndex(ConfiguringTestBase):
 		
 	@WithMockDSTrans
 	def test_search_hit_redaction_ds(self):
-		usr = User.create_user( mock_dataserver.current_mock_ds, username='nt@nti.com', password='temp' )
+		usr = self._create_user()
 		redaction = Redaction()
 		redaction.selectedText = u'Fear'
 		redaction.replacementContent = 'redaction'

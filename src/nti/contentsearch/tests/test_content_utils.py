@@ -49,7 +49,7 @@ class TestContentUtils(ConfiguringTestBase):
 		assert_that(get_content('82%'), is_('82%'))
 
 		u = unichr(40960) + u'bleach' + unichr(1972)
-		assert_that(get_content(u), is_('bleach'))
+		assert_that(get_content(u), is_(u'\ua000bleach'))
 		
 	def _create_note(self, msg, username, containerId=None, tags=('ichigo',), canvas=None):
 		note = Note()
@@ -61,10 +61,15 @@ class TestContentUtils(ConfiguringTestBase):
 		note.containerId = containerId or make_ntiid(nttype='bleach', specific='manga')
 		return note
 	
+	def _create_user(self, ds=None, username='nt@nti.com', password='temp001'):
+		ds = ds or mock_dataserver.current_mock_ds
+		usr = User.create_user( ds, username=username, password=password)
+		return usr
+	
 	@WithMockDSTrans
 	def test_note_adapter(self):
+		usr = self._create_user()
 		containerId = make_ntiid(nttype='bleach', specific='manga')
-		usr = User.create_user( mock_dataserver.current_mock_ds, username='nt@nti.com', password='temp' )
 		note = self._create_note('nothing can be explained', usr.username, containerId)
 		mock_dataserver.current_transaction.add(note)
 		note = usr.addContainedObject( note ) 
@@ -85,8 +90,8 @@ class TestContentUtils(ConfiguringTestBase):
 		ct = CanvasTextShape()
 		ct.text = 'Mike Wyzgowski'
 		c.append(ct)
+		usr = self._create_user()
 		containerId =  make_ntiid(nttype='bleach', specific='manga')
-		usr = User.create_user( mock_dataserver.current_mock_ds, username='nt@nti.com', password='temp' )
 		note = self._create_note('New Age', usr.username, containerId, canvas=c)
 		mock_dataserver.current_transaction.add(note)
 		note = usr.addContainedObject( note ) 
@@ -97,7 +102,7 @@ class TestContentUtils(ConfiguringTestBase):
 	def test_redaction_adpater(self):
 		username = 'kuchiki@bleach.com'
 		containerId = make_ntiid(nttype='bleach', specific='manga')
-		user = User.create_user(mock_dataserver.current_mock_ds, username=username, password='temp' )
+		user = self._create_user(username=username)
 		redaction = Redaction()
 		redaction.selectedText = u'Fear'
 		redaction.replacementContent = 'redaction'
@@ -120,7 +125,7 @@ class TestContentUtils(ConfiguringTestBase):
 	def test_highlight_adpater(self):
 		username = 'urahara@bleach.com'
 		containerId = make_ntiid(nttype='bleach', specific='manga')
-		user = User.create_user(mock_dataserver.current_mock_ds, username=username, password='temp' )
+		user = self._create_user(username=username)
 		highlight = Highlight()
 		highlight.selectedText = u'Kon saw it! The Secret of a Beautiful Office Lady'
 		highlight.creator = username

@@ -33,6 +33,11 @@ class TestWhooshUserAdapter(ConfiguringTestBase):
 	def tearDownClass(cls):
 		shutil.rmtree(cls.db_dir, True)
 
+	def _create_user(self, ds=None, username='nt@nti.com', password='temp001'):
+		ds = ds or mock_dataserver.current_mock_ds
+		usr = User.create_user( ds, username=username, password=password)
+		return usr
+	
 	def _add_notes(self, usr):
 		notes = []
 		conn = mock_dataserver.current_transaction
@@ -48,7 +53,7 @@ class TestWhooshUserAdapter(ConfiguringTestBase):
 
 	def _add_user_index_notes(self, do_assert=False):
 		username = str(uuid.uuid4()).split('-')[-1] + '@nti.com' 
-		usr = User.create_user(  mock_dataserver.current_mock_ds, username=username, password='temp' )
+		usr = self._create_user(username=username )
 		notes = self._add_notes(usr)
 		uim = search_interfaces.IWhooshEntityIndexManager(usr, None)
 		for note in notes:
@@ -60,7 +65,7 @@ class TestWhooshUserAdapter(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_empty(self):
 		username = str(uuid.uuid4()).split('-')[-1] + '@nti.com' 
-		usr = User.create_user(  mock_dataserver.current_mock_ds, username=username, password='temp' )
+		usr = self._create_user(username=username )
 		uim = search_interfaces.IWhooshEntityIndexManager(usr, None)
 		assert_that(uim.get_stored_indices(), is_([]))
 		assert_that(uim.has_stored_indices(), is_(False))
