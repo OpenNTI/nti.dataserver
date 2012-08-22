@@ -446,10 +446,17 @@ def _configure_database( env, uris ):
 	install_zlib_client_resolver()
 	db = db_from_uri( uris )
 	# TODO: Circular import
+	# TODO: We don't want to be doing this in prod, we want this to be configured somewhere.
+	# If we do this, we must provide a password utility
 	import nti.dataserver.utils.example_database_initializer
 	component.provideUtility(
 		nti.dataserver.utils.example_database_initializer.ExampleDatabaseInitializer(),
 		name='nti.dataserver-example' )
+	import z3c.password.password
+	import z3c.password.interfaces
+	component.provideUtility(
+		z3c.password.password.TrivialPasswordUtility() )
+
 	# Now, simply broadcasting the DatabaseOpenedWithRoot option
 	# will trigger the installers from zope.generations
 	notify( DatabaseOpenedWithRoot( db ) )
