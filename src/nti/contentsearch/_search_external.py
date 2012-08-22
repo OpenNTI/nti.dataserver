@@ -60,7 +60,7 @@ class NgramSnippetHighlightDecorator(object):
 		query = getattr(original, 'query', None)
 		if query:
 			text = external.get(SNIPPET, None)
-			text = _ngram_content_highlight(query, text, text)
+			text = _ngram_content_highlight(query, text.lower(), text)
 			external[SNIPPET] = text
 		
 def WhooshHighlightDecoratorFactory(*args):
@@ -75,7 +75,7 @@ class _BaseWordSnippetHighlightDecorator(object):
 		query = getattr(original, 'query', None)
 		if query:
 			text = external.get(SNIPPET, None)
-			text = _word_content_highlight(query, text, text)
+			text = _word_content_highlight(query, text.lower(), text)
 			external[SNIPPET] = text
 			
 class WordSnippetHighlightDecorator(_BaseWordSnippetHighlightDecorator):
