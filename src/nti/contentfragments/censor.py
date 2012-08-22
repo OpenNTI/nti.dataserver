@@ -141,8 +141,8 @@ def ExternalWordPlusTrivialMatchScannerFiles( profanity_path, word_list_path ):
 
 @interface.implementer(interfaces.ICensoredContentScanner)
 def DefaultTrivialProfanityScanner():
-	return TrivialMatchScannerExternalFile( resource_filename( __name__, 'profanity_list.txt' ) )
-
+	file_path = resource_filename( __name__, 'profanity_list.txt' )
+	return ExternalWordPlusTrivialMatchScannerFiles( file_path, file_path )
 
 @interface.implementer(interfaces.ICensoredContentPolicy)
 class DefaultCensoredContentPolicy(object):
