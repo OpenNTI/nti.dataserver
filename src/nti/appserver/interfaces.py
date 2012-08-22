@@ -185,6 +185,11 @@ class IExternalFieldResource(ILocation):
 
 	resource = interface.Attribute( "The object to be updated." )
 
+	wrap_value = schema.Bool( title="Whether to wrap the value as a dictionary name:value.",
+							  description="If False, then assume that the value passed in is acceptable to the object to update.",
+							  default=True,
+							  required=False )
+
 class IExternalFieldTraversable(trv_interfaces.ITraversable):
 	"""
 	Marker interface that says that this object traverses into the externally visible
