@@ -52,8 +52,8 @@ class TestEvolve16(nti.dataserver.tests.mock_dataserver.ConfiguringTestBase):
 				'Note',
 				note,
 				'text/plain' )
-			jason.friendsLists['Everyone'].add_enclosure( enclosure )
-			jason.friendsLists['Everyone']._enclosures.__name__ = None
+			#jason.friendsLists['Everyone'].add_enclosure( enclosure )
+			#jason.friendsLists['Everyone']._enclosures.__name__ = None
 			note_id = note.id
 
 
@@ -68,4 +68,4 @@ class TestEvolve16(nti.dataserver.tests.mock_dataserver.ConfiguringTestBase):
 		with mock_db_trans( ) as conn:
 			ds_folder = context.connection.root()['nti.dataserver']
 			jason = ds_folder['users']['jason.madden@nextthought.com']
-			assert_that( jason.friendsLists['Everyone'], has_property( '_enclosures', has_property( '__name__', '++adapter++enclosures' ) ) )
+			#assert_that( jason.friendsLists['Everyone'], has_property( '_enclosures', has_property( '__name__', '++adapter++enclosures' ) ) )

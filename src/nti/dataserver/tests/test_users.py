@@ -79,7 +79,7 @@ def test_friends_list_case_insensitive():
 
 
 def test_everyone_has_creator():
-	assert_that( users.EVERYONE, has_property( 'creator', nti_interfaces.SYSTEM_USER_NAME ) )
+	assert_that( users.Everyone(), has_property( 'creator', nti_interfaces.SYSTEM_USER_NAME ) )
 
 
 class TestUser(mock_dataserver.ConfiguringTestBase):

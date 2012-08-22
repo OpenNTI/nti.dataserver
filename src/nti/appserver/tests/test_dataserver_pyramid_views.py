@@ -181,6 +181,7 @@ class TestUGDViews(ConfiguringTestBase):
 														 'ContainerId': 'FriendsLists'},
 														 'json' )
 		view.getRemoteUser = lambda: user
+		view() # First time fine
 		with self.assertRaises(hexc.HTTPConflict):
 			view()
 

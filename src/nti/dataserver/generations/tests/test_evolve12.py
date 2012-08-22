@@ -76,14 +76,7 @@ def install_main( context ):
 			lsm[key].__name__ = key
 
 	if 'Everyone' not in lsm['users']:
-		# Hmm. In the case that we're running multiple DS instances in the
-		# same VM, our constant could wind up with different _p_jar
-		# and _p_oid settings. Hence the copy
-		lsm['users']['Everyone'] = copy.deepcopy( users.EVERYONE_PROTO )
-	# This is interesting. Must do this to ensure that users
-	# that get created at different times and that have weak refs
-	# to the right thing. What's a better way?
-	users.EVERYONE = lsm['users']['Everyone']
+		lsm['users']['Everyone'] = users.Everyone()
 
 	# By keeping track of changes in one specific place, and weak-referencing
 	# them elsewhere, we can control how much history is kept in one place.

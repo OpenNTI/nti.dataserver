@@ -991,6 +991,7 @@ class TestApplication(ApplicationTestBase):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = self._create_user()
 			self._create_user( username='jason.madden@nextthought.com' )
+			self._create_user( username='foo@bar' )
 
 			klass = _create_class( self.ds, ('sjohnson@nextthought.com','jason.madden@nextthought.com') )
 			sect = list(klass.Sections)[0]

@@ -433,10 +433,6 @@ class Everyone(Community):
 		super(Everyone,self).__setstate__( state )
 
 
-EVERYONE_PROTO = Everyone()
-EVERYONE = EVERYONE_PROTO
-#""" There is only one Everyone community. """
-
 class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters for __setstate__
 	""" A FriendsList or Circle belongs to a user and
 	contains references (strings or weakrefs to principals) to other
@@ -799,25 +795,8 @@ class User(Principal):
 		self.friendsLists = _FriendsListMap()
 		self.friendsLists.__parent__ = self
 
-		# We have a default friends list called Public that
-		# contains Public. It's a real list so the user
-		# can delete it or change it.
-		# TODO: To make getting it back easy, we need the
-		# notion of 'suggested' entities to follow/share with
-		# TODO: At some place we'll need to have different defaults for
-		# different users (e.g., in a school, maybe the pre-defined list
-		# is the class
-		publicList = FriendsList( 'Everyone' )
-		publicList.alias = 'Public'
-		publicList.realname = 'Everyone'
-		publicList.avatarURL = 'http://www.gravatar.com/avatar/dfa1147926ce6416f9f731dcd14c0260?s=128&d=retro'
-		publicList.addFriend( EVERYONE ) # TODO: This is wrong. Constant objects aren't.
-		if _create_fl:
-			self.friendsLists['Everyone'] = publicList
-
-
 		# Join our default community
-		self.join_community( EVERYONE )
+		self._communities.add( 'Everyone' )
 
 		# We maintain a list of devices associated with this user
 		# TODO: Want a persistent set?
