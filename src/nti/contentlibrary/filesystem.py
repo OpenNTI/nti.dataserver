@@ -131,7 +131,8 @@ class FilesystemContentUnit(ContentUnit):
 				return None
 
 	def does_sibling_entry_exist( self, sibling_name ):
-		return os.path.exists( self.make_sibling_key( sibling_name  ) )
+		sib_key = self.make_sibling_key( sibling_name )
+		return sibling_name if os.path.exists( self.make_sibling_key( sibling_name  ) ) else None
 
 @interface.implementer(IFilesystemContentPackage)
 class FilesystemContentPackage(ContentPackage,FilesystemContentUnit):

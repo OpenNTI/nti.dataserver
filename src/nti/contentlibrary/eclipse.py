@@ -94,6 +94,7 @@ def EclipseContentPackage( toc_entry,
 	content_package.root = toc_entry.get_parent_key()
 	content_package.index = toc_entry.key
 	content_package.index_last_modified = toc_last_modified
+	content_package.index_jsonp = toc_entry.does_sibling_entry_exist( TOC_FILENAME + '.jsonp' )
 
 	renderVersion = root.get( 'renderVersion' )
 	if renderVersion:

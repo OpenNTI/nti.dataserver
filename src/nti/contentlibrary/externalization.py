@@ -82,8 +82,11 @@ class _FilesystemContentPackageExternal(_ContentPackageExternal):
 
 	def toExternalObject( self ):
 		result = super(_FilesystemContentPackageExternal,self).toExternalObject()
-		# TODO: Index handling is ugly
-		result['index'] = _path_join( result._root_url, os.path.basename( self.package.index ) if self.package.index else None )
+		# TODO: Index handling is ugly. Can we use the new multi-adapter stuff below? Added for
+		# the sake of the appserver/contentlibrary_views
+		root_url = result._root_url
+		result['index'] = _path_join( root_url, os.path.basename( self.package.index ) if self.package.index else None )
+		result['index_jsonp'] = _path_join( root_url, os.path.basename( self.package.index_jsonp ) ) if self.package.index_jsonp else None
 		return result
 
 from pyramid import traversal
@@ -103,6 +106,21 @@ class _FilesystemContentUnitHrefMapper(object):
 			href = '/' + href
 		self.href = href
 
+@component.adapter(basestring,interfaces.IFilesystemContentUnit)
+@interface.implementer(interfaces.IContentUnitHrefMapper)
+class _FilesystemKeyContentUnitHrefMapper(object):
+	href = None
+
+ 	def __init__( self, key, unit ):
+		root_package = traversal.find_interface( unit, interfaces.IContentPackage )
+		root_url = _root_url_of_unit( root_package )
+		__traceback_info__ = unit, root_package, root_url
+		href = _path_join( root_url, key )
+		href = href.replace( '//', '/' )
+		if not href.startswith( '/' ):
+			href = '/' + href
+		self.href = href
+
 @interface.implementer(IExternalObject)
 @component.adapter(interfaces.IS3ContentPackage)
 class _S3ContentPackageExternal(_ContentPackageExternal):
@@ -113,6 +131,7 @@ class _S3ContentPackageExternal(_ContentPackageExternal):
 		# TODO: For some reason self.package.icon and self.package.href are relative paths,
 		# but self.package.index is a full key
 		result['index'] = interfaces.IContentUnitHrefMapper( self.package.index ).href
+		result['index_jsonp'] = interfaces.IContentUnitHrefMapper( self.package.index_jsonp ).href if self.package.index_jsonp else None
 		return result
 
 @component.adapter(interfaces.IS3ContentUnit)
