@@ -911,8 +911,19 @@ class ShareableMixin(datastructures.CreatedModDateTrackingObject):
 			return set()
 		return set( (x.username for x in _SCOSContainerFacade( self._sharingTargets ) ) )
 
-
 	flattenedSharingTargetNames = property( getFlattenedSharingTargetNames )
-	sharingTargets = property( getFlattenedSharingTargetNames )
+	getFlattenedSharingTargetNames = deprecate("Prefer 'flattenedSharingTargetNames' attribute")(getFlattenedSharingTargetNames)
 
-	getFlattenedSharingTargetNames = deprecate("Use the attribute")(getFlattenedSharingTargetNames)
+
+	@property
+	def sharingTargets(self):
+		"""
+		Returns a flattened :class:`set` of entities with whom this item
+		is shared.
+		"""
+		if self._sharingTargets is None:
+			return set()
+		# Provide a bit of defense against the intids going away or changing
+		# out from under us
+		return set( (x for x in _SCOSContainerFacade( self._sharingTargets )
+					if x is not None and hasattr( x, 'username') ) )

@@ -976,7 +976,7 @@ class User(Principal):
 			change.creator = source
 			change.containerId = '' # Not anchored, show at root and below
 			change.useSummaryExternalObject = True # Don't send the whole user
-			self._broadcast_change_to( change, username=self.username )
+			self._broadcast_change_to( change, target=self )
 			return change # which is both True and useful
 
 	def is_accepting_shared_data_from( self, source ):
@@ -1155,7 +1155,7 @@ class User(Principal):
 			# The updateSet consists of either the object, or, if it as a
 			# shared object, (object, sharedSet). This allows us to be
 			# smart about how we distribute notifications.
-			self._v_updateSet.append( (obj,obj.flattenedSharingTargetNames)
+			self._v_updateSet.append( (obj,obj.sharingTargets)
 									  if isinstance( obj, ShareableMixin)
 									  else obj )
 
@@ -1225,12 +1225,15 @@ class User(Principal):
 		return self._Updater( self )
 
 	@classmethod
-	def _broadcast_change_to( cls, theChange, **kwargs ):
+	def _broadcast_change_to( cls, theChange, target=None, broadcast=None ):
 		"""
 		Broadcast the change object to the given username.
 		Happens asynchronously. Exists as an class attribute method so that it
 		can be temporarily overridden by an instance. See the :class:`_NoChangeBroadcast` class.
 		"""
+		kwargs = {'target': target}
+		if broadcast is not None:
+			kwargs['broadcast'] = broadcast
 		_get_shared_dataserver().enqueue_change( theChange, **kwargs )
 		return True
 
@@ -1259,7 +1262,7 @@ class User(Principal):
 			# If we can't get sharing, then there's no point in trying
 			# to do anything--the object could never go anywhere
 			try:
-				origSharing = obj.flattenedSharingTargetNames
+				origSharing = obj.sharingTargets
 			except AttributeError:
 				logger.debug( "Failed to get sharing targets on obj of type %s; no one to target change to", type(obj) )
 				return
@@ -1272,21 +1275,19 @@ class User(Principal):
 		if changeType != Change.CIRCLED:
 			change = Change( changeType, obj )
 			change.creator = self
-			self._broadcast_change_to( change, broadcast=True, username=self.username )
+			self._broadcast_change_to( change, broadcast=True, target=self )
 
-		newSharing = obj.flattenedSharingTargetNames
-		seenUsernames = set()
-		def sendChangeToUser( username, theChange ):
+		newSharing = obj.sharingTargets
+		seenTargets = set()
+		def sendChangeToUser( user, theChange ):
 			""" Sends at most one change to a user, taking
 			into account aliases. """
-			user = self.get_entity( username )
-			if user is None:
-				logger.warn( 'Unknown user for changes "%s"', username )
+
+			if user in seenTargets or user is None:
 				return
-			if user.username in seenUsernames: return
-			seenUsernames.add( user.username )
+			seenTargets.add( user )
 			# Fire the change off to the user using different threads.
-			self._broadcast_change_to( theChange, username=user.username )
+			self._broadcast_change_to( theChange, target=user )
 
 		if origSharing != newSharing and changeType not in (Change.CREATED,Change.DELETED):
 			# OK, the sharing changed and its not a new or dead
@@ -1416,10 +1417,10 @@ def user_devicefeedback( msg ):
 		component.getUtility( IDataserverTransactionRunner )( feedback )
 
 
-def onChange( datasvr, msg, username=None, broadcast=None, **kwargs ):
-	if username and not broadcast:
-		logger.debug( 'Incoming change to %s', username )
-		entity = Entity.get_entity( username, dataserver=datasvr )
-		if entity._p_jar:
-			entity._p_jar.readCurrent( entity )
+def onChange( datasvr, msg, target=None, broadcast=None, **kwargs ):
+	if target and not broadcast:
+		logger.debug( 'Incoming change to %s', target )
+		entity = target
+		if getattr( entity, '_p_jar', None):
+			getattr( entity, '_p_jar' ).readCurrent( entity )
 		entity._noticeChange( msg )
