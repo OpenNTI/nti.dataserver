@@ -39,6 +39,18 @@ def test_defaults():
 	assert_that( strat.censor_ranges( bad_val, scanner.scan( bad_val ) ),
 				 is_( 'This is ******* stupid, you ************ *******' ) )
 
+def test_mike_words():
+	scanner = component.getUtility( nti.contentfragments.interfaces.ICensoredContentScanner )
+	strat = component.getUtility( nti.contentfragments.interfaces.ICensoredContentStrategy )
+
+	bad_val = 'ubefrfuvg'.encode( 'rot13' )
+	assert_that( strat.censor_ranges( bad_val, scanner.scan( bad_val ) ),
+				 is_( '*********' ) )
+	
+	bad_val = 'ohyyfuvg'.encode( 'rot13' )
+	assert_that( strat.censor_ranges( bad_val, scanner.scan( bad_val ) ),
+				 is_( '********' ) )
+	
 def test_word_match_scanner():
 	wm = WordMatchScanner(['lost','like'])
 	bad_val = """So I feel a little like, a child who's lost, a little like, (everything's changed) a
