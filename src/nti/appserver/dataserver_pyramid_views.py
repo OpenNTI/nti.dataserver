@@ -2,15 +2,13 @@
 """
 Defines traversal views and resources for the dataserver.
 """
-import sys
-import logging
-logger = logging.getLogger( __name__ )
+from __future__ import print_function, unicode_literals, absolute_import
+logger = __import__( 'logging' ).getLogger( __name__ )
 
+import sys
 import numbers
 import collections
 import time
-
-import anyjson as json
 
 from zope import component
 from zope import interface
@@ -26,12 +24,9 @@ import transaction
 
 from zope.location.location import LocationProxy
 
-
 from nti.dataserver.interfaces import (IDataserver, ISimpleEnclosureContainer, IEnclosedContent)
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import users
-
-
 
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.datastructures import LocatedExternalDict
@@ -41,13 +36,11 @@ from nti.ntiids import ntiids
 
 from nti.dataserver import enclosures
 from nti.dataserver.mimetype import MIME_BASE, nti_mimetype_from_object
-from nti.dataserver import authorization_acl as nacl
 from nti.appserver import interfaces as app_interfaces
 
 from nti.contentlibrary import interfaces as lib_interfaces
 from nti.assessment import interfaces as asm_interfaces
 
-from nti.dataserver.interfaces import ACLLocationProxy
 from nti.appserver import _external_object_io as obj_io
 
 class _ServiceGetView(object):
@@ -580,14 +573,8 @@ class _UGDPostView(_UGDModifyViewBase):
 		__traceback_info__ = containedObject
 		assert containedObject.__parent__
 		assert containedObject.__name__
-		# TODO: Do we actually need to proxy to preserve the ACL? Or can that happen
-		# automatically now?
-		acl = nacl.ACL( containedObject, default=self )
-		assert acl is not self
-		return ACLLocationProxy( containedObject,
-								 containedObject.__parent__,
-								 containedObject.__name__,
-								 nacl.ACL( containedObject ) )
+		return containedObject
+		# We used to ACL proxy here
 
 
 class _UGDDeleteView(_UGDModifyViewBase):
@@ -690,16 +677,8 @@ class _UGDPutView(_UGDModifyViewBase):
 			theObject = toExternalObject( theObject, 'personal-summary' )
 			self._check_object_exists( theObject, creator, containerId, objId )
 
-		__traceback_info__ = theObject
-		assert theObject.__parent__
-		assert theObject.__name__
-		# TODO: Do we need to proxy?
-		acl = nacl.ACL( theObject, default=self )
-		assert acl is not self
-		return ACLLocationProxy( theObject,
-								 theObject.__parent__,
-								 theObject.__name__,
-								 nacl.ACL( theObject ) )
+		return theObject
+		# We used to ACL proxy here, but that should no longer be necessary.
 
 
 class _UGDFieldPutView(_UGDPutView):
