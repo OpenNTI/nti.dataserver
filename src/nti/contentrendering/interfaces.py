@@ -54,6 +54,9 @@ class IRenderedBook(interface.Interface):
 	jobname = schema.TextLine(
 		title="The name of the rendering job that produced this book, or the empty string.",
 		default='')
+	
+	tocFile = schema.TextLine(
+		title=u"The location of the eclipse toc file")
 
 class IIconFinder(interface.Interface):
 	"""
