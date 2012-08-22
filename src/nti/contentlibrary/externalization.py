@@ -136,3 +136,39 @@ class _S3KeyHrefMapper(object):
 		# falls down for the browser: the certs on the CNAME we redirect to, *.s3.aws.amazon.com
 		# don't match for bucket.name host
 		self.href = 'http://' + key.bucket.name + '/' + key.key
+
+@interface.implementer(interfaces.IAbsoluteContentUnitHrefMapper)
+class CDNS3KeyHrefMapper(object):
+	"""
+	Produces protocol-relative URLs for keys in S3 buckets.
+
+	Use this mapper when the content in a bucket is configured to be accessible
+	at a specific address, typically in a CDN distribution. This mapper returns
+	protocol relative addresses because the CDN address is assumed to be
+	its own CNAME and equipped with certificates.
+	"""
+	href = None
+
+ 	def __init__( self, key, cdn_cname ):
+		"""
+		:param string cdn_name: The FQDN where the request should be directed.
+		"""
+		self.href = '//' + cdn_cname + '/' + key.key
+
+class CDNS3KeyHrefMapperFactory(object):
+	"""
+	A factory to produce :class:`CDNS3KeyHrefMapper` objects. Register
+	this object (usually in code) as an adapter for S3 content objects,
+	knowing the given name of the CDN distribution.
+	"""
+
+	def __init__( self, cdn_name ):
+		self.cdn_name = cdn_name
+
+	def __call__( self, key ):
+		return CDNS3KeyHrefMapper( key, self.cdn_name )
+
+def map_all_buckets_to( cdn_name, site_manager ):
+	site_manager.registerAdapter( CDNS3KeyHrefMapperFactory( cdn_name ),
+								  required=(interfaces.IS3Key,),
+								  provided=interfaces.IAbsoluteContentUnitHrefMapper )

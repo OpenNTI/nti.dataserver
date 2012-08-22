@@ -18,17 +18,14 @@ import boto
 
 from nti.contentlibrary.filesystem import DynamicLibrary
 from nti.contentlibrary.boto_s3 import BotoS3BucketContentLibrary
+from nti.contentlibrary.externalization import map_all_buckets_to
 from nti.dataserver import interfaces as nti_interfaces
 from zope import component
 
 from .application import createApplication, AppServer
 from paste.deploy.converters import asbool
 
-
 SOCKET_IO_PATH = 'socket.io'
-#USE_FILE_INDICES = 'USE_ZEO_USER_INDICES' not in os.environ
-#HTTP_PORT = int(os.environ.get('DATASERVER_PORT', '8081'))
-#SYN_CHANGES = 'DATASERVER_SYNC_CHANGES' in os.environ
 
 def configure_app( global_config,
 				   deploy_root='/Library/WebServer/Documents/',
@@ -38,7 +35,9 @@ def configure_app( global_config,
 	":return: A WSGI callable."
 
 	# Quick hack to switch on or off the library: if the root is a path
-	# then we use a filesystem view. If it's not, then we assume it must be a bucket
+	# then we use a filesystem view. If it's not, then we assume it must be a bucket.
+	# TODO: This needs to change because it breaks the glossary/dictionary, which
+	# is assumed to be in the deploy_root?
 	if '/' in deploy_root:
 		library = DynamicLibrary( deploy_root )
 		# We'll volunteer to serve all the files in the root directory
@@ -53,6 +52,7 @@ def configure_app( global_config,
 		boto_bucket = boto.connect_s3().get_bucket( deploy_root )
 		library = BotoS3BucketContentLibrary( boto_bucket )
 
+
 	application,main = createApplication( int(settings.get('http_port','8081')),
 										  library,
 										  process_args=True,
@@ -61,6 +61,14 @@ def configure_app( global_config,
 										  **settings)
 
 	main.setServeFiles( serveFiles )
+
+	# If we are serving content from a bucket, we might have a CDN on top of it
+	# in the case that we are also serving the application. Rewrite bucket
+	# rules with that in mind, replacing the HTTP Host: and Origin: aware stuff
+	# we would do if we were serving the application and content both from a cdn.
+	if 's3_cdn_cname' in settings and settings['s3_cdn_cname']:
+		map_all_buckets_to( settings['s3_cdn_cname'], component.getSiteManager() )
+
 	return application
 
 def _serve(httpd):

@@ -206,7 +206,7 @@ class TestLogon(ConfiguringTestBase):
 	def test_create_from_external( self ):
 		component.provideHandler( eventtesting.events.append, (None,) )
 		component.provideHandler( _handle_user_create_event )
-		self.request.headers['origin'] = 'http://mathcounts.nextthought.com'
+
 		# For now, we are adding to some predefined communities
 		mc = users.Community( 'MathCounts' )
 		self.ds.root['users'][mc.username] = mc
@@ -221,9 +221,14 @@ class TestLogon(ConfiguringTestBase):
 		assert_that( user, is_( users.OpenIdUser ) )
 		assert_that( user, has_property( 'identity_url', 'http://example.com' ) )
 
-		assert_that( users.Entity.get_entity( 'MathCounts' ), not_none() )
-		assert_that( user.communities, has_item( 'MathCounts' ) )
-		assert_that( user.following, has_item( 'MathCounts' ) )
+		# This:
+		#assert_that( users.Entity.get_entity( 'MathCounts' ), not_none() )
+		#assert_that( user.communities, has_item( 'MathCounts' ) )
+		#assert_that( user.following, has_item( 'MathCounts' ) )
+		# Only happens if this:
+		#self.request.headers['origin'] = 'http://mathcounts.nextthought.com'
+		# happened first. But as the policies are getting stricter, that's not
+		# possible.
 
 		# The creation of this user caused events to fire
 		assert_that( eventtesting.getEvents(), has_length( greater_than_or_equal_to( 1 ) ) )
