@@ -22,7 +22,7 @@ class TestIndexer(unittest.TestCase):
 
 	def test_index_content(self):
 		toc = os.path.join(os.path.dirname(__file__), 'eclipse-toc-complete.xml')
-		index_content(toc, indexdir=self.idxdir, optimize=False)
+		index_content(toc, indexdir=self.idxdir, optimize=False, indexname='prealgebra')
 		idx = get_or_create_index(indexdir=self.idxdir, recreate=False)
 
 		q = Term("keywords", u"mathcounts")
