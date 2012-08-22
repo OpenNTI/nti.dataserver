@@ -30,11 +30,13 @@ def add_filesystem_index( title, event ):
 		return
 
 	try:
-		indexname = title.key.bucket.name
-		indexdir = title.make_sibling_key( 'indexdir' )
-		__traceback_info__ = indexdir, indexmanager, indexname
-		if indexmanager.add_book( indexname=indexname, indexdir=indexdir.absolute_path, ntiid=title.ntiid ):
-			logger.debug( 'Added book %s to %s', indexname, indexmanager )
+		indexname = os.path.basename( title.get_parent_key().bucket.name ) # TODO: So many assumptions here
+		indexdir_key = title.make_sibling_key( 'indexdir' )
+		__traceback_info__ = indexdir_key, indexmanager, indexname
+		if indexmanager.add_book( indexname=indexname, indexdir=indexdir_key.absolute_path, ntiid=title.ntiid ):
+			logger.debug( 'Added index %s at %s to %s', indexname, indexdir_key, indexmanager )
+		else:
+			logger.warn( 'Failed to add index %s at %s to %s', indexname, indexdir_key, indexmanager )
 	except ImportError: # pragma: no cover
 		# Adding a book on disk loads the Whoosh indexes, which
 		# are implemented as pickles. Incompatible version changes
