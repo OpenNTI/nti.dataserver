@@ -58,9 +58,12 @@ def get_possible_site_names():
 @interface.implementer(lib_interfaces.IAbsoluteContentUnitHrefMapper)
 class RequestAwareS3KeyHrefMapper(object):
 	"""
-	Produces HTTP URLs for keys in buckets.
+	Produces HTTP URLs for keys in buckets.	Takes steps to work with CORS
+	and other distribution strategies.
 
-	Takes steps to work with CORS and other distribution strategies.
+	Use this mapper when the bucket name is a DNS name, and the bucket name
+	also has a DNS CNAME set up for it, and the application accessing the content
+	was served from the same CNAME origin (or doesn't care about cross-origin concerns).
 	"""
 	href = None
 
@@ -79,6 +82,7 @@ class RequestAwareS3KeyHrefMapper(object):
 			self.href = 'http://' + sites[0] + '/' + key.key
 		else:
 			self.href = 'http://' + key.bucket.name + '/' + key.key
+
 
 @interface.implementer(nti_interfaces.INewUserPlacer)
 class RequestAwareUserPlacer(nti_shards.AbstractShardPlacer):
