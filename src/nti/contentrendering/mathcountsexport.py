@@ -260,8 +260,8 @@ def _output_master_file( worksheets ):
 \\documentclass[a4paper]{book}
 \\usepackage{ntilatexmacros}
 \\usepackage{ntiassessment}
-\\usepackage{mathcounts}
 \\usepackage{graphicx}
+\\usepackage{amsmath}
 \\title{MATHCOUNTS 2012-2013}
 \\author{MATHCOUNTS Foundation}
 """
