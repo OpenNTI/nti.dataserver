@@ -53,7 +53,6 @@ def creator_and_location_censor_policy( fragment, target ):
 
 
 	"""
-
 	creator = None
 	location = None
 
@@ -92,6 +91,7 @@ def user_filesystem_censor_policy( user, file_content_unit ):
 	"""
 	# TODO: maybe this could be handled with an ACL entry? The permission
 	# to post uncensored things?
+
 	if file_content_unit.does_sibling_entry_exist( '.nti_disable_censoring' ):
 		return None
 	return coppa_user_censor_policy( user, file_content_unit )

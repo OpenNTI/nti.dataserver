@@ -34,8 +34,11 @@ class ContentUnit(object):
 
 	def __init__( self, **kwargs ):
 		for k, v in kwargs.items():
+			__traceback_info__ = k, v
 			if hasattr( self, k ):
 				setattr( self, k, v )
+			else: # pragma: no cover
+				logger.warn( "Ignoring unknown key %s = %s", k, v )
 
 	__name__ = alias( 'title' )
 	label = alias( 'title' )
@@ -43,7 +46,7 @@ class ContentUnit(object):
 
 	def __repr__( self ):
 		return "<%s.%s '%s' '%s'>" % (self.__class__.__module__, self.__class__.__name__,
-									  self.__name__, self.href )
+									  self.__name__, getattr( self, 'key', self.href) )
 
 
 @interface.implementer(IContentPackage)

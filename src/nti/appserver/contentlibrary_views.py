@@ -85,11 +85,11 @@ class _ContentUnitAssessmentItemDecorator(object):
 			return
 
 		questions = component.getUtility( app_interfaces.IFileQuestionMap )
-		for_file = questions.by_file.get( getattr( context.contentUnit, 'filename', None ) )
-		if for_file:
+		for_key = questions.by_file.get( getattr( context.contentUnit, 'key', None ) )
+		if for_key:
 			### XXX FIXME: We need to be sure we don't send back the
 			# solutions and explanations right now
-			result_map['AssessmentItems'] = to_external_object( for_file  )
+			result_map['AssessmentItems'] = to_external_object( for_key  )
 
 ###
 # We look for content container preferences. For actual containers, we

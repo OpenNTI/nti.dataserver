@@ -182,8 +182,8 @@ class ConfiguringTestBase(AbstractTestBase):
 	features = ('devmode',)
 	configuration_context = None
 	def setUp( self ):
-		super(ConfiguringTestBase,self).setUp()
 		setHooks()
+		super(ConfiguringTestBase,self).setUp()
 		self.configuration_context = self.configure_packages( self.set_up_packages, self.features, self.configuration_context )
 
 	def configure_packages(self, set_up_packages=(), features=(), context=None ):
@@ -191,8 +191,8 @@ class ConfiguringTestBase(AbstractTestBase):
 		return self.configuration_context
 
 	def tearDown( self ):
-		resetHooks()
 		super(ConfiguringTestBase,self).tearDown()
+		resetHooks()
 
 def module_setup( set_up_packages=(), features=('devmode',)):
 	"""

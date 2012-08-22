@@ -85,6 +85,14 @@ class IContentPackage(IContentUnit, dub_interfaces.IDCExtended):
 	renderVersion = schema.Int( title="Version of the rendering process that produced this package.",
 								default=1, min=1 )
 
+class IDelimitedHierarchyBucket(IZContained):
+	name = schema.TextLine( title="The name of this bucket" )
+
+class IDelimitedHierarchyKey(IZContained):
+
+	bucket = schema.Object( IDelimitedHierarchyBucket, title="The bucket to which this key is relative." )
+	name = schema.TextLine( title="The relative name of this key. Also in `key` and `__name__`." )
+
 class IDelimitedHierarchyEntry(interface.Interface,dub_interfaces.IDCTimes):
 	"""
 	Similar to an :class:`IFilesystemEntry`, but not tied to the local (or mounted)
@@ -97,9 +105,7 @@ class IDelimitedHierarchyEntry(interface.Interface,dub_interfaces.IDCTimes):
 
 	"""
 
-	key = interface.Attribute( "The key designating this entry in the hierarchy." )
-	# Needs further definition. In the filesystem case, this is `filename`. In the boto case,
-	# this is `key`
+	key = schema.Object( IDelimitedHierarchyKey, title="The key designating this entry in the hierarchy." )
 
 	def get_parent_key( ):
 		"""
@@ -144,7 +150,7 @@ class IDelimitedHierarchyContentUnit(IContentUnit,IDelimitedHierarchyEntry):
 class IDelimitedHierarchyContentPackage(IContentPackage,IDelimitedHierarchyEntry):
 	pass
 
-class IS3Bucket(IZContained): # .boto_s3 will patch these to be IZContained
+class IS3Bucket(IDelimitedHierarchyBucket): # .boto_s3 will patch these to be IZContained
 	"""
 	See :class:`boto.s3.bucket.Bucket`.
 
@@ -154,7 +160,7 @@ class IS3Bucket(IZContained): # .boto_s3 will patch these to be IZContained
 
 	name = schema.TextLine( title="The name of this bucket; globally unique" )
 
-class IS3Key(IZContained):
+class IS3Key(IDelimitedHierarchyKey):
 	"""
 	See :class:`boto.s3.key.Key`.
 
@@ -164,7 +170,7 @@ class IS3Key(IZContained):
 
 	bucket = schema.Object( IS3Bucket, title="The bucket to which this key belongs" )
 
-	name = schema.TextLine( title="The name of this key; unique within the bucket" )
+	name = schema.TextLine( title="The name of this key; unique within the bucket; `__name__` and `key` are aliases" )
 
 class IS3ContentUnit(IDelimitedHierarchyContentUnit):
 
@@ -173,6 +179,26 @@ class IS3ContentUnit(IDelimitedHierarchyContentUnit):
 class IS3ContentPackage(IDelimitedHierarchyContentPackage,IS3ContentUnit):
 	pass
 
+
+
+class IFilesystemBucket(IDelimitedHierarchyBucket):
+	"""
+	An absolute string of a filesystem directory.
+	"""
+
+	name = schema.TextLine( title="The complete path of this key (same as self); unique within the filesystem; `__name__` and `key` are aliases" )
+
+
+class IFilesystemKey(IDelimitedHierarchyKey):
+	"""
+	A string, relative to its parent.
+	"""
+
+	bucket = schema.Object( IFilesystemBucket, title="The bucket to which this key belongs" )
+
+	name = schema.TextLine( title="The name of this key; unique within the bucket; `__name__` and `key` are aliases" )
+
+	absolute_path = schema.TextLine( title="The absolute path on disk for this key." )
 
 class IFilesystemEntry(interface.Interface,dub_interfaces.IDCTimes,IDelimitedHierarchyEntry):
 	"""

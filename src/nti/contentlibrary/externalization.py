@@ -40,6 +40,7 @@ def _root_url_of_unit( unit ):
 	if mapper:
 		href = mapper.href
 	else:
+		# TODO: this should go away now
 		href = '/' + unit.get_parent_key().split( '/' )[-1]
 	return href + ('' if href.endswith( '/' ) else '/')  # trailing slash is important for urljoin
 
@@ -61,8 +62,11 @@ class _ContentPackageExternal(object):
 		result['href'] = _path_join( root_url, self.package.href ) # ...
 
 		result['root'] = root_url
-		#result['index'] = _path_join( root_url, os.path.basename( self.package.index ) if self.package.index else None )
 		result['title'] = self.package.title # Matches result['DCTitle']
+
+		result['index'] = interfaces.IContentUnitHrefMapper( self.package.index ).href if self.package.index else None
+		result['index_jsonp'] = interfaces.IContentUnitHrefMapper( self.package.index_jsonp ).href if self.package.index_jsonp else None
+
 
 		result['version'] = '1.0' # This field was never defined. What does it mean?  I think we were thinking of generations
 		result['renderVersion'] = self.package.renderVersion
@@ -79,15 +83,8 @@ class _ContentPackageExternal(object):
 @interface.implementer(IExternalObject)
 @component.adapter(interfaces.IFilesystemContentPackage)
 class _FilesystemContentPackageExternal(_ContentPackageExternal):
+	pass
 
-	def toExternalObject( self ):
-		result = super(_FilesystemContentPackageExternal,self).toExternalObject()
-		# TODO: Index handling is ugly. Can we use the new multi-adapter stuff below? Added for
-		# the sake of the appserver/contentlibrary_views
-		root_url = result._root_url
-		result['index'] = _path_join( root_url, os.path.basename( self.package.index ) if self.package.index else None )
-		result['index_jsonp'] = _path_join( root_url, os.path.basename( self.package.index_jsonp ) ) if self.package.index_jsonp else None
-		return result
 
 from pyramid import traversal
 
@@ -98,6 +95,7 @@ class _FilesystemContentUnitHrefMapper(object):
 
  	def __init__( self, unit ):
 		root_package = traversal.find_interface( unit, interfaces.IContentPackage )
+		__traceback_info__ = unit, root_package
 		root_url = _root_url_of_unit( root_package )
 		__traceback_info__ = unit, root_package, root_url
 		href = _path_join( root_url, unit.href )
@@ -106,9 +104,24 @@ class _FilesystemContentUnitHrefMapper(object):
 			href = '/' + href
 		self.href = href
 
+@component.adapter(interfaces.IFilesystemKey)
+@interface.implementer(interfaces.IContentUnitHrefMapper)
+class _FilesystemKeyHrefMapper(object):
+	href = None
+
+ 	def __init__( self, key ):
+		root_package = traversal.find_interface( key, interfaces.IContentPackage )
+		root_url = '/' + os.path.basename( os.path.dirname( root_package.filename ) ) + '/'
+		__traceback_info__ = key, root_package, root_url
+		href = _path_join( root_url, key.key )
+		href = href.replace( '//', '/' )
+		if not href.startswith( '/' ):
+			href = '/' + href
+		self.href = href
+
 @component.adapter(basestring,interfaces.IFilesystemContentUnit)
 @interface.implementer(interfaces.IContentUnitHrefMapper)
-class _FilesystemKeyContentUnitHrefMapper(object):
+class _FilesystemStringContentUnitHrefMapper(object):
 	href = None
 
  	def __init__( self, key, unit ):
@@ -124,15 +137,8 @@ class _FilesystemKeyContentUnitHrefMapper(object):
 @interface.implementer(IExternalObject)
 @component.adapter(interfaces.IS3ContentPackage)
 class _S3ContentPackageExternal(_ContentPackageExternal):
+	pass
 
-
-	def toExternalObject( self ):
-		result = super(_S3ContentPackageExternal,self).toExternalObject()
-		# TODO: For some reason self.package.icon and self.package.href are relative paths,
-		# but self.package.index is a full key
-		result['index'] = interfaces.IContentUnitHrefMapper( self.package.index ).href
-		result['index_jsonp'] = interfaces.IContentUnitHrefMapper( self.package.index_jsonp ).href if self.package.index_jsonp else None
-		return result
 
 @component.adapter(interfaces.IS3ContentUnit)
 @interface.implementer(interfaces.IAbsoluteContentUnitHrefMapper)
@@ -187,7 +193,7 @@ class CDNS3KeyHrefMapperFactory(object):
 	def __call__( self, key ):
 		return CDNS3KeyHrefMapper( key, self.cdn_name )
 
-def map_all_buckets_to( cdn_name, site_manager ):
-	site_manager.registerAdapter( CDNS3KeyHrefMapperFactory( cdn_name ),
-								  required=(interfaces.IS3Key,),
-								  provided=interfaces.IAbsoluteContentUnitHrefMapper )
+def map_all_buckets_to( cdn_name ):
+	component.provideAdapter( CDNS3KeyHrefMapperFactory( cdn_name ),
+							  adapts=(interfaces.IS3Key,),
+							  provides=interfaces.IAbsoluteContentUnitHrefMapper )
