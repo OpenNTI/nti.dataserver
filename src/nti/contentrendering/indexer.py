@@ -9,9 +9,12 @@ from datetime import datetime
 from xml.dom.minidom import parse
 from xml.dom.minidom import Node
 
+from zope import interface
+
 from whoosh import index
 
 from concurrent.futures import ThreadPoolExecutor
+from nti.contentrendering import interfaces
 from nti.contentfragments.html import _sanitize_user_html_to_text
 from nti.contentsearch.whoosh_contenttypes import create_book_schema
 
@@ -24,6 +27,8 @@ from nltk.tokenize import RegexpTokenizer
 import logging
 logger = logging.getLogger(__name__)
 
+interface.moduleProvides( interfaces.IRenderedBookTransformer )
+
 name_anchor_pattern = re.compile(".+[#a\d+]$")
 ref_pattern = re.compile("<span class=\"ref\">(.*)</span>")
 last_m_pattern = re.compile("<meta content=\"(.*)\" http-equiv=\"last-modified\"")
@@ -34,7 +39,7 @@ default_tokenizer = RegexpTokenizer(r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-
 def get_schema():
 	return create_book_schema()
 
-def get_or_create_index(indexdir, indexname ='prealgebra', recreate = True):
+def get_or_create_index(indexdir, indexname, recreate=True):
 
 	if not os.path.exists(indexdir):
 		os.makedirs(indexdir)
@@ -215,14 +220,15 @@ def main(tocFile,
 	"""
 	Main program routine
 	"""
-
+	
+	assert indexname, 'must provide an index name'
+		
 	if not contentPath:
 		contentPath = os.path.dirname(tocFile)
 
 	if not indexdir:
 		indexdir = os.path.join(contentPath, "indexdir")
-
-	indexname = indexname or "prealgebra"
+	
 	# FIXME: Rewrite this process to use RenderedBook which has a better idea of what
 	# constitutes a "page" to index
 	nodes = get_nodes(tocFile)
@@ -243,7 +249,11 @@ def main(tocFile,
 		logger.info( "Optimizing index" )
 		idx.optimize()
 
-index_content = main
+def transform(book):
+	main(book.tocFile, book.contentLocation, indexname=book.jobname)
+
+
+index_content = main	
 
 if __name__ == '__main__':
 	def _call_main():
