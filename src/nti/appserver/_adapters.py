@@ -56,12 +56,14 @@ class BrokenExternalObject(object):
 
 @interface.implementer(app_interfaces.IExternalFieldResource)
 class _DefaultExternalFieldResource(object):
-
-	def __init__( self, key, obj ):
+	wrap_value = True
+	def __init__( self, key, obj , wrap_value=None):
 		self.__name__ = key
 		# Initially parent is the object. This may be changed later
 		self.__parent__ = obj
 		self.resource = obj
+		if wrap_value is not None:
+			self.wrap_value = wrap_value
 
 @interface.implementer(trv_interfaces.ITraversable)
 class _AbstractExternalFieldTraverser(object):
@@ -102,7 +104,7 @@ class UserExternalFieldTraverser(_AbstractExternalFieldTraverser):
 	def __getitem__( self, key ):
 		if key not in ('lastLoginTime', 'password', 'mute_conversation', 'unmute_conversation', 'ignoring', 'accepting', 'NotificationCount'):
 			raise KeyError(key)
-		return _DefaultExternalFieldResource( key, self.context )
+		return _DefaultExternalFieldResource( key, self.context, wrap_value=(key != "password") )
 
 
 from nti.utils import create_gravatar_url

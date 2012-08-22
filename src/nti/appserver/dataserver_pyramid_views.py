@@ -713,7 +713,9 @@ class _UGDFieldPutView(_UGDPutView):
 
 	def readInput( self, value=None ):
 		value = super(_UGDFieldPutView,self).readInput(value=value)
-		return { self.request.context.__name__: value }
+		if self.request.context.wrap_value:
+			return { self.request.context.__name__: value }
+		return value
 
 
 def _force_update_modification_time( object, lastModified, max_depth=-1 ):
