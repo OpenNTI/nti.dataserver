@@ -22,6 +22,8 @@ import os.path
 
 class TestFilesystemContentUnit(ConfiguringTestBase):
 
+	set_up_packages = (nti.contentlibrary, nti.externalization)
+
 	def test_filesystem_content_interfaces(self):
 
 		unit = filesystem.FilesystemContentPackage(

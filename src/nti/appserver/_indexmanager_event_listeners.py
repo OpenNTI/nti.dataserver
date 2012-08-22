@@ -30,10 +30,10 @@ def add_filesystem_index( title, event ):
 		return
 
 	try:
-		indexname = os.path.basename( title.get_parent_key() )
+		indexname = title.key.bucket.name
 		indexdir = title.make_sibling_key( 'indexdir' )
 		__traceback_info__ = indexdir, indexmanager, indexname
-		if indexmanager.add_book( indexname=indexname, indexdir=indexdir, ntiid=title.ntiid ):
+		if indexmanager.add_book( indexname=indexname, indexdir=indexdir.absolute_path, ntiid=title.ntiid ):
 			logger.debug( 'Added book %s to %s', indexname, indexmanager )
 	except ImportError: # pragma: no cover
 		# Adding a book on disk loads the Whoosh indexes, which

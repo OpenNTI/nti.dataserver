@@ -36,6 +36,10 @@ class ConfiguringTestBase(nti.tests.ConfiguringTestBase):
 		self.config.setup_registry()
 		return self.config
 
+	def beginRequest( self ):
+		self.request = DummyRequest()
+		self.config.begin( request=self.request )
+
 	def tearDown( self ):
 		ptearDown()
 		super(ConfiguringTestBase,self).tearDown()

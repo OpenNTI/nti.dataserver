@@ -77,7 +77,7 @@ class ApplicationTestBase(ConfiguringTestBase):
 
 	def setUp(self):
 		__show__.off()
-		super(ApplicationTestBase,self).setUp(pyramid_request=True)
+		super(ApplicationTestBase,self).setUp(pyramid_request=False)
 		#self.ds = mock_dataserver.MockDataserver()
 		test_func = getattr( self, self._testMethodName )
 		ds_factory = getattr( test_func, 'mock_ds_factory', mock_dataserver.MockDataserver )
@@ -96,8 +96,10 @@ class ApplicationTestBase(ConfiguringTestBase):
 		# the get_current_request method returns the mock request we just set up,
 		# then if the environ doesn't have these things in it we can get an AssertionError
 		# from paste.httpheaders n behalf of repoze.who's request classifier
+		self.beginRequest()
 		self.request.environ[b'HTTP_USER_AGENT'] = b'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_3) AppleWebKit/537.6 (KHTML, like Gecko) Chrome/23.0.1239.0 Safari/537.6'
 		self.request.environ[b'wsgi.version'] = '1.0'
+
 
 	def tearDown(self):
 		__show__.on()
@@ -1296,7 +1298,8 @@ class TestApplicationAssessment(ApplicationTestBase):
 		assert_that( qmap,
 					 has_key( self.child_ntiid ) )
 		assert_that( qmap.by_file,
-					 has_key( os.path.join( os.path.dirname(__file__), 'ExLibrary', 'WithAssessment', 'tag_nextthought_com_2011-10_mathcounts-HTML-MN_2012_0.html' ) ) )
+					 has_key( has_property( 'absolute_path',
+											os.path.join( os.path.dirname(__file__), 'ExLibrary', 'WithAssessment', 'tag_nextthought_com_2011-10_mathcounts-HTML-MN_2012_0.html' ) ) ) )
 
 
 

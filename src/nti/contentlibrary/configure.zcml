@@ -11,8 +11,9 @@
 	<adapter factory=".externalization._FilesystemContentPackageExternal" />
 	<adapter factory=".externalization._S3ContentPackageExternal" />
 
+	<adapter factory=".externalization._FilesystemKeyHrefMapper" />
 	<adapter factory=".externalization._FilesystemContentUnitHrefMapper" />
-	<adapter factory=".externalization._FilesystemKeyContentUnitHrefMapper" />
+	<adapter factory=".externalization._FilesystemStringContentUnitHrefMapper" />
 	<adapter factory=".externalization._S3ContentUnitHrefMapper" />
 	<adapter factory=".externalization._S3KeyHrefMapper" />
 

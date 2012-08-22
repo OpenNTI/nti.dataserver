@@ -82,7 +82,7 @@ def _user_sensitive_factory_finder( ext_object ):
 			# Some test cases call us with bad header values, causing
 			# repoze.who.api.request_classifier and paste.httpheaders to incorrectly
 			# blow up
-			logger.exception( "Failed to get authenticated userid. If this is not a test case, this is a problem" )
+			logger.debug( "Failed to get authenticated userid. If this is not a test case, this is a problem" )
 			auth_user_name = None
 
 		if auth_user_name:
