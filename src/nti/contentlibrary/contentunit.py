@@ -57,6 +57,7 @@ class ContentPackage(ContentUnit):
 	root = None
 	index = None
 	index_last_modified = None
+	index_jsonp = None
 	installable = False
 	archive = None
 	archive_unit = None

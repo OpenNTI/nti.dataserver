@@ -99,7 +99,7 @@ def _create_xml_conf_machine( settings ):
 	xml_conf_machine = xmlconfig.ConfigurationMachine()
 	xmlconfig.registerCommonDirectives( xml_conf_machine )
 	if 'devmode' in settings and settings['devmode']:
-		logger.debug( "Enabling devmode" )
+		logger.info( "Enabling devmode" )
 		xml_conf_machine.provideFeature( 'devmode' )
 	return xml_conf_machine
 

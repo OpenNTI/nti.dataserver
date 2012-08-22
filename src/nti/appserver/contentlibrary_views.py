@@ -44,7 +44,7 @@ from nti.contentlibrary import interfaces as lib_interfaces
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.externalization import to_external_object
 
-def _create_page_info(request, href, ntiid, last_modified=0):
+def _create_page_info(request, href, ntiid, last_modified=0, jsonp_href=None):
 	"""
 	:param float last_modified: If greater than 0, the best known date for the
 		modification time of the contents of the `href`.
@@ -59,6 +59,8 @@ def _create_page_info(request, href, ntiid, last_modified=0):
 	info = pages_collection.make_info_for( ntiid )
 	if href:
 		info.extra_links = (links.Link( href, rel='content' ),) # TODO: The rel?
+	if jsonp_href:
+		info.extra_links = info.extra_links + (links.Link( jsonp_href, rel='jsonp_content', target_mime_type='application/json' ),) # TODO: The rel?
 
 	info.contentUnit = request.context
 
@@ -325,6 +327,7 @@ def _LibraryTOCRedirectView(request, default_href=None, ntiid=None):
 	of the data can be returned.
 	"""
 	href = getattr(request.context, 'href', default_href )
+	jsonp_href = None
 	lastModified = 0
 	# Right now, the ILibraryTOCEntries always have relative hrefs,
 	# which may or may not include a leading /.
@@ -343,6 +346,21 @@ def _LibraryTOCRedirectView(request, default_href=None, ntiid=None):
 		 	href = href.replace( '//', '/' )
 		 	if not href.startswith( '/' ):
 		 		href = '/' + href
+
+	if getattr( request.context, 'href', None ) and hasattr( request.context, 'does_sibling_entry_exist' ):
+		# TODO: This falls down on the filesystem, the keys are currently meaningless strings
+		# TODO: Many tests are not providing anywhere near a valid implementation of a content unit,
+		# hence the check for does_sibling_entry_exist
+		mapper = None
+		jsonp_key = request.context.does_sibling_entry_exist( request.context.href + '.jsonp' )
+
+		if jsonp_key:
+			mapper = component.queryAdapter( jsonp_key, lib_interfaces.IContentUnitHrefMapper )
+			if not mapper:
+				# For the sake of the filesystem, check for the key within the context
+				mapper = component.queryMultiAdapter( (jsonp_key, request.context), lib_interfaces.IContentUnitHrefMapper )
+		if mapper:
+			jsonp_href = mapper.href
 
 	if root_package: # missing in the root ntiid case
 		lastModified = getattr( root_package, 'lastModified', 0 )  # only IFilesystemContentPackage guaranteed to have
@@ -375,7 +393,7 @@ def _LibraryTOCRedirectView(request, default_href=None, ntiid=None):
 		return link
 
 	if accept_type in (json_mt,page_info_mt,page_info_mt_json):
-		return _create_page_info(request, href, ntiid or request.context.ntiid, last_modified=lastModified)
+		return _create_page_info(request, href, ntiid or request.context.ntiid, last_modified=lastModified, jsonp_href=jsonp_href)
 
 	# ...send a 302. Return rather than raise so that webtest works better
 	return hexc.HTTPSeeOther( location=href )

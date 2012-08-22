@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from hamcrest import assert_that, has_entry, has_entries
 from hamcrest import greater_than_or_equal_to
+from hamcrest import has_key
 
 from nti.contentlibrary import filesystem, boto_s3
 
@@ -43,6 +44,7 @@ def _do_test_escape_if_needed(factory, key, index='eclipse-toc.xml', archive_uni
 	assert_that( result,
 				 has_entry( 'icon', prefix + '/prealgebra/icons/The%20Icon.png' ) )
 
+	assert_that( result, has_key( 'index_jsonp' ) )
 	assert_that( result,
 				 has_entry( 'renderVersion', 1 ) )
 	assert_that( result, has_entry( 'Class', 'ContentPackage' ) )
