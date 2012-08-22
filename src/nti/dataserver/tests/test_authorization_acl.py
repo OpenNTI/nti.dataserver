@@ -29,9 +29,13 @@ import mock_dataserver
 
 class TestShareableACLProvider(mock_dataserver.ConfiguringTestBase):
 
+	@mock_dataserver.WithMockDSTrans
 	def test_non_shared(self):
 		n = Note()
-		n.creator = 'sjohnson@nextthought.com'
+		creator = User.create_user( username='sjohnson@nextthought.com' )
+		target = User.create_user( username='foo@bar' )
+
+		n.creator = creator
 
 		acl_prov = nti_interfaces.IACLProvider( n )
 		assert_that( acl_prov, provides( nti_interfaces.IACLProvider ) )
@@ -43,14 +47,18 @@ class TestShareableACLProvider(mock_dataserver.ConfiguringTestBase):
 		action, actor, permission = acl[0]
 		assert_that( action, is_( nti_interfaces.ACE_ACT_ALLOW ) )
 		assert_that( actor, provides( nti_interfaces.IPrincipal ) )
-		assert_that( actor.id, is_( n.creator ) )
+		assert_that( actor.id, is_( n.creator.username ) )
 		assert_that( permission, provides( nti_interfaces.IPermission ) )
 		assert_that( permission, is_( nti_interfaces.ALL_PERMISSIONS ) )
 
+	@mock_dataserver.WithMockDSTrans
 	def test_shared( self ):
+		creator = User.create_user( username='sjohnson@nextthought.com' )
+		target = User.create_user( username='foo@bar' )
+
 		n = Note()
-		n.creator = 'sjohnson@nextthought.com'
-		n.addSharingTarget( 'foo@bar', n.creator )
+		n.creator = creator
+		n.addSharingTarget( target, n.creator )
 
 		acl_prov = nti_interfaces.IACLProvider( n )
 		assert_that( acl_prov, provides( nti_interfaces.IACLProvider ) )
@@ -62,7 +70,7 @@ class TestShareableACLProvider(mock_dataserver.ConfiguringTestBase):
 		action, actor, permission = acl[0]
 		assert_that( action, is_( nti_interfaces.ACE_ACT_ALLOW ) )
 		assert_that( actor, provides( nti_interfaces.IPrincipal ) )
-		assert_that( actor.id, is_( n.creator ) )
+		assert_that( actor.id, is_( n.creator.username ) )
 		assert_that( permission, provides( nti_interfaces.IPermission ) )
 		assert_that( permission, is_( nti_interfaces.ALL_PERMISSIONS ) )
 
@@ -75,12 +83,14 @@ class TestShareableACLProvider(mock_dataserver.ConfiguringTestBase):
 		assert_that( permission[0].id, is_( 'zope.View' ) )
 
 
+	@mock_dataserver.WithMockDSTrans
 	def test_pyramid_acl_authorization( self ):
 		"Ensure our IPermission objects work with pyramid."
-
+		creator = User.create_user( username='sjohnson@nextthought.com' )
+		target = User.create_user( username='foo@bar' )
 		n = Note()
-		n.creator = 'sjohnson@nextthought.com'
-		n.addSharingTarget( 'foo@bar', n.creator )
+		n.creator = creator
+		n.addSharingTarget( target, n.creator )
 
 		acl_prov = nti_interfaces.IACLProvider( n )
 		assert_that( acl_prov, provides( nti_interfaces.IACLProvider ) )

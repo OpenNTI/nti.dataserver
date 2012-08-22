@@ -84,6 +84,24 @@ def test_everyone_has_creator():
 
 class TestUser(mock_dataserver.ConfiguringTestBase):
 
+	@WithMockDSTrans
+	def test_can_find_friendslist_with_ntiid(self):
+		user1 = User.create_user( self.ds, username='foo@bar' )
+		user2 = User.create_user( self.ds, username='foo2@bar' )
+
+		fl1 = user1.maybeCreateContainedObjectWithType( 'FriendsLists', {'Username': 'Friend' } )
+		user1.addContainedObject( fl1 )
+
+		fl2 = user2.maybeCreateContainedObjectWithType( 'FriendsLists', {'Username': 'Friend' } )
+		user2.addContainedObject( fl2 )
+
+		assert_that( fl1.NTIID, is_not( fl2.NTIID ) )
+
+		assert_that( user1.get_entity( fl2.NTIID ), is_( fl2 ) )
+		assert_that( user2.get_entity( fl1.NTIID ), is_( fl1 ) )
+		assert_that( User.get_entity( fl1.NTIID ), is_( fl1 ) )
+		assert_that( User.get_entity( 'foo@bar' ), is_( user1 ) )
+
 
 	def test_friendslist_updated_through_user_updates_last_mod(self):
 		user = User( 'foo@bar', 'temp' )
@@ -166,7 +184,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		user1.addContainedObject( note )
 		assert_that( note.id, is_not( none() ) )
 
-		note.addSharingTarget( 'fab@bar', actor=user1 )
+		note.addSharingTarget( user2 )
 		note.id = 'foobar' # to ensure it doesn't get used or changed by the sharing process
 		user2._noticeChange( Change( Change.SHARED, note ) )
 		assert_that( note.id, is_( 'foobar' ) )

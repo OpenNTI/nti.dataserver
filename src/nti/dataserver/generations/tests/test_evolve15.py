@@ -68,4 +68,4 @@ class TestEvolve15(nti.dataserver.tests.mock_dataserver.ConfiguringTestBase):
 			note = jason.getContainedObject( "foo:bar", note_id )
 			assert_that( note._sharingTargets, is_( BTrees.family64.OO.TreeSet ) )
 
-			assert_that( note.sharingTargets, is_( set(['baz@bas', 'jeff.muehring@nextthought.com']) ) )
+			assert_that( set(note._sharingTargets), is_( set(['baz@bas', 'jeff.muehring@nextthought.com']) ) )

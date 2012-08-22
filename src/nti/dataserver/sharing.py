@@ -786,17 +786,28 @@ class DynamicSharingTargetMixin(SharingTargetMixin):
 	def __init__(self, *args, **kwargs):
 		super(DynamicSharingTargetMixin,self).__init__( *args, **kwargs )
 
+def _ii_family():
+	intids = component.queryUtility( zc_intid.IIntIds )
+	if intids:
+		 return intids.family
+	return BTrees.family64
+
+
 
 class ShareableMixin(datastructures.CreatedModDateTrackingObject):
 	""" Represents something that can be shared. It has a set of SharingTargets
 	with which it is shared (permissions) and some flags. Only its creator
 	can alter its sharing targets. It may be possible to copy this object. """
 
-	# An OOTreeSet of string usernames
+	# An IITreeSet of string userids
+	# TODO: FIXME: When the user is deleted and his ID goes bad, we're
+	# not listening for that. What if the ID gets reused for something else?
 	_sharingTargets = None
 
 	def __init__( self ):
 		super(ShareableMixin,self).__init__()
+
+
 
 	def clearSharingTargets( self ):
 		if self._sharingTargets is not None:
@@ -805,37 +816,33 @@ class ShareableMixin(datastructures.CreatedModDateTrackingObject):
 			self.updateLastMod()
 
 	def addSharingTarget( self, target, actor=None ):
-		""" Adds a sharing target. We accept either SharingTarget
-		subclasses, or strings, or iterables of strings.
+		"""
+		Adds a sharing target. We accept either SharingTarget
+		subclasses, or iterables of them.
 
 		"""
 		if isinstance( target, collections.Iterable ) \
 			   and not isinstance( target, basestring ) \
 			   and not hasattr( target, 'username' ):
-			# expand iterables (friends lists) now
+			# TODO: interfaces
+			# expand iterables now
 			for t in target:
 				self.addSharingTarget( t, actor=actor )
 			return
 
-		try:
-			target = target.username
-		except AttributeError:
-			pass
-
-
 		# Don't allow sharing with ourself, it's weird
 		# Allow self.creator to be  string or an Entity
 		try:
-			if self.creator is not None and (self.creator == target or self.creator.username == target):
+			if self.creator is not None and (self.creator == target):
 				return
 		except AttributeError:
 			# If it was already a string that was not equal
 			pass
 
 		if self._sharingTargets is None:
-			self._sharingTargets = OOTreeSet()
+			self._sharingTargets = _ii_family().II.TreeSet()
 
-		self._sharingTargets.add( target )
+		self._sharingTargets.add( _getId( target ) )
 		self.updateLastMod()
 
 	def updateSharingTargets( self, replacement_targets ):
@@ -843,55 +850,67 @@ class ShareableMixin(datastructures.CreatedModDateTrackingObject):
 		Cause this object to be shared with only the `replacement_targets` and
 		no one else.
 
-		:param replacement_targets: A collection of strings or users.
+		:param replacement_targets: A collection of users.
 		"""
 
-		replacement_usernames = set()
+		replacement_userids = _ii_family().II.TreeSet()
 		def addToSet( target ):
 			if isinstance( target, basestring ):
-				replacement_usernames.add( target )
+				raise TypeError('Strings are no longer acceptable', target, self)
+
+			# TODO: interfaces
+			if isinstance(target, DynamicSharingTargetMixin):
+				replacement_userids.add( _getId( target ) )
 			elif isinstance( target, collections.Iterable ):
-				for x in target: addToSet( x )
+				for x in target:
+					addToSet( x )
 			else:
-				replacement_usernames.add( target.username )
+				replacement_userids.add( _getId( target ) )
 
 		for target in replacement_targets:
-			if target is None: continue
+			if target is None:
+				continue
 			addToSet( target )
 
-		if not replacement_usernames:
+		if not replacement_userids:
 			self.clearSharingTargets()
 			return
 
-		self.addSharingTarget( replacement_usernames )
+		if self._sharingTargets is None:
+			self._sharingTargets = replacement_userids
+		else:
+			self._sharingTargets.update( replacement_userids )
+
 		# Now remove any excess
-		replacement_usernames = OOTreeSet( replacement_usernames )
+
 		# If for some reason we don't actually have sharing targets
 		# then this may return None
-		excess_targets = BTrees.family64.OO.difference( self._sharingTargets, replacement_usernames )
+		excess_targets = _ii_family().II.difference( self._sharingTargets, replacement_userids )
 		for x in (excess_targets or ()):
 			self._sharingTargets.remove( x )
 
 
 	def isSharedWith( self, wants ):
-		""" Checks if we are shared with `wants`, which can be a
-		Principal or a string."""
+		""" Checks if we are shared with `wants`, which must be a
+		Principal."""
 		if not self._sharingTargets:
 			return False
 
 		try:
-			wants = wants.username
-		except AttributeError:
+			return _getId( wants ) in self._sharingTargets
+		except KeyError:
 			pass
 
-		return wants in self._sharingTargets
 
 	def getFlattenedSharingTargetNames(self):
 		"""
 		Returns a flattened :class:`set` of :class:`SharingTarget` usernames with whom this item
 		is shared.
 		"""
-		return set( self._sharingTargets ) if self._sharingTargets is not None else set()
+		if self._sharingTargets is None:
+			return set()
+		return set( (x.username for x in _SCOSContainerFacade( self._sharingTargets ) ) )
+
 
 	flattenedSharingTargetNames = property( getFlattenedSharingTargetNames )
 	sharingTargets = property( getFlattenedSharingTargetNames )

@@ -76,7 +76,20 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 		"""
 		Returns an existing entity with the given username or None. If the
 		dataserver is not given, then the global dataserver will be used.
+
+		:param basestring username: The username to find. If this string is actually
+			an ntiid, then an entity will be looked up by ntiid. This permits
+			finding user-specific objects like friends lists.
 		"""
+
+		if ntiids.is_valid_ntiid_string( username ):
+			result = ntiids.find_object_with_ntiid( username )
+			if result is not None:
+				if not isinstance(result,Entity):
+					result = None
+				return result or default
+
+
 		# Allow for escaped usernames, since they are hard to defend against
 		# at a higher level (this behaviour changed in pyramid 1.2.3)
 		username = urllib.unquote( username )
@@ -518,13 +531,6 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 								  nttype=ntiids.TYPE_MEETINGROOM_GROUP,
 								  specific=self.username.lower().replace( ' ', '_' ).replace( '-', '_' ) )
 
-	#### Externalization/Pickling
-
-	def __setstate__( self, state ):
-		super(FriendsList,self).__setstate__( state )
-		if 'containerId' in self.__dict__:
-			del self.__dict__['containerId']
-
 	def get_containerId( self ):
 		return 'FriendsLists'
 	def set_containerId( self, cid ):
@@ -587,6 +593,27 @@ class _FriendsListUsernameIterable(object):
 
 	def __iter__(self):
 		return (x.username for x in self.context)
+
+class DynamicFriendsList(DynamicSharingTarget,FriendsList):
+
+	__external_class_name__ = 'FriendsList'
+	__external_can_create__ = False
+
+	def accept_shared_data_from( self, source ):
+		"""
+		Override to save space. Only the membership matters.
+		"""
+		return True
+
+	def ignore_shared_data_from( self, source ):
+		"""
+		Override to save space. Only the membership matters.
+		"""
+		return False
+
+	def is_accepting_shared_data_from( self, source ):
+		return source in list(self)
+
 
 ShareableMixin = sharing.ShareableMixin
 deprecated( 'ShareableMixin', 'Prefer sharing.ShareableMixin' )

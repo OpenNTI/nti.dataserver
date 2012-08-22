@@ -181,10 +181,11 @@ class _UserContentRoot(sharing.ShareableMixin, datastructures.ContainedMixin, da
 					else:
 						target = s = None
 
-			# TODO: We should really only add target, and only if it
-			# is non-none, right? Otherwise we are falsely implying sharing
+			# We only add target, and only if it is non-none and
+			# resolver. Otherwise we are falsely implying sharing
 			# happened when it really didn't
-			targets.add( target or s )
+			if target is not s and target is not None:
+				targets.add( target or s )
 		self.updateSharingTargets( targets )
 
 		if self._is_update_sharing_only( parsed ):
