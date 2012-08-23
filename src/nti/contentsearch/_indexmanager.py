@@ -1,5 +1,7 @@
 from __future__ import print_function, unicode_literals
 
+import six
+
 import gevent
 import gevent.pool
 
@@ -239,7 +241,7 @@ class IndexManager(object):
 	# -------------------
 
 	def _get_user_index_manager(self, target, create=True):
-		if isinstance( target, basestring ):
+		if isinstance( target, six.string_types ):
 			target = self.get_user( target )
 		result = self.useridx_manager_adapter(target, None) if target and create else None
 		return result
