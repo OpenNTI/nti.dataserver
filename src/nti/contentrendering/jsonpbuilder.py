@@ -5,13 +5,12 @@ import base64
 import io
 import mimetypes
 import os
-import simplejson as json
 import sys
-
-from nti.contentrendering import RenderedBook
 
 import logging
 logger = logging.getLogger(__name__)
+
+import simplejson as json
 
 from zope import interface
 from zope import component
@@ -20,8 +19,31 @@ from zope.configuration import xmlconfig
 
 import nti.contentrendering
 from nti.contentrendering import interfaces
+from nti.contentrendering import RenderedBook
 
 interface.moduleProvides( interfaces.IRenderedBookTransformer )
+
+class _JSONPWrapper(object):
+
+	def __init__(self, ntiid, filename, jsonpFunctionName):
+		self.filename = filename
+		self.jsonpFunctionName = jsonpFunctionName
+		self.data = {}
+		self.data['ntiid'] = ntiid
+		self.data['Content-Type'] = mimetypes.guess_type(filename)[0]
+		self.data['version'] = '1'
+
+		# Read the ToC file and base64 encode
+		with io.open( filename, 'rb') as file:
+			self.data['content'] = base64.standard_b64encode(file.read())
+			self.data['Content-Encoding'] = 'base64'
+
+	def writeJSONPToFile(self):
+		# Write the JSONP output
+		with io.open( self.filename + '.jsonp', 'wb') as file:
+			file.write(self.jsonpFunctionName + '(')
+			json.dump(self.data, file)
+			file.write(');')
 
 def main(args):
 	""" Main program routine """
@@ -45,42 +67,18 @@ def transform( book, context=None ):
 	to include background images when appropriate.
 	"""
 
-	_process_toc( book.toc )
+	# Export the ToC file as a JSONP file
+	_JSONPWrapper( book.toc.root_topic.ntiid, book.toc.filename, 'jsonpToc' ).writeJSONPToFile()
+	# Export the root icon as a JSONP file if it exists
+	if( book.toc.root_topic.has_icon() ):
+		_JSONPWrapper( book.toc.root_topic.ntiid, 
+			       os.path.join(book.contentLocation, book.toc.root_topic.get_icon()), 
+			       'jsonpData' ).writeJSONPToFile()
+	# Export the topic HTML files as JSONP files
 	_process_topic( book.toc.root_topic, book.contentLocation )
 
-def _process_toc( toc ):
-	data = {}
-	data['ntiid'] = toc.root_topic.ntiid
-	data['Content-Type'] = mimetypes.guess_type(toc.filename)[0]
-	data['version'] = '1'
-
-	# Read the ToC file and base64 encode
-	with io.open( toc.filename, 'rb') as file:
-		data['content'] = base64.standard_b64encode(file.read())
-		data['Content-Encoding'] = 'base64'
-
-	# Write the JSONP output
-	with io.open( toc.filename + '.jsonp', 'wb') as file:
-		file.write('jsonpToc(')
-		json.dump(data, file)
-		file.write(');')
-
 def _process_topic( topic, contentLocation ):
-	data = {}
-	data['ntiid'] = topic.ntiid
-	data['Content-Type'] = mimetypes.guess_type(topic.filename)[0]
-	data['version'] = '1'
-
-	# Read the content file and base64 encode
-	with io.open( os.path.join(contentLocation, topic.filename), 'rb') as file:
-		data['content'] = base64.standard_b64encode(file.read())
-		data['Content-Encoding'] = 'base64'
-
-	# Write the JSONP output
-	with io.open( os.path.join(contentLocation, topic.filename + '.jsonp'), 'wb') as file:
-		file.write('jsonpContent(')
-		json.dump(data, file)
-		file.write(');')
+	_JSONPWrapper( topic.ntiid, os.path.join(contentLocation, topic.filename), 'jsonpContent' ).writeJSONPToFile()
 
 	# Process any child nodes
 	for child in topic.childTopics:
