@@ -79,7 +79,7 @@ class IUserDataSchema(Interface):
 		required=True,
 		constraint=checkEmailAddress)
 
-	home_page = schema.TextLine(
+	home_page = schema.URI(
 		title='Home page',
 		description="The URL for your external home page, "
 					  "if you have one.",
@@ -108,6 +108,12 @@ class IUserDataSchema(Interface):
 		title='birthdate',
 		description='Your date of birth',
 		required=False )
+
+	# TODO: This probably comes from a vocabulary, at least for some users
+	affiliation = schema.TextLine(
+		title='Affiliation',
+		description="Your affiliation, such as school name",
+		required=False)
 
 	# portrait = FileUpload(title=_(u'label_portrait', default=u'Portrait'),
 	# 	description=_(u'help_portrait',
