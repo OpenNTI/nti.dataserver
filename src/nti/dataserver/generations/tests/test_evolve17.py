@@ -130,7 +130,7 @@ class TestEvolve17(nti.dataserver.tests.mock_dataserver.ConfiguringTestBase):
 			# intids were applied to users...
 			assert_that( intids.getObject( intids.getId( jason ) ), is_( same_instance( jason ) ) )
 			# ...their friends lists
-			assert_that( intids.getObject( intids.getId( jason.friendsLists['Everyone']  ) ), is_( same_instance( jason.friendsLists['Everyone']  ) ) )
+			#assert_that( intids.getObject( intids.getId( jason.friendsLists['Everyone']  ) ), is_( same_instance( jason.friendsLists['Everyone']  ) ) )
 
 			# ...and their owned data
 			note = jason.getContainedObject( 'foo:bar', note_id )

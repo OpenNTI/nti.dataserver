@@ -6,7 +6,7 @@ from __future__ import print_function, unicode_literals
 
 __docformat__ = 'restructuredtext'
 
-generation = 21
+generation = 22
 
 from zope.generations.generations import SchemaManager
 
@@ -46,7 +46,6 @@ from nti.dataserver import shards as ds_shards
 from nti.dataserver import password_utility
 
 
-import copy
 def install_chat( context ):
 	pass
 
@@ -91,18 +90,6 @@ def install_main( context ):
 	# simplified through dropping UserRootResource in favor of normal traversal
 	install_root_folders( dataserver_folder )
 
-	if 'Everyone' not in dataserver_folder['users']:
-		# Hmm. In the case that we're running multiple DS instances in the
-		# same VM, our constant could wind up with different _p_jar
-		# and _p_oid settings. Hence the copy
-		dataserver_folder['users']['Everyone'] = copy.deepcopy( users.EVERYONE_PROTO )
-	# This is interesting. Must do this to ensure that users
-	# that get created at different times and that have weak refs
-	# to the right thing. What's a better way?
-	# TODO: Probably the better way is through references. See
-	# gocept.reference
-	users.EVERYONE = dataserver_folder['users']['Everyone']
-
 
 	# Install the site manager and register components
 	root['nti.dataserver_root'] = root_folder
@@ -115,7 +102,10 @@ def install_main( context ):
 	sess_storage = session_storage.OwnerBasedAnnotationSessionServiceStorage()
 	lsm.registerUtility( sess_storage, provided=nti_interfaces.ISessionServiceStorage )
 
-	install_intids( dataserver_folder )
+	intids = install_intids( dataserver_folder )
+
+	everyone = dataserver_folder['users']['Everyone'] = users.Everyone()
+	intids.register( everyone ) # Events didn't fire
 
 	install_flag_storage( dataserver_folder )
 

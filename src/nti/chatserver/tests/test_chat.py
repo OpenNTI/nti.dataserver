@@ -280,6 +280,7 @@ class TestChatserver(ConfiguringTestBase):
 			if not users.User.get_user( v.owner ):
 				user = users.User.create_user( username=(v.owner if '@' in v.owner else v.owner + '@nextthought.com') )
 				users._get_shared_dataserver().root['users'][v.owner] = user # Establish an alias if '@' wasn't in the name
+			v.the_user = users.User.get_user( v.owner )
 
 		def __getitem__( self, k ):
 			return self.sessions[k]
@@ -820,6 +821,7 @@ class TestChatserver(ConfiguringTestBase):
 		sessions[3] = self.Session( 'jason' )
 		# Create a user, but remove the session
 		sessions[2] = self.Session( 'chris' )
+		chris_user = sessions[2].the_user
 		del sessions[2]
 		chatserver = chat.Chatserver( sessions, chat.TestingMappingMeetingStorage() )
 
@@ -827,9 +829,9 @@ class TestChatserver(ConfiguringTestBase):
 		component.provideUtility( chatserver )
 
 		n = Note()
-		n.addSharingTarget( 'sjohnson' )
-		n.addSharingTarget( 'jason' )
-		n.addSharingTarget( 'chris' )
+		n.addSharingTarget( sessions[1].the_user )
+		n.addSharingTarget( sessions[3].the_user )
+		n.addSharingTarget( chris_user )
 		assert_that( n.flattenedSharingTargetNames, is_( set( ['jason','chris','sjohnson'] ) ) )
 		conn.add( n )
 		conn.root()['Note'] = n
@@ -922,8 +924,8 @@ class TestChatserver(ConfiguringTestBase):
 			chatserver = chat.Chatserver( sessions )
 
 			note = Note()
-			note.creator = 'sjohnson'
-			note.addSharingTarget( 'jason' )
+			note.creator = sessions[1].the_user
+			note.addSharingTarget( sessions[2].the_user )
 			self.ds.root._p_jar.add( note )
 			note.__parent__ = self.ds.root
 

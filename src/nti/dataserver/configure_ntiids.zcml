@@ -1,0 +1,36 @@
+<!-- -*- mode: nxml -*- -->
+<configure xmlns="http://namespaces.zope.org/zope"
+		   i18n_domain="zope">
+
+	<!-- NTIID Resolvers -->
+	<utility factory=".ntiids._OIDResolver" name="OID" />
+	<utility factory=".ntiids._ClassResolver" name="Class" />
+	<utility factory=".ntiids._ClassResolver" name="MeetingRoom:Class" />
+	<utility factory=".ntiids._SectionResolver" name="ClassSection" />
+	<utility factory=".ntiids._SectionResolver" name="MeetingRoom:ClassSection" />
+	<utility factory=".ntiids._ContentResolver" name="HTML" />
+	<utility factory=".ntiids._ContentResolver" name="Root" />
+	<utility factory=".ntiids._AssessmentResolver" name="NAQ" />
+	<utility factory=".ntiids._MeetingRoomResolver" name="MeetingRoom" />
+	<utility factory=".ntiids._MeetingRoomResolver" name="MeetingRoom:Group" />
+
+	<utility factory=".ntiids._TranscriptResolver" name="Transcript" />
+
+	<utility factory=".ntiids._UGDResolver" name="Note" />
+	<!-- Legacy quizzes are stored under specific users -->
+	<utility factory=".ntiids._UGDResolver" name="Quiz" />
+
+	<!--
+		 The things that are user-like, or might get an ID shoved into
+		 a Username field, we want to have
+		 case-insensitive ids
+	-->
+	<utility factory=".ntiids._MeetingRoomResolver" name="meetingroom" />
+	<utility factory=".ntiids._MeetingRoomResolver" name="meetingroom:group" />
+	<utility factory=".ntiids._ClassResolver" name="class" />
+	<utility factory=".ntiids._ClassResolver" name="meetingroom:class" />
+	<utility factory=".ntiids._SectionResolver" name="classsection" />
+	<utility factory=".ntiids._SectionResolver" name="meetingroom:classsection" />
+
+
+</configure>

@@ -18,11 +18,12 @@ from nti.dataserver.contenttypes import Redaction as _Redaction, Highlight as _H
 
 from nti.externalization.oids import to_external_ntiid_oid
 
-#import nti.dataserver.users
+import nti.dataserver.users as users
 
 import zope.schema.interfaces
 import mock_dataserver
-from mock_dataserver import WithMockDS
+from .mock_dataserver import WithMockDS
+from .mock_dataserver import WithMockDSTrans
 from nti.contentfragments import interfaces as frg_interfaces
 import nti.contentfragments.censor
 from nti.dataserver import containers
@@ -66,7 +67,10 @@ def Redaction():
 
 class RedactionTest(mock_dataserver.ConfiguringTestBase):
 
+	@mock_dataserver.WithMockDSTrans
 	def test_redaction_external(self):
+		joe = users.User.create_user( username='joe@ou.edu' )
+
 		redaction = Redaction()
 		redaction.applicableRange = None
 
@@ -106,7 +110,7 @@ class RedactionTest(mock_dataserver.ConfiguringTestBase):
 			assert_that( redaction, has_property( k,  'This is ******* stupid, you ************ *******' ) )
 			assert_that( redaction, has_property( k, verifiably_provides( frg_interfaces.ICensoredPlainTextContentFragment ) ) )
 
-		redaction.addSharingTarget( 'joe@ou.edu' )
+		redaction.addSharingTarget( joe )
 		ext = redaction.toExternalObject()
 		assert_that( ext, has_entry( 'sharedWith', ['joe@ou.edu'] ) )
 
@@ -446,17 +450,28 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 
 
 
-	@WithMockDS
+	@WithMockDSTrans
 	def test_update_sharing_only( self ):
-
+		users.User.create_user( username='jason.madden@nextthought.com' )
 		n = Note()
 		n.body = ['This is the body']
 
 		ds = self.ds
-		ext = { 'sharedWith': ['jason'] }
-		with mock_dataserver.mock_db_trans(ds) as conn:
-			conn.add( n )
-			n.updateFromExternalObject( ext, dataserver=ds )
+		ds.root_connection.add( n )
+		ext = { 'sharedWith': ['jason.madden@nextthought.com'] }
+		n.updateFromExternalObject( ext, dataserver=ds )
+
+	@WithMockDSTrans
+	def test_update_sharing_only_unresolvable_user( self ):
+		assert_that( users.User.get_user( 'jason.madden@nextthought.com', dataserver=self.ds ), is_( none() ) )
+		n = Note()
+		n.body = ['This is the body']
+
+		ds = self.ds
+		ds.root_connection.add( n )
+		ext = { 'sharedWith': ['jason.madden@nextthought.com'] }
+		n.updateFromExternalObject( ext, dataserver=ds )
+
 
 	def test_inherit_anchor_properties(self):
 		n = Note()

@@ -173,18 +173,23 @@ class _UserContentRoot(sharing.ShareableMixin, datastructures.ContainedMixin, da
 				# This last clause is our nod to security; need to be firmer
 
 				obj = ntiids.find_object_with_ntiid( s )
-				obj = nti_interfaces.IUsernameIterable( obj, None )
-				if obj:
-					obj = tuple(obj) # expand the iterable to something hashable
-					if getattr( self.creator, 'username', self.creator) in obj and self.creator is not None:
-						target = obj
-					else:
-						target = s = None
+				iterable = nti_interfaces.IUsernameIterable( obj, None )
+				if iterable is not None:
+					ents = set()
+					for uname in iterable:
+						ent = _get_entity( uname )
+						if ent:
+							ents.add( ent )
+					if self.creator in ents:
+						ents.discard( self.creator ) # don't let the creator slip in there
+						target = tuple(ents)
 
-			# TODO: We should really only add target, and only if it
-			# is non-none, right? Otherwise we are falsely implying sharing
+
+			# We only add target, and only if it is non-none and
+			# resolver. Otherwise we are falsely implying sharing
 			# happened when it really didn't
-			targets.add( target or s )
+			if target is not s and target is not None:
+				targets.add( target or s )
 		self.updateSharingTargets( targets )
 
 		if self._is_update_sharing_only( parsed ):

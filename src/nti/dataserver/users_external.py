@@ -29,10 +29,10 @@ class _EntitySummaryExternalObject(object):
 
 	def toExternalObject( self ):
 		"""
+		Inspects the context entity and produces its external summary form.
 		:return: Standard dictionary minus Last Modified plus the properties of this class.
 			These properties include 'Username', 'avatarURL', 'realname', and 'alias'.
 
-		EOD
 		"""
 		entity = self.entity
 		extDict = to_standard_external_dictionary( entity )
@@ -118,24 +118,25 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 
 		from nti.dataserver._Dataserver import InappropriateSiteError # circular imports
 		extDict = super(_UserPersonalSummaryExternalObject,self).toExternalObject()
-		def ext( l ):
+		def ext( l, name='summary' ):
 			result = []
-			for name in l:
+			for ent_name in l:
+				__traceback_info__ = name, ent_name
 				try:
-					e = self.entity.get_entity( name, default=self )
+					e = self.entity.get_entity( ent_name, default=self )
 					e = None if e is self else e # Defend against no dataserver component to resolve with
 				except InappropriateSiteError:
 					# We've seen this in logging that is captured and happens
 					# after things finish running, notably nose's logcapture.
 					e = None
 
-				result.append( toExternalObject( e, name='summary' ) if e else name )
+				result.append( toExternalObject( e, name=name ) if e else ent_name )
 
 			return result
 
 		# Communities are not currently editable,
 		# and will need special handling of Everyone
-		extDict['Communities'] = ext(self.entity.communities)
+		extDict['Communities'] = ext(self.entity.communities, name='')
 		# Following is writable
 		extDict['following'] = ext(self.entity.following)
 		# as is ignoring and accepting

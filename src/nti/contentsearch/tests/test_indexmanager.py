@@ -65,11 +65,11 @@ class _BaseIndexManagerTest(object):
 	def is_ngram_search_supported(self):
 		features = component.getUtility(search_interfaces.ISearchFeatures)
 		return features.is_ngram_search_supported
-	
+
 	def is_word_suggest_supported(self):
 		features = component.getUtility(search_interfaces.ISearchFeatures)
 		return features.is_word_suggest_supported
-	
+
 	@WithMockDSTrans
 	def test_add_book(self):
 		self.im = self.create_index_mananger()
@@ -105,13 +105,13 @@ class _BaseIndexManagerTest(object):
 		q.term = 'coffee'
 		hits = self.im.search(q)
 		assert_that(hits, has_entry(HIT_COUNT, 1))
-		
+
 	@WithMockDSTrans
 	def test_unified_search_ngrams(self):
-		
+
 		if not self.is_ngram_search_supported():
 			return
-		
+
 		self._add_notes_and_index(('omega radicals', 'the queen of coffee'))
 		self.im.add_book(indexname='bleach', indexdir=self.book_idx_dir)
 
@@ -125,13 +125,13 @@ class _BaseIndexManagerTest(object):
 
 		hits = self.im.suggest_and_search(q)
 		assert_that(hits, has_entry(HIT_COUNT, 2))
-		
+
 	@WithMockDSTrans
 	def test_unified_search_suggest(self):
-		
+
 		if not self.is_word_suggest_supported():
 			return
-		
+
 		self._add_notes_and_index(('omega radicals', 'the queen of coffee'))
 		self.im.add_book(indexname='bleach', indexdir=self.book_idx_dir)
 
@@ -141,17 +141,17 @@ class _BaseIndexManagerTest(object):
 
 	@WithMockDSTrans
 	def test_unified_search_suggest_and_search(self):
-		
+
 		if not self.is_word_suggest_supported():
 			return
-		
+
 		self._add_notes_and_index(('omega radicals', 'the queen of coffee'))
 		self.im.add_book(indexname='bleach', indexdir=self.book_idx_dir)
 
 		q = QueryObject(term='omeg', indexid='bleach', username='nt@nti.com')
 		hits = self.im.suggest_and_search(q)
 		assert_that(hits, has_entry(HIT_COUNT, 2))
-		
+
 	# ----------------
 
 	def _add_notes_to_ds(self, strings=zanpakuto_commands):
@@ -169,15 +169,15 @@ class _BaseIndexManagerTest(object):
 			notes.append(usr.addContainedObject( note ))
 		return notes, usr
 
-	def _add_notes_to_index(self, im, notes):
+	def _add_notes_to_index(self, im, notes, user):
 		for note in notes:
-			im.index_user_content(data=note, username='nt@nti.com')
+			im.index_user_content(data=note, target=user)
 		return notes
 
 	def _add_notes_and_index(self, strings=zanpakuto_commands):
 		self.im = self.create_index_mananger()
 		notes, usr = self._add_notes_to_ds(strings)
-		self._add_notes_to_index(self.im, notes)
+		self._add_notes_to_index(self.im, notes, usr)
 		return notes, usr
 
 	@WithMockDSTrans
@@ -193,49 +193,49 @@ class _BaseIndexManagerTest(object):
 
 		hits = self.im.user_data_search(query='rage', username='nt@nti.com', search_on=('Notes',))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
-		
+
 	@WithMockDSTrans
 	def test_search_notes_ngrams(self):
-		
+
 		if not self.is_ngram_search_supported():
 			return
-		
+
 		self._add_notes_and_index()
 		hits = self.im.user_data_ngram_search(query='deat', username='nt@nti.com', search_on=('note',))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 
 	@WithMockDSTrans
 	def test_search_notes_suggest(self):
-		
+
 		if not self.is_word_suggest_supported():
 			return
-		
+
 		self._add_notes_and_index()
 		hits = self.im.user_data_suggest(username='nt@nti.com', search_on=('note',), query='flow')
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 
 	@WithMockDSTrans
 	def test_search_notes_suggest_and_search(self):
-		
+
 		if not self.is_word_suggest_supported():
 			return
-		
+
 		self._add_notes_and_index()
 		hits = self.im.user_data_suggest_and_search(query='creat', username='nt@nti.com', search_on=('note',))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 
 	@WithMockDSTrans
 	def test_update_delete_note(self):
-		notes,_ = self._add_notes_and_index()
+		notes, user = self._add_notes_and_index()
 
 		note = notes[0]
 		note.body = [u'Shoot To Death']
-		self.im.update_user_content(data=note, username='nt@nti.com')
+		self.im.update_user_content(user, data=note)
 		hits = self.im.user_data_search(query='death', username='nt@nti.com', search_on=('Notes',))
 		assert_that(hits, has_entry(HIT_COUNT, 2))
 
 		note = notes[1]
-		self.im.delete_user_content(data=note, username='nt@nti.com')
+		self.im.delete_user_content(user, data=note)
 		hits = self.im.user_data_search(query='deviate', username='nt@nti.com', search_on=('Notes',))
 		assert_that(hits, has_entry(HIT_COUNT, 0))
 
