@@ -10,6 +10,7 @@ entry_points = {
 		"nti_cache_avatars = nti.dataserver.utils.nti_cache_avatars:main",
 		"nti_create_user = nti.dataserver.utils.nti_create_user:main",
 		"nti_create_class = nti.dataserver.utils.nti_create_class:main",
+		"nti_create_dfl = nti.dataserver.utils.nti_create_dfl:main",
 		"nti_enroll_class = nti.dataserver.utils.nti_enroll_class:main",
 		"nti_set_generation = nti.dataserver.utils.nti_set_generation:main",
 		"nti_set_password = nti.dataserver.utils.nti_set_password:main",
