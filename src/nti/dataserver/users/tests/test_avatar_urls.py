@@ -22,6 +22,7 @@ tearDownModule = nti.tests.module_teardown
 from zope import interface
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces
+from nti.dataserver.users import Everyone
 
 def test_coppa_user():
 	class O(object):
@@ -32,6 +33,15 @@ def test_coppa_user():
 
 
 	interface.alsoProvides( o, nti_interfaces.ICoppaUserWithAgreement )
+
+	assert_that( interfaces.IAvatarURL( o ),
+				 verifiably_provides( interfaces.IAvatarURL ) )
+	assert_that( interfaces.IAvatarURL( o ),
+				 has_property( 'avatarURL', contains_string( 'http://' ) ) )
+
+def test_everyone():
+
+	o = Everyone()
 
 	assert_that( interfaces.IAvatarURL( o ),
 				 verifiably_provides( interfaces.IAvatarURL ) )

@@ -28,9 +28,15 @@ def AvatarURLFactory(entity):
 	"""
 	# Something explicitly set, historical
 	if getattr( entity, '_avatarURL', None ):
-		return entity
+		return _FixedAvatarWrapper( entity )
 
 	return component.queryAdapter( entity, interfaces.IAvatarURL, name="generated" )
+
+@interface.implementer(interfaces.IAvatarURL)
+class _FixedAvatarWrapper(object):
+
+	def __init__( self, context ):
+		self.avatarURL = getattr( context, '_avatarURL' )
 
 @component.adapter(nti_interfaces.IEntity)
 @interface.implementer(interfaces.IAvatarURL)

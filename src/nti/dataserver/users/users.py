@@ -407,16 +407,17 @@ class Community(Entity,sharing.DynamicSharingTargetMixin):
 class Everyone(Community):
 	""" A community that represents the entire world. """
 	__external_class_name__ = 'Community'
+	# 'everyone@nextthought.com' hash
+	_avatarURL = 'http://www.gravatar.com/avatar/bb798c65a45658a80281bd3ba26c4ff8?s=128&d=mm'
 	def __init__(self):
 		super(Everyone,self).__init__( 'Everyone' )
 		self.realname = 'Everyone'
 		self.alias = 'Public'
-		# 'everyone@nextthought.com' hash
-		self.avatarURL = 'http://www.gravatar.com/avatar/bb798c65a45658a80281bd3ba26c4ff8?s=128&d=mm'
+
 
 	def __setstate__(self,state):
-		if state.get( '_avatarURL' ) != 'http://www.gravatar.com/avatar/bb798c65a45658a80281bd3ba26c4ff8?s=128&d=mm':
-			state['_avatarURL'] = 'http://www.gravatar.com/avatar/bb798c65a45658a80281bd3ba26c4ff8?s=128&d=mm'
+		if '_avatarURL' in state:
+			del state['_avatarURL']
 		super(Everyone,self).__setstate__( state )
 
 
