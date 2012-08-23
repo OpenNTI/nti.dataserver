@@ -31,10 +31,10 @@ logger = logging.getLogger( __name__ )
 
 class _FakeSite(object):
 	interface.implements(ISite)
-	
+
 	def __init__(self, sitemanager):
 		self.sitemanager = sitemanager
-				
+
 	def setSiteManager(self, sitemanager):
 		self.sitemanager = sitemanager
 
@@ -48,7 +48,7 @@ def _greenlet_spawn(spawn, func, *args, **kwargs):
 			return f(*fargs, **fkwargs)
 	greenlet = spawn(runner, f=func, *args, **kwargs)
 	return greenlet
-	
+
 class IndexManager(object):
 	interface.implements(seach_interfaces.IIndexManager)
 
@@ -80,29 +80,29 @@ class IndexManager(object):
 		return component.queryUtility( nti_interfaces.IDataserver )
 
 	def get_user(self, username):
-		result = User.get_user(username, dataserver=self.dataserver) 
+		result = User.get_user(username, dataserver=self.dataserver)
 		return result
-	
+
 	def users_exists(self, username):
 		result = self.get_user(username)
 		return result is not None
-	
+
 	def get_user_communities(self, username):
 		user = self.get_user(username)
 		return list(user.communities) if user else []
-	
+
 	# -------------------
-	
+
 	@SearchCallWrapper
 	def search(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
 		username = query.username
-	
+
 		jobs = []
 		try:
 			# search user content
 			self._ugd_search_jobs(query, jobs) if username else []
-		
+
 			# search books
 			for indexid in query.books:
 				job = _greenlet_spawn(spawn=self.search_pool.spawn, func=self.content_search, \
@@ -110,25 +110,25 @@ class IndexManager(object):
 				jobs.append(job)
 		finally:
 			gevent.joinall(jobs)
-		
+
 		# merge results
 		results = empty_search_result(query.term)
 		for job in jobs:
 			results = merge_search_results (results, job.value)
-			
+
 		logger.debug("Query '%s' returned %s hit(s)" % (query.term, results[HIT_COUNT]))
-		return results 
-		
+		return results
+
 	@SearchCallWrapper
 	def ngram_search(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
 		username = query.username
-		
+
 		jobs = []
 		try:
 			# search user content
 			self._ugd_ngram_search_jobs(query, jobs) if username else []
-		
+
 			# search books
 			for indexid in query.books:
 				job = _greenlet_spawn(spawn=self.search_pool.spawn, func=self.content_ngram_search, \
@@ -136,23 +136,23 @@ class IndexManager(object):
 				jobs.append(job)
 		finally:
 			gevent.joinall(jobs)
-		
+
 		# merge results
 		results = empty_search_result(query.term)
 		for job in jobs:
 			results = merge_search_results (results, job.value)
 		return results
-		
+
 	@SearchCallWrapper
 	def suggest_and_search(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
 		username = query.username
-		
+
 		jobs = []
 		try:
 			# search user content
 			self._ugd_suggest_and_search_jobs(query, jobs) if username else []
-		
+
 			# search books
 			for indexid in query.books:
 				job = _greenlet_spawn(spawn=self.search_pool.spawn, func=self.content_suggest_and_search, \
@@ -160,23 +160,23 @@ class IndexManager(object):
 				jobs.append(job)
 		finally:
 			gevent.joinall(jobs)
-		
+
 		# merge results
 		results = empty_suggest_and_search_result(query.term)
 		for job in jobs:
 			results = merge_suggest_and_search_results(results, job.value)
 		return results
-	
+
 	@SearchCallWrapper
 	def suggest(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
 		username = query.username
-		
+
 		jobs = []
 		try:
 			# search user content
 			self._ugd_suggest_jobs(query, jobs) if username else []
-		
+
 			# search books
 			for indexid in query.books:
 				job = _greenlet_spawn(spawn=self.search_pool.spawn, func=self.content_suggest, \
@@ -184,13 +184,13 @@ class IndexManager(object):
 				jobs.append(job)
 		finally:
 			gevent.joinall(jobs)
-		
+
 		# merge results
 		results = empty_suggest_result(query.term)
 		for job in jobs:
 			results = merge_suggest_results(results, job.value)
 		return results
-	
+
 	# -------------------
 
 	def get_book_index_manager(self, indexid):
@@ -235,31 +235,36 @@ class IndexManager(object):
 
 	quick_search = content_ngram_search
 	content_quick_search = content_ngram_search
-	
+
 	# -------------------
 
-	def _get_user_index_manager(self, username, create=True):
-		result = None
-		if self.users_exists(username):
-			user = self.get_user(username)
-			result = self.useridx_manager_adapter(user, None) if user and create else None
+	def _get_user_index_manager(self, target, create=True):
+		if isinstance( target, basestring ):
+			target = self.get_user( target )
+		result = self.useridx_manager_adapter(target, None) if target and create else None
 		return result
 
 	def _get_search_uims(self, username):
 		result = []
 		for name in [username] + self.get_user_communities(username):
 			uim = self._get_user_index_manager(name)
-			if uim is not None: result.append(uim)
+			if uim is not None:
+				result.append(uim)
 		return result
-		
+
 	# -------------------
-	
+
 	def _ugd_search_jobs(self, query, jobs=[]):
 		for uim in self._get_search_uims(query.username):
 			job = _greenlet_spawn(spawn=self.search_pool.spawn, func=uim.search, query=query)
 			jobs.append(job)
 		return jobs
-		
+
+	####
+	# TODO: *args and **kwargs  seem to be way overused, making
+	# refactoring very difficult. When arguments are not optional, e.g., 'username'
+	# it should be declared.
+
 	def user_data_search(self, query, *args, **kwargs):
 		results = None
 		query = QueryObject.create(query, **kwargs)
@@ -274,13 +279,13 @@ class IndexManager(object):
 		return results if results else empty_search_result(query.term)
 
 	# ------------
-	
+
 	def _ugd_ngram_search_jobs(self, query, jobs=[]):
 		for uim in self._get_search_uims(query.username):
 			job = _greenlet_spawn(spawn=self.search_pool.spawn, func=uim.ngram_search, query=query)
 			jobs.append(job)
 		return jobs
-	
+
 	def user_data_ngram_search(self, query, *args, **kwargs):
 		results = None
 		query = QueryObject.create(query, **kwargs)
@@ -295,15 +300,15 @@ class IndexManager(object):
 		return results if results else empty_search_result(query.term)
 
 	user_data_quick_search = user_data_ngram_search
-	
+
 	# ------------
-	
+
 	def _ugd_suggest_and_search_jobs(self, query, jobs=[]):
 		for uim in self._get_search_uims(query.username):
 			job = _greenlet_spawn(spawn=self.search_pool.spawn, func=uim.suggest_and_search, query=query)
 			jobs.append(job)
 		return jobs
-	
+
 	def user_data_suggest_and_search(self, query, *args, **kwargs):
 		results = None
 		query = QueryObject.create(query, **kwargs)
@@ -318,13 +323,13 @@ class IndexManager(object):
 		return results if results else empty_suggest_and_search_result(query.term)
 
 	# ------------
-	
+
 	def _ugd_suggest_jobs(self, query, jobs=[]):
 		for uim in self._get_search_uims(query.username):
 			job = _greenlet_spawn(spawn=self.search_pool.spawn, func=uim.suggest, query=query)
 			jobs.append(job)
 		return jobs
-	
+
 	def user_data_suggest(self, query, *args, **kwargs):
 		results = None
 		query = QueryObject.create(query, **kwargs)
@@ -339,41 +344,31 @@ class IndexManager(object):
 		return results if results else empty_suggest_result(query)
 
 	# -------------------
-	
-	def _get_data(self, kwargs):
-		if 'data' in kwargs:
-			result = kwargs.pop('data')
-		else:
-			result = kwargs.get('externalValue', None)
-		return result
 
-	def index_user_content(self, username, type_name=None, *args, **kwargs):
+	def index_user_content(self, target, type_name=None, data=None):
 		um = None
-		data = self._get_data(kwargs)
 		if data is not None:
-			um = self._get_user_index_manager(username)
+			um = self._get_user_index_manager(target)
 		if um is not None and data is not None:
-			return um.index_content(data, type_name, *args, **kwargs)
+			return um.index_content(data, type_name )
 
-	def update_user_content(self, username, type_name=None, *args, **kwargs):
+	def update_user_content(self, target, type_name=None, data=None):
 		um = None
-		data = self._get_data(kwargs)
 		if data is not None:
-			um = self._get_user_index_manager(username)
+			um = self._get_user_index_manager(target)
 		if um is not None and data is not None:
-			return um.update_content(data, type_name, *args, **kwargs)
+			return um.update_content(data, type_name)
 
-	def delete_user_content(self, username, type_name=None, *args, **kwargs):
+	def delete_user_content(self, target, type_name=None, data=None):
 		um = None
-		data = self._get_data(kwargs)
 		if data is not None:
-			um = self._get_user_index_manager(username)
+			um = self._get_user_index_manager(target)
 		if um is not None and data is not None:
-			return um.delete_content(data, type_name, *args, **kwargs)
+			return um.delete_content(data, type_name)
 
 	@classmethod
-	def onChange(cls, datasvr, msg, username=None, broadcast=None):
-		handle_index_event(cls.get_shared_indexmanager(), username, msg)
+	def onChange(cls, datasvr, msg, target=None, broadcast=None):
+		handle_index_event(cls.get_shared_indexmanager(), target, msg)
 
 	# -------------------
 
@@ -381,5 +376,9 @@ class IndexManager(object):
 		for bm in self.books.itervalues():
 			self._close(bm)
 
+	def _close( self, book_manager ):
+		raise NotImplementedError()
+
+	# TODO: Finalizers are evil
 	def __del__(self):
 		self.close()

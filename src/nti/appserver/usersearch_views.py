@@ -27,6 +27,8 @@ from nti.externalization.datastructures import isSyntheticKey
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.datastructures import LocatedExternalDict
 
+import warnings
+
 from . import interfaces as app_interfaces
 
 @view_config( route_name='search.users',
@@ -54,15 +56,17 @@ class _UserSearchView(object):
 		# optimize for that case--avoid waking all other users up
 		result = []
 
-		_users = self.dataserver.root['users']
 		if not partialMatch:
 			pass
-		elif partialMatch in _users:
+		elif users.Entity.get_entity( partialMatch ):
 			# NOTE: If the partial match is an exact match but also a component
 			# it cannot be searched for. For example, a community named 'NextThought'
 			# prevents searching for 'nextthought' if you expect to match '@nextthought.com'
-			result.append( _users[partialMatch] )
+			result.append( users.Entity.get_entity( partialMatch ) )
+			# NOTE2: Going through this API lets some private objects be found
+			# (DynamicFriendsLists, specifically). We should probably lock that down
 		else:
+			_users = self.dataserver.root['users']
 			# Searching the userid is generally not what we want
 			# now that we have username and alias (e.g,
 			# tfandango@gmail.com -> Troy Daley. Search for "Dan" and get Troy and
@@ -107,6 +111,13 @@ class _UserSearchView(object):
 			if not result:
 				result += uid_matches
 
+			if not result:
+				warnings.warn( "Hack for UI: looking at display names of communities" )
+				for x in remote_user.communities:
+					x = users.Entity.get_entity( x )
+					if x and x.username.lower() == partialMatch.lower():
+						result.append( x )
+						break
 		# Since we are already looking in the object we might as well return the summary form
 		# For this reason, we are doing the externalization ourself.
 

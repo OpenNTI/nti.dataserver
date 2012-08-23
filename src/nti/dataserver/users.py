@@ -51,6 +51,7 @@ from nti import apns
 
 import nti.apns.interfaces
 
+from nti.utils import sets
 from nti.utils import create_gravatar_url as _createAvatarURL
 
 def _get_shared_dataserver(context=None,default=None):
@@ -58,9 +59,10 @@ def _get_shared_dataserver(context=None,default=None):
 		return component.queryUtility( nti_interfaces.IDataserver, context=context, default=default )
 	return component.getUtility( nti_interfaces.IDataserver, context=context )
 
+
 @lru_cache(10000)
-def _lower(s):
-	return s.lower() if s else s
+def _lower(s): return s.lower() if s else s
+
 
 @functools.total_ordering
 @interface.implementer( nti_interfaces.IEntity, nti_interfaces.ILastModified, an_interfaces.IAttributeAnnotatable)
@@ -76,7 +78,20 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 		"""
 		Returns an existing entity with the given username or None. If the
 		dataserver is not given, then the global dataserver will be used.
+
+		:param basestring username: The username to find. If this string is actually
+			an ntiid, then an entity will be looked up by ntiid. This permits
+			finding user-specific objects like friends lists.
 		"""
+
+		if ntiids.is_valid_ntiid_string( username ):
+			result = ntiids.find_object_with_ntiid( username )
+			if result is not None:
+				if not isinstance(result,Entity):
+					result = None
+				return result or default
+
+
 		# Allow for escaped usernames, since they are hard to defend against
 		# at a higher level (this behaviour changed in pyramid 1.2.3)
 		username = urllib.unquote( username )
@@ -420,10 +435,6 @@ class Everyone(Community):
 		super(Everyone,self).__setstate__( state )
 
 
-EVERYONE_PROTO = Everyone()
-EVERYONE = EVERYONE_PROTO
-#""" There is only one Everyone community. """
-
 class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters for __setstate__
 	""" A FriendsList or Circle belongs to a user and
 	contains references (strings or weakrefs to principals) to other
@@ -518,19 +529,21 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 								  nttype=ntiids.TYPE_MEETINGROOM_GROUP,
 								  specific=self.username.lower().replace( ' ', '_' ).replace( '-', '_' ) )
 
-	#### Externalization/Pickling
-
-	def __setstate__( self, state ):
-		super(FriendsList,self).__setstate__( state )
-		if 'containerId' in self.__dict__:
-			del self.__dict__['containerId']
-
 	def get_containerId( self ):
 		return 'FriendsLists'
 	def set_containerId( self, cid ):
 		pass
 	containerId = property( get_containerId, set_containerId )
 
+
+	def _update_friends_from_external(self, newFriends):
+
+		self._friends = None
+		for newFriend in newFriends:
+			if isinstance( newFriend, basestring ) and isinstance(self.creator, User):
+				otherList = self.creator.getFriendsList( newFriend )
+				if otherList: newFriend = otherList
+			self.addFriend( newFriend )
 
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
 		super(FriendsList,self).updateFromExternalObject( parsed, *args, **kwargs )
@@ -541,12 +554,7 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 		# the realname, alias, etc
 		if newFriends is not None:
 			updated = True
-			self._friends = None
-			for newFriend in newFriends:
-				if isinstance( newFriend, basestring ) and isinstance(self.creator, User):
-					otherList = self.creator.getFriendsList( newFriend )
-					if otherList: newFriend = otherList
-				self.addFriend( newFriend )
+			self._update_friends_from_external( newFriends )
 
 		if self.username is None:
 			self.username = parsed.get( 'Username' )
@@ -587,6 +595,61 @@ class _FriendsListUsernameIterable(object):
 
 	def __iter__(self):
 		return (x.username for x in self.context)
+
+class DynamicFriendsList(DynamicSharingTarget,FriendsList):
+	"""
+	An incredible hack to introduce a dynamic, but iterable
+	user managed group/list.
+
+	These are half FriendsList and half Community. When people are added
+	to the list (and they don't get a veto), they are also added to the "community"
+	that is this object. Their private _community set gets our NTIID
+	added to it. The NTIID is resolvable through Entity.get_entity like magic,
+	so this object will magically start appearing for them, and also will be
+	searchable by them.
+	"""
+	__external_class_name__ = 'FriendsList'
+	__external_can_create__ = False
+	defaultGravatarType = 'retro'
+	# Doesn't work because it's not in the instance dict, and the IModeledContent
+	# interface value takes precedence over the class attribute
+	mime_type = 'application/vnd.nextthought.friendslist'
+
+
+	def _on_added_friend( self, friend ):
+		assert self.creator, "Must have creator"
+		super(DynamicFriendsList,self)._on_added_friend( friend )
+		friend._communities.add( self.NTIID )
+		friend._following.add( self.NTIID )
+		# TODO: When this object is deleted we need to clean this up
+
+	def _update_friends_from_external( self, new_friends ):
+		old_friends = set( self )
+		super(DynamicFriendsList,self)._update_friends_from_external( new_friends )
+		new_friends = set( self )
+
+		# New additions would have been added, we only have to take care of
+		# removals.
+		ex_friends = old_friends - new_friends
+		for i_hate_you in ex_friends:
+			sets.discard( i_hate_you._communities, self.NTIID )
+			sets.discard( i_hate_you._following, self.NTIID )
+
+	def accept_shared_data_from( self, source ):
+		"""
+		Override to save space. Only the membership matters.
+		"""
+		return True
+
+	def ignore_shared_data_from( self, source ):
+		"""
+		Override to save space. Only the membership matters.
+		"""
+		return False
+
+	def is_accepting_shared_data_from( self, source ):
+		return source is self.creator or source in list(self)
+
 
 ShareableMixin = sharing.ShareableMixin
 deprecated( 'ShareableMixin', 'Prefer sharing.ShareableMixin' )
@@ -772,25 +835,8 @@ class User(Principal):
 		self.friendsLists = _FriendsListMap()
 		self.friendsLists.__parent__ = self
 
-		# We have a default friends list called Public that
-		# contains Public. It's a real list so the user
-		# can delete it or change it.
-		# TODO: To make getting it back easy, we need the
-		# notion of 'suggested' entities to follow/share with
-		# TODO: At some place we'll need to have different defaults for
-		# different users (e.g., in a school, maybe the pre-defined list
-		# is the class
-		publicList = FriendsList( 'Everyone' )
-		publicList.alias = 'Public'
-		publicList.realname = 'Everyone'
-		publicList.avatarURL = 'http://www.gravatar.com/avatar/dfa1147926ce6416f9f731dcd14c0260?s=128&d=retro'
-		publicList.addFriend( EVERYONE ) # TODO: This is wrong. Constant objects aren't.
-		if _create_fl:
-			self.friendsLists['Everyone'] = publicList
-
-
 		# Join our default community
-		self.join_community( EVERYONE )
+		self._communities.add( 'Everyone' )
 
 		# We maintain a list of devices associated with this user
 		# TODO: Want a persistent set?
@@ -970,7 +1016,7 @@ class User(Principal):
 			change.creator = source
 			change.containerId = '' # Not anchored, show at root and below
 			change.useSummaryExternalObject = True # Don't send the whole user
-			self._broadcast_change_to( change, username=self.username )
+			self._broadcast_change_to( change, target=self )
 			return change # which is both True and useful
 
 	def is_accepting_shared_data_from( self, source ):
@@ -1149,7 +1195,7 @@ class User(Principal):
 			# The updateSet consists of either the object, or, if it as a
 			# shared object, (object, sharedSet). This allows us to be
 			# smart about how we distribute notifications.
-			self._v_updateSet.append( (obj,obj.flattenedSharingTargetNames)
+			self._v_updateSet.append( (obj,obj.sharingTargets)
 									  if isinstance( obj, ShareableMixin)
 									  else obj )
 
@@ -1219,12 +1265,15 @@ class User(Principal):
 		return self._Updater( self )
 
 	@classmethod
-	def _broadcast_change_to( cls, theChange, **kwargs ):
+	def _broadcast_change_to( cls, theChange, target=None, broadcast=None ):
 		"""
 		Broadcast the change object to the given username.
 		Happens asynchronously. Exists as an class attribute method so that it
 		can be temporarily overridden by an instance. See the :class:`_NoChangeBroadcast` class.
 		"""
+		kwargs = {'target': target}
+		if broadcast is not None:
+			kwargs['broadcast'] = broadcast
 		_get_shared_dataserver().enqueue_change( theChange, **kwargs )
 		return True
 
@@ -1253,7 +1302,7 @@ class User(Principal):
 			# If we can't get sharing, then there's no point in trying
 			# to do anything--the object could never go anywhere
 			try:
-				origSharing = obj.flattenedSharingTargetNames
+				origSharing = obj.sharingTargets
 			except AttributeError:
 				logger.debug( "Failed to get sharing targets on obj of type %s; no one to target change to", type(obj) )
 				return
@@ -1266,21 +1315,19 @@ class User(Principal):
 		if changeType != Change.CIRCLED:
 			change = Change( changeType, obj )
 			change.creator = self
-			self._broadcast_change_to( change, broadcast=True, username=self.username )
+			self._broadcast_change_to( change, broadcast=True, target=self )
 
-		newSharing = obj.flattenedSharingTargetNames
-		seenUsernames = set()
-		def sendChangeToUser( username, theChange ):
+		newSharing = obj.sharingTargets
+		seenTargets = set()
+		def sendChangeToUser( user, theChange ):
 			""" Sends at most one change to a user, taking
 			into account aliases. """
-			user = self.get_entity( username )
-			if user is None:
-				logger.warn( 'Unknown user for changes "%s"', username )
+
+			if user in seenTargets or user is None:
 				return
-			if user.username in seenUsernames: return
-			seenUsernames.add( user.username )
+			seenTargets.add( user )
 			# Fire the change off to the user using different threads.
-			self._broadcast_change_to( theChange, username=user.username )
+			self._broadcast_change_to( theChange, target=user )
 
 		if origSharing != newSharing and changeType not in (Change.CREATED,Change.DELETED):
 			# OK, the sharing changed and its not a new or dead
@@ -1410,10 +1457,10 @@ def user_devicefeedback( msg ):
 		component.getUtility( IDataserverTransactionRunner )( feedback )
 
 
-def onChange( datasvr, msg, username=None, broadcast=None, **kwargs ):
-	if username and not broadcast:
-		logger.debug( 'Incoming change to %s', username )
-		entity = Entity.get_entity( username, dataserver=datasvr )
-		if entity._p_jar:
-			entity._p_jar.readCurrent( entity )
+def onChange( datasvr, msg, target=None, broadcast=None, **kwargs ):
+	if target and not broadcast:
+		logger.debug( 'Incoming change to %s', target )
+		entity = target
+		if getattr( entity, '_p_jar', None):
+			getattr( entity, '_p_jar' ).readCurrent( entity )
 		entity._noticeChange( msg )

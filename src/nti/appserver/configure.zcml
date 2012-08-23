@@ -37,7 +37,7 @@
 	As it stands now, returning FriendsLists cannot be cached,
 	because they include dynamic presence information
 	-->
-	<adapter factory=".workspaces.UncacheableHomogeneousTypedContainerCollection"
+	<adapter factory=".workspaces.FriendsListContainerCollection"
 			 for="nti.dataserver.interfaces.IFriendsListContainer"
 			 provides=".interfaces.IContainerCollection" />
 	<adapter factory=".pyramid_renderers.uncacheable_factory" />
@@ -49,6 +49,9 @@
 			 provides='.interfaces.IService'/>
 	<adapter factory=".workspaces.ServiceExternalizer" />
 	<subscriber factory="._adapters._SectionInfoUserLikeDecorator"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"
+				/>
+	<subscriber factory="._adapters._DFLUserLikeDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"
 				/>
 

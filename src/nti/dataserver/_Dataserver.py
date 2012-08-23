@@ -373,17 +373,6 @@ class Dataserver(MinimalDataserver):
 			if not root.has_key( 'nti.dataserver' ):
 				raise Exception( "Creating DS against uninitialized DB. Test code?" )
 
-			# if 'Everyone' not in self.root['users']:
-			# 	# Hmm. In the case that we're running multiple DS instances in the
-			# 	# same VM, our constant could wind up with different _p_jar
-			# 	# and _p_oid settings. Hence the copy
-			# 	self.root['users']['Everyone'] = copy.deepcopy( users.EVERYONE )
-			# This is interesting. Must do this to ensure that users
-			# that get created at different times and that have weak refs
-			# to the right thing. What's a better way?
-			# TODO: This is almost certainly wrong given the _p_jar stuff
-			users.EVERYONE = root['nti.dataserver']['users']['Everyone']
-
 
 		room_name = 'meeting_rooms'
 
