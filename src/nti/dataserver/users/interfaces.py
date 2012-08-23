@@ -64,9 +64,21 @@ def checkEmailAddress(value):
 
 	raise EmailAddressInvalid( value )
 
+class IAvatarURL(Interface):
+	"""
+	Something that features a display URL.
+	"""
+
+	avatarURL = schema.URI(
+		title="URL of your avatar picture",
+		description="If not provided, one will be generated for you.",
+		required=False )
 
 
-class IUserDataSchema(Interface):
+class IUserProfile(IAvatarURL):
+	"""
+	A complete user profile.
+	"""
 
 	fullname = schema.TextLine(
 		title='Full Name',
@@ -99,10 +111,7 @@ class IUserDataSchema(Interface):
 					  "your office is located.",
 		required=False)
 
-	avatarURL = schema.URI(
-		title="URL of your avatar picture",
-		description="If not provided, one will be generated for you.",
-		required=False )
+
 
 	birthdate = schema.Date(
 		title='birthdate',

@@ -17,7 +17,7 @@ from nti.externalization.interfaces import IExternalObject
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.externalization import to_standard_external_dictionary
 
-
+from . import interfaces
 
 class _EntitySummaryExternalObject(object):
 	component.adapts( nti_interfaces.IEntity )
@@ -41,7 +41,7 @@ class _EntitySummaryExternalObject(object):
 		# on it.
 		extDict.pop( 'Last Modified', None )
 		extDict['Username'] = entity.username
-		extDict['avatarURL'] = entity.avatarURL
+		extDict['avatarURL'] = interfaces.IAvatarURL(entity).avatarURL
 		extDict['realname'] = entity.realname
 		extDict['alias'] = entity.alias
 		extDict['CreatedTime'] = getattr( self, 'createdTime', 42 ) # for migration
@@ -90,7 +90,7 @@ class _FriendsListExternalObject(_EntityExternalObject):
 		# We do this simply by selecting 4 random users, seeded based on the name of this
 		# object.
 		# TODO: Is there a better seed?
-		friends = [x.avatarURL for x in self.entity]
+		friends = [interfaces.IAvatarURL(x).avatarURL for x in self.entity]
 		if not friends:
 			return ()
 		rand = random.Random( hash(self.entity.username) )
