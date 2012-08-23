@@ -25,6 +25,8 @@ logger = __import__('logging').getLogger(__name__)
 
 import sys
 
+import simplejson as json
+
 import zope.schema
 
 from nti.dataserver import users
@@ -38,6 +40,25 @@ from pyramid import security as sec
 import nti.appserver.httpexceptions as hexc
 
 REL_CREATE_ACCOUNT = "account.create"
+
+def _raise_error( request,
+				  factory,
+				  v,
+				  tb ):
+	mts = ('application/json', 'text/plain')
+	accept_type = 'application/json'
+	if getattr(request, 'accept', None):
+		accept_type = request.accept.best_match( mts )
+
+	if accept_type == 'application/json':
+		v = json.dumps( v )
+	else:
+		v = str(v)
+
+	result = factory()
+	result.body = v
+	result.content_type = accept_type
+	raise result, None, tb
 
 @view_config(route_name='objects.generic.traversal',
 			 name=REL_CREATE_ACCOUNT,
@@ -71,7 +92,12 @@ def account_create_view(request):
 		_ = externalValue['password']
 	except KeyError:
 		exc_info = sys.exc_info()
-		raise hexc.HTTPUnprocessableEntity, exc_info[1], exc_info[2]
+		_raise_error( request, hexc.HTTPUnprocessableEntity,
+					  {'field': exc_info[1].message,
+					   'message': 'Missing data',
+					   'code': 'MissingKeyError'},
+					  exc_info[2] )
+
 
 	try:
 		# Now create the user, firing Created and Added events as appropriate.
@@ -87,10 +113,20 @@ def account_create_view(request):
 	except zope.schema.ValidationError:
 		# Validation error may be many things, including invalid password by the policy
 		exc_info = sys.exc_info()
-		raise hexc.HTTPUnprocessableEntity, exc_info[1], exc_info[2]
+		_raise_error( request,
+					  hexc.HTTPUnprocessableEntity,
+					  {'message': exc_info[1].message,
+					   'field': None,
+					   'code': exc_info[1].__class__.__name__},
+					  exc_info[2] )
 	except KeyError:
 		exc_info = sys.exc_info()
-		raise hexc.HTTPConflict, exc_info[1], exc_info[2]
+		_raise_error( request,
+					  hexc.HTTPConflict,
+					  {'field': 'Username',
+					   'message': 'Duplicate username',
+					   'code': 'DuplicateUsernameError'},
+					   exc_info[2] )
 
 
 	# Yay, we created one. Respond with the Created code, and location.
