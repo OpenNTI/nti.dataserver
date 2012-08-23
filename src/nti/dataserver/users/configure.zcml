@@ -54,4 +54,8 @@
 			 for="nti.dataserver.interfaces.ICoppaUser" />
 
 
+	<!-- User profile info -->
+	<!-- Default -->
+	<adapter factory=".user_profile.CompleteUserProfileFactory" />
+
 </configure>

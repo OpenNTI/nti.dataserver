@@ -41,14 +41,15 @@ EMAIL_RE = re.compile(r"^(\w&.%#$&'\*+-/=?^_`{}|~]+!)*[\w&.%#$&'\*+-/=?^_`{}|~]+
 
 
 def _checkEmailAddress(address):
-    """ Check email address.
+	""" Check email address.
 
-    This should catch most invalid but no valid addresses.
-    """
-    if not _LOCAL_RE.match(address):
-        raise EmailAddressInvalid(address)
-    if not _DOMAIN_RE.match(address):
-        raise EmailAddressInvalid(address)
+	This should catch most invalid but no valid addresses.
+	"""
+	if not _LOCAL_RE.match(address):
+		raise EmailAddressInvalid(address)
+	if not _DOMAIN_RE.match(address):
+		raise EmailAddressInvalid(address)
+	return True
 
 def _isValidEmail(email):
 	""" checks for valid email """
@@ -56,7 +57,7 @@ def _isValidEmail(email):
 		raise EmailAddressInvalid(email)
 
 	_checkEmailAddress(email)
-
+	return True
 
 def checkEmailAddress(value):
 	if value and _isValidEmail(value):
@@ -75,17 +76,23 @@ class IAvatarURL(Interface):
 		required=False )
 
 
-class IUserProfile(IAvatarURL):
+class ICompleteUserProfile(Interface):
 	"""
 	A complete user profile.
 	"""
 
-	fullname = schema.TextLine(
-		title='Full Name',
+	alias = schema.TextLine(
+		title='Display alias',
+		description="Enter preferred display name alias, e.g., johnnyboy."
+			"Your site may impose limitations on this value.",
+		required=False)
+
+	realname = schema.TextLine(
+		title='Full Name aka realname',
 		description="Enter full name, e.g. John Smith.",
 		required=False)
 
-	email = schema.ASCIILine(
+	email = schema.TextLine(
 		title='Email',
 		description=u'',
 		required=True,
