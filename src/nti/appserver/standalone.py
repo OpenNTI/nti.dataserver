@@ -67,7 +67,7 @@ def configure_app( global_config,
 	# rules with that in mind, replacing the HTTP Host: and Origin: aware stuff
 	# we would do if we were serving the application and content both from a cdn.
 	if 's3_cdn_cname' in settings and settings['s3_cdn_cname']:
-		map_all_buckets_to( settings['s3_cdn_cname'], component.getSiteManager() )
+		map_all_buckets_to( settings['s3_cdn_cname'] )
 
 	return application
 
