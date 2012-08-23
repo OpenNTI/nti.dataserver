@@ -3,7 +3,7 @@
 """
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
 
 
 logger = __import__( 'logging' ).getLogger( __name__ )
@@ -53,6 +53,10 @@ import nti.apns.interfaces
 
 from nti.utils import sets
 from nti.utils import create_gravatar_url as _createAvatarURL
+
+from ZODB.interfaces import IConnection
+from nti.dataserver.interfaces import IDataserverTransactionRunner
+
 
 def _get_shared_dataserver(context=None,default=None):
 	if default != None:
@@ -1432,8 +1436,6 @@ def user_willRemoveIntIdForContainedObject( contained, event ):
 	if hasattr( contained.creator, '_postDeleteNotification' ):
 		contained.creator._postDeleteNotification( contained )
 
-from ZODB.interfaces import IConnection
-from .interfaces import IDataserverTransactionRunner
 @component.adapter(nti.apns.interfaces.IDeviceFeedbackEvent)
 def user_devicefeedback( msg ):
 	def feedback():
