@@ -26,8 +26,6 @@ def AvatarURLFactory(entity):
 	"""
 	For legacy reasons, this factory first checks for the presence of an avatar URL
 	"""
-	from IPython.core.debugger import Tracer; Tracer()() ## DEBUG ##
-
 	# Something explicitly set, historical
 	if getattr( entity, '_avatarURL', None ):
 		return entity
