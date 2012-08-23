@@ -129,3 +129,18 @@ class _SectionInfoUserLikeDecorator(object):
 				external[k] = original.Description if original.Description else original.ID
 		if 'avatarURL' not in external:
 			external['avatarURL'] = create_gravatar_url( original.ID, 'identicon' )
+
+from nti.dataserver.users import DynamicFriendsList
+
+@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+@component.adapter(DynamicFriendsList)
+class _DFLUserLikeDecorator(object):
+	"""
+	For purposes of the web UI, cause DFL to use their unique NTIID as the 'username' field.
+	"""
+
+	def __init__( self, context ):
+		pass
+
+	def decorateExternalObject( self, original, external ):
+		external['Username'] = original.NTIID

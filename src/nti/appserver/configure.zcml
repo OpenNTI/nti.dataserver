@@ -51,6 +51,9 @@
 	<subscriber factory="._adapters._SectionInfoUserLikeDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"
 				/>
+	<subscriber factory="._adapters._DFLUserLikeDecorator"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"
+				/>
 
 	<adapter factory=".workspaces._NTIIDEntryExternalizer" />
 	<subscriber factory=".workspaces.ContentUnitInfoHrefDecorator"

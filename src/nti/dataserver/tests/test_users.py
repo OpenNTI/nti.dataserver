@@ -32,12 +32,13 @@ from zope.container.interfaces import InvalidItemType
 from zope.component import eventtesting
 from zope.location import interfaces as loc_interfaces
 
-import mock_dataserver
-from mock_dataserver import WithMockDSTrans
-from mock_dataserver import WithMockDS
+from . import  mock_dataserver
+from .mock_dataserver import WithMockDSTrans
+from .mock_dataserver import WithMockDS
 import persistent.wref
-from nti.dataserver import datastructures
-from nti.dataserver import users
+
+
+from nti.contentrange.contentrange import ContentRangeDescription
 import time
 
 class PersistentContainedThreadable(ContainedMixin,persistent.Persistent):
@@ -83,6 +84,26 @@ def test_everyone_has_creator():
 
 
 class TestUser(mock_dataserver.ConfiguringTestBase):
+
+	@WithMockDSTrans
+	def test_dynamic_friendslist(self):
+		user1 = User.create_user( self.ds, username='foo@bar' )
+		user2 = User.create_user( self.ds, username='foo2@bar' )
+		user3 = User.create_user( self.ds, username='foo3@bar' )
+
+		fl1 = users.DynamicFriendsList(username='Friends')
+		fl1.creator = user1 # Creator must be set
+
+		user1.addContainedObject( fl1 )
+		fl1.addFriend( user2 )
+
+		assert_that( user2.communities, has_item( fl1.NTIID ) )
+
+		fl1.updateFromExternalObject( {'friends': [user3.username]} )
+
+		assert_that( user3.communities, has_item( fl1.NTIID ) )
+		assert_that( user2.communities, does_not( has_item( fl1.NTIID ) ) )
+
 
 	@WithMockDSTrans
 	def test_can_find_friendslist_with_ntiid(self):
@@ -193,6 +214,132 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		user2._noticeChange( Change( Change.DELETED, note ) )
 		assert_that( persistent.wref.WeakRef( note ), is_not( is_in( user2.getSharedContainer( 'c1' ) ) ) )
 		assert_that( note.id, is_( 'foobar' ) )
+
+	@WithMockDS(with_changes=True)
+	def test_share_unshare_note_with_dynamic_friendslist(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			self.ds.add_change_listener( users.onChange )
+			user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
+			user2 = User.create_user( self.ds, username='fab@bar', password='temp001' )
+
+			friends_list = users.DynamicFriendsList( username='Friends' )
+			friends_list.creator = user1
+			user1.addContainedObject( friends_list )
+			friends_list.addFriend( user2 )
+
+			note = Note()
+			note.body = ['text']
+			note.containerId = 'c1'
+			note.creator = user1.username
+
+			with user1.updates():
+				note.addSharingTarget( friends_list )
+				user1.addContainedObject( note )
+			assert_that( note.id, is_not( none() ) )
+
+			assert_that( note, is_in( user2.getSharedContainer( 'c1' ) ) )
+			assert_that( friends_list, is_in( note.sharingTargets ) )
+
+			with user1.updates():
+				user1.deleteContainedObject( note.containerId, note.id )
+
+			assert_that( note, is_not( is_in( user2.getSharedContainer( 'c1' ) ) ) )
+
+	@WithMockDS(with_changes=True)
+	def test_share_unshare_note_with_friendslist(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			self.ds.add_change_listener( users.onChange )
+			user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
+			user2 = User.create_user( self.ds, username='fab@bar', password='temp001' )
+
+			friends_list = users.FriendsList( username='Friends' )
+			friends_list.creator = user1
+			user1.addContainedObject( friends_list )
+			friends_list.addFriend( user2 )
+
+			note = Note()
+			note.body = ['text']
+			note.containerId = 'c1'
+			note.creator = user1.username
+
+			with user1.updates():
+				note.addSharingTarget( friends_list )
+				user1.addContainedObject( note )
+			assert_that( note.id, is_not( none() ) )
+
+			assert_that( note, is_in( user2.getSharedContainer( 'c1' ) ) )
+			assert_that( user2, is_in( note.sharingTargets ) )
+
+			with user1.updates():
+				user1.deleteContainedObject( note.containerId, note.id )
+
+			assert_that( note, is_not( is_in( user2.getSharedContainer( 'c1' ) ) ) )
+
+	@WithMockDS(with_changes=True)
+	def test_share_unshare_note_with_dynamic_friendslist_external(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			self.ds.add_change_listener( users.onChange )
+			user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
+			user2 = User.create_user( self.ds, username='fab@bar', password='temp001' )
+
+			friends_list = users.DynamicFriendsList( username='Friends' )
+			friends_list.creator = user1
+			user1.addContainedObject( friends_list )
+			friends_list.addFriend( user2 )
+
+			note = Note()
+			note.body = ['text']
+			note.containerId = 'c1'
+			note.creator = user1.username
+			note.applicableRange = ContentRangeDescription()
+			user1.addContainedObject( note )
+
+			with user1.updates():
+				the_note = user1.getContainedObject( note.containerId, note.id )
+				the_note.updateFromExternalObject( {'sharedWith': [friends_list.NTIID] } )
+
+			assert_that( note.id, is_not( none() ) )
+			assert_that( note, is_in( user2.getSharedContainer( 'c1' ) ) )
+			assert_that( friends_list, is_in( note.sharingTargets ) )
+
+			with user1.updates():
+				the_note = user1.getContainedObject( note.containerId, note.id )
+				the_note.updateFromExternalObject( {'sharedWith': [] } )
+
+			assert_that( note, is_not( is_in( user2.getSharedContainer( 'c1' ) ) ) )
+
+	@WithMockDS(with_changes=True)
+	def test_share_unshare_note_with_friendslist_external(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			self.ds.add_change_listener( users.onChange )
+			user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
+			user2 = User.create_user( self.ds, username='fab@bar', password='temp001' )
+
+			friends_list = users.FriendsList( username='Friends' )
+			friends_list.creator = user1
+			user1.addContainedObject( friends_list )
+			friends_list.addFriend( user2 )
+
+			note = Note()
+			note.body = ['text']
+			note.containerId = 'c1'
+			note.creator = user1.username
+			note.applicableRange = ContentRangeDescription()
+			user1.addContainedObject( note )
+
+			with user1.updates():
+				the_note = user1.getContainedObject( note.containerId, note.id )
+				the_note.updateFromExternalObject( {'sharedWith': [friends_list.NTIID] } )
+
+			assert_that( note.id, is_not( none() ) )
+			assert_that( note, is_in( user2.getSharedContainer( 'c1' ) ) )
+			assert_that( user2, is_in( note.sharingTargets ) )
+
+			with user1.updates():
+				the_note = user1.getContainedObject( note.containerId, note.id )
+				the_note.updateFromExternalObject( {'sharedWith': [] } )
+
+			assert_that( note, is_not( is_in( user2.getSharedContainer( 'c1' ) ) ) )
 
 	@mock_dataserver.WithMockDS
 	def test_share_note_with_updates(self):

@@ -823,7 +823,7 @@ class ShareableMixin(datastructures.CreatedModDateTrackingObject):
 		"""
 		if isinstance( target, collections.Iterable ) \
 			   and not isinstance( target, basestring ) \
-			   and not hasattr( target, 'username' ):
+			   and not isinstance( target, DynamicSharingTargetMixin ):
 			# TODO: interfaces
 			# expand iterables now
 			for t in target:

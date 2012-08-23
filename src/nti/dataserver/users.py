@@ -51,6 +51,7 @@ from nti import apns
 
 import nti.apns.interfaces
 
+from nti.utils import sets
 from nti.utils import create_gravatar_url as _createAvatarURL
 
 def _get_shared_dataserver(context=None,default=None):
@@ -58,9 +59,10 @@ def _get_shared_dataserver(context=None,default=None):
 		return component.queryUtility( nti_interfaces.IDataserver, context=context, default=default )
 	return component.getUtility( nti_interfaces.IDataserver, context=context )
 
+
 @lru_cache(10000)
-def _lower(s):
-	return s.lower() if s else s
+def _lower(s): return s.lower() if s else s
+
 
 @functools.total_ordering
 @interface.implementer( nti_interfaces.IEntity, nti_interfaces.ILastModified, an_interfaces.IAttributeAnnotatable)
@@ -534,6 +536,15 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 	containerId = property( get_containerId, set_containerId )
 
 
+	def _update_friends_from_external(self, newFriends):
+
+		self._friends = None
+		for newFriend in newFriends:
+			if isinstance( newFriend, basestring ) and isinstance(self.creator, User):
+				otherList = self.creator.getFriendsList( newFriend )
+				if otherList: newFriend = otherList
+			self.addFriend( newFriend )
+
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
 		super(FriendsList,self).updateFromExternalObject( parsed, *args, **kwargs )
 		updated = None
@@ -543,12 +554,7 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 		# the realname, alias, etc
 		if newFriends is not None:
 			updated = True
-			self._friends = None
-			for newFriend in newFriends:
-				if isinstance( newFriend, basestring ) and isinstance(self.creator, User):
-					otherList = self.creator.getFriendsList( newFriend )
-					if otherList: newFriend = otherList
-				self.addFriend( newFriend )
+			self._update_friends_from_external( newFriends )
 
 		if self.username is None:
 			self.username = parsed.get( 'Username' )
@@ -591,9 +597,43 @@ class _FriendsListUsernameIterable(object):
 		return (x.username for x in self.context)
 
 class DynamicFriendsList(DynamicSharingTarget,FriendsList):
+	"""
+	An incredible hack to introduce a dynamic, but iterable
+	user managed group/list.
 
+	These are half FriendsList and half Community. When people are added
+	to the list (and they don't get a veto), they are also added to the "community"
+	that is this object. Their private _community set gets our NTIID
+	added to it. The NTIID is resolvable through Entity.get_entity like magic,
+	so this object will magically start appearing for them, and also will be
+	searchable by them.
+	"""
 	__external_class_name__ = 'FriendsList'
 	__external_can_create__ = False
+	defaultGravatarType = 'retro'
+	# Doesn't work because it's not in the instance dict, and the IModeledContent
+	# interface value takes precedence over the class attribute
+	mime_type = 'application/vnd.nextthought.friendslist'
+
+
+	def _on_added_friend( self, friend ):
+		assert self.creator, "Must have creator"
+		super(DynamicFriendsList,self)._on_added_friend( friend )
+		friend._communities.add( self.NTIID )
+		friend._following.add( self.NTIID )
+		# TODO: When this object is deleted we need to clean this up
+
+	def _update_friends_from_external( self, new_friends ):
+		old_friends = set( self )
+		super(DynamicFriendsList,self)._update_friends_from_external( new_friends )
+		new_friends = set( self )
+
+		# New additions would have been added, we only have to take care of
+		# removals.
+		ex_friends = old_friends - new_friends
+		for i_hate_you in ex_friends:
+			sets.discard( i_hate_you._communities, self.NTIID )
+			sets.discard( i_hate_you._following, self.NTIID )
 
 	def accept_shared_data_from( self, source ):
 		"""
@@ -608,7 +648,7 @@ class DynamicFriendsList(DynamicSharingTarget,FriendsList):
 		return False
 
 	def is_accepting_shared_data_from( self, source ):
-		return source in list(self)
+		return source is self.creator or source in list(self)
 
 
 ShareableMixin = sharing.ShareableMixin
