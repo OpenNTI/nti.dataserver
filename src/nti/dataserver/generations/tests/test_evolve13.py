@@ -24,7 +24,7 @@ new_container = "tag:nexthought.com:abc"
 
 class TestEvolve13(nti.tests.ConfiguringTestBase):
 
-	@fudge.patch( 'nti.dataserver.users._get_shared_dataserver' )
+	@fudge.patch( 'nti.dataserver.users.users._get_shared_dataserver' )
 	def test_evolve13(self, mock_ds):
 		dbs = {}
 		db = DB( MappingStorage.MappingStorage(), databases=dbs, database_name='Root' )
