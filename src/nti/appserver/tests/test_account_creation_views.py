@@ -98,8 +98,11 @@ class TestCreateView(ConfiguringTestBase):
 
 		account_create_view( self.request )
 
-		with assert_raises( hexc.HTTPConflict ):
+		with assert_raises( hexc.HTTPConflict ) as e:
 			account_create_view( self.request )
+
+		assert_that( e.exception.json_body, has_entry( 'code', 'DuplicateUsernameError' ) )
+
 
 	@WithMockDSTrans
 	def test_create_shard_matches_request_host( self ):
