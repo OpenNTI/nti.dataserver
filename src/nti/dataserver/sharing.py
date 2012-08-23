@@ -51,7 +51,12 @@ class _SCOSContainerFacade(object):
 	def __iter__( self ):
 		intids = component.queryUtility( zc_intid.IIntIds )
 		for iid in self._container_set:
-			yield intids.getObject( iid )
+			__traceback_info__ = iid
+			try:
+				yield intids.getObject( iid )
+			except TypeError:
+				#from IPython.core.debugger import Tracer; Tracer()() ## DEBUG ##
+				continue
 
 	def __len__( self ):
 		return len(self._container_set)

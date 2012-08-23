@@ -13,6 +13,7 @@ logger = __import__('logging').getLogger(__name__)
 
 
 import collections
+import warnings
 
 from zope import interface
 from zope import component
@@ -110,9 +111,9 @@ class ContainerEnumerationWorkspace(_ContainerWrapper):
 	def collections( self ):
 		return _collections( self, self._container.itercontainers() )
 
+@interface.implementer(app_interfaces.IContainerCollection)
+@component.adapter(model_interfaces.IHomogeneousTypeContainer)
 class HomogeneousTypedContainerCollection(_ContainerWrapper):
-	interface.implements(app_interfaces.IContainerCollection)
-	component.adapts(model_interfaces.IHomogeneousTypeContainer)
 
 	def __init__( self, container ):
 		super(HomogeneousTypedContainerCollection,self).__init__(container)
@@ -125,8 +126,38 @@ class HomogeneousTypedContainerCollection(_ContainerWrapper):
 	def container(self):
 		return self._container
 
+@interface.implementer(app_interfaces.IUncacheableInResponse)
 class UncacheableHomogeneousTypedContainerCollection(HomogeneousTypedContainerCollection):
-	interface.implements(app_interfaces.IUncacheableInResponse)
+	pass
+
+@component.adapter(model_interfaces.IFriendsListContainer)
+class FriendsListContainerCollection(UncacheableHomogeneousTypedContainerCollection):
+	"""
+	Magically adds the dynamic sharing communities to the friends list.
+	Hopefully temporary, necessary for the web up to render them.
+
+	..note:: We are correctly not sending back an 'edit' link, but the UI still presents
+		them as editable. We are also sending back the correct creator.
+	"""
+	@property
+	def container(self):
+		if not self._container.__parent__:
+			return self._container
+		# TODO: This needs a test case
+		dfl_communities = (users.Entity.get_entity( x ) for x in self._container.__parent__.communities)
+		dfl_communities = [x for x in dfl_communities if model_interfaces.IFriendsList.providedBy( x ) ]
+		if not dfl_communities:
+			return self._container
+
+		fake_container = LocatedExternalDict()
+		fake_container.__name__ = self._container.__name__
+		fake_container.__parent__ = self._container.__parent__
+		fake_container.update( self._container )
+		warnings.warn( "Hack for UI: Moving DFLs around." )
+		for v in dfl_communities:
+			fake_container[v.NTIID] = v
+		fake_container.lastModified = self._container.lastModified
+		return fake_container
 
 class CollectionContentTypeAware(object):
 	interface.implements(mime_interfaces.IContentTypeAware)

@@ -79,6 +79,7 @@ from nti.ntiids import interfaces as nid_interfaces
 
 from zope import component
 from zope import interface
+import warnings
 
 @interface.implementer( nid_interfaces.INTIIDResolver )
 class _OIDResolver(object):
@@ -87,8 +88,18 @@ class _OIDResolver(object):
 		dataserver = component.queryUtility( nti_interfaces.IDataserver )
 		return dataserver.get_by_oid( key, ignore_creator=True ) if dataserver else None
 
-def _match( x, container_id ):
-	return x if getattr( x, 'NTIID', None ) == container_id else None
+
+def _match( x, container_id, case_sensitive=True ):
+	"""
+	Things that are user-like, or might have their NTIID used like a Username
+	and share that namespace, are expected to be treated case *in*sensitively.
+	You should also configure a lowercase resolver.
+	"""
+	if case_sensitive:
+		return x if getattr( x, 'NTIID', None ) == container_id else None
+
+	warnings.warn( "Hack for UI: making some NTIIDS case-insensitive." )
+	return x if getattr( x, 'NTIID', '' ).lower() == (container_id.lower() or 'B').lower() else None
 
 class _AbstractUserBasedResolver(object):
 
@@ -116,7 +127,7 @@ class _ClassResolver(_AbstractUserBasedResolver):
 		# TODO: Why are there two id_type that mean the same?
 		result = None
 		for x in provider.classes.itervalues():
-			result = _match( x, key )
+			result = _match( x, key, False )
 			if result: break
 		return result
 
@@ -128,7 +139,7 @@ class _SectionResolver(_AbstractUserBasedResolver):
 		result = None
 		for c in provider.classes.itervalues():
 			for s in getattr( c, 'Sections', () ):
-				result = _match( s, key )
+				result = _match( s, key, False )
 				if result: break
 			if result: break
 		return result
@@ -162,7 +173,7 @@ class _MeetingRoomResolver(_AbstractUserBasedResolver):
 	def _resolve( self, key, user ):
 		result = None
 		for x in user.friendsLists.itervalues():
-			if _match( x, key ):
+			if _match( x, key, False ):
 				result = x
 				break
 		return result

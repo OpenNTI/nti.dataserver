@@ -144,3 +144,6 @@ class _DFLUserLikeDecorator(object):
 
 	def decorateExternalObject( self, original, external ):
 		external['Username'] = original.NTIID
+		# The application gets confused. Sometimes it uses the ID,
+		# sometimes the Username.
+		external['ID'] = original.NTIID
