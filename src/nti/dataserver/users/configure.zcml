@@ -39,5 +39,19 @@
 	</class>
 
 	<!-- FriendsLists can iterate usernames -->
+	<adapter factory=".users._FriendsListUsernameIterable" />
+
+
+	<!-- Avatar URLs -->
+	<!-- Default -->
+	<adapter factory=".avatar_urls.AvatarURLFactory" />
+	<!-- Named fallback -->
+	<adapter factory=".avatar_urls.GravatarComputedAvatarURL"
+			 name="generated" />
+	<!-- Default for Koppa Kids -->
+	<adapter factory=".avatar_urls.GravatarComputedAvatarURL"
+			 provides=".interfaces.IAvatarURL"
+			 for="nti.dataserver.interfaces.ICoppaUser" />
+
 
 </configure>

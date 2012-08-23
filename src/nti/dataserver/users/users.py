@@ -188,7 +188,8 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 			raise ValueError( 'Illegal username ' + str(username) )
 
 		self.username = username
-		self._avatarURL = avatarURL
+		if avatarURL: # Legacy
+			self._avatarURL = avatarURL
 		self._realname = realname
 		self._alias = alias
 		# Entities, and in particular Principals, have a created time,
@@ -217,7 +218,7 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 
 	def __repr__(self):
 		try:
-			return '%s("%s","%s","%s","%s")' % (self.__class__.__name__,self.username,self.avatarURL, self.realname, self.alias)
+			return '%s(%r,%r,%r)' % (self.__class__.__name__,self.username, self.realname, self.alias)
 		except (ZODB.POSException.ConnectionStateError,AttributeError):
 			# This most commonly (only?) comes up in unit tests when nose defers logging of an
 			# error until after the transaction has exited. There will
@@ -230,26 +231,6 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 			return self.username
 		except ZODB.POSException.ConnectionStateError:
 			return object.__str__(self)
-
-	def _getAvatarURL(self):
-		""" A string giving the URL for an image to be used
-		for this object. May be a data: URL, may be a
-		Gravatar URL. Will always be present. """
-		result = getattr( self, '_avatarURL', None )
-		if result is None:
-			# Construct one using Gravatars
-			result = _createAvatarURL( self.username, self.defaultGravatarType )
-
-		return result
-
-	def _setAvatarURL( self, url ):
-		self._avatarURL = url
-
-	avatarURL = property( _getAvatarURL, _setAvatarURL )
-
-	# Subclasses or instances can set this to
-	# request a different type
-	defaultGravatarType = 'mm'
 
 	def _getRealname(self):
 		result = getattr(self, '_realname', None) or self.username
