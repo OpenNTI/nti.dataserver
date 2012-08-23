@@ -9,7 +9,6 @@ from nti.dataserver.activitystream_change import Change
 from nti.contentsearch import get_indexable_types
 from nti.contentsearch.common import normalize_type_name
 
-
 import logging
 logger = logging.getLogger(__name__)
 

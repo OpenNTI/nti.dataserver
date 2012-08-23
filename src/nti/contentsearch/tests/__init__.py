@@ -34,7 +34,6 @@ zanpakuto_commands =  (	"Shoot To Kill",
 class ConfiguringTestBase(DSConfiguringTestBase):
 	set_up_packages = (dataserver, contentsearch)
 	
-
 	def setUp( self ):
 		super(ConfiguringTestBase,self).setUp()
 		xmlconfig.file("repoze_full.zcml", contentsearch, context=self.configuration_context)
