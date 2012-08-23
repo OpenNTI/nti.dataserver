@@ -379,6 +379,3 @@ class IndexManager(object):
 	def _close( self, book_manager ):
 		raise NotImplementedError()
 
-	# TODO: Finalizers are evil
-	def __del__(self):
-		self.close()
