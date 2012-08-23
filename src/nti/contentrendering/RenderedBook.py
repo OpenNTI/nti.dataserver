@@ -545,6 +545,11 @@ class _EclipseTOCMiniDomTopic(object):
 		self.modifiedTopic = True
 		return self.modifiedTopic
 
+	def get_icon( self ):
+		if self.has_icon():
+			return urllib.unquote(self.topic.attributes.get(b'icon').value)
+		else: return None
+
 	def set_label( self, label ):
 		self.topic.attributes[b'label'] = label
 		self.modifiedTopic = True
