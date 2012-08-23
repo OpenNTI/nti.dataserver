@@ -318,7 +318,7 @@ def _save_message_to_transcripts_subscriber( msg_info, event ):
 		# TODO: I think we are broadcasting this strictly for the sake of
 		# getting it into the contentsearch indexes. Is this actually necessary? Could
 		# or should contentsearch piggyback other events?
-		enqueue_change( change, username=owner, broadcast=True )
+		enqueue_change( change, target=users.User.get_user(owner), broadcast=True )
 
 
 def transcript_for_user_in_room( username, room_id ):

@@ -821,6 +821,9 @@ class ShareableMixin(datastructures.CreatedModDateTrackingObject):
 		subclasses, or iterables of them.
 
 		"""
+		if isinstance( target, basestring ):
+			raise TypeError('Strings are no longer acceptable', target, self)
+
 		if isinstance( target, collections.Iterable ) \
 			   and not isinstance( target, basestring ) \
 			   and not isinstance( target, DynamicSharingTargetMixin ):
@@ -832,12 +835,9 @@ class ShareableMixin(datastructures.CreatedModDateTrackingObject):
 
 		# Don't allow sharing with ourself, it's weird
 		# Allow self.creator to be  string or an Entity
-		try:
-			if self.creator is not None and (self.creator == target):
-				return
-		except AttributeError:
-			# If it was already a string that was not equal
-			pass
+		if self.creator == target:
+			logger.debug( "Dissalow sharing object with creator %s", self.creator )
+			return
 
 		if self._sharingTargets is None:
 			self._sharingTargets = _ii_family().II.TreeSet()
@@ -857,6 +857,9 @@ class ShareableMixin(datastructures.CreatedModDateTrackingObject):
 		def addToSet( target ):
 			if isinstance( target, basestring ):
 				raise TypeError('Strings are no longer acceptable', target, self)
+
+			if target == self.creator:
+				return
 
 			# TODO: interfaces
 			if isinstance(target, DynamicSharingTargetMixin):
