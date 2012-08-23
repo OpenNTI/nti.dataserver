@@ -1,0 +1,267 @@
+{
+	"Items": {
+		"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.nextthought_tutorial": {
+			"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.nextthought_tutorial",
+			"Items": {
+				"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.tutorial_for_students": {
+					"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.tutorial_for_students",
+					"Items": {
+						"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.welcome_to_nextthought": {
+							"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.welcome_to_nextthought",
+							"Items": {
+								"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.introduction": {
+									"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.introduction",
+									"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_welcome_to_nextthought.html#a0000000003",
+									"AssessmentItems": {},
+									"filename": null
+								},
+								"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.supported_browsers": {
+									"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.supported_browsers",
+									"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_welcome_to_nextthought.html#a0000000004",
+									"AssessmentItems": {},
+									"filename": null
+								}
+							},
+							"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_welcome_to_nextthought.html",
+							"AssessmentItems": {},
+							"filename": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_welcome_to_nextthought.html"
+						},
+						"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.manage_your_account": {
+							"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.manage_your_account",
+							"Items": {
+								"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.accessing_the_account_menu": {
+									"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.accessing_the_account_menu",
+									"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_manage_your_account.html#a0000000006",
+									"AssessmentItems": {},
+									"filename": null
+								},
+								"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.adding_a_gravatar_and_alias": {
+									"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.adding_a_gravatar_and_alias",
+									"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_manage_your_account.html#a0000000007",
+									"AssessmentItems": {},
+									"filename": null
+								}
+							},
+							"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_manage_your_account.html",
+							"AssessmentItems": {},
+							"filename": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_manage_your_account.html"
+						},
+						"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.interact_with_your_content": {
+							"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.interact_with_your_content",
+							"Items": {
+								"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.filtering_interactions": {
+									"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.filtering_interactions",
+									"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_interact_with_your_content.html#a0000000021",
+									"AssessmentItems": {},
+									"filename": null
+								},
+								"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.adding_a_whiteboard": {
+									"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.adding_a_whiteboard",
+									"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_interact_with_your_content.html#a0000000020",
+									"AssessmentItems": {},
+									"filename": null
+								},
+								"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.adding_and_deleting_a_note": {
+									"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.adding_and_deleting_a_note",
+									"Items": {
+										"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.option_1": {
+											"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.option_1",
+											"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_interact_with_your_content.html#a0000000018",
+											"AssessmentItems": {},
+											"filename": null
+										},
+										"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.option_2": {
+											"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.option_2",
+											"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_interact_with_your_content.html#a0000000019",
+											"AssessmentItems": {},
+											"filename": null
+										}
+									},
+									"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_interact_with_your_content.html#a0000000017",
+									"AssessmentItems": {},
+									"filename": null
+								},
+								"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.adding_and_deleting_a_highlight": {
+									"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.adding_and_deleting_a_highlight",
+									"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_interact_with_your_content.html#a0000000016",
+									"AssessmentItems": {},
+									"filename": null
+								}
+							},
+							"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_interact_with_your_content.html",
+							"AssessmentItems": {},
+							"filename": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_interact_with_your_content.html"
+						},
+						"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.contact_us": {
+							"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.contact_us",
+							"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_contact_us.html",
+							"AssessmentItems": {},
+							"filename": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_contact_us.html"
+						},
+						"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.collaborate_with_your_community": {
+							"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.collaborate_with_your_community",
+							"Items": {
+								"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.understanding_the_community_panel": {
+									"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.understanding_the_community_panel",
+									"Items": {
+										"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.deleting_a_group": {
+											"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.deleting_a_group",
+											"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_collaborate_with_your_community.html#a0000000026",
+											"AssessmentItems": {},
+											"filename": null
+										},
+										"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.creating_a_new_group": {
+											"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.creating_a_new_group",
+											"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_collaborate_with_your_community.html#a0000000024",
+											"AssessmentItems": {},
+											"filename": null
+										},
+										"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.adding_an_individual_to_an_existing_group": {
+											"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.adding_an_individual_to_an_existing_group",
+											"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_collaborate_with_your_community.html#a0000000025",
+											"AssessmentItems": {},
+											"filename": null
+										}
+									},
+									"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_collaborate_with_your_community.html#a0000000023",
+									"AssessmentItems": {},
+									"filename": null
+								},
+								"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.starting_a_chat_and_creating_a_group_chat": {
+									"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.starting_a_chat_and_creating_a_group_chat",
+									"Items": {
+										"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.option_1\u2014sharting_a_chat_within_a_note": {
+											"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.option_1\u2014sharting_a_chat_within_a_note",
+											"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_collaborate_with_your_community.html#a0000000034",
+											"AssessmentItems": {},
+											"filename": null
+										},
+										"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.option_2\u2014starting_a_chat_outside_of_a_note": {
+											"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.option_2\u2014starting_a_chat_outside_of_a_note",
+											"Items": {
+												"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.begin_a_chat_with_and_individual": {
+													"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.begin_a_chat_with_and_individual",
+													"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_collaborate_with_your_community.html#a0000000036",
+													"AssessmentItems": {},
+													"filename": null
+												},
+												"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.begin_a_chat_with_a_group": {
+													"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.begin_a_chat_with_a_group",
+													"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_collaborate_with_your_community.html#a0000000037",
+													"AssessmentItems": {},
+													"filename": null
+												}
+											},
+											"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_collaborate_with_your_community.html#a0000000035",
+											"AssessmentItems": {},
+											"filename": null
+										}
+									},
+									"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_collaborate_with_your_community.html#a0000000033",
+									"AssessmentItems": {},
+									"filename": null
+								},
+								"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.sharing_interactions": {
+									"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.sharing_interactions",
+									"Items": {
+										"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.sharing_a_note_or_whiteboard": {
+											"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.sharing_a_note_or_whiteboard",
+											"Items": {
+												"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.option_1\u2014sharing_while_adding_a_new_note": {
+													"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.option_1\u2014sharing_while_adding_a_new_note",
+													"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_collaborate_with_your_community.html#a0000000030",
+													"AssessmentItems": {},
+													"filename": null
+												},
+												"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.option_2\u2014sharing_an_existing_note": {
+													"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.option_2\u2014sharing_an_existing_note",
+													"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_collaborate_with_your_community.html#a0000000031",
+													"AssessmentItems": {},
+													"filename": null
+												}
+											},
+											"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_collaborate_with_your_community.html#a0000000029",
+											"AssessmentItems": {},
+											"filename": null
+										},
+										"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.replying_to_a_shared_note": {
+											"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.replying_to_a_shared_note",
+											"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_collaborate_with_your_community.html#a0000000032",
+											"AssessmentItems": {},
+											"filename": null
+										},
+										"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.sharing_a_highlight": {
+											"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.sharing_a_highlight",
+											"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_collaborate_with_your_community.html#a0000000028",
+											"AssessmentItems": {},
+											"filename": null
+										}
+									},
+									"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_collaborate_with_your_community.html#a0000000027",
+									"AssessmentItems": {},
+									"filename": null
+								}
+							},
+							"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_collaborate_with_your_community.html",
+							"AssessmentItems": {},
+							"filename": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_collaborate_with_your_community.html"
+						},
+						"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.navigate_your_content": {
+							"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.navigate_your_content",
+							"Items": {
+								"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.navigating_content_and_sections": {
+									"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.navigating_content_and_sections",
+									"Items": {
+										"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.option_3\u2014navigation_arrows": {
+											"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.option_3\u2014navigation_arrows",
+											"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_navigate_your_content.html#a0000000012",
+											"AssessmentItems": {},
+											"filename": null
+										},
+										"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.option_1\u2014library_tab": {
+											"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.option_1\u2014library_tab",
+											"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_navigate_your_content.html#a0000000010",
+											"AssessmentItems": {},
+											"filename": null
+										},
+										"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.option_2\u2014quick_jump_menu": {
+											"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.option_2\u2014quick_jump_menu",
+											"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_navigate_your_content.html#a0000000011",
+											"AssessmentItems": {},
+											"filename": null
+										}
+									},
+									"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_navigate_your_content.html#a0000000009",
+									"AssessmentItems": {},
+									"filename": null
+								},
+								"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.searching_for_keywords_and_phrases": {
+									"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.searching_for_keywords_and_phrases",
+									"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_navigate_your_content.html#a0000000013",
+									"AssessmentItems": {},
+									"filename": null
+								},
+								"tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.hiding_the_left_panel": {
+									"NTIID": "tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtGenericTutorial.hiding_the_left_panel",
+									"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_navigate_your_content.html#a0000000014",
+									"AssessmentItems": {},
+									"filename": null
+								}
+							},
+							"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_navigate_your_content.html",
+							"AssessmentItems": {},
+							"filename": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_navigate_your_content.html"
+						}
+					},
+					"href": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_tutorial_for_students.html",
+					"AssessmentItems": {},
+					"filename": "tag_nextthought_com_2011-10_NextThought-HTML-NextThoughtGenericTutorial_tutorial_for_students.html"
+				}
+			},
+			"href": "index.html",
+			"AssessmentItems": {},
+			"filename": "index.html"
+		}
+	},
+	"href": "index.html"
+}

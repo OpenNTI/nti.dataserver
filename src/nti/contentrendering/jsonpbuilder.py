@@ -62,9 +62,11 @@ def main(args):
 
 def transform( book, context=None ):
 	"""
-	Modifies the TOC dom by: reading NTIIDs out of HTML content and adding them
-	to the TOC, setting icon attributes in the TOC. Also modifies HTML content
-	to include background images when appropriate.
+	Based on information in the RenderedBook, converts the ToC, content HTML files, and the root icon into 
+	a JSONP file for use working around CORS issues.  This transform is non-distructive and will not alter 
+	the source files in any way.
+
+	The transform will always return true, because any failures in file IO will raise an IOError exception.
 	"""
 
 	# Export the ToC file as a JSONP file
@@ -77,7 +79,13 @@ def transform( book, context=None ):
 	# Export the topic HTML files as JSONP files
 	_process_topic( book.toc.root_topic, book.contentLocation )
 
+	return True
+
 def _process_topic( topic, contentLocation ):
+	"""
+	This function will export a topic to JSONP format and then recursively process any child topics.
+	The function has no return value.
+	"""
 	_JSONPWrapper( topic.ntiid, os.path.join(contentLocation, topic.filename), 'jsonpContent' ).writeJSONPToFile()
 
 	# Process any child nodes
