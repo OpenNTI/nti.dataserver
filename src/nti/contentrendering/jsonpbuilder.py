@@ -3,9 +3,9 @@ from __future__ import print_function, unicode_literals
 
 import base64
 import io
-import json
 import mimetypes
 import os
+import simplejson as json
 import sys
 
 from nti.contentrendering import RenderedBook
@@ -55,13 +55,15 @@ def _process_toc( toc ):
 	data['version'] = '1'
 
 	# Read the ToC file and base64 encode
-	with io.open( toc.filename, 'r') as file:
-		data['content'] = base64.standard_b64encode(file.read().encode('utf8'))
+	with io.open( toc.filename, 'rb') as file:
+		data['content'] = base64.standard_b64encode(file.read())
 		data['Content-Encoding'] = 'base64'
 
 	# Write the JSONP output
-	with io.open( toc.filename + '.jsonp', 'w') as file:
-		file.write('jsonpToc(' + json.dumps(data) + ');')
+	with io.open( toc.filename + '.jsonp', 'wb') as file:
+		file.write('jsonpToc(')
+		json.dump(data, file)
+		file.write(');')
 
 def _process_topic( topic, contentLocation ):
 	data = {}
@@ -70,13 +72,15 @@ def _process_topic( topic, contentLocation ):
 	data['version'] = '1'
 
 	# Read the content file and base64 encode
-	with io.open( os.path.join(contentLocation, topic.filename), 'r') as file:
-		data['content'] = base64.standard_b64encode(file.read().encode('utf8'))
+	with io.open( os.path.join(contentLocation, topic.filename), 'rb') as file:
+		data['content'] = base64.standard_b64encode(file.read())
 		data['Content-Encoding'] = 'base64'
 
 	# Write the JSONP output
-	with io.open( os.path.join(contentLocation, topic.filename + '.jsonp'), 'w') as file:
-		file.write('jsonpContent(' + json.dumps(data) + ');')
+	with io.open( os.path.join(contentLocation, topic.filename + '.jsonp'), 'wb') as file:
+		file.write('jsonpContent(')
+		json.dump(data, file)
+		file.write(');')
 
 	# Process any child nodes
 	for child in topic.childTopics:
