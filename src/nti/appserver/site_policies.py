@@ -247,3 +247,32 @@ class MathcountsSitePolicyEventListener(object):
 
 		if '@' in user.username:
 			raise zope.schema.ValidationError( "Username cannot contain '@'", 'Username', user.username )
+
+@interface.implementer(ISitePolicyUserEventListener)
+class RwandaSitePolicyEventListener(object):
+	"""
+	Implements the policy for the rwanda site.
+	"""
+
+	def user_will_update_new( self, user, event ):
+		pass
+
+
+	def user_created( self, user, event ):
+		"""
+		This policy places newly created users in the ``MathCounts`` community
+		(creating it if it doesn't exist).
+
+		It also verifies naming restraints.
+
+		"""
+
+		community = users.Entity.get_entity( 'Carnegie Mellon University' )
+		if community is None:
+			community = users.Community.create_community( username='Carnegie Mellon University' )
+			com_names = user_interfaces.IFriendlyNamed( community )
+			com_names.alias = 'CMU'
+			com_names.realnam = 'Carnegie Mellon University'
+
+		user.join_community( community )
+		user.follow( community )
