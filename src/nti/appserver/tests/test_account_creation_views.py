@@ -55,6 +55,8 @@ import datetime
 
 class TestCreateView(ConfiguringTestBase):
 
+	features = () # Disable devmode so that we get email required by default
+
 	@WithMockDSTrans
 	def test_create_missing_password(self):
 		self.request.content_type = 'application/vnd.nextthought+json'
@@ -79,7 +81,8 @@ class TestCreateView(ConfiguringTestBase):
 		component.provideHandler( eventtesting.events.append, (None,) )
 		self.request.content_type = 'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason@nextthought.com',
-													 'password': 'pass123word' } )
+													 'password': 'pass123word',
+													 'email': 'foo@bar.com' } )
 
 
 		new_user = account_create_view( self.request )
@@ -97,7 +100,8 @@ class TestCreateView(ConfiguringTestBase):
 	def test_create_duplicate( self ):
 		self.request.content_type = 'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason_nextthought_com',
-													 'password': 'pass132word' } )
+													 'password': 'pass132word',
+													 'email': 'foo@bar.com' } )
 
 		account_create_view( self.request )
 
@@ -121,6 +125,22 @@ class TestCreateView(ConfiguringTestBase):
 		assert_that( e.exception.json_body, has_entry( 'code', 'EmailAddressInvalid' ) )
 		assert_that( e.exception.json_body, has_entry( 'field', 'email' ) )
 
+	@WithMockDSTrans
+	def test_create_invalid_username( self ):
+		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.body = to_json_representation( {'Username': '   ',
+													 'password': 'pass132word',
+													 'email': 'user@domain.com' } )
+
+
+
+		with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
+			account_create_view( self.request )
+
+		assert_that( e.exception.json_body, has_entry( 'field', 'Username' ) )
+		assert_that( e.exception.json_body, has_entry( 'code', 'InvalidValue' ) )
+
+
 
 	@WithMockDSTrans
 	def test_create_shard_matches_request_host( self ):
@@ -129,7 +149,8 @@ class TestCreateView(ConfiguringTestBase):
 
 		self.request.content_type = 'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason@nextthought.com',
-													 'password': 'pass123word' } )
+													 'password': 'pass123word',
+													 'email': 'foo@bar.com' } )
 
 
 		new_user = account_create_view( self.request )
@@ -146,7 +167,8 @@ class TestCreateView(ConfiguringTestBase):
 
 		self.request.content_type = 'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason@nextthought.com',
-													 'password': 'pass123word' } )
+													 'password': 'pass123word',
+													 'email': 'foo@bar.com' } )
 
 
 		new_user = account_create_view( self.request )
@@ -251,7 +273,8 @@ class TestCreateView(ConfiguringTestBase):
 
 		self.request.content_type = 'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason@nextthought.com',
-													 'password': 'pass123word' } )
+													 'password': 'pass123word',
+													 'email': 'foo@bar.com' } )
 
 
 		new_user = account_create_view( self.request )
@@ -271,7 +294,8 @@ class TestApplicationCreateUser(ApplicationTestBase):
 		app = TestApp( self.app )
 
 		data = to_json_representation( {'Username': 'jason@nextthought.com',
-										'password': 'password' } )
+										'password': 'password',
+										'email': 'foo@bar.com'	} )
 
 		path = b'/dataserver2/users/@@account.create'
 
