@@ -46,7 +46,7 @@ import pyramid.config
 import pyramid.authorization
 import pyramid.security
 import pyramid.httpexceptions as hexc
-
+from paste.deploy.converters import asbool
 
 import nti.appserver.workspaces
 from nti.appserver import pyramid_auth
@@ -226,7 +226,9 @@ def createApplication( http_port,
 	pyramid_config.set_session_factory( my_session_factory )
 
 	pyramid_config.set_authorization_policy( pyramid_authorization.ACLAuthorizationPolicy() )
-	pyramid_config.set_authentication_policy( pyramid_auth.create_authentication_policy() )
+	pyramid_config.set_authentication_policy(
+		pyramid_auth.create_authentication_policy(
+			secure_cookies=asbool(settings.get('secure_cookies', False) ) ) )
 
 	pyramid_config.add_route( name='logon.ping', pattern='/dataserver2/logon.ping' )
 	pyramid_config.add_route( name='logon.handshake', pattern='/dataserver2/logon.handshake' )
