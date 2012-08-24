@@ -208,6 +208,25 @@ class TestCreateView(ConfiguringTestBase):
 
 		assert_that( exc.exception.json_body, has_entry( 'field', 'email' ) )
 
+	@WithMockDSTrans
+	def test_create_rwanda_policy( self ):
+		# see site_policies.[py|zcml]
+		assert_that( self.request.host, is_( 'example.com:80' ) )
+		self.request.headers['origin'] = 'http://rwanda.nextthought.com'
+
+		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.body = to_json_representation( {'Username': 'jason@nextthought_com',
+													 'password': 'pass123word',
+													 'realname': 'Jason Madden',
+													 'birthdate': '1982-01-31',
+													 'alias': 'Jason',
+													 'email': 'jason@nextthought.com' } )
+		new_user = account_create_view( self.request )
+		assert_that( new_user, has_property( 'communities', has_item( 'Carnegie Mellon University' ) ) )
+		assert_that( user_interfaces.IFriendlyNamed( new_user ), has_property( 'realname', 'Jason Madden' ) )
+		assert_that( user_interfaces.ICompleteUserProfile( new_user ),
+					 has_property( 'birthdate', datetime.date( 1982, 1, 31 ) ) )
+
 
 	@WithMockDSTrans
 	def test_create_component_matches_request_host( self ):

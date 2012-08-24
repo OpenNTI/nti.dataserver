@@ -10,4 +10,7 @@
 	<utility factory=".site_policies.MathcountsSitePolicyEventListener"
 			 name="mathcounts.nextthought.com"/>
 
+	<utility factory=".site_policies.RwandaSitePolicyEventListener"
+			 name="rwanda.nextthought.com"/>
+
 </configure>
