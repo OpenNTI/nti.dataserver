@@ -24,6 +24,13 @@
 			 provides=".interfaces.ILocatedExternalSequence"
 			 factory=".datastructures.LocatedExternalList" />
 
+	<!-- Offer to adapt strings to dates -->
+	<!-- TODO: This is a bit ad-hoc. Surely there's a more formal set
+	of transforms somewhere? -->
+	<adapter for="basestring"
+			 provides="zope.interface.common.idatetime.IDate"
+			 factory=".internalization._date_from_string" />
+
 	<!-- The "*" matches things that implement some interface -->
 	<!-- It translates into passing None to the registry method -->
 	<adapter for="*"

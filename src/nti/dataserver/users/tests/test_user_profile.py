@@ -11,7 +11,9 @@ __docformat__ = "restructuredtext en"
 
 from hamcrest import assert_that
 from hamcrest import is_
+from hamcrest import is_not as does_not
 from hamcrest import has_property
+from hamcrest import has_key
 from hamcrest import contains_string
 
 from nose.tools import assert_raises
@@ -28,7 +30,7 @@ from nti.dataserver.users import interfaces
 from nti.dataserver.users import Everyone
 from nti.dataserver.users import User
 
-def test_default_user():
+def test_default_user_profile():
 	user = User( username="foo@bar" )
 
 	prof = interfaces.ICompleteUserProfile( user )
@@ -47,3 +49,37 @@ def test_default_user():
 	assert_that( prof2.email, is_( 'foo@bar.com' ) )
 	assert_that( prof,
 				 verifiably_provides( interfaces.ICompleteUserProfile ) )
+
+	# Because of inheritance, even if we ask for IFriendlyNamed, we get ICompleteUserProfile
+	prof2 = interfaces.IFriendlyNamed( user )
+	assert_that( prof2.email, is_( 'foo@bar.com' ) )
+	assert_that( prof,
+				 verifiably_provides( interfaces.ICompleteUserProfile ) )
+
+def test_user_profile_with_legacy_dict():
+	user = User( "foo@bar" )
+	user._alias = 'bizbaz'
+	user._realname = 'boo'
+
+	prof = interfaces.ICompleteUserProfile( user )
+	assert_that( prof, verifiably_provides( interfaces.ICompleteUserProfile ) )
+
+	assert_that( prof, has_property( 'alias', 'bizbaz' ) )
+	assert_that( prof, has_property( 'realname', 'boo' ) )
+
+	prof.alias = 'haha'
+	prof.realname = 'hehe'
+
+	assert_that( prof, has_property( 'alias', 'haha' ) )
+	assert_that( prof, has_property( 'realname', 'hehe' ) )
+
+
+	assert_that( user.__dict__, does_not( has_key( '_alias' ) ) )
+	assert_that( user.__dict__, does_not( has_key( '_realname' ) ) )
+
+def test_everyone_names():
+	everyone = Everyone()
+
+	names = interfaces.IFriendlyNamed( everyone )
+	assert_that( names, has_property( 'alias', 'Public' ) )
+	assert_that( names, has_property( 'realname', 'Everyone' ) )

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+58#!/usr/bin/env python
 
 from hamcrest import (assert_that, is_, has_entry, instance_of,
 					  is_in, not_none, is_not, greater_than_or_equal_to,
@@ -55,7 +55,7 @@ class PersistentContainedThreadable(ContainedMixin,persistent.Persistent):
 
 def test_create_friends_list_through_registry():
 	def _test( name ):
-		user = User( 'foo@bar', 'temp' )
+		user = User( 'foo@bar' )
 		created = user.maybeCreateContainedObjectWithType( name, {'Username': 'Friend' } )
 		assert_that( created, is_(FriendsList) )
 		assert_that( created.username, is_( 'Friend' ) )
@@ -71,7 +71,7 @@ def test_adding_wrong_type_to_friendslist():
 		friends['k'] = 'v'
 
 def test_friends_list_case_insensitive():
-	user = User( 'foo@bar', 'temp' )
+	user = User( 'foo@bar' )
 	fl = user.maybeCreateContainedObjectWithType( 'FriendsLists', {'Username': 'Friend' } )
 	user.addContainedObject( fl )
 

@@ -56,6 +56,9 @@
 
 	<!-- User profile info -->
 	<!-- Default -->
+	<adapter factory=".interfaces.FriendlyNamedSchemaProvider"
+			 for="nti.dataserver.interfaces.IEntity" />
+	<adapter factory=".user_profile.FriendlyNamedFactory" />
 	<adapter factory=".user_profile.CompleteUserProfileFactory" />
 
 </configure>

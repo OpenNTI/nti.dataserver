@@ -3,10 +3,8 @@ import unittest
 from hamcrest import equal_to
 from hamcrest import assert_that
 
-from nti.dataserver.users import Change
+from nti.dataserver.activitystream_change import Change
 from nti.contentsearch._indexagent import _process_event
-
-##########################
 
 test_user = 'test.user@nextthought.com'
 
@@ -25,7 +23,7 @@ def decorator(f):
 		self.exception = None
 		try:
 			f(self, *args, **kwargs)
-		except Exception, e:
+		except Exception as e:
 			self.exception = e
 	execute.__name__ = f.__name__
 	return execute
@@ -72,7 +70,6 @@ class TestIndexAgent(unittest.TestCase):
 		_process_event(self.indexmanager, test_user, Change.DELETED, 'Note', note_mod)
 		if self.indexmanager.exception:
 			self.fail(str(self.indexmanager.exception))
-			
+
 if __name__ == '__main__':
 	unittest.main()
-

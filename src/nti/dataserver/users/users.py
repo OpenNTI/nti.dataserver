@@ -13,46 +13,39 @@ import numbers
 import functools
 import time
 import six
+import collections
 
 from zope import interface
 from zope import component
+from zope.location import interfaces as loc_interfaces
+
 from zope.component.factory import Factory
 from zope.deprecation import deprecated
-from zope import lifecycleevent
-from zope.keyreference.interfaces import IKeyReference
-from zope.location import interfaces as loc_interfaces
-from zope.annotation import interfaces as an_interfaces
+
 import zope.intid
 
 from z3c.password import interfaces as pwd_interfaces
 
-from repoze.lru import lru_cache
-
 import persistent
-import ZODB.POSException
 
-import collections
-import urllib
 
 from nti.ntiids import ntiids
 from nti.zodb import minmax
 
-from nti.externalization.persistence import PersistentExternalizableList, getPersistentState, setPersistentStateChanged
+from nti.externalization.persistence import  getPersistentState, setPersistentStateChanged
 from nti.externalization.datastructures import ExternalizableDictionaryMixin
+import nti.externalization.internalization
+
 
 from nti.dataserver import datastructures
 from nti.dataserver import dicts
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver import enclosures
 from nti.dataserver import mimetype
 from nti.dataserver import sharing
 from nti.dataserver.activitystream_change import Change
 from nti import apns
 
 import nti.apns.interfaces
-
-from nti.utils import sets
-from nti.utils import create_gravatar_url as _createAvatarURL
 
 from ZODB.interfaces import IConnection
 from nti.dataserver.interfaces import IDataserverTransactionRunner
@@ -64,239 +57,7 @@ def _get_shared_dataserver(context=None,default=None):
 	return component.getUtility( nti_interfaces.IDataserver, context=context )
 
 
-@lru_cache(10000)
-def _lower(s): return s.lower() if s else s
-
-
-@functools.total_ordering
-@interface.implementer( nti_interfaces.IEntity, nti_interfaces.ILastModified, an_interfaces.IAttributeAnnotatable)
-class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
-	"""
-	The root for things that represent human-like objects.
-	"""
-
-	_ds_namespace = 'users' # TODO: This doesn't really belong here
-
-	@classmethod
-	def get_entity( cls, username, dataserver=None, default=None, _namespace=None ):
-		"""
-		Returns an existing entity with the given username or None. If the
-		dataserver is not given, then the global dataserver will be used.
-
-		:param basestring username: The username to find. If this string is actually
-			an ntiid, then an entity will be looked up by ntiid. This permits
-			finding user-specific objects like friends lists.
-		"""
-
-		if ntiids.is_valid_ntiid_string( username ):
-			result = ntiids.find_object_with_ntiid( username )
-			if result is not None:
-				if not isinstance(result,Entity):
-					result = None
-				return result or default
-
-
-		# Allow for escaped usernames, since they are hard to defend against
-		# at a higher level (this behaviour changed in pyramid 1.2.3)
-		username = urllib.unquote( username )
-		dataserver = dataserver or _get_shared_dataserver(default=default)
-		if dataserver is not default:
-			return dataserver.root[_namespace or cls._ds_namespace].get( username, default )
-		return default
-
-	@classmethod
-	def create_entity( cls, dataserver=None, **kwargs ):
-		"""
-		Creates (and returns) and places in the dataserver a new entity,
-		constructed using the keyword arguments given, the same as those
-		the User constructor takes. If an user already exists with that name,
-		raises a :class:`KeyError`. You handle the transaction.
-
-		The newly-created user will be placed in a shard through use of a
-		:class:`nti.dataserver.interfaces.INewUserPlacer`. If the unnamed (default)
-		utility is available, it will be used. Otherwise, the utility named
-		``default`` (which is configured by this package) will be used.
-		"""
-
-		dataserver = dataserver or _get_shared_dataserver()
-		root_users = dataserver.root[cls._ds_namespace]
-		if 'parent' not in kwargs:
-			kwargs['parent'] = root_users
-
-		# When we auto-create users, we need to be sure
-		# they have a database connection so that things that
-		# are added /to them/ (their contained storage) in the same transaction
-		# will also be able to get a database connection and hence
-		# an OID.
-		# NOTE: This is also where we decide which database shard the user lives in
-		# First we create the skeleton object
-		user = cls.__new__( cls )
-		user.username = kwargs['username']
-		# Then we place it in a database. It's important to do this before any code
-		# runs so that subobjects which might go looking through their parents
-		# to find a IConnection find the user's IConnection *first*, before they find
-		# the `root_users` connection
-		placer = component.queryUtility( nti_interfaces.INewUserPlacer ) or component.getUtility( nti_interfaces.INewUserPlacer, name='default' )
-		placer.placeNewUser( user, root_users, dataserver.shards )
-
-		IKeyReference( user ) # Ensure it gets added to the database
-		assert getattr( user, '_p_jar', None ), "User should have a connection"
-
-		# Finally, we init the user
-		user.__init__( **kwargs )
-		assert getattr( user, '_p_jar', None ), "User should still have a connection"
-
-		lifecycleevent.created( user ) # Fire created event
-		# Must manually fire added event if parent was given
-		if kwargs['parent'] is not None:
-			lifecycleevent.added( user, kwargs['parent'], user.username )
-
-		# Now store it. If there was no parent given or parent was none,
-		# this will fire ObjectAdded. If parent was given and is different than root_users,
-		# this will fire ObjectMoved. If the user already exists, raises a KeyError
-		root_users[user.username] = user
-
-		return user
-
-	@classmethod
-	def delete_entity( cls, username, dataserver=None ):
-		"""
-		Delete the entity (in this class's namespace) given by `username`. If the entity
-		doesn't exist, raises :class:`KeyError`.
-		:return: The user that was deleted.
-		"""
-		dataserver = dataserver or _get_shared_dataserver()
-		root_users = dataserver.root[cls._ds_namespace]
-
-		user = root_users[username]
-		del root_users[username]
-
-		# Also clean it up from whatever shard it happened to come from
-		home_shard = nti_interfaces.IShardLayout( IConnection( user ) )
-		if username in home_shard.users_folder:
-			del home_shard.users_folder[username]
-		return user
-
-	creator = nti_interfaces.SYSTEM_USER_NAME
-	__parent__ = None
-
-	def __init__(self, username, avatarURL=None, realname=None, alias=None, parent=None):
-		super(Entity,self).__init__()
-		if not username or '%' in username:
-			# % is illegal because we sometimes have to
-			# URL encode an @ to %40.
-			raise ValueError( 'Illegal username ' + str(username) )
-
-		self.username = username
-		if avatarURL: # Legacy
-			self._avatarURL = avatarURL
-		self._realname = realname
-		self._alias = alias
-		# Entities, and in particular Principals, have a created time,
-		# and their last modified date is initialized to this created
-		# time...this implies there are never temporary objects of this type
-		# and that this type represents a fully formed object after construction
-		self.createdTime = self.updateLastMod()
-
-		if parent is not None:
-			# If we pre-set this, then the ObjectAdded event doesn't
-			# fire (the ObjectCreatedEvent does). On the other hand, we can't add anything to friendsLists
-			# if an intid utility is installed if we don't have a parent (and thus
-			# cannot be adapted to IKeyReference).
-			self.__parent__ = parent
-
-
-	def _get__name__(self):
-		return self.username
-	def _set__name__(self,new_name):
-		if new_name:
-			# Deleting from a container wants to remove our name.
-			# We cannot allow that.
-			self.username = new_name
-	__name__ = property(_get__name__, _set__name__ )
-
-
-	def __repr__(self):
-		try:
-			return '%s(%r,%r,%r)' % (self.__class__.__name__,self.username, self.realname, self.alias)
-		except (ZODB.POSException.ConnectionStateError,AttributeError):
-			# This most commonly (only?) comes up in unit tests when nose defers logging of an
-			# error until after the transaction has exited. There will
-			# be other log messages about trying to load state when connection is closed,
-			# so we don't need to try to log it as well
-			return object.__repr__(self)
-
-	def __str__(self):
-		try:
-			return self.username
-		except ZODB.POSException.ConnectionStateError:
-			return object.__str__(self)
-
-	def _getRealname(self):
-		result = getattr(self, '_realname', None) or self.username
-		if result is self.username:
-			# Try to make it prettier.
-			# Probably shouldn't do this in production.
-			if '@' in result:
-				result = self.username[0:self.username.index('@')]
-				result = result.replace( '.', ' ' ).title()
-		return result
-
-	def _setRealname( self, value ):
-		self._realname = value
-
-	realname = property( _getRealname, _setRealname )
-
-	def _getAlias(self):
-		return getattr(self, '_alias', None) or getattr( self, '_realname', None ) or self.username
-
-	def _setAlias( self, value ):
-		self._alias = value
-
-	alias = property( _getAlias, _setAlias )
-
-	@property
-	def preferredDisplayName( self ):
-		# TODO: This is messed up, due to the defaulting
-		if self.realname:
-			return self.realname
-		if self.alias:
-			return self.alias
-		return self.username
-
-	@property
-	def id(self):
-		""" Our ID is a synonym for our username"""
-		return self.username
-
-	### Externalization ###
-
-	def updateFromExternalObject( self, parsed, *args, **kwargs ):
-		def setIf( name ):
-			o = parsed.pop( name, None )
-			if o is not None: setattr( self, name, o )
-
-		setIf( 'realname' )
-		setIf( 'alias' )
-		setIf( 'avatarURL' )
-
-	### Comparisons and Hashing ###
-
-	def __eq__(self, other):
-		try:
-			return other is self or _lower(self.username) == _lower(other.username)
-		except AttributeError:
-			return NotImplemented
-
-	def __lt__(self, other):
-		try:
-			return _lower(self.username) < _lower(other.username)
-		except AttributeError:
-			return NotImplemented
-
-	def __hash__(self):
-		return _lower(self.username).__hash__()
-
+from .entity import Entity
 
 SharingTarget = sharing.SharingTargetMixin
 deprecated( 'SharingTarget', 'Prefer sharing.SharingTargetMixin' )
@@ -356,13 +117,14 @@ class Principal(Entity,sharing.SharingSourceMixin):
 	# concept.
 	def __init__(self,
 				 username=None,
-				 avatarURL=None,
+				 #avatarURL=None,
 				 password=None,
-				 realname=None,
-				 alias=None,
+				 #realname=None,
+				 #alias=None,
 				 parent=None):
 
-		super(Principal,self).__init__(username,avatarURL,realname=realname,alias=alias,parent=parent)
+		super(Principal,self).__init__(username,#avatarURL,realname=realname,alias=alias,
+									   parent=parent)
 		if not username or '@' not in username:
 			raise ValueError( 'Illegal username ' + username )
 
@@ -409,237 +171,24 @@ class Everyone(Community):
 	__external_class_name__ = 'Community'
 	# 'everyone@nextthought.com' hash
 	_avatarURL = 'http://www.gravatar.com/avatar/bb798c65a45658a80281bd3ba26c4ff8?s=128&d=mm'
+	_realname = 'Everyone'
+	_alias = 'Public'
 	def __init__(self):
 		super(Everyone,self).__init__( 'Everyone' )
-		self.realname = 'Everyone'
-		self.alias = 'Public'
-
 
 	def __setstate__(self,state):
-		if '_avatarURL' in state:
-			del state['_avatarURL']
+		for k in ('_avatarURL', '_realname', 'alias'):
+			if k in state:
+				del state[k]
 		super(Everyone,self).__setstate__( state )
 
-
-class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters for __setstate__
-	""" A FriendsList or Circle belongs to a user and
-	contains references (strings or weakrefs to principals) to other
-	users. It has a name and ID, possibly a custom image.
-
-	All mutations to the list must go through the APIs of this class. """
-
-	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-	defaultGravatarType = 'wavatar'
-	__external_can_create__ = True
-
-	interface.implements(nti_interfaces.IFriendsList,nti_interfaces.ISimpleEnclosureContainer)
-
-	def __init__(self, username=None, avatarURL=None):
-		super(FriendsList,self).__init__(username, avatarURL)
-		self._friends = None
-
-	def _on_added_friend( self, friend ):
-
-		if isinstance( friend, SharingSource ):
-			friend.accept_shared_data_from( self.creator )
-			self.creator.follow( friend )
-
-	def __iter__(self):
-		"""
-		Iterating over a FriendsList iterates over its friends
-		(as Entity objects), resolving weak refs and strings.
-		:return: An iterator across a set of `Entity` objects.
-		"""
-		# This function replaces things in the friends list as we
-		# iterate across it, so we must iterate by index
-		def _resolve_friend( friend, ix ):
-			result = friend
-			if isinstance( friend, six.string_types ):
-				result = User.get_user( friend, default=self )
-				if result is self: result = None
-				if result is not None:
-					self._on_added_friend( result )
-					# Now that we found it, if possible replace the string
-					# with the real thing
-					try:
-						# Must have the index, the weak refs in here
-						# behave badly in comparisons.
-						self._friends[ix] = persistent.wref.WeakRef( result )
-					except ValueError: pass
-			elif isinstance( friend, persistent.wref.WeakRef ):
-				result = friend()
-			return result
-
-		resolved = [_resolve_friend(self.friends[i], i) for i in xrange(len(self.friends))]
-		return iter( {x for x in resolved if x is not None} )
-
-
-	@property
-	def friends(self):
-		""" A sequence of strings, weak refs to Principals,
-		arbitrary objects.
-
-		Avoid this method. Prefer to iterate across this object."""
-		return self._friends if self._friends is not None else []
-
-	def addFriend( self, friend ):
-		""" Adding friends causes our creator to follow them. """
-		if friend is None: return
-		# TODO: Why is this a list?
-		if self._friends is None: self._friends = PersistentExternalizableList()
-		if isinstance( friend, FriendsList ):
-			# Recurse to generate the correct notifications
-			for other_friend in friend.friends:
-				self.addFriend( other_friend )
-		elif isinstance( friend, Entity ):
-			self._friends.append( persistent.wref.WeakRef( friend ) )
-		elif isinstance( friend, collections.Mapping ) and 'Username' in friend:
-			# Dictionaries and Dictionary-like things come in from
-			# external representations. Resolve, then append.
-			self.addFriend( User.get_user( friend['Username'], default=friend['Username'] ) )
-		elif isinstance( friend, six.string_types ):
-			# Try to resolve, add the resolved if possible, otherwise add the
-			# string as a placeholder. Don't recurse, could be infinite
-			friend = friend.lower()
-			friend = User.get_user( friend, default=friend )
-			self._friends.append( friend )
-		else:
-			self._friends.append( friend )
-
-		self._on_added_friend( friend )
-
-	@property
-	def NTIID(self):
-		return ntiids.make_ntiid( date=ntiids.DATE,
-								  provider=self.creator.username if self.creator else 'Unknown',
-								  nttype=ntiids.TYPE_MEETINGROOM_GROUP,
-								  specific=self.username.lower().replace( ' ', '_' ).replace( '-', '_' ) )
-
-	def get_containerId( self ):
-		return 'FriendsLists'
-	def set_containerId( self, cid ):
-		pass
-	containerId = property( get_containerId, set_containerId )
-
-
-	def _update_friends_from_external(self, newFriends):
-
-		self._friends = None
-		for newFriend in newFriends:
-			if isinstance( newFriend, basestring ) and isinstance(self.creator, User):
-				otherList = self.creator.getFriendsList( newFriend )
-				if otherList: newFriend = otherList
-			self.addFriend( newFriend )
-
-	def updateFromExternalObject( self, parsed, *args, **kwargs ):
-		super(FriendsList,self).updateFromExternalObject( parsed, *args, **kwargs )
-		updated = None
-		newFriends = parsed.pop('friends', None)
-		# Update, as usual, starts from scratch.
-		# Notice we allow not sending friends to easily change
-		# the realname, alias, etc
-		if newFriends is not None:
-			updated = True
-			self._update_friends_from_external( newFriends )
-
-		if self.username is None:
-			self.username = parsed.get( 'Username' )
-		if self.username is None:
-			self.username = parsed.get( 'ID' )
-		return updated
-
-	@classmethod
-	def _resolve_friends( cls, dataserver, parsed, externalFriends ):
-		result = []
-		for externalFriend in externalFriends:
-			result.append( cls.get_entity( externalFriend, dataserver=dataserver, default=externalFriend ) )
-		return result
-
-	__external_resolvers__ = {'friends': _resolve_friends }
-
-
-	def __eq__(self,other):
-		result = super(FriendsList,self).__eq__(other)
-		if result is True:
-			try:
-				result = self.friends == other.friends
-			except AttributeError:
-				result = NotImplemented
-		return result
-	def __lt__(self,other):
-		result = super(FriendsList,self).__lt__(other)
-		if result is True:
-			result = self.friends < other.friends
-		return result
-
-@interface.implementer(nti_interfaces.IUsernameIterable)
-@component.adapter(nti_interfaces.IFriendsList)
-class _FriendsListUsernameIterable(object):
-
-	def __init__( self, context ):
-		self.context = context
-
-	def __iter__(self):
-		return (x.username for x in self.context)
-
-class DynamicFriendsList(DynamicSharingTarget,FriendsList):
-	"""
-	An incredible hack to introduce a dynamic, but iterable
-	user managed group/list.
-
-	These are half FriendsList and half Community. When people are added
-	to the list (and they don't get a veto), they are also added to the "community"
-	that is this object. Their private _community set gets our NTIID
-	added to it. The NTIID is resolvable through Entity.get_entity like magic,
-	so this object will magically start appearing for them, and also will be
-	searchable by them.
-	"""
-	__external_class_name__ = 'FriendsList'
-	__external_can_create__ = False
-	defaultGravatarType = 'retro'
-	# Doesn't work because it's not in the instance dict, and the IModeledContent
-	# interface value takes precedence over the class attribute
-	mime_type = 'application/vnd.nextthought.friendslist'
-
-
-	def _on_added_friend( self, friend ):
-		assert self.creator, "Must have creator"
-		super(DynamicFriendsList,self)._on_added_friend( friend )
-		friend._communities.add( self.NTIID )
-		friend._following.add( self.NTIID )
-		# TODO: When this object is deleted we need to clean this up
-
-	def _update_friends_from_external( self, new_friends ):
-		old_friends = set( self )
-		super(DynamicFriendsList,self)._update_friends_from_external( new_friends )
-		new_friends = set( self )
-
-		# New additions would have been added, we only have to take care of
-		# removals.
-		ex_friends = old_friends - new_friends
-		for i_hate_you in ex_friends:
-			sets.discard( i_hate_you._communities, self.NTIID )
-			sets.discard( i_hate_you._following, self.NTIID )
-
-	def accept_shared_data_from( self, source ):
-		"""
-		Override to save space. Only the membership matters.
-		"""
-		return True
-
-	def ignore_shared_data_from( self, source ):
-		"""
-		Override to save space. Only the membership matters.
-		"""
-		return False
-
-	def is_accepting_shared_data_from( self, source ):
-		return source is self.creator or source in list(self)
-
+from .friends_lists import FriendsList
+from .friends_lists import DynamicFriendsList
+from .friends_lists import _FriendsListUsernameIterable # bwc
+from .friends_lists import _FriendsListMap # bwc
 
 ShareableMixin = sharing.ShareableMixin
 deprecated( 'ShareableMixin', 'Prefer sharing.ShareableMixin' )
-
 
 
 @functools.total_ordering
@@ -697,16 +246,7 @@ class Device(persistent.Persistent,
 	def __hash__(self):
 		return self.deviceId.__hash__()
 
-class _FriendsListMap(datastructures.AbstractCaseInsensitiveNamedLastModifiedBTreeContainer):
-	interface.implements(nti_interfaces.IFriendsListContainer)
 
-	contained_type = nti_interfaces.IFriendsList
-	container_name = 'FriendsLists'
-
-
-nti_interfaces.IFriendsList.setTaggedValue( nti_interfaces.IHTC_NEW_FACTORY,
-											Factory( lambda extDict:  FriendsList( extDict['Username'] if 'Username' in extDict else extDict['ID'] ),
-													 interfaces=(nti_interfaces.IFriendsList,)) )
 
 class _DevicesMap(datastructures.AbstractNamedLastModifiedBTreeContainer):
 	interface.implements(nti_interfaces.IDeviceContainer)
@@ -720,7 +260,7 @@ class _DevicesMap(datastructures.AbstractNamedLastModifiedBTreeContainer):
 
 
 nti_interfaces.IDevice.setTaggedValue( nti_interfaces.IHTC_NEW_FACTORY,
-									   Factory( lambda extDict:  Device( extDict ),
+									   Factory( Device,
 												interfaces=(nti_interfaces.IDevice,)) )
 
 
@@ -806,8 +346,11 @@ class User(Principal):
 	# send back a gravatar URL for the primary email:
 	# http://www.gravatar.com/avatar/%<Lowercase hex MD5>=44&d=mm
 
-	def __init__(self, username, avatarURL=None, password=None, realname=None, alias=None, parent=None, _stack_adjust=0):
-		super(User,self).__init__(username, avatarURL=avatarURL, password=password, realname=realname, alias=alias, parent=parent)
+	def __init__(self, username, password=None,
+
+				 parent=None, _stack_adjust=0):
+		super(User,self).__init__(username, password=password,
+								  parent=parent)
 		# We maintain a Map of our friends lists, organized by
 		# username (only one friend with a username)
 		_create_fl = True
@@ -1371,7 +914,7 @@ class User(Principal):
 			payload = apns.APNSPayload( badge=self.notificationCount.value,
 										sound='default',
 										# TODO: I18N text for this
-										alert=change.creator.preferredDisplayName + ' shared an object',
+										alert='An object was shared with you', #change.creator.preferredDisplayName + ' shared an object',
 										userInfo=userInfo )
 			for device in self.devices.itervalues():
 				if not isinstance( device, Device ): continue
