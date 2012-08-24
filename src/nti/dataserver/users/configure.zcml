@@ -20,14 +20,23 @@
 	<!-- Externalization -->
 	<adapter factory=".users_external._EntitySummaryExternalObject"
 			 name="summary" />
+
+
+	<adapter factory=".users_external._EntityExternalObject" />
+	<adapter factory=".users_external._FriendsListExternalObject" />
+
+	<adapter factory=".users_external._UserExternalObject" />
 	<adapter factory=".users_external._UserSummaryExternalObject"
 			 name="summary" />
 	<adapter factory=".users_external._UserPersonalSummaryExternalObject"
 			 name="personal-summary" />
 
-	<adapter factory=".users_external._EntityExternalObject" />
-	<adapter factory=".users_external._FriendsListExternalObject" />
-	<adapter factory=".users_external._UserExternalObject" />
+
+	<adapter factory=".users_external._CoppaUserExternalObject" />
+	<adapter factory=".users_external._CoppaUserSummaryExternalObject"
+			 name="summary" />
+	<adapter factory=".users_external._CoppaUserPersonalSummaryExternalObject"
+			 name="personal-summary" />
 
 	<!-- Groups and ACLs -->
 	<!-- First, make something that can store group names on the user -->

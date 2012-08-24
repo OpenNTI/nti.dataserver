@@ -19,6 +19,7 @@ logger = __import__('logging').getLogger(__name__)
 from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import has_entry
+from hamcrest import has_entries
 from hamcrest import has_length
 from hamcrest import has_key
 from hamcrest import contains_string
@@ -43,6 +44,7 @@ import nti.dataserver.tests.mock_dataserver
 from nti.dataserver import shards
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.externalization.externalization import to_json_representation
+from nti.externalization.externalization import to_external_object
 from nti.dataserver.users import interfaces as user_interfaces
 
 from zope.component import eventtesting
@@ -182,6 +184,7 @@ class TestCreateView(ConfiguringTestBase):
 													 'realname': 'Joe Bananna',
 													 'birthdate': '1982-01-31',
 													 'alias': 'jason_nextthought_com',
+													 'affiliation': 'school',
 													 'email': 'foo@bar.com' } )
 		new_user = account_create_view( self.request )
 		assert_that( new_user, verifiably_provides( nti_interfaces.ICoppaUserWithoutAgreement ) )
@@ -189,6 +192,11 @@ class TestCreateView(ConfiguringTestBase):
 		assert_that( user_interfaces.IFriendlyNamed( new_user ), has_property( 'realname', 'Joe Bananna' ) )
 		assert_that( user_interfaces.ICompleteUserProfile( new_user ),
 					 has_property( 'birthdate', datetime.date( 1982, 1, 31 ) ) )
+
+		assert_that( to_external_object( new_user ), has_entries( 'email', None,
+																  'birthdate', None,
+																  'affiliation', None ) )
+
 
 	@WithMockDSTrans
 	def test_create_mathcounts_policy_email_required( self ):
@@ -220,6 +228,7 @@ class TestCreateView(ConfiguringTestBase):
 													 'realname': 'Jason Madden',
 													 'birthdate': '1982-01-31',
 													 'alias': 'Jason',
+													 'affiliation': 'NTI',
 													 'email': 'jason@nextthought.com' } )
 		new_user = account_create_view( self.request )
 		assert_that( new_user, has_property( 'communities', has_item( 'Carnegie Mellon University' ) ) )
@@ -227,6 +236,9 @@ class TestCreateView(ConfiguringTestBase):
 		assert_that( user_interfaces.ICompleteUserProfile( new_user ),
 					 has_property( 'birthdate', datetime.date( 1982, 1, 31 ) ) )
 
+		assert_that( to_external_object( new_user ), has_entries( 'email', 'jason@nextthought.com',
+																  'birthdate', '1982-01-31',
+																  'affiliation', 'NTI' ) )
 
 	@WithMockDSTrans
 	def test_create_component_matches_request_host( self ):
@@ -247,6 +259,7 @@ class TestCreateView(ConfiguringTestBase):
 		assert_that( new_user._p_jar.db(), has_property( 'database_name', 'FOOBAR' ) )
 
 		assert_that( new_user, has_property( '__parent__', IShardLayout( mock_dataserver.current_transaction ).users_folder ) )
+
 
 from .test_application import ApplicationTestBase
 from webtest import TestApp
