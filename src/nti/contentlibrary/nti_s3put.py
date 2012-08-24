@@ -176,7 +176,7 @@ def main():
 		if o in ('-s', '--secret_key'):
 			aws_secret_access_key = a
 		if o in ('--header'):
-			(k,v) = a.split("=")
+			(k,v) = a.split("=",1) # JAM: = is valid on the RHS in things like Cache-Control
 			headers[k] = v
 	if len(args) != 1:
 		print( usage() )
