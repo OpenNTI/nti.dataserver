@@ -4,10 +4,12 @@ import os
 import re
 import sys
 import time
-
 from datetime import datetime
 from xml.dom.minidom import parse
 from xml.dom.minidom import Node
+
+import lxml.etree as etree
+
 
 from zope import interface
 
@@ -70,7 +72,7 @@ def add_ntiid_to_set(pset, node):
 		pset.add(unicode(ntiid))
 	return pset
 
-def get_related(node):
+def _get_related(node):
 	"""
 	return a list w/ the related nttids for this node
 	"""
@@ -96,13 +98,8 @@ def parse_text(text, pattern, defValue=''):
 	else:
 		return defValue
 
-def get_last_modified(text):
-	"""
-	return the last modified date from the text
-	"""
-	now = time.time()
-
-	t = parse_text(text, last_m_pattern, None)
+def _parse_last_modified(t):
+	result = time.time()
 	try:
 		if t:
 			ms = ".0"
@@ -113,12 +110,17 @@ def get_last_modified(text):
 
 			t = time.strptime(t,"%Y-%m-%d %H:%M:%S")
 			t = long(time.mktime(t))
-			f = str(t) + ms
-			return f
-		else:
-			return now
+			result = str(t) + ms
 	except:
-		return now
+		pass	
+	return float(result)
+	
+def get_last_modified(text):
+	"""
+	return the last modified date from the text
+	"""
+	t = parse_text(text, last_m_pattern, None)
+	return _parse_last_modified(t)
 
 def get_ref(text):
 	"""
@@ -169,7 +171,7 @@ def _index_node(writer, node, contentPath, optimize=False):
 	if not ntiid:
 		return
 
-	related = get_related(node)
+	related = _get_related(node)
 
 	logger.info( "Indexing (%s, %s, %s)", fileName, title, ntiid )
 
@@ -249,11 +251,92 @@ def main(tocFile,
 		logger.info( "Optimizing index" )
 		idx.optimize()
 
-def transform(book):
-	main(book.tocFile, book.contentLocation, indexname=book.jobname)
-
 
 index_content = main	
+
+def _get_text(node):
+	txt = node.text
+	if txt:
+		txt = unicode(txt.strip().lower())
+	return txt
+	
+def _index_book_node(writer, node, tokenizer=default_tokenizer):
+	title = unicode(node.title)
+	ntiid = unicode(node.ntiid)
+	related = _get_related(node.topic)
+	
+	# find last_modified
+	last_modified = time.time()
+	for n in node.dom('meta'):
+		attributes = n.attrib
+		if attributes.get('http-equiv', None) == "last-modified":
+			last_modified = _parse_last_modified(attributes.get('content', None))
+			break
+		
+	# get content
+	content = []
+	def _collector(n, lst):
+		if not isinstance(n, etree._Comment):
+			txt = _get_text(n)
+			if txt:
+				lst.append(txt)
+			for c in n.iterchildren():
+				_collector(c, lst)
+			
+	for n in node.dom("div").filter(".page-contents"):
+		_collector(n, content)
+
+	content = tokenizer.tokenize(' '.join(content))
+	content = unicode(' '.join(content))
+
+	# section has removed
+	section = None
+	
+	#TODO: find key words
+	keywords = set()
+	
+	try:
+		as_time = datetime.fromtimestamp(float(last_modified))
+		writer.add_document(ntiid=unicode(ntiid),
+							title=unicode(title),
+							content=unicode(content),
+							quick=unicode(content),
+							related=related,
+							section=section,
+							keywords=sorted(keywords),
+							last_modified=as_time)
+	except Exception:
+		writer.cancel()
+		raise	
+	
+def transform(book, indexname=None, indexdir=None, recreate_index=True, optimize=True):
+	contentPath = book.contentLocation
+	indexname = indexname or book.jobname
+	if not indexdir:
+		indexdir = os.path.join(contentPath, "indexdir")
+		
+	idx = get_or_create_index(indexdir, indexname, recreate=recreate_index)
+	writer = whoosh.writing.BufferedWriter( idx,
+											period=None,
+											limit=100,
+											commitargs={'optimize' : False, 'merge': False})
+	
+	toc = book.toc
+	def _loop(topic):
+		_index_book_node(writer, topic)
+		for t in topic.childTopics:
+			_loop(t)			
+	_loop(toc.root_topic)
+	
+	if optimize:
+		logger.info( "Optimizing index" )
+		idx.optimize()
+
+
+#from nti.contentrendering.tests import NoPhantomRenderedBook, EmptyMockDocument
+#if __name__ == '__main__':
+#	book = NoPhantomRenderedBook( EmptyMockDocument(), os.path.join( os.path.dirname( __file__ ),  'tests/intro-biology-rendered-book' ) )
+#	transform(book, indexdir="/tmp/bio")
 
 if __name__ == '__main__':
 	def _call_main():
