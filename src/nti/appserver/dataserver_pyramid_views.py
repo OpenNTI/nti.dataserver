@@ -523,7 +523,8 @@ class _UGDPostView(_UGDModifyViewBase):
 				transformedObject = self.request.registry.queryAdapter( containedObject,
 																		app_interfaces.INewObjectTransformer,
 																		default=_id )( containedObject )
-			except (TypeError,ValueError,AssertionError) as e:
+			except (TypeError,ValueError,AssertionError,KeyError) as e:
+				transaction.doom()
 				logger.warn( "Failed to transform incoming object", exc_info=True)
 				raise hexc.HTTPUnprocessableEntity( e.message )
 			# If we transformed, copy the container and creator
