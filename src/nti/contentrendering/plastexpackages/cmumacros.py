@@ -9,9 +9,11 @@ from nti.contentrendering import plastexids
 from nti.contentrendering.resources import interfaces as res_interfaces
 
 from plasTeX import Base
-#from plasTex import Command
-#from plasTex import DimenCommand
-#from plasTex import Environment
+
+class _Ignored(Base.Command):
+        unicode = ''
+        def invoke( self, tex ):
+                return []
 
 class lecture(Base.chapter):
 	args = '* [shorttitle] title { label }'
@@ -63,6 +65,9 @@ class colortabular(Base.Environment):
 
 class contentwidth(Base.DimenCommand):
 	value = Base.DimenCommand.new('600pt')
+
+class beamertemplatebookbibitems(_Ignored):
+	pass
 
 class alt(Base.Command):
 	args = '< overlay > default alternative'
