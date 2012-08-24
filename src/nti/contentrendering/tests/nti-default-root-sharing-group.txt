@@ -1,0 +1,6 @@
+# This file is a list of the entities that make up the default sharing group for a piece of content.
+# The format is one entity per line.  Comments are allowed but they can only be on lines starting with a '#' character.
+entity0
+entity1
+entity2
+entity3
