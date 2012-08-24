@@ -206,15 +206,18 @@ class MathcountsSitePolicyEventListener(object):
 		interface.alsoProvides( user, nti_interfaces.ICoppaUserWithoutAgreement )
 
 		names = user_interfaces.IFriendlyNamed( user )
+		# Match the format of, e.g, WrongTypeError: message, field/type, value
+		# the view likes this
 		if names.alias != user.username:
-			raise zope.schema.ValidationError("Display name %s and username %s must match." % (names.alias, user.username))
+			raise zope.schema.ValidationError("Display name %s and username %s must match." % (names.alias, user.username),
+											  'Username', user.username)
 
 		if any( (x.lower() in user.username.lower() for x in (names.realname or user.username).split( )) ):
+			# humanname parser might help http://pypi.python.org/pypi/nameparser/0.2.2
 			raise zope.schema.ValidationError("Username %s cannot include any part of the real name %s" %
-											 (user.username, user.realname) )
+											 (user.username, user.realname), 'Username', user.username )
 
 		# TODO: Censor
 
 		if '@' in user.username:
-			# This has to go away when those restrictions do
-			logger.warning( "Allowing '@' in username for Koppa Kid %s", user )
+			raise zope.schema.ValidationError( "Username cannot contain '@'", 'Username', user.username )

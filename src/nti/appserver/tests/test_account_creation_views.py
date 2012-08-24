@@ -160,7 +160,7 @@ class TestCreateView(ConfiguringTestBase):
 		self.request.headers['origin'] = 'http://mathcounts.nextthought.com'
 
 		self.request.content_type = 'application/vnd.nextthought+json'
-		self.request.body = to_json_representation( {'Username': 'jason@nextthought.com',
+		self.request.body = to_json_representation( {'Username': 'jason_nextthought_com',
 													 'password': 'pass123word' } )
 
 
@@ -168,18 +168,18 @@ class TestCreateView(ConfiguringTestBase):
 			# Cannot include username
 			account_create_view( self.request )
 
-		self.request.body = to_json_representation( {'Username': 'jason@nextthought.com',
+		self.request.body = to_json_representation( {'Username': 'jason_nextthought_com',
 													 'password': 'pass123word',
 													 'realname': 'Joe Bananna'} )
 		with assert_raises( hexc.HTTPUnprocessableEntity ):
 			# username and displayname must match
 			account_create_view( self.request )
 
-		self.request.body = to_json_representation( {'Username': 'jason@nextthought.com',
+		self.request.body = to_json_representation( {'Username': 'jason_nextthought_com',
 													 'password': 'pass123word',
 													 'realname': 'Joe Bananna',
 													 'birthdate': '1982-01-31',
-													 'alias': 'jason@nextthought.com'} )
+													 'alias': 'jason_nextthought_com'} )
 		new_user = account_create_view( self.request )
 		assert_that( new_user, verifiably_provides( nti_interfaces.ICoppaUserWithoutAgreement ) )
 		assert_that( new_user, has_property( 'communities', has_item( 'MathCounts' ) ) )
