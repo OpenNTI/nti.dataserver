@@ -176,6 +176,8 @@ def main():
 		if o in ('-s', '--secret_key'):
 			aws_secret_access_key = a
 		if o in ('--header'):
+			# JAM: FIXME: The lowlevel boto layer has a bug uploading the cache-control header,
+			# it prematurely escapes the = in max age, so we get a bad value
 			(k,v) = a.split("=",1) # JAM: = is valid on the RHS in things like Cache-Control
 			headers[k] = v
 	if len(args) != 1:
