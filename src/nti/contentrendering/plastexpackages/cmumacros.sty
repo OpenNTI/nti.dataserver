@@ -1,0 +1,17 @@
+\usepackage{latexsym}
+
+\newenvironment{colortabular}[1]{\medskip\rowcolors[]{1}{blue!20}{blue!10}\tabular{#1}\rowcolor{blue!40}}{\endtabular\medskip}
+
+\newenvironment{greencolortabular}[1]
+{\medskip\rowcolors[]{1}{green!50!black!20}{green!50!black!10}%                                                         
+  \tabular{#1}\rowcolor{green!50!black!40}}%                                                                            
+{\endtabular\medskip}
+
+\renewcommand{\tabularxcolumn}[1]{m{#1}}
+\newcommand{\nblock}{\raggedright\arraybackslash}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcolumntype{S}{>{\raggedright\arraybackslash}m{\percwidth{.3}}}
+\newcolumntype{K}{>{\columncolor[gray]{0.7}}l}
+%\newcolumntype{k}{>{\columncolor[gray]{0.7}}p{.12\linewidth}}
+\newcolumntype{k}[1]{>{\columncolor[gray]{0.7}}p{#1}}
+\newcommand{\titlerow}{\rowcolor[gray]{0.7}}
