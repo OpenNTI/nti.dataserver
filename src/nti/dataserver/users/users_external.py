@@ -105,11 +105,20 @@ class _UserSummaryExternalObject(_EntitySummaryExternalObject):
 		# TODO: Is this a privacy concern?
 		extDict['lastLoginTime'] = self.entity.lastLoginTime.value
 		extDict['NotificationCount'] = self.entity.notificationCount.value
+		extDict['affiliation'] = interfaces.ICompleteUserProfile( self.entity ).affiliation
+		return extDict
+
+@component.adapter(nti_interfaces.ICoppaUser)
+class _CoppaUserSummaryExternalObject(_UserSummaryExternalObject):
+
+	def toExternalObject( self ):
+		extDict = super(_CoppaUserSummaryExternalObject,self).toExternalObject( )
+		extDict['affiliation'] = None
 		return extDict
 
 
+@component.adapter( nti_interfaces.IUser )
 class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
-	component.adapts( nti_interfaces.IUser )
 
 	def toExternalObject( self ):
 		"""
@@ -134,6 +143,10 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 
 			return result
 
+		prof = interfaces.ICompleteUserProfile( self.entity )
+		extDict['email'] = prof.email
+		extDict['birthdate'] = prof.birthdate.isoformat() if prof.birthdate is not None else None
+
 		# Communities are not currently editable,
 		# and will need special handling of Everyone
 		extDict['Communities'] = ext(self.entity.communities, name='')
@@ -148,3 +161,14 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 		return extDict
 
 _UserExternalObject = _UserPersonalSummaryExternalObject
+
+@component.adapter(nti_interfaces.ICoppaUser)
+class _CoppaUserPersonalSummaryExternalObject(_UserPersonalSummaryExternalObject):
+
+	def toExternalObject( self ):
+		extDict = super(_CoppaUserPersonalSummaryExternalObject,self).toExternalObject( )
+		for k in ('affiliation', 'email', 'birthdate'):
+			extDict[k] = None
+		return extDict
+
+_CoppaUserExternalObject = _CoppaUserPersonalSummaryExternalObject
