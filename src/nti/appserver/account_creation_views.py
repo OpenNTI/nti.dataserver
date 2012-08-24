@@ -105,15 +105,26 @@ def account_create_view(request):
 		# function since it may want to inspect things like username and realname
 		# This is done by passing the entire external value and letting it
 		# update itself
+		# TODO: The interface to use to determine what values to apply/request/store
+		# is currently not being applied by the site policy until after
+		# the user object has been updated (if it's based on interface). When we
+		# need different values, that falls over.
 		new_user = users.User.create_user( username=desired_userid,
 										   external_value=externalValue ) # May throw validation error
-	except zope.schema.ValidationError:
-		# Validation error may be many things, including invalid password by the policy
+	except zope.schema.ValidationError as e:
+		# Validation error may be many things, including invalid password by the policy.
+		# Some places try hard to set a good message, some don't
 		exc_info = sys.exc_info()
+		field_name = None
+		field = getattr( e, 'field', None )
+		if field:
+			field_name = field.__name__
+		elif len(e.args) == 3:
+			field_name = e.args[2]
 		_raise_error( request,
 					  hexc.HTTPUnprocessableEntity,
 					  {'message': exc_info[1].message,
-					   'field': None,
+					   'field': field_name,
 					   'code': exc_info[1].__class__.__name__},
 					  exc_info[2] )
 	except KeyError:

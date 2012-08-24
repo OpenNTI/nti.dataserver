@@ -89,12 +89,16 @@ class IFriendlyNamed(Interface):
 		description="Enter full name, e.g. John Smith.",
 		required=False)
 
+import nti.utils.schema
+class _ValidTextLine(nti.utils.schema.FieldValidationMixin,schema.TextLine):
+	pass
+
 class ICompleteUserProfile(IFriendlyNamed):
 	"""
 	A complete user profile.
 	"""
 
-	email = schema.TextLine(
+	email = _ValidTextLine(
 		title='Email',
 		description=u'',
 		required=False, # TODO: Should be true when the tests are ready

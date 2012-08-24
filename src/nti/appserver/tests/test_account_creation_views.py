@@ -94,7 +94,7 @@ class TestCreateView(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_create_duplicate( self ):
 		self.request.content_type = 'application/vnd.nextthought+json'
-		self.request.body = to_json_representation( {'Username': 'jason@nextthought.com',
+		self.request.body = to_json_representation( {'Username': 'jason_nextthought_com',
 													 'password': 'pass132word' } )
 
 		account_create_view( self.request )
@@ -103,6 +103,21 @@ class TestCreateView(ConfiguringTestBase):
 			account_create_view( self.request )
 
 		assert_that( e.exception.json_body, has_entry( 'code', 'DuplicateUsernameError' ) )
+
+	@WithMockDSTrans
+	def test_create_invalid_email( self ):
+		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.body = to_json_representation( {'Username': 'jason@nextthought.com',
+													 'password': 'pass132word',
+													 'email': 'not valid' } )
+
+
+
+		with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
+			account_create_view( self.request )
+
+		assert_that( e.exception.json_body, has_entry( 'code', 'EmailAddressInvalid' ) )
+		assert_that( e.exception.json_body, has_entry( 'field', 'email' ) )
 
 
 	@WithMockDSTrans
