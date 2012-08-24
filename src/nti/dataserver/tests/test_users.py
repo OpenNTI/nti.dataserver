@@ -55,7 +55,7 @@ class PersistentContainedThreadable(ContainedMixin,persistent.Persistent):
 
 def test_create_friends_list_through_registry():
 	def _test( name ):
-		user = User( 'foo@bar' )
+		user = User( 'foo' )
 		created = user.maybeCreateContainedObjectWithType( name, {'Username': 'Friend' } )
 		assert_that( created, is_(FriendsList) )
 		assert_that( created.username, is_( 'Friend' ) )
@@ -87,9 +87,9 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_dynamic_friendslist(self):
-		user1 = User.create_user( self.ds, username='foo@bar' )
-		user2 = User.create_user( self.ds, username='foo2@bar' )
-		user3 = User.create_user( self.ds, username='foo3@bar' )
+		user1 = User.create_user( self.ds, username='foo' )
+		user2 = User.create_user( self.ds, username='foo2' )
+		user3 = User.create_user( self.ds, username='foo3' )
 
 		fl1 = users.DynamicFriendsList(username='Friends')
 		fl1.creator = user1 # Creator must be set

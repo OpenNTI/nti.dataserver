@@ -117,16 +117,13 @@ class Principal(Entity,sharing.SharingSourceMixin):
 	# concept.
 	def __init__(self,
 				 username=None,
-				 #avatarURL=None,
 				 password=None,
-				 #realname=None,
-				 #alias=None,
 				 parent=None):
 
-		super(Principal,self).__init__(username,#avatarURL,realname=realname,alias=alias,
+		super(Principal,self).__init__(username,
 									   parent=parent)
-		if not username or '@' not in username:
-			raise ValueError( 'Illegal username ' + username )
+#		if not username or '@' not in username:
+#			raise ValueError( 'Illegal username ' + username )
 
 		if password:
 			self.password = password

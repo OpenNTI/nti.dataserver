@@ -41,6 +41,18 @@ from zope import schema
 from zope import component
 from zope.schema import interfaces as sch_interfaces
 
+class FieldValidationMixin(object):
+	"""
+	A field mixin that causes slightly better errors to be created.
+	"""
+	def _validate(self, value):
+		try:
+			super(FieldValidationMixin,self)._validate( value )
+		except sch_interfaces.ValidationError as e:
+			if len(e.args) == 1:
+				e.args = (value, e.args[0], self.__name__)
+			e.field = self
+			raise
 
 class IndexedIterable(schema.List):
 	"""
