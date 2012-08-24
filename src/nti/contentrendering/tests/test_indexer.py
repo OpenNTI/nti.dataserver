@@ -3,9 +3,10 @@ import shutil
 import tempfile
 import unittest
 
-from nti.contentrendering.indexer import index_content
+from nti.contentrendering.indexer import transform
 from nti.contentrendering.indexer import get_or_create_index
-
+from nti.contentrendering.tests import NoPhantomRenderedBook, EmptyMockDocument
+		
 from hamcrest import assert_that, has_length
 
 from whoosh.query import (Or, Term)
@@ -21,19 +22,21 @@ class TestIndexer(unittest.TestCase):
 		shutil.rmtree(cls.idxdir, True)
 
 	def test_index_content(self):
-		toc = os.path.join(os.path.dirname(__file__), 'eclipse-toc-complete.xml')
-		index_content(toc, indexdir=self.idxdir, optimize=False, indexname='prealgebra')
-		idx = get_or_create_index(indexdir=self.idxdir, indexname='prealgebra', recreate=False)
-
+		indexname='biology'
+		path = os.path.join( os.path.dirname( __file__ ),  'intro-biology-rendered-book' )
+		book = NoPhantomRenderedBook( EmptyMockDocument(), path)
+		transform(book, indexname=indexname, indexdir=self.idxdir)
+		
+		idx = get_or_create_index(indexdir=self.idxdir, indexname=indexname, recreate=False)
 		q = Term("keywords", u"mathcounts")
 		with idx.searcher() as s:
 			r = s.search(q)
 			assert_that(r, has_length(0))
 
-		q = Or([Term("content", u'rules'),])
+		q = Or([Term("content", u'biology'),])
 		with idx.searcher() as s:
 			r = s.search(q)
-			assert_that(r, has_length(1))
+			assert_that(r, has_length(5))
 
 		idx.close()
 
