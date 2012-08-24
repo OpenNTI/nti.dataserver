@@ -21,6 +21,7 @@ from repoze.who.classifiers import default_challenge_decider
 from repoze.who.classifiers import default_request_classifier
 from pyramid_who.whov2 import WhoV2AuthenticationPolicy
 
+from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import User
 from nti.dataserver import authentication as nti_authentication
 
@@ -262,3 +263,18 @@ class NTIAuthenticationPolicy(WhoV2AuthenticationPolicy):
 
 	def _getAPI( self, request ):
 		return self.api_factory( request.environ )
+
+# Temporarily make everyone an OU admin
+@interface.implementer( nti_interfaces.IGroupMember )
+@component.adapter( object )
+class OUAdminFactory(object):
+	"""
+	If this is registered, it makes everyone an administrator of the OU provider.
+	"""
+
+	def __init__( self, o ):
+		pass
+
+	@property
+	def groups(self):
+		return [ nti_interfaces.IPrincipal( "role:OU.Admin" ) ]

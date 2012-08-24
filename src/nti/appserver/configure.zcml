@@ -268,4 +268,11 @@
 	<!-- User-type policies -->
 	<include package="." file="configure_user_policies.zcml" />
 
+	<!-- Hacky temporary stuff -->
+	<adapter name="OUAdminFactory"
+			 for="*"
+			 factory=".pyramid_auth.OUAdminFactory"
+			 provides="nti.dataserver.interfaces.IGroupMember"
+			 zcml:condition="have devmode" />
+
 </configure>
