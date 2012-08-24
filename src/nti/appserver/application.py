@@ -255,19 +255,6 @@ def createApplication( http_port,
 	pyramid_config.add_route( name=dataserver_socketio_views.RT_CONNECT, pattern=dataserver_socketio_views.URL_CONNECT )
 	pyramid_config.scan( dataserver_socketio_views )
 
-	# Temporarily make everyone an OU admin
-	class OUAdminFactory(object):
-		interface.implements( nti_interfaces.IGroupMember )
-		component.adapts( object )
-
-		def __init__( self, o ): pass
-
-		@property
-		def groups(self):
-			return [ nti_interfaces.IPrincipal( "role:OU.Admin" ) ]
-	pyramid_config.registry.registerAdapter( OUAdminFactory, name='OUAdminFactory' )
-
-
 	if 'main_dictionary_path' in settings:
 		try:
 			dictionary = dictserver.dictionary.SQLiteJsonDictionary( settings['main_dictionary_path'] )
