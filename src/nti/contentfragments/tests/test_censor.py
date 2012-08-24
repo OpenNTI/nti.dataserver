@@ -51,6 +51,10 @@ def test_mike_words():
 	assert_that( strat.censor_ranges( bad_val, scanner.scan( bad_val ) ),
 				 is_( '********' ) )
 	
+	bad_val = 'nffbpvngrq cerff'.encode( 'rot13' )
+	assert_that( strat.censor_ranges( bad_val, scanner.scan( bad_val ) ),
+				 is_( 'associated press' ) )
+	
 def test_word_match_scanner():
 	wm = WordMatchScanner((), ['lost','like'])
 	bad_val = """So I feel a little like, a child who's lost, a little like, (everything's changed) a
