@@ -23,11 +23,40 @@ from zope.schema.fieldproperty import FieldPropertyStoredThroughField
 from nti.dataserver import interfaces as nti_interfaces
 from . import interfaces
 
-@component.adapter(nti_interfaces.IUser)
-@interface.implementer(interfaces.ICompleteUserProfile,zope.location.interfaces.ILocation)
-class CompleteUserProfile(persistent.Persistent):
+class _ExistingDictReadFieldPropertyStoredThroughField(FieldPropertyStoredThroughField):
 	"""
-	An adapter for storing profile data for users. Intended to be an annotation, used with
+	Migration from existing data fields in instance dictionaries to
+	our profile storage. There are probably few enough of these in places we care
+	about to be almost unnecessary.
+	"""
+	_existing_name = None
+	def __init__( self, field, name=None, exist_name=None ):
+		super(_ExistingDictReadFieldPropertyStoredThroughField,self).__init__( field, name=name )
+		if exist_name:
+			self._existing_name = exist_name
+
+	def getValue( self, inst, field):
+		ex_val = getattr( inst.context, self._existing_name or 'This Value Cannot Be an Attr', None )
+		if ex_val:
+			return ex_val
+		return super(_ExistingDictReadFieldPropertyStoredThroughField,self).getValue( inst, field )
+
+	def setValue( self, inst, field, value ):
+		try:
+			del inst.context.__dict__[self._existing_name]
+		except KeyError:
+			pass
+		super(_ExistingDictReadFieldPropertyStoredThroughField,self).setValue( inst, field, value )
+		# We're not implementing the queryValue method, which is used
+		# somehow when the field is readonly and...something
+		# We don't use this for readonly fields, so we don't care
+
+
+@component.adapter(nti_interfaces.IEntity)
+@interface.implementer(interfaces.IFriendlyNamed,zope.location.interfaces.ILocation)
+class FriendlyNamed(persistent.Persistent):
+	"""
+	An adapter for storing naming data for users. Intended to be an annotation, used with
 	an annotation factory; in this way we keep the context as our parent, but taket
 	it as an optional argument for ease of testing.
 	"""
@@ -36,7 +65,7 @@ class CompleteUserProfile(persistent.Persistent):
 	__name__ = None
 
 	def __init__( self, context=None ):
-		super(CompleteUserProfile,self).__init__()
+		super(FriendlyNamed,self).__init__()
 		if context:
 			self.__parent__ = context
 
@@ -44,12 +73,42 @@ class CompleteUserProfile(persistent.Persistent):
 	def context(self):
 		return self.__parent__
 
+@component.adapter(nti_interfaces.IUser)
+@interface.implementer(interfaces.ICompleteUserProfile)
+class CompleteUserProfile(FriendlyNamed):
+	"""
+	An adapter for storing profile data for users. Intended to be an annotation, used with
+	an annotation factory; in this way we keep the context as our parent, but taket
+	it as an optional argument for ease of testing.
+	"""
+
 	@property
 	def avatarURL(self):
 		return interfaces.IAvatarURL(self.context).avatarURL
 
-for _x in interfaces.ICompleteUserProfile.names():
-	if not hasattr( CompleteUserProfile, _x ):
-		setattr( CompleteUserProfile, _x, FieldPropertyStoredThroughField( interfaces.ICompleteUserProfile[_x] ) )
+def _init():
+	# Map "existing"/legacy User/Entity dict storage to their new profile field
+	_field_map = { 'alias': '_alias',
+				   'realname': '_realname'}
 
+	for _x in interfaces.IFriendlyNamed.names():
+		if not hasattr( FriendlyNamed, _x ):
+			setattr( FriendlyNamed,
+					 _x,
+					 _ExistingDictReadFieldPropertyStoredThroughField(
+						 interfaces.IFriendlyNamed[_x],
+						 exist_name=_field_map.get( _x ) ) )
+
+
+	for _x in interfaces.ICompleteUserProfile.names():
+		if not hasattr( CompleteUserProfile, _x ):
+			setattr( CompleteUserProfile,
+					 _x,
+					 _ExistingDictReadFieldPropertyStoredThroughField(
+						 interfaces.ICompleteUserProfile[_x],
+						 exist_name=_field_map.get( _x ) ) )
+_init()
+del _init
+
+FriendlyNamedFactory = zope.annotation.factory( FriendlyNamed )
 CompleteUserProfileFactory = zope.annotation.factory( CompleteUserProfile )

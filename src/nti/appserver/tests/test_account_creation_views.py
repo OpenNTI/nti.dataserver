@@ -43,12 +43,13 @@ import nti.dataserver.tests.mock_dataserver
 from nti.dataserver import shards
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.externalization.externalization import to_json_representation
-
+from nti.dataserver.users import interfaces as user_interfaces
 
 from zope.component import eventtesting
 from zope import component
 from zope.lifecycleevent import IObjectCreatedEvent, IObjectAddedEvent
 import zope.schema
+import datetime
 
 class TestCreateView(ConfiguringTestBase):
 
@@ -162,10 +163,14 @@ class TestCreateView(ConfiguringTestBase):
 		self.request.body = to_json_representation( {'Username': 'jason@nextthought.com',
 													 'password': 'pass123word',
 													 'realname': 'Joe Bananna',
+													 'birthdate': '1982-01-31',
 													 'alias': 'jason@nextthought.com'} )
 		new_user = account_create_view( self.request )
 		assert_that( new_user, verifiably_provides( nti_interfaces.ICoppaUserWithoutAgreement ) )
 		assert_that( new_user, has_property( 'communities', has_item( 'MathCounts' ) ) )
+		assert_that( user_interfaces.IFriendlyNamed( new_user ), has_property( 'realname', 'Joe Bananna' ) )
+		assert_that( user_interfaces.ICompleteUserProfile( new_user ),
+					 has_property( 'birthdate', datetime.date( 1982, 1, 31 ) ) )
 
 
 

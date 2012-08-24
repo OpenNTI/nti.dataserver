@@ -14,6 +14,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import interface
 from zope.interface import Interface
 from zope import schema
 import re
@@ -75,11 +76,7 @@ class IAvatarURL(Interface):
 		description="If not provided, one will be generated for you.",
 		required=False )
 
-
-class ICompleteUserProfile(Interface):
-	"""
-	A complete user profile.
-	"""
+class IFriendlyNamed(Interface):
 
 	alias = schema.TextLine(
 		title='Display alias',
@@ -92,10 +89,15 @@ class ICompleteUserProfile(Interface):
 		description="Enter full name, e.g. John Smith.",
 		required=False)
 
+class ICompleteUserProfile(IFriendlyNamed):
+	"""
+	A complete user profile.
+	"""
+
 	email = schema.TextLine(
 		title='Email',
 		description=u'',
-		required=True,
+		required=False, # TODO: Should be true when the tests are ready
 		constraint=checkEmailAddress)
 
 	home_page = schema.URI(
@@ -131,18 +133,39 @@ class ICompleteUserProfile(Interface):
 		description="Your affiliation, such as school name",
 		required=False)
 
-	# portrait = FileUpload(title=_(u'label_portrait', default=u'Portrait'),
-	# 	description=_(u'help_portrait',
-	# 				  default=u'To add or change the portrait: click the '
-	# 				  '"Browse" button; select a picture of yourself. '
-	# 				  'Recommended image size is 75 pixels wide by 100 '
-	# 				  'pixels tall.'),
-	# 	required=False)
 
-	# pdelete = schema.Bool(
-	# 	title=_(u'label_delete_portrait', default=u'Delete Portrait'),
-	# 	description=u'',
-	# 	required=False)
+class IUserProfileSchemaProvider(Interface):
+	"""
+	Usually registered as an adapter from a IUser interface or sometimes an IEntity.
+
+	This is used during the externalization process to determine
+	what sort of data we should require or provide.
+
+	"""
+
+	def getSchema():
+		"""
+		Return the interface that defines the profile data expected.
+
+		"""
+
+@interface.implementer(IUserProfileSchemaProvider)
+class DefaultProfileSchemaProvider(object):
+
+	def __init__( self, context ):
+		pass
+
+	def getSchema(self):
+		return ICompleteUserProfile
+
+@interface.implementer(IUserProfileSchemaProvider)
+class FriendlyNamedSchemaProvider(object):
+
+	def __init__( self, context ):
+		pass
+
+	def getSchema(self):
+		return IFriendlyNamed
 
 def validateAccept(value):
     if not value == True:

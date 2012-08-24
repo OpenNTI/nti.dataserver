@@ -519,7 +519,7 @@ def _deal_with_external_account( request, fname, lname, email, idurl, iface, cre
 		kwargs = {'dataserver': dataserver,
 				  'username': email,
 				  'password': '',
-				  'realname': fname + ' ' + lname }
+				  }
 		kwargs[url_attr] = idurl
 		user = creator.create_user( **kwargs )
 		assert getattr( user, url_attr ) == idurl

@@ -176,6 +176,7 @@ def dispatch_user_created_to_site_policy( user, event ):
 			break
 
 from nti.dataserver import users
+from nti.dataserver.users import interfaces as user_interfaces
 import zope.schema
 @interface.implementer(ISitePolicyUserEventListener)
 class MathcountsSitePolicyEventListener(object):
@@ -204,10 +205,11 @@ class MathcountsSitePolicyEventListener(object):
 		interface.alsoProvides( user, nti_interfaces.ICoppaUser )
 		interface.alsoProvides( user, nti_interfaces.ICoppaUserWithoutAgreement )
 
-		if user.alias != user.username:
-			raise zope.schema.ValidationError("Display name %s and username %s must match." % (user.alias, user.username))
+		names = user_interfaces.IFriendlyNamed( user )
+		if names.alias != user.username:
+			raise zope.schema.ValidationError("Display name %s and username %s must match." % (names.alias, user.username))
 
-		if any( (x.lower() in user.username.lower() for x in user.realname.split( )) ):
+		if any( (x.lower() in user.username.lower() for x in (names.realname or user.username).split( )) ):
 			raise zope.schema.ValidationError("Username %s cannot include any part of the real name %s" %
 											 (user.username, user.realname) )
 
