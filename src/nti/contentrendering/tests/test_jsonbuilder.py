@@ -9,7 +9,7 @@ import io
 import mimetypes
 import os
 import shutil
-from hamcrest import assert_that, has_length, greater_than_or_equal_to, is_, none
+from hamcrest import assert_that, has_entry, has_item, has_property, has_length, greater_than_or_equal_to, is_, is_not, none
 import simplejson as json
 
 def test_module_provides():
@@ -29,12 +29,12 @@ def _verifyJSONPContents( orig_filename, ntiid, jsonpFunctionName ):
 	with io.open( orig_filename, 'rb') as file:
 		refData = base64.standard_b64encode(file.read())
 		
-	assert_that( data[0], is_( jsonpFunctionName ) )
-	assert_that( data[1]['ntiid'], is_( ntiid ) )
-	assert_that( data[1]['Content-Type'], is_( mimetypes.guess_type( orig_filename )[0] ) )
-	assert_that( data[1]['Content-Encoding'], is_( 'base64' ) )
-	assert_that( data[1]['content'], is_( refData ) )
-	assert_that( data[1]['version'], is_( '1' ) )
+	assert_that( data, has_item( jsonpFunctionName ) )
+	assert_that( data[1], has_entry('ntiid',  ntiid ) )
+	assert_that( data[1], has_entry('Content-Type', mimetypes.guess_type( orig_filename )[0]) )
+	assert_that( data[1], has_entry('Content-Encoding', 'base64') )
+	assert_that( data[1], has_entry('content', refData) )
+	assert_that( data[1], has_entry('version', '1' ) )
 
 class TestTransforms(ConfiguringTestBase):
 
@@ -45,41 +45,41 @@ class TestTransforms(ConfiguringTestBase):
 
 		# Make a copy of the rendered book
 		book_copy = os.path.join( os.path.dirname( __file__ ),  'test-tmp' )
-		shutil.rmtree(book_copy, ignore_errors=True)
+		if os.path.exists( book_copy ):
+			shutil.rmtree(book_copy, ignore_errors=True)
 		shutil.copytree( os.path.join( os.path.dirname( __file__ ),  'NextThoughtGenericTutorial-rendered-book'), book_copy)
-		
-		# Open the copy of the rendered book
-		book = RenderedBook.RenderedBook( None, book_copy )
 
-		# Assert ToC is present
-		assert_that( (book.toc is not None) , is_( True ) )
-		# Assert that the root topic is present
-		assert_that( (book.toc.root_topic is not None) , is_( True ) )
-		# Assert that there is a root topic icon is present
-		assert_that( (book.toc.root_topic.get_icon() is not None) , is_( True ) )
-		# Assert that there is a root topic icon file exists
-		assert_that( os.access(os.path.join(book_copy, book.toc.root_topic.get_icon()), os.F_OK),
-			     is_( True ) )
+		try:
+			# Open the copy of the rendered book
+			book = RenderedBook.RenderedBook( None, book_copy )
 
-		jsonpbuilder.transform( book )
+			# Assert ToC is present
+			assert_that( book, has_property( 'toc', is_not( none() ) ) )
+			# Assert that the root topic is present
+			assert_that( book.toc, has_property( 'root_topic', is_not( none() ) ) )
+			# Assert that there is a root topic icon is present
+			assert_that( book.toc.root_topic.get_icon(), is_not( none() ) )
+			# Assert that there is a root topic icon file exists
+			assert_that( os.path.exists(os.path.join(book_copy, book.toc.root_topic.get_icon())), is_( True ) )
 
-		# Assert that eclipse-toc.xml.jsonp exists
-		assert_that( os.access( book.toc.filename + '.jsonp', os.F_OK), is_( True ) )
-		# Assert that index.html.jsonp exists
-		assert_that( os.access(os.path.join(book_copy, book.toc.root_topic.filename) + '.jsonp', os.F_OK),
-			     is_( True ) )
-		# Assert that the JSONP version of the root topic icon file exists
-		assert_that( os.access(os.path.join(book_copy, book.toc.root_topic.get_icon()) + '.jsonp', os.F_OK),
-			     is_( True ) )
+			jsonpbuilder.transform( book )
 
-		# Test that the eclipse-toc.xml.jsonp contains the correct data
-		_verifyJSONPContents( book.toc.filename, book.toc.root_topic.ntiid, 'jsonpToc' )
-		# Test that the index.html.jsonp contains the correct data
-		_verifyJSONPContents( os.path.join(book_copy, book.toc.root_topic.filename), 
-				      book.toc.root_topic.ntiid, 'jsonpContent' )
-		# Test that the JSONP version of the root topic icon file  contains the correct data
-		_verifyJSONPContents( os.path.join(book_copy, book.toc.root_topic.get_icon()), 
-				      book.toc.root_topic.ntiid, 'jsonpData' )
+			# Assert that eclipse-toc.xml.jsonp exists
+			assert_that( os.path.exists( book.toc.filename + '.jsonp'), is_( True ) )
+			# Assert that index.html.jsonp exists
+			assert_that( os.path.exists(os.path.join(book_copy, book.toc.root_topic.filename) + '.jsonp'),is_( True ) )
+			# Assert that the JSONP version of the root topic icon file exists
+			assert_that( os.path.exists(os.path.join(book_copy, book.toc.root_topic.get_icon()) + '.jsonp'),is_( True ) )
 
-		# Delete copy of the rendered book
-		shutil.rmtree( book_copy )
+			# Test that the eclipse-toc.xml.jsonp contains the correct data
+			_verifyJSONPContents( book.toc.filename, book.toc.root_topic.ntiid, 'jsonpToc' )
+			# Test that the index.html.jsonp contains the correct data
+			_verifyJSONPContents( os.path.join(book_copy, book.toc.root_topic.filename), 
+					      book.toc.root_topic.ntiid, 'jsonpContent' )
+			# Test that the JSONP version of the root topic icon file  contains the correct data
+			_verifyJSONPContents( os.path.join(book_copy, book.toc.root_topic.get_icon()), 
+					      book.toc.root_topic.ntiid, 'jsonpData' )
+			
+		finally:
+			# Delete copy of the rendered book
+			shutil.rmtree( book_copy )
