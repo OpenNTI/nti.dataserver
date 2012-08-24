@@ -537,6 +537,16 @@ class _EclipseTOCMiniDomTopic(object):
 		self.modifiedTopic = True
 		return True
 
+	def set_default_sharing_group( self, shareWith ):
+		self.topic.attributes[b'shareWith'] = shareWith
+		self.modifiedTopic = True
+		return self.modifiedTopic
+
+	def get_default_sharing_group( self ):
+		if self.topic.attributes and self.topic.attributes.get(b'shareWith'):
+			return self.topic.attributes.get(b'shareWith').value
+		else: return None
+
 	def has_icon( self ):
 		return (self.topic.attributes and self.topic.attributes.get(b'icon'))
 
