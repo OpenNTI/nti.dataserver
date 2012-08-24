@@ -45,5 +45,19 @@ class GravatarComputedAvatarURL(object):
 	defaultGravatarType = 'mm'
 
 	def __init__( self, context ):
-		self.avatarURL = create_gravatar_url( context.username,
-											  getattr( context, 'defaultGravatarType', self.defaultGravatarType ) )
+
+		email = context.username
+		try:
+			profile = interfaces.ICompleteUserProfile( context, None )
+		except TypeError:
+			profile = None
+		else:
+			if profile and profile.email:
+				email = profile.email
+
+		gravatar_type = None
+		for x in (profile, context, self):
+			gravatar_type = getattr( x, 'defaultGravatarType', None )
+			if gravatar_type:
+				break
+		self.avatarURL = create_gravatar_url( email, gravatar_type )

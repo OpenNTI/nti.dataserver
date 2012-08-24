@@ -28,6 +28,7 @@ import sys
 import simplejson as json
 
 import zope.schema
+import zope.schema.interfaces
 
 from nti.dataserver import users
 
@@ -45,6 +46,7 @@ def _raise_error( request,
 				  factory,
 				  v,
 				  tb ):
+	#logger.exception( "Failed to create user; returning expected error" )
 	mts = ('application/json', 'text/plain')
 	accept_type = 'application/json'
 	if getattr(request, 'accept', None):
@@ -111,7 +113,15 @@ def account_create_view(request):
 		# need different values, that falls over.
 		new_user = users.User.create_user( username=desired_userid,
 										   external_value=externalValue ) # May throw validation error
-	except zope.schema.ValidationError as e:
+	except zope.schema.interfaces.RequiredMissing as e:
+		exc_info = sys.exc_info()
+		_raise_error( request,
+					  hexc.HTTPUnprocessableEntity,
+					  {'message': exc_info[1].message,
+					   'field': exc_info[1].message,
+					   'code': exc_info[1].__class__.__name__ },
+					   exc_info[2]	)
+	except zope.schema.interfaces.ValidationError as e:
 		# Validation error may be many things, including invalid password by the policy.
 		# Some places try hard to set a good message, some don't
 		exc_info = sys.exc_info()

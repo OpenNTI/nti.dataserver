@@ -10,4 +10,10 @@
 	<subscriber handler=".user_policies.veto_sharing_for_unsigned_coppa_create" />
 	<subscriber handler=".user_policies.veto_sharing_for_unsigned_coppa_edit" />
 
+
+	<!-- Require specific profile info for Koppa Kids -->
+	<adapter factory="nti.dataserver.users.user_profile.EmailRequiredUserProfileFactory"
+			 provides="nti.dataserver.users.interfaces.IEmailRequiredUserProfile"
+			 for="nti.dataserver.interfaces.ICoppaUser" />
+
 </configure>
