@@ -22,6 +22,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import users
 from nti.dataserver import mimetype as nti_mimetype
 from nti.dataserver import authorization as nauth
+from nti.dataserver.users import interfaces as user_interfaces
 
 from nti.externalization.datastructures import isSyntheticKey
 from nti.externalization.externalization import toExternalObject
@@ -82,22 +83,26 @@ class _UserSearchView(object):
 				# Our class name is UserMatchingGet, but we actually
 				# search across all entities, like Communities
 				userObj = users.Entity.get_entity( maybeMatch, dataserver=self.dataserver )
-				if not userObj: continue
+				if not userObj:
+					continue
 
 				if partialMatch in maybeMatch.lower():
 					uid_matches.append( userObj )
 
-				if partialMatch in getattr(userObj, 'realname', '').lower() \
-					   or partialMatch in getattr(userObj, 'alias', '').lower():
+				names = user_interfaces.IFriendlyNamed( userObj )
+				if partialMatch in (names.realname or '').lower() \
+					   or partialMatch in (names.alias or '').lower():
 					result.append( userObj )
 
 			if remote_user:
 				# Given a remote user, add matching friends lists, too
 				for fl in remote_user.friendsLists.values():
-					if not isinstance( fl, users.Entity ): continue
+					if not isinstance( fl, users.Entity ):
+						continue
+					names = user_interfaces.IFriendlyNamed( fl )
 					if partialMatch in fl.username.lower() \
-					   or partialMatch in (fl.realname or '').lower() \
-					   or partialMatch in (fl.alias or '').lower():
+					   or partialMatch in (names.realname or '').lower() \
+					   or partialMatch in (names.alias or '').lower():
 						result.append( fl )
 				# Also add enrolled classes
 				# TODO: What about instructors?

@@ -519,9 +519,13 @@ class _UGDPostView(_UGDModifyViewBase):
 			# Update the object, but don't fire any modified events. We don't know
 			# if we'll keep this object yet, and we haven't fired a created event
 			self.updateContentObject( containedObject, externalValue, set_id=True, notify=False )
-			transformedObject = self.request.registry.queryAdapter( containedObject,
-																	app_interfaces.INewObjectTransformer,
-																	default=_id )( containedObject )
+			try:
+				transformedObject = self.request.registry.queryAdapter( containedObject,
+																		app_interfaces.INewObjectTransformer,
+																		default=_id )( containedObject )
+			except (TypeError,ValueError,AssertionError) as e:
+				logger.warn( "Failed to transform incoming object", exc_info=True)
+				raise hexc.HTTPUnprocessableEntity( e.message )
 			# If we transformed, copy the container and creator
 			if transformedObject is not containedObject:
 				transformedObject.creator = creator

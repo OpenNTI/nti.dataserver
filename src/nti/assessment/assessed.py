@@ -106,7 +106,7 @@ def assess_question_submission( submission, questions=None ):
 
 	question = questions[submission.questionId]
 	if len(question.parts) != len(submission.parts):
-		raise ValueError( "Question and submission have different numbers of parts." )
+		raise ValueError( "Question (%s) and submission (%s) have different numbers of parts." % ( len(equestion.parts), len(submission.parts) ) )
 
 	assessed_parts = persistent.list.PersistentList()
 	for sub_part, q_part in zip( submission.parts, question.parts ):
