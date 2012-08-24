@@ -11,6 +11,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import re
+from collections import defaultdict
 from pkg_resources import resource_filename
 
 from zope import interface
@@ -71,20 +73,17 @@ class TrivialMatchScanner(object):
 		return True
 		
 	def _do_scan(self, content_fragment, yielded):
-
-		start_ix = 0
 		for x in self.prohibited_values:
-			end_ix = content_fragment.find( x, start_ix )
-			if end_ix != -1:
-				# Got a match
-				match_range = (end_ix, end_ix + len(x))
+			idx = content_fragment.find( x, 0 )
+			while (idx != -1):
+				match_range = (idx, idx + len(x))
 				if self._test_range(match_range, yielded):
-					yielded.append( match_range )
-					yield  match_range
+					yield match_range
+				idx = content_fragment.find( x, idx + len(x) )
 					
 	def scan( self, content_fragment ):
-		content_fragment = content_fragment.lower()
 		yielded = [] # A simple, inefficient way of making sure we don't send overlapping ranges
+		content_fragment = content_fragment.lower()
 		return self._do_scan(content_fragment, yielded)
 
 @interface.implementer(interfaces.ICensoredContentScanner)
@@ -99,35 +98,71 @@ def TrivialMatchScannerExternalFile( file_path ):
 @interface.implementer(interfaces.ICensoredContentScanner)
 class WordMatchScanner(TrivialMatchScanner):
 
+	_re_word_start    = r"[^\(\"\`{\[:;&\#\*@\)}\]\-,]"
+
+	_re_non_word_chars   = r"(?:[?!)\";}\]\*:@\'\({\[])"
+
+	_re_multi_char_punct = r"(?:\-{2,}|\.{2,}|(?:\.\s){2,}\.)"
+
+	_word_tokenize_fmt = r'''(
+		%(MultiChar)s
+		|
+		(?=%(WordStart)s)\S+?  # Accept word characters until end is found
+		(?= # Sequences marking a word's end
+		    \s|                                 # White-space
+		    $|                                  # End-of-string
+		    %(NonWord)s|%(MultiChar)s|          # Punctuation
+		    ,(?=$|\s|%(NonWord)s|%(MultiChar)s) # Comma if at end of word
+		)
+		|
+		\S
+	)'''
+
+	@classmethod
+	def create_word_tokenizer(cls):
+		_re_word_tokenizer = re.compile(
+				cls._word_tokenize_fmt %
+				{
+					'NonWord':   cls._re_non_word_chars,
+					'MultiChar': cls._re_multi_char_punct,
+					'WordStart': cls._re_word_start,
+				},
+				re.UNICODE | re.VERBOSE
+			)
+		return _re_word_tokenizer
+	
 	def __init__( self, white_words=(), prohibited_words=() ):
+		self._word_tokenizer = self.create_word_tokenizer()
 		self.white_words = set([x.lower() for x in white_words if x]) if white_words else ()
 		self.prohibited_words = set([x.lower() for x in prohibited_words if x]) if prohibited_words else ()
 
 	def _do_scan(self, content_fragment, white_words_ranges=[]):
 		
-		# mark the ranges for white words
-		for x in self.white_words:
-			idx = content_fragment.find( x, 0 )
-			while (idx != -1):
-				match_range = (idx, idx + len(x))
-				white_words_ranges.append(match_range)
-				idx = content_fragment.find( x, idx + len(x) )
+		tokens = defaultdict(list)
+		for t in self._word_tokenizer.finditer(content_fragment):
+			match_range = (t.start(), t.end())
+			text = content_fragment[t.start():t.end()]
+			tokens[text].append(match_range)
+
+		# save the ranges of safe words
+		for word in self.white_words:
+			ranges = tokens.get(word, ())
+			if ranges:
+				white_words_ranges.extend(ranges)
 				
-		# test prohibited_words
-		for x in self.prohibited_words:
-			idx = content_fragment.find( x, 0 )
-			while (idx != -1):
-				match_range = (idx, idx + len(x))
+		# yield/return any prohibited_words
+		for word in self.prohibited_words:
+			lst = tokens.get(word, ())
+			for match_range in lst:
 				if self._test_range(match_range, white_words_ranges):
 					yield match_range
-				idx = content_fragment.find( x, idx + len(x) )
 				
 	def scan( self, content_fragment ):
 		content_fragment = content_fragment.lower()
 		return self._do_scan(content_fragment)
 		
 @interface.implementer(interfaces.ICensoredContentScanner)
-class WordPlusTrivialMatchScanner(WordMatchScanner, TrivialMatchScanner):
+class WordPlusTrivialMatchScanner(WordMatchScanner):
 
 	def __init__( self, white_words=(), prohibited_words=(), prohibited_values=()):
 		WordMatchScanner.__init__(self, white_words, prohibited_words)
@@ -148,7 +183,7 @@ class WordPlusTrivialMatchScanner(WordMatchScanner, TrivialMatchScanner):
 			yield match_range
 		
 @interface.implementer(interfaces.ICensoredContentScanner)
-def ExternalWordPlusTrivialMatchScannerFiles( white_words_path, prohibited_words_path, profanity_path,  ):
+def ExternalWordPlusTrivialMatchScannerFiles( white_words_path, prohibited_words_path, profanity_path):
 	with open(white_words_path, 'rU') as src:
 		white_words = (x.strip() for x in src.readlines() )
 		
@@ -163,8 +198,9 @@ def ExternalWordPlusTrivialMatchScannerFiles( white_words_path, prohibited_words
 @interface.implementer(interfaces.ICensoredContentScanner)
 def DefaultTrivialProfanityScanner():
 	white_path = resource_filename( __name__, 'white_list.txt' )
-	file_path = resource_filename( __name__, 'profanity_list.txt' )
-	return ExternalWordPlusTrivialMatchScannerFiles( white_path, file_path, file_path )
+	prohibited_words = resource_filename( __name__, 'prohibited_words.txt' )
+	profanity_values = resource_filename( __name__, 'profanity_list.txt' )
+	return ExternalWordPlusTrivialMatchScannerFiles( white_path, prohibited_words, profanity_values )
 
 @interface.implementer(interfaces.ICensoredContentPolicy)
 class DefaultCensoredContentPolicy(object):
@@ -228,3 +264,5 @@ def _default_profanity_terms():
 	terms = [ SimpleTerm(value=word, token=repr(word)) for word in words ]
 	map(lambda x: interface.alsoProvides( x, interfaces.IProfanityTerm ), terms)
 	return SimpleVocabulary(terms)
+
+
