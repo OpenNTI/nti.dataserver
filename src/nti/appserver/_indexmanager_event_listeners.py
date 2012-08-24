@@ -17,13 +17,13 @@ import os.path
 import tempfile
 
 from zope import component
-
+from zope.lifecycleevent.interfaces import IObjectCreatedEvent
 from nti.contentlibrary import interfaces as lib_interfaces
 from nti.contentsearch import interfaces as search_interfaces
 
 from nti.contentlibrary.boto_s3 import key_last_modified
 
-@component.adapter(lib_interfaces.IFilesystemContentPackage, component.interfaces.IObjectEvent)
+@component.adapter(lib_interfaces.IFilesystemContentPackage, IObjectCreatedEvent)
 def add_filesystem_index( title, event ):
 	indexmanager = component.queryUtility( search_interfaces.IIndexManager )
 	if indexmanager is None: # pragma: no cover
@@ -43,7 +43,7 @@ def add_filesystem_index( title, event ):
 		# lead to unloadable pickles. We've seen this manifest as ImportError
 		logger.exception( "Failed to add book search %s", title )
 
-@component.adapter(lib_interfaces.IS3ContentPackage, component.interfaces.IObjectEvent)
+@component.adapter(lib_interfaces.IS3ContentPackage, IObjectCreatedEvent)
 def add_s3_index( title, event ):
 	"""
 	Adds an index for things that exist in S3, possibly making a local
