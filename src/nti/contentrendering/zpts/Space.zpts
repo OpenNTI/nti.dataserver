@@ -6,7 +6,7 @@ name: -vspace
 
 name: vspace
 
-name: -bigskip
+name: -bigskip bigskip
 <div class="bigskip"></div>
 
 name: -medskip
