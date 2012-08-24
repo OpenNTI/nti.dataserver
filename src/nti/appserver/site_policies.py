@@ -24,6 +24,8 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.dataserver import shards as nti_shards
 
+import nameparser
+
 def get_possible_site_names():
 	"""
 	Look for the current request, and return an ordered list
@@ -233,8 +235,11 @@ class MathcountsSitePolicyEventListener(object):
 			raise zope.schema.ValidationError("Display name %s and username %s must match." % (names.alias, user.username),
 											  'Username', user.username)
 
-		if any( (x.lower() in user.username.lower() for x in (names.realname or user.username).split( )) ):
-			# humanname parser might help http://pypi.python.org/pypi/nameparser/0.2.2
+		# We require a realname, at least the first name, it must already be given.
+		# parse it now. This raises BlankHumanName if missing
+		human_name = nameparser.HumanName( names.realname )
+		human_name_parts = human_name.first_list + human_name.middle_list + human_name.last_list
+		if any( (x.lower() in user.username.lower() for x in human_name_parts) ):
 			raise zope.schema.ValidationError("Username %s cannot include any part of the real name %s" %
 											 (user.username, user.realname), 'Username', user.username )
 
