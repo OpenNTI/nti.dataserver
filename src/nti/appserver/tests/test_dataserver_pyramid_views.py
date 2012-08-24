@@ -66,6 +66,14 @@ def test_content_type():
 # 	for k in ('Objects', 'NTIIDs', 'Library', 'Pages', 'Classes'):
 # 		yield _test, k
 
+from zope.keyreference.interfaces import IKeyReference
+
+@interface.implementer(IKeyReference) # IF we don't, we won't get intids
+class ContainedExternal(ZContainedMixin):
+
+	def toExternalObject( self ):
+		return str(self)
+
 from zope.component import eventtesting
 from zope import component
 from zope.lifecycleevent import IObjectModifiedEvent
@@ -128,7 +136,7 @@ class TestUGDViews(ConfiguringTestBase):
 			resource = None
 			__acl__ = ()
 
-		@interface.implementer(nti_interfaces.ILastModified, nti_interfaces.IContained, nti_interfaces.IZContained)
+		@interface.implementer(nti_interfaces.ILastModified, nti_interfaces.IContained, nti_interfaces.IZContained, IKeyReference)
 		class ContainedObject(object):
 			__name__ = None
 			__parent__ = None
@@ -193,7 +201,7 @@ class TestUGDViews(ConfiguringTestBase):
 		with self.assertRaises(hexc.HTTPNotFound):
 			view.getObjectsForId( user, 'foobar' )
 		# Now if there are objects in there, it won't raise.
-		user.addContainedObject( ZContainedMixin('foobar') )
+		user.addContainedObject( ContainedExternal('foobar') )
 		view.getObjectsForId( user, 'foobar' )
 
 	@WithMockDSTrans
@@ -205,7 +213,7 @@ class TestUGDViews(ConfiguringTestBase):
 			view.getObjectsForId( user, ntiids.ROOT )
 		# Any child of the root throws if (1) the root DNE
 		# and (2) the children are empty
-		c = ZContainedMixin( ntiids.make_ntiid( provider='ou', specific='test', nttype='test' ) )
+		c = ContainedExternal( ntiids.make_ntiid( provider='ou', specific='test', nttype='test' ) )
 		user.addContainedObject( c )
 		assert_that( user.getContainedObject( c.containerId, c.id ), is_( c ) )
 		# so this will work, as it is not empty

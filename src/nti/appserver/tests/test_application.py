@@ -52,6 +52,9 @@ from zope import interface
 from zope import component
 from zope.deprecation import __show__
 
+from zope.keyreference.interfaces import IKeyReference
+
+@interface.implementer(IKeyReference) # IF we don't, we won't get intids
 class ContainedExternal(ZContainedMixin):
 
 	def toExternalObject( self ):

@@ -570,6 +570,9 @@ class User(Principal):
 		# have a connection (and adding the connection in
 		# addition to the user in User.create_user fails later
 		# on with spurious POSKeyError).
+		# TODO: This should not be needed anymore as
+		# intid listeners, etc, adapt to IKeyReference which adapts to IConnection
+		# which walks the containment tree
 		if getattr( contained, '_p_jar', self ) is None \
 			and getattr( self, '_p_jar' ) is not None:
 			self._p_jar.add( contained )
@@ -578,6 +581,9 @@ class User(Principal):
 		return result
 
 	def _postCreateNotification( self, obj ):
+		intids = component.queryUtility( zope.intid.IIntIds )
+		__traceback_info__ = obj, intids
+		assert intids is None or intids.getId( obj ) is not None, "Should have int id for obj"
 		self._postNotification( Change.CREATED, obj )
 
 	def _postDeleteNotification( self, obj ):
