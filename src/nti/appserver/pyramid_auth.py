@@ -191,13 +191,15 @@ class NTIUsersAuthenticatorPlugin(object):
 		if _make_user_auth().user_has_password( identity['login'], identity['password'] ):
 			return identity['login']
 
-def _create_middleware( app=None ):
+def _create_middleware( secure_cookies=False ):
 	user_auth = NTIUsersAuthenticatorPlugin()
 	basicauth = BasicAuthPlugin('NTI')
 	# Note that the cookie name needs to be bytes, not unicode. Otherwise we wind up with
 	# unicode objects in the headers, which are supposed to be ascii. Things like the Cookie
 	# module (used by webtest) then fail
-	auth_tkt = AuthTktCookiePlugin('secret', b'nti.auth_tkt', timeout=30*24*60*60, reissue_time=600)
+	auth_tkt = AuthTktCookiePlugin('secret', b'nti.auth_tkt',
+								   secure=secure_cookies,
+								   timeout=30*24*60*60, reissue_time=600)
 	# For testing, we let basic-auth set cookies. We don't want to do this
 	# generally.
 	#basicauth.include_ip = False
@@ -215,7 +217,7 @@ def _create_middleware( app=None ):
 	mdproviders = []
 
 	middleware = PluggableAuthenticationMiddleware(
-					app,
+					None, # No WSGI app to wrap
 					identifiers,
 					authenticators,
 					challengers,
@@ -226,8 +228,13 @@ def _create_middleware( app=None ):
 					log_level=logging.DEBUG )
 	return middleware
 
-def create_authentication_policy( ):
-	middleware = _create_middleware()
+def create_authentication_policy( secure_cookies=False ):
+	"""
+	:param bool secure_cookies: If ``True`` (not the default), then any cookies
+		we create will only be sent over SSL and will additionally have the 'HttpOnly'
+		flag set, preventing them from being subject to cross-site vulnerabilities.
+	"""
+	middleware = _create_middleware(secure_cookies=secure_cookies)
 	result = NTIAuthenticationPolicy()
 	result.api_factory = middleware.api_factory
 	# And make it capable of impersonation
