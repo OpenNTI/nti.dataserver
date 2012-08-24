@@ -49,6 +49,18 @@ class column(Base.Command):
 class mtiny(Base.Command):
         pass
 
+class pause(Base.Command):
+	pass
+
+class alert(Base.Command):
+	pass
+
+class titlerow(Base.Command):
+	pass
+
+class colortabular(Base.Environment):
+	pass
+
 class contentwidth(Base.DimenCommand):
 	value = Base.DimenCommand.new('600pt')
 
