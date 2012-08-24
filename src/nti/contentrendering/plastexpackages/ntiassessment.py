@@ -115,6 +115,13 @@ class _LocalContentMixin(object):
 	def _after_render( self, rendered ):
 		self._asm_local_content = _asm_rendered_textcontent( self )
 
+# Handle custom counter names
+class naquestionname(Base.Command):
+	unicode = ''
+
+class naqsolutionnumname(Base.Command):
+	unicode = ''
+
 class naqsolutions(Base.List):
 
 	counters = ['naqsolutionnum']
