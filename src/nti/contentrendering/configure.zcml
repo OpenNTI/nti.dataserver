@@ -19,7 +19,7 @@
 	<utility component=".sectionvideoadder.YouTubeRelatedVideoAdder"
 			 name="YouTubeRelatedVideoAdder" />
 
-	<!-- Content fragments and conversion -->
+	<!-- Content fragments and conversion, mime types -->
 	<include package="nti.contentfragments" />
 
 	<!-- icon and image finders for testing book -->

@@ -11,6 +11,7 @@ from __future__ import print_function, unicode_literals
 from zope import interface
 from zope import component
 from zope.mimetype import types as mime_types
+import zope.contenttype
 mime_types.setup() # register interface classes and utilities if not already
 
 def _setup():
@@ -24,9 +25,11 @@ def _setup():
 	ifs = mime_types.getInterfaces( data )
 	mime_types.registerUtilities( ifs, data )
 
+	mime_map_file = resource_filename( 'nti.contentfragments', 'mime.types' )
+	zope.contenttype.add_files( [mime_map_file] )
 _setup()
 
-	
+
 class IContentFragment(interface.Interface):
 	"""
 	Base interface representing different formats that content can
@@ -146,12 +149,12 @@ class ICensoredTerm(ITokenizedTerm):
 	"""
 	Base interface for a censored term
 	"""
-	
+
 class IProfanityTerm(ICensoredTerm):
 	"""
 	Base interface for a profanity term
 	"""
-	
+
 class ICensoredUnicodeContentFragment(IUnicodeContentFragment):
 	"""
 	A content fragment that has passed through a censoring process to

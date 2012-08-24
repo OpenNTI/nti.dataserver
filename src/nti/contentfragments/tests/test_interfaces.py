@@ -39,3 +39,9 @@ def test_html_math(  ):
 	assert_that( 2 * h1, is_( HTMLContentFragment ) )
 	assert_that( 2 * s1, is_( 'safesafe' ) )
 	assert_that( 2 * h1, is_( 'unsafeunsafe' ) )
+
+import mimetypes
+
+def test_mime_types():
+	assert_that( mimetypes.guess_type( 'foo.jsonp' ),
+				 is_( ('application/json',None) ) )
