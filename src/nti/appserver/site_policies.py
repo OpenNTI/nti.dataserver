@@ -159,38 +159,61 @@ class ISitePolicyUserEventListener(interface.Interface):
 	they should apply to.
 	"""
 
+	def user_will_update_new( user, event ):
+		"""
+		Handler for the IWillUpdateNewEntityEvent, called
+		before creation is complete or the user is updated.
+		"""
+
 	def user_created( user, event ):
 		"""
 		Called when a user is created.
 		"""
 
 from zope.lifecycleevent.interfaces import IObjectCreatedEvent
+from nti.dataserver import users
+from nti.dataserver.users import interfaces as user_interfaces
+import zope.schema
 
-@component.adapter(nti_interfaces.IUser,IObjectCreatedEvent)
-def dispatch_user_created_to_site_policy( user, event ):
+
+def _dispatch_to_policy( user, event, func_name ):
 	for site_name in get_possible_site_names():
 		utility = component.queryUtility( ISitePolicyUserEventListener, name=site_name )
 		if utility:
 			logger.info( "Site %s wants to handle user creation event with %s", site_name, utility )
-			utility.user_created( user, event )
+			getattr( utility, func_name )( user, event )
 			break
 
-from nti.dataserver import users
-from nti.dataserver.users import interfaces as user_interfaces
-import zope.schema
+@component.adapter(nti_interfaces.IUser,IObjectCreatedEvent)
+def dispatch_user_created_to_site_policy( user, event ):
+	_dispatch_to_policy( user, event, 'user_created' )
+
+@component.adapter(nti_interfaces.IUser, user_interfaces.IWillUpdateNewEntityEvent)
+def dispatch_user_will_update_to_site_policy( user, event ):
+	_dispatch_to_policy( user, event, 'user_will_update_new' )
+
 @interface.implementer(ISitePolicyUserEventListener)
 class MathcountsSitePolicyEventListener(object):
 	"""
 	Implements the policy for the mathcounts site.
 	"""
 
+	def user_will_update_new( self, user, event ):
+		"""
+		This policy applies the :class:`nti.dataserver.interfaces.ICoppaUserWithoutAgreement` interface
+		to the object.
+		"""
+
+		interface.alsoProvides( user, nti_interfaces.ICoppaUser )
+		interface.alsoProvides( user, nti_interfaces.ICoppaUserWithoutAgreement )
+
+
 	def user_created( self, user, event ):
 		"""
 		This policy places newly created users in the ``MathCounts`` community
 		(creating it if it doesn't exist).
 
-		It also applies the :class:`nti.dataserver.interfaces.ICoppaUserWithoutAgreement` interface
-		to the object.
+		It also verifies naming restraints.
 
 		"""
 
@@ -202,8 +225,6 @@ class MathcountsSitePolicyEventListener(object):
 		user.join_community( community )
 		user.follow( community )
 
-		interface.alsoProvides( user, nti_interfaces.ICoppaUser )
-		interface.alsoProvides( user, nti_interfaces.ICoppaUserWithoutAgreement )
 
 		names = user_interfaces.IFriendlyNamed( user )
 		# Match the format of, e.g, WrongTypeError: message, field/type, value

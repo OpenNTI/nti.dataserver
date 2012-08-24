@@ -17,6 +17,7 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope.interface import Interface
 from zope import schema
+import zope.component.interfaces
 import re
 
 
@@ -65,6 +66,21 @@ def checkEmailAddress(value):
 		return True
 
 	raise EmailAddressInvalid( value )
+
+class IWillUpdateNewEntityEvent(zope.component.interfaces.IObjectEvent):
+	"""
+	Fired before an :class:`zope.lifecycleevent.interfaces.IObjectCreatedEvent` with
+	an entity that is in the process of being created by the factories. At this
+	point, the entity will have only its username and parent established. Externalization
+	details are yet to be filled in.
+
+	This is a good opportunity to apply additional site-specific policies (interfaces),
+	especially if they can guide the updating process.
+	"""
+
+@interface.implementer(IWillUpdateNewEntityEvent)
+class WillUpdateNewEntityEvent(zope.component.interfaces.ObjectEvent):
+	pass
 
 class IAvatarURL(Interface):
 	"""
@@ -137,6 +153,19 @@ class ICompleteUserProfile(IFriendlyNamed):
 		description="Your affiliation, such as school name",
 		required=False)
 
+class IEmailRequiredUserProfile(ICompleteUserProfile):
+	"""
+	A user profile that ensures the email is filled in.
+
+	.. note:: This is temporary and will become an alias for :class:`ICompleteUserProfile`
+		when tests are updated across the board to require email addresses.
+	"""
+
+	email = _ValidTextLine(
+		title='Email',
+		description=u'',
+		required=True, # TODO: Should be true when the tests are ready
+		constraint=checkEmailAddress)
 
 class IUserProfileSchemaProvider(Interface):
 	"""
@@ -154,17 +183,12 @@ class IUserProfileSchemaProvider(Interface):
 		"""
 
 @interface.implementer(IUserProfileSchemaProvider)
-class DefaultProfileSchemaProvider(object):
-
-	def __init__( self, context ):
-		pass
-
-	def getSchema(self):
-		return ICompleteUserProfile
-
-@interface.implementer(IUserProfileSchemaProvider)
 class FriendlyNamedSchemaProvider(object):
-
+	"""
+	Return the base IFriendlyNamed profile. This will work as an
+	adapter for anything that extends Entity, and the most derived available
+	profile will be used (that is registered as an adapter for that type).
+	"""
 	def __init__( self, context ):
 		pass
 

@@ -161,7 +161,8 @@ class TestCreateView(ConfiguringTestBase):
 
 		self.request.content_type = 'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason_nextthought_com',
-													 'password': 'pass123word' } )
+													 'password': 'pass123word',
+													 'email': 'foo@bar.com' } )
 
 
 		with assert_raises( hexc.HTTPUnprocessableEntity ):
@@ -170,7 +171,8 @@ class TestCreateView(ConfiguringTestBase):
 
 		self.request.body = to_json_representation( {'Username': 'jason_nextthought_com',
 													 'password': 'pass123word',
-													 'realname': 'Joe Bananna'} )
+													 'realname': 'Joe Bananna',
+													 'email': 'foo@bar.com' } )
 		with assert_raises( hexc.HTTPUnprocessableEntity ):
 			# username and displayname must match
 			account_create_view( self.request )
@@ -179,7 +181,8 @@ class TestCreateView(ConfiguringTestBase):
 													 'password': 'pass123word',
 													 'realname': 'Joe Bananna',
 													 'birthdate': '1982-01-31',
-													 'alias': 'jason_nextthought_com'} )
+													 'alias': 'jason_nextthought_com',
+													 'email': 'foo@bar.com' } )
 		new_user = account_create_view( self.request )
 		assert_that( new_user, verifiably_provides( nti_interfaces.ICoppaUserWithoutAgreement ) )
 		assert_that( new_user, has_property( 'communities', has_item( 'MathCounts' ) ) )
@@ -187,6 +190,23 @@ class TestCreateView(ConfiguringTestBase):
 		assert_that( user_interfaces.ICompleteUserProfile( new_user ),
 					 has_property( 'birthdate', datetime.date( 1982, 1, 31 ) ) )
 
+	@WithMockDSTrans
+	def test_create_mathcounts_policy_email_required( self ):
+		# see site_policies.[py|zcml]
+		assert_that( self.request.host, is_( 'example.com:80' ) )
+		self.request.headers['origin'] = 'http://mathcounts.nextthought.com'
+
+		self.request.content_type = 'application/vnd.nextthought+json'
+
+		self.request.body = to_json_representation( {'Username': 'jason_nextthought_com',
+													 'password': 'pass123word',
+													 'realname': 'Joe Bananna',
+													 'birthdate': '1982-01-31',
+													 'alias': 'jason_nextthought_com' }  )
+		with assert_raises( hexc.HTTPUnprocessableEntity ) as exc:
+			 account_create_view( self.request )
+
+		assert_that( exc.exception.json_body, has_entry( 'field', 'email' ) )
 
 
 	@WithMockDSTrans

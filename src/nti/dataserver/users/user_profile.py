@@ -86,29 +86,36 @@ class CompleteUserProfile(FriendlyNamed):
 	def avatarURL(self):
 		return interfaces.IAvatarURL(self.context).avatarURL
 
+
+@interface.implementer(interfaces.IEmailRequiredUserProfile)
+class EmailRequiredUserProfile(CompleteUserProfile):
+	"""
+	An adapter for requiring the email.
+	"""
+
+
 def _init():
 	# Map "existing"/legacy User/Entity dict storage to their new profile field
 	_field_map = { 'alias': '_alias',
 				   'realname': '_realname'}
 
-	for _x in interfaces.IFriendlyNamed.names():
-		if not hasattr( FriendlyNamed, _x ):
-			setattr( FriendlyNamed,
-					 _x,
-					 _ExistingDictReadFieldPropertyStoredThroughField(
-						 interfaces.IFriendlyNamed[_x],
-						 exist_name=_field_map.get( _x ) ) )
+	_class_map = { interfaces.IFriendlyNamed: FriendlyNamed,
+				   interfaces.ICompleteUserProfile: CompleteUserProfile,
+				   interfaces.IEmailRequiredUserProfile: EmailRequiredUserProfile }
 
-
-	for _x in interfaces.ICompleteUserProfile.names():
-		if not hasattr( CompleteUserProfile, _x ):
-			setattr( CompleteUserProfile,
-					 _x,
-					 _ExistingDictReadFieldPropertyStoredThroughField(
-						 interfaces.ICompleteUserProfile[_x],
-						 exist_name=_field_map.get( _x ) ) )
+	for iface, clazz in _class_map.items():
+		for _x in iface.names():
+			# Since the names are defined and may be overrides,
+			# we also let overrides happen in the class dicts
+			if not _x in clazz.__dict__:
+				setattr( clazz,
+						 _x,
+						 _ExistingDictReadFieldPropertyStoredThroughField(
+							 iface[_x],
+							 exist_name=_field_map.get( _x ) ) )
 _init()
 del _init
 
 FriendlyNamedFactory = zope.annotation.factory( FriendlyNamed )
 CompleteUserProfileFactory = zope.annotation.factory( CompleteUserProfile )
+EmailRequiredUserProfileFactory = zope.annotation.factory( EmailRequiredUserProfile )

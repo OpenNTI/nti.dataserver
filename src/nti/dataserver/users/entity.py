@@ -13,7 +13,7 @@ import urllib
 
 from zope import interface
 from zope import component
-
+from zope.event import notify
 
 from zope import lifecycleevent
 from zope.keyreference.interfaces import IKeyReference
@@ -133,6 +133,9 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 		ext_value = kwargs.pop( 'external_value', None )
 		user.__init__( **kwargs )
 		assert getattr( user, '_p_jar', None ), "User should still have a connection"
+
+		# Notify we're about to update
+		notify( interfaces.WillUpdateNewEntityEvent( user ) )
 
 		# Update from the external value, if provided
 		if ext_value:
