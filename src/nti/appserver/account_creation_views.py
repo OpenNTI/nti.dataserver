@@ -127,13 +127,16 @@ def account_create_view(request):
 		exc_info = sys.exc_info()
 		field_name = None
 		field = getattr( e, 'field', None )
+		msg = ''
 		if field:
 			field_name = field.__name__
 		elif len(e.args) == 3:
-			field_name = e.args[2]
+			# message, field, value
+			field_name = e.args[1]
+			msg = e.args[0]
 		_raise_error( request,
 					  hexc.HTTPUnprocessableEntity,
-					  {'message': exc_info[1].message,
+					  {'message': exc_info[1].message or msg,
 					   'field': field_name,
 					   'code': exc_info[1].__class__.__name__},
 					  exc_info[2] )

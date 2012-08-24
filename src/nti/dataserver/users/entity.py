@@ -14,6 +14,7 @@ import urllib
 from zope import interface
 from zope import component
 from zope.event import notify
+import zope.schema.interfaces
 
 from zope import lifecycleevent
 from zope.keyreference.interfaces import IKeyReference
@@ -178,10 +179,14 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 	def __init__(self, username,
 				 parent=None):
 		super(Entity,self).__init__()
-		if not username or '%' in username:
+		if not username or not username.strip():
+			# Throw a three-arg version, similar to what a Field would do
+			raise zope.schema.interfaces.InvalidValue( "Username must be non-blank", 'Username', username )
+		if '%' in username or ',' in username: # TODO: Spaces?
 			# % is illegal because we sometimes have to
-			# URL encode an @ to %40.
-			raise ValueError( 'Illegal username ' + str(username) )
+			# URL encode an @ to %40. Comma we reserve as a separator
+			raise zope.schema.interfaces.InvalidValue( "Username contains invalid characters", 'Username', username )
+
 
 		self.username = username
 
