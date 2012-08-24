@@ -12,11 +12,11 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import os.path
 import simplejson
 
 from zope import interface
 from zope import component
+from zope.lifecycleevent.interfaces import IObjectCreatedEvent
 
 import nti.externalization.internalization
 
@@ -87,11 +87,13 @@ class QuestionMap(dict):
 				self._from_index_entry( item, hierarchy_entry )
 
 
-@component.adapter(lib_interfaces.IContentPackage,component.interfaces.IObjectEvent)
+@component.adapter(lib_interfaces.IContentPackage,IObjectCreatedEvent)
 def add_assessment_items_from_new_content( title, event ):
 	question_map = component.getUtility( app_interfaces.IFileQuestionMap )
 	if question_map is None: #pragma: no cover
 		return
+
+	logger.info( "Adding assessment items from new content %s %s", title, event )
 
 	asm_index_text = title.read_contents_of_sibling_entry( 'assessment_index.json' )
 	_populate_question_map_from_text( question_map, asm_index_text, title )
