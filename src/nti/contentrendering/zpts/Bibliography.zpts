@@ -1,3 +1,15 @@
+name: thebibliography
+<div class="bibliography">
+     <div class="title" tal:content="self/title">Bibliography</div>
+     <div tal:replace="self"></div>
+</div>
+
+name: bibitem
+<div class="bibitem">
+[<a tal:attributes="name self/id" tal:content="self/bibcite"></a>]
+<div tal:replace="self">information</div>
+</div>
+
 name: bibliography
 <div class="bibliography">
 	<div class="title" tal:content="self/title">Bibliography</div>
