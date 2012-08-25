@@ -10,6 +10,7 @@ logger = __import__( 'logging' ).getLogger( __name__ )
 
 import functools
 import urllib
+import string
 
 from zope import interface
 from zope import component
@@ -176,15 +177,21 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 	creator = nti_interfaces.SYSTEM_USER_NAME
 	__parent__ = None
 
+	# % is illegal because we sometimes have to
+	# URL encode an @ to %40. Comma we reserve as a separator.
+	# : and - are used in NTIIDs.
+	# NOTE: This is prohibiting Unicode characters
+	# NOTE: This has bad effects on FriendsLists since right now they are entities
+	ALLOWED_USERNAME_CHARS = string.letters + string.digits + '+.@_' # prohibit whitespace and punctuation not needed in emails
+
 	def __init__(self, username,
 				 parent=None):
 		super(Entity,self).__init__()
+		__traceback_info__ = username, parent
 		if not username or not username.strip():
 			# Throw a three-arg version, similar to what a Field would do
 			raise zope.schema.interfaces.InvalidValue( "Username must be non-blank", 'Username', username )
-		if '%' in username or ',' in username: # TODO: Spaces?
-			# % is illegal because we sometimes have to
-			# URL encode an @ to %40. Comma we reserve as a separator
+		if any( (c not in self.ALLOWED_USERNAME_CHARS for c in username) ):
 			raise zope.schema.interfaces.InvalidValue( "Username contains invalid characters", 'Username', username )
 
 

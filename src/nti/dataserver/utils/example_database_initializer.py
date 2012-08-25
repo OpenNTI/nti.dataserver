@@ -95,13 +95,9 @@ class ExampleDatabaseInitializer(object):
 
 	def _make_communities(self):
 		# Communities
-		aopsCommunity = Community( "Art Of Problem Solving" )
+		aopsCommunity = Community( "ArtOfProblemSolving" )
 		aopsCommunity.realname = aopsCommunity.username
 		aopsCommunity.alias = 'AOPS'
-
-		drgCommunity = Community( "Delaware Resources Group" )
-		drgCommunity.realname = drgCommunity.username
-		drgCommunity.alias = 'DRG'
 
 		ntiCommunity = Community( 'NextThought' )
 		ntiCommunity.realname = ntiCommunity.username
@@ -115,7 +111,7 @@ class ExampleDatabaseInitializer(object):
 		testUsersCommunity.realname = testUsersCommunity.username
 		testUsersCommunity.alias = self.nti_testers
 
-		return (aopsCommunity, drgCommunity, ntiCommunity, testUsersCommunity)
+		return (aopsCommunity, ntiCommunity, testUsersCommunity)
 
 	def _add_friendslists_to_user( self, for_user ):
 		if for_user.username != 'jason.madden@nextthought.com':
@@ -129,7 +125,7 @@ class ExampleDatabaseInitializer(object):
 		fl.containerId = 'FriendsLists'
 		for_user.addContainedObject( fl )
 
-		fl = FriendsList( 'Command and Control' )
+		fl = FriendsList( 'CommandAndControl' )
 		fl.creator = for_user
 		fl.addFriend( 'darth.vader@nextthought.com' )
 		fl.addFriend( 'jeanluc.picard@nextthought.com' )
@@ -137,7 +133,7 @@ class ExampleDatabaseInitializer(object):
 		fl.containerId = 'FriendsLists'
 		for_user.addContainedObject( fl )
 
-		fl = FriendsList( 'NTI-OK' )
+		fl = FriendsList( 'NTI_OK' )
 		fl.creator = for_user
 		fl.addFriend( 'chris.utz@nextthought.com' )
 		fl.addFriend( 'carlos.sanchez@nextthought.com' )

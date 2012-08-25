@@ -267,12 +267,12 @@ class RwandaSitePolicyEventListener(object):
 
 		"""
 
-		community = users.Entity.get_entity( 'Carnegie Mellon University' )
+		community = users.Entity.get_entity( 'CarnegieMellonUniversity' )
 		if community is None:
-			community = users.Community.create_community( username='Carnegie Mellon University' )
+			community = users.Community.create_community( username='CarnegieMellonUniversity' )
 			com_names = user_interfaces.IFriendlyNamed( community )
 			com_names.alias = 'CMU'
-			com_names.realnam = 'Carnegie Mellon University'
+			com_names.realname = 'Carnegie Mellon University'
 
 		user.join_community( community )
 		user.follow( community )

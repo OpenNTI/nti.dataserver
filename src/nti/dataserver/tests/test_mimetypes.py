@@ -41,7 +41,7 @@ def test_mimetype_from_object():
 	# class that implements
 	assert_that( as_mimetype( FriendsList ), is_( FL_MT ) )
 	# instance
-	assert_that( as_mimetype( FriendsList("My FL" ) ), is_( FL_MT ) )
+	assert_that( as_mimetype( FriendsList("MyFL" ) ), is_( FL_MT ) )
 
 
 def test_mimetype_from_object_doesnt_screw_up_implementedBy_for_callable_objects():
