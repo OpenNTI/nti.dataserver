@@ -128,17 +128,20 @@ class TestCreateView(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_create_invalid_username( self ):
 		self.request.content_type = 'application/vnd.nextthought+json'
-		self.request.body = to_json_representation( {'Username': '   ',
-													 'password': 'pass132word',
-													 'email': 'user@domain.com' } )
+
+		for bad_username in ('   ', 'foo bar', 'foo#bar', 'foo,bar', 'foo%bar' ):
+
+			self.request.body = to_json_representation( {'Username': bad_username,
+														 'password': 'pass132word',
+														 'email': 'user@domain.com' } )
 
 
 
-		with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
-			account_create_view( self.request )
+			with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
+				account_create_view( self.request )
 
-		assert_that( e.exception.json_body, has_entry( 'field', 'Username' ) )
-		assert_that( e.exception.json_body, has_entry( 'code', 'InvalidValue' ) )
+			assert_that( e.exception.json_body, has_entry( 'field', 'Username' ) )
+			assert_that( e.exception.json_body, has_entry( 'code', 'InvalidValue' ) )
 
 
 
@@ -253,7 +256,7 @@ class TestCreateView(ConfiguringTestBase):
 													 'affiliation': 'NTI',
 													 'email': 'jason@nextthought.com' } )
 		new_user = account_create_view( self.request )
-		assert_that( new_user, has_property( 'communities', has_item( 'Carnegie Mellon University' ) ) )
+		assert_that( new_user, has_property( 'communities', has_item( 'CarnegieMellonUniversity' ) ) )
 		assert_that( user_interfaces.IFriendlyNamed( new_user ), has_property( 'realname', 'Jason Madden' ) )
 		assert_that( user_interfaces.ICompleteUserProfile( new_user ),
 					 has_property( 'birthdate', datetime.date( 1982, 1, 31 ) ) )

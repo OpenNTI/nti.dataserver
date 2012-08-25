@@ -18,6 +18,7 @@ import collections
 from zope import interface
 from zope import component
 from zope.location import interfaces as loc_interfaces
+from zope.keyreference.interfaces import IKeyReference
 
 from zope.component.factory import Factory
 from zope.deprecation import deprecated
@@ -583,7 +584,11 @@ class User(Principal):
 	def _postCreateNotification( self, obj ):
 		intids = component.queryUtility( zope.intid.IIntIds )
 		__traceback_info__ = obj, intids
-		assert intids is None or intids.getId( obj ) is not None, "Should have int id for obj"
+		try:
+			assert intids is None or intids.getId( obj ) is not None, "Should have int id for obj"
+		except KeyError:
+			IKeyReference( obj ) # No intid. Why? Can we not adapt to IKeyRef?
+			raise # If we could adapt to key ref, raise the original missing
 		self._postNotification( Change.CREATED, obj )
 
 	def _postDeleteNotification( self, obj ):
