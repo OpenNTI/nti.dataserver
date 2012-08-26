@@ -52,7 +52,7 @@ class _UserSearchView(object):
 	def __call__(self):
 		remote_user = users.User.get_user( sec.authenticated_userid( self.request ), dataserver=self.dataserver )
 		partialMatch = self.request.matchdict['term']
-		partialMatch = partialMatch.lower()
+		partialMatch = unicode(partialMatch or '').lower()
 		# We tend to use this API as a user-resolution service, so
 		# optimize for that case--avoid waking all other users up
 		result = []
