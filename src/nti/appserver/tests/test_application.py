@@ -38,6 +38,7 @@ from nti.dataserver import users, classes, providers
 from nti.ntiids import ntiids
 from nti.dataserver.datastructures import ZContainedMixin
 from nti.externalization.oids import to_external_ntiid_oid
+from nti.externalization.externalization import to_external_object
 from nti.contentrange import contentrange
 from nti.dataserver import contenttypes
 from nti.dataserver import datastructures
@@ -685,9 +686,13 @@ class TestApplication(ApplicationTestBase):
 		n = contenttypes.Note()
 		n.applicableRange = contentrange.ContentRangeDescription()
 		n.containerId = 'tag:nti:foo'
-		n.sharedWith = ['Everyone']
 
-		data  = to_json_representation( n )
+		# Note that we externalize before we attempt to add the sharing data,
+		# because the sharingTargets field is externalized in a special way
+		ext_object = to_external_object( n )
+		ext_object['sharedWith'] = ['Everyone']
+
+		data  = to_json_representation( ext_object )
 
 		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/'
 
