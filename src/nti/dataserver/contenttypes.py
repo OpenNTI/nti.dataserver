@@ -131,9 +131,16 @@ class _UserContentRoot(sharing.ShareableMixin, datastructures.ContainedMixin, da
 	def toExternalObject( self ):
 		extDict = getattr( self, 'toExternalDictionary' )()
 
-		sharedWith = toExternalObject( self.flattenedSharingTargetNames )
-		if sharedWith:
-			extDict['sharedWith'] = sharedWith
+		# Return the values of things we're sharing with. Note that instead of
+		# just using the 'username' attribute directly ourself, we are externalizing
+		# the whole object and returning the externalized value of the username.
+		# This lets us be consistent with any cases where we are playing games
+		# with the external value of the username, such as with DynamicFriendsLists
+		ext_shared_with = []
+		for entity in self.sharingTargets:
+			ext_shared_with.append( toExternalObject( entity )['Username'] )
+
+		extDict['sharedWith'] = ext_shared_with
 		return extDict
 
 	def _is_update_sharing_only( self, parsed ):
