@@ -106,7 +106,7 @@ setup(
 		'dm.zope.schema >= 2.0.1',
 		'dolmen.builtins >= 0.3.1', # interfaces for common python types
 		'filechunkio >= 1.5', # Req'd for multi-put in boto == 2.5.2
-		'futures >= 2.1.2',
+		'futures >= 2.1.3',
 		#'gevent == 1.0dev', Coming from requirements.txt right now
 		# NOTE: gevent_zeromq and pyzmq are tightly coupled. Updating pyzmq
 		# usually requires rebuilding gevent_zeromq. You'll get errors about 'Context has wrong size'.
@@ -160,7 +160,7 @@ setup(
 		'repoze.who >= 2.0',
 		'repoze.zodbconn >= 0.14',
 		'grequests >= 0.1.0', #replaces requests.async in 0.13
-		'requests >= 0.13.8', # HTTP
+		'requests >= 0.13.9', # HTTP
 		'scss',
 		'setproctitle >= 1.1.6',
 		'setuptools',

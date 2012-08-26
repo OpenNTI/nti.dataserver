@@ -17,7 +17,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.contenttypes import Redaction as _Redaction, Highlight as _Highlight, Note as _Note, Canvas, CanvasShape, CanvasAffineTransform, CanvasCircleShape, CanvasPolygonShape, CanvasPathShape, CanvasUrlShape, CanvasTextShape
 
 from nti.externalization.oids import to_external_ntiid_oid
-
+from nti.externalization.externalization import to_external_object
 import nti.dataserver.users as users
 
 import zope.schema.interfaces
@@ -338,6 +338,59 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 			assert_that( n.references[0], is_( n2 ) )
 
 		ds.close()
+
+	@WithMockDSTrans
+	def test_external_reply_to_copies_sharing(self):
+		parent_user = users.User.create_user( username="foo@bar" )
+		child_user = users.User.create_user( username="baz@bar" )
+		parent_note = Note()
+		parent_note.creator = parent_user
+		parent_note.body = ['Hi there']
+		parent_note.containerId = 'tag:nti'
+		parent_note.addSharingTarget( child_user )
+		parent_user.addContainedObject( parent_note )
+
+		child_note = Note()
+		child_note.creator = child_user
+		child_note.body = ['A reply']
+
+		ext_obj = to_external_object( child_note )
+		ext_obj['inReplyTo'] = to_external_ntiid_oid( parent_note )
+
+		update_from_external_object( child_note, ext_obj, context=self.ds )
+
+		assert_that( child_note, has_property( 'inReplyTo', parent_note ) )
+		assert_that( child_note, has_property( 'sharingTargets', set((parent_user,)) ) )
+
+	@WithMockDSTrans
+	def test_external_reply_to_copies_sharing_dfl(self):
+		parent_user = users.User.create_user( username="foo@bar" )
+		parent_dfl = users.DynamicFriendsList( username="ParentFriendsList" )
+		parent_dfl.creator = parent_user
+		parent_user.addContainedObject( parent_dfl )
+
+		child_user = users.User.create_user( username="baz@bar" )
+		parent_dfl.addFriend( child_user )
+
+		parent_note = Note()
+		parent_note.creator = parent_user
+		parent_note.body = ['Hi there']
+		parent_note.containerId = 'tag:nti'
+		parent_note.addSharingTarget( parent_dfl )
+		parent_user.addContainedObject( parent_note )
+
+		child_note = Note()
+		child_note.creator = child_user
+		child_note.body = ['A reply']
+
+		ext_obj = to_external_object( child_note )
+		ext_obj['inReplyTo'] = to_external_ntiid_oid( parent_note )
+
+		update_from_external_object( child_note, ext_obj, context=self.ds )
+
+		assert_that( child_note, has_property( 'inReplyTo', parent_note ) )
+		assert_that( child_note, has_property( 'sharingTargets', set((parent_dfl,parent_user)) ) )
+
 
 	def test_must_provide_body_text(self):
 		n = Note()

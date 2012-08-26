@@ -249,9 +249,9 @@ class MathcountsSitePolicyEventListener(object):
 			raise zope.schema.ValidationError( "Username cannot contain '@'", 'Username', user.username )
 
 @interface.implementer(ISitePolicyUserEventListener)
-class RwandaSitePolicyEventListener(object):
+class GenericAdultSitePolicyEventListener(object):
 	"""
-	Implements the policy for the rwanda site.
+	Implements a generic policy for adult sites.
 	"""
 
 	def user_will_update_new( self, user, event ):
@@ -260,10 +260,30 @@ class RwandaSitePolicyEventListener(object):
 
 	def user_created( self, user, event ):
 		"""
-		This policy places newly created users in the ``MathCounts`` community
-		(creating it if it doesn't exist).
+		This policy verifies naming restraints.
 
-		It also verifies naming restraints.
+		"""
+
+		profile = user_interfaces.ICompleteUserProfile( user )
+		if '@' in user.username:
+			if user.username.endswith( '@nextthought.com' ):
+				raise zope.schema.ValidationError( "Invalid username", 'Username', user.username )
+			if not profile.email:
+				profile.email = user.username
+			elif user.username != profile.email:
+				raise zope.schema.ValidationError( "Using an '@' in username means it must match email", 'Username', user.username )
+
+
+@interface.implementer(ISitePolicyUserEventListener)
+class RwandaSitePolicyEventListener(GenericAdultSitePolicyEventListener):
+	"""
+	Implements the policy for the rwanda site.
+	"""
+
+	def user_created( self, user, event ):
+		"""
+		This policy places newly created users in the ``CarnegieMellonUniversity`` community
+		(creating it if it doesn't exist).
 
 		"""
 
@@ -277,12 +297,4 @@ class RwandaSitePolicyEventListener(object):
 		user.join_community( community )
 		user.follow( community )
 
-
-		profile = user_interfaces.ICompleteUserProfile( user )
-		if '@' in user.username:
-			if user.username.endswith( '@nextthought.com' ):
-				raise zope.schema.ValidationError( "Invalid username", 'Username', user.username )
-			if not profile.email:
-				profile.email = user.username
-			elif user.username != profile.email:
-				raise zope.schema.ValidationError( "Using an '@' in username means it must match email", 'Username', user.username )
+		super(RwandaSitePolicyEventListener,self).user_created( user, event )

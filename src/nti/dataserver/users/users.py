@@ -872,6 +872,12 @@ class User(Principal):
 			# Fire the change off to the user using different threads.
 			self._broadcast_change_to( theChange, target=user )
 
+			for nested_username in nti_interfaces.IUsernameIterable(user, ()):
+				# Make this work for DynamicFriendsLists.
+				# TODO: this falls down as soon as nesting is involved, because
+				# we won't be able to resolve by names
+				sendChangeToUser( self.get_user( nested_username ), theChange )
+
 		if origSharing != newSharing and changeType not in (Change.CREATED,Change.DELETED):
 			# OK, the sharing changed and its not a new or dead
 			# object. People that it used to be shared with will get a
@@ -899,8 +905,8 @@ class User(Principal):
 		for lovedPerson in newSharing:
 			sendChangeToUser( lovedPerson, change )
 
-	def _acceptIncomingChange( self, change ):
-		accepted = super(User,self)._acceptIncomingChange( change )
+	def _acceptIncomingChange( self, change, direct=True ):
+		accepted = super(User,self)._acceptIncomingChange( change, direct=direct )
 		if accepted:
 			self.notificationCount.value = self.notificationCount.value + 1
 			self._broadcastIncomingChange( change )
