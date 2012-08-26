@@ -30,6 +30,8 @@ import simplejson as json
 import zope.schema
 import zope.schema.interfaces
 
+import z3c.password.interfaces
+
 from nti.dataserver import users
 
 from nti.appserver._util import logon_userid_with_request
@@ -121,9 +123,19 @@ def account_create_view(request):
 					   'field': exc_info[1].message,
 					   'code': exc_info[1].__class__.__name__ },
 					   exc_info[2]	)
+	except z3c.password.interfaces.InvalidPassword as e:
+		# Turns out that even though these are ValidationError, we have to handle
+		# them specially because the library doesn't follow the usual pattern
+		exc_info = sys.exc_info()
+		_raise_error( request,
+					  hexc.HTTPUnprocessableEntity,
+					  {'message': str(e),
+					   'field': 'password',
+					   'code': e.__class__.__name__},
+					  exc_info[2] )
 	except zope.schema.interfaces.ValidationError as e:
-		# Validation error may be many things, including invalid password by the policy.
-		# Some places try hard to set a good message, some don't
+		# Validation error may be many things, including invalid password by the policy (see above)
+		# Some places try hard to set a good message, some don't.
 		exc_info = sys.exc_info()
 		field_name = None
 		field = getattr( e, 'field', None )
