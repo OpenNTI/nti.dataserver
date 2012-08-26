@@ -16,8 +16,8 @@ import platform
 
 import boto
 
+import nti.contentlibrary.boto_s3
 from nti.contentlibrary.filesystem import DynamicLibrary
-from nti.contentlibrary.boto_s3 import BotoS3BucketContentLibrary
 from nti.contentlibrary.externalization import map_all_buckets_to
 from nti.dataserver import interfaces as nti_interfaces
 from zope import component
@@ -49,8 +49,11 @@ def configure_app( global_config,
 					   if os.path.isdir( os.path.join( deploy_root, s ) )]
 	else:
 		serveFiles = ()
-		boto_bucket = boto.connect_s3().get_bucket( deploy_root )
-		library = BotoS3BucketContentLibrary( boto_bucket )
+		conn = boto.connect_s3()
+		# CAUTION: See warning in this class
+		conn.bucket_class = nti.contentlibrary.boto_s3.NameEqualityBucket
+		boto_bucket = conn.get_bucket( deploy_root )
+		library = nti.contentlibrary.boto_s3.BotoS3BucketContentLibrary( boto_bucket )
 
 
 	application,main = createApplication( int(settings.get('http_port','8081')),

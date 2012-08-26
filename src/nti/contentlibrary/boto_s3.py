@@ -40,6 +40,53 @@ boto.s3.bucket.Bucket.__parent__ = alias( 'connection' )
 boto.s3.key.Key.__bases__ += _WithName,
 boto.s3.key.Key.__parent__ = alias( 'bucket' )
 
+class NameEqualityKey(boto.s3.key.Key):
+	"""
+	A class that tests for equality based on the name and bucket. Two keys with
+	the same name in the same bucket will be equal. The same name across
+	buckets will not be equal.
+
+	.. caution:: This is only useful with the :class:`NameEqualityBucket`.
+		This does not take the connection into account, and
+		hence is somewhat dangerous. Only use it if there will be one
+		set of credentials in use.
+	"""
+
+	# Not taking the connection into account because I don't have time to
+	# verify its equality conditions.
+
+	def __eq__( self, other ):
+		try:
+			return self is other or (self.name == other.name and self.bucket == other.bucket)
+		except AttributeError: # pragma: no cover
+			return NotImplemented
+
+	def __hash__( self ):
+		return hash(self.name) + 37 + hash(self.bucket)
+
+
+class NameEqualityBucket(boto.s3.bucket.Bucket):
+	"""
+	A class that tests for equality based on the name.
+
+	.. caution:: This does not take the connection into account, and
+		hence is somewhat dangerous. Only use it if there will be one
+		set of credentials in use.
+	"""
+
+	def __init__(self, connection=None, name=None, key_class=NameEqualityKey):
+		super(NameEqualityBucket, self).__init__( connection=connection, name=name, key_class=key_class )
+
+	def __eq__( self, other ):
+		try:
+			return self is other or self.name == other.name
+		except AttributeError:  # pragma: no cover
+			return NotImplemented
+
+	def __hash__( self ):
+		return hash(self.name) + 37
+
+
 def key_last_modified( key ):
 	"""
 	Return the last modified value of the key in some form thats actually
