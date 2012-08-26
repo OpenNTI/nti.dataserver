@@ -10,6 +10,7 @@ from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 from zope import interface, schema
+from zope.interface.interfaces import IObjectEvent, ObjectEvent
 from zope.interface.common import mapping
 from zope.annotation import interfaces as an_interfaces
 
@@ -210,13 +211,13 @@ class ISocketSession(ISocketIOChannel, an_interfaces.IAnnotatable):
 
 
 
-class ISocketSessionEvent(interface.interfaces.IObjectEvent):
+class ISocketSessionEvent(IObjectEvent):
 	"""
 	An event fired relating to a socket session.
 	In general, socket events will only be fired for sockets that have owners.
 	"""
 
-class ISocketSessionConnectedEvent(interface.interfaces.IObjectEvent):
+class ISocketSessionConnectedEvent(IObjectEvent):
 	"""
 	An event that is fired when a socket session establishes a connection for the first time.
 	"""
@@ -226,14 +227,44 @@ class ISocketSessionDisconnectedEvent(ISocketSessionEvent):
 	An event that is fired when a socket session disconnects.
 	"""
 
+@interface.implementer(ISocketSessionEvent)
 class SocketSessionEvent(interface.interfaces.ObjectEvent):
-	interface.implements(ISocketSessionEvent)
+	pass
 
+@interface.implementer(ISocketSessionConnectedEvent)
 class SocketSessionConnectedEvent(SocketSessionEvent):
-	interface.implements(ISocketSessionConnectedEvent)
+	pass
 
+@interface.implementer(ISocketSessionDisconnectedEvent)
 class SocketSessionDisconnectedEvent(SocketSessionEvent):
-	interface.implements(ISocketSessionDisconnectedEvent)
+	pass
+
+class ISocketSessionCreatedObjectEvent(IObjectEvent):
+	"""
+	An event fired when a socket session is creating objects and preparing
+	to distribute them to :class:`ISocketEventHandler` instances. This fires
+	*before* any object events fired by the handlers or the process of
+	updating the object from external data. Listeners for this event can
+	use it to establish constraints and invariants around the incoming object, such
+	as security proxying it.
+	"""
+
+	session = schema.Object( ISocketSession, title="The session doing the creating." )
+	message = schema.Object( ISocketIOMessage, title="The message being processed." )
+	external_object = interface.Attribute( "The object value that will update the created object." )
+
+@interface.implementer(ISocketSessionCreatedObjectEvent)
+class SocketSessionCreatedObjectEvent(ObjectEvent):
+
+	session = None
+	message = None
+	external_object = None
+
+	def __init__( self, object, session=None, message=None, external_object=None ):
+		super(SocketSessionCreatedObjectEvent,self).__init__( object )
+		self.session = session
+		self.message = message
+		self.external_object = external_object
 
 class ISocketSessionClientMessageConsumer(interface.Interface):
 	"""

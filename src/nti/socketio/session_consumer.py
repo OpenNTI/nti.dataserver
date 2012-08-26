@@ -10,6 +10,7 @@ import itertools
 
 from zope import interface
 from zope import component
+from zope.event import notify
 
 import nti.externalization.internalization
 from nti.externalization.externalization import toExternalObject
@@ -20,6 +21,7 @@ from nti.socketio import interfaces as sio_interfaces
 class UnauthenticatedSessionError(ValueError):
 	"Raised when a session consumer is called but is not authenticated."
 
+@interface.implementer(sio_interfaces.ISocketSessionClientMessageConsumer)
 class SessionConsumer(object):
 	"""
 	A callable object that responds to events from a client session.
@@ -28,14 +30,12 @@ class SessionConsumer(object):
 	event handling.
 	"""
 
-	interface.implements(sio_interfaces.ISocketSessionClientMessageConsumer)
-
 	def __call__( self, session, msg ):
 		if session.owner is None:
 			raise UnauthenticatedSessionError()
 
 		event_handlers = self._initialize_session( session )
-		return self._on_msg( event_handlers, session.socket, msg )
+		return self._on_msg( event_handlers, session, msg )
 
 	def _initialize_session(self, session):
 		"""
@@ -44,9 +44,6 @@ class SessionConsumer(object):
 		session.incr_hits()
 
 		return self._create_event_handlers( session.socket, session )
-
-		#if session.internalize_function == plistlib.readPlistFromString:
-		#	session.externalize_function = to_external_representation
 
 	def _create_event_handlers( self, socket_obj, session=None ):
 		"""
@@ -75,7 +72,7 @@ class SessionConsumer(object):
 			if callable(destroy): destroy()
 
 
-	def _find_handler( self, event_handlers, message ):
+	def _find_handler( self, event_handlers, session, message ):
 		"""
 		:return: A callable object of zero arguments, or None.
 		"""
@@ -117,8 +114,8 @@ class SessionConsumer(object):
 				# Note that we're converting the input to objects for each
 				# handler in the list. This could be a little inefficient in the case
 				# of multiple handlers that come from related packages.
-				args = _convert_message_args_to_objects( h, message )
-				#logger.debug( "Handling message using %s(%s)", h, args )
+				args = _convert_message_args_to_objects( h, session, message )
+
 				result = h(*args)
 				if result is not None:
 					last_result = result
@@ -126,23 +123,24 @@ class SessionConsumer(object):
 
 		return call
 
-	def _on_msg( self, event_handlers, socket_obj, message ):
+	def _on_msg( self, event_handlers, session, message ):
 		"""
 		:return: Boolean value indicating success or failure.
 		"""
+
 		if message is None:
 			# socket has died
-			logger.debug( "Socket has died %s", socket_obj )
+			logger.debug( "Socket has died %s", session )
 			return False
 		if message.get('type') != 'event':
 			logger.warning( 'Dropping unhandled message of wrong type %s', message )
 			return False
 
-		handler = self._find_handler( event_handlers, message ) # This logs missing handlers
+		handler = self._find_handler( event_handlers, session, message ) # This logs missing handlers
 		if handler is None:
 			return False
 
-
+		socket_obj = session.socket
 		try:
 			result = handler( )
 			if message.get('id'):
@@ -163,8 +161,9 @@ class SessionConsumer(object):
 		else:
 			return True
 
+_registered_legacy_search_mods = set()
 
-def _convert_message_args_to_objects( handler, message ):
+def _convert_message_args_to_objects( handler, session, message ):
 	"""
 	Convert the list/dictionary external (incoming) structures into objects to pass to
 	the handler.
@@ -179,6 +178,10 @@ def _convert_message_args_to_objects( handler, message ):
 	# We use the dataserver to handle the conversion. We
 	# inspect the handler to find out where it lives so that we can
 	# limit the types the dataserver needs to search.
+	# TODO: This is deprecated, the MimeType factories should be used to handle
+	# this. We need to start issuing warnings.
+	# NOTE: If we get factory objects and not the actual class, then we
+	# are constrained to a zero-arg constructor
 	search_modules = ['nti.dataserver.users', 'nti.dataserver.contenttypes']
 	def handlers_from_class( cls ):
 		mods = getattr( cls, '_session_consumer_args_search_', () )
@@ -195,13 +198,18 @@ def _convert_message_args_to_objects( handler, message ):
 		handlers_from_class( handler )
 
 	for mod in search_modules:
+		if mod in _registered_legacy_search_mods:
+			continue
 		nti.externalization.internalization.register_legacy_search_module( mod )
+		_registered_legacy_search_mods.add( mod )
 
 	for arg in message['args']:
-		extType = nti.externalization.internalization.find_factory_for( arg )
+		ext_factory = nti.externalization.internalization.find_factory_for( arg )
 
-		if extType:
-			arg = nti.externalization.internalization.update_from_external_object( extType(), arg )
+		if ext_factory:
+			v = ext_factory()
+			notify( sio_interfaces.SocketSessionCreatedObjectEvent( v, session, message, arg ) )
+			arg = nti.externalization.internalization.update_from_external_object( v, arg )
 		args.append( arg ) # strings and such fall through here
 
 	return args

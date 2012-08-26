@@ -11,7 +11,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import os
 
 from zope import component
 from zope import interface
@@ -19,6 +18,8 @@ from zope import interface
 from nti.dataserver import interfaces as nti_interfaces
 from nti.contentfragments import interfaces as frg_interfaces
 from nti.contentlibrary import interfaces as lib_interfaces
+from nti.chatserver import interfaces as chat_interfaces
+from nti.socketio import interfaces as sio_interfaces
 
 from nti.contentfragments import censor
 
@@ -95,3 +96,12 @@ def user_filesystem_censor_policy( user, file_content_unit ):
 	if file_content_unit.does_sibling_entry_exist( '.nti_disable_censoring' ):
 		return None
 	return coppa_user_censor_policy( user, file_content_unit )
+
+@component.adapter( chat_interfaces.IMessageInfo, sio_interfaces.ISocketSessionCreatedObjectEvent )
+def ensure_message_info_has_creator( message, event ):
+	"""
+	Ensures that messages created by sockets have their creator set immediately. This is necessary
+	to be sure that the correct security and censoring policies are applied.
+	"""
+
+	message.creator = event.session.owner
