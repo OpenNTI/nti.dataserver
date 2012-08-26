@@ -145,7 +145,10 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 					# after things finish running, notably nose's logcapture.
 					e = None
 
-				result.append( toExternalObject( e, name=name ) if e else ent_name )
+				if e:
+					result.append( toExternalObject( e, name=name ) )
+				# It screws up the web app if we return strings here for things that do not yet or
+				# do not anymore exist. Even though we've always done that.
 
 			return result
 
