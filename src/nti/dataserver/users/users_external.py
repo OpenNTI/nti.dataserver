@@ -71,8 +71,13 @@ class _FriendsListExternalObject(_EntityExternalObject):
 		theFriends = []
 		for friend in iter(self.entity): #iter self to weak refs and dups
 			if isinstance( friend, users.Entity ):
+				# NOTE: We've got a potential infinite recursion here. Normally
+				# users cannot be their own friends. But a DFL might make it
+				# appear that way. The DFL would show up in the communities of the
+				# personal-summary too, which would get us back here. So we
+				# must not use personal-summary here.
 				if friend == self.entity.creator:
-					friend = toExternalObject( friend, name='personal-summary' )
+					friend = toExternalObject( friend, name='summary' )
 				else:
 					friend = toExternalObject( friend, name='summary' )
 				theFriends.append( friend )
