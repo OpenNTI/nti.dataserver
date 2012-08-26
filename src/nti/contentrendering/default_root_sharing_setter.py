@@ -58,15 +58,15 @@ def _handle_toc(toc, book):
 	modified = True
 
 	if contentLocation:
-		shareWith = ''
+		sharedWith = ''
 		with io.open( os.path.join(contentLocation, '..', DEFAULT_SHARING_GROUP_FILENAME), 'rb') as file:
 			for line in file.readlines():
 				if line[0] is not '#':
 					# Otherwise the line is a comment
-					shareWith = ' '.join([shareWith, line.strip()])
+					sharedWith = ' '.join([sharedWith, line.strip()])
 
 		index = book.toc.root_topic
-		modified = index.set_default_sharing_group( shareWith.strip() )
+		modified = index.set_default_sharing_group( sharedWith.strip() )
 
 	return modified
 
