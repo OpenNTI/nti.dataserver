@@ -13,6 +13,7 @@ from zope.generations import interfaces as gen_interfaces
 import nti.dataserver.quizzes as quizzes
 import nti.dataserver.classes as classes
 import nti.dataserver.providers as providers
+from nti.dataserver.users import interfaces as user_interfaces
 
 from nti import deprecated
 from nti.dataserver import containers
@@ -188,6 +189,7 @@ class ExampleDatabaseInitializer(object):
 		mock_dataserver.shards = root['shards']
 		USERS = self._make_usernames()
 		def create_add_user(user_tuple):
+			#from IPython.core.debugger import Tracer;  Tracer()() 
 			uname = user_tuple[0]
 			is_test_user =  uname.startswith('test.user.')
 			password = 'temp001' if is_test_user else user_tuple[1].replace( ' ', '.' ).lower()
@@ -197,8 +199,10 @@ class ExampleDatabaseInitializer(object):
 
 			user = User.create_user( username=uname, password=password, dataserver=mock_dataserver )
 			register_user( user )
-			user.realname = user_tuple[1]
-			user.alias = user_tuple[1].split()[0]
+			names = user_interfaces.IFriendlyNamed(user)
+			names.realname = user_tuple[1]
+			names.alias = user_tuple[1].split()[0]
+			names.email = uname
 			for c in communities:
 				if	(c.alias == self.nti_testers and is_test_user) or \
 					(c.alias != self.nti_testers and not is_test_user):
