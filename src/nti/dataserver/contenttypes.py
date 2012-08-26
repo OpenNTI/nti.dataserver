@@ -365,23 +365,19 @@ class Note(ThreadableExternalizableMixin, Highlight):
 		# of the new note. This is because our policy settings
 		# may be user/community/context specific.
 		if not self._p_mtime and self.inReplyTo:
-			self.clearSharingTargets() # ignore anything incoming
-			creatorName = getattr( self.creator, 'username', None )
 			# Current policy is to copy the sharing settings
 			# of the parent, and share back to the parent's creator,
 			# only making sure not to share with ourself since that's weird
 			# (Be a bit defensive about bad inReplyTo)
-			if not hasattr( self.inReplyTo, 'flattenedSharingTargetNames' ):
-				raise AttributeError( 'Illegal value for inReplyTo: %s (%s)' % datastructures.toExternalOID(self.inReplyTo), self.inReplyTo )
-			sharingTargetNames = set( self.inReplyTo.flattenedSharingTargetNames )
-			sharingTargetNames.add( getattr( self.inReplyTo.creator, 'username', None ) )
-			sharingTargetNames.discard( creatorName )
-			sharingTargetNames.discard( None )
+			if not hasattr( self.inReplyTo, 'sharingTargets' ): # pragma: no cover
+				raise AttributeError( 'Illegal value for inReplyTo: %s' % self.inReplyTo )
+			sharingTargets = set( self.inReplyTo.sharingTargets )
+			sharingTargets.add( self.inReplyTo.creator )
+			sharingTargets.discard( self.creator )
+			sharingTargets.discard( None )
 
-			for name in sharingTargetNames:
-				ent = _get_entity( name )
-				target = ent or name
-				self.addSharingTarget( target, self.creator )
+			self.updateSharingTargets( sharingTargets )
+
 
 			# Now some other things we want to inherit if possible
 			for copy in self._inheritable_properties_:
@@ -421,7 +417,7 @@ class Canvas(ThreadableExternalizableMixin, _UserContentRoot, ExternalizableInst
 		# TODO: Super properties?
 		try:
 			return self.shapeList == other.shapeList
-		except AttributeError:
+		except AttributeError: #pragma: no cover
 			return NotImplemented
 
 
@@ -470,7 +466,7 @@ class CanvasAffineTransform(ExternalizableInstanceDict):
 	def __eq__( self, other ):
 		try:
 			return all( [getattr(self, x) == getattr(other,x) for x in self.__dict__] )
-		except AttributeError:
+		except AttributeError: #pragma: no cover
 			return NotImplemented
 
 

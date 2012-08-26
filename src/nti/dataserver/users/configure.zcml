@@ -48,7 +48,7 @@
 	</class>
 
 	<!-- FriendsLists can iterate usernames -->
-	<adapter factory=".users._FriendsListUsernameIterable" />
+	<adapter factory=".friends_lists._FriendsListUsernameIterable" />
 
 
 	<!-- Avatar URLs -->
