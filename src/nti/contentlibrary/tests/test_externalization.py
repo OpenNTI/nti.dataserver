@@ -2,6 +2,8 @@
 from hamcrest import assert_that, has_entry, has_entries
 from hamcrest import greater_than_or_equal_to
 from hamcrest import has_key
+from hamcrest import is_not
+from hamcrest import is_
 
 from nti.contentlibrary import filesystem, boto_s3
 
@@ -106,10 +108,17 @@ class TestExternalization(ConfiguringTestBase):
 	@fudge.patch('nti.contentlibrary.boto_s3.BotoS3ContentUnit._connect_key')
 	def test_escape_if_needed_boto(self, fake_connect):
 		fake_connect.expects_call()
-		bucket = boto.s3.bucket.Bucket(name='content.nextthought.com')
-		key = boto.s3.key.Key( bucket=bucket, name='prealgebra/index.html' )
+		bucket = boto_s3.NameEqualityBucket(name='content.nextthought.com')
+		key = bucket.key_class( bucket=bucket, name='prealgebra/index.html' )
 		key.last_modified = 0
-		index = boto.s3.key.Key( bucket=bucket, name='prealgebra/eclipse-toc.xml' )
+		index = bucket.key_class( bucket=bucket, name='prealgebra/eclipse-toc.xml' )
+
+		assert_that( key, is_not( index ) )
+		assert_that( key, is_( key ) )
+		assert_that( bucket, is_( bucket ) )
+		d = { key: index }
+		key2 = bucket.key_class( bucket=bucket, name='prealgebra/index.html' )
+		assert_that( d.get( key2 ), is_( index ) )
 
 		self._do_test_escape_if_needed( boto_s3.BotoS3ContentPackage, key=key, index=index, prefix='http://content.nextthought.com',
 								  archive_unit=boto_s3.BotoS3ContentUnit( key=boto.s3.key.Key( bucket=bucket, name='prealgebra/archive.zip' ) ),
