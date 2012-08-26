@@ -7,10 +7,6 @@
  * Only apply the setting to the root.
  */
 
-#NTIContent {
-	position: relative;/*make absolutely positioned elements anchor to this node*/
-}
-
 #NTIContent .minipage {
 	display: inline-block;
 	margin-top: .5em;
@@ -23,15 +19,4 @@
 /*
  All font sizes must be specified in percents(or em units) for the size changing code to work.
 */
-#NTIContent pre {
-    color: #004000;
-    width: 100%;
-    font-size: 90%;
-    background-color: #f0f0f0;
-    padding-top: 5px;
-    padding-bottom: 5px;
-    border: 1px #aaffaa solid;
-    font-family: Monaco, "Courier New", Courier, fixed;
-    padding-left: 4ex;
-}
 
