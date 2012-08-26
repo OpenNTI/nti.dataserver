@@ -16,4 +16,8 @@
 	<utility factory=".site_policies.GenericAdultSitePolicyEventListener"
 			 name="alpha.nextthought.com"/>
 
+	<utility factory=".site_policies.GenericSitePolicyEventListener"
+			 name=''
+			 zcml:condition="not-have devmode" />
+
 </configure>
