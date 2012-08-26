@@ -12,6 +12,7 @@ from nti.dataserver import shards as nti_shards
 from nti.dataserver import users
 from nti.dataserver import providers
 from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.users import interfaces as user_interfaces
 from . import run_with_dataserver
 
 import argparse
@@ -100,12 +101,13 @@ def _create_user( factory, username, password, realname, communities=(), options
 		sys.exit( 2 )
 
 	args = {'username': username}
-	if realname:
-		args['realname'] = realname
 	if password:
 		args['password'] = password
 	user = factory( **args )
 	if nti_interfaces.IUser.providedBy( user ):
+		names = user_interfaces.IFriendlyNamed( user )
+		if realname:
+			names.realname = realname
 		for com_name in communities:
 			community = users.Entity.get_entity( com_name, default='' )
 			if community:
