@@ -59,7 +59,7 @@ def _handle_toc(toc, book):
 
 	if contentLocation:
 		shareWith = ''
-		with io.open( os.path.join(contentLocation, '..', DEFAULT_SHARING_GROUP_FILENAME), 'r') as file:
+		with io.open( os.path.join(contentLocation, '..', DEFAULT_SHARING_GROUP_FILENAME), 'rb') as file:
 			for line in file.readlines():
 				if line[0] is not '#':
 					# Otherwise the line is a comment
