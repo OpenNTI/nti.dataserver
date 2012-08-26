@@ -27,11 +27,11 @@ from nti.externalization import datastructures
 from nti.contentfragments import interfaces as frg_interfaces
 from nti.contentfragments import censor
 
+from nti.dataserver import mimetype
 from nti.dataserver import contenttypes
 
 
 from zope import interface
-from zope import component
 
 from . import interfaces
 
@@ -39,6 +39,8 @@ from . import interfaces
 class MessageInfo( contenttypes.ThreadableExternalizableMixin,
 				   Persistent,
 				   datastructures.ExternalizableInstanceDict ):
+
+	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
 	__parent__ = None
 
@@ -54,18 +56,17 @@ class MessageInfo( contenttypes.ThreadableExternalizableMixin,
 	channel = interfaces.CHANNEL_DEFAULT
 	body = None
 	recipients = ()
+	Creator = None # aka Sender. Forcibly set by the handler
+	containerId = None
 
 	def __init__( self ):
 		super(MessageInfo,self).__init__()
 		self.ID = uuid.uuid4().hex
-		self.Creator = None # aka Sender. Forcibly set by the handler
 		self._v_sender_sid = None # volatile. The session id of the sender.
 		self.LastModified = time.time()
 		self.CreatedTime = self.LastModified
-		self.containerId = None
 		self.Status = interfaces.STATUS_INITIAL
 
-	# Aliases (TODO: Need general alias descriptor)
 	Sender = alias('Creator')
 	creator = alias('Creator')
 

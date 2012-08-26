@@ -7,6 +7,8 @@ from __future__ import print_function
 from hamcrest import assert_that
 from hamcrest import has_entry
 from hamcrest import is_
+from hamcrest import has_property
+from hamcrest import none
 
 import anyjson as json
 import os
@@ -16,6 +18,7 @@ from zope import component
 
 
 from nti.externalization.oids import to_external_ntiid_oid
+from nti.externalization.externalization import to_external_object
 from nti.dataserver import contenttypes
 from nti.contentrange import contentrange
 
@@ -30,6 +33,10 @@ from nti.dataserver import interfaces as nti_interfaces
 
 import nti.appserver.censor_policies
 import nti.contentfragments.censor
+
+from nti.socketio import interfaces as sio_interfaces
+from nti.chatserver.messageinfo import MessageInfo
+from nti.socketio import session_consumer
 
 class TestApplicationAssessment(ApplicationTestBase):
 	child_ntiid =  'tag:nextthought.com,2011-10:MN-NAQ-MiladyCosmetology.naq.1'
@@ -97,3 +104,21 @@ class TestApplicationCensoring(ApplicationTestBase):
 		self._do_test_censor_note( 'tag:not_in_library',
 								   censored=True,
 								   extra_ifaces=(nti_interfaces.ICoppaUser,) )
+
+	def test_create_chat_object_events_copy_owner_from_session(self):
+
+		@interface.implementer(sio_interfaces.ISocketSession)
+		class Session(object):
+			owner = self
+
+		chat_message = MessageInfo()
+		# ContainerIDs are required or censoring by default kicks in
+		chat_message.containerId = 'tag:foo'
+
+		args = session_consumer._convert_message_args_to_objects( None, Session(), { 'args': [to_external_object( chat_message )] } )
+
+		assert_that( args[0], is_( MessageInfo ) )
+		assert_that( args[0], has_property( 'creator', self ) )
+
+		assert_that( nti.appserver.censor_policies.creator_and_location_censor_policy( '', args[0] ),
+					 is_( none() ) )

@@ -29,4 +29,9 @@
 			 for="nti.dataserver.interfaces.IUser *" />
 	<adapter factory=".censor_policies.user_filesystem_censor_policy" />
 	-->
+
+	<!-- Make sure messages get the right censoring policy -->
+	<subscriber
+		handler=".censor_policies.ensure_message_info_has_creator"
+		for="nti.chatserver.interfaces.IMessageInfo nti.socketio.interfaces.ISocketSessionCreatedObjectEvent"/>
 </configure>
