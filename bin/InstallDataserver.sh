@@ -30,7 +30,7 @@ export CFLAGS="-I/opt/local/include -L/opt/local/lib"
 
 echo "Installing pyzmq"
 pip install cython
-pip install --install-option="--zmq=/opt/local" "pyzmq>=2.2.0"
+pip install --install-option="--zmq=/opt/local" "pyzmq==2.2.0"
 
 PROJECT_PARENT=${2:-~/Projects}
 echo "Checking project out to $PROJECT_PARENT/NextThoughtPlatform"
