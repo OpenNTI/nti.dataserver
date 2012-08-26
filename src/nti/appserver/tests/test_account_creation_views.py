@@ -93,14 +93,14 @@ class TestCreateView(ConfiguringTestBase):
 		# headers
 		component.provideHandler( eventtesting.events.append, (None,) )
 		self.request.content_type = 'application/vnd.nextthought+json'
-		self.request.body = to_json_representation( {'Username': 'jason@nextthought.com',
+		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
 													 'password': 'pass123word',
 													 'email': 'foo@bar.com' } )
 
 
 		new_user = account_create_view( self.request )
-		assert_that( new_user, has_property( 'username', 'jason@nextthought.com' ) )
-		assert_that( self.request.response, has_property( 'location', contains_string( '/dataserver2/users/jason%40nextthought.com' ) ) )
+		assert_that( new_user, has_property( 'username', 'jason@test.nextthought.com' ) )
+		assert_that( self.request.response, has_property( 'location', contains_string( '/dataserver2/users/jason%40test.nextthought.com' ) ) )
 		assert_that( self.request.response, has_property( 'status_int', 201 ) )
 		#assert_that( self.request.response.headers, has_property( "what", "th" ) )
 
@@ -126,7 +126,7 @@ class TestCreateView(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_create_invalid_email( self ):
 		self.request.content_type = 'application/vnd.nextthought+json'
-		self.request.body = to_json_representation( {'Username': 'jason@nextthought.com',
+		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
 													 'password': 'pass132word',
 													 'email': 'not valid' } )
 
@@ -137,6 +137,39 @@ class TestCreateView(ConfiguringTestBase):
 
 		assert_that( e.exception.json_body, has_entry( 'code', 'EmailAddressInvalid' ) )
 		assert_that( e.exception.json_body, has_entry( 'field', 'email' ) )
+
+	@WithMockDSTrans
+	def test_create_censored_username( self ):
+		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.body = to_json_representation( {'Username': 'shpxsnpr'.encode('rot13'),
+													 'password': 'pass132word',
+													 'email': 'foo@bar.com' } )
+
+
+		with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
+			account_create_view( self.request )
+
+		assert_that( e.exception.json_body, has_entry( 'code', 'ValidationError' ) )
+		assert_that( e.exception.json_body, has_entry( 'field', 'Username' ) )
+		assert_that( e.exception.json_body, has_entry( 'message', contains_string( 'censored' ) ) )
+
+
+
+	@WithMockDSTrans
+	def test_create_censored_alias( self ):
+		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.body = to_json_representation( {'alias': 'shpxsnpr'.encode('rot13'),
+													 'Username': 'jamadden',
+													 'password': 'pass132word',
+													 'email': 'foo@bar.com' } )
+
+
+		with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
+			account_create_view( self.request )
+
+		assert_that( e.exception.json_body, has_entry( 'code', 'ValidationError' ) )
+		assert_that( e.exception.json_body, has_entry( 'field', 'alias' ) )
+		assert_that( e.exception.json_body, has_entry( 'message', contains_string( 'censored' ) ) )
 
 	@WithMockDSTrans
 	def test_create_invalid_username( self ):
@@ -164,7 +197,7 @@ class TestCreateView(ConfiguringTestBase):
 		mock_dataserver.add_memory_shard( self.ds, 'example.com' )
 
 		self.request.content_type = 'application/vnd.nextthought+json'
-		self.request.body = to_json_representation( {'Username': 'jason@nextthought.com',
+		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
 													 'password': 'pass123word',
 													 'email': 'foo@bar.com' } )
 
@@ -182,7 +215,7 @@ class TestCreateView(ConfiguringTestBase):
 		mock_dataserver.add_memory_shard( self.ds, 'content.nextthought.com' )
 
 		self.request.content_type = 'application/vnd.nextthought+json'
-		self.request.body = to_json_representation( {'Username': 'jason@nextthought.com',
+		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
 													 'password': 'pass123word',
 													 'email': 'foo@bar.com' } )
 
@@ -288,7 +321,7 @@ class TestCreateView(ConfiguringTestBase):
 		component.provideUtility( Placer(), provides=INewUserPlacer, name='example.com' )
 
 		self.request.content_type = 'application/vnd.nextthought+json'
-		self.request.body = to_json_representation( {'Username': 'jason@nextthought.com',
+		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
 													 'password': 'pass123word',
 													 'email': 'foo@bar.com' } )
 
@@ -309,7 +342,7 @@ class TestApplicationCreateUser(ApplicationTestBase):
 	def test_create_user( self ):
 		app = TestApp( self.app )
 
-		data = to_json_representation( {'Username': 'jason@nextthought.com',
+		data = to_json_representation( {'Username': 'jason@test.nextthought.com',
 										'password': 'password',
 										'email': 'foo@bar.com'	} )
 
@@ -321,14 +354,14 @@ class TestApplicationCreateUser(ApplicationTestBase):
 		assert_that( res, has_property( 'location', contains_string( '/dataserver2/users/jason' ) ) )
 
 		assert_that( res.headers, has_key( 'Set-Cookie' ) )
-		assert_that( res.json_body, has_entry( 'Username', 'jason@nextthought.com' ) )
+		assert_that( res.json_body, has_entry( 'Username', 'jason@test.nextthought.com' ) )
 
 	def test_create_user_logged_in( self ):
 		with mock_dataserver.mock_db_trans(self.ds):
 			_ = self._create_user( )
 
 		app = TestApp( self.app )
-		data = to_json_representation( {'Username': 'jason@nextthought.com',
+		data = to_json_representation( {'Username': 'jason@test.nextthought.com',
 										'password': 'password' } )
 
 		path = b'/dataserver2/users/@@account.create'

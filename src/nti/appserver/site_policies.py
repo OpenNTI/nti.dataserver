@@ -21,6 +21,7 @@ from pyramid.threadlocal import get_current_request
 
 from nti.contentlibrary import interfaces as lib_interfaces
 from nti.dataserver import interfaces as nti_interfaces
+from nti.contentfragments import censor
 
 from nti.dataserver import shards as nti_shards
 
@@ -179,12 +180,18 @@ import zope.schema
 
 
 def _dispatch_to_policy( user, event, func_name ):
-	for site_name in get_possible_site_names():
+	# Put the empty name/default component on the end of the list of site names
+	site_names = list(get_possible_site_names())
+	site_names.append( '' )
+	for site_name in site_names:
 		utility = component.queryUtility( ISitePolicyUserEventListener, name=site_name )
 		if utility:
 			logger.info( "Site %s wants to handle user creation event with %s", site_name, utility )
 			getattr( utility, func_name )( user, event )
-			break
+			return
+
+	logger.info( "No site in %s wanted to handle user event for %s", site_names, user )
+
 
 @component.adapter(nti_interfaces.IUser,IObjectCreatedEvent)
 def dispatch_user_created_to_site_policy( user, event ):
@@ -194,8 +201,39 @@ def dispatch_user_created_to_site_policy( user, event ):
 def dispatch_user_will_update_to_site_policy( user, event ):
 	_dispatch_to_policy( user, event, 'user_will_update_new' )
 
+def _censor_usernames( user ):
+	policy = censor.DefaultCensoredContentPolicy()
+
+	if policy.censor( user.username, user ) != user.username:
+		raise zope.schema.ValidationError( "Username contains a censored sequence", 'Username', user.username )
+
+	names = user_interfaces.IFriendlyNamed( user )
+	if names.alias: # TODO: What about realname?
+		if policy.censor( names.alias, user ) != names.alias:
+			raise zope.schema.ValidationError( "alias contains a censored sequence", 'alias', names.alias )
+
 @interface.implementer(ISitePolicyUserEventListener)
-class MathcountsSitePolicyEventListener(object):
+class GenericSitePolicyEventListener(object):
+	"""
+	Implements a generic policy for all sites.
+	"""
+
+	def user_will_update_new( self, user, event ):
+		pass
+
+
+	def user_created( self, user, event ):
+		"""
+		This policy verifies naming restraints.
+
+		"""
+		_censor_usernames( user )
+		if user.username.endswith( '@nextthought.com' ):
+			raise zope.schema.ValidationError( "Invalid username", 'Username', user.username )
+
+
+@interface.implementer(ISitePolicyUserEventListener)
+class MathcountsSitePolicyEventListener(GenericSitePolicyEventListener):
 	"""
 	Implements the policy for the mathcounts site.
 	"""
@@ -218,6 +256,7 @@ class MathcountsSitePolicyEventListener(object):
 		It also verifies naming restraints.
 
 		"""
+		super(MathcountsSitePolicyEventListener,self).user_created( user, event )
 
 		community = users.Entity.get_entity( 'MathCounts' )
 		if community is None:
@@ -243,13 +282,12 @@ class MathcountsSitePolicyEventListener(object):
 			raise zope.schema.ValidationError("Username %s cannot include any part of the real name %s" %
 											 (user.username, user.realname), 'Username', user.username )
 
-		# TODO: Censor
-
 		if '@' in user.username:
 			raise zope.schema.ValidationError( "Username cannot contain '@'", 'Username', user.username )
 
+
 @interface.implementer(ISitePolicyUserEventListener)
-class GenericAdultSitePolicyEventListener(object):
+class GenericAdultSitePolicyEventListener(GenericSitePolicyEventListener):
 	"""
 	Implements a generic policy for adult sites.
 	"""
@@ -263,11 +301,10 @@ class GenericAdultSitePolicyEventListener(object):
 		This policy verifies naming restraints.
 
 		"""
+		super(GenericAdultSitePolicyEventListener,self).user_created( user, event )
 
 		profile = user_interfaces.ICompleteUserProfile( user )
 		if '@' in user.username:
-			if user.username.endswith( '@nextthought.com' ):
-				raise zope.schema.ValidationError( "Invalid username", 'Username', user.username )
 			if not profile.email:
 				profile.email = user.username
 			elif user.username != profile.email:
@@ -287,6 +324,8 @@ class RwandaSitePolicyEventListener(GenericAdultSitePolicyEventListener):
 
 		"""
 
+		super(RwandaSitePolicyEventListener,self).user_created( user, event )
+
 		community = users.Entity.get_entity( 'CarnegieMellonUniversity' )
 		if community is None:
 			community = users.Community.create_community( username='CarnegieMellonUniversity' )
@@ -296,5 +335,3 @@ class RwandaSitePolicyEventListener(GenericAdultSitePolicyEventListener):
 
 		user.join_community( community )
 		user.follow( community )
-
-		super(RwandaSitePolicyEventListener,self).user_created( user, event )

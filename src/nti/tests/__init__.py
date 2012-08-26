@@ -4,6 +4,8 @@ import os
 import subprocess
 import sys
 
+logger = __import__( 'logging' ).getLogger(__name__)
+
 from hamcrest.core.base_matcher import BaseMatcher
 import hamcrest
 
@@ -131,7 +133,9 @@ def _configure(self=None, set_up_packages=(), features=('devmode',), context=Non
 
 	# zope.component.globalregistry conveniently adds
 	# a zope.testing.cleanup.CleanUp to reset the globalSiteManager
+
 	if set_up_packages:
+		logger.debug( "Configuring %s with features %s", set_up_packages, features )
 		if context is None:
 			context = config.ConfigurationMachine()
 			xmlconfig.registerCommonDirectives( context )
