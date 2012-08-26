@@ -33,9 +33,15 @@ def test_update_friends_list_name():
 		_avatarURL = 'BAD'
 
 	o = FriendsList('MyList')
+	ext_value = nti.externalization.externalization.to_external_object( o )
+	assert_that( ext_value, has_entry( 'Username', 'MyList' ) )
+	assert_that( ext_value, has_entry( 'alias', 'MyList' ) )
+	assert_that( ext_value, has_entry( 'realname', 'MyList' ) )
+
 	nti.externalization.internalization.update_from_external_object( o, {'realname': "My Funny Name"} )
 
 	ext_value = nti.externalization.externalization.to_external_object( o )
 
 	assert_that( ext_value, has_entry( 'Username', 'MyList' ) )
 	assert_that( ext_value, has_entry( 'realname', 'My Funny Name' ) )
+	assert_that( ext_value, has_entry( 'alias', 'My Funny Name' ) )

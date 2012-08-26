@@ -61,7 +61,7 @@ def validate_ntiid_string( string ):
 		raise InvalidNTIIDError( "String contains non-ascii values " + repr(string) )
 
 	if not string or not string.startswith( 'tag:nextthought.com,20' ):
-		raise InvalidNTIIDError( 'Missing correct start value: ' + str(string) )
+		raise InvalidNTIIDError( 'Missing correct start value: ' + repr(string) )
 
 
 	parts = string.split( ':', 2 ) # Split twice. Allow for : in the specific part

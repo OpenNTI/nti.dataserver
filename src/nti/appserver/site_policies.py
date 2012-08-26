@@ -276,3 +276,13 @@ class RwandaSitePolicyEventListener(object):
 
 		user.join_community( community )
 		user.follow( community )
+
+
+		profile = user_interfaces.ICompleteUserProfile( user )
+		if '@' in user.username:
+			if user.username.endswith( '@nextthought.com' ):
+				raise zope.schema.ValidationError( "Invalid username", 'Username', user.username )
+			if not profile.email:
+				profile.email = user.username
+			elif user.username != profile.email:
+				raise zope.schema.ValidationError( "Using an '@' in username means it must match email", 'Username', user.username )

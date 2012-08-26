@@ -35,8 +35,10 @@ def _session_id_set_for_session_owner( session_owner_or_user, family, default=No
 		in the annotations) if needed; otherwise, an empty tuple will be returned
 		(and not stored anywhere)
 	"""
-	__traceback_info__ = session_owner_or_user, default
+	__traceback_info__ = session_owner_or_user, default, create
 	user = users.User.get_user( session_owner_or_user ) if not nti_interfaces.IUser.providedBy( session_owner_or_user ) else session_owner_or_user
+	if user is None and default is None:
+		raise KeyError( "No such user " + session_owner_or_user )
 	annotations = IAnnotations( user ) if default is None else IAnnotations( user, default )
 	try:
 		session_set = annotations[_OWNED_SESSIONS_KEY]

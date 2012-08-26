@@ -93,7 +93,7 @@ class _GenericGetView(object):
 			if result is resource:
 				# Must be careful not to modify the persistent object
 				result = LocationProxy( result, getattr( result, '__parent__', None), getattr( result, '__name__', None ) )
-			if getattr( resource, '__parent__', None ):
+			if getattr( resource, '__parent__', None ) is not None:
 				result.__parent__ = resource.__parent__
 				# FIXME: Another hack at getting the right parent relationship in.
 				# The actual parent relationship is to the Provider object,
