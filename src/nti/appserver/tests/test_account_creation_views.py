@@ -55,20 +55,33 @@ import datetime
 
 class TestCreateView(ConfiguringTestBase):
 
-	features = () # Disable devmode so that we get email required by default
+	features = () # Disable devmode so that we get 'email' required by default for new users
 
 	@WithMockDSTrans
 	def test_create_missing_password(self):
 		self.request.content_type = 'application/vnd.nextthought+json'
-		self.request.body = to_json_representation( {'Username': 'foo@bar' } )
+		self.request.body = to_json_representation( {'Username': 'foo@bar.com', 'email': 'foo@bar.com' } )
 		with assert_raises( hexc.HTTPUnprocessableEntity ):
 			account_create_view( self.request )
 
+	@WithMockDSTrans
+	def test_create_invalid_password(self):
+		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.body = to_json_representation( {'Username': 'foo@bar.com',
+													 'email': 'foo@bar.com',
+													 'password': 'a' } )
+		with assert_raises( hexc.HTTPUnprocessableEntity ) as exc:
+			account_create_view( self.request )
+
+
+		assert_that( exc.exception.json_body, has_entry( 'field', 'password' ) )
+		assert_that( exc.exception.json_body, has_entry( 'message', contains_string( 'Password is too short' ) ) )
+		assert_that( exc.exception.json_body, has_entry( 'code', 'TooShortPassword' ) )
 
 	@WithMockDSTrans
 	def test_create_missing_username( self ):
 		self.request.content_type = 'application/vnd.nextthought+json'
-		self.request.body = to_json_representation( {'password': 'pass123word' } )
+		self.request.body = to_json_representation( {'password': 'pass123word', 'email': 'foo@bar.com' } )
 		with assert_raises( hexc.HTTPUnprocessableEntity ):
 			account_create_view( self.request )
 
