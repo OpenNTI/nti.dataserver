@@ -38,6 +38,13 @@ class _FixedAvatarWrapper(object):
 	def __init__( self, context ):
 		self.avatarURL = getattr( context, '_avatarURL' )
 
+# See also https://www.libravatar.org/
+# for a FOSS Gravatar clone that supports delegation by domain.
+# We may want to potentially run our own instance. It is written in Python.
+# They provide pyLibravatar as a client library. The federation features
+# use DNS and that library uses pyDNS which may or may not be gevent friendly,
+# so that would have to be investigated
+
 @component.adapter(nti_interfaces.IEntity)
 @interface.implementer(interfaces.IAvatarURL)
 class GravatarComputedAvatarURL(object):
