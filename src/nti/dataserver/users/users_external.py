@@ -42,8 +42,9 @@ class _EntitySummaryExternalObject(object):
 		extDict.pop( 'Last Modified', None )
 		extDict['Username'] = entity.username
 		extDict['avatarURL'] = interfaces.IAvatarURL(entity).avatarURL
-		extDict['realname'] = interfaces.IFriendlyNamed(entity).realname
-		extDict['alias'] = interfaces.IFriendlyNamed(entity).alias
+		names = interfaces.IFriendlyNamed( entity )
+		extDict['realname'] = names.realname or entity.username
+		extDict['alias'] = names.alias or names.realname or entity.username
 		extDict['CreatedTime'] = getattr( self, 'createdTime', 42 ) # for migration
 		extDict.__parent__ = entity.__parent__
 		extDict.__name__ = entity.__name__

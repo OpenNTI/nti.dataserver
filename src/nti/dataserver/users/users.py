@@ -587,8 +587,14 @@ class User(Principal):
 		try:
 			assert intids is None or intids.getId( obj ) is not None, "Should have int id for obj"
 		except KeyError:
-			IKeyReference( obj ) # No intid. Why? Can we not adapt to IKeyRef?
-			raise # If we could adapt to key ref, raise the original missing
+			key_ref = IKeyReference( obj ) # No intid. Why? Can we not adapt to IKeyRef?
+			# Hmm. We could adapt to key ref, but for some reason the events didn't
+			# fire right to get an ID. Correct that now
+			iid = intids.register( obj )
+			logger.warn( "Forced registering an intid %s for obj %s of type %s with ref %s",
+						 iid, obj, type(obj), key_ref )
+			assert intids.getId( obj ) == iid, "intids must match"
+
 		self._postNotification( Change.CREATED, obj )
 
 	def _postDeleteNotification( self, obj ):

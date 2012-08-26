@@ -248,20 +248,20 @@ class TestCreateView(ConfiguringTestBase):
 		self.request.headers['origin'] = 'http://rwanda.nextthought.com'
 
 		self.request.content_type = 'application/vnd.nextthought+json'
-		self.request.body = to_json_representation( {'Username': 'jason@nextthought_com',
+		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
 													 'password': 'pass123word',
 													 'realname': 'Jason Madden',
 													 'birthdate': '1982-01-31',
 													 'alias': 'Jason',
 													 'affiliation': 'NTI',
-													 'email': 'jason@nextthought.com' } )
+													 'email': 'jason@test.nextthought.com' } )
 		new_user = account_create_view( self.request )
 		assert_that( new_user, has_property( 'communities', has_item( 'CarnegieMellonUniversity' ) ) )
 		assert_that( user_interfaces.IFriendlyNamed( new_user ), has_property( 'realname', 'Jason Madden' ) )
 		assert_that( user_interfaces.ICompleteUserProfile( new_user ),
 					 has_property( 'birthdate', datetime.date( 1982, 1, 31 ) ) )
 
-		assert_that( to_external_object( new_user ), has_entries( 'email', 'jason@nextthought.com',
+		assert_that( to_external_object( new_user ), has_entries( 'email', 'jason@test.nextthought.com',
 																  'birthdate', '1982-01-31',
 																  'affiliation', 'NTI' ) )
 
