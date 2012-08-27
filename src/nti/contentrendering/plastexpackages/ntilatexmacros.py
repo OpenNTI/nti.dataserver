@@ -3,6 +3,8 @@
 
 from plasTeX import Base, Command
 
+from plasTeX.Base import Crossref
+
 # Monkey patching time
 # SAJ: The following are set to render properly nested HTML.
 Base.figure.forcePars = False
@@ -20,6 +22,30 @@ class _Ignored(Base.Command):
 	unicode = ''
 	def invoke( self, tex ):
 		return []
+
+#TODO do pagerefs even make sense in our dom?
+#Try to find an intelligent page name for the reference
+#so we don't have to render the link text as '3'
+class pageref(Crossref.pageref):
+
+	#we would hope to generate the pagename attribute in
+	#the invoke method but since it is dependent on the page
+	#splits used at render time we define a function to be called
+	#from the page template
+	def getPageNameForRef(self):
+		#Look up the dom tree until we find something
+		#that would create a file
+		print("******")
+		fileNode = self.idref['label']
+		while not getattr(fileNode, 'title', None) and getattr(fileNode, 'parentNode', None):
+			fileNode = fileNode.parentNode
+
+		if hasattr(fileNode, 'title'):
+			print(getattr(fileNode.title, 'textContent', fileNode.title))
+			return getattr(fileNode.title, 'textContent', fileNode.title)
+
+		return None
+
 
 class ntiincludevideo(_OneText):
 	args = 'text'
