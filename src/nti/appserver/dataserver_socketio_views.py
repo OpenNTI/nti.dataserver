@@ -184,10 +184,6 @@ def _get_session(session_id):
 
 @view_config(route_name=RT_CONNECT) # Any request method
 def _connect_view( request ):
-	# Users must be authenticated. All users are allowed to make connections
-	# So this is a hamfisted way of achieving that policy
-	if not sec.authenticated_userid( request ):
-		raise hexc.HTTPUnauthorized()
 
 	environ = request.environ
 	transport = request.matchdict.get( 'transport' )
@@ -203,6 +199,17 @@ def _connect_view( request ):
 	  raise hexc.HTTPNotFound( 'Incorrect use of websockets' )
 
 	session = _get_session(session_id)
+
+	# Users must be authenticated. All users are allowed to make connections
+	# So this is a hamfisted way of achieving that policy.
+	# NOTE: It seems that the 'flashsocket' transport does not actually set
+	# up authentication
+	if not sec.authenticated_userid( request ):
+		if transport == 'flashsocket':
+			logger.warn( "Allowing unauthenticated flashsocket use from %s", request )
+		else:
+			raise hexc.HTTPUnauthorized()
+
 
 	# If we're restoring a previous session, we
 	# must switch to using the protocol from

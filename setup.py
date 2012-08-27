@@ -85,7 +85,7 @@ setup(
 		'Pillow >= 1.7.7',
 		'RestrictedPython',
 		'ZConfig >= 2.9.3',
-		'ZODB3 >= 3.10.5', # NOTE: Soon need to include persistent >= 4.0.0, being pulled out of ZODB
+		'ZODB3 >= 3.10.5', # NOTE: Soon need to include persistent >= 4.0.1, being pulled out of ZODB
 		# ZODB RelStorage:
 		# 'pylibmc', # for memcached support
 		# 'MySQL-python', # mysql adapter
