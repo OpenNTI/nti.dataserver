@@ -523,6 +523,20 @@ class User(Principal):
 
 	### Sharing
 
+	def _get_dynamic_sharing_targets_for_read( self ):
+		"""
+		Overrides the super method to return both the communities we are a
+		member of, plus the friends lists we ourselves have created that are dynamic.
+		"""
+		for comm in self._communities:
+			comm = self.get_entity( comm )
+			if comm:
+				yield comm
+
+		for fl in self.friendsLists.values():
+			if isinstance( fl, sharing.DynamicSharingTargetMixin ):
+				yield fl
+
 	def accept_shared_data_from( self, source ):
 		""" Accepts if not ignored; auto-follows as well.
 		:return: A truth value. If this was the initial add, it will be the Change.
