@@ -9,6 +9,9 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope.cachedescriptors.property import Lazy
 
+from cStringIO import StringIO
+import gzip
+
 from nti.utils.property import alias
 
 from .interfaces import IS3ContentUnit
@@ -118,6 +121,18 @@ _exist_cache = repoze.lru.ExpiringLRUCache( 1000, default_timeout=600 )
 import zope.testing.cleanup
 zope.testing.cleanup.addCleanUp( _exist_cache.clear )
 
+def _read_key( key ):
+	data = None
+	if key:
+		data = key.get_contents_as_string()
+		if key.content_encoding == 'gzip':
+			stream = StringIO( data )
+			gzip_stream = gzip.GzipFile( fileobj=stream, mode='rb' )
+			data = gzip_stream.read()
+			gzip_stream.close()
+			stream.close()
+	return data
+
 @interface.implementer(IS3ContentUnit)
 class BotoS3ContentUnit(ContentUnit):
 	"""
@@ -162,12 +177,15 @@ class BotoS3ContentUnit(ContentUnit):
 		return new_key
 
 	def read_contents( self ):
-		return self.key.get_contents_as_string()
+		return _read_key( self.key )
 
 	def read_contents_of_sibling_entry( self, sibling_name ):
+		data = None
 		if self.key:
 			new_key = self.does_sibling_entry_exist( sibling_name )
-			return new_key.get_contents_as_string() if new_key else None
+			data = _read_key( new_key )
+		return data
+
 
 	@repoze.lru.lru_cache( 1, cache=_exist_cache )
 	def does_sibling_entry_exist( self, sibling_name ):

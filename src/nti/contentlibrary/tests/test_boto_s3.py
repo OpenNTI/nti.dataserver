@@ -13,6 +13,7 @@ from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import is_not
 from hamcrest import not_none
+from hamcrest import none
 from hamcrest import same_instance
 from hamcrest import has_property
 
@@ -23,8 +24,10 @@ from zope import interface
 from zope import component
 
 from ..boto_s3 import BotoS3ContentUnit
+from ..boto_s3 import _read_key as read_key
 
-
+from cStringIO import StringIO
+import gzip
 
 from nti.tests import ConfiguringTestBase
 
@@ -81,3 +84,32 @@ class TestBotoCDNKeyMapper(ConfiguringTestBase):
 		externalization.map_all_buckets_to( 'cloudfront.amazon.com' )
 		assert_that( interfaces.IAbsoluteContentUnitHrefMapper( key ),
 					 has_property( 'href', '//cloudfront.amazon.com/mathcounts2012/index.html' ) )
+
+
+	def test_read_contents( self ):
+		class Key(object):
+			bucket = None
+			name = None
+			contents = ''
+			content_encoding = None
+
+			def __init__( self, bucket=None, name=None ):
+				if bucket: self.bucket = bucket
+				if name: self.name = name
+
+			def get_contents_as_string(self):
+				return self.contents
+
+		assert_that( read_key( None ), is_( none() ) )
+		assert_that( read_key( Key() ), is_( '' ) )
+
+		key = Key()
+		key.content_encoding = 'gzip'
+		strio = StringIO()
+		gzipped = gzip.GzipFile( fileobj=strio, mode='wb' )
+		gzipped.write( 'The contents' )
+		gzipped.close()
+		data = strio.getvalue()
+		key.contents = data
+
+		assert_that( read_key( key ), is_( 'The contents' ) )

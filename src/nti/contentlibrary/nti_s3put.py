@@ -245,6 +245,7 @@ def main():
 GZIP_TYPES = ('text/html', 'text/xml', 'application/xml', 'application/json', 'application/javascript')
 # The server isn't yet ready to handle
 # some compressed files, notably the toc/dublin core file and the assessment_index.
+# TODO: These exemptions can probably go away now with the changes in boto_s3 to support gzip
 NOT_GZIP_EXT = ('.xml', '.json' )
 
 def _upload_file( key, fullpath, cb=None, num_cb=None,  policy=None, reduced_redundancy=None, headers=None ):
