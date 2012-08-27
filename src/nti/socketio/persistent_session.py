@@ -27,6 +27,8 @@ import nti.socketio.protocol
 from nti.socketio import interfaces as sio_interfaces
 from nti.socketio.interfaces import SocketSessionConnectedEvent, SocketSessionDisconnectedEvent
 
+import ZODB.POSException
+
 @interface.implementer(sio_interfaces.ISocketSession,IAttributeAnnotatable)
 class AbstractSession(persistent.Persistent):
 	"""
@@ -77,19 +79,32 @@ class AbstractSession(persistent.Persistent):
 		return nti.socketio.protocol.SocketIOSocket( self )
 
 	def __str__(self):
-		result = ['[session_id=%r' % self.session_id]
-		result.append(self.state)
-		result.append( 'owner=%s' % self.owner )
-		result.append( 'client_queue[%s]' % len(self.client_queue))
-		result.append( 'server_queue[%s]' % len(self.server_queue))
-		result.append( 'hits=%s' % self._hits.value)
-		result.append( 'confirmed=%s' % self.connection_confirmed )
-		result.append( 'id=%s]'% id(self) )
-		return ' '.join(result)
+		try:
+			result = ['[session_id=%r' % self.session_id]
+			result.append(self.state)
+			result.append( 'owner=%s' % self.owner )
+			result.append( 'client_queue[%s]' % len(self.client_queue))
+			result.append( 'server_queue[%s]' % len(self.server_queue))
+			result.append( 'hits=%s' % self._hits.value)
+			result.append( 'confirmed=%s' % self.connection_confirmed )
+			result.append( 'id=%s]'% id(self) )
+			return ' '.join(result)
+		except (ZODB.POSException.ConnectionStateError,AttributeError):
+			# This most commonly (only?) comes up in unit tests when nose defers logging of an
+			# error until after the transaction has exited. There will
+			# be other log messages about trying to load state when connection is closed,
+			# so we don't need to try to log it as well
+			return object.__str__(self)
 
 	def __repr__(self):
-		result = '<%s/%s/%s at %s>' % (type(self), self.session_id, self.state, id(self))
-		return result
+		try:
+			return '<%s/%s/%s at %s>' % (type(self), self.session_id, self.state, id(self))
+		except (ZODB.POSException.ConnectionStateError,AttributeError):
+			# This most commonly (only?) comes up in unit tests when nose defers logging of an
+			# error until after the transaction has exited. There will
+			# be other log messages about trying to load state when connection is closed,
+			# so we don't need to try to log it as well
+			return object.__repr__(self)
 
 	@property
 	def connected(self):
