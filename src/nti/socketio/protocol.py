@@ -183,7 +183,7 @@ class SocketIOProtocolFormatter1(object):
 			ve.message = 'Unknown message type'
 			raise ve
 
-		msg_type, msg_id, tail = data.split(":", 2)
+		msg_type, msg_id, tail = data.split(b":", 2)
 
 		# 'disconnect'
 		# 'connect'
@@ -196,30 +196,30 @@ class SocketIOProtocolFormatter1(object):
 		# 'noop'  -- not handled
 
 
-		if msg_type == "0": # disconnect
+		if msg_type == b"0": # disconnect
 			return DisconnectMessage()
 
-		if msg_type == "1": # connect
+		if msg_type == b"1": # connect
 			return ConnectMessage( data=tail )
 
 
-		if msg_type == "2": # heartbeat
+		if msg_type == b"2": # heartbeat
 			return HeartbeatMessage()
 
 
 		message = None
-		msg_endpoint, data = tail.split(":", 1)
+		msg_endpoint, data = tail.split(b":", 1)
 		assert msg_endpoint is not None
 
 		data = data.decode( 'utf-8', 'replace' )
-		if msg_type == "3": # message
+		if msg_type == b"3": # message
 			message = MessageMessage(
 				type='message',
 				data=data )
-		elif msg_type == "4": # json
+		elif msg_type == b"4": # json
 			message = self._parse_data(data)
 			message = JsonMessage(message)
-		elif msg_type == "5": # event
+		elif msg_type == b"5": # event
 			message = self._parse_data(data)
 			message = EventMessage( message )
 
@@ -230,7 +230,7 @@ class SocketIOProtocolFormatter1(object):
 			if not isinstance( message.get( 'args' ), list ):
 				raise ValueError( 'Improper event, missing args', message )
 
-			if "+" in msg_id:
+			if b"+" in msg_id:
 				message['id'] = msg_id
 			else:
 				pass # TODO send auto ack
