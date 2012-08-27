@@ -196,13 +196,15 @@ class ExampleDatabaseInitializer(object):
 			if self.skip_passwords:
 				# this can speed up creation a lot, the encrpytion is slow. This matters for test cases.
 				password = None
-
-			user = User.create_user( username=uname, password=password, dataserver=mock_dataserver )
+				
+			args = {'username':uname, 'password':password,'dataserver':mock_dataserver}
+			ext_value = {}
+			ext_value['email'] = unicode(uname)
+			ext_value['realname'] = user_tuple[1]
+			ext_value['alias'] = user_tuple[1].split()[0]
+			args['external_value'] = ext_value
+			user = User.create_user( **args )
 			register_user( user )
-			names = user_interfaces.IFriendlyNamed(user)
-			names.realname = user_tuple[1]
-			names.alias = user_tuple[1].split()[0]
-			names.email = uname
 			for c in communities:
 				if	(c.alias == self.nti_testers and is_test_user) or \
 					(c.alias != self.nti_testers and not is_test_user):
