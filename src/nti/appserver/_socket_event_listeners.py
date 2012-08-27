@@ -18,8 +18,14 @@ def _is_user_online(dataserver, username, ignoring_session=None):
 	:return: A value that can be used as a boolean saying the user is online. In reality,
 		it will be an iterable of the user's sessions.
 	"""
-	sessions = set(dataserver.sessions.get_sessions_by_owner(username))
-	if ignoring_session: sessions.discard( ignoring_session )
+	try:
+		sessions = set(dataserver.sessions.get_sessions_by_owner(username))
+	except KeyError: # Hmm. session_storage.py reports some inconsistency errors sometimes. Which is bad
+		logger.exception( "Failed to get all sessions for owner %s", username )
+		sessions = set()
+
+	if ignoring_session:
+		sessions.discard( ignoring_session )
 	return sessions
 
 def _notify_friends_of_presence( session, presence ):
