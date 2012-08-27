@@ -35,13 +35,11 @@ class pageref(Crossref.pageref):
 	def getPageNameForRef(self):
 		#Look up the dom tree until we find something
 		#that would create a file
-		print("******")
 		fileNode = self.idref['label']
 		while not getattr(fileNode, 'title', None) and getattr(fileNode, 'parentNode', None):
 			fileNode = fileNode.parentNode
 
 		if hasattr(fileNode, 'title'):
-			print(getattr(fileNode.title, 'textContent', fileNode.title))
 			return getattr(fileNode.title, 'textContent', fileNode.title)
 
 		return None
