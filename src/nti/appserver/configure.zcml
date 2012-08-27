@@ -64,7 +64,7 @@
 			 for="nti.dataserver.containers.LastModifiedBTreeContainer"
 			 provides=".interfaces.IContentUnitPreferences" />
 
-	<adapter factory=".contentlibrary_views._FilesystemContentUnitPreferencesFactory"
+	<adapter factory=".contentlibrary_views._DelimitedHierarchyContentUnitPreferencesFactory"
 			 provides=".interfaces.IContentUnitPreferences" />
 
 	<adapter factory=".contentlibrary_views._ContainerFieldsTraversable"
