@@ -116,6 +116,9 @@ class _LocalContentMixin(object):
 		self._asm_local_content = _asm_rendered_textcontent( self )
 
 # Handle custom counter names
+class naquestionsetname(Base.Command):
+	unicode = ''
+
 class naquestionname(Base.Command):
 	unicode = ''
 
@@ -523,6 +526,7 @@ def ProcessOptions( options, document ):
 
 	document.context.newcounter( 'naqsolutionnum' )
 	document.context.newcounter( 'naquestion' )
+	document.context.newcounter( 'naquestionset' )
 
 @interface.implementer(interfaces.IAssessmentExtractor)
 @component.adapter(cdr_interfaces.IRenderedBook)
