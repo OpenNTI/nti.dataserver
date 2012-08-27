@@ -8,6 +8,8 @@ import sys
 from zope import interface
 from zope import component
 
+from nti.externalization.externalization import to_external_object
+
 from nti.dataserver import shards as nti_shards
 from nti.dataserver import users
 from nti.dataserver import providers
@@ -35,6 +37,12 @@ def main():
 	arg_parser.add_argument( '-n', '--name',
 							 dest='name',
 							 help="The realname of the user" )
+	arg_parser.add_argument( '--email',
+							 dest='email',
+							 help="The email address of the user" )
+	arg_parser.add_argument( '--birthdate',
+							 dest='birthdate',
+							 help="The birthdate of the user in YYYY-MM-DD form" )
 	arg_parser.add_argument( '-c', '--communities',
 							 dest='communities',
 							 nargs="+",
@@ -103,11 +111,18 @@ def _create_user( factory, username, password, realname, communities=(), options
 	args = {'username': username}
 	if password:
 		args['password'] = password
+	ext_value = {}
+	# TODO: We could almost pass the options argument itself. It's dict-like
+	if options.email:
+		ext_value['email'] = unicode(options.email)
+	if options.name:
+		ext_value['realname'] = unicode(options.name)
+	if options.birthdate:
+		ext_value['birthdate'] = unicode(options.birthdate)
+
+	args['external_value'] = ext_value
 	user = factory( **args )
 	if nti_interfaces.IUser.providedBy( user ):
-		if realname:
-			names = user_interfaces.IFriendlyNamed( user, None )
-			names.realname = unicode(realname)
 		for com_name in communities:
 			community = users.Entity.get_entity( com_name, default='' )
 			if community:
@@ -117,3 +132,10 @@ def _create_user( factory, username, password, realname, communities=(), options
 		if options.coppa and not nti_interfaces.ICoppaUserWithoutAgreement.providedBy( user ):
 			logger.info( "Applying coppa to %s", user )
 			interface.alsoProvides( user, nti_interfaces.ICoppaUserWithoutAgreement )
+
+
+	if options.verbose:
+		import pprint
+		pprint.pprint( to_external_object( user ) )
+
+	return user
