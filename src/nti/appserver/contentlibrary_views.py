@@ -123,13 +123,13 @@ def _ContainerContentUnitPreferencesFactory(container):
 
 ###
 # We can also look for preferences on the actual content unit
-# itself. We provide an adapter for IFilesystemContentUnit, because
+# itself. We provide an adapter for IDelimitedHierarchyContentUnit, because
 # we know that :mod:`nti.contentlibrary.eclipse` may set up sharedWith
 # values for us.
 ###
 @interface.implementer(app_interfaces.IContentUnitPreferences)
-@component.adapter(lib_interfaces.IFilesystemContentUnit)
-def _FilesystemContentUnitPreferencesFactory(content_unit):
+@component.adapter(lib_interfaces.IDelimitedHierarchyContentUnit)
+def _DelimitedHierarchyContentUnitPreferencesFactory(content_unit):
 	sharedWith = getattr( content_unit, 'sharedWith', None )
 	if sharedWith is None:
 		return None
