@@ -80,8 +80,8 @@ class OwnerBasedAnnotationSessionServiceStorage(persistent.Persistent):
 	def register_session( self, session ):
 		session_id = self.intids.register( session )
 		session.id = hex(session_id).encode( 'ascii' )
-		logger.info( 'Created session id %s', session.id )
 		_session_id_set_for_session_owner( session.owner, self.family ).add( session_id )
+		logger.info( 'Registered session id %s for %s', session.id, session.owner )
 
 	def get_session( self, session_id ):
 		# The session id is supposed to come in as the base 16 session id we created
@@ -98,9 +98,11 @@ class OwnerBasedAnnotationSessionServiceStorage(persistent.Persistent):
 			pass
 
 	def get_sessions_by_owner( self, session_owner ):
-		session_ids = _session_id_set_for_session_owner( session_owner, self.family, default={} )
+		session_ids = _session_id_set_for_session_owner( session_owner, self.family, default={}, create=False )
 		for sid in session_ids:
+			__traceback_info__ = session_owner, session_ids, sid
 			session = self.intids.getObject( sid ) # If the object doesn't exist, we have an inconsistency!
+			# FIXME: The inconsistency has popped up a couple times in prod. How? Why? Who? What for?
 			yield session
 
 	def unregister_session( self, session ):
@@ -112,6 +114,7 @@ class OwnerBasedAnnotationSessionServiceStorage(persistent.Persistent):
 		discard( _session_id_set_for_session_owner( session.owner, self.family ),
 				 session_id )
 		self.intids.unregister( session )
+		logger.info( "Unregistered session %s for %s", session_id, session.owner )
 
 	def unregister_all_sessions_for_owner( self, session_owner ):
 		session_ids = _session_id_set_for_session_owner( session_owner, None, default={}, create=False )
@@ -120,6 +123,7 @@ class OwnerBasedAnnotationSessionServiceStorage(persistent.Persistent):
 				session = self.intids.getObject( sid )
 				self.intids.unregister( session )
 			session_ids.clear()
+			logger.info( "Unregisterad all sessions for %s", session_owner )
 
 @component.adapter(nti_interfaces.IUser, IObjectRemovedEvent)
 def _remove_sessions_for_removed_user( user, event ):
