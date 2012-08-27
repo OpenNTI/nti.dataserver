@@ -113,8 +113,8 @@ class _UserSearchView(object):
 					if partialMatch in section.ID.lower() or partialMatch in section.Description.lower():
 						result.append( section )
 
-			if not result:
-				result += uid_matches
+			if uid_matches:
+				result.extend(uid_matches)
 
 			if not result:
 				warnings.warn( "Hack for UI: looking at display names of communities" )
