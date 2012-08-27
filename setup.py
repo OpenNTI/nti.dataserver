@@ -22,7 +22,10 @@ entry_points = {
 		"nti_index_listener = nti.appserver.application:index_listener_main",
 		"nti_reindex_user_content = nti.contentsearch.utils.nti_reindex_user_content:main",
 		"nti_remove_user_search_content = nti.contentsearch.utils.nti_remove_user_content:main",
-		"nti_s3put = nti.contentlibrary.nti_s3put:main"
+		"nti_s3put = nti.contentlibrary.nti_s3put:main",
+		"nti_gslopinionexport = nti.contentrendering.gslopinionexport:main",
+		"nti_jsonpbuilder = nti.contentrendering.jsonpbuilder:main",
+		"nti_default_root_sharing_setter = nti.contentrendering.default_root_sharing_setter:main"
 	],
 	"paste.app_factory": [
 		"main = nti.appserver.standalone:configure_app",
