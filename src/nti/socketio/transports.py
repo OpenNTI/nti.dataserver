@@ -95,7 +95,7 @@ class XHRPollingTransport(BaseTransport):
 	def get(self, session):
 		session.clear_disconnect_timeout()
 		session_service = component.getUtility( nti_interfaces.IDataserver ).session_manager
-
+		result = None
 		try:
 			# A dead session will feed us a None object
 			# whereupon...we blow up...
@@ -120,12 +120,14 @@ class XHRPollingTransport(BaseTransport):
 
 			if not messages:
 				raise Empty()
-			message = session.socket.protocol.encode_multi( messages )
+			result = session.socket.protocol.encode_multi( messages )
 		except (Empty,IndexError):
-			message = session.socket.protocol.make_noop()
+			result = session.socket.protocol.make_noop()
+
+		__traceback_info__ = session, messages, result
 
 		response = self.request.response
-		response.body = message
+		response.body = result
 		return response
 
 	def _request_body(self):
