@@ -123,7 +123,7 @@ class OwnerBasedAnnotationSessionServiceStorage(persistent.Persistent):
 				session = self.intids.getObject( sid )
 				self.intids.unregister( session )
 			session_ids.clear()
-			logger.info( "Unregisterad all sessions for %s", session_owner )
+			logger.info( "Unregistered all sessions for %s", session_owner )
 
 @component.adapter(nti_interfaces.IUser, IObjectRemovedEvent)
 def _remove_sessions_for_removed_user( user, event ):
