@@ -52,7 +52,8 @@ class _ServiceGetView(object):
 		username = sec.authenticated_userid( self.request )
 		ds = self.request.registry.getUtility(IDataserver)
 		user = users.User.get_user( username, dataserver=ds )
-
+		if not user:
+			raise hexc.HTTPForbidden()
 		service = self.request.registry.getAdapter( user, app_interfaces.IService )
 		#service.__parent__ = self.request.context
 		return service

@@ -126,7 +126,10 @@ def _handshake_view( request ):
 	"""
 	# TODO: Always creating a session here is a potential DOS?
 	# We need to require them to be authenticated
-	session = _create_new_session(request)
+	try:
+		session = _create_new_session(request)
+	except KeyError: #Currently this means user DNE. see dataserver/session_storage.py # TODO: Something better
+		raise hexc.HTTPForbidden()
 	#data = "%s:15:10:jsonp-polling,htmlfile" % (session.session_id,)
 	# session_id:heartbeat_seconds:close_timeout:supported_type, supported_type
 	handler_types = [x[0] for x in component.getAdapters( (request,), nti.socketio.interfaces.ISocketIOTransport)]

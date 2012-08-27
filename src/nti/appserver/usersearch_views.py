@@ -116,7 +116,7 @@ class _UserSearchView(object):
 			if uid_matches:
 				result.extend(uid_matches)
 
-			if not result:
+			if not result and remote_user:
 				warnings.warn( "Hack for UI: looking at display names of communities" )
 				for x in remote_user.communities:
 					x = users.Entity.get_entity( x )
