@@ -258,6 +258,26 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 			assert_that( other_user.notificationCount, has_property( 'value', 2 ) )
 
 
+			# If the child shares something unrelated, it is visible to the creator
+			with child_user.updates():
+				child_note = Note()
+				child_note.creator = child_user
+				child_note.body = ['From the child']
+				child_note.containerId = 'tag:nti2'
+				child_note.applicableRange = ContentRangeDescription()
+				child_note.addSharingTarget( parent_dfl )
+
+				assert_that( child_note, has_property( 'sharingTargets', set((parent_dfl,)) ) )
+
+				child_user.addContainedObject( child_note )
+
+			parent_shared_cont = parent_user.getSharedContainer( child_note.containerId )
+			assert_that( parent_shared_cont, has_length( 1 ) )
+			assert_that( parent_shared_cont, contains( child_note ) )
+			parent_stream = parent_user.getContainedStream( child_note.containerId )
+			assert_that( parent_stream, has_length( 1 ) )
+
+
 	@WithMockDSTrans
 	def test_cannot_create_twice(self):
 		user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
