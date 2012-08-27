@@ -59,10 +59,18 @@ class TestSocketIOProtocolFormatter1(AbstractTestBase):
 
 	def test_decode_json( self ):
 		for decoder in (self.protocol.decode, lambda x: self.protocol.decode_multi(x)[0]):
-			for s in ( u'4:::{}', b'4:::{}' ):
+			for s in ( u'4:::{}', b'4:::{}', ):
 				msg = decoder( s )
 				assert_that( msg, is_( protocol.JsonMessage ) )
 				assert_that( msg, has_length(  0 ) )
+
+	def test_decode_json_unicode( self ):
+		for decoder in (self.protocol.decode, lambda x: self.protocol.decode_multi(x)[0]):
+			for s in ( b'4:::{"str": "\xc3\xb6"}', ): # umlaut o
+				msg = decoder( s )
+				assert_that( msg, is_( protocol.JsonMessage ) )
+				assert_that( msg, has_length(  1 ) )
+
 
 	def test_decode_event( self ):
 		for decoder in (self.protocol.decode, lambda x: self.protocol.decode_multi(x)[0]):
