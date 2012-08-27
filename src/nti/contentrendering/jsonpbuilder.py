@@ -45,10 +45,10 @@ class _JSONPWrapper(object):
 			json.dump(self.data, file)
 			file.write(');')
 
-def main(args):
+def main():
 	""" Main program routine """
 
-	contentLocation = args[0]
+	contentLocation = sys.argv[1]
 
 	xmlconfig.file( 'configure.zcml', package=nti.contentrendering )
 	zope_conf_name = os.path.join( contentLocation, '..', 'configure.zcml' )
@@ -93,4 +93,4 @@ def _process_topic( topic, contentLocation ):
 		_process_topic( child, contentLocation )
 
 if __name__ == '__main__':
-	main( sys.argv[1:] )
+	main()
