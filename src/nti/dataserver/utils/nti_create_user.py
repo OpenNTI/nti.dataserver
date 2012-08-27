@@ -105,9 +105,9 @@ def _create_user( factory, username, password, realname, communities=(), options
 		args['password'] = password
 	user = factory( **args )
 	if nti_interfaces.IUser.providedBy( user ):
-		names = user_interfaces.IFriendlyNamed( user )
 		if realname:
-			names.realname = realname
+			names = user_interfaces.IFriendlyNamed( user, None )
+			names.realname = unicode(realname)
 		for com_name in communities:
 			community = users.Entity.get_entity( com_name, default='' )
 			if community:
