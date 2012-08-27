@@ -53,6 +53,8 @@ def _create_page_info(request, href, ntiid, last_modified=0, jsonp_href=None):
 	# This way we get the correct link structure
 
 	remote_user = users.User.get_user( sec.authenticated_userid( request ), dataserver=request.registry.getUtility(nti_interfaces.IDataserver) )
+	if not remote_user:
+		raise hexc.HTTPForbidden()
 	user_service = request.registry.getAdapter( remote_user, app_interfaces.IService )
 	user_workspace = user_service.user_workspace
 	pages_collection = user_workspace.pages_collection
