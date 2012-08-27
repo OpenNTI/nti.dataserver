@@ -146,9 +146,9 @@ class SocketIOProtocolFormatter1(object):
 		:return: A byte string. If there was more than one message, this will be a framed
 			string. Otherwise, it will be equivalent to the first object in messages.
 		"""
-		if not messages:
+		if messages is None or len(messages) == 0:
 			# Hmm, nothing to do. Caller error?
-			return
+			raise ValueError( "Invalid multi-message sequence." )
 
 		if len(messages) == 1:
 			msg = messages[0]

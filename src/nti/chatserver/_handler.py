@@ -218,13 +218,14 @@ class _ChatHandler(object):
 def ChatHandlerNotAvailable(*args):
 	return None
 
+@interface.implementer(sio_interfaces.ISocketEventHandler)
 def ChatHandlerFactory( socketio_protocol, chatserver=None ):
 	session = socketio_protocol.session if hasattr( socketio_protocol, 'session' ) else socketio_protocol
 	if session:
 		chatserver = component.queryUtility( interfaces.IChatserver ) if not chatserver else chatserver
 		user = users.User.get_user( session.owner )
 	if session and chatserver and user:
-		component.getMultiAdapter( (user, session, chatserver), chat_interfaces.IChatEventHandler )
-		return _ChatHandler( chatserver, session )
+		handler = component.queryMultiAdapter( (user, session, chatserver), chat_interfaces.IChatEventHandler )
+		return handler
 	logger.warning( "No session (%s) or chatserver (%s) or user (%r=%s); could not create event handler.",
 					session, chatserver, getattr( session, 'owner', None ), user )
