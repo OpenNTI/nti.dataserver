@@ -91,6 +91,7 @@ setup(
 		# 'MySQL-python', # mysql adapter
 		# # See also umysqldb for a mysql adapter that should be gevent compat, with same API
 		# 'RelStorage',
+		# See also http://pypi.python.org/pypi/neoppod/ for a completely different option
 		'anyjson >= 0.3.3',
 		'boto >= 2.5.2', # amazon
 		'brownie >= 0.5.1', # Common utilities

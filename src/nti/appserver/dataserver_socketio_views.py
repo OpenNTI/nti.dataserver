@@ -211,13 +211,9 @@ def _connect_view( request ):
 			raise hexc.HTTPUnauthorized()
 
 
-	# If we're restoring a previous session, we
-	# must switch to using the protocol from
-	# it to preserve JSON vs plist and other settings
-	environ['socketio'] = session.new_protocol( ) # handler=environ['socketio'].handler )
-
 	# Make the session object available for WSGI apps
-	environ['socketio'].session = session
+	environ['socketio'] = session.socket
+	environ['socketio'].session = session # TODO: Needed anymore?
 
 	# Create a transport and handle the request likewise
 	transport = component.getAdapter( request, nti.socketio.interfaces.ISocketIOTransport, name=transport )
