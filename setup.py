@@ -170,7 +170,7 @@ setup(
 		'setuptools',
 		'simplejson >= 2.6.1',
 		'sympy == 0.7.1', # sympy-docs-html-0.7.1 is currently greater
-		'six >= 1.1.0',
+		'six >= 1.2.0',
 		'slimit',
 		'supervisor >= 3.0a12',
 		'transaction >= 1.3.0',
