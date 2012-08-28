@@ -6,7 +6,7 @@ from hamcrest import (assert_that, is_, none,
 					  has_entry, has_length, has_item,
 					  greater_than_or_equal_to, is_not,
 					  all_of, is_in)
-
+from hamcrest import contains
 from nti.appserver.workspaces import ContainerEnumerationWorkspace as CEW
 from nti.appserver.workspaces import UserEnumerationWorkspace as UEW
 from nti.appserver.workspaces import HomogeneousTypedContainerCollection as HTCW
@@ -202,11 +202,25 @@ from nti.dataserver.classes import ClassInfo, SectionInfo
 class TestUserService(tests.ConfiguringTestBase):
 
 	@mock_dataserver.WithMockDSTrans
+	def test_external_coppa_capabilities(self):
+		user = users.User.create_user( dataserver=self.ds, username='sjohnson@nextthought.com' )
+		interface.alsoProvides( user, nti_interfaces.ICoppaUserWithoutAgreement )
+		service = UserService( user )
+
+		ext_object = toExternalObject( service )
+		# No defined capabilities
+		assert_that( ext_object, has_entry( 'CapabilityList', has_length( 0 ) ) )
+
+
+	@mock_dataserver.WithMockDSTrans
 	def test_external(self):
 		user = users.User.create_user( dataserver=self.ds, username='sjohnson@nextthought.com' )
 		service = UserService( user )
 
 		ext_object = toExternalObject( service )
+		# The user should have some capabilities
+		assert_that( ext_object, has_entry( 'CapabilityList', has_item( u'nti.platform.p2p.chat' ) ) )
+		assert_that( ext_object, has_entry( 'CapabilityList', has_item( u'nti.platform.p2p.sharing' ) ) )
 		# The global workspace should have a Link
 		assert_that( ext_object['Items'][1], has_entry( 'Title', 'Global' ) )
 		assert_that( ext_object['Items'][1], has_entry( 'Links', has_item( has_entry( 'href', '/dataserver2/UserSearch' ) ) ) )

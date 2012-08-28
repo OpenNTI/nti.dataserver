@@ -46,8 +46,10 @@
 	<adapter factory=".workspaces.LibraryCollection" />
 	<adapter factory=".workspaces.WorkspaceExternalizer" />
 	<adapter factory=".workspaces.UserService"
-			 provides='.interfaces.IService'/>
+			 provides='.interfaces.IUserService'/>
 	<adapter factory=".workspaces.ServiceExternalizer" />
+	<adapter factory=".workspaces.UserServiceExternalizer"
+			 for=".interfaces.IUserService" />
 	<subscriber factory="._adapters._SectionInfoUserLikeDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"
 				/>
