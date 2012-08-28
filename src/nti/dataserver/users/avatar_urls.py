@@ -68,3 +68,24 @@ class GravatarComputedAvatarURL(object):
 			if gravatar_type:
 				break
 		self.avatarURL = create_gravatar_url( email, gravatar_type )
+
+@component.adapter(nti_interfaces.ICoppaUser)
+@interface.implementer(interfaces.IAvatarURL)
+class GravatarComputedCoppaAvatarURL(object):
+	"""
+	Coppa users aren't expected to have a valid email. Instead, they are
+	expected to have choosen one of a few gravatar types or possibly permutations
+	of usernames.
+	"""
+
+	defaultGravatarType = 'retro'
+
+	def __init__( self, context ):
+		email = context.username
+
+		gravatar_type = None
+		for x in (context, self):
+			gravatar_type = getattr( x, 'defaultGravatarType', None )
+			if gravatar_type:
+				break
+		self.avatarURL = create_gravatar_url( email, gravatar_type )

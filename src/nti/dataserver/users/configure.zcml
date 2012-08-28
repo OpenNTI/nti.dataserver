@@ -58,9 +58,14 @@
 	<adapter factory=".avatar_urls.GravatarComputedAvatarURL"
 			 name="generated" />
 	<!-- Default for Koppa Kids -->
-	<adapter factory=".avatar_urls.GravatarComputedAvatarURL"
+	<adapter factory=".avatar_urls.GravatarComputedCoppaAvatarURL"
 			 provides=".interfaces.IAvatarURL"
 			 for="nti.dataserver.interfaces.ICoppaUser" />
+	<!-- Fallback for KK, just in case -->
+	<adapter factory=".avatar_urls.GravatarComputedCoppaAvatarURL"
+			 provides=".interfaces.IAvatarURL"
+			 for="nti.dataserver.interfaces.ICoppaUser"
+			 name="generated" />
 
 
 	<!-- User profile info -->
