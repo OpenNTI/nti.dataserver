@@ -708,9 +708,10 @@ class _ProviderCollection(object):
 					result.append( contained_type )
 		return result
 
+@interface.implementer(app_interfaces.IUserService, mime_interfaces.IContentTypeAware)
+@component.adapter(model_interfaces.IUser)
 class UserService(object):
-	interface.implements( app_interfaces.IService, mime_interfaces.IContentTypeAware )
-	component.adapts( users.User )
+
 	# Is this an adapter? A multi adapter?
 
 	mime_type = mimetype.nti_mimetype_with_class( 'workspace' )
@@ -719,14 +720,14 @@ class UserService(object):
 	__parent__ = None
 
 	def __init__( self, user ):
-		self._user = user
+		self.user = user
 		self.__parent__ = component.getUtility( model_interfaces.IDataserver ).root
 
 	@property
 	def user_workspace(self):
 		# The main user workspace lives at /users/ME/
-		user_workspace = UserEnumerationWorkspace( self._user )
-		user_workspace.__name__ = self._user.username
+		user_workspace = UserEnumerationWorkspace( self.user )
+		user_workspace.__name__ = self.user.username
 		user_workspace.__parent__ = self
 		return user_workspace
 
@@ -744,7 +745,7 @@ class UserService(object):
 			# Inject the library at /users/ME/Library
 			tr = location.Location()
 			tr.__parent__ = self
-			tr.__name__ = self._user.username
+			tr.__name__ = self.user.username
 			lib_ws = LibraryWorkspace( _library )
 			lib_ws.__parent__ = tr
 			result.append( lib_ws )
@@ -766,15 +767,32 @@ class UserService(object):
 
 		return result
 
+@interface.implementer(ext_interfaces.IExternalObject)
+@component.adapter(app_interfaces.IService)
 class ServiceExternalizer(object):
-	interface.implements(ext_interfaces.IExternalObject)
-	component.adapts(app_interfaces.IService)
 
 	def __init__( self, service ):
-		self._service = service
+		self.context = service
 
 	def toExternalObject( self ):
 		result = LocatedExternalDict()
+		result.__parent__ = self.context.__parent__
+		result.__name__ = self.context.__name__
 		result[StandardExternalFields.CLASS] = 'Service'
-		result['Items'] = [toExternalObject(ws) for ws in self._service.workspaces]
+		result[StandardExternalFields.MIMETYPE] = mimetype.nti_mimetype_with_class( 'Service' )
+		result['Items'] = [toExternalObject(ws) for ws in self.context.workspaces]
+		return result
+
+@component.adapter(app_interfaces.IUserService)
+class UserServiceExternalizer(ServiceExternalizer):
+
+	def toExternalObject(self):
+		result = super(UserServiceExternalizer,self).toExternalObject()
+		# TODO: This is hardcoded. Needs replaced with something dynamic.
+		# Querying the utilities for the user, which would be registered for specific
+		# IUser types or something...
+		capabilities = set( ('nti.platform.p2p.chat', 'nti.platform.p2p.sharing') )
+		if model_interfaces.ICoppaUserWithoutAgreement.providedBy( self.context.user ):
+			capabilities = ()
+		result['CapabilityList'] = list( capabilities )
 		return result

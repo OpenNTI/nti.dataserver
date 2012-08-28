@@ -86,6 +86,13 @@ class IService(ILocationAware):
 	workspaces = schema.Iterable(
 		u"The workspaces of this service" )
 
+class IUserService(IService):
+	"""
+	A service for a particular user.
+	"""
+	user_workspace = Object( IWorkspace, title="The main workspace for the user" )
+	user = Object(nti_interfaces.IUser, title="The user" )
+
 class IContentUnitInfo(ILocation, nti_interfaces.ILastModified, nti_interfaces.ILinked):
 	"""
 	Information about a particular bit of content and the links it contains.
