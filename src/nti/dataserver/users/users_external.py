@@ -130,7 +130,6 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 		"""
 		:return: the externalization intended to be sent when requested by this user.
 		"""
-
 		from nti.dataserver._Dataserver import InappropriateSiteError # circular imports
 		extDict = super(_UserPersonalSummaryExternalObject,self).toExternalObject()
 		def ext( l, name='summary' ):
