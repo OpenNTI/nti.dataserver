@@ -161,7 +161,12 @@ class _NTIUsers(object):
 		# Because we are both part of a middleware and the pyramid
 		# auth policy, we can get called both already authenticated
 		# and not-authenticated.
-		# TODO: Cache the groups results
+		# NOTE: we are caching the group results as part of the userid dictionary,
+		# which means they cannot change during a request.
+
+		if 'nti.dataserver.groups' in userid:
+			return userid['nti.dataserver.groups']
+
 		if 'repoze.who.userid' in userid:
 			result = self._query_groups( userid['repoze.who.userid'], request.registry )
 		elif 'login' in userid and 'password' in userid:
@@ -169,6 +174,8 @@ class _NTIUsers(object):
 			if self.user_has_password( username, password ):
 				result = self._query_groups( username, component )
 
+		if result is not None:
+			userid['nti.dataserver.groups'] = result
 		return result
 
 def _make_user_auth():

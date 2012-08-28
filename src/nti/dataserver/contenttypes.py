@@ -138,7 +138,12 @@ class _UserContentRoot(sharing.ShareableMixin, datastructures.ContainedMixin, da
 		# with the external value of the username, such as with DynamicFriendsLists
 		ext_shared_with = []
 		for entity in self.sharingTargets:
-			ext_shared_with.append( toExternalObject( entity )['Username'] )
+			# NOTE: This entire process does way too much work for as often as this
+			# is called so we hack this and couple it tightly to when we think
+			# we need to use it
+			#ext_shared_with.append( toExternalObject( entity )['Username'] )
+			username = entity.username if isinstance(entity,users.User) else toExternalObject(entity)['Username']
+			ext_shared_with.append( username )
 
 		extDict['sharedWith'] = ext_shared_with
 		return extDict
