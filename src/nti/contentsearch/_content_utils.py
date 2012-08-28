@@ -348,7 +348,7 @@ class _ContentTokenizer(object):
 
 	def tokenize(self, content):
 		if not content or not isinstance(content, six.string_types):
-			return ''
+			return u''
 
 		plain_text = component.getAdapter( content, frg_interfaces.IPlainTextContentFragment, name='text' )
 		words = self.tokenizer.tokenize(plain_text)
