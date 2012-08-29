@@ -10,10 +10,19 @@ process, where there are page redirects happening frequently.
 
 .. py:data:: REL_CREATE_ACCOUNT
 
-	The link relationship type for a link used to create an account. Also
-	serves as a view name for that same purpose. Unauthenticated users
-	will be given a link with this rel ("account.create") at logon ping
-	and handshake time.
+	The link relationship type for a link used to create an account.
+	Also serves as a view name for that same purpose
+	(:func:`account_create_view`). Unauthenticated users will be given
+	a link with this rel ("account.create") at logon ping and
+	handshake time.
+
+.. py:data:: REL_PREFLIGHT_CREATE_ACCOUNT
+
+	The link relationship type for a link used to preflight fields to
+	be used to create an account. Also serves as a view name for that
+	same purpose (:func:`account_preflight_view`). Unauthenticated
+	users will be given a link with this rel
+	("account.preflight.create") at logon ping and handshake time.
 
 $Id$
 """
@@ -26,6 +35,8 @@ logger = __import__('logging').getLogger(__name__)
 import sys
 
 import simplejson as json
+
+from zope import component
 
 import zope.schema
 import zope.schema.interfaces
@@ -43,6 +54,7 @@ from pyramid import security as sec
 import nti.appserver.httpexceptions as hexc
 
 REL_CREATE_ACCOUNT = "account.create"
+REL_PREFLIGHT_CREATE_ACCOUNT = "account.preflight.create"
 
 def _raise_error( request,
 				  factory,
@@ -64,28 +76,7 @@ def _raise_error( request,
 	result.content_type = accept_type
 	raise result, None, tb
 
-@view_config(route_name='objects.generic.traversal',
-			 name=REL_CREATE_ACCOUNT,
-			 request_method='POST',
-			 renderer='rest')
-def account_create_view(request):
-	"""
-	Creates a new account (i.e., a new user object), if possible and such a user
-	does not already exist. This is only allowed for unauthenticated requests right now.
-
-	The act of creating the account, if successful, also logs the user in and the appropriate headers
-	are returned with the response.
-
-	The input to this view is the JSON for a User object. Minimally, the 'Username' and 'password'
-	fields must be populated; this view ensures they are. The User object may impose additional
-	constraints. The 'password' must conform to the password policy.
-	"""
-
-	if sec.authenticated_userid( request ):
-		raise hexc.HTTPForbidden( "Cannot create new account while logged on." )
-
-	# TODO: We are hardcoding the factory. Should we do that?
-	externalValue = obj_io.read_body_as_external_object(request)
+def _create_user( request, externalValue, preflight_only=False ):
 
 	try:
 		desired_userid = externalValue['Username'] # May throw KeyError
@@ -99,9 +90,8 @@ def account_create_view(request):
 		_raise_error( request, hexc.HTTPUnprocessableEntity,
 					  {'field': exc_info[1].message,
 					   'message': 'Missing data',
-					   'code': 'MissingKeyError'},
+					   'code': 'RequiredMissing'},
 					  exc_info[2] )
-
 
 	try:
 		# Now create the user, firing Created and Added events as appropriate.
@@ -114,7 +104,9 @@ def account_create_view(request):
 		# the user object has been updated (if it's based on interface). When we
 		# need different values, that falls over.
 		new_user = users.User.create_user( username=desired_userid,
-										   external_value=externalValue ) # May throw validation error
+										   external_value=externalValue,
+										   preflight_only=preflight_only ) # May throw validation error
+		return new_user
 	except zope.schema.interfaces.RequiredMissing as e:
 		exc_info = sys.exc_info()
 		_raise_error( request,
@@ -168,6 +160,31 @@ def account_create_view(request):
 					   exc_info[2] )
 
 
+
+@view_config(route_name='objects.generic.traversal',
+			 name=REL_CREATE_ACCOUNT,
+			 request_method='POST',
+			 renderer='rest')
+def account_create_view(request):
+	"""
+	Creates a new account (i.e., a new user object), if possible and such a user
+	does not already exist. This is only allowed for unauthenticated requests right now.
+
+	The act of creating the account, if successful, also logs the user in and the appropriate headers
+	are returned with the response.
+
+	The input to this view is the JSON for a User object. Minimally, the 'Username' and 'password'
+	fields must be populated; this view ensures they are. The User object may impose additional
+	constraints. The 'password' must conform to the password policy.
+	"""
+
+	if sec.authenticated_userid( request ):
+		raise hexc.HTTPForbidden( "Cannot create new account while logged on." )
+
+	# TODO: We are hardcoding the factory. Should we do that?
+	externalValue = obj_io.read_body_as_external_object(request)
+	new_user = _create_user( request, externalValue )
+
 	# Yay, we created one. Respond with the Created code, and location.
 	request.response.status_int = 201
 
@@ -182,3 +199,44 @@ def account_create_view(request):
 	logon_userid_with_request( new_user.username, request, request.response )
 
 	return new_user
+
+
+@view_config(route_name='objects.generic.traversal',
+			 name=REL_PREFLIGHT_CREATE_ACCOUNT,
+			 request_method='POST',
+			 renderer='rest')
+def account_preflight_view(request):
+	"""
+	Does a preflight check of the values being used during the process of account creation, returning
+	any error messages that occur.
+
+	The input to this view is the JSON for a User object. It must have at least the ``Username`` field, with
+	other missing fields being synthesized by this object to avoid conflict with the site policies. If
+	you do give other fields, then they will be checked in combination to see if the combination is valid.
+
+	"""
+
+	if sec.authenticated_userid( request ):
+		raise hexc.HTTPForbidden( "Cannot create new account while logged on." )
+
+
+	externalValue = obj_io.read_body_as_external_object(request)
+
+	placeholder_data = {'password': None,
+						'birthdate': '1982-01-31',
+						'email': 'testing_account_creation@tests.nextthought.com',
+						'realname': 'com.nextthought.account_creation_user' }
+
+	for k, v in placeholder_data.items():
+		if k not in externalValue:
+			externalValue[k] = v
+
+	if not externalValue['password']:
+		externalValue['password'] = component.getUtility( z3c.password.interfaces.IPasswordUtility ).generate()
+
+	_create_user( request, externalValue, preflight_only=True )
+
+
+	request.response.status_int = 200
+
+	return {}

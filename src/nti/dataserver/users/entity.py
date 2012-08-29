@@ -99,14 +99,27 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 		utility is available, it will be used. Otherwise, the utility named
 		``default`` (which is configured by this package) will be used.
 
+		This method fires :class:`nti.dataserver.users.interfaces.IWillUpdateNewEntityEvent`,
+		:class:`nti.dataserver.users.interfaces.IWillCreateNewEntityEvent`,
+		:class:`zope.lifecycleevent.IObjectCreatedEvent` and :class:`zope.lifecycleevent.IObjectAddedEvent`,
+		in that order.
+
 		:keyword dict external_value: Optional dictionary used to update the object
 			through the user externalization mechanisms. This is done
 			before the user is stored anywhere and any added/created events are
 			fired. No notifications are emitted during this process.
+		:keyword bool preflight_only: If ``False`` (the default), the user is created
+			as normal. If set to ``True``, then the process stops before the
+			:class:`zope.lifecycleevent.IObjectCreated` and :class:`zope.lifecycleevent.IObjectAdded`
+			events are fired, and the user object is not actually added to the database. When
+			``True``, the preflight object is not returned.
 		"""
 
 		dataserver = dataserver or _get_shared_dataserver()
 		root_users = dataserver.root[cls._ds_namespace]
+
+		preflight_only = kwargs.pop( 'preflight_only', False )
+
 		if 'parent' not in kwargs:
 			kwargs['parent'] = root_users
 
@@ -140,6 +153,12 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 		# Update from the external value, if provided
 		if ext_value:
 			nti.externalization.internalization.update_from_external_object( user, ext_value, context=dataserver, notify=False )
+
+		notify( interfaces.WillCreateNewEntityEvent( user ) )
+		if preflight_only:
+			if user.username in root_users:
+				raise KeyError( user.username )
+			return
 
 		lifecycleevent.created( user ) # Fire created event
 		# Must manually fire added event if parent was given

@@ -124,6 +124,21 @@ class IWillUpdateNewEntityEvent(zope.component.interfaces.IObjectEvent):
 class WillUpdateNewEntityEvent(zope.component.interfaces.ObjectEvent):
 	pass
 
+class IWillCreateNewEntityEvent(zope.component.interfaces.IObjectEvent):
+	"""
+	Fired before an
+	:class:`zope.lifecycleevent.interfaces.IObjectCreatedEvent` and
+	after a :class:`IWillUpdateNewEntityEvent` with an entity that is
+	in the process of being created by the factories. Externalization
+	details will have been filled in.
+
+	This is a good time to perform final validation of the entity.
+	"""
+
+@interface.implementer(IWillCreateNewEntityEvent)
+class WillCreateNewEntityEvent(zope.component.interfaces.ObjectEvent):
+	pass
+
 class IAvatarURL(Interface):
 	"""
 	Something that features a display URL.

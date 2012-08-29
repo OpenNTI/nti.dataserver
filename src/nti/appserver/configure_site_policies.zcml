@@ -6,6 +6,7 @@
 
 	<subscriber handler=".site_policies.dispatch_user_created_to_site_policy" />
 	<subscriber handler=".site_policies.dispatch_user_will_update_to_site_policy" />
+	<subscriber handler=".site_policies.dispatch_user_will_create_to_site_policy" />
 
 	<utility factory=".site_policies.MathcountsSitePolicyEventListener"
 			 name="mathcounts.nextthought.com"/>
