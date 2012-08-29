@@ -372,6 +372,9 @@ IGroupAwarePrincipal.__bases__ = tuple( itertools.chain( IGroupAwarePrincipal.__
 class IEntity(IZContained, IAnnotatable):
 	username = schema.TextLine( title=u'The username' )
 
+class ICommunity(IEntity):
+	pass
+	
 class IUser(IEntity,IContainerIterable):
 	"""
 	A user of the system. Notice this is not an IPrincipal.

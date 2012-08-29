@@ -18,9 +18,7 @@ from webtest import TestApp
 from nti.dataserver import users
 from nti.dataserver.tests import mock_dataserver
 
-from .test_application import ApplicationTestBase
-
-
+from nti.appserver.tests.test_application import ApplicationTestBase
 
 class TestApplicationUserSearch(ApplicationTestBase):
 
@@ -58,7 +56,7 @@ class TestApplicationUserSearch(ApplicationTestBase):
 		# It should take what the DS gives it.
 		# TODO: The security on this isn't very tight
 		path = '/dataserver2/UserSearch/' + dfl.NTIID.lower()
-		res = testapp.get( str(path), extra_environ=self._make_extra_environ('jason@nextthought.com'))
+		res = testapp.get( str(path), extra_environ=self._make_extra_environ('sjohnson@nextthought.com'))
 
 		member = res.json_body['Items'][0]
 		assert_that( member, has_entry( 'Username', dfl.NTIID ) )
