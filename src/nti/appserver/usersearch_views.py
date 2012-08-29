@@ -49,25 +49,7 @@ class _UserSearchView(object):
 		self.request = request
 		self.dataserver = self.request.registry.getUtility(nti_interfaces.IDataserver)
 
-	def get_user_communities(self, user):
-		result = list(user.communities) if user and nti_interfaces.IUser.providedBy(user) else ()
-		return result
-		
-	def share_a_community(self, a, b):
-		a_coms = set([u for u in self.get_user_communities(a) if u != 'Everyone'])
-		b_coms = set([u for u in self.get_user_communities(b) if u != 'Everyone'])
-		return a_coms.intersection(b_coms)
-	
-	def _check_relationship(self, remote_user, entity):
-		return	(remote_user == entity) or \
-				(nti_interfaces.IUser.providedBy(entity) and self.share_a_community(remote_user, entity) ) or \
-				(nti_interfaces.ICommunity.providedBy(entity) and entity.username in self.get_user_communities(remote_user)) or \
-				(nti_interfaces.IFriendsList.providedBy(entity) and entity.creator.username == remote_user.username )
-				
 	def __call__(self):
-		
-		#from IPython.core.debugger import Tracer;  Tracer()() 
-		
 		remote_user = users.User.get_user( sec.authenticated_userid( self.request ), dataserver=self.dataserver )
 		partialMatch = self.request.matchdict['term']
 		partialMatch = unicode(partialMatch or '').lower()
@@ -75,15 +57,13 @@ class _UserSearchView(object):
 		# optimize for that case--avoid waking all other users up
 		result = []
 
-		if not partialMatch or not remote_user:
+		if not partialMatch:
 			pass
 		elif users.Entity.get_entity( partialMatch ):
-			# NOTE: if ther is an exact match we want to make sure that is a comunity we belong to
-			# or is a user in one of our comunities	
-			entity = users.Entity.get_entity( partialMatch )
-			if self._check_relationship(remote_user, entity):
-				result.append( entity )
-				
+			# NOTE: If the partial match is an exact match but also a component
+			# it cannot be searched for. For example, a community named 'NextThought'
+			# prevents searching for 'nextthought' if you expect to match '@nextthought.com'
+			result.append( users.Entity.get_entity( partialMatch ) )
 			# NOTE2: Going through this API lets some private objects be found
 			# (DynamicFriendsLists, specifically). We should probably lock that down
 		else:
@@ -95,34 +75,35 @@ class _UserSearchView(object):
 			# if there are no other matches
 			uid_matches = []
 			for maybeMatch in _users.iterkeys():
-				
 				if isSyntheticKey( maybeMatch ):
 					continue
 
-				entity = users.Entity.get_entity( maybeMatch, dataserver=self.dataserver )
-				if not entity:
+				# TODO how expensive is it to actually look inside all these
+				# objects?  This almost certainly wakes them up?
+				# Our class name is UserMatchingGet, but we actually
+				# search across all entities, like Communities
+				userObj = users.Entity.get_entity( maybeMatch, dataserver=self.dataserver )
+				if not userObj:
 					continue
-				
-				if partialMatch in maybeMatch.lower() and self._check_relationship(remote_user, entity):
-					uid_matches.append( entity )
-				
-				names = user_interfaces.IFriendlyNamed( entity )
-				# NOTE: we are only allowed to search on the alias.
-				if partialMatch in (names.alias or '').lower() and \
-				   self._check_relationship(remote_user, entity):
-					result.append( entity )
 
-				# add matching friends lists, too
+				if partialMatch in maybeMatch.lower():
+					uid_matches.append( userObj )
+
+				names = user_interfaces.IFriendlyNamed( userObj )
+				if partialMatch in (names.realname or '').lower() \
+					   or partialMatch in (names.alias or '').lower():
+					result.append( userObj )
+
+			if remote_user:
+				# Given a remote user, add matching friends lists, too
 				for fl in remote_user.friendsLists.values():
-					if not isinstance( fl, users.Entity ): #not nti_interfaces.IEntity.providedBy(fl):
+					if not isinstance( fl, users.Entity ):
 						continue
 					names = user_interfaces.IFriendlyNamed( fl )
 					if partialMatch in fl.username.lower() \
 					   or partialMatch in (names.realname or '').lower() \
 					   or partialMatch in (names.alias or '').lower():
 						result.append( fl )
-
-				# Disable search in classes for the time being
 				# Also add enrolled classes
 				# TODO: What about instructors?
 				enrolled_sections = component.getAdapter( remote_user, app_interfaces.IContainerCollection, name='EnrolledClassSections' )
@@ -143,12 +124,12 @@ class _UserSearchView(object):
 						result.append( x )
 						break
 
-#			# FIXME: Hack in a policy of limiting searching to overlapping communities
-#			if remote_user:
-#				remote_com_names = remote_user.communities - set( ('Everyone',) )
-#				# Filter to things that share a common community
-#				result = [x for x in result
-#						  if not hasattr(x, 'communities') or x.communities.intersection( remote_com_names )]
+			# FIXME: Hack in a policy of limiting searching to overlapping communities
+			if remote_user:
+				remote_com_names = remote_user.communities - set( ('Everyone',) )
+				# Filter to things that share a common community
+				result = [x for x in result
+						  if not hasattr(x, 'communities') or x.communities.intersection( remote_com_names )]
 		# Since we are already looking in the object we might as well return the summary form
 		# For this reason, we are doing the externalization ourself.
 
