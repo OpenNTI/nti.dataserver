@@ -17,7 +17,7 @@ from zope import component
 from nti.dataserver import interfaces as nti_interfaces
 from . import interfaces
 
-from nti.utils import create_gravatar_url
+from nti.utils import create_gravatar_url, GENERATED_GRAVATAR_TYPES
 
 
 @component.adapter(nti_interfaces.IEntity)
@@ -89,3 +89,37 @@ class GravatarComputedCoppaAvatarURL(object):
 			if gravatar_type:
 				break
 		self.avatarURL = create_gravatar_url( email, gravatar_type )
+
+@component.adapter(basestring)
+@interface.implementer(interfaces.IAvatarChoices)
+class StringComputedAvatarURLChoices(object):
+
+	def __init__( self, context ):
+		self.context = context
+
+	def get_choices( self ):
+		choices = []
+		for name in (self.context, ''.join( list( reversed( self.context ) ) )):
+			for gen_type in GENERATED_GRAVATAR_TYPES:
+				choices.append( create_gravatar_url( name, gen_type ) )
+		return choices
+
+@component.adapter(nti_interfaces.ICoppaUser)
+@interface.implementer(interfaces.IAvatarChoices)
+class GravatarComputedCoppaAvatarURLChoices(StringComputedAvatarURLChoices):
+
+	def __init__( self, context ):
+		super(GravatarComputedCoppaAvatarURLChoices,self).__init__( context.username )
+
+@component.adapter(nti_interfaces.IEntity)
+@interface.implementer(interfaces.IAvatarChoices)
+class GravatarComputedAvatarURLChoices(object):
+	"""
+	Normal users don't get a choice.
+	"""
+
+	def __init__( self, context ):
+		self.avatarURL = interfaces.IAvatarURL( context ).avatarURL
+
+	def get_choices( self ):
+		return (self.avatarURL,)

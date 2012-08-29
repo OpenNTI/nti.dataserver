@@ -163,6 +163,7 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 		# as is ignoring and accepting
 		extDict['ignoring'] = ext(self.entity.ignoring_shared_data_from)
 		extDict['accepting'] = ext(self.entity.accepting_shared_data_from)
+		extDict['AvatarURLChoices'] = component.getAdapter( self.entity, interfaces.IAvatarChoices ).get_choices()
 		#extDict['Links'] = [ links.Link( to_external_ntiid_oid( self.entity ), rel='edit' ) ]
 		extDict['Links'] = [ links.Link( self.entity, rel='edit' ) ]
 		extDict['Last Modified'] = getattr( self.entity, 'lastModified', 0 )

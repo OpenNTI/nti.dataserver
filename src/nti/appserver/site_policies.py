@@ -27,7 +27,7 @@ from nti.dataserver import shards as nti_shards
 
 import nameparser
 
-def get_possible_site_names():
+def get_possible_site_names(request=None):
 	"""
 	Look for the current request, and return an ordered list
 	of site names the request could be considered to be for.
@@ -39,7 +39,7 @@ def get_possible_site_names():
 		or a preferred site cannot be found, returns an empty sequence.
 	"""
 
-	request = get_current_request()
+	request = request or get_current_request()
 	if not request: # pragma: no cover
 		return ()
 
@@ -56,6 +56,23 @@ def get_possible_site_names():
 	if 'localhost' in result:
 		result.remove( 'localhost' )
 	return result
+
+_marker = object()
+def queryAdapterInSite( obj, interface=None, request=None, default=None, context=None  ):
+	"""
+	Queries for named adapters following the site names, all the way up until the default
+	site name.
+	"""
+	# Put the empty name/default component on the end of the list of site names
+	site_names = list(get_possible_site_names(request))
+	site_names.append( '' )
+
+	for site in site_names:
+		result = component.queryAdapter( obj, interface, name=site, context=context, default=_marker )
+		if result is not _marker:
+			return result
+	return default
+
 
 @component.adapter(lib_interfaces.IS3Key)
 @interface.implementer(lib_interfaces.IAbsoluteContentUnitHrefMapper)

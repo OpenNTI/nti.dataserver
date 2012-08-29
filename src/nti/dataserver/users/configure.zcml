@@ -67,6 +67,16 @@
 			 for="nti.dataserver.interfaces.ICoppaUser"
 			 name="generated" />
 
+	<!-- Default choices for coppa users -->
+	<adapter factory=".avatar_urls.GravatarComputedCoppaAvatarURLChoices"
+			 provides=".interfaces.IAvatarChoices"
+			 for="nti.dataserver.interfaces.ICoppaUser"
+			 />
+	<!-- And everyone -->
+	<adapter factory=".avatar_urls.GravatarComputedAvatarURLChoices"
+			 provides=".interfaces.IAvatarChoices"
+			 for="nti.dataserver.interfaces.IEntity"
+			 />
 
 	<!-- User profile info -->
 	<!-- Default -->

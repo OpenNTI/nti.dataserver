@@ -279,7 +279,10 @@ def validate_field_value( self, field_name, field, value ):
 	__traceback_info__ = field_name, value
 	field = field.bind( self )
 	try:
-		field.validate( value )
+		if isinstance(value, unicode) and sch_interfaces.IFromUnicode.providedBy( field ):
+			value = field.fromUnicode( value )
+		else:
+			field.validate( value )
 	except sch_interfaces.SchemaNotProvided as e:
 		# The object doesn't implement the required interface.
 		# Can we adapt the provided object to the desired interface?

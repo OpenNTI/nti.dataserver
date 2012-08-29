@@ -159,6 +159,42 @@ class TestPreflightView(_AbstractValidationViewBase):
 		self.the_view = account_preflight_view
 
 
+	@WithMockDSTrans
+	def test_create_mathcounts_policy_avatar_choices( self ):
+		# see site_policies.[py|zcml]
+		assert_that( self.request.host, is_( 'example.com:80' ) )
+		self.request.headers['origin'] = 'http://mathcounts.nextthought.com'
+
+		self.request.content_type = 'application/vnd.nextthought+json'
+
+		self.request.body = to_json_representation( {'Username': 'jason_nextthought_com',
+													 'password': 'pass123word',
+													 'realname': 'Joe Bananna',
+													 'birthdate': '1982-01-31',
+													 'alias': 'jason_nextthought_com' }  )
+
+		val = self.the_view( self.request )
+
+		assert_that( val, has_entry( 'AvatarURLChoices', has_length( 8 ) ) )
+
+	@WithMockDSTrans
+	def test_create_rwanda_policy_avatar_choices( self ):
+		# see site_policies.[py|zcml]
+		assert_that( self.request.host, is_( 'example.com:80' ) )
+		self.request.headers['origin'] = 'http://rwanda.nextthought.com'
+
+		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
+													 'password': 'pass123word',
+													 'realname': 'Jason Madden',
+													 'birthdate': '1982-01-31',
+													 'alias': 'Jason',
+													 'affiliation': 'NTI',
+													 'email': 'jason@test.nextthought.com' } )
+		new_user = self.the_view( self.request )
+		assert_that( new_user, has_entry( 'AvatarURLChoices', has_length( 0 ) ) )
+
+
 class TestCreateView(_AbstractValidationViewBase):
 
 	features = () # Disable devmode so that we get 'email' required by default for new users
