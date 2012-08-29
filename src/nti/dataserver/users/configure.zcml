@@ -53,17 +53,21 @@
 
 	<!-- Avatar URLs -->
 	<!-- Default -->
-	<adapter factory=".avatar_urls.AvatarURLFactory" />
+	<adapter factory=".avatar_urls.AvatarURLFactory"
+			 provides=".interfaces.IAvatarURLProvider" />
+	<adapter factory=".avatar_urls.AvatarURLFactory"
+			 provides=".interfaces.IAvatarURL" />
 	<!-- Named fallback -->
 	<adapter factory=".avatar_urls.GravatarComputedAvatarURL"
+			 provides=".interfaces.IAvatarURLProvider"
 			 name="generated" />
 	<!-- Default for Koppa Kids -->
 	<adapter factory=".avatar_urls.GravatarComputedCoppaAvatarURL"
-			 provides=".interfaces.IAvatarURL"
+			 provides=".interfaces.IAvatarURLProvider"
 			 for="nti.dataserver.interfaces.ICoppaUser" />
 	<!-- Fallback for KK, just in case -->
 	<adapter factory=".avatar_urls.GravatarComputedCoppaAvatarURL"
-			 provides=".interfaces.IAvatarURL"
+			 provides=".interfaces.IAvatarURLProvider"
 			 for="nti.dataserver.interfaces.ICoppaUser"
 			 name="generated" />
 

@@ -293,13 +293,18 @@ class MathcountsSitePolicyEventListener(GenericSitePolicyEventListener):
 
 	def user_will_update_new( self, user, event ):
 		"""
-		This policy applies the :class:`nti.dataserver.interfaces.ICoppaUserWithoutAgreement` interface
+		This policy applies the :class:`nti.dataserver.interfaces.ICoppaUserWithoutAgreement` or
+		the :class:`nti.dataserver.interfaces.ICoppaUserWithAgreement` interface
 		to the object, which drives the available data to store.
 		"""
 
 		interface.alsoProvides( user, nti_interfaces.ICoppaUser )
-		interface.alsoProvides( user, nti_interfaces.ICoppaUserWithoutAgreement )
+		iface_to_provide = nti_interfaces.ICoppaUserWithoutAgreement
 
+		if 'birthdate' in event.ext_value and _is_thirteen_or_more_years_ago( zope.interface.common.idatetime.IDate( event.ext_value['birthdate'] ) ):
+			iface_to_provide = nti_interfaces.ICoppaUserWithAgreement
+
+		interface.alsoProvides( user, iface_to_provide )
 
 	def user_created( self, user, event ):
 		"""
@@ -339,16 +344,17 @@ class MathcountsSitePolicyEventListener(GenericSitePolicyEventListener):
 		if '@' in user.username:
 			raise zope.schema.ValidationError( "Username cannot contain '@'", 'Username', user.username )
 
-		profile = user_interfaces.ICompleteUserProfile( user )
-		if profile.birthdate and _is_thirteen_or_more_years_ago( profile.birthdate ):
+		# This much is handled in the will_update_event
+		#profile = user_interfaces.IUserProfile( user )
+		#if profile.birthdate and _is_thirteen_or_more_years_ago( profile.birthdate ):
 			# If we can show the kid is actually at least 13, then
 			# we don't need to get an agreement
-			interface.noLongerProvides( user, nti_interfaces.ICoppaUserWithoutAgreement )
-			interface.alsoProvides( user, nti_interfaces.ICoppaUserWithAgreement )
 
-		else:
-			# We can only store the first name
-			profile.realname = human_name.first
+
+
+		if nti_interfaces.ICoppaUserWithoutAgreement.providedBy( user ):
+			# We can only store the first name for little kids
+			names.realname = human_name.first
 
 
 @interface.implementer(ISitePolicyUserEventListener)

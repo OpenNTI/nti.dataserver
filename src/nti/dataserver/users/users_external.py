@@ -111,7 +111,8 @@ class _UserSummaryExternalObject(_EntitySummaryExternalObject):
 		# TODO: Is this a privacy concern?
 		extDict['lastLoginTime'] = self.entity.lastLoginTime.value
 		extDict['NotificationCount'] = self.entity.notificationCount.value
-		extDict['affiliation'] = interfaces.ICompleteUserProfile( self.entity ).affiliation
+		prof = interfaces.IUserProfile( self.entity )
+		extDict['affiliation'] = getattr( prof, 'affiliation', None )
 		return extDict
 
 @component.adapter(nti_interfaces.ICoppaUser)
@@ -151,7 +152,7 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 
 			return result
 
-		prof = interfaces.ICompleteUserProfile( self.entity )
+		prof = interfaces.IRestrictedUserProfile( self.entity )
 		extDict['email'] = prof.email
 		extDict['birthdate'] = prof.birthdate.isoformat() if prof.birthdate is not None else None
 

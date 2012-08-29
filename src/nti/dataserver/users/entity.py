@@ -149,7 +149,7 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 		assert getattr( user, '_p_jar', None ), "User should still have a connection"
 
 		# Notify we're about to update
-		notify( interfaces.WillUpdateNewEntityEvent( user ) )
+		notify( interfaces.WillUpdateNewEntityEvent( user, ext_value ) )
 
 		# Update from the external value, if provided
 		if ext_value:

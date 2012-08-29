@@ -23,7 +23,7 @@ from hamcrest import has_entries
 from hamcrest import has_length
 from hamcrest import has_key
 from hamcrest import contains_string
-#from hamcrest import is_not
+from hamcrest import is_not as does_not
 from hamcrest import has_property
 from hamcrest import greater_than
 from hamcrest import has_item
@@ -170,7 +170,7 @@ class TestPreflightView(_AbstractValidationViewBase):
 		self.the_view = account_preflight_view
 
 	@WithMockDSTrans
-	def test_create_mathcounts_policy_birthdate_only( self ):
+	def test_create_mathcounts_policy_birthdate_only_old_user( self ):
 		assert_that( self.request.host, is_( 'example.com:80' ) )
 		self.request.headers['origin'] = 'http://mathcounts.nextthought.com'
 
@@ -184,6 +184,26 @@ class TestPreflightView(_AbstractValidationViewBase):
 
 		assert_that( val, has_entry( 'AvatarURLChoices', has_length( 0 ) ) )
 		assert_that( val, has_entry( 'ProfileSchema', has_key( 'opt_in_email_communication' ) ) )
+
+	@WithMockDSTrans
+	def test_create_mathcounts_policy_birthdate_only_under_13_user( self ):
+		assert_that( self.request.host, is_( 'example.com:80' ) )
+		self.request.headers['origin'] = 'http://mathcounts.nextthought.com'
+
+		self.request.content_type = 'application/vnd.nextthought+json'
+
+		birthdate = datetime.date.today().replace( year=datetime.date.today().year - 10 ).isoformat()
+
+		self.request.body = to_json_representation( {
+													 'birthdate': birthdate,
+													  }  )
+
+		val = self.the_view( self.request )
+
+		assert_that( val, has_entry( 'AvatarURLChoices', has_length( 0 ) ) )
+		assert_that( val, has_entry( 'ProfileSchema', does_not( has_key( 'opt_in_email_communication' ) ) ) )
+		assert_that( val, has_entry( 'ProfileSchema', has_key( 'contact_email' ) ) )
+
 
 	@WithMockDSTrans
 	def test_create_mathcounts_policy_avatar_choices( self ):
@@ -364,7 +384,7 @@ class TestCreateView(_AbstractValidationViewBase):
 													 'password': 'pass123word',
 													 'realname': 'Joe Bananna',
 													 'alias': 'Me',
-													 'email': 'foo@bar.com' } )
+													 'contact_email': 'foo@bar.com' } )
 
 		new_user = account_create_view( self.request )
 		assert_that( user_interfaces.IFriendlyNamed( new_user ),
@@ -374,6 +394,7 @@ class TestCreateView(_AbstractValidationViewBase):
 		assert_that( user_interfaces.IFriendlyNamed( new_user ), has_property( 'realname', 'Joe' ) )
 
 
+		# This guy is old enough to require an email and not need a contact_email
 		self.request.body = to_json_representation( {'Username': 'jason2_nextthought_com',
 													 'password': 'pass123word',
 													 'realname': 'Joe Bananna',

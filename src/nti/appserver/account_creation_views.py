@@ -245,6 +245,7 @@ def account_preflight_view(request):
 						'password': None,
 						'birthdate': '1982-01-31',
 						'email': 'testing_account_creation@tests.nextthought.com',
+						'contact_email': 'testing_account_creation@tests.nextthought.com',
 						'realname': 'com.nextthought.account_creation_user WithALastName' }
 
 	for k, v in placeholder_data.items():

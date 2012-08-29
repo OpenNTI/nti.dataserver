@@ -12,8 +12,18 @@
 
 
 	<!-- Require specific profile info for Koppa Kids -->
+	<!--
+		 NOTE: The transition between these two will be a bit rough.
+		 We may have to manually copy some information when we change the
+		 interfaces.
+	-->
+	<adapter factory="nti.dataserver.users.user_profile.RestrictedUserProfileWithContactEmailFactory"
+			 provides="nti.dataserver.users.interfaces.IRestrictedUserProfileWithContactEmail"
+			 for="nti.dataserver.interfaces.ICoppaUserWithoutAgreement" />
+
 	<adapter factory="nti.dataserver.users.user_profile.EmailRequiredUserProfileFactory"
 			 provides="nti.dataserver.users.interfaces.IEmailRequiredUserProfile"
-			 for="nti.dataserver.interfaces.ICoppaUser" />
+			 for="nti.dataserver.interfaces.ICoppaUserWithAgreement" />
+
 
 </configure>
