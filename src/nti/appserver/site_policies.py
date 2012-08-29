@@ -173,6 +173,11 @@ class ISitePolicyUserEventListener(interface.Interface):
 		Called when a user is created.
 		"""
 
+	def user_will_create( user, event ):
+		"""
+		Called just before a user is created. Do most validation here.
+		"""
+
 from zope.lifecycleevent.interfaces import IObjectCreatedEvent
 from nti.dataserver import users
 from nti.dataserver.users import interfaces as user_interfaces
@@ -201,6 +206,10 @@ def dispatch_user_created_to_site_policy( user, event ):
 def dispatch_user_will_update_to_site_policy( user, event ):
 	_dispatch_to_policy( user, event, 'user_will_update_new' )
 
+@component.adapter(nti_interfaces.IUser, user_interfaces.IWillCreateNewEntityEvent)
+def dispatch_user_will_create_to_site_policy( user, event ):
+	_dispatch_to_policy( user, event, 'user_will_create' )
+
 def _censor_usernames( user ):
 	policy = censor.DefaultCensoredContentPolicy()
 
@@ -221,8 +230,10 @@ class GenericSitePolicyEventListener(object):
 	def user_will_update_new( self, user, event ):
 		pass
 
-
 	def user_created( self, user, event ):
+		pass
+
+	def user_will_create( self, user, event ):
 		"""
 		This policy verifies naming restraints.
 
@@ -253,8 +264,6 @@ class MathcountsSitePolicyEventListener(GenericSitePolicyEventListener):
 		This policy places newly created users in the ``MathCounts`` community
 		(creating it if it doesn't exist).
 
-		It also verifies naming restraints.
-
 		"""
 		super(MathcountsSitePolicyEventListener,self).user_created( user, event )
 
@@ -266,7 +275,8 @@ class MathcountsSitePolicyEventListener(GenericSitePolicyEventListener):
 		user.join_community( community )
 		user.follow( community )
 
-
+	def user_will_create( self, user, event ):
+		super(MathcountsSitePolicyEventListener,self).user_will_create( user, event )
 		names = user_interfaces.IFriendlyNamed( user )
 		# Match the format of, e.g, WrongTypeError: message, field/type, value
 		# the view likes this
@@ -292,16 +302,12 @@ class GenericAdultSitePolicyEventListener(GenericSitePolicyEventListener):
 	Implements a generic policy for adult sites.
 	"""
 
-	def user_will_update_new( self, user, event ):
-		pass
-
-
-	def user_created( self, user, event ):
+	def user_will_create( self, user, event ):
 		"""
 		This policy verifies naming restraints.
 
 		"""
-		super(GenericAdultSitePolicyEventListener,self).user_created( user, event )
+		super(GenericAdultSitePolicyEventListener,self).user_will_create( user, event )
 
 		profile = user_interfaces.ICompleteUserProfile( user )
 		if '@' in user.username:

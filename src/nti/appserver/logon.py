@@ -33,7 +33,7 @@ from nti.dataserver import mimetype
 from nti.dataserver import users
 
 from nti.appserver._util import logon_userid_with_request
-from nti.appserver.account_creation_views import REL_CREATE_ACCOUNT
+from nti.appserver.account_creation_views import REL_CREATE_ACCOUNT, REL_PREFLIGHT_CREATE_ACCOUNT
 
 from pyramid.view import view_config
 from pyramid import security as sec
@@ -100,11 +100,15 @@ def _links_for_unauthenticated_users( request ):
 	remote_user_name = sec.authenticated_userid( request )
 	if not remote_user_name:
 		create_account = request.route_path( 'objects.generic.traversal', traverse=('users') )
-		link = Link( create_account, rel=REL_CREATE_ACCOUNT,
-					 target_mime_type=mimetype.nti_mimetype_from_object( users.User ),
-					 elements=('@@' + REL_CREATE_ACCOUNT,))
 
-		links = (link,)
+		create = Link( create_account, rel=REL_CREATE_ACCOUNT,
+					   target_mime_type=mimetype.nti_mimetype_from_object( users.User ),
+					   elements=('@@' + REL_CREATE_ACCOUNT,))
+		preflight = Link( create_account, rel=REL_PREFLIGHT_CREATE_ACCOUNT,
+						  target_mime_type=mimetype.nti_mimetype_from_object( users.User ),
+						  elements=('@@' + REL_PREFLIGHT_CREATE_ACCOUNT,))
+
+		links = (create, preflight)
 
 	return links
 

@@ -32,7 +32,7 @@ from nti.tests import verifiably_provides
 from nose.tools import assert_raises
 
 from nti.appserver import interfaces as app_interfaces
-from nti.appserver.account_creation_views import account_create_view
+from nti.appserver.account_creation_views import account_create_view, account_preflight_view
 
 from nti.appserver.tests import ConfiguringTestBase
 
@@ -53,16 +53,13 @@ from zope.lifecycleevent import IObjectCreatedEvent, IObjectAddedEvent
 import zope.schema
 import datetime
 
-class TestCreateView(ConfiguringTestBase):
+class _AbstractValidationViewBase(ConfiguringTestBase):
+	""" Base for the things where validation should fail """
 
 	features = () # Disable devmode so that we get 'email' required by default for new users
 
-	@WithMockDSTrans
-	def test_create_missing_password(self):
-		self.request.content_type = 'application/vnd.nextthought+json'
-		self.request.body = to_json_representation( {'Username': 'foo@bar.com', 'email': 'foo@bar.com' } )
-		with assert_raises( hexc.HTTPUnprocessableEntity ):
-			account_create_view( self.request )
+	the_view = None
+
 
 	@WithMockDSTrans
 	def test_create_invalid_password(self):
@@ -71,7 +68,7 @@ class TestCreateView(ConfiguringTestBase):
 													 'email': 'foo@bar.com',
 													 'password': 'a' } )
 		with assert_raises( hexc.HTTPUnprocessableEntity ) as exc:
-			account_create_view( self.request )
+			self.the_view( self.request )
 
 
 		assert_that( exc.exception.json_body, has_entry( 'field', 'password' ) )
@@ -82,6 +79,98 @@ class TestCreateView(ConfiguringTestBase):
 	def test_create_missing_username( self ):
 		self.request.content_type = 'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'password': 'pass123word', 'email': 'foo@bar.com' } )
+		with assert_raises( hexc.HTTPUnprocessableEntity ):
+			self.the_view( self.request )
+
+
+	@WithMockDSTrans
+	def test_create_invalid_email( self ):
+		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
+													 'password': 'pass132word',
+													 'email': 'not valid' } )
+
+		with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
+			self.the_view( self.request )
+
+		assert_that( e.exception.json_body, has_entry( 'code', 'EmailAddressInvalid' ) )
+		assert_that( e.exception.json_body, has_entry( 'field', 'email' ) )
+
+	@WithMockDSTrans
+	def test_create_censored_username( self ):
+		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.body = to_json_representation( {'Username': 'shpxsnpr'.encode('rot13'),
+													 'password': 'pass132word',
+													 'email': 'foo@bar.com' } )
+
+
+		with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
+			self.the_view( self.request )
+
+		assert_that( e.exception.json_body, has_entry( 'code', 'ValidationError' ) )
+		assert_that( e.exception.json_body, has_entry( 'field', 'Username' ) )
+		assert_that( e.exception.json_body, has_entry( 'message', contains_string( 'censored' ) ) )
+
+
+
+	@WithMockDSTrans
+	def test_create_censored_alias( self ):
+		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.body = to_json_representation( {'alias': 'shpxsnpr'.encode('rot13'),
+													 'Username': 'jamadden',
+													 'password': 'pass132word',
+													 'email': 'foo@bar.com' } )
+
+
+		with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
+			self.the_view( self.request )
+
+		assert_that( e.exception.json_body, has_entry( 'code', 'ValidationError' ) )
+		assert_that( e.exception.json_body, has_entry( 'field', 'alias' ) )
+		assert_that( e.exception.json_body, has_entry( 'message', contains_string( 'censored' ) ) )
+
+	@WithMockDSTrans
+	def test_create_invalid_username( self ):
+		self.request.content_type = 'application/vnd.nextthought+json'
+
+		bad_code = 'UsernameCannotBeBlank'
+		for bad_username in ('   ', 'foo bar', 'foo#bar', 'foo,bar', 'foo%bar' ):
+
+			self.request.body = to_json_representation( {'Username': bad_username,
+														 'password': 'pass132word',
+														 'email': 'user@domain.com' } )
+
+
+
+			with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
+				self.the_view( self.request )
+
+			assert_that( e.exception.json_body, has_entry( 'field', 'Username' ) )
+			assert_that( e.exception.json_body, has_entry( 'code', bad_code ) )
+			bad_code = 'UsernameContainsIllegalChar'
+
+
+class TestPreflightView(_AbstractValidationViewBase):
+
+	features = () # Disable devmode so that we get 'email' required by default for new users
+
+	def setUp( self ):
+		super(TestPreflightView,self).setUp()
+		self.the_view = account_preflight_view
+
+
+class TestCreateView(_AbstractValidationViewBase):
+
+	features = () # Disable devmode so that we get 'email' required by default for new users
+
+	def setUp( self ):
+		super(TestCreateView,self).setUp()
+		self.the_view = account_create_view
+
+	@WithMockDSTrans
+	def test_create_missing_password(self):
+		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.body = to_json_representation( {'Username': 'foo@bar.com', 'email': 'foo@bar.com' } )
 		with assert_raises( hexc.HTTPUnprocessableEntity ):
 			account_create_view( self.request )
 
@@ -123,74 +212,6 @@ class TestCreateView(ConfiguringTestBase):
 
 		assert_that( e.exception.json_body, has_entry( 'code', 'DuplicateUsernameError' ) )
 
-	@WithMockDSTrans
-	def test_create_invalid_email( self ):
-		self.request.content_type = 'application/vnd.nextthought+json'
-		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
-													 'password': 'pass132word',
-													 'email': 'not valid' } )
-
-
-
-		with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
-			account_create_view( self.request )
-
-		assert_that( e.exception.json_body, has_entry( 'code', 'EmailAddressInvalid' ) )
-		assert_that( e.exception.json_body, has_entry( 'field', 'email' ) )
-
-	@WithMockDSTrans
-	def test_create_censored_username( self ):
-		self.request.content_type = 'application/vnd.nextthought+json'
-		self.request.body = to_json_representation( {'Username': 'shpxsnpr'.encode('rot13'),
-													 'password': 'pass132word',
-													 'email': 'foo@bar.com' } )
-
-
-		with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
-			account_create_view( self.request )
-
-		assert_that( e.exception.json_body, has_entry( 'code', 'ValidationError' ) )
-		assert_that( e.exception.json_body, has_entry( 'field', 'Username' ) )
-		assert_that( e.exception.json_body, has_entry( 'message', contains_string( 'censored' ) ) )
-
-
-
-	@WithMockDSTrans
-	def test_create_censored_alias( self ):
-		self.request.content_type = 'application/vnd.nextthought+json'
-		self.request.body = to_json_representation( {'alias': 'shpxsnpr'.encode('rot13'),
-													 'Username': 'jamadden',
-													 'password': 'pass132word',
-													 'email': 'foo@bar.com' } )
-
-
-		with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
-			account_create_view( self.request )
-
-		assert_that( e.exception.json_body, has_entry( 'code', 'ValidationError' ) )
-		assert_that( e.exception.json_body, has_entry( 'field', 'alias' ) )
-		assert_that( e.exception.json_body, has_entry( 'message', contains_string( 'censored' ) ) )
-
-	@WithMockDSTrans
-	def test_create_invalid_username( self ):
-		self.request.content_type = 'application/vnd.nextthought+json'
-
-		bad_code = 'UsernameCannotBeBlank'
-		for bad_username in ('   ', 'foo bar', 'foo#bar', 'foo,bar', 'foo%bar' ):
-
-			self.request.body = to_json_representation( {'Username': bad_username,
-														 'password': 'pass132word',
-														 'email': 'user@domain.com' } )
-
-
-
-			with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
-				account_create_view( self.request )
-
-			assert_that( e.exception.json_body, has_entry( 'field', 'Username' ) )
-			assert_that( e.exception.json_body, has_entry( 'code', bad_code ) )
-			bad_code = 'UsernameContainsIllegalChar'
-
 
 
 	@WithMockDSTrans
@@ -227,6 +248,24 @@ class TestCreateView(ConfiguringTestBase):
 		assert_that( new_user._p_jar.db(), has_property( 'database_name', 'content.nextthought.com' ) )
 
 		assert_that( new_user, has_property( '__parent__', IShardLayout( mock_dataserver.current_transaction ).users_folder ) )
+
+	@WithMockDSTrans
+	def test_create_mathcounts_policy_email_required( self ):
+		# see site_policies.[py|zcml]
+		assert_that( self.request.host, is_( 'example.com:80' ) )
+		self.request.headers['origin'] = 'http://mathcounts.nextthought.com'
+
+		self.request.content_type = 'application/vnd.nextthought+json'
+
+		self.request.body = to_json_representation( {'Username': 'jason_nextthought_com',
+													 'password': 'pass123word',
+													 'realname': 'Joe Bananna',
+													 'birthdate': '1982-01-31',
+													 'alias': 'jason_nextthought_com' }  )
+		with assert_raises( hexc.HTTPUnprocessableEntity ) as exc:
+			 self.the_view( self.request )
+
+		assert_that( exc.exception.json_body, has_entry( 'field', 'email' ) )
 
 	@WithMockDSTrans
 	def test_create_mathcounts_policy( self ):
@@ -270,24 +309,6 @@ class TestCreateView(ConfiguringTestBase):
 																  'birthdate', None,
 																  'affiliation', None ) )
 
-
-	@WithMockDSTrans
-	def test_create_mathcounts_policy_email_required( self ):
-		# see site_policies.[py|zcml]
-		assert_that( self.request.host, is_( 'example.com:80' ) )
-		self.request.headers['origin'] = 'http://mathcounts.nextthought.com'
-
-		self.request.content_type = 'application/vnd.nextthought+json'
-
-		self.request.body = to_json_representation( {'Username': 'jason_nextthought_com',
-													 'password': 'pass123word',
-													 'realname': 'Joe Bananna',
-													 'birthdate': '1982-01-31',
-													 'alias': 'jason_nextthought_com' }  )
-		with assert_raises( hexc.HTTPUnprocessableEntity ) as exc:
-			 account_create_view( self.request )
-
-		assert_that( exc.exception.json_body, has_entry( 'field', 'email' ) )
 
 	@WithMockDSTrans
 	def test_create_rwanda_policy( self ):
@@ -368,4 +389,23 @@ class TestApplicationCreateUser(ApplicationTestBase):
 
 		path = b'/dataserver2/users/@@account.create'
 
-		res = app.post( path, data, extra_environ=self._make_extra_environ(), status=403 )
+		_ = app.post( path, data, extra_environ=self._make_extra_environ(), status=403 )
+
+class TestApplicationPreflightUser(ApplicationTestBase):
+
+	def test_preflight_user( self ):
+		app = TestApp( self.app )
+
+
+		data_with_username_only = {'Username': 'jason@test.nextthought.com'}
+		data_full = {'Username': 'jason@test.nextthought.com',
+					 'password': 'password',
+					 'email': 'foo@bar.com'	}
+
+		path = b'/dataserver2/users/@@account.preflight.create'
+
+		for data in (data_with_username_only, data_full):
+			data = to_json_representation( data )
+			res = app.post( path, data )
+
+			assert_that( res, has_property( 'status_int', 200 ) )
