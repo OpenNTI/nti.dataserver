@@ -35,6 +35,7 @@ def _decode_packet_to_session( session, sock, data, doom_transaction=True ):
 
 	for pkt in pkts:
 		if pkt.msg_type == 0:
+			logger.debug( "Killing session %s on receipt of death packet %s from remote client", session, pkt )
 			session.kill()
 		elif pkt.msg_type == 1:
 			sock.send_connect( pkt['data'] )
@@ -44,7 +45,8 @@ def _decode_packet_to_session( session, sock, data, doom_transaction=True ):
 			#logger.debug( "Session %s received msg %s", session, pkt )
 			session.put_server_msg( pkt )
 
-def _safe_kill_session( session ):
+def _safe_kill_session( session, reason='' ):
+	logger.debug( "Killing session %s %s", session, reason )
 	try:
 		session.kill()
 	except AttributeError:
@@ -264,9 +266,10 @@ class WebsocketTransport(BaseTransport):
 		def _do_send(self):
 			message = self.message
 			session = self.get_session()
-			if session: session.get_client_msgs() # prevent buildup
+			if session:
+				session.get_client_msgs() # prevent buildup
 			if message is None:
-				_safe_kill_session( session )
+				_safe_kill_session( session, ' on transfer of None across sending channel' )
 				return False
 			return True
 
@@ -314,7 +317,7 @@ class WebsocketTransport(BaseTransport):
 				# Kill the greenlet
 				self.session_proxy.put_client_msg( None )
 				# and the session
-				_safe_kill_session( session )
+				_safe_kill_session( session, 'on transfer of None across reading channel' )
 				return False
 
 			try:
@@ -323,7 +326,7 @@ class WebsocketTransport(BaseTransport):
 				logger.exception( "Failed to read packets from WS; killing session %s", self.session_id )
 				# We don't doom this transaction, we want to commit the death
 				# transaction.doom()
-				_safe_kill_session( session )
+				_safe_kill_session( session, 'on failure to read packet from WS' )
 				return False
 
 			return True
@@ -358,7 +361,7 @@ class WebsocketTransport(BaseTransport):
 			while listen:
 				gevent.sleep( self.ping_sleep )
 				# FIXME: Make time a config?
-				listen = run_job_in_site( self._do_ping, retries=5 )
+				listen = run_job_in_site( self._do_ping, retries=5, sleep=0.1 )
 
 	def connect(self, session, request_method, ping_sleep=5.0 ):
 
