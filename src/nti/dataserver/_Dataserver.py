@@ -226,7 +226,7 @@ interface.directlyProvides( run_job_in_site, interfaces.IDataserverTransactionRu
 
 DATASERVER_DEMO = 'DATASERVER_DEMO' in os.environ and 'DATASERVER_NO_DEMO' not in os.environ
 
-interface.implementer(interfaces.IShardLayout)
+@interface.implementer(interfaces.IShardLayout)
 class MinimalDataserver(object):
 	"""
 	Represents the basic connections and nothing more.

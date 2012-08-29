@@ -104,7 +104,7 @@ def _mock_ds_wrapper_for( func, factory=MockDataserver, teardown=None ):
 
 		with site(sitemanc):
 			assert component.getSiteManager() == sitemanc.getSiteManager()
-			component.provideUtility( ds )
+			component.provideUtility( ds, nti_interfaces.IDataserver )
 			assert component.getUtility( nti_interfaces.IDataserver )
 			try:
 				func( *args )
@@ -174,7 +174,7 @@ def mock_db_trans(ds=None):
 
 	with site( sitemanc ):
 		assert component.getSiteManager() == sitemanc.getSiteManager()
-		component.provideUtility( ds )
+		component.provideUtility( ds, nti_interfaces.IDataserver )
 		assert component.getUtility( nti_interfaces.IDataserver )
 
 		yield conn
@@ -205,7 +205,7 @@ class faster_mock_db_trans(object):
 		setSite(sitemanc)
 
 		assert component.getSiteManager() == sitemanc.getSiteManager()
-		component.provideUtility( ds )
+		component.provideUtility( ds, nti_interfaces.IDataserver )
 		assert component.getUtility( nti_interfaces.IDataserver )
 
 		return conn
@@ -236,7 +236,7 @@ def WithMockDSTrans( func ):
 
 		with site( sitemanc ):
 			assert component.getSiteManager() == sitemanc.getSiteManager()
-			component.provideUtility( ds )
+			component.provideUtility( ds, nti_interfaces.IDataserver )
 			assert component.getUtility( nti_interfaces.IDataserver )
 
 			try:
