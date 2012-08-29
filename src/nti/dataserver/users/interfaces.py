@@ -17,13 +17,55 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope.interface import Interface
 from zope import schema
+import zope.schema.interfaces
 import zope.component.interfaces
 import re
 
 
+from zope.i18n import translate
+from . import MessageFactory as _
 
-class EmailAddressInvalid(schema.ValidationError):
-    '''Invalid email address.'''
+
+
+class _InvalidData(zope.schema.interfaces.InvalidValue):
+	"""Invalid Value"""
+
+	i18n_message = None
+
+	def __str__(self):
+		if self.i18n_message:
+			return translate(self.i18n_message)
+		return super(_InvalidData, self).__str__()
+
+	def doc(self):
+		if self.i18n_message:
+			return self.i18n_message
+		return self.__class__.__doc__
+
+class UsernameCannotBeBlank(_InvalidData):
+
+	i18n_message = 'Username cannot be blank'
+
+	def __init__( self, username ):
+		super(UsernameCannotBeBlank,self).__init__( self.i18n_message, 'Username', username )
+
+class UsernameContainsIllegalChar(_InvalidData):
+
+	def __init__( self, username, allowed_chars ):
+		self.i18n_message = _(
+			'Username contains an illegal character. Only "${allowed_chars}" are allowed.',
+			mapping={'allowed_chars': allowed_chars})
+
+		super(UsernameContainsIllegalChar,self).__init__( self.i18n_message, 'Username', username )
+
+class EmailAddressInvalid(_InvalidData):
+	"""Invalid email address."""
+
+	i18n_message = "The email address you have entered is not valid"
+
+	def __init__( self, address ):
+		super(EmailAddressInvalid,self).__init__( address )
+
 
 # RFC 2822 local-part: dot-atom or quoted-string
 # characters allowed in atom: A-Za-z0-9!#$%&'*+-/=?^_`{|}~

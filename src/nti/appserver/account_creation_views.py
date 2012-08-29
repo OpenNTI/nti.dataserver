@@ -146,9 +146,15 @@ def account_create_view(request):
 			# message, field, value
 			field_name = e.args[1]
 			msg = e.args[0]
+
+		if getattr(e, 'i18n_message', None):
+			msg = str(e)
+		else:
+			msg = exc_info[1].message or msg
+
 		_raise_error( request,
 					  hexc.HTTPUnprocessableEntity,
-					  {'message': exc_info[1].message or msg,
+					  {'message': msg,
 					   'field': field_name,
 					   'code': exc_info[1].__class__.__name__},
 					  exc_info[2] )
