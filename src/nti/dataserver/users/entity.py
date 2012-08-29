@@ -15,7 +15,6 @@ import string
 from zope import interface
 from zope import component
 from zope.event import notify
-import zope.schema.interfaces
 
 from zope import lifecycleevent
 from zope.keyreference.interfaces import IKeyReference
@@ -40,7 +39,6 @@ import nti.apns.interfaces
 from . import interfaces
 
 from nti.externalization.datastructures import InterfaceObjectIO
-
 
 def _get_shared_dataserver(context=None,default=None):
 	if default != None:
@@ -190,10 +188,10 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 		__traceback_info__ = username, parent
 		if not username or not username.strip():
 			# Throw a three-arg version, similar to what a Field would do
-			raise zope.schema.interfaces.InvalidValue( "Username must be non-blank", 'Username', username )
-		if any( (c not in self.ALLOWED_USERNAME_CHARS for c in username) ):
-			raise zope.schema.interfaces.InvalidValue( "Username contains invalid characters", 'Username', username )
-
+			raise interfaces.UsernameCannotBeBlank( username )
+		for c in username:
+			if c not in self.ALLOWED_USERNAME_CHARS:
+				raise interfaces.UsernameContainsIllegalChar( username, self.ALLOWED_USERNAME_CHARS )
 
 		self.username = username
 

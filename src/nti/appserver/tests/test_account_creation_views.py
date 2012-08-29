@@ -175,6 +175,7 @@ class TestCreateView(ConfiguringTestBase):
 	def test_create_invalid_username( self ):
 		self.request.content_type = 'application/vnd.nextthought+json'
 
+		bad_code = 'UsernameCannotBeBlank'
 		for bad_username in ('   ', 'foo bar', 'foo#bar', 'foo,bar', 'foo%bar' ):
 
 			self.request.body = to_json_representation( {'Username': bad_username,
@@ -187,7 +188,8 @@ class TestCreateView(ConfiguringTestBase):
 				account_create_view( self.request )
 
 			assert_that( e.exception.json_body, has_entry( 'field', 'Username' ) )
-			assert_that( e.exception.json_body, has_entry( 'code', 'InvalidValue' ) )
+			assert_that( e.exception.json_body, has_entry( 'code', bad_code ) )
+			bad_code = 'UsernameContainsIllegalChar'
 
 
 
