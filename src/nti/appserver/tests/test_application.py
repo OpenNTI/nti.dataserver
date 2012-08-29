@@ -109,14 +109,17 @@ class ApplicationTestBase(ConfiguringTestBase):
 		__show__.on()
 		super(ApplicationTestBase,self).tearDown()
 
-	def _make_extra_environ(self, user=b'sjohnson@nextthought.COM', update_request=False, **kwargs):
+	extra_environ_default_user = b'sjohnson@nextthought.COM'
+	def _make_extra_environ(self, user=extra_environ_default_user, update_request=False, **kwargs):
 		"""
 		The default username is a case-modified version of the default user in :meth:`_create_user`,
 		to test case-insensitive ACLs and login.
 		"""
+		if user is self.extra_environ_default_user and 'username' in kwargs:
+			user = str(kwargs.pop( 'username' ) )
 		result = {
 			b'HTTP_AUTHORIZATION': b'Basic ' + (user + ':temp001').encode('base64'),
-			b'HTTP_ORIGIN': b'localhost', # To trigger CORS
+			b'HTTP_ORIGIN': b'http://localhost', # To trigger CORS
 			b'HTTP_USER_AGENT': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_3) AppleWebKit/537.6 (KHTML, like Gecko) Chrome/23.0.1239.0 Safari/537.6'
 			}
 		for k, v in kwargs.items():

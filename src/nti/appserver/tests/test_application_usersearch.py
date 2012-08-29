@@ -11,11 +11,13 @@ from hamcrest import has_item
 from hamcrest import all_of
 from hamcrest import contains_string
 from hamcrest import has_property
+from hamcrest import none
 from hamcrest import has_length
 
 
 from webtest import TestApp
 from nti.dataserver import users
+from nti.dataserver.users import interfaces as user_interfaces
 from nti.dataserver.tests import mock_dataserver
 
 from nti.appserver.tests.test_application import ApplicationTestBase
@@ -114,6 +116,42 @@ class TestApplicationUserSearch(ApplicationTestBase):
 		assert_that( res.json_body['Items'], has_item( has_entry( 'Username', 'sjohnson@nextthought.com' ) ) )
 		assert_that( res.json_body['Items'], has_item( has_entry( 'Username', 'sj2@nextthought.com' ) ) )
 
+
+		# We can search for the community
+		path = '/dataserver2/UserSearch/Community'
+		res = testapp.get( path, extra_environ=self._make_extra_environ())
+		assert_that( res.json_body['Items'], has_length( 1 ) )
+
+		# The user that's not in the community cannot
+		res = testapp.get( path, extra_environ=self._make_extra_environ(username=u3.username))
+		assert_that( res.json_body['Items'], has_length( 0 ) )
+
+	def test_user_search_mathcounts_policy(self):
+		"On the mathcounts site, we cannot search for realname or alias"
+		with mock_dataserver.mock_db_trans(self.ds):
+			u1 = self._create_user()
+			u2 = self._create_user( username='sj2@nextthought.com' )
+			user_interfaces.IFriendlyNamed( u2 ).alias = u"Steve"
+			user_interfaces.IFriendlyNamed( u2 ).realname = u"Steve Johnson"
+			community = users.Community.create_community( username='TheCommunity' )
+			u1.join_community( community )
+			u2.join_community( community )
+
+		testapp = TestApp( self.app )
+
+
+		# Normal search works
+		path = '/dataserver2/UserSearch/steve'
+		res = testapp.get( path, extra_environ=self._make_extra_environ())
+		assert_that( res.json_body['Items'], has_length( 1 ) )
+		assert_that( res.json_body['Items'], has_item( has_entry( 'Username', 'sj2@nextthought.com' ) ) )
+		assert_that( res.json_body['Items'], has_item( has_entry( 'realname', none() ) ) )
+
+		# MC search is locked down
+		environ = self._make_extra_environ()
+		environ['HTTP_ORIGIN'] = 'http://mathcounts.nextthought.com'
+		res = testapp.get( path, extra_environ=environ )
+		assert_that( res.json_body['Items'], has_length( 0 ) )
 
 
 	def test_search_empty_term_user(self):
