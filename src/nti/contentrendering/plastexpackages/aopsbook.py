@@ -64,18 +64,6 @@ class pagebreak(_Ignored):
 class phantom(Base.Space.phantom):
 	args = 'tex'
 
-
-class yen(Base.Command):
-	unicode = u'\xA5'
-
-class eur(Base.Command):
-	macroName = 'EUR'
-	unicode = u'\x20AC'
-
-class textcent(Base.Command):
-	unicode = u'\xA2'
-
-
 @interface.implementer(res_interfaces.IRepresentationPreferences)
 class Cube(_OneText):
 	resourceTypes = ['png', 'svg']

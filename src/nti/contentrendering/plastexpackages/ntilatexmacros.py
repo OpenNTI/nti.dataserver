@@ -72,6 +72,17 @@ class textregistered(Base.Command):
 class textdegree(Base.Command):
 	unicode = u'\u00B0'
 
+# Currency symbols
+class yen(Base.Command):
+	unicode = u'\xA5'
+
+class eur(Base.Command):
+	macroName = 'EUR'
+	unicode = u'\x20AC'
+
+class textcent(Base.Command):
+	unicode = u'\xA2'
+
 # Handle pdfLatex primatives
 class pdfminorversion(Command):
 	args = 'version:int'
