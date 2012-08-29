@@ -29,13 +29,12 @@ import nti.socketio.interfaces
 import nti.dataserver.interfaces as nti_interfaces
 import nti.socketio.session_consumer
 
-
-import nti.dataserver.sessions as _sessions
+from nti.socketio.persistent_session import AbstractSession
 
 #from nti.socketio import interfaces as socketio_interfaces
 import nti.socketio.protocol
 
-class Session( _sessions.Session ):
+class Session( AbstractSession ):
 	"""
 	Client session which checks the connection health and the queues for
 	message passing.

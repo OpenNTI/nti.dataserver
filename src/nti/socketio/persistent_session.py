@@ -49,8 +49,8 @@ class AbstractSession(persistent.Persistent):
 
 	def __init__(self, owner=None):
 		self.creation_time = time.time()
-		self.client_queue = zc.queue.Queue() # queue for messages to client
-		self.server_queue = zc.queue.Queue() # queue for messages to server
+		self.client_queue = zc.queue.CompositeQueue() # queue for messages to client
+		self.server_queue = zc.queue.CompositeQueue() # queue for messages to server
 
 		self._hits = minmax.MergingCounter( 0 )
 		self._last_heartbeat_time = minmax.NumericMaximum( 0 )
