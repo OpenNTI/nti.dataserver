@@ -120,9 +120,14 @@ class IWillUpdateNewEntityEvent(zope.component.interfaces.IObjectEvent):
 	especially if they can guide the updating process.
 	"""
 
+	ext_value = interface.Attribute( "The external value that will drive the update" )
+
 @interface.implementer(IWillUpdateNewEntityEvent)
 class WillUpdateNewEntityEvent(zope.component.interfaces.ObjectEvent):
-	pass
+
+	def __init__( self, obj, ext_value=None ):
+		super(WillUpdateNewEntityEvent,self).__init__( obj )
+		self.ext_value = ext_value
 
 class IWillCreateNewEntityEvent(zope.component.interfaces.IObjectEvent):
 	"""
@@ -138,6 +143,17 @@ class IWillCreateNewEntityEvent(zope.component.interfaces.IObjectEvent):
 @interface.implementer(IWillCreateNewEntityEvent)
 class WillCreateNewEntityEvent(zope.component.interfaces.ObjectEvent):
 	pass
+
+class IAvatarURLProvider(Interface):
+	"""
+	Something that can provide a display URL. This is separate
+	from the profile hierarchy to allow delegation of adapters.
+	"""
+
+	avatarURL = schema.URI(
+		title="URL of your avatar picture",
+		description="If not provided, one will be generated for you.",
+		required=False )
 
 class IAvatarURL(Interface):
 	"""
@@ -184,21 +200,52 @@ import nti.utils.schema
 class _ValidTextLine(nti.utils.schema.FieldValidationMixin,schema.TextLine):
 	pass
 
-class ICompleteUserProfile(IFriendlyNamed):
+class IUserProfile(IFriendlyNamed, IAvatarURL):
 	"""
-	A complete user profile.
+	Base class that user profiles should extend.
 	"""
-	# Notice we re-define avatarURL, but do not extend IAvatarURL.
-	# This is because of how we are currently implementing avatarURL.
-	# If we extend, we get into infinite recursion. TODO: Rethink this
-	avatarURL = schema.URI(
-		title="URL of your avatar picture",
-		description="If not provided, one will be generated for you.",
+
+class IRestrictedUserProfile(IUserProfile):
+	"""
+	A profile for a restricted user.
+	"""
+
+	birthdate = schema.Date(
+		title='birthdate',
+		description='Your date of birth',
+		required=False )
+
+	password_recovery_email_hash = _ValidTextLine(
+		title="A secure hash of an email address used during password recovery",
 		required=False )
 
 	email = _ValidTextLine(
 		title='Email',
-		description=u'',
+		description=u'Email is not stored at this level, but the field is specified here as a convenient way'
+			' to be able to set the password_recovery_email_hash',
+		required=False,
+		constraint=checkEmailAddress)
+
+class IRestrictedUserProfileWithContactEmail(IRestrictedUserProfile):
+	"""
+	A profile that adds a (temporary) contact email during the account setup
+	process.
+	"""
+
+	contact_email = _ValidTextLine(
+		title='Contact email',
+		description=u'An email address to use to contact someone responsible for this accounts user',
+		required=True,
+		constraint=checkEmailAddress)
+
+class ICompleteUserProfile(IRestrictedUserProfile):
+	"""
+	A complete user profile.
+	"""
+
+	email = _ValidTextLine(
+		title='Email',
+		description=u'An email address that can be used for communication.',
 		required=False, # TODO: Should be true when the tests are ready
 		constraint=checkEmailAddress)
 
@@ -226,11 +273,6 @@ class ICompleteUserProfile(IFriendlyNamed):
 					  "country - or in a company setting, where "
 					  "your office is located.",
 		required=False)
-
-	birthdate = schema.Date(
-		title='birthdate',
-		description='Your date of birth',
-		required=False )
 
 	# TODO: This probably comes from a vocabulary, at least for some users
 	affiliation = schema.TextLine(

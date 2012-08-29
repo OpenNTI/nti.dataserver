@@ -22,6 +22,7 @@ setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.dataserver',
 tearDownModule = nti.tests.module_teardown
 
 from zope import interface
+from zope.annotation import interfaces as an_interfaces
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces
 from nti.dataserver.users import Everyone
@@ -35,6 +36,7 @@ def test_coppa_user():
 
 
 	interface.alsoProvides( o, nti_interfaces.ICoppaUserWithAgreement )
+	interface.alsoProvides( o, an_interfaces.IAttributeAnnotatable )
 
 	assert_that( interfaces.IAvatarURL( o ),
 				 verifiably_provides( interfaces.IAvatarURL ) )

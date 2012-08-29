@@ -17,6 +17,7 @@ import zope.location.interfaces
 import zope.annotation
 
 import persistent
+import hashlib
 
 from zope.schema.fieldproperty import FieldPropertyStoredThroughField
 
@@ -78,18 +79,37 @@ class FriendlyNamed(persistent.Persistent):
 	def context(self):
 		return self.__parent__
 
-
 @component.adapter(nti_interfaces.IUser)
-@interface.implementer(interfaces.ICompleteUserProfile)
-class CompleteUserProfile(FriendlyNamed):
+@interface.implementer(interfaces.IUserProfile)
+class UserProfile(FriendlyNamed):
 	"""
 	An adapter for storing profile information. We provide a specific implementation
 	of the ``avatarURL`` property rather than relying on field storage.
 	"""
 
-	avatarURL = property( lambda self: getattr( self, '_avatarURL', None ) or interfaces.IAvatarURL(self.context).avatarURL,
+	avatarURL = property( lambda self: getattr( self, '_avatarURL', None ) or interfaces.IAvatarURLProvider(self.context).avatarURL,
 						  lambda self, nv: setattr( self, '_avatarURL', nv ),
 						  lambda self: delattr( self, '_avatarURL' ) )
+
+@component.adapter(nti_interfaces.IUser)
+@interface.implementer(interfaces.IRestrictedUserProfile)
+class RestrictedUserProfile(UserProfile):
+
+	# If anyone tries to set an email on us, we turn it into the recovery hash
+	email = property( lambda self: None,
+					  lambda self, nv: setattr( self, 'password_recovery_email_hash', unicode(hashlib.sha1( nv ).hexdigest()) ),
+					  doc="This type of profile cannot store an actual email address. If anyone tries, it becomes the recovery hash")
+
+@component.adapter(nti_interfaces.IUser)
+@interface.implementer(interfaces.IRestrictedUserProfileWithContactEmail)
+class RestrictedUserProfileWithContactEmail(RestrictedUserProfile):
+	pass
+
+@component.adapter(nti_interfaces.IUser)
+@interface.implementer(interfaces.ICompleteUserProfile)
+class CompleteUserProfile(RestrictedUserProfile):
+	pass
+
 
 
 @interface.implementer(interfaces.IEmailRequiredUserProfile)
@@ -106,6 +126,9 @@ def _init():
 				   'realname': '_realname'}
 
 	_class_map = { interfaces.IFriendlyNamed: FriendlyNamed,
+				   interfaces.IUserProfile: UserProfile,
+				   interfaces.IRestrictedUserProfile: RestrictedUserProfile,
+				   interfaces.IRestrictedUserProfileWithContactEmail: RestrictedUserProfileWithContactEmail,
 				   interfaces.ICompleteUserProfile: CompleteUserProfile,
 				   interfaces.IEmailRequiredUserProfile: EmailRequiredUserProfile }
 
@@ -123,5 +146,7 @@ _init()
 del _init
 
 FriendlyNamedFactory = zope.annotation.factory( FriendlyNamed )
+RestrictedUserProfileFactory = zope.annotation.factory( RestrictedUserProfile )
+RestrictedUserProfileWithContactEmailFactory = zope.annotation.factory( RestrictedUserProfileWithContactEmail )
 CompleteUserProfileFactory = zope.annotation.factory( CompleteUserProfile )
 EmailRequiredUserProfileFactory = zope.annotation.factory( EmailRequiredUserProfile )

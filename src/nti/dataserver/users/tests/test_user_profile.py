@@ -69,6 +69,13 @@ def test_updating_realname_from_external():
 	assert_that( prof,
 				 has_property( 'realname', 'Foo Bar' ) )
 
+	interface.alsoProvides( user, interfaces.IImmutableFriendlyNamed )
+	user.updateFromExternalObject( {'realname': 'Changed Name' } )
+
+	prof = interfaces.ICompleteUserProfile( user )
+	assert_that( prof,
+				 has_property( 'realname', 'Foo Bar' ) )
+
 
 def test_updating_avatar_url_from_external():
 	user = User( username="foo@bar" )

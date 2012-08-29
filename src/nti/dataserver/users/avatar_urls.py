@@ -21,7 +21,7 @@ from nti.utils import create_gravatar_url, GENERATED_GRAVATAR_TYPES
 
 
 @component.adapter(nti_interfaces.IEntity)
-@interface.implementer(interfaces.IAvatarURL)
+@interface.implementer(interfaces.IAvatarURLProvider,interfaces.IAvatarURL)
 def AvatarURLFactory(entity):
 	"""
 	For legacy reasons, this factory first checks for the presence of an avatar URL
@@ -30,9 +30,9 @@ def AvatarURLFactory(entity):
 	if getattr( entity, '_avatarURL', None ):
 		return _FixedAvatarWrapper( entity )
 
-	return component.queryAdapter( entity, interfaces.IAvatarURL, name="generated" )
+	return component.queryAdapter( entity, interfaces.IAvatarURLProvider, name="generated" )
 
-@interface.implementer(interfaces.IAvatarURL)
+@interface.implementer(interfaces.IAvatarURLProvider,interfaces.IAvatarURL)
 class _FixedAvatarWrapper(object):
 
 	def __init__( self, context ):
@@ -46,7 +46,7 @@ class _FixedAvatarWrapper(object):
 # so that would have to be investigated
 
 @component.adapter(nti_interfaces.IEntity)
-@interface.implementer(interfaces.IAvatarURL)
+@interface.implementer(interfaces.IAvatarURLProvider,interfaces.IAvatarURL)
 class GravatarComputedAvatarURL(object):
 
 	defaultGravatarType = 'mm'
@@ -70,7 +70,7 @@ class GravatarComputedAvatarURL(object):
 		self.avatarURL = create_gravatar_url( email, gravatar_type )
 
 @component.adapter(nti_interfaces.ICoppaUser)
-@interface.implementer(interfaces.IAvatarURL)
+@interface.implementer(interfaces.IAvatarURLProvider,interfaces.IAvatarURL)
 class GravatarComputedCoppaAvatarURL(object):
 	"""
 	Coppa users aren't expected to have a valid email. Instead, they are
