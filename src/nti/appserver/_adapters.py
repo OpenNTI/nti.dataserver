@@ -147,3 +147,17 @@ class _DFLUserLikeDecorator(object):
 		# The application gets confused. Sometimes it uses the ID,
 		# sometimes the Username.
 		external['ID'] = original.NTIID
+
+@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+@component.adapter(nti_interfaces.IUser)
+class _UserRealnameStripper(object):
+	"""
+	At this time, we never, ever, ever, want to send back the extremely valuable and
+	privacy sensitive data we have stored in our 'realname' field. It's our secret.
+	"""
+
+	def __init__( self, context ):
+		pass
+
+	def decorateExternalObject( self, original, external ):
+		external['realname'] = None

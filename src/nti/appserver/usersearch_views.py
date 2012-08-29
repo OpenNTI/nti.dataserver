@@ -31,6 +31,7 @@ from nti.externalization.datastructures import LocatedExternalDict
 import warnings
 
 from . import interfaces as app_interfaces
+from . import site_policies
 
 @view_config( route_name='search.users',
 			  renderer='rest',
@@ -66,73 +67,11 @@ class _UserSearchView(object):
 			result.append( users.Entity.get_entity( partialMatch ) )
 			# NOTE2: Going through this API lets some private objects be found
 			# (DynamicFriendsLists, specifically). We should probably lock that down
-		else:
-			_users = nti_interfaces.IShardLayout( self.dataserver ).users_folder
-			# Searching the userid is generally not what we want
-			# now that we have username and alias (e.g,
-			# tfandango@gmail.com -> Troy Daley. Search for "Dan" and get Troy and
-			# be very confused.). As a compromise, we include them
-			# if there are no other matches
-			uid_matches = []
-			for maybeMatch in _users.iterkeys():
-				if isSyntheticKey( maybeMatch ):
-					continue
+		elif remote_user:
+			result = _authenticated_search( self.request, remote_user, self.dataserver, partialMatch )
 
-				# TODO how expensive is it to actually look inside all these
-				# objects?  This almost certainly wakes them up?
-				# Our class name is UserMatchingGet, but we actually
-				# search across all entities, like Communities
-				userObj = users.Entity.get_entity( maybeMatch, dataserver=self.dataserver )
-				if not userObj:
-					continue
-
-				if partialMatch in maybeMatch.lower():
-					uid_matches.append( userObj )
-
-				names = user_interfaces.IFriendlyNamed( userObj )
-				if partialMatch in (names.realname or '').lower() \
-					   or partialMatch in (names.alias or '').lower():
-					result.append( userObj )
-
-			if remote_user:
-				# Given a remote user, add matching friends lists, too
-				for fl in remote_user.friendsLists.values():
-					if not isinstance( fl, users.Entity ):
-						continue
-					names = user_interfaces.IFriendlyNamed( fl )
-					if partialMatch in fl.username.lower() \
-					   or partialMatch in (names.realname or '').lower() \
-					   or partialMatch in (names.alias or '').lower():
-						result.append( fl )
-				# Also add enrolled classes
-				# TODO: What about instructors?
-				enrolled_sections = component.getAdapter( remote_user, app_interfaces.IContainerCollection, name='EnrolledClassSections' )
-				for section in enrolled_sections.container:
-					# TODO: We really want to be searching the class as well, but
-					# we cannot get there from here
-					if partialMatch in section.ID.lower() or partialMatch in section.Description.lower():
-						result.append( section )
-
-			if uid_matches:
-				result.extend(uid_matches)
-
-			if not result and remote_user:
-				warnings.warn( "Hack for UI: looking at display names of communities" )
-				for x in remote_user.communities:
-					x = users.Entity.get_entity( x )
-					if x and x.username.lower() == partialMatch.lower():
-						result.append( x )
-						break
-
-			# FIXME: Hack in a policy of limiting searching to overlapping communities
-			if remote_user:
-				remote_com_names = remote_user.communities - set( ('Everyone',) )
-				# Filter to things that share a common community
-				result = [x for x in result
-						  if not hasattr(x, 'communities') or x.communities.intersection( remote_com_names )]
 		# Since we are already looking in the object we might as well return the summary form
 		# For this reason, we are doing the externalization ourself.
-
 		result = [toExternalObject( user, name=('personal-summary'
 												if user == remote_user
 												else 'summary') )
@@ -147,3 +86,101 @@ class _UserSearchView(object):
 		result.__parent__ = self.dataserver.root
 		result.__name__ = 'UserSearch' # TODO: Hmm
 		return result
+
+def _authenticated_search( request, remote_user, dataserver, search_term ):
+	result = []
+	_users = nti_interfaces.IShardLayout( dataserver ).users_folder
+	user_search_matcher = site_policies.queryAdapterInSite( remote_user, IUserSearchMatcher, request=request, default=ComprehensiveUserSearchMatcher() )
+	# Searching the userid is generally not what we want
+	# now that we have username and alias (e.g,
+	# tfandango@gmail.com -> Troy Daley. Search for "Dan" and get Troy and
+	# be very confused.). As a compromise, we include them
+	# if there are no other matches
+	uid_matches = []
+	for maybeMatch in _users.iterkeys():
+		if isSyntheticKey( maybeMatch ):
+			continue
+
+		# TODO how expensive is it to actually look inside all these
+		# objects?  This almost certainly wakes them up?
+		# Our class name is UserMatchingGet, but we actually
+		# search across all entities, like Communities
+		userObj = users.Entity.get_entity( maybeMatch, dataserver=dataserver )
+		if not userObj:
+			continue
+
+		if search_term in maybeMatch.lower():
+			uid_matches.append( userObj )
+
+		if user_search_matcher.matches( search_term, userObj ):
+			result.append( userObj )
+
+
+	# Given a remote user, add matching friends lists, too
+	for fl in remote_user.friendsLists.values():
+		if not isinstance( fl, users.Entity ):
+			continue
+		names = user_interfaces.IFriendlyNamed( fl )
+		if search_term in fl.username.lower() \
+		   or search_term in (names.realname or '').lower() \
+		   or search_term in (names.alias or '').lower():
+			result.append( fl )
+	# Also add enrolled classes
+	# TODO: What about instructors?
+	enrolled_sections = component.getAdapter( remote_user, app_interfaces.IContainerCollection, name='EnrolledClassSections' )
+	for section in enrolled_sections.container:
+		# TODO: We really want to be searching the class as well, but
+		# we cannot get there from here
+		if search_term in section.ID.lower() or search_term in section.Description.lower():
+			result.append( section )
+
+	if uid_matches:
+		result.extend(uid_matches)
+
+	if not result:
+		warnings.warn( "Hack for UI: looking at display names of communities" )
+		for x in remote_user.communities:
+			x = users.Entity.get_entity( x )
+			if x and x.username.lower() == search_term.lower():
+				result.append( x )
+				break
+
+	# FIXME: Hack in a policy of limiting searching to overlapping communities
+	remote_com_names = remote_user.communities - set( ('Everyone',) )
+	def test(x):
+		if isinstance( x, users.Community ):
+			return x.username in remote_com_names
+		return not hasattr(x, 'communities') or x.communities.intersection( remote_com_names )
+	# Filter to things that share a common community
+	result = [x for x in result
+			  if test(x)]
+
+	return result
+
+class IUserSearchMatcher(interface.Interface):
+
+	def matches( search_term, entity ):
+		"""
+		Determine if the user matches.
+		:return: Boolean.
+		"""
+
+@interface.implementer(IUserSearchMatcher)
+class ComprehensiveUserSearchMatcher(object):
+
+	def __init__( self, context=None ):
+		pass
+
+	def matches( self, search_term, entity ):
+		names = user_interfaces.IFriendlyNamed( entity )
+		return search_term in (names.realname or '').lower() or search_term in (names.alias or '').lower()
+
+
+@interface.implementer(IUserSearchMatcher)
+class NoOpUserSearchMatcher(object):
+
+	def __init__( self, context=None ):
+		pass
+
+	def matches( self, search_term, entity ):
+		return False

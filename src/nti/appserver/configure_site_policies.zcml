@@ -27,4 +27,10 @@
 			 provides="nti.dataserver.users.interfaces.IAvatarChoices"
 			 name="mathcounts.nextthought.com" />
 
+	<!-- On the MC site, we cannot search for users by anything except their username -->
+	<adapter factory="nti.appserver.usersearch_views.NoOpUserSearchMatcher"
+			 for="nti.dataserver.interfaces.IUser"
+			 provides="nti.appserver.usersearch_views.IUserSearchMatcher"
+			 name="mathcounts.nextthought.com" />
+
 </configure>
