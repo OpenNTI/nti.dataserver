@@ -46,6 +46,8 @@ import z3c.password.interfaces
 from nti.dataserver import users
 from nti.dataserver.users import interfaces as user_interfaces
 
+from nti.externalization.datastructures import InterfaceObjectIO
+
 from nti.appserver._util import logon_userid_with_request
 from nti.appserver import _external_object_io as obj_io
 from nti.appserver import site_policies
@@ -54,6 +56,8 @@ from pyramid.view import view_config
 from pyramid import security as sec
 
 import nti.appserver.httpexceptions as hexc
+
+import nameparser.parser
 
 REL_CREATE_ACCOUNT = "account.create"
 REL_PREFLIGHT_CREATE_ACCOUNT = "account.preflight.create"
@@ -109,6 +113,14 @@ def _create_user( request, externalValue, preflight_only=False ):
 										   external_value=externalValue,
 										   preflight_only=preflight_only ) # May throw validation error
 		return new_user
+	except nameparser.parser.BlankHumanNameError as e:
+		exc_info = sys.exc_info()
+		_raise_error( request,
+					  hexc.HTTPUnprocessableEntity,
+					  { 'message': e.message,
+						'field': 'realname',
+						'code': e.__class__.__name__ },
+						exc_info[2]	)
 	except zope.schema.interfaces.RequiredMissing as e:
 		exc_info = sys.exc_info()
 		_raise_error( request,
@@ -212,9 +224,12 @@ def account_preflight_view(request):
 	Does a preflight check of the values being used during the process of account creation, returning
 	any error messages that occur.
 
-	The input to this view is the JSON for a User object. It must have at least the ``Username`` field, with
+	The input to this view is the JSON for a User object. It should have at least the ``Username`` field, with
 	other missing fields being synthesized by this object to avoid conflict with the site policies. If
 	you do give other fields, then they will be checked in combination to see if the combination is valid.
+
+	If you do not give the ``Username`` field, then you must at least give the ``birthdate`` field, and
+	a general description of requirements will be returned to you.
 
 	:return: A dictionary containing the Username and any possible AvatarURLChoices.
 
@@ -226,10 +241,11 @@ def account_preflight_view(request):
 
 	externalValue = obj_io.read_body_as_external_object(request)
 
-	placeholder_data = {'password': None,
+	placeholder_data = {'Username': 'A_Username_We_Allow_That_Doesnt_Conflict',
+						'password': None,
 						'birthdate': '1982-01-31',
 						'email': 'testing_account_creation@tests.nextthought.com',
-						'realname': 'com.nextthought.account_creation_user' }
+						'realname': 'com.nextthought.account_creation_user WithALastName' }
 
 	for k, v in placeholder_data.items():
 		if k not in externalValue:
@@ -238,18 +254,27 @@ def account_preflight_view(request):
 	if not externalValue['password']:
 		externalValue['password'] = component.getUtility( z3c.password.interfaces.IPasswordUtility ).generate()
 
-	_create_user( request, externalValue, preflight_only=True )
+	preflight_user = _create_user( request, externalValue, preflight_only=True )
+	profile_iface = user_interfaces.IUserProfileSchemaProvider( preflight_user ).getSchema()
+	profile = profile_iface( preflight_user )
+	iface_io = InterfaceObjectIO( profile, profile_iface )
+	schema = iface_io.schema
+	ext_schema = { k: {'name': k, 'required': v.required} for k, v in schema.namesAndDescriptions(all=True) }
 
 
 	request.response.status_int = 200
 
-	# Great, valid so far. By definition we know if we make it here we have a Username value.
+	# Great, valid so far. We might or might not have a username, depending on what was provided.
 	# Can we provide options for avatars based on that?
 	avatar_choices = ()
-	avatar_choices_factory = site_policies.queryAdapterInSite( externalValue['Username'], user_interfaces.IAvatarChoices,
-															   request=request )
-	if avatar_choices_factory:
-		avatar_choices = avatar_choices_factory.get_choices()
 
-	return {'Username': externalValue['Username'],
-			'AvatarURLChoices': avatar_choices }
+	provided_username = externalValue['Username'] != placeholder_data['Username']
+	if provided_username:
+		avatar_choices_factory = site_policies.queryAdapterInSite( externalValue['Username'], user_interfaces.IAvatarChoices,
+																   request=request )
+		if avatar_choices_factory:
+			avatar_choices = avatar_choices_factory.get_choices()
+
+	return {'Username': externalValue['Username'] if provided_username else None,
+			'AvatarURLChoices': avatar_choices,
+			'ProfileSchema': ext_schema }

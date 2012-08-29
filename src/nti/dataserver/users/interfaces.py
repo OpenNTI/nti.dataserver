@@ -174,6 +174,12 @@ class IFriendlyNamed(Interface):
 		description="Enter full name, e.g. John Smith.",
 		required=False)
 
+class IImmutableFriendlyNamed(Interface):
+	"""
+	Apply this to a context object to mark that it should not allow mutation
+	of the friendly name values.
+	"""
+
 import nti.utils.schema
 class _ValidTextLine(nti.utils.schema.FieldValidationMixin,schema.TextLine):
 	pass

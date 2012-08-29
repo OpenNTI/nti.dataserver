@@ -75,13 +75,6 @@ class _AbstractValidationViewBase(ConfiguringTestBase):
 		assert_that( exc.exception.json_body, has_entry( 'message', contains_string( 'Password is too short' ) ) )
 		assert_that( exc.exception.json_body, has_entry( 'code', 'TooShortPassword' ) )
 
-	@WithMockDSTrans
-	def test_create_missing_username( self ):
-		self.request.content_type = 'application/vnd.nextthought+json'
-		self.request.body = to_json_representation( {'password': 'pass123word', 'email': 'foo@bar.com' } )
-		with assert_raises( hexc.HTTPUnprocessableEntity ):
-			self.the_view( self.request )
-
 
 	@WithMockDSTrans
 	def test_create_invalid_email( self ):
@@ -130,6 +123,24 @@ class _AbstractValidationViewBase(ConfiguringTestBase):
 		assert_that( e.exception.json_body, has_entry( 'message', contains_string( 'censored' ) ) )
 
 	@WithMockDSTrans
+	def test_create_birthdate_must_be_in_past( self ):
+		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.body = to_json_representation( {
+													 'Username': 'jamadden',
+													 'realname': 'Jason Madden',
+													 'password': 'pass132word',
+													 'email': 'foo@bar.com',
+													 'birthdate': datetime.date.today().isoformat() } )
+
+
+		with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
+			self.the_view( self.request )
+
+		assert_that( e.exception.json_body, has_entry( 'code', 'ValidationError' ) )
+		assert_that( e.exception.json_body, has_entry( 'field', 'birthdate' ) )
+		assert_that( e.exception.json_body, has_entry( 'message', contains_string( 'past' ) ) )
+
+	@WithMockDSTrans
 	def test_create_invalid_username( self ):
 		self.request.content_type = 'application/vnd.nextthought+json'
 
@@ -158,6 +169,21 @@ class TestPreflightView(_AbstractValidationViewBase):
 		super(TestPreflightView,self).setUp()
 		self.the_view = account_preflight_view
 
+	@WithMockDSTrans
+	def test_create_mathcounts_policy_birthdate_only( self ):
+		assert_that( self.request.host, is_( 'example.com:80' ) )
+		self.request.headers['origin'] = 'http://mathcounts.nextthought.com'
+
+		self.request.content_type = 'application/vnd.nextthought+json'
+
+		self.request.body = to_json_representation( {
+													 'birthdate': '1982-01-31',
+													  }  )
+
+		val = self.the_view( self.request )
+
+		assert_that( val, has_entry( 'AvatarURLChoices', has_length( 0 ) ) )
+		assert_that( val, has_entry( 'ProfileSchema', has_key( 'opt_in_email_communication' ) ) )
 
 	@WithMockDSTrans
 	def test_create_mathcounts_policy_avatar_choices( self ):
@@ -204,6 +230,14 @@ class TestCreateView(_AbstractValidationViewBase):
 		self.the_view = account_create_view
 
 	@WithMockDSTrans
+	def test_create_missing_username( self ):
+		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.body = to_json_representation( {'password': 'pass123word', 'email': 'foo@bar.com' } )
+		with assert_raises( hexc.HTTPUnprocessableEntity ):
+			self.the_view( self.request )
+
+
+	@WithMockDSTrans
 	def test_create_missing_password(self):
 		self.request.content_type = 'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'foo@bar.com', 'email': 'foo@bar.com' } )
@@ -220,11 +254,13 @@ class TestCreateView(_AbstractValidationViewBase):
 		self.request.content_type = 'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
 													 'password': 'pass123word',
+													 'realname': 'Jason Madden',
 													 'email': 'foo@bar.com' } )
 
 
 		new_user = account_create_view( self.request )
 		assert_that( new_user, has_property( 'username', 'jason@test.nextthought.com' ) )
+		assert_that( user_interfaces.IFriendlyNamed( new_user ), has_property( 'alias', 'Jason M' ) )
 		assert_that( self.request.response, has_property( 'location', contains_string( '/dataserver2/users/jason%40test.nextthought.com' ) ) )
 		assert_that( self.request.response, has_property( 'status_int', 201 ) )
 		#assert_that( self.request.response.headers, has_property( "what", "th" ) )
@@ -239,9 +275,11 @@ class TestCreateView(_AbstractValidationViewBase):
 		self.request.content_type = 'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason_nextthought_com',
 													 'password': 'pass132word',
+													 'realname': 'Jason Madden',
 													 'email': 'foo@bar.com' } )
 
-		account_create_view( self.request )
+		new_user = account_create_view( self.request )
+		assert_that( user_interfaces.IFriendlyNamed( new_user ), has_property( 'alias', 'Jason M' ) )
 
 		with assert_raises( hexc.HTTPConflict ) as e:
 			account_create_view( self.request )
@@ -258,6 +296,7 @@ class TestCreateView(_AbstractValidationViewBase):
 		self.request.content_type = 'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
 													 'password': 'pass123word',
+													 'realname': 'Jason Madden',
 													 'email': 'foo@bar.com' } )
 
 
@@ -276,6 +315,7 @@ class TestCreateView(_AbstractValidationViewBase):
 		self.request.content_type = 'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
 													 'password': 'pass123word',
+													 'realname': 'Jason Madden',
 													 'email': 'foo@bar.com' } )
 
 
@@ -319,23 +359,29 @@ class TestCreateView(_AbstractValidationViewBase):
 			# Cannot include username
 			account_create_view( self.request )
 
+		# Our value for alias trumps anything they send
 		self.request.body = to_json_representation( {'Username': 'jason_nextthought_com',
 													 'password': 'pass123word',
 													 'realname': 'Joe Bananna',
+													 'alias': 'Me',
 													 'email': 'foo@bar.com' } )
-		with assert_raises( hexc.HTTPUnprocessableEntity ):
-			# username and displayname must match
-			account_create_view( self.request )
 
-		self.request.body = to_json_representation( {'Username': 'jason_nextthought_com',
+		new_user = account_create_view( self.request )
+		assert_that( user_interfaces.IFriendlyNamed( new_user ),
+					 has_property( 'alias', new_user.username ) )
+		# We sent no birthdate so we must assume it's a baby
+		assert_that( new_user, verifiably_provides( nti_interfaces.ICoppaUserWithoutAgreement ) )
+		assert_that( user_interfaces.IFriendlyNamed( new_user ), has_property( 'realname', 'Joe' ) )
+
+
+		self.request.body = to_json_representation( {'Username': 'jason2_nextthought_com',
 													 'password': 'pass123word',
 													 'realname': 'Joe Bananna',
 													 'birthdate': '1982-01-31',
-													 'alias': 'jason_nextthought_com',
 													 'affiliation': 'school',
 													 'email': 'foo@bar.com' } )
 		new_user = account_create_view( self.request )
-		assert_that( new_user, verifiably_provides( nti_interfaces.ICoppaUserWithoutAgreement ) )
+		assert_that( new_user, verifiably_provides( nti_interfaces.ICoppaUserWithAgreement ) )
 		assert_that( new_user, has_property( 'communities', has_item( 'MathCounts' ) ) )
 		assert_that( user_interfaces.IFriendlyNamed( new_user ), has_property( 'realname', 'Joe Bananna' ) )
 		assert_that( user_interfaces.ICompleteUserProfile( new_user ),
@@ -382,6 +428,7 @@ class TestCreateView(_AbstractValidationViewBase):
 		self.request.content_type = 'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
 													 'password': 'pass123word',
+													 'realname': 'Jason Madden',
 													 'email': 'foo@bar.com' } )
 
 
