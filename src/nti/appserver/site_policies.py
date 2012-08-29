@@ -21,11 +21,13 @@ from pyramid.threadlocal import get_current_request
 
 from nti.contentlibrary import interfaces as lib_interfaces
 from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.users import interfaces as user_interfaces
 from nti.contentfragments import censor
 
 from nti.dataserver import shards as nti_shards
 
 import nameparser
+import datetime
 
 def get_possible_site_names(request=None):
 	"""
@@ -259,6 +261,29 @@ class GenericSitePolicyEventListener(object):
 		if user.username.endswith( '@nextthought.com' ):
 			raise zope.schema.ValidationError( "Invalid username", 'Username', user.username )
 
+		# Icky. For some random reason we require everyone to provide their real name,
+		# and we force the display name to be derived from it.
+		names = user_interfaces.IFriendlyNamed( user )
+		human_name = nameparser.HumanName( names.realname ) # Raises BlankHumanName if missing
+		if not human_name.first:
+			raise zope.schema.ValidationError( "Must provide first name", 'realname', names.realname )
+		if not human_name.last:
+			raise zope.schema.ValidationError( "Must provide last name", 'realname', names.realname )
+		human_name.capitalize()
+		names.realname = unicode(human_name)
+		names.alias = human_name.first + ' ' + human_name.last[0]
+
+		profile = user_interfaces.ICompleteUserProfile( user )
+		if profile.birthdate:
+			if profile.birthdate >= datetime.date.today():
+				raise zope.schema.ValidationError( "Birthdate must be in the past", 'birthdate', profile.birthdate.isoformat() )
+
+def _is_thirteen_or_more_years_ago( birthdate ):
+
+	today = datetime.date.today()
+	thirteen_years_ago = datetime.date.today().replace( year=today.year - 13 )
+
+	return birthdate < thirteen_years_ago
 
 @interface.implementer(ISitePolicyUserEventListener)
 class MathcountsSitePolicyEventListener(GenericSitePolicyEventListener):
@@ -269,7 +294,7 @@ class MathcountsSitePolicyEventListener(GenericSitePolicyEventListener):
 	def user_will_update_new( self, user, event ):
 		"""
 		This policy applies the :class:`nti.dataserver.interfaces.ICoppaUserWithoutAgreement` interface
-		to the object.
+		to the object, which drives the available data to store.
 		"""
 
 		interface.alsoProvides( user, nti_interfaces.ICoppaUser )
@@ -292,18 +317,20 @@ class MathcountsSitePolicyEventListener(GenericSitePolicyEventListener):
 		user.join_community( community )
 		user.follow( community )
 
+		interface.alsoProvides( user, user_interfaces.IImmutableFriendlyNamed )
+
 	def user_will_create( self, user, event ):
 		super(MathcountsSitePolicyEventListener,self).user_will_create( user, event )
 		names = user_interfaces.IFriendlyNamed( user )
+		# Force the alias to be the same as the username
+		names.alias = user.username
 		# Match the format of, e.g, WrongTypeError: message, field/type, value
 		# the view likes this
-		if names.alias != user.username:
-			raise zope.schema.ValidationError("Display name %s and username %s must match." % (names.alias, user.username),
-											  'Username', user.username)
 
 		# We require a realname, at least the first name, it must already be given.
-		# parse it now. This raises BlankHumanName if missing
+		# parse it now. This raises BlankHumanName if missing. This was checked by super
 		human_name = nameparser.HumanName( names.realname )
+
 		human_name_parts = human_name.first_list + human_name.middle_list + human_name.last_list
 		if any( (x.lower() in user.username.lower() for x in human_name_parts) ):
 			raise zope.schema.ValidationError("Username %s cannot include any part of the real name %s" %
@@ -312,12 +339,27 @@ class MathcountsSitePolicyEventListener(GenericSitePolicyEventListener):
 		if '@' in user.username:
 			raise zope.schema.ValidationError( "Username cannot contain '@'", 'Username', user.username )
 
+		profile = user_interfaces.ICompleteUserProfile( user )
+		if profile.birthdate and _is_thirteen_or_more_years_ago( profile.birthdate ):
+			# If we can show the kid is actually at least 13, then
+			# we don't need to get an agreement
+			interface.noLongerProvides( user, nti_interfaces.ICoppaUserWithoutAgreement )
+			interface.alsoProvides( user, nti_interfaces.ICoppaUserWithAgreement )
+
+		else:
+			# We can only store the first name
+			profile.realname = human_name.first
+
 
 @interface.implementer(ISitePolicyUserEventListener)
 class GenericAdultSitePolicyEventListener(GenericSitePolicyEventListener):
 	"""
 	Implements a generic policy for adult sites.
 	"""
+
+	def user_created( self, user, event ):
+		super(GenericAdultSitePolicyEventListener,self).user_created( user, event )
+		interface.alsoProvides( user, user_interfaces.IImmutableFriendlyNamed )
 
 	def user_will_create( self, user, event ):
 		"""

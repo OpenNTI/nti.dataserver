@@ -256,6 +256,11 @@ class InterfaceObjectIO(AbstractDynamicObjectIO):
 		# TODO: Should we cache the schema we use for a particular type?
 		self._iface = self._ext_find_schema( ext_self, iface_upper_bound or self._ext_iface_upper_bound )
 
+	@property
+	def schema(self):
+		""" The schema we will use to guide the process """
+		return self._iface
+
 	def _ext_find_schema( self, ext_self, iface_upper_bound ):
 		_iface = iface_upper_bound
 		# Search for the most derived version of the interface

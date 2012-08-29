@@ -112,7 +112,8 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 			as normal. If set to ``True``, then the process stops before the
 			:class:`zope.lifecycleevent.IObjectCreated` and :class:`zope.lifecycleevent.IObjectAdded`
 			events are fired, and the user object is not actually added to the database. When
-			``True``, the preflight object is not returned.
+			``True``, the preflight object is returned (assuming validation went as planned),
+			but it will not have a valid ``__parent__``
 		"""
 
 		dataserver = dataserver or _get_shared_dataserver()
@@ -158,7 +159,8 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 		if preflight_only:
 			if user.username in root_users:
 				raise KeyError( user.username )
-			return
+			user.__parent__ = None
+			return user
 
 		lifecycleevent.created( user ) # Fire created event
 		# Must manually fire added event if parent was given
@@ -265,6 +267,14 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 		# Profile info
 		profile_iface = interfaces.IUserProfileSchemaProvider( self ).getSchema()
 		profile = profile_iface( self )
+		# Cause certain fields to be effectively read-only once they are
+		# set. At this time, we cannot update the alias or realname fields once created; we assume
+		# them to be immutable
+		if interfaces.IImmutableFriendlyNamed.providedBy( self ):
+			if profile.alias and parsed.get( 'alias' ):
+				parsed.pop( 'alias' )
+			if profile.realname and parsed.get( 'realname' ):
+				parsed.pop( 'realname' )
 		InterfaceObjectIO( profile, profile_iface ).updateFromExternalObject( parsed, *args, **kwargs )
 
 	### Comparisons and Hashing ###

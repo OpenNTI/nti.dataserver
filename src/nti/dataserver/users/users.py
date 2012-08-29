@@ -143,8 +143,7 @@ class Principal(Entity,sharing.SharingSourceMixin):
 
 
 class Community(Entity,sharing.DynamicSharingTargetMixin):
-	interface.implements(nti_interfaces.ICommunity)
-	
+
 	@classmethod
 	def create_community( cls, dataserver=None, **kwargs ):
 		""" Creates (and returns) and places in the dataserver a new community.
