@@ -12,6 +12,8 @@ __docformat__ = "restructuredtext en"
 from hamcrest import assert_that
 from hamcrest import has_property
 from hamcrest import contains_string
+from hamcrest import has_length
+from hamcrest import has_item
 
 import nti.tests
 from nti.tests import verifiably_provides
@@ -39,6 +41,10 @@ def test_coppa_user():
 	assert_that( interfaces.IAvatarURL( o ),
 				 has_property( 'avatarURL', contains_string( 'http://' ) ) )
 
+	choices = interfaces.IAvatarChoices( o ).get_choices()
+	assert_that( choices, has_length( 8 ) )
+	assert_that( choices, has_item( interfaces.IAvatarURL( o ).avatarURL ) )
+
 def test_everyone():
 
 	o = Everyone()
@@ -47,3 +53,7 @@ def test_everyone():
 				 verifiably_provides( interfaces.IAvatarURL ) )
 	assert_that( interfaces.IAvatarURL( o ),
 				 has_property( 'avatarURL', contains_string( 'http://' ) ) )
+
+	choices = interfaces.IAvatarChoices( o ).get_choices()
+	assert_that( choices, has_length( 1 ) )
+	assert_that( choices, has_item( interfaces.IAvatarURL( o ).avatarURL ) )

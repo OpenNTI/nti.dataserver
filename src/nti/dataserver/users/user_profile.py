@@ -51,6 +51,11 @@ class _ExistingDictReadFieldPropertyStoredThroughField(FieldPropertyStoredThroug
 		# somehow when the field is readonly and...something
 		# We don't use this for readonly fields, so we don't care
 
+####
+## The profile classes use schema fields to define what can be stored
+## and to perform validation. The schema fields are handled dynamically with the
+## fieldproperty classes, and are added to the classes themselves dynamically in _init
+####
 
 @component.adapter(nti_interfaces.IEntity)
 @interface.implementer(interfaces.IFriendlyNamed,zope.location.interfaces.ILocation)
@@ -73,18 +78,18 @@ class FriendlyNamed(persistent.Persistent):
 	def context(self):
 		return self.__parent__
 
+
 @component.adapter(nti_interfaces.IUser)
 @interface.implementer(interfaces.ICompleteUserProfile)
 class CompleteUserProfile(FriendlyNamed):
 	"""
-	An adapter for storing profile data for users. Intended to be an annotation, used with
-	an annotation factory; in this way we keep the context as our parent, but taket
-	it as an optional argument for ease of testing.
+	An adapter for storing profile information. We provide a specific implementation
+	of the ``avatarURL`` property rather than relying on field storage.
 	"""
 
-	@property
-	def avatarURL(self):
-		return interfaces.IAvatarURL(self.context).avatarURL
+	avatarURL = property( lambda self: getattr( self, '_avatarURL', None ) or interfaces.IAvatarURL(self.context).avatarURL,
+						  lambda self, nv: setattr( self, '_avatarURL', nv ),
+						  lambda self: delattr( self, '_avatarURL' ) )
 
 
 @interface.implementer(interfaces.IEmailRequiredUserProfile)
@@ -95,6 +100,7 @@ class EmailRequiredUserProfile(CompleteUserProfile):
 
 
 def _init():
+
 	# Map "existing"/legacy User/Entity dict storage to their new profile field
 	_field_map = { 'alias': '_alias',
 				   'realname': '_realname'}

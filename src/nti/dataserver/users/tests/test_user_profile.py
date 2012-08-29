@@ -20,6 +20,7 @@ from nose.tools import assert_raises
 
 import nti.tests
 from nti.tests import verifiably_provides
+from nti.tests import is_false
 
 setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.dataserver',) )
 tearDownModule = nti.tests.module_teardown
@@ -38,6 +39,8 @@ def test_default_user_profile():
 				 verifiably_provides( interfaces.ICompleteUserProfile ) )
 	assert_that( prof,
 				 has_property( 'avatarURL', contains_string( 'http://' ) ) )
+	assert_that( prof,
+				 has_property( 'opt_in_email_communication', is_false() ) )
 
 
 	with assert_raises(interfaces.EmailAddressInvalid):
@@ -55,6 +58,26 @@ def test_default_user_profile():
 	assert_that( prof2.email, is_( 'foo@bar.com' ) )
 	assert_that( prof,
 				 verifiably_provides( interfaces.ICompleteUserProfile ) )
+
+
+def test_updating_realname_from_external():
+	user = User( username="foo@bar" )
+
+	user.updateFromExternalObject( {'realname': 'Foo Bar' } )
+
+	prof = interfaces.ICompleteUserProfile( user )
+	assert_that( prof,
+				 has_property( 'realname', 'Foo Bar' ) )
+
+
+def test_updating_avatar_url_from_external():
+	user = User( username="foo@bar" )
+
+	user.updateFromExternalObject( {'avatarURL': 'http://localhost/avatarurl' } )
+
+	prof = interfaces.ICompleteUserProfile( user )
+	assert_that( prof,
+				 has_property( 'avatarURL', 'http://localhost/avatarurl' ) )
 
 def test_user_profile_with_legacy_dict():
 	user = User( "foo@bar" )

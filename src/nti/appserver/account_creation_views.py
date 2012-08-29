@@ -44,9 +44,11 @@ import zope.schema.interfaces
 import z3c.password.interfaces
 
 from nti.dataserver import users
+from nti.dataserver.users import interfaces as user_interfaces
 
 from nti.appserver._util import logon_userid_with_request
 from nti.appserver import _external_object_io as obj_io
+from nti.appserver import site_policies
 
 from pyramid.view import view_config
 from pyramid import security as sec
@@ -214,6 +216,8 @@ def account_preflight_view(request):
 	other missing fields being synthesized by this object to avoid conflict with the site policies. If
 	you do give other fields, then they will be checked in combination to see if the combination is valid.
 
+	:return: A dictionary containing the Username and any possible AvatarURLChoices.
+
 	"""
 
 	if sec.authenticated_userid( request ):
@@ -239,4 +243,13 @@ def account_preflight_view(request):
 
 	request.response.status_int = 200
 
-	return {}
+	# Great, valid so far. By definition we know if we make it here we have a Username value.
+	# Can we provide options for avatars based on that?
+	avatar_choices = ()
+	avatar_choices_factory = site_policies.queryAdapterInSite( externalValue['Username'], user_interfaces.IAvatarChoices,
+															   request=request )
+	if avatar_choices_factory:
+		avatar_choices = avatar_choices_factory.get_choices()
+
+	return {'Username': externalValue['Username'],
+			'AvatarURLChoices': avatar_choices }

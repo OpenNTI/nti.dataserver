@@ -21,4 +21,10 @@
 			 name=''
 			 zcml:condition="not-have devmode" />
 
+	<!-- On the MC site, we will be able to provide choices for avatars based simply on the username string -->
+	<adapter factory="nti.dataserver.users.avatar_urls.StringComputedAvatarURLChoices"
+			 for="basestring"
+			 provides="nti.dataserver.users.interfaces.IAvatarChoices"
+			 name="mathcounts.nextthought.com" />
+
 </configure>

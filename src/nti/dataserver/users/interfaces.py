@@ -149,6 +149,18 @@ class IAvatarURL(Interface):
 		description="If not provided, one will be generated for you.",
 		required=False )
 
+class IAvatarChoices(Interface):
+	"""
+	Something that can provide choices for possible avatar URLs.
+	Typically this will be registered as an adapter from a string (the username/email)
+	or the IUser object. It may named for the site.
+	"""
+	# TODO: This is quite similar to a vocabulary
+	def get_choices():
+		"""
+		Returns a sequence of string choices.
+		"""
+
 class IFriendlyNamed(Interface):
 
 	alias = schema.TextLine(
@@ -170,12 +182,24 @@ class ICompleteUserProfile(IFriendlyNamed):
 	"""
 	A complete user profile.
 	"""
+	# Notice we re-define avatarURL, but do not extend IAvatarURL.
+	# This is because of how we are currently implementing avatarURL.
+	# If we extend, we get into infinite recursion. TODO: Rethink this
+	avatarURL = schema.URI(
+		title="URL of your avatar picture",
+		description="If not provided, one will be generated for you.",
+		required=False )
 
 	email = _ValidTextLine(
 		title='Email',
 		description=u'',
 		required=False, # TODO: Should be true when the tests are ready
 		constraint=checkEmailAddress)
+
+	opt_in_email_communication = schema.Bool(
+		title="Can we contact you by email?",
+		required=False,
+		default=False )
 
 	home_page = schema.URI(
 		title='Home page',
@@ -196,8 +220,6 @@ class ICompleteUserProfile(IFriendlyNamed):
 					  "country - or in a company setting, where "
 					  "your office is located.",
 		required=False)
-
-
 
 	birthdate = schema.Date(
 		title='birthdate',
