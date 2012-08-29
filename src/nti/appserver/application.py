@@ -279,7 +279,7 @@ def createApplication( http_port,
 	indexmanager = component.queryUtility( nti.contentsearch.interfaces.IIndexManager )
 
 	if server:
-		pyramid_config.registry.registerUtility( server )
+		pyramid_config.registry.registerUtility( server, nti_interfaces.IDataserver )
 		if server.chatserver:
 			pyramid_config.registry.registerUtility( server.chatserver )
 	pyramid_config.registry.registerUtility( library )

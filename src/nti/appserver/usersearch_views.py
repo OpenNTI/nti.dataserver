@@ -67,7 +67,7 @@ class _UserSearchView(object):
 			# NOTE2: Going through this API lets some private objects be found
 			# (DynamicFriendsLists, specifically). We should probably lock that down
 		else:
-			_users = self.dataserver.root['users']
+			_users = nti_interfaces.IShardLayout( self.dataserver ).users_folder
 			# Searching the userid is generally not what we want
 			# now that we have username and alias (e.g,
 			# tfandango@gmail.com -> Troy Daley. Search for "Dan" and get Troy and
@@ -123,6 +123,13 @@ class _UserSearchView(object):
 					if x and x.username.lower() == partialMatch.lower():
 						result.append( x )
 						break
+
+			# FIXME: Hack in a policy of limiting searching to overlapping communities
+			if remote_user:
+				remote_com_names = remote_user.communities - set( ('Everyone',) )
+				# Filter to things that share a common community
+				result = [x for x in result
+						  if not hasattr(x, 'communities') or x.communities.intersection( remote_com_names )]
 		# Since we are already looking in the object we might as well return the summary form
 		# For this reason, we are doing the externalization ourself.
 

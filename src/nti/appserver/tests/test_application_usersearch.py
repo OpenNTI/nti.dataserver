@@ -11,6 +11,7 @@ from hamcrest import has_item
 from hamcrest import all_of
 from hamcrest import contains_string
 from hamcrest import has_property
+from hamcrest import has_length
 
 
 from webtest import TestApp
@@ -94,6 +95,27 @@ class TestApplicationUserSearch(ApplicationTestBase):
 												  has_item( all_of(
 													  has_entry( 'href', "/dataserver2/users/sjohnson%40nextthought.com" ),
 													  has_entry( 'rel', 'edit' ) ) ) ) )
+
+	def test_user_search_communities(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			u1 = self._create_user()
+			u2 = self._create_user( username='sj2@nextthought.com' )
+			u3 = self._create_user( username='sj3@nextthought.com' )
+			community = users.Community.create_community( username='TheCommunity' )
+			u1.join_community( community )
+			u2.join_community( community )
+
+		testapp = TestApp( self.app )
+
+		# We can search for ourself
+		path = '/dataserver2/UserSearch/sj'
+		res = testapp.get( path, extra_environ=self._make_extra_environ())
+
+		# We only matched the two that were in the same community
+		assert_that( res.json_body['Items'], has_length( 2 ) )
+		assert_that( res.json_body['Items'], has_item( has_entry( 'Username', 'sjohnson@nextthought.com' ) ) )
+		assert_that( res.json_body['Items'], has_item( has_entry( 'Username', 'sj2@nextthought.com' ) ) )
+
 
 
 	def test_search_empty_term_user(self):

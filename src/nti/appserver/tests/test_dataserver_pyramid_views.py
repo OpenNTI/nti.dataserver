@@ -404,7 +404,7 @@ class TestNTIIDsContainer(ConfiguringTestBase):
 			def pathToNTIID( self, ntiid ): return [NID()] if ntiid == child_ntiid else None
 
 		get_current_request().registry.registerUtility( Lib(), lib_interfaces.IContentPackageLibrary )
-		get_current_request().registry.registerUtility( self.ds )
+		get_current_request().registry.registerUtility( self.ds, nti_interfaces.IDataserver )
 		cont = _NTIIDsContainerResource( None, None )
 		cont.request = get_current_request()
 
