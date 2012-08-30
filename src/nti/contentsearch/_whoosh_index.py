@@ -148,7 +148,6 @@ def create_book_schema():
 				  			keywords = fields.KEYWORD(stored=True), 
 				 			quick = fields.NGRAM(maxsize=10),
 				 			related = fields.KEYWORD(stored=True),
-				 			section = fields.TEXT(),
 				 			content = fields.TEXT(stored=True, spelling=True))
 	return schema
 
