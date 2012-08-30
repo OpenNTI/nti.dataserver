@@ -92,9 +92,7 @@ messageinfo = u'messageinfo'
 messageinfo_ = u'messageinfo'
 canvastextshape_ = 'canvastextshape'
 
-#CMU Temporarily disable the indexing of messageinfo_ to benchmark with Tom
-#indexable_type_names = (note_, highlight_, redaction_, messageinfo_)
-indexable_type_names = (note_, highlight_, redaction_)
+indexable_type_names = (note_, highlight_, redaction_, messageinfo_)
 
 def epoch_time(dt):
 	if dt:
