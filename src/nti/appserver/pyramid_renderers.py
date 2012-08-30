@@ -132,7 +132,7 @@ def render_externalizable(data, system):
 			if isinstance( body, collections.MutableMapping ):
 				body['Last Modified'] = lastMod
 
-	response.content_type = find_content_type( request, data )
+	response.content_type = str(find_content_type( request, data ))
 	if response.content_type.startswith( MIME_BASE ):
 		# Only transform this if it was one of our objects
 		if response.content_type.endswith( 'json' ):
@@ -203,6 +203,8 @@ def uncacheable_cache_controller( data, system ):
 	response.cache_control = 'no-store'
 	response.last_modified = None
 
+from cStringIO import StringIO
+import gzip
 
 
 class REST(object):
@@ -238,7 +240,18 @@ class REST(object):
 												default=default_cache_controller )
 		cacher(data, system)
 
-
-
+		# We are applying caching here. We probably don't have a proxy in front of us
+		# that can filter that (sadly). The Paste gzip middleware seems to have a problem
+		# in our setup...which is actually our fault. If we get any Unicode values
+		# in the headers, gunicorn throws a UnicodeDecodeError. We have to be very careful
+		# about that
+		# TODO: Streaming
+		if response.content_type.endswith( 'json' ) and 'gzip' in request.accept_encoding:
+			response.content_encoding = b'gzip'
+			strio = StringIO()
+			gzipped = gzip.GzipFile( fileobj=strio, mode='wb' )
+			gzipped.write( body )
+			gzipped.close()
+			body = strio.getvalue()
 
 		return body
