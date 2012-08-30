@@ -91,8 +91,9 @@ def _asm_rendered_textcontent(self):
 	"""
 	childNodes = []
 	for item in self.childNodes:
-		# Skipping the parts and solutions that come from this module
-		if type(item).__module__ == __name__:
+		# Skipping the parts and solutions that come from this module except naqvideo.
+		# SAJ: This is a temporary hack until naqvideo works properly as a _LocalContentMixin.
+		if type(item).__module__ == __name__ and not isinstance(item, naqvideo):
 			continue
 		childNodes.append( item )
 
@@ -458,6 +459,9 @@ class naqhint(_LocalContentMixin,Base.List.item):
 	def _after_render( self, rendered ):
 		self._asm_local_content = rendered
 
+class naqvideo(Base.Command):
+	args = 'videourl thumbnail'
+	blockType = True
 
 class naquestion(_LocalContentMixin,Base.Environment,plastexids.NTIIDMixin):
 	args = '[individual:str]'
@@ -484,12 +488,20 @@ class naquestion(_LocalContentMixin,Base.Environment,plastexids.NTIIDMixin):
 			result = super(naquestion,self)._ntiid_get_local_part
 		return result
 
+	def _asm_videos(self):
+		videos = []
+		video_els = self.getElementsByTagName( 'naqvideo' )
+		#for video_el in video_els:
+		#	videos.append( video_el._asm_local_content )
+
+		return ''.join(videos)
+
 	def _asm_question_parts(self):
 		return [x.assessment_object() for x in self if hasattr(x,'assessment_object')]
 
 	def assessment_object(self):
 		result = question.QQuestion( content=self._asm_local_content,
-									 parts=self._asm_question_parts() )
+					     parts=self._asm_question_parts())
 		errors = schema.getValidationErrors( as_interfaces.IQuestion, result )
 		if errors: # pragma: no cover
 			raise errors[0][1]

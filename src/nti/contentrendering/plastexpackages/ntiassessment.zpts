@@ -49,6 +49,12 @@ name: naquestion
 </div>
 </object>
 
+name: naqvideo
+<object class="naqvideo" style="display: none" data-ntiid="none">
+<param name="url" tal:attributes="value self/attributes/videourl/source" />
+<param name="thumbnail" tal:attributes="value self/attributes/thumbnail/source" />
+</object>
+
 # Things that shouldn't render, just be placeholders
 name: naqsolution naqsolexplanation naqhints naqhint naqsolutions naquestionset
 <span tal:attributes="class string:${self/__class__/__name__} hidden" />
