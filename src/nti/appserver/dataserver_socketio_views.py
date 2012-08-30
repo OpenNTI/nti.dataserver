@@ -34,15 +34,22 @@ from nti.socketio.persistent_session import AbstractSession
 #from nti.socketio import interfaces as socketio_interfaces
 import nti.socketio.protocol
 
+from nti.appserver import site_policies
+
 class Session( AbstractSession ):
 	"""
 	Client session which checks the connection health and the queues for
 	message passing.
 	`self.owner`: An attribute for the user that owns the session.
+
+	.. py:attribute:: originating_site_names
+
+		The list of sites that apply to the request that created this session. Useful
+		for applying site policies later on after the requests are gone.
 	"""
 
-	# Inherited from superclass:
-	# interface.implements( socketio_interfaces.ISocketSession )
+	originating_site_names = ()
+
 
 	wsgi_app_greenlet = True # TODO: Needed anymore?
 
@@ -111,6 +118,7 @@ def _create_new_session(request):
 
 	session_manager = component.getUtility( nti_interfaces.IDataserver ).session_manager
 	session = session_manager.create_session( session_class=Session, owner=username )
+	session.originating_site_names = site_policies.get_possible_site_names( request, include_default=True )
 	logger.debug( "Created new session %s", session )
 	return session
 
