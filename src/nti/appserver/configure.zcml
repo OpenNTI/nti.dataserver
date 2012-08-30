@@ -100,7 +100,7 @@
 	<subscriber factory=".contentlibrary_views._ContentUnitPreferencesDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				/>
-	<subscriber factory=".pyramid_renderers.EditLinkDecorator"
+	<subscriber factory=".pyramid_renderers_edit_link_decorator.EditLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 
 	<adapter factory=".workspaces.CollectionSummaryExternalizer" />

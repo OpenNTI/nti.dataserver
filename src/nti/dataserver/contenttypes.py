@@ -235,6 +235,7 @@ class SelectedRange(_UserContentRoot,ExternalizableInstanceDict):
 	# See comments above about being IZContained. We add it here to minimize the impact
 
 	_excluded_in_ivars_ = { 'AutoTags' } | ExternalizableInstanceDict._excluded_in_ivars_
+	_ext_primitive_out_ivars_ = ExternalizableInstanceDict._ext_primitive_out_ivars_.union( {'selectedText'} )
 
 	selectedText = ''
 	applicableRange = None
@@ -293,6 +294,8 @@ class SelectedRange(_UserContentRoot,ExternalizableInstanceDict):
 
 @interface.implementer(nti_interfaces.IHighlight)
 class Highlight(SelectedRange, _HighlightBWC):
+
+	_ext_primitive_out_ivars_ = SelectedRange._ext_primitive_out_ivars_.union( {'style'} )
 
 	style = 'plain'
 
@@ -454,6 +457,9 @@ class CanvasAffineTransform(ExternalizableInstanceDict):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
 	__external_can_create__ = True
+
+	_ext_primitive_out_ivars_ = ExternalizableInstanceDict._ext_primitive_out_ivars_.union( {'a', 'b', 'c', 'd', 'tx', 'ty'} )
+
 	def __init__( self ):
 		"""
 		Initializes to the identity transform.
@@ -660,6 +666,9 @@ class CanvasShape(_UserContentRoot,ExternalizableInstanceDict):
 class CanvasCircleShape(CanvasShape): pass
 class CanvasPolygonShape(CanvasShape):
 
+	_ext_primitive_out_ivars_ = CanvasShape._ext_primitive_out_ivars_.union( {'sides'} )
+
+
 	def __init__(self, sides=4 ):
 		super(CanvasPolygonShape,self).__init__()
 		self.sides = sides
@@ -672,6 +681,9 @@ class CanvasPolygonShape(CanvasShape):
 		return super(CanvasPolygonShape,self).__eq__( other ) and self.sides == other.sides
 
 class CanvasTextShape(CanvasShape):
+
+	_ext_primitive_out_ivars_ = CanvasShape._ext_primitive_out_ivars_.union( {'text'} )
+
 
 	def __init__( self, text='' ):
 		super(CanvasTextShape, self).__init__( )
@@ -686,6 +698,10 @@ class CanvasTextShape(CanvasShape):
 
 
 class CanvasUrlShape(CanvasShape):
+
+
+	_ext_primitive_out_ivars_ = CanvasShape._ext_primitive_out_ivars_.union( {'url'} )
+
 
 	def __init__( self, url='' ):
 		super(CanvasUrlShape, self).__init__( )
@@ -726,6 +742,12 @@ class CanvasUrlShape(CanvasShape):
 
 class CanvasPathShape(CanvasShape):
 
+	# We write points ourself for speed. The list is ofter long and only
+	# contains primitives.
+	_excluded_out_ivars_ = CanvasShape._excluded_out_ivars_.union( {'points'} )
+
+	_ext_primitive_out_ivars_ = CanvasShape._ext_primitive_out_ivars_.union( {'closed'} )
+
 	def __init__( self, closed=True, points=() ):
 		super(CanvasPathShape,self).__init__()
 		self.closed = closed
@@ -739,6 +761,11 @@ class CanvasPathShape(CanvasShape):
 		for i in self.points:
 			assert isinstance( i, numbers.Real )
 		assert (len(self.points) % 2) == 0 # Must be even number of pairs
+
+	def toExternalDictionary( self, mergeFrom=None ):
+		result = super(CanvasPathShape,self).toExternalDictionary( mergeFrom=mergeFrom )
+		result['points'] = self.points
+		return result
 
 	def __eq__( self, other ):
 		return super(CanvasPathShape,self).__eq__( other ) \

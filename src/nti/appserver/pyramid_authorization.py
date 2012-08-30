@@ -88,10 +88,16 @@ def is_writable(obj, request=None):
 	# like the zope.site.threadSiteSubscriber that does the same thing for
 	# pyramid.threadlocal. Here we cheap out
 	# and re-implement has_permission to use the desired registry.
-	return _has_permission( ACT_UPDATE, obj, request ) \
-	  or (IExternalizedObject.providedBy( obj )
-		  and StandardExternalFields.CREATOR in obj
-		  and obj[StandardExternalFields.CREATOR] == psec.authenticated_userid( request ) )
+	result = _has_permission( ACT_UPDATE, obj, request )
+	if result:
+		return result
+	# Externalized objects. The direct check and throw is faster
+	# then IExternalizedObject.providedBy and an /in/
+	try:
+		ext_creator_name = obj[StandardExternalFields.CREATOR]
+		return ext_creator_name == psec.authenticated_userid( request )
+	except (KeyError,AttributeError,TypeError):
+		return False
 
 def _has_permission( permission, context, request ):
 	try:
