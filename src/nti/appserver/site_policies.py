@@ -16,6 +16,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 from zope import interface
+from zope import schema
 
 from pyramid.threadlocal import get_current_request
 
@@ -317,10 +318,14 @@ def _is_thirteen_or_more_years_ago( birthdate ):
 	return birthdate < thirteen_years_ago
 
 @interface.implementer(ISitePolicyUserEventListener)
-class MathcountsSitePolicyEventListener(GenericSitePolicyEventListener):
+class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 	"""
-	Implements the policy for the mathcounts site.
+	Implements the starting policy for the sites with kids.
 	"""
+
+	IF_ROOT = nti_interfaces.ICoppaUser
+	IF_WITH_AGREEMENT = nti_interfaces.ICoppaUserWithAgreement
+	IF_WOUT_AGREEMENT = nti_interfaces.ICoppaUserWithoutAgreement
 
 	def user_will_update_new( self, user, event ):
 		"""
@@ -329,34 +334,24 @@ class MathcountsSitePolicyEventListener(GenericSitePolicyEventListener):
 		to the object, which drives the available data to store.
 		"""
 
-		interface.alsoProvides( user, nti_interfaces.ICoppaUser )
-		iface_to_provide = nti_interfaces.ICoppaUserWithoutAgreement
+		interface.alsoProvides( user, self.IF_ROOT )
+		iface_to_provide = self.IF_WOUT_AGREEMENT
 
 		if 'birthdate' in event.ext_value and _is_thirteen_or_more_years_ago( zope.interface.common.idatetime.IDate( event.ext_value['birthdate'] ) ):
-			iface_to_provide = nti_interfaces.ICoppaUserWithAgreement
+			iface_to_provide = self.IF_WITH_AGREEMENT
 
 		interface.alsoProvides( user, iface_to_provide )
 
 	def user_created( self, user, event ):
 		"""
-		This policy places newly created users in the ``MathCounts`` community
-		(creating it if it doesn't exist).
-
+		Makes the user immutably named.
 		"""
-		super(MathcountsSitePolicyEventListener,self).user_created( user, event )
-
-		community = users.Entity.get_entity( 'MathCounts' )
-		if community is None:
-			community = users.Community.create_community( username='MathCounts' )
-
-
-		user.join_community( community )
-		user.follow( community )
+		super(GenericKidSitePolicyEventListener,self).user_created( user, event )
 
 		interface.alsoProvides( user, user_interfaces.IImmutableFriendlyNamed )
 
 	def user_will_create( self, user, event ):
-		super(MathcountsSitePolicyEventListener,self).user_will_create( user, event )
+		super(GenericKidSitePolicyEventListener,self).user_will_create( user, event )
 		names = user_interfaces.IFriendlyNamed( user )
 		# Force the alias to be the same as the username
 		names.alias = user.username
@@ -380,8 +375,6 @@ class MathcountsSitePolicyEventListener(GenericSitePolicyEventListener):
 		#if profile.birthdate and _is_thirteen_or_more_years_ago( profile.birthdate ):
 			# If we can show the kid is actually at least 13, then
 			# we don't need to get an agreement
-
-
 
 		if nti_interfaces.ICoppaUserWithoutAgreement.providedBy( user ):
 			# We can only store the first name for little kids
@@ -411,6 +404,48 @@ class GenericAdultSitePolicyEventListener(GenericSitePolicyEventListener):
 				profile.email = user.username
 			elif user.username != profile.email:
 				raise zope.schema.ValidationError( "Using an '@' in username means it must match email", 'Username', user.username )
+
+class IMathcountsUser(nti_interfaces.ICoppaUser):
+	pass
+
+class IMathcountsCoppaUserWithoutAgreement(IMathcountsUser, nti_interfaces.ICoppaUserWithoutAgreement):
+	pass
+class IMathcountsCoppaUserWithAgreement(IMathcountsUser, nti_interfaces.ICoppaUserWithAgreement):
+	pass
+
+# TODO: Work in progress
+class IMathcountsUserProfile(user_interfaces.IEmailRequiredUserProfile):
+
+	role = schema.Choice( title="Your role in the organization",
+						  values=("Student", "Teacher", "Coach", "Parent", "Volunteer", "Other"),
+						  default="Other")
+
+
+@interface.implementer(ISitePolicyUserEventListener)
+class MathcountsSitePolicyEventListener(GenericKidSitePolicyEventListener):
+	"""
+	Implements the policy for the mathcounts site.
+	"""
+
+	IF_ROOT = IMathcountsUser
+	IF_WITH_AGREEMENT = IMathcountsCoppaUserWithAgreement
+	IF_WOUT_AGREEMENT = IMathcountsCoppaUserWithoutAgreement
+
+	def user_created( self, user, event ):
+		"""
+		This policy places newly created users in the ``MathCounts`` community
+		(creating it if it doesn't exist).
+
+		"""
+		super(MathcountsSitePolicyEventListener,self).user_created( user, event )
+
+		community = users.Entity.get_entity( 'MathCounts' )
+		if community is None:
+			community = users.Community.create_community( username='MathCounts' )
+
+
+		user.join_community( community )
+		user.follow( community )
 
 
 @interface.implementer(ISitePolicyUserEventListener)

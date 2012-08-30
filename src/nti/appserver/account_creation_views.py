@@ -279,6 +279,7 @@ def account_preflight_view(request):
 		item_schema = {'name': k,
 					   'required': getattr( v, 'required', None),
 					   'min_length': getattr(v, 'min_length', None) }
+
 		ext_schema[k] = item_schema
 
 	# Flip the internal/external name of the Username field. Probably some other

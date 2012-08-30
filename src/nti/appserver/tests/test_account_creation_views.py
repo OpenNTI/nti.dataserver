@@ -34,7 +34,7 @@ import itertools
 
 from nti.appserver import interfaces as app_interfaces
 from nti.appserver.account_creation_views import account_create_view, account_preflight_view
-
+from nti.appserver import site_policies
 from nti.appserver.tests import ConfiguringTestBase
 
 import pyramid.httpexceptions as hexc
@@ -51,7 +51,7 @@ from nti.dataserver.users import interfaces as user_interfaces
 from zope.component import eventtesting
 from zope import component
 from zope.lifecycleevent import IObjectCreatedEvent, IObjectAddedEvent
-import zope.schema
+
 import datetime
 
 class _AbstractValidationViewBase(ConfiguringTestBase):
@@ -189,6 +189,7 @@ class TestPreflightView(_AbstractValidationViewBase):
 		assert_that( val, has_entry( 'ProfileSchema', has_key( 'opt_in_email_communication' ) ) )
 		assert_that( val, has_entry( 'ProfileSchema', has_entry( 'Username', has_entry( 'min_length', 5 ) ) ) )
 
+
 	@WithMockDSTrans
 	def test_create_mathcounts_policy_birthdate_only_under_13_user( self ):
 		assert_that( self.request.host, is_( 'example.com:80' ) )
@@ -207,7 +208,6 @@ class TestPreflightView(_AbstractValidationViewBase):
 		assert_that( val, has_entry( 'AvatarURLChoices', has_length( 0 ) ) )
 		assert_that( val, has_entry( 'ProfileSchema', does_not( has_key( 'opt_in_email_communication' ) ) ) )
 		assert_that( val, has_entry( 'ProfileSchema', has_key( 'contact_email' ) ) )
-
 
 	@WithMockDSTrans
 	def test_create_mathcounts_policy_avatar_choices( self ):
@@ -397,6 +397,7 @@ class TestCreateView(_AbstractValidationViewBase):
 					 has_property( 'alias', new_user.username ) )
 		# We sent no birthdate so we must assume it's a baby
 		assert_that( new_user, verifiably_provides( nti_interfaces.ICoppaUserWithoutAgreement ) )
+		assert_that( new_user, verifiably_provides( site_policies.IMathcountsCoppaUserWithoutAgreement ) )
 		assert_that( user_interfaces.IFriendlyNamed( new_user ), has_property( 'realname', 'Joe' ) )
 
 
@@ -409,6 +410,7 @@ class TestCreateView(_AbstractValidationViewBase):
 													 'email': 'foo@bar.com' } )
 		new_user = account_create_view( self.request )
 		assert_that( new_user, verifiably_provides( nti_interfaces.ICoppaUserWithAgreement ) )
+		assert_that( new_user, verifiably_provides( site_policies.IMathcountsCoppaUserWithAgreement ) )
 		assert_that( new_user, has_property( 'communities', has_item( 'MathCounts' ) ) )
 		assert_that( user_interfaces.IFriendlyNamed( new_user ), has_property( 'realname', 'Joe Bananna' ) )
 		assert_that( user_interfaces.ICompleteUserProfile( new_user ),
