@@ -14,7 +14,7 @@ from nti.dataserver.mimetype import MIME_BASE
 import logging
 logger = logging.getLogger( __name__ )
 
-	
+
 ID 				= unicode(ext_interfaces.StandardExternalFields.ID)
 HIT 			= u'Hit'
 OID 			= unicode(ext_interfaces.StandardExternalFields.OID)
@@ -33,12 +33,12 @@ MIME_TYPE		= unicode(ext_interfaces.StandardExternalFields.MIMETYPE)
 HIT_COUNT 		= u'Hit Count'
 TARGET_OID		= u'TargetOID'
 MESSAGE_INFO	= u'MessageInfo'
-SUGGESTIONS		= u'Suggestions' 
+SUGGESTIONS		= u'Suggestions'
 CONTAINER_ID	= unicode(ext_interfaces.StandardExternalFields.CONTAINER_ID)
 COLLECTION_ID	= u'CollectionId'
 LAST_MODIFIED	= unicode(ext_interfaces.StandardExternalFields.LAST_MODIFIED)
 
-	
+
 id_				= unicode(ext_interfaces.StandardInternalFields.ID)
 oid_			= u'oid'
 body_ 			= u'body'
@@ -77,7 +77,7 @@ creator_fields = (CREATOR, creator_)
 oid_fields = (OID, p_oid_, oid_, id_)
 keyword_fields = (keywords_, tags_, AUTO_TAGS)
 container_id_fields = (CONTAINER_ID, 'ContainerID', containerId_, 'container')
-last_modified_fields =  (ext_interfaces.StandardInternalFields.LAST_MODIFIED, 
+last_modified_fields =  (ext_interfaces.StandardInternalFields.LAST_MODIFIED,
 						 ext_interfaces.StandardInternalFields.LAST_MODIFIEDU,
 						 LAST_MODIFIED,
 						 last_modified_)
@@ -92,7 +92,9 @@ messageinfo = u'messageinfo'
 messageinfo_ = u'messageinfo'
 canvastextshape_ = 'canvastextshape'
 
-indexable_type_names = (note_, highlight_, redaction_, messageinfo_)
+#CMU Temporarily disable the indexing of messageinfo_ to benchmark with Tom
+#indexable_type_names = (note_, highlight_, redaction_, messageinfo_)
+indexable_type_names = (note_, highlight_, redaction_)
 
 def epoch_time(dt):
 	if dt:
@@ -113,7 +115,7 @@ def normalize_type_name(x, encode=True):
 	if x:
 		result =x[0:-1].lower() if x.endswith('s') else x.lower()
 	return unicode(result) if encode else result
-	
+
 def get_type_name(obj):
 	if not isinstance(obj, dict):
 		result = obj.__class__.__name__
@@ -131,7 +133,7 @@ class QueryExpr(object):
 	def __init__(self, expr):
 		assert expr is not None, 'must specify a query expression'
 		self.expr = unicode(expr)
-	
+
 	def __str__( self ):
 		return self.expr
 
