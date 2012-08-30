@@ -132,14 +132,13 @@ class TestApplicationCensoring(ApplicationTestBase):
 		assert_that( nti.appserver.censor_policies.creator_and_location_censor_policy( '', args[0] ),
 					 is_( none() ) )
 
+	@mock_dataserver.WithMockDSTrans
 	def test_chat_message_uses_sites_from_session(self):
-		@interface.implementer(nti_interfaces.IUser)
-		class User(object):
-			pass
+		user = self._create_user()
 
 		@interface.implementer(sio_interfaces.ISocketSession)
 		class Session(object):
-			owner = User()
+			owner = user.username
 			originating_site_names = ('mathcounts.nextthought.com','')
 
 		chat_message = MessageInfo()
