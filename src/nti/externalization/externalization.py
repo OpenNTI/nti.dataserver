@@ -184,8 +184,9 @@ def toExternalObject( obj, coerceNone=False, name=_ex_name_marker, registry=comp
 		return result
 	finally:
 		_ex_name_local.name.pop()
-#		if len(_ex_name_local.name) <= 1:
+#		if len(_ex_name_local.name) == 1:
 #			import pprint
+#			#from IPython.core.debugger import Tracer; Tracer()() ## DEBUG ##
 #			pprint.pprint( _ex_name_local._to_ext )
 #			_ex_name_local._to_ext = {}
 

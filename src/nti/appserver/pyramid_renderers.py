@@ -14,29 +14,28 @@ import pyramid.traversal
 
 from zope import interface
 from zope import component
-from zope.location import interfaces as loc_interfaces
+
 
 from paste import httpheaders
 HEADER_LAST_MODIFIED = httpheaders.LAST_MODIFIED.name
 
 from zope.mimetype.interfaces import IContentTypeAware
 
-from nti.externalization import oids as ext_oids
-from nti.externalization import interfaces as ext_interfaces
-from nti.externalization.externalization import to_external_representation, toExternalObject, EXT_FORMAT_JSON, EXT_FORMAT_PLIST, catch_replace_action
-from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.externalization import to_external_representation, toExternalObject,  EXT_FORMAT_PLIST, catch_replace_action
+from nti.externalization.externalization import EXT_FORMAT_JSON
+
 from nti.dataserver.mimetype import (MIME_BASE_PLIST, MIME_BASE_JSON,
 									 MIME_EXT_PLIST, MIME_EXT_JSON,
 									 nti_mimetype_from_object,
 									 MIME_BASE)
 
-from nti.dataserver import links
+
 from nti.dataserver import traversal as nti_traversal
 
 
 
 import nti.appserver.interfaces as app_interfaces
-from nti.appserver.pyramid_authorization import is_writable
+
 import nti.dataserver.interfaces as nti_interfaces
 
 def find_content_type( request, data=None ):
@@ -136,6 +135,13 @@ def render_externalizable(data, system):
 	if response.content_type.startswith( MIME_BASE ):
 		# Only transform this if it was one of our objects
 		if response.content_type.endswith( 'json' ):
+			# Notice that we're not doing this:
+			#body = json.dumps( body )
+			# Although it would be nice to avoid the second iteration that happens
+			# with to_external_representation (for a 10% perf improvement), we have at
+			# least one test that fails if we do that because a Link object added during
+			# decoration doesn't get rendered. TODO: We could probably use simplejson's
+			# object writing hook to catch that on the way out?
 			body = to_external_representation( body, EXT_FORMAT_JSON )
 		else:
 			body = to_external_representation( body, EXT_FORMAT_PLIST )
