@@ -317,7 +317,8 @@ ACE_ACT_ALLOW = "Allow"
 ACE_ACT_DENY = "Deny"
 ALL_PERMISSIONS = None
 ACE_DENY_ALL = None
-
+# Exported policies
+from pyramid.interfaces import IAuthorizationPolicy
 from pyramid.interfaces import IAuthenticationPolicy
 import pyramid.security as _psec
 
@@ -374,7 +375,7 @@ class IEntity(IZContained, IAnnotatable):
 
 class ICommunity(IEntity):
 	pass
-	
+
 class IUser(IEntity,IContainerIterable):
 	"""
 	A user of the system. Notice this is not an IPrincipal.
