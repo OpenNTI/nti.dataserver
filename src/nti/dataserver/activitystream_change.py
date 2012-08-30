@@ -1,8 +1,9 @@
-#!/usr/bin/env python2.7
-
+#!/usr/bin/env python
 """
 Functions and architecture for general activity streams.
 """
+
+from __future__ import print_function, unicode_literals, absolute_import
 
 import weakref
 import persistent
@@ -10,21 +11,23 @@ import persistent
 from zope import interface
 from zope import component
 
-from nti.dataserver import  datastructures
+from nti.dataserver import datastructures
 from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver import mimetype
 
 from nti.externalization.datastructures import LocatedExternalDict
 from nti.externalization.oids import toExternalOID
 from nti.externalization.externalization import toExternalObject
 from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.interfaces import StandardExternalFields
 
+@interface.implementer(nti_interfaces.IStreamChangeEvent,nti_interfaces.IZContained)
 class Change(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 	"""
 	A change notification. For convenience, it acts like a
 	Contained object if the underlying object was Contained.
 	It externalizes to include the ChangeType, Creator, and Item.
 	"""
-	interface.implements(nti_interfaces.IStreamChangeEvent)
 
 	CREATED  = nti_interfaces.SC_CREATED
 	MODIFIED = nti_interfaces.SC_MODIFIED
@@ -33,6 +36,9 @@ class Change(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 	CIRCLED  = nti_interfaces.SC_CIRCLED
 
 	useSummaryExternalObject = False
+
+	__name__ = None
+	__parent__ = None
 
 	# Notice we do not inherit from ContainedMixin, and we do not implement
 	# IContained. We do that conditionally if the object we're wrapping
@@ -50,10 +56,11 @@ class Change(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 			self.objectReference = persistent.wref.WeakRef( obj )
 		else:
 			self.objectReference = weakref.ref( obj )
-		_id = getattr( obj, 'id', None )
-		if _id: self.id = _id
-		_containerId = getattr( obj, 'containerId', None )
-		if _containerId: self.containerId = _containerId
+
+		for k in ('id', 'containerId', '__name__', '__parent__'):
+			v = getattr( obj, k, None )
+			if v is not None:
+				setattr( self, k, v )
 
 		if self.id and self.containerId:
 			interface.alsoProvides( self, nti_interfaces.IContained )
@@ -78,27 +85,36 @@ class Change(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 		return "%s('%s',%s)" % (self.__class__.__name__,self.type,type(self.object).__name__)
 
 
+@interface.implementer(ext_interfaces.IExternalObject)
+@component.adapter(nti_interfaces.IStreamChangeEvent)
 class _ChangeExternalObject(object):
-	interface.implements(ext_interfaces.IExternalObject)
-	component.adapts(nti_interfaces.IStreamChangeEvent)
 
 	def __init__( self, change ):
 		self.change = change
 
 	def toExternalObject(self):
-		result = LocatedExternalDict()
 		change = self.change
-		result['Last Modified'] = change.lastModified
+		wrapping = change.object
+
+		result = LocatedExternalDict()
+		result.__parent__ = getattr( wrapping, '__parent__', getattr( change, '__parent__', None ) )
+		result.__name__ = getattr( wrapping, '__name__', getattr( change, '__name__', None ) )
+		result[StandardExternalFields.CLASS] = 'Change'
+		result[StandardExternalFields.MIMETYPE] = mimetype.nti_mimetype_with_class( 'Change' )
+
+
+		result[StandardExternalFields.LAST_MODIFIED] = change.lastModified
+		result[StandardExternalFields.CREATOR] = None
 		if change.creator:
-			result['Creator'] = change.creator.username if hasattr( change.creator, 'username' ) else change.creator
-		result['Class'] = 'Change'
+			result[StandardExternalFields.CREATOR] = change.creator.username if hasattr( change.creator, 'username' ) else change.creator
+
 		result['ChangeType'] = change.type
-		if change.id:
-			result['ID'] = change.id
+		result[StandardExternalFields.ID] = change.id or None
 		# OIDs must be unique
-		result['OID'] = toExternalOID( change )
-		if result['OID'] is None:
-			del result['OID']
-		if change.object is not None:
+		result[StandardExternalFields.OID] = toExternalOID( change )
+		#if result['OID'] is None:
+		#	del result['OID']
+		result['Item'] = None
+		if wrapping is not None:
 			result['Item'] = toExternalObject( change.object, name=('summary' if change.useSummaryExternalObject else '') )
 		return result
