@@ -103,6 +103,7 @@ class TestApplicationUserSearch(ApplicationTestBase):
 	def test_user_search_communities(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			u1 = self._create_user()
+			user_interfaces.IFriendlyNamed( u1 ).realname = u"sj"
 			u2 = self._create_user( username='sj2@nextthought.com' )
 			u3 = self._create_user( username='sj3@nextthought.com' )
 			community = users.Community.create_community( username='TheCommunity' )
