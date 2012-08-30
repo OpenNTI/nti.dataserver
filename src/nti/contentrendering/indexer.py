@@ -130,9 +130,6 @@ def _index_book_node(writer, node, tokenizer=default_tokenizer):
 	content = tokenizer.tokenize(' '.join(content))
 	content = unicode(' '.join(content))
 
-	# section has been removed
-	section = None
-	
 	#TODO: find key words
 	keywords = set()
 	
@@ -143,7 +140,6 @@ def _index_book_node(writer, node, tokenizer=default_tokenizer):
 							content=unicode(content),
 							quick=unicode(content),
 							related=related,
-							section=section,
 							keywords=sorted(keywords),
 							last_modified=as_time)
 	except Exception:
