@@ -216,16 +216,18 @@ class TestPreflightView(_AbstractValidationViewBase):
 		self.request.headers['origin'] = 'http://mathcounts.nextthought.com'
 
 		self.request.content_type = 'application/vnd.nextthought+json'
-
+		birthdate = datetime.date.today().replace( year=datetime.date.today().year - 10 ).isoformat()
 		self.request.body = to_json_representation( {'Username': 'jason_nextthought_com',
 													 'password': 'pass123word',
 													 'realname': 'Joe Bananna',
-													 'birthdate': '1982-01-31',
+													 'birthdate': birthdate,
 													 'alias': 'jason_nextthought_com' }  )
 
 		val = self.the_view( self.request )
-
 		assert_that( val, has_entry( 'AvatarURLChoices', has_length( 8 ) ) )
+		assert_that( val, has_entry( 'ProfileSchema', does_not( has_key( 'opt_in_email_communication' ) ) ) )
+		assert_that( val, has_entry( 'ProfileSchema', has_key( 'contact_email' ) ) )
+
 
 	@WithMockDSTrans
 	def test_create_rwanda_policy_avatar_choices( self ):

@@ -238,6 +238,10 @@ def account_preflight_view(request):
 	If you do not give the ``Username`` field, then you must at least give the ``birthdate`` field, and
 	a general description of requirements will be returned to you.
 
+	.. note:: If you do not send a birthdate, one will be provided that makes you old enough
+		to not be subject to COPPA restrictions. You will thus get a non-strict superset of
+		options available to COPPA users.
+
 	:return: A dictionary containing the Username and any possible AvatarURLChoices.
 
 	"""
