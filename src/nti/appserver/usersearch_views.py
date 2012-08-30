@@ -160,10 +160,16 @@ def _make_visibility_test(remote_user):
 	if remote_user:
 		remote_com_names = remote_user.communities - set( ('Everyone',) )
 		def test(x):
+			# User can see himself
 			if x == remote_user:
 				return True
+			# User can see communities he's a member of
 			if isinstance( x, users.Community ):
 				return x.username in remote_com_names
+			# No one can see the Koppa Kids
+			# FIXME: Hardcoding this site/user policy
+			if nti_interfaces.ICoppaUserWithoutAgreement.providedBy( x ):
+				return False
 			return not hasattr(x, 'communities') or x.communities.intersection( remote_com_names )
 		return test
 	return lambda x: True
