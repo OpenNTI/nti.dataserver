@@ -134,22 +134,41 @@
 	<subscriber handler="._indexmanager_event_listeners.add_s3_index" />
 
 	<!-- Logon -->
+	<!-- Local users with passwords get a direct logon link -->
 	<subscriber factory=".logon._SimpleExistingUserLinkProvider"
 				provides=".interfaces.ILogonLinkProvider"/>
+	<!--
+		Users we've never seen before do as well. Security through
+		obscurity and avoiding leaking information. Also, since
+		we are not currently offering any other login types in
+		production, this is necessary to make the login page work out.
+	-->
+	<subscriber factory=".logon._SimpleExistingUserLinkProvider"
+				provides=".interfaces.ILogonLinkProvider"
+				for=".interfaces.IMissingUser pyramid.interfaces.IRequest" />
+
+	<!-- All the other logon types are disabled in production -->
 	<subscriber factory=".logon._SimpleMissingUserFacebookLinkProvider"
-				provides=".interfaces.ILogonLinkProvider" />
+				provides=".interfaces.ILogonLinkProvider"
+				zcml:condition="have devmode"/>
 	<subscriber factory=".logon._SimpleExistingUserFacebookLinkProvider"
-				provides=".interfaces.ILogonLinkProvider" />
+				provides=".interfaces.ILogonLinkProvider"
+				zcml:condition="have devmode"/>
 	<subscriber factory=".logon._WhitelistedDomainGoogleLoginLinkProvider"
-				provides=".interfaces.ILogonLinkProvider"/>
+				provides=".interfaces.ILogonLinkProvider"
+				zcml:condition="have devmode"/>
 	<subscriber factory=".logon._ExistingOpenIdUserLoginLinkProvider"
-				provides=".interfaces.ILogonLinkProvider"/>
+				provides=".interfaces.ILogonLinkProvider"
+				zcml:condition="have devmode"/>
 	<subscriber factory=".logon._MissingUserWhitelistedDomainGoogleLoginLinkProvider"
-				provides=".interfaces.ILogonLinkProvider"/>
+				provides=".interfaces.ILogonLinkProvider"
+				zcml:condition="have devmode"/>
 	<subscriber factory=".logon._OnlineQueryGoogleLoginLinkProvider"
-				provides=".interfaces.ILogonLinkProvider"/>
+				provides=".interfaces.ILogonLinkProvider"
+				zcml:condition="have devmode"/>
 	<subscriber factory=".logon._MissingUserAopsLoginLinkProvider"
-				provides=".interfaces.ILogonLinkProvider" />
+				provides=".interfaces.ILogonLinkProvider"
+				zcml:condition="have devmode"/>
 
 	<!-- Individual field updates -->
 	<!-- Normal traversing of the fields namespace, both with and
