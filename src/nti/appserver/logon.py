@@ -196,6 +196,10 @@ class NoSuchUser(object):
 	def __init__( self, username ):
 		self.username = username
 
+	def has_password( self ):
+		"We pretend to have a password so we can offer that login option."
+		return True
+
 @view_config(route_name=REL_HANDSHAKE, request_method='POST', renderer='rest')
 def handshake(request):
 	"""
