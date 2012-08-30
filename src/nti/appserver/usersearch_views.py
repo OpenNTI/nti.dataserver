@@ -64,7 +64,12 @@ class _UserSearchView(object):
 			# NOTE: If the partial match is an exact match but also a component
 			# it cannot be searched for. For example, a community named 'NextThought'
 			# prevents searching for 'nextthought' if you expect to match '@nextthought.com'
-			result.append( users.Entity.get_entity( partialMatch ) )
+			# NOTE3: We have not stopped allowing this to work for user resolution.
+			# This will probably break many assumptions in the UI about what and when usernames
+			# can be resolved
+			entity = users.Entity.get_entity( partialMatch )
+			if _make_visibility_test( remote_user )(entity):
+				result.append( entity )
 			# NOTE2: Going through this API lets some private objects be found
 			# (DynamicFriendsLists, specifically). We should probably lock that down
 		elif remote_user:
@@ -146,16 +151,23 @@ def _authenticated_search( request, remote_user, dataserver, search_term ):
 				break
 
 	# FIXME: Hack in a policy of limiting searching to overlapping communities
-	remote_com_names = remote_user.communities - set( ('Everyone',) )
-	def test(x):
-		if isinstance( x, users.Community ):
-			return x.username in remote_com_names
-		return not hasattr(x, 'communities') or x.communities.intersection( remote_com_names )
+	test = _make_visibility_test( remote_user )
 	# Filter to things that share a common community
-	result = [x for x in result
-			  if test(x)]
+	result = [x for x in result if test(x)]
 
 	return result
+
+def _make_visibility_test(remote_user):
+	if remote_user:
+		remote_com_names = remote_user.communities - set( ('Everyone',) )
+		def test(x):
+			if x == remote_user:
+				return True
+			if isinstance( x, users.Community ):
+				return x.username in remote_com_names
+			return not hasattr(x, 'communities') or x.communities.intersection( remote_com_names )
+		return test
+	return lambda x: True
 
 class IUserSearchMatcher(interface.Interface):
 

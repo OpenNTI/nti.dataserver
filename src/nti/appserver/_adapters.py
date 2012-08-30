@@ -148,16 +148,27 @@ class _DFLUserLikeDecorator(object):
 		# sometimes the Username.
 		external['ID'] = original.NTIID
 
+from nti.dataserver import users
+from pyramid import security as psec
+from pyramid.threadlocal import get_current_request
+
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
 @component.adapter(nti_interfaces.IUser)
 class _UserRealnameStripper(object):
 	"""
 	At this time, we never, ever, ever, want to send back the extremely valuable and
 	privacy sensitive data we have stored in our 'realname' field. It's our secret.
+
+	Except when its not. We have the requirement to do some expensive computations
+	every time we echo one of these things back to see if if it might be you. Then we can
+	tell you what we think your name is. Even though you cannot edit it. And even though
+	it's probably not what you typed in the first place so it will be confusing to you.
 	"""
 
 	def __init__( self, context ):
 		pass
 
 	def decorateExternalObject( self, original, external ):
+		if users.User.get_user( psec.authenticated_userid( get_current_request() ) ) == original:
+			return
 		external['realname'] = None

@@ -72,7 +72,8 @@ class TestApplicationUserSearch(ApplicationTestBase):
 
 	def test_user_search(self):
 		with mock_dataserver.mock_db_trans(self.ds):
-			_ = self._create_user()
+			user = self._create_user()
+			user_interfaces.IFriendlyNamed( user ).realname = u"Steve Johnson"
 
 		testapp = TestApp( self.app )
 		res = testapp.get( '/dataserver2', extra_environ=self._make_extra_environ())
@@ -95,6 +96,9 @@ class TestApplicationUserSearch(ApplicationTestBase):
 												  has_item( all_of(
 													  has_entry( 'href', "/dataserver2/users/sjohnson%40nextthought.com" ),
 													  has_entry( 'rel', 'edit' ) ) ) ) )
+
+		# We should have our name
+		assert_that( res.json_body['Items'][0], has_entry( 'realname', 'Steve Johnson' ) )
 
 	def test_user_search_communities(self):
 		with mock_dataserver.mock_db_trans(self.ds):
