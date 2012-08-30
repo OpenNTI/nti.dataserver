@@ -30,6 +30,7 @@ from hamcrest import has_item
 
 from nti.tests import verifiably_provides
 from nose.tools import assert_raises
+import itertools
 
 from nti.appserver import interfaces as app_interfaces
 from nti.appserver.account_creation_views import account_create_view, account_preflight_view
@@ -145,12 +146,15 @@ class _AbstractValidationViewBase(ConfiguringTestBase):
 		self.request.content_type = 'application/vnd.nextthought+json'
 
 		bad_code = 'UsernameCannotBeBlank'
-		for bad_username in ('   ', 'foo bar', 'foo#bar', 'foo,bar', 'foo%bar' ):
+		bad_code = [bad_code] + ['UsernameContainsIllegalChar'] * 4
+		bad_code.append( "TooShort" )
+		for bad_code, bad_username in itertools.izip( bad_code, ('   ', 'foo bar', 'foo#bar', 'foo,bar', 'foo%bar', 'abcd' )):
 
 			self.request.body = to_json_representation( {'Username': bad_username,
 														 'password': 'pass132word',
+														 'realname': 'Joe Human',
 														 'email': 'user@domain.com' } )
-
+			__traceback_info__ = self.request.body
 
 
 			with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
@@ -158,7 +162,6 @@ class _AbstractValidationViewBase(ConfiguringTestBase):
 
 			assert_that( e.exception.json_body, has_entry( 'field', 'Username' ) )
 			assert_that( e.exception.json_body, has_entry( 'code', bad_code ) )
-			bad_code = 'UsernameContainsIllegalChar'
 
 
 class TestPreflightView(_AbstractValidationViewBase):

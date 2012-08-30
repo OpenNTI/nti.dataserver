@@ -370,8 +370,12 @@ class IGroupMember(interface.Interface):
 IGroupAwarePrincipal.__bases__ = tuple( itertools.chain( IGroupAwarePrincipal.__bases__,
 														 (IGroupMember,) ))
 
+from nti.utils.schema import ValidTextLine
+
 class IEntity(IZContained, IAnnotatable):
-	username = schema.TextLine( title=u'The username' )
+	username = ValidTextLine(
+		title=u'The username',
+		)
 
 class ICommunity(IEntity):
 	pass
@@ -381,6 +385,9 @@ class IUser(IEntity,IContainerIterable):
 	A user of the system. Notice this is not an IPrincipal.
 	This interface needs finished and fleshed out.
 	"""
+	username = ValidTextLine(
+		title=u'The username',
+		min_length=5 )
 
 class IUsernameIterable(interface.Interface):
 	"""
