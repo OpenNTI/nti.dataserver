@@ -99,8 +99,7 @@ class XHRPollingTransport(BaseTransport):
 		session_service = component.getUtility( nti_interfaces.IDataserver ).session_manager
 		result = None
 		try:
-			# A dead session will feed us a None object
-			# whereupon...we blow up...
+			# A dead session will feed us a queue with a None object
 			messages = session.get_client_msgs()
 			if not messages:
 				with _using_session_proxy( session_service, session.session_id ) as session_proxy:
@@ -122,11 +121,20 @@ class XHRPollingTransport(BaseTransport):
 
 			if not messages:
 				raise Empty()
+			# If we feed encode_multi None or an empty queue, it raises
+			# ValueError.
+			# If however, we feed it len() == 1 and that 1 is None,
+			# it quietly returns None to us
 			result = session.socket.protocol.encode_multi( messages )
 		except (Empty,IndexError):
 			result = session.socket.protocol.make_noop()
 
 		__traceback_info__ = session, messages, result
+		if result is None:
+			# Must have pulled a None out of the queue. Which means our
+			# session is dead. How to deal with this?
+			logger.debug( "Polling got terminal None message. Need to disconnect." )
+			result = session.socket.protocol.make_noop()
 
 		response = self.request.response
 		response.body = result
