@@ -39,10 +39,10 @@ def dispatch_content_edited_to_user_policies( content, event ):
 
 @component.adapter(nti_interfaces.IModeledContent, nti_interfaces.ICoppaUserWithoutAgreement, IObjectCreatedEvent)
 def veto_sharing_for_unsigned_coppa_create( content, creator, event ):
-	if content.sharingTargets:
+	if getattr( content, 'sharingTargets', None):
 		raise hexc.HTTPForbidden( "Cannot share objects" )
 
 @component.adapter(nti_interfaces.IModeledContent, nti_interfaces.ICoppaUserWithoutAgreement, IObjectModifiedEvent)
 def veto_sharing_for_unsigned_coppa_edit( content, editor, event ):
-	if content.sharingTargets:
+	if getattr( content, 'sharingTargets', None ):
 		raise hexc.HTTPForbidden( "Cannot share objects" )
