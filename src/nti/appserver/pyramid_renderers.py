@@ -7,6 +7,7 @@ Contains renderers for the REST api.
 
 logger = __import__('logging').getLogger(__name__)
 
+import simplejson as json
 import collections
 
 import pyramid.httpexceptions
@@ -23,6 +24,7 @@ from zope.mimetype.interfaces import IContentTypeAware
 
 from nti.externalization.externalization import to_external_representation, toExternalObject,  EXT_FORMAT_PLIST, catch_replace_action
 from nti.externalization.externalization import EXT_FORMAT_JSON
+from nti.externalization.externalization import to_external_object
 
 from nti.dataserver.mimetype import (MIME_BASE_PLIST, MIME_BASE_JSON,
 									 MIME_EXT_PLIST, MIME_EXT_JSON,
@@ -89,7 +91,11 @@ def find_content_type( request, data=None ):
 
 	return best_match or MIME_BASE_JSON
 
-from nti.dataserver.links_external import render_link
+def _second_pass_to_external_object( obj ):
+	result = to_external_object( obj, name='second-pass' )
+	if result is obj:
+		raise TypeError(repr(obj) + " is not JSON serializable")
+	return result
 
 def render_externalizable(data, system):
 	request = system['request']
@@ -131,18 +137,17 @@ def render_externalizable(data, system):
 			if isinstance( body, collections.MutableMapping ):
 				body['Last Modified'] = lastMod
 
-	response.content_type = str(find_content_type( request, data ))
+	response.content_type = str(find_content_type( request, data )) # headers must be bytes
 	if response.content_type.startswith( MIME_BASE ):
 		# Only transform this if it was one of our objects
 		if response.content_type.endswith( 'json' ):
 			# Notice that we're not doing this:
-			#body = json.dumps( body )
-			# Although it would be nice to avoid the second iteration that happens
-			# with to_external_representation (for a 10% perf improvement), we have at
-			# least one test that fails if we do that because a Link object added during
-			# decoration doesn't get rendered. TODO: We could probably use simplejson's
-			# object writing hook to catch that on the way out?
-			body = to_external_representation( body, EXT_FORMAT_JSON )
+			#body = to_external_representation( body, EXT_FORMAT_JSON )
+			# For about a 10% performance improvement, we can leverage
+			# simplejson's default method to replace anything that isn't serializable
+			# (These things creep in during the object decorator phase and are usually
+			# links.)
+			body = json.dumps( body, check_circular=False, default=_second_pass_to_external_object )
 		else:
 			body = to_external_representation( body, EXT_FORMAT_PLIST )
 
