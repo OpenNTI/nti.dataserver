@@ -187,6 +187,7 @@ class TestPreflightView(_AbstractValidationViewBase):
 
 		assert_that( val, has_entry( 'AvatarURLChoices', has_length( 0 ) ) )
 		assert_that( val, has_entry( 'ProfileSchema', has_key( 'opt_in_email_communication' ) ) )
+		assert_that( val, has_entry( 'ProfileSchema', has_entry( 'Username', has_entry( 'min_length', 5 ) ) ) )
 
 	@WithMockDSTrans
 	def test_create_mathcounts_policy_birthdate_only_under_13_user( self ):

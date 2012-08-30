@@ -35,7 +35,9 @@ logger = __import__('logging').getLogger(__name__)
 import sys
 import collections
 import simplejson as json
+import itertools
 
+from zope import interface
 from zope import component
 
 import zope.schema
@@ -44,6 +46,7 @@ import zope.schema.interfaces
 import z3c.password.interfaces
 
 from nti.dataserver import users
+from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 
 from nti.externalization.datastructures import InterfaceObjectIO
@@ -262,9 +265,22 @@ def account_preflight_view(request):
 	preflight_user = _create_user( request, externalValue, preflight_only=True )
 	profile_iface = user_interfaces.IUserProfileSchemaProvider( preflight_user ).getSchema()
 	profile = profile_iface( preflight_user )
-	iface_io = InterfaceObjectIO( profile, profile_iface )
-	schema = iface_io.schema
-	ext_schema = { k: {'name': k, 'required': v.required} for k, v in schema.namesAndDescriptions(all=True) }
+	profile_schema = InterfaceObjectIO( profile, profile_iface ).schema
+	ext_schema = {}
+	for k, v in itertools.chain( nti_interfaces.IUser.namesAndDescriptions(all=False), profile_schema.namesAndDescriptions(all=True)):
+		__traceback_info__ = k, v
+		if interface.interfaces.IMethod.providedBy( v ):
+			continue
+		# v could be a schema field or an interface.Attribute
+		item_schema = {'name': k,
+					   'required': getattr( v, 'required', None),
+					   'min_length': getattr(v, 'min_length', None) }
+		ext_schema[k] = item_schema
+
+	# Flip the internal/external name of the Username field. Probably some other
+	# stuff gets this wrong?
+	ext_schema['Username'] = ext_schema['username']
+	del ext_schema['username']
 
 
 	request.response.status_int = 200
