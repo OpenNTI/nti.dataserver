@@ -339,7 +339,7 @@ class MathcountsSitePolicyEventListener(GenericSitePolicyEventListener):
 		human_name_parts = human_name.first_list + human_name.middle_list + human_name.last_list
 		if any( (x.lower() in user.username.lower() for x in human_name_parts) ):
 			raise zope.schema.ValidationError("Username %s cannot include any part of the real name %s" %
-											 (user.username, user.realname), 'Username', user.username )
+											 (user.username, names.realname), 'Username', user.username )
 
 		if '@' in user.username:
 			raise zope.schema.ValidationError( "Username cannot contain '@'", 'Username', user.username )
