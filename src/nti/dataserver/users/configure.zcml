@@ -11,6 +11,7 @@
 	<include package="nti.externalization" />
 
 	<ext:registerMimeFactories module=".users" />
+	<ext:registerMimeFactories module=".friends_lists" />
 
 	<!-- Events -->
 	<subscriber handler=".users.user_devicefeedback" />

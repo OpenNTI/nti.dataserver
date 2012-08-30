@@ -263,7 +263,7 @@ class TestUserService(tests.ConfiguringTestBase):
 		assert_that( 'application/vnd.nextthought.canvasurlshape', is_in( list(UserPagesCollection(user).accepts) ) )
 
 		# Making it ICoppaUser cuts that out
-		interface.alsoProvides( user, nti_interfaces.ICoppaUser )
+		interface.alsoProvides( user, nti_interfaces.ICoppaUserWithoutAgreement )
 		assert_that( 'application/vnd.nextthought.canvasurlshape', is_not( is_in( list(UserPagesCollection(user).accepts) ) ) )
 
 

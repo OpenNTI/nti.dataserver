@@ -28,7 +28,7 @@
 	-->
 	<adapter
 		factory="._creatable_mime_object_vocabulary._SimpleRestrictedContentObjectFilter"
-		for="nti.dataserver.interfaces.ICoppaUser" />
+		for="nti.dataserver.interfaces.ICoppaUserWithoutAgreement" />
 
 
 </configure>

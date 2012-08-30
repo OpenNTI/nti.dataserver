@@ -49,7 +49,8 @@ class _CreatableMimeObjectVocabulary(UtilityVocabulary):
 class _SimpleRestrictedContentObjectFilter(object):
 
 	RESTRICTED = ('application/vnd.nextthought.canvasurlshape', #images
-				  'application/vnd.nextthought.redaction' )
+				  'application/vnd.nextthought.redaction',
+				  'application/vnd.nextthought.friendslist' )
 
 	def __init__( self, context=None ):
 		pass
