@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function, unicode_literals
 
 import os
 import re
@@ -71,8 +72,7 @@ def _get_related(node):
 
 	result = list(related)
 	result.sort()
-	
-	print(result)
+
 	return result
 
 def _parse_last_modified(t):
@@ -176,4 +176,4 @@ if __name__ == '__main__':
 		indexname = args[1] if len(args) > 1 else 'MAIN'
 		transform(book, indexname=indexname)
 	else:
-		print "Specify a book location"
+		print("Specify a book location")
