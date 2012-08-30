@@ -96,12 +96,15 @@ def _authenticated_search( request, remote_user, dataserver, search_term ):
 	result = []
 	_users = nti_interfaces.IShardLayout( dataserver ).users_folder
 	user_search_matcher = site_policies.queryAdapterInSite( remote_user, IUserSearchMatcher, request=request, default=ComprehensiveUserSearchMatcher() )
-	# Searching the userid is generally not what we want
-	# now that we have username and alias (e.g,
-	# tfandango@gmail.com -> Troy Daley. Search for "Dan" and get Troy and
-	# be very confused.). As a compromise, we include them
-	# if there are no other matches
-	uid_matches = []
+	# We used to have some nice heuristics about when to include uid-only
+	# matches. This became much less valuable when we started to never display
+	# anything except uid and sometimes to only want to search on UID:
+	## Searching the userid is generally not what we want
+	## now that we have username and alias (e.g,
+	## tfandango@gmail.com -> Troy Daley. Search for "Dan" and get Troy and
+	## be very confused.). As a compromise, we include them
+	## if there are no other matches
+	# Therefore we say screw it and throw that heuristic out the window.
 	for maybeMatch in _users.iterkeys():
 		if isSyntheticKey( maybeMatch ):
 			continue
@@ -115,9 +118,8 @@ def _authenticated_search( request, remote_user, dataserver, search_term ):
 			continue
 
 		if search_term in maybeMatch.lower():
-			uid_matches.append( userObj )
-
-		if user_search_matcher.matches( search_term, userObj ):
+			result.append( userObj )
+		elif user_search_matcher.matches( search_term, userObj ):
 			result.append( userObj )
 
 
@@ -139,9 +141,6 @@ def _authenticated_search( request, remote_user, dataserver, search_term ):
 		if search_term in section.ID.lower() or search_term in section.Description.lower():
 			result.append( section )
 
-	if uid_matches:
-		result.extend(uid_matches)
-
 	if not result:
 		warnings.warn( "Hack for UI: looking at display names of communities" )
 		for x in remote_user.communities:
@@ -153,7 +152,7 @@ def _authenticated_search( request, remote_user, dataserver, search_term ):
 	# FIXME: Hack in a policy of limiting searching to overlapping communities
 	test = _make_visibility_test( remote_user )
 	# Filter to things that share a common community
-	result = [x for x in result if test(x)]
+	result = {x for x in result if test(x)} # ensure a set
 
 	return result
 
