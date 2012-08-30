@@ -119,7 +119,7 @@ def _create_new_session(request):
 	session_manager = component.getUtility( nti_interfaces.IDataserver ).session_manager
 	session = session_manager.create_session( session_class=Session, owner=username )
 	session.originating_site_names = site_policies.get_possible_site_names( request, include_default=True )
-	logger.debug( "Created new session %s", session )
+	logger.debug( "Created new session %s with site policies %s", session, session.originating_site_names )
 	return session
 
 

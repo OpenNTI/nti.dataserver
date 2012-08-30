@@ -14,11 +14,15 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
+import six
+
 from nti.dataserver import interfaces as nti_interfaces
 from nti.contentfragments import interfaces as frg_interfaces
 from nti.contentlibrary import interfaces as lib_interfaces
 from nti.chatserver import interfaces as chat_interfaces
 from nti.socketio import interfaces as sio_interfaces
+
+from nti.dataserver import users
 
 from nti.contentfragments import censor
 
@@ -78,6 +82,10 @@ def creator_and_location_censor_policy( fragment, target, site_names=None ):
 		return censor.DefaultCensoredContentPolicy()
 
 	creator = target.creator
+	# Hmm Kay. If we find a string for a creator, try to resolve
+	# it to an entity.
+	if isinstance( creator, six.string_types ):
+		creator = users.Entity.get_entity( username=creator, default=creator )
 
 	# TODO: It's possible this isn't doing what we want for Messages. They have
 	# a containerId that is their meeting? But we actually want to use
@@ -129,7 +137,8 @@ def ensure_message_info_has_creator( message, event ):
 	We also copy the originating site names from the session if they exist into a temporary
 	attribute.
 	"""
-
+	# Recall that sessions have string as their owner,
+	# and messages keep it that way
 	message.creator = event.session.owner
 	setattr( message, '_v_originating_site_names',
 			 getattr(event.session, 'originating_site_names', () ) )
