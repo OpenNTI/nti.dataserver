@@ -402,7 +402,7 @@ class TestApplication(ApplicationTestBase):
 		# If we become restricted, we cannot post it
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = users.User.get_user( 'sjohnson@nextthought.com' )
-			interface.alsoProvides( user, nti_interfaces.ICoppaUser )
+			interface.alsoProvides( user, nti_interfaces.ICoppaUserWithoutAgreement )
 
 		testapp.post( '/dataserver2/users/sjohnson@nextthought.com', json_data,
 					  extra_environ=self._make_extra_environ(),

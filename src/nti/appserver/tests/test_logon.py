@@ -87,6 +87,8 @@ class TestLogon(ConfiguringTestBase):
 		self.config.add_route( name='logon.logout', pattern='/dataserver2/logon.logout' )
 		self.config.add_route( name='logon.facebook.oauth1', pattern='/dataserver2/logon.facebook.1' )
 
+		# A user that doesn't actually exist.
+		# Per current policy, the first link will be the generic password login
 		class Policy(object):
 			interface.implements( pyramid.interfaces.IAuthenticationPolicy )
 			def authenticated_userid( self, request ):
@@ -94,11 +96,11 @@ class TestLogon(ConfiguringTestBase):
 		get_current_request().registry.registerUtility( Policy() )
 		get_current_request().params['username'] = 'jason.madden@nextthought.com'
 		result = handshake( get_current_request() )
-		assert_that( result, has_property( 'links', has_length( 4 ) ) )
-		assert_that( result.links[0].target, is_( '/dataserver2/logon.google?username=jason.madden%40nextthought.com&oidcsum=-1978826904171095151' ) )
-		assert_that( result.links[1].target, is_( '/dataserver2/logon.facebook.1?username=jason.madden%40nextthought.com' ) )
-		assert_that( result.links[2].target, is_( '/dataserver2' ) )
-		assert_that( result.links[3].target, is_( '/dataserver2/logon.logout' ) )
+		assert_that( result, has_property( 'links', has_length( 5 ) ) )
+		assert_that( result.links[1].target, is_( '/dataserver2/logon.google?username=jason.madden%40nextthought.com&oidcsum=-1978826904171095151' ) )
+		assert_that( result.links[2].target, is_( '/dataserver2/logon.facebook.1?username=jason.madden%40nextthought.com' ) )
+		assert_that( result.links[3].target, is_( '/dataserver2' ) )
+		assert_that( result.links[4].target, is_( '/dataserver2/logon.logout' ) )
 
 	def test_handshake_no_user(self):
 		assert_that( handshake( get_current_request() ), is_( hexc.HTTPBadRequest ) )

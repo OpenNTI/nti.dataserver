@@ -139,6 +139,26 @@ class FriendsListContainerCollection(UncacheableHomogeneousTypedContainerCollect
 	..note:: We are correctly not sending back an 'edit' link, but the UI still presents
 		them as editable. We are also sending back the correct creator.
 	"""
+
+	@property
+	def accepts( self ):
+		# Try to determine if we should be allowed to create
+		# this kind of thing or not
+		# TODO: This can probably be generalized up
+		user = None
+		user_service = traversal.find_interface( self, app_interfaces.IUserService )
+		if user_service:
+			user = user_service.user
+		if user:
+			vocab = component.getUtility( sch_interfaces.IVocabularyFactory, "Creatable External Object Types" )( user )
+			try:
+				vocab.getTermByToken( mimetype.nti_mimetype_from_object( self._container.contained_type ) )
+			except LookupError:
+				# We can prove that we cannot create it, it's not in our vocabulary.
+				return ()
+		return (self._container.contained_type,)
+
+
 	@property
 	def container(self):
 		if not self._container.__parent__:
@@ -791,7 +811,7 @@ class UserServiceExternalizer(ServiceExternalizer):
 		# TODO: This is hardcoded. Needs replaced with something dynamic.
 		# Querying the utilities for the user, which would be registered for specific
 		# IUser types or something...
-		capabilities = set( ('nti.platform.p2p.chat', 'nti.platform.p2p.sharing') )
+		capabilities = set( ('nti.platform.p2p.chat', 'nti.platform.p2p.sharing', 'nti.platform.p2p.friendslists') )
 		if model_interfaces.ICoppaUserWithoutAgreement.providedBy( self.context.user ):
 			capabilities = ()
 		result['CapabilityList'] = list( capabilities )
