@@ -48,6 +48,12 @@ class column(Base.Command):
                 self.parse(tex)
                 return []
 
+class framebreak(_Ignored):
+	pass
+
+class noframebreak(_Ignored):
+	pass
+
 class mtiny(Base.Command):
         pass
 
@@ -55,7 +61,7 @@ class pause(Base.Command):
 	pass
 
 class alert(Base.Command):
-	pass
+	args = '< overlay > text'
 
 class titlerow(Base.Command):
 	pass
