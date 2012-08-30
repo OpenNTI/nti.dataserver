@@ -32,7 +32,8 @@ from nti.ntiids import ntiids
 
 from .interfaces import IExternalObject, IExternalObjectDecorator, IExternalMappingDecorator, StandardExternalFields, StandardInternalFields
 from .interfaces import INonExternalizableReplacer, INonExternalizableReplacement
-from .interfaces import ILocatedExternalSequence, ILocatedExternalMapping
+from .interfaces import ILocatedExternalSequence
+from .interfaces import LocatedExternalDict
 from .oids import to_external_ntiid_oid
 
 # It turns out that the name we use for externalization (and really the registry, too)
@@ -45,8 +46,10 @@ class _ex_name_local_c(gevent.local.local):
 	def __init__( self ):
 		super(_ex_name_local_c,self).__init__()
 		self.name = [_ex_name_marker]
+		#self._to_ext = {}
 _ex_name_local = _ex_name_local_c
 _ex_name_local.name = [_ex_name_marker]
+#_ex_name_local._to_ext = {}
 
 # Things that can be directly externalized
 _primitives = six.string_types + (numbers.Number,bool)
@@ -85,6 +88,7 @@ _SEQUENCE_TYPES = (persistent.list.PersistentList, collections.Set, list, tuple)
 # all map onto a dict.
 _MAPPING_TYPES  = (persistent.mapping.PersistentMapping,BTrees.OOBTree.OOBTree,collections.Mapping)
 
+
 def toExternalObject( obj, coerceNone=False, name=_ex_name_marker, registry=component,
 					  catch_components=(), catch_component_action=None,
 					  default_non_externalizable_replacer=DefaultNonExternalizableReplacer):
@@ -108,6 +112,7 @@ def toExternalObject( obj, coerceNone=False, name=_ex_name_marker, registry=comp
 		then call this object and use the results.
 
 	"""
+#	_ex_name_local._to_ext[type(obj)] = _ex_name_local._to_ext.get( type(obj), 0 ) + 1
 
 	# Catch the primitives up here, quickly
 	if isinstance(obj, _primitives):
@@ -135,7 +140,7 @@ def toExternalObject( obj, coerceNone=False, name=_ex_name_marker, registry=comp
 				return catch_component_action( o, t )
 
 		orig_obj = obj
-		if not IExternalObject.providedBy( obj ) and not hasattr( obj, 'toExternalObject' ):
+		if not hasattr( obj, 'toExternalObject' ) and not IExternalObject.providedBy( obj ):
 			adapter = registry.queryAdapter( obj, IExternalObject, default=None, name=name )
 			if not adapter and name != '':
 				# try for the default, but allow passing name of None to disable (?)
@@ -143,6 +148,7 @@ def toExternalObject( obj, coerceNone=False, name=_ex_name_marker, registry=comp
 			if adapter:
 				obj = adapter
 
+		# Note that for speed, before calling 'recall' we are performing the primitive check
 		result = obj
 		if hasattr( obj, "toExternalObject" ):
 			result = obj.toExternalObject()
@@ -159,9 +165,9 @@ def toExternalObject( obj, coerceNone=False, name=_ex_name_marker, registry=comp
 			# NOTE: This means that Links added here will not be externalized. There
 			# is an IExternalObjectDecorator that does that
 			for key, value in obj.items():
-				result[key] = recall( value )
+				result[key] = recall( value ) if not isinstance(value, _primitives) else value
 		elif isinstance( obj, _SEQUENCE_TYPES ):
-			result = registry.getAdapter( [recall(x) for x in obj], ILocatedExternalSequence )
+			result = registry.getAdapter( [(recall(x) if not isinstance(x, _primitives) else x) for x in obj], ILocatedExternalSequence )
 		# PList doesn't support None values, JSON does. The closest
 		# coersion I can think of is False.
 		elif obj is None:
@@ -178,6 +184,10 @@ def toExternalObject( obj, coerceNone=False, name=_ex_name_marker, registry=comp
 		return result
 	finally:
 		_ex_name_local.name.pop()
+#		if len(_ex_name_local.name) <= 1:
+#			import pprint
+#			pprint.pprint( _ex_name_local._to_ext )
+#			_ex_name_local._to_ext = {}
 
 to_external_object = toExternalObject
 
@@ -271,7 +281,8 @@ def to_standard_external_dictionary( self, mergeFrom=None, name=_ex_name_marker,
 	be added to the dictionary created by this method. The keys and
 	values in mergeFrom should already be external.
 	"""
-	result = registry.getMultiAdapter( (), ILocatedExternalMapping )
+
+	result = LocatedExternalDict()
 
 	if mergeFrom:
 		result.update( mergeFrom )

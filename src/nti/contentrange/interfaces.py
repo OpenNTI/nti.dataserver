@@ -32,6 +32,7 @@ class IDomContentPointer(interface.Interface):
 	role = schema.Choice( title="Intended use of this content pointer.",
 						  vocabulary=POINTER_ROLE_VOCABULARY )
 
+IDomContentPointer['role']._type = unicode
 
 
 class IElementDomContentPointer(IDomContentPointer):

@@ -134,6 +134,11 @@ class LinkExternal(object):
 	def toExternalObject(self):
 		return render_link( self.context )
 
+ILink_providedBy = nti_interfaces.ILink.providedBy
+_MutableSequence = collections.MutableSequence
+_MutableMapping = collections.MutableMapping
+LINKS = StandardExternalFields.LINKS
+
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
 @component.adapter(object)
 class LinkExternalObjectDecorator(object):
@@ -145,11 +150,11 @@ class LinkExternalObjectDecorator(object):
 		pass
 
 	def decorateExternalObject(self, context, obj):
-		if isinstance( obj, collections.MutableSequence ):
-			if any( (nti_interfaces.ILink.providedBy( x ) for x in obj) ):
-				for i, x in enumerate(obj):
-					obj[i] = render_link(x) if nti_interfaces.ILink.providedBy(x) else x
-		elif isinstance( obj, collections.MutableMapping ) and obj.get( StandardExternalFields.LINKS, () ):
-			obj[StandardExternalFields.LINKS] = [render_link(link) if nti_interfaces.ILink.providedBy(link) else link
-												 for link
-												 in obj[StandardExternalFields.LINKS]]
+		if isinstance( obj, _MutableSequence ):
+			for i, x in enumerate(obj):
+				if ILink_providedBy( x ):
+					obj[i] = render_link( x )
+		elif isinstance( obj, _MutableMapping ) and obj.get( LINKS, () ):
+			obj[LINKS] = [render_link(link) if ILink_providedBy(link) else link
+						  for link
+						  in obj[LINKS]]

@@ -31,27 +31,8 @@ def _isMagicKey( key ):
 
 isSyntheticKey = _isMagicKey
 
-@interface.implementer( ILocatedExternalMapping )
-class LocatedExternalDict(dict):
-	"""
-	A dictionary that implements :class:`nti.externalization.interfaces.ILocatedExternalMapping`. Returned
-	by :func:`to_standard_external_dictionary`.
-	"""
-
-	__name__ = ''
-	__parent__ = None
-	__acl__ = ()
-
-interface.implementer( ILocatedExternalSequence )
-class LocatedExternalList(list):
-	"""
-	A list that implements :class:`nti.externalization.interfaces.ILocatedExternalSequence`. Returned
-	by :func:`toExternalObject`.
-	"""
-
-	__name__ = ''
-	__parent__ = None
-	__acl__ = ()
+# BWC export
+from .interfaces import LocatedExternalDict, LocatedExternalList
 
 class ExternalizableDictionaryMixin(object):
 	""" Implements a toExternalDictionary method as a base for subclasses. """
@@ -100,6 +81,7 @@ class AbstractDynamicObjectIO(ExternalizableDictionaryMixin):
 						   StandardInternalFields.LAST_MODIFIEDU,
 						   StandardExternalFields.CLASS,
 						   StandardInternalFields.CONTAINER_ID}
+	_ext_primitive_out_ivars_ = set()
 	_prefer_oid_ = False
 
 
@@ -131,15 +113,25 @@ class AbstractDynamicObjectIO(ExternalizableDictionaryMixin):
 					 and not k.startswith( '_' ))]			# private
 					 #and not callable(getattr(ext_self,k)))]	# avoid functions
 
+	def _ext_primitive_keys(self):
+		"""
+		Return a container of string keys whose values are known to be primitive.
+		This is an optimization for writing.
+		"""
+		return self._ext_primitive_out_ivars_
+
 	def toExternalDictionary( self, mergeFrom=None ):
 		result = super(AbstractDynamicObjectIO,self).toExternalDictionary( mergeFrom=mergeFrom )
 		ext_self = self._ext_replacement()
+		primitive_ext_keys = self._ext_primitive_keys()
 		for k in self._ext_keys():
 			if k in result:
 				# Standard key already added
 				continue
 
-			result[k] = toExternalObject( self._ext_getattr( ext_self, k ) )
+			attr_val = self._ext_getattr( ext_self, k )
+			result[k] = toExternalObject( attr_val ) if k not in primitive_ext_keys else attr_val
+
 			if ILocation.providedBy( result[k] ):
 				result[k].__parent__ = ext_self
 
@@ -222,6 +214,10 @@ class ExternalizableInstanceDict(AbstractDynamicObjectIO):
 		except (AttributeError) as e: # Another weird database-related issue
 			return '<%s(%s)>' % (self.__class__.__name__, e)
 
+import six
+import numbers
+_primitives = six.string_types + (numbers.Number,bool)
+
 @interface.implementer(IInternalObjectIO)
 class InterfaceObjectIO(AbstractDynamicObjectIO):
 	"""
@@ -253,8 +249,11 @@ class InterfaceObjectIO(AbstractDynamicObjectIO):
 		"""
 		super(InterfaceObjectIO, self).__init__( )
 		self._ext_self = ext_self
-		# TODO: Should we cache the schema we use for a particular type?
+		# TODO: Should we cache the schema (and keys) we use for a particular type?
+		# Right now, this time is barely making a dent in the profiling data, and caching
+		# could be tricky to get right
 		self._iface = self._ext_find_schema( ext_self, iface_upper_bound or self._ext_iface_upper_bound )
+		self._ext_primitive_out_ivars_ = self._ext_primitive_out_ivars_.union( self._ext_find_primitive_keys() )
 
 	@property
 	def schema(self):
@@ -269,6 +268,26 @@ class InterfaceObjectIO(AbstractDynamicObjectIO):
 			if iface.isOrExtends( _iface ):
 				_iface = iface
 		return _iface
+
+	def _ext_find_primitive_keys(self):
+		result = set()
+		for n in self._ext_all_possible_keys():
+			field = self._iface[n]
+			field_type = getattr( field, '_type', None )
+			try:
+				if field_type:
+					if isinstance( field_type, tuple ):
+						if all( (issubclass( x, _primitives ) for x in field_type ) ):
+							result.add( n )
+					elif issubclass( field_type, _primitives ):
+						result.add( n )
+			except TypeError:
+				from IPython.core.debugger import Tracer; Tracer()() ## DEBUG ##
+				raise
+
+
+		return result
+
 
 	def _ext_schemas_to_consider( self, ext_self ):
 		return interface.providedBy( ext_self )

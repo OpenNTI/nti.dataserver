@@ -157,6 +157,28 @@ class ILocatedExternalSequence(IExternalizedObject,ILocation,ISequence):
 	information.
 	"""
 
+@interface.implementer( ILocatedExternalMapping )
+class LocatedExternalDict(dict):
+	"""
+	A dictionary that implements :class:`nti.externalization.interfaces.ILocatedExternalMapping`. Returned
+	by :func:`to_standard_external_dictionary`.
+	"""
+
+	__name__ = ''
+	__parent__ = None
+	__acl__ = ()
+
+@interface.implementer( ILocatedExternalSequence )
+class LocatedExternalList(list):
+	"""
+	A list that implements :class:`nti.externalization.interfaces.ILocatedExternalSequence`. Returned
+	by :func:`toExternalObject`.
+	"""
+
+	__name__ = ''
+	__parent__ = None
+	__acl__ = ()
+
 ### Creating and updating new and existing objects given external forms
 
 class IMimeObjectFactory(IFactory):

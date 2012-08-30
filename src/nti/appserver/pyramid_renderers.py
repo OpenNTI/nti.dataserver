@@ -204,50 +204,6 @@ def uncacheable_cache_controller( data, system ):
 	response.last_modified = None
 
 
-import persistent.interfaces
-
-@interface.implementer(ext_interfaces.IExternalMappingDecorator)
-@component.adapter(persistent.interfaces.IPersistent) # TODO: IModeledContent?
-class EditLinkDecorator(object):
-
-	def __init__( self, context ): pass
-
-	def decorateExternalMapping( self, context, mapping ):
-		if is_writable( context ) and getattr( context, '_p_jar'):
-
-			# TODO: This is weird, assuming knowledge about the URL structure here
-			# Should probably use request ILocationInfo to traverse back up to the ISite
-			if not any( [l.rel == 'edit'
-						 for l in mapping.get(StandardExternalFields.LINKS, ())
-						 if nti_interfaces.ILink.providedBy(l) ] ):
-				__traceback_info__ = context, mapping
-				try:
-					# Some objects are not in the traversal tree. Specifically,
-					# chatserver.IMeeting (which is IModeledContent and IPersistent)
-					# Our options are to either catch that here, or introduce an
-					# opt-in interface that everything that wants 'edit' implements
-					nearest_site = nti_traversal.find_nearest_site( context )
-				except TypeError:
-					nearest_site = None
-
-				if nearest_site is None:
-					logger.debug( "Not providing edit links for %s, could not find site", type(context) )
-					return
-
-				mapping.setdefault( StandardExternalFields.LINKS, [] )
-				link = links.Link( ext_oids.to_external_ntiid_oid( context ), rel='edit' )
-				link.__parent__ = context
-				link.__name__ = ''
-				interface.alsoProvides( link, loc_interfaces.ILocation )
-				if nti_interfaces.ICreated.providedBy( context ):
-					interface.alsoProvides( link, nti_interfaces.ICreated )
-					link.creator = context.creator
-				mapping[StandardExternalFields.LINKS].append( link )
-
-				# For cases that we can, make edit and the toplevel href be the same.
-				# this improves caching
-				mapping['href'] = render_link( link, nearest_site=nearest_site )['href']
-
 
 class REST(object):
 
