@@ -135,7 +135,6 @@ class TestWhooshIndex(ConfiguringTestBase):
 								content = unicode(x),
 								quick = unicode(x),
 								related= u'',
-								section= u'',
 								last_modified=datetime.fromtimestamp(now))
 		writer.commit()
 		
