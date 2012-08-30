@@ -318,9 +318,9 @@ ACE_ACT_DENY = "Deny"
 ALL_PERMISSIONS = None
 ACE_DENY_ALL = None
 
-from pyramid.interfaces import IAuthorizationPolicy
 from pyramid.interfaces import IAuthenticationPolicy
 import pyramid.security as _psec
+
 EVERYONE_USER_NAME = _psec.Everyone
 AUTHENTICATED_GROUP_NAME = _psec.Authenticated
 ACE_ACT_ALLOW = _psec.Allow
@@ -704,17 +704,17 @@ class IRedaction(ISelectedRange):
 		required=False)
 
 class ILikeable(IAnnotatable):
-    """
+	"""
 	Marker interface that promises that an implementing object may be
 	liked by users using the :class:`contentratings.interfaces.IUserRating` interface.
-    """
+	"""
 
 
 class IFavoritable(IAnnotatable):
-    """
+	"""
 	Marker interface that promises that an implementing object may be
 	favorited by users using the :class:`contentratings.interfaces.IUserRating` interface.
-    """
+	"""
 
 class IFlaggable(IAnnotatable):
 	"""

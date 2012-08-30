@@ -10,12 +10,11 @@ from zope import component
 
 from nti.externalization.externalization import to_external_object
 
-from nti.dataserver import shards as nti_shards
 from nti.dataserver import users
 from nti.dataserver import providers
+from nti.dataserver import shards as nti_shards
+from nti.dataserver.utils import run_with_dataserver
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.users import interfaces as user_interfaces
-from . import run_with_dataserver
 
 import argparse
 
@@ -53,6 +52,9 @@ def main():
 							 action='store_true',
 							 default=False,
 							 help="Creating a user to whom COPPA applies (under 13)" )
+	arg_parser.add_argument( '--contact_email',
+							 dest='contact_email',
+							 help="The contact email address of the user" )
 
 	site_group = arg_parser.add_mutually_exclusive_group()
 	site_group.add_argument( '-s', '--shard',
