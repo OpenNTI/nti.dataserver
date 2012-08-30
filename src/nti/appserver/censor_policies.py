@@ -11,7 +11,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-
 from zope import component
 from zope import interface
 
@@ -23,10 +22,23 @@ from nti.socketio import interfaces as sio_interfaces
 
 from nti.contentfragments import censor
 
+from nti.appserver import site_policies
+
+class IPlacelessObject(interface.Interface):
+	"""
+	This object is used when we need to look up censoring
+	policies but could not determine a location.
+
+	"""
+@interface.implementer(IPlacelessObject)
+class PlacelessObject(object):
+	pass
+
+_placeless_object = PlacelessObject()
 
 @interface.implementer( frg_interfaces.ICensoredContentPolicy )
 @component.adapter( frg_interfaces.IUnicodeContentFragment, nti_interfaces.IModeledContent )
-def creator_and_location_censor_policy( fragment, target ):
+def creator_and_location_censor_policy( fragment, target, site_names=None ):
 	"""
 	Attempts to locate a censoring policy, appropriate for the creator
 	of the target object and the location in which it is being created.
@@ -52,8 +64,13 @@ def creator_and_location_censor_policy( fragment, target ):
 		current authenticated principal instead of the creator, or the one
 		that is the most restrictive, or both.
 
+	:keyword list site_names: If given, this is an ordered list of the active sites
+		we should consider when looking for site-wide policies. It can
+		be passed by another adapter factory that has this context information
+		not dependent on the current request.
 
 	"""
+
 	creator = None
 	location = None
 
@@ -64,7 +81,8 @@ def creator_and_location_censor_policy( fragment, target ):
 
 	# TODO: It's possible this isn't doing what we want for Messages. They have
 	# a containerId that is their meeting? But we actually want to use
-	# the meeting's containerId?
+	# the meeting's containerId? As it is, this winds up finding a `location`
+	# of ``None``, which gets matched by the * in the adapter registration
 
 	library = component.queryUtility( lib_interfaces.IContentPackageLibrary )
 	if library is not None:
@@ -72,7 +90,12 @@ def creator_and_location_censor_policy( fragment, target ):
 		if content_units:
 			location = content_units[-1]
 
-	return component.queryMultiAdapter( (creator, location), frg_interfaces.ICensoredContentPolicy )
+	if location is None:
+		location = _placeless_object
+
+	return site_policies.queryMultiAdapterInSite( (creator, location),
+												  frg_interfaces.ICensoredContentPolicy,
+												  site_names=site_names	)
 
 
 @interface.implementer(frg_interfaces.ICensoredContentPolicy)
@@ -102,6 +125,22 @@ def ensure_message_info_has_creator( message, event ):
 	"""
 	Ensures that messages created by sockets have their creator set immediately. This is necessary
 	to be sure that the correct security and censoring policies are applied.
+
+	We also copy the originating site names from the session if they exist into a temporary
+	attribute.
 	"""
 
 	message.creator = event.session.owner
+	setattr( message, '_v_originating_site_names',
+			 getattr(event.session, 'originating_site_names', () ) )
+
+@interface.implementer( frg_interfaces.ICensoredContentPolicy )
+@component.adapter(frg_interfaces.IUnicodeContentFragment, chat_interfaces.IMessageInfo )
+def message_info_uses_captured_session_info( fragment, target ):
+	"""
+	Chat messages usually arrive outside an active request. So we use the sites
+	that originated the session, which we captured on the session itself
+	and then copied to the message.
+	"""
+
+	return creator_and_location_censor_policy( fragment, target, site_names=getattr( target, '_v_originating_site_names', () ) )

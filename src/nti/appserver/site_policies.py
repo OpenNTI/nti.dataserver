@@ -29,7 +29,7 @@ from nti.dataserver import shards as nti_shards
 import nameparser
 import datetime
 
-def get_possible_site_names(request=None):
+def get_possible_site_names(request=None, include_default=False):
 	"""
 	Look for the current request, and return an ordered list
 	of site names the request could be considered to be for.
@@ -37,13 +37,18 @@ def get_possible_site_names(request=None):
 	specific. The HTTP origin is considered the most preferred, followed
 	by the HTTP Host.
 
+	:keyword bool include_default: If set to ``True`` (not the default)
+		then a site named '' (the empty string) is returned as the last
+		site in the iterable, making it suitable for use as an ordered
+		list of adapter names.
+
 	:return: An ordered sequence of string site names. If there is no request
 		or a preferred site cannot be found, returns an empty sequence.
 	"""
 
 	request = request or get_current_request()
 	if not request: # pragma: no cover
-		return ()
+		return () if not include_default else ('',)
 
 	result = []
 	if 'origin' in request.headers:
@@ -57,20 +62,46 @@ def get_possible_site_names(request=None):
 
 	if 'localhost' in result:
 		result.remove( 'localhost' )
+
+	if include_default:
+		result.append( '' )
 	return result
 
 _marker = object()
-def queryAdapterInSite( obj, interface=None, request=None, default=None, context=None  ):
+def queryAdapterInSite( obj, target, request=None, site_names=None, default=None, context=None  ):
 	"""
 	Queries for named adapters following the site names, all the way up until the default
 	site name.
+
+	:keyword request: The current request to investigate for site names.
+		If not given, the threadlocal request will be used.
+	:keyword site_names: If given and non-empty, the list of site names to use.
+		Overrides the `request` parameter.
 	"""
-	# Put the empty name/default component on the end of the list of site names
-	site_names = list(get_possible_site_names(request))
-	site_names.append( '' )
+
+	site_names = get_possible_site_names(request, include_default=True)
 
 	for site in site_names:
-		result = component.queryAdapter( obj, interface, name=site, context=context, default=_marker )
+		result = component.queryAdapter( obj, target, name=site, context=context, default=_marker )
+		if result is not _marker:
+			return result
+	return default
+
+def queryMultiAdapterInSite( objects, target, request=None, site_names=None, default=None, context=None  ):
+	"""
+	Queries for named adapters following the site names, all the way up until the default
+	site name.
+
+	:keyword request: The current request to investigate for site names.
+		If not given, the threadlocal request will be used.
+	:keyword site_names: If given and non-empty, the list of site names to use.
+		Overrides the `request` parameter.
+
+	"""
+	site_names = site_names or get_possible_site_names(request, include_default=True)
+
+	for site in site_names:
+		result = component.queryMultiAdapter( objects, target, name=site, context=context, default=_marker )
 		if result is not _marker:
 			return result
 	return default

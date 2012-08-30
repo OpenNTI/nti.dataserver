@@ -18,7 +18,17 @@
 
 	<adapter factory=".censor_policies.coppa_user_censor_policy" />
 
+	<!--
+		 Make sure messages get the right censoring policy by
+		 assigning their owner as early as needed
+	-->
 
+	<subscriber
+		handler=".censor_policies.ensure_message_info_has_creator"
+		for="nti.chatserver.interfaces.IMessageInfo nti.socketio.interfaces.ISocketSessionCreatedObjectEvent"/>
+	<adapter
+		factory=".censor_policies.message_info_uses_captured_session_info"
+		name="body" />
 	<!--
 	The policy for censoring things from regular, non-coppa
 	users by default isn't enabled. If desired, it can be added in a
@@ -30,8 +40,13 @@
 	<adapter factory=".censor_policies.user_filesystem_censor_policy" />
 	-->
 
-	<!-- Make sure messages get the right censoring policy -->
-	<subscriber
-		handler=".censor_policies.ensure_message_info_has_creator"
-		for="nti.chatserver.interfaces.IMessageInfo nti.socketio.interfaces.ISocketSessionCreatedObjectEvent"/>
+	<!--
+	Except apparently on mathcounts.nextthought.com. There, we
+	censor regardless of who you are.
+	-->
+	<adapter factory="nti.contentfragments.censor.DefaultCensoredContentPolicy"
+			 provides="nti.contentfragments.interfaces.ICensoredContentPolicy"
+			 for="nti.dataserver.interfaces.IUser *"
+			 name="mathcounts.nextthought.com" />
+
 </configure>
