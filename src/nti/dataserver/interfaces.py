@@ -389,6 +389,10 @@ class IUser(IEntity,IContainerIterable):
 		title=u'The username',
 		min_length=5 )
 
+	# Note: z3c.password provides a PasswordField we could use here
+	# when we're sure what it does and that validation works out
+	password = interface.Attribute("The password" )
+
 class IUsernameIterable(interface.Interface):
 	"""
 	Something that can iterate across usernames belonging to system :class:`IUser`, typically
