@@ -8,6 +8,7 @@ import sys
 from zope.exceptions.exceptionformatter import print_exception
 import zope.exceptions.log
 from zope import component
+from zope import interface
 from zope.dottedname import resolve as dottedname
 from zope.component.hooks import setHooks
 from zope.configuration import xmlconfig, config
@@ -88,7 +89,7 @@ def run_with_dataserver( environment_dir=None, function=None,
 
 
 	ds = Dataserver( environment_dir )
-	component.provideUtility( ds )
+	component.provideUtility( ds , nti_interfaces.IDataserver)
 
 	def fun():
 		"""Run the user-given function in the environment; print exceptions
@@ -103,4 +104,4 @@ def run_with_dataserver( environment_dir=None, function=None,
 	except Exception:
 		pass
 	finally:
-		component.getSiteManager().unregisterUtility( ds )
+		component.getSiteManager().unregisterUtility( ds, nti_interfaces.IDataserver )
