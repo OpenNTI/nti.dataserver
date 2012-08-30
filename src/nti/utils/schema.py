@@ -54,6 +54,12 @@ class FieldValidationMixin(object):
 			e.field = self
 			raise
 
+class ValidTextLine(FieldValidationMixin,schema.TextLine):
+	"""
+	A text line that produces slightly better error messages. They will all
+	have the 'field' property.
+	"""
+
 class IndexedIterable(schema.List):
 	"""
 	An arbitrary (indexable) iterable, not necessarily a list or tuple;

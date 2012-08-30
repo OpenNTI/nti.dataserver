@@ -165,6 +165,8 @@ class IAvatarURL(Interface):
 		description="If not provided, one will be generated for you.",
 		required=False )
 
+IAvatarURL['avatarURL']._type = (str,unicode) # Relax this constraint for the sake of BWC
+
 class IAvatarChoices(Interface):
 	"""
 	Something that can provide choices for possible avatar URLs.
@@ -196,9 +198,7 @@ class IImmutableFriendlyNamed(Interface):
 	of the friendly name values.
 	"""
 
-import nti.utils.schema
-class _ValidTextLine(nti.utils.schema.FieldValidationMixin,schema.TextLine):
-	pass
+from nti.utils.schema import ValidTextLine as _ValidTextLine
 
 class IUserProfile(IFriendlyNamed, IAvatarURL):
 	"""

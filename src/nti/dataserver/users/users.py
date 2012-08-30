@@ -349,6 +349,7 @@ class User(Principal):
 				 parent=None, _stack_adjust=0):
 		super(User,self).__init__(username, password=password,
 								  parent=parent)
+		nti_interfaces.IUser['username'].bind(self).validate( self.username )
 		# We maintain a Map of our friends lists, organized by
 		# username (only one friend with a username)
 		_create_fl = True

@@ -210,10 +210,16 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 		if not username or not username.strip():
 			# Throw a three-arg version, similar to what a Field would do
 			raise interfaces.UsernameCannotBeBlank( username )
+		username = unicode(username)
 		for c in username:
 			if c not in self.ALLOWED_USERNAME_CHARS:
 				raise interfaces.UsernameContainsIllegalChar( username, self.ALLOWED_USERNAME_CHARS )
 
+		# NOTE: Although we could look for the most derived IEntity self implements
+		# and validate against that schema we don't necessarily want to do so
+		# at this time since there are so many extent types of IEntity and
+		# we haven't enforced constraints like this before. This needs to be cleaned up
+		nti_interfaces.IEntity['username'].bind( self ).validate( username )
 		self.username = username
 
 		# Entities, and in particular Principals, have a created time,

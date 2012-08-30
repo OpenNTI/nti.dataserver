@@ -33,7 +33,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import sys
-
+import collections
 import simplejson as json
 
 from zope import component
@@ -71,6 +71,10 @@ def _raise_error( request,
 	accept_type = 'application/json'
 	if getattr(request, 'accept', None):
 		accept_type = request.accept.best_match( mts )
+
+	if isinstance( v, collections.Mapping ) and v.get( 'field' ) == 'username':
+		# Our internal schema field is username, but that maps to Username on the outside
+		v['field'] = 'Username'
 
 	if accept_type == 'application/json':
 		v = json.dumps( v )

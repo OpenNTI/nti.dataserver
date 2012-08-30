@@ -274,17 +274,12 @@ class InterfaceObjectIO(AbstractDynamicObjectIO):
 		for n in self._ext_all_possible_keys():
 			field = self._iface[n]
 			field_type = getattr( field, '_type', None )
-			try:
-				if field_type:
-					if isinstance( field_type, tuple ):
-						if all( (issubclass( x, _primitives ) for x in field_type ) ):
-							result.add( n )
-					elif issubclass( field_type, _primitives ):
+			if field_type:
+				if isinstance( field_type, tuple ):
+					if all( (issubclass( x, _primitives ) for x in field_type ) ):
 						result.add( n )
-			except TypeError:
-				from IPython.core.debugger import Tracer; Tracer()() ## DEBUG ##
-				raise
-
+				elif issubclass( field_type, _primitives ):
+					result.add( n )
 
 		return result
 
