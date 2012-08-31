@@ -803,6 +803,8 @@ class ServiceExternalizer(object):
 		result['Items'] = [toExternalObject(ws) for ws in self.context.workspaces]
 		return result
 
+from nti.appserver import site_policies
+
 @component.adapter(app_interfaces.IUserService)
 class UserServiceExternalizer(ServiceExternalizer):
 
@@ -811,8 +813,13 @@ class UserServiceExternalizer(ServiceExternalizer):
 		# TODO: This is hardcoded. Needs replaced with something dynamic.
 		# Querying the utilities for the user, which would be registered for specific
 		# IUser types or something...
+		# TODO: These strings are in several places
 		capabilities = set( ('nti.platform.p2p.chat', 'nti.platform.p2p.sharing', 'nti.platform.p2p.friendslists') )
-		if model_interfaces.ICoppaUserWithoutAgreement.providedBy( self.context.user ):
-			capabilities = ()
+		# TODO: This should probably be subscriber, not adapter, since we have to remember
+		# to register both (see configure-site-policies)
+		cap_filter = site_policies.queryAdapterInSite( self.context.user, app_interfaces.IUserCapabilityFilter )
+		if cap_filter:
+			capabilities = cap_filter.filterCapabilities( capabilities )
+
 		result['CapabilityList'] = list( capabilities )
 		return result

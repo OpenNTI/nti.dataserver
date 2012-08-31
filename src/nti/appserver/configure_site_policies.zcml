@@ -33,4 +33,17 @@
 			 provides="nti.appserver.usersearch_views.IUserSearchMatcher"
 			 name="mathcounts.nextthought.com" />
 
+	<!-- On the MC site, NO ONE can chat -->
+	<adapter factory=".site_policies.NoChatCapabilityFilter"
+			 for="nti.dataserver.interfaces.IUser"
+			 provides="nti.appserver.interfaces.IUserCapabilityFilter"
+			 name="mathcounts.nextthought.com" />
+
+	<!-- and coppa kids are more restricted. -->
+	<adapter factory=".user_policies.CoppaUserWithoutAgreementCapabilityFilter"
+			 for="nti.dataserver.interfaces.ICoppaUserWithoutAgreement"
+			 provides="nti.appserver.interfaces.IUserCapabilityFilter"
+			 name="mathcounts.nextthought.com" />
+
+
 </configure>

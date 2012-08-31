@@ -57,6 +57,14 @@ class ICreatableObjectFilter(interface.Interface):
 		:return: Dictionary of filtered terms.
 		"""
 
+class IUserCapabilityFilter(interface.Interface):
+
+	def filterCapabilities( cap_set ):
+		"""
+		Given a set of capability strings, return a set filtered to just
+		the ones allowed.
+		"""
+
 class IContainerCollection(ICollection):
 	"""
 	An :class:ICollection based of an :class:nti.dataserver.interfaces.IContainer.

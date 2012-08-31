@@ -11,6 +11,8 @@
 	<subscriber handler=".user_policies.veto_sharing_for_unsigned_coppa_edit" />
 
 
+	<adapter factory=".user_policies.CoppaUserWithoutAgreementCapabilityFilter" />
+
 	<!-- Require specific profile info for Koppa Kids -->
 	<!--
 		 NOTE: The transition between these two will be a bit rough.
