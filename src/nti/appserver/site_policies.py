@@ -449,6 +449,23 @@ class MathcountsSitePolicyEventListener(GenericKidSitePolicyEventListener):
 		user.join_community( community )
 		user.follow( community )
 
+@component.adapter(nti_interfaces.IUser,app_interfaces.IUserLogonEvent)
+def send_mathcounts_default_landing_page_cookie( user, event ):
+	"""
+	This is a hardcoded logon listener to send a cookie to
+	tell the app to direct to a specific page at logon time.
+
+	It only runs when 'mathcounts.nextthought.com' is in the list of sites
+	(we don't have a good way to direct events through site policies yet)
+	"""
+
+	if 'mathcounts.nextthought.com' in get_possible_site_names( request=event.request ):
+		event.request.response.set_cookie( b'nti.landing_page',
+										   value=b'tag:nextthought.com,2011-10:mathcounts-HTML-mathcounts2013.warm_up_1' )
+
+
+
+
 @interface.implementer(app_interfaces.IUserCapabilityFilter)
 @component.adapter(nti_interfaces.ICoppaUserWithoutAgreement)
 class NoChatCapabilityFilter(object):

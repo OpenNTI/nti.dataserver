@@ -150,7 +150,7 @@ class IUserLogonEvent(interface.interfaces.IObjectEvent):
 	# event holding the principal, this level adding the request
 
 	object = schema.Object(nti_interfaces.IUser,
-						   title="The User that just logged on.")
+						   title="The User that just logged on. You can add event listeners based on the interfaces of this object.")
 	request = schema.Object(pyramid_interfaces.IRequest,
 							title="The request that completed the login process.",
 							description="Useful to get IP information and the like.")
