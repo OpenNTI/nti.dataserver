@@ -16,8 +16,10 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import component
+from zope import interface
 
 from nti.dataserver import interfaces as nti_interfaces
+from nti.appserver import interfaces as app_interfaces
 
 from zope.lifecycleevent import IObjectCreatedEvent
 from zope.lifecycleevent import IObjectModifiedEvent
@@ -46,3 +48,17 @@ def veto_sharing_for_unsigned_coppa_create( content, creator, event ):
 def veto_sharing_for_unsigned_coppa_edit( content, editor, event ):
 	if getattr( content, 'sharingTargets', None ):
 		raise hexc.HTTPForbidden( "Cannot share objects" )
+
+@interface.implementer(app_interfaces.IUserCapabilityFilter)
+@component.adapter(nti_interfaces.ICoppaUserWithoutAgreement)
+class CoppaUserWithoutAgreementCapabilityFilter(object):
+	"""
+	This policy filters out things that users that are probably kids and
+	subject to COPPA cannot do.
+	"""
+
+	def __init__( self, context=None ):
+		pass
+
+	def filterCapabilities( self, capabilities ):
+		return set()

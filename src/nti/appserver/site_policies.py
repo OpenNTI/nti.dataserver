@@ -23,6 +23,8 @@ from pyramid.threadlocal import get_current_request
 from nti.contentlibrary import interfaces as lib_interfaces
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
+from nti.appserver import interfaces as app_interfaces
+
 from nti.contentfragments import censor
 
 from nti.dataserver import shards as nti_shards
@@ -446,6 +448,21 @@ class MathcountsSitePolicyEventListener(GenericKidSitePolicyEventListener):
 
 		user.join_community( community )
 		user.follow( community )
+
+@interface.implementer(app_interfaces.IUserCapabilityFilter)
+@component.adapter(nti_interfaces.ICoppaUserWithoutAgreement)
+class NoChatCapabilityFilter(object):
+	"""
+	Removes chat.
+	"""
+
+	def __init__( self, context=None ):
+		pass
+
+	def filterCapabilities( self, capabilities ):
+		result = set(capabilities)
+		result.discard( 'nti.platform.p2p.chat' )
+		return result
 
 
 @interface.implementer(ISitePolicyUserEventListener)
