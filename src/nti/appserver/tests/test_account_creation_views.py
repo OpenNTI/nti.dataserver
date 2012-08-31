@@ -491,6 +491,28 @@ class TestApplicationCreateUser(ApplicationTestBase):
 		assert_that( res.headers, has_key( 'Set-Cookie' ) )
 		assert_that( res.json_body, has_entry( 'Username', 'jason@test.nextthought.com' ) )
 
+	def test_create_user_mathcounts_policy( self ):
+
+		app = TestApp( self.app )
+
+		data = to_json_representation(  {'Username': 'jason2_nextthought_com',
+										 'password': 'pass123word',
+										 'realname': 'Joe Bananna',
+										 'birthdate': '1982-01-31',
+										 'affiliation': 'school',
+										 'email': 'foo@bar.com' } )
+
+		path = b'/dataserver2/users/@@account.create'
+
+		res = app.post( path, data, extra_environ={b'HTTP_ORIGIN': b'http://mathcounts.nextthought.com'} )
+
+		assert_that( res, has_property( 'status_int', 201 ) )
+		assert_that( res, has_property( 'location', contains_string( '/dataserver2/users/jason' ) ) )
+
+		assert_that( res.cookies_set, has_key( 'nti.auth_tkt' ) )
+		assert_that( res.cookies_set, has_key( 'nti.landing_page' ) )
+		assert_that( res.json_body, has_entry( 'Username', 'jason2_nextthought_com' ) )
+
 	def test_create_user_logged_in( self ):
 		with mock_dataserver.mock_db_trans(self.ds):
 			_ = self._create_user( )
