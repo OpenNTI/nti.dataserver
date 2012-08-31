@@ -246,7 +246,7 @@ def _dispatch_to_policy( user, event, func_name ):
 			getattr( utility, func_name )( user, event )
 			return
 
-	logger.info( "No site in %s wanted to handle user event for %s", site_names, user )
+	logger.info( "No site in %s wanted to handle user event %s for %s", site_names, func_name, user )
 
 
 @component.adapter(nti_interfaces.IUser,IObjectCreatedEvent)

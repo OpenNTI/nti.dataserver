@@ -74,7 +74,7 @@ def TestApp(app=_TestApp):
 
 class ApplicationTestBase(ConfiguringTestBase):
 
-	set_up_packages = ('nti.appserver',) # None, because configuring the app will do this
+	set_up_packages = () # None, because configuring the app will do this
 
 	def _setup_library(self, *args, **kwargs):
 		return Library()
