@@ -34,7 +34,7 @@ class TermExtractor(object):
 		terms.setdefault(norm, 0)
 		terms[norm] += 1
 	
-	def extract(self, tagged_terms):
+	def extract(self, tagged_terms=()):
 		terms = {}
 		# phase 1: A little state machine is used to build simple and
 		# composite terms.
@@ -62,4 +62,55 @@ class TermExtractor(object):
 			(word, occur, len(word.split()))
 			for word, occur in terms.items()
 			if self.filter(word, occur, len(word.split()))]
+	
+# for the time being we assume the training sents comes
+# from the brown corpus
+_train_sents = None
+def default_train_sents():
+	global _train_sents
+	if _train_sents is None:
+		try:
+			from nltk.corpus import brown
+			_train_sents = brown.tagged_sents()
+		except:
+			_train_sents = ()
+	return _train_sents
 
+from nltk.tag import UnigramTagger, BigramTagger, TrigramTagger, DefaultTagger
+
+# build  a built up tagger 
+def backoff_tagger(train_sents, start_tagger=None, tagger_classes): 
+	backoff = start_tagger
+	for cls in tagger_classes: 
+		backoff = cls(train_sents, backoff=backoff) 
+	return backoff
+
+# return default tagger using the default training sentences
+def default_tagger():
+	train_sents = default_train_sents()
+	tagger = DefaultTagger('NN')
+	if not train_sents:
+		tagger = backoff_tagger(train_sents=train_sents, start_tagger=tagger,
+								(UnigramTagger, BigramTagger, TrigramTagger))
+	return tagger
+
+
+import re
+from nltk import PorterStemmer
+from nltk.tokenize import RegexpTokenizer
+
+default_tokenizer = RegexpTokenizer(r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-']\w+)*",
+									flags = re.MULTILINE | re.DOTALL)
+	
+def extract_key_words(content, extractor=None, tokenizer=default_tokenizer, tagger=None, stemmer=None):
+	tagger = tagger or default_tagger()
+	stemmer = stemmer or PorterStemmer()
+	extractor = extractor or TermExtractor()
+	tokenized_words = tokenizer.tokenize(content)
+	tagged_items = tagger.tag(tokenized_words)
+	tagged_terms = []
+	for token, tag in tagged_items:
+		root = stemmer.stem(token) if stemmer else token
+		tagged_terms.append((token, tag, root))
+	result = extractor.extract(tagged_terms)
+	return result
