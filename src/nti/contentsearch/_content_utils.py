@@ -37,7 +37,8 @@ logger = logging.getLogger( __name__ )
 
 def get_content(text=None):
 	tokenizer = component.getUtility(search_interfaces.IContentTokenizer)
-	result = tokenizer.tokenize(text) if text else u''
+	result = tokenizer.tokenize(text) if text else ()
+	result = ' '.join(result)
 	return unicode(result)
 
 @interface.implementer(search_interfaces.IContentResolver)
@@ -348,8 +349,8 @@ class _ContentTokenizer(object):
 
 	def tokenize(self, content):
 		if not content or not isinstance(content, six.string_types):
-			return u''
-
+			return ()
+		
 		plain_text = component.getAdapter( content, frg_interfaces.IPlainTextContentFragment, name='text' )
 		words = self.tokenizer.tokenize(plain_text)
-		return ' '.join(words)
+		return words
