@@ -314,7 +314,7 @@ def to_standard_external_dictionary( self, mergeFrom=None, name=_ex_name_marker,
 		cls = getattr(self, '__external_class_name__', None)
 		if cls:
 			result[StandardExternalFields.CLASS] = cls
-		elif self.__class__.__module__ not in ( 'nti.externalization', 'nti.externalization.datastructures', 'nti.externalization.persistence' ) \
+		elif self.__class__.__module__ not in ( 'nti.externalization', 'nti.externalization.datastructures', 'nti.externalization.persistence', 'nti.externalization.interfaces' ) \
 			   and not self.__class__.__name__.startswith( '_' ):
 			result[StandardExternalFields.CLASS] = self.__class__.__name__
 
