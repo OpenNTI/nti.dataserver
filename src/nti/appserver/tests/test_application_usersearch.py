@@ -13,7 +13,8 @@ from hamcrest import contains_string
 from hamcrest import has_property
 from hamcrest import none
 from hamcrest import has_length
-
+from hamcrest import has_key
+from hamcrest import is_not as does_not
 
 from webtest import TestApp
 from nti.dataserver import users
@@ -121,6 +122,8 @@ class TestApplicationUserSearch(ApplicationTestBase):
 		assert_that( res.json_body['Items'], has_item( has_entry( 'Username', 'sjohnson@nextthought.com' ) ) )
 		assert_that( res.json_body['Items'], has_item( has_entry( 'Username', 'sj2@nextthought.com' ) ) )
 
+		# Getting a 'Class' value back here really confuses the iPad
+		assert_that( res.json_body, does_not( has_key( 'Class' ) ) )
 
 		# We can search for the community
 		path = '/dataserver2/UserSearch/Community'
