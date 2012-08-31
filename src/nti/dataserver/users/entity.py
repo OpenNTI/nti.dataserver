@@ -69,6 +69,8 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 			an ntiid, then an entity will be looked up by ntiid. This permits
 			finding user-specific objects like friends lists.
 		"""
+		if username is None:
+			return default
 
 		if ntiids.is_valid_ntiid_string( username ):
 			result = ntiids.find_object_with_ntiid( username )
