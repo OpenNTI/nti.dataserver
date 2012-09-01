@@ -115,7 +115,7 @@ class _UserSummaryExternalObject(_EntitySummaryExternalObject):
 		extDict['affiliation'] = getattr( prof, 'affiliation', None )
 		return extDict
 
-@component.adapter(nti_interfaces.ICoppaUser)
+@component.adapter(nti_interfaces.ICoppaUserWithoutAgreement)
 class _CoppaUserSummaryExternalObject(_UserSummaryExternalObject):
 
 	def toExternalObject( self ):
@@ -168,17 +168,33 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 		#extDict['Links'] = [ links.Link( to_external_ntiid_oid( self.entity ), rel='edit' ) ]
 		extDict['Links'] = [ links.Link( self.entity, rel='edit' ) ]
 		extDict['Last Modified'] = getattr( self.entity, 'lastModified', 0 )
+
+		most_derived_profile_iface = _ext_find_schema( prof, interfaces.IRestrictedUserProfile )
+		for name, field in most_derived_profile_iface.namesAndDescriptions(all=True):
+			if name in extDict or field.queryTaggedValue( interfaces.TAG_HIDDEN_IN_UI ) or interface.interfaces.IMethod.providedBy( field ):
+				continue
+			extDict[name] = field.query( prof )
+
 		return extDict
 
 _UserExternalObject = _UserPersonalSummaryExternalObject
 
-@component.adapter(nti_interfaces.ICoppaUser)
+@component.adapter(nti_interfaces.ICoppaUserWithoutAgreement)
 class _CoppaUserPersonalSummaryExternalObject(_UserPersonalSummaryExternalObject):
 
 	def toExternalObject( self ):
 		extDict = super(_CoppaUserPersonalSummaryExternalObject,self).toExternalObject( )
-		for k in ('affiliation', 'email', 'birthdate'):
+		for k in ('affiliation', 'email', 'birthdate', 'contact_email'):
 			extDict[k] = None
 		return extDict
 
 _CoppaUserExternalObject = _CoppaUserPersonalSummaryExternalObject
+
+def _ext_find_schema( ext_self, iface_upper_bound ):
+	_iface = iface_upper_bound
+	# Search for the most derived version of the interface
+	# this object implements and use that.
+	for iface in interface.providedBy( ext_self ):
+		if iface.isOrExtends( _iface ):
+			_iface = iface
+	return _iface

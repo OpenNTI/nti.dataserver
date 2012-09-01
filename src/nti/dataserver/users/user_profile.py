@@ -118,6 +118,32 @@ class EmailRequiredUserProfile(CompleteUserProfile):
 	An adapter for requiring the email.
 	"""
 
+def add_profile_fields( iface, clazz, field_map=None ):
+	"""
+	Given an interfaces that extends :class:`nti.dataserver.users.interfaces.IUserProfile`
+	and a class that extends :class:`nti.dataserver.users.user_profile.UserProfile`,
+	add the fields necessary to implement the interface to the class's dictionary.
+
+	:param field_map: If given, maps from schema fields to legacy storage that can be
+		found on the adapted object. Generally not used outside of this module.
+
+	:return: The object given as `clazz`.
+	"""
+
+	for _x in iface.names():
+		# Since the names are defined and may be overrides,
+		# we also let overrides happen in the class dicts
+		if not _x in clazz.__dict__:
+			if field_map and _x in field_map:
+				field = _ExistingDictReadFieldPropertyStoredThroughField( iface[_x], exist_name=field_map[_x] )
+			else:
+				field = FieldPropertyStoredThroughField( iface[_x] )
+
+			setattr( clazz,
+					 _x,
+					 field )
+
+	return clazz
 
 def _init():
 
@@ -133,15 +159,8 @@ def _init():
 				   interfaces.IEmailRequiredUserProfile: EmailRequiredUserProfile }
 
 	for iface, clazz in _class_map.items():
-		for _x in iface.names():
-			# Since the names are defined and may be overrides,
-			# we also let overrides happen in the class dicts
-			if not _x in clazz.__dict__:
-				setattr( clazz,
-						 _x,
-						 _ExistingDictReadFieldPropertyStoredThroughField(
-							 iface[_x],
-							 exist_name=_field_map.get( _x ) ) )
+		add_profile_fields( iface, clazz, field_map=_field_map )
+
 _init()
 del _init
 

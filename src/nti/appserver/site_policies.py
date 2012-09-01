@@ -415,13 +415,63 @@ class IMathcountsCoppaUserWithoutAgreement(IMathcountsUser, nti_interfaces.ICopp
 class IMathcountsCoppaUserWithAgreement(IMathcountsUser, nti_interfaces.ICoppaUserWithAgreement):
 	pass
 
-# TODO: Work in progress
-class IMathcountsUserProfile(user_interfaces.IEmailRequiredUserProfile):
+# Profiles for MC
+from nti.dataserver.users import user_profile
+from nti.utils.schema import ValidTextLine
+import zope.annotation
+
+class IMathcountsCoppaUserWithoutAgreementUserProfile(user_interfaces.IRestrictedUserProfileWithContactEmail):
+
+	participates_in_mathcounts = schema.Bool(
+		title="Do you currently participate in MATHCOUNTS?",
+		required=False,
+		default=False )
+
+	email = ValidTextLine(
+		title='Email',
+		description=u'Email is not stored at this level, but the field is specified here as a convenient way'
+			' to be able to set the password_recovery_email_hash',
+		required=True,
+		constraint=user_interfaces.checkEmailAddress)
+
+	# No affiliation
+	# No role
+
+class IMathcountsCoppaUserWithAgreementUserProfile(user_interfaces.IEmailRequiredUserProfile):
+
+	participates_in_mathcounts = schema.Bool(
+		title="Do you currently participate in MATHCOUNTS?",
+		required=False,
+		default=False )
+
+	affiliation = schema.TextLine(
+		title='Affiliation',
+		description="Your affiliation, such as school name",
+		required=False)
 
 	role = schema.Choice( title="Your role in the organization",
 						  values=("Student", "Teacher", "Coach", "Parent", "Volunteer", "Other"),
-						  default="Other")
+						  default="Other",
+						  required=False)
 
+IMathcountsCoppaUserWithAgreementUserProfile['affiliation'].setTaggedValue( user_interfaces.TAG_UI_TYPE, 'nti.appserver.site_policies.school' )
+
+
+@component.adapter(IMathcountsCoppaUserWithoutAgreement)
+@interface.implementer(IMathcountsCoppaUserWithoutAgreementUserProfile)
+class MathcountsCoppaUserWithoutAgreementUserProfile(user_profile.RestrictedUserProfileWithContactEmail):
+	pass
+
+@component.adapter(IMathcountsCoppaUserWithAgreement)
+@interface.implementer(IMathcountsCoppaUserWithAgreementUserProfile)
+class MathcountsCoppaUserWithAgreementUserProfile(user_profile.EmailRequiredUserProfile):
+	pass
+
+user_profile.add_profile_fields( IMathcountsCoppaUserWithoutAgreementUserProfile, MathcountsCoppaUserWithoutAgreementUserProfile )
+user_profile.add_profile_fields( IMathcountsCoppaUserWithAgreementUserProfile, MathcountsCoppaUserWithAgreementUserProfile )
+
+MathcountsCoppaUserWithoutAgreementUserProfileFactory = zope.annotation.factory( MathcountsCoppaUserWithoutAgreementUserProfile )
+MathcountsCoppaUserWithAgreementUserProfileFactory = zope.annotation.factory( MathcountsCoppaUserWithAgreementUserProfile )
 
 @interface.implementer(ISitePolicyUserEventListener)
 class MathcountsSitePolicyEventListener(GenericKidSitePolicyEventListener):

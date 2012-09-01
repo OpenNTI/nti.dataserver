@@ -27,14 +27,12 @@
 			 provides="nti.dataserver.users.interfaces.IEmailRequiredUserProfile"
 			 for="nti.dataserver.interfaces.ICoppaUserWithAgreement" />
 
-	<adapter factory="nti.dataserver.users.user_profile.RestrictedUserProfileWithContactEmailFactory"
-			 provides="nti.dataserver.users.interfaces.IRestrictedUserProfileWithContactEmail"
-			 for="nti.appserver.site_policies.IMathcountsCoppaUserWithoutAgreement" />
+	<adapter factory=".site_policies.MathcountsCoppaUserWithoutAgreementUserProfileFactory"
+			 provides=".site_policies.IMathcountsCoppaUserWithoutAgreementUserProfile"
+			 for=".site_policies.IMathcountsCoppaUserWithoutAgreement" />
 
-	<adapter factory="nti.dataserver.users.user_profile.EmailRequiredUserProfileFactory"
-			 provides="nti.dataserver.users.interfaces.IEmailRequiredUserProfile"
-			 for="nti.appserver.site_policies.IMathcountsCoppaUserWithAgreement" />
-
-
+	<adapter factory=".site_policies.MathcountsCoppaUserWithAgreementUserProfileFactory"
+			 provides=".site_policies.IMathcountsCoppaUserWithAgreementUserProfile"
+			 for=".site_policies.IMathcountsCoppaUserWithAgreement" />
 
 </configure>

@@ -200,6 +200,9 @@ class IImmutableFriendlyNamed(Interface):
 
 from nti.utils.schema import ValidTextLine as _ValidTextLine
 
+TAG_HIDDEN_IN_UI = "nti.dataserver.users.field_hidden_in_ui" # Don't display this by default in the UI
+TAG_UI_TYPE = 'nti.dataserver.users.field_type' # Qualifying details about how the field should be treated, such as data source
+
 class IUserProfile(IFriendlyNamed, IAvatarURL):
 	"""
 	Base class that user profiles should extend.
@@ -228,6 +231,8 @@ class IRestrictedUserProfile(IUserProfile):
 		required=False,
 		constraint=checkEmailAddress)
 
+IRestrictedUserProfile['password_recovery_email_hash'].setTaggedValue( TAG_HIDDEN_IN_UI, True )
+
 class IRestrictedUserProfileWithContactEmail(IRestrictedUserProfile):
 	"""
 	A profile that adds a (temporary) contact email during the account setup
@@ -237,7 +242,7 @@ class IRestrictedUserProfileWithContactEmail(IRestrictedUserProfile):
 	contact_email = _ValidTextLine(
 		title='Contact email',
 		description=u'An email address to use to contact someone responsible for this accounts user',
-		required=True,
+		required=False,
 		constraint=checkEmailAddress)
 
 class ICompleteUserProfile(IRestrictedUserProfile):
@@ -281,6 +286,10 @@ class ICompleteUserProfile(IRestrictedUserProfile):
 		title='Affiliation',
 		description="Your affiliation, such as school name",
 		required=False)
+
+ICompleteUserProfile['home_page'].setTaggedValue( TAG_HIDDEN_IN_UI, True )
+ICompleteUserProfile['description'].setTaggedValue( TAG_HIDDEN_IN_UI, True )
+ICompleteUserProfile['location'].setTaggedValue( TAG_HIDDEN_IN_UI, True )
 
 class IEmailRequiredUserProfile(ICompleteUserProfile):
 	"""
