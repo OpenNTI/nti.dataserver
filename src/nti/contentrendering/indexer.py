@@ -12,17 +12,21 @@ import lxml.etree as etree
 
 from zope import interface
 
+from nltk import clean_html
+from nltk.tokenize import RegexpTokenizer
+
 from whoosh import index
 
 from nti.contentrendering import interfaces
+from nti.contentfragments.html import _sanitize_user_html_to_text
 from nti.contentsearch.whoosh_contenttypes import create_book_schema
-
-from nltk.tokenize import RegexpTokenizer
 
 import logging
 logger = logging.getLogger(__name__)
 
 interface.moduleProvides( interfaces.IRenderedBookTransformer )
+
+page_c_pattern = re.compile("<div class=\"page-contents\">(.*)</body>")
 
 default_tokenizer = RegexpTokenizer(r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-']\w+)*",
 									flags = re.MULTILINE | re.DOTALL | re.UNICODE)
@@ -75,6 +79,27 @@ def _get_related(node):
 
 	return result
 
+def _parse_text(text, pattern, default=''):
+	m = pattern.search(text, re.M|re.I)
+	return m.groups()[0] if m else default
+
+def _get_page_content(text):
+	c = text.replace('\n','')
+	c = c.replace('\r','')
+	c = c.replace('\t','')
+	c = _parse_text(c, page_c_pattern, None)
+	return c or text
+
+def _sanitize_content(text, tokenizer=default_tokenizer):
+	# user ds sanitizer
+	text = _sanitize_user_html_to_text(text.lower())
+	# remove any html (i.e. meta, link) that is not removed
+	text = clean_html(text)
+	# tokenize words
+	words = tokenizer.tokenize(text)
+	words = ' '.join(words)
+	return words
+
 def _parse_last_modified(t):
 	result = time.time()
 	try:
@@ -98,11 +123,11 @@ def _get_text(node):
 		txt = unicode(txt.strip().lower())
 	return txt
 	
-def _index_book_node(writer, node, tokenizer=default_tokenizer):
+def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=True):
 	title = unicode(node.title)
 	ntiid = unicode(node.ntiid)
-	path = os.path.basename(node.location)
-	logger.info( "Indexing (%s, %s, %s)", path, title, ntiid )
+	content_file = node.location
+	logger.info( "Indexing (%s, %s, %s)", os.path.basename(content_file), title, ntiid )
 	
 	related = _get_related(node.topic)
 	
@@ -114,25 +139,31 @@ def _index_book_node(writer, node, tokenizer=default_tokenizer):
 			last_modified = _parse_last_modified(attributes.get('content', None))
 			break
 		
-	# get content
-	content = []
-	def _collector(n, lst):
-		if not isinstance(n, etree._Comment):
-			txt = _get_text(n)
-			if txt:
-				lst.append(txt)
-			for c in n.iterchildren():
-				_collector(c, lst)
-			
-	for n in node.dom("div").filter(".page-contents"):
-		_collector(n, content)
+	if file_indexing and os.path.exists(content_file):
+		with open(content_file, "r") as f:
+			content = f.read()
 
-	content = tokenizer.tokenize(' '.join(content))
-	content = unicode(' '.join(content))
+		content = _get_page_content(content)
+		content = _sanitize_content(content)
+	else:
+		# get content
+		content = []
+		def _collector(n, lst):
+			if not isinstance(n, etree._Comment):
+				txt = _get_text(n)
+				if txt:
+					lst.append(txt)
+				for c in n.iterchildren():
+					_collector(c, lst)
+				
+		for n in node.dom("div").filter(".page-contents"):
+			_collector(n, content)
+	
+		content = tokenizer.tokenize(' '.join(content))
+		content = unicode(' '.join(content))
 
 	#TODO: find key words
 	keywords = set()
-	
 	try:
 		as_time = datetime.fromtimestamp(float(last_modified))
 		writer.add_document(ntiid=unicode(ntiid),
