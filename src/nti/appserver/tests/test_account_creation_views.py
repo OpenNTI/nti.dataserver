@@ -35,9 +35,11 @@ import itertools
 from nti.appserver import interfaces as app_interfaces
 from nti.appserver.account_creation_views import account_create_view, account_preflight_view
 from nti.appserver import site_policies
+from nti.appserver import z3c_zpt
 from nti.appserver.tests import ConfiguringTestBase
 
 import pyramid.httpexceptions as hexc
+import pyramid.interfaces
 
 from nti.dataserver.interfaces import IShardLayout, INewUserPlacer
 from nti.dataserver import interfaces as nti_interfaces
@@ -54,6 +56,9 @@ from zope.lifecycleevent import IObjectCreatedEvent, IObjectAddedEvent
 
 import datetime
 
+from pyramid_mailer.interfaces import IMailer
+from pyramid_mailer.mailer import DummyMailer
+
 class _AbstractValidationViewBase(ConfiguringTestBase):
 	""" Base for the things where validation should fail """
 
@@ -61,6 +66,12 @@ class _AbstractValidationViewBase(ConfiguringTestBase):
 
 	the_view = None
 
+	def setUp(self):
+		super(_AbstractValidationViewBase,self).setUp()
+		# Must provide the correct zpt template renderer or the email process blows up
+		# See application.py
+		component.provideUtility( z3c_zpt.renderer_factory, pyramid.interfaces.IRendererFactory, name=".pt" )
+		component.provideUtility( DummyMailer(), IMailer )
 
 	@WithMockDSTrans
 	def test_create_invalid_password(self):
@@ -399,6 +410,7 @@ class TestCreateView(_AbstractValidationViewBase):
 		# see site_policies.[py|zcml]
 		assert_that( self.request.host, is_( 'example.com:80' ) )
 		self.request.headers['origin'] = 'http://mathcounts.nextthought.com'
+		mailer = component.getUtility( IMailer )
 
 		self.request.content_type = 'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason_nextthought_com',
@@ -427,6 +439,14 @@ class TestCreateView(_AbstractValidationViewBase):
 		assert_that( user_interfaces.IFriendlyNamed( new_user ), has_property( 'realname', 'Joe' ) )
 		assert_that( user_interfaces.IFriendlyNamed( new_user ),
 					 has_property( 'participates_in_mathcounts', False ) )
+		assert_that( user_interfaces.IFriendlyNamed( new_user ),
+					 has_property( 'email', None ) )
+		assert_that( user_interfaces.IFriendlyNamed( new_user ),
+					 has_property( 'password_recovery_email_hash', '823776525776c8f23a87176c59d25759da7a52c4' ) )
+
+		# Which means we sent no mail
+		assert_that( mailer.outbox, has_length( 0 ) )
+
 
 		assert_that( to_external_object( new_user ), has_entries( 'email', None,
 																  'birthdate', None,
@@ -458,6 +478,9 @@ class TestCreateView(_AbstractValidationViewBase):
 																  'birthdate', '1982-01-31',
 																  'affiliation', 'school',
 																  'role', 'Other' ) )
+		# And we sent mail
+		mailer = component.getUtility( IMailer )
+		assert_that( mailer.outbox, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
 
 
 	@WithMockDSTrans
@@ -483,6 +506,11 @@ class TestCreateView(_AbstractValidationViewBase):
 		assert_that( to_external_object( new_user ), has_entries( 'email', 'jason@test.nextthought.com',
 																  'birthdate', '1982-01-31',
 																  'affiliation', 'NTI' ) )
+
+		mailer = component.getUtility( IMailer )
+		assert_that( mailer.outbox, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
+
+
 
 	@WithMockDSTrans
 	def test_create_component_matches_request_host( self ):
@@ -511,6 +539,7 @@ from .test_application import ApplicationTestBase
 from webtest import TestApp
 from nti.dataserver.tests import mock_dataserver
 
+
 class TestApplicationCreateUser(ApplicationTestBase):
 
 	def test_create_user( self ):
@@ -518,6 +547,7 @@ class TestApplicationCreateUser(ApplicationTestBase):
 
 		data = to_json_representation( {'Username': 'jason@test.nextthought.com',
 										'password': 'password',
+										'realname': 'Jason Madden',
 										'email': 'foo@bar.com'	} )
 
 		path = b'/dataserver2/users/@@account.create'
@@ -529,6 +559,9 @@ class TestApplicationCreateUser(ApplicationTestBase):
 
 		assert_that( res.headers, has_key( 'Set-Cookie' ) )
 		assert_that( res.json_body, has_entry( 'Username', 'jason@test.nextthought.com' ) )
+
+		mailer = component.getUtility( IMailer )
+		assert_that( mailer.outbox, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
 
 	def test_create_user_mathcounts_policy( self ):
 
@@ -551,6 +584,9 @@ class TestApplicationCreateUser(ApplicationTestBase):
 		assert_that( res.cookies_set, has_key( 'nti.auth_tkt' ) )
 		assert_that( res.cookies_set, has_key( 'nti.landing_page' ) )
 		assert_that( res.json_body, has_entry( 'Username', 'jason2_nextthought_com' ) )
+
+		mailer = component.getUtility( IMailer )
+		assert_that( mailer.outbox, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
 
 	def test_create_user_logged_in( self ):
 		with mock_dataserver.mock_db_trans(self.ds):

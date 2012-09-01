@@ -37,6 +37,7 @@ import itertools
 
 from zope import interface
 from zope import component
+from zope.event import notify
 
 import zope.schema
 import zope.schema.interfaces
@@ -46,6 +47,7 @@ import z3c.password.interfaces
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
+from nti.appserver import interfaces as app_interfaces
 
 from nti.externalization.datastructures import InterfaceObjectIO
 
@@ -169,7 +171,7 @@ def account_create_view(request):
 
 	request.response.location = request.resource_url( new_user )
 
-
+	notify( app_interfaces.UserCreatedWithRequestEvent( new_user, request ) )
 	logon_userid_with_request( new_user.username, request, request.response )
 
 	return new_user
@@ -232,8 +234,9 @@ def account_preflight_view(request):
 		if v.queryTaggedValue( user_interfaces.TAG_HIDDEN_IN_UI ):
 			continue
 
+		required = v.queryTaggedValue( user_interfaces.TAG_REQUIRED_IN_UI ) or getattr( v, 'required', None )
 		item_schema = {'name': k,
-					   'required': getattr( v, 'required', None),
+					   'required': required,
 					   'min_length': getattr(v, 'min_length', None) }
 		ui_type = v.queryTaggedValue( user_interfaces.TAG_UI_TYPE )
 		if not ui_type and isinstance( getattr( v, '_type', None ), type):

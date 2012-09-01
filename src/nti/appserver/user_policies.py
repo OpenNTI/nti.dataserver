@@ -20,6 +20,7 @@ from zope import interface
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.appserver import interfaces as app_interfaces
+from nti.dataserver.users import interfaces as user_interfaces
 
 from zope.lifecycleevent import IObjectCreatedEvent
 from zope.lifecycleevent import IObjectModifiedEvent
@@ -62,3 +63,40 @@ class CoppaUserWithoutAgreementCapabilityFilter(object):
 
 	def filterCapabilities( self, capabilities ):
 		return set()
+
+from pyramid.renderers import render
+from pyramid_mailer.message import Message
+from pyramid_mailer.interfaces import IMailer
+
+@component.adapter(nti_interfaces.IUser, app_interfaces.IUserCreatedWithRequestEvent)
+def send_email_on_new_account( user, event ):
+	"""
+	For new accounts where we have an email (and of course the request), we send a welcome message.
+
+	Notice that we do not have an email collected for the ICoppaUserWithoutAgreement, so
+	they will never get a notice here. (And we don't have to specifically check for that).
+	"""
+
+	if not event.request: #pragma: no cover
+		return
+
+	profile = user_interfaces.IUserProfile( user )
+	email = getattr( profile, 'email' )
+	if not email:
+		return
+
+	# Need to send both HTML and plain text if we send HTML, because
+	# many clients still do not render HTML emails well (e.g., the popup notification on iOS
+	# only works with a text part)
+	html_body = render( 'templates/new_user_created.pt',
+						dict(user=user, profile=profile, context=user),
+						request=event.request )
+	text_body = render( 'templates/new_user_created.txt',
+						dict(user=user, profile=profile, context=user),
+						request=event.request )
+
+	message = Message( subject="Welcome to NextThought", # TODO: i18n
+					   recipients=[email],
+					   body=text_body,
+					   html=html_body )
+	component.getUtility( IMailer ).send( message )
