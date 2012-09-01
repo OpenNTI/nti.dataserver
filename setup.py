@@ -105,7 +105,7 @@ setup(
 		'contentratings == 1.0',
 		'coverage >= 3.5.2', # Test coverage
 		'cssselect >= 0.7.1', # Used by pyquery
-		'cython >= 0.16',
+		'cython >= 0.17',
 		# support for defining and evolving classes based on schemas
 		# pulls in dm.reuse
 		'dm.zope.schema >= 2.0.1',
