@@ -230,6 +230,8 @@ def createApplication( http_port,
 		pyramid_auth.create_authentication_policy(
 			secure_cookies=asbool(settings.get('secure_cookies', False) ) ) )
 
+	###
+	## Logon
 	pyramid_config.add_route( name='logon.ping', pattern='/dataserver2/logon.ping' )
 	pyramid_config.add_route( name='logon.handshake', pattern='/dataserver2/logon.handshake' )
 	pyramid_config.add_route( name='logon.nti.password', pattern='/dataserver2/logon.nti.password' )
@@ -251,6 +253,12 @@ def createApplication( http_port,
 	# This value works for any google apps account: https://www.google.com/accounts/o8/id
 	pyramid_config.add_view( route_name='verify_openid', view='pyramid_openid.verify_openid' )
 	pyramid_config.add_view( name='verify_openid', route_name='verify_openid', view='pyramid_openid.verify_openid' )
+
+	###
+	# Site-specific CSS packages
+	##
+	pyramid_config.add_route( name="logon.logon_css", pattern="/login/resources/css/site.css" )
+	pyramid_config.scan( 'nti.appserver.site_policy_views' )
 
 
 	pyramid_config.add_route( name=dataserver_socketio_views.RT_HANDSHAKE, pattern=dataserver_socketio_views.URL_HANDSHAKE )
@@ -325,10 +333,6 @@ def createApplication( http_port,
 							  factory=_ContentSearchRootFactory)
 	pyramid_config.scan( 'nti.appserver.usersearch_views' )
 
-	# pyramid_config.add_view( route_name='search.users',
-	# 						 view='nti.appserver.dataserver_pyramid_views._UserSearchView',
-	# 						 renderer='rest',
-	# 						 permission=nauth.ACT_SEARCH)
 
 	pyramid_config.add_route( name='search2.user', pattern='/dataserver2/users/{user}/Search/RecursiveUserGeneratedData/{term:.*}',
 							  factory=_UserSearchRootFactory)
@@ -346,12 +350,6 @@ def createApplication( http_port,
 							 renderer='rest',
 							 permission=nauth.ACT_SEARCH)
 
-	# pyramid_config.add_route( name='search2.users', pattern='/dataserver2/UserSearch/{term:.*}',
-	# 						  factory=_ContentSearchRootFactory)
-	# pyramid_config.add_view( route_name='search2.users',
-	# 						 view='nti.appserver.dataserver_pyramid_views._UserSearchView',
-	# 						 renderer='rest',
-	# 						 permission=nauth.ACT_SEARCH)
 
 	logger.debug( 'Finished creating search' )
 
