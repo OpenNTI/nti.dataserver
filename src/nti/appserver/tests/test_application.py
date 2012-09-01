@@ -72,6 +72,8 @@ def TestApp(app=_TestApp):
 
 	return _TestApp( CORSInjector( CORSOptionHandler( app ) ) )
 
+import pyramid_mailer.testing
+
 class ApplicationTestBase(ConfiguringTestBase):
 
 	set_up_packages = () # None, because configuring the app will do this
@@ -95,6 +97,8 @@ class ApplicationTestBase(ConfiguringTestBase):
 					   for s in os.listdir( root )
 					   if os.path.isdir( os.path.join( root, s ) )]
 		self.main.setServeFiles( serveFiles )
+
+		pyramid_mailer.testing.includeme( self.config )
 
 		# If we try to externalize things outside of an active request, but
 		# the get_current_request method returns the mock request we just set up,

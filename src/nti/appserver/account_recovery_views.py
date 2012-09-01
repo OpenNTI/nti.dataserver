@@ -48,7 +48,12 @@ from nti.appserver import site_policies
 from pyramid.view import view_config
 from pyramid import security as sec
 
+from pyramid.renderers import render
+
 import nti.appserver.httpexceptions as hexc
+
+from pyramid_mailer.interfaces import IMailer
+from pyramid_mailer.message import Message
 
 
 REL_FORGOT_USERNAME = "logon.forgot.username"
@@ -80,5 +85,20 @@ def forgot_username_view(request):
 	except zope.schema.interfaces.ValidationError as e:
 		obj_io.handle_validation_error( request, e )
 
+
+	user = users.User.get_user( 'jason.madden@nextthought.com' )
+	# Need to send both HTML and plain text if we send HTML, because
+	# many clients still do not render HTML emails well (e.g., the popup notification on iOS
+	# only works with a text part)
+	html_body = render( 'templates/username_recovery_email.pt',
+						[user],
+						request=request )
+	text_body = user.username
+
+	message = Message( subject="Username Recovery", # TODO: i18n
+					   recipients=[email_assoc_with_account],
+					   body=text_body,
+					   html=html_body )
+	component.getUtility( IMailer ).send( message )
 
 	return hexc.HTTPNoContent()
