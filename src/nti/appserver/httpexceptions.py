@@ -8,6 +8,14 @@ from __future__ import print_function, unicode_literals
 import pyramid.httpexceptions as _hexc
 import sys
 
+# Import some common things for the sake of static analysis
+HTTPBadRequest = _hexc.HTTPBadRequest
+HTTPConflict = _hexc.HTTPConflict
+HTTPForbidden = _hexc.HTTPForbidden
+HTTPUnsupportedMediaType = _hexc.HTTPUnsupportedMediaType
+HTTPException = _hexc.HTTPException
+
+# Dynamically import the rest
 def _copy_pyramid_exceptions():
 	frame = sys._getframe(1)
 	for k,v in _hexc.__dict__.items():
@@ -20,6 +28,7 @@ del sys
 
 try:
 	from pyramid.httpexceptions import HTTPUnprocessableEntity
+	assert HTTPUnprocessableEntity.code == 422
 except ImportError:
 	class HTTPUnprocessableEntity(HTTPClientError):
 		"""

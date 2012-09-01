@@ -13,14 +13,16 @@ logger = __import__('logging').getLogger(__name__)
 
 import collections
 import sys
-
+import simplejson
 
 from zope import component
 from zope import interface
+import zope.schema.interfaces
+
+from pyramid.threadlocal import get_current_request
 
 from nti.appserver import httpexceptions as hexc
-
-import simplejson
+from nti.appserver._util import raise_json_error
 
 from nti.dataserver import interfaces as nti_interfaces
 import nti.externalization.internalization
@@ -83,14 +85,61 @@ def read_body_as_external_object( request, input_data=None, expected_type=collec
 		ex = hexc.HTTPBadRequest()
 		raise ex, None, tb
 
-def update_object_from_external_object( contentObject, externalValue, notify=True ):
+def update_object_from_external_object( contentObject, externalValue, notify=True, request=None ):
 	dataserver = component.queryUtility( nti_interfaces.IDataserver )
 	try:
 		__traceback_info__ = contentObject, externalValue
 		return nti.externalization.internalization.update_from_external_object( contentObject, externalValue, context=dataserver, notify=notify )
+	except zope.schema.interfaces.ValidationError as e:
+		if request is None:
+			request = get_current_request()
+		if request is None:
+			_no_request_validation_error()
+		else:
+			handle_validation_error( request, e )
 	except (ValueError,AssertionError,interface.Invalid,TypeError,KeyError): # pragma: no cover
 		# These are all 'validation' errors. Raise them as unprocessable entities
 		# interface.Invalid, in particular, is the root class of zope.schema.ValidationError
-		logger.exception( "Failed to update content object, bad input" )
-		exc_info = sys.exc_info()
-		raise hexc.HTTPUnprocessableEntity, exc_info[1], exc_info[2]
+		_no_request_validation_error( )
+
+
+def _no_request_validation_error():
+	logger.exception( "Failed to update content object, bad input" )
+	exc_info = sys.exc_info()
+	raise hexc.HTTPUnprocessableEntity, exc_info[1], exc_info[2]
+
+def handle_validation_error( request, validation_error ):
+	"""
+	Handles a :class:`zope.schema.interfaces.ValidationError` within the context
+	of a Pyramid request by raising an :class:`pyramid.httpexceptions.HTTPUnprocessableEntity`
+	error. Call from within the scope of a ``catch`` block.
+
+	:param validation_error: The validation error being processed.
+
+	"""
+	# Validation error may be many things, including invalid password by the policy (see above)
+	# Some places try hard to set a good message, some don't.
+	exc_info = sys.exc_info()
+	field_name = None
+	field = getattr( validation_error, 'field', None )
+	msg = ''
+	if field:
+		field_name = field.__name__
+	elif len(validation_error.args) == 3:
+		# message, field, value
+		field_name = validation_error.args[1]
+		msg = validation_error.args[0]
+
+	# z3c.password and similar (nti.dataserver.users._InvalidData) set this for internationalization
+	# purposes
+	if getattr(validation_error, 'i18n_message', None):
+		msg = str(validation_error)
+	else:
+		msg = validation_error.message or msg
+
+	raise_json_error( request,
+					  hexc.HTTPUnprocessableEntity,
+					  {'message': msg,
+					   'field': field_name,
+					   'code': validation_error.__class__.__name__},
+					   exc_info[2] )

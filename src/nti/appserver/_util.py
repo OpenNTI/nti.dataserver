@@ -175,3 +175,39 @@ def dump_stacks_view(request):
 	request.response.text = body
 	request.response.content_type = 'text/plain'
 	return request.response
+
+import anyjson as json
+import collections
+
+def raise_json_error( request,
+					  factory,
+					  v,
+					  tb ):
+	"""
+	Attempts to raise an error during processing of a pyramid request.
+	We expect the client to specify that they want JSON errors.
+
+	:param v: The detail message. Can be a string or a dictionary. A dictionary
+		may contain the keys `field`, `message` and `code`.
+	:param factory: The factory (class) to produce an HTTP exception.
+	:param tb: The traceback from `sys.exc_info`.
+	"""
+	#logger.exception( "Failed to create user; returning expected error" )
+	mts = ('application/json', 'text/plain')
+	accept_type = 'application/json'
+	if getattr(request, 'accept', None):
+		accept_type = request.accept.best_match( mts )
+
+	if isinstance( v, collections.Mapping ) and v.get( 'field' ) == 'username':
+		# Our internal schema field is username, but that maps to Username on the outside
+		v['field'] = 'Username'
+
+	if accept_type == 'application/json':
+		v = json.dumps( v )
+	else:
+		v = str(v)
+
+	result = factory()
+	result.body = v
+	result.content_type = accept_type
+	raise result, None, tb

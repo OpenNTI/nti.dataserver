@@ -34,6 +34,7 @@ from nti.dataserver import users
 
 from nti.appserver._util import logon_userid_with_request
 from nti.appserver.account_creation_views import REL_CREATE_ACCOUNT, REL_PREFLIGHT_CREATE_ACCOUNT
+from nti.appserver.account_recovery_views import REL_FORGOT_USERNAME, REL_FORGOT_PASSCODE
 
 from pyramid.view import view_config
 from pyramid import security as sec
@@ -68,6 +69,7 @@ REL_LOGIN_OPENID = 'logon.openid'
 REL_LOGIN_FACEBOOK = 'logon.facebook'
 REL_LOGIN_LOGOUT = 'logon.logout'
 
+
 # The time limit for a GET request during
 # the authentication process
 _REQUEST_TIMEOUT = 0.5
@@ -99,6 +101,7 @@ def _links_for_unauthenticated_users( request ):
 	links = ()
 	remote_user_name = sec.authenticated_userid( request )
 	if not remote_user_name:
+
 		create_account = request.route_path( 'objects.generic.traversal', traverse=('users') )
 
 		create = Link( create_account, rel=REL_CREATE_ACCOUNT,
@@ -108,7 +111,15 @@ def _links_for_unauthenticated_users( request ):
 						  target_mime_type=mimetype.nti_mimetype_from_object( users.User ),
 						  elements=('@@' + REL_PREFLIGHT_CREATE_ACCOUNT,))
 
-		links = (create, preflight)
+		forgot_username = Link( request.route_path( REL_FORGOT_USERNAME ),
+								rel=REL_FORGOT_USERNAME )
+
+
+		#forgot_passcode = Link( request.route_path( REL_FORGOT_PASSCODE ),
+		#						rel=REL_FORGOT_PASSCODE )
+
+
+		links = (create, preflight, forgot_username)
 
 	return links
 

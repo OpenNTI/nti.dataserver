@@ -33,8 +33,6 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import sys
-import collections
-import simplejson as json
 import itertools
 
 from zope import interface
@@ -54,6 +52,7 @@ from nti.externalization.datastructures import InterfaceObjectIO
 from nti.appserver._util import logon_userid_with_request
 from nti.appserver import _external_object_io as obj_io
 from nti.appserver import site_policies
+from nti.appserver._util import raise_json_error as _raise_error
 
 from pyramid.view import view_config
 from pyramid import security as sec
@@ -65,29 +64,6 @@ import nameparser.parser
 REL_CREATE_ACCOUNT = "account.create"
 REL_PREFLIGHT_CREATE_ACCOUNT = "account.preflight.create"
 
-def _raise_error( request,
-				  factory,
-				  v,
-				  tb ):
-	#logger.exception( "Failed to create user; returning expected error" )
-	mts = ('application/json', 'text/plain')
-	accept_type = 'application/json'
-	if getattr(request, 'accept', None):
-		accept_type = request.accept.best_match( mts )
-
-	if isinstance( v, collections.Mapping ) and v.get( 'field' ) == 'username':
-		# Our internal schema field is username, but that maps to Username on the outside
-		v['field'] = 'Username'
-
-	if accept_type == 'application/json':
-		v = json.dumps( v )
-	else:
-		v = str(v)
-
-	result = factory()
-	result.body = v
-	result.content_type = accept_type
-	raise result, None, tb
 
 def _create_user( request, externalValue, preflight_only=False ):
 
@@ -147,30 +123,7 @@ def _create_user( request, externalValue, preflight_only=False ):
 					   'code': e.__class__.__name__},
 					  exc_info[2] )
 	except zope.schema.interfaces.ValidationError as e:
-		# Validation error may be many things, including invalid password by the policy (see above)
-		# Some places try hard to set a good message, some don't.
-		exc_info = sys.exc_info()
-		field_name = None
-		field = getattr( e, 'field', None )
-		msg = ''
-		if field:
-			field_name = field.__name__
-		elif len(e.args) == 3:
-			# message, field, value
-			field_name = e.args[1]
-			msg = e.args[0]
-
-		if getattr(e, 'i18n_message', None):
-			msg = str(e)
-		else:
-			msg = exc_info[1].message or msg
-
-		_raise_error( request,
-					  hexc.HTTPUnprocessableEntity,
-					  {'message': msg,
-					   'field': field_name,
-					   'code': exc_info[1].__class__.__name__},
-					  exc_info[2] )
+		obj_io.handle_validation_error( request, e )
 	except KeyError:
 		exc_info = sys.exc_info()
 		_raise_error( request,
