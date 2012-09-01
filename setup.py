@@ -145,7 +145,7 @@ setup(
 		'pyquery >= 1.2.1', # jquery-like traversing of python datastructures. lxml, cssselect
 		'pyramid >= 1.3.3' ,
 		'pyramid_tm >= 0.5',
-		'pyramid_traversalwrapper',
+		'pyramid_mailer >= 0.9', # Which uses repoze.sendmail
 		'pyramid_who >= 0.3',
 		'pyramid_zcml >= 0.9.2',
 		'pyramid_zodbconn >= 0.3',
@@ -161,6 +161,7 @@ setup(
 		'rdflib',
 		'repoze.catalog >= 0.8.2',
 		'repoze.lru >= 0.6', # LRU caching. Dep of Pyramid
+		'repoze.sendmail >= 3.2',
 		'repoze.who >= 2.0',
 		'repoze.zodbconn >= 0.14',
 		'grequests >= 0.1.0', #replaces requests.async in 0.13
