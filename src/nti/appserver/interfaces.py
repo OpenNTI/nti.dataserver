@@ -155,14 +155,44 @@ class IUserLogonEvent(interface.interfaces.IObjectEvent):
 							title="The request that completed the login process.",
 							description="Useful to get IP information and the like.")
 
-class UserLogonEvent(interface.interfaces.ObjectEvent):
-	interface.implements(IUserLogonEvent)
+class _UserEventWithRequest(interface.interfaces.ObjectEvent):
 
 	request = None
-	def __init__( self, object, request=None ):
-		super(UserLogonEvent,self).__init__( object )
+
+	def __init__( self, user, request=None ):
+		super(_UserEventWithRequest,self).__init__( user )
 		if request is not None:
 			self.request = request
+
+
+@interface.implementer(IUserLogonEvent)
+class UserLogonEvent(_UserEventWithRequest):
+	pass
+
+class IUserCreatedWithRequestEvent(interface.interfaces.IObjectEvent):
+	"""
+	Fired when a new user account has been created successfully due
+	to interactive actions.
+
+	This is fired just before the :class:`IUserLogonEvent` is fired for the new
+	user, and after the zope lifecycle events.
+
+	"""
+	# Very surprised not to find an analogue of this event in zope.*
+	# or pyramid, so we roll our own.
+	# TODO: Might want to build this on a lower-level (nti_interfaces)
+	# event holding the principal, this level adding the request
+
+	object = schema.Object(nti_interfaces.IUser,
+						   title="The User that just got created. You can add event listeners based on the interfaces of this object.")
+	request = schema.Object(pyramid_interfaces.IRequest,
+							title="The request that completed the creation process.",
+							description="Useful to get IP information and the like.")
+
+@interface.implementer(IUserCreatedWithRequestEvent)
+class UserCreatedWithRequestEvent(_UserEventWithRequest):
+	pass
+
 
 ### Dealing with responses
 # Data rendering

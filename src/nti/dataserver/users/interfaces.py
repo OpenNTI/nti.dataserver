@@ -202,6 +202,7 @@ from nti.utils.schema import ValidTextLine as _ValidTextLine
 
 TAG_HIDDEN_IN_UI = "nti.dataserver.users.field_hidden_in_ui" # Don't display this by default in the UI
 TAG_UI_TYPE = 'nti.dataserver.users.field_type' # Qualifying details about how the field should be treated, such as data source
+TAG_REQUIRED_IN_UI = 'nti.dataserver.users.field_required' # Overrides the value from the field itself
 
 class IUserProfile(IFriendlyNamed, IAvatarURL):
 	"""

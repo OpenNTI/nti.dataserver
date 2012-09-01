@@ -1,0 +1,2 @@
+Welcome, ${profile.realname}. A new NextThought account,
+${user.username}, has been created on ${request.application_url}.
