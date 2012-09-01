@@ -138,6 +138,17 @@ class ApplicationTestBase(ConfiguringTestBase):
 
 class TestApplication(ApplicationTestBase):
 
+	def test_logon_css_site_policy(self):
+		testapp = TestApp(self.app)
+		# No site, empty file
+		res = testapp.get( '/login/resources/css/site.css' )
+		assert_that( res, has_property( 'content_type', 'text/css' ) )
+
+		# Configured site, redirect
+		res = testapp.get( '/login/resources/css/site.css', extra_environ={b'HTTP_ORIGIN': b'http://mathcounts.nextthought.com'}, status=303 )
+		assert_that( res.headers, has_entry( 'Location', ends_with( '/login/resources/css/mathcounts.nextthought.com/site.css' ) ) )
+
+
 	def test_options_request( self ):
 		testapp = TestApp( self.app )
 		res = testapp.options( '/dataserver2/logon.ping', extra_environ=self._make_extra_environ() )
