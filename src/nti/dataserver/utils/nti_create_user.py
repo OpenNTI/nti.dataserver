@@ -22,7 +22,7 @@ _type_map = { 'user': users.User.create_user,
 			  'provider': providers.Provider.create_provider,
 			  'community': users.Community.create_community }
 
-def main():
+def main(args=None):
 	arg_parser = argparse.ArgumentParser( description="Create a user-type object" )
 	arg_parser.add_argument( 'env_dir', help="Dataserver environment root directory" )
 	arg_parser.add_argument( 'username', help="The username to create" )
@@ -65,7 +65,7 @@ def main():
 							 dest='site',
 							 help="Create the user as if done by a request in this application SITE. Use this when site policy should be invoked to set interfaces, establish communities, etc" )
 
-	args = arg_parser.parse_args()
+	args = arg_parser.parse_args(args=args)
 
 	env_dir = args.env_dir
 	username = args.username
