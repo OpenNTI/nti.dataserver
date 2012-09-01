@@ -386,7 +386,7 @@ class _UGDModifyViewBase(object):
 			raise hexc.HTTPNotFound( "No object %s/%s/%s" % (cr, cid,oid))
 
 	def updateContentObject( self, contentObject, externalValue, set_id=False, notify=True ):
-		containedObject = obj_io.update_object_from_external_object( contentObject, externalValue, notify=notify )
+		containedObject = obj_io.update_object_from_external_object( contentObject, externalValue, notify=notify, request=self.request )
 
 		# If they provided an ID, use it if we can and we need to
 		if set_id and StandardExternalFields.ID in externalValue \

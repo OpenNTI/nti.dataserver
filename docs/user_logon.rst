@@ -22,6 +22,17 @@ Accounts can also be created on the command line:
 
 .. command-output:: nti_create_user -h
 
+
+Account Recovery
+================
+
+Account recovery actions for forgotted usernames and passwords can
+be initiated through the ReST interface.
+
+.. automodule:: nti.appserver.account_recovery_views
+	:private-members:
+
+
 Logon APIs
 ==========
 
