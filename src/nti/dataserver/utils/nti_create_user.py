@@ -23,6 +23,10 @@ _type_map = { 'user': users.User.create_user,
 			  'community': users.Community.create_community }
 
 def main(args=None):
+	create_user(args)
+	sys.exit( 0 )
+
+def create_user(args=None):
 	arg_parser = argparse.ArgumentParser( description="Create a user-type object" )
 	arg_parser.add_argument( 'env_dir', help="Dataserver environment root directory" )
 	arg_parser.add_argument( 'username', help="The username to create" )
@@ -77,8 +81,7 @@ def main(args=None):
 						 xmlconfig_packages=conf_packages,
 						 verbose=args.verbose,
 						 function=lambda: _create_user(_type_map[args.type], username, password, args.name, args.communities, args ) )
-	sys.exit( 0 )
-
+	
 def _create_user( factory, username, password, realname, communities=(), options=None ):
 	__traceback_info__ = locals().items()
 
