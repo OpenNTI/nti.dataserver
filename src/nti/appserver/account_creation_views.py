@@ -276,9 +276,24 @@ def account_preflight_view(request):
 		if interface.interfaces.IMethod.providedBy( v ):
 			continue
 		# v could be a schema field or an interface.Attribute
+		if v.queryTaggedValue( user_interfaces.TAG_HIDDEN_IN_UI ):
+			continue
+
 		item_schema = {'name': k,
 					   'required': getattr( v, 'required', None),
 					   'min_length': getattr(v, 'min_length', None) }
+		ui_type = v.queryTaggedValue( user_interfaces.TAG_UI_TYPE )
+		if not ui_type and isinstance( getattr( v, '_type', None ), type):
+			ui_type = getattr( v, '_type' ).__name__
+			if ui_type in ('unicode', 'str', 'basestring'):
+				ui_type = 'string'
+
+		if ui_type:
+			item_schema['type'] = ui_type
+
+		if zope.schema.interfaces.IChoice.providedBy( v ) and zope.schema.interfaces.IVocabulary.providedBy( v.vocabulary ):
+			item_schema['choices'] = [x.token for x in v.vocabulary]
+
 
 		ext_schema[k] = item_schema
 

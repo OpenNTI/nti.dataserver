@@ -189,6 +189,21 @@ class TestPreflightView(_AbstractValidationViewBase):
 		assert_that( val, has_entry( 'ProfileSchema', has_key( 'opt_in_email_communication' ) ) )
 		assert_that( val, has_entry( 'ProfileSchema', has_entry( 'Username', has_entry( 'min_length', 5 ) ) ) )
 
+		assert_that( val, has_entry( 'ProfileSchema',
+									 has_entry( 'participates_in_mathcounts',
+												has_entry( 'required', False ) ) ) )
+		assert_that( val, has_entry( 'ProfileSchema',
+									 has_entry( 'participates_in_mathcounts',
+												has_entry( 'type', 'bool' ) ) ) )
+
+		assert_that( val, has_entry( 'ProfileSchema',
+									 has_entry( 'role',
+												has_key( 'choices' ) ) ) )
+		assert_that( val, has_entry( 'ProfileSchema',
+									 has_entry( 'affiliation',
+												has_entry( 'type', 'nti.appserver.site_policies.school' ) ) ) )
+
+
 
 	@WithMockDSTrans
 	def test_create_mathcounts_policy_birthdate_only_under_13_user( self ):
@@ -207,7 +222,17 @@ class TestPreflightView(_AbstractValidationViewBase):
 
 		assert_that( val, has_entry( 'AvatarURLChoices', has_length( 0 ) ) )
 		assert_that( val, has_entry( 'ProfileSchema', does_not( has_key( 'opt_in_email_communication' ) ) ) )
-		assert_that( val, has_entry( 'ProfileSchema', has_key( 'contact_email' ) ) )
+		assert_that( val, has_entry( 'ProfileSchema',
+									 has_entry( 'contact_email',
+												has_entry( 'required', False ) ) ) )
+
+		assert_that( val, has_entry( 'ProfileSchema',
+									 has_entry( 'participates_in_mathcounts',
+												has_entry( 'required', False ) ) ) )
+		assert_that( val, has_entry( 'ProfileSchema',
+									 has_entry( 'participates_in_mathcounts',
+												has_entry( 'type', 'bool' ) ) ) )
+
 
 	@WithMockDSTrans
 	def test_create_mathcounts_policy_avatar_choices( self ):
@@ -390,6 +415,7 @@ class TestCreateView(_AbstractValidationViewBase):
 													 'password': 'pass123word',
 													 'realname': 'Joe Bananna',
 													 'alias': 'Me',
+													 'email': 'foo@bar.com',
 													 'contact_email': 'foo@bar.com' } )
 
 		new_user = account_create_view( self.request )
@@ -399,6 +425,13 @@ class TestCreateView(_AbstractValidationViewBase):
 		assert_that( new_user, verifiably_provides( nti_interfaces.ICoppaUserWithoutAgreement ) )
 		assert_that( new_user, verifiably_provides( site_policies.IMathcountsCoppaUserWithoutAgreement ) )
 		assert_that( user_interfaces.IFriendlyNamed( new_user ), has_property( 'realname', 'Joe' ) )
+		assert_that( user_interfaces.IFriendlyNamed( new_user ),
+					 has_property( 'participates_in_mathcounts', False ) )
+
+		assert_that( to_external_object( new_user ), has_entries( 'email', None,
+																  'birthdate', None,
+																  'affiliation', None,
+																  'participates_in_mathcounts', False ) )
 
 
 		# This guy is old enough to require an email and not need a contact_email
@@ -413,12 +446,18 @@ class TestCreateView(_AbstractValidationViewBase):
 		assert_that( new_user, verifiably_provides( site_policies.IMathcountsCoppaUserWithAgreement ) )
 		assert_that( new_user, has_property( 'communities', has_item( 'MathCounts' ) ) )
 		assert_that( user_interfaces.IFriendlyNamed( new_user ), has_property( 'realname', 'Joe Bananna' ) )
-		assert_that( user_interfaces.ICompleteUserProfile( new_user ),
+		assert_that( user_interfaces.IFriendlyNamed( new_user ),
 					 has_property( 'birthdate', datetime.date( 1982, 1, 31 ) ) )
+		assert_that( user_interfaces.IFriendlyNamed( new_user ),
+					 has_property( 'affiliation', 'school' ) )
+		assert_that( user_interfaces.IFriendlyNamed( new_user ),
+					 has_property( 'role', 'Other' ) )
 
-		assert_that( to_external_object( new_user ), has_entries( 'email', None,
-																  'birthdate', None,
-																  'affiliation', None ) )
+		# He's old enough we can echo this stuff back
+		assert_that( to_external_object( new_user ), has_entries( 'email', 'foo@bar.com',
+																  'birthdate', '1982-01-31',
+																  'affiliation', 'school',
+																  'role', 'Other' ) )
 
 
 	@WithMockDSTrans
