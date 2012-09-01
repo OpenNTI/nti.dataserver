@@ -490,7 +490,7 @@ def temp_get_config( root, demo=False ):
 
 	return env
 
-def write_configs(root_dir, pserve_ini, update_existing=False):
+def write_configs(root_dir, pserve_ini, update_existing=False, write_supervisord=False):
 	env = _Env( root_dir, create=(not update_existing), only_new=update_existing )
 	xmlconfig.file( 'configure.zcml', package=sys.modules['nti.dataserver'] )
 	uris = _configure_zeo( env )
@@ -507,7 +507,7 @@ def write_configs(root_dir, pserve_ini, update_existing=False):
 	listener.priority = 50
 	env.add_program( listener )
 
-	if not update_existing:
+	if not update_existing or write_supervisord:
 		env.write_supervisor_conf_file( pserve_ini )
 		env.write_main_conf()
 
