@@ -8,12 +8,8 @@
 	</head>
 	<body>
 		<p>
-			We found the following usernames associated with this
-			email address:
+			We're sorry, there are no accounts associated with this
+			email address.
 		</p>
-		<ul>
-			<li tal:repeat="user options/users"
-				tal:content="user/username" />
-		</ul>
 	</body>
 </html>

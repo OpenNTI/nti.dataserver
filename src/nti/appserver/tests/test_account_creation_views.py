@@ -62,8 +62,6 @@ from pyramid_mailer.mailer import DummyMailer
 class _AbstractValidationViewBase(ConfiguringTestBase):
 	""" Base for the things where validation should fail """
 
-	features = () # Disable devmode so that we get 'email' required by default for new users
-
 	the_view = None
 
 	def setUp(self):
@@ -101,6 +99,35 @@ class _AbstractValidationViewBase(ConfiguringTestBase):
 		assert_that( e.exception.json_body, has_entry( 'code', 'EmailAddressInvalid' ) )
 		assert_that( e.exception.json_body, has_entry( 'field', 'email' ) )
 
+
+
+	@WithMockDSTrans
+	def test_create_invalid_username( self ):
+		self.request.content_type = 'application/vnd.nextthought+json'
+
+		bad_code = 'UsernameCannotBeBlank'
+		bad_code = [bad_code] + ['UsernameContainsIllegalChar'] * 4
+		bad_code.append( "TooShort" )
+		for bad_code, bad_username in itertools.izip( bad_code, ('   ', 'foo bar', 'foo#bar', 'foo,bar', 'foo%bar', 'abcd' )):
+
+			self.request.body = to_json_representation( {'Username': bad_username,
+														 'password': 'pass132word',
+														 'realname': 'Joe Human',
+														 'email': 'user@domain.com' } )
+			__traceback_info__ = self.request.body
+
+
+			with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
+				self.the_view( self.request )
+
+			assert_that( e.exception.json_body, has_entry( 'field', 'Username' ) )
+			assert_that( e.exception.json_body, has_entry( 'code', bad_code ) )
+
+class _AbstractNotDevmodeViewBase(_AbstractValidationViewBase):
+	# The tests that depend on not having devmode installed (stricter defailt validation) should be here
+	# Since they run so much slower due to the mimetype registration
+	features = ()
+
 	@WithMockDSTrans
 	def test_create_censored_username( self ):
 		self.request.content_type = 'application/vnd.nextthought+json'
@@ -115,7 +142,6 @@ class _AbstractValidationViewBase(ConfiguringTestBase):
 		assert_that( e.exception.json_body, has_entry( 'code', 'ValidationError' ) )
 		assert_that( e.exception.json_body, has_entry( 'field', 'Username' ) )
 		assert_that( e.exception.json_body, has_entry( 'message', contains_string( 'censored' ) ) )
-
 
 
 	@WithMockDSTrans
@@ -152,32 +178,9 @@ class _AbstractValidationViewBase(ConfiguringTestBase):
 		assert_that( e.exception.json_body, has_entry( 'field', 'birthdate' ) )
 		assert_that( e.exception.json_body, has_entry( 'message', contains_string( 'past' ) ) )
 
-	@WithMockDSTrans
-	def test_create_invalid_username( self ):
-		self.request.content_type = 'application/vnd.nextthought+json'
-
-		bad_code = 'UsernameCannotBeBlank'
-		bad_code = [bad_code] + ['UsernameContainsIllegalChar'] * 4
-		bad_code.append( "TooShort" )
-		for bad_code, bad_username in itertools.izip( bad_code, ('   ', 'foo bar', 'foo#bar', 'foo,bar', 'foo%bar', 'abcd' )):
-
-			self.request.body = to_json_representation( {'Username': bad_username,
-														 'password': 'pass132word',
-														 'realname': 'Joe Human',
-														 'email': 'user@domain.com' } )
-			__traceback_info__ = self.request.body
-
-
-			with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
-				self.the_view( self.request )
-
-			assert_that( e.exception.json_body, has_entry( 'field', 'Username' ) )
-			assert_that( e.exception.json_body, has_entry( 'code', bad_code ) )
-
 
 class TestPreflightView(_AbstractValidationViewBase):
 
-	features = () # Disable devmode so that we get 'email' required by default for new users
 
 	def setUp( self ):
 		super(TestPreflightView,self).setUp()
@@ -282,30 +285,11 @@ class TestPreflightView(_AbstractValidationViewBase):
 		new_user = self.the_view( self.request )
 		assert_that( new_user, has_entry( 'AvatarURLChoices', has_length( 0 ) ) )
 
-
-class TestCreateView(_AbstractValidationViewBase):
-
-	features = () # Disable devmode so that we get 'email' required by default for new users
+class TestCreateViewNotDevmode(_AbstractNotDevmodeViewBase):
 
 	def setUp( self ):
-		super(TestCreateView,self).setUp()
+		super(TestCreateViewNotDevmode,self).setUp()
 		self.the_view = account_create_view
-
-	@WithMockDSTrans
-	def test_create_missing_username( self ):
-		self.request.content_type = 'application/vnd.nextthought+json'
-		self.request.body = to_json_representation( {'password': 'pass123word', 'email': 'foo@bar.com' } )
-		with assert_raises( hexc.HTTPUnprocessableEntity ):
-			self.the_view( self.request )
-
-
-	@WithMockDSTrans
-	def test_create_missing_password(self):
-		self.request.content_type = 'application/vnd.nextthought+json'
-		self.request.body = to_json_representation( {'Username': 'foo@bar.com', 'email': 'foo@bar.com' } )
-		with assert_raises( hexc.HTTPUnprocessableEntity ):
-			account_create_view( self.request )
-
 
 	@WithMockDSTrans
 	def test_create_works( self ):
@@ -348,6 +332,26 @@ class TestCreateView(_AbstractValidationViewBase):
 
 		assert_that( e.exception.json_body, has_entry( 'code', 'DuplicateUsernameError' ) )
 
+class TestCreateView(_AbstractValidationViewBase):
+
+	def setUp( self ):
+		super(TestCreateView,self).setUp()
+		self.the_view = account_create_view
+
+	@WithMockDSTrans
+	def test_create_missing_username( self ):
+		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.body = to_json_representation( {'password': 'pass123word', 'email': 'foo@bar.com' } )
+		with assert_raises( hexc.HTTPUnprocessableEntity ):
+			self.the_view( self.request )
+
+
+	@WithMockDSTrans
+	def test_create_missing_password(self):
+		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.body = to_json_representation( {'Username': 'foo@bar.com', 'email': 'foo@bar.com' } )
+		with assert_raises( hexc.HTTPUnprocessableEntity ):
+			account_create_view( self.request )
 
 
 	@WithMockDSTrans
