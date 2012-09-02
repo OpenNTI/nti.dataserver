@@ -7,7 +7,7 @@
 		<title>Welcome To NextThought</title>
 	</head>
 	<body>
-		<p>Welcome, <span tal:content="options/profile/realname" class="realname">John Doe</p>.
+		<p>Welcome, <span tal:content="options/profile/realname" class="realname">John Doe</span></p>.
 		<p>
 			A new account, <span tal:content="options/user/username" class="username">username</span>
 			has been created on
