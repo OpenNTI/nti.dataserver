@@ -5,6 +5,7 @@ $Id$
 """
 from __future__ import print_function, unicode_literals
 
+import sys
 import argparse
 
 from nti.dataserver import users
@@ -21,6 +22,7 @@ def main():
 	env_dir = args.env_dir
 	shard_name = args.shard_name
 	init_shard(env_dir, shard_name)
+	sys.exit(0)
 
 def init_shard(env_dir, shard_name):
 	run_with_dataserver( environment_dir=env_dir, function=lambda: _init_shard(shard_name) )
