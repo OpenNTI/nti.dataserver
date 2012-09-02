@@ -31,6 +31,7 @@ from nti.dataserver import shards as nti_shards
 
 import nameparser
 import datetime
+import urllib
 
 def get_possible_site_names(request=None, include_default=False):
 	"""
@@ -518,7 +519,7 @@ def send_mathcounts_default_landing_page_cookie( user, event ):
 
 	if 'mathcounts.nextthought.com' in get_possible_site_names( request=event.request ):
 		event.request.response.set_cookie( b'nti.landing_page',
-										   value=b'tag:nextthought.com,2011-10:mathcounts-HTML-mathcounts2013.warm_up_1' )
+										   value=urllib.quote( b'tag:nextthought.com,2011-10:mathcounts-HTML-mathcounts2013.warm_up_1' ) )
 
 
 
