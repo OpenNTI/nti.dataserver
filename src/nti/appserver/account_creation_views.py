@@ -221,6 +221,11 @@ def account_preflight_view(request):
 	if not externalValue['password']:
 		externalValue['password'] = component.getUtility( z3c.password.interfaces.IPasswordUtility ).generate()
 
+	if '@' in externalValue['Username'] and externalValue['email'] == placeholder_data['email']:
+		# We do have one policy on adult sites that wants usernames and email to match if the username
+		# is an email.
+		externalValue['email'] = externalValue['Username']
+
 	preflight_user = _create_user( request, externalValue, preflight_only=True )
 	profile_iface = user_interfaces.IUserProfileSchemaProvider( preflight_user ).getSchema()
 	profile = profile_iface( preflight_user )
