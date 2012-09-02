@@ -161,3 +161,60 @@ class TestApplicationPasswordRecovery(ApplicationTestBase):
 		msg = mailer.outbox[0]
 
 		assert_that( msg, has_property( 'body', contains_string( 'http://localhost/place?username=' + urllib.quote(user.username) ) ) )
+
+from zope.annotation.interfaces import IAnnotations
+from nti.appserver import account_recovery_views
+import datetime
+
+class TestApplicationPasswordReset(ApplicationTestBase):
+
+	def test_reset_user_logged_in( self ):
+		with mock_dataserver.mock_db_trans(self.ds):
+			_ = self._create_user( )
+
+		app = TestApp( self.app )
+
+		path = b'/dataserver2/logon.reset.passcode'
+		data = ""
+		app.post( path, data, extra_environ=self._make_extra_environ(), status=403 )
+
+	def test_reset_user_no_params( self ):
+		app = TestApp( self.app )
+
+		path = b'/dataserver2/logon.reset.passcode'
+		data = {}
+		app.post( path, data, status=400 )
+
+
+	def test_recover_user_no_id( self ):
+		app = TestApp( self.app )
+
+		path = b'/dataserver2/logon.reset.passcode'
+		data = {'username': 'not valid'}
+		_ = app.post( path, data, status=400 )
+
+	def test_recover_user_not_found( self ):
+		app = TestApp( self.app )
+
+		path = b'/dataserver2/logon.reset.passcode'
+		data = {'id': 'not.registered@example.com', 'username': 'somebodyelse', }
+		app.post( path, data, status=404 )
+
+
+	def test_recover_user_found_with_data( self ):
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = self._create_user( )
+			profile = user_interfaces.IUserProfile( user )
+			profile.email = 'jason.madden@nextthought.com'
+			IAnnotations(user)[account_recovery_views._KEY_PASSCODE_RESET] = ('the_id', datetime.datetime.utcnow())
+
+		app = TestApp( self.app )
+
+		path = b'/dataserver2/logon.reset.passcode'
+		data = {'id': 'the_id',
+				'username': user.username,
+				'password': 'my_new_pwd'}
+		app.post( path, data, status=200 )
+
+		with mock_dataserver.mock_db_trans(self.ds):
+			user.password.checkPassword( 'my_new_pwd' )

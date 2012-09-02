@@ -139,7 +139,9 @@ class Principal(Entity,sharing.SharingSourceMixin):
 		component.getUtility( pwd_interfaces.IPasswordUtility ).verify( np )
 		self.__dict__['password'] = _Password(np)
 		# otherwise, no change
-	password = property(_get_password,_set_password)
+	def _del_password(self):
+		del self.__dict__['password']
+	password = property(_get_password,_set_password,_del_password)
 
 
 class Community(Entity,sharing.DynamicSharingTargetMixin):
