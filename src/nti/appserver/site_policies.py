@@ -443,6 +443,7 @@ class IMathcountsCoppaUserWithoutAgreementUserProfile(user_interfaces.IRestricte
 	# No affiliation
 	# No role
 IMathcountsCoppaUserWithoutAgreementUserProfile['email'].setTaggedValue( user_interfaces.TAG_REQUIRED_IN_UI, True )
+IMathcountsCoppaUserWithoutAgreementUserProfile['password_recovery_email_hash'].setTaggedValue( user_interfaces.TAG_HIDDEN_IN_UI, True )
 
 class IMathcountsCoppaUserWithAgreementUserProfile(user_interfaces.IEmailRequiredUserProfile):
 

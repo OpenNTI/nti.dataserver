@@ -166,7 +166,7 @@ setup(
 		'repoze.who >= 2.0',
 		'repoze.zodbconn >= 0.14',
 		'grequests >= 0.1.0', #replaces requests.async in 0.13
-		'requests >= 0.13.9', # HTTP
+		'requests >= 0.14.0', # HTTP
 		'scss',
 		'setproctitle >= 1.1.6',
 		'setuptools',
@@ -270,7 +270,9 @@ setup(
 			'sphinxcontrib-programoutput >= 0.7',
 			'epydoc >= 3.0.1', # auto-api docs
 			'rope >= 0.9.4', # refactoring library. c.f. ropemacs
-			'ropemode >= 0.2' # IDE helper for rope
+			'ropemode >= 0.2', # IDE helper for rope
+			'virtualenv >= 1.8',
+			'pip >= 1.2'
 			]
 	},
 	dependency_links = ['http://svn.wikimedia.org/svnroot/pywikipedia/trunk/pywikipedia/'],
