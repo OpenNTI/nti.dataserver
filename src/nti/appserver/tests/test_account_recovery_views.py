@@ -22,13 +22,13 @@ from hamcrest import contains_string
 from hamcrest import has_property
 
 from nti.dataserver.users import interfaces as user_interfaces
-
+from nose.tools import assert_raises
 
 from zope import component
 
 from pyramid_mailer.interfaces import IMailer
 import urllib
-
+import pyramid.httpexceptions as hexc
 from .test_application import ApplicationTestBase
 from webtest import TestApp
 from nti.dataserver.tests import mock_dataserver
@@ -218,3 +218,19 @@ class TestApplicationPasswordReset(ApplicationTestBase):
 
 		with mock_dataserver.mock_db_trans(self.ds):
 			user.password.checkPassword( 'my_new_pwd' )
+
+	def test_recover_user_found_with_data_bad_pwd( self ):
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = self._create_user( )
+			profile = user_interfaces.IUserProfile( user )
+			profile.email = 'jason.madden@nextthought.com'
+			IAnnotations(user)[account_recovery_views._KEY_PASSCODE_RESET] = ('the_id', datetime.datetime.utcnow())
+
+		app = TestApp( self.app )
+
+		path = b'/dataserver2/logon.reset.passcode'
+		data = {'id': 'the_id',
+				'username': user.username,
+				'password': ' '}
+
+		app.post( path, data, status=422 )
