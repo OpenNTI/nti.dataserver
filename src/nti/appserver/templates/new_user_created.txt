@@ -1,2 +1,18 @@
-Welcome, ${profile.realname}. A new NextThought account,
-${user.username}, has been created on ${request.application_url}.
+Hi ${profile.realname}!
+
+Thank you for creating your new account, and welcome to NextThought!
+
+Your username is ${user.username}
+Please go to ${request.application_url} to log into your account.
+
+With NextThought, you can easily collaborate with your classmates and
+personalize your content through notes, highlights, and whiteboards.
+Explore the NextThought Help Center in your Library to get started and
+learn more about the exciting interactive features NextThought has to
+offer.
+
+Sincerely,
+NextThought
+
+If you feel this email was sent in error, or this account was created
+without your consent, you may email us at support@nextthought.com.
