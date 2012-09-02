@@ -261,6 +261,7 @@ def createApplication( http_port,
 	pyramid_config.scan( 'nti.appserver.site_policy_views' )
 
 	pyramid_config.add_route( name="logon.forgot.username", pattern="/dataserver2/logon.forgot.username" )
+	pyramid_config.add_route( name="logon.forgot.passcode", pattern="/dataserver2/logon.forgot.passcode" )
 	pyramid_config.scan( 'nti.appserver.account_recovery_views' )
 
 	pyramid_config.add_route( name=dataserver_socketio_views.RT_HANDSHAKE, pattern=dataserver_socketio_views.URL_HANDSHAKE )
