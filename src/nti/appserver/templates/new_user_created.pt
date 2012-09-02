@@ -7,11 +7,35 @@
 		<title>Welcome To NextThought</title>
 	</head>
 	<body>
-		<p>Welcome, <span tal:content="options/profile/realname" class="realname">John Doe</span></p>.
+		<p>Hi <span tal:content="options/profile/realname" class="realname">John Doe</span>!</p>.
+
 		<p>
-			A new account, <span tal:content="options/user/username" class="username">username</span>
-			has been created on
-			<a href="http://nextthought.com" tal:attributes="href request/application_url" tal:content="request/application_url">http://nextthought.com</a>.
+			Thank you for creating your new account, and welcome to
+			NextThought!
 		</p>
+
+		<p>
+			Your username is <span tal:content="options/user/username" class="username">username</span>.
+			Please go to <a href="http://nextthought.com" tal:attributes="href request/application_url" tal:content="request/application_url">http://nextthought.com</a>
+			to log into your account.
+		</p>
+		<p>
+			With NextThought, you can easily collaborate with your classmates and
+			personalize your content through notes, highlights, and whiteboards.
+			Explore the NextThought Help Center in your Library to get started and
+			learn more about the exciting interactive features NextThought has to
+			offer.
+		</p>
+
+		<p>
+		Sincerely,<br />
+		NextThought
+		</p>
+
+		<p>
+		If you feel this email was sent in error, or this account was created
+		without your consent, you may email us at <a href="mailto:support@nextthought.com">support@nextthought.com</a>.
+		</p>
+
 	</body>
 </html>
