@@ -53,8 +53,11 @@ class TestLogon(ConfiguringTestBase):
 		self.config.add_route( name='logon.handshake', pattern='/dataserver2/handshake' )
 		self.config.add_route( name='objects.generic.traversal', pattern='/dataserver2/*traverse' )
 		self.config.add_route( name='logon.forgot.username', pattern='/dataserver2/logon.forgot.username' )
+		self.config.add_route( name='logon.forgot.passcode', pattern='/dataserver2/logon.forgot.passcode' )
+		self.config.add_route( name='logon.reset.passcode', pattern='/dataserver2/logon.reset.passcode' )
+
 		result = ping( get_current_request() )
-		assert_that( result, has_property( 'links', has_length( 4 ) ) )
+		assert_that( result, has_property( 'links', has_length( 6 ) ) )
 		assert_that( result.links[0].target, ends_with( '/dataserver2/handshake' ) )
 		assert_that( result.links[1].target, ends_with( '/dataserver2/users' ) )
 		assert_that( result.links[1].elements, is_( ('@@account.create',) ) )
@@ -110,6 +113,8 @@ class TestLogon(ConfiguringTestBase):
 	def test_handshake_existing_user_with_pass(self):
 		self.config.add_route( name='logon.nti.password', pattern='/dataserver2/logon.nti.password' )
 		self.config.add_route( name='logon.forgot.username', pattern='/dataserver2/logon.forgot.username' )
+		self.config.add_route( name='logon.forgot.passcode', pattern='/dataserver2/logon.forgot.passcode' )
+		self.config.add_route( name='logon.reset.passcode', pattern='/dataserver2/logon.reset.passcode' )
 		self.config.add_route( name='objects.generic.traversal', pattern='/dataserver2/*traverse' )
 		user = users.User.create_user( self.ds, username='jason.madden@nextthought.com', password='temp001' )
 
@@ -118,14 +123,14 @@ class TestLogon(ConfiguringTestBase):
 		# With no other routes present, and us having a password, we can
 		# login that way
 		result = handshake( get_current_request() )
-		assert_that( result, has_property( 'links', has_length( 4 ) ) )
+		assert_that( result, has_property( 'links', has_length( 6 ) ) )
 		assert_that( result.links[0].target, is_( '/dataserver2/logon.nti.password?username=jason.madden%40nextthought.com' ) )
 
 
 		# Give us the capability to do a google logon, and we can
 		self.config.add_route( name='logon.google', pattern='/dataserver2/logon.google' )
 		result = handshake( get_current_request() )
-		assert_that( result, has_property( 'links', has_length( 5 ) ) )
+		assert_that( result, has_property( 'links', has_length( 7 ) ) )
 		assert_that( result.links[0].target, is_( '/dataserver2/logon.nti.password?username=jason.madden%40nextthought.com' ) )
 		assert_that( result.links[1].target, is_( '/dataserver2/logon.google?username=jason.madden%40nextthought.com&oidcsum=-1978826904171095151' ) )
 
@@ -134,7 +139,7 @@ class TestLogon(ConfiguringTestBase):
 		user.identity_url = 'http://google.com/foo'
 		interface.alsoProvides( user, nti_interfaces.IOpenIdUser )
 		result = handshake( get_current_request() )
-		assert_that( result, has_property( 'links', has_length( 5 ) ) )
+		assert_that( result, has_property( 'links', has_length( 7 ) ) )
 		assert_that( result.links[0].target, is_( '/dataserver2/logon.nti.password?username=jason.madden%40nextthought.com' ) )
 		assert_that( result.links[1].target, is_( '/dataserver2/logon.openid?username=jason.madden%40nextthought.com&openid=http%3A%2F%2Fgoogle.com%2Ffoo&oidcsum=-1978826904171095151' ) )
 

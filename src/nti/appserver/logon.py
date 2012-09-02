@@ -34,7 +34,7 @@ from nti.dataserver import users
 
 from nti.appserver._util import logon_userid_with_request
 from nti.appserver.account_creation_views import REL_CREATE_ACCOUNT, REL_PREFLIGHT_CREATE_ACCOUNT
-from nti.appserver.account_recovery_views import REL_FORGOT_USERNAME, REL_FORGOT_PASSCODE
+from nti.appserver.account_recovery_views import REL_FORGOT_USERNAME, REL_FORGOT_PASSCODE, REL_RESET_PASSCODE
 
 from pyramid.view import view_config
 from pyramid import security as sec
@@ -113,13 +113,12 @@ def _links_for_unauthenticated_users( request ):
 
 		forgot_username = Link( request.route_path( REL_FORGOT_USERNAME ),
 								rel=REL_FORGOT_USERNAME )
+		forgot_passcode = Link( request.route_path( REL_FORGOT_PASSCODE ),
+								rel=REL_FORGOT_PASSCODE )
+		reset_passcode = Link( request.route_path( REL_RESET_PASSCODE ),
+							   rel=REL_RESET_PASSCODE )
 
-
-		#forgot_passcode = Link( request.route_path( REL_FORGOT_PASSCODE ),
-		#						rel=REL_FORGOT_PASSCODE )
-
-
-		links = (create, preflight, forgot_username)
+		links = (create, preflight, forgot_username, forgot_passcode, reset_passcode)
 
 	return links
 
