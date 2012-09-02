@@ -310,7 +310,7 @@ def reset_passcode_view(request):
 	if user.has_password():
 		del user.password
 
-	user.updateFromExternalObject( {'password': new_password } )
+	obj_io.update_object_from_external_object( user, {'password': new_password }, notify=False, request=request )
 
 	# Assuming that works, return the user
 	return user
