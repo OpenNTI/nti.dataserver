@@ -4,6 +4,7 @@ Thank you for creating your new account, and welcome to NextThought!
 
 Your username is ${user.username}
 Please go to ${request.application_url} to log into your account.
+Please save a copy of this email for your records.
 
 With NextThought, you can easily collaborate with your classmates and
 personalize your content through notes, highlights, and whiteboards.

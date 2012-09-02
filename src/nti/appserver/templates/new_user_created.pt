@@ -15,9 +15,11 @@
 		</p>
 
 		<p>
-			Your username is <span tal:content="options/user/username" class="username">username</span>.
+			Your username is <span tal:content="options/user/username"
+			class="username">username</span>. <br />
 			Please go to <a href="http://nextthought.com" tal:attributes="href request/application_url" tal:content="request/application_url">http://nextthought.com</a>
-			to log into your account.
+			to log into your account. <br />
+			Please save a copy of this email for your records.
 		</p>
 		<p>
 			With NextThought, you can easily collaborate with your classmates and
@@ -28,13 +30,13 @@
 		</p>
 
 		<p>
-		Sincerely,<br />
-		NextThought
+			Sincerely,<br />
+			NextThought
 		</p>
 
 		<p>
-		If you feel this email was sent in error, or this account was created
-		without your consent, you may email us at <a href="mailto:support@nextthought.com">support@nextthought.com</a>.
+			If you feel this email was sent in error, or this account was created
+			without your consent, you may email us at <a href="mailto:support@nextthought.com">support@nextthought.com</a>.
 		</p>
 
 	</body>

@@ -105,7 +105,7 @@ def forgot_username_view(request):
 							dict(users=matching_users,context=request.context),
 							request=request )
 
-	message = Message( subject="Your NextThought Username", # TODO: i18n
+	message = Message( subject="NextThought Username Reminder", # TODO: i18n
 					   recipients=[email_assoc_with_account],
 					   body=text_body,
 					   html=html_body )
