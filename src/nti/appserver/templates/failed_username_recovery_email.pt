@@ -4,12 +4,37 @@
 	  xmlns:tal="http://xml.zope.org/namespaces/tal">
 	<head>
 		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
-		<title>Username Recovery</title>
+		<title>Username Reminder</title>
 	</head>
 	<body>
+		<p>Hello.</p>
+
 		<p>
-			We're sorry, there are no accounts associated with this
-			email address.
+			You are receiving this notification because you (or
+			someone pretending to be you) requested a reminder of the
+			NextThought username associated with this email address
+			on <a href="http://nextthought.com"
+				  tal:attributes="href request/application_url"
+				  tal:content="request/application_url">http://nextthought.com</a>.
+			Unfortunately, we found no usernames associated with this
+			email address, but you can create a new free account
+			on <a href="http://nextthought.com"
+				  tal:attributes="href request/application_url"
+				  tal:content="request/application_url">http://nextthought.com</a>.
 		</p>
+
+		<p>
+			If you did not request this reminder, you can safely
+			disregard this email.
+		</p>
+		<p>
+		For help, you can email us at <a href="mailto:support@nextthought.com">support@nextthought.com</a>.
+		</p>
+
+		<p>
+			Sincerely, <br />
+			NextThought
+		</p>
+
 	</body>
 </html>
