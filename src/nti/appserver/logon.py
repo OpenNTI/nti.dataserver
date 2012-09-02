@@ -434,6 +434,8 @@ def _create_success_response( request, userid=None, success=None ):
 		response = hexc.HTTPSeeOther( location=success )
 	else:
 		response = hexc.HTTPNoContent()
+
+	request.response = response # Make it the same to avoid confusing things that only get the request, e.g., event listeners
 	if userid is None:
 		userid = sec.authenticated_userid( request )
 
