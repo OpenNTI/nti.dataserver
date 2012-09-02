@@ -91,13 +91,16 @@ class UserProfile(FriendlyNamed):
 						  lambda self, nv: setattr( self, '_avatarURL', nv ),
 						  lambda self: delattr( self, '_avatarURL' ) )
 
+def make_password_recovery_email_hash( email ):
+	return unicode( hashlib.sha1( email ).hexdigest() )
+
 @component.adapter(nti_interfaces.IUser)
 @interface.implementer(interfaces.IRestrictedUserProfile)
 class RestrictedUserProfile(UserProfile):
 
 	# If anyone tries to set an email on us, we turn it into the recovery hash
 	email = property( lambda self: None,
-					  lambda self, nv: setattr( self, 'password_recovery_email_hash', unicode(hashlib.sha1( nv ).hexdigest()) ),
+					  lambda self, nv: setattr( self, 'password_recovery_email_hash', make_password_recovery_email_hash( nv ) ),
 					  doc="This type of profile cannot store an actual email address. If anyone tries, it becomes the recovery hash")
 
 @component.adapter(nti_interfaces.IUser)

@@ -38,6 +38,7 @@ import zope.schema.interfaces
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
+from nti.dataserver.users import user_profile
 
 from nti.externalization.datastructures import InterfaceObjectIO
 
@@ -85,20 +86,57 @@ def forgot_username_view(request):
 	except zope.schema.interfaces.ValidationError as e:
 		obj_io.handle_validation_error( request, e )
 
-
-	user = users.User.get_user( 'jason.madden@nextthought.com' )
+	matching_users = find_users_with_email( email_assoc_with_account, request.registry.getUtility(nti_interfaces.IDataserver) )
 	# Need to send both HTML and plain text if we send HTML, because
 	# many clients still do not render HTML emails well (e.g., the popup notification on iOS
 	# only works with a text part)
-	html_body = render( 'templates/username_recovery_email.pt',
-						[user],
-						request=request )
-	text_body = user.username
+	if matching_users:
+		html_body = render( 'templates/username_recovery_email.pt',
+							dict(users=matching_users,context=request.context),
+							request=request )
+		text_body = render( 'templates/username_recovery_email.txt',
+							dict(users=matching_users,context=request.context),
+							request=request )
+	else:
+		html_body = render( 'templates/failed_username_recovery_email.pt',
+							dict(users=matching_users,context=request.context),
+							request=request )
+		text_body = render( 'templates/failed_username_recovery_email.txt',
+							dict(users=matching_users,context=request.context),
+							request=request )
 
-	message = Message( subject="Username Recovery", # TODO: i18n
+	message = Message( subject="Your NextThought Username", # TODO: i18n
 					   recipients=[email_assoc_with_account],
 					   body=text_body,
 					   html=html_body )
 	component.getUtility( IMailer ).send( message )
 
+
+
 	return hexc.HTTPNoContent()
+
+def find_users_with_email( email, dataserver ):
+	"""
+	Looks for and returns all users with an email or password recovery
+	email matching the given email.
+
+	:return: A sequence of the matched user objects.
+	"""
+	# TODO: This is implemented as a linear search, waking up
+	# all kinds of objects. Highly inefficient.
+
+	result = []
+
+	hashed_email = user_profile.make_password_recovery_email_hash( email )
+
+	users_folder = nti_interfaces.IShardLayout( dataserver ).users_folder
+
+	for entity in users_folder.values():
+		profile = user_interfaces.IUserProfile( entity, None )
+		if not profile:
+			continue
+
+		if email == getattr( profile, 'email', None ) or hashed_email == getattr( profile, 'password_recovery_email_hash', None ):
+			result.append( entity )
+
+	return result
