@@ -285,6 +285,18 @@ class TestPreflightView(_AbstractValidationViewBase):
 		new_user = self.the_view( self.request )
 		assert_that( new_user, has_entry( 'AvatarURLChoices', has_length( 0 ) ) )
 
+	@WithMockDSTrans
+	def test_preflight_username_only_with_email( self ):
+		# see site_policies.[py|zcml]
+		assert_that( self.request.host, is_( 'example.com:80' ) )
+		self.request.headers['origin'] = 'http://rwanda.nextthought.com'
+
+		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
+													 'birthdate': '1982-01-31'} )
+		new_user = self.the_view( self.request )
+		assert_that( new_user, has_entry( 'AvatarURLChoices', has_length( 0 ) ) )
+
 class TestCreateViewNotDevmode(_AbstractNotDevmodeViewBase):
 
 	def setUp( self ):
