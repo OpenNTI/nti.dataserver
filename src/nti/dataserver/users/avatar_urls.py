@@ -11,6 +11,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import random
+
 from zope import interface
 from zope import component
 
@@ -102,6 +104,11 @@ class StringComputedAvatarURLChoices(object):
 		for name in (self.context, ''.join( list( reversed( self.context ) ) )):
 			for gen_type in GENERATED_GRAVATAR_TYPES:
 				choices.append( create_gravatar_url( name, gen_type ) )
+		# Shuffle the choices so it's not obvious we're following a pattern to
+		# create them. But shuffle them deterministically for the same input
+		# so that we don't appear to jump around as we re-request this, which
+		# would confuse the user
+		random.Random( hash(self.context) ).shuffle( choices )
 		return choices
 
 @component.adapter(nti_interfaces.ICoppaUser)

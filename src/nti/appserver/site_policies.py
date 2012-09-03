@@ -414,7 +414,7 @@ class GenericAdultSitePolicyEventListener(GenericSitePolicyEventListener):
 			if not email:
 				profile.email = user.username
 			elif user.username != email:
-				raise zope.schema.ValidationError( "Using an '@' in username means it must match email", 'Username', user.username )
+				raise zope.schema.ValidationError( "If you want to use an email address for the username, it must match the email address you enter", 'Username', user.username )
 
 class IMathcountsUser(nti_interfaces.ICoppaUser):
 	pass
