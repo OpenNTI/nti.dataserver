@@ -23,8 +23,8 @@ class DefaultFilter(object):
 
 class TermExtractor(object):
 
-	NOUN = 1
-	SEARCH = 0
+	_NOUN = 1
+	_SEARCH = 0
 
 	def __init__(self, term_filter=None):
 		self.term_filter = term_filter or DefaultFilter()
@@ -61,7 +61,7 @@ class TermExtractor(object):
 		return [
 			(word, occur, len(word.split()))
 			for word, occur in terms.items()
-			if self.filter(word, occur, len(word.split()))]
+			if self.term_filter(word, occur, len(word.split()))]
 	
 # for the time being we assume the training sents comes
 # from the brown corpus
@@ -79,7 +79,7 @@ def default_train_sents():
 from nltk.tag import UnigramTagger, BigramTagger, TrigramTagger, DefaultTagger
 
 # build  a built up tagger 
-def backoff_tagger(train_sents, start_tagger=None, tagger_classes): 
+def backoff_tagger(train_sents, start_tagger=None, tagger_classes=()): 
 	backoff = start_tagger
 	for cls in tagger_classes: 
 		backoff = cls(train_sents, backoff=backoff) 
@@ -89,9 +89,9 @@ def backoff_tagger(train_sents, start_tagger=None, tagger_classes):
 def default_tagger():
 	train_sents = default_train_sents()
 	tagger = DefaultTagger('NN')
-	if not train_sents:
+	if train_sents:
 		tagger = backoff_tagger(train_sents=train_sents, start_tagger=tagger,
-								(UnigramTagger, BigramTagger, TrigramTagger))
+								tagger_classes=(UnigramTagger, BigramTagger, TrigramTagger))
 	return tagger
 
 
@@ -114,3 +114,13 @@ def extract_key_words(content, extractor=None, tokenizer=default_tokenizer, tagg
 		tagged_terms.append((token, tag, root))
 	result = extractor.extract(tagged_terms)
 	return result
+
+if __name__ == '__main__':
+	import os
+	import sys
+	
+	args = sys.argv[1:]
+	if args:
+		with open(os.path.expanduser(args[0]),"r") as f:
+			content = f.read()
+		print extract_key_words(content)
