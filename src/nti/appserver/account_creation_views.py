@@ -75,7 +75,12 @@ def _create_user( request, externalValue, preflight_only=False ):
 		# below.
 		# TODO: See comments in the user about needing to use site policies vs the default
 		# Not sure if that is required
-		_ = externalValue['password']
+		pwd = externalValue['password']
+		# We're good about checking the desired_userid, but we actually would allow
+		# None for an account without a password (an openid account), but that's not
+		# helpful here
+		if pwd is None:
+			raise KeyError( 'password' )
 	except KeyError:
 		exc_info = sys.exc_info()
 		_raise_error( request, hexc.HTTPUnprocessableEntity,
