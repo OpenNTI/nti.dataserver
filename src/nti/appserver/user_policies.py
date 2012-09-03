@@ -15,6 +15,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import pkg_resources
+
 from zope import component
 from zope import interface
 
@@ -67,7 +69,9 @@ class CoppaUserWithoutAgreementCapabilityFilter(object):
 from pyramid.renderers import render
 from pyramid.renderers import get_renderer
 from pyramid_mailer.message import Message
+from pyramid_mailer.message import Attachment
 from pyramid_mailer.interfaces import IMailer
+from email.mime.application import MIMEApplication
 
 
 @component.adapter(nti_interfaces.IUser, app_interfaces.IUserCreatedWithRequestEvent)
@@ -128,16 +132,44 @@ def send_consent_request_on_new_coppa_account( user, event ):
 	html_body = render( 'templates/coppa_consent_request_email.pt',
 						dict(user=user, profile=profile, context=user,master=master),
 						request=event.request )
-	# NOTE: The text refers to an attachment. Where is it and how are
-	# we supposed to generate it?
 	text_body = render( 'templates/coppa_consent_request_email.txt',
 						dict(user=user, profile=profile, context=user,master=master),
 						request=event.request )
 
+	# TODO: It would be nice if this PDF was prefilled with some fields
+	attachment_filename = 'coppa_consent_request_email_attachment.pdf'
+	attachment = pkg_resources.resource_stream( 'nti.appserver.templates',
+												attachment_filename )
+	# There are problems using the released version attachments:
+	#https://github.com/Pylons/pyramid_mailer/issues/18
+	# So the workaround is to use the email package directly:
+	attachment = MIMEApplication(attachment.read(), 'pdf' )
+	attachment.add_header('Content-Disposition', 'attachment', filename=attachment_filename)
+
 	message = Message( subject="COPPA Direct Notice", # TODO: i18n
 					   recipients=[email],
-					   body=text_body,
-					   html=html_body )
-	component.getUtility( IMailer ).send_to_queue( message )
+					   sender='NextThought Compliance <compliance@nextthought.com',
+					   body=None,
+					   html=html_body)
+
+	# (Add this to ensure we get a multipart message - it will be removed later)
+	message.attach(Attachment('foo.txt', 'text/plain', 'foo'))
+
+
+	msg = message.to_message()
+	msg.set_payload([p for p in msg.get_payload() if p.get_filename() != 'foo.txt'] + [attachment])
+	# The problem with this is that we wind up with a multipart/alternative if we
+	# send the text, html, and pdf, which makes it very hard to get to the PDF.
+	# We need to send multipart/mixed. But if we do that with all three types, they all three wind
+	# up displayed, which is not what we want either since two are alternatives
+	# We must be doing something wrong
+	#msg.set_type( 'multipart/mixed' )
+	mailer = component.getUtility( IMailer )
+	if getattr( mailer, 'queue_delivery', None) is not None:
+		mailer.queue_delivery.send(message.sender, message.send_to, msg)
+	else:
+		#tests
+		message.body = text_body
+		mailer.send_to_queue( message )
 
 	# TODO: At this point, we should probably destroy the contact_email.
