@@ -36,7 +36,7 @@ class TestIndexer(unittest.TestCase):
 		q = Or([Term("content", u'biology'),])
 		with idx.searcher() as s:
 			r = s.search(q)
-			assert_that(r, has_length(5))
+			assert_that(r, has_length(7))
 
 		idx.close()
 
