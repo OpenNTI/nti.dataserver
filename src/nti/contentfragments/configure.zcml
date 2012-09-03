@@ -91,6 +91,6 @@
       		 factory=".censor._default_profanity_terms"
 			 name="default-profanity-vocabulary-en" />
 			 
-	<utility factory=".urlmatcher.GrubberHyperlinkifier" />
+	<utility factory=".urlmatcher.GrubberHyperlinkFormatter" />
       
 </configure>

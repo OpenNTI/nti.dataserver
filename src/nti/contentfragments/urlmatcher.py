@@ -8,14 +8,14 @@ from html5lib import treebuilders
 
 from zope import interface
 
-from nti.contentfragments.interfaces import IHyperlinkifier
+from nti.contentfragments.interfaces import IHyperlinkFormatter
 from nti.contentfragments.interfaces import IHTMLContentFragment
 
 import logging
 logger = logging.getLogger(__name__)
 
-@interface.implementer(IHyperlinkifier)
-class GrubberHyperlinkifier(object):
+@interface.implementer(IHyperlinkFormatter)
+class GrubberHyperlinkFormatter(object):
 	
 	# http://daringfireball.net/2010/07/improved_regex_for_matching_urls
 	
@@ -70,7 +70,7 @@ class GrubberHyperlinkifier(object):
 			self._a_builder(node, self.grubber_v1_pattern, True)
 		self._a_builder(node, self.grubber_v1_pattern, False)
 	
-	def convert(self, html_fragment):
+	def format(self, html_fragment):
 		if IHTMLContentFragment.providedBy(html_fragment):
 			p = html5lib.HTMLParser( tree=treebuilders.getTreeBuilder("lxml"), namespaceHTMLElements=False )
 			doc = p.parse( html_fragment )
