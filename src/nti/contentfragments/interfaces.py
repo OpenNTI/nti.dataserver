@@ -286,3 +286,11 @@ class ICensoredContentPolicy(interface.Interface):
 			allowed and the content should be thrown away.
 
 		"""
+
+class IHyperlinkifier(interface.Interface):
+	
+	def convert( html_fragment ):
+		"""
+		Process the specified ``IHTMLContentFragment`` and scan through and convert any 
+		plain text links recognized by the this object and inserting new ``<a>`` elements,
+		"""
