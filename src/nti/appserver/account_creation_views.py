@@ -51,7 +51,7 @@ from nti.appserver import interfaces as app_interfaces
 
 from nti.externalization.datastructures import InterfaceObjectIO
 
-from nti.appserver._util import logon_userid_with_request
+from nti.appserver._util import logon_user_with_request
 from nti.appserver import _external_object_io as obj_io
 from nti.appserver import site_policies
 from nti.appserver._util import raise_json_error as _raise_error
@@ -143,8 +143,6 @@ def _create_user( request, externalValue, preflight_only=False ):
 		obj_io.handle_possible_validation_error( request, e )
 
 
-
-
 @view_config(route_name='objects.generic.traversal',
 			 name=REL_CREATE_ACCOUNT,
 			 request_method='POST',
@@ -180,7 +178,7 @@ def account_create_view(request):
 	request.response.location = request.resource_url( new_user )
 
 	notify( app_interfaces.UserCreatedWithRequestEvent( new_user, request ) )
-	logon_userid_with_request( new_user.username, request, request.response )
+	logon_user_with_request( new_user, request, request.response )
 
 	return new_user
 
