@@ -371,9 +371,14 @@ class Note(ThreadableExternalizableMixin, Highlight):
 
 			# Sanitize the body. Anything that can become a fragment, do so, incidentally
 			# sanitizing and censoring it along the way.
-			self.body = [censor.censor_assign( frg_interfaces.IUnicodeContentFragment( x, x ), self, 'body' )
-							for x
-							in self.body]
+			def _sanitize(x):
+				if frg_interfaces.IHTMLContentFragment.providedBy(x):
+					x = component.getUtility(frg_interfaces.IHyperlinkifier).convert(x)
+				if isinstance(x, six.string_types):
+					x = censor.censor_assign(frg_interfaces.IUnicodeContentFragment( x, x ), self, 'body' )	
+				return x
+				
+			self.body = [_sanitize(x) for x in self.body]
 
 		# If we are newly created, and a reply, then
 		# we want to use our policy settings to determine the sharing
