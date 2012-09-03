@@ -90,5 +90,7 @@
 	<utility provides="zope.schema.interfaces.IVocabularyFactory"
       		 factory=".censor._default_profanity_terms"
 			 name="default-profanity-vocabulary-en" />
+			 
+	<utility factory=".urlmatcher.GrubberHyperlinkifier" />
       
 </configure>
