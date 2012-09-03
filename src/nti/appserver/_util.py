@@ -123,10 +123,28 @@ def logon_userid_with_request( userid, request, response=None ):
 	if not user:
 		raise ValueError( "No user found for %s" % userid )
 
+	logon_user_with_request( user, request, response=response )
+
+def logon_user_with_request( user, request, response=None ):
+	"""
+	Mark that the user has logged in. This is done by notifying a :class:`nti.appserver.interfaces.IUserLogonEvent`.
+
+	:param user: The user object that should be logged in.
+	:param request: Pyramid request that is active and responsible for the login.
+	:param response: If given, then the response will be given the headers
+		to remember the logon.
+	:raise ValueError: If the user is None.
+	"""
+
+	# Send the logon event
+	if not user:
+		raise ValueError( "No user given" )
+
 	notify( app_interfaces.UserLogonEvent( user, request ) )
 
 	if response:
 		response.headers.extend( remember( request, user.username.encode('utf-8') ) )
+
 
 def dump_stacks():
 	"""
