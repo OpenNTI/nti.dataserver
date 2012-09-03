@@ -6,11 +6,15 @@ import html5lib
 from lxml import etree
 from html5lib import treebuilders
 
+from zope import interface
+
+from nti.contentfragments.interfaces import IHyperlinkifier
 from nti.contentfragments.interfaces import IHTMLContentFragment
 
 import logging
 logger = logging.getLogger(__name__)
 
+@interface.implementer(IHyperlinkifier)
 class GrubberHyperlinkifier(object):
 	
 	# http://daringfireball.net/2010/07/improved_regex_for_matching_urls
