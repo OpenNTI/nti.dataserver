@@ -188,6 +188,24 @@ class _AbstractNotDevmodeViewBase(ConfiguringTestBase):
 		assert_that( e.exception.json_body, has_entry( 'message', contains_string( 'past' ) ) )
 
 	@WithMockDSTrans
+	def test_create_birthdate_two_digit_year( self ):
+		self.request.content_type = 'application/vnd.nextthought+json'
+		# This two-digit year is interpreted as in the future
+		self.request.body = to_json_representation( {
+													 'Username': 'jamadden',
+													 'realname': 'Jason Madden',
+													 'password': 'pass132word',
+													 'email': 'foo@bar.com',
+													 'birthdate': '63-01-01' } )
+
+		with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
+			self.the_view( self.request )
+
+		assert_that( e.exception.json_body, has_entry( 'code', 'BirthdateInFuture' ) )
+		assert_that( e.exception.json_body, has_entry( 'field', 'birthdate' ) )
+		assert_that( e.exception.json_body, has_entry( 'message', contains_string( 'past' ) ) )
+
+	@WithMockDSTrans
 	def test_create_birthdate_must_be_four_years_ago( self ):
 		self.request.content_type = 'application/vnd.nextthought+json'
 		today = datetime.date.today()
