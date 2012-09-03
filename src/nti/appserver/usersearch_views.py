@@ -60,37 +60,78 @@ class _UserSearchView(object):
 
 		if not partialMatch:
 			pass
-		elif users.Entity.get_entity( partialMatch ):
+		elif not self.request.params.get( 'all' ) and users.Entity.get_entity( partialMatch ):
+			return _ResolveUserView( self.request )
 			# NOTE: If the partial match is an exact match but also a component
 			# it cannot be searched for. For example, a community named 'NextThought'
 			# prevents searching for 'nextthought' if you expect to match '@nextthought.com'
 			# NOTE3: We have not stopped allowing this to work for user resolution.
 			# This will probably break many assumptions in the UI about what and when usernames
 			# can be resolved
-			entity = users.Entity.get_entity( partialMatch )
-			if _make_visibility_test( remote_user )(entity):
-				result.append( entity )
 			# NOTE2: Going through this API lets some private objects be found
 			# (DynamicFriendsLists, specifically). We should probably lock that down
-		elif remote_user:
+
+		if remote_user:
 			result = _authenticated_search( self.request, remote_user, self.dataserver, partialMatch )
 
-		# Since we are already looking in the object we might as well return the summary form
-		# For this reason, we are doing the externalization ourself.
-		result = [toExternalObject( user, name=('personal-summary'
-												if user == remote_user
-												else 'summary') )
+
+		return _format_result( result, remote_user, self.dataserver )
+
+@view_config( route_name='search.resolve_user',
+			  renderer='rest',
+			  permission=nauth.ACT_SEARCH,
+			  request_method='GET' )
+def _ResolveUserView(request):
+	"""
+	.. note:: This is extremely inefficient.
+
+	.. note:: Policies need to be applied to this. For example, one policy
+		is that we should only be able to find users that intersect the set of communities
+		we are in. (To do that efficiently, we need community indexes).
+	"""
+
+	dataserver = request.registry.getUtility(nti_interfaces.IDataserver)
+
+	remote_user = users.User.get_user( sec.authenticated_userid( request ), dataserver=dataserver )
+	partialMatch = request.matchdict['term']
+	partialMatch = unicode(partialMatch or '').lower()
+	result = []
+
+	if not partialMatch:
+		pass
+	elif users.Entity.get_entity( partialMatch ):
+		# NOTE: If the partial match is an exact match but also a component
+		# it cannot be searched for. For example, a community named 'NextThought'
+		# prevents searching for 'nextthought' if you expect to match '@nextthought.com'
+		# NOTE3: We have not stopped allowing this to work for user resolution.
+		# This will probably break many assumptions in the UI about what and when usernames
+		# can be resolved
+		entity = users.Entity.get_entity( partialMatch )
+		if _make_visibility_test( remote_user )(entity):
+			result.append( entity )
+		# NOTE2: Going through this API lets some private objects be found
+		# (DynamicFriendsLists, specifically). We should probably lock that down
+
+
+	return _format_result( result, remote_user, dataserver )
+
+def _format_result( result, remote_user, dataserver ):
+	# Since we are already looking in the object we might as well return the summary form
+	# For this reason, we are doing the externalization ourself.
+	result = [toExternalObject( user, name=('personal-summary'
+											if user == remote_user
+											else 'summary') )
 				  for user in result]
 
-		# We have no good modification data for this list, due to changing Presence
-		# values of users, so it should not be cached, unfortunately
-		result = LocatedExternalDict( {'Last Modified': 0, 'Items': result} )
-		interface.alsoProvides( result, app_interfaces.IUncacheableInResponse )
-		interface.alsoProvides( result, zmime_interfaces.IContentTypeAware )
-		result.mime_type = nti_mimetype.nti_mimetype_with_class( None )
-		result.__parent__ = self.dataserver.root
-		result.__name__ = 'UserSearch' # TODO: Hmm
-		return result
+	# We have no good modification data for this list, due to changing Presence
+	# values of users, so it should not be cached, unfortunately
+	result = LocatedExternalDict( {'Last Modified': 0, 'Items': result} )
+	interface.alsoProvides( result, app_interfaces.IUncacheableInResponse )
+	interface.alsoProvides( result, zmime_interfaces.IContentTypeAware )
+	result.mime_type = nti_mimetype.nti_mimetype_with_class( None )
+	result.__parent__ = dataserver.root
+	result.__name__ = 'UserSearch' # TODO: Hmm
+	return result
 
 def _authenticated_search( request, remote_user, dataserver, search_term ):
 	result = []

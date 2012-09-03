@@ -335,6 +335,8 @@ def createApplication( http_port,
 
 	pyramid_config.add_route( name='search.users', pattern='/dataserver2/UserSearch/{term:.*}',
 							  factory=_ContentSearchRootFactory)
+	pyramid_config.add_route( name='search.resolve_user', pattern='/dataserver2/ResolveUser/{term:.*}',
+							  factory=_ContentSearchRootFactory)
 	pyramid_config.scan( 'nti.appserver.usersearch_views' )
 
 

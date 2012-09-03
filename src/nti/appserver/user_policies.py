@@ -139,3 +139,5 @@ def send_consent_request_on_new_coppa_account( user, event ):
 					   body=text_body,
 					   html=html_body )
 	component.getUtility( IMailer ).send_to_queue( message )
+
+	# TODO: At this point, we should probably destroy the contact_email.
