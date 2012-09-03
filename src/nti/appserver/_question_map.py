@@ -80,6 +80,11 @@ class QuestionMap(dict):
 					raise ValueError( filename, "Found a second entry for the same file" )
 			self.by_file[filename] = factory()
 
+		# FIXME: There's some problem with the recursion and nesting here.
+		# It doesn't handle hooking things up to files if they are more than X (2?) levels
+		# deep (we have no test cases for that). The question gets parsed, but it doesn't get
+		# associated with any files...which means it doesn't come back in page info, and cannot
+		# be queried directly (as it has no ACL)
 		for item in index['Items'].values():
 			self.__process_assessments( item.get( "AssessmentItems", {} ), filename, hierarchy_entry )
 
