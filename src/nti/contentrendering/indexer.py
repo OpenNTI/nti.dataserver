@@ -124,7 +124,7 @@ def _get_text(node):
 		txt = unicode(txt.strip().lower())
 	return txt
 	
-def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=True):
+def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=False):
 	title = unicode(node.title)
 	ntiid = unicode(node.ntiid)
 	content_file = node.location
@@ -137,7 +137,7 @@ def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=Tr
 	
 	# find last_modified
 	last_modified = time.time()
-	for n in node.dom('meta'):
+	for n in node.dom(b'meta'):
 		attributes = n.attrib
 		if attributes.get('http-equiv', None) == "last-modified":
 			last_modified = _parse_last_modified(attributes.get('content', None))
@@ -180,7 +180,7 @@ def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=Tr
 				for c in n.iterchildren():
 					_collector(c)
 				
-		for n in node.dom("div").filter(".page-contents"):
+		for n in node.dom(b'div').filter(b'.page-contents'):
 			_collector(n)
 	
 def transform(book, indexname=None, indexdir=None, recreate_index=True, optimize=True):
