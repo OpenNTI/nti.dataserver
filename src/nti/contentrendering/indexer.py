@@ -123,7 +123,7 @@ def _get_text(node):
 		txt = unicode(txt.strip().lower())
 	return txt
 	
-def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=True):
+def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=False):
 	title = unicode(node.title)
 	ntiid = unicode(node.ntiid)
 	content_file = node.location
@@ -139,44 +139,46 @@ def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=Tr
 			last_modified = _parse_last_modified(attributes.get('content', None))
 			break
 		
+	#TODO: find key words
+	keywords = set()
+	
+	as_time = datetime.fromtimestamp(float(last_modified))
+	def _index(content):
+		if not content:
+			return
+		
+		try:
+			writer.add_document(ntiid=unicode(ntiid),
+								title=unicode(title),
+								content=unicode(content),
+								quick=unicode(content),
+								related=related,
+								keywords=sorted(keywords),
+								last_modified=as_time)
+		except Exception:
+			writer.cancel()
+			raise	
+	
 	if file_indexing and os.path.exists(content_file):
 		with open(content_file, "r") as f:
 			content = f.read()
 
 		content = _get_page_content(content)
 		content = _sanitize_content(content)
+		_index(content)
 	else:
-		# get content
-		content = []
 		def _collector(n, lst):
 			if not isinstance(n, etree._Comment):
-				txt = _get_text(n)
-				if txt:
-					lst.append(txt)
-				for c in n.iterchildren():
-					_collector(c, lst)
+				text = _get_text(n)
+				text = text.strip() if text else None
+				if text:
+					text = tokenizer.tokenize(text)
+					text = unicode(' '.join(content))
+					_index(text)
 				
 		for n in node.dom("div").filter(".page-contents"):
 			_collector(n, content)
-	
-		content = tokenizer.tokenize(' '.join(content))
-		content = unicode(' '.join(content))
 
-	#TODO: find key words
-	keywords = set()
-	try:
-		as_time = datetime.fromtimestamp(float(last_modified))
-		writer.add_document(ntiid=unicode(ntiid),
-							title=unicode(title),
-							content=unicode(content),
-							quick=unicode(content),
-							related=related,
-							keywords=sorted(keywords),
-							last_modified=as_time)
-	except Exception:
-		writer.cancel()
-		raise	
-	
 def transform(book, indexname=None, indexdir=None, recreate_index=True, optimize=True):
 	contentPath = book.contentLocation
 	indexname = indexname or book.jobname
