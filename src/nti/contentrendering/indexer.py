@@ -167,17 +167,19 @@ def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=Fa
 		content = _sanitize_content(content)
 		_index(content)
 	else:
-		def _collector(n, lst):
+		def _collector(n):
 			if not isinstance(n, etree._Comment):
 				text = _get_text(n)
 				text = text.strip() if text else None
 				if text:
 					text = tokenizer.tokenize(text)
-					text = unicode(' '.join(content))
+					text = unicode(' '.join(text))
 					_index(text)
+				for c in n.iterchildren():
+					_collector(c)
 				
 		for n in node.dom("div").filter(".page-contents"):
-			_collector(n, content)
+			_collector(n)
 
 def transform(book, indexname=None, indexdir=None, recreate_index=True, optimize=True):
 	contentPath = book.contentLocation
