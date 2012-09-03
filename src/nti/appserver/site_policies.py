@@ -275,6 +275,15 @@ def _censor_usernames( user ):
 		if policy.censor( names.alias, user ) != names.alias:
 			raise zope.schema.ValidationError( "alias contains a censored sequence", 'alias', names.alias )
 
+def _is_x_or_more_years_ago( birthdate, years_ago=13 ):
+
+	today = datetime.date.today()
+	x_years_ago = datetime.date.today().replace( year=today.year - years_ago )
+
+	return birthdate < x_years_ago
+
+_is_thirteen_or_more_years_ago = _is_x_or_more_years_ago
+
 @interface.implementer(ISitePolicyUserEventListener)
 class GenericSitePolicyEventListener(object):
 	"""
@@ -313,12 +322,8 @@ class GenericSitePolicyEventListener(object):
 			if profile.birthdate >= datetime.date.today():
 				raise zope.schema.ValidationError( "Birthdate must be in the past", 'birthdate', profile.birthdate.isoformat() )
 
-def _is_thirteen_or_more_years_ago( birthdate ):
-
-	today = datetime.date.today()
-	thirteen_years_ago = datetime.date.today().replace( year=today.year - 13 )
-
-	return birthdate < thirteen_years_ago
+			if not _is_x_or_more_years_ago( profile.birthdate, 4 ):
+				raise zope.schema.ValidationError( "Birthdate must be at least four years ago", 'birthdate', profile.birthdate.isoformat() )
 
 @interface.implementer(ISitePolicyUserEventListener)
 class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
