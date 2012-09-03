@@ -44,6 +44,10 @@ class TestUrlMatcher(ConfiguringTestBase):
 		assert_that(self.linkifier.convert(frg_interfaces.IHTMLContentFragment(html)), is_(html))
 		html = u'<html><head/><body>fly <a href="http://www.aa.com">aa</a> always</body></html>'
 		assert_that(self.linkifier.convert(frg_interfaces.IHTMLContentFragment(html)), is_(html))
+		html = u'<html><head/><body>fly <a href="http://www.aa.com">www.aa.com</a> always</body></html>'
+		assert_that(self.linkifier.convert(frg_interfaces.IHTMLContentFragment(html)), is_(html))
+		html = u'<html><head/><body>fly <a href="http://www.aa.com">www.aa.com</a> <a href="http://www.aa.com">www.aa.com</a></body></html>'
+		assert_that(self.linkifier.convert(frg_interfaces.IHTMLContentFragment(html)), is_(html))
 	
 if __name__ == '__main__':
 	import unittest

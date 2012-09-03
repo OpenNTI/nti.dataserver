@@ -66,7 +66,8 @@ class GrubberHyperlinkifier(object):
 
 				
 	def _link_finder(self, node):
-		self._a_builder(node, self.grubber_v1_pattern, True)
+		if node.tag != 'a':
+			self._a_builder(node, self.grubber_v1_pattern, True)
 		self._a_builder(node, self.grubber_v1_pattern, False)
 	
 	def convert(self, html_fragment):
