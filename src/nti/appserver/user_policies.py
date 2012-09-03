@@ -99,7 +99,7 @@ def send_email_on_new_account( user, event ):
 					   recipients=[email],
 					   body=text_body,
 					   html=html_body )
-	component.getUtility( IMailer ).send( message )
+	component.getUtility( IMailer ).send_to_queue( message )
 
 @component.adapter(nti_interfaces.ICoppaUserWithoutAgreement, app_interfaces.IUserCreatedWithRequestEvent)
 def send_consent_request_on_new_coppa_account( user, event ):
@@ -135,4 +135,4 @@ def send_consent_request_on_new_coppa_account( user, event ):
 					   recipients=[email],
 					   body=text_body,
 					   html=html_body )
-	component.getUtility( IMailer ).send( message )
+	component.getUtility( IMailer ).send_to_queue( message )
