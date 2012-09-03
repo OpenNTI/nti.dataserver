@@ -132,9 +132,9 @@ def handle_validation_error( request, validation_error ):
 	msg = ''
 	if field:
 		field_name = field.__name__
-	elif len(validation_error.args) == 3:
+	if len(validation_error.args) == 3:
 		# message, field, value
-		field_name = validation_error.args[1]
+		field_name = field_name or validation_error.args[1]
 		msg = validation_error.args[0]
 
 	# z3c.password and similar (nti.dataserver.users._InvalidData) set this for internationalization

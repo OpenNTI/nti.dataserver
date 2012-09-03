@@ -51,6 +51,8 @@ class FieldValidationMixin(object):
 		except sch_interfaces.ValidationError as e:
 			if len(e.args) == 1:
 				e.args = (value, e.args[0], self.__name__)
+			elif isinstance( e, sch_interfaces.TooShort ) and len(e.args) == 2:
+				e.args = (self.__name__ + ' is too short', self.__name__, value )
 			e.field = self
 			raise
 
