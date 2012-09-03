@@ -100,3 +100,39 @@ def send_email_on_new_account( user, event ):
 					   body=text_body,
 					   html=html_body )
 	component.getUtility( IMailer ).send( message )
+
+@component.adapter(nti_interfaces.ICoppaUserWithoutAgreement, app_interfaces.IUserCreatedWithRequestEvent)
+def send_consent_request_on_new_coppa_account( user, event ):
+	"""
+	For new accounts where we have an contact email (and of course the request),
+	we send a consent request.
+
+	"""
+
+	if not event.request: #pragma: no cover
+		return
+
+
+	profile = user_interfaces.IUserProfile( user )
+	email = getattr( profile, 'contact_email' )
+	if not email:
+		return
+
+	# Need to send both HTML and plain text if we send HTML, because
+	# many clients still do not render HTML emails well (e.g., the popup notification on iOS
+	# only works with a text part)
+#	html_body = render( 'templates/new_user_created.pt',
+#						dict(user=user, profile=profile, context=user)#,
+#						request=event.request )
+	# NOTE: The text refers to an attachment. Where is it and how are
+	# we supposed to generate it?
+	html_body = None
+	text_body = render( 'templates/coppa_consent_request_email.txt',
+						dict(user=user, profile=profile, context=user),
+						request=event.request )
+
+	message = Message( subject="COPPA Direct Notice", # TODO: i18n
+					   recipients=[email],
+					   body=text_body,
+					   html=html_body )
+	component.getUtility( IMailer ).send( message )

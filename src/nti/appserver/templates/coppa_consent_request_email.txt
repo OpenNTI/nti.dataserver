@@ -1,0 +1,63 @@
+Dear Parent,
+
+Your child ${profile.realname} has created a free NextThought account
+with the username ${user.username} and needs your permission before he
+or she can use all of its rich features.
+
+About NextThought
+=================
+
+NextThought is a social learning platform that allows students to
+interact, communicate and collaborate with others within the content
+of their educational materials. Students can access and read materials
+online, annotate them, create whiteboards and share notes with their
+classmates and teachers.
+
+Your Permission
+===============
+
+Before we allow children under the age of 13 to use the social
+features of NextThought, we must receive parental consent to collect
+some personal information. To permit your child to join the
+NextThought community, please review our privacy policies and then
+sign and return the attached consent form. Until we receive your
+consent, your child can still use some parts of NextThought, such as
+reading materials online and making notes for themselves.
+
+Your Child's Information
+=======================
+
+At NextThought we are committed to providing a safe and secure
+environment to support your child's education and appreciate that you
+may want to know more about the information we collect.
+
+At registration we saved your child's first name, username, password
+and birthday, so he or she could begin to use NextThought. We also
+requested an email address, which we hash (or alter) so it can be used
+for password resets only. Your child's username is displayed on the
+site and should be a pseudonym.
+
+After we receive your signed form, we'll ask your child for his or her
+full name, school and email address and make the social features
+available to him or her. This information allows us to connect users
+to the educational community and to send information about NextThought
+to your child.
+
+NextThought Rules, Terms of Service, and Privacy
+================================================
+
+Please take a moment to review our Terms of Service, Privacy Policy
+and our Children's Privacy Policy for more details about our
+information collection and sharing practices. These can all be found
+at ${request.application_url}.
+
+You may review or update your child's personal information or request
+that we delete his or her account at any time. To do this please send
+an email your child's username to compliance@nextthought.com, and we
+will contact you about reviewing or deleting your child's information.
+
+Sincerely,
+- The NextThought Team
+
+For more information about NextThought, please visit our website at
+www.nextthought.com.

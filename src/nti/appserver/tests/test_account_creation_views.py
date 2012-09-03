@@ -482,6 +482,17 @@ class TestCreateView(_AbstractValidationViewBase):
 
 		assert_that( exc.exception.json_body, has_entry( 'field', 'contact_email' ) )
 
+		self.request.body = to_json_representation( {'Username': 'jason_nextthought_com',
+													 'password': 'pass123word',
+													 'realname': 'Joe Bananna',
+													 'email': 'foo@bar.com',
+													 'contact_email': 'other@other.com',
+													 'alias': 'jason_nextthought_com' }  )
+		self.the_view( self.request )
+		mailer = component.getUtility( IMailer )
+		assert_that( mailer.outbox, has_length( 1 ) )
+		assert_that( mailer.outbox[0], has_property( 'body', contains_string( 'Parent' ) ) )
+
 	@WithMockDSTrans
 	def test_create_mathcounts_policy( self ):
 		# see site_policies.[py|zcml]
@@ -521,8 +532,8 @@ class TestCreateView(_AbstractValidationViewBase):
 		assert_that( user_interfaces.IFriendlyNamed( new_user ),
 					 has_property( 'password_recovery_email_hash', '823776525776c8f23a87176c59d25759da7a52c4' ) )
 
-		# Which means we sent no mail
-		assert_that( mailer.outbox, has_length( 0 ) )
+		# Which means we sent no mail except to the parent
+		assert_that( mailer.outbox, has_length( 1 ) )
 
 
 		assert_that( to_external_object( new_user ), has_entries( 'email', None,
