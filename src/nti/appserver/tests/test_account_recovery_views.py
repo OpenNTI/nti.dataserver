@@ -54,7 +54,7 @@ class TestApplicationUsernameRecovery(ApplicationTestBase):
 		app.post( path, data, status=400 )
 
 		mailer = component.getUtility( IMailer )
-		assert_that( mailer.outbox, has_length( 0 ) )
+		assert_that( mailer.queue, has_length( 0 ) )
 
 	def test_recover_user_invalid_email( self ):
 		app = TestApp( self.app )
@@ -66,7 +66,7 @@ class TestApplicationUsernameRecovery(ApplicationTestBase):
 
 
 		mailer = component.getUtility( IMailer )
-		assert_that( mailer.outbox, has_length( 0 ) )
+		assert_that( mailer.queue, has_length( 0 ) )
 
 
 	def test_recover_user_not_found( self ):
@@ -77,7 +77,7 @@ class TestApplicationUsernameRecovery(ApplicationTestBase):
 		app.post( path, data, status=204 )
 
 		mailer = component.getUtility( IMailer )
-		assert_that( mailer.outbox, has_length( 1 ) )
+		assert_that( mailer.queue, has_length( 1 ) )
 
 	def test_recover_user_found( self ):
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -92,8 +92,8 @@ class TestApplicationUsernameRecovery(ApplicationTestBase):
 		app.post( path, data, status=204 )
 
 		mailer = component.getUtility( IMailer )
-		assert_that( mailer.outbox, has_length( 1 ) )
-		msg = mailer.outbox[0]
+		assert_that( mailer.queue, has_length( 1 ) )
+		msg = mailer.queue[0]
 		assert_that( msg, has_property( 'body', contains_string( user.username ) ) )
 
 
@@ -117,7 +117,7 @@ class TestApplicationPasswordRecovery(ApplicationTestBase):
 		app.post( path, data, status=400 )
 
 		mailer = component.getUtility( IMailer )
-		assert_that( mailer.outbox, has_length( 0 ) )
+		assert_that( mailer.queue, has_length( 0 ) )
 
 	def test_recover_user_invalid_email( self ):
 		app = TestApp( self.app )
@@ -129,7 +129,7 @@ class TestApplicationPasswordRecovery(ApplicationTestBase):
 
 
 		mailer = component.getUtility( IMailer )
-		assert_that( mailer.outbox, has_length( 0 ) )
+		assert_that( mailer.queue, has_length( 0 ) )
 
 
 	def test_recover_user_not_found( self ):
@@ -140,7 +140,7 @@ class TestApplicationPasswordRecovery(ApplicationTestBase):
 		app.post( path, data, status=204 )
 
 		mailer = component.getUtility( IMailer )
-		assert_that( mailer.outbox, has_length( 1 ) )
+		assert_that( mailer.queue, has_length( 1 ) )
 
 	def test_recover_user_found( self ):
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -157,8 +157,8 @@ class TestApplicationPasswordRecovery(ApplicationTestBase):
 		app.post( path, data, status=204 )
 
 		mailer = component.getUtility( IMailer )
-		assert_that( mailer.outbox, has_length( 1 ) )
-		msg = mailer.outbox[0]
+		assert_that( mailer.queue, has_length( 1 ) )
+		msg = mailer.queue[0]
 
 		assert_that( msg, has_property( 'body', contains_string( 'http://localhost/place?username=' + urllib.quote(user.username) ) ) )
 

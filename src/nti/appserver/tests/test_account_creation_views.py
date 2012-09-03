@@ -490,8 +490,8 @@ class TestCreateView(_AbstractValidationViewBase):
 													 'alias': 'jason_nextthought_com' }  )
 		self.the_view( self.request )
 		mailer = component.getUtility( IMailer )
-		assert_that( mailer.outbox, has_length( 1 ) )
-		assert_that( mailer.outbox[0], has_property( 'body', contains_string( 'Parent' ) ) )
+		assert_that( mailer.queue, has_length( 1 ) )
+		assert_that( mailer.queue[0], has_property( 'body', contains_string( 'Parent' ) ) )
 
 	@WithMockDSTrans
 	def test_create_mathcounts_policy( self ):
@@ -533,7 +533,7 @@ class TestCreateView(_AbstractValidationViewBase):
 					 has_property( 'password_recovery_email_hash', '823776525776c8f23a87176c59d25759da7a52c4' ) )
 
 		# Which means we sent no mail except to the parent
-		assert_that( mailer.outbox, has_length( 1 ) )
+		assert_that( mailer.queue, has_length( 1 ) )
 
 
 		assert_that( to_external_object( new_user ), has_entries( 'email', None,
@@ -568,7 +568,7 @@ class TestCreateView(_AbstractValidationViewBase):
 																  'role', 'Other' ) )
 		# And we sent mail
 		mailer = component.getUtility( IMailer )
-		assert_that( mailer.outbox, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
+		assert_that( mailer.queue, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
 
 
 	@WithMockDSTrans
@@ -596,7 +596,7 @@ class TestCreateView(_AbstractValidationViewBase):
 																  'affiliation', 'NTI' ) )
 
 		mailer = component.getUtility( IMailer )
-		assert_that( mailer.outbox, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
+		assert_that( mailer.queue, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
 
 
 
@@ -649,7 +649,7 @@ class TestApplicationCreateUser(ApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'Username', 'jason@test.nextthought.com' ) )
 
 		mailer = component.getUtility( IMailer )
-		assert_that( mailer.outbox, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
+		assert_that( mailer.queue, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
 
 	def test_create_user_mathcounts_policy( self ):
 
@@ -674,7 +674,7 @@ class TestApplicationCreateUser(ApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'Username', 'jason2_nextthought_com' ) )
 
 		mailer = component.getUtility( IMailer )
-		assert_that( mailer.outbox, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
+		assert_that( mailer.queue, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
 
 	def test_create_user_logged_in( self ):
 		with mock_dataserver.mock_db_trans(self.ds):

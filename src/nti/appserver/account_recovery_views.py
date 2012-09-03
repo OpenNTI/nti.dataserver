@@ -121,7 +121,7 @@ def forgot_username_view(request):
 					   recipients=[email_assoc_with_account],
 					   body=text_body,
 					   html=html_body )
-	component.getUtility( IMailer ).send( message )
+	component.getUtility( IMailer ).send_to_queue( message )
 
 	return hexc.HTTPNoContent()
 
@@ -209,7 +209,7 @@ def forgot_passcode_view(request):
 					   recipients=[email_assoc_with_account],
 					   body=text_body,
 					   html=html_body )
-	component.getUtility( IMailer ).send( message )
+	component.getUtility( IMailer ).send_to_queue( message )
 
 	return hexc.HTTPNoContent()
 
