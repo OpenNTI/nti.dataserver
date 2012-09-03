@@ -104,8 +104,10 @@ class site_tween(object):
 					# The sad part is that this assertion error overrides the stack trace for what's currently
 					# in progress
 					logger.exception( "Failing to commit; should already be an exception in progress" )
-					if exc_info:
+					if exc_info and exc_info[0]:
 						raise exc_info[0], None, exc_info[2]
+					else:
+						raise
 
 			return response
 		finally:
