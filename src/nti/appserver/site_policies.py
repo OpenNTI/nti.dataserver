@@ -55,6 +55,7 @@ def get_possible_site_names(request=None, include_default=False):
 		return () if not include_default else ('',)
 
 	result = []
+
 	if 'origin' in request.headers:
 		# TODO: The port splitting breaks on IPv6
 		# Origin comes in as a complete URL, host and potentially port
@@ -317,13 +318,14 @@ class GenericSitePolicyEventListener(object):
 		names.realname = unicode(human_name)
 		names.alias = human_name.first + ' ' + human_name.last[0]
 
-		profile = user_interfaces.ICompleteUserProfile( user )
-		if profile.birthdate:
-			if profile.birthdate >= datetime.date.today():
-				raise zope.schema.ValidationError( "Birthdate must be in the past", 'birthdate', profile.birthdate.isoformat() )
+		profile = user_interfaces.IUserProfile( user )
+		birthdate = getattr( profile, 'birthdate', None )
+		if birthdate:
+			if birthdate >= datetime.date.today():
+				raise zope.schema.ValidationError( "Birthdate must be in the past", 'birthdate', birthdate.isoformat() )
 
-			if not _is_x_or_more_years_ago( profile.birthdate, 4 ):
-				raise zope.schema.ValidationError( "Birthdate must be at least four years ago", 'birthdate', profile.birthdate.isoformat() )
+			if not _is_x_or_more_years_ago( birthdate, 4 ):
+				raise zope.schema.ValidationError( "Birthdate must be at least four years ago", 'birthdate', birthdate.isoformat() )
 
 @interface.implementer(ISitePolicyUserEventListener)
 class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
@@ -406,11 +408,12 @@ class GenericAdultSitePolicyEventListener(GenericSitePolicyEventListener):
 		"""
 		super(GenericAdultSitePolicyEventListener,self).user_will_create( user, event )
 
-		profile = user_interfaces.ICompleteUserProfile( user )
+		profile = user_interfaces.IUserProfile( user )
 		if '@' in user.username:
-			if not profile.email:
+			email = getattr(profile, 'email', None)
+			if not email:
 				profile.email = user.username
-			elif user.username != profile.email:
+			elif user.username != email:
 				raise zope.schema.ValidationError( "Using an '@' in username means it must match email", 'Username', user.username )
 
 class IMathcountsUser(nti_interfaces.ICoppaUser):
