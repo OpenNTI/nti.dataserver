@@ -601,10 +601,13 @@ class _UGDDeleteView(_UGDModifyViewBase):
 			theObject = user.getContainedObject( theObject.containerId, theObject.id )
 			# FIXME: See notes in _UGDPutView
 
-			if theObject is None and traversal.find_interface( self.request.context.resource, IEnclosedContent ):
-				# should be self.request.context.resource.__parent__
-				self.request.context = traversal.find_interface( self.request.context.resource, IEnclosedContent )
-				return _EnclosureDeleteView( self.request )()
+			if theObject is None:
+				# See comment above about BWC
+				enclosed = traversal.find_interface( getattr( self.request.context, 'resource', self.request.context ), IEnclosedContent )
+				if enclosed:
+					# should be self.request.context.resource.__parent__
+					self.request.context = enclosed
+					return _EnclosureDeleteView( self.request )()
 
 			self._check_object_exists( theObject )
 
