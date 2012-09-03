@@ -6,7 +6,7 @@
 	<head>
 		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 		<title>NextThought Password Reset</title>
-		<style metal:use-macro="options/master/macros/style">
+		<style metal:define-macro="style">
 			#green-bar {
 			background-color: #89be3c;
 			width: 100%;
@@ -29,17 +29,27 @@
 			text-decoration: none;
 			color: #3fb3f6;
 			}
-			.tterm {
+			.tterm, strong {
 			font-weight: bold;
 			color: #494949;
+			}
+			.tterm-color {
+			font-weight: bold;
+			color: #3fb3f6;
 			}
 			h1, h2, h3, h4, h5, h6 {
 			font-weight: bold;
 			}
+			h1 {
+			font-size: 14pt;
+			}
+			body p {
+			margin-right: 30px;
+			}
 		</style>
 	</head>
 	<body>
-		<div metal:use-macro="options/master/macros/header">
+		<div metal:define-macro="header">
 		<div id="green-bar"></div>
 		<div id="logo-bar">
 			<img src="http://d2ixlfeu83tci.cloudfront.net/images/email_logo.png" width="177" height="25"

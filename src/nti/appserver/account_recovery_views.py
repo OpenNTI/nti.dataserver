@@ -62,6 +62,7 @@ from pyramid.view import view_config
 from pyramid import security as sec
 
 from pyramid.renderers import render
+from pyramid.renderers import get_renderer
 
 import nti.appserver.httpexceptions as hexc
 
@@ -111,9 +112,9 @@ def forgot_username_view(request):
 	base_template = 'username_recovery_email'
 	if not matching_users:
 		base_template = 'failed_' + base_template
-
+	master = get_renderer('templates/master_email.pt').implementation()
 	html_body, text_body = [render( 'templates/' + base_template + extension,
-									dict(users=matching_users,context=request.context),
+									dict(users=matching_users,context=request.context,master=master),
 									request=request )
 							for extension in ('.pt', '.txt')]
 
@@ -167,7 +168,7 @@ def forgot_passcode_view(request):
 
 	# Ok, we either got one user on no users.
 	base_template = 'password_reset_email'
-
+	master = get_renderer('templates/master_email.pt').implementation()
 	if matching_users:
 		assert len(matching_users) == 1
 		# We got one user. So we need to generate a token, and
@@ -201,7 +202,7 @@ def forgot_passcode_view(request):
 		base_template = 'failed_' + base_template
 
 	html_body, text_body = [render( 'templates/' + base_template + extension,
-									dict(user=matching_user,context=request.context,reset_url=reset_url, users=matching_users),
+									dict(user=matching_user,context=request.context,reset_url=reset_url, users=matching_users,master=master),
 									request=request )
 							for extension in ('.pt', '.txt')]
 

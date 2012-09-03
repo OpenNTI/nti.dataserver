@@ -65,8 +65,10 @@ class CoppaUserWithoutAgreementCapabilityFilter(object):
 		return set()
 
 from pyramid.renderers import render
+from pyramid.renderers import get_renderer
 from pyramid_mailer.message import Message
 from pyramid_mailer.interfaces import IMailer
+
 
 @component.adapter(nti_interfaces.IUser, app_interfaces.IUserCreatedWithRequestEvent)
 def send_email_on_new_account( user, event ):
@@ -88,11 +90,12 @@ def send_email_on_new_account( user, event ):
 	# Need to send both HTML and plain text if we send HTML, because
 	# many clients still do not render HTML emails well (e.g., the popup notification on iOS
 	# only works with a text part)
+	master = get_renderer('templates/master_email.pt').implementation()
 	html_body = render( 'templates/new_user_created.pt',
-						dict(user=user, profile=profile, context=user),
+						dict(user=user, profile=profile, context=user,master=master),
 						request=event.request )
 	text_body = render( 'templates/new_user_created.txt',
-						dict(user=user, profile=profile, context=user),
+						dict(user=user, profile=profile, context=user,master=master),
 						request=event.request )
 
 	message = Message( subject="Welcome to NextThought", # TODO: i18n
@@ -121,14 +124,15 @@ def send_consent_request_on_new_coppa_account( user, event ):
 	# Need to send both HTML and plain text if we send HTML, because
 	# many clients still do not render HTML emails well (e.g., the popup notification on iOS
 	# only works with a text part)
-#	html_body = render( 'templates/new_user_created.pt',
-#						dict(user=user, profile=profile, context=user)#,
-#						request=event.request )
+	master = get_renderer('templates/master_email.pt').implementation()
+	html_body = render( 'templates/coppa_consent_request_email.pt',
+						dict(user=user, profile=profile, context=user,master=master),
+						request=event.request )
 	# NOTE: The text refers to an attachment. Where is it and how are
 	# we supposed to generate it?
 	html_body = None
 	text_body = render( 'templates/coppa_consent_request_email.txt',
-						dict(user=user, profile=profile, context=user),
+						dict(user=user, profile=profile, context=user,master=master),
 						request=event.request )
 
 	message = Message( subject="COPPA Direct Notice", # TODO: i18n
