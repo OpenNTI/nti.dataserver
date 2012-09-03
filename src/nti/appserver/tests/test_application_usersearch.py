@@ -101,6 +101,24 @@ class TestApplicationUserSearch(ApplicationTestBase):
 		# We should have our name
 		assert_that( res.json_body['Items'][0], has_entry( 'realname', 'Steve Johnson' ) )
 
+	def test_user_search_subset(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = self._create_user()
+			user2 = self._create_user( username=user.username + '2' )
+			# have to share a damn community
+			community = users.Community.create_community( username='TheCommunity' )
+			user.join_community( community )
+			user2.join_community( community )
+
+		testapp = TestApp( self.app )
+		# We can search for ourself
+		path = '/dataserver2/UserSearch/sjohnson@nextthought.com'
+		res = testapp.get( path, extra_environ=self._make_extra_environ())
+		assert_that( res.json_body['Items'], has_length( 1 ) )
+
+		res = testapp.get( path, params={'all': True}, extra_environ=self._make_extra_environ())
+		assert_that( res.json_body['Items'], has_length( 2 ) )
+
 	def test_user_search_communities(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			u1 = self._create_user()

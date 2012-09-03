@@ -267,11 +267,14 @@ class GlobalWorkspace(object):
 		if parent:
 			self.__parent__ = parent
 		# TODO: Hardcoding both these things
-		link = links.Link( 'UserSearch', rel='UserSearch' )
-		link.__name__ = link.target
-		link.__parent__ = self.__parent__
-		interface.alsoProvides( link, loc_interfaces.ILocation )
-		self.links = (link,)
+		lnks = []
+		for l in ('UserSearch', 'ResolveUser'):
+			link = links.Link( l, rel=l )
+			link.__name__ = link.target
+			link.__parent__ = self.__parent__
+			interface.alsoProvides( link, loc_interfaces.ILocation )
+			lnks.append( link )
+		self.links = lnks
 
 	@property
 	def name(self): return 'Global'
