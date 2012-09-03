@@ -271,7 +271,7 @@ setup(
 			'epydoc >= 3.0.1', # auto-api docs
 			'rope >= 0.9.4', # refactoring library. c.f. ropemacs
 			'ropemode >= 0.2', # IDE helper for rope
-			'virtualenv >= 1.8',
+			'virtualenv >= 1.8.1',
 			'pip >= 1.2'
 			]
 	},
