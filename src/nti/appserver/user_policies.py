@@ -172,4 +172,8 @@ def send_consent_request_on_new_coppa_account( user, event ):
 		message.body = text_body
 		mailer.send_to_queue( message )
 
-	# TODO: At this point, we should probably destroy the contact_email.
+	# We can log that we sent the message to the contact person for operational purposes,
+	# but we cannot preserve it
+	logger.info( "Will send COPPA consent notice to %s on behalf of %s", email, user.username )
+
+	setattr( profile, 'contact_email', None )

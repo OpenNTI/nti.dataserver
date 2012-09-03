@@ -506,10 +506,14 @@ class TestCreateView(_AbstractValidationViewBase):
 													 'email': 'foo@bar.com',
 													 'contact_email': 'other@other.com',
 													 'alias': 'jason_nextthought_com' }  )
-		self.the_view( self.request )
+		new_user = self.the_view( self.request )
+		# We sent mail
 		mailer = component.getUtility( IMailer )
 		assert_that( mailer.queue, has_length( 1 ) )
 		assert_that( mailer.queue[0], has_property( 'body', contains_string( 'Parent' ) ) )
+		# and destroyed the evidence
+		assert_that( user_interfaces.IUserProfile( new_user ),
+					 has_property( 'contact_email', None ) )
 
 	@WithMockDSTrans
 	def test_create_mathcounts_policy( self ):
@@ -550,7 +554,7 @@ class TestCreateView(_AbstractValidationViewBase):
 		assert_that( user_interfaces.IFriendlyNamed( new_user ),
 					 has_property( 'password_recovery_email_hash', '823776525776c8f23a87176c59d25759da7a52c4' ) )
 
-		# Which means we sent no mail except to the parent
+		# Which means we sent no mail, except to the parent
 		assert_that( mailer.queue, has_length( 1 ) )
 
 
