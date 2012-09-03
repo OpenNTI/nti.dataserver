@@ -32,6 +32,7 @@ from nti.dataserver import shards as nti_shards
 import nameparser
 import datetime
 import urllib
+import string
 
 def get_possible_site_names(request=None, include_default=False):
 	"""
@@ -269,12 +270,12 @@ def _censor_usernames( user ):
 	policy = censor.DefaultCensoredContentPolicy()
 
 	if policy.censor( user.username, user ) != user.username:
-		raise zope.schema.ValidationError( "Username contains a censored sequence", 'Username', user.username )
+		raise FieldContainsCensoredSequence( "Username contains a censored sequence", 'Username', user.username )
 
 	names = user_interfaces.IFriendlyNamed( user )
 	if names.alias: # TODO: What about realname?
 		if policy.censor( names.alias, user ) != names.alias:
-			raise zope.schema.ValidationError( "alias contains a censored sequence", 'alias', names.alias )
+			raise FieldContainsCensoredSequence( "alias contains a censored sequence", 'alias', names.alias )
 
 def _is_x_or_more_years_ago( birthdate, years_ago=13 ):
 
@@ -284,6 +285,20 @@ def _is_x_or_more_years_ago( birthdate, years_ago=13 ):
 	return birthdate < x_years_ago
 
 _is_thirteen_or_more_years_ago = _is_x_or_more_years_ago
+
+# Validation errors. The class names will be used as codes,
+# which will help the UI if they don't want to use our error
+# messages
+class BirthdateInFuture(zope.schema.ValidationError): pass
+class BirthdateTooRecent(zope.schema.ValidationError): pass
+class BirthdateTooAncient(zope.schema.ValidationError): pass
+class UsernameCannotContainRealname(zope.schema.ValidationError): pass
+class UsernameCannotContainAt(user_interfaces.UsernameContainsIllegalChar): pass
+class UsernameCannotContainNextthoughtCom(zope.schema.ValidationError): pass
+class FieldContainsCensoredSequence(zope.schema.ValidationError): pass
+class MissingFirstName(zope.schema.ValidationError): pass
+class MissingLastName(zope.schema.ValidationError): pass
+class AtInUsernameImpliesMatchingEmail(zope.schema.ValidationError): pass
 
 @interface.implementer(ISitePolicyUserEventListener)
 class GenericSitePolicyEventListener(object):
@@ -304,16 +319,16 @@ class GenericSitePolicyEventListener(object):
 		"""
 		_censor_usernames( user )
 		if user.username.endswith( '@nextthought.com' ):
-			raise zope.schema.ValidationError( "Invalid username", 'Username', user.username )
+			raise UsernameCannotContainNextthoughtCom( "Invalid username", 'Username', user.username )
 
 		# Icky. For some random reason we require everyone to provide their real name,
 		# and we force the display name to be derived from it.
 		names = user_interfaces.IFriendlyNamed( user )
 		human_name = nameparser.HumanName( names.realname ) # Raises BlankHumanName if missing
 		if not human_name.first:
-			raise zope.schema.ValidationError( "Must provide first name", 'realname', names.realname )
+			raise MissingFirstName( "Must provide first name", 'realname', names.realname )
 		if not human_name.last:
-			raise zope.schema.ValidationError( "Must provide last name", 'realname', names.realname )
+			raise MissingLastName( "Must provide last name", 'realname', names.realname )
 		human_name.capitalize()
 		names.realname = unicode(human_name)
 		names.alias = human_name.first + ' ' + human_name.last[0]
@@ -322,10 +337,14 @@ class GenericSitePolicyEventListener(object):
 		birthdate = getattr( profile, 'birthdate', None )
 		if birthdate:
 			if birthdate >= datetime.date.today():
-				raise zope.schema.ValidationError( "Birthdate must be in the past", 'birthdate', birthdate.isoformat() )
+				raise BirthdateInFuture( "Birthdate must be in the past", 'birthdate', birthdate.isoformat() )
 
 			if not _is_x_or_more_years_ago( birthdate, 4 ):
-				raise zope.schema.ValidationError( "Birthdate must be at least four years ago", 'birthdate', birthdate.isoformat() )
+				raise BirthdateTooRecent( "Birthdate must be at least four years ago", 'birthdate', birthdate.isoformat() )
+
+			if _is_x_or_more_years_ago( birthdate, 150 ):
+				raise BirthdateTooAncient( "Birthdate must be less than 150 years ago", 'birthdate', birthdate.isoformat() )
+
 
 @interface.implementer(ISitePolicyUserEventListener)
 class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
@@ -374,11 +393,11 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 
 		human_name_parts = human_name.first_list + human_name.middle_list + human_name.last_list
 		if any( (x.lower() in user.username.lower() for x in human_name_parts) ):
-			raise zope.schema.ValidationError("Username %s cannot include any part of the real name %s" %
-											 (user.username, names.realname), 'Username', user.username )
+			raise UsernameCannotContainRealname("Username %s cannot include any part of the real name %s" %
+												(user.username, names.realname), 'Username', user.username )
 
 		if '@' in user.username:
-			raise zope.schema.ValidationError( "Username cannot contain '@'", 'Username', user.username )
+			raise UsernameCannotContainAt( user.username, string.letters + string.digits )
 
 		# This much is handled in the will_update_event
 		#profile = user_interfaces.IUserProfile( user )
@@ -414,7 +433,7 @@ class GenericAdultSitePolicyEventListener(GenericSitePolicyEventListener):
 			if not email:
 				profile.email = user.username
 			elif user.username != email:
-				raise zope.schema.ValidationError( "If you want to use an email address for the username, it must match the email address you enter", 'Username', user.username )
+				raise AtInUsernameImpliesMatchingEmail( "If you want to use an email address for the username, it must match the email address you enter", 'Username', user.username )
 
 class IMathcountsUser(nti_interfaces.ICoppaUser):
 	pass
