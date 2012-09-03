@@ -5,6 +5,7 @@ import os
 import re
 import sys
 import time
+import codecs
 from datetime import datetime
 from xml.dom.minidom import Node
 
@@ -123,13 +124,16 @@ def _get_text(node):
 		txt = unicode(txt.strip().lower())
 	return txt
 	
-def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=False):
+def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=True):
 	title = unicode(node.title)
 	ntiid = unicode(node.ntiid)
 	content_file = node.location
 	logger.info( "Indexing (%s, %s, %s)", os.path.basename(content_file), title, ntiid )
 	
 	related = _get_related(node.topic)
+	
+	#TODO: find key words
+	keywords = set()
 	
 	# find last_modified
 	last_modified = time.time()
@@ -138,12 +142,9 @@ def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=Fa
 		if attributes.get('http-equiv', None) == "last-modified":
 			last_modified = _parse_last_modified(attributes.get('content', None))
 			break
-		
-	#TODO: find key words
-	keywords = set()
 	
 	as_time = datetime.fromtimestamp(float(last_modified))
-	def _index(content):
+	def _to_index(content):
 		if not content:
 			return
 		
@@ -158,29 +159,30 @@ def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=Fa
 		except Exception:
 			writer.cancel()
 			raise	
-	
+			
 	if file_indexing and os.path.exists(content_file):
-		with open(content_file, "r") as f:
+		with codecs.open(content_file, "r", encoding='UTF-8') as f:
 			content = f.read()
 
 		content = _get_page_content(content)
 		content = _sanitize_content(content)
-		_index(content)
+		_to_index(content)
 	else:
+		# get content
 		def _collector(n):
 			if not isinstance(n, etree._Comment):
-				text = _get_text(n)
-				text = text.strip() if text else None
-				if text:
-					text = tokenizer.tokenize(text)
-					text = unicode(' '.join(text))
-					_index(text)
+				content = _get_text(n)
+				if content:
+					content = tokenizer.tokenize(content)
+					content = unicode(' '.join(content))
+					_to_index(content)
+					
 				for c in n.iterchildren():
 					_collector(c)
 				
 		for n in node.dom("div").filter(".page-contents"):
 			_collector(n)
-
+	
 def transform(book, indexname=None, indexdir=None, recreate_index=True, optimize=True):
 	contentPath = book.contentLocation
 	indexname = indexname or book.jobname
