@@ -123,10 +123,19 @@ class _AbstractValidationViewBase(ConfiguringTestBase):
 			assert_that( e.exception.json_body, has_entry( 'field', 'Username' ) )
 			assert_that( e.exception.json_body, has_entry( 'code', bad_code ) )
 
-class _AbstractNotDevmodeViewBase(_AbstractValidationViewBase):
+class _AbstractNotDevmodeViewBase(ConfiguringTestBase):
 	# The tests that depend on not having devmode installed (stricter defailt validation) should be here
 	# Since they run so much slower due to the mimetype registration
 	features = ()
+
+	the_view = None
+
+	def setUp(self):
+		super(_AbstractNotDevmodeViewBase,self).setUp()
+		# Must provide the correct zpt template renderer or the email process blows up
+		# See application.py
+		component.provideUtility( z3c_zpt.renderer_factory, pyramid.interfaces.IRendererFactory, name=".pt" )
+		component.provideUtility( DummyMailer(), IMailer )
 
 	@WithMockDSTrans
 	def test_create_censored_username( self ):
@@ -365,6 +374,19 @@ class TestCreateView(_AbstractValidationViewBase):
 		with assert_raises( hexc.HTTPUnprocessableEntity ):
 			account_create_view( self.request )
 
+	@WithMockDSTrans
+	def test_create_null_password(self):
+		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.body = to_json_representation( {'Username': 'foo@bar.com',
+													 'email': 'foo@bar.com',
+													 'password': None } )
+		with assert_raises( hexc.HTTPUnprocessableEntity ) as exc:
+			self.the_view( self.request )
+
+
+		assert_that( exc.exception.json_body, has_entry( 'field', 'password' ) )
+		#assert_that( exc.exception.json_body, has_entry( 'message', contains_string( 'Password is too short' ) ) )
+		#assert_that( exc.exception.json_body, has_entry( 'code', 'TooShortPassword' ) )
 
 	@WithMockDSTrans
 	def test_create_shard_matches_request_host( self ):
@@ -420,6 +442,25 @@ class TestCreateView(_AbstractValidationViewBase):
 			 self.the_view( self.request )
 
 		assert_that( exc.exception.json_body, has_entry( 'field', 'email' ) )
+
+	@WithMockDSTrans
+	def test_create_mathcounts_policy_contact_email_required_valid( self ):
+		# see site_policies.[py|zcml]
+		assert_that( self.request.host, is_( 'example.com:80' ) )
+		self.request.headers['origin'] = 'http://mathcounts.nextthought.com'
+
+		self.request.content_type = 'application/vnd.nextthought+json'
+
+		self.request.body = to_json_representation( {'Username': 'jason_nextthought_com',
+													 'password': 'pass123word',
+													 'realname': 'Joe Bananna',
+													 'email': 'foo@bar.com',
+													 'contact_email': 'other',
+													 'alias': 'jason_nextthought_com' }  )
+		with assert_raises( hexc.HTTPUnprocessableEntity ) as exc:
+			 self.the_view( self.request )
+
+		assert_that( exc.exception.json_body, has_entry( 'field', 'contact_email' ) )
 
 	@WithMockDSTrans
 	def test_create_mathcounts_policy( self ):
