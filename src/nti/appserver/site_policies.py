@@ -340,7 +340,7 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 		interface.alsoProvides( user, self.IF_ROOT )
 		iface_to_provide = self.IF_WOUT_AGREEMENT
 
-		if 'birthdate' in event.ext_value and _is_thirteen_or_more_years_ago( zope.interface.common.idatetime.IDate( event.ext_value['birthdate'] ) ):
+		if event.ext_value.get( 'birthdate' ) and _is_thirteen_or_more_years_ago( zope.interface.common.idatetime.IDate( event.ext_value['birthdate'] ) ):
 			iface_to_provide = self.IF_WITH_AGREEMENT
 
 		interface.alsoProvides( user, iface_to_provide )
