@@ -22,8 +22,8 @@ import nti.dataserver.users as users
 
 import zope.schema.interfaces
 import mock_dataserver
-from .mock_dataserver import WithMockDS
-from .mock_dataserver import WithMockDSTrans
+from nti.dataserver.tests.mock_dataserver import WithMockDS
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.contentfragments import interfaces as frg_interfaces
 import nti.contentfragments.censor
 from nti.dataserver import containers
@@ -163,7 +163,7 @@ from nti.dataserver import liking
 import contentratings.interfaces
 
 class NoteTest(mock_dataserver.ConfiguringTestBase):
-
+	
 	def test_note_is_favoritable(self):
 		"Notes should be favoritable, and can become IUserRating"
 		n = Note()
@@ -272,8 +272,6 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 		assert_that( liking.unfavorite_object( n, 'foo@bar' ), verifiably_provides( contentratings.interfaces.IUserRating ) )
 		# second time no-op
 		assert_that( liking.unfavorite_object( n, 'foo@bar' ), is_( none() ) )
-
-
 
 	@WithMockDS
 	def test_external_reply_to(self):
@@ -501,7 +499,17 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 
 		assert_that( n.body[0], is_( Canvas ) )
 
-
+	def test_external_body_hyperlink(self):
+		n = Note()
+		html = frg_interfaces.IHTMLContentFragment(u'<html><head/><body><p>At www.nextthought.com</p></body></html>')
+		n.updateFromExternalObject( { 'body': [html] } )
+		ext = n.toExternalObject()
+		assert_that( ext['body'], is_( [u'<html><head/><body><p>At <a href="www.nextthought.com">www.nextthought.com</a></p></body></html>'] ) )
+		
+		n = Note()
+		n.updateFromExternalObject( { 'body': [u'www.nextthought.com'] } )
+		ext = n.toExternalObject()
+		assert_that( ext['body'], is_( [u'www.nextthought.com'] ) )
 
 	@WithMockDSTrans
 	def test_update_sharing_only( self ):
@@ -524,7 +532,6 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 		ds.root_connection.add( n )
 		ext = { 'sharedWith': ['jason.madden@nextthought.com'] }
 		n.updateFromExternalObject( ext, dataserver=ds )
-
 
 	def test_inherit_anchor_properties(self):
 		n = Note()
