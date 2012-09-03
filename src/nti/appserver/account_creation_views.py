@@ -134,6 +134,9 @@ def _create_user( request, externalValue, preflight_only=False ):
 					   'message': 'Duplicate username',
 					   'code': 'DuplicateUsernameError'},
 					   exc_info[2] )
+	except Exception as e:
+		obj_io.handle_possible_validation_error( request, e )
+
 
 
 
@@ -226,7 +229,9 @@ def account_preflight_view(request):
 		# is an email.
 		externalValue['email'] = externalValue['Username']
 
+
 	preflight_user = _create_user( request, externalValue, preflight_only=True )
+
 	profile_iface = user_interfaces.IUserProfileSchemaProvider( preflight_user ).getSchema()
 	profile = profile_iface( preflight_user )
 	profile_schema = InterfaceObjectIO( profile, profile_iface ).schema

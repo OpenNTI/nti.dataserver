@@ -187,7 +187,6 @@ def ping( request ):
 	links.append( Link( handshake_href, rel=REL_HANDSHAKE ) )
 	links.extend( _links_for_authenticated_users( request ) )
 	links.extend( _links_for_unauthenticated_users( request ) )
-
 	return _Pong( links )
 
 @interface.implementer( ext_interfaces.IExternalObject )

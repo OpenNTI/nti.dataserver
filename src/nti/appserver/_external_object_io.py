@@ -85,23 +85,29 @@ def read_body_as_external_object( request, input_data=None, expected_type=collec
 		ex = hexc.HTTPBadRequest()
 		raise ex, None, tb
 
-def update_object_from_external_object( contentObject, externalValue, notify=True, request=None ):
-	dataserver = component.queryUtility( nti_interfaces.IDataserver )
-	try:
-		__traceback_info__ = contentObject, externalValue
-		return nti.externalization.internalization.update_from_external_object( contentObject, externalValue, context=dataserver, notify=notify )
-	except zope.schema.interfaces.ValidationError as e:
+def handle_possible_validation_error( request, e ):
+	if isinstance( e, zope.schema.interfaces.ValidationError ):
 		if request is None:
 			request = get_current_request()
 		if request is None:
 			_no_request_validation_error()
 		else:
 			handle_validation_error( request, e )
-	except (ValueError,AssertionError,interface.Invalid,TypeError,KeyError): # pragma: no cover
+	elif isinstance( e, (ValueError,AssertionError,interface.Invalid,TypeError,KeyError)): # pragma: no cover
 		# These are all 'validation' errors. Raise them as unprocessable entities
 		# interface.Invalid, in particular, is the root class of zope.schema.ValidationError
-		_no_request_validation_error( )
+		_no_request_validation_error()
+	else:
+		raise
 
+
+def update_object_from_external_object( contentObject, externalValue, notify=True, request=None ):
+	dataserver = component.queryUtility( nti_interfaces.IDataserver )
+	try:
+		__traceback_info__ = contentObject, externalValue
+		return nti.externalization.internalization.update_from_external_object( contentObject, externalValue, context=dataserver, notify=notify )
+	except Exception as e:
+		handle_possible_validation_error( request, e )
 
 def _no_request_validation_error():
 	logger.exception( "Failed to update content object, bad input" )
