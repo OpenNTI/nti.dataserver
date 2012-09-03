@@ -2,9 +2,10 @@ Hello.
 
 You are receiving this notification because you (or someone pretending
 to be you) requested a reminder of the NextThought username associated
-with this email address on ${request.application_url}. Unfortunately,
-we found no usernames associated with this email address, but you can create
-a new free account on ${request.application_url}.
+with this email address on ${request.application_url}.
+
+No usernames were found associated with this email address, but you
+can create a new free account on ${request.application_url}.
 
 If you did not request this reminder, you can safely disregard this email.
 
