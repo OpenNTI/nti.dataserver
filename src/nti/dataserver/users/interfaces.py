@@ -20,7 +20,7 @@ from zope import schema
 import zope.schema.interfaces
 import zope.component.interfaces
 import re
-
+import string
 
 from zope.i18n import translate
 from . import MessageFactory as _
@@ -52,8 +52,10 @@ class UsernameCannotBeBlank(_InvalidData):
 class UsernameContainsIllegalChar(_InvalidData):
 
 	def __init__( self, username, allowed_chars ):
+		allowed_chars = set(allowed_chars) - set( string.letters + string.digits )
+		allowed_chars = ''.join( allowed_chars )
 		self.i18n_message = _(
-			'Username contains an illegal character. Only "${allowed_chars}" are allowed.',
+			'Username contains an illegal character. Only letters, digits, and "${allowed_chars}" are allowed.',
 			mapping={'allowed_chars': allowed_chars})
 
 		super(UsernameContainsIllegalChar,self).__init__( self.i18n_message, 'Username', username )

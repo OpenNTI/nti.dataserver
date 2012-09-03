@@ -148,7 +148,7 @@ class _AbstractNotDevmodeViewBase(ConfiguringTestBase):
 		with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
 			self.the_view( self.request )
 
-		assert_that( e.exception.json_body, has_entry( 'code', 'ValidationError' ) )
+		assert_that( e.exception.json_body, has_entry( 'code', 'FieldContainsCensoredSequence' ) )
 		assert_that( e.exception.json_body, has_entry( 'field', 'Username' ) )
 		assert_that( e.exception.json_body, has_entry( 'message', contains_string( 'censored' ) ) )
 
@@ -165,7 +165,7 @@ class _AbstractNotDevmodeViewBase(ConfiguringTestBase):
 		with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
 			self.the_view( self.request )
 
-		assert_that( e.exception.json_body, has_entry( 'code', 'ValidationError' ) )
+		assert_that( e.exception.json_body, has_entry( 'code', 'FieldContainsCensoredSequence' ) )
 		assert_that( e.exception.json_body, has_entry( 'field', 'alias' ) )
 		assert_that( e.exception.json_body, has_entry( 'message', contains_string( 'censored' ) ) )
 
@@ -183,7 +183,7 @@ class _AbstractNotDevmodeViewBase(ConfiguringTestBase):
 		with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
 			self.the_view( self.request )
 
-		assert_that( e.exception.json_body, has_entry( 'code', 'ValidationError' ) )
+		assert_that( e.exception.json_body, has_entry( 'code', 'BirthdateInFuture' ) )
 		assert_that( e.exception.json_body, has_entry( 'field', 'birthdate' ) )
 		assert_that( e.exception.json_body, has_entry( 'message', contains_string( 'past' ) ) )
 
@@ -203,7 +203,7 @@ class _AbstractNotDevmodeViewBase(ConfiguringTestBase):
 		with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
 			self.the_view( self.request )
 
-		assert_that( e.exception.json_body, has_entry( 'code', 'ValidationError' ) )
+		assert_that( e.exception.json_body, has_entry( 'code', 'BirthdateTooRecent' ) )
 		assert_that( e.exception.json_body, has_entry( 'field', 'birthdate' ) )
 		assert_that( e.exception.json_body, has_entry( 'message', contains_string( 'four' ) ) )
 
