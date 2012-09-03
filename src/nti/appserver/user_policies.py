@@ -130,7 +130,6 @@ def send_consent_request_on_new_coppa_account( user, event ):
 						request=event.request )
 	# NOTE: The text refers to an attachment. Where is it and how are
 	# we supposed to generate it?
-	html_body = None
 	text_body = render( 'templates/coppa_consent_request_email.txt',
 						dict(user=user, profile=profile, context=user,master=master),
 						request=event.request )
