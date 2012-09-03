@@ -55,7 +55,7 @@ class UsernameContainsIllegalChar(_InvalidData):
 		allowed_chars = set(allowed_chars) - set( string.letters + string.digits )
 		allowed_chars = ''.join( allowed_chars )
 		self.i18n_message = _(
-			'Username contains an illegal character. Only letters, digits, and "${allowed_chars}" are allowed.',
+			'Username contains an illegal character. Only letters, digits, and ${allowed_chars} are allowed.',
 			mapping={'allowed_chars': allowed_chars})
 
 		super(UsernameContainsIllegalChar,self).__init__( self.i18n_message, 'Username', username )

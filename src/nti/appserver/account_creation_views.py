@@ -136,7 +136,7 @@ def _create_user( request, externalValue, preflight_only=False ):
 		_raise_error( request,
 					  hexc.HTTPConflict,
 					  {'field': 'Username',
-					   'message': 'Duplicate username',
+					   'message': 'That username is not available',
 					   'code': 'DuplicateUsernameError'},
 					   exc_info[2] )
 	except Exception as e:
