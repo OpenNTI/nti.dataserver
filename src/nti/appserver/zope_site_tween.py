@@ -11,6 +11,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import sys
+
 import pyramid_tm
 import transaction
 import pyramid_zodbconn
@@ -92,7 +94,19 @@ class site_tween(object):
 			# pass with or without these next two lines. There's no real harm leaving them in, other than
 			# that transaction.commit shows up as being called twice in profiles
 			if not transaction.isDoomed() and not pyramid_tm.default_commit_veto( request, response ):
-				transaction.commit()
+				exc_info = sys.exc_info()
+				try:
+					transaction.commit()
+				except AssertionError:
+					# We've seen this when we are recalled during retry handling. The higher level
+					# is in the process of throwing a different exception and the transaction is
+					# already toast, so this commit would never work, but we haven't lost anything;
+					# The sad part is that this assertion error overrides the stack trace for what's currently
+					# in progress
+					logger.exception( "Failing to commit; should already be an exception in progress" )
+					if exc_info:
+						raise exc_info[0], None, exc_info[2]
+
 			return response
 		finally:
 			setSite()
