@@ -221,7 +221,10 @@ def raise_json_error( request,
 		v['field'] = 'Username'
 
 	if accept_type == 'application/json':
-		v = json.dumps( v )
+		try:
+			v = json.dumps( v )
+		except TypeError:
+			v = str(v)
 	else:
 		v = str(v)
 
