@@ -187,6 +187,26 @@ class _AbstractNotDevmodeViewBase(ConfiguringTestBase):
 		assert_that( e.exception.json_body, has_entry( 'field', 'birthdate' ) )
 		assert_that( e.exception.json_body, has_entry( 'message', contains_string( 'past' ) ) )
 
+	@WithMockDSTrans
+	def test_create_birthdate_must_be_four_years_ago( self ):
+		self.request.content_type = 'application/vnd.nextthought+json'
+		today = datetime.date.today()
+		three_years_ago = today.replace( year=today.year - 3 )
+		self.request.body = to_json_representation( {
+													 'Username': 'jamadden',
+													 'realname': 'Jason Madden',
+													 'password': 'pass132word',
+													 'email': 'foo@bar.com',
+													 'birthdate': three_years_ago.isoformat() } )
+
+
+		with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
+			self.the_view( self.request )
+
+		assert_that( e.exception.json_body, has_entry( 'code', 'ValidationError' ) )
+		assert_that( e.exception.json_body, has_entry( 'field', 'birthdate' ) )
+		assert_that( e.exception.json_body, has_entry( 'message', contains_string( 'four' ) ) )
+
 
 class TestPreflightView(_AbstractValidationViewBase):
 
