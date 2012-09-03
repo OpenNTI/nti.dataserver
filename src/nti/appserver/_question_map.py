@@ -63,12 +63,12 @@ class QuestionMap(dict):
 				obj.read_contents_of_sibling_entry = read_contents_of_sibling_entry
 				interface.alsoProvides( obj, lib_interfaces.IFilesystemEntry )
 
-	def _from_index_entry(self, index, hierarchy_entry):
-		filename = None
+	def _from_index_entry(self, index, hierarchy_entry, nearest_containing_key=None ):
+		key_for_this_level = nearest_containing_key
 		if index.get( 'filename' ):
-			filename = hierarchy_entry.make_sibling_key( index['filename'] )
+			key_for_this_level = hierarchy_entry.make_sibling_key( index['filename'] )
 			factory = list
-			if filename in self.by_file:
+			if key_for_this_level in self.by_file:
 				# Across all indexes, every filename key should be unique.
 				# We rely on this property when we lookup the objects to return
 				# We make an exception for index.html, due to a duplicate bug in
@@ -77,19 +77,20 @@ class QuestionMap(dict):
 					factory = tuple
 					logger.warning( "Duplicate 'index.html' entry in %s; update content", hierarchy_entry )
 				else: # pragma: no cover
-					raise ValueError( filename, "Found a second entry for the same file" )
-			self.by_file[filename] = factory()
+					raise ValueError( key_for_this_level, "Found a second entry for the same file" )
+			self.by_file[key_for_this_level] = factory()
 
-		# FIXME: There's some problem with the recursion and nesting here.
-		# It doesn't handle hooking things up to files if they are more than X (2?) levels
-		# deep (we have no test cases for that). The question gets parsed, but it doesn't get
-		# associated with any files...which means it doesn't come back in page info, and cannot
-		# be queried directly (as it has no ACL)
+
+		# JAM: This is very odd. Each level of the tree uses its own key
+		# to store the assessment items found in each of its children. At one time we had a situation
+		# where too many 'filename'-less intervening levels caused the chain to get broken and the
+		# leaf questions to effectively be lost. We are now carrying the nearest containing key around,
+		# so that's no longer a problem, but now we may be returning too many items?
 		for item in index['Items'].values():
-			self.__process_assessments( item.get( "AssessmentItems", {} ), filename, hierarchy_entry )
+			self.__process_assessments( item.get( "AssessmentItems", {} ), key_for_this_level, hierarchy_entry )
 
 			if 'Items' in item:
-				self._from_index_entry( item, hierarchy_entry )
+				self._from_index_entry( item, hierarchy_entry, nearest_containing_key=key_for_this_level )
 
 
 @component.adapter(lib_interfaces.IContentPackage,IObjectCreatedEvent)
