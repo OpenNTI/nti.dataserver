@@ -92,7 +92,7 @@ class _SearchableContent(object):
 	def execute_query_and_externalize(self, searcher, search_field, parsed_query, queryobject, highlight_type=None):
 
 		# execute search
-		search_hits = searcher.search(parsed_query, limit = queryobject.limit)
+		search_hits = searcher.search(parsed_query, limit=queryobject.limit)
 		
 		# set highlight type
 		surround = queryobject.surround
@@ -146,9 +146,9 @@ def create_book_schema():
 							title = fields.TEXT(stored=True, spelling=True),
 				  			last_modified = fields.DATETIME(stored=True),
 				  			keywords = fields.KEYWORD(stored=True), 
-				 			quick = fields.NGRAM(maxsize=10),
+				 			quick = fields.NGRAM(maxsize=10, phrase=True),
 				 			related = fields.KEYWORD(stored=True),
-				 			content = fields.TEXT(stored=True, spelling=True))
+				 			content = fields.TEXT(stored=True, spelling=True, phrase=True))
 	return schema
 
 class Book(_SearchableContent):
@@ -328,8 +328,8 @@ class TreadableIndexableContent(UserIndexableContent):
 	
 def create_highlight_schema():
 	schema = _create_treadable_schema()
-	schema.add(content_, fields.TEXT(stored=False, spelling=True))
-	schema.add(quick_, fields.NGRAM(maxsize=10))
+	schema.add(content_, fields.TEXT(stored=False, chars=True, spelling=True))
+	schema.add(quick_, fields.NGRAM(maxsize=10, phrase=True))
 	return schema
 
 class Highlight(TreadableIndexableContent):
@@ -347,8 +347,8 @@ class Highlight(TreadableIndexableContent):
 
 def create_redaction_schema():
 	schema = create_highlight_schema()
-	schema.add(replacementContent_, fields.TEXT(stored=False, spelling=True))
-	schema.add(redactionExplanation_, fields.TEXT(stored=False, spelling=True))
+	schema.add(replacementContent_, fields.TEXT(stored=False, chars=True, spelling=True))
+	schema.add(redactionExplanation_, fields.TEXT(stored=False, chars=True, spelling=True))
 	return schema
 
 class Redaction(Highlight):
