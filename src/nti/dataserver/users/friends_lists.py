@@ -71,7 +71,8 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 			result = friend
 			if isinstance( friend, six.string_types ):
 				result = Entity.get_entity( friend, default=self )
-				if result is self: result = None
+				if result is self:
+					result = None
 				if result is not None:
 					self._on_added_friend( result )
 					# Now that we found it, if possible replace the string
@@ -99,9 +100,11 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 
 	def addFriend( self, friend ):
 		""" Adding friends causes our creator to follow them. """
-		if friend is None: return
+		if friend is None or friend is self:
+			return
 		# TODO: Why is this a list?
-		if self._friends is None: self._friends = PersistentExternalizableList()
+		if self._friends is None:
+			self._friends = PersistentExternalizableList()
 		if isinstance( friend, FriendsList ):
 			# Recurse to generate the correct notifications
 			for other_friend in friend.friends:
