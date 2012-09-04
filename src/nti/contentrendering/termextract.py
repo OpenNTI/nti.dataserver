@@ -12,6 +12,8 @@
 #
 ##############################################################################
 
+#!/usr/bin/env python
+
 import os
 import gzip
 import pickle
@@ -92,7 +94,6 @@ def train_default_tagger(train_sents=None):
 	train_sents = train_sents or default_training_sents()
 	tagger = DefaultTagger('NN')
 	if train_sents:
-		#TODO: Traning 3 tagger is expensive with the whole corpus
 		tagger = backoff_tagger(train_sents=train_sents, start_tagger=tagger,
 								tagger_classes=(UnigramTagger, BigramTagger, TrigramTagger))
 	return tagger
@@ -117,11 +118,10 @@ from nltk.tokenize import RegexpTokenizer
 default_tokenizer = RegexpTokenizer(r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-']\w+)*",
 									flags = re.MULTILINE | re.DOTALL)
 	
-def extract_key_words(content, extractor=None, tokenizer=default_tokenizer, tagger=None, stemmer=None):
+def extract_key_words_from_tokens(tokenized_words, extractor=None, tagger=None, stemmer=None):
 	tagger = tagger or default_tagger()
 	stemmer = stemmer or PorterStemmer()
 	extractor = extractor or TermExtractor()
-	tokenized_words = tokenizer.tokenize(content)
 	tagged_items = tagger.tag(tokenized_words)
 	tagged_terms = []
 	for token, tag in tagged_items:
@@ -129,6 +129,12 @@ def extract_key_words(content, extractor=None, tokenizer=default_tokenizer, tagg
 		tagged_terms.append((token, tag, root))
 	result = extractor.extract(tagged_terms)
 	return result
+
+def extract_key_words_from_text(content, extractor=None, tokenizer=default_tokenizer, tagger=None, stemmer=None):
+	tokenized_words = tokenizer.tokenize(content)
+	return extract_key_words_from_tokens(tokenized_words, extractor=extractor, tagger=extractor, stemmer=stemmer)
+
+extract_key_words = extract_key_words_from_text
 
 if __name__ == '__main__':
 	import sys
