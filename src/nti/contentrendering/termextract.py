@@ -76,7 +76,7 @@ def default_train_sents():
 			_train_sents = ()
 	return _train_sents
 
-from nltk.tag import UnigramTagger, BigramTagger, TrigramTagger, DefaultTagger
+from nltk.tag import DefaultTagger, UnigramTagger, BigramTagger, TrigramTagger
 
 # build  a built up tagger 
 def backoff_tagger(train_sents, start_tagger=None, tagger_classes=()): 
@@ -90,6 +90,7 @@ def default_tagger():
 	train_sents = default_train_sents()
 	tagger = DefaultTagger('NN')
 	if train_sents:
+		#TODO: Traning 3 tagger is expensive with the whole corpus
 		tagger = backoff_tagger(train_sents=train_sents, start_tagger=tagger,
 								tagger_classes=(UnigramTagger, BigramTagger, TrigramTagger))
 	return tagger
