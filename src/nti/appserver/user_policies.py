@@ -146,9 +146,9 @@ def send_consent_request_on_new_coppa_account( user, event ):
 	attachment = MIMEApplication(attachment.read(), 'pdf' )
 	attachment.add_header('Content-Disposition', 'attachment', filename=attachment_filename)
 
-	message = Message( subject="COPPA Direct Notice", # TODO: i18n
+	message = Message( subject="Please Confirm Your Child's NextThought Account", # TODO: i18n
 					   recipients=[email],
-					   sender='NextThought Compliance <compliance@nextthought.com',
+					   sender='NextThought Compliance <compliance@nextthought.com', # Override the default, also needed for the attachment handling
 					   body=None,
 					   html=html_body)
 

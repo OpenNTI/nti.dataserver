@@ -49,12 +49,12 @@
 		<p>Hi <span tal:content="options/profile/realname" class="realname tterm">John Doe</span>!</p>
 
 		<p>
-			Thank you for creating your new account, and welcome to
+			Thank you for creating your new account and welcome to
 			NextThought!
 		</p>
 
 		<p>
-			<strong>Username:</strong> <span tal:content="options/user/username" class="tterm-color">username</span>. <br />
+			<strong>Username:</strong> <span tal:content="options/user/username" class="tterm-color">username</span> <br />
 			<strong>Log in at:</strong> <a href="http://nextthought.com"
 							tal:attributes="href request/application_url"
 							tal:content="request/application_url">http://nextthought.com</a>
@@ -74,7 +74,8 @@
 
 		<p>
 			If you feel this email was sent in error, or this account was created
-			without your consent, you may email us at <a href="mailto:support@nextthought.com">support@nextthought.com</a>.
+			without your consent, you may email us at
+			<a href="mailto:support@nextthought.com">support@nextthought.com</a>.
 		</p>
 
 	</body>

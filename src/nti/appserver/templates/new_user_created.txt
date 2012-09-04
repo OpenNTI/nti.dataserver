@@ -1,6 +1,6 @@
 Hi ${profile.realname}!
 
-Thank you for creating your new account, and welcome to NextThought!
+Thank you for creating your new account and welcome to NextThought!
 
 Username: ${user.username}
 Log in at: ${request.application_url}
