@@ -38,4 +38,24 @@
 			 provides=".site_policies.IMathcountsCoppaUserWithAgreementUserProfile"
 			 for=".site_policies.IMathcountsCoppaUserWithAgreement" />
 
+	<!--
+		 And apparently we've changed our minds and feel that even
+		 teachers should not be able to use images.
+		 Too bad for them.
+		 NOTE: This is wrong in several ways, chiefly that the
+		 presumed requirement is now site-based, not just user based,
+		 and we cannot express that, so this is definitely a horrible hack.
+	-->
+	<adapter
+		factory="._creatable_mime_object_vocabulary._SimpleRestrictedContentObjectFilter"
+		for=".site_policies.IMathcountsCoppaUserWithAgreement" />
+
+	<adapter
+		factory="._creatable_mime_object_vocabulary._SimpleRestrictedContentObjectFilter"
+		for=".site_policies.IMathcountsCoppaUserWithoutAgreement" />
+
+	<adapter
+		factory="._creatable_mime_object_vocabulary._SimpleRestrictedContentObjectFilter"
+		for=".site_policies.IMathcountsUser" />
+
 </configure>
