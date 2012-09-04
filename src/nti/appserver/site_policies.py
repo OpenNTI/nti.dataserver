@@ -26,6 +26,7 @@ from nti.dataserver.users import interfaces as user_interfaces
 from nti.appserver import interfaces as app_interfaces
 
 from nti.contentfragments import censor
+from nti.utils.schema import InvalidValue
 
 from nti.dataserver import shards as nti_shards
 
@@ -289,16 +290,16 @@ _is_thirteen_or_more_years_ago = _is_x_or_more_years_ago
 # Validation errors. The class names will be used as codes,
 # which will help the UI if they don't want to use our error
 # messages
-class BirthdateInFuture(zope.schema.ValidationError): pass
-class BirthdateTooRecent(zope.schema.ValidationError): pass
-class BirthdateTooAncient(zope.schema.ValidationError): pass
-class UsernameCannotContainRealname(zope.schema.ValidationError): pass
+class BirthdateInFuture(InvalidValue): pass
+class BirthdateTooRecent(InvalidValue): pass
+class BirthdateTooAncient(InvalidValue): pass
+class UsernameCannotContainRealname(InvalidValue): pass
 class UsernameCannotContainAt(user_interfaces.UsernameContainsIllegalChar): pass
-class UsernameCannotContainNextthoughtCom(zope.schema.ValidationError): pass
-class FieldContainsCensoredSequence(zope.schema.ValidationError): pass
-class MissingFirstName(zope.schema.ValidationError): pass
-class MissingLastName(zope.schema.ValidationError): pass
-class AtInUsernameImpliesMatchingEmail(zope.schema.ValidationError): pass
+class UsernameCannotContainNextthoughtCom(InvalidValue): pass
+class FieldContainsCensoredSequence(InvalidValue): pass
+class MissingFirstName(zope.schema.interfaces.RequiredMissing): pass
+class MissingLastName(zope.schema.interfaces.RequiredMissing): pass
+class AtInUsernameImpliesMatchingEmail(InvalidValue): pass
 
 @interface.implementer(ISitePolicyUserEventListener)
 class GenericSitePolicyEventListener(object):
@@ -319,7 +320,7 @@ class GenericSitePolicyEventListener(object):
 		"""
 		_censor_usernames( user )
 		if user.username.endswith( '@nextthought.com' ):
-			raise UsernameCannotContainNextthoughtCom( "Invalid username", 'Username', user.username )
+			raise UsernameCannotContainNextthoughtCom( "Invalid username", 'Username', user.username, value=user.username )
 
 		# Icky. For some random reason we require everyone to provide their real name,
 		# and we force the display name to be derived from it.
@@ -337,13 +338,13 @@ class GenericSitePolicyEventListener(object):
 		birthdate = getattr( profile, 'birthdate', None )
 		if birthdate:
 			if birthdate >= datetime.date.today():
-				raise BirthdateInFuture( "Birthdate must be in the past", 'birthdate', birthdate.isoformat() )
+				raise BirthdateInFuture( "Birthdate must be in the past", 'birthdate', birthdate.isoformat(), value=birthdate )
 
 			if not _is_x_or_more_years_ago( birthdate, 4 ):
-				raise BirthdateTooRecent( "Birthdate must be at least four years ago", 'birthdate', birthdate.isoformat() )
+				raise BirthdateTooRecent( "Birthdate must be at least four years ago", 'birthdate', birthdate.isoformat(), value=birthdate )
 
 			if _is_x_or_more_years_ago( birthdate, 150 ):
-				raise BirthdateTooAncient( "Birthdate must be less than 150 years ago", 'birthdate', birthdate.isoformat() )
+				raise BirthdateTooAncient( "Birthdate must be less than 150 years ago", 'birthdate', birthdate.isoformat(), value=birthdate )
 
 
 @interface.implementer(ISitePolicyUserEventListener)
@@ -394,7 +395,7 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 		human_name_parts = human_name.first_list + human_name.middle_list + human_name.last_list
 		if any( (x.lower() in user.username.lower() for x in human_name_parts) ):
 			raise UsernameCannotContainRealname("Username %s cannot include any part of the real name %s" %
-												(user.username, names.realname), 'Username', user.username )
+												(user.username, names.realname), 'Username', user.username, value=user.username )
 
 		if '@' in user.username:
 			raise UsernameCannotContainAt( user.username, string.letters + string.digits )

@@ -41,6 +41,21 @@ from zope import schema
 from zope import component
 from zope.schema import interfaces as sch_interfaces
 
+class InvalidValue(sch_interfaces.InvalidValue):
+	"""
+	Adds a field specifically to carry the value that is invalid.
+	"""
+	value = None
+
+	def __init__( self, *args, **kwargs ):
+		super(InvalidValue,self).__init__( *args )
+		if 'value' in kwargs:
+			self.value = kwargs['value']
+
+# And we monkey patch it in to InvalidValue as well
+if not hasattr(sch_interfaces.InvalidValue, 'value' ):
+	setattr( sch_interfaces.InvalidValue, 'value', None )
+
 class FieldValidationMixin(object):
 	"""
 	A field mixin that causes slightly better errors to be created.
