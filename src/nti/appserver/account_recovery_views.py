@@ -252,8 +252,9 @@ def find_users_with_email( email, dataserver, username=None ):
 
 def _is_one_hour_or_more_old( token_time ):
 
-	today = datetime.datetime.utcnow()
-	hour_ago = datetime.datetime.utcnow().replace( hour=today.hour - 1 )
+	now = datetime.datetime.utcnow()
+	delta = datetime.timedelta( hours=-1 )
+	hour_ago = now + delta
 
 	return token_time < hour_ago
 
