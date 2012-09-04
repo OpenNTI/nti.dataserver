@@ -123,4 +123,5 @@ class HashedShardPlacer(TrivialShardPlacer,AbstractShardPlacer):
 			# Note that we can't do that ourself, because the root shard uses a
 			# 'users' container that fires events, and the user object is probably not
 			# ready for that yet.
+			logger.debug( "Failed to assign new user %s to shard %s out of %s", user.username, shard_name, shard_buckets )
 			super(HashedShardPlacer,self).placeNewUser( user, user_directory, shards )
