@@ -36,7 +36,7 @@ class TestUrlMatcher(ConfiguringTestBase):
 		exp = u'<html><head/><body>my sec link <a href="https://www.chase.com">https://www.chase.com</a></body></html>'
 		assert_that(self.formatter.format(frg_interfaces.IHTMLContentFragment(html)), is_(exp))
 		html = u'<html><head/><body>search with www.google.com to know everything</body></html>'
-		exp = u'<html><head/><body>search with <a href="www.google.com">www.google.com</a> to know everything</body></html>'
+		exp = u'<html><head/><body>search with <a href="http://www.google.com">www.google.com</a> to know everything</body></html>'
 		assert_that(self.formatter.format(frg_interfaces.IHTMLContentFragment(html)), is_(exp))
 		
 	def test_nochange(self):
