@@ -1,18 +1,10 @@
 import os
 import unittest
-
-try:
-	#need to download or install the corpus.
-	from nltk.corpus import brown
-	skip = False
-except:
-	skip = True
 			
 from nti.contentrendering.termextract import extract_key_words
 		
 from hamcrest import assert_that, is_
 
-@unittest.skipIf(skip, "nltk corpus not installed")
 class TestIndexer(unittest.TestCase):
 
 	def test_index_content(self):

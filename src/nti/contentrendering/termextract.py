@@ -12,6 +12,10 @@
 #
 ##############################################################################
 
+import os
+import gzip
+import pickle
+
 class DefaultFilter(object):
 
 	def __init__(self, single_strength_min_occur=3, no_limit_strength=2):
@@ -65,29 +69,27 @@ class TermExtractor(object):
 	
 # for the time being we assume the training sents comes
 # from the brown corpus
-_train_sents = None
-def default_train_sents():
-	global _train_sents
-	if _train_sents is None:
+_training_sents = None
+def default_training_sents():
+	global _training_sents
+	if _training_sents is None:
 		try:
 			from nltk.corpus import brown
-			_train_sents = brown.tagged_sents()
+			_training_sents = brown.tagged_sents()
 		except:
-			_train_sents = ()
-	return _train_sents
+			_training_sents = ()
+	return _training_sents
 
 from nltk.tag import DefaultTagger, UnigramTagger, BigramTagger, TrigramTagger
 
-# build  a built up tagger 
 def backoff_tagger(train_sents, start_tagger=None, tagger_classes=()): 
 	backoff = start_tagger
 	for cls in tagger_classes: 
 		backoff = cls(train_sents, backoff=backoff) 
 	return backoff
 
-# return default tagger using the default training sentences
-def default_tagger():
-	train_sents = default_train_sents()
+def train_default_tagger(train_sents=None):
+	train_sents = train_sents or default_training_sents()
 	tagger = DefaultTagger('NN')
 	if train_sents:
 		#TODO: Traning 3 tagger is expensive with the whole corpus
@@ -95,6 +97,18 @@ def default_tagger():
 								tagger_classes=(UnigramTagger, BigramTagger, TrigramTagger))
 	return tagger
 
+# return default tagger using the default training sentences
+_default_tagger = None
+def default_tagger():
+	global _default_tagger
+	if _default_tagger is None:
+		try:
+			name = os.path.join(os.path.dirname(__file__), "taggers/default_tagger.pickle.gz")
+			with gzip.open(name,"rb") as f:
+				_default_tagger = pickle.load(f)
+		except:
+			_default_tagger = DefaultTagger('NN')
+	return _default_tagger
 
 import re
 from nltk import PorterStemmer
@@ -117,9 +131,7 @@ def extract_key_words(content, extractor=None, tokenizer=default_tokenizer, tagg
 	return result
 
 if __name__ == '__main__':
-	import os
 	import sys
-	
 	args = sys.argv[1:]
 	if args:
 		with open(os.path.expanduser(args[0]),"r") as f:
