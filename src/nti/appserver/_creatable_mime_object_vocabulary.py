@@ -60,6 +60,20 @@ class _SimpleRestrictedContentObjectFilter(object):
 			terms.pop( name, None )
 		return terms
 
+@interface.implementer(app_interfaces.ICreatableObjectFilter)
+class _ImageAndRedactionRestrictedContentObjectFilter(_SimpleRestrictedContentObjectFilter):
+
+	RESTRICTED = ('application/vnd.nextthought.canvasurlshape', #images
+				  'application/vnd.nextthought.redaction' )
+
+	def __init__( self, context=None ):
+		pass
+
+	def filter_creatable_objects( self, terms ):
+		for name in self.RESTRICTED:
+			terms.pop( name, None )
+		return terms
+
 @interface.implementer(sch_interfaces.IVocabularyFactory)
 class _UserCreatableMimeObjectVocabularyFactory(object):
 

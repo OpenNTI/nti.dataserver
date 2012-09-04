@@ -47,7 +47,7 @@
 		 and we cannot express that, so this is definitely a horrible hack.
 	-->
 	<adapter
-		factory="._creatable_mime_object_vocabulary._SimpleRestrictedContentObjectFilter"
+		factory="._creatable_mime_object_vocabulary._ImageAndRedactionRestrictedContentObjectFilter"
 		for=".site_policies.IMathcountsCoppaUserWithAgreement" />
 
 	<adapter
@@ -55,7 +55,7 @@
 		for=".site_policies.IMathcountsCoppaUserWithoutAgreement" />
 
 	<adapter
-		factory="._creatable_mime_object_vocabulary._SimpleRestrictedContentObjectFilter"
+		factory="._creatable_mime_object_vocabulary._ImageAndRedactionRestrictedContentObjectFilter"
 		for=".site_policies.IMathcountsUser" />
 
 </configure>
