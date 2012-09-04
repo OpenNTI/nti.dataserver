@@ -21,6 +21,7 @@ from whoosh import index
 from nti.contentrendering import interfaces
 from nti.contentfragments.html import _sanitize_user_html_to_text
 from nti.contentsearch.whoosh_contenttypes import create_book_schema
+from nti.contentrendering.termextract import extract_key_words_from_tokens, TermExtractor
 
 import logging
 logger = logging.getLogger(__name__)
@@ -91,15 +92,15 @@ def _get_page_content(text):
 	c = _parse_text(c, page_c_pattern, None)
 	return c or text
 
-def _sanitize_content(text, tokenizer=default_tokenizer):
+def _sanitize_content(text, tokens=False, tokenizer=default_tokenizer ):
 	# user ds sanitizer
-	text = _sanitize_user_html_to_text(text.lower())
+	text = _sanitize_user_html_to_text(text)
 	# remove any html (i.e. meta, link) that is not removed
 	text = clean_html(text)
 	# tokenize words
-	words = tokenizer.tokenize(text)
-	words = ' '.join(words)
-	return words
+	tokenized_words = tokenizer.tokenize(text)
+	result = tokenized_words if tokens else ' '.join(tokenized_words)
+	return result
 
 def _parse_last_modified(t):
 	result = time.time()
@@ -120,10 +121,30 @@ def _parse_last_modified(t):
 
 def _get_text(node):
 	txt = node.text
-	if txt:
-		txt = unicode(txt.strip().lower())
+	if txt: txt = unicode(txt.strip())
 	return txt
-	
+
+class _KeyWordFilter(object):
+
+	def __init__(self, single_strength_min_occur=3, max_limit_strength=2):
+		self.max_limit_strength = max_limit_strength
+		self.single_strength_min_occur = single_strength_min_occur
+
+	def __call__(self, word, occur, strength):
+		result = (strength == 1 and occur >= self.single_strength_min_occur) or (strength <= self.max_limit_strength)
+		result = result and len(word) > 1
+		return result
+
+def _extract_key_words(tokenized_words, extractor=None, max_words=10):
+	extractor = extractor or TermExtractor(_KeyWordFilter())
+	records = extract_key_words_from_tokens(tokenized_words, extractor=extractor)
+	keywords = []
+	for r in records[:max_words]:
+		word = r.norm
+		if r.terms: word = r.terms[0] # pick the first word
+		keywords.append(unicode(word.lower()))
+	return keywords
+
 def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=False):
 	title = unicode(node.title)
 	ntiid = unicode(node.ntiid)
@@ -131,9 +152,6 @@ def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=Fa
 	logger.info( "Indexing (%s, %s, %s)", os.path.basename(content_file), title, ntiid )
 	
 	related = _get_related(node.topic)
-	
-	#TODO: find key words
-	keywords = set()
 	
 	# find last_modified
 	last_modified = time.time()
@@ -144,38 +162,39 @@ def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=Fa
 			break
 	
 	as_time = datetime.fromtimestamp(float(last_modified))
-	def _to_index(content):
+	def _to_index(content, keywords=()):
 		if not content:
 			return
 		
 		try:
-			writer.add_document(ntiid=unicode(ntiid),
-								title=unicode(title),
-								content=unicode(content),
-								quick=unicode(content),
+			content = unicode(content.lower())
+			writer.add_document(ntiid=ntiid,
+								title=title,
+								content=content,
+								quick=content,
 								related=related,
-								keywords=sorted(keywords),
+								keywords=keywords,
 								last_modified=as_time)
 		except Exception:
 			writer.cancel()
 			raise	
 			
+	documents = []
 	if file_indexing and os.path.exists(content_file):
 		with codecs.open(content_file, "r", encoding='UTF-8') as f:
-			content = f.read()
+			raw_content = f.read()
 
-		content = _get_page_content(content)
-		content = _sanitize_content(content)
-		_to_index(content)
+		raw_content = _get_page_content(raw_content)
+		tokenized_words = _sanitize_content(raw_content, tokens=True)
+		documents.append(tokenized_words)
 	else:
 		# get content
 		def _collector(n):
 			if not isinstance(n, etree._Comment):
 				content = _get_text(n)
 				if content:
-					content = tokenizer.tokenize(content)
-					content = unicode(' '.join(content))
-					_to_index(content)
+					tokenized_words = tokenizer.tokenize(content)
+					documents.append(tokenized_words)
 					
 				for c in n.iterchildren():
 					_collector(c)
@@ -183,6 +202,18 @@ def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=Fa
 		for n in node.dom(b'div').filter(b'.page-contents'):
 			_collector(n)
 	
+	# TODO: key word should done on a book basis
+	# compute keywords
+	all_words = []
+	for tokenized_words in documents:
+		all_words.extend(tokenized_words)
+	keywords = _extract_key_words(all_words)
+	logger.debug("\tkeywords %s", keywords )
+	
+	for tokenized_words in documents:
+		content = ' '.join(tokenized_words)
+		_to_index(content, keywords)
+		
 def transform(book, indexname=None, indexdir=None, recreate_index=True, optimize=True):
 	contentPath = book.contentLocation
 	indexname = indexname or book.jobname
