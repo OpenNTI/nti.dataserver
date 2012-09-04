@@ -178,7 +178,6 @@ setup(
 		'supervisor >= 3.0a12',
 		'transaction >= 1.3.0',
 		'webob >= 1.2.2',
-		'webtest >= 1.3.6',
 		'whoosh >= 2.4.1',
 		 # bcrypt/pbkdf2 for zope.password
 		 # adds cryptacular and pbkdf2
@@ -252,6 +251,7 @@ setup(
 			'zc.buildout == 1.6.3',
 			'nose-progressive',
 			'pyhamcrest >= 1.6',
+			'webtest >= 1.4.0',
 			'fudge'],
 		'tools': [
 			'pyramid_debugtoolbar >= 1.0.2',

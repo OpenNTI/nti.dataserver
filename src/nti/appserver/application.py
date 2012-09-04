@@ -601,13 +601,6 @@ def createApplication( http_port,
 
 	return (main,main) # bwc
 
-import geventwebsocket.handler
-
-class AppServer(gevent.pywsgi.WSGIServer):
-	def __init__( self, *args, **kwargs ):
-		kwargs['handler_class'] = geventwebsocket.handler.WebSocketHandler
-		super(AppServer,self).__init__(*args, **kwargs)
-
 
 # These two functions exist for the sake of the installed executables
 # but they do nothing these days

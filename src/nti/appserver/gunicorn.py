@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 """
 Support for running the application with gunicorn. You must use our worker, configured with paster:
 	[server:main]
@@ -23,11 +23,12 @@ import gunicorn.sock
 
 import gevent
 import gevent.socket
-from gevent.server import StreamServer
+
+from .application_server import FlashPolicyServer
+from .application_server import WebSocketServer
 
 from zope.dottedname import resolve as dottedname
 
-import nti.appserver.standalone
 from paste.deploy import loadwsgi
 
 class _DummyApp(object):
@@ -136,12 +137,10 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 			gevent.hub.get_hub() # init the hub in this new thread/process
 			dummy_app = self.app.app
 			wsgi_app = loadwsgi.loadapp( 'config:' + dummy_app.global_conf['__file__'], name='dataserver_gunicorn' )
-			# Note that this is creating the SockeIO server class as well as initializing
-			# the Pyramid/Dataserver application
-			self.app_server = nti.appserver.standalone._create_app_server( wsgi_app,
-																		   dummy_app.global_conf,
-																		   port=dummy_app.global_conf['http_port'],
-																		   **dummy_app.kwargs )
+			self.app_server = WebSocketServer(
+				(dummy_app.kwargs.get( 'host', ''), int(dummy_app.global_conf['http_port'])),
+				wsgi_app )
+
 			self.wsgi_handler = self.app_server.handler_class
 
 		except Exception:
@@ -168,6 +167,7 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		self.app_server.socket = self.socket
 		# Everything must be complete and ready to go before we call into
 		# the super, it in turn calls run()
+		# TODO: Errors here get silently swallowed and gunicorn just cycles the worker
 		super(GeventApplicationWorker,self).init_process()
 
 class _PhonyRequest(object):
@@ -280,18 +280,3 @@ class _ServerFactory(object):
 		worker.app_server.handler_class = HandlerClass
 		worker.app_server.base_env = ggevent.PyWSGIServer.base_env
 		return worker.app_server
-
-class FlashPolicyServer(StreamServer):
-	policy = b"""<?xml version="1.0" encoding="utf-8"?>
-	<!DOCTYPE cross-domain-policy SYSTEM "http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd">
-	<cross-domain-policy>
-		<allow-access-from domain="*" to-ports="*"/>
-	</cross-domain-policy>\n"""
-
-	def __init__(self, listener=None, backlog=None):
-		if listener is None:
-			listener = ('0.0.0.0', 10843)
-		StreamServer.__init__(self, listener=listener, backlog=backlog)
-
-	def handle(self, socket, address):
-		socket.sendall(self.policy)
