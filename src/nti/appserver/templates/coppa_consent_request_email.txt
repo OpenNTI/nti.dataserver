@@ -25,7 +25,7 @@ consent, your child can still use some parts of NextThought, such as
 reading materials online and making notes for themselves.
 
 Your Child's Information
-=======================
+========================
 
 At NextThought we are committed to providing a safe and secure
 environment to support your child's education and appreciate that you
@@ -43,8 +43,8 @@ available to him or her. This information allows us to connect users
 to the educational community and to send information about NextThought
 to your child.
 
-NextThought Rules, Terms of Service, and Privacy
-================================================
+NextThought Rules, Terms of Service and Privacy
+===============================================
 
 Please take a moment to review our Terms of Service, Privacy Policy
 and our Children's Privacy Policy for more details about our
@@ -53,11 +53,12 @@ at ${request.application_url}.
 
 You may review or update your child's personal information or request
 that we delete his or her account at any time. To do this please send
-an email your child's username to compliance@nextthought.com, and we
-will contact you about reviewing or deleting your child's information.
+an email with your child's username to compliance@nextthought.com, and
+we will contact you about reviewing or deleting your child's
+information.
 
 Sincerely,
-- The NextThought Team
+NextThought
 
 For more information about NextThought, please visit our website at
 www.nextthought.com.

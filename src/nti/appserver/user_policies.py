@@ -148,7 +148,7 @@ def send_consent_request_on_new_coppa_account( user, event ):
 
 	message = Message( subject="Please Confirm Your Child's NextThought Account", # TODO: i18n
 					   recipients=[email],
-					   sender='NextThought Compliance <compliance@nextthought.com', # Override the default, also needed for the attachment handling
+					   sender='no-reply@nextthought.com', # The default, but explicitly needed for the attachment handling below
 					   body=None,
 					   html=html_body)
 
