@@ -114,7 +114,7 @@ def _create_new_session(request):
 	if not username:
 		logger.debug( "Unauthenticated session request" )
 		raise hexc.HTTPUnauthorized()
-	gevent.sleep( 0.1 ) # Trivial throttling
+	#gevent.sleep( 0.1 ) # Trivial throttling
 	logger.debug( "Creating session handler for '%s'", username )
 
 	session_manager = component.getUtility( nti_interfaces.IDataserver ).session_manager
