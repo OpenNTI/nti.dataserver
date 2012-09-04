@@ -125,7 +125,7 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 
 		if 'parent' not in kwargs:
 			kwargs['parent'] = root_users
-
+		__traceback_info__ = kwargs
 		# When we auto-create users, we need to be sure
 		# they have a database connection so that things that
 		# are added /to them/ (their contained storage) in the same transaction
@@ -139,16 +139,17 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 		# runs so that subobjects which might go looking through their parents
 		# to find a IConnection find the user's IConnection *first*, before they find
 		# the `root_users` connection
-		placer = component.queryUtility( nti_interfaces.INewUserPlacer ) or component.getUtility( nti_interfaces.INewUserPlacer, name='default' )
-		placer.placeNewUser( user, root_users, dataserver.shards )
+		if not preflight_only:
+			placer = component.queryUtility( nti_interfaces.INewUserPlacer ) or component.getUtility( nti_interfaces.INewUserPlacer, name='default' )
+			placer.placeNewUser( user, root_users, dataserver.shards )
 
-		IKeyReference( user ) # Ensure it gets added to the database
-		assert getattr( user, '_p_jar', None ), "User should have a connection"
+			IKeyReference( user ) # Ensure it gets added to the database
+			assert getattr( user, '_p_jar', None ), "User should have a connection"
 
 		# Finally, we init the user
 		ext_value = kwargs.pop( 'external_value', None )
 		user.__init__( **kwargs )
-		assert getattr( user, '_p_jar', None ), "User should still have a connection"
+		assert preflight_only or getattr( user, '_p_jar', None ), "User should still have a connection"
 
 		# Notify we're about to update
 		notify( interfaces.WillUpdateNewEntityEvent( user, ext_value ) )
@@ -162,6 +163,9 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 			if user.username in root_users:
 				raise KeyError( user.username )
 			user.__parent__ = None
+			# Be sure we didn't add this guy anywhere. If we did, then things are
+			# wacked and we need this transaction to fail.
+			assert getattr( user, '_p_jar', None ) is None, "User should NOT have a connection"
 			return user
 
 		lifecycleevent.created( user ) # Fire created event
