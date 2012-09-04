@@ -864,7 +864,7 @@ class User(Principal):
 			try:
 				origSharing = obj.sharingTargets
 			except AttributeError:
-				logger.debug( "Failed to get sharing targets on obj of type %s; no one to target change to", type(obj) )
+				#logger.debug( "Failed to get sharing targets on obj of type %s; no one to target change to", type(obj) )
 				return
 		else:
 			# If we were a tuple, then we definitely have sharing
@@ -1023,7 +1023,7 @@ def user_devicefeedback( msg ):
 
 def onChange( datasvr, msg, target=None, broadcast=None, **kwargs ):
 	if target and not broadcast:
-		logger.debug( 'Incoming change to %s', target )
+		#logger.debug( 'Incoming change to %s', target )
 		entity = target
 		if getattr( entity, '_p_jar', None):
 			getattr( entity, '_p_jar' ).readCurrent( entity )

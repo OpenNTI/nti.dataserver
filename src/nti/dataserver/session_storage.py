@@ -114,7 +114,7 @@ class OwnerBasedAnnotationSessionServiceStorage(persistent.Persistent):
 		discard( _session_id_set_for_session_owner( session.owner, self.family ),
 				 session_id )
 		self.intids.unregister( session )
-		logger.info( "Unregistered session %s for %s", session_id, session.owner )
+		logger.info( "Unregistered session %s for %s", hex(session_id), session.owner )
 
 	def unregister_all_sessions_for_owner( self, session_owner ):
 		session_ids = _session_id_set_for_session_owner( session_owner, None, default={}, create=False )
