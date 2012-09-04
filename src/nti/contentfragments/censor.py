@@ -98,64 +98,42 @@ def TrivialMatchScannerExternalFile( file_path ):
 @interface.implementer(interfaces.ICensoredContentScanner)
 class WordMatchScanner(TrivialMatchScanner):
 
-	_re_word_start    = r"[^\(\"\`{\[:;&\#\*@\)}\]\-,]"
-
-	_re_non_word_chars   = r"(?:[?!)\";}\]\*:@\'\({\[])"
-
-	_re_multi_char_punct = r"(?:\-{2,}|\.{2,}|(?:\.\s){2,}\.)"
-
-	_word_tokenize_fmt = r'''(
-		%(MultiChar)s
-		|
-		(?=%(WordStart)s)\S+?  # Accept word characters until end is found
-		(?= # Sequences marking a word's end
-		    \s|                                 # White-space
-		    $|                                  # End-of-string
-		    %(NonWord)s|%(MultiChar)s|          # Punctuation
-		    ,(?=$|\s|%(NonWord)s|%(MultiChar)s) # Comma if at end of word
-		)
-		|
-		\S
-	)'''
-
-	@classmethod
-	def create_word_tokenizer(cls):
-		_re_word_tokenizer = re.compile(
-				cls._word_tokenize_fmt %
-				{
-					'NonWord':   cls._re_non_word_chars,
-					'MultiChar': cls._re_multi_char_punct,
-					'WordStart': cls._re_word_start,
-				},
-				re.UNICODE | re.VERBOSE
-			)
-		return _re_word_tokenizer
+	_re_char = r"[ \? | ( | \" | \` | { | \[ | : | ; | & | \# | \* | @ | \) | } | \] | \- | , | \. | ! | \s]"
 
 	def __init__( self, white_words=(), prohibited_words=() ):
-		self._word_tokenizer = self.create_word_tokenizer()
-		self.white_words = set([x.lower() for x in white_words if x]) if white_words else ()
-		self.prohibited_words = set([x.lower() for x in prohibited_words if x]) if prohibited_words else ()
+		self.char_tester = re.compile(self._re_char)
+		self.white_words = [word.lower() for word in white_words]
+		self.prohibited_words = [word.lower() for word in prohibited_words]
 
+	def _test_start(self, idx, content_fragment):
+		result = idx == 0 or self.char_tester.match(content_fragment[idx-1])
+		return result
+	
+	def _test_end(self, idx, content_fragment):
+		result = idx == len(content_fragment) or self.char_tester.match(content_fragment[idx])
+		return result
+	
+	def _find_ranges(self, word_list, content_fragment):
+		ranges = []
+		for x in word_list:
+			idx = content_fragment.find( x, 0 )
+			while (idx != -1):
+				endidx = idx + len(x)
+				match_range = (idx, endidx)
+				if self._test_start(idx, content_fragment) and self._test_end(endidx, content_fragment):
+					ranges.append(match_range)
+				idx = content_fragment.find( x, endidx )
+		return ranges
+				
 	def _do_scan(self, content_fragment, white_words_ranges=[]):
-
-		tokens = defaultdict(list)
-		for t in self._word_tokenizer.finditer(content_fragment):
-			match_range = (t.start(), t.end())
-			text = content_fragment[t.start():t.end()]
-			tokens[text].append(match_range)
-
-		# save the ranges of safe words
-		for word in self.white_words:
-			ranges = tokens.get(word, ())
-			if ranges:
-				white_words_ranges.extend(ranges)
+		ranges = self._find_ranges(self.white_words, content_fragment)
+		white_words_ranges.extend(ranges)
 
 		# yield/return any prohibited_words
-		for word in self.prohibited_words:
-			lst = tokens.get(word, ())
-			for match_range in lst:
-				if self._test_range(match_range, white_words_ranges):
-					yield match_range
+		ranges = self._find_ranges(self.prohibited_words, content_fragment)
+		for match_range in ranges:
+			if self._test_range(match_range, white_words_ranges):
+				yield match_range
 
 	def scan( self, content_fragment ):
 		content_fragment = content_fragment.lower()

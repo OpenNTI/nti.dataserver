@@ -232,7 +232,6 @@ u0ne
 u0e
 u0er
 u4k0e
-uneq ba
 uneqpberfrk
 ubne
 ubre

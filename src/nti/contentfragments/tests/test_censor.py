@@ -61,7 +61,7 @@ def test_word_match_scanner():
 			  lot, I didn't like all of the pain"""
 
 	ranges = list(wm.scan(bad_val))
-	assert_that(ranges, is_([(19, 23), (54, 58), (104, 108), (39, 43)]))
+	assert_that(ranges, is_([(39, 43), (19, 23), (54, 58), (104, 108)]))
 	
 	wm = WordMatchScanner((), ['thought'])
 	ranges = list(wm.scan(bad_val))
@@ -70,6 +70,24 @@ def test_word_match_scanner():
 	wm = WordMatchScanner(('lost',), ['lost','like'])
 	ranges = list(wm.scan(bad_val))
 	assert_that(ranges, is_([(19, 23), (54, 58), (104, 108)]))
+	
+	bad_val = "So I am a rock on!!! forever"
+	wm = WordMatchScanner((), ['rock on','apple'])
+	ranges = list(wm.scan(bad_val))
+	assert_that(ranges, is_([(10,17)]))
+	bad_val = "So I am a rock one and that is it"
+	ranges = list(wm.scan(bad_val))
+	assert_that(ranges, is_([]))
+	
+	bad_val = "buck bill gates"
+	wm = WordMatchScanner((), ['buck'])
+	ranges = list(wm.scan(bad_val))
+	assert_that(ranges, is_([(0,4)]))
+	
+	bad_val = "buck bill gates"
+	wm = WordMatchScanner((), ['gates'])
+	ranges = list(wm.scan(bad_val))
+	assert_that(ranges, is_([(10,15)]))
 	
 def test_trivial_and_word_match_scanner():
 	
@@ -106,3 +124,6 @@ def test_schema_event_censoring():
 
 	assert_that( censored.body,
 				 is_( 'This is ******* stupid, you ************ *******' ) )
+	
+if __name__ == '__main__':
+	test_word_match_scanner()
