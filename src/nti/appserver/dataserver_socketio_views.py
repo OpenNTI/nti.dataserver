@@ -114,6 +114,7 @@ def _create_new_session(request):
 	if not username:
 		logger.debug( "Unauthenticated session request" )
 		raise hexc.HTTPUnauthorized()
+	gevent.sleep( 0.1 ) # Trivial throttling
 	logger.debug( "Creating session handler for '%s'", username )
 
 	session_manager = component.getUtility( nti_interfaces.IDataserver ).session_manager
@@ -128,7 +129,7 @@ def _create_new_session(request):
 def _handshake_view( request ):
 	"""
 	The first step in socket.io. A handshake begins the process by
-	requesting a new session, we send back the session id and some miscelaneous
+	requesting a new session, we send back the session id and some miscellaneous
 	information.
 	"""
 	# TODO: Always creating a session here is a potential DOS?
