@@ -17,6 +17,7 @@
 import os
 import gzip
 import pickle
+from collections import defaultdict
 
 class DefaultFilter(object):
 
@@ -27,6 +28,17 @@ class DefaultFilter(object):
 	def __call__(self, word, occur, strength):
 		return (strength == 1 and occur >= self.single_strength_min_occur) or (strength >= self.no_limit_strength)
 
+class NormRecord(object):
+	
+	def __init__(self, norm, occur, strength, terms=()):
+		self.norm = norm
+		self.occur = occur
+		self.strength = strength
+		self.terms = sorted(terms) if terms else () 
+
+	def __repr__( self ):
+		return "NormRecord(%s, %s, %s, %s)" % (self.norm, self.occur, self.strength, self.terms)
+
 class TermExtractor(object):
 
 	_NOUN = 1
@@ -35,26 +47,29 @@ class TermExtractor(object):
 	def __init__(self, term_filter=None):
 		self.term_filter = term_filter or DefaultFilter()
 
-	def _tracker(self, term, norm, multiterm, terms):
+	def _tracker(self, term, norm, multiterm, terms, terms_per_norm):
 		multiterm.append((term, norm))
 		terms.setdefault(norm, 0)
 		terms[norm] += 1
+		terms_per_norm[norm].add(term.lower())
 	
 	def extract(self, tagged_terms=()):
 		terms = {}
 		# phase 1: A little state machine is used to build simple and
 		# composite terms.
 		multiterm = []
+		terms_per_norm = defaultdict(set)
+		
 		state = self._SEARCH
 		for term, tag, norm in tagged_terms:
 			if state == self._SEARCH and tag.startswith('N'):
 				state = self._NOUN
-				self._tracker(term, norm, multiterm, terms)
+				self._tracker(term, norm, multiterm, terms, terms_per_norm)
 			elif state == self._SEARCH and tag == 'JJ' and term[0].isupper():
 				state = self._NOUN
-				self._tracker(term, norm, multiterm, terms)
+				self._tracker(term, norm, multiterm, terms, terms_per_norm)
 			elif state == self._NOUN and tag.startswith('N'):
-				self._tracker(term, norm, multiterm, terms)
+				self._tracker(term, norm, multiterm, terms, terms_per_norm)
 			elif state == self._NOUN and not tag.startswith('N'):
 				state = self._SEARCH
 				if len(multiterm) > 1:
@@ -64,10 +79,12 @@ class TermExtractor(object):
 				multiterm = []
 		# phase 2: Only select the terms that fulfill the filter criteria.
 		# also create the term strength.
-		return [
-			(word, occur, len(word.split()))
-			for word, occur in terms.items()
-			if self.term_filter(word, occur, len(word.split()))]
+		result = [	NormRecord(norm, occur, len(norm.split()), terms_per_norm.get(norm,()))
+			 		for norm, occur in terms.items()
+			 		if self.term_filter(norm, occur, len(norm.split())) ]
+		result = sorted(result, reverse=True, key=lambda x: x.occur)
+		
+		return result
 	
 # for the time being we assume the training sents comes
 # from the brown corpus

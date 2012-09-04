@@ -13,10 +13,11 @@ class TestIndexer(unittest.TestCase):
 			content = f.read()
 			
 		terms = extract_key_words(content)
-		assert_that(terms, is_([('blood vessel', 1, 2), 
-								('blood cells', 1, 2),
+		terms = [(r.norm, r.occur, r.strength) for r in terms]
+		assert_that(terms, is_([('blood', 4, 1),
 								('virus', 3, 1),
-								('blood', 4, 1),
+								('blood vessel', 1, 2), 
+								('blood cells', 1, 2),
 								('body works', 1, 2),
 								('blood cells viruses', 1, 3)]))	
 
