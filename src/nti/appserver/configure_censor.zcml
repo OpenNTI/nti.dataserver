@@ -18,6 +18,12 @@
 
 	<adapter factory=".censor_policies.coppa_user_censor_policy" />
 
+	<!-- All FriendsLists names are censored, all the time -->
+	<!-- Just like we do for user account usernames -->
+	<subscriber handler=".site_policies._censor_usernames"
+				for="nti.dataserver.interfaces.IFriendsList
+					 zope.lifecycleevent.IObjectCreatedEvent" />
+
 	<!--
 		 Make sure messages get the right censoring policy by
 		 assigning their owner as early as needed

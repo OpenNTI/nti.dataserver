@@ -14,6 +14,7 @@ from zope import component
 from zope import interface
 
 from zope import lifecycleevent
+from zope.schema import interfaces as sch_interfaces
 
 import pyramid.security as sec
 from nti.appserver import httpexceptions as hexc
@@ -474,7 +475,13 @@ class _UGDPostView(_UGDModifyViewBase):
 	def createContentObject( self, user, datatype, externalValue, creator ):
 		return _createContentObject( self.dataserver, user, datatype, externalValue, creator )
 
-	def __call__(self ):
+	def __call__( self ):
+		try:
+			return self._do_call()
+		except sch_interfaces.ValidationError as e:
+			obj_io.handle_validation_error( self.request, e )
+
+	def _do_call( self ):
 		creator = self.getRemoteUser()
 		context = self.request.context
 		# If our context contains a user resource, then that's where we should be trying to

@@ -237,7 +237,6 @@ class ISitePolicyUserEventListener(interface.Interface):
 
 from zope.lifecycleevent.interfaces import IObjectCreatedEvent
 from nti.dataserver import users
-from nti.dataserver.users import interfaces as user_interfaces
 import zope.schema
 
 
@@ -267,15 +266,18 @@ def dispatch_user_will_update_to_site_policy( user, event ):
 def dispatch_user_will_create_to_site_policy( user, event ):
 	_dispatch_to_policy( user, event, 'user_will_create' )
 
-def _censor_usernames( user ):
+def _censor_usernames( entity, event=None ):
+	"""
+	Censore the username field of the entity. Can be used as an event listener as well.
+	"""
 	policy = censor.DefaultCensoredContentPolicy()
 
-	if policy.censor( user.username, user ) != user.username:
-		raise FieldContainsCensoredSequence( "Username contains a censored sequence", 'Username', user.username )
+	if policy.censor( entity.username, entity ) != entity.username:
+		raise FieldContainsCensoredSequence( "Username contains a censored sequence", 'Username', entity.username )
 
-	names = user_interfaces.IFriendlyNamed( user )
-	if names.alias: # TODO: What about realname?
-		if policy.censor( names.alias, user ) != names.alias:
+	names = user_interfaces.IFriendlyNamed( entity, None )
+	if names and names.alias: # TODO: What about realname?
+		if policy.censor( names.alias, entity ) != names.alias:
 			raise FieldContainsCensoredSequence( "alias contains a censored sequence", 'alias', names.alias )
 
 def _is_x_or_more_years_ago( birthdate, years_ago=13 ):
