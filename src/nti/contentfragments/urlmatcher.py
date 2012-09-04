@@ -31,6 +31,11 @@ class GrubberHyperlinkFormatter(object):
 	grubber_v1_pattern = re.compile(''.join(grubber_v1))
 	grubber_v2_pattern = re.compile(''.join(grubber_v2))
 
+	def _check_href(self, href):
+		if not href.startswith('http'):
+			href = 'http://' + href
+		return href
+	
 	def _a_builder(self, node, pattern, is_text=True):
 		field = 'text' if is_text else 'tail'
 		text = getattr(node, field, None)
@@ -41,7 +46,8 @@ class GrubberHyperlinkFormatter(object):
 				end = m.end()
 				start = m.start()
 				result.append(text[0:start])
-				e = etree.Element('a', href=text[start:end])
+				href = self._check_href(text[start:end])
+				e = etree.Element('a', href=href)
 				e.text = text[start:end]
 				result.append(e)
 				text = text[end:]
