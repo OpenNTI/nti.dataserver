@@ -219,7 +219,12 @@ class _ServerFactory(object):
 				if not prequest:
 					return self._formatinfo()
 
-				uid = unauthenticated_userid( prequest )
+				try:
+					uid = unauthenticated_userid( prequest )
+				except LookupError:
+					# In some cases, pyramid tries to turn this into an authenticated
+					# user id, and if it's too early, we won't be able to use the dataserver
+					uid = prequest.remote_user
 				return "%s:%s" % (prequest.path, uid )
 
 		spawn.greenlet_class = WorkerGreenlet
