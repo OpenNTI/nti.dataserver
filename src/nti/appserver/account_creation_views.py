@@ -44,6 +44,8 @@ import zope.schema.interfaces
 
 import z3c.password.interfaces
 
+import nti.utils.schema
+
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
@@ -66,6 +68,7 @@ import nameparser.parser
 REL_CREATE_ACCOUNT = "account.create"
 REL_PREFLIGHT_CREATE_ACCOUNT = "account.preflight.create"
 
+_PLACEHOLDER_USERNAME = 'A_Username_We_Allow_That_Doesnt_Conflict'
 
 def _create_user( request, externalValue, preflight_only=False ):
 
@@ -129,6 +132,17 @@ def _create_user( request, externalValue, preflight_only=False ):
 					   'field': 'password',
 					   'code': e.__class__.__name__},
 					  exc_info[2] )
+	except nti.utils.schema.InvalidValue as e:
+		if e.value == _PLACEHOLDER_USERNAME:
+			# Not quite sure what the conflict actually was, but at least we know
+			# they haven't provided a username value, so make it look like that
+			exc_info = sys.exc_info()
+			_raise_error( request, hexc.HTTPUnprocessableEntity,
+						  {'field': 'Username',
+						   'message': 'Username cannot be blank',
+						   'code': 'UsernameCannotBeBlank'},
+						   exc_info[2] )
+		obj_io.handle_validation_error( request, e )
 	except zope.schema.interfaces.ValidationError as e:
 		obj_io.handle_validation_error( request, e )
 	except KeyError:
@@ -213,7 +227,7 @@ def account_preflight_view(request):
 
 	externalValue = obj_io.read_body_as_external_object(request)
 
-	placeholder_data = {'Username': 'A_Username_We_Allow_That_Doesnt_Conflict',
+	placeholder_data = {'Username': _PLACEHOLDER_USERNAME,
 						'password': None,
 						'birthdate': '1982-01-31',
 						'email': 'testing_account_creation@tests.nextthought.com',

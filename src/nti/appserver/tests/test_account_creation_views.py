@@ -123,6 +123,29 @@ class _AbstractValidationViewBase(ConfiguringTestBase):
 			assert_that( e.exception.json_body, has_entry( 'field', 'Username' ) )
 			assert_that( e.exception.json_body, has_entry( 'code', bad_code ) )
 
+	@WithMockDSTrans
+	def test_create_invalid_realname( self ):
+		self.request.content_type = 'application/vnd.nextthought+json'
+
+		bad_code = 'UsernameCannotBeBlank'
+		bad_code = [bad_code] + ['UsernameContainsIllegalChar'] * 4
+		bad_code.append( "TooShort" )
+		for bad_code, bad_username in itertools.izip( bad_code, ('   ', 'foo bar', 'foo#bar', 'foo,bar', 'foo%bar', 'abcd' )):
+
+			self.request.body = to_json_representation( {'Username': bad_username,
+														 'password': 'pass132word',
+														 'realname': 'Joe Human',
+														 'email': 'user@domain.com' } )
+			__traceback_info__ = self.request.body
+
+
+			with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
+				self.the_view( self.request )
+
+			assert_that( e.exception.json_body, has_entry( 'field', 'Username' ) )
+			assert_that( e.exception.json_body, has_entry( 'code', bad_code ) )
+
+
 class _AbstractNotDevmodeViewBase(ConfiguringTestBase):
 	# The tests that depend on not having devmode installed (stricter defailt validation) should be here
 	# Since they run so much slower due to the mimetype registration
@@ -264,6 +287,25 @@ class TestPreflightView(_AbstractValidationViewBase):
 									 has_entry( 'affiliation',
 												has_entry( 'type', 'nti.appserver.site_policies.school' ) ) ) )
 
+
+	@WithMockDSTrans
+	def test_create_invalid_realname_mathcounts( self ):
+		assert_that( self.request.host, is_( 'example.com:80' ) )
+		self.request.headers['origin'] = 'http://mathcounts.nextthought.com'
+		self.request.content_type = 'application/vnd.nextthought+json'
+
+		bad_code = 'UsernameCannotBeBlank'
+		birthdate = datetime.date.today().replace( year=datetime.date.today().year - 10 ).isoformat()
+		self.request.body = to_json_representation( { 'birthdate': birthdate,
+													 'realname': 'N K' } )
+		__traceback_info__ = self.request.body
+
+
+		with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
+			self.the_view( self.request )
+
+		assert_that( e.exception.json_body, has_entry( 'field', 'Username' ) )
+		assert_that( e.exception.json_body, has_entry( 'code', bad_code ) )
 
 
 	@WithMockDSTrans
