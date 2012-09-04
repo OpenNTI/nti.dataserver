@@ -28,7 +28,7 @@ def _is_user_online(dataserver, username, ignoring_session=None):
 		sessions.discard( ignoring_session )
 	return sessions
 
-def _notify_friends_of_presence( session, presence ):
+def _notify_friends_of_presence( session, presence, event=None ):
 	user = users.User.get_user( session.owner ) if session else None
 	if user is None:
 		logger.error( "Unable to get owner of session %s; not sending presence notification", session )
@@ -36,7 +36,7 @@ def _notify_friends_of_presence( session, presence ):
 
 	# TODO: Better algorithm. Who should this really go to?
 	has_me_in_buddy_list = user.following | set(user._sources_accepted)
-	logger.debug( "Notifying %s of presence change of %s to %s", has_me_in_buddy_list, session.owner, presence )
+	logger.debug( "Notifying %s of presence change of %s/%s to %s for %s", has_me_in_buddy_list, session.owner, session, presence, event )
 	notify( chat_interfaces.PresenceChangedUserNotificationEvent( has_me_in_buddy_list, session.owner, presence ) )
 
 
@@ -49,14 +49,14 @@ def session_disconnected_broadcaster( session, event ):
 
 	online = _is_user_online( dataserver, session.owner, session )
 	if not online:
-		_notify_friends_of_presence( session, chat_interfaces.PresenceChangedUserNotificationEvent.P_OFFLINE )
+		_notify_friends_of_presence( session, chat_interfaces.PresenceChangedUserNotificationEvent.P_OFFLINE, event )
 	else:
-		logger.debug( "A session (%s) died, but some are still online (%s)", session, online )
+		logger.debug( "A session (%s) died, but %s are still online", session, len(online) )
 
 
 @component.adapter( sio_interfaces.ISocketSession, sio_interfaces.ISocketSessionConnectedEvent )
 def session_connected_broadcaster( session, event ):
-	_notify_friends_of_presence( session, chat_interfaces.PresenceChangedUserNotificationEvent.P_ONLINE )
+	_notify_friends_of_presence( session, chat_interfaces.PresenceChangedUserNotificationEvent.P_ONLINE, event )
 
 ## Add presence info to users during externalization
 ## FIXME: This information is transient and so by doing this
