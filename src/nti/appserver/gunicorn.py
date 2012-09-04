@@ -180,6 +180,9 @@ class _PhonyRequest(object):
 	def get_input_headers(self):
 		raise Exception("Not implemented for phony request")
 
+from pyramid.security import unauthenticated_userid
+from pyramid.threadlocal import get_current_request
+
 class _ServerFactory(object):
 	"""
 	Given a worker that has already created the app server, does
@@ -205,6 +208,21 @@ class _ServerFactory(object):
 
 		# The super class will provide a Pool based on the
 		# worker_connections setting
+
+		class WorkerGreenlet(spawn.greenlet_class):
+			"""
+			See nti.dataserver for this. We provide a pretty thread name to the extent
+			possible.
+			"""
+			def __thread_name__(self):
+				prequest = get_current_request()
+				if not prequest:
+					return self._formatinfo()
+
+				uid = unauthenticated_userid( prequest )
+				return "%s:%s" % (prequest.path, uid )
+
+		spawn.greenlet_class = WorkerGreenlet
 		worker.app_server.set_spawn(spawn)
 		# We want to log with the appropriate logger, which
 		# has monitoring info attached to it
