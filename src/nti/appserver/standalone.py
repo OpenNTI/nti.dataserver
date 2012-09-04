@@ -22,7 +22,8 @@ from nti.contentlibrary.externalization import map_all_buckets_to
 from nti.dataserver import interfaces as nti_interfaces
 from zope import component
 
-from .application import createApplication, AppServer
+from .application import createApplication
+from .application_server import WebSocketServer
 from paste.deploy.converters import asbool
 
 SOCKET_IO_PATH = 'socket.io'
@@ -84,7 +85,7 @@ def _serve(httpd):
 			raise
 
 def _create_app_server(wsgi_app, global_conf, host='', port=None, **kwargs):
-	httpd = AppServer(
+	httpd = WebSocketServer(
 		(host, int(port)),
 		wsgi_app )
 	return httpd
