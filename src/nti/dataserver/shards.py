@@ -87,6 +87,9 @@ class AbstractShardPlacer(object):
 		:return: A `True` value if we could place the user in the requested shard,
 			otherwise a `False` value.
 		"""
+		if not user or not shard_name:
+			return False
+
 		root_conn = IConnection(user_directory)
 		shard_conn = root_conn.get_connection( shard_name ) # TODO: Handling the case where we can't get a connection
 		if shard_conn and shard_conn is not root_conn:
@@ -116,12 +119,23 @@ class HashedShardPlacer(TrivialShardPlacer,AbstractShardPlacer):
 		# While the shards are the same, to get consistent results,
 		# we need the buckets to be the same too. Which means we must sort them.
 		shard_buckets = sorted(shards.keys())
-		shard_name = shard_buckets[hash(user.username) % len(shard_buckets)]
+		# Removing the root shard, if it's present, since we fallback to that
+		# and we want to avoid going there
+		try:
+			shard_buckets.remove( IConnection(user_directory).db().database_name )
+		except ValueError: pass
 
-		if not self.place_user_in_shard_named( user, user_directory, shard_name ):
-			# Narf. Going to have to go back to the root conn
-			# Note that we can't do that ourself, because the root shard uses a
-			# 'users' container that fires events, and the user object is probably not
-			# ready for that yet.
-			logger.debug( "Failed to assign new user %s to shard %s out of %s", user.username, shard_name, shard_buckets )
-			super(HashedShardPlacer,self).placeNewUser( user, user_directory, shards )
+		if not shard_buckets:
+			# We have no choice but to place in the root
+			TrivialShardPlacer.placeNewUser( self, user, user_directory, shards )
+		else:
+
+			shard_name = shard_buckets[hash(user.username) % len(shard_buckets)]
+
+			if not self.place_user_in_shard_named( user, user_directory, shard_name ):
+				# Narf. Going to have to go back to the root conn
+				# Note that we can't do that ourself, because the root shard uses a
+				# 'users' container that fires events, and the user object is probably not
+				# ready for that yet.
+				logger.debug( "Failed to assign new user %s to shard %s out of %s", user.username, shard_name, shard_buckets )
+				TrivialShardPlacer.placeNewUser( self, user, user_directory, shards )
