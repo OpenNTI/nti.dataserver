@@ -370,8 +370,8 @@ MathJax.Hub.Register.StartupHook("HTML-CSS Jax Ready",function () {
       TEXDEF.mathchar0mi.blacktriangledown = '25BE';
       TEXDEF.mathchar0mi.square = '25FB';
       TEXDEF.mathchar0mi.blacksquare = '25FC';
-      TEXDEF.mathchar0mi.vartriangle = ['25B3',{mathsize:"71%"}];
-      TEXDEF.mathchar0mi.triangledown = ['25BD',{mathsize:"71%"}];
+      TEXDEF.mathchar0mi.vartriangle = ['25B3',{mathsize:"80%"}];
+      TEXDEF.mathchar0mi.triangledown = ['25BD',{mathsize:"80%"}];
       TEXDEF.mathchar0mo.blacktriangleleft = '25C2';
       TEXDEF.mathchar0mo.blacktriangleright = '25B8';
       TEXDEF.mathchar0mo.smallsetminus = '2216';
