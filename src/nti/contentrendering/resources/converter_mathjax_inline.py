@@ -68,7 +68,7 @@ class MathjaxInlineCompilerDriver(converters.AbstractOneOutputDocumentCompilerDr
 		<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">\
 		<head>\
 		<link rel="stylesheet" href="styles/styles.css" />\
-		<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/1.1-latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>')
+		<script type="text/javascript" src="%s/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>' % os.path.dirname(self.mathjaxconfigfile))
 
 		self.write('<script type="text/javascript" src="%s"></script>' % self.mathjaxconfigfile)
 		self.write('<script type="text/javascript" src="%s"></script>' % self.configName)
