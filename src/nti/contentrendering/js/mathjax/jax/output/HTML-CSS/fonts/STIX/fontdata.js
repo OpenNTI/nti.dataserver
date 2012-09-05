@@ -359,7 +359,7 @@
     TEX.Definitions.mathchar0mi.prime[1].variantForm = true;
     TEX.Definitions.mathchar0mi.emptyset[1].variantForm = true;
     TEX.Definitions.mathchar0mi.backslash[1].variantForm = true;
-    TEX.Definitions.mathchar0mi.triangle[1].mathsize = "71%";
+    TEX.Definitions.mathchar0mi.triangle[1].mathsize = "80%";
 
     TEX.Definitions.mathchar0mo.setminus = ['2216',{variantForm: true}];
   });
