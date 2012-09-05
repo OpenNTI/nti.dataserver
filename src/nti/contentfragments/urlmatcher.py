@@ -36,6 +36,11 @@ class GrubberHyperlinkFormatter(object):
 			href = 'http://' + href
 		return href
 	
+	def _check_text(self, text):
+		if text.startswith('mailto:'):
+			text = text[7:]
+		return text
+	
 	def _a_builder(self, node, pattern, is_text=True):
 		field = 'text' if is_text else 'tail'
 		text = getattr(node, field, None)
@@ -48,7 +53,7 @@ class GrubberHyperlinkFormatter(object):
 				result.append(text[0:start])
 				href = self._check_href(text[start:end])
 				e = etree.Element('a', href=href)
-				e.text = text[start:end]
+				e.text = self._check_text(text[start:end])
 				result.append(e)
 				text = text[end:]
 				m = pattern.search(text)

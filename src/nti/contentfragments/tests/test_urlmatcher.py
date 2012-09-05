@@ -51,7 +51,7 @@ class TestUrlMatcher(ConfiguringTestBase):
 		
 	def test_mailto(self):
 		html = u'<html><head/><body>mailto:help@nextthought.com</body></html>'
-		exp = u'<html><head/><body><a href="mailto:help@nextthought.com">mailto:help@nextthought.com</a></body></html>'
+		exp = u'<html><head/><body><a href="mailto:help@nextthought.com">help@nextthought.com</a></body></html>'
 		assert_that(self.formatter.format(frg_interfaces.IHTMLContentFragment(html)), is_(exp))
 	
 if __name__ == '__main__':
