@@ -19,6 +19,7 @@ MathJax.Hub.Config({
 			lcm: '\\text{lcm}',
 			rule:['', 2],
 			bm: ['\\boldsymbol{#1}', 1],
+		    ensuremath: ['{#1}', 1],
 			textsuperscript: ['^{\\text{#1}}', 1]
 		}
 	}
@@ -44,6 +45,8 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready",function () {
 									 TEX.Definitions.mathchar0mo.iddots = '22F0';
 									 TEX.Definitions.mathchar0mo.yen = '00A5';
 									 TEX.Definitions.mathchar0mo.textregistered = '00AE';
+									 TEX.Definitions.mathchar0mo.mathsterling = '00A3';
+									 TEX.Definitions.mathchar0mo.pounds = '00A3';
 									 TEX.Definitions.mathchar0mo.EUR = '20AC';
 									 TEX.Definitions.mathchar0mo.EURO = '20AC';
 									 TEX.Definitions.mathchar0mo.euro = '20AC';
