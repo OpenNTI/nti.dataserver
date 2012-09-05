@@ -163,7 +163,7 @@ from nti.dataserver import liking
 import contentratings.interfaces
 
 class NoteTest(mock_dataserver.ConfiguringTestBase):
-	
+
 	def test_note_is_favoritable(self):
 		"Notes should be favoritable, and can become IUserRating"
 		n = Note()
@@ -504,8 +504,8 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 		html = frg_interfaces.IHTMLContentFragment(u'<html><head/><body><p>At www.nextthought.com</p></body></html>')
 		n.updateFromExternalObject( { 'body': [html] } )
 		ext = n.toExternalObject()
-		assert_that( ext['body'], is_( [u'<html><head/><body><p>At <a href="www.nextthought.com">www.nextthought.com</a></p></body></html>'] ) )
-		
+		assert_that( ext['body'], is_( [u'<html><head/><body><p>At <a href="http://www.nextthought.com">www.nextthought.com</a></p></body></html>'] ) )
+
 		n = Note()
 		n.updateFromExternalObject( { 'body': [u'www.nextthought.com'] } )
 		ext = n.toExternalObject()
