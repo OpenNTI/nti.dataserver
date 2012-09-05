@@ -41,6 +41,17 @@ class Search(object):
 		return _locate( indexmanager.search( query=query, indexid=query.indexid ),
 						self.request.root, 'Search' )
 
+class SuggestAndSearch(object):
+
+	def __init__(self, request):
+		self.request = request
+
+	def __call__( self ):
+		query = get_queryobject(self.request)
+		indexmanager = self.request.registry.getUtility( IIndexManager )
+		return _locate( indexmanager.suggest_and_search(query=query, indexid=query.indexid ),
+						self.request.root, 'SuggestAndSearch' )
+
 class UserSearch(object):
 
 	def __init__( self, request ):
