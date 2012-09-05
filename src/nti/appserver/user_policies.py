@@ -136,10 +136,11 @@ def send_consent_request_on_new_coppa_account( user, event ):
 						dict(user=user, profile=profile, context=user,master=master),
 						request=event.request )
 
-	# TODO: It would be nice if this PDF was prefilled with some fields
 	attachment_filename = 'coppa_consent_request_email_attachment.pdf'
 	attachment = pkg_resources.resource_stream( 'nti.appserver.templates',
 												attachment_filename )
+	# Prefill the fields.
+	attachment = _alter_pdf( attachment, user.username, profile.realname, email )
 	# There are problems using the released version attachments:
 	#https://github.com/Pylons/pyramid_mailer/issues/18
 	# So the workaround is to use the email package directly:
@@ -177,3 +178,53 @@ def send_consent_request_on_new_coppa_account( user, event ):
 	logger.info( "Will send COPPA consent notice to %s on behalf of %s", email, user.username )
 
 	setattr( profile, 'contact_email', None )
+
+import pyPdf
+import pyPdf.generic
+from cStringIO import StringIO
+
+def _alter_pdf( pdf_stream, username, child_firstname, parent_email ):
+	"""
+	Given a stream to our COPPA pdf, manipulate the fields to include the given data,
+	and return a new read stream.
+
+	This process is intimately tied to the structure of the PDF. If the PDF changes, then this
+	process will have to be (slightly) recalculated. Thus this method is littered with assertions.
+
+	This process depends on using standard PDF fonts, or having the entire font embedded, otherwise
+	characters not contained in the PDF will fail to render (will render as square boxes).
+	Our starter PDF includes all the ASCII characters, except the lowercase 'j', which causes text strings
+	to break up. It has also been run through Acrobat Pro to be sure that the fields we want to replace
+	are in Helvetica (Bold), and that this font (a standard font) is not subsetted, so that we can render 'j'.
+	"""
+
+	pdf_reader = pyPdf.PdfFileReader( pdf_stream )
+	assert pdf_reader.numPages == 1
+
+	pdf_page = pdf_reader.getPage( 0 )
+	# Get the content (we have to decode it, if we ask the page to decode it, it
+	# doesn't hold the reference)
+	page_content = pyPdf.pdf.ContentStream( pdf_page['/Contents'].getObject(), pdf_page.pdf )
+	# And store the content back in the page, under the NamedObject key, which happens to be equal to the string
+	assert pdf_page.keys()[0] == '/Contents'
+	pdf_page[pdf_page.keys()[0]] = page_content
+
+	IX_EMAIL = 357
+	IX_FNAME = 348
+	IX_UNAME = 338
+
+	assert page_content.operations[IX_EMAIL][1] == 'TJ' # TJ being the 'text with placement' operator
+	assert page_content.operations[IX_UNAME][1] == 'TJ'
+	assert page_content.operations[IX_FNAME][1] == 'TJ'
+
+	page_content.operations[IX_EMAIL] = ( [pyPdf.generic.TextStringObject( parent_email )], 'Tj') # Tj being the simple text operator
+	page_content.operations[IX_UNAME] = ( [pyPdf.generic.TextStringObject( username )], 'Tj')
+	page_content.operations[IX_FNAME] = ( [pyPdf.generic.TextStringObject( child_firstname )], 'Tj')
+
+	writer = pyPdf.PdfFileWriter()
+	writer.addPage( pdf_page )
+
+	stream = StringIO()
+	writer.write( stream )
+
+	return StringIO( stream.getvalue() )
