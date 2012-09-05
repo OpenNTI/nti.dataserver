@@ -32,7 +32,7 @@ class GrubberHyperlinkFormatter(object):
 	grubber_v2_pattern = re.compile(''.join(grubber_v2))
 
 	def _check_href(self, href):
-		if not href.startswith('http'):
+		if not href.startswith('http') and not href.startswith('mailto'):
 			href = 'http://' + href
 		return href
 	
