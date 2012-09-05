@@ -198,9 +198,13 @@ class _AbstractNAQPart(_LocalContentMixin,Base.Environment):
 			#  code fails on Latex solutions like $\frac{1}{2}$
 			# TODO: Should this be rendered? In some cases yes, in some cases no?
 			content = ' '.join([c.source.strip() for c in solution_el.childNodes]).strip()
-			if content[0] == '$' and content[len(content)-1] == '$':
-				 content = content[1:-1]
-			solution = self.soln_interface( cfg_interfaces.ILatexContentFragment( unicode(content).strip() ) )
+			if len(content) >= 2 and content.startswith( '$' ) and content.endswith( '$' ):
+				content = content[1:-1]
+
+			# Note that this is already a latex content fragment, we don't need
+			# to adapt it with the interfaces. If we do, a content string like "75\%" becomes
+			# "75\\\\%\\", which is clearly wrong
+			solution = self.soln_interface( cfg_interfaces.LatexContentFragment( unicode(content).strip() ) )
 			weight = solution_el.attributes['weight']
 			if weight is not None:
 				solution.weight = weight
