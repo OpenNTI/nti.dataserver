@@ -209,9 +209,9 @@ def _alter_pdf( pdf_stream, username, child_firstname, parent_email ):
 	assert pdf_page.keys()[0] == '/Contents'
 	pdf_page[pdf_page.keys()[0]] = page_content
 
-	IX_EMAIL = 357
-	IX_FNAME = 348
-	IX_UNAME = 338
+	IX_EMAIL = 323
+	IX_FNAME = 315
+	IX_UNAME = 307
 
 	assert page_content.operations[IX_EMAIL][1] == 'TJ' # TJ being the 'text with placement' operator
 	assert page_content.operations[IX_UNAME][1] == 'TJ'
