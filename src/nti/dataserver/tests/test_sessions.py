@@ -155,7 +155,7 @@ class TestSessionService(mock_dataserver.ConfiguringTestBase):
 		sessions = []
 		recur_limit = sys.getrecursionlimit()
 		for _ in range(recur_limit * 2): # The length needs to be pretty big to ensure recursion fails
-			session = self.session_service.create_session( watch_session=False )
+			session = self.session_service.create_session( watch_session=False, drop_old_sessions=False )
 			sessions.append( session )
 			session.incr_hits()
 

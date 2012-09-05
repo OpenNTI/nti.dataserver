@@ -44,7 +44,12 @@ class SessionService(object):
 		"""
 		self.proxy_sessions = {}
 		self.pub_socket = None
+		# Note that we have no way to close these greenlets. We depend
+		# on GC of this object to let them die when the last refs to
+		# us do.
 		self.cluster_listener = self._spawn_cluster_listener()
+		self._watching_sessions = set()
+		self._session_watchdog = self._spawn_session_watchdog()
 
 	@property
 	def _session_db(self):
@@ -74,6 +79,36 @@ class SessionService(object):
 
 		return gevent.spawn( read_incoming )
 
+	def _spawn_session_watchdog( self ):
+		def watchdog_sessions():
+			while True:
+				# Some transports make it very hard to detect
+				# when a session stops responding (XHR)...it just goes silent.
+				# We watch for it to die (since we created it) and cleanup
+				# after it...this is a compromise between always
+				# knowing it has died and doing the best we can across the cluster
+				gevent.sleep( 60 )	# Time? We can detect a dead session no faster than we decide it's dead,
+									# which is SESSION_HEARTBEAT_TIMEOUT
+				watching_sessions = list(self._watching_sessions)
+
+				try:
+					# In the past, we have done this by having a single greenlet per
+					# session_id. While this was convenient and probably not too heavy weight from a greenlet
+					# perspective, there are some indications that so many small transactions was
+					# a net loss as far as the DB goes. A few bigger transactions are more efficient, to a point
+					# although there is a higher risk of conflict
+					sessions = component.getUtility( nti_interfaces.IDataserverTransactionRunner )( lambda: {sid: self.get_session(sid) for sid in watching_sessions}, retries=5, sleep=0.1 )
+				except transaction.interfaces.TransientError:
+					# Try again later
+					logger.debug( "Trying session poll later", exc_info=True )
+					continue
+
+				for sid, sess in sessions.items():
+					if sess is None:
+						logger.debug( "Session %s died", sid )
+						self._watching_sessions.discard( sid )
+		return gevent.spawn( watchdog_sessions )
+
 	def _dispatch_message_to_proxy(  self, session_id, function_name, function_arg ):
 		handled = False
 		proxy = self.get_proxy_session( session_id )
@@ -101,39 +136,41 @@ class SessionService(object):
 	def get_proxy_session( self, session_id ):
 		return self.proxy_sessions.get( session_id )
 
-	def create_session( self, session_class=Session, watch_session=True, **kwargs ):
-		""" The returned session must not be modified. """
+	def create_session( self, session_class=Session, watch_session=True, drop_old_sessions=True, **kwargs ):
+		"""
+		The returned session must not be modified.
+
+		:param bool drop_old_sessions: If ``True`` (the default) then we will proactively look
+			for sessions for the session owner in excess of some number or some age and automatically kill them, keeping
+			a limit on the outstanding sessions the owner can have.
+			TODO: This may force older clients off the connection? Which may make things worse?
+		:param unicode owner: The session owner.
+		:param kwargs: All the remaining arguments are passed to the session constructor.
+
+		"""
 		if 'owner' not in kwargs:
 			raise ValueError( "Neglected to provide owner" )
+
 		session = session_class(**kwargs)
 		self._session_db.register_session( session )
+
+		if drop_old_sessions:
+			outstanding = self.get_sessions_by_owner( session.owner )
+			if len(outstanding) > 5: # TODO: Param for this?
+				# Sort them from oldest to newest
+				outstanding = sorted(outstanding, key=lambda x: x.creation_time)
+				# split the five newest from all the older ones
+				#newest = outstanding[-5:]
+				older = outstanding[:-5]
+				# Kill all the old ones
+				for s in older:
+					self._session_cleanup( s, send_event=False )
+				for s in older:
+					notify( SocketSessionDisconnectedEvent( s ) )
+
 		session_id = session.session_id
-
 		if watch_session:
-			def watchdog_session():
-				# Some transports make it very hard to detect
-				# when a session stops responding (XHR)...it just goes silent.
-				# We watch for it to die (since we created it) and cleanup
-				# after it...this is a compromise between always
-				# knowing it has died and doing the best we can across the cluster
-				gevent.sleep( 60 )	# Time? We can detect a dead session no faster than we decide it's dead,
-									# which is SESSION_HEARTBEAT_TIMEOUT
-				logger.log( loglevels.TRACE, "Checking status of session %s", session_id )
-
-				try:
-					sess = component.getUtility( nti_interfaces.IDataserverTransactionRunner )( lambda: self.get_session(session_id), retries=2 )
-				except transaction.interfaces.TransientError:
-					# Try again later
-					logger.debug( "Trying session poll later", exc_info=True )
-					gevent.spawn( watchdog_session )
-					return
-
-				if sess:
-					# still alive, go again
-					gevent.spawn( watchdog_session )
-				else:
-					logger.debug( "Session %s died", session_id )
-			gevent.spawn( watchdog_session )
+			self._watching_sessions.add( session_id )
 
 		return session
 
