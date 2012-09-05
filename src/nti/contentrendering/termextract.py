@@ -135,6 +135,7 @@ class ZopyYXStemmer(object):
 		self._stemmer = stemmer.Stemmer(language)
 		
 	def stem(self, token):
+		token = unicode(token)
 		result = self._stemmer.stem((token,))
 		return result[0] if result else token
 		
