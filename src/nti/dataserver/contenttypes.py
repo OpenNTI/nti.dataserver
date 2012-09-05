@@ -35,6 +35,7 @@ from zope import interface
 from zope.deprecation import deprecate
 from zope import component
 from zope.annotation import interfaces as an_interfaces
+import zope.schema.interfaces
 
 def _get_entity( username, dataserver=None ):
 	return users.Entity.get_entity( username, dataserver=dataserver, _namespace=users.User._ds_namespace )
@@ -360,24 +361,30 @@ class Note(ThreadableExternalizableMixin, Highlight):
 			# Support raw body, not wrapped
 			if isinstance( parsed['body'], six.string_types ):
 				self.body = ( parsed['body'], )
-			assert len(self.body) > 0
-			# convert mutable lists to immutable tuples
-			self.body = tuple( self.body )
+			if not self.body:
+				raise zope.schema.interfaces.RequiredMissing('Must supply body')
 
 			# Verify that the body contains supported types, if
 			# sent from the client.
 			for x in self.body:
-				assert (isinstance(x, six.string_types) and len(x) > 0) or isinstance(x,Canvas)
+				__traceback_info__ = x
+				if not isinstance( x, (basestring,Canvas)):
+					raise zope.schema.interfaces.WrongContainedType()
+				if isinstance( x, basestring ) and len(x) == 0:
+					raise zope.schema.interfaces.TooShort()
+
 
 			# Sanitize the body. Anything that can become a fragment, do so, incidentally
 			# sanitizing and censoring it along the way.
 			def _sanitize(x):
 				x = censor.censor_assign(frg_interfaces.IUnicodeContentFragment( x, x ), self, 'body' )
-				if frg_interfaces.IHTMLContentFragment.providedBy(x):
-					x = component.getUtility(frg_interfaces.IHyperlinkFormatter).format(x)
+				x = component.getUtility(frg_interfaces.IHyperlinkFormatter).format(x)
 				return x
 
 			self.body = [_sanitize(x) for x in self.body]
+
+			# convert mutable lists to immutable tuples
+			self.body = tuple( self.body )
 
 
 		# If we are newly created, and a reply, then
