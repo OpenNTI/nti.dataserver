@@ -28,6 +28,18 @@ class TestLatex(ConfiguringTestBase):
 
 		assert_that( soln.grade( soln.value ), is_true() )
 
+	def test_simple_grade_accept_trailing_units(self):
+
+		soln = solution.QLatexSymbolicMathSolution( "$\frac{1}{2}$" )
+
+		rsp = response.QTextResponse( soln.value + " day" )
+
+		grader = component.getMultiAdapter( (None, soln, rsp), interfaces.IQSymbolicMathGrader )
+		assert_that( grader(  ), is_true() )
+
+		assert_that( soln.grade( soln.value ), is_true() )
+
+
 	def test_grade_empty(self):
 		rsp = response.QTextResponse( "" )
 		soln = solution.QLatexSymbolicMathSolution( "$\frac{1}{2}$" )

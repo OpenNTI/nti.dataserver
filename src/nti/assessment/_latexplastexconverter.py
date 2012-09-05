@@ -69,6 +69,7 @@ def convert( response ):
 	cache_attr = '_v_latexplastexconverter_cache'
 	cached_value = getattr( response, cache_attr, None )
 	if not cached_value or cached_value[0] != response.value:
+		__traceback_info__ = response.value
 		response_doc = _response_text_to_latex( response.value )
 		dom = _mathTexToDOMNodes( ( response_doc, ) )
 		if len(dom) == 1:
