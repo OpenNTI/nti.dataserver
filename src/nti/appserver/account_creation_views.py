@@ -132,6 +132,17 @@ def _create_user( request, externalValue, preflight_only=False ):
 					   'field': 'password',
 					   'code': e.__class__.__name__},
 					  exc_info[2] )
+	except user_interfaces.EmailAddressInvalid as e:
+		exc_info = sys.exc_info()
+		if e.value == desired_userid:
+			# Given a choice, identify this on the username, since
+			# we are forcing them to be the same
+			_raise_error( request, hexc.HTTPUnprocessableEntity,
+						  {'field': 'Username', 'fields': ['Username', 'email'],
+						   'message': str(e),
+						   'code': e.__class__.__name__},
+						exc_info[2] )
+		obj_io.handle_validation_error( request, e )
 	except nti.utils.schema.InvalidValue as e:
 		if e.value == _PLACEHOLDER_USERNAME:
 			# Not quite sure what the conflict actually was, but at least we know
@@ -284,6 +295,9 @@ def account_preflight_view(request):
 	# stuff gets this wrong?
 	ext_schema['Username'] = ext_schema['username']
 	del ext_schema['username']
+
+	# Ensure password is marked required (it's defined at the wrong level to tag it)
+	ext_schema['password']['required'] = True
 
 
 	request.response.status_int = 200

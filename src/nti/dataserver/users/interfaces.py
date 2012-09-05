@@ -25,9 +25,9 @@ import string
 from zope.i18n import translate
 from . import MessageFactory as _
 
+import nti.utils.schema
 
-
-class _InvalidData(zope.schema.interfaces.InvalidValue):
+class _InvalidData(nti.utils.schema.InvalidValue):
 	"""Invalid Value"""
 
 	i18n_message = None
@@ -47,7 +47,7 @@ class UsernameCannotBeBlank(_InvalidData):
 	i18n_message = 'Username cannot be blank'
 
 	def __init__( self, username ):
-		super(UsernameCannotBeBlank,self).__init__( self.i18n_message, 'Username', username )
+		super(UsernameCannotBeBlank,self).__init__( self.i18n_message, 'Username', username, value=username )
 
 class UsernameContainsIllegalChar(_InvalidData):
 
@@ -58,7 +58,7 @@ class UsernameContainsIllegalChar(_InvalidData):
 			'Username contains an illegal character. Only letters, digits, and ${allowed_chars} are allowed.',
 			mapping={'allowed_chars': allowed_chars})
 
-		super(UsernameContainsIllegalChar,self).__init__( self.i18n_message, 'Username', username )
+		super(UsernameContainsIllegalChar,self).__init__( self.i18n_message, 'Username', username, value=username )
 
 class EmailAddressInvalid(_InvalidData):
 	"""Invalid email address."""
@@ -66,7 +66,7 @@ class EmailAddressInvalid(_InvalidData):
 	i18n_message = "The email address you have entered is not valid"
 
 	def __init__( self, address ):
-		super(EmailAddressInvalid,self).__init__( address )
+		super(EmailAddressInvalid,self).__init__( address, value=address )
 
 
 # RFC 2822 local-part: dot-atom or quoted-string

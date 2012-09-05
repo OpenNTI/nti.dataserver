@@ -97,6 +97,7 @@ setup(
 		# # See also umysqldb for a mysql adapter that should be gevent compat, with same API
 		# 'RelStorage',
 		# See also http://pypi.python.org/pypi/neoppod/ for a completely different option
+
 		'anyjson >= 0.3.3',
 		'boto >= 2.5.2', # amazon
 		'brownie >= 0.5.1', # Common utilities
@@ -124,6 +125,7 @@ setup(
 		'gevent_zeromq >= 0.2.5',
 		'greenlet >= 0.4.0',
 		'gunicorn >= 0.14.6',
+		'hiredis >= 0.1.1', # Redis C parser
 		'html5lib == 0.95',
 		 # WSGI middleware for profiling. Defaults to storing
 		 # data in a sqlite file. Works across multiple gunicorn workers, does
@@ -162,6 +164,7 @@ setup(
 		'pyzmq >= 2.2.0',
 		'pytz >= 2012d',
 		'rdflib',
+		'redis >= 2.6.2', # Redis python client
 		'repoze.catalog >= 0.8.2',
 		'repoze.lru >= 0.6', # LRU caching. Dep of Pyramid
 		'repoze.sendmail >= 3.2',

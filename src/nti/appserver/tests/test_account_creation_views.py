@@ -272,6 +272,9 @@ class TestPreflightView(_AbstractValidationViewBase):
 		assert_that( val, has_entry( 'AvatarURLChoices', has_length( 0 ) ) )
 		assert_that( val, has_entry( 'ProfileSchema', has_key( 'opt_in_email_communication' ) ) )
 		assert_that( val, has_entry( 'ProfileSchema', has_entry( 'Username', has_entry( 'min_length', 5 ) ) ) )
+		assert_that( val, has_entry( 'ProfileSchema',
+									 has_entry( 'password',
+												has_entry( 'required', True ) ) ) )
 
 		assert_that( val, has_entry( 'ProfileSchema',
 									 has_entry( 'participates_in_mathcounts',
@@ -385,6 +388,17 @@ class TestPreflightView(_AbstractValidationViewBase):
 													 'birthdate': '1982-01-31'} )
 		new_user = self.the_view( self.request )
 		assert_that( new_user, has_entry( 'AvatarURLChoices', has_length( 0 ) ) )
+
+		self.request.body = to_json_representation( {'Username': 'jason@example',
+													 'birthdate': '1982-01-31'} )
+
+		with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
+			self.the_view( self.request )
+
+		assert_that( e.exception.json_body, has_entry( 'field', 'Username' ) )
+		assert_that( e.exception.json_body, has_entry( 'code', 'EmailAddressInvalid' ) )
+		assert_that( e.exception.json_body, has_entry( 'message', 'The email address you have entered is not valid' ) )
+
 
 class TestCreateViewNotDevmode(_AbstractNotDevmodeViewBase):
 

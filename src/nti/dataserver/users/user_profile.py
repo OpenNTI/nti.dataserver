@@ -57,6 +57,7 @@ class _ExistingDictReadFieldPropertyStoredThroughField(FieldPropertyStoredThroug
 ## and to perform validation. The schema fields are handled dynamically with the
 ## fieldproperty classes, and are added to the classes themselves dynamically in _init
 ####
+# TODO: Isn't this extremely similar to dm.zope.schema? Did we forget about that?
 
 @component.adapter(nti_interfaces.IEntity)
 @interface.implementer(interfaces.IFriendlyNamed,zope.location.interfaces.ILocation)
