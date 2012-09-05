@@ -67,8 +67,9 @@ def get_possible_site_names(request=None, include_default=False):
 		# Host is a plain name/IP address, and potentially port
 		result.append( request.host.split(':')[0].lower() )
 
-	if 'localhost' in result:
-		result.remove( 'localhost' )
+	for blacklisted in ('localhost', '0.0.0.0'):
+		if blacklisted in result:
+			result.remove( blacklisted )
 
 	if include_default:
 		result.append( '' )
@@ -235,23 +236,39 @@ class ISitePolicyUserEventListener(interface.Interface):
 		Called just before a user is created. Do most validation here.
 		"""
 
+	# TODO : I'm not entirely sure this belongs here. Might want to rethink this a lot
+	def upgrade_user( user ):
+		"""
+		Transition a user from a limited form to the next lest limited forrm.
+		Specifically intended to deal with providing coppa consent.
+		"""
+
 from zope.lifecycleevent.interfaces import IObjectCreatedEvent
 from nti.dataserver import users
 import zope.schema
 
 
-def _dispatch_to_policy( user, event, func_name ):
-	# Put the empty name/default component on the end of the list of site names
-	site_names = list(get_possible_site_names())
-	site_names.append( '' )
+def find_site_policy( request=None ):
+	"""
+	Find a site policy that's currently active, including the default.
+	:return: A two-tuple of (policy, site_name). If no policy was found
+		then the first value is None and the second value is all applicable site_names found.
+	"""
+	site_names = get_possible_site_names( request=request, include_default=True )
 	for site_name in site_names:
 		utility = component.queryUtility( ISitePolicyUserEventListener, name=site_name )
 		if utility:
-			logger.info( "Site %s wants to handle user creation event with %s", site_name, utility )
-			getattr( utility, func_name )( user, event )
-			return
+			return utility, site_name
+	return None, site_names
 
-	logger.info( "No site in %s wanted to handle user event %s for %s", site_names, func_name, user )
+def _dispatch_to_policy( user, event, func_name ):
+	utility, site_name = find_site_policy( )
+	if utility:
+		logger.info( "Site %s wants to handle user creation event %s with %s", site_name, func_name, utility )
+		getattr( utility, func_name )( user, event )
+		return
+
+	logger.info( "No site in %s wanted to handle user event %s for %s", site_name, func_name, user )
 
 
 @component.adapter(nti_interfaces.IUser,IObjectCreatedEvent)
@@ -309,6 +326,9 @@ class GenericSitePolicyEventListener(object):
 	Implements a generic policy for all sites.
 	"""
 
+	def upgrade_user( self, user ):
+		pass
+
 	def user_will_update_new( self, user, event ):
 		pass
 
@@ -358,6 +378,31 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 	IF_ROOT = nti_interfaces.ICoppaUser
 	IF_WITH_AGREEMENT = nti_interfaces.ICoppaUserWithAgreement
 	IF_WOUT_AGREEMENT = nti_interfaces.ICoppaUserWithoutAgreement
+
+	def upgrade_user( self, user ):
+		if not self.IF_WOUT_AGREEMENT.providedBy( user ):
+			logger.debug( "No need to upgrade user %s that doesn't provide %s", user, self.IF_WOUT_AGREEMENT )
+			return
+
+		# Copy the profile info. First, adapt to the old profile:
+		profile = user_interfaces.IUserProfile( user )
+		# Then adjust the interfaces
+		interface.noLongerProvides( user, self.IF_WOUT_AGREEMENT )
+		interface.alsoProvides( user, self.IF_WITH_AGREEMENT )
+		# Now get the new profile
+		new_profile = user_interfaces.IUserProfile( user )
+		# If they changed, adjust them
+		if profile is not new_profile:
+			most_derived_profile_iface = _ext_find_schema( new_profile, user_interfaces.IUserProfile )
+			for name, field in most_derived_profile_iface.namesAndDescriptions(all=True):
+				if interface.interfaces.IMethod.providedBy( field ):
+					continue
+
+				if getattr( profile, name, None ): # Only copy things that have values. Let defaults be used otherwise
+					setattr( new_profile, name, getattr( profile, name ) )
+
+		# TODO: If the new profile required some values the old one didn't, then what?
+		# Prime example: email, not required for kids, yes required for adults.
 
 	def user_will_update_new( self, user, event ):
 		"""
@@ -595,3 +640,12 @@ class RwandaSitePolicyEventListener(GenericAdultSitePolicyEventListener):
 
 		user.join_community( community )
 		user.follow( community )
+
+def _ext_find_schema( ext_self, iface_upper_bound ):
+	_iface = iface_upper_bound
+	# Search for the most derived version of the interface
+	# this object implements and use that.
+	for iface in interface.providedBy( ext_self ):
+		if iface.isOrExtends( _iface ):
+			_iface = iface
+	return _iface

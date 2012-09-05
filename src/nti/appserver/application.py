@@ -444,6 +444,7 @@ def createApplication( http_port,
 	pyramid_config.scan( 'nti.appserver.contentlibrary_views' )
 	pyramid_config.scan( 'nti.appserver.liking_views' )
 	pyramid_config.scan( 'nti.appserver.flagging_views' )
+	pyramid_config.scan( 'nti.appserver.coppa_admin_views' )
 	pyramid_config.scan( 'nti.appserver._hacks' )
 	pyramid_config.scan( 'nti.appserver.account_creation_views' )
 

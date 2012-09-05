@@ -5,40 +5,73 @@
 	<include package="zope.component" />
 	<include package="z3c.table" />
 
-	<adapter factory=".flagging_views.NoteBodyColumn"
+	<adapter factory="z3c.table.header.SortingColumnHeader"
+			 provides="z3c.table.interfaces.IColumnHeader"
+			 for="* * * ._table_utils.ModifiedColumn"
+			 />
+
+	<adapter factory="z3c.table.header.SortingColumnHeader"
+			 provides="z3c.table.interfaces.IColumnHeader"
+			 for="* * * ._table_utils.CreatedColumn"
+			 />
+	<adapter factory="z3c.table.header.SortingColumnHeader"
+			 provides="z3c.table.interfaces.IColumnHeader"
+			 for="* * * ._table_utils.CreatorColumn"
+			 />
+
+	<adapter factory="z3c.table.header.SortingColumnHeader"
+			 provides="z3c.table.interfaces.IColumnHeader"
+			 for="* * * ._table_utils.UsernameColumn"
+			 />
+
+	<!-- Moderation -->
+	<adapter factory="._table_utils.NoteBodyColumn"
+			 for="* * .flagging_views.ModerationAdminTable"
 			 provides="z3c.table.interfaces.IColumn" />
 
-	<adapter factory=".flagging_views.CreatedColumn"
+	<adapter factory="._table_utils.CreatedColumn"
 			 provides="z3c.table.interfaces.IColumn"
 			 for="* * .flagging_views.ModerationAdminTable"
 			 name="note-created"/>
 
-	<adapter factory=".flagging_views.ModifiedColumn"
+	<adapter factory="._table_utils.ModifiedColumn"
 			 provides="z3c.table.interfaces.IColumn"
 			 for="* * .flagging_views.ModerationAdminTable"
 			 name="note-modified" />
-	<adapter factory=".flagging_views.CreatorColumn"
+	<adapter factory="._table_utils.CreatorColumn"
 			 provides="z3c.table.interfaces.IColumn"
 			 for="* * .flagging_views.ModerationAdminTable"
 			 name="note-creator" />
 
-	<adapter factory=".flagging_views.IntIdCheckBoxColumn"
+	<adapter factory="._table_utils.IntIdCheckBoxColumn"
 			 provides="z3c.table.interfaces.IColumn"
 			 for="* * .flagging_views.ModerationAdminTable"
 			 name="note-selected" />
 
-	<adapter factory="z3c.table.header.SortingColumnHeader"
-			 provides="z3c.table.interfaces.IColumnHeader"
-			 for="* * * .flagging_views.ModifiedColumn"
-			 />
+	<!-- Coppa admin -->
+	<adapter factory="._table_utils.CreatedColumn"
+			 provides="z3c.table.interfaces.IColumn"
+			 for="* * .coppa_admin_views.CoppaAdminTable"
+			 name="coppa-admin-created"/>
+
+	<adapter factory="._table_utils.IntIdCheckBoxColumn"
+			 provides="z3c.table.interfaces.IColumn"
+			 for="* * .coppa_admin_views.CoppaAdminTable"
+			 name="coppa-admin-selected" />
+
+	<adapter factory="._table_utils.UsernameColumn"
+			 provides="z3c.table.interfaces.IColumn"
+			 for="* * .coppa_admin_views.CoppaAdminTable"
+			 name="coppa-admin-username" />
+
+
+	<adapter factory=".coppa_admin_views.RealnameColumn"
+			 provides="z3c.table.interfaces.IColumn"
+			 for="* * .coppa_admin_views.CoppaAdminTable"
+			 name="coppa-admin-realname" />
 
 	<adapter factory="z3c.table.header.SortingColumnHeader"
 			 provides="z3c.table.interfaces.IColumnHeader"
-			 for="* * * .flagging_views.CreatedColumn"
+			 for="* * * .coppa_admin_views.RealnameColumn"
 			 />
-	<adapter factory="z3c.table.header.SortingColumnHeader"
-			 provides="z3c.table.interfaces.IColumnHeader"
-			 for="* * * .flagging_views.CreatorColumn"
-			 />
-
 </configure>
