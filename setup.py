@@ -144,6 +144,7 @@ setup(
 		# install numpy manually with pip: pip install numpy
 		'numpy >= 1.6.2',
 		'paste',
+		'pyPDF >= 1.13', # Pure python PDF reading library. Not complex. Has newer fork pyPDF2, not yet on PyPI?
 		'pyquery >= 1.2.1', # jquery-like traversing of python datastructures. lxml, cssselect
 		'pyramid >= 1.3.3' ,
 		'pyramid_tm >= 0.5',
