@@ -15,6 +15,7 @@
 #!/usr/bin/env python
 
 import os
+import six
 import gzip
 import pickle
 from collections import defaultdict
@@ -128,6 +129,17 @@ def default_tagger():
 			_default_tagger = DefaultTagger('NN')
 	return _default_tagger
 
+from zopyx.txng3.ext import stemmer
+
+class ZopyYXStemmer(stemmer.Stemmer):
+	def __init__(self, language='english'):
+		super(ZopyYXStemmer, self).__init__(language)
+		
+	def stem(self, token):
+		word = (unicode(token),) if isinstance(token, six.string_types) else token
+		result = super(ZopyYXStemmer, self).stem(word)
+		return result[0] if result and isinstance(token, six.string_types) else result
+		
 import re
 from nltk import PorterStemmer
 from nltk.tokenize import RegexpTokenizer
