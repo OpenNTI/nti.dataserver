@@ -125,4 +125,14 @@ class Grader(object):
 		self.response = response
 
 	def __call__( self ):
-		return grade( self.solution, self.response )
+		result = grade( self.solution, self.response )
+		if not result and not self.response.value.startswith( '<' ):
+			#Hmm. Is there some trailing text we should brush away from the response?
+			# Only try if it's not OpenMath XML (which only comes up in test cases now)
+			parts = self.response.value.rsplit( ' ', 1 )
+			if len( parts ) == 2:
+				response = type(self.response)( parts[0] )
+				result = grade( self.solution, response )
+				if result:
+					self.response = response
+		return result
