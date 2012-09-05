@@ -145,7 +145,7 @@ class ExampleDatabaseInitializer(object):
 		for_user.addContainedObject( fl )
 
 	def _add_test_user_friendlist(self, for_user):
-		fl = FriendsList( self.nti_testers)
+		fl = FriendsList( u'FL-' + self.nti_testers)
 		for x in range(1, self.max_test_users):
 			uid = 'test.user.%s@nextthought.com' % x
 			if uid != for_user.username:
