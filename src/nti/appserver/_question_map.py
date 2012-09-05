@@ -31,6 +31,12 @@ def _ntiid_object_hook( k, v, x ):
 	"""
 	if 'NTIID' in x and not getattr( v, 'ntiid', None ):
 		v.ntiid = x['NTIID']
+	if 'value' in x and 'Class' in x and x['Class'] == 'LatexSymbolicMathSolution' and x['value'] != v.value:
+		# We started out with LatexContentFragments when we wrote these,
+		# and if we re-convert when we read, we tend to over-escape
+		# One thing we do need to do, though, is replace long dashes with standard minus signs
+		v.value = cfg_interfaces.LatexContentFragment( x['value'].replace( '\u2212', '-') )
+
 	return v
 
 @interface.implementer( app_interfaces.IFileQuestionMap )
