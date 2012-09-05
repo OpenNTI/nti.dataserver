@@ -48,6 +48,11 @@ class TestUrlMatcher(ConfiguringTestBase):
 		assert_that(self.formatter.format(frg_interfaces.IHTMLContentFragment(html)), is_(html))
 		html = u'<html><head/><body>fly <a href="http://www.aa.com">www.aa.com</a> <a href="http://www.aa.com">www.aa.com</a></body></html>'
 		assert_that(self.formatter.format(frg_interfaces.IHTMLContentFragment(html)), is_(html))
+		
+	def test_mailto(self):
+		html = u'<html><head/><body>mailto:help@nextthought.com</body></html>'
+		exp = u'<html><head/><body><a href="mailto:help@nextthought.com">mailto:help@nextthought.com</a></body></html>'
+		assert_that(self.formatter.format(frg_interfaces.IHTMLContentFragment(html)), is_(exp))
 	
 if __name__ == '__main__':
 	import unittest
