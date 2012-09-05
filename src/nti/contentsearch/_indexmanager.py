@@ -81,17 +81,18 @@ class IndexManager(object):
 	def dataserver(self):
 		return component.queryUtility( nti_interfaces.IDataserver )
 
-	def get_user(self, username):
-		result = User.get_user(username, dataserver=self.dataserver)
+	def get_entity(self, username):
+		result = User.get_entity(username, dataserver=self.dataserver)
 		return result
 
 	def users_exists(self, username):
-		result = self.get_user(username)
+		result = self.get_entity(username)
 		return result is not None
 
 	def get_user_communities(self, username):
-		user = self.get_user(username)
-		return list(user.communities) if user else []
+		user = self.get_entity(username)
+		result = list(user.communities) if user and hasattr(user, 'communities') else ()
+		return result
 
 	# -------------------
 
@@ -242,7 +243,7 @@ class IndexManager(object):
 
 	def _get_user_index_manager(self, target, create=True):
 		if isinstance( target, six.string_types ):
-			target = self.get_user( target )
+			target = self.get_entity( target )
 		result = self.useridx_manager_adapter(target, None) if target and create else None
 		return result
 
