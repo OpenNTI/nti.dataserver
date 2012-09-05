@@ -1,0 +1,24 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	  xmlns:tal="http://xml.zope.org/namespaces/tal">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<title>COPPA Admin</title>
+	</head>
+	<body>
+		<form action="" method="post"
+			  enctype="multipart/form-data"
+			  class="edit-form"
+			  name="subFormTable" id="subFormTable">
+
+			<table tal:replace="structure python:options['here'].render()" />
+
+			<input id="subFormTable-buttons-approve"
+				   name="subFormTable.buttons.approve"
+				   class="submit-widget button-field" value="Approve"
+				   type="submit" />
+
+		</form>
+	</body>
+</html>

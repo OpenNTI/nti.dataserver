@@ -85,6 +85,7 @@ ACT_DELETE   = Permission('nti.actions.delete')
 ACT_UPDATE   = Permission('nti.actions.update')
 ACT_SEARCH   = Permission('nti.actions.search')
 ACT_MODERATE = Permission('nti.actions.moderate')
+ACT_COPPA_ADMIN = Permission('nti.actions.coppa_admin')
 ACT_READ     = Permission('zope.View')
 
 # Groups that are expected to have certain rights

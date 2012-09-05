@@ -538,11 +538,13 @@ import warnings
 class _DataserverFolderACLProvider(object):
 
 	def __init__( self, context ):
-		warnings.warn( "Temporary hack allowing @nextthought.com users all permissions." )
+		warnings.warn( "Temporary hack allowing @nextthought.com users moderation and coppa admin." )
 		# Got to be here after the components are registered
 		self.__acl__ = _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, auth.ACT_READ, _DataserverFolderACLProvider ),
 							  # TEMP Hack allowing nextthought.com users full permissions
-							  ace_allowing( 'nextthought.com', nti_interfaces.ALL_PERMISSIONS, _DataserverFolderACLProvider ) ) )
+							  ace_allowing( 'nextthought.com', auth.ACT_MODERATE, _DataserverFolderACLProvider ),
+							  ace_allowing( 'nextthought.com', auth.ACT_COPPA_ADMIN, _DataserverFolderACLProvider )
+							  ) )
 
 @interface.implementer( nti_interfaces.IACLProvider )
 @component.adapter(content_interfaces.IContentPackageLibrary)
