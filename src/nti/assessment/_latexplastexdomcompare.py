@@ -61,7 +61,7 @@ def _symbolic( child ):
 	"""
 	try:
 		return parse_expr( child.textContent )
-	except (TokenError,SyntaxError,AttributeError):
+	except (TokenError,SyntaxError,AttributeError,TypeError): #TypeError arises on 1(2) -> function call of 1
 		return child
 
 def _mathChildIsEqual(child1, child2):
@@ -106,6 +106,7 @@ def _sanitizeTextNodeContent(textNode):
 
 
 def grade( solution, response ):
+	__traceback_info__ = solution, response
 	try:
 		converter = component.getMultiAdapter( (solution,response), interfaces.IResponseToSymbolicMathConverter )
 	except ComponentLookupError:
