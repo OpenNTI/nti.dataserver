@@ -43,8 +43,11 @@ def _mathTexToDOMNodes(maths):
 def _response_text_to_latex(response):
 	# Experimentally, plasTeX sometimes has problems with $ display math
 	# We haven't set seen that problem with \( display math
+	# Split it in two steps because sometimes our processing leaves one or the other
 	if response.startswith( '$' ):
-		response = response[1:-1]
+		response = response[1:]
+	if response.endswith( '$' ):
+		response = response[:-1]
 
 	if openmath.OMOBJ in response or openmath.OMA in response:
 		response = openmath.OpenMath2Latex().translate( response )

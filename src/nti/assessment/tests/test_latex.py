@@ -19,7 +19,7 @@ class TestLatex(ConfiguringTestBase):
 
 	def test_simple_grade(self):
 
-		soln = solution.QLatexSymbolicMathSolution( "$\frac{1}{2}$" )
+		soln = solution.QLatexSymbolicMathSolution( r"$\frac{1}{2}$" )
 
 		rsp = response.QTextResponse( soln.value )
 
@@ -30,7 +30,7 @@ class TestLatex(ConfiguringTestBase):
 
 	def test_simple_grade_accept_trailing_units(self):
 
-		soln = solution.QLatexSymbolicMathSolution( "$\frac{1}{2}$" )
+		soln = solution.QLatexSymbolicMathSolution( r"$\frac{1}{2}$" )
 
 		rsp = response.QTextResponse( soln.value + " day" )
 
@@ -39,10 +39,20 @@ class TestLatex(ConfiguringTestBase):
 
 		assert_that( soln.grade( soln.value ), is_true() )
 
+	def test_simple_grade_accept_trailing_percent(self):
+
+		soln = solution.QLatexSymbolicMathSolution( "$75$" )
+
+		rsp = response.QTextResponse( r"$75 \%$" )
+
+		grader = component.getMultiAdapter( (None, soln, rsp), interfaces.IQSymbolicMathGrader )
+		assert_that( grader(  ), is_true() )
+
+		assert_that( soln.grade( soln.value ), is_true() )
 
 	def test_grade_empty(self):
 		rsp = response.QTextResponse( "" )
-		soln = solution.QLatexSymbolicMathSolution( "$\frac{1}{2}$" )
+		soln = solution.QLatexSymbolicMathSolution( r"$\frac{1}{2}$" )
 
 		grader = component.getMultiAdapter( (None, soln, rsp), interfaces.IQSymbolicMathGrader )
 		assert_that( grader(  ), is_false() )
