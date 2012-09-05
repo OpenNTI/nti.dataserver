@@ -28,6 +28,16 @@ class TestLatex(ConfiguringTestBase):
 
 		assert_that( soln.grade( soln.value ), is_true() )
 
+	def test_simple_grade_with_numeric_parens(self):
+		# We don't get it right, but we don't blow up either
+		soln = solution.QLatexSymbolicMathSolution( r"$6$" )
+
+		rsp = response.QTextResponse(  r"$3(2)$" )
+
+		grader = component.getMultiAdapter( (None, soln, rsp), interfaces.IQSymbolicMathGrader )
+		assert_that( grader(  ), is_false() )
+
+
 	def test_simple_grade_accept_trailing_units(self):
 
 		soln = solution.QLatexSymbolicMathSolution( r"$\frac{1}{2}$" )
