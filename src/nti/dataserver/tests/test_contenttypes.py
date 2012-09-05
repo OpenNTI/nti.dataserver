@@ -393,11 +393,11 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 	def test_must_provide_body_text(self):
 		n = Note()
 		# No parts
-		with self.assertRaises( AssertionError ):
+		with self.assertRaises( zope.schema.interfaces.RequiredMissing ):
 			n.updateFromExternalObject( { 'body': [] } )
 
 		# Empty part
-		with self.assertRaises( AssertionError ):
+		with self.assertRaises( zope.schema.interfaces.TooShort ):
 			n.updateFromExternalObject( { 'body': [''] } )
 
 	def test_body_text_is_sanitized(self):
@@ -506,10 +506,14 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 		ext = n.toExternalObject()
 		assert_that( ext['body'], is_( [u'<html><head/><body><p>At <a href="http://www.nextthought.com">www.nextthought.com</a></p></body></html>'] ) )
 
+
+
+	def test_external_body_hyperlink_incoming_plain(self):
 		n = Note()
-		n.updateFromExternalObject( { 'body': [u'www.nextthought.com'] } )
+		n.updateFromExternalObject( { 'body': ["So visit www.nextthought.com and see for yourself."] } )
 		ext = n.toExternalObject()
-		assert_that( ext['body'], is_( [u'www.nextthought.com'] ) )
+		assert_that( ext['body'], is_( [u'<html><head/><body>So visit <a href="http://www.nextthought.com">www.nextthought.com</a> and see for yourself.</body></html>'] ) )
+
 
 	@WithMockDSTrans
 	def test_update_sharing_only( self ):
