@@ -20,19 +20,6 @@ var processPage = function(){
 			return jQuery("&lt;p&gt;").append(this.eq(0).clone()).html();
 		};
 
-		//If we have mathjax that has been scaled above 100% back it off
-		$("span.math span[style*='font-size:']").each(function()
-		{
-			var mathEl = this;
-			var sizeStr = mathEl.style.fontSize;
-
-			if( sizeStr.charAt(sizeStr.length - 1) ) {
-				var sizeInt = parseInt(sizeStr.substring(0, sizeStr.length - 1));
-				if(sizeInt && sizeInt > 100) {
-					mathEl.style.fontSize = '100%';
-				}
-			}
-		});
 
 		$(".tex2jax_process").each(function()
 		{
