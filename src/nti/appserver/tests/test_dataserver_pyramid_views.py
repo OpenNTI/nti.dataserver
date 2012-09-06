@@ -310,6 +310,10 @@ class TestUGDViews(ConfiguringTestBase):
 
 			assert_that( stream, has_length( 3 ) ) # owned, shared, public. main thing is not 404
 
+			# If the sharing user is then deleted, we're right back where we started
+			users.User.delete_entity( user2.username )
+			with self.assertRaises(hexc.HTTPNotFound):
+				stream = view.getObjectsForId( user, ntiids.ROOT )
 
 
 	@WithMockDSTrans
