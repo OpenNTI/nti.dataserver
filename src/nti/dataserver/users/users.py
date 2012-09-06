@@ -1009,7 +1009,6 @@ class FacebookUser(User):
 
 @component.adapter(nti_interfaces.IContained, zope.intid.interfaces.IIntIdRemovedEvent)
 def user_willRemoveIntIdForContainedObject( contained, event ):
-
 	# Make the containing owner broadcast the DELETED event /now/,
 	# while we can still get an ID, to keep catalogs and whatnot
 	# up-to-date.
