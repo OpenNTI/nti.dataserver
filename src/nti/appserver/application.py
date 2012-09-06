@@ -356,13 +356,6 @@ def createApplication( http_port,
 							 renderer='rest',
 							 permission=nauth.ACT_SEARCH)
 
-	pyramid_config.add_route( name='search2.suggestandsearch', pattern='/dataserver2/users/{user}/Search/SuggestAndSearch/{ntiid}/{term:.*}',
-							  factory=_UserSearchRootFactory)
-	pyramid_config.add_view( route_name='search2.suggestandsearch',
-							 view='nti.contentsearch.pyramid_views.SuggestAndSearch',
-							 renderer='rest',
-							 permission=nauth.ACT_SEARCH)
-
 	logger.debug( 'Finished creating search' )
 
 	# User-generated data
