@@ -9,6 +9,7 @@ from zope import component
 
 from whoosh import fields
 from whoosh import highlight
+#from whoosh import analysis
 
 from nti.contentsearch._search_query import QueryObject
 from nti.contentsearch._whoosh_query import parse_query
@@ -149,6 +150,7 @@ def create_book_schema():
 				 			quick = fields.NGRAM(maxsize=10, phrase=True),
 				 			related = fields.KEYWORD(stored=True),
 				 			content = fields.TEXT(stored=True, spelling=True, phrase=True))
+	#  ,analyzer = analysis.StandardAnalyzer() | analysis.NgramFilter(minsize=3, maxsize=10)))
 	return schema
 
 class Book(_SearchableContent):
