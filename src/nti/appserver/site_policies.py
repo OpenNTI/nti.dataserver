@@ -575,9 +575,10 @@ class MathcountsSitePolicyEventListener(GenericKidSitePolicyEventListener):
 		"""
 		super(MathcountsSitePolicyEventListener,self).user_created( user, event )
 
-		community = users.Entity.get_entity( 'MathCounts' )
+		community = users.Entity.get_entity( 'MATHCOUNTS' )
 		if community is None:
-			community = users.Community.create_community( username='MathCounts' )
+			community = users.Community.create_community( username='MATHCOUNTS' )
+			user_interfaces.IFriendlyNamed( community ).alias = 'MATHCOUNTS'
 
 
 		user.join_community( community )

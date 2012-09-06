@@ -630,7 +630,7 @@ class TestCreateView(_AbstractValidationViewBase):
 		new_user = account_create_view( self.request )
 		assert_that( new_user, verifiably_provides( nti_interfaces.ICoppaUserWithAgreement ) )
 		assert_that( new_user, verifiably_provides( site_policies.IMathcountsCoppaUserWithAgreement ) )
-		assert_that( new_user, has_property( 'communities', has_item( 'MathCounts' ) ) )
+		assert_that( new_user, has_property( 'communities', has_item( 'MATHCOUNTS' ) ) )
 		assert_that( user_interfaces.IFriendlyNamed( new_user ), has_property( 'realname', 'Joe Bananna' ) )
 		assert_that( user_interfaces.IFriendlyNamed( new_user ),
 					 has_property( 'birthdate', datetime.date( 1982, 1, 31 ) ) )
