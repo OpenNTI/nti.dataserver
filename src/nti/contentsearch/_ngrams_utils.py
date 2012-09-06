@@ -8,13 +8,13 @@ import logging
 logger = logging.getLogger( __name__ )
 
 def ngram_tokens(text, minsize=3, maxsize=10, at='start', unique=True):
-	rext = analysis.RegexTokenizer()
-	ngf = analysis.NgramFilter(minsize=minsize, maxsize=maxsize, at=at)
-	stream = rext(unicode(text.lower()))
+	tokenizer = analysis.RegexTokenizer()
+	ng_filter = analysis.NgramFilter(minsize=minsize, maxsize=maxsize, at=at)
+	stream = tokenizer(unicode(text.lower()))
 	if not unique:
-		result = [token.copy() for token in ngf(stream)]
+		result = [token.copy() for token in ng_filter(stream)]
 	else:
-		result = OrderedDict( {token.text:token.copy() for token in ngf(stream)}).values()
+		result = OrderedDict( {token.text:token.copy() for token in ng_filter(stream)}).values()
 	return result
 		
 def ngrams(text):

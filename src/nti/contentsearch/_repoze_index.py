@@ -159,8 +159,12 @@ class _DefaultRepozeSearchFeatures(object):
 	is_word_suggest_supported = False
 	
 @interface.implementer(search_interfaces.ISearchFeatures)
+class _NgramRepozeSearchFeatures(object):
+	is_ngram_search_supported = True
+	is_word_suggest_supported = False
+	
+@interface.implementer(search_interfaces.ISearchFeatures)
 class _FullRepozeSearchFeatures(object):
 	is_ngram_search_supported = True
 	is_word_suggest_supported = True
 
-	
