@@ -784,3 +784,18 @@ class TestApplicationPreflightUser(ApplicationTestBase):
 			res = app.post( path, data )
 
 			assert_that( res, has_property( 'status_int', 200 ) )
+
+class TestApplicationProfile(ApplicationTestBase):
+
+	def test_preflight_user( self ):
+		with mock_dataserver.mock_db_trans(self.ds):
+			self._create_user()
+
+		app = TestApp( self.app )
+
+		path = b'/dataserver2/users/sjohnson@nextthought.com/@@account.profile'
+
+		res = app.get( path, extra_environ=self._make_extra_environ() )
+
+		assert_that( res, has_property( 'status_int', 200 ) )
+		assert_that( res.json_body, has_entry( 'ProfileSchema', has_key( 'opt_in_email_communication' ) ) )
