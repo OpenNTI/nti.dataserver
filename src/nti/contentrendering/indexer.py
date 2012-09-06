@@ -220,6 +220,8 @@ def transform(book, indexname=None, indexdir=None, recreate_index=True, optimize
 	if not indexdir:
 		indexdir = os.path.join(contentPath, "indexdir")
 		
+	logger.info('indexing %s(%s)' % (indexname, indexdir))
+	
 	idx = get_or_create_index(indexdir, indexname, recreate=recreate_index)
 	writer = idx.writer(optimize=False, merge=False)
 	
@@ -237,6 +239,7 @@ def transform(book, indexname=None, indexdir=None, recreate_index=True, optimize
 		idx.optimize()
 
 if __name__ == '__main__':
+	logging.basicConfig(level=logging.INFO, format='%(asctime)-15s %(name)-5s %(levelname)-8s %(message)s')
 	from nti.contentrendering.tests import NoPhantomRenderedBook, EmptyMockDocument
 	args = sys.argv[1:]
 	if args:
