@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Views related to creating accounts.
+Views related to creating/editing accounts.
 
 Creating an account is expected to be carried out in an asynchronous,
 XHR based fashion involving no redirects. Contrast this with the logon
@@ -47,6 +47,8 @@ import z3c.password.interfaces
 import nti.utils.schema
 
 from nti.dataserver import users
+from nti.dataserver import authorization as nauth
+
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 from nti.appserver import interfaces as app_interfaces
@@ -67,6 +69,7 @@ import nameparser.parser
 
 REL_CREATE_ACCOUNT = "account.create"
 REL_PREFLIGHT_CREATE_ACCOUNT = "account.preflight.create"
+REL_ACCOUNT_PROFILE = "account.profile"
 
 _PLACEHOLDER_USERNAME = 'A_Username_We_Allow_That_Doesnt_Conflict'
 
@@ -228,7 +231,10 @@ def account_preflight_view(request):
 		to not be subject to COPPA restrictions. You will thus get a non-strict superset of
 		options available to COPPA users.
 
-	:return: A dictionary containing the Username and any possible AvatarURLChoices.
+	:return: A dictionary containing the Username and any possible ``AvatarURLChoices``. The dictionary
+		also contains a ``ProfileSchema`` key containing a list of dictionaries providing
+		information about what field we would like to have filled out, and in some cases, what values
+		they can have.
 
 	"""
 
@@ -260,8 +266,60 @@ def account_preflight_view(request):
 
 	preflight_user = _create_user( request, externalValue, preflight_only=True )
 
-	profile_iface = user_interfaces.IUserProfileSchemaProvider( preflight_user ).getSchema()
-	profile = profile_iface( preflight_user )
+	ext_schema = _make_schema( preflight_user )
+
+	request.response.status_int = 200
+
+	# Great, valid so far. We might or might not have a username, depending on what was provided.
+	# Can we provide options for avatars based on that?
+	avatar_choices = ()
+
+	provided_username = externalValue['Username'] != placeholder_data['Username']
+	if provided_username:
+		avatar_choices = _get_avatar_choices_for_username( externalValue['Username'], request )
+
+
+	return {'Username': externalValue['Username'] if provided_username else None,
+			'AvatarURLChoices': avatar_choices,
+			'ProfileSchema': ext_schema }
+
+@view_config(route_name='objects.generic.traversal',
+			 name=REL_ACCOUNT_PROFILE,
+			 request_method='GET',
+			 context=nti_interfaces.IUser,
+			 permission=nauth.ACT_UPDATE,
+			 renderer='rest')
+def account_profile_view(request):
+	"""
+	Given an existing user, returns the schema for his profile, the
+	same as when the user was being created.
+
+	:return: A dictionary containing the Username and any possible ``AvatarURLChoices``. The dictionary
+		also contains a ``ProfileSchema`` key containing a list of dictionaries providing
+		information about what field we would like to have filled out, and in some cases, what values
+		they can have.
+
+	"""
+
+	request.response.status = 200
+
+	return {'Username': request.context.username,
+			'AvatarURLChoices': _get_avatar_choices_for_username( request.context.username, request ),
+			'ProfileSchema': _make_schema( request.context )}
+
+def _get_avatar_choices_for_username( username, request ):
+	avatar_choices = ()
+	avatar_choices_factory = site_policies.queryAdapterInSite( username,
+															   user_interfaces.IAvatarChoices,
+															   request=request )
+	if avatar_choices_factory:
+		avatar_choices = avatar_choices_factory.get_choices()
+	return avatar_choices
+
+
+def _make_schema( user ):
+	profile_iface = user_interfaces.IUserProfileSchemaProvider( user ).getSchema()
+	profile = profile_iface( user )
 	profile_schema = InterfaceObjectIO( profile, profile_iface ).schema
 	ext_schema = {}
 	for k, v in itertools.chain( nti_interfaces.IUser.namesAndDescriptions(all=False), profile_schema.namesAndDescriptions(all=True)):
@@ -299,20 +357,4 @@ def account_preflight_view(request):
 	# Ensure password is marked required (it's defined at the wrong level to tag it)
 	ext_schema['password']['required'] = True
 
-
-	request.response.status_int = 200
-
-	# Great, valid so far. We might or might not have a username, depending on what was provided.
-	# Can we provide options for avatars based on that?
-	avatar_choices = ()
-
-	provided_username = externalValue['Username'] != placeholder_data['Username']
-	if provided_username:
-		avatar_choices_factory = site_policies.queryAdapterInSite( externalValue['Username'], user_interfaces.IAvatarChoices,
-																   request=request )
-		if avatar_choices_factory:
-			avatar_choices = avatar_choices_factory.get_choices()
-
-	return {'Username': externalValue['Username'] if provided_username else None,
-			'AvatarURLChoices': avatar_choices,
-			'ProfileSchema': ext_schema }
+	return ext_schema
