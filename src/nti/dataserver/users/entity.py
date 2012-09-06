@@ -287,7 +287,10 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 				parsed.pop( 'alias' )
 			if profile.realname and parsed.get( 'realname' ):
 				parsed.pop( 'realname' )
-		InterfaceObjectIO( profile, profile_iface ).updateFromExternalObject( parsed, *args, **kwargs )
+		# Only validate it though, if we are not saved. Once we are saved, presumably with a
+		# valid profile, then if the profile changes and we are missing (new) fields,
+		# we cannot necessarily expect to have them filled in
+		InterfaceObjectIO( profile, profile_iface, validate_after_update=(not self._p_mtime) ).updateFromExternalObject( parsed, *args, **kwargs )
 
 	### Comparisons and Hashing ###
 
