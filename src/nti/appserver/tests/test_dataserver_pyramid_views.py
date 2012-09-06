@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 
 
 from hamcrest import assert_that
@@ -27,7 +27,8 @@ import UserList
 from nti.dataserver import users
 from nti.ntiids import ntiids
 from nti.dataserver.datastructures import ZContainedMixin
-from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans, WithMockDS
+from nti.dataserver.tests import mock_dataserver
 from nti.externalization.externalization import to_external_representation
 
 from zope import interface
@@ -274,6 +275,42 @@ class TestUGDViews(ConfiguringTestBase):
 		user.streamCache.clear()
 		with self.assertRaises( hexc.HTTPNotFound ):
 			view.getObjectsForId( user, ntiids.ROOT )
+
+	@WithMockDS(with_changes=True)
+	def test_rstream_not_found_following_community(self):
+		with mock_dataserver.mock_db_trans( self.ds ):
+			self.ds.add_change_listener( users.onChange )
+
+			view = _RecursiveUGDStreamView( get_current_request() )
+			user = users.User.create_user( self.ds, username='jason.madden@nextthought.com')
+			community = users.Community.create_community( self.ds, username='MathCounts' )
+			user2 = users.User.create_user( self.ds, username='steve.johnson@nextthought.com' )
+
+			user.join_community( community )
+			user2.join_community( community )
+
+			user.follow( community )
+			user2.follow( community )
+
+			# The root item throws if there is nothing found
+			with self.assertRaises(hexc.HTTPNotFound):
+				view.getObjectsForId( user, ntiids.ROOT )
+
+			# Now, user2 can share with the community, and it
+			# appears in user 1's root stream
+			import nti.dataserver.contenttypes
+
+			note = nti.dataserver.contenttypes.Note()
+			note.containerId = ntiids.make_ntiid( provider='ou', specific='test', nttype='test' )
+			note.addSharingTarget( community )
+			with user2.updates():
+				user2.addContainedObject( note )
+
+			stream = view.getObjectsForId( user, ntiids.ROOT )
+
+			assert_that( stream, has_length( 3 ) ) # owned, shared, public. main thing is not 404
+
+
 
 	@WithMockDSTrans
 	def test_ugdrstream_withUGD_not_found_404(self):

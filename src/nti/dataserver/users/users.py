@@ -717,10 +717,28 @@ class User(Principal):
 		"""
 		Returns an iterable across the NTIIDs that are relevant to this user.
 		"""
-		# TODO: This could be much more efficient: iter( {k for k in itertools.chain( owned, shared )} )?
-		owned = [k for k in self.containers if self._is_container_ntiid( k )]
-		shared = [k for k in self.containersOfShared if self._is_container_ntiid( k )]
-		return iter( set( owned ) | set( shared ) )
+		# Takes into account our things, things shared directly to us,
+		# and things found in dynamic things we care about
+		seen = set()
+
+		for k in self.containers:
+			if self._is_container_ntiid(k) and k not in seen:
+				seen.add( k )
+				yield k
+
+		for k in self.containersOfShared:
+			if self._is_container_ntiid(k) and k not in seen:
+				seen.add( k )
+				yield k
+
+		for c_name in self.communities:
+			com = self.get_entity( c_name )
+			if not hasattr( com, 'containersOfShared' ):
+				continue
+			for k in com.containersOfShared:
+				if self._is_container_ntiid( k ) and k not in seen:
+					seen.add( k )
+					yield k
 
 	def itercontainers( self ):
 		# TODO: Not sure about this. Who should be responsible for
@@ -1027,4 +1045,5 @@ def onChange( datasvr, msg, target=None, broadcast=None, **kwargs ):
 		entity = target
 		if getattr( entity, '_p_jar', None):
 			getattr( entity, '_p_jar' ).readCurrent( entity )
+
 		entity._noticeChange( msg )
