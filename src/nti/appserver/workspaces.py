@@ -466,8 +466,7 @@ def _create_search_links( parent ):
 	search_parent.__parent__ = parent
 	ugd_link = links.Link( 'RecursiveUserGeneratedData', rel='UGDSearch' )
 	unified_link = links.Link( 'UnifiedSearch', rel='UnifiedSearch' )
-	suggest_and_search_link = links.Link( 'SuggestAndSearch', rel='SuggestAndSearch' )
-	result = (ugd_link, unified_link, suggest_and_search_link)
+	result = (ugd_link, unified_link)
 	for lnk in result:
 		lnk.__parent__ = search_parent
 		lnk.__name__ = lnk.target
