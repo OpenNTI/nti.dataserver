@@ -13,6 +13,7 @@ entry_points = {
 		"nti_create_class = nti.dataserver.utils.nti_create_class:main",
 		"nti_create_friendslist = nti.dataserver.utils.nti_create_friendslist:main",
 		"nti_enroll_class = nti.dataserver.utils.nti_enroll_class:main",
+		"nti_join_community = nti.dataserver.utils.nti_join_community:main",
 		"nti_set_generation = nti.dataserver.utils.nti_set_generation:main",
 		"nti_set_password = nti.dataserver.utils.nti_set_password:main",
 		"nti_follow_entity = nti.dataserver.utils.nti_follow_entity:main",

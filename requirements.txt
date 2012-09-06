@@ -1,4 +1,5 @@
 file:../lib/pywikipedia/#egg=pywikipedia
+# 1.0b4 is out, but not yet tagged
 -e hg+https://bitbucket.org/denis/gevent@1.0b3#egg=gevent
 ## Sadly, issue 328 prevents us from using local paths for these things,
 ## if we include the egg name. If we're otherwise very careful, 
