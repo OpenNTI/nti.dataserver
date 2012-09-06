@@ -91,7 +91,9 @@ class IndexManager(object):
 
 	def get_user_communities(self, username):
 		user = self.get_entity(username)
-		result = list(user.communities) if user and hasattr(user, 'communities') else ()
+		result = set(user.communities) if user and hasattr(user, 'communities') else ()
+		if result and 'Everyone' in result:
+			result.remove('Everyone')
 		return result
 
 	# -------------------
