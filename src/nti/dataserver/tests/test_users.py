@@ -7,6 +7,7 @@ from hamcrest import (assert_that, is_, has_entry, instance_of,
 					  contains)
 does_not = is_not
 from hamcrest import has_item
+from hamcrest import greater_than
 import unittest
 from nose.tools import assert_raises
 
@@ -742,3 +743,24 @@ class TestFeedbackEvent(mock_dataserver.ConfiguringTestBase):
 		notify( event )
 
 		assert_that( user.devices, has_length( 0 ) )
+
+import zope.schema.interfaces
+
+class TestUserNotDevMode(mock_dataserver.ConfiguringTestBase):
+	features = ()
+
+	@WithMockDS
+	def test_update_existing_created_without_email(self):
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = User.create_user( self.ds, username='sjohnson@nextthought.com', password='temp001' )
+			# with an mtime of None we cannot create invalid
+			with assert_raises( zope.schema.interfaces.RequiredMissing ):
+				user.updateFromExternalObject( {} )
+
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = User.get_user( 'sjohnson@nextthought.com' )
+			# But once we're saved there is no use harping on required missing
+			# data; presumably the profile changed
+			assert_that( user._p_mtime, greater_than( 0 ) )
+
+			user.updateFromExternalObject( {} )

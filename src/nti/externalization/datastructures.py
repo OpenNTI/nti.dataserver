@@ -237,8 +237,9 @@ class InterfaceObjectIO(AbstractDynamicObjectIO):
 	"""
 
 	_ext_iface_upper_bound = None
+	validate_after_update = True
 
-	def __init__( self, ext_self, iface_upper_bound=None ):
+	def __init__( self, ext_self, iface_upper_bound=None, validate_after_update=True ):
 		"""
 		:param iface_upper_bound: The upper bound on the schema to use
 			to externalize `ext_self`; we will use the most derived sub-interface
@@ -246,6 +247,9 @@ class InterfaceObjectIO(AbstractDynamicObjectIO):
 			constructor to pass this parameter (while taking one argument themselves,
 			to be usable as an adapter), or they can define the class
 			attribute ``_ext_iface_upper_bound``
+		:param bool validate_after_update: If ``True`` (the default) then the entire
+			schema will be validated after an object has been updated with :meth:`update_from_external_object`,
+			not just the keys that were assigned.
 		"""
 		super(InterfaceObjectIO, self).__init__( )
 		self._ext_self = ext_self
@@ -254,6 +258,8 @@ class InterfaceObjectIO(AbstractDynamicObjectIO):
 		# could be tricky to get right
 		self._iface = self._ext_find_schema( ext_self, iface_upper_bound or self._ext_iface_upper_bound )
 		self._ext_primitive_out_ivars_ = self._ext_primitive_out_ivars_.union( self._ext_find_primitive_keys() )
+		if not validate_after_update:
+			self.validate_after_update = validate_after_update
 
 	@property
 	def schema(self):
@@ -304,7 +310,10 @@ class InterfaceObjectIO(AbstractDynamicObjectIO):
 		super(InterfaceObjectIO,self).updateFromExternalObject( parsed, *args, **kwargs )
 		# If we make it this far, then validate the object.
 		# TODO: Should probably just make sure that there are no /new/ validation errors added
-		errors = schema.getValidationErrors( self._iface, self._ext_self )
+		# Best we can do right now is skip this step if asked
+		errors = None
+		if self.validate_after_update:
+			errors = schema.getValidationErrors( self._iface, self._ext_self )
 		if errors:
 			__traceback_info__ = errors
 			try:
