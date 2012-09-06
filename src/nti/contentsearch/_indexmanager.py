@@ -104,10 +104,14 @@ class IndexManager(object):
 		username = query.username
 
 		jobs = []
+		results = empty_search_result(query.term)
 		try:
 			# search user content
-			self._ugd_search_jobs(query, jobs) if username else []
-
+			#self._ugd_search_jobs(query, jobs) if username else []
+			for uim in self._get_search_uims(username):
+				rest = uim.search(query=query)
+				results = merge_search_results (results, rest)
+				
 			# search books
 			for indexid in query.books:
 				job = _greenlet_spawn(spawn=self.search_pool.spawn, func=self.content_search, \
@@ -117,7 +121,7 @@ class IndexManager(object):
 			gevent.joinall(jobs)
 
 		# merge results
-		results = empty_search_result(query.term)
+		
 		for job in jobs:
 			results = merge_search_results (results, job.value)
 
