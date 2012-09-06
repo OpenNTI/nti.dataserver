@@ -64,7 +64,7 @@ class TestWhooshBookIndexManager(ConfiguringTestBase):
 		assert_that(item, has_entry(CONTAINER_ID,  is_not(None)))
 		
 		item = toExternalObject(item)
-		assert_that(item, has_entry(SNIPPET, 'now and Become my SHIELD, Lightning, Strike'))
+		assert_that(item, has_entry(SNIPPET, 'Rise now and Become my SHIELD, Lightning, Strike'))
 		
 	def test_search_start(self):
 		hits = self.bim.search("ra*", limit=None)
@@ -74,16 +74,17 @@ class TestWhooshBookIndexManager(ConfiguringTestBase):
 		
 	def test_suggest(self):
 		hits = self.bim.suggest("ra")
-		assert_that(hits, has_entry(HIT_COUNT, 4))
+		assert_that(hits, has_entry(HIT_COUNT, 5))
 		assert_that(hits, has_entry(QUERY, 'ra'))
 		assert_that(hits, has_key(ITEMS))
 		
 		items = hits[ITEMS]
-		assert_that(items, has_length(4))
-		assert_that(items, has_item('rankle'))
-		assert_that(items, has_item('raise'))
-		assert_that(items, has_item('rain'))
+		assert_that(items, has_length(5))
 		assert_that(items, has_item('rage'))
+		assert_that(items, has_item('rank'))
+		assert_that(items, has_item('rag'))
+		assert_that(items, has_item('rai'))
+		assert_that(items, has_item('ran'))
 		
 	def test_ngram_search(self):
 		hits = self.bim.ngram_search("sea")
