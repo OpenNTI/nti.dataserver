@@ -160,6 +160,14 @@ class Book(_SearchableContent):
 	def get_search_highlight_type(self):
 		return WHOOSH_HIGHLIGHT
 	
+	def suggest(self, searcher, word, *args, **kwargs):
+		result = super(Book, self).suggest(searcher, word, *args, **kwargs)
+		records = result[ITEMS]
+		if records:
+			records = sorted(records, key=lambda x: len(x), reverse=True)
+			result[ITEMS] = records
+		return result
+	
 	def get_objects_from_whoosh_hits(self, search_hits, search_field):
 		result = []
 		for hit in search_hits:
