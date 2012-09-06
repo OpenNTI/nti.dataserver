@@ -52,8 +52,17 @@ class NoSnippetHighlightDecorator(object):
 def NgramSnippetHighlightDecoratorFactory(*args):
 	return NgramSnippetHighlightDecorator()
 
-class NgramSnippetHighlightDecorator(object):
+class _BaseNgramSnippetHighlightDecorator(object):
 	interface.implements(ext_interfaces.IExternalObjectDecorator)
+	
+	def decorateExternalObject(self, original, external):
+		query = getattr(original, 'query', None)
+		if query:
+			text = external.get(SNIPPET, None)
+			text = _ngram_content_highlight(query, text.lower(), text)
+			external[SNIPPET] = text
+			
+class NgramSnippetHighlightDecorator(_BaseNgramSnippetHighlightDecorator):
 	component.adapts(search_interfaces.INgramSnippetHighlight)
 
 	def decorateExternalObject(self, original, external):
@@ -82,7 +91,7 @@ class WordSnippetHighlightDecorator(_BaseWordSnippetHighlightDecorator):
 	component.adapts(search_interfaces.IWordSnippetHighlight)
 	pass
 	
-class WhooshHighlightDecorator(_BaseWordSnippetHighlightDecorator):
+class WhooshHighlightDecorator(_BaseNgramSnippetHighlightDecorator):
 	component.adapts(search_interfaces.IWhooshSnippetHighlight)
 
 	def decorateExternalObject(self, original, external):
