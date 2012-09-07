@@ -2,6 +2,7 @@
 <configure xmlns="http://namespaces.zope.org/zope"
 		   i18n_domain="zope">
 	<include package="zope.component" />
+	<include package="nti.mimetype" />
 
 	<adapter for="nti.contentrendering.interfaces.IRenderedBook"
 			 factory=".ntiassessment._AssessmentExtractor"
@@ -12,9 +13,6 @@
 			 name="AssessmentExtractor" />
 
 	<include package="nti.assessment" />
-	<!-- TODO: Break this dependency. It causes us to get monkey
-	patched into a single process executor -->
-	<subscriber factory="nti.dataserver.datastructures.MimeTypeDecorator"
-				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+
 
 </configure>
