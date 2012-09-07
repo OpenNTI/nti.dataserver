@@ -266,7 +266,7 @@ def account_preflight_view(request):
 
 	preflight_user = _create_user( request, externalValue, preflight_only=True )
 
-	ext_schema = _make_schema( preflight_user )
+	ext_schema = _make_schema( preflight_user, readonly_override=False )
 
 	request.response.status_int = 200
 
@@ -317,7 +317,7 @@ def _get_avatar_choices_for_username( username, request ):
 	return avatar_choices
 
 
-def _make_schema( user ):
+def _make_schema( user, readonly_override=None ):
 	profile_iface = user_interfaces.IUserProfileSchemaProvider( user ).getSchema()
 	profile = profile_iface( user )
 	profile_schema = InterfaceObjectIO( profile, profile_iface ).schema
@@ -331,8 +331,14 @@ def _make_schema( user ):
 			continue
 
 		required = v.queryTaggedValue( user_interfaces.TAG_REQUIRED_IN_UI ) or getattr( v, 'required', None )
+		if readonly_override is not None:
+			readonly = readonly_override
+		else:
+			readonly = v.queryTaggedValue( user_interfaces.TAG_READONLY_IN_UI ) or getattr( v, 'readonly', False )
+
 		item_schema = {'name': k,
 					   'required': required,
+					   'readonly': readonly,
 					   'min_length': getattr(v, 'min_length', None) }
 		ui_type = v.queryTaggedValue( user_interfaces.TAG_UI_TYPE )
 		if not ui_type and isinstance( getattr( v, '_type', None ), type):
@@ -356,5 +362,11 @@ def _make_schema( user ):
 
 	# Ensure password is marked required (it's defined at the wrong level to tag it)
 	ext_schema['password']['required'] = True
+
+	if user_interfaces.IImmutableFriendlyNamed.providedBy( user ) and readonly_override is None:
+		# This interface isn't actually in the inheritance tree, so it
+		# wouldn't be used to determine the readonly status
+		ext_schema['alias']['readonly'] = True
+		ext_schema['realname']['readonly'] = True
 
 	return ext_schema

@@ -538,6 +538,8 @@ class IMathcountsCoppaUserWithAgreementUserProfile(user_interfaces.IEmailRequire
 						  required=False)
 
 IMathcountsCoppaUserWithAgreementUserProfile['affiliation'].setTaggedValue( user_interfaces.TAG_UI_TYPE, 'nti.appserver.site_policies.school' )
+IMathcountsCoppaUserWithAgreementUserProfile['affiliation'].setTaggedValue( user_interfaces.TAG_READONLY_IN_UI, True ) # post-creation
+IMathcountsCoppaUserWithAgreementUserProfile['role'].setTaggedValue( user_interfaces.TAG_READONLY_IN_UI, True ) # post-creation
 
 
 @component.adapter(IMathcountsCoppaUserWithoutAgreement)
