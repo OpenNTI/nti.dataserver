@@ -1,0 +1,13 @@
+# -*- mode: html -*-
+
+name: description
+type: xml
+<div class="description">
+<metal:block tal:repeat="item self">
+    <div class="description-item">
+      <b tal:condition="item/attributes/term" tal:content="item/attributes/term"></b>
+      <span tal:condition="item/attributes/term" tal:omit-tag=""> &mdash; </span>
+      <span tal:replace="item"></span>
+    </div>
+</metal:block>
+</div>
