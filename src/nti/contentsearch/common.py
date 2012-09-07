@@ -9,7 +9,7 @@ from datetime import datetime
 
 from nti.externalization import interfaces as ext_interfaces
 
-from nti.dataserver.mimetype import MIME_BASE
+from nti.mimetype.mimetype import MIME_BASE
 
 import logging
 logger = logging.getLogger( __name__ )

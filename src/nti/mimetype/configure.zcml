@@ -1,0 +1,14 @@
+<!-- -*- mode: nxml -*- -->
+<configure xmlns="http://namespaces.zope.org/zope"
+		   i18n_domain="zope">
+
+	<subscriber factory=".externalization.MimeTypeDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+	<adapter factory=".mimetype.ContentTypeMarkeTypeAwareAdapter" />
+
+	<!-- Finding objects by mimetype -->
+	<adapter factory=".mimetype.ModeledContentTypeMimeFactory"
+			 provides="nti.externalization.interfaces.IMimeObjectFactory"
+			 for="dolmen.builtins.IDict" />
+
+</configure>

@@ -495,8 +495,8 @@ class IContent(ILastModified,ICreated):
 	"""
 	It's All Content.
 	"""
-
-class IModeledContent(IContent,IContained):
+from nti.mimetype import interfaces as mime_interfaces
+class IModeledContent(IContent,IContained,mime_interfaces.IContentTypeMarker):
 	"""
 	Content accessible as objects.
 	Interfaces that extend this MUST directly provide IContentTypeAware.
