@@ -1,6 +1,10 @@
 file:../lib/pywikipedia/#egg=pywikipedia
-# 1.0b4 is out, but not yet tagged
+# 1.0b4 is out, but not yet tagged; trunk causes a hang on exit
 -e hg+https://bitbucket.org/denis/gevent@1.0b3#egg=gevent
+# gevent mysql-compat driver
+-e git+https://github.com/esnme/ultramysql.git#egg=umysql-dev
+-e git+https://github.com/hongqn/umysqldb.git#egg=umysqldb-dev
+-e git+https://github.com/petehunt/PyMySQL.git#egg=PyMySQL-dev
 ## Sadly, issue 328 prevents us from using local paths for these things,
 ## if we include the egg name. If we're otherwise very careful, 
 ## local paths can be made to work

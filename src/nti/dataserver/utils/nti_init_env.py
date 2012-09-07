@@ -47,8 +47,7 @@ def init_env( args ):
 		component.provideUtility(
 			z3c.password.password.TrivialPasswordUtility() )
 
-
-	config.write_configs(root_dir, pserve_ini )
+	config.write_configs( root_dir, pserve_ini )
 
 if __name__ == '__main__':
 	main()

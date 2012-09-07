@@ -12,7 +12,7 @@ logger = __import__('logging').getLogger(__name__)
 
 import os
 import plasTeX.Imagers
-from concurrent.futures import  ProcessPoolExecutor
+from nti.contentrendering import ConcurrentExecutor as ProcessPoolExecutor
 import subprocess
 import math
 

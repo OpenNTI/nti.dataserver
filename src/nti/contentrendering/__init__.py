@@ -78,3 +78,15 @@ def run_phantom_on_page( htmlFile, scriptName, args=(), key=_none_key, expect_no
 		return result
 
 	return (key, result)
+
+import concurrent.futures
+def ConcurrentExecutor(max_workers=None):
+	"""
+	An abstraction layer to let rendering code easily switch between different concurrency
+	strategies.
+
+	It also serves as a compatibility shim to make us compatible with gevent thread patching.
+	"""
+	# Notice that we did not import the full path because it gets swizzled at
+	# runtime
+	return concurrent.futures.ProcessPoolExecutor(max_workers=max_workers)

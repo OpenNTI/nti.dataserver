@@ -22,7 +22,7 @@ from zope import interface
 from plasTeX.Imagers import WorkingFile
 from plasTeX.Filenames import Filenames
 
-from concurrent.futures import ProcessPoolExecutor
+from nti.contentrendering import ConcurrentExecutor as ProcessPoolExecutor
 
 from . import interfaces
 
