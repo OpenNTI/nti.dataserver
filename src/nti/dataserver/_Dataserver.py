@@ -13,9 +13,8 @@ import gevent.local
 import ZODB.interfaces
 from zope import interface
 from zope import component
-from zope.configuration import xmlconfig
 from zope.event import notify
-from zope.processlifetime import DatabaseOpenedWithRoot
+from zope.processlifetime import DatabaseOpened, DatabaseOpenedWithRoot
 
 import zope.generations.generations
 import zope.deprecation
@@ -253,37 +252,18 @@ class MinimalDataserver(object):
 		# should go through an open connection.
 		self.db, _, _ = self._setup_dbs( parentDir, dataFileName, daemon )
 
-		# Now, simply broadcasting the DatabaseOpenedWithRoot option
-		# will trigger the installers/evolvers from zope.generations
+		# In zope, IDatabaseOpened is fired by XXX.
+		# zope.app.appsetup.bootstrap.bootStrapSubscriber listens for
+		# this event, and ensures that the database has a IRootFolder
+		# object. Once that happens, then bootStrapSubscriber fires
+		# IDatabaseOpenedWithRoot.
+
+		# zope.generations installers/evolvers are triggered on IDatabaseOpenedWithRoot
+		# We notify both in that order.
+
 		# TODO: Should we be the ones doing this?
 
-		# In the past, we weren't used to install the application
-		# Therefore we could have all the installed components, but
-		# not the generation key. We'll support that for awhile by
-		# manually running the migrations: set the version to 1, the first version that
-		# actually was installed by us, and then let the 1-to-2 migration path
-		# really fire.
-		# We also need to arrange for the example database to get migrated
-		# if it present (since we do not statically configure it)
-		with self.db.transaction() as conn:
-			root = conn.root()
-			if root.get( zope.generations.generations.generations_key ) is None and root.get( 'users' ) is not None:
-				# OK, the application has been run before, but migration and schema setup have
-				# not.
-				generations = PersistentMapping()
-				root[zope.generations.generations.generations_key] = generations
-				generations['nti.dataserver'] = 1
-			generations = root.get( zope.generations.generations.generations_key )
-			if generations is not None and 'nti.dataserver-example' in generations:
-				# see config.py
-				# TODO: Circular import
-				import nti.dataserver.utils.example_database_initializer
-				component.provideUtility(
-					nti.dataserver.utils.example_database_initializer.ExampleDatabaseInitializer(),
-					name='nti.dataserver-example' )
-
-
-
+		notify( DatabaseOpened( self.db ) )
 		notify( DatabaseOpenedWithRoot( self.db ) )
 		#ZODB.Connection.resetCaches()
 		self._parentDir = parentDir

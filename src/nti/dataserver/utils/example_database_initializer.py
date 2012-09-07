@@ -3,17 +3,18 @@
 from __future__ import unicode_literals, print_function
 
 import os
-import json
+import simplejson as json
 import pkg_resources
 
 from zc import intid as zc_intid
 from zope import interface
+from zope import component
+import zope.generations.generations
 from zope.generations import interfaces as gen_interfaces
 
 import nti.dataserver.quizzes as quizzes
 import nti.dataserver.classes as classes
 import nti.dataserver.providers as providers
-from nti.dataserver.users import interfaces as user_interfaces
 
 from nti import deprecated
 from nti.dataserver import containers
@@ -30,8 +31,26 @@ def load_jfile(jfile):
 _DATA_QUIZ_0 = load_jfile('example_database_quiz0.json')
 _DATA_QUIZ_1 = load_jfile('example_database_quiz1.json')
 
+def exampleDatabaseInitializerSubscriber( event ):
+	"""
+	Subscriber to the :class:`zope.processlifetime.IDatabaseOpenedEvent`.
+	If the example database has previously been installed in this
+	database, then we provide the schema manager to continue
+	its evolution (since the schema manager is optional).
+	"""
+	with event.database.transaction() as conn:
+		root = conn.root()
+		generations = root.get( zope.generations.generations.generations_key )
+		if generations is not None and 'nti.dataserver-example' in generations:
+			component.provideUtility(
+				ExampleDatabaseInitializer(),
+				name='nti.dataserver-example' )
+
+
+
+@interface.implementer(gen_interfaces.IInstallableSchemaManager)
 class ExampleDatabaseInitializer(object):
-	interface.implements(gen_interfaces.IInstallableSchemaManager)
+
 
 	generation = 8
 	max_test_users = 101
@@ -189,14 +208,14 @@ class ExampleDatabaseInitializer(object):
 		mock_dataserver.shards = root['shards']
 		USERS = self._make_usernames()
 		def create_add_user(user_tuple):
-			#from IPython.core.debugger import Tracer;  Tracer()() 
+			#from IPython.core.debugger import Tracer;  Tracer()()
 			uname = user_tuple[0]
 			is_test_user =  uname.startswith('test.user.')
 			password = 'temp001' if is_test_user else user_tuple[1].replace( ' ', '.' ).lower()
 			if self.skip_passwords:
 				# this can speed up creation a lot, the encrpytion is slow. This matters for test cases.
 				password = None
-				
+
 			args = {'username':uname, 'password':password,'dataserver':mock_dataserver}
 			ext_value = {}
 			ext_value['email'] = unicode(uname)
