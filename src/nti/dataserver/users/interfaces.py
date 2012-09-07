@@ -200,11 +200,25 @@ class IImmutableFriendlyNamed(Interface):
 	of the friendly name values.
 	"""
 
+	alias = schema.TextLine(
+		title='Display alias',
+		description="Enter preferred display name alias, e.g., johnnyboy."
+			"Your site may impose limitations on this value.",
+		required=False,
+		readonly=True)
+
+	realname = schema.TextLine(
+		title='Full Name aka realname',
+		description="Enter full name, e.g. John Smith.",
+		required=False,
+		readonly=True)
+
 from nti.utils.schema import ValidTextLine as _ValidTextLine
 
 TAG_HIDDEN_IN_UI = "nti.dataserver.users.field_hidden_in_ui" # Don't display this by default in the UI
 TAG_UI_TYPE = 'nti.dataserver.users.field_type' # Qualifying details about how the field should be treated, such as data source
 TAG_REQUIRED_IN_UI = 'nti.dataserver.users.field_required' # Overrides the value from the field itself
+TAG_READONLY_IN_UI = 'nti.dataserver.users.field_readonly' # Overrides the value from the field itself, if true
 
 class IUserProfile(IFriendlyNamed, IAvatarURL):
 	"""
@@ -235,6 +249,7 @@ class IRestrictedUserProfile(IUserProfile):
 		constraint=checkEmailAddress)
 
 IRestrictedUserProfile['password_recovery_email_hash'].setTaggedValue( TAG_HIDDEN_IN_UI, True )
+IRestrictedUserProfile['password_recovery_email_hash'].setTaggedValue( TAG_READONLY_IN_UI, True )
 
 class IRestrictedUserProfileWithContactEmail(IRestrictedUserProfile):
 	"""
