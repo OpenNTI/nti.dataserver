@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 entry_points = {
 	'console_scripts': [
 		"nti_render = nti.contentrendering.nti_render:main",
-		"nti_init_env = nti.dataserver.config:main",
+		"nti_init_env = nti.dataserver.utils.nti_init_env:main",
 		"nti_pubsub_device = nti.dataserver._PubSubDevice:main",
 		"nti_init_shard = nti.dataserver.utils.nti_init_shard:main",
 		"nti_cache_avatars = nti.dataserver.utils.nti_cache_avatars:main",
@@ -198,6 +198,7 @@ setup(
 		'zc.zlibstorage >= 0.1.1', # compressed records. Will be built-in to newer ZODB
 		'zc.zodbdgc >= 0.6.0',
 		'zetalibrary',
+		'zope.app.broken >= 3.6.0', # Improved broken objects
 		'zope.app.component >= 3.9.3', # bwc only, DO NOT IMPORT. pulled in by contentratings
 		'zope.app.interface >= 3.6.0', # bwc only, DO NOT IMPORT. pulled in by contentratings
 		'zope.annotation >= 3.5.0',

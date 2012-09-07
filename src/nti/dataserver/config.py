@@ -435,28 +435,16 @@ def _configure_zeo( env_root ):
 
 from repoze.zodbconn.uri import db_from_uri
 from zope.configuration import xmlconfig
-from zope import component
-
 
 
 from zope.event import notify
+from zope.processlifetime import DatabaseOpened
 from zope.processlifetime import DatabaseOpenedWithRoot
 
 def _configure_database( env, uris ):
 	install_zlib_client_resolver()
 	db = db_from_uri( uris )
-	# TODO: Circular import
-	# TODO: We don't want to be doing this in prod, we want this to be configured somewhere.
-	# If we do this, we must provide a password utility
-	import nti.dataserver.utils.example_database_initializer
-	component.provideUtility(
-		nti.dataserver.utils.example_database_initializer.ExampleDatabaseInitializer(),
-		name='nti.dataserver-example' )
-	import z3c.password.password
-	import z3c.password.interfaces
-	component.provideUtility(
-		z3c.password.password.TrivialPasswordUtility() )
-
+	notify( DatabaseOpened( db ) )
 	# Now, simply broadcasting the DatabaseOpenedWithRoot option
 	# will trigger the installers from zope.generations
 	notify( DatabaseOpenedWithRoot( db ) )
@@ -492,7 +480,6 @@ def temp_get_config( root, demo=False ):
 
 def write_configs(root_dir, pserve_ini, update_existing=False, write_supervisord=False):
 	env = _Env( root_dir, create=(not update_existing), only_new=update_existing )
-	xmlconfig.file( 'configure.zcml', package=sys.modules['nti.dataserver'] )
 	uris = _configure_zeo( env )
 	if not update_existing:
 		_configure_database( env, uris )
@@ -512,21 +499,3 @@ def write_configs(root_dir, pserve_ini, update_existing=False, write_supervisord
 		env.write_main_conf()
 
 	return env
-
-def main():
-	args = sys.argv
-
-	if len( args ) < 3:
-		print( 'Usage: root_dir pserve_ini_file' )
-		sys.exit( 1 )
-
-	root_dir = args[1]
-	pserve_ini = args[2]
-	pserve_ini = os.path.abspath( os.path.expanduser( pserve_ini ) )
-	if not os.path.exists( pserve_ini ):
-		raise OSError( "No ini file " + pserve_ini )
-
-	write_configs(root_dir, pserve_ini, '--update_existing' in args)
-
-if __name__ == '__main__':
-	main()
