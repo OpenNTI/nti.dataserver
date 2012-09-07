@@ -12,7 +12,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from xml.dom.minidom import parse
-from concurrent.futures import ProcessPoolExecutor
+
 import os
 
 from zope.deprecation import deprecate
@@ -24,6 +24,7 @@ from . import interfaces
 from . import run_phantom_on_page
 _runPhantomOnPage = run_phantom_on_page
 from . import javascript_path
+from . import ConcurrentExecutor
 
 import html5lib
 from html5lib import treewalkers, serializer, treebuilders
@@ -121,7 +122,7 @@ class RenderedBook(object):
 		# risky: arbitrary, non-pickalable objects could get attached there
 		results = {}
 
-		with ProcessPoolExecutor() as executor:
+		with ConcurrentExecutor() as executor:
 			for the_tuple in executor.map( self._get_phantom_function(),
 										   [os.path.join( self.contentLocation, node.getAttribute( b'href' ) )
 											for node in nodesForPages],

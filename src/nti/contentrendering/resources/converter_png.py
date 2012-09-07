@@ -17,7 +17,7 @@ import re
 import glob
 import time
 
-from concurrent.futures import ProcessPoolExecutor
+from nti.contentrendering import ConcurrentExecutor as ProcessPoolExecutor
 from nti.contentrendering.resources import converters, interfaces
 from zope import interface
 

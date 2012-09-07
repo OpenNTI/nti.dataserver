@@ -17,6 +17,7 @@ from zope import component
 from zope.component.hooks import site, setHooks
 import zope.intid
 from nti.dataserver import sharing
+from nti.dataserver import interfaces as nti_interfaces
 
 def migrate( user, mixin, intids, users ):
 	assert isinstance( mixin, sharing.ShareableMixin )
@@ -29,7 +30,7 @@ def migrate( user, mixin, intids, users ):
 	targets = targets or ()
 
 	def addToSet(target):
-		target = users.get( target )
+		target = users.get( target ) if not nti_interfaces.IUser.providedBy( target ) else target
 		if target:
 			treeset.add( intids.register( target ) )
 

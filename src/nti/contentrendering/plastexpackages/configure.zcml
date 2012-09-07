@@ -12,6 +12,8 @@
 			 name="AssessmentExtractor" />
 
 	<include package="nti.assessment" />
+	<!-- TODO: Break this dependency. It causes us to get monkey
+	patched into a single process executor -->
 	<subscriber factory="nti.dataserver.datastructures.MimeTypeDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 

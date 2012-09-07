@@ -15,3 +15,7 @@ __docformat__ = "restructuredtext en"
 # right threading bases and we don't have to use our fancy patched classes
 # (which do work, but this is safer)
 import nti.dataserver
+
+# Monkey-patch for RelStorage
+#import umysqldb
+#umysqldb.install_as_MySQLdb()
