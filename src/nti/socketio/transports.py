@@ -204,7 +204,7 @@ def _catch_all(greenlet):
 		try:
 			greenlet(*args)
 		except gevent.GreenletExit:
-			logger.info( "Terminating greenlet by request" )
+			logger.info( "Terminating greenlet by request", exc_info=True )
 		except:
 			# Trap and log.
 			logger.exception( "Failed to run greenlet %s", greenlet )
