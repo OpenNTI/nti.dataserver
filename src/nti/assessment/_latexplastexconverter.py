@@ -11,20 +11,25 @@ from nti.assessment import interfaces
 import nti.openmath as openmath
 
 import tempfile
-import StringIO
+from StringIO import StringIO
 
 import plasTeX
 
 from plasTeX.TeX import TeX
+_counter = 0
 
 
 def _buildDomFromString(docString):
+	global _counter
 	document = plasTeX.TeXDocument()
-	strIO = StringIO.StringIO(docString)
+	strIO = StringIO(docString)
 	strIO.name = 'temp'
-	tex = TeX(document,strIO)
-	document.userdata['jobname'] = 'temp'
+	tex = TeX(document, strIO)
+	document.userdata['jobname'] = 'temp%s' % _counter
+	_counter += 1
 	document.userdata['working-dir'] = tempfile.gettempdir()
+	### FIXME: There's some global state in these objects somewhere.
+	### See comments in test_latex
 	tex.parse()
 	return document
 
@@ -78,7 +83,6 @@ def convert( response ):
 		if len(dom) == 1:
 			cached_value = (response.value, dom[0])
 			setattr( response, cache_attr, cached_value )
-
 	return cached_value[1] if cached_value else None
 
 class EmptyResponseConverter(object):

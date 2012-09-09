@@ -72,7 +72,7 @@ setup(
 	# Support unit tests of package
 #	tests_require = ['z3c.coverage','zope.testing'],
 	setup_requires = [
-		'nose >= 1.1.2',
+		'nose >= 1.2.0',
 		#'distribute >= 0.6.28', # Can't seem to include that anywhere
 		# In theory this should make it possible to get
 		# the svn revision number from svn 1.7. Doesn't seem
