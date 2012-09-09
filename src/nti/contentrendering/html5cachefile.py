@@ -1,3 +1,16 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+
+
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
 import re
 import os
 import sys
@@ -22,7 +35,7 @@ def get_open_port():
 		return s.getsockname()[1]
 	finally:
 		s.close()
-		
+
 def main(url_or_path, out_dir="/tmp/", manifest='cache-manifest', port=None):
 	"""
 	Creates an html cache-manifest file with all resources in the specified url
@@ -43,8 +56,6 @@ def main(url_or_path, out_dir="/tmp/", manifest='cache-manifest', port=None):
 		resources = _get_url_resources(url, out_dir, httpd==None)
 		_process_toc_file(url, resources)
 
-		print "%s Resources found" % len(resources)
-
 		path = os.path.join(out_dir, manifest)
 		with open(path,"w") as target:
 			target.write("CACHE MANIFEST\n")
@@ -56,8 +67,6 @@ def main(url_or_path, out_dir="/tmp/", manifest='cache-manifest', port=None):
 			httpd.server_close()
 
 def _process_toc_file(url, resources, toc_file='eclipse-toc.xml'):
-
-	print "Processing TOC file"
 
 	tmp = tempfile.mkdtemp()
 	try:
@@ -79,8 +88,6 @@ def _process_node(node, resources):
 				continue
 			elif value not in resources:
 				resources[value] = None
-
-# -------------------------------
 
 def _launch_server(data_path, port = None):
 
@@ -107,15 +114,11 @@ def _launch_server(data_path, port = None):
 	thread.start_new_thread(worker, ())
 	return httpd
 
-# -------------------------------
 
 def _get_toc_file(url, out_dir, toc_file='eclipse-toc.xml'):
-	print "Getting TOC file"
 	return _get_file(url, out_dir, toc_file, True)
 
 def _get_url_resources(url, out_dir="/tmp", user_spider=False):
-
-	print "Getting URL resources"
 
 	tmp = None
 	resources = {}
@@ -143,13 +146,13 @@ def _get_url_resources(url, out_dir="/tmp", user_spider=False):
 			return None
 
 	try:
-		with subprocess.Popen(args, shell=False, stderr=subprocess.PIPE).stderr as source:
-			for line in source:
-				m = re.search('(^--.*--)  (http:\/\/.*[^\/]$)', line)
-				if m:
-					rsr = valid_resource(m.group(2))
-					if rsr and rsr not in resources:
-						resources[rsr] = None
+		source = subprocess.Popen(args, shell=False, stderr=subprocess.PIPE).communicate()[1] # stderr
+		for line in source:
+			m = re.search('(^--.*--)  (http:\/\/.*[^\/]$)', line)
+			if m:
+				rsr = valid_resource(m.group(2))
+				if rsr and rsr not in resources:
+					resources[rsr] = None
 	finally:
 		if tmp:
 			shutil.rmtree(tmp, ignore_errors=True)
@@ -186,8 +189,6 @@ def _execute_cmd(args):
 	if retcode != 0:
 		raise Exception("Fail to execute '%s'" % cmd)
 	return True
-
-# -------------------------------
 
 def _remove_file(target):
 	try:

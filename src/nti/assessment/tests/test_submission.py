@@ -39,7 +39,7 @@ class TestQuestionSubmission(ConfiguringTestBase):
 
 
 		# Now verify the same for the mimetype-only version
-		mtd = dottedname.resolve( 'nti.dataserver.datastructures.MimeTypeDecorator' )
+		mtd = dottedname.resolve( 'nti.mimetype.externalization.MimeTypeDecorator' )
 		component.provideSubscriptionAdapter( mtd, provides=ext_interfaces.IExternalMappingDecorator )
 		assert_that( submission.QuestionSubmission(), externalizes( has_key( 'MimeType' ) ) )
 		ext_obj_no_class = toExternalObject( submission.QuestionSubmission() )
