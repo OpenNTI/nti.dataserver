@@ -75,6 +75,8 @@
 	
 	<utility factory="._content_utils._ContentTokenizer"  />
 	<utility factory="._content_utils._ContentTokenizer" name="en" />
+	<utility factory="._content_utils._stop_words_en" />
+	<utility factory="._content_utils._stop_words_en" name="en" />
 	
 	<!-- zopyx Storage -->
 
