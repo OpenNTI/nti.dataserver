@@ -55,7 +55,7 @@ def ngram_content_highlight(query, text, maxchars=300, surround=50, order=highli
 	fragments = fragmenter.fragment_tokens(text, tokens)
 	fragments = highlight.top_fragments(fragments, top, scorer, order)
 	
-	formatter = highlight.UppercaseFormatter()
+	formatter = highlight.NullFormatter() #  highlight.UppercaseFormatter()
 	return formatter(text, fragments)
 
 def word_content_highlight(query, text, analyzer=None, maxchars=300, surround=50, *args, **kwargs):
@@ -65,7 +65,7 @@ def word_content_highlight(query, text, analyzer=None, maxchars=300, surround=50
 	terms = frozenset([query])
 	analyzer = analyzer or analysis.SimpleAnalyzer()
 	fragmenter = highlight.ContextFragmenter(maxchars=maxchars, surround=surround)
-	formatter = highlight.UppercaseFormatter()
+	formatter = highlight.NullFormatter() # highlight.UppercaseFormatter()
 	return highlight.highlight(text, terms, analyzer, fragmenter, formatter)
 
 
