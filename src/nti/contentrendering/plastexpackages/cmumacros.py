@@ -75,6 +75,9 @@ class contentwidth(Base.DimenCommand):
 class beamertemplatebookbibitems(_Ignored):
 	pass
 
+class beamertemplatearticlebibitems(_Ignored):
+	pass
+
 class alt(Base.Command):
 	args = '< overlay > default alternative'
 
