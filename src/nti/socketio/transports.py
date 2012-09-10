@@ -203,10 +203,10 @@ def _catch_all(greenlet):
 	def f(*args):
 		try:
 			greenlet(*args)
-		except gevent.GreenletExit:
-			logger.info( "Terminating greenlet by request", exc_info=True )
 		except:
 			# Trap and log.
+			# We no longer expect to use GreenletExit, so it isn't handled
+			# specially.
 			logger.exception( "Failed to run greenlet %s", greenlet )
 	return f
 
@@ -250,6 +250,19 @@ class WebsocketTransport(BaseTransport):
 		super(WebsocketTransport,self).__init__(request)
 		self.websocket = None
 
+	class WebSocketGreenlet(gevent.Greenlet):
+
+		def __init__( self, run=None, *args, **kwargs ):
+			self.ws_operator = run
+			gevent.Greenlet.__init__( self, run, *args, **kwargs )
+
+		def ws_ask_to_quit( self ):
+			"""
+			Use this instead of :meth:`kill` if there's a chance that
+			resources might not be cleaned up as the stack unwinds.
+			"""
+			self.ws_operator.run_loop = False
+
 	class AbstractWebSocketOperator(object):
 
 		def __init__(self, session_id, session_proxy, session_service, websocket ):
@@ -257,6 +270,7 @@ class WebsocketTransport(BaseTransport):
 			self.session_proxy = session_proxy
 			self.session_service = session_service
 			self.websocket = websocket
+			self.run_loop = True
 
 		@_catch_all
 		def __call__(self):
@@ -285,22 +299,21 @@ class WebsocketTransport(BaseTransport):
 			return True
 
 		def _run(self):
-			listen = True
-
-			while listen:
+			while self.run_loop:
 				self.message = self.session_proxy.get_client_msg()
 				assert isinstance(self.message, (str,types.NoneType)), "Messages should already be encoded as required"
-
+				if not self.run_loop:
+					break
 				try:
-					listen = run_job_in_site( self._do_send, retries=10 )
+					self.run_loop &= run_job_in_site( self._do_send, retries=10 )
 				except transaction.interfaces.TransientError:
 					# A problem clearing the queue or getting the session.
 					# Generally, these can be ignored, since we'll just try again later
 					logger.debug( "Unable to clear session msgs, ignoring", exc_info=True )
-					listen = (self.message is not None)
+					self.run_loop = (self.message is not None)
 
 
-				if not listen:
+				if not self.run_loop:
 					# Don't send a message if the transactions failed
 					# and we're going to break this loop
 					break
@@ -343,13 +356,14 @@ class WebsocketTransport(BaseTransport):
 			return True
 
 		def _run(self):
-			listen = True
-			while listen:
+			while self.run_loop:
 				self.message = self.websocket.receive()
+				if not self.run_loop:
+					break
 				# Try for up to 2 seconds to receive this message. If it fails,
 				# drop it and wait for the next one. That's better than dieing altogether, right?
 				try:
-					listen = run_job_in_site( self._do_read, retries=20, sleep=0.1 )
+					self.run_loop &= run_job_in_site( self._do_read, retries=20, sleep=0.1 )
 				except transaction.interfaces.TransientError:
 					logger.exception( "Failed to receive message (%s) from WS; ignoring and continuing %s",
 									  self.message[0:50], self.session_id )
@@ -368,11 +382,12 @@ class WebsocketTransport(BaseTransport):
 			return False
 
 		def _run(self):
-			listen = True
-			while listen:
+			while self.run_loop:
 				gevent.sleep( self.ping_sleep )
+				if not self.run_loop:
+					break
 				# FIXME: Make time a config?
-				listen = run_job_in_site( self._do_ping, retries=5, sleep=0.1 )
+				self.run_loop &= run_job_in_site( self._do_ping, retries=5, sleep=0.1 )
 
 	def connect(self, session, request_method, ping_sleep=5.0 ):
 
@@ -403,9 +418,9 @@ class WebsocketTransport(BaseTransport):
 		read_from_ws = self.WebSocketReader( session_id, session_proxy, session_service, websocket )
 		ping = self.WebSocketPinger( session_id, session_proxy, session_service, websocket, ping_sleep=ping_sleep )
 
-		gr1 = gevent.spawn(send_into_ws)
-		gr2 = gevent.spawn(read_from_ws)
-		heartbeat = gevent.spawn( ping )
+		gr1 = self.WebSocketGreenlet.spawn(send_into_ws)
+		gr2 = self.WebSocketGreenlet.spawn(read_from_ws)
+		heartbeat = self.WebSocketGreenlet.spawn( ping )
 
 		to_cleanup = [gr1, gr2, heartbeat]
 		def cleanup(dead_greenlet):
@@ -420,8 +435,8 @@ class WebsocketTransport(BaseTransport):
 			# When one dies, they all die
 			for greenlet in to_cleanup:
 				if not greenlet.ready():
-					logger.debug( "Killing %s on death of %s", greenlet, dead_greenlet )
-					greenlet.kill( block=False )
+					logger.debug( "Asking %s to quit on death of %s", greenlet, dead_greenlet )
+					greenlet.ws_ask_to_quit()
 
 		for link in to_cleanup:
 			link.link( cleanup )
