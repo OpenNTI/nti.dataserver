@@ -56,7 +56,8 @@ def ngram_content_highlight(query, text, maxchars=300, surround=50, order=highli
 	fragments = highlight.top_fragments(fragments, top, scorer, order)
 	
 	formatter = highlight.NullFormatter() #  highlight.UppercaseFormatter()
-	return formatter(text, fragments)
+	result = formatter(text, fragments)
+	return result
 
 def word_content_highlight(query, text, analyzer=None, maxchars=300, surround=50, *args, **kwargs):
 	"""

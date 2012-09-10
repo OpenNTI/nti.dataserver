@@ -98,7 +98,7 @@ class TestWhooshUserAdapter(ConfiguringTestBase):
 		assert_that(items[key], has_entry(CONTAINER_ID, 'tag:nextthought.com,2011-10:bleach-manga'))
 
 		hits = uim.search("*", limit=None)
-		assert_that(hits, has_entry(HIT_COUNT, 11))
+		assert_that(hits, has_entry(HIT_COUNT, 12))
 
 		hits = uim.search("ra*", limit=None)
 		assert_that(hits, has_entry(HIT_COUNT, 3))
