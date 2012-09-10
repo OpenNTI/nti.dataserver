@@ -44,16 +44,8 @@ class TestLatex(ConfiguringTestBase):
 		rsp = response.QTextResponse( soln.value + " day" )
 
 		grader = component.getMultiAdapter( (None, soln, rsp), interfaces.IQSymbolicMathGrader )
-		### FIXME FIXME FIXME:
-		# See _latexplastexconverter. There's apparently some global state
-		# in the plasTeX package we haven't yet gotten rid of.
-		# If we run this test case, then a bunch of the content rendering tests fail because something
-		# isn't getting cleaned up like it should.
-		# To demonstrate, uncomment the two assertions, and run the following command:
-		# nosetests nti.assessment.tests.test_latex:TestLatex.test_simple_grade_accept_trailing_units nti.contentrendering.resources.tests.test_resourcedb:TestResourceDBTabular.test_system_generate
-		# TestResourceDBTabular will fail
-		#assert_that( grader(  ), is_true() )
-		#assert_that( soln.grade( soln.value ), is_true() )
+		assert_that( grader(  ), is_true() )
+		assert_that( soln.grade( soln.value ), is_true() )
 
 	def test_simple_grade_accept_trailing_percent(self):
 
