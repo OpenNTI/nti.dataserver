@@ -138,12 +138,15 @@ class TestWebSocket(ConfiguringTestBase):
 
 		reader._run()
 		assert_that( session, has_property( 'killed', True ) )
+		assert_that( reader, has_property( 'run_loop', False ) )
 
 		session.killed = False
+		reader.run_loop = True
 		socket.pkts.append( 'unparsable' )
 
 		reader._run()
 		assert_that( session, has_property( 'killed', True ) )
+		assert_that( reader, has_property( 'run_loop', False ) )
 
 class MockSession(object):
 	socket = None
