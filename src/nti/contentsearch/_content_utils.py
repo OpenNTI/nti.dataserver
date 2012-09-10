@@ -358,5 +358,10 @@ class _ContentTokenizer(object):
 		return words
 	
 @interface.implementer( search_interfaces.IStopWords )
-def _stop_words_en():
-	return STOP_WORDS
+class _DefaultStopWords(object):
+	
+	def stopwords(self, language='en'):
+		return STOP_WORDS
+
+	def available_languages(self, ):
+		return ('en',)

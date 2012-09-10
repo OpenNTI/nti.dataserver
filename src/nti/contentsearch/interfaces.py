@@ -410,8 +410,12 @@ class IContentTokenizer(interface.Interface):
 		"""tokenize the specifeid text data"""
 	
 class IStopWords(interface.Interface):
-	"""Marker interface for stop words"""
-	pass
+
+	def stopwords(language):
+		"""return stop word for the specified language"""
+		
+	def available_languages():
+		"available languages"
 			
 # Catalog creators
 	

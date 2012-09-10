@@ -126,6 +126,14 @@ class _SearchableContent(object):
 
 	def get_objects_from_whoosh_hits(self, search_hits, search_field):
 		return search_hits
+
+# content analyzer
+
+def _content_analyzer():
+	zutility = component.queryUtility(search_interfaces.IStopWords) 
+	stopwords = zutility.stopwords() if zutility else analysis.STOP_WORDS
+	analyzer = analysis.StandardAnalyzer(stoplist=stopwords) | analysis.NgramFilter(minsize=3, maxsize=10)
+	return analyzer
 	
 # book content
 
@@ -149,8 +157,7 @@ def create_book_schema():
 				  			keywords = fields.KEYWORD(stored=True), 
 				 			quick = fields.NGRAM(maxsize=10, phrase=True),
 				 			related = fields.KEYWORD(stored=True),
-				 			content = fields.TEXT(stored=True, spelling=True, phrase=True,
-												  analyzer = analysis.StandardAnalyzer() | analysis.NgramFilter(minsize=3, maxsize=10)))
+				 			content = fields.TEXT(stored=True, spelling=True, phrase=True, analyzer=_content_analyzer()))
 	return schema
 
 class Book(_SearchableContent):
@@ -338,7 +345,7 @@ class TreadableIndexableContent(UserIndexableContent):
 	
 def create_highlight_schema():
 	schema = _create_treadable_schema()
-	schema.add(content_, fields.TEXT(stored=False, chars=True, spelling=True))
+	schema.add(content_, fields.TEXT(stored=False, chars=True, spelling=True, analyzer=_content_analyzer()))
 	schema.add(quick_, fields.NGRAM(maxsize=10, phrase=True))
 	return schema
 
