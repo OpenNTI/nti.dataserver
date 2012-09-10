@@ -98,7 +98,7 @@ class TestWhooshUserAdapter(ConfiguringTestBase):
 		assert_that(items[key], has_entry(CONTAINER_ID, 'tag:nextthought.com,2011-10:bleach-manga'))
 
 		hits = uim.search("*", limit=None)
-		assert_that(hits, has_entry(HIT_COUNT, 0))
+		assert_that(hits, has_entry(HIT_COUNT, 11))
 
 		hits = uim.search("ra*", limit=None)
 		assert_that(hits, has_entry(HIT_COUNT, 3))
@@ -141,17 +141,16 @@ class TestWhooshUserAdapter(ConfiguringTestBase):
 		uim = search_interfaces.IWhooshEntityIndexManager(usr, None)
 		
 		hits = uim.suggest("ra")
-		assert_that(hits, has_entry(HIT_COUNT, 5))
+		assert_that(hits, has_entry(HIT_COUNT, 4))
 		assert_that(hits, has_entry(QUERY, 'ra'))
 		assert_that(hits, has_key(ITEMS))
 
 		items = hits[ITEMS]
-		assert_that(items, has_length(5))
-		assert_that(items, has_item('ran'))
-		assert_that(items, has_item('rag'))
-		assert_that(items, has_item('rai'))
-		assert_that(items, has_item('rank'))
+		assert_that(items, has_length(4))
 		assert_that(items, has_item('rage'))
+		assert_that(items, has_item('raise'))
+		assert_that(items, has_item('rain'))
+		assert_that(items, has_item('rankle'))
 
 	@WithMockDSTrans
 	def test_ngram_search(self):
