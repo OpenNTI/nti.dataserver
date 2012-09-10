@@ -92,7 +92,7 @@ messageinfo = u'messageinfo'
 messageinfo_ = u'messageinfo'
 canvastextshape_ = 'canvastextshape'
 
-indexable_type_names = (note_, highlight_, redaction_, messageinfo_)
+indexable_type_names = frozenset((note_, highlight_, redaction_, messageinfo_))
 
 def epoch_time(dt):
 	if dt:

@@ -402,13 +402,17 @@ class IMessageInfoContentResolver(IThreadableContentResolver):
 	def get_recipients():
 		"""return the message recipients"""
 
-# text tokenizer
+# content tokenizer
 
 class IContentTokenizer(interface.Interface):
 	
 	def tokenize(data):
 		"""tokenize the specifeid text data"""
-		
+	
+class IStopWords(interface.Interface):
+	"""Marker interface for stop words"""
+	pass
+			
 # Catalog creators
 	
 class IRepozeCatalogCreator(interface.Interface):

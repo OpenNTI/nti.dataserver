@@ -12,6 +12,8 @@ from dolmen.builtins import IDict
 
 from nltk.tokenize import RegexpTokenizer
 
+from whoosh.analysis import STOP_WORDS
+	
 from nti.contentfragments import interfaces as frg_interfaces
 
 from nti.chatserver import interfaces as chat_interfaces
@@ -354,3 +356,7 @@ class _ContentTokenizer(object):
 		plain_text = component.getAdapter( content, frg_interfaces.IPlainTextContentFragment, name='text' )
 		words = self.tokenizer.tokenize(plain_text)
 		return words
+	
+@interface.implementer( search_interfaces.IStopWords )
+def _stop_words_en():
+	return STOP_WORDS
