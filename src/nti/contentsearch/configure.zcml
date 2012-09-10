@@ -75,8 +75,7 @@
 	
 	<utility factory="._content_utils._ContentTokenizer"  />
 	<utility factory="._content_utils._ContentTokenizer" name="en" />
-	<utility factory="._content_utils._stop_words_en" />
-	<utility factory="._content_utils._stop_words_en" name="en" />
+	<utility factory="._content_utils._DefaultStopWords" />
 	
 	<!-- zopyx Storage -->
 
@@ -96,6 +95,9 @@
 				component=".zopyxtxng3corestorage.StorageWithTermFrequencyFactory"
 				name="txng.storages.term_frequencies" />	
 			
+	<utility	provides="zopyx.txng3.core.interfaces.IStopwords"
+				factory=".zopyxtxng3corestopwords._Stopwords" />	
+				
 	<include file="repoze_minimal.zcml" />
 	<include file="whoosh.zcml" />
 	<include file="cloud_search.zcml" />
