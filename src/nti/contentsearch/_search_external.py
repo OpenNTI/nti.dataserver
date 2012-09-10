@@ -85,15 +85,15 @@ class WordSnippetHighlightDecorator(_BaseWordSnippetHighlightDecorator):
 	component.adapts(search_interfaces.IWordSnippetHighlight)
 	pass
 	
-class WhooshHighlightDecorator(_BaseNgramSnippetHighlightDecorator):
+class WhooshHighlightDecorator(_BaseWordSnippetHighlightDecorator):
 	component.adapts(search_interfaces.IWhooshSnippetHighlight)
 
 	def decorateExternalObject(self, original, external):
-		whoosh_highlight = getattr(original, 'whoosh_highlight', None)
-		if whoosh_highlight:
-			external[SNIPPET] = whoosh_highlight
-		else:
-			super(WhooshHighlightDecorator, self).decorateExternalObject(original, external)
+		#whoosh_highlight = getattr(original, 'whoosh_highlight', None)
+		#if whoosh_highlight:
+		#	external[SNIPPET] = whoosh_highlight
+		#else:
+		super(WhooshHighlightDecorator, self).decorateExternalObject(original, external)
 
 # search hits
 

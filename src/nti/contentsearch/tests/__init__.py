@@ -28,7 +28,8 @@ zanpakuto_commands =  (	"Shoot To Kill",
 						"Sting All Enemies To Death",
 						"Reduce All Creation to Ash",
 						"Sit Upon the Frozen Heavens",
-						"Call forth the Twilight")
+						"Call forth the Twilight",
+						"Multiplication and subtraction of fire and ice, show your might")
 
 
 class ConfiguringTestBase(DSConfiguringTestBase):

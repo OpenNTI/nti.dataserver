@@ -64,11 +64,21 @@ class TestWhooshBookIndexManager(ConfiguringTestBase):
 		assert_that(item, has_entry(CONTAINER_ID,  is_not(None)))
 		
 		item = toExternalObject(item)
-		assert_that(item, has_entry(SNIPPET, 'Rise now and Become my Shield, Lightning, Strike'))
+		assert_that(item, has_entry(SNIPPET, 'All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade'))
+		
+	def test_longword_search(self):		
+		hits = self.bim.search("multiplication", limit=None)
+		assert_that(hits, has_entry(HIT_COUNT, 1))
+		assert_that(hits, has_entry(QUERY, 'multiplication'))
+		assert_that(hits, has_key(ITEMS))
+		
+		items = hits[ITEMS]
+		item = toExternalObject(list(items.values())[0])
+		assert_that(item, has_entry(SNIPPET, 'Multiplication and subtraction of fire and ice, show your might'))
 		
 	def test_search_start(self):
 		hits = self.bim.search("ra*", limit=None)
-		assert_that(hits, has_entry(HIT_COUNT, 3))
+		assert_that(hits, has_entry(HIT_COUNT, 4))
 		assert_that(hits, has_entry(QUERY, 'ra*'))
 		assert_that(hits, has_key(ITEMS))
 		
@@ -81,7 +91,7 @@ class TestWhooshBookIndexManager(ConfiguringTestBase):
 		items = hits[ITEMS]
 		assert_that(items, has_length(5))
 		assert_that(items, has_item('rage'))
-		assert_that(items, has_item('rank'))
+		assert_that(items, has_item('ran'))
 		assert_that(items, has_item('rag'))
 		assert_that(items, has_item('rai'))
 		assert_that(items, has_item('ran'))
