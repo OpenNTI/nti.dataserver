@@ -34,6 +34,7 @@ class _SliceDict(dict):
 			return self.items()[::-1]
 		return dict.__getitem__( self, key )
 
+# TODO: Consider also http://packages.python.org/PottyMouth/
 from html5lib.sanitizer import HTMLSanitizerMixin
 # There is a bug in 0.95: the sanitizer converts attribute dicts
 # to lists when they should stay dicts
