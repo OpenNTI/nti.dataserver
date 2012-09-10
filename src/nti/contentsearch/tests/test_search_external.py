@@ -78,7 +78,7 @@ class TestRepozeIndex(ConfiguringTestBase):
 		assert_that(d, has_entry(NTIID, u'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x085a:5573657273'))
 		assert_that(d, has_entry(TARGET_OID, u'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x085a:5573657273'))
 		assert_that(d,
-			has_entry(SNIPPET, u'you know how to add subtract multiply and DIVIDE in fact you may already know how to solve many of the problems'))
+			has_entry(SNIPPET, u'You know how to add subtract multiply and divide In fact you may already know how to solve many of the problems'))
 		
 	def test_seach_hit_redaction_dict(self):
 		d = self._externalize(_RedactionSearchHit, self.redaction, '')
@@ -96,7 +96,7 @@ class TestRepozeIndex(ConfiguringTestBase):
 		assert_that(d, has_entry(CREATOR, u'carlos.sanchez@nextthought.com'))
 		assert_that(d, has_entry(NTIID, u'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x0860:5573657273'))
 		assert_that(d, has_entry(TARGET_OID, u'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x0860:5573657273'))
-		assert_that(d, has_entry(SNIPPET, u'all WAVES rise now and become my shield lightning strike now and'))
+		assert_that(d, has_entry(SNIPPET, u'All Waves Rise now and Become my Shield Lightning Strike now and'))
 		
 	def test_search_hit_messgeinfo_dict(self):
 		d = self._externalize(_MessageInfoSearchHit, self.messageinfo, '')
@@ -124,7 +124,7 @@ class TestRepozeIndex(ConfiguringTestBase):
 		assert_that(d, has_entry(CREATOR, u'nt@nti.com'))
 		assert_that(d, has_entry(NTIID, oidstr))
 		assert_that(d, has_entry(TARGET_OID, oidstr))
-		assert_that(d, has_entry(SNIPPET, u'it is not enough to mean WELL we actually have to do WELL'))
+		assert_that(d, has_entry(SNIPPET, u'It is not enough to mean well we actually have to do well'))
 		
 	@WithMockDSTrans
 	def test_search_hit_hightlight_ds(self):
@@ -142,7 +142,7 @@ class TestRepozeIndex(ConfiguringTestBase):
 		assert_that(d, has_entry(CREATOR, u'nt@nti.com'))
 		assert_that(d, has_entry(NTIID, oidstr))
 		assert_that(d, has_entry(TARGET_OID, oidstr))
-		assert_that(d, has_entry(SNIPPET, u'kon saw it the SECRET of a beautiful office lady'))
+		assert_that(d, has_entry(SNIPPET, u'Kon saw it The Secret of a Beautiful Office Lady'))
 		
 	@WithMockDSTrans
 	def test_search_hit_redaction_ds(self):
@@ -162,7 +162,7 @@ class TestRepozeIndex(ConfiguringTestBase):
 		assert_that(d, has_entry(CREATOR, u'nt@nti.com'))
 		assert_that(d, has_entry(NTIID, oidstr))
 		assert_that(d, has_entry(TARGET_OID, oidstr))
-		assert_that(d, has_entry(SNIPPET, u'overcome it everytime i have been on the verge of DEATH fear'))
+		assert_that(d, has_entry(SNIPPET, u'overcome it everytime I have been on the verge of death Fear'))
 
 	def test_search_hit_book(self):
 		containerId = make_ntiid(nttype='bleach', specific='manga')	
@@ -176,7 +176,7 @@ class TestRepozeIndex(ConfiguringTestBase):
 		assert_that(d, has_entry(TYPE, 'Content'))
 		assert_that(d, has_entry(CONTAINER_ID, containerId))
 		assert_that(d, has_entry(NTIID, containerId))
-		assert_that(d, has_entry(SNIPPET, u'all waves, rise now and become my SHIELD, lightning, strike now and become my blade'))
+		assert_that(d, has_entry(SNIPPET, u'All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade'))
 		
 if __name__ == '__main__':
 	unittest.main()

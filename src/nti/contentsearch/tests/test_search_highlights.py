@@ -17,22 +17,22 @@ class TestCommon(ConfiguringTestBase):
 			after unintentionally absorbing most of Rukia Kuchiki's powers"""))
 		
 		assert_that( word_content_highlight('ichigo', text), 
-				is_('An orange-haired high school student ICHIGO becomes a substitute Shinigami Soul Reaper after unintentionally'))
+				is_('An orange-haired high school student Ichigo becomes a substitute Shinigami Soul Reaper after unintentionally'))
 		
-		assert_that(word_content_highlight('ichigo', text, surround=5), is_('ICHIGO becomes'))
+		assert_that(word_content_highlight('ichigo', text, surround=5), is_('Ichigo becomes'))
 		
 		assert_that(word_content_highlight('shinigami', text, maxchars=10), 
-					is_('high school student Ichigo becomes a substitute SHINIGAMI Soul'))
+					is_('high school student Ichigo becomes a substitute Shinigami Soul'))
 		
-		assert_that(word_content_highlight('rukia', text, maxchars=10, surround=1), is_('RUKIA'))
+		assert_that(word_content_highlight('rukia', text, maxchars=10, surround=1), is_('Rukia'))
 
 	def test_ngram_content_highlight(self):
 		text = unicode(get_content('All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade'))
 		
-		assert_that(ngram_content_highlight('strike', text), is_('STRIKE now and Become my Blade'))
-		assert_that(ngram_content_highlight('str', text), is_('STRike now and Become my Blade'))
+		assert_that(ngram_content_highlight('strike', text), is_('Strike now and Become my Blade'))
+		assert_that(ngram_content_highlight('str', text), is_('Strike now and Become my Blade'))
 		
-		assert_that(ngram_content_highlight('Lightning', text, surround=5), is_('LIGHTNING Strike now and Become my Blade'))
+		assert_that(ngram_content_highlight('Lightning', text, surround=5), is_('Lightning Strike now and Become my Blade'))
 		
 #		text = u"""if it takes 24 seconds to write a tweet and 8 seconds to send it what is the greatest number of tweets that can be written and sent in 6 minutes"""
 #

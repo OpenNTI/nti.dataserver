@@ -98,7 +98,7 @@ class _SearchableContent(object):
 		# set highlight type
 		surround = queryobject.surround
 		maxchars = queryobject.maxchars
-		search_hits.formatter = highlight.UppercaseFormatter()
+		search_hits.formatter = highlight.NullFormatter() #highlight.UppercaseFormatter()
 		search_hits.fragmenter = highlight.ContextFragmenter(maxchars=maxchars, surround=surround)
 		
 		length = len(search_hits)
