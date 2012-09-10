@@ -72,7 +72,7 @@ setup(
 	# Support unit tests of package
 #	tests_require = ['z3c.coverage','zope.testing'],
 	setup_requires = [
-		'nose >= 1.2.0',
+		'nose >= 1.2.0', # also listed in extras/test!
 		#'distribute >= 0.6.28', # Can't seem to include that anywhere
 		# In theory this should make it possible to get
 		# the svn revision number from svn 1.7. Doesn't seem
@@ -252,7 +252,7 @@ setup(
 		],
 	extras_require = {
 		'test': [
-			'nose >= 1.1.2',
+			'nose >= 1.2.0',
 			'zope.testing >= 4.1.1',
 			'zc.buildout == 1.6.3',
 			'nose-progressive',
@@ -279,7 +279,7 @@ setup(
 			'rope >= 0.9.4', # refactoring library. c.f. ropemacs
 			'ropemode >= 0.2', # IDE helper for rope
 			'virtualenv >= 1.8.1',
-			'pip >= 1.2'
+			'pip >= 1.2.1'
 			]
 	},
 	dependency_links = ['http://svn.wikimedia.org/svnroot/pywikipedia/trunk/pywikipedia/'],
