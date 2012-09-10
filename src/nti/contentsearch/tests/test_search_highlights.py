@@ -34,5 +34,10 @@ class TestCommon(ConfiguringTestBase):
 		
 		assert_that(ngram_content_highlight('Lightning', text, surround=5), is_('LIGHTNING Strike now and Become my Blade'))
 		
+#		text = u"""if it takes 24 seconds to write a tweet and 8 seconds to send it what is the greatest number of tweets that can be written and sent in 6 minutes"""
+#
+#		t = ngram_content_highlight("test", 'greatest tweet', multiple_match=False )
+#		print t
+		
 if __name__ == '__main__':
 	unittest.main()
