@@ -345,7 +345,7 @@ class TreadableIndexableContent(UserIndexableContent):
 	
 def create_highlight_schema():
 	schema = _create_treadable_schema()
-	schema.add(content_, fields.TEXT(stored=False, chars=True, spelling=True, analyzer=_content_analyzer()))
+	schema.add(content_, fields.TEXT(stored=False, chars=True, spelling=True))
 	schema.add(quick_, fields.NGRAM(maxsize=10, phrase=True))
 	return schema
 
