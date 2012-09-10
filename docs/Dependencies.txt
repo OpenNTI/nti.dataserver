@@ -1,5 +1,5 @@
 Dependencies (macports):
-- gcc44				# 2012-03-07
+- gcc45				# 2012-03-07
 - llvm-gcc-4.2		# 2012-03-07 (Optional)
 
 - py27-cython		# 2011-08-31
@@ -20,6 +20,7 @@ Dependencies (macports):
 - py27-epydoc		# 2012-01-01, 3.0.1
 - HAProxy			# 2010-01-04, 1.5dev (Optional)
 - stunnel			# "", latest, (Optional)
+- pypy				# 2012-09-10 (Optional), if it takes a long time to install, try to build with build.jobs=1
 
 - mercurial 		# 2012-02-24 (Optional)
 - py27-hggit		# 2012-02-24 (Optional)
