@@ -2,10 +2,11 @@
 # -*- coding: utf-8 -*-
 """ """
 from __future__ import print_function, unicode_literals
-from hamcrest import assert_that, contains_string
+from hamcrest import assert_that, contains_string, is_
 from nose.tools import assert_raises
 import os
 import sys
+import shutil
 
 import nti.tests
 import nti.contentrendering
@@ -27,7 +28,7 @@ class TestGSL(nti.tests.ConfiguringTestBase):
 		pq = pyquery.PyQuery( filename=os.path.join( os.path.dirname(__file__), 'gslopinion.html' ) )
 		gslopinionexport._opinion_to_tex( pq, out, 'http://foo.bar' )
 		assert_that( out.getvalue(), contains_string( br'\href{/scholar\_case' ) )
-		assert_that( out.getvalue(), contains_string( br'\section{Opinion of the Court' ) )
+		assert_that( out.getvalue(), contains_string( br'\subsection{Opinion of the Court' ) )
 		assert_that( out.getvalue(), contains_string( br'\section{MR. JUSTICE BLACKMUN' ) )
 		assert_that( out.getvalue(), contains_string( br'\section{MR. JUSTICE WHITE' ) )
 		assert_that( out.getvalue(), contains_string( br'{ \textit{Bushman,} 1 Cal. 3d, at 773, 463 P. 2d, at 730, }' ) )
@@ -40,4 +41,15 @@ class TestGSL(nti.tests.ConfiguringTestBase):
 		fake_get.expects_call().returns_fake().has_attr( text=open( os.path.join( os.path.dirname(__file__), 'gslopinion.html' ), 'rU' ).read() )
 		fake_sys.has_attr( argv=['a', 'b'], stdout=fudge.Fake(name='stdout').provides('write') )
 
-		gslopinionexport.main()
+		contentLocation = 'COHEN_v__CALIFORNIA_'
+		try:
+			os.chdir( '/tmp' )
+			gslopinionexport.main()
+			assert_that( os.path.exists(os.path.join( contentLocation, 'COHEN_v__CALIFORNIA_.tex' ) ), 
+						    is_(True) )
+			assert_that( os.path.exists(os.path.join( contentLocation, 'nti_render_conf.ini' ) ), 
+						    is_(True) )
+		finally:
+			if os.path.exists( contentLocation ):
+				shutil.rmtree( contentLocation )
+

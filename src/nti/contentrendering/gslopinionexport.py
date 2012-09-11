@@ -13,6 +13,13 @@ from nti.contentfragments import interfaces as frg_interfaces
 import requests
 import pyquery
 from lxml import etree
+import os
+
+try:
+	from cStringIO import StringIO
+except ImportError:
+	from StringIO import StringIO
+
 import sys
 import re
 
@@ -58,6 +65,9 @@ class _Chapter(_WrappedElement):
 
 class _Section(_WrappedElement):
 	wrapper = 'section'
+
+class _SubSection(_WrappedElement):
+	wrapper = 'subsection'
 
 class _Label(_WrappedElement):
 	wrapper = 'label'
@@ -198,11 +208,29 @@ def _url_escape(u):
 CONTAINERS = { 'blockquote': 'quote',
 			   'center': 'center' }
 
+def _build_header(title = None, authors = None, base_url = None):
+	lines = [br'\documentclass{book}', 
+		 br'\usepackage{graphicx}', 
+		 br'\usepackage{ntilatexmacros}', 
+		 br'\usepackage{hyperref}']
+        if base_url:
+                lines.append( br'\hyperbaseurl{' + _url_escape(base_url) + b'}' )
+        if title:
+                lines.append( br'\title{' + title + b'}' )
+        if authors:
+		for author in authors:
+			lines.append( br'\author{' + author + b'}' )
+        lines.append( br'\begin{document}' )
+
+	return '\n'.join(lines)
+
+def _build_footer():
+	return br'\end{document}' + '\n'
+
 def _opinion_to_tex( doc, output=None, base_url=None ):
 	tex = []
 
 	name = _case_name_of( doc )
-#	tex.append( _Title( name ) )
 	footnotes = _footnotes_of( doc )
 	for i in footnotes:
 		i.getparent().remove( i )
@@ -215,15 +243,10 @@ def _opinion_to_tex( doc, output=None, base_url=None ):
 	inc_children = _included_children_of( _opinion_of( doc ) )
 	exc_children = set()
 
-	current = _Chapter( name )
-	tex.append( current )
 
-	section = _Section( "Opinion of the Court" )
-	if hasattr( current, 'parent' ):
-		current = getattr( current, 'parent' ) # Close the nesting. This deals with exactly one level
-	current.add_child( section )
-	setattr( section, 'parent', current )
-	current = section
+
+	current = _SubSection( "Opinion of the Court" )
+	tex.append( current )
 
 	for inc_child in inc_children:
 		if inc_child in exc_children:
@@ -270,15 +293,44 @@ def _opinion_to_tex( doc, output=None, base_url=None ):
 		for child in getattr( node, 'children', ()):
 			_print( frg_interfaces.ILatexContentFragment(child) )
 
+	print( _build_header( name, None, base_url ).encode('utf-8'), file=output )
+
 	for node in tex:
 		_print( node )
+
+	print( _build_footer().encode('utf-8'), file=output )
+
+	return name
+
+def _build_nti_render_conf():
+	output ="""[general]
+theme = GoogleScholar-Legal
+
+[NTI]
+provider = USSC
+"""
+	return output
 
 def main():
 	from zope.configuration import xmlconfig
 	xmlconfig.file( 'configure.zcml', package=nti.contentrendering )
 	url = sys.argv[1]
 	pq = _url_to_pyquery( url )
-	_opinion_to_tex( pq, base_url=url )
+	buffer = StringIO()
+	title = _opinion_to_tex( pq, output=buffer, base_url=url )
+	title = title.replace(' ', '_').replace('.', '_')
+
+	# Make output directory
+	if not os.path.exists( title ):
+		os.mkdir(title)
+ 
+	# Write output tex file
+	with open( os.path.join(title, title + '.tex'), 'wb') as file:
+		file.write( buffer.getvalue() )
+
+	# Write nti_render_conf.ini
+	with open( os.path.join(title, 'nti_render_conf.ini'), 'wb') as file:
+		file.write( _build_nti_render_conf() )
 
 if __name__ == '__main__': # pragma: no cover
 	main()
