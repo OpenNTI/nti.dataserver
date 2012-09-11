@@ -110,7 +110,7 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		just our socket when we create it. So this method DOES NOT call
 		super (which patches the whole system).
 		"""
-		pass
+		import nti.dataserver # But we do import nti.dataserver, to make sure we get the patches we do want
 
 
 	def __init__( self, *args, **kwargs ):
@@ -208,6 +208,15 @@ class _ServerFactory(object):
 
 		# The super class will provide a Pool based on the
 		# worker_connections setting
+
+		def print_stacks():
+			from nti.appserver._util import dump_stacks
+			import sys
+			while True:
+				gevent.sleep( 15.0 )
+				print( '\n'.join( dump_stacks() ), file=sys.stderr )
+
+		#gevent.spawn( print_stacks )
 
 		class WorkerGreenlet(spawn.greenlet_class):
 			"""
