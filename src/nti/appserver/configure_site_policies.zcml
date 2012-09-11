@@ -19,7 +19,7 @@
 			 name="alpha.nextthought.com"/>
 
 	<utility factory=".site_policies.GenericAdultSitePolicyEventListener"
-			 name="primia.nextthought.com"/>
+			 name="prmia.nextthought.com"/>
 
 	<utility factory=".site_policies.GenericAdultSitePolicyEventListener"
 			 name="law.nextthought.com"/>
