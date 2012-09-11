@@ -16,3 +16,6 @@ name: columns column mtiny pause
 
 name: alt
 <span tal:content="self/attributes/default"></span>
+
+name: alert
+<em tal:content="self/attributes/text"></em>
