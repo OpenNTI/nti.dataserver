@@ -69,7 +69,10 @@ def _handle_toc(toc, book, save_dom, context=None):
 		title = index.get_title( )
 		if title:
 			modified = index.set_label( title ) or modified
-			modified = index.set_icon( "icons/chapters/" + title + "-icon.png" ) or modified
+			if os.path.exists( os.path.join(contentLocation, "icons/chapters/" + title + "-icon.png" ) ):
+				modified = index.set_icon( "icons/chapters/" + title + "-icon.png" ) or modified
+			else:
+				modified = index.set_icon( "icons/chapters/generic_book.png" ) or modified
 
 		for node in index.childTopics:
 			node.save_dom = save_dom
