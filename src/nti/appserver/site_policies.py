@@ -649,6 +649,31 @@ class RwandaSitePolicyEventListener(GenericAdultSitePolicyEventListener):
 		user.join_community( community )
 		user.follow( community )
 
+@interface.implementer(ISitePolicyUserEventListener)
+class LawSitePolicyEventListener(GenericAdultSitePolicyEventListener):
+	"""
+	Implements the policy for ``law.nextthought.com``.
+	"""
+
+	def user_created( self, user, event ):
+		"""
+		This policy places newly created users in the ``LegalStudies`` community
+		(creating it if it doesn't exist).
+
+		"""
+
+		super(LawSitePolicyEventListener,self).user_created( user, event )
+
+		community = users.Entity.get_entity( 'LegalStudies' )
+		if community is None:
+			community = users.Community.create_community( username='LegalStudies' )
+			com_names = user_interfaces.IFriendlyNamed( community )
+			com_names.alias = 'Law'
+			com_names.realname = 'Legal Studies'
+
+		user.join_community( community )
+		user.follow( community )
+
 def _ext_find_schema( ext_self, iface_upper_bound ):
 	_iface = iface_upper_bound
 	# Search for the most derived version of the interface
