@@ -657,16 +657,16 @@ class LawSitePolicyEventListener(GenericAdultSitePolicyEventListener):
 
 	def user_created( self, user, event ):
 		"""
-		This policy places newly created users in the ``LegalStudies`` community
+		This policy places newly created users in the ``law.nextthought.com`` community
 		(creating it if it doesn't exist).
 
 		"""
 
 		super(LawSitePolicyEventListener,self).user_created( user, event )
 
-		community = users.Entity.get_entity( 'LegalStudies' )
+		community = users.Entity.get_entity( 'law.nextthought.com' )
 		if community is None:
-			community = users.Community.create_community( username='LegalStudies' )
+			community = users.Community.create_community( username='law.nextthought.com' )
 			com_names = user_interfaces.IFriendlyNamed( community )
 			com_names.alias = 'Law'
 			com_names.realname = 'Legal Studies'

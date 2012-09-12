@@ -21,7 +21,7 @@
 	<utility factory=".site_policies.GenericAdultSitePolicyEventListener"
 			 name="prmia.nextthought.com"/>
 
-	<utility factory=".site_policies.GenericAdultSitePolicyEventListener"
+	<utility factory=".site_policies.LawSitePolicyEventListener"
 			 name="law.nextthought.com"/>
 
 	<utility factory=".site_policies.GenericSitePolicyEventListener"
