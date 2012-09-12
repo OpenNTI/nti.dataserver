@@ -74,4 +74,19 @@
 			 provides="z3c.table.interfaces.IColumnHeader"
 			 for="* * * .coppa_admin_views.RealnameColumn"
 			 />
+
+	<!-- New Note Email -->
+	<adapter factory="._table_utils.NoteBodyColumn"
+			 for="* * ._stream_event_listeners.NewNoteBodyTable"
+			 provides="z3c.table.interfaces.IColumn"
+			 name="new-note-body" />
+	<adapter factory="._table_utils.CreatedColumn"
+			 provides="z3c.table.interfaces.IColumn"
+			 for="* * ._stream_event_listeners.NewNoteBodyTable"
+			 name="new-note-created"/>
+	<adapter factory="._table_utils.CreatorColumn"
+			 provides="z3c.table.interfaces.IColumn"
+			 for="* * ._stream_event_listeners.NewNoteBodyTable"
+			 name="new-note-creator" />
+
 </configure>
