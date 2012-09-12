@@ -650,10 +650,10 @@ class TestCreateView(_AbstractValidationViewBase):
 
 
 	@WithMockDSTrans
-	def test_create_rwanda_policy( self ):
+	def _do_test_create_site_policy( self, host, com_name ):
 		# see site_policies.[py|zcml]
 		assert_that( self.request.host, is_( 'example.com:80' ) )
-		self.request.headers['origin'] = 'http://rwanda.nextthought.com'
+		self.request.headers['origin'] = 'http://' + host
 
 		self.request.content_type = 'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
@@ -664,7 +664,7 @@ class TestCreateView(_AbstractValidationViewBase):
 													 'affiliation': 'NTI',
 													 'email': 'jason@test.nextthought.com' } )
 		new_user = account_create_view( self.request )
-		assert_that( new_user, has_property( 'communities', has_item( 'CarnegieMellonUniversity' ) ) )
+		assert_that( new_user, has_property( 'communities', has_item( com_name ) ) )
 		assert_that( user_interfaces.IFriendlyNamed( new_user ), has_property( 'realname', 'Jason Madden' ) )
 		assert_that( user_interfaces.ICompleteUserProfile( new_user ),
 					 has_property( 'birthdate', datetime.date( 1982, 1, 31 ) ) )
@@ -676,6 +676,11 @@ class TestCreateView(_AbstractValidationViewBase):
 		mailer = component.getUtility( IMailer )
 		assert_that( mailer.queue, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
 
+	def test_create_rwanda_policy( self ):
+		self._do_test_create_site_policy( 'rwanda.nextthought.com', 'CarnegieMellonUniversity' )
+
+	def test_create_law_policy( self ):
+		self._do_test_create_site_policy( 'law.nextthought.com', 'law.nextthought.com' )
 
 
 	@WithMockDSTrans
