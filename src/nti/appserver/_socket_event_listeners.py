@@ -1,11 +1,15 @@
-#!/usr/bin/env python2.7
-
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Listeners for socket activity.
+
+$Id$
 """
 
-import logging
-logger = logging.getLogger(__name__)
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 from nti.dataserver import interfaces as nti_interfaces, users
 from nti.chatserver import interfaces as chat_interfaces
@@ -79,9 +83,3 @@ class _UserPresenceExternalDecorator(object):
 
 	def decorateExternalObject( self, user, result ):
 		result['Presence'] =  "Online" if _is_user_online( self.ds, user.username ) else "Offline"
-
-## Listen for data changes and broadcast to connected users
-@component.adapter( nti_interfaces.IUser, nti_interfaces.IStreamChangeEvent )
-def user_change_broadcaster( user, change ):
-	logger.debug( 'Broadcasting incoming change to %s chg: %s', user.username, change.type)
-	notify( chat_interfaces.DataChangedUserNotificationEvent( (user.username,), change ) )

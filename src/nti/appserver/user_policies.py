@@ -28,6 +28,7 @@ from zope.lifecycleevent import IObjectCreatedEvent
 from zope.lifecycleevent import IObjectModifiedEvent
 
 from . import httpexceptions as hexc
+from ._email_utils import queue_simple_html_text_email
 
 @component.adapter(nti_interfaces.IModeledContent, IObjectCreatedEvent)
 def dispatch_content_created_to_user_policies( content, event ):
@@ -94,19 +95,11 @@ def send_email_on_new_account( user, event ):
 	# Need to send both HTML and plain text if we send HTML, because
 	# many clients still do not render HTML emails well (e.g., the popup notification on iOS
 	# only works with a text part)
-	master = get_renderer('templates/master_email.pt').implementation()
-	html_body = render( 'templates/new_user_created.pt',
-						dict(user=user, profile=profile, context=user,master=master),
-						request=event.request )
-	text_body = render( 'templates/new_user_created.txt',
-						dict(user=user, profile=profile, context=user,master=master),
-						request=event.request )
+	queue_simple_html_text_email( 'new_user_created', subject="Welcome to NextThought",
+								  recipients=[email],
+								  template_args={'user': user, 'profile': profile, 'context': user },
+								  request=event.request )
 
-	message = Message( subject="Welcome to NextThought", # TODO: i18n
-					   recipients=[email],
-					   body=text_body,
-					   html=html_body )
-	component.getUtility( IMailer ).send_to_queue( message )
 
 @component.adapter(nti_interfaces.ICoppaUserWithoutAgreement, app_interfaces.IUserCreatedWithRequestEvent)
 def send_consent_request_on_new_coppa_account( user, event ):

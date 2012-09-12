@@ -102,10 +102,6 @@ from zope.dublincore import interfaces as dc_interfaces
 from zope.proxy.decorator import SpecificationDecoratorBase
 from nti.appserver.z3c_zpt import PyramidZopeRequestProxy
 
-@interface.implementer(dc_interfaces.IZopeDublinCore)
-class _FakeDublinCoreProxy(SpecificationDecoratorBase):
-	pass
-
 def _moderation_table( request ):
 	content = component.getUtility( nti_interfaces.IGlobalFlagStorage ).iterflagged()
 	content = list(content)

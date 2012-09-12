@@ -66,7 +66,12 @@ class ZPTTemplateRenderer(object):
 		request = PyramidZopeRequestProxy( system['request'] )
 		system['request'] = request
 
-		result = self.template.bind( system['view'] )( **system )
+		view = system['view']
+		if view is None:
+			view = request
+			system['view'] = request
+
+		result = self.template.bind( view )( **system )
 		#print(result)
 		return result
 
@@ -96,8 +101,10 @@ class PyramidZopeRequestProxy(SpecificationDecoratorBase):
 		the WSGI environ, making the request dict-like for the environ.
 		Hence the need to mark this method non_overridable.
 		"""
-		dict_of_lists = self.GET.dict_of_lists()
-		dict_of_lists.update( self.POST.dict_of_lists() )
+		def _d_o_l( o ):
+			return o.dict_of_lists() if hasattr( o, 'dict_of_lists' ) else o.copy() # DummyRequest GET/POST are different
+		dict_of_lists = _d_o_l( self.GET )
+		dict_of_lists.update( _d_o_l( self.POST ) )
 		val = dict_of_lists.get( key )
 		if val:
 			if len(val) == 1:

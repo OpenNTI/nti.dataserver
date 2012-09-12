@@ -55,6 +55,7 @@ from nti.dataserver.users import user_profile
 
 
 from nti.appserver._util import raise_json_error
+from nti.appserver._email_utils import queue_simple_html_text_email
 from nti.appserver import _external_object_io as obj_io
 
 
@@ -112,17 +113,10 @@ def forgot_username_view(request):
 	base_template = 'username_recovery_email'
 	if not matching_users:
 		base_template = 'failed_' + base_template
-	master = get_renderer('templates/master_email.pt').implementation()
-	html_body, text_body = [render( 'templates/' + base_template + extension,
-									dict(users=matching_users,context=request.context,master=master),
-									request=request )
-							for extension in ('.pt', '.txt')]
-
-	message = Message( subject="NextThought Username Reminder", # TODO: i18n
-					   recipients=[email_assoc_with_account],
-					   body=text_body,
-					   html=html_body )
-	component.getUtility( IMailer ).send_to_queue( message )
+	queue_simple_html_text_email( base_template, subject="NextThought Username Reminder",
+								  recipients=[email_assoc_with_account],
+								  template_args={'users': matching_users},
+								  request=request )
 
 	return hexc.HTTPNoContent()
 
@@ -168,7 +162,6 @@ def forgot_passcode_view(request):
 
 	# Ok, we either got one user on no users.
 	base_template = 'password_reset_email'
-	master = get_renderer('templates/master_email.pt').implementation()
 	if matching_users:
 		assert len(matching_users) == 1
 		# We got one user. So we need to generate a token, and
@@ -201,16 +194,12 @@ def forgot_passcode_view(request):
 		reset_url = None
 		base_template = 'failed_' + base_template
 
-	html_body, text_body = [render( 'templates/' + base_template + extension,
-									dict(user=matching_user,context=request.context,reset_url=reset_url, users=matching_users,master=master),
-									request=request )
-							for extension in ('.pt', '.txt')]
 
-	message = Message( subject="NextThought Password Reset", # TODO: i18n
-					   recipients=[email_assoc_with_account],
-					   body=text_body,
-					   html=html_body )
-	component.getUtility( IMailer ).send_to_queue( message )
+	queue_simple_html_text_email( base_template, subject="NextThought Password Reset",
+								  recipients=[email_assoc_with_account],
+								  template_args={'users': matching_users, 'user': matching_user, 'reset_url': reset_url},
+								  request=request )
+
 
 	return hexc.HTTPNoContent()
 

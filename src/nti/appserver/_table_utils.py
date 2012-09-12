@@ -44,7 +44,7 @@ class NoteBodyColumn(column.GetAttrColumn):
 				# TODO: Inspect about the presence of images, etc
 				parts.append( "&lt;CANVAS OBJECT&gt;" )
 			else:
-				parts.append( frg_interfaces.IPlainTextContentFragment( part ) )
+				parts.append( frg_interfaces.IPlainTextContentFragment( part, None ) or unicode(part) )
 		return '<br />'.join( parts )
 
 class IntIdCheckBoxColumn(column.CheckBoxColumn):

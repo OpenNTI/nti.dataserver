@@ -1,0 +1,69 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	  xmlns:metal="http://xml.zope.org/namespaces/metal"
+	  xmlns:tal="http://xml.zope.org/namespaces/tal">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<title>New Comment Created</title>
+		<style metal:use-macro="options/master/macros/style">
+			#green-bar {
+			background-color: #89be3c;
+			width: 100%;
+			height: 5px;
+			margin-left: -30px;
+			padding-right: 40px;
+			}
+			#logo-bar {
+			margin-top: 20px;
+			margin-bottom: 30px;
+			}
+			body {
+			margin-left: 30px;
+			margin-right: 0px;
+			font-family: Arial, sans-serif;
+			font-size: 14pt;
+			color: #757474;
+			}
+			a {
+			text-decoration: none;
+			color: #3fb3f6;
+			}
+			.tterm, strong {
+			font-weight: bold;
+			color: #494949;
+			}
+			h1, h2, h3, h4, h5, h6 {
+			font-weight: bold;
+			}
+		</style>
+	</head>
+	<body>
+		<div metal:use-macro="options/master/macros/header">
+		<div id="green-bar"></div>
+		<div id="logo-bar">
+			<img src="http://d2ixlfeu83tci.cloudfront.net/images/email_logo.png" width="177" height="25"
+			alt="NextThought Logo" />
+		</div>
+		</div>
+		<p>Dear <span tal:content="options/profile/realname" class="realname tterm">John Doe</span>,</p>
+
+		<p>
+			A new note has been created and shared with you.
+		</p>
+
+		<table tal:replace="structure python:options['note_table'].render()" />
+
+		<p>
+			Sincerely,<br />
+			NextThought
+		</p>
+
+		<p>
+			If you feel this email was sent in error,
+			without your consent, you may email us at
+			<a href="mailto:support@nextthought.com">support@nextthought.com</a>.
+		</p>
+
+	</body>
+</html>

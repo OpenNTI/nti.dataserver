@@ -246,10 +246,12 @@
 
 
 	<!-- Events -->
+	<!-- Stream events -->
+	<subscriber handler="._stream_event_listeners.user_change_broadcaster" />
+	<subscriber handler="._stream_event_listeners.user_change_new_note_emailer" />
+
 	<subscriber handler="._socket_event_listeners.session_disconnected_broadcaster" />
 	<subscriber handler="._socket_event_listeners.session_connected_broadcaster" />
-	<subscriber handler="._socket_event_listeners.user_change_broadcaster" />
-
 
 	<subscriber factory="._socket_event_listeners._UserPresenceExternalDecoratorFactory"
 				for="nti.dataserver.interfaces.IUser"

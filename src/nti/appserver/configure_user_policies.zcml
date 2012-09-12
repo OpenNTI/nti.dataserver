@@ -10,8 +10,19 @@
 	<subscriber handler=".user_policies.veto_sharing_for_unsigned_coppa_create" />
 	<subscriber handler=".user_policies.veto_sharing_for_unsigned_coppa_edit" />
 
+	<!-- Emails -->
 	<subscriber handler=".user_policies.send_email_on_new_account" />
 	<subscriber handler=".user_policies.send_consent_request_on_new_coppa_account" />
+	<!--
+	Default to "sending" new object emails in dev mode.
+	These will actually just get queued to disk in the usual case.
+
+	IN PRODUCTION: Add this same utility registration (without the condition)
+	to site.zcml, and give it a 'name' attribute matching the username
+	of the user that wants email.
+	-->
+	<utility factory="._stream_event_listeners.TemporaryChangeEmailMarker"
+			 zcml:condition="have devmode" />
 
 	<!-- Filter capabilities -->
 	<adapter factory=".user_policies.CoppaUserWithoutAgreementCapabilityFilter" />
