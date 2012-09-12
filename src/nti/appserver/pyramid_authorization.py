@@ -81,6 +81,9 @@ def is_writable(obj, request=None):
 	"""
 	if request is None:
 		request = get_current_request()
+	if request is None:
+		logger.warning( "No request given or found; assuming not writable. Please run with a request." )
+		return None
 
 	# Using psec itself is "broken": It doesn't respect the current site
 	# components, even if the request itself does not have a registry.
