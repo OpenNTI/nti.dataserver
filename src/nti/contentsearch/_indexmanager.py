@@ -5,6 +5,8 @@ import six
 import gevent
 import gevent.pool
 
+import pyramid.threadlocal
+
 from zope import component
 from zope import interface
 from zope.component.hooks import site
@@ -43,10 +45,11 @@ class _FakeSite(object):
 	def getSiteManager(self):
 		return self.sitemanager
 
-def _greenlet_spawn(spawn, func, *args, **kwargs):
+def _greenlet_spawn(spawn, func, tl, *args, **kwargs):
 	local_site = _FakeSite(component.getSiteManager())
 	def runner(f, *fargs, **fkwargs):
 		with site(local_site):
+			pyramid.threadlocal.manager.push( tl )
 			return f(*fargs, **fkwargs)
 	greenlet = spawn(runner, f=func, *args, **kwargs)
 	return greenlet
@@ -110,8 +113,9 @@ class IndexManager(object):
 			self._ugd_search_jobs(query, jobs) if username else []
 				
 			# search books
+			tl = pyramid.threadlocal.manager.get()
 			for indexid in query.books:
-				job = _greenlet_spawn(spawn=self.search_pool.spawn, func=self.content_search, \
+				job = _greenlet_spawn(spawn=self.search_pool.spawn, func=self.content_search, tl=tl, \
 									  indexid=indexid, query=query)
 				jobs.append(job)
 		finally:
@@ -136,8 +140,9 @@ class IndexManager(object):
 			self._ugd_ngram_search_jobs(query, jobs) if username else []
 
 			# search books
+			tl = pyramid.threadlocal.manager.get()
 			for indexid in query.books:
-				job = _greenlet_spawn(spawn=self.search_pool.spawn, func=self.content_ngram_search, \
+				job = _greenlet_spawn(spawn=self.search_pool.spawn, func=self.content_ngram_search, tl=tl, \
 									  indexid=indexid, query=query)
 				jobs.append(job)
 		finally:
@@ -160,8 +165,9 @@ class IndexManager(object):
 			self._ugd_suggest_and_search_jobs(query, jobs) if username else []
 
 			# search books
+			tl = pyramid.threadlocal.manager.get()
 			for indexid in query.books:
-				job = _greenlet_spawn(spawn=self.search_pool.spawn, func=self.content_suggest_and_search, \
+				job = _greenlet_spawn(spawn=self.search_pool.spawn, func=self.content_suggest_and_search, tl=tl, \
 									  indexid=indexid, query=query)
 				jobs.append(job)
 		finally:
@@ -184,8 +190,9 @@ class IndexManager(object):
 			self._ugd_suggest_jobs(query, jobs) if username else []
 
 			# search books
+			tl = pyramid.threadlocal.manager.get()
 			for indexid in query.books:
-				job = _greenlet_spawn(spawn=self.search_pool.spawn, func=self.content_suggest, \
+				job = _greenlet_spawn(spawn=self.search_pool.spawn, func=self.content_suggest, tl=tl,\
 									  indexid=indexid, query=query)
 				jobs.append(job)
 		finally:
@@ -261,8 +268,9 @@ class IndexManager(object):
 	# -------------------
 
 	def _ugd_search_jobs(self, query, jobs=[]):
+		tl = pyramid.threadlocal.manager.get()
 		for uim in self._get_search_uims(query.username):
-			job = _greenlet_spawn(spawn=self.search_pool.spawn, func=uim.search, query=query)
+			job = _greenlet_spawn(spawn=self.search_pool.spawn, func=uim.search, tl=tl, query=query)
 			jobs.append(job)
 		return jobs
 
@@ -287,8 +295,9 @@ class IndexManager(object):
 	# ------------
 
 	def _ugd_ngram_search_jobs(self, query, jobs=[]):
+		tl = pyramid.threadlocal.manager.get()
 		for uim in self._get_search_uims(query.username):
-			job = _greenlet_spawn(spawn=self.search_pool.spawn, func=uim.ngram_search, query=query)
+			job = _greenlet_spawn(spawn=self.search_pool.spawn, func=uim.ngram_search, tl=tl, query=query)
 			jobs.append(job)
 		return jobs
 
@@ -310,8 +319,9 @@ class IndexManager(object):
 	# ------------
 
 	def _ugd_suggest_and_search_jobs(self, query, jobs=[]):
+		tl = pyramid.threadlocal.manager.get()
 		for uim in self._get_search_uims(query.username):
-			job = _greenlet_spawn(spawn=self.search_pool.spawn, func=uim.suggest_and_search, query=query)
+			job = _greenlet_spawn(spawn=self.search_pool.spawn, func=uim.suggest_and_search, tl=tl, query=query)
 			jobs.append(job)
 		return jobs
 
@@ -331,8 +341,9 @@ class IndexManager(object):
 	# ------------
 
 	def _ugd_suggest_jobs(self, query, jobs=[]):
+		tl = pyramid.threadlocal.manager.get()
 		for uim in self._get_search_uims(query.username):
-			job = _greenlet_spawn(spawn=self.search_pool.spawn, func=uim.suggest, query=query)
+			job = _greenlet_spawn(spawn=self.search_pool.spawn, func=uim.suggest, tl=tl, query=query)
 			jobs.append(job)
 		return jobs
 
