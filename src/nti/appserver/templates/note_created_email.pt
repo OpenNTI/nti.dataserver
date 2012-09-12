@@ -46,7 +46,7 @@
 			alt="NextThought Logo" />
 		</div>
 		</div>
-		<p>Dear <span tal:content="options/profile/realname" class="realname tterm">John Doe</span>,</p>
+		<p>Dear <span tal:content="options/profile/realname | options/profile/alias | options/user" class="realname tterm">John Doe</span>,</p>
 
 		<p>
 			A new note has been created and shared with you.
@@ -60,8 +60,7 @@
 		</p>
 
 		<p>
-			If you feel this email was sent in error,
-			without your consent, you may email us at
+			If you feel this email was sent in error, you may email us at
 			<a href="mailto:support@nextthought.com">support@nextthought.com</a>.
 		</p>
 
