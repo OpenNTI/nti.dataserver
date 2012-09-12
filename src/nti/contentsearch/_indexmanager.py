@@ -107,10 +107,7 @@ class IndexManager(object):
 		results = empty_search_result(query.term)
 		try:
 			# search user content
-			#self._ugd_search_jobs(query, jobs) if username else []
-			for uim in self._get_search_uims(username):
-				rest = uim.search(query=query)
-				results = merge_search_results (results, rest)
+			self._ugd_search_jobs(query, jobs) if username else []
 				
 			# search books
 			for indexid in query.books:
