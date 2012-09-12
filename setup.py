@@ -27,7 +27,8 @@ entry_points = {
 		"nti_s3put = nti.contentlibrary.nti_s3put:main",
 		"nti_gslopinionexport = nti.contentrendering.gslopinionexport:main",
 		"nti_jsonpbuilder = nti.contentrendering.jsonpbuilder:main",
-		"nti_default_root_sharing_setter = nti.contentrendering.default_root_sharing_setter:main"
+		"nti_default_root_sharing_setter = nti.contentrendering.default_root_sharing_setter:main",
+		"pserve = nti.appserver.nti_pserve:main", # This script overrides the one from pyramid
 	],
 	"paste.app_factory": [
 		"main = nti.appserver.standalone:configure_app",
