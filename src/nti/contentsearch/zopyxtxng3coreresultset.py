@@ -49,4 +49,4 @@ def unionResultSets(sets):
 def inverseResultSet(all_docids, s): 
     """ perform difference between all docids and a resultset """    
     docids = difference64(DocidList(all_docids), s.getDocids())
-    return ResultSet(docids, set.getWords())
+    return ResultSet(docids, s.getWords())
