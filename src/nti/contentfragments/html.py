@@ -193,6 +193,17 @@ def _sanitize_user_html_to_text( user_input ):
 @component.adapter(frg_interfaces.IHTMLContentFragment)
 @lru_cache(10000)
 def _html_to_sanitized_text( html ):
+	# FIXME: This doesn't quite work as we would expect. Given
+	# an input string (in _html_to_sanitized_text) of:
+	# '<html><head/><body> \n\n\n\n\n<title/>\n\n\n&lt;style None="type"&gt;\np.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 13.0px Helvetica; color: #333233;
+	#	background-color: #fbfbfb}\n&lt;/style&gt;\n\n\n<p><a href="https://github.com/saghul"><b>@saghul</b></a>
+	#  Yes it\'s the latter : I don\'t control greenlets creation as they are spawned by various third party code that use gevent.
+	#  I am trying to debug a weird lock by dumping the stack of each active greenlet when it happens</p><p>\n\n\n</p></body></html>'
+	# We get output of
+	#  ' \n\n\n\n\n\n\n\n<style None="type">\np.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 13.0px Helvetica; color: #333233; background-color: #fbfbfb}
+	#  \n</style>\n\n\n<p><a href="https://github.com/saghul"><b>@saghul</b></a> Yes it\'s the latter : I don\'t control greenlets creation
+	#  as they are spawned by various third party code that use gevent. I am trying to debug a weird lock by dumping the stack of each active
+	#  greenlet when it happens</p><p>\n\n\n</p></body></html>'
 	return _doc_to_plain_text( _to_sanitized_doc( html ) )
 
 

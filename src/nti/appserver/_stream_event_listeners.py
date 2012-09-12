@@ -66,6 +66,9 @@ def user_change_new_note_emailer( user, change ):
 	profile = user_interfaces.IUserProfile( user )
 	email = getattr( profile, 'email', None )
 	opt_in = getattr( profile, 'opt_in_email_communication', True )
+#	if not email or not opt_in:
+#		email = 'jason.madden@nextthought.com'
+#		opt_in = True
 	if not email or not opt_in:
 		logger.debug( "User %s has no email (%s) or hasn't opted in (%s), no way to send notices",
 					  user, email, opt_in )
@@ -101,6 +104,6 @@ def user_change_new_note_emailer( user, change ):
 						   'change': change,
 						   'user': user,
 						   'note_table': the_table,
-						   'note_text': '\n'.join( frg_interfaces.IPlainTextContentFragment( x, '' ) for x in change_object.body ),
+						   'note_text': '\n'.join( component.queryAdapter( x, frg_interfaces.IPlainTextContentFragment, name='text', default='' ) for x in change_object.body ),
 						   'profile': profile},
 			request=request	)
