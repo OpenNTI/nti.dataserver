@@ -13,7 +13,6 @@ from zope import component
 import z3c.password.password
 import z3c.password.interfaces
 
-
 from nti.dataserver import config
 from nti.dataserver.utils import run
 import nti.dataserver.utils.example_database_initializer
@@ -24,8 +23,9 @@ def main():
 	arg_parser.add_argument( 'pserve_ini_file', help="The path to the .ini file for pserve" )
 	arg_parser.add_argument( '-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
 	arg_parser.add_argument( '--with-example', help="Populate the example data", action='store_true', dest='with_example')
+	arg_parser.add_argument( '--update-existing', help="Update an existing env directory", action='store_true', dest='update_existing')
+	arg_parser.add_argument( '--write-supervisord', help="Write supervisord config file", action='store_true', dest='write_supervisord')
 	args = arg_parser.parse_args()
-
 
 	run( lambda: init_env( args ) )
 
@@ -38,7 +38,6 @@ def init_env( args ):
 	if not os.path.exists( pserve_ini ):
 		raise OSError( "No ini file " + pserve_ini )
 
-
 	if args.with_example:
 		# If we do this, we must provide a password utility or we cannot create users
 		component.provideUtility(
@@ -47,7 +46,10 @@ def init_env( args ):
 		component.provideUtility(
 			z3c.password.password.TrivialPasswordUtility() )
 
-	config.write_configs( root_dir, pserve_ini )
+	update_existing = args.update_existing
+	write_supervisord = args.write_supervisord
+	
+	config.write_configs(root_dir, pserve_ini, update_existing=update_existing, write_supervisord=write_supervisord)
 
 if __name__ == '__main__':
 	main()
