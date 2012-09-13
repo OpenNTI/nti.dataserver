@@ -170,13 +170,13 @@ class _WSWillUpgradeVeto(object):
 		sid = environ['PATH_INFO'].split( '/' )[-1]
 		def test():
 			try:
-				_get_session( sid )
+				_get_session( sid ) # TODO: This causes a write to the session. Why?
 			except hexc.HTTPNotFound:
 				logger.debug( "Not upgrading, no session", exc_info=True )
 				return False
 			else:
 				return True
-		return component.getUtility( nti_interfaces.IDataserverTransactionRunner )( test )
+		return component.getUtility( nti_interfaces.IDataserverTransactionRunner )( test, retries=3, sleep=0.1 )
 
 def _get_session(session_id):
 	"""
