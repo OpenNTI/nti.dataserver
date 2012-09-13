@@ -1,21 +1,20 @@
 file:../lib/pywikipedia/#egg=pywikipedia
-# 1.0b4 is out, but not yet tagged; trunk causes a hang on exit
+# 1.0b4 is out, but not yet tagged; we need it for subprocess, but we actually
+# need trunk for EINVAL handling and ultimately a fix for posix_read
 -e hg+https://bitbucket.org/denis/gevent#egg=gevent
 # gevent mysql-compat driver
 -e git+https://github.com/esnme/ultramysql.git#egg=umysql-dev
--e git+https://github.com/hongqn/umysqldb.git#egg=umysqldb-dev
+# Sadly, something is screwed about this repository and updating it in
+# place messes things up
+# -e git+https://github.com/hongqn/umysqldb.git#egg=umysqldb-dev
+git+https://github.com/hongqn/umysqldb.git#egg=umysqldb-dev
 -e git+https://github.com/petehunt/PyMySQL.git#egg=PyMySQL-dev
 ## Sadly, issue 328 prevents us from using local paths for these things,
-## if we include the egg name. If we're otherwise very careful, 
+## if we include the egg name. If we're otherwise very careful,
 ## local paths can be made to work
 ## see https://github.com/pypa/pip/issues/328
 -e ../site-lib/plastex-dist
-#-e svn+https://svn.nextthought.com/repository/NextThoughtPlatform/trunk/site-lib/plastex-dist#egg=plastex
 -e ../site-lib/context
-#-e svn+https://svn.nextthought.com/repository/NextThoughtPlatform/trunk/site-lib/context#egg=context
 -e ../site-lib/geventwebsocket
-#-e svn+https://svn.nextthought.com/repository/NextThoughtPlatform/trunk/site-lib/geventwebsocket#egg=geventwebsocket
-
-
-
-
+# Gunicorn dev for testing
+# -e git+https://github.com/benoitc/gunicorn.git#egg=gunicorn-dev
