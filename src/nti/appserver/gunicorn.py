@@ -101,6 +101,7 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 	server_class = None
 	socket = None
 	policy_server = None
+	_preloaded_app = None
 
 	@classmethod
 	def setup(cls):
@@ -125,16 +126,12 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 			except socket.error:
 				logger.error( "Failed to create flash policy socket" )
 
+		if getattr( self.cfg, 'preload_app', None ):
+			logger.warn( "Preloading app before forking not supported" )
 
-	def init_process(self):
-		"""
-		We must create the appserver only once, and only after the process
-		has forked. Doing it before the fork leads to thread-related problems
-		and a deadlock (the ZEO connection pthreads do not survive the fork, I think).
-		"""
 
+	def _init_server( self ):
 		try:
-			gevent.hub.get_hub() # init the hub in this new thread/process
 			dummy_app = self.app.app
 			wsgi_app = loadwsgi.loadapp( 'config:' + dummy_app.global_conf['__file__'], name='dataserver_gunicorn' )
 			self.app_server = WebSocketServer(
@@ -147,6 +144,19 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 			logger.exception( "Failed to create appserver" )
 			raise
 
+	def init_process(self):
+		"""
+		We must create the appserver only once, and only after the process
+		has forked if we are using ZEO; even though we do not have pthreads that fail to survive
+		the fork, the asyncore connection and ZODB cache do not work properly when forked.
+
+		Also, we have ZMQ background threads. So even if we have, say RelStorage and no ZEO threads,
+		we can still fail to fork properly.
+		"""
+		gevent.hub.get_hub() # init the hub in this new thread/process
+		if not self._preloaded_app:
+			logger.info( "Loading app after forking" )
+			self._init_server()
 
 		# Change/update the logging format.
 		# It's impossible to configure this from the ini file because
