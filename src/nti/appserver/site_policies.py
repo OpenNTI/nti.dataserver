@@ -473,6 +473,15 @@ class GenericAdultSitePolicyEventListener(GenericSitePolicyEventListener):
 		super(GenericAdultSitePolicyEventListener,self).user_created( user, event )
 		interface.alsoProvides( user, user_interfaces.IImmutableFriendlyNamed )
 
+	def user_will_update_new( self, user, event ):
+		"""
+		Also enforces the email requirement constraint for newly created objects.
+		"""
+		super(GenericAdultSitePolicyEventListener,self).user_will_update_new( user, event )
+		ext_value = event.ext_value
+		if 'email' not in ext_value and '@' in ext_value.get( 'Username', '' ):
+			ext_value['email'] = ext_value['Username']
+
 	def user_will_create( self, user, event ):
 		"""
 		This policy verifies naming restraints.
