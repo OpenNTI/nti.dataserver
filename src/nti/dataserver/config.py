@@ -256,14 +256,17 @@ def _configure_zeo( env_root ):
 		}
 
 	configuration = """
+		%%import zc.zlibstorage
 		<zeo>
 		address %(clientPipe)s
 		</zeo>
+		<serverzlibstorage>
 		<filestorage 1>
 		path %(dataFile)s
 		blob-dir %(blobDir)s
 		pack-gc false
 		</filestorage>
+		</serverzlibstorage>
 
 		<eventlog>
 		<logfile>
@@ -290,11 +293,13 @@ def _configure_zeo( env_root ):
 	# much faster on raw files
 	gc_configuration = """
 		<zodb Users>
+		<zlibstorage>
 		<filestorage 1>
 		path %(dataFile)s
 		blob-dir %(blobDir)s
 		pack-gc false
 		</filestorage>
+		</zlibstorage>
 		</zodb>
 		""" % configuration_dict
 	env_root.write_conf_file( 'gc_conf.xml', gc_configuration )
@@ -349,6 +354,7 @@ def _configure_zeo( env_root ):
 		<zodb %(name)s>
 		pool-size 7
 		database-name %(name)s
+		<zlibstorage>
 		<relstorage %(name)s>
 				blob-dir %(blobDir)s
 				cache-servers %(cacheServers)s
@@ -364,6 +370,7 @@ def _configure_zeo( env_root ):
 				%(addr)s
 				</mysql>
 		</relstorage>
+		</zlibstorage>
 		</zodb>
 		""" % locals()
 		if storage_only:
@@ -377,7 +384,7 @@ def _configure_zeo( env_root ):
 	""" % (_relstorage_stanza(blobDir=blobDir),)
 	relstorage_zconfig_path = env_root.write_conf_file( 'relstorage_conf.xml', relstorage_configuration )
 
-	base_uri = 'zeo://%(addr)s?storage=%(storage)s&database_name=%(name)s&blob_dir=%(blob_dir)s&shared_blob_dir=%(shared)s'
+	base_uri = 'zlibzeo://%(addr)s?storage=%(storage)s&database_name=%(name)s&blob_dir=%(blob_dir)s&shared_blob_dir=%(shared)s'
 	file_uri = 'file://%s?database_name=%s&blobstorage_dir=%s'
 	relstorage_zconfig_uri = 'zconfig://' + relstorage_zconfig_path
 
