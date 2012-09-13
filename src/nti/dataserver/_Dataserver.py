@@ -60,7 +60,8 @@ DEFAULT_PASSWORD = "temp001"
 ### into its own function and call it explicitly.
 ###
 
-class InappropriateSiteError(LookupError): pass
+from nti.dataserver.interfaces import InappropriateSiteError, SiteNotInstalledError
+
 
 class _Change(Persistent):
 
@@ -137,8 +138,10 @@ def _site_cm(conn):
 	sitemanc = conn.root()['nti.dataserver']
 
 	with site( sitemanc ):
-		assert component.getSiteManager() == sitemanc.getSiteManager(), "Hooks not installed?"
-		assert component.getUtility( interfaces.IDataserver )
+		if component.getSiteManager() != sitemanc.getSiteManager():
+			raise SiteNotInstalledError( "Hooks not installed?" )
+		if component.getUtility( interfaces.IDataserver ) is None:
+			raise InappropriateSiteError()
 		yield sitemanc
 
 
