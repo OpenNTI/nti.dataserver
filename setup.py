@@ -195,6 +195,7 @@ setup(
 		'z3c.table >= 1.0.0', # Flexible table rendering
 		'zc.dict >= 1.3b1', # BTree based dicts that are subclassable
 		'zc.intid >= 1.0.1',
+		'zc.lockfile >= 1.0.0',
 		'zc.queue >= 1.3',
 		'zc.zlibstorage >= 0.1.1', # compressed records. Will be built-in to newer ZODB
 		'zc.zodbdgc >= 0.6.0',

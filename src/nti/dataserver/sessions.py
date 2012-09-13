@@ -23,7 +23,7 @@ import transaction
 from nti.dataserver import interfaces as nti_interfaces
 from nti.socketio.interfaces import  SocketSessionDisconnectedEvent
 from nti.socketio.persistent_session import AbstractSession as Session
-
+from nti.dataserver.interfaces import SiteNotInstalledError
 
 @interface.implementer( nti_interfaces.ISessionService )
 class SessionService(object):
@@ -101,6 +101,9 @@ class SessionService(object):
 				except transaction.interfaces.TransientError:
 					# Try again later
 					logger.debug( "Trying session poll later", exc_info=True )
+					continue
+				except SiteNotInstalledError:
+					logger.debug( "Site setup not ready; trying to poll later" ) # Happens if startup takes too long, e.g., while downloading index data
 					continue
 
 				for sid, sess in sessions.items():

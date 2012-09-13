@@ -14,6 +14,7 @@ import gevent.local
 
 import sys
 import os
+import random
 
 import nti.dictserver as dictserver
 import nti.dictserver.dictionary
@@ -308,7 +309,14 @@ def createApplication( http_port,
 
 	question_map = _question_map.QuestionMap()
 	pyramid_config.registry.registerUtility( question_map, app_interfaces.IFileQuestionMap )
-	for title in library.titles:
+
+	# Now file the events letting listeners (e.g., index and question adders)
+	# know that we have content. Randomize the order of this across worker
+	# processes so that we don't collide too badly on downloading indexes if need be
+	titles = list(library.titles)
+	random.seed( )
+	random.shuffle( titles )
+	for title in titles:
 		lifecycleevent.created( title )
 
 	# TODO: ACLs on searching: only the user should be allowed.

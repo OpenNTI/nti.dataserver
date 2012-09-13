@@ -65,6 +65,11 @@ class ACLProxy(ProxyBase):
 class IDataserver(interface.Interface):
 	pass
 
+class InappropriateSiteError(LookupError):
+	pass
+class SiteNotInstalledError(AssertionError):
+	pass
+
 class IDataserverFolder(zope.site.interfaces.IFolder):
 	pass
 
