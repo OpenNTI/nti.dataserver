@@ -682,6 +682,9 @@ class TestCreateView(_AbstractValidationViewBase):
 	def test_create_law_policy( self ):
 		self._do_test_create_site_policy( 'law.nextthought.com', 'law.nextthought.com' )
 
+	def test_create_prmia_policy( self ):
+		self._do_test_create_site_policy( 'prmia.nextthought.com', 'prmia.nextthought.com' )
+
 
 	@WithMockDSTrans
 	def test_create_component_matches_request_host( self ):

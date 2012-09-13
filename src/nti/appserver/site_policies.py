@@ -625,54 +625,65 @@ class NoChatCapabilityFilter(object):
 
 
 @interface.implementer(ISitePolicyUserEventListener)
-class RwandaSitePolicyEventListener(GenericAdultSitePolicyEventListener):
+class _AdultCommunitySitePolicyEventListener(GenericAdultSitePolicyEventListener):
 	"""
-	Implements the policy for the rwanda site.
+	Implements the policy for ad adult site, adding new users to a single community.
 	"""
+
+	COM_USERNAME = None
+	COM_ALIAS = None
+	COM_REALNAME = None
 
 	def user_created( self, user, event ):
 		"""
-		This policy places newly created users in the ``CarnegieMellonUniversity`` community
-		(creating it if it doesn't exist).
+		This policy places newly created users in the community defined by the fields
+		of this object (creating it if it doesn't exist).
 
 		"""
 
-		super(RwandaSitePolicyEventListener,self).user_created( user, event )
+		super(_AdultCommunitySitePolicyEventListener,self).user_created( user, event )
+		if self.COM_USERNAME and self.COM_ALIAS and self.COM_REALNAME:
+			community = users.Entity.get_entity( self.COM_USERNAME )
+			if community is None:
+				community = users.Community.create_community( username=self.COM_USERNAME )
+				com_names = user_interfaces.IFriendlyNamed( community )
+				com_names.alias = self.COM_ALIAS
+				com_names.realname = self.COM_REALNAME
 
-		community = users.Entity.get_entity( 'CarnegieMellonUniversity' )
-		if community is None:
-			community = users.Community.create_community( username='CarnegieMellonUniversity' )
-			com_names = user_interfaces.IFriendlyNamed( community )
-			com_names.alias = 'CMU'
-			com_names.realname = 'Carnegie Mellon University'
+			user.join_community( community )
+			user.follow( community )
 
-		user.join_community( community )
-		user.follow( community )
 
 @interface.implementer(ISitePolicyUserEventListener)
-class LawSitePolicyEventListener(GenericAdultSitePolicyEventListener):
+class RwandaSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
+	"""
+	Implements the policy for the rwanda site.
+	"""
+	COM_USERNAME = 'CarnegieMellonUniversity'
+	COM_ALIAS = 'CMU'
+	COM_REALNAME = 'Carnegie Mellon University'
+
+@interface.implementer(ISitePolicyUserEventListener)
+class LawSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 	"""
 	Implements the policy for ``law.nextthought.com``.
 	"""
 
-	def user_created( self, user, event ):
-		"""
-		This policy places newly created users in the ``law.nextthought.com`` community
-		(creating it if it doesn't exist).
+	COM_USERNAME = 'law.nextthought.com'
+	COM_ALIAS = 'Law'
+	COM_REALNAME = 'Legal Studies'
 
-		"""
+@interface.implementer(ISitePolicyUserEventListener)
+class PrmiaSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
+	"""
+	Implements the policy for ``prmia.nextthought.com``.
+	"""
 
-		super(LawSitePolicyEventListener,self).user_created( user, event )
+	COM_USERNAME = 'prmia.nextthought.com'
+	COM_ALIAS = 'PRMIA'
+	COM_REALNAME = "Professional Risk Managers' International Association"
 
-		community = users.Entity.get_entity( 'law.nextthought.com' )
-		if community is None:
-			community = users.Community.create_community( username='law.nextthought.com' )
-			com_names = user_interfaces.IFriendlyNamed( community )
-			com_names.alias = 'Law'
-			com_names.realname = 'Legal Studies'
 
-		user.join_community( community )
-		user.follow( community )
 
 def _ext_find_schema( ext_self, iface_upper_bound ):
 	_iface = iface_upper_bound
