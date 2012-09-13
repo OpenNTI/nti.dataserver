@@ -282,7 +282,6 @@ def to_standard_external_dictionary( self, mergeFrom=None, name=_ex_name_marker,
 	be added to the dictionary created by this method. The keys and
 	values in mergeFrom should already be external.
 	"""
-
 	result = LocatedExternalDict()
 
 	if mergeFrom:
@@ -343,6 +342,23 @@ def to_standard_external_dictionary( self, mergeFrom=None, name=_ex_name_marker,
 toExternalDictionary = to_standard_external_dictionary
 deprecation.deprecated('toExternalDictionary', 'Prefer to_standard_external_dictionary' )
 
+def to_minimal_standard_external_dictionary( self, mergeFrom=None ):
+	"Does no decoration. Useful for non-'object' types. `self` should have a `mime_type` field."
+
+	result = LocatedExternalDict()
+	if mergeFrom:
+		result.update( mergeFrom )
+	if StandardExternalFields.CLASS not in result:
+		cls = getattr(self, '__external_class_name__', None)
+		if cls:
+			result[StandardExternalFields.CLASS] = cls
+		elif self.__class__.__module__ not in ( 'nti.externalization', 'nti.externalization.datastructures', 'nti.externalization.persistence', 'nti.externalization.interfaces' ) \
+			   and not self.__class__.__name__.startswith( '_' ):
+			result[StandardExternalFields.CLASS] = self.__class__.__name__
+	mime_type = getattr( self, 'mime_type', None )
+	if mime_type:
+		result[StandardExternalFields.MIMETYPE] = mime_type
+	return result
 
 def make_repr():
 	def __repr__( self ):
