@@ -86,10 +86,12 @@ class ModeledContentTypeAwareRegistryMetaclass(type):
 
 	def __new__(mcs, name, bases, cls_dict):
 		new_type = type.__new__( mcs, name, bases, cls_dict )
-		# elide internal classes. In the future, we may want
-		# finer control with a class dictionary attribute.
+		# elide internal classes. (In the future, we may want
+		# finer control with a class dictionary attribute.)
+		# Also don't overwrite an existing value
 		if not name.startswith( '_' ):
-			new_type.mime_type = nti_mimetype_with_class( new_type )
+			if 'mime_type' not in cls_dict:
+				new_type.mime_type = nti_mimetype_with_class( new_type )
 			new_type.parameters = None
 			interface.classImplements( new_type, IContentTypeAware )
 			_mm_types.add( new_type )

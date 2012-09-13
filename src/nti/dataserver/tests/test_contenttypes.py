@@ -15,7 +15,7 @@ from nti.tests import is_true
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.contenttypes import Redaction as _Redaction, Highlight as _Highlight, Note as _Note, Canvas, CanvasShape, CanvasAffineTransform, CanvasCircleShape, CanvasPolygonShape, CanvasPathShape, CanvasUrlShape, CanvasTextShape
-
+from nti.dataserver.contenttypes import NonpersistentCanvasPathShape
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.externalization import to_external_object
 import nti.dataserver.users as users
@@ -472,7 +472,7 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 			update_from_external_object( n, ext, context=ds )
 
 		assert_that( n.body[0], is_( Canvas ) )
-		assert_that( n.body[0][0], is_( CanvasPathShape ) )
+		assert_that( n.body[0][0], is_( NonpersistentCanvasPathShape ) )
 		assert_that( n.body[0][0].closed, same_instance( True ) )
 
 	@WithMockDS

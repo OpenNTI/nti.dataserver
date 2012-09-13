@@ -438,7 +438,7 @@ class Canvas(ThreadableExternalizableMixin, _UserContentRoot, ExternalizableInst
 
 	def updateFromExternalObject( self, *args, **kwargs ):
 		super(Canvas,self).updateFromExternalObject( *args, **kwargs )
-		assert all( (isinstance( x, CanvasShape ) for x in self.shapeList) )
+		assert all( (isinstance( x, _CanvasShape ) for x in self.shapeList) )
 
 	def __eq__( self, other ):
 		# TODO: Super properties?
@@ -451,6 +451,7 @@ class Canvas(ThreadableExternalizableMixin, _UserContentRoot, ExternalizableInst
 def _make_external_value_object( external ):
 	external.pop( 'Last Modified', None )
 	external.pop( 'OID', None )
+	external.pop( 'NTIID', None )
 	external.pop( 'ID', None )
 	external.pop( 'CreatedTime', None )
 	external.pop( 'Creator', None )
@@ -499,13 +500,18 @@ class CanvasAffineTransform(ExternalizableInstanceDict):
 		except AttributeError: #pragma: no cover
 			return NotImplemented
 
+@interface.implementer(IExternalObject)
+class _CanvasShape(ExternalizableInstanceDict):
+	### FIXME: These objects really shouldn't be persistent
 
-class CanvasShape(_UserContentRoot,ExternalizableInstanceDict):
+	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
+
+
 	# We generate the affine transform on demand; we don't store it
 	# to avoid object overhead.
 
 	def __init__( self ):
-		super(CanvasShape,self).__init__( )
+		super(_CanvasShape,self).__init__( )
 		# Matrix fields. Initialize as identity.
 		self._a = 1
 		self._b = 0
@@ -521,15 +527,6 @@ class CanvasShape(_UserContentRoot,ExternalizableInstanceDict):
 		self._fill_rgba = [1.0, 1.0, 1.0, 0.0]
 		# stroke width is the same both places, and stored in pts.
 		self._stroke_width = 1.0
-
-	def __setstate__( self, state ):
-		super(CanvasShape,self).__setstate__( state )
-		if not hasattr( self, '_stroke_rgba' ):
-			self._stroke_rgba = [1.0, 1.0, 1.0, 1.0]
-		if not hasattr( self, '_fill_rgba' ):
-			self._fill_rgba = [1.0, 1.0, 1.0, 0.0]
-		if not hasattr( self, '_stroke_width' ):
-			self._stroke_width = 1.0
 
 	def get_transform( self ):
 		result = CanvasAffineTransform( )
@@ -575,7 +572,7 @@ class CanvasShape(_UserContentRoot,ExternalizableInstanceDict):
 		return self._fill_rgba[3]
 
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
-		super(CanvasShape,self).updateFromExternalObject( parsed, *args, **kwargs )
+		super(_CanvasShape,self).updateFromExternalObject( parsed, *args, **kwargs )
 		# The matrix, if given, convert to our points
 		matrix = parsed.pop( 'transform', None )
 		if matrix: self.transform = matrix
@@ -604,7 +601,7 @@ class CanvasShape(_UserContentRoot,ExternalizableInstanceDict):
 				# opacity and alpha are exactly the same,
 				# 0.0 fully transparent, 1.0 fully opaque
 				arr[3] = stroke_opacity
-				self._p_changed = True
+				if hasattr( self, '_p_changed'): setattr( self, '_p_changed', True )
 
 		def update_from_rgba( arr, string, alpha=1.0 ):
 			"""
@@ -626,7 +623,7 @@ class CanvasShape(_UserContentRoot,ExternalizableInstanceDict):
 			arr[0], arr[1], arr[2] = r, g, b
 			assert( 0.0 <= a <= 1.0 )
 			arr[3] = a
-			self._p_changed = True
+			if hasattr( self, '_p_changed'): setattr( self, '_p_changed', True )
 
 		if stroke_rgba_string is not None:
 			update_from_rgba( self._stroke_rgba, stroke_rgba_string )
@@ -667,60 +664,65 @@ class CanvasShape(_UserContentRoot,ExternalizableInstanceDict):
 		mergeFrom['fillColor'] = self.fillColor
 		mergeFrom['fillOpacity'] = self.fillOpacity
 
-		return _make_external_value_object( super(CanvasShape,self).toExternalDictionary( mergeFrom=mergeFrom ) )
+		return _make_external_value_object( super(_CanvasShape,self).toExternalDictionary( mergeFrom=mergeFrom ) )
+
+	def toExternalObject( self ):
+		return self.toExternalDictionary()
 
 	def __eq__( self, other ):
 		# Implementation note: when toExternalDictionary changes,
 		# this method should change too
 		# TODO: This is a lousy comparison
-		return self.__class__ == other.__class__ and self.transform == other.transform
+		try:
+			return self.transform == other.transform
+		except AttributeError:
+			return NotImplemented
 
-class CanvasCircleShape(CanvasShape): pass
-class CanvasPolygonShape(CanvasShape):
+class _CanvasCircleShape(_CanvasShape):
+	pass
+class _CanvasPolygonShape(_CanvasShape):
 
-	_ext_primitive_out_ivars_ = CanvasShape._ext_primitive_out_ivars_.union( {'sides'} )
+	_ext_primitive_out_ivars_ = _CanvasShape._ext_primitive_out_ivars_.union( {'sides'} )
 
 
 	def __init__(self, sides=4 ):
-		super(CanvasPolygonShape,self).__init__()
+		super(_CanvasPolygonShape,self).__init__()
 		self.sides = sides
 
 	def updateFromExternalObject( self, *args, **kwargs ):
-		super(CanvasPolygonShape,self).updateFromExternalObject( *args, **kwargs )
+		super(_CanvasPolygonShape,self).updateFromExternalObject( *args, **kwargs )
 		assert isinstance( self.sides, numbers.Integral )
 
 	def __eq__( self, other ):
-		return super(CanvasPolygonShape,self).__eq__( other ) and self.sides == other.sides
+		return super(_CanvasPolygonShape,self).__eq__( other ) and self.sides == other.sides
 
-class CanvasTextShape(CanvasShape):
+class _CanvasTextShape(_CanvasShape):
 
-	_ext_primitive_out_ivars_ = CanvasShape._ext_primitive_out_ivars_.union( {'text'} )
+	_ext_primitive_out_ivars_ = _CanvasShape._ext_primitive_out_ivars_.union( {'text'} )
 
 
 	def __init__( self, text='' ):
-		super(CanvasTextShape, self).__init__( )
+		super(_CanvasTextShape, self).__init__( )
 		self.text = text
 
 	def updateFromExternalObject( self, *args, **kwargs ):
 		tbf = self.text
-		super(CanvasTextShape,self).updateFromExternalObject( *args, **kwargs )
+		super(_CanvasTextShape,self).updateFromExternalObject( *args, **kwargs )
 		assert isinstance( self.text, six.string_types )
 		if self.text != tbf:
 			self.text = component.getAdapter( self.text, frg_interfaces.IUnicodeContentFragment, name='text' )
 
 
-class CanvasUrlShape(CanvasShape):
+class _CanvasUrlShape(_CanvasShape):
 
-
-	_ext_primitive_out_ivars_ = CanvasShape._ext_primitive_out_ivars_.union( {'url'} )
-
+	_ext_primitive_out_ivars_ = _CanvasShape._ext_primitive_out_ivars_.union( {'url'} )
 
 	def __init__( self, url='' ):
-		super(CanvasUrlShape, self).__init__( )
+		super(_CanvasUrlShape, self).__init__( )
 		self.url = url
 
 	def updateFromExternalObject( self, *args, **kwargs ):
-		super(CanvasUrlShape,self).updateFromExternalObject( *args, **kwargs )
+		super(_CanvasUrlShape,self).updateFromExternalObject( *args, **kwargs )
 
 	def _get_url(self):
 		if '_head' in self.__dict__:
@@ -752,21 +754,21 @@ class CanvasUrlShape(CanvasShape):
 	def __repr__(self):
 		return '%s(%s)' % (self.__class__.__name__, len(self.url))
 
-class CanvasPathShape(CanvasShape):
+class _CanvasPathShape(_CanvasShape):
 
-	# We write points ourself for speed. The list is ofter long and only
+	# We write points ourself for speed. The list is often long and only
 	# contains primitives.
-	_excluded_out_ivars_ = CanvasShape._excluded_out_ivars_.union( {'points'} )
+	_excluded_out_ivars_ = _CanvasShape._excluded_out_ivars_.union( {'points'} )
 
-	_ext_primitive_out_ivars_ = CanvasShape._ext_primitive_out_ivars_.union( {'closed'} )
+	_ext_primitive_out_ivars_ = _CanvasShape._ext_primitive_out_ivars_.union( {'closed'} )
 
 	def __init__( self, closed=True, points=() ):
-		super(CanvasPathShape,self).__init__()
+		super(_CanvasPathShape,self).__init__()
 		self.closed = closed
 		self.points = points
 
 	def updateFromExternalObject(self, *args, **kwargs ):
-		super(CanvasPathShape,self).updateFromExternalObject( *args, **kwargs )
+		super(_CanvasPathShape,self).updateFromExternalObject( *args, **kwargs )
 		assert (isinstance( self.closed, bool ) or self.closed == 0 or self.closed == 1)
 		if self.closed == 0 or self.closed == 1:
 			self.closed = bool(self.closed)
@@ -775,14 +777,64 @@ class CanvasPathShape(CanvasShape):
 		assert (len(self.points) % 2) == 0 # Must be even number of pairs
 
 	def toExternalDictionary( self, mergeFrom=None ):
-		result = super(CanvasPathShape,self).toExternalDictionary( mergeFrom=mergeFrom )
+		result = super(_CanvasPathShape,self).toExternalDictionary( mergeFrom=mergeFrom )
 		result['points'] = self.points
 		return result
 
 	def __eq__( self, other ):
-		return super(CanvasPathShape,self).__eq__( other ) \
+		return super(_CanvasPathShape,self).__eq__( other ) \
 			and self.closed == getattr(other,'closed',None) \
 			and self.points == getattr(other,'points',None)
+
+### Ok, so earlier we screwed up. We had CanvasShape by default
+# be persistent. We need the class with that name to continue to be persistent,
+# otherwise we cannot load them out of the database. But we want new objects
+# to not be persistent, hence the class layout that has non-externally-creatable
+# objects at the root, then a persistent subclass that's also not creatable,
+# and then a non-persistent subclass that is creatable, but registered
+# under all the old names and indistinguishable from outside.
+# We ought to be able to write a migration to copy the old shapes
+# to the new shapes and then delete the old persistent classes; but
+# we hold off on that until we do the URL migration too
+class CanvasShape(_CanvasShape,persistent.Persistent): pass
+class CanvasCircleShape(_CanvasCircleShape,persistent.Persistent): pass
+class CanvasPolygonShape(_CanvasPolygonShape,persistent.Persistent): pass
+class CanvasTextShape(_CanvasTextShape,persistent.Persistent): pass
+class CanvasUrlShape(_CanvasUrlShape,persistent.Persistent): pass
+class CanvasPathShape(_CanvasPathShape,persistent.Persistent): pass
+
+class NonpersistentCanvasShape(_CanvasShape):
+	__external_can_create__ = True
+	mime_type = CanvasShape.mime_type
+	__external_class_name__ = 'CanvasShape'
+
+
+class NonpersistentCanvasCircleShape(_CanvasCircleShape):
+	__external_can_create__ = True
+	mime_type = CanvasCircleShape.mime_type
+	__external_class_name__ = 'CanvasCircleShape'
+
+class NonpersistentCanvasPolygonShape(_CanvasPolygonShape):
+	__external_can_create__ = True
+	mime_type = CanvasPolygonShape.mime_type
+	__external_class_name__ = 'CanvasPolygonShape'
+
+class NonpersistentCanvasTextShape(_CanvasTextShape):
+	__external_can_create__ = True
+	mime_type = CanvasTextShape.mime_type
+	__external_class_name__ = 'CanvasTextShape'
+
+class NonpersistentCanvasUrlShape(_CanvasUrlShape):
+	__external_can_create__ = True
+	mime_type = CanvasUrlShape.mime_type
+	__external_class_name__ = 'CanvasUrlShape'
+
+class NonpersistentCanvasPathShape(_CanvasPathShape):
+	__external_can_create__ = True
+	mime_type = CanvasPathShape.mime_type
+	__external_class_name__ = 'CanvasPathShape'
+
+
 
 
 # Support for legacy quiz posting
