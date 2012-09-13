@@ -16,7 +16,7 @@ from nti.dataserver.authorization import ACT_UPDATE
 from nti.dataserver.authorization_acl import ACL
 from nti.dataserver.interfaces import ACLProxy, IAuthenticationPolicy, IAuthorizationPolicy
 
-from nti.externalization.interfaces import StandardExternalFields, IExternalizedObject
+from nti.externalization.interfaces import StandardExternalFields
 
 import pyramid.authorization
 import pyramid.security as psec
@@ -55,7 +55,7 @@ def _acl_adding_lineage(obj):
 	for location in _pyramid_lineage(obj):
 		try:
 			# Native ACL. Run with it.
-			location.__acl__
+			getattr( location, '__acl__' )
 			yield location
 		except AttributeError:
 			# OK, can we create one?
@@ -81,9 +81,6 @@ def is_writable(obj, request=None):
 	"""
 	if request is None:
 		request = get_current_request()
-	if request is None:
-		logger.warning( "No request given or found; assuming not writable. Please run with a request." )
-		return None
 
 	# Using psec itself is "broken": It doesn't respect the current site
 	# components, even if the request itself does not have a registry.
@@ -103,6 +100,14 @@ def is_writable(obj, request=None):
 		return False
 
 def _has_permission( permission, context, request ):
+	"""
+	:param request: The currently active Pyramid HTTP request object, or
+		None. If not provided (and we do not look for a current request),
+		then the global component registry will be used to find Authentication
+		and Authorization policies, and the only principal that will be checked is
+		:const:`pyramid.security.Everyone` (since there will be no identifiable
+		principal from the request).
+	"""
 	try:
 		reg = request.registry
 	except AttributeError:
@@ -116,5 +121,5 @@ def _has_permission( permission, context, request ):
 	if authz_policy is None: # pragma: no cover
 		raise ValueError('Authentication policy registered without '
 						 'authorization policy') # should never happen
-	principals = authn_policy.effective_principals(request)
+	principals = authn_policy.effective_principals(request) if request is not None else (psec.Everyone,)
 	return authz_policy.permits(context, principals, permission)
