@@ -19,6 +19,7 @@ from nti.externalization.interfaces import IExternalObject
 from nti.externalization.externalization import stripSyntheticKeysFromExternalDictionary, toExternalObject
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.datastructures import ExternalizableInstanceDict
+from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization import internalization
 
 from nti.dataserver import datastructures
@@ -422,9 +423,15 @@ class Canvas(ThreadableExternalizableMixin, _UserContentRoot, ExternalizableInst
 	# things. Figure out how we want to do incremental changes
 	# (pushing new shapes while drawing). Should we take the whole thing every
 	# time (and then look for equal object that we already have)? Accept POSTS
-	# of shapes into this object as a "container"?
+	# of shapes into this object as a "container"? Right now, we have disabled
+	# persistence of individual shapes so it doesn't do us much good
 	__parent__ = None
 	__name__ = None
+
+	# We write shapes ourself for speed. The list is often long and only
+	# contains _CanvasShape "objects". Note that this means they cannot be decorated
+	_excluded_out_ivars_ = ExternalizableInstanceDict._excluded_out_ivars_.union( {'shapeList'} )
+
 
 	def __init__(self):
 		super(Canvas,self).__init__()
@@ -440,6 +447,11 @@ class Canvas(ThreadableExternalizableMixin, _UserContentRoot, ExternalizableInst
 		super(Canvas,self).updateFromExternalObject( *args, **kwargs )
 		assert all( (isinstance( x, _CanvasShape ) for x in self.shapeList) )
 
+	def toExternalDictionary( self, mergeFrom=None ):
+		result = super(Canvas,self).toExternalDictionary( mergeFrom=mergeFrom )
+		result['shapeList'] = [x.toExternalObject() for x in self.shapeList]
+		return result
+
 	def __eq__( self, other ):
 		# TODO: Super properties?
 		try:
@@ -447,15 +459,6 @@ class Canvas(ThreadableExternalizableMixin, _UserContentRoot, ExternalizableInst
 		except AttributeError: #pragma: no cover
 			return NotImplemented
 
-
-def _make_external_value_object( external ):
-	external.pop( 'Last Modified', None )
-	external.pop( 'OID', None )
-	external.pop( 'NTIID', None )
-	external.pop( 'ID', None )
-	external.pop( 'CreatedTime', None )
-	external.pop( 'Creator', None )
-	return external
 
 class CanvasAffineTransform(ExternalizableInstanceDict):
 	"""
@@ -491,8 +494,23 @@ class CanvasAffineTransform(ExternalizableInstanceDict):
 			assert isinstance( getattr( self, x ), numbers.Number )
 
 	def toExternalDictionary( self, mergeFrom=None ):
-		# TODO: Need a mimetype for these guys.
-		return _make_external_value_object( super(CanvasAffineTransform,self).toExternalDictionary( mergeFrom=mergeFrom ) )
+		"""
+		Note that we externalize ourself directly, without going through the superclass
+		at all, for speed. We would only delete most of the stuff it added anyway.
+		"""
+		result = LocatedExternalDict()
+		result['a'] = self.a
+		result['b'] = self.b
+		result['c'] = self.c
+		result['d'] = self.d
+		result['tx'] = self.tx
+		result['ty'] = self.ty
+		result['Class'] = self.__class__.__name__
+		result['MimeType'] = self.mime_type
+		return result
+
+	def toExternalObject( self ):
+		return self.toExternalDictionary()
 
 	def __eq__( self, other ):
 		try:
@@ -505,7 +523,6 @@ class _CanvasShape(ExternalizableInstanceDict):
 	### FIXME: These objects really shouldn't be persistent
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-
 
 	# We generate the affine transform on demand; we don't store it
 	# to avoid object overhead.
@@ -664,7 +681,8 @@ class _CanvasShape(ExternalizableInstanceDict):
 		mergeFrom['fillColor'] = self.fillColor
 		mergeFrom['fillOpacity'] = self.fillOpacity
 
-		return _make_external_value_object( super(_CanvasShape,self).toExternalDictionary( mergeFrom=mergeFrom ) )
+		return super(_CanvasShape,self).toExternalDictionary( mergeFrom=mergeFrom )
+	__external_use_minimal_base__ = True # Avoid the call to standard_dictionary, and just use the minimal fields
 
 	def toExternalObject( self ):
 		return self.toExternalDictionary()
@@ -793,9 +811,9 @@ class _CanvasPathShape(_CanvasShape):
 # objects at the root, then a persistent subclass that's also not creatable,
 # and then a non-persistent subclass that is creatable, but registered
 # under all the old names and indistinguishable from outside.
-# We ought to be able to write a migration to copy the old shapes
-# to the new shapes and then delete the old persistent classes; but
-# we hold off on that until we do the URL migration too
+# A migration has moved all old objects to the new version;
+# now we need to deprecate the old version and be sure that they don't
+# get loaded anymore, then we can delete the class
 class CanvasShape(_CanvasShape,persistent.Persistent): pass
 class CanvasCircleShape(_CanvasCircleShape,persistent.Persistent): pass
 class CanvasPolygonShape(_CanvasPolygonShape,persistent.Persistent): pass

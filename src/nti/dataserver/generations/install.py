@@ -6,7 +6,7 @@ from __future__ import print_function, unicode_literals
 
 __docformat__ = 'restructuredtext'
 
-generation = 23
+generation = 24
 
 from zope.generations.generations import SchemaManager
 

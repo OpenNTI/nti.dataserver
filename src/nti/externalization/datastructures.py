@@ -19,6 +19,7 @@ from zope.location import ILocation
 
 from .interfaces import IExternalObject, IInternalObjectIO, ILocatedExternalMapping, ILocatedExternalSequence, StandardInternalFields, StandardExternalFields
 from .externalization import to_standard_external_dictionary, toExternalObject
+from .externalization import to_minimal_standard_external_dictionary
 from .internalization import validate_named_field_value
 
 def _syntheticKeys( ):
@@ -37,14 +38,21 @@ from .interfaces import LocatedExternalDict, LocatedExternalList
 class ExternalizableDictionaryMixin(object):
 	""" Implements a toExternalDictionary method as a base for subclasses. """
 
+	__external_use_minimal_base__ = False
+
 	def __init__(self, *args):
 		super(ExternalizableDictionaryMixin,self).__init__(*args)
 
 	def _ext_replacement( self ):
 		return self
 
+	def _ext_standard_external_dictionary( self, replacement, mergeFrom=None ):
+		if self.__external_use_minimal_base__:
+			return to_minimal_standard_external_dictionary( replacement, mergeFrom=mergeFrom )
+		return to_standard_external_dictionary( replacement, mergeFrom=mergeFrom )
+
 	def toExternalDictionary( self, mergeFrom=None):
-		return to_standard_external_dictionary( self._ext_replacement(), mergeFrom=mergeFrom )
+		return self._ext_standard_external_dictionary( self._ext_replacement(), mergeFrom=mergeFrom )
 
 	def stripSyntheticKeysFromExternalDictionary( self, external ):
 		""" Given a mutable dictionary, removes all the external keys
