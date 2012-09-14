@@ -681,6 +681,18 @@ class LawSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 	COM_USERNAME = 'law.nextthought.com'
 	COM_ALIAS = 'Law'
 	COM_REALNAME = 'Legal Studies'
+	
+	# major hack to add users of law to a DFL
+	DEFAULT_DFL_NAME = u'tag:nextthought.com,2011-10:thai@post.harvard.edu-MeetingRoom:Group-firstamendment_thai_fall2012'
+	DEFAULT_DFL_OWNER = 'thai@post.harvard.edu'
+	
+	def user_created( self, user, event ):
+		super(LawSitePolicyEventListener, self).user_created(user, event)
+		owner = users.User.get_entity( self.DEFAULT_DFL_OWNER )
+		if owner is not None:
+			dfl = owner.getContainedObject('FriendsLists', self.DEFAULT_DFL_NAME)
+			if dfl is not None: 
+				dfl.addFriend( user )
 
 @interface.implementer(ISitePolicyUserEventListener)
 class PrmiaSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
