@@ -7,10 +7,9 @@ $Id$
 import logging
 logger = logging.getLogger( __name__ )
 
-# Import this first to ensure gevent is monkey patched
+
 import nti.dataserver as dataserver
 
-import gevent.local
 
 import sys
 import os
@@ -37,11 +36,6 @@ from zope.configuration import xmlconfig
 from zope.event import notify
 from zope.processlifetime import ProcessStarting
 from zope import lifecycleevent
-
-# Make sure our thread-local monkey patch has been applied
-from zope.component.hooks import siteinfo
-assert gevent.local.local in type(siteinfo).__bases__
-
 
 import pyramid.config
 import pyramid.authorization

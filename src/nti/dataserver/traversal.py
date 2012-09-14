@@ -5,6 +5,12 @@ $Id$
 """
 from __future__ import print_function, unicode_literals
 
+
+from nti.monkey import traversing_patch_on_import
+traversing_patch_on_import.patch()
+del traversing_patch_on_import
+
+
 from pyramid.traversal import _join_path_tuple # TODO: Remove the dependency on pyramid at this level
 
 from zope import component

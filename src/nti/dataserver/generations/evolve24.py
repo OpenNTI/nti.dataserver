@@ -43,10 +43,8 @@ def migrate( note ):
 					for k, v in shape.__dict__.items():
 						new_shape.__dict__[k] = v
 					__traceback_info__ = shape, new_shape
-					try:
-						assert new_shape == shape
-					except AssertionError as e:
-						from IPython.core.debugger import Tracer; Tracer()() ## DEBUG ##
+
+					assert new_shape == shape
 
 					# Finally, replace the object
 					item.shapeList[i] = new_shape
@@ -77,6 +75,4 @@ def evolve( context ):
 			for note in findObjectsMatching( user,
 											 needs_migrate):
 				__traceback_info__ = user, note
-				import sys
-				print( "Evolving ", note, "for", user, file=sys.stderr )
 				migrate( note )
