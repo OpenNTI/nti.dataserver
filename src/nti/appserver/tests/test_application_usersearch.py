@@ -58,7 +58,7 @@ class TestApplicationUserSearch(ApplicationTestBase):
 		# The application for some reason is lowercasing the Username, which is WRONG.
 		# It should take what the DS gives it.
 		# TODO: The security on this isn't very tight
-		path = '/dataserver2/UserSearch/' + dfl.NTIID.lower()
+		path = '/dataserver2/ResolveUser/' + dfl.NTIID.lower()
 		res = testapp.get( str(path), extra_environ=self._make_extra_environ('sjohnson@nextthought.com'))
 
 		member = res.json_body['Items'][0]
@@ -111,12 +111,13 @@ class TestApplicationUserSearch(ApplicationTestBase):
 			user2.join_community( community )
 
 		testapp = TestApp( self.app )
-		# We can search for ourself
-		path = '/dataserver2/UserSearch/sjohnson@nextthought.com'
+		# We can resolve just ourself
+		path = '/dataserver2/ResolveUser/sjohnson@nextthought.com'
 		res = testapp.get( path, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body['Items'], has_length( 1 ) )
 
-		res = testapp.get( path, params={'all': True}, extra_environ=self._make_extra_environ())
+		path = '/dataserver2/UserSearch/sjohnson@nextthought.com'
+		res = testapp.get( path, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body['Items'], has_length( 2 ) )
 
 	def test_user_search_communities(self):
