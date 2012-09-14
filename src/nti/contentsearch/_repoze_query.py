@@ -3,6 +3,8 @@ from __future__ import print_function, unicode_literals
 import sys
 import inspect
 
+from zope import component
+from zope import interface
 from zopyx.txng3.core.parsers.english import EnglishQueryParser
 
 from repoze.catalog.query import Eq
@@ -13,6 +15,7 @@ from repoze.catalog.query import DoesNotContain as IndexDoesNotContain
 
 from nti.contentsearch.common import QueryExpr
 from nti.contentsearch.common import is_all_query
+from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch.common import (sharedWith_, containerId_, collectionId_, id_, oid_, ntiid_,
 									  ID, LAST_MODIFIED, CONTAINER_ID, COLLECTION_ID, OID, NTIID, CREATOR)
 from nti.contentsearch.common import (last_modified_fields)
@@ -128,13 +131,20 @@ def parse_subqueries(qo, stored_names=(), map_func=map_to_key_names):
 		chain = chain & op if chain else op
 	return chain
 	
-def check_query(query):
-	try:
-		EnglishQueryParser.parse(query)
-		return True
-	except Exception, e:
-		logger.warn("Error while parsing query '%s'. '%s'" % (query, e))
-		return False
+@interface.implementer( search_interfaces.ISearchQueryValidator )
+class _DefaultSearchQueryValiator(object):
+	
+	def validate(self, query):
+		try:
+			EnglishQueryParser.parse(query)
+			return True
+		except Exception, e:
+			logger.warn("Error while parsing query '%s'. '%s'" % (query, e))
+			return False
+	
+def validate_query(query, language='en'):
+	validator = component.getUtility(search_interfaces.ISearchQueryValidator, name=language)
+	return validator.validate(query)
 	
 def parse_query(catalog, fieldname, qo):
 	is_all = is_all_query(qo.term)
@@ -143,7 +153,7 @@ def parse_query(catalog, fieldname, qo):
 		return is_all, subquery_chain
 	else:
 		query_term = qo.term
-		if not check_query(query_term): 
+		if not validate_query(query_term): 
 			query_term = u'-'
 			subquery_chain = None
 		queryobject = Contains.create_for_indexng3(fieldname, query_term, limit=qo.limit)
