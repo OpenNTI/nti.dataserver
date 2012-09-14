@@ -3,6 +3,8 @@ from __future__ import print_function, unicode_literals
 import sys
 import inspect
 
+from zopyx.txng3.core.parsers.english import EnglishQueryParser
+
 from repoze.catalog.query import Eq
 from repoze.catalog.query import Query
 from repoze.catalog.query import Contains as IndexContains
@@ -128,7 +130,7 @@ def parse_subqueries(qo, stored_names=(), map_func=map_to_key_names):
 	
 def check_query(query):
 	try:
-		rz_parse_query(query)
+		EnglishQueryParser.parse(query)
 		return True
 	except Exception, e:
 		logger.warn("Error while parsing query '%s'. '%s'" % (query, e))
@@ -141,9 +143,9 @@ def parse_query(catalog, fieldname, qo):
 		return is_all, subquery_chain
 	else:
 		query_term = qo.term
-		#if not check_query(query_term): 
-		#	query_term = u'-'
-		#	subquery_chain = None
+		if not check_query(query_term): 
+			query_term = u'-'
+			subquery_chain = None
 		queryobject = Contains.create_for_indexng3(fieldname, query_term, limit=qo.limit)
 		queryobject = queryobject & subquery_chain if subquery_chain else queryobject
 		return is_all, queryobject
