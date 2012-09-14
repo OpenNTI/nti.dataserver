@@ -5,8 +5,8 @@ import inspect
 
 from repoze.catalog.query import Eq
 from repoze.catalog.query import Query
-from repoze.catalog.query import parse_query
 from repoze.catalog.query import Contains as IndexContains
+from repoze.catalog.query import parse_query as rz_parse_query
 from repoze.catalog.query import DoesNotContain as IndexDoesNotContain
 
 from nti.contentsearch.common import QueryExpr
@@ -109,7 +109,7 @@ def parse_subquery(fieldname, value):
 		text = value
 		if isinstance(value, QueryExpr):
 			text = value.expr
-			result = parse_query(text)
+			result = rz_parse_query(text)
 			if not isinstance(result, Query):
 				result = None 
 	except:
@@ -126,12 +126,24 @@ def parse_subqueries(qo, stored_names=(), map_func=map_to_key_names):
 		chain = chain & op if chain else op
 	return chain
 	
+def check_query(query):
+	try:
+		rz_parse_query(query)
+		return True
+	except Exception, e:
+		logger.warn("Error while parsing query '%s'. '%s'" % (query, e))
+		return False
+	
 def parse_query(catalog, fieldname, qo):
 	is_all = is_all_query(qo.term)
 	subquery_chain = parse_subqueries(qo, catalog.keys())
 	if is_all:
 		return is_all, subquery_chain
 	else:
-		queryobject = Contains.create_for_indexng3(fieldname, qo.term, limit=qo.limit)
+		query_term = qo.term
+		if not check_query(query_term): 
+			query_term = u'-'
+			subquery_chain = None
+		queryobject = Contains.create_for_indexng3(fieldname, query_term, limit=qo.limit)
 		queryobject = queryobject & subquery_chain if subquery_chain else queryobject
 		return is_all, queryobject
