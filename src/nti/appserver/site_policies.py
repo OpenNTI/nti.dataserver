@@ -683,7 +683,7 @@ class LawSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 	COM_REALNAME = 'Legal Studies'
 	
 	# major hack to add users of law to a DFL
-	DEFAULT_DFL_NAME = u'tag:nextthought.com,2011-10:thai@post.harvard.edu-MeetingRoom:Group-firstamendment_thai_fall2012'
+	DEFAULT_DFL_NAME = u'FirstAmendment_Thai_Fall2012'
 	DEFAULT_DFL_OWNER = u'thai@post.harvard.edu'
 	
 	def user_created( self, user, event ):
