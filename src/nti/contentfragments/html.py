@@ -14,8 +14,8 @@ from zope import component
 
 import html5lib
 from html5lib import treewalkers, serializer, treebuilders
-#from html5lib import filters
-#from html5lib.filters import sanitizer
+#from html5lib.filters._base import Filter as FilterBase
+from html5lib.filters import sanitizer
 import lxml.etree
 
 from nti.contentfragments import interfaces as frg_interfaces
@@ -37,7 +37,7 @@ class _SliceDict(dict):
 # TODO: Consider also http://packages.python.org/PottyMouth/
 from html5lib.sanitizer import HTMLSanitizerMixin
 # There is a bug in 0.95: the sanitizer converts attribute dicts
-# to lists when they should stay dicts
+# to lists when they should stay dicts. We fix that globally.
 _orig_sanitize = HTMLSanitizerMixin.sanitize_token
 def _sanitize_token(self, token ):
 	to_dict = False
@@ -54,15 +54,91 @@ def _sanitize_token(self, token ):
 
 HTMLSanitizerMixin.sanitize_token = _sanitize_token
 
-# In order to be able to serialize a complete document, we
-# must whitelist the root tags as of 0.95
-# TODO: Maybe this means now we can parse and serialize in one step?
-HTMLSanitizerMixin.allowed_elements.extend( ['html', 'head', 'body'] )
+from html5lib.constants import tokenTypes
+# But we define our own sanitizer mixin subclass and filter to be able to
+# customize the allowed tags and protocols
+class _SanitizerFilter(sanitizer.Filter):
+	# In order to be able to serialize a complete document, we
+	# must whitelist the root tags as of 0.95. But we don't want the mathml and svg tags
+	# TODO: Maybe this means now we can parse and serialize in one step?
+	acceptable_elements = ['a', 'audio',
+						   'b', 'big', 'br',
+						   'center',
+						   'em',
+						   'font',
+						   'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr',
+						   'i', 'img',
+						   'p',
+						   'small', 'span', 'strong',
+						   'tt',
+						   'u']
+	allowed_elements = acceptable_elements + ['html', 'head', 'body']
 
-# We use data: URIs to communicate images and sounds in one
-# step. FIXME: They aren't really safe and we should have tighter restrictions
-# on them, such as by size.
-HTMLSanitizerMixin.acceptable_protocols.append( 'data' )
+	# Lock down attributes for safety
+	allowed_attributes = ['color', 'controls',
+						  'href',
+						  'src','style',
+						  'xml:lang']
+
+	# We use data: URIs to communicate images and sounds in one
+	# step. FIXME: They aren't really safe and we should have tighter restrictions
+	# on them, such as by size.
+	allowed_protocols = HTMLSanitizerMixin.acceptable_protocols + ['data']
+
+	# Lock down CSS for safety
+	allowed_css_properties = ['font-style', 'font', 'font-weight', 'font-size', 'font-family',
+							  'color',
+							  'text-align']
+
+	rejected_elements = ['script', 'style'] # Things we don't even try to preserve the text content of
+
+	_rejecting_stack = ()
+
+	def __init__( self, source ):
+		super(_SanitizerFilter,self).__init__(source)
+		self._rejecting_stack = []
+
+	def sanitize_token( self, token ):
+		"""
+		Alters the super class's behaviour to not write escaped version of disallowed tags
+		and to reject certain tags and their bodies altogether. If we instead write escaped
+		version of the tag, then we get them back when we serialize to text, which is not what we
+		want. The rejected tags have no sensible text content.
+		"""
+		# accommodate filters which use token_type differently
+		token_type = token["type"]
+		if token_type in tokenTypes.keys():
+			token_type = tokenTypes[token_type]
+
+		if token_type == tokenTypes['Characters'] and self._rejecting_stack:
+			# character data beneath a rejected element
+			return None
+
+		if token_type in (tokenTypes["StartTag"], tokenTypes["EndTag"],
+						  tokenTypes["EmptyTag"]) and token["name"] not in self.allowed_elements:
+			# We're making some assumptions here, like all the things we reject are not empty
+			if token['name'] in self.rejected_elements:
+				if token_type == tokenTypes['StartTag']:
+					self._rejecting_stack.append(token)
+				else:
+					self._rejecting_stack.pop()
+
+				return None
+			if self._rejecting_stack:
+				# element data beneath something we're rejecting
+				return None
+
+			token['data'] = ' '
+
+			if token["type"] in tokenTypes.keys():
+				token["type"] = "Characters"
+			else:
+				token["type"] = tokenTypes["Characters"]
+
+			del token["name"]
+			return token
+
+		return super(_SanitizerFilter,self).sanitize_token( token )
 
 def _html5lib_tostring(doc,sanitize=True):
 	"""
@@ -71,10 +147,8 @@ def _html5lib_tostring(doc,sanitize=True):
 	"""
 	walker = treewalkers.getTreeWalker("lxml")
 	stream = walker(doc)
-	# We can easily subclass filters.HTMLSanitizer to add more
-	# forbidden tags, and some CSS things to filter. Then
-	# we pass a treewalker over it to the XHTMLSerializer instead
-	# of using the keyword arg.
+	if sanitize:
+		stream = _SanitizerFilter( stream )
 	# We want to produce parseable XML so that it's easy to deal with
 	# outside a browser
 	# TODO: What about stripping excess whitespace? Seems like a good idea...
@@ -84,7 +158,7 @@ def _html5lib_tostring(doc,sanitize=True):
 												   strip_whitespace=False,
 												   use_trailing_solidus=True,
 												   space_before_trailing_solidus=True,
-												   sanitize=sanitize )
+												   sanitize=False )
 	output_generator = s.serialize(stream) # By not passing the 'encoding' arg, we get a unicode string
 	string = u''.join( output_generator )
 	return string
@@ -193,17 +267,6 @@ def _sanitize_user_html_to_text( user_input ):
 @component.adapter(frg_interfaces.IHTMLContentFragment)
 @lru_cache(10000)
 def _html_to_sanitized_text( html ):
-	# FIXME: This doesn't quite work as we would expect. Given
-	# an input string (in _html_to_sanitized_text) of:
-	# '<html><head/><body> \n\n\n\n\n<title/>\n\n\n&lt;style None="type"&gt;\np.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 13.0px Helvetica; color: #333233;
-	#	background-color: #fbfbfb}\n&lt;/style&gt;\n\n\n<p><a href="https://github.com/saghul"><b>@saghul</b></a>
-	#  Yes it\'s the latter : I don\'t control greenlets creation as they are spawned by various third party code that use gevent.
-	#  I am trying to debug a weird lock by dumping the stack of each active greenlet when it happens</p><p>\n\n\n</p></body></html>'
-	# We get output of
-	#  ' \n\n\n\n\n\n\n\n<style None="type">\np.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 13.0px Helvetica; color: #333233; background-color: #fbfbfb}
-	#  \n</style>\n\n\n<p><a href="https://github.com/saghul"><b>@saghul</b></a> Yes it\'s the latter : I don\'t control greenlets creation
-	#  as they are spawned by various third party code that use gevent. I am trying to debug a weird lock by dumping the stack of each active
-	#  greenlet when it happens</p><p>\n\n\n</p></body></html>'
 	return _doc_to_plain_text( _to_sanitized_doc( html ) )
 
 
