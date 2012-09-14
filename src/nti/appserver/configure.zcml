@@ -101,7 +101,12 @@
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				/>
 	<subscriber factory=".pyramid_renderers_edit_link_decorator.EditLinkDecorator"
-				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.interfaces.IModeledContent" />
+	<subscriber factory=".pyramid_renderers_edit_link_decorator.EditLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.interfaces.IUser" />
+
 	<subscriber factory=".pyramid_renderers_profile_link_decorator.ProfileLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 

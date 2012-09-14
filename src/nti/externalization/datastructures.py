@@ -226,6 +226,31 @@ import six
 import numbers
 _primitives = six.string_types + (numbers.Number,bool)
 
+class _InterfaceCache(object):
+	iface = None
+	ext_primitive_out_ivars = None
+	ext_all_possible_keys = None
+
+	@classmethod
+	def cache_for( cls, externalizer, ext_self ):
+		# The Declaration objects maintain a _v_attrs that
+		# gets blown away on changes to themselves or their
+		# dependents, including adding interfaces dynamically to an instance
+		# (In that case, the provided object actually gets reset)
+		cache_place = interface.providedBy( ext_self )
+		try:
+			attrs = cache_place._v_attrs
+		except AttributeError:
+			attrs = cache_place._v_attrs = {}
+		key = type(externalizer)
+		if key in attrs:
+			cache = attrs[key]
+		else:
+			cache = cls()
+			attrs[key] = cache
+		return cache
+
+
 @interface.implementer(IInternalObjectIO)
 class InterfaceObjectIO(AbstractDynamicObjectIO):
 	"""
@@ -261,11 +286,17 @@ class InterfaceObjectIO(AbstractDynamicObjectIO):
 		"""
 		super(InterfaceObjectIO, self).__init__( )
 		self._ext_self = ext_self
-		# TODO: Should we cache the schema (and keys) we use for a particular type?
-		# Right now, this time is barely making a dent in the profiling data, and caching
-		# could be tricky to get right
-		self._iface = self._ext_find_schema( ext_self, iface_upper_bound or self._ext_iface_upper_bound )
-		self._ext_primitive_out_ivars_ = self._ext_primitive_out_ivars_.union( self._ext_find_primitive_keys() )
+		# Cache all of this data that we use. It's required often and, if not quite a bottleneck,
+		# does show up in the profiling data
+		cache = _InterfaceCache.cache_for( self, ext_self )
+		if not cache.iface:
+			cache.iface = self._ext_find_schema( ext_self, iface_upper_bound or self._ext_iface_upper_bound )
+		self._iface = cache.iface
+
+		if not cache.ext_primitive_out_ivars:
+			cache.ext_primitive_out_ivars = self._ext_primitive_out_ivars_.union( self._ext_find_primitive_keys() )
+		self._ext_primitive_out_ivars_ = cache.ext_primitive_out_ivars
+
 		if not validate_after_update:
 			self.validate_after_update = validate_after_update
 
@@ -305,7 +336,10 @@ class InterfaceObjectIO(AbstractDynamicObjectIO):
 		return self._ext_self
 
 	def _ext_all_possible_keys(self):
-		return [n for n in self._iface.names(all=True) if not interface.interfaces.IMethod.providedBy(self._iface[n])]
+		cache = _InterfaceCache.cache_for( self, self._ext_self )
+		if cache.ext_all_possible_keys is None:
+			cache.ext_all_possible_keys = [n for n in self._iface.names(all=True) if not interface.interfaces.IMethod.providedBy(self._iface[n])]
+		return cache.ext_all_possible_keys
 
 	def _ext_getattr( self, ext_self, k ):
 		# TODO: Should this be directed through IField.get?
