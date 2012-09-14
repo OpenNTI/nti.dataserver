@@ -141,9 +141,9 @@ def parse_query(catalog, fieldname, qo):
 		return is_all, subquery_chain
 	else:
 		query_term = qo.term
-		if not check_query(query_term): 
-			query_term = u'-'
-			subquery_chain = None
+		#if not check_query(query_term): 
+		#	query_term = u'-'
+		#	subquery_chain = None
 		queryobject = Contains.create_for_indexng3(fieldname, query_term, limit=qo.limit)
 		queryobject = queryobject & subquery_chain if subquery_chain else queryobject
 		return is_all, queryobject
