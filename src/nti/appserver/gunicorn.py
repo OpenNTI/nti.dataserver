@@ -111,7 +111,7 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		just our socket when we create it. So this method DOES NOT call
 		super (which patches the whole system).
 		"""
-		import nti.dataserver # But we do import nti.dataserver, to make sure we get the patches we do want
+		import nti.monkey.gevent_patch_on_import # But we do import the patches, to make sure we get the patches we do want
 
 
 	def __init__( self, *args, **kwargs ):

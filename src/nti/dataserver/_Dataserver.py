@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 from __future__ import print_function, unicode_literals
-import logging
-logger = logging.getLogger( __name__ )
+logger = __import__( 'logging' ).getLogger( __name__ )
 
 import os
 import six
