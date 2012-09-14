@@ -52,3 +52,17 @@ def test_html_to_text():
 	plain_text = frg_interfaces.IPlainTextContentFragment( exp )
 	assert_that( plain_text, verifiably_provides( frg_interfaces.IPlainTextContentFragment ) )
 	assert_that( plain_text, is_( "The pad replies to my note.The server edits it." ) )
+
+
+def test_rejected_tags():
+	html = u'<html><body><div style=" text-align: left;">The text</div></body></html>'
+	exp = 'The text'
+	sanitized = _check_sanitized( html, exp, frg_interfaces.IPlainTextContentFragment )
+
+	html = u'<html><body><style>* { font: "Helvetica";}</style><p style=" text-align: left;">The text</div></body></html>'
+	exp =  u'<html><body><p style="text-align: left;">The text</p></body></html>'
+	sanitized = _check_sanitized( html, exp, frg_interfaces.ISanitizedHTMLContentFragment )
+
+	html = u'<html><body><script><p>should be ignored</p> Other stuff.</script><p style=" text-align: left;">The text</div></body></html>'
+	exp =  u'<html><body><p style="text-align: left;">The text</p></body></html>'
+	sanitized = _check_sanitized( html, exp, frg_interfaces.ISanitizedHTMLContentFragment )

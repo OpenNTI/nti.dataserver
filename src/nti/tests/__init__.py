@@ -57,8 +57,9 @@ class Provides(BaseMatcher):
 def provides( iface ):
 	return Provides( iface )
 
+from zope import interface
 from zope.interface.verify import verifyObject
-from zope.interface.exceptions import Invalid, BrokenImplementation, BrokenMethodImplementation
+from zope.interface.exceptions import Invalid, BrokenImplementation, BrokenMethodImplementation, DoesNotImplement
 class VerifyProvides(BaseMatcher):
 
 	def __init__( self, iface ):
@@ -74,24 +75,27 @@ class VerifyProvides(BaseMatcher):
 			return True
 
 	def describe_to( self, description ):
-		description.append_text( 'object verifiably providing' ).append( str(self.iface) )
+		description.append_text( 'object verifiably providing ' ).append( str(self.iface) )
 
 	def describe_mismatch( self, item, mismatch_description ):
 		x = None
-		mismatch_description.append_text( '(' + str(type(item)) + ') ' )
+		mismatch_description.append_text( str(type(item))  )
 		try:
 			verifyObject( self.iface, item )
 		except BrokenMethodImplementation as x:
 			mismatch_description.append_text( str(x).replace( '\n', '' ) )
 		except BrokenImplementation as x:
 			mismatch_description.append_text( 'failed to provide attribute "').append_text( x.name ).append_text( '"' )
+		except DoesNotImplement as x:
+			mismatch_description.append_text( " does not implement the interface; it does implement " ).append_text( str(list(interface.providedBy(item))) )
 		except Invalid as x:
 			#mismatch_description.append_description_of( item ).append_text( ' has no attr ').append_text( self.attr )
 			mismatch_description.append_text( str(x).replace( '\n', '' ) )
 
 
 def verifiably_provides(iface):
-	return hamcrest.all_of( provides( iface ), VerifyProvides(iface) )
+#	return hamcrest.all_of( provides( iface ), VerifyProvides(iface) )
+	return VerifyProvides(iface)
 
 
 class Implements(BaseMatcher):
