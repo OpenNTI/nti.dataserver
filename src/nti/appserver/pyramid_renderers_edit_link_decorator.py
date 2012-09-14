@@ -34,21 +34,29 @@ ICreated_providedBy = ICreated.providedBy
 LINKS = StandardExternalFields.LINKS
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
-@component.adapter(persistent.interfaces.IPersistent) # TODO: IModeledContent?
 class EditLinkDecorator(object):
+	"""
+	Adds the ``edit`` link relationship to persistent objects (because we have to be able
+	to generat a URL and we need the OID) that are writable by the current user.
+	"""
 
-	def __init__( self, context ): pass
+	def __init__( self, context ):
+		pass
 
 	def decorateExternalMapping( self, context, mapping ):
-		if is_writable( context ) and getattr( context, '_p_jar'):
-			# preflight, make sure there is no edit link already
-			for l in mapping.get(LINKS,()):
-				try:
-					if l.rel == 'edit':
-						return
-				except AttributeError:
-					pass
 
+		if not getattr( context, '_p_jar' ):
+			return
+		# preflight, make sure there is no edit link already
+		# is_writable is relatively expensive
+		for l in mapping.get(LINKS,()):
+			try:
+				if l.rel == 'edit':
+					return
+			except AttributeError:
+				pass
+
+		if is_writable( context ):
 			# TODO: This is weird, assuming knowledge about the URL structure here
 			# Should probably use request ILocationInfo to traverse back up to the ISite
 			__traceback_info__ = context, mapping

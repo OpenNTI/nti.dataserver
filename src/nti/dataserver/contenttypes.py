@@ -459,8 +459,8 @@ class Canvas(ThreadableExternalizableMixin, _UserContentRoot, ExternalizableInst
 		except AttributeError: #pragma: no cover
 			return NotImplemented
 
-
-class CanvasAffineTransform(ExternalizableInstanceDict):
+@interface.implementer(IExternalObject)
+class CanvasAffineTransform(object):
 	"""
 	Represents the 6 values required in an 2-D affine transform:
 	\|a  b  0|
@@ -468,45 +468,41 @@ class CanvasAffineTransform(ExternalizableInstanceDict):
 	\|tx ty 1|
 
 	Treated are like structs, compared by value, not identity. They are
-	never standalone, so many of their external fields are lacking.
+	never standalone, so many of their external fields are lacking. They handle
+	all their own externalization and are not meant to be subclassed.
 	"""
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
 	__external_can_create__ = True
 
-	_ext_primitive_out_ivars_ = ExternalizableInstanceDict._ext_primitive_out_ivars_.union( {'a', 'b', 'c', 'd', 'tx', 'ty'} )
+	__slots__ = ('a', 'b', 'c', 'd', 'tx', 'ty')
+
+	A = D = 1
+	B = C = TX = TY = 0
 
 	def __init__( self ):
 		"""
 		Initializes to the identity transform.
 		"""
-		super(CanvasAffineTransform,self).__init__()
-		self.a = 1
-		self.b = 0
-		self.c = 0
-		self.d = 1
-		self.tx = 0
-		self.ty = 0
+		# cannot mix __slots__ with class attributes
+		self.a = self.d = self.A
+		self.b = self.c = self.tx = self.ty = self.B
 
-	def updateFromExternalObject( self, *args, **kwargs ):
-		super(CanvasAffineTransform,self).updateFromExternalObject( *args, **kwargs )
-		for x in self.__dict__:
-			assert isinstance( getattr( self, x ), numbers.Number )
+	def updateFromExternalObject( self, parsed, **kwargs ):
+		for k in self.__slots__:
+			if k in parsed:
+				val = parsed[k]
+				__traceback_info__ = k, val
+				assert isinstance( val, numbers.Number )
+				setattr( self, k, val )
 
 	def toExternalDictionary( self, mergeFrom=None ):
 		"""
 		Note that we externalize ourself directly, without going through the superclass
 		at all, for speed. We would only delete most of the stuff it added anyway.
 		"""
-		result = LocatedExternalDict()
-		result['a'] = self.a
-		result['b'] = self.b
-		result['c'] = self.c
-		result['d'] = self.d
-		result['tx'] = self.tx
-		result['ty'] = self.ty
-		result['Class'] = self.__class__.__name__
-		result['MimeType'] = self.mime_type
+		result = LocatedExternalDict(a=self.a, b=self.b, c=self.c, d=self.d, tx=self.tx, ty=self.ty,
+									 Class=self.__class__.__name__, MimeType=self.mime_type)
 		return result
 
 	def toExternalObject( self ):
@@ -514,7 +510,7 @@ class CanvasAffineTransform(ExternalizableInstanceDict):
 
 	def __eq__( self, other ):
 		try:
-			return all( [getattr(self, x) == getattr(other,x) for x in self.__dict__] )
+			return all( [getattr(self, x) == getattr(other,x) for x in self.__slots__] )
 		except AttributeError: #pragma: no cover
 			return NotImplemented
 
@@ -527,15 +523,11 @@ class _CanvasShape(ExternalizableInstanceDict):
 	# We generate the affine transform on demand; we don't store it
 	# to avoid object overhead.
 
+	_a = _d = CanvasAffineTransform.A
+	_b = _c = _tx = _ty = CanvasAffineTransform.TY
+
 	def __init__( self ):
 		super(_CanvasShape,self).__init__( )
-		# Matrix fields. Initialize as identity.
-		self._a = 1
-		self._b = 0
-		self._c = 0
-		self._d = 1
-		self._tx = 0
-		self._ty = 0
 
 		# We expose stroke and fill properties optimized
 		# for both Web and iPad. The iPad format is a superset
@@ -547,14 +539,19 @@ class _CanvasShape(ExternalizableInstanceDict):
 
 	def get_transform( self ):
 		result = CanvasAffineTransform( )
-		for x in result.__dict__:
-			setattr( result, x, getattr( self, '_' + x ) )
+		for x in result.__slots__:
+			val = getattr( self, '_' + x )
+			if val != getattr( result, x ):
+				setattr( result, x, val )
 		return result
 	def set_transform( self, matrix ):
 		__traceback_info__ = matrix
 		assert isinstance( matrix, CanvasAffineTransform )
-		for x in matrix.__dict__:
-			setattr( self, '_' + x, matrix.__dict__[x] )
+		for x in matrix.__slots__:
+			val = getattr( matrix, x )
+			if val != getattr( self, '_' + x ):
+				setattr( self, '_' + x, val )
+
 	transform = property( get_transform, set_transform )
 
 	def _write_rgba( self, prop_name ):
@@ -669,7 +666,11 @@ class _CanvasShape(ExternalizableInstanceDict):
 		# doing anything fancy with keeping track of identical objects
 		# when we update a canvas, we are also eliding these same fields like Point.
 		mergeFrom = mergeFrom or {}
-		mergeFrom['transform'] = self.transform.toExternalDictionary()
+		# Avoid the creation of a temporary object and externalize directly
+		mergeFrom['transform'] = LocatedExternalDict(a=self._a, b=self._b, c=self._c, d=self._d,
+													 tx=self._tx, ty=self._ty,
+													 Class=CanvasAffineTransform.__name__, MimeType=CanvasAffineTransform.mime_type)
+		#self.transform.toExternalDictionary()
 
 		mergeFrom['strokeRGBAColor'] = self.strokeRGBAColor
 		mergeFrom['fillRGBAColor'] = self.fillRGBAColor

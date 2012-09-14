@@ -33,10 +33,11 @@ class TestPyramidAuthorization(ConfiguringTestBase):
 
 		class Parent(object): pass
 		class Child(object):
-			__parent__ = Parent()
+			def __init__(self):
+				self.__parent__ = Parent()
 
-		context = Child()
-		assert_that( context, self.doesnt_have_permission( 'edit' ) )
+
+		assert_that( Child(), self.doesnt_have_permission( 'edit' ) )
 
 		# But with an ACL provider for the parent, we do
 		class Provider(object):
@@ -48,6 +49,6 @@ class TestPyramidAuthorization(ConfiguringTestBase):
 
 		self.request.registry.registerAdapter( Provider, (Parent,), nti_interfaces.IACLProvider )
 		# Ensure we provided what we think we provided
-		assert_that( auth_acl.ACL( context.__parent__, is_( Provider(None).__acl__ ) ) )
+		assert_that( auth_acl.ACL( Child().__parent__, is_( Provider(None).__acl__ ) ) )
 
-		assert_that( context, self.has_permission( 'edit' ) )
+		assert_that( Child(), self.has_permission( 'edit' ) )

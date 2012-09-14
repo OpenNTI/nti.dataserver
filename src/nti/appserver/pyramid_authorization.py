@@ -51,7 +51,25 @@ def ACLAuthorizationPolicy():
 	return pyramid.authorization.ACLAuthorizationPolicy()
 
 _marker = object()
+# These functions, particularly the lineage function, is called
+# often during externalization, for many of the same objects, resulting
+# in many duplicate computations of ACLs. These shouldn't be changing
+# during a single request anyway. We probably want to do something long-term
+# about caching the ACLs on the objects themselves, but until we do that,
+# memoizing these calls on the current Request object is highly effective:
+# in one test, ~2500 calls were reduced to ~477
+
+class _Fake(object): pass
+
+def _get_cache( obj, name ):
+	cache = getattr( obj, name, None )
+	if cache is None:
+		cache = {}
+		setattr( obj, name, cache )
+	return cache
+
 def _acl_adding_lineage(obj):
+	cache = _get_cache( get_current_request() or _Fake(), '_acl_adding_lineage_cache' )
 	for location in _pyramid_lineage(obj):
 		try:
 			# Native ACL. Run with it.
@@ -59,12 +77,15 @@ def _acl_adding_lineage(obj):
 			yield location
 		except AttributeError:
 			# OK, can we create one?
-			try:
-				acl = ACL( location, default=_marker )
-			except AttributeError:
-				# Sometimes the ACL providers might fail with this;
-				# especially common in test objects
-				acl = _marker
+			acl = cache.get( location )
+			if acl is None:
+				try:
+					acl = ACL( location, default=_marker )
+				except AttributeError:
+					# Sometimes the ACL providers might fail with this;
+					# especially common in test objects
+					acl = _marker
+				cache[location] = acl
 
 			if acl is _marker:
 				# Nope. So still return the original object,
@@ -81,6 +102,10 @@ def is_writable(obj, request=None):
 	"""
 	if request is None:
 		request = get_current_request()
+
+	val = _get_cache( request or _Fake(), '_acl_is_writable_cache' ).get( obj, _marker )
+	if val is not _marker:
+		return val
 
 	# Using psec itself is "broken": It doesn't respect the current site
 	# components, even if the request itself does not have a registry.
