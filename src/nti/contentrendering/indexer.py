@@ -53,8 +53,8 @@ def get_or_create_index(indexdir, indexname, recreate=True):
 	return ix
 
 def _get_ntiid(node):
-	attrs = node.attributes
-	return attrs['ntiid'].value if attrs.has_key('ntiid') else None
+	attrs = node.attributes if node is not None else None
+	return attrs['ntiid'].value if attrs and attrs.has_key('ntiid') else None
 
 def _add_ntiid_to_set(pset, node):
 	ntiid = _get_ntiid(node)
@@ -67,14 +67,15 @@ def _get_related(node):
 	return a list w/ the related nttids for this node
 	"""
 	related = set()
-	for child in node.childNodes:
-		if child.nodeType == Node.ELEMENT_NODE:
-			if child.localName == 'topic':
-				_add_ntiid_to_set(related, child)
-			elif child.localName == 'Related':
-				for c in child.childNodes:
-					if c.nodeType == Node.ELEMENT_NODE and c.localName == 'page':
-						_add_ntiid_to_set(related, c)
+	if node is  not None:
+		for child in node.childNodes:
+			if child.nodeType == Node.ELEMENT_NODE:
+				if child.localName == 'topic':
+					_add_ntiid_to_set(related, child)
+				elif child.localName == 'Related':
+					for c in child.childNodes:
+						if c.nodeType == Node.ELEMENT_NODE and c.localName == 'page':
+							_add_ntiid_to_set(related, c)
 
 	result = list(related)
 	result.sort()
