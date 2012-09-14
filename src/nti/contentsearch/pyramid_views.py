@@ -79,7 +79,9 @@ class UserSearch(object):
 						self.request.root, 'UserSearch' )
 
 def clean_search_query(query):
-	if query in ('*', '?'):
+	temp = query.replace('*', '')
+	temp = temp.replace('?', '')
+	if not temp:
 		return None
 	return unicode(query)
 
