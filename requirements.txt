@@ -1,7 +1,7 @@
 file:../lib/pywikipedia/#egg=pywikipedia
 # 1.0b4 is out, but not yet tagged; we need it for subprocess, but we actually
 # need trunk for EINVAL handling and ultimately a fix for posix_read
--e hg+https://bitbucket.org/denis/gevent#egg=gevent
+-e git+https://github.com/SiteSupport/gevent.git#egg=gevent
 # gevent mysql-compat driver
 -e git+https://github.com/esnme/ultramysql.git#egg=umysql-dev
 # Sadly, something is screwed about this repository and updating it in
