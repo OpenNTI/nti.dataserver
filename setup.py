@@ -73,7 +73,11 @@ setup(
 	# Support unit tests of package
 #	tests_require = ['z3c.coverage','zope.testing'],
 	setup_requires = [
-		'nose >= 1.2.0', # also listed in extras/test!
+		# If we actually ran tests out of the box on a fresh install, we'd
+		# need this:
+		#'nose >= 1.2.1',
+		# But it's also listed in extras/test, and it's very hard to upgrade
+		# when that changes
 		#'distribute >= 0.6.28', # Can't seem to include that anywhere
 		# In theory this should make it possible to get
 		# the svn revision number from svn 1.7. Doesn't seem
@@ -254,7 +258,7 @@ setup(
 		],
 	extras_require = {
 		'test': [
-			'nose >= 1.2.0',
+			'nose >= 1.2.1',
 			'zope.testing >= 4.1.1',
 			'zc.buildout == 1.6.3',
 			'nose-progressive',

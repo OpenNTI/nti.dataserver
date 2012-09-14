@@ -58,20 +58,12 @@ class _UserSearchView(object):
 		# optimize for that case--avoid waking all other users up
 		result = []
 
-		if not partialMatch:
-			pass
-		elif not self.request.params.get( 'all' ) and users.Entity.get_entity( partialMatch ):
-			return _ResolveUserView( self.request )
-			# NOTE: If the partial match is an exact match but also a component
-			# it cannot be searched for. For example, a community named 'NextThought'
-			# prevents searching for 'nextthought' if you expect to match '@nextthought.com'
-			# NOTE3: We have not stopped allowing this to work for user resolution.
+		if partialMatch and remote_user:
+			# NOTE3: We have now stopped allowing this to work for user resolution.
 			# This will probably break many assumptions in the UI about what and when usernames
 			# can be resolved
 			# NOTE2: Going through this API lets some private objects be found
 			# (DynamicFriendsLists, specifically). We should probably lock that down
-
-		if remote_user:
 			result = _authenticated_search( self.request, remote_user, self.dataserver, partialMatch )
 
 
@@ -100,9 +92,6 @@ def _ResolveUserView(request):
 	if not partialMatch:
 		pass
 	elif users.Entity.get_entity( partialMatch ):
-		# NOTE: If the partial match is an exact match but also a component
-		# it cannot be searched for. For example, a community named 'NextThought'
-		# prevents searching for 'nextthought' if you expect to match '@nextthought.com'
 		# NOTE3: We have not stopped allowing this to work for user resolution.
 		# This will probably break many assumptions in the UI about what and when usernames
 		# can be resolved
@@ -147,15 +136,12 @@ def _authenticated_search( request, remote_user, dataserver, search_term ):
 	## if there are no other matches
 	# Therefore we say screw it and throw that heuristic out the window.
 	for maybeMatch in _users.iterkeys():
-		if isSyntheticKey( maybeMatch ):
-			continue
-
 		# TODO how expensive is it to actually look inside all these
 		# objects?  This almost certainly wakes them up?
 		# Our class name is UserMatchingGet, but we actually
 		# search across all entities, like Communities
 		userObj = users.Entity.get_entity( maybeMatch, dataserver=dataserver )
-		if not userObj:
+		if not userObj: # pragma: no cover
 			continue
 
 		if search_term in maybeMatch.lower():
@@ -166,7 +152,7 @@ def _authenticated_search( request, remote_user, dataserver, search_term ):
 
 	# Given a remote user, add matching friends lists, too
 	for fl in remote_user.friendsLists.values():
-		if not isinstance( fl, users.Entity ):
+		if not isinstance( fl, users.Entity ): # pragma: no cover
 			continue
 		names = user_interfaces.IFriendlyNamed( fl )
 		if search_term in fl.username.lower() \
