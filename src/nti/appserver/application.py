@@ -365,7 +365,7 @@ def createApplication( http_port,
 							  factory='nti.appserver._dataserver_pyramid_traversal.users_root_resource_factory',
 							  traverse='/{user}/{group}'
 							  )
-	pyramid_config.add_view( route_name='user.pages.traversal', view='nti.appserver.dataserver_pyramid_views._UGDView',
+	pyramid_config.add_view( route_name='user.pages.traversal', view='nti.appserver.ugd_query_views._UGDView',
 							 name='', renderer='rest',
 							 permission=nauth.ACT_READ, request_method='GET' )
 
@@ -374,7 +374,7 @@ def createApplication( http_port,
 							  factory='nti.appserver._dataserver_pyramid_traversal.users_root_resource_factory',
 							  traverse='/{user}/{group}'
 							  )
-	pyramid_config.add_view( route_name='user.pages.recursivetraversal', view='nti.appserver.dataserver_pyramid_views._RecursiveUGDView',
+	pyramid_config.add_view( route_name='user.pages.recursivetraversal', view='nti.appserver.ugd_query_views._RecursiveUGDView',
 							 name='', renderer='rest',
 							 permission=nauth.ACT_READ, request_method='GET' )
 
@@ -383,7 +383,7 @@ def createApplication( http_port,
 							  factory='nti.appserver._dataserver_pyramid_traversal.users_root_resource_factory',
 							  traverse='/{user}/{group}'
 							  )
-	pyramid_config.add_view( route_name='user.pages.stream', view='nti.appserver.dataserver_pyramid_views._UGDStreamView',
+	pyramid_config.add_view( route_name='user.pages.stream', view='nti.appserver.ugd_query_views._UGDStreamView',
 							 name='', renderer='rest',
 							 permission=nauth.ACT_READ, request_method='GET' )
 
@@ -392,7 +392,7 @@ def createApplication( http_port,
 							  factory='nti.appserver._dataserver_pyramid_traversal.users_root_resource_factory',
 							  traverse='/{user}/{group}'
 							  )
-	pyramid_config.add_view( route_name='user.pages.recursivestream', view='nti.appserver.dataserver_pyramid_views._RecursiveUGDStreamView',
+	pyramid_config.add_view( route_name='user.pages.recursivestream', view='nti.appserver.ugd_query_views._RecursiveUGDStreamView',
 							 name='', renderer='rest',
 							 permission=nauth.ACT_READ, request_method='GET' )
 
@@ -401,7 +401,7 @@ def createApplication( http_port,
 							  factory='nti.appserver._dataserver_pyramid_traversal.users_root_resource_factory',
 							  traverse='/{user}/{group}'
 							  )
-	pyramid_config.add_view( route_name='user.pages.ugdandrecursivestream', view='nti.appserver.dataserver_pyramid_views._RecursiveUGDStreamView',
+	pyramid_config.add_view( route_name='user.pages.ugdandrecursivestream', view='nti.appserver.ugd_query_views._RecursiveUGDStreamView',
 							 name='', renderer='rest',
 							 permission=nauth.ACT_READ, request_method='GET' )
 
@@ -457,7 +457,7 @@ def createApplication( http_port,
 						'UserGeneratedDataAndRecursiveStream': '_UGDAndRecursiveStreamView' }.items():
 		for route in ('objects.generic.traversal', 'user.pages.odata.traversal'):
 			pyramid_config.add_view(
-				route_name=route, view='nti.appserver.dataserver_pyramid_views.' + view,
+				route_name=route, view='nti.appserver.ugd_query_views.' + view,
 				context='nti.appserver.interfaces.IPageContainerResource',
 				name=name, renderer='rest',
 				permission=nauth.ACT_READ, request_method='GET' )
