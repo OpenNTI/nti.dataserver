@@ -232,8 +232,8 @@ class ExampleDatabaseInitializer(object):
 
 			if not is_test_user:
 				self._add_friendslists_to_user( user )
-			else:
-				self._add_test_user_friendlist(user)
+#			else:
+#				self._add_test_user_friendlist(user)
 
 		map(create_add_user, USERS)
 
