@@ -122,8 +122,18 @@ def _parse_last_modified(t):
 
 def _get_text(node):
 	txt = node.text
-	if txt: txt = unicode(txt.strip())
+	txt = unicode(txt.strip()) if txt else u''
 	return txt
+
+def _get_tail(node):
+	txt = node.tail
+	txt = unicode(txt.strip()) if txt else u''
+	return txt
+
+def _get_note_content(node):
+	result = [_get_text(node), _get_tail(node)]
+	result = ' '.join(result)
+	return result.strip()
 
 class _KeyWordFilter(object):
 
@@ -192,7 +202,7 @@ def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=Fa
 		# get content
 		def _collector(n):
 			if not isinstance(n, etree._Comment):
-				content = _get_text(n)
+				content = _get_note_content(n)
 				if content:
 					tokenized_words = tokenizer.tokenize(content)
 					documents.append(tokenized_words)
