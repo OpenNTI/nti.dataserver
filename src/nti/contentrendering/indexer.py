@@ -130,7 +130,7 @@ def _get_tail(node):
 	txt = unicode(txt.strip()) if txt else u''
 	return txt
 
-def _get_note_content(node):
+def _get_node_content(node):
 	result = [_get_text(node), _get_tail(node)]
 	result = ' '.join(result)
 	return result.strip()
@@ -202,7 +202,7 @@ def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=Fa
 		# get content
 		def _collector(n):
 			if not isinstance(n, etree._Comment):
-				content = _get_note_content(n)
+				content = _get_node_content(n)
 				if content:
 					tokenized_words = tokenizer.tokenize(content)
 					documents.append(tokenized_words)
