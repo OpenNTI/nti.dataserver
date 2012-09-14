@@ -25,7 +25,7 @@ class TestIndexer(unittest.TestCase):
 		indexname='biology'
 		path = os.path.join( os.path.dirname( __file__ ),  'intro-biology-rendered-book' )
 		book = NoPhantomRenderedBook( EmptyMockDocument(), path)
-		transform(book, indexname=indexname, indexdir=self.idxdir)
+		transform(book, indexname=indexname, indexdir=self.idxdir, optimize=False)
 		
 		idx = get_or_create_index(indexdir=self.idxdir, indexname=indexname, recreate=False)
 		q = Term("keywords", u"mathcounts")
