@@ -3,17 +3,12 @@
 Functions for externalizing OIDs.
 $Revision$
 """
-
-
-import logging
-logger = logging.getLogger( __name__ )
+from __future__ import print_function, absolute_import, unicode_literals
 
 import six
 
-
 from zope.container._zope_container_contained import isProxy as _isContainedProxy
 from zope.container._zope_container_contained import getProxiedObject as _getContainedProxiedObject
-
 
 from zope.security.management import system_user
 
@@ -32,27 +27,34 @@ def toExternalOID( self, default=None ):
 		# those out. Finally, it probably has chars that
 		# aren't legal it UTF or ASCII, so we go to hex and prepend
 		# a flag, '0x'
-		oid = getattr(self, '_p_oid').lstrip('\x00')
+		oid = getattr(self, '_p_oid').lstrip(b'\x00')
 		oid = '0x' + oid.encode('hex')
 		if hasattr(self, '_p_jar') and getattr(self, '_p_jar'):
 			db_name = self._p_jar.db().database_name
 			oid = oid + ':' + db_name.encode( 'hex' )
 	return oid
 
+to_external_oid = toExternalOID
+
 def fromExternalOID( ext_oid ):
 	"""
 	:return: A tuple of OID, database name. Name may be empty.
 	:param string ext_oid: As produced by :func:`toExternalOID`.
 	"""
+	# But, for legacy reasons, we accept directly the bytes given
+	# in _p_oid, so we have to be careful with our literals here
+	# to avoid Unicode[en|de]codeError
 	__traceback_info__ = ext_oid
-	oid_string, name_s = ext_oid.split( ':' ) if ':' in ext_oid else (ext_oid, "")
+	oid_string, name_s = ext_oid.split( b':' ) if b':' in ext_oid else (ext_oid, b"")
 	# Translate the external format if needed
-	if oid_string.startswith( '0x' ):
+	if oid_string.startswith( b'0x' ):
 		oid_string = oid_string[2:].decode( 'hex' )
 		name_s = name_s.decode( 'hex' )
 	# Recall that oids are padded to 8 with \x00
-	oid_string = oid_string.rjust( 8, '\x00' )
+	oid_string = oid_string.rjust( 8, b'\x00' )
 	return oid_string, name_s
+
+from_external_oid = fromExternalOID
 
 _ext_ntiid_oid = object()
 def to_external_ntiid_oid( contained, default_oid=_ext_ntiid_oid ):
