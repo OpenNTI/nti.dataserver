@@ -77,6 +77,11 @@
 	<utility factory="._content_utils._ContentTokenizer" name="en" />
 	<utility factory="._content_utils._DefaultStopWords" />
 	
+	<!-- Search query validator -->
+	
+	<utility factory="._repoze_query._DefaultSearchQueryValiator"  />
+	<utility factory="._repoze_query._DefaultSearchQueryValiator" name="en" />
+	
 	<!-- zopyx Storage -->
 
 	<utility	provides="zopyx.txng3.core.interfaces.IStorage"

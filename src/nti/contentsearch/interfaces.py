@@ -416,7 +416,14 @@ class IStopWords(interface.Interface):
 		
 	def available_languages():
 		"available languages"
-			
+		
+# search query valididator
+
+class ISearchQueryValidator(interface.Interface):
+	
+	def validate(quyery):
+		"""check if the specified search query is valid"""
+	
 # Catalog creators
 	
 class IRepozeCatalogCreator(interface.Interface):
