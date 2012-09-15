@@ -29,9 +29,12 @@ from nti.contentfragments import censor
 
 from nti.dataserver import mimetype
 from nti.dataserver import contenttypes
+from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.contenttypes.base import _make_getitem
 
 
 from zope import interface
+from zope.container.contained import contained
 
 from . import interfaces
 
@@ -129,6 +132,7 @@ class MessageInfo( contenttypes.ThreadableExternalizableMixin,
 			result['recipients'] = self.recipients
 		return result
 
+
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
 		super(MessageInfo,self).updateFromExternalObject( parsed, *args, **kwargs )
 		if 'Body' in parsed and 'body' not in parsed:
@@ -141,6 +145,10 @@ class MessageInfo( contenttypes.ThreadableExternalizableMixin,
 				self.body = [censor.censor_assign( frg_interfaces.IUnicodeContentFragment( x ), self, 'body' ) if isinstance(x,six.string_types) else x
 							 for x
 							 in self.body]
+				for i, x in enumerate(self.body):
+					# Make images work
+					if nti_interfaces.ICanvas.providedBy( x ):
+						contained( x, self, unicode(i) )
 
 		# make recipients be stored as a persistent list.
 		# In theory, this helps when we have to serialize the message object
@@ -148,3 +156,5 @@ class MessageInfo( contenttypes.ThreadableExternalizableMixin,
 		# This also results in us copying incoming recipients
 		if self.recipients and 'recipients' in parsed:
 			self.recipients = PersistentList( self.recipients )
+
+	__getitem__ = _make_getitem( 'body' )

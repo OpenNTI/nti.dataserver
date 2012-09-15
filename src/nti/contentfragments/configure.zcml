@@ -11,7 +11,7 @@
 	So we don't. Tests that depend on them should drop this
 	feature from the list. Importing the .interfaces
 	package loads and registers them at least once, which
-	creates the classes, which will not change for the life of the VM.a3
+	creates the classes, which will not change for the life of the VM.
 	The details of this may change in the future.
 	-->
 	<configure zcml:condition="not-have devmode">
@@ -21,6 +21,24 @@
 			module=".interfaces"
 			file="types.csv"
 			/>
+	</configure>
+	<!--
+	If we don't load it, we still need to make sure that
+	some of the most important parts are available.
+	zope.file, in particular, depends on this.
+	-->
+	<configure zcml:condition="have devmode">
+		<utility
+			provides="zope.mimetype.interfaces.IMimeTypeGetter"
+			component="zope.mimetype.typegetter.smartMimeTypeGuesser"
+			/>
+
+		<utility
+			provides="zope.mimetype.interfaces.ICharsetGetter"
+			component="zope.mimetype.typegetter.charsetGetter"
+			/>
+
+		<adapter factory="zope.mimetype.contentinfo.ContentInfo"/>
 	</configure>
 
 	<!-- Event assignment dispatching. Used in censoring. -->
@@ -90,7 +108,7 @@
 	<utility provides="zope.schema.interfaces.IVocabularyFactory"
       		 factory=".censor._default_profanity_terms"
 			 name="default-profanity-vocabulary-en" />
-			 
+
 	<utility factory=".urlmatcher.GrubberHyperlinkFormatter" />
-      
+
 </configure>

@@ -78,6 +78,9 @@ class ZPTTemplateRenderer(object):
 from zope.proxy import non_overridable
 from zope.proxy.decorator import SpecificationDecoratorBase
 import zope.publisher.interfaces.browser
+#import zope.publisher.interfaces.http # For IHTTPResponse, should we need it
+import operator
+
 @interface.implementer(zope.publisher.interfaces.browser.IBrowserRequest)
 class PyramidZopeRequestProxy(SpecificationDecoratorBase):
 	"""
@@ -91,6 +94,7 @@ class PyramidZopeRequestProxy(SpecificationDecoratorBase):
 	def __init__( self, base ):
 		SpecificationDecoratorBase.__init__( self, base )
 		base.response.getHeader = lambda k: base.response.headers[k]
+		base.response.setHeader = lambda k, v, literal=False: operator.setitem( base.response.headers, str(k), str(v) if isinstance(v,unicode) else v )
 
 	@non_overridable
 	def get( self, key, default=None ):

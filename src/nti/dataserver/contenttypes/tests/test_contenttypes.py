@@ -631,11 +631,25 @@ class TestCanvas(mock_dataserver.ConfiguringTestBase):
 		shape3 = CanvasUrlShape( url='data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw==' )
 		shape = CanvasUrlShape()
 		with mock_dataserver.mock_db_trans(ds):
-			update_from_external_object( shape, shape3.toExternalObject(), context=ds )
+			ext_shape = shape3.toExternalObject()
+			from nti.dataserver.links import Link
+			assert_that( ext_shape, has_entry( 'url', is_( Link ) ) )
+			ext_shape['url'] = shape3.url
+			update_from_external_object( shape, ext_shape, context=ds )
 		assert_that( shape, is_( shape3 ) )
+		assert_that( shape, has_property( 'url', 'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw==' ) )
 
-		assert_that( shape.toExternalObject(), has_entry( 'url', 'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw==' ) )
-		assert_that( shape3.__dict__, has_entry( '_head', 'data:image/gif;base64' ) )
+		assert_that( shape.toExternalObject(), has_entry( 'url', is_( Link ) ) )
+		assert_that( shape3.__dict__, has_entry( '_file', has_property( 'mimeType', b'image/gif' ) ) )
+
+
+		shape4 = CanvasUrlShape( url='/path/to/relative/image.png' )
+		shape = CanvasUrlShape()
+		with mock_dataserver.mock_db_trans(ds):
+			update_from_external_object( shape, shape4.toExternalObject(), context=ds )
+		assert_that( shape, is_( shape4 ) )
+
+		assert_that( shape.toExternalObject(), has_entry( 'url', '/path/to/relative/image.png' ) )
 
 def check_update_props( ext_name='strokeRGBAColor',
 						col_name='strokeColor',

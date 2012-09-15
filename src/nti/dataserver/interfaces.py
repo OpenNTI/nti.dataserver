@@ -209,7 +209,12 @@ class ILink(interface.Interface):
 		constraint=mime_interfaces.mimeTypeConstraint,
 		required=False )
 
-
+class ILinkExternalHrefOnly(ILink):
+	"""
+	A marker interface intended to be used when a link
+	object should be externalized as its 'href' value only and
+	not the wrapping object.
+	"""
 
 class ILinked(interface.Interface):
 	"""
