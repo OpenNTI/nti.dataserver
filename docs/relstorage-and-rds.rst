@@ -79,6 +79,12 @@ separate install from the normal AWS command line tools.)
 It may also be helpful (to reduce MySQL 2006 warnings from RelStorage)
 to set the ``wait_timeout`` value to an increased value (such as 600).
 
+Finally, it is important to ensure that the ``max_connections`` value
+is large enough. Each dataserver worker will need a number of
+connections equal to the number of shards it is using (plus the root)
+times the number of concurrent transactions it will handle. This
+parameter should be at least 500.
+
 Users and schemas
 ~~~~~~~~~~~~~~~~~
 
@@ -143,8 +149,10 @@ documentation. Here's a complete example::
 	<zodb Users>
 		pool-size 7
 		database-name Users
+		<zlibstorage>
 		<relstorage Users>
 			blob-dir /opt/nti/DataserverEnv/data/data.fs.blobs
+			shared-blob-dir false
 			cache-servers zodb.wz3dwu.0001.use1.cache.amazonaws.com:11211
 			cache-prefix Users
 			poll-interval 0
@@ -158,49 +166,14 @@ documentation. Here's a complete example::
 				host alpharelstorage.cnv6nhiwf3j5.us-east-1.rds.amazonaws.com
 			</mysql>
 		</relstorage>
+		<zlibstorage>
 	</zodb>
 
-
-	<zodb Sessions>
-		pool-size 7
-		database-name Sessions
-		<relstorage Sessions>
-			blob-dir /opt/nti/DataserverEnv/data/sessions.data.fs.blobs
-			cache-servers zodb.wz3dwu.0001.use1.cache.amazonaws.com:11211
-			cache-prefix Sessions
-			poll-interval 0
-			commit-lock-timeout 30
-			keep-history false
-			pack-gc false
-			<mysql>
-				db Sessions
-				user ec2user
-				passwd rdstemp001
-				host alpharelstorage.cnv6nhiwf3j5.us-east-1.rds.amazonaws.com
-			</mysql>
-		</relstorage>
-	</zodb>
-
-
-	<zodb Search>
-		pool-size 7
-		database-name Search
-		<relstorage Search>
-			blob-dir /opt/nti/DataserverEnv/data/search.data.fs.blobs
-			cache-servers zodb.wz3dwu.0001.use1.cache.amazonaws.com:11211
-			cache-prefix Search
-			poll-interval 0
-			commit-lock-timeout 30
-			keep-history false
-			pack-gc false
-			<mysql>
-				db Search
-				user ec2user
-				passwd rdstemp001
-				host alpharelstorage.cnv6nhiwf3j5.us-east-1.rds.amazonaws.com
-			</mysql>
-		</relstorage>
-	</zodb>
+Some notables: First, the relstorage is wrapped in ``zlibstorage`` to
+dramatically improve cache efficiency and reduce database size and
+network trafficy. Second, ``shared-blob-dir`` is set to false; for a
+multi-dataserver-machine installation, it must be false (otherwise it
+can be ommitted or set to true).
 
 Migrating Existing Data
 -----------------------
@@ -258,9 +231,9 @@ Operational Notes
   checks to be done every transaction. A larger value (e.g, 60) is
   more efficient if the database is read-mostly. With a value of 0,
   the cache is not used (?)
-* Unfortunately, the MySOL library is implemented in C and uses
+* Unfortunately, the default MySOL library is implemented in C and uses
   blocking IO, which means it doesn't play nicely with gunicorn and
-  gevent (it prevents switching). Although there are alternate MySQL
-  libraries available that are pure python, RelStorage seems fairly
-  tightly coupled to this particular implementation. *This may be a
-  deal breaker.*
+  gevent (it prevents switching). We use an alternate driver that
+  does play nicely by monkey-patching the system.
+* The value of ``shared-blob-dir`` is critical; if false, there are
+  other tunables (like ``blob-cache-size`` to consider).

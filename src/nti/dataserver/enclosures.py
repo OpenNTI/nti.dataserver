@@ -21,7 +21,7 @@ class SimplePersistentEnclosure(datastructures.CreatedModDateTrackingObject, per
 	"""
 	A trivial implementation of a persistent enclosure.
 	Real production usage needs much more thought and should
-	use Blobs. Consider the :module:`z3c.blobfile` package. See also zope.dublincore.
+	use Blobs. Consider the :module:`zope.file` package. See also zope.dublincore.
 	"""
 
 	interface.implements( interfaces.IEnclosedContent,

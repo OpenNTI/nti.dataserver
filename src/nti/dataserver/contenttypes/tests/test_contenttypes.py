@@ -1,3 +1,5 @@
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
 
 from hamcrest import (assert_that, is_, has_entry, is_not, has_entry,
 					  has_key,  is_not, has_item, has_property,
@@ -21,7 +23,7 @@ from nti.externalization.externalization import to_external_object
 import nti.dataserver.users as users
 
 import zope.schema.interfaces
-import mock_dataserver
+from nti.dataserver.tests import mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDS
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.contentfragments import interfaces as frg_interfaces
@@ -48,7 +50,6 @@ def test_sanitize_html_contenttypes():
 	assert_that( shape, has_property( 'text', "Hi, all.  I've found the following video series to be very helpful as you learn algebra.  Let me know if questions or if you find others.\n" ) )
 
 
-from nti.contentrange.contentrange import ContentRangeDescription
 def Note():
 	n = _Note()
 	n.applicableRange = ContentRangeDescription()

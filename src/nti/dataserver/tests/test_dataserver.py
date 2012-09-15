@@ -78,7 +78,7 @@ class TestDataserver( mock_dataserver.ConfiguringTestBase ):
 		# is_ doesn't work, that turns into class assertion
 		assert_that( find_factory_for_class_name( 'Notes' ), equal_to( contenttypes.Note ) )
 		assert_that( find_factory_for_class_name( 'Note' ), equal_to( contenttypes.Note ) )
-		assert_that( find_factory_for_class_name( 'notes' ), equal_to( contenttypes.Note ) )
+#		assert_that( find_factory_for_class_name( 'notes' ), equal_to( contenttypes.Note ) )
 
 		assert_that( find_factory_for_class_name( 'quizresults' ), equal_to( contenttypes.quizresult ) )
 

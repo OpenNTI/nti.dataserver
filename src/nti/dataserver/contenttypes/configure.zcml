@@ -1,0 +1,16 @@
+<!-- -*- mode: nxml -*- -->
+<configure
+	xmlns="http://namespaces.zope.org/zope"
+	xmlns:ext="http://nextthought.com/ntp/ext"
+	xmlns:zcml="http://namespaces.zope.org/zcml"
+	i18n_domain="zope">
+
+	<include package="nti.externalization" file="meta.zcml" />
+	<include package="nti.externalization" />
+
+	<ext:registerMimeFactories module=".note" />
+	<ext:registerMimeFactories module=".highlight" />
+	<ext:registerMimeFactories module=".redaction" />
+	<ext:registerMimeFactories module=".canvas" />
+
+</configure>

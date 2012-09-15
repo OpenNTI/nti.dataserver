@@ -557,7 +557,7 @@ class _ExternalRefResolver(object):
 		return self.ds.get_by_oid( oid )
 
 # nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.users' )
-nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.contenttypes' )
+# nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.contenttypes' )
 # nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.providers' )
 # nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.classes' )
 # nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.quizzes' )

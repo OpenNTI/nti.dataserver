@@ -1,423 +1,44 @@
 #!/usr/bin/env python
-""" This module defines the content types that users can create within the system. """
+"""
+Implementations of canvas types.
+"""
 from __future__ import print_function, unicode_literals
 
 import logging
 logger = logging.getLogger( __name__ )
 
 import persistent
-import warnings
-import collections
-import numbers
-
 from persistent.list import PersistentList
+
+import numbers
 import six
 import urlparse
 import base64
 
 from nti.externalization.interfaces import IExternalObject
-from nti.externalization.externalization import stripSyntheticKeysFromExternalDictionary, toExternalObject
-from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.datastructures import ExternalizableInstanceDict
 from nti.externalization.interfaces import LocatedExternalDict
-from nti.externalization import internalization
 
-from nti.dataserver import datastructures
+
 from nti.dataserver import mimetype
-from nti.dataserver import sharing
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver import users
-from nti.ntiids import ntiids
 
 from nti.contentfragments import interfaces as frg_interfaces
-from nti.contentfragments import censor
+
 
 from zope import interface
-from zope.deprecation import deprecate
 from zope import component
-from zope.annotation import interfaces as an_interfaces
-import zope.schema.interfaces
 
-def _get_entity( username, dataserver=None ):
-	return users.Entity.get_entity( username, dataserver=dataserver, _namespace=users.User._ds_namespace )
 
-class ThreadableMixin(object):
-	""" Defines an object that is client-side threadable. These objects are
-	threaded like email (RFC822?). We assume a single parent and
-	maintain a list of parents in order up to the root (or the last
-	thing that was threadable. """
 
-	__external_oids__ = ['inReplyTo', 'references']
-
-	# Our one single parent
-	_inReplyTo = None
-	# Our chain of references back to the root
-	_references = ()
-
-	def __init__(self):
-		super(ThreadableMixin,self).__init__()
-
-	def getInReplyTo(self):
-		return self._inReplyTo() if self._inReplyTo else None
-
-	def setInReplyTo( self, value ):
-		self._inReplyTo = persistent.wref.WeakRef( value ) if value is not None else None
-
-	inReplyTo = property( getInReplyTo, setInReplyTo )
-
-	@property
-	def references(self):
-		return [x() for x in self._references if x() is not None]
-
-	def addReference( self, value ):
-		if value is not None:
-			if not self._references:
-				self._references = PersistentList()
-			self._references.append( persistent.wref.WeakRef( value ) )
-
-	def clearReferences( self ):
-		if self._references:
-			del self._references
-
-class ThreadableExternalizableMixin(ThreadableMixin):
-	"""
-	Extends :class:`ThreadableMixin` with support for externalizing to and from a dictionary.
-	"""
-	def toExternalObject(self):
-		extDict = super(ThreadableExternalizableMixin,self).toExternalObject()
-		assert isinstance( extDict, collections.Mapping )
-		inReplyTo = self.inReplyTo
-		if inReplyTo is not None:
-			extDict['inReplyTo'] = to_external_ntiid_oid( inReplyTo )
-
-		extRefs = [] # Order matters
-		for ref in self.references:
-			extRefs.append( to_external_ntiid_oid( ref ) )
-		if extRefs:
-			extDict['references'] = extRefs
-		return extDict
-
-	def updateFromExternalObject( self, parsed, **kwargs ):
-		assert isinstance( parsed, collections.Mapping )
-		inReplyTo = parsed.pop( 'inReplyTo', None )
-		references = parsed.pop( 'references', [] )
-		super(ThreadableExternalizableMixin, self).updateFromExternalObject( parsed, **kwargs )
-
-		self.inReplyTo = inReplyTo
-		self.clearReferences()
-		for ref in references:
-			self.addReference( ref )
-
-# TODO: These objects should probably implement IZContained (__name__,__parent__). Otherwise they
-# often wind up wrapped in container proxy objects, which is confusing. There may be
-# traversal implications to that though, that need to be considered. See also classes.py
-@interface.implementer(nti_interfaces.IModeledContent,IExternalObject)
-class _UserContentRoot(sharing.ShareableMixin, datastructures.ContainedMixin, datastructures.CreatedModDateTrackingObject, persistent.Persistent):
-	""" By default, if an update comes in with only new sharing information,
-	and we have been previously saved, then we do not clear our
-	other contents. Subclasses can override this by setting canUpdateSharingOnly
-	to false.
-
-	Subclasses must arrange for there to be an implementation of toExternalDictionary.
-
-	"""
-	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-
-
-	canUpdateSharingOnly = True
-	__external_can_create__ = True
-
-	def __init__(self):
-		super(_UserContentRoot,self).__init__()
-
-	def toExternalObject( self ):
-		extDict = getattr( self, 'toExternalDictionary' )()
-
-		# Return the values of things we're sharing with. Note that instead of
-		# just using the 'username' attribute directly ourself, we are externalizing
-		# the whole object and returning the externalized value of the username.
-		# This lets us be consistent with any cases where we are playing games
-		# with the external value of the username, such as with DynamicFriendsLists
-		ext_shared_with = []
-		for entity in self.sharingTargets:
-			# NOTE: This entire process does way too much work for as often as this
-			# is called so we hack this and couple it tightly to when we think
-			# we need to use it
-			#ext_shared_with.append( toExternalObject( entity )['Username'] )
-			username = entity.username if isinstance(entity,users.User) else toExternalObject(entity)['Username']
-			ext_shared_with.append( username )
-
-		extDict['sharedWith'] = ext_shared_with
-		return extDict
-
-	def _is_update_sharing_only( self, parsed ):
-		"""
-		Call this after invoking this objects (super's) implementation of
-		updateFromExternalObject. If it returns a true value,
-		you should take no action.
-		"""
-		# TODO: I don't like this. It requires all subclasses
-		# to be complicit
-		parsed = stripSyntheticKeysFromExternalDictionary( dict( parsed ) )
-		return len(parsed) == 0 and self.canUpdateSharingOnly and self._p_jar
-
-	def updateFromExternalObject( self, ext_parsed, *args, **kwargs ):
-		assert isinstance( ext_parsed, collections.Mapping )
-		# Remove some things that may come in (in a copy!)
-		parsed = ext_parsed
-
-		# It's important that they stay stripped so that our
-		# canUpdateSharingOnly check works (len = 0)
-
-		# Replace sharing with the incoming data.
-		sharedWith = parsed.pop( 'sharedWith', () )
-		targets = set()
-		for s in sharedWith or ():
-			target = s
-			if _get_entity( s ):
-				target = _get_entity( s )
-			elif hasattr( self.creator, 'getFriendsList' ):
-				# This branch is semi-deprecated. They should send in
-				# the NTIID of the list...once we apply security here
-				target = self.creator.getFriendsList( s )
-
-			if (target is s or target is None) and ntiids.is_valid_ntiid_string( s ):
-				# Any thing else that is a username iterable,
-				# in which we are contained (e.g., a class section we are enrolled in)
-				# This last clause is our nod to security; need to be firmer
-
-				obj = ntiids.find_object_with_ntiid( s )
-				iterable = nti_interfaces.IUsernameIterable( obj, None )
-				if iterable is not None:
-					ents = set()
-					for uname in iterable:
-						ent = _get_entity( uname )
-						if ent:
-							ents.add( ent )
-					if self.creator in ents:
-						ents.discard( self.creator ) # don't let the creator slip in there
-						target = tuple(ents)
-
-
-			# We only add target, and only if it is non-none and
-			# resolver. Otherwise we are falsely implying sharing
-			# happened when it really didn't
-			if target is not s and target is not None:
-				targets.add( target or s )
-		self.updateSharingTargets( targets )
-
-		if self._is_update_sharing_only( parsed ):
-			# In this state, we have received an update only for sharing.
-			# and so do not need to do anything else. We're a saved
-			# object already. If we're not saved already, we cannot
-			# be created with just this
-			pass
-		elif len(stripSyntheticKeysFromExternalDictionary( dict( parsed ) )) == 0:
-			raise ValueError( "Updating non-saved object: The body must have some data, cannot be empty" )
-
-		s = super(_UserContentRoot,self)
-		if hasattr( s, 'updateFromExternalObject' ):
-			# Notice we pass on the original dictionary
-			getattr( s, 'updateFromExternalObject' )(ext_parsed, *args, **kwargs )
-
-class _HighlightBWC(object):
-	"""
-	Defines read-only properties that are included in a highlight
-	to help backwards compatibility.
-	"""
-
-	top = left = startOffset = endOffset = property( deprecate( "Use the applicableRange" )( lambda self: 0 ) )
-
-	highlightedText = startHighlightedFullText = startHighlightedText = endHighlightedText = endHighlightedFullText = property( deprecate( "Use the selectedText" )( lambda self: getattr( self, 'selectedText' ) ) )
-
-	startXpath = startAnchor = endAnchor = endXpath = anchorPoint = anchorType = property( deprecate( "Use the applicableRange" )( lambda self: '' ) )
-
-@interface.implementer(nti_interfaces.IZContained, nti_interfaces.ISelectedRange)
-class SelectedRange(_UserContentRoot,ExternalizableInstanceDict):
-	# See comments above about being IZContained. We add it here to minimize the impact
-
-	_excluded_in_ivars_ = { 'AutoTags' } | ExternalizableInstanceDict._excluded_in_ivars_
-	_ext_primitive_out_ivars_ = ExternalizableInstanceDict._ext_primitive_out_ivars_.union( {'selectedText'} )
-
-	selectedText = ''
-	applicableRange = None
-	tags = ()
-	AutoTags = ()
-	_update_accepts_type_attrs = True
-	__parent__ = None
-
-	def __init__( self ):
-		super(SelectedRange,self).__init__()
-		# To get in the dict for externalization
-		self.selectedText = ''
-		self.applicableRange = None
-
-		# Tags. It may be better to use objects to represent
-		# the tags and have a single list. The two-field approach
-		# most directly matches what the externalization is.
-		self.tags = ()
-		self.AutoTags = ()
-
-	__name__ = property(lambda self: getattr( self, 'id'), lambda self, name: setattr( self, 'id', name ))
-
-	# While we are transitioning over from instance-dict-based serialization
-	# to schema based serialization and validation, we handle update validation
-	# ourself through these two class attributes. You may extend the list of fields
-	# to validate in your subclass if you also set the schema to the schema that defines
-	# those fields (and inherits from ISelectedRange).
-	# This validation provides an opportunity for adaptation to come into play as well,
-	# automatically taking care of things like sanitizing user input
-	_schema_fields_to_validate_ = ('applicableRange', 'selectedText')
-	_schema_to_validate_ = nti_interfaces.ISelectedRange
-
-	def updateFromExternalObject( self, parsed, *args, **kwargs ):
-		parsed.pop( 'AutoTags', None )
-		super(SelectedRange,self).updateFromExternalObject( parsed, *args, **kwargs )
-		__traceback_info__ = parsed
-		for k in self._schema_fields_to_validate_:
-			value = getattr( self, k )
-			# pass the current value, and call the return value (if there's no exception)
-			# in case adaptation took place
-			internalization.validate_named_field_value( self, self._schema_to_validate_, k, value )()
-
-
-		if 'tags' in parsed:
-			# we lowercase and sanitize tags. Our sanitization here is really
-			# cheap and discards html symbols
-			temp_tags = { t.lower() for t in parsed['tags'] if '>' not in t and '<' not in t and '&' not in t }
-			if not temp_tags:
-				self.tags = ()
-			else:
-				# Preserve an existing mutable object if we have one
-				if not self.tags:
-					self.tags = []
-				del self.tags[:]
-				self.tags.extend( temp_tags )
-
-@interface.implementer(nti_interfaces.IHighlight)
-class Highlight(SelectedRange, _HighlightBWC):
-
-	_ext_primitive_out_ivars_ = SelectedRange._ext_primitive_out_ivars_.union( {'style'} )
-
-	style = 'plain'
-
-	def __init__( self ):
-		super(Highlight,self).__init__()
-		# To get in the dict for externalization
-		self.style = self.style
-
-	def updateFromExternalObject( self, parsed, *args, **kwargs ):
-		super(Highlight,self).updateFromExternalObject( parsed, *args, **kwargs )
-		if 'style' in parsed:
-			nti_interfaces.IHighlight['style'].validate( parsed['style'] )
-
-@interface.implementer(nti_interfaces.IRedaction)
-class Redaction(SelectedRange):
-
-	replacementContent = None
-	redactionExplanation = None
-	_schema_fields_to_validate_ = SelectedRange._schema_fields_to_validate_ + ('replacementContent','redactionExplanation')
-	_schema_to_validate_ = nti_interfaces.IRedaction
-
-@interface.implementer(nti_interfaces.INote,
-					    # requires annotations
-					   nti_interfaces.ILikeable,
-					   nti_interfaces.IFavoritable,
-					   nti_interfaces.IFlaggable,
-					   # provides annotations
-					   an_interfaces.IAttributeAnnotatable )
-class Note(ThreadableExternalizableMixin, Highlight):
-
-
-	# A sequence of properties we would like to copy from the parent
-	# when a child reply is created. If the child already has them, they
-	# are left alone.
-	# This consists of the anchoring properties
-	_inheritable_properties_ = ( 'applicableRange', )
-	style = 'suppressed'
-
-	def __init__(self):
-		super(Note,self).__init__()
-		self.body = ("",)
-
-	def toExternalDictionary( self, mergeFrom=None ):
-		result = super(Note,self).toExternalDictionary(mergeFrom=mergeFrom)
-		# In our initial state, don't try to send empty body/text
-		if self.body == ('',):
-			result.pop( 'body' )
-
-		return result
-
-	def updateFromExternalObject( self, parsed, *args, **kwargs ):
-		# Only updates to the body are accepted
-		parsed.pop( 'text', None )
-
-		super(Note, self).updateFromExternalObject( parsed, *args, **kwargs )
-		if self._is_update_sharing_only( parsed ):
-			return
-
-		self.updateLastMod()
-		# Support text and body as input
-		if 'body' in parsed:
-			# Support raw body, not wrapped
-			if isinstance( parsed['body'], six.string_types ):
-				self.body = ( parsed['body'], )
-			if not self.body:
-				raise zope.schema.interfaces.RequiredMissing('Must supply body')
-
-			# Verify that the body contains supported types, if
-			# sent from the client.
-			for x in self.body:
-				__traceback_info__ = x
-				if not isinstance( x, (basestring,Canvas)):
-					raise zope.schema.interfaces.WrongContainedType()
-				if isinstance( x, basestring ) and len(x) == 0:
-					raise zope.schema.interfaces.TooShort()
-
-
-			# Sanitize the body. Anything that can become a fragment, do so, incidentally
-			# sanitizing and censoring it along the way.
-			def _sanitize(x):
-				x = censor.censor_assign(frg_interfaces.IUnicodeContentFragment( x, x ), self, 'body' )
-				x = component.getUtility(frg_interfaces.IHyperlinkFormatter).format(x)
-				return x
-
-			self.body = [_sanitize(x) for x in self.body]
-
-			# convert mutable lists to immutable tuples
-			self.body = tuple( self.body )
-
-
-		# If we are newly created, and a reply, then
-		# we want to use our policy settings to determine the sharing
-		# of the new note. This is because our policy settings
-		# may be user/community/context specific.
-		if not self._p_mtime and self.inReplyTo:
-			# Current policy is to copy the sharing settings
-			# of the parent, and share back to the parent's creator,
-			# only making sure not to share with ourself since that's weird
-			# (Be a bit defensive about bad inReplyTo)
-			if not hasattr( self.inReplyTo, 'sharingTargets' ): # pragma: no cover
-				raise AttributeError( 'Illegal value for inReplyTo: %s' % self.inReplyTo )
-			sharingTargets = set( self.inReplyTo.sharingTargets )
-			sharingTargets.add( self.inReplyTo.creator )
-			sharingTargets.discard( self.creator )
-			sharingTargets.discard( None )
-
-			self.updateSharingTargets( sharingTargets )
-
-
-			# Now some other things we want to inherit if possible
-			for copy in self._inheritable_properties_:
-				val = getattr( self.inReplyTo, copy, getattr( self, copy, None ) )
-				if val is not None:
-					setattr( self, copy, val )
+from .threadable import ThreadableExternalizableMixin
+from .base import UserContentRoot
 
 #####
 # Whiteboard shapes
 #####
 @interface.implementer(nti_interfaces.ICanvas,nti_interfaces.IZContained)
-class Canvas(ThreadableExternalizableMixin, _UserContentRoot, ExternalizableInstanceDict):
+class Canvas(ThreadableExternalizableMixin, UserContentRoot, ExternalizableInstanceDict):
 
 	# TODO: We're not trying to resolve any incoming external
 	# things. Figure out how we want to do incremental changes
@@ -852,10 +473,3 @@ class NonpersistentCanvasPathShape(_CanvasPathShape):
 	__external_can_create__ = True
 	mime_type = CanvasPathShape.mime_type
 	__external_class_name__ = 'CanvasPathShape'
-
-
-
-
-# Support for legacy quiz posting
-from quizzes import QuizResult
-quizresult = QuizResult
