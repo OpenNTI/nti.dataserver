@@ -1,3 +1,7 @@
+from nti.monkey import zopyx_patch_on_import
+zopyx_patch_on_import.patch()
+del zopyx_patch_on_import
+
 import sys
 import time
 
@@ -13,11 +17,6 @@ from nti.contentsearch._search_highlights import (WORD_HIGHLIGHT, NGRAM_HIGHLIGH
 
 import logging
 logger = logging.getLogger( __name__ )
-
-# monkey patch
-
-import zopyxtxng3corelogger
-sys.modules["zopyx.txng3.core.logger"] = zopyxtxng3corelogger
 
 def get_indexable_types():
 	return indexable_type_names
