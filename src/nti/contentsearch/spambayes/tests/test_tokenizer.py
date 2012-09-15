@@ -15,7 +15,7 @@ class TestTokenzier(ConfiguringTestBase):
 	def do_tokenize(self, text=None, *args, **kwargs):
 		tokenizer = component.getUtility(cs_interfaces.IContentTokenizer, name='spam_tokenizer')
 		result = tokenizer.tokenize(text, *args, **kwargs) if text else u''
-		return unicode(result)
+		return unicode(' '.join(result))
 
 	def test_tokenize(self):
 		text = self.do_tokenize(self.spam_msg)
