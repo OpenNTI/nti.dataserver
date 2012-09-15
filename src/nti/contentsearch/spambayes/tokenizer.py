@@ -367,8 +367,8 @@ class _ContentTokenizer(object):
 	
 	def tokenize(self, text, *args, **kwargs):
 		if not text or not isinstance(text, six.string_types):
-			return u''
+			return ()
 		else:
 			result = list(tokenize(text, *args,  **kwargs))
-			return unicode(' '.join(result))
+			return result
 
