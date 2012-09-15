@@ -348,6 +348,17 @@ def _configure_zeo( env_root ):
 		if db_passwd is db_name and 'MYSQL_PASSWD' in os.environ:
 			db_passwd = os.environ['MYSQL_PASSWD']
 
+
+		# The value for shared-blob-dir is important. To quote the
+		# RelStorage docs:
+		# "If true (the default), the blob directory
+		# is assumed to be shared among all clients using NFS or
+		# similar; blob data will be stored only on the filesystem and
+		# not in the database. If false, blob data is stored in the
+		# relational database and the blob directory holds a cache of
+		# blobs. When this option is false, the blob directory should
+		# not be shared among clients."
+
 		# Notice that we specify both a section name (<zodb Name>) and
 		# the database-nome. Further explanation below.
 		result = """
@@ -357,6 +368,7 @@ def _configure_zeo( env_root ):
 		<zlibstorage>
 		<relstorage %(name)s>
 				blob-dir %(blobDir)s
+				shared-blob-dir false
 				cache-servers %(cacheServers)s
 				cache-prefix %(db_name)s
 				poll-interval 0
@@ -364,9 +376,9 @@ def _configure_zeo( env_root ):
 				keep-history false
 				pack-gc false
 				<mysql>
-				db %(db_name)s
-				user %(db_username)s
-				passwd %(db_passwd)s
+					db %(db_name)s
+					user %(db_username)s
+					passwd %(db_passwd)s
 				%(addr)s
 				</mysql>
 		</relstorage>
