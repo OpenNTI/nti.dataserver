@@ -18,3 +18,6 @@ for module in (zopycoreidx, zopyevaluator):
 	module.unionResultSets = ntizopyrs.unionResultSets
 	module.inverseResultSet = ntizopyrs.inverseResultSet
 	module.intersectionResultSets = ntizopyrs.intersectionResultSets
+	
+def patch():
+	pass
