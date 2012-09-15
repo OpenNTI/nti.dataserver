@@ -26,10 +26,19 @@ from BTrees.LLBTree import LLBTree
 from zope.component.interfaces import IFactory
 from zope.interface import implements, implementedBy
 
+from zopyx.txng3.core import index as zopycoreidx
 from zopyx.txng3.core import widcode as zopywidcode
 from zopyx.txng3.core import storage as zopystorage
+from zopyx.txng3.core import evaluator as zopyevaluator
 from zopyx.txng3.core.interfaces import IStorageWithTermFrequency
 
+# monkey patch
+from nti.contentsearch import zopyxtxng3coreresultset as ntizopyrs
+for module in (zopycoreidx, zopyevaluator):
+	module.unionResultSets = ntizopyrs.unionResultSets
+	module.inverseResultSet = ntizopyrs.inverseResultSet
+	module.intersectionResultSets = ntizopyrs.intersectionResultSets
+	
 from nti.contentsearch.zopyxtxng3coredoclist import DocidList
 
 class Storage(zopystorage.Storage):

@@ -1,9 +1,10 @@
-from nti.monkey import zopyx_patch_on_import
-zopyx_patch_on_import.patch()
-del zopyx_patch_on_import
+from __future__ import print_function, unicode_literals
 
 import sys
 import time
+
+from nti.contentsearch import zopyxtxng3corelogger
+sys.modules["zopyx.txng3.core.logger"] = zopyxtxng3corelogger
 
 from nti.contentsearch.common import to_list
 from nti.contentsearch._search_query import QueryObject
