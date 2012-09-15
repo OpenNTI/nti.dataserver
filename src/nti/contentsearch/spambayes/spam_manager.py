@@ -71,8 +71,3 @@ class SpamManager(Persistent):
 		rev_index = self._catalog[intid_]._rev_index 
 		result = uid in rev_index 
 		return result
-
-
-	
-
-
