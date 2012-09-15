@@ -120,6 +120,11 @@ def render_link( link, nearest_site=None ):
 		__traceback_info__ = href, link, target, nearest_site
 		raise zope.traversing.interfaces.TraversalError(href)
 
+	if ILinkExternalHrefOnly_providedBy( link ):
+		# The marker that identifies the link should be replaced by just the href
+		# Because of the decorator, it's easiest to just do this here
+		result = result['href']
+
 	return result
 
 
@@ -135,6 +140,7 @@ class LinkExternal(object):
 		return render_link( self.context )
 
 ILink_providedBy = nti_interfaces.ILink.providedBy
+ILinkExternalHrefOnly_providedBy = nti_interfaces.ILinkExternalHrefOnly.providedBy
 _MutableSequence = collections.MutableSequence
 _MutableMapping = collections.MutableMapping
 LINKS = StandardExternalFields.LINKS

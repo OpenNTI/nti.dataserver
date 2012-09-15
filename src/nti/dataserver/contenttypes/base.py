@@ -141,3 +141,19 @@ class UserContentRoot(sharing.ShareableMixin, datastructures.ContainedMixin, dat
 		if hasattr( s, 'updateFromExternalObject' ):
 			# Notice we pass on the original dictionary
 			getattr( s, 'updateFromExternalObject' )(ext_parsed, *args, **kwargs )
+
+def _make_getitem( attr_name ):
+	def __getitem__( self, i ):
+		attr = getattr( self, attr_name )
+		try:
+			return attr[i]
+		except TypeError:
+			# For traversability purposes, we also accept
+			# our string names as assigned in append
+			# This could also be done with an adapter
+			try:
+				return attr[int(i)]
+			except ValueError: # can't convert to int
+				raise KeyError( i )
+
+	return __getitem__

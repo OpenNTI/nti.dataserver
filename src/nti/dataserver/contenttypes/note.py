@@ -16,10 +16,12 @@ from zope import interface
 
 from zope import component
 from zope.annotation import interfaces as an_interfaces
+from zope.container.contained import contained
 import zope.schema.interfaces
 
 from .highlight import Highlight
 from .threadable import ThreadableExternalizableMixin
+from .base import _make_getitem
 
 @interface.implementer(nti_interfaces.INote,
 					    # requires annotations
@@ -41,6 +43,8 @@ class Note(ThreadableExternalizableMixin, Highlight):
 	def __init__(self):
 		super(Note,self).__init__()
 		self.body = ("",)
+
+	__getitem__ = _make_getitem( 'body' )
 
 	def toExternalDictionary( self, mergeFrom=None ):
 		result = super(Note,self).toExternalDictionary(mergeFrom=mergeFrom)
@@ -69,12 +73,14 @@ class Note(ThreadableExternalizableMixin, Highlight):
 
 			# Verify that the body contains supported types, if
 			# sent from the client.
-			for x in self.body:
-				__traceback_info__ = x
+			for i, x in enumerate(self.body):
+				__traceback_info__ = i, x
 				if not isinstance( x, basestring) and not nti_interfaces.ICanvas.providedBy( x ):
 					raise zope.schema.interfaces.WrongContainedType()
 				if isinstance( x, basestring ) and len(x) == 0:
 					raise zope.schema.interfaces.TooShort()
+				if nti_interfaces.ICanvas.providedBy( x ):
+					contained( x, self, unicode(i) )
 
 
 			# Sanitize the body. Anything that can become a fragment, do so, incidentally

@@ -5,6 +5,8 @@
 	xmlns:zcml="http://namespaces.zope.org/zcml"
 	i18n_domain="zope">
 
+	<include package="zope.component" />
+
 	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />
 
@@ -12,5 +14,9 @@
 	<ext:registerMimeFactories module=".highlight" />
 	<ext:registerMimeFactories module=".redaction" />
 	<ext:registerMimeFactories module=".canvas" />
+
+	<!-- Blob file URL storage for canvas images -->
+	<exclude package="zope.file" file="browser.zcml" />
+	<include package="zope.file" />
 
 </configure>

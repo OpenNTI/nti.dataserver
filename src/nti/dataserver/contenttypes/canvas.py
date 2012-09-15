@@ -15,9 +15,12 @@ import six
 import urlparse
 import base64
 
+from nti.utils import dataurl
+
 from nti.externalization.interfaces import IExternalObject
 from nti.externalization.datastructures import ExternalizableInstanceDict
 from nti.externalization.interfaces import LocatedExternalDict
+from nti.externalization.externalization import to_external_object
 
 
 from nti.dataserver import mimetype
@@ -28,11 +31,13 @@ from nti.contentfragments import interfaces as frg_interfaces
 
 from zope import interface
 from zope import component
-
+from zope.container.contained import contained
+import zope.schema.interfaces
+from zope.file import file as zfile
 
 
 from .threadable import ThreadableExternalizableMixin
-from .base import UserContentRoot
+from .base import UserContentRoot, _make_getitem
 
 #####
 # Whiteboard shapes
@@ -59,14 +64,24 @@ class Canvas(ThreadableExternalizableMixin, UserContentRoot, ExternalizableInsta
 		self.shapeList = PersistentList()
 
 	def append( self, shape ):
+		if not isinstance( shape, _CanvasShape ):
+			__traceback_info__ = shape
+			raise zope.schema.interfaces.WrongContainedType()
 		self.shapeList.append( shape )
+		contained( shape, self, unicode(len(self.shapeList) - 1) )
 
-	def __getitem__( self, i ):
-		return self.shapeList[i]
+	__getitem__ = _make_getitem( 'shapeList' )
 
 	def updateFromExternalObject( self, *args, **kwargs ):
+		# Special handling of shapeList to preserve the PersistentList.
+		# (Though this probably doesn't matter. See the note at the top of the class)
+		shapeList = args[0].pop( 'shapeList', self )
 		super(Canvas,self).updateFromExternalObject( *args, **kwargs )
-		assert all( (isinstance( x, _CanvasShape ) for x in self.shapeList) )
+		if shapeList is not self:
+			del self.shapeList[:]
+			if shapeList:
+				for shape in shapeList:
+					self.append( shape )
 
 	def toExternalDictionary( self, mergeFrom=None ):
 		result = super(Canvas,self).toExternalDictionary( mergeFrom=mergeFrom )
@@ -135,10 +150,11 @@ class CanvasAffineTransform(object):
 		except AttributeError: #pragma: no cover
 			return NotImplemented
 
-@interface.implementer(IExternalObject)
+@interface.implementer(IExternalObject,nti_interfaces.IZContained)
 class _CanvasShape(ExternalizableInstanceDict):
-	### FIXME: These objects really shouldn't be persistent
 
+	__parent__ = None
+	__name__ = None
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
 	# We generate the affine transform on demand; we don't store it
@@ -334,7 +350,10 @@ class _CanvasPolygonShape(_CanvasShape):
 		assert isinstance( self.sides, numbers.Integral )
 
 	def __eq__( self, other ):
-		return super(_CanvasPolygonShape,self).__eq__( other ) and self.sides == other.sides
+		try:
+			return super(_CanvasPolygonShape,self).__eq__( other ) and self.sides == other.sides
+		except AttributeError:
+			return NotImplemented
 
 class _CanvasTextShape(_CanvasShape):
 
@@ -352,10 +371,17 @@ class _CanvasTextShape(_CanvasShape):
 		if self.text != tbf:
 			self.text = component.getAdapter( self.text, frg_interfaces.IUnicodeContentFragment, name='text' )
 
+from nti.dataserver import links
 
 class _CanvasUrlShape(_CanvasShape):
 
+	# We take responsibility for writing the URL ourself
+	_excluded_out_ivars_ = _CanvasShape._excluded_out_ivars_.union( {'url'} )
 	_ext_primitive_out_ivars_ = _CanvasShape._ext_primitive_out_ivars_.union( {'url'} )
+
+	_file = None
+
+	_DATA_NAME = 'data'
 
 	def __init__( self, url='' ):
 		super(_CanvasUrlShape, self).__init__( )
@@ -365,34 +391,69 @@ class _CanvasUrlShape(_CanvasShape):
 		super(_CanvasUrlShape,self).updateFromExternalObject( *args, **kwargs )
 
 	def _get_url(self):
-		if '_head' in self.__dict__:
-			return self._head + ',' + base64.b64encode( self._raw_tail )
+		if '_file' in self.__dict__:
+			#return self._head + ',' + base64.b64encode( self._raw_tail )
+
+			fp = self._file.open()
+			raw_bytes = fp.read()
+			fp.close()
+			return dataurl.encode( raw_bytes, self._file.mimeType )
+
+			#return
+
 		return self.__dict__[ 'url' ]
 	def _set_url(self,nurl):
 		if not nurl:
-			self.__dict__.pop( '_head', None )
-			self.__dict__.pop( '_raw_tail', None )
+			self.__dict__.pop( '_file', None )
 			self.__dict__['url'] = nurl
 			return
 
-		parsed = urlparse.urlparse( nurl )
-		assert parsed.scheme == 'data'
-		if parsed.path.split( ';' )[-1].startswith( 'base64' ):
-			# Un-base 64 things for more compact storage
-			head = nurl[0:nurl.index(',')]
-			tail = nurl[nurl.index(',')+1:]
-			bts = base64.b64decode( tail )
-			self._head = head
-			self._raw_tail = bts
+		if nurl.startswith( b'data:' ):
+			raw_bytes, mime_type = dataurl.decode( nurl )
+			major, minor, parms = zope.contenttype.parse.parse(  mime_type )
+			self._file = zfile.File( mimeType=major+'/'+minor, parameters=parms )
+			fp = self._file.open( 'w' )
+			fp.write( raw_bytes )
+			fp.close()
+			self._file.__parent__ = self
+			self._file.__name__ = self._DATA_NAME
+
 			# By keeping url in __dict__, toExternalDictionary
 			# still does the right thing
 			self.__dict__['url'] = None
 		else:
+			# Be sure it at least parses
+			urlparse.urlparse( nurl )
 			self.__dict__['url'] = nurl
+
 	url = property(_get_url,_set_url)
 
+	def __getitem__( self, key ):
+		"""
+		For traversability purposes, making our blob data available,
+		we accept its name here. Note this could also be done with an adapter,
+		but it's fairly tightly coupled to our implementation.
+		"""
+		if key == self._DATA_NAME:
+			return self._file
+		raise KeyError( key )
+
+	def toExternalDictionary( self, mergeFrom=None ):
+		result = super(_CanvasUrlShape,self).toExternalDictionary( mergeFrom=mergeFrom )
+		if '_file' in self.__dict__:
+			# See __getitem__
+			# TODO: This is pretty tightly coupled to the app layer
+			# TODO: If we wanted to be clever, we would have a cutoff point based on the size
+			# to determine when to return a link vs the data URL.
+			link = links.Link( target=self._file, target_mime_type=self._file.mimeType, elements=('@@view',), rel="data" )
+			interface.alsoProvides( link, nti_interfaces.ILinkExternalHrefOnly )
+			result['url'] = link
+		else:
+			result['url'] = self.url
+		return result
+
 	def __repr__(self):
-		return '%s(%s)' % (self.__class__.__name__, len(self.url))
+		return '<%s>' % self.__class__.__name__
 
 class _CanvasPathShape(_CanvasShape):
 
@@ -422,9 +483,12 @@ class _CanvasPathShape(_CanvasShape):
 		return result
 
 	def __eq__( self, other ):
-		return super(_CanvasPathShape,self).__eq__( other ) \
-			and self.closed == getattr(other,'closed',None) \
-			and self.points == getattr(other,'points',None)
+		try:
+			return super(_CanvasPathShape,self).__eq__( other ) \
+			  and self.closed == other.closed \
+			  and self.points == other.points
+		except AttributeError:
+			return NotImplemented
 
 ### Ok, so earlier we screwed up. We had CanvasShape by default
 # be persistent. We need the class with that name to continue to be persistent,

@@ -12,6 +12,7 @@ from hamcrest import not_none
 from hamcrest.library import has_property
 from hamcrest import greater_than_or_equal_to
 from hamcrest import is_not
+from hamcrest import contains
 does_not = is_not
 import unittest
 
@@ -422,6 +423,75 @@ class TestApplication(ApplicationTestBase):
 		testapp.post( '/dataserver2/users/sjohnson@nextthought.com', json_data,
 					  extra_environ=self._make_extra_environ(),
 					  status=403 ) # Forbidden!
+
+	def test_post_canvas_image_roundtrip_download_views(self):
+		" Images posted as data urls come back as real links which can be fetched "
+		data = {u'Class': 'Canvas',
+				'ContainerId': 'tag:foo:bar',
+				u'MimeType': u'application/vnd.nextthought.canvas',
+				'shapeList': [{u'Class': 'CanvasUrlShape',
+							   u'MimeType': u'application/vnd.nextthought.canvasurlshape',
+							   u'url': u'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw=='}]}
+
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = self._create_user()
+
+
+		json_data = json.serialize( data )
+
+		testapp = TestApp( self.app )
+
+		res = testapp.post( '/dataserver2/users/sjohnson@nextthought.com', json_data, extra_environ=self._make_extra_environ() )
+
+		canvas = res.json_body
+		assert_that( canvas, has_entry( 'shapeList', has_length( 1 ) ) )
+		assert_that( canvas, has_entry( 'shapeList', contains( has_entry( 'Class', 'CanvasUrlShape' ) ) ) )
+		assert_that( canvas, has_entry( 'shapeList', contains( has_entry( 'url', contains_string( '/dataserver2/' ) ) ) ) )
+		canvas_res = res
+
+		res = testapp.get( canvas['shapeList'][0]['url'], extra_environ=self._make_extra_environ() )
+		# The content type is preserved
+		assert_that( res, has_property( 'content_type', 'image/gif' ) )
+		# The modified date is the same as the canvas containing it
+		assert_that( res, has_property( 'last_modified', not_none() ) )
+		assert_that( res, has_property( 'last_modified', canvas_res.last_modified ) )
+
+	def test_post_canvas_in_note_image_roundtrip_download_views(self):
+		" Images posted as data urls come back as real links which can be fetched "
+		canvas_data = {u'Class': 'Canvas',
+					   'ContainerId': 'tag:foo:bar',
+					   u'MimeType': u'application/vnd.nextthought.canvas',
+					   'shapeList': [{u'Class': 'CanvasUrlShape',
+									  u'MimeType': u'application/vnd.nextthought.canvasurlshape',
+									  u'url': u'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw=='}]}
+		data = {'Class': 'Note',
+				'ContainerId': 'tag:foo:bar',
+				u'MimeType': u'application/vnd.nextthought.note',
+				'applicableRange': {'Class': 'ContentRangeDescription'},
+				'body': [canvas_data]}
+
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = self._create_user()
+
+
+		json_data = json.serialize( data )
+
+		testapp = TestApp( self.app )
+
+		res = testapp.post( '/dataserver2/users/sjohnson@nextthought.com', json_data, extra_environ=self._make_extra_environ() )
+
+		canvas = res.json_body['body'][0]
+		assert_that( canvas, has_entry( 'shapeList', has_length( 1 ) ) )
+		assert_that( canvas, has_entry( 'shapeList', contains( has_entry( 'Class', 'CanvasUrlShape' ) ) ) )
+		assert_that( canvas, has_entry( 'shapeList', contains( has_entry( 'url', contains_string( '/dataserver2/' ) ) ) ) )
+		canvas_res = res
+
+		res = testapp.get( canvas['shapeList'][0]['url'], extra_environ=self._make_extra_environ() )
+		# The content type is preserved
+		assert_that( res, has_property( 'content_type', 'image/gif' ) )
+		# The modified date is the same as the canvas containing it
+		assert_that( res, has_property( 'last_modified', not_none() ) )
+		assert_that( res, has_property( 'last_modified', canvas_res.last_modified ) )
 
 	def test_search_empty_term_user_ugd_book(self):
 		"Searching with an empty term returns empty results"
