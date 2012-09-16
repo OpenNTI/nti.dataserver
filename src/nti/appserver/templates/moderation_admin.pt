@@ -12,7 +12,7 @@
 			  class="edit-form"
 			  name="subFormTable" id="subFormTable">
 
-			<table tal:replace="structure python:options['here'].render()" />
+			<table tal:replace="structure options/here/render" />
 
 			<input id="subFormTable-buttons-unflag"
 				   name="subFormTable.buttons.unflag"
