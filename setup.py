@@ -189,6 +189,7 @@ setup(
 		'transaction >= 1.3.0',
 		'webob >= 1.2.2',
 		'whoosh >= 2.4.1',
+		'z3c.batching >= 1.1.0', # result paging. Pulled in by z3c.table
 		 # bcrypt/pbkdf2 for zope.password
 		 # adds cryptacular and pbkdf2
 		'z3c.bcrypt >= 1.1',
@@ -280,7 +281,7 @@ setup(
 			'zodbbrowser >= 0.10.0',
 			'sphinx >= 1.1.3', # Narrative docs
 			'sphinxtheme.readability >= 0.0.6',
-			'repoze.sphinx.autointerface >= 0.7.0',
+			'repoze.sphinx.autointerface >= 0.7.1',
 			'sphinxcontrib-programoutput >= 0.7',
 			'epydoc >= 3.0.1', # auto-api docs
 			'rope >= 0.9.4', # refactoring library. c.f. ropemacs

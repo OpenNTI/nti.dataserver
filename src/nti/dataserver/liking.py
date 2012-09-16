@@ -43,13 +43,17 @@ class LikeDecorator(object):
 LIKE_CAT_NAME = 'likes'
 FAVR_CAT_NAME = 'favorites'
 
-def _lookup_like_rating_for_read( context, cat_name=LIKE_CAT_NAME ):
+def _lookup_like_rating_for_read( context, cat_name=LIKE_CAT_NAME, safe=False ):
 	"""
 	:param context: Something that is :class:`interfaces.ILikeable`
 		and, for now, can be adapted to an :class:`contentratings.IUserRating`
 		with the name of `cat_name`.
 	:param string cat_name: The name of the ratings category to look up. One of
 		:const:`LIKE_CAT_NAME` or :const:`FAVR_CAT_NAME`.
+	:keyword bool safe: If ``False`` (the default) then this method can raise an
+		exception if it won't ever be possible to rate the given object (because
+		annotations and adapters are not set up). If ``True``, then this method
+		quetly returns None in that case.
 	:return: A user rating object, if one already exists. Otherwise :const:`None`.
 	"""
 
@@ -62,13 +66,19 @@ def _lookup_like_rating_for_read( context, cat_name=LIKE_CAT_NAME ):
 	key = getattr(UserRatingStorage, 'annotation_key', BASE_KEY)
 	# Append the category name to the dotted annotation key name
 	key = str(key + '.' + cat_name)
-	# Retrieve the storage from the annotation, or create a new one
-	annotations = an_interfaces.IAnnotations(context)
-	storage = annotations.get( key )
+	# Retrieve the storage from the annotation. Note that IAttributeAnnotatable
+	# default adapter does not create a OOBTree and set the __annotations__ attribute until
+	# it is written to, so this is safe
+	try:
+		annotations = an_interfaces.IAnnotations(context)
+		storage = annotations.get( key )
 
-	if storage:
-		# Ok, we already have one. Use it.
-		return _lookup_like_rating_for_write( context, cat_name=cat_name )
+		if storage:
+			# Ok, we already have one. Use it.
+			return _lookup_like_rating_for_write( context, cat_name=cat_name )
+	except (TypeError, LookupError):
+		if not safe:
+			raise
 
 def _lookup_like_rating_for_write( context, cat_name=LIKE_CAT_NAME ):
 	return component.getAdapter( context, contentratings.interfaces.IUserRating, name=cat_name )
@@ -102,10 +112,17 @@ def _unrate_object( context, username, cat_name ):
 		return rating
 
 def _rates_object( context, username, cat_name ):
-	rating = _lookup_like_rating_for_read( context, cat_name )
+	rating = _lookup_like_rating_for_read( context, cat_name=cat_name )
 	if rating and rating.userRating( username ) is not None:
 		return rating
 
+def _rate_count( context, cat_name ):
+	"""
+	Return the number of times this object has been rated the particular way.
+	Accepts any object, not just those that can be rated.
+	"""
+	ratings = _lookup_like_rating_for_read( context, cat_name, safe=True )
+	return ratings.numberOfRatings if ratings else 0
 
 def like_object( context, username ):
 	"""
@@ -144,6 +161,15 @@ def likes_object( context, username ):
 	"""
 	return _rates_object( context, username, LIKE_CAT_NAME )
 
+def like_count( context ):
+	"""
+	Determine how many distinct users like the `context`.
+
+	:param context: Any object (unlike the rest of the functions, this is
+		not limited to just :class:`interfaces.ILikeable` objects.
+	:return: A non-negative integer.
+	"""
+	return _rate_count( context, LIKE_CAT_NAME )
 
 def favorite_object( context, username ):
 	"""

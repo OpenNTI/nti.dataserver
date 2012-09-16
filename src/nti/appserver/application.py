@@ -463,6 +463,7 @@ def createApplication( http_port,
 				name=name, renderer='rest',
 				permission=nauth.ACT_READ, request_method='GET' )
 
+	pyramid_config.scan( 'nti.appserver.ugd_query_views' )
 	pyramid_config.scan( 'nti.appserver.glossary_views' )
 
 
