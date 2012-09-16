@@ -52,7 +52,7 @@
 			A new note has been created and shared with you.
 		</p>
 
-		<table tal:replace="structure python:options['note_table'].render()" />
+		<table tal:replace="structure options/note_table/render" />
 
 		<p>
 			Sincerely,<br />
