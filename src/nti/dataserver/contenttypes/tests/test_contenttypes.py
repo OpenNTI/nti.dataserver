@@ -182,6 +182,12 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 		assert_that( ratings, verifiably_provides( contentratings.interfaces.IUserRating ) )
 		assert_that( ratings, has_property( 'numberOfRatings', 0 ) )
 
+		assert_that( liking.like_count( n ), is_( 0 ) )
+		liking.like_object( n, 'foo@bar' )
+		assert_that( liking.like_count( n ), is_( 1 ) )
+
+		assert_that( liking.like_count( self ), is_( 0 ) )
+
 	def test_reading_note_adds_no_annotations(self):
 		"Externalizing a note produces LikeCount attribute, but doesn't add annotations"
 		n = Note()

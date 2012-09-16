@@ -97,6 +97,9 @@
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 	<subscriber factory=".liking_views.LikeLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+	<subscriber factory=".ugd_query_views.RepliesLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+
 	<subscriber factory=".contentlibrary_views._ContentUnitPreferencesDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				/>

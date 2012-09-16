@@ -11,18 +11,34 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import weakref
 import numbers
 
+from zope import interface
+from zope import component
+from zope.proxy import ProxyBase
+
+from pyramid.view import view_config
+from pyramid import security as psec
+from pyramid.threadlocal import get_current_request
+
 from nti.appserver import httpexceptions as hexc
+from nti.appserver import _util
 
 from nti.contentlibrary import interfaces as lib_interfaces
 
+from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.oids import to_external_oid
 
 from nti.ntiids import ntiids
 
+from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import users
+from nti.dataserver import liking
+from nti.dataserver import authorization as nauth
+
+from z3c.batching.batch import Batch
 
 def lists_and_dicts_to_ext_collection( items ):
 	""" Given items that may be dictionaries or lists, combines them
@@ -67,6 +83,73 @@ def lists_and_dicts_to_ext_collection( items ):
 	result = LocatedExternalDict( { 'Last Modified': lastMod, 'Items': result } )
 	return result
 
+_REF_ATTRIBUTE = 'referenced_by' # TODO: Be absolutely sure this doesn't cause rewriting of the note in the DB
+
+class RefProxy(ProxyBase):
+
+	def __init__( self, obj ):
+		super(RefProxy,self).__init__( obj )
+		self._v_referenced_by = None
+
+	def _referenced_by(self):
+		return self._v_referenced_by
+	def _set_referenced_by( self, nv ):
+		self._v_referenced_by = nv
+	referenced_by = property(_referenced_by, _set_referenced_by)
+
+def _build_reference_lists( request, result_list ):
+	proxies = {}
+	setattr( request, '_build_reference_lists_proxies', proxies )
+	def _referenced_by( x ):
+		x = proxies[x]
+		result = x.referenced_by
+		if result is None:
+			result = []
+			x.referenced_by = result
+		return result
+
+	for i, item in enumerate(result_list):
+		# Ensure every item gets the list if it could have replies
+		if hasattr( item, 'inReplyTo' ):
+			proxy = RefProxy( item )
+			result_list[i] = proxy
+			proxies[item] = proxy
+
+	for item in result_list:
+		inReplyTo = getattr( item, 'inReplyTo', None )
+
+		if inReplyTo is not None:
+			# This function blows up if the reply is from a different container.
+			# and so didn't get proxied
+			# That's not supposed to happen.
+			# Also, we must maintain the proxy map ourself because the items we get
+			# back from here are 'real' vs the things we just put in the result list
+			_referenced_by( inReplyTo ).append( weakref.ref( item ) )
+		for ref in getattr( item, 'references', () ):
+			if ref is not None:
+				_referenced_by( ref ).append( weakref.ref( item ) )
+
+def _reference_list_length( x ):
+	refs = getattr( x, _REF_ATTRIBUTE, _reference_list_length )
+	if refs is not _reference_list_length:
+		if refs is None:
+			return 0
+		return len(refs)
+	return -1 # distinguish no refs vs no data
+
+SORT_KEYS = {
+	'lastModified': lambda x: getattr( x, 'lastModified', 0 ), # TODO: Adapt to dublin core?
+	'LikeCount': liking.like_count,
+	'ReferencedByCount': ( _build_reference_lists, _reference_list_length )
+	}
+SORT_DIRECTION_DEFAULT = {
+	'LikeCount': 'descending',
+	'ReferencedByCount': 'descending'
+	}
+FILTER_NAMES = {
+	'TopLevel': lambda x: getattr( x, 'inReplyTo', None ) is None
+	# This won't work for the Change objects. (Try Acquisition?) Do we need it for them?
+	}
 
 class _UGDView(object):
 
@@ -81,6 +164,7 @@ class _UGDView(object):
 	def __call__( self ):
 		user, ntiid = self.request.context.user, self.request.context.ntiid
 		result = lists_and_dicts_to_ext_collection( self.getObjectsForId( user, ntiid ) )
+		self._sort_filter_batch_result( result )
 		result.__parent__ = self.request.context
 		result.__name__ = ntiid
 		return result
@@ -106,6 +190,64 @@ class _UGDView(object):
 
 		return (mystuffDict, sharedstuffList, publicDict)
 
+	def _sort_filter_batch_result( self, result ):
+		"""
+		Sort, filter, and batch (page) the result by modifying it in place.
+		:param dict result: The result dictionary that will be returned to the client.
+			Contains the ``Items`` list of all items found. You may add keys to the dictionary.
+			You may (and should) modify the Items list directly.
+		"""
+
+		# Before we filter and batch, we sort. Some filter operations need the sorted
+		# data
+		result_list = result['Items']
+		result['TotalItemCount'] = len(result_list)
+		# The request keys match what z3c.table does
+		sort_on = self.request.params.get( 'sortOn', 'lastModified' )
+		sort_order = self.request.params.get( 'sortOrder', SORT_DIRECTION_DEFAULT.get( sort_on, 'ascending' ) )
+		sort_key_function = SORT_KEYS.get( sort_on, SORT_KEYS['lastModified'] )
+		if isinstance( sort_key_function, tuple ):
+			prep_function = sort_key_function[0]
+			sort_key_function = sort_key_function[1]
+			prep_function( self.request, result_list )
+
+		result_list.sort( key=sort_key_function,
+						  reverse=(sort_order == 'descending') )
+
+		# TODO: Which is faster and more efficient? The built-in filter function which allocates
+		# a new list but iterates fast, or iterating in python and removing from the existing list?
+		# Since the list is really an array, removing from it is actually slow
+		filter_name = self.request.params.get( 'filter' )
+		if filter_name in FILTER_NAMES:
+			# Be nice and make sure the reply count gets included if
+			# it isn't already and we're after just the top level.
+			# Must do this before filtering
+			if filter_name == 'TopLevel' and sort_key_function is not _reference_list_length:
+				_build_reference_lists( self.request, result_list )
+			result_list = filter(FILTER_NAMES[filter_name], result_list)
+			result['Items'] = result_list
+
+		batch_size = self.request.params.get( 'batchSize' )
+		batch_start = self.request.params.get( 'batchStart' )
+		if batch_size and batch_start:
+			try:
+				batch_size = int(batch_size)
+				batch_start = int(batch_start)
+			except ValueError:
+				raise hexc.HTTPBadRequest()
+			if batch_size <= 0 or batch_start < 0:
+				raise hexc.HTTPBadRequest()
+
+			if batch_start >= len(result_list):
+				# Batch raises IndexError
+				result_list = []
+			else:
+				# TODO: With a slight change to the renderer, we could directly
+				# externalize by iterating this and avoid creating the sublist
+				result_list = list(Batch( result_list, batch_start, batch_size ))
+
+			result['Items'] = result_list
+			# TODO: Inserting links to next/previous/start/end
 
 class _RecursiveUGDView(_UGDView):
 
@@ -226,3 +368,55 @@ class _UGDAndRecursiveStreamView(_UGDView):
 		all_data += page_data
 		all_data += stream_data
 		return all_data
+
+REL_REPLIES = 'replies'
+
+
+
+@interface.implementer(ext_interfaces.IExternalMappingDecorator)
+@component.adapter(nti_interfaces.INote)
+class RepliesLinkDecorator(_util.AbstractTwoStateViewLinkDecorator):
+	"""
+	Adds the link to get replies.
+	"""
+	false_view = REL_REPLIES
+	true_view = REL_REPLIES
+	predicate = staticmethod(lambda context, current_user: True)
+
+	def decorateExternalMapping( self, context, mapping ):
+		super(RepliesLinkDecorator,self).decorateExternalMapping( context, mapping )
+		# Also add the reply count, if we have that information available
+		request = get_current_request()
+		if request:
+			proxies = getattr( request, '_build_reference_lists_proxies', None )
+			if proxies:
+				proxy = proxies.get( context, context )
+				reply_count = _reference_list_length( proxy )
+				if reply_count >= 0:
+					mapping['ReferencedByCount'] = reply_count
+
+@view_config( route_name='objects.generic.traversal',
+			  renderer='rest',
+			  context=nti_interfaces.INote,
+			  permission=nauth.ACT_READ,
+			  request_method='GET',
+			  name=REL_REPLIES)
+def replies_view(request):
+	"""
+	Given a threaded object, return all the objects in the same container
+	that reference it.
+	"""
+
+	# First collect the objects
+	view = _UGDView( request )
+	view._my_objects_may_be_empty = True
+	objs = view.getObjectsForId( users.User.get_user( psec.authenticated_userid( request ) ),
+								 request.context.containerId )
+	result = lists_and_dicts_to_ext_collection( objs )
+
+	def test(x):
+		return request.context in getattr( x, 'references', () ) or request.context == getattr( x, 'inReplyTo', None )
+	result_list = filter( test,
+						  result['Items'] )
+	result['Items'] = result_list
+	return result
