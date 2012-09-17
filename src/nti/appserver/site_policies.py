@@ -602,7 +602,7 @@ class MathcountsSitePolicyEventListener(GenericKidSitePolicyEventListener):
 
 _SITE_LANDING_PAGES = {
 	'mathcounts.nextthought.com': b'tag:nextthought.com,2011-10:mathcounts-HTML-mathcounts2013.warm_up_1',
-	#'prmia.nextthought.com': b''
+	'prmia.nextthought.com': b'tag:nextthought.com,2011-10:PRMIA-HTML-Volume_III.A.2_converted.toc260827905'
 	}
 
 @component.adapter(nti_interfaces.IUser,app_interfaces.IUserLogonEvent)
