@@ -144,7 +144,8 @@ SORT_KEYS = {
 	}
 SORT_DIRECTION_DEFAULT = {
 	'LikeCount': 'descending',
-	'ReferencedByCount': 'descending'
+	'ReferencedByCount': 'descending',
+	'lastModified': 'descending'
 	}
 FILTER_NAMES = {
 	'TopLevel': lambda x: getattr( x, 'inReplyTo', None ) is None
