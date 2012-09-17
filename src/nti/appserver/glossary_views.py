@@ -63,10 +63,8 @@ class GlossaryView(object):
 		request = self.request
 		term = request.subpath[0]
 
-
-		info = dictserver.WordInfo( term )
 		try:
-			dictserver.lookup( info )
+			info = dictserver.lookup( term )
 		except (KeyError,ValueError): # pragma: no cover
 			# Bad/missing JSON dictionary data.
 			# We probably shouldn't ever get this far

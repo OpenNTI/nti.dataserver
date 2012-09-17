@@ -17,8 +17,10 @@ import nti.tests
 from nose.tools import assert_raises
 import fudge
 
-from nti.dictserver.dictionary import SQLiteJsonDictionary as ChromeDictionary
-from nti.dictserver import lookup, WordInfo
+from nti.dictserver.storage import UncleanSQLiteJsonDictionaryTermStorage as Storage
+from nti.dictserver.storage import JsonDictionaryTermDataStorage as JsonDictionary
+from nti.dictserver import lookup
+from nti.dictserver.term import DictionaryTerm as WordInfo
 
 
 class TestDictionary(nti.tests.ConfiguringTestBase):
@@ -26,9 +28,9 @@ class TestDictionary(nti.tests.ConfiguringTestBase):
 	# this test makes sure that when a dict is constructed without a lookup path,
 	# or other bad path of some sort, it fails
 	def test_badConstructorValues( self ):
-		assert_raises(ValueError, ChromeDictionary, '')
-		assert_raises(TypeError, ChromeDictionary)
-		assert_raises(TypeError, ChromeDictionary, None)
+		assert_raises(ValueError, Storage, '')
+		assert_raises(TypeError, Storage)
+		assert_raises(TypeError, Storage, None)
 
 	@fudge.patch( 'sqlite3.connect' )
 	def test_no_lookup( self, sqlite3_connect ):
@@ -36,7 +38,7 @@ class TestDictionary(nti.tests.ConfiguringTestBase):
 		fake_cur = fake_conn.expects('execute').with_arg_count( 2 ).returns_fake( )
 		fake_cur.expects( 'fetchone' ).returns( (None,) )
 		fake_cur.expects( 'close' )
-		json_dict = ChromeDictionary( ":memory:" )
+		json_dict = Storage( ":memory:" )
 
 		val = json_dict.lookup( 'word' )
 		assert_that( val, is_not( none() ) )
@@ -48,7 +50,7 @@ class TestDictionary(nti.tests.ConfiguringTestBase):
 		fake_cur = fake_conn.expects('execute').with_arg_count( 2 ).returns_fake( )
 		fake_cur.expects( 'fetchone' ).returns( ('text',) )
 		fake_cur.expects( 'close' )
-		json_dict = ChromeDictionary( ":memory:" )
+		json_dict = Storage( ":memory:" )
 
 		val = json_dict.lookup( 'word' )
 		assert_that( val, is_( 'text' ) )
@@ -67,13 +69,14 @@ class TestDictionary(nti.tests.ConfiguringTestBase):
 				}
 		fake_cur.expects( 'fetchone' ).returns( (json.dumps( defn ),) )
 		fake_cur.expects( 'close' )
-		json_dict = ChromeDictionary( ":memory:" )
+		storage = Storage( ":memory:" )
+		json_dict = JsonDictionary( storage )
 		component.provideUtility( json_dict )
 		val = lookup( 'word' )
 
 		assert_that( val, is_( WordInfo ) )
 		assert_that( val.toXMLString(), is_not( none() ) )
-		json_dict.close()
+		storage.close()
 
 	@fudge.patch( 'sqlite3.connect' )
 	def test_lookup_bad_data_through_api( self, sqlite3_connect ):
@@ -82,10 +85,11 @@ class TestDictionary(nti.tests.ConfiguringTestBase):
 		fake_cur = fake_conn.expects('execute').with_arg_count( 2 ).returns_fake( )
 		fake_cur.expects( 'fetchone' ).returns( ('CANNOT LOAD',) )
 		fake_cur.expects( 'close' )
-		json_dict = ChromeDictionary( ":memory:" )
+		storage = Storage( ":memory:" )
+		json_dict = JsonDictionary( storage )
 		component.provideUtility( json_dict )
 		val = lookup( 'word' )
 
 		assert_that( val, is_( WordInfo ) )
 
-		json_dict.close()
+		storage.close()

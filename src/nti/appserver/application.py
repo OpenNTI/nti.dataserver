@@ -16,7 +16,7 @@ import os
 import random
 
 import nti.dictserver as dictserver
-import nti.dictserver.dictionary
+import nti.dictserver.storage
 
 
 import nti.dataserver._Dataserver
@@ -266,7 +266,8 @@ def createApplication( http_port,
 
 	if 'main_dictionary_path' in settings:
 		try:
-			dictionary = dictserver.dictionary.SQLiteJsonDictionary( settings['main_dictionary_path'] )
+			storage = nti.dictserver.storage.UncleanSQLiteJsonDictionaryTermStorage( settings['main_dictionary_path'] )
+			dictionary = nti.dictserver.storage.JsonDictionaryTermDataStorage( storage )
 			pyramid_config.registry.registerUtility( dictionary )
 			logger.debug( "Adding dictionary" )
 		except Exception:
