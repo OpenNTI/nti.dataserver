@@ -20,7 +20,8 @@ from nti.contentsearch._search_highlights import (word_content_highlight, ngram_
 from nti.contentsearch._search_highlights import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT, WHOOSH_HIGHLIGHT)
 
 from nti.contentsearch.common import (	NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
-										SNIPPET, HIT, ID, TARGET_OID, OID, CONTENT, INTID)
+										SNIPPET, HIT, ID, TARGET_OID, OID, CONTENT, INTID, QUERY,
+										HIT_COUNT, ITEMS)
 
 from nti.contentsearch.common import ( last_modified_, content_, title_, ntiid_)
 
@@ -98,11 +99,43 @@ class WhooshHighlightDecorator(_BaseWordSnippetHighlightDecorator):
 
 # search results
 
+@interface.implementer(ext_interfaces.IExternalObject)
+class _BaseSearchResultsExternalizer(object):
+	def __init__( self, results ):
+		self.results = results
+		
+	@property
+	def query(self):
+		self.results.query
+		
+	def toExternalObject(self):
+		return {}
+	
+@component.adapter(search_interfaces.ISearchResults)
+class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
+	def toExternalObject(self):
+		eo  = {QUERY: self.query.term}
+		return eo
+	
+#result = {}
+#	result[QUERY] = query
+#	result[HIT_COUNT] = 0
+#	result[ITEMS] = [] if is_suggest else {}
+#	result[LAST_MODIFIED] = 0
+#	return result
+
+@component.adapter(search_interfaces.ISuggestResults)
+class _SuggestResultsExternalizer(_BaseSearchResultsExternalizer):
+	pass
+	
+@component.adapter(search_interfaces.ISuggestResults)
+class _SuggestAndSearchResultsExternalizer(_BaseSearchResultsExternalizer):
+	pass
 
 # search hits
 
-search_external_fields  = (	CLASS, CREATOR, TARGET_OID, TYPE, LAST_MODIFIED, NTIID, \
-							CONTAINER_ID, SNIPPET, ID, INTID)
+hit_search_external_fields  = (	CLASS, CREATOR, TARGET_OID, TYPE, LAST_MODIFIED, NTIID, \
+								CONTAINER_ID, SNIPPET, ID, INTID)
 	
 default_search_hit_mappings =  ((CLASS, TYPE), (OID, TARGET_OID), \
 								(last_modified_, LAST_MODIFIED), (content_, SNIPPET) )
@@ -125,11 +158,12 @@ class _SearchHit(object, UserDict.DictMixin):
 		else:
 			self._data = dict(original) if original else {}
 			
+		self._query = None
 		self._supplement(original, self._data)
 		self._reduce(self._data)
-		self.query = None
-	
-	def _supplement(self, original, external, intid=None):
+		
+	@classmethod
+	def _supplement(cls, original, external, intid=None):
 		for k, r in default_search_hit_mappings:
 			if k in external:
 				external[r] = external[k]
@@ -143,16 +177,29 @@ class _SearchHit(object, UserDict.DictMixin):
 		external[CLASS] = HIT
 		external[NTIID] = external.get(NTIID, None) or external.get(TARGET_OID, None)
 		
-	def _reduce(self, data):
+	@classmethod
+	def _reduce(cls, data):
 		for key in list(data.keys()):
-			if not key in search_external_fields:
+			if not key in hit_search_external_fields:
 				data.pop(key)
+	
+	def get_query(self):
+		return self._query if search_interfaces.ISearchQuery.providedBy(self._query) else self._query
+	
+	def set_query(self, query):
+		self._query = query
+		
+	query = property(get_query, set_query)
+	
+	@property
+	def last_modified(self):
+		return self._data.get(LAST_MODIFIED, 0)
+		
+	def toExternalObject(self):
+		return self._data
 	
 	def keys(self):
 		return self._data.keys()
-			
-	def toExternalObject(self):
-		return dict(self._data)
 	
 	def __getitem__(self, key):
 		return self._data[key]

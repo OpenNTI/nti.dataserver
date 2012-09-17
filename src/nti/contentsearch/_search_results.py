@@ -3,6 +3,7 @@ from __future__ import print_function, unicode_literals
 import six
 
 from zope import interface
+from persistent.interfaces import IPersistent
 
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch.common import (QUERY, HIT_COUNT, ITEMS, LAST_MODIFIED, SUGGESTIONS)
@@ -10,7 +11,7 @@ from nti.contentsearch.common import (QUERY, HIT_COUNT, ITEMS, LAST_MODIFIED, SU
 import logging
 logger = logging.getLogger( __name__ )
 
-class _Results(object):
+class _BaseSearchResults(object):
 	def __init__(self, query):
 		assert search_interfaces.ISearchQuery.providedBy(query)
 		self._query = query
@@ -26,9 +27,18 @@ class _Results(object):
 	@property
 	def hits(self):
 		raise NotImplementedError()
+	
+	def __len__(self):
+		return len(self.hits)
+	
+	def __getitem__(self, n):
+		return self.hits[n]
 
-@interface.implementer( search_interfaces.IHitSearchResults )
-class _SearchResults(_Results):
+	def __iter__(self):
+		return iter(self.hits)
+
+@interface.implementer( search_interfaces.ISearchResults )
+class _SearchResults(_BaseSearchResults):
 	def __init__(self, query):
 		super(_SearchResults, self).__init__(query)
 		self._hits = []
@@ -38,13 +48,13 @@ class _SearchResults(_Results):
 		return self._hits
 	
 	def add(self, items):
-		items = tuple(items) if search_interfaces.ISearchHit.providedBy(items) else items
+		items = tuple(items) if IPersistent.providedBy(items) else items
 		for item in items or ():
-			if search_interfaces.ISearchHit.providedBy(item):
+			if IPersistent.providedBy(item):
 				self.hits.append(item)
 	
-@interface.implementer( search_interfaces.ISuggestSearchResults )
-class _SuggestResults(_Results):
+@interface.implementer( search_interfaces.ISuggestResults )
+class _SuggestResults(_BaseSearchResults):
 	def __init__(self, query):
 		super(_SuggestResults, self).__init__(query)
 		self._words = set()
@@ -79,7 +89,24 @@ class _SuggestAndSearchResults(_SearchResults, _SuggestResults):
 			
 	def add(self, items):
 		_SearchResults.add(self, items)
-	
+
+@interface.implementer( search_interfaces.ISearchResultsCreator )
+class _SearchResultCreator(object):
+	def __call__(self, query):
+		return _SearchResults(query)
+
+@interface.implementer( search_interfaces.ISuggestResultsCreator )
+class _SuggestResultsCreator(object):
+	def __call__(self, query):
+		return _SuggestResults(query)
+
+@interface.implementer( search_interfaces.ISuggestAndSearchResultsCreator)
+class _SuggestAndSearchResultsCreator(object):
+	def __call__(self, query):
+		return _SuggestAndSearchResults(query)
+
+# legacy results
+
 def _empty_result(query, is_suggest=False):
 	result = {}
 	result[QUERY] = query

@@ -77,7 +77,13 @@
 	<utility factory="._content_utils._ContentTokenizer" name="en" />
 	<utility factory="._content_utils._DefaultStopWords" />
 	
-	<!-- Search query validator -->
+	<!-- Search results -->
+		
+	<utility factory="._search_results._SearchResultCreator"  />
+	<utility factory="._search_results._SuggestResultsCreator"  />
+	<utility factory="._search_results._SuggestAndSearchResultsCreator"  />
+	
+	<!-- Search query -->
 	
 	<utility factory="._repoze_query._DefaultSearchQueryValiator"  />
 	<utility factory="._repoze_query._DefaultSearchQueryValiator" name="en" />

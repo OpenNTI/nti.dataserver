@@ -336,10 +336,6 @@ class INgramSnippetHighlight(IHighlightType):
 class IWhooshSnippetHighlight(IHighlightType):
 	pass
 
-class ISearchHit(ext_interfaces.IExternalObject):
-	query = schema.TextLine(title="query that produced this hit")
-	pass
-	
 # user generated content resolvers
 
 class IContentResolver(interface.Interface):
@@ -466,18 +462,22 @@ class ISearchQueryValidator(interface.Interface):
 		"""check if the specified search query is valid"""
 		
 # search results
-
-class ISearchResults(interface.Interface):
+	
+class ISearchHit(ext_interfaces.IExternalObject):
+	query = schema.TextLine(title="query that produced this hit")
+	last_modified = schema.Float(title="last modified date for this hit")
+	
+class IBaseSearchResults(interface.Interface):
 	query = schema.Object(ISearchQuery, title="search query")
 	pass
 
-class IHitSearchResults(ISearchResults):
+class ISearchResults(IBaseSearchResults):
 	hits = schema.Iterable("search result hits")
 	
 	def add(hit_or_hits):
 		"""add a search hit(s) to this result"""
 	
-class ISuggestSearchResults(ISearchResults):
+class ISuggestResults(IBaseSearchResults):
 	suggestions = schema.Iterable("suggested words")
 	
 	def add_suggestions(word_or_words):
@@ -485,8 +485,18 @@ class ISuggestSearchResults(ISearchResults):
 	
 	add = add_suggestions
 	
-class ISuggestAndSearchResults(IHitSearchResults, ISuggestSearchResults):
+class ISuggestAndSearchResults(ISearchResults, ISuggestResults):
 	def add(hit_or_hits):
 		"""add a search hit(s) to this result"""
-
+		
+class ISearchResultsCreator(interface.Interface):
+	def __call__(query):
+		"""return a new instance of a ISearchResults"""
 	
+class ISuggestResultsCreator(interface.Interface):
+	def __call__(query):
+		"""return a new instance of a ISuggestResults"""
+		
+class ISuggestAndSearchResultsCreator(interface.Interface):
+	def __call__(query):
+		"""return a new instance of a ISuggestAndSearchResults"""
