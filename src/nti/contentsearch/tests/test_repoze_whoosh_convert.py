@@ -4,6 +4,7 @@ import time
 import datetime
 import unittest						  
 
+from whoosh import fields
 from repoze.catalog import query as repquery
 
 from nti.contentsearch import _repoze_whoosh_convert
@@ -24,7 +25,19 @@ def is_like(string):
 class RepozeWhooshConversionTests(unittest.TestCase):
 
 	def setUp(self):
-		self.q = _repoze_whoosh_convert.QueryConverter()
+		self.schema = fields.Schema( 
+						collectionId = fields.ID(stored=True),
+                       	oid = fields.ID(stored=True, unique=True),
+                        containerId = fields.ID(stored=True),
+                        creator = fields.ID(stored=True),
+                        last_modified = fields.DATETIME(stored=True),
+                        content = fields.TEXT(stored=True, spelling=True),
+                        sharedWith = fields.KEYWORD(stored=False),
+                        color = fields.TEXT(stored=False),
+                        quick = fields.NGRAM(maxsize=10),
+                        keywords = fields.KEYWORD(stored=True),
+                        ntiid = fields.ID(stored=True))
+		self.q = _repoze_whoosh_convert.QueryConverter(schema=self.schema)
 
 	def test_equality_and_contains(self):
 		query = repquery.Eq('author','Bob')
@@ -81,7 +94,7 @@ class RepozeWhooshConversionTests(unittest.TestCase):
 			 	is_like("(author:'Bob Lastname' OR book:'Default Title') AND age:45"))
 
 	def test_date_conversions(self):
-		self.uq = _repoze_whoosh_convert.QueryConverter('default')
+		self.uq = _repoze_whoosh_convert.QueryConverter(self.schema)
 		query = repquery.Gt('last_modified',time.mktime(datetime.datetime(2012,3,14).timetuple()))
 		assert_that(self.uq.convert_query(query), 
 				is_like("last_modified:{14 march 2012 TO}"))
@@ -93,3 +106,6 @@ class RepozeWhooshConversionTests(unittest.TestCase):
 		assert_that(self.q.convert_query(query)[:6], is_("ntiid:"))
 		query = repquery.Eq('kw','keyword')
 		assert_that(self.q.convert_query(query)[:9], is_("keywords:"))
+
+if __name__ == '__main__':
+	unittest.main()

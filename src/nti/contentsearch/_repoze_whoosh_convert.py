@@ -24,19 +24,6 @@ class QueryConverter(object):
 	
 	def __init__(self, schema=None, catalog=None):
 		self.schema = schema
-		if schema == 'default':
-			self.schema = fields.Schema( 
-							collectionId = fields.ID(stored=True),
-                           	oid = fields.ID(stored=True, unique=True),
-                            containerId = fields.ID(stored=True),
-                            creator = fields.ID(stored=True),
-                            last_modified = fields.DATETIME(stored=True),
-                            content = fields.TEXT(stored=True, spelling=True),
-                            sharedWith = fields.KEYWORD(stored=False),
-                            color = fields.TEXT(stored=False),
-                            quick = fields.NGRAM(maxsize=10),
-                            keywords = fields.KEYWORD(stored=True),
-                            ntiid = fields.ID(stored=True))
 
 	def convert_base_query(self,q):
 
@@ -71,7 +58,7 @@ class QueryConverter(object):
 		date_conversion = False
 		if self.schema:
 			sd = {x[0]: x[1:] for x in self.schema.items()}
-			if index in sd and isinstance(sd[index][0],fields.DATETIME):
+			if index in sd and isinstance(sd[index][0], fields.DATETIME):
 				val = date_convert(val)
 				date_conversion = True
 		if not date_conversion: val = process(val)
