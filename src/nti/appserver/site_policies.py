@@ -600,19 +600,26 @@ class MathcountsSitePolicyEventListener(GenericKidSitePolicyEventListener):
 		user.join_community( community )
 		user.follow( community )
 
+_SITE_LANDING_PAGES = {
+	'mathcounts.nextthought.com': b'tag:nextthought.com,2011-10:mathcounts-HTML-mathcounts2013.warm_up_1',
+	#'prmia.nextthought.com': b''
+	}
+
 @component.adapter(nti_interfaces.IUser,app_interfaces.IUserLogonEvent)
-def send_mathcounts_default_landing_page_cookie( user, event ):
+def send_site_default_landing_page_cookie( user, event ):
 	"""
 	This is a hardcoded logon listener to send a cookie to
 	tell the app to direct to a specific page at logon time.
 
-	It only runs when 'mathcounts.nextthought.com' is in the list of sites
-	(we don't have a good way to direct events through site policies yet)
+	We don't have a good way to direct events through site policies yet
+	so we hack it in with a dictionary.
 	"""
 
-	if 'mathcounts.nextthought.com' in get_possible_site_names( request=event.request ):
-		event.request.response.set_cookie( b'nti.landing_page',
-										   value=urllib.quote( b'tag:nextthought.com,2011-10:mathcounts-HTML-mathcounts2013.warm_up_1' ) )
+	for site_name in get_possible_site_names( request=event.request ):
+		if site_name in _SITE_LANDING_PAGES:
+			event.request.response.set_cookie( b'nti.landing_page',
+											   value=urllib.quote( _SITE_LANDING_PAGES[site_name] ) )
+			break
 
 
 
@@ -681,17 +688,17 @@ class LawSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 	COM_USERNAME = 'law.nextthought.com'
 	COM_ALIAS = 'Law'
 	COM_REALNAME = 'Legal Studies'
-	
+
 	# major hack to add users of law to a DFL
 	DEFAULT_DFL_NAME = u'FirstAmendment_Thai_Fall2012'
 	DEFAULT_DFL_OWNER = u'thai@post.harvard.edu'
-	
+
 	def user_created( self, user, event ):
 		super(LawSitePolicyEventListener, self).user_created(user, event)
 		owner = users.User.get_user( self.DEFAULT_DFL_OWNER )
 		if owner is not None:
 			dfl = owner.getContainedObject('FriendsLists', self.DEFAULT_DFL_NAME)
-			if dfl is not None: 
+			if dfl is not None:
 				dfl.addFriend( user )
 			else:
 				logger.warn("Could not find DFL '%s'" %self.DEFAULT_DFL_NAME)
