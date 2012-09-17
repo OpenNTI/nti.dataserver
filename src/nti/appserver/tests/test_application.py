@@ -198,7 +198,7 @@ class TestApplication(ApplicationTestBase):
 		res = testapp.get( path, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body, has_entry( 'Items', has_length( 2 ) ) )
 
-		res = testapp.get( path, params={'filter': 'TopLevel'}, extra_environ=self._make_extra_environ())
+		res = testapp.get( path, params={'filter': 'TopLevel,MeOnly'}, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
 		assert_that( res.json_body, has_entry( 'Items', contains( has_entry( 'ID', top_n_id ) ) ) )
 		assert_that( res.json_body,

@@ -151,6 +151,7 @@ FILTER_NAMES = {
 	'TopLevel': lambda x: getattr( x, 'inReplyTo', None ) is None
 	# This won't work for the Change objects. (Try Acquisition?) Do we need it for them?
 	}
+# MeOnly is another valid filter for just things I have done, implemented efficiently
 
 class _UGDView(object):
 	"""
@@ -159,7 +160,7 @@ class _UGDView(object):
 
 	get_owned = users.User.getContainer
 	get_shared = users.User.getSharedContainer
-	get_public = None
+	#get_public = None
 
 	def __init__(self, request ):
 		self.request = request
@@ -173,6 +174,9 @@ class _UGDView(object):
 		result.__name__ = ntiid
 		return result
 
+	def _get_filter_names(self):
+		return self.request.params.get( 'filter', '' ).split( ',' )
+
 	def getObjectsForId( self, user, ntiid ):
 		"""
 		Returns a sequence of values that can be passed to
@@ -182,18 +186,18 @@ class _UGDView(object):
 		"""
 		__traceback_info__ = user, ntiid
 		mystuffDict = self.get_owned( user, ntiid ) if self.get_owned else ()
-		sharedstuffList = self.get_shared( user, ntiid) if self.get_shared else ()
-		publicDict = self.get_public( user, ntiid ) if self.get_public else ()
+		sharedstuffList = self.get_shared( user, ntiid) if self.get_shared and 'MeOnly' not in self._get_filter_names() else ()
+
 		# To determine the existence of the container,
 		# My stuff either exists or it doesn't. The others, being shared,
 		# may be empty or not empty.
 		if (mystuffDict is None \
 			or (not self._my_objects_may_be_empty and not mystuffDict)) \
-			   and not sharedstuffList \
-			   and not publicDict:
+			   and not sharedstuffList:
+
 			raise hexc.HTTPNotFound(ntiid)
 
-		return (mystuffDict, sharedstuffList, publicDict)
+		return (mystuffDict, sharedstuffList, ()) # Last value is placeholder for get_public, currently not used
 
 	def _sort_filter_batch_result( self, result ):
 		"""
@@ -208,9 +212,10 @@ class _UGDView(object):
 			The sort direction. Options are ``ascending`` and ``descending``.
 
 		filter
-			Whether to filter the returned data in some fashion. Only ``TopLevel`` is defined, and
-			only for the data views (not the stream). It causes only objects that are not
-			replies to something else to be returned.
+			Whether to filter the returned data in some fashion. Two values are defined, and
+			only for the data views (not the stream). First is ``TopLevel``: it causes only objects that are not
+			replies to something else to be returned. Second is ``MeOnly``: it causes only things that
+			I have done to be included. They can be combined by separating them with a comma.
 
 		batchSize
 			Integer giving the page size. Must be greater than zero. Paging only happens when
@@ -244,15 +249,16 @@ class _UGDView(object):
 		# TODO: Which is faster and more efficient? The built-in filter function which allocates
 		# a new list but iterates fast, or iterating in python and removing from the existing list?
 		# Since the list is really an array, removing from it is actually slow
-		filter_name = self.request.params.get( 'filter' )
-		if filter_name in FILTER_NAMES:
-			# Be nice and make sure the reply count gets included if
-			# it isn't already and we're after just the top level.
-			# Must do this before filtering
-			if filter_name == 'TopLevel' and sort_key_function is not _reference_list_length:
-				_build_reference_lists( self.request, result_list )
-			result_list = filter(FILTER_NAMES[filter_name], result_list)
-			result['Items'] = result_list
+		filter_names = self._get_filter_names()
+		for filter_name in filter_names:
+			if filter_name in FILTER_NAMES:
+				# Be nice and make sure the reply count gets included if
+				# it isn't already and we're after just the top level.
+				# Must do this before filtering
+				if filter_name == 'TopLevel' and sort_key_function is not _reference_list_length:
+					_build_reference_lists( self.request, result_list )
+				result_list = filter(FILTER_NAMES[filter_name], result_list)
+				result['Items'] = result_list
 
 		batch_size = self.request.params.get( 'batchSize' )
 		batch_start = self.request.params.get( 'batchStart' )
