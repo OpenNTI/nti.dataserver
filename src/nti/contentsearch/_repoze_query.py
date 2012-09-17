@@ -135,6 +135,7 @@ def parse_subqueries(qo, stored_names=(), map_func=map_to_key_names):
 class _DefaultSearchQueryValiator(object):
 	
 	def validate(self, query):
+		query = query.term if search_interfaces.ISearchQuery.providedBy(query) else query
 		try:
 			EnglishQueryParser.parse(query)
 			return True

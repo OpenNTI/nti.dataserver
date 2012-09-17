@@ -42,9 +42,9 @@ def _ngram_content_highlight(query=None, text=None, default=None):
 def NoSnippetHighlightDecoratorFactory(*args):
 	return NoSnippetHighlightDecorator()
 
+@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+@component.adapter(search_interfaces.INoSnippetHighlight)
 class NoSnippetHighlightDecorator(object):
-	interface.implements(ext_interfaces.IExternalObjectDecorator)
-	component.adapts(search_interfaces.INoSnippetHighlight)
 
 	def decorateExternalObject(self, original, external):
 		pass
@@ -52,8 +52,8 @@ class NoSnippetHighlightDecorator(object):
 def NgramSnippetHighlightDecoratorFactory(*args):
 	return NgramSnippetHighlightDecorator()
 
+@interface.implementer(ext_interfaces.IExternalObjectDecorator)
 class _BaseNgramSnippetHighlightDecorator(object):
-	interface.implements(ext_interfaces.IExternalObjectDecorator)
 	
 	def decorateExternalObject(self, original, external):
 		query = getattr(original, 'query', None)
@@ -62,8 +62,8 @@ class _BaseNgramSnippetHighlightDecorator(object):
 			text = _ngram_content_highlight(query, text.lower(), text)
 			external[SNIPPET] = text
 			
+@component.adapter(search_interfaces.INgramSnippetHighlight)
 class NgramSnippetHighlightDecorator(_BaseNgramSnippetHighlightDecorator):
-	component.adapts(search_interfaces.INgramSnippetHighlight)
 	pass
 		
 def WhooshHighlightDecoratorFactory(*args):
@@ -72,8 +72,9 @@ def WhooshHighlightDecoratorFactory(*args):
 def WordSnippetHighlightDecoratorFactory(*args):
 	return WordSnippetHighlightDecorator()
 	
+@interface.implementer(ext_interfaces.IExternalObjectDecorator)
 class _BaseWordSnippetHighlightDecorator(object):
-	interface.implements(ext_interfaces.IExternalObjectDecorator)
+
 	def decorateExternalObject(self, original, external):
 		query = getattr(original, 'query', None)
 		if query:
@@ -81,12 +82,12 @@ class _BaseWordSnippetHighlightDecorator(object):
 			text = _word_content_highlight(query, text, text)
 			external[SNIPPET] = text
 			
+@component.adapter(search_interfaces.IWordSnippetHighlight)
 class WordSnippetHighlightDecorator(_BaseWordSnippetHighlightDecorator):
-	component.adapts(search_interfaces.IWordSnippetHighlight)
 	pass
 	
+@component.adapter(search_interfaces.IWhooshSnippetHighlight)
 class WhooshHighlightDecorator(_BaseWordSnippetHighlightDecorator):
-	component.adapts(search_interfaces.IWhooshSnippetHighlight)
 
 	def decorateExternalObject(self, original, external):
 		#whoosh_highlight = getattr(original, 'whoosh_highlight', None)
@@ -94,6 +95,9 @@ class WhooshHighlightDecorator(_BaseWordSnippetHighlightDecorator):
 		#	external[SNIPPET] = whoosh_highlight
 		#else:
 		super(WhooshHighlightDecorator, self).decorateExternalObject(original, external)
+
+# search results
+
 
 # search hits
 
@@ -112,8 +116,8 @@ def get_uid(obj):
 	uid = _ds_intid.getId(obj)
 	return uid
 
+@interface.implementer(search_interfaces.ISearchHit)
 class _SearchHit(object, UserDict.DictMixin):
-	interface.implements( search_interfaces.ISearchHit )
 	
 	def __init__( self, original ):
 		if IPersistent.providedBy(original):
@@ -162,24 +166,24 @@ class _SearchHit(object, UserDict.DictMixin):
 	def __repr__(self):
 		return "<%s %r>" % (self.__class__.__name__, self._data)
 		
+@component.adapter(nti_interfaces.IHighlight)
 class _HighlightSearchHit(_SearchHit):
-	component.adapts( nti_interfaces.IHighlight )
 	pass
 	
+@component.adapter(nti_interfaces.IRedaction)
 class _RedactionSearchHit(_SearchHit):
-	component.adapts( nti_interfaces.IRedaction )
 	pass
 		
+@component.adapter(nti_interfaces.INote)
 class _NoteSearchHit(_SearchHit):
-	component.adapts( nti_interfaces.INote )
 	pass
 	
+@component.adapter(chat_interfaces.IMessageInfo)
 class _MessageInfoSearchHit(_SearchHit):
-	component.adapts( chat_interfaces.IMessageInfo )
 	pass
 		
+@component.adapter(search_interfaces.IWhooshBookContent)
 class _WhooshBookSearchHit(_SearchHit):
-	component.adapts( search_interfaces.IWhooshBookContent )
 	
 	def __init__( self, hit ):
 		self._data = {}	
@@ -219,6 +223,7 @@ def _provide_highlight_snippet(hit, query=None, highlight_type=WORD_HIGHLIGHT):
 	return hit
 
 def get_search_hit(obj, query=None, highlight_type=WORD_HIGHLIGHT, *args, **kwargs):
-	hit = component.queryAdapter( obj, ext_interfaces.IExternalObject, default=_SearchHit(obj), name='search-hit')
+	hit = component.queryAdapter( obj, ext_interfaces.IExternalObject, default=None, name='search-hit')
+	hit = hit or _SearchHit(obj)
 	hit = _provide_highlight_snippet(hit, query, highlight_type)
 	return hit

@@ -462,7 +462,7 @@ class ISearchQuery(interface.Interface):
 
 class ISearchQueryValidator(interface.Interface):
 	
-	def validate(term):
+	def validate(query):
 		"""check if the specified search query is valid"""
 		
 # search results
@@ -473,12 +473,20 @@ class ISearchResults(interface.Interface):
 
 class IHitSearchResults(ISearchResults):
 	hits = schema.Iterable("search result hits")
-	pass
+	
+	def add(hit_or_hits):
+		"""add a search hit(s) to this result"""
 	
 class ISuggestSearchResults(ISearchResults):
 	suggestions = schema.Iterable("suggested words")
-	pass
+	
+	def add_suggestions(word_or_words):
+		"""add a word suggestion(s) to this result"""
+	
+	add = add_suggestions
 	
 class ISuggestAndSearchResults(IHitSearchResults, ISuggestSearchResults):
-	pass
+	def add(hit_or_hits):
+		"""add a search hit(s) to this result"""
+
 	

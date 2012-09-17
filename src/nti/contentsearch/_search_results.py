@@ -2,8 +2,9 @@ from __future__ import print_function, unicode_literals
 
 import six
 
-from nti.contentsearch.interfaces import ISearchHit
-from nti.contentsearch._search_query import QueryObject
+from zope import interface
+
+from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch.common import (QUERY, HIT_COUNT, ITEMS, LAST_MODIFIED, SUGGESTIONS)
 
 import logging
@@ -11,7 +12,7 @@ logger = logging.getLogger( __name__ )
 
 class _Results(object):
 	def __init__(self, query):
-		assert isinstance(query, QueryObject)
+		assert search_interfaces.ISearchQuery.providedBy(query)
 		self._query = query
 	
 	@property
@@ -26,6 +27,7 @@ class _Results(object):
 	def hits(self):
 		raise NotImplementedError()
 
+@interface.implementer( search_interfaces.IHitSearchResults )
 class _SearchResults(_Results):
 	def __init__(self, query):
 		super(_SearchResults, self).__init__(query)
@@ -36,11 +38,12 @@ class _SearchResults(_Results):
 		return self._hits
 	
 	def add(self, items):
-		items = tuple(items) if ISearchHit.providedBy(items) else items
+		items = tuple(items) if search_interfaces.ISearchHit.providedBy(items) else items
 		for item in items or ():
-			if ISearchHit.providedBy(item):
+			if search_interfaces.ISearchHit.providedBy(item):
 				self.hits.append(item)
 	
+@interface.implementer( search_interfaces.ISuggestSearchResults )
 class _SuggestResults(_Results):
 	def __init__(self, query):
 		super(_SuggestResults, self).__init__(query)
@@ -60,6 +63,7 @@ class _SuggestResults(_Results):
 			
 	add = add_suggestions
 
+@interface.implementer( search_interfaces.ISuggestAndSearchResults )
 class _SuggestAndSearchResults(_SearchResults, _SuggestResults):
 	def __init__(self, query):
 		super(_SearchResults, self).__init__(query)
