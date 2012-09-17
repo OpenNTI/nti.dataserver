@@ -13,7 +13,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 from zope import component
-from zope.lifecycleevent import IObjectRemovedEvent
+from zope.lifecycleevent import IObjectRemovedEvent, IObjectCreatedEvent
 from zope.annotation import IAnnotations
 
 import persistent
@@ -132,3 +132,16 @@ def _remove_sessions_for_removed_user( user, event ):
 	# This is tightly coupled to OwnerBasedAnnotationSessionServiceStorage
 	if hasattr( storage, 'unregister_all_sessions_for_owner' ):
 		storage.unregister_all_sessions_for_owner( user )
+
+@component.adapter(nti_interfaces.IUser, IObjectCreatedEvent)
+def _create_sessions_for_new_user( user, event ):
+	# Users commonly create sessions immediately after they create accounts
+	# Go ahead and create the session storage in the transaction where
+	# the user is created so it already exists. Lots of things want to start
+	# adding annotations to the user as soon as it exists, and if we don't have
+	# to modify the IAnnotations BTree to get to the session store, we stand
+	# a better chance of avoiding conflicts
+	storage = component.queryUtility( nti_interfaces.ISessionServiceStorage )
+
+	family = getattr( storage, 'family', BTrees.family64 )
+	_session_id_set_for_session_owner( user, family )
