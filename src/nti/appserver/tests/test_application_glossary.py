@@ -31,6 +31,10 @@ from .test_application import ContainedExternal
 
 from urllib import quote as UQ
 
+from nti.dictserver.tests import test_dictionary
+from nti.dictserver.storage import TrivialExcelCSVDataStorage
+from zope import component
+
 class TestApplicationGlossary(ApplicationTestBase):
 
 
@@ -38,6 +42,10 @@ class TestApplicationGlossary(ApplicationTestBase):
 		"We can hit the glossary of a new container. Does no real verification."
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user( )
+
+		csv_dict = TrivialExcelCSVDataStorage( os.path.join( os.path.dirname( test_dictionary.__file__ ), 'nti_content_glossary.csv' ) )
+		component.provideUtility( csv_dict )
+
 
 		testapp = TestApp( self.app )
 		path = '/dataserver2/users/sjohnson@nextthought.com/Pages(tag:NewcontainerResource)/Glossary/demo'

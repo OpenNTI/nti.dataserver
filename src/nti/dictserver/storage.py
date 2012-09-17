@@ -11,6 +11,7 @@ logger = __import__('logging').getLogger(__name__)
 import sqlite3
 import simplejson as json
 import re
+import csv
 
 from zope import interface
 from zope import component
@@ -107,6 +108,35 @@ class JsonDictionaryTermDataStorage(object):
 					meaning_dict['content'] = _wiki_clean( meaning_dict['content'] )
 			return result
 
+@interface.implementer(interfaces.IDictionaryTermDataStorage)
+class TrivialExcelCSVDataStorage(object):
+	"""
+	Reads a CSV file containing a ``Term`` and ``Definition`` column
+	and stores this data in memory.
+	"""
+
+	def __init__( self, path_or_file ):
+		"""
+		:param path_or_file: Either a string naming a file path, or an open
+			file-like object that we can read from.
+		"""
+
+		if isinstance(path_or_file, basestring):
+			path_or_file = open(path_or_file, 'rU')
+
+		reader = csv.DictReader( path_or_file )
+		self._data = {} # depending on how big the data is, we might want to use a btree
+		for row in reader:
+			term = row['Term']
+			defn = row['Definition']
+
+			self._data[term.lower()] = DictionaryTermData( meanings=( {'content': defn, 'examples': (), 'type': 'noun' }, ) )
+
+	def lookup( self, key, exact=False ):
+		result = self._data.get( key )
+		if not result and not exact:
+			result = self._data.get( key.lower() )
+		return result
 
 @interface.implementer(interfaces.IDictionaryTermData)
 class DictionaryTermData(dict):

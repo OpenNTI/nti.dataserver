@@ -1,0 +1,10 @@
+Term,Definition
+risk limits,"upper and/or lower bounds for various quantitative measures that are thought to relate to the risk of a portfolio, where risk is meant to be risk of loss of value, that are not to be exceeded at any time when applied to the positions in a portfolio "
+market maker,an individual who stands ready at all times to purchase and sell a quantity of a financial instrument at announced prices
+open position,ownership of a financial instrument in a portfolio in which there is not also an identical but offsetting position owned
+basis risk,risk of loss arising when a portfolio contains offsetting positions that are not identical in the sense that the price dynamics of the two position are not perfectly correlated
+shading,an inventory management method used by market makers intended to attract buyers (sellers) in order to reduce (increase) the quantity of a financial instrument held in the market maker's portfolio
+paying away,to incur a transaction cost from selling at the bid price (below the mid or fair value) or buying at the ask price (above the mid or fair value)
+negative gamma,"gamma is a measure of non-linearity in the relationship between the price of an instrument and the underlying market factor whose variation causes that price to change.  Gamma can be positive or negative.  When a position has negative gamma and a positive correlation with the underlying market factor, maintaining a hedge of the position is money-losing, and the rate at which lossess accumulate is faster than the rate at which profits accumulate.  "
+probability distribution,a function describing the uncertainty in the value of an object in terms of the likelihood that the object's value is between any two given bounding values
+risk appetite,"an expression of risk aversion, usually by the board of an organization, in terms of the maximum loss tolerable witin a given interval of time"

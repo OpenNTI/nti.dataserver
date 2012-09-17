@@ -12,6 +12,7 @@ from hamcrest import none
 
 import anyjson as json
 from zope import component
+import os.path
 
 import nti.tests
 from nose.tools import assert_raises
@@ -19,6 +20,7 @@ import fudge
 
 from nti.dictserver.storage import UncleanSQLiteJsonDictionaryTermStorage as Storage
 from nti.dictserver.storage import JsonDictionaryTermDataStorage as JsonDictionary
+from nti.dictserver.storage import TrivialExcelCSVDataStorage
 from nti.dictserver import lookup
 from nti.dictserver.term import DictionaryTerm as WordInfo
 
@@ -93,3 +95,11 @@ class TestDictionary(nti.tests.ConfiguringTestBase):
 		assert_that( val, is_( WordInfo ) )
 
 		storage.close()
+
+	def test_lookup_trivial_excel_through_api( self ):
+		csv_dict = TrivialExcelCSVDataStorage( os.path.join( os.path.dirname( __file__ ), 'nti_content_glossary.csv' ) )
+		component.provideUtility( csv_dict )
+
+		val = lookup( 'Risk Limits' )
+		assert_that( val, is_( WordInfo ) )
+		assert_that( val.toXMLString(), is_not( none() ) )
