@@ -26,7 +26,7 @@ Accounts can also be created on the command line:
 Account Recovery
 ================
 
-Account recovery actions for forgotted usernames and passwords can
+Account recovery actions for forgotten usernames and passwords can
 be initiated through the ReST interface.
 
 .. automodule:: nti.appserver.account_recovery_views
@@ -51,3 +51,11 @@ Database Sharding
 
 .. automodule:: nti.dataserver.shards
 	:private-members:
+
+Command Line
+------------
+
+Once the database is in place, and configured, the dataserver has to
+be made aware of the database and told to use it as a shard:
+
+.. command-output:: nti_init_shard -h

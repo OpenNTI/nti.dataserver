@@ -62,6 +62,7 @@ Tasks
 
 	liking
 	flagging
+	ugd_query
 
 Chat
 ====

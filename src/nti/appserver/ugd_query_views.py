@@ -153,6 +153,9 @@ FILTER_NAMES = {
 	}
 
 class _UGDView(object):
+	"""
+	The base view for user generated data.
+	"""
 
 	get_owned = users.User.getContainer
 	get_shared = users.User.getSharedContainer
@@ -171,10 +174,11 @@ class _UGDView(object):
 		return result
 
 	def getObjectsForId( self, user, ntiid ):
-		""" Returns a sequence of values that can be passed to
+		"""
+		Returns a sequence of values that can be passed to
 		:func:`lists_and_dicts_to_ext_collection`.
 
-		:raise :class:`hexc.HTTPNotFound`: If no actual objects can be found.
+		:raises nti.appserver.httpexceptions.HTTPNotFound: If no actual objects can be found.
 		"""
 		__traceback_info__ = user, ntiid
 		mystuffDict = self.get_owned( user, ntiid ) if self.get_owned else ()
@@ -193,7 +197,29 @@ class _UGDView(object):
 
 	def _sort_filter_batch_result( self, result ):
 		"""
-		Sort, filter, and batch (page) the result by modifying it in place.
+		Sort, filter, and batch (page) the result by modifying it in place. This method
+		sorts by lastModified by default, but everything else comes from the query parameters:
+
+		sortOn
+			The field to sort on. Options are ``lastModified``, ``LikeCount`` and ``ReferencedByCount``.
+			Only ``lastModified`` is valid for the stream views.
+
+		sortOrder
+			The sort direction. Options are ``ascending`` and ``descending``.
+
+		filter
+			Whether to filter the returned data in some fashion. Only ``TopLevel`` is defined, and
+			only for the data views (not the stream). It causes only objects that are not
+			replies to something else to be returned.
+
+		batchSize
+			Integer giving the page size. Must be greater than zero. Paging only happens when
+			this is supplied together with ``batchStart``
+
+		batchStart
+			Integer giving the index of the first object to return, starting with zero. Paging only
+			happens when this is supplied together with ``batchSize``.
+
 		:param dict result: The result dictionary that will be returned to the client.
 			Contains the ``Items`` list of all items found. You may add keys to the dictionary.
 			You may (and should) modify the Items list directly.

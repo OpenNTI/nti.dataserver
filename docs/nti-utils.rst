@@ -4,6 +4,11 @@
 
 .. automodule:: nti.utils
 
+dataurl
+=======
+
+.. automodule:: nti.utils.dataurl
+
 minidom
 =======
 
