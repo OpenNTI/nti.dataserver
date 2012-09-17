@@ -154,7 +154,7 @@ setup(
 		'paste',
 		'pyPDF >= 1.13', # Pure python PDF reading library. Not complex. Has newer fork pyPDF2, not yet on PyPI?
 		'pyquery >= 1.2.1', # jquery-like traversing of python datastructures. lxml, cssselect
-		'pyramid >= 1.3.4' ,
+		'pyramid >= 1.3.4, < 1.4a1' ,
 		'pyramid_tm >= 0.5',
 		'pyramid_mailer >= 0.9', # Which uses repoze.sendmail
 		'pyramid_who >= 0.3',
