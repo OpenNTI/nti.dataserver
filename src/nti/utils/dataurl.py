@@ -73,8 +73,8 @@ def encode(raw_bytes,
 		have encoded your raw data appropriately.
 
 		.. note:: This function employs a heuristic to know when to default this
-		parameter (for example, it is not used for image mime types). To be absolutely
-		sure, set it explicitly (None meaning not to use it).
+			parameter (for example, it is not used for image mime types). To be absolutely
+			sure, set it explicitly (None meaning not to use it).
 	:param encoder:	"base64" or None.
 	:returns: Data URL byte string
 	"""
