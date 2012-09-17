@@ -246,11 +246,11 @@ class TestApplication(ApplicationTestBase):
 									has_entry( 'ID', reply_n_id ),
 									has_entry( 'ID', top_n_id ) ) ) )
 
-		res = testapp.get( path, params={'batchSize': '1', 'batchStart': '0'}, extra_environ=self._make_extra_environ())
+		res = testapp.get( path, params={'batchSize': '1', 'batchStart': '0', 'sortOn': 'lastModified', 'sortOrder': 'ascending'}, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
 		assert_that( res.json_body, has_entry( 'Items', contains( has_entry( 'ID', top_n_id ) ) ) )
 
-		res = testapp.get( path, params={'batchSize': '1', 'batchStart': '1'}, extra_environ=self._make_extra_environ())
+		res = testapp.get( path, params={'batchSize': '1', 'batchStart': '1', 'sortOn': 'lastModified', 'sortOrder': 'ascending'}, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
 		assert_that( res.json_body, has_entry( 'Items', contains( has_entry( 'ID', reply_n_id ) ) ) )
 
