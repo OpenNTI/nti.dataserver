@@ -52,8 +52,8 @@
 			 provides="nti.appserver.interfaces.IUserCapabilityFilter"
 			 name="mathcounts.nextthought.com" />
 
-	<!-- Landing page for mathcounts -->
-	<subscriber handler=".site_policies.send_mathcounts_default_landing_page_cookie" />
+	<!-- Landing pages for sites -->
+	<subscriber handler=".site_policies.send_site_default_landing_page_cookie" />
 
 	<!-- CSS for mathcounts -->
 	<utility factory=".site_policy_views.SiteCSSMarker"
