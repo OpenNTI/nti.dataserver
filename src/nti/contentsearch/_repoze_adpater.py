@@ -114,7 +114,7 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 			t = time.time()
 			result = catalog.query(queryobject, limit=limit)
 			t = time.time() - t
-			logger.debug("repoze catalog for type '%s' search took %s(s)" % (type_name, t))
+			logger.debug("repoze catalog search for %s(s) took %s(s)" % (type_name, t))
 			return result
 
 	def _do_search(self, fieldname, qo, search_on=(), highlight_type=None):
