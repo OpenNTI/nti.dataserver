@@ -12,13 +12,18 @@ from lxml import etree
 
 from zope.dublincore import xmlmetadata
 
-# some direct imports for speed
-#from os.path import join as path_join
-
-
+###
+## Constants for file names we know and care about
+##
 TOC_FILENAME = 'eclipse-toc.xml'
 ARCHIVE_FILENAME = 'archive.zip'
 DCMETA_FILENAME = 'dc_metadata.xml'
+# A glossary file applicable to the entire content.
+# TODO: In the future, if we need to, we can add a node property
+# for sub-glossaries specific to just portions of the content
+MAIN_CSV_CONTENT_GLOSSARY_FILENAME = 'nti_content_glossary.csv'
+# Assessment items for this entire content
+ASSESSMENT_INDEX_FILENAME = 'assessment_index.json'
 
 _toc_item_attrs = ('NTIRelativeScrollHeight', 'href', 'icon', 'label', 'ntiid',)
 

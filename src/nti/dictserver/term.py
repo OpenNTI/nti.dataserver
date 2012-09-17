@@ -36,6 +36,20 @@ class DictionaryTerm(_InfoRoot):
 	def __iter__(self):
 		return self.infos.__iter__()
 
+	def __len__( self ):
+		"""
+		How many infos we hold. Note that this also makes us False when empty.
+		"""
+		return len(self.infos)
+
+	def findInfo( self, clazz ):
+		"""
+		Return the first instance of the given class that we hold.
+		"""
+		for info in self:
+			if isinstance( info, clazz ):
+				return info
+
 	def toXML( self ):
 		""" Returns a DOM """
 		dom = getDOMImplementation().createDocument( None, 'WordInfo',
@@ -112,6 +126,12 @@ class DictInfo(_InfoRoot):
 	def __iter__(self):
 		return self.definitions.__iter__()
 
+	def __len__( self ):
+		"""
+		How many definitions we hold. Note that this also makes us False when empty.
+		"""
+		return len(self.definitions)
+
 	def toXML( self, dom, parent ):
 		info = dom.createElement( "DictInfo" )
 		parent.appendChild( info )
@@ -145,6 +165,12 @@ class TherInfo(_InfoRoot):
 
 	def addSynonym( self, synonym ):
 		self.synonyms.append( synonym )
+
+	def __len__( self ):
+		"""
+		How many synonyms we hold. Note that this also makes us False when empty.
+		"""
+		return len(self.synonyms)
 
 
 	def toXML( self, dom, parent ):

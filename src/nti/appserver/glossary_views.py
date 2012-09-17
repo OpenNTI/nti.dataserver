@@ -38,7 +38,10 @@ import datetime
 from pyramid.view import view_config, view_defaults
 from pyramid import httpexceptions as hexc
 
+import nti.contentlibrary.interfaces as lib_interfaces
 import nti.appserver.interfaces as app_interfaces
+import nti.dictserver.interfaces as dict_interfaces
+
 import nti.dictserver as dictserver
 from nti.dataserver import authorization as nauth
 
@@ -57,19 +60,38 @@ class GlossaryView(object):
 	@view_config( context=app_interfaces.IPageContainerResource )
 	@view_config( context=app_interfaces.INewContainerResource )
 	def __call__(self):
-		# Obviously none of the configuration
-		# and traversal and merging is here yet.
-		# This is a straightforward
 		request = self.request
 		term = request.subpath[0]
+		# Note that by registering on objects.generic.traversal, we will
+		# always get a INewContainerResource, with an ntiid of Pages(....), with
+		# the real value still parenthesized. We should register on one of the odata traversals
+		# to avoid this
+		ntiid = request.context.ntiid
+		if ntiid.startswith( 'Pages(' ) and ntiid.endswith( ')' ):
+			ntiid = ntiid[6:-1]
 
-		try:
-			info = dictserver.lookup( term )
-		except (KeyError,ValueError): # pragma: no cover
-			# Bad/missing JSON dictionary data.
-			# We probably shouldn't ever get this far
-			logger.exception( "Bad or missing dictionary data" )
-			return hexc.HTTPNotFound()
+		# Currently, we only support merging in content-specific glossary values
+		library = request.registry.queryUtility( lib_interfaces.IContentPackageLibrary )
+		if library:
+			path = library.pathToNTIID( ntiid ) or ()
+		else:
+			path = ()
+
+		# Collect all the dictionaries, from most specific to global
+		dictionaries = []
+		for unit in path:
+			unit_dict = request.registry.queryUtility( dict_interfaces.IDictionaryTermDataStorage, name=unit.ntiid )
+			dictionaries.append( unit_dict )
+		dictionaries.append( request.registry.queryUtility( dict_interfaces.IDictionaryTermDataStorage ) )
+
+		info = term
+		for dictionary in dictionaries:
+			if dictionary is not None:
+				info = dictserver.lookup( info, dictionary=dictionary )
+
+		if info is term:
+			# No dictionaries at all were found
+			raise hexc.HTTPNotFound()
 
 		# Save a unicode string into the body
 		request.response.text = info.toXMLString(encoding=None)
@@ -79,3 +101,21 @@ class GlossaryView(object):
 		request.response.status_int = 200
 
 		return request.response
+
+from zope import component
+from zope.lifecycleevent.interfaces import IObjectCreatedEvent
+
+from nti.contentlibrary import interfaces as lib_interfaces
+from nti.contentlibrary.eclipse import MAIN_CSV_CONTENT_GLOSSARY_FILENAME
+from cStringIO import StringIO
+
+from nti.dictserver.storage import TrivialExcelCSVDataStorage
+
+@component.adapter(lib_interfaces.IContentPackage,IObjectCreatedEvent)
+def add_main_glossary_from_new_content( title, event ):
+	glossary_source = title.read_contents_of_sibling_entry( MAIN_CSV_CONTENT_GLOSSARY_FILENAME )
+	if glossary_source:
+		logger.info( "Adding content-glossary from %s at %s", title, title.ntiid )
+
+		csv_dict = TrivialExcelCSVDataStorage( StringIO( glossary_source ) )
+		component.provideUtility( csv_dict, name=title.ntiid )
