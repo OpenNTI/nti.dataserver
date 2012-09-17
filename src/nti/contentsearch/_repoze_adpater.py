@@ -1,5 +1,7 @@
 from __future__ import print_function, unicode_literals
 
+import time
+
 from zope import component
 from zope import interface
 from zope.annotation import factory as an_factory
@@ -103,13 +105,17 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 		
 		return items, lm
 
-	def _do_catalog_query(self, catalog, fieldname, qo):
+	def _do_catalog_query(self, catalog, fieldname, qo, type_name):
 		is_all_query, queryobject = parse_query(catalog, fieldname, qo)
 		if is_all_query:
 			return 0, []
 		else:
 			limit = qo.limit
-			return catalog.query(queryobject, limit=limit)
+			t = time.time()
+			result = catalog.query(queryobject, limit=limit)
+			t = time.time() - t
+			logger.debug("repoze catalog for type '%s' search took %s(s)" % (type_name, t))
+			return result
 
 	def _do_search(self, fieldname, qo, search_on=(), highlight_type=None):
 		
@@ -122,7 +128,7 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 			catalog = self.get_catalog(type_name)
 			
 			# search catalog
-			_, docids = self._do_catalog_query(catalog, fieldname, qo)
+			_, docids = self._do_catalog_query(catalog, fieldname, qo, type_name)
 			hits, hits_lm = self._get_hits_from_docids(qo, docids, highlight_type)
 			
 			# calc the last modified date

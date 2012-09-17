@@ -337,7 +337,7 @@ class IWhooshSnippetHighlight(IHighlightType):
 	pass
 
 class ISearchHit(ext_interfaces.IExternalObject):
-	query = interface.Attribute("""query that produced this hit""")
+	query = schema.TextLine(title="query that produced this hit")
 	pass
 	
 # user generated content resolvers
@@ -417,12 +417,6 @@ class IStopWords(interface.Interface):
 	def available_languages():
 		"available languages"
 		
-# search query valididator
-
-class ISearchQueryValidator(interface.Interface):
-	
-	def validate(quyery):
-		"""check if the specified search query is valid"""
 	
 # Catalog creators
 	
@@ -460,4 +454,31 @@ class ICloudSearchStore(interface.Interface):
 	def get_domain(domain_name):
 		"""return the aws domain w/ the specified name"""
 	
+# search query
 
+class ISearchQuery(interface.Interface):
+	term = schema.TextLine(title="query search term")
+	limit = schema.Int(title="search results limit")
+
+class ISearchQueryValidator(interface.Interface):
+	
+	def validate(term):
+		"""check if the specified search query is valid"""
+		
+# search results
+
+class ISearchResults(interface.Interface):
+	query = schema.Object(ISearchQuery, title="search query")
+	pass
+
+class IHitSearchResults(ISearchResults):
+	hits = schema.Iterable("search result hits")
+	pass
+	
+class ISuggestSearchResults(ISearchResults):
+	suggestions = schema.Iterable("suggested words")
+	pass
+	
+class ISuggestAndSearchResults(IHitSearchResults, ISuggestSearchResults):
+	pass
+	

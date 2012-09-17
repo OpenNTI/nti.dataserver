@@ -3,8 +3,12 @@ from __future__ import print_function, unicode_literals
 import six
 import UserDict
 
-from nti.contentsearch.common import to_list
+from zope import interface
 
+from nti.contentsearch.common import to_list
+from nti.contentsearch import interfaces as search_interfaces
+
+@interface.implementer(search_interfaces.ISearchQuery)
 class QueryObject(object, UserDict.DictMixin):
 
 	__float_properties__ = ('threshold',)

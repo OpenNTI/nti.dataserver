@@ -1,10 +1,81 @@
 from __future__ import print_function, unicode_literals
 
+import six
+
+from nti.contentsearch.interfaces import ISearchHit
+from nti.contentsearch._search_query import QueryObject
 from nti.contentsearch.common import (QUERY, HIT_COUNT, ITEMS, LAST_MODIFIED, SUGGESTIONS)
 
 import logging
 logger = logging.getLogger( __name__ )
 
+class _Results(object):
+	def __init__(self, query):
+		assert isinstance(query, QueryObject)
+		self._query = query
+	
+	@property
+	def limit(self):
+		return self.query.limit
+	
+	@property
+	def query(self):
+		return self._query
+	
+	@property
+	def hits(self):
+		raise NotImplementedError()
+
+class _SearchResults(_Results):
+	def __init__(self, query):
+		super(_SearchResults, self).__init__(query)
+		self._hits = []
+
+	@property
+	def hits(self):
+		return self._hits
+	
+	def add(self, items):
+		items = tuple(items) if ISearchHit.providedBy(items) else items
+		for item in items or ():
+			if ISearchHit.providedBy(item):
+				self.hits.append(item)
+	
+class _SuggestResults(_Results):
+	def __init__(self, query):
+		super(_SuggestResults, self).__init__(query)
+		self._words = set()
+
+	@property
+	def hits(self):
+		return self._words
+	
+	suggestions = hits
+	
+	def add_suggestions(self, items):
+		items = tuple(items) if isinstance(items, six.string_types) else items
+		for item in items or ():
+			if isinstance(item, six.string_types):
+				self.hits.add(unicode(item))
+			
+	add = add_suggestions
+
+class _SuggestAndSearchResults(_SearchResults, _SuggestResults):
+	def __init__(self, query):
+		super(_SearchResults, self).__init__(query)
+		super(_SuggestResults, self).__init__(query)
+
+	@property
+	def hits(self):
+		return self._hits
+	
+	@property
+	def suggestions(self):
+		return list(self._words)
+			
+	def add(self, items):
+		_SearchResults.add(self, items)
+	
 def _empty_result(query, is_suggest=False):
 	result = {}
 	result[QUERY] = query
