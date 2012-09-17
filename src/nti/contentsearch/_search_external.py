@@ -146,7 +146,10 @@ class _SearchHit(object, UserDict.DictMixin):
 	
 	def keys(self):
 		return self._data.keys()
-		
+			
+	def toExternalObject(self):
+		return dict(self._data)
+	
 	def __getitem__(self, key):
 		return self._data[key]
 	
@@ -155,9 +158,9 @@ class _SearchHit(object, UserDict.DictMixin):
 		
 	def __delitem__(self, key):
 		self._data.pop(key)
-	
-	def toExternalObject(self):
-		return dict(self._data)
+		
+	def __repr__(self):
+		return "<%s %r>" % (self.__class__.__name__, self._data)
 		
 class _HighlightSearchHit(_SearchHit):
 	component.adapts( nti_interfaces.IHighlight )
