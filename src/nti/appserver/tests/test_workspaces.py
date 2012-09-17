@@ -131,7 +131,7 @@ class TestUserEnumerationWorkspace(tests.ConfiguringTestBase):
 		root = uew.collections[0].container[0]
 		ext_obj = to_external_object( root )
 		assert_that( ext_obj, has_entry( 'ID', ntiids.ROOT ) )
-		assert_that( ext_obj, has_entry( 'Links', has_length( 1 ) ) )
+		assert_that( ext_obj, has_entry( 'Links', has_length( greater_than_or_equal_to( 1 ) ) ) )
 		assert_that( ext_obj['Links'][0], has_entry( 'rel', 'RecursiveStream' ) )
 
 	@mock_dataserver.WithMockDSTrans
@@ -158,15 +158,15 @@ class TestUserEnumerationWorkspace(tests.ConfiguringTestBase):
 		assert_that( ext_obj, has_entry( 'ID', ntiids.ROOT ) )
 		assert_that( ext_obj, has_entry( 'Class', 'PageInfo' ) )
 		assert_that( ext_obj, has_entry( 'MimeType', 'application/vnd.nextthought.pageinfo' ) )
-		assert_that( ext_obj, has_entry( 'Links', has_length( 1 ) ) )
+		assert_that( ext_obj, has_entry( 'Links', has_length( greater_than_or_equal_to( 1 ) ) ) )
 		assert_that( ext_obj['Links'][0], has_entry( 'rel', 'RecursiveStream' ) )
 
 
 		shared = uew.collections[2].container[1]
 		ext_obj = to_external_object( shared )
 		assert_that( ext_obj, has_entry( 'ID', PersistentContained.containerId ) )
-		#['UserGeneratedData', 'RecursiveUserGeneratedData', 'Stream', 'RecursiveStream', 'UserGeneratedDataAndRecursiveStream']
-		assert_that( ext_obj, has_entry( 'Links', has_length( 5 ) ) )
+		#['UserGeneratedData', 'RecursiveUserGeneratedData', 'Stream', 'RecursiveStream', 'UserGeneratedDataAndRecursiveStream', 'Glossary']
+		assert_that( ext_obj, has_entry( 'Links', has_length( greater_than_or_equal_to( 6 ) ) ) )
 
 
 

@@ -14,6 +14,7 @@ from pyramid import httpexceptions as hexc
 
 import nti.dictserver as dictserver
 
+
 @view_config(route_name='dictionary.word', request_method='GET',
 			 http_cache=datetime.timedelta(days=1) )
 def lookup( request ):
@@ -26,9 +27,9 @@ def lookup( request ):
 	environ = request.environ
 	path = os.path.split( environ['PATH_INFO'] )[1]
 
-	info = dictserver.WordInfo( path )
+
 	try:
-		dictserver.lookup( info )
+		info = dictserver.lookup( path )
 	except (KeyError,ValueError):
 		# Bad/missing JSON dictionary data.
 		# We probably shouldn't ever get this far

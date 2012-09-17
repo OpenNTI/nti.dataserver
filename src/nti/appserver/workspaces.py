@@ -532,7 +532,8 @@ class _NTIIDEntry(object):
 	# in the _PageContainerResource
 	__operations__ = ('UserGeneratedData', 'RecursiveUserGeneratedData',
 					  'Stream', 'RecursiveStream',
-					  'UserGeneratedDataAndRecursiveStream')
+					  'UserGeneratedDataAndRecursiveStream',
+					  'Glossary')
 
 	extra_links = ()
 	contentUnit = None
@@ -609,7 +610,7 @@ class _RootNTIIDEntry(_NTIIDEntry):
 	Defines the collection entry for the root pseudo-NTIID, which
 	is only meant for the use of the global stream.
 	"""
-	__operations__ = ('RecursiveStream',)
+	__operations__ = ('RecursiveStream', 'Glossary')
 
 	def __init__( self, parent, _ ):
 		super(_RootNTIIDEntry,self).__init__( parent, ntiids.ROOT )
