@@ -77,6 +77,7 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 					self._on_added_friend( result )
 					# Now that we found it, if possible replace the string
 					# with the real thing
+					# TODO: Remove support for storing friends as string names
 					try:
 						# Must have the index, the weak refs in here
 						# behave badly in comparisons.
@@ -118,8 +119,11 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 		elif isinstance( friend, six.string_types ):
 			# Try to resolve, add the resolved if possible, otherwise add the
 			# string as a placeholder. Don't recurse, could be infinite
+			# TODO: Remove support for storing friends as string names
 			friend = friend.lower()
 			friend = Entity.get_entity( friend, default=friend )
+			if isinstance( friend, six.string_types ):
+				logger.debug( "Adding unresolved friend as string %s to %s", friend, self )
 			self._friends.append( friend )
 		else:
 			self._friends.append( friend )
@@ -226,8 +230,11 @@ class DynamicFriendsList(DynamicSharingTargetMixin,FriendsList):
 	def _on_added_friend( self, friend ):
 		assert self.creator, "Must have creator"
 		super(DynamicFriendsList,self)._on_added_friend( friend )
-		friend._communities.add( self.NTIID )
-		friend._following.add( self.NTIID )
+		if hasattr( friend, '_communities' ) and hasattr( friend, '_following' ):
+			# TODO: This is here to support the weird unresolved friend-as-string
+			# thing
+			friend._communities.add( self.NTIID )
+			friend._following.add( self.NTIID )
 		# TODO: When this object is deleted we need to clean this up
 
 	def _update_friends_from_external( self, new_friends ):
