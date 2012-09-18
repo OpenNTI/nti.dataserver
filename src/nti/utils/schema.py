@@ -87,14 +87,16 @@ class IndexedIterable(schema.List):
 	_type = None # Override from super to not force a list
 
 
-def find_most_derived_interface( ext_self, iface_upper_bound ):
+def find_most_derived_interface( ext_self, iface_upper_bound, possibilities=None ):
 	"""
 	Search for the most derived version of the interface `iface_upper_bound`
 	implemented by `ext_self` and return that. Always returns at least `iface_upper_bound`
+	:param possibilities: An iterable of schemas to consider
 	"""
-
+	if possibilities is None:
+		possibilities = interface.providedBy( ext_self )
 	_iface = iface_upper_bound
-	for iface in interface.providedBy( ext_self ):
+	for iface in possibilities:
 		if iface.isOrExtends( _iface ):
 			_iface = iface
 	return _iface

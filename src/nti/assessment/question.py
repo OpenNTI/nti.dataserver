@@ -8,6 +8,7 @@ from __future__ import print_function, unicode_literals
 
 from zope import interface
 from zope.mimetype import interfaces as mime_interfaces
+import zope.container.contained
 
 from persistent import Persistent
 
@@ -15,7 +16,7 @@ from . import interfaces
 from ._util import superhash
 
 @interface.implementer(interfaces.IQuestion,mime_interfaces.IContentTypeAware)
-class QQuestion(Persistent):
+class QQuestion(Persistent, zope.container.contained.Contained):
 	mime_type = 'application/vnd.nextthought.naquestion'
 
 	content = ''
@@ -39,7 +40,7 @@ class QQuestion(Persistent):
 
 
 @interface.implementer(interfaces.IQuestionSet, mime_interfaces.IContentTypeAware)
-class QQuestionSet(Persistent):
+class QQuestionSet(Persistent,zope.container.contained.Contained):
 	mime_type = 'application/vnd.nextthought.naquestionset'
 
 	questions = ()

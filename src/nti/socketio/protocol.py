@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
 
 import logging
 logger = logging.getLogger(__name__)
 import six
 
 import anyjson as json
+from nti.externalization.externalization import to_json_representation_externalized
 
-import interfaces
+from . import interfaces
 
 from zope import interface
 from zope import component
@@ -125,10 +126,8 @@ class SocketIOProtocolFormatter1(object):
 		if isinstance(message, six.string_types):
 			return message
 
-		if isinstance(message, (object, dict)):
-			return self.encode(json.dumps(message))
+		return self.encode( to_json_representation_externalized(message) )
 
-		raise ValueError("Can't encode message")
 
 	def _frame( self, msg ):
 		"""
