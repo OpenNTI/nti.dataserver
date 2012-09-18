@@ -24,7 +24,7 @@ from nti.contentsearch.tests import domain as domain_words
 
 from hamcrest import (assert_that, has_length, is_, is_not, has_entry, has_item)
 
-class TestCommon(ConfiguringTestBase):
+class TestSearchResults(ConfiguringTestBase):
 
 	@classmethod
 	def setUpClass(cls):	

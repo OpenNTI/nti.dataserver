@@ -22,7 +22,7 @@ from nti.contentsearch.tests import ConfiguringTestBase
 
 from hamcrest import (is_, is_not, has_key, has_item, has_entry, has_length, assert_that)
 
-class TestRepozeUserIndexManager(ConfiguringTestBase):
+class TestRepozeUserAdapter(ConfiguringTestBase):
 
 	def _create_user(self, ds=None, username='nt@nti.com', password='temp001'):
 		ds = ds or mock_dataserver.current_mock_ds

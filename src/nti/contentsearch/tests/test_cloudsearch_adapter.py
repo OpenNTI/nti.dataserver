@@ -23,9 +23,9 @@ from nti.contentsearch.tests import ConfiguringTestBase
 from hamcrest import (is_, is_not, has_key, has_entry, has_length, assert_that)
 
 @unittest.SkipTest
-class TestCloudSearchIndexManager(ConfiguringTestBase):
+class TestCloudSearchAdapter(ConfiguringTestBase):
 	
-	__name__ = "TestCloudSearchIndexManager"
+	__name__ = "TestCloudSearchAdapter"
 	
 	aws_op_delay = 5
 	aws_access_key_id = 'AKIAJ42UUP2EUMCMCZIQ'
