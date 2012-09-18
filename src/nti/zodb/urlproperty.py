@@ -90,16 +90,25 @@ class UrlProperty(object):
 			raise KeyError( key )
 		return __getitem__
 
+	def get_file( self, instance ):
+		"""
+		Return the :class:`zope.file.interfaces.IFile` for the instance if there is one, otherwise None.
+		"""
+		the_file = self._getattr( instance, self.file_attr_name, None )
+		if file_interfaces.IFile.providedBy( the_file ):
+			return the_file
+
 	def __get__( self, instance, owner ):
 		if instance is None:
 			return self
 
-		the_file = self._getattr( instance, self.file_attr_name, None )
-		if file_interfaces.IFile.providedBy( the_file ):
+		the_file = self.get_file( instance )
+		if the_file is not None:
 			fp = the_file.open()
 			raw_bytes = fp.read()
 			fp.close()
 			return dataurl.encode( raw_bytes, the_file.mimeType )
+
 		return self._getattr( instance, self.url_attr_name )
 
 	def __set__( self, instance, value ):

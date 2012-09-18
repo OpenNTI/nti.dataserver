@@ -949,6 +949,14 @@ class TestApplication(ApplicationTestBase):
 		data = '5'
 		self._edit_user_ext_field( 'NotificationCount', data )
 
+	def test_edit_user_avatar_url(self):
+		"We can POST to a specific sub-URL to change the avatarURL"
+
+		data = u'"data:image/gif;base64,R0lGODlhEAAQANUAAP///////vz9/fr7/Pf5+vX4+fP2+PL19/D09uvx8+Xt797o69zm6tnk6Nfi5tLf49Dd483c4cva38nZ38jY3cbX3MTW3MPU2sLT2cHT2cDS2b3R2L3Q17zP17vP1rvO1bnN1LbM1LbL07XL0rTK0bLI0LHH0LDHz6/Gzq7Ezq3EzavDzKnCy6jByqbAyaS+yKK9x6C7xZ66xJu/zJi2wY2uukZncwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAEAAQAAAGekCAcEgsEmvIJNJmBNSEAQHh8GQWn4BBAZHAWm1MsM0AVtTEYYd67bAtGrO4lb1mOB4RyixNb0MkFRh7ADZ9bRMWGh+DhX02FxsgJIMAhhkdISUpjIY2IycrLoxhYBxgKCwvMZRCNRkeIiYqLTAyNKxOcbq7uGi+YgBBADs="'
+		res = self._edit_user_ext_field( 'avatarURL', data )
+		assert_that( res.json_body, has_entry( 'avatarURL', starts_with( '/dataserver2/' ) ) )
+
+
 	def test_put_data_to_user( self ):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = self._create_user()

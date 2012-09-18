@@ -102,7 +102,7 @@ class SharedWithExternalFieldTraverser(_AbstractExternalFieldTraverser):
 class UserExternalFieldTraverser(_AbstractExternalFieldTraverser):
 
 	def __getitem__( self, key ):
-		if key not in ('lastLoginTime', 'password', 'mute_conversation', 'unmute_conversation', 'ignoring', 'accepting', 'NotificationCount'):
+		if key not in ('lastLoginTime', 'password', 'mute_conversation', 'unmute_conversation', 'ignoring', 'accepting', 'NotificationCount', 'avatarURL'):
 			raise KeyError(key)
 		return _DefaultExternalFieldResource( key, self.context, wrap_value=(key != "password") )
 

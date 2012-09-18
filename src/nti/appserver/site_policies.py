@@ -716,12 +716,4 @@ class PrmiaSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 	COM_REALNAME = "Professional Risk Managers' International Association"
 
 
-
-def _ext_find_schema( ext_self, iface_upper_bound ):
-	_iface = iface_upper_bound
-	# Search for the most derived version of the interface
-	# this object implements and use that.
-	for iface in interface.providedBy( ext_self ):
-		if iface.isOrExtends( _iface ):
-			_iface = iface
-	return _iface
+from nti.utils.schema import find_most_derived_interface as _ext_find_schema
