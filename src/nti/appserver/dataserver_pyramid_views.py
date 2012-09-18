@@ -538,7 +538,11 @@ class _EnclosurePostView(_UGDModifyViewBase):
 		context = self.request.context # A _AbstractObjectResource OR an ISimpleEnclosureContainer
 		# Enclosure containers are defined to be IContainerNamesContainer,
 		# which means they will choose their name based on what we give them
-		enclosure_container = context if ISimpleEnclosureContainer.providedBy( context ) else context.resource
+		enclosure_container = context if ISimpleEnclosureContainer.providedBy( context ) else getattr( context, 'resource', None )
+		if enclosure_container is None:
+			# Posting data to something that cannot take it. This was probably
+			# actually meant to be a PUT to update existing data
+			raise hexc.HTTPForbidden("Cannot POST here. Did you mean to PUT?")
 
 		# AtomPub specifies a 'Slug' header to be used as the base of the
 		# name

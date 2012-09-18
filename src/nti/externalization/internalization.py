@@ -12,6 +12,7 @@ import six
 import numbers
 
 import persistent
+from persistent.interfaces import IPersistent
 from zope import component
 from zope import interface
 from zope.schema import interfaces as sch_interfaces
@@ -160,6 +161,9 @@ def _resolve_externals(containedObject, externalObject, registry=component, cont
 			# so we special case it so instances don't have to.
 			if isinstance( value, classmethod ) or isinstance( value, staticmethod ):
 				value = value.__get__( None, containedObject.__class__ )
+			elif len( inspect.getargspec( value )[0] ) == 4: # instance method
+				_value = value
+				value = lambda x, y, z: _value( containedObject, x, y, z )
 
 			externalObject[key] = value( context, externalObject, externalObject[key] )
 
@@ -172,6 +176,8 @@ def _object_hook( k, v, x ):
 def _recall( k, obj, ext_obj, kwargs ):
 	obj = update_from_external_object( obj, ext_obj, **kwargs )
 	obj = kwargs['object_hook']( k, obj, ext_obj )
+	if IPersistent.providedBy( obj ):
+		obj._v_updated_from_external_source = ext_obj
 	return obj
 
 def update_from_external_object( containedObject, externalObject,

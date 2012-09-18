@@ -12,15 +12,13 @@ from persistent.list import PersistentList
 
 import numbers
 import six
-import urlparse
-import base64
+from urllib import quote as urlquote
 
-from nti.utils import dataurl
 
 from nti.externalization.interfaces import IExternalObject
 from nti.externalization.datastructures import ExternalizableInstanceDict
 from nti.externalization.interfaces import LocatedExternalDict
-from nti.externalization.externalization import to_external_object
+#from nti.externalization.externalization import to_external_object
 from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.dataserver import mimetype
@@ -33,7 +31,6 @@ from zope import interface
 from zope import component
 from zope.container.contained import contained
 import zope.schema.interfaces
-from zope.file import file as zfile
 
 
 from .threadable import ThreadableExternalizableMixin
@@ -78,10 +75,25 @@ class Canvas(ThreadableExternalizableMixin, UserContentRoot, ExternalizableInsta
 		shapeList = args[0].pop( 'shapeList', self )
 		super(Canvas,self).updateFromExternalObject( *args, **kwargs )
 		if shapeList is not self:
+			# Copy the current files. If we find anything that refers
+			# to them as a URL below, swap in the file data and swap out
+			# the URL string
+			# This is tightly couple to the implementation of CanvasUrlShape
+			existing_files = [getattr(x, '_file') for x in self.shapeList if getattr(x, '_file', None )]
+			existing_files = {urlquote(to_external_ntiid_oid(x)): x for x in existing_files}
 			del self.shapeList[:]
 			if shapeList:
 				for shape in shapeList:
 					self.append( shape )
+					if 'url' in shape.__dict__:
+						url = shape.__dict__['url']
+						for existing_file_url, existing_file in existing_files.items():
+							if existing_file_url in url:
+								shape.__dict__['url'] = None
+								shape.__dict__['_file'] = existing_file
+								existing_file.__parent__ = shape
+
+		args[0]['shapeList'] = list(self.shapeList) # be polite and put it back
 
 	def toExternalDictionary( self, mergeFrom=None ):
 		result = super(Canvas,self).toExternalDictionary( mergeFrom=mergeFrom )
