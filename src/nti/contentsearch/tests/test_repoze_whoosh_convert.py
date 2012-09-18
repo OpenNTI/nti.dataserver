@@ -22,7 +22,7 @@ class isLikeMatcher(BaseMatcher):
 def is_like(string):
 	return isLikeMatcher(string)
 
-class RepozeWhooshConversionTests(unittest.TestCase):
+class TestRepozeWhooshConverter(unittest.TestCase):
 
 	def setUp(self):
 		self.schema = fields.Schema( 
