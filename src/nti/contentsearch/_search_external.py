@@ -172,7 +172,7 @@ class _SuggestAndSearchResultsExternalizer(_SearchResultsExternalizer, _SuggestR
 	
 	def toExternalObject(self):
 		eo = _SearchResultsExternalizer.toExternalObject(self)
-		eo[SUGGESTIONS] = self.get_suggestions()
+		eo[SUGGESTIONS] = self.suggestions
 		return eo
 	
 # search hits
