@@ -9,6 +9,7 @@ from zope import interface
 from nti.dataserver import interfaces as nti_interfaces
 from nti.chatserver import interfaces as chat_interfaces
 from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.externalization import toExternalObject
 
 from nti.contentsearch import interfaces as search_interfaces
 
@@ -131,9 +132,25 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 	@property
 	def hits(self):
 		return self.results.hits
+	items = hits
 	
 	def toExternalObject(self):
 		eo = super(_SearchResultsExternalizer, self).toExternalObject()
+		eo[ITEMS] = items = []
+		
+		# process hits
+		query = self.query
+		last_modified = 0
+		highlight_type = self.highlight_type
+		for item in self.items:
+			# adapt to a search hit 
+			hit = get_search_hit(item, query, highlight_type)
+			last_modified = max(last_modified, hit.last_modified)
+			# run any decorator
+			external = toExternalObject(hit)
+			items.append(external)
+			
+		eo[LAST_MODIFIED] = last_modified
 		return eo
 
 @component.adapter(search_interfaces.ISuggestResults)
@@ -157,6 +174,7 @@ class _SuggestAndSearchResultsExternalizer(_SearchResultsExternalizer, _SuggestR
 		eo = _SearchResultsExternalizer.toExternalObject(self)
 		eo[SUGGESTIONS] = self.get_suggestions()
 		return eo
+	
 # search hits
 
 hit_search_external_fields  = (	CLASS, CREATOR, TARGET_OID, TYPE, LAST_MODIFIED, NTIID, \
