@@ -152,6 +152,8 @@ setup(
 		# install numpy manually with pip: pip install numpy
 		'numpy >= 1.6.2',
 		'paste',
+		'plone.scale >= 1.2.2', # image scaling/storage based on PIL
+		'plone.namedfile >= 2.0', # much like zope.file, but some image-specific goodness.
 		'pyPDF >= 1.13', # Pure python PDF reading library. Not complex. Has newer fork pyPDF2, not yet on PyPI?
 		'pyquery >= 1.2.1', # jquery-like traversing of python datastructures. lxml, cssselect
 		'pyramid >= 1.3.4, < 1.4a1' ,
