@@ -43,6 +43,7 @@ from nti.externalization.externalization import to_external_object
 from nti.contentrange import contentrange
 from nti.dataserver import contenttypes
 from nti.dataserver import datastructures
+from nti.dataserver import links
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.dataserver.tests import mock_dataserver
@@ -574,18 +575,39 @@ class TestApplication(ApplicationTestBase):
 
 		res = testapp.post( '/dataserver2/users/sjohnson@nextthought.com', json_data, extra_environ=self._make_extra_environ() )
 
-		canvas = res.json_body['body'][0]
-		assert_that( canvas, has_entry( 'shapeList', has_length( 1 ) ) )
-		assert_that( canvas, has_entry( 'shapeList', contains( has_entry( 'Class', 'CanvasUrlShape' ) ) ) )
-		assert_that( canvas, has_entry( 'shapeList', contains( has_entry( 'url', contains_string( '/dataserver2/' ) ) ) ) )
-		canvas_res = res
+		def _check_canvas( res ):
+			canvas_res = res
+			canvas = res.json_body['body'][0]
+			assert_that( canvas, has_entry( 'shapeList', has_length( 1 ) ) )
+			assert_that( canvas, has_entry( 'shapeList', contains( has_entry( 'Class', 'CanvasUrlShape' ) ) ) )
+			assert_that( canvas, has_entry( 'shapeList', contains( has_entry( 'url', contains_string( '/dataserver2/' ) ) ) ) )
 
-		res = testapp.get( canvas['shapeList'][0]['url'], extra_environ=self._make_extra_environ() )
-		# The content type is preserved
-		assert_that( res, has_property( 'content_type', 'image/gif' ) )
-		# The modified date is the same as the canvas containing it
-		assert_that( res, has_property( 'last_modified', not_none() ) )
-		assert_that( res, has_property( 'last_modified', canvas_res.last_modified ) )
+
+			res = testapp.get( canvas['shapeList'][0]['url'], extra_environ=self._make_extra_environ() )
+			# The content type is preserved
+			assert_that( res, has_property( 'content_type', 'image/gif' ) )
+			# The modified date is the same as the canvas containing it
+			assert_that( res, has_property( 'last_modified', not_none() ) )
+		#	assert_that( res, has_property( 'last_modified', canvas_res.last_modified ) )
+
+		_check_canvas( res )
+
+		# If we "edit" the data, then nothing breaks
+		edit_link = None
+		for l in res.json_body['Links']:
+			if l['rel'] == 'edit':
+				edit_link = l['href']
+				break
+		res = testapp.put( edit_link.encode('ascii'), res.body, extra_environ=self._make_extra_environ() )
+		_check_canvas( res )
+
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = users.User.get_user( user.username )
+			note = user.getContainedObject( res.json_body['ContainerId'], res.json_body['ID'] )
+			canvas = note.body[0]
+			url_shape = canvas.shapeList[0]
+			# And it externalizes as a real link because it owns the file data
+			assert_that( url_shape.toExternalObject()['url'], is_( links.Link ) )
 
 	def test_search_empty_term_user_ugd_book(self):
 		"Searching with an empty term returns empty results"

@@ -12,9 +12,12 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.contentfragments import interfaces as frg_interfaces
 from nti.contentfragments import censor
 
+from nti.ntiids.ntiids import find_object_with_ntiid
+
 from zope import interface
 
 from zope import component
+from ZODB.interfaces import IConnection
 from zope.annotation import interfaces as an_interfaces
 from zope.container.contained import contained
 import zope.schema.interfaces
@@ -54,6 +57,35 @@ class Note(ThreadableExternalizableMixin, Highlight):
 
 		return result
 
+	def _resolve_external_body( self, context, parsed, body ):
+		"""
+		Attempt to resolve elements in the body to existing canvas objects
+		that are my children. If we find them, then update them in place
+		to the best of our ability.
+		"""
+		if not self.body or self.body == ("",):
+			# Our initial state. Empty body, nothing to resolve against.
+			return body
+
+		# Support raw body, not wrapped
+		if isinstance(body, six.string_types ):
+			body = [body]
+		for i, item in enumerate(body):
+			if not nti_interfaces.ICanvas.providedBy( item ):
+				continue
+			ext_val = getattr( item, '_v_updated_from_external_source', {} )
+			if 'NTIID' not in ext_val:
+				continue
+			existing_canvas = find_object_with_ntiid( ext_val['NTIID'] )
+			if getattr( existing_canvas, '__parent__', None ) != self:
+				continue
+			# Ok, so we found one of my children. Update it in place
+			existing_canvas.updateFromExternalObject( ext_val, context=context )
+			body[i] = existing_canvas
+		return body
+
+	__external_resolvers__ = { 'body': _resolve_external_body }
+
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
 		# Only updates to the body are accepted
 		parsed.pop( 'text', None )
@@ -81,6 +113,9 @@ class Note(ThreadableExternalizableMixin, Highlight):
 					raise zope.schema.interfaces.TooShort()
 				if nti_interfaces.ICanvas.providedBy( x ):
 					contained( x, self, unicode(i) )
+					jar = IConnection( x, None )
+					if jar and not getattr( x, '_p_oid', None ): # If we have a connection, make sure the canvas does too
+						jar.add( x )
 
 
 			# Sanitize the body. Anything that can become a fragment, do so, incidentally
