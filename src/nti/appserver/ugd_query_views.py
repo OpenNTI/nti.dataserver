@@ -100,12 +100,13 @@ class RefProxy(ProxyBase):
 def _build_reference_lists( request, result_list ):
 	proxies = {}
 	setattr( request, '_build_reference_lists_proxies', proxies )
-	def _referenced_by( x ):
+	def _referenced_by( x, ref=None ):
 		try:
 			x = proxies[x]
 		except KeyError:
-			logger.exception( "Failed to get proxy for %s/%s. Illegal reference chain.",
-							  x, getattr( x, 'containerId', None ) )
+			logger.exception( "Failed to get proxy for %s/%s. Illegal reference chain from %s/%s.",
+							  x, getattr( x, 'containerId', None ),
+							  ref, getattr( ref, 'containerId', None ))
 			return [] # return a temp list that's not persistent
 		result = x.referenced_by
 		if result is None:
@@ -127,10 +128,10 @@ def _build_reference_lists( request, result_list ):
 		if inReplyTo is not None:
 			# Also, we must maintain the proxy map ourself because the items we get
 			# back from here are 'real' vs the things we just put in the result list
-			_referenced_by( inReplyTo ).append( weakref.ref( item ) )
+			_referenced_by( inReplyTo, item ).append( weakref.ref( item ) )
 		for ref in getattr( item, 'references', () ):
 			if ref is not None:
-				_referenced_by( ref ).append( weakref.ref( item ) )
+				_referenced_by( ref, item ).append( weakref.ref( item ) )
 
 def _reference_list_length( x ):
 	refs = getattr( x, _REF_ATTRIBUTE, _reference_list_length )

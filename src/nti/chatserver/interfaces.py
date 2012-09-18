@@ -111,8 +111,8 @@ class IMeetingPolicy(interface.Interface):
 
 	moderated_by_usernames = interface.Attribute( "Iterable of names moderating this meeting." )
 
-class IMessageInfo(nti_interfaces.ISharableModeledContent, nti_interfaces.IZContained):
-	# We have to be ISharableModeledContent if we want the same ACL provider to work for us
+class IMessageInfo(nti_interfaces.IShareableModeledContent, nti_interfaces.IZContained):
+	# We have to be IShareableModeledContent if we want the same ACL provider to work for us
 	# as works for Notes
 	channel = schema.Choice(
 		title="The channel the message was sent to.",
