@@ -16,7 +16,7 @@ import BTrees.OOBTree
 import ZODB
 
 import plistlib
-import anyjson as json
+import simplejson as json
 
 import six
 import numbers
@@ -212,6 +212,12 @@ def stripSyntheticKeysFromExternalDictionary( external ):
 EXT_FORMAT_JSON = 'json'
 EXT_FORMAT_PLIST = 'plist'
 
+def _second_pass_to_external_object( obj ):
+	result = to_external_object( obj, name='second-pass' )
+	if result is obj:
+		raise TypeError(repr(obj) + " is not JSON serializable")
+	return result
+
 def to_external_representation( obj, ext_format=EXT_FORMAT_PLIST, name=_ex_name_marker, registry=component ):
 	"""
 	Transforms (and returns) the `obj` into its external (string) representation.
@@ -232,13 +238,23 @@ def to_external_representation( obj, ext_format=EXT_FORMAT_PLIST, name=_ex_name_
 			logger.exception( "Failed to externalize %s", ext )
 			raise
 	else:
-		ext = json.dumps( ext )
+		ext = to_json_representation_externalized( ext )
 	return ext
 
 def to_json_representation( obj ):
 	""" A convenience function that calls :func:`to_external_representation` with :data:`EXT_FORMAT_JSON`."""
 	return to_external_representation( obj, EXT_FORMAT_JSON )
 
+def to_json_representation_externalized( obj ):
+	"""
+	Given an object that is known to already be in an externalized form,
+	convert it to JSON. This can be about 10% faster then requiring a pass
+	across all the sub-objects of the object to check that they are in external
+	form, while still handling a few corner cases with a second-pass conversion.
+	(These things creep in during the object decorator phase and are usually
+	links.)
+	"""
+	return json.dumps( obj, check_circular=False, default=_second_pass_to_external_object )
 
 def _syntheticKeys( ):
 	return ('OID', 'ID', 'Last Modified', 'Creator', 'ContainerId', 'Class')

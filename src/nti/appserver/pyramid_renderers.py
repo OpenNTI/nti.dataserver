@@ -23,8 +23,7 @@ HEADER_LAST_MODIFIED = httpheaders.LAST_MODIFIED.name
 from zope.mimetype.interfaces import IContentTypeAware
 
 from nti.externalization.externalization import to_external_representation, toExternalObject,  EXT_FORMAT_PLIST, catch_replace_action
-from nti.externalization.externalization import EXT_FORMAT_JSON
-from nti.externalization.externalization import to_external_object
+from nti.externalization.externalization import to_json_representation_externalized
 
 from nti.dataserver.mimetype import (MIME_BASE_PLIST, MIME_BASE_JSON,
 									 MIME_EXT_PLIST, MIME_EXT_JSON,
@@ -91,11 +90,6 @@ def find_content_type( request, data=None ):
 
 	return best_match or MIME_BASE_JSON
 
-def _second_pass_to_external_object( obj ):
-	result = to_external_object( obj, name='second-pass' )
-	if result is obj:
-		raise TypeError(repr(obj) + " is not JSON serializable")
-	return result
 
 def render_externalizable(data, system):
 	request = system['request']
@@ -141,13 +135,7 @@ def render_externalizable(data, system):
 	if response.content_type.startswith( MIME_BASE ):
 		# Only transform this if it was one of our objects
 		if response.content_type.endswith( 'json' ):
-			# Notice that we're not doing this:
-			#body = to_external_representation( body, EXT_FORMAT_JSON )
-			# For about a 10% performance improvement, we can leverage
-			# simplejson's default method to replace anything that isn't serializable
-			# (These things creep in during the object decorator phase and are usually
-			# links.)
-			body = json.dumps( body, check_circular=False, default=_second_pass_to_external_object )
+			body = to_json_representation_externalized( body )
 		else:
 			body = to_external_representation( body, EXT_FORMAT_PLIST )
 

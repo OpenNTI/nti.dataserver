@@ -308,7 +308,7 @@ class InterfaceObjectIO(AbstractDynamicObjectIO):
 		return self._iface
 
 	def _ext_find_schema( self, ext_self, iface_upper_bound ):
-		return find_most_derived_interface( ext_self, iface_upper_bound )
+		return find_most_derived_interface( ext_self, iface_upper_bound, possibilities=self._ext_schemas_to_consider( ext_self ) )
 
 	def _ext_find_primitive_keys(self):
 		result = set()
@@ -408,8 +408,10 @@ class ModuleScopedInterfaceObjectIO(InterfaceObjectIO):
 		# In that case, we are not suitable for use with this object
 		for iface in self._ext_schemas_to_consider( ext_self ):
 			if not most_derived.isOrExtends( iface ):
-				raise TypeError( "Non-tree interface graph implemented by %s in %s: %s is not %s (%s)"
-								 % (type(ext_self),self._ext_search_module, most_derived, iface, list(self._ext_schemas_to_consider( ext_self ))) )
+				raise TypeError( "Most derived interface %s does not extend %s; non-tree interface structure. "
+								 "Searching module %s and considered %s on object %s of class %s and type %s"
+								 % ( most_derived, iface, self._ext_search_module, list(self._ext_schemas_to_consider( ext_self ) ), ext_self, ext_self.__class__, type(ext_self) ) )
+
 		return most_derived
 
 	def _ext_schemas_to_consider( self, ext_self ):
