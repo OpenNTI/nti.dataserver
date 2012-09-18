@@ -371,6 +371,7 @@ class _CanvasTextShape(_CanvasShape):
 		if self.text != tbf:
 			self.text = component.getAdapter( self.text, frg_interfaces.IUnicodeContentFragment, name='text' )
 
+from nti.zodb import urlproperty
 from nti.dataserver import links
 
 class _CanvasUrlShape(_CanvasShape):
@@ -390,57 +391,15 @@ class _CanvasUrlShape(_CanvasShape):
 	def updateFromExternalObject( self, *args, **kwargs ):
 		super(_CanvasUrlShape,self).updateFromExternalObject( *args, **kwargs )
 
-	def _get_url(self):
-		if '_file' in self.__dict__:
-			#return self._head + ',' + base64.b64encode( self._raw_tail )
 
-			fp = self._file.open()
-			raw_bytes = fp.read()
-			fp.close()
-			return dataurl.encode( raw_bytes, self._file.mimeType )
+	url = urlproperty.UrlProperty( data_name=_DATA_NAME, url_attr_name='url', file_attr_name='_file',
+								   use_dict=True)
 
-			#return
-
-		return self.__dict__[ 'url' ]
-	def _set_url(self,nurl):
-		if not nurl:
-			self.__dict__.pop( '_file', None )
-			self.__dict__['url'] = nurl
-			return
-
-		if nurl.startswith( b'data:' ):
-			raw_bytes, mime_type = dataurl.decode( nurl )
-			major, minor, parms = zope.contenttype.parse.parse(  mime_type )
-			self._file = zfile.File( mimeType=major+'/'+minor, parameters=parms )
-			fp = self._file.open( 'w' )
-			fp.write( raw_bytes )
-			fp.close()
-			self._file.__parent__ = self
-			self._file.__name__ = self._DATA_NAME
-
-			# By keeping url in __dict__, toExternalDictionary
-			# still does the right thing
-			self.__dict__['url'] = None
-		else:
-			# Be sure it at least parses
-			urlparse.urlparse( nurl )
-			self.__dict__['url'] = nurl
-
-	url = property(_get_url,_set_url)
-
-	def __getitem__( self, key ):
-		"""
-		For traversability purposes, making our blob data available,
-		we accept its name here. Note this could also be done with an adapter,
-		but it's fairly tightly coupled to our implementation.
-		"""
-		if key == self._DATA_NAME:
-			return self._file
-		raise KeyError( key )
+	__getitem__ = url.make_getitem()
 
 	def toExternalDictionary( self, mergeFrom=None ):
 		result = super(_CanvasUrlShape,self).toExternalDictionary( mergeFrom=mergeFrom )
-		if '_file' in self.__dict__:
+		if self._file is not None:
 			# See __getitem__
 			# TODO: This is pretty tightly coupled to the app layer
 			# TODO: If we wanted to be clever, we would have a cutoff point based on the size
