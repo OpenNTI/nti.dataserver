@@ -711,6 +711,8 @@ class TestChatserver(ConfiguringTestBase):
 		msg.channel = chat.CHANNEL_WHISPER
 		chatserver.post_message_to_room( room.ID, msg ) # jason whispers to Chris
 		assert_that( msg.sharedWith, is_( set(['jason', 'chris']) ) )
+		assert_that( auth_acl.ACLProvider( msg ), permits( 'jason', 'zope.View' ) )
+		assert_that( auth_acl.ACLProvider( msg ), permits( 'chris', 'zope.View' ) )
 
 		# It should not be in the moderator transcript
 		assert_that( chat_transcripts.transcript_for_user_in_room( 'sjohnson', room.ID ),
