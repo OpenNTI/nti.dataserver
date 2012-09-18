@@ -101,7 +101,12 @@ def _build_reference_lists( request, result_list ):
 	proxies = {}
 	setattr( request, '_build_reference_lists_proxies', proxies )
 	def _referenced_by( x ):
-		x = proxies[x]
+		try:
+			x = proxies[x]
+		except KeyError:
+			logger.exception( "Failed to get proxy for %s/%s. Illegal reference chain.",
+							  x, getattr( x, 'containerId', None ) )
+			return [] # return a temp list that's not persistent
 		result = x.referenced_by
 		if result is None:
 			result = []
@@ -117,11 +122,9 @@ def _build_reference_lists( request, result_list ):
 
 	for item in result_list:
 		inReplyTo = getattr( item, 'inReplyTo', None )
+		__traceback_info__ = item, inReplyTo, getattr( item, 'containerId', None )
 
 		if inReplyTo is not None:
-			# This function blows up if the reply is from a different container.
-			# and so didn't get proxied
-			# That's not supposed to happen.
 			# Also, we must maintain the proxy map ourself because the items we get
 			# back from here are 'real' vs the things we just put in the result list
 			_referenced_by( inReplyTo ).append( weakref.ref( item ) )
