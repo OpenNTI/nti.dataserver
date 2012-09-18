@@ -60,6 +60,7 @@ def getPersistentState( obj ):
 		# leads to weird behaviour for things that want to notice changes (users.User.endUpdates)
 		# so we need to reflect those changes to the actual object ourself
 		# TODO: Such places should be using events
+		# TODO: Can/should/when should we/ unwrap all proxies using zope.proxy.removeAllProxies?
 		if _isContainedProxy(obj):
 			return getPersistentState( _getContainedProxiedObject( obj ) )
 		return persistent.UPTODATE
