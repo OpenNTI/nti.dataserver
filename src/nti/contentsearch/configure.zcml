@@ -6,6 +6,10 @@
 		
 	<!-- Externalization -->
 
+	<adapter factory="._search_external._SearchResultsExternalizer" />
+	<adapter factory="._search_external._SuggestResultsExternalizer" />
+	<adapter factory="._search_external._SuggestAndSearchResultsExternalizer" />
+	
 	<adapter factory="._search_external._HighlightSearchHit"
 			 name="search-hit" />
 			 

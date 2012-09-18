@@ -3,17 +3,26 @@ import json
 import unittest
 import collections
 
-from nti.contentsearch.tests import ConfiguringTestBase
+from zope import component
 
-from nti.contentsearch.common import LAST_MODIFIED, QUERY, ITEMS, HIT_COUNT, SUGGESTIONS
+from nti.dataserver.contenttypes import Note
 
-from nti.contentsearch._search_results import merge_search_results
-from nti.contentsearch._search_results import merge_suggest_results
+from nti.ntiids.ntiids import make_ntiid
+
+from nti.contentsearch._search_query import QueryObject
+from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch._search_results import empty_search_result
 from nti.contentsearch._search_results import empty_suggest_result
+from nti.contentsearch._search_results import merge_search_results
+from nti.contentsearch._search_results import merge_suggest_results
 from nti.contentsearch._search_results import empty_suggest_and_search_result
+from nti.contentsearch.common import LAST_MODIFIED, QUERY, ITEMS, HIT_COUNT, SUGGESTIONS
 
-from hamcrest import (assert_that, has_length, is_, has_entry)
+from nti.contentsearch.tests import zanpakuto_commands
+from nti.contentsearch.tests import ConfiguringTestBase
+from nti.contentsearch.tests import domain as domain_words
+
+from hamcrest import (assert_that, has_length, is_, is_not, has_entry, has_item)
 
 class TestCommon(ConfiguringTestBase):
 
@@ -22,6 +31,93 @@ class TestCommon(ConfiguringTestBase):
 		path = os.path.join(os.path.dirname(__file__), 'message_info.json')
 		with open(path, "r") as f:
 			cls.messageinfo = json.load(f)
+		
+	def test_search_results(self):
+		qo = QueryObject.create("test")
+		sr = component.getUtility(search_interfaces.ISearchResultsCreator)(qo)
+		assert_that(sr, is_not(None))
+		assert_that(search_interfaces.ISearchResults.providedBy(sr), is_(True))
+		
+		notes = []
+		containerid = make_ntiid(nttype='bleach', specific='manga')
+		for cmd in zanpakuto_commands:
+			note = Note()
+			note.body = [unicode(cmd)]
+			note.creator = 'nt@nti.com'
+			note.containerId = containerid
+			notes.append(note)
+			
+		sr.add(notes)
+		assert_that(len(sr), is_(len(notes)))
+		for x, note in enumerate(notes):
+			assert_that(note, is_(sr[x]))
+			
+		note = Note()
+		note.body = [u'test']
+		note.creator = 'nt@nti.com'
+		note.containerId = containerid
+		sr.add(note)
+		
+		count = 0
+		for n in sr.hits:
+			assert_that(n, is_not(None))
+			count = count + 1
+			
+		expected = len(notes) + 1
+		assert_that(count, is_(expected))
+		
+		sr.add(1)
+		sr.add('no to be added')
+		assert_that(sr, has_length(expected))
+	
+	def test_suggest_results(self):
+		qo = QueryObject.create("test")
+		sr = component.getUtility(search_interfaces.ISuggestResultsCreator)(qo)
+		assert_that(sr, is_not(None))
+		assert_that(search_interfaces.ISuggestResults.providedBy(sr), is_(True))
+		
+		sr.add_suggestions(domain_words)
+		
+		assert_that(sr, has_length(len(domain_words)))
+		for word in domain_words:
+			assert_that(sr.hits, has_item(word))
+			
+		sr.add('ichigo')
+		expected = len(domain_words) + 1
+		assert_that(sr, has_length(expected))
+		
+		count = 0
+		for n in sr.hits:
+			count = count + 1
+			assert_that(n, is_not(None))
+			
+		assert_that(count, is_(expected))
+		
+		sr.add(1) ## should not add
+		sr.add(Note()) ## should not add
+		assert_that(sr, has_length(expected))
+			
+	def test_suggest_and_search_results(self):
+		qo = QueryObject.create("test")
+		sr = component.getUtility(search_interfaces.ISuggestAndSearchResultsCreator)(qo)
+		assert_that(sr, is_not(None))
+		assert_that(search_interfaces.ISuggestAndSearchResults.providedBy(sr), is_(True))
+		
+		sr.add_suggestions(domain_words)
+		assert_that(sr.suggestions, has_length(len(domain_words)))
+		for word in domain_words:
+			assert_that(sr.suggestions, has_item(word))
+			
+		notes = []
+		containerid = make_ntiid(nttype='bleach', specific='manga')
+		for cmd in zanpakuto_commands:
+			note = Note()
+			note.body = [unicode(cmd)]
+			note.creator = 'nt@nti.com'
+			note.containerId = containerid
+			notes.append(note)
+		sr.add(notes)
+		assert_that(sr, has_length(len(notes)))
 		
 	def _check_empty(self, d, query):
 		assert_that(isinstance(d, collections.Mapping), is_(True))

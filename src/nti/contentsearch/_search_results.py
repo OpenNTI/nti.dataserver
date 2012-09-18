@@ -1,6 +1,7 @@
 from __future__ import print_function, unicode_literals
 
 import six
+from collections import Iterable
 
 from zope import interface
 from persistent.interfaces import IPersistent
@@ -48,10 +49,10 @@ class _SearchResults(_BaseSearchResults):
 		return self._hits
 	
 	def add(self, items):
-		items = tuple(items) if IPersistent.providedBy(items) else items
+		items = [items] if IPersistent.providedBy(items) or not isinstance(items, Iterable)  else items
 		for item in items or ():
 			if IPersistent.providedBy(item):
-				self.hits.append(item)
+				self._hits.append(item)
 	
 @interface.implementer( search_interfaces.ISuggestResults )
 class _SuggestResults(_BaseSearchResults):
@@ -66,18 +67,18 @@ class _SuggestResults(_BaseSearchResults):
 	suggestions = hits
 	
 	def add_suggestions(self, items):
-		items = tuple(items) if isinstance(items, six.string_types) else items
+		items = [items] if isinstance(items, six.string_types) or not isinstance(items, Iterable) else items
 		for item in items or ():
 			if isinstance(item, six.string_types):
-				self.hits.add(unicode(item))
+				self._words.add(unicode(item))
 			
 	add = add_suggestions
 
 @interface.implementer( search_interfaces.ISuggestAndSearchResults )
 class _SuggestAndSearchResults(_SearchResults, _SuggestResults):
 	def __init__(self, query):
-		super(_SearchResults, self).__init__(query)
-		super(_SuggestResults, self).__init__(query)
+		_SearchResults.__init__(self, query)
+		_SuggestResults.__init__(self, query)
 
 	@property
 	def hits(self):
@@ -85,7 +86,7 @@ class _SuggestAndSearchResults(_SearchResults, _SuggestResults):
 	
 	@property
 	def suggestions(self):
-		return list(self._words)
+		return self._words
 			
 	def add(self, items):
 		_SearchResults.add(self, items)
