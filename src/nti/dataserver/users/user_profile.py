@@ -63,9 +63,12 @@ class _ExistingDictReadFieldPropertyStoredThroughField(FieldPropertyStoredThroug
 @interface.implementer(interfaces.IFriendlyNamed,zope.location.interfaces.ILocation)
 class FriendlyNamed(persistent.Persistent):
 	"""
-	An adapter for storing naming data for users. Intended to be an annotation, used with
-	an annotation factory; in this way we keep the context as our parent, but taket
-	it as an optional argument for ease of testing.
+	An adapter for storing naming data for users. Intended to be an
+	annotation, used with an annotation factory; in that scenario, the
+	"context" of the annotation is actually the ``__parent__`` (as set
+	by the factory). However, for ease of testing, we can also
+	explicitly accept the context as an optional argument to the
+	constructor.
 	"""
 
 	__parent__ = None
