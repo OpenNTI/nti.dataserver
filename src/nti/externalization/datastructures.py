@@ -17,6 +17,8 @@ from zope import schema
 from zope.schema import interfaces as sch_interfaces
 from zope.location import ILocation
 
+from nti.utils.schema import find_most_derived_interface
+
 from .interfaces import IExternalObject, IInternalObjectIO, ILocatedExternalMapping, ILocatedExternalSequence, StandardInternalFields, StandardExternalFields
 from .externalization import to_standard_external_dictionary, toExternalObject
 from .externalization import to_minimal_standard_external_dictionary
@@ -306,13 +308,7 @@ class InterfaceObjectIO(AbstractDynamicObjectIO):
 		return self._iface
 
 	def _ext_find_schema( self, ext_self, iface_upper_bound ):
-		_iface = iface_upper_bound
-		# Search for the most derived version of the interface
-		# this object implements and use that.
-		for iface in self._ext_schemas_to_consider( ext_self ):
-			if iface.isOrExtends( _iface ):
-				_iface = iface
-		return _iface
+		return find_most_derived_interface( ext_self, iface_upper_bound )
 
 	def _ext_find_primitive_keys(self):
 		result = set()

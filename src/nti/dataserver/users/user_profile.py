@@ -21,6 +21,7 @@ import hashlib
 
 from zope.schema.fieldproperty import FieldPropertyStoredThroughField
 
+from nti.zodb import urlproperty
 from nti.dataserver import interfaces as nti_interfaces
 from . import interfaces
 
@@ -83,6 +84,20 @@ class FriendlyNamed(persistent.Persistent):
 	def context(self):
 		return self.__parent__
 
+class _AvatarUrlProperty(urlproperty.UrlProperty):
+	"""
+	Adds a default value if nothing is set for the instance.
+	"""
+	# TODO: Should we be scaling this now?
+	# TODO: Should we be enforcing constraints on this? Like max size,
+	# ensuring it really is an image, etc? With arbitrary image uploading, we risk
+	# being used as a dumping ground for illegal/copyright infringing material
+	def __get__( self, instance, owner ):
+		result = super(_AvatarUrlProperty,self).__get__( instance, owner )
+		if not result:
+			result = interfaces.IAvatarURLProvider(instance.context).avatarURL
+		return result
+
 @component.adapter(nti_interfaces.IUser)
 @interface.implementer(interfaces.IUserProfile)
 class UserProfile(FriendlyNamed):
@@ -90,10 +105,10 @@ class UserProfile(FriendlyNamed):
 	An adapter for storing profile information. We provide a specific implementation
 	of the ``avatarURL`` property rather than relying on field storage.
 	"""
-
-	avatarURL = property( lambda self: getattr( self, '_avatarURL', None ) or interfaces.IAvatarURLProvider(self.context).avatarURL,
-						  lambda self, nv: setattr( self, '_avatarURL', nv ),
-						  lambda self: delattr( self, '_avatarURL' ) )
+	### NOTE: See users_external, this is fairly tightly coupled to that
+	_avatarURL = None
+	avatarURL = _AvatarUrlProperty( data_name="avatarURL", url_attr_name='_avatarURL', file_attr_name='_avatarURL' )
+	__getitem__ = avatarURL.make_getitem()
 
 def make_password_recovery_email_hash( email ):
 	return unicode( hashlib.sha1( email ).hexdigest() )

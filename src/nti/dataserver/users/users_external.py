@@ -8,6 +8,8 @@ import random
 from zope import component
 from zope import interface
 
+from nti.zodb import urlproperty
+
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import users
 from nti.dataserver import links
@@ -16,8 +18,30 @@ from nti.dataserver import authorization_acl as auth
 from nti.externalization.interfaces import IExternalObject
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.externalization import to_standard_external_dictionary
+from nti.externalization.oids import to_external_ntiid_oid
 
 from . import interfaces
+
+def _avatar_url( entity ):
+	"""
+	Takes into account file storage and generates Link objects
+	instead of data: urls. Tightly coupled to user_profile.
+	"""
+
+	with_url = interfaces.IAvatarURL( entity )
+	url_property = getattr( type(with_url), 'avatarURL', None )
+	if isinstance( url_property, urlproperty.UrlProperty ):
+		the_file = url_property.get_file( with_url )
+		if the_file:
+			# TODO: View name. Coupled to the app layer
+			# It's not quite possible to fully traverse to the file if the profile
+			# is implemented as an annotation (and that exposes lots of internal details)
+			# so we go directly to the file address
+			link = links.Link( target=to_external_ntiid_oid(the_file), target_mime_type=the_file.mimeType, elements=('@@view',), rel="data" )
+			interface.alsoProvides( link, nti_interfaces.ILinkExternalHrefOnly )
+			return link
+	return with_url.avatarURL
+
 
 class _EntitySummaryExternalObject(object):
 	component.adapts( nti_interfaces.IEntity )
@@ -41,7 +65,7 @@ class _EntitySummaryExternalObject(object):
 		# on it.
 		extDict.pop( 'Last Modified', None )
 		extDict['Username'] = entity.username
-		extDict['avatarURL'] = interfaces.IAvatarURL(entity).avatarURL
+		extDict['avatarURL'] = _avatar_url( entity )
 		names = interfaces.IFriendlyNamed( entity )
 		extDict['realname'] = names.realname or entity.username
 		extDict['alias'] = names.alias or names.realname or entity.username
@@ -96,7 +120,7 @@ class _FriendsListExternalObject(_EntityExternalObject):
 		# We do this simply by selecting 4 random users, seeded based on the name of this
 		# object.
 		# TODO: Is there a better seed?
-		friends = [interfaces.IAvatarURL(x).avatarURL for x in self.entity]
+		friends = [_avatar_url(x) for x in self.entity]
 		if not friends:
 			return ()
 		rand = random.Random( hash(self.entity.username) )
@@ -131,6 +155,7 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 		"""
 		:return: the externalization intended to be sent when requested by this user.
 		"""
+
 		from nti.dataserver._Dataserver import InappropriateSiteError # circular imports
 		extDict = super(_UserPersonalSummaryExternalObject,self).toExternalObject()
 		def ext( l, name='summary' ):
@@ -190,11 +215,4 @@ class _CoppaUserPersonalSummaryExternalObject(_UserPersonalSummaryExternalObject
 
 _CoppaUserExternalObject = _CoppaUserPersonalSummaryExternalObject
 
-def _ext_find_schema( ext_self, iface_upper_bound ):
-	_iface = iface_upper_bound
-	# Search for the most derived version of the interface
-	# this object implements and use that.
-	for iface in interface.providedBy( ext_self ):
-		if iface.isOrExtends( _iface ):
-			_iface = iface
-	return _iface
+from nti.utils.schema import find_most_derived_interface as _ext_find_schema
