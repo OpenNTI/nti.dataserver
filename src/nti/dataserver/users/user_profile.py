@@ -87,7 +87,14 @@ class FriendlyNamed(persistent.Persistent):
 class _AvatarUrlProperty(urlproperty.UrlProperty):
 	"""
 	Adds a default value if nothing is set for the instance.
+
+	Requires either a data: url or a complete URL, not a host-relative URL;
+	host-relative URLs are ignored (as an attempt to update-in-place the same
+	externalized URL).
 	"""
+
+	ignore_url_with_missing_host = True
+
 	# TODO: Should we be scaling this now?
 	# TODO: Should we be enforcing constraints on this? Like max size,
 	# ensuring it really is an image, etc? With arbitrary image uploading, we risk

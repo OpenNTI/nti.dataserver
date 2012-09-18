@@ -55,6 +55,10 @@ def test_coppa_user():
 
 	assert_that( users_external._avatar_url( o ), is_( links.Link ) )
 
+	# host-less URLs are ignored
+	profile.avatarURL = '/a/path/to/data/@@view'
+	assert_that( users_external._avatar_url( o ), is_( links.Link ) )
+
 
 def test_everyone():
 

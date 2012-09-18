@@ -14,6 +14,7 @@ logger = __import__('logging').getLogger(__name__)
 import urlparse
 
 import zope.contenttype.parse
+import zope.schema.interfaces
 
 from zope.file import interfaces as file_interfaces
 from zope.file import file as zfile
@@ -55,6 +56,8 @@ class UrlProperty(object):
 	url_attr_name = '_url'
 	file_attr_name = '_file'
 	data_name = 'data'
+	ignore_url_with_missing_host = False
+	reject_url_with_missing_host = False
 
 	_getattr = staticmethod(getattr)
 	_setattr = staticmethod(setattr)
@@ -136,7 +139,13 @@ class UrlProperty(object):
 			self._setattr( instance, self.file_attr_name, the_file )
 		else:
 			# Be sure it at least parses
-			urlparse.urlparse( value )
+			parsed = urlparse.urlparse( value )
+			if not parsed.netloc:
+				if self.reject_url_with_missing_host:
+					raise zope.schema.interfaces.InvalidURI( value )
+				if self.ignore_url_with_missing_host:
+					return
+
 			self._setattr( instance, self.file_attr_name, None )
 			self._setattr( instance, self.url_attr_name, value )
 
