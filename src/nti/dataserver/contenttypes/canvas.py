@@ -21,7 +21,7 @@ from nti.externalization.interfaces import IExternalObject
 from nti.externalization.datastructures import ExternalizableInstanceDict
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.externalization import to_external_object
-
+from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.dataserver import mimetype
 from nti.dataserver import interfaces as nti_interfaces
@@ -404,7 +404,13 @@ class _CanvasUrlShape(_CanvasShape):
 			# TODO: This is pretty tightly coupled to the app layer
 			# TODO: If we wanted to be clever, we would have a cutoff point based on the size
 			# to determine when to return a link vs the data URL.
-			link = links.Link( target=self._file, target_mime_type=self._file.mimeType, elements=('@@view',), rel="data" )
+
+			# We do not want to rely on traversal to this object, so we give the exact
+			# path to the file. (Traversal works for pure canvas, and canvas-in-note, but breaks
+			# for canvas-in-chat-message)
+			target = to_external_ntiid_oid( self._file, add_to_connection=True )
+
+			link = links.Link( target=target, target_mime_type=self._file.mimeType, elements=('@@view',), rel="data" )
 			interface.alsoProvides( link, nti_interfaces.ILinkExternalHrefOnly )
 			result['url'] = link
 		else:
