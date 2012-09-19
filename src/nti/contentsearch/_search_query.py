@@ -16,15 +16,6 @@ class QueryObject(object, UserDict.DictMixin):
 	__properties__ 		 = ('term', 'query', 'books', 'indexid', 'search_on') + __int_properties__ + __float_properties__
 
 	def __init__(self, *args, **kwargs):
-		term = None
-		if 'term' in kwargs:
-			# Be careful with this, '' is valid but False in comparisons,
-			# so a trivial 'or' test doesn't work
-			term = kwargs['term']
-		else:
-			term = kwargs.get( 'query' )
-
-		assert term is not None, 'must specify a query term'
 		self._data = {}
 		for k, v in kwargs.items():
 			if k and v is not None:
@@ -181,8 +172,9 @@ class QueryObject(object, UserDict.DictMixin):
 		if isinstance(query, six.string_types):
 			queryobject = QueryObject(term=query)
 		else:
-			assert isinstance(query, QueryObject)
-			queryobject = QueryObject(**query._data)
+			queryobject = QueryObject()
+			if isinstance(query, QueryObject):
+				queryobject._data.update(query._data)
 
 		for k, v in kwargs.items():
 			if k and v is not None:

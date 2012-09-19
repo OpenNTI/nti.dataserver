@@ -9,13 +9,15 @@ from nti.dataserver.contenttypes import Note
 
 from nti.ntiids.ntiids import make_ntiid
 
-import nti.dataserver.tests.mock_dataserver as mock_dataserver
-from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+from nti.externalization.externalization import toExternalObject
 
 from nti.contentsearch import interfaces as search_interfaces
 
 from nti.contentsearch.common import ( 	HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS,
 										NTIID, TARGET_OID)
+
+import nti.dataserver.tests.mock_dataserver as mock_dataserver
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from nti.contentsearch.tests import zanpakuto_commands
 from nti.contentsearch.tests import ConfiguringTestBase
@@ -33,8 +35,8 @@ class TestWhooshUserAdapter(ConfiguringTestBase):
 	def tearDownClass(cls):
 		shutil.rmtree(cls.db_dir, True)
 
-	def _create_user(self, ds=None, username='nt@nti.com', password='temp001'):
-		ds = ds or mock_dataserver.current_mock_ds
+	def _create_user(self, username='nt@nti.com', password='temp001'):
+		ds = mock_dataserver.current_mock_ds
 		usr = User.create_user( ds, username=username, password=password)
 		return usr
 	
@@ -65,7 +67,7 @@ class TestWhooshUserAdapter(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_empty(self):
 		username = str(uuid.uuid4()).split('-')[-1] + '@nti.com' 
-		usr = self._create_user(username=username )
+		usr = self._create_user(username=username)
 		uim = search_interfaces.IWhooshEntityIndexManager(usr, None)
 		assert_that(uim.get_stored_indices(), is_([]))
 		assert_that(uim.has_stored_indices(), is_(False))
@@ -82,28 +84,25 @@ class TestWhooshUserAdapter(ConfiguringTestBase):
 		_, usr = self._add_user_index_notes()
 		uim = search_interfaces.IWhooshEntityIndexManager(usr, None)
 		
-		hits = uim.search("shield", limit=None)
+		hits = toExternalObject(uim.search("shield"))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 		assert_that(hits, has_entry(QUERY, 'shield'))
 		assert_that(hits, has_key(ITEMS))
 
 		items = hits[ITEMS]
 		assert_that(items, has_length(1))
+		assert_that(items[0], has_entry(CLASS, HIT))
+		assert_that(items[0], has_entry(NTIID, is_not(None)))
+		assert_that(items[0], has_entry(TARGET_OID, is_not(None)))
+		assert_that(items[0], has_entry(CONTAINER_ID, 'tag:nextthought.com,2011-10:bleach-manga'))
 
-		key = list(items.keys())[0]
-		assert_that(items[key], has_entry(CLASS, HIT))
-		assert_that(items[key], has_entry(NTIID, is_not(None)))
-		assert_that(items[key], has_entry(TARGET_OID, is_not(None)))
-		assert_that(key, is_(items[key][NTIID]))
-		assert_that(items[key], has_entry(CONTAINER_ID, 'tag:nextthought.com,2011-10:bleach-manga'))
+		hits = toExternalObject(uim.search("*"))
+		assert_that(hits, has_entry(HIT_COUNT, len(zanpakuto_commands)))
 
-		hits = uim.search("*", limit=None)
-		assert_that(hits, has_entry(HIT_COUNT, 12))
-
-		hits = uim.search("ra*", limit=None)
+		hits = toExternalObject(uim.search("ra*"))
 		assert_that(hits, has_entry(HIT_COUNT, 3))
 
-		hits = uim.search(">ichigo")
+		hits = toExternalObject(uim.search(">ichigo"))
 		assert_that(hits, has_entry(HIT_COUNT, 0))
 
 	@WithMockDSTrans
@@ -115,11 +114,11 @@ class TestWhooshUserAdapter(ConfiguringTestBase):
 		note.body = [u'Blow It Away']
 		uim.update_content(note)
 
-		hits = uim.search("shield", limit=None)
+		hits = toExternalObject(uim.search("shield"))
 		assert_that(hits, has_entry(HIT_COUNT, 0))
 		assert_that(hits, has_entry(QUERY, 'shield'))
 
-		hits = uim.search("blow", limit=None)
+		hits = toExternalObject(uim.search("blow"))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 		assert_that(hits, has_entry(QUERY, 'blow'))
 
@@ -131,7 +130,7 @@ class TestWhooshUserAdapter(ConfiguringTestBase):
 		note = notes[5]
 		uim.delete_content(note)
 
-		hits = uim.search("shield", limit=None)
+		hits = toExternalObject(uim.search("shield"))
 		assert_that(hits, has_entry(HIT_COUNT, 0))
 		assert_that(hits, has_entry(QUERY, 'shield'))
 
@@ -140,7 +139,7 @@ class TestWhooshUserAdapter(ConfiguringTestBase):
 		_, usr = self._add_user_index_notes()
 		uim = search_interfaces.IWhooshEntityIndexManager(usr, None)
 		
-		hits = uim.suggest("ra")
+		hits = toExternalObject(uim.suggest("ra"))
 		assert_that(hits, has_entry(HIT_COUNT, 4))
 		assert_that(hits, has_entry(QUERY, 'ra'))
 		assert_that(hits, has_key(ITEMS))
@@ -156,7 +155,7 @@ class TestWhooshUserAdapter(ConfiguringTestBase):
 	def test_ngram_search(self):
 		_, usr = self._add_user_index_notes()
 		uim = search_interfaces.IWhooshEntityIndexManager(usr, None)
-		hits = uim.ngram_search("sea")
+		hits = toExternalObject(uim.ngram_search("sea"))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 		assert_that(hits, has_entry(QUERY, 'sea'))
 		assert_that(hits, has_key(ITEMS))

@@ -8,25 +8,24 @@ from zope import interface
 from zope import component
 
 from whoosh import fields
-from whoosh import highlight
 from whoosh import analysis
+from whoosh import highlight
 
 from nti.contentsearch._search_query import QueryObject
 from nti.contentsearch._whoosh_query import parse_query
-from nti.contentsearch._search_external import get_search_hit
+from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch._datastructures import CaseInsensitiveDict
-
-from nti.contentsearch.common import normalize_type_name
-from nti.contentsearch._search_results import empty_search_result
-from nti.contentsearch._search_results import empty_suggest_result
-from nti.contentsearch.common import (NTIID, LAST_MODIFIED, ITEMS, HIT_COUNT, SUGGESTIONS)
+from nti.contentsearch._search_results import empty_search_results
+from nti.contentsearch._search_results import empty_suggest_results
+from nti.contentsearch._search_results import empty_suggest_and_search_results
 from nti.contentsearch._search_highlights import ( WORD_HIGHLIGHT, NGRAM_HIGHLIGHT, WHOOSH_HIGHLIGHT)
+
 
 from nti.contentsearch.common import (	quick_, channel_, content_, keywords_, references_, 
 										recipients_, sharedWith_, ntiid_, last_modified_,
 										creator_, containerId_, replacementContent_,
-										redactionExplanation_, intid_)
+										redactionExplanation_, intid_, title_)
 		
 import logging
 logger = logging.getLogger( __name__ )
@@ -54,46 +53,55 @@ class _SearchableContent(object):
 	
 	def search(self, searcher, query, *args, **kwargs):
 		qo, parsed_query = self._parse_query(content_, query, **kwargs)
-		return self.execute_query_and_externalize(searcher, content_, parsed_query, qo,
-												  self.get_search_highlight_type())
+		return self._execute_search(searcher, content_, parsed_query, qo, self.get_search_highlight_type())
 		
 	def ngram_search(self, searcher, query, *args, **kwargs):
 		qo, parsed_query = self._parse_query(quick_, query, **kwargs)
-		return self.execute_query_and_externalize(searcher, quick_, parsed_query, qo, NGRAM_HIGHLIGHT)
+		return self._execute_search(searcher, quick_, parsed_query, qo, NGRAM_HIGHLIGHT)
 	
 	def suggest_and_search(self, searcher, query, *args, **kwargs):
-		qo = QueryObject.create(query, **kwargs)
+		qo, parsed_query = self._parse_query(content_, query, **kwargs)
 		if ' ' in qo.term:
-			suggestions = []
-			result = self.search(searcher, qo)
+			results = self._execute_search(	searcher,
+										 	content_, 
+										 	parsed_query,
+										 	qo,
+										 	highlight_type=self.get_search_highlight_type(), 
+										 	creator_method=empty_suggest_and_search_results)
 		else:
 			result = self.suggest(searcher, qo)
-			suggestions = result.get(ITEMS, None)
+			suggestions = list(result.suggestions)
 			if suggestions:
+				#TODO: pick a good suggestion word
 				qo.set_term(suggestions[0])
-				result = self.search(searcher, qo)
-			else:
-				result = self.search(searcher, qo)
+				parsed_query = parse_query(content_, qo, self.get_schema())
+				
+			results = self._execute_search(	searcher,
+										 	content_, 
+										 	parsed_query,
+										 	qo,
+										 	highlight_type=self.get_search_highlight_type(), 
+										 	creator_method=empty_suggest_and_search_results)
+			results.add_suggestions(suggestions)
 
-		result[SUGGESTIONS] = suggestions
-		return result
+		return results
 
 	def suggest(self, searcher, word, *args, **kwargs):
 		qo = QueryObject.create(word, **kwargs)
-		limit = qo.limit
 		prefix = qo.prefix or len(qo.term)
 		maxdist = qo.maxdist or _default_word_max_dist
-		result = empty_suggest_result(qo.term)
+		results = empty_suggest_results(qo)
 		records = searcher.suggest(content_, qo.term, maxdist=maxdist, prefix=prefix)
-		records = records[:limit] if limit and limit > 0 else records
-		result[ITEMS] = records
-		result[HIT_COUNT] = len(records)
-		return result
+		results.add(records)
+		return results
 
-	def execute_query_and_externalize(self, searcher, search_field, parsed_query, queryobject, highlight_type=None):
-
+	def _execute_search(self, searcher, search_field, parsed_query, queryobject, highlight_type=None, creator_method=None):
+		creator_method = creator_method or empty_search_results
+		results = creator_method(queryobject)
+		results.highlight_type = highlight_type
+		
 		# execute search
-		search_hits = searcher.search(parsed_query, limit=queryobject.limit)
+		search_hits = searcher.search(parsed_query, limit=None)
 		
 		# set highlight type
 		surround = queryobject.surround
@@ -102,27 +110,14 @@ class _SearchableContent(object):
 		search_hits.fragmenter = highlight.ContextFragmenter(maxchars=maxchars, surround=surround)
 		
 		length = len(search_hits)
-		query_term = queryobject.term
-		result = empty_search_result(query_term)
 		if not length:
-			return result
-		
-		items = result[ITEMS]
+			return results
 		
 		# return all source objects
 		objects = self.get_objects_from_whoosh_hits(search_hits, search_field)
+		results.add(objects)
 		
-		# get all index hits
-		hits = map(get_search_hit, objects, [query_term]*length, [highlight_type]*length)
-		
-		# get last modified
-		lm = reduce(lambda x,y: max(x, y.get(LAST_MODIFIED,0)), hits, 0)
-		for hit in hits:
-			items[hit[NTIID]] = hit
-			
-		result[LAST_MODIFIED] = lm
-		result[HIT_COUNT] = length
-		return result
+		return results
 
 	def get_objects_from_whoosh_hits(self, search_hits, search_field):
 		return search_hits
@@ -160,6 +155,11 @@ def create_book_schema():
 				 			content = fields.TEXT(stored=True, spelling=True, phrase=True, analyzer=_content_analyzer()))
 	return schema
 
+#TODO: do an adapter
+@interface.implementer(search_interfaces.IWhooshBookContent)
+class _BookHit(dict):
+	pass
+
 class Book(_SearchableContent):
 
 	_schema = create_book_schema()
@@ -167,22 +167,25 @@ class Book(_SearchableContent):
 	def get_search_highlight_type(self):
 		return WHOOSH_HIGHLIGHT
 	
-	def suggest(self, searcher, word, *args, **kwargs):
-		result = super(Book, self).suggest(searcher, word, *args, **kwargs)
-		records = result[ITEMS]
-		if records:
-			records = sorted(records, key=lambda x: len(x), reverse=True)
-			result[ITEMS] = records
-		return result
-	
 	def get_objects_from_whoosh_hits(self, search_hits, search_field):
 		result = []
 		for hit in search_hits:
-			result.append(hit)
-			hit.search_field = search_field
-			interface.alsoProvides( hit, search_interfaces.IWhooshBookContent )
+			data = _BookHit(ntiid = hit[ntiid_], 
+					 		title = hit[title_],
+					 		content = hit[content_],
+					 		last_modified = hit[last_modified_] )
+			# _set_whoosh_highlight(data, hit, search_field)
+			result.append(data)
 		return result
 
+	def _set_whoosh_highlight(self, data, hit, search_field):
+		try:
+			whoosh_highlight = hit.highlights(search_field)
+			if whoosh_highlight:
+				data['whoosh_highlight'] = whoosh_highlight
+		except:
+			pass
+			
 # ugd content getter 
 
 def get_channel(obj):
@@ -269,7 +272,7 @@ class UserIndexableContent(_SearchableContent):
 	def get_search_highlight_type(self):
 		return WORD_HIGHLIGHT
 	
-	def get_index_data(self, data, *args, **kwargs):
+	def get_index_data(self, data):
 		"""
 		return a dictonary with the info to be stored in the index
 		"""
@@ -335,8 +338,8 @@ class TreadableIndexableContent(UserIndexableContent):
 	
 	_schema = _create_treadable_schema()
 	
-	def get_index_data(self, data, *args, **kwargs):
-		result = super(TreadableIndexableContent, self).get_index_data(data,  *args, **kwargs)
+	def get_index_data(self, data):
+		result = super(TreadableIndexableContent, self).get_index_data(data)
 		result[keywords_] = get_keywords(data)
 		result[sharedWith_] = get_sharedWith(data)
 		return result
@@ -354,8 +357,8 @@ class Highlight(TreadableIndexableContent):
 	__indexable__ = True
 	_schema = create_highlight_schema()
 
-	def get_index_data(self, data, *args, **kwargs):
-		result = super(Highlight, self).get_index_data(data,  *args, **kwargs)
+	def get_index_data(self, data):
+		result = super(Highlight, self).get_index_data(data)
 		result[content_] = get_object_content(data)
 		result[quick_] = result[content_] if is_ngram_search_supported() else None
 		return result
@@ -372,8 +375,8 @@ class Redaction(Highlight):
 
 	_schema = create_redaction_schema()
 
-	def get_index_data(self, data, *args, **kwargs):
-		result = super(Redaction, self).get_index_data(data,  *args, **kwargs)
+	def get_index_data(self, data):
+		result = super(Redaction, self).get_index_data(data)
 		result[replacementContent_] = get_replacement_content(data)
 		result[redactionExplanation_] = get_redaction_explanation(data)
 		return result
@@ -389,8 +392,8 @@ class Note(Highlight):
 	
 	_schema = create_note_schema()
 	
-	def get_index_data(self, data, *args, **kwargs):
-		result = super(Note, self).get_index_data(data,  *args, **kwargs)
+	def get_index_data(self, data):
+		result = super(Note, self).get_index_data(data)
 		result[references_] = get_references(data)
 		return result
 
@@ -406,8 +409,8 @@ class MessageInfo(Note):
 
 	_schema = create_messageinfo_schema()
 
-	def get_index_data(self, data, *args, **kwargs):
-		result = super(MessageInfo, self).get_index_data(data,  *args, **kwargs)
+	def get_index_data(self, data):
+		result = super(MessageInfo, self).get_index_data(data)
 		result[channel_] = get_channel(data)
 		result[references_] = get_references(data)
 		return result

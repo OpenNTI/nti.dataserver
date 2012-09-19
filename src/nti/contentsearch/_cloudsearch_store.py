@@ -2,6 +2,7 @@ from __future__ import print_function, unicode_literals
 
 import os
 import six
+
 from zope import interface
 
 from boto.cloudsearch import regions
@@ -66,8 +67,8 @@ def create_cloudsearch_store(aws_access_key_id=None,
 	kwargs.pop('search_domain' , None)
 	return _CloudSearchStore(region=region, search_domain=search_domain, **kwargs)
 	
+@interface.implementer(ICloudSearchStore)
 class _CloudSearchStore(object):
-	interface.implements(ICloudSearchStore)
 	
 	def __init__(self, region=None, search_domain='ntisearch', **kwargs):
 		super(_CloudSearchStore, self).__init__()

@@ -13,12 +13,13 @@ from nti.contentsearch._whoosh_index import create_book_schema
 from nti.contentsearch._whoosh_indexstorage import create_directory_index
 from nti.contentsearch._whoosh_bookindexmanager import WhooshBookIndexManager
 
-from nti.contentsearch.common import (HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, SNIPPET, NTIID)
+from nti.contentsearch.common import (HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS,
+									  SNIPPET, NTIID, SUGGESTIONS)
 
 from nti.contentsearch.tests import zanpakuto_commands
 from nti.contentsearch.tests import ConfiguringTestBase
 
-from hamcrest import (assert_that, is_, has_key, has_entry, has_length, is_not, has_item)
+from hamcrest import (assert_that, has_key, has_entry, has_length, is_not, has_item)
 
 _whoosh_index.compute_ngrams = True
 
@@ -48,7 +49,7 @@ class TestWhooshBookIndexManager(ConfiguringTestBase):
 		shutil.rmtree(cls.idx_dir, True)
 		
 	def test_search(self):		
-		hits = self.bim.search("shield", limit=None)
+		hits = toExternalObject(self.bim.search("shield"))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 		assert_that(hits, has_entry(QUERY, 'shield'))
 		assert_that(hits, has_key(ITEMS))
@@ -56,34 +57,30 @@ class TestWhooshBookIndexManager(ConfiguringTestBase):
 		items = hits[ITEMS]
 		assert_that(items, has_length(1))
 		
-		key = list(items.keys())[0]
-		item = items[key]
-		assert_that(key, is_(item[NTIID]))
+		item = items[0]
 		assert_that(item, has_entry(CLASS, HIT))
 		assert_that(item, has_entry(NTIID, is_not(None)))
 		assert_that(item, has_entry(CONTAINER_ID,  is_not(None)))
-		
-		item = toExternalObject(item)
 		assert_that(item, has_entry(SNIPPET, 'All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade'))
 		
 	def test_longword_search(self):		
-		hits = self.bim.search("multiplication", limit=None)
+		hits = toExternalObject(self.bim.search("multiplication"))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 		assert_that(hits, has_entry(QUERY, 'multiplication'))
 		assert_that(hits, has_key(ITEMS))
 		
 		items = hits[ITEMS]
-		item = toExternalObject(list(items.values())[0])
+		item = items[0]
 		assert_that(item, has_entry(SNIPPET, 'Multiplication and subtraction of fire and ice, show your might'))
 		
 	def test_search_start(self):
-		hits = self.bim.search("ra*", limit=None)
+		hits = toExternalObject(self.bim.search("ra*"))
 		assert_that(hits, has_entry(HIT_COUNT, 4))
 		assert_that(hits, has_entry(QUERY, 'ra*'))
 		assert_that(hits, has_key(ITEMS))
 		
 	def test_suggest(self):
-		hits = self.bim.suggest("ra")
+		hits = toExternalObject(self.bim.suggest("ra"))
 		assert_that(hits, has_entry(HIT_COUNT, 5))
 		assert_that(hits, has_entry(QUERY, 'ra'))
 		assert_that(hits, has_key(ITEMS))
@@ -97,18 +94,19 @@ class TestWhooshBookIndexManager(ConfiguringTestBase):
 		assert_that(items, has_item('ran'))
 		
 	def test_ngram_search(self):
-		hits = self.bim.ngram_search("sea")
+		hits = toExternalObject(self.bim.ngram_search("sea"))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 		assert_that(hits, has_entry(QUERY, 'sea'))
 		assert_that(hits, has_key(ITEMS))
 		assert_that(hits[ITEMS], has_length(1))
 		
 	def test_suggest_and_search(self):
-		hits = self.bim.suggest_and_search("ra")
+		hits = toExternalObject(self.bim.suggest_and_search("ra"))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
-		assert_that(hits, has_entry(QUERY, u'rage'))
+		assert_that(hits, has_entry(QUERY, u'ran'))
 		assert_that(hits, has_key(ITEMS))
 		assert_that(hits[ITEMS], has_length(1))
+		assert_that(hits[SUGGESTIONS], has_length(5))
 		
 if __name__ == '__main__':
 	unittest.main()

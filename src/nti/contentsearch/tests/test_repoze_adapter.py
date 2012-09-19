@@ -24,8 +24,8 @@ from hamcrest import (is_, is_not, has_key, has_item, has_entry, has_length, ass
 
 class TestRepozeUserAdapter(ConfiguringTestBase):
 
-	def _create_user(self, ds=None, username='nt@nti.com', password='temp001'):
-		ds = ds or mock_dataserver.current_mock_ds
+	def _create_user(self, username='nt@nti.com', password='temp001'):
+		ds = mock_dataserver.current_mock_ds
 		usr = User.create_user( ds, username=username, password=password)
 		return usr
 	
@@ -46,7 +46,7 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 
 	def _add_notes(self, usr=None, conn=None):
 		notes = []
-		conn = conn or mock_dataserver.current_transaction
+		conn = mock_dataserver.current_transaction
 		usr = usr or self._create_user()
 		for x in zanpakuto_commands:
 			note = self._create_note(x, usr.username)
@@ -55,9 +55,9 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 			notes.append(note)
 		return notes, usr
 
-	def _index_notes(self, dataserver=None, usr=None, conn=None, do_assert=True):
+	def _index_notes(self, usr=None, do_assert=True):
 		docids = []
-		notes, usr = self._add_notes(usr=usr, conn=conn)
+		notes, usr = self._add_notes(usr=usr)
 		rim = search_interfaces.IRepozeEntityIndexManager(usr, None)
 		for note in notes:
 			docid = rim.index_content(note)
@@ -66,9 +66,9 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 			docids.append(docids)
 		return usr, notes, docids
 
-	def _add_user_index_notes(self, ds=None):
+	def _add_user_index_notes(self):
 		usr = self._create_user()
-		_, notes, docids = self._index_notes(dataserver=ds, usr=usr, do_assert=False)
+		_, notes, docids = self._index_notes(usr=usr, do_assert=False)
 		return usr, docids, notes
 
 	@WithMockDSTrans
@@ -98,7 +98,8 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 		usr, _, _ = self._add_user_index_notes()
 		rim = search_interfaces.IRepozeEntityIndexManager(usr, None)
 		
-		hits = rim.search("shield", limit=None)
+		results = rim.search("shield")
+		hits = toExternalObject(results)
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 		assert_that(hits, has_entry(QUERY, 'shield'))
 		assert_that(hits, has_key(ITEMS))
@@ -106,22 +107,20 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 		items = hits[ITEMS]
 		assert_that(items, has_length(1))
 
-		key = list(items.keys())[0]
-		hit = toExternalObject(items[key])
+		hit = items[0]
 		assert_that(hit, has_entry(CLASS, HIT))
 		assert_that(hit, has_entry(NTIID, is_not(None)))
 		assert_that(hit, has_entry(TARGET_OID, is_not(None)))
-		assert_that(key, is_(hit[NTIID]))
 		assert_that(hit, has_entry(CONTAINER_ID, 'tag:nextthought.com,2011-10:bleach-manga'))
 		assert_that(hit, has_entry(SNIPPET, 'All Waves Rise now and Become my Shield Lightning Strike now and Become my Blade'))
 
-		hits = rim.search("*", limit=None)
+		hits = toExternalObject(rim.search("*"))
 		assert_that(hits, has_entry(HIT_COUNT, 0))
 
-		hits = rim.search("?", limit=None)
+		hits = toExternalObject(rim.search("?"))
 		assert_that(hits, has_entry(HIT_COUNT, 0))
 
-		hits = rim.search("ra*", limit=None)
+		hits = toExternalObject(rim.search("ra*"))
 		assert_that(hits, has_entry(HIT_COUNT, 3))
 
 	@WithMockDSTrans
@@ -132,11 +131,11 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 		note.body = [u'Blow It Away']
 		rim.update_content(note)
 
-		hits = rim.search("shield", limit=None)
+		hits = toExternalObject(rim.search("shield"))
 		assert_that(hits, has_entry(HIT_COUNT, 0))
 		assert_that(hits, has_entry(QUERY, 'shield'))
 
-		hits = rim.search("blow", limit=None)
+		hits = toExternalObject(rim.search("blow"))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 		assert_that(hits, has_entry(QUERY, 'blow'))
 
@@ -148,7 +147,7 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 		note = notes[5]
 		rim.delete_content(note)
 
-		hits = rim.search("shield", limit=None)
+		hits = toExternalObject(rim.search("shield"))
 		assert_that(hits, has_entry(HIT_COUNT, 0))
 		assert_that(hits, has_entry(QUERY, 'shield'))
 
@@ -161,7 +160,7 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 		usr, _, _ = self._add_user_index_notes()
 		rim = search_interfaces.IRepozeEntityIndexManager(usr, None)
 		
-		hits = rim.suggest("ra")
+		hits = toExternalObject(rim.suggest("ra"))
 		assert_that(hits, has_entry(HIT_COUNT, 4))
 		assert_that(hits, has_entry(QUERY, 'ra'))
 		assert_that(hits, has_key(ITEMS))
@@ -182,7 +181,7 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 		usr, _, _ = self._add_user_index_notes()
 		rim = search_interfaces.IRepozeEntityIndexManager(usr, None)
 		
-		hits = rim.ngram_search("sea")
+		hits = toExternalObject(rim.ngram_search("sea"))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 		assert_that(hits, has_entry(QUERY, 'sea'))
 		assert_that(hits, has_key(ITEMS))
@@ -195,7 +194,7 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 		with mock_dataserver.mock_db_trans( ds ):
 			for x in range(2):
 				username = 'nt%s@nti.com' % x
-				user = self._create_user(ds, username=username )
+				user = self._create_user(username=username )
 				users.append(user)
 
 			note = self._create_note('ichigo', users[0].username)
@@ -211,7 +210,7 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 
 		for x in xrange(2):
 			with mock_dataserver.mock_db_trans( ds ):
-				hits = rims[x].search("ichigo", limit=None)
+				hits = toExternalObject( rims[x].search("ichigo"))
 				assert_that(hits, has_entry(HIT_COUNT, 1))
 
 	@WithMockDSTrans
@@ -230,13 +229,13 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 		docid = rim.index_content(redaction)
 		assert_that(docid, is_not(None))
 		
-		hits = rim.search("fear", limit=None)
+		hits = toExternalObject(rim.search("fear"))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 		
-		hits = rim.search("death", limit=None)
+		hits = toExternalObject(rim.search("death"))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 		
-		hits = rim.search("ichigo", limit=None)
+		hits = toExternalObject(rim.search("ichigo"))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 				
 if __name__ == '__main__':
