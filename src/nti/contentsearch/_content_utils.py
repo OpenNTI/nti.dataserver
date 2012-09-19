@@ -365,3 +365,29 @@ class _DefaultStopWords(object):
 
 	def available_languages(self, ):
 		return ('en',)
+	
+
+@interface.implementer( search_interfaces.IWordSimilarity )
+class _DefaultWordSimilarity(object):
+	
+	def __init__(self):
+		try:
+			from zopyx.txng3.ext.levenshtein import ratio as zopyx_ratio
+			self._ratio = zopyx_ratio
+		except ImportError:
+			self._ratio = lambda x,y: 1
+			
+	def compute(self, a, b):
+		result = self._ratio(a,b)
+		return result
+
+	def rank(self, word, terms, reverse=True):
+		result = sorted(terms, key=lambda w: self.compute(word, w), reverse=reverse)
+		return result
+	
+def rank_words(word, terms, reverse=True):
+	ws = component.getUtility(search_interfaces.IWordSimilarity)
+	result = ws.rank(word, terms, reverse)
+	return result
+
+	

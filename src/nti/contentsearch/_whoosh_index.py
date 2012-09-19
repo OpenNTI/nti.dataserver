@@ -13,6 +13,7 @@ from whoosh import highlight
 
 from nti.contentsearch._search_query import QueryObject
 from nti.contentsearch._whoosh_query import parse_query
+from nti.contentsearch._content_utils import rank_words
 from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch._datastructures import CaseInsensitiveDict
@@ -72,7 +73,7 @@ class _SearchableContent(object):
 			result = self.suggest(searcher, qo)
 			suggestions = list(result.suggestions)
 			if suggestions:
-				#TODO: pick a good suggestion word
+				suggestions = rank_words(qo.term, suggestions)
 				qo.set_term(suggestions[0])
 				parsed_query = parse_query(content_, qo, self.get_schema())
 				
