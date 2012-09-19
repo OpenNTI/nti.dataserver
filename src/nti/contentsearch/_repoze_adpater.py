@@ -80,11 +80,11 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 	
 	# ----------------
 	
-	def _adapt_search_on_types(self, search_on=None):
+	def _adapt_searchon_types(self, searchon=None):
 		catnames = self.get_catalog_names()
-		if search_on:
-			search_on = [normalize_type_name(x) for x in search_on if normalize_type_name(x) in catnames]
-		return search_on or catnames
+		if searchon:
+			searchon = [normalize_type_name(x) for x in searchon if normalize_type_name(x) in catnames]
+		return searchon or catnames
 
 	def _get_hits_from_docids(self, results, docids, type_name):
 		t = time.time()
@@ -109,13 +109,13 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 				logger.log(loglevels.BLATHER, "Index search for %s(s) took %s(s). %s doc(s) retreived" , type_name, t, result[0])
 			return result
 
-	def _do_search(self, fieldname, qo, search_on=(), highlight_type=WORD_HIGHLIGHT, creator_method=None):
+	def _do_search(self, fieldname, qo, searchon=(), highlight_type=WORD_HIGHLIGHT, creator_method=None):
 		creator_method = creator_method or empty_search_results
 		results = creator_method(qo)
 		results.highlight_type = highlight_type
 		if qo.is_empty: return results
 
-		for type_name in search_on:
+		for type_name in searchon:
 			catalog = self.get_catalog(type_name)
 			_, docids = self._do_catalog_query(catalog, fieldname, qo, type_name)
 			self._get_hits_from_docids(results, docids, type_name)
@@ -125,27 +125,27 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 	@SearchCallWrapper
 	def search(self, query, *args, **kwargs):
 		qo = QueryObject.create(query, **kwargs)
-		search_on = self._adapt_search_on_types(qo.search_on)
+		searchon = self._adapt_searchon_types(qo.searchon)
 		highlight_type = None if is_all_query(qo.term) else WORD_HIGHLIGHT
-		results = self._do_search(content_, qo, search_on, highlight_type)
+		results = self._do_search(content_, qo, searchon, highlight_type)
 		return results
 
 	def ngram_search(self, query, *args, **kwargs):
 		qo = QueryObject.create(query, **kwargs)
-		search_on = self._adapt_search_on_types(qo.search_on)
+		searchon = self._adapt_searchon_types(qo.searchon)
 		highlight_type = None if is_all_query(qo.term) else NGRAM_HIGHLIGHT
-		results = self._do_search(ngrams_, qo, search_on, highlight_type)
+		results = self._do_search(ngrams_, qo, searchon, highlight_type)
 		return results
 
 	def suggest(self, query, *args, **kwargs):
 		qo = QueryObject.create(query, **kwargs)
-		search_on = self._adapt_search_on_types(qo.search_on)
+		searchon = self._adapt_searchon_types(qo.searchon)
 		results = empty_suggest_results(qo)
 		if qo.is_empty: return results
 
 		threshold = qo.threshold
 		prefix = qo.prefix or len(qo.term)
-		for type_name in search_on:
+		for type_name in searchon:
 			catalog = self.get_catalog(type_name)
 			textfield = catalog.get(content_, None)
 			
@@ -158,14 +158,14 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 
 	def suggest_and_search(self, query, limit=None, *args, **kwargs):
 		queryobject = QueryObject.create(query, **kwargs)
-		search_on = self._adapt_search_on_types(queryobject.search_on)
+		searchon = self._adapt_searchon_types(queryobject.searchon)
 		if ' ' in query.term:
 			results = self._do_search(content_, 
 									  queryobject, 
-									  search_on, 
+									  searchon, 
 									  creator_method=empty_suggest_and_search_results)
 		else:
-			result = self.suggest(queryobject, search_on=search_on)
+			result = self.suggest(queryobject, searchon=searchon)
 			suggestions = result.suggestions
 			if suggestions:
 				#TODO: pick a good suggestion
@@ -173,7 +173,7 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 			
 			results = self._do_search(content_,
 									  queryobject,
-									  search_on, 
+									  searchon, 
 									  creator_method=empty_suggest_and_search_results)
 			results.add_suggestions(suggestions)
 			

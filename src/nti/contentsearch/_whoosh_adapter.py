@@ -161,17 +161,17 @@ class _WhooshEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 	
 	# -------------------
 		
-	def _adapt_search_on_types(self, search_on=None):
+	def _adapt_searchon_types(self, searchon=None):
 		indexables = get_indexables()
-		if search_on:
-			search_on = [normalize_type_name(x) for x in search_on if normalize_type_name(x) in indexables]
-		return search_on or indexables
+		if searchon:
+			searchon = [normalize_type_name(x) for x in searchon if normalize_type_name(x) in indexables]
+		return searchon or indexables
 	
 	def _do_search(self, query, is_ngram_search=False, **kwargs):
 		query = QueryObject.create(query, **kwargs)
-		search_on = self._adapt_search_on_types(query.search_on)
+		searchon = self._adapt_searchon_types(query.searchon)
 		results = empty_search_results(query)
-		for type_name in search_on:
+		for type_name in searchon:
 			index = self._get_or_create_index(type_name)
 			with index:
 				indexable = get_indexable_object(type_name)
@@ -193,9 +193,9 @@ class _WhooshEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 
 	def suggest_and_search(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
-		search_on = self._adapt_search_on_types(query.search_on)
+		searchon = self._adapt_searchon_types(query.searchon)
 		results = empty_suggest_and_search_results(query)
-		for type_name in search_on:
+		for type_name in searchon:
 			index = self._get_or_create_index(type_name)
 			with index:
 				indexable = get_indexable_object(type_name)
@@ -206,9 +206,9 @@ class _WhooshEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 
 	def suggest(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
-		search_on = self._adapt_search_on_types(query.search_on)
+		searchon = self._adapt_searchon_types(query.searchon)
 		results = empty_suggest_results(query)
-		for type_name in search_on:
+		for type_name in searchon:
 			index = self._get_or_create_index(type_name)
 			with index:
 				indexable = get_indexable_object(type_name)

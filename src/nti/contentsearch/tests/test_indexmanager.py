@@ -187,10 +187,10 @@ class _BaseIndexManagerTest(object):
 	def test_search_notes(self):
 		_, usr = self._add_notes_and_index()
 
-		hits = self.im.user_data_search(query='not_to_be_found', username=usr.username, search_on=('Notes',))
+		hits = self.im.user_data_search(query='not_to_be_found', username=usr.username, searchon=('Notes',))
 		assert_that(hits, has_length(0))
 
-		hits = self.im.user_data_search(query='rage', username=usr.username, search_on=('Notes',))
+		hits = self.im.user_data_search(query='rage', username=usr.username, searchon=('Notes',))
 		assert_that(hits, has_length(1))
 
 	@WithMockDSTrans
@@ -200,7 +200,7 @@ class _BaseIndexManagerTest(object):
 			return
 
 		_, usr = self._add_notes_and_index()
-		hits = self.im.user_data_ngram_search(query='deat', username=usr.username, search_on=('note',))
+		hits = self.im.user_data_ngram_search(query='deat', username=usr.username, searchon=('note',))
 		assert_that(hits, has_length(1))
 
 	@WithMockDSTrans
@@ -210,7 +210,7 @@ class _BaseIndexManagerTest(object):
 			return
 
 		_, usr = self._add_notes_and_index()
-		hits = self.im.user_data_suggest(username=usr.username, search_on=('note',), query='flow')
+		hits = self.im.user_data_suggest(username=usr.username, searchon=('note',), query='flow')
 		assert_that(hits, has_length(1))
 
 	@WithMockDSTrans
@@ -220,7 +220,7 @@ class _BaseIndexManagerTest(object):
 			return
 
 		_, usr = self._add_notes_and_index()
-		hits = self.im.user_data_suggest_and_search(query='creat', username=usr.username, search_on=('note',))
+		hits = self.im.user_data_suggest_and_search(query='creat', username=usr.username, searchon=('note',))
 		assert_that(hits, has_length(1))
 
 	@WithMockDSTrans
@@ -230,12 +230,12 @@ class _BaseIndexManagerTest(object):
 		note = notes[0]
 		note.body = [u'Shoot To Death']
 		self.im.update_user_content(user, data=note)
-		hits = self.im.user_data_search(query='death', username=user.username, search_on=('Notes',))
+		hits = self.im.user_data_search(query='death', username=user.username, searchon=('Notes',))
 		assert_that(hits, has_length(2))
 
 		note = notes[1]
 		self.im.delete_user_content(user, data=note)
-		hits = self.im.user_data_search(query='deviate', username=user.username, search_on=('Notes',))
+		hits = self.im.user_data_search(query='deviate', username=user.username, searchon=('Notes',))
 		assert_that(hits, has_length(0))
 
 class TestIndexManagerWithRepoze(_BaseIndexManagerTest, ConfiguringTestBase):
