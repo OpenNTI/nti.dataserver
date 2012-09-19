@@ -68,12 +68,16 @@ class SessionService(object):
 				# then it must also be waiting in another greenlet
 				# on get_client_msg, whereupon it will see this message arrive
 				# after we commit (and probably begin its own transaction)
-				# Note that the normal _dispatch_message_to_proxy can be called
+				# NOTE: that the normal _dispatch_message_to_proxy can be called
 				# already in a transaction
+				# NOTE: We do not do this in a site (to reduce DB connections), so the proxy listeners need to
+				# be very limited in what they do
 
 				try:
-					_ = component.getUtility( nti_interfaces.IDataserverTransactionRunner )( lambda: self._dispatch_message_to_proxy( *msgs ), retries=2 )
-					#logger.debug( "Dispatched incoming cluster message? %s: %s", handled, msgs )
+					#_ = component.getUtility( nti_interfaces.IDataserverTransactionRunner )( lambda: self._dispatch_message_to_proxy( *msgs ), retries=2 )
+					transaction.begin()
+					_ = self._dispatch_message_to_proxy( *msgs )
+					transaction.commit()
 				except Exception:
 					logger.exception( "Failed to dispatch incoming cluster message." )
 
