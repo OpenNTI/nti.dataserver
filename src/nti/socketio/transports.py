@@ -14,7 +14,7 @@ import gevent
 import types
 from Queue import Empty
 from gevent.queue import Queue
-
+import time
 import socket
 import geventwebsocket.exceptions
 
@@ -301,6 +301,7 @@ class WebsocketTransport(BaseTransport):
 		def _run(self):
 			while self.run_loop:
 				self.message = self.session_proxy.get_client_msg()
+				logger.info( "Waking up sender for %s", self.message )
 				assert isinstance(self.message, (str,types.NoneType)), "Messages should already be encoded as required"
 				if not self.run_loop:
 					break
@@ -332,11 +333,17 @@ class WebsocketTransport(BaseTransport):
 	class WebSocketReader(AbstractWebSocketOperator):
 		message = None
 
+		# Cache of some stuff from the session
+		last_heartbeat_time = 0
+		connected = False
+
 		def _do_read(self):
 			session = self.get_session( )
 			if session is None:
 				return False
 
+			self.last_heartbeat_time = session.last_heartbeat_time
+			self.connected = session.connected
 			if self.message is None:
 				# Kill the greenlet
 				self.session_proxy.put_client_msg( None )
@@ -358,8 +365,16 @@ class WebsocketTransport(BaseTransport):
 		def _run(self):
 			while self.run_loop:
 				self.message = self.websocket.receive()
+
+				# Reduce heartbeat activity from every five seconds to every
+				# thirty seconds to cut down on database activity
+				# This is tightly coupled to session implementation and lifetime
+				if self.message == b"2::" and self.connected and self.last_heartbeat_time >= time.time() - 30:
+					continue
+
 				if not self.run_loop:
 					break
+
 				# Try for up to 2 seconds to receive this message. If it fails,
 				# drop it and wait for the next one. That's better than dieing altogether, right?
 				try:
@@ -381,13 +396,23 @@ class WebsocketTransport(BaseTransport):
 				return True
 			return False
 
+		def _do_ping_direct( self ):
+			# Short cut everything to reduce DB activity
+			try:
+				self.websocket.send( b"2::" )
+				return True
+			except Exception:
+				logger.debug( "Stopping sending messages to '%s'", self.session_id, exc_info=True )
+				return False
+
 		def _run(self):
 			while self.run_loop:
 				gevent.sleep( self.ping_sleep )
 				if not self.run_loop:
 					break
 				# FIXME: Make time a config?
-				self.run_loop &= run_job_in_site( self._do_ping, retries=5, sleep=0.1 )
+				#self.run_loop &= run_job_in_site( self._do_ping, retries=5, sleep=0.1 )
+				self.run_loop &= self._do_ping_direct()
 
 	def connect(self, session, request_method, ping_sleep=5.0 ):
 

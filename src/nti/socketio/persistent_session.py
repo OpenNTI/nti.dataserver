@@ -159,6 +159,8 @@ class AbstractSession(persistent.Persistent):
 		self.server_queue.put( msg )
 
 	def enqueue_client_msg(self, msg):
+		# TODO: This is wrong, or the queues are being used wrong. The session manager
+		# uses this to send messages TO clients
 		if msg is not None:
 			# When we get a message from the client, reset our
 			# heartbeat timer. (Don't do this for our termination message)
