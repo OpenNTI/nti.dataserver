@@ -451,8 +451,8 @@ class ISearchQuery(interface.Interface):
 	limit = schema.Int(title="search results limit", required=False)
 	indexid = schema.TextLine(title="Book content NTIID", required=False)
 	searchon = schema.Iterable("Content types to search on", required=False)
-	pagelen = schema.Int(title="Search hits per page", required=False)
-	pagenum = schema.Int(title="Which page of the results to use, numbered from ``1``", required=False)
+	batchsize = schema.Int(title="page size", required=False)
+	batchstart = schema.Int(title="The index of the first object to return, starting with zero", required=False)
 		
 class ISearchQueryValidator(interface.Interface):
 	

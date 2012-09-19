@@ -1,8 +1,9 @@
 from __future__ import print_function, unicode_literals
 
 import six
-from math import ceil
 from collections import Iterable
+
+from z3c.batching.batch import Batch
 
 from zope import interface
 from zope import component
@@ -50,52 +51,30 @@ class _BaseSearchResults(object):
 
 class _PageableSearchResults(_BaseSearchResults):
 	
-	_offset = None
-	_pagelen = None
-
 	@property
-	def paging(self):
-		return self.query.pagelen and self.query.pagenum
+	def is_batching(self):
+		return self.batchstart is not None and self.batchsize 
 	
 	@property
-	def pagecount(self):
-		result = int(ceil(self.total / self.query.pagelen)) if self.paging else None
-		return result
-		
-	@property
-	def pagenum(self):
-		result = self.query.pagenum if self.paging else None
-		return result
-
-	@property
-	def pagelen(self):
-		if self.paging and self._pagelen is None:
-			if (self.offset + self.query.pagelen) > self.total:
-				self._pagelen = self.total - self.offset
-			else:
-				self._pagelen = self.query.pagelen
-		return self._pagelen
+	def batchsize(self):
+		return self.query.batchsize
 	
-	@property
-	def offset(self):
-		if self.paging and self._offset is None:
-			self._offset = (self.pagenum - 1) * self.query.pagelen
-		else:
-			self._offset = 0
-		return self._offset
+	def batchstart(self):
+		return self.query.batchstart
 	
-	def is_last_page(self):
-		return self.pagecount == 0 or self.pagenum == self.pagecount
-	
+	def _batch(self):
+		return Batch(self.hits, start=self.batchstart, size=self.batchsize)
+			
 	def __getitem__(self, n):
-		if self.paging:
-			offset = self.offset
-			n = n + offset
-		return super(_PageableSearchResults, self).__getitem__(n)
+		if self.is_batching:
+			result = self._batch()[n]
+		else:
+			result = super(_PageableSearchResults, self).__getitem__(n)
+		return result
 	
 	def __iter__(self):
-		if self.paging:
-			return iter(self.hits[self.offset:self.offset + self.pagelen])
+		if self.is_batching:
+			return iter(self._batch())
 		else:
 			return super(_PageableSearchResults, self).__iter__()
 
