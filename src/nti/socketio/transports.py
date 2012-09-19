@@ -21,7 +21,7 @@ import geventwebsocket.exceptions
 import pyramid.interfaces
 from nti.socketio import interfaces
 import nti.dataserver.interfaces as nti_interfaces
-
+from nti.dataserver.sessions import SessionService
 from nti.utils import transactions
 
 def _decode_packet_to_session( session, sock, data, doom_transaction=True ):
@@ -332,6 +332,7 @@ class WebsocketTransport(BaseTransport):
 
 	class WebSocketReader(AbstractWebSocketOperator):
 		message = None
+		HEARTBEAT_LIFETIME = SessionService.SESSION_HEARTBEAT_TIMEOUT / 2
 
 		# Cache of some stuff from the session
 		last_heartbeat_time = 0
@@ -366,10 +367,13 @@ class WebsocketTransport(BaseTransport):
 			while self.run_loop:
 				self.message = self.websocket.receive()
 
-				# Reduce heartbeat activity from every five seconds to every
-				# thirty seconds to cut down on database activity
+				# Reduce heartbeat activity from every five seconds to
+				# no more often than half of what's needed to keep the session "alive"
+				# to cut down on database activity
 				# This is tightly coupled to session implementation and lifetime
-				if self.message == b"2::" and self.connected and self.last_heartbeat_time >= time.time() - 30:
+				if self.message == b"2::" \
+				  and self.connected \
+				  and self.last_heartbeat_time >= (time.time() - self.HEARTBEAT_LIFETIME):
 					continue
 
 				if not self.run_loop:
