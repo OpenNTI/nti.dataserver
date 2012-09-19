@@ -4,9 +4,8 @@
 
 	<include file="meta.zcml" package="zope.component" />
 
-	<adapter zcml:condition="installed zope.copy"
-			 factory=".copy.wref_copy_factory" />
-
-	<include package="." file="configure_activitylog.zcml" />
+	<subscriber
+		handler=".activitylog.register_subscriber"
+		for="zope.processlifetime.IDatabaseOpened" />
 
 </configure>
