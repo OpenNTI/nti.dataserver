@@ -364,6 +364,7 @@ def _configure_zeo( env_root ):
 		result = """
 		<zodb %(name)s>
 		pool-size 7
+		cache-size 25000
 		database-name %(name)s
 		<zlibstorage>
 		<relstorage %(name)s>
@@ -396,7 +397,7 @@ def _configure_zeo( env_root ):
 	""" % (_relstorage_stanza(blobDir=blobDir),)
 	relstorage_zconfig_path = env_root.write_conf_file( 'relstorage_conf.xml', relstorage_configuration )
 
-	base_uri = 'zlibzeo://%(addr)s?storage=%(storage)s&database_name=%(name)s&blob_dir=%(blob_dir)s&shared_blob_dir=%(shared)s'
+	base_uri = 'zlibzeo://%(addr)s?storage=%(storage)s&database_name=%(name)s&blob_dir=%(blob_dir)s&shared_blob_dir=%(shared)s&connection_cache_size=25000&cache_size=104857600'
 	file_uri = 'file://%s?database_name=%s&blobstorage_dir=%s'
 	relstorage_zconfig_uri = 'zconfig://' + relstorage_zconfig_path
 
