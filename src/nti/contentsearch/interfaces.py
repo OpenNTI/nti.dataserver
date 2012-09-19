@@ -453,9 +453,14 @@ class ICloudSearchStore(interface.Interface):
 # search query
 
 class ISearchQuery(interface.Interface):
-	term = schema.TextLine(title="query search term")
-	limit = schema.Int(title="search results limit")
-
+	term = schema.TextLine(title="Query search term", required=True)
+	username = schema.TextLine(title="User doing the search", required=True)
+	limit = schema.Int(title="search results limit", required=False)
+	indexid = schema.TextLine(title="Book content NTIID", required=False)
+	search_on = schema.Iterable("Content types to search on", required=False)
+	pagelen = schema.Int(title="Search hits per page", required=False)
+	pagenum = schema.Int(title="Which page of the results to use, numbered from ``1``", required=False)
+		
 class ISearchQueryValidator(interface.Interface):
 	
 	def validate(query):

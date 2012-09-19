@@ -15,13 +15,12 @@ from nti.contentsearch._search_results import empty_suggest_results
 from nti.contentsearch._search_results import merge_search_results
 from nti.contentsearch._search_results import merge_suggest_results
 from nti.contentsearch._search_results import empty_suggest_and_search_results
-from nti.contentsearch.common import (LAST_MODIFIED, ITEMS, HIT_COUNT)
 
 from nti.contentsearch.tests import zanpakuto_commands
 from nti.contentsearch.tests import ConfiguringTestBase
 from nti.contentsearch.tests import domain as domain_words
 
-from hamcrest import (assert_that, has_length, is_, is_not, has_entry, has_item)
+from hamcrest import (assert_that, has_length, is_, is_not, has_item)
 
 class TestSearchResults(ConfiguringTestBase):
 
@@ -126,70 +125,54 @@ class TestSearchResults(ConfiguringTestBase):
 		assert_that(d.hits, is_([]))
 		assert_that(d.suggestions, has_length(0) )
 
-	def xtest_merge_search_results(self):
-		a = {LAST_MODIFIED: 1, ITEMS:{'a':1}}
-		b = {LAST_MODIFIED: 2, ITEMS:{'b':2}}
-		m = merge_search_results(a, b)
+	def test_merge_search_results(self):
 		
-		assert_that(m, has_entry(LAST_MODIFIED, 2))
-		assert_that(m, has_entry(ITEMS, {'a':1, 'b':2}))
-		assert_that(m, has_entry(HIT_COUNT, 2))
-	
-		a = {LAST_MODIFIED: 1, ITEMS:{'a':1}}
-		b = {ITEMS:{'b':2}}
-		m = merge_search_results(a, b)
-		assert_that(m, has_entry(LAST_MODIFIED, 1))
-
-		a = {ITEMS:{'a':1}}
-		b = {LAST_MODIFIED: 3, ITEMS:{'b':2}}
-		m = merge_search_results(a, b)
-		assert_that(m, has_entry(LAST_MODIFIED, 3))
-
-		a = None
-		b = {LAST_MODIFIED: 3, ITEMS:{'b':2}}
-		m = merge_search_results(a, b)
-		assert_that(m, is_(b))
-
-		a = {LAST_MODIFIED: 3, ITEMS:{'b':2}}
-		b = None
-		m = merge_search_results(a, b)
-		assert_that(m, is_(a))
-
-		m = merge_search_results(None, None)
-		assert_that(m, is_(None))
-
-	def xtest_merge_suggest_results(self):
-		a = {LAST_MODIFIED: 4, ITEMS:['a']}
-		b = {LAST_MODIFIED: 2, ITEMS:['b','c']}
-		m = merge_suggest_results(a, b)
+		a = empty_search_results(QueryObject.create("myQuery"))
+		a.prop1 = 'value0'
 		
-		assert_that(m, has_entry(LAST_MODIFIED, 4))
-		assert_that(m, has_entry(ITEMS, ['a','c', 'b']))
-		assert_that(m, has_entry(HIT_COUNT, 3))
+		b = empty_search_results(QueryObject.create("myQuery"))
+		b.prop1 = 'value1'
+		b.prop2 = 'value2'
+		
+		containerid = make_ntiid(nttype='bleach', specific='manga')
+		for x, cmd in enumerate(zanpakuto_commands):
+			note = Note()
+			note.body = [unicode(cmd)]
+			note.creator = 'nt@nti.com'
+			note.containerId = containerid
+			result = b if x % 2 == 0 else a
+			result.add(note)
+		
+		assert_that(a.prop1, is_('value0'))
+		
+		offset = len(a)
+		a = merge_search_results(a, b)
+		assert_that(a, has_length(len(zanpakuto_commands)))
+		for x, note in enumerate(b):
+			assert_that(note, is_(a[offset+x]))
+			
+		assert_that(a.prop1, is_('value1'))
+		assert_that(a.prop2, is_('value2'))
 
-		a = {LAST_MODIFIED: 1, ITEMS:['a']}
-		b = {ITEMS:['b']}
-		m = merge_suggest_results(a, b)
-		assert_that(m, has_entry(LAST_MODIFIED, 1))
-		assert_that(m, has_entry(ITEMS, ['a','b']))
-
-		a = {ITEMS:['a']}
-		b = {LAST_MODIFIED: 3, ITEMS:['b']}
-		m = merge_suggest_results(a, b)
-		self.assertEqual(3, m[LAST_MODIFIED])
-
-		a = None
-		b = {LAST_MODIFIED: 3, ITEMS:['b']}
-		m = merge_suggest_results(a, b)
-		assert_that(m, is_(b))
-
-		a = {LAST_MODIFIED: 3, ITEMS:['c']}
-		b = None
-		m = merge_suggest_results(a, b)
-		assert_that(m, is_(a))
-
-		m = merge_suggest_results(None, None)
-		assert_that(m, is_(None))
+	def test_merge_suggest_results(self):
+		
+		a = empty_suggest_results(QueryObject.create("myQuery"))
+		a.prop1 = 'value0'
+		
+		b = empty_suggest_results(QueryObject.create("myQuery"))
+		b.prop1 = 'value1'
+		b.prop2 = 'value2'
+		
+		a.add(['a'])
+		b.add(['b','c'])
+		a = merge_suggest_results(a, b)
+		assert_that(a, has_length(3))
+		
+		for x in ('a', 'b', 'c'):
+			assert_that(a, has_item(x))
+			
+		assert_that(a.prop1, is_('value1'))
+		assert_that(a.prop2, is_('value2'))
 
 if __name__ == '__main__':
 	unittest.main()
