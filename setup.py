@@ -196,7 +196,7 @@ setup(
 		 # adds cryptacular and pbkdf2
 		'z3c.bcrypt >= 1.1',
 		'z3c.coverage >= 1.2.0', # TODO: Do we need this?
-		'z3c.password >= 0.11.0', # password policies
+		'z3c.password >= 0.11.1', # password policies
 		'z3c.pt >= 2.2.3', # Better ZPT support than plastex, add-in to Chameleon
 		# TODO: z3c.ptcompat? We already have zope.pagetemplate listed
 		'z3c.table >= 1.0.0', # Flexible table rendering
