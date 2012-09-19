@@ -13,8 +13,6 @@ from nti.dataserver.contenttypes import Note
 
 from nti.ntiids.ntiids import make_ntiid
 
-from nti.externalization.externalization import toExternalObject
-
 from nti.contentsearch import QueryObject
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch._whoosh_index import create_book_schema
@@ -26,13 +24,11 @@ from nti.contentsearch._whoosh_bookindexmanager import WhooshBookIndexManager
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from nti.contentsearch.common import HIT_COUNT
-
 from nti.contentsearch.tests import phrases
 from nti.contentsearch.tests import zanpakuto_commands
 from nti.contentsearch.tests import ConfiguringTestBase
 
-from hamcrest import (is_, has_entry, assert_that)
+from hamcrest import (is_, assert_that, has_length)
 
 class _BaseIndexManagerTest(object):
 
@@ -84,17 +80,17 @@ class _BaseIndexManagerTest(object):
 		self.im = self.create_index_mananger()
 		self.im.add_book(indexname='bleach', ntiid='bleach', indexdir=self.book_idx_dir)
 
-		hits = toExternalObject(self.im.content_search(indexid='bleach', query='omega') )
-		assert_that(hits, has_entry(HIT_COUNT, 1))
+		hits = self.im.content_search(indexid='bleach', query='omega') 
+		assert_that(hits, has_length(1))
 
-		hits = toExternalObject(self.im.content_ngram_search(indexid='bleach', query='ren') )
-		assert_that(hits, has_entry(HIT_COUNT, 3))
+		hits = self.im.content_ngram_search(indexid='bleach', query='ren') 
+		assert_that(hits, has_length(3))
 
-		hits = toExternalObject(self.im.content_suggest_and_search(indexid='bleach', query='wen') )
-		assert_that(hits, has_entry(HIT_COUNT, 1))
+		hits = self.im.content_suggest_and_search(indexid='bleach', query='wen') 
+		assert_that(hits, has_length(1))
 
-		hits = toExternalObject(self.im.content_suggest(indexid='bleach', query='extre'))
-		assert_that(hits, has_entry(HIT_COUNT, 2))
+		hits = self.im.content_suggest(indexid='bleach', query='extre')
+		assert_that(hits, has_length(2))
 
 	def _add_notes_to_ds(self, strings=zanpakuto_commands):
 		notes = []
@@ -129,12 +125,12 @@ class _BaseIndexManagerTest(object):
 		self.im.add_book(indexname='bleach', ntiid='bleach', indexdir=self.book_idx_dir)
 
 		q = QueryObject(term='omega', indexid='bleach', username=usr.username)
-		hits = toExternalObject(self.im.search(q))
-		assert_that(hits, has_entry(HIT_COUNT, 2))
+		hits = self.im.search(q)
+		assert_that(hits, has_length(2))
 
 		q.term = 'coffee'
-		hits = toExternalObject(self.im.search(q))
-		assert_that(hits, has_entry(HIT_COUNT, 1))
+		hits = self.im.search(q)
+		assert_that(hits, has_length(1))
 
 	@WithMockDSTrans
 	def test_unified_search_ngrams(self):
@@ -146,15 +142,15 @@ class _BaseIndexManagerTest(object):
 		self.im.add_book(indexname='bleach', indexdir=self.book_idx_dir)
 
 		q = QueryObject(term='coff', indexid='bleach', username=usr.username)
-		hits = toExternalObject(self.im.ngram_search(q))
-		assert_that(hits, has_entry(HIT_COUNT, 1))
+		hits = self.im.ngram_search(q)
+		assert_that(hits, has_length(1))
 
 		q.term = 'omeg'
-		hits = toExternalObject(self.im.suggest(q))
-		assert_that(hits, has_entry(HIT_COUNT, 1))
+		hits = self.im.suggest(q)
+		assert_that(hits, has_length(1))
 
-		hits = toExternalObject(self.im.suggest_and_search(q))
-		assert_that(hits, has_entry(HIT_COUNT, 2))
+		hits = self.im.suggest_and_search(q)
+		assert_that(hits, has_length(2))
 
 	@WithMockDSTrans
 	def test_unified_search_suggest(self):
@@ -166,8 +162,8 @@ class _BaseIndexManagerTest(object):
 		self.im.add_book(indexname='bleach', indexdir=self.book_idx_dir)
 
 		q = QueryObject(term='omeg', indexid='bleach', username=usr.username)
-		hits = toExternalObject(self.im.suggest(q))
-		assert_that(hits, has_entry(HIT_COUNT, 1))
+		hits = self.im.suggest(q)
+		assert_that(hits, has_length(1))
 
 	@WithMockDSTrans
 	def test_unified_search_suggest_and_search(self):
@@ -179,8 +175,8 @@ class _BaseIndexManagerTest(object):
 		self.im.add_book(indexname='bleach', indexdir=self.book_idx_dir)
 
 		q = QueryObject(term='omeg', indexid='bleach', username=usr.username)
-		hits = toExternalObject(self.im.suggest_and_search(q))
-		assert_that(hits, has_entry(HIT_COUNT, 2))
+		hits = self.im.suggest_and_search(q)
+		assert_that(hits, has_length(2))
 
 
 	@WithMockDSTrans
@@ -191,11 +187,11 @@ class _BaseIndexManagerTest(object):
 	def test_search_notes(self):
 		_, usr = self._add_notes_and_index()
 
-		hits = toExternalObject(self.im.user_data_search(query='not_to_be_found', username=usr.username, search_on=('Notes',)))
-		assert_that(hits, has_entry(HIT_COUNT, 0))
+		hits = self.im.user_data_search(query='not_to_be_found', username=usr.username, search_on=('Notes',))
+		assert_that(hits, has_length(0))
 
-		hits = toExternalObject(self.im.user_data_search(query='rage', username=usr.username, search_on=('Notes',)))
-		assert_that(hits, has_entry(HIT_COUNT, 1))
+		hits = self.im.user_data_search(query='rage', username=usr.username, search_on=('Notes',))
+		assert_that(hits, has_length(1))
 
 	@WithMockDSTrans
 	def test_search_notes_ngrams(self):
@@ -204,8 +200,8 @@ class _BaseIndexManagerTest(object):
 			return
 
 		_, usr = self._add_notes_and_index()
-		hits = toExternalObject(self.im.user_data_ngram_search(query='deat', username=usr.username, search_on=('note',)))
-		assert_that(hits, has_entry(HIT_COUNT, 1))
+		hits = self.im.user_data_ngram_search(query='deat', username=usr.username, search_on=('note',))
+		assert_that(hits, has_length(1))
 
 	@WithMockDSTrans
 	def test_search_notes_suggest(self):
@@ -214,8 +210,8 @@ class _BaseIndexManagerTest(object):
 			return
 
 		_, usr = self._add_notes_and_index()
-		hits = toExternalObject(self.im.user_data_suggest(username=usr.username, search_on=('note',), query='flow'))
-		assert_that(hits, has_entry(HIT_COUNT, 1))
+		hits = self.im.user_data_suggest(username=usr.username, search_on=('note',), query='flow')
+		assert_that(hits, has_length(1))
 
 	@WithMockDSTrans
 	def test_search_notes_suggest_and_search(self):
@@ -224,8 +220,8 @@ class _BaseIndexManagerTest(object):
 			return
 
 		_, usr = self._add_notes_and_index()
-		hits = toExternalObject(self.im.user_data_suggest_and_search(query='creat', username=usr.username, search_on=('note',)))
-		assert_that(hits, has_entry(HIT_COUNT, 1))
+		hits = self.im.user_data_suggest_and_search(query='creat', username=usr.username, search_on=('note',))
+		assert_that(hits, has_length(1))
 
 	@WithMockDSTrans
 	def test_update_delete_note(self):
@@ -234,13 +230,13 @@ class _BaseIndexManagerTest(object):
 		note = notes[0]
 		note.body = [u'Shoot To Death']
 		self.im.update_user_content(user, data=note)
-		hits = toExternalObject(self.im.user_data_search(query='death', username=user.username, search_on=('Notes',)))
-		assert_that(hits, has_entry(HIT_COUNT, 2))
+		hits = self.im.user_data_search(query='death', username=user.username, search_on=('Notes',))
+		assert_that(hits, has_length(2))
 
 		note = notes[1]
 		self.im.delete_user_content(user, data=note)
-		hits = toExternalObject(self.im.user_data_search(query='deviate', username=user.username, search_on=('Notes',)))
-		assert_that(hits, has_entry(HIT_COUNT, 0))
+		hits = self.im.user_data_search(query='deviate', username=user.username, search_on=('Notes',))
+		assert_that(hits, has_length(0))
 
 class TestIndexManagerWithRepoze(_BaseIndexManagerTest, ConfiguringTestBase):
 

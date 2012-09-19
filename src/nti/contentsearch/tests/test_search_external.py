@@ -230,6 +230,7 @@ class TestSearchExternal(ConfiguringTestBase):
 		assert_that(eo[LAST_MODIFIED], greater_than_or_equal_to(0))
 		assert_that(eo, has_key(ITEMS))
 		assert_that(eo[ITEMS], has_length(len(domain_words)))
+		assert_that(eo[SUGGESTIONS], has_length(len(domain_words)))
 		
 	@WithMockDSTrans
 	def test_externalize_search_suggest_results(self):
