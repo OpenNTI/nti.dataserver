@@ -104,9 +104,19 @@ def _build_reference_lists( request, result_list ):
 		try:
 			x = proxies[x]
 		except KeyError:
-			logger.exception( "Failed to get proxy for %s/%s. Illegal reference chain from %s/%s.",
-							  x, getattr( x, 'containerId', None ),
-							  ref, getattr( ref, 'containerId', None ))
+			# So this means that we found something in the reference chain that was not
+			# in the collection itself. Assuming we're looking at shared data in addition to owned data,
+			# and knowing that ThreadableMixin is implemented with weakrefs, this means one of a few things:
+			# First, there's cross-container referencing going on. The containerIDs won't match. That's not
+			# supposed to be allowed. We haven't actually seen that yet.
+			# Second, the note has been deleted but the weak ref hasn't cleaned up yet.
+			# Third, the item was shared with this user at one point and no longer is.
+
+			# In the later two cases, we will report on ID that the client won't be able to find and put into the thread,
+			# so it will appear to be 'deleted'
+			logger.debug( "Failed to get proxy for %s/%s. Illegal reference chain from %s/%s?",
+						  x, getattr( x, 'containerId', None ),
+						  ref, getattr( ref, 'containerId', None ))
 			return [] # return a temp list that's not persistent
 		result = x.referenced_by
 		if result is None:
