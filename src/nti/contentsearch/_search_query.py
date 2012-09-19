@@ -12,7 +12,7 @@ from nti.contentsearch import interfaces as search_interfaces
 class QueryObject(object, UserDict.DictMixin):
 	
 	__float_properties__ = ('threshold',)
-	__int_properties__ 	 = ('limit', 'maxdist', 'prefix', 'surround', 'maxchars', 'pagenum', 'pagelen')
+	__int_properties__ 	 = ('limit', 'maxdist', 'prefix', 'surround', 'maxchars', 'batchsize', 'batchstart')
 	__properties__ 		 = ('term', 'books', 'indexid', 'searchon', 'username') + __int_properties__ + __float_properties__
 
 	def __init__(self, *args, **kwargs):
@@ -42,16 +42,14 @@ class QueryObject(object, UserDict.DictMixin):
 		key = 'term' if key == 'query' else key
 		key = 'indexid' if key == 'indexname' else key
 		key = 'searchon' if key == 'search_on' else key
-		key = 'pagelen' if key == 'batchsize' else key
-		key = 'pagenum' if key == 'batchstart' else key
 				
 		if key in self.__properties__:
 			if key == 'term':
 				self.set_term(val)
-			elif key == 'pagelen':
-				self.set_pagelen(val)
-			elif key == 'pagenum':
-				self.set_pagenum(val)
+			elif key == 'batchsize':
+				self.set_batchsize(val)
+			elif key == 'batchstart':
+				self.set_batchstart(val)
 			elif key == 'searchon':
 				self.set_searchon(val)
 			elif key in self.__int_properties__:
@@ -102,23 +100,25 @@ class QueryObject(object, UserDict.DictMixin):
 	query = term
 	word = query
 
-	def get_pagelen(self):
-		return self._data.get('pagelen', None)
+	def get_batchsize(self):
+		return self._data.get('batchsize', None)
 
-	def set_pagelen(self, pagelen=None):
-		pagelen = abs(int(pagelen)) if pagelen is not None else pagelen
-		self._data['pagelen'] = pagelen
+	def set_batchsize(self, batchsize=None):
+		pagelen = abs(int(batchsize)) if batchsize is not None else batchsize
+		self._data['batchsize'] = pagelen
 
-	pagelen = property(get_pagelen, set_pagelen)
+	batchsize = property(get_batchsize, set_batchsize)
+	batchSize = batchsize
+	
+	def get_batchstart(self):
+		return self._data.get('batchstart', None)
 
-	def get_pagenum(self):
-		return self._data.get('pagenum', None)
+	def set_batchstart(self, batchstart=None):
+		pagenum = abs(int(batchstart)) if batchstart is not None else batchstart
+		self._data['batchstart'] = pagenum
 
-	def set_pagenum(self, pagenum=None):
-		pagenum = abs(int(pagenum)) if pagenum is not None else pagenum
-		self._data['pagenum'] = pagenum
-
-	pagenum = property(get_pagenum, set_pagenum)
+	batchstart = property(get_batchstart, set_batchstart)
+	batchStart = batchstart
 	
 	def get_limit(self):
 		return self._data.get('limit', None)
