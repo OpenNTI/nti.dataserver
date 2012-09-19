@@ -1,6 +1,7 @@
 from __future__ import print_function, unicode_literals
 
 import six
+from math import ceil
 from collections import Iterable
 
 from zope import interface
@@ -26,16 +27,16 @@ class _BaseSearchResults(object):
 		self._query = query
 	
 	@property
-	def limit(self):
-		return self.query.limit
-	
-	@property
 	def query(self):
 		return self._query
 	
 	@property
 	def hits(self):
 		raise NotImplementedError()
+	
+	@property
+	def total(self):
+		return len(self.hits)
 	
 	def __len__(self):
 		return len(self.hits)
@@ -45,7 +46,58 @@ class _BaseSearchResults(object):
 
 	def __iter__(self):
 		return iter(self.hits)
+	
 
+class _PageableSearchResults(_BaseSearchResults):
+	
+	_offset = None
+	_pagelen = None
+
+	@property
+	def paging(self):
+		return self.query.pagelen and self.query.pagenum
+	
+	@property
+	def pagecount(self):
+		result = int(ceil(self.total / self.query.pagelen)) if self.paging else None
+		return result
+		
+	@property
+	def pagenum(self):
+		result = self.query.pagenum if self.paging else None
+		return result
+
+	@property
+	def pagelen(self):
+		if self.paging and self._pagelen is None:
+			if (self.offset + self.query.pagelen) > self.total:
+				self._pagelen = self.total - self.offset
+			else:
+				self._pagelen = self.query.pagelen
+		return self._pagelen
+	
+	@property
+	def offset(self):
+		if self.paging and self._offset is None:
+			self._offset = (self.pagenum - 1) * self.query.pagelen
+		else:
+			self._offset = 0
+		return self._offset
+	
+	def is_last_page(self):
+		return self.pagecount == 0 or self.pagenum == self.pagecount
+	
+	def __getitem__(self, n):
+		if self.paging:
+			offset = self.offset
+			n = n + offset
+		return super(_PageableSearchResults, self).__getitem__(n)
+	
+	def __iter__(self):
+		if self.paging:
+			return iter(self.hits[self.offset:self.offset + self.pagelen])
+		else:
+			return super(_PageableSearchResults, self).__iter__()
 
 class _MetaSearchResults(type):
 	
@@ -56,7 +108,7 @@ class _MetaSearchResults(type):
 
 @interface.implementer( search_interfaces.ISearchResults,
 						zmime_interfaces.IContentTypeAware )
-class _SearchResults(_BaseSearchResults):
+class _SearchResults(_PageableSearchResults):
 	
 	__metaclass__ = _MetaSearchResults
 	
