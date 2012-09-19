@@ -6,6 +6,7 @@
 
 	<subscriber
 		handler=".activitylog.register_subscriber"
-		for="zope.processlifetime.IDatabaseOpened" />
+		for="zope.processlifetime.IDatabaseOpened"
+		zcml:condition="have devmode" />
 
 </configure>
