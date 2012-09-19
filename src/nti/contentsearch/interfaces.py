@@ -11,6 +11,7 @@ from nti.externalization import interfaces as ext_interfaces
 
 deprecated( 'IRepozeDataStore', 'Use lastest index implementation' )
 class IRepozeDataStore(IFullMapping):
+	
 	def has_user(username):
 		"""
 		return if the store has catalogs for the specified user
@@ -22,41 +23,32 @@ class IRepozeDataStore(IFullMapping):
 	
 class ISearcher(interface.Interface):
 	
-	def search(query, *args, **kwargs):
+	def search(query):
 		"""
 		search the content using the specified query
 		
 		:param query: Search query
-		:param limit: max number of search hits
-		:param search_on: type items to search
 		"""
 	
-	def ngram_search(query, *args, **kwargs):
+	def ngram_search(query):
 		"""
 		search the content using ngram for the specified query
 		
 		:param query: Search query
-		:param limit: max number of search hits
-		:param search_on: type items to search
 		"""
 		
-	def suggest(query, *args, **kwargs):
+	def suggest(query):
 		"""
 		perform a word suggestion
 		
 		:param query: Search query
-		:param limit: max number of search hits
-		:param prefix: number of chars in terms for prefix
-		:param search_on: type items to search
 		"""
 		
-	def suggest_and_search(query, *args, **kwargs):
+	def suggest_and_search(query):
 		"""
 		do a word suggestion and perform a search
 		
-		:param term: Search query
-		:param limit: max number of search hits
-		:param search_on: type items to search
+		:param query: Search query
 		"""
 	
 class ISearchFeatures(interface.Interface):
@@ -64,6 +56,7 @@ class ISearchFeatures(interface.Interface):
 	is_word_suggest_supported = schema.Bool(title="Property for word suggestion support.", default=False)
 	
 class IBookIndexManager(ISearcher):
+	
 	def get_indexname():
 		"return the index name"
 		
@@ -82,7 +75,7 @@ class IEntityIndexManager(ISearcher):
 		return the index names accessible/stored in this manager for the user
 		"""
 				
-	def index_content(data, type_name=None, *args, **kwargs):
+	def index_content(data, type_name=None):
 		"""
 		index the specified content
 		
@@ -90,7 +83,7 @@ class IEntityIndexManager(ISearcher):
 		:param type_name: data type
 		"""
 		
-	def update_content(data, type_name=None, *args, **kwargs):
+	def update_content(data, type_name=None):
 		"""
 		update the specified content index
 		
@@ -98,7 +91,7 @@ class IEntityIndexManager(ISearcher):
 		:param type_name: data type
 		"""
 
-	def delete_content(data, type_name=None, *args, **kwargs):
+	def delete_content(data, type_name=None):
 		"""
 		delete from the index the specified content
 		
@@ -106,7 +99,7 @@ class IEntityIndexManager(ISearcher):
 		:param type_name: data type
 		"""
 		
-	def remove_index(type_name, *args, **kwargs):
+	def remove_index(type_name):
 		"""
 		remove the specified index
 		
@@ -128,35 +121,35 @@ class ICloudSearchEntityIndexManager(IEntityIndexManager):
 	
 class IIndexManager(interface.Interface):
 	
-	def search(query, *args, **kwargs):
+	def search(query):
 		"""
 		perform a search query
 		
 		:param query: query object
 		"""
 		
-	def ngram_search(query, *args, **kwargs):
+	def ngram_search(query):
 		"""
 		perform a ngram based search
 		
 		:param query: query object
 		"""
 		
-	def suggest_and_search(query, *args, **kwargs):
+	def suggest_and_search(query):
 		"""
 		perform a  word suggestion and search
 		
 		:param query: query object
 		"""
 	
-	def suggest(query, *args, **kwargs):
+	def suggest(query):
 		"""
 		perform a word suggestion search
 		
 		:param query: query object
 		"""
 		
-	def content_search(query,  *args, **kwargs):
+	def content_search(query):
 		"""
 		perform a book search
 		
@@ -165,7 +158,7 @@ class IIndexManager(interface.Interface):
 		:param limit: max number of search hits
 		"""
 	
-	def content_ngram_search(query, *args, **kwargs):
+	def content_ngram_search(query):
 		"""
 		perform a ngram based content search
 		
@@ -174,7 +167,7 @@ class IIndexManager(interface.Interface):
 		:param limit: max number of search hits
 		"""
 		
-	def content_suggest_and_search(query, *args, **kwargs):
+	def content_suggest_and_search(query):
 		"""
 		perform a book word suggestion and search
 		
@@ -183,7 +176,7 @@ class IIndexManager(interface.Interface):
 		:param limit: max number of search hits
 		"""
 		
-	def content_suggest(query, *args, **kwargs):
+	def content_suggest(query):
 		"""
 		perform a book word suggestion
 		
@@ -193,7 +186,7 @@ class IIndexManager(interface.Interface):
 		:param prefix: number of chars in terms for prefix
 		"""
 	
-	def user_data_search(query, limit=None, *args, **kwargs):
+	def user_data_search(query):
 		"""
 		perform a user data content search
 		
@@ -202,7 +195,7 @@ class IIndexManager(interface.Interface):
 		:param limit: max number of search hits
 		"""
 
-	def user_data_ngram_search(query, *args, **kwargs):
+	def user_data_ngram_search(query):
 		"""
 		perform a user data ngram based content search
 		
@@ -211,7 +204,7 @@ class IIndexManager(interface.Interface):
 		:param limit: max number of search hits
 		"""
 
-	def user_data_suggest_and_search(query, *args, **kwargs):
+	def user_data_suggest_and_search(query):
 		"""
 		perform a book user data suggestion and search
 		
@@ -220,7 +213,7 @@ class IIndexManager(interface.Interface):
 		:param limit: max number of search hits
 		"""
 
-	def user_data_suggest(query, *args, **kwargs):
+	def user_data_suggest(query):
 		"""
 		perform a user data word suggestion
 		
@@ -230,7 +223,7 @@ class IIndexManager(interface.Interface):
 		:param prefix: number of chars in terms for prefix
 		"""
 		
-	def index_user_content(username, data, type_name=None, *args, **kwargs):
+	def index_user_content(username, data, type_name=None):
 		"""
 		index the specified content
 		
@@ -239,7 +232,7 @@ class IIndexManager(interface.Interface):
 		:param type_name: data type
 		"""
 
-	def update_user_content(username, data, type_name=None, *args, **kwargs):
+	def update_user_content(username, data, type_name=None):
 		"""
 		update the index for specified content
 		
@@ -248,7 +241,7 @@ class IIndexManager(interface.Interface):
 		:param type_name: data type
 		"""
 
-	def delete_user_content(username, data, type_name=None, *args, **kwargs):
+	def delete_user_content(username, data, type_name=None):
 		"""
 		delete from the index the specified content
 		
@@ -457,7 +450,7 @@ class ISearchQuery(interface.Interface):
 	username = schema.TextLine(title="User doing the search", required=True)
 	limit = schema.Int(title="search results limit", required=False)
 	indexid = schema.TextLine(title="Book content NTIID", required=False)
-	search_on = schema.Iterable("Content types to search on", required=False)
+	searchon = schema.Iterable("Content types to search on", required=False)
 	pagelen = schema.Int(title="Search hits per page", required=False)
 	pagenum = schema.Int(title="Which page of the results to use, numbered from ``1``", required=False)
 		
