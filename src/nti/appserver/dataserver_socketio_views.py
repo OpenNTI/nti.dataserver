@@ -66,26 +66,21 @@ class Session( AbstractSession ):
 	def message_handler(self):
 		return nti.socketio.session_consumer.SessionConsumer()
 
-	# The names are odd. put_server_msg is a message TO
-	# the server. That is, a message arriving at the server,
-	# sent from the client. In contrast, put_client_msg
-	# is a message to send TO the client, FROM the server.
-
 	# TODO: We want to ensure queue behaviour for
 	# server messages across the cluster. Either that, or make the interaction
 	# stateless
-	def put_server_msg(self, msg):
+	def queue_message_from_client(self, msg):
 		# Putting a server message immediately processes it,
 		# wherever the session is loaded.
 		self.message_handler( self, msg )
 
-	def put_client_msg(self, msg):
+	def queue_message_to_client(self, msg):
 		session_service = component.getUtility( nti_interfaces.IDataserver ).session_manager
-		session_service.put_client_msg( self.session_id, msg )
+		session_service.queue_message_to_client( self.session_id, msg )
 
-	def get_client_msgs(self):
+	def get_messages_to_client(self):
 		session_service = component.getUtility( nti_interfaces.IDataserver ).session_manager
-		return session_service.get_client_msgs( self.session_id )
+		return session_service.get_messages_to_client( self.session_id )
 
 	def kill( self, send_event=True ):
 		self.message_handler.kill(self)

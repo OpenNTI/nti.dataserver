@@ -161,7 +161,7 @@ if getattr( gevent, 'version_info', (0,) )[0] >= 1 and 'ZEO' not in sys.modules:
 		def __init__( self, *args, **kwargs ):
 			LogRecord.__init__( self, *args, **kwargs )
 			# TODO: Respect logging.logThreads?
-			if self.threadName == 'MainThread':
+			if self.threadName and (self.threadName == 'MainThread' or self.threadName.startswith( 'Dummy-' )):
 				current = getcurrent()
 				thread_info = getattr( current, '__thread_name__', None )
 				if thread_info:

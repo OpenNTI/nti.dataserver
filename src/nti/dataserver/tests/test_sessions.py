@@ -76,8 +76,8 @@ class TestSessionService(mock_dataserver.ConfiguringTestBase):
 			s_msg = object()
 			c_msg = object()
 
-			def put_server_msg( self, msg ): self.s_msg = msg
-			def put_client_msg( self, msg ): self.c_msg = msg
+			def queue_message_from_client( self, msg ): self.s_msg = msg
+			def queue_message_to_client( self, msg ): self.c_msg = msg
 
 		proxy = Proxy()
 		assert_that( proxy, has_property( 's_msg', is_not( none() ) ) )

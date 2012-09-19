@@ -160,13 +160,13 @@ class ISocketIOChannel(interface.Interface):
 	of the messages is done (the messages are strings of bytes).
 	"""
 
-	def put_server_msg( msg ):
+	def queue_message_from_client( msg ):
 		"""
 		A message, ``msg``, has arrived at the server and is ready to
 		be processed.
 		"""
 
-	def put_client_msg( msg ):
+	def queue_message_to_client( msg ):
 		"""
 		A message, ``msg``, is ready to be sent to the remote client.
 		"""
