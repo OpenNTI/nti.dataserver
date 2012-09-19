@@ -63,7 +63,7 @@ class QueryObject(object, UserDict.DictMixin):
 		books = self._data.get('books', ())
 		if not books:
 			indexid = self._data.get('indexid', None)
-			if indexid:
+			if indexid is not None:
 				books = (indexid,)
 		return books
 
