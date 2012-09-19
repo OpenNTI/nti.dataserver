@@ -141,7 +141,8 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 		query = self.query
 		last_modified = 0
 		highlight_type = self.highlight_type
-		for item in self.items:
+		# use iterator in case of any paging
+		for item in self.results:
 			# adapt to a search hit 
 			hit = get_search_hit(item, query, highlight_type)
 			last_modified = max(last_modified, hit.last_modified)
