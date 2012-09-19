@@ -114,14 +114,14 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 		assert_that(hit, has_entry(CONTAINER_ID, 'tag:nextthought.com,2011-10:bleach-manga'))
 		assert_that(hit, has_entry(SNIPPET, 'All Waves Rise now and Become my Shield Lightning Strike now and Become my Blade'))
 
-		hits = toExternalObject(rim.search("*"))
-		assert_that(hits, has_entry(HIT_COUNT, 0))
+		hits = rim.search("*")
+		assert_that(hits, has_length(0))
 
-		hits = toExternalObject(rim.search("?"))
-		assert_that(hits, has_entry(HIT_COUNT, 0))
+		hits = rim.search("?")
+		assert_that(hits, has_length(0))
 
-		hits = toExternalObject(rim.search("ra*"))
-		assert_that(hits, has_entry(HIT_COUNT, 3))
+		hits = rim.search("ra*")
+		assert_that(hits, has_length(3))
 
 	@WithMockDSTrans
 	def test_update_note(self):
@@ -229,14 +229,14 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 		docid = rim.index_content(redaction)
 		assert_that(docid, is_not(None))
 		
-		hits = toExternalObject(rim.search("fear"))
-		assert_that(hits, has_entry(HIT_COUNT, 1))
+		hits = rim.search("fear")
+		assert_that(hits, has_length(1))
 		
-		hits = toExternalObject(rim.search("death"))
-		assert_that(hits, has_entry(HIT_COUNT, 1))
+		hits = rim.search("death")
+		assert_that(hits, has_length(1))
 		
-		hits = toExternalObject(rim.search("ichigo"))
-		assert_that(hits, has_entry(HIT_COUNT, 1))
+		hits = rim.search("ichigo")
+		assert_that(hits, has_length(1))
 				
 if __name__ == '__main__':
 	unittest.main()
