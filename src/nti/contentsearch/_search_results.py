@@ -53,17 +53,17 @@ class _PageableSearchResults(_BaseSearchResults):
 	
 	@property
 	def is_batching(self):
-		return self.batchstart is not None and self.batchsize 
+		return self.batchStart is not None and self.batchSize 
 	
 	@property
-	def batchsize(self):
-		return self.query.batchsize
+	def batchSize(self):
+		return self.query.batchSize
 	
-	def batchstart(self):
-		return self.query.batchstart
+	def batchStart(self):
+		return self.query.batchStart
 	
 	def _batch(self):
-		return Batch(self.hits, start=self.batchstart, size=self.batchsize)
+		return Batch(self.hits, start=self.batchStart, size=self.batchSize)
 			
 	def __getitem__(self, n):
 		if self.is_batching:
