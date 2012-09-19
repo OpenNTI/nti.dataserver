@@ -116,7 +116,7 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 		for type_name in search_on:
 			catalog = self.get_catalog(type_name)
 			_, docids = self._do_catalog_query(catalog, fieldname, qo, type_name)
-			self._get_hits_from_docids(results, docids, highlight_type)
+			self._get_hits_from_docids(results, docids, type_name)
 			
 		return results
 
