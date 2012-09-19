@@ -20,13 +20,13 @@ from nti.contentsearch.common import is_all_query
 from nti.contentsearch.common import get_type_name
 from nti.contentsearch._repoze_query import parse_query
 from nti.contentsearch.common import normalize_type_name
+from nti.contentsearch.common import (content_, ngrams_)
 from nti.contentsearch._repoze_index import create_catalog
-from nti.contentsearch._search_external import get_search_hit
 from nti.contentsearch.textindexng3 import CatalogTextIndexNG3
-from nti.contentsearch._search_results import empty_search_result
-from nti.contentsearch._search_results import empty_suggest_result
+from nti.contentsearch._search_results import empty_search_results
+from nti.contentsearch._search_results import empty_suggest_results
+from nti.contentsearch._search_results import empty_suggest_and_search_results
 from nti.contentsearch._search_highlights import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT)
-from nti.contentsearch.common import (NTIID, LAST_MODIFIED, ITEMS, HIT_COUNT, SUGGESTIONS, content_, ngrams_)
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -84,62 +84,40 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 			search_on = [normalize_type_name(x) for x in search_on if normalize_type_name(x) in catnames]
 		return search_on or catnames
 
-	def _get_hits_from_docids(self, qo, docids, highlight_type=None):
+	def _get_hits_from_docids(self, results, docids, type_name):
+		t = time.time()
+		try:
+			# get all objects from the ds
+			objects = map(self.get_object, docids)
+			t = time.time() - t
+			results.add(objects)
+		finally:
+			logger.debug("Getting %s %s(s) from dataserver took %s(s)" % (len(docids), type_name, t))
 		
-		limit = qo.limit		
-		if not docids:
-			return [], 0
-		
-		# get all objects from the ds
-		objects = map(self.get_object, docids)
-		
-		# get all index hits
-		length = len(objects)
-		hits = map(get_search_hit, objects, [qo.term]*length, [highlight_type]*length)
-		
-		# filter if required
-		items = hits[:limit] if limit else hits
-		
-		# get last modified
-		lm = reduce(lambda x,y: max(x, y.get(LAST_MODIFIED,0)), items, 0)
-		
-		return items, lm
-
 	def _do_catalog_query(self, catalog, fieldname, qo, type_name):
 		is_all_query, queryobject = parse_query(catalog, fieldname, qo)
 		if is_all_query:
 			return 0, []
 		else:
-			limit = qo.limit
 			t = time.time()
-			result = catalog.query(queryobject, limit=limit)
-			t = time.time() - t
-			logger.debug("repoze catalog search for %s(s) took %s(s)" % (type_name, t))
+			try:
+				result = catalog.query(queryobject)
+				t = time.time() - t
+			finally:
+				logger.debug("repoze catalog search for %s(s) took %s(s)" % (type_name, t))
 			return result
 
-	def _do_search(self, fieldname, qo, search_on=(), highlight_type=None):
-		
-		results = empty_search_result(qo.term)
+	def _do_search(self, fieldname, qo, search_on=(), highlight_type=WORD_HIGHLIGHT, creator_method=None):
+		creator_method = creator_method or empty_search_results
+		results = creator_method(qo)
+		results.highlight_type = highlight_type
 		if qo.is_empty: return results
 
-		lm = 0
-		items = results[ITEMS]
 		for type_name in search_on:
 			catalog = self.get_catalog(type_name)
-			
-			# search catalog
 			_, docids = self._do_catalog_query(catalog, fieldname, qo, type_name)
-			hits, hits_lm = self._get_hits_from_docids(qo, docids, highlight_type)
+			self._get_hits_from_docids(results, docids, highlight_type)
 			
-			# calc the last modified date
-			lm = max(lm, hits_lm)
-			
-			# set items
-			for hit in hits:
-				items[hit[NTIID]] = hit
-
-		results[LAST_MODIFIED] = lm
-		results[HIT_COUNT] = len(items)
 		return results
 
 	@SearchCallWrapper
@@ -160,14 +138,11 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 	def suggest(self, query, *args, **kwargs):
 		qo = QueryObject.create(query, **kwargs)
 		search_on = self._adapt_search_on_types(qo.search_on)
-		results = empty_suggest_result(qo.term)
+		results = empty_suggest_results(qo)
 		if qo.is_empty: return results
 
-		limit = qo.limit
-		suggestions = set()
 		threshold = qo.threshold
 		prefix = qo.prefix or len(qo.term)
-
 		for type_name in search_on:
 			catalog = self.get_catalog(type_name)
 			textfield = catalog.get(content_, None)
@@ -175,30 +150,32 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 			# make sure the field supports suggest
 			if isinstance(textfield, CatalogTextIndexNG3):
 				words_t = textfield.suggest(term=qo.term, threshold=threshold, prefix=prefix)
-				for t in words_t:
-					suggestions.add(t[0])
+				results.add(map(lambda t: t[0], words_t))
 	
-		suggestions = suggestions[:limit] if limit and limit > 0 else suggestions
-		results[ITEMS] = list(suggestions)
-		results[HIT_COUNT] = len(suggestions)
 		return results
 
 	def suggest_and_search(self, query, limit=None, *args, **kwargs):
-		qo = QueryObject.create(query, **kwargs)
-		search_on = self._adapt_search_on_types(qo.search_on)
+		queryobject = QueryObject.create(query, **kwargs)
+		search_on = self._adapt_search_on_types(queryobject.search_on)
 		if ' ' in query.term:
-			suggestions = []
-			result = self.search(qo, search_on=search_on)
+			results = self._do_search(content_, 
+									  queryobject, 
+									  search_on, 
+									  creator_method=empty_suggest_and_search_results)
 		else:
-			result = self.suggest(qo, search_on=search_on)
-			suggestions = result[ITEMS]
+			result = self.suggest(queryobject, search_on=search_on)
+			suggestions = result.suggestions
 			if suggestions:
-				qo.term = suggestions[0]
-				result = self.search(qo, search_on=search_on)
-			else:
-				result = self.search(qo, search_on=search_on)
-		result[SUGGESTIONS] = suggestions
-		return result
+				#TODO: pick a good suggestion
+				queryobject.term = list(suggestions)[0]
+			
+			results = self._do_search(content_,
+									  queryobject,
+									  search_on, 
+									  creator_method=empty_suggest_and_search_results)
+			results.add_suggestions(suggestions)
+			
+		return results
 
 	# ----------------
 		

@@ -73,16 +73,16 @@ class TestSearchExternal(ConfiguringTestBase):
 		d = _provide_highlight_snippet(clazz(data), query)
 		return toExternalObject(d)
 			
-	def xtest_get_type_name(self):
+	def test_get_type_name(self):
 		assert_that(get_type_name(self.note), is_('note'))
 		assert_that(get_type_name(self.hightlight), is_('highlight'))
 		assert_that(get_type_name(self.messageinfo), is_('messageinfo'))
 		
-	def xtest_get_search_hit(self):
+	def test_get_search_hit(self):
 		hit = get_search_hit({})
 		assert_that(hit, is_not(None))
 			
-	def xtest_search_hit_hightlight_dict(self):
+	def test_search_hit_hightlight_dict(self):
 		d = self._externalize(_HighlightSearchHit, self.hightlight, 'divide')
 		assert_that(d, has_entry(CLASS, HIT))
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.0'))
@@ -92,7 +92,7 @@ class TestSearchExternal(ConfiguringTestBase):
 		assert_that(d,
 			has_entry(SNIPPET, u'You know how to add subtract multiply and divide In fact you may already know how to solve many of the problems'))
 		
-	def xtest_seach_hit_redaction_dict(self):
+	def test_seach_hit_redaction_dict(self):
 		d = self._externalize(_RedactionSearchHit, self.redaction, '')
 		assert_that(d, has_entry(CLASS, HIT))
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:AOPS-HTML-Howes_converted.0'))
@@ -101,7 +101,7 @@ class TestSearchExternal(ConfiguringTestBase):
 		assert_that(d, has_entry(TARGET_OID, u'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x1876:5573657273'))
 		assert_that(d, has_entry(SNIPPET, u'redaction serving a sentence in a Michigan jail'))
 		
-	def xtest_search_hit_note_dict(self):
+	def test_search_hit_note_dict(self):
 		d = self._externalize(_NoteSearchHit, self.note, 'waves')
 		assert_that(d, has_entry(CLASS, HIT))
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.0'))
@@ -110,7 +110,7 @@ class TestSearchExternal(ConfiguringTestBase):
 		assert_that(d, has_entry(TARGET_OID, u'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x0860:5573657273'))
 		assert_that(d, has_entry(SNIPPET, u'All Waves Rise now and Become my Shield Lightning Strike now and'))
 		
-	def xtest_search_hit_messgeinfo_dict(self):
+	def test_search_hit_messgeinfo_dict(self):
 		d = self._externalize(_MessageInfoSearchHit, self.messageinfo, '')
 		assert_that(d, has_entry(CLASS, HIT))
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:zope.security.management.system_user-OID-0x82:53657373696f6e73'))
@@ -120,7 +120,7 @@ class TestSearchExternal(ConfiguringTestBase):
 		assert_that(d, has_entry(SNIPPET, u'Zanpakuto and Zangetsu'))
 		
 	@WithMockDSTrans
-	def xtest_search_hit_note_ds(self):
+	def test_search_hit_note_ds(self):
 		usr = self._create_user()
 		note = Note()
 		note.body = [u'It is not enough to mean well, we actually have to do well']
@@ -139,7 +139,7 @@ class TestSearchExternal(ConfiguringTestBase):
 		assert_that(d, has_entry(SNIPPET, u'It is not enough to mean well we actually have to do well'))
 		
 	@WithMockDSTrans
-	def xtest_search_hit_hightlight_ds(self):
+	def test_search_hit_hightlight_ds(self):
 		usr = self._create_user()
 		highlight = Highlight()
 		highlight.selectedText = u'Kon saw it! The Secret of a Beautiful Office Lady'
@@ -157,7 +157,7 @@ class TestSearchExternal(ConfiguringTestBase):
 		assert_that(d, has_entry(SNIPPET, u'Kon saw it The Secret of a Beautiful Office Lady'))
 		
 	@WithMockDSTrans
-	def xtest_search_hit_redaction_ds(self):
+	def test_search_hit_redaction_ds(self):
 		usr = self._create_user()
 		redaction = Redaction()
 		redaction.selectedText = u'Fear'
@@ -176,7 +176,7 @@ class TestSearchExternal(ConfiguringTestBase):
 		assert_that(d, has_entry(TARGET_OID, oidstr))
 		assert_that(d, has_entry(SNIPPET, u'overcome it everytime I have been on the verge of death Fear'))
 
-	def xtest_search_hit_book(self):
+	def test_search_hit_book(self):
 		containerId = make_ntiid(nttype='bleach', specific='manga')	
 		hit = {}
 		hit[title_] = 'Bleach'

@@ -14,6 +14,8 @@ from nti.dataserver.contenttypes import Redaction as dsRedaction
 
 from nti.ntiids.ntiids import make_ntiid
 
+from nti.externalization.externalization import toExternalObject
+
 from nti.contentsearch import _whoosh_index
 from nti.contentsearch._whoosh_index import Note
 from nti.contentsearch._whoosh_index import Book
@@ -67,7 +69,7 @@ class TestWhooshIndex(ConfiguringTestBase):
 		note.index_content(idx.writer(), self._create_ds_note())
 		with idx.searcher() as s:
 			assert_that(s.doc_count(), is_(1))
-			d = note.search(s, "rise")
+			d = toExternalObject(note.search(s, "rise"))
 			assert_that(d, has_entry(HIT_COUNT, 1))
 			assert_that(d, has_entry(QUERY, 'rise'))
 			assert_that(d, has_key(ITEMS))
@@ -93,7 +95,7 @@ class TestWhooshIndex(ConfiguringTestBase):
 		hi.index_content(idx.writer(), self._create_ds_highlight())
 		with idx.searcher() as s:
 			assert_that(s.doc_count(), is_(1))
-			d = hi.search(s, "divide")
+			d = toExternalObject(hi.search(s, "divide"))
 			assert_that(d, has_entry(HIT_COUNT, 1))
 			assert_that(d, has_entry(QUERY, 'divide'))
 			assert_that(d, has_key(ITEMS))
@@ -118,7 +120,7 @@ class TestWhooshIndex(ConfiguringTestBase):
 		rd.index_content(idx.writer(), self._create_ds_redaction())
 		with idx.searcher() as s:
 			assert_that(s.doc_count(), is_(1))
-			d = rd.search(s, "stark")
+			d = toExternalObject(rd.search(s, "stark"))
 			assert_that(d, has_entry(HIT_COUNT, 1))
 			assert_that(d, has_entry(QUERY, 'stark'))
 			assert_that(d, has_key(ITEMS))
@@ -139,7 +141,7 @@ class TestWhooshIndex(ConfiguringTestBase):
 		writer.commit()
 		
 		with idx.searcher() as s:
-			d = bk.search(s, "shield")
+			d = toExternalObject(bk.search(s, "shield"))
 			assert_that(d, has_entry(HIT_COUNT, 1))
 			assert_that(d, has_entry(QUERY, 'shield'))
 			assert_that(d, has_key(ITEMS))

@@ -97,9 +97,8 @@ def WordSnippetHighlightDecoratorFactory(*args):
 class WhooshHighlightDecorator(_BaseWordSnippetHighlightDecorator):
 
 	def decorateExternalObject(self, original, external):
-		#whoosh_highlight = getattr(original, 'whoosh_highlight', None)
-		#if whoosh_highlight:
-		#	external[SNIPPET] = whoosh_highlight
+		#if 'whoosh_highlight' in original:
+		#	external[SNIPPET] = original['whoosh_highlight']
 		#else:
 		super(WhooshHighlightDecorator, self).decorateExternalObject(original, external)
 
@@ -265,16 +264,11 @@ class _WhooshBookSearchHit(_BaseSearchHit):
 		self._data[CONTAINER_ID] = hit[ntiid_]
 		self._data[title_.capitalize()] = hit[title_]
 		self._data[LAST_MODIFIED] = epoch_time(hit[last_modified_])
-		
-		# set whoosh highlight
-		self.whoosh_highlight = None
-		search_field = getattr(hit, 'search_field', None)
-		if search_field:
-			try:
-				self.whoosh_highlight = hit.highlights(search_field)
-			except:
-				pass
-		
+			
+	@property
+	def last_modified(self):
+		return self._data.get(LAST_MODIFIED, 0)
+	
 def _provide_highlight_snippet(hit, query=None, highlight_type=WORD_HIGHLIGHT):
 	if hit is not None:
 		hit.query = query

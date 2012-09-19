@@ -25,13 +25,13 @@ from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch._whoosh_index import get_indexables
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch._whoosh_index import get_indexable_object
-from nti.contentsearch._search_results import empty_search_result
-from nti.contentsearch._search_results import empty_suggest_result
+from nti.contentsearch._search_results import empty_search_results
 from nti.contentsearch._search_results import merge_search_results
+from nti.contentsearch._search_results import empty_suggest_results
 from nti.contentsearch._search_results import merge_suggest_results
-from nti.contentsearch._search_indexmanager import _SearchEntityIndexManager
-from nti.contentsearch._search_results import empty_suggest_and_search_result
+from nti.contentsearch._search_results import empty_suggest_and_search_results
 from nti.contentsearch._search_results import merge_suggest_and_search_results
+from nti.contentsearch._search_indexmanager import _SearchEntityIndexManager
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -167,34 +167,34 @@ class _WhooshEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 			search_on = [normalize_type_name(x) for x in search_on if normalize_type_name(x) in indexables]
 		return search_on or indexables
 	
-	def _do_search(self, query, is_ngram_search=False, *args, **kwargs):
+	def _do_search(self, query, is_ngram_search=False, **kwargs):
 		query = QueryObject.create(query, **kwargs)
 		search_on = self._adapt_search_on_types(query.search_on)
-		results = empty_search_result(query.term)
+		results = empty_search_results(query)
 		for type_name in search_on:
 			index = self._get_or_create_index(type_name)
 			with index:
 				indexable = get_indexable_object(type_name)
 				with index.searcher() as searcher:
 					if not is_ngram_search:
-						hits = indexable.search(searcher, query)
+						rs = indexable.search(searcher, query)
 					else:
-						hits = indexable.ngram_search(searcher, query)
-					results = merge_search_results(results, hits)
+						rs = indexable.ngram_search(searcher, query)
+					results = merge_search_results(results, rs)
 		return results	
 
 	def search(self, query, *args, **kwargs):
-		results = self._do_search(query, False, *args, **kwargs)
+		results = self._do_search(query, False, **kwargs)
 		return results
 
 	def ngram_search(self, query, *args, **kwargs):
-		results = self._do_search(query, True, *args, **kwargs)
+		results = self._do_search(query, True, **kwargs)
 		return results
 
 	def suggest_and_search(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
 		search_on = self._adapt_search_on_types(query.search_on)
-		results = empty_suggest_and_search_result(query.term)
+		results = empty_suggest_and_search_results(query)
 		for type_name in search_on:
 			index = self._get_or_create_index(type_name)
 			with index:
@@ -207,7 +207,7 @@ class _WhooshEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 	def suggest(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
 		search_on = self._adapt_search_on_types(query.search_on)
-		results = empty_suggest_result(query.term)
+		results = empty_suggest_results(query)
 		for type_name in search_on:
 			index = self._get_or_create_index(type_name)
 			with index:

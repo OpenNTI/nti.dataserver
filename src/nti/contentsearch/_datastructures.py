@@ -1,5 +1,7 @@
 from __future__ import print_function, unicode_literals
 
+import collections
+
 from brownie.caching import LFUCache
 
 class LFUMap(LFUCache):
@@ -27,3 +29,5 @@ class CaseInsensitiveDict(dict):
     
     def __delitem__(self, key):
         return super(CaseInsensitiveDict, self).__delitem__(key.lower())
+
+collections.Mapping.register(CaseInsensitiveDict)

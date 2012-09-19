@@ -24,8 +24,6 @@ from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentsearch import QueryObject
 from nti.contentsearch.interfaces import IIndexManager
 
-from nti.externalization.datastructures import LocatedExternalDict
-
 import logging
 logger = logging.getLogger( __name__ )
 
@@ -40,11 +38,10 @@ def get_collection(ntiid, default=None, registry=component):
 
 def _locate(obj, parent, name=None):
 	# TODO: We really need to have a specific model object to represent results
-	# with proper IExternalObject and IContentTypeAware support. As it is,
+	# with proper IContentTypeAware support. As it is,
 	# we wind up guessing MimeType and modification info (leading to the hack below)
 	# (Instead of modification info, we should be using etags here, anyway).
 	# cf nti.apserver.usersearch_views._format_result
-	obj = LocatedExternalDict( obj )
 	obj.__parent__ = parent
 	obj.__name__ = name
 	# Sadly, these are not properly cachable

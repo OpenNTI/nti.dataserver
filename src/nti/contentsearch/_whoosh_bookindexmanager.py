@@ -78,13 +78,13 @@ class WhooshBookIndexManager(object):
 			results = self.book.search(s, query)
 		return results
 
-	def ngram_search(self, query, limit=None, *args, **kwargs):
+	def ngram_search(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
 		with  _Proxy(self.bookidx.searcher()) as s:
 			results = self.book.ngram_search(s, query)
 		return results
 
-	def suggest_and_search(self, query, limit=None, *args, **kwargs):
+	def suggest_and_search(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
 		with _Proxy(self.bookidx.searcher()) as s:
 			results = self.book.suggest_and_search(s, query)

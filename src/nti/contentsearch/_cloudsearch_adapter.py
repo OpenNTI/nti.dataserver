@@ -17,7 +17,6 @@ from nti.contentsearch import SearchCallWrapper
 from nti.contentsearch.common import is_all_query
 from nti.contentsearch.common import get_type_name
 from nti.contentsearch.common import normalize_type_name
-from nti.contentsearch._search_external import get_search_hit
 from nti.contentsearch._cloudsearch_query import parse_query
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch._cloudsearch_index import to_ds_object
@@ -29,16 +28,17 @@ from nti.contentsearch._cloudsearch_store import get_search_service
 from nti.contentsearch._cloudsearch_index import search_stored_fields
 from nti.contentsearch._cloudsearch_store import get_document_service
 from nti.contentsearch._search_indexmanager import _SearchEntityIndexManager
+from nti.contentsearch._search_results import empty_suggest_and_search_result
+
 from nti.contentsearch._search_highlights import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT)
-from nti.contentsearch.common import ( LAST_MODIFIED, ITEMS, NTIID, HIT_COUNT)
 from nti.contentsearch.common import (username_, ngrams_, content_, intid_, type_)
 
 import logging
 logger = logging.getLogger( __name__ )
 	
 @component.adapter(nti_interfaces.IEntity)
+@interface.implementer(search_interfaces.ICloudSearchEntityIndexManager)
 class _CloudSearchEntityIndexManager(Persistent, _SearchEntityIndexManager):
-	interface.implements(search_interfaces.ICloudSearchEntityIndexManager)
 
 	@property
 	def domain(self):
@@ -59,36 +59,26 @@ class _CloudSearchEntityIndexManager(Persistent, _SearchEntityIndexManager):
 	def _get_search_service(self):	
 		return get_search_service(domain=self.domain)
 	
-	def _get_search_hit(self, obj, query=None, highlight_type=WORD_HIGHLIGHT):
+	def _get_search_hit(self, obj):
 		data = to_ds_object(obj['data'])  
-		return get_search_hit(data, query=query, highlight_type=highlight_type)
+		return data
 		
-	def _do_search(self, field, qo, highlight_type):
-		results = empty_search_result(qo.term)
+	def _do_search(self, field, qo, highlight_type=WORD_HIGHLIGHT, creator_method=None):
+		creator_method = creator_method or empty_search_result
+		results = creator_method(qo)
+		results.highlight_type = highlight_type
 		if qo.is_empty: return results
 		
 		service = self._get_search_service()
 		
+		# perform cloud query
 		start = qo.get('start', 0)
-		limit = qo.limit or sys.maxint
+		limit = sys.maxint # return all hits
 		bq = parse_query(qo, self.username, field)
 		objects = service.search(bq=bq, return_fields=search_stored_fields, size=limit, start=start)
 		
-		length = len(objects)
-		hits = map(self._get_search_hit, objects, [qo.term]*length, [highlight_type]*length)
-		
-		# filter if required
-		hits = hits[:limit] if limit else hits
-		
-		# get last modified
-		lm = reduce(lambda x,y: max(x, y.get(LAST_MODIFIED,0)), hits, 0)
-		
-		items = results[ITEMS]
-		for hit in hits:
-			items[hit[NTIID]] = hit
-		
-		results[LAST_MODIFIED] = lm
-		results[HIT_COUNT] = len(items)
+		# get ds objects
+		results.add(map(self._get_search_hit, objects))
 		return results
 	
 	@SearchCallWrapper
@@ -106,10 +96,12 @@ class _CloudSearchEntityIndexManager(Persistent, _SearchEntityIndexManager):
 
 	def suggest(self, query, *args, **kwargs):
 		qo = QueryObject.create(query, **kwargs)
-		return empty_suggest_result(qo.term)
+		return empty_suggest_result(qo)
 		
-	# word suggest does not seem to be supported yet in cloud search
-	suggest_and_search = search
+	def suggest_and_search(self, query, *args, **kwargs):
+		# word suggest does not seem to be supported yet in cloud search
+		qo = QueryObject.create(query, **kwargs)
+		return self._do_search(content_, qo, creator_method=empty_suggest_and_search_result)
 	
 	# ---------------------- 
 	
@@ -129,7 +121,7 @@ class _CloudSearchEntityIndexManager(Persistent, _SearchEntityIndexManager):
 		errors = result.errors[:n]
 		return '\n'.join(errors)
 
-	def index_content(self, data, type_name=None, **kwargs):
+	def index_content(self, data, type_name=None):
 		if not data: return None
 		service = self._get_document_service()
 		type_name = normalize_type_name(type_name or get_type_name(data))
@@ -144,7 +136,7 @@ class _CloudSearchEntityIndexManager(Persistent, _SearchEntityIndexManager):
 	# update is simply and add w/ a different version number
 	update_content = index_content
 
-	def delete_content(self, data, type_name=None, *args, **kwargs):
+	def delete_content(self, data, type_name=None):
 		if not data: return None
 		service = self._get_document_service()
 		oid = get_cloud_oid(data)

@@ -4,15 +4,20 @@ import six
 from collections import Iterable
 
 from zope import interface
-from persistent.interfaces import IPersistent
+from zope import component
+from zope.location import ILocation
 
 from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch.common import (QUERY, HIT_COUNT, ITEMS, LAST_MODIFIED, SUGGESTIONS)
 
 import logging
 logger = logging.getLogger( __name__ )
 
+@interface.implementer( ILocation )
 class _BaseSearchResults(object):
+	
+	__name__ = None
+	__parent__ = None
+	
 	def __init__(self, query):
 		assert search_interfaces.ISearchQuery.providedBy(query)
 		self._query = query
@@ -49,10 +54,16 @@ class _SearchResults(_BaseSearchResults):
 		return self._hits
 	
 	def add(self, items):
-		items = [items] if IPersistent.providedBy(items) or not isinstance(items, Iterable)  else items
+		items = [items] if not isinstance(items, Iterable)  else items
 		for item in items or ():
-			if IPersistent.providedBy(item):
+			if item is not None:
 				self._hits.append(item)
+				
+	def __iadd__(self, other):
+		if 	search_interfaces.ISearchResults.providedBy(other) or \
+			search_interfaces.ISuggestAndSearchResults.providedBy(other):
+			self._hits.extend(other.hits)
+		return self
 	
 @interface.implementer( search_interfaces.ISuggestResults )
 class _SuggestResults(_BaseSearchResults):
@@ -73,6 +84,12 @@ class _SuggestResults(_BaseSearchResults):
 				self._words.add(unicode(item))
 			
 	add = add_suggestions
+	
+	def __iadd__(self, other):
+		if 	search_interfaces.ISuggestResults.providedBy(other) or \
+			search_interfaces.ISuggestAndSearchResults.providedBy(other):
+			self._words.update(other.suggestions)
+		return self
 
 @interface.implementer( search_interfaces.ISuggestAndSearchResults )
 class _SuggestAndSearchResults(_SearchResults, _SuggestResults):
@@ -90,6 +107,11 @@ class _SuggestAndSearchResults(_SearchResults, _SuggestResults):
 			
 	def add(self, items):
 		_SearchResults.add(self, items)
+		
+	def __iadd__(self, other):
+		_SearchResults.__iadd__(self, other)
+		_SuggestResults.__iadd__(self, other)
+		return self
 
 @interface.implementer( search_interfaces.ISearchResultsCreator )
 class _SearchResultCreator(object):
@@ -108,72 +130,50 @@ class _SuggestAndSearchResultsCreator(object):
 
 # legacy results
 
-def _empty_result(query, is_suggest=False):
-	result = {}
-	result[QUERY] = query
-	result[HIT_COUNT] = 0
-	result[ITEMS] = [] if is_suggest else {}
-	result[LAST_MODIFIED] = 0
+def empty_search_results(query):
+	result = component.getUtility(search_interfaces.ISearchResultsCreator)(query)
 	return result
 
-def empty_search_result(query):
-	return _empty_result(query)
-
-def empty_suggest_and_search_result(query):
-	result = _empty_result(query)
-	result[SUGGESTIONS] = []
+def empty_suggest_and_search_results(query):
+	result = component.getUtility(search_interfaces.ISuggestAndSearchResultsCreator)(query)
 	return result
 
-def empty_suggest_result(word):
-	return _empty_result(word, True)
+def empty_suggest_results(query):
+	result = component.getUtility(search_interfaces.ISuggestResultsCreator)(query)
+	return result
+
+def _preflight(a, b):
+	if a is None and b is None:
+		result = (None, True)
+	elif a is None and b is not None:
+		result = (b, True)
+	elif a is not None and b is None:
+		result = (a, True)
+	else:
+		result = (None, False)
+	return result
+
+def _merge(a, b):
+	a += b
+	for k, vb in b.__dict__.items():
+		if not k.startswith('_'):
+			va = a.__dict__.get(k, None)
+			if vb != va:
+				a.__dict__[k] = vb
+	return a
 
 def merge_search_results(a, b):
-
-	if not a and not b:
-		return None
-	elif not a and b:
-		return b
-	elif a and not b:
-		return a
-
-	alm = a.get(LAST_MODIFIED, 0)
-	blm = b.get(LAST_MODIFIED, 0)
-	a[LAST_MODIFIED] = max(alm, blm)
-
-	if not a.has_key(ITEMS):
-		a[ITEMS] = {}
-	
-	a[ITEMS].update(b.get(ITEMS, {}))
-	a[HIT_COUNT] = len(a[ITEMS])
-	return a
+	v, t = _preflight(a, b)
+	if t: return v
+	return _merge(a, b)
 
 def merge_suggest_and_search_results(a, b):
-	result = merge_search_results(a, b)
-	s_a = set(a.get(SUGGESTIONS, [])) if a else set([])
-	s_b = set(b.get(SUGGESTIONS, [])) if b else set([])
-	s_a.update(s_b)
-	result[SUGGESTIONS] = list(s_a)
-	return result
+	v, t = _preflight(a, b)
+	if t: return v
+	return _merge(a, b)
 
 def merge_suggest_results(a, b):
-
-	if not a and not b:
-		return None
-	elif not a and b:
-		return b
-	elif a and not b:
-		return a
-
-	alm = a.get(LAST_MODIFIED, 0)
-	blm = b.get(LAST_MODIFIED, 0)
-	a[LAST_MODIFIED] = max(alm, blm)
-
-	if not a.has_key(ITEMS):
-		a[ITEMS] = []
-	
-	a_set = set(a.get(ITEMS,[]))
-	a_set.update(b.get(ITEMS,[]))
-	a[ITEMS] = list(a_set)
-	a[HIT_COUNT] = len(a[ITEMS])
-	return a
+	v, t = _preflight(a, b)
+	if t: return v
+	return _merge(a, b)
 
