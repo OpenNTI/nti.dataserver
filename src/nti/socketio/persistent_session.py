@@ -41,11 +41,10 @@ class AbstractSession(persistent.Persistent):
 	"""
 
 	connection_confirmed = False
-	state = None
-	session_id = None # The session id must be plain ascii for sending across sockets
-
 	_broadcast_connect = False
 
+	state = None
+	session_id = None # The session id must be plain ascii for sending across sockets
 
 	def __init__(self, owner=None):
 		self.creation_time = time.time()
@@ -55,6 +54,36 @@ class AbstractSession(persistent.Persistent):
 		self._hits = minmax.MergingCounter( 0 )
 		self._last_heartbeat_time = minmax.NumericMaximum( 0 )
 		self.__dict__['owner'] = owner
+
+	def _p_resolveConflict(self, oldState, savedState, newState):
+		logger.debug( "Resolving conflict in sessions between %s and %s", savedState, newState )
+		# So only a few things can change in ways that might
+		# conflict.
+		# We can ignore:
+		# - client_queue, server_queue, _hits, _last_heartbeat_time: handle themselves
+		# - creation_time, owner, session_id: immutable
+		state = dict(newState)
+
+		# That just leaves connection_confirmed, state, and _broadcast_connect
+		# Connection_confirmed and _broadcast_connect only ever become True, going
+		# from being class attributes to instance attributes
+
+		for k in 'connection_confirmed', '_broadcast_connect':
+			if k in savedState or k in newState:
+				state[k] = True
+		# The 'state' value goes through a defined sequence. We accept whichever one is
+		# farthest along
+		ordered_states = [sio_interfaces.SESSION_STATE_NEW,
+						  sio_interfaces.SESSION_STATE_CONNECTED,
+						  sio_interfaces.SESSION_STATE_DISCONNECTING,
+						  sio_interfaces.SESSION_STATE_DISCONNECTED]
+
+		for next_state in reversed(ordered_states):
+			if savedState.get( 'state', None ) == next_state or newState.get( 'state', None ) == next_state:
+				state['state'] = next_state
+				break
+
+		return state
 
 	def __eq__( self, other ):
 		try:
