@@ -143,10 +143,11 @@ def is_all_query(query):
 	mo = _all_re.search(query)
 	return mo and mo.start(1) == 0
 
-def clean_query(query, lower=False):
+def clean_search_query(query, lower=False):
 	result = re.sub('[*?]', '', query) if query else u''
 	result = result.lower() if lower and result else result
 	return unicode(result)
+clean_query = clean_search_query
 
 def to_list(data):
 	if isinstance(data, six.string_types):

@@ -22,6 +22,7 @@ from nti.contentlibrary.interfaces import IContentPackageLibrary
 
 from nti.contentsearch import QueryObject
 from nti.contentsearch.interfaces import IIndexManager
+from nti.contentsearch.common import clean_search_query
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -69,23 +70,16 @@ class UserSearch(object):
 		indexmanager = self.request.registry.getUtility( IIndexManager )
 		return _locate( indexmanager.user_data_search( query=query ), self.request.root, 'UserSearch' )
 
-def clean_search_query(query):
-	temp = query.replace('*', '')
-	temp = temp.replace('?', '')
-	if not temp:
-		return None
-	return unicode(query)
-
 def get_queryobject(request):
+	
 	term = request.matchdict.get('term', None)
 	term = clean_search_query(term)
-	term = term or ''
+	term = term or u''
 	args = {'term': term}
 
 	username = request.matchdict.get('user', None)
 	username = username or authenticated_userid( request )
-	if username:
-		args['username'] = username
+	args['username'] = username
 
 	ntiid = request.matchdict.get('ntiid', None)
 	if ntiid:
@@ -95,4 +89,15 @@ def get_queryobject(request):
 		else:
 			args['indexid'] = indexid
 
+	# parse params:
+	for k, v in request.params.items():
+		if k in QueryObject.__properties__:
+			try:
+				v = v.replace(u'null', u'None')
+				v = eval(v)
+				v = v[0] if isinstance(v, (list, tuple)) else v
+				args[k] = v
+			except:
+				pass
+		
 	return QueryObject(**args)
