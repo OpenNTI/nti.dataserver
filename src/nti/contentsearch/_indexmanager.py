@@ -106,7 +106,7 @@ class IndexManager(object):
 	# -------------------
 
 	def get_book_index_manager(self, indexid):
-		return self.books.get(indexid, None)
+		return self.books.get(indexid, None) if indexid is not None else None
 
 	def add_book(self, indexname, ntiid=None, *args, **kwargs):
 		result = False

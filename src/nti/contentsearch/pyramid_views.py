@@ -61,8 +61,7 @@ class Search(object):
 	def __call__( self ):
 		query = get_queryobject(self.request)
 		indexmanager = self.request.registry.getUtility( IIndexManager )
-		return _locate( indexmanager.search( query=query, indexid=query.indexid ),
-						self.request.root, 'Search' )
+		return _locate( indexmanager.search( query=query), self.request.root, 'Search' )
 
 class UserSearch(object):
 
@@ -72,8 +71,7 @@ class UserSearch(object):
 	def __call__( self ):
 		query = get_queryobject(self.request)
 		indexmanager = self.request.registry.getUtility( IIndexManager )
-		return _locate( indexmanager.user_data_search( query=query, username=query.username ),
-						self.request.root, 'UserSearch' )
+		return _locate( indexmanager.user_data_search( query=query ), self.request.root, 'UserSearch' )
 
 def clean_search_query(query):
 	temp = query.replace('*', '')
