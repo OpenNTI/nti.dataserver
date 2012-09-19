@@ -7,6 +7,8 @@ from zope import interface
 from zope.annotation import factory as an_factory
 from zope.interface.common.mapping import IFullMapping
 
+from ZODB import loglevels
+
 from persistent.mapping import PersistentMapping
 
 from nti.dataserver import interfaces as nti_interfaces
@@ -92,7 +94,7 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 			t = time.time() - t
 			results.add(objects)
 		finally:
-			logger.debug("Getting %s %s(s) from dataserver took %s(s)" % (len(docids), type_name, t))
+			logger.log(loglevels.BLATHER, "Getting %s %s(s) from dataserver took %s(s)" , len(docids), type_name, t)
 		
 	def _do_catalog_query(self, catalog, fieldname, qo, type_name):
 		is_all_query, queryobject = parse_query(catalog, fieldname, qo)
@@ -104,7 +106,7 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 				result = catalog.query(queryobject)
 				t = time.time() - t
 			finally:
-				logger.debug("repoze catalog search for %s(s) took %s(s)" % (type_name, t))
+				logger.log(loglevels.BLATHER, "Index search for %s(s) took %s(s). %s doc(s) retreived" , type_name, t, result[0])
 			return result
 
 	def _do_search(self, fieldname, qo, search_on=(), highlight_type=WORD_HIGHLIGHT, creator_method=None):
