@@ -43,7 +43,7 @@ def _decode_packet_to_session( session, sock, data, doom_transaction=True ):
 			session.heartbeat()
 		else:
 			#logger.debug( "Session %s received msg %s", session, pkt )
-			session.put_server_msg( pkt )
+			session.queue_message_from_client( pkt )
 
 def _safe_kill_session( session, reason='' ):
 	logger.debug( "Killing session %s %s", session, reason )
@@ -100,7 +100,7 @@ class XHRPollingTransport(BaseTransport):
 		result = None
 		try:
 			# A dead session will feed us a queue with a None object
-			messages = session.get_client_msgs()
+			messages = session.get_messages_to_client()
 			if not messages:
 				with _using_session_proxy( session_service, session.session_id ) as session_proxy:
 					# Nothing to read right now.
@@ -227,7 +227,7 @@ class _SessionEventProxy(object):
 
 	def get_client_msg(self, **kwargs):
 		return self.client_queue.get(**kwargs)
-	def put_client_msg( self, msg ):
+	def queue_message_to_client( self, msg ):
 		transactions.put_nowait( self.client_queue, msg )
 
 
@@ -264,7 +264,7 @@ class WebsocketTransport(BaseTransport):
 			self.ws_operator.run_loop = False
 
 	class AbstractWebSocketOperator(object):
-
+		session_owner = ''
 		def __init__(self, session_id, session_proxy, session_service, websocket ):
 			self.session_id = session_id
 			self.session_proxy = session_proxy
@@ -283,7 +283,7 @@ class WebsocketTransport(BaseTransport):
 			return self.session_service.get_session( self.session_id )
 
 		def __repr__( self ):
-			return '<%s for %s/%s>' % (self.__class__.__name__, self.session_id, self.websocket)
+			return '<%s for %s%s>' % (self.__class__.__name__, self.session_id, self.session_owner)
 
 	class WebSocketSender(AbstractWebSocketOperator):
 		message = None
@@ -292,7 +292,7 @@ class WebsocketTransport(BaseTransport):
 			message = self.message
 			session = self.get_session()
 			if session:
-				session.get_client_msgs() # prevent buildup
+				session.get_messages_to_client() # prevent buildup in the database
 			if message is None:
 				_safe_kill_session( session, ' on transfer of None across sending channel' )
 				return False
@@ -301,7 +301,6 @@ class WebsocketTransport(BaseTransport):
 		def _run(self):
 			while self.run_loop:
 				self.message = self.session_proxy.get_client_msg()
-				logger.info( "Waking up sender for %s", self.message )
 				assert isinstance(self.message, (str,types.NoneType)), "Messages should already be encoded as required"
 				if not self.run_loop:
 					break
@@ -347,7 +346,7 @@ class WebsocketTransport(BaseTransport):
 			self.connected = session.connected
 			if self.message is None:
 				# Kill the greenlet
-				self.session_proxy.put_client_msg( None )
+				self.session_proxy.queue_message_to_client( None )
 				# and the session
 				_safe_kill_session( session, 'on transfer of None across reading channel' )
 				return False
@@ -446,6 +445,11 @@ class WebsocketTransport(BaseTransport):
 		send_into_ws = self.WebSocketSender( session_id, session_proxy, session_service, websocket )
 		read_from_ws = self.WebSocketReader( session_id, session_proxy, session_service, websocket )
 		ping = self.WebSocketPinger( session_id, session_proxy, session_service, websocket, ping_sleep=ping_sleep )
+
+		session_owner = getattr( session, 'owner', '' )
+		if session_owner:
+			# We only get one shot at setting the thread name (the repr is only read once by gevent/greenlet)
+			send_into_ws.session_owner = read_from_ws.session_owner = ping.session_owner = '/' + session_owner
 
 		gr1 = self.WebSocketGreenlet.spawn(send_into_ws)
 		gr2 = self.WebSocketGreenlet.spawn(read_from_ws)

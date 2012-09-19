@@ -37,7 +37,7 @@ def test_heartbeat_time():
 	# Putting a message also sets this property
 
 	session = Session()
-	session.enqueue_client_msg( object() )
+	session.enqueue_message_from_client( object() )
 	assert_that( session, has_property( 'last_heartbeat_time', greater_than( 0 ) ) )
 
 

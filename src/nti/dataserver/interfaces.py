@@ -900,7 +900,7 @@ class ISessionService(interface.Interface):
 	def set_proxy_session(session_id, session=None):
 		"""
 		:param session: An :class:`ISocketProxySession` (something
-			with `put_server_msg` and `put_client_msg` methods). If
+			with `queue_message_from_client` and `queue_message_to_client` methods). If
 			`None`, then a proxy session for the `session_id` will be
 			removed (if any)
 		"""

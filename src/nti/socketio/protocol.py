@@ -34,7 +34,7 @@ class SocketIOSocket(object):
 		return component.getUtility( interfaces.ISocketIOProtocolFormatter, name=self.version )
 
 	def send(self, message):
-		self.channel.put_client_msg( message )
+		self.channel.queue_message_to_client( message )
 
 	def send_event(self, name, *args):
 		self.send( self.protocol.make_event( name, *args ) )

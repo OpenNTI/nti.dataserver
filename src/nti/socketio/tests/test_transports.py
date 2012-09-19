@@ -102,7 +102,7 @@ class TestWebSocket(ConfiguringTestBase):
 		# Kill the session on a None-message
 		assert_that( sender._do_send(), is_( False ) )
 		transaction.begin()
-		proxy.put_client_msg( None )
+		proxy.queue_message_to_client( None )
 		transaction.commit()
 		sender._run()
 		with self.assertRaises( Empty ):
@@ -166,14 +166,14 @@ class MockSession(object):
 	def kill( self ):
 		self.killed = True
 
-	def put_server_msg( self, msg ):
+	def queue_message_from_client( self, msg ):
 		if not self.server_messages:
 			self.server_messages = [msg]
 		else:
 			self.server_messages.append( msg )
 
 	client_msgs = ()
-	def get_client_msgs( self ):
+	def get_messages_to_client( self ):
 		return self.client_msgs
 
 	def clear_disconnect_timeout(self): pass

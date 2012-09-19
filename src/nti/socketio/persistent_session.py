@@ -34,10 +34,10 @@ class AbstractSession(persistent.Persistent):
 	"""
 	Abstract base for persistent session implementations. Because this class
 	may be used in a distributed environment, it does not provide
-	implementations of :meth:`put_client_msg` and :meth:`put_server_msg`; your subclass
+	implementations of :meth:`queue_message_to_client` and :meth:`queue_message_from_client`; your subclass
 	will need to decide how to process those locally or remotely. Instead, it provides
 	persistent storage queues for these two types of messages, which can be accessed
-	using :meth:`enqueue_server_msg` and :meth:`enqueue_client_msg`.
+	using :meth:`enqueue_message_from_client` and :meth:`enqueue_message_to_client`.
 	"""
 
 	connection_confirmed = False
@@ -155,22 +155,23 @@ class AbstractSession(persistent.Persistent):
 			self.enqueue_client_msg( None )
 
 
-	def enqueue_server_msg(self, msg):
-		self.server_queue.put( msg )
-
-	def enqueue_client_msg(self, msg):
-		# TODO: This is wrong, or the queues are being used wrong. The session manager
-		# uses this to send messages TO clients
+	def enqueue_message_from_client(self, msg):
 		if msg is not None:
 			# When we get a message from the client, reset our
 			# heartbeat timer. (Don't do this for our termination message)
 			self.clear_disconnect_timeout()
+		self.server_queue.put( msg )
+
+	def enqueue_message_to_client(self, msg):
 		self.client_queue.put( msg )
 
-	def put_server_msg(self, msg):
+	enqueue_client_msg = enqueue_message_to_client
+	enqueue_server_msg = enqueue_message_from_client
+
+	def queue_message_from_client(self, msg):
 		raise NotImplementedError() # pragma: no cover
 
-	def put_client_msg(self, msg):
+	def queue_message_to_client(self, msg):
 		raise NotImplementedError() # pragma: no cover
 
 # for BWC, copy the vocab choices

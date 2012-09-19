@@ -120,7 +120,7 @@ class SessionService(object):
 			handled = True
 		elif proxy and function_name == 'session_dead':
 			# Kill anything reading from it
-			for x in ('put_server_msg', 'put_client_msg'):
+			for x in ('queue_message_from_client', 'queue_message_to_client'):
 				if hasattr( proxy, x ):
 					getattr( proxy, x )(None)
 			handled = True
@@ -128,7 +128,7 @@ class SessionService(object):
 
 	def set_proxy_session( self, session_id, session=None ):
 		"""
-		:param session: Something with `put_server_msg` and `put_client_msg` methods.
+		:param session: Something with `queue_message_from_client` and `queue_message_to_client` methods.
 			If `None`, then a proxy session for the `session_id` will be removed (if any)
 		"""
 		if session is not None:
@@ -290,14 +290,14 @@ class SessionService(object):
 							 call=self.pub_socket.send_multipart,
 							 args=([session_id, name, msg_str],) )
 
-	def put_server_msg(self, session_id, msg):
-		self._put_msg( Session.enqueue_server_msg, session_id, msg )
-		self._publish_msg( b'put_server_msg', session_id, json.dumps( msg ) )
+	def queue_message_from_client(self, session_id, msg):
+		self._put_msg( Session.enqueue_message_from_client, session_id, msg )
+		self._publish_msg( b'queue_message_from_client', session_id, json.dumps( msg ) )
 
 
-	def put_client_msg(self, session_id, msg):
-		self._put_msg( Session.enqueue_client_msg, session_id, msg )
-		self._publish_msg( b'put_client_msg', session_id, msg )
+	def queue_message_to_client(self, session_id, msg):
+		self._put_msg( Session.enqueue_message_to_client, session_id, msg )
+		self._publish_msg( b'queue_message_to_client', session_id, msg )
 
 
 	def _get_msgs( self, q_name, session_id ):
@@ -305,7 +305,7 @@ class SessionService(object):
 		sess = self._get_session( session_id )
 		if sess:
 			# Reading messages should not reset the timeout.
-			# Only the session put_server_msg should do so.
+			# Only the session queue_message_from_client should do so.
 			#sess.clear_disconnect_timeout()
 			result = getattr( sess, q_name )
 			if result:
@@ -315,15 +315,14 @@ class SessionService(object):
 				result = nresult
 		return result
 
-	def get_client_msgs( self, session_id ):
+	def get_messages_to_client( self, session_id ):
 		"""
 		Removes and returns all available client messages from `session_id`,
 		otherwise None.
 		"""
 		return self._get_msgs( 'client_queue', session_id )
 
-
-	def get_server_msgs( self, session_id ):
+	def get_messages_from_client( self, session_id ):
 		"""
 		Removes and returns all available server messages from `session_id`,
 		otherwise None.
