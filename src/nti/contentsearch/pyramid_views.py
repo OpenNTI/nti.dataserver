@@ -13,7 +13,6 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 from zope import interface
-from zope.mimetype import interfaces as zmime_interfaces
 
 from pyramid.security import authenticated_userid
 
@@ -46,11 +45,8 @@ def _locate(obj, parent, name=None):
 	obj.__name__ = name
 	# Sadly, these are not properly cachable
 	from nti.appserver import interfaces as app_interfaces # Avoid circular imports
-	from nti.dataserver import mimetype as nti_mimetype
-
 	interface.alsoProvides( obj, app_interfaces.IUncacheableInResponse )
-	interface.alsoProvides( obj, zmime_interfaces.IContentTypeAware )
-	obj.mime_type = nti_mimetype.nti_mimetype_with_class( None )
+	
 	return obj
 
 class Search(object):

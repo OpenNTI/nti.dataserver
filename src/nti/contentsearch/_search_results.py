@@ -6,6 +6,9 @@ from collections import Iterable
 from zope import interface
 from zope import component
 from zope.location import ILocation
+from zope.mimetype import interfaces as zmime_interfaces
+
+from nti.mimetype.mimetype import nti_mimetype_with_class
 
 from nti.contentsearch import interfaces as search_interfaces
 
@@ -43,8 +46,20 @@ class _BaseSearchResults(object):
 	def __iter__(self):
 		return iter(self.hits)
 
-@interface.implementer( search_interfaces.ISearchResults )
+
+class _MetaSearchResults(type):
+	
+	def __new__(cls, name, bases, dct):
+		t = type.__new__(cls, name, bases, dct)
+		t.mime_type = nti_mimetype_with_class( name[1:] )
+		return t
+
+@interface.implementer( search_interfaces.ISearchResults,
+						zmime_interfaces.IContentTypeAware )
 class _SearchResults(_BaseSearchResults):
+	
+	__metaclass__ = _MetaSearchResults
+	
 	def __init__(self, query):
 		super(_SearchResults, self).__init__(query)
 		self._hits = []
@@ -67,6 +82,9 @@ class _SearchResults(_BaseSearchResults):
 	
 @interface.implementer( search_interfaces.ISuggestResults )
 class _SuggestResults(_BaseSearchResults):
+	
+	__metaclass__ = _MetaSearchResults
+	
 	def __init__(self, query):
 		super(_SuggestResults, self).__init__(query)
 		self._words = set()
@@ -93,6 +111,9 @@ class _SuggestResults(_BaseSearchResults):
 
 @interface.implementer( search_interfaces.ISuggestAndSearchResults )
 class _SuggestAndSearchResults(_SearchResults, _SuggestResults):
+	
+	__metaclass__ = _MetaSearchResults
+	
 	def __init__(self, query):
 		_SearchResults.__init__(self, query)
 		_SuggestResults.__init__(self, query)
