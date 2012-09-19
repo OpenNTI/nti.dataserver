@@ -52,6 +52,8 @@ class QueryObject(object, UserDict.DictMixin):
 				self.set_pagelen(val)
 			elif key == 'pagenum':
 				self.set_pagenum(val)
+			elif key == 'searchon':
+				self.set_searchon(val)
 			elif key in self.__int_properties__:
 				self._data[key] = int(val) if val is not None else val
 			elif key in self.__float_properties__:
@@ -74,11 +76,18 @@ class QueryObject(object, UserDict.DictMixin):
 				books = (indexid,)
 		return books
 
-	@property
-	def search_on(self):
+	def get_searchon(self):
 		result = self._data.get('searchon', None)
-		return to_list(result) if result else None
+		return result
 
+	def set_searchon(self, val):
+		if isinstance(val, six.string_types):
+			val = val.split(',')
+		self._data['searchon'] = to_list(val) if val is not None else None
+	
+	searchon = property(get_searchon, set_searchon)
+	search_on = searchon
+	
 	@property
 	def username(self):
 		return self._data.get('username', None)
