@@ -53,3 +53,24 @@ def test_equality():
 	assert_that( session1, is_not( session2 ) )
 
 	assert_that( set((session1,)), is_not( has_item( session2 ) ) )
+
+def test_resolve():
+
+	session1 = Session()
+	session2 = Session()
+
+	session3 = Session()
+
+	session3._p_resolveConflict( session1.__getstate__(), session2.__getstate__(), session3.__getstate__() )
+
+	session2._broadcast_connect = True
+	session2.state = sio_interfaces.SESSION_STATE_DISCONNECTING
+	session3.state = sio_interfaces.SESSION_STATE_DISCONNECTED
+
+	resolved_state = session3._p_resolveConflict( session1.__getstate__(),
+												  session2.__getstate__(),
+												  session3.__getstate__() )
+
+	session3.__setstate__( resolved_state )
+	assert_that( session3, has_property( 'state', sio_interfaces.SESSION_STATE_DISCONNECTED ) )
+	assert_that( session3, has_property( '_broadcast_connect', True ) )
