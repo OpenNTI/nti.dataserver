@@ -47,11 +47,18 @@ class _FixedAvatarWrapper(object):
 # use DNS and that library uses pyDNS which may or may not be gevent friendly,
 # so that would have to be investigated
 
+def _find_default_gravatar_type( *places ):
+	for place in places:
+		gravatar_type = getattr( place, 'defaultGravatarType', None )
+		if gravatar_type:
+			return gravatar_type
+
+
 @component.adapter(nti_interfaces.IEntity)
 @interface.implementer(interfaces.IAvatarURLProvider,interfaces.IAvatarURL)
 class GravatarComputedAvatarURL(object):
 
-	defaultGravatarType = 'mm'
+	defaultGravatarType = 'identicon'
 
 	def __init__( self, context ):
 
@@ -64,11 +71,7 @@ class GravatarComputedAvatarURL(object):
 			if profile and profile.email:
 				email = profile.email
 
-		gravatar_type = None
-		for x in (profile, context, self):
-			gravatar_type = getattr( x, 'defaultGravatarType', None )
-			if gravatar_type:
-				break
+		gravatar_type = _find_default_gravatar_type( profile, context, self )
 		self.avatarURL = create_gravatar_url( email, gravatar_type )
 
 @component.adapter(nti_interfaces.ICoppaUser)
@@ -83,19 +86,17 @@ class GravatarComputedCoppaAvatarURL(object):
 	defaultGravatarType = 'retro'
 
 	def __init__( self, context ):
-		email = context.username
-
-		gravatar_type = None
-		for x in (context, self):
-			gravatar_type = getattr( x, 'defaultGravatarType', None )
-			if gravatar_type:
-				break
-		self.avatarURL = create_gravatar_url( email, gravatar_type )
+		gravatar_type = _find_default_gravatar_type( context, self )
+		self.avatarURL = create_gravatar_url( context.username, gravatar_type )
 
 @component.adapter(basestring)
 @interface.implementer(interfaces.IAvatarChoices)
 class StringComputedAvatarURLChoices(object):
-
+	"""
+	Computes a set of choices based of the given string. The assumption is that
+	the given string is not a valid email address and so does not
+	have any registered gravatars; thus, we get the different fallbacks.
+	"""
 	def __init__( self, context ):
 		self.context = context
 
@@ -120,9 +121,9 @@ class GravatarComputedCoppaAvatarURLChoices(StringComputedAvatarURLChoices):
 
 @component.adapter(nti_interfaces.IEntity)
 @interface.implementer(interfaces.IAvatarChoices)
-class GravatarComputedAvatarURLChoices(object):
+class EntityGravatarComputedAvatarURLChoices(object):
 	"""
-	Normal users don't get a choice.
+	Arbitrary entities just get their assigned URL.
 	"""
 
 	def __init__( self, context ):
@@ -130,3 +131,22 @@ class GravatarComputedAvatarURLChoices(object):
 
 	def get_choices( self ):
 		return (self.avatarURL,)
+
+
+@component.adapter(nti_interfaces.IUser)
+@interface.implementer(interfaces.IAvatarChoices)
+class GravatarComputedAvatarURLChoices(object):
+	"""
+	Normal users get their "real" avatar URL, plus some based on creating
+	a fake email address that cannot possibly be registered.
+	"""
+
+	def __init__( self, context ):
+		self.avatarURL = interfaces.IAvatarURL( context ).avatarURL
+		self.context = context
+
+	def get_choices( self ):
+		fake_addr = self.context.username.replace( '@', '_' ) + '@alias.nextthought.com'
+		choices = StringComputedAvatarURLChoices( fake_addr ).get_choices()
+		choices[0] = self.avatarURL
+		return choices

@@ -78,9 +78,13 @@
 			 for="nti.dataserver.interfaces.ICoppaUser"
 			 />
 	<!-- And everyone -->
-	<adapter factory=".avatar_urls.GravatarComputedAvatarURLChoices"
+	<adapter factory=".avatar_urls.EntityGravatarComputedAvatarURLChoices"
 			 provides=".interfaces.IAvatarChoices"
 			 for="nti.dataserver.interfaces.IEntity"
+			 />
+	<adapter factory=".avatar_urls.GravatarComputedAvatarURLChoices"
+			 provides=".interfaces.IAvatarChoices"
+			 for="nti.dataserver.interfaces.IUser"
 			 />
 
 	<!-- User profile info -->
