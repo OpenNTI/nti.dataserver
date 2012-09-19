@@ -1,18 +1,12 @@
 import unittest
 
-from nti.contentsearch import QueryObject
+from nti.contentsearch._search_query import QueryObject
 
 from hamcrest import (assert_that, is_)
 
-class TestContetSearch(unittest.TestCase):
+class TestSearchQuery(unittest.TestCase):
 
 	def test_queryobject_ctor(self):
-		try:
-			QueryObject(foo=u'dummy')
-			self.fail('must specify a query term')
-		except:
-			pass
-		
 		qo = QueryObject(term=u'term')
 		assert_that(qo.term, is_(u'term'))
 		assert_that(qo.query, is_(u'term'))

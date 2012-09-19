@@ -10,10 +10,10 @@ from nti.contentsearch import interfaces as search_interfaces
 
 @interface.implementer(search_interfaces.ISearchQuery)
 class QueryObject(object, UserDict.DictMixin):
-
+	
 	__float_properties__ = ('threshold',)
-	__int_properties__ 	 = ('limit', 'maxdist', 'prefix', 'surround', 'maxchars')
-	__properties__ 		 = ('term', 'query', 'books', 'indexid', 'search_on') + __int_properties__ + __float_properties__
+	__int_properties__ 	 = ('limit', 'maxdist', 'prefix', 'surround', 'maxchars', 'pagenum', 'pagelen')
+	__properties__ 		 = ('term', 'books', 'indexid', 'searchon', 'username') + __int_properties__ + __float_properties__
 
 	def __init__(self, *args, **kwargs):
 		self._data = {}
@@ -36,21 +36,28 @@ class QueryObject(object, UserDict.DictMixin):
 		return self._data[key]
 
 	def __setitem__(self, key, val):
-		if key.lower() == 'indexname': # backwards compatible
-			key = 'indexid'
-			
-		if key.lower() in self.__properties__:
-			key = key.lower()
-			if key in ('query', 'term'):
+		key = key.lower()
+		
+		# check for alias
+		key = 'term' if key == 'query' else key
+		key = 'indexid' if key == 'indexname' else key
+		key = 'searchon' if key == 'search_on' else key
+		key = 'pagelen' if key == 'batchsize' else key
+		key = 'pagenum' if key == 'batchstart' else key
+				
+		if key in self.__properties__:
+			if key == 'term':
 				self.set_term(val)
+			elif key == 'pagelen':
+				self.set_pagelen(val)
+			elif key == 'pagenum':
+				self.set_pagenum(val)
 			elif key in self.__int_properties__:
 				self._data[key] = int(val) if val is not None else val
 			elif key in self.__float_properties__:
 				self._data[key] = float(val) if val is not None else val
 			else:
 				self._data[key] = unicode(val) if isinstance(val, six.string_types) else val
-		else:
-			self._data[key] = unicode(val) if isinstance(val, six.string_types) else val
 
 	# -- search --
 
@@ -69,7 +76,7 @@ class QueryObject(object, UserDict.DictMixin):
 
 	@property
 	def search_on(self):
-		result = self._data.get('search_on', None)
+		result = self._data.get('searchon', None)
 		return to_list(result) if result else None
 
 	@property
@@ -86,14 +93,33 @@ class QueryObject(object, UserDict.DictMixin):
 	query = term
 	word = query
 
+	def get_pagelen(self):
+		return self._data.get('pagelen', None)
+
+	def set_pagelen(self, pagelen=None):
+		pagelen = abs(int(pagelen)) if pagelen is not None else pagelen
+		self._data['pagelen'] = pagelen
+
+	pagelen = property(get_pagelen, set_pagelen)
+
+	def get_pagenum(self):
+		return self._data.get('pagenum', None)
+
+	def set_pagenum(self, pagenum=None):
+		pagenum = abs(int(pagenum)) if pagenum is not None else pagenum
+		self._data['pagenum'] = pagenum
+
+	pagenum = property(get_pagenum, set_pagenum)
+	
 	def get_limit(self):
 		return self._data.get('limit', None)
 
 	def set_limit(self, limit=None):
-		self.__setitem__('limit', limit)
+		limit = abs(int(limit)) if limit is not None else limit
+		self._data['limit'] = limit
 
 	limit = property(get_limit, set_limit)
-
+	
 	def get_subqueries(self):
 		result = []
 		for k in self.keys():
@@ -172,9 +198,12 @@ class QueryObject(object, UserDict.DictMixin):
 		if isinstance(query, six.string_types):
 			queryobject = QueryObject(term=query)
 		else:
-			queryobject = QueryObject()
 			if isinstance(query, QueryObject):
-				queryobject._data.update(query._data)
+				if kwargs:
+					queryobject = QueryObject()
+					queryobject._data.update(query._data)
+				else:
+					queryobject = query
 
 		for k, v in kwargs.items():
 			if k and v is not None:
