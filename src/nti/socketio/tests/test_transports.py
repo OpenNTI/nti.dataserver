@@ -45,6 +45,7 @@ class TestWebSocket(ConfiguringTestBase):
 			socket = None
 			protocol = None
 			connected = True
+			last_heartbeat_time = 0
 
 		websocket = WebSocket()
 		handler = Handler()
@@ -112,6 +113,8 @@ class TestWebSocket(ConfiguringTestBase):
 		class Socket(object):
 			protocol = protocol.SocketIOProtocolFormatter1()
 		class Session(object):
+			last_heartbeat_time = 0
+			connected = True
 			killed = False
 			socket = Socket()
 			def kill(self):
