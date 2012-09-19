@@ -57,6 +57,12 @@ class AbstractSession(persistent.Persistent):
 
 	def _p_resolveConflict(self, oldState, savedState, newState):
 		logger.debug( "Resolving conflict in sessions between %s and %s", savedState, newState )
+		# NOTE: The below is wrong. There are two attributes that are assigned by others:
+		# originating_site_names
+		# _session_intid
+		# We need to take care of those and/or avoid setting them on this object.
+		# They appear to fit the 'immutable once set' pattern
+
 		# So only a few things can change in ways that might
 		# conflict.
 		# We can ignore:
