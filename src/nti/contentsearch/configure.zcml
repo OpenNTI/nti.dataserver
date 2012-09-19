@@ -81,6 +81,9 @@
 	<utility factory="._content_utils._ContentTokenizer" name="en" />
 	<utility factory="._content_utils._DefaultStopWords" />
 	
+	<utility factory="._content_utils._DefaultWordSimilarity"  />
+	<utility factory="._content_utils._DefaultWordSimilarity" name="en" />
+	
 	<!-- Search results -->
 		
 	<utility factory="._search_results._SearchResultCreator"  />

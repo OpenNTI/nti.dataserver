@@ -15,9 +15,12 @@ from nti.dataserver.contenttypes import CanvasTextShape
 
 from nti.ntiids.ntiids import make_ntiid
 
-from nti.contentsearch.tests import ConfiguringTestBase
-from nti.contentsearch.interfaces import IContentResolver
+from nti.contentsearch._content_utils import rank_words
 from nti.contentsearch._content_utils import get_content
+from nti.contentsearch.interfaces import IContentResolver
+
+from nti.contentsearch.tests import ConfiguringTestBase
+from nti.contentsearch.tests import domain as sample_words
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
@@ -164,6 +167,12 @@ class TestContentUtils(ConfiguringTestBase):
 		assert_that(adapted.get_keywords(), is_([]))
 		assert_that(adapted.get_sharedWith(), is_([]))
 		assert_that(adapted.get_last_modified(), is_(close_to(1334000544.120, 0.05)))
+		
+	def test_rank_words(self):
+		terms = sorted(sample_words[:5])
+		word = 'stranger'
+		w = rank_words(word, terms)
+		assert_that(w, is_(['bravo', 'delta', 'charlie', 'alfa', 'echo']))
 		
 if __name__ == '__main__':
 	unittest.main()

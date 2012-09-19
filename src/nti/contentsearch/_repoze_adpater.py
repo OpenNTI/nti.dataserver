@@ -13,20 +13,20 @@ from persistent.mapping import PersistentMapping
 
 from nti.dataserver import interfaces as nti_interfaces
 
-from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch._search_indexmanager import _SearchEntityIndexManager
-
 from nti.contentsearch import QueryObject
 from nti.contentsearch import SearchCallWrapper
 from nti.contentsearch.common import is_all_query
 from nti.contentsearch.common import get_type_name
 from nti.contentsearch._repoze_query import parse_query
+from nti.contentsearch._content_utils import rank_words
 from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch.common import (content_, ngrams_)
 from nti.contentsearch._repoze_index import create_catalog
+from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch.textindexng3 import CatalogTextIndexNG3
 from nti.contentsearch._search_results import empty_search_results
 from nti.contentsearch._search_results import empty_suggest_results
+from nti.contentsearch._search_indexmanager import _SearchEntityIndexManager
 from nti.contentsearch._search_results import empty_suggest_and_search_results
 from nti.contentsearch._search_highlights import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT)
 
@@ -78,8 +78,6 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 				self.add_catalog(catalog, type_name)
 		return catalog
 
-	# ----------------
-
 	def _adapt_searchon_types(self, searchon=None):
 		catnames = self.get_catalog_names()
 		if searchon:
@@ -94,7 +92,7 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 			t = time.time() - t
 			results.add(objects)
 		finally:
-			logger.log(loglevels.BLATHER, "Getting %s %s(s) from dataserver took %s(s)" , len(docids), type_name, t)
+			logger.log(loglevels.TRACE, "Getting %s %s(s) from dataserver took %s(s)" , len(docids), type_name, t)
 
 	def _do_catalog_query(self, catalog, fieldname, qo, type_name):
 		is_all_query, queryobject = parse_query(catalog, fieldname, qo)
@@ -107,7 +105,7 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 			result = catalog.query(queryobject)
 			t = time.time() - t
 		finally:
-			logger.log(loglevels.BLATHER, "Index search for %s(s) took %s(s). %s doc(s) retreived" , type_name, t, result[0])
+			logger.log(loglevels.TRACE, "Index search for %s(s) took %s(s). %s doc(s) retreived" , type_name, t, result[0])
 		return result
 
 	def _do_search(self, fieldname, qo, searchon=(), highlight_type=WORD_HIGHLIGHT, creator_method=None):
@@ -169,8 +167,8 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 			result = self.suggest(queryobject, searchon=searchon)
 			suggestions = result.suggestions
 			if suggestions:
-				#TODO: pick a good suggestion
-				queryobject.term = list(suggestions)[0]
+				suggestions = rank_words(query.term, suggestions)
+				queryobject.term = suggestions[0]
 
 			results = self._do_search(content_,
 									  queryobject,
@@ -179,7 +177,7 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 			results.add_suggestions(suggestions)
 
 		return results
-
+		
 	# ----------------
 
 	def index_content(self, data, type_name=None, **kwargs):

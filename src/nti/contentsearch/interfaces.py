@@ -460,7 +460,14 @@ class ISearchQueryValidator(interface.Interface):
 		"""check if the specified search query is valid"""
 		
 # search results
-	
+
+class IWordSimilarity(interface.Interface):	
+	def compute(a, b):
+		"""compute a similarity ratio for the specified words"""
+		
+	def rank(word, terms, reverse=True):
+		"""return the specified terms based on the distance to the specified word"""
+		
 class ISearchHit(ext_interfaces.IExternalObject):
 	query = schema.TextLine(title="query that produced this hit")
 	last_modified = schema.Float(title="last modified date for this hit")
