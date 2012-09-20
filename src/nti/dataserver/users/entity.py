@@ -207,7 +207,7 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 	# : and - are used in NTIIDs.
 	# NOTE: This is prohibiting Unicode characters
 	# NOTE: This has bad effects on FriendsLists since right now they are entities
-	ALLOWED_USERNAME_CHARS = string.letters + string.digits + '+.@_' # prohibit whitespace and punctuation not needed in emails
+	ALLOWED_USERNAME_CHARS = string.letters + string.digits + '-+.@_' # prohibit whitespace and punctuation not needed/allowed in emails
 
 	def __init__(self, username,
 				 parent=None):
