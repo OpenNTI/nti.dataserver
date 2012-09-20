@@ -46,10 +46,6 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 	defaultGravatarType = 'wavatar'
 	__external_can_create__ = True
 
-	# FIXME: We really shouldn't depend on entity.
-	# The only reason we're allowing - here right now is to work with existing tests.
-	ALLOWED_USERNAME_CHARS = Entity.ALLOWED_USERNAME_CHARS + '-'
-
 	def __init__(self, username=None, avatarURL=None):
 		super(FriendsList,self).__init__(username, avatarURL)
 		self._friends = None
