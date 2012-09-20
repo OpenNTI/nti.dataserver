@@ -195,6 +195,7 @@ else:
 try:
 	logger.debug( "Attempting MySQL monkey patch" )
 	import umysqldb
+	import pymysql.err
 except ImportError as e:
 	logger.exception( "Please 'pip install -r requirements.txt' to get non-blocking drivers." )
 	# This early, logging is probably not set up
@@ -233,6 +234,13 @@ else:
 	umysqldb.connect = Connection
 	umysqldb.Connection = Connection
 	umysqldb.Connect = Connection
+
+	logger.info( "Monkey-patching RelStorage to recognize new close exceptions" )
+	# Now got to patch relstorage to recognize some exceptions
+	import relstorage.adapters.mysql
+	assert relstorage.adapters.mysql.MySQLdb is umysqldb
+	relstorage.adapters.mysql.close_exceptions += (pymysql.err.Error,)
+	relstorage.adapters.mysql.MySQLdbConnectionManager.close_exceptions += (pymysql.err.Error,)
 
 def patch():
 	pass
