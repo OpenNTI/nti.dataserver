@@ -42,14 +42,12 @@ def _avatar_url( entity ):
 			return link
 	return with_url.avatarURL
 
-
+@component.adapter( nti_interfaces.IEntity )
+@interface.implementer( IExternalObject )
 class _EntitySummaryExternalObject(object):
-	component.adapts( nti_interfaces.IEntity )
-	interface.implements( IExternalObject )
 
 	def __init__( self, entity ):
 		self.entity = entity
-
 
 	def toExternalObject( self ):
 		"""
@@ -86,9 +84,8 @@ class _EntityExternalObject(_EntitySummaryExternalObject):
 		return result
 
 
-
+@component.adapter( nti_interfaces.IFriendsList )
 class _FriendsListExternalObject(_EntityExternalObject):
-	component.adapts( nti_interfaces.IFriendsList )
 
 	def toExternalObject(self):
 		extDict = super(_FriendsListExternalObject,self).toExternalObject()
@@ -126,8 +123,8 @@ class _FriendsListExternalObject(_EntityExternalObject):
 		rand = random.Random( hash(self.entity.username) )
 		return rand.sample( friends, min(4,len(friends)) )
 
+@component.adapter( nti_interfaces.IUser )
 class _UserSummaryExternalObject(_EntitySummaryExternalObject):
-	component.adapts( nti_interfaces.IUser )
 
 	def toExternalObject( self ):
 		extDict = super(_UserSummaryExternalObject,self).toExternalObject( )
@@ -155,7 +152,6 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 		"""
 		:return: the externalization intended to be sent when requested by this user.
 		"""
-
 		from nti.dataserver._Dataserver import InappropriateSiteError # circular imports
 		extDict = super(_UserPersonalSummaryExternalObject,self).toExternalObject()
 		def ext( l, name='summary' ):
