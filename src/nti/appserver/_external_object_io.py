@@ -18,6 +18,7 @@ import simplejson
 from zope import component
 from zope import interface
 import zope.schema.interfaces
+from z3c.password import interfaces as pwd_interfaces
 
 from pyramid.threadlocal import get_current_request
 
@@ -136,6 +137,9 @@ def handle_validation_error( request, validation_error ):
 		# message, field, value
 		field_name = field_name or validation_error.args[1]
 		msg = validation_error.args[0]
+
+	if not field_name and isinstance( validation_error, pwd_interfaces.InvalidPassword ):
+		field_name = 'password'
 
 	# z3c.password and similar (nti.dataserver.users._InvalidData) set this for internationalization
 	# purposes
