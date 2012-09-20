@@ -79,7 +79,7 @@ class ExampleDatabaseInitializer(object):
 		for uid in ('grey.allman', 'ken.parker', 'logan.testi', 'jason.madden',
 				   'chris.utz', 'carlos.sanchez', 'jonathan.grimes',
 				   'pacifique.mahoro', 'eric.anderson', 'jeff.muehring',
-				   'aaron.eskam', 'kaley.white', 'luigi﻿.texidor', 'greg.higgins',
+				   'aaron.eskam', 'kaley.white', 'greg.higgins', 
 				   'leo.parker', 'troy.daley', 'steve.johnson','vitalik.buterin' ):
 			USERS.append( (uid + '@nextthought.com', uid.replace( '.', ' ').title() ) )
 
