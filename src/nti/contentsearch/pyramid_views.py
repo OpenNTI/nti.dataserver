@@ -1,11 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-"""
-
-
-$Id$
-"""
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -15,7 +7,6 @@ from zope import component
 from zope import interface
 
 from pyramid.security import authenticated_userid
-
 
 from nti.ntiids.ntiids import is_valid_ntiid_string
 from nti.contentlibrary.interfaces import IContentPackageLibrary
@@ -37,14 +28,10 @@ def get_collection(ntiid, default=None, registry=component):
 	return unicode(result.lower()) if result else default
 
 def _locate(obj, parent, name=None):
-	# TODO: We really need to have a specific model object to represent results
-	# with proper IContentTypeAware support. As it is,
-	# we wind up guessing MimeType and modification info (leading to the hack below)
-	# (Instead of modification info, we should be using etags here, anyway).
-	# cf nti.apserver.usersearch_views._format_result
+	# TODO: (Instead of modification info, we should be using etags here, anyway).
 	obj.__parent__ = parent
 	obj.__name__ = name
-	# Sadly, these are not properly cachable
+	# TODO: Make cachable?
 	from nti.appserver import interfaces as app_interfaces # Avoid circular imports
 	interface.alsoProvides( obj, app_interfaces.IUncacheableInResponse )
 	
