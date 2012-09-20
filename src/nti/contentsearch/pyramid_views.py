@@ -1,7 +1,8 @@
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+
+import re
 
 from zope import component
 from zope import interface
@@ -13,7 +14,6 @@ from nti.contentlibrary.interfaces import IContentPackageLibrary
 
 from nti.contentsearch import QueryObject
 from nti.contentsearch.interfaces import IIndexManager
-from nti.contentsearch.common import clean_search_query
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -57,11 +57,21 @@ class UserSearch(object):
 		indexmanager = self.request.registry.getUtility( IIndexManager )
 		return _locate( indexmanager.user_data_search( query=query ), self.request.root, 'UserSearch' )
 
+_extractor_pe = re.compile('[?*]*(.*)')
+
+def clean_search_query(query):
+	temp = query.replace('*', '')
+	temp = temp.replace('?', '')
+	result = unicode(query) if temp else u''
+	if result:
+		m = _extractor_pe.search(result)
+		result = m.group() if m else u''
+	return unicode(result)
+
 def get_queryobject(request):
 	
-	term = request.matchdict.get('term', None)
-	term = clean_search_query(term)
-	term = term or u''
+	term = request.matchdict.get('term', u'')
+	term = clean_search_query(unicode(term))
 	args = {'term': term}
 
 	username = request.matchdict.get('user', None)

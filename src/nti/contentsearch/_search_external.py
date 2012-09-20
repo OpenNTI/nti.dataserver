@@ -1,5 +1,6 @@
 from __future__ import print_function, unicode_literals
 
+import re
 import UserDict
 
 import zope.intid
@@ -14,7 +15,6 @@ from nti.externalization.externalization import toExternalObject
 from nti.contentsearch import interfaces as search_interfaces
 
 from nti.contentsearch.common import epoch_time
-from nti.contentsearch.common import clean_query
 from nti.contentsearch._search_highlights import (word_content_highlight, ngram_content_highlight)
 from nti.contentsearch._search_highlights import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT, WHOOSH_HIGHLIGHT)
 
@@ -28,6 +28,11 @@ import logging
 logger = logging.getLogger( __name__ )
 
 # hilight decorators
+
+def clean_query(query, lower=False):
+	result = re.sub('[*?]', '', query) if query else u''
+	result = result.lower() if lower and result else result
+	return unicode(result)
 
 def _word_content_highlight(query=None, text=None, default=None):
 	query = clean_query(query) if query else u''
