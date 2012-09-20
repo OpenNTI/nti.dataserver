@@ -175,7 +175,7 @@ def createApplication( http_port,
 	# ...which will veto commit on a 4xx or 5xx response
 	pyramid_config.registry.settings['tm.commit_veto'] = 'pyramid_tm.default_commit_veto'
 	# ...and which will retry a few times. Note this requires the request to be fully buffered
-	pyramid_config.registry.settings['tm.attempts'] = 5
+	pyramid_config.registry.settings['tm.attempts'] = 10
 
 	# Arrange for a db connection to be opened with each request
 	# if pyramid_zodbconn.get_connection() is called (until called, this does nothing)
