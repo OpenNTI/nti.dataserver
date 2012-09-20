@@ -340,17 +340,16 @@ def transcript_summaries_for_user_in_container( username, containerId ):
 
 	"""
 	storage = _ts_storage_for( username )
+	data = LocatedExternalDict()
+	last_modified = 0
+	for summary in storage.transcript_summaries:
+		if summary.RoomInfo.containerId == containerId:
+			data[summary.RoomInfo.ID] = summary
+			last_modified = max( last_modified, summary.LastModified )
+	data.lastModified = last_modified
+	data.creator = username
 
-	data = {summary.RoomInfo.ID: summary
-			for summary
-			in storage.transcript_summaries
-			if summary.RoomInfo.containerId == containerId}
-	logger.debug( "All summaries %s", data )
-	result = LocatedExternalDict( data )
-	result.creator = username
-	if data:
-		result.lastModified = max( data.itervalues(), key=lambda x: x.LastModified ).LastModified
-	return result
+	return data
 
 def list_transcripts_for_user( username ):
 	"""
