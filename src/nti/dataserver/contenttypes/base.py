@@ -64,9 +64,15 @@ class UserContentRoot(sharing.ShareableMixin, datastructures.ContainedMixin, dat
 		for entity in self.sharingTargets:
 			# NOTE: This entire process does way too much work for as often as this
 			# is called so we hack this and couple it tightly to when we think
-			# we need to use it
+			# we need to use it. See nti.appserver._adapters
 			#ext_shared_with.append( toExternalObject( entity )['Username'] )
-			username = entity.username if isinstance(entity,users.User) else toExternalObject(entity)['Username']
+			if isinstance( entity, (users.User, users.Community) ):
+				username = entity.username
+			elif isinstance( entity, users.DynamicFriendsList ):
+				username = entity.NTIID
+			else:
+				username = toExternalObject( entity )['Username']
+
 			ext_shared_with.append( username )
 
 		extDict['sharedWith'] = ext_shared_with
