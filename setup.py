@@ -102,7 +102,7 @@ setup(
 		# 'MySQL-python', # mysql adapter
 		# See also umysqldb for a mysql adapter that should be gevent compat, with same API
 		# It's currently being installed from requirements.txt
-		'RelStorage',
+		'RelStorage >= 1.5.1',
 		# See also http://pypi.python.org/pypi/neoppod/ for a completely different option
 
 		'anyjson >= 0.3.3',
