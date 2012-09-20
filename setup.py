@@ -171,6 +171,9 @@ setup(
 		# something like:
 		# pip install --install-option="--zmq=/opt/nti" pyzmq
 		'pyzmq >= 2.2.0',
+		# Monitoring stats and instrumenting code
+		'python-statsd >= 1.5.7', # statsd client. statsd must be installed separately: https://github.com/etsy/statsd
+		'pystatsd >= 0.1.6', # statsd server implementation, pure python. probably easier than setting up node. Might want to get it from https://github.com/sivy/py-statsd
 		'pytz >= 2012d',
 		'rdflib',
 		'redis >= 2.6.2', # Redis python client
@@ -290,7 +293,12 @@ setup(
 			'rope >= 0.9.4', # refactoring library. c.f. ropemacs
 			'ropemode >= 0.2', # IDE helper for rope
 			'virtualenv >= 1.8.1',
-			'pip >= 1.2.1'
+			'pip >= 1.2.1',
+			# Monitoring stats and instrumenting code
+			# See above for python-statsd
+			#'graphite-web >= 0.9.10', # web front end. Requires the /opt/graphite directory. Pulls in twisted.
+			#'carbon >= 0.9.10', # storage daemon. Requires the /opt/graphite directory
+			'whisper >= 0.9.10', # database lib.
 			]
 	},
 	dependency_links = ['http://svn.wikimedia.org/svnroot/pywikipedia/trunk/pywikipedia/'],
