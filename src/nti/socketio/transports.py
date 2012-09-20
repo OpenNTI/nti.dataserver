@@ -17,7 +17,7 @@ from gevent.queue import Queue
 import time
 import socket
 import geventwebsocket.exceptions
-
+from ZODB import loglevels
 import pyramid.interfaces
 from nti.socketio import interfaces
 import nti.dataserver.interfaces as nti_interfaces
@@ -324,8 +324,8 @@ class WebsocketTransport(BaseTransport):
 				except geventwebsocket.exceptions.FrameTooLargeException:
 					logger.warn( "Failed to send message to websocket, %s is too large. Head: %s",
 								 len(self.message), self.message[0:50] )
-				except socket.error:
-					logger.debug( "Stopping sending messages to '%s'", self.session_id, exc_info=True )
+				except socket.error as e:
+					logger.debug( "Stopping sending messages to '%s' on %s", self.session_id, e )
 					# The session will be killed of its own accord soon enough.
 					break
 
@@ -354,7 +354,7 @@ class WebsocketTransport(BaseTransport):
 			try:
 				_decode_packet_to_session( session, session.socket, self.message, doom_transaction=False )
 			except ValueError:
-				logger.exception( "Failed to read packets from WS; killing session %s", self.session_id )
+				logger.exception( "Failed to read packets from websocket; killing session %s", self.session_id )
 				# We don't doom this transaction, we want to commit the death
 				# transaction.doom()
 				_safe_kill_session( session, 'on failure to read packet from WS' )
@@ -383,7 +383,7 @@ class WebsocketTransport(BaseTransport):
 				try:
 					self.run_loop &= run_job_in_site( self._do_read, retries=20, sleep=0.1 )
 				except transaction.interfaces.TransientError:
-					logger.exception( "Failed to receive message (%s) from WS; ignoring and continuing %s",
+					logger.exception( "Failed to receive message (%s) from websocket; ignoring and continuing %s",
 									  self.message[0:50], self.session_id )
 
 	class WebSocketPinger(AbstractWebSocketOperator):
@@ -404,8 +404,8 @@ class WebsocketTransport(BaseTransport):
 			try:
 				self.websocket.send( b"2::" )
 				return True
-			except Exception:
-				logger.debug( "Stopping sending messages to '%s'", self.session_id, exc_info=True )
+			except Exception as e:
+				logger.debug( "Stopping sending pings to '%s' on %s", self.session_id, e )
 				return False
 
 		def _run(self):
@@ -457,9 +457,9 @@ class WebsocketTransport(BaseTransport):
 
 		to_cleanup = [gr1, gr2, heartbeat]
 		def cleanup(dead_greenlet):
-			logger.debug( "Performing cleanup on death of %s/%s", dead_greenlet, session_id )
+			logger.log( loglevels.TRACE, "Performing cleanup on death of %s/%s", dead_greenlet, session_id )
 			if session_service.get_proxy_session( session_id ) is session_proxy:
-				logger.debug( "Removing websocket session proxy for %s", session_id )
+				logger.log( loglevels.TRACE, "Removing websocket session proxy for %s", session_id )
 				session_service.set_proxy_session( session_id, None )
 
 			try:
@@ -468,7 +468,7 @@ class WebsocketTransport(BaseTransport):
 			# When one dies, they all die
 			for greenlet in to_cleanup:
 				if not greenlet.ready():
-					logger.debug( "Asking %s to quit on death of %s", greenlet, dead_greenlet )
+					logger.log( loglevels.TRACE, "Asking %s to quit on death of %s", greenlet, dead_greenlet )
 					greenlet.ws_ask_to_quit()
 
 		for link in to_cleanup:

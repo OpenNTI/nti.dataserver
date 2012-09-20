@@ -28,6 +28,7 @@ from zope import interface
 from z3c.table import table
 from nti.appserver.z3c_zpt import PyramidZopeRequestProxy
 
+from ZODB import loglevels
 
 @component.adapter( nti_interfaces.IUser, nti_interfaces.IStreamChangeEvent )
 def user_change_broadcaster( user, change ):
@@ -35,7 +36,7 @@ def user_change_broadcaster( user, change ):
 	Notifies the chat server of data change events so they can be
 	put on the user's socket.
 	"""
-	logger.debug( 'Broadcasting incoming change to %s chg: %s', user.username, change.type)
+	logger.log( loglevels.TRACE, 'Broadcasting incoming change to %s chg: %s', user.username, change.type)
 	notify( chat_interfaces.DataChangedUserNotificationEvent( (user.username,), change ) )
 
 
@@ -66,12 +67,11 @@ def user_change_new_note_emailer( user, change ):
 	profile = user_interfaces.IUserProfile( user )
 	email = getattr( profile, 'email', None )
 	opt_in = getattr( profile, 'opt_in_email_communication', True )
-#	if not email or not opt_in:
-#		email = 'jason.madden@nextthought.com'
-#		opt_in = True
+
 	if not email or not opt_in:
-		logger.debug( "User %s has no email (%s) or hasn't opted in (%s), no way to send notices",
-					  user, email, opt_in )
+		logger.log( loglevels.TRACE,
+					"User %s has no email (%s) or hasn't opted in (%s), no way to send notices",
+					user, email, opt_in )
 		return
 
 

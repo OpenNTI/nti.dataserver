@@ -19,7 +19,7 @@ from zope import interface
 from zope import component
 from zope.location import interfaces as loc_interfaces
 from zope.keyreference.interfaces import IKeyReference
-
+from ZODB import loglevels
 from zope.component.factory import Factory
 from zope.deprecation import deprecated
 
@@ -873,7 +873,7 @@ class User(Principal):
 			del self.ent._broadcast_change_to
 
 	def _postNotification( self, changeType, objAndOrigSharingTuple ):
-		logger.debug( "%s asked to post %s", self, changeType )
+		logger.log( loglevels.TRACE, "%s asked to post %s", self, changeType )
 		# FIXME: Clean this up, make this not so implicit,
 		# make it go through a central place, make it asnyc, etc.
 
@@ -942,7 +942,7 @@ class User(Principal):
 		# Now broadcast the change to anyone that's left.
 		change = Change( changeType, obj )
 		change.creator = self
-		logger.debug( "Sending %s change to %s", changeType, newSharing )
+		logger.log( loglevels.TRACE, "Sending %s change to %s", changeType, newSharing )
 		for lovedPerson in newSharing:
 			sendChangeToUser( lovedPerson, change )
 
