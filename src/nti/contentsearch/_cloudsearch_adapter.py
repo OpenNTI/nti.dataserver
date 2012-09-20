@@ -22,13 +22,13 @@ from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch._cloudsearch_index import to_ds_object
 from nti.contentsearch._cloudsearch_index import get_cloud_oid
 from nti.contentsearch._cloudsearch_index import to_cloud_object
-from nti.contentsearch._search_results import empty_search_result
-from nti.contentsearch._search_results import empty_suggest_result
+from nti.contentsearch._search_results import empty_search_results
+from nti.contentsearch._search_results import empty_suggest_results
 from nti.contentsearch._cloudsearch_store import get_search_service
 from nti.contentsearch._cloudsearch_index import search_stored_fields
 from nti.contentsearch._cloudsearch_store import get_document_service
 from nti.contentsearch._search_indexmanager import _SearchEntityIndexManager
-from nti.contentsearch._search_results import empty_suggest_and_search_result
+from nti.contentsearch._search_results import empty_suggest_and_search_results
 
 from nti.contentsearch._search_highlights import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT)
 from nti.contentsearch.common import (username_, ngrams_, content_, intid_, type_)
@@ -64,7 +64,7 @@ class _CloudSearchEntityIndexManager(Persistent, _SearchEntityIndexManager):
 		return data
 		
 	def _do_search(self, field, qo, highlight_type=WORD_HIGHLIGHT, creator_method=None):
-		creator_method = creator_method or empty_search_result
+		creator_method = creator_method or empty_search_results
 		results = creator_method(qo)
 		results.highlight_type = highlight_type
 		if qo.is_empty: return results
@@ -96,12 +96,12 @@ class _CloudSearchEntityIndexManager(Persistent, _SearchEntityIndexManager):
 
 	def suggest(self, query, *args, **kwargs):
 		qo = QueryObject.create(query, **kwargs)
-		return empty_suggest_result(qo)
+		return empty_suggest_results(qo)
 		
 	def suggest_and_search(self, query, *args, **kwargs):
 		# word suggest does not seem to be supported yet in cloud search
 		qo = QueryObject.create(query, **kwargs)
-		return self._do_search(content_, qo, creator_method=empty_suggest_and_search_result)
+		return self._do_search(content_, qo, creator_method=empty_suggest_and_search_results)
 	
 	# ---------------------- 
 	
