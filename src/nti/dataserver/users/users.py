@@ -274,6 +274,7 @@ class _TranscriptsMap(datastructures.AbstractNamedLastModifiedBTreeContainer):
 	contained_type = nti_interfaces.ITranscript
 	container_name = 'Transcripts'
 
+class OldPasswordDoesNotMatchCurrentPassword(pwd_interfaces.InvalidPassword): pass
 
 class User(Principal):
 	"""A user is the central class for data storage. It maintains
@@ -458,7 +459,7 @@ class User(Principal):
 					old_pw = parsed.pop( 'old_password')
 					# And it must match
 					if not self.password.checkPassword( old_pw ):
-						raise ValueError( "Old password does not match" )
+						raise OldPasswordDoesNotMatchCurrentPassword( "The password supplied does not match the current password." )
 				password = parsed.pop( 'password' )
 				# TODO: Names/sites for these? That are distinct from the containment structure?
 				component.getUtility( pwd_interfaces.IPasswordUtility ).verify( password, old_pw )
