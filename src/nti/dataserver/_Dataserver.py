@@ -211,12 +211,12 @@ def run_job_in_site(func, retries=0, sleep=None,
 					t.commit()
 				# No errors, return the result
 				return result
-			except transaction.interfaces.TransientError:
+			except transaction.interfaces.TransientError as e:
 				t.abort()
 				if i == retries:
 					# We failed for the last time
 					raise
-				logger.warn( "Retrying transaction %s on exception (try: %s)", func, i, exc_info=True )
+				logger.debug( "Retrying transaction %s on exception (try: %s): %s", func, i, e )
 				if sleep is not None:
 					gevent.sleep( sleep )
 			except transaction.interfaces.DoomedTransaction:
