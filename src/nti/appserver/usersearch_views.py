@@ -125,7 +125,7 @@ def _format_result( result, remote_user, dataserver ):
 def _authenticated_search( request, remote_user, dataserver, search_term ):
 	result = []
 	_users = nti_interfaces.IShardLayout( dataserver ).users_folder
-	user_search_matcher = site_policies.queryAdapterInSite( remote_user, IUserSearchMatcher, request=request, default=ComprehensiveUserSearchMatcher() )
+	user_search_matcher = site_policies.queryAdapterInSite( remote_user, IUserSearchMatcher, request=request, default=NoOpUserSearchMatcher() )
 	# We used to have some nice heuristics about when to include uid-only
 	# matches. This became much less valuable when we started to never display
 	# anything except uid and sometimes to only want to search on UID:
@@ -135,19 +135,19 @@ def _authenticated_search( request, remote_user, dataserver, search_term ):
 	## be very confused.). As a compromise, we include them
 	## if there are no other matches
 	# Therefore we say screw it and throw that heuristic out the window.
-	for maybeMatch in _users.iterkeys():
+	for entity_name in _users.iterkeys():
 		# TODO how expensive is it to actually look inside all these
 		# objects?  This almost certainly wakes them up?
 		# Our class name is UserMatchingGet, but we actually
 		# search across all entities, like Communities
-		userObj = users.Entity.get_entity( maybeMatch, dataserver=dataserver )
-		if not userObj: # pragma: no cover
-			continue
 
-		if search_term in maybeMatch.lower():
-			result.append( userObj )
-		elif user_search_matcher.matches( search_term, userObj ):
-			result.append( userObj )
+		if search_term in entity_name.lower():
+			entity = users.Entity.get_entity( entity_name, dataserver=dataserver )
+		else:
+			entity = user_search_matcher.matches( search_term, entity_name )
+
+		if entity is not None:
+			result.append( entity )
 
 
 	# Given a remote user, add matching friends lists, too
@@ -203,10 +203,10 @@ def _make_visibility_test(remote_user):
 
 class IUserSearchMatcher(interface.Interface):
 
-	def matches( search_term, entity ):
+	def matches( search_term, entity_name ):
 		"""
-		Determine if the user matches.
-		:return: Boolean.
+		Determine if the entity matches.
+		:return: The entity object, if it matched. Otherwise None.
 		"""
 
 @interface.implementer(IUserSearchMatcher)
@@ -215,9 +215,12 @@ class ComprehensiveUserSearchMatcher(object):
 	def __init__( self, context=None ):
 		pass
 
-	def matches( self, search_term, entity ):
-		names = user_interfaces.IFriendlyNamed( entity )
-		return search_term in (names.realname or '').lower() or search_term in (names.alias or '').lower()
+	def matches( self, search_term, entity_name ):
+		entity = users.Entity.get_entity( entity_name )
+		if entity:
+			names = user_interfaces.IFriendlyNamed( entity )
+			if search_term in (names.realname or '').lower() or search_term in (names.alias or '').lower():
+				return entity
 
 
 @interface.implementer(IUserSearchMatcher)
@@ -226,5 +229,5 @@ class NoOpUserSearchMatcher(object):
 	def __init__( self, context=None ):
 		pass
 
-	def matches( self, search_term, entity ):
-		return False
+	def matches( self, search_term, entity_name ):
+		return None
