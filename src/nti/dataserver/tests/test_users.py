@@ -14,7 +14,7 @@ from nose.tools import assert_raises
 import persistent
 from zope import component
 import zc.intid
-
+from z3c.password import interfaces as pwd_interfaces
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization import internalization
 
@@ -284,6 +284,11 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
 		with assert_raises(KeyError):
 			User.create_user( self.ds, username=user1.username, password='temp001' )
+
+	@WithMockDSTrans
+	def test_cannot_have_whitespace_pwd(self):
+		with assert_raises(pwd_interfaces.InvalidPassword):
+			User.create_user( self.ds, username="foo@bar", password=' \t ' )
 
 
 	@WithMockDSTrans

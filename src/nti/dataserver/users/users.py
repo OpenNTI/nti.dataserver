@@ -135,8 +135,13 @@ class Principal(Entity,sharing.SharingSourceMixin):
 	def _get_password(self):
 		return self.__dict__.get('password', None)
 	def _set_password(self,np):
-		# TODO: Names for these
+		# TODO: Names for these?
 		component.getUtility( pwd_interfaces.IPasswordUtility ).verify( np )
+		# NOTE: The password policy objects do not have an option to forbid
+		# all whitespace, so we implement that manually here.
+		# TODO: Subclass the policy and implement one that does, install that and migrate
+		if np and not np.strip(): # but do allow leading/trailing whitespace
+			raise pwd_interfaces.NoPassword()
 		self.__dict__['password'] = _Password(np)
 		# otherwise, no change
 	def _del_password(self):
