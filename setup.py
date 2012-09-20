@@ -99,9 +99,9 @@ setup(
 		'ZODB3 >= 3.10.5', # NOTE: Soon need to include persistent >= 4.0.1, being pulled out of ZODB
 		# ZODB RelStorage:
 		'pylibmc', # for memcached support
-		'MySQL-python', # mysql adapter
+		#'MySQL-python', # mysql adapter
 		# See also umysqldb for a mysql adapter that should be gevent compat, with same API
-		'RelStorage',
+		#'RelStorage',
 		# See also http://pypi.python.org/pypi/neoppod/ for a completely different option
 
 		'anyjson >= 0.3.3',
