@@ -405,19 +405,17 @@ class TranscriptSummary(nti.externalization.datastructures.ExternalizableInstanc
 		#if ntiids.is_ntiid_of_type( room.containerId, ntiids.TYPE_MEETINGROOM ):
 			#self.NTIID = _transcript_ntiid( room, self.creator, self._NTIID_TYPE_ )
 		self.NTIID = _transcript_ntiid( room, self.creator.username, self._NTIID_TYPE_ )
-		_messages = list( meeting_storage.itervalues() )
+
 		# TODO: What should the LastModified be? The room doesn't
 		# currently track it. We're using the max for our messages, which may not be right?
-		if _messages:
-			m = max(_messages, key=lambda m: getattr(m, 'LastModified', 0))
-			self.LastModified = getattr(m, 'LastModified', 0 )
-		else:
-			# cannot max() empty sequence
-			self.LastModified = 0
+		last_modified = 0
+		contributors = set()
+		for message in meeting_storage.itervalues():
+			last_modified = max( last_modified, getattr( message, 'LastModified', 0 ) )
+			contributors.update( getattr(message, 'sharedWith', ()) or () )
 
-		self.Contributors = set()
-		for msg in _messages:
-			self.Contributors.update( getattr(msg, 'sharedWith', ()) or () )
+		self.LastModified = last_modified
+		self.Contributors = contributors
 
 		self.links = self._create_links( meeting_storage )
 
