@@ -48,7 +48,7 @@ class Session( AbstractSession ):
 		for applying site policies later on after the requests are gone.
 	"""
 
-	originating_site_names = ()
+	#originating_site_names = () # actually in the superclass for conflict resolution
 
 
 	wsgi_app_greenlet = True # TODO: Needed anymore?

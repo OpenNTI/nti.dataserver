@@ -46,6 +46,11 @@ class AbstractSession(persistent.Persistent):
 	state = None
 	session_id = None # The session id must be plain ascii for sending across sockets
 
+	# Things we don't use but others annotate on us
+	# TODO: This knowledge is weird
+	_session_intid = None # from the intid utility
+	originating_site_names = ()
+
 	def __init__(self, owner=None):
 		self.creation_time = time.time()
 		self.client_queue = zc.queue.CompositeQueue() # queue for messages to client
@@ -58,10 +63,6 @@ class AbstractSession(persistent.Persistent):
 	def _p_resolveConflict(self, oldState, savedState, newState):
 		logger.debug( "Resolving conflict in sessions between %s and %s", savedState, newState )
 		# NOTE: The below is wrong. There are two attributes that are assigned by others:
-		# originating_site_names
-		# _session_intid
-		# We need to take care of those and/or avoid setting them on this object.
-		# They appear to fit the 'immutable once set' pattern
 
 		# So only a few things can change in ways that might
 		# conflict.
@@ -70,13 +71,23 @@ class AbstractSession(persistent.Persistent):
 		# - creation_time, owner, session_id: immutable
 		state = dict(newState)
 
-		# That just leaves connection_confirmed, state, and _broadcast_connect
+		# That just leaves connection_confirmed, state, and _broadcast_connect, _session_intid and originating_site_names
 		# Connection_confirmed and _broadcast_connect only ever become True, going
 		# from being class attributes to instance attributes
 
 		for k in 'connection_confirmed', '_broadcast_connect':
 			if k in savedState or k in newState:
 				state[k] = True
+
+		# session_intid is set when this object is created and deleted, going from missing to int to None
+		# Once it's gone, we should never be resurrected
+		if savedState.get( '_session_intid', self ) is None:
+			state['_session_intid'] = None
+
+		# Originating_site_names is immutable once set
+		if 'originating_site_names' in savedState:
+			state['originating_site_names'] = savedState['originating_site_names']
+
 		# The 'state' value goes through a defined sequence. We accept whichever one is
 		# farthest along
 		ordered_states = [sio_interfaces.SESSION_STATE_NEW,
