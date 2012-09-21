@@ -21,6 +21,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.contentsearch import LFUMap
 from nti.contentsearch import QueryObject
 from nti.contentsearch.common import get_type_name
+from nti.contentsearch.common import sort_search_types
 from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch._whoosh_index import get_indexables
 from nti.contentsearch import interfaces as search_interfaces
@@ -165,7 +166,9 @@ class _WhooshEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 		indexables = get_indexables()
 		if searchon:
 			searchon = [normalize_type_name(x) for x in searchon if normalize_type_name(x) in indexables]
-		return searchon or indexables
+		result = searchon or indexables
+		result = sort_search_types(result)
+		return result
 	
 	def _do_search(self, query, is_ngram_search=False, **kwargs):
 		query = QueryObject.create(query, **kwargs)

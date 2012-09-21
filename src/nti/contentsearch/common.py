@@ -93,6 +93,7 @@ messageinfo_ = u'messageinfo'
 canvastextshape_ = 'canvastextshape'
 
 indexable_type_names = (note_, highlight_, redaction_, messageinfo_)
+indexable_types_order = { x:p for p,x in enumerate(indexable_type_names) }
 
 def epoch_time(dt):
 	if dt:
@@ -153,3 +154,8 @@ def to_list(data):
 	elif data is not None:
 		data = [data]
 	return data
+
+def sort_search_types(type_names=indexable_type_names):
+	type_names = to_list(type_names)
+	result = sorted(type_names, key=lambda x: indexable_types_order.get(x,0))
+	return result

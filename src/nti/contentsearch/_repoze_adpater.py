@@ -17,6 +17,7 @@ from nti.contentsearch import QueryObject
 from nti.contentsearch import SearchCallWrapper
 from nti.contentsearch.common import is_all_query
 from nti.contentsearch.common import get_type_name
+from nti.contentsearch.common import sort_search_types
 from nti.contentsearch._repoze_query import parse_query
 from nti.contentsearch._content_utils import rank_words
 from nti.contentsearch.common import normalize_type_name
@@ -82,7 +83,9 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 		catnames = self.get_catalog_names()
 		if searchon:
 			searchon = [normalize_type_name(x) for x in searchon if normalize_type_name(x) in catnames]
-		return searchon or catnames
+		result = searchon or catnames
+		result = sort_search_types(result)
+		return result
 
 	def _get_hits_from_docids(self, results, docids, type_name):
 		t = time.time()
