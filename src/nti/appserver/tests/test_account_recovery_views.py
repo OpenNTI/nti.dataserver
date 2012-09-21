@@ -20,8 +20,11 @@ from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import contains_string
 from hamcrest import has_property
+from hamcrest import is_not as does_not
+from hamcrest import has_key
 
 from nti.dataserver.users import interfaces as user_interfaces
+from nti.dataserver import users
 from nose.tools import assert_raises
 
 from zope import component
@@ -234,3 +237,12 @@ class TestApplicationPasswordReset(ApplicationTestBase):
 				'password': ' '}
 
 		app.post( path, data, status=422 )
+
+		data['password'] = 'temp001'
+		app.post( path, data )
+
+		# And the annotation key is now gone
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = users.User.get_user( user.username )
+			annotations = IAnnotations( user )
+			assert_that( annotations, does_not( has_key( account_recovery_views._KEY_PASSCODE_RESET ) ) )
