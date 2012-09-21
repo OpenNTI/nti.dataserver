@@ -122,6 +122,9 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 
 		hits = rim.search("ra*")
 		assert_that(hits, has_length(3))
+		
+		hits = rim.search('"%s"' % zanpakuto_commands[0])
+		assert_that(hits, has_length(1))
 
 	@WithMockDSTrans
 	def test_update_note(self):
