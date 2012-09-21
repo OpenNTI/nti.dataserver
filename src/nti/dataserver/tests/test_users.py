@@ -286,6 +286,15 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 			User.create_user( self.ds, username=user1.username, password='temp001' )
 
 	@WithMockDSTrans
+	def test_cannot_reset_password_if_not_match(self):
+		user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
+		with assert_raises(pwd_interfaces.InvalidPassword):
+			user1.updateFromExternalObject( {'password': 'temp003' } )
+		with assert_raises(pwd_interfaces.InvalidPassword):
+			user1.updateFromExternalObject( {'password': 'temp003', 'old_password': 'temp002' } )
+
+
+	@WithMockDSTrans
 	def test_cannot_have_whitespace_pwd(self):
 		with assert_raises(pwd_interfaces.InvalidPassword):
 			User.create_user( self.ds, username="foo@bar", password=' \t ' )

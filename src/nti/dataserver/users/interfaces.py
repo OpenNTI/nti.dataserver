@@ -19,6 +19,9 @@ from zope.interface import Interface
 from zope import schema
 import zope.schema.interfaces
 import zope.component.interfaces
+
+from z3c.password import interfaces as pwd_interfaces
+
 import re
 import string
 
@@ -68,6 +71,11 @@ class EmailAddressInvalid(_InvalidData):
 	def __init__( self, address ):
 		super(EmailAddressInvalid,self).__init__( address, value=address )
 
+class OldPasswordDoesNotMatchCurrentPassword(pwd_interfaces.InvalidPassword):
+	i18n_message = "The password supplied does not match the current password."
+
+class PasswordCannotConsistOfOnlyWhitespace(pwd_interfaces.NoPassword):
+	i18n_message = "Password cannot consist of only whitespace"
 
 # RFC 2822 local-part: dot-atom or quoted-string
 # characters allowed in atom: A-Za-z0-9!#$%&'*+-/=?^_`{|}~

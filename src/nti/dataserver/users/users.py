@@ -59,6 +59,7 @@ def _get_shared_dataserver(context=None,default=None):
 
 
 from .entity import Entity
+from . import interfaces as user_interfaces
 
 SharingTarget = sharing.SharingTargetMixin
 deprecated( 'SharingTarget', 'Prefer sharing.SharingTargetMixin' )
@@ -123,9 +124,6 @@ class Principal(Entity,sharing.SharingSourceMixin):
 
 		super(Principal,self).__init__(username,
 									   parent=parent)
-#		if not username or '@' not in username:
-#			raise ValueError( 'Illegal username ' + username )
-
 		if password:
 			self.password = password
 
@@ -141,7 +139,7 @@ class Principal(Entity,sharing.SharingSourceMixin):
 		# all whitespace, so we implement that manually here.
 		# TODO: Subclass the policy and implement one that does, install that and migrate
 		if np and not np.strip(): # but do allow leading/trailing whitespace
-			raise pwd_interfaces.NoPassword()
+			raise user_interfaces.PasswordCannotConsistOfOnlyWhitespace()
 		self.__dict__['password'] = _Password(np)
 		# otherwise, no change
 	def _del_password(self):
@@ -274,7 +272,7 @@ class _TranscriptsMap(datastructures.AbstractNamedLastModifiedBTreeContainer):
 	contained_type = nti_interfaces.ITranscript
 	container_name = 'Transcripts'
 
-class OldPasswordDoesNotMatchCurrentPassword(pwd_interfaces.InvalidPassword): pass
+
 
 class User(Principal):
 	"""A user is the central class for data storage. It maintains
@@ -455,11 +453,12 @@ class User(Principal):
 				old_pw = None
 				if self.has_password():
 					# To change an existing password, you must send the old
-					# password
-					old_pw = parsed.pop( 'old_password')
+					# password (The default, empty string, is never a valid password and lets
+					# us produce better error messages then having no default)
+					old_pw = parsed.pop( 'old_password', '' )
 					# And it must match
 					if not self.password.checkPassword( old_pw ):
-						raise OldPasswordDoesNotMatchCurrentPassword( "The password supplied does not match the current password." )
+						raise user_interfaces.OldPasswordDoesNotMatchCurrentPassword()
 				password = parsed.pop( 'password' )
 				# TODO: Names/sites for these? That are distinct from the containment structure?
 				component.getUtility( pwd_interfaces.IPasswordUtility ).verify( password, old_pw )
