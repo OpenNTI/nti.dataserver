@@ -43,6 +43,9 @@ def get_content(text=None):
 	result = ' '.join(result)
 	return unicode(result)
 
+tokenize_content = get_content
+
+
 @interface.implementer(search_interfaces.IContentResolver)
 @component.adapter(basestring)
 class _StringContentResolver(object):
