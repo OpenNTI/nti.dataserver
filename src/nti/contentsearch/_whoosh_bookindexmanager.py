@@ -7,10 +7,10 @@ from zope.proxy import ProxyBase
 
 from whoosh import index
 
-from nti.contentsearch import interfaces
-from nti.contentsearch import QueryObject
 from nti.contentsearch import SearchCallWrapper
 from nti.contentsearch._whoosh_index import Book
+from nti.contentsearch._search_query import QueryObject
+from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch._whoosh_indexstorage import DirectoryStorage
 
 import logging
@@ -36,8 +36,8 @@ class _Proxy(ProxyBase):
 		self._semaphore.release()
 		return result
 		
+@interface.implementer( search_interfaces.IBookIndexManager )
 class WhooshBookIndexManager(object):
-	interface.implements( interfaces.IBookIndexManager )
 	
 	def __init__(self, indexname, ntiid=None, storage=None, indexdir=None):
 		self.ntiid = ntiid if ntiid else indexname

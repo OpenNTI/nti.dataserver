@@ -13,7 +13,6 @@ from nti.contentsearch._search_query import QueryObject
 from nti.contentsearch._indexagent import handle_index_event
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch._datastructures import CaseInsensitiveDict
-
 from nti.contentsearch._search_results import empty_search_results
 from nti.contentsearch._search_results import merge_search_results
 from nti.contentsearch._search_results import empty_suggest_results

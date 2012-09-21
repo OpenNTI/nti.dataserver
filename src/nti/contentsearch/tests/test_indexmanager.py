@@ -13,7 +13,7 @@ from nti.dataserver.contenttypes import Note
 
 from nti.ntiids.ntiids import make_ntiid
 
-from nti.contentsearch import QueryObject
+from nti.contentsearch._search_query import QueryObject
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch._whoosh_index import create_book_schema
 from nti.contentsearch._whoosh_indexstorage import create_directory_index

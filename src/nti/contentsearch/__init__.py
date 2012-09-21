@@ -3,24 +3,33 @@ from __future__ import print_function, unicode_literals
 import sys
 import time
 
+# monkey patch
+
 from nti.contentsearch import zopyxtxng3corelogger
 sys.modules["zopyx.txng3.core.logger"] = zopyxtxng3corelogger
 
-from nti.contentsearch.common import to_list
-from nti.contentsearch._search_query import QueryObject
-from nti.contentsearch.common import normalize_type_name
-from nti.contentsearch.common import indexable_type_names
-from nti.contentsearch._ngrams_utils import (ngrams, ngram_tokens)
-from nti.contentsearch._datastructures import LFUMap, CaseInsensitiveDict
-from nti.contentsearch.common import (note_, highlight_, redaction_, messageinfo_)
-from nti.contentsearch._search_highlights import (ngram_content_highlight, word_content_highlight)
-from nti.contentsearch._search_highlights import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT, WHOOSH_HIGHLIGHT)
+from zopyx.txng3.core import index as zopycoreidx
+from zopyx.txng3.core import evaluator as zopyevaluator
 
-import logging
-logger = logging.getLogger( __name__ )
+from nti.contentsearch import zopyxtxng3coreresultset as ntizopy_rs
+from nti.contentsearch import zopyxtxng3coredoclist as ntizopyx_doclist
+
+for module in (zopycoreidx, zopyevaluator):
+	module.LOG = zopyxtxng3corelogger.LOG
+	module.DocidList = ntizopyx_doclist.DocidList
+	module.unionResultSets = ntizopy_rs.unionResultSets
+	module.inverseResultSet = ntizopy_rs.inverseResultSet
+	module.intersectionResultSets = ntizopy_rs.intersectionResultSets
+	
+# legacy imports
+
+from nti.contentsearch.common import indexable_type_names
 
 def get_indexable_types():
 	return indexable_type_names
+
+import logging
+logger = logging.getLogger( __name__ )
 
 class SearchCallWrapper(object):
 	def __init__(self, func):

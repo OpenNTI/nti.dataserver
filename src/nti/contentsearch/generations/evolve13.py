@@ -13,8 +13,7 @@ def do_remove_user_catalogs(user):
 
 def evolve(context):
 	"""
-	Evolve generation 12 to  13 by reindexing user content after catalog def
-	were changed
+	Evolve generation 12 to  13 by reindexing user content after catalog def were changed
 	"""
 	users = context.connection.root()['nti.dataserver']['users']
 	for user in users.values():

@@ -18,10 +18,10 @@ from whoosh.store import LockError
 
 from nti.dataserver import interfaces as nti_interfaces
 
-from nti.contentsearch import LFUMap
-from nti.contentsearch import QueryObject
 from nti.contentsearch.common import get_type_name
+from nti.contentsearch._datastructures import LFUMap
 from nti.contentsearch.common import sort_search_types
+from nti.contentsearch._search_query import QueryObject
 from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch._whoosh_index import get_indexables
 from nti.contentsearch import interfaces as search_interfaces
