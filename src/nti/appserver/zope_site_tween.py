@@ -20,6 +20,8 @@ import pyramid.security
 
 from zope.component.hooks import setSite, getSite, setHooks
 
+import ZODB.POSException
+
 def early_request_teardown(request):
 	"""
 	Clean up all the things set up by our new request handler and the
@@ -108,6 +110,14 @@ class site_tween(object):
 						raise exc_info[0], None, exc_info[2]
 					else:
 						raise
+				except ZODB.POSException.StorageError as e:
+					if str(e) == 'Unable to acquire commit lock':
+						# Relstorage locks. Who's holding it? What's this worker doing?
+						# if the problem is some other worker this doesn't help much
+						from ._util import dump_stacks
+						body = '\n'.join(dump_stacks())
+						print( body, file=sys.stderr )
+					raise
 
 			return response
 		finally:
