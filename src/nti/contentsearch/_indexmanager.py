@@ -66,6 +66,7 @@ class IndexManager(object):
 		result = list(user.communities) if user and hasattr(user, 'communities') else []
 		if result and 'Everyone' in result:
 			result.remove('Everyone')
+		result = sorted(result, key=lambda s: s.lower())
 		return result
 
 	# -------------------
