@@ -103,13 +103,13 @@ def _build_reference_lists( request, result_list ):
 	proxies = {}
 	setattr( request, '_build_reference_lists_proxies', proxies )
 	fake_proxies = {} # so we only log once
-	def _referenced_by( x, ref=None ):
+	def _referenced_by( reference_to, reference_from=None ):
 		try:
-			orig = x
-			x = proxies.get( x, None )
-			if x is None:
-				x = orig
-				x = fake_proxies[x]
+			orig = reference_to
+			reference_to = proxies.get( reference_to, None )
+			if reference_to is None:
+				reference_to = orig
+				reference_to = fake_proxies[reference_to]
 		except KeyError:
 			# So this means that we found something in the reference chain that was not
 			# in the collection itself. Assuming we're looking at shared data in addition to owned data,
@@ -122,17 +122,18 @@ def _build_reference_lists( request, result_list ):
 			# In the later two cases, we will report on ID that the client won't be able to find and put into the thread,
 			# so it will appear to be 'deleted'
 			level = logging.DEBUG
-			if hasattr( x, 'inReplyTo' ) and not getattr( x, 'inReplyTo' ):
+			if hasattr( reference_to, 'inReplyTo' ) and not getattr( reference_to, 'inReplyTo' ):
 				level = logging.WARN # If it was a root object, this is bad. The entire thread could be hidden
 			logger.log( level, "Failed to get proxy for %s/%s/%s. Illegal reference chain from %s/%s?",
-						  x, getattr( x, 'containerId', None ), id(x),
-						  ref, getattr( ref, 'containerId', None ))
-			proxy = fake_proxies[x] = RefProxy( x )
+						  reference_to, getattr( reference_to, 'containerId', None ), id(reference_to),
+						  reference_from, getattr( reference_from, 'containerId', None ))
+			proxy = fake_proxies[reference_to] = RefProxy( reference_to )
 			result = proxy.referenced_by = []
 			return result # return a temp list that's not persistent
-		result = x.referenced_by
+		result = reference_to.referenced_by
 		if result is None:
-			result = x.referenced_by = []
+			result = reference_to.referenced_by = []
+
 		return result
 
 	for i, item in enumerate(result_list):
@@ -151,7 +152,7 @@ def _build_reference_lists( request, result_list ):
 			# back from here are 'real' vs the things we just put in the result list
 			_referenced_by( inReplyTo, item ).append( weakref.ref( item ) )
 		for ref in getattr( item, 'references', () ):
-			if ref is not None:
+			if ref is not None and ref is not inReplyTo:
 				_referenced_by( ref, item ).append( weakref.ref( item ) )
 
 def _reference_list_length( x ):

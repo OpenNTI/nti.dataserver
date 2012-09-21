@@ -188,6 +188,7 @@ class TestApplication(ApplicationTestBase):
 			reply_n.containerId = 'tag:nti:foo'
 			reply_n.body = ('Reply',)
 			reply_n.inReplyTo = top_n
+			reply_n.addReference(top_n)
 			user.addContainedObject( reply_n )
 			reply_n_id = reply_n.id
 			reply_n.lastModified = 2
@@ -263,6 +264,7 @@ class TestApplication(ApplicationTestBase):
 		res = testapp.get( path, extra_environ=self._make_extra_environ() )
 		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
 		assert_that( res.json_body, has_entry( 'Items', contains( has_entry( 'ID', reply_n_id ) ) ) )
+
 
 	def test_path_with_parens(self):
 		with mock_dataserver.mock_db_trans(self.ds):
