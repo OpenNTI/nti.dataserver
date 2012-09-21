@@ -76,6 +76,8 @@ def do_evolve(context):
 	for user in users.values():
 		_reindex(user, users, ds_intid)
 		
+	logger.debug('Evolution done!!!')
+		
 def evolve(context):
 	"""
 	Evolve generation 11 to generation 12 by reindexing in the user space
