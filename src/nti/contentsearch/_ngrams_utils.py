@@ -2,6 +2,9 @@ from __future__ import print_function, unicode_literals
 
 from collections import OrderedDict
 
+from zope import schema
+from zope import interface
+
 from whoosh import analysis
 
 import logging
@@ -24,3 +27,23 @@ def ngrams(text):
 	else:
 		result = u''
 	return unicode(result)
+
+
+class INgramComputer(interface.interface):
+	minsize = schema.Int(title="min ngram size", required=True)
+	minsize = schema.Int(title="max ngram size", required=True)
+	unique = schema.Bool(title="flag to return unique ngrams", required=True)
+	at_start = schema.Bool(title="flag to return ngrams from the start of the word ", required=True)
+	
+	def compute(text):
+		"""compute the ngrams for the specified text"""
+
+@interface.implementer( INgramComputer )		
+class _DefaultNgramComputer(object):
+	minsize = 3
+	maxsize = 6
+	unique = True
+	at_start = True
+	
+	def compute(self, text):
+		pass
