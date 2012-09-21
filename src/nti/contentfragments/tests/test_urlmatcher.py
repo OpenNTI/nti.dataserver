@@ -53,6 +53,13 @@ class TestUrlMatcher(ConfiguringTestBase):
 		html = u'<html><head/><body>mailto:help@nextthought.com</body></html>'
 		exp = u'<html><head/><body><a href="mailto:help@nextthought.com">help@nextthought.com</a></body></html>'
 		assert_that(self.formatter.format(frg_interfaces.IHTMLContentFragment(html)), is_(exp))
+		
+	def test_utz(self):
+		html = u'<html><head/><body>foo<div><br></div><div>http://google.com</div>' + \
+				'<div><br></div><div>bar</div><div><br></div><div>http://yahoo.com</div></body></html>'
+		exp = u'<html><head/><body>foo<div><br/></div><div><a href="http://google.com">http://google.com</a></div>' +\
+				'<div><br/></div><div>bar</div><div><br/></div><div><a href="http://yahoo.com">http://yahoo.com</a></div></body></html>'
+		assert_that(self.formatter.format(frg_interfaces.IHTMLContentFragment(html)), is_(exp))
 	
 if __name__ == '__main__':
 	import unittest
