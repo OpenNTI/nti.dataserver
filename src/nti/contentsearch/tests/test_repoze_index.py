@@ -1,5 +1,7 @@
 import unittest
 
+import BTrees
+
 from nti.contentsearch._repoze_index import create_catalog
 
 from nti.contentsearch.tests import ConfiguringTestBase
@@ -8,11 +10,12 @@ from nti.contentsearch.common import (	ngrams_, channel_, content_, keywords_, r
 										highlight_, redaction_, replacementContent_, redactionExplanation_,
 										messageinfo_)
 
-from hamcrest import (assert_that, has_key )
+from hamcrest import (assert_that, has_key, is_ )
 
 class TestRepozeIndex(ConfiguringTestBase):
 			
 	def _test_common_catalog(self, catalog):
+		assert_that(catalog.family, is_(BTrees.family64))
 		assert_that(catalog, has_key(ntiid_))
 		assert_that(catalog, has_key(creator_))
 		assert_that(catalog, has_key(keywords_))
