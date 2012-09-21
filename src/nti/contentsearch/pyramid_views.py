@@ -12,8 +12,8 @@ from pyramid.security import authenticated_userid
 from nti.ntiids.ntiids import is_valid_ntiid_string
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 
-from nti.contentsearch import QueryObject
 from nti.contentsearch.interfaces import IIndexManager
+from nti.contentsearch._search_query import QueryObject
 
 import logging
 logger = logging.getLogger( __name__ )

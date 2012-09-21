@@ -12,10 +12,10 @@ from persistent import Persistent
 
 from nti.dataserver import interfaces as nti_interfaces
 
-from nti.contentsearch import QueryObject
 from nti.contentsearch import SearchCallWrapper
 from nti.contentsearch.common import is_all_query
 from nti.contentsearch.common import get_type_name
+from nti.contentsearch._search_query import QueryObject
 from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch._cloudsearch_query import parse_query
 from nti.contentsearch import interfaces as search_interfaces

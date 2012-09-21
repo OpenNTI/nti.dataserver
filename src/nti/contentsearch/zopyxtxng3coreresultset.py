@@ -22,6 +22,9 @@ from zopyx.txng3.core.resultset import ResultSet, WordList
 
 from nti.contentsearch.zopyxtxng3coredoclist import DocidList
     
+import logging
+logger = logging.getLogger( __name__ )
+
 def intersectionResultSets(sets):
     """ perform intersection of ResultSets """
     
@@ -42,6 +45,7 @@ def unionResultSets(sets):
     docids = DocidList()
     words = WordList()
     for s in sets:
+        logger.info("%s, %s", type(s), type(s.docids))
         docids = union64(docids, s.docids)
         words.extend(s.words)
     return ResultSet(docids, words)

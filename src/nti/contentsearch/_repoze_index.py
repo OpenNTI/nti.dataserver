@@ -105,7 +105,7 @@ def create_catalog(type_name):
 @interface.implementer(search_interfaces.IRepozeCatalogCreator)
 class _RepozeCatalogCreator(object):
 	def create(self):
-		catalog = Catalog()
+		catalog = Catalog(family=BTrees.family64)
 		self._set4(catalog, search_interfaces.IRepozeCatalogFieldCreator)
 		self._set4(catalog, self._iface)
 		return catalog

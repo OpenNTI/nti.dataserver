@@ -13,11 +13,11 @@ from persistent.mapping import PersistentMapping
 
 from nti.dataserver import interfaces as nti_interfaces
 
-from nti.contentsearch import QueryObject
 from nti.contentsearch import SearchCallWrapper
 from nti.contentsearch.common import is_all_query
 from nti.contentsearch.common import get_type_name
 from nti.contentsearch.common import sort_search_types
+from nti.contentsearch._search_query import QueryObject
 from nti.contentsearch._repoze_query import parse_query
 from nti.contentsearch._content_utils import rank_words
 from nti.contentsearch.common import normalize_type_name
