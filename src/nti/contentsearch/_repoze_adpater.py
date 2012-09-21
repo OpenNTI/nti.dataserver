@@ -35,8 +35,8 @@ import logging
 logger = logging.getLogger( __name__ )
 
 @component.adapter(nti_interfaces.IEntity)
+@interface.implementer( search_interfaces.IRepozeEntityIndexManager, IFullMapping )
 class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
-	interface.implements(search_interfaces.IRepozeEntityIndexManager, IFullMapping)
 
 	def __init__(self):
 		PersistentMapping.__init__(self)
