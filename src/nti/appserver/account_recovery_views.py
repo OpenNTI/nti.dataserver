@@ -288,7 +288,10 @@ def reset_passcode_view(request):
 	value = annotations.get( _KEY_PASSCODE_RESET, value )
 	if value[0] != token or _is_one_hour_or_more_old( value[1] ):
 		# expired, no user, bad token
-		raise_json_error( request, hexc.HTTPNotFound, {'code': 'InvalidOrMissingOrExpiredResetToken'}, None )
+		raise_json_error( request, hexc.HTTPNotFound,
+						  {'code': 'InvalidOrMissingOrExpiredResetToken',
+						   'message': "Your reset link is not valid. Please request a new one."}, # TODO: I18N
+						   None )
 
 	new_password = request.params.get( 'password' )
 	if not new_password: # preflight
