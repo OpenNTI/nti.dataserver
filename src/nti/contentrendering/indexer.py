@@ -182,6 +182,7 @@ def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=Fa
 			writer.add_document(ntiid=ntiid,
 								title=title,
 								content=content,
+								quick=content,
 								related=related,
 								keywords=keywords,
 								last_modified=as_time)
