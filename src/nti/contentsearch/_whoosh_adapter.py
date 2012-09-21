@@ -107,8 +107,8 @@ whoosh_indices = LFUMap(maxsize=500, on_removal_callback=_on_index_removed)
 # entity adapter for whoosh indicies
 
 @component.adapter(nti_interfaces.IEntity)
+@interface.implementer( search_interfaces.IWhooshEntityIndexManager, IFullMapping )
 class _WhooshEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
-	interface.implements(search_interfaces.IWhooshEntityIndexManager, IFullMapping)
 		
 	delay = 0.25
 	maxiters = 40

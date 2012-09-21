@@ -11,7 +11,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.contentsearch import SearchCallWrapper
 from nti.contentsearch._search_query import QueryObject
 from nti.contentsearch._indexagent import handle_index_event
-from nti.contentsearch import interfaces as seach_interfaces
+from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch._datastructures import CaseInsensitiveDict
 
 from nti.contentsearch._search_results import empty_search_results
@@ -24,8 +24,8 @@ from nti.contentsearch._search_results import merge_suggest_and_search_results
 import logging
 logger = logging.getLogger( __name__ )
 
+@interface.implementer( search_interfaces.IIndexManager )
 class IndexManager(object):
-	interface.implements(seach_interfaces.IIndexManager)
 
 	indexmanager = None
 
