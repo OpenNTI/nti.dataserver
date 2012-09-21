@@ -291,7 +291,7 @@ def reset_passcode_view(request):
 		raise_json_error( request, hexc.HTTPNotFound, {'code': 'InvalidOrMissingOrExpiredResetToken'}, None )
 
 	new_password = request.params.get( 'password' )
-	if not new_password:
+	if not new_password: # preflight
 		return hexc.HTTPNoContent()
 
 	# First, clear the old password, because we do not have one to
@@ -302,6 +302,10 @@ def reset_passcode_view(request):
 		del user.password
 
 	obj_io.update_object_from_external_object( user, {'password': new_password }, notify=False, request=request )
+
+	# Great, it worked. Kill the annotation so that it CANNOT be used again
+	# (otherwise the window of vulnerability is larger than it needs to be)
+	del annotations[_KEY_PASSCODE_RESET]
 
 	# Assuming that works, return the user
 	return user
