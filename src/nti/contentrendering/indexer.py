@@ -178,7 +178,7 @@ def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=Fa
 			return
 		
 		try:
-			content = unicode(content.lower())
+			content = unicode(content)
 			writer.add_document(ntiid=ntiid,
 								title=title,
 								content=content,
