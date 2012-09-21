@@ -8,8 +8,8 @@ $Id$
 
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+import logging
+logger = logging.getLogger(__name__)
 
 import weakref
 import numbers
@@ -83,10 +83,12 @@ def lists_and_dicts_to_ext_collection( items ):
 	result = LocatedExternalDict( { 'Last Modified': lastMod, 'Items': result } )
 	return result
 
-_REF_ATTRIBUTE = 'referenced_by' # TODO: Be absolutely sure this doesn't cause rewriting of the note in the DB
+_REF_ATTRIBUTE = 'referenced_by'
 
 class RefProxy(ProxyBase):
-
+	# Unless we have slots, we set properties of the underlying object, which is bad,
+	# it has cross-thread implications and defeats the point of a proxy in the first place
+	__slots__ = ('_v_referenced_by', '__weakref__')
 	def __init__( self, obj ):
 		super(RefProxy,self).__init__( obj )
 		self._v_referenced_by = None
@@ -100,9 +102,14 @@ class RefProxy(ProxyBase):
 def _build_reference_lists( request, result_list ):
 	proxies = {}
 	setattr( request, '_build_reference_lists_proxies', proxies )
+	fake_proxies = {} # so we only log once
 	def _referenced_by( x, ref=None ):
 		try:
-			x = proxies[x]
+			orig = x
+			x = proxies.get( x, None )
+			if x is None:
+				x = orig
+				x = fake_proxies[x]
 		except KeyError:
 			# So this means that we found something in the reference chain that was not
 			# in the collection itself. Assuming we're looking at shared data in addition to owned data,
@@ -114,14 +121,18 @@ def _build_reference_lists( request, result_list ):
 
 			# In the later two cases, we will report on ID that the client won't be able to find and put into the thread,
 			# so it will appear to be 'deleted'
-			logger.debug( "Failed to get proxy for %s/%s. Illegal reference chain from %s/%s?",
-						  x, getattr( x, 'containerId', None ),
+			level = logging.DEBUG
+			if hasattr( x, 'inReplyTo' ) and not getattr( x, 'inReplyTo' ):
+				level = logging.WARN # If it was a root object, this is bad. The entire thread could be hidden
+			logger.log( level, "Failed to get proxy for %s/%s/%s. Illegal reference chain from %s/%s?",
+						  x, getattr( x, 'containerId', None ), id(x),
 						  ref, getattr( ref, 'containerId', None ))
-			return [] # return a temp list that's not persistent
+			proxy = fake_proxies[x] = RefProxy( x )
+			result = proxy.referenced_by = []
+			return result # return a temp list that's not persistent
 		result = x.referenced_by
 		if result is None:
-			result = []
-			x.referenced_by = result
+			result = x.referenced_by = []
 		return result
 
 	for i, item in enumerate(result_list):
