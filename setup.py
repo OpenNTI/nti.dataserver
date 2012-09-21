@@ -280,7 +280,7 @@ setup(
 			'pudb', # Python full screen console debugger. Beats ipython's: import pudb; pdb.set_trace()
 			'nose-pudb >= 0.1.2', # Nose integration: --pudb --pudb-failures. 0.1.2 requires trivial patch
 			'readline',
-			'httpie >= 0.2.7',
+			'httpie >= 0.3.0',
 			'logilab_astng >= 0.24.0',
 			'pylint >= 0.25.2',
 			'zodbupdate >= 0.5',
