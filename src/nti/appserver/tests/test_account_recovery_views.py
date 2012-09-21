@@ -122,6 +122,23 @@ class TestApplicationPasswordRecovery(ApplicationTestBase):
 		mailer = component.getUtility( IMailer )
 		assert_that( mailer.queue, has_length( 0 ) )
 
+	def test_recover_user_no_username( self ):
+		app = TestApp( self.app )
+
+		path = b'/dataserver2/logon.forgot.passcode'
+		data = {'email': 'foo@bar.com'}
+		res = app.post( path, data, status=400 )
+		assert_that( res.body, contains_string( "Must provide username" ) )
+
+	def test_recover_user_no_success( self ):
+		app = TestApp( self.app )
+
+		path = b'/dataserver2/logon.forgot.passcode'
+		data = {'email': 'foo@bar.com', 'username': 'foo@bar.com' }
+		res = app.post( path, data, status=400 )
+
+		assert_that( res.body, contains_string( "Must provide success" ) )
+
 	def test_recover_user_invalid_email( self ):
 		app = TestApp( self.app )
 
@@ -164,6 +181,26 @@ class TestApplicationPasswordRecovery(ApplicationTestBase):
 		msg = mailer.queue[0]
 
 		assert_that( msg, has_property( 'body', contains_string( 'http://localhost/place?username=' + urllib.quote(user.username) ) ) )
+
+	def test_recover_user_found_query_in_url( self ):
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = self._create_user( )
+			profile = user_interfaces.IUserProfile( user )
+			profile.email = 'jason.madden@nextthought.com'
+
+		app = TestApp( self.app )
+
+		path = b'/dataserver2/logon.forgot.passcode'
+		data = {'email': 'jason.madden@nextthought.com',
+				'username': user.username,
+				'success': 'http://localhost/place?host=foo&baz=bar'}
+		app.post( path, data, status=204 )
+
+		mailer = component.getUtility( IMailer )
+		assert_that( mailer.queue, has_length( 1 ) )
+		msg = mailer.queue[0]
+
+		assert_that( msg, has_property( 'body', contains_string( 'http://localhost/place?host=foo&baz=bar&username=' + urllib.quote(user.username) ) ) )
 
 from zope.annotation.interfaces import IAnnotations
 from nti.appserver import account_recovery_views
@@ -232,10 +269,13 @@ class TestApplicationPasswordReset(ApplicationTestBase):
 		app = TestApp( self.app )
 
 		path = b'/dataserver2/logon.reset.passcode'
-		data = {'id': 'the_id',
-				'username': user.username,
-				'password': ' '}
 
+		data = {'id': 'the_id',
+				'username': user.username }
+
+		app.post( path, data, status=204 ) # preflights
+
+		data['password'] = ' '
 		app.post( path, data, status=422 )
 
 		data['password'] = 'temp001'
