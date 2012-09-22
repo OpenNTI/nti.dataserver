@@ -82,6 +82,15 @@ class Session( AbstractSession ):
 		session_service = component.getUtility( nti_interfaces.IDataserver ).session_manager
 		return session_service.get_messages_to_client( self.session_id )
 
+	def clear_disconnect_timeout(self):
+		session_service = component.getUtility( nti_interfaces.IDataserver ).session_manager
+		session_service.clear_disconnect_timeout( self.session_id )
+
+	@property
+	def last_heartbeat_time(self):
+		session_service = component.getUtility( nti_interfaces.IDataserver ).session_manager
+		return session_service.get_last_heartbeat_time( self.session_id, self )
+
 	def kill( self, send_event=True ):
 		self.message_handler.kill(self)
 		super(Session,self).kill(send_event=send_event)
