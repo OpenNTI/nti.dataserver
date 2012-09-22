@@ -153,7 +153,7 @@ class GSPDFPNG2BatchConverter(converters.ImagerContentUnitRepresentationBatchCon
 			raise OSError( 'Expected %s files but only generated %s for batch %s' %
 						   (len(content_units), len(processed), self.batch ) )
 		elapsed = end - start
-		logger.info( "%s resources generated in %sms for batch %s", len(processed), elapsed, self.batch )
+		logger.info( "%s resources generated in %ss for batch %s", len(processed), elapsed, self.batch )
 		#origSources, origImages = zip(*processed)
 		#origImages = processed
 
