@@ -11,6 +11,7 @@ import gevent.queue
 import gevent.local
 
 import ZODB.interfaces
+import ZODB.POSException
 from zope import interface
 from zope import component
 from zope.event import notify
@@ -213,6 +214,15 @@ def run_job_in_site(func, retries=0, sleep=None,
 				if sleep is not None:
 					gevent.sleep( sleep )
 			except transaction.interfaces.DoomedTransaction:
+				raise
+			except ZODB.POSException.StorageError as e:
+				if str(e) == 'Unable to acquire commit lock':
+					# Relstorage locks. Who's holding it? What's this worker doing?
+					# if the problem is some other worker this doesn't help much
+					from nti.appserver._util import dump_stacks
+					import sys
+					body = '\n'.join(dump_stacks())
+					print( body, file=sys.stderr )
 				raise
 			except:
 				t.abort()
