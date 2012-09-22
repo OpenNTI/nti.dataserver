@@ -12,5 +12,11 @@ class TestNgramUtils(ConfiguringTestBase):
 		n = ngrams('Sing Crimson Princess')
 		assert_that(n, is_('cri crim crims crimso pri prin princ prince sin sing'))
 		
+		n = ngrams('word word word')
+		assert_that(n, is_('wor word'))
+		
+		n = ngrams(None)
+		assert_that(n, is_(''))
+		
 if __name__ == '__main__':
 	unittest.main()

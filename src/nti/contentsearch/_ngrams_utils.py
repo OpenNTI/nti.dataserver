@@ -1,7 +1,5 @@
 from __future__ import print_function, unicode_literals
 
-from collections import OrderedDict
-
 from zope import schema
 from zope import component
 from zope import interface
@@ -19,7 +17,7 @@ def ngram_tokens(text, minsize=3, maxsize=10, at='start', unique=True, lower=Tru
 	if not unique:
 		result = [token.copy() for token in ng_filter(stream)]
 	else:
-		result = OrderedDict( {token.text:token.copy() for token in ng_filter(stream)}).values()
+		result = {token.text:token.copy() for token in ng_filter(stream)}.values()
 	return result
 		
 def ngrams(text):
