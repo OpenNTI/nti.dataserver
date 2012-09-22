@@ -1,10 +1,13 @@
 from __future__ import print_function, unicode_literals
 
-from zope import schema
 from zope import component
 from zope import interface
 
 from whoosh import analysis
+
+from nti.contentsearch.common import default_ngram_minsize
+from nti.contentsearch.common import default_ngram_maxsize
+from nti.contentsearch import interfaces as search_interfaces
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -21,31 +24,19 @@ def ngram_tokens(text, minsize=3, maxsize=10, at='start', unique=True, lower=Tru
 	return result
 		
 def ngrams(text):
-	u = component.getUtility(INgramComputer)
+	u = component.getUtility(search_interfaces.INgramComputer)
 	result = u.compute(text)
 	return unicode(result)
 
-class INgramComputer(interface.Interface):
-	minsize = schema.Int(title="min ngram size", required=True)
-	minsize = schema.Int(title="max ngram size", required=True)
-	unique = schema.Bool(title="flag to return unique ngrams", required=True)
-	at_start = schema.Bool(title="flag to return ngrams from the start of the word ", required=True)
-	
-	def compute(text):
-		"""compute the ngrams for the specified text"""
-
-@interface.implementer( INgramComputer )		
+@interface.implementer( search_interfaces.INgramComputer )		
 class _DefaultNgramComputer(object):
 	
-	minsize = 3
-	maxsize = 6
-	unique = True
-	at_start = True
+	minsize = default_ngram_minsize
+	maxsize = default_ngram_maxsize
 	
 	def compute(self, text):
 		if text:
-			at = 'start' if self.at_start else 'end'
-			tokens = ngram_tokens(text, self.minsize, self.maxsize, at, self.unique)
+			tokens = ngram_tokens(text, self.minsize, self.maxsize)
 			result = [token.text for token in tokens]
 			result = ' '.join(sorted(result, cmp=lambda x,y: cmp(x, y)))
 		else:

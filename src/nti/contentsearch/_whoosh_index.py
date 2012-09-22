@@ -15,13 +15,14 @@ from nti.contentsearch._search_query import QueryObject
 from nti.contentsearch._whoosh_query import parse_query
 from nti.contentsearch._content_utils import rank_words
 from nti.contentsearch.common import normalize_type_name
+from nti.contentsearch.common import default_ngram_minsize
+from nti.contentsearch.common import default_ngram_maxsize
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch._datastructures import CaseInsensitiveDict
 from nti.contentsearch._search_results import empty_search_results
 from nti.contentsearch._search_results import empty_suggest_results
 from nti.contentsearch._search_results import empty_suggest_and_search_results
 from nti.contentsearch._search_highlights import ( WORD_HIGHLIGHT, NGRAM_HIGHLIGHT, WHOOSH_HIGHLIGHT)
-
 
 from nti.contentsearch.common import (	quick_, channel_, content_, keywords_, references_, 
 										recipients_, sharedWith_, ntiid_, last_modified_,
@@ -125,10 +126,17 @@ class _SearchableContent(object):
 
 # content analyzer
 
-def _content_analyzer():
-	zutility = component.queryUtility(search_interfaces.IStopWords) 
-	stopwords = zutility.stopwords() if zutility else analysis.STOP_WORDS
-	analyzer = analysis.StandardAnalyzer(stoplist=stopwords) | analysis.NgramFilter(minsize=3, maxsize=10)
+def ngram_minmax():
+	ngc_util = component.queryUtility(search_interfaces.INgramComputer) 
+	minsize = ngc_util.minsize if ngc_util else default_ngram_minsize
+	maxsize = ngc_util.minsize if ngc_util else default_ngram_maxsize
+	return (minsize, maxsize)
+
+def content_analyzer():
+	minsize, maxsize = ngram_minmax()
+	sw_util = component.queryUtility(search_interfaces.IStopWords) 
+	stopwords = sw_util.stopwords() if sw_util else analysis.STOP_WORDS
+	analyzer = analysis.StandardAnalyzer(stoplist=stopwords) | analysis.NgramFilter(minsize=minsize, maxsize=maxsize)
 	return analyzer
 	
 # book content
@@ -146,14 +154,15 @@ def create_book_schema():
 	related: ntiids of related sections
 	ref: chapter reference
 	"""
+	minsize, maxsize = ngram_minmax()
 	
 	schema = fields.Schema(	ntiid = fields.ID(stored=True, unique=False),
 							title = fields.TEXT(stored=True, spelling=True),
 				  			last_modified = fields.DATETIME(stored=True),
 				  			keywords = fields.KEYWORD(stored=True), 
-				 			quick = fields.NGRAM(maxsize=10, phrase=True),
+				 			quick = fields.NGRAM(minsize=minsize, maxsize=maxsize, phrase=True),
 				 			related = fields.KEYWORD(stored=True),
-				 			content = fields.TEXT(stored=True, spelling=True, phrase=True, analyzer=_content_analyzer()))
+				 			content = fields.TEXT(stored=True, spelling=True, phrase=True, analyzer=content_analyzer()))
 	return schema
 
 #TODO: do an adapter
@@ -348,9 +357,10 @@ class TreadableIndexableContent(UserIndexableContent):
 # highlight
 	
 def create_highlight_schema():
+	minsize, maxsize = ngram_minmax()		 			
 	schema = _create_treadable_schema()
 	schema.add(content_, fields.TEXT(stored=False, chars=True, spelling=True))
-	schema.add(quick_, fields.NGRAM(maxsize=10, phrase=True))
+	schema.add(quick_, fields.NGRAM(minsize=minsize, maxsize=maxsize, phrase=True))
 	return schema
 
 class Highlight(TreadableIndexableContent):

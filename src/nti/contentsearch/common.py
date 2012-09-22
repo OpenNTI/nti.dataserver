@@ -14,7 +14,6 @@ from nti.mimetype.mimetype import MIME_BASE
 import logging
 logger = logging.getLogger( __name__ )
 
-
 ID 				= unicode(ext_interfaces.StandardExternalFields.ID)
 HIT 			= u'Hit'
 OID 			= unicode(ext_interfaces.StandardExternalFields.OID)
@@ -37,7 +36,6 @@ SUGGESTIONS		= u'Suggestions'
 CONTAINER_ID	= unicode(ext_interfaces.StandardExternalFields.CONTAINER_ID)
 COLLECTION_ID	= u'CollectionId'
 LAST_MODIFIED	= unicode(ext_interfaces.StandardExternalFields.LAST_MODIFIED)
-
 
 id_				= unicode(ext_interfaces.StandardInternalFields.ID)
 oid_			= u'oid'
@@ -94,6 +92,9 @@ canvastextshape_ = 'canvastextshape'
 
 indexable_type_names = (note_, highlight_, redaction_, messageinfo_)
 indexable_types_order = { x:p for p,x in enumerate(indexable_type_names) }
+
+default_ngram_minsize = 2
+default_ngram_maxsize = 6
 
 def epoch_time(dt):
 	if dt:
