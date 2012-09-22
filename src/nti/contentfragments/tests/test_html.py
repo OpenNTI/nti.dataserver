@@ -66,3 +66,8 @@ def test_rejected_tags():
 	html = u'<html><body><script><p>should be ignored</p> Other stuff.</script><p style=" text-align: left;">The text</div></body></html>'
 	exp =  u'<html><body><p style="text-align: left;">The text</p></body></html>'
 	sanitized = _check_sanitized( html, exp, frg_interfaces.ISanitizedHTMLContentFragment )
+
+	html = 'foo<div><br></div><div>http://google.com</div><div><br></div><div>bar</div><div><br></div><div>http://yahoo.com</div>'''
+	exp = '<html><body>foo <br />  <a href="http://google.com">http://google.com</a>  <br />  bar  <br />  <a href="http://yahoo.com">http://yahoo.com</a> </body></html>'
+
+	sanitized = _check_sanitized( html, exp, frg_interfaces.ISanitizedHTMLContentFragment )

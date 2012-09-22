@@ -121,8 +121,11 @@ class Note(ThreadableExternalizableMixin, Highlight):
 			# Sanitize the body. Anything that can become a fragment, do so, incidentally
 			# sanitizing and censoring it along the way.
 			def _sanitize(x):
-				x = censor.censor_assign(frg_interfaces.IUnicodeContentFragment( x, x ), self, 'body' )
-				x = component.getUtility(frg_interfaces.IHyperlinkFormatter).format(x)
+				if frg_interfaces.IHTMLContentFragment.providedBy( x ) and not frg_interfaces.ISanitizedHTMLContentFragment.providedBy( x ):
+					x = frg_interfaces.ISanitizedHTMLContentFragment( x )
+				else:
+					x = frg_interfaces.IUnicodeContentFragment( x, x )
+				x = censor.censor_assign(x, self, 'body' )
 				return x
 
 			self.body = [_sanitize(x) for x in self.body]

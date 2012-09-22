@@ -511,7 +511,7 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 		html = frg_interfaces.IHTMLContentFragment(u'<html><head/><body><p>At www.nextthought.com</p></body></html>')
 		n.updateFromExternalObject( { 'body': [html] } )
 		ext = n.toExternalObject()
-		assert_that( ext['body'], is_( [u'<html><head/><body><p>At <a href="http://www.nextthought.com">www.nextthought.com</a></p></body></html>'] ) )
+		assert_that( ext['body'], is_( [u'<html><body><p>At <a href="http://www.nextthought.com">www.nextthought.com</a></p></body></html>'] ) )
 
 
 
@@ -519,7 +519,7 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 		n = Note()
 		n.updateFromExternalObject( { 'body': ["So visit www.nextthought.com and see for yourself."] } )
 		ext = n.toExternalObject()
-		assert_that( ext['body'], is_( [u'<html><head/><body>So visit <a href="http://www.nextthought.com">www.nextthought.com</a> and see for yourself.</body></html>'] ) )
+		assert_that( ext['body'], is_( [u'<html><body>So visit <a href="http://www.nextthought.com">www.nextthought.com</a> and see for yourself.</body></html>'] ) )
 
 
 	@WithMockDSTrans

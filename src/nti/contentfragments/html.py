@@ -97,6 +97,50 @@ class _SanitizerFilter(sanitizer.Filter):
 	def __init__( self, source ):
 		super(_SanitizerFilter,self).__init__(source)
 		self._rejecting_stack = []
+		self.link_finder = component.getUtility( frg_interfaces.IHyperlinkFormatter )
+
+	def __iter__( self ):
+		for token in super(_SanitizerFilter,self).__iter__():
+			if token:
+				token_type = token["type"]
+				if token_type in tokenTypes.keys():
+					token_type = tokenTypes[token_type]
+
+				if token_type == tokenTypes['Characters']:
+					for text_token in self._find_links_in_text(token):
+						yield text_token
+				else:
+					yield token
+
+	def _find_links_in_text( self, token ):
+		text = token['data']
+		text_and_links = self.link_finder.find_links( text )
+		if len(text_and_links) != 1 or text_and_links[0] != text:
+			def _unicode( x ):
+				return unicode( x, 'utf-8' ) if isinstance( x, str ) else x
+			for text_or_link in text_and_links:
+				if isinstance( text_or_link, basestring ):
+					sub_token = token.copy()
+					sub_token['data'] = _unicode(text_or_link)
+					yield sub_token
+				else:
+					start_token = {'type': 'StartTag',
+								   'name': 'a',
+								   'namespace': 'None',
+								   'data': {(None,'href'): _unicode(text_or_link.attrib['href'])}}
+					yield start_token
+					text_token = token.copy()
+					text_token['data'] = _unicode( text_or_link.text )
+					yield text_token
+
+					end_token = {'type': 'EndTag',
+								 'name': 'a',
+								 'namespace': 'None',
+								 'data': {}}
+					yield end_token
+		else:
+			yield token
+
 
 	def sanitize_token( self, token ):
 		"""
@@ -113,6 +157,7 @@ class _SanitizerFilter(sanitizer.Filter):
 		if token_type == tokenTypes['Characters'] and self._rejecting_stack:
 			# character data beneath a rejected element
 			return None
+
 
 		if token_type in (tokenTypes["StartTag"], tokenTypes["EndTag"],
 						  tokenTypes["EmptyTag"]) and token["name"] not in self.allowed_elements:

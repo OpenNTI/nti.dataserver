@@ -70,6 +70,10 @@
 	<adapter factory=".html.sanitize_user_html"
 			 for="unicode"
 			 provides=".interfaces.IUnicodeContentFragment" />
+	<!-- This is something of a lie. It might sanitize to plain text -->
+	<adapter factory=".html.sanitize_user_html"
+			 for=".interfaces.IHTMLContentFragment"
+			 provides=".interfaces.ISanitizedHTMLContentFragment" />
 
 	<adapter factory=".html._sanitize_user_html_to_text"
 			 for="str"
