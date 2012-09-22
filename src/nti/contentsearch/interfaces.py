@@ -406,7 +406,13 @@ class IStopWords(interface.Interface):
 	def available_languages():
 		"available languages"
 		
+class INgramComputer(interface.Interface):
+	minsize = schema.Int(title="min ngram size", required=True)
+	minsize = schema.Int(title="max ngram size", required=True)
 	
+	def compute(text):
+		"""compute the ngrams for the specified text"""
+		
 # Catalog creators
 	
 class IRepozeCatalogCreator(interface.Interface):

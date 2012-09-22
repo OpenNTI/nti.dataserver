@@ -90,7 +90,7 @@ class _BaseIndexManagerTest(object):
 		assert_that(hits, has_length(1))
 
 		hits = self.im.content_suggest(indexid='bleach', query='extre')
-		assert_that(hits, has_length(2))
+		assert_that(hits, has_length(1))
 
 	def _add_notes_to_ds(self, strings=zanpakuto_commands):
 		notes = []
