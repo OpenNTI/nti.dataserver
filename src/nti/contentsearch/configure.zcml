@@ -84,6 +84,9 @@
 	<utility factory="._content_utils._DefaultWordSimilarity"  />
 	<utility factory="._content_utils._DefaultWordSimilarity" name="en" />
 	
+	<utility factory="._ngrams_utils._DefaultNgramComputer" />
+	<utility factory="._ngrams_utils._DefaultNgramComputer" name="en" />
+	
 	<!-- Search results -->
 		
 	<utility factory="._search_results._SearchResultCreator"  />

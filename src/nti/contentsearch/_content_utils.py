@@ -45,7 +45,6 @@ def get_content(text=None):
 
 tokenize_content = get_content
 
-
 @interface.implementer(search_interfaces.IContentResolver)
 @component.adapter(basestring)
 class _StringContentResolver(object):
