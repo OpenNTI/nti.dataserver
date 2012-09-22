@@ -288,9 +288,17 @@ class ICensoredContentPolicy(interface.Interface):
 		"""
 
 class IHyperlinkFormatter(interface.Interface):
-	
+
+	def find_links( text ):
+		"""
+		Given a string of `text`, look through it for hyperlinks and find them.
+
+		:return: A sequence of strings and `lxml.etree.Element` objects representing
+			the plain text and detected links, in order, within the given text.
+		"""
+
 	def format( html_fragment ):
 		"""
-		Process the specified ``IHTMLContentFragment`` and scan through and convert any 
+		Process the specified ``IHTMLContentFragment`` and scan through and convert any
 		plain text links recognized by the this object and inserting new ``<a>`` elements,
 		"""

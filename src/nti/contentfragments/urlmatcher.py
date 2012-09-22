@@ -48,26 +48,32 @@ class GrubberHyperlinkFormatter(object):
 			text = text[7:]
 		return text
 
+	def find_links( self, text, pattern=grubber_v1_pattern ):
+		result = []
+		m = pattern.search(text)
+		while m:
+			end = m.end()
+			start = m.start()
+			result.append( text[0:start] )
+
+			href = self._check_href(text[start:end]).strip()
+			e = etree.Element('a', href=href)
+			e.text = self._check_text(text[start:end])
+			result.append(e)
+
+			text = text[end:]
+			m = pattern.search(text)
+
+		if text:
+			result.append(text)
+
+		return result
+
 	def _a_builder(self, node, pattern, is_text=True):
 		field = 'text' if is_text else 'tail'
 		text = getattr(node, field, None)
 		if text:
-			result = []
-			m = pattern.search(text)
-			while m:
-				end = m.end()
-				start = m.start()
-				result.append(text[0:start])
-				href = self._check_href(text[start:end])
-				e = etree.Element('a', href=href)
-				e.text = self._check_text(text[start:end])
-				result.append(e)
-				text = text[end:]
-				m = pattern.search(text)
-
-			if text:
-				result.append(text)
-
+			result = self.find_links( text, pattern=pattern )
 			setattr(node, field, None)
 			for i, e in enumerate(result):
 				if isinstance(e, six.string_types):
