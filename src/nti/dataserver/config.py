@@ -6,7 +6,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 import os
-import sys
+import urllib
 import stat
 import ConfigParser
 from ConfigParser import SafeConfigParser
@@ -94,8 +94,11 @@ class _ReadableEnv(object):
 	def run_file( self, name ):
 		return os.path.join( self.run_dir(), name )
 
+	def data_dir( self ):
+		return os.path.join( self.env_root, 'data' )
+
 	def data_file( self, name ):
-		return os.path.join( self.env_root, 'data', name )
+		return os.path.join( self.data_dir(), name )
 
 	def log_file( self, name ):
 		return os.path.join( self.env_root, 'var', 'log', name )
@@ -220,6 +223,26 @@ def _configure_pubsub_changes( env ):
 
 def _configure_pubsub_session( env ):
 	_configure_pubsub( env, 'session' )
+
+def _configure_redis( env ):
+	redis_file = env.run_file( 'redis.sock' )
+	redis_conf = env.conf_file( 'redis.conf' )
+
+	redis_conf_contents = []
+	redis_conf_contents.append( 'port 0' ) # turn off tcp
+	redis_conf_contents.append( 'unixsocket ' + redis_file ) # activate unix sockets
+	redis_conf_contents.append( 'loglevel notice' )
+	redis_conf_contents.append( 'dbfilename redis.dump.rdb' )
+	redis_conf_contents.append( 'dir ' + env.data_dir() )
+
+	env.write_conf_file( 'redis.conf', '\n'.join( redis_conf_contents ) )
+
+	program = _Program( 'redis', '/opt/local/bin/redis-server ' + redis_conf )
+	env.add_program( program )
+
+	if not env.main_conf.has_section( 'redis' ):
+		env.main_conf.add_section( 'redis' )
+	env.main_conf.set( 'redis', 'redis_url', urllib.basejoin( 'file://', urllib.pathname2url( redis_file ) ) )
 
 def _create_zeo_program(env_root, zeo_config='zeo_conf.xml' ):
 	program = _Program( 'zeo', 'runzeo -C ' + env_root.conf_file( zeo_config ) )
@@ -454,8 +477,6 @@ def _configure_zeo( env_root ):
 
 
 from repoze.zodbconn.uri import db_from_uri
-from zope.configuration import xmlconfig
-
 
 from zope.event import notify
 from zope.processlifetime import DatabaseOpened
@@ -505,7 +526,7 @@ def write_configs(root_dir, pserve_ini, update_existing=False, write_supervisord
 		_configure_database( env, uris )
 	_configure_pubsub_changes( env )
 	_configure_pubsub_session( env )
-
+	_configure_redis( env )
 	listener = _Program( 'nti_sharing_listener' )
 	listener.priority = 50
 	env.add_program( listener )

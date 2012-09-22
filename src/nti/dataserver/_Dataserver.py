@@ -4,7 +4,8 @@ logger = __import__( 'logging' ).getLogger( __name__ )
 
 import os
 import six
-
+from urlparse import urlparse
+import contextlib
 
 import gevent.queue
 import gevent.local
@@ -14,19 +15,13 @@ from zope import interface
 from zope import component
 from zope.event import notify
 from zope.processlifetime import DatabaseOpened, DatabaseOpenedWithRoot
-
 import zope.generations.generations
 import zope.deprecation
-
 from persistent import Persistent, wref
 import transaction
+from zope.component.hooks import site
 
-from persistent.mapping import PersistentMapping
-
-import contextlib
-from zope.component.hooks import site, getSite, setSite
-
-
+import redis
 
 from nti.externalization import oids
 import nti.apns as apns
@@ -35,10 +30,8 @@ from nti.externalization import interfaces as ext_interfaces
 import nti.externalization.internalization
 
 from nti.dataserver import sessions
-from nti.dataserver import users
 from nti.dataserver import interfaces
 
-from nti.chatserver import interfaces as chat_interfaces
 from nti.chatserver.chatserver import Chatserver
 from . import meeting_container_storage
 from . import meeting_storage
@@ -248,7 +241,8 @@ class MinimalDataserver(object):
 		parentDir = os.path.expanduser( parentDir )
 		self.conf = config.temp_get_config( parentDir, demo=DATASERVER_DEMO )
 		# TODO: We shouldn't be doing this, it should be passed to us
-		component.provideUtility( self.conf )
+		component.getGlobalSiteManager().registerUtility( self.conf )
+		self.redis = self._setup_redis( self.conf )
 		# Although _setup_dbs returns a tuple, we don't actually want to hold a ref
 		# to any database except the root database. All access to multi-databases
 		# should go through an open connection.
@@ -291,6 +285,23 @@ class MinimalDataserver(object):
 			raise Exception( "Setup storages no longer supported:" + str( self._setup_storages ) )
 		db, ses_db, search_db = self.conf.connect_databases()
 		return db, ses_db, search_db
+
+	def _setup_redis( self, conf ):
+
+		if not conf.main_conf.has_option( 'redis', 'redis_url' ):
+			logger.warn( "YOUR CONFIGURATION IS OUT OF DATE. Please install redis and then run nti_init_env --upgrade-outdated --write-supervisord" )
+			return # .sessions.SessionService can go either way right now. Remove when everyone has upgraded
+
+		redis_url = conf.main_conf.get( 'redis', 'redis_url' )
+		parsed_url = urlparse( redis_url )
+		if parsed_url.scheme == 'file':
+			# Redis client doesn't natively understand file://, only redis://
+			client = redis.StrictRedis( unix_socket_path=parsed_url.path ) # XXX Windows
+		else:
+			client = redis.StrictRedis.from_url( redis_url )
+		interface.alsoProvides( client, interfaces.IRedisClient )
+		component.getGlobalSiteManager().registerUtility( client, interfaces.IRedisClient )
+		return client
 
 	@property
 	def root(self):

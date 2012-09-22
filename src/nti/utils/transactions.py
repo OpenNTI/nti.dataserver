@@ -8,6 +8,7 @@ from zope import interface
 import transaction
 import gevent.queue
 
+@interface.implementer(transaction.interfaces.IDataManager)
 class ObjectDataManager(object):
 	"""
 	A generic (and therefore relatively expensive) :class:`transaction.interfaces.IDataManager`
@@ -16,7 +17,6 @@ class ObjectDataManager(object):
 	(to preserve consistency with the rest of the data managers). If there's a chance the method could fail,
 	then whatever actions it does take should not have side-effects.
 	"""
-	interface.implements(transaction.interfaces.IDataManager)
 
 	_EMPTY_KWARGS = {}
 
@@ -26,7 +26,7 @@ class ObjectDataManager(object):
 		or the `call` argument. (You may always pass the `target` argument, which will
 		be made available on this object for the use of :meth:`tpc_vote`. )
 
-		:param target: An object. Optional if `callable` is given.
+		:param target: An object. Optional if `call` is given.
 		:param string method_name: The name of the attribute to get from `target`. Optional if `callable`
 			is given.
 		:param callable call: A callable object. Ignored if `target` *and* `method_name` are given.
@@ -63,7 +63,8 @@ class ObjectDataManager(object):
 		# in the order we joined the transaction, for the queue property
 		# (FIFO) to hold. The list.sort() is guaranteed to be stable,
 		# so we can use the same key and we'll stay in the right order
-		return id(self.target) if self.target is not None else id(self.callable)
+		# It's not clearly documented, but this is supposed to be a string
+		return str(id(self.target) if self.target is not None else id(self.callable))
 
 	# No subtransaction support.
 	def abort_sub(self, tx):

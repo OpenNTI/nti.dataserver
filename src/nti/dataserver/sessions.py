@@ -39,6 +39,8 @@ class SessionService(object):
 
 	"""
 
+	_redis = None
+
 	def __init__( self ):
 		"""
 		"""
@@ -47,9 +49,11 @@ class SessionService(object):
 		# Note that we have no way to close these greenlets. We depend
 		# on GC of this object to let them die when the last refs to
 		# us do.
+		self._redis = self._get_redis()
 		self.cluster_listener = self._spawn_cluster_listener()
 		self._watching_sessions = set()
 		self._session_watchdog = self._spawn_session_watchdog()
+
 
 	@property
 	def _session_db(self):
@@ -264,10 +268,39 @@ class SessionService(object):
 		if sess:
 			sess.kill()
 
+	def _get_redis( self ):
+		if self._redis is None:
+			self._redis = component.queryUtility( nti_interfaces.IRedisClient, default=0 )
+			if self._redis:
+				logger.info( "Using redis for session storage" )
+			else:
+				logger.warn( "Using the database for session storage" )
+		return self._redis
 
-	def _put_msg( self, meth, session_id, msg ):
+	def _put_msg_to_redis( self, queue_name, msg ):
+		self._redis.pipeline().rpush( queue_name, msg ).expire( queue_name, self.SESSION_HEARTBEAT_TIMEOUT * 2 ).execute()
+
+	def _put_msg( self, meth, q_name, session_id, msg ):
 		sess = self._get_session( session_id )
-		if sess:
+
+		if self._get_redis() and sess:
+			queue_name = 'sessions.' + session_id + '.' + q_name
+			# TODO: Probably need to add timeouts here
+			if meth == Session.enqueue_message_from_client and msg is not None:
+				# Since we don't call it anymore, we need to handle the timeout
+				# ourself...except, we can avoid a DB store if we let
+				# the normal heartbeat do this
+				#sess.clear_disconnect_timeout()
+				pass
+			if msg is None:
+				msg = ''
+			# We wind up with a lot of these data managers for a given transaction (e.g., one for every
+			# message to every session). We really would like to coallesce these into one, which we
+			# can do with some work
+			transactions.do( target=self,
+							 call=self._put_msg_to_redis,
+							 args=(queue_name, msg,) )
+		elif sess:
 			meth( sess, msg )
 
 	def _publish_msg( self, name, session_id, msg_str ):
@@ -295,29 +328,43 @@ class SessionService(object):
 							 args=([session_id, name, msg_str],) )
 
 	def queue_message_from_client(self, session_id, msg):
-		self._put_msg( Session.enqueue_message_from_client, session_id, msg )
+		self._put_msg( Session.enqueue_message_from_client, 'server_queue', session_id, msg )
 		self._publish_msg( b'queue_message_from_client', session_id, json.dumps( msg ) )
 
 
 	def queue_message_to_client(self, session_id, msg):
-		self._put_msg( Session.enqueue_message_to_client, session_id, msg )
+		self._put_msg( Session.enqueue_message_to_client, 'client_queue', session_id, msg )
 		self._publish_msg( b'queue_message_to_client', session_id, msg )
 
 
 	def _get_msgs( self, q_name, session_id ):
 		result = None
-		sess = self._get_session( session_id )
-		if sess:
-			# Reading messages should not reset the timeout.
-			# Only the session queue_message_from_client should do so.
-			#sess.clear_disconnect_timeout()
-			result = getattr( sess, q_name )
-			if result:
-				# "pop" them all
-				nresult = list(result)
-				result._data = ()
-				result = nresult
-		return result
+		if self._get_redis():
+			queue_name = 'sessions.' + session_id + q_name
+			# atomically read the current messages and then clear the state of the queue.
+			msgs, _ = self._redis.pipeline().lrange( queue_name, 0, -1 ).delete(  queue_name ).execute()
+			# If the transaction aborts, got to put these back so they don't get lost
+			def after_commit( success ):
+				if success:
+					return
+				logger.info( "Pushing messages back onto %s on abort", queue_name )
+				msgs.reverse()
+				self._redis.lpush( queue_name, *msgs )
+			transaction.get().addAfterCommitHook( after_commit )
+			result = [None if not x else x for x in msgs] # unwrap None encoding
+		else:
+			sess = self._get_session( session_id )
+			if sess:
+				# Reading messages should not reset the timeout.
+				# Only the session queue_message_from_client should do so.
+				#sess.clear_disconnect_timeout()
+				result = getattr( sess, q_name )
+				if result:
+					# "pop" them all
+					nresult = list(result)
+					result._data = ()
+					result = nresult
+			return result
 
 	def get_messages_to_client( self, session_id ):
 		"""
