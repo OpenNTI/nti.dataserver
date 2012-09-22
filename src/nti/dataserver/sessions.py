@@ -99,6 +99,8 @@ class SessionService(object):
 									# which is SESSION_HEARTBEAT_TIMEOUT
 				watching_sessions = list(self._watching_sessions)
 
+				# TODO: With the heartbeats in redis, we can check for valid sessions there.
+				# Only for invalid sessions will we have to hit the DB
 				try:
 					# In the past, we have done this by having a single greenlet per
 					# session_id. While this was convenient and probably not too heavy weight from a greenlet
@@ -186,6 +188,9 @@ class SessionService(object):
 		return session
 
 	def _get_session( self, session_id ):
+		"""
+		Gets a session object without any validation.
+		"""
 		result = self._session_db.get_session( session_id )
 		if isinstance( result, Session ):
 			result._v_session_service = self
@@ -195,7 +200,8 @@ class SessionService(object):
 
 	def _is_session_dead( self, session, max_age=SESSION_HEARTBEAT_TIMEOUT ):
 		too_old = time.time() - max_age
-		return (session.last_heartbeat_time < too_old and session.creation_time < too_old) \
+		last_heartbeat_time = self.get_last_heartbeat_time( session.session_id, session )
+		return (last_heartbeat_time < too_old and session.creation_time < too_old) \
 		  or (session.state in (Session.STATE_DISCONNECTING,Session.STATE_DISCONNECTED))
 
 	def _session_cleanup( self, s, send_event=True ):
@@ -379,3 +385,34 @@ class SessionService(object):
 		otherwise None.
 		"""
 		return self._get_msgs( 'server_queue', session_id )
+
+	# Redirect heartbeats through redis if possible. Note this is scuzzy and not clean
+
+	def _heartbeat_key( self, session_id ):
+		return 'sessions.' + session_id + '.heartbeat'
+
+	def clear_disconnect_timeout(self, session_id ):
+		if self._get_redis():
+			# Note that we don't make this transactional. The fact that we got a message
+			# from a client is a good-faith indication the client is still around.
+			key_name = self._heartbeat_key( session_id )
+			self._redis.pipeline( ).set( key_name, time.time() ).expire( key_name, self.SESSION_HEARTBEAT_TIMEOUT * 2 ).execute()
+		else:
+			sess = self._get_session( session_id )
+			if sess and hasattr( '_last_heartbeat_time' ):
+				sess._last_heartbeat_time.set( time.time() )
+
+
+	def get_last_heartbeat_time(self, session_id, session=None ):
+		result = 0
+		if self._get_redis():
+			# TODO: This gets called a fair amount. Do we need to cache?
+			key_name = self._heartbeat_key( session_id )
+			val = self._redis.get( key_name )
+			result = float( val or '0' )
+		else:
+			sess = session or self._get_session( session_id )
+			if sess and hasattr( sess, '_last_heartbeat_time' ):
+				assert sess.session_id == session_id
+				result = sess._last_heartbeat_time.value
+		return result
