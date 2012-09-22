@@ -15,6 +15,9 @@ class TestNgramUtils(ConfiguringTestBase):
 		n = ngrams('word word word')
 		assert_that(n, is_('wor word'))
 		
+		n = ngrams('self-esteem')
+		assert_that(n, is_('est este estee esteem sel self'))
+		
 		n = ngrams(None)
 		assert_that(n, is_(''))
 		
