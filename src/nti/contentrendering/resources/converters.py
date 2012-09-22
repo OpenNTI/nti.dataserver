@@ -257,7 +257,7 @@ class AbstractDocumentCompilerDriver(object):
 						 len(self._generatables), nresources, self._batch )
 
 		elapsed = time.time() - start
-		logger.info( "%s resources generated in %sms for batch %s", nresources, elapsed, self._batch )
+		logger.info( "%s resources generated in %ss for batch %s", nresources, elapsed, self._batch )
 
 		return resources
 
