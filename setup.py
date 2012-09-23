@@ -274,7 +274,7 @@ setup(
 			'webtest >= 1.4.0',
 			'fudge'],
 		'tools': [
-			'pyramid_debugtoolbar >= 1.0.2',
+			'pyramid_debugtoolbar >= 1.0.3',
 			'dblatex >= 0.3.4', # content rendering, convert docbook to tex
 			'ipython[notebook] >= 0.13', # notebook is web based, pulls in tornado
 			'pudb', # Python full screen console debugger. Beats ipython's: import pudb; pdb.set_trace()
