@@ -346,17 +346,18 @@ class SessionService(object):
 	def _get_msgs( self, q_name, session_id ):
 		result = None
 		if self._get_redis():
-			queue_name = 'sessions.' + session_id + q_name
+			queue_name = 'sessions.' + session_id + '.' + q_name
 			# atomically read the current messages and then clear the state of the queue.
 			msgs, _ = self._redis.pipeline().lrange( queue_name, 0, -1 ).delete(  queue_name ).execute()
 			# If the transaction aborts, got to put these back so they don't get lost
-			def after_commit( success ):
-				if success:
-					return
-				logger.info( "Pushing messages back onto %s on abort", queue_name )
-				msgs.reverse()
-				self._redis.lpush( queue_name, *msgs )
-			transaction.get().addAfterCommitHook( after_commit )
+			if msgs: # lpush requires at least one message
+				def after_commit( success ):
+					if success:
+						return
+					logger.info( "Pushing messages back onto %s on abort", queue_name )
+					msgs.reverse()
+					self._redis.lpush( queue_name, *msgs )
+				transaction.get().addAfterCommitHook( after_commit )
 			result = [None if not x else x for x in msgs] # unwrap None encoding
 		else:
 			sess = self._get_session( session_id )
