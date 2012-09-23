@@ -84,6 +84,12 @@ def get_object_ngrams(obj, default=None):
 	return ngrams(get_object_content(obj)) or default
 get_ngrams = get_object_ngrams
 
+def get_content_and_ngrams(obj, default=None):
+	content = get_object_content(obj)
+	n_grams = ngrams(content)
+	result = '%s %s' % (content, n_grams) if content else u''
+	return result or default
+
 def get_replacement_content(obj, default=None):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	result = adapted.get_replacement_content()
@@ -134,6 +140,9 @@ def _get_discriminator(name):
 		result = name
 	return result
 
+def _content_ngrams_field_creator(catalog, name, iface):
+	catalog[name] = CatalogTextIndexNG3(name, get_content_and_ngrams)
+	
 def _zopytext_field_creator(catalog, name, iface):
 	discriminator = _get_discriminator(name)
 	catalog[name] = CatalogTextIndexNG3(name, discriminator)
