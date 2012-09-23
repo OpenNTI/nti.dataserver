@@ -103,6 +103,7 @@ setup(
 		# See also umysqldb for a mysql adapter that should be gevent compat, with same API
 		# It's currently being installed from requirements.txt
 		'RelStorage >= 1.5.1',
+		'python-memcached >= 1.48', # pure-python cache for relstorage. Must set cache-module-name. Needed for gevent
 		# See also http://pypi.python.org/pypi/neoppod/ for a completely different option
 
 		'anyjson >= 0.3.3',
