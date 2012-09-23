@@ -395,6 +395,7 @@ def _configure_zeo( env_root ):
 				shared-blob-dir false
 				cache-servers %(cacheServers)s
 				cache-prefix %(db_name)s
+				cache-module-name memcache
 				poll-interval 0
 				commit-lock-timeout 30
 				keep-history false
