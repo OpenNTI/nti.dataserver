@@ -79,6 +79,10 @@ class Session( AbstractSession ):
 		session_service.queue_message_to_client( self.session_id, msg )
 
 	def get_messages_to_client(self):
+		"""
+		Returns an iterable of messages to the client, or possibly None if the session is dead. These messages
+		are now considered consumed and cannot be retrieved by this method again.
+		"""
 		session_service = component.getUtility( nti_interfaces.IDataserver ).session_manager
 		return session_service.get_messages_to_client( self.session_id )
 
