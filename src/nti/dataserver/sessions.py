@@ -10,7 +10,7 @@ from ZODB import loglevels
 import warnings
 import time
 import anyjson as json
-
+import zlib
 import gevent
 
 from zope import interface
@@ -300,6 +300,8 @@ class SessionService(object):
 				pass
 			if msg is None:
 				msg = ''
+			else:
+				msg = zlib.compress( msg )
 			# We wind up with a lot of these data managers for a given transaction (e.g., one for every
 			# message to every session). We really would like to coallesce these into one, which we
 			# can do with some work
@@ -358,7 +360,11 @@ class SessionService(object):
 					msgs.reverse()
 					self._redis.lpush( queue_name, *msgs )
 				transaction.get().addAfterCommitHook( after_commit )
-			result = [None if not x else x for x in msgs] # unwrap None encoding
+				# unwrap None encoding, decompress strings. The result is a generator
+				# because it's very rarely actually used
+				result = (None if not x else zlib.decompress(x) for x in msgs)
+			else:
+				result = () # empty tuple for cheap
 		else:
 			sess = self._get_session( session_id )
 			if sess:

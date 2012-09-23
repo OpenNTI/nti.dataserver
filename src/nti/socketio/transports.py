@@ -101,6 +101,8 @@ class XHRPollingTransport(BaseTransport):
 		try:
 			# A dead session will feed us a queue with a None object
 			messages = session.get_messages_to_client()
+			if messages is not None:
+				messages = list(messages)
 			if not messages:
 				with _using_session_proxy( session_service, session.session_id ) as session_proxy:
 					# Nothing to read right now.
