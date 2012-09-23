@@ -5,7 +5,7 @@
 			 
 	<utility name="content" 
 			 provides=".interfaces.IRepozeCatalogFieldCreator" 
-			 component="._repoze_index._zopytext_field_creator" />	
+			 component="._repoze_index._content_ngrams_field_creator" />	
 	
 	<utility component="._repoze_index._DefaultRepozeSearchFeatures" 
 			 provides=".interfaces.ISearchFeatures" />
