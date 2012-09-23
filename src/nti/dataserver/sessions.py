@@ -406,7 +406,7 @@ class SessionService(object):
 			self._redis.pipeline( ).set( key_name, time.time() ).expire( key_name, self.SESSION_HEARTBEAT_TIMEOUT * 2 ).execute()
 		else:
 			sess = self._get_session( session_id )
-			if sess and hasattr( '_last_heartbeat_time' ):
+			if sess and hasattr( sess, '_last_heartbeat_time' ):
 				sess._last_heartbeat_time.set( time.time() )
 
 
