@@ -93,7 +93,7 @@ class _SearchFragment(object):
 		result.matches = matches if matches else ()
 		return result
 		
-def word_fragments_highlight(query, text, maxchars=300, surround=50, top=1, analyzer=None, order=highlight.FIRST):
+def word_fragments_highlight(query, text, maxchars=300, surround=50, top=3, analyzer=None, order=highlight.FIRST):
 	text = unicode(text)	
 	termset = _get_terms(query)
 	scorer = highlight.BasicFragmentScorer()
