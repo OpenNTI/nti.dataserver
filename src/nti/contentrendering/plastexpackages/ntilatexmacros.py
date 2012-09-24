@@ -63,14 +63,46 @@ class textsuperscript(Base.Command):
 class textsubscript(Base.Command):
 	args = 'self'
 
-class texttrademark(Base.Command):
-	unicode = u'\u2122'
+# The following 'text' symbols are from the textcomp package.
+
+class textapprox(Base.Command):
+	unicode = u'\u2248'
+
+class textdegree(Base.Command):
+	unicode = u'\u00B0'
+
+class textdiv(Base.Command):
+	unicode = u'\u00F7'
+
+class textminus(Base.Command):
+	unicode = u'\u2212'
+
+class textpm(Base.Command):
+	unicode = u'\u00B1'
 
 class textregistered(Base.Command):
 	unicode = u'\u00AE'
 
-class textdegree(Base.Command):
-	unicode = u'\u00B0'
+class textrightarrow(Base.Command):
+	unicode = u'\u2192'
+
+class textsmiley(Base.Command):
+	unicode = u'\u263A'
+
+class texttimes(Base.Command):
+	unicode = u'\u00D7'
+
+class texttrademark(Base.Command):
+	unicode = u'\u2122'
+
+# The following 'text' commands are custom and specific to NTI
+
+class textneq(Base.Command):
+	unicode = u'\u2260'
+
+class textpi(Base.Command):
+	unicode = u'\u03C0'
+
 
 # Currency symbols
 class yen(Base.Command):
