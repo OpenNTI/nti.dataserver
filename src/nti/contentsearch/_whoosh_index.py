@@ -22,9 +22,9 @@ from nti.contentsearch._datastructures import CaseInsensitiveDict
 from nti.contentsearch._search_results import empty_search_results
 from nti.contentsearch._search_results import empty_suggest_results
 from nti.contentsearch._search_results import empty_suggest_and_search_results
-from nti.contentsearch._search_highlights import ( WORD_HIGHLIGHT, NGRAM_HIGHLIGHT, WHOOSH_HIGHLIGHT)
+from nti.contentsearch._search_highlights import ( WORD_HIGHLIGHT, WHOOSH_HIGHLIGHT)
 
-from nti.contentsearch.common import (	quick_, channel_, content_, keywords_, references_, 
+from nti.contentsearch.common import (	channel_, content_, keywords_, references_, 
 										recipients_, sharedWith_, ntiid_, last_modified_,
 										creator_, containerId_, replacementContent_,
 										redactionExplanation_, intid_, title_)
@@ -57,10 +57,6 @@ class _SearchableContent(object):
 		qo, parsed_query = self._parse_query(content_, query, **kwargs)
 		return self._execute_search(searcher, content_, parsed_query, qo, self.get_search_highlight_type())
 		
-	def ngram_search(self, searcher, query, *args, **kwargs):
-		qo, parsed_query = self._parse_query(quick_, query, **kwargs)
-		return self._execute_search(searcher, quick_, parsed_query, qo, NGRAM_HIGHLIGHT)
-	
 	def suggest_and_search(self, searcher, query, *args, **kwargs):
 		qo, parsed_query = self._parse_query(content_, query, **kwargs)
 		if ' ' in qo.term:
