@@ -300,8 +300,15 @@ setup(
 			#'graphite-web >= 0.9.10', # web front end. Requires the /opt/graphite directory. Pulls in twisted.
 			#'carbon >= 0.9.10', # storage daemon. Requires the /opt/graphite directory
 			'whisper >= 0.9.10', # database lib.
+			# Managing translations
+			'Babel >= 0.9.6',
+			'lingua >= 1.3',
 			]
 	},
+	message_extractors = { '.': [
+		('**.py',   'lingua_python', None ),
+		('**.pt',   'lingua_xml', None ),
+		]},
 	dependency_links = ['http://svn.wikimedia.org/svnroot/pywikipedia/trunk/pywikipedia/'],
 	packages = find_packages('src'),
 	package_dir = {'': 'src'},

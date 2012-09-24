@@ -1,11 +1,12 @@
 <!-- -*- mode: nxml -*- -->
 <configure
 	xmlns="http://namespaces.zope.org/zope"
+	xmlns:i18n="http://namespaces.zope.org/i18n"
 	xmlns:zcml="http://namespaces.zope.org/zcml">
 	<include package="zope.component" />
 	<include package="zope.componentvocabulary" />
 	<include package="nti.dataserver" />
-
+	<i18n:registerTranslations directory="locales" />
 	<!-- Account Creation -->
 	<utility factory=".site_policies.RequestAwareUserPlacer" />
 
