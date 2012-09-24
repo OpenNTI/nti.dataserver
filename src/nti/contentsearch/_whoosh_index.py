@@ -16,7 +16,6 @@ from nti.contentsearch._whoosh_query import parse_query
 from nti.contentsearch._content_utils import rank_words
 from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch.common import default_ngram_minsize
-from nti.contentsearch.common import default_ngram_maxsize
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch._datastructures import CaseInsensitiveDict
 from nti.contentsearch._search_results import empty_search_results
@@ -33,6 +32,7 @@ import logging
 logger = logging.getLogger( __name__ )
 
 _default_word_max_dist = 15
+_default_ngram_maxsize = 10
 
 class _SearchableContent(object):
 	
@@ -125,7 +125,7 @@ class _SearchableContent(object):
 def ngram_minmax():
 	ngc_util = component.queryUtility(search_interfaces.INgramComputer) 
 	minsize = ngc_util.minsize if ngc_util else default_ngram_minsize
-	maxsize = ngc_util.minsize if ngc_util else default_ngram_maxsize
+	maxsize = _default_ngram_maxsize
 	return (minsize, maxsize)
 
 def content_analyzer():
