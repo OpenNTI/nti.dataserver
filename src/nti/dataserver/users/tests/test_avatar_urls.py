@@ -15,6 +15,7 @@ from hamcrest import contains_string
 from hamcrest import has_length
 from hamcrest import is_
 from hamcrest import has_item
+from hamcrest import greater_than_or_equal_to
 
 import nti.tests
 from nti.tests import verifiably_provides
@@ -47,7 +48,7 @@ def test_coppa_user():
 				 has_property( 'avatarURL', contains_string( 'http://' ) ) )
 
 	choices = interfaces.IAvatarChoices( o ).get_choices()
-	assert_that( choices, has_length( 8 ) )
+	assert_that( choices, has_length( greater_than_or_equal_to( 16 ) ) )
 	assert_that( choices, has_item( interfaces.IAvatarURL( o ).avatarURL ) )
 
 	profile = interfaces.IAvatarURL( o )
