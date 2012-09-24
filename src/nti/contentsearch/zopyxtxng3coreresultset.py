@@ -41,11 +41,9 @@ def intersectionResultSets(sets):
 
 def unionResultSets(sets):
     """ perform intersection of ResultSets """
-    
     docids = DocidList()
     words = WordList()
     for s in sets:
-        logger.info("%s, %s", type(s), type(s.docids))
         docids = union64(docids, s.docids)
         words.extend(s.words)
     return ResultSet(docids, words)
