@@ -47,7 +47,7 @@ class _InvalidData(nti.utils.schema.InvalidValue):
 
 class UsernameCannotBeBlank(_InvalidData):
 
-	i18n_message = 'Username cannot be blank'
+	i18n_message = _("The username cannot be blank.")
 
 	def __init__( self, username ):
 		super(UsernameCannotBeBlank,self).__init__( self.i18n_message, 'Username', username, value=username )
@@ -74,16 +74,16 @@ class UsernameContainsIllegalChar(_InvalidData):
 class EmailAddressInvalid(_InvalidData):
 	"""Invalid email address."""
 
-	i18n_message = "The email address you have entered is not valid"
+	i18n_message = _("The email address you have entered is not valid")
 
 	def __init__( self, address ):
 		super(EmailAddressInvalid,self).__init__( address, value=address )
 
 class OldPasswordDoesNotMatchCurrentPassword(pwd_interfaces.InvalidPassword):
-	i18n_message = "The password supplied does not match the current password."
+	i18n_message = _("The password you supplied does not match the current password.")
 
 class PasswordCannotConsistOfOnlyWhitespace(pwd_interfaces.NoPassword):
-	i18n_message = "Password cannot consist of only whitespace"
+	i18n_message = _("Your pasword cannot contain only whitespace. Please try again.")
 
 # RFC 2822 local-part: dot-atom or quoted-string
 # characters allowed in atom: A-Za-z0-9!#$%&'*+-/=?^_`{|}~

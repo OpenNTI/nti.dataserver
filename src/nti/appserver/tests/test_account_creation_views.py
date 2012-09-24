@@ -83,7 +83,7 @@ class _AbstractValidationViewBase(ConfiguringTestBase):
 
 
 		assert_that( exc.exception.json_body, has_entry( 'field', 'password' ) )
-		assert_that( exc.exception.json_body, has_entry( 'message', contains_string( 'Password is too short' ) ) )
+		assert_that( exc.exception.json_body, has_entry( 'message', contains_string( 'Your password is too short. Please choose one at least' ) ) )
 		assert_that( exc.exception.json_body, has_entry( 'code', 'TooShortPassword' ) )
 
 
