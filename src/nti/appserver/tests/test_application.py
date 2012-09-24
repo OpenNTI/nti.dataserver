@@ -578,7 +578,6 @@ class TestApplication(ApplicationTestBase):
 		res = testapp.post( '/dataserver2/users/sjohnson@nextthought.com', json_data, extra_environ=self._make_extra_environ() )
 
 		def _check_canvas( res ):
-			canvas_res = res
 			canvas = res.json_body['body'][0]
 			assert_that( canvas, has_entry( 'shapeList', has_length( 1 ) ) )
 			assert_that( canvas, has_entry( 'shapeList', contains( has_entry( 'Class', 'CanvasUrlShape' ) ) ) )
