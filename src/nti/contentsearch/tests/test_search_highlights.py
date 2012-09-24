@@ -25,6 +25,10 @@ class TestCommon(ConfiguringTestBase):
 					is_('high school student Ichigo becomes a substitute Shinigami Soul'))
 		
 		assert_that(word_content_highlight('rukia', text, maxchars=10, surround=1), is_('Rukia'))
+		
+		assert_that(word_content_highlight('"high school"', text), 
+					is_('An orange-haired high school student Ichigo becomes a substitute Shinigami Soul'))
+		
 
 	def test_ngram_content_highlight(self):
 		text = unicode(get_content('All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade'))
