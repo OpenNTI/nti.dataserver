@@ -15,6 +15,7 @@ from nti.contentsearch._search_query import QueryObject
 from nti.contentsearch._whoosh_query import parse_query
 from nti.contentsearch._content_utils import rank_words
 from nti.contentsearch.common import normalize_type_name
+from nti.contentsearch.common import default_ngram_maxsize
 from nti.contentsearch.common import default_ngram_minsize
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch._datastructures import CaseInsensitiveDict
@@ -32,7 +33,7 @@ import logging
 logger = logging.getLogger( __name__ )
 
 _default_word_max_dist = 15
-_default_ngram_maxsize = 10
+_default_ngram_maxsize_content = 10
 
 class _SearchableContent(object):
 	
@@ -125,11 +126,12 @@ class _SearchableContent(object):
 def ngram_minmax():
 	ngc_util = component.queryUtility(search_interfaces.INgramComputer) 
 	minsize = ngc_util.minsize if ngc_util else default_ngram_minsize
-	maxsize = _default_ngram_maxsize
+	maxsize = ngc_util.maxsize if ngc_util else default_ngram_maxsize
 	return (minsize, maxsize)
 
 def content_analyzer():
-	minsize, maxsize = ngram_minmax()
+	minsize, _ = ngram_minmax()
+	maxsize = _default_ngram_maxsize_content
 	sw_util = component.queryUtility(search_interfaces.IStopWords) 
 	stopwords = sw_util.stopwords() if sw_util else analysis.STOP_WORDS
 	analyzer = 	analysis.StandardAnalyzer(stoplist=stopwords) | \
@@ -152,7 +154,6 @@ def create_book_schema():
 	ref: chapter reference
 	"""
 	minsize, maxsize = ngram_minmax()
-	
 	schema = fields.Schema(	ntiid = fields.ID(stored=True, unique=False),
 							title = fields.TEXT(stored=True, spelling=True),
 				  			last_modified = fields.DATETIME(stored=True),
