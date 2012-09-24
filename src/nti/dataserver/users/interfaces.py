@@ -279,6 +279,8 @@ class IRestrictedUserProfileWithContactEmail(IRestrictedUserProfile):
 		required=False,
 		constraint=checkEmailAddress)
 
+IRestrictedUserProfileWithContactEmail['contact_email'].setTaggedValue( TAG_REQUIRED_IN_UI, True )
+
 class ICompleteUserProfile(IRestrictedUserProfile):
 	"""
 	A complete user profile.

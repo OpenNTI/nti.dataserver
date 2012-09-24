@@ -430,6 +430,8 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 
 		if event.ext_value.get( 'birthdate' ) and _is_thirteen_or_more_years_ago( zope.interface.common.idatetime.IDate( event.ext_value['birthdate'] ) ):
 			iface_to_provide = self.IF_WITH_AGREEMENT
+		elif 'contact_email' in event.ext_value and 'email' not in event.ext_value:
+			event.ext_value['email'] = event.ext_value['contact_email']
 
 		interface.alsoProvides( user, iface_to_provide )
 
