@@ -225,6 +225,12 @@ class ISitePolicyUserEventListener(interface.Interface):
 	they should apply to.
 	"""
 
+	def map_validation_exception( incoming_data, exception ):
+		"""
+		Gives a site policy a chance to change an exception being returned
+		during validation.
+		"""
+
 	def user_will_update_new( user, event ):
 		"""
 		Handler for the IWillUpdateNewEntityEvent, called
@@ -330,6 +336,9 @@ class GenericSitePolicyEventListener(object):
 	"""
 	Implements a generic policy for all sites.
 	"""
+
+	def map_validation_exception( self, incoming_data, exception ):
+		return exception
 
 	def upgrade_user( self, user ):
 		pass
@@ -450,7 +459,7 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 												(user.username, names.realname), 'Username', user.username, value=user.username )
 
 		if '@' in user.username:
-			raise UsernameCannotContainAt( user.username, string.letters + string.digits )
+			raise UsernameCannotContainAt( user.username, user.ALLOWED_USERNAME_CHARS ).new_instance_restricting_chars( '@' )
 
 		# This much is handled in the will_update_event
 		#profile = user_interfaces.IUserProfile( user )
@@ -461,6 +470,11 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 		if nti_interfaces.ICoppaUserWithoutAgreement.providedBy( user ):
 			# We can only store the first name for little kids
 			names.realname = human_name.first
+
+	def map_validation_exception( self, incoming_data, exception ):
+		if type(exception) == user_interfaces.UsernameContainsIllegalChar:
+			return exception.new_instance_restricting_chars( '@' )
+		return exception
 
 
 @interface.implementer(ISitePolicyUserEventListener)
