@@ -292,7 +292,7 @@ class _UGDView(object):
 
 		batch_size = self.request.params.get( 'batchSize', self._DEFAULT_BATCH_SIZE )
 		batch_start = self.request.params.get( 'batchStart', self._DEFAULT_BATCH_START )
-		if batch_size and batch_start:
+		if batch_size is not None and batch_start is not None:
 			try:
 				batch_size = int(batch_size)
 				batch_start = int(batch_start)
