@@ -92,6 +92,28 @@ class _SearchFragment(object):
 		result.text = fragment
 		result.matches = matches if matches else ()
 		return result
+	
+	@classmethod
+	def create_from_terms(cls, text, termset):
+		matches = []
+		fragment = text
+		fragment_lower = fragment.lower()
+		termset = [term.lower() for term in termset]
+		
+		for term in termset:
+			idx = 0
+			_len = len(term)
+			idx = fragment_lower.find(term, idx)
+			while idx >=0:
+				endidx = idx + _len
+				matches.append((idx, endidx))
+				idx = endidx
+				idx = fragment_lower.find(term, idx)
+			
+		result = _SearchFragment()
+		result.text = fragment
+		result.matches = matches if matches else ()
+		return result
 		
 def word_fragments_highlight(query, text, maxchars=300, surround=50, top=3, analyzer=None, order=highlight.FIRST):
 	text = unicode(text)	
@@ -106,12 +128,22 @@ def word_fragments_highlight(query, text, maxchars=300, surround=50, top=3, anal
 	fragments = fragmenter.fragment_tokens(text, tokens)
 	fragments = highlight.top_fragments(fragments, top, scorer, order)
 	
-	search_fragments = []
-	for f in fragments:
-		sf = _SearchFragment.create_from_whoosh_fragment(f)
-		search_fragments.append(sf)	
+	if fragments:
+		search_fragments = []
+		for f in fragments:
+			sf = _SearchFragment.create_from_whoosh_fragment(f)
+			search_fragments.append(sf)	
+		snippet = formatter(text, fragments)
+	else:
+		snippet = text
+		search_fragments = [_SearchFragment.create_from_terms(text, termset)]
 		
-	snippet = formatter(text, fragments)
+	return snippet, search_fragments
+
+def substring_fragments_highlight(query, text):
+	snippet = text
+	termset = _get_terms(query)
+	search_fragments = [_SearchFragment.search_fragments(text, termset)]
 	return snippet, search_fragments
 
 def word_content_highlight(query, text, maxchars=300, surround=50, top=3, analyzer=None):
