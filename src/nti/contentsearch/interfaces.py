@@ -29,13 +29,6 @@ class ISearcher(interface.Interface):
 		
 		:param query: Search query
 		"""
-	
-	def ngram_search(query):
-		"""
-		search the content using ngram for the specified query
-		
-		:param query: Search query
-		"""
 		
 	def suggest(query):
 		"""
@@ -52,7 +45,6 @@ class ISearcher(interface.Interface):
 		"""
 	
 class ISearchFeatures(interface.Interface):
-	is_ngram_search_supported = schema.Bool(title="Property for ngram search support.", default=False)
 	is_word_suggest_supported = schema.Bool(title="Property for word suggestion support.", default=False)
 	
 class IBookIndexManager(ISearcher):
@@ -128,13 +120,6 @@ class IIndexManager(interface.Interface):
 		:param query: query object
 		"""
 		
-	def ngram_search(query):
-		"""
-		perform a ngram based search
-		
-		:param query: query object
-		"""
-		
 	def suggest_and_search(query):
 		"""
 		perform a  word suggestion and search
@@ -153,74 +138,42 @@ class IIndexManager(interface.Interface):
 		"""
 		perform a book search
 		
-		:param indexname: book index name
 		:param query: search query
-		:param limit: max number of search hits
 		"""
-	
-	def content_ngram_search(query):
-		"""
-		perform a ngram based content search
-		
-		:param indexname: book index name
-		:param query: Search query
-		:param limit: max number of search hits
-		"""
-		
+
 	def content_suggest_and_search(query):
 		"""
 		perform a book word suggestion and search
 		
-		:param indexname: book index name
 		:param query: Search query
-		:param limit: max number of search hits
 		"""
 		
 	def content_suggest(query):
 		"""
 		perform a book word suggestion
 		
-		:param indexname: book index name
-		:param word: Word fragment
-		:param limit: max number of search hits
-		:param prefix: number of chars in terms for prefix
+		:param query: Word fragment
 		"""
 	
 	def user_data_search(query):
 		"""
 		perform a user data content search
 		
-		:param username: user name
 		:param query: search query
-		:param limit: max number of search hits
-		"""
-
-	def user_data_ngram_search(query):
-		"""
-		perform a user data ngram based content search
-		
-		:param username: user name
-		:param query: search query
-		:param limit: max number of search hits
 		"""
 
 	def user_data_suggest_and_search(query):
 		"""
 		perform a book user data suggestion and search
 		
-		:param username: user name
 		:param query: Search query
-		:param limit: max number of search hits
 		"""
 
 	def user_data_suggest(query):
 		"""
 		perform a user data word suggestion
 		
-		:param username: user name
 		:param word: Word fragment
-		:param limit: max number of search hits
-		:param prefix: number of chars in terms for prefix
 		"""
 		
 	def index_user_content(username, data, type_name=None):
