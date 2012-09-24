@@ -21,12 +21,25 @@ from nti.externalization.externalization import toExternalObject
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.interfaces import StandardExternalFields
 
+def _weak_ref_to( obj ):
+	if hasattr( obj, '_p_oid' ):
+		return persistent.wref.WeakRef( obj )
+	try:
+		return weakref.ref( obj )
+	except TypeError:
+		return obj # For the sake of old tests, we allow things that cannot be weakly ref'd.
+
 @interface.implementer(nti_interfaces.IStreamChangeEvent,nti_interfaces.IZContained)
 class Change(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 	"""
 	A change notification. For convenience, it acts like a
 	Contained object if the underlying object was Contained.
 	It externalizes to include the ChangeType, Creator, and Item.
+
+	Because changes are meant to be part of an ongoing stream of activity, which may be cached
+	in many different places that are not necessarily planned for or easy to find,
+	these objects only keep a weak reference to the modified object. For that same
+	reason, they only keep a weak reference to their `creator`
 	"""
 
 	CREATED  = nti_interfaces.SC_CREATED
@@ -52,10 +65,7 @@ class Change(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 		# We keep a weak reference to the object, but
 		# we actually store the container information so that it's
 		# useful after the object goes away
-		if hasattr( obj, '_p_oid' ):
-			self.objectReference = persistent.wref.WeakRef( obj )
-		else:
-			self.objectReference = weakref.ref( obj )
+		self.objectReference = _weak_ref_to( obj )
 
 		for k in ('id', 'containerId', '__name__', '__parent__'):
 			v = getattr( obj, k, None )
@@ -67,6 +77,17 @@ class Change(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 		# We don't copy the object's modification date,
 		# we have our own
 		self.updateLastMod()
+
+	def _get_creator( self ):
+		creator = self.__dict__['creator']
+		if creator and callable(creator):
+			creator = creator() # unwrap weak refs. Older or test objects may not have weak refs
+		return creator
+	def _set_creator( self, new_creator ):
+		if new_creator:
+			new_creator = _weak_ref_to( new_creator )
+		self.__dict__['creator'] = new_creator
+	creator = property(_get_creator,_set_creator)
 
 	@property
 	def object(self):

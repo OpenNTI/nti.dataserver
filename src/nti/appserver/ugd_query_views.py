@@ -225,6 +225,10 @@ class _UGDView(object):
 
 		return (mystuffDict, sharedstuffList, ()) # Last value is placeholder for get_public, currently not used
 
+	_DEFAULT_SORT_ON = 'lastModified'
+	_DEFAULT_BATCH_SIZE = None
+	_DEFAULT_BATCH_START = None
+
 	def _sort_filter_batch_result( self, result ):
 		"""
 		Sort, filter, and batch (page) the result by modifying it in place. This method
@@ -261,7 +265,7 @@ class _UGDView(object):
 		result_list = result['Items']
 		result['TotalItemCount'] = len(result_list)
 		# The request keys match what z3c.table does
-		sort_on = self.request.params.get( 'sortOn', 'lastModified' )
+		sort_on = self.request.params.get( 'sortOn', self._DEFAULT_SORT_ON )
 		sort_order = self.request.params.get( 'sortOrder', SORT_DIRECTION_DEFAULT.get( sort_on, 'ascending' ) )
 		sort_key_function = SORT_KEYS.get( sort_on, SORT_KEYS['lastModified'] )
 		if isinstance( sort_key_function, tuple ):
@@ -286,8 +290,8 @@ class _UGDView(object):
 				result_list = filter(FILTER_NAMES[filter_name], result_list)
 				result['Items'] = result_list
 
-		batch_size = self.request.params.get( 'batchSize' )
-		batch_start = self.request.params.get( 'batchStart' )
+		batch_size = self.request.params.get( 'batchSize', self._DEFAULT_BATCH_SIZE )
+		batch_start = self.request.params.get( 'batchStart', self._DEFAULT_BATCH_START )
 		if batch_size and batch_start:
 			try:
 				batch_size = int(batch_size)
@@ -373,6 +377,28 @@ class _RecursiveUGDStreamView(_RecursiveUGDView):
 		self.get_owned = users.User.getContainedStream
 		self.get_shared = None
 		self._my_objects_may_be_empty = False
+
+	_DEFAULT_BATCH_SIZE = 100
+	_DEFAULT_BATCH_START = 0
+
+	def _sort_filter_batch_result( self, result ):
+		"""
+		Excludes change objects that refer to a missing object or creator due to weak refs.
+		"""
+		# Do this before the filters and what not on the top level so that the item count
+		# makes sense
+		#_entity_cache = {}
+		#def _entity_exists( uname ):
+		#	if uname not in _entity_cache:
+		#		_entity_cache[uname] = users.Entity.get_entity( username=uname ) is not None
+		#	return _entity_cache[uname]
+		# If for some reason weak refs aren't clearing when we expect them to, we can
+		# include the above in this clause.
+
+		result['Items'] = [x for x in result['Items'] if x and x.object and x.creator]
+		super(_RecursiveUGDStreamView,self)._sort_filter_batch_result( result )
+
+
 
 class _UGDAndRecursiveStreamView(_UGDView):
 
