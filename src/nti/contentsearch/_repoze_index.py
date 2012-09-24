@@ -80,10 +80,6 @@ def get_object_content(obj, default=None):
 	return result.lower() if result else None
 get_content = get_object_content
 
-def get_object_ngrams(obj, default=None):
-	return ngrams(get_object_content(obj)) or default
-get_ngrams = get_object_ngrams
-
 def get_content_and_ngrams(obj, default=None):
 	content = get_object_content(obj)
 	n_grams = ngrams(content)
@@ -158,9 +154,6 @@ def _named_field_creator(catalog, name, iface ):
 def _keyword_field_creator(catalog, name, iface ):
 	discriminator = _get_discriminator(name)
 	catalog[name] = CatalogKeywordIndex( discriminator )
-
-def _ngrams_field_creator(catalog, name, iface):
-	catalog[name] = CatalogTextIndexNG3(name, get_ngrams)
 	
 @interface.implementer(search_interfaces.ISearchFeatures)
 class _DefaultRepozeSearchFeatures(object):

@@ -30,8 +30,8 @@ from nti.contentsearch._cloudsearch_store import get_document_service
 from nti.contentsearch._search_indexmanager import _SearchEntityIndexManager
 from nti.contentsearch._search_results import empty_suggest_and_search_results
 
-from nti.contentsearch._search_highlights import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT)
-from nti.contentsearch.common import (username_, ngrams_, content_, intid_, type_)
+from nti.contentsearch._search_highlights import (WORD_HIGHLIGHT)
+from nti.contentsearch.common import (username_, content_, intid_, type_)
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -86,12 +86,6 @@ class _CloudSearchEntityIndexManager(Persistent, _SearchEntityIndexManager):
 		qo = QueryObject.create(query, **kwargs)
 		highlight_type = None if is_all_query(qo.term) else WORD_HIGHLIGHT
 		results = self._do_search(content_, qo, highlight_type)
-		return results
-	
-	def ngram_search(self, query, *args, **kwargs):
-		qo = QueryObject.create(query, **kwargs)
-		highlight_type = None if is_all_query(qo.term) else NGRAM_HIGHLIGHT
-		results = self._do_search(ngrams_, qo, highlight_type)
 		return results
 
 	def suggest(self, query, *args, **kwargs):

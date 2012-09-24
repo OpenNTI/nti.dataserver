@@ -13,6 +13,7 @@ from persistent.mapping import PersistentMapping
 
 from nti.dataserver import interfaces as nti_interfaces
 
+from nti.contentsearch.common import content_
 from nti.contentsearch import SearchCallWrapper
 from nti.contentsearch.common import is_all_query
 from nti.contentsearch.common import get_type_name
@@ -21,15 +22,14 @@ from nti.contentsearch._search_query import QueryObject
 from nti.contentsearch._repoze_query import parse_query
 from nti.contentsearch._content_utils import rank_words
 from nti.contentsearch.common import normalize_type_name
-from nti.contentsearch.common import (content_, ngrams_)
 from nti.contentsearch._repoze_index import create_catalog
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch.textindexng3 import CatalogTextIndexNG3
+from nti.contentsearch._search_highlights import WORD_HIGHLIGHT
 from nti.contentsearch._search_results import empty_search_results
 from nti.contentsearch._search_results import empty_suggest_results
 from nti.contentsearch._search_indexmanager import _SearchEntityIndexManager
 from nti.contentsearch._search_results import empty_suggest_and_search_results
-from nti.contentsearch._search_highlights import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT)
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -130,13 +130,6 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 		searchon = self._adapt_searchon_types(qo.searchon)
 		highlight_type = None if is_all_query(qo.term) else WORD_HIGHLIGHT
 		results = self._do_search(content_, qo, searchon, highlight_type)
-		return results
-
-	def ngram_search(self, query, *args, **kwargs):
-		qo = QueryObject.create(query, **kwargs)
-		searchon = self._adapt_searchon_types(qo.searchon)
-		highlight_type = None if is_all_query(qo.term) else NGRAM_HIGHLIGHT
-		results = self._do_search(ngrams_, qo, searchon, highlight_type)
 		return results
 
 	def suggest(self, query, *args, **kwargs):

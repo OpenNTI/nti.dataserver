@@ -16,7 +16,6 @@ from nti.ntiids.ntiids import make_ntiid
 
 from nti.externalization.externalization import toExternalObject
 
-from nti.contentsearch import _whoosh_index
 from nti.contentsearch._whoosh_index import Note
 from nti.contentsearch._whoosh_index import Book
 from nti.contentsearch._whoosh_index import Highlight
@@ -31,8 +30,6 @@ import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from hamcrest import (assert_that, is_, has_entry, has_key, has_length)
-
-_whoosh_index.compute_ngrams = True
 
 class TestWhooshIndex(ConfiguringTestBase):
 	
