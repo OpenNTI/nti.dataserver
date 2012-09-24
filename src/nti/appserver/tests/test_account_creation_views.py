@@ -27,6 +27,7 @@ from hamcrest import is_not as does_not
 from hamcrest import has_property
 from hamcrest import greater_than
 from hamcrest import has_item
+from hamcrest import greater_than_or_equal_to
 
 from nti.tests import verifiably_provides
 from nose.tools import assert_raises
@@ -355,7 +356,7 @@ class TestPreflightView(_AbstractValidationViewBase):
 													 'alias': 'jason_nextthought_com' }  )
 
 		val = self.the_view( self.request )
-		assert_that( val, has_entry( 'AvatarURLChoices', has_length( 8 ) ) )
+		assert_that( val, has_entry( 'AvatarURLChoices', has_length( greater_than_or_equal_to( 8 ) ) ) )
 		assert_that( val, has_entry( 'ProfileSchema', does_not( has_key( 'opt_in_email_communication' ) ) ) )
 		assert_that( val, has_entry( 'ProfileSchema', has_key( 'contact_email' ) ) )
 

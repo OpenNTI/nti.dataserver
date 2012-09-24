@@ -53,6 +53,15 @@ def _find_default_gravatar_type( *places ):
 		if gravatar_type:
 			return gravatar_type
 
+def _username_as_email( username ):
+	"""
+	For purposes of gravatar, we need to have the usernames be valid email
+	addresses, or at least appear to be in a domain that we control.
+	"""
+	email = username
+	if '@' not in email:
+		email = email + '@alias.nextthought.com'
+	return email
 
 @component.adapter(nti_interfaces.IEntity)
 @interface.implementer(interfaces.IAvatarURLProvider,interfaces.IAvatarURL)
@@ -62,7 +71,7 @@ class GravatarComputedAvatarURL(object):
 
 	def __init__( self, context ):
 
-		email = context.username
+		email = _username_as_email( context.username )
 		try:
 			profile = interfaces.ICompleteUserProfile( context, None )
 		except TypeError:
@@ -87,7 +96,7 @@ class GravatarComputedCoppaAvatarURL(object):
 
 	def __init__( self, context ):
 		gravatar_type = _find_default_gravatar_type( context, self )
-		self.avatarURL = create_gravatar_url( context.username, gravatar_type )
+		self.avatarURL = create_gravatar_url( _username_as_email( context.username ), gravatar_type )
 
 @component.adapter(basestring)
 @interface.implementer(interfaces.IAvatarChoices)
@@ -100,9 +109,25 @@ class StringComputedAvatarURLChoices(object):
 	def __init__( self, context ):
 		self.context = context
 
+	def _compute_permutations( self ):
+		"""
+		Returns an iterable across various permutations of the context of this object,
+			intended to produce different gravatar choices, including the context.
+		"""
+		# Changing the case doesn't matter, the rules say to lower case it
+		# We must always be sure it's something we control if we're going to be permuting
+		# it
+		email = _username_as_email( self.context )
+
+		before, after = email.split( '@', 1 )
+		return (email, ''.join( reversed( before ) ) + after,
+				before + '@1' + after, before + '@2' + after, # Use the '@' because it can never be a valid email now
+				before + '@3' + after, before + '@4' + after, )
+
+
 	def get_choices( self ):
 		choices = []
-		for name in (self.context, ''.join( list( reversed( self.context ) ) )):
+		for name in self._compute_permutations():
 			for gen_type in GENERATED_GRAVATAR_TYPES:
 				choices.append( create_gravatar_url( name, gen_type ) )
 		# Shuffle the choices so it's not obvious we're following a pattern to
@@ -146,7 +171,7 @@ class GravatarComputedAvatarURLChoices(object):
 		self.context = context
 
 	def get_choices( self ):
-		fake_addr = self.context.username.replace( '@', '_' ) + '@alias.nextthought.com'
+		fake_addr = _username_as_email( self.context.username.replace( '@', '_' ) )
 		choices = StringComputedAvatarURLChoices( fake_addr ).get_choices()
 		choices[0] = self.avatarURL
 		return choices
