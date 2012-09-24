@@ -63,6 +63,23 @@ class textsuperscript(Base.Command):
 class textsubscript(Base.Command):
 	args = 'self'
 
+# The following 'text' symbols are 'Predefined' LaTeX 2e commands
+
+class textcopyright(Base.Command):
+	unicode = u'\u00A9'
+
+class textgreater(Base.Command):
+	unicode = u'\u003E'
+
+class textless(Base.Command):
+	unicode = u'\u003C'
+
+class textregistered(Base.Command):
+	unicode = u'\u00AE'
+
+class texttrademark(Base.Command):
+	unicode = u'\u2122'
+
 # The following 'text' symbols are from the textcomp package.
 
 class textapprox(Base.Command):
@@ -80,9 +97,6 @@ class textminus(Base.Command):
 class textpm(Base.Command):
 	unicode = u'\u00B1'
 
-class textregistered(Base.Command):
-	unicode = u'\u00AE'
-
 class textrightarrow(Base.Command):
 	unicode = u'\u2192'
 
@@ -91,9 +105,6 @@ class textsmiley(Base.Command):
 
 class texttimes(Base.Command):
 	unicode = u'\u00D7'
-
-class texttrademark(Base.Command):
-	unicode = u'\u2122'
 
 # The following 'text' commands are custom and specific to NTI
 
