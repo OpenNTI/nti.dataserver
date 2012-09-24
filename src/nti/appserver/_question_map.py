@@ -31,6 +31,7 @@ def _ntiid_object_hook( k, v, x ):
 	"""
 	if 'NTIID' in x and not getattr( v, 'ntiid', None ):
 		v.ntiid = x['NTIID']
+		v.__name__ = v.ntiid
 	if 'value' in x and 'Class' in x and x['Class'] == 'LatexSymbolicMathSolution' and x['value'] != v.value:
 		# We started out with LatexContentFragments when we wrote these,
 		# and if we re-convert when we read, we tend to over-escape
@@ -46,7 +47,7 @@ class QuestionMap(dict):
 		super(QuestionMap,self).__init__()
 		self.by_file = {}
 
-	def __process_assessments( self, assessment_item_dict, containing_filename, hierarchy_entry ):
+	def __process_assessments( self, assessment_item_dict, containing_filename, hierarchy_entry, level_ntiid=None ):
 		for k, v in assessment_item_dict.items():
 			__traceback_info__ = k, v
 
@@ -56,6 +57,9 @@ class QuestionMap(dict):
 			nti.externalization.internalization.update_from_external_object( obj, v, require_updater=True, notify=False, object_hook=_ntiid_object_hook )
 			obj.ntiid = k
 			self[k] = obj
+
+			obj.__name__ = k
+			obj.__parent__ = level_ntiid
 
 			if containing_filename:
 				self.by_file[containing_filename].append( obj )
@@ -69,7 +73,7 @@ class QuestionMap(dict):
 				obj.read_contents_of_sibling_entry = read_contents_of_sibling_entry
 				interface.alsoProvides( obj, lib_interfaces.IFilesystemEntry )
 
-	def _from_index_entry(self, index, hierarchy_entry, nearest_containing_key=None ):
+	def _from_index_entry(self, index, hierarchy_entry, nearest_containing_key=None, nearest_containing_ntiid=None ):
 		key_for_this_level = nearest_containing_key
 		if index.get( 'filename' ):
 			key_for_this_level = hierarchy_entry.make_sibling_key( index['filename'] )
@@ -92,15 +96,20 @@ class QuestionMap(dict):
 		# where too many 'filename'-less intervening levels caused the chain to get broken and the
 		# leaf questions to effectively be lost. We are now carrying the nearest containing key around,
 		# so that's no longer a problem, but now we may be returning too many items?
+		level_ntiid = index.get( 'NTIID' ) or nearest_containing_ntiid
 		for item in index['Items'].values():
-			self.__process_assessments( item.get( "AssessmentItems", {} ), key_for_this_level, hierarchy_entry )
+			self.__process_assessments( item.get( "AssessmentItems", {} ), key_for_this_level, hierarchy_entry, level_ntiid )
 
 			if 'Items' in item:
-				self._from_index_entry( item, hierarchy_entry, nearest_containing_key=key_for_this_level )
+				self._from_index_entry( item, hierarchy_entry, nearest_containing_key=key_for_this_level, nearest_containing_ntiid=level_ntiid )
 
 
 @component.adapter(lib_interfaces.IContentPackage,IObjectCreatedEvent)
 def add_assessment_items_from_new_content( title, event ):
+	"""
+	Assessment items have their NTIID as their __name__, and the NTIID of their primary
+	container within this context as their __parent__ (that should really be the hierarchy entry)
+	"""
 	question_map = component.getUtility( app_interfaces.IFileQuestionMap )
 	if question_map is None: #pragma: no cover
 		return

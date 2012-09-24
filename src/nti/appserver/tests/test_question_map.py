@@ -87,14 +87,16 @@ def test_create_question_map_captures_set_ntiids(index_string=ASSM_STRING_W_SET)
 
 	assert_that( assm_items, has_length( 2 ) ) # one question, one set
 	assert_that( assm_items[1], has_property( 'ntiid',  'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.testquestion' ) )
-
+	assert_that( assm_items[1], has_property( '__name__',  'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.testquestion' ) )
 	assert_that( assm_items[0], has_property( 'ntiid',  'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.set.testset' ) )
+	assert_that( assm_items[0], has_property( '__name__',  'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.set.testset' ) )
 
 	qset = assm_items[0]
 	qset_question = qset.questions[0]
 
 	assert_that( qset_question, is_( assm_items[1] ) )
 	assert_that( qset_question, has_property( 'ntiid',  'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.testquestion' ) )
+	assert_that( qset_question, has_property( '__name__',  'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.testquestion' ) )
 
 
 	assert_that( question_map[qset_question.ntiid], is_( qset_question ) )

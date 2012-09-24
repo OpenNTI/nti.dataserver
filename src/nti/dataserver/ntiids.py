@@ -164,7 +164,10 @@ class _AssessmentResolver(object):
 		result = component.queryUtility( asm_interfaces.IQuestionMap, default={} ).get( key )
 		if result:
 			# TODO: ACL Proxy can probably go away
-			result = nti_interfaces.ACLLocationProxy( result, None, None, nacl.ACL( result ) )
+			result = nti_interfaces.ACLLocationProxy( result,
+													  getattr( result, '__parent__', None ),
+													  getattr( result, '__name__', None ),
+													  nacl.ACL( result ) )
 		return result
 
 @interface.implementer( nid_interfaces.INTIIDResolver )
