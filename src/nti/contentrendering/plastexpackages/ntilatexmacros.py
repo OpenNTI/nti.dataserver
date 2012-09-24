@@ -108,6 +108,12 @@ class texttimes(Base.Command):
 
 # The following 'text' commands are custom and specific to NTI
 
+class textge(Base.Command):
+	unicode = u'\u2265'
+
+class textle(Base.Command):
+	unicode = u'\u2264'
+
 class textneq(Base.Command):
 	unicode = u'\u2260'
 
