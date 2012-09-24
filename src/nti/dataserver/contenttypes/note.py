@@ -81,6 +81,7 @@ class Note(ThreadableExternalizableMixin, Highlight):
 				continue
 			# Ok, so we found one of my children. Update it in place
 			existing_canvas.updateFromExternalObject( ext_val, context=context )
+			existing_canvas.updateLastMod()
 			body[i] = existing_canvas
 		return body
 
