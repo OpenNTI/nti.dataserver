@@ -15,8 +15,8 @@ from nti.externalization.externalization import toExternalObject
 from nti.contentsearch import interfaces as search_interfaces
 
 from nti.contentsearch.common import epoch_time
-from nti.contentsearch._search_highlights import (word_content_highlight, ngram_content_highlight)
-from nti.contentsearch._search_highlights import (WORD_HIGHLIGHT, NGRAM_HIGHLIGHT, WHOOSH_HIGHLIGHT)
+from nti.contentsearch._search_highlights import word_content_highlight
+from nti.contentsearch._search_highlights import (WORD_HIGHLIGHT, WHOOSH_HIGHLIGHT)
 
 from nti.contentsearch.common import (	NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
 										SNIPPET, HIT, ID, TARGET_OID, CONTENT, INTID, QUERY,
@@ -37,11 +37,6 @@ def clean_query(query, lower=False):
 def _word_content_highlight(query=None, text=None, default=None):
 	query = clean_query(query) if query else u''
 	content = word_content_highlight(query, text) if query and text else u''
-	return unicode(content) if content else default
-
-def _ngram_content_highlight(query=None, text=None, default=None):
-	query = clean_query(query) if query else u''
-	content = ngram_content_highlight(query, text) if query and text else u''
 	return unicode(content) if content else default
 
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
@@ -65,22 +60,6 @@ class NoSnippetHighlightDecorator(_BaseHighlightDecorator):
 def NoSnippetHighlightDecoratorFactory(*args):
 	return NoSnippetHighlightDecorator()
 				
-class _BaseNgramSnippetHighlightDecorator(_BaseHighlightDecorator):
-	
-	def decorateExternalObject(self, original, external):
-		query = self.get_query_term(original)
-		if query:
-			text = external.get(SNIPPET, None)
-			text = _ngram_content_highlight(query, text.lower(), text)
-			external[SNIPPET] = text
-			
-@component.adapter(search_interfaces.INgramSnippetHighlight)
-class NgramSnippetHighlightDecorator(_BaseNgramSnippetHighlightDecorator):
-	pass
-	
-def NgramSnippetHighlightDecoratorFactory(*args):
-	return NgramSnippetHighlightDecorator()
-
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
 class _BaseWordSnippetHighlightDecorator(_BaseHighlightDecorator):
 
@@ -278,9 +257,7 @@ class _WhooshBookSearchHit(_BaseSearchHit):
 def _provide_highlight_snippet(hit, query=None, highlight_type=WORD_HIGHLIGHT):
 	if hit is not None:
 		hit.query = query
-		if highlight_type == NGRAM_HIGHLIGHT:
-			interface.alsoProvides( hit, search_interfaces.INgramSnippetHighlight )
-		elif highlight_type == WORD_HIGHLIGHT:
+		if highlight_type == WORD_HIGHLIGHT:
 			interface.alsoProvides( hit, search_interfaces.IWordSnippetHighlight )
 		elif highlight_type == WHOOSH_HIGHLIGHT:
 			interface.alsoProvides( hit, search_interfaces.IWhooshSnippetHighlight )
