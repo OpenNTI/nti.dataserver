@@ -34,7 +34,6 @@ class TestRepozeWhooshConverter(unittest.TestCase):
                         content = fields.TEXT(stored=True, spelling=True),
                         sharedWith = fields.KEYWORD(stored=False),
                         color = fields.TEXT(stored=False),
-                        quick = fields.NGRAM(maxsize=10),
                         keywords = fields.KEYWORD(stored=True),
                         ntiid = fields.ID(stored=True))
 		self.q = _repoze_whoosh_convert.QueryConverter(schema=self.schema)

@@ -83,9 +83,6 @@ class _BaseIndexManagerTest(object):
 		hits = self.im.content_search(indexid='bleach', query='omega') 
 		assert_that(hits, has_length(1))
 
-		hits = self.im.content_ngram_search(indexid='bleach', query='ren') 
-		assert_that(hits, has_length(3))
-
 		hits = self.im.content_suggest_and_search(indexid='bleach', query='wen') 
 		assert_that(hits, has_length(1))
 
@@ -141,11 +138,7 @@ class _BaseIndexManagerTest(object):
 		_, usr = self._add_notes_and_index(('omega radicals', 'the queen of coffee'))
 		self.im.add_book(indexname='bleach', indexdir=self.book_idx_dir)
 
-		q = QueryObject(term='coff', indexid='bleach', username=usr.username)
-		hits = self.im.ngram_search(q)
-		assert_that(hits, has_length(1))
-
-		q.term = 'omeg'
+		q = QueryObject(term='omeg', indexid='bleach', username=usr.username)
 		hits = self.im.suggest(q)
 		assert_that(hits, has_length(1))
 
@@ -178,7 +171,6 @@ class _BaseIndexManagerTest(object):
 		hits = self.im.suggest_and_search(q)
 		assert_that(hits, has_length(2))
 
-
 	@WithMockDSTrans
 	def test_add_notes(self):
 		self._add_notes_and_index()
@@ -191,16 +183,6 @@ class _BaseIndexManagerTest(object):
 		assert_that(hits, has_length(0))
 
 		hits = self.im.user_data_search(query='rage', username=usr.username, searchon=('Notes',))
-		assert_that(hits, has_length(1))
-
-	@WithMockDSTrans
-	def test_search_notes_ngrams(self):
-
-		if not self.is_ngram_search_supported():
-			return
-
-		_, usr = self._add_notes_and_index()
-		hits = self.im.user_data_ngram_search(query='deat', username=usr.username, searchon=('note',))
 		assert_that(hits, has_length(1))
 
 	@WithMockDSTrans

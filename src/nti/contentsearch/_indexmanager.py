@@ -80,14 +80,6 @@ class IndexManager(object):
 		return results
 
 	@SearchCallWrapper
-	def ngram_search(self, query, *args, **kwargs):
-		query = QueryObject.create(query, **kwargs)
-		cnt_results = self.content_ngram_search(query=query)
-		ugd_results = self.user_data_ngram_search(query=query)	
-		results = merge_search_results(cnt_results, ugd_results)
-		return results
-
-	@SearchCallWrapper
 	def suggest_and_search(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
 		cnt_results = self.content_suggest_and_search(query=query)

@@ -29,10 +29,6 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 		usr = User.create_user( ds, username=username, password=password)
 		return usr
 	
-	def is_ngram_search_supported(self):
-		features = component.getUtility(search_interfaces.ISearchFeatures)
-		return features.is_ngram_search_supported
-	
 	def is_word_suggest_supported(self):
 		features = component.getUtility(search_interfaces.ISearchFeatures)
 		return features.is_word_suggest_supported
@@ -174,21 +170,6 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 		assert_that(items, has_item('raise'))
 		assert_that(items, has_item('rain'))
 		assert_that(items, has_item('rage'))
-
-	@WithMockDSTrans
-	def test_ngram_search(self):
-		
-		if not self.is_ngram_search_supported():
-			return
-		
-		usr, _, _ = self._add_user_index_notes()
-		rim = search_interfaces.IRepozeEntityIndexManager(usr, None)
-		
-		hits = toExternalObject(rim.ngram_search("sea"))
-		assert_that(hits, has_entry(HIT_COUNT, 1))
-		assert_that(hits, has_entry(QUERY, 'sea'))
-		assert_that(hits, has_key(ITEMS))
-		assert_that(hits[ITEMS], has_length(1))
 
 	@mock_dataserver.WithMockDS
 	def test_note_index_to_two_users(self):

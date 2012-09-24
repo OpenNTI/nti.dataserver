@@ -30,10 +30,6 @@ class _SearchEntityIndexManager(object):
 	def search(self, query, *args, **kwargs):
 		raise NotImplementedError()
 
-	def ngram_search(self, query, *args, **kwargs):
-		raise NotImplementedError()
-	quick_search = ngram_search
-
 	def suggest(self, query, *args, **kwargs):
 		raise NotImplementedError()
 

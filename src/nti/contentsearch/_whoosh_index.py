@@ -356,11 +356,9 @@ class TreadableIndexableContent(UserIndexableContent):
 	
 # highlight
 	
-def create_highlight_schema():
-	minsize, maxsize = ngram_minmax()		 			
+def create_highlight_schema():	 			
 	schema = _create_treadable_schema()
 	schema.add(content_, fields.TEXT(stored=False, chars=True, spelling=True))
-	schema.add(quick_, fields.NGRAM(minsize=minsize, maxsize=maxsize, phrase=True))
 	return schema
 
 class Highlight(TreadableIndexableContent):
@@ -371,7 +369,6 @@ class Highlight(TreadableIndexableContent):
 	def get_index_data(self, data):
 		result = super(Highlight, self).get_index_data(data)
 		result[content_] = get_object_content(data)
-		result[quick_] = result[content_] if is_ngram_search_supported() else None
 		return result
 	
 # redaction

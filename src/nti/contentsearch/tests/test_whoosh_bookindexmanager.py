@@ -93,13 +93,6 @@ class TestWhooshBookIndexManager(ConfiguringTestBase):
 		assert_that(items, has_item('rai'))
 		assert_that(items, has_item('ran'))
 		
-	def test_ngram_search(self):
-		hits = toExternalObject(self.bim.ngram_search("sea"))
-		assert_that(hits, has_entry(HIT_COUNT, 1))
-		assert_that(hits, has_entry(QUERY, 'sea'))
-		assert_that(hits, has_key(ITEMS))
-		assert_that(hits[ITEMS], has_length(1))
-		
 	def test_suggest_and_search(self):
 		hits = toExternalObject(self.bim.suggest_and_search("ra"))
 		assert_that(hits, has_entry(HIT_COUNT, 1))

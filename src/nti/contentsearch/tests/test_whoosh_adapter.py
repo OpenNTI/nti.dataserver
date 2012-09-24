@@ -151,15 +151,5 @@ class TestWhooshUserAdapter(ConfiguringTestBase):
 		assert_that(items, has_item('rain'))
 		assert_that(items, has_item('rankle'))
 
-	@WithMockDSTrans
-	def test_ngram_search(self):
-		_, usr = self._add_user_index_notes()
-		uim = search_interfaces.IWhooshEntityIndexManager(usr, None)
-		hits = toExternalObject(uim.ngram_search("sea"))
-		assert_that(hits, has_entry(HIT_COUNT, 1))
-		assert_that(hits, has_entry(QUERY, 'sea'))
-		assert_that(hits, has_key(ITEMS))
-		assert_that(hits[ITEMS], has_length(1))
-
 if __name__ == '__main__':
 	unittest.main()

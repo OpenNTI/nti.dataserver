@@ -179,19 +179,12 @@ class _WhooshEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 			with index:
 				indexable = get_indexable_object(type_name)
 				with index.searcher() as searcher:
-					if not is_ngram_search:
-						rs = indexable.search(searcher, query)
-					else:
-						rs = indexable.ngram_search(searcher, query)
+					rs = indexable.search(searcher, query)
 					results = merge_search_results(results, rs)
 		return results	
 
 	def search(self, query, *args, **kwargs):
 		results = self._do_search(query, False, **kwargs)
-		return results
-
-	def ngram_search(self, query, *args, **kwargs):
-		results = self._do_search(query, True, **kwargs)
 		return results
 
 	def suggest_and_search(self, query, *args, **kwargs):

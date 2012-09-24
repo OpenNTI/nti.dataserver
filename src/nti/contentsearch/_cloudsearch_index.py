@@ -66,7 +66,6 @@ def create_search_domain(connection, domain_name='ntisearch', allow_ips=()):
 	
 	# content fields
 	domain.create_index_field(content_, 'text', searchable=True, result=False)
-	domain.create_index_field(ngrams_, 'text', searchable=True, result=False)
 	
 	domain.create_index_field(recipients_, 'text', searchable=True, result=False)
 	domain.create_index_field(_shared_with, 'text', searchable=True, result=False, source_attributes=(sharedWith_,))
