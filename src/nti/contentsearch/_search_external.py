@@ -16,11 +16,12 @@ from nti.contentsearch import interfaces as search_interfaces
 
 from nti.contentsearch.common import epoch_time
 from nti.contentsearch._search_highlights import word_content_highlight
+from nti.contentsearch._search_highlights import word_fragments_highlight
 from nti.contentsearch._search_highlights import (WORD_HIGHLIGHT, WHOOSH_HIGHLIGHT)
 
 from nti.contentsearch.common import (	NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
 										SNIPPET, HIT, ID, TARGET_OID, CONTENT, INTID, QUERY,
-										HIT_COUNT, ITEMS, SUGGESTIONS)
+										HIT_COUNT, ITEMS, SUGGESTIONS, FRAGMENTS)
 
 from nti.contentsearch.common import ( last_modified_, content_, title_, ntiid_)
 
@@ -38,6 +39,11 @@ def _word_content_highlight(query=None, text=None, default=None):
 	query = clean_query(query) if query else u''
 	content = word_content_highlight(query, text) if query and text else u''
 	return unicode(content) if content else default
+
+def _word_fragments_highlight(query=None, text=None, default=None):
+	query = clean_query(query) if query else u''
+	snippet, fragments = word_fragments_highlight(query, text) if query and text else (u'', ())
+	return unicode(snippet),fragments if snippet else default
 
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
 class _BaseHighlightDecorator(object):
@@ -67,8 +73,10 @@ class _BaseWordSnippetHighlightDecorator(_BaseHighlightDecorator):
 		query = self.get_query_term(original)
 		if query:
 			text = external.get(SNIPPET, None)
-			text = _word_content_highlight(query, text, text)
+			#text = _word_content_highlight(query, text, text)
+			text, fragments = word_fragments_highlight(query, text, (text,()))
 			external[SNIPPET] = text
+			external[FRAGMENTS] = toExternalObject(fragments) if fragments else []
 			
 @component.adapter(search_interfaces.IWordSnippetHighlight)
 class WordSnippetHighlightDecorator(_BaseWordSnippetHighlightDecorator):

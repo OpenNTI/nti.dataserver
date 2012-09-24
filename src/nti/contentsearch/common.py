@@ -26,6 +26,7 @@ QUERY 			= u'Query'
 ITEMS			= u'Items'
 CONTENT			= u'Content'
 SNIPPET 		= u'Snippet'
+FRAGMENTS		= u'Fragments'
 CREATOR 		= unicode(ext_interfaces.StandardExternalFields.CREATOR)
 AUTO_TAGS		= u'AutoTags'
 MIME_TYPE		= unicode(ext_interfaces.StandardExternalFields.MIMETYPE)

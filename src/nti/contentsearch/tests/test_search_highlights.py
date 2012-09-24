@@ -58,6 +58,22 @@ class TestCommon(ConfiguringTestBase):
 		assert_that(fragments[0].text, is_(_text))
 		assert_that(fragments[0].matches, is_([(47, 52), (76, 80)]))
 		
+	def test_word_fragments_highlight_multiple(self):
+		text = "Carlos is going on vacation from Mexico to London with a brief stop in New York He forgot to exchange his pesos for " +\
+		"British pounds and must do so in New York He would like to have 2000 British pounds for his trip 12.1 Mexican pesos can be " +\
+		"exchanged for 1 dollar and 1 dollar can be exchanged for 0.62 pounds To the nearest peso how many pesos will Carlos have to "+\
+		"exchange in order to get 2000 British pounds"
+		snippet, fragments = word_fragments_highlight('carlos', text)
+		
+		f1 = "Carlos is going on vacation from Mexico to London with a brief stop in New York He forgot to exchange his pesos for British"
+		f2 = "pounds To the nearest peso how many pesos will Carlos have to exchange in order to get 2000 British pounds"
+		s = "...".join([f1,f2])
+		assert_that(fragments, has_length(2))
+		assert_that(snippet, is_(s))
+		assert_that(fragments[0].text, is_(f1))
+		assert_that(fragments[0].matches, is_([(0, 6)]))
+		assert_that(fragments[1].text, is_(f2))
+		assert_that(fragments[1].matches, is_([(47, 53)]))
 		
 if __name__ == '__main__':
 	unittest.main()
