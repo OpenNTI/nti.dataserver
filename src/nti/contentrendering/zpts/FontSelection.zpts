@@ -53,3 +53,10 @@ name: huge
 
 name: Huge
 <span class="xhuge" tal:content="self">Huge text</span>
+
+name: underline
+<span class="underline" tal:content="self">underline text</span>
+
+name: overline
+<span class="overline" tal:content="self">overline text</span>
+

@@ -120,6 +120,8 @@ class textneq(Base.Command):
 class textpi(Base.Command):
 	unicode = u'\u03C0'
 
+class textsquare(Base.Command):
+	unicode = u'\u25A1'
 
 # Currency symbols
 class yen(Base.Command):
