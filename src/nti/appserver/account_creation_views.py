@@ -156,6 +156,9 @@ def _create_user( request, externalValue, preflight_only=False ):
 						   'message': 'Username cannot be blank',
 						   'code': 'UsernameCannotBeBlank'},
 						   exc_info[2] )
+		policy, _ = site_policies.find_site_policy( request=request )
+		if policy:
+			e = policy.map_validation_exception( externalValue, e )
 		obj_io.handle_validation_error( request, e )
 	except zope.schema.interfaces.ValidationError as e:
 		obj_io.handle_validation_error( request, e )

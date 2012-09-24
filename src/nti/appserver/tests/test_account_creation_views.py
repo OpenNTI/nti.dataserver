@@ -311,6 +311,28 @@ class TestPreflightView(_AbstractValidationViewBase):
 		assert_that( e.exception.json_body, has_entry( 'field', 'Username' ) )
 		assert_that( e.exception.json_body, has_entry( 'code', bad_code ) )
 
+	@WithMockDSTrans
+	def test_create_special_characters_username_mathcounts( self ):
+		assert_that( self.request.host, is_( 'example.com:80' ) )
+		self.request.headers['origin'] = 'http://mathcounts.nextthought.com'
+		self.request.content_type = 'application/vnd.nextthought+json'
+
+		bad_code = 'UsernameContainsIllegalChar'
+		birthdate = datetime.date.today().replace( year=datetime.date.today().year - 10 ).isoformat()
+		self.request.body = to_json_representation( { 'Username': 'test#%^&',
+													  'birthdate': birthdate,
+													  'realname': 'N K' } )
+		__traceback_info__ = self.request.body
+
+
+		with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
+			self.the_view( self.request )
+
+		assert_that( e.exception.json_body, has_entry( 'field', 'Username' ) )
+		assert_that( e.exception.json_body, has_entry( 'code', bad_code ) )
+		assert_that( e.exception.json_body, has_entry( 'message',
+													  'Username contains an illegal character. Only letters, digits, and +-_. are allowed.' ) )
+
 
 	@WithMockDSTrans
 	def test_create_mathcounts_policy_birthdate_only_under_13_user( self ):
