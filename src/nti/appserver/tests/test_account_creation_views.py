@@ -54,6 +54,7 @@ from nti.dataserver.users import interfaces as user_interfaces
 from zope.component import eventtesting
 from zope import component
 from zope.lifecycleevent import IObjectCreatedEvent, IObjectAddedEvent
+from zope.annotation.interfaces import IAnnotations
 
 import datetime
 
@@ -353,7 +354,7 @@ class TestPreflightView(_AbstractValidationViewBase):
 		assert_that( val, has_entry( 'ProfileSchema', does_not( has_key( 'opt_in_email_communication' ) ) ) )
 		assert_that( val, has_entry( 'ProfileSchema',
 									 has_entry( 'contact_email',
-												has_entry( 'required', False ) ) ) )
+												has_entry( 'required', True ) ) ) )
 
 		assert_that( val, has_entry( 'ProfileSchema',
 									 has_entry( 'participates_in_mathcounts',
@@ -654,7 +655,7 @@ class TestCreateView(_AbstractValidationViewBase):
 													 'password': 'pass123word',
 													 'realname': 'Joe Bananna',
 													 'alias': 'Me',
-													 'email': 'foo@bar.com',
+													 #'email': 'foo@bar.com',
 													 'contact_email': 'foo@bar.com' } )
 
 		new_user = account_create_view( self.request )
@@ -673,6 +674,8 @@ class TestCreateView(_AbstractValidationViewBase):
 
 		# Which means we sent no mail, except to the parent
 		assert_that( mailer.queue, has_length( 1 ) )
+		from .. import user_policies
+		assert_that( IAnnotations(new_user), has_entry( user_policies.CONTACT_EMAIL_RECOVERY_ANNOTATION, '823776525776c8f23a87176c59d25759da7a52c4' ) )
 
 
 		assert_that( to_external_object( new_user ), has_entries( 'email', None,

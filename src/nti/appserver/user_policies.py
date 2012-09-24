@@ -26,6 +26,7 @@ from nti.dataserver.users import interfaces as user_interfaces
 
 from zope.lifecycleevent import IObjectCreatedEvent
 from zope.lifecycleevent import IObjectModifiedEvent
+from zope.annotation.interfaces import IAnnotations
 
 from . import httpexceptions as hexc
 from ._email_utils import queue_simple_html_text_email
@@ -37,6 +38,7 @@ def dispatch_content_created_to_user_policies( content, event ):
 from pyramid import security as psec
 from pyramid.threadlocal import get_current_request
 from nti.dataserver import users
+from nti.dataserver.users import user_profile
 
 @component.adapter(nti_interfaces.IModeledContent, IObjectModifiedEvent)
 def dispatch_content_edited_to_user_policies( content, event ):
@@ -100,6 +102,7 @@ def send_email_on_new_account( user, event ):
 								  template_args={'user': user, 'profile': profile, 'context': user },
 								  request=event.request )
 
+CONTACT_EMAIL_RECOVERY_ANNOTATION = __name__ + '.contact_email_recovery_hash'
 
 @component.adapter(nti_interfaces.ICoppaUserWithoutAgreement, app_interfaces.IUserCreatedWithRequestEvent)
 def send_consent_request_on_new_coppa_account( user, event ):
@@ -169,8 +172,11 @@ def send_consent_request_on_new_coppa_account( user, event ):
 	# We can log that we sent the message to the contact person for operational purposes,
 	# but we cannot preserve it
 	logger.info( "Will send COPPA consent notice to %s on behalf of %s", email, user.username )
-
 	setattr( profile, 'contact_email', None )
+
+	# We do need to keep something machine readable, though, for purposes of bounces
+	# The cheap way to do it is with annotations
+	IAnnotations( user )[CONTACT_EMAIL_RECOVERY_ANNOTATION] = user_profile.make_password_recovery_email_hash( email )
 
 import pyPdf
 import pyPdf.generic
