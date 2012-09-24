@@ -40,10 +40,10 @@ def _word_content_highlight(query=None, text=None, default=None):
 	content = word_content_highlight(query, text) if query and text else u''
 	return unicode(content) if content else default
 
-def _word_fragments_highlight(query=None, text=None, default=None):
+def _word_fragments_highlight(query=None, text=None):
 	query = clean_query(query) if query else u''
 	snippet, fragments = word_fragments_highlight(query, text) if query and text else (u'', ())
-	return unicode(snippet),fragments if snippet else default
+	return unicode(snippet), fragments
 
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
 class _BaseHighlightDecorator(object):
