@@ -259,11 +259,17 @@ def get_uid(obj):
 	uid = _ds_intid.getId(obj)
 	return unicode(str(uid))
 	
-def get_object(uid):
-	_ds_intid = component.getUtility( zope.intid.IIntIds )
+def get_object(uid, ignore_exp=False):
 	uid = int(uid)
-	return _ds_intid.getObject(uid)
-
+	_ds_intid = component.getUtility( zope.intid.IIntIds )
+	try:
+		return _ds_intid.getObject(uid)
+	except Exception:
+		if not ignore_exp:
+			raise
+		logger.warn('Could not find object with id %r' % uid)
+		return None
+		
 def is_ngram_search_supported():
 	features = component.getUtility( search_interfaces.ISearchFeatures )
 	return features.is_ngram_search_supported
@@ -300,7 +306,7 @@ class UserIndexableContent(_SearchableContent):
 	
 	def _get_object(self, hit):
 		uid = hit[intid_]
-		result = get_object(uid)
+		result = get_object(uid, True)
 		return result
 	
 	def index_content(self, writer, data, auto_commit=True, **commit_args):
