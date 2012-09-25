@@ -37,16 +37,19 @@ def main():
 						 xmlconfig_packages=(nti.contentsearch,),
 						 function=lambda: remove_user_content(username, content_types) )
 			
-def remove_user_content( username, content_types):
-	user = users.User.get_user( username )
-	if not user:
-		print( "user '%s' does not exists" % username, file=sys.stderr )
+def remove_entity_content( username, content_types):
+	entity = users.Entity.get_entity( username )
+	if not entity:
+		print( "user/entity '%s' does not exists" % username, file=sys.stderr )
 		sys.exit( 3 )
 
-	rim = search_interfaces.IRepozeEntityIndexManager(user)
-	for key in list(rim.keys()):
-		if key in content_types:
-			rim.pop(key, None)
+	rim = search_interfaces.IRepozeEntityIndexManager(entity, None)
+	if rim is not None:
+		for key in list(rim.keys()):
+			if key in content_types:
+				rim.pop(key, None)
+
+remove_user_content = remove_entity_content
 
 if __name__ == '__main__':
 	main()
