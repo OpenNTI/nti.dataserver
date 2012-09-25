@@ -838,6 +838,8 @@ class TestApplicationCreateUser(_AbstractApplicationCreateUserTest):
 
 		mailer = component.getUtility( IMailer )
 		assert_that( mailer.queue, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
+		# Be sure we picked up the right template
+		assert_that( mailer.queue, has_item( has_property( 'body', contains_string( 'MATHCOUNTS' ) ) ) )
 
 	def test_create_user_prmia_policy( self ):
 
@@ -863,6 +865,8 @@ class TestApplicationCreateUser(_AbstractApplicationCreateUserTest):
 
 		mailer = component.getUtility( IMailer )
 		assert_that( mailer.queue, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
+		# Be sure we picked up the right template
+		assert_that( mailer.queue, has_item( has_property( 'body', does_not( contains_string( 'MATHCOUNTS' ) ) ) ) )
 
 
 	def test_create_user_logged_in( self ):
