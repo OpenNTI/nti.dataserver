@@ -107,6 +107,11 @@ class texttimes(Base.Command):
 	unicode = u'\u00D7'
 
 # The following 'text' commands are custom and specific to NTI
+class textangle(Base.Command):
+	unicode = u'\u2220'
+
+class textcong(Base.Command):
+	unicode = u'\u2245'
 
 class textge(Base.Command):
 	unicode = u'\u2265'
@@ -117,11 +122,26 @@ class textle(Base.Command):
 class textneq(Base.Command):
 	unicode = u'\u2260'
 
+class textparallel(Base.Command):
+	unicode = u'\u2016'
+
+class textperp(Base.Command):
+	unicode = u'\u22A5'
+
 class textpi(Base.Command):
 	unicode = u'\u03C0'
 
+class textprime(Base.Command):
+	unicode = u'\u2032'
+
+class textsim(Base.Command):
+	unicode = u'\u007E'
+
 class textsquare(Base.Command):
 	unicode = u'\u25A1'
+
+class texttriangle(Base.Command):
+	unicode = u'\u25B3'
 
 # Currency symbols
 class yen(Base.Command):
