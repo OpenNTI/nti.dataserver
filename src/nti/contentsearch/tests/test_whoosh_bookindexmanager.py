@@ -75,7 +75,7 @@ class TestWhooshBookIndexManager(ConfiguringTestBase):
 		
 	def test_search_start(self):
 		hits = toExternalObject(self.bim.search("ra*"))
-		assert_that(hits, has_entry(HIT_COUNT, 4))
+		assert_that(hits, has_entry(HIT_COUNT, 3))
 		assert_that(hits, has_entry(QUERY, 'ra*'))
 		assert_that(hits, has_key(ITEMS))
 		
