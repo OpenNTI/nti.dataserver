@@ -101,10 +101,10 @@ class site_tween(object):
 					now = time.time()
 					transaction.commit()
 					done = time.time() # TODO: replace all this with statsd
-					logger.debug( "Committed transaction for %s in %ss", request, done - now )
+					logger.debug( "Committed transaction for %s in %ss", request.url, done - now )
 					if (done - now) > 10.0:
 						# We held locks for a really, really, long time. Why?
-						logger.warn( "Slow running commit for %s in %ss", request, done - now )
+						logger.warn( "Slow running commit for %s in %ss", request.url, done - now )
 				except AssertionError:
 					# We've seen this when we are recalled during retry handling. The higher level
 					# is in the process of throwing a different exception and the transaction is
