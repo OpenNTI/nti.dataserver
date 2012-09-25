@@ -779,8 +779,7 @@ from .test_application import ApplicationTestBase
 from webtest import TestApp
 from nti.dataserver.tests import mock_dataserver
 
-
-class TestApplicationCreateUser(ApplicationTestBase):
+class _AbstractApplicationCreateUserTest(ApplicationTestBase):
 
 	def test_create_user( self ):
 		app = TestApp( self.app )
@@ -799,9 +798,24 @@ class TestApplicationCreateUser(ApplicationTestBase):
 
 		assert_that( res.headers, has_key( 'Set-Cookie' ) )
 		assert_that( res.json_body, has_entry( 'Username', 'jason@test.nextthought.com' ) )
+		return res
 
+class TestApplicationCreateUserNonDevmode(_AbstractApplicationCreateUserTest):
+	features = ()
+	APP_IN_DEVMODE = False
+
+	def test_create_user( self ):
+		super(TestApplicationCreateUserNonDevmode,self).test_create_user()
 		mailer = component.getUtility( IMailer )
 		assert_that( mailer.queue, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
+
+
+class TestApplicationCreateUser(_AbstractApplicationCreateUserTest):
+
+	def test_create_user( self ):
+		super(TestApplicationCreateUser,self).test_create_user()
+		mailer = component.getUtility( IMailer )
+		assert_that( mailer.queue, has_length( 0 ) ) # no email in devmode because there is no site policy
 
 	def test_create_user_mathcounts_policy( self ):
 

@@ -29,7 +29,6 @@ from zope.lifecycleevent import IObjectModifiedEvent
 from zope.annotation.interfaces import IAnnotations
 
 from . import httpexceptions as hexc
-from ._email_utils import queue_simple_html_text_email
 
 @component.adapter(nti_interfaces.IModeledContent, IObjectCreatedEvent)
 def dispatch_content_created_to_user_policies( content, event ):
@@ -76,31 +75,6 @@ from pyramid_mailer.message import Attachment
 from pyramid_mailer.interfaces import IMailer
 from email.mime.application import MIMEApplication
 
-
-@component.adapter(nti_interfaces.IUser, app_interfaces.IUserCreatedWithRequestEvent)
-def send_email_on_new_account( user, event ):
-	"""
-	For new accounts where we have an email (and of course the request), we send a welcome message.
-
-	Notice that we do not have an email collected for the ICoppaUserWithoutAgreement, so
-	they will never get a notice here. (And we don't have to specifically check for that).
-	"""
-
-	if not event.request: #pragma: no cover
-		return
-
-	profile = user_interfaces.IUserProfile( user )
-	email = getattr( profile, 'email' )
-	if not email:
-		return
-
-	# Need to send both HTML and plain text if we send HTML, because
-	# many clients still do not render HTML emails well (e.g., the popup notification on iOS
-	# only works with a text part)
-	queue_simple_html_text_email( 'new_user_created', subject=_("Welcome to NextThought"),
-								  recipients=[email],
-								  template_args={'user': user, 'profile': profile, 'context': user },
-								  request=event.request )
 
 CONTACT_EMAIL_RECOVERY_ANNOTATION = __name__ + '.contact_email_recovery_hash'
 
