@@ -46,10 +46,12 @@ def run_phantom_on_page( htmlFile, scriptName, args=(), key=_none_key, expect_no
 	# TODO: Rewrite the scripts to use the built-in webserver and communicate
 	# over a socket as opposed to stdout/stderr? As of 1.6, I think this is the recommended approach
 
-	process = "phantomjs %s %s %s 2>/dev/null" % (scriptName, htmlFile, " ".join([str(x) for x in args]))
+	#process = "phantomjs %s %s %s 2>/dev/null" % (scriptName, htmlFile, " ".join([str(x) for x in args]))
+	process = ['phantomjs', scriptName, htmlFile]
+	process.extend( args )
 	logger.debug( "Executing %s", process )
-	# TODO: Rewrite this without the shell for safety and speed
-	jsonStr = subprocess.Popen(process, shell=True, stdout=subprocess.PIPE).communicate()[0].strip()
+	# TODO: subprocess.check_output?
+	jsonStr = subprocess.Popen(process, stdout=subprocess.PIPE).communicate()[0].strip()
 	result = ''
 	if expect_no_output:
 		if jsonStr:

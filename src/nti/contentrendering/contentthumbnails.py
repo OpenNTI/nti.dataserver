@@ -6,7 +6,7 @@ import shutil
 import subprocess
 # This process is all about external processes so threads
 # are fine to extract max concurrency
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor # TODO: Convert to nti.contentrendering.ConcurrentExecutor. But beware of exceptions in the called function!
 import multiprocessing
 import tempfile
 import warnings
@@ -32,8 +32,9 @@ def _generateImage(contentdir, page, output):
 	# subprocess.Popen(process, shell=True, stdout=subprocess.PIPE).communicate()[0].strip()
 
 	#shrink it down to size
-	process = "convert %s -resize %d%% PNG32:%s" % (output, 25, output)
-	subprocess.Popen(process, shell=True, stdout=subprocess.PIPE).communicate()[0].strip()
+	#process = "convert %s -resize %d%% PNG32:%s" % (output, 25, output)
+	process = ['convert', output, '-resize', '%d%%' % 25, 'PING32:%s' % output]
+	subprocess.check_call( process, bufsize=-1 )
 
 	return (page.ntiid, output)
 
