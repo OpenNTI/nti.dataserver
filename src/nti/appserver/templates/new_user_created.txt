@@ -5,11 +5,10 @@ Thank you for creating your new account and welcome to NextThought!
 Username: ${user.username}
 Log in at: ${request.application_url}
 
-With NextThought, you can easily collaborate with your classmates and
-personalize your content through notes, highlights, and whiteboards.
-Explore the NextThought Help Center in your Library to get started and
-learn more about the exciting interactive features NextThought has to
-offer.
+NextThought offers interactive content and rich features to make
+learning both social and personal. Explore the NextThought Help Center
+in your Library to get started and learn more about the exciting
+interactive features NextThought has to offer.
 
 Sincerely,
 NextThought

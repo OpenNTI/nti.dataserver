@@ -642,6 +642,8 @@ class MathcountsSitePolicyEventListener(GenericKidSitePolicyEventListener):
 	Implements the policy for the mathcounts site.
 	"""
 
+	NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME = 'new_user_created_mathcounts'
+
 	IF_ROOT = IMathcountsUser
 	IF_WITH_AGREEMENT = IMathcountsCoppaUserWithAgreement
 	IF_WOUT_AGREEMENT = IMathcountsCoppaUserWithoutAgreement

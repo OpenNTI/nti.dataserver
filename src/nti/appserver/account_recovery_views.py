@@ -29,6 +29,8 @@ Views related to recovering information about accounts (lost username and/or pas
 	given a link with this rel ("logon.reset.passcode") at logon ping
 	and handshake time.
 
+For the general design, see `Everything you ever wanted to know about building a secure password reset feature <http://www.troyhunt.com/2012/05/everything-you-ever-wanted-to-know.html>`_
+
 $Id$
 """
 
