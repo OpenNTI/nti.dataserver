@@ -33,7 +33,7 @@ import logging
 logger = logging.getLogger( __name__ )
 
 _default_word_max_dist = 15
-_default_ngram_maxsize_content = 10
+_default_ngram_maxsize_content = 12 # biggest common word in English to be found in a text has 20 chars
 
 class _SearchableContent(object):
 	
