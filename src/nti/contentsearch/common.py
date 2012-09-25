@@ -95,7 +95,7 @@ indexable_type_names = (note_, highlight_, redaction_, messageinfo_)
 indexable_types_order = { x:p for p,x in enumerate(indexable_type_names) }
 
 default_ngram_minsize = 2
-default_ngram_maxsize = 6
+default_ngram_maxsize = 6 # average word size in English in 5.10 
 
 def epoch_time(dt):
 	if dt:
