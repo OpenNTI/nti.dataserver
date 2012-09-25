@@ -36,7 +36,7 @@ from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
-
+from nti.appserver import MessageFactory as _
 import uuid
 import datetime
 import urllib
@@ -113,7 +113,7 @@ def forgot_username_view(request):
 	base_template = 'username_recovery_email'
 	if not matching_users:
 		base_template = 'failed_' + base_template
-	queue_simple_html_text_email( base_template, subject="NextThought Username Reminder",
+	queue_simple_html_text_email( base_template, subject=_("NextThought Username Reminder"),
 								  recipients=[email_assoc_with_account],
 								  template_args={'users': matching_users},
 								  request=request )
@@ -195,7 +195,7 @@ def forgot_passcode_view(request):
 		base_template = 'failed_' + base_template
 
 
-	queue_simple_html_text_email( base_template, subject="NextThought Password Reset",
+	queue_simple_html_text_email( base_template, subject=_("NextThought Password Reset"),
 								  recipients=[email_assoc_with_account],
 								  template_args={'users': matching_users, 'user': matching_user, 'reset_url': reset_url},
 								  request=request )
@@ -290,7 +290,7 @@ def reset_passcode_view(request):
 		# expired, no user, bad token
 		raise_json_error( request, hexc.HTTPNotFound,
 						  {'code': 'InvalidOrMissingOrExpiredResetToken',
-						   'message': "Your reset link is not valid. Please request a new one."}, # TODO: I18N
+						   'message': _("Your reset link is not valid. Please request a new one.")},
 						   None )
 
 	new_password = request.params.get( 'password' )
