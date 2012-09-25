@@ -32,19 +32,20 @@ def _get_sharedWith(obj):
 		result = ()
 	return result
 
-def _get_indeaxable_objects(user):
+def _get_indeaxable_objects(user, rim=None):
 	username = user.username
 
-	rim = search_interfaces.IRepozeEntityIndexManager(user, None)
+	indexable_types = get_indexable_types()
+	rim = rim or search_interfaces.IRepozeEntityIndexManager(user, None)
 	for obj in findObjectsProviding( user, nti_interfaces.IModeledContent):
 		
-		if get_type_name(obj) not in get_indexable_types():
+		if get_type_name(obj) not in indexable_types:
 			continue
 		
 		yield (rim, obj)
 		
 		for uname in _get_sharedWith(obj):
-			sharing_user = users.User.get_user(uname)
+			sharing_user = users.Entity.get_entity(uname)
 			if sharing_user and uname != username: 
 				srim = search_interfaces.IRepozeEntityIndexManager(sharing_user, None)
 				if srim is not None:
@@ -58,25 +59,28 @@ def _index(rim, obj):
 		return True
 	return False
 			
-def _reindex_user_content( username ):
-	user = users.User.get_user( username )
-	if not user:
-		print( "user '%s' does not exists" % username, file=sys.stderr )
+def _reindex_entity_content( username ):
+	entity = users.Entity.get_entity( username )
+	if not entity:
+		print( "user/entity '%s' does not exists" % username, file=sys.stderr )
 		sys.exit( 2 )
 
-	# remove all catalogs
-	rim = search_interfaces.IRepozeEntityIndexManager(user)
-	for key in list(rim.keys()):
-		rim.pop(key, None)
-		
 	counter = 0
-	for rim, obj in _get_indeaxable_objects(user):
-		try:
-			if _index(rim, obj):
-				counter = counter + 1
-		except POSKeyError:
-			# broken reference for object
-			pass
+	rim = search_interfaces.IRepozeEntityIndexManager(entity, None)
+	if rim is not None:
+		# remove all catalogs
+		for key in list(rim.keys()):
+			rim.pop(key, None)
+		
+		for eim, obj in _get_indeaxable_objects(entity, rim):
+			try:
+				if _index(eim, obj):
+					counter = counter + 1
+			except POSKeyError:
+				# broken reference for object
+				pass
+	
+	return counter
 
 def main():
 	if len(sys.argv) < 3:
@@ -87,7 +91,7 @@ def main():
 	username = sys.argv[2]
 	run_with_dataserver( environment_dir=env_dir,
 						 xmlconfig_packages=(nti.contentsearch,),
-						 function=lambda: _reindex_user_content(username) )
+						 function=lambda: _reindex_entity_content(username) )
 
 if __name__ == '__main__':
 	main()
