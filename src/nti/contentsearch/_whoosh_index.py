@@ -262,13 +262,10 @@ def get_uid(obj):
 def get_object(uid, ignore_exp=False):
 	uid = int(uid)
 	_ds_intid = component.getUtility( zope.intid.IIntIds )
-	try:
-		return _ds_intid.getObject(uid)
-	except Exception:
-		if not ignore_exp:
-			raise
-		logger.warn('Could not find object with id %r' % uid)
-		return None
+	result = _ds_intid.queryObject(uid, None)
+	if result is None:
+		logger.debug('Could not find object with id %r' % uid)
+	return result
 		
 def is_ngram_search_supported():
 	features = component.getUtility( search_interfaces.ISearchFeatures )
