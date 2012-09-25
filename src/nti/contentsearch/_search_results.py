@@ -48,7 +48,6 @@ class _BaseSearchResults(object):
 	def __iter__(self):
 		return iter(self.hits)
 	
-
 class _PageableSearchResults(_BaseSearchResults):
 	
 	@property

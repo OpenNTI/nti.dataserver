@@ -133,7 +133,7 @@ def content_analyzer():
 	minsize, _ = ngram_minmax()
 	maxsize = _default_ngram_maxsize_content
 	sw_util = component.queryUtility(search_interfaces.IStopWords) 
-	stopwords = sw_util.stopwords() if sw_util else analysis.STOP_WORDS
+	stopwords = sw_util.stopwords() if sw_util else ()
 	analyzer = 	analysis.StandardAnalyzer(stoplist=stopwords) | \
 				analysis.NgramFilter(minsize=minsize, maxsize=maxsize, at='start')
 	return analyzer
