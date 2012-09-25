@@ -11,7 +11,6 @@
 	<subscriber handler=".user_policies.veto_sharing_for_unsigned_coppa_edit" />
 
 	<!-- Emails -->
-	<subscriber handler=".user_policies.send_email_on_new_account" />
 	<subscriber handler=".user_policies.send_consent_request_on_new_coppa_account" />
 	<!--
 	Default to "sending" new object emails in dev mode.

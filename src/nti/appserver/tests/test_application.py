@@ -79,7 +79,7 @@ import pyramid_mailer.testing
 class ApplicationTestBase(ConfiguringTestBase):
 
 	set_up_packages = () # None, because configuring the app will do this
-
+	APP_IN_DEVMODE = True
 	def _setup_library(self, *args, **kwargs):
 		return Library()
 
@@ -90,7 +90,7 @@ class ApplicationTestBase(ConfiguringTestBase):
 		test_func = getattr( self, self._testMethodName )
 		ds_factory = getattr( test_func, 'mock_ds_factory', mock_dataserver.MockDataserver )
 
-		self.app, self.main = createApplication( 8080, self._setup_library(), create_ds=ds_factory, pyramid_config=self.config, devmode=True )
+		self.app, self.main = createApplication( 8080, self._setup_library(), create_ds=ds_factory, pyramid_config=self.config, devmode=self.APP_IN_DEVMODE )
 		self.ds = component.getUtility( nti_interfaces.IDataserver )
 		root = '/Library/WebServer/Documents/'
 		# We'll volunteer to serve all the files in the root directory
@@ -193,6 +193,7 @@ class TestApplication(ApplicationTestBase):
 			reply_n_id = reply_n.id
 			reply_n.lastModified = 2
 
+			top_n_ext_id = to_external_ntiid_oid( top_n )
 
 		testapp = TestApp( self.app )
 		path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + top_n.containerId + ')/UserGeneratedData'
@@ -260,7 +261,7 @@ class TestApplication(ApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'Items', has_length( 0 ) ) )
 
 		# Top-level filtering is only useful if we can get replies on demand.
-		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/' + to_external_ntiid_oid( top_n ) + '/@@replies'
+		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/' + top_n_ext_id  + '/@@replies'
 		res = testapp.get( path, extra_environ=self._make_extra_environ() )
 		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
 		assert_that( res.json_body, has_entry( 'Items', contains( has_entry( 'ID', reply_n_id ) ) ) )

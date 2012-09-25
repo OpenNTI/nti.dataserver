@@ -13,7 +13,7 @@ from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
-
+from . import MessageFactory as _
 from zope import component
 from zope import interface
 from zope import schema
@@ -29,6 +29,8 @@ from nti.contentfragments import censor
 from nti.utils.schema import InvalidValue
 
 from nti.dataserver import shards as nti_shards
+
+from ._email_utils import queue_simple_html_text_email
 
 import nameparser
 import datetime
@@ -242,6 +244,12 @@ class ISitePolicyUserEventListener(interface.Interface):
 		Called when a user is created.
 		"""
 
+	def user_created_with_request( user, event ):
+		"""
+		Called when a user is created in the scope of an interactive
+		request (after user_created).
+		"""
+
 	def user_will_create( user, event ):
 		"""
 		Called just before a user is created. Do most validation here.
@@ -273,11 +281,14 @@ def find_site_policy( request=None ):
 	return None, site_names
 
 def _dispatch_to_policy( user, event, func_name ):
+	"""
+	Returns a true value if the event was handled by some policy.
+	"""
 	utility, site_name = find_site_policy( )
 	if utility:
-		logger.info( "Site %s wants to handle user creation event %s with %s", site_name, func_name, utility )
+		logger.info( "Site %s wants to handle user creation event %s for %s with %s", site_name, func_name, user, utility )
 		getattr( utility, func_name )( user, event )
-		return
+		return True
 
 	logger.info( "No site in %s wanted to handle user event %s for %s", site_name, func_name, user )
 
@@ -293,6 +304,10 @@ def dispatch_user_will_update_to_site_policy( user, event ):
 @component.adapter(nti_interfaces.IUser, user_interfaces.IWillCreateNewEntityEvent)
 def dispatch_user_will_create_to_site_policy( user, event ):
 	_dispatch_to_policy( user, event, 'user_will_create' )
+
+@component.adapter(nti_interfaces.IUser, app_interfaces.IUserCreatedWithRequestEvent)
+def dispatch_user_created_with_request_to_site_policy( user, event ):
+	_dispatch_to_policy( user, event, 'user_created_with_request' )
 
 def _censor_usernames( entity, event=None ):
 	"""
@@ -336,6 +351,38 @@ class GenericSitePolicyEventListener(object):
 	"""
 	Implements a generic policy for all sites.
 	"""
+
+	def user_created_with_request( self, user, event ):
+		self._send_email_on_new_account( user, event )
+
+	NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME = 'new_user_created'
+
+	def _send_email_on_new_account( self, user, event ):
+		"""
+		For new accounts where we have an email (and of course the request), we send a welcome message.
+
+		Notice that we do not have an email collected for the ICoppaUserWithoutAgreement, so
+		they will never get a notice here. (And we don't have to specifically check for that).
+
+		Uses the self/class attribute ``NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME`` to generate the email text.
+		"""
+
+		if not event.request: #pragma: no cover
+			return
+
+		profile = user_interfaces.IUserProfile( user )
+		email = getattr( profile, 'email' )
+		if not email:
+			return
+
+		# Need to send both HTML and plain text if we send HTML, because
+		# many clients still do not render HTML emails well (e.g., the popup notification on iOS
+		# only works with a text part)
+		queue_simple_html_text_email( self.NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME,
+									  subject=_("Welcome to NextThought"),
+									  recipients=[email],
+									  template_args={'user': user, 'profile': profile, 'context': user },
+									  request=event.request )
 
 	def map_validation_exception( self, incoming_data, exception ):
 		return exception
