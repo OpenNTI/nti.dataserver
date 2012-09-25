@@ -11,8 +11,6 @@ from persistent.interfaces import IPersistent
 from dolmen.builtins import IDict
 
 from nltk.tokenize import RegexpTokenizer
-
-from whoosh.analysis import STOP_WORDS
 	
 from nti.contentfragments import interfaces as frg_interfaces
 
@@ -363,7 +361,7 @@ class _ContentTokenizer(object):
 class _DefaultStopWords(object):
 	
 	def stopwords(self, language='en'):
-		return STOP_WORDS
+		return ()
 
 	def available_languages(self, ):
 		return ('en',)
