@@ -73,6 +73,22 @@ class _SearchFragment(object):
 		return result
 	
 	@classmethod
+	def _is_range_subsumed(cls, refidx, v, ranges):
+		for idx, t in enumerate(ranges):
+			if idx != refidx:
+				if v[0] >= t[0] and v[1] <= t[1]:
+					return True
+		return False
+	
+	@classmethod
+	def _clean_ranges(cls, matches):
+		result = []
+		for idx, r in enumerate(matches):
+			if not cls._is_range_subsumed(idx, r, matches):
+				result.append(r)
+		return result
+			
+	@classmethod
 	def create_from_whoosh_fragment(cls, wf):
 		matches = []
 		fragment = wf.text[wf.startchar:wf.endchar]
@@ -87,7 +103,8 @@ class _SearchFragment(object):
 				endidx = idx + _len
 				matches.append((idx, endidx))
 				tokens[t.text] = endidx 
-			
+				
+		matches = cls._clean_ranges(matches)
 		result = _SearchFragment()
 		result.text = fragment
 		result.matches = matches if matches else ()
@@ -110,6 +127,7 @@ class _SearchFragment(object):
 				idx = endidx
 				idx = fragment_lower.find(term, idx)
 			
+		matches = cls._clean_ranges(matches)
 		result = _SearchFragment()
 		result.text = fragment
 		result.matches = matches if matches else ()
