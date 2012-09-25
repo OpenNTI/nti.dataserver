@@ -6,6 +6,7 @@ import re
 import sys
 import time
 import codecs
+import hashlib
 from datetime import datetime
 from xml.dom.minidom import Node
 
@@ -173,13 +174,16 @@ def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=Fa
 			break
 	
 	as_time = datetime.fromtimestamp(float(last_modified))
-	def _to_index(content, keywords=()):
+	def _to_index(docid, content, keywords=()):
 		if not content:
 			return
 		
+		docid = "%s %s" % (ntiid, docid)
+		docid = unicode(hashlib.md5(docid).hexdigest())
 		try:
 			content = unicode(content)
-			writer.add_document(ntiid=ntiid,
+			writer.add_document(#docid=docid,
+								ntiid=ntiid,
 								title=title,
 								content=content,
 								quick=content,
@@ -221,9 +225,9 @@ def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=Fa
 	keywords = _extract_key_words(all_words)
 	logger.debug("\tkeywords %s", keywords )
 	
-	for tokenized_words in documents:
+	for docid, tokenized_words in enumerate(documents):
 		content = ' '.join(tokenized_words)
-		_to_index(content, keywords)
+		_to_index(docid, content, keywords)
 		
 def transform(book, indexname=None, indexdir=None, recreate_index=True, optimize=True):
 	contentPath = book.contentLocation
