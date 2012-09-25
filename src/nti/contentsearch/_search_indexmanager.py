@@ -19,30 +19,39 @@ class _SearchEntityIndexManager(object):
 		_ds_intid = component.getUtility( zope.intid.IIntIds )
 		return _ds_intid.getId(obj)
 	
-	def get_object(self, uid):
+	def get_object(self, uid, ignore_exp=False):
 		_ds_intid = component.getUtility( zope.intid.IIntIds )
-		return _ds_intid.getObject(uid)
+		try:
+			return _ds_intid.getObject(uid)
+		except Exception:
+			if not ignore_exp:
+				raise
+			logger.warn('Could not find object with id %r' % uid)
+			return None
 		
+	def get_object_safe(self, uid):
+		return self.get_object(uid, True)
+	
 	@property
 	def dataserver(self):
 		return component.getUtility( nti_interfaces.IDataserver )
 
-	def search(self, query, *args, **kwargs):
+	def search(self, query):
 		raise NotImplementedError()
 
-	def suggest(self, query, *args, **kwargs):
+	def suggest(self, query):
 		raise NotImplementedError()
 
-	def suggest_and_search(self, query, limit=None, *args, **kwargs):
+	def suggest_and_search(self, query):
 		raise NotImplementedError()
 	
-	def index_content(self, data, type_name=None, **kwargs):
+	def index_content(self, data, type_name=None):
 		raise NotImplementedError()
 
-	def update_content(self, data, type_name=None, *args, **kwargs):
+	def update_content(self, data, type_name=None):
 		raise NotImplementedError()
 
-	def delete_content(self, data, type_name=None, *args, **kwargs):
+	def delete_content(self, data, type_name=None):
 		raise NotImplementedError()
 
 	def remove_index(self, type_name):

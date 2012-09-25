@@ -91,7 +91,7 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 		t = time.time()
 		try:
 			# get all objects from the ds
-			objects = map(self.get_object, docids)
+			objects = map(self.get_object_safe, docids)
 			t = time.time() - t
 			results.add(objects)
 		finally:
