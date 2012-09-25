@@ -164,7 +164,9 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		# and tries to interpolate the settings for the log file.
 		# For now, we just add on the time in microseconds with %(D)s. Other options include
 		# using a different key with a fake % char, like ^,
-		self.cfg.settings['access_log_format'].set( self.cfg.access_log_format + " %(D)sus" )
+		# NOTE: The documentation claims that %D is microseconds, but as af 0.14.6, it's really
+		# milliseconds
+		self.cfg.settings['access_log_format'].set( self.cfg.access_log_format + " %(D)sms" )
 		# Also, if there is a handler set for the gunicorn access log (e.g., '-' for stderr)
 		# Then the default propagation settings mean we get two copies of access logging.
 		# make that stop.
