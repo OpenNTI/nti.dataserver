@@ -260,6 +260,21 @@ class DynamicFriendsList(DynamicSharingTargetMixin,FriendsList):
 	def is_accepting_shared_data_from( self, source ):
 		return source is self.creator or source in list(self)
 
+@interface.implementer(nti_interfaces.IUsernameIterable)
+@component.adapter(DynamicFriendsList)
+class _DynamicFriendsListUsernameIterable(_FriendsListUsernameIterable):
+	"""
+	Iterates the contained friends, but also includes the creator
+	of the DFL. The primary reason to do this is that the only place
+	this interface is used is with sharing, and this ensures
+	that the creator gets notices.
+	"""
+
+	def __iter__( self ):
+		names = {x.username for x in self.context}
+		names.add( self.context.creator.username )
+		return iter(names)
+
 from nti.dataserver import datastructures
 
 @interface.implementer(nti_interfaces.IFriendsListContainer)

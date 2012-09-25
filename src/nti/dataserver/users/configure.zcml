@@ -49,7 +49,10 @@
 	</class>
 
 	<!-- FriendsLists can iterate usernames -->
-	<adapter factory=".friends_lists._FriendsListUsernameIterable" />
+	<adapter provides="nti.dataserver.interfaces.IUsernameIterable"
+			 factory=".friends_lists._FriendsListUsernameIterable" />
+	<adapter provides="nti.dataserver.interfaces.IUsernameIterable"
+			 factory=".friends_lists._DynamicFriendsListUsernameIterable" />
 
 
 	<!-- Avatar URLs -->

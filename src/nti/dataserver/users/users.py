@@ -906,7 +906,7 @@ class User(Principal):
 			""" Sends at most one change to a user, taking
 			into account aliases. """
 
-			if user in seenTargets or user is None:
+			if user in seenTargets or user is None or user is self:
 				return
 			seenTargets.add( user )
 			# Fire the change off to the user using different threads.
@@ -916,6 +916,11 @@ class User(Principal):
 				# Make this work for DynamicFriendsLists.
 				# TODO: this falls down as soon as nesting is involved, because
 				# we won't be able to resolve by names
+				# NOTE: Because if _get_dynamic_sharing_targets_for_read, there might actually
+				# be duplicate change objects that get eliminated at read time.
+				# But this ensures that the stream gets an object, bumps the notification
+				# count, and sends a real-time notice to connected sockets.
+				# TODO: Can we make it be just the later? Or remove _get_dynamic_sharing_targets_for_read?
 				sendChangeToUser( self.get_user( nested_username ), theChange )
 
 		if origSharing != newSharing and changeType not in (Change.CREATED,Change.DELETED):
