@@ -12,7 +12,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import sys
-
+import time
 import pyramid_tm
 import transaction
 import pyramid_zodbconn
@@ -98,7 +98,13 @@ class site_tween(object):
 			if not transaction.isDoomed() and not pyramid_tm.default_commit_veto( request, response ):
 				exc_info = sys.exc_info()
 				try:
+					now = time.time()
 					transaction.commit()
+					done = time.time() # TODO: replace all this with statsd
+					logger.debug( "Committed transaction for %s in %ss", request, done - now )
+					if (done - now) > 10.0:
+						# We held locks for a really, really, long time. Why?
+						logger.warn( "Slow running commit for %s in %ss", request, done - now )
 				except AssertionError:
 					# We've seen this when we are recalled during retry handling. The higher level
 					# is in the process of throwing a different exception and the transaction is
@@ -113,7 +119,8 @@ class site_tween(object):
 				except ZODB.POSException.StorageError as e:
 					if str(e) == 'Unable to acquire commit lock':
 						# Relstorage locks. Who's holding it? What's this worker doing?
-						# if the problem is some other worker this doesn't help much
+						# if the problem is some other worker this doesn't help much.
+						# Of course by definition, we won't catch it in the act if we're running.
 						from ._util import dump_stacks
 						body = '\n'.join(dump_stacks())
 						print( body, file=sys.stderr )
