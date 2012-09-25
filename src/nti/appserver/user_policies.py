@@ -14,7 +14,7 @@ from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
-
+from nti.appserver import MessageFactory as _
 import pkg_resources
 
 from zope import component
@@ -97,7 +97,7 @@ def send_email_on_new_account( user, event ):
 	# Need to send both HTML and plain text if we send HTML, because
 	# many clients still do not render HTML emails well (e.g., the popup notification on iOS
 	# only works with a text part)
-	queue_simple_html_text_email( 'new_user_created', subject="Welcome to NextThought",
+	queue_simple_html_text_email( 'new_user_created', subject=_("Welcome to NextThought"),
 								  recipients=[email],
 								  template_args={'user': user, 'profile': profile, 'context': user },
 								  request=event.request )
@@ -143,7 +143,7 @@ def send_consent_request_on_new_coppa_account( user, event ):
 	attachment = MIMEApplication(attachment.read(), 'pdf' )
 	attachment.add_header('Content-Disposition', 'attachment', filename=attachment_filename)
 
-	message = Message( subject="Please Confirm Your Child's NextThought Account", # TODO: i18n
+	message = Message( subject=_("Please Confirm Your Child's NextThought Account"),
 					   recipients=[email],
 					   sender='no-reply@nextthought.com', # The default, but explicitly needed for the attachment handling below
 					   body=None,
