@@ -125,27 +125,6 @@ class _AbstractValidationViewBase(ConfiguringTestBase):
 			assert_that( e.exception.json_body, has_entry( 'field', 'Username' ) )
 			assert_that( e.exception.json_body, has_entry( 'code', bad_code ) )
 
-	@WithMockDSTrans
-	def test_create_invalid_realname( self ):
-		self.request.content_type = 'application/vnd.nextthought+json'
-
-		bad_code = 'UsernameCannotBeBlank'
-		bad_code = [bad_code] + ['UsernameContainsIllegalChar'] * 4
-		bad_code.append( "TooShort" )
-		for bad_code, bad_username in itertools.izip( bad_code, ('   ', 'foo bar', 'foo#bar', 'foo,bar', 'foo%bar', 'abcd' )):
-
-			self.request.body = to_json_representation( {'Username': bad_username,
-														 'password': 'pass132word',
-														 'realname': 'Joe Human',
-														 'email': 'user@domain.com' } )
-			__traceback_info__ = self.request.body
-
-
-			with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
-				self.the_view( self.request )
-
-			assert_that( e.exception.json_body, has_entry( 'field', 'Username' ) )
-			assert_that( e.exception.json_body, has_entry( 'code', bad_code ) )
 
 
 class _AbstractNotDevmodeViewBase(ConfiguringTestBase):
@@ -250,6 +229,24 @@ class _AbstractNotDevmodeViewBase(ConfiguringTestBase):
 		assert_that( e.exception.json_body, has_entry( 'field', 'birthdate' ) )
 		assert_that( e.exception.json_body, has_entry( 'message', contains_string( 'four' ) ) )
 
+	@WithMockDSTrans
+	def test_create_invalid_realname( self ):
+
+		self.request.content_type = 'application/vnd.nextthought+json'
+
+		self.request.body = to_json_representation( {'Username': 'this_username_works',
+													 'password': 'pass132word',
+													 'realname': '',
+													 'email': 'user@domain.com' } )
+		__traceback_info__ = self.request.body
+
+
+		with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
+			self.the_view( self.request )
+
+		assert_that( e.exception.json_body, has_entry( 'field', 'realname' ) )
+		assert_that( e.exception.json_body, has_entry( 'code', 'BlankHumanNameError' ) )
+		assert_that( e.exception.json_body, has_entry( 'message', 'Please provide your first and last names.' ) )
 
 class TestPreflightView(_AbstractValidationViewBase):
 

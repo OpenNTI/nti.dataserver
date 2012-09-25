@@ -31,7 +31,7 @@ from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
-
+from . import MessageFactory as _
 import sys
 import itertools
 
@@ -113,7 +113,7 @@ def _create_user( request, externalValue, preflight_only=False ):
 		exc_info = sys.exc_info()
 		_raise_error( request,
 					  hexc.HTTPUnprocessableEntity,
-					  { 'message': e.message,
+					  { 'message': _("Please provide your first and last names." ),
 						'field': 'realname',
 						'code': e.__class__.__name__ },
 						exc_info[2]	)
@@ -153,10 +153,10 @@ def _create_user( request, externalValue, preflight_only=False ):
 			exc_info = sys.exc_info()
 			_raise_error( request, hexc.HTTPUnprocessableEntity,
 						  {'field': 'Username',
-						   'message': 'Username cannot be blank',
+						   'message': _('Username cannot be blank'),
 						   'code': 'UsernameCannotBeBlank'},
 						   exc_info[2] )
-		policy, _ = site_policies.find_site_policy( request=request )
+		policy, _site = site_policies.find_site_policy( request=request )
 		if policy:
 			e = policy.map_validation_exception( externalValue, e )
 		obj_io.handle_validation_error( request, e )
@@ -167,7 +167,7 @@ def _create_user( request, externalValue, preflight_only=False ):
 		_raise_error( request,
 					  hexc.HTTPConflict,
 					  {'field': 'Username',
-					   'message': 'That username is not available',
+					   'message': _('That username is not available. Please choose another.'),
 					   'code': 'DuplicateUsernameError'},
 					   exc_info[2] )
 	except Exception as e:
@@ -243,7 +243,6 @@ def account_preflight_view(request):
 
 	if sec.authenticated_userid( request ):
 		raise hexc.HTTPForbidden( "Cannot create new account while logged on." )
-
 
 	externalValue = obj_io.read_body_as_external_object(request)
 
