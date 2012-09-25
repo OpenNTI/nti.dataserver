@@ -164,11 +164,21 @@ def _alter_pdf( pdf_stream, username, child_firstname, parent_email ):
 	This process is intimately tied to the structure of the PDF. If the PDF changes, then this
 	process will have to be (slightly) recalculated. Thus this method is littered with assertions.
 
-	This process depends on using standard PDF fonts, or having the entire font embedded, otherwise
-	characters not contained in the PDF will fail to render (will render as square boxes).
-	Our starter PDF includes all the ASCII characters, except the lowercase 'j', which causes text strings
-	to break up. It has also been run through Acrobat Pro to be sure that the fields we want to replace
-	are in Helvetica (Bold), and that this font (a standard font) is not subsetted, so that we can render 'j'.
+	This process depends on using standard PDF fonts, or having the
+	entire font embedded, otherwise characters not contained in the
+	PDF will fail to render (will render as square boxes). Our starter
+	PDF includes all the ASCII characters, except the lowercase 'j',
+	which causes text strings to break up. It has also been run
+	through Acrobat Pro to be sure that the fields we want to replace
+	are in Helvetica (Bold), and that this font (a standard font) is
+	not subsetted, so that we can render 'j'. Acrobat Pro is also used to add the
+	clickable link, which doesn't make it through printing from Word.
+
+	The best way to get the document out of Word is to Print, use the
+	PDF option of the Print dialog and 'Save as Adobe PDF', and
+	'Smallest File Size' which puts it right into Acrobat. This is the
+	only way to achieve the ~40K file size (otherwise you get 800K). When using the PDF Optimizer,
+	image optimizations should be unchecked; having it checked seems to embed 300K of Color Space data.
 	"""
 
 	pdf_reader = pyPdf.PdfFileReader( pdf_stream )
@@ -182,17 +192,25 @@ def _alter_pdf( pdf_stream, username, child_firstname, parent_email ):
 	assert pdf_page.keys()[0] == '/Contents'
 	pdf_page[pdf_page.keys()[0]] = page_content
 
-	IX_EMAIL = 323
-	IX_FNAME = 315
-	IX_UNAME = 307
+
+	IX_UNAME = 366
+	IX_FNAME = 385
+	IX_EMAIL = 401
 
 	assert page_content.operations[IX_EMAIL][1] == 'TJ' # TJ being the 'text with placement' operator
 	assert page_content.operations[IX_UNAME][1] == 'TJ'
 	assert page_content.operations[IX_FNAME][1] == 'TJ'
 
-	page_content.operations[IX_EMAIL] = ( [pyPdf.generic.TextStringObject( parent_email )], 'Tj') # Tj being the simple text operator
-	page_content.operations[IX_UNAME] = ( [pyPdf.generic.TextStringObject( username )], 'Tj')
+	def _pdf_clean( text ):
+		# Many punctuation characters are handled specially and overlap
+		# each other. They don't work in the Tj operator.
+		# We can get pretty close with some padding.
+		return text.replace( '-', '-  ' ).replace( '_', '_  ' ).replace( 'j', 'j ' )
+
+	page_content.operations[IX_EMAIL] = ( [pyPdf.generic.TextStringObject( _pdf_clean(parent_email) )], 'Tj') # Tj being the simple text operator
+	page_content.operations[IX_UNAME] = ( [pyPdf.generic.TextStringObject( _pdf_clean(username) )], 'Tj')
 	page_content.operations[IX_FNAME] = ( [pyPdf.generic.TextStringObject( child_firstname )], 'Tj')
+
 
 	writer = pyPdf.PdfFileWriter()
 	writer.addPage( pdf_page )
