@@ -144,6 +144,7 @@ def create_book_schema():
 	"""
 	Book index schema
 
+	docid: Unique id
 	ntiid: Internal nextthought ID for the chapter/section
 	title: chapter/section title
 	last_modified: chapter/section last modification since the epoch
@@ -154,7 +155,8 @@ def create_book_schema():
 	ref: chapter reference
 	"""
 	minsize, maxsize = ngram_minmax()
-	schema = fields.Schema(	ntiid = fields.ID(stored=True, unique=False),
+	schema = fields.Schema(	docid = fields.ID(stored=True, unique=True),
+							ntiid = fields.ID(stored=True, unique=False),
 							title = fields.TEXT(stored=True, spelling=True),
 				  			last_modified = fields.DATETIME(stored=True),
 				  			keywords = fields.KEYWORD(stored=True), 
