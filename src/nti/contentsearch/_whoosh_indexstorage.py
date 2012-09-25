@@ -14,7 +14,7 @@ from nti.contentsearch.interfaces import IWhooshIndexStorage
 import logging
 logger = logging.getLogger( __name__ )
 
-def oid_to_path(oid, max_bytes=2):
+def oid_to_path(oid, max_bytes=3):
 	"""
 	Taken from ZODB/blob.py/BushyLayout
 	"""
@@ -172,7 +172,7 @@ class UserDirectoryStorage(DirectoryStorage):
 			return path
 		return self.folder
 	
-	def oid_to_path(self, oid, max_bytes=2):
+	def oid_to_path(self, oid, max_bytes=3):
 		return oid_to_path(oid, max_bytes)
 	
 	

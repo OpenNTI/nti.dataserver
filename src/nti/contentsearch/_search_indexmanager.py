@@ -21,17 +21,11 @@ class _SearchEntityIndexManager(object):
 	
 	def get_object(self, uid, ignore_exp=False):
 		_ds_intid = component.getUtility( zope.intid.IIntIds )
-		try:
-			return _ds_intid.getObject(uid)
-		except Exception:
-			if not ignore_exp:
-				raise
-			logger.warn('Could not find object with id %r' % uid)
-			return None
+		result = _ds_intid.queryObject(uid, None)
+		if result is None:
+			logger.debug('Could not find object with id %r' % uid)
+		return result
 		
-	def get_object_safe(self, uid):
-		return self.get_object(uid, True)
-	
 	@property
 	def dataserver(self):
 		return component.getUtility( nti_interfaces.IDataserver )
