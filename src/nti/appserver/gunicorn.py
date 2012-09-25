@@ -162,11 +162,10 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		# It's impossible to configure this from the ini file because
 		# Paste uses plain ConfigParser, which doesn't understand escaped % chars,
 		# and tries to interpolate the settings for the log file.
-		# For now, we just add on the time in microseconds with %(D)s. Other options include
+		# For now, we just add on the time in seconds and  microseconds with %(T)s.%(D)s. Other options include
 		# using a different key with a fake % char, like ^,
-		# NOTE: The documentation claims that %D is microseconds, but as af 0.14.6, it's really
-		# milliseconds
-		self.cfg.settings['access_log_format'].set( self.cfg.access_log_format + " %(D)sms" )
+		# (Note: microseconds and seconds are not /total/, they are each fractions.)
+		self.cfg.settings['access_log_format'].set( self.cfg.access_log_format + " %(T)s.%(D)ss" )
 		# Also, if there is a handler set for the gunicorn access log (e.g., '-' for stderr)
 		# Then the default propagation settings mean we get two copies of access logging.
 		# make that stop.
