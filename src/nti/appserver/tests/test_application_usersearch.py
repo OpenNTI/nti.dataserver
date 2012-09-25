@@ -33,6 +33,7 @@ class TestApplicationUserSearch(ApplicationTestBase):
 			dfl.creator = user1
 			dfl.addFriend( user2 )
 			user1.addContainedObject( dfl )
+			dfl_ntiid = dfl.NTIID
 
 		testapp = TestApp( self.app )
 		# We can search for ourself
@@ -52,24 +53,24 @@ class TestApplicationUserSearch(ApplicationTestBase):
 
 		member = res.json_body['Items'][0]
 		assert_that( member, has_entry( 'Username', 'jason@nextthought.com' ) )
-		assert_that( member, has_entry( 'Communities', has_item( has_entry( 'Username', dfl.NTIID ) ) ) )
+		assert_that( member, has_entry( 'Communities', has_item( has_entry( 'Username', dfl_ntiid ) ) ) )
 
 		# We can also search for the DFL, by its lowercase NTIID
 		# The application for some reason is lowercasing the Username, which is WRONG.
 		# It should take what the DS gives it.
 		# TODO: The security on this isn't very tight
-		path = '/dataserver2/ResolveUser/' + dfl.NTIID.lower()
+		path = '/dataserver2/ResolveUser/' + dfl_ntiid.lower()
 		res = testapp.get( str(path), extra_environ=self._make_extra_environ('sjohnson@nextthought.com'))
 
 		member = res.json_body['Items'][0]
-		assert_that( member, has_entry( 'Username', dfl.NTIID ) )
+		assert_that( member, has_entry( 'Username', dfl_ntiid ) )
 
 		# And we can also search for their display names. Sigh.
 		path = '/dataserver2/UserSearch/Friends'
 		res = testapp.get( str(path), extra_environ=self._make_extra_environ('jason@nextthought.com'))
 
 		member = res.json_body['Items'][0]
-		assert_that( member, has_entry( 'Username', dfl.NTIID ) )
+		assert_that( member, has_entry( 'Username', dfl_ntiid ) )
 
 	def test_user_search(self):
 		with mock_dataserver.mock_db_trans(self.ds):
