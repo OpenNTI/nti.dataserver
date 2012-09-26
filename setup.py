@@ -173,7 +173,7 @@ setup(
 		# You may have to install this manually, depending on where zmq is installed.
 		# something like:
 		# pip install --install-option="--zmq=/opt/nti" pyzmq
-		'pyzmq >= 2.2.0', # TODO: 2.2.0.1 is out. It includes zmq.green and obsoletes gevent_zeromq. It is incompatible with having gevent_zeromq installed
+		'pyzmq == 2.2.0', # TODO: 2.2.0.1 is out. It includes zmq.green and obsoletes gevent_zeromq. It is incompatible with having gevent_zeromq installed
 		# Monitoring stats and instrumenting code
 		'python-statsd >= 1.5.7', # statsd client. statsd must be installed separately: https://github.com/etsy/statsd
 		'pystatsd >= 0.1.6', # statsd server implementation, pure python. probably easier than setting up node. Might want to get it from https://github.com/sivy/py-statsd
