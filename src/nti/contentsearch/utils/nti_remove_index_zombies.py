@@ -8,16 +8,12 @@ import sys
 import zope.intid
 from zope import component
 
-from repoze.catalog.indexes.field import CatalogFieldIndex
-from repoze.catalog.indexes.keyword import CatalogKeywordIndex
-
 from nti.dataserver import users
 from nti.dataserver.utils import run_with_dataserver
 from nti.dataserver import interfaces as nti_interfaces
 
 import nti.contentsearch
 from nti.contentsearch import get_indexable_types
-from nti.contentsearch.textindexng3 import CatalogTextIndexNG3
 from nti.contentsearch import interfaces as search_interfaces
 
 def main():
@@ -52,18 +48,15 @@ def _get_object(uid):
 	return result
 
 def _get_docids_from_catalog_field(catfield):
-	if 	isinstance(catfield, CatalogTextIndexNG3) or \
-		isinstance(catfield, CatalogFieldIndex) or \
-		isinstance(catfield, CatalogKeywordIndex):
-		
-		return catfield._indexed()
-	else:
-		return ()
+	m = getattr(catfield, "_indexed", None)
+	result = catfield._indexed() if m is not None else ()
+	return result	
 		
 def _get_docids_from_rim(rim):
 	for catalog in rim.values():
 		for catfield in catalog.values():
 			yield catalog, _get_docids_from_catalog_field(catfield)
+			break
 			
 def remove_zombies( usernames ):
 	
