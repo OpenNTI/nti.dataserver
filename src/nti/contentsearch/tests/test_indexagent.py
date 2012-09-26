@@ -6,6 +6,8 @@ from hamcrest import assert_that
 from nti.dataserver.activitystream_change import Change
 from nti.contentsearch._indexagent import _process_event
 
+from nti.contentsearch.tests import ConfiguringTestBase
+
 test_user = 'test.user@nextthought.com'
 
 note_add =  {'body': [u'Kenpachi Zaraki'], 'ContainerId': 'tag:nextthought.com,2011-07-14:AOPS-HTML-prealgebra-0', \
@@ -49,11 +51,12 @@ class MockIndexManager(object):
 	def delete_user_content(self, username, type_name=None, data=None, *args, **kwargs):
 		self.update_user_content(username, type_name, data)
 
-class TestIndexAgent(unittest.TestCase):
+class TestIndexAgent(ConfiguringTestBase):
 
 	indexmanager = None
 
 	def setUp(self):
+		super(TestIndexAgent, self).setUp()
 		self.indexmanager = MockIndexManager()
 
 	def test_create(self):
