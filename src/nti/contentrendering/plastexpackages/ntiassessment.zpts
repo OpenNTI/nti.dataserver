@@ -5,39 +5,39 @@
 
 name: naqsymmathpart
 <div class="naquestionpart naqsymmathpart" tal:attributes="id self/id" >
-	 <a tal:attributes="name self/id"/>
-	 <span tal:content="self" />
+	 <a tal:attributes="name self/id"></a>
+	 <span tal:content="self" ></span>
 </div>
 
 name: naqnumericmathpart
 <div class="naquestionpart naqnumericmathpart" tal:attributes="name self/id" >
-	 <a tal:attributes="name self/id"/>
-	 <span tal:content="self"/>
+	 <a tal:attributes="name self/id"></a>
+	 <span tal:content="self"></span>
 </div>
 
 
 name: naqfreeresponsepart
 <div class="naquestionpart naqfreeresponsepart" tal:attributes="name self/id" >
-	 <a tal:attributes="name self/id"/>
-	 <span tal:content="self"/>
+	 <a tal:attributes="name self/id"></a>
+	 <span tal:content="self"></span>
 </div>
 
 # These and the contained naqchoices should probably be radio buttuns
 name: naqmultiplechoicepart
 <div class="naquestionpart naqmultiplechoicepart" tal:attributes="name self/id" >
-	 <a tal:attributes="name self/id"/>
-	 <span tal:content="self"/>
+	 <a tal:attributes="name self/id"></a>
+	 <span tal:content="self"></span>
 </div>
 
 name: naqchoices
 <ol class="naqchoices">
-	<li tal:repeat="item self" class="naqchoice" tal:content="item" />
+	<li tal:repeat="item self" class="naqchoice" tal:content="item" ></li>
 </ol>
 
 name: naqmatchingpart
 <div class="naquestionpart naqmatchingpart" tal:attributes="name self/id" >
-	 <a tal:attributes="name self/id"/>
-	 <span tal:content="self"/>
+	 <a tal:attributes="name self/id"></a>
+	 <span tal:content="self"></span>
 </div>
 
 name: naquestion
@@ -45,7 +45,7 @@ name: naquestion
 <param name="ntiid" value="the-ntiid" tal:attributes="value self/ntiid" />
 <param name="canindividual" value="false"      tal:attributes="value self/attributes/individual | default" />
 <div class="naquestion">
-	 <span tal:content="self"/>
+	 <span tal:replace="self"></span>
 </div>
 </object>
 
@@ -57,4 +57,4 @@ name: naqvideo
 
 # Things that shouldn't render, just be placeholders
 name: naqsolution naqsolexplanation naqhints naqhint naqsolutions naquestionset
-<span tal:attributes="class string:${self/__class__/__name__} hidden" />
+<span tal:attributes="class string:${self/__class__/__name__} hidden" ></span>
