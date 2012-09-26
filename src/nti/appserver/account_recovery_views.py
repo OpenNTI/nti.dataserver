@@ -205,11 +205,13 @@ def forgot_passcode_view(request):
 
 	return hexc.HTTPNoContent()
 
+from nti.appserver.user_policies import CONTACT_EMAIL_RECOVERY_ANNOTATION
+from zope.annotation.interfaces import IAnnotations
 
 def find_users_with_email( email, dataserver, username=None ):
 	"""
 	Looks for and returns all users with an email or password recovery
-	email matching the given email.
+	email hash (or parent/contact email hash) matching the given email.
 
 	:param basestring username: If given, we will only examine
 		a user with this name (and will return a sequence of length 0 or 1).
@@ -236,7 +238,9 @@ def find_users_with_email( email, dataserver, username=None ):
 		if not profile:
 			continue
 
-		if email == getattr( profile, 'email', None ) or hashed_email == getattr( profile, 'password_recovery_email_hash', None ):
+		if (email == getattr( profile, 'email', None )
+			or hashed_email == getattr( profile, 'password_recovery_email_hash', None )
+			or hashed_email == IAnnotations( entity, {} ).get( CONTACT_EMAIL_RECOVERY_ANNOTATION )):
 			result.append( entity )
 
 	return result
