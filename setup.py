@@ -108,7 +108,7 @@ setup(
 		# See also http://pypi.python.org/pypi/neoppod/ for a completely different option
 
 		'anyjson >= 0.3.3',
-		'boto >= 2.5.2', # amazon
+		'boto >= 2.6.0', # amazon
 		'brownie >= 0.5.1', # Common utilities
 		 # rating content objects (1.0-rc3 > 1.0 sadly, so specific)
 		 # See also collective.subscribe for a different take, useful when we need
