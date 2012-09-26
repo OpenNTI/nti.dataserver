@@ -60,8 +60,8 @@ class mtiny(Base.Command):
 class pause(Base.Command):
 	pass
 
-class alert(Base.Command):
-	args = '< overlay > text'
+class alert(Base.FontSelection.TextCommand):
+	args = '< overlay > self'
 
 class titlerow(Base.Command):
 	pass
