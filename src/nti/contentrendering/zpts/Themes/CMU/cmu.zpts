@@ -18,4 +18,4 @@ name: alt
 <span tal:content="self/attributes/default"></span>
 
 name: alert
-<em tal:content="self/attributes/text"></em>
+<em tal:content="self"></em>
