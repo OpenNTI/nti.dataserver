@@ -56,9 +56,3 @@ name: pageref
  
 name: caption*
 <div class="caption"><span tal:content="self">Caption text</span></div>
-
-name: textsuperscript
-<sup tal:content="self"></sup>
-
-name: textsubscript
-<sub tal:content="self"></sub>
