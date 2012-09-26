@@ -164,6 +164,21 @@ def _reference_list_length( x ):
 		return len(refs)
 	return -1 # distinguish no refs vs no data
 
+def _combine_predicate( new, old ):
+	if not old:
+		return new
+	return lambda obj: new(obj) and old(obj)
+
+def _ifollow_predicate_factory( request, and_me=False ):
+	user = request.context.user
+	following = user.following
+	if and_me:
+		following.add( user.username )
+	return lambda o: getattr( o.creator, 'username', o.creator ) in following
+
+def _ifollowandme_predicate_factory( request ):
+	return _ifollow_predicate_factory( request, True )
+
 SORT_KEYS = {
 	'lastModified': lambda x: getattr( x, 'lastModified', 0 ), # TODO: Adapt to dublin core?
 	'LikeCount': liking.like_count,
@@ -175,8 +190,10 @@ SORT_DIRECTION_DEFAULT = {
 	'lastModified': 'descending'
 	}
 FILTER_NAMES = {
-	'TopLevel': lambda x: getattr( x, 'inReplyTo', None ) is None
+	'TopLevel': lambda x: getattr( x, 'inReplyTo', None ) is None,
 	# This won't work for the Change objects. (Try Acquisition?) Do we need it for them?
+	'IFollow': (_ifollow_predicate_factory,),
+	'IFollowAndMe': (_ifollowandme_predicate_factory,)
 	}
 # MeOnly is another valid filter for just things I have done, implemented efficiently
 
@@ -252,10 +269,24 @@ class _UGDView(object):
 			The sort direction. Options are ``ascending`` and ``descending``.
 
 		filter
-			Whether to filter the returned data in some fashion. Two values are defined, and
-			only for the data views (not the stream). First is ``TopLevel``: it causes only objects that are not
-			replies to something else to be returned. Second is ``MeOnly``: it causes only things that
-			I have done to be included. They can be combined by separating them with a comma.
+			Whether to filter the returned data in some fashion. Several values are defined:
+
+			* ``TopLevel``: it causes only objects that are not replies to something else
+			  to be returned (this is meaningless on the stream views).
+
+			* ``MeOnly``: it causes only things that I have done to be included.
+
+			* ``IFollow``: it causes only things done by people I am directly following
+			  to be returned (right now, adding to a FriendsList also defaults to establishing
+			  the following relationship, so you can think of this as "My Contacts"). Note that
+			  this *does not* imply or include things that I have done. This is very efficient.
+			  (Seems weird, but that's the existing behaviour.)
+
+			* ``IFollowAndMe``: Just like ``IFollow``, but also adds things that I have done.
+			  Again, this is very efficient.
+
+			They can be combined by separating them with a comma (although ``MeOnly`` and
+			``IFollow`` are mutually exclusive.)
 
 		accept
 			A comma-separated list of MIME types of objects to return. If not given or ``*/*`` is in the list, all types
@@ -304,15 +335,14 @@ class _UGDView(object):
 		if 'TopLevel' in filter_names and sort_key_function is not _reference_list_length:
 			_build_reference_lists( self.request, result_list )
 
-		def _make_p( a, b ):
-			if b is None:
-				return a
-			return lambda o: a(o) and b(o)
-
 		for filter_name in filter_names:
 			if filter_name not in FILTER_NAMES:
 				continue
-			predicate = _make_p( FILTER_NAMES[filter_name], predicate )
+			the_filter = FILTER_NAMES[filter_name]
+			if isinstance( the_filter, tuple ):
+				the_filter = the_filter[0]( self.request )
+
+			predicate = _combine_predicate( the_filter, predicate )
 
 		if predicate:
 			result_list = filter(predicate, result_list)
