@@ -41,10 +41,11 @@ def _get_default_analyzer():
 	if _default_analyzer is None:
 		sw_util = component.queryUtility(search_interfaces.IStopWords) 
 		stoplist = sw_util.stopwords() if sw_util else ()
-		tokenizer = analysis.RegexTokenizer(expression=_default_expression, gaps=False)
-		lc_filter = analysis.LowercaseFilter()
-		stopword_filter = analysis.StopFilter(stoplist=stoplist)
-		_default_analyzer = analysis.CompositeAnalyzer(tokenizer, lc_filter, stopword_filter)
+		analyzers = [analysis.RegexTokenizer(expression=_default_expression, gaps=False),
+					 analysis.LowercaseFilter() ]
+		if stoplist:
+			analyzers.append(analysis.StopFilter(stoplist=stoplist))
+		_default_analyzer = analysis.CompositeAnalyzer(*analyzers)
 	return _default_analyzer
 
 def _set_matched_filter(tokens, termset):
