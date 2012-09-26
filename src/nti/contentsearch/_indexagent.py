@@ -21,7 +21,7 @@ _event_types = { Change.CREATED: 'index_user_content',
 				 Change.MODIFIED:'update_user_content',
 				 Change.DELETED: 'delete_user_content' }
 
-_only_delete_by_owner = False
+_only_delete_by_owner = True
 
 def get_creator(obj):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
