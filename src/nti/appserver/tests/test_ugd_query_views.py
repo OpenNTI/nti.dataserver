@@ -417,3 +417,82 @@ class TestApplicationUGDQueryViews(ApplicationTestBase):
 		res = testapp.get( path, params={'filter': 'TopLevel', 'accept': contenttypes.Note.mime_type + ',' + contenttypes.Highlight.mime_type}, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body, has_entry( 'Items', has_length( 2 ) ) )
 		assert_that( res.json_body, has_entry( 'Items', contains( has_entry( 'ID', hl_id ), has_entry( 'ID', top_n_id ) ) ) )
+
+		# Now share some stuff and test the MeOnly and IFollow
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = users.User.get_user( user.username )
+			user_i_follow = self._create_user( username='user_i_follow' )
+			user.follow( user_i_follow )
+			user_not_followed = self._create_user( username='user_not_followed' )
+
+			hl = contenttypes.Highlight()
+			hl.applicableRange = contentrange.ContentRangeDescription()
+			hl.containerId = 'tag:nti:foo'
+			hl.creator = user_i_follow
+			user_i_follow.addContainedObject( hl )
+			hl.lastModified = 5
+			hl_id_follow = to_external_ntiid_oid( hl )
+			user._addSharedObject( hl )
+
+			hl = contenttypes.Highlight()
+			hl.applicableRange = contentrange.ContentRangeDescription()
+			hl.containerId = 'tag:nti:foo'
+			hl.creator = user_not_followed
+			user_not_followed.addContainedObject( hl )
+			hl.lastModified = 4
+			hl_id_not_followed = to_external_ntiid_oid( hl )
+			user._addSharedObject( hl ) # in normal circumstances, this would come from a Community
+
+
+		# Ok, no user filters, I get it all
+		res = testapp.get( path, params={'filter': 'TopLevel'}, extra_environ=self._make_extra_environ())
+		assert_that( res.json_body, has_entry( 'Items', has_length( 4 ) ) )
+		assert_that( res.json_body, has_entry( 'Items',
+											   contains( has_entry( 'ID', hl_id_follow ), has_entry( 'ID', hl_id_not_followed ),
+														 has_entry( 'ID', hl_id ), has_entry( 'ID', top_n_id ) ) ) )
+
+		# Me only is back to 2
+		res = testapp.get( path, params={'filter': 'TopLevel,MeOnly'}, extra_environ=self._make_extra_environ())
+		assert_that( res.json_body, has_entry( 'Items', has_length( 2 ) ) )
+		assert_that( res.json_body, has_entry( 'Items', contains( has_entry( 'ID', hl_id ), has_entry( 'ID', top_n_id ) ) ) )
+
+		# Me only notes is back to 1
+		res = testapp.get( path, params={'filter': 'TopLevel,MeOnly', 'accept': contenttypes.Note.mime_type }, extra_environ=self._make_extra_environ())
+		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
+		assert_that( res.json_body, has_entry( 'Items', contains( has_entry( 'ID', top_n_id ) ) ) )
+
+		# TopLevel I follow cuts out the not_followed user. And also me.
+		res = testapp.get( path, params={'filter': 'TopLevel,IFollow'}, extra_environ=self._make_extra_environ())
+		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
+		assert_that( res.json_body, has_entry( 'Items',
+											   contains( has_entry( 'ID', hl_id_follow ) ) ) )
+
+		# And I can make that just highlights
+		res = testapp.get( path, params={'filter': 'TopLevel,IFollow', 'accept': contenttypes.Highlight.mime_type}, extra_environ=self._make_extra_environ())
+		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
+		assert_that( res.json_body, has_entry( 'Items',
+											   contains( has_entry( 'ID', hl_id_follow ) ) ) )
+
+		# Or just the notes, which clears it all
+		res = testapp.get( path, params={'filter': 'TopLevel,IFollow', 'accept': contenttypes.Note.mime_type}, extra_environ=self._make_extra_environ())
+		assert_that( res.json_body, has_entry( 'Items', has_length( 0 ) ) )
+
+		# The same os above, but with me
+		# TopLevel I follow cuts out the not_followed user. And also me.
+		res = testapp.get( path, params={'filter': 'TopLevel,IFollowAndMe'}, extra_environ=self._make_extra_environ())
+		assert_that( res.json_body, has_entry( 'Items', has_length( 3 ) ) )
+		assert_that( res.json_body, has_entry( 'Items',
+											   contains( has_entry( 'ID', hl_id_follow ),
+														 has_entry( 'ID', hl_id ),
+														 has_entry( 'ID', top_n_id ) ) ) )
+
+		# And I can make that just highlights
+		res = testapp.get( path, params={'filter': 'TopLevel,IFollowAndMe', 'accept': contenttypes.Highlight.mime_type}, extra_environ=self._make_extra_environ())
+		assert_that( res.json_body, has_entry( 'Items', has_length( 2 ) ) )
+		assert_that( res.json_body, has_entry( 'Items',
+											   contains( has_entry( 'ID', hl_id_follow ),
+														 has_entry( 'ID', hl_id ) ) ) )
+
+		# Or just the notes, which gets back one
+		res = testapp.get( path, params={'filter': 'TopLevel,IFollowAndMe', 'accept': contenttypes.Note.mime_type}, extra_environ=self._make_extra_environ())
+		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
