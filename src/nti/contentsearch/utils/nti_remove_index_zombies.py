@@ -2,8 +2,7 @@
 
 from __future__ import print_function, unicode_literals
 
-import os
-import sys
+import argparse
 
 import zope.intid
 from zope import component
@@ -16,12 +15,15 @@ import nti.contentsearch
 from nti.contentsearch import interfaces as search_interfaces
 
 def main():
-	if len(sys.argv) < 2:
-		print( "Usage %s env_dir *usernames" % sys.argv[0] )
-		sys.exit( 1 )
+	arg_parser = argparse.ArgumentParser( description="Remove index zombies" )
+	arg_parser.add_argument( 'env_dir', help="Dataserver environment root directory" )
+	arg_parser.add_argument( 'usernames',
+							 nargs="*",
+							 help="The username(s) to process" )
+	args = arg_parser.parse_args()
 
-	env_dir = os.path.expanduser(sys.argv[1])
-	usernames = sys.argv[2:]
+	env_dir = args.env_dir
+	usernames = args.usernames
 	
 	run_with_dataserver( environment_dir=env_dir,
 						 xmlconfig_packages=(nti.contentsearch,),
