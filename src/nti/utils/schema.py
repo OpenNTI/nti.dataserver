@@ -57,6 +57,10 @@ class InvalidValue(sch_interfaces.InvalidValue):
 if not hasattr(sch_interfaces.InvalidValue, 'value' ):
 	setattr( sch_interfaces.InvalidValue, 'value', None )
 
+# And give all validation errors a 'field'
+if not hasattr(sch_interfaces.ValidationError, 'field' ):
+	setattr( sch_interfaces.ValidationError, 'field', None )
+
 class FieldValidationMixin(object):
 	"""
 	A field mixin that causes slightly better errors to be created.

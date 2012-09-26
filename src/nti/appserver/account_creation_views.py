@@ -118,13 +118,7 @@ def _create_user( request, externalValue, preflight_only=False ):
 						'code': e.__class__.__name__ },
 						exc_info[2]	)
 	except zope.schema.interfaces.RequiredMissing as e:
-		exc_info = sys.exc_info()
-		_raise_error( request,
-					  hexc.HTTPUnprocessableEntity,
-					  {'message': exc_info[1].message,
-					   'field': exc_info[1].message,
-					   'code': exc_info[1].__class__.__name__ },
-					   exc_info[2]	)
+		obj_io.handle_validation_error( request, e )
 	except z3c.password.interfaces.InvalidPassword as e:
 		# Turns out that even though these are ValidationError, we have to handle
 		# them specially because the library doesn't follow the usual pattern
