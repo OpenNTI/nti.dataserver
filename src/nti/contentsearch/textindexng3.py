@@ -89,6 +89,8 @@ class TextIndexNG3(object):
 	def unindex_doc(self, docid):
 		self.unindex_object(docid)
 
+	reindex_doc = index_doc
+
 	# --- IStatistics --- 
 	
 	def documentCount(self):
@@ -221,9 +223,6 @@ class CatalogTextIndexNG3(CatalogIndex, TextIndexNG3):
 		if limit:
 			result = result[:limit]
 		return result
-
-	def reindex_doc(self, docid, obj):
-		return super(CatalogTextIndexNG3, self).reindex_doc(docid, obj)
 
 	def _indexed(self):
 		return self.get_docids()
