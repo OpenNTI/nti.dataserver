@@ -162,5 +162,11 @@ class pdfminorversion(Command):
 class flushbottom(Command):
 	args = ''
 
+class nobreak(Base.Command):
+	args = 'self'
+
+class vfrac(Base.Command):
+	args = 'nom denom'
+
 def ProcessOptions( options, document ):
 	pass
