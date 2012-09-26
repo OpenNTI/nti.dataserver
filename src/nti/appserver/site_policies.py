@@ -684,7 +684,7 @@ class TestMathcountsSitePolicyEventListener(GenericKidSitePolicyEventListener):
 		(creating it if it doesn't exist).
 
 		"""
-		super(MathcountsSitePolicyEventListener,self).user_created( user, event )
+		super(TestMathcountsSitePolicyEventListener,self).user_created( user, event )
 
 		community = users.Entity.get_entity( 'testmathcounts.nextthought.com' )
 		if community is None:
