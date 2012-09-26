@@ -14,7 +14,6 @@ from hamcrest import greater_than_or_equal_to
 from hamcrest import is_not
 from hamcrest import contains
 does_not = is_not
-import unittest
 
 from nti.appserver.application import createApplication
 from nti.contentlibrary.filesystem import StaticFilesystemLibrary as Library
@@ -140,7 +139,7 @@ class ApplicationTestBase(ConfiguringTestBase):
 
 	def _create_user(self, username=b'sjohnson@nextthought.com', password='temp001' ):
 		return users.User.create_user( self.ds, username=username, password=password )
-from nti.dataserver import liking
+
 
 class TestApplication(ApplicationTestBase):
 
@@ -169,103 +168,6 @@ class TestApplication(ApplicationTestBase):
 			self._create_user()
 		testapp = TestApp( self.app )
 		testapp.get( '/dataserver2/users/sjohnson@nextthought.com/Library/Main', extra_environ=self._make_extra_environ() )
-
-	def test_sort_filter_page(self):
-		with mock_dataserver.mock_db_trans(self.ds):
-			user = self._create_user( )
-
-			top_n = contenttypes.Note()
-			top_n.applicableRange = contentrange.ContentRangeDescription()
-			top_n.containerId = 'tag:nti:foo'
-			top_n.body = ("Top",)
-			liking.like_object( top_n, 'foo@bar' )
-			user.addContainedObject( top_n )
-			top_n_id = top_n.id
-			top_n.lastModified = 1
-
-			reply_n = contenttypes.Note()
-			reply_n.applicableRange = contentrange.ContentRangeDescription()
-			reply_n.containerId = 'tag:nti:foo'
-			reply_n.body = ('Reply',)
-			reply_n.inReplyTo = top_n
-			reply_n.addReference(top_n)
-			user.addContainedObject( reply_n )
-			reply_n_id = reply_n.id
-			reply_n.lastModified = 2
-
-			top_n_ext_id = to_external_ntiid_oid( top_n )
-
-		testapp = TestApp( self.app )
-		path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + top_n.containerId + ')/UserGeneratedData'
-
-		res = testapp.get( path, extra_environ=self._make_extra_environ())
-		assert_that( res.json_body, has_entry( 'Items', has_length( 2 ) ) )
-
-		res = testapp.get( path, params={'filter': 'TopLevel,MeOnly'}, extra_environ=self._make_extra_environ())
-		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
-		assert_that( res.json_body, has_entry( 'Items', contains( has_entry( 'ID', top_n_id ) ) ) )
-		assert_that( res.json_body,
-					 has_entry( 'Items',
-								contains(
-									has_entry( 'ReferencedByCount', 1 ) ) ) )
-
-		res = testapp.get( path, params={'sortOn': 'LikeCount'}, extra_environ=self._make_extra_environ())
-		assert_that( res.json_body, has_entry( 'Items', has_length( 2 ) ) )
-		# Descending by default
-		assert_that( res.json_body,
-					 has_entry( 'Items',
-								contains(
-									has_entry( 'ID', top_n_id ),
-									has_entry( 'ID', reply_n_id ) ) ) )
-
-		res = testapp.get( path, params={'sortOn': 'LikeCount', 'sortOrder': 'ascending'}, extra_environ=self._make_extra_environ())
-		assert_that( res.json_body, has_entry( 'Items', has_length( 2 ) ) )
-		assert_that( res.json_body,
-					 has_entry( 'Items',
-								contains(
-									has_entry( 'ID', reply_n_id ),
-									has_entry( 'ID', top_n_id ) ) ) )
-
-		res = testapp.get( path, params={'sortOn': 'ReferencedByCount'}, extra_environ=self._make_extra_environ())
-		assert_that( res.json_body, has_entry( 'Items', has_length( 2 ) ) )
-		# Descending by default
-		assert_that( res.json_body,
-					 has_entry( 'Items',
-								contains(
-									has_entry( 'ID', top_n_id ),
-									has_entry( 'ID', reply_n_id ) ) ) )
-		# And, if we asked for this info, we get data back about it
-		assert_that( res.json_body,
-					 has_entry( 'Items',
-								contains(
-									has_entry( 'ReferencedByCount', 1 ),
-									has_entry( 'ReferencedByCount', 0 ) ) ) )
-
-		res = testapp.get( path, params={'sortOn': 'lastModified', 'sortOrder': 'descending'}, extra_environ=self._make_extra_environ())
-		assert_that( res.json_body, has_entry( 'Items', has_length( 2 ) ) )
-		assert_that( res.json_body,
-					 has_entry( 'Items',
-								contains(
-									has_entry( 'ID', reply_n_id ),
-									has_entry( 'ID', top_n_id ) ) ) )
-
-		res = testapp.get( path, params={'batchSize': '1', 'batchStart': '0', 'sortOn': 'lastModified', 'sortOrder': 'ascending'}, extra_environ=self._make_extra_environ())
-		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
-		assert_that( res.json_body, has_entry( 'Items', contains( has_entry( 'ID', top_n_id ) ) ) )
-
-		res = testapp.get( path, params={'batchSize': '1', 'batchStart': '1', 'sortOn': 'lastModified', 'sortOrder': 'ascending'}, extra_environ=self._make_extra_environ())
-		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
-		assert_that( res.json_body, has_entry( 'Items', contains( has_entry( 'ID', reply_n_id ) ) ) )
-
-		res = testapp.get( path, params={'batchSize': '1', 'batchStart': '2'}, extra_environ=self._make_extra_environ())
-		assert_that( res.json_body, has_entry( 'Items', has_length( 0 ) ) )
-
-		# Top-level filtering is only useful if we can get replies on demand.
-		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/' + top_n_ext_id  + '/@@replies'
-		res = testapp.get( path, extra_environ=self._make_extra_environ() )
-		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
-		assert_that( res.json_body, has_entry( 'Items', contains( has_entry( 'ID', reply_n_id ) ) ) )
-
 
 	def test_path_with_parens(self):
 		with mock_dataserver.mock_db_trans(self.ds):

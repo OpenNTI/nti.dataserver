@@ -37,6 +37,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import users
 from nti.dataserver import liking
 from nti.dataserver import authorization as nauth
+from nti.dataserver.mimetype import nti_mimetype_from_object
 
 from z3c.batching.batch import Batch
 
@@ -200,8 +201,17 @@ class _UGDView(object):
 		result.__name__ = ntiid
 		return result
 
+	def __get_list_param( self, name ):
+		param = self.request.params.get( name, '' )
+		if param:
+			return param.split( ',' )
+		return ()
+
 	def _get_filter_names(self):
-		return self.request.params.get( 'filter', '' ).split( ',' )
+		return self.__get_list_param( 'filter' )
+
+	def _get_accept_types(self):
+		return self.__get_list_param( 'accept' )
 
 	def getObjectsForId( self, user, ntiid ):
 		"""
@@ -247,6 +257,11 @@ class _UGDView(object):
 			replies to something else to be returned. Second is ``MeOnly``: it causes only things that
 			I have done to be included. They can be combined by separating them with a comma.
 
+		accept
+			A comma-separated list of MIME types of objects to return. If not given or ``*/*`` is in the list, all types
+			of objects are returned. By default, all types of objects are returned. This parameter
+			is meaningless for the stream views, since they only ever contain one type of object, the change object.
+
 		batchSize
 			Integer giving the page size. Must be greater than zero. Paging only happens when
 			this is supplied together with ``batchStart``
@@ -261,34 +276,58 @@ class _UGDView(object):
 		"""
 
 		# Before we filter and batch, we sort. Some filter operations need the sorted
-		# data
+		# data.
+		### XXX Which ones? Unit tests don't break if we don't sort first, so for efficiency
+		# we're not
+
 		result_list = result['Items']
 		result['TotalItemCount'] = len(result_list)
+
 		# The request keys match what z3c.table does
 		sort_on = self.request.params.get( 'sortOn', self._DEFAULT_SORT_ON )
 		sort_order = self.request.params.get( 'sortOrder', SORT_DIRECTION_DEFAULT.get( sort_on, 'ascending' ) )
 		sort_key_function = SORT_KEYS.get( sort_on, SORT_KEYS['lastModified'] )
+
+		# TODO: Which is faster and more efficient? The built-in filter function which allocates
+		# a new list but iterates fast, or iterating in python and removing from the existing list?
+		# Since the list is really an array, removing from it is actually slow
+
+		predicate = None # We build an uber predicate that handles all filtering in one pass through the list
+		accept_types = self._get_accept_types()
+		if accept_types and '*/*' not in accept_types:
+			predicate = lambda o: nti_mimetype_from_object(o) in accept_types
+
+		filter_names = self._get_filter_names()
+		# Be nice and make sure the reply count gets included if
+		# it isn't already and we're after just the top level.
+		# Must do this before filtering
+		if 'TopLevel' in filter_names and sort_key_function is not _reference_list_length:
+			_build_reference_lists( self.request, result_list )
+
+		def _make_p( a, b ):
+			if b is None:
+				return a
+			return lambda o: a(o) and b(o)
+
+		for filter_name in filter_names:
+			if filter_name not in FILTER_NAMES:
+				continue
+			predicate = _make_p( FILTER_NAMES[filter_name], predicate )
+
+		if predicate:
+			result_list = filter(predicate, result_list)
+			result['Items'] = result_list
+
+		# Finally, sort the smallest set.
 		if isinstance( sort_key_function, tuple ):
 			prep_function = sort_key_function[0]
 			sort_key_function = sort_key_function[1]
 			prep_function( self.request, result_list )
 
+		# Stable sort, which may be important
 		result_list.sort( key=sort_key_function,
 						  reverse=(sort_order == 'descending') )
 
-		# TODO: Which is faster and more efficient? The built-in filter function which allocates
-		# a new list but iterates fast, or iterating in python and removing from the existing list?
-		# Since the list is really an array, removing from it is actually slow
-		filter_names = self._get_filter_names()
-		for filter_name in filter_names:
-			if filter_name in FILTER_NAMES:
-				# Be nice and make sure the reply count gets included if
-				# it isn't already and we're after just the top level.
-				# Must do this before filtering
-				if filter_name == 'TopLevel' and sort_key_function is not _reference_list_length:
-					_build_reference_lists( self.request, result_list )
-				result_list = filter(FILTER_NAMES[filter_name], result_list)
-				result['Items'] = result_list
 
 		batch_size = self.request.params.get( 'batchSize', self._DEFAULT_BATCH_SIZE )
 		batch_start = self.request.params.get( 'batchStart', self._DEFAULT_BATCH_START )
