@@ -18,6 +18,7 @@ import simplejson
 from zope import component
 from zope import interface
 import zope.schema.interfaces
+from zope.i18n import translate
 from z3c.password import interfaces as pwd_interfaces
 
 from pyramid.threadlocal import get_current_request
@@ -144,13 +145,14 @@ def handle_validation_error( request, validation_error ):
 	if not field_name and isinstance( validation_error, zope.schema.interfaces.RequiredMissing ):
 		field_name = validation_error.message
 
+
 	# z3c.password and similar (nti.dataserver.users._InvalidData) set this for internationalization
 	# purposes
 	if getattr(validation_error, 'i18n_message', None):
-		msg = str(validation_error)
+		msg = translate( validation_error.i18n_message )
 	else:
 		msg = validation_error.message or msg
-		msg = str(msg)
+		msg = translate(msg)
 
 	raise_json_error( request,
 					  hexc.HTTPUnprocessableEntity,

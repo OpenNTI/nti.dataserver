@@ -4,6 +4,10 @@ from __future__ import print_function, unicode_literals
 import hashlib
 import urlparse
 
+import zope.i18nmessageid
+MessageFactory = zope.i18nmessageid.MessageFactory('nti.dataserver')
+
+
 _AVATAR_SERVICES = { 'gravatar': { True: b'secure.gravatar.com',
 								   False: b'www.gravatar.com' },
 					'libravatar': {True: b'seccdn.libravatar.org',

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nti.dataserver 0.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2012-09-25 19:20-0500\n"
+"POT-Creation-Date: 2012-09-26 14:39-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -66,15 +66,15 @@ msgid "Please provide your last name."
 msgstr ""
 
 #: src/nti/appserver/site_policies.py:424
-msgid "Birthdate must be in the past"
+msgid "Birthdate must be in the past."
 msgstr ""
 
 #: src/nti/appserver/site_policies.py:427
-msgid "Birthdate must be at least four years ago"
+msgid "Birthdate must be at least four years ago."
 msgstr ""
 
 #: src/nti/appserver/site_policies.py:430
-msgid "Birthdate must be less than 150 years ago"
+msgid "Birthdate must be less than 150 years ago."
 msgstr ""
 
 #: src/nti/appserver/user_policies.py:120
@@ -92,7 +92,7 @@ msgid ""
 msgstr ""
 
 #: src/nti/dataserver/users/interfaces.py:77
-msgid "The email address you have entered is not valid"
+msgid "The email address you have entered is not valid."
 msgstr ""
 
 #: src/nti/dataserver/users/interfaces.py:83
@@ -101,5 +101,9 @@ msgstr ""
 
 #: src/nti/dataserver/users/interfaces.py:86
 msgid "Your pasword cannot contain only whitespace. Please try again."
+msgstr ""
+
+#: src/nti/utils/schema.py:76
+msgid "${field} is too short."
 msgstr ""
 

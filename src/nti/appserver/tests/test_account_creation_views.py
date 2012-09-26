@@ -125,6 +125,8 @@ class _AbstractValidationViewBase(ConfiguringTestBase):
 			assert_that( e.exception.json_body, has_entry( 'field', 'Username' ) )
 			assert_that( e.exception.json_body, has_entry( 'code', bad_code ) )
 
+		# last one is too short.
+		assert_that( e.exception.json_body, has_entry( 'message', contains_string('Username is too short. Please use at least' ) ) )
 
 
 class _AbstractNotDevmodeViewBase(ConfiguringTestBase):

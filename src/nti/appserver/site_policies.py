@@ -421,13 +421,13 @@ class GenericSitePolicyEventListener(object):
 		birthdate = getattr( profile, 'birthdate', None )
 		if birthdate:
 			if birthdate >= datetime.date.today():
-				raise BirthdateInFuture( _("Birthdate must be in the past"), 'birthdate', birthdate.isoformat(), value=birthdate )
+				raise BirthdateInFuture( _("Birthdate must be in the past."), 'birthdate', birthdate.isoformat(), value=birthdate )
 
 			if not _is_x_or_more_years_ago( birthdate, 4 ):
-				raise BirthdateTooRecent( _("Birthdate must be at least four years ago"), 'birthdate', birthdate.isoformat(), value=birthdate )
+				raise BirthdateTooRecent( _("Birthdate must be at least four years ago."), 'birthdate', birthdate.isoformat(), value=birthdate )
 
 			if _is_x_or_more_years_ago( birthdate, 150 ):
-				raise BirthdateTooAncient( _("Birthdate must be less than 150 years ago"), 'birthdate', birthdate.isoformat(), value=birthdate )
+				raise BirthdateTooAncient( _("Birthdate must be less than 150 years ago."), 'birthdate', birthdate.isoformat(), value=birthdate )
 
 
 @interface.implementer(ISitePolicyUserEventListener)
