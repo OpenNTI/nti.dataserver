@@ -38,7 +38,7 @@ def _check_event(target, change_type, data_type, data):
 def _process_event(indexmanager, target, change_type, data_type, data):
 	if 	_check_event(target, change_type, data_type, data):
 
-		logger.log( loglevels.BLATHER, 'Index event ("%s", "%s", "%s") received', target, change_type, data_type)
+		logger.log( loglevels.TRACE, 'Index event ("%s", "%s", "%s") received', target, change_type, data_type)
 
 		func_name = _event_types.get( change_type )
 		func = getattr( indexmanager, func_name, None ) if func_name else None
