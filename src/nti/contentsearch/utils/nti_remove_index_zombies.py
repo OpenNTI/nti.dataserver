@@ -13,7 +13,6 @@ from nti.dataserver.utils import run_with_dataserver
 from nti.dataserver import interfaces as nti_interfaces
 
 import nti.contentsearch
-from nti.contentsearch import get_indexable_types
 from nti.contentsearch import interfaces as search_interfaces
 
 def main():
@@ -23,20 +22,7 @@ def main():
 
 	env_dir = os.path.expanduser(sys.argv[1])
 	usernames = sys.argv[2:]
-	idx_types = sys.argv[3:]
-	if not idx_types:
-		content_types = get_indexable_types()
-	else:
-		content_types = set()
-		for tname in idx_types:
-			tname = tname.lower()
-			if tname in get_indexable_types():
-				content_types.append(tname)
-		
-		if not content_types:
-			print("No valid content type(s) were specified")
-			sys.exit(2)
-			
+	
 	run_with_dataserver( environment_dir=env_dir,
 						 xmlconfig_packages=(nti.contentsearch,),
 						 function=lambda: remove_zombies(usernames) )
