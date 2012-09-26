@@ -97,7 +97,7 @@ setup(
 		'Pillow >= 1.7.7',
 		'RestrictedPython',
 		'ZConfig >= 2.9.3',
-		'ZODB3 >= 3.10.5', # NOTE: Soon need to include persistent >= 4.0.1, being pulled out of ZODB
+		'ZODB3 >= 3.10.5', # NOTE: Soon need to include persistent >= 4.0.2, being pulled out of ZODB
 		# ZODB RelStorage:
 		# 'pylibmc', # for memcached support (has third-party dep on memcache-devel)
 		# 'MySQL-python', # mysql adapter
@@ -115,6 +115,7 @@ setup(
 		 # this stuff globally (https://github.com/collective/collective.subscribe/tree/master/collective/subscribe)
 		'contentratings == 1.0',
 		'coverage >= 3.5.2', # Test coverage
+		'cryptacular >= 1.4.1', # see z3c.crypt
 		'cssselect >= 0.7.1', # Used by pyquery
 		'cython >= 0.17',
 		# support for defining and evolving classes based on schemas
@@ -146,7 +147,7 @@ setup(
 		'logilab-common >= 0.58.1',
 		'lxml == 2.3.5', # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
 		'nameparser >= 0.2.2', # Human name parsing
-		'nltk >= 2.0.2',
+		'nltk >= 2.0.3',
 		# numpy is req'd by nltk, but not depended on. sigh.
 		# This turns out to be because it CANNOT be installed in a setup.py:
 		# Apparently it ships its own distutils. If you try to install from setup.py, you get
@@ -172,11 +173,11 @@ setup(
 		# You may have to install this manually, depending on where zmq is installed.
 		# something like:
 		# pip install --install-option="--zmq=/opt/nti" pyzmq
-		'pyzmq >= 2.2.0',
+		'pyzmq >= 2.2.0', # TODO: 2.2.0.1 is out. It includes zmq.green and obsoletes gevent_zeromq. It is incompatible with having gevent_zeromq installed
 		# Monitoring stats and instrumenting code
 		'python-statsd >= 1.5.7', # statsd client. statsd must be installed separately: https://github.com/etsy/statsd
 		'pystatsd >= 0.1.6', # statsd server implementation, pure python. probably easier than setting up node. Might want to get it from https://github.com/sivy/py-statsd
-		'pytz >= 2012d',
+		'pytz >= 2012f',
 		'rdflib',
 		'redis >= 2.6.2', # Redis python client
 		'repoze.catalog >= 0.8.2',
@@ -193,7 +194,7 @@ setup(
 		'sympy == 0.7.1', # sympy-docs-html-0.7.1 is currently greater
 		'six >= 1.2.0',
 		'slimit',
-		'supervisor >= 3.0a12',
+		'supervisor >= 3.0b1',
 		'transaction >= 1.3.0',
 		'webob >= 1.2.2',
 		'whoosh >= 2.4.1',
@@ -213,6 +214,7 @@ setup(
 		'zc.zlibstorage >= 0.1.1', # compressed records. Will be built-in to newer ZODB
 		'zc.zodbdgc >= 0.6.0',
 		'zetalibrary',
+		'zodburi >= 1.1', # used by pyramid_zodbconn
 		'zope.app.broken >= 3.6.0', # Improved broken objects
 		'zope.app.component >= 3.9.3', # bwc only, DO NOT IMPORT. pulled in by contentratings
 		'zope.app.interface >= 3.6.0', # bwc only, DO NOT IMPORT. pulled in by contentratings
@@ -294,7 +296,8 @@ setup(
 			'epydoc >= 3.0.1', # auto-api docs
 			'rope >= 0.9.4', # refactoring library. c.f. ropemacs
 			'ropemode >= 0.2', # IDE helper for rope
-			'virtualenv >= 1.8.1',
+			#'Pymacs >= 0.25',
+			'virtualenv >= 1.8.2',
 			'pip >= 1.2.1',
 			# Monitoring stats and instrumenting code
 			# See above for python-statsd
