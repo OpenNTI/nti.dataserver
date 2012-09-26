@@ -1,3 +1,5 @@
+# -*- mode: html -*-
+
 name: ntiincludevideo
 # The things we have links to right now we embed as iframes. This
 # will need to get smarter as there are more types. Note that WebKit
@@ -5,3 +7,15 @@ name: ntiincludevideo
 #<video tal:attributes="src self/attributes/text" />
 # NOTE that this must stay consistent with sectionvideoadder.py (TODO: Can we use this template?)
 <div class="externalvideo"><iframe width="640" height="360" tal:attributes="src self/attributes/text" frameborder="0" allowfullscreen="true" ></iframe></div>
+
+name: vfrac
+<span class="vfrac"><sup class="nom" tal:content="self/attributes/nom"></sup><span class="divider">&#47;</span><sub class="denom" tal:content="self/attributes/denom"></sub></span>
+
+name: textsuperscript
+<sup tal:content="self"></sup>
+
+name: textsubscript
+<sub tal:content="self"></sub>
+
+name: nobreak
+<span class="nobreak" tal:content="self"></span>
