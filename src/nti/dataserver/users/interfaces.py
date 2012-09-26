@@ -74,7 +74,7 @@ class UsernameContainsIllegalChar(_InvalidData):
 class EmailAddressInvalid(_InvalidData):
 	"""Invalid email address."""
 
-	i18n_message = _("The email address you have entered is not valid")
+	i18n_message = _("The email address you have entered is not valid.")
 
 	def __init__( self, address ):
 		super(EmailAddressInvalid,self).__init__( address, value=address )

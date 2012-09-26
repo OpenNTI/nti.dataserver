@@ -10,7 +10,7 @@ thus always import `Object` from this module
 $Id$
 """
 from __future__ import print_function, unicode_literals
-
+from . import MessageFactory as _
 from dm.zope.schema.schema import SchemaConfigured, schemadict, Object
 
 class PermissiveSchemaConfigured(SchemaConfigured):
@@ -72,7 +72,11 @@ class FieldValidationMixin(object):
 			if len(e.args) == 1:
 				e.args = (value, e.args[0], self.__name__)
 			elif isinstance( e, sch_interfaces.TooShort ) and len(e.args) == 2:
-				e.args = (self.__name__ + ' is too short', self.__name__, value )
+				# Note we're capitalizing the field in the message.
+				e.i18n_message = _('${field} is too short.', mapping={'field': self.__name__.capitalize(), 'minLength': e.args[1]})
+				e.args = ( self.__name__.capitalize() + ' is too short.',
+						   self.__name__,
+						   value )
 			e.field = self
 			raise
 
