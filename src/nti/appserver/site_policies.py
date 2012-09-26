@@ -316,12 +316,12 @@ def _censor_usernames( entity, event=None ):
 	policy = censor.DefaultCensoredContentPolicy()
 
 	if policy.censor( entity.username, entity ) != entity.username:
-		raise FieldContainsCensoredSequence( "Username contains a censored sequence", 'Username', entity.username )
+		raise FieldContainsCensoredSequence( _("Username contains a censored sequence"), 'Username', entity.username )
 
 	names = user_interfaces.IFriendlyNamed( entity, None )
 	if names and names.alias: # TODO: What about realname?
 		if policy.censor( names.alias, entity ) != names.alias:
-			raise FieldContainsCensoredSequence( "alias contains a censored sequence", 'alias', names.alias )
+			raise FieldContainsCensoredSequence( _("Alias contains a censored sequence"), 'alias', names.alias )
 
 def _is_x_or_more_years_ago( birthdate, years_ago=13 ):
 
@@ -403,16 +403,16 @@ class GenericSitePolicyEventListener(object):
 		"""
 		_censor_usernames( user )
 		if user.username.endswith( '@nextthought.com' ):
-			raise UsernameCannotContainNextthoughtCom( "Invalid username", 'Username', user.username, value=user.username )
+			raise UsernameCannotContainNextthoughtCom( _("That username is not valid. Please choose another."), 'Username', user.username, value=user.username )
 
 		# Icky. For some random reason we require everyone to provide their real name,
 		# and we force the display name to be derived from it.
 		names = user_interfaces.IFriendlyNamed( user )
 		human_name = nameparser.HumanName( names.realname ) # Raises BlankHumanName if missing
 		if not human_name.first:
-			raise MissingFirstName( "Must provide first name", 'realname', names.realname )
+			raise MissingFirstName( _("Please provide your first name."), 'realname', names.realname )
 		if not human_name.last:
-			raise MissingLastName( "Must provide last name", 'realname', names.realname )
+			raise MissingLastName( _("Please provide your last name."), 'realname', names.realname )
 		human_name.capitalize()
 		names.realname = unicode(human_name)
 		names.alias = human_name.first + ' ' + human_name.last[0]
@@ -421,13 +421,13 @@ class GenericSitePolicyEventListener(object):
 		birthdate = getattr( profile, 'birthdate', None )
 		if birthdate:
 			if birthdate >= datetime.date.today():
-				raise BirthdateInFuture( "Birthdate must be in the past", 'birthdate', birthdate.isoformat(), value=birthdate )
+				raise BirthdateInFuture( _("Birthdate must be in the past"), 'birthdate', birthdate.isoformat(), value=birthdate )
 
 			if not _is_x_or_more_years_ago( birthdate, 4 ):
-				raise BirthdateTooRecent( "Birthdate must be at least four years ago", 'birthdate', birthdate.isoformat(), value=birthdate )
+				raise BirthdateTooRecent( _("Birthdate must be at least four years ago"), 'birthdate', birthdate.isoformat(), value=birthdate )
 
 			if _is_x_or_more_years_ago( birthdate, 150 ):
-				raise BirthdateTooAncient( "Birthdate must be less than 150 years ago", 'birthdate', birthdate.isoformat(), value=birthdate )
+				raise BirthdateTooAncient( _("Birthdate must be less than 150 years ago"), 'birthdate', birthdate.isoformat(), value=birthdate )
 
 
 @interface.implementer(ISitePolicyUserEventListener)

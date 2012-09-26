@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nti.dataserver 0.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2012-09-25 14:50-0500\n"
+"POT-Creation-Date: 2012-09-25 19:20-0500\n"
 "PO-Revision-Date: 2012-09-24 22:18-0500\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: en <LL@li.org>\n"
@@ -22,28 +22,60 @@ msgstr ""
 msgid "Please provide your first and last names."
 msgstr ""
 
-#: src/nti/appserver/account_creation_views.py:156
+#: src/nti/appserver/account_creation_views.py:150
 msgid "Username cannot be blank"
 msgstr ""
 
-#: src/nti/appserver/account_creation_views.py:170
+#: src/nti/appserver/account_creation_views.py:164
 msgid "That username is not available. Please choose another."
 msgstr ""
 
-#: src/nti/appserver/account_recovery_views.py:116
+#: src/nti/appserver/account_recovery_views.py:118
 msgid "NextThought Username Reminder"
 msgstr ""
 
-#: src/nti/appserver/account_recovery_views.py:198
+#: src/nti/appserver/account_recovery_views.py:200
 msgid "NextThought Password Reset"
 msgstr ""
 
-#: src/nti/appserver/account_recovery_views.py:293
+#: src/nti/appserver/account_recovery_views.py:295
 msgid "Your reset link is not valid. Please request a new one."
+msgstr ""
+
+#: src/nti/appserver/site_policies.py:319
+msgid "Username contains a censored sequence"
+msgstr ""
+
+#: src/nti/appserver/site_policies.py:324
+msgid "Alias contains a censored sequence"
 msgstr ""
 
 #: src/nti/appserver/site_policies.py:382
 msgid "Welcome to NextThought"
+msgstr ""
+
+#: src/nti/appserver/site_policies.py:406
+msgid "That username is not valid. Please choose another."
+msgstr ""
+
+#: src/nti/appserver/site_policies.py:413
+msgid "Please provide your first name."
+msgstr ""
+
+#: src/nti/appserver/site_policies.py:415
+msgid "Please provide your last name."
+msgstr ""
+
+#: src/nti/appserver/site_policies.py:424
+msgid "Birthdate must be in the past"
+msgstr ""
+
+#: src/nti/appserver/site_policies.py:427
+msgid "Birthdate must be at least four years ago"
+msgstr ""
+
+#: src/nti/appserver/site_policies.py:430
+msgid "Birthdate must be less than 150 years ago"
 msgstr ""
 
 #: src/nti/appserver/user_policies.py:120

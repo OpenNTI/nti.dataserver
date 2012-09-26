@@ -230,7 +230,7 @@ class _AbstractNotDevmodeViewBase(ConfiguringTestBase):
 		assert_that( e.exception.json_body, has_entry( 'message', contains_string( 'four' ) ) )
 
 	@WithMockDSTrans
-	def test_create_invalid_realname( self ):
+	def test_create_blang_realname( self ):
 
 		self.request.content_type = 'application/vnd.nextthought+json'
 
@@ -247,6 +247,26 @@ class _AbstractNotDevmodeViewBase(ConfiguringTestBase):
 		assert_that( e.exception.json_body, has_entry( 'field', 'realname' ) )
 		assert_that( e.exception.json_body, has_entry( 'code', 'BlankHumanNameError' ) )
 		assert_that( e.exception.json_body, has_entry( 'message', 'Please provide your first and last names.' ) )
+
+	@WithMockDSTrans
+	def test_create_invalid_realname( self ):
+
+		self.request.content_type = 'application/vnd.nextthought+json'
+
+		self.request.body = to_json_representation( {'Username': 'this_username_works',
+													 'password': 'pass132word',
+													 'realname': 'Joe',
+													 'email': 'user@domain.com' } )
+		__traceback_info__ = self.request.body
+
+
+		with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
+			self.the_view( self.request )
+
+		assert_that( e.exception.json_body, has_entry( 'field', 'realname' ) )
+		assert_that( e.exception.json_body, has_entry( 'code', 'MissingLastName' ) )
+		assert_that( e.exception.json_body, has_entry( 'message', 'Please provide your last name.' ) )
+
 
 class TestPreflightView(_AbstractValidationViewBase):
 
