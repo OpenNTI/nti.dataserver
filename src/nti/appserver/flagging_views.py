@@ -8,13 +8,14 @@ $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 
+logger = __import__('logging').getLogger('__name__')
+
 from pyramid.security import authenticated_userid
 import pyramid.httpexceptions  as hexc
 from pyramid.view import view_config
 
 from zope import interface
 from zope import component
-from zc import intid as zc_intid
 
 from nti.appserver import _util
 
@@ -23,7 +24,7 @@ from nti.dataserver import flagging
 from nti.dataserver import authorization as nauth
 
 from nti.externalization import interfaces as ext_interfaces
-from nti.contentfragments import interfaces as frg_interfaces
+
 
 FLAG_VIEW = 'flag'
 FLAG_AGAIN_VIEW = 'flag.metoo'
@@ -42,6 +43,14 @@ class FlagLinkDecorator(_util.AbstractTwoStateViewLinkDecorator):
 	true_view = FLAG_AGAIN_VIEW
 	predicate = staticmethod(flagging.flags_object)
 
+def _do_flag( f, request ):
+	try:
+		f( request.context, authenticated_userid( request ) )
+		return _util.uncached_in_response( request.context )
+	except KeyError:
+		logger.warn( "Attempting to un/flag something not found. Was it deleted and the link is stale? %s", request.context, exc_info=true )
+		raise hexc.HTTPNotFound()
+
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
@@ -57,9 +66,7 @@ def _FlagView(request):
 	Registered as a named view, so invoked via the @@flag syntax.
 
 	"""
-
-	flagging.flag_object( request.context, authenticated_userid( request ) )
-	return _util.uncached_in_response( request.context )
+	return _do_flag( flagging.flag_object, request )
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
@@ -85,9 +92,8 @@ def _UnFlagView(request):
 	Registered as a named view, so invoked via the @@unflag syntax.
 
 	"""
+	return _do_flag( flagging.unflag_object, request )
 
-	flagging.unflag_object( request.context, authenticated_userid( request ) )
-	return _util.uncached_in_response( request.context )
 
 ########
 ## Right here is code for a moderation view:

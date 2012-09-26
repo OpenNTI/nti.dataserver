@@ -440,7 +440,7 @@ class TestPreflightView(_AbstractValidationViewBase):
 
 		assert_that( e.exception.json_body, has_entry( 'field', 'Username' ) )
 		assert_that( e.exception.json_body, has_entry( 'code', 'EmailAddressInvalid' ) )
-		assert_that( e.exception.json_body, has_entry( 'message', 'The email address you have entered is not valid' ) )
+		assert_that( e.exception.json_body, has_entry( 'message', 'The email address you have entered is not valid.' ) )
 
 
 class TestCreateViewNotDevmode(_AbstractNotDevmodeViewBase):
