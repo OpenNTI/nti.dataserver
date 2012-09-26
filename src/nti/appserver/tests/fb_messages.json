@@ -1,0 +1,56 @@
+[{
+  "Type" : "Notification",
+  "MessageId" : "0889a130-d1c0-4727-8516-6fc10d0bb0bd",
+  "TopicArn" : "arn:aws:sns:us-east-1:569451255149:SESFeedback",
+  "Message" : "{\"notificationType\":\"Bounce\",\"bounce\":{\"bounceType\":\"Transient\",\"reportingMTA\":\"dns; na-mm-outgoing-6102-bacon.iad6.amazon.com\",\"bouncedRecipients\":[{\"emailAddress\":\"n@y.com\",\"status\":\"5.0.0\",\"action\":\"failed\",\"diagnosticCode\":\"smtp; 5.1.2 - Bad destination host 'DNS Hard Error looking up y.com (MX):  NXDomain' (delivery attempts: 0)\"}],\"bounceSubType\":\"General\",\"timestamp\":\"2012-09-25T19:25:41.000Z\",\"feedbackId\":\"00000139fee3d768-b65e88a3-0746-11e2-8674-03d8dd2f6371-000000\"},\"mail\":{\"timestamp\":\"2012-09-25T19:25:05.000Z\",\"source\":\"no-reply@nextthought.com\",\"messageId\":\"00000139fee3cb85-9efd6a22-e1ca-4a11-a6e5-e21110663a65-000000\",\"destination\":[\"n@y.com\"]}}",
+  "Timestamp" : "2012-09-25T19:25:08.654Z",
+  "SignatureVersion" : "1",
+  "Signature" : "Mqx3KpAD7HoPWZtIOklrmgvw4ZUtqBzVCNpqB6y6f8Cn7m7TOB4VWCLw/nInq6k2IrH6shtAG68gH+amBczgjryB/Flo+nHYbBO15WMwlBoQeNVegdi6TS4eNhqLqDY6T1Cl+YddAriBfVMaQa5md1hsrd+DEWC+MK2Yd2wAoZQ=",
+  "SigningCertURL" : "https://sns.us-east-1.amazonaws.com/SimpleNotificationService-f3ecfb7224c7233fe7bb5f59f96de52f.pem",
+  "UnsubscribeURL" : "https://sns.us-east-1.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws:sns:us-east-1:569451255149:SESFeedback:5f975788-f300-4f03-92bc-bfe4ddda0a17"
+},
+{
+  "Type" : "Notification",
+  "MessageId" : "c520e607-5d28-402e-8d3a-8c10e7fef458",
+  "TopicArn" : "arn:aws:sns:us-east-1:569451255149:SESFeedback",
+  "Message" : "{\"notificationType\":\"Bounce\",\"bounce\":{\"bounceType\":\"Transient\",\"reportingMTA\":\"dns; na-mm-outgoing-6102-bacon.iad6.amazon.com\",\"bouncedRecipients\":[{\"emailAddress\":\"n@y.com\",\"status\":\"5.0.0\",\"action\":\"failed\",\"diagnosticCode\":\"smtp; 5.1.2 - Bad destination host 'DNS Hard Error looking up y.com (MX):  NXDomain' (delivery attempts: 0)\"}],\"bounceSubType\":\"General\",\"timestamp\":\"2012-09-25T16:15:36.000Z\",\"feedbackId\":\"00000139fe35e280-2b30305c-072c-11e2-b54b-bb8469a13e75-000000\"},\"mail\":{\"timestamp\":\"2012-09-25T16:15:04.000Z\",\"source\":\"no-reply@nextthought.com\",\"messageId\":\"00000139fe35d4a1-db90321e-aadb-4e98-9222-95b798f62e87-000000\",\"destination\":[\"n@y.com\"]}}",
+  "Timestamp" : "2012-09-25T16:15:08.370Z",
+  "SignatureVersion" : "1",
+  "Signature" : "pUnQ9uaVYovqLQCD2kCz9IY8Ofds8AWdz4TU0tr2LJNa5eSelUx+ggmPX/mGhC2y3pFPwJlSlzdYt+AORuWKE89vYM4I34DVsMgXvAWzroI3szrtqEDxw2ViPB8edSsTNhBECBZtOA9UroKVnAwf+RcetmlSqR1+IafaPysMIPk=",
+  "SigningCertURL" : "https://sns.us-east-1.amazonaws.com/SimpleNotificationService-f3ecfb7224c7233fe7bb5f59f96de52f.pem",
+  "UnsubscribeURL" : "https://sns.us-east-1.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws:sns:us-east-1:569451255149:SESFeedback:5f975788-f300-4f03-92bc-bfe4ddda0a17"
+},
+{
+  "Type" : "Notification",
+  "MessageId" : "936cd1b8-bd3e-4d62-9f70-42cbfd6de088",
+  "TopicArn" : "arn:aws:sns:us-east-1:569451255149:SESFeedback",
+  "Message" : "{\"notificationType\":\"Bounce\",\"bounce\":{\"bounceType\":\"Transient\",\"reportingMTA\":\"dns; na-mm-outgoing-6102-bacon.iad6.amazon.com\",\"bouncedRecipients\":[{\"emailAddress\":\"n@y.com\",\"status\":\"5.0.0\",\"action\":\"failed\",\"diagnosticCode\":\"smtp; 5.1.2 - Bad destination host 'DNS Hard Error looking up y.com (MX):  NXDomain' (delivery attempts: 0)\"}],\"bounceSubType\":\"General\",\"timestamp\":\"2012-09-25T19:25:42.000Z\",\"feedbackId\":\"00000139fee3d7e1-b6714d72-0746-11e2-8700-6de5cd24f845-000000\"},\"mail\":{\"timestamp\":\"2012-09-25T19:25:04.000Z\",\"source\":\"no-reply@nextthought.com\",\"messageId\":\"00000139fee3c8fd-dbf73e13-3a83-4dd8-8a54-c8840ea82d7b-000000\",\"destination\":[\"n@y.com\"]}}",
+  "Timestamp" : "2012-09-25T19:25:08.799Z",
+  "SignatureVersion" : "1",
+  "Signature" : "t+Avx9GSKqpVyNjG11KY09xEQ26IJBhSAUUkXJ+QVqJAr7uIdAaziI5AAYMbQSwwI+cUVnii1ytpVWlhmoCaMXDH4ulj9Ja8UxpCBhBVYt2Z7RL+Zk8N/sYs9oA6kWHTZTPoo4poOoOK1wwpWst0X6FJJMDH2png6W0w+XsEvZc=",
+  "SigningCertURL" : "https://sns.us-east-1.amazonaws.com/SimpleNotificationService-f3ecfb7224c7233fe7bb5f59f96de52f.pem",
+  "UnsubscribeURL" : "https://sns.us-east-1.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws:sns:us-east-1:569451255149:SESFeedback:5f975788-f300-4f03-92bc-bfe4ddda0a17"
+},
+{
+  "Type" : "Notification",
+  "MessageId" : "6c234451-828a-4268-b06a-1a31f6eb0559",
+  "TopicArn" : "arn:aws:sns:us-east-1:569451255149:SESFeedback",
+  "Message" : "{\"notificationType\":\"Bounce\",\"bounce\":{\"bounceType\":\"Transient\",\"reportingMTA\":\"dns; na-mm-outgoing-6102-bacon.iad6.amazon.com\",\"bouncedRecipients\":[{\"emailAddress\":\"n@y.com\",\"status\":\"5.0.0\",\"action\":\"failed\",\"diagnosticCode\":\"smtp; 5.1.2 - Bad destination host 'DNS Hard Error looking up y.com (MX):  NXDomain' (delivery attempts: 0)\"}],\"bounceSubType\":\"General\",\"timestamp\":\"2012-09-25T19:45:42.000Z\",\"feedbackId\":\"00000139fef62348-81124050-0749-11e2-9682-f72a45a8ba93-000000\"},\"mail\":{\"timestamp\":\"2012-09-25T19:45:04.000Z\",\"source\":\"no-reply@nextthought.com\",\"messageId\":\"00000139fef6166f-a3bc86ee-d4fa-4c11-871b-eed1341bdb12-000000\",\"destination\":[\"n@y.com\"]}}",
+  "Timestamp" : "2012-09-25T19:45:07.706Z",
+  "SignatureVersion" : "1",
+  "Signature" : "gFHNQVnwyszkATcBnvmMFmMY9QBgD0ZOwRgEBdoX2hxlMxTn6PmaOJVMDciRapekYXYEOKAXcKHJ/46BRuXTyTU+1zxA3OUI9BTryKVKGLgbIK+f5YiWxmDj8btisiYbrPwtTqqhMta73OvOiEYKEoh0szI9Jst02tN8UhPYyD4=",
+  "SigningCertURL" : "https://sns.us-east-1.amazonaws.com/SimpleNotificationService-f3ecfb7224c7233fe7bb5f59f96de52f.pem",
+  "UnsubscribeURL" : "https://sns.us-east-1.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws:sns:us-east-1:569451255149:SESFeedback:5f975788-f300-4f03-92bc-bfe4ddda0a17"
+},
+{
+  "Type" : "Notification",
+  "MessageId" : "ce91606f-b00a-4afb-96c7-757b07c64643",
+  "TopicArn" : "arn:aws:sns:us-east-1:569451255149:SESFeedback",
+  "Message" : "{\"notificationType\":\"Bounce\",\"bounce\":{\"bounceType\":\"Transient\",\"reportingMTA\":\"dns; na-mm-outgoing-6102-bacon.iad6.amazon.com\",\"bouncedRecipients\":[{\"emailAddress\":\"n@y.com\",\"status\":\"5.0.0\",\"action\":\"failed\",\"diagnosticCode\":\"smtp; 5.1.2 - Bad destination host 'DNS Hard Error looking up y.com (MX):  NXDomain' (delivery attempts: 0)\"}],\"bounceSubType\":\"General\",\"timestamp\":\"2012-09-25T19:30:41.000Z\",\"feedbackId\":\"00000139fee868a1-68c7c0fc-0747-11e2-8ead-61450c11ac39-000000\"},\"mail\":{\"timestamp\":\"2012-09-25T19:30:04.000Z\",\"source\":\"no-reply@nextthought.com\",\"messageId\":\"00000139fee85b73-0fc26389-dd8f-4034-9d8a-10b93655c842-000000\",\"destination\":[\"n@y.com\"]}}",
+  "Timestamp" : "2012-09-25T19:30:07.976Z",
+  "SignatureVersion" : "1",
+  "Signature" : "EGQkHy1uiSnUzKYbUpEk3o6QRp2xkuonYdeAiDMKxx8yyPxD3ZCpOT1zNnYgKaDdPrJXEdFlHOEX3EMD+tNv8OAvla4WGS8y4HZycmhRMb0ll/TzY2/Y9hZDyUPTQc30j+OSTvwROGCWtxf412eCdI9axR0SxR/oiKt8qU/b0Xg=",
+  "SigningCertURL" : "https://sns.us-east-1.amazonaws.com/SimpleNotificationService-f3ecfb7224c7233fe7bb5f59f96de52f.pem",
+  "UnsubscribeURL" : "https://sns.us-east-1.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws:sns:us-east-1:569451255149:SESFeedback:5f975788-f300-4f03-92bc-bfe4ddda0a17"
+}
+]
