@@ -303,6 +303,8 @@
 	<!-- User-type policies -->
 	<include package="." file="configure_user_policies.zcml" />
 
+	<include package="." file="configure_testmathcounts.zcml" />
+
 	<!-- Hacky temporary stuff -->
 	<adapter name="OUAdminFactory"
 			 for="*"

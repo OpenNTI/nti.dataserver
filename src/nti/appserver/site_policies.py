@@ -664,9 +664,40 @@ class MathcountsSitePolicyEventListener(GenericKidSitePolicyEventListener):
 
 		user.join_community( community )
 		user.follow( community )
+#### XXXX:
+#### FIXME: Exact copy of the above
+@interface.implementer(ISitePolicyUserEventListener)
+class TestMathcountsSitePolicyEventListener(GenericKidSitePolicyEventListener):
+	"""
+	Implements the policy for the mathcounts site.
+	"""
+
+	NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME = 'new_user_created_mathcounts'
+
+	IF_ROOT = IMathcountsUser
+	IF_WITH_AGREEMENT = IMathcountsCoppaUserWithAgreement
+	IF_WOUT_AGREEMENT = IMathcountsCoppaUserWithoutAgreement
+
+	def user_created( self, user, event ):
+		"""
+		This policy places newly created users in the ``MathCounts`` community
+		(creating it if it doesn't exist).
+
+		"""
+		super(MathcountsSitePolicyEventListener,self).user_created( user, event )
+
+		community = users.Entity.get_entity( 'testmathcounts.nextthought.com' )
+		if community is None:
+			community = users.Community.create_community( username='testmathcounts.nextthought.com' )
+			user_interfaces.IFriendlyNamed( community ).alias = 'TEST MATHCOUNTS TEST'
+
+
+		user.join_community( community )
+		user.follow( community )
 
 _SITE_LANDING_PAGES = {
 	'mathcounts.nextthought.com': b'tag:nextthought.com,2011-10:mathcounts-HTML-mathcounts2013.warm_up_1',
+	'testmathcounts.nextthought.com': b'tag:nextthought.com,2011-10:mathcounts-HTML-mathcounts2013.warm_up_1',
 	'prmia.nextthought.com': b'tag:nextthought.com,2011-10:PRMIA-HTML-Volume_III.A.2_converted.toc260827905'
 	}
 

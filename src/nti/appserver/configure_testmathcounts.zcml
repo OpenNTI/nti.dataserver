@@ -1,0 +1,44 @@
+<!-- -*- mode: nxml -*- -->
+<configure
+	xmlns="http://namespaces.zope.org/zope"
+	xmlns:zcml="http://namespaces.zope.org/zcml">
+	<include package="zope.component" />
+
+	<utility factory=".site_policies.TestMathcountsSitePolicyEventListener"
+			 name="testmathcounts.nextthought.com"/>
+
+
+	<!-- On the MC site, we will be able to provide choices for avatars based simply on the username string -->
+	<adapter factory="nti.dataserver.users.avatar_urls.StringComputedAvatarURLChoices"
+			 for="basestring"
+			 provides="nti.dataserver.users.interfaces.IAvatarChoices"
+			 name="testmathcounts.nextthought.com" />
+
+	<!-- On the MC site, we cannot search for users by anything except their username -->
+	<adapter factory="nti.appserver.usersearch_views.NoOpUserSearchMatcher"
+			 for="nti.dataserver.interfaces.IUser"
+			 provides="nti.appserver.usersearch_views.IUserSearchMatcher"
+			 name="testmathcounts.nextthought.com" />
+
+	<!-- On the MC site, NO ONE can chat -->
+	<adapter factory=".site_policies.NoChatCapabilityFilter"
+			 for="nti.dataserver.interfaces.IUser"
+			 provides="nti.appserver.interfaces.IUserCapabilityFilter"
+			 name="testmathcounts.nextthought.com" />
+
+	<!-- and coppa kids are more restricted. -->
+	<adapter factory=".user_policies.CoppaUserWithoutAgreementCapabilityFilter"
+			 for="nti.dataserver.interfaces.ICoppaUserWithoutAgreement"
+			 provides="nti.appserver.interfaces.IUserCapabilityFilter"
+			 name="testmathcounts.nextthought.com" />
+
+	<utility factory=".site_policy_views.SiteCSSMarker"
+			 name="testmathcounts.nextthought.com" />
+
+
+	<adapter factory="nti.contentfragments.censor.DefaultCensoredContentPolicy"
+			 provides="nti.contentfragments.interfaces.ICensoredContentPolicy"
+			 for="nti.dataserver.interfaces.IUser *"
+			 name="testmathcounts.nextthought.com" />
+
+</configure>
