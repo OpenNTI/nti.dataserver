@@ -172,7 +172,7 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 		assert_that(items, has_item('rage'))
 
 	@mock_dataserver.WithMockDS
-	def test_note_index_to_two_users(self):
+	def test_one_note_index_to_two_users(self):
 		ds = mock_dataserver.current_mock_ds
 		users = []
 		with mock_dataserver.mock_db_trans( ds ):
@@ -195,7 +195,8 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 		for x in xrange(2):
 			with mock_dataserver.mock_db_trans( ds ):
 				hits = toExternalObject( rims[x].search("ichigo"))
-				assert_that(hits, has_entry(HIT_COUNT, 1))
+				exp_count = 1 if x == 0 else 0
+				assert_that(hits, has_entry(HIT_COUNT, exp_count))
 
 	@WithMockDSTrans
 	def test_create_redaction(self):
