@@ -21,7 +21,7 @@
 			body {
 			margin-left: 30px;
 			margin-right: 0px;
-			font-family: Arial, sans-serif;
+			font-family: Helvetica, Arial, sans-serif;
 			font-size: 14pt;
 			line-height: 20pt;
 			color: #757474;
@@ -43,6 +43,9 @@
 			}
 			h1 {
 			font-size: 14pt;
+			}
+			h2 {
+			font-size: 12pt;
 			}
 			body p {
 			margin-right: 30px;
