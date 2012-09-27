@@ -6,6 +6,7 @@ from collections import defaultdict
 from zope import schema
 from zope import component
 from zope import interface
+from ZODB import loglevels
 
 from whoosh import analysis
 from whoosh import highlight
@@ -53,6 +54,17 @@ def _set_matched_filter(tokens, termset):
 		t.matched = t.text in termset
 		yield t
 	
+_re_char = r"[ \? | ( | \" | \` | { | \[ | : | ; | & | \# | \* | @ | \) | } | \] | \- | , | \. | ! | \s]"
+_char_tester = re.compile(_re_char)
+
+def _is_word_start(idx, text):
+	result = idx == 0 or _char_tester.match(text[idx-1])
+	return result
+
+def _is_word_end(idx, text):
+	result = idx == len(text) or _char_tester.match(text[idx])
+	return result
+	
 class ISearchFragment(ext_interfaces.IExternalObject):
 	text = schema.TextLine(title="fragment text", required=True)
 	matches = schema.Iterable("Iterable with pair tuples where a match occurs", required=True)
@@ -88,7 +100,7 @@ class _SearchFragment(object):
 			if not cls._is_range_subsumed(idx, r, matches):
 				result.append(r)
 		return result
-			
+		
 	@classmethod
 	def create_from_whoosh_fragment(cls, wf):
 		matches = []
@@ -102,10 +114,12 @@ class _SearchFragment(object):
 			idx = fragment_lower.find(txt, idx)
 			if idx >=0:
 				endidx = idx + _len
-				matches.append((idx, endidx))
+				mrange = (idx, endidx)
+				if _is_word_start(idx, fragment) and _is_word_end(endidx, fragment):
+					matches.append(mrange)
 				tokens[t.text] = endidx 
 				
-		matches = cls._clean_ranges(matches)
+		matches = cls._clean_ranges(matches) #TODO: Do we have to check this?
 		result = _SearchFragment()
 		result.text = fragment
 		result.matches = matches if matches else ()
@@ -153,8 +167,10 @@ def word_fragments_highlight(query, text, maxchars=300, surround=50, top=3, anal
 			sf = _SearchFragment.create_from_whoosh_fragment(f)
 			search_fragments.append(sf)	
 		snippet = formatter(text, fragments)
+		logger.log(loglevels.TRACE, 'Snippet "%r", Fragments %r)', snippet, fragments)
 	else:
 		snippet = text
+		logger.log(loglevels.TRACE, 'Creating fragments from terms ("%r", "%r")', termset, snippet)
 		search_fragments = [_SearchFragment.create_from_terms(text, termset)]
 		
 	return snippet, search_fragments
