@@ -10,12 +10,14 @@ from zope import schema
 from zope.traversing import interfaces as trv_interfaces
 
 import nti.dataserver.interfaces as nti_interfaces
+from nti.dataserver.users import interfaces as user_interfaces
 from pyramid import interfaces as pyramid_interfaces
 
 from nti.contentlibrary import interfaces as lib_interfaces
 from nti.dataserver.interfaces import ILocation
 
 from nti.utils.schema import Object
+from nti.utils.property import alias
 from dolmen.builtins import IUnicode
 
 ILocationAware = ILocation # b/c
@@ -128,16 +130,47 @@ class IMissingUser(interface.Interface):
 	# TODO: Convert to zope.authentication.IUnauthenticatedPrincipal?
 	username = schema.TextLine( title=u"The desired username" )
 
-class ILogonLinkProvider(interface.Interface):
-	"Called to add links to the logon handshake."
+class ILogonOptionLinkProvider(interface.Interface):
+	"""
+	Called to add links to the logon ping request/handshake. These provide
+	an option for the way the user can logon (which may vary by site or user type).
+
+	Normally these will be registered as subscribers
+	adapting the user and the request.
+	"""
 
 	rel = schema.TextLine(
 		title=u"The link rel that this object may produce." )
 
 	def __call__( ):
-		"Returns a single of :class:`nti_interfaces.ILink` object, or None."
+		"Returns a single instance of :class:`nti_interfaces.ILink` object, or None."
 
-class IUserLogonEvent(interface.interfaces.IObjectEvent):
+ILogonLinkProvider = ILogonOptionLinkProvider # BWC
+
+class IAuthenticatedUserLinkProvider(interface.Interface):
+	"""
+	Called during the logon process to get additional links that should be presented
+	to the user that has been authenticated. These links will typically be for
+	providing options or commands to the client application, for example, to retrieve
+	messages from a message queue or to update a password that's about to expire.
+
+	Normally these will be registered as subscribers adapting the user and the request.
+	"""
+
+	def get_links():
+		"""
+		Return an iterable of additional links to add. The semantics of each link
+		are specified independently, based on the link relationship.
+		"""
+
+class IUserEvent(interface.interfaces.IObjectEvent):
+	"""
+	An object event where the object is a user.
+	"""
+	object = schema.Object(nti_interfaces.IUser,
+						   title="The User that just logged on. You can add event listeners based on the interfaces of this object.")
+
+class IUserLogonEvent(IUserEvent):
 	"""
 	Fired when a user has successfully logged on.
 
@@ -149,8 +182,6 @@ class IUserLogonEvent(interface.interfaces.IObjectEvent):
 	# TODO: Might want to build this on a lower-level (nti_interfaces)
 	# event holding the principal, this level adding the request
 
-	object = schema.Object(nti_interfaces.IUser,
-						   title="The User that just logged on. You can add event listeners based on the interfaces of this object.")
 	request = schema.Object(pyramid_interfaces.IRequest,
 							title="The request that completed the login process.",
 							description="Useful to get IP information and the like.")
@@ -163,13 +194,14 @@ class _UserEventWithRequest(interface.interfaces.ObjectEvent):
 		super(_UserEventWithRequest,self).__init__( user )
 		if request is not None:
 			self.request = request
+	user = alias('object')
 
 
 @interface.implementer(IUserLogonEvent)
 class UserLogonEvent(_UserEventWithRequest):
 	pass
 
-class IUserCreatedWithRequestEvent(interface.interfaces.IObjectEvent):
+class IUserCreatedWithRequestEvent(IUserEvent):
 	"""
 	Fired when a new user account has been created successfully due
 	to interactive actions.
@@ -178,13 +210,7 @@ class IUserCreatedWithRequestEvent(interface.interfaces.IObjectEvent):
 	user, and after the zope lifecycle events.
 
 	"""
-	# Very surprised not to find an analogue of this event in zope.*
-	# or pyramid, so we roll our own.
-	# TODO: Might want to build this on a lower-level (nti_interfaces)
-	# event holding the principal, this level adding the request
 
-	object = schema.Object(nti_interfaces.IUser,
-						   title="The User that just got created. You can add event listeners based on the interfaces of this object.")
 	request = schema.Object(pyramid_interfaces.IRequest,
 							title="The request that completed the creation process.",
 							description="Useful to get IP information and the like.")
@@ -192,6 +218,34 @@ class IUserCreatedWithRequestEvent(interface.interfaces.IObjectEvent):
 @interface.implementer(IUserCreatedWithRequestEvent)
 class UserCreatedWithRequestEvent(_UserEventWithRequest):
 	pass
+
+class IUserUpgradedEvent(IUserEvent):
+	"""
+	Fired when the user changes profiles from a more restrictive one to a
+	less restrictive one, e.g., from a limited COPPA account to an unlimited account.
+	"""
+
+	restricted_interface = schema.InterfaceField( title="The original interface." )
+	restricted_profile = schema.Object( user_interfaces.IUserProfile,
+										title="The original profile.")
+
+	upgraded_interface = schema.InterfaceField( title="The new interface." )
+	upgraded_profile = schema.Object( user_interfaces.IUserProfile,
+									  title="The new profile." )
+
+@interface.implementer(IUserUpgradedEvent)
+class UserUpgradedEvent(_UserEventWithRequest):
+
+	restricted_interface = None
+	restricted_profile = None
+	upgraded_interface = None
+	upgraded_profile = None
+
+	def __init__( self, user, restricted_interface=None, restricted_profile=None, upgraded_interface=None, upgraded_profile=None ):
+		super(UserUpgradedEvent,self).__init__( user )
+		for k in UserUpgradedEvent.__dict__:
+			if k in locals() and locals()[k]:
+				setattr( self, k, locals()[k] )
 
 
 ### Dealing with responses
