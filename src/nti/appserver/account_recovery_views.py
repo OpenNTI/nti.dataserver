@@ -208,7 +208,7 @@ def forgot_passcode_view(request):
 from nti.appserver.user_policies import CONTACT_EMAIL_RECOVERY_ANNOTATION
 from zope.annotation.interfaces import IAnnotations
 
-def find_users_with_email( email, dataserver, username=None ):
+def find_users_with_email( email, dataserver, username=None, match_info=False ):
 	"""
 	Looks for and returns all users with an email or password recovery
 	email hash (or parent/contact email hash) matching the given email.
@@ -217,6 +217,8 @@ def find_users_with_email( email, dataserver, username=None ):
 		a user with this name (and will return a sequence of length 0 or 1).
 		This is a shortcut to share code for username and password recovery that
 		will probably go away once things are indexed.
+	:param bool match_info: If given and True, then the result will be a sequence of
+		`tuple` objects, first the user and then the name of the field that matched.
 	:return: A sequence of the matched user objects.
 	"""
 	# TODO: This is implemented as a linear search, waking up
@@ -238,10 +240,16 @@ def find_users_with_email( email, dataserver, username=None ):
 		if not profile:
 			continue
 
-		if (email == getattr( profile, 'email', None )
-			or hashed_email == getattr( profile, 'password_recovery_email_hash', None )
-			or hashed_email == IAnnotations( entity, {} ).get( CONTACT_EMAIL_RECOVERY_ANNOTATION )):
-			result.append( entity )
+		match = None
+		if email == getattr( profile, 'email', None ):
+			match = 'email'
+		elif hashed_email == getattr( profile, 'password_recovery_email_hash', None ):
+			match = 'password_recovery_email_hash'
+		elif hashed_email == IAnnotations( entity, {} ).get( CONTACT_EMAIL_RECOVERY_ANNOTATION ):
+			match = CONTACT_EMAIL_RECOVERY_ANNOTATION
+
+		if match:
+			result.append( entity if not match_info else (entity,match) )
 
 	return result
 

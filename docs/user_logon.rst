@@ -22,6 +22,15 @@ Accounts can also be created on the command line:
 
 .. command-output:: nti_create_user -h
 
+Bounced Emails
+==============
+
+If we detect that the user has entered invalid email addresses,
+we go into the bounce-recovery states and action must be taken
+by the user through the ReST interface.
+
+.. automodule:: nti.appserver.bounced_email_workflow
+
 
 Account Recovery
 ================
