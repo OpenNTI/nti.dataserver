@@ -15,6 +15,7 @@ from zope.component import eventtesting, provideHandler
 
 from nti.appserver import logon
 from nti.appserver.logon import (ping, handshake,password_logon, google_login, openid_login)
+from nti.appserver import user_link_provider
 
 from nti.appserver.tests import ConfiguringTestBase
 from pyramid.threadlocal import get_current_request
@@ -30,7 +31,7 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans, WithMockDS
 from zope import interface
 import nti.dataserver.interfaces as nti_interfaces
 
-from nti.externalization.externalization import EXT_FORMAT_JSON, to_external_representation
+from nti.externalization.externalization import EXT_FORMAT_JSON, to_external_representation, to_external_object
 from nti.dataserver import users
 
 class DummyView(object):
@@ -64,6 +65,7 @@ class TestLogon(ConfiguringTestBase):
 		assert_that( result.links[1].target_mime_type, is_( 'application/vnd.nextthought.user' ) )
 		to_external_representation( result, EXT_FORMAT_JSON, name='wsgi' )
 
+
 	@WithMockDSTrans
 	def test_authenticated_ping(self):
 		"An authenticated ping returns two links, to the handshake and the root"
@@ -75,12 +77,25 @@ class TestLogon(ConfiguringTestBase):
 			interface.implements( pyramid.interfaces.IAuthenticationPolicy )
 			def authenticated_userid( self, request ):
 				return 'jason.madden@nextthought.com'
-		users.User.create_user( dataserver=self.ds, username='jason.madden@nextthought.com' )
+		user = users.User.create_user( dataserver=self.ds, username='jason.madden@nextthought.com' )
 		get_current_request().registry.registerUtility( Policy() )
 		result = ping( get_current_request() )
 		assert_that( result, has_property( 'links', has_length( 3 ) ) )
 		assert_that( result.links[0].target, ends_with( '/dataserver2/handshake' ) )
 		assert_that( result.links[1].target, ends_with( '/dataserver2' ) )
+
+		# We can increase that by adding links
+		user_link_provider.add_link( user, 'force-edit-profile' )
+		result = ping( get_current_request() )
+		assert_that( result, has_property( 'links', has_length( 4 ) ) )
+		external = to_external_object( result )
+		assert_that( external, has_entry( 'Links', has_length( 4 ) ) )
+		assert_that( external['Links'][3], has_entry( 'href', '/dataserver2/users/jason.madden%40nextthought.com/@@force-edit-profile' ) )
+
+		# and we can decrease again
+		user_link_provider.delete_link( user, 'force-edit-profile' )
+		result = ping( get_current_request() )
+		assert_that( result, has_property( 'links', has_length( 3 ) ) )
 
 	@WithMockDSTrans
 	def test_fake_authenticated_handshake(self):

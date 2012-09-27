@@ -156,6 +156,10 @@
 				provides=".interfaces.ILogonLinkProvider"
 				for=".interfaces.IMissingUser pyramid.interfaces.IRequest" />
 
+	<!-- Additional links for real users -->
+	<subscriber factory=".user_link_provider.UserLinkProvider"
+				provides=".interfaces.IAuthenticatedUserLinkProvider" />
+
 	<!-- All the other logon types are disabled in production -->
 	<subscriber factory=".logon._SimpleMissingUserFacebookLinkProvider"
 				provides=".interfaces.ILogonLinkProvider"
