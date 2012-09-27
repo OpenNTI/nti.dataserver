@@ -10,6 +10,7 @@ from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
+import operator
 
 from zope import component
 from zope import interface
@@ -24,7 +25,7 @@ from nti.dataserver import mimetype as nti_mimetype
 from nti.dataserver import authorization as nauth
 from nti.dataserver.users import interfaces as user_interfaces
 
-from nti.externalization.datastructures import isSyntheticKey
+
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.datastructures import LocatedExternalDict
 
@@ -87,7 +88,7 @@ def _ResolveUserView(request):
 	remote_user = users.User.get_user( sec.authenticated_userid( request ), dataserver=dataserver )
 	partialMatch = request.matchdict['term']
 	partialMatch = unicode(partialMatch or '').lower()
-	result = []
+	entity = None
 
 	if not partialMatch:
 		pass
@@ -96,11 +97,17 @@ def _ResolveUserView(request):
 		# This will probably break many assumptions in the UI about what and when usernames
 		# can be resolved
 		entity = users.Entity.get_entity( partialMatch )
-		if _make_visibility_test( remote_user )(entity):
-			result.append( entity )
 		# NOTE2: Going through this API lets some private objects be found
 		# (DynamicFriendsLists, specifically). We should probably lock that down
+	else:
+		scoped = _search_scope_to_remote_user( remote_user, partialMatch, operator.eq )
+		if scoped:
+			entity = scoped[0]
 
+	result = []
+	if entity is not None:
+		if _make_visibility_test( remote_user )(entity):
+			result.append( entity )
 
 	return _format_result( result, remote_user, dataserver )
 
@@ -149,32 +156,7 @@ def _authenticated_search( request, remote_user, dataserver, search_term ):
 		if entity is not None:
 			result.append( entity )
 
-
-	# Given a remote user, add matching friends lists, too
-	for fl in remote_user.friendsLists.values():
-		if not isinstance( fl, users.Entity ): # pragma: no cover
-			continue
-		names = user_interfaces.IFriendlyNamed( fl )
-		if search_term in fl.username.lower() \
-		   or search_term in (names.realname or '').lower() \
-		   or search_term in (names.alias or '').lower():
-			result.append( fl )
-	# Also add enrolled classes
-	# TODO: What about instructors?
-	enrolled_sections = component.getAdapter( remote_user, app_interfaces.IContainerCollection, name='EnrolledClassSections' )
-	for section in enrolled_sections.container:
-		# TODO: We really want to be searching the class as well, but
-		# we cannot get there from here
-		if search_term in section.ID.lower() or search_term in section.Description.lower():
-			result.append( section )
-
-	if not result:
-		warnings.warn( "Hack for UI: looking at display names of communities" )
-		for x in remote_user.communities:
-			x = users.Entity.get_entity( x )
-			if x and x.username.lower() == search_term.lower():
-				result.append( x )
-				break
+	result.extend( _search_scope_to_remote_user( remote_user, search_term ) )
 
 	# FIXME: Hack in a policy of limiting searching to overlapping communities
 	test = _make_visibility_test( remote_user )
@@ -182,6 +164,37 @@ def _authenticated_search( request, remote_user, dataserver, search_term ):
 	result = {x for x in result if test(x)} # ensure a set
 
 	return result
+
+def _search_scope_to_remote_user( remote_user, search_term, op=operator.contains ):
+	result = []
+	# Given a remote user, add matching friends lists, too
+	for fl in remote_user.friendsLists.values():
+		if not isinstance( fl, users.Entity ): # pragma: no cover
+			continue
+		names = user_interfaces.IFriendlyNamed( fl )
+		if op( fl.username.lower(), search_term ) \
+		   or op( (names.realname or '').lower(), search_term ) \
+		   or op( (names.alias or '').lower(), search_term ):
+			result.append( fl )
+	# Also add enrolled classes
+	# TODO: What about instructors?
+	enrolled_sections = component.getAdapter( remote_user, app_interfaces.IContainerCollection, name='EnrolledClassSections' )
+	for section in enrolled_sections.container:
+		# TODO: We really want to be searching the class as well, but
+		# we cannot get there from here
+		if op( section.ID.lower(), search_term ) or op( section.Description.lower(), search_term ):
+			result.append( section )
+
+	if not result:
+		warnings.warn( "Hack for UI: looking at display names of communities" )
+		for x in remote_user.communities:
+			x = users.Entity.get_entity( x )
+			if x and op( x.username.lower(), search_term.lower() ):
+				result.append( x )
+				break
+
+	return result
+
 
 def _make_visibility_test(remote_user):
 	if remote_user:

@@ -66,11 +66,19 @@ class TestApplicationUserSearch(ApplicationTestBase):
 		assert_that( member, has_entry( 'Username', dfl_ntiid ) )
 
 		# And we can also search for their display names. Sigh.
-		path = '/dataserver2/UserSearch/Friends'
-		res = testapp.get( str(path), extra_environ=self._make_extra_environ('jason@nextthought.com'))
+		for t in ("UserSearch", 'ResolveUser' ):
+			path = '/dataserver2/%s/Friends' % t
+			res = testapp.get( str(path), extra_environ=self._make_extra_environ('jason@nextthought.com'))
 
-		member = res.json_body['Items'][0]
-		assert_that( member, has_entry( 'Username', dfl_ntiid ) )
+			member = res.json_body['Items'][0]
+			assert_that( member, has_entry( 'Username', dfl_ntiid ) )
+
+		# UserSearch does substring match, resolve is exact
+		for t, cnt in (("UserSearch",1), ('ResolveUser',0) ):
+			path = '/dataserver2/%s/Friend' % t
+			res = testapp.get( str(path), extra_environ=self._make_extra_environ('jason@nextthought.com'))
+			assert_that( res.json_body['Items'], has_length( cnt ) )
+
 
 	def test_user_search(self):
 		with mock_dataserver.mock_db_trans(self.ds):
