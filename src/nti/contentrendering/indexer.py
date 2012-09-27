@@ -1,12 +1,14 @@
 #!/usr/bin/env python
+
 from __future__ import print_function, unicode_literals
 
 import os
 import re
-import sys
+import glob
 import time
 import codecs
 import hashlib
+import argparse
 from datetime import datetime
 from xml.dom.minidom import Node
 
@@ -253,13 +255,31 @@ def transform(book, indexname=None, indexdir=None, recreate_index=True, optimize
 		logger.info( "Optimizing index" )
 		idx.optimize()
 
+def _remove_index_files(location, indexname):
+	indexdir = os.path.join(location, "indexdir") 
+	if os.path.exists(indexdir):
+		pathname = '%s/*%s*' % (indexdir, indexname)
+		for name in glob.glob(pathname):
+			os.remove(name)
+
+def main():
+	from nti.contentrendering.utils import NoPhantomRenderedBook, EmptyMockDocument
+	
+	arg_parser = argparse.ArgumentParser( description="Content indexer" )
+	arg_parser.add_argument( 'contentpath', help="Content book location" )
+	arg_parser.add_argument( "-i", "--indexname", dest='indexname', help="Content index name", default=None)
+	arg_parser.add_argument( '-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
+	args = arg_parser.parse_args()
+
+	contentpath = os.path.expanduser(args.contentpath)
+	indexname = args.indexname or os.path.split(contentpath)[1]
+	verbose = args.verbose
+	if verbose:
+		logging.basicConfig(level=logging.INFO, format='%(asctime)-15s %(name)-5s %(levelname)-8s %(message)s')
+		
+	_remove_index_files(contentpath, indexname)
+	book = NoPhantomRenderedBook( EmptyMockDocument(), contentpath)
+	transform(book, indexname=indexname)
+	
 if __name__ == '__main__':
-	logging.basicConfig(level=logging.INFO, format='%(asctime)-15s %(name)-5s %(levelname)-8s %(message)s')
-	from nti.contentrendering.tests import NoPhantomRenderedBook, EmptyMockDocument
-	args = sys.argv[1:]
-	if args:
-		book = NoPhantomRenderedBook( EmptyMockDocument(), args[0])
-		indexname = args[1] if len(args) > 1 else 'MAIN'
-		transform(book, indexname=indexname)
-	else:
-		print("Specify a book location")
+	main()

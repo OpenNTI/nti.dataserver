@@ -29,6 +29,7 @@ entry_points = {
 		"nti_gslopinionexport = nti.contentrendering.gslopinionexport:main",
 		"nti_jsonpbuilder = nti.contentrendering.jsonpbuilder:main",
 		"nti_default_root_sharing_setter = nti.contentrendering.default_root_sharing_setter:main",
+		"nti_index_book_content = nti.contentrendering.indexer:main",
 		"pserve = nti.appserver.nti_pserve:main", # This script overrides the one from pyramid
 	],
 	"paste.app_factory": [
