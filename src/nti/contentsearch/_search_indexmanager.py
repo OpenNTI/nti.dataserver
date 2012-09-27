@@ -7,25 +7,44 @@ from zope.location.interfaces import ILocation
 
 from nti.dataserver import interfaces as nti_interfaces
 
+
 from nti.contentsearch import interfaces as search_interfaces
 
 import logging
 logger = logging.getLogger( __name__ )
 
+@interface.implementer( search_interfaces.IEntityIndexManager, ILocation )
 class _SearchEntityIndexManager(object):
-	interface.implements(search_interfaces.IEntityIndexManager, ILocation)
+	
+	@property
+	def username(self):
+		return self.__parent__.username
+	
+	def get_username(self):
+		return self.username
 	
 	def get_uid(self, obj):
 		_ds_intid = component.getUtility( zope.intid.IIntIds )
 		return _ds_intid.getId(obj)
 	
-	def get_object(self, uid, ignore_exp=False):
+	def get_object(self, uid):
 		_ds_intid = component.getUtility( zope.intid.IIntIds )
 		result = _ds_intid.queryObject(uid, None)
 		if result is None:
 			logger.debug('Could not find object with id %r' % uid)
+			
+		if not self.verify_access(result):
+			result = None
+	
 		return result
 		
+	def verify_access(self, obj):
+		adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+		creator =  adapted.get_creator() if adapted else u''
+		sharedWith = adapted.get_sharedWith() or () if adapted else ()
+		result = self.username == creator or self.username in sharedWith
+		return result
+
 	@property
 	def dataserver(self):
 		return component.getUtility( nti_interfaces.IDataserver )
