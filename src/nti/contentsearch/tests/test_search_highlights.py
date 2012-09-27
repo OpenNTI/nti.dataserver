@@ -10,7 +10,7 @@ from nti.contentsearch.tests import ConfiguringTestBase, zanpakuto_commands
 from hamcrest import (assert_that, is_, has_length)
 
 class TestCommon(ConfiguringTestBase):
-
+	
 	def test_word_content_highlight(self):
 		text = unicode(get_content("""
 			An orange-haired high school student, Ichigo becomes a "substitute Shinigami (Soul Reaper)"
@@ -74,6 +74,14 @@ class TestCommon(ConfiguringTestBase):
 		assert_that(fragments[0].matches, is_([(0, 6)]))
 		assert_that(fragments[1].text, is_(f2))
 		assert_that(fragments[1].matches, is_([(47, 53)]))
+		
+	def test_word_fragments_prealgebra(self):
+		text = u"get more complicated like trying to compute the trajectory or trying to analyze a " +\
+				"financial market or trying to count the number of ways a text message can be routed through"
+		snippet, fragments = word_fragments_highlight("trying to analyze trajectory", text)
+		assert_that(fragments, has_length(1))
+		assert_that(snippet, is_(text))
+		assert_that(fragments[0].matches, is_([(26, 32), (33, 35), (48, 58), (62, 68), (72, 79), (102, 108), (69, 71)]))
 		
 if __name__ == '__main__':
 	unittest.main()
