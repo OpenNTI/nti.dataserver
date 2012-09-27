@@ -936,3 +936,46 @@ class TestApplicationProfile(ApplicationTestBase):
 
 		assert_that( res, has_property( 'status_int', 200 ) )
 		assert_that( res.json_body, has_entry( 'ProfileSchema', has_key( 'opt_in_email_communication' ) ) )
+
+
+def main(email=None, uname=None, cname=None):
+	import sys
+	_contact_email = email or sys.argv[1]
+	_username = uname or sys.argv[2]
+	child_name = cname or sys.argv[3]
+
+	from zope import interface
+	from zope.annotation.interfaces import IAttributeAnnotatable
+	@interface.implementer(user_interfaces.IUserProfile,IAttributeAnnotatable)
+	class FakeUser(object):
+		username = _username
+		contact_email = _contact_email
+		realname = child_name
+
+	class FakeEvent(object):
+		request = True
+
+	import nti.dataserver.utils
+	from pyramid.testing import setUp as psetUp
+	from pyramid.testing import tearDown as ptearDown
+	from pyramid.testing import DummyRequest
+	nti.dataserver.utils._configure( set_up_packages=('nti.appserver',) )
+	request = DummyRequest()
+	config = psetUp(registry=component.getGlobalSiteManager(),request=request,hook_zca=False)
+	config.setup_registry()
+	FakeEvent.request = request
+
+	import pyramid_mailer
+	component.provideUtility( pyramid_mailer.Mailer.from_settings( {'mail.queue_path': '/tmp/ds_maildir' } ), IMailer )
+
+	import nti.appserver.z3c_zpt
+	from pyramid.interfaces import IRendererFactory
+	component.provideUtility( nti.appserver.z3c_zpt.renderer_factory, IRendererFactory, name='.pt' )
+	import nti.appserver.user_policies
+	nti.appserver.user_policies.send_consent_request_on_new_coppa_account( FakeUser(), FakeEvent )
+
+	import transaction
+	transaction.commit()
+
+if __name__ == '__main__':
+	main()

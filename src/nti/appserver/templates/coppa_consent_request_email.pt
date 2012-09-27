@@ -23,6 +23,7 @@
 			margin-right: 0px;
 			font-family: Helvetica, Arial, sans-serif;
 			font-size: 14pt;
+			line-height: 20pt;
 			color: #757474;
 			}
 			a {
@@ -48,7 +49,7 @@
 			}
 		</style>
 	</head>
-	<body>
+	<body class="normal-text">
 		<div metal:use-macro="options/master/macros/header">
 		<div id="green-bar"></div>
 		<div id="logo-bar">
@@ -57,8 +58,8 @@
 		</div>
 		</div>
 
-		<p>Dear Parent,</p>
-		<p>
+		<p style="margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">Dear Parent,</p>
+		<p style="margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">
 			Your child <span class="tterm"
 			tal:content="options/profile/realname">Justin</span> has
 			created a free NextThought account with the
@@ -71,24 +72,24 @@
 			form.
 		</p>
 
-		<h1>About NextThought</h1>
-		<p>
+		<h1 style="font-weight: bold; margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">About NextThought</h1>
+		<p style="margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">
 			NextThought is a social learning platform that allows students to
 			interact, communicate, and collaborate with others within the content
 			of their educational materials. Students can access and read materials
 			online, annotate them, create whiteboards, and share notes with their
 			classmates and teachers. For more information about
-			NextThought, please visit <a href="http://www.nextthought.com">www.nextthought.com</a>.
+			NextThought, please visit <a style="text-decoration: none; color: #3fb3f6" href="http://www.nextthought.com">www.nextthought.com</a>.
 		</p>
 
-		<h1>Your Child's Account</h1>
-		<p>
+		<h1 style="font-weight: bold; margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">Your Child's Account</h1>
+		<p style="margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">
 			At NextThought we are committed to providing a safe and
 			secure environment to support your child's education and
 			appreciate that you may want to know more about the
 			information we collect.
 		</p>
-		<p>
+		<p style="margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">
 			When your child registered for an account, we asked for
 			his or her first and last name, birthday, username,
 			password, email address, and parent's email address. To
@@ -96,8 +97,8 @@
 			this information in specific ways, as outlined below:
 		</p>
 
-		<h2 style="margin-left: 50px">First Name, Last Name, and Username</h2>
-		<p style="margin-left: 50px">
+		<h2 style="font-weight: bold; margin-left: 50px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">First Name, Last Name, and Username</h2>
+		<p style="margin-left: 50px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;" >
 			Children's names are never displayed publicly on the
 			NextThought site. Instead, each child is known by the
 			username he or she creates when registering for an
@@ -108,25 +109,25 @@
 			after the account is created.
 		</p>
 
-		<h2 style="margin-left: 50px">Child's Email Address</h2>
-		<p style="margin-left: 50px">
+		<h2 style="font-weight: bold; margin-left: 50px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">Child's Email Address</h2>
+		<p style="margin-left: 50px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">
 			We hash (or alter) the email address that a child
 			provides. This altered email address will be used only for
 			the purpose of recovering a password.
 		</p>
 
-		<h2 style="margin-left: 50px">Parent's Email Address</h2>
-		<p style="margin-left: 50px">
+		<h2 style="font-weight: bold; margin-left: 50px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">Parent's Email Address</h2>
+		<p style="margin-left: 50px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">
 			We do not save this email address after sending you this
 			email notice
 		</p>
 
-		<p>
+		<p style="margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">
 			In short, the only information we retain after your child
 			completes registration is his or her birthday, first name,
 			and email address in its altered form.
 		</p>
-		<p>
+		<p style="margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">
 			Through this initial process of registration, your child
 			has access to limited site features, such as reading
 			materials online and making notes only he or she sees. If
@@ -136,15 +137,15 @@
 			the information your child provided for the purposes
 			stated above.
 		</p>
-		<p>
-			Please take a moment to review our <a href="https://docs.google.com/document/pub?id=1kNo6hwwKwWdhq7jzczAysUWhnsP9RfckIet11pWPW6k">Children's Privacy
+		<p style="margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">
+			Please take a moment to review our <a style="text-decoration: none; color: #3fb3f6" href="https://docs.google.com/document/pub?id=1kNo6hwwKwWdhq7jzczAysUWhnsP9RfckIet11pWPW6k">Children's Privacy
 			Policy</a> for more details about our information collection
 			and sharing practices.
 		</p>
 
 
-		<h1>Your Permission for Social Features</h1>
-		<p>
+		<h1 style="font-weight: bold; margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">Your Permission for Social Features</h1>
+		<p style="margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">
 			Access to social features requires us to collect parental
 			consent, since we must collect some of your child's
 			personal information. By signing and sending the attached
@@ -161,21 +162,21 @@
 			receive updates from NextThought.
 		</p>
 
-		<h1>Your Child's Account</h1>
-		<p>
+		<h1 style="font-weight: bold; margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">Your Child's Account</h1>
+		<p style="margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">
 			You may review, update, or delete your child's personal information
 			at any time.
 			To do this please send an email with your child's username
-			to <a href="mailto:compliance@nextthought.com">compliance@nextthought.com</a>,
+			to <a style="text-decoration: none; color: #3fb3f6" href="mailto:compliance@nextthought.com">compliance@nextthought.com</a>,
 			and we will contact you about reviewing or deleting your
 			child's information.
 		</p>
-		<p>
+		<p style="margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">
 			If you have other questions about NextThought or need
 			further assistance with your child's account, please feel
 			free to contact us.
 		</p>
-		<p>
+		<p style="margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">
 			Sincerely, <br />
 			NextThought
 		</p>
