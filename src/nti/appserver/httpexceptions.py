@@ -15,6 +15,7 @@ HTTPForbidden = _hexc.HTTPForbidden
 HTTPUnsupportedMediaType = _hexc.HTTPUnsupportedMediaType
 HTTPException = _hexc.HTTPException
 HTTPNotFound = _hexc.HTTPNotFound
+HTTPNoContent = _hexc.HTTPNoContent
 
 # Dynamically import the rest
 def _copy_pyramid_exceptions():
