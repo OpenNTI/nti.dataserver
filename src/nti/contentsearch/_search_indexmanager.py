@@ -33,7 +33,7 @@ class _SearchEntityIndexManager(object):
 		if result is None:
 			logger.debug('Could not find object with id %r' % uid)
 			
-		if not self.verify_access(result):
+		if result is not None and not self.verify_access(result):
 			result = None
 	
 		return result
