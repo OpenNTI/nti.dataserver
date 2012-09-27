@@ -76,13 +76,12 @@
 		<p style="margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">
 			NextThought is a social learning platform that allows students to
 			interact, communicate, and collaborate with others within the content
-			of their educational materials. Students can access and read materials
-			online, annotate them, create whiteboards, and share notes with their
-			classmates and teachers. For more information about
-			NextThought, please visit <a style="text-decoration: none; color: #3fb3f6" href="http://www.nextthought.com">www.nextthought.com</a>.
+			of their educational materials. Students can read materials
+			online, annotate them, create whiteboards, and share notes with
+			classmates and teachers.
 		</p>
 
-		<h1 style="font-weight: bold; margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">Your Child's Account</h1>
+		<h1 style="font-weight: bold; margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">Your Child's Information</h1>
 		<p style="margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">
 			At NextThought we are committed to providing a safe and
 			secure environment to support your child's education and
@@ -93,7 +92,7 @@
 			When your child registered for an account, we asked for
 			his or her first and last name, birthday, username,
 			password, email address, and parent's email address. To
-			minimize data collected from children under 13, we handle
+			minimize data collected from children, we handle
 			this information in specific ways, as outlined below:
 		</p>
 
@@ -118,13 +117,16 @@
 
 		<h2 style="font-weight: bold; margin-left: 50px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">Parent's Email Address</h2>
 		<p style="margin-left: 50px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">
-			We do not save this email address after sending you this
-			email notice
+			We use this address to send you this notice, and we
+			include it on the attached consent form so that we can
+			match your child's username to your email address when you
+			submit the form. We delete your address after sending you
+			this email.
 		</p>
 
 		<p style="margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">
 			In short, the only information we retain after your child
-			completes registration is his or her birthday, first name,
+			creates an account is his or her birthday, first name,
 			and email address in its altered form.
 		</p>
 		<p style="margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">
@@ -146,20 +148,18 @@
 
 		<h1 style="font-weight: bold; margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">Your Permission for Social Features</h1>
 		<p style="margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">
-			Access to social features requires us to collect parental
-			consent, since we must collect some of your child's
-			personal information. By signing and sending the attached
-			form to us via one of the methods listed on it, you permit
-			us to ask for and store your child's full name, school
+			We must obtain parental consent to collect personal
+			information from children before we grant them access to
+			social features. By signing and sending the attached form
+			to us via one of the methods listed on it, you permit us
+			to ask for and store your child's full name, school
 			affiliation, and email address (in unaltered form) and to
-			make the social features available to him or her. This
-			personal information allows us to communicate with our
-			users and connect them to the educational community. We
-			will also retain your email address, which appears on the
-			attached form, so that we can inform you of any material
-			changes that affect the way we use your child's
-			information. You also have the opportunity to sign up to
-			receive updates from NextThought.
+			make the social features available to him or her. You also
+			permit us to save your email address from the form, so
+			that we can notify you of any material changes that affect
+			the way we use your child's information. Having this
+			information allows us to communicate with our users and
+			connect them to the educational community.
 		</p>
 
 		<h1 style="font-weight: bold; margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">Your Child's Account</h1>
@@ -180,6 +180,9 @@
 			Sincerely, <br />
 			NextThought
 		</p>
-
+		<p style="margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 12pt; line-height: 20pt;">
+			For more information about NextThought, please visit our
+			website at <a  style="text-decoration: none; color: #3fb3f6" href="http://www.nextthought.com">www.nextthought.com</a>.
+		</p>
 	</body>
 </html>
