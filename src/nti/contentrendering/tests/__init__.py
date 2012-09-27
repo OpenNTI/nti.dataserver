@@ -1,49 +1,23 @@
-import nti.contentrendering
-
+import os
+import sys
+import shutil
+import tempfile
+import StringIO
 
 import zope.component
 from pkg_resources import resource_filename
 
-from nti.tests import ConfiguringTestBase as _ConfiguringTestBase
-import sys
-
-class ConfiguringTestBase(_ConfiguringTestBase):
-	set_up_packages = (nti.contentrendering,)
-
-
-class EmptyMockDocument(object):
-
-	childNodes = ()
-
-	def __init__(self):
-		self.context = {}
-		self.userdata = {}
-
-	def getElementsByTagName(self, name): return ()
-
-def _phantom_function( htmlFile, scriptName, args, key ):
-	return (key, {'ntiid': key[0]})
-
-from nti.contentrendering.RenderedBook import RenderedBook
-class NoPhantomRenderedBook(RenderedBook):
-
-	def _get_phantom_function(self):
-		return _phantom_function
-
-
-
-
-import os
-import shutil
-
-
-import tempfile
-import StringIO
-
 import plasTeX
 from plasTeX.TeX import TeX
 
+import nti.contentrendering
 from nti.contentrendering import nti_render
+from nti.contentrendering.utils import EmptyMockDocument
+from nti.contentrendering.utils import NoPhantomRenderedBook
+from nti.tests import ConfiguringTestBase as _ConfiguringTestBase
+
+class ConfiguringTestBase(_ConfiguringTestBase):
+	set_up_packages = (nti.contentrendering,)
 
 def buildDomFromString(docString, mkdtemp=False):
 	document = plasTeX.TeXDocument()
