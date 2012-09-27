@@ -178,7 +178,7 @@ def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=Fa
 		if not content:
 			return
 		
-		docid = "%s %s" % (ntiid, docid)
+		docid = "%r %s" % (ntiid, docid)
 		docid = unicode(hashlib.md5(docid).hexdigest())
 		try:
 			content = unicode(content)
