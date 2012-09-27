@@ -148,14 +148,6 @@ def get_uid(obj):
 	uid = _ds_intid.getId(obj)
 	return int(uid)
 	
-def get_object(uid, ignore_exp=False):
-	uid = int(uid)
-	_ds_intid = component.getUtility( zope.intid.IIntIds )
-	result = _ds_intid.queryObject(uid , None)
-	if result is None:
-		logger.debug('Could not find object with id %r' % uid)
-	return result
-
 @interface.implementer(search_interfaces.ICloudSearchObject)
 class _AbstractCSObject(dict):
 	def __init__( self, src ):
@@ -205,8 +197,3 @@ def to_cloud_object(obj, username):
 	data = search_interfaces.ICloudSearchObject(obj)
 	data[username_] = username
 	return oid, data
-
-def to_ds_object(cloud_data):
-	uid = cloud_data.get(intid_, None)
-	result = get_object(uid, True) if uid is not None else None
-	return result

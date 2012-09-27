@@ -113,11 +113,7 @@ class _WhooshEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 	delay = 0.25
 	maxiters = 40
 	use_md5 = True
-		
-	@property
-	def username(self):
-		return self.__parent__.username
-	
+			
 	@property
 	def storage(self):
 		result = component.getUtility(search_interfaces.IWhooshIndexStorage)
@@ -148,7 +144,7 @@ class _WhooshEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 		indexname = self._get_indexname(type_name)
 		index = whoosh_indices.get(indexname, None)
 		if not index:
-			indexable = get_indexable_object(type_name)
+			indexable = self.get_indexable_object(type_name)
 			schema = indexable.get_schema() if indexable else None
 			if schema:
 				index = self.storage.get_or_create_index(indexname=indexname,
@@ -177,7 +173,7 @@ class _WhooshEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 		for type_name in searchon:
 			index = self._get_or_create_index(type_name)
 			with index:
-				indexable = get_indexable_object(type_name)
+				indexable = self.get_indexable_object(type_name)
 				with index.searcher() as searcher:
 					rs = indexable.search(searcher, query)
 					results = merge_search_results(results, rs)
@@ -194,7 +190,7 @@ class _WhooshEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 		for type_name in searchon:
 			index = self._get_or_create_index(type_name)
 			with index:
-				indexable = get_indexable_object(type_name)
+				indexable = self.get_indexable_object(type_name)
 				with index.searcher() as searcher:
 					rs = indexable.suggest_and_search(searcher, query)
 					results = merge_suggest_and_search_results(results, rs)
@@ -207,7 +203,7 @@ class _WhooshEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 		for type_name in searchon:
 			index = self._get_or_create_index(type_name)
 			with index:
-				indexable = get_indexable_object(type_name)
+				indexable = self.get_indexable_object(type_name)
 				with index.searcher() as searcher:
 					rs = indexable.suggest(searcher, query)
 					results = merge_suggest_results(results, rs)
@@ -226,7 +222,7 @@ class _WhooshEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 		index = self._get_or_create_index(type_name)
 		if index is not None:
 			with index:
-				indexable = get_indexable_object(type_name)
+				indexable = self.get_indexable_object(type_name)
 				writer = self._get_index_writer(index)
 				if not indexable.index_content(writer, data, **self.writer_commit_args):
 					writer.cancel()
@@ -239,7 +235,7 @@ class _WhooshEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 		index = self._get_or_create_index(type_name)
 		if index is not None:
 			with index:
-				indexable = get_indexable_object(type_name)
+				indexable = self.get_indexable_object(type_name)
 				writer = self._get_index_writer(index)
 				if not indexable.update_content(writer, data, **self.writer_commit_args):
 					writer.cancel()
@@ -252,7 +248,7 @@ class _WhooshEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 		index = self._get_or_create_index(type_name)
 		if index is not None:
 			with index:
-				indexable = get_indexable_object(type_name)
+				indexable = self.get_indexable_object(type_name)
 				writer = self._get_index_writer(index)
 				if not indexable.delete_content(writer, data, **self.writer_commit_args):
 					writer.cancel()
@@ -268,6 +264,11 @@ class _WhooshEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 				self.pop(type_name, None)
 				whoosh_indices.pop(type_name, None)
 				_safe_index_close(index)
+	
+	def get_indexable_object(self, type_name):
+		indexable = get_indexable_object(type_name)
+		setattr(indexable ,'get_object', self.get_object)
+		return indexable
 	
 	# -------------------
 	

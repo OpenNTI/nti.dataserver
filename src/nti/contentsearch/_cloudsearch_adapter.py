@@ -19,7 +19,6 @@ from nti.contentsearch._search_query import QueryObject
 from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch._cloudsearch_query import parse_query
 from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch._cloudsearch_index import to_ds_object
 from nti.contentsearch._cloudsearch_index import get_cloud_oid
 from nti.contentsearch._cloudsearch_index import to_cloud_object
 from nti.contentsearch._search_results import empty_search_results
@@ -46,13 +45,6 @@ class _CloudSearchEntityIndexManager(Persistent, _SearchEntityIndexManager):
 		result = cs.get_search_domain()
 		return result
 	
-	@property
-	def username(self):
-		return self.__parent__.username
-	
-	def get_username(self):
-		return self.username
-	
 	def _get_document_service(self):
 		return get_document_service(domain=self.domain)
 	
@@ -60,8 +52,10 @@ class _CloudSearchEntityIndexManager(Persistent, _SearchEntityIndexManager):
 		return get_search_service(domain=self.domain)
 	
 	def _get_search_hit(self, obj):
-		data = to_ds_object(obj['data'])  
-		return data
+		cloud_data = obj['data']
+		uid = cloud_data.get(intid_, None)
+		result = self.get_object(int(uid)) if uid else None
+		return result
 		
 	def _do_search(self, field, qo, highlight_type=WORD_HIGHLIGHT, creator_method=None):
 		creator_method = creator_method or empty_search_results

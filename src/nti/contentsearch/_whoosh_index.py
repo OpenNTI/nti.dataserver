@@ -259,7 +259,7 @@ def get_uid(obj):
 	uid = _ds_intid.getId(obj)
 	return unicode(str(uid))
 	
-def get_object(uid, ignore_exp=False):
+def get_object_from_ds(uid):
 	uid = int(uid)
 	_ds_intid = component.getUtility( zope.intid.IIntIds )
 	result = _ds_intid.queryObject(uid, None)
@@ -298,12 +298,16 @@ class UserIndexableContent(_SearchableContent):
 		return result
 
 	def get_objects_from_whoosh_hits(self, search_hits, search_field):
-		result = map(self._get_object, search_hits)
+		result = map(self.get_object_from_whoosh_hit, search_hits)
 		return result
 	
-	def _get_object(self, hit):
+	def get_object_from_whoosh_hit(self, hit):
 		uid = hit[intid_]
-		result = get_object(uid, True)
+		result = self.get_object(int(uid))
+		return result
+	
+	def get_object(self, uid):
+		result = get_object_from_ds(uid)
 		return result
 	
 	def index_content(self, writer, data, auto_commit=True, **commit_args):
@@ -432,12 +436,12 @@ _indexables = CaseInsensitiveDict()
 for k,v in globals().items():
 	if inspect.isclass(v) and getattr(v, '__indexable__', False):
 		name = normalize_type_name(k)
-		_indexables[name] = v()
+		_indexables[name] = v
 		
 def get_indexables():
 	return _indexables.keys()
 
 def get_indexable_object(type_name=None):
 	name = normalize_type_name(type_name)
-	result = _indexables.get(name, None)
-	return result
+	clazz = _indexables.get(name, None)
+	return clazz() if clazz else None
