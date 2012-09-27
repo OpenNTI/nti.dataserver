@@ -80,14 +80,22 @@ def _links_for_authenticated_users( request ):
 	go to the user. Shared between ping and handshake.
 	"""
 	links = ()
+	remote_user = None
 	remote_user_name = sec.authenticated_userid( request )
 	if remote_user_name:
-		logger.debug( "Found authenticated user %s", dict(request.environ.get( 'repoze.who.identity', {} )) )
+		remote_user = users.User.get_user( remote_user_name )
+		# The cookie may be valid, but the user deleted, so check for
+		# the actual user
+	if remote_user:
+		logger.debug( "Found authenticated user %s", remote_user )
 		# They are already logged in, provide a continue link
 		continue_href = request.route_path( 'user.root.service', _='' )
 		links = [ Link( continue_href, rel=REL_CONTINUE ) ]
 		logout_href = request.route_path( REL_LOGIN_LOGOUT )
 		links.append( Link( logout_href, rel=REL_LOGIN_LOGOUT ) )
+
+		for provider in request.registry.subscribers( (remote_user,request), app_interfaces.IAuthenticatedUserLinkProvider ):
+			links.extend( provider.get_links() )
 
 	return links
 

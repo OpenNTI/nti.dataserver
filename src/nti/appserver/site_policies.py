@@ -14,9 +14,11 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 from . import MessageFactory as _
+
 from zope import component
 from zope import interface
 from zope import schema
+from zope.event import notify
 
 from pyramid.threadlocal import get_current_request
 
@@ -446,22 +448,24 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 			return
 
 		# Copy the profile info. First, adapt to the old profile:
-		profile = user_interfaces.IUserProfile( user )
+		orig_profile = user_interfaces.IUserProfile( user )
 		# Then adjust the interfaces
 		interface.noLongerProvides( user, self.IF_WOUT_AGREEMENT )
 		interface.alsoProvides( user, self.IF_WITH_AGREEMENT )
 		# Now get the new profile
 		new_profile = user_interfaces.IUserProfile( user )
-		# If they changed, adjust them
-		if profile is not new_profile:
+		# If they changed, adjust them, copying in any missing data
+		if orig_profile is not new_profile:
 			most_derived_profile_iface = _ext_find_schema( new_profile, user_interfaces.IUserProfile )
 			for name, field in most_derived_profile_iface.namesAndDescriptions(all=True):
 				if interface.interfaces.IMethod.providedBy( field ):
 					continue
 
-				if getattr( profile, name, None ): # Only copy things that have values. Let defaults be used otherwise
-					setattr( new_profile, name, getattr( profile, name ) )
-
+				if getattr( orig_profile, name, None ): # Only copy things that have values. Let defaults be used otherwise
+					setattr( new_profile, name, getattr( orig_profile, name ) )
+		notify( app_interfaces.UserUpgradedEvent( user,
+												  self.IF_WOUT_AGREEMENT, orig_profile,
+												  self.IF_WITH_AGREEMENT, new_profile ) )
 		# TODO: If the new profile required some values the old one didn't, then what?
 		# Prime example: email, not required for kids, yes required for adults.
 

@@ -14,22 +14,15 @@ from hamcrest import greater_than_or_equal_to
 from hamcrest import is_not as does_not
 from nti.tests import verifiably_provides
 from zope import interface
-
+from zope import component
+from zope.component import eventtesting
 from webtest import TestApp
 
-import os.path
-
-import urllib
-
-from nti.ntiids import ntiids
-from nti.externalization.oids import to_external_ntiid_oid
-from nti.dataserver import contenttypes, users
-from nti.contentrange import contentrange
 
 from nti.dataserver import users
 from nti.dataserver.users import interfaces as user_interfaces
 from nti.appserver import site_policies
-
+from nti.appserver import interfaces as app_interfaces
 from nti.dataserver.tests import mock_dataserver
 
 from .test_application import ApplicationTestBase
@@ -40,6 +33,7 @@ class TestApplicationCoppaAdmin(ApplicationTestBase):
 
 	def test_approve_coppa(self):
 		"Basic tests of the moderation admin page"
+		component.provideHandler( eventtesting.events.append, (None,) )
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = self._create_user()
 			coppa_user = self._create_user( username='ossmkitty' )
@@ -78,3 +72,7 @@ class TestApplicationCoppaAdmin(ApplicationTestBase):
 			assert_that( user, verifiably_provides( site_policies.IMathcountsCoppaUserWithAgreement ) )
 
 			assert_that( user_interfaces.IFriendlyNamed( user ), has_property( 'realname', 'Jason' ) )
+
+			upgrade_event = eventtesting.getEvents( app_interfaces.IUserUpgradedEvent )[0]
+			assert_that( upgrade_event, has_property( 'user', user ) )
+			assert_that( upgrade_event, has_property( 'upgraded_interface', site_policies.IMathcountsCoppaUserWithAgreement ) )
