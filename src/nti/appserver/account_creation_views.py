@@ -24,6 +24,15 @@ process, where there are page redirects happening frequently.
 	users will be given a link with this rel
 	("account.preflight.create") at logon ping and handshake time.
 
+.. py:data:: REL_ACCOUNT_PROFILE_UPGRADE
+
+	The link relationship type that means that the user profile is in need
+	of an update, possibly because the applicable fields have changed
+	(e.g., when the user signs a COPPA agreement). This is one of those
+	links that needs to be DELETEd when the action has been taken: it serves as a flag.
+	When this link appears, the correct schema for the profile can
+	be obtained from the :func:`account_profile_view`
+
 $Id$
 """
 
@@ -59,6 +68,7 @@ from nti.appserver._util import logon_user_with_request
 from nti.appserver import _external_object_io as obj_io
 from nti.appserver import site_policies
 from nti.appserver._util import raise_json_error as _raise_error
+from nti.appserver import user_link_provider
 
 from pyramid.view import view_config
 from pyramid import security as sec
@@ -70,6 +80,7 @@ import nameparser.parser
 REL_CREATE_ACCOUNT = "account.create"
 REL_PREFLIGHT_CREATE_ACCOUNT = "account.preflight.create"
 REL_ACCOUNT_PROFILE = "account.profile"
+REL_ACCOUNT_PROFILE_UPGRADE = "account.profile.needs.updated"
 
 _PLACEHOLDER_USERNAME = 'A_Username_We_Allow_That_Doesnt_Conflict'
 
@@ -302,6 +313,22 @@ def account_profile_view(request):
 	return {'Username': request.context.username,
 			'AvatarURLChoices': _get_avatar_choices_for_username( request.context.username, request ),
 			'ProfileSchema': _make_schema( request.context )}
+
+
+@component.adapter(nti_interfaces.IUser,app_interfaces.IUserUpgradedEvent)
+def request_profile_update_on_user_upgrade(user, event):
+	user_link_provider.add_link( user, REL_ACCOUNT_PROFILE_UPGRADE )
+
+
+class ProfileUpgradeDeleteView(user_link_provider.AbstractUserLinkDeleteView):
+
+	LINK_NAME = REL_ACCOUNT_PROFILE_UPGRADE
+
+	@view_config(name=REL_ACCOUNT_PROFILE_UPGRADE)
+	def __call__( self ):
+		return user_link_provider.AbstractUserLinkDeleteView.__call__( self )
+
+
 
 def _get_avatar_choices_for_username( username, request ):
 	avatar_choices = ()

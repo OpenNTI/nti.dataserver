@@ -142,6 +142,9 @@
 	<subscriber handler="._indexmanager_event_listeners.add_filesystem_index" />
 	<subscriber handler="._indexmanager_event_listeners.add_s3_index" />
 	<subscriber handler=".glossary_views.add_main_glossary_from_new_content" />
+
+	<subscriber handler=".account_creation_views.request_profile_update_on_user_upgrade" />
+
 	<!-- Logon -->
 	<!-- Local users with passwords get a direct logon link -->
 	<subscriber factory=".logon._SimpleExistingUserLinkProvider"
