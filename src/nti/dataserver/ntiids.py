@@ -109,8 +109,17 @@ class _AbstractUserBasedResolver(object):
 		dataserver = component.queryUtility( nti_interfaces.IDataserver )
 		user = None
 		if dataserver:
-			provider = get_provider( key )
-			user = dataserver.root[self.namespace].get( provider )
+			provider_name = get_provider( key )
+			user = dataserver.root[self.namespace].get( provider_name )
+			if not user:
+				# Try unescaping it. See ntiids.py for more. The transformation is
+				# not totally reliable. The - becomes _ when "escaped" (as does whitespace,
+				# but those aren't allowed in user names). This wouldn't be a problem except that
+				# usernames can contain - already. So if the name mixes _ and -, then we can't
+				# recover it
+				provider_name = provider_name.replace( '_', '-' )
+				user = dataserver.root[self.namespace].get( provider_name )
+
 		if user:
 			return self._resolve( key, user )
 
