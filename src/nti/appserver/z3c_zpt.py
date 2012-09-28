@@ -21,6 +21,8 @@ from pyramid.i18n import get_locale_name
 from pyramid.interfaces import ITemplateRenderer
 from pyramid.decorator import reify
 from pyramid import renderers
+from pyramid.renderers import get_renderer
+
 
 def renderer_factory(info):
 	"""
@@ -71,6 +73,9 @@ class ZPTTemplateRenderer(object):
 			view = request
 			system['view'] = request
 
+		if 'master' not in system:
+			master = get_renderer('templates/master_email.pt').implementation()
+			system['master'] = master
 		result = self.template.bind( view )( **system )
 		#print(result)
 		return result

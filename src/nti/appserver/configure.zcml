@@ -6,7 +6,15 @@
 	<include package="zope.component" />
 	<include package="zope.componentvocabulary" />
 	<include package="nti.dataserver" />
+
 	<i18n:registerTranslations directory="locales" />
+	<!--
+		 Let requests be used for negotiating locales in the Zope way.
+		 Needed for tables
+	-->
+<!--	<adapter factory="._adapters.EnglishPreferredLanguage" /> -->
+	<adapter factory="zope.publisher.browser.BrowserLanguages" />
+
 	<!-- Account Creation -->
 	<utility factory=".site_policies.RequestAwareUserPlacer" />
 

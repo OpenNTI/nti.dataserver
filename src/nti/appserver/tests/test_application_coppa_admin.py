@@ -53,7 +53,8 @@ class TestApplicationCoppaAdmin(ApplicationTestBase):
 		assert_that( res.body, contains_string( 'ossmkitty' ) )
 		assert_that( res.body, contains_string( 'Jason' ) )
 
-		# OK, now let's approve it, then we should be back to an empty page
+		# OK, now let's approve it, then we should be back to an empty page.
+		# First, if we submit without an email, we don't get approval
 
 		form = res.form
 		form.set( 'table-coppa-admin-selected-0-selectedItems', True, index=0 )
@@ -64,6 +65,20 @@ class TestApplicationCoppaAdmin(ApplicationTestBase):
 		assert_that( res.status_int, is_( 200 ) )
 
 		assert_that( res.content_type, is_( 'text/html' ) )
+		assert_that( res.body, contains_string( 'ossmkitty' ) )
+		assert_that( res.body, contains_string( 'Jason' ) )
+
+		# Now, if we submit with an email, we do get approval
+		form = res.form
+		form.set( 'table-coppa-admin-selected-0-selectedItems', True, index=0 )
+		for k in form.fields:
+			if 'contactemail' in k:
+				form.set( k, 'jason.madden@nextthought.com' )
+		res = form.submit( 'subFormTable.buttons.approve', extra_environ=environ )
+		assert_that( res.status_int, is_( 302 ) )
+
+		res = testapp.get( path, extra_environ=environ )
+		assert_that( res.status_int, is_( 200 ) )
 		assert_that( res.body, does_not( contains_string( 'ossmkitty' ) ) )
 		assert_that( res.body, does_not( contains_string( 'Jason' ) ) )
 
@@ -72,6 +87,7 @@ class TestApplicationCoppaAdmin(ApplicationTestBase):
 			assert_that( user, verifiably_provides( site_policies.IMathcountsCoppaUserWithAgreement ) )
 
 			assert_that( user_interfaces.IFriendlyNamed( user ), has_property( 'realname', 'Jason' ) )
+			assert_that( user_interfaces.IUserProfile( user ), has_property( 'contact_email', 'jason.madden@nextthought.com' ) )
 
 			upgrade_event = eventtesting.getEvents( app_interfaces.IUserUpgradedEvent )[0]
 			assert_that( upgrade_event, has_property( 'user', user ) )

@@ -275,7 +275,7 @@ class IRestrictedUserProfileWithContactEmail(IRestrictedUserProfile):
 
 	contact_email = _ValidTextLine(
 		title='Contact email',
-		description=u'An email address to use to contact someone responsible for this accounts user',
+		description=u"An email address to use to contact someone responsible for this accounts' user",
 		required=False,
 		constraint=checkEmailAddress)
 
