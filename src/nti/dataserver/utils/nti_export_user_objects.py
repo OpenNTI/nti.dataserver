@@ -5,6 +5,7 @@ from __future__ import print_function, unicode_literals
 import os
 import sys
 import json
+import argparse
 import datetime
 from collections import Mapping
 from collections import defaultdict
@@ -86,15 +87,25 @@ def export_user_objects( username, object_types=(), export_dir="/tmp"):
 	return out_files
 
 def main():
-	if len(sys.argv) < 2:
-		print( "Usage %s env_dir username [export_dir] [*types]" % sys.argv[0] )
-		sys.exit( 1 )
-
+	arg_parser = argparse.ArgumentParser( description="Export user objects" )
+	arg_parser.add_argument( 'env_dir', help="Dataserver environment root directory" )
+	arg_parser.add_argument( 'username', help="The username to delete" )
+	arg_parser.add_argument( '-d', '--directory',
+							 dest='export_dir',
+							 default=None,
+							 help="Output export directory" )
+	arg_parser.add_argument( '-t', '--types',
+							 nargs="*",
+							 dest='object_types',
+							 help="The object type(s) to export" )
+	
+	args = arg_parser.parse_args()
+	
 	# gather parameters
-	env_dir = sys.argv[1]
-	username = sys.argv[2]
-	export_dir = sys.argv[3] if len(sys.argv) >=4 else env_dir
-	object_types = set(sys.argv[4:])
+	env_dir = args.env_dir
+	username = args.username
+	export_dir = args.export_dir or env_dir
+	object_types = set(args.object_types) if args.object_types else ()
 
 	# run export
 	run_with_dataserver(environment_dir=env_dir, 
