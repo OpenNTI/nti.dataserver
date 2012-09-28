@@ -4,6 +4,7 @@ import six
 
 from zope import component
 from zope import interface
+from zope.event import notify
 
 from nti.dataserver.users import User
 from nti.dataserver import interfaces as nti_interfaces
@@ -203,22 +204,22 @@ class IndexManager(object):
 		um = None
 		if data is not None:
 			um = self._get_user_index_manager(target)
-		if um is not None and data is not None:
-			return um.index_content(data, type_name )
+		if um is not None and data is not None and um.index_content(data, type_name):
+			notify(search_interfaces.IndexEvent(target, data, search_interfaces.IE_INDEXED))
 
 	def update_user_content(self, target, type_name=None, data=None):
 		um = None
 		if data is not None:
 			um = self._get_user_index_manager(target)
-		if um is not None and data is not None:
-			return um.update_content(data, type_name)
+		if um is not None and data is not None and um.update_content(data, type_name):
+			notify(search_interfaces.IndexEvent(target, data, search_interfaces.IE_REINDEXED))
 
 	def delete_user_content(self, target, type_name=None, data=None):
 		um = None
 		if data is not None:
 			um = self._get_user_index_manager(target)
-		if um is not None and data is not None:
-			return um.delete_content(data, type_name)
+		if um is not None and data is not None and um.delete_content(data, type_name):
+			notify(search_interfaces.IndexEvent(target, data, search_interfaces.IE_UNINDEXED))
 
 	@classmethod
 	def onChange(cls, datasvr, msg, target=None, broadcast=None):
