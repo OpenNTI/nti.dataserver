@@ -107,6 +107,9 @@ class TestLogon(ConfiguringTestBase):
 		self.config.add_route( name='logon.google', pattern='/dataserver2/logon.google' )
 		self.config.add_route( name='logon.logout', pattern='/dataserver2/logon.logout' )
 		self.config.add_route( name='logon.facebook.oauth1', pattern='/dataserver2/logon.facebook.1' )
+		self.config.add_route( name='logon.forgot.username', pattern='/dataserver2/logon.forgot' )
+		self.config.add_route( name='logon.forgot.passcode', pattern='/dataserver2/logon.forgot.passcode' )
+		self.config.add_route( name='logon.reset.passcode', pattern='/dataserver2/logon.reset.passcode' )
 
 		# A user that doesn't actually exist.
 		# Per current policy, the first link will be the generic password login
@@ -119,7 +122,7 @@ class TestLogon(ConfiguringTestBase):
 		get_current_request().params['username'] = 'jason.madden@nextthought.com'
 
 		result = handshake( get_current_request() )
-		assert_that( result, has_property( 'links', has_length( 3 ) ) )
+		assert_that( result, has_property( 'links', has_length( greater_than_or_equal_to( 3 ) ) ) )
 		assert_that( result.links[1].target, is_( '/dataserver2/logon.google?username=jason.madden%40nextthought.com&oidcsum=-1978826904171095151' ) )
 		assert_that( result.links[2].target, is_( '/dataserver2/logon.facebook.1?username=jason.madden%40nextthought.com' ) )
 		#assert_that( result.links[3].target, is_( '/dataserver2' ) )
