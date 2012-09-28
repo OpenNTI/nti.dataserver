@@ -119,7 +119,7 @@ setup(
 		'coverage >= 3.5.2', # Test coverage
 		'cryptacular >= 1.4.1', # see z3c.crypt
 		'cssselect >= 0.7.1', # Used by pyquery
-		'cython >= 0.17',
+		'cython >= 0.17.1',
 		# support for defining and evolving classes based on schemas
 		# pulls in dm.reuse
 		'dm.zope.schema >= 2.0.1',
@@ -147,7 +147,7 @@ setup(
 		 # fewer dependencies, but less helpful output and doesn't work with multiple workers (?)
 		#'linesman >= 0.2.2', # Conflicts with Pillow. Modify requires.txt as part of the patch
 		'logilab-common >= 0.58.1',
-		'lxml == 2.3.5', # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
+		'lxml == 2.3.6', # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
 		'nameparser >= 0.2.2', # Human name parsing
 		'nltk >= 2.0.3',
 		# numpy is req'd by nltk, but not depended on. sigh.
