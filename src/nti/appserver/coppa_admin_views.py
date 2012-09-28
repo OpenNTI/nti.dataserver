@@ -7,8 +7,11 @@ Views relating to coppa administration.
 $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
-logger = __import__('logging').getLogger('__name__')
+logger = __import__('logging').getLogger(__name__)
+from . import MessageFactory as _
 
+from zope import component
+from zc.intid import IIntIds
 
 import pyramid.httpexceptions  as hexc
 from pyramid.view import view_config
@@ -18,10 +21,11 @@ from nti.appserver import site_policies
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
+
 from z3c.table import table
+from z3c.table import column
 
 from nti.dataserver import authorization as nauth
-
 
 from nti.appserver.z3c_zpt import PyramidZopeRequestProxy
 
@@ -34,6 +38,9 @@ def _coppa_table( request ):
 		content = [x for x in users_folder.values() if site_policy.IF_WOUT_AGREEMENT.providedBy( x )]
 	the_table = CoppaAdminTable( content,
 								 PyramidZopeRequestProxy( request ) )
+	the_table.__parent__ = request.context
+	the_table.__name__ = 'coppa_admin.html'
+	the_table.startBatchingAt = 50
 	the_table.update()
 	return the_table
 
@@ -58,7 +65,16 @@ def moderation_admin_post( request ):
 		if not site_policy: #pragma: no cover
 			logger.warn( "Unable to find site policy in %s", policy_name )
 		else:
+			email_col = the_table.columnByName['coppa-admin-contactemail']
 			for item in the_table.selectedItems:
+				contact_email = email_col.getItemValue( item ) or ''
+				contact_email = contact_email.strip()
+				if not contact_email:
+					# TODO: Need to put this is the flash queue or something so it can be displayed on the page
+					logger.warn( "No contact email provided for %s, not upgrading", item )
+					continue
+				logger.info( "Upgrading user %s to COPPA approved with contact email %s", item, contact_email )
+				user_interfaces.IUserProfile(item).contact_email = contact_email
 				site_policy.upgrade_user( item )
 
 	# Else, no action.
@@ -71,6 +87,42 @@ class CoppaAdminTable(table.SequenceTable):
 	pass
 
 class RealnameColumn(_table_utils.AdaptingGetAttrColumn):
-	header = 'Name'
+	header = _('Name')
 	attrName = 'realname'
 	adapt_to = user_interfaces.IFriendlyNamed
+
+class ContactEmailColumn(column.Column):
+	"""
+	Column to accept the new contact email address.
+	"""
+
+	header = _('Contact Email')
+	weight = 15
+
+	def __init__( self, context, request, tbl ):
+		super(ContactEmailColumn,self).__init__( context, request, tbl )
+		self._values = {}
+
+	def getSortKey(self, item):
+		return self.getItemValue( item )
+
+	def getItemKey(self, item):
+	 	return '%s-contactemail-%s' % (self.id, component.getUtility(IIntIds).getId(item))
+
+	def getItemValue(self, item):
+		return self._values.get( self.getItemKey(item ) ) or getattr( user_interfaces.IUserProfile(item), 'contact_email', None )
+
+	def update(self):
+		for item in self.table.values:
+			key = self.getItemKey( item )
+			val = self.request.get( key )
+			if val:
+				self._values[key] = val
+
+	def renderCell(self, item):
+		selected = u''
+#		if item in self.selectedItems:
+#			selected = 'checked="checked"'
+		return u'<input type="email" class="%s" name="%s" value="%s" %s />' \
+			% ('contact-email-widget', self.getItemKey(item), self.getItemValue(item) or '',
+			selected)

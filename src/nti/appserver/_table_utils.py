@@ -17,16 +17,31 @@ from zc import intid as zc_intid
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.contentfragments import interfaces as frg_interfaces
+import pyramid.interfaces
+import z3c.table.interfaces
 
 from z3c.table import column
 from zope.dublincore import interfaces as dc_interfaces
 from zope.proxy.decorator import SpecificationDecoratorBase
 
+from zope.traversing.browser.interfaces import IAbsoluteURL
 
 @interface.implementer(dc_interfaces.IZopeDublinCore)
 class _FakeDublinCoreProxy(SpecificationDecoratorBase):
 	pass
 
+@interface.implementer(IAbsoluteURL)
+@component.adapter(z3c.table.interfaces.ITable, pyramid.interfaces.IRequest)
+class TrivialTableAbsoluteURL(object):
+	"""
+	Needed to be able to produce the batching URLs.
+	"""
+	def __init__( self, context, request ):
+		self.context = context
+		self.request = request
+
+	def __call__( self ):
+		return self.request.path
 
 class NoteBodyColumn(column.GetAttrColumn):
 	"""

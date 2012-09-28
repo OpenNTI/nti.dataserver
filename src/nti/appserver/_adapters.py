@@ -13,7 +13,7 @@ from zope.traversing import interfaces as trv_interfaces
 import ZODB
 
 from nti.appserver import interfaces as app_interfaces
-
+import pyramid.interfaces
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.externalization import datastructures
@@ -172,3 +172,17 @@ class _UserRealnameStripper(object):
 		if users.User.get_user( psec.authenticated_userid( get_current_request() ) ) == original:
 			return
 		external['realname'] = None
+
+### Localization
+
+from zope.i18n.interfaces import IUserPreferredLanguages
+
+@interface.implementer(IUserPreferredLanguages)
+@component.adapter(pyramid.interfaces.IRequest)
+class EnglishPreferredLanguage(object):
+
+	def __init__( self, context ):
+		pass
+
+	def getPreferredLanguages(self):
+		return ['en']

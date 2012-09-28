@@ -5,20 +5,73 @@
 	<head>
 		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 		<title>COPPA Admin</title>
+		<style metal:use-macro="options/master/macros/style">
+			#green-bar {
+			background-color: #89be3c;
+			width: 100%;
+			height: 5px;
+			margin-left: -30px;
+			padding-right: 40px;
+			}
+			#logo-bar {
+			margin-top: 20px;
+			margin-bottom: 30px;
+			}
+			body {
+			margin-left: 30px;
+			margin-right: 0px;
+			font-family: Helvetica, Arial, sans-serif;
+			font-size: 14pt;
+			line-height: 20pt;
+			color: #757474;
+			}
+			a {
+			text-decoration: none;
+			color: #3fb3f6;
+			}
+			.tterm {
+			font-weight: bold;
+			color: #494949;
+			}
+			h1, h2, h3, h4, h5, h6 {
+			font-weight: bold;
+			}
+
+			h1 {
+			font-size: 16pt;
+			}
+			h2 {
+			font-size: 14pt;
+			}
+			body p {
+			margin-right: 30px;
+			}
+		</style>
 	</head>
-	<body>
+	<body class="normal-text">
+		<div metal:use-macro="options/master/macros/header">
+		<div id="green-bar"></div>
+		<div id="logo-bar">
+			<img src="http://d2ixlfeu83tci.cloudfront.net/images/email_logo.png" width="177" height="25"
+			alt="NextThought Logo" />
+		</div>
+		</div>
+
 		<form action="" method="post"
 			  enctype="multipart/form-data"
 			  class="edit-form"
 			  name="subFormTable" id="subFormTable">
 
-			<table tal:replace="structure python:options['here'].render()" />
+			<table tal:replace="structure options/here/render" />
 
 			<input id="subFormTable-buttons-approve"
 				   name="subFormTable.buttons.approve"
 				   class="submit-widget button-field" value="Approve"
 				   type="submit" />
 
+			<div class="batches">
+				Pages: <span tal:replace="structure options/here/renderBatch" />
+			</div>
 		</form>
 	</body>
 </html>

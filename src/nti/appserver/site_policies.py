@@ -618,10 +618,17 @@ class IMathcountsCoppaUserWithAgreementUserProfile(user_interfaces.IEmailRequire
 						  default="Other",
 						  required=False)
 
+	# When we upgrade accounts, we need to keep the contact email
+	contact_email = ValidTextLine(
+		title='Contact email',
+		description=u"An email address to use to contact someone responsible for this accounts' user",
+		required=False,
+		constraint=user_interfaces.checkEmailAddress)
+
 IMathcountsCoppaUserWithAgreementUserProfile['affiliation'].setTaggedValue( user_interfaces.TAG_UI_TYPE, 'nti.appserver.site_policies.school' )
 IMathcountsCoppaUserWithAgreementUserProfile['affiliation'].setTaggedValue( user_interfaces.TAG_READONLY_IN_UI, True ) # post-creation
 IMathcountsCoppaUserWithAgreementUserProfile['role'].setTaggedValue( user_interfaces.TAG_READONLY_IN_UI, True ) # post-creation
-
+IMathcountsCoppaUserWithAgreementUserProfile['contact_email'].setTaggedValue( user_interfaces.TAG_HIDDEN_IN_UI, True )
 
 @component.adapter(IMathcountsCoppaUserWithoutAgreement)
 @interface.implementer(IMathcountsCoppaUserWithoutAgreementUserProfile)

@@ -5,6 +5,8 @@
 	<include package="zope.component" />
 	<include package="z3c.table" />
 
+	<adapter factory="._table_utils.TrivialTableAbsoluteURL" />
+
 	<adapter factory="z3c.table.header.SortingColumnHeader"
 			 provides="z3c.table.interfaces.IColumnHeader"
 			 for="* * * ._table_utils.ModifiedColumn"
@@ -69,6 +71,11 @@
 			 provides="z3c.table.interfaces.IColumn"
 			 for="* * .coppa_admin_views.CoppaAdminTable"
 			 name="coppa-admin-realname" />
+	<adapter factory=".coppa_admin_views.ContactEmailColumn"
+			 provides="z3c.table.interfaces.IColumn"
+			 for="* * .coppa_admin_views.CoppaAdminTable"
+			 name="coppa-admin-contactemail" />
+
 
 	<adapter factory="z3c.table.header.SortingColumnHeader"
 			 provides="z3c.table.interfaces.IColumnHeader"
