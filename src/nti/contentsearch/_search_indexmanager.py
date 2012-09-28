@@ -40,8 +40,8 @@ class _SearchEntityIndexManager(object):
 		
 	def verify_access(self, obj):
 		adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
-		creator =  adapted.get_creator() if adapted else u''
-		sharedWith = adapted.get_sharedWith() or () if adapted else ()
+		creator =  adapted.get_creator()
+		sharedWith = adapted.get_sharedWith() or ()
 		result = self.username == creator or self.username in sharedWith
 		return result
 
