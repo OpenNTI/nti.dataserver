@@ -4,6 +4,7 @@ from __future__ import print_function, unicode_literals
 
 import os
 import sys
+import argparse
 
 from nti.dataserver import users
 from nti.dataserver.utils import run_with_dataserver
@@ -13,13 +14,18 @@ from nti.contentsearch import get_indexable_types
 from nti.contentsearch import interfaces as search_interfaces
 
 def main():
-	if len(sys.argv) < 3:
-		print( "Usage %s env_dir username *types" % sys.argv[0] )
-		sys.exit( 1 )
-
-	env_dir = os.path.expanduser(sys.argv[1])
-	username = sys.argv[2]
-	idx_types = sys.argv[3:]
+	arg_parser = argparse.ArgumentParser( description="Unindex user content" )
+	arg_parser.add_argument( 'env_dir', help="Dataserver environment root directory" )
+	arg_parser.add_argument( 'username', help="The username" )
+	arg_parser.add_argument( '-t', '--types',
+							 nargs="*",
+							 dest='idx_types',
+							 help="The content type(s) to unindex" )
+	args = arg_parser.parse_args()
+	
+	env_dir = os.path.expanduser(args.env_dir)
+	username = args.username
+	idx_types = args.idx_types
 	if not idx_types:
 		content_types = get_indexable_types()
 	else:
