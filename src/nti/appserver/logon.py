@@ -74,18 +74,26 @@ REL_LOGIN_LOGOUT = 'logon.logout'
 # the authentication process
 _REQUEST_TIMEOUT = 0.5
 
+def _authenticated_user( request ):
+	"""
+	Returns the User object authenticated by the request, or
+	None if there is no user object authenticated by the request (which
+	means either the credentials were invalid, or they are valid, but
+	reference a user that no longer or doesn't exist; this can happen during
+	testing when mixing site names up.)
+	"""
+	remote_user_name = sec.authenticated_userid( request )
+	if remote_user_name:
+		remote_user = users.User.get_user( remote_user_name )
+		return remote_user
+
 def _links_for_authenticated_users( request ):
 	"""
 	If a request is authenticated, returns links that should
 	go to the user. Shared between ping and handshake.
 	"""
 	links = ()
-	remote_user = None
-	remote_user_name = sec.authenticated_userid( request )
-	if remote_user_name:
-		remote_user = users.User.get_user( remote_user_name )
-		# The cookie may be valid, but the user deleted, so check for
-		# the actual user
+	remote_user = _authenticated_user( request )
 	if remote_user:
 		logger.debug( "Found authenticated user %s", remote_user )
 		# They are already logged in, provide a continue link
@@ -107,8 +115,8 @@ def _links_for_unauthenticated_users( request ):
 	In particular, this will provide a link to be able to create accounts.
 	"""
 	links = ()
-	remote_user_name = sec.authenticated_userid( request )
-	if not remote_user_name:
+	remote_user = _authenticated_user( request )
+	if not remote_user:
 
 		create_account = request.route_path( 'objects.generic.traversal', traverse=('users') )
 
@@ -454,9 +462,15 @@ def _create_success_response( request, userid=None, success=None ):
 def password_logon(request):
 	response = None
 
-	if not sec.authenticated_userid(request):
-		response = _create_failure_response( request )
+	remote_user = _authenticated_user( request )
+	desired_username = request.params.get( 'username' )
+
+	if not remote_user:
+		response = _create_failure_response( request ) # not authenticated or does not exist
+	elif desired_username and desired_username != remote_user.username:
+		response = _create_failure_response( request ) # Usually a cookie/param mismatch
 	else:
+		# Note that this also accepts the authentication cookie
 		response = _create_success_response( request )
 	return response
 
