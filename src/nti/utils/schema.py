@@ -40,6 +40,8 @@ Object.check_declaration = True
 from zope import interface
 from zope import schema
 from zope import component
+from zope.component import handle
+from zope.event import notify
 from zope.schema import interfaces as sch_interfaces
 
 class InvalidValue(sch_interfaces.InvalidValue):
@@ -80,11 +82,22 @@ class FieldValidationMixin(object):
 			e.field = self
 			raise
 
+from zope.schema._field import BeforeObjectAssignedEvent
+
 class ValidTextLine(FieldValidationMixin,schema.TextLine):
 	"""
 	A text line that produces slightly better error messages. They will all
 	have the 'field' property.
+
+	We also fire BeforeObjectAssignedEvents, which the normal
+	mechanism does not.
 	"""
+
+	def set( self, object, value ):
+		event = BeforeObjectAssignedEvent(value, self.__name__, object)
+		notify(event)
+		value = event.object
+		super(ValidTextLine,self).set( object, value )
 
 class IndexedIterable(schema.List):
 	"""
@@ -119,4 +132,4 @@ def before_object_assigned_event_dispatcher(event):
 	This is analogous to :func:`zope.component.event.objectEventNotify`
 	"""
 
-	component.subscribers( (event.object, event.context, event), None )
+	handle( event.object, event.context, event )
