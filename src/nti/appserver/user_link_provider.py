@@ -51,6 +51,19 @@ def add_link( user, link_name ):
 		IAnnotations( user )[_LINK_ANNOTATION_KEY] = the_set
 	the_set.add( link_name )
 
+def has_link( user, link_name ):
+	"""
+	Primarily for testing, answer whether the user is known to
+	have the given link.
+
+	:param user: An annotatable user.
+	:param unicode link_name: The link name.
+	"""
+
+	the_set = IAnnotations( user ).get( _LINK_ANNOTATION_KEY, () )
+	return link_name in the_set
+
+
 def delete_link( user, link_name ):
 	"""
 	Ensure the given user does not have a link with the

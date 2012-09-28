@@ -80,47 +80,16 @@ class BouncedContactEmailDeleteView(AbstractUserLinkDeleteView):
 	def __call__( self ):
 		return AbstractUserLinkDeleteView.__call__( self )
 
-def process_ses_feedback( messages, dataserver=None, delete=True ):
+def _mark_accounts_with_bounces( email_addrs, dataserver=None ):
 	"""
-	Given an iterable of :class:`boto.sqs.message.Message` objects
-	that represent `feedback from SES <http://docs.amazonwebservices.com/ses/latest/DeveloperGuide/NotificationContents.html>`_,
-	process them. When they have been successfully processed, remove them from the queue.
+	Given a sequence of email addresses, find all the accounts that
+	correspond to those addresses, and take appropriate action.
 	"""
+	if not email_addrs:
+		return
 
-	proc_messages = []
-	addr_permanent_errors = set()
-	addr_transient_errors = set()
-	i = 0
-	for message in messages:
-		body = message.get_body()
-		try:
-			body = json.loads( body )
-		except (TypeError,ValueError):
-			continue
-
-		if body.get( 'Type' ) != 'Notification':
-			continue
-		try:
-			body = json.loads( body['Message'] )
-		except (TypeError,ValueError,KeyError):
-			continue
-
-		if body['notificationType'] != 'Bounce':
-			continue
-		i += 1
-		bounce = body['bounce']
-		errors = addr_permanent_errors if bounce['bounceType'] == 'Permanent' else addr_transient_errors
-
-		for bounced in bounce['bouncedRecipients']:
-			errors.add( bounced['emailAddress'] )
-
-		proc_messages.append( message )
-
-	logger.info( "Processed %d bounce notices", i )
-	logger.info( "The following email addresses experienced transient failures: %s", addr_transient_errors )
-	logger.info( "The following email addresses experienced permanent failures: %s", addr_permanent_errors )
 	dataserver = dataserver or component.getUtility( nti_interfaces.IDataserver )
-	for email_addr in addr_permanent_errors:
+	for email_addr in email_addrs:
 		users = find_users_with_email( email_addr, dataserver, match_info=True )
 		if not users:
 			logger.warn( "No users found associated with bounced email %s", email_addr )
@@ -140,17 +109,63 @@ def process_ses_feedback( messages, dataserver=None, delete=True ):
 				# all that's left is contact
 				user_link_provider.add_link( user, REL_INVALID_CONTACT_EMAIL )
 
-	if delete:
-		for msg in proc_messages:
-			msg.delete()
+
+def process_ses_feedback( messages, dataserver=None ):
+	"""
+	Given an iterable of :class:`boto.sqs.message.Message` objects
+	that represent `feedback from SES <http://docs.amazonwebservices.com/ses/latest/DeveloperGuide/NotificationContents.html>`_,
+	process them.
+
+	:return: A list of all the messages that were processed for bounce information.
+		If a message wasn't processed because it wasn't a bounce notice, it won't be
+		in this list. It is the caller's responsibility to delete these messages
+		from the SQS queue if desired (once the transaction has committed safely).
+	"""
+
+	proc_messages = []
+	addr_permanent_errors = set()
+	addr_transient_errors = set()
+	i = 0
+	for message in messages:
+		body = message.get_body()
+		try:
+			body = json.loads( body )
+		except (TypeError,ValueError): # pragma: no cover
+			continue
+
+		if body.get( 'Type' ) != 'Notification': # pragma: no cover
+			continue
+		try:
+			body = json.loads( body['Message'] )
+		except (TypeError,ValueError,KeyError): # pragma: no cover
+			continue
+
+		if body['notificationType'] != 'Bounce':
+			continue
+		i += 1
+		bounce = body['bounce']
+		errors = addr_permanent_errors if bounce['bounceType'] == 'Permanent' else addr_transient_errors
+
+		for bounced in bounce['bouncedRecipients']:
+			errors.add( bounced['emailAddress'] )
+
+		proc_messages.append( message )
+
+	logger.info( "Processed %d bounce notices", i )
+	logger.info( "The following email addresses experienced transient failures: %s", addr_transient_errors )
+	logger.info( "The following email addresses experienced permanent failures: %s", addr_permanent_errors )
+
+	_mark_accounts_with_bounces( addr_permanent_errors, dataserver=dataserver )
 
 	return proc_messages
 
 def process_sqs_messages():
-	arg_parser = argparse.ArgumentParser( description="Create a user-type object" )
+	arg_parser = argparse.ArgumentParser( description="Read SES feedback messages from an SQS queue and mark users that need updates." )
 	arg_parser.add_argument( 'env_dir', help="Dataserver environment root directory" )
-	arg_parser.add_argument( 'queue', help="The SQS queue to read from" )
+	arg_parser.add_argument( 'queue', help="The SQS queue to read from. Default: %(default)s", default='SESFeedback', nargs='?' )
 	arg_parser.add_argument( '-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
+	arg_parser.add_argument( '--delete', help="After successful processing, delete messages from SQS queue. Default: %(default)s",
+							 action='store_true', dest='delete', default=False)
 
 
 	args = arg_parser.parse_args()
@@ -158,14 +173,14 @@ def process_sqs_messages():
 	def _proc():
 		sqs = boto.connect_sqs()
 		fb_q = sqs.get_queue( args.queue )
-		fb_q.message_class = boto.sqs.message.RawMessage
+		fb_q.message_class = boto.sqs.message.RawMessage # These aren't encoded
 		logger.info( "Processing bounce notices from %s", fb_q )
 		def gen():
 			msg = fb_q.read()
 			while msg is not None:
 				yield msg
 				msg = fb_q.read()
-		return process_ses_feedback( gen(), delete=False )
+		return process_ses_feedback( gen() )
 
 	env_dir = args.env_dir
 	proc_msgs = run_with_dataserver( environment_dir=env_dir,
@@ -173,7 +188,6 @@ def process_sqs_messages():
 									 xmlconfig_packages=('nti.appserver',),
 									 verbose=args.verbose )
 
-	# If we got through without a transaction error, then we can delete the messages
-	#....
-	#for msg in proc_msgs:
-	#	msg.delete()
+	if args.delete:
+		for msg in proc_msgs:
+			msg.delete()
