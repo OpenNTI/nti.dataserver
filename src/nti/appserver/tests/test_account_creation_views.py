@@ -863,6 +863,44 @@ class TestApplicationCreateUser(_AbstractApplicationCreateUserTest):
 		# Be sure we picked up the right template
 		assert_that( mailer.queue, has_item( has_property( 'body', contains_string( 'MATHCOUNTS' ) ) ) )
 
+	def test_create_coppa_user_mathcounts_policy( self ):
+
+		app = TestApp( self.app )
+
+		data = to_json_representation(  {'Username': 'jason2_nextthought_com',
+										 'password': 'pass123word',
+										 'realname': 'Joe Bananna',
+										 'birthdate': '2008-01-31', # NOTE: This will break after the year 2021
+										 'affiliation': 'school',
+										 'email': 'foo@bar.com',
+										 'contact_email': 'jason.madden@nextthought.com' } )
+
+		path = b'/dataserver2/users/@@account.create'
+
+		res = app.post( path, data, extra_environ={b'HTTP_ORIGIN': b'http://mathcounts.nextthought.com'} )
+
+		assert_that( res, has_property( 'status_int', 201 ) )
+		assert_that( res, has_property( 'location', contains_string( '/dataserver2/users/jason' ) ) )
+
+		assert_that( res.cookies_set, has_key( 'nti.auth_tkt' ) )
+		assert_that( res.cookies_set, has_key( 'nti.landing_page' ) )
+		assert_that( res.json_body, has_entry( 'Username', 'jason2_nextthought_com' ) )
+
+		mailer = component.getUtility( IMailer )
+		assert_that( mailer.queue, has_item( has_property( 'subject', "Please Confirm Your Child's NextThought Account" ) ) )
+
+		del mailer.queue[:]
+
+		# If we edit the contact_email of the account, we get a new notice
+		data = to_json_representation( {'contact_email': 'jason.madden2@nextthought.com' } )
+		extra_environ = self._make_extra_environ( username=res.json_body['Username'] )
+		extra_environ[b'HTTP_ORIGIN'] = b'http://mathcounts.nextthought.com'
+		res = app.put( res.location, data, extra_environ=extra_environ )
+
+		assert_that( res, has_property( 'status_int', 200 ) )
+
+		assert_that( mailer.queue, has_item( has_property( 'subject', "Please Confirm Your Child's NextThought Account" ) ) )
+
 	def test_create_user_prmia_policy( self ):
 
 		app = TestApp( self.app )

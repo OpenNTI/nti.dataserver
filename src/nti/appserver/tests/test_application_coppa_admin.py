@@ -29,6 +29,8 @@ from .test_application import ApplicationTestBase
 
 from urllib import quote as UQ
 
+from pyramid_mailer.interfaces import IMailer
+
 class TestApplicationCoppaAdmin(ApplicationTestBase):
 
 	def test_approve_coppa(self):
@@ -92,3 +94,7 @@ class TestApplicationCoppaAdmin(ApplicationTestBase):
 			upgrade_event = eventtesting.getEvents( app_interfaces.IUserUpgradedEvent )[0]
 			assert_that( upgrade_event, has_property( 'user', user ) )
 			assert_that( upgrade_event, has_property( 'upgraded_interface', site_policies.IMathcountsCoppaUserWithAgreement ) )
+
+		# We generated no email during this process
+		mailer = component.getUtility( IMailer )
+		assert_that( mailer, has_property( 'queue', has_length( 0 ) ) )
