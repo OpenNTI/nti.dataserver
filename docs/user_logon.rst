@@ -31,6 +31,13 @@ by the user through the ReST interface.
 
 .. automodule:: nti.appserver.bounced_email_workflow
 
+Batch Process
+-------------
+
+Detecting that email addresses are invalid is done with a batch
+process:
+
+.. command-output:: nti_bounced_email_batch -h
 
 Account Recovery
 ================

@@ -245,7 +245,7 @@ def find_users_with_email( email, dataserver, username=None, match_info=False ):
 			match = 'email'
 		elif hashed_email == getattr( profile, 'password_recovery_email_hash', None ):
 			match = 'password_recovery_email_hash'
-		elif hashed_email == IAnnotations( entity, {} ).get( CONTACT_EMAIL_RECOVERY_ANNOTATION ):
+		elif email == getattr( profile, 'contact_email', None ) or hashed_email == IAnnotations( entity, {} ).get( CONTACT_EMAIL_RECOVERY_ANNOTATION ):
 			match = CONTACT_EMAIL_RECOVERY_ANNOTATION
 
 		if match:
