@@ -25,7 +25,7 @@ _only_delete_by_owner = True
 
 def get_creator(obj):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
-	return adapted.get_creator() if adapted else None
+	return adapted.get_creator()
 							
 def _check_event(target, change_type, data_type, data):
 	result = change_type in _event_types and normalize_type_name(data_type) in get_indexable_types()
