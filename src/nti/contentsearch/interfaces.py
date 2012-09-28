@@ -8,6 +8,7 @@ from zope.interface.common.mapping import IFullMapping
 
 from dolmen.builtins import IDict
 
+from nti.utils.property import alias
 from nti.dataserver import interfaces as nti_interfaces
 from nti.externalization import interfaces as ext_interfaces
 
@@ -125,7 +126,15 @@ class IIndexEvent(component.interfaces.IObjectEvent):
 							   title="Index event type")
 
 
-	
+@interface.implementer(IIndexEvent)
+class IndexEvent(component.interfaces.ObjectEvent):
+
+	def __init__( self, user, data, event_type ):
+		super(IndexEvent,self).__init__( user )
+		self.data = data
+		self.event_type = event_type
+	target = alias('object')
+
 # entity adapters
 
 class IRepozeEntityIndexManager(IEntityIndexManager):
