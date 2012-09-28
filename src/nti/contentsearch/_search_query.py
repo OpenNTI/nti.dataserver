@@ -12,7 +12,7 @@ from nti.contentsearch import interfaces as search_interfaces
 class QueryObject(object, UserDict.DictMixin):
 	
 	__float_properties__ = ('threshold',)
-	__int_properties__ 	 = ('limit', 'maxdist', 'prefix', 'surround', 'maxchars', 'batchsize', 'batchstart')
+	__int_properties__ 	 = ('limit', 'maxdist', 'prefix', 'surround', 'maxchars', 'batchSize', 'batchStart')
 	__properties__ 		 = ('term', 'books', 'indexid', 'searchon', 'username') + __int_properties__ + __float_properties__
 
 	def __init__(self, *args, **kwargs):
