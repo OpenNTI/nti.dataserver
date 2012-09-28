@@ -48,7 +48,7 @@ def _do_flag( f, request ):
 		f( request.context, authenticated_userid( request ) )
 		return _util.uncached_in_response( request.context )
 	except KeyError:
-		logger.warn( "Attempting to un/flag something not found. Was it deleted and the link is stale? %s", request.context, exc_info=true )
+		logger.warn( "Attempting to un/flag something not found. Was it deleted and the link is stale? %s", request.context, exc_info=True )
 		raise hexc.HTTPNotFound()
 
 
