@@ -2,11 +2,13 @@ from __future__ import print_function, unicode_literals
 
 from zope import schema
 from zope import interface
+from zope import component
 from zope.deprecation import deprecated
 from zope.interface.common.mapping import IFullMapping
 
 from dolmen.builtins import IDict
 
+from nti.dataserver import interfaces as nti_interfaces
 from nti.externalization import interfaces as ext_interfaces
 
 deprecated( 'IRepozeDataStore', 'Use lastest index implementation' )
@@ -75,6 +77,7 @@ class IEntityIndexManager(ISearcher):
 		
 		:param data: data to index
 		:param type_name: data type
+		:return whether the data as indexed successfully
 		"""
 		
 	def update_content(data, type_name=None):
@@ -83,6 +86,7 @@ class IEntityIndexManager(ISearcher):
 		
 		:param data: data to index
 		:param type_name: data type
+		:return whether the data as reindexed successfully
 		"""
 
 	def delete_content(data, type_name=None):
@@ -91,6 +95,7 @@ class IEntityIndexManager(ISearcher):
 		
 		:param data: data to delete
 		:param type_name: data type
+		:return whether the data as deleted from the index successfully
 		"""
 		
 	def remove_index(type_name):
@@ -99,6 +104,27 @@ class IEntityIndexManager(ISearcher):
 		
 		:param type_name: index type
 		"""
+	
+# index events
+
+IE_INDEXED   = "Indexed"
+IE_REINDEXED = "Reindexed"
+IE_UNINDEXED = "Unindexed"
+
+class IIndexEvent(component.interfaces.IObjectEvent):
+	"""
+	An index event
+	"""
+	target = schema.Object(nti_interfaces.IEntity,
+						   title="The entity in the index event")
+	
+	data = schema.Object(nti_interfaces.IModeledContent,
+						 title="The object in the index event")
+	
+	event_type = schema.Choice(values=(IE_INDEXED, IE_REINDEXED, IE_UNINDEXED),
+							   title="Index event type")
+
+
 	
 # entity adapters
 
@@ -276,9 +302,6 @@ class INoSnippetHighlight(IHighlightType):
 	pass
 
 class IWordSnippetHighlight(IHighlightType):
-	pass
-
-class INgramSnippetHighlight(IHighlightType):
 	pass
 
 class IWhooshSnippetHighlight(IHighlightType):
