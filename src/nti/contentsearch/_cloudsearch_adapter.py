@@ -119,7 +119,7 @@ class _CloudSearchEntityIndexManager(Persistent, _SearchEntityIndexManager):
 		if result.errors:
 			s = self._get_errors(result)
 			raise Exception(s)
-		return result
+		return True
 	
 	# update is simply and add w/ a different version number
 	update_content = index_content

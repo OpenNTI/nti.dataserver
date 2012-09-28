@@ -182,7 +182,8 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 		catalog = self.get_create_catalog(data, type_name)
 		if catalog:
 			catalog.index_doc(docid, data)
-		return docid
+			return True
+		return False
 
 	def update_content(self, data, type_name=None, *args, **kwargs):
 		if not data: return None
@@ -190,7 +191,8 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 		catalog = self.get_create_catalog(data, type_name)
 		if catalog:
 			catalog.reindex_doc(docid, data)
-		return docid
+			return True
+		return False
 
 	def delete_content(self, data, type_name=None, *args, **kwargs):
 		if not data: return None
@@ -198,7 +200,8 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 		catalog = self.get_create_catalog(data, type_name, create=False)
 		if catalog:
 			catalog.unindex_doc(docid)
-		return docid
+			return True
+		return False
 
 	def remove_index(self, type_name):
 		result = self.remove_catalog(type_name)
