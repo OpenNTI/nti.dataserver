@@ -120,12 +120,6 @@ class IndexManager(object):
 		results = bm.search(query) if (bm is not None and not query.is_empty) else None
 		return results if results is not None else empty_search_results(query)
 
-	def content_ngram_search(self, query, *args, **kwargs):
-		query = QueryObject.create(query, **kwargs)
-		bm = self.get_book_index_manager(query.indexid)
-		results = bm.ngram_search(query) if (bm is not None and not query.is_empty) else None
-		return results if results is not None else empty_search_results(query)
-
 	def content_suggest_and_search(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
 		bm = self.get_book_index_manager(query.indexid)
@@ -137,9 +131,6 @@ class IndexManager(object):
 		bm = self.get_book_index_manager(query.indexid)
 		results = bm.suggest(query) if (bm is not None and not query.is_empty) else None
 		return results if results is not None else empty_suggest_results(query)
-
-	quick_search = content_ngram_search
-	content_quick_search = content_ngram_search
 
 	# -------------------
 
