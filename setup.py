@@ -116,7 +116,7 @@ setup(
 		 # See also collective.subscribe for a different take, useful when we need
 		 # this stuff globally (https://github.com/collective/collective.subscribe/tree/master/collective/subscribe)
 		'contentratings == 1.0',
-		'coverage >= 3.5.2', # Test coverage
+		'coverage >= 3.5.3', # Test coverage
 		'cryptacular >= 1.4.1', # see z3c.crypt
 		'cssselect >= 0.7.1', # Used by pyquery
 		'cython >= 0.17.1',
@@ -204,7 +204,7 @@ setup(
 		 # bcrypt/pbkdf2 for zope.password
 		 # adds cryptacular and pbkdf2
 		'z3c.bcrypt >= 1.1',
-		'z3c.coverage >= 1.2.0', # TODO: Do we need this?
+		#'z3c.coverage >= 1.3.0', # TODO: Do we need this?
 		'z3c.password >= 0.11.1', # password policies
 		'z3c.pt >= 2.2.3', # Better ZPT support than plastex, add-in to Chameleon
 		# TODO: z3c.ptcompat? We already have zope.pagetemplate listed
