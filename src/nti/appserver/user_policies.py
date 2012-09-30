@@ -31,6 +31,7 @@ from zope.lifecycleevent import IObjectModifiedEvent
 from zope.annotation.interfaces import IAnnotations
 
 from . import httpexceptions as hexc
+from . import _email_utils
 
 @component.adapter(nti_interfaces.IModeledContent, IObjectCreatedEvent)
 def dispatch_content_created_to_user_policies( content, event ):
@@ -74,7 +75,6 @@ from pyramid.renderers import render
 from pyramid.renderers import get_renderer
 from pyramid_mailer.message import Message
 from pyramid_mailer.message import Attachment
-from pyramid_mailer.interfaces import IMailer
 from email.mime.application import MIMEApplication
 
 
@@ -162,21 +162,16 @@ def _send_consent_request( user, profile, email, event ):
 	message.attach(Attachment('foo.txt', 'text/plain', 'foo'))
 
 
-	msg = message.to_message()
-	msg.set_payload([p for p in msg.get_payload() if p.get_filename() != 'foo.txt'] + [attachment])
+	email_msg = message.to_message()
+	email_msg.set_payload([p for p in email_msg.get_payload() if p.get_filename() != 'foo.txt'] + [attachment])
 	# The problem with this is that we wind up with a multipart/alternative if we
 	# send the text, html, and pdf, which makes it very hard to get to the PDF.
 	# We need to send multipart/mixed. But if we do that with all three types, they all three wind
 	# up displayed, which is not what we want either since two are alternatives
 	# We must be doing something wrong
-	#msg.set_type( 'multipart/mixed' )
-	mailer = component.getUtility( IMailer )
-	if getattr( mailer, 'queue_delivery', None) is not None:
-		mailer.queue_delivery.send(message.sender, message.send_to, msg)
-	else:
-		#tests
-		message.body = text_body
-		mailer.send_to_queue( message )
+	#email_msg.set_type( 'multipart/mixed' )
+	message.body = text_body # mainly tests
+	_email_utils.send_mail( message=email_msg, pyramid_mail_message=message )
 
 	# We can log that we sent the message to the contact person for operational purposes,
 	# but we cannot preserve it

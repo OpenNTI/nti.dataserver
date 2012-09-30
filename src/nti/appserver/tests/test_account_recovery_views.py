@@ -29,13 +29,12 @@ from nose.tools import assert_raises
 
 from zope import component
 
-from pyramid_mailer.interfaces import IMailer
 import urllib
 import pyramid.httpexceptions as hexc
 from .test_application import ApplicationTestBase
 from webtest import TestApp
 from nti.dataserver.tests import mock_dataserver
-
+from . import ITestMailDelivery
 
 class TestApplicationUsernameRecovery(ApplicationTestBase):
 
@@ -56,7 +55,7 @@ class TestApplicationUsernameRecovery(ApplicationTestBase):
 		data = {}
 		app.post( path, data, status=400 )
 
-		mailer = component.getUtility( IMailer )
+		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_length( 0 ) )
 
 	def test_recover_user_invalid_email( self ):
@@ -68,7 +67,7 @@ class TestApplicationUsernameRecovery(ApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'code', 'EmailAddressInvalid' ) )
 
 
-		mailer = component.getUtility( IMailer )
+		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_length( 0 ) )
 
 
@@ -79,7 +78,7 @@ class TestApplicationUsernameRecovery(ApplicationTestBase):
 		data = {'email': 'not.registered@example.com'}
 		app.post( path, data, status=204 )
 
-		mailer = component.getUtility( IMailer )
+		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_length( 1 ) )
 
 	def test_recover_user_found( self ):
@@ -94,7 +93,7 @@ class TestApplicationUsernameRecovery(ApplicationTestBase):
 		data = {'email': 'jason.madden@nextthought.com'}
 		app.post( path, data, status=204 )
 
-		mailer = component.getUtility( IMailer )
+		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_length( 1 ) )
 		msg = mailer.queue[0]
 		assert_that( msg, has_property( 'body', contains_string( user.username ) ) )
@@ -119,7 +118,7 @@ class TestApplicationPasswordRecovery(ApplicationTestBase):
 		data = {}
 		app.post( path, data, status=400 )
 
-		mailer = component.getUtility( IMailer )
+		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_length( 0 ) )
 
 	def test_recover_user_no_username( self ):
@@ -148,7 +147,7 @@ class TestApplicationPasswordRecovery(ApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'code', 'EmailAddressInvalid' ) )
 
 
-		mailer = component.getUtility( IMailer )
+		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_length( 0 ) )
 
 
@@ -159,7 +158,7 @@ class TestApplicationPasswordRecovery(ApplicationTestBase):
 		data = {'email': 'not.registered@example.com', 'username': 'somebodyelse', 'success': 'http://localhost/place'}
 		app.post( path, data, status=204 )
 
-		mailer = component.getUtility( IMailer )
+		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_length( 1 ) )
 
 	def test_recover_user_found( self ):
@@ -176,7 +175,7 @@ class TestApplicationPasswordRecovery(ApplicationTestBase):
 				'success': 'http://localhost/place'}
 		app.post( path, data, status=204 )
 
-		mailer = component.getUtility( IMailer )
+		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_length( 1 ) )
 		msg = mailer.queue[0]
 
@@ -196,7 +195,7 @@ class TestApplicationPasswordRecovery(ApplicationTestBase):
 				'success': 'http://localhost/place?host=foo&baz=bar'}
 		app.post( path, data, status=204 )
 
-		mailer = component.getUtility( IMailer )
+		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_length( 1 ) )
 		msg = mailer.queue[0]
 

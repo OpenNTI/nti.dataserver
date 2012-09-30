@@ -26,10 +26,8 @@ from nti.appserver import interfaces as app_interfaces
 from nti.dataserver.tests import mock_dataserver
 
 from .test_application import ApplicationTestBase
+from . import ITestMailDelivery
 
-from urllib import quote as UQ
-
-from pyramid_mailer.interfaces import IMailer
 
 class TestApplicationCoppaAdmin(ApplicationTestBase):
 
@@ -96,5 +94,5 @@ class TestApplicationCoppaAdmin(ApplicationTestBase):
 			assert_that( upgrade_event, has_property( 'upgraded_interface', site_policies.IMathcountsCoppaUserWithAgreement ) )
 
 		# We generated no email during this process
-		mailer = component.getUtility( IMailer )
+		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer, has_property( 'queue', has_length( 0 ) ) )

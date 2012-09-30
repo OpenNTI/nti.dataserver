@@ -37,7 +37,7 @@ from nti.appserver import interfaces as app_interfaces
 from nti.appserver.account_creation_views import account_create_view, account_preflight_view
 from nti.appserver import site_policies
 from nti.appserver import z3c_zpt
-from nti.appserver.tests import ConfiguringTestBase
+from nti.appserver.tests import ConfiguringTestBase, ITestMailDelivery
 
 import pyramid.httpexceptions as hexc
 import pyramid.interfaces
@@ -58,8 +58,7 @@ from zope.annotation.interfaces import IAnnotations
 
 import datetime
 
-from pyramid_mailer.interfaces import IMailer
-from pyramid_mailer.mailer import DummyMailer
+
 
 class _AbstractValidationViewBase(ConfiguringTestBase):
 	""" Base for the things where validation should fail """
@@ -68,10 +67,6 @@ class _AbstractValidationViewBase(ConfiguringTestBase):
 
 	def setUp(self):
 		super(_AbstractValidationViewBase,self).setUp()
-		# Must provide the correct zpt template renderer or the email process blows up
-		# See application.py
-		component.provideUtility( z3c_zpt.renderer_factory, pyramid.interfaces.IRendererFactory, name=".pt" )
-		component.provideUtility( DummyMailer(), IMailer )
 
 	@WithMockDSTrans
 	def test_create_invalid_password(self):
@@ -138,10 +133,6 @@ class _AbstractNotDevmodeViewBase(ConfiguringTestBase):
 
 	def setUp(self):
 		super(_AbstractNotDevmodeViewBase,self).setUp()
-		# Must provide the correct zpt template renderer or the email process blows up
-		# See application.py
-		component.provideUtility( z3c_zpt.renderer_factory, pyramid.interfaces.IRendererFactory, name=".pt" )
-		component.provideUtility( DummyMailer(), IMailer )
 
 	@WithMockDSTrans
 	def test_create_censored_username( self ):
@@ -516,7 +507,7 @@ class TestCreateViewNotDevmode(_AbstractNotDevmodeViewBase):
 																  'birthdate', '1982-01-31',
 																  'affiliation', 'NTI' ) )
 
-		mailer = component.getUtility( IMailer )
+		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
 
 	def test_create_rwanda_policy( self ):
@@ -645,7 +636,7 @@ class TestCreateView(_AbstractValidationViewBase):
 													 'alias': 'jason_nextthought_com' }  )
 		new_user = self.the_view( self.request )
 		# We sent mail
-		mailer = component.getUtility( IMailer )
+		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_length( 1 ) )
 		assert_that( mailer.queue[0], has_property( 'body', contains_string( 'Parent' ) ) )
 		# and destroyed the evidence
@@ -657,7 +648,7 @@ class TestCreateView(_AbstractValidationViewBase):
 		# see site_policies.[py|zcml]
 		assert_that( self.request.host, is_( 'example.com:80' ) )
 		self.request.headers['origin'] = 'http://mathcounts.nextthought.com'
-		mailer = component.getUtility( IMailer )
+		mailer = component.getUtility( ITestMailDelivery )
 
 		self.request.content_type = 'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason_nextthought_com',
@@ -728,7 +719,7 @@ class TestCreateView(_AbstractValidationViewBase):
 																  'affiliation', 'school',
 																  'role', 'Other' ) )
 		# And we sent mail
-		mailer = component.getUtility( IMailer )
+		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
 
 
@@ -758,7 +749,7 @@ class TestCreateView(_AbstractValidationViewBase):
 																  'birthdate', '1982-01-31',
 																  'affiliation', 'NTI' ) )
 
-		mailer = component.getUtility( IMailer )
+		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
 
 	def test_create_rwanda_policy( self ):
@@ -825,7 +816,7 @@ class TestApplicationCreateUserNonDevmode(_AbstractApplicationCreateUserTest):
 
 	def test_create_user( self ):
 		super(TestApplicationCreateUserNonDevmode,self).test_create_user()
-		mailer = component.getUtility( IMailer )
+		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
 
 
@@ -833,7 +824,7 @@ class TestApplicationCreateUser(_AbstractApplicationCreateUserTest):
 
 	def test_create_user( self ):
 		super(TestApplicationCreateUser,self).test_create_user()
-		mailer = component.getUtility( IMailer )
+		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_length( 0 ) ) # no email in devmode because there is no site policy
 
 	def test_create_user_mathcounts_policy( self ):
@@ -858,7 +849,7 @@ class TestApplicationCreateUser(_AbstractApplicationCreateUserTest):
 		assert_that( res.cookies_set, has_key( 'nti.landing_page' ) )
 		assert_that( res.json_body, has_entry( 'Username', 'jason2_nextthought_com' ) )
 
-		mailer = component.getUtility( IMailer )
+		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
 		# Be sure we picked up the right template
 		assert_that( mailer.queue, has_item( has_property( 'body', contains_string( 'MATHCOUNTS' ) ) ) )
@@ -886,8 +877,8 @@ class TestApplicationCreateUser(_AbstractApplicationCreateUserTest):
 		assert_that( res.cookies_set, has_key( 'nti.landing_page' ) )
 		assert_that( res.json_body, has_entry( 'Username', 'jason2_nextthought_com' ) )
 
-		mailer = component.getUtility( IMailer )
-		assert_that( mailer.queue, has_item( has_property( 'subject', "Please Confirm Your Child's NextThought Account" ) ) )
+		mailer = component.getUtility( ITestMailDelivery )
+		assert_that( mailer, has_property( 'queue', has_item( has_property( 'subject', "Please Confirm Your Child's NextThought Account" ) ) ) )
 
 		del mailer.queue[:]
 
@@ -923,7 +914,7 @@ class TestApplicationCreateUser(_AbstractApplicationCreateUserTest):
 		assert_that( res.cookies_set, has_key( 'nti.landing_page' ) )
 		assert_that( res.json_body, has_entry( 'Username', 'jason2_nextthought_com' ) )
 
-		mailer = component.getUtility( IMailer )
+		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
 		# Be sure we picked up the right template
 		assert_that( mailer.queue, has_item( has_property( 'body', does_not( contains_string( 'MATHCOUNTS' ) ) ) ) )
@@ -1004,6 +995,7 @@ def main(email=None, uname=None, cname=None):
 	FakeEvent.request = request
 
 	import pyramid_mailer
+	from pyramid_mailer.interfaces import IMailer
 	component.provideUtility( pyramid_mailer.Mailer.from_settings( {'mail.queue_path': '/tmp/ds_maildir' } ), IMailer )
 
 	import nti.appserver.z3c_zpt
