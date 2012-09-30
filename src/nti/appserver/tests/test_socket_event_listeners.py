@@ -13,7 +13,7 @@ from nti.dataserver.users import interfaces as user_interfaces
 from nti.dataserver import interfaces as nti_interfaces
 from nti.chatserver import interfaces as chat_interfaces
 
-from nti.appserver.tests import ConfiguringTestBase
+from nti.appserver.tests import ConfiguringTestBase, ITestMailDelivery
 from nti.dataserver.tests import mock_dataserver
 
 from zope import interface
@@ -23,12 +23,6 @@ from nti.appserver._socket_event_listeners import session_disconnected_broadcast
 
 from nti.appserver._stream_event_listeners import user_change_broadcaster
 from nti.appserver._stream_event_listeners import user_change_new_note_emailer, TemporaryChangeEmailMarker, ITemporaryChangeEmailMarker
-
-
-from pyramid_mailer.interfaces import IMailer
-from pyramid_mailer.mailer import DummyMailer
-from nti.appserver import z3c_zpt
-import pyramid.interfaces
 
 class MockChatserver(object):
 	interface.implements(chat_interfaces.IChatserver)
@@ -90,9 +84,7 @@ class TestEvents(ConfiguringTestBase):
 		def_marker = component.getUtility( ITemporaryChangeEmailMarker )
 		component.getGlobalSiteManager().unregisterUtility( def_marker, provided=ITemporaryChangeEmailMarker, name='' )
 		assert_that( component.queryUtility( ITemporaryChangeEmailMarker, name='' ), is_( none() ) )
-		component.provideUtility( z3c_zpt.renderer_factory, pyramid.interfaces.IRendererFactory, name=".pt" )
-		component.provideUtility( DummyMailer(), IMailer )
-		mailer = component.getUtility( IMailer )
+		mailer = component.getUtility( ITestMailDelivery )
 		user = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
 
 		# With no note, email address or marker, nothing happens

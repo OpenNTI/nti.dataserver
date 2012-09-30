@@ -64,13 +64,7 @@ from nti.appserver import _external_object_io as obj_io
 from pyramid.view import view_config
 from pyramid import security as sec
 
-from pyramid.renderers import render
-from pyramid.renderers import get_renderer
-
 import nti.appserver.httpexceptions as hexc
-
-from pyramid_mailer.interfaces import IMailer
-from pyramid_mailer.message import Message
 
 
 REL_FORGOT_USERNAME = "logon.forgot.username"

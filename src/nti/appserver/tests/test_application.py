@@ -99,8 +99,6 @@ class ApplicationTestBase(ConfiguringTestBase):
 					   if os.path.isdir( os.path.join( root, s ) )]
 		self.main.setServeFiles( serveFiles )
 
-		pyramid_mailer.testing.includeme( self.config )
-
 		# If we try to externalize things outside of an active request, but
 		# the get_current_request method returns the mock request we just set up,
 		# then if the environ doesn't have these things in it we can get an AssertionError
