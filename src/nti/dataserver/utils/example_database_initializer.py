@@ -12,7 +12,6 @@ from zope import component
 import zope.generations.generations
 from zope.generations import interfaces as gen_interfaces
 
-import nti.dataserver.quizzes as quizzes
 import nti.dataserver.classes as classes
 import nti.dataserver.providers as providers
 
@@ -79,7 +78,7 @@ class ExampleDatabaseInitializer(object):
 		for uid in ('grey.allman', 'ken.parker', 'logan.testi', 'jason.madden',
 				   'chris.utz', 'carlos.sanchez', 'jonathan.grimes',
 				   'pacifique.mahoro', 'eric.anderson', 'jeff.muehring',
-				   'aaron.eskam', 'kaley.white', 'greg.higgins', 
+				   'aaron.eskam', 'kaley.white', 'greg.higgins',
 				   'leo.parker', 'troy.daley', 'steve.johnson','vitalik.buterin' ):
 			USERS.append( (uid + '@nextthought.com', uid.replace( '.', ' ').title() ) )
 
@@ -255,46 +254,10 @@ class ExampleDatabaseInitializer(object):
 		section.InstructorInfo.Instructors.append( 'jason.madden@nextthought.com' )
 		section.Provider = 'OU'
 
-
-
-		# Quizzes
-		if 'quizzes' not in root or 'quizzes' not in root['quizzes']:
-			root['quizzes']['quizzes'] = containers.LastModifiedBTreeContainer()
-			self._install_quizzes( root )
-
-	def _install_quizzes( self, root ):
-		with deprecated.hiding_warnings():
-			# Quizzes are pretty much immutable and can be
-			# recreated pretty easily
-			# Static Quizzes
-			q = quizzes.Quiz()
-			q.update( _DATA_QUIZ_1 )
-
-			q.id = _DATA_QUIZ_1['ID']
-			root['quizzes']['quizzes'][q.id] = q
-
-			q = quizzes.Quiz()
-			q.update( _DATA_QUIZ_0 )
-
-			q.id = _DATA_QUIZ_0['ID']
-			root['quizzes']['quizzes'][q.id] = q
-
-			# loading quiz from mathcounts2012.json
-			with pkg_resources.resource_stream( __name__, 'mathcounts2012.json' ) as data_stream:
-				ext_quizzes = json.load(data_stream)
-				for data in ext_quizzes:
-					q = quizzes.Quiz()
-					q.update( data )
-					q.id = data['ID']
-					root['quizzes']['quizzes'][q.id] = q
-
-
-
 	def evolve( self, context, generation ):
 		conn = context.connection
 		root = conn.root()
 		root = root['nti.dataserver']
-		self._install_quizzes( root )
 
 		# Add a missing community, if needed
 		mathcountsCommunity = Community( 'MathCounts' )

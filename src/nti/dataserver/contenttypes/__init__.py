@@ -38,10 +38,6 @@ from .canvas import NonpersistentCanvasShape
 from .canvas import NonpersistentCanvasTextShape
 from .canvas import NonpersistentCanvasUrlShape
 
-# Support for legacy quiz posting
-from nti.dataserver.quizzes import QuizResult
-quizresult = QuizResult
-
 # Support for legacy class names in creation
 import nti.externalization.internalization
 nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.contenttypes' )
