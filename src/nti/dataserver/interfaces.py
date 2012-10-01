@@ -66,6 +66,15 @@ class IDataserver(interface.Interface):
 	pass
 
 class IRedisClient( interface.Interface ):
+	"""
+	A very poor abstraction of a :class:`redis.StrictRedis` client.
+	In general, this should only be used in the lowest low level code and
+	abstractions should be built on top of this.
+
+	When creating keys to use in the client, try to use traversal-friendly
+	keys, the same sorts of keys that can be found in the ZODB: unicode names
+	separated by the ``/`` character.
+	"""
 	pass
 
 class InappropriateSiteError(LookupError):
