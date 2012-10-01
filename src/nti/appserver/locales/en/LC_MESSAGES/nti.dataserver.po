@@ -60,11 +60,11 @@ msgstr ""
 
 #: src/nti/appserver/site_policies.py:413
 msgid "Please provide your first name."
-msgstr ""
+msgstr "Please provide your first and last names."
 
 #: src/nti/appserver/site_policies.py:415
 msgid "Please provide your last name."
-msgstr ""
+msgstr "Please provide your first and last names."
 
 #: src/nti/appserver/site_policies.py:424
 msgid "Birthdate must be in the past."
