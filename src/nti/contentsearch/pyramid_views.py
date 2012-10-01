@@ -1,6 +1,6 @@
 from __future__ import print_function, unicode_literals, absolute_import
-__docformat__ = "restructuredtext en"
 
+__docformat__ = "restructuredtext en"
 
 import re
 
@@ -60,8 +60,7 @@ class UserSearch(object):
 _extractor_pe = re.compile('[?*]*(.*)')
 
 def clean_search_query(query):
-	temp = query.replace('*', '')
-	temp = temp.replace('?', '')
+	temp = re.sub('[*?]','', query)
 	result = unicode(query) if temp else u''
 	if result:
 		m = _extractor_pe.search(result)
