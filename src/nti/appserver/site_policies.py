@@ -418,7 +418,11 @@ class GenericSitePolicyEventListener(object):
 			raise MissingLastName( _("Please provide your last name."), 'realname', names.realname )
 		human_name.capitalize()
 		names.realname = unicode(human_name)
-		names.alias = human_name.first + ' ' + human_name.last[0]
+		names.alias = human_name.first + ' ' + human_name.last
+		# As of 2012-10-01, the acct creation UI has two very anglocentric fields labeled distinctly
+		# 'first' and 'last' name, which it concats to form the 'realname'. So this makes
+		# realname and alias exactly the same. As of this same date, we are also never returning
+		# the realname value to any site, nor are we searching on it.
 
 		profile = user_interfaces.IUserProfile( user )
 		birthdate = getattr( profile, 'birthdate', None )

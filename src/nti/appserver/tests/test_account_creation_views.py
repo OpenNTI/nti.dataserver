@@ -455,7 +455,7 @@ class TestCreateViewNotDevmode(_AbstractNotDevmodeViewBase):
 
 		new_user = account_create_view( self.request )
 		assert_that( new_user, has_property( 'username', 'jason@test.nextthought.com' ) )
-		assert_that( user_interfaces.IFriendlyNamed( new_user ), has_property( 'alias', 'Jason M' ) )
+		assert_that( user_interfaces.IFriendlyNamed( new_user ), has_property( 'alias', 'Jason Madden' ) )
 		assert_that( self.request.response, has_property( 'location', contains_string( '/dataserver2/users/jason%40test.nextthought.com' ) ) )
 		assert_that( self.request.response, has_property( 'status_int', 201 ) )
 		#assert_that( self.request.response.headers, has_property( "what", "th" ) )
@@ -474,7 +474,7 @@ class TestCreateViewNotDevmode(_AbstractNotDevmodeViewBase):
 													 'email': 'foo@bar.com' } )
 
 		new_user = account_create_view( self.request )
-		assert_that( user_interfaces.IFriendlyNamed( new_user ), has_property( 'alias', 'Jason M' ) )
+		assert_that( user_interfaces.IFriendlyNamed( new_user ), has_property( 'alias', 'Jason Madden' ) )
 
 		with assert_raises( hexc.HTTPConflict ) as e:
 			account_create_view( self.request )
@@ -742,6 +742,7 @@ class TestCreateView(_AbstractValidationViewBase):
 		new_user = account_create_view( self.request )
 		assert_that( new_user, has_property( 'communities', has_item( com_name ) ) )
 		assert_that( user_interfaces.IFriendlyNamed( new_user ), has_property( 'realname', 'Jason Madden' ) )
+		assert_that( user_interfaces.IFriendlyNamed( new_user ), has_property( 'alias', 'Jason Madden' ) )
 		assert_that( user_interfaces.ICompleteUserProfile( new_user ),
 					 has_property( 'birthdate', datetime.date( 1982, 1, 31 ) ) )
 
@@ -876,6 +877,7 @@ class TestApplicationCreateUser(_AbstractApplicationCreateUserTest):
 		assert_that( res.cookies_set, has_key( 'nti.auth_tkt' ) )
 		assert_that( res.cookies_set, has_key( 'nti.landing_page' ) )
 		assert_that( res.json_body, has_entry( 'Username', 'jason2_nextthought_com' ) )
+		assert_that( res.json_body, has_entry( 'alias', 'jason2_nextthought_com' ) )
 
 		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer, has_property( 'queue', has_item( has_property( 'subject', "Please Confirm Your Child's NextThought Account" ) ) ) )
