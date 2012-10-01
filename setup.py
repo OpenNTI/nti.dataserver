@@ -104,7 +104,9 @@ setup(
 		# 'pylibmc', # for memcached support (has third-party dep on memcache-devel)
 		# 'MySQL-python', # mysql adapter
 		# See also umysqldb for a mysql adapter that should be gevent compat, with same API
-		# It's currently being installed from requirements.txt
+		# It's currently being installed from requirements.txt because it has no release on pypi.
+		# It depends on umysql, which has been released as 2.4 on pypi
+		'umysql >= 2.4',
 		'RelStorage >= 1.5.1',
 		'python-memcached >= 1.48', # pure-python cache for relstorage. Must set cache-module-name. Needed for gevent
 		# See also http://pypi.python.org/pypi/neoppod/ for a completely different option
