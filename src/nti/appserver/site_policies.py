@@ -29,6 +29,7 @@ from nti.appserver import interfaces as app_interfaces
 
 from nti.contentfragments import censor
 from nti.utils.schema import InvalidValue
+from nti.utils.schema import find_most_derived_interface
 
 from nti.dataserver import shards as nti_shards
 
@@ -456,7 +457,7 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 		new_profile = user_interfaces.IUserProfile( user )
 		# If they changed, adjust them, copying in any missing data
 		if orig_profile is not new_profile:
-			most_derived_profile_iface = _ext_find_schema( new_profile, user_interfaces.IUserProfile )
+			most_derived_profile_iface = find_most_derived_interface( new_profile, user_interfaces.IUserProfile )
 			for name, field in most_derived_profile_iface.namesAndDescriptions(all=True):
 				if interface.interfaces.IMethod.providedBy( field ):
 					continue
@@ -647,6 +648,22 @@ user_profile.add_profile_fields( IMathcountsCoppaUserWithAgreementUserProfile, M
 MathcountsCoppaUserWithoutAgreementUserProfileFactory = zope.annotation.factory( MathcountsCoppaUserWithoutAgreementUserProfile )
 MathcountsCoppaUserWithAgreementUserProfileFactory = zope.annotation.factory( MathcountsCoppaUserWithAgreementUserProfile )
 
+def _join_community_user_created( self, user, event ):
+	"""
+	Helper method that places newly created users in the community defined by the fields
+	of this object (creating it if it doesn't exist).
+	"""
+	if self.COM_USERNAME and self.COM_ALIAS and self.COM_REALNAME:
+		community = users.Entity.get_entity( self.COM_USERNAME )
+		if community is None:
+			community = users.Community.create_community( username=self.COM_USERNAME )
+			com_names = user_interfaces.IFriendlyNamed( community )
+			com_names.alias = self.COM_ALIAS
+			com_names.realname = self.COM_REALNAME
+
+		user.join_community( community )
+		user.follow( community )
+
 @interface.implementer(ISitePolicyUserEventListener)
 class MathcountsSitePolicyEventListener(GenericKidSitePolicyEventListener):
 	"""
@@ -659,6 +676,10 @@ class MathcountsSitePolicyEventListener(GenericKidSitePolicyEventListener):
 	IF_WITH_AGREEMENT = IMathcountsCoppaUserWithAgreement
 	IF_WOUT_AGREEMENT = IMathcountsCoppaUserWithoutAgreement
 
+	COM_USERNAME = 'MATHCOUNTS'
+	COM_ALIAS = 'MATHCOUNTS'
+	COM_REALNAME = 'MATHCOUNTS'
+
 	def user_created( self, user, event ):
 		"""
 		This policy places newly created users in the ``MathCounts`` community
@@ -666,45 +687,19 @@ class MathcountsSitePolicyEventListener(GenericKidSitePolicyEventListener):
 
 		"""
 		super(MathcountsSitePolicyEventListener,self).user_created( user, event )
-
-		community = users.Entity.get_entity( 'MATHCOUNTS' )
-		if community is None:
-			community = users.Community.create_community( username='MATHCOUNTS' )
-			user_interfaces.IFriendlyNamed( community ).alias = 'MATHCOUNTS'
+		_join_community_user_created( self, user, event )
 
 
-		user.join_community( community )
-		user.follow( community )
-#### XXXX:
-#### FIXME: Exact copy of the above
 @interface.implementer(ISitePolicyUserEventListener)
-class TestMathcountsSitePolicyEventListener(GenericKidSitePolicyEventListener):
+class TestMathcountsSitePolicyEventListener(MathcountsSitePolicyEventListener):
 	"""
 	Implements the policy for the mathcounts site.
 	"""
 
-	NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME = 'new_user_created_mathcounts'
+	COM_USERNAME = 'testmathcounts.nextthought.com'
+	COM_ALIAS = 'TEST MATHCOUNTS TEST'
+	COM_REALNAME = 'TEST MATHCOUNTS TEST'
 
-	IF_ROOT = IMathcountsUser
-	IF_WITH_AGREEMENT = IMathcountsCoppaUserWithAgreement
-	IF_WOUT_AGREEMENT = IMathcountsCoppaUserWithoutAgreement
-
-	def user_created( self, user, event ):
-		"""
-		This policy places newly created users in the ``MathCounts`` community
-		(creating it if it doesn't exist).
-
-		"""
-		super(TestMathcountsSitePolicyEventListener,self).user_created( user, event )
-
-		community = users.Entity.get_entity( 'testmathcounts.nextthought.com' )
-		if community is None:
-			community = users.Community.create_community( username='testmathcounts.nextthought.com' )
-			user_interfaces.IFriendlyNamed( community ).alias = 'TEST MATHCOUNTS TEST'
-
-
-		user.join_community( community )
-		user.follow( community )
 
 _SITE_LANDING_PAGES = {
 	'mathcounts.nextthought.com': b'tag:nextthought.com,2011-10:mathcounts-HTML-mathcounts2013.warm_up_1',
@@ -727,8 +722,6 @@ def send_site_default_landing_page_cookie( user, event ):
 			event.request.response.set_cookie( b'nti.landing_page',
 											   value=urllib.quote( _SITE_LANDING_PAGES[site_name] ) )
 			break
-
-
 
 
 @interface.implementer(app_interfaces.IUserCapabilityFilter)
@@ -763,18 +756,8 @@ class _AdultCommunitySitePolicyEventListener(GenericAdultSitePolicyEventListener
 		of this object (creating it if it doesn't exist).
 
 		"""
-
 		super(_AdultCommunitySitePolicyEventListener,self).user_created( user, event )
-		if self.COM_USERNAME and self.COM_ALIAS and self.COM_REALNAME:
-			community = users.Entity.get_entity( self.COM_USERNAME )
-			if community is None:
-				community = users.Community.create_community( username=self.COM_USERNAME )
-				com_names = user_interfaces.IFriendlyNamed( community )
-				com_names.alias = self.COM_ALIAS
-				com_names.realname = self.COM_REALNAME
-
-			user.join_community( community )
-			user.follow( community )
+		_join_community_user_created( self, user, event )
 
 
 @interface.implementer(ISitePolicyUserEventListener)
@@ -822,5 +805,12 @@ class PrmiaSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 	COM_ALIAS = 'PRMIA'
 	COM_REALNAME = "Professional Risk Managers' International Association"
 
+@interface.implementer(ISitePolicyUserEventListener)
+class LitWorldSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
+	"""
+	Implements the policy for the litworld site.
+	"""
 
-from nti.utils.schema import find_most_derived_interface as _ext_find_schema
+	COM_USERNAME = 'litworld.nextthought.com'
+	COM_ALIAS = 'LitWorld'
+	COM_REALNAME = 'LitWorld'
