@@ -186,8 +186,7 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 		extDict['ignoring'] = ext(self.entity.ignoring_shared_data_from)
 		extDict['accepting'] = ext(self.entity.accepting_shared_data_from)
 		extDict['AvatarURLChoices'] = component.getAdapter( self.entity, interfaces.IAvatarChoices ).get_choices()
-		#extDict['Links'] = [ links.Link( to_external_ntiid_oid( self.entity ), rel='edit' ) ]
-		extDict['Links'] = [ links.Link( self.entity, rel='edit' ) ]
+		extDict['Links'] = self._replace_or_add_edit_link_with_self( extDict.get( 'Links', () ) )
 		extDict['Last Modified'] = getattr( self.entity, 'lastModified', 0 )
 
 		most_derived_profile_iface = _ext_find_schema( prof, interfaces.IRestrictedUserProfile )
@@ -197,6 +196,18 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 			extDict[name] = field.query( prof )
 
 		return extDict
+
+	def _replace_or_add_edit_link_with_self( self, _links ):
+		added = False
+		_links = list( _links )
+		for i, l in enumerate(_links):
+			if l.rel == 'edit':
+				_links[i] = links.Link( self.entity, rel='edit' )
+				added = True
+		if not added:
+			_links.append( links.Link( self.entity, rel='edit' ) )
+
+		return _links
 
 _UserExternalObject = _UserPersonalSummaryExternalObject
 

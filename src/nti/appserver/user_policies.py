@@ -25,6 +25,7 @@ import dolmen.builtins
 from nti.dataserver import interfaces as nti_interfaces
 from nti.appserver import interfaces as app_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
+from pyramid import interfaces as pyramid_interfaces
 
 from zope.lifecycleevent import IObjectCreatedEvent
 from zope.lifecycleevent import IObjectModifiedEvent
@@ -32,6 +33,9 @@ from zope.annotation.interfaces import IAnnotations
 
 from . import httpexceptions as hexc
 from . import _email_utils
+from ._util import link_belongs_to_user
+
+from nti.dataserver.links import Link
 
 @component.adapter(nti_interfaces.IModeledContent, IObjectCreatedEvent)
 def dispatch_content_created_to_user_policies( content, event ):
@@ -70,6 +74,21 @@ class CoppaUserWithoutAgreementCapabilityFilter(object):
 
 	def filterCapabilities( self, capabilities ):
 		return set()
+
+@interface.implementer(app_interfaces.IAuthenticatedUserLinkProvider)
+@component.adapter(nti_interfaces.ICoppaUser,pyramid_interfaces.IRequest)
+class CoppaUserPrivacyPolicyLinkProvider(object):
+
+	def __init__( self, user=None, request=None ):
+		self.user = user
+
+	def get_links( self ):
+		link = Link( 'https://docs.google.com/document/pub?id=1kNo6hwwKwWdhq7jzczAysUWhnsP9RfckIet11pWPW6k',
+					  rel='childrens-privacy',
+					  target_mime_type='text/html' )
+		link_belongs_to_user( link, self.user )
+		return (link,)
+
 
 from pyramid.renderers import render
 from pyramid.renderers import get_renderer

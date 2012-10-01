@@ -6,6 +6,7 @@ from __future__ import print_function
 
 from hamcrest import assert_that
 from hamcrest import has_entry
+from hamcrest import has_entries
 from hamcrest import is_
 from hamcrest import has_item
 from hamcrest import all_of
@@ -16,12 +17,17 @@ from hamcrest import has_length
 from hamcrest import has_key
 from hamcrest import is_not as does_not
 
+from zope import interface
+
 from webtest import TestApp
 from nti.dataserver import users
+from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 from nti.dataserver.tests import mock_dataserver
 
 from nti.appserver.tests.test_application import ApplicationTestBase
+from nti.appserver.account_creation_views import REL_ACCOUNT_PROFILE
+
 
 class TestApplicationUserSearch(ApplicationTestBase):
 
@@ -166,6 +172,7 @@ class TestApplicationUserSearch(ApplicationTestBase):
 		"On the mathcounts site, we cannot search for realname or alias"
 		with mock_dataserver.mock_db_trans(self.ds):
 			u1 = self._create_user()
+			interface.alsoProvides( u1, nti_interfaces.ICoppaUser )
 			u2 = self._create_user( username='sj2@nextthought.com' )
 			user_interfaces.IFriendlyNamed( u2 ).alias = u"Steve"
 			user_interfaces.IFriendlyNamed( u2 ).realname = u"Steve Johnson"
@@ -198,6 +205,15 @@ class TestApplicationUserSearch(ApplicationTestBase):
 		assert_that( res.json_body['Items'], has_item( has_entry( 'alias', 'sj2@nextthought.com' ) ) )
 		assert_that( res.json_body['Items'], has_item( has_entry( 'realname', none() ) ) )
 
+		# But if the hit was us, we get back some special links to the privacy policy
+		environ['HTTP_ORIGIN'] = 'http://mathcounts.nextthought.com'
+		res = testapp.get( b'/dataserver2/UserSearch/' + str(u1.username), extra_environ=environ )
+		assert_that( res.json_body['Items'], has_length( 1 ) )
+		links = res.json_body['Items'][0]['Links']
+		assert_that( links, has_item( has_entry( 'rel', 'childrens-privacy' ) ) )
+		# At one time, we were double-nesting this link, hence the path check
+		assert_that( links, has_item( has_entries( 'href', '/dataserver2/users/sjohnson%40nextthought.com/@@' + REL_ACCOUNT_PROFILE ,
+												   'rel', REL_ACCOUNT_PROFILE ) ) )
 
 	def test_search_empty_term_user(self):
 		"Searching with an empty term returns empty results"

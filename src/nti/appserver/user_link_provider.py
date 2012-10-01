@@ -33,6 +33,7 @@ from nti.dataserver import authorization as nauth
 
 from pyramid.view import view_defaults
 from nti.appserver import httpexceptions as hexc
+from ._util import link_belongs_to_user
 
 # We store links in an OOTreeSet annotation on the User object
 _LINK_ANNOTATION_KEY = __name__ + '.LinkAnnotation'
@@ -83,17 +84,17 @@ def delete_link( user, link_name ):
 
 @interface.implementer(app_interfaces.IAuthenticatedUserLinkProvider)
 @component.adapter(nti_interfaces.IUser,pyramid_interfaces.IRequest)
-class UserLinkProvider(object):
+class PersistentUserLinkProvider(object):
 
-	def __init__( self, user, request ):
+	def __init__( self, user, request=None ):
 		self.user = user
-		self.request = request
 
 	def get_links( self ):
 		the_set = IAnnotations( self.user ).get( _LINK_ANNOTATION_KEY, () )
 		result = []
 		for link_name in the_set:
 			link = Link( self.user, rel=link_name, elements=("@@" + link_name,))
+			link_belongs_to_user( link, self.user )
 			result.append( link )
 		return result
 

@@ -28,6 +28,7 @@ from pyramid import security as psec
 from pyramid.threadlocal import get_current_request
 
 from nti.appserver.account_creation_views import REL_ACCOUNT_PROFILE
+from ._util import link_belongs_to_user
 
 LINKS = StandardExternalFields.LINKS
 
@@ -41,17 +42,10 @@ class ProfileLinkDecorator(object):
 		if context.username == psec.authenticated_userid( get_current_request() ):
 
 			mapping.setdefault( LINKS, [] )
-			link = Link( to_external_ntiid_oid( context ),
+			link = Link( context,
 						 rel=REL_ACCOUNT_PROFILE,
 						 elements=('@@' + REL_ACCOUNT_PROFILE, )	)
-			link.__parent__ = context
-			link.__name__ = ''
-			interface.alsoProvides( link, ILocation )
-			try:
-				link.creator = context
-				interface.alsoProvides( link, ICreated )
-			except AttributeError:
-				pass
+			link_belongs_to_user( link, context )
 			#if ICreated_providedBy( context ):
 
 			mapping[LINKS].append( link )

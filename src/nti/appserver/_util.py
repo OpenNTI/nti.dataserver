@@ -232,3 +232,15 @@ def raise_json_error( request,
 	result.body = v
 	result.content_type = accept_type
 	raise result, None, tb
+
+from nti.dataserver.interfaces import ICreated
+def link_belongs_to_user( link, user ):
+	link.__parent__ = user
+	link.__name__ = ''
+	interface.alsoProvides( link, ILocation )
+	try:
+		link.creator = user
+		interface.alsoProvides( link, ICreated )
+	except AttributeError:
+		pass
+	return link
