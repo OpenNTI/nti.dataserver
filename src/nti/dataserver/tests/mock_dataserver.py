@@ -1,18 +1,20 @@
 
-import warnings
+
 import ZODB
-from ZODB.MappingStorage import MappingStorage
+
 from ZODB.DemoStorage import DemoStorage
 from ZODB.FileStorage import FileStorage
 
 import nti.dataserver as dataserver
 import nti.dataserver._Dataserver
-from nti.dataserver import users
+
 
 from zope import component
-from ZODB.DB import ContextManager as DBContext
+
 from nti.dataserver import interfaces as nti_interfaces
 from nti.tests import ConfiguringTestBase as _BaseConfiguringTestBase
+
+from . import mock_redis
 
 class ChangePassingMockDataserver(dataserver._Dataserver.Dataserver ):
 
@@ -32,6 +34,11 @@ class ChangePassingMockDataserver(dataserver._Dataserver.Dataserver ):
 
 	def _setup_apns( self, *args ):
 		pass
+
+	def _setup_redis( self, *args ):
+		client = mock_redis.InMemoryMockRedis()
+		component.provideUtility( client )
+		return client
 
 	def _setup_storage( self, *args ):
 		# DemoStorage supports blobs, a plain MappingStorage does not.

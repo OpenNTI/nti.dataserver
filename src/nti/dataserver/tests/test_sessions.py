@@ -5,10 +5,12 @@
 
 from hamcrest import assert_that,  is_, none, is_not, has_property
 from hamcrest import has_length
+from hamcrest import contains
 from nose.tools import assert_raises
 
 from zope import component
 from zope import interface
+import transaction
 import sys
 
 from nti.tests import verifiably_provides
@@ -22,6 +24,7 @@ import mock_dataserver
 from mock_dataserver import WithMockDSTrans
 from zope.deprecation import __show__
 
+from nti.dataserver.tests import mock_redis
 
 class MockSessionService(sessions.SessionService):
 
@@ -57,9 +60,12 @@ class TestSessionService(mock_dataserver.ConfiguringTestBase):
 
 	def setUp(self):
 		super(TestSessionService,self).setUp()
+		self.redis = mock_redis.InMemoryMockRedis()
+		component.provideUtility( self.redis, provides=nti_interfaces.IRedisClient )
 		self.session_service = MockSessionService()
 		self.storage = session_storage.OwnerBasedAnnotationSessionServiceStorage()
 		component.provideUtility( self.storage, provides=nti_interfaces.ISessionServiceStorage )
+
 
 	def test_get_set_proxy_session(self):
 		self.session_service.set_proxy_session( '1', self )
@@ -111,6 +117,34 @@ class TestSessionService(mock_dataserver.ConfiguringTestBase):
 		assert_that( deleted_user, is_( self.session_service.created_users[0] ) )
 
 		assert_that( self.session_service.get_session( session.session_id ), is_( none() ) )
+
+	@WithMockDSTrans
+	def test_queue_messages_to_session(self):
+		session = self.session_service.create_session( watch_session=False )
+		assert_that( session, is_not( none() ) )
+		assert_that( self.session_service.get_session( session.session_id ), is_( session ) )
+
+		self.session_service.queue_message_from_client( session.session_id, 'foobar' )
+		self.session_service.queue_message_to_client( session.session_id, 'foobar' )
+		transaction.commit()
+
+		to_client = list(self.session_service.get_messages_to_client( session.session_id ))
+		from_client = list(self.session_service.get_messages_from_client( session.session_id ))
+
+		for l in to_client, from_client:
+			assert_that( l, has_length( 1 ) )
+			assert_that( l, contains( 'foobar' ) )
+
+		transaction.commit()
+
+	@WithMockDSTrans
+	def test_clear_disconnect_timeout(self):
+		session = self.session_service.create_session( watch_session=False )
+		assert_that( session, is_not( none() ) )
+
+		self.session_service.clear_disconnect_timeout( session.session_id, 42 )
+		assert_that( self.session_service.get_last_heartbeat_time( session.session_id ), is_( 42 ) )
+
 
 	@WithMockDSTrans
 	def test_get_dead_session(self):

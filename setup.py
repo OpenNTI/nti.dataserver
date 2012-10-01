@@ -267,8 +267,8 @@ setup(
 		'zope.tales >= 3.5.2',
 		'zope.traversing >= 3.14.0',
 		# textindexng3
-		'zopyx.txng3.core',
-		'zopyx.txng3.ext',
+		'zopyx.txng3.core >= 3.5.3',
+		'zopyx.txng3.ext >= 3.3.3',
 		],
 	extras_require = {
 		'test': [

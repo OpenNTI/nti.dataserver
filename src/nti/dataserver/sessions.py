@@ -276,21 +276,18 @@ class SessionService(object):
 
 	def _get_redis( self ):
 		if self._redis is None:
-			self._redis = component.queryUtility( nti_interfaces.IRedisClient, default=0 )
-			if self._redis:
-				logger.info( "Using redis for session storage" )
-			else:
-				logger.warn( "Using the database for session storage" )
+			self._redis = component.getUtility( nti_interfaces.IRedisClient )
+			logger.info( "Using redis for session storage" )
 		return self._redis
 
 	def _put_msg_to_redis( self, queue_name, msg ):
-		self._redis.pipeline().rpush( queue_name, msg ).expire( queue_name, self.SESSION_HEARTBEAT_TIMEOUT * 2 ).execute()
+		self._get_redis().pipeline().rpush( queue_name, msg ).expire( queue_name, self.SESSION_HEARTBEAT_TIMEOUT * 2 ).execute()
 
 	def _put_msg( self, meth, q_name, session_id, msg ):
 		sess = self._get_session( session_id )
 
-		if self._get_redis() and sess:
-			queue_name = 'sessions.' + session_id + '.' + q_name
+		if sess:
+			queue_name = 'sessions/' + session_id + '/' + q_name
 			# TODO: Probably need to add timeouts here
 			if meth == Session.enqueue_message_from_client and msg is not None:
 				# Since we don't call it anymore, we need to handle the timeout
@@ -308,8 +305,6 @@ class SessionService(object):
 			transactions.do( target=self,
 							 call=self._put_msg_to_redis,
 							 args=(queue_name, msg,) )
-		elif sess:
-			meth( sess, msg )
 
 	def _publish_msg( self, name, session_id, msg_str ):
 		assert isinstance( name, str ) # Not Unicode, only byte constants
@@ -347,37 +342,27 @@ class SessionService(object):
 
 	def _get_msgs( self, q_name, session_id ):
 		result = None
-		if self._get_redis():
-			queue_name = 'sessions.' + session_id + '.' + q_name
-			# atomically read the current messages and then clear the state of the queue.
-			msgs, _ = self._redis.pipeline().lrange( queue_name, 0, -1 ).delete(  queue_name ).execute()
-			# If the transaction aborts, got to put these back so they don't get lost
-			if msgs: # lpush requires at least one message
-				def after_commit( success ):
-					if success:
-						return
-					logger.info( "Pushing messages back onto %s on abort", queue_name )
-					msgs.reverse()
-					self._redis.lpush( queue_name, *msgs )
-				transaction.get().addAfterCommitHook( after_commit )
-				# unwrap None encoding, decompress strings. The result is a generator
-				# because it's very rarely actually used
-				result = (None if not x else zlib.decompress(x) for x in msgs)
-			else:
-				result = () # empty tuple for cheap
+		queue_name = 'sessions/' + session_id + '/' + q_name
+		# atomically read the current messages and then clear the state of the queue.
+		msgs, _ = self._redis.pipeline().lrange( queue_name, 0, -1 ).delete(  queue_name ).execute()
+		# If the transaction aborts, got to put these back so they don't get lost
+		if msgs: # lpush requires at least one message
+			# FIXME: TODO: This fails if the transaction is actually
+			# aborted instead of being committed and failing
+			def after_commit( success ):
+				if success:
+					return
+				logger.info( "Pushing messages back onto %s on abort", queue_name )
+				msgs.reverse()
+				self._redis.lpush( queue_name, *msgs )
+			transaction.get().addAfterCommitHook( after_commit )
+			# unwrap None encoding, decompress strings. The result is a generator
+			# because it's very rarely actually used
+			result = (None if not x else zlib.decompress(x) for x in msgs)
 		else:
-			sess = self._get_session( session_id )
-			if sess:
-				# Reading messages should not reset the timeout.
-				# Only the session queue_message_from_client should do so.
-				#sess.clear_disconnect_timeout()
-				result = getattr( sess, q_name )
-				if result:
-					# "pop" them all
-					nresult = list(result)
-					result._data = ()
-					result = nresult
-			return result
+			result = () # empty tuple for cheap
+
+		return result
 
 	def get_messages_to_client( self, session_id ):
 		"""
@@ -396,30 +381,25 @@ class SessionService(object):
 	# Redirect heartbeats through redis if possible. Note this is scuzzy and not clean
 
 	def _heartbeat_key( self, session_id ):
-		return 'sessions.' + session_id + '.heartbeat'
+		return 'sessions/' + session_id + '.heartbeat'
 
-	def clear_disconnect_timeout(self, session_id ):
-		if self._get_redis():
-			# Note that we don't make this transactional. The fact that we got a message
-			# from a client is a good-faith indication the client is still around.
-			key_name = self._heartbeat_key( session_id )
-			self._redis.pipeline( ).set( key_name, time.time() ).expire( key_name, self.SESSION_HEARTBEAT_TIMEOUT * 2 ).execute()
-		else:
-			sess = self._get_session( session_id )
-			if sess and hasattr( sess, '_last_heartbeat_time' ):
-				sess._last_heartbeat_time.set( time.time() )
+	def clear_disconnect_timeout(self, session_id, heartbeat_time=None ):
+		"""
+		Clears the disconnect timer for the given session by making it the current time.
+
+		:param float heartbeat_time: If given, this is used instead of the current time
+		"""
+		# Note that we don't make this transactional. The fact that we got a message
+		# from a client is a good-faith indication the client is still around.
+		key_name = self._heartbeat_key( session_id )
+		self._get_redis().pipeline( ).set( key_name, heartbeat_time or time.time() ).expire( key_name, self.SESSION_HEARTBEAT_TIMEOUT * 2 ).execute()
 
 
 	def get_last_heartbeat_time(self, session_id, session=None ):
 		result = 0
-		if self._get_redis():
-			# TODO: This gets called a fair amount. Do we need to cache?
-			key_name = self._heartbeat_key( session_id )
-			val = self._redis.get( key_name )
-			result = float( val or '0' )
-		else:
-			sess = session or self._get_session( session_id )
-			if sess and hasattr( sess, '_last_heartbeat_time' ):
-				assert sess.session_id == session_id
-				result = sess._last_heartbeat_time.value
+		# TODO: This gets called a fair amount. Do we need to cache?
+		key_name = self._heartbeat_key( session_id )
+		val = self._get_redis().get( key_name )
+		result = float( val or '0' )
+
 		return result

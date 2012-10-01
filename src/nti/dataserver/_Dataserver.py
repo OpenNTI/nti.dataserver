@@ -297,10 +297,10 @@ class MinimalDataserver(object):
 		return db, ses_db, search_db
 
 	def _setup_redis( self, conf ):
-
 		if not conf.main_conf.has_option( 'redis', 'redis_url' ):
-			logger.warn( "YOUR CONFIGURATION IS OUT OF DATE. Please install redis and then run nti_init_env --upgrade-outdated --write-supervisord" )
-			return # .sessions.SessionService can go either way right now. Remove when everyone has upgraded
+			msg = "YOUR CONFIGURATION IS OUT OF DATE. Please install redis and then run nti_init_env --upgrade-outdated --write-supervisord"
+			logger.warn( msg )
+			raise RuntimeError( msg )
 
 		redis_url = conf.main_conf.get( 'redis', 'redis_url' )
 		parsed_url = urlparse( redis_url )
