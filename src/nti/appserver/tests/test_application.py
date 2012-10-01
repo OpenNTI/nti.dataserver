@@ -159,7 +159,24 @@ class TestApplication(ApplicationTestBase):
 
 	def test_logon_ping(self):
 		testapp = TestApp( self.app )
-		testapp.get( '/dataserver2/logon.ping' )
+		res = testapp.get( '/dataserver2/logon.ping' )
+
+		assert_that( res.json_body, has_key( 'Links' ) )
+
+		link_rels = [l['rel'] for l in res.json_body['Links']]
+		assert_that( link_rels, has_item( 'account.create' ) )
+		assert_that( link_rels, has_item( 'account.preflight.create' ) )
+
+	def test_logon_ping_demo_site_policy(self):
+		testapp = TestApp( self.app )
+		res = testapp.get( '/dataserver2/logon.ping', extra_environ={b'HTTP_ORIGIN': b'http://demo.nextthought.com'} )
+
+		assert_that( res.json_body, has_key( 'Links' ) )
+
+		link_rels = [l['rel'] for l in res.json_body['Links']]
+		assert_that( link_rels, does_not( has_item( 'account.create' ) ) )
+		assert_that( link_rels, does_not( has_item( 'account.preflight.create' ) ) )
+
 
 	def test_library_main(self):
 		with mock_dataserver.mock_db_trans( self.ds ):

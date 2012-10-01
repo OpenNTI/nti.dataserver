@@ -10,7 +10,44 @@
 	<subscriber handler=".site_policies.dispatch_user_will_create_to_site_policy" />
 	<subscriber handler=".site_policies.dispatch_user_created_with_request_to_site_policy" />
 
+	<!--
+	Dispatch functions for objects we know we may want to externalize slightly differently
+	from one site to another. This is relatively expensive so use sparingly.
+	-->
+	<subscriber factory=".site_policies.SiteBasedExternalObjectDecorator"
+				for=".logon._Pong"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
+	<subscriber factory=".site_policies.SiteBasedExternalObjectDecorator"
+				for=".logon._Handshake"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
 
+	<!-- Misc policies -->
+
+	<!--
+	On sites in devmode that do not otherwise specify a search behaviour, use the
+	old behaviour. This policy is evolving as realname evolves.
+	-->
+	<adapter factory="nti.appserver.usersearch_views.ComprehensiveUserSearchMatcher"
+			 for="nti.dataserver.interfaces.IUser"
+			 provides="nti.appserver.usersearch_views.IUserSearchMatcher"
+			 zcml:condition="have devmode"/>
+	<!--
+	See comments in this class.
+	Note: This is really meant to be a user policy, adapted to specific
+	account types, e.g., ICoppaUser. Right now its global. If it needs to become
+	site based, that can be done with the SiteBasedExternalObjectDecorator.
+	-->
+	<subscriber factory="._adapters._UserRealnameStripper"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
+
+	<!--
+	Landing pages for sites. Note that this embeds configuration of its own.
+	-->
+	<subscriber handler=".site_policies.send_site_default_landing_page_cookie" />
+
+	<!--
+	General site policies
+	-->
 	<utility factory=".site_policies.MathcountsSitePolicyEventListener"
 			 name="mathcounts.nextthought.com"/>
 
@@ -33,52 +70,5 @@
 			 name=''
 			 zcml:condition="not-have devmode" />
 
-	<!-- On the MC site, we will be able to provide choices for avatars based simply on the username string -->
-	<adapter factory="nti.dataserver.users.avatar_urls.StringComputedAvatarURLChoices"
-			 for="basestring"
-			 provides="nti.dataserver.users.interfaces.IAvatarChoices"
-			 name="mathcounts.nextthought.com" />
-
-	<!-- On the MC site, we cannot search for users by anything except their username -->
-	<adapter factory="nti.appserver.usersearch_views.NoOpUserSearchMatcher"
-			 for="nti.dataserver.interfaces.IUser"
-			 provides="nti.appserver.usersearch_views.IUserSearchMatcher"
-			 name="mathcounts.nextthought.com" />
-	<!--
-	On sites in devmode that do not otherwise specify, use the
-	old behaviour. This policy is evolving as realname evolves.
-	-->
-	<adapter factory="nti.appserver.usersearch_views.ComprehensiveUserSearchMatcher"
-			 for="nti.dataserver.interfaces.IUser"
-			 provides="nti.appserver.usersearch_views.IUserSearchMatcher"
-			 zcml:condition="have devmode"/>
-	<!--
-	See comments in this class.
-	Note: This is really meant to be a user policy, adapted to specific
-	account types, e.g., ICoppaUser. Right now its global. If it needs to become
-	site based, that can be done with a dispatch function.
-	-->
-	<subscriber factory="._adapters._UserRealnameStripper"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
-
-
-	<!-- On the MC site, NO ONE can chat -->
-	<adapter factory=".site_policies.NoChatCapabilityFilter"
-			 for="nti.dataserver.interfaces.IUser"
-			 provides="nti.appserver.interfaces.IUserCapabilityFilter"
-			 name="mathcounts.nextthought.com" />
-
-	<!-- and coppa kids are more restricted. -->
-	<adapter factory=".user_policies.CoppaUserWithoutAgreementCapabilityFilter"
-			 for="nti.dataserver.interfaces.ICoppaUserWithoutAgreement"
-			 provides="nti.appserver.interfaces.IUserCapabilityFilter"
-			 name="mathcounts.nextthought.com" />
-
-	<!-- Landing pages for sites -->
-	<subscriber handler=".site_policies.send_site_default_landing_page_cookie" />
-
-	<!-- CSS for mathcounts -->
-	<utility factory=".site_policy_views.SiteCSSMarker"
-			 name="mathcounts.nextthought.com" />
 
 </configure>

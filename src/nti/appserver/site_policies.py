@@ -26,6 +26,7 @@ from nti.contentlibrary import interfaces as lib_interfaces
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 from nti.appserver import interfaces as app_interfaces
+from nti.externalization import interfaces as ext_interfaces
 
 from nti.contentfragments import censor
 from nti.utils.schema import InvalidValue
@@ -222,6 +223,10 @@ class RequestAwareUserPlacer(nti_shards.AbstractShardPlacer):
 #
 # Initially, we are taking the simplest approach, and even going so far
 # as to put the actual policies in code (so a config change is a code release).
+# This is starting to get out of hand, though, and the automatic delegation of a real site
+# would be very nice to have. The `EventListener` is now being delegated to for all kinds
+# of random things, many of which have nothing to do with events, such as
+# object externalization decoration
 ####
 
 class ISitePolicyUserEventListener(interface.Interface):
@@ -265,9 +270,47 @@ class ISitePolicyUserEventListener(interface.Interface):
 		Specifically intended to deal with providing coppa consent.
 		"""
 
+
 from zope.lifecycleevent.interfaces import IObjectCreatedEvent
 from nti.dataserver import users
 import zope.schema
+
+@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+class SiteBasedExternalObjectDecorator(object):
+	"""
+	Something that can be registered as a subscriber to forward
+	object decoration to objects that do something for a particular site.
+	These object must be registered as multi-adapters for the original object
+	and the active request, and must be named for the site.
+
+	Register this object sparingly, it is expensive.
+	"""
+
+	def __init__( self, *args ):
+		pass
+
+	def decorateExternalObject( self, orig_obj, result ):
+		request = get_current_request()
+		if not request:
+			return
+
+		for site_name in get_possible_site_names( include_default=None ):
+			adapter = component.queryMultiAdapter( (orig_obj, request), ext_interfaces.IExternalObjectDecorator, name=site_name )
+			if adapter:
+				adapter.decorateExternalObject( orig_obj, result )
+				break
+
+@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+class LogonLinksCreationStripper(object):
+	"""
+	Configured for sites that are not allowing account creation through the UI.
+	"""
+
+	def __init__( self, *args ):
+		pass
+
+	def decorateExternalObject( self, orig_obj, result ):
+		result['Links'] = [link for link in result['Links'] if link['rel'] not in ('account.create', 'account.preflight.create')]
 
 
 def find_site_policy( request=None ):
