@@ -31,11 +31,16 @@ from nti.appserver.z3c_zpt import PyramidZopeRequestProxy
 
 def _coppa_table( request ):
 	content = ()
-	site_policy, _ = site_policies.find_site_policy( request )
+	site_policy, _pol_name = site_policies.find_site_policy( request )
 	if site_policy and getattr(site_policy, 'IF_WOUT_AGREEMENT', None):
+		logger.debug( "Found site policy %s/%s; looking for users that are %s",
+					  site_policy, _pol_name, site_policy.IF_WOUT_AGREEMENT )
 		dataserver = request.registry.getUtility( nti_interfaces.IDataserver )
 		users_folder = nti_interfaces.IShardLayout( dataserver ).users_folder
 		content = [x for x in users_folder.values() if site_policy.IF_WOUT_AGREEMENT.providedBy( x )]
+	else:
+		logger.warn( "No site policy (%s/%s) or policy (%s) does not specify users to find",
+					 site_policy, _pol_name, site_policy )
 	the_table = CoppaAdminTable( content,
 								 PyramidZopeRequestProxy( request ) )
 	the_table.__parent__ = request.context
