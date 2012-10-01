@@ -190,7 +190,7 @@ setup(
 		'repoze.who >= 2.0',
 		'repoze.zodbconn >= 0.14',
 		'grequests >= 0.1.0', #replaces requests.async in 0.13
-		'requests >= 0.14.0', # HTTP
+		'requests >= 0.14.1', # HTTP
 		'scss',
 		'setproctitle >= 1.1.6',
 		'setuptools',
