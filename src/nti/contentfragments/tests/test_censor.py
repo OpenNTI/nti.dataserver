@@ -101,6 +101,10 @@ def test_trivial_and_word_match_scanner():
 	assert_that( strat.censor_ranges( bad_val, scanner.scan( bad_val ) ),
 				 is_( 'This is ******* ******, you ************ *******' ) )
 	
+	bad_val = 'ohggre pbafgvghgvba pbzchgngvba'.encode( 'rot13' )
+	assert_that( strat.censor_ranges( bad_val, scanner.scan( bad_val ) ),
+				 is_( 'butter constitution computation' ) )
+	
 def test_schema_event_censoring():
 
 	class ICensored(interface.Interface):
@@ -126,4 +130,4 @@ def test_schema_event_censoring():
 				 is_( 'This is ******* stupid, you ************ *******' ) )
 	
 if __name__ == '__main__':
-	test_word_match_scanner()
+	test_trivial_and_word_match_scanner()
