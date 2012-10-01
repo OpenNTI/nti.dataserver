@@ -165,7 +165,7 @@ class _UserRealnameStripper(object):
 	it's probably not what you typed in the first place so it will be confusing to you.
 	"""
 
-	def __init__( self, context ):
+	def __init__( self, *args ):
 		pass
 
 	def decorateExternalObject( self, original, external ):
@@ -174,15 +174,73 @@ class _UserRealnameStripper(object):
 		external['realname'] = None
 
 ### Localization
+## Not currently used, the zope browser version seems to work well enough
+# from zope.i18n.interfaces import IUserPreferredLanguages
 
-from zope.i18n.interfaces import IUserPreferredLanguages
+# @interface.implementer(IUserPreferredLanguages)
+# @component.adapter(pyramid.interfaces.IRequest)
+# class EnglishPreferredLanguage(object):
 
-@interface.implementer(IUserPreferredLanguages)
-@component.adapter(pyramid.interfaces.IRequest)
-class EnglishPreferredLanguage(object):
+# 	def __init__( self, context ):
+# 		pass
 
-	def __init__( self, context ):
+# 	def getPreferredLanguages(self):
+# 		return ['en']
+
+from nti.dataserver.users import interfaces as user_interfaces
+
+@interface.implementer(app_interfaces.IUserSearchPolicy)
+class _AliasUserSearchPolicy(object):
+	"""
+	Something that searches on the alias in addition to the implicitly searched-on
+	username.
+	"""
+
+	def __init__( self, *args ):
 		pass
 
-	def getPreferredLanguages(self):
-		return ['en']
+	def matches( self, search_term, entity_name ):
+		entity = users.Entity.get_entity( entity_name )
+		if entity:
+			names = user_interfaces.IFriendlyNamed( entity )
+			return self._entity_matches( entity, names, search_term )
+
+	def _entity_matches( self, entity, names, search_term ):
+		if search_term in (names.alias or '').lower():
+			return entity
+
+@interface.implementer(app_interfaces.IUserSearchPolicy)
+class _ComprehensiveUserSearchPolicy(_AliasUserSearchPolicy):
+	"""
+	Something that searches on the realname and alias in addition to the implicitly searched-on
+	username.
+	"""
+
+	def _entity_matches( self, entity, names, search_term ):
+		if search_term in (names.realname or '').lower():
+			return entity
+		return super(_ComprehensiveUserSearchPolicy,self)._entity_matches( entity, names, search_term )
+
+
+@interface.implementer(app_interfaces.IUserSearchPolicy)
+class _NoOpUserSearchPolicy(object):
+	"""
+	Does no additional matching.
+	"""
+
+	def __init__( self, *args ):
+		pass
+
+	def matches( self, search_term, entity_name ):
+		return None
+
+class _NoOpUserSearchPolicyAndRealnameStripper(_NoOpUserSearchPolicy,_UserRealnameStripper):
+	"""
+	A policy that combines stripping realnames with not searching on them (or aliases, actually,
+	so only use this on sites that require the username to be equal to the alias).
+	"""
+
+	def decorateExternalObject( self, original, external ):
+		if external.get( 'Username' ):
+			external['alias'] = external['Username']
+		super(_NoOpUserSearchPolicyAndRealnameStripper,self).decorateExternalObject( original, external )

@@ -181,13 +181,22 @@ class TestApplicationUserSearch(ApplicationTestBase):
 		res = testapp.get( path, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body['Items'], has_length( 1 ) )
 		assert_that( res.json_body['Items'], has_item( has_entry( 'Username', 'sj2@nextthought.com' ) ) )
-		assert_that( res.json_body['Items'], has_item( has_entry( 'realname', none() ) ) )
+		assert_that( res.json_body['Items'], has_item( has_entry( 'alias', 'Steve' ) ) )
+		assert_that( res.json_body['Items'], has_item( has_entry( 'realname', 'Steve Johnson' ) ) )
 
-		# MC search is locked down
+		# MC search is locked down to be only the username
 		environ = self._make_extra_environ()
 		environ['HTTP_ORIGIN'] = 'http://mathcounts.nextthought.com'
 		res = testapp.get( path, extra_environ=environ )
 		assert_that( res.json_body['Items'], has_length( 0 ) )
+
+		# Even if it does find a hit, we don't get back a realname and the alias is set to the username
+		environ = self._make_extra_environ()
+		environ['HTTP_ORIGIN'] = 'http://mathcounts.nextthought.com'
+		res = testapp.get( b'/dataserver2/UserSearch/sj2@nextthought.com', extra_environ=environ )
+		assert_that( res.json_body['Items'], has_length( 1 ) )
+		assert_that( res.json_body['Items'], has_item( has_entry( 'alias', 'sj2@nextthought.com' ) ) )
+		assert_that( res.json_body['Items'], has_item( has_entry( 'realname', none() ) ) )
 
 
 	def test_search_empty_term_user(self):

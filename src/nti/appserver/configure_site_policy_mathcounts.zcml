@@ -10,10 +10,23 @@
 			 provides="nti.dataserver.users.interfaces.IAvatarChoices"
 			 name="mathcounts.nextthought.com" />
 
-	<!-- On the MC site, we cannot search for users by anything except their username -->
-	<adapter factory="nti.appserver.usersearch_views.NoOpUserSearchMatcher"
+	<!--
+		 On the MC site, we cannot search for users by anything except their username.
+		 Note that for accounts initially created on this site and not modified,
+		 this is the same as the alias, but for other accounts (logged on from different sites)
+		 this is different than alias. We don't search alias, either, and on that site
+		 we force the value returned for alias to be the username as well, even if you
+		 have something else defined.
+	-->
+	<adapter factory="._adapters._NoOpUserSearchPolicyAndRealnameStripper"
 			 for="nti.dataserver.interfaces.IUser"
-			 provides="nti.appserver.usersearch_views.IUserSearchMatcher"
+			 provides=".interfaces.IUserSearchPolicy"
+			 name="mathcounts.nextthought.com" />
+
+	<!-- Likewise, we never reveal real names -->
+	<adapter factory="._adapters._NoOpUserSearchPolicyAndRealnameStripper"
+			 provides="nti.externalization.interfaces.IExternalObjectDecorator"
+			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
 			 name="mathcounts.nextthought.com" />
 
 	<!-- On the MC site, NO ONE can chat -->
@@ -27,7 +40,6 @@
 			 for="nti.dataserver.interfaces.ICoppaUserWithoutAgreement"
 			 provides="nti.appserver.interfaces.IUserCapabilityFilter"
 			 name="mathcounts.nextthought.com" />
-
 
 	<!-- CSS for mathcounts -->
 	<utility factory=".site_policy_views.SiteCSSMarker"

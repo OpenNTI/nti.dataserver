@@ -7,7 +7,6 @@
 	<utility factory=".site_policies.TestMathcountsSitePolicyEventListener"
 			 name="testmathcounts.nextthought.com"/>
 
-
 	<!-- On the MC site, we will be able to provide choices for avatars based simply on the username string -->
 	<adapter factory="nti.dataserver.users.avatar_urls.StringComputedAvatarURLChoices"
 			 for="basestring"
@@ -15,9 +14,15 @@
 			 name="testmathcounts.nextthought.com" />
 
 	<!-- On the MC site, we cannot search for users by anything except their username -->
-	<adapter factory="nti.appserver.usersearch_views.NoOpUserSearchMatcher"
+	<adapter factory="._adapters._NoOpUserSearchPolicyAndRealnameStripper"
 			 for="nti.dataserver.interfaces.IUser"
-			 provides="nti.appserver.usersearch_views.IUserSearchMatcher"
+			 provides=".interfaces.IUserSearchPolicy"
+			 name="testmathcounts.nextthought.com" />
+
+	<!-- Likewise, we never reveal real names -->
+	<adapter factory="._adapters._NoOpUserSearchPolicyAndRealnameStripper"
+			 provides="nti.externalization.interfaces.IExternalObjectDecorator"
+			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
 			 name="testmathcounts.nextthought.com" />
 
 	<!-- On the MC site, NO ONE can chat -->
@@ -32,6 +37,7 @@
 			 provides="nti.appserver.interfaces.IUserCapabilityFilter"
 			 name="testmathcounts.nextthought.com" />
 
+	<!-- CSS for mathcounts -->
 	<utility factory=".site_policy_views.SiteCSSMarker"
 			 name="testmathcounts.nextthought.com" />
 
