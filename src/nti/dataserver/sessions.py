@@ -35,7 +35,8 @@ class SessionService(object):
 	session.
 
 	This object will look for a utility component of :class:`nti_interfaces.ISessionServiceStorage`
-	to provide session storage.
+	to provide session storage, and a utility component :class:`nti.dataserver.interfaces.IRedisClient`
+	to provide Redis services.
 
 	"""
 
@@ -49,7 +50,6 @@ class SessionService(object):
 		# Note that we have no way to close these greenlets. We depend
 		# on GC of this object to let them die when the last refs to
 		# us do.
-		self._redis = self._get_redis()
 		self.cluster_listener = self._spawn_cluster_listener()
 		self._watching_sessions = set()
 		self._session_watchdog = self._spawn_session_watchdog()
@@ -58,6 +58,8 @@ class SessionService(object):
 	@property
 	def _session_db(self):
 		return component.getUtility( nti_interfaces.ISessionServiceStorage )
+
+	# TODO: This can possibly be replaced with redis pub/sub
 
 	def _spawn_cluster_listener(self):
 		env_settings = component.getUtility( nti_interfaces.IEnvironmentSettings )

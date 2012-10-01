@@ -332,3 +332,18 @@ class INewObjectTransformer(interface.Interface):
 		"""
 		Given the object posted from external, return the object to actually store.
 		"""
+
+
+###
+# Policies
+###
+
+class IUserSearchPolicy(interface.Interface):
+
+	def matches( search_term, entity_name ):
+		"""
+		Determine if the entity matches.
+		:return: The entity object, if it matched. Otherwise None.
+		"""
+
+IUserSearchMatcher = IUserSearchPolicy # BBB

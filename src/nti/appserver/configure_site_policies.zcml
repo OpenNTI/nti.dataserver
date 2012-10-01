@@ -20,25 +20,24 @@
 	<subscriber factory=".site_policies.SiteBasedExternalObjectDecorator"
 				for=".logon._Handshake"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
+	<subscriber factory=".site_policies.SiteBasedExternalObjectDecorator"
+				for="nti.dataserver.interfaces.IUser"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
 
 	<!-- Misc policies -->
 
 	<!--
-	On sites in devmode that do not otherwise specify a search behaviour, use the
-	old behaviour. This policy is evolving as realname evolves.
+	On sites that do not otherwise specify a search behaviour, use the
+	"old" behaviour that searches on alias and realname. (Alias is and always has been displayed;
+	on all the adult sites realname is being displayed now, as well, so this covers them. The
+	only exception is the mathcounts-based sites, where no-one can have a realname displayed (and,
+	depending on where you created your account, alias may or may not be the same as the username).
+
+	This policy is evolving as realname evolves.
 	-->
-	<adapter factory="nti.appserver.usersearch_views.ComprehensiveUserSearchMatcher"
+	<adapter factory="._adapters._ComprehensiveUserSearchPolicy"
 			 for="nti.dataserver.interfaces.IUser"
-			 provides="nti.appserver.usersearch_views.IUserSearchMatcher"
-			 zcml:condition="have devmode"/>
-	<!--
-	See comments in this class.
-	Note: This is really meant to be a user policy, adapted to specific
-	account types, e.g., ICoppaUser. Right now its global. If it needs to become
-	site based, that can be done with the SiteBasedExternalObjectDecorator.
-	-->
-	<subscriber factory="._adapters._UserRealnameStripper"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
+			 provides=".interfaces.IUserSearchPolicy" />
 
 	<!--
 	Landing pages for sites. Note that this embeds configuration of its own.

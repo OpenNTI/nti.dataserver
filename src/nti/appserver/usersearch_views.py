@@ -132,7 +132,7 @@ def _format_result( result, remote_user, dataserver ):
 def _authenticated_search( request, remote_user, dataserver, search_term ):
 	result = []
 	_users = nti_interfaces.IShardLayout( dataserver ).users_folder
-	user_search_matcher = site_policies.queryAdapterInSite( remote_user, IUserSearchMatcher, request=request, default=NoOpUserSearchMatcher() )
+	user_search_matcher = site_policies.queryAdapterInSite( remote_user, app_interfaces.IUserSearchMatcher, request=request )
 	# We used to have some nice heuristics about when to include uid-only
 	# matches. This became much less valuable when we started to never display
 	# anything except uid and sometimes to only want to search on UID:
@@ -151,7 +151,7 @@ def _authenticated_search( request, remote_user, dataserver, search_term ):
 		if search_term in entity_name.lower():
 			entity = users.Entity.get_entity( entity_name, dataserver=dataserver )
 		else:
-			entity = user_search_matcher.matches( search_term, entity_name )
+			entity = user_search_matcher.matches( search_term, entity_name ) if user_search_matcher else None
 
 		if entity is not None:
 			result.append( entity )
@@ -213,34 +213,3 @@ def _make_visibility_test(remote_user):
 			return not hasattr(x, 'communities') or x.communities.intersection( remote_com_names )
 		return test
 	return lambda x: True
-
-class IUserSearchMatcher(interface.Interface):
-
-	def matches( search_term, entity_name ):
-		"""
-		Determine if the entity matches.
-		:return: The entity object, if it matched. Otherwise None.
-		"""
-
-@interface.implementer(IUserSearchMatcher)
-class ComprehensiveUserSearchMatcher(object):
-
-	def __init__( self, context=None ):
-		pass
-
-	def matches( self, search_term, entity_name ):
-		entity = users.Entity.get_entity( entity_name )
-		if entity:
-			names = user_interfaces.IFriendlyNamed( entity )
-			if search_term in (names.realname or '').lower() or search_term in (names.alias or '').lower():
-				return entity
-
-
-@interface.implementer(IUserSearchMatcher)
-class NoOpUserSearchMatcher(object):
-
-	def __init__( self, context=None ):
-		pass
-
-	def matches( self, search_term, entity_name ):
-		return None

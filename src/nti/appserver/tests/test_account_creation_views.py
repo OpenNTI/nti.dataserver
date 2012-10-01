@@ -258,7 +258,7 @@ class _AbstractNotDevmodeViewBase(ConfiguringTestBase):
 
 		assert_that( e.exception.json_body, has_entry( 'field', 'realname' ) )
 		assert_that( e.exception.json_body, has_entry( 'code', 'MissingLastName' ) )
-		assert_that( e.exception.json_body, has_entry( 'message', 'Please provide your last name.' ) )
+		assert_that( e.exception.json_body, has_entry( 'message', 'Please provide your first and last names.' ) )
 
 
 class TestPreflightView(_AbstractValidationViewBase):
