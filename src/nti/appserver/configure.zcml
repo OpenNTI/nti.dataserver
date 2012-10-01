@@ -318,7 +318,9 @@
 	<!-- User-type policies -->
 	<include package="." file="configure_user_policies.zcml" />
 
-	<include package="." file="configure_testmathcounts.zcml" />
+	<include package="." file="configure_site_policy_mathcounts.zcml" />
+	<include package="." file="configure_site_policy_testmathcounts.zcml" />
+	<include package="." file="configure_site_policy_demo.zcml" />
 
 	<!-- Hacky temporary stuff -->
 	<adapter name="OUAdminFactory"

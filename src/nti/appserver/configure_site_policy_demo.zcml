@@ -1,0 +1,17 @@
+<!-- -*- mode: nxml -*- -->
+<configure
+	xmlns="http://namespaces.zope.org/zope"
+	xmlns:zcml="http://namespaces.zope.org/zcml">
+	<include package="zope.component" />
+
+	<adapter factory=".site_policies.LogonLinksCreationStripper"
+			 for=".logon._Pong pyramid.interfaces.IRequest"
+			 provides="nti.externalization.interfaces.IExternalObjectDecorator"
+			 name="demo.nextthought.com"/>
+	<adapter factory=".site_policies.LogonLinksCreationStripper"
+			 for=".logon._Handshake pyramid.interfaces.IRequest"
+			 provides="nti.externalization.interfaces.IExternalObjectDecorator"
+			 name="demo.nextthought.com"/>
+
+
+</configure>
