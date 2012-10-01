@@ -414,7 +414,6 @@ chffrr
 chffvrf
 chffl
 chfflf
-chgn
 chgb
 chhxr
 chhxre
