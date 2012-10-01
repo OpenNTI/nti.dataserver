@@ -1,11 +1,6 @@
 from __future__ import print_function, unicode_literals
 
 import six
-import sys
-
-# monkey patch logger
-import zopyxtxng3corelogger
-sys.modules["zopyx.txng3.core.logger"] = zopyxtxng3corelogger
 
 from zope.interface import implements
 from zope.index.interfaces import IInjection
