@@ -80,7 +80,6 @@ class TestDataserver( mock_dataserver.ConfiguringTestBase ):
 		assert_that( find_factory_for_class_name( 'Note' ), equal_to( contenttypes.Note ) )
 		assert_that( find_factory_for_class_name( 'notes' ), equal_to( contenttypes.Note ) )
 
-		assert_that( find_factory_for_class_name( 'quizresults' ), equal_to( contenttypes.quizresult ) )
 
 		assert_that( find_factory_for_class_name( 'TestDataserver' ), is_( none() ) )
 

@@ -1081,33 +1081,6 @@ class TestApplication(ApplicationTestBase):
 			assert_that( body, has_entry( 'Sections', has_item( has_entry( 'Enrolled', has_item( 'jason.madden@nextthought.com' ) ) ) ) )
 
 
-	def test_quiz_container_id_auto_mapping(self):
-		with mock_dataserver.mock_db_trans(self.ds):
-			self._create_user()
-
-		# The quiz may live in any container
-		quiz_data = {"MimeType":"application/vnd.nextthought.quiz",
-					 'ContainerId': ntiids.make_ntiid( provider='mathcounts', nttype='HTML', specific='0' ),
-					 "Class": "Quiz",
-					 "ID": ntiids.make_ntiid( provider='sjohnson@nextthought.com', nttype=ntiids.TYPE_QUIZ, specific='0' ),
-					 "Items": {"1" : { "Class": "QuizQuestion","Answers": ["$5$", "$5.0$"],
-									   "MimeType": "application/vnd.nextthought.quizquestion","ID": "1", "Text": "foo bar" } } }
-		testapp = TestApp( self.app )
-
-		res = testapp.post( '/dataserver2/users/sjohnson@nextthought.com/Pages',
-							json.dumps(quiz_data ),
-							extra_environ=self._make_extra_environ() )
-		json.loads( res.body )
-
-		container_id = ntiids.make_ntiid( provider='sjohnson@nextthought.com', nttype=ntiids.TYPE_HTML, specific='0' )
-		# We should be able to post a response for grading
-		result_data = {"Class": "QuizResult", "MimeType":"application/vnd.nextthought.quizresult",
-					   "ContainerId": container_id,
-					   'Items': {"1": "0"}}
-		testapp.post( '/dataserver2/users/sjohnson@nextthought.com/',
-							   json.dumps( result_data ),
-							   extra_environ=self._make_extra_environ() )
-
 	def test_share_note_with_class(self):
 		"We can share with the NTIID of a class we are enrolled in to get to the other students and instructors."
 		with mock_dataserver.mock_db_trans( self.ds ):

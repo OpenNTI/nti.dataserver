@@ -146,7 +146,7 @@ def install_flag_storage( dataserver_folder ):
 
 def install_root_folders( parent_folder,
 						  folder_type=container.CaseInsensitiveLastModifiedBTreeFolder,
-						  folder_names=('users', 'providers', 'quizzes'),  # TODO: Drop quizzes
+						  folder_names=('users', 'providers',),
 						  extra_folder_names=(),
 						  exclude_folder_names=() ):
 	for key in set( ('users', 'providers', 'quizzes' ) + extra_folder_names) - set( exclude_folder_names ):
