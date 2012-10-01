@@ -169,7 +169,7 @@ class _UserRealnameStripper(object):
 		pass
 
 	def decorateExternalObject( self, original, external ):
-		if users.User.get_user( psec.authenticated_userid( get_current_request() ) ) == original:
+		if original.username == psec.authenticated_userid( get_current_request() ):
 			return
 		external['realname'] = None
 
@@ -244,3 +244,32 @@ class _NoOpUserSearchPolicyAndRealnameStripper(_NoOpUserSearchPolicy,_UserRealna
 		if external.get( 'Username' ):
 			external['alias'] = external['Username']
 		super(_NoOpUserSearchPolicyAndRealnameStripper,self).decorateExternalObject( original, external )
+
+from nti.externalization.interfaces import StandardExternalFields
+
+@interface.implementer(ext_interfaces.IExternalMappingDecorator)
+@component.adapter(nti_interfaces.IUser)
+class _AuthenticatedUserLinkAdder(object):
+	"""
+	When we decorate an user, if the user is ourself, we want to provide
+	the same links that we would at logon time, mostly as a convenience
+	to the client.
+	"""
+
+	def __init__( self, *args ):
+		pass
+
+	def decorateExternalMapping( self, original, external ):
+		request = get_current_request()
+		if not request:
+			return
+
+		userid = psec.authenticated_userid( request )
+		if not userid or original.username != userid:
+			return
+
+		links = list( external.get( StandardExternalFields.LINKS, () ) )
+		for provider in request.registry.subscribers( (original,request), app_interfaces.IAuthenticatedUserLinkProvider ):
+			links.extend( provider.get_links() )
+
+		external[StandardExternalFields.LINKS] = links

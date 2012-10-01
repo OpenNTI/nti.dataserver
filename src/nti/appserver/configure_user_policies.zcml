@@ -13,6 +13,7 @@
 	<!-- Emails -->
 	<subscriber handler=".user_policies.send_consent_request_on_new_coppa_account" />
 	<subscriber handler=".user_policies.send_consent_request_when_contact_email_changes" />
+
 	<!--
 	Default to "sending" new object emails in dev mode.
 	These will actually just get queued to disk in the usual case.
@@ -68,5 +69,10 @@
 	<adapter
 		factory="._creatable_mime_object_vocabulary._ImageAndRedactionRestrictedContentObjectFilter"
 		for=".site_policies.IMathcountsUser" />
+
+	<!-- Privacy link as needed -->
+	<subscriber factory=".user_policies.CoppaUserPrivacyPolicyLinkProvider"
+				provides=".interfaces.IAuthenticatedUserLinkProvider" />
+
 
 </configure>

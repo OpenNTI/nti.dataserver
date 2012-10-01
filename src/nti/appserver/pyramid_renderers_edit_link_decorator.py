@@ -44,7 +44,6 @@ class EditLinkDecorator(object):
 		pass
 
 	def decorateExternalMapping( self, context, mapping ):
-
 		if not getattr( context, '_p_jar', None ):
 			return
 		# preflight, make sure there is no edit link already
