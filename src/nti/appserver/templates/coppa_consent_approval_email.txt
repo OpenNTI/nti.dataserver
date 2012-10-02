@@ -1,0 +1,21 @@
+Dear Parent,
+
+Thank you for submitting the consent form for ${profile.realname}
+(username: ${user.username}). We have activated the social features
+for the account. These features, which will allow your child to share
+notes and collaborate with others, will be available the next time
+your child signs in to his or her account and fills out some
+information.
+
+We are excited to have your child join the NextThought community, and
+we believe that having access to the interactive content and features
+will both enrich your child's education and provide him or her with a
+more engaging experience.
+
+Sincerely,
+
+NextThought
+
+If you feel this email was sent in error, or you did not submit a
+consent form to enable social features for your child's account, you
+may email us at support@nextthought.com.
