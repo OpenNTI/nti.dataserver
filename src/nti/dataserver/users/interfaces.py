@@ -229,6 +229,13 @@ class IImmutableFriendlyNamed(Interface):
 		required=False,
 		readonly=True)
 
+class IRequireProfileUpdate(Interface):
+	"""
+	Apply this as a marker to a context object (user) that requires a profile
+	update. This will trigger profile validation (which usually doesn't happen)
+	and allow bypassing certain parts of :class:`IImmutableFriendlyNamed.`
+	"""
+
 from nti.utils.schema import ValidTextLine as _ValidTextLine
 
 TAG_HIDDEN_IN_UI = "nti.dataserver.users.field_hidden_in_ui" # Don't display this by default in the UI

@@ -317,7 +317,16 @@ def account_profile_view(request):
 
 @component.adapter(nti_interfaces.IUser,app_interfaces.IUserUpgradedEvent)
 def request_profile_update_on_user_upgrade(user, event):
+	"""
+	When we get the event that a user has upgraded from one account type
+	to another and thus changed profiles, signal that the profile is in need of immediate
+	update. At this time, require the profile to be valid, and allow bypassing some of the
+	normal restrictions on what can be changed in the profile.
+	"""
 	user_link_provider.add_link( user, REL_ACCOUNT_PROFILE_UPGRADE )
+	# Apply the marker interface, which vanishes when the user's profile
+	# is updated
+	interface.alsoProvides( user, user_interfaces.IRequireProfileUpdate )
 
 
 class ProfileUpgradeDeleteView(user_link_provider.AbstractUserLinkDeleteView):
@@ -326,6 +335,9 @@ class ProfileUpgradeDeleteView(user_link_provider.AbstractUserLinkDeleteView):
 
 	@view_config(name=REL_ACCOUNT_PROFILE_UPGRADE)
 	def __call__( self ):
+		# If they clear the flag without resetting the profile, take that
+		# ability off. (This is idempotent)
+		interface.noLongerProvides( self.request.context, user_interfaces.IRequireProfileUpdate )
 		return user_link_provider.AbstractUserLinkDeleteView.__call__( self )
 
 

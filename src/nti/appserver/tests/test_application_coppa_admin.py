@@ -85,6 +85,7 @@ class TestApplicationCoppaAdmin(ApplicationTestBase):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = users.User.get_user( 'ossmkitty' )
 			assert_that( user, verifiably_provides( site_policies.IMathcountsCoppaUserWithAgreement ) )
+			assert_that( user, verifiably_provides( user_interfaces.IRequireProfileUpdate ) )
 
 			assert_that( user_interfaces.IFriendlyNamed( user ), has_property( 'realname', 'Jason' ) )
 			assert_that( user_interfaces.IUserProfile( user ), has_property( 'contact_email', 'jason.madden@nextthought.com' ) )
@@ -96,3 +97,11 @@ class TestApplicationCoppaAdmin(ApplicationTestBase):
 		# We generated no email during this process
 		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer, has_property( 'queue', has_length( 0 ) ) )
+
+		testapp.delete( '/dataserver2/users/ossmkitty/@@account.profile.needs.updated',
+						extra_environ=self._make_extra_environ(username='ossmkitty'),
+						status=204 )
+
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = users.User.get_user( 'ossmkitty' )
+			assert_that( user, does_not( verifiably_provides( user_interfaces.IRequireProfileUpdate ) ) )
