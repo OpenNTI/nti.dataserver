@@ -57,7 +57,7 @@ class ntiincludevideo(_OneText):
 class ntipagenum(_OneText):
 	pass
 
-class ntiglosseryterm(Base.Command):
+class ntiglossaryterm(Base.Command):
 	args = 'term self'
 
 class textsuperscript(Base.Command):
