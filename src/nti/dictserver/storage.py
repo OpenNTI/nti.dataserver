@@ -124,11 +124,13 @@ class TrivialExcelCSVDataStorage(object):
 		if isinstance(path_or_file, basestring):
 			path_or_file = open(path_or_file, 'rU')
 
+		# CSV Readers operate at the level of bytestrings, so it's up to us
+		# to decode
 		reader = csv.DictReader( path_or_file )
 		self._data = {} # depending on how big the data is, we might want to use a btree
 		for row in reader:
-			term = row['Term']
-			defn = row['Definition']
+			term = row['Term'].decode( 'utf-8' )
+			defn = row['Definition'].decode( 'utf-8' )
 
 			self._data[term.lower()] = DictionaryTermData( meanings=( {'content': defn, 'examples': (), 'type': 'noun' }, ) )
 

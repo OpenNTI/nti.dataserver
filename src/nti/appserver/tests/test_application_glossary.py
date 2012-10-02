@@ -53,3 +53,10 @@ class TestApplicationGlossary(ApplicationTestBase):
 		res = testapp.get( path, extra_environ=self._make_extra_environ())
 
 		assert_that( res.body, contains_string( str('xml-stylesheet') ) )
+
+		path = '/dataserver2/users/sjohnson@nextthought.com/Pages(tag:NewcontainerResource)/Glossary/institutional theory'
+		path = urllib.quote( path )
+		res = testapp.get( path, extra_environ=self._make_extra_environ())
+
+		assert_that( res.body, contains_string( str('xml-stylesheet') ) )
+		assert_that( res.body, contains_string( 'institutional' ) )
