@@ -1,7 +1,8 @@
 from __future__ import print_function, unicode_literals
 
-import os
 import six
+
+from persistent import Persistent
 
 from zope import interface
 
@@ -25,7 +26,12 @@ AWS_CS_PARAMS = {'aws_access_key_id': (str, None),
 				 'proxy_port': (int, None),
 				 'proxy_user': (str, None),
 				 'proxy_pass': (str, None),
-				 'region' : (str, None) }
+				 'region' : (str, None),
+				 'path' : (str, '/'),
+				 'region' : (str, None),
+				 'api_version': (str, None),
+				 'security_token' : (str, None),
+				 'debug': (int, 0)}
 
 def find_aws_region(region):
 	if isinstance(region, six.string_types):
@@ -45,42 +51,55 @@ def get_search_service(domain=None, endpoint=None):
 def get_document_service(domain=None, endpoint=None):
 	return DocumentServiceConnection(domain=domain, endpoint=endpoint)
 
-def create_cloudsearch_store(aws_access_key_id=None, 
-							 aws_secret_access_key=None,
-							 search_domain='ntisearch',
-				 			 is_secure=True,
-				 			 host='cloudsearch.us-east-1.amazonaws.com', 
-				 			 port=None, 
-				 			 proxy=None,
-				 			 proxy_port=None,
-				 			 proxy_user=None,
-				 			 proxy_pass=None,
-				 			 debug=0,
-				 			 https_connection_factory=None, 
-				 			 path='/', 
-				 			 region=None,
-							 api_version=None,
-							 security_token=None):
-	
-	kwargs = dict(locals())
-	kwargs.pop('region' , None)
-	kwargs.pop('search_domain' , None)
-	return _CloudSearchStore(region=region, search_domain=search_domain, **kwargs)
+def create_cloudsearch_store(**kwargs):
+	params = dict(kwargs)
+	search_domain = params.pop('search_domain' , 'ntisearch')
+	return _CloudSearchStore(search_domain=search_domain, **params)
 	
 @interface.implementer(ICloudSearchStore)
-class _CloudSearchStore(object):
+class _CloudSearchStore(Persistent, object):
 	
-	def __init__(self, region=None, search_domain='ntisearch', **kwargs):
-		super(_CloudSearchStore, self).__init__()
-		region = find_aws_region(region)
-		self._search_domain = search_domain
-		self.connection = connect_to_region(region.name, **kwargs)
-		self._set_aws_domains(self._v_connection)
+	def __init__(self, search_domain='ntisearch', **kwargs):
+		self.search_domain = search_domain
+		self.reset_aws_connection(**kwargs)
 
+	@property
+	def connection(self):
+		return self._v_connection
+	
+	@property
+	def domains(self):
+		return self._v_domains
+	
+	def reset_aws_connection(self, **kwargs):
+		if kwargs:
+			illegal_args = [k for k in kwargs.keys() if not k in AWS_CS_PARAMS.keys()]
+			if illegal_args:
+				raise ValueError('Unknown parameters: %s' % ', '.join(illegal_args))
+			
+			self.region = kwargs.pop('region', None)
+			for k, v in AWS_CS_PARAMS.items():
+				v = kwargs.get(k, v)
+				setattr(self, k, v)
+		
+		# find and aws region
+		region = find_aws_region(self.region)
+		self.region = region.name
+		
+		# set aws conn params
+		params = dict(self.__dict__)
+		params.pop('region', None)
+		self._v_connection = connect_to_region(region.name, **params)
+		self._set_aws_domains(self._v_connection)
+		
+	def __setstate__(self, d):
+		self.__dict__ = d
+		self.reset_aws_connection()
+		
 	def _set_aws_domains(self, connection):
-		self.domains = {}
+		self._v_domains = {}
 		for d in self.get_aws_domains():
-			self.domains[d['domain_name']] = Domain(connection, d)
+			self._v_domains[d['domain_name']] = Domain(connection, d)
 		
 	def get_search_domain(self):
 		return self.get_domain(domain_name=self._search_domain)
@@ -90,18 +109,6 @@ class _CloudSearchStore(object):
 		return domains
 		
 	def get_domain(self, domain_name):
-		domain = self.domains.get(domain_name, None)
+		domain = self._v_domains.get(domain_name, None)
 		return domain
-		
-def _create_default_cloudsearch_store():
-	params = {}
-	for k, v in AWS_CS_PARAMS.items():
-		func, df = v
-		val = os.getenv(k, None)
-		val = func(val) if val is not None else df
-		params[k] = val
-		
-	if 	params.get('aws_access_key_id', None) and \
-		params.get('aws_secret_access_key', None):
-		return create_cloudsearch_store(**params)
-	return None
+
