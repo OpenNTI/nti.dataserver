@@ -30,14 +30,19 @@ class TestIndexer(unittest.TestCase):
 		idx = get_or_create_index(indexdir=self.idxdir, indexname=indexname, recreate=False)
 		q = Term("keywords", u"mathcounts")
 		with idx.searcher() as s:
-			r = s.search(q)
+			r = s.search(q, limit=None)
 			assert_that(r, has_length(0))
 
 		q = Or([Term("content", u'biology'),])
 		with idx.searcher() as s:
-			r = s.search(q)
-			assert_that(r, has_length(30))
-
+			r = s.search(q, limit=None)
+			assert_that(r, has_length(27))
+			
+		q = Or([Term("content", u'homeostasis'),])
+		with idx.searcher() as s:
+			r = s.search(q, limit=None)
+			assert_that(r, has_length(16))
+		
 		idx.close()
 
 	def test_index_file(self):
