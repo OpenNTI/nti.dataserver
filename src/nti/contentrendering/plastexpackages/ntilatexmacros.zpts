@@ -20,5 +20,5 @@ name: textsubscript
 name: nobreak
 <span class="nobreak" tal:content="self"></span>
 
-name: ntiglosseryterm
+name: ntiglossaryterm
 <b tal:content="self/attributes/term"></b>
