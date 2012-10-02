@@ -170,8 +170,10 @@ class _CaseInsensitiveKey(object):
 	"""
 
 	def __init__( self, key ):
+		if not isinstance( key, basestring ):
+			raise TypeError(key)
 		self.key = unicode(key)
-		self._lower_key = key.lower()
+		self._lower_key = self.key.lower()
 
 	def __str__( self ): # pragma: no cover
 		return self.key
