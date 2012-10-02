@@ -281,16 +281,28 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 		profile = profile_iface( self )
 		# Cause certain fields to be effectively read-only once they are
 		# set. At this time, we cannot update the alias or realname fields once created; we assume
-		# them to be immutable
-		if interfaces.IImmutableFriendlyNamed.providedBy( self ):
+		# them to be immutable. There are some few, one-time-only scenarios where we allow updates,
+		# usually when our interface has changed
+		immutably_named = interfaces.IImmutableFriendlyNamed.providedBy( self )
+		profile_update = interfaces.IRequireProfileUpdate.providedBy( self )
+		if immutably_named:
 			if profile.alias and parsed.get( 'alias' ):
 				parsed.pop( 'alias' )
-			if profile.realname and parsed.get( 'realname' ):
+			if profile.realname and parsed.get( 'realname' ) and not profile_update:
 				parsed.pop( 'realname' )
-		# Only validate it though, if we are not saved. Once we are saved, presumably with a
+		# Only validate it though, if we are not saved and not forcing a profile update.
+		# Once we are saved, presumably with a
 		# valid profile, then if the profile changes and we are missing (new) fields,
-		# we cannot necessarily expect to have them filled in
-		InterfaceObjectIO( profile, profile_iface, validate_after_update=(not self._p_mtime) ).updateFromExternalObject( parsed, *args, **kwargs )
+		# we cannot necessarily expect to have them filled in.
+		# TODO: I think this make is impossible to just change a password while the profile needs updated
+		validate = profile_update or not self._p_mtime
+		__traceback_info__ = profile_iface, profile_update, validate
+		InterfaceObjectIO( profile, profile_iface, validate_after_update=validate ).updateFromExternalObject( parsed, *args, **kwargs )
+
+		if profile_update:
+			# If we got here, then we got the data to validly update our profile,
+			# so we can stop providing the update interface
+			interface.noLongerProvides( self, interfaces.IRequireProfileUpdate )
 
 	### Comparisons and Hashing ###
 
