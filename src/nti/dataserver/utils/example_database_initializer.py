@@ -9,6 +9,7 @@ import pkg_resources
 from zc import intid as zc_intid
 from zope import interface
 from zope import component
+from zope.component.hooks import site, setHooks
 import zope.generations.generations
 from zope.generations import interfaces as gen_interfaces
 
@@ -173,6 +174,10 @@ class ExampleDatabaseInitializer(object):
 	def install( self, context ):
 		conn = context.connection
 		root = conn.root()['nti.dataserver']
+		with site( root ):
+			self._install_in_site( context, conn, root )
+
+	def _install_in_site( self, context, conn, root ):
 		# ONLY_NEW = '--only-new' in sys.argv
 		# if ONLY_NEW:
 		# 	def add_user( u ):

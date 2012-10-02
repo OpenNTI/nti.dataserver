@@ -6,7 +6,7 @@ from __future__ import print_function, unicode_literals
 
 __docformat__ = 'restructuredtext'
 
-generation = 27
+generation = 28
 
 from zope.generations.generations import SchemaManager
 
@@ -136,7 +136,7 @@ def install_password_utility( dataserver_folder ):
 	policy.__parent__ = dataserver_folder
 	policy.maxLength = 100
 	policy.minLength = 6
-	policy.groupMax = 10 # TODO: The group max interferes with pass phrases, which we like
+	policy.groupMax = 50 # TODO: The group max interferes with pass phrases, which we like
 	lsm.registerUtility( policy, provided=z3c.password.interfaces.IPasswordUtility )
 
 def install_flag_storage( dataserver_folder ):
