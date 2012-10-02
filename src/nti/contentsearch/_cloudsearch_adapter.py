@@ -105,9 +105,14 @@ class _CloudSearchEntityIndexManager(Persistent, _SearchEntityIndexManager):
 	def d_version(self):
 		return self.version + 1
 	
-	def _get_errors(self, result, n=5):
-		errors = result.errors[:n]
-		return '\n'.join(errors)
+	def _check_errors(self, result, n=5, throw=True):
+		errors = result.errors[:n] if result is not None else ()
+		if errors:
+			s = '\n'.join(errors)
+			if throw:
+				raise Exception(s)
+			else:
+				logger.error(s)
 
 	def index_content(self, data, type_name=None):
 		if not data: return None
@@ -116,9 +121,7 @@ class _CloudSearchEntityIndexManager(Persistent, _SearchEntityIndexManager):
 		oid, external = to_cloud_object(data, self.username, type_name)
 		service.add(oid, self.a_version,  external) 
 		result = service.commit()
-		if result.errors:
-			s = self._get_errors(result)
-			raise Exception(s)
+		self._check_errors(result)
 		return True
 	
 	# update is simply and add w/ a different version number
@@ -130,10 +133,7 @@ class _CloudSearchEntityIndexManager(Persistent, _SearchEntityIndexManager):
 		oid = get_cloud_oid(data)
 		service.delete(oid, self.d_version) 
 		result = service.commit()
-		if result.errors:
-			s = ' '.join(result.errors)
-			logger.error(s)
-			return False
+		self._check_errors(result)
 		return True
 
 	def remove_index(self, type_name=None):
@@ -145,11 +145,9 @@ class _CloudSearchEntityIndexManager(Persistent, _SearchEntityIndexManager):
 		
 		if counter:
 			result = service.commit()
-			logger.info("%s document(s) unindexed" % result.deletes)
-			if result.errors:
-				s = self._get_errors(result)
-				logger.error(s)
-			return result.deletes
+			self._check_errors(result, throw=False)
+			deletes = getattr(result, 'deletes', 0) if result is not None else 0
+			return deletes
 		return 0
 		
 	def get_aws_oids(self, type_name=None, size=sys.maxint):

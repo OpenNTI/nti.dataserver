@@ -12,7 +12,7 @@ from nti.chatserver import interfaces as chat_interfaces
 
 from nti.contentsearch import interfaces as search_interfaces
 
-from nti.contentsearch._ngrams_utils import ngrams
+#from nti.contentsearch._ngrams_utils import ngrams
 from nti.contentsearch.common import get_type_name
 
 from nti.contentsearch.common import (	CLASS, CREATOR, last_modified_fields, ntiid_fields, INTID, 
@@ -83,13 +83,9 @@ def create_search_domain(connection, domain_name='ntisearch', allow_ips=()):
 	
 	return domain
 
-def is_ngram_search_supported():
-	features = component.getUtility( search_interfaces.ISearchFeatures )
-	return features.is_ngram_search_supported
-
 def get_cloud_oid(obj):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
-	oid = adapted.get_external_oid(obj)
+	oid = adapted.get_external_oid()
 	return hashlib.sha224(oid).hexdigest()
 
 def get_object_content(data):
@@ -101,11 +97,6 @@ def get_last_modified(data):
 	adapted = component.getAdapter(data, search_interfaces.IContentResolver)
 	result = adapted.get_last_modified()
 	return int(result) if result else None
-
-def get_object_ngrams(data, type_name=None):
-	content = get_object_content(data, type_name) if is_ngram_search_supported() else None
-	result = ngrams(content)  if content else None
-	return result
 
 def get_channel(obj):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
@@ -152,24 +143,12 @@ def get_uid(obj):
 class _AbstractCSObject(dict):
 	def __init__( self, src ):
 		self._set_items(src)
-		self._prune(src)
 	
 	def _set_items(self, src):
 		self[intid_] = get_uid(src)
-		self[ntiid_] = get_ntiid(src)
 		self[type_] = get_type_name(src)
 		self[creator_] = get_creator(src)
-		self[keywords_] = get_keywords(src)
-		self[ngrams_] = get_object_ngrams(src)
 		self[content_] = get_object_content(src)
-		self[_shared_with] = get_sharedWith(src)
-		self[_container_id] = get_containerId(src)
-		self[last_modified_] = get_last_modified(src)
-		
-	def _prune(self, src):
-		for k in list(self.keys()):
-			if self[k] is None:
-				self.pop(k)
 		
 @component.adapter(nti_interfaces.INote)	
 class _CSNote(_AbstractCSObject):
@@ -189,8 +168,6 @@ class _CSRedaction(_AbstractCSObject):
 class _CSMessageInfo(_AbstractCSObject):
 	def _set_items(self, src):
 		super(_CSMessageInfo, self)._set_items(src)
-		self[recipients_] = get_recipients(src)
-		self[references_] = get_references(src)
 
 def to_cloud_object(obj, username):
 	oid = get_cloud_oid(obj)
