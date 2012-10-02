@@ -32,7 +32,7 @@ from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.internalization import update_from_external_object
 
 from nti.dataserver.tests import mock_dataserver
-from nti.dataserver.tests.mock_dataserver import WithMockDS
+from nti.dataserver.tests.mock_dataserver import WithMockDS, WithMockDSTrans
 from nti.dataserver.users import users
 from nti.dataserver.contenttypes import Note
 from nti.contentrange.contentrange import ContentRangeDescription
@@ -55,6 +55,41 @@ def test_update_friends_list_name():
 	assert_that( ext_value, has_entry( 'Username', 'MyList' ) )
 	assert_that( ext_value, has_entry( 'realname', 'My Funny Name' ) )
 	assert_that( ext_value, has_entry( 'alias', 'My Funny Name' ) )
+
+@WithMockDSTrans
+def test_update_friends_list():
+	owner = users.User.create_user( username='owner@bar' )
+	user = users.User.create_user( username='1foo@bar' )
+	user2 = users.User.create_user( username='2foo2@bar' )
+	user3 = users.User.create_user( username='3foo3@bar' )
+
+	fl = FriendsList( 'MyList' )
+	fl.creator = owner
+
+	# Cannot add self
+	fl.updateFromExternalObject( {'friends': [owner] } )
+	assert_that( list(fl), has_length( 0 ) )
+
+	# Can add a few to empty
+	fl.updateFromExternalObject( {'friends': [user, user2] } )
+	assert_that( list(fl), has_length( 2 ) )
+	assert_that( sorted(fl), contains( user, user2 ) )
+
+	# Can add one more
+	fl.updateFromExternalObject( {'friends': [user, user2, user3, user, user2, user3] } )
+	assert_that( list(fl), has_length( 3 ) )
+	assert_that( sorted(fl), contains( user, user2, user3 ) )
+
+	# Can go back to one
+	fl.updateFromExternalObject( {'friends': [user2] } )
+	assert_that( list(fl), contains( user2 ) )
+
+	fl.updateFromExternalObject( {'friends': [user] } )
+	assert_that( list(fl), contains( user ) )
+
+	fl.updateFromExternalObject( {'friends': [user, user2, user3, user, user2, user3] } )
+	assert_that( list(fl), has_length( 3 ) )
+	assert_that( sorted(fl), contains( user, user2, user3 ) )
 
 
 @WithMockDS(with_changes=True)

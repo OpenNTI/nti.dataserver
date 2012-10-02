@@ -15,6 +15,7 @@ from zope import component
 from zope.component.factory import Factory
 
 import persistent
+from BTrees.OOBTree import OOTreeSet, difference as OOBTree_difference
 
 from nti.externalization.persistence import PersistentExternalizableList
 
@@ -26,6 +27,7 @@ from nti.dataserver import enclosures
 from nti.dataserver import mimetype
 
 from .entity import Entity
+from .wref import WeakRef
 
 def _get_shared_dataserver(context=None,default=None):
 	if default != None:
@@ -46,11 +48,19 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 	defaultGravatarType = 'wavatar'
 	__external_can_create__ = True
 
+
 	def __init__(self, username=None, avatarURL=None):
 		super(FriendsList,self).__init__(username, avatarURL)
-		self._friends = None
+		# We store our friends in a sorted set of weak references
+		# It's unlikely to have many empty friendslist objects, so it makes sense
+		# to create it now
+		self._friends_wref_set = OOTreeSet()
+
 
 	def _on_added_friend( self, friend ):
+		"""
+		Called with an Entity object when a new friend is added
+		"""
 		if callable( getattr( friend, 'accept_shared_data_from', None ) ):
 			friend.accept_shared_data_from( self.creator )
 			self.creator.follow( friend ) # TODO: used to be an instance check on SharingSource
@@ -61,73 +71,46 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 		(as Entity objects), resolving weak refs and strings.
 		:return: An iterator across a set of `Entity` objects.
 		"""
-		# This function replaces things in the friends list as we
-		# iterate across it, so we must iterate by index
-		def _resolve_friend( friend, ix ):
-			result = friend
-			if isinstance( friend, six.string_types ):
-				result = Entity.get_entity( friend, default=self )
-				if result is self:
-					result = None
-				if result is not None:
-					self._on_added_friend( result )
-					# Now that we found it, if possible replace the string
-					# with the real thing
-					# TODO: Remove support for storing friends as string names
-					try:
-						# Must have the index, the weak refs in here
-						# behave badly in comparisons.
-						self._friends[ix] = persistent.wref.WeakRef( result )
-					except ValueError: pass
-			elif isinstance( friend, persistent.wref.WeakRef ):
-				result = friend()
-			return result
+		return (x() for x in self._friends_wref_set if x())
 
-		resolved = [_resolve_friend(self.friends[i], i) for i in xrange(len(self.friends))]
-		return iter( {x for x in resolved if x is not None} )
-
-
-	@property
-	def friends(self):
-		""" A sequence of strings, weak refs to Principals,
-		arbitrary objects.
-
-		Avoid this method. Prefer to iterate across this object."""
-		return self._friends if self._friends is not None else []
 
 	def addFriend( self, friend ):
-		""" Adding friends causes our creator to follow them. """
-		if friend is None or friend is self:
-			return
-		# TODO: Why is this a list?
-		if self._friends is None:
-			self._friends = PersistentExternalizableList()
-		if isinstance( friend, FriendsList ):
-			# Recurse to generate the correct notifications
-			for other_friend in friend.friends:
-				self.addFriend( other_friend )
-		elif isinstance( friend, Entity ):
-			self._friends.append( persistent.wref.WeakRef( friend ) )
-		elif isinstance( friend, collections.Mapping ) and 'Username' in friend:
-			# Dictionaries and Dictionary-like things come in from
-			# external representations. Resolve, then append.
-			self.addFriend( Entity.get_entity( friend['Username'], default=friend['Username'] ) )
-		elif isinstance( friend, six.string_types ):
-			# Try to resolve, add the resolved if possible, otherwise add the
-			# string as a placeholder. Don't recurse, could be infinite
-			# TODO: Remove support for storing friends as string names
-			friend = friend.lower()
-			friend = Entity.get_entity( friend, default=friend )
-			if isinstance( friend, six.string_types ):
-				logger.debug( "Adding unresolved friend as string %s to %s", friend, self )
-			self._friends.append( friend )
-		else:
-			self._friends.append( friend )
+		"""
+		Adding friends causes our creator to follow them.
 
-		self._on_added_friend( friend )
+		:param friend: Perhaps unwisely, we will accept a few potential values
+			for `friend`. In the simplest most desired case, it may be an existing, named Entity.
+			It may not be this list or this list's creator.
+
+		:return: A count of the number of friends added to this list, usually
+			0 or 1. May be treated as a boolean to determine if the object was actually added
+			or was either already a member of this list or of an unrecognized type.
+
+		"""
+		if friend is None or friend is self or friend is self.creator:
+			return 0
+
+		if not isinstance( friend, Entity ):
+			try:
+				friend = self.get_entity( friend, default=friend )
+			except TypeError:
+				pass
+
+		result = False
+		#if isinstance( friend, FriendsList ):
+			# Recurse to generate the correct notifications
+		#	for other_friend in friend:
+		#		result += self.addFriend( other_friend )
+		if isinstance( friend, Entity ):
+			result = self._friends_wref_set.add( WeakRef( friend ) )
+			if result:
+				self._on_added_friend( friend )
+
+		return result
 
 	@property
 	def NTIID(self):
+		# TODO: Cache this. @CachedProperty?
 		return ntiids.make_ntiid( date=ntiids.DATE,
 								  provider=self.creator.username if self.creator else 'Unknown',
 								  nttype=ntiids.TYPE_MEETINGROOM_GROUP,
@@ -141,13 +124,40 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 
 
 	def _update_friends_from_external(self, newFriends):
+		new_weak_refs = []
 
-		self._friends = None
 		for newFriend in newFriends:
-			if isinstance( newFriend, basestring ) and callable( getattr( self.creator, 'getFriendsList', None ) ):
-				otherList = self.creator.getFriendsList( newFriend )
-				if otherList: newFriend = otherList
-			self.addFriend( newFriend )
+			# For the sake of unit tests, we need to do resolution here. but only of string
+			# names
+			if not isinstance( newFriend, Entity ):
+				try:
+					newFriend = self.get_entity( newFriend, default=newFriend )
+				except TypeError:
+					pass
+			#if not isinstance( newFriend, Entity ) and callable( getattr( self.creator, 'getFriendsList', None ) ):
+			#	otherList = self.creator.getFriendsList( newFriend )
+			#	if otherList:
+			#		new_weak_refs.extend( [WeakRef( f ) for f in otherList] )
+			if isinstance( newFriend, Entity ):
+				new_weak_refs.append( WeakRef(newFriend) )
+
+		incoming_weak_refs = OOTreeSet( new_weak_refs )
+		#assert len(OOBTree_difference( OOTreeSet( new_weak_refs ), OOTreeSet( new_weak_refs ) )) == 0
+		#assert len(OOBTree_difference( OOTreeSet( self._friends_wref_set ), OOTreeSet( self._friends_wref_set ) )) == 0
+		# What's incoming that I don't have
+		missing_weak_refs = OOBTree_difference( incoming_weak_refs, self._friends_wref_set )
+
+		# What I do have that I should no longer have
+		extra_weak_refs = OOBTree_difference( self._friends_wref_set, incoming_weak_refs )
+
+		# Now sync
+		for x in missing_weak_refs:
+			self.addFriend( x() )
+
+		for x in extra_weak_refs:
+			self._friends_wref_set.remove( x )
+
+		#assert set(self) == {x() for x in incoming_weak_refs if x() is not self.creator}
 
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
 		super(FriendsList,self).updateFromExternalObject( parsed, *args, **kwargs )
@@ -180,14 +190,18 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 		result = super(FriendsList,self).__eq__(other)
 		if result is True:
 			try:
-				result = self.friends == other.friends
-			except AttributeError:
+				result = self.creator == other.creator and set(self) == set(other)
+			except (AttributeError,TypeError):
 				result = NotImplemented
 		return result
+
 	def __lt__(self,other):
 		result = super(FriendsList,self).__lt__(other)
 		if result is True:
-			result = self.friends < other.friends
+			try:
+				result = self.creator < other.creator and sorted(self) < sorted(other)
+			except (AttributeError,TypeError):
+				result = NotImplemented
 		return result
 
 @interface.implementer(nti_interfaces.IUsernameIterable)
