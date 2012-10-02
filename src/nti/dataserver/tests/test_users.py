@@ -89,6 +89,15 @@ def test_everyone_has_creator():
 class TestUser(mock_dataserver.ConfiguringTestBase):
 
 	@WithMockDSTrans
+	def test_type_error(self):
+		with assert_raises(TypeError):
+			users.Entity.get_entity( username={} )
+
+		with assert_raises(TypeError):
+			users.Entity.get_entity( username=1 )
+
+
+	@WithMockDSTrans
 	def test_dynamic_friendslist(self):
 		user1 = User.create_user( self.ds, username='foo23' )
 		user2 = User.create_user( self.ds, username='foo12' )

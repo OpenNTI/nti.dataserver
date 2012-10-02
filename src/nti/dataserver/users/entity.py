@@ -68,6 +68,7 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 		:param basestring username: The username to find. If this string is actually
 			an ntiid, then an entity will be looked up by ntiid. This permits
 			finding user-specific objects like friends lists.
+		:raises TypeError: If the username is not a valid username string.
 		"""
 		if username is None:
 			return default
@@ -79,12 +80,11 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 					result = None
 				return result or default
 
-
-		# Allow for escaped usernames, since they are hard to defend against
-		# at a higher level (this behaviour changed in pyramid 1.2.3)
-		username = urllib.unquote( username )
 		dataserver = dataserver or _get_shared_dataserver(default=default)
 		if dataserver is not default:
+			# Sometimes we get a dict sneaking in here when updating from external objects.
+			# The CaseInsensitiveLastModifiedBTreeFolder turns out to throw a TypeError
+			# in that case, the same thing that, say, BTrees.IIBTree.IIBTree does
 			return dataserver.root[_namespace or cls._ds_namespace].get( username, default )
 		return default
 

@@ -100,6 +100,17 @@ def test_case_insensitive_container():
 
 	del c['upper']
 
+def test_case_insensitive_container_invalid_keys():
+
+	c = container.CaseInsensitiveLastModifiedBTreeContainer()
+
+	with assert_raises(TypeError):
+		c.get( {} )
+
+	with assert_raises(TypeError):
+		c.get( 1 )
+
+
 from zope.component.eventtesting import getEvents, clearEvents
 def test_eventless_container():
 
