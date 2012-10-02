@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nti.dataserver 0.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2012-09-26 14:39-0500\n"
+"POT-Creation-Date: 2012-10-02 18:45-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,67 +17,79 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 0.9.6\n"
 
-#: src/nti/appserver/account_creation_views.py:116
+#: src/nti/appserver/account_creation_views.py:127
 msgid "Please provide your first and last names."
 msgstr ""
 
-#: src/nti/appserver/account_creation_views.py:150
+#: src/nti/appserver/account_creation_views.py:161
 msgid "Username cannot be blank"
 msgstr ""
 
-#: src/nti/appserver/account_creation_views.py:164
+#: src/nti/appserver/account_creation_views.py:175
 msgid "That username is not available. Please choose another."
 msgstr ""
 
-#: src/nti/appserver/account_recovery_views.py:118
+#: src/nti/appserver/account_recovery_views.py:112
 msgid "NextThought Username Reminder"
 msgstr ""
 
-#: src/nti/appserver/account_recovery_views.py:200
+#: src/nti/appserver/account_recovery_views.py:194
 msgid "NextThought Password Reset"
 msgstr ""
 
-#: src/nti/appserver/account_recovery_views.py:295
+#: src/nti/appserver/account_recovery_views.py:301
 msgid "Your reset link is not valid. Please request a new one."
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:319
+#: src/nti/appserver/coppa_admin_views.py:95
+msgid "Name"
+msgstr ""
+
+#: src/nti/appserver/coppa_admin_views.py:104
+msgid "Contact Email"
+msgstr ""
+
+#: src/nti/appserver/site_policies.py:365
 msgid "Username contains a censored sequence"
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:324
+#: src/nti/appserver/site_policies.py:370
 msgid "Alias contains a censored sequence"
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:382
+#: src/nti/appserver/site_policies.py:428
 msgid "Welcome to NextThought"
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:406
+#: src/nti/appserver/site_policies.py:452
 msgid "That username is not valid. Please choose another."
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:413
+#: src/nti/appserver/site_policies.py:459
 msgid "Please provide your first name."
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:415
+#: src/nti/appserver/site_policies.py:461
 msgid "Please provide your last name."
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:424
+#: src/nti/appserver/site_policies.py:474
 msgid "Birthdate must be in the past."
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:427
+#: src/nti/appserver/site_policies.py:477
 msgid "Birthdate must be at least four years ago."
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:430
+#: src/nti/appserver/site_policies.py:480
 msgid "Birthdate must be less than 150 years ago."
 msgstr ""
 
-#: src/nti/appserver/user_policies.py:120
+#: src/nti/appserver/user_policies.py:112
+msgid "NextThought Account Confirmation"
+msgstr ""
+
+#: src/nti/appserver/user_policies.py:190
 msgid "Please Confirm Your Child's NextThought Account"
 msgstr ""
 
@@ -103,7 +115,23 @@ msgstr ""
 msgid "Your pasword cannot contain only whitespace. Please try again."
 msgstr ""
 
-#: src/nti/utils/schema.py:76
+#: src/nti/dataserver/users/missing_user.py:37
+msgid "Missing Entity"
+msgstr ""
+
+#: src/nti/dataserver/users/missing_user.py:38
+msgid "Deleted Entity"
+msgstr ""
+
+#: src/nti/dataserver/users/missing_user.py:55
+msgid "Missing User"
+msgstr ""
+
+#: src/nti/dataserver/users/missing_user.py:56
+msgid "Deleted User"
+msgstr ""
+
+#: src/nti/utils/schema.py:78
 msgid "${field} is too short."
 msgstr ""
 
