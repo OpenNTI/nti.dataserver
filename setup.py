@@ -182,7 +182,7 @@ setup(
 		'python-statsd >= 1.5.7', # statsd client. statsd must be installed separately: https://github.com/etsy/statsd
 		'pystatsd >= 0.1.6', # statsd server implementation, pure python. probably easier than setting up node. Might want to get it from https://github.com/sivy/py-statsd
 		'pytz >= 2012f',
-		'rdflib',
+		'rdflib >= 3.2.2',
 		'redis >= 2.6.2', # Redis python client
 		'repoze.catalog >= 0.8.2',
 		'repoze.lru >= 0.6', # LRU caching. Dep of Pyramid
@@ -197,7 +197,7 @@ setup(
 		'simplejson >= 2.6.2',
 		'sympy == 0.7.1', # sympy-docs-html-0.7.1 is currently greater
 		'six >= 1.2.0',
-		'slimit',
+		#'slimit',
 		'supervisor >= 3.0b1',
 		'transaction >= 1.3.0',
 		'webob >= 1.2.2',
@@ -217,7 +217,7 @@ setup(
 		'zc.queue >= 1.3',
 		'zc.zlibstorage >= 0.1.1', # compressed records. Will be built-in to newer ZODB
 		'zc.zodbdgc >= 0.6.0',
-		'zetalibrary',
+		#'zetalibrary',
 		'zodburi >= 1.1', # used by pyramid_zodbconn
 		'zope.app.broken >= 3.6.0', # Improved broken objects
 		'zope.app.component >= 3.9.3', # bwc only, DO NOT IMPORT. pulled in by contentratings
@@ -248,8 +248,9 @@ setup(
 		'zope.formlib >= 4.1.1', # Req'd by zope.mimetype among others,
 		'zope.generations >= 3.7.1',
 		'zope.hookable >= 4.0.0', # explicitly list this to ensure we get the fast C version. Used by ZCA.
-		'zope.i18n',
-		'zope.i18nmessageid',
+		'zope.i18n >= 3.8.0',
+		'zope.i18nmessageid >= 4.0.0',
+		'zope.index >= 3.6.4',
 		'zope.interface >= 4.0.1',
 		'zope.intid >= 3.7.2',
 		'zope.lifecycleevent >= 3.7.0',
