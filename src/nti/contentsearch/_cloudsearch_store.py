@@ -102,7 +102,7 @@ class _CloudSearchStore(Persistent, object):
 			self._v_domains[d['domain_name']] = Domain(connection, d)
 		
 	def get_search_domain(self):
-		return self.get_domain(domain_name=self._search_domain)
+		return self.get_domain(domain_name=self.search_domain)
 	
 	def get_aws_domains(self):
 		domains = self.connection.describe_domains()
