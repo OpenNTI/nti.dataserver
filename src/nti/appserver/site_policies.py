@@ -512,8 +512,9 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 				if getattr( orig_profile, name, None ): # Only copy things that have values. Let defaults be used otherwise
 					setattr( new_profile, name, getattr( orig_profile, name ) )
 		notify( app_interfaces.UserUpgradedEvent( user,
-												  self.IF_WOUT_AGREEMENT, orig_profile,
-												  self.IF_WITH_AGREEMENT, new_profile ) )
+												  restricted_interface=self.IF_WOUT_AGREEMENT, restricted_profile=orig_profile,
+												  upgraded_interface=self.IF_WITH_AGREEMENT, upgraded_profile=new_profile,
+												  request=get_current_request() ) )
 		# TODO: If the new profile required some values the old one didn't, then what?
 		# Prime example: email, not required for kids, yes required for adults.
 

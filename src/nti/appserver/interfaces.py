@@ -241,8 +241,8 @@ class UserUpgradedEvent(_UserEventWithRequest):
 	upgraded_interface = None
 	upgraded_profile = None
 
-	def __init__( self, user, restricted_interface=None, restricted_profile=None, upgraded_interface=None, upgraded_profile=None ):
-		super(UserUpgradedEvent,self).__init__( user )
+	def __init__( self, user, restricted_interface=None, restricted_profile=None, upgraded_interface=None, upgraded_profile=None, request=None ):
+		super(UserUpgradedEvent,self).__init__( user, request=request )
 		for k in UserUpgradedEvent.__dict__:
 			if k in locals() and locals()[k]:
 				setattr( self, k, locals()[k] )

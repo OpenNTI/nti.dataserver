@@ -12,7 +12,10 @@ from hamcrest import not_none
 from hamcrest.library import has_property
 from hamcrest import greater_than_or_equal_to
 from hamcrest import is_not as does_not
+from hamcrest import contains
+
 from nti.tests import verifiably_provides
+
 from zope import interface
 from zope import component
 from zope.component import eventtesting
@@ -94,9 +97,10 @@ class TestApplicationCoppaAdmin(ApplicationTestBase):
 			assert_that( upgrade_event, has_property( 'user', user ) )
 			assert_that( upgrade_event, has_property( 'upgraded_interface', site_policies.IMathcountsCoppaUserWithAgreement ) )
 
-		# We generated no email during this process
+		# We generated just the ack email
 		mailer = component.getUtility( ITestMailDelivery )
-		assert_that( mailer, has_property( 'queue', has_length( 0 ) ) )
+		assert_that( mailer, has_property( 'queue', has_length( 1 ) ) )
+		assert_that( mailer, has_property( 'queue', contains( has_property( 'subject', 'NextThought Account Confirmation' ) ) ) )
 
 		testapp.delete( '/dataserver2/users/ossmkitty/@@account.profile.needs.updated',
 						extra_environ=self._make_extra_environ(username='ossmkitty'),

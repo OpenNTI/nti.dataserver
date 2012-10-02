@@ -99,6 +99,21 @@ from email.mime.application import MIMEApplication
 
 CONTACT_EMAIL_RECOVERY_ANNOTATION = __name__ + '.contact_email_recovery_hash'
 
+@component.adapter(nti_interfaces.ICoppaUser,app_interfaces.IUserUpgradedEvent)
+def send_consent_ack_email(user, event):
+	"""
+	If we're upgrading a user from non-approved to approved, and we have a contact email,
+	send the approval to the parent.
+	"""
+
+	if getattr( event.upgraded_profile, 'contact_email', None ):
+		_email_utils.queue_simple_html_text_email( 'coppa_consent_approval_email',
+												   subject=_("NextThought Account Confirmation"),
+												   recipients=[event.upgraded_profile.contact_email],
+												   template_args={'user': user, 'profile': event.upgraded_profile, 'context': user },
+												   request=event.request )
+
+
 @component.adapter(dolmen.builtins.IUnicode, user_interfaces.IRestrictedUserProfileWithContactEmail, sch_interfaces.IBeforeObjectAssignedEvent)
 def send_consent_request_when_contact_email_changes( new_email, target, event ):
 	"""
