@@ -17,7 +17,4 @@
 			 provides=".interfaces.ICloudSearchObject"
 			 for="nti.chatserver.interfaces.IMessageInfo" />
 			 
-	<utility factory="._cloudsearch_store._create_default_cloudsearch_store" 
-			 provides=".interfaces.ICloudSearchStore" />
-	
 </configure>
