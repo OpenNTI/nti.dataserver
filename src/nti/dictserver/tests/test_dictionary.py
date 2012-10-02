@@ -103,3 +103,7 @@ class TestDictionary(nti.tests.ConfiguringTestBase):
 		val = lookup( 'Risk Limits' )
 		assert_that( val, is_( WordInfo ) )
 		assert_that( val.toXMLString(), is_not( none() ) )
+
+		val = lookup( 'institutional theory' )
+		assert_that( val, is_( WordInfo ) )
+		assert_that( val.toXMLString(), is_not( none() ) )
