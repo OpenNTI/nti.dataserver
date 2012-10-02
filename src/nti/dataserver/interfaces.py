@@ -399,6 +399,12 @@ class IEntity(IZContained, IAnnotatable):
 		title=u'The username',
 		)
 
+class IMissingEntity(IEntity):
+	"""
+	A proxy object for a missing, unresolved or unresolvable
+	entity.
+	"""
+
 class ICommunity(IEntity):
 	pass
 
@@ -414,6 +420,11 @@ class IUser(IEntity,IContainerIterable):
 	# Note: z3c.password provides a PasswordField we could use here
 	# when we're sure what it does and that validation works out
 	password = interface.Attribute("The password" )
+
+class IMissingUser(IMissingEntity):
+	"""
+	A proxy object for a missing user.
+	"""
 
 class IUsernameIterable(interface.Interface):
 	"""
