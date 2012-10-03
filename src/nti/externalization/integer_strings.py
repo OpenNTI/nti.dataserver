@@ -6,10 +6,10 @@ human-readable and writable strings. The motivation is to be able to take int id
 as produced by an :class:`zc.intid.IIntId` utility and produce something that can be
 written down and typed in by a human. To this end, the strings produced have to be:
 
-*. One-to-one and onto the integer domain;
-*. As short as possible;
-*. While not being easily confused;
-*. Or accidentaly permuted
+* One-to-one and onto the integer domain;
+* As short as possible;
+* While not being easily confused;
+* Or accidentaly permuted
 
 To meet those goals, we define an alphabet consisting of the ASCII digits and
 upper and lowercase letters, leaving out troublesome pairs (zero and upper and lower oh,

@@ -163,12 +163,7 @@ class IAuthenticatedUserLinkProvider(interface.Interface):
 		are specified independently, based on the link relationship.
 		"""
 
-class IUserEvent(interface.interfaces.IObjectEvent):
-	"""
-	An object event where the object is a user.
-	"""
-	object = schema.Object(nti_interfaces.IUser,
-						   title="The User that just logged on. You can add event listeners based on the interfaces of this object.")
+IUserEvent = nti_interfaces.IUserEvent
 
 class IUserLogonEvent(IUserEvent):
 	"""
@@ -186,7 +181,7 @@ class IUserLogonEvent(IUserEvent):
 							title="The request that completed the login process.",
 							description="Useful to get IP information and the like.")
 
-class _UserEventWithRequest(interface.interfaces.ObjectEvent):
+class _UserEventWithRequest(nti_interfaces.UserEvent):
 
 	request = None
 
@@ -194,7 +189,6 @@ class _UserEventWithRequest(interface.interfaces.ObjectEvent):
 		super(_UserEventWithRequest,self).__init__( user )
 		if request is not None:
 			self.request = request
-	user = alias('object')
 
 
 @interface.implementer(IUserLogonEvent)
