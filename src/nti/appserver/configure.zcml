@@ -156,7 +156,7 @@
 	<subscriber handler=".glossary_views.add_main_glossary_from_new_content" />
 
 	<subscriber handler=".account_creation_views.request_profile_update_on_user_upgrade" />
-
+	<subscriber handler=".account_creation_views.accept_invitations_on_user_creation" />
 	<!-- Logon -->
 	<!-- Local users with passwords get a direct logon link -->
 	<subscriber factory=".logon._SimpleExistingUserLinkProvider"
@@ -332,5 +332,7 @@
 			 factory=".pyramid_auth.OUAdminFactory"
 			 provides="nti.dataserver.interfaces.IGroupMember"
 			 zcml:condition="have devmode" />
+
+	<include package="." file="configure_invitations.zcml" />
 
 </configure>

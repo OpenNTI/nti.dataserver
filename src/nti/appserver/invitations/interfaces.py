@@ -60,7 +60,13 @@ class IInvitation(cnt_interfaces.IContained,
 
 	def accept( user ):
 		"""
-		TODO
+		Perform whatever action is required for the ``user`` to accept the invitation, including
+		validating that the user is actually allowed to accept the invitation. Typically
+		this means that this method has side effects.
+
+		Once the invitation has been accepted, this should notify an :class:`IInvitationAcceptedEvent`.
+
+		:raises InvitationExpiredError: If the invitation has expired.
 		"""
 
 class IObjectInvitation(IInvitation):
@@ -71,12 +77,23 @@ class IObjectInvitation(IInvitation):
 	object_int_id = interface.Attribute('The global intid for the object the invitation refers to.')
 	object = interface.Attribute('Object')
 
-class IInvitations(interface.Interface):
+class IInvitations(cnt_interfaces.IContained,
+				   an_interfaces.IAnnotatable):
+	"""
+	A central registry of invitations. Intended to be used as a utility registered
+	for the site.
+	"""
 
 	def registerInvitation(invitation):
 		"""
 		Registers the given invitation with this object. This object is responsible for
 		assigning the invitation code and taking ownership of the invitation.
+		"""
+
+	def getInvitationByCode( code ):
+		"""
+		Returns an invitation having the given code, or None if there is no
+		such invitation.
 		"""
 
 	# def removeObject(id):
@@ -113,7 +130,11 @@ class IInvitationAcceptedEvent(IInvitationEvent):
 
 @interface.implementer(IInvitationAcceptedEvent)
 class InvitationAcceptedEvent(ObjectEvent):
-	pass
+
+	def __init__( self, obj, user ):
+		super(InvitationAcceptedEvent,self).__init__( obj )
+		self.user = user
+
 
 class InvitationValidationError(ValidationError):
 	"""
@@ -121,9 +142,14 @@ class InvitationValidationError(ValidationError):
 	an invitation.
 	"""
 
+	def __init__( self, code ):
+		super(InvitationValidationError,self).__init__( code )
+		self.value = code
+
 class InvitationCodeError(InvitationValidationError):
 	__doc__ = _('The invitation code is not valid.')
-
+	i18n_message = __doc__
 
 class InvitationExpiredError(InvitationValidationError):
 	__doc__ = _('The invitation code has expired.')
+	i18n_message = __doc__

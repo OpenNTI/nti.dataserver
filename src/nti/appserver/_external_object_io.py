@@ -132,12 +132,14 @@ def handle_validation_error( request, validation_error ):
 	field_name = None
 	field = getattr( validation_error, 'field', None )
 	msg = ''
+	value = None
 	if field:
 		field_name = getattr( field, '__name__', field )
 	if len(validation_error.args) == 3:
 		# message, field, value
 		field_name = field_name or validation_error.args[1]
 		msg = validation_error.args[0]
+		value = validation_error.args[2]
 
 	if not field_name and isinstance( validation_error, pwd_interfaces.InvalidPassword ):
 		field_name = 'password'
@@ -145,6 +147,8 @@ def handle_validation_error( request, validation_error ):
 	if not field_name and isinstance( validation_error, zope.schema.interfaces.RequiredMissing ):
 		field_name = validation_error.message
 
+	if not value:
+		value = getattr( validation_error, 'value', value )
 
 	# z3c.password and similar (nti.dataserver.users._InvalidData) set this for internationalization
 	# purposes
@@ -158,5 +162,6 @@ def handle_validation_error( request, validation_error ):
 					  hexc.HTTPUnprocessableEntity,
 					  {'message': msg,
 					   'field': field_name,
-					   'code': validation_error.__class__.__name__},
+					   'code': validation_error.__class__.__name__,
+					   'value': value },
 					   exc_info[2] )
