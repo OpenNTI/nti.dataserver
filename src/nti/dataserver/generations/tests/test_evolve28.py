@@ -59,5 +59,5 @@ class TestEvolve28(nti.dataserver.tests.mock_dataserver.ConfiguringTestBase):
 			jason = ds_folder['users']['jason.madden@nextthought.com']
 			pilots = jason.getFriendsList( 'Pilots' )
 
-			assert_that( list(pilots), contains( pilots.get_entity( 'amelia.earhart@nextthought.com' ),
-												 pilots.get_entity( 'luke.skywalker@nextthought.com' ) ) )
+			assert_that( sorted(list(pilots)), contains( pilots.get_entity( 'amelia.earhart@nextthought.com' ),
+														 pilots.get_entity( 'luke.skywalker@nextthought.com' ) ) )
