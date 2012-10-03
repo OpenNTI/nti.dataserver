@@ -111,6 +111,10 @@ def createApplication( http_port,
 	# Configure subscribers, etc.
 	try:
 		xml_conf_machine = _create_xml_conf_machine( settings )
+		if 'pre_site_zcml' in settings:
+			# One before we load the main config so it has a chance to exclude files
+			logger.debug( "Loading pre-site settings from %s", settings['pre_site_zcml'] )
+			xml_conf_machine = xmlconfig.file( settings['pre_site_zcml'],  package=nti.appserver, context=xml_conf_machine )
 		xml_conf_machine = xmlconfig.file( 'configure.zcml', package=nti.appserver, context=xml_conf_machine )
 		if 'site_zcml' in settings:
 			logger.debug( "Loading site settings from %s", settings['site_zcml'] )

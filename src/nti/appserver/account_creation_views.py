@@ -41,6 +41,7 @@ from nti.appserver import interfaces as app_interfaces
 from nti.appserver.invitations import interfaces as invite_interfaces
 
 from nti.externalization.datastructures import InterfaceObjectIO
+from nti.appserver.invitations.utility import accept_invitations
 
 from nti.appserver._util import logon_user_with_request
 from nti.appserver import _external_object_io as obj_io
@@ -331,6 +332,20 @@ def account_profile_view(request):
 	return {'Username': request.context.username,
 			'AvatarURLChoices': _get_avatar_choices_for_username( request.context.username, request ),
 			'ProfileSchema': _make_schema( request.context )}
+
+@component.adapter(nti_interfaces.IUser, user_interfaces.IWillCreateNewEntityEvent)
+def accept_invitations_on_user_creation(user, event):
+	"""
+	Registered as an event handler on the WillCreate notification (not the
+	DidCreateWithRequest notification, because that doesn't fire for preflight,
+	and we need to check the codes for preflight).
+	"""
+	if not event.ext_value:
+		return
+
+	invite_codes = event.ext_value.get( 'invitation_codes' )
+	if invite_codes:
+		accept_invitations( user, invite_codes )
 
 
 @component.adapter(nti_interfaces.IUser,app_interfaces.IUserUpgradedEvent)

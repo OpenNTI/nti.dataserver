@@ -69,6 +69,26 @@ class _AbstractValidationViewBase(ConfiguringTestBase):
 		super(_AbstractValidationViewBase,self).setUp()
 
 	@WithMockDSTrans
+	def test_create_invalid_invitation_code(self):
+		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
+													 'password': 'pass123word',
+													 'realname': 'Jason Madden',
+													 'email': 'foo@bar.com',
+													 'invitation_codes': ['foobar'] } )
+
+		with assert_raises( hexc.HTTPUnprocessableEntity ) as exc:
+			self.the_view( self.request )
+
+
+		assert_that( exc.exception.json_body, has_entry( 'field', 'invitation_codes' ) )
+		assert_that( exc.exception.json_body, has_entry( 'code', 'InvitationCodeError' ) )
+		assert_that( exc.exception.json_body, has_entry( 'value', 'foobar' ) )
+		assert_that( exc.exception.json_body, has_entry( 'message', contains_string( 'The invitation code is not valid.' ) ) )
+
+
+
+	@WithMockDSTrans
 	def test_create_invalid_password(self):
 		self.request.content_type = 'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'foo@bar.com',
@@ -223,7 +243,7 @@ class _AbstractNotDevmodeViewBase(ConfiguringTestBase):
 		assert_that( e.exception.json_body, has_entry( 'message', contains_string( 'four' ) ) )
 
 	@WithMockDSTrans
-	def test_create_blang_realname( self ):
+	def test_create_blank_realname( self ):
 
 		self.request.content_type = 'application/vnd.nextthought+json'
 
