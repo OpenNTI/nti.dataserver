@@ -421,6 +421,25 @@ class IUser(IEntity,IContainerIterable):
 	# when we're sure what it does and that validation works out
 	password = interface.Attribute("The password" )
 
+
+class IUserEvent(interface.interfaces.IObjectEvent):
+	"""
+	An object event where the object is a user.
+	"""
+	object = schema.Object(IUser,
+						   title="The User (an alias for user). You can add event listeners based on the interfaces of this object.")
+	user = schema.Object(IUser,
+						 title="The User (an alias for object). You can add event listeners based on the interfaces of this object.")
+from nti.utils.property import alias
+
+@interface.implementer(IUserEvent)
+class UserEvent(interface.interfaces.ObjectEvent):
+
+	def __init__( self, user ):
+		super(UserEvent,self).__init__( user )
+
+	user = alias('object')
+
 class IMissingUser(IMissingEntity):
 	"""
 	A proxy object for a missing user.

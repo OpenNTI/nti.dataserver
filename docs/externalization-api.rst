@@ -26,6 +26,11 @@ OIDs
 ====
 .. automodule:: nti.externalization.oids
 
+Human Readable Integer Strings
+==============================
+
+.. automodule:: nti.externalization.integer_strings
+
 Persistence
 ===========
 .. automodule:: nti.externalization.persistence

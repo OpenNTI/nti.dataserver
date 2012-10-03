@@ -22,6 +22,13 @@ Accounts can also be created on the command line:
 
 .. command-output:: nti_create_user -h
 
+Invitations
+===========
+
+Invitation tokens may be specified at account creation time.
+
+.. automodule:: nti.appserver.invitations.interfaces
+
 Bounced Emails
 ==============
 
