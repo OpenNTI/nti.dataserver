@@ -236,6 +236,9 @@ class DynamicFriendsList(DynamicSharingTargetMixin,FriendsList):
 	# interface value takes precedence over the class attribute
 	mime_type = 'application/vnd.nextthought.friendslist'
 
+	# TODO: Users can leave these things by editing their 'communities' attribute
+	# When that happens, we need to catch that event and remove them from here
+	# as well. Or somehow tie the things closer together.
 
 	def _on_added_friend( self, friend ):
 		assert self.creator, "Must have creator"

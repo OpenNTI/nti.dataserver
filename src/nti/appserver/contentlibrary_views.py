@@ -151,20 +151,12 @@ def _prefs_present( prefs ):
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
 @component.adapter(app_interfaces.IContentUnitInfo)
 class _ContentUnitPreferencesDecorator(object):
+	"Decorates the mapping with the sharing preferences. Contains the algorithm to resolve them."
 
 	def __init__( self, context ):
 		self.context = context
 
-	def decorateExternalMapping( self, context, result_map ):
-		if context.contentUnit is None:
-			return
-
-		request = get_current_request()
-		if not request: return
-		remote_user = users.User.get_user( sec.authenticated_userid( request ),
-										   dataserver=request.registry.getUtility(nti_interfaces.IDataserver) )
-		if not remote_user: return
-
+	def _find_prefs(self, context, remote_user):
 		# Walk up the parent tree of content units (not including the mythical root)
 		# until we run out, or find preferences
 		def units( ):
@@ -191,6 +183,41 @@ class _ContentUnitPreferencesDecorator(object):
 				if _prefs_present( prefs ):
 					break
 				prefs = None
+
+		if not _prefs_present( prefs ):
+			# Ok, nothing the user has set, and nothing found looking at the content
+			# units themselves. Now we're into weird fallback territory. This is probably very shaky and
+			# needing constant review, but it's a start.
+			dfl_name = None
+			for com_name in remote_user.communities:
+				# Can we find a DynamicFriendsList/DFL/Team that the user belongs too?
+				# And just one? If so, then it's our default sharing target
+				if ntiids.is_valid_ntiid_string( com_name ):
+					if dfl_name is None:
+						dfl_name = com_name
+					else:
+						# damn, more than one.
+						dfl_name = None
+						break
+			if dfl_name:
+				# Yay, found one!
+				prefs = _ContentUnitPreferences( sharedWith=(dfl_name,) )
+				provenance = dfl_name
+
+		return prefs, provenance, contentUnit
+
+	def decorateExternalMapping( self, context, result_map ):
+		if context.contentUnit is None:
+			return
+
+		request = get_current_request()
+		if not request: return
+		remote_user = users.User.get_user( sec.authenticated_userid( request ),
+										   dataserver=request.registry.getUtility(nti_interfaces.IDataserver) )
+		if not remote_user:
+			return
+
+		prefs, provenance, contentUnit = self._find_prefs( context, remote_user )
 
 		if _prefs_present( prefs ):
 			ext_obj = {}
