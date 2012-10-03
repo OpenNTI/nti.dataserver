@@ -22,6 +22,7 @@ from pyramid.threadlocal import get_current_request
 
 import pyramid.testing
 import pyramid.httpexceptions as hexc
+import pyramid.request
 
 
 
@@ -191,6 +192,8 @@ class TestLogon(ConfiguringTestBase):
 
 
 	def test_password_logon_failed(self):
+		super(TestLogon,self).tearDown()
+		super(TestLogon,self).setUp(request_factory=pyramid.request.Request.blank, request_args=('/',))
 		class Policy(object):
 			interface.implements( pyramid.interfaces.IAuthenticationPolicy )
 			def forget( self, request ):
@@ -202,7 +205,10 @@ class TestLogon(ConfiguringTestBase):
 		assert_that( result.headers, has_entry( "Policy", "Me" ) )
 
         # Or a redirect
-		get_current_request().params['failure'] = '/the/url/to/go/to'
+		super(TestLogon,self).tearDown()
+		super(TestLogon,self).setUp(request_factory=pyramid.request.Request.blank, request_args=('/?failure=/the/url/to/go/to',))
+		get_current_request().registry.registerUtility( Policy() )
+		#get_current_request().params['failure'] = '/the/url/to/go/to'
 		result = password_logon( get_current_request() )
 		assert_that( result, is_( hexc.HTTPSeeOther ) )
 		assert_that( result.headers, has_entry( "Policy", "Me" ) )
@@ -210,6 +216,9 @@ class TestLogon(ConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_password_logon_success(self):
+		user = users.User.create_user( self.ds, username='jason.madden@nextthought.com', password='temp001' )
+		user.lastLoginTime.value = 0
+
 		class Policy(object):
 			interface.implements( pyramid.interfaces.IAuthenticationPolicy )
 			def remember( self, request, who ):
@@ -217,8 +226,6 @@ class TestLogon(ConfiguringTestBase):
 			def authenticated_userid( self, request ):
 				return 'jason.madden@nextthought.com'
 		get_current_request().registry.registerUtility( Policy() )
-		user = users.User.create_user( self.ds, username='jason.madden@nextthought.com', password='temp001' )
-		user.lastLoginTime.value = 0
 		result = password_logon( get_current_request() )
 		assert_that( result, is_( hexc.HTTPNoContent ) )
 		assert_that( result.headers, has_entry( "Policy", 'jason.madden@nextthought.com' ) )

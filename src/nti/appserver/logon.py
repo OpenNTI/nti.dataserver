@@ -436,8 +436,8 @@ class _Handshake(dict):
 		dict.__init__( self )
 		self.links = lnks
 
-def _create_failure_response( request, failure=None, error=None ):
-	return _forgetting( request, 'failure', hexc.HTTPUnauthorized, redirect_value=failure, error=error )
+def _create_failure_response( request, failure=None, error=None, error_factory=hexc.HTTPUnauthorized ):
+	return _forgetting( request, 'failure', error_factory, redirect_value=failure, error=error )
 
 def _create_success_response( request, userid=None, success=None ):
 	# Incoming authentication worked. Remember the user, and
@@ -463,11 +463,25 @@ def password_logon(request):
 	response = None
 
 	remote_user = _authenticated_user( request )
-	desired_username = request.params.get( 'username' )
+	try:
+		desired_usernames = request.params.getall( 'username' ) or []
+	except AttributeError:
+		# Nark. For test code. It's hard to always be able to use a real MultiDict
+		desired_usernames = request.params.get( 'username', () )
+		if desired_usernames:
+			desired_usernames = [desired_usernames]
+
+	desired_username = None
+
+	if len(desired_usernames) > 1:
+		return _create_failure_response( request, error_factory=hexc.HTTPBadRequest, error='Multiple usernames' )
+
+	if desired_usernames:
+		desired_username = desired_usernames[0].lower()
 
 	if not remote_user:
 		response = _create_failure_response( request ) # not authenticated or does not exist
-	elif desired_username and desired_username != remote_user.username:
+	elif desired_username and desired_username != remote_user.username.lower():
 		response = _create_failure_response( request ) # Usually a cookie/param mismatch
 	else:
 		# Note that this also accepts the authentication cookie
