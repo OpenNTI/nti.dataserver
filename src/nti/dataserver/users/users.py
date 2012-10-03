@@ -56,7 +56,10 @@ def _get_shared_dataserver(context=None,default=None):
 	if default != None:
 		return component.queryUtility( nti_interfaces.IDataserver, context=context, default=default )
 	return component.getUtility( nti_interfaces.IDataserver, context=context )
-
+# Starts as none, which matches what _get_shared_dataserver takes as its
+# clue to use get instead of query. But set to False or 0 to use
+# query during evolutions.
+BROADCAST_DEFAULT_DS = None
 
 from .entity import Entity
 from . import interfaces as user_interfaces
@@ -857,7 +860,9 @@ class User(Principal):
 		kwargs = {'target': target}
 		if broadcast is not None:
 			kwargs['broadcast'] = broadcast
-		_get_shared_dataserver().enqueue_change( theChange, **kwargs )
+		ds = _get_shared_dataserver(default=BROADCAST_DEFAULT_DS)
+		if ds: # Primarily for evolutions
+			ds.enqueue_change( theChange, **kwargs )
 		return True
 
 	class _NoChangeBroadcast(object):

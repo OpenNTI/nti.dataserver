@@ -14,6 +14,7 @@ from zope import component
 from zope.component.hooks import site, setHooks
 
 from nti.dataserver.users import Entity
+from nti.dataserver.users import users as users_mod
 from nti.dataserver.users.wref import WeakRef
 import persistent.wref
 
@@ -33,7 +34,10 @@ def evolve( context ):
 	ds_folder = context.connection.root()['nti.dataserver']
 	with site( ds_folder ):
 		assert component.getSiteManager() == ds_folder.getSiteManager(), "Hooks not installed?"
-
+		# Avoid needing a DS registered if we need to broadcast: don't. This is primarily a problem
+		# in test databases, where some of the FLs were created with strings and have never been
+		# accessed so never resolved.
+		users_mod.BROADCAST_DEFAULT_DS = False
 		users = ds_folder['users']
 		for user in users.values():
 			if not hasattr( user, 'friendsLists' ):
@@ -59,7 +63,9 @@ def evolve( context ):
 							# Already deleted. Still has a weak ref, doesn't have a ntiid
 							pass
 					elif isinstance( thing, six.string_types ):
-						# strings didn't. If they can be resolved, they must be
-						entity = fl.get_entity( thing )
+						# strings didn't. If they can be resolved, they must be. Note we can't use
+						# fl.get_entity, we don't actually have a dataserver utility yet
+						entity = users.get( thing )
 						if entity:
 							fl.addFriend( entity )
+		users_mod.BROADCAST_DEFAULT_DS = None
