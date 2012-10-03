@@ -10,3 +10,7 @@ Content Anchoring API
 .. automodule:: nti.contentrange
 .. automodule:: nti.contentrange.contentrange
 .. automodule:: nti.contentrange.externalization
+
+
+.. inheritance-diagram:: nti.contentrange.contentrange
+	:parts: 1

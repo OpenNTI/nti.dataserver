@@ -8,31 +8,6 @@ XHR based fashion involving no redirects. Contrast this with the logon
 process, where there are page redirects happening frequently.
 
 
-.. py:data:: REL_CREATE_ACCOUNT
-
-	The link relationship type for a link used to create an account.
-	Also serves as a view name for that same purpose
-	(:func:`account_create_view`). Unauthenticated users will be given
-	a link with this rel ("account.create") at logon ping and
-	handshake time.
-
-.. py:data:: REL_PREFLIGHT_CREATE_ACCOUNT
-
-	The link relationship type for a link used to preflight fields to
-	be used to create an account. Also serves as a view name for that
-	same purpose (:func:`account_preflight_view`). Unauthenticated
-	users will be given a link with this rel
-	("account.preflight.create") at logon ping and handshake time.
-
-.. py:data:: REL_ACCOUNT_PROFILE_UPGRADE
-
-	The link relationship type that means that the user profile is in need
-	of an update, possibly because the applicable fields have changed
-	(e.g., when the user signs a COPPA agreement). This is one of those
-	links that needs to be DELETEd when the action has been taken: it serves as a flag.
-	When this link appears, the correct schema for the profile can
-	be obtained from the :func:`account_profile_view`
-
 $Id$
 """
 
@@ -77,9 +52,30 @@ import nti.appserver.httpexceptions as hexc
 
 import nameparser.parser
 
+#: The link relationship type for a link used to create an account.
+#: Also serves as a view name for that same purpose
+#: (:func:`account_create_view`). Unauthenticated users will be given
+#: a link with this rel at logon ping and
+#: handshake time.
 REL_CREATE_ACCOUNT = "account.create"
+
+
+#: The link relationship type for a link used to preflight fields to
+#: be used to create an account. Also serves as a view name for that
+#: same purpose (:func:`account_preflight_view`). Unauthenticated
+#: users will be given a link with this rel
+#: at logon ping and handshake time.
 REL_PREFLIGHT_CREATE_ACCOUNT = "account.preflight.create"
+
+
 REL_ACCOUNT_PROFILE = "account.profile"
+
+#: The link relationship type that means that the user profile is in need
+#: of an update, possibly because the applicable fields have changed
+#: (e.g., when the user signs a COPPA agreement). This is one of those
+#: links that needs to be DELETEd when the action has been taken: it serves as a flag.
+#: When this link appears, the correct schema for the profile can
+#: be obtained from the :func:`account_profile_view`
 REL_ACCOUNT_PROFILE_UPGRADE = "account.profile.needs.updated"
 
 _PLACEHOLDER_USERNAME = 'A_Username_We_Allow_That_Doesnt_Conflict'
