@@ -158,9 +158,16 @@ class IWillCreateNewEntityEvent(zope.component.interfaces.IObjectEvent):
 	This is a good time to perform final validation of the entity.
 	"""
 
+	ext_value = interface.Attribute( "If the entity was created with external data, this will be it." )
+
+
 @interface.implementer(IWillCreateNewEntityEvent)
 class WillCreateNewEntityEvent(zope.component.interfaces.ObjectEvent):
-	pass
+
+	def __init__( self, obj, ext_value=None ):
+		super(WillCreateNewEntityEvent,self).__init__( obj )
+		self.ext_value = ext_value
+
 
 class IAvatarURLProvider(Interface):
 	"""

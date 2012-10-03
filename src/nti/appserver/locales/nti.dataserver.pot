@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nti.dataserver 0.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2012-10-02 18:45-0500\n"
+"POT-Creation-Date: 2012-10-03 15:26-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,27 +17,27 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 0.9.6\n"
 
-#: src/nti/appserver/account_creation_views.py:127
+#: src/nti/appserver/account_creation_views.py:126
 msgid "Please provide your first and last names."
 msgstr ""
 
-#: src/nti/appserver/account_creation_views.py:161
+#: src/nti/appserver/account_creation_views.py:163
 msgid "Username cannot be blank"
 msgstr ""
 
-#: src/nti/appserver/account_creation_views.py:175
+#: src/nti/appserver/account_creation_views.py:177
 msgid "That username is not available. Please choose another."
 msgstr ""
 
-#: src/nti/appserver/account_recovery_views.py:112
+#: src/nti/appserver/account_recovery_views.py:103
 msgid "NextThought Username Reminder"
 msgstr ""
 
-#: src/nti/appserver/account_recovery_views.py:194
+#: src/nti/appserver/account_recovery_views.py:185
 msgid "NextThought Password Reset"
 msgstr ""
 
-#: src/nti/appserver/account_recovery_views.py:301
+#: src/nti/appserver/account_recovery_views.py:292
 msgid "Your reset link is not valid. Please request a new one."
 msgstr ""
 
@@ -85,12 +85,20 @@ msgstr ""
 msgid "Birthdate must be less than 150 years ago."
 msgstr ""
 
-#: src/nti/appserver/user_policies.py:112
+#: src/nti/appserver/user_policies.py:111
 msgid "NextThought Account Confirmation"
 msgstr ""
 
-#: src/nti/appserver/user_policies.py:190
+#: src/nti/appserver/user_policies.py:189
 msgid "Please Confirm Your Child's NextThought Account"
+msgstr ""
+
+#: src/nti/appserver/invitations/interfaces.py:125
+msgid "The invitation code is not valid."
+msgstr ""
+
+#: src/nti/appserver/invitations/interfaces.py:129
+msgid "The invitation code has expired."
 msgstr ""
 
 #: src/nti/dataserver/users/interfaces.py:50

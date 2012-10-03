@@ -115,11 +115,15 @@ class IInvitationAcceptedEvent(IInvitationEvent):
 class InvitationAcceptedEvent(ObjectEvent):
 	pass
 
+class InvitationValidationError(ValidationError):
+	"""
+	A problem relating to the validity of an attempted action on
+	an invitation.
+	"""
 
-
-class InvitationCodeError(ValidationError):
+class InvitationCodeError(InvitationValidationError):
 	__doc__ = _('The invitation code is not valid.')
 
 
-class InvitationExpiredError(ValidationError):
+class InvitationExpiredError(InvitationValidationError):
 	__doc__ = _('The invitation code has expired.')

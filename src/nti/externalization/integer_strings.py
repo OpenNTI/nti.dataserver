@@ -27,8 +27,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import math
-
 import string
 
 # In the first version of the protocol, the version marker, which would
