@@ -60,14 +60,15 @@ import urllib
 import urlparse
 import anyjson as json
 
-REL_HANDSHAKE = 'logon.handshake'
+REL_PING = 'logon.ping' #: See :func:`ping`
+REL_HANDSHAKE = 'logon.handshake' #: See :func:`handshake`
 REL_CONTINUE  = 'logon.continue'
 
-REL_LOGIN_NTI_PASSWORD = 'logon.nti.password'
-REL_LOGIN_GOOGLE = 'logon.google'
-REL_LOGIN_OPENID = 'logon.openid'
-REL_LOGIN_FACEBOOK = 'logon.facebook'
-REL_LOGIN_LOGOUT = 'logon.logout'
+REL_LOGIN_NTI_PASSWORD = 'logon.nti.password' #: See :func:`password_logon`
+REL_LOGIN_GOOGLE = 'logon.google' #: See :func:`google_login`
+REL_LOGIN_OPENID = 'logon.openid' #: See :func:`openid_login`
+REL_LOGIN_FACEBOOK = 'logon.facebook' #: See :func:`facebook_oauth1`
+REL_LOGIN_LOGOUT = 'logon.logout' #: See :func:`logout`
 
 
 # The time limit for a GET request during
@@ -190,7 +191,7 @@ def logout(request):
 	# multiple logins are allowed )
 	return _forgetting( request, 'success', hexc.HTTPNoContent )
 
-@view_config(route_name='logon.ping', request_method='GET', renderer='rest')
+@view_config(route_name=REL_PING, request_method='GET', renderer='rest')
 def ping( request ):
 	"""
 	The first step in authentication.
@@ -199,7 +200,7 @@ def ping( request ):
 		to the continue URL if authentication was provided and valid.
 	"""
 	links = []
-	handshake_href = request.route_path( 'logon.handshake' )
+	handshake_href = request.route_path( REL_HANDSHAKE )
 	links.append( Link( handshake_href, rel=REL_HANDSHAKE ) )
 	links.extend( _links_for_authenticated_users( request ) )
 	links.extend( _links_for_unauthenticated_users( request ) )
