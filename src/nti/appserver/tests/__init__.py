@@ -37,7 +37,7 @@ class ConfiguringTestBase(nti.tests.ConfiguringTestBase):
 	config = None
 	request = None
 
-	def setUp( self, pyramid_request=True ):
+	def setUp( self, pyramid_request=True, request_factory=DummyRequest, request_args=() ):
 		"""
 		:return: The `Configurator`, which is also in ``self.config``.
 		"""
@@ -45,9 +45,12 @@ class ConfiguringTestBase(nti.tests.ConfiguringTestBase):
 		super(ConfiguringTestBase,self).setUp()
 
 		if pyramid_request:
-			self.request = DummyRequest()
+			self.request = request_factory( *request_args )
+
 		self.config = psetUp(registry=component.getGlobalSiteManager(),request=self.request,hook_zca=False)
 		self.config.setup_registry()
+		if pyramid_request and not getattr( self.request, 'registry', None ):
+			self.request.registry = component.getGlobalSiteManager()
 
 		if self.set_up_mailer:
 			# Must provide the correct zpt template renderer or the email process blows up
