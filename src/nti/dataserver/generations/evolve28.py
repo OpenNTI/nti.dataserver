@@ -43,15 +43,16 @@ def evolve( context ):
 			if not hasattr( user, 'friendsLists' ):
 				continue
 			for fl in user.friendsLists.itervalues():
-				old_friends = getattr( fl, '_friends', None )
-				if old_friends is None:
+				old_friends = getattr( fl, '_friends', fl )
+				if old_friends is fl:
 					continue
+				__traceback_info__ = user, fl, old_friends
 				delattr( fl, '_friends' )
 
 				new_friends = OOTreeSet()
 				setattr( fl, '_friends_wref_set', new_friends )
 
-				for thing in old_friends:
+				for thing in old_friends or ():
 					if isinstance( thing, persistent.wref.WeakRef ):
 						thing = thing()
 
