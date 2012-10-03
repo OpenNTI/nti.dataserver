@@ -1,5 +1,6 @@
 from __future__ import print_function, unicode_literals
 
+import json
 import hashlib
 
 import zope.intid
@@ -38,48 +39,64 @@ search_common_fields = (type_, creator_, last_modified_, ntiid_, _container_id, 
 search_faceted_fields = (keywords_, references_, username_, channel_ )
 
 search_indexed_fields = search_stored_fields + search_common_fields + search_faceted_fields 
-												
-def create_search_domain(connection, domain_name='ntisearch', allow_ips=()):
+		
+def create_domain(domain_name='ntisearch', aws_access_key_id=None, aws_secret_access_key=None, **kwargs):
+	params = {'aws_access_key_id':aws_access_key_id, 'aws_secret_access_key':aws_secret_access_key}
+	params.update(kwargs)
+	
+	# connect to first region
+	from boto.cloudsearch import regions, connect_to_region
+	region = regions()[0]
+	connection = connect_to_region(region.name, **params)
+	
+	# create domain
+	result = create_search_domain(connection, domain_name)
+	return result
+						
+def create_search_domain(connection, domain_name='ntisearch', language='en'):
 	
 	domain = connection.create_domain(domain_name)
-	for ip in allow_ips:
-		domain.allow_ip(ip)
 		
-	# storable field
-	domain.create_index_field(intid_, 'uint', searchable=False, result=True,
-							  source_attributes=(INTID, intid_))
+	# storable
+	connection.define_index_field(domain_name, intid_, 'uint', searchable=False, result=True,
+							 	  source_attributes=(INTID, intid_), default=0)
 		
-	domain.create_index_field(type_, 'literal', searchable=True, result=False,
-							  source_attributes=(type_, CLASS))
+	# literal
+	connection.define_index_field(domain_name, type_, 'literal', searchable=True, result=False,
+							 	  source_attributes=(type_, CLASS))
 	
-	domain.create_index_field(creator_, 'literal', searchable=True, result=False, 
-							  source_attributes=(creator_, CREATOR))
+	connection.define_index_field(domain_name, creator_, 'literal', searchable=True, result=False, 
+								  source_attributes=(creator_, CREATOR))
 	
-	domain.create_index_field(last_modified_, 'uint', searchable=True, result=False,
-							  source_attributes=last_modified_fields, default=0 )
+	connection.define_index_field(domain_name, last_modified_, 'uint', searchable=True, result=False,
+								  source_attributes=last_modified_fields, default=0 )
 	
-	domain.create_index_field(ntiid_, 'literal', searchable=True, result=True, 
-							  source_attributes=ntiid_fields)
+	connection.define_index_field(domain_name, ntiid_, 'literal', searchable=True, result=False, 
+								  source_attributes=ntiid_fields)
 	
-	domain.create_index_field(_container_id, 'literal', searchable=True, result=False,
-							  source_attributes=container_id_fields)
+	connection.define_index_field(domain_name, _container_id, 'literal', searchable=True, result=False,
+								  source_attributes=container_id_fields)
+		
+	connection.define_index_field(domain_name, username_, 'literal', searchable=True, result=False, facet=True)
+	connection.define_index_field(domain_name, channel_, 'literal', searchable=True, result=False, facet=True)
 	
 	# content fields
-	domain.create_index_field(content_, 'text', searchable=True, result=False)
-	
-	domain.create_index_field(recipients_, 'text', searchable=True, result=False)
-	domain.create_index_field(_shared_with, 'text', searchable=True, result=False, source_attributes=(sharedWith_,))
-	
-	# literal fields
-	domain.create_index_field(username_, 'literal', searchable=True, result=False, facet=True)
-	domain.create_index_field(channel_, 'literal', searchable=True, result=False, facet=True)
-	
+	connection.define_index_field(domain_name, content_, 'text', searchable=True, result=False)
+	connection.define_index_field(domain_name, recipients_, 'text', searchable=True, result=False)
+	connection.define_index_field(domain_name, _shared_with, 'text', searchable=True, result=False, source_attributes=(sharedWith_,))
+
 	# faceted fields
-	domain.create_index_field(keywords_, 'text', searchable=True, result=False, facet=True)
-	domain.create_index_field(references_, 'text', searchable=True, result=False, facet=True)
+	connection.define_index_field(domain_name, keywords_, 'text', searchable=True, result=False, facet=True)
+	connection.define_index_field(domain_name, references_, 'text', searchable=True, result=False, facet=True)
 
 	# make sure 'content' is the default field if its result=False
-	# connection.update_default_search_field(domain_name, content_)
+	connection.update_default_search_field(domain_name, content_)
+	
+	# set the stop word policy
+	sw_util = component.queryUtility(search_interfaces.IStopWords) 
+	stoplist = sw_util.stopwords(language) if sw_util else ()
+	stoplist = json.dumps({'stopwords':stoplist})
+	connection.update_stopword_options(domain_name, stoplist)
 	
 	return domain
 
@@ -174,3 +191,7 @@ def to_cloud_object(obj, username):
 	data = search_interfaces.ICloudSearchObject(obj)
 	data[username_] = username
 	return oid, data
+
+if __name__ == '__main__':
+	create_domain(aws_access_key_id = 'AKIAJ42UUP2EUMCMCZIQ',
+				  aws_secret_access_key = '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')
