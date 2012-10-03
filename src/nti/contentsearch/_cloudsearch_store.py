@@ -134,11 +134,11 @@ class _CloudSearchStore(Persistent, object):
 		result = self._v_domains.get(domain_name, None)
 		return result
 
-class CloudSearchStorageService(object):
 
-	MAX_MESSAGES = 100
-	SLEEP_WAIT_TIME = 30
-	EXPIRATION_TIME_IN_SECS = 60 * 2
+SLEEP_WAIT_TIME = 15
+EXPIRATION_TIME_IN_SECS = 60 * 2
+
+class CloudSearchStorageService(object):
 	
 	_redis = None
 	
@@ -173,7 +173,7 @@ class CloudSearchStorageService(object):
 		result = None
 		
 		# get all messages 
-		msgs, _ = self._redis.pipeline().lrange( queue_name, 0, self.MAX_MESSAGES).delete(  queue_name ).execute()
+		msgs, _ = self._redis.pipeline().lrange( queue_name, 0, -1).delete(  queue_name ).execute()
 		if msgs:
 #			def after_commit( success ):
 #				if not success:
@@ -196,7 +196,7 @@ class CloudSearchStorageService(object):
 			transactions.do(target=self, call=self._put_msg_to_redis, args=(msg,) )
 	
 	def _put_msg_to_redis( self, msg, queue_name='cloudsearch' ):
-		self._get_redis().pipeline().rpush( queue_name, msg ).expire(queue_name, self.EXPIRATION_TIME_IN_SECS).execute()
+		self._get_redis().pipeline().rpush( queue_name, msg ).expire(queue_name, EXPIRATION_TIME_IN_SECS).execute()
 
 	def _spawn_index_listener(self):
 		
@@ -204,7 +204,7 @@ class CloudSearchStorageService(object):
 			while True:
 						
 				# wait for idx ops
-				gevent.sleep(self.SLEEP_WAIT_TIME)
+				gevent.sleep(SLEEP_WAIT_TIME)
 				
 				try:
 					transaction.begin()
