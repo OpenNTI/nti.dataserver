@@ -204,3 +204,21 @@ def process_sqs_messages():
 	if args.delete:
 		for msg in proc_msgs:
 			msg.delete()
+
+def mark_emails_bounced():
+	arg_parser = argparse.ArgumentParser( description="Search for accounts using an email address and mark them invalid." )
+	arg_parser.add_argument( 'env_dir', help="Dataserver environment root directory" )
+	arg_parser.add_argument( '-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
+	arg_parser.add_argument( 'addrs', help="The email addresses to find.", nargs='+' )
+
+
+	args = arg_parser.parse_args()
+
+	def _proc():
+		return _mark_accounts_with_bounces( args.addrs )
+
+	env_dir = args.env_dir
+	run_with_dataserver( environment_dir=env_dir,
+						 function=_proc,
+						 xmlconfig_packages=('nti.appserver',),
+						 verbose=args.verbose )

@@ -31,6 +31,7 @@ entry_points = {
 		"nti_default_root_sharing_setter = nti.contentrendering.default_root_sharing_setter:main",
 		"nti_index_book_content = nti.contentrendering.indexer:main",
 		'nti_bounced_email_batch = nti.appserver.bounced_email_workflow:process_sqs_messages',
+		'nti_testing_mark_emails_bounced = nti.appserver.bounced_email_workflow:mark_emails_bounced',
 		"pserve = nti.appserver.nti_pserve:main", # This script overrides the one from pyramid
 	],
 	"paste.app_factory": [

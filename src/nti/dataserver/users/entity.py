@@ -254,7 +254,7 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 
 	def __repr__(self):
 		try:
-			return '%s(%r,%r,%r)' % (self.__class__.__name__,self.username, self.realname, self.alias)
+			return '%s(%s)' % (self.__class__.__name__,self.username)
 		except (ZODB.POSException.ConnectionStateError,AttributeError):
 			# This most commonly (only?) comes up in unit tests when nose defers logging of an
 			# error until after the transaction has exited. There will
