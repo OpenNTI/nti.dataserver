@@ -1349,6 +1349,20 @@ class TestRootPageEntryLibrary(TestApplicationLibraryBase):
 	_check_content_link = False
 	_stream_type = 'RecursiveStream'
 
+	def test_one_dfl_entry_default_share(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			u = self._create_user()
+			u._communities.add( ntiids.ROOT )
+
+		testapp = TestApp( self.app )
+		res = testapp.get( '/dataserver2/NTIIDs/' + self.child_ntiid,
+						   headers={"Accept": 'application/json' },
+						   extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 200 ) )
+		assert_that( res.json_body, has_entry( 'MimeType', 'application/vnd.nextthought.pageinfo' ) )
+		assert_that( res.json_body, has_entry( 'sharingPreference', has_entry( 'sharedWith', [ntiids.ROOT] ) ) )
+
+
 	def test_set_root_page_prefs_inherits(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			self._create_user()
