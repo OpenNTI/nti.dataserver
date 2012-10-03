@@ -70,7 +70,7 @@ class TestBouncedEmailworkflow(ConfiguringTestBase):
 	def test_process_transient_messages(self):
 		messages = _read_msgs()
 		# no dataserver needed, because they're all transient
-		proc = bounced_email_workflow.process_ses_feedback( messages )
+		proc = bounced_email_workflow.process_ses_feedback( messages, mark_transient=False )
 		assert_that( proc, is_( messages ) )
 
 

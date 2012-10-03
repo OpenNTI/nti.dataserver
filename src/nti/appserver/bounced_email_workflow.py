@@ -110,11 +110,23 @@ def _mark_accounts_with_bounces( email_addrs, dataserver=None ):
 				user_link_provider.add_link( user, REL_INVALID_CONTACT_EMAIL )
 
 
-def process_ses_feedback( messages, dataserver=None ):
+def process_ses_feedback( messages, dataserver=None, mark_transient=True ):
 	"""
 	Given an iterable of :class:`boto.sqs.message.Message` objects
 	that represent `feedback from SES <http://docs.amazonwebservices.com/ses/latest/DeveloperGuide/NotificationContents.html>`_,
 	process them.
+
+	:param bool mark_transient: If set to ``True`` (the default) then bounce notifications
+		that are either permanent or transient (so all notifications) result in
+		corresponding user accounts being marked as needing an update. This is true by default
+		because SES only sends a bounce notification once it has given up trying to deliver:
+		"Amazon SES only reports hard bounces back to you. A hard bounce indicates a persistent delivery failure
+		(e.g., mailbox does not exist).
+		In other words, your recipient did not receive your email message, and Amazon SES will not try to resend it."
+		For our purposes, this means the user needs to confirm the address again. (While it is possible to distinguish certain subtypes of
+		transient errors that may truly be transient, particularly MailboxFull, we haven't seen any
+		of those in practice.)
+
 
 	:return: A list of all the messages that were processed for bounce information.
 		If a message wasn't processed because it wasn't a bounce notice, it won't be
@@ -155,7 +167,11 @@ def process_ses_feedback( messages, dataserver=None ):
 	logger.info( "The following email addresses experienced transient failures: %s", addr_transient_errors )
 	logger.info( "The following email addresses experienced permanent failures: %s", addr_permanent_errors )
 
-	_mark_accounts_with_bounces( addr_permanent_errors, dataserver=dataserver )
+	to_mark = addr_permanent_errors
+	if mark_transient:
+		to_mark = to_mark.union( addr_transient_errors )
+
+	_mark_accounts_with_bounces( to_mark, dataserver=dataserver )
 
 	return proc_messages
 
