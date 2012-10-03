@@ -19,6 +19,8 @@ from . import MessageFactory as _
 import sys
 import itertools
 
+import transaction
+
 from zope import interface
 from zope import component
 from zope.event import notify
@@ -36,6 +38,7 @@ from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 from nti.appserver import interfaces as app_interfaces
+from nti.appserver.invitations import interfaces as invite_interfaces
 
 from nti.externalization.datastructures import InterfaceObjectIO
 
@@ -147,6 +150,9 @@ def _create_user( request, externalValue, preflight_only=False ):
 						   'code': e.__class__.__name__},
 						exc_info[2] )
 		obj_io.handle_validation_error( request, e )
+	except invite_interfaces.InvitationValidationError as e:
+		e.field = 'invitation_codes'
+		obj_io.handle_validation_error( request, e )
 	except nti.utils.schema.InvalidValue as e:
 		if e.value == _PLACEHOLDER_USERNAME:
 			# Not quite sure what the conflict actually was, but at least we know
@@ -181,15 +187,29 @@ def _create_user( request, externalValue, preflight_only=False ):
 			 renderer='rest')
 def account_create_view(request):
 	"""
-	Creates a new account (i.e., a new user object), if possible and such a user
-	does not already exist. This is only allowed for unauthenticated requests right now.
+	Creates a new account (i.e., a new user object), if possible and
+	such a user does not already exist. This is only allowed for
+	*unauthenticated* requests right now.
 
-	The act of creating the account, if successful, also logs the user in and the appropriate headers
-	are returned with the response.
+	The act of creating the account, if successful, also logs the user
+	in and the appropriate headers are returned with the response.
 
-	The input to this view is the JSON for a User object. Minimally, the 'Username' and 'password'
-	fields must be populated; this view ensures they are. The User object may impose additional
-	constraints. The 'password' must conform to the password policy.
+	The input to this view is the JSON for a
+	:class:`nti.dataserver.interfaces.IUser` object. Minimally, the
+	``Username`` and ``password`` fields must be populated; this view
+	ensures they are. The site and the specific User object may impose
+	additional constraints (for example, the ``password`` must conform
+	to the password policy for that user and the present site.)
+
+	In addition to the standard fields for a `User` object, the following additional values
+	may be provided:
+
+	invitation_codes
+		An array of strings representing the invitations the person creating the account
+		would like to have accepted by the new account. If any of these strings refers
+		to an invitation that does not exist or that is not applicable to the user, an
+		error results.
+
 	"""
 
 	if sec.authenticated_userid( request ):
@@ -229,7 +249,8 @@ def account_preflight_view(request):
 	you do give other fields, then they will be checked in combination to see if the combination is valid.
 
 	If you do not give the ``Username`` field, then you must at least give the ``birthdate`` field, and
-	a general description of requirements will be returned to you.
+	a general description of profile requirements will be returned to you. (In addition to the non-profile
+	possibilities described on :func:`account_create_view`.)
 
 	.. note:: If you do not send a birthdate, one will be provided that makes you old enough
 		to not be subject to COPPA restrictions. You will thus get a non-strict superset of
@@ -281,7 +302,8 @@ def account_preflight_view(request):
 	if provided_username:
 		avatar_choices = _get_avatar_choices_for_username( externalValue['Username'], request )
 
-
+	# Make sure there are no side effects of this
+	transaction.abort()
 	return {'Username': externalValue['Username'] if provided_username else None,
 			'AvatarURLChoices': avatar_choices,
 			'ProfileSchema': ext_schema }

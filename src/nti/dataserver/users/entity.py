@@ -158,7 +158,7 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 		if ext_value:
 			nti.externalization.internalization.update_from_external_object( user, ext_value, context=dataserver, notify=False )
 
-		notify( interfaces.WillCreateNewEntityEvent( user ) )
+		notify( interfaces.WillCreateNewEntityEvent( user, ext_value ) )
 		if preflight_only:
 			if user.username in root_users:
 				raise KeyError( user.username )
