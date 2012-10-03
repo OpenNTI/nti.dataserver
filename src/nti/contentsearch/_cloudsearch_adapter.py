@@ -23,9 +23,7 @@ from nti.contentsearch._cloudsearch_index import get_cloud_oid
 from nti.contentsearch._cloudsearch_index import to_cloud_object
 from nti.contentsearch._search_results import empty_search_results
 from nti.contentsearch._search_results import empty_suggest_results
-from nti.contentsearch._cloudsearch_store import get_search_service
 from nti.contentsearch._cloudsearch_index import search_stored_fields
-from nti.contentsearch._cloudsearch_store import get_document_service
 from nti.contentsearch._search_indexmanager import _SearchEntityIndexManager
 from nti.contentsearch._search_results import empty_suggest_and_search_results
 
@@ -42,15 +40,14 @@ class _CloudSearchEntityIndexManager(Persistent, _SearchEntityIndexManager):
 	@property
 	def domain(self):
 		cs = component.getUtility(search_interfaces.ICloudSearchStore)
-		result = cs.get_search_domain()
+		result = cs.get_domain()
 		return result
 	
-	def _get_document_service(self):
-		return get_document_service(domain=self.domain)
-	
-	def _get_search_service(self):	
-		return get_search_service(domain=self.domain)
-	
+	@property
+	def service(self):
+		result = component.getUtility(search_interfaces.ICloudSearchStoreService)
+		return result
+
 	def _get_search_hit(self, obj):
 		cloud_data = obj['data']
 		uid = cloud_data.get(intid_, None)
@@ -63,7 +60,7 @@ class _CloudSearchEntityIndexManager(Persistent, _SearchEntityIndexManager):
 		results.highlight_type = highlight_type
 		if qo.is_empty: return results
 		
-		service = self._get_search_service()
+		service = self.service
 		
 		# perform cloud query
 		start = qo.get('start', 0)
@@ -116,7 +113,7 @@ class _CloudSearchEntityIndexManager(Persistent, _SearchEntityIndexManager):
 
 	def index_content(self, data, type_name=None):
 		if not data: return None
-		service = self._get_document_service()
+		service = self.service
 		type_name = normalize_type_name(type_name or get_type_name(data))
 		oid, external = to_cloud_object(data, self.username, type_name)
 		service.add(oid, self.a_version,  external) 
@@ -129,7 +126,7 @@ class _CloudSearchEntityIndexManager(Persistent, _SearchEntityIndexManager):
 
 	def delete_content(self, data, type_name=None):
 		if not data: return None
-		service = self._get_document_service()
+		service = self.service
 		oid = get_cloud_oid(data)
 		service.delete(oid, self.d_version) 
 		result = service.commit()
@@ -138,7 +135,7 @@ class _CloudSearchEntityIndexManager(Persistent, _SearchEntityIndexManager):
 
 	def remove_index(self, type_name=None):
 		counter = 0
-		service = self._get_document_service()
+		service = self.service
 		for oid in self.get_aws_oids(type_name=type_name):
 			service.delete(oid, self.d_version)
 			counter = counter + 1

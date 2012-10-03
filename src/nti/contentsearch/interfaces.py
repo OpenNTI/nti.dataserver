@@ -427,15 +427,51 @@ class ICloudSearchObject(IDict):
 	
 class ICloudSearchStore(interface.Interface):
 	
-	def get_search_domain():
-		"""return the aws search domain"""
+	def get_domain(domain_name):
+		"""return the domain with the specified domain"""
+	
+	def get_document_service(domain_name):
+		"""return a document service for the specified domain"""
+	
+	def get_search_service(domain_name):
+		"""return the searchh service for the specified domain"""
 	
 	def get_aws_domains():
 		"""return all aws search domains"""
 		
-	def get_domain(domain_name):
-		"""return the aws domain w/ the specified name"""
+class ICloudSearchStoreService(interface.Interface):
 	
+	# document service
+	
+	def add(_id, version, fields):
+		"""
+		index the specified data fields
+		
+		:param _id cloud search document id
+		:param version document version
+		:param fields : data-dict to index
+		"""
+	
+	def delete(_id, version):
+		"""
+		unindex the specified document
+		
+		:param _id cloud search document id
+		:param version document version
+		"""
+	
+	def commit():
+		"""
+		commit index operation(s)
+		"""
+	
+	# search service
+	
+	def search( *args, **kwargs):
+		"""
+		return a searh against cloud search
+		"""
+		
 # search query
 
 class ISearchQuery(interface.Interface):

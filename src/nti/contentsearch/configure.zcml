@@ -117,5 +117,5 @@
 				
 	<include file="repoze_minimal.zcml" />
 	<include file="whoosh.zcml" />
-	<include file="cloud_search.zcml" />
+	<!-- <include file="cloud_search.zcml" /> -->
 </configure>

@@ -1,10 +1,10 @@
 from __future__ import print_function, unicode_literals
 
+import os
 import six
 
 import zlib
 import gevent
-import transaction
 from persistent import Persistent
 
 from zope import component
@@ -86,8 +86,8 @@ class _CloudSearchStore(Persistent, object):
 			
 			self.region = kwargs.pop('region', None)
 			for k, v in AWS_CS_PARAMS.items():
-				v = kwargs.get(k, v)
-				setattr(self, k, v)
+				value = kwargs.get(k, v[1])
+				setattr(self, k, value)
 		
 		# find and aws region
 		region = find_aws_region(self.region)
@@ -105,42 +105,38 @@ class _CloudSearchStore(Persistent, object):
 		
 	def _set_aws_domains(self, connection):
 		self._v_domains = {}
-		self._v_search_service = {}
-		self._v_document_service = {}
 		for d in self.get_aws_domains():
 			domain_name = d['domain_name']
 			domain = Domain(connection, d)
 			self._v_domains[domain_name] = domain
-			self._v_search_service[domain_name] = get_search_service(domain)
-			self._v_document_service[domain_name] = get_document_service(domain)
 		
-	def get_default_domain(self):
-		return self.get_domain(domain_name=self.search_domain)
-	
-	get_search_domain = get_default_domain
-	
-	def get_default_document_service(self):
-		result = self._v_document_service.get(self.search_domain, None)
-		return result
-	
-	def get_default_search_service(self):
-		return self.get_domain(domain_name=self.search_domain)
-	
 	def get_aws_domains(self):
 		domains = self.connection.describe_domains()
 		return domains
 		
-	def get_domain(self, domain_name):
+	def get_domain(self, domain_name=None):
+		domain_name = domain_name or self.search_domain
 		result = self._v_domains.get(domain_name, None)
 		return result
-
+	
+	def get_document_service(self, domain_name=None):
+		domain = self.get_domain(domain_name)
+		result = get_document_service(domain) if domain else None
+		return result
+	
+	def get_search_service(self, domain_name=None):
+		domain = self.get_domain(domain_name)
+		result = get_search_service(domain) if domain else None
+		return result
 
 SLEEP_WAIT_TIME = 15
 EXPIRATION_TIME_IN_SECS = 60 * 2
 
-class CloudSearchStorageService(object):
+@interface.implementer(search_interfaces.ICloudSearchStoreService)
+class _CloudSearchStorageService(object):
 	
 	_redis = None
+	_store = None
 	
 	def __init__( self ):
 		self.index_listener = self._spawn_index_listener()
@@ -150,9 +146,10 @@ class CloudSearchStorageService(object):
 			self._redis = component.getUtility( nti_interfaces.IRedisClient )
 		return self._redis
 	
-	@property
-	def store(self):
-		return component.getUtility( search_interfaces.ICloudSearchStore )
+	def _get_store(self):
+		if self._store is None:
+			self._store = component.getUtility( search_interfaces.ICloudSearchStore  )
+		return self._store
 	
 	# document service
 	
@@ -167,28 +164,19 @@ class CloudSearchStorageService(object):
 	def commit(self):
 		return None # no-op
 	
+	# search service
+	
+	def search(self, *args, **kwargs):
+		service = self._get_store().get_search_service()
+		result = service.search(*args, **kwargs)
+		return result
+	
 	# redis
 	
 	def _get_index_msgs( self, queue_name='cloudsearch'):
-		result = None
-		
-		# get all messages 
-		msgs, _ = self._redis.pipeline().lrange( queue_name, 0, -1).delete(  queue_name ).execute()
-		if msgs:
-#			def after_commit( success ):
-#				if not success:
-#					logger.warn( "Pushing messages back onto %s on abort", queue_name )
-#					msgs.reverse()
-#					# insert at the head of the list 
-#					self._redis.lpush( queue_name, *msgs )
-#			transaction.get().addAfterCommitHook( after_commit )
-#		
-			result = (eval(zlib.decompress(x)) for x in msgs)
-		else:
-			result = () 
-
+		msgs = self._get_redis().pipeline().lrange( queue_name, 0, -1).execute()
+		result = (eval(zlib.decompress(x)) for x in msgs[0]) if msgs else ()
 		return result
-	
 	
 	def _put_msg(self, msg):
 		if msg is not None:
@@ -197,7 +185,10 @@ class CloudSearchStorageService(object):
 	
 	def _put_msg_to_redis( self, msg, queue_name='cloudsearch' ):
 		self._get_redis().pipeline().rpush( queue_name, msg ).expire(queue_name, EXPIRATION_TIME_IN_SECS).execute()
-
+	
+	def _remove_from_redis(self, msgs, queue_name='cloudsearch'):
+		self._get_redis().pipeline().ltrim( queue_name, len(msgs), -1).execute()
+		
 	def _spawn_index_listener(self):
 		
 		def read_index_msgs():
@@ -207,18 +198,25 @@ class CloudSearchStorageService(object):
 				gevent.sleep(SLEEP_WAIT_TIME)
 				
 				try:
-					transaction.begin()
 					msgs = self._get_index_msgs()
 					if msgs:
-						self._dispatch_messages_to_cs( *msgs )
-					transaction.commit()
+						service = self._get_store().get_default_document_service()
+						result = self.dispatch_messages_to_cs( msgs, service )
+						if result.errors: # check for parsing validation errors
+							s = '\n'.join(result.errors[:5]) # don't show all error
+							logger.error(s) # log errors only 
+							#TODO: save result / messages to a file
+						
+						# remove processed
+						self._remove_from_redis(msgs)
+						
 				except Exception:
 					logger.exception( "Failed to read and process index messages" )
 
 		return gevent.spawn( read_index_msgs )
 	
-	def _dispatch_messages_to_cs(self, msgs):
-		service = self.store.get_default_document_service()
+	@classmethod
+	def dispatch_messages_to_cs(cls, msgs, service):
 		for m in msgs:
 			op, _id, version, external =  m
 			if op == 'add':
@@ -226,8 +224,19 @@ class CloudSearchStorageService(object):
 			elif op == 'delete':
 				service.delete(_id, version)
 		result = service.commit()
-		if result.errors: # check for parsing validation errors
-			s = '\n'.join(result.errors[:5]) # don't show all error
-			logger.error(s) # log errors only 
-			#TODO: save result / messages to a file
+		return result
+	
+@interface.implementer(search_interfaces.ICloudSearchStore)
+def _create_default_cloudsearch_store():
+	params = {}
+	for k, v in AWS_CS_PARAMS.items():
+		func, df = v
+		val = os.getenv(k, None)
+		val = func(val) if val is not None else df
+		params[k] = val
 		
+	if 	params.get('aws_access_key_id', None) and \
+		params.get('aws_secret_access_key', None):
+		return create_cloudsearch_store(**params)
+	return None
+
