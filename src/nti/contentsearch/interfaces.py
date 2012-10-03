@@ -472,6 +472,11 @@ class ICloudSearchStoreService(interface.Interface):
 		return a searh against cloud search
 		"""
 		
+class ICloudSearchQueryParser(interface.Interface):
+	
+	def parse(qo):
+		"""parse the specified ISearchQuery query object"""
+		
 # search query
 
 class ISearchQuery(interface.Interface):

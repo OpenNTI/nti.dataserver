@@ -6,8 +6,6 @@ from datetime import datetime
 
 from zope import interface
 from zope import component
-from zope.annotation import factory as an_factory
-
 from persistent import Persistent
 
 from nti.dataserver import interfaces as nti_interfaces
@@ -54,18 +52,18 @@ class _CloudSearchEntityIndexManager(Persistent, _SearchEntityIndexManager):
 		result = self.get_object(int(uid)) if uid else None
 		return result
 		
-	def _do_search(self, field, qo, highlight_type=WORD_HIGHLIGHT, creator_method=None):
+	def _do_search(self, qo, highlight_type=WORD_HIGHLIGHT, creator_method=None):
 		creator_method = creator_method or empty_search_results
 		results = creator_method(qo)
 		results.highlight_type = highlight_type
 		if qo.is_empty: return results
 		
 		service = self.service
-		
+
 		# perform cloud query
 		start = qo.get('start', 0)
 		limit = sys.maxint # return all hits
-		bq = parse_query(qo, self.username, field)
+		bq = parse_query(qo)
 		objects = service.search(bq=bq, return_fields=search_stored_fields, size=limit, start=start)
 		
 		# get ds objects
@@ -76,7 +74,7 @@ class _CloudSearchEntityIndexManager(Persistent, _SearchEntityIndexManager):
 	def search(self, query, *args, **kwargs):
 		qo = QueryObject.create(query, **kwargs)
 		highlight_type = None if is_all_query(qo.term) else WORD_HIGHLIGHT
-		results = self._do_search(content_, qo, highlight_type)
+		results = self._do_search(qo, highlight_type)
 		return results
 
 	def suggest(self, query, *args, **kwargs):
@@ -160,7 +158,7 @@ class _CloudSearchEntityIndexManager(Persistent, _SearchEntityIndexManager):
 		bq.append(')')
 		bq = ' '.join(bq)
 		
-		service = self._get_search_service()
+		service = self.service
 		results = service.search(bq=bq, return_fields=[intid_], size=size, start=0)
 		for r in results:
 			yield r['id']
@@ -169,13 +167,11 @@ class _CloudSearchEntityIndexManager(Persistent, _SearchEntityIndexManager):
 		
 	def has_stored_indices(self):
 		bq = unicode("%s:'%s'" % (username_, self.username))
-		service  = self._get_search_service()
+		service  = self.service
 		results = service.search(bq=bq, return_fields=[intid_], size=1, start=0) if service else ()
 		return len(results) > 0
 		
 	def get_stored_indices(self):
 		return ()
 
-def _CloudSearchEntityIndexManagerFactory(user):
-	result = an_factory(_CloudSearchEntityIndexManager)(user)
-	return result
+

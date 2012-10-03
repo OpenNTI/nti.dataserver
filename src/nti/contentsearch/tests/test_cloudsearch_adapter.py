@@ -3,12 +3,15 @@ import time
 import uuid
 import unittest
 
+from zope.configuration import xmlconfig
+
 from nti.dataserver.users import User
 from nti.dataserver.contenttypes import Note
 from nti.externalization.externalization import toExternalObject
 
 from nti.ntiids.ntiids import make_ntiid
 
+from nti import contentsearch
 from nti.contentsearch import interfaces as search_interfaces
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
@@ -35,6 +38,10 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 	def setUpClass(cls):
 		os.environ['aws_access_key_id']= cls.aws_access_key_id
 		os.environ['aws_secret_access_key']= cls.aws_secret_access_key
+		
+	def setUp( self ):
+		super(TestCloudSearchAdapter,self).setUp()
+		xmlconfig.file("cloud_search.zcml", contentsearch, context=self.configuration_context)
 		
 	# ---------------------
 	
@@ -133,15 +140,6 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 		assert_that(hits, has_entry(HIT_COUNT, 0))
 		assert_that(hits, has_entry(QUERY, 'shield'))
 
-	@WithMockDSTrans
-	def test_ngram_search(self):
-		usr, _, _ = self.add_user_index_notes()
-		cim = search_interfaces.ICloudSearchEntityIndexManager(usr)
-		hits = toExternalObject(cim.ngram_search("sea"))
-		assert_that(hits, has_entry(HIT_COUNT, 1))
-		assert_that(hits, has_entry(QUERY, 'sea'))
-		assert_that(hits, has_key(ITEMS))
-		assert_that(hits[ITEMS], has_length(1))
-		
+
 if __name__ == '__main__':
 	unittest.main()
