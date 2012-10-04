@@ -3,12 +3,8 @@ LOGIN TESTS
 
 Unit to test: Types of login
 Test case data: 
-	- check if login buttons appear after an email is typed. 
-	- check if user can login with facebook. 
-	- check if user can login with gmail.
-	- nextthought email and password. 
-	- use yahoo account. 
-	- check logout
+	- check if login buttons become active after a username and password are typed.  
+
 	
 ACCOUNT TESTS
 -------------
@@ -16,7 +12,10 @@ Unit to test: Password changes
 Test case data: 
 	- check if user is being prompted for old password before changing it. 
 	- check if user is allowed to use the same password when changing his password. 
-	- check if special characters are allowed.
+	- check if special characters are not allowed.
+	- check if only whitespaces are not allowed.
+	- check if a new password too similar to an old one is prohibited.
+	
 
 Unit to test: Lists changes 
 Test case data: 
@@ -32,26 +31,17 @@ READER TESTS
 Unit to test: Highlights. 
 
 Test case data: Be able to highlight: 
-	- paragraphs. 
-	- pictures. 
-	- videos. 
-	- chapter quotes. 
-	- review questions. 
+	- paragraphs.  
+	- lists
+	- Math Formulas. 
 
-Test case data: Check if all the different types of highlights can be shared with: 
-	- one friend. 
-	- multiple friends.
-	- one group
-	- multiple groups. 
-	
-Test case data: Be able to delete a highlight/shared highlight. 
+Test case data: Be able to delete a highlight. 
 			
 Unit to test: Notes.
-Test case data: Be able to create a note for: 
+Test case data: Be able to create a note in the gutter next to: 
 	- paragraphs.
 	- pictures. 
 	- videos.
-	- chapter quotes.
 	- review questions. 
 	
 Test case data: Check location of created notes. 
@@ -60,16 +50,30 @@ Test case data:Be able to share notes with:
 	- one friend/multiple friends. 
 	- one group/multiple groups. 
 
-Test case data: Be able to delete  notes/shared notes. 
+Test case data: Be able to delete notes/shared notes. 
 
 
 ACTIVITY STREAM TESTS 
 ---------------------
-Unit to test: if activity stream is up to date. 
+Unit to test: if activity stream is up to date. Meaning if something is shared with a friend, an instant notification should appear under notifications. 
+
 Test case data: Check if activity stream shows updated records:
 		- The creation of a highlight.
 		- The creation of a note. 
 		- Sharing of a note/highlight with one/multiple friends. 
+		- If a user is added to someone's contacts. 
+
+Test case data: Check if clicking on a notification does the right action.
+		- clicking on a note notification should open the note.
+		- clicking on a 'added as a contact' notification should open a menu to select a group and add your friend to it. 
+		- clicking on a redaction should do nothing (for now).
+		- hovering over a note notification should show a fly-out of the note. 
+
+Test case data: Check if the different buttons on a note work
+		- Reply button opens a reply field.
+		- Share button shows the list of people the note is shared to. 
+		- Start a chat button opens a new chat session. 
+		
 		
 GROUP TESTS
 -----------
@@ -80,50 +84,33 @@ Test case data:
 - Check if group name can have unlimited number of characters. 
 - Check if space character is an acceptable name. 
 - Check if special characters are legal. 
-- Use an existing group name. 
+
 
 Unit to test: group members. 
 Test case data: 
-- Add a large number of group members (e.g: 300000). 
 - Add the same group member twice. 
-- Check if group can have 0 members.  
-
-Unit to test: Sorting and columns settings.
-Test case data: 
-- Check if ascending and descending sorting works. 
-- Check if 'columns' menu allows to change displayed columns.
-- Check if changes to 'columns' menu are being saved. 
-- Check if all columns checkboxes have names. 
-- When no columns are displayed, check if there is still a menu to change the columns settings. 
+- Remove a user from a group
+- Add a user to a group
 
  CHAT TESTS
 -----------
 
 Unit to test:  launching chat
 test case data: launch chat from the following modes:
-- reader mode
-- stream mode
-- group mode
 - from note
-- from class
+- from group
 
 Unit to test:  1-1 chat
 test case data: send and receive 1-1
-- test by double clicking user in chat window
-- test via text box
-- test via "compose message"
+- test by clicking friends name under Contacts. 
+- test via notes
 - send basic whiteboard image
-- send line break via "compose message"
 - check messaging around closing user 1 window and having user 2 send on the same session
 
 Unit to test:  Group chat
 test case data: send and receive group chat and ensure all parties receive
-- test by clicking "open chat for group" icon 
-- test via text box
-- test via "compose message"
-- test via class room 
+- test by clicking "Group Chat'  
 - send basic whiteboard image
-- send line break via "compose message"
 - check messaging around closing one user 1 window and others still chatting
 - ensure group chat works when starting from a shared note
 
@@ -133,8 +120,33 @@ test case data: start many 1-1 chats
 
 Unit to test:  Chat Misc	
 test case data: Chat Misc
-- ensure flagged messages
 - ensure chat window is in front of the videos 
+
+
+SEARCH TESTS
+------------
+
+Unit to test: Search efficiency. 
+test case data: Check if search can match up: 
+	- sentences. 
+	- partial matches
+	
+test case data: Check if clicking on a search result redirects to that page.Check for both: 
+	- 'content' search results. 
+	- 'user generated' search results (meaning notes and highlights).
+	 
+
+##############IGNORE THESE TESTS#########################################
+MYSTUFF TESTS
+-------------
+
+Unit to test: My stuff updates. 
+test case data: Check if Mystuff displays an updated list of: 
+	- highlights. 
+	- notes. 
+	- messagesNotes (chats).
+	
+test case data: Check if clicking on a list item (highlights/notes/messageNotes) redirects you to the right page. 
 
 CLASSROOM TESTS 
 ---------------
@@ -163,30 +175,3 @@ test case data: make sure the user can manage ressources through:
 test case data: make sure the user can: 
 	- enter a study group by clicking on its 'select' link.
 	- 
-
-MYSTUFF TESTS
--------------
-
-Unit to test: My stuff updates. 
-test case data: Check if Mystuff displays an updated list of: 
-	- highlights. 
-	- notes. 
-	- messagesNotes (chats).
-	
-test case data: Check if clicking on a list item (highlights/notes/messageNotes) redirects you to the right page. 
-
-
-SEARCH TESTS
-------------
-
-Unit to test: Search efficiency. 
-test case data: Check if search can match up: 
-	- special characters. 
-	- numbers.
-	- sentences. 
-	
-test case data: Check if clicking on a search result redirects to that page.Check for both: 
-	- 'content' search results. 
-	- 'user generated' search results. 
-
-
