@@ -148,34 +148,45 @@ class _NTIUsers(object):
 		return userObj.password if userObj else None
 
 	def user_has_password( self, username, password ):
-		if not self.user_exists( username ): return False
+		if not self.user_exists( username ):
+			return False
 		user_password = self.user_password( username )
 		return user_password.checkPassword( password ) if user_password else False
 
 	def _query_groups( self, username, components ):
 		":return: The groups of an authenticated user."
+		if not self.user_exists( username ):
+			return None
 		return nti_authentication.effective_principals( username, registry=components, authenticated=True )
 
 	def __call__( self, userid, request ):
 		result = None
+		# Note: returning None from this causes WhoV2AuthenticationPolicy
+		# to return None from authenticated_userid()
+
 		# Because we are both part of a middleware and the pyramid
 		# auth policy, we can get called both already authenticated
 		# and not-authenticated.
 		# NOTE: we are caching the group results as part of the userid dictionary,
 		# which means they cannot change during a request.
+		CACHE_KEY = 'nti.dataserver.groups'
+		if CACHE_KEY in userid:
+			return userid[CACHE_KEY]
 
-		if 'nti.dataserver.groups' in userid:
-			return userid['nti.dataserver.groups']
-
-		if 'repoze.who.userid' in userid:
-			result = self._query_groups( userid['repoze.who.userid'], request.registry )
+		username = None
+		password = None
+		require_password = False
+		if 'repoze.who.userid' in userid: # already identified by AuthTktCookie
+			username = userid['repoze.who.userid']
 		elif 'login' in userid and 'password' in userid:
+			require_password = True
 			username, password = _decode_username_identity( userid )
-			if self.user_has_password( username, password ):
-				result = self._query_groups( username, component )
 
-		if result is not None:
-			userid['nti.dataserver.groups'] = result
+		result = None
+		if self.user_exists( username ) and (not require_password or self.user_has_password( username, password ) ):
+			result = self._query_groups( username, request.registry )
+
+		userid[CACHE_KEY] = result
 		return result
 
 def _make_user_auth():
