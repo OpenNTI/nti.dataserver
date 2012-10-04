@@ -1,11 +1,9 @@
 from __future__ import print_function, unicode_literals
 
 import os
-import six
 
 import zlib
 import gevent
-from persistent import Persistent
 
 from zope import component
 from zope import interface
@@ -23,48 +21,29 @@ from nti.contentsearch import interfaces as search_interfaces
 
 import logging
 logger = logging.getLogger( __name__ )
-	
-AWS_CS_PARAMS = {'aws_access_key_id': (str, None),
-				 'aws_secret_access_key': (str, None),
-				 'is_secure': (bool, True),
-				 'host': (str, 'cloudsearch.us-east-1.amazonaws.com'), 
-				 'port': (int, None), 
-				 'proxy': (str, None), 
-				 'proxy_port': (int, None),
-				 'proxy_user': (str, None),
-				 'proxy_pass': (str, None),
-				 'region' : (str, None),
-				 'path' : (str, '/'),
-				 'region' : (str, None),
-				 'api_version': (str, None),
-				 'security_token' : (str, None),
-				 'debug': (int, 0)}
 
-def find_aws_region(region):
-	if isinstance(region, six.string_types):
-		for r in regions():
-			if r.name == region:
-				region = r
+def find_aws_region(region_name):
+	result = None
+	_regions = regions()
+	if region_name:
+		for r in _regions:
+			if r.name == region_name:
+				result = r
 				break
 	# if no region grab first available
-	if not region:
-		region = regions()[0]
+	if result is None:
+		result = _regions[0]
 		
-	return region
+	return result
 	
 def get_search_service(domain=None, endpoint=None):
 	return SearchConnection(domain=domain, endpoint=endpoint)
 
 def get_document_service(domain=None, endpoint=None):
 	return DocumentServiceConnection(domain=domain, endpoint=endpoint)
-
-def create_cloudsearch_store(**kwargs):
-	params = dict(kwargs)
-	search_domain = params.pop('search_domain' , 'ntisearch')
-	return _CloudSearchStore(search_domain=search_domain, **params)
 	
 @interface.implementer(search_interfaces.ICloudSearchStore)
-class _CloudSearchStore(Persistent, object):
+class _CloudSearchStore(object):
 	
 	def __init__(self, search_domain='ntisearch', **kwargs):
 		self.search_domain = search_domain
@@ -79,29 +58,10 @@ class _CloudSearchStore(Persistent, object):
 		return self._v_domains
 	
 	def reset_aws_connection(self, **kwargs):
-		if kwargs:
-			illegal_args = [k for k in kwargs.keys() if not k in AWS_CS_PARAMS.keys()]
-			if illegal_args:
-				raise ValueError('Unknown parameters: %s' % ', '.join(illegal_args))
-			
-			self.region = kwargs.pop('region', None)
-			for k, v in AWS_CS_PARAMS.items():
-				value = kwargs.get(k, v[1])
-				setattr(self, k, value)
-		
-		# find and aws region
-		region = find_aws_region(self.region)
-		self.region = region.name
-		
-		# set aws conn params
-		params = dict(self.__dict__)
-		params.pop('region', None)
-		self._v_connection = connect_to_region(region.name, **params)
+		region = kwargs.pop('region_name', None)
+		region = find_aws_region(region)
+		self._v_connection = connect_to_region(region.name, **kwargs)
 		self._set_aws_domains(self._v_connection)
-		
-	def __setstate__(self, d):
-		self.__dict__ = d
-		self.reset_aws_connection()
 		
 	def _set_aws_domains(self, connection):
 		self._v_domains = {}
@@ -227,20 +187,12 @@ class _CloudSearchStorageService(object):
 		return result
 	
 @interface.implementer(search_interfaces.ICloudSearchStore)
-def _create_default_cloudsearch_store():
-	settings = dict(os.environ)
-	registry = component.getGlobalSiteManager()
-	if registry and hasattr(registry, 'settings'):
-		settings.update(registry.settings)
-		
-	params = {}
-	for k, v in AWS_CS_PARAMS.items():
-		func, df = v
-		val = settings.get(k, None)
-		val = func(val) if val is not None else df
-		params[k] = val
-		
-	result = None
-	if params.get('aws_access_key_id', None) and params.get('aws_secret_access_key', None):
-		result = create_cloudsearch_store(**params)
+def _create_cloudsearch_store():
+	aws_access_key_id = os.environ.get('aws_access_key_id', None)
+	aws_secret_access_key = os.environ.get('aws_secret_access_key', None)
+	if aws_access_key_id and aws_secret_access_key:
+		result = _CloudSearchStore(	aws_access_key_id=aws_access_key_id,
+									aws_secret_access_key=aws_secret_access_key)
+	else:
+		result = _CloudSearchStore()
 	return result
