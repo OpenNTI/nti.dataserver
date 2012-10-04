@@ -228,15 +228,19 @@ class _CloudSearchStorageService(object):
 	
 @interface.implementer(search_interfaces.ICloudSearchStore)
 def _create_default_cloudsearch_store():
+	settings = dict(os.environ)
+	env_settings = component.queryUtility( nti_interfaces.IEnvironmentSettings )
+	if env_settings:
+		settings.update(env_settings.settings)
+	
 	params = {}
 	for k, v in AWS_CS_PARAMS.items():
 		func, df = v
-		val = os.getenv(k, None)
+		val = settings.get(k, None)
 		val = func(val) if val is not None else df
 		params[k] = val
 		
-	if 	params.get('aws_access_key_id', None) and \
-		params.get('aws_secret_access_key', None):
-		return create_cloudsearch_store(**params)
-	return None
-
+	result = None
+	if params.get('aws_access_key_id', None) and params.get('aws_secret_access_key', None):
+		result = create_cloudsearch_store(**params)
+	return result
