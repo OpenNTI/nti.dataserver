@@ -1,3 +1,5 @@
+from gevent.coros import RLock
+
 from zope import interface
 
 from nti.dataserver import interfaces as nti_interfaces
@@ -9,6 +11,7 @@ class InMemoryMockRedis(object):
 
 	def __init__( self ):
 		self.database = {}
+		self.lock = RLock()
 
 	def set( self, key, value ):
 		self.database[key] = value
@@ -53,7 +56,6 @@ class InMemoryMockRedis(object):
 		q = self.get( key )
 		if q is None:
 			q = self.database[key] = list()
-
 		q.append( value )
 
 class Pipeline(object):
@@ -64,8 +66,10 @@ class Pipeline(object):
 
 	def __getattr__( self, key ):
 		meth = getattr( self._redis, key )
+		lock = getattr( self._redis, 'lock' )
 		def call(*args):
-			r = meth(*args)
+			with lock:
+				r = meth(*args)
 			self._results.append( r )
 			return self
 		return call
