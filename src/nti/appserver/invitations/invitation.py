@@ -11,6 +11,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import persistent
+
 from zope import interface
 
 from zope.container import contained
@@ -24,7 +26,7 @@ from nti.dataserver import datastructures
 from nti.dataserver import users
 
 @interface.implementer(invite_interfaces.IInvitation, an_interfaces.IAttributeAnnotatable)
-class PersistentInvitation(datastructures.PersistentCreatedModDateTrackingObject,contained.Contained):
+class BaseInvitation(datastructures.CreatedModDateTrackingObject,contained.Contained):
 	"""
 	Starting implementation for an interface that doesn't actually do anything.
 	"""
@@ -38,10 +40,21 @@ class PersistentInvitation(datastructures.PersistentCreatedModDateTrackingObject
 		if not user: raise ValueError()
 		notify( invite_interfaces.InvitationAcceptedEvent( self, user ) )
 
-class JoinCommunityInvitation(PersistentInvitation):
+
+class PersistentInvitation(persistent.Persistent,BaseInvitation):
+	""" Invitation meant to be stored persistently. """
+
+
+class ZcmlInvitation(BaseInvitation):
+	"""
+	Invitation not intended to be stored persistently, so it won't get intids
+	and isn't automatically adaptable to IKeyReference.
+	"""
+
+class JoinCommunityInvitation(ZcmlInvitation):
 	"""
 	Simple first pass at a pre-configured invitation to join existing
-	entities.
+	entities. Intended to be configured with ZCML and not stored persistently.
 	"""
 
 	creator = nti_interfaces.SYSTEM_USER_NAME
