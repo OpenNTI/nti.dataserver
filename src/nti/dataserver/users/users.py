@@ -149,7 +149,7 @@ class Principal(Entity,sharing.SharingSourceMixin):
 		del self.__dict__['password']
 	password = property(_get_password,_set_password,_del_password)
 
-
+@interface.implementer(nti_interfaces.ICommunity)
 class Community(Entity,sharing.DynamicSharingTargetMixin):
 
 	@classmethod

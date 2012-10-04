@@ -44,6 +44,7 @@ import pyramid.interfaces
 
 from nti.dataserver.interfaces import IShardLayout, INewUserPlacer
 from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver import users
 import nti.dataserver.tests.mock_dataserver
 from nti.dataserver import shards
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
@@ -85,6 +86,20 @@ class _AbstractValidationViewBase(ConfiguringTestBase):
 		assert_that( exc.exception.json_body, has_entry( 'code', 'InvitationCodeError' ) )
 		assert_that( exc.exception.json_body, has_entry( 'value', 'foobar' ) )
 		assert_that( exc.exception.json_body, has_entry( 'message', contains_string( 'The invitation code is not valid.' ) ) )
+
+	@WithMockDSTrans
+	def test_create_valid_invitation_code(self):
+		users.Community.create_entity( username='MATHCOUNTS' )
+		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
+													 'password': 'pass123word',
+													 'realname': 'Jason Madden',
+													 'email': 'foo@bar.com',
+													 'invitation_codes': ['MATHCOUNTS'] } )
+
+		self.the_view( self.request )
+
+
 
 
 

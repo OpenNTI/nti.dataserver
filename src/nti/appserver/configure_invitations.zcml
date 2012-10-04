@@ -1,10 +1,16 @@
 <!-- -*- mode: nxml -*- -->
 <configure
 	xmlns="http://namespaces.zope.org/zope"
-	xmlns:zcml="http://namespaces.zope.org/zcml">
+	xmlns:zcml="http://namespaces.zope.org/zcml"
+	xmlns:invite="http://nextthought.com/ntp/invite">
 	<include package="zope.component" />
+	<include package=".invitations" file="meta.zcml" />
 
 	<utility factory=".invitations.utility.ZcmlInvitations"
 			 provides=".invitations.interfaces.IInvitations" />
+
+	<invite:joinCommunities
+		code="MATHCOUNTS"
+		entities="MATHCOUNTS" />
 
 </configure>
