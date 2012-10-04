@@ -1,7 +1,9 @@
 from __future__ import print_function, unicode_literals
 
+import time
 import json
 import hashlib
+from datetime import datetime
 
 import zope.intid
 from zope import interface
@@ -59,7 +61,7 @@ def create_search_domain(connection, domain_name='ntisearch', language='en'):
 		
 	# storable
 	connection.define_index_field(domain_name, intid_, 'literal', searchable=False, result=True,
-							 	  source_attributes=(INTID, intid_), default=0)
+							 	  source_attributes=(INTID, intid_))
 		
 	# literal
 	connection.define_index_field(domain_name, type_, 'literal', searchable=True, result=False,
@@ -68,8 +70,8 @@ def create_search_domain(connection, domain_name='ntisearch', language='en'):
 	connection.define_index_field(domain_name, creator_, 'literal', searchable=True, result=False, 
 								  source_attributes=(creator_, CREATOR))
 	
-	connection.define_index_field(domain_name, last_modified_, 'uint', searchable=True, result=False,
-								  source_attributes=last_modified_fields, default=0 )
+	connection.define_index_field(domain_name, last_modified_, 'text', searchable=True, result=False,
+								  source_attributes=last_modified_fields )
 	
 	connection.define_index_field(domain_name, ntiid_, 'literal', searchable=True, result=False, 
 								  source_attributes=ntiid_fields)
@@ -112,8 +114,10 @@ def get_object_content(data):
 
 def get_last_modified(data):
 	adapted = component.getAdapter(data, search_interfaces.IContentResolver)
-	result = adapted.get_last_modified()
-	return int(result) if result else None
+	result = adapted.get_last_modified() or time.time()
+	result = datetime.fromtimestamp(result)
+	result = result.strftime('%Y%m%d%H%M%S')
+	return result
 
 def get_channel(obj):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
