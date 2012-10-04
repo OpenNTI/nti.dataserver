@@ -6,7 +6,10 @@ from datetime import datetime
 
 from zope import interface
 from zope import component
-from persistent import Persistent
+from zope.annotation import factory as an_factory
+from zope.interface.common.mapping import IFullMapping
+
+from persistent.mapping import PersistentMapping
 
 from nti.dataserver import interfaces as nti_interfaces
 
@@ -32,24 +35,24 @@ import logging
 logger = logging.getLogger( __name__ )
 	
 @component.adapter(nti_interfaces.IEntity)
-@interface.implementer(search_interfaces.ICloudSearchEntityIndexManager)
-class _CloudSearchEntityIndexManager(Persistent, _SearchEntityIndexManager):
+@interface.implementer(search_interfaces.ICloudSearchEntityIndexManager, IFullMapping)
+class _CloudSearchEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 
-	@property
-	def domain(self):
-		cs = component.getUtility(search_interfaces.ICloudSearchStore)
-		result = cs.get_domain()
-		return result
+	_service = None
 	
-	@property
-	def service(self):
-		result = component.getUtility(search_interfaces.ICloudSearchStoreService)
-		return result
+	def __init__(self):
+		PersistentMapping.__init__(self)
+		
+	def _get_cs_service(self):
+		if self._service is None:
+			self._service = component.getUtility(search_interfaces.ICloudSearchStoreService)
+		return self._service
 
 	def _get_search_hit(self, obj):
 		cloud_data = obj['data']
 		uid = cloud_data.get(intid_, None)
-		result = self.get_object(int(uid)) if uid else None
+		uid = uid[0] if isinstance(uid, (list, tuple)) else uid
+		result = self.get_object(uid) if uid is not None else None
 		return result
 		
 	def _do_search(self, qo, highlight_type=WORD_HIGHLIGHT, creator_method=None):
@@ -58,12 +61,12 @@ class _CloudSearchEntityIndexManager(Persistent, _SearchEntityIndexManager):
 		results.highlight_type = highlight_type
 		if qo.is_empty: return results
 		
-		service = self.service
+		service = self._get_cs_service()
 
 		# perform cloud query
 		start = qo.get('start', 0)
 		limit = sys.maxint # return all hits
-		bq = parse_query(qo)
+		bq = parse_query(qo, self.username)
 		objects = service.search(bq=bq, return_fields=search_stored_fields, size=limit, start=start)
 		
 		# get ds objects
@@ -111,9 +114,9 @@ class _CloudSearchEntityIndexManager(Persistent, _SearchEntityIndexManager):
 
 	def index_content(self, data, type_name=None):
 		if not data: return None
-		service = self.service
+		service = self._get_cs_service()
 		type_name = normalize_type_name(type_name or get_type_name(data))
-		oid, external = to_cloud_object(data, self.username, type_name)
+		oid, external = to_cloud_object(data, self.username)
 		service.add(oid, self.a_version,  external) 
 		result = service.commit()
 		self._check_errors(result)
@@ -124,7 +127,7 @@ class _CloudSearchEntityIndexManager(Persistent, _SearchEntityIndexManager):
 
 	def delete_content(self, data, type_name=None):
 		if not data: return None
-		service = self.service
+		service = self._get_cs_service()
 		oid = get_cloud_oid(data)
 		service.delete(oid, self.d_version) 
 		result = service.commit()
@@ -133,7 +136,7 @@ class _CloudSearchEntityIndexManager(Persistent, _SearchEntityIndexManager):
 
 	def remove_index(self, type_name=None):
 		counter = 0
-		service = self.service
+		service = self._get_cs_service()
 		for oid in self.get_aws_oids(type_name=type_name):
 			service.delete(oid, self.d_version)
 			counter = counter + 1
@@ -158,7 +161,7 @@ class _CloudSearchEntityIndexManager(Persistent, _SearchEntityIndexManager):
 		bq.append(')')
 		bq = ' '.join(bq)
 		
-		service = self.service
+		service = self._get_cs_service()
 		results = service.search(bq=bq, return_fields=[intid_], size=size, start=0)
 		for r in results:
 			yield r['id']
@@ -167,11 +170,13 @@ class _CloudSearchEntityIndexManager(Persistent, _SearchEntityIndexManager):
 		
 	def has_stored_indices(self):
 		bq = unicode("%s:'%s'" % (username_, self.username))
-		service  = self.service
+		service  = self._get_cs_service()
 		results = service.search(bq=bq, return_fields=[intid_], size=1, start=0) if service else ()
 		return len(results) > 0
 		
 	def get_stored_indices(self):
 		return ()
 
-
+def _CloudSearchEntityIndexManagerFactory(user):
+	result = an_factory(_CloudSearchEntityIndexManager)(user)
+	return result

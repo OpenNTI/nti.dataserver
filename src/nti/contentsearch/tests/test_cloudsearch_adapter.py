@@ -2,21 +2,27 @@ import os
 import time
 import uuid
 import unittest
+import threading
 
-from zope.configuration import xmlconfig
+from zope import component
+
 
 from nti.dataserver.users import User
 from nti.dataserver.contenttypes import Note
+from nti.dataserver import interfaces as nti_interfaces
 from nti.externalization.externalization import toExternalObject
 
 from nti.ntiids.ntiids import make_ntiid
 
-from nti import contentsearch
 from nti.contentsearch import interfaces as search_interfaces
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
+from nti.contentsearch import _cloudsearch_store
+from nti.contentsearch import _cloudsearch_index
+from nti.contentsearch import _cloudsearch_query
+from nti.contentsearch import _cloudsearch_adapter
 from nti.contentsearch.common import ( 	HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, SNIPPET,
 										NTIID, TARGET_OID)
 
@@ -25,10 +31,33 @@ from nti.contentsearch.tests import ConfiguringTestBase
 
 from hamcrest import (is_not, has_key, has_entry, has_length, assert_that)
 
-@unittest.SkipTest
-class TestCloudSearchAdapter(ConfiguringTestBase):
+import redis
+import logging
+
+logger = logging.getLogger(__name__)
+
+class MockCloudSearchStorageService(_cloudsearch_store._CloudSearchStorageService):
 	
-	__name__ = "TestCloudSearchAdapter"
+	def __init__( self ):
+		super(MockCloudSearchStorageService, self).__init__()
+		
+	def _spawn_index_listener(self):
+		self.stop = False
+		def read_idx_msgs():
+			while not self.stop:
+				time.sleep(5)
+				if not self.stop:
+					self.read_process_index_msgs()
+		
+		th = threading.Thread(target=read_idx_msgs)
+		th.start()
+		return th
+	
+	def halt(self):
+		self.stop =True
+	
+@unittest.SkipTest	
+class TestCloudSearchAdapter(ConfiguringTestBase):
 	
 	aws_op_delay = 5
 	aws_access_key_id = 'AKIAJ42UUP2EUMCMCZIQ'
@@ -38,10 +67,36 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 	def setUpClass(cls):
 		os.environ['aws_access_key_id']= cls.aws_access_key_id
 		os.environ['aws_secret_access_key']= cls.aws_secret_access_key
+		logging.basicConfig(level=logging.INFO, format='%(asctime)-15s %(name)-5s %(levelname)-8s %(message)s')
+		
+	def _register_zcml(self):
+		self.redis = redis.StrictRedis( unix_socket_path='/Users/csanchez/tmp/var/redis.sock')
+		component.provideUtility( self.redis, provides=nti_interfaces.IRedisClient )
+		
+		parser = _cloudsearch_query._DefaultCloudSearchQueryParser()
+		component.provideUtility( parser, provides=search_interfaces.ICloudSearchQueryParser )
+		
+		self.store = _cloudsearch_store._create_cloudsearch_store()
+		component.provideUtility( self.store, provides=search_interfaces.ICloudSearchStore )
+		
+		self.cs_service = MockCloudSearchStorageService()
+		self.cs_service._redis = self.redis
+		component.provideUtility( self.cs_service, provides=search_interfaces.ICloudSearchStoreService )
+		
+		component.provideAdapter(_cloudsearch_adapter._CloudSearchEntityIndexManagerFactory,
+								 adapts=[nti_interfaces.IEntity],
+								 provides=search_interfaces.ICloudSearchEntityIndexManager)	
+		
+		component.provideAdapter(_cloudsearch_index._CSNote,
+								 adapts=[nti_interfaces.INote],
+								 provides=search_interfaces.ICloudSearchObject)	
 		
 	def setUp( self ):
 		super(TestCloudSearchAdapter,self).setUp()
-		xmlconfig.file("cloud_search.zcml", contentsearch, context=self.configuration_context)
+		self._register_zcml()	
+		
+	def tearDown(self):
+		self.cs_service.halt()
 		
 	# ---------------------
 	
@@ -60,6 +115,7 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 			if conn: conn.add(note)
 			note = usr.addContainedObject( note )
 			notes.append(note)
+			break
 		return notes
 
 	def index_notes(self, usr, do_assert=True):
@@ -87,7 +143,7 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 		usr, _, _ = self.add_user_index_notes()
 		cim = search_interfaces.ICloudSearchEntityIndexManager(usr)
 		
-		results = cim.search("shield")
+		results = cim.search("kill")
 		hits = toExternalObject (results)
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 		assert_that(hits, has_entry(QUERY, 'shield'))
@@ -112,7 +168,7 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 		assert_that(hits, has_entry(HIT_COUNT, 3))
 
 	@WithMockDSTrans
-	def test_update_note(self):
+	def xtest_update_note(self):
 		usr, notes, _ = self.add_user_index_notes()
 		cim = search_interfaces.ICloudSearchEntityIndexManager(usr)
 		
@@ -130,7 +186,7 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 		assert_that(hits, has_entry(QUERY, 'blow'))
 
 	@WithMockDSTrans
-	def test_delete_note(self):
+	def xtest_delete_note(self):
 		usr, notes, _ = self.add_user_index_notes()
 		cim = search_interfaces.ICloudSearchEntityIndexManager(usr)
 		note = notes[5]

@@ -29,7 +29,7 @@ class _SearchEntityIndexManager(object):
 	
 	def get_object(self, uid):
 		_ds_intid = component.getUtility( zope.intid.IIntIds )
-		result = _ds_intid.queryObject(uid, None)
+		result = _ds_intid.queryObject(int(uid), None)
 		if result is None:
 			logger.debug('Could not find object with id %r' % uid)
 			

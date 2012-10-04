@@ -1,6 +1,10 @@
 <!-- -*- mode: nxml -*- -->
 <configure xmlns="http://namespaces.zope.org/zope" i18n_domain="zope">
 
+	<adapter factory="._cloudsearch_adapter._CloudSearchEntityIndexManagerFactory"
+			 for="nti.dataserver.interfaces.IEntity"
+			 provides=".interfaces.ICloudSearchEntityIndexManager" />
+			 			 
 	<adapter factory="._cloudsearch_index._CSHighlight"
 			 provides=".interfaces.ICloudSearchObject"
 			 for="nti.dataserver.interfaces.IHighlight" />
