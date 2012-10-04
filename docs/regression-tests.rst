@@ -52,6 +52,34 @@ Test case data:Be able to share notes with:
 
 Test case data: Be able to delete notes/shared notes. 
 
+MATHCOUNTS TESTS
+---------------------
+Unit to test: check assessment questions buttons
+Test case data:
+check if:  
+ - a button to show the solution is visible.
+	 - clicking it loads the solution. 
+	 - images are displayed in the solution. 
+
+Test case data: Play with the math symbols buttons
+
+
+LAW CONTENT TESTS: 
+---------------------
+Unit to test: Redactions
+Test case data: 
+	check: 
+	- sharing an inline/block redaction
+	- editing the name of an inline/block redaction 
+	- deleting an inline/block redaction
+	- you can create two inline/block redactions on one paragraph, if successful, check if both redactions have their controls menu. 
+	
+Unit to test: Links
+Test case data: 
+	click: 
+	- law cases links
+	- footnotes numbers
+
 
 ACTIVITY STREAM TESTS 
 ---------------------
