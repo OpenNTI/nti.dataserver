@@ -67,20 +67,27 @@ class FieldValidationMixin(object):
 	"""
 	A field mixin that causes slightly better errors to be created.
 	"""
+
+	def _reraise_validation_error(self, e, value):
+		if len(e.args) == 1:
+			e.args = (value, e.args[0], self.__name__)
+		elif isinstance( e, sch_interfaces.TooShort ) and len(e.args) == 2:
+			# Note we're capitalizing the field in the message.
+			e.i18n_message = _('${field} is too short.', mapping={'field': self.__name__.capitalize(), 'minLength': e.args[1]})
+			e.args = ( self.__name__.capitalize() + ' is too short.',
+					   self.__name__,
+					   value )
+		e.field = self
+		if not e.value:
+			e.value  = value
+		raise
+
 	def _validate(self, value):
 		try:
 			super(FieldValidationMixin,self)._validate( value )
 		except sch_interfaces.ValidationError as e:
-			if len(e.args) == 1:
-				e.args = (value, e.args[0], self.__name__)
-			elif isinstance( e, sch_interfaces.TooShort ) and len(e.args) == 2:
-				# Note we're capitalizing the field in the message.
-				e.i18n_message = _('${field} is too short.', mapping={'field': self.__name__.capitalize(), 'minLength': e.args[1]})
-				e.args = ( self.__name__.capitalize() + ' is too short.',
-						   self.__name__,
-						   value )
-			e.field = self
-			raise
+			self._reraise_validation_error( e, value )
+
 
 from zope.schema._field import BeforeObjectAssignedEvent
 
@@ -94,10 +101,13 @@ class ValidTextLine(FieldValidationMixin,schema.TextLine):
 	"""
 
 	def set( self, object, value ):
-		event = BeforeObjectAssignedEvent(value, self.__name__, object)
-		notify(event)
-		value = event.object
-		super(ValidTextLine,self).set( object, value )
+		try:
+			event = BeforeObjectAssignedEvent(value, self.__name__, object)
+			notify(event)
+			value = event.object
+			super(ValidTextLine,self).set( object, value )
+		except sch_interfaces.ValidationError as e:
+			self._reraise_validation_error( e, value )
 
 class IndexedIterable(schema.List):
 	"""

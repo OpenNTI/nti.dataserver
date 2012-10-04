@@ -30,7 +30,7 @@ from nti.dataserver.tests import mock_dataserver
 
 from .test_application import ApplicationTestBase
 from . import ITestMailDelivery
-
+from nti.appserver import user_policies
 
 class TestApplicationCoppaAdmin(ApplicationTestBase):
 
@@ -141,13 +141,19 @@ class TestApplicationCoppaAdmin(ApplicationTestBase):
 		# reset
 		del mailer.queue[:]
 
-		# Also can put to the field
+		# Also can put to the field, except it's too soon now
 		path = b'/dataserver2/users/ossmkitty/++fields++contact_email'
 		data = 'jason.madden@nextthought.com'
 
-		res = testapp.put( path, json.dumps( data ), extra_environ=self._make_extra_environ(username='ossmkitty') )
-		assert_that( res.status_int, is_( 200 ) )
+		res = testapp.put( path, json.dumps( data ), extra_environ=self._make_extra_environ(username='ossmkitty'), status=422 )
+		assert_that( res.json_body, has_entry( 'code', 'AttemptingToResendConsentEmailTooSoon' ) )
 
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = users.User.get_user( 'ossmkitty' )
+			user_policies._clear_consent_email_rate_limit( user )
+
+		# Now it works
+		res = testapp.put( path, json.dumps( data ), extra_environ=self._make_extra_environ(username='ossmkitty'), status=200 )
 		# We should be getting back a link to exactly that (see user_policies.py)
 		assert_that( res.json_body, has_entry( 'Links', has_item( has_entries( 'rel', 'contact-email-sends-consent-request',
 																			   'href', path ) ) ) )

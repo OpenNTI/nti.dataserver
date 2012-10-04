@@ -17,6 +17,8 @@ logger = __import__('logging').getLogger(__name__)
 from nti.appserver import MessageFactory as _
 import pkg_resources
 
+import time
+
 from zope import component
 from zope import interface
 from zope.schema import interfaces as sch_interfaces
@@ -130,6 +132,10 @@ from email.mime.application import MIMEApplication
 
 
 CONTACT_EMAIL_RECOVERY_ANNOTATION = __name__ + '.contact_email_recovery_hash'
+#: The time.time() value at which the last consent request
+#: email was sent. Used to implement rate limiting. We apply rate limiting
+#: even when changing as a result of a bounce
+CONSENT_EMAIL_LAST_SENT_ANNOTATION = __name__ + '.consent_email_last_sent'
 
 @component.adapter(nti_interfaces.ICoppaUser,app_interfaces.IUserUpgradedEvent)
 def send_consent_ack_email(user, event):
@@ -172,7 +178,7 @@ def send_consent_request_when_contact_email_changes( new_email, profile, event )
 		return
 
 	event.request = get_current_request()
-	_send_consent_request( user, profile, new_email, event )
+	_send_consent_request( user, profile, new_email, event, rate_limit=True )
 	event.object = None # Got to prohibit actually storing this.
 
 
@@ -188,13 +194,24 @@ def send_consent_request_on_new_coppa_account( user, event ):
 	email = getattr( profile, 'contact_email' )
 	_send_consent_request( user, profile, email, event )
 
-def _send_consent_request( user, profile, email, event ):
+class AttemptingToResendConsentEmailTooSoon(sch_interfaces.ValidationError):
+	i18n_message = _("It is too soon to send another consent request email. Please try again tomorrow.")
+	field = 'contact_email'
+
+def _send_consent_request( user, profile, email, event, rate_limit=False ):
 
 	if not email:
 		return
 
 	if not event.request: #pragma: no cover
 		return
+
+	annotations = IAnnotations( user )
+	if rate_limit:
+		time_last_sent = annotations.get( CONSENT_EMAIL_LAST_SENT_ANNOTATION, 0 )
+		a_day_after_last_sent = time_last_sent + (12 * 60 * 60) # twelve hour lockout
+		if time.time() < a_day_after_last_sent:
+			raise AttemptingToResendConsentEmailTooSoon()
 
 	# Need to send both HTML and plain text if we send HTML, because
 	# many clients still do not render HTML emails well (e.g., the popup notification on iOS
@@ -246,7 +263,13 @@ def _send_consent_request( user, profile, email, event ):
 
 	# We do need to keep something machine readable, though, for purposes of bounces
 	# The cheap way to do it is with annotations
-	IAnnotations( user )[CONTACT_EMAIL_RECOVERY_ANNOTATION] = user_profile.make_password_recovery_email_hash( email )
+	annotations[CONTACT_EMAIL_RECOVERY_ANNOTATION] = user_profile.make_password_recovery_email_hash( email )
+	annotations[CONSENT_EMAIL_LAST_SENT_ANNOTATION] = time.time()
+
+def _clear_consent_email_rate_limit( user ):
+	annotations = IAnnotations(user)
+	if CONSENT_EMAIL_LAST_SENT_ANNOTATION in annotations:
+		del annotations[CONSENT_EMAIL_LAST_SENT_ANNOTATION]
 
 import pyPdf
 import pyPdf.generic
