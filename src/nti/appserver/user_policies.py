@@ -75,6 +75,24 @@ class CoppaUserWithoutAgreementCapabilityFilter(object):
 	def filterCapabilities( self, capabilities ):
 		return set()
 
+#: This relationship is exposed on Users and in the handshake/ping
+#: when the UI should display it as a link to information about
+#: our "Children's Privacy Policy."
+REL_CHILDRENS_PRIVACY = 'childrens-privacy'
+
+#: The relationship that is exposed when editing a user's profile's
+#: ``contact_email`` field will result in sending a COPPA consent
+#: request email to the new address. The link value itself turns
+#: out to be the address of the ``contact_email`` field, so an application
+#: can simply PUT to the value of this link to trigger sending the email.
+#:
+#: .. note::
+#:     There may be rate limits and other restrictions on the
+#:     ``contact_email``, so be prepared to handle errors when
+#:     editing this value.
+#:
+REL_CONTACT_EMAIL_SENDS_CONSENT = 'contact-email-sends-consent-request'
+
 @interface.implementer(app_interfaces.IAuthenticatedUserLinkProvider)
 @component.adapter(nti_interfaces.ICoppaUser,pyramid_interfaces.IRequest)
 class CoppaUserPrivacyPolicyLinkProvider(object):
@@ -84,8 +102,22 @@ class CoppaUserPrivacyPolicyLinkProvider(object):
 
 	def get_links( self ):
 		link = Link( 'https://docs.google.com/document/pub?id=1kNo6hwwKwWdhq7jzczAysUWhnsP9RfckIet11pWPW6k',
-					  rel='childrens-privacy',
+					  rel=REL_CHILDRENS_PRIVACY,
 					  target_mime_type='text/html' )
+		link_belongs_to_user( link, self.user )
+		return (link,)
+
+@interface.implementer(app_interfaces.IAuthenticatedUserLinkProvider)
+@component.adapter(nti_interfaces.ICoppaUserWithoutAgreement,pyramid_interfaces.IRequest)
+class CoppaUserWithoutAgreementContactEmailLinkProvider(object):
+
+	def __init__( self, user=None, request=None ):
+		self.user = user
+
+	def get_links( self ):
+		link = Link( self.user,
+					 rel=REL_CONTACT_EMAIL_SENDS_CONSENT,
+					 elements=( '++fields++contact_email', ) )
 		link_belongs_to_user( link, self.user )
 		return (link,)
 

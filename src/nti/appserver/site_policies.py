@@ -316,6 +316,7 @@ class LogonLinksCreationStripper(object):
 def find_site_policy( request=None ):
 	"""
 	Find a site policy that's currently active, including the default.
+
 	:return: A two-tuple of (policy, site_name). If no policy was found
 		then the first value is None and the second value is all applicable site_names found.
 	"""

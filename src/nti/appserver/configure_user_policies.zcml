@@ -74,5 +74,8 @@
 	<subscriber factory=".user_policies.CoppaUserPrivacyPolicyLinkProvider"
 				provides=".interfaces.IAuthenticatedUserLinkProvider" />
 
+	<!-- Contact email link as needed -->
+	<subscriber factory=".user_policies.CoppaUserWithoutAgreementContactEmailLinkProvider"
+				provides=".interfaces.IAuthenticatedUserLinkProvider" />
 
 </configure>
