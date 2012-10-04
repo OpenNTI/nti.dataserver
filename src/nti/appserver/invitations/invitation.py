@@ -18,8 +18,10 @@ from zope.event import notify
 
 from zope.annotation import interfaces as an_interfaces
 from . import interfaces as invite_interfaces
+from nti.dataserver import interfaces as nti_interfaces
 
 from nti.dataserver import datastructures
+from nti.dataserver import users
 
 @interface.implementer(invite_interfaces.IInvitation, an_interfaces.IAttributeAnnotatable)
 class PersistentInvitation(datastructures.PersistentCreatedModDateTrackingObject,contained.Contained):
@@ -35,3 +37,33 @@ class PersistentInvitation(datastructures.PersistentCreatedModDateTrackingObject
 		"""
 		if not user: raise ValueError()
 		notify( invite_interfaces.InvitationAcceptedEvent( self, user ) )
+
+class JoinCommunityInvitation(PersistentInvitation):
+	"""
+	Simple first pass at a pre-configured invitation to join existing
+	entities.
+	"""
+
+	creator = nti_interfaces.SYSTEM_USER_NAME
+
+	def __init__( self, code, entities ):
+		super(JoinCommunityInvitation,self).__init__()
+		self.code = code
+		self.entities = entities
+
+	def accept( self, user ):
+		for entity_name in self.entities:
+			entity = users.Entity.get_entity( entity_name )
+			if entity is None:
+				logger.warn( "Unable to accept invitation to join non-existent entity %s", entity_name )
+				continue
+			if nti_interfaces.ICommunity.providedBy( entity ):
+				logger.info( "Accepting invitation to join community %s", entity )
+				user.join_community( entity )
+				user.follow( entity )
+			elif nti_interfaces.IFriendsList.providedBy( entity ):
+				logger.info( "Accepting invitation to join DFL %s", entity )
+				entity.addFriend( user )
+			else:
+				logger.warn( "Don't know how to accept invitation to join entity %s", entity )
+		super(JoinCommunityInvitation,self).accept( user )

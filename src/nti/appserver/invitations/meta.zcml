@@ -1,0 +1,14 @@
+<configure
+	xmlns="http://namespaces.zope.org/zope"
+	xmlns:meta="http://namespaces.zope.org/meta">
+
+  <meta:directives namespace="http://nextthought.com/ntp/invite">
+
+	<meta:directive
+		name="joinCommunities"
+		schema=".zcml.IRegisterJoinCommunityInvitationDirective"
+		handler=".zcml.registerJoinCommunityInvitation"
+		/>
+  </meta:directives>
+
+</configure>
