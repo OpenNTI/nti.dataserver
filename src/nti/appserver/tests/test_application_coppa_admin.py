@@ -102,6 +102,31 @@ class TestApplicationCoppaAdmin(ApplicationTestBase):
 		assert_that( mailer, has_property( 'queue', has_length( 1 ) ) )
 		assert_that( mailer, has_property( 'queue', contains( has_property( 'subject', 'NextThought Account Confirmation' ) ) ) )
 
+		# The schema should specify that an email address is required
+		res = testapp.get( '/dataserver2/users/ossmkitty/@@account.profile',
+						   extra_environ=self._make_extra_environ(username='ossmkitty'), )
+		assert_that( res.json_body, has_entry( 'ProfileSchema', has_entry( 'email', has_entry( 'required', True ) ) ) )
+		res = testapp.put( '/dataserver2/users/ossmkitty/++fields++email',
+						   json.dumps( None ),
+						   extra_environ=self._make_extra_environ(username='ossmkitty'),
+						   status=422 )
+		assert_that( res.json_body, has_entry( 'field', 'email' ) )
+
+		res = testapp.put( '/dataserver2/users/ossmkitty/++fields++email',
+						   json.dumps( 'not_valid' ),
+						   extra_environ=self._make_extra_environ(username='ossmkitty'),
+						   status=422 )
+		assert_that( res.json_body, has_entry( 'field', 'email' ) )
+
+		# We can't actually do anything until we get this email updated
+
+		res = testapp.put( '/dataserver2/users/ossmkitty/++fields++NotificationCount',
+						   json.dumps( 1 ),
+						   extra_environ=self._make_extra_environ(username='ossmkitty'),
+						   status=422 )
+		assert_that( res.json_body, has_entry( 'field', 'email' ) )
+
+		# But what the hell, we can go ahead and clear the flag manually
 		testapp.delete( '/dataserver2/users/ossmkitty/@@account.profile.needs.updated',
 						extra_environ=self._make_extra_environ(username='ossmkitty'),
 						status=204 )
