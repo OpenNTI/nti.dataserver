@@ -131,3 +131,33 @@ class ContactEmailColumn(column.Column):
 		return u'<input type="email" class="%s" name="%s" value="%s" %s />' \
 			% ('contact-email-widget', self.getItemKey(item), self.getItemValue(item) or '',
 			selected)
+
+
+### Administrative profile review and editing
+# TODO: This will eventually move somewhere else
+
+import zope.formlib.form
+from nti.utils.schema import find_most_derived_interface
+from zope import interface
+
+@view_config( route_name='objects.generic.traversal',
+			  renderer='templates/account_profile_view.pt',
+			  permission=nauth.ACT_COPPA_ADMIN,
+			  request_method='GET',
+			  context=nti_interfaces.IUser,
+			  name='account_profile_view')
+def account_profile_view( request ):
+	context = request.context
+	profile_iface = user_interfaces.IUserProfileSchemaProvider( context ).getSchema()
+	profile = profile_iface( context )
+	profile_schema = find_most_derived_interface( profile, profile_iface, possibilities=interface.providedBy(profile) )
+
+	fields = zope.formlib.form.Fields( profile_schema, render_context=True )
+	fields = fields.omit( *[k for k,v in profile_schema.namesAndDescriptions(all=True) if v.queryTaggedValue(user_interfaces.TAG_HIDDEN_IN_UI) ] )
+
+	widgets = zope.formlib.form.setUpWidgets( fields, 'form', context,
+											  PyramidZopeRequestProxy( request ),
+											  # Without this, it needs request.form
+											  ignore_request=True )
+
+	return widgets

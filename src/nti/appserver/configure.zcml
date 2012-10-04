@@ -5,6 +5,7 @@
 	xmlns:zcml="http://namespaces.zope.org/zcml">
 	<include package="zope.component" />
 	<include package="zope.componentvocabulary" />
+	<include package="zope.formlib" />
 	<include package="nti.dataserver" />
 
 	<i18n:registerTranslations directory="locales" />
