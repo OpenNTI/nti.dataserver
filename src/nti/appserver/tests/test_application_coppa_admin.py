@@ -194,3 +194,20 @@ class TestApplicationCoppaAdmin(ApplicationTestBase):
 			user = users.User.get_user( 'ossmkitty' )
 			assert_that( user, verifiably_provides( site_policies.IMathcountsCoppaUserWithoutAgreement ) )
 			assert_that( user_interfaces.IUserProfile( user ), has_property( 'contact_email', none() ) )
+
+
+	def test_profile_admin_get_view(self):
+
+		component.provideHandler( eventtesting.events.append, (None,) )
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = self._create_user()
+			coppa_user = self._create_user( username='ossmkitty' )
+			interface.alsoProvides( coppa_user, site_policies.IMathcountsCoppaUserWithoutAgreement )
+			user_interfaces.IFriendlyNamed( coppa_user ).realname = u'Jason'
+
+		testapp = TestApp( self.app )
+
+		path = '/dataserver2/users/ossmkitty/@@account_profile_view'
+		environ = self._make_extra_environ()
+		res = testapp.get( path, extra_environ=environ )
+		assert_that( res.status_int, is_( 200 ) )

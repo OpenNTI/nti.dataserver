@@ -317,6 +317,10 @@ class _EntityACLProvider(object):
 		"""
 		acl = _ACL([ace_allowing( self._entity.username, nti_interfaces.ALL_PERMISSIONS, self ),
 					ace_allowing( pyramid.security.Authenticated, auth.ACT_READ, self),])
+		warnings.warn( "Temporary hack allowing @nextthought.com users moderation and coppa admin on all users" )
+
+		acl.append( ace_allowing( 'nextthought.com', auth.ACT_MODERATE, self ) )
+		acl.append( ace_allowing( 'nextthought.com', auth.ACT_COPPA_ADMIN, self ) )
 		# Everyone else can do nothing
 		acl.append( nti_interfaces.ACE_DENY_ALL )
 		return acl
@@ -538,7 +542,7 @@ import warnings
 class _DataserverFolderACLProvider(object):
 
 	def __init__( self, context ):
-		warnings.warn( "Temporary hack allowing @nextthought.com users moderation and coppa admin." )
+		warnings.warn( "Temporary hack allowing @nextthought.com users moderation and coppa admin on the root." )
 		# Got to be here after the components are registered
 		self.__acl__ = _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, auth.ACT_READ, _DataserverFolderACLProvider ),
 							  # TEMP Hack allowing nextthought.com users full permissions
