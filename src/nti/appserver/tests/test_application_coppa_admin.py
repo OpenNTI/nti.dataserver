@@ -127,6 +127,8 @@ class TestApplicationCoppaAdmin(ApplicationTestBase):
 		res = testapp.put( path, json.dumps( data ), extra_environ=self._make_extra_environ(username='ossmkitty') )
 		assert_that( res.status_int, is_( 200 ) )
 
+
+
 		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer, has_property( 'queue', has_length( 1 ) ) )
 		assert_that( mailer, has_property( 'queue', contains( has_property( 'subject', "Please Confirm Your Child's NextThought Account" ) ) ) )
@@ -145,6 +147,12 @@ class TestApplicationCoppaAdmin(ApplicationTestBase):
 
 		res = testapp.put( path, json.dumps( data ), extra_environ=self._make_extra_environ(username='ossmkitty') )
 		assert_that( res.status_int, is_( 200 ) )
+
+		# We should be getting back a link to exactly that (see user_policies.py)
+		assert_that( res.json_body, has_entry( 'Links', has_item( has_entries( 'rel', 'contact-email-sends-consent-request',
+																			   'href', path ) ) ) )
+
+
 
 		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer, has_property( 'queue', has_length( 1 ) ) )

@@ -53,6 +53,7 @@ Users and Logon
 	:maxdepth: 2
 
 	user_logon
+	user_and_site_policies
 
 Tasks
 =====
