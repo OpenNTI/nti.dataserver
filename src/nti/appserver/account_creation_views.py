@@ -40,7 +40,7 @@ from nti.dataserver.users import interfaces as user_interfaces
 from nti.appserver import interfaces as app_interfaces
 from nti.appserver.invitations import interfaces as invite_interfaces
 
-from nti.externalization.datastructures import InterfaceObjectIO
+from nti.utils.schema import find_most_derived_interface
 from nti.appserver.invitations.utility import accept_invitations
 
 from nti.appserver._util import logon_user_with_request
@@ -388,7 +388,7 @@ def _get_avatar_choices_for_username( username, request ):
 def _make_schema( user, readonly_override=None ):
 	profile_iface = user_interfaces.IUserProfileSchemaProvider( user ).getSchema()
 	profile = profile_iface( user )
-	profile_schema = InterfaceObjectIO( profile, profile_iface ).schema
+	profile_schema = find_most_derived_interface( profile, profile_iface, possibilities=interface.providedBy(profile) )
 	ext_schema = {}
 	for k, v in itertools.chain( nti_interfaces.IUser.namesAndDescriptions(all=False), profile_schema.namesAndDescriptions(all=True)):
 		__traceback_info__ = k, v

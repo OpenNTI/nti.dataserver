@@ -13,11 +13,12 @@ from zope.traversing import interfaces as trv_interfaces
 import ZODB
 
 from nti.appserver import interfaces as app_interfaces
-import pyramid.interfaces
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.externalization import datastructures
 from nti.externalization import interfaces as ext_interfaces
+
+from nti.utils.schema import find_most_derived_interface
 
 class EnclosureExternalObject(object):
 	interface.implements( ext_interfaces.IExternalObject )
@@ -101,8 +102,29 @@ class SharedWithExternalFieldTraverser(_AbstractExternalFieldTraverser):
 @component.adapter(nti_interfaces.IUser)
 class UserExternalFieldTraverser(_AbstractExternalFieldTraverser):
 
+	def __init__( self, context, request=None ):
+		super(UserExternalFieldTraverser,self).__init__( context, request=request )
+		profile_iface = user_interfaces.IUserProfileSchemaProvider( context ).getSchema()
+		profile = profile_iface( context )
+		profile_schema = find_most_derived_interface( profile, profile_iface, possibilities=interface.providedBy(profile) )
+
+		allowed_fields = {'lastLoginTime', 'password', 'mute_conversation', 'unmute_conversation', 'ignoring', 'accepting', 'NotificationCount', 'avatarURL' }
+
+		for k, v in profile_schema.namesAndDescriptions(all=True):
+			__traceback_info__ = k, v
+			if interface.interfaces.IMethod.providedBy( v ):
+				continue
+			# v could be a schema field or an interface.Attribute
+			if v.queryTaggedValue( user_interfaces.TAG_HIDDEN_IN_UI ):
+				continue
+
+			allowed_fields.add( k )
+
+		self._allowed_fields = allowed_fields
+
+
 	def __getitem__( self, key ):
-		if key not in ('lastLoginTime', 'password', 'mute_conversation', 'unmute_conversation', 'ignoring', 'accepting', 'NotificationCount', 'avatarURL'):
+		if key not in self._allowed_fields:
 			raise KeyError(key)
 		return _DefaultExternalFieldResource( key, self.context, wrap_value=(key != "password") )
 
