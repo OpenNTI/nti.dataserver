@@ -14,7 +14,6 @@ from boto.cloudsearch.domain import Domain
 from boto.cloudsearch.search import SearchConnection
 from boto.cloudsearch.document import DocumentServiceConnection
 
-from nti.utils import transactions
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.contentsearch import interfaces as search_interfaces
@@ -135,13 +134,14 @@ class _CloudSearchStorageService(object):
 	
 	def _get_index_msgs( self, queue_name='cloudsearch'):
 		msgs = self._get_redis().pipeline().lrange( queue_name, 0, -1).execute()
-		result = (eval(zlib.decompress(x)) for x in msgs[0]) if msgs else ()
+		msgs = msgs[0] if msgs else ()
+		result = [eval(zlib.decompress(x)) for x in msgs] if msgs else ()
 		return result
 	
 	def _put_msg(self, msg):
 		if msg is not None:
 			msg = zlib.compress( msg )
-			transactions.do(target=self, call=self._put_msg_to_redis, args=(msg,) )
+			self._put_msg_to_redis(msg)
 	
 	def _put_msg_to_redis( self, msg, queue_name='cloudsearch' ):
 		self._get_redis().pipeline().rpush( queue_name, msg ).expire(queue_name, EXPIRATION_TIME_IN_SECS).execute()
@@ -153,28 +153,31 @@ class _CloudSearchStorageService(object):
 		
 		def read_index_msgs():
 			while True:
-						
 				# wait for idx ops
 				gevent.sleep(SLEEP_WAIT_TIME)
+				self.read_process_index_msgs()
 				
-				try:
-					msgs = self._get_index_msgs()
-					if msgs:
-						service = self._get_store().get_default_document_service()
-						result = self.dispatch_messages_to_cs( msgs, service )
-						if result.errors: # check for parsing validation errors
-							s = '\n'.join(result.errors[:5]) # don't show all error
-							logger.error(s) # log errors only 
-							#TODO: save result / messages to a file
-						
-						# remove processed
-						self._remove_from_redis(msgs)
-						
-				except Exception:
-					logger.exception( "Failed to read and process index messages" )
-
-		return gevent.spawn( read_index_msgs )
+		result = gevent.spawn( read_index_msgs )
+		return result
 	
+	def read_process_index_msgs(self):
+		try:
+			msgs = self._get_index_msgs()
+			logger.info(msgs)
+			if msgs:
+				service = self._get_store().get_document_service()
+				result = self.dispatch_messages_to_cs( msgs, service )
+				if result.errors: # check for parsing validation errors
+					s = '\n'.join(result.errors[:5]) # don't show all error
+					logger.error(s) # log errors only 
+					#TODO: save result / messages to a file
+				
+				# remove processed
+				self._remove_from_redis(msgs)
+						
+		except Exception:
+			logger.exception( "Failed to read and process index messages" )
+			
 	@classmethod
 	def dispatch_messages_to_cs(cls, msgs, service):
 		for m in msgs:

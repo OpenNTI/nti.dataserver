@@ -16,9 +16,8 @@ def adapt_searchon_types(searchon=None):
 	
 @interface.implementer(search_interfaces.ICloudSearchQueryParser)
 class _DefaultCloudSearchQueryParser(object):
-	def parse(self, qo):
-		username = qo.username
-		
+	def parse(self, qo, username=None):
+		username = username or qo.username
 		searchon = adapt_searchon_types(qo.searchon)
 		
 		bq = ['(and']
@@ -35,7 +34,7 @@ class _DefaultCloudSearchQueryParser(object):
 		result = ' '.join(bq)
 		return result
 	
-def parse_query(qo):
-	parser = component.queryUtility(search_interfaces.ICloudSearchQueryParser)
-	result = parser.parse(qo)
+def parse_query(qo, username=None):
+	parser = component.getUtility(search_interfaces.ICloudSearchQueryParser)
+	result = parser.parse(qo, username)
 	return result

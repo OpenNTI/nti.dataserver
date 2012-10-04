@@ -58,7 +58,7 @@ def create_search_domain(connection, domain_name='ntisearch', language='en'):
 	domain = connection.create_domain(domain_name)
 		
 	# storable
-	connection.define_index_field(domain_name, intid_, 'uint', searchable=False, result=True,
+	connection.define_index_field(domain_name, intid_, 'literal', searchable=False, result=True,
 							 	  source_attributes=(INTID, intid_), default=0)
 		
 	# literal
@@ -134,27 +134,27 @@ def get_creator(obj):
 def get_recipients(obj):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	result = adapted.get_recipients()
-	return unicode(' '.join(result)) if result else None
+	return unicode(' '.join(result)) if result else u''
 
 def get_sharedWith(obj):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	result = adapted.get_sharedWith()
-	return unicode(' '.join(result)) if result else None
+	return unicode(' '.join(result)) if result else u''
 
 def get_references(obj):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	result = adapted.get_references()
-	return unicode(','.join(result)) if result else None
+	return unicode(','.join(result)) if result else u''
 
 def get_keywords(obj):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	words = adapted.get_keywords()
-	return unicode(','.join(words)) if words else None
+	return unicode(','.join(words)) if words else u''
 
 def get_uid(obj):
 	_ds_intid = component.getUtility( zope.intid.IIntIds )
 	uid = _ds_intid.getId(obj)
-	return int(uid)
+	return unicode(repr(uid))
 	
 @interface.implementer(search_interfaces.ICloudSearchObject)
 class _AbstractCSObject(dict):
@@ -171,7 +171,6 @@ class _AbstractCSObject(dict):
 class _CSNote(_AbstractCSObject):
 	def _set_items(self, src):
 		super(_CSNote, self)._set_items(src)
-		self[references_] = get_references(src)
 
 @component.adapter(nti_interfaces.IHighlight)	
 class _CSHighlight(_AbstractCSObject):
