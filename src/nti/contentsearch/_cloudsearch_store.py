@@ -163,7 +163,6 @@ class _CloudSearchStorageService(object):
 	def read_process_index_msgs(self):
 		try:
 			msgs = self._get_index_msgs()
-			logger.info(msgs)
 			if msgs:
 				service = self._get_store().get_document_service()
 				result = self.dispatch_messages_to_cs( msgs, service )
