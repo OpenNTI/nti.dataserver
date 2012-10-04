@@ -115,7 +115,7 @@ def send_consent_ack_email(user, event):
 
 
 @component.adapter(dolmen.builtins.IUnicode, user_interfaces.IRestrictedUserProfileWithContactEmail, sch_interfaces.IBeforeObjectAssignedEvent)
-def send_consent_request_when_contact_email_changes( new_email, target, event ):
+def send_consent_request_when_contact_email_changes( new_email, profile, event ):
 	"""
 	When users that are still pending an agreement change their contact email, we need to fire a consent
 	request.
@@ -124,24 +124,24 @@ def send_consent_request_when_contact_email_changes( new_email, target, event ):
 	(specifically the IMathcountsCoppaUserWithAgreement), so they will never get here.
 	"""
 
+	if 'contact_email' != event.name:
+		return # Note: We get two of these, one from the interface, one from the FieldPropertyStoredTHroughField named '__st_contact_email_st'
 
-	user = target.__parent__
+	user = profile.__parent__
 	if not nti_interfaces.ICoppaUserWithoutAgreement.providedBy( user ) or not getattr( user, '_p_mtime', None ):
 		# Do not do this if it's not in need of agreement.
 		# also do not do this when the user is initially being created.
 		return
 
-	if 'contact_email' != event.name:
-		return # Note: We get two of these, one from the interface, one from the FieldPropertyStoredTHroughField named '__st_contact_email_st'
 
-	if new_email == target.contact_email:
+	if new_email == profile.contact_email:
 		# Ordinarily this won't be the case because we clear out the contact_email from
 		# the profile when we send. But belt and suspenders.
 		return
 
 	event.request = get_current_request()
-	_send_consent_request( user, target, new_email, event )
-	event.value = None # Got to prohibit actually storing this.
+	_send_consent_request( user, profile, new_email, event )
+	event.object = None # Got to prohibit actually storing this.
 
 
 

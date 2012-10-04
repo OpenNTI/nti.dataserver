@@ -15,7 +15,7 @@ from hamcrest import is_not as does_not
 from hamcrest import contains
 
 from nti.tests import verifiably_provides
-
+import anyjson as json
 from zope import interface
 from zope import component
 from zope.component import eventtesting
@@ -109,3 +109,49 @@ class TestApplicationCoppaAdmin(ApplicationTestBase):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = users.User.get_user( 'ossmkitty' )
 			assert_that( user, does_not( verifiably_provides( user_interfaces.IRequireProfileUpdate ) ) )
+
+
+	def test_post_contact_email_addr_sends_email(self):
+		component.provideHandler( eventtesting.events.append, (None,) )
+		with mock_dataserver.mock_db_trans( self.ds ):
+			coppa_user = self._create_user( username='ossmkitty' )
+			interface.alsoProvides( coppa_user, site_policies.IMathcountsCoppaUserWithoutAgreement )
+			user_interfaces.IFriendlyNamed( coppa_user ).realname = u'Jason'
+
+		testapp = TestApp( self.app )
+
+		# The full user path
+		path = b'/dataserver2/users/ossmkitty'
+		data = {'contact_email': 'jason.madden@nextthought.com'}
+
+		res = testapp.put( path, json.dumps( data ), extra_environ=self._make_extra_environ(username='ossmkitty') )
+		assert_that( res.status_int, is_( 200 ) )
+
+		mailer = component.getUtility( ITestMailDelivery )
+		assert_that( mailer, has_property( 'queue', has_length( 1 ) ) )
+		assert_that( mailer, has_property( 'queue', contains( has_property( 'subject', "Please Confirm Your Child's NextThought Account" ) ) ) )
+
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = users.User.get_user( 'ossmkitty' )
+			assert_that( user, verifiably_provides( site_policies.IMathcountsCoppaUserWithoutAgreement ) )
+			assert_that( user_interfaces.IUserProfile( user ), has_property( 'contact_email', none() ) )
+
+		# reset
+		del mailer.queue[:]
+
+		# Also can put to the field
+		path = b'/dataserver2/users/ossmkitty/++fields++contact_email'
+		data = 'jason.madden@nextthought.com'
+
+		res = testapp.put( path, json.dumps( data ), extra_environ=self._make_extra_environ(username='ossmkitty') )
+		assert_that( res.status_int, is_( 200 ) )
+
+		mailer = component.getUtility( ITestMailDelivery )
+		assert_that( mailer, has_property( 'queue', has_length( 1 ) ) )
+		assert_that( mailer, has_property( 'queue', contains( has_property( 'subject', "Please Confirm Your Child's NextThought Account" ) ) ) )
+
+
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = users.User.get_user( 'ossmkitty' )
+			assert_that( user, verifiably_provides( site_policies.IMathcountsCoppaUserWithoutAgreement ) )
+			assert_that( user_interfaces.IUserProfile( user ), has_property( 'contact_email', none() ) )
