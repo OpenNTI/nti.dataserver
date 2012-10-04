@@ -229,10 +229,10 @@ class _CloudSearchStorageService(object):
 @interface.implementer(search_interfaces.ICloudSearchStore)
 def _create_default_cloudsearch_store():
 	settings = dict(os.environ)
-	env_settings = component.queryUtility( nti_interfaces.IEnvironmentSettings )
-	if env_settings:
-		settings.update(env_settings.settings)
-	
+	registry = component.getGlobalSiteManager()
+	if registry and hasattr(registry, 'settings'):
+		settings.update(registry.settings)
+		
 	params = {}
 	for k, v in AWS_CS_PARAMS.items():
 		func, df = v
