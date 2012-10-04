@@ -919,15 +919,6 @@ class TestApplicationCreateUser(_AbstractApplicationCreateUserTest):
 
 		del mailer.queue[:]
 
-		# If we edit the contact_email of the account, we get a new notice
-		data = to_json_representation( {'contact_email': 'jason.madden2@nextthought.com' } )
-		extra_environ = self._make_extra_environ( username=res.json_body['Username'] )
-		extra_environ[b'HTTP_ORIGIN'] = b'http://mathcounts.nextthought.com'
-		res = app.put( res.location, data, extra_environ=extra_environ )
-
-		assert_that( res, has_property( 'status_int', 200 ) )
-
-		assert_that( mailer.queue, has_item( has_property( 'subject', "Please Confirm Your Child's NextThought Account" ) ) )
 
 	def test_create_user_prmia_policy( self ):
 
