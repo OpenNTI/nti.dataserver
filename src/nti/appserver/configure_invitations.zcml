@@ -9,6 +9,10 @@
 	<utility factory=".invitations.utility.ZcmlInvitations"
 			 provides=".invitations.interfaces.IInvitations" />
 
+	<!--
+		 Basic testing invitation. Note that entities is a space
+		 separated list of usernames and/or NTIIDs (for DFLs).
+	-->
 	<invite:joinCommunities
 		code="MATHCOUNTS"
 		entities="MATHCOUNTS" />
