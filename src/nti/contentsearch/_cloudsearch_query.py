@@ -15,7 +15,7 @@ def adapt_searchon_types(searchon=None):
 		return ()
 	
 @interface.implementer(search_interfaces.ICloudSearchQueryParser)
-class _DefaulCloudSearchQueryParser(object):
+class _DefaultCloudSearchQueryParser(object):
 	def parse(self, qo):
 		username = qo.username
 		
