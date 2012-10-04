@@ -78,7 +78,7 @@ class FieldValidationMixin(object):
 					   self.__name__,
 					   value )
 		e.field = self
-		if not e.value:
+		if not getattr( e, 'value', None):
 			e.value  = value
 		raise
 

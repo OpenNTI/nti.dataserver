@@ -209,15 +209,29 @@ class NTIUsersAuthenticatorPlugin(object):
 		if _make_user_auth().user_has_password( identity['login'], identity['password'] ):
 			return identity['login']
 
-def _create_middleware( secure_cookies=False ):
+ONE_DAY = 24 * 60 * 60
+ONE_WEEK = 7 * ONE_DAY
+ONE_MONTH = 30 * ONE_DAY
+
+def _create_middleware( secure_cookies=False,
+						cookie_secret='secret',
+						cookie_timeout=ONE_WEEK ):
 	user_auth = NTIUsersAuthenticatorPlugin()
 	basicauth = BasicAuthPlugin('NTI')
 	# Note that the cookie name needs to be bytes, not unicode. Otherwise we wind up with
 	# unicode objects in the headers, which are supposed to be ascii. Things like the Cookie
 	# module (used by webtest) then fail
-	auth_tkt = AuthTktCookiePlugin('secret', b'nti.auth_tkt',
+	auth_tkt = AuthTktCookiePlugin(cookie_secret,
+								   b'nti.auth_tkt',
 								   secure=secure_cookies,
-								   timeout=30*24*60*60, reissue_time=600)
+								   timeout=cookie_timeout,
+								   reissue_time=600,
+								   # For extra safety, we can refuse to return authenticated ids
+								   # if they don't exist. If we are called too early ,outside the site,
+								   # this can raise an exception, but the only place that matters, logging,
+								   # already deals with it (gunicorn.py). Because it's an exception,
+								   # it prevents any of the caching from kicking in
+								   userid_checker=User.get_user)
 	# For testing, we let basic-auth set cookies. We don't want to do this
 	# generally.
 	#basicauth.include_ip = False
@@ -246,14 +260,17 @@ def _create_middleware( secure_cookies=False ):
 					log_level=logging.DEBUG )
 	return middleware
 
-def create_authentication_policy( secure_cookies=False ):
+def create_authentication_policy( secure_cookies=False, cookie_secret='secret', cookie_timeout=ONE_WEEK ):
 	"""
 	:param bool secure_cookies: If ``True`` (not the default), then any cookies
 		we create will only be sent over SSL and will additionally have the 'HttpOnly'
 		flag set, preventing them from being subject to cross-site vulnerabilities.
+	:param str cookie_secret: The value used to encrypt cookies. Must be the same on
+		all instances in a given environment, but should be different in different
+		environments.
 	"""
-	middleware = _create_middleware(secure_cookies=secure_cookies)
-	result = NTIAuthenticationPolicy()
+	middleware = _create_middleware(secure_cookies=secure_cookies, cookie_secret=cookie_secret, cookie_timeout=cookie_timeout )
+	result = NTIAuthenticationPolicy(cookie_timeout=cookie_timeout)
 	result.api_factory = middleware.api_factory
 	# And make it capable of impersonation
 	result = nti_authentication.DelegatingImpersonatedAuthenticationPolicy( result )
@@ -262,11 +279,12 @@ def create_authentication_policy( secure_cookies=False ):
 @interface.implementer( IAuthenticationPolicy )
 class NTIAuthenticationPolicy(WhoV2AuthenticationPolicy):
 
-	def __init__( self ):
+	def __init__( self, cookie_timeout=ONE_WEEK ):
 		# configfile is ignored, second argument is identifier_id, which must match one of the
 		# things we setup in _create_middleware. It's used in remember()
 		super(NTIAuthenticationPolicy,self).__init__( '', 'auth_tkt', callback=_make_user_auth() )
 		self.api_factory = None
+		self._cookie_timeout = cookie_timeout
 
 	def unauthenticated_userid( self, request ):
 		_decode_username( request )
@@ -282,7 +300,7 @@ class NTIAuthenticationPolicy(WhoV2AuthenticationPolicy):
 		identity = {
 			'repoze.who.userid': principal,
 			'identifier': api.name_registry[self._identifier_id],
-			'max_age': str(30*24*60*60)
+			'max_age': str(self._cookie_timeout)
 			}
 		return api.remember(identity)
 

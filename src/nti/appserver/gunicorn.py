@@ -234,18 +234,31 @@ class _ServerFactory(object):
 			See nti.dataserver for this. We provide a pretty thread name to the extent
 			possible.
 			"""
+
 			def __thread_name__(self):
+				# The WorkerGreenlets themselves are cached and reused,
+				# but the request we can cache on
 				prequest = get_current_request()
 				if not prequest:
 					return self._formatinfo()
 
 				try:
+					return getattr( prequest, '_worker_greenlet_cached_thread_name' )
+				except AttributeError:
+					pass
+				cache = False
+				try:
 					uid = unauthenticated_userid( prequest )
+					cache = True
 				except LookupError:
 					# In some cases, pyramid tries to turn this into an authenticated
 					# user id, and if it's too early, we won't be able to use the dataserver
 					uid = prequest.remote_user
-				return "%s:%s" % (prequest.path, uid )
+
+				result = "%s:%s" % (prequest.path, uid or '' )
+				if cache:
+					setattr( prequest, '_worker_greenlet_cached_thread_name', result )
+				return result
 
 		spawn.greenlet_class = WorkerGreenlet
 		worker.app_server.set_spawn(spawn)
