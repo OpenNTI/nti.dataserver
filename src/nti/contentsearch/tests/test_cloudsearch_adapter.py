@@ -28,12 +28,11 @@ from nti.contentsearch.common import ( 	HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUE
 
 from nti.contentsearch.tests import zanpakuto_commands
 from nti.contentsearch.tests import ConfiguringTestBase
+from nti.contentsearch.tests.mock_redis import InMemoryMockRedis
 
 from hamcrest import (is_not, has_key, has_entry, has_length, assert_that)
 
-import redis
 import logging
-
 logger = logging.getLogger(__name__)
 
 class MockCloudSearchStorageService(_cloudsearch_store._CloudSearchStorageService):
@@ -70,7 +69,7 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 		logging.basicConfig(level=logging.INFO, format='%(asctime)-15s %(name)-5s %(levelname)-8s %(message)s')
 		
 	def _register_zcml(self):
-		self.redis = redis.StrictRedis( unix_socket_path='/Users/csanchez/tmp/var/redis.sock')
+		self.redis = InMemoryMockRedis()
 		component.provideUtility( self.redis, provides=nti_interfaces.IRedisClient )
 		
 		parser = _cloudsearch_query._DefaultCloudSearchQueryParser()
@@ -115,7 +114,6 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 			if conn: conn.add(note)
 			note = usr.addContainedObject( note )
 			notes.append(note)
-			break
 		return notes
 
 	def index_notes(self, usr, do_assert=True):
@@ -143,7 +141,7 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 		usr, _, _ = self.add_user_index_notes()
 		cim = search_interfaces.ICloudSearchEntityIndexManager(usr)
 		
-		results = cim.search("kill")
+		results = cim.search("shield")
 		hits = toExternalObject (results)
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 		assert_that(hits, has_entry(QUERY, 'shield'))
@@ -156,13 +154,7 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 		assert_that(hit, has_entry(NTIID, is_not(None)))
 		assert_that(hit, has_entry(TARGET_OID, is_not(None)))
 		assert_that(hit, has_entry(CONTAINER_ID, 'tag:nextthought.com,2011-10:bleach-manga'))
-		assert_that(hit, has_entry(SNIPPET, 'All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade'))
-
-		hits = toExternalObject(cim.search("*"))
-		assert_that(hits, has_entry(HIT_COUNT, len(zanpakuto_commands)))
-
-		hits = toExternalObject(cim.search("?"))
-		assert_that(hits, has_entry(HIT_COUNT, len(zanpakuto_commands)))
+		assert_that(hit, has_entry(SNIPPET, 'All Waves Rise now and Become my Shield Lightning Strike now and Become my Blade'))
 
 		hits = toExternalObject(cim.search("ra*"))
 		assert_that(hits, has_entry(HIT_COUNT, 3))
@@ -192,7 +184,7 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 		note = notes[5]
 		cim.delete_content(note)
 		time.sleep(self.aws_op_delay)
-		hits = toExternalObject(self.cim.search("shield"))
+		hits = toExternalObject(cim.search("shield"))
 		assert_that(hits, has_entry(HIT_COUNT, 0))
 		assert_that(hits, has_entry(QUERY, 'shield'))
 

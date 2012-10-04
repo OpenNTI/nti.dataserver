@@ -1,4 +1,4 @@
-from gevent.coros import RLock
+from threading import RLock
 
 from zope import interface
 
