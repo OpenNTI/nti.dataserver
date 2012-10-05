@@ -11,8 +11,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import re
-
 from zope import interface
 
 from nti.dataserver import interfaces as nti_interfaces
