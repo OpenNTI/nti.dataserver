@@ -7,13 +7,15 @@ import gevent
 
 from zope import component
 from zope import interface
+from ZODB import loglevels
 
 from boto.cloudsearch import regions
-from boto.cloudsearch import connect_to_region
-from boto.cloudsearch.domain import Domain 
+from boto.cloudsearch.domain import Domain
+from boto.cloudsearch import connect_to_region 
 from boto.cloudsearch.search import SearchConnection
 from boto.cloudsearch.document import DocumentServiceConnection
 
+from nti.utils import transactions
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.contentsearch import interfaces as search_interfaces
@@ -88,8 +90,9 @@ class _CloudSearchStore(object):
 		result = get_search_service(domain) if domain else None
 		return result
 
-SLEEP_WAIT_TIME = 15
-EXPIRATION_TIME_IN_SECS = 60 * 2
+MAX_BATCH_ITEMS = 99
+SLEEP_WAIT_TIME = 5
+EXPIRATION_TIME_IN_SECS = 60
 
 @interface.implementer(search_interfaces.ICloudSearchStoreService)
 class _CloudSearchStorageService(object):
@@ -98,7 +101,7 @@ class _CloudSearchStorageService(object):
 	_store = None
 	
 	def __init__( self ):
-		self.index_listener = self._spawn_index_listener()
+		self._v_index_listener = self._spawn_index_listener()
 
 	def _get_redis( self ):
 		if self._redis is None:
@@ -133,7 +136,7 @@ class _CloudSearchStorageService(object):
 	# redis
 	
 	def _get_index_msgs( self, queue_name='cloudsearch'):
-		msgs = self._get_redis().pipeline().lrange( queue_name, 0, -1).execute()
+		msgs = self._get_redis().pipeline().lrange( queue_name, 0, MAX_BATCH_ITEMS).execute()
 		msgs = msgs[0] if msgs else ()
 		result = [eval(zlib.decompress(x)) for x in msgs] if msgs else ()
 		return result
@@ -141,7 +144,7 @@ class _CloudSearchStorageService(object):
 	def _put_msg(self, msg):
 		if msg is not None:
 			msg = zlib.compress( msg )
-			self._put_msg_to_redis(msg)
+			transactions.do(target=self, call=self._put_msg_to_redis, args=(msg,) )
 	
 	def _put_msg_to_redis( self, msg, queue_name='cloudsearch' ):
 		self._get_redis().pipeline().rpush( queue_name, msg ).expire(queue_name, EXPIRATION_TIME_IN_SECS).execute()
@@ -164,6 +167,7 @@ class _CloudSearchStorageService(object):
 		try:
 			msgs = self._get_index_msgs()
 			if msgs:
+				logger.log(loglevels.TRACE, 'Read %s index events from redis', len(msgs))
 				service = self._get_store().get_document_service()
 				result = self.dispatch_messages_to_cs( msgs, service )
 				if result and result.errors: # check for parsing validation errors
@@ -188,8 +192,14 @@ class _CloudSearchStorageService(object):
 		result = service.commit()
 		return result
 	
+	
+#_aws_access_key_id = 'AKIAJ42UUP2EUMCMCZIQ'
+#_aws_secret_access_key = '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'
+	
 @interface.implementer(search_interfaces.ICloudSearchStore)
 def _create_cloudsearch_store():
+	#os.environ['aws_access_key_id']= _aws_access_key_id
+	#os.environ['aws_secret_access_key']= _aws_secret_access_key	
 	aws_access_key_id = os.environ.get('aws_access_key_id', None)
 	aws_secret_access_key = os.environ.get('aws_secret_access_key', None)
 	if aws_access_key_id and aws_secret_access_key:
