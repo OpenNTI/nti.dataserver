@@ -51,6 +51,7 @@ from nti.appserver import pyramid_authorization
 from nti.appserver import _question_map
 from nti.appserver import dataserver_socketio_views
 
+from nti.utils import setupChameleonCache
 
 # Make the zope interface extend the pyramid interface
 # Although this seems backward, it isn't. The zope location
@@ -130,6 +131,7 @@ def createApplication( http_port,
 	notify( ProcessStarting() )
 
 	logger.debug( 'Began starting dataserver' )
+	setupChameleonCache(config=True)
 	server = None
 
 	if IDataserver.providedBy( create_ds ): #not isinstance( create_ds, bool ):
