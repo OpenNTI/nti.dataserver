@@ -43,7 +43,7 @@ class MockCloudSearchStorageService(_cloudsearch_store._CloudSearchStorageServic
 		self.stop = False
 		def read_idx_msgs():
 			while not self.stop:
-				time.sleep(5)
+				time.sleep(1)
 				if not self.stop:
 					self.read_process_index_msgs()
 		
@@ -78,7 +78,7 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 								 provides=search_interfaces.ICloudSearchObject)	
 		
 	def _register_zcml_cs(self):
-		self.aws_op_delay = 10
+		self.aws_op_delay = 5
 		self._register_zcml()
 		
 		parser = _cloudsearch_query._DefaultCloudSearchQueryParser()
@@ -92,7 +92,7 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 		component.provideUtility( self.cs_service, provides=search_interfaces.ICloudSearchStoreService )
 		
 	def _register_zcml_mock(self):
-		self.aws_op_delay = 5
+		self.aws_op_delay = 2.5
 		self._register_zcml()
 		
 		parser = _MockCloundSearchQueryParser()
@@ -206,7 +206,6 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 		hits = toExternalObject(cim.search("shield"))
 		assert_that(hits, has_entry(HIT_COUNT, 0))
 		assert_that(hits, has_entry(QUERY, 'shield'))
-
 
 if __name__ == '__main__':
 	unittest.main()
