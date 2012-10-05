@@ -25,13 +25,16 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 from nti.dataserver.tests import mock_dataserver
 
-from nti.appserver.tests.test_application import ApplicationTestBase
+from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
 from nti.appserver.account_creation_views import REL_ACCOUNT_PROFILE
 
 
-class TestApplicationUserSearch(ApplicationTestBase):
+class TestApplicationUserSearch(SharedApplicationTestBase):
 
+	@WithSharedApplicationMockDS
 	def test_user_search_has_dfl(self):
+
+
 		with mock_dataserver.mock_db_trans(self.ds):
 			user1 = self._create_user()
 			user2 = self._create_user(username='jason@nextthought.com' )
@@ -85,8 +88,9 @@ class TestApplicationUserSearch(ApplicationTestBase):
 			res = testapp.get( str(path), extra_environ=self._make_extra_environ('jason@nextthought.com'))
 			assert_that( res.json_body['Items'], has_length( cnt ) )
 
-
+	@WithSharedApplicationMockDS
 	def test_user_search(self):
+
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user()
 			user_interfaces.IFriendlyNamed( user ).realname = u"Steve Johnson"
@@ -116,6 +120,7 @@ class TestApplicationUserSearch(ApplicationTestBase):
 		# We should have our name
 		assert_that( res.json_body['Items'][0], has_entry( 'realname', 'Steve Johnson' ) )
 
+	@WithSharedApplicationMockDS
 	def test_user_search_subset(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user()
@@ -135,6 +140,7 @@ class TestApplicationUserSearch(ApplicationTestBase):
 		res = testapp.get( path, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body['Items'], has_length( 2 ) )
 
+	@WithSharedApplicationMockDS
 	def test_user_search_communities(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			u1 = self._create_user()
@@ -168,6 +174,7 @@ class TestApplicationUserSearch(ApplicationTestBase):
 		res = testapp.get( path, extra_environ=self._make_extra_environ(username=u3.username))
 		assert_that( res.json_body['Items'], has_length( 0 ) )
 
+	@WithSharedApplicationMockDS
 	def test_user_search_mathcounts_policy(self):
 		"On the mathcounts site, we cannot search for realname or alias"
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -215,6 +222,7 @@ class TestApplicationUserSearch(ApplicationTestBase):
 		assert_that( links, has_item( has_entries( 'href', '/dataserver2/users/sjohnson%40nextthought.com/@@' + REL_ACCOUNT_PROFILE ,
 												   'rel', REL_ACCOUNT_PROFILE ) ) )
 
+	@WithSharedApplicationMockDS
 	def test_search_empty_term_user(self):
 		"Searching with an empty term returns empty results"
 		with mock_dataserver.mock_db_trans( self.ds ):

@@ -14,7 +14,7 @@ from hamcrest import greater_than
 from nti.appserver.dataserver_pyramid_views import (class_name_from_content_type,
 													_UGDPutView,
 													_UGDPostView,)
-from nti.appserver.tests import ConfiguringTestBase
+from nti.appserver.tests import SharedConfiguringTestBase
 from pyramid.threadlocal import get_current_request
 import pyramid.httpexceptions as hexc
 
@@ -74,7 +74,15 @@ class ContainedExternal(ZContainedMixin):
 from zope.component import eventtesting
 from zope import component
 from zope.lifecycleevent import IObjectModifiedEvent
-class TestUGDModifyViews(ConfiguringTestBase):
+from nti.appserver._dataserver_pyramid_traversal import _NTIIDsContainerResource
+class TestUGDModifyViews(SharedConfiguringTestBase):
+
+	@classmethod
+	def setUpClass(cls):
+		super(TestUGDModifyViews,cls).setUpClass()
+		component.provideHandler( eventtesting.events.append, (None,) )
+
+
 
 	@WithMockDSTrans
 	def test_put_summary_obj(self):
@@ -96,8 +104,6 @@ class TestUGDModifyViews(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_put_to_user_fires_events(self):
 		"If we put to the User, events fire"""
-
-		component.provideHandler( eventtesting.events.append, (None,) )
 
 		view = _UGDPutView( get_current_request() )
 		user = users.User.create_user( self.ds, username='jason.madden@nextthought.com', password='temp001' )
@@ -123,8 +129,6 @@ class TestUGDModifyViews(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_put_to_contained_object_fires_events(self):
 		"Putting to a contained object fires events to update the object and the container modification times"""
-
-		component.provideHandler( eventtesting.events.append, (None,) )
 
 		view = _UGDPutView( get_current_request() )
 		user = users.User.create_user( dataserver=self.ds, username='jason.madden@nextthought.com' )
@@ -191,12 +195,9 @@ class TestUGDModifyViews(ConfiguringTestBase):
 			view()
 
 
-from nti.appserver._dataserver_pyramid_traversal import _NTIIDsContainerResource
-
-class TestNTIIDsContainer(ConfiguringTestBase):
-
 	@WithMockDSTrans
 	def test_ntiid_uses_library(self):
+		self.beginRequest()
 		child_ntiid = ntiids.make_ntiid( provider='ou', specific='test2', nttype='HTML' )
 
 		class NID(object):

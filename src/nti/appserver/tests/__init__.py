@@ -24,18 +24,38 @@ class ITestMailDelivery(IMailer, IMailDelivery):
 from nti.appserver import z3c_zpt
 
 
-class ConfiguringTestBase(nti.tests.ConfiguringTestBase):
+class _TestBaseMixin(object):
+	set_up_packages = (nti.appserver,)
+	set_up_mailer = True
+	config = None
+	request = None
+
+	def beginRequest( self ):
+		self.request = DummyRequest()
+		self.config.begin( request=self.request )
+
+	def get_ds(self):
+		"Convenience for when you have imported mock_dataserver and used @WithMockDS/Trans"
+		return getattr( self, '_ds', mock_dataserver.current_mock_ds )
+
+	def set_ds(self,ds):
+		"setable for backwards compat"
+		self._ds = ds
+	ds = property( get_ds, set_ds )
+
+	def has_permission( self, permission ):
+		return HasPermission( True, permission, self.request )
+
+	def doesnt_have_permission( self, permission ):
+		return HasPermission( False, permission, self.request )
+
+class ConfiguringTestBase(_TestBaseMixin,nti.tests.ConfiguringTestBase):
 	"""
 	Attributes:
 	self.config A pyramid configurator. Note that it does not have a
 		package associated with it.
 	self.request A pyramid request
 	"""
-
-	set_up_packages = (nti.appserver,)
-	set_up_mailer = True
-	config = None
-	request = None
 
 	def setUp( self, pyramid_request=True, request_factory=DummyRequest, request_args=() ):
 		"""
@@ -61,30 +81,54 @@ class ConfiguringTestBase(nti.tests.ConfiguringTestBase):
 
 		return self.config
 
-	def beginRequest( self ):
-		self.request = DummyRequest()
-		self.config.begin( request=self.request )
-
 	def tearDown( self ):
 		ptearDown()
 		super(ConfiguringTestBase,self).tearDown()
 
+class SharedConfiguringTestBase(_TestBaseMixin,nti.tests.SharedConfiguringTestBase):
 
-	def get_ds(self):
-		"Convenience for when you have imported mock_dataserver and used @WithMockDS/Trans"
-		return getattr( self, '_ds', mock_dataserver.current_mock_ds )
+	_mailer = None
 
-	def set_ds(self,ds):
-		"setable for backwards compat"
-		self._ds = ds
-	ds = property( get_ds, set_ds )
+	@classmethod
+	def setUpClass( self, request_factory=DummyRequest, request_args=() ):
+		"""
+		:return: The `Configurator`, which is also in ``self.config``.
+		"""
 
-	def has_permission( self, permission ):
-		return HasPermission( True, permission, self.request )
+		super(SharedConfiguringTestBase,self).setUpClass()
 
-	def doesnt_have_permission( self, permission ):
-		return HasPermission( False, permission, self.request )
+		self.config = psetUp(registry=component.getGlobalSiteManager(),request=self.request,hook_zca=False)
+		self.config.setup_registry()
 
+		if self.set_up_mailer:
+			# Must provide the correct zpt template renderer or the email process blows up
+			# See application.py
+			component.provideUtility( z3c_zpt.renderer_factory, pyramid.interfaces.IRendererFactory, name=".pt" )
+			self._mailer = mailer = TestMailDelivery()
+			component.provideUtility( mailer, ITestMailDelivery )
+
+		return self.config
+
+	ds = property( lambda s: getattr(mock_dataserver, 'current_mock_ds' ) )
+
+	@classmethod
+	def tearDownClass( self ):
+		ptearDown()
+		self._mailer = None
+		super(SharedConfiguringTestBase,self).tearDownClass()
+
+	def setUp( self ):
+		super(SharedConfiguringTestBase,self).setUp()
+		if self._mailer:
+			del self._mailer.queue[:]
+		return self.config
+
+class NewRequestSharedConfiguringTestBase(SharedConfiguringTestBase):
+
+	def setUp( self ):
+		result = super(NewRequestSharedConfiguringTestBase,self).setUp()
+		self.beginRequest()
+		return result
 
 from pyramid.security import has_permission
 

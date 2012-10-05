@@ -40,15 +40,17 @@ from nti.appserver import interfaces as app_interfaces
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.interfaces import StandardExternalFields
 from nti.dataserver.mimetype import  nti_mimetype_with_class
-from .test_application import ApplicationTestBase
+from .test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
 from .test_application import TestApp
 
-class TestApplicationAssessment(ApplicationTestBase):
+class TestApplicationAssessment(SharedApplicationTestBase):
 	child_ntiid =  'tag:nextthought.com,2011-10:MN-NAQ-MiladyCosmetology.naq.1'
 
+	@classmethod
 	def _setup_library( self, *args, **kwargs ):
 		return FileLibrary( os.path.join( os.path.dirname(__file__), 'ExLibrary' ) )
 
+	@WithSharedApplicationMockDS
 	def test_registered_utility(self):
 		qmap = component.getUtility( asm_interfaces.IQuestionMap )
 		assert_that( qmap,
@@ -62,7 +64,7 @@ class TestApplicationAssessment(ApplicationTestBase):
 											os.path.join( os.path.dirname(__file__), 'ExLibrary', 'WithAssessment', 'tag_nextthought_com_2011-10_mathcounts-HTML-MN_2012_0.html' ) ) ) )
 
 
-
+	@WithSharedApplicationMockDS
 	def test_fetch_assessment_question(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			self._create_user()
@@ -88,7 +90,7 @@ class TestApplicationAssessment(ApplicationTestBase):
 		assert_that( res.status_int, is_( 200 ) )
 		assert_that( res.json_body, has_entry( 'Class', 'PageInfo' ) )
 
-
+	@WithSharedApplicationMockDS
 	def test_fetch_pageinfo_with_questions(self):
 
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -114,6 +116,7 @@ class TestApplicationAssessment(ApplicationTestBase):
 		assert_that( res.json_body, has_entry( StandardExternalFields.LAST_MODIFIED, is_( float ) ) )
 		assert_that( res.json_body, has_entry( StandardExternalFields.MIMETYPE, 'application/vnd.nextthought.assessment.assessedquestion' ) )
 
+	@WithSharedApplicationMockDS
 	def test_posting_assesses_mimetype_only(self):
 
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -130,7 +133,7 @@ class TestApplicationAssessment(ApplicationTestBase):
 		res = testapp.post( '/dataserver2/users/sjohnson@nextthought.com', data, extra_environ=self._make_extra_environ() )
 		self._check_submission( res )
 
-
+	@WithSharedApplicationMockDS
 	def test_posting_assesses_class_only(self):
 
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -147,6 +150,7 @@ class TestApplicationAssessment(ApplicationTestBase):
 		res = testapp.post( '/dataserver2/users/sjohnson@nextthought.com', data, extra_environ=self._make_extra_environ() )
 		self._check_submission( res )
 
+	@WithSharedApplicationMockDS
 	def test_posting_multiple_choice(self):
 
 		with mock_dataserver.mock_db_trans(self.ds):

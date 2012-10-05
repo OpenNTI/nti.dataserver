@@ -24,7 +24,7 @@ from nti.contentrange import contentrange
 
 from nti.dataserver.tests import mock_dataserver
 
-from .test_application import ApplicationTestBase
+from .test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
 
 from urllib import quote as UQ
 
@@ -38,16 +38,18 @@ from nti.socketio import interfaces as sio_interfaces
 from nti.chatserver.messageinfo import MessageInfo
 from nti.socketio import session_consumer
 
-class TestApplicationAssessment(ApplicationTestBase):
-	child_ntiid =  'tag:nextthought.com,2011-10:MN-NAQ-MiladyCosmetology.naq.1'
+#class TestApplicationAssessment(ApplicationTestBase):
+#	child_ntiid =  'tag:nextthought.com,2011-10:MN-NAQ-MiladyCosmetology.naq.1'
 
 bad_val = 'Guvf vf shpxvat fghcvq, lbh ZbgureShpxre onfgneq'.encode( 'rot13' )
 censored_val = 'This is ******* stupid, you ************ *******'
 
-class TestApplicationCensoring(ApplicationTestBase):
+class _CensorTestMixin(object):
 
-	def _setup_library( self, *args, **kwargs ):
+	@classmethod
+	def _setup_library( cls, *args, **kwargs ):
 		return FileLibrary( os.path.join( os.path.dirname(__file__), 'ExLibrary' ) )
+
 
 	def _do_test_censor_note( self, containerId, censored=True, extra_ifaces=(), environ=None ):
 		with mock_dataserver.mock_db_trans( self.ds ):
@@ -77,43 +79,26 @@ class TestApplicationCensoring(ApplicationTestBase):
 					 has_entry( 'body',
 								[censored_val if censored else bad_val ] ) )
 
+
+class TestApplicationCensoring(_CensorTestMixin,SharedApplicationTestBase):
+
+	@WithSharedApplicationMockDS
 	def test_censor_note_not_in_library_disabled_by_default(self):
 		"If we post a note to a container we don't recognize, we don't get censored."
 		self._do_test_censor_note( 'tag:not_in_library', censored=False )
 
+	@WithSharedApplicationMockDS
 	def test_censoring_disabled_by_default( self ):
 		self._do_test_censor_note( "tag:nextthought.com,2011-10:MN-HTML-Uncensored.cosmetology", censored=False )
 
+	@WithSharedApplicationMockDS
 	def test_censoring_enabled_in_mathcounts_site(self):
 		"Regardless of who you are this site censors"
 		self._do_test_censor_note( "tag:nextthought.com,2011-10:MN-HTML-Uncensored.cosmetology",
 								   censored=True,
 								   environ={'HTTP_ORIGIN': 'http://mathcounts.nextthought.com'})
 
-	def test_censoring_can_be_disabled( self ):
-		component.provideAdapter( nti.contentfragments.censor.DefaultCensoredContentPolicy,
-								  adapts=(nti.dataserver.interfaces.IUser, None) )
-		component.provideAdapter( nti.appserver.censor_policies.user_filesystem_censor_policy )
-		self._do_test_censor_note( "tag:nextthought.com,2011-10:MN-HTML-Uncensored.cosmetology", censored=False )
-
-	def test_censoring_cannot_be_disabled_for_kids( self ):
-		# The ICoppaUser flag trumps the no-censoring flag
-		component.provideAdapter( nti.contentfragments.censor.DefaultCensoredContentPolicy,
-								  adapts=(nti.dataserver.interfaces.IUser, None) )
-		component.provideAdapter( nti.appserver.censor_policies.user_filesystem_censor_policy )
-		self._do_test_censor_note( "tag:nextthought.com,2011-10:MN-HTML-Uncensored.cosmetology",
-								   censored=True,
-								   extra_ifaces=(nti_interfaces.ICoppaUser,) )
-
-	def test_censor_note_not_in_library_enabled_for_kids(self):
-		"If we post a note to a container we don't recognize, we  get censored if we are a kid"
-		component.provideAdapter( nti.contentfragments.censor.DefaultCensoredContentPolicy,
-								  adapts=(nti.dataserver.interfaces.IUser, None) )
-		component.provideAdapter( nti.appserver.censor_policies.user_filesystem_censor_policy )
-		self._do_test_censor_note( 'tag:not_in_library',
-								   censored=True,
-								   extra_ifaces=(nti_interfaces.ICoppaUser,) )
-
+	@WithSharedApplicationMockDS
 	def test_create_chat_object_events_copy_owner_from_session(self):
 
 		@interface.implementer(sio_interfaces.ISocketSession)
@@ -132,24 +117,58 @@ class TestApplicationCensoring(ApplicationTestBase):
 		assert_that( nti.appserver.censor_policies.creator_and_location_censor_policy( '', args[0] ),
 					 is_( none() ) )
 
-	@mock_dataserver.WithMockDSTrans
+	@WithSharedApplicationMockDS
 	def test_chat_message_uses_sites_from_session(self):
-		user = self._create_user()
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = self._create_user()
 
-		@interface.implementer(sio_interfaces.ISocketSession)
-		class Session(object):
-			owner = user.username
-			originating_site_names = ('mathcounts.nextthought.com','')
+			@interface.implementer(sio_interfaces.ISocketSession)
+			class Session(object):
+				owner = user.username
+				originating_site_names = ('mathcounts.nextthought.com','')
 
-		chat_message = MessageInfo()
-		chat_message.containerId = 'tag:foo'
-		chat_message.body = [bad_val]
+			chat_message = MessageInfo()
+			chat_message.containerId = 'tag:foo'
+			chat_message.body = [bad_val]
 
-		args = session_consumer._convert_message_args_to_objects( None, Session(), { 'args': [to_external_object( chat_message )] } )
+			args = session_consumer._convert_message_args_to_objects( None, Session(), { 'args': [to_external_object( chat_message )] } )
 
-		assert_that( args[0], is_( MessageInfo ) )
-		assert_that( args[0], has_property( 'creator', Session.owner ) )
+			assert_that( args[0], is_( MessageInfo ) )
+			assert_that( args[0], has_property( 'creator', Session.owner ) )
 
-		#nti.contentfragments.censor.censor_assign( [bad_val], args[0], 'body' )
+			#nti.contentfragments.censor.censor_assign( [bad_val], args[0], 'body' )
 
-		assert_that( args[0], has_property( 'body', [censored_val] ) )
+			assert_that( args[0], has_property( 'body', [censored_val] ) )
+
+class TestApplicationCensoringWithDefaultPolicyForAllUsers(_CensorTestMixin,SharedApplicationTestBase):
+
+	@classmethod
+	def setUpClass(cls):
+		super(TestApplicationCensoringWithDefaultPolicyForAllUsers,cls).setUpClass()
+		component.provideAdapter( nti.contentfragments.censor.DefaultCensoredContentPolicy,
+								  adapts=(nti.dataserver.interfaces.IUser, None) )
+		component.provideAdapter( nti.appserver.censor_policies.user_filesystem_censor_policy )
+
+	@WithSharedApplicationMockDS
+	def test_censoring_can_be_disabled( self ):
+		component.provideAdapter( nti.contentfragments.censor.DefaultCensoredContentPolicy,
+								  adapts=(nti.dataserver.interfaces.IUser, None) )
+		component.provideAdapter( nti.appserver.censor_policies.user_filesystem_censor_policy )
+		self._do_test_censor_note( "tag:nextthought.com,2011-10:MN-HTML-Uncensored.cosmetology", censored=False )
+
+	@WithSharedApplicationMockDS
+	def test_censoring_cannot_be_disabled_for_kids( self ):
+		# The ICoppaUser flag trumps the no-censoring flag
+		component.provideAdapter( nti.contentfragments.censor.DefaultCensoredContentPolicy,
+								  adapts=(nti.dataserver.interfaces.IUser, None) )
+		component.provideAdapter( nti.appserver.censor_policies.user_filesystem_censor_policy )
+		self._do_test_censor_note( "tag:nextthought.com,2011-10:MN-HTML-Uncensored.cosmetology",
+								   censored=True,
+								   extra_ifaces=(nti_interfaces.ICoppaUser,) )
+
+	@WithSharedApplicationMockDS
+	def test_censor_note_not_in_library_enabled_for_kids(self):
+		"If we post a note to a container we don't recognize, we  get censored if we are a kid"
+		self._do_test_censor_note( 'tag:not_in_library',
+								   censored=True,
+								   extra_ifaces=(nti_interfaces.ICoppaUser,) )

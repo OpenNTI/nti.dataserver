@@ -127,6 +127,20 @@ class AbstractTestBase(zope.testing.cleanup.CleanUp, unittest.TestCase):
 	"""
 	pass
 
+class AbstractSharedTestBase(unittest.TestCase):
+	"""
+	Base class for testing that can share most global data (e.g., ZCML configuration) between unit tests.
+	This is far more efficient, if the global data is otherwise cleaned up.
+	"""
+
+	@classmethod
+	def setUpClass(cls):
+		zope.testing.cleanup.cleanUp()
+
+	@classmethod
+	def tearDownClass(cls):
+		zope.testing.cleanup.cleanUp()
+
 
 from zope import component
 from zope.configuration import xmlconfig, config
@@ -200,6 +214,49 @@ class ConfiguringTestBase(AbstractTestBase):
 
 	def tearDown( self ):
 		super(ConfiguringTestBase,self).tearDown()
+		resetHooks()
+
+class SharedConfiguringTestBase(AbstractSharedTestBase):
+	"""
+	Test case that can be subclassed when ZCML configuration is desired.
+
+	This class defines two class level attributes:
+
+	.. py:attribute:: set_up_packages
+		A sequence of package objects or strings naming packages. These will be configured, in order, using
+		ZCML. The ``configure.zcml`` package from each package will be loaded. Instead
+		of a package object, each item can be a tuple of (filename, package); in that case,
+		the given file (usually ``meta.zcml``) will be loaded from the given package.
+
+	.. py:attribute:: features
+		A sequence of strings to be added as features before loading the configuration. By default,
+		this is ``devmode``.
+
+	When the meth:`setUp` method runs, one instance attribute is defined:
+
+	.. py:attribute:: configuration_context
+		The :class:`config.ConfigurationMachine` that was used to load configuration data (if any).
+		This can be used by individual methods to load more configuration data.
+
+
+	"""
+	set_up_packages = ()
+	features = ('devmode',)
+	configuration_context = None
+	@classmethod
+	def setUpClass( cls ):
+		setHooks()
+		super(SharedConfiguringTestBase,cls).setUpClass()
+		cls.configuration_context = cls.configure_packages( cls.set_up_packages, cls.features, cls.configuration_context )
+
+	@classmethod
+	def configure_packages(cls, set_up_packages=(), features=(), context=None ):
+		cls.configuration_context = _configure( cls, set_up_packages, features, context or cls.configuration_context )
+		return cls.configuration_context
+
+	@classmethod
+	def tearDownClass( cls ):
+		super(SharedConfiguringTestBase,cls).tearDownClass()
 		resetHooks()
 
 def module_setup( set_up_packages=(), features=('devmode',)):

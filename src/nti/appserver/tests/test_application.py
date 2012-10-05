@@ -24,12 +24,12 @@ import nti.contentsearch.interfaces
 import pyramid.config
 
 
-from nti.appserver.tests import ConfiguringTestBase
+from nti.appserver.tests import ConfiguringTestBase, SharedConfiguringTestBase
 from webtest import TestApp as _TestApp
 import webob.datetime_utils
 import datetime
 import time
-
+import functools
 import os
 import os.path
 
@@ -73,9 +73,87 @@ def TestApp(app=_TestApp):
 
 	return _TestApp( CORSInjector( CORSOptionHandler( app ) ) )
 
-import pyramid_mailer.testing
+class _AppTestBaseMixin(object):
 
-class ApplicationTestBase(ConfiguringTestBase):
+	extra_environ_default_user = b'sjohnson@nextthought.COM'
+	def _make_extra_environ(self, user=extra_environ_default_user, update_request=False, **kwargs):
+		"""
+		The default username is a case-modified version of the default user in :meth:`_create_user`,
+		to test case-insensitive ACLs and login.
+		"""
+		if user is self.extra_environ_default_user and 'username' in kwargs:
+			user = str(kwargs.pop( 'username' ) )
+		result = {
+			b'HTTP_AUTHORIZATION': b'Basic ' + (user + ':temp001').encode('base64'),
+			b'HTTP_ORIGIN': b'http://localhost', # To trigger CORS
+			b'HTTP_USER_AGENT': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_3) AppleWebKit/537.6 (KHTML, like Gecko) Chrome/23.0.1239.0 Safari/537.6'
+			}
+		for k, v in kwargs.items():
+			k = str(k)
+			k.replace( '_', '-' )
+			result[k] = v
+
+		if update_request:
+			self.request.environ.update( result )
+
+		return result
+
+	def _create_user(self, username=b'sjohnson@nextthought.com', password='temp001' ):
+		return users.User.create_user( self.ds, username=username, password=password )
+
+class SharedApplicationTestBase(_AppTestBaseMixin,SharedConfiguringTestBase):
+
+	set_up_packages = () # None, because configuring the app will do this
+	APP_IN_DEVMODE = True
+
+	@classmethod
+	def _setup_library(cls, *args, **kwargs):
+		return Library()
+
+	@classmethod
+	def setUpClass(cls):
+		#self.ds = mock_dataserver.MockDataserver()
+		super(SharedApplicationTestBase,cls).setUpClass()
+		cls.app, cls.main = createApplication( 8080, cls._setup_library(), create_ds=False, pyramid_config=cls.config, devmode=cls.APP_IN_DEVMODE )
+
+		root = '/Library/WebServer/Documents/'
+		# We'll volunteer to serve all the files in the root directory
+		# This SHOULD include 'prealgebra' and 'mathcounts'
+		serveFiles = [ ('/' + s, os.path.join( root, s) )
+					   for s in os.listdir( root )
+					   if os.path.isdir( os.path.join( root, s ) )]
+		cls.main.setServeFiles( serveFiles )
+
+	def setUp(self):
+		super(SharedApplicationTestBase,self).setUp()
+
+		test_func = getattr( self, self._testMethodName )
+		#ds_factory = getattr( test_func, 'mock_ds_factory', mock_dataserver.MockDataserver )
+		#self.ds = ds_factory()
+		#component.provideUtility( self.ds, nti_interfaces.IDataserver )
+
+		# If we try to externalize things outside of an active request, but
+		# the get_current_request method returns the mock request we just set up,
+		# then if the environ doesn't have these things in it we can get an AssertionError
+		# from paste.httpheaders n behalf of repoze.who's request classifier
+		self.beginRequest()
+		self.request.environ[b'HTTP_USER_AGENT'] = b'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_3) AppleWebKit/537.6 (KHTML, like Gecko) Chrome/23.0.1239.0 Safari/537.6'
+		self.request.environ[b'wsgi.version'] = '1.0'
+
+	@classmethod
+	def tearDownClass(cls):
+		super(SharedApplicationTestBase,cls).tearDownClass()
+
+def WithSharedApplicationMockDS(func):
+	@functools.wraps(func)
+	@mock_dataserver.WithMockDS
+	def f(self):
+		self.config.registry._zodb_databases = { '': self.ds.db } # 0.3
+		func(self)
+	return f
+
+
+class ApplicationTestBase(_AppTestBaseMixin, ConfiguringTestBase):
 
 	set_up_packages = () # None, because configuring the app will do this
 	APP_IN_DEVMODE = True
@@ -112,35 +190,11 @@ class ApplicationTestBase(ConfiguringTestBase):
 		__show__.on()
 		super(ApplicationTestBase,self).tearDown()
 
-	extra_environ_default_user = b'sjohnson@nextthought.COM'
-	def _make_extra_environ(self, user=extra_environ_default_user, update_request=False, **kwargs):
-		"""
-		The default username is a case-modified version of the default user in :meth:`_create_user`,
-		to test case-insensitive ACLs and login.
-		"""
-		if user is self.extra_environ_default_user and 'username' in kwargs:
-			user = str(kwargs.pop( 'username' ) )
-		result = {
-			b'HTTP_AUTHORIZATION': b'Basic ' + (user + ':temp001').encode('base64'),
-			b'HTTP_ORIGIN': b'http://localhost', # To trigger CORS
-			b'HTTP_USER_AGENT': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_3) AppleWebKit/537.6 (KHTML, like Gecko) Chrome/23.0.1239.0 Safari/537.6'
-			}
-		for k, v in kwargs.items():
-			k = str(k)
-			k.replace( '_', '-' )
-			result[k] = v
-
-		if update_request:
-			self.request.environ.update( result )
-
-		return result
-
-	def _create_user(self, username=b'sjohnson@nextthought.com', password='temp001' ):
-		return users.User.create_user( self.ds, username=username, password=password )
 
 
-class TestApplication(ApplicationTestBase):
+class TestApplication(SharedApplicationTestBase):
 
+	@WithSharedApplicationMockDS
 	def test_logon_css_site_policy(self):
 		testapp = TestApp(self.app)
 		# No site, empty file
@@ -151,12 +205,13 @@ class TestApplication(ApplicationTestBase):
 		res = testapp.get( '/login/resources/css/site.css', extra_environ={b'HTTP_ORIGIN': b'http://mathcounts.nextthought.com'}, status=303 )
 		assert_that( res.headers, has_entry( 'Location', ends_with( '/login/resources/css/mathcounts.nextthought.com/site.css' ) ) )
 
-
+	@WithSharedApplicationMockDS
 	def test_options_request( self ):
 		testapp = TestApp( self.app )
 		res = testapp.options( '/dataserver2/logon.ping', extra_environ=self._make_extra_environ() )
 		assert_that( res.headers, has_key( 'Access-Control-Allow-Methods' ) )
 
+	@WithSharedApplicationMockDS
 	def test_logon_ping(self):
 		testapp = TestApp( self.app )
 		res = testapp.get( '/dataserver2/logon.ping' )
@@ -167,6 +222,7 @@ class TestApplication(ApplicationTestBase):
 		assert_that( link_rels, has_item( 'account.create' ) )
 		assert_that( link_rels, has_item( 'account.preflight.create' ) )
 
+	@WithSharedApplicationMockDS
 	def test_logon_ping_demo_site_policy(self):
 		testapp = TestApp( self.app )
 		res = testapp.get( '/dataserver2/logon.ping', extra_environ={b'HTTP_ORIGIN': b'http://demo.nextthought.com'} )
@@ -177,13 +233,14 @@ class TestApplication(ApplicationTestBase):
 		assert_that( link_rels, does_not( has_item( 'account.create' ) ) )
 		assert_that( link_rels, does_not( has_item( 'account.preflight.create' ) ) )
 
-
+	@WithSharedApplicationMockDS
 	def test_library_main(self):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			self._create_user()
 		testapp = TestApp( self.app )
 		testapp.get( '/dataserver2/users/sjohnson@nextthought.com/Library/Main', extra_environ=self._make_extra_environ() )
 
+	@WithSharedApplicationMockDS
 	def test_path_with_parens(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			contained = ContainedExternal()
@@ -199,6 +256,7 @@ class TestApplication(ApplicationTestBase):
 
 		assert_that( res.body, contains_string( str(contained) ) )
 
+	@WithSharedApplicationMockDS
 	def test_pages_with_only_shared_not_404(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			contained = PersistentContainedExternal()
@@ -222,7 +280,7 @@ class TestApplication(ApplicationTestBase):
 		path = '/dataserver2/users/foo@bar/Pages(' + ntiids.ROOT + ')/RecursiveStream'
 		testapp.get( path, extra_environ=self._make_extra_environ(user='foo@bar'))
 
-
+	@WithSharedApplicationMockDS
 	def test_deprecated_path_with_slash(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			contained = ContainedExternal()
@@ -239,7 +297,7 @@ class TestApplication(ApplicationTestBase):
 		assert_that( res.body, contains_string( str(contained) ) )
 
 
-
+	@WithSharedApplicationMockDS
 	def test_post_pages_collection(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			_ = self._create_user()
@@ -278,51 +336,8 @@ class TestApplication(ApplicationTestBase):
 		# I can now delete that item
 		testapp.delete( str(href), extra_environ=self._make_extra_environ())
 
-	def test_post_share_delete_highlight(self):
-		with mock_dataserver.mock_db_trans(self.ds):
-			_ = self._create_user()
-			self._create_user( username='foo@bar' )
-			testapp = TestApp( self.app )
-			containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
-			data = json.serialize( { 'Class': 'Highlight', 'MimeType': 'application/vnd.nextthought.highlight',
-									 'ContainerId': containerId,
-									 'selectedText': "This is the selected text",
-									 'applicableRange': {'Class': 'ContentRangeDescription'}} )
 
-		path = '/dataserver2/users/sjohnson@nextthought.com/Pages/'
-		res = testapp.post( path, data, extra_environ=self._make_extra_environ() )
-		assert_that( res.status_int, is_( 201 ) )
-		assert_that( res.body, contains_string( '"Class": "ContentRangeDescription"' ) )
-		href = res.json_body['href']
-		assert_that( res.headers, has_entry( 'Location', contains_string( 'http://localhost/dataserver2/users/sjohnson%40nextthought.com/Objects/tag:nextthought.com,2011-10:sjohnson@nextthought.com-OID' ) ) )
-		assert_that( res.headers, has_entry( 'Content-Type', contains_string( 'application/vnd.nextthought.highlight+json' ) ) )
-
-		path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + containerId + ')/UserGeneratedData'
-		res = testapp.get( path, extra_environ=self._make_extra_environ())
-		assert_that( res.body, contains_string( '"Class": "ContentRangeDescription"' ) )
-
-		# I can share the item
-		path = href + '/++fields++sharedWith'
-		data = json.dumps( ['foo@bar'] )
-		res = testapp.put( str(path), data, extra_environ=self._make_extra_environ() )
-		assert_that( res.json_body, has_entry( 'sharedWith', ['foo@bar'] ) )
-
-		# And the recipient can see it
-		path = '/dataserver2/users/foo@bar/Pages(' + containerId + ')/UserGeneratedData'
-		res = testapp.get( str(path), extra_environ=self._make_extra_environ(user=b'foo@bar'))
-		assert_that( res.body, contains_string( "This is the selected text" ) )
-
-		# I can now delete that item
-		testapp.delete( str(href), extra_environ=self._make_extra_environ())
-
-		# And it is no longer available
-		res = testapp.get( str(path), extra_environ=self._make_extra_environ(user=b'foo@bar'),
-						   status=404)
-
-
-	test_post_share_delete_highlight.mock_ds_factory = mock_dataserver.ChangePassingMockDataserver
-
-
+	@WithSharedApplicationMockDS
 	def test_get_highlight_by_oid_has_links(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			_ = self._create_user()
@@ -350,7 +365,7 @@ class TestApplication(ApplicationTestBase):
 										  has_entry( 'href', contains_string( '/dataserver2/users/sjohnson%40nextthought.com/Objects/tag' ) ),
 										  has_entry( 'rel', 'edit' ) ) ) ))
 
-
+	@WithSharedApplicationMockDS
 	def test_post_two_friendslist_same_name(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			_ = self._create_user()
@@ -366,7 +381,7 @@ class TestApplication(ApplicationTestBase):
 		# Generates a conflict the next time
 		testapp.post( path, data, extra_environ=self._make_extra_environ(), status=409 )
 
-
+	@WithSharedApplicationMockDS
 	def test_friends_list_uncached(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			_ = self._create_user()
@@ -375,6 +390,7 @@ class TestApplication(ApplicationTestBase):
 		res = testapp.get( '/dataserver2/users/sjohnson@nextthought.com/FriendsLists', extra_environ=self._make_extra_environ() )
 		assert_that( res.cache_control, has_property( 'no_store', True ) )
 
+	@WithSharedApplicationMockDS
 	def test_post_device(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			_ = self._create_user()
@@ -392,6 +408,7 @@ class TestApplication(ApplicationTestBase):
 		# Generates a conflict the next time
 		testapp.post( path, data, extra_environ=self._make_extra_environ(), status=409 )
 
+	@WithSharedApplicationMockDS
 	def test_put_device(self):
 		"Putting a non-existant device is not possible"
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -410,7 +427,7 @@ class TestApplication(ApplicationTestBase):
 		# And then put
 		testapp.put( path, data, extra_environ=self._make_extra_environ(), status=200 )
 
-
+	@WithSharedApplicationMockDS
 	def test_post_restricted_types(self):
 		data = {u'Class': 'Canvas',
 				'ContainerId': 'tag:foo:bar',
@@ -439,6 +456,7 @@ class TestApplication(ApplicationTestBase):
 					  extra_environ=self._make_extra_environ(),
 					  status=403 ) # Forbidden!
 
+	@WithSharedApplicationMockDS
 	def test_post_canvas_image_roundtrip_download_views(self):
 		" Images posted as data urls come back as real links which can be fetched "
 		data = {u'Class': 'Canvas',
@@ -471,6 +489,7 @@ class TestApplication(ApplicationTestBase):
 		assert_that( res, has_property( 'last_modified', not_none() ) )
 		assert_that( res, has_property( 'last_modified', canvas_res.last_modified ) )
 
+	@WithSharedApplicationMockDS
 	def test_post_canvas_in_note_image_roundtrip_download_views(self):
 		" Images posted as data urls come back as real links which can be fetched "
 		canvas_data = {u'Class': 'Canvas',
@@ -528,65 +547,9 @@ class TestApplication(ApplicationTestBase):
 			# And it externalizes as a real link because it owns the file data
 			assert_that( url_shape.toExternalObject()['url'], is_( links.Link ) )
 
-	def test_search_empty_term_user_ugd_book(self):
-		"Searching with an empty term returns empty results"
-		with mock_dataserver.mock_db_trans( self.ds ):
-			contained = ContainedExternal()
-			user = self._create_user()
-			contained.containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
-			user.addContainedObject( contained )
-			assert_that( user.getContainer( contained.containerId ), has_length( 1 ) )
-
-		testapp = TestApp( self.app )
-		# The results are not defined across the search types,
-		# we just test that it doesn't raise a 404
-		for search_path in ('users/sjohnson@nextthought.com/Search/RecursiveUserGeneratedData',):
-			for ds_path in ('dataserver2',):
-				path = '/' + ds_path +'/' + search_path + '/'
-				res = testapp.get( path, extra_environ=self._make_extra_environ())
-				assert_that( res.status_int, is_( 200 ) )
 
 
-	def test_ugd_search_no_data_returns_empty(self):
-		"Any search term against a user whose index DNE returns empty results"
-		with mock_dataserver.mock_db_trans(self.ds):
-			self._create_user()
-		testapp = TestApp( self.app )
-		for search_term in ('', 'term'):
-			for ds_path in ('dataserver2', ):
-				path = '/' + ds_path +'/users/sjohnson@nextthought.com/Search/RecursiveUserGeneratedData/' + search_term
-				res = testapp.get( path, extra_environ=self._make_extra_environ())
-				assert_that( res.status_int, is_( 200 ) )
-
-		# This should not have created index entries for the user.
-		# (Otherwise, theres denial-of-service possibilities)
-		with component.getUtility( nti_interfaces.IDataserverTransactionContextManager )():
-			ixman = pyramid.config.global_registries.last.getUtility( nti.contentsearch.interfaces.IIndexManager )
-			assert_that( ixman._get_user_index_manager( 'user@dne.org', create=False ), is_( none() ) )
-			assert_that( ixman._get_user_index_manager( 'sjohnson@nextthought.com', create=False ), is_( none() ) )
-
-	def test_ugd_search_other_user(self):
-		"Security prevents searching other user's data"
-		with mock_dataserver.mock_db_trans( self.ds ):
-			self._create_user()
-
-
-		testapp = TestApp( self.app )
-		for search_term in ('', 'term'):
-			for ds_path in ('dataserver2',):
-				path = '/' + ds_path +'/users/user@dne.org/Search/RecursiveUserGeneratedData/' + search_term
-				testapp.get( path, extra_environ=self._make_extra_environ(), status=403)
-
-
-		# This should not have created index entries for the user.
-		# (Otherwise, there's denial-of-service possibilities)
-		ixman = pyramid.config.global_registries.last.getUtility( nti.contentsearch.interfaces.IIndexManager )
-		with component.getUtility( nti_interfaces.IDataserverTransactionContextManager )():
-			assert_that( ixman._get_user_index_manager( 'user@dne.org', create=False ), is_( none() ) )
-			assert_that( ixman._get_user_index_manager( 'sjohnson@nextthought.com', create=False ), is_( none() ) )
-
-
-
+	@WithSharedApplicationMockDS
 	def test_create_friends_list_content_type(self):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			self._create_user()
@@ -603,6 +566,7 @@ class TestApplication(ApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'href', starts_with('/dataserver2/users/sjohnson%40nextthought.com/Objects' ) ))
 		#assert_that( body, has_entry( 'href', '/dataserver2/users/sjohnson%40nextthought.com/FriendsLists/boom%40nextthought.com' ) )
 
+	@WithSharedApplicationMockDS
 	def test_create_friends_list_post_user(self):
 		# Like the previous test, but _UGDPostView wasn't consistent with where it was setting up the phony location proxies,
 		# so we could get different results depending on where we came from
@@ -622,6 +586,7 @@ class TestApplication(ApplicationTestBase):
 
 		testapp.delete( str(res.json_body['href']), extra_environ=self._make_extra_environ() )
 
+	@WithSharedApplicationMockDS
 	def test_post_friendslist_friends_field(self):
 		"We can put to ++fields++friends"
 		with mock_dataserver.mock_db_trans( self.ds ):
@@ -668,7 +633,7 @@ class TestApplication(ApplicationTestBase):
 		assert_that( res.last_modified, is_( none() ) )
 		assert_that( res.json_body['Items'], has_entry( 'boom@nextthought.com',
 														has_entries( 'Last Modified', last_mod, 'href', href ) ) )
-
+	@WithSharedApplicationMockDS
 	def test_edit_note_returns_editlink(self):
 		"The object returned by POST should have enough ACL to regenerate its Edit link"
 		with mock_dataserver.mock_db_trans( self.ds ):
@@ -689,6 +654,7 @@ class TestApplication(ApplicationTestBase):
 		assert_that( json.loads(res.body), has_entry( 'href', path ) )
 		assert_that( json.loads(res.body), has_entry( 'Links', has_item( has_entry( 'rel', 'edit' ) ) ) )
 
+	@WithSharedApplicationMockDS
 	def test_like_unlike_note(self):
 		"We get the appropriate @@like or @@unlike links for a note"
 		with mock_dataserver.mock_db_trans( self.ds ):
@@ -733,6 +699,7 @@ class TestApplication(ApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'LikeCount', 0 ) )
 		assert_that( res.json_body, has_entry( 'Links', has_item( has_entry( 'rel', 'like' ) ) ) )
 
+	@WithSharedApplicationMockDS
 	def test_favorite_unfavorite_note(self):
 		"We get the appropriate @@favorite or @@unfavorite links for a note"
 		with mock_dataserver.mock_db_trans( self.ds ):
@@ -774,6 +741,7 @@ class TestApplication(ApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'Links', has_item( has_entry( 'rel', 'like' ) ) ) )
 		assert_that( json.loads(res.body), has_entry( 'Links', has_item( has_entry( 'rel', 'favorite' ) ) ) )
 
+	@WithSharedApplicationMockDS
 	def test_edit_note_sharing_coppa_user(self):
 		"Unsigned coppa users cannot share anything after creation"
 		with mock_dataserver.mock_db_trans( self.ds ):
@@ -798,6 +766,7 @@ class TestApplication(ApplicationTestBase):
 						   headers={"Content-Type": "application/json" },
 						   status=403	)
 
+	@WithSharedApplicationMockDS
 	def test_create_note_sharing_coppa_user(self):
 		"Unsigned coppa users cannot share anything at creation"
 		with mock_dataserver.mock_db_trans( self.ds ):
@@ -825,7 +794,7 @@ class TestApplication(ApplicationTestBase):
 						   headers={"Content-Type": "application/json" },
 						   status=403	)
 
-
+	@WithSharedApplicationMockDS
 	def test_edit_note_sharing_only(self):
 		"We can POST to a specific sub-URL to change the sharing"
 		with mock_dataserver.mock_db_trans( self.ds ):
@@ -879,17 +848,20 @@ class TestApplication(ApplicationTestBase):
 					user.password = 'temp001'
 		return res
 
+	@WithSharedApplicationMockDS
 	def test_edit_user_password_only(self):
 		"We can POST to a specific sub-URL to change the password"
 		data = json.dumps( {'password': 'newp4ssw0r8', 'old_password': 'temp001' } )
 		self._edit_user_ext_field( 'password', data )
 
+	@WithSharedApplicationMockDS
 	def test_edit_user_count_only(self):
 		"We can POST to a specific sub-URL to change the notification count"
 
 		data = '5'
 		self._edit_user_ext_field( 'NotificationCount', data )
 
+	@WithSharedApplicationMockDS
 	def test_edit_user_avatar_url(self):
 		"We can POST to a specific sub-URL to change the avatarURL"
 
@@ -897,7 +869,7 @@ class TestApplication(ApplicationTestBase):
 		res = self._edit_user_ext_field( 'avatarURL', data )
 		assert_that( res.json_body, has_entry( 'avatarURL', starts_with( '/dataserver2/' ) ) )
 
-
+	@WithSharedApplicationMockDS
 	def test_put_data_to_user( self ):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = self._create_user()
@@ -917,7 +889,7 @@ class TestApplication(ApplicationTestBase):
 			assert_that( res.json_body, has_entry( 'NotificationCount', 5 ) )
 
 
-
+	@WithSharedApplicationMockDS
 	def test_get_user_not_allowed(self):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			self._create_user()
@@ -926,6 +898,7 @@ class TestApplication(ApplicationTestBase):
 		path = '/dataserver2/users/sjohnson@nextthought.com'
 		testapp.get( path, status=405, extra_environ=self._make_extra_environ())
 
+	@WithSharedApplicationMockDS
 	def test_class_provider_hrefs(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			self._create_user()
@@ -1030,16 +1003,19 @@ class TestApplication(ApplicationTestBase):
 			assert_that( body, has_entry( 'Sections', has_item( has_entry( 'ID', 'CS2503.101' ) ) ) )
 			assert_that( body, has_entry( 'Sections', has_item( has_entry( 'Enrolled', has_item( 'jason.madden@nextthought.com' ) ) ) ) )
 
+	@WithSharedApplicationMockDS
 	def test_post_class_full_path(self):
 		self._do_post_class_to_path( '/dataserver2/providers/OU/Classes/' )
 
+	@WithSharedApplicationMockDS
 	def test_post_class_full_path_section(self):
 		self._do_post_class_to_path_with_section( '/dataserver2/providers/OU/Classes/', get=True )
 
+	@WithSharedApplicationMockDS
 	def test_post_class_part_path(self):
 		self._do_post_class_to_path( '/dataserver2/providers/OU/' )
 
-
+	@WithSharedApplicationMockDS
 	def test_post_class_section_same_time(self):
 		path = '/dataserver2/providers/OU/Classes/'
 		get = True
@@ -1070,6 +1046,7 @@ class TestApplication(ApplicationTestBase):
 			assert_that( body, has_entry( 'Sections', has_item( has_entry( 'NTIID', 'tag:nextthought.com,2011-10:OU-MeetingRoom:ClassSection-CS2503.101' ) ) ) )
 			assert_that( body, has_entry( 'Sections', has_item( has_entry( 'Enrolled', has_item( 'jason.madden@nextthought.com' ) ) ) ) )
 
+	@WithSharedApplicationMockDS
 	def test_post_class_section_same_time_uncreated(self):
 		path = '/dataserver2/providers/OU/'
 		get = True
@@ -1097,7 +1074,7 @@ class TestApplication(ApplicationTestBase):
 			assert_that( body, has_entry( 'Sections', has_item( has_entry( 'NTIID', 'tag:nextthought.com,2011-10:OU-MeetingRoom:ClassSection-CS2503.101' ) ) ) )
 			assert_that( body, has_entry( 'Sections', has_item( has_entry( 'Enrolled', has_item( 'jason.madden@nextthought.com' ) ) ) ) )
 
-
+	@WithSharedApplicationMockDS
 	def test_share_note_with_class(self):
 		"We can share with the NTIID of a class we are enrolled in to get to the other students and instructors."
 		with mock_dataserver.mock_db_trans( self.ds ):
@@ -1129,6 +1106,7 @@ class TestApplication(ApplicationTestBase):
 		assert_that( res.status_int, is_( 200 ) )
 		assert_that( res.json_body, has_entry( 'sharedWith', ['foo@bar', 'jason.madden@nextthought.com'] ) )
 
+	@WithSharedApplicationMockDS
 	def test_user_search_returns_enrolled_classes(self):
 		"We can find class sections we are enrolled in with a search"
 		with mock_dataserver.mock_db_trans( self.ds ):
@@ -1155,7 +1133,111 @@ class TestApplication(ApplicationTestBase):
 		assert_that( sect_info, has_entry( 'alias', sect_name ) )
 		assert_that( sect_info, has_key( 'avatarURL' ) )
 
+class TestApplicationSearch(ApplicationTestBase):
 
+
+	def test_search_empty_term_user_ugd_book(self):
+		"Searching with an empty term returns empty results"
+		with mock_dataserver.mock_db_trans( self.ds ):
+			contained = ContainedExternal()
+			user = self._create_user()
+			contained.containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
+			user.addContainedObject( contained )
+			assert_that( user.getContainer( contained.containerId ), has_length( 1 ) )
+
+		testapp = TestApp( self.app )
+		# The results are not defined across the search types,
+		# we just test that it doesn't raise a 404
+		for search_path in ('users/sjohnson@nextthought.com/Search/RecursiveUserGeneratedData',):
+			for ds_path in ('dataserver2',):
+				path = '/' + ds_path +'/' + search_path + '/'
+				res = testapp.get( path, extra_environ=self._make_extra_environ())
+				assert_that( res.status_int, is_( 200 ) )
+
+
+	def test_ugd_search_no_data_returns_empty(self):
+		"Any search term against a user whose index DNE returns empty results"
+		with mock_dataserver.mock_db_trans(self.ds):
+			self._create_user()
+		testapp = TestApp( self.app )
+		for search_term in ('', 'term'):
+			for ds_path in ('dataserver2', ):
+				path = '/' + ds_path +'/users/sjohnson@nextthought.com/Search/RecursiveUserGeneratedData/' + search_term
+				res = testapp.get( path, extra_environ=self._make_extra_environ())
+				assert_that( res.status_int, is_( 200 ) )
+
+		# This should not have created index entries for the user.
+		# (Otherwise, theres denial-of-service possibilities)
+		with component.getUtility( nti_interfaces.IDataserverTransactionContextManager )():
+			ixman = pyramid.config.global_registries.last.getUtility( nti.contentsearch.interfaces.IIndexManager )
+			assert_that( ixman._get_user_index_manager( 'user@dne.org', create=False ), is_( none() ) )
+			assert_that( ixman._get_user_index_manager( 'sjohnson@nextthought.com', create=False ), is_( none() ) )
+
+
+	def test_ugd_search_other_user(self):
+		"Security prevents searching other user's data"
+		with mock_dataserver.mock_db_trans( self.ds ):
+			self._create_user()
+
+
+		testapp = TestApp( self.app )
+		for search_term in ('', 'term'):
+			for ds_path in ('dataserver2',):
+				path = '/' + ds_path +'/users/user@dne.org/Search/RecursiveUserGeneratedData/' + search_term
+				testapp.get( path, extra_environ=self._make_extra_environ(), status=403)
+
+
+		# This should not have created index entries for the user.
+		# (Otherwise, there's denial-of-service possibilities)
+		ixman = pyramid.config.global_registries.last.getUtility( nti.contentsearch.interfaces.IIndexManager )
+		with component.getUtility( nti_interfaces.IDataserverTransactionContextManager )():
+			assert_that( ixman._get_user_index_manager( 'user@dne.org', create=False ), is_( none() ) )
+			assert_that( ixman._get_user_index_manager( 'sjohnson@nextthought.com', create=False ), is_( none() ) )
+
+
+	def test_post_share_delete_highlight(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			_ = self._create_user()
+			self._create_user( username='foo@bar' )
+			testapp = TestApp( self.app )
+			containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
+			data = json.serialize( { 'Class': 'Highlight', 'MimeType': 'application/vnd.nextthought.highlight',
+									 'ContainerId': containerId,
+									 'selectedText': "This is the selected text",
+									 'applicableRange': {'Class': 'ContentRangeDescription'}} )
+
+		path = '/dataserver2/users/sjohnson@nextthought.com/Pages/'
+		res = testapp.post( path, data, extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 201 ) )
+		assert_that( res.body, contains_string( '"Class": "ContentRangeDescription"' ) )
+		href = res.json_body['href']
+		assert_that( res.headers, has_entry( 'Location', contains_string( 'http://localhost/dataserver2/users/sjohnson%40nextthought.com/Objects/tag:nextthought.com,2011-10:sjohnson@nextthought.com-OID' ) ) )
+		assert_that( res.headers, has_entry( 'Content-Type', contains_string( 'application/vnd.nextthought.highlight+json' ) ) )
+
+		path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + containerId + ')/UserGeneratedData'
+		res = testapp.get( path, extra_environ=self._make_extra_environ())
+		assert_that( res.body, contains_string( '"Class": "ContentRangeDescription"' ) )
+
+		# I can share the item
+		path = href + '/++fields++sharedWith'
+		data = json.dumps( ['foo@bar'] )
+		res = testapp.put( str(path), data, extra_environ=self._make_extra_environ() )
+		assert_that( res.json_body, has_entry( 'sharedWith', ['foo@bar'] ) )
+
+		# And the recipient can see it
+		path = '/dataserver2/users/foo@bar/Pages(' + containerId + ')/UserGeneratedData'
+		res = testapp.get( str(path), extra_environ=self._make_extra_environ(user=b'foo@bar'))
+		assert_that( res.body, contains_string( "This is the selected text" ) )
+
+		# I can now delete that item
+		testapp.delete( str(href), extra_environ=self._make_extra_environ())
+
+		# And it is no longer available
+		res = testapp.get( str(path), extra_environ=self._make_extra_environ(user=b'foo@bar'),
+						   status=404)
+
+
+	test_post_share_delete_highlight.mock_ds_factory = mock_dataserver.ChangePassingMockDataserver
 
 
 def _create_class(ds, usernames_to_enroll=()):
