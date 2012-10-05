@@ -40,6 +40,9 @@ class _CloudSearchEntityIndexManager(PersistentMapping, _SearchEntityIndexManage
 
 	_v_service = None
 	
+	def __init__(self):
+		PersistentMapping.__init__(self)
+
 	def _get_cs_service(self):
 		if self._v_service is None:
 			self._v_service = component.getUtility(search_interfaces.ICloudSearchStoreService)
