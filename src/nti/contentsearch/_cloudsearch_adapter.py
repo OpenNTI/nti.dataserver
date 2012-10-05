@@ -38,15 +38,12 @@ logger = logging.getLogger( __name__ )
 @interface.implementer(search_interfaces.ICloudSearchEntityIndexManager, IFullMapping)
 class _CloudSearchEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 
-	_service = None
+	_v_service = None
 	
-	def __init__(self):
-		PersistentMapping.__init__(self)
-		
 	def _get_cs_service(self):
-		if self._service is None:
-			self._service = component.getUtility(search_interfaces.ICloudSearchStoreService)
-		return self._service
+		if self._v_service is None:
+			self._v_service = component.getUtility(search_interfaces.ICloudSearchStoreService)
+		return self._v_service
 
 	def _get_search_hit(self, obj):
 		cloud_data = obj['data']
