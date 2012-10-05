@@ -112,6 +112,7 @@ class SharedApplicationTestBase(_AppTestBaseMixin,SharedConfiguringTestBase):
 
 	@classmethod
 	def setUpClass(cls):
+		__show__.off()
 		#self.ds = mock_dataserver.MockDataserver()
 		super(SharedApplicationTestBase,cls).setUpClass()
 		cls.app, cls.main = createApplication( 8080, cls._setup_library(), create_ds=False, pyramid_config=cls.config, devmode=cls.APP_IN_DEVMODE )
@@ -142,6 +143,7 @@ class SharedApplicationTestBase(_AppTestBaseMixin,SharedConfiguringTestBase):
 
 	@classmethod
 	def tearDownClass(cls):
+		__show__.on()
 		super(SharedApplicationTestBase,cls).tearDownClass()
 
 def WithSharedApplicationMockDS(func):
