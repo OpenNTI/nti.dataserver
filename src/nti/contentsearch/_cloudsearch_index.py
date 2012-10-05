@@ -110,7 +110,7 @@ def get_cloud_oid(obj):
 def get_object_content(data):
 	adapted = component.getAdapter(data, search_interfaces.IContentResolver)
 	result = adapted.get_content()
-	return result.lower() if result else None
+	return result.lower() if result else u''
 
 def get_last_modified(data):
 	adapted = component.getAdapter(data, search_interfaces.IContentResolver)
@@ -121,19 +121,19 @@ def get_last_modified(data):
 
 def get_channel(obj):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
-	return adapted.get_channel()
+	return adapted.get_channel() or u''
 
 def get_containerId(obj):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
-	return adapted.get_containerId()
+	return adapted.get_containerId() or u''
 
 def get_ntiid(obj):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
-	return adapted.get_ntiid()
+	return adapted.get_ntiid() or u''
 
 def get_creator(obj):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
-	return adapted.get_creator()
+	return adapted.get_creator() or unicode(nti_interfaces.SYSTEM_USER_NAME)
 
 def get_recipients(obj):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
