@@ -232,6 +232,7 @@ def patch_all():
 	"""
 	plasTeX.Base.par.id = property(_catching(_par_id_get, 'id' ),plasTeX.Base.par.id.fset)
 	plasTeX.Base.Array.id = property(_catching(_par_id_get, 'id'), plasTeX.Base.Array.id.fset)
+	plasTeX.Base.footnote.id = property(_catching(_par_id_get, 'id' ),plasTeX.Base.footnote.id.fset)
 	from plasTeX.Packages.graphicx import includegraphics
 	includegraphics.id =  property(_catching(_par_id_get, 'id'),includegraphics.id.fset) # TODO: Different counters for this than _par_used_ids?
 	SectionUtils.ntiid = property(_catching(_section_ntiid))
