@@ -1,8 +1,9 @@
 from __future__ import print_function, unicode_literals
 
 import os
-
+import uuid
 import zlib
+
 import gevent
 
 from zope import component
@@ -90,8 +91,8 @@ class _CloudSearchStore(object):
 		result = get_search_service(domain) if domain else None
 		return result
 
-MAX_BATCH_ITEMS = 99
-SLEEP_WAIT_TIME = 5
+MAX_BATCH_ITEMS = 199
+SLEEP_WAIT_TIME = 15
 EXPIRATION_TIME_IN_SECS = 60
 
 @interface.implementer(search_interfaces.ICloudSearchStoreService)
@@ -99,9 +100,11 @@ class _CloudSearchStorageService(object):
 	
 	_redis = None
 	_store = None
+	_queue_id = unicode(str(uuid.uuid4()))
 	
 	def __init__( self ):
 		self._v_index_listener = self._spawn_index_listener()
+		self._v_queue_name = u'cloudsearch-' + self._queue_id
 
 	def _get_redis( self ):
 		if self._redis is None:
@@ -113,6 +116,10 @@ class _CloudSearchStorageService(object):
 			self._store = component.getUtility( search_interfaces.ICloudSearchStore  )
 		return self._store
 	
+	@property
+	def queue_name(self):
+		return self._v_queue_name
+		
 	# document service
 	
 	def add(self, _id, version, external):
@@ -135,8 +142,8 @@ class _CloudSearchStorageService(object):
 	
 	# redis
 	
-	def _get_index_msgs( self, queue_name='cloudsearch'):
-		msgs = self._get_redis().pipeline().lrange( queue_name, 0, MAX_BATCH_ITEMS).execute()
+	def _get_index_msgs( self ):
+		msgs = self._get_redis().pipeline().lrange( self.queue_name, 0, MAX_BATCH_ITEMS).execute()
 		msgs = msgs[0] if msgs else ()
 		result = [eval(zlib.decompress(x)) for x in msgs] if msgs else ()
 		return result
@@ -146,11 +153,11 @@ class _CloudSearchStorageService(object):
 			msg = zlib.compress( msg )
 			transactions.do(target=self, call=self._put_msg_to_redis, args=(msg,) )
 	
-	def _put_msg_to_redis( self, msg, queue_name='cloudsearch' ):
-		self._get_redis().pipeline().rpush( queue_name, msg ).expire(queue_name, EXPIRATION_TIME_IN_SECS).execute()
+	def _put_msg_to_redis( self, msg):
+		self._get_redis().pipeline().rpush( self.queue_name, msg ).expire(self.queue_name, EXPIRATION_TIME_IN_SECS).execute()
 	
-	def _remove_from_redis(self, msgs, queue_name='cloudsearch'):
-		self._get_redis().pipeline().ltrim( queue_name, len(msgs), -1).execute()
+	def _remove_from_redis(self, msgs):
+		self._get_redis().pipeline().ltrim( self.queue_name, len(msgs), -1).execute()
 		
 	def _spawn_index_listener(self):
 		
@@ -167,7 +174,7 @@ class _CloudSearchStorageService(object):
 		try:
 			msgs = self._get_index_msgs()
 			if msgs:
-				logger.log(loglevels.TRACE, 'Read %s index events from redis', len(msgs))
+				logger.log(loglevels.TRACE, '%s index event(s) read from redis queue %r', len(msgs), self.queue_name)
 				service = self._get_store().get_document_service()
 				result = self.dispatch_messages_to_cs( msgs, service )
 				if result and result.errors: # check for parsing validation errors
@@ -191,7 +198,6 @@ class _CloudSearchStorageService(object):
 				service.delete(_id, version)
 		result = service.commit()
 		return result
-	
 	
 @interface.implementer(search_interfaces.ICloudSearchStore)
 def _create_cloudsearch_store():
