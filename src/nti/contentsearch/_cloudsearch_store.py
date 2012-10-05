@@ -198,11 +198,6 @@ class _CloudSearchStorageService(object):
 		result = service.commit()
 		return result
 	
-	def reprocess_by_keys(self, pattern):
-		queue_names = self._get_redis().client.keys(pattern)
-		for queue_name in queue_names:
-			self.read_process_index_msgs(queue_name)
-	
 @interface.implementer(search_interfaces.ICloudSearchStore)
 def _create_cloudsearch_store():
 	aws_access_key_id = os.environ.get('aws_access_key_id', None)
