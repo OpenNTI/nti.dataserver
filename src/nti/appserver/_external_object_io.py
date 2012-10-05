@@ -72,6 +72,12 @@ def read_body_as_external_object( request, input_data=None, expected_type=collec
 		if not isinstance( value, expected_type ):
 			raise TypeError( type(value) )
 
+		# Depending on whether the simplejson C speedups are active, we can still
+		# get back a non-unicode string if the object was a naked string. (If the python
+		# version is used, it returns unicode; the C version returns str.)
+		if isinstance( value, str ):
+			value = unicode(value, 'utf-8') # we know it's simple ascii or it would have produced unicode
+
 		return value
 	except hexc.HTTPException: # pragma: no cover
 		raise
