@@ -11,6 +11,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import re
+
 from zope import interface
 
 from nti.dataserver import interfaces as nti_interfaces
@@ -41,6 +43,16 @@ class InMemoryMockRedis(object):
 	def expire( self, key, ttl ):
 		pass
 
+	def rename(self, old_key, new_key):
+		if new_key in self.database:
+			raise ValueError("key '%s' already in database" % new_key)
+		
+		if old_key not in self.database:
+			raise KeyError(old_key)
+		
+		value = self.database.pop( old_key )
+		self.database[new_key] = value
+	
 	###
 	# Pipeline
 	###
