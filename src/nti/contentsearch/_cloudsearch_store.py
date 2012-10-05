@@ -1,7 +1,6 @@
 from __future__ import print_function, unicode_literals
 
 import os
-import uuid
 import zlib
 
 import gevent
@@ -16,7 +15,6 @@ from boto.cloudsearch import connect_to_region
 from boto.cloudsearch.search import SearchConnection
 from boto.cloudsearch.document import DocumentServiceConnection
 
-from nti.utils import transactions
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.contentsearch import interfaces as search_interfaces
@@ -91,8 +89,7 @@ class _CloudSearchStore(object):
 		result = get_search_service(domain) if domain else None
 		return result
 
-MAX_BATCH_ITEMS = 199
-SLEEP_WAIT_TIME = 15
+SLEEP_WAIT_TIME = 10
 EXPIRATION_TIME_IN_SECS = 60
 
 @interface.implementer(search_interfaces.ICloudSearchStoreService)
@@ -100,11 +97,10 @@ class _CloudSearchStorageService(object):
 	
 	_redis = None
 	_store = None
-	_queue_id = unicode(str(uuid.uuid4()))
 	
 	def __init__( self ):
 		self._v_index_listener = self._spawn_index_listener()
-		self._v_queue_name = u'cloudsearch-' + self._queue_id
+		self._v_queue_name = u'nti/cloudsearch'
 
 	def _get_redis( self ):
 		if self._redis is None:
@@ -143,22 +139,17 @@ class _CloudSearchStorageService(object):
 	# redis
 	
 	def _get_index_msgs( self ):
-		msgs = self._get_redis().pipeline().lrange( self.queue_name, 0, MAX_BATCH_ITEMS).execute()
-		msgs = msgs[0] if msgs else ()
-		result = [eval(zlib.decompress(x)) for x in msgs] if msgs else ()
-		return result
+		msgs, _ = self._get_redis().pipeline().lrange(self.queue_name, 0, -1).delete(self.queue_name).execute()
+		return msgs
 	
 	def _put_msg(self, msg):
 		if msg is not None:
 			msg = zlib.compress( msg )
-			transactions.do(target=self, call=self._put_msg_to_redis, args=(msg,) )
+			self._put_msg_to_redis(msg)
 	
 	def _put_msg_to_redis( self, msg):
 		self._get_redis().pipeline().rpush( self.queue_name, msg ).expire(self.queue_name, EXPIRATION_TIME_IN_SECS).execute()
-	
-	def _remove_from_redis(self, msgs):
-		self._get_redis().pipeline().ltrim( self.queue_name, len(msgs), -1).execute()
-		
+			
 	def _spawn_index_listener(self):
 		
 		def read_index_msgs():
@@ -170,6 +161,11 @@ class _CloudSearchStorageService(object):
 		result = gevent.spawn( read_index_msgs )
 		return result
 	
+	def _push_back_msgs(self, msgs):
+		logger.info( "Pushing messages back onto %s on exception", self.queue_name )
+		msgs.reverse()
+		self._redis.lpush( self.queue_name, *msgs )
+		
 	def read_process_index_msgs(self):
 		try:
 			msgs = self._get_index_msgs()
@@ -182,15 +178,14 @@ class _CloudSearchStorageService(object):
 					logger.error(s) # log errors only 
 					#TODO: save result / messages to a file
 				
-				# remove processed
-				self._remove_from_redis(msgs)
-						
 		except Exception:
+			self._push_back_msgs(msgs)
 			logger.exception( "Failed to read and process index messages" )
 			
 	@classmethod
 	def dispatch_messages_to_cs(cls, msgs, service):
 		for m in msgs:
+			m = eval(zlib.decompress(m))
 			op, _id, version, external =  m
 			if op == 'add':
 				service.add(_id, version, external)

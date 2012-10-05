@@ -28,7 +28,6 @@ from nti.contentsearch.common import ( 	HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUE
 
 from nti.contentsearch.tests import zanpakuto_commands
 from nti.contentsearch.tests import ConfiguringTestBase
-from nti.contentsearch.tests.mock_redis import InMemoryMockRedis
 from nti.contentsearch.tests.mock_cloudsearch import _MockCloudSearch
 from nti.contentsearch.tests.mock_cloudsearch import _MockCloundSearchQueryParser
 
@@ -66,8 +65,10 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 		os.environ['aws_secret_access_key']= cls.aws_secret_access_key
 		
 	def _register_zcml(self):
-		self.redis = InMemoryMockRedis()
-		component.provideUtility( self.redis, provides=nti_interfaces.IRedisClient )
+		self.redis = None
+		# import redis
+		# self.redis = redis.StrictRedis( unix_socket_path='/Users/csanchez/tmp/var/redis.sock')
+		# component.provideUtility( self.redis, provides=nti_interfaces.IRedisClient )
 		
 		component.provideAdapter(_cloudsearch_adapter._CloudSearchEntityIndexManagerFactory,
 								 adapts=[nti_interfaces.IEntity],
