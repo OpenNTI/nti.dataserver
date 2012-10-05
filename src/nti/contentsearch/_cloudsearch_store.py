@@ -100,7 +100,7 @@ class _CloudSearchStorageService(object):
 	
 	def __init__( self ):
 		self._v_index_listener = self._spawn_index_listener()
-		self._v_queue_name = u'nti/cloudsearch'
+		self._v_default_queue_name = u'nti/cloudsearch'
 
 	def _get_redis( self ):
 		if self._redis is None:
@@ -113,8 +113,8 @@ class _CloudSearchStorageService(object):
 		return self._store
 	
 	@property
-	def queue_name(self):
-		return self._v_queue_name
+	def default_queue_name(self):
+		return self._v_default_queue_name
 		
 	# document service
 	
@@ -138,17 +138,18 @@ class _CloudSearchStorageService(object):
 	
 	# redis
 	
-	def _get_index_msgs( self ):
-		msgs, _ = self._get_redis().pipeline().lrange(self.queue_name, 0, -1).delete(self.queue_name).execute()
+	def _get_index_msgs( self, queue_name):
+		msgs, _ = self._get_redis().pipeline().lrange(queue_name, 0, -1).delete(queue_name).execute()
 		return msgs
 	
-	def _put_msg(self, msg):
+	def _put_msg(self, msg, queue_name=None):
 		if msg is not None:
 			msg = zlib.compress( msg )
-			self._put_msg_to_redis(msg)
+			self._put_msg_to_redis(msg, queue_name)
 	
-	def _put_msg_to_redis( self, msg):
-		self._get_redis().pipeline().rpush( self.queue_name, msg ).expire(self.queue_name, EXPIRATION_TIME_IN_SECS).execute()
+	def _put_msg_to_redis( self, msg, queue_name=None):
+		queue_name = queue_name or self.default_queue_name
+		self._get_redis().pipeline().rpush(queue_name, msg ).expire(queue_name, EXPIRATION_TIME_IN_SECS).execute()
 			
 	def _spawn_index_listener(self):
 		
@@ -161,26 +162,29 @@ class _CloudSearchStorageService(object):
 		result = gevent.spawn( read_index_msgs )
 		return result
 	
-	def _push_back_msgs(self, msgs):
-		logger.info( "Pushing messages back onto %s on exception", self.queue_name )
+	def _push_back_msgs(self, msgs, queue_name):
+		logger.info( "Pushing messages back onto %s on exception", queue_name )
 		msgs.reverse()
-		self._redis.lpush( self.queue_name, *msgs )
+		self._redis.lpush( queue_name, *msgs )
 		
-	def read_process_index_msgs(self):
+	def read_process_index_msgs(self, queue_name=None):
+		queue_name = queue_name or self.default_queue_name
 		try:
-			msgs = self._get_index_msgs()
-			if msgs:
-				logger.log(loglevels.TRACE, '%s index event(s) read from redis queue %r', len(msgs), self.queue_name)
-				service = self._get_store().get_document_service()
-				result = self.dispatch_messages_to_cs( msgs, service )
-				if result and result.errors: # check for parsing validation errors
-					s = '\n'.join(result.errors[:5]) # don't show all error
-					logger.error(s) # log errors only 
-					#TODO: save result / messages to a file
-				
+			msgs = self._get_index_msgs(queue_name)
+			self._process_and_dispatch(msgs, queue_name)			
 		except Exception:
-			self._push_back_msgs(msgs)
+			self._push_back_msgs(msgs, queue_name)
 			logger.exception( "Failed to read and process index messages" )
+	
+	def _process_and_dispatch(self, msgs, queue_name):
+		if msgs:
+			logger.log(loglevels.TRACE, 'Processing %s index event(s) read from redis queue %r', len(msgs), queue_name)
+			service = self._get_store().get_document_service()
+			result = self.dispatch_messages_to_cs( msgs, service )
+			if result and result.errors: # check for parsing validation errors
+				s = '\n'.join(result.errors[:5]) # don't show all error
+				logger.error(s) # log errors only 
+				#TODO: save result / messages to a file
 			
 	@classmethod
 	def dispatch_messages_to_cs(cls, msgs, service):
@@ -193,6 +197,11 @@ class _CloudSearchStorageService(object):
 				service.delete(_id, version)
 		result = service.commit()
 		return result
+	
+	def reprocess_by_keys(self, pattern):
+		queue_names = self._get_redis().client.keys(pattern)
+		for queue_name in queue_names:
+			self.read_process_index_msgs(queue_name)
 	
 @interface.implementer(search_interfaces.ICloudSearchStore)
 def _create_cloudsearch_store():
