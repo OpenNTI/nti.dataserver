@@ -79,9 +79,57 @@ class InMemoryMockRedis(object):
 		q = self.get( key )
 		if q is None:
 			q = self.database[key] = list()
-
 		q.append( value )
+		
+	###
+	# Set operations
+	###
 
+	def sadd(self, key, *args):
+		s = self.database.get(key, None)
+		if s is None:
+			s = set()
+			self.database[key] = s
+		assert_that( s, is_( set ) )
+		result = 0
+		for a in args:
+			if a not in s:
+				s.add(a)
+				result += 1
+		return result
+	
+	def scard(self, key):
+		s = self.database.get(key, None)
+		result = 0
+		if s is not None:
+			assert_that( s, is_( set ) )
+			result = len(s)
+		return result
+	
+	def srem(self, key, *args):
+		s = self.database.get(key, None)
+		result = 0
+		if s is not None:
+			assert_that( s, is_( set ) )
+			for a in args:
+				if a in s:
+					s.remove(a)
+					result += 1
+		return result
+	
+	def smembers(self, key):
+		s = self.database.get(key, set())
+		assert_that( s, is_( set ) )
+		return s
+	
+	def sismember(self, key, val):
+		s = self.database.get(key, None)
+		result = 0
+		if s is not None:
+			assert_that( s, is_( set ) )
+			result = 1 if val in s else 0
+		return result
+	
 class Pipeline(object):
 
 	def __init__( self, redis ):
