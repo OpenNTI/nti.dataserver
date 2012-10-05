@@ -13,7 +13,7 @@ _AVATAR_SERVICES = { 'gravatar': { True: b'secure.gravatar.com',
 					'libravatar': {True: b'seccdn.libravatar.org',
 								   False: b'cdn.libravatar.org'} }
 
-GENERATED_GRAVATAR_TYPES = ('identicon', 'monsterid', 'wavatar', 'retro' )
+GENERATED_GRAVATAR_TYPES = ('retro', 'identicon', 'monsterid', 'wavatar' )
 KNOWN_GRAVATAR_TYPES = GENERATED_GRAVATAR_TYPES + ('mm','404')
 
 def create_gravatar_url( username,

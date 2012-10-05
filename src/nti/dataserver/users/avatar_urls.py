@@ -133,8 +133,17 @@ class StringComputedAvatarURLChoices(object):
 		# Shuffle the choices so it's not obvious we're following a pattern to
 		# create them. But shuffle them deterministically for the same input
 		# so that we don't appear to jump around as we re-request this, which
-		# would confuse the user
-		random.Random( hash(self.context) ).shuffle( choices )
+		# would confuse the user.
+		# Try not to shuffle what it /probably/ the default value out of its
+		# first position, because that may often appear as the 'default' in
+		# the UI, and if it doesn't make an actual selection, we'd like the final
+		# to match. This is extremely fragile, depending on default values and the order
+		# of GENERATED_GRAVATAR_TYPES. But it's really a UI bug
+		first_choice = choices[0]
+		tail = choices[1:]
+		random.Random( hash(self.context) ).shuffle( tail )
+		tail.insert( 0, first_choice )
+		choices = tail
 		return choices
 
 @component.adapter(nti_interfaces.ICoppaUser)
