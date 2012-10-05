@@ -31,13 +31,14 @@ from zope import component
 
 import urllib
 import pyramid.httpexceptions as hexc
-from .test_application import ApplicationTestBase
+from .test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
 from webtest import TestApp
 from nti.dataserver.tests import mock_dataserver
 from . import ITestMailDelivery
 
-class TestApplicationUsernameRecovery(ApplicationTestBase):
+class TestApplicationUsernameRecovery(SharedApplicationTestBase):
 
+	@WithSharedApplicationMockDS
 	def test_recover_user_logged_in( self ):
 		with mock_dataserver.mock_db_trans(self.ds):
 			_ = self._create_user( )
@@ -48,6 +49,7 @@ class TestApplicationUsernameRecovery(ApplicationTestBase):
 		data = ""
 		app.post( path, data, extra_environ=self._make_extra_environ(), status=403 )
 
+	@WithSharedApplicationMockDS
 	def test_recover_user_no_email( self ):
 		app = TestApp( self.app )
 
@@ -58,6 +60,7 @@ class TestApplicationUsernameRecovery(ApplicationTestBase):
 		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_length( 0 ) )
 
+	@WithSharedApplicationMockDS
 	def test_recover_user_invalid_email( self ):
 		app = TestApp( self.app )
 
@@ -70,7 +73,7 @@ class TestApplicationUsernameRecovery(ApplicationTestBase):
 		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_length( 0 ) )
 
-
+	@WithSharedApplicationMockDS
 	def test_recover_user_not_found( self ):
 		app = TestApp( self.app )
 
@@ -81,6 +84,7 @@ class TestApplicationUsernameRecovery(ApplicationTestBase):
 		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_length( 1 ) )
 
+	@WithSharedApplicationMockDS
 	def test_recover_user_found( self ):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user( )
@@ -99,8 +103,9 @@ class TestApplicationUsernameRecovery(ApplicationTestBase):
 		assert_that( msg, has_property( 'body', contains_string( user.username ) ) )
 
 
-class TestApplicationPasswordRecovery(ApplicationTestBase):
+class TestApplicationPasswordRecovery(SharedApplicationTestBase):
 
+	@WithSharedApplicationMockDS
 	def test_recover_user_logged_in( self ):
 		with mock_dataserver.mock_db_trans(self.ds):
 			_ = self._create_user( )
@@ -111,6 +116,7 @@ class TestApplicationPasswordRecovery(ApplicationTestBase):
 		data = ""
 		app.post( path, data, extra_environ=self._make_extra_environ(), status=403 )
 
+	@WithSharedApplicationMockDS
 	def test_recover_user_no_email( self ):
 		app = TestApp( self.app )
 
@@ -121,6 +127,7 @@ class TestApplicationPasswordRecovery(ApplicationTestBase):
 		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_length( 0 ) )
 
+	@WithSharedApplicationMockDS
 	def test_recover_user_no_username( self ):
 		app = TestApp( self.app )
 
@@ -129,6 +136,7 @@ class TestApplicationPasswordRecovery(ApplicationTestBase):
 		res = app.post( path, data, status=400 )
 		assert_that( res.body, contains_string( "Must provide username" ) )
 
+	@WithSharedApplicationMockDS
 	def test_recover_user_no_success( self ):
 		app = TestApp( self.app )
 
@@ -138,6 +146,7 @@ class TestApplicationPasswordRecovery(ApplicationTestBase):
 
 		assert_that( res.body, contains_string( "Must provide success" ) )
 
+	@WithSharedApplicationMockDS
 	def test_recover_user_invalid_email( self ):
 		app = TestApp( self.app )
 
@@ -150,7 +159,7 @@ class TestApplicationPasswordRecovery(ApplicationTestBase):
 		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_length( 0 ) )
 
-
+	@WithSharedApplicationMockDS
 	def test_recover_user_not_found( self ):
 		app = TestApp( self.app )
 
@@ -161,6 +170,7 @@ class TestApplicationPasswordRecovery(ApplicationTestBase):
 		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_length( 1 ) )
 
+	@WithSharedApplicationMockDS
 	def test_recover_user_found( self ):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user( )
@@ -181,6 +191,7 @@ class TestApplicationPasswordRecovery(ApplicationTestBase):
 
 		assert_that( msg, has_property( 'body', contains_string( 'http://localhost/place?username=' + urllib.quote(user.username) ) ) )
 
+	@WithSharedApplicationMockDS
 	def test_recover_user_found_query_in_url( self ):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user( )
@@ -205,8 +216,9 @@ from zope.annotation.interfaces import IAnnotations
 from nti.appserver import account_recovery_views
 import datetime
 
-class TestApplicationPasswordReset(ApplicationTestBase):
+class TestApplicationPasswordReset(SharedApplicationTestBase):
 
+	@WithSharedApplicationMockDS
 	def test_reset_user_logged_in( self ):
 		with mock_dataserver.mock_db_trans(self.ds):
 			_ = self._create_user( )
@@ -217,6 +229,7 @@ class TestApplicationPasswordReset(ApplicationTestBase):
 		data = ""
 		app.post( path, data, extra_environ=self._make_extra_environ(), status=403 )
 
+	@WithSharedApplicationMockDS
 	def test_reset_user_no_params( self ):
 		app = TestApp( self.app )
 
@@ -225,6 +238,7 @@ class TestApplicationPasswordReset(ApplicationTestBase):
 		app.post( path, data, status=400 )
 
 
+	@WithSharedApplicationMockDS
 	def test_recover_user_no_id( self ):
 		app = TestApp( self.app )
 
@@ -232,6 +246,7 @@ class TestApplicationPasswordReset(ApplicationTestBase):
 		data = {'username': 'not valid'}
 		_ = app.post( path, data, status=400 )
 
+	@WithSharedApplicationMockDS
 	def test_recover_user_not_found( self ):
 		app = TestApp( self.app )
 
@@ -239,7 +254,7 @@ class TestApplicationPasswordReset(ApplicationTestBase):
 		data = {'id': 'not.registered@example.com', 'username': 'somebodyelse', }
 		app.post( path, data, status=404 )
 
-
+	@WithSharedApplicationMockDS
 	def test_recover_user_found_with_data( self ):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user( )
@@ -258,6 +273,7 @@ class TestApplicationPasswordReset(ApplicationTestBase):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user.password.checkPassword( 'my_new_pwd' )
 
+	@WithSharedApplicationMockDS
 	def test_recover_user_found_with_data_bad_pwd( self ):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user( )

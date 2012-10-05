@@ -376,7 +376,7 @@ class Dataserver(MinimalDataserver):
 			# TODO: For right now, we are also handling initialization until all code
 			# is ported over
 			if not root.has_key( 'nti.dataserver' ):
-				raise Exception( "Creating DS against uninitialized DB. Test code?" )
+				raise Exception( "Creating DS against uninitialized DB. Test code?", str(root) )
 
 
 		room_name = 'meeting_rooms'

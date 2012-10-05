@@ -28,13 +28,13 @@ from nti.contentrange import contentrange
 
 from nti.dataserver.tests import mock_dataserver
 
-from .test_application import ApplicationTestBase
+from .test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
 
 from urllib import quote as UQ
 
-class TestApplicationFlagging(ApplicationTestBase):
+class TestApplicationFlagging(SharedApplicationTestBase):
 
-
+	@WithSharedApplicationMockDS
 	def test_flag_note(self):
 		"We get the appropriate @@flag or @@flag.metoo links for a note"
 		with mock_dataserver.mock_db_trans( self.ds ):
@@ -69,7 +69,7 @@ class TestApplicationFlagging(ApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'Links', has_item( has_entry( 'rel', 'favorite' ) ) ) )
 		assert_that( res.json_body, has_entry( 'Links', has_item( has_entry( 'rel', 'flag.metoo' ) ) ) )
 
-
+	@WithSharedApplicationMockDS
 	def test_flag_moderation(self):
 		"Basic tests of the moderation admin page"
 		with mock_dataserver.mock_db_trans( self.ds ):
@@ -143,6 +143,7 @@ class TestApplicationFlagging(ApplicationTestBase):
 		assert_that( res.body, does_not( contains_string( 'The first part' ) ) )
 		assert_that( res.body, does_not( contains_string( 'This part is HTML' ) ) )
 
+	@WithSharedApplicationMockDS
 	def test_flag_moderation_note_content(self):
 		"Basic tests of the moderation admin page"
 		with mock_dataserver.mock_db_trans( self.ds ):

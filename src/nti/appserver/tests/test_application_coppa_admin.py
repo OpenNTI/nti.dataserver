@@ -28,12 +28,13 @@ from nti.appserver import site_policies
 from nti.appserver import interfaces as app_interfaces
 from nti.dataserver.tests import mock_dataserver
 
-from .test_application import ApplicationTestBase
+from .test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
 from . import ITestMailDelivery
 from nti.appserver import user_policies
 
-class TestApplicationCoppaAdmin(ApplicationTestBase):
+class TestApplicationCoppaAdmin(SharedApplicationTestBase):
 
+	@WithSharedApplicationMockDS
 	def test_approve_coppa(self):
 		"Basic tests of the moderation admin page"
 		component.provideHandler( eventtesting.events.append, (None,) )
@@ -135,7 +136,7 @@ class TestApplicationCoppaAdmin(ApplicationTestBase):
 			user = users.User.get_user( 'ossmkitty' )
 			assert_that( user, does_not( verifiably_provides( user_interfaces.IRequireProfileUpdate ) ) )
 
-
+	@WithSharedApplicationMockDS
 	def test_post_contact_email_addr_sends_email(self):
 		component.provideHandler( eventtesting.events.append, (None,) )
 		with mock_dataserver.mock_db_trans( self.ds ):
@@ -195,10 +196,8 @@ class TestApplicationCoppaAdmin(ApplicationTestBase):
 			assert_that( user, verifiably_provides( site_policies.IMathcountsCoppaUserWithoutAgreement ) )
 			assert_that( user_interfaces.IUserProfile( user ), has_property( 'contact_email', none() ) )
 
-
+	@WithSharedApplicationMockDS
 	def test_profile_admin_get_view(self):
-
-		component.provideHandler( eventtesting.events.append, (None,) )
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = self._create_user()
 			coppa_user = self._create_user( username='ossmkitty' )

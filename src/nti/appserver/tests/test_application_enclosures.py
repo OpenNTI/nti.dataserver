@@ -25,15 +25,15 @@ from nti.dataserver.tests import mock_dataserver
 
 import anyjson as json
 
-from .test_application import ApplicationTestBase
+from .test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
 from .test_application import PersistentContainedExternal
 from .test_application import ContainedExternal
 
 from urllib import quote as UQ
 
-class TestApplicationEnclosures(ApplicationTestBase):
+class TestApplicationEnclosures(SharedApplicationTestBase):
 
-
+	@WithSharedApplicationMockDS
 	def test_class_trivial_enclosure_href(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			self._create_user()
@@ -100,6 +100,7 @@ class TestApplicationEnclosures(ApplicationTestBase):
 			assert_that( res.content_type, is_( mime_type ) )
 		return body, testapp
 
+	@WithSharedApplicationMockDS
 	def test_class_modeled_enclosure_href(self):
 		data = { 'Class': 'ClassScript', 'body': ["The body"] }
 		self._check_class_modeled_enclosure_href( data, 'application/vnd.nextthought.classscript+json' )
@@ -135,7 +136,7 @@ class TestApplicationEnclosures(ApplicationTestBase):
 							   extra_environ=self._make_extra_environ() )
 
 
-	@mock_dataserver.WithMockDS
+	@WithSharedApplicationMockDS
 	def test_class_section_modeled_enclosure_href(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			self._create_user()
@@ -201,7 +202,7 @@ class TestApplicationEnclosures(ApplicationTestBase):
 					 extra_environ=self._make_extra_environ(),
 					 status=404	)
 
-
+	@WithSharedApplicationMockDS
 	def test_class_section_trivial_enclosure_href(self):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			self._create_user()

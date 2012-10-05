@@ -37,7 +37,7 @@ from nti.appserver import interfaces as app_interfaces
 from nti.appserver.account_creation_views import account_create_view, account_preflight_view
 from nti.appserver import site_policies
 from nti.appserver import z3c_zpt
-from nti.appserver.tests import ConfiguringTestBase, ITestMailDelivery
+from nti.appserver.tests import NewRequestSharedConfiguringTestBase as SharedConfiguringTestBase, ITestMailDelivery
 
 import pyramid.httpexceptions as hexc
 import pyramid.interfaces
@@ -61,7 +61,7 @@ import datetime
 
 
 
-class _AbstractValidationViewBase(ConfiguringTestBase):
+class _AbstractValidationViewBase(SharedConfiguringTestBase):
 	""" Base for the things where validation should fail """
 
 	the_view = None
@@ -159,7 +159,7 @@ class _AbstractValidationViewBase(ConfiguringTestBase):
 		assert_that( e.exception.json_body, has_entry( 'message', contains_string('Username is too short. Please use at least' ) ) )
 
 
-class _AbstractNotDevmodeViewBase(ConfiguringTestBase):
+class _AbstractNotDevmodeViewBase(SharedConfiguringTestBase):
 	# The tests that depend on not having devmode installed (stricter defailt validation) should be here
 	# Since they run so much slower due to the mimetype registration
 	features = ()
@@ -805,28 +805,31 @@ class TestCreateView(_AbstractValidationViewBase):
 		class Placer(shards.AbstractShardPlacer):
 			def placeNewUser( self, user, users_directory, _shards ):
 				self.place_user_in_shard_named( user, users_directory, 'FOOBAR' )
-		component.provideUtility( Placer(), provides=INewUserPlacer, name='example.com' )
-
-		self.request.content_type = 'application/vnd.nextthought+json'
-		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
-													 'password': 'pass123word',
-													 'realname': 'Jason Madden',
-													 'email': 'foo@bar.com' } )
-
-
-		new_user = account_create_view( self.request )
-
-		assert_that( new_user._p_jar.db(), has_property( 'database_name', 'FOOBAR' ) )
-
-		assert_that( new_user, has_property( '__parent__', IShardLayout( mock_dataserver.current_transaction ).users_folder ) )
+		utility = Placer()
+		component.provideUtility( utility, provides=INewUserPlacer, name='example.com' )
+		try:
+			self.request.content_type = 'application/vnd.nextthought+json'
+			self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
+														 'password': 'pass123word',
+														 'realname': 'Jason Madden',
+														 'email': 'foo@bar.com' } )
 
 
-from .test_application import ApplicationTestBase
+			new_user = account_create_view( self.request )
+
+			assert_that( new_user._p_jar.db(), has_property( 'database_name', 'FOOBAR' ) )
+
+			assert_that( new_user, has_property( '__parent__', IShardLayout( mock_dataserver.current_transaction ).users_folder ) )
+		finally:
+			component.getGlobalSiteManager().unregisterUtility( utility, provided=INewUserPlacer, name='example.com' )
+
+from .test_application import ApplicationTestBase, WithSharedApplicationMockDS, SharedApplicationTestBase
 from webtest import TestApp
 from nti.dataserver.tests import mock_dataserver
 
-class _AbstractApplicationCreateUserTest(ApplicationTestBase):
+class _AbstractApplicationCreateUserTest(SharedApplicationTestBase):
 
+	@WithSharedApplicationMockDS
 	def test_create_user( self ):
 		app = TestApp( self.app )
 
@@ -850,6 +853,7 @@ class TestApplicationCreateUserNonDevmode(_AbstractApplicationCreateUserTest):
 	features = ()
 	APP_IN_DEVMODE = False
 
+	@WithSharedApplicationMockDS
 	def test_create_user( self ):
 		super(TestApplicationCreateUserNonDevmode,self).test_create_user()
 		mailer = component.getUtility( ITestMailDelivery )
@@ -858,11 +862,13 @@ class TestApplicationCreateUserNonDevmode(_AbstractApplicationCreateUserTest):
 
 class TestApplicationCreateUser(_AbstractApplicationCreateUserTest):
 
+	@WithSharedApplicationMockDS
 	def test_create_user( self ):
 		super(TestApplicationCreateUser,self).test_create_user()
 		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_length( 0 ) ) # no email in devmode because there is no site policy
 
+	@WithSharedApplicationMockDS
 	def test_create_user_mathcounts_policy( self ):
 
 		app = TestApp( self.app )
@@ -890,6 +896,7 @@ class TestApplicationCreateUser(_AbstractApplicationCreateUserTest):
 		# Be sure we picked up the right template
 		assert_that( mailer.queue, has_item( has_property( 'body', contains_string( 'MATHCOUNTS' ) ) ) )
 
+	@WithSharedApplicationMockDS
 	def test_create_coppa_user_mathcounts_policy( self ):
 
 		app = TestApp( self.app )
@@ -919,7 +926,7 @@ class TestApplicationCreateUser(_AbstractApplicationCreateUserTest):
 
 		del mailer.queue[:]
 
-
+	@WithSharedApplicationMockDS
 	def test_create_user_prmia_policy( self ):
 
 		app = TestApp( self.app )
@@ -947,7 +954,7 @@ class TestApplicationCreateUser(_AbstractApplicationCreateUserTest):
 		# Be sure we picked up the right template
 		assert_that( mailer.queue, has_item( has_property( 'body', does_not( contains_string( 'MATHCOUNTS' ) ) ) ) )
 
-
+	@WithSharedApplicationMockDS
 	def test_create_user_logged_in( self ):
 		with mock_dataserver.mock_db_trans(self.ds):
 			_ = self._create_user( )
@@ -960,8 +967,9 @@ class TestApplicationCreateUser(_AbstractApplicationCreateUserTest):
 
 		_ = app.post( path, data, extra_environ=self._make_extra_environ(), status=403 )
 
-class TestApplicationPreflightUser(ApplicationTestBase):
+class TestApplicationPreflightUser(SharedApplicationTestBase):
 
+	@WithSharedApplicationMockDS
 	def test_preflight_user( self ):
 		app = TestApp( self.app )
 
@@ -979,8 +987,8 @@ class TestApplicationPreflightUser(ApplicationTestBase):
 
 			assert_that( res, has_property( 'status_int', 200 ) )
 
-class TestApplicationProfile(ApplicationTestBase):
-
+class TestApplicationProfile(SharedApplicationTestBase):
+	@WithSharedApplicationMockDS
 	def test_preflight_user( self ):
 		with mock_dataserver.mock_db_trans(self.ds):
 			self._create_user()

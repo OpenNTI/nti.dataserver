@@ -140,6 +140,8 @@ def createApplication( http_port,
 		class MockServer(object):
 			_parentDir = '.'
 			_dataFileName = 'data.fs'
+			db = None
+			chatserver = None
 		server = MockServer()
 	else:
 		ds_class = dataserver._Dataserver.Dataserver if not callable(create_ds) else create_ds

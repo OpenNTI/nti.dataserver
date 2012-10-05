@@ -13,7 +13,7 @@ from hamcrest import has_entry
 from hamcrest import has_key
 from hamcrest import greater_than
 
-from nti.appserver.tests import ConfiguringTestBase
+from nti.appserver.tests import NewRequestSharedConfiguringTestBase
 from nti.tests import verifiably_provides
 from nti.dataserver.tests.mock_dataserver import WithMockDS, WithMockDSTrans
 
@@ -42,7 +42,7 @@ class ContentUnitInfo(object):
 	lastModified = 0
 
 
-class TestContainerPrefs(ConfiguringTestBase):
+class TestContainerPrefs(NewRequestSharedConfiguringTestBase):
 
 	rem_username = 'foo@bar'
 
