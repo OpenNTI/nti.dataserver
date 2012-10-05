@@ -166,7 +166,7 @@ class _CloudSearchStorageService(object):
 			if msgs:
 				service = self._get_store().get_document_service()
 				result = self.dispatch_messages_to_cs( msgs, service )
-				if result.errors: # check for parsing validation errors
+				if result and result.errors: # check for parsing validation errors
 					s = '\n'.join(result.errors[:5]) # don't show all error
 					logger.error(s) # log errors only 
 					#TODO: save result / messages to a file
