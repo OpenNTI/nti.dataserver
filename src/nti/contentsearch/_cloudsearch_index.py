@@ -195,6 +195,3 @@ def to_cloud_object(obj, username):
 	data[username_] = username
 	return oid, data
 
-if __name__ == '__main__':
-	create_domain(aws_access_key_id = 'AKIAJ42UUP2EUMCMCZIQ',
-				  aws_secret_access_key = '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')

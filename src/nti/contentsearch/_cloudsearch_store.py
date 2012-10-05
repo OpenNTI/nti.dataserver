@@ -193,13 +193,8 @@ class _CloudSearchStorageService(object):
 		return result
 	
 	
-#_aws_access_key_id = 'AKIAJ42UUP2EUMCMCZIQ'
-#_aws_secret_access_key = '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'
-	
 @interface.implementer(search_interfaces.ICloudSearchStore)
 def _create_cloudsearch_store():
-	#os.environ['aws_access_key_id']= _aws_access_key_id
-	#os.environ['aws_secret_access_key']= _aws_secret_access_key	
 	aws_access_key_id = os.environ.get('aws_access_key_id', None)
 	aws_secret_access_key = os.environ.get('aws_secret_access_key', None)
 	if aws_access_key_id and aws_secret_access_key:
