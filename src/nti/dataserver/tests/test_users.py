@@ -571,6 +571,55 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		assert_that( user.getContainedStream('foo')[0].object, is_( note ) )
 
 	@WithMockDSTrans
+	def test_getContainedStream_more_items_in_comm_cache_than_cap_returns_newest(self):
+		"""If a community we follow has a larger stream cache than our cap parameter, we get only the newest from the cache."""
+		user = User.create_user( self.ds, username='sjohnson@nextthought.com', password='temp001' )
+		user2 = User.create_user( self.ds, username='jason@nextthought.com', password='temp001' )
+		comm = Community( 'AoPS' )
+		self.ds.root['users'][comm.username] = comm
+		comm.MAX_STREAM_SIZE = user.MAX_STREAM_SIZE * 3
+
+		user.join_community( comm ); user2.join_community( comm )
+		user.follow( comm )
+
+		def _note_in_foo_at_time_shared_with( x, target ):
+			note = Note()
+			note.containerId = 'foo'
+			note.addSharingTarget( target )
+			user2.addContainedObject( note )
+			note.lastModified = x
+			note = user2.getContainedObject( 'foo', note.id )
+
+			change = Change( Change.SHARED, note )
+			change.creator = x
+			change.lastModified = x
+			target._noticeChange( change )
+			return change
+
+		# Throw many items in the stream with increasing modification times
+		for x in range(0, comm.MAX_STREAM_SIZE ):
+			change = _note_in_foo_at_time_shared_with( x, comm )
+
+		stream = user.getContainedStream( 'foo' )
+		assert_that( stream, has_length( user.MAX_STREAM_SIZE ) )
+		assert_that( stream, has_item( change ) )
+		# This way we're sure it's the one we have above
+		assert_that( stream[0].creator, is_( x ) )
+
+		# also share something newer directly with the user, to verify
+		# that sorting comes out as expected
+		x = x + 1
+		change = _note_in_foo_at_time_shared_with( x, user )
+
+		stream = user.getContainedStream( 'foo' )
+		assert_that( stream, has_length( user.MAX_STREAM_SIZE ) )
+		assert_that( stream, has_item( change ) )
+		# This way we're sure it's the one we have above
+		assert_that( stream[0].creator, is_( x ) )
+		assert_that( stream[1].creator, is_( x - 1 ) )
+
+
+	@WithMockDSTrans
 	def test_deleting_user_with_contained_objects_removes_intids(self):
 		user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
 
