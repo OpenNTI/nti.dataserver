@@ -296,11 +296,12 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 			n.addReference( n2 )
 			conn.root()['Notes'] = [n, n2]
 			assert_that( n._inReplyTo, instance_of( intid_wref.WeakRef ) )
+			n2_ext_id = to_external_ntiid_oid( n2 )
 
 		with mock_dataserver.mock_db_trans(ds):
 			ext = n.toExternalObject()
 
-		assert_that( ext, has_entry( 'inReplyTo', to_external_ntiid_oid( n2 ) ) )
+		assert_that( ext, has_entry( 'inReplyTo', n2_ext_id ) )
 
 
 		with mock_dataserver.mock_db_trans(ds):
@@ -333,12 +334,13 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 			n.addReference( n2 )
 			conn.root()['Notes'] = [n]
 			sconn.root()['Notes'] = [n2]
+			n2_ext_id = to_external_ntiid_oid( n2 )
 
 		with mock_dataserver.mock_db_trans(ds):
 			ext = n.toExternalObject()
 
-		assert_that( ext, has_entry( 'inReplyTo', to_external_ntiid_oid( n2 ) ) )
-		assert_that( ext, has_entry( 'references', only_contains( to_external_ntiid_oid( n2 ) ) ) )
+		assert_that( ext, has_entry( 'inReplyTo', n2_ext_id ) )
+		assert_that( ext, has_entry( 'references', only_contains( n2_ext_id ) ) )
 
 
 		with mock_dataserver.mock_db_trans(ds):

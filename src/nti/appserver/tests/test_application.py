@@ -645,11 +645,12 @@ class TestApplication(SharedApplicationTestBase):
 			n.applicableRange = contentrange.ContentRangeDescription()
 			n.containerId = 'tag:nti:foo'
 			user.addContainedObject( n )
+			n_ext_id = to_external_ntiid_oid( n )
 
 		testapp = TestApp( self.app )
 		data = '{"body": ["text"]}'
 
-		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % datastructures.to_external_ntiid_oid( n )
+		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % n_ext_id
 		path = urllib.quote( path )
 		res = testapp.put( path, data, extra_environ=self._make_extra_environ() )
 		assert_that( res.status_int, is_( 200 ) )
@@ -666,10 +667,11 @@ class TestApplication(SharedApplicationTestBase):
 			n.applicableRange = contentrange.ContentRangeDescription()
 			n.containerId = 'tag:nti:foo'
 			user.addContainedObject( n )
+			n_ext_id = to_external_ntiid_oid( n )
 
 		testapp = TestApp( self.app )
 		data = ''
-		path = '/dataserver2/Objects/%s' % datastructures.to_external_ntiid_oid( n )
+		path = '/dataserver2/Objects/%s' % n_ext_id
 		path = urllib.quote( path )
 		# Initially, unliked, I get asked to like
 		res = testapp.get( path, extra_environ=self._make_extra_environ() )
@@ -681,7 +683,7 @@ class TestApplication(SharedApplicationTestBase):
 								has_item(
 									has_entry(
 										'href',
-										'/dataserver2/Objects/' + urllib.quote(datastructures.to_external_ntiid_oid( n )) + '/@@like' ) ) ) )
+										'/dataserver2/Objects/' + urllib.quote( n_ext_id ) + '/@@like' ) ) ) )
 
 		# So I do
 		res = testapp.post( path + '/@@like', data, extra_environ=self._make_extra_environ() )
@@ -711,10 +713,11 @@ class TestApplication(SharedApplicationTestBase):
 			n.applicableRange = contentrange.ContentRangeDescription()
 			n.containerId = 'tag:nti:foo'
 			user.addContainedObject( n )
+			n_ext_id = to_external_ntiid_oid( n )
 
 		testapp = TestApp( self.app )
 		data = ''
-		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % datastructures.to_external_ntiid_oid( n )
+		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % n_ext_id
 		path = urllib.quote( path )
 		# Initially, unliked, I get asked to favorite
 		res = testapp.get( path, extra_environ=self._make_extra_environ() )
@@ -755,11 +758,12 @@ class TestApplication(SharedApplicationTestBase):
 			n.containerId = 'tag:nti:foo'
 			user.addContainedObject( n )
 			assert_that( n.sharingTargets, is_( set() ) )
+			n_ext_id = to_external_ntiid_oid( n )
 
 		testapp = TestApp( self.app )
 		data = '["Everyone"]'
 
-		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % datastructures.to_external_ntiid_oid( n )
+		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % n_ext_id
 		field_path = path + '/++fields++sharedWith' # The name of the external field
 
 		_ = testapp.put( urllib.quote( field_path ),
@@ -807,11 +811,12 @@ class TestApplication(SharedApplicationTestBase):
 			n.containerId = 'tag:nti:foo'
 			user.addContainedObject( n )
 			assert_that( n.sharingTargets, is_( set() ) )
+			n_ext_id = to_external_ntiid_oid( n )
 
 		testapp = TestApp( self.app )
 		data = '["Everyone"]'
 
-		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % datastructures.to_external_ntiid_oid( n )
+		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % n_ext_id
 		field_path = path + '/++fields++sharedWith' # The name of the external field
 
 		res = testapp.put( urllib.quote( field_path ),
@@ -828,11 +833,12 @@ class TestApplication(SharedApplicationTestBase):
 	def _edit_user_ext_field( self, field, data ):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = self._create_user()
+			user_ext_id = to_external_ntiid_oid( user )
 
 		testapp = TestApp( self.app )
 
 		# This works for both the OID and direct username paths
-		for path in ('/dataserver2/Objects/%s' % datastructures.to_external_ntiid_oid( user ), '/dataserver2/users/' + user.username):
+		for path in ('/dataserver2/Objects/%s' % user_ext_id, '/dataserver2/users/' + user.username):
 			# Both the classic (direct) and the namespace approach
 			# ONly the namespace is supported
 			for field_segment in ('++fields++' + field, ):
@@ -875,11 +881,12 @@ class TestApplication(SharedApplicationTestBase):
 	def test_put_data_to_user( self ):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = self._create_user()
+			user_ext_id = to_external_ntiid_oid( user )
 
 		testapp = TestApp( self.app )
 
 		# This works for both the OID and direct username paths
-		for path in ('/dataserver2/Objects/%s' % datastructures.to_external_ntiid_oid( user ), '/dataserver2/users/' + user.username):
+		for path in ('/dataserver2/Objects/%s' % user_ext_id, '/dataserver2/users/' + user.username):
 
 			data = json.dumps( {"NotificationCount": 5 } )
 
@@ -907,6 +914,7 @@ class TestApplication(SharedApplicationTestBase):
 			self._create_user( username='jason.madden@nextthought.com' )
 
 			clazz = _create_class( self.ds, ('sjohnson@nextthought.com',) )
+			clazz_ntiid = to_external_ntiid_oid( clazz )
 
 		testapp = TestApp( self.app )
 		body = testapp.get( '/dataserver2/providers/OU/Classes/CS2051', extra_environ=self._make_extra_environ() )
@@ -917,7 +925,7 @@ class TestApplication(SharedApplicationTestBase):
 		assert_that( body, has_entry( 'Links',
 									  has_item( has_entries( rel='edit',
 															 #href='/dataserver2/providers/OU/Classes/CS2051' ) ) ) )
-															 href='/dataserver2/providers/OU/Objects/%s' % urllib.quote(to_external_ntiid_oid(clazz)) ) ) ) )
+															 href='/dataserver2/providers/OU/Objects/%s' % urllib.quote(clazz_ntiid) ) ) ) )
 		# And the top-level href matches the edit href
 		assert_that( body, has_entry( 'href', body['Links'][0]['href'] ) )
 
@@ -951,7 +959,7 @@ class TestApplication(SharedApplicationTestBase):
 		assert_that( body, has_entry( 'Links',
 									  has_item( has_entries( rel='edit',
 															 #href='/dataserver2/providers/OU/Classes/CS2051' ) ) ) )
-															 href='/dataserver2/providers/OU/Objects/%s' % urllib.quote(to_external_ntiid_oid(clazz)) ) ) ) )
+															 href='/dataserver2/providers/OU/Objects/%s' % urllib.quote(clazz_ntiid) ) ) ) )
 		# And the top-level href matches the edit href
 		assert_that( body, has_entry( 'href', body['Links'][0]['href'] ) )
 
@@ -1094,11 +1102,12 @@ class TestApplication(SharedApplicationTestBase):
 			n.containerId = 'tag:nti:foo'
 			user.addContainedObject( n )
 			assert_that( n.sharingTargets, is_( set() ) )
+			n_ext_id = to_external_ntiid_oid( n )
 
 		testapp = TestApp( self.app )
 		data = '["' + sect_ntiid + '"]'
 
-		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % datastructures.to_external_ntiid_oid( n )
+		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % n_ext_id
 		field_path = path + '/++fields++sharedWith' # The name of the external field
 
 		res = testapp.put( urllib.quote( field_path ),
