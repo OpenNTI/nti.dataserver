@@ -27,7 +27,7 @@ from persistent.mapping import PersistentMapping
 
 from zope import interface
 from zope import component
-
+from zc import intid as zc_intid
 from . import interfaces
 from .meeting import _Meeting
 
@@ -102,6 +102,9 @@ class TestingMappingMeetingStorage(object):
 		room.id = ntiids.make_ntiid( provider=room.creator,
 									 nttype=ntiids.TYPE_UUID,
 									 specific=uuid.uuid4().hex )
+		ids = component.queryUtility( zc_intid.IIntIds )
+		if ids:
+			ids.register( room )
 		self.meetings[room.id] = room
 
 	def get( self, room_id ):

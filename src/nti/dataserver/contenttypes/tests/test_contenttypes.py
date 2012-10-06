@@ -6,6 +6,7 @@ from hamcrest import (assert_that, is_, has_entry, is_not, has_entry,
 					  same_instance, none, has_entries, only_contains)
 from hamcrest import has_length
 from hamcrest import not_none
+from hamcrest import instance_of
 from hamcrest import greater_than
 from zope.annotation import interfaces as an_interfaces
 from zope import component
@@ -14,7 +15,7 @@ from nose.tools import with_setup
 import nti.tests
 from nti.tests import verifiably_provides
 from nti.tests import is_true
-
+from nti.dataserver import intid_wref
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.contenttypes import Redaction as _Redaction, Highlight as _Highlight, Note as _Note, Canvas, CanvasShape, CanvasAffineTransform, CanvasCircleShape, CanvasPolygonShape, CanvasPathShape, CanvasUrlShape, CanvasTextShape
 from nti.dataserver.contenttypes import NonpersistentCanvasPathShape
@@ -41,6 +42,7 @@ from nti.externalization.internalization import update_from_external_object
 #nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.quizzes' )
 #nti.externalization.internalization.register_legacy_search_module( 'nti.chatserver.messageinfo' )
 
+from zc import intid as zc_intid
 
 @with_setup(lambda: nti.tests.module_setup( set_up_packages=(nti.contentfragments,) ), nti.tests.module_teardown )
 def test_sanitize_html_contenttypes():
@@ -288,9 +290,12 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 			n2 = Note()
 			conn.add( n )
 			conn.add( n2 )
+			component.getUtility( zc_intid.IIntIds ).register( n )
+			component.getUtility( zc_intid.IIntIds ).register( n2 )
 			n.inReplyTo = n2
 			n.addReference( n2 )
 			conn.root()['Notes'] = [n, n2]
+			assert_that( n._inReplyTo, instance_of( intid_wref.WeakRef ) )
 
 		with mock_dataserver.mock_db_trans(ds):
 			ext = n.toExternalObject()
@@ -320,6 +325,10 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 			mock_dataserver.add_memory_shard( ds, 'Sessions' )
 			sconn = conn.get_connection( 'Sessions' )
 			sconn.add( n2 )
+
+			component.getUtility( zc_intid.IIntIds ).register( n )
+			component.getUtility( zc_intid.IIntIds ).register( n2 )
+
 			n.inReplyTo = n2
 			n.addReference( n2 )
 			conn.root()['Notes'] = [n]
@@ -544,10 +553,13 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 		ext = { 'sharedWith': ['jason.madden@nextthought.com'] }
 		n.updateFromExternalObject( ext, dataserver=ds )
 
+	@WithMockDSTrans
 	def test_inherit_anchor_properties(self):
 		n = Note()
 		n.applicableRange = DomContentRangeDescription( ancestor=ElementDomContentPointer( elementTagName='p' ) )
 
+		self.ds.root_connection.add( n )
+		component.getUtility( zc_intid.IIntIds ).register( n )
 
 		child = Note()
 		child.inReplyTo = n
@@ -565,6 +577,9 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 			conn.add( n )
 
 			child = Note()
+			component.getUtility( zc_intid.IIntIds ).register( n )
+			component.getUtility( zc_intid.IIntIds ).register( child )
+
 			child.inReplyTo = n
 			conn.add( child )
 			assert_that( child, has_property( '_p_jar', not_none() ) )
