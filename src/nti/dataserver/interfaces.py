@@ -1017,3 +1017,43 @@ class ISessionServiceStorage(interface.Interface):
 		:return: A sequence (possibly a generator) of session objects belonging to
 			the given user.
 		"""
+
+####
+## Weak Refs
+####
+
+class IWeakRef(interface.Interface):
+	"""
+	Represents a weak reference to some object. The strategy for
+	creating and maintaining weak references may vary dramatically for
+	different types of objects, so the semantics associated with cleanup
+	should not be assumed. For example, weak references to ordinary python
+	objects can exist only within the lifetime of a single process
+	and clear immediately when the original object is gone, but weak
+	references to persistent objects may last for several processes and
+	may persist even after the original object is gone.
+	"""
+
+	def __call__():
+		"""
+		Weak references are callable objects. Calling them returns
+		the object they reference if it is still available, otherwise
+		it returns ``None``.
+		"""
+
+	def __eq__(other):
+		"""
+		Weak references should be equal to other objects that
+		weakly reference the same object.
+		"""
+
+	def __hash__():
+		"""
+		Weak references should be suitable for hashing.
+		If possible, they should hash the same as the underlying object.
+		"""
+
+import weakref
+interface.classImplements( weakref.ref, IWeakRef )
+import persistent.wref
+interface.classImplements( persistent.wref.WeakRef, IWeakRef )

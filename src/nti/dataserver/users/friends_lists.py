@@ -7,17 +7,11 @@ from __future__ import print_function, unicode_literals, absolute_import
 
 logger = __import__( 'logging' ).getLogger( __name__ )
 
-import six
-import collections
-
 from zope import interface
 from zope import component
 from zope.component.factory import Factory
 
-import persistent
 from BTrees.OOBTree import OOTreeSet, difference as OOBTree_difference
-
-from nti.externalization.persistence import PersistentExternalizableList
 
 from nti.ntiids import ntiids
 from nti.utils import sets
@@ -27,7 +21,7 @@ from nti.dataserver import enclosures
 from nti.dataserver import mimetype
 
 from .entity import Entity
-from .wref import WeakRef
+
 
 def _get_shared_dataserver(context=None,default=None):
 	if default != None:
@@ -102,7 +96,9 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 		#	for other_friend in friend:
 		#		result += self.addFriend( other_friend )
 		if isinstance( friend, Entity ):
-			result = self._friends_wref_set.add( WeakRef( friend ) )
+			wref = nti_interfaces.IWeakRef( friend )
+			assert wref.username == friend.username
+			result = self._friends_wref_set.add( wref )
 			if result:
 				self._on_added_friend( friend )
 
@@ -134,16 +130,12 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 					newFriend = self.get_entity( newFriend, default=newFriend )
 				except TypeError:
 					pass
-			#if not isinstance( newFriend, Entity ) and callable( getattr( self.creator, 'getFriendsList', None ) ):
-			#	otherList = self.creator.getFriendsList( newFriend )
-			#	if otherList:
-			#		new_weak_refs.extend( [WeakRef( f ) for f in otherList] )
+
 			if isinstance( newFriend, Entity ):
-				new_weak_refs.append( WeakRef(newFriend) )
+				new_weak_refs.append( nti_interfaces.IWeakRef(newFriend) )
 
 		incoming_weak_refs = OOTreeSet( new_weak_refs )
-		#assert len(OOBTree_difference( OOTreeSet( new_weak_refs ), OOTreeSet( new_weak_refs ) )) == 0
-		#assert len(OOBTree_difference( OOTreeSet( self._friends_wref_set ), OOTreeSet( self._friends_wref_set ) )) == 0
+
 		# What's incoming that I don't have
 		missing_weak_refs = OOBTree_difference( incoming_weak_refs, self._friends_wref_set )
 
@@ -157,7 +149,6 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 		for x in extra_weak_refs:
 			self._friends_wref_set.remove( x )
 
-		#assert set(self) == {x() for x in incoming_weak_refs if x() is not self.creator}
 
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
 		super(FriendsList,self).updateFromExternalObject( parsed, *args, **kwargs )

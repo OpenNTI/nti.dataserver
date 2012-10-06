@@ -18,7 +18,7 @@ from nti.dataserver.generations.install import evolve as install
 from nti.dataserver.utils.example_database_initializer import ExampleDatabaseInitializer
 from nti.dataserver.generations.evolve24 import evolve
 
-
+from nti.dataserver import users
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.contenttypes import Canvas, CanvasCircleShape, NonpersistentCanvasCircleShape
 
@@ -27,7 +27,7 @@ import nti.dataserver
 
 import nti.dataserver.tests.mock_dataserver
 from nti.dataserver.tests.mock_dataserver import  mock_db_trans, WithMockDS
-
+from nti.dataserver.tests import mock_dataserver
 import fudge
 
 from nti.deprecated import hides_warnings
@@ -46,8 +46,8 @@ class TestEvolve24(nti.dataserver.tests.mock_dataserver.ConfiguringTestBase):
 			install( context )
 			ExampleDatabaseInitializer(max_test_users=0,skip_passwords=True).install( context )
 
-			ds_folder = context.connection.root()['nti.dataserver']
-			jason = ds_folder['users']['jason.madden@nextthought.com']
+			jason = users.User.get_user( dataserver=mock_dataserver.current_mock_ds, username='jason.madden@nextthought.com' )
+
 			# Give me some data to migrate over
 			note = Note()
 			canvas = Canvas()

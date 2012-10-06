@@ -18,11 +18,15 @@ logger = __import__('logging').getLogger(__name__)
 import functools
 
 from zope import component
+from zope import interface
 from zc import intid as zc_intid
 
+from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import missing_user
 
 @functools.total_ordering
+@interface.implementer(nti_interfaces.IWeakRef)
+@component.adapter(nti_interfaces.IEntity)
 class WeakRef(object):
 	"""
 	A weak reference to an entity object (generally, anything

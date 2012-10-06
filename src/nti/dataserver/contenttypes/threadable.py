@@ -4,12 +4,11 @@ Defines the base behaviours for things that are threadable.
 """
 from __future__ import print_function, unicode_literals
 
-import persistent
 import collections
 
 from persistent.list import PersistentList
 from nti.externalization.oids import to_external_ntiid_oid
-
+from nti.dataserver import interfaces as nti_interfaces
 
 class ThreadableMixin(object):
 	"""
@@ -33,7 +32,7 @@ class ThreadableMixin(object):
 		return self._inReplyTo() if self._inReplyTo else None
 
 	def setInReplyTo( self, value ):
-		self._inReplyTo = persistent.wref.WeakRef( value ) if value is not None else None
+		self._inReplyTo = nti_interfaces.IWeakRef( value ) if value is not None else None
 
 	inReplyTo = property( getInReplyTo, setInReplyTo )
 
@@ -45,7 +44,7 @@ class ThreadableMixin(object):
 		if value is not None:
 			if not self._references:
 				self._references = PersistentList()
-			self._references.append( persistent.wref.WeakRef( value ) )
+			self._references.append( nti_interfaces.IWeakRef( value ) )
 
 	def clearReferences( self ):
 		if self._references:
