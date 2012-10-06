@@ -42,7 +42,7 @@ if getattr( gevent, 'version_info', (0,) )[0] >= 1 and 'ZEO' not in sys.modules:
 	# 	raise
 
 	# As of 2012-10-06, patching sys/std[out/err/in] hangs gunicorn, so be sure it's false
-	gevent.monkey.patch_all(sys=False, Event=True)
+	gevent.monkey.patch_all(sys=False, Event=False)
 	# NOTE: There is an incompatibility with patching 'thread' and the 'multiprocessing' module:
 	logger = __import__('logging').getLogger(__name__) # Only import this after the patch, it allocates locks
 	logger.info( "Monkey patching most libraries for gevent" )

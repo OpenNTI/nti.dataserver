@@ -16,7 +16,7 @@ from ZODB.DB import DB
 from ZODB.FileStorage import FileStorage
 import transaction
 import os
-
+from zc import intid as zc_intid
 from nti.dataserver import authorization_acl as auth_acl
 from pyramid.authorization import ACLAuthorizationPolicy
 
@@ -186,6 +186,7 @@ class TestChatRoom(ConfiguringTestBase):
 			n = Note()
 			room = chat.Meeting( None )
 			conn.add( n )
+			component.getUtility( zc_intid.IIntIds ).register( n )
 			mock_dataserver.add_memory_shard( ds, 'Sessions' )
 			sconn = conn.get_connection( 'Sessions' )
 			sconn.add( room )
@@ -313,6 +314,9 @@ class TestChatserver(ConfiguringTestBase):
 		if otherDict:
 			d.update( otherDict )
 		room = chatserver.create_room_from_dict( d )
+		ids = component.getUtility( zc_intid.IIntIds )
+		if not ids.queryId( room ):
+			ids.register( room )
 		return room, chatserver
 
 	def _create_moderated_room( self, otherDict=None ):
@@ -558,6 +562,7 @@ class TestChatserver(ConfiguringTestBase):
 		room = chatserver.create_room_from_dict( {'Occupants': ['jason', 'chris', 'sjohnson'],
 												  'Creator': 'sjohnson',
 												  'ContainerId': 'tag:nextthought.com,2011-10:x-y-z'} )
+		component.getUtility( zc_intid.IIntIds ).register( room )
 		msg = chat.MessageInfo()
 		msg.Creator = 'jason'
 		msg.recipients = ['chris'] # But the default channel
@@ -665,7 +670,9 @@ class TestChatserver(ConfiguringTestBase):
 		msg.Creator = 'jason'
 		assert_that( chatserver.post_message_to_room( room.ID, msg ), is_( False ) )
 		# unless its a reply
-		msg.inReplyTo = chat.MessageInfo()
+		msg_info = chat.MessageInfo()
+		component.getUtility( zc_intid.IIntIds ).register( msg_info )
+		msg.inReplyTo = msg_info
 		assert_that( chatserver.post_message_to_room( room.ID, msg ), is_( True ) )
 		# only went to moderators
 		assert_that( msg.recipients, is_( {'sjohnson'} ) )
@@ -836,6 +843,7 @@ class TestChatserver(ConfiguringTestBase):
 		n.addSharingTarget( chris_user )
 		assert_that( n.flattenedSharingTargetNames, is_( set( ['jason','chris','sjohnson'] ) ) )
 		conn.add( n )
+		component.getUtility( zc_intid.IIntIds ).register( n )
 		conn.root()['Note'] = n
 		n_oid = toExternalOID( n )
 

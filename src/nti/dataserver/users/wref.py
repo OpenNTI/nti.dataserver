@@ -43,6 +43,8 @@ class WeakRef(object):
 
 		The username being referenced.
 
+	.. todo:: This is very similar to :class:`nti.dataserver.intid_wref.WeakRef`.
+
 	"""
 
 	# Because entity names may be reused, we keep both the intid of the object

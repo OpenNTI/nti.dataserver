@@ -5,6 +5,11 @@
 	<adapter factory="persistent.wref.WeakRef"
 			 provides=".interfaces.IWeakRef"
 			 for="persistent.interfaces.IPersistent" />
+
+	<adapter factory=".intid_wref.WeakRef"
+			 provides=".interfaces.IWeakRef"
+			 for=".interfaces.IModeledContent" />
+
 	<!-- objects implementing no interface -->
 	<adapter factory="weakref.ref"
 			 provides=".interfaces.IWeakRef"
