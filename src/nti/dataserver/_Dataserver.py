@@ -18,7 +18,8 @@ from zope.event import notify
 from zope.processlifetime import DatabaseOpened, DatabaseOpenedWithRoot
 import zope.generations.generations
 import zope.deprecation
-from persistent import Persistent, wref
+from zc import intid as zc_intid
+from persistent import Persistent
 import transaction
 from zope.component.hooks import site
 
@@ -619,12 +620,14 @@ def get_object_by_oid( connection, oid_string, ignore_creator=False ):
 		logger.debug( "Failed to resolve non-OID NTIID %s", oid_string )
 		return None
 
-	oid_string, database_name = oids.fromExternalOID( oid_string )
+	oid_string, database_name, intid = oids.fromExternalOID( oid_string )
 	if not oid_string:
 		logger.debug( 'No OID string given' )
 		return None
+	__traceback_info__ = oid_string, database_name, intid
 	try:
-		if database_name: connection = connection.get_connection( database_name )
+		if database_name:
+			connection = connection.get_connection( database_name )
 		result = connection[oid_string]
 		#if result is None and required_user not in (required_user_marker, interfaces.SYSTEM_USER_NAME):
 			# TODO: Right here, we have a user. We couldn't find the object globally,
@@ -635,6 +638,10 @@ def get_object_by_oid( connection, oid_string, ignore_creator=False ):
 		if interfaces.IWeakRef.providedBy( result ):
 			result = result()
 
+		if result is not None and intid is not None:
+			obj = component.getUtility( zc_intid.IIntIds ).getObject( intid )
+			if obj is not result:
+				raise KeyError( "Mismatch between intid %s and %s", intid, obj )
 
 		if result is not None and not ignore_creator:
 			creator = getattr( result, 'creator', None )
