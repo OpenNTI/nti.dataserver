@@ -93,7 +93,6 @@ import nti.externalization.datastructures
 from nti.externalization.datastructures import LocatedExternalDict
 from nti.externalization import interfaces as ext_interfaces
 
-import persistent.wref
 from persistent import Persistent
 import BTrees.OOBTree
 import ZODB.POSException
@@ -117,7 +116,7 @@ class _AbstractMeetingTranscriptStorage(Persistent,datastructures.ZContainedMixi
 
 	def __init__( self, meeting ):
 		super(_AbstractMeetingTranscriptStorage,self).__init__()
-		self._meeting_ref = persistent.wref.WeakRef( meeting ) # TODO: This should now be int-id based
+		self._meeting_ref = nti_interfaces.IWeakRef( meeting )
 
 	@property
 	def meeting(self):

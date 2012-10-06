@@ -55,6 +55,9 @@
 			 factory=".friends_lists._DynamicFriendsListUsernameIterable" />
 
 
+	<!-- WeakRefs to entity objects -->
+	<adapter factory=".wref.WeakRef" />
+
 	<!-- Avatar URLs -->
 	<!-- Default -->
 	<adapter factory=".avatar_urls.AvatarURLFactory"

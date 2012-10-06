@@ -27,7 +27,7 @@ def evolve( context ):
 	setHooks()
 	ds_folder = context.connection.root()['nti.dataserver']
 	with site( ds_folder ):
-		assert component.getSiteManager() == ds_folder.getSiteManager(), "Hooks not installed?"
+		assert component.getSiteManager() is ds_folder.getSiteManager(), "Hooks not installed?"
 
 		users = ds_folder['users']
 		for user in users.values():

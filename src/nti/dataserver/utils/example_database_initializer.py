@@ -9,7 +9,7 @@ import pkg_resources
 from zc import intid as zc_intid
 from zope import interface
 from zope import component
-from zope.component.hooks import site, setHooks
+from zope.component.hooks import site, setHooks, getSite
 import zope.generations.generations
 from zope.generations import interfaces as gen_interfaces
 
@@ -113,21 +113,21 @@ class ExampleDatabaseInitializer(object):
 
 		return USERS
 
-	def _make_communities(self):
+	def _make_communities(self, ds):
 		# Communities
-		aopsCommunity = Community( "ArtOfProblemSolving" )
+		aopsCommunity = Community.create_entity( ds, username="ArtOfProblemSolving" )
 		aopsCommunity.realname = aopsCommunity.username
 		aopsCommunity.alias = 'AOPS'
 
-		ntiCommunity = Community( 'NextThought' )
+		ntiCommunity = Community.create_entity( ds, username='NextThought' )
 		ntiCommunity.realname = ntiCommunity.username
 		ntiCommunity.alias = 'NTI'
 
-		mathcountsCommunity = Community( 'MathCounts' )
+		mathcountsCommunity = Community.create_entity( ds, username='MathCounts' )
 		mathcountsCommunity.realname = mathcountsCommunity.username
 		mathcountsCommunity.alias = 'MathCounts'
 
-		testUsersCommunity = Community( self.nti_testers)
+		testUsersCommunity = Community.create_entity( ds, username=self.nti_testers)
 		testUsersCommunity.realname = testUsersCommunity.username
 		testUsersCommunity.alias = self.nti_testers
 
@@ -172,10 +172,15 @@ class ExampleDatabaseInitializer(object):
 		for_user.addContainedObject( fl )
 
 	def install( self, context ):
+
 		conn = context.connection
 		root = conn.root()['nti.dataserver']
-		with site( root ):
+		# If we're in tests, we probably already have a site setup
+		if getSite() and getSite().getSiteManager() and getSite().getSiteManager().queryUtility( zc_intid.IIntIds ):
 			self._install_in_site( context, conn, root )
+		else:
+			with site( root ):
+				self._install_in_site( context, conn, root )
 
 	def _install_in_site( self, context, conn, root ):
 		# ONLY_NEW = '--only-new' in sys.argv
@@ -187,11 +192,10 @@ class ExampleDatabaseInitializer(object):
 		def register_user( u ):
 			# Because we're not in that site, we need to make sure the events
 			# go to the right place
-			utility = root.getSiteManager().queryUtility( zc_intid.IIntIds )
-			if utility is not None:
-				# Support it being missing for the sake of tests (test_evolve17)
-				_id = utility.register( u )
-				assert utility.getObject( _id ) is u
+			utility = component.getUtility( zc_intid.IIntIds )
+			_id = utility.register( u )
+			#print( u, _id, utility, id(u) )
+			assert utility.getObject( _id ) is u
 
 
 		def add_user( u ):
@@ -199,17 +203,13 @@ class ExampleDatabaseInitializer(object):
 			root['users'][u.username] = u
 			register_user( u )
 
-		# TODO: Switch to using Community.create_entity
-		communities = self._make_communities()
-		for c in communities:
-			c.__parent__ = root['users']
-			add_user( c )
-
-		# create users
 		class mock_dataserver(object):
 			pass
 		mock_dataserver.root = root
 		mock_dataserver.shards = root['shards']
+		communities = self._make_communities(mock_dataserver)
+
+
 		USERS = self._make_usernames()
 		def create_add_user(user_tuple):
 			#from IPython.core.debugger import Tracer;  Tracer()()

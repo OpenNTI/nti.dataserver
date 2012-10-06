@@ -5,7 +5,6 @@ Functions and architecture for general activity streams.
 
 from __future__ import print_function, unicode_literals, absolute_import
 
-import weakref
 import persistent
 
 from zope import interface
@@ -22,10 +21,8 @@ from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.interfaces import StandardExternalFields
 
 def _weak_ref_to( obj ):
-	if hasattr( obj, '_p_oid' ):
-		return persistent.wref.WeakRef( obj )
 	try:
-		return weakref.ref( obj )
+		return nti_interfaces.IWeakRef( obj )
 	except TypeError:
 		return obj # For the sake of old tests, we allow things that cannot be weakly ref'd.
 

@@ -34,7 +34,7 @@ class IntIds(zc_utility.IntIds):
 		try:
 			return zc_utility.IntIds.getId( self, ob )
 		except KeyError as k:
-			raise IntIdMissingError( ob, self )
+			raise IntIdMissingError( ob, id(ob), self )
 
 	def getObject( self, id ):
 		try:

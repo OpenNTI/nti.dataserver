@@ -585,9 +585,8 @@ class _ExternalRefResolver(object):
 # nti.externalization.internalization.register_legacy_search_module( 'nti.chatserver.messageinfo' )
 
 
-
+@interface.implementer( interfaces.IOIDResolver )
 class PersistentOidResolver(Persistent):
-	interface.implements( interfaces.IOIDResolver )
 
 	def get_object_by_oid( self, oid_string, ignore_creator=False ):
 		# We live with the pylint warning about '_p_jar' not being found on persistent. We cannot
@@ -633,7 +632,7 @@ def get_object_by_oid( connection, oid_string, ignore_creator=False ):
 			# and ask it to find it.
 			#pass
 
-		if isinstance(result, wref.WeakRef):
+		if interfaces.IWeakRef.providedBy( result ):
 			result = result()
 
 
