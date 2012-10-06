@@ -2,9 +2,6 @@ import six
 
 QUEUE_NAME = '%r:queue' 
 QUEUESET = 'QUEUESET' # the set which holds all queues
-PUBSUB_SUFIX = 'PUBSUB'
-POLICY_BROADCAST = 1
-POLICY_ROUNDROBIN = 2
 
 class RedisMQ(object):
     
