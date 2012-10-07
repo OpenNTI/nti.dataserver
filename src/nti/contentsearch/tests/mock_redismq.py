@@ -1,7 +1,7 @@
 import six
 
-QUEUE_NAME = '%r:queue' 
-QUEUESET = 'QUEUESET' # the set which holds all queues
+QUEUE_NAME = u'%r:queue' 
+QUEUESET = u'QUEUESET' # the set which holds all queues
 
 class RedisMQ(object):
     
@@ -14,6 +14,10 @@ class RedisMQ(object):
         else:
             raise ValueError("data must be a string")
         
+    def _internal_queue_name(self, queue):
+        result = QUEUE_NAME % self.normalize(queue)
+        return unicode(result)
+     
     def queue_add(self, queue, value, ttl=None):
         queue, value = self.normalize(queue), self.normalize(value)
             
@@ -23,7 +27,7 @@ class RedisMQ(object):
         if ttl is not None:
             self.redis.expire(key, ttl)
     
-        internal_queue_name = QUEUE_NAME % queue
+        internal_queue_name = self._internal_queue_name(queue)
         if uuid == 1:
             self.redis.sadd(QUEUESET, queue)
 
@@ -31,9 +35,7 @@ class RedisMQ(object):
         return res
 
     def queue_get(self, queue, softget=False): 
-        queue = self.normalize(queue)
-        lkey = QUEUE_NAME % self.normalize(queue)
-    
+        lkey = self._internal_queue_name(queue)
         if not softget:
             okey = self.redis.rpop(lkey)
         else:
@@ -58,7 +60,7 @@ class RedisMQ(object):
         return {'key':okey, 'value':val}
     
     def queue_len(self, queue):
-        lkey = QUEUE_NAME % self.normalize(queue)
+        lkey = self._internal_queue_name(queue)
         ll = self.redis.llen(lkey)
         return ll
 
@@ -89,8 +91,7 @@ class RedisMQ(object):
             LRANGE could too fetch the latest keys, even if there was less than keyno keys. MGET could be used too.
             TODO: does DELete belongs here ?
         """
-        queue = self.normalize(queue)
-        lkey = QUEUE_NAME % self.normalize(queue)
+        lkey = self._internal_queue_name(queue)
         multivalue = []
         for _ in range(keyno):
             nk = self.redis.rpop(lkey)
@@ -101,7 +102,9 @@ class RedisMQ(object):
     
             okey = t
             if delete_obj:
-                if not self._del_internal_key(okey): continue
+                v = self._del_internal_key(okey)
+                if v is None: continue
+                v = v['value']
             else:
                 v = self.redis.get(t)
     
@@ -110,8 +113,7 @@ class RedisMQ(object):
         return multivalue
     
     def queue_getdel(self, queue):
-        queue = self.normalize(queue)
-        lkey = QUEUE_NAME % self.normalize(queue)
+        lkey = self._internal_queue_name(queue)
         okey = self.redis.rpop(lkey) # take from queue's list
         if okey == None:
             return None
@@ -130,23 +132,24 @@ class RedisMQ(object):
         """
             returns a list with the last count items in the queue
         """
-        queue = self.normalize(queue)
-        lkey = QUEUE_NAME % self.normalize(queue)
+        lkey = self._internal_queue_name(queue)
         multivalue = self.redis.lrange(lkey, 0, count-1)
         return multivalue
  
 def test_op(mq, queue='myqueue'):
-    #for x in xrange(10):
-    #    uuid = queue_add(redis, queue, 'carlos-%r' % x)
-    #    print uuid
-    #print queue_get(redis, queue)
+    for x in xrange(10):
+        uuid = mq.queue_add(queue, u'sample-%r' % x)
+        print uuid
+    print mq.queue_get(queue)
     print mq.queue_len(queue)
-    #print queue_all(redis)
-    #print queue_tail(redis, queue, 5, True)
-    #print queue_count_elements(redis, queue)
+    print mq.queue_all()
+    print mq.queue_tail(queue, 5, True)
+    print mq.queue_len(queue)
+    #print mq.queue_count_elements(queue)
     print mq.queue_last_items(queue)
    
 if __name__ == '__main__':
-    #redis =  create_client()
-    #test_op(redis)
-    pass
+    from nti.dataserver.tests.mock_redis import InMemoryMockRedis
+    redis = InMemoryMockRedis()
+    mq = RedisMQ(redis)
+    test_op(mq)
