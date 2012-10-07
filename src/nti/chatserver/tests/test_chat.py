@@ -194,13 +194,14 @@ class TestChatRoom(ConfiguringTestBase):
 			room.addReference( n )
 			conn.root()['Notes'] = [n]
 			sconn.root()['Notes'] = [room]
+			n_ext_id = to_external_ntiid_oid( n )
 
 		with mock_dataserver.mock_db_trans(ds):
 			ext = room.toExternalObject()
 
 
-		assert_that( ext, has_entry( 'inReplyTo', to_external_ntiid_oid( n ) ) )
-		assert_that( ext, has_entry( 'references', only_contains( to_external_ntiid_oid( n ) ) ) )
+		assert_that( ext, has_entry( 'inReplyTo', n_ext_id ) )
+		assert_that( ext, has_entry( 'references', only_contains( n_ext_id ) ) )
 		assert_that( ext, has_entry( 'Moderators', [] ) )
 		assert_that( ext, has_entry( 'MessageCount', 0 ) )
 		assert_that( ext, has_entry( 'Moderated', False ) )
