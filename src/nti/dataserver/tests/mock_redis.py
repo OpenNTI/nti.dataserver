@@ -81,6 +81,37 @@ class InMemoryMockRedis(object):
 			q = self.database[key] = list()
 		q.append( value )
 		
+	def lpush( self, key, value ):
+		q = self.get( key )
+		if q is None:
+			q = self.database[key] = list()
+		q.insert(0, value )
+		
+	def lindex( self, key, index ):
+		obj = self.get( key )
+		if obj is None:
+			return None
+		assert_that( obj, is_( list ) )
+		index = int(index)
+		try:
+			return obj[index]
+		except IndexError:
+			return None
+		
+	def rpop( self, key ):
+		obj = self.get( key )
+		if obj is None:
+			return None
+		assert_that( obj, is_( list ) )
+		return obj.pop() if obj else None
+	
+	def llen( self, key ):
+		obj = self.get( key )
+		if obj is None:
+			return 0
+		assert_that( obj, is_( list ) )
+		return len(key)
+		
 	###
 	# Set operations
 	###
@@ -88,8 +119,7 @@ class InMemoryMockRedis(object):
 	def sadd(self, key, *args):
 		s = self.database.get(key, None)
 		if s is None:
-			s = set()
-			self.database[key] = s
+			s = self.database[key] = set()
 		assert_that( s, is_( set ) )
 		result = 0
 		for a in args:
@@ -116,7 +146,7 @@ class InMemoryMockRedis(object):
 					s.remove(a)
 					result += 1
 		return result
-	
+
 	def smembers(self, key):
 		s = self.database.get(key, set())
 		assert_that( s, is_( set ) )
@@ -130,6 +160,17 @@ class InMemoryMockRedis(object):
 			result = 1 if val in s else 0
 		return result
 	
+	###
+	# Counters operations
+	###
+	
+	def incr(self, key):
+		obj = self.database.get(key, None)
+		if obj is None:
+			obj = self.database[key] = 0
+		assert_that( obj, is_( int ) )
+		self.database[key] = obj + 1
+		
 class Pipeline(object):
 
 	def __init__( self, redis ):
