@@ -31,12 +31,17 @@ class InMemoryMockRedis(object):
 
 	def set( self, key, value ):
 		self.database[key] = value
+		return True
 
 	def get( self, key ):
-		return self.database.get( key )
+		return self.database.get( key, None )
 
-	def delete( self, key ):
-		self.database.pop( key, None )
+	def delete( self, *args ):
+		result = 0
+		for key in args:
+			obj = self.database.pop( key, None )
+			result +=  1 if obj is not None else 0
+		return result
 
 	def expire( self, key, ttl ):
 		pass
@@ -50,6 +55,7 @@ class InMemoryMockRedis(object):
 		
 		value = self.database.pop( old_key )
 		self.database[new_key] = value
+		return True
 	
 	###
 	# Pipeline
@@ -80,12 +86,14 @@ class InMemoryMockRedis(object):
 		if q is None:
 			q = self.database[key] = list()
 		q.append( value )
+		return len(q)
 		
 	def lpush( self, key, value ):
 		q = self.get( key )
 		if q is None:
 			q = self.database[key] = list()
 		q.insert(0, value )
+		return len(q)
 		
 	def lindex( self, key, index ):
 		obj = self.get( key )
@@ -98,6 +106,13 @@ class InMemoryMockRedis(object):
 		except IndexError:
 			return None
 		
+	def lpop( self, key ):
+		obj = self.get( key )
+		if obj is None:
+			return None
+		assert_that( obj, is_( list ) )
+		return obj.pop(0) if obj else None
+	
 	def rpop( self, key ):
 		obj = self.get( key )
 		if obj is None:
@@ -110,7 +125,7 @@ class InMemoryMockRedis(object):
 		if obj is None:
 			return 0
 		assert_that( obj, is_( list ) )
-		return len(key)
+		return len(obj)
 		
 	###
 	# Set operations
@@ -170,6 +185,7 @@ class InMemoryMockRedis(object):
 			obj = self.database[key] = 0
 		assert_that( obj, is_( int ) )
 		self.database[key] = obj + 1
+		return self.database[key]
 		
 class Pipeline(object):
 
