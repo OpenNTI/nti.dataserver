@@ -34,7 +34,6 @@ import zope.intid
 import zc.intid
 from zope.catalog.interfaces import ICatalog
 from zope.catalog.catalog import Catalog
-from zope.catalog.field import FieldIndex
 
 
 import z3c.password.interfaces
@@ -48,7 +47,9 @@ from nti.dataserver import intid_utility
 from nti.dataserver import flagging
 from nti.dataserver import shards as ds_shards
 from nti.dataserver import password_utility
+
 from nti.dataserver.users import interfaces as user_interfaces
+from nti.dataserver.users import index as user_index
 
 def install_chat( context ):
 	pass
@@ -142,13 +143,18 @@ def install_user_catalog( dataserver_folder, intids ):
 	intids.register( catalog )
 	lsm.registerUtility( catalog, provided=ICatalog, name='nti.dataserver.++etc++entity-catalog' )
 
-	alias_index = FieldIndex( 'alias', interface=user_interfaces.IFriendlyNamed, family=BTrees.family64 )
+	alias_index = user_index.AliasIndex( family=BTrees.family64 )
 	intids.register( alias_index )
 	catalog['alias'] = alias_index
 
-	email_index = FieldIndex( 'email', interface=user_interfaces.IUserProfile, family=BTrees.family64 )
+	email_index = user_index.EmailIndex(family=BTrees.family64 )
 	intids.register( email_index )
 	catalog['email'] = email_index
+
+	realname_index = user_index.RealnameIndex( family=BTrees.family64 )
+	intids.register( realname_index )
+	catalog['realname'] = realname_index
+
 	return catalog
 
 
