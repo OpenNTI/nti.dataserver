@@ -80,13 +80,16 @@ class _BaseIndexManagerTest(object):
 		self.im = self.create_index_mananger()
 		self.im.add_book(indexname='bleach', ntiid='bleach', indexdir=self.book_idx_dir)
 
-		hits = self.im.content_search(indexid='bleach', query='omega') 
+		q = QueryObject(indexid='bleach', query='omega')
+		hits = self.im.content_search(query=q) 
 		assert_that(hits, has_length(1))
 
-		hits = self.im.content_suggest_and_search(indexid='bleach', query='wen') 
+		q = QueryObject(indexid='bleach', query='wen')
+		hits = self.im.content_suggest_and_search(query=q) 
 		assert_that(hits, has_length(1))
 
-		hits = self.im.content_suggest(indexid='bleach', query='extre')
+		q = QueryObject(indexid='bleach', query='extre')
+		hits = self.im.content_suggest(query=q)
 		assert_that(hits, has_length(2))
 
 	def _add_notes_to_ds(self, strings=zanpakuto_commands):
@@ -179,10 +182,12 @@ class _BaseIndexManagerTest(object):
 	def test_search_notes(self):
 		_, usr = self._add_notes_and_index()
 
-		hits = self.im.user_data_search(query='not_to_be_found', username=usr.username, searchon=('Notes',))
+		q = QueryObject(term='not_to_be_found', username=usr.username, searchon=('Notes',))
+		hits = self.im.user_data_search(query=q)
 		assert_that(hits, has_length(0))
 
-		hits = self.im.user_data_search(query='rage', username=usr.username, searchon=('Notes',))
+		q = QueryObject(term='rage', username=usr.username, searchon=('Notes',))
+		hits = self.im.user_data_search(query=q)
 		assert_that(hits, has_length(1))
 
 	@WithMockDSTrans
@@ -192,7 +197,8 @@ class _BaseIndexManagerTest(object):
 			return
 
 		_, usr = self._add_notes_and_index()
-		hits = self.im.user_data_suggest(username=usr.username, searchon=('note',), query='flow')
+		q = QueryObject(term='flow', username=usr.username, searchon=('Notes',))
+		hits = self.im.user_data_suggest(q)
 		assert_that(hits, has_length(1))
 
 	@WithMockDSTrans
@@ -202,7 +208,8 @@ class _BaseIndexManagerTest(object):
 			return
 
 		_, usr = self._add_notes_and_index()
-		hits = self.im.user_data_suggest_and_search(query='creat', username=usr.username, searchon=('note',))
+		q = QueryObject(term='creat', username=usr.username, searchon=('Notes',))
+		hits = self.im.user_data_suggest_and_search(query=q)
 		assert_that(hits, has_length(1))
 
 	@WithMockDSTrans
@@ -212,12 +219,14 @@ class _BaseIndexManagerTest(object):
 		note = notes[0]
 		note.body = [u'Shoot To Death']
 		self.im.update_user_content(user, data=note)
-		hits = self.im.user_data_search(query='death', username=user.username, searchon=('Notes',))
+		q = QueryObject(term='death', username=user.username, searchon=('Notes',))
+		hits = self.im.user_data_search(query=q)
 		assert_that(hits, has_length(2))
 
 		note = notes[1]
 		self.im.delete_user_content(user, data=note)
-		hits = self.im.user_data_search(query='deviate', username=user.username, searchon=('Notes',))
+		q = QueryObject(term='deviate', username=user.username, searchon=('Notes',))
+		hits = self.im.user_data_search(query=q)
 		assert_that(hits, has_length(0))
 
 class TestIndexManagerWithRepoze(_BaseIndexManagerTest, ConfiguringTestBase):

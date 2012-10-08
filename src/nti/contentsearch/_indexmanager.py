@@ -72,8 +72,8 @@ class IndexManager(object):
 	# -------------------
 
 	@SearchCallWrapper
-	def search(self, query, *args, **kwargs):
-		query = QueryObject.create(query, **kwargs)
+	def search(self, query):
+		query = QueryObject.create(query)
 		cnt_results = self.content_search(query=query)
 		ugd_results = self.user_data_search(query=query)	
 		results = merge_search_results(cnt_results, ugd_results)
@@ -81,16 +81,16 @@ class IndexManager(object):
 		return results
 
 	@SearchCallWrapper
-	def suggest_and_search(self, query, *args, **kwargs):
-		query = QueryObject.create(query, **kwargs)
+	def suggest_and_search(self, query):
+		query = QueryObject.create(query)
 		cnt_results = self.content_suggest_and_search(query=query)
 		ugd_results = self.user_data_suggest_and_search(query=query)	
 		results = merge_suggest_and_search_results(cnt_results, ugd_results)
 		return results
 
 	@SearchCallWrapper
-	def suggest(self, query, *args, **kwargs):
-		query = QueryObject.create(query, **kwargs)
+	def suggest(self, query):
+		query = QueryObject.create(query)
 		cnt_results = self.content_suggest(query=query)
 		ugd_results = self.user_data_suggest(query=query)	
 		results = merge_suggest_results(cnt_results, ugd_results)
@@ -114,14 +114,14 @@ class IndexManager(object):
 				logger.warn("Could not add book index '%s,%r,%r' to index manager" % (indexname, ntiid, kwargs))
 		return result
 
-	def content_search(self, query, *args, **kwargs):
-		query = QueryObject.create(query, **kwargs)
+	def content_search(self, query):
+		query = QueryObject.create(query)
 		bm = self.get_book_index_manager(query.indexid)
 		results = bm.search(query) if (bm is not None and not query.is_empty) else None
 		return results if results is not None else empty_search_results(query)
 
-	def content_suggest_and_search(self, query, *args, **kwargs):
-		query = QueryObject.create(query, **kwargs)
+	def content_suggest_and_search(self, query):
+		query = QueryObject.create(query)
 		bm = self.get_book_index_manager(query.indexid)
 		results = bm.suggest_and_search(query) if (bm is not None and not query.is_empty) else None
 		return results if results is not None else empty_suggest_and_search_results(query)
@@ -150,39 +150,24 @@ class IndexManager(object):
 
 	# -------------------
 
-	####
-	# TODO: *args and **kwargs  seem to be way overused, making
-	# refactoring very difficult. When arguments are not optional, e.g., 'username'
-	# it should be declared.
-
-	def user_data_search(self, query, *args, **kwargs):
-		query = QueryObject.create(query, **kwargs)
+	def user_data_search(self, query):
+		query = QueryObject.create(query)
 		results = empty_search_results(query)
 		for uim in self._get_search_uims(query.username):
 			rest = uim.search(query=query)
 			results = merge_search_results (results, rest)
 		return results
 
-	def user_data_ngram_search(self, query, *args, **kwargs):
-		query = QueryObject.create(query, **kwargs)
-		results = empty_search_results(query)
-		for uim in self._get_search_uims(query.username):
-			rest = uim.ngram_search(query=query)
-			results = merge_search_results (results, rest)
-		return results
-
-	user_data_quick_search = user_data_ngram_search
-
-	def user_data_suggest_and_search(self, query, *args, **kwargs):
-		query = QueryObject.create(query, **kwargs)
+	def user_data_suggest_and_search(self, query):
+		query = QueryObject.create(query)
 		results = empty_suggest_and_search_results(query)
 		for uim in self._get_search_uims(query.username):
 			rest = uim.suggest_and_search(query=query)
 			results = merge_suggest_and_search_results (results, rest)
 		return results
 	
-	def user_data_suggest(self, query, *args, **kwargs):
-		query = QueryObject.create(query, **kwargs)
+	def user_data_suggest(self, query):
+		query = QueryObject.create(query)
 		results = empty_suggest_results(query)
 		for uim in self._get_search_uims(query.username):
 			rest = uim.suggest(query=query)
