@@ -863,3 +863,14 @@ class LitWorldSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 	COM_USERNAME = 'litworld.nextthought.com'
 	COM_ALIAS = 'LitWorld'
 	COM_REALNAME = 'LitWorld'
+	
+@interface.implementer(ISitePolicyUserEventListener)
+class CollegiateSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
+	"""
+	Implements the policy for the Collegiate site.
+	"""
+
+	COM_USERNAME = 'collegiate.nextthought.com'
+	COM_ALIAS = 'Collegiate'
+	COM_REALNAME = 'Collegiate'
+	
