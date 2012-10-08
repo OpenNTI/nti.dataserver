@@ -79,6 +79,15 @@ class EmailAddressInvalid(_InvalidData):
 	def __init__( self, address ):
 		super(EmailAddressInvalid,self).__init__( address, value=address )
 
+class RealnameInvalid(_InvalidData):
+	""" Invalid realname. """
+	i18n_message = _("The first or last name you have entered is not valid.")
+	field = 'realname'
+
+	def __init__( self, name ):
+		super(RealnameInvalid,self).__init__( name, value=name )
+
+
 class OldPasswordDoesNotMatchCurrentPassword(pwd_interfaces.InvalidPassword):
 	i18n_message = _("The password you supplied does not match the current password.")
 
@@ -126,6 +135,25 @@ def checkEmailAddress(value):
 		return True
 
 	raise EmailAddressInvalid( value )
+
+#: A sequence of only non-alphanumeric characters
+#: or a sequence of only digits and spaces, the underscore, and non-alphanumeric characters
+#: (which is basically \W with digits and _ added back
+_INVALID_REALNAME_RE = re.compile( r'^\W+$|^[\d\s\W_]+$', re.UNICODE )
+
+def checkRealname(value):
+	"""
+	Ensure that the realname doesn't consist of just digits/spaces
+	or just alphanumeric characters
+	"""
+
+	if value:
+		if _INVALID_REALNAME_RE.match( value ):
+			raise RealnameInvalid( value )
+		# Component parts? TODO: What about 'Jon Smith 3' as 'Jon Smith III'?
+		#for x in value.split():
+
+	return True
 
 class IWillUpdateNewEntityEvent(zope.component.interfaces.IObjectEvent):
 	"""
@@ -215,7 +243,8 @@ class IFriendlyNamed(Interface):
 	realname = schema.TextLine(
 		title='Full Name aka realname',
 		description="Enter full name, e.g. John Smith.",
-		required=False)
+		required=False,
+		constraint=checkRealname)
 
 class IImmutableFriendlyNamed(Interface):
 	"""
@@ -234,7 +263,8 @@ class IImmutableFriendlyNamed(Interface):
 		title='Full Name aka realname',
 		description="Enter full name, e.g. John Smith.",
 		required=False,
-		readonly=True)
+		readonly=True,
+		constraint=checkRealname)
 
 class IRequireProfileUpdate(Interface):
 	"""
