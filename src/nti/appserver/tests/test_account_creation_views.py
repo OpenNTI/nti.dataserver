@@ -70,6 +70,23 @@ class _AbstractValidationViewBase(SharedConfiguringTestBase):
 		super(_AbstractValidationViewBase,self).setUp()
 
 	@WithMockDSTrans
+	def test_create_invalid_realname(self):
+		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
+													 'password': 'pass123word',
+													 'realname': '123 456_',
+													 'email': 'foo@bar.com',} )
+
+		with assert_raises( hexc.HTTPUnprocessableEntity ) as exc:
+			self.the_view( self.request )
+
+
+		assert_that( exc.exception.json_body, has_entry( 'field', 'realname' ) )
+		assert_that( exc.exception.json_body, has_entry( 'code', 'RealnameInvalid' ) )
+		assert_that( exc.exception.json_body, has_entry( 'value', '123 456_' ) )
+		assert_that( exc.exception.json_body, has_entry( 'message', contains_string( 'The first or last name you have entered is not valid.' ) ) )
+
+	@WithMockDSTrans
 	def test_create_invalid_invitation_code(self):
 		self.request.content_type = 'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
@@ -98,9 +115,6 @@ class _AbstractValidationViewBase(SharedConfiguringTestBase):
 													 'invitation_codes': ['MATHCOUNTS'] } )
 
 		self.the_view( self.request )
-
-
-
 
 
 	@WithMockDSTrans
