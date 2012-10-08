@@ -43,7 +43,7 @@ class TestEvolve25(nti.dataserver.tests.mock_dataserver.ConfiguringTestBase):
 		with mock_db_trans( ) as conn:
 			context = fudge.Fake().has_attr( connection=conn )
 
-			install( context )
+			#install( context )
 			ExampleDatabaseInitializer(max_test_users=0,skip_passwords=True).install( context )
 
 			ds_folder = context.connection.root()['nti.dataserver']

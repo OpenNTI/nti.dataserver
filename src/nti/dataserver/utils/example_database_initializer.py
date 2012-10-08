@@ -81,7 +81,9 @@ class ExampleDatabaseInitializer(object):
 				   'pacifique.mahoro', 'eric.anderson', 'jeff.muehring',
 				   'aaron.eskam', 'kaley.white', 'greg.higgins',
 				   'leo.parker', 'troy.daley', 'steve.johnson','vitalik.buterin' ):
-			USERS.append( (uid + '@nextthought.com', uid.replace( '.', ' ').title() ) )
+			USERS.append( (uid + '@nextthought.com',
+						   uid.replace( '.', ' ').title(),
+						   uid + '@nextthought.com') )
 
 		# Add test users
 		max_test_users = self.max_test_users
@@ -222,7 +224,7 @@ class ExampleDatabaseInitializer(object):
 
 			args = {'username':uname, 'password':password,'dataserver':mock_dataserver}
 			ext_value = {}
-			ext_value['email'] = unicode(uname)
+			ext_value['email'] = unicode(uname) if len(user_tuple) < 3 else user_tuple[2]
 			ext_value['realname'] = user_tuple[1]
 			ext_value['alias'] = user_tuple[1].split()[0]
 			args['external_value'] = ext_value
@@ -254,8 +256,8 @@ class ExampleDatabaseInitializer(object):
 		section.ID = 'CS2051.101'
 		klass.add_section( section )
 		section.InstructorInfo = classes.InstructorInfo()
-		for username, _ in USERS:
-			section.enroll( username )
+		for user_tuple in USERS:
+			section.enroll( user_tuple[0] )
 		section.InstructorInfo.Instructors.append( 'jason.madden@nextthought.com' )
 		section.Provider = 'OU'
 

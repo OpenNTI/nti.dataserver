@@ -691,6 +691,8 @@ class User(Principal):
 		all the contained things he has created, and anything annotated
 		on him that was in ILocation (see :mod:`zope.annotation.factory`).
 
+		.. todo:: See comments in this method; annotations no longer supported.
+
 		Note that this is used during the processing of :class:`zope.lifecycleevent.IObjectMovedEvent`,
 		when :func:`zope.container.contained.dispatchToSublocations` comes through
 		and recursively lets all the children know about the event. Also note that :class:`zope.lifecycleevent.IObjectRemovedEvent`
@@ -701,15 +703,26 @@ class User(Principal):
 		yield self.friendsLists
 		yield self.devices
 		yield self.containers
+
 		# If we have annotations, then if the annotated value thinks of
 		# us as a parent, we need to return that. See zope.annotation.factory
-		annotations = zope.annotation.interfaces.IAnnotations(self, {})
+		#### XXX FIXME:
+		#### This is wrong (and so commented out). Specifically, for ObjectAddedEvent,
+		#### any annotations we have already established get their own intids,
+		#### even if they are not meant to be addressable like that, potentially
+		#### keeping them alive for too long. This also means that annotations get
+		#### indexed, which is probably also not what we want. It causes issues for
+		#### IUserProfile annotation in particular.
+		#### TODO: But what does turning this off break? Certain migration patterns?
+		#### Or does it break deleting a user? Chat message storage winds up with
+		#### too many objects still with intids?
+		#annotations = zope.annotation.interfaces.IAnnotations(self, {})
 
 		# Technically, IAnnotations doesn't have to be iterable of values,
 		# but it always is (see zope.annotation.attribute)
-		for val in annotations.values():
-			if getattr( val, '__parent__', None ) is self:
-				yield val
+		#for val in annotations.values():
+		#	if getattr( val, '__parent__', None ) is self:
+		#		yield val
 
 	def _is_container_ntiid( self, containerId ):
 		"""
