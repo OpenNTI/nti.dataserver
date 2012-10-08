@@ -1,0 +1,12 @@
+<!-- -*- mode: nxml -*- -->
+<configure
+	xmlns="http://namespaces.zope.org/zope"
+	xmlns:zcml="http://namespaces.zope.org/zcml">
+	<include package="zope.component" />
+
+	<adapter factory="nti.contentfragments.censor.DefaultCensoredContentPolicy"
+			 provides="nti.contentfragments.interfaces.ICensoredContentPolicy"
+			 for="nti.dataserver.interfaces.IUser *"
+			 name="collegiate.nextthought.com" />
+			 
+</configure>
