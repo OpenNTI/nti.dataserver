@@ -43,7 +43,7 @@ class TestEvolve24(nti.dataserver.tests.mock_dataserver.ConfiguringTestBase):
 		with mock_db_trans( ) as conn:
 			context = fudge.Fake().has_attr( connection=conn )
 
-			install( context )
+			#install( context )
 			ExampleDatabaseInitializer(max_test_users=0,skip_passwords=True).install( context )
 
 			jason = users.User.get_user( dataserver=mock_dataserver.current_mock_ds, username='jason.madden@nextthought.com' )

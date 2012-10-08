@@ -30,9 +30,13 @@ from zope.component.interfaces import ISite
 from zope.site import LocalSiteManager
 from zope.site.folder import Folder, rootFolder
 
-
 import zope.intid
 import zc.intid
+from zope.catalog.interfaces import ICatalog
+from zope.catalog.catalog import Catalog
+from zope.catalog.field import FieldIndex
+
+
 import z3c.password.interfaces
 
 from nti.dataserver import _Dataserver
@@ -44,7 +48,7 @@ from nti.dataserver import intid_utility
 from nti.dataserver import flagging
 from nti.dataserver import shards as ds_shards
 from nti.dataserver import password_utility
-
+from nti.dataserver.users import interfaces as user_interfaces
 
 def install_chat( context ):
 	pass
@@ -103,6 +107,7 @@ def install_main( context ):
 	lsm.registerUtility( sess_storage, provided=nti_interfaces.ISessionServiceStorage )
 
 	intids = install_intids( dataserver_folder )
+	install_user_catalog( dataserver_folder, intids )
 
 	everyone = dataserver_folder['users']['Everyone'] = users.Everyone()
 	intids.register( everyone ) # Events didn't fire
@@ -118,8 +123,7 @@ def install_intids( dataserver_folder ):
 	# A utility to create intids for any object that needs it
 	# Two choices: With either one of them registered, subscribers
 	# fire forcing objects to be adaptable to IKeyReference.
-	# Int ids are not currently being used, but plans are for the
-	# near future. A migration path will have to be established.
+
 	#intids = zope.intid.IntIds( family=BTrees.family64 )
 	intids = intid_utility.IntIds('_ds_intid', family=BTrees.family64 )
 	intids.__name__ = '++etc++intids'
@@ -128,6 +132,25 @@ def install_intids( dataserver_folder ):
 	# Make sure to register it as both types of utility, one is a subclass of the other
 	lsm.registerUtility( intids, provided=zc.intid.IIntIds )
 	return intids
+
+def install_user_catalog( dataserver_folder, intids ):
+	lsm = dataserver_folder.getSiteManager()
+	catalog = Catalog()
+
+	catalog.__name__ = '++etc++entity-catalog'
+	catalog.__parent__ = dataserver_folder
+	intids.register( catalog )
+	lsm.registerUtility( catalog, provided=ICatalog, name='nti.dataserver.++etc++entity-catalog' )
+
+	alias_index = FieldIndex( 'alias', interface=user_interfaces.IFriendlyNamed, family=BTrees.family64 )
+	intids.register( alias_index )
+	catalog['alias'] = alias_index
+
+	email_index = FieldIndex( 'email', interface=user_interfaces.IUserProfile, family=BTrees.family64 )
+	intids.register( email_index )
+	catalog['email'] = email_index
+	return catalog
+
 
 def install_password_utility( dataserver_folder ):
 	lsm = dataserver_folder.getSiteManager()

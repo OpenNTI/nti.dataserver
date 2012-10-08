@@ -8,17 +8,24 @@ from __future__ import print_function, unicode_literals
 from hamcrest import assert_that
 from hamcrest import is_, is_not, none
 from hamcrest import has_property
+from hamcrest import contains
 from nti.tests import verifiably_provides
 
+from zope.component.hooks import site
 from zope.component import eventtesting
 
 from zope import component
 from zc import intid as zcid_interfaces
 
+from zope.catalog.interfaces import ICatalog
 from zope.container import contained
 import persistent
 
+from nti.dataserver.utils.example_database_initializer import ExampleDatabaseInitializer
 from nti.dataserver.tests import mock_dataserver
+from nti.dataserver.tests.mock_dataserver import mock_db_trans
+
+import fudge
 
 class PersistentContained(contained.Contained,persistent.Persistent):
 	pass
@@ -44,3 +51,20 @@ class TestInstall(mock_dataserver.ConfiguringTestBase):
 
 		del ds.root['NewKey']
 		assert_that( intids.queryId( contained_obj ), is_( none() ) )
+
+	@mock_dataserver.WithMockDS
+	def test_installed_catalog(self):
+		with mock_db_trans( ) as conn:
+
+			context = fudge.Fake().has_attr( connection=conn )
+
+			ExampleDatabaseInitializer(max_test_users=0,skip_passwords=True).install( context )
+
+
+		with mock_db_trans( ) as conn:
+			ds_folder = context.connection.root()['nti.dataserver']
+
+			with site(ds_folder):
+				ent_catalog = component.getUtility(ICatalog, name='nti.dataserver.++etc++entity-catalog')
+				results = list(ent_catalog.searchResults( email=('jason.madden@nextthought.com','jason.madden@nextthought.com') ))
+				assert_that( results, contains( ds_folder['users']['jason.madden@nextthought.com'] ) )

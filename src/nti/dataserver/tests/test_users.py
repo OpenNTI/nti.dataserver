@@ -673,6 +673,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		assert_that( sublocs, has_item( user1.friendsLists ) )
 
 
+	@unittest.skip("Annotations disabled for now; causes problems with indexing.")
 	@WithMockDSTrans
 	def test_sublocations_include_annotations(self):
 		user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
