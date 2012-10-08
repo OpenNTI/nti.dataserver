@@ -9,7 +9,7 @@ from whoosh import index
 from whoosh.index import _DEF_INDEX_NAME
 from whoosh.filedb.filestore import FileStorage as WhooshFileStorage
 
-from nti.contentsearch.interfaces import IWhooshIndexStorage
+from nti.contentsearch import interfaces as search_interfaces
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -48,8 +48,8 @@ def segment_merge(writer, segments):
 			newsegments.append(s)
 	return newsegments
 
+@interface.implementer( search_interfaces.IWhooshIndexStorage )
 class IndexStorage(object):
-	interface.implements(IWhooshIndexStorage)
 	
 	# limitmb: http://packages.python.org/Whoosh/batch.html
 	default_ctor_args = {'limitmb':96}
@@ -148,7 +148,7 @@ class DirectoryStorage(IndexStorage):
 
 class UserDirectoryStorage(DirectoryStorage):
 	
-	def __init__(self, indexdir=None, max_level=2):
+	def __init__(self, indexdir=None, max_level=3):
 		super(UserDirectoryStorage, self).__init__(indexdir)
 		self.stores = {}
 		self.max_level = max_level
@@ -182,6 +182,7 @@ def create_directory_index(indexname, schema, indexdir=None):
 	idx.close()
 	return idx, storage	
 	
+@interface.implementer( search_interfaces.IWhooshIndexStorage )
 def _create_default_whoosh_storage():
 	if os.getenv('DATASERVER_DIR', None):
 		return UserDirectoryStorage()
