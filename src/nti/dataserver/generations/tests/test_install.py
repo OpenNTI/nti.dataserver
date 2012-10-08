@@ -66,5 +66,8 @@ class TestInstall(mock_dataserver.ConfiguringTestBase):
 
 			with site(ds_folder):
 				ent_catalog = component.getUtility(ICatalog, name='nti.dataserver.++etc++entity-catalog')
-				results = list(ent_catalog.searchResults( email=('jason.madden@nextthought.com','jason.madden@nextthought.com') ))
+				results = list(ent_catalog.searchResults( email=('Jason.madden@nextthought.com','jason.madden@nextthought.com') ))
+				assert_that( results, contains( ds_folder['users']['jason.madden@nextthought.com'] ) )
+
+				results = list(ent_catalog.searchResults( realname=('JASON MADDEN','JASON MADDEN') ))
 				assert_that( results, contains( ds_folder['users']['jason.madden@nextthought.com'] ) )

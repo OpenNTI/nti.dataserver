@@ -228,6 +228,7 @@ setup(
 		'zope.browser',
 		'zope.browserpage',
 		'zope.browserresource',
+		'zope.catalog >= 3.8.2',
 		'zope.cachedescriptors >= 3.5.1',
 		'zope.component >= 4.0.0',
 		# Schema vocabularies based on querying ZCA; useful
