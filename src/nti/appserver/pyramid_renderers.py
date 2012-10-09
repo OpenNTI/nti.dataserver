@@ -34,10 +34,10 @@ from nti.dataserver.mimetype import (MIME_BASE_PLIST, MIME_BASE_JSON,
 from nti.dataserver import traversal as nti_traversal
 
 
-
 import nti.appserver.interfaces as app_interfaces
-
 import nti.dataserver.interfaces as nti_interfaces
+
+from perfmetrics import metric
 
 def find_content_type( request, data=None ):
 	"""
@@ -90,7 +90,7 @@ def find_content_type( request, data=None ):
 
 	return best_match or MIME_BASE_JSON
 
-
+@metric
 def render_externalizable(data, system):
 	request = system['request']
 	response = request.response

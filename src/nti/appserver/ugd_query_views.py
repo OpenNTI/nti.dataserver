@@ -41,6 +41,8 @@ from nti.dataserver.mimetype import nti_mimetype_from_object
 
 from z3c.batching.batch import Batch
 
+from perfmetrics import metric, metricmethod
+
 def lists_and_dicts_to_ext_collection( items ):
 	""" Given items that may be dictionaries or lists, combines them
 	and externalizes them for return to the user as a dictionary. If the individual items
@@ -230,6 +232,7 @@ class _UGDView(object):
 	def _get_accept_types(self):
 		return self.__get_list_param( 'accept' )
 
+	@metricmethod
 	def getObjectsForId( self, user, ntiid ):
 		"""
 		Returns a sequence of values that can be passed to
@@ -256,6 +259,7 @@ class _UGDView(object):
 	_DEFAULT_BATCH_SIZE = None
 	_DEFAULT_BATCH_START = None
 
+	@metricmethod
 	def _sort_filter_batch_result( self, result ):
 		"""
 		Sort, filter, and batch (page) the result by modifying it in place. This method
@@ -386,6 +390,7 @@ class _RecursiveUGDView(_UGDView):
 	def __init__(self,request):
 		super(_RecursiveUGDView,self).__init__(request)
 
+	@metricmethod
 	def getObjectsForId( self, user, ntiid ):
 		containers = ()
 
