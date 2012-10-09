@@ -6,7 +6,7 @@ from __future__ import print_function, unicode_literals
 
 __docformat__ = 'restructuredtext'
 
-generation = 29
+generation = 30
 
 from zope.generations.generations import SchemaManager
 
@@ -34,6 +34,8 @@ import zope.intid
 import zc.intid
 from zope.catalog.interfaces import ICatalog
 from zope.catalog.catalog import Catalog
+from zope.index.topic.index import TopicIndex
+from zope.index.topic.filter import PythonFilteredSet
 
 
 import z3c.password.interfaces
@@ -151,9 +153,20 @@ def install_user_catalog( dataserver_folder, intids ):
 	intids.register( email_index )
 	catalog['email'] = email_index
 
+	password_recovery_email_hash_index = user_index.PasswordRecoveryEmailHashIndex(family=BTrees.family64)
+	intids.register( password_recovery_email_hash_index )
+	catalog['password_recovery_email_hash'] = password_recovery_email_hash_index
+
 	realname_index = user_index.RealnameIndex( family=BTrees.family64 )
 	intids.register( realname_index )
 	catalog['realname'] = realname_index
+
+
+	opt_in_comm_index = TopicIndex( family=BTrees.family64 )
+	opt_in_comm_set = user_index.OptInEmailCommunicationFilteredSet( 'opt_in_email_communication', family=BTrees.family64 )
+	opt_in_comm_index.addFilter( opt_in_comm_set )
+	intids.register( opt_in_comm_index )
+	catalog['topics'] = opt_in_comm_index
 
 	return catalog
 
