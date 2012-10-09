@@ -6,7 +6,7 @@ name: ntiincludevideo
 # refuses to load iframes properly from on-disk files.
 #<video tal:attributes="src self/attributes/text" />
 # NOTE that this must stay consistent with sectionvideoadder.py (TODO: Can we use this template?)
-<div class="externalvideo"><iframe width="640" height="360" tal:attributes="src self/attributes/text" frameborder="0" allowfullscreen="true" ></iframe></div>
+<div class="externalvideo"><iframe width="640" height="360" tal:attributes="src self/attributes/video_url" frameborder="0" allowfullscreen="true" ></iframe></div>
 
 name: vfrac
 <span class="vfrac"><sup class="nom" tal:content="self/attributes/nom"></sup><span class="divider">&#47;</span><sub class="denom" tal:content="self/attributes/denom"></sub></span>
@@ -22,3 +22,6 @@ name: nobreak
 
 name: ntiglossaryterm
 <b tal:content="self/attributes/term"></b>
+
+name: ntiimagehref
+<a class="thumb" tal:attributes="href self/attributes/url"><img tal:attributes="src self/attributes/img"></a>

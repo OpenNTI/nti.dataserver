@@ -46,12 +46,20 @@ class pageref(Crossref.pageref):
 
 
 class ntiincludevideo(_OneText):
-	args = 'text'
+	args = 'video_url'
 
 	def invoke( self, tex ):
 		result = super(ntiincludevideo, self).invoke( tex )
 		# change youtube view links to embed
-		self.attributes['text'] = self.attributes['text'].textContent.replace( "/watch?v=", '/embed/' )
+		self.attributes['video_url'] = self.attributes['video_url'].textContent.replace( "/watch?v=", '/embed/' )
+		self.attributes['width'] = 640
+		self.attributes['height'] = 360
+		_t = self.attributes['video_url'].split('/')
+		if 'youtube' in _t[2]:
+			self.attributes['service'] = 'youtube'
+			self.attributes['video_id'] = _t[4].split('?')[0]
+			self.attributes['poster'] = '//img.youtube.com/vi/' + self.attributes['video_id'] + '/0.jpg'
+			self.attributes['thumbnail'] = '//img.youtube.com/vi/' + self.attributes['video_id'] + '/1.jpg'
 		return result
 
 class ntipagenum(_OneText):
@@ -59,6 +67,9 @@ class ntipagenum(_OneText):
 
 class ntiglossaryterm(Base.Command):
 	args = 'term self'
+
+class ntiimagehref(Base.Command):
+	args = 'img url'
 
 class textsuperscript(Base.Command):
 	args = 'self'
