@@ -1,20 +1,17 @@
 from __future__ import print_function, unicode_literals
 
-import time
-
 from zope import component
 from zope import interface
 from zope.annotation import factory as an_factory
 from zope.interface.common.mapping import IFullMapping
 
-from ZODB import loglevels
-
 from persistent.mapping import PersistentMapping
+
+from perfmetrics import metric, metricmethod
 
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.contentsearch.common import content_
-from nti.contentsearch import SearchCallWrapper
 from nti.contentsearch.common import is_all_query
 from nti.contentsearch.common import get_type_name
 from nti.contentsearch.common import sort_search_types
@@ -87,28 +84,19 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 		result = sort_search_types(result)
 		return result
 
+	@metricmethod
 	def _get_hits_from_docids(self, results, docids, type_name):
-		t = time.time()
-		try:
-			# get all objects from the ds
-			objects = map(self.get_object, docids)
-			t = time.time() - t
-			results.add(objects)
-		finally:
-			logger.log(loglevels.TRACE, "Getting %s %s(s) from dataserver took %s(s)" , len(docids), type_name, t)
-
+		# get all objects from the ds
+		objects = map(self.get_object, docids)
+		results.add(objects)
+		
+	@metricmethod
 	def _do_catalog_query(self, catalog, fieldname, qo, type_name):
 		is_all_query, queryobject = parse_query(catalog, fieldname, qo)
 		if is_all_query:
 			return 0, []
 
-		result = (0,())
-		t = time.time()
-		try:
-			result = catalog.query(queryobject)
-			t = time.time() - t
-		finally:
-			logger.log(loglevels.TRACE, "Index search for %s(s) took %s(s). %s doc(s) retreived" , type_name, t, result[0])
+		result = catalog.query(queryobject)
 		return result
 
 	def _do_search(self, fieldname, qo, searchon=(), highlight_type=WORD_HIGHLIGHT, creator_method=None):
@@ -124,7 +112,7 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 
 		return results
 
-	@SearchCallWrapper
+	@metric
 	def search(self, query, *args, **kwargs):
 		qo = QueryObject.create(query, **kwargs)
 		searchon = self._adapt_searchon_types(qo.searchon)

@@ -5,9 +5,10 @@ from gevent.lock import BoundedSemaphore
 from zope import interface
 from zope.proxy import ProxyBase
 
+from perfmetrics import metric
+
 from whoosh import index
 
-from nti.contentsearch import SearchCallWrapper
 from nti.contentsearch._whoosh_index import Book
 from nti.contentsearch._search_query import QueryObject
 from nti.contentsearch import interfaces as search_interfaces
@@ -71,7 +72,7 @@ class WhooshBookIndexManager(object):
 	
 	# ---------------
 	
-	@SearchCallWrapper
+	@metric
 	def search(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
 		with _Proxy(self.bookidx.searcher()) as s:

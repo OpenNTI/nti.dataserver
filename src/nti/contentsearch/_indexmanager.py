@@ -6,10 +6,11 @@ from zope import component
 from zope import interface
 from zope.event import notify
 
+from perfmetrics import metric
+
 from nti.dataserver.users import User
 from nti.dataserver import interfaces as nti_interfaces
 
-from nti.contentsearch import SearchCallWrapper
 from nti.contentsearch._search_query import QueryObject
 from nti.contentsearch._indexagent import handle_index_event
 from nti.contentsearch import interfaces as search_interfaces
@@ -71,7 +72,7 @@ class IndexManager(object):
 
 	# -------------------
 
-	@SearchCallWrapper
+	@metric
 	def search(self, query):
 		query = QueryObject.create(query)
 		cnt_results = self.content_search(query=query)
@@ -80,7 +81,7 @@ class IndexManager(object):
 		logger.debug("Query '%s' returned %s hit(s)" % (query.term, len(results)))
 		return results
 
-	@SearchCallWrapper
+	@metric
 	def suggest_and_search(self, query):
 		query = QueryObject.create(query)
 		cnt_results = self.content_suggest_and_search(query=query)
@@ -88,7 +89,7 @@ class IndexManager(object):
 		results = merge_suggest_and_search_results(cnt_results, ugd_results)
 		return results
 
-	@SearchCallWrapper
+	@metric
 	def suggest(self, query):
 		query = QueryObject.create(query)
 		cnt_results = self.content_suggest(query=query)
