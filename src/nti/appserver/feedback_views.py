@@ -19,11 +19,15 @@ from nti.appserver import interfaces as app_interfaces
 from pyramid import interfaces as pyramid_interfaces
 
 from pyramid.view import view_config
+from pyramid import security as psec
 
 from nti.dataserver.links import Link
 from nti.dataserver import authorization as nauth
 
+from . import httpexceptions as hexc
 from ._util import link_belongs_to_user
+from . import _email_utils
+from ._external_object_io import read_body_as_external_object
 
 #: The link relationship type to which an authenticated
 #: user can POST data to send feedback. Also the name of a
@@ -38,7 +42,21 @@ REL_SEND_FEEDBACK = 'send-feedback'
 			  name=REL_SEND_FEEDBACK )
 def send_feedback_view( request ):
 	logger.warning("Feedback view unimplemented")
-	return True
+
+	json_body = read_body_as_external_object( request )
+	if 'body' not in json_body:
+		raise hexc.HTTPBadRequest()
+
+	_email_utils.queue_simple_html_text_email( 'platform_feedback_email',
+											   subject="Feedback from %s" % psec.authenticated_userid(request),
+											   recipients=['feedback@nextthought.com'],
+											   template_args={'userid': psec.authenticated_userid(request),
+															  'data': json_body,
+															  'context': json_body,
+															  'request': request },
+											   request=request )
+
+	return hexc.HTTPNoContent()
 
 @interface.implementer(app_interfaces.IAuthenticatedUserLinkProvider)
 @component.adapter(nti_interfaces.IUser,pyramid_interfaces.IRequest)
