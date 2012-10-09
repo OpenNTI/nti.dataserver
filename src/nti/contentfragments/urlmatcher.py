@@ -97,13 +97,10 @@ class GrubberHyperlinkFormatter(object):
 	def format(self, html_fragment):
 		if interfaces.IHTMLContentFragment.providedBy(html_fragment):
 			html_fragment = self._parse_and_linkify( html_fragment, html_fragment.__class__ )
-		elif isinstance( html_fragment, basestring ) and self.grubber_v1_pattern.search( html_fragment ):
+		elif isinstance( html_fragment, six.string_types ) and self.grubber_v1_pattern.search( html_fragment ):
 			# A plain string that matches
 			html_fragment = self._parse_and_linkify( html_fragment, interfaces.HTMLContentFragment )
 		return html_fragment
-
-#	def __call__(self, html_fragment):
-#		return self.convert(html_fragment)
 
 	def _parse_and_linkify( self, content, dest_class ):
 		p = html5lib.HTMLParser( tree=treebuilders.getTreeBuilder("lxml"), namespaceHTMLElements=False )
