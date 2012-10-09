@@ -7,7 +7,7 @@ from zope.interface.common.mapping import IFullMapping
 
 from persistent.mapping import PersistentMapping
 
-from perfmetrics import metric, metricmethod
+from perfmetrics import metricmethod
 
 from nti.dataserver import interfaces as nti_interfaces
 
@@ -112,7 +112,7 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 
 		return results
 
-	@metric
+	@metricmethod
 	def search(self, query, *args, **kwargs):
 		qo = QueryObject.create(query, **kwargs)
 		searchon = self._adapt_searchon_types(qo.searchon)
