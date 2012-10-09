@@ -49,6 +49,7 @@ import boto
 import boto.sqs.message
 
 from zope import component
+import zope.interface.exceptions
 
 from pyramid.view import view_config
 
@@ -94,9 +95,17 @@ def _mark_accounts_with_bounces( email_addrs, dataserver=None ):
 
 		logger.info( "The following users are associated with the email address %s: %s", email_addr, users )
 		for user, match_type in users:
+			__traceback_info__ = user, match_type, email_addr
 			if match_type == 'email':
-				# Clear it
-				user_interfaces.IUserProfile( user ).email = None
+				# Clear it if we can; some types of profiles don't allow that
+				try:
+					user_interfaces.IUserProfile( user ).email = None
+				except zope.interface.exceptions.Invalid:
+					# TODO: Should we do something about zope.schema.interfaces.RequiredMissing, in
+					# particular? That means the profile doesn't allow None. But if we can't reset
+					# this address, then we can keep sending email to it, and bouncing,
+					# which tends to make SES angry. I don't know what we could do, though?
+					logger.debug( "Unable to clear invalid email address for %s", user, exc_info=True)
 				user_link_provider.add_link( user, REL_INVALID_EMAIL )
 			elif match_type == 'password_recovery_email_hash':
 				# Hmm. Can't really clear it, but this will never get to them
