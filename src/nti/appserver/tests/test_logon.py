@@ -81,22 +81,23 @@ class TestLogon(ConfiguringTestBase):
 		user = users.User.create_user( dataserver=self.ds, username='jason.madden@nextthought.com' )
 		get_current_request().registry.registerUtility( Policy() )
 		result = ping( get_current_request() )
-		assert_that( result, has_property( 'links', has_length( 3 ) ) )
+		assert_that( result, has_property( 'links', has_length( greater_than_or_equal_to( 3 ) ) ) )
+		len_links = len(result.links)
 		assert_that( result.links[0].target, ends_with( '/dataserver2/handshake' ) )
 		assert_that( result.links[1].target, ends_with( '/dataserver2' ) )
 
 		# We can increase that by adding links
 		user_link_provider.add_link( user, 'force-edit-profile' )
 		result = ping( get_current_request() )
-		assert_that( result, has_property( 'links', has_length( 4 ) ) )
+		assert_that( result, has_property( 'links', has_length( len_links + 1 ) ) )
 		external = to_external_object( result )
-		assert_that( external, has_entry( 'Links', has_length( 4 ) ) )
+		assert_that( external, has_entry( 'Links', has_length( len_links + 1 ) ) )
 		assert_that( external['Links'][3], has_entry( 'href', '/dataserver2/users/jason.madden%40nextthought.com/@@force-edit-profile' ) )
 
 		# and we can decrease again
 		user_link_provider.delete_link( user, 'force-edit-profile' )
 		result = ping( get_current_request() )
-		assert_that( result, has_property( 'links', has_length( 3 ) ) )
+		assert_that( result, has_property( 'links', has_length( len_links ) ) )
 
 	@WithMockDSTrans
 	def test_fake_authenticated_handshake(self):
