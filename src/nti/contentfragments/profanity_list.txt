@@ -193,7 +193,6 @@ ihyin
 ihyyin
 in-w-w
 in1wvan
-int
 int1an
 intvan
 intvvan
