@@ -37,33 +37,26 @@ class TestLatexTransforms(ConfiguringTestBase):
 	
 	set_up_packages = (nti.contentfragments,)
 	
-	def test_geo_brazil(self):
-		name = os.path.join(os.path.dirname(__file__), "geobrazil.txt.gz");
-		with gzip.open(name, "rb") as src:
+	def _test_book(self, source, maxtests=10, minwords=50, maxwords=100):
+		with gzip.open(source, "rb") as src:
 			g = NLTKMessageGenerator(src)
 			
 		scanner = component.getUtility( nti.contentfragments.interfaces.ICensoredContentScanner )
 		strat = component.getUtility( nti.contentfragments.interfaces.ICensoredContentStrategy )
-		size = random.randint(1, 10)
+		size = random.randint(1, maxtests)
 		for _ in range(size+1):
-			size = random.randint(50, 100)
+			size = random.randint(minwords, maxwords)
 			txt = g.generate(size)
 			censored = strat.censor_ranges( txt, scanner.scan( txt ))
 			assert_that(txt, is_(censored))
+			
+	def test_geo_brazil(self):
+		name = os.path.join(os.path.dirname(__file__), "geobrazil.txt.gz");
+		self._test_book(name)
 			
 	def test_dracula(self):
 		name = os.path.join(os.path.dirname(__file__), "dracula.txt.gz");
-		with gzip.open(name, "rb") as src:
-			g = NLTKMessageGenerator(src)
-			
-		scanner = component.getUtility( nti.contentfragments.interfaces.ICensoredContentScanner )
-		strat = component.getUtility( nti.contentfragments.interfaces.ICensoredContentStrategy )
-		size = random.randint(1, 10)
-		for _ in range(size+1):
-			size = random.randint(50, 100)
-			txt = g.generate(size)
-			censored = strat.censor_ranges( txt, scanner.scan( txt ))
-			assert_that(txt, is_(censored))
+		self._test_book(name)
 	
 if __name__ == '__main__':
 	unittest.main()
