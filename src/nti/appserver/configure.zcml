@@ -326,7 +326,8 @@
 	<include package="." file="configure_site_policy_mathcounts.zcml" />
 	<include package="." file="configure_site_policy_testmathcounts.zcml" />
 	<include package="." file="configure_site_policy_demo.zcml" />
-
+	<include package="." file="configure_site_policy_collegiate.zcml" />
+	
 	<!-- Hacky temporary stuff -->
 	<adapter name="OUAdminFactory"
 			 for="*"
