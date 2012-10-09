@@ -23,6 +23,8 @@ page_info_mt_json = page_info_mt + '+json'
 ####
 ## Note: In pyramid 1.3, there seems to be a bug with accept in a view config. It doesn't
 ## work. That or I misunderstand the documentation. So we are manually dispatching.
+## The documentation also lies: wildcards are not allowed in accept= predicates;
+## webob.acceptparse throws an exception (The application should offer specific types, got u'*/*') if you try (in 1.2.2)
 ####
 
 @view_config( route_name='objects.generic.traversal',
@@ -41,11 +43,23 @@ def pageinfo_from_question_view( request ):
 	route_path = request.route_path( 'objects.generic.traversal', traverse=('NTIIDs',request.context.__parent__) )
 	return hexc.HTTPSeeOther( location=route_path )
 
+@view_config( route_name='objects.generic.traversal',
+			  renderer='rest',
+			  context='nti.assessment.interfaces.IQuestion',
+			  permission=nauth.ACT_READ, request_method='GET',
+			  accept=b'application/vnd.nextthought.link+json')
+def get_question_view_link( request ):
+	# Not supported.
+	return hexc.HTTPBadRequest()
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
 			  context='nti.assessment.interfaces.IQuestion',
 			  permission=nauth.ACT_READ, request_method='GET',
-			  accept='*/*')
+			  accept=b'') # empty accept
+@view_config( route_name='objects.generic.traversal',
+			  renderer='rest',
+			  context='nti.assessment.interfaces.IQuestion',
+			  permission=nauth.ACT_READ, request_method='GET')
 def get_question_view( request ):
 	return request.context
