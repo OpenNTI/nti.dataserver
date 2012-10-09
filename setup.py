@@ -161,6 +161,7 @@ setup(
 		# install numpy manually with pip: pip install numpy
 		'numpy >= 1.6.2',
 		'paste',
+		'perfmetrics >= 1.0', # easy statsd metrics.
 		'plone.scale >= 1.2.2', # image scaling/storage based on PIL
 		'plone.namedfile >= 2.0', # much like zope.file, but some image-specific goodness.
 		'pyPDF >= 1.13', # Pure python PDF reading library. Not complex. Has newer fork pyPDF2, not yet on PyPI?
@@ -181,7 +182,9 @@ setup(
 		'pyzmq == 2.2.0', # TODO: 2.2.0.1 is out. It includes zmq.green and obsoletes gevent_zeromq. It is incompatible with having gevent_zeromq installed
 		# Monitoring stats and instrumenting code
 		'python-statsd >= 1.5.7', # statsd client. statsd must be installed separately: https://github.com/etsy/statsd
-		'pystatsd >= 0.1.6', # statsd server implementation, pure python. probably easier than setting up node. Might want to get it from https://github.com/sivy/py-statsd
+		 # statsd server implementation, pure python. probably easier than setting up node. Might want to get it from https://github.com/sivy/py-statsd
+		 # Consider also https://github.com/phensley/gstatsd
+		'pystatsd >= 0.1.6',
 		'pytz >= 2012f',
 		'rdflib >= 3.2.2',
 		'redis >= 2.6.2', # Redis python client

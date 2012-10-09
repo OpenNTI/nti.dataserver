@@ -208,6 +208,8 @@ def createApplication( http_port,
 	# make it respect the features we choose to provide
 	pyramid_zcml.ConfigurationMachine = lambda: _create_xml_conf_machine( settings )
 
+	pyramid_config.include( 'perfmetrics' )
+
 	# Our traversers
 	# TODO: Does doing this get us into any trouble with a non-matching request.resource_url
 	# method? Do we need to install an implementation if IResourceURL?
