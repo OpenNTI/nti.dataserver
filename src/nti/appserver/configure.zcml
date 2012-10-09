@@ -175,6 +175,8 @@
 	<!-- Additional links for real users -->
 	<subscriber factory=".user_link_provider.PersistentUserLinkProvider"
 				provides=".interfaces.IAuthenticatedUserLinkProvider" />
+	<subscriber factory=".feedback_views.FeedbackLinkProvider"
+				provides=".interfaces.IAuthenticatedUserLinkProvider" />
 
 	<!-- All the other logon types are disabled in production -->
 	<subscriber factory=".logon._SimpleMissingUserFacebookLinkProvider"
@@ -327,7 +329,7 @@
 	<include package="." file="configure_site_policy_testmathcounts.zcml" />
 	<include package="." file="configure_site_policy_demo.zcml" />
 	<include package="." file="configure_site_policy_collegiate.zcml" />
-	
+
 	<!-- Hacky temporary stuff -->
 	<adapter name="OUAdminFactory"
 			 for="*"
