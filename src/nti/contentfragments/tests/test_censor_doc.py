@@ -50,6 +50,20 @@ class TestLatexTransforms(ConfiguringTestBase):
 			txt = g.generate(size)
 			censored = strat.censor_ranges( txt, scanner.scan( txt ))
 			assert_that(txt, is_(censored))
+			
+	def test_dracula(self):
+		name = os.path.join(os.path.dirname(__file__), "dracula.txt.gz");
+		with gzip.open(name, "rb") as src:
+			g = NLTKMessageGenerator(src)
+			
+		scanner = component.getUtility( nti.contentfragments.interfaces.ICensoredContentScanner )
+		strat = component.getUtility( nti.contentfragments.interfaces.ICensoredContentStrategy )
+		size = random.randint(1, 10)
+		for _ in range(size+1):
+			size = random.randint(50, 100)
+			txt = g.generate(size)
+			censored = strat.censor_ranges( txt, scanner.scan( txt ))
+			assert_that(txt, is_(censored))
 	
 if __name__ == '__main__':
 	unittest.main()
