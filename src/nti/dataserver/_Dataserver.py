@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
 logger = __import__( 'logging' ).getLogger( __name__ )
 
 import os
@@ -11,6 +11,7 @@ import gevent.queue
 import gevent.local
 
 import ZODB.interfaces
+from ZODB.interfaces import IConnection
 import ZODB.POSException
 from zope import interface
 from zope import component
@@ -29,7 +30,7 @@ from nti.externalization import oids
 import nti.apns as apns
 from nti.ntiids import ntiids
 from nti.externalization import interfaces as ext_interfaces
-import nti.externalization.internalization
+
 
 from nti.dataserver import sessions
 from nti.dataserver import interfaces
@@ -41,9 +42,7 @@ from . import meeting_storage
 from . import config
 
 from nti.deprecated import hiding_warnings as hiding_deprecation_warnings
-from nti.deprecated import deprecated
 
-DEFAULT_PASSWORD = "temp001"
 
 ###
 ### Note: There is a bug is some versions of the python interpreter
@@ -60,6 +59,7 @@ from nti.dataserver.interfaces import InappropriateSiteError, SiteNotInstalledEr
 class _Change(Persistent):
 
 	def __init__( self, change, meta ):
+		super(_Change,self).__init__()
 		self.change = change
 		self.meta = meta
 
@@ -73,7 +73,7 @@ def _trivial_db_transaction_cm():
 	# get in the main app through pyramid_tm
 
 	lsm = component.getSiteManager()
-	conn = getattr( lsm, '_p_jar', None )
+	conn = IConnection( lsm, None )
 	if conn:
 		logger.warn( 'Reusing existing component connection %s %s', lsm, conn )
 		yield conn
@@ -331,7 +331,7 @@ class MinimalDataserver(object):
 	@property
 	def root_connection(self):
 		"Returns the connection to the root database, the one containing the shard map."
-		return self.root._p_jar
+		return IConnection(self.root)
 
 	@property
 	def shards(self):
@@ -544,23 +544,6 @@ class Dataserver(MinimalDataserver):
 				# let the errors propagate so that they rollback the transaction
 				# (Otherwise, we could wind up with half-committed, bad state)
 
-	###
-	# Dealing with content types
-	# TODO: This should be separated out
-	###
-	@deprecated()
-	def find_content_type( self, typeName=None ):
-		"""
-		Given the name of a type, optionally ending in 's' for
-		plural, returns that type.
-		"""
-		return nti.externalization.internalization.find_factory_for_class_name( typeName )
-
-	@deprecated()
-	def update_from_external_object( self, containedObject, externalObject ):
-		return nti.externalization.internalization.update_from_external_object( containedObject, externalObject, context=self )
-
-
 
 _SynchronousChangeDataserver = Dataserver
 zope.deprecation.deprecated('_SynchronousChangeDataserver',
@@ -578,23 +561,12 @@ class _ExternalRefResolver(object):
 	def resolve( self, oid ):
 		return self.ds.get_by_oid( oid )
 
-# nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.users' )
-# nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.contenttypes' )
-# nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.providers' )
-# nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.classes' )
-# nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.quizzes' )
-# nti.externalization.internalization.register_legacy_search_module( 'nti.chatserver.messageinfo' )
-
 
 @interface.implementer( interfaces.IOIDResolver )
 class PersistentOidResolver(Persistent):
 
 	def get_object_by_oid( self, oid_string, ignore_creator=False ):
-		# We live with the pylint warning about '_p_jar' not being found on persistent. We cannot
-		# declare a class attribute with that name, because doing so overrides
-		# the getter/setter pair defined in the cPersistence PyTypeObject structure that is Persistent
-		# and we lose access to it
-		connection = self._p_jar
+		connection = IConnection(self)
 		return get_object_by_oid( connection, oid_string, ignore_creator=ignore_creator )
 
 def get_object_by_oid( connection, oid_string, ignore_creator=False ):
