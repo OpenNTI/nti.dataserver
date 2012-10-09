@@ -292,8 +292,8 @@ setup(
 			'nose-pudb >= 0.1.2', # Nose integration: --pudb --pudb-failures. 0.1.2 requires trivial patch
 			'readline',
 			'httpie >= 0.3.0',
-			'logilab_astng >= 0.24.0',
-			'pylint >= 0.25.2',
+			'logilab_astng >= 0.24.0', # 24.1 is out, not yet on pypi (2012-10-09)
+			'pylint >= 0.25.2', # 26.0 is out, not yet on pypi (2012-10-09)
 			'zodbupdate >= 0.5',
 			'zodbbrowser >= 0.10.0',
 			'sphinx >= 1.1.3', # Narrative docs
