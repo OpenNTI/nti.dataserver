@@ -55,6 +55,14 @@ def test_mike_words():
 	assert_that( strat.censor_ranges( bad_val, scanner.scan( bad_val ) ),
 				 is_( 'associated press' ) )
 	
+	
+def test_kaley_words():
+	scanner = component.getUtility( nti.contentfragments.interfaces.ICensoredContentScanner )
+	strat = component.getUtility( nti.contentfragments.interfaces.ICensoredContentStrategy )
+	vals = "Manuscript, proclamation, grasses, endorsement, passes, hoarse  safeguard, farther, seashore shore ashore, glasses"
+	assert_that( strat.censor_ranges( vals, scanner.scan( vals ) ),
+				 is_( vals ) )
+	
 def test_word_match_scanner():
 	wm = WordMatchScanner((), ['lost','like'])
 	bad_val = """So I feel a little like, a child who's lost, a little like, (everything's changed) a
