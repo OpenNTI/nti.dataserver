@@ -90,6 +90,20 @@ class TestApplicationAssessment(SharedApplicationTestBase):
 		assert_that( res.status_int, is_( 200 ) )
 		assert_that( res.json_body, has_entry( 'Class', 'PageInfo' ) )
 
+		# Asking for a link isn't supported
+		res = testapp.get( '/dataserver2/NTIIDs/' + self.child_ntiid,
+						   headers={'Accept': b'application/vnd.nextthought.link+json'},
+						   extra_environ=self._make_extra_environ(),
+						   status=400 )
+
+
+
+		res = testapp.get( '/dataserver2/NTIIDs/' + self.child_ntiid,
+						   headers={'Accept': b'application/json'},
+						   extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 200 ) )
+
+
 	@WithSharedApplicationMockDS
 	def test_fetch_pageinfo_with_questions(self):
 
