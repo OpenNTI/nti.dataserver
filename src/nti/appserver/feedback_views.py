@@ -41,7 +41,6 @@ REL_SEND_FEEDBACK = 'send-feedback'
 			  request_method='POST',
 			  name=REL_SEND_FEEDBACK )
 def send_feedback_view( request ):
-	logger.warning("Feedback view unimplemented")
 
 	json_body = read_body_as_external_object( request )
 	if 'body' not in json_body:
