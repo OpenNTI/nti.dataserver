@@ -46,7 +46,8 @@ class TestApplicationFeedback(SharedApplicationTestBase):
 		mailer = component.getUtility( ITestMailDelivery )
 
 		path = b'/dataserver2/users/ossmkitty/@@send-feedback'
-		data = {'body': 'Hi there. I love it.'}
+		data = {'body': 'Hi there. I love it. This is a string that is long enough to make the wrapping kick in.'
+				' It must be more than 60 or seventy characters.'}
 
 		res = testapp.post( path, json.dumps( data ), extra_environ=self._make_extra_environ(username='ossmkitty') )
 		assert_that( res, has_property( 'status_int', 204 ) )

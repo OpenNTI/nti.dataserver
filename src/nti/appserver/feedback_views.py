@@ -11,6 +11,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import textwrap
+
 from zope import interface
 from zope import component
 
@@ -46,13 +48,18 @@ def send_feedback_view( request ):
 	if 'body' not in json_body:
 		raise hexc.HTTPBadRequest()
 
+	request_details_table = '\n    '.join( [k + '\t\t:' + repr(v) for k, v in sorted(request.environ.items())] )
+
+
 	_email_utils.queue_simple_html_text_email( 'platform_feedback_email',
 											   subject="Feedback from %s" % psec.authenticated_userid(request),
 											   recipients=['feedback@nextthought.com'],
 											   template_args={'userid': psec.authenticated_userid(request),
 															  'data': json_body,
+															  'filled_body': '\n    '.join( textwrap.wrap( json_body['body'], 60 ) ),
 															  'context': json_body,
-															  'request': request },
+															  'request': request,
+															  'request_details_table': request_details_table},
 											   request=request )
 
 	return hexc.HTTPNoContent()
