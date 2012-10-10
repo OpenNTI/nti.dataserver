@@ -89,7 +89,7 @@ def export_user_objects( username, object_types=(), export_dir="/tmp"):
 def main():
 	arg_parser = argparse.ArgumentParser( description="Export user objects" )
 	arg_parser.add_argument( 'env_dir', help="Dataserver environment root directory" )
-	arg_parser.add_argument( 'username', help="The username to delete" )
+	arg_parser.add_argument( 'username', help="The username" )
 	arg_parser.add_argument( '-d', '--directory',
 							 dest='export_dir',
 							 default=None,

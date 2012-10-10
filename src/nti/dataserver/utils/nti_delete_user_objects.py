@@ -5,6 +5,7 @@ from __future__ import print_function, unicode_literals
 import os
 import sys
 import json
+import argparse
 import datetime
 from collections import defaultdict
 
@@ -31,12 +32,13 @@ def remove_user_objects( username, object_types=(), export_dir=None ):
 
 	counter = 0
 	for type_name, adapted, obj in get_user_objects( user, object_types):
-		external = to_external_object(adapted)
+		external = to_external_object(adapted) if export_dir else None
 		with user.updates():
 			_id = getattr(obj, 'id', None )
 			containerId = getattr(obj, 'containerId', None )
 			if containerId and _id and user.deleteContainedObject( containerId, _id ):
-				captured_types[type_name].append(external)
+				if external is not None:
+					captured_types[type_name].append(external)
 				counter = counter +  1
 
 	if captured_types:
@@ -53,14 +55,26 @@ def remove_user_objects( username, object_types=(), export_dir=None ):
 		print( "No objects were removed for user '%s'" % username, file=sys.stderr)
 
 def main():
-	if len(sys.argv) < 2:
-		print( "Usage %s env_dir username [*types]" % sys.argv[0] )
-		sys.exit( 1 )
-
-	env_dir = sys.argv[1]
-	username = sys.argv[2]
-	object_types = set(sys.argv[3:])
-	run_with_dataserver( environment_dir=env_dir, function=lambda: remove_user_objects(username, object_types, env_dir) )
+	arg_parser = argparse.ArgumentParser( description="Export user objects" )
+	arg_parser.add_argument( 'env_dir', help="Dataserver environment root directory" )
+	arg_parser.add_argument( 'username', help="The username" )
+	arg_parser.add_argument( '-d', '--directory',
+							 dest='export_dir',
+							 default=None,
+							 help="Output export directory" )
+	arg_parser.add_argument( '-t', '--types',
+							 nargs="*",
+							 dest='object_types',
+							 help="The object type(s) to delete" )
+	
+	args = arg_parser.parse_args()
+	
+	env_dir = args.env_dir
+	username = args.username
+	export_dir = args.export_dir
+	object_types = set(args.object_types) if args.object_types else ()
+	
+	run_with_dataserver( environment_dir=env_dir, function=lambda: remove_user_objects(username, object_types, export_dir) )
 
 if __name__ == '__main__':
 	main()
