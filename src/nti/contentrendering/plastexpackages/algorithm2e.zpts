@@ -1,0 +1,55 @@
+# -*- mode: html -*-
+
+name: function
+<div class="algorithm-function" tal:content="self">Function Body</div>
+
+name: ;
+<br/>
+
+name: TitleOfAlgo
+<div class="algorithm-title">
+<b>Function:</b> <span tal:content="self"></span>
+</div>
+
+name: KwData
+<div class="algorithm-kwdata">
+<b>Data:</b> <span tal:content="self"></span>
+</div>
+
+name: KwResult
+<div class="algorithm-kwresult">
+<b>Result:</b> <span tal:content="self"></span>
+</div>
+
+name: If
+<div class="algorithm-if-block">
+<b>if </b><em tal:content="self">emphasized text</em><b> then</b>
+<div class="algorithm-indent-block" tal:content="self/attributes/then">Then Block</div>
+<b>end if</b>
+</div>
+
+name: uIf
+<div class="algorithm-uif-block">
+<b>if </b><em tal:content="self">emphasized text</em><b> then</b>
+<div class="algorithm-indent-block" tal:content="self/attributes/then">Then Block</div>
+</div>
+
+name: ElseIf
+<div class="algorithm-uelseif-block">
+<b>else if </b><em tal:content="self">emphasized text</em><b> then</b>
+<div class="algorithm-indent-block" tal:content="self/attributes/then">Then Block</div>
+<b>end if</b>
+</div>
+
+name: uElseIf
+<div class="algorithm-uelseif-block">
+<b>else if </b><em tal:content="self">emphasized text</em><b> then</b>
+<div class="algorithm-indent-block" tal:content="self/attributes/then">Then Block</div>
+</div>
+
+name: Else
+<div class="algorithm-else-block">
+<b>else</b> <span tal:condition="self/attributes/comment" tal:content="self/attributes/comment">Comment</span>
+<div class="algorithm-indent-block" tal:content="self">else clause</div>
+<b>end if</b>
+</div>
