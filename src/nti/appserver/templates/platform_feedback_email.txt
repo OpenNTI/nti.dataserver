@@ -1,4 +1,9 @@
 Feedback from ${userid}:
 
 
-${data['body']}
+    ${filled_body}
+
+Request Details
+===============
+
+    ${request_details_table}
