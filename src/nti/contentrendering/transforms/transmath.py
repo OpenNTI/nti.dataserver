@@ -11,7 +11,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-from plasTeX import Node
+from plasTeX import Node, TeXFragment
 import plasTeX.Base
 import string
 
@@ -84,7 +84,8 @@ def transformSimpleMath(document):
 			r = document.createElement( 'mathname' )
 			r.attributes['text'] = text
 			r.origMathSource = math.source
-			math.parentNode.replaceChild( r, math )
+			if not isinstance(math.parentNode.childNodes, TeXFragment):
+				math.parentNode.replaceChild( r, math )
 		else:
 			# Not empty, not a name. Let's consider it a "number"
 			try:
@@ -95,4 +96,5 @@ def transformSimpleMath(document):
 			r = document.createElement( 'mathnumber' )
 			r.attributes['text'] = text
 			r.origMathSource = math.source
-			math.parentNode.replaceChild( r, math )
+			if not isinstance(math.parentNode.childNodes, TeXFragment):
+				math.parentNode.replaceChild( r, math )
