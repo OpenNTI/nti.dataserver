@@ -52,6 +52,18 @@
 
 		</pre>
 
+		<h2>Request Details</h2>
+		<table>
+			<thead>
+				<tr><td>Variable</td><td>Value</td></tr>
+			</thead>
+			<tbody>
+				<tr tal:repeat="item python: sorted(request.environ.items())">
+					<td tal:content="python:item[0]">Variable Name</td>
+					<td tal:content="python:item[1]">Variable Value</td>
+				</tr>
+			</tbody>
+		</table>
 
 	</body>
 </html>
