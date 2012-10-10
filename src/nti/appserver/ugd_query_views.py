@@ -419,6 +419,7 @@ class _RecursiveUGDView(_UGDView):
 		# and the children are empty/DNE. In other words, if
 		# accessing UGD for this container would throw,
 		# so does accessing recursive.
+		items = [x for x in items if x is not None] # TODO: Who gives us back a None? Seen on the Root with MeOnly filter
 		empty = len(items) == 0
 		if not empty:
 			# We have items. We are only truly empty, though,
