@@ -22,7 +22,7 @@ WORD_HIGHLIGHT  = "WordHighlight"
 WHOOSH_HIGHLIGHT = "WhooshHighlight"
 
 _default_analyzer = None
-_default_expression = "\w+(\.?\w+)*"
+_default_expression = "\w+([-']\w+)*"
 _default_pattern = re.compile(_default_expression, re.I)
 
 def _get_terms(query, pattern=_default_pattern):

@@ -66,14 +66,14 @@ class TestCommon(ConfiguringTestBase):
 		snippet, fragments = word_fragments_highlight('carlos', text)
 		
 		f1 = "Carlos is going on vacation from Mexico to London with a brief stop in New York He forgot to exchange his pesos for British"
-		f2 = "pounds To the nearest peso how many pesos will Carlos have to exchange in order to get 2000 British pounds"
+		f2 = "62 pounds To the nearest peso how many pesos will Carlos have to exchange in order to get 2000 British pounds"
 		s = "...".join([f1,f2])
 		assert_that(fragments, has_length(2))
 		assert_that(snippet, is_(s))
 		assert_that(fragments[0].text, is_(f1))
 		assert_that(fragments[0].matches, is_([(0, 6)]))
 		assert_that(fragments[1].text, is_(f2))
-		assert_that(fragments[1].matches, is_([(47, 53)]))
+		assert_that(fragments[1].matches, is_([(50, 56)]))
 		
 	def test_word_fragments_prealgebra(self):
 		text = u"get more complicated like trying to compute the trajectory or trying to analyze a " +\
@@ -82,6 +82,18 @@ class TestCommon(ConfiguringTestBase):
 		assert_that(fragments, has_length(1))
 		assert_that(snippet, is_(text))
 		assert_that(fragments[0].matches, is_([(26, 32), (33, 35), (48, 58), (62, 68), (72, 79), (102, 108), (69, 71)]))
+		
+	def test_word_cohen(self):
+		text = u"Critical to the Court's judgment is the undisputed fact that [Fields] was told that he was free to end the questioning " +\
+				"and to return to his cell. Ante, at 1194. Never mind the facts suggesting that Fields's submission to the overnight " +\
+				"interview was anything but voluntary. Was Fields held for interrogation?"
+				
+		snippet, fragments = word_fragments_highlight('court\'s', text)
+		_text = "Critical to the Court's judgment is the undisputed fact that [Fields] was told"
+		assert_that(fragments, has_length(1))
+		assert_that(snippet, is_(_text))
+		assert_that(fragments[0].text, is_(_text))
+		assert_that(fragments[0].matches, is_([(16, 23)]))
 		
 if __name__ == '__main__':
 	unittest.main()
