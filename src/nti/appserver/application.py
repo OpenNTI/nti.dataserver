@@ -230,12 +230,13 @@ def createApplication( http_port,
 	my_session_factory = UnencryptedCookieSessionFactoryConfig('ntidataservercookiesecretpass')
 	pyramid_config.set_session_factory( my_session_factory )
 
-	pyramid_config.set_authorization_policy( pyramid_authorization.ACLAuthorizationPolicy() )
-	pyramid_config.set_authentication_policy(
-		pyramid_auth.create_authentication_policy(
-			secure_cookies=asbool( settings.get('secure_cookies', False) ),
-			cookie_secret=settings.get('cookie_secret', 'secret' ) ) )
+	auth_policy, forbidden_view = pyramid_auth.create_authentication_policy(
+		secure_cookies=asbool( settings.get('secure_cookies', False) ),
+		cookie_secret=settings.get('cookie_secret', 'secret' ) )
 
+	pyramid_config.set_authorization_policy( pyramid_authorization.ACLAuthorizationPolicy() )
+	pyramid_config.set_authentication_policy( auth_policy )
+	pyramid_config.add_forbidden_view( forbidden_view )
 	###
 	## Logon
 	pyramid_config.add_route( name='logon.ping', pattern='/dataserver2/logon.ping' )
@@ -588,19 +589,6 @@ def createApplication( http_port,
 							 renderer='rest',context='nti.dataserver.interfaces.IFriendsList',
 							 permission=nauth.ACT_READ, request_method='GET' )
 
-
-
-	# Make 401 come back as appropriate. Otherwise we get 403
-	# all the time, which prompts us to net send
-	# credentials
-	# TODO: Better use of an IChallangeDecider
-	def forb_view(request):
-		if 'repoze.who.identity' not in request.environ:
-			result = hexc.HTTPUnauthorized()
-			result.www_authenticate = ('Basic', 'realm="nti"')
-			return result
-		return request.exception
-	pyramid_config.add_forbidden_view( forb_view )
 
 
 	# register change listeners

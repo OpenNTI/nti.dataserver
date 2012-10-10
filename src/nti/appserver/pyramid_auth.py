@@ -8,16 +8,18 @@ from __future__ import print_function, unicode_literals
 
 import binascii
 import logging
+logger = logging.getLogger(__name__ )
 
 from pyramid.interfaces import IAuthenticationPolicy
 
 from zope import interface
 from zope import component
-from repoze.who.interfaces import IAuthenticator
+from repoze.who.interfaces import IAuthenticator, IChallenger, IChallengeDecider, IRequestClassifier
 from repoze.who.middleware import PluggableAuthenticationMiddleware
 from repoze.who.plugins.basicauth import BasicAuthPlugin
 from repoze.who.plugins.auth_tkt import AuthTktCookiePlugin
-from repoze.who.classifiers import default_challenge_decider
+#from repoze.who.classifiers import default_challenge_decider
+from pyramid_who.classifiers import forbidden_challenger
 from repoze.who.classifiers import default_request_classifier
 from pyramid_who.whov2 import WhoV2AuthenticationPolicy
 
@@ -213,11 +215,62 @@ ONE_DAY = 24 * 60 * 60
 ONE_WEEK = 7 * ONE_DAY
 ONE_MONTH = 30 * ONE_DAY
 
+class _NonChallengingBasicAuthPlugin(BasicAuthPlugin):
+	"""
+	For use when the request is probably an interactive XHR request, but
+	credentials are totally invalid. We need to send a 401 response, but sending
+	the WWW-Authenticate header probably causes a browser on the other end to
+	pop-up a dialog box, which is no help. Technically, this violates the HTTP
+	spec which requires a WWW-Authenticate header on a 401; but it seems safer to elide
+	it then to create our own type?
+	"""
+
+	classifications = {IChallenger: ['application-browser']}
+
+	def challenge( self, *args ):
+		exc = super(_NonChallengingBasicAuthPlugin,self).challenge( *args )
+		del exc.headers[:] # clear out the WWW-Authenticate header
+		return exc
+
+def _nti_request_classifier( environ ):
+	"""
+	Extends the default classification scheme to try to detect
+	requests in which the browser is being used by an application and we don't
+	want to generate a native authentication dialog.
+	"""
+	result = default_request_classifier( environ )
+	if result == 'browser':
+		# OK, but is it an interactive browser request where we'd like to
+		# change up the auth rules?
+		if environ.get( 'HTTP_X_REQUESTED_WITH' ) == 'XMLHttpRequest':
+			# An easy Yes!
+			result = 'application-browser'
+		else:
+			# Hmm. Going to have to do some guessing. Sigh.
+			if 'HTTP_REFERER' in environ and 'Mozilla' in environ.get( 'HTTP_USER_AGENT' ):
+				result = 'application-browser'
+	return result
+
+interface.directlyProvides(_nti_request_classifier, IRequestClassifier)
+
+def _nti_challenge_decider( environ, status, headers ):
+	"""
+	We want to offer an auth challenge if Pyramid thinks we need one (403)
+	and if we have no credentials at all. (If we have credentials, then
+	the correct response is a 403)
+	"""
+	return forbidden_challenger( environ, status, headers ) and 'repoze.who.identity' not in environ
+
+interface.directlyProvides( _nti_challenge_decider, IChallengeDecider )
+
 def _create_middleware( secure_cookies=False,
 						cookie_secret='secret',
 						cookie_timeout=ONE_WEEK ):
 	user_auth = NTIUsersAuthenticatorPlugin()
 	basicauth = BasicAuthPlugin('NTI')
+
+	basicauth_interactive = _NonChallengingBasicAuthPlugin('NTI')
+
 	# Note that the cookie name needs to be bytes, not unicode. Otherwise we wind up with
 	# unicode objects in the headers, which are supposed to be ascii. Things like the Cookie
 	# module (used by webtest) then fail
@@ -245,7 +298,9 @@ def _create_middleware( secure_cookies=False,
 	# Or possibly HTTP Basic auth
 	authenticators = [('auth_tkt', auth_tkt),
 					  ('htpasswd', user_auth)]
-	challengers = [('basicauth', basicauth)]
+	challengers = [ # Order matters when multiple classifications match
+				   ('basicauth-interactive', basicauth_interactive),
+				   ('basicauth', basicauth), ]
 	mdproviders = []
 
 	middleware = PluggableAuthenticationMiddleware(
@@ -254,8 +309,8 @@ def _create_middleware( secure_cookies=False,
 					authenticators,
 					challengers,
 					mdproviders,
-					default_request_classifier,
-					default_challenge_decider,
+					_nti_request_classifier,
+					_nti_challenge_decider,
 					log_stream=logging.getLogger( 'repoze.who' ),
 					log_level=logging.DEBUG )
 	return middleware
@@ -268,13 +323,15 @@ def create_authentication_policy( secure_cookies=False, cookie_secret='secret', 
 	:param str cookie_secret: The value used to encrypt cookies. Must be the same on
 		all instances in a given environment, but should be different in different
 		environments.
+	:return: A tuple of the authentication policy, and a forbidden view that must be installed
+		to make it effective.
 	"""
 	middleware = _create_middleware(secure_cookies=secure_cookies, cookie_secret=cookie_secret, cookie_timeout=cookie_timeout )
 	result = NTIAuthenticationPolicy(cookie_timeout=cookie_timeout)
 	result.api_factory = middleware.api_factory
 	# And make it capable of impersonation
 	result = nti_authentication.DelegatingImpersonatedAuthenticationPolicy( result )
-	return result
+	return result, NTIForbiddenView(middleware.api_factory)
 
 @interface.implementer( IAuthenticationPolicy )
 class NTIAuthenticationPolicy(WhoV2AuthenticationPolicy):
@@ -306,6 +363,36 @@ class NTIAuthenticationPolicy(WhoV2AuthenticationPolicy):
 
 	def _getAPI( self, request ):
 		return self.api_factory( request.environ )
+
+from . import httpexceptions as hexc
+class NTIForbiddenView(object):
+	"""
+	Works with the configured `IChallengeDecider` and `IChallenger` to
+	replace Pyramid's generic "403 Forbidden" with the proper
+	challenge.
+
+	Note that pyramid issues 403 forbidden even when no credentials
+	are provided---which should instead be a 401, so this method does that.
+	"""
+
+	def __init__( self, api_factory ):
+		self.api_factory = api_factory
+
+	def __call__( self, request ):
+		# TODO: This is very similar to some code in the PluggableAuthenticationMiddleware.
+		# Should we just use that? It changes the order in which things are done, though
+		# which might cause transaction problems?
+
+		api = self.api_factory( request.environ )
+		if api.challenge_decider(request.environ, request.exception.status, request.exception.headers):
+			challenge_app = api.challenge(request.exception.status, request.exception.headers)
+			if challenge_app is not None:
+				# Although these generically can return "apps" that are supposed to be WSGI callables,
+				# in reality they only return instances of paste.httpexceptions.HTTPClientError.
+				# Which happens to map one-to-one to the pyramid exception framework
+				return hexc.__dict__[type(challenge_app).__name__](headers=challenge_app.headers)
+
+		return request.exception
 
 # Temporarily make everyone an OU admin
 @interface.implementer( nti_interfaces.IGroupMember )
