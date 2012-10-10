@@ -6,12 +6,13 @@ $Id$
 from __future__ import print_function, unicode_literals
 
 import sys
+import argparse
+from pprint import pprint
 
 from nti.dataserver import users
 from nti.externalization.externalization import to_external_object
 
-from . import run_with_dataserver
-import argparse
+from nti.dataserver.utils import run_with_dataserver
 
 def main():
 	arg_parser = argparse.ArgumentParser( description="Make a user follow an existing entity; if a community, they also join the community." )
@@ -26,7 +27,6 @@ def main():
 	args = arg_parser.parse_args()
 
 	env_dir = args.env_dir
-
 
 	run_with_dataserver( environment_dir=env_dir, function=lambda: _follow_entities(args) )
 
@@ -51,4 +51,4 @@ def _follow_entities( args ):
 			print( "No entity", username, "to follow" )
 
 	if args.verbose:
-		print( to_external_object( user ) )
+		pprint( to_external_object( user ) )
