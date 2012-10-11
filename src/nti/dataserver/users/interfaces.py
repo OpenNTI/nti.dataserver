@@ -415,6 +415,6 @@ class FriendlyNamedSchemaProvider(object):
 		return IFriendlyNamed
 
 def validateAccept(value):
-    if not value == True:
-        return False
-    return True
+	if not value == True:
+		return False
+	return True
