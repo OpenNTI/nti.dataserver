@@ -218,6 +218,9 @@ def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=Fa
 				
 		for n in node.dom(b'div').filter(b'.page-contents'):
 			_collector(n)
+			
+		for n in node.dom(b'div').filter(b'#footnotes'):
+			_collector(n)
 	
 	# TODO: key word should done on a book basis
 	# compute keywords
