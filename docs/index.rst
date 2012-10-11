@@ -61,6 +61,7 @@ Tasks
 .. toctree::
 	:maxdepth: 2
 
+	invitations
 	liking
 	flagging
 	ugd_query

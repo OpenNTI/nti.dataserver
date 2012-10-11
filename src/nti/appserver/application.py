@@ -459,6 +459,7 @@ def createApplication( http_port,
 	pyramid_config.scan( 'nti.appserver.assessment_views' )
 	pyramid_config.scan( 'nti.appserver.bounced_email_workflow' )
 	pyramid_config.scan( 'nti.appserver.feedback_views' )
+	pyramid_config.scan( 'nti.appserver.invitation_views' )
 
 	# Generic user object tree traversal
 	# For the Library/Main URL.
