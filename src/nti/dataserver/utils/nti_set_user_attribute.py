@@ -45,7 +45,7 @@ def main():
 	arg_parser.add_argument( '-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
 	
 	attributes = {}
-	names = parse_schema(user_interfaces.ICompleteUserProfile, attributes)
+	parse_schema(user_interfaces.ICompleteUserProfile, attributes)
 	for name, sch in attributes.items():
 		if not sch.readonly:
 			help_ = sch.getDoc() or sch.title
@@ -56,11 +56,11 @@ def main():
 	args = arg_parser.parse_args()
 	
 	data = {}
-	for name in names:
+	for name, sch_def in attributes.items():
 		value = getattr(args, name, None)
 		if value is not None:
 			value = None if not value else unicode(value)
-			data[name] = attributes[name].fromUnicode(value) if value else None
+			data[name] = sch_def.fromUnicode(value) if value else None
 	
 	if not data:
 		print( "Nothing to set", args, file=sys.stderr )
