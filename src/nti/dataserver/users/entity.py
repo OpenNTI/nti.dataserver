@@ -33,7 +33,7 @@ from nti.ntiids import ntiids
 import nti.externalization.internalization
 
 from nti.dataserver import datastructures
-
+from nti.dataserver.intid_utility import IntIdMissingError
 from nti.dataserver import interfaces as nti_interfaces
 import nti.apns.interfaces
 from . import interfaces
@@ -158,7 +158,12 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 		if ext_value:
 			nti.externalization.internalization.update_from_external_object( user, ext_value, context=dataserver, notify=False )
 
-		notify( interfaces.WillCreateNewEntityEvent( user, ext_value ) )
+		try:
+			notify( interfaces.WillCreateNewEntityEvent( user, ext_value, preflight_only ) )
+		except IntIdMissingError:
+			if not preflight_only:
+				raise
+			logger.debug( "Ignoring missing intid during preflight." )
 		if preflight_only:
 			if user.username in root_users:
 				raise KeyError( user.username )
