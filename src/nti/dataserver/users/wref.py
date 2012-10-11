@@ -111,24 +111,30 @@ class WeakRef(object):
 
 	def __eq__( self, other ):
 		try:
-			return self is other or (self.username == other.username and self._entity_id == other._entity_id)
+			return self is other or ( (self.username, self._entity_id) == (other.username, other._entity_id) )
 		except AttributeError: #pragma: no cover
+			return NotImplemented
+
+	def _ne__( self, other ):
+		try:
+			return (self.username, self._entity_id) != (other.username, other._entity_id)
+		except AttributeError: # pragma: no cover
 			return NotImplemented
 
 	def __lt__( self, other ):
 		try:
-			return self.username < other.username and self._entity_id < other._entity_id
+			return (self.username, self._entity_id) < (other.username, other._entity_id)
 		except AttributeError: # pragma: no cover
 			return NotImplemented
 
 	def __gt__( self, other ):
 		try:
-			return self.username > other.username and self._entity_id > other._entity_id
+			return (self.username, self._entity_id) > (other.username, other._entity_id)
 		except AttributeError: # pragma: no cover
 			return NotImplemented
 
 	def __hash__(self):
-		return hash(self.username) + self._entity_id
+		return hash((self.username, self._entity_id))
 
 	def __repr__(self):
 		return "<%s.%s %s/%s>" % (self.__class__.__module__, self.__class__.__name__, self.username, self._entity_id)
