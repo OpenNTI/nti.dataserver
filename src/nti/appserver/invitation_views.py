@@ -59,7 +59,7 @@ def accept_invitations_view( request ):
 	except invite_interfaces.InvitationValidationError as e:
 		e.field = 'invitation_codes'
 		obj_io.handle_validation_error( request, e )
-	except Exception as e:
+	except Exception as e: #pragma: no cover
 		obj_io.handle_possible_validation_error( request, e )
 
 
