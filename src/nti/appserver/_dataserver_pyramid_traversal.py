@@ -115,12 +115,11 @@ class _ContainerResource(object):
 			# LocationError is a subclass of KeyError, and compatible
 			# with the traverse() interface
 			raise loc_interfaces.LocationError( key )
-		# The owner has full rights, authenticated can read,
-		# and deny everything to everyone else (so we don't recurse up the tree)
-		# TODO: The need for this wrapping is probably gone. Everything
-		# has its own ACL now, and we should have a consistent traversal tree.
-		#result = _ACLAndLocationForcingObjectResource( self.container, self.ntiid, key, self.user )
-		#return result
+		# TODO: We might need to chop off an intid portion of the key
+		# if it's in new style, forced on it by nti.externalization.externalization.
+		# Fortunately, I think everything uses direct OID links and not traversal,
+		# or is in a new enough database that the situation doesn't arise.
+
 		return contained_object
 
 # TODO: These next two classes inherit from _ContainerResource and hence

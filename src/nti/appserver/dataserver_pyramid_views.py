@@ -199,6 +199,15 @@ class _UGDModifyViewBase(object):
 				pass
 		return containedObject
 
+	def checkObjectOutFromUserForUpdate( self, user, containerId, objId ):
+		"""
+		Having identified an object, make sure the user is aware that we are going
+		to change it. Should be called in a ``with user.updates()`` block.
+		"""
+		# TODO: We might need to do some ID massaging here, if the ID is an OID in the old, non-intid
+		# appended form
+		return user.getContainedObject( containerId, objId )
+
 	def idForLocation( self, value ):
 		theId = None
 		if isinstance(value,collections.Mapping):
@@ -403,7 +412,7 @@ class _UGDDeleteView(_UGDModifyViewBase):
 
 		user = theObject.creator
 		with user.updates():
-			theObject = user.getContainedObject( theObject.containerId, theObject.id )
+			theObject = self.checkObjectOutFromUserForUpdate( user, theObject.containerId, theObject.id )
 			# FIXME: See notes in _UGDPutView
 
 			if theObject is None:
@@ -466,7 +475,7 @@ class _UGDPutView(_UGDModifyViewBase):
 			# that it will cache the right sharing values)
 			# TODO: This is sort of weird. Have User.willUpdate and User.didUpdate
 			# to be explicit?
-			theObject = creator.getContainedObject( containerId, objId )
+			theObject = self.checkObjectOutFromUserForUpdate( creator, containerId, objId )
 			# FIXME: This is terrible. We are dispatching again if we cannot resolve the object.
 			# We would have arrived here through the 'Objects' path and found
 			# (the child of) an 'enclosure' object, not an object actually contained by the user
