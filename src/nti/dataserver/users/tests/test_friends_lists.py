@@ -16,7 +16,7 @@ from hamcrest import has_property
 from hamcrest import contains
 
 import nti.tests
-
+from nti.tests import is_true, is_false
 
 setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.dataserver',) )
 tearDownModule = nti.tests.module_teardown
@@ -62,6 +62,11 @@ def test_update_friends_list():
 	user = users.User.create_user( username='1foo@bar' )
 	user2 = users.User.create_user( username='2foo2@bar' )
 	user3 = users.User.create_user( username='3foo3@bar' )
+	user4 = users.User.create_user( username='4foo4@bar' )
+	user5 = users.User.create_user( username='5foo5@bar' )
+	user6 = users.User.create_user( username='6foo6@bar' )
+	user7 = users.User.create_user( username='7foo7@bar' )
+	user8 = users.User.create_user( username='8foo8@bar' )
 
 	fl = FriendsList( 'MyList' )
 	fl.creator = owner
@@ -90,6 +95,37 @@ def test_update_friends_list():
 	fl.updateFromExternalObject( {'friends': [user, user2, user3, user, user2, user3] } )
 	assert_that( list(fl), has_length( 3 ) )
 	assert_that( sorted(fl), contains( user, user2, user3 ) )
+
+	updated = fl.updateFromExternalObject( {'friends': [user.username, user2.username, user3.username, user4.username]} )
+	assert_that( updated, is_true() )
+	assert_that( list(fl), has_length( 4 ) )
+	assert_that( sorted(fl), contains( user, user2, user3, user4 ) )
+
+	updated = fl.updateFromExternalObject( {'friends': [user4.username, user3.username, user2.username, user.username]} )
+	assert_that( updated, is_false() ) # no change
+
+	updated = fl.updateFromExternalObject( {'friends': [user.username, user2.username, user3.username, user4.username,
+														user5.username, user6.username]} )
+	assert_that( updated, is_true() )
+	assert_that( list(fl), has_length( 6 ) )
+	assert_that( sorted(fl), contains( user, user2, user3, user4, user5, user6 ) )
+
+
+	updated = fl.updateFromExternalObject( {'friends': [user.username, user2.username, user3.username, user4.username,
+														user5.username, user6.username, user7.username, user8.username]} )
+	assert_that( updated, is_true() )
+	assert_that( list(fl), has_length( 8 ) )
+	assert_that( sorted(fl), contains( user, user2, user3, user4, user5, user6, user7, user8 ) )
+
+	# Break some refs
+	users.User.delete_user( user.username )
+
+	updated = fl.updateFromExternalObject( {'friends': [user.username, user2.username, user3.username, user4.username,
+														user5.username, user6.username, user7.username, user8.username]} )
+	assert_that( updated, is_true() )
+	assert_that( list(fl), has_length( 7 ) )
+	assert_that( sorted(fl), contains( user2, user3, user4, user5, user6, user7, user8 ) )
+
 
 
 @WithMockDS(with_changes=True)

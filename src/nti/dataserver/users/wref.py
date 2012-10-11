@@ -86,7 +86,7 @@ class WeakRef(object):
 
 		return result
 
-	def __call__(self, return_missing_proxy=False ):
+	def __call__(self, return_missing_proxy=False, allow_cached=True ):
 		"""
 		Return the entity object, or None if it no longer exists.
 
@@ -94,7 +94,13 @@ class WeakRef(object):
 			return a :mod:`nti.dataserver.users.missing_user` proxy instead of
 			None. You can also set this to a callable object to return
 			a different type of object.
+		:param bool allow_cached: If ``True`` (the default) then this object
+			can use a locally cached value without checking to see if
+			the user still exists.
 		"""
+		if not allow_cached:
+			self._v_entity_cache = None
+
 		result = self._cached()
 
 		if result is None and return_missing_proxy:

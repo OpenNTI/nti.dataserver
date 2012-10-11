@@ -62,7 +62,7 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 	def __iter__(self):
 		"""
 		Iterating over a FriendsList iterates over its friends
-		(as Entity objects), resolving weak refs and strings.
+		(as Entity objects), resolving weak refs.
 		:return: An iterator across a set of `Entity` objects.
 		"""
 		return (x() for x in self._friends_wref_set if x())
@@ -91,10 +91,6 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 				pass
 
 		result = False
-		#if isinstance( friend, FriendsList ):
-			# Recurse to generate the correct notifications
-		#	for other_friend in friend:
-		#		result += self.addFriend( other_friend )
 		if isinstance( friend, Entity ):
 			wref = nti_interfaces.IWeakRef( friend )
 			assert wref.username == friend.username
@@ -120,7 +116,7 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 
 
 	def _update_friends_from_external(self, newFriends):
-		new_weak_refs = []
+		new_entities = []
 
 		for newFriend in newFriends:
 			# For the sake of unit tests, we need to do resolution here. but only of string
@@ -131,24 +127,43 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 				except TypeError:
 					pass
 
-			if isinstance( newFriend, Entity ):
-				new_weak_refs.append( nti_interfaces.IWeakRef(newFriend) )
+			if isinstance( newFriend, Entity ) and newFriend != self.creator:
+				new_entities.append( newFriend )
 
-		incoming_weak_refs = OOTreeSet( new_weak_refs )
+		result = 0
+		incoming_entities = OOTreeSet( new_entities )
+		current_entities = OOTreeSet()
+		broken_refs = []
+		for x in self._friends_wref_set:
+			ent = x(allow_cached=False)
+			if ent is not None:
+				current_entities.add( ent )
+			else:
+				broken_refs.append( x )
 
-		# What's incoming that I don't have
-		missing_weak_refs = OOBTree_difference( incoming_weak_refs, self._friends_wref_set )
-
-		# What I do have that I should no longer have
-		extra_weak_refs = OOBTree_difference( self._friends_wref_set, incoming_weak_refs )
-
-		# Now sync
-		for x in missing_weak_refs:
-			self.addFriend( x() )
-
-		for x in extra_weak_refs:
+		for x in broken_refs:
+			result += 1
 			self._friends_wref_set.remove( x )
 
+		# What's incoming that I don't have
+		missing_entities = OOBTree_difference( incoming_entities, current_entities )
+
+		# What I do have that I should no longer have
+		extra_entities = OOBTree_difference( current_entities, incoming_entities )
+
+		# Now sync
+		for x in missing_entities:
+			result += self.addFriend( x )
+
+		for x in extra_entities:
+			self._friends_wref_set.remove( nti_interfaces.IWeakRef( x ) )
+			result += 1
+
+		if __debug__:
+			__traceback_info__ = list(sorted(incoming_entities)), list(sorted(self))
+			assert list(sorted(incoming_entities)) == list(sorted(self))
+
+		return result
 
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
 		super(FriendsList,self).updateFromExternalObject( parsed, *args, **kwargs )
@@ -158,8 +173,9 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 		# Notice we allow not sending friends to easily change
 		# the realname, alias, etc
 		if newFriends is not None:
-			updated = True
-			self._update_friends_from_external( newFriends )
+			__traceback_info__ = newFriends
+			update_count = self._update_friends_from_external( newFriends )
+			updated = update_count > 0
 
 		if self.username is None:
 			self.username = parsed.get( 'Username' )

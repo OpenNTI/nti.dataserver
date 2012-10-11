@@ -136,8 +136,10 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		assert_that( User.get_entity( 'foo@bar' ), is_( user1 ) )
 
 
+	@WithMockDSTrans
 	def test_friendslist_updated_through_user_updates_last_mod(self):
-		user = User( 'foo@bar', 'temp' )
+		user = User.create_user( self.ds,  username='foo@bar' )
+		friend = User.create_user( self.ds, username='friend@bar' )
 		fl = user.maybeCreateContainedObjectWithType( 'FriendsLists', {'Username': 'Friend' } )
 		user.addContainedObject( fl )
 		fl.lastModified = 0
@@ -145,7 +147,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 
 		with user.updates():
 			fl2 = user.getContainedObject( fl.containerId, fl.id )
-			internalization.update_from_external_object( fl2, {'friends': []} )
+			internalization.update_from_external_object( fl2, {'friends': [friend.username]} )
 
 		assert_that( fl.lastModified, is_( greater_than_or_equal_to( now ) ) )
 		assert_that( user.getContainer( fl.containerId ).lastModified, is_( greater_than_or_equal_to( now ) ) )
