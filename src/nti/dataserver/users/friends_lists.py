@@ -11,7 +11,7 @@ from zope import interface
 from zope import component
 from zope.component.factory import Factory
 
-from BTrees.OOBTree import OOTreeSet, difference as OOBTree_difference
+from BTrees.OOBTree import OOTreeSet, difference as OOBTree_difference, intersection as OOBTree_intersection
 
 from nti.ntiids import ntiids
 from nti.utils import sets
@@ -133,31 +133,36 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 		result = 0
 		incoming_entities = OOTreeSet( new_entities )
 		current_entities = OOTreeSet()
-		broken_refs = []
 		for x in self._friends_wref_set:
 			ent = x(allow_cached=False)
 			if ent is not None:
 				current_entities.add( ent )
 			else:
-				broken_refs.append( x )
+				# broken ref. So we are effectively mutating this entity
+				result += 1
 
-		for x in broken_refs:
-			result += 1
-			self._friends_wref_set.remove( x )
 
 		# What's incoming that I don't have
 		missing_entities = OOBTree_difference( incoming_entities, current_entities )
 
-		# What I do have that I should no longer have
-		extra_entities = OOBTree_difference( current_entities, incoming_entities )
+		# What's incoming that I /do/ have
+		overlap_entities = OOBTree_intersection( incoming_entities, current_entities )
 
-		# Now sync
+		# The weak refs we keep are non-persistent, so when we write out the tree set
+		# we're going to write out all of the data anyway for every bucket that we touch.
+		# So it makes as much sense to clear the treeset out and start from
+		# scratch as it does to add and remove to bring into sync...plus it's a bit safer
+		# if comparisons of the keys change over time.
+		self._friends_wref_set.clear()
+		for x in overlap_entities:
+			self._friends_wref_set.add( nti_interfaces.IWeakRef( x ) )
+
+		# Now actually Add the new ones so that we can fire the right events
 		for x in missing_entities:
 			result += self.addFriend( x )
 
-		for x in extra_entities:
-			self._friends_wref_set.remove( nti_interfaces.IWeakRef( x ) )
-			result += 1
+		# Any extras that we used to have but tossed count towards our total
+		result += len( OOBTree_difference( current_entities, incoming_entities ) )
 
 		if __debug__:
 			__traceback_info__ = list(sorted(incoming_entities)), list(sorted(self))

@@ -52,7 +52,7 @@ def send_feedback_view( request ):
 	del request_details['body']
 	request_details.update( request.environ )
 
-	request_details_table = '\n    '.join( [k + '\t\t:' + repr(v) for k, v in sorted(request_details.items())] )
+	request_details_table = '\n\n    '.join( [k + '\t\t:' + repr(v) for k, v in sorted(request_details.items())] )
 
 
 	_email_utils.queue_simple_html_text_email( 'platform_feedback_email',
