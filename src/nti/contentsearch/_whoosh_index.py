@@ -10,6 +10,7 @@ from zope import component
 from whoosh import fields
 from whoosh import analysis
 from whoosh import highlight
+from whoosh.util import rcompile
 
 from nti.contentsearch._search_query import QueryObject
 from nti.contentsearch._whoosh_query import parse_query
@@ -34,6 +35,7 @@ logger = logging.getLogger( __name__ )
 
 _default_word_max_dist = 15
 _default_ngram_maxsize_content = 12 # biggest common word in English to be found in a text has 20 chars
+_default_expression = rcompile(r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-']\w+)*")
 
 class _SearchableContent(object):
 	
