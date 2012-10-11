@@ -14,7 +14,7 @@ from pyramid.interfaces import IAuthenticationPolicy
 
 from zope import interface
 from zope import component
-from repoze.who.interfaces import IAuthenticator, IChallenger, IChallengeDecider, IRequestClassifier
+from repoze.who.interfaces import IAuthenticator, IIdentifier, IChallenger, IChallengeDecider, IRequestClassifier
 from repoze.who.middleware import PluggableAuthenticationMiddleware
 from repoze.who.plugins.basicauth import BasicAuthPlugin
 from repoze.who.plugins.auth_tkt import AuthTktCookiePlugin
@@ -225,12 +225,16 @@ class _NonChallengingBasicAuthPlugin(BasicAuthPlugin):
 	it then to create our own type?
 	"""
 
-	classifications = {IChallenger: ['application-browser']}
+	classifications = {IChallenger: ['application-browser'],
+					   IIdentifier: ['application-browser']}
 
 	def challenge( self, *args ):
 		exc = super(_NonChallengingBasicAuthPlugin,self).challenge( *args )
 		del exc.headers[:] # clear out the WWW-Authenticate header
 		return exc
+
+	def forget(self, *args ):
+		return ()
 
 def _nti_request_classifier( environ ):
 	"""
@@ -293,6 +297,7 @@ def _create_middleware( secure_cookies=False,
 	# Identity (username) can come from the cookie,
 	# or HTTP Basic auth
 	identifiers = [('auth_tkt', auth_tkt),
+				   ('basicauth-interactive', basicauth_interactive),
 				   ('basicauth', basicauth)]
 	# Confirmation/authentication can come from the cookie (encryption)
 	# Or possibly HTTP Basic auth
