@@ -27,13 +27,14 @@ from zope.event import notify
 
 import zope.schema
 import zope.schema.interfaces
-
+from zc import intid as zc_intid
 import z3c.password.interfaces
 
 import nti.utils.schema
 
 from nti.dataserver import users
 from nti.dataserver import authorization as nauth
+from nti.dataserver.intid_utility import IntIdMissingError
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
@@ -170,7 +171,14 @@ def _create_user( request, externalValue, preflight_only=False ):
 		obj_io.handle_validation_error( request, e )
 	except zope.schema.interfaces.ValidationError as e:
 		obj_io.handle_validation_error( request, e )
-	except KeyError:
+	except IntIdMissingError as e:
+		# Hmm. This is a serious type of KeyError, one unexpected
+		# it deserves a 500
+		raise
+	except KeyError as e:
+		# Sadly, key errors can be several things, not necessarily just
+		# usernames. It's hard to tell them apart though
+		logger.debug( "Got key error %s creating user (preflight? %s)", e, preflight_only )
 		exc_info = sys.exc_info()
 		_raise_error( request,
 					  hexc.HTTPConflict,
@@ -303,7 +311,7 @@ def account_preflight_view(request):
 	if provided_username:
 		avatar_choices = _get_avatar_choices_for_username( externalValue['Username'], request )
 
-	# Make sure there are no side effects of this
+	# Make sure there are /no/ side effects of this
 	transaction.abort()
 	return {'Username': externalValue['Username'] if provided_username else None,
 			'AvatarURLChoices': avatar_choices,
@@ -345,6 +353,11 @@ def accept_invitations_on_user_creation(user, event):
 
 	invite_codes = event.ext_value.get( 'invitation_codes' )
 	if invite_codes:
+		if not event.preflight_only:
+			# IntIds get added normally by ObjectAddedEvent, but we are before that event.
+			# But invitations often need intids, so go ahead and register it now. (TODO: Is this safe?
+			# does this mess up handling the intid event itself? Since we are so soon?)
+			component.getUtility(zc_intid.IIntIds).register( user )
 		accept_invitations( user, invite_codes )
 
 

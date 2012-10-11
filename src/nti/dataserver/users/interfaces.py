@@ -188,13 +188,16 @@ class IWillCreateNewEntityEvent(zope.component.interfaces.IObjectEvent):
 
 	ext_value = interface.Attribute( "If the entity was created with external data, this will be it." )
 
+	preflight_only = interface.Attribute( "A boolean, set to true if this is a preflight-only event." )
+
 
 @interface.implementer(IWillCreateNewEntityEvent)
 class WillCreateNewEntityEvent(zope.component.interfaces.ObjectEvent):
 
-	def __init__( self, obj, ext_value=None ):
+	def __init__( self, obj, ext_value=None, preflight_only=False ):
 		super(WillCreateNewEntityEvent,self).__init__( obj )
 		self.ext_value = ext_value
+		self.preflight_only = preflight_only
 
 
 class IAvatarURLProvider(Interface):
