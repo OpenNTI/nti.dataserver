@@ -97,7 +97,7 @@ class _SanitizerFilter(sanitizer.Filter):
 	def __init__( self, source ):
 		super(_SanitizerFilter,self).__init__(source)
 		self._rejecting_stack = []
-		self.link_finder = component.getUtility( frg_interfaces.IHyperlinkFormatter )
+		self.link_finder = component.queryUtility( frg_interfaces.IHyperlinkFormatter )
 
 	def __iter__( self ):
 		for token in super(_SanitizerFilter,self).__iter__():
@@ -114,7 +114,7 @@ class _SanitizerFilter(sanitizer.Filter):
 
 	def _find_links_in_text( self, token ):
 		text = token['data']
-		text_and_links = self.link_finder.find_links( text )
+		text_and_links = self.link_finder.find_links( text ) if self.link_finder else ()
 		if len(text_and_links) != 1 or text_and_links[0] != text:
 			def _unicode( x ):
 				return unicode( x, 'utf-8' ) if isinstance( x, str ) else x
