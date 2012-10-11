@@ -19,6 +19,7 @@ entry_points = {
 		"nti_follow_entity = nti.dataserver.utils.nti_follow_entity:main",
 		"nti_remove_user = nti.dataserver.utils.nti_remove_user:main",
 		"nti_export_entities = nti.dataserver.utils.nti_export_entities:main",
+		"nti_set_user_attribute = nti.dataserver.utils.nti_set_user_attribute:main",
 		"nti_delete_user_objects = nti.dataserver.utils.nti_delete_user_objects:main",
 		"nti_export_user_objects = nti.dataserver.utils.nti_export_user_objects:main",
 		"nti_sharing_listener = nti.appserver.application:sharing_listener_main",
