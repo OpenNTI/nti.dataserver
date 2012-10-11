@@ -231,7 +231,7 @@ def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=Fa
 		content = ' '.join(tokenized_words)
 		_to_index(docid, content, keywords)
 		
-def transform(book, indexname=None, indexdir=None, recreate_index=True, optimize=True):
+def transform(book, indexname=None, indexdir=None, recreate_index=True, optimize=True, file_indexing=False):
 	contentPath = book.contentLocation
 	indexname = indexname or book.jobname
 	if not indexdir:
@@ -244,7 +244,7 @@ def transform(book, indexname=None, indexdir=None, recreate_index=True, optimize
 	
 	toc = book.toc
 	def _loop(topic):
-		_index_book_node(writer, topic)
+		_index_book_node(writer, topic, file_indexing=file_indexing)
 		for t in topic.childTopics:
 			_loop(t)			
 	_loop(toc.root_topic)
@@ -268,18 +268,20 @@ def main():
 	arg_parser = argparse.ArgumentParser( description="Content indexer" )
 	arg_parser.add_argument( 'contentpath', help="Content book location" )
 	arg_parser.add_argument( "-i", "--indexname", dest='indexname', help="Content index name", default=None)
+	arg_parser.add_argument( "-f", "--file_indexing", dest='file_indexing', help="Use file indexing", action='store_true')
 	arg_parser.add_argument( '-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
 	args = arg_parser.parse_args()
 
 	contentpath = os.path.expanduser(args.contentpath)
 	indexname = args.indexname or os.path.split(contentpath)[1]
 	verbose = args.verbose
+	file_indexing = args.file_indexing
 	if verbose:
 		logging.basicConfig(level=logging.INFO, format='%(asctime)-15s %(name)-5s %(levelname)-8s %(message)s')
 		
 	_remove_index_files(contentpath, indexname)
 	book = NoPhantomRenderedBook( EmptyMockDocument(), contentpath)
-	transform(book, indexname=indexname)
+	transform(book, indexname=indexname, file_indexing=file_indexing)
 	
 if __name__ == '__main__':
 	main()
