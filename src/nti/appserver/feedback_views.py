@@ -45,10 +45,14 @@ REL_SEND_FEEDBACK = 'send-feedback'
 def send_feedback_view( request ):
 
 	json_body = read_body_as_external_object( request )
-	if 'body' not in json_body:
+	if 'body' not in json_body or not json_body['body'] or not unicode(json_body['body']).strip():
 		raise hexc.HTTPBadRequest()
 
-	request_details_table = '\n    '.join( [k + '\t\t:' + repr(v) for k, v in sorted(request.environ.items())] )
+	request_details = dict(json_body)
+	del request_details['body']
+	request_details.update( request.environ )
+
+	request_details_table = '\n    '.join( [k + '\t\t:' + repr(v) for k, v in sorted(request_details.items())] )
 
 
 	_email_utils.queue_simple_html_text_email( 'platform_feedback_email',
@@ -59,6 +63,7 @@ def send_feedback_view( request ):
 															  'filled_body': '\n    '.join( textwrap.wrap( json_body['body'], 60 ) ),
 															  'context': json_body,
 															  'request': request,
+															  'request_details': request_details,
 															  'request_details_table': request_details_table},
 											   request=request )
 
