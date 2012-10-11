@@ -181,6 +181,7 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 			__traceback_info__ = newFriends
 			update_count = self._update_friends_from_external( newFriends )
 			updated = update_count > 0
+			self.updateLastMod() # Sigh. Some general_purpose tests depend on this, regardless of whether any update got done.
 
 		if self.username is None:
 			self.username = parsed.get( 'Username' )

@@ -309,6 +309,15 @@ def to_standard_external_dictionary( self, mergeFrom=None, name=_ex_name_marker,
 	# As we transition over to structured IDs that contain OIDs, we'll try to use that
 	# for both the ID and OID portions
 	if ntiids.is_ntiid_of_type( result.get( StandardExternalFields.ID ), ntiids.TYPE_OID ):
+		# If we are trying to use OIDs as IDs, it's possible that the
+		# ids are in the old, version 1 format, without an intid component. If that's the case,
+		# then update them on the fly, but only for notes because odd things happen to other
+		# objects (chat rooms?) if we do this to them
+		result_id = result[StandardExternalFields.ID]
+		std_oid = to_external_ntiid_oid( self )
+		if std_oid.startswith( result_id ) and self.__class__.__name__ == 'Note':
+			result[StandardExternalFields.ID] = std_oid
+
 		result[StandardExternalFields.OID] = result[StandardExternalFields.ID]
 	else:
 		oid = to_external_ntiid_oid( self, default_oid=None ) #toExternalOID( self )
