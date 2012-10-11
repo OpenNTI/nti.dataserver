@@ -58,7 +58,7 @@
 				<tr><td>Variable</td><td>Value</td></tr>
 			</thead>
 			<tbody>
-				<tr tal:repeat="item python: sorted(request.environ.items())">
+				<tr tal:repeat="item python: sorted(options['request_details'].items())">
 					<td tal:content="python:item[0]">Variable Name</td>
 					<td tal:content="python:item[1]">Variable Value</td>
 				</tr>

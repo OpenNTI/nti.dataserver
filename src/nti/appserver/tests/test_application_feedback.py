@@ -57,3 +57,23 @@ class TestApplicationFeedback(SharedApplicationTestBase):
 		assert_that( mailer, has_property( 'queue', contains( has_property( 'subject', "Feedback from ossmkitty" ) ) ) )
 
 		assert_that( mailer.queue[0].as_string(), contains_string( "Hi there. I love it." ) )
+
+	@WithSharedApplicationMockDS
+	def test_post_bad_feedback(self):
+		component.provideHandler( eventtesting.events.append, (None,) )
+		with mock_dataserver.mock_db_trans( self.ds ):
+			coppa_user = self._create_user( username='ossmkitty' )
+
+		testapp = TestApp( self.app )
+		mailer = component.getUtility( ITestMailDelivery )
+
+		path = b'/dataserver2/users/ossmkitty/@@send-feedback'
+		for body in (None, '', '   '):
+			data = {'body': body}
+
+			testapp.post( path,
+						  json.dumps( data ),
+						  extra_environ=self._make_extra_environ(username='ossmkitty'),
+						  status=400 )
+			mailer = component.getUtility( ITestMailDelivery )
+			assert_that( mailer, has_property( 'queue', has_length( 0 ) ) )
