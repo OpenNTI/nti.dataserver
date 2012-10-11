@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from __future__ import unicode_literals, print_function
+from __future__ import unicode_literals, print_function, absolute_import
 
 from hamcrest import assert_that, is_, less_than, greater_than, less_than_or_equal_to
 from hamcrest import same_instance

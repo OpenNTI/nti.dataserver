@@ -8,7 +8,7 @@ from __future__ import print_function, unicode_literals
 
 from hamcrest import assert_that, is_
 
-from . import buildDomFromString, simpleLatexDocumentText
+from nti.contentrendering.tests import buildDomFromString, simpleLatexDocumentText
 from nti.contentrendering.plastexids import _section_ntiid_filename, _section_ntiid
 
 def test_escape_filename():
