@@ -45,22 +45,37 @@ class TestIndexer(unittest.TestCase):
 		
 		idx.close()
 
-	def test_index_file(self):
-		indexname='prealgebra'
-		path = os.path.join( os.path.dirname( __file__ ),  'why_start_with_arithmetic_.html' )
-
+	def _index_file(self, path, indexname, nodename):
 		idx = get_or_create_index(indexdir=self.idxdir, indexname=indexname, recreate=True)
 		writer = idx.writer(optimize=False, merge=False)		
-		node = _EclipseTOCMiniDomTopic(None, path, path, None, 'why start with arithmetic')
+		node = _EclipseTOCMiniDomTopic(None, path, path, None, nodename)
 		index_book_node(writer, node)
 		writer.commit(optimize=False, merge=False)
+		return idx
+			
+	def test_index_prealgebra(self):
+		indexname='prealgebra'
+		path = os.path.join( os.path.dirname( __file__ ),  'why_start_with_arithmetic_.html' )
+		idx = self._index_file(path, indexname, 'why start with arithmetic')
+		try:
+			q = Term("content", u"exotic")
+			with idx.searcher() as s:
+				r = s.search(q)
+				assert_that(r, has_length(1))
+		finally:
+			idx.close()
 		
-		q = Term("content", u"exotic")
-		with idx.searcher() as s:
-			r = s.search(q)
-			assert_that(r, has_length(1))
-		
-		idx.close()
+	def test_index_cohen(self):
+		indexname='cohen'
+		path = os.path.join( os.path.dirname( __file__ ),  'cohen_vs_california.html' )
+		idx = self._index_file(path, indexname, 'cohen vs california')
+		try:
+			q = Term("content",u"court's")
+			with idx.searcher() as s:
+				r = s.search(q)
+				assert_that(r, has_length(1))
+		finally:
+			idx.close()
 		
 if __name__ == '__main__':
 	unittest.main()
