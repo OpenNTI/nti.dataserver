@@ -23,8 +23,8 @@ from BTrees.LOBTree import LOBTree
 from BTrees.LLBTree import union as union64
 from BTrees.LLBTree import LLBTree
 
+from zope import interface
 from zope.component.interfaces import IFactory
-from zope.interface import implements, implementedBy
 
 from zopyx.txng3.core import widcode as zopywidcode
 from zopyx.txng3.core import storage as zopystorage
@@ -94,8 +94,8 @@ class Storage(zopystorage.Storage):
 			r = union64(r, docids)
 		return r
 
+@interface.implementer(IStorageWithTermFrequency)
 class StorageWithTermFrequency(Storage):
-	implements(IStorageWithTermFrequency)
 
 	def clear(self):
 		Storage.clear(self)
@@ -130,8 +130,8 @@ class StorageWithTermFrequency(Storage):
 	def getTermFrequency(self):
 		return self._frequencies
 
+@interface.implementer(IFactory)
 class _StorageFactory:
-	implements(IFactory)
 	
 	def __init__(self, klass):
 		self._klass = klass
@@ -140,7 +140,7 @@ class _StorageFactory:
 		return self._klass()
 	
 	def getInterfaces(self):
-		return implementedBy(self._klass)
+		return interface.implementedBy(self._klass)
 
 StorageFactory = _StorageFactory(Storage)
 StorageWithTermFrequencyFactory = _StorageFactory(StorageWithTermFrequency)

@@ -8,13 +8,14 @@ import time
 from nti.contentsearch import zopyxtxng3corelogger
 sys.modules["zopyx.txng3.core.logger"] = zopyxtxng3corelogger
 
-from zopyx.txng3.core import index as zopycoreidx
-from zopyx.txng3.core import evaluator as zopyevaluator
+from zopyx.txng3.core import index as zopyx_coreidx
+from zopyx.txng3.core import evaluator as zopyx_evaluator
+from zopyx.txng3.core import resultset as zopyx_resultset
 
 from nti.contentsearch import zopyxtxng3coreresultset as ntizopy_rs
 from nti.contentsearch import zopyxtxng3coredoclist as ntizopyx_doclist
 
-for module in (zopycoreidx, zopyevaluator):
+for module in (zopyx_coreidx, zopyx_evaluator, zopyx_resultset):
 	module.LOG = zopyxtxng3corelogger.LOG
 	module.DocidList = ntizopyx_doclist.DocidList
 	module.unionResultSets = ntizopy_rs.unionResultSets
@@ -27,6 +28,7 @@ import logging
 logger = logging.getLogger( __name__ )
 
 from nti.contentsearch.common import indexable_type_names
+from nti.contentsearch._content_utils import split_content
 from nti.contentsearch._content_utils import get_punkt_translation_table as get_punctuation_translation_table
 
 def get_indexable_types():
