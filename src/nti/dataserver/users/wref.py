@@ -41,7 +41,7 @@ class WeakRef(object):
 
 	.. py:attribute:: username
 
-		The username being referenced.
+		The username being referenced. Note that this is normalized to lower case.
 
 	.. todo:: This is very similar to :class:`nti.dataserver.intid_wref.WeakRef`.
 

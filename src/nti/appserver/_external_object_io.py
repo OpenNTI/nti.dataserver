@@ -101,7 +101,12 @@ def handle_possible_validation_error( request, e ):
 			_no_request_validation_error()
 		else:
 			handle_validation_error( request, e )
-	elif isinstance( e, (ValueError,AssertionError,interface.Invalid,TypeError,KeyError)): # pragma: no cover
+	elif isinstance( e, AssertionError): #pragma: no cover
+		# Triggered a failed assertion on our side.
+		# That's bad. We probably want this to come up as a 500
+		# so we log it and deal with it
+		raise
+	elif isinstance( e, (ValueError,interface.Invalid,TypeError,KeyError)): # pragma: no cover
 		# These are all 'validation' errors. Raise them as unprocessable entities
 		# interface.Invalid, in particular, is the root class of zope.schema.ValidationError
 		_no_request_validation_error()

@@ -66,7 +66,7 @@ def test_update_friends_list():
 	user5 = users.User.create_user( username='5foo5@bar' )
 	user6 = users.User.create_user( username='6foo6@bar' )
 	user7 = users.User.create_user( username='7foo7@bar' )
-	user8 = users.User.create_user( username='8foo8@bar' )
+	user8 = users.User.create_user( username='8foo8@BAR' )
 
 	fl = FriendsList( 'MyList' )
 	fl.creator = owner
