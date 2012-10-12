@@ -23,26 +23,11 @@ for module in (zopycoreidx, zopyevaluator):
 	
 # legacy imports
 
-from nti.contentsearch.common import indexable_type_names
-
-def get_indexable_types():
-	return indexable_type_names
-
 import logging
 logger = logging.getLogger( __name__ )
 
-class SearchCallWrapper(object):
-	def __init__(self, func):
-		self.func = func
+from nti.contentsearch.common import indexable_type_names
+from nti.contentsearch._content_utils import get_punkt_translation_table as get_punctuation_translation_table
 
-	def __call__(self, *args, **kargs):
-		now = time.time()
-		result =  self.func(*args, **kargs)
-		elapsed = time.time() - now
-		logger.debug('(%s,%r,%r) took %0.5fs' % (self.func.__name__, args, kargs, elapsed))
-		return result
-	
-	def __get__(self, instance, owner):
-		def wrapper(*args, **kargs):
-			return self(instance, *args, **kargs)
-		return wrapper
+def get_indexable_types():
+	return indexable_type_names

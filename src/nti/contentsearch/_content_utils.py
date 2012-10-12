@@ -1,6 +1,5 @@
 from __future__ import print_function, unicode_literals, absolute_import
 
-import os
 import re
 import six
 import collections
@@ -38,9 +37,18 @@ from nti.contentsearch.common import (text_, body_, selectedText_, replacementCo
 import logging
 logger = logging.getLogger( __name__ )
 
+def get_punkt_translation_table(language='en'):
+	table = component.queryUtility(search_interfaces.IPunktTranslationTable, name=language)
+	return table or _default_punkt_translation_table()
+
 def get_content(text=None, language='en'):
-	tokenizer = component.getUtility(search_interfaces.IContentTokenizer, name=language)
-	result = tokenizer.tokenize(text) if text else ()
+	result = ()
+	text = unicode(text) if text else None
+	if text:
+		table = get_punkt_translation_table(language)
+		text = text.translate(table)
+		tokenizer = component.getUtility(search_interfaces.IContentTokenizer, name=language)
+		result = tokenizer.tokenize(text)
 	result = ' '.join(result)
 	return unicode(result)
 
@@ -407,6 +415,3 @@ def _default_punkt_translation_table():
 		result[int(splits[0])] = repl
 	return result
 
-def get_punkt_translation_table(language='en'):
-	table = component.queryUtility(search_interfaces.IPunktTranslationTable, name=language)
-	return table or _default_punkt_translation_table()
