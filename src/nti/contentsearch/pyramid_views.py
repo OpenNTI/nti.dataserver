@@ -14,6 +14,7 @@ from nti.contentlibrary.interfaces import IContentPackageLibrary
 
 from nti.contentsearch.interfaces import IIndexManager
 from nti.contentsearch._search_query import QueryObject
+from nti.contentsearch._content_utils import get_punkt_translation_table
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -59,12 +60,15 @@ class UserSearch(object):
 
 _extractor_pe = re.compile('[?*]*(.*)')
 
-def clean_search_query(query):
+def clean_search_query(query, language='en'):
 	temp = re.sub('[*?]','', query)
 	result = unicode(query) if temp else u''
 	if result:
 		m = _extractor_pe.search(result)
 		result = m.group() if m else u''
+	
+	table = get_punkt_translation_table(language)
+	result = result.translate(table) if result else u''
 	return unicode(result)
 
 def get_queryobject(request):

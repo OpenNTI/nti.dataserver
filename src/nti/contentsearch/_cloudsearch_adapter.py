@@ -11,9 +11,10 @@ from zope.interface.common.mapping import IFullMapping
 
 from persistent.mapping import PersistentMapping
 
+from perfmetrics import metricmethod
+
 from nti.dataserver import interfaces as nti_interfaces
 
-from nti.contentsearch import SearchCallWrapper
 from nti.contentsearch.common import is_all_query
 from nti.contentsearch.common import get_type_name
 from nti.contentsearch._search_query import QueryObject
@@ -73,7 +74,7 @@ class _CloudSearchEntityIndexManager(PersistentMapping, _SearchEntityIndexManage
 		results.add(map(self._get_search_hit, objects))
 		return results
 	
-	@SearchCallWrapper
+	@metricmethod
 	def search(self, query, *args, **kwargs):
 		qo = QueryObject.create(query, **kwargs)
 		highlight_type = None if is_all_query(qo.term) else WORD_HIGHLIGHT

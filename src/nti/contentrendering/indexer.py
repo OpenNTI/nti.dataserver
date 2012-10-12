@@ -22,6 +22,7 @@ from nltk.tokenize import RegexpTokenizer
 from whoosh import index
 
 from nti.contentrendering import interfaces
+from nti.contentsearch import get_punctuation_translation_table
 from nti.contentfragments.html import _sanitize_user_html_to_text
 from nti.contentsearch.whoosh_contenttypes import create_book_schema
 from nti.contentrendering.termextract import extract_key_words_from_tokens, TermExtractor
@@ -166,6 +167,7 @@ def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=Fa
 	logger.info( "Indexing (%s, %s, %s)", os.path.basename(content_file), title, ntiid )
 	
 	related = _get_related(node.topic)
+	table = get_punctuation_translation_table()
 	
 	# find last_modified
 	last_modified = time.time()
@@ -209,6 +211,7 @@ def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=Fa
 		def _collector(n):
 			if not isinstance(n, etree._Comment):
 				content = _get_node_content(n)
+				content = content.translate(table) if content else None
 				if content:
 					tokenized_words = tokenizer.tokenize(content)
 					documents.append(tokenized_words)
