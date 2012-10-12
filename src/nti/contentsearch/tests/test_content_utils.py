@@ -179,7 +179,13 @@ class TestContentUtils(ConfiguringTestBase):
 	def test_punk_translation_table(self):
 		table = get_punkt_translation_table()
 		assert_that(table, has_length(605))
+		s = u'California Court of Appeal\u2019s said Bushman may \u2026be guilty of disturbing the peace through \u2018offensive\u2019'
+		t = s.translate(table)
+		assert_that(t, is_("California Court of Appeal's said Bushman may ...be guilty of disturbing the peace through 'offensive'"))
 		
+		s = u'COPTIC OLD NUBIAN VERSE DIVIDER is \u2cFc deal with it'
+		t = s.translate(table)
+		assert_that(t, is_("COPTIC OLD NUBIAN VERSE DIVIDER is  deal with it"))
 		
 if __name__ == '__main__':
 	unittest.main()
