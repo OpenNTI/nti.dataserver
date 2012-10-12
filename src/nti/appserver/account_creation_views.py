@@ -353,11 +353,6 @@ def accept_invitations_on_user_creation(user, event):
 
 	invite_codes = event.ext_value.get( 'invitation_codes' )
 	if invite_codes:
-		if not event.preflight_only:
-			# IntIds get added normally by ObjectAddedEvent, but we are before that event.
-			# But invitations often need intids, so go ahead and register it now. (TODO: Is this safe?
-			# does this mess up handling the intid event itself? Since we are so soon?)
-			component.getUtility(zc_intid.IIntIds).register( user )
 		accept_invitations( user, invite_codes )
 
 
