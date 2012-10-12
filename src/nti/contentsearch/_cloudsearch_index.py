@@ -15,7 +15,7 @@ from nti.chatserver import interfaces as chat_interfaces
 
 from nti.contentsearch import interfaces as search_interfaces
 
-#from nti.contentsearch._ngrams_utils import ngrams
+from nti.contentsearch._ngrams_utils import ngrams
 from nti.contentsearch.common import get_type_name
 
 from nti.contentsearch.common import (	CLASS, CREATOR, last_modified_fields, ntiid_fields, INTID, 
@@ -112,6 +112,12 @@ def get_object_content(data):
 	result = adapted.get_content()
 	return result.lower() if result else u''
 
+def get_content_and_ngrams(obj):
+	content = get_object_content(obj)
+	n_grams = ngrams(content)
+	result = '%s %s' % (content, n_grams) if content else u''
+	return result
+
 def get_last_modified(data):
 	adapted = component.getAdapter(data, search_interfaces.IContentResolver)
 	result = adapted.get_last_modified() or time.time()
@@ -169,7 +175,7 @@ class _AbstractCSObject(dict):
 		self[intid_] = get_uid(src)
 		self[type_] = get_type_name(src)
 		self[creator_] = get_creator(src)
-		self[content_] = get_object_content(src)
+		self[content_] = get_content_and_ngrams(src)
 		
 @component.adapter(nti_interfaces.INote)	
 class _CSNote(_AbstractCSObject):
