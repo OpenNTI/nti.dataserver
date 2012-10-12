@@ -674,6 +674,12 @@ class TestCanvas(mock_dataserver.ConfiguringTestBase):
 
 		assert_that( shape.toExternalObject(), has_entry( 'url', '/path/to/relative/image.png' ) )
 
+		# Null values for the URL are currently allowed
+		with mock_dataserver.mock_db_trans(ds):
+			update_from_external_object( shape, {'url': None}, context=ds )
+
+		assert_that( shape.toExternalObject(), has_entry( 'url', None ) )
+
 def check_update_props( ext_name='strokeRGBAColor',
 						col_name='strokeColor',
 						opac_name='strokeOpacity',
