@@ -41,14 +41,17 @@ def get_punkt_translation_table(language='en'):
 	table = component.queryUtility(search_interfaces.IPunktTranslationTable, name=language)
 	return table or _default_punkt_translation_table()
 
+def split_content(text, language='en'):
+	tokenizer = component.getUtility(search_interfaces.IContentTokenizer, name=language)
+	result = tokenizer.tokenize(unicode(text)) if text else []
+	return result
+	
 def get_content(text=None, language='en'):
 	result = ()
 	text = unicode(text) if text else None
 	if text:
 		table = get_punkt_translation_table(language)
-		text = text.translate(table)
-		tokenizer = component.getUtility(search_interfaces.IContentTokenizer, name=language)
-		result = tokenizer.tokenize(text)
+		result = split_content(text.translate(table))
 	result = ' '.join(result)
 	return unicode(result)
 

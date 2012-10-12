@@ -1,7 +1,7 @@
 <!-- -*- mode: nxml -*- -->
 <configure xmlns="http://namespaces.zope.org/zope" i18n_domain="zope">
 	<include package="zope.component" />
-	<include package="zopyx.txng3.core" file="configure.zcml" />
+
 	<include package="nti.contentfragments" file="configure.zcml" />
 		
 	<!-- Externalization -->
@@ -97,27 +97,7 @@
 	<utility factory="._repoze_query._DefaultSearchQueryValiator"  />
 	<utility factory="._repoze_query._DefaultSearchQueryValiator" name="en" />
 	
-	<!-- zopyx Storage -->
-
-	<utility	provides="zopyx.txng3.core.interfaces.IStorage"
-				factory=".zopyxtxng3corestorage.StorageFactory"
-				name="txng.storages.default" />
-
-	<utility	provides="zope.component.interfaces.IFactory"
-				component=".zopyxtxng3corestorage.StorageFactory"
-				name="txng.storages.default" />
-
-	<utility	provides="zopyx.txng3.core.interfaces.IStorage"
-				factory=".zopyxtxng3corestorage.StorageWithTermFrequencyFactory"
-				name="txng.storages.term_frequencies" />
-
-	<utility	provides="zope.component.interfaces.IFactory"
-				component=".zopyxtxng3corestorage.StorageWithTermFrequencyFactory"
-				name="txng.storages.term_frequencies" />	
-			
-	<utility	provides="zopyx.txng3.core.interfaces.IStopwords"
-				factory=".zopyxtxng3corestopwords._Stopwords" />	
-				
+	<include file="zopyx.zcml" />
 	<include file="repoze_minimal.zcml" />
 	<include file="whoosh.zcml" />
 </configure>

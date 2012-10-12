@@ -225,6 +225,27 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 		
 		hits = rim.search("ichigo")
 		assert_that(hits, has_length(1))
+		
+	@WithMockDSTrans
+	def test_note_phrase(self):
+		username = 'kuchiki@bleach.com'
+		user = self._create_user(username=username )
+		msg = u"you'll be ready to rumble"
+		note = Note()
+		note.body = [unicode(msg)]
+		note.creator = username
+		note.containerId = make_ntiid(nttype='bleach', specific='manga')
+		note = user.addContainedObject( note )
+		
+		rim = search_interfaces.IRepozeEntityIndexManager(user, None)
+		docid = rim.index_content(note)
+		assert_that(docid, is_not(None))
+		
+		hits = rim.search("you'll be ready")
+		assert_that(hits, has_length(1))
+		
+		hits = rim.search("you will be ready")
+		assert_that(hits, has_length(0))
 				
 if __name__ == '__main__':
 	unittest.main()
