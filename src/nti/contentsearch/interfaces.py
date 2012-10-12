@@ -496,6 +496,8 @@ class ISearchQuery(interface.Interface):
 	searchon = schema.Iterable("Content types to search on", required=False)
 	batchSize = schema.Int(title="page size", required=False)
 	batchStart = schema.Int(title="The index of the first object to return, starting with zero", required=False)
+	
+	is_phrase_search = schema.Bool(title="Returns true if the search is for phrase search", required=True, readonly=True)
 		
 class ISearchQueryValidator(interface.Interface):
 	

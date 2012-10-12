@@ -21,7 +21,7 @@ from nti.contentsearch._search_highlights import (WORD_HIGHLIGHT, WHOOSH_HIGHLIG
 
 from nti.contentsearch.common import (	NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
 										SNIPPET, HIT, ID, TARGET_OID, CONTENT, INTID, QUERY,
-										HIT_COUNT, ITEMS, SUGGESTIONS, FRAGMENTS)
+										HIT_COUNT, ITEMS, SUGGESTIONS, FRAGMENTS, PHRASE_SEARCH)
 
 from nti.contentsearch.common import ( last_modified_, content_, title_, ntiid_)
 
@@ -127,6 +127,7 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 	
 	def toExternalObject(self):
 		eo = super(_SearchResultsExternalizer, self).toExternalObject()
+		eo[PHRASE_SEARCH] = self.query.is_phrase_search
 		eo[ITEMS] = items = []
 		
 		# process hits

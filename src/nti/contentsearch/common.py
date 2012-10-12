@@ -34,6 +34,7 @@ HIT_COUNT 		= u'Hit Count'
 TARGET_OID		= u'TargetOID'
 MESSAGE_INFO	= u'MessageInfo'
 SUGGESTIONS		= u'Suggestions'
+PHRASE_SEARCH 	= u'PhraseSearch'
 CONTAINER_ID	= unicode(ext_interfaces.StandardExternalFields.CONTAINER_ID)
 COLLECTION_ID	= u'CollectionId'
 LAST_MODIFIED	= unicode(ext_interfaces.StandardExternalFields.LAST_MODIFIED)

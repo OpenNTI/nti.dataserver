@@ -15,7 +15,7 @@ import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from nti.contentsearch.common import ( 	HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, SNIPPET,
-										NTIID, TARGET_OID)
+										NTIID, TARGET_OID, PHRASE_SEARCH)
 
 from nti.contentsearch.tests import zanpakuto_commands
 from nti.contentsearch.tests import ConfiguringTestBase
@@ -99,6 +99,7 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 		assert_that(hits, has_entry(QUERY, 'shield'))
 		assert_that(hits, has_key(ITEMS))
+		assert_that(hits, has_entry(PHRASE_SEARCH, False))
 
 		items = hits[ITEMS]
 		assert_that(items, has_length(1))
@@ -121,6 +122,8 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 		
 		hits = rim.search('"%s"' % zanpakuto_commands[0])
 		assert_that(hits, has_length(1))
+		hits = toExternalObject(hits)
+		assert_that(hits, has_entry(PHRASE_SEARCH, True))
 
 	@WithMockDSTrans
 	def test_update_note(self):

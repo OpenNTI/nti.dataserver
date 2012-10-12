@@ -1,5 +1,6 @@
 from __future__ import print_function, unicode_literals
 
+import re
 import six
 import UserDict
 
@@ -7,6 +8,8 @@ from zope import interface
 
 from nti.contentsearch.common import to_list
 from nti.contentsearch import interfaces as search_interfaces
+
+phrase_search = re.compile(r'"(?P<text>.*?)"')
 
 @interface.implementer(search_interfaces.ISearchQuery)
 class QueryObject(object, UserDict.DictMixin):
@@ -146,6 +149,10 @@ class QueryObject(object, UserDict.DictMixin):
 	@property
 	def is_empty(self):
 		return not self.term
+	
+	@property
+	def is_phrase_search(self):
+		return phrase_search.match(self.term) is not None
 
 	# -- suggest --
 
