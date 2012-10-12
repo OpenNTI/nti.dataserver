@@ -88,13 +88,13 @@ setup(
 		# In theory this should make it possible to get
 		# the svn revision number from svn 1.7. Doesn't seem
 		# to work (with distribute?)
-		#'setuptools_subversion >= 2.1'
+		#'setuptools_subversion >= 3.0'
 	],
 	install_requires = [
 		 # Zope Acquisition; used by contentratings implicitly
 		 # cool concept. Pulls in ExtensionClass (which should not be used)
 		'Acquisition >= 4.0a1',
-		'Chameleon >= 2.9.2',
+		'Chameleon >= 2.10',
 		 # 'friendly' fork of PIL, developed by Zope/Plone.
 		 # PIL is currently (as of 2012-07) at version 1.1.7 (from 2009), which
 		 # is the version that Pillow forked from in 2010 as version 1.0. So
@@ -206,7 +206,7 @@ setup(
 		#'slimit',
 		'supervisor >= 3.0b1',
 		'transaction >= 1.3.0',
-		'webob >= 1.2.2',
+		'webob >= 1.2.3',
 		'whoosh >= 2.4.1',
 		'z3c.batching >= 1.1.0', # result paging. Pulled in by z3c.table
 		 # bcrypt/pbkdf2 for zope.password
@@ -304,7 +304,7 @@ setup(
 			'sphinx >= 1.1.3', # Narrative docs
 			'sphinxtheme.readability >= 0.0.6',
 			'repoze.sphinx.autointerface >= 0.7.1',
-			'sphinxcontrib-programoutput >= 0.7',
+			'sphinxcontrib-programoutput >= 0.8',
 			'epydoc >= 3.0.1', # auto-api docs
 			'rope >= 0.9.4', # refactoring library. c.f. ropemacs
 			'ropemode >= 0.2', # IDE helper for rope
