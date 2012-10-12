@@ -127,7 +127,8 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 	
 	def toExternalObject(self):
 		eo = super(_SearchResultsExternalizer, self).toExternalObject()
-		eo[PHRASE_SEARCH] = self.query.is_phrase_search
+		is_phrase_search = self.query.is_phrase_search
+		eo[PHRASE_SEARCH] = is_phrase_search
 		eo[ITEMS] = items = []
 		
 		# process hits
@@ -141,6 +142,7 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 			last_modified = max(last_modified, hit.last_modified)
 			# run any decorator
 			external = toExternalObject(hit)
+			external[PHRASE_SEARCH] = is_phrase_search
 			items.append(external)
 			
 		eo[LAST_MODIFIED] = last_modified
