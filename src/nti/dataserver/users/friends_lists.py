@@ -93,7 +93,8 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 		result = False
 		if isinstance( friend, Entity ):
 			wref = nti_interfaces.IWeakRef( friend )
-			assert wref.username == friend.username
+			__traceback_info__ = friend, wref
+			assert wref.username.lower() == friend.username.lower()
 			result = self._friends_wref_set.add( wref )
 			if result:
 				self._on_added_friend( friend )
