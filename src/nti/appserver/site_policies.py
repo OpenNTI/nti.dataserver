@@ -834,6 +834,9 @@ class LawSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 
 	def user_created( self, user, event ):
 		super(LawSitePolicyEventListener, self).user_created(user, event)
+		# Ensure we can get a weak ref to this user now, in case the DFL needs it.
+		# This makes tests fail even if the DFL doesn't exist
+		nti_interfaces.IWeakRef( user )
 		owner = users.User.get_user( self.DEFAULT_DFL_OWNER )
 		if owner is not None:
 			dfl = owner.getContainedObject('FriendsLists', self.DEFAULT_DFL_NAME)
@@ -863,7 +866,7 @@ class LitWorldSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 	COM_USERNAME = 'litworld.nextthought.com'
 	COM_ALIAS = 'LitWorld'
 	COM_REALNAME = 'LitWorld'
-	
+
 @interface.implementer(ISitePolicyUserEventListener)
 class CollegiateSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 	"""
@@ -873,4 +876,3 @@ class CollegiateSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 	COM_USERNAME = 'collegiate.nextthought.com'
 	COM_ALIAS = 'Collegiate'
 	COM_REALNAME = 'Collegiate'
-	

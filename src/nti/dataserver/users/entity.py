@@ -9,9 +9,10 @@ from __future__ import print_function, unicode_literals, absolute_import
 logger = __import__( 'logging' ).getLogger( __name__ )
 
 import functools
-import urllib
+
 import string
 
+import transaction
 from zope import interface
 from zope import component
 from zope.event import notify
@@ -20,6 +21,8 @@ from zope import lifecycleevent
 from zope.keyreference.interfaces import IKeyReference
 
 from zope.annotation import interfaces as an_interfaces
+
+from zc import intid as zc_intid
 
 from repoze.lru import lru_cache
 
@@ -33,7 +36,6 @@ from nti.ntiids import ntiids
 import nti.externalization.internalization
 
 from nti.dataserver import datastructures
-from nti.dataserver.intid_utility import IntIdMissingError
 from nti.dataserver import interfaces as nti_interfaces
 import nti.apns.interfaces
 from . import interfaces
@@ -158,12 +160,10 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 		if ext_value:
 			nti.externalization.internalization.update_from_external_object( user, ext_value, context=dataserver, notify=False )
 
-		try:
-			notify( interfaces.WillCreateNewEntityEvent( user, ext_value, preflight_only ) )
-		except IntIdMissingError:
-			if not preflight_only:
-				raise
-			logger.debug( "Ignoring missing intid during preflight." )
+		# Register an intid for this user that we are creating so that the events that fire before
+		# ObjectAdded (which is usually when intids get assigned) can use it.
+		component.getUtility( zc_intid.IIntIds ).register( user )
+		notify( interfaces.WillCreateNewEntityEvent( user, ext_value, preflight_only ) )
 		if preflight_only:
 			if user.username in root_users:
 				raise KeyError( user.username )
@@ -171,6 +171,8 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 			# Be sure we didn't add this guy anywhere. If we did, then things are
 			# wacked and we need this transaction to fail.
 			assert getattr( user, '_p_jar', None ) is None, "User should NOT have a connection"
+			# Must NOT try to commit the transaction since the object has been added to the intid registry
+			transaction.doom()
 			return user
 
 		lifecycleevent.created( user ) # Fire created event
