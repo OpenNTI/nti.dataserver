@@ -71,7 +71,10 @@
 			 provides=".interfaces.IContentResolver"
 			 for="nti.dataserver.contenttypes.CanvasTextShape" />
 			 	  
-	<!-- Content tokenizer -->
+	<!-- Content processing -->
+	
+	<utility factory="._content_utils._default_punkt_translation_table"  />
+	<utility factory="._content_utils._default_punkt_translation_table" name="en" />
 	
 	<utility factory="._content_utils._ContentTokenizer"  />
 	<utility factory="._content_utils._ContentTokenizer" name="en" />

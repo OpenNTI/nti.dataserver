@@ -1,8 +1,11 @@
 from __future__ import print_function, unicode_literals, absolute_import
 
+import os
 import re
 import six
 import collections
+
+from pkg_resources import resource_filename
 
 from zope import component
 from zope import interface
@@ -35,8 +38,8 @@ from nti.contentsearch.common import (text_, body_, selectedText_, replacementCo
 import logging
 logger = logging.getLogger( __name__ )
 
-def get_content(text=None):
-	tokenizer = component.getUtility(search_interfaces.IContentTokenizer)
+def get_content(text=None, language='en'):
+	tokenizer = component.getUtility(search_interfaces.IContentTokenizer, name=language)
 	result = tokenizer.tokenize(text) if text else ()
 	result = ' '.join(result)
 	return unicode(result)
@@ -390,4 +393,20 @@ def rank_words(word, terms, reverse=True):
 	result = ws.rank(word, terms, reverse)
 	return result
 
+@interface.implementer( search_interfaces.IPunktTranslationTable )
+def _default_punkt_translation_table():
+	name = resource_filename(__name__, "punctuation-en.txt")
+	with open(name, 'r') as src:
+		lines = src.readlines()
 	
+	result = {}
+	for line in lines:
+		line = line.replace('\n', '')
+		splits = line.split('\t')
+		repl = splits[4] or None if len(splits) >= 5 else None
+		result[int(splits[0])] = repl
+	return result
+
+def get_punkt_translation_table(language='en'):
+	table = component.queryUtility(search_interfaces.IPunktTranslationTable, name=language)
+	return table or _default_punkt_translation_table()

@@ -378,8 +378,17 @@ class IMessageInfoContentResolver(IThreadableContentResolver):
 	def get_recipients():
 		"""return the message recipients"""
 
-# content tokenizer
+# content processing
 
+class IPunktTranslationTable(interface.Interface):
+	"""marker interface for punctuation translationt table"""
+	pass
+		
+class IContentTokenizer(interface.Interface):
+	
+	def tokenize(data):
+		"""tokenize the specifeid text data"""
+		
 class IContentTokenizer(interface.Interface):
 	
 	def tokenize(data):

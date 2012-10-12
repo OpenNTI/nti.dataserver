@@ -18,6 +18,7 @@ from nti.ntiids.ntiids import make_ntiid
 from nti.contentsearch._content_utils import rank_words
 from nti.contentsearch._content_utils import get_content
 from nti.contentsearch.interfaces import IContentResolver
+from nti.contentsearch._content_utils import get_punkt_translation_table
 
 from nti.contentsearch.tests import ConfiguringTestBase
 from nti.contentsearch.tests import domain as sample_words
@@ -25,7 +26,7 @@ from nti.contentsearch.tests import domain as sample_words
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from hamcrest import (assert_that, is_, is_not, close_to)
+from hamcrest import (assert_that, is_, is_not, close_to, has_length)
 
 class TestContentUtils(ConfiguringTestBase):
 
@@ -173,6 +174,12 @@ class TestContentUtils(ConfiguringTestBase):
 		word = 'stranger'
 		w = rank_words(word, terms)
 		assert_that(w, is_(['bravo', 'delta', 'charlie', 'alfa', 'echo']))
+		
+		
+	def test_punk_translation_table(self):
+		table = get_punkt_translation_table()
+		assert_that(table, has_length(605))
+		
 		
 if __name__ == '__main__':
 	unittest.main()
