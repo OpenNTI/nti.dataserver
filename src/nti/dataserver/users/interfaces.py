@@ -328,6 +328,17 @@ class IRestrictedUserProfileWithContactEmail(IRestrictedUserProfile):
 
 IRestrictedUserProfileWithContactEmail['contact_email'].setTaggedValue( TAG_REQUIRED_IN_UI, True )
 
+
+class IContactEmailRecovery(interface.Interface):
+	"""
+	Information used for recovering/resending consent emails to
+	COPPA users, since we cannot actually retain the contact email.
+	Should be registered as an adapter on the user.
+	"""
+	contact_email_recovery_hash = interface.Attribute( "A string giving the hash of the contact email.")
+	consent_email_last_sent = interface.Attribute( "A float giving the time the last consent email was sent.")
+
+
 class ICompleteUserProfile(IRestrictedUserProfile):
 	"""
 	A complete user profile.

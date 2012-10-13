@@ -112,7 +112,7 @@ def _mark_accounts_with_bounces( email_addrs, dataserver=None ):
 				# they probably can't logon
 				user_link_provider.add_link( user, REL_INVALID_EMAIL )
 			else:
-				# all that's left is contact
+				# all that's left is contact_email (which has two match types)
 				user_link_provider.add_link( user, REL_INVALID_CONTACT_EMAIL )
 
 

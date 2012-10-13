@@ -6,7 +6,7 @@ from __future__ import print_function, unicode_literals
 
 __docformat__ = 'restructuredtext'
 
-generation = 30
+generation = 31
 
 from zope.generations.generations import SchemaManager
 
@@ -143,24 +143,17 @@ def install_user_catalog( dataserver_folder, intids ):
 	catalog.__name__ = '++etc++entity-catalog'
 	catalog.__parent__ = dataserver_folder
 	intids.register( catalog )
-	lsm.registerUtility( catalog, provided=ICatalog, name='nti.dataserver.++etc++entity-catalog' )
+	lsm.registerUtility( catalog, provided=ICatalog, name=user_index.CATALOG_NAME )
 
-	alias_index = user_index.AliasIndex( family=BTrees.family64 )
-	intids.register( alias_index )
-	catalog['alias'] = alias_index
-
-	email_index = user_index.EmailIndex(family=BTrees.family64 )
-	intids.register( email_index )
-	catalog['email'] = email_index
-
-	password_recovery_email_hash_index = user_index.PasswordRecoveryEmailHashIndex(family=BTrees.family64)
-	intids.register( password_recovery_email_hash_index )
-	catalog['password_recovery_email_hash'] = password_recovery_email_hash_index
-
-	realname_index = user_index.RealnameIndex( family=BTrees.family64 )
-	intids.register( realname_index )
-	catalog['realname'] = realname_index
-
+	for name, clazz in ( ('alias', user_index.AliasIndex),
+						 ('email', user_index.EmailIndex),
+						 ('contact_email', user_index.ContactEmailIndex),
+						 ('password_recovery_email_hash', user_index.PasswordRecoveryEmailHashIndex),
+						 ('realname', user_index.RealnameIndex),
+						 ('contact_email_recovery_hash', user_index.ContactEmailRecoveryHashIndex)):
+		index = clazz( family=BTrees.family64 )
+		intids.register( index )
+		catalog[name] = index
 
 	opt_in_comm_index = TopicIndex( family=BTrees.family64 )
 	opt_in_comm_set = user_index.OptInEmailCommunicationFilteredSet( 'opt_in_email_communication', family=BTrees.family64 )

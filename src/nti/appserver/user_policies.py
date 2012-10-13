@@ -39,6 +39,8 @@ from ._util import link_belongs_to_user
 
 from nti.dataserver.links import Link
 
+from nti.utils.property import annotation_alias
+
 @component.adapter(nti_interfaces.IModeledContent, IObjectCreatedEvent)
 def dispatch_content_created_to_user_policies( content, event ):
 	component.handle( content, content.creator, event )
@@ -206,9 +208,9 @@ def _send_consent_request( user, profile, email, event, rate_limit=False ):
 	if not event.request: #pragma: no cover
 		return
 
-	annotations = IAnnotations( user )
+	recovery_info = app_interfaces.IContactEmailRecovery( user )
 	if rate_limit:
-		time_last_sent = annotations.get( CONSENT_EMAIL_LAST_SENT_ANNOTATION, 0 )
+		time_last_sent = recovery_info.consent_email_last_sent or 0
 		a_day_after_last_sent = time_last_sent + (12 * 60 * 60) # twelve hour lockout
 		if time.time() < a_day_after_last_sent:
 			raise AttemptingToResendConsentEmailTooSoon()
@@ -262,14 +264,27 @@ def _send_consent_request( user, profile, email, event, rate_limit=False ):
 	setattr( profile, 'contact_email', None )
 
 	# We do need to keep something machine readable, though, for purposes of bounces
-	# The cheap way to do it is with annotations
-	annotations[CONTACT_EMAIL_RECOVERY_ANNOTATION] = user_profile.make_password_recovery_email_hash( email )
-	annotations[CONSENT_EMAIL_LAST_SENT_ANNOTATION] = time.time()
+	recovery_info.contact_email_recovery_hash = user_profile.make_password_recovery_email_hash( email )
+	recovery_info.consent_email_last_sent = time.time()
 
 def _clear_consent_email_rate_limit( user ):
 	annotations = IAnnotations(user)
 	if CONSENT_EMAIL_LAST_SENT_ANNOTATION in annotations:
 		del annotations[CONSENT_EMAIL_LAST_SENT_ANNOTATION]
+
+@interface.implementer(app_interfaces.IContactEmailRecovery)
+@component.adapter(nti_interfaces.IUser)
+class ContactEmailRecovery(object):
+	"""
+	For backward compatibility, stores values in annotations directly
+	on the user
+	"""
+
+	def __init__( self, context ):
+		self.context = context
+
+	contact_email_recovery_hash = annotation_alias(CONTACT_EMAIL_RECOVERY_ANNOTATION, 'context')
+	consent_email_last_sent = annotation_alias(CONSENT_EMAIL_LAST_SENT_ANNOTATION, 'context')
 
 import pyPdf
 import pyPdf.generic

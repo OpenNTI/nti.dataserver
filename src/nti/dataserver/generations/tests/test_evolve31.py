@@ -9,7 +9,8 @@ from hamcrest import assert_that
 from hamcrest import contains
 
 from nti.dataserver.utils.example_database_initializer import ExampleDatabaseInitializer
-from nti.dataserver.generations.evolve30 import evolve
+
+from nti.dataserver.generations.evolve31 import evolve
 
 from zope.catalog.interfaces import ICatalog
 from zope import component
@@ -25,12 +26,12 @@ import fudge
 from nti.deprecated import hides_warnings
 
 
-class TestEvolve30(mock_dataserver.ConfiguringTestBase):
+class TestEvolve31(mock_dataserver.ConfiguringTestBase):
 	set_up_packages = (nti.dataserver,)
 
 	@hides_warnings
 	@WithMockDS
-	def test_evolve30(self):
+	def test_evolve31(self):
 		with mock_db_trans( ) as conn:
 			context = fudge.Fake().has_attr( connection=conn )
 

@@ -190,8 +190,8 @@ def forgot_passcode_view(request):
 
 	return hexc.HTTPNoContent()
 
-from nti.appserver.user_policies import CONTACT_EMAIL_RECOVERY_ANNOTATION
-from zope.annotation.interfaces import IAnnotations
+from nti.dataserver.users import index as user_index
+from zope.catalog.interfaces import ICatalog
 
 def find_users_with_email( email, dataserver, username=None, match_info=False ):
 	"""
@@ -206,37 +206,24 @@ def find_users_with_email( email, dataserver, username=None, match_info=False ):
 		`tuple` objects, first the user and then the name of the field that matched.
 	:return: A sequence of the matched user objects.
 	"""
-	# TODO: This is implemented as a linear search, waking up
-	# all kinds of objects. Highly inefficient.
-
-	result = []
 
 	hashed_email = user_profile.make_password_recovery_email_hash( email )
 
-	users_folder = nti_interfaces.IShardLayout( dataserver ).users_folder
+	matches = set()
+	ent_catalog = component.getUtility(ICatalog, name=user_index.CATALOG_NAME)
+
+	for match_type, v in ( ('email', email),
+						   ('contact_email', email),
+						   ('password_recovery_email_hash', hashed_email),
+						   ('contact_email_recovery_hash', hashed_email)):
+		matches.update( ((x, match_type) for x in ent_catalog.searchResults( **{match_type: (v,v)} ) ) )
 
 	if username:
-		to_search = [users_folder.get( username )]
-	else:
-		to_search = users_folder.values()
+		matches = ( (u,match_type) for u, match_type in matches if u.username.lower() == username)
 
-	for entity in to_search:
-		profile = user_interfaces.IUserProfile( entity, None )
-		if not profile:
-			continue
 
-		match = None
-		if email == getattr( profile, 'email', None ):
-			match = 'email'
-		elif hashed_email == getattr( profile, 'password_recovery_email_hash', None ):
-			match = 'password_recovery_email_hash'
-		elif email == getattr( profile, 'contact_email', None ) or hashed_email == IAnnotations( entity, {} ).get( CONTACT_EMAIL_RECOVERY_ANNOTATION ):
-			match = CONTACT_EMAIL_RECOVERY_ANNOTATION
+	return [x[0] for x in matches] if not match_info else list(matches)
 
-		if match:
-			result.append( entity if not match_info else (entity,match) )
-
-	return result
 
 def _is_one_hour_or_more_old( token_time ):
 

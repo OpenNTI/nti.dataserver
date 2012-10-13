@@ -28,6 +28,7 @@ from nti.dataserver import users
 from nose.tools import assert_raises
 
 from zope import component
+from zope.lifecycleevent import modified
 
 import urllib
 import pyramid.httpexceptions as hexc
@@ -90,6 +91,7 @@ class TestApplicationUsernameRecovery(SharedApplicationTestBase):
 			user = self._create_user( )
 			profile = user_interfaces.IUserProfile( user )
 			profile.email = 'jason.madden@nextthought.com'
+			modified( user )
 
 		app = TestApp( self.app )
 
@@ -176,6 +178,7 @@ class TestApplicationPasswordRecovery(SharedApplicationTestBase):
 			user = self._create_user( )
 			profile = user_interfaces.IUserProfile( user )
 			profile.email = 'jason.madden@nextthought.com'
+			modified( user )
 
 		app = TestApp( self.app )
 
@@ -197,6 +200,7 @@ class TestApplicationPasswordRecovery(SharedApplicationTestBase):
 			user = self._create_user( )
 			profile = user_interfaces.IUserProfile( user )
 			profile.email = 'jason.madden@nextthought.com'
+			modified( user )
 
 		app = TestApp( self.app )
 

@@ -341,3 +341,6 @@ class IUserSearchPolicy(interface.Interface):
 		"""
 
 IUserSearchMatcher = IUserSearchPolicy # BBB
+
+from nti.dataserver.users.interfaces import IContactEmailRecovery
+IContactEmailRecovery = IContactEmailRecovery # BBB

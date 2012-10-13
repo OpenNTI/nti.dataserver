@@ -4,6 +4,9 @@
 	xmlns:zcml="http://namespaces.zope.org/zcml">
 	<include package="zope.component" />
 
+	<!-- Information used during sending/retrieving contact emails. -->
+	<adapter factory=".user_policies.ContactEmailRecovery" />
+
 	<subscriber handler=".user_policies.dispatch_content_created_to_user_policies" />
 	<subscriber handler=".user_policies.dispatch_content_edited_to_user_policies" />
 
