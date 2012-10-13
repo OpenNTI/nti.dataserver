@@ -18,7 +18,7 @@ from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import has_property
 
-
+from zope.lifecycleevent import modified
 import anyjson as json
 import os
 
@@ -86,10 +86,16 @@ class TestBouncedEmailworkflow(ConfiguringTestBase):
 
 		u1 = users.User.create_user( username='user1' )
 		user_interfaces.IUserProfile( u1 ).email = 'n@y.com'
+		modified( u1 )
 		u2 = users.User.create_user( username='user2' )
 		user_interfaces.IUserProfile( u2 ).password_recovery_email_hash = make_password_recovery_email_hash( 'n@y.com' )
+		modified( u2 )
 		u3 = users.User.create_user( username='user3' )
 		user_interfaces.IUserProfile( u3 ).contact_email = 'n@y.com'
+		modified( u3 )
+		u4 = users.User.create_user( username='user4' )
+		user_interfaces.IContactEmailRecovery( u4 ).contact_email_recovery_hash = make_password_recovery_email_hash( 'n@y.com' )
+		modified( u4 )
 
 		messages = _read_msgs( make_perm=True )
 		proc = bounced_email_workflow.process_ses_feedback( messages )
@@ -98,6 +104,7 @@ class TestBouncedEmailworkflow(ConfiguringTestBase):
 		assert_that( u1, has_link( bounced_email_workflow.REL_INVALID_EMAIL ) )
 		assert_that( u2, has_link( bounced_email_workflow.REL_INVALID_EMAIL ) )
 		assert_that( u3, has_link( bounced_email_workflow.REL_INVALID_CONTACT_EMAIL ) )
+		assert_that( u4, has_link( bounced_email_workflow.REL_INVALID_CONTACT_EMAIL ) )
 
 class TestApplicationBouncedEmailWorkflow(ApplicationTestBase):
 

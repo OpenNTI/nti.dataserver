@@ -24,6 +24,10 @@ import zope.container.contained
 
 from zope.index.topic.filter import FilteredSetBase
 
+#: The name of the utility that the Zope Catalog
+#: for users should be registered under
+CATALOG_NAME = 'nti.dataserver.++etc++entity-catalog'
+
 @interface.implementer(IFieldIndex)
 class NormalizingFieldIndex(zope.index.field.FieldIndex,
 							zope.container.contained.Contained):
@@ -61,10 +65,21 @@ class EmailIndex(CaseInsensitiveFieldIndex):
 	default_field_name = 'email'
 	default_interface = user_interfaces.IUserProfile
 
+class ContactEmailIndex(CaseInsensitiveFieldIndex):
+
+	default_field_name = 'contact_email'
+	default_interface = user_interfaces.IUserProfile
+
 class PasswordRecoveryEmailHashIndex(zope.catalog.field.FieldIndex):
 
 	default_field_name = 'password_recovery_email_hash'
 	default_interface = user_interfaces.IRestrictedUserProfile
+
+class ContactEmailRecoveryHashIndex(zope.catalog.field.FieldIndex):
+
+	default_field_name = 'contact_email_recovery_hash'
+	default_interface = user_interfaces.IContactEmailRecovery
+
 
 class OptInEmailCommunicationFilteredSet(FilteredSetBase):
 
