@@ -13,7 +13,8 @@ from hamcrest import greater_than
 
 from nti.appserver.dataserver_pyramid_views import (class_name_from_content_type,
 													_UGDPutView,
-													_UGDPostView,)
+													_UGDPostView,
+													_UGDDeleteView)
 from nti.appserver.tests import SharedConfiguringTestBase
 from pyramid.threadlocal import get_current_request
 import pyramid.httpexceptions as hexc
@@ -71,9 +72,27 @@ class ContainedExternal(ZContainedMixin):
 	def toExternalObject( self ):
 		return str(self)
 
+class _Context(object):
+	resource = None
+	__acl__ = ()
+
+@interface.implementer(nti_interfaces.ILastModified, nti_interfaces.IContained, nti_interfaces.IZContained, IKeyReference)
+class _ContainedObject(object):
+	__name__ = None
+	__parent__ = None
+	lastModified = 0
+	containerId = None
+	id = None
+	__acl__ = ()
+	def updateFromExternalObject( self, *args, **kwargs ):
+		return True # Yes, we modified
+
+	def updateLastMod(self, t=None):
+		self.lastModified = 1 if t is None else t
+
 from zope.component import eventtesting
 from zope import component
-from zope.lifecycleevent import IObjectModifiedEvent
+from zope.lifecycleevent import IObjectModifiedEvent, IObjectRemovedEvent
 from nti.appserver._dataserver_pyramid_traversal import _NTIIDsContainerResource
 class TestUGDModifyViews(SharedConfiguringTestBase):
 
@@ -82,43 +101,50 @@ class TestUGDModifyViews(SharedConfiguringTestBase):
 		super(TestUGDModifyViews,cls).setUpClass()
 		component.provideHandler( eventtesting.events.append, (None,) )
 
+	def _establish_context( self, view, user=None, ext_value=None, add_contained_object=False ):
 
+		if user is None:
+			user = users.User.create_user( self.ds, username='jason.madden@nextthought.com', password='temp001' )
+			assert user.__parent__
+
+		resource = user
+		if add_contained_object:
+			con_obj = _ContainedObject()
+			con_obj.containerId = 'abc'
+			con_obj.id = '123'
+			user.addContainedObject( con_obj )
+			resource = con_obj
+			con_obj.lastModified = 0
+			user.getContainer( con_obj.containerId ).lastModified = 0
+
+		view.request.context = _Context()
+		view.request.context.resource = resource
+		view.request.content_type = 'application/vnd.nextthought+json'
+		view.request.body = to_external_representation( ext_value or {}, 'json' )
+
+		eventtesting.clearEvents()
+		user.lastModified = 0
+
+		return user, resource
 
 	@WithMockDSTrans
 	def test_put_summary_obj(self):
 		"We can put an object that summarizes itself before we get to the renderer"
 		view = _UGDPutView( get_current_request() )
-		user = users.User.create_user( self.ds, username='jason.madden@nextthought.com', password='temp001' )
-
-		class X(object):
-			resource = None
-			__acl__ = ()
-		view.request.context = X()
-		view.request.context.resource = user
-		view.request.content_type = 'application/vnd.nextthought+json'
-		view.request.body = to_external_representation( {}, 'json' )
+		self._establish_context( view )
 
 		result = view()
 		assert_that( result, is_( dict ) )
+
 
 	@WithMockDSTrans
 	def test_put_to_user_fires_events(self):
 		"If we put to the User, events fire"""
 
 		view = _UGDPutView( get_current_request() )
-		user = users.User.create_user( self.ds, username='jason.madden@nextthought.com', password='temp001' )
-		assert user.__parent__
 
-		class X(object):
-			resource = None
-			__acl__ = ()
-		view.request.context = X()
-		view.request.context.resource = user
-		view.request.content_type = 'application/vnd.nextthought+json'
-		view.request.body = to_external_representation( { 'password': 'uniqPass123', 'old_password': 'temp001' }, 'json' )
+		user, _ = self._establish_context( view, ext_value={ 'password': 'uniqPass123', 'old_password': 'temp001' } )
 
-		eventtesting.clearEvents()
-		user.lastModified = 0
 		view()
 
 		# One event, for the object we modified
@@ -131,64 +157,46 @@ class TestUGDModifyViews(SharedConfiguringTestBase):
 		"Putting to a contained object fires events to update the object and the container modification times"""
 
 		view = _UGDPutView( get_current_request() )
-		user = users.User.create_user( dataserver=self.ds, username='jason.madden@nextthought.com' )
 
-		class Context(object):
-			resource = None
-			__acl__ = ()
-
-		@interface.implementer(nti_interfaces.ILastModified, nti_interfaces.IContained, nti_interfaces.IZContained, IKeyReference)
-		class ContainedObject(object):
-			__name__ = None
-			__parent__ = None
-			lastModified = 0
-			containerId = None
-			id = None
-			__acl__ = ()
-			def updateFromExternalObject( self, *args, **kwargs ):
-				return True # Yes, we modified
-
-			def updateLastMod(self, t=None):
-				self.lastModified = 1 if t is None else t
-
-		con_obj = ContainedObject()
-		con_obj.containerId = 'abc'
-		con_obj.id = '123'
-		user.addContainedObject( con_obj )
-
-		view.request.context = Context()
-		view.request.context.resource = con_obj
-		view.request.content_type = 'application/vnd.nextthought+json'
-		view.request.body = to_external_representation( {}, 'json' )
-
-		eventtesting.clearEvents()
-		con_obj.lastModified = 0
-		user.getContainer( con_obj.containerId ).lastModified = 0
+		user, con_obj = self._establish_context( view, add_contained_object=True )
 
 		view()
 
 		# One event, for the object we modified has a ripple effect
 		assert_that( eventtesting.getEvents(  ), has_length( 1 ) )
 		assert_that( eventtesting.getEvents( IObjectModifiedEvent ), has_length( 1 ) )
-		assert_that( user, has_property( 'lastModified', greater_than( 0 ) ) )
 		assert_that( con_obj, has_property( 'lastModified', greater_than( 0 ) ) )
 		assert_that( user.getContainer( con_obj.containerId ), has_property( 'lastModified', greater_than( 0 ) ) )
+
+		# The user itself wasn't modified
+		assert_that( user, has_property( 'lastModified', 0 ) )
+
+	@WithMockDSTrans
+	def test_delete_to_contained_object_fires_events(self):
+		"Deleting a contained object fires events to update the object and the container modification times"""
+		self.beginRequest()
+		view = _UGDDeleteView( get_current_request() )
+
+		user, con_obj = self._establish_context( view, add_contained_object=True )
+
+		view()
+
+		# Removing the object has a ripple effect and fires a number of events
+		assert_that( eventtesting.getEvents(  ), has_length( 4 ) )  # ObjectRemoved, zope...IntIdRemoved, zc...IntIdRemoved, ContainerModified
+		assert_that( eventtesting.getEvents( IObjectRemovedEvent ), has_length( 1 ) )
+		assert_that( user.getContainer( con_obj.containerId ), has_property( 'lastModified', greater_than( 0 ) ) )
+
+		# The user itself wasn't modified
+		assert_that( user, has_property( 'lastModified', 0 ) )
 
 	@WithMockDSTrans
 	def test_post_existing_friendslist_id(self):
 		"We get a good error posting to a friendslist that already exists"
 		view = _UGDPostView( get_current_request() )
-		user = users.User.create_user( self.ds, username='jason.madden@nextthought.com', password='temp001' )
-		class X(object):
-			resource = None
-			__acl__ = ()
-		view.request.context = X()
-		view.request.context.resource = user
-		view.request.content_type = 'application/vnd.nextthought+json'
-		view.request.body = to_external_representation( {'Class': 'FriendsList',
-														 'ID': 'Everyone',
-														 'ContainerId': 'FriendsLists'},
-														 'json' )
+
+		user, _ = self._establish_context( view, ext_value={'Class': 'FriendsList',
+															'ID': 'Everyone',
+															'ContainerId': 'FriendsLists'} )
 		view.getRemoteUser = lambda: user
 		view() # First time fine
 		with self.assertRaises(hexc.HTTPConflict):
