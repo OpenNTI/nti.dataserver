@@ -152,7 +152,7 @@ setup(
 		 # fewer dependencies, but less helpful output and doesn't work with multiple workers (?)
 		#'linesman >= 0.2.2', # Conflicts with Pillow. Modify requires.txt as part of the patch
 		'logilab-common >= 0.58.1',
-		'lxml >= 3.0', # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
+		'lxml >= 3.0.1', # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
 		'nameparser >= 0.2.2', # Human name parsing
 		'nltk >= 2.0.3',
 		# numpy is req'd by nltk, but not depended on. sigh.
