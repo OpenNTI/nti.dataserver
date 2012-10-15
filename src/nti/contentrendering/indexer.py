@@ -279,7 +279,8 @@ def main():
 	args = arg_parser.parse_args()
 
 	contentpath = os.path.expanduser(args.contentpath)
-	indexname = args.indexname or os.path.split(contentpath)[1]
+	contentpath = contentpath[:-1] if contentpath.endswith(os.path.sep) else contentpath
+	indexname = args.indexname or os.path.basename(contentpath)
 	verbose = args.verbose
 	file_indexing = args.file_indexing
 	if verbose:
