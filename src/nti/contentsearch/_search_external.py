@@ -1,6 +1,5 @@
 from __future__ import print_function, unicode_literals
 
-import re
 import UserDict
 
 import zope.intid
@@ -15,7 +14,6 @@ from nti.externalization.externalization import toExternalObject
 from nti.contentsearch import interfaces as search_interfaces
 
 from nti.contentsearch.common import epoch_time
-from nti.contentsearch._search_highlights import word_content_highlight
 from nti.contentsearch._search_highlights import word_fragments_highlight
 from nti.contentsearch._search_highlights import (WORD_HIGHLIGHT, WHOOSH_HIGHLIGHT)
 
@@ -28,32 +26,18 @@ from nti.contentsearch.common import ( last_modified_, content_, title_, ntiid_)
 import logging
 logger = logging.getLogger( __name__ )
 
-# hilight decorators
-
-def clean_query(query, lower=False):
-	result = re.sub('[*?]', '', query) if query else u''
-	result = result.lower() if lower and result else result
-	return unicode(result)
-
-def _word_content_highlight(query=None, text=None, default=None):
-	query = clean_query(query) if query else u''
-	content = word_content_highlight(query, text) if query and text else u''
-	return unicode(content) if content else default
+# highlight decorators
 
 def _word_fragments_highlight(query=None, text=None):
-	query = clean_query(query) if query else u''
-	snippet, fragments = word_fragments_highlight(query, text) if query and text else (u'', ())
+	query = search_interfaces.ISearchQuery(query, None)
+	if query and text:
+		snippet, fragments = word_fragments_highlight(query, text)
+	else:
+		snippet, fragments = (text or u'', ())
 	return unicode(snippet), fragments
 
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
 class _BaseHighlightDecorator(object):
-	
-	@classmethod
-	def get_query_term(cls, original):
-		query = getattr(original, 'query', None)
-		if query and search_interfaces.ISearchQuery.providedBy(query):
-			query = query.term
-		return query
 	
 	@classmethod
 	def decorateExternalObject(cls, original, external):
@@ -70,11 +54,10 @@ def NoSnippetHighlightDecoratorFactory(*args):
 class _BaseWordSnippetHighlightDecorator(_BaseHighlightDecorator):
 
 	def decorateExternalObject(self, original, external):
-		query = self.get_query_term(original)
+		query = getattr(original, 'query', None)
 		if query:
 			text = external.get(SNIPPET, None)
-			#text = _word_content_highlight(query, text, text)
-			text, fragments = word_fragments_highlight(query, text, (text,()))
+			text, fragments = _word_fragments_highlight(query, text)
 			external[SNIPPET] = text
 			external[FRAGMENTS] = toExternalObject(fragments) if fragments else []
 			
@@ -89,9 +72,6 @@ def WordSnippetHighlightDecoratorFactory(*args):
 class WhooshHighlightDecorator(_BaseWordSnippetHighlightDecorator):
 
 	def decorateExternalObject(self, original, external):
-		#if 'whoosh_highlight' in original:
-		#	external[SNIPPET] = original['whoosh_highlight']
-		#else:
 		super(WhooshHighlightDecorator, self).decorateExternalObject(original, external)
 
 def WhooshHighlightDecoratorFactory(*args):
@@ -218,10 +198,10 @@ class _SearchHit(_BaseSearchHit):
 		self._data[LAST_MODIFIED] = adapted.get_last_modified() if adapted else 0
 		
 	def get_query(self):
-		return self._query if search_interfaces.ISearchQuery.providedBy(self._query) else self._query
+		return self._query
 	
 	def set_query(self, query):
-		self._query = query
+		self._query = search_interfaces.ISearchQuery(query, None)
 		
 	query = property(get_query, set_query)
 	

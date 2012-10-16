@@ -4,7 +4,10 @@ import re
 import six
 import UserDict
 
+from zope import component
 from zope import interface
+
+from dolmen.builtins import IUnicode, IString
 
 from nti.contentsearch.common import to_list
 from nti.contentsearch import interfaces as search_interfaces
@@ -12,6 +15,15 @@ from nti.contentsearch import interfaces as search_interfaces
 phrase_search = re.compile(r'"(?P<text>.*?)"')
 prefix_search = re.compile(r'(?P<text>[^ \t\r\n*]+)[*](?= |$|\\)')
 
+
+@interface.implementer(search_interfaces.ISearchQuery)
+@component.adapter(IString)
+@component.adapter(IUnicode)
+def _default_query_adapter(query, *args, **kwargs):
+	if query is not None:
+		query = QueryObject.create(query, *args, **kwargs)
+	return query
+	
 @interface.implementer(search_interfaces.ISearchQuery)
 class QueryObject(object, UserDict.DictMixin):
 	

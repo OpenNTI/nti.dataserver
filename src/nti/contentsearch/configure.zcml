@@ -94,6 +94,10 @@
 	
 	<!-- Search query -->
 	
+	<adapter factory="._search_query._default_query_adapter"
+			 provides=".interfaces.ISearchQuery"
+			 for="basestring" />
+		 
 	<utility factory="._repoze_query._DefaultSearchQueryValiator"  />
 	<utility factory="._repoze_query._DefaultSearchQueryValiator" name="en" />
 	

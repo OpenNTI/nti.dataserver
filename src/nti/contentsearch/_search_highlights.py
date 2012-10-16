@@ -35,7 +35,13 @@ def _get_terms(query, pattern=_default_pattern):
 		term = query[m.start():pos]
 		terms.append(term)
 		m = pattern.search(query, pos)
-	return frozenset(terms)
+	return tuple(terms)
+
+def _get_query_terms(query, pattern=_default_pattern):
+	result = _get_terms(query.term, _default_pattern)
+	if not query.is_phrase_search:
+		result = frozenset(result)
+	return result
 
 def _get_default_analyzer():
 	global _default_analyzer
@@ -149,14 +155,20 @@ class _SearchFragment(object):
 		return result
 		
 def word_fragments_highlight(query, text, maxchars=300, surround=50, top=3, analyzer=None, order=highlight.FIRST):
+	# get query terms
 	text = unicode(text)	
-	termset = _get_terms(query)
+	termset = _get_query_terms(search_interfaces.ISearchQuery(query))
+	
+	# prepare fragmenter
 	scorer = highlight.BasicFragmentScorer()
 	analyzer = analyzer or _get_default_analyzer()
 	formatter = highlight.NullFormatter() #  highlight.UppercaseFormatter()
 	fragmenter = highlight.ContextFragmenter(maxchars=maxchars, surround=surround)
 	
+	# sadly we need to retokenize to find term matches
 	tokens = analyzer(text, chars=True, mode="query", removestops=False)
+	
+	# compute whoosh fragments
 	tokens = _set_matched_filter(tokens, termset)
 	fragments = fragmenter.fragment_tokens(text, tokens)
 	fragments = highlight.top_fragments(fragments, top, scorer, order)
