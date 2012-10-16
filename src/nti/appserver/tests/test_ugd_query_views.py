@@ -289,6 +289,45 @@ from webtest import TestApp
 
 class TestApplicationUGDQueryViews(ApplicationTestBase):
 
+	def test_rstream_circled_exclude(self):
+		"Requesting the root NTIID includes your circling."
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = self._create_user()
+			actor = users.User.create_user( self.ds,  username='carlos.sanchez@nextthought.com' )
+
+			# Broadcast
+			change = user.accept_shared_data_from( actor )
+			# Ensure it is in the stream
+			user._noticeChange( change )
+
+		testapp = TestApp( self.app, extra_environ=self._make_extra_environ() )
+		path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + ntiids.ROOT + ')/RecursiveStream'
+		USER_MIME_TYPE = 'application/vnd.nextthought.user'
+		res = testapp.get( path )
+		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
+		assert_that( res.json_body['Items'][0], has_entry( 'Item', has_entry( 'MimeType', USER_MIME_TYPE ) ) )
+
+		# accept works, can filter it out
+		res = testapp.get( path, params={'accept': 'application/foo'} )
+		assert_that( res.json_body, has_entry( 'Items', has_length( 0 ) ) )
+
+		# accept works, can include it
+		res = testapp.get( path, params={'accept': USER_MIME_TYPE} )
+		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
+
+		# exclude works, can filter it out
+		res = testapp.get( path, params={'exclude': USER_MIME_TYPE} )
+		assert_that( res.json_body, has_entry( 'Items', has_length( 0 ) ) )
+
+		# exclude works, can filter other things out
+		res = testapp.get( path, params={'exclude': 'application/foo'} )
+		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
+
+		# accept takes precedence
+		res = testapp.get( path, params={'accept': USER_MIME_TYPE, 'exclude': USER_MIME_TYPE} )
+		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
+
+
 	def test_sort_filter_page(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user( )
@@ -517,7 +556,23 @@ class TestApplicationUGDQueryViews(ApplicationTestBase):
 
 			liking.favorite_object( fav, user.username )
 
+			bm = contenttypes.Bookmark()
+			bm.applicableRange = contentrange.ContentRangeDescription()
+			bm.containerId = fav.containerId
+			bm.creator = user
+			user.addContainedObject( bm )
+			bm.lastModified = 7
+			bm_id = to_external_ntiid_oid( bm )
+
+		# Just Favorite
 		res = testapp.get( path, params={'filter':'Favorite'}, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
 		assert_that( res.json_body, has_entry( 'Items',
 											   contains( has_entry( 'ID', fav_id_follow ) ) ) )
+
+		# The Bookmark filter includes the bookmark object
+		res = testapp.get( path, params={'filter':'Bookmarks'}, extra_environ=self._make_extra_environ())
+		assert_that( res.json_body, has_entry( 'Items', has_length( 2 ) ) )
+		assert_that( res.json_body, has_entry( 'Items',
+											   contains( has_entry( 'ID', fav_id_follow ),
+														 has_entry( 'ID', bm_id ) ) ) )

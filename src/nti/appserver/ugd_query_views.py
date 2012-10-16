@@ -186,6 +186,11 @@ def _favorite_predicate_factory( request ):
 	auth_userid = psec.authenticated_userid( request )
 	return functools.partial( liking.favorites_object, username=auth_userid, safe=True )
 
+def _bookmark_predicate_factory( request ):
+	is_fav_p = _favorite_predicate_factory(request)
+	is_bm_p = nti_interfaces.IBookmark.providedBy
+	return lambda o: is_fav_p( o ) or is_bm_p( o )
+
 SORT_KEYS = {
 	'lastModified': lambda x: getattr( x, 'lastModified', 0 ), # TODO: Adapt to dublin core?
 	'LikeCount': liking.like_count,
@@ -201,9 +206,21 @@ FILTER_NAMES = {
 	# This won't work for the Change objects. (Try Acquisition?) Do we need it for them?
 	'IFollow': (_ifollow_predicate_factory,),
 	'IFollowAndMe': (_ifollowandme_predicate_factory,),
-	'Favorite': (_favorite_predicate_factory,)
+	'Favorite': (_favorite_predicate_factory,),
+	'Bookmarks': (_bookmark_predicate_factory,),
 	}
 # MeOnly is another valid filter for just things I have done, implemented efficiently
+
+class _MimeFilter(object):
+
+	def __init__( self, accept_types ):
+		self.accept_types = accept_types
+
+	def _mimetype_from_object( self, o ):
+		return nti_mimetype_from_object( o )
+
+	def __call__( self, o ):
+		return self._mimetype_from_object(o) in self.accept_types
 
 class _UGDView(object):
 	"""
@@ -238,6 +255,10 @@ class _UGDView(object):
 	def _get_accept_types(self):
 		return self.__get_list_param( 'accept' )
 
+	def _get_exclude_types(self):
+		return self.__get_list_param( 'exclude' )
+
+
 	@metricmethod
 	def getObjectsForId( self, user, ntiid ):
 		"""
@@ -264,12 +285,24 @@ class _UGDView(object):
 	_DEFAULT_SORT_ON = 'lastModified'
 	_DEFAULT_BATCH_SIZE = None
 	_DEFAULT_BATCH_START = None
+	_MIME_FILTER_FACTORY = _MimeFilter
+
+	def _make_accept_predicate( self ):
+		accept_types = self._get_accept_types()
+		if accept_types and '*/*' not in accept_types:
+			return self._MIME_FILTER_FACTORY( accept_types )
+
+	def _make_exclude_predicate( self ):
+		exclude_types = self._get_exclude_types()
+		if exclude_types and '*/*' not in exclude_types:
+			mime_filter = self._MIME_FILTER_FACTORY( exclude_types )
+			return lambda o: not mime_filter(o)
 
 	@metricmethod
 	def _sort_filter_batch_result( self, result ):
 		"""
 		Sort, filter, and batch (page) the result by modifying it in place. This method
-		sorts by lastModified by default, but everything else comes from the query parameters:
+		sorts by ``lastModified`` by default, but everything else comes from the query parameters:
 
 		sortOn
 			The field to sort on. Options are ``lastModified``, ``LikeCount`` and ``ReferencedByCount``.
@@ -297,8 +330,15 @@ class _UGDView(object):
 
 			* ``Favorite``: it causes only objects that the current user has
 			  :mod:`favorited <nti.appserver.liking_views>` the object to be returned.
-			  (Does not function on the stream views.) Currenly, this is not especially
+			  (Does not function on the stream views.) Currently, this is not especially
 			  efficient.
+
+			* ``Bookmarks``: a high-level, pseudo-object filter that causes only
+			  objects identified as "bookmarks" to be returned. For this purpose, bookmarks
+			  are defined as favorite objects (like with ``Favorite``) with the addition of
+			  actual :class:`~nti.dataserver.interfaces.IBookmark` objects. Typically this
+			  will not be used together with an ``accept`` parameter or any other ``filter``
+			  value.
 
 			They can be combined by separating them with a comma. Note that ``MeOnly`` and
 			``IFollow`` are mutually exclusive and specifying them both will result in
@@ -306,9 +346,16 @@ class _UGDView(object):
 			logically mutually exclusive (users probably don't favorite their own objects).
 
 		accept
-			A comma-separated list of MIME types of objects to return. If not given or ``*/*`` is in the list, all types
-			of objects are returned. By default, all types of objects are returned. This parameter
-			is meaningless for the stream views, since they only ever contain one type of object, the change object.
+			A comma-separated list of MIME types of objects to return.
+			If not given or ``*/*`` is in the list, all types of
+			objects are returned. By default, all types of objects are
+			returned. For the stream views, this filters the underlying
+			object type that the change references.
+
+		exclude
+			A comma-separated list of MIME types of objects *not* to return,
+			functioning otherwise like ``accept.`` If ``accept`` is given (and doesn't contain ``*/*``), any
+			value for ``exclude`` is ignored. This value should not include ``*/*``.
 
 		batchSize
 			Integer giving the page size. Must be greater than zero. Paging only happens when
@@ -341,9 +388,10 @@ class _UGDView(object):
 		# Since the list is really an array, removing from it is actually slow
 
 		predicate = None # We build an uber predicate that handles all filtering in one pass through the list
-		accept_types = self._get_accept_types()
-		if accept_types and '*/*' not in accept_types:
-			predicate = lambda o: nti_mimetype_from_object(o) in accept_types
+		predicate = self._make_accept_predicate( )
+		if predicate is None:
+			# accept takes priority over exclude
+			predicate = self._make_exclude_predicate()
 
 		filter_names = self._get_filter_names()
 		# Be nice and make sure the reply count gets included if
@@ -450,6 +498,11 @@ class _RecursiveUGDView(_UGDView):
 
 		return items
 
+class _ChangeMimeFilter(_MimeFilter):
+
+	def _mimetype_from_object( self, o ):
+		return nti_mimetype_from_object( o.object ) if o.object else None
+
 class _UGDStreamView(_UGDView):
 
 	def __init__(self, request ):
@@ -457,6 +510,8 @@ class _UGDStreamView(_UGDView):
 		self.get_owned = users.User.getContainedStream
 		self.get_shared = None
 		self._my_objects_may_be_empty = False
+
+	_MIME_FILTER_FACTORY = _ChangeMimeFilter
 
 class _RecursiveUGDStreamView(_RecursiveUGDView):
 
@@ -468,11 +523,13 @@ class _RecursiveUGDStreamView(_RecursiveUGDView):
 
 	_DEFAULT_BATCH_SIZE = 100
 	_DEFAULT_BATCH_START = 0
+	_MIME_FILTER_FACTORY = _ChangeMimeFilter
 
 	def _sort_filter_batch_result( self, result ):
 		"""
 		Excludes change objects that refer to a missing object or creator due to weak refs.
 		"""
+
 		# Do this before the filters and what not on the top level so that the item count
 		# makes sense
 		#_entity_cache = {}
