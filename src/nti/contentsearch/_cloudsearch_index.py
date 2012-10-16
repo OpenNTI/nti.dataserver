@@ -84,6 +84,8 @@ def create_search_domain(connection, domain_name='ntisearch', language='en'):
 	
 	# content fields
 	connection.define_index_field(domain_name, content_, 'text', searchable=True, result=False)
+	connection.define_index_field(domain_name, ngrams_, 'text', searchable=True, result=False)
+	
 	connection.define_index_field(domain_name, recipients_, 'text', searchable=True, result=False)
 	connection.define_index_field(domain_name, _shared_with, 'text', searchable=True, result=False, source_attributes=(sharedWith_,))
 
@@ -112,10 +114,10 @@ def get_object_content(data):
 	result = adapted.get_content()
 	return result.lower() if result else u''
 
-def get_content_and_ngrams(obj):
+def get_object_ngrams(obj):
 	content = get_object_content(obj)
-	n_grams = ngrams(content)
-	result = '%s %s' % (content, n_grams) if content else u''
+	n_grams = ngrams(content) if content else u''
+	result = n_grams if n_grams else u''
 	return result
 
 def get_last_modified(data):
@@ -175,7 +177,8 @@ class _AbstractCSObject(dict):
 		self[intid_] = get_uid(src)
 		self[type_] = get_type_name(src)
 		self[creator_] = get_creator(src)
-		self[content_] = get_content_and_ngrams(src)
+		self[content_] = get_object_content(src)
+		self[ngrams_] = get_object_ngrams(src)
 		
 @component.adapter(nti_interfaces.INote)	
 class _CSNote(_AbstractCSObject):

@@ -6,8 +6,10 @@ from whoosh import fields
 from whoosh import analysis
 from whoosh import ramindex
 
+from nti.contentsearch.common import (content_, ngrams_)
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch._cloudsearch_query import adapt_searchon_types
+from nti.contentsearch.common import (default_ngram_maxsize, default_ngram_minsize) 
 
 def content_analyzer():
 	sw_util = component.queryUtility(search_interfaces.IStopWords) 
@@ -16,7 +18,9 @@ def content_analyzer():
 	return analyzer
 
 def create_schema():
-	analyzer = content_analyzer()
+	analyzer = content_analyzer()	
+	minsize, maxsize = (default_ngram_minsize, default_ngram_maxsize)
+	
 	schema = fields.Schema( id = fields.ID(stored=True, unique=True),
 							version = fields.ID(stored=True, unique=False),
 							intid = fields.ID(stored=True, unique=True),
@@ -31,6 +35,7 @@ def create_schema():
 							shared_with = fields.TEXT(stored=False, spelling=False, phrase=False),
 							keywords = fields.TEXT(stored=False, spelling=False, phrase=False),
 							references = fields.TEXT(stored=False, spelling=False, phrase=False), 
+							ngrams = fields.NGRAM(minsize=minsize, maxsize=maxsize, phrase=True),
 							content = fields.TEXT(stored=False, spelling=True, phrase=True, analyzer=analyzer))
 	return schema
 		
@@ -45,14 +50,14 @@ class _MockCloundSearchQueryParser(object):
 		username = username or qo.username
 		term = qo.term
 		
-		if term.endswith('*'):
-			term = query.Wildcard("content", term)
-		elif term.startswith('"') or term.endswith('"'):
+		if qo.is_prefix_search:
+			term = query.Wildcard(content_, term)
+		elif qo.is_phrase_search:
 			rex = analysis.RegexTokenizer()
 			words = [token.text.lower() for token in rex(unicode(term))]
-			term = query.Phrase("content", words)
+			term = query.Phrase(content_, words)
 		else:
-			term = query.Term("content", term)
+			term = query.Term(ngrams_, term)
 			
 		ors=[]
 		ands=[term, query.Term("username", unicode(username))]
@@ -82,6 +87,7 @@ class _MockCloudSearch(object):
 	def add(self, _id, version, external):
 		data = dict(external)
 		data['id'] = unicode(_id)
+		data[ngrams_] = data.get(content_, u'')
 		data['version'] = unicode(repr(version))
 		writer = self.index.writer()
 		if not self.exists(_id):
