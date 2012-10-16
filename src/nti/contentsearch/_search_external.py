@@ -59,7 +59,8 @@ class _BaseWordSnippetHighlightDecorator(_BaseHighlightDecorator):
 			text = external.get(SNIPPET, None)
 			text, fragments = _word_fragments_highlight(query, text)
 			external[SNIPPET] = text
-			external[FRAGMENTS] = toExternalObject(fragments) if fragments else []
+			if fragments:
+				external[FRAGMENTS] = toExternalObject(fragments)
 			
 @component.adapter(search_interfaces.IWordSnippetHighlight)
 class WordSnippetHighlightDecorator(_BaseWordSnippetHighlightDecorator):
