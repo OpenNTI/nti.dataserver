@@ -496,3 +496,28 @@ class TestApplicationUGDQueryViews(ApplicationTestBase):
 		# Or just the notes, which gets back one
 		res = testapp.get( path, params={'filter': 'TopLevel,IFollowAndMe', 'accept': contenttypes.Note.mime_type}, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
+
+		# If I ask for things I favorite, nothing comes back because I have no favorites
+		res = testapp.get( path, params={'filter':'Favorite'}, extra_environ=self._make_extra_environ())
+		assert_that( res.json_body, has_entry( 'Items', has_length( 0 ) ) )
+
+		# If I favorite one of the things shared with me, I can get it back
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = users.User.get_user( user.username )
+			user_i_follow = users.User.get_user( user_i_follow.username )
+
+			fav = contenttypes.Note()
+			fav.applicableRange = contentrange.ContentRangeDescription()
+			fav.containerId = 'tag:nti:foo'
+			fav.creator = user_i_follow
+			user_i_follow.addContainedObject( fav )
+			fav.lastModified = 6
+			fav_id_follow = to_external_ntiid_oid( fav )
+			user._addSharedObject( fav )
+
+			liking.favorite_object( fav, user.username )
+
+		res = testapp.get( path, params={'filter':'Favorite'}, extra_environ=self._make_extra_environ())
+		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
+		assert_that( res.json_body, has_entry( 'Items',
+											   contains( has_entry( 'ID', fav_id_follow ) ) ) )

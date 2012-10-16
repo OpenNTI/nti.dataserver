@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 import weakref
 import numbers
+import functools
 
 from zope import interface
 from zope import component
@@ -181,6 +182,10 @@ def _ifollow_predicate_factory( request, and_me=False ):
 def _ifollowandme_predicate_factory( request ):
 	return _ifollow_predicate_factory( request, True )
 
+def _favorite_predicate_factory( request ):
+	auth_userid = psec.authenticated_userid( request )
+	return functools.partial( liking.favorites_object, username=auth_userid, safe=True )
+
 SORT_KEYS = {
 	'lastModified': lambda x: getattr( x, 'lastModified', 0 ), # TODO: Adapt to dublin core?
 	'LikeCount': liking.like_count,
@@ -195,7 +200,8 @@ FILTER_NAMES = {
 	'TopLevel': lambda x: getattr( x, 'inReplyTo', None ) is None,
 	# This won't work for the Change objects. (Try Acquisition?) Do we need it for them?
 	'IFollow': (_ifollow_predicate_factory,),
-	'IFollowAndMe': (_ifollowandme_predicate_factory,)
+	'IFollowAndMe': (_ifollowandme_predicate_factory,),
+	'Favorite': (_favorite_predicate_factory,)
 	}
 # MeOnly is another valid filter for just things I have done, implemented efficiently
 
@@ -289,8 +295,15 @@ class _UGDView(object):
 			* ``IFollowAndMe``: Just like ``IFollow``, but also adds things that I have done.
 			  Again, this is very efficient.
 
-			They can be combined by separating them with a comma (although ``MeOnly`` and
-			``IFollow`` are mutually exclusive.)
+			* ``Favorite``: it causes only objects that the current user has
+			  :mod:`favorited <nti.appserver.liking_views>` the object to be returned.
+			  (Does not function on the stream views.) Currenly, this is not especially
+			  efficient.
+
+			They can be combined by separating them with a comma. Note that ``MeOnly`` and
+			``IFollow`` are mutually exclusive and specifying them both will result in
+			empty results. It is also probably the case that ``MeOnly`` and ``Favorite`` are
+			logically mutually exclusive (users probably don't favorite their own objects).
 
 		accept
 			A comma-separated list of MIME types of objects to return. If not given or ``*/*`` is in the list, all types

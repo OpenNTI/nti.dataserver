@@ -25,9 +25,7 @@ Accounts can also be created on the command line:
 Invitations
 ===========
 
-Invitation tokens may be specified at account creation time.
-
-.. automodule:: nti.appserver.invitations.interfaces
+Invitation tokens may be specified at account creation time. See :mod:`nti.appserver.invitations.interfaces`.
 
 Bounced Emails
 ==============
