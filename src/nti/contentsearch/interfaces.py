@@ -48,7 +48,8 @@ class ISearcher(interface.Interface):
 		"""
 	
 class ISearchFeatures(interface.Interface):
-	is_word_suggest_supported = schema.Bool(title="Property for word suggestion support.", default=False)
+	is_ngram_search_supported = schema.Bool(title="Property for ngram search support.", default=False, readonly=True)
+	is_word_suggest_supported = schema.Bool(title="Property for word suggestion support.", default=False, readonly=True)
 	
 class IBookIndexManager(ISearcher):
 	

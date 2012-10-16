@@ -241,10 +241,10 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 		docid = rim.index_content(note)
 		assert_that(docid, is_not(None))
 		
-		hits = rim.search("you'll be ready")
+		hits = rim.search('"you\'ll be ready"')
 		assert_that(hits, has_length(1))
 		
-		hits = rim.search("you will be ready")
+		hits = rim.search('"you will be ready"')
 		assert_that(hits, has_length(0))
 				
 if __name__ == '__main__':
