@@ -10,6 +10,7 @@ from nti.contentsearch.common import to_list
 from nti.contentsearch import interfaces as search_interfaces
 
 phrase_search = re.compile(r'"(?P<text>.*?)"')
+prefix_search = re.compile(r'(?P<text>[^ \t\r\n*]+)[*](?= |$|\\)')
 
 @interface.implementer(search_interfaces.ISearchQuery)
 class QueryObject(object, UserDict.DictMixin):
@@ -153,6 +154,10 @@ class QueryObject(object, UserDict.DictMixin):
 	@property
 	def is_phrase_search(self):
 		return phrase_search.match(self.term) is not None
+	
+	@property
+	def is_prefix_search(self):
+		return prefix_search.match(self.term) is not None
 
 	# -- suggest --
 

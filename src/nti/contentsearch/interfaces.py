@@ -497,6 +497,7 @@ class ISearchQuery(interface.Interface):
 	batchSize = schema.Int(title="page size", required=False)
 	batchStart = schema.Int(title="The index of the first object to return, starting with zero", required=False)
 	
+	is_prefix_search = schema.Bool(title="Returns true if the search is for prefix search", required=True, readonly=True)
 	is_phrase_search = schema.Bool(title="Returns true if the search is for phrase search", required=True, readonly=True)
 		
 class ISearchQueryValidator(interface.Interface):
