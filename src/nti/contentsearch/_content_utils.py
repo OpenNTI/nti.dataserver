@@ -26,6 +26,7 @@ from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.contentsearch.common import to_list
 from nti.contentsearch import interfaces as search_interfaces
+from nti.contentsearch.common import default_word_tokenizer_expression
 
 from nti.contentsearch.common import (CLASS, BODY, ID)
 from nti.contentsearch.common import (text_, body_, selectedText_, replacementContent_, redactionExplanation_,
@@ -360,7 +361,7 @@ class _DictContentResolver(object):
 
 @interface.implementer( search_interfaces.IContentTokenizer )
 class _ContentTokenizer(object):
-	tokenizer = RegexpTokenizer(r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-']\w+)*",
+	tokenizer = RegexpTokenizer(default_word_tokenizer_expression,
 								flags = re.MULTILINE | re.DOTALL | re.UNICODE)
 
 	def tokenize(self, content):

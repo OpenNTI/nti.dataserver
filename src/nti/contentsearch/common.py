@@ -97,6 +97,7 @@ indexable_types_order = { x:p for p,x in enumerate(indexable_type_names) }
 
 default_ngram_minsize = 2
 default_ngram_maxsize = 8 # average word size in English in 5.10 
+default_word_tokenizer_expression = r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-']\w+)*"
 
 def epoch_time(dt):
 	if dt:

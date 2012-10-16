@@ -22,6 +22,7 @@ from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch._datastructures import CaseInsensitiveDict
 from nti.contentsearch._search_results import empty_search_results
 from nti.contentsearch._search_results import empty_suggest_results
+from nti.contentsearch.common import default_word_tokenizer_expression
 from nti.contentsearch._search_results import empty_suggest_and_search_results
 from nti.contentsearch._search_highlights import ( WORD_HIGHLIGHT, WHOOSH_HIGHLIGHT)
 
@@ -34,8 +35,7 @@ import logging
 logger = logging.getLogger( __name__ )
 
 _default_word_max_dist = 15
-_default_ngram_maxsize_content = 12 # biggest common word in English to be found in a text has 20 chars
-_default_expression = rcompile(r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-']\w+)*")
+_default_expression = rcompile(default_word_tokenizer_expression)
 
 class _SearchableContent(object):
 	
