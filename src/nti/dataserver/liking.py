@@ -70,7 +70,7 @@ def _lookup_like_rating_for_read( context, cat_name=LIKE_CAT_NAME, safe=False ):
 	# default adapter does not create a OOBTree and set the __annotations__ attribute until
 	# it is written to, so this is safe
 	try:
-		annotations = an_interfaces.IAnnotations(context)
+		annotations = an_interfaces.IAnnotations(context) if not safe else an_interfaces.IAnnotations(context,{})
 		storage = annotations.get( key )
 
 		if storage:
@@ -111,8 +111,8 @@ def _unrate_object( context, username, cat_name ):
 		notify( contentratings.events.ObjectRatedEvent(context, None, cat_name ) )
 		return rating
 
-def _rates_object( context, username, cat_name ):
-	rating = _lookup_like_rating_for_read( context, cat_name=cat_name )
+def _rates_object( context, username, cat_name, safe=False ):
+	rating = _lookup_like_rating_for_read( context, cat_name=cat_name, safe=safe )
 	if rating and rating.userRating( username ) is not None:
 		return rating
 
@@ -197,16 +197,21 @@ def unfavorite_object( context, username ):
 	return _unrate_object( context, username, FAVR_CAT_NAME )
 
 
-def favorites_object( context, username ):
+def favorites_object( context, username, safe=False ):
 	"""
 	Determine if the `username` has favorited the `context`.
 
 	:param context: An :class:`interfaces.IFavoritable` object.
 	:param username: The name of the user possibly favoriting the object. Should not be
 		empty.
+	:keyword bool safe: If ``False`` (the default) then this method can raise an
+		exception if it won't ever be possible to rate the given object (because
+		annotations and adapters are not set up). If ``True``, then this method
+		quetly returns None in that case.
+
 	:return: An object with a boolean value; if the user likes the object, the value is True-y.
 	"""
-	return _rates_object( context, username, FAVR_CAT_NAME )
+	return _rates_object( context, username, FAVR_CAT_NAME, safe=safe )
 
 
 
