@@ -28,7 +28,7 @@ from nti.contentsearch._search_highlights import ( WORD_HIGHLIGHT, WHOOSH_HIGHLI
 from nti.contentsearch.common import (	channel_, content_, keywords_, references_, 
 										recipients_, sharedWith_, ntiid_, last_modified_,
 										creator_, containerId_, replacementContent_,
-										redactionExplanation_, intid_, title_)
+										redactionExplanation_, intid_, title_, quick_)
 		
 import logging
 logger = logging.getLogger( __name__ )
@@ -48,8 +48,13 @@ class _SearchableContent(object):
 	def get_schema(self):
 		return getattr(self, '_schema', None)
 			
-	def _parse_query(self, fieldname, query, **kwargs):
+	def _get_search_field(self, queryobject):
+		fieldname = content_ if queryobject.is_phrase_search or queryobject.is_prefix_search else quick_
+		return fieldname
+	
+	def _parse_query(self, query, **kwargs):
 		qo = QueryObject.create(query, **kwargs)
+		fieldname = self._get_search_field(qo)
 		parsed_query = parse_query(fieldname, qo, self.get_schema())
 		return qo, parsed_query
 	
@@ -57,14 +62,13 @@ class _SearchableContent(object):
 		return WORD_HIGHLIGHT
 	
 	def search(self, searcher, query, *args, **kwargs):
-		qo, parsed_query = self._parse_query(content_, query, **kwargs)
-		return self._execute_search(searcher, content_, parsed_query, qo, self.get_search_highlight_type())
+		qo, parsed_query = self._parse_query(query, **kwargs)
+		return self._execute_search(searcher, parsed_query, qo, self.get_search_highlight_type())
 		
 	def suggest_and_search(self, searcher, query, *args, **kwargs):
-		qo, parsed_query = self._parse_query(content_, query, **kwargs)
-		if ' ' in qo.term:
-			results = self._execute_search(	searcher,
-										 	content_, 
+		qo, parsed_query = self._parse_query(query, **kwargs)
+		if ' ' in qo.term or qo.is_prefix_search or qo.is_phrase_search:
+			results = self._execute_search(	searcher, 
 										 	parsed_query,
 										 	qo,
 										 	highlight_type=self.get_search_highlight_type(), 
@@ -78,7 +82,6 @@ class _SearchableContent(object):
 				parsed_query = parse_query(content_, qo, self.get_schema())
 				
 			results = self._execute_search(	searcher,
-										 	content_, 
 										 	parsed_query,
 										 	qo,
 										 	highlight_type=self.get_search_highlight_type(), 
@@ -95,8 +98,9 @@ class _SearchableContent(object):
 		records = searcher.suggest(content_, qo.term, maxdist=maxdist, prefix=prefix)
 		results.add(records)
 		return results
-
-	def _execute_search(self, searcher, search_field, parsed_query, queryobject, highlight_type=None, creator_method=None):
+	
+	def _execute_search(self, searcher, parsed_query, queryobject, highlight_type=None, creator_method=None):
+		search_field = self._get_search_field(queryobject)
 		creator_method = creator_method or empty_search_results
 		results = creator_method(queryobject)
 		results.highlight_type = highlight_type
@@ -132,12 +136,9 @@ def ngram_minmax():
 	return (minsize, maxsize)
 
 def content_analyzer():
-	minsize, _ = ngram_minmax()
-	maxsize = _default_ngram_maxsize_content
 	sw_util = component.queryUtility(search_interfaces.IStopWords) 
 	stopwords = sw_util.stopwords() if sw_util else ()
-	analyzer = 	analysis.StandardAnalyzer(expression=_default_expression, stoplist=stopwords) | \
-				analysis.NgramFilter(minsize=minsize, maxsize=maxsize, at='start')
+	analyzer = 	analysis.StandardAnalyzer(expression=_default_expression, stoplist=stopwords)
 	return analyzer
 	
 # book content
@@ -364,10 +365,12 @@ class TreadableIndexableContent(UserIndexableContent):
 		return result
 	
 # highlight
-	
-def create_highlight_schema():	 			
+
+def create_highlight_schema():	
+	minsize, maxsize = ngram_minmax() 			
 	schema = _create_treadable_schema()
-	schema.add(content_, fields.TEXT(stored=False, chars=True, spelling=True))
+	schema.add(content_, fields.TEXT(stored=False, spelling=True, phrase=True, analyzer=content_analyzer()))
+	schema.add(quick_, fields.NGRAM(minsize=minsize, maxsize=maxsize, phrase=True))
 	return schema
 
 class Highlight(TreadableIndexableContent):
@@ -377,7 +380,9 @@ class Highlight(TreadableIndexableContent):
 
 	def get_index_data(self, data):
 		result = super(Highlight, self).get_index_data(data)
-		result[content_] = get_object_content(data)
+		content_to_idx = get_object_content(data)
+		result[content_] = content_to_idx
+		result[quick_] = content_to_idx
 		return result
 	
 # redaction

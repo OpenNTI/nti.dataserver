@@ -81,25 +81,24 @@ class TestWhooshBookIndexManager(ConfiguringTestBase):
 		
 	def test_suggest(self):
 		hits = toExternalObject(self.bim.suggest("ra"))
-		assert_that(hits, has_entry(HIT_COUNT, 5))
+		assert_that(hits, has_entry(HIT_COUNT, 4))
 		assert_that(hits, has_entry(QUERY, 'ra'))
 		assert_that(hits, has_key(ITEMS))
 		
 		items = hits[ITEMS]
-		assert_that(items, has_length(5))
+		assert_that(items, has_length(4))
 		assert_that(items, has_item('rage'))
-		assert_that(items, has_item('ran'))
-		assert_that(items, has_item('rag'))
-		assert_that(items, has_item('rai'))
-		assert_that(items, has_item('ran'))
+		assert_that(items, has_item('rankle'))
+		assert_that(items, has_item('rage'))
+		assert_that(items, has_item('rain'))
 		
 	def test_suggest_and_search(self):
 		hits = toExternalObject(self.bim.suggest_and_search("ra"))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
-		assert_that(hits, has_entry(QUERY, u'ran'))
+		assert_that(hits, has_entry(QUERY, u'rain'))
 		assert_that(hits, has_key(ITEMS))
 		assert_that(hits[ITEMS], has_length(1))
-		assert_that(hits[SUGGESTIONS], has_length(5))
+		assert_that(hits[SUGGESTIONS], has_length(4))
 		
 if __name__ == '__main__':
 	unittest.main()

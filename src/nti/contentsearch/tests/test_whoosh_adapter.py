@@ -97,7 +97,7 @@ class TestWhooshUserAdapter(ConfiguringTestBase):
 		assert_that(items[0], has_entry(CONTAINER_ID, 'tag:nextthought.com,2011-10:bleach-manga'))
 
 		hits = toExternalObject(uim.search("*"))
-		assert_that(hits, has_entry(HIT_COUNT, len(zanpakuto_commands)))
+		assert_that(hits, has_entry(HIT_COUNT, 0))
 
 		hits = toExternalObject(uim.search("ra*"))
 		assert_that(hits, has_entry(HIT_COUNT, 3))

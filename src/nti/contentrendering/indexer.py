@@ -186,7 +186,7 @@ def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=Fa
 		docid = unicode(hashlib.md5(docid).hexdigest())
 		try:
 			content = unicode(content)
-			writer.add_document(#docid=docid,
+			writer.add_document(docid=docid,
 								ntiid=ntiid,
 								title=title,
 								content=content,
