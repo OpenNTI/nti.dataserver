@@ -5,7 +5,7 @@ Definitions of highlight objects.
 from __future__ import print_function, unicode_literals
 
 from zope import interface
-from zope.deprecation import deprecate
+
 
 
 from nti.dataserver import interfaces as nti_interfaces
@@ -14,21 +14,22 @@ from .base import UserContentRoot
 UserContentRoot = UserContentRoot # BWC top-level import
 from .selectedrange import SelectedRange # BWC top-level import
 
-class _HighlightBWC(object):
-	"""
-	Defines read-only properties that are included in a highlight
-	to help backwards compatibility.
-	"""
-
-	top = left = startOffset = endOffset = property( deprecate( "Use the applicableRange" )( lambda self: 0 ) )
-
-	highlightedText = startHighlightedFullText = startHighlightedText = endHighlightedText = endHighlightedFullText = property( deprecate( "Use the selectedText" )( lambda self: getattr( self, 'selectedText' ) ) )
-
-	startXpath = startAnchor = endAnchor = endXpath = anchorPoint = anchorType = property( deprecate( "Use the applicableRange" )( lambda self: '' ) )
+#from zope.deprecation import deprecate
+#class _HighlightBWC(object):
+#	"""
+#	Defines read-only properties that are included in a highlight
+#	to help backwards compatibility.
+#	"""
+#
+#	top = left = startOffset = endOffset = property( deprecate( "Use the applicableRange" )( lambda self: 0 ) )
+#
+#	highlightedText = startHighlightedFullText = startHighlightedText = endHighlightedText = endHighlightedFullText = property( deprecate( "Use the selectedText" )( lambda self: getattr( self, 'selectedText' ) ) )
+#
+#	startXpath = startAnchor = endAnchor = endXpath = anchorPoint = anchorType = property( deprecate( "Use the applicableRange" )( lambda self: '' ) )
 
 
 @interface.implementer(nti_interfaces.IHighlight)
-class Highlight(SelectedRange, _HighlightBWC):
+class Highlight(SelectedRange): #, _HighlightBWC):
 	"""
 	Implementation of a highlight.
 	"""
