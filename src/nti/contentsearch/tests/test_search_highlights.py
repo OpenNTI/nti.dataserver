@@ -9,7 +9,7 @@ from nti.contentsearch.tests import ConfiguringTestBase, zanpakuto_commands
 
 from hamcrest import (assert_that, is_, has_length)
 
-class TestCommon(ConfiguringTestBase):
+class TestSearchHighlight(ConfiguringTestBase):
 	
 	def test_word_content_highlight(self):
 		text = unicode(get_content("""
