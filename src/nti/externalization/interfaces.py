@@ -15,7 +15,10 @@ from zope.component.interfaces import IFactory
 #pylint: disable=E0213,E0211
 
 class StandardExternalFields(object):
-
+	"""
+	Namespace object defining constants whose values are the
+	keys used in external mappings.
+	"""
 	OID   = 'OID'
 	ID    = 'ID'
 	NTIID = 'NTIID'
@@ -33,6 +36,11 @@ StandardExternalFields.ALL = (lambda : [ v for k,v in StandardExternalFields.__d
 
 
 class StandardInternalFields(object):
+	"""
+	Namespace object defining constants whose values are the
+	property/attribute names looked for on internal objects.
+	"""
+
 	ID = 'id'
 	NTIID = 'ntiid'
 
@@ -72,7 +80,7 @@ class IInternalObjectExternalizer(interface.Interface):
 		used instead. """)
 
 	def toExternalObject():
-		""" Optional, see this module's toExternalObject() """
+		""" Optional, see this :func:`~nti.externalization.externalization.to_external_object`."""
 
 	# def updateFromExternalObject( parsed, *args, **kwargs ):
 	# 	""" Optional, updates this object using the parsed input
@@ -105,17 +113,19 @@ class IExternalObjectDecorator(interface.Interface):
 	"""
 	Used as a subscription adapter to provide additional information
 	to the externalization of an object after it has been externalized
-	by the primary implementation of :class:`IExternalObject`. Allows for a separation
+	by the primary implementation of :class:`~nti.externalization.interfaces.IInternalObjectExternalizer`. Allows for a separation
 	of concerns. These are called in no specific order, and so must
 	operate by mutating the external object.
 	"""
 
 	def decorateExternalObject( origial, external ):
 		"""
+		Decorate the externalized object (which is probably a mapping).
+
 		:param original: The object that is being externalized.
 			Passed to facilitate using non-classes as decorators.
 		:param external: The externalization of that object, produced
-			by an implementation of :class:`IExternalObject` or
+			by an implementation of :class:`~nti.externalization.interfaces.IInternalObjectExternalizer` or
 			default rules.
 		:return: Undefined.
 		"""
@@ -124,18 +134,23 @@ class IExternalMappingDecorator(interface.Interface):
 	"""
 	Used as a subscription adapter to provide additional information
 	to the externalization of an object after it has been externalized
-	by the primary implementation of :class:`IExternalObject`. Allows for a separation
-	of concerns. These are called in no specific order, and so must
-	operate by mutating the external object.
+	by the primary implementation of
+	:class:`~nti.externalization.interfaces.IInternalObjectExternalizer`.
+	Allows for a separation of concerns. These are called in no
+	specific order, and so must operate by mutating the external
+	object.
 	"""
 
 	def decorateExternalMapping( original, external ):
 		"""
-		:param original: The object that is being externalized.
-			Passed to facilitate using non-classes as decorators.
-		:param external: The externalization of that object, an :class:`ILocatedExternalMapping`, produced
-			by an implementation of :class:`IExternalObject` or
-			default rules.
+		Decorate the externalized object mapping.
+
+		:param original: The object that is being externalized. Passed
+			to facilitate using non-classes as decorators. :param
+			external: The externalization of that object, an
+			:class:`~nti.externalization.interfaces.ILocatedExternalMapping`,
+			produced by an implementation of
+			:class:`~nti.externalization.interfaces.IInternalObjectExternalizer` or default rules.
 		:return: Undefined.
 		"""
 
@@ -160,8 +175,8 @@ class ILocatedExternalSequence(IExternalizedObject,ILocation,ISequence):
 @interface.implementer( ILocatedExternalMapping )
 class LocatedExternalDict(dict):
 	"""
-	A dictionary that implements :class:`nti.externalization.interfaces.ILocatedExternalMapping`. Returned
-	by :func:`to_standard_external_dictionary`.
+	A dictionary that implements :class:`~nti.externalization.interfaces.ILocatedExternalMapping`. Returned
+	by :func:`~nti.externalization.externalization.to_standard_external_dictionary`.
 	"""
 
 	__name__ = ''
@@ -171,8 +186,8 @@ class LocatedExternalDict(dict):
 @interface.implementer( ILocatedExternalSequence )
 class LocatedExternalList(list):
 	"""
-	A list that implements :class:`nti.externalization.interfaces.ILocatedExternalSequence`. Returned
-	by :func:`toExternalObject`.
+	A list that implements :class:`~nti.externalization.interfaces.ILocatedExternalSequence`. Returned
+	by :func:`~nti.externalization.externalization.to_external_object`.
 	"""
 
 	__name__ = ''
@@ -199,9 +214,10 @@ class IExternalizedObjectFactoryFinder(interface.Interface):
 
 	def find_factory( externalized_object ):
 		"""
-		Given an externalized object, return a :class:`IFactory` to create the proper
+		Given an externalized object, return a :class:`zope.component.interfaces.IFactory` to create the proper
 		internal types.
-		:return: An IFactory, or `None`.
+
+		:return: An :class:`zope.component.interfaces.IFactory`, or :const:`None`.
 		"""
 
 class IExternalReferenceResolver(interface.Interface):

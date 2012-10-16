@@ -439,9 +439,7 @@ class _UGDView(object):
 				# Batch raises IndexError
 				result_list = []
 			else:
-				# TODO: With a slight change to the renderer, we could directly
-				# externalize by iterating this and avoid creating the sublist
-				result_list = list(Batch( result_list, batch_start, batch_size ))
+				result_list = Batch( result_list, batch_start, batch_size )
 
 			result['Items'] = result_list
 			# TODO: Inserting links to next/previous/start/end
