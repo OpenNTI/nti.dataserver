@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 """
 Functions related to actually externalizing objects.
-$Revision$
+
+$Id$
 """
 from __future__ import print_function, unicode_literals
 
@@ -25,6 +26,7 @@ import time
 from zope import interface
 from zope import component
 from zope import deprecation
+from zope.interface.common import sequence
 from zope.dublincore import interfaces as dub_interfaces
 
 
@@ -81,19 +83,24 @@ def DevmodeNonExternalizableObjectReplacer( obj ):
 def _DevmodeNonExternalizableObjectReplacer( obj ):
 	return DevmodeNonExternalizableObjectReplacer
 
-# The types that we will treat as sequences for externalization purposes. These
-# all map onto lists. (TODO: Should we just try to iter() it, ignoring strings?)
-_SEQUENCE_TYPES = (persistent.list.PersistentList, collections.Set, list, tuple)
-# The types that we will treat as mappings for externalization purposes. These
-# all map onto a dict.
-_MAPPING_TYPES  = (persistent.mapping.PersistentMapping,BTrees.OOBTree.OOBTree,collections.Mapping)
+#: The types that we will treat as sequences for externalization purposes. These
+#: all map onto lists. (TODO: Should we just try to iter() it, ignoring strings?)
+#: In addition, we also support :class:`~zope.interface.common.sequence.IFiniteSequence`
+#: by iterating it and mapping onto a list. This allows :class:`~z3c.batching.interfaces.IBatch`
+#: to be directly externalized.
+SEQUENCE_TYPES = (persistent.list.PersistentList, collections.Set, list, tuple)
+
+#: The types that we will treat as mappings for externalization purposes. These
+#: all map onto a dict.
+MAPPING_TYPES  = (persistent.mapping.PersistentMapping,BTrees.OOBTree.OOBTree,collections.Mapping)
 
 
 def toExternalObject( obj, coerceNone=False, name=_ex_name_marker, registry=component,
 					  catch_components=(), catch_component_action=None,
 					  default_non_externalizable_replacer=DefaultNonExternalizableReplacer):
 	""" Translates the object into a form suitable for
-	external distribution, through some data formatting process.
+	external distribution, through some data formatting process. See :const:`SEQUENCE_TYPES`
+	and :const:`MAPPING_TYPES` for details on what we can handle by default.
 
 	:param string name: The name of the adapter to :class:IExternalObject to look
 		for. Defaults to the empty string (the default adapter). If you provide
@@ -103,12 +110,12 @@ def toExternalObject( obj, coerceNone=False, name=_ex_name_marker, registry=comp
 		externalizing sub-objects (e.g., items in a list or dictionary). If one of these
 		exceptions is caught, then `catch_component_action` will be called to raise or replace
 		the value. The default is to catch nothing.
-	:param function catch_component_action: If given with `catch_components`, a function
+	:param callable catch_component_action: If given with `catch_components`, a function
 		of two arguments, the object being externalized and the exception raised. May return
 		a different object (already externalized) or re-raise the exception. There is no default,
 		but :func:`catch_replace_action` is a good choice.
 	:param callable default_non_externalizable_replacer: If we are asked to externalize an object
-		and cannot, and there is no :class:`INonExternalizableReplacer` registered for it,
+		and cannot, and there is no :class:`~nti.externalization.interfaces.INonExternalizableReplacer` registered for it,
 		then call this object and use the results.
 
 	"""
@@ -156,7 +163,7 @@ def toExternalObject( obj, coerceNone=False, name=_ex_name_marker, registry=comp
 			result = obj.toExternalDictionary()
 		elif hasattr( obj, "toExternalList" ):
 			result = obj.toExternalList()
-		elif isinstance(obj, _MAPPING_TYPES ):
+		elif isinstance(obj, MAPPING_TYPES ):
 			result = to_standard_external_dictionary( obj, name=name, registry=registry )
 			if obj.__class__ is dict:
 				result.pop( 'Class', None )
@@ -166,7 +173,7 @@ def toExternalObject( obj, coerceNone=False, name=_ex_name_marker, registry=comp
 			# is an IExternalObjectDecorator that does that
 			for key, value in obj.items():
 				result[key] = recall( value ) if not isinstance(value, _primitives) else value
-		elif isinstance( obj, _SEQUENCE_TYPES ):
+		elif isinstance( obj, SEQUENCE_TYPES ) or sequence.IFiniteSequence.providedBy( obj ):
 			result = registry.getAdapter( [(recall(x) if not isinstance(x, _primitives) else x) for x in obj], ILocatedExternalSequence )
 		# PList doesn't support None values, JSON does. The closest
 		# coersion I can think of is False.
@@ -184,16 +191,12 @@ def toExternalObject( obj, coerceNone=False, name=_ex_name_marker, registry=comp
 		return result
 	finally:
 		_ex_name_local.name.pop()
-#		if len(_ex_name_local.name) == 1:
-#			import pprint
-#			#from IPython.core.debugger import Tracer; Tracer()() ## DEBUG ##
-#			pprint.pprint( _ex_name_local._to_ext )
-#			_ex_name_local._to_ext = {}
+
 
 to_external_object = toExternalObject
 
 def stripNoneFromExternal( obj ):
-	""" Given an already externalized object, strips None values. """
+	""" Given an already externalized object, strips ``None`` values. """
 	if isinstance( obj, list ) or isinstance(obj, tuple):
 		obj = [stripNoneFromExternal(x) for x in obj if x is not None]
 	elif isinstance( obj, collections.Mapping ):
@@ -204,13 +207,13 @@ def stripNoneFromExternal( obj ):
 
 def stripSyntheticKeysFromExternalDictionary( external ):
 	""" Given a mutable dictionary, removes all the external keys
-	that might have been added by toExternalDictionary and echoed back. """
+	that might have been added by :func:`to_standard_external_dictionary` and echoed back. """
 	for key in _syntheticKeys():
 		external.pop( key, None )
 	return external
 
-EXT_FORMAT_JSON = 'json'
-EXT_FORMAT_PLIST = 'plist'
+EXT_FORMAT_JSON = 'json' #: Constant requesting JSON format data
+EXT_FORMAT_PLIST = 'plist' #: Constant requesting PList (XML) format data
 
 def _second_pass_to_external_object( obj ):
 	result = to_external_object( obj, name='second-pass' )
@@ -222,7 +225,7 @@ def to_external_representation( obj, ext_format=EXT_FORMAT_PLIST, name=_ex_name_
 	"""
 	Transforms (and returns) the `obj` into its external (string) representation.
 
-	:param ext_format: One of :const:EXT_FORMAT_JSON or :const:EXT_FORMAT_PLIST.
+	:param ext_format: One of :const:`EXT_FORMAT_JSON` or :const:`EXT_FORMAT_PLIST`.
 	"""
 	# It would seem nice to be able to do this in one step during
 	# the externalization process itself, but we would wind up traversing
@@ -288,15 +291,15 @@ def to_standard_external_dictionary( self, mergeFrom=None, name=_ex_name_marker,
 	"""
 	Returns a dictionary representing the standard externalization of
 	the object. This impl takes care of the standard attributes
-	including OID (from self._p_oid) and ID (from self.id if defined)
-	and Creator (from self.creator).
+	including OID (from :attr:`~persistent.interfaces.IPersistent._p_oid`) and ID (from ``self.id`` if defined)
+	and Creator (from ``self.creator``).
 
-	If the object has any :class:`IExternalMappingDecorator` subscribers registered for it,
+	If the object has any :class:`~nti.externalization.interfaces.IExternalMappingDecorator` subscribers registered for it,
 	they will be called to decorate the result of this method before it returns.
 
-	For convenience, if mergeFrom is not None, then those values will
-	be added to the dictionary created by this method. The keys and
-	values in mergeFrom should already be external.
+	:param dict mergeFrom: For convenience, if ``mergeFrom`` is not None, then those values will
+		be added to the dictionary created by this method. The keys and
+		values in ``mergeFrom`` should already be external.
 	"""
 	result = LocatedExternalDict()
 

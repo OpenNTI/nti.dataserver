@@ -287,6 +287,8 @@ Implementation Notes
 
 .. automodule:: nti.dataserver.contenttypes.selectedrange
 	:private-members:
+	:member-order: bysource
+	:undoc-members:
 
 .. automodule:: nti.dataserver.contenttypes.highlight
 	:private-members:

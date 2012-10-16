@@ -43,13 +43,17 @@ class SelectedRange(UserContentRoot,ExternalizableInstanceDict):
 
 	_excluded_in_ivars_ = { 'AutoTags' } | ExternalizableInstanceDict._excluded_in_ivars_
 	_ext_primitive_out_ivars_ = ExternalizableInstanceDict._ext_primitive_out_ivars_.union( {'selectedText'} )
+	_update_accepts_type_attrs = True
 
 	selectedText = ''
 	applicableRange = None
 	tags = ()
 	AutoTags = ()
-	_update_accepts_type_attrs = True
+
+
 	__parent__ = None
+	__name__ = alias('id')
+
 
 	def __init__( self ):
 		super(SelectedRange,self).__init__()
@@ -63,7 +67,6 @@ class SelectedRange(UserContentRoot,ExternalizableInstanceDict):
 		self.tags = ()
 		self.AutoTags = ()
 
-	__name__ = alias('id')
 
 
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
