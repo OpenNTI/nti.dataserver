@@ -35,18 +35,19 @@ class UserContentRoot(sharing.ShareableMixin, datastructures.ContainedMixin, dat
 	Base implementation of behaviours expected for contenttypes. Should be the primary
 	superclass for subclasses.
 
-	By default, if an update comes in with only new sharing information,
-	and we have been previously saved, then we do not clear our
-	other contents. Subclasses can override this by setting canUpdateSharingOnly
-	to false.
-
-	Subclasses must arrange for there to be an implementation of toExternalDictionary.
+	Subclasses must arrange for there to be an implementation of ``toExternalDictionary``.
 
 	"""
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
-
+	#: By default, if an update comes in with only new sharing information,
+	#: and we have been previously saved, then we do not clear our
+	#: other contents. Subclasses can override this by setting canUpdateSharingOnly
+	#: to ``False``.
 	canUpdateSharingOnly = True
+
+	#: It is allowed to create instances of these classes from
+	#: external data.
 	__external_can_create__ = True
 
 	def __init__(self):

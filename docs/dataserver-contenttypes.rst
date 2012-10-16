@@ -1,5 +1,6 @@
-Content Types
-=============
+===============
+ Content Types
+===============
 
 This document describes the foundational content types supported for
 storage with the dataserver. Specific content types that are used only
@@ -11,7 +12,7 @@ are represented on the wire as either JSON or PList. In general,
 however, the field names will be the same.
 
 Basics
-------
+======
 
 We begin with some basic definitions that are shared throughout.
 First, note that *most* content types exchanged with the dataserver
@@ -97,7 +98,7 @@ We begin by defining the root ``Object``:
 
 
 Users and Security
-------------------
+==================
 
 These objects describe users and things related to users.
 
@@ -178,7 +179,7 @@ These objects describe users and things related to users.
    }
 
 UGD Content
------------
+===========
 
 These are definitions related to content that a user can generate.
 
@@ -234,19 +235,23 @@ These are definitions related to content that a user can generate.
        // person has already flagged it.
    }
 
-   //NOTE: Bookmarks do not currently exist
-   struct Bookmark : PersistentObject<Anchored,Shareable,Taggable> { }
-
    // NOTE that it is possible to update only the sharing of a
    // highlight or note, by sending only the 'sharedWith' field and
    // leaving all other fields absent.
 
-   //Created from a DOM Range indicating a user-selection.
+   //A location and selection (possibly empty) in the DOM.
    //NOTE: Does not currently exist as a creatable entity, only
    //an abstract concept.
-   struct SelectedRange : Bookmark {
+   struct SelectedRange : PersistentObject<Anchored,Shareable,Taggable> {
         string selectedText; //Populated from the Range object's string value: http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-range-stringifier
    }
+
+   // A location in the DOM that the user would like to remember.
+   // The `selectedText` may be empty or may be created automatically
+   // by the application as a reminder of where the bookmark is located.
+   struct Bookmark : SelectedRange {
+   }
+
 
    struct Highlight : SelectedRange {
         //Variants of highlights. Currently, 'plain' or 'suppressed';
@@ -274,8 +279,26 @@ These are definitions related to content that a user can generate.
 .. note:: For a more full explanation of a Redaction object, see
    :py:class:`nti.dataserver.interfaces.IRedaction`
 
+Implementation Notes
+--------------------
+
+.. automodule:: nti.dataserver.contenttypes.base
+	:private-members:
+
+.. automodule:: nti.dataserver.contenttypes.selectedrange
+	:private-members:
+
+.. automodule:: nti.dataserver.contenttypes.highlight
+	:private-members:
+
+.. automodule:: nti.dataserver.contenttypes.threadable
+	:private-members:
+
+.. automodule:: nti.dataserver.contenttypes.note
+	:private-members:
+
 Activity Stream
----------------
+===============
 
 .. code-block:: cpp
 

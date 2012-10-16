@@ -17,7 +17,7 @@ from nti.tests import verifiably_provides
 from nti.tests import is_true
 from nti.dataserver import intid_wref
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.contenttypes import Redaction as _Redaction, Highlight as _Highlight, Note as _Note, Canvas, CanvasShape, CanvasAffineTransform, CanvasCircleShape, CanvasPolygonShape, CanvasPathShape, CanvasUrlShape, CanvasTextShape
+from nti.dataserver.contenttypes import Redaction as _Redaction, Highlight as _Highlight, Note as _Note, Bookmark as _Bookmark, Canvas, CanvasShape, CanvasAffineTransform, CanvasCircleShape, CanvasPolygonShape, CanvasPathShape, CanvasUrlShape, CanvasTextShape
 from nti.dataserver.contenttypes import NonpersistentCanvasPathShape
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.externalization import to_external_object
@@ -56,6 +56,12 @@ def Note():
 	n = _Note()
 	n.applicableRange = ContentRangeDescription()
 	return n
+
+def Bookmark():
+	h = _Bookmark()
+	h.applicableRange = ContentRangeDescription()
+	return h
+
 
 def Highlight():
 	h = _Highlight()
@@ -118,14 +124,14 @@ class RedactionTest(mock_dataserver.ConfiguringTestBase):
 		assert_that( ext, has_entry( 'sharedWith', ['joe@ou.edu'] ) )
 
 
+class _BaseSelectedRangeTest(mock_dataserver.ConfiguringTestBase):
 
-
-class HighlightTest(mock_dataserver.ConfiguringTestBase):
+	CONSTRUCTOR = staticmethod(Highlight)
 
 	@mock_dataserver.WithMockDSTrans
 	def test_add_range_to_existing(self):
 		"Old objects that are missing applicableRange/selectedText can be updated"
-		h = Highlight()
+		h = self.CONSTRUCTOR()
 		del h.applicableRange
 		del h.selectedText
 		ext = { 'selectedText': u'', 'applicableRange': ContentRangeDescription() }
@@ -134,7 +140,7 @@ class HighlightTest(mock_dataserver.ConfiguringTestBase):
 	@mock_dataserver.WithMockDSTrans
 	def test_external_tags(self):
 		ext = { 'tags': ['foo'], 'AutoTags': ['bar'] }
-		highlight = Highlight()
+		highlight = self.CONSTRUCTOR()
 		highlight.updateFromExternalObject( ext, self.ds )
 
 		assert_that( highlight.AutoTags, is_( () ) )
@@ -161,6 +167,24 @@ class HighlightTest(mock_dataserver.ConfiguringTestBase):
 		with self.assertRaises(zope.schema.interfaces.ConstraintNotSatisfied):
 			highlight.updateFromExternalObject( {'style':'F00B4R'} )
 
+
+class HighlightTest(_BaseSelectedRangeTest):
+
+	def test_external_style(self):
+		highlight = Highlight()
+		assert_that( highlight.style, is_( 'plain' ) )
+
+		with self.assertRaises(zope.schema.interfaces.ConstraintNotSatisfied):
+			highlight.updateFromExternalObject( {'style':'redaction'} )
+
+
+		with self.assertRaises(zope.schema.interfaces.ConstraintNotSatisfied):
+			highlight.updateFromExternalObject( {'style':'F00B4R'} )
+
+
+class BookmarkTest(_BaseSelectedRangeTest):
+
+	CONSTRUCTOR = staticmethod(Bookmark)
 
 from nti.dataserver import liking
 import contentratings.interfaces
