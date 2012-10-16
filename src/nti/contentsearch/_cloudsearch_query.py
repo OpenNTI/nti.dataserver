@@ -5,7 +5,7 @@ from zope import component
 
 from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch.common import (username_, content_, type_)
+from nti.contentsearch.common import (username_, content_, type_, ngrams_)
 
 def adapt_searchon_types(searchon=None):
 	if searchon:
@@ -16,13 +16,19 @@ def adapt_searchon_types(searchon=None):
 	
 @interface.implementer(search_interfaces.ICloudSearchQueryParser)
 class _DefaultCloudSearchQueryParser(object):
+	
+	def _get_search_field(self, qo):
+		fieldname = content_ if qo.is_phrase_search or qo.is_prefix_search else ngrams_
+		return fieldname
+	
 	def parse(self, qo, username=None):
 		username = username or qo.username
 		searchon = adapt_searchon_types(qo.searchon)
+		search_field = self._get_search_field(qo)
 		
 		bq = ['(and']
 		bq.append("%s:'%s'" % (username_, username))
-		bq.append("%s:'%s'" % (content_, qo.term))
+		bq.append("%s:'%s'" % (search_field, qo.term))
 		
 		if searchon:
 			bq.append('(or')
