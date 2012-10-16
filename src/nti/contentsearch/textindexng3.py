@@ -2,7 +2,7 @@ from __future__ import print_function, unicode_literals
 
 import six
 
-from zope.interface import implements
+from zope import interface
 from zope.index.interfaces import IInjection
 from zope.index.interfaces import IStatistics
 from zope.index.interfaces import IIndexSort
@@ -26,11 +26,11 @@ class _Proxy(object):
 			data = unicode(data)
 		else:
 			data = unicode(repr(data)) if data else u''
-		for field in fields or []:
+		for field in fields or ():
 			self.__dict__[field] = data
 
+@interface.implementer(IInjection, IIndexSearch, IStatistics)
 class TextIndexNG3(object):
-	implements(IInjection, IIndexSearch, IStatistics)
 	
 	meta_type = 'TextIndexNG3'
 	
@@ -161,6 +161,7 @@ class TextIndexNG3(object):
 	def get_index_source_names(self):
 		return self.fields
 
+@interface.implementer(ICatalogIndex, IIndexSort)
 class CatalogTextIndexNG3(CatalogIndex, TextIndexNG3):
 	""" 
 	Full-text index.
@@ -170,8 +171,6 @@ class CatalogTextIndexNG3(CatalogIndex, TextIndexNG3):
 	- Eq
 	- NotEq
 	"""
-
-	implements(ICatalogIndex, IIndexSort)
 
 	def __init__(self, field, discriminator=None, *args, **kwargs):
 		

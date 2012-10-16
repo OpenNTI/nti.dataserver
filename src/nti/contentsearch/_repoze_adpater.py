@@ -11,10 +11,10 @@ from perfmetrics import metricmethod
 
 from nti.dataserver import interfaces as nti_interfaces
 
-from nti.contentsearch.common import content_
 from nti.contentsearch.common import is_all_query
 from nti.contentsearch.common import get_type_name
 from nti.contentsearch.common import sort_search_types
+from nti.contentsearch.common import (content_, ngrams_)
 from nti.contentsearch._search_query import QueryObject
 from nti.contentsearch._repoze_query import parse_query
 from nti.contentsearch._content_utils import rank_words
@@ -84,6 +84,10 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 		result = sort_search_types(result)
 		return result
 
+	def _get_search_field(self, queryobject):
+		fieldname = content_ if queryobject.is_phrase_search or queryobject.is_prefix_search else ngrams_
+		return fieldname
+	
 	@metricmethod
 	def _get_hits_from_docids(self, results, docids, type_name):
 		# get all objects from the ds
@@ -91,7 +95,8 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 		results.add(objects)
 		
 	@metricmethod
-	def _do_catalog_query(self, catalog, fieldname, qo, type_name):
+	def _do_catalog_query(self, catalog, qo, type_name, fieldname=None):
+		fieldname = fieldname or self._get_search_field(qo)
 		is_all_query, queryobject = parse_query(catalog, fieldname, qo)
 		if is_all_query:
 			return 0, []
@@ -99,7 +104,7 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 		result = catalog.query(queryobject)
 		return result
 
-	def _do_search(self, fieldname, qo, searchon=(), highlight_type=WORD_HIGHLIGHT, creator_method=None):
+	def _do_search(self, qo, searchon=(), highlight_type=WORD_HIGHLIGHT, creator_method=None, fieldname=None):
 		creator_method = creator_method or empty_search_results
 		results = creator_method(qo)
 		results.highlight_type = highlight_type
@@ -107,7 +112,7 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 
 		for type_name in searchon:
 			catalog = self.get_catalog(type_name)
-			_, docids = self._do_catalog_query(catalog, fieldname, qo, type_name)
+			_, docids = self._do_catalog_query(catalog, qo, type_name, fieldname=fieldname)
 			self._get_hits_from_docids(results, docids, type_name)
 
 		return results
@@ -117,7 +122,7 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 		qo = QueryObject.create(query, **kwargs)
 		searchon = self._adapt_searchon_types(qo.searchon)
 		highlight_type = None if is_all_query(qo.term) else WORD_HIGHLIGHT
-		results = self._do_search(content_, qo, searchon, highlight_type)
+		results = self._do_search(qo, searchon, highlight_type)
 		return results
 
 	def suggest(self, query, *args, **kwargs):
@@ -142,9 +147,8 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 	def suggest_and_search(self, query, limit=None, *args, **kwargs):
 		queryobject = QueryObject.create(query, **kwargs)
 		searchon = self._adapt_searchon_types(queryobject.searchon)
-		if ' ' in query.term:
-			results = self._do_search(content_,
-									  queryobject,
+		if ' ' in queryobject.term or queryobject.is_prefix_search or queryobject.is_phrase_search:
+			results = self._do_search(queryobject,
 									  searchon,
 									  creator_method=empty_suggest_and_search_results)
 		else:
@@ -154,10 +158,10 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 				suggestions = rank_words(query.term, suggestions)
 				queryobject.term = suggestions[0]
 
-			results = self._do_search(content_,
-									  queryobject,
+			results = self._do_search(queryobject,
 									  searchon,
-									  creator_method=empty_suggest_and_search_results)
+									  creator_method=empty_suggest_and_search_results,
+									  fieldname=content_)
 			results.add_suggestions(suggestions)
 
 		return results

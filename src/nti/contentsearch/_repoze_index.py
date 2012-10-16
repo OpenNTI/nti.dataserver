@@ -80,6 +80,12 @@ def get_object_content(obj, default=None):
 	return result.lower() if result else None
 get_content = get_object_content
 
+def get_object_ngrams(obj, default=None):
+	content = get_object_content(obj, default)
+	n_grams = ngrams(content) if content else default
+	return n_grams.lower() if n_grams else default
+get_ngrams = get_object_ngrams
+
 def get_content_and_ngrams(obj, default=None):
 	content = get_object_content(obj)
 	n_grams = ngrams(content)
@@ -157,11 +163,6 @@ def _keyword_field_creator(catalog, name, iface ):
 	
 @interface.implementer(search_interfaces.ISearchFeatures)
 class _DefaultRepozeSearchFeatures(object):
-	is_ngram_search_supported = False
-	is_word_suggest_supported = False
-	
-@interface.implementer(search_interfaces.ISearchFeatures)
-class _NgramRepozeSearchFeatures(object):
 	is_ngram_search_supported = True
 	is_word_suggest_supported = False
 	

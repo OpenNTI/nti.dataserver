@@ -3,11 +3,8 @@
 	<include package="zope.component" />
 	<include file="repoze_common.zcml" />
 			 
-	<utility name="content" 
-			 provides=".interfaces.IRepozeCatalogFieldCreator" 
-			 component="._repoze_index._content_ngrams_field_creator" />	
-	
-	<utility component="._repoze_index._DefaultRepozeSearchFeatures" 
-			 provides=".interfaces.ISearchFeatures" />
+	<utility name="content" provides=".interfaces.IRepozeCatalogFieldCreator" component="._repoze_index._zopytext_field_creator" />
+	<utility name="ngrams" provides=".interfaces.IRepozeCatalogFieldCreator" component="._repoze_index._zopytext_field_creator" />
+	<utility component="._repoze_index._DefaultRepozeSearchFeatures" provides=".interfaces.ISearchFeatures" />
 			 
 </configure>
