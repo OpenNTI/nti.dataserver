@@ -18,8 +18,9 @@ from .threadable import ThreadableExternalizableMixin
 
 from .base import UserContentRoot as _UserContentRoot
 
-from .note import Note
+from .bookmark import Bookmark
 from .highlight import Highlight
+from .note import Note
 from .redaction import Redaction
 
 from .canvas import Canvas
@@ -42,6 +43,7 @@ from .canvas import NonpersistentCanvasUrlShape
 import nti.externalization.internalization
 nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.contenttypes' )
 nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.contenttypes.note' )
+nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.contenttypes.bookmark' )
 nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.contenttypes.highlight' )
 nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.contenttypes.redaction' )
 nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.contenttypes.canvas' )

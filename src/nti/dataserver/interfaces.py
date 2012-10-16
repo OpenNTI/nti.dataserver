@@ -719,13 +719,20 @@ class ICanvas(IShareableModeledContent, IThreadable):
 		Adds the shape to the top of the list of shapes.
 		"""
 
-class ISelectedRange(IShareableModeledContent,IThreadable,IAnchoredRepresentation):
+class ISelectedRange(IShareableModeledContent,IAnchoredRepresentation):
 	"""
 	A selected range of content that the user wishes to remember. This interface
 	attaches no semantic meaning to the selection; subclasses will do that.
 	"""
 	# TODO: A field class that handles HTML validation/stripping?
-	selectedText = schema.Text( title="The string representation of the DOM Range the user selected." )
+	selectedText = schema.Text( title="The string representation of the DOM Range the user selected, possibly empty." )
+
+class IBookmark(ISelectedRange):
+	"""
+	A marker that the user places in the content. The selected text
+	is used mostly as a reminder (and may not actually be created by the user
+	but automatically selected by the application).
+	"""
 
 IHIGHLIGHT_STYLE_VOCABULARY = schema.vocabulary.SimpleVocabulary(
 	[schema.vocabulary.SimpleTerm(_x)
@@ -809,7 +816,7 @@ class IGlobalFlagStorage(interface.Interface):
 		this storage.
 		"""
 
-class INote(IHighlight):
+class INote(IHighlight,IThreadable):
 	"""
 	A user-created note attached to other content.
 	"""

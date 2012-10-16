@@ -34,13 +34,17 @@ from .base import _make_getitem
 					   # provides annotations
 					   an_interfaces.IAttributeAnnotatable )
 class Note(ThreadableExternalizableMixin, Highlight):
+	"""
+	Implementation of a note.
+	"""
 
-
-	# A sequence of properties we would like to copy from the parent
-	# when a child reply is created. If the child already has them, they
-	# are left alone.
-	# This consists of the anchoring properties
+	#: A sequence of properties we would like to copy from the parent
+	#: when a child reply is created. If the child already has them, they
+	#: are left alone.
+	#: This consists of the anchoring properties
 	_inheritable_properties_ = ( 'applicableRange', )
+
+	#: We override the default highlight style to suppress it.
 	style = 'suppressed'
 
 	def __init__(self):
