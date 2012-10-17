@@ -283,6 +283,8 @@ TAG_UI_TYPE = 'nti.dataserver.users.field_type' # Qualifying details about how t
 TAG_REQUIRED_IN_UI = 'nti.dataserver.users.field_required' # Overrides the value from the field itself
 TAG_READONLY_IN_UI = 'nti.dataserver.users.field_readonly' # Overrides the value from the field itself, if true
 
+IFriendlyNamed['realname'].setTaggedValue( TAG_REQUIRED_IN_UI, True )
+
 class IUserProfile(IFriendlyNamed, IAvatarURL):
 	"""
 	Base class that user profiles should extend.
