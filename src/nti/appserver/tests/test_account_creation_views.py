@@ -372,6 +372,26 @@ class TestPreflightView(_AbstractValidationViewBase):
 		assert_that( e.exception.json_body, has_entry( 'code', bad_code ) )
 
 	@WithMockDSTrans
+	def test_create_invalid_username_mathcounts( self ):
+		assert_that( self.request.host, is_( 'example.com:80' ) )
+		self.request.headers['origin'] = 'http://mathcounts.nextthought.com'
+		self.request.content_type = 'application/vnd.nextthought+json'
+
+		bad_code = 'BlankHumanNameError'
+		birthdate = datetime.date.today().replace( year=datetime.date.today().year - 10 ).isoformat()
+		self.request.body = to_json_representation( { 'birthdate': birthdate,
+													  'Username': 'WithALastName' } )
+		__traceback_info__ = self.request.body
+
+
+		with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
+			self.the_view( self.request )
+
+		assert_that( e.exception.json_body, has_entry( 'field', 'realname' ) )
+		assert_that( e.exception.json_body, has_entry( 'fields', ['Username', 'realname'] ) )
+		assert_that( e.exception.json_body, has_entry( 'code', bad_code ) )
+
+	@WithMockDSTrans
 	def test_create_special_characters_username_mathcounts( self ):
 		assert_that( self.request.host, is_( 'example.com:80' ) )
 		self.request.headers['origin'] = 'http://mathcounts.nextthought.com'

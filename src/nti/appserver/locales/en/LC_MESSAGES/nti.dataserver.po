@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nti.dataserver 0.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2012-10-08 11:57-0500\n"
+"POT-Creation-Date: 2012-10-17 16:24-0500\n"
 "PO-Revision-Date: 2012-09-24 22:18-0500\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: en <LL@li.org>\n"
@@ -18,15 +18,16 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 0.9.6\n"
 
-#: src/nti/appserver/account_creation_views.py:127
+#: src/nti/appserver/account_creation_views.py:129
+#: src/nti/appserver/account_creation_views.py:177
 msgid "Please provide your first and last names."
 msgstr ""
 
-#: src/nti/appserver/account_creation_views.py:164
+#: src/nti/appserver/account_creation_views.py:168
 msgid "Username cannot be blank"
 msgstr ""
 
-#: src/nti/appserver/account_creation_views.py:178
+#: src/nti/appserver/account_creation_views.py:200
 msgid "That username is not available. Please choose another."
 msgstr ""
 
@@ -38,7 +39,7 @@ msgstr ""
 msgid "NextThought Password Reset"
 msgstr ""
 
-#: src/nti/appserver/account_recovery_views.py:292
+#: src/nti/appserver/account_recovery_views.py:279
 msgid "Your reset link is not valid. Please request a new one."
 msgstr ""
 
@@ -58,45 +59,45 @@ msgstr ""
 msgid "Alias contains a censored sequence"
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:429
+#: src/nti/appserver/site_policies.py:431
 msgid "Welcome to NextThought"
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:453
+#: src/nti/appserver/site_policies.py:455
 msgid "That username is not valid. Please choose another."
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:460
+#: src/nti/appserver/site_policies.py:462
 msgid "Please provide your first name."
 msgstr "Please provide your first and last names."
 
-#: src/nti/appserver/site_policies.py:462
+#: src/nti/appserver/site_policies.py:464
 msgid "Please provide your last name."
 msgstr "Please provide your first and last names."
 
-#: src/nti/appserver/site_policies.py:475
+#: src/nti/appserver/site_policies.py:477
 msgid "Birthdate must be in the past."
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:478
+#: src/nti/appserver/site_policies.py:480
 msgid "Birthdate must be at least four years ago."
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:481
+#: src/nti/appserver/site_policies.py:483
 msgid "Birthdate must be less than 150 years ago."
 msgstr ""
 
-#: src/nti/appserver/user_policies.py:149
+#: src/nti/appserver/user_policies.py:151
 msgid "NextThought Account Confirmation"
 msgstr ""
 
-#: src/nti/appserver/user_policies.py:198
+#: src/nti/appserver/user_policies.py:200
 msgid ""
 "It is too soon to send another consent request email. Please try again "
 "tomorrow."
 msgstr ""
 
-#: src/nti/appserver/user_policies.py:238
+#: src/nti/appserver/user_policies.py:240
 msgid "Please Confirm Your Child's NextThought Account"
 msgstr ""
 
@@ -150,7 +151,7 @@ msgstr ""
 msgid "Deleted User"
 msgstr ""
 
-#: src/nti/utils/schema.py:76
+#: src/nti/utils/schema.py:78
 msgid "${field} is too short."
 msgstr "${field} is too short. Please use at least ${minLength} characters."
 
