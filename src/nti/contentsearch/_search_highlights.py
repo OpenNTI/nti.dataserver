@@ -195,6 +195,9 @@ def _prune_fragments(termset, original_snippet, original_fragments):
 	return snippet, fragments
 
 def _search_fragment_snippet(text, fragment, surround=50):
+	if not fragment.matches:
+		return text
+	
 	start = fragment.matches[0].start
 	end = fragment.matches[-1].end
 
@@ -217,8 +220,7 @@ def _search_fragment_snippet(text, fragment, surround=50):
 				end = -idx
 				break
 		
-	snippet = text[start:end]	
-	print(snippet)
+	snippet = text[start:end]
 	return snippet
 
 def word_fragments_highlight(query, text, maxchars=300, surround=50, top=3, analyzer=None, order=highlight.FIRST):
