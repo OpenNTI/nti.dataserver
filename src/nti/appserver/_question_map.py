@@ -58,8 +58,10 @@ class QuestionMap(dict):
 			obj.ntiid = k
 			self[k] = obj
 
-			obj.__name__ = k
-			obj.__parent__ = level_ntiid
+			# Fixes for pyramid.traversal: must be sure that the things
+			# in the tree are actually, strictly, unicode objects, not subclasses.
+			obj.__name__ = unicode( k )
+			obj.__parent__ = unicode(level_ntiid) if level_ntiid else None
 
 			if containing_filename:
 				self.by_file[containing_filename].append( obj )
@@ -128,6 +130,9 @@ def _populate_question_map_from_text( question_map, asm_index_text, title ):
 		# fragment, we will wind up with sanitized HTML, which is not what
 		# we want, in this case
 		# TODO: Needs specific test cases
+		# NOTE: This breaks certain assumptions that assume that there are no
+		# subclasses of str or unicode, notably pyramid.traversal. See assessment_views.py
+		# for more details.
 		def hook(o):
 			return dict( (k,cfg_interfaces.UnicodeContentFragment(v) if isinstance(v, unicode) else v) for k, v in o )
 
