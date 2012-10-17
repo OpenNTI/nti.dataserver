@@ -828,25 +828,6 @@ class LawSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 	COM_ALIAS = 'Law'
 	COM_REALNAME = 'Legal Studies'
 
-	# major hack to add users of law to a DFL
-	DEFAULT_DFL_NAME = u'FirstAmendment_Thai_Fall2012'
-	DEFAULT_DFL_OWNER = u'thai@post.harvard.edu'
-
-	def user_created( self, user, event ):
-		super(LawSitePolicyEventListener, self).user_created(user, event)
-		# Ensure we can get a weak ref to this user now, in case the DFL needs it.
-		# This makes tests fail even if the DFL doesn't exist
-		nti_interfaces.IWeakRef( user )
-		owner = users.User.get_user( self.DEFAULT_DFL_OWNER )
-		if owner is not None:
-			dfl = owner.getContainedObject('FriendsLists', self.DEFAULT_DFL_NAME)
-			if dfl is not None:
-				dfl.addFriend( user )
-			else:
-				logger.warn("Could not find DFL '%s'" %self.DEFAULT_DFL_NAME)
-		else:
-			logger.warn("Could not find user '%s'" %self.DEFAULT_DFL_OWNER)
-
 @interface.implementer(ISitePolicyUserEventListener)
 class PrmiaSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 	"""
