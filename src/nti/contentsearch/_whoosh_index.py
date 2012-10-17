@@ -59,20 +59,20 @@ class _SearchableContent(object):
 	def _parse_query(self, query, **kwargs):
 		qo = QueryObject.create(query, **kwargs)
 		fieldnames = self._get_search_fields(qo)
-		parsed_queries = []
+		parsed_query = None
 		for fieldname in fieldnames:
-			parsed_queries.append(parse_query(fieldname, qo, self.get_schema()))
-		return qo, parsed_queries
+			pq = parse_query(fieldname, qo, self.get_schema())
+			parsed_query = pq | parsed_query if parsed_query else pq
+		return qo, (parsed_query,)
 	
 	def get_search_highlight_type(self):
 		return WORD_HIGHLIGHT
 	
 	def search(self, searcher, query, *args, **kwargs):
-		docids = set()
 		results = None
 		qo, parsed_queries = self._parse_query(query, **kwargs)
 		for parsed_query in parsed_queries:
-			r = self._execute_search(searcher, parsed_query, qo, docids, self.get_search_highlight_type())
+			r = self._execute_search(searcher, parsed_query, qo, highlight_type=self.get_search_highlight_type())
 			results = merge_search_results(results, r)
 		return results
 		
@@ -89,11 +89,9 @@ class _SearchableContent(object):
 				qo.set_term(suggestions[0])
 				parsed_query = parse_query(content_, qo, self.get_schema())
 				
-				docids = set()
 				results = self._execute_search(	searcher,
 											 	parsed_query,
 											 	qo,
-											 	docids,
 											 	highlight_type=self.get_search_highlight_type(), 
 											 	creator_method=empty_suggest_and_search_results)
 				results.add_suggestions(suggestions)
@@ -112,7 +110,7 @@ class _SearchableContent(object):
 		results.add(records)
 		return results
 	
-	def _execute_search(self, searcher, parsed_query, queryobject, docids, highlight_type=None, creator_method=None):
+	def _execute_search(self, searcher, parsed_query, queryobject, docids=None, highlight_type=None, creator_method=None):
 		creator_method = creator_method or empty_search_results
 		results = creator_method(queryobject)
 		results.highlight_type = highlight_type
@@ -192,12 +190,14 @@ class Book(_SearchableContent):
 	def get_search_highlight_type(self):
 		return WHOOSH_HIGHLIGHT
 	
-	def get_objects_from_whoosh_hits(self, search_hits, docids):
+	def get_objects_from_whoosh_hits(self, search_hits, docids=None):
 		result = []
 		for hit in search_hits:
 			docnum = hit.docnum
-			if docnum not in docids:
-				docids.add(docnum)
+			if docids is None or docnum not in docids:
+				if docids is not None:
+					docids.add(docnum)
+					
 				data = _BookHit(intid_ = docnum,
 								ntiid  = hit[ntiid_], 
 						 		title  = hit[title_],
@@ -315,12 +315,13 @@ class UserIndexableContent(_SearchableContent):
 		result[last_modified_] = get_last_modified(data)
 		return result
 
-	def get_objects_from_whoosh_hits(self, search_hits, docids):
+	def get_objects_from_whoosh_hits(self, search_hits, docids=None):
 		result = []
 		for hit in search_hits:
 			uid = int(hit[intid_])
-			if uid not in docids:
-				docids.add(uid)
+			if docids is None or uid not in docids:
+				if docids is not None:
+					docids.add(uid)
 				obj = self.get_object(uid)
 				result.append(obj)
 		return result
