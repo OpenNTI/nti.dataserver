@@ -121,40 +121,51 @@ class _SearchFragment(object):
 		return result
 		
 	@classmethod
-	def create_from_whoosh_fragment(cls, wf):
+	def _match_terms(cls, fragment, termset, check_start_word=False, check_end_word=False):
 		matches = []
+		for term in termset:
+			idx = 0
+			_len = len(term)
+			idx = fragment.find(term, idx)
+			while idx >=0:
+				endidx = idx + _len
+				if  (not check_start_word or _is_word_start(idx, fragment) ) and \
+					(not check_end_word or _is_word_end(endidx, fragment)):
+					mrange = _Range(idx, endidx, term)
+					matches.append(mrange)
+				idx = fragment.find(term, endidx)
+		matches = cls._clean_ranges(matches)
+		return matches
+	
+	@classmethod
+	def create_from_whoosh_fragment(cls, wf, termset):
+		matches = []
+		termset = set(termset)
 		offset = wf.startchar
 		for t in wf.matches:
 			txt = t.text.lower()
+			if txt in termset:
+				termset.remove(txt)
 			idx = t.startchar - offset
 			endidx = t.endchar - offset
 			mrange = _Range(idx, endidx, txt)
 			matches.append(mrange)
 		
+		fragment = wf.text[wf.startchar:wf.endchar]
+		if termset:
+			m = cls._match_terms(fragment.lower(), termset, True, False)
+			matches.extend(m)
+			matches = sorted(matches, key=lambda ra: ra.start)
+			
 		result = _SearchFragment()
-		result.text = wf.text[wf.startchar:wf.endchar]
+		result.text = fragment
 		result.matches = matches if matches else ()
 		return result
 	
 	@classmethod
 	def create_from_terms(cls, text, termset, check_word=False):
-		matches = []
 		fragment = text
-		fragment_lower = fragment.lower()
-		termset = [term.lower() for term in termset]
-		
-		for term in termset:
-			idx = 0
-			_len = len(term)
-			idx = fragment_lower.find(term, idx)
-			while idx >=0:
-				endidx = idx + _len
-				if not check_word or (_is_word_start(idx, fragment) and _is_word_end(endidx, fragment)):
-					mrange = _Range(idx, endidx, term)
-					matches.append(mrange)
-				idx = fragment_lower.find(term, endidx)
-			
-		matches = cls._clean_ranges(matches)
+		matches = cls._match_terms(fragment.lower(), termset, check_word, check_word)
 		matches = sorted(matches, key=lambda ra: ra.start)
 		result = _SearchFragment()
 		result.text = fragment
@@ -247,7 +258,7 @@ def word_fragments_highlight(query, text, maxchars=300, surround=50, top=3, anal
 	if fragments:
 		search_fragments = []
 		for f in fragments:
-			sf = _SearchFragment.create_from_whoosh_fragment(f)
+			sf = _SearchFragment.create_from_whoosh_fragment(f, termset)
 			search_fragments.append(sf)	
 		snippet = formatter(text, fragments)
 	else:

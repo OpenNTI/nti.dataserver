@@ -120,6 +120,13 @@ class TestSearchHighlight(ConfiguringTestBase):
 		assert_that(fragments[0].text, is_(_text))
 		assert_that(fragments[0].matches, is_([(0, 7), (8,12), (13,15)]))
 
-			
+	def test_word_fragments_partial_match(self):
+		text = u'States Court of Appeals for the Ninth Circuit both Argued February 28 March 1 1966 and No 584'
+		snippet, fragments = word_fragments_highlight('Argued Feb', text)
+		assert_that(fragments, has_length(1))
+		assert_that(snippet, is_(text))
+		assert_that(fragments[0].text, is_(text))
+		assert_that(fragments[0].matches, is_([(51, 57), (58, 61)]))
+		
 if __name__ == '__main__':
 	unittest.main()
