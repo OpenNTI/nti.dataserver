@@ -110,6 +110,15 @@ class TestSearchHighlight(ConfiguringTestBase):
 		assert_that(snippet, is_(_text))
 		assert_that(fragments[0].text, is_(_text))
 		assert_that(fragments[0].matches, is_([(49, 69)]))
+		
+	def test_word_fragments_weird_case(self):
+		text = u'Decided June 13 1966'		
+		snippet, fragments = word_fragments_highlight('Decided June 13', text)
+		_text = u"Decided June 13 1966"
+		assert_that(fragments, has_length(1))
+		assert_that(snippet, is_(_text))
+		assert_that(fragments[0].text, is_(_text))
+		assert_that(fragments[0].matches, is_([(0, 7), (8,12), (13,15)]))
 
 			
 if __name__ == '__main__':
