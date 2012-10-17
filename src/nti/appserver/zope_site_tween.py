@@ -69,7 +69,7 @@ class site_tween(object):
 		try:
 			assert old_site is None or old_site is site, "Should not have a site already in place"
 		except AssertionError:
-			logger.exception( "Should not have a site already in place: %s", old_site )
+			logger.debug( "Should not have a site already in place: %s", old_site, exc_info=True )
 			old_site = None
 
 		setSite( site )

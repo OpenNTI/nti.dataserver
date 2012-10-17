@@ -115,6 +115,8 @@ def fromExternalOID( ext_oid ):
 
 from_external_oid = fromExternalOID
 
+DEFAULT_EXTERNAL_CREATOR = system_user.id
+
 _ext_ntiid_oid = object()
 def to_external_ntiid_oid( contained, default_oid=_ext_ntiid_oid, add_to_connection=False, add_to_intids=False ):
 	"""
@@ -141,9 +143,9 @@ def to_external_ntiid_oid( contained, default_oid=_ext_ntiid_oid, add_to_connect
 	if not oid:
 		return None
 
-	creator = getattr( contained, 'creator', system_user.id )
+	creator = getattr( contained, 'creator', DEFAULT_EXTERNAL_CREATOR )
 	return ntiids.make_ntiid( provider=(creator
 										if isinstance( creator, six.string_types )
-										else getattr( creator, 'username', system_user.id )),
+										else getattr( creator, 'username', DEFAULT_EXTERNAL_CREATOR )),
 								specific=oid,
 								nttype=ntiids.TYPE_OID )

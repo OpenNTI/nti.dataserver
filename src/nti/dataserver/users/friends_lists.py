@@ -107,7 +107,7 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 		return ntiids.make_ntiid( date=ntiids.DATE,
 								  provider=self.creator.username if self.creator else 'Unknown',
 								  nttype=ntiids.TYPE_MEETINGROOM_GROUP,
-								  specific=self.username.lower().replace( ' ', '_' ).replace( '-', '_' ) )
+								  specific=ntiids.escape_provider(self.username.lower()))
 
 	def get_containerId( self ):
 		return 'FriendsLists'

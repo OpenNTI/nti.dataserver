@@ -107,6 +107,13 @@ class _Password(object):
 	# be compared
 
 
+def named_entity_ntiid(entity):
+	return ntiids.make_ntiid( date=ntiids.DATE,
+							  provider=nti_interfaces.SYSTEM_USER_NAME,
+							  nttype=entity.NTIID_TYPE,
+							  specific=ntiids.escape_provider(entity.username.lower()))
+
+
 class Principal(Entity,sharing.SharingSourceMixin):
 	""" A Principal represents a set of credentials that has access to the system.
 
@@ -149,6 +156,9 @@ class Principal(Entity,sharing.SharingSourceMixin):
 		del self.__dict__['password']
 	password = property(_get_password,_set_password,_del_password)
 
+	NTIID_TYPE = None
+	NTIID = property(named_entity_ntiid)
+
 @interface.implementer(nti_interfaces.ICommunity)
 class Community(Entity,sharing.DynamicSharingTargetMixin):
 
@@ -158,6 +168,8 @@ class Community(Entity,sharing.DynamicSharingTargetMixin):
 		"""
 		return cls.create_entity( dataserver=dataserver, **kwargs )
 
+	NTIID_TYPE = ntiids.TYPE_NAMED_ENTITY_COMMUNITY
+	NTIID = property(named_entity_ntiid)
 
 	# We override these methods for space efficiency.
 	# TODO: Should we track membership here? If so, membership
@@ -433,6 +445,9 @@ class User(Principal):
 	@property
 	def containerId(self):
 		return "Users"
+
+	NTIID_TYPE = ntiids.TYPE_NAMED_ENTITY_USER
+	NTIID = property(named_entity_ntiid)
 
 	def update_last_login_time(self):
 		self.lastLoginTime.value = time.time()

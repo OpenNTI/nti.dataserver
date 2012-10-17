@@ -5,8 +5,9 @@ $Revision$
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope.deprecation import deprecated
+import numbers
 
+from zope.deprecation import deprecated
 from nti.ntiids.ntiids import TYPE_MEETINGROOM_CLASS
 deprecated( "TYPE_MEETINGROOM_CLASS", "Prefer nti.ntiids.ntiids.TYPE_MEETINGROOM_CLASS" )
 from nti.ntiids.ntiids import unicode_literals
@@ -19,8 +20,6 @@ from nti.ntiids.ntiids import TYPE_MEETINGROOM_GROUP
 deprecated( "TYPE_MEETINGROOM_GROUP", "Prefer nti.ntiids.ntiids.TYPE_MEETINGROOM_GROUP" )
 from nti.ntiids.ntiids import TYPE_MEETINGROOM
 deprecated( "TYPE_MEETINGROOM", "Prefer nti.ntiids.ntiids.TYPE_MEETINGROOM" )
-from nti.ntiids.ntiids import numbers
-deprecated( "numbers", "Prefer nti.ntiids.ntiids.numbers" )
 from nti.ntiids.ntiids import TYPE_ROOM
 deprecated( "TYPE_ROOM", "Prefer nti.ntiids.ntiids.TYPE_ROOM" )
 from nti.ntiids.ntiids import DATE
@@ -39,12 +38,12 @@ from nti.ntiids.ntiids import is_valid_ntiid_string
 deprecated( "is_valid_ntiid_string", "Prefer nti.ntiids.ntiids.is_valid_ntiid_string" )
 from nti.ntiids.ntiids import NTIID
 deprecated( "NTIID", "Prefer nti.ntiids.ntiids.NTIID" )
-from nti.ntiids.ntiids import collections
-deprecated( "collections", "Prefer nti.ntiids.ntiids.collections" )
+
 from nti.ntiids.ntiids import ROOT
 deprecated( "ROOT", "Prefer nti.ntiids.ntiids.ROOT" )
 from nti.ntiids.ntiids import get_provider
 deprecated( "get_provider", "Prefer nti.ntiids.ntiids.get_provider" )
+from nti.ntiids.ntiids import get_specific
 from nti.ntiids.ntiids import is_ntiid_of_type
 deprecated( "is_ntiid_of_type", "Prefer nti.ntiids.ntiids.is_ntiid_of_type" )
 from nti.ntiids.ntiids import escape_provider
@@ -88,6 +87,31 @@ class _OIDResolver(object):
 		dataserver = component.queryUtility( nti_interfaces.IDataserver )
 		return dataserver.get_by_oid( key, ignore_creator=True ) if dataserver else None
 
+def _resolve_user( provider_name, namespace ):
+	dataserver = component.queryUtility( nti_interfaces.IDataserver )
+	user = None
+	if dataserver:
+		user = dataserver.root[namespace].get( provider_name )
+		if not user:
+			# Try unescaping it. See ntiids.py for more. The transformation is
+			# not totally reliable. The - becomes _ when "escaped" (as does whitespace,
+			# but those aren't allowed in user names). This wouldn't be a problem except that
+			# usernames can contain - already. So if the name mixes _ and -, then we can't
+			# recover it
+			provider_name = provider_name.replace( '_', '-' )
+			user = dataserver.root[namespace].get( provider_name )
+
+	return user
+
+@interface.implementer( nid_interfaces.INTIIDResolver )
+class _NamedEntityResolver(object):
+
+	def resolve( self, key ):
+		# TODO: We currently know that everything we support, users and
+		# communities, live in the same namespace
+		ent_name = get_specific( key )
+		return _resolve_user( ent_name, 'users' )
+
 
 def _match( x, container_id, case_sensitive=True ):
 	"""
@@ -106,19 +130,8 @@ class _AbstractUserBasedResolver(object):
 	namespace = 'users'
 
 	def resolve( self, key ):
-		dataserver = component.queryUtility( nti_interfaces.IDataserver )
-		user = None
-		if dataserver:
-			provider_name = get_provider( key )
-			user = dataserver.root[self.namespace].get( provider_name )
-			if not user:
-				# Try unescaping it. See ntiids.py for more. The transformation is
-				# not totally reliable. The - becomes _ when "escaped" (as does whitespace,
-				# but those aren't allowed in user names). This wouldn't be a problem except that
-				# usernames can contain - already. So if the name mixes _ and -, then we can't
-				# recover it
-				provider_name = provider_name.replace( '_', '-' )
-				user = dataserver.root[self.namespace].get( provider_name )
+		provider_name = get_provider( key )
+		user = _resolve_user( provider_name, self.namespace )
 
 		if user:
 			return self._resolve( key, user )

@@ -84,6 +84,7 @@ REL_ACCOUNT_PROFILE = "account.profile"
 REL_ACCOUNT_PROFILE_UPGRADE = "account.profile.needs.updated"
 
 _PLACEHOLDER_USERNAME = 'A_Username_We_Allow_That_Doesnt_Conflict'
+_PLACEHOLDER_REALNAME = 'com.nextthought.account_creation_user WithALastName'
 
 def _create_user( request, externalValue, preflight_only=False ):
 
@@ -282,7 +283,7 @@ def account_preflight_view(request):
 						'birthdate': '1982-01-31',
 						'email': 'testing_account_creation@tests.nextthought.com',
 						'contact_email': 'testing_account_creation@tests.nextthought.com',
-						'realname': 'com.nextthought.account_creation_user WithALastName' }
+						'realname': _PLACEHOLDER_REALNAME }
 
 	for k, v in placeholder_data.items():
 		if k not in externalValue:

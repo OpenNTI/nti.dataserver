@@ -14,6 +14,9 @@
 	<utility factory=".ntiids._MeetingRoomResolver" name="MeetingRoom" />
 	<utility factory=".ntiids._MeetingRoomResolver" name="MeetingRoom:Group" />
 
+	<utility factory=".ntiids._NamedEntityResolver" name="NamedEntity:User" />
+	<utility factory=".ntiids._NamedEntityResolver" name="NamedEntity:Community" />
+
 	<utility factory=".ntiids._TranscriptResolver" name="Transcript" />
 
 	<utility factory=".ntiids._UGDResolver" name="Note" />
@@ -31,6 +34,5 @@
 	<utility factory=".ntiids._ClassResolver" name="meetingroom:class" />
 	<utility factory=".ntiids._SectionResolver" name="classsection" />
 	<utility factory=".ntiids._SectionResolver" name="meetingroom:classsection" />
-
 
 </configure>

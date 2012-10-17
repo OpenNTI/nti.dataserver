@@ -23,7 +23,19 @@ ROOT = "tag:nextthought.com,2011-10:Root"
 
 TYPE_OID = 'OID'
 TYPE_UUID = 'UUID'
-TYPE_INTID = 'INTID' # TODO: Add a resolver for intids
+#: The intid type is not currently used. Instead,
+#: intid is included as a part of the OID, preventing
+#: access using a stale URL after an object is deleted
+TYPE_INTID = 'INTID'
+
+#: Named entities are globally accessible knowing nothing
+#: more than a simple string name. There should be a defined
+#: subtype for each namespace and/or specific kind of
+#: named entity
+TYPE_NAMED_ENTITY = 'NamedEntity'
+
+TYPE_NAMED_ENTITY_USER = TYPE_NAMED_ENTITY + ':User'
+TYPE_NAMED_ENTITY_COMMUNITY = TYPE_NAMED_ENTITY + ':Community'
 
 TYPE_ROOM = 'MeetingRoom'
 TYPE_MEETINGROOM = TYPE_ROOM
