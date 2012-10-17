@@ -6,7 +6,6 @@ from collections import namedtuple
 from zope import schema
 from zope import component
 from zope import interface
-from ZODB import loglevels
 
 from whoosh import analysis
 from whoosh import highlight
@@ -162,8 +161,8 @@ class _SearchFragment(object):
 		return result
 
 def _prune_fragments(termset, original_snippet, original_fragments):
-	fragments = []
 	snippets = []
+	fragments = []
 	_len = len(termset)
 	if _len == 1:
 		return original_snippet, original_fragments
@@ -180,11 +179,19 @@ def _prune_fragments(termset, original_snippet, original_fragments):
 			subs = matches[idx:idx+_len]
 			if len(subs) != _len:
 				break
-			zipped = zip(subs, termset)
-			matched = reduce(lambda x, t: x and t[0].match(t[1]), zipped, True)
+			
+			i = 0
+			pattern = [subs[i].text]
+			for i in range(1, len(subs)):
+				pattern.append(_re_char)
+				pattern.append('+')
+				pattern.append(subs[i].text)
+			
+			pattern = ''.join(pattern)
+			matched = re.search(pattern, sf.text, re.I | re.U)
 			if matched:
+				tmp.append(_Range(subs[0].start, subs[-1].end, None))
 				idx = idx + _len
-				tmp.extend(subs)
 			else:
 				idx += 1
 				
@@ -230,7 +237,6 @@ def word_fragments_highlight(query, text, maxchars=300, surround=50, top=3, anal
 		
 	if query.is_phrase_search:
 		snippet, search_fragments =  _prune_fragments(termset, snippet, search_fragments)
-		logger.log(loglevels.BLATHER, 'prunned ("%r", "%r")', snippet, search_fragments)
 	
 	return snippet, search_fragments
 

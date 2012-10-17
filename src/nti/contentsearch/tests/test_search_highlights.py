@@ -89,7 +89,7 @@ class TestSearchHighlight(ConfiguringTestBase):
 		assert_that(fragments[0].text, is_(_text))
 		assert_that(fragments[0].matches, is_([(16, 23)]))
 		
-	def xtest_word_fragments_phrase(self):
+	def test_word_fragments_phrase(self):
 		text = u'Black and white net. Twenty two bridges in the land of gulf, sixty six crowns and belts. Footprints, distant thunder, ' +\
 				'sharp peak, engulfing land, hidden in the night, sea of clouds, blue line. Form a circle and fly though the heavens and' +\
 				'form the land of creation'
@@ -99,17 +99,17 @@ class TestSearchHighlight(ConfiguringTestBase):
 		assert_that(fragments, has_length(1))
 		assert_that(snippet, is_(_text))
 		assert_that(fragments[0].text, is_(_text))
-		assert_that(fragments[0].matches, is_([(12,21), (22, 26)]))
+		assert_that(fragments[0].matches, is_([(12, 26)]))
 		
-	def xtest_word_fragments_miranda(self):
+	def test_word_fragments_miranda(self):
 		text = u'Gordon Ringer Deputy Attorney General of California argued the cause for petitioner in No 584 With him on the briefs were bad'
 				
 		snippet, fragments = word_fragments_highlight('"cause for petitioner"', text)
-		_text = u"sharp peak, engulfing land, hidden in the night, sea of clouds, blue line. Form a circle"
+		_text = u"Deputy Attorney General of California argued the cause for petitioner in No 584 With him on the briefs were bad"
 		assert_that(fragments, has_length(1))
 		assert_that(snippet, is_(_text))
 		assert_that(fragments[0].text, is_(_text))
-		assert_that(fragments[0].matches, is_([(12,21), (22, 26)]))
+		assert_that(fragments[0].matches, is_([(49, 69)]))
 
 			
 if __name__ == '__main__':
