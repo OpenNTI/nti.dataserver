@@ -18,6 +18,9 @@ __docformat__ = "restructuredtext en"
 from nti.monkey import gevent_patch_on_import
 gevent_patch_on_import.patch()
 
+from nti.monkey import pyramid_excview_tween_iface_patch
+pyramid_excview_tween_iface_patch.patch()
+
 import sys
 from pkg_resources import load_entry_point
 
