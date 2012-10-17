@@ -33,7 +33,7 @@ def _get_terms(query, pattern=_default_pattern):
 	while m is not None:
 		pos = m.end()
 		term = query[m.start():pos]
-		terms.append(term)
+		terms.append(term.lower())
 		m = pattern.search(query, pos)
 	return tuple(terms)
 
