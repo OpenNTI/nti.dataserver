@@ -20,6 +20,7 @@ from nti.contentsearch.common import default_ngram_maxsize
 from nti.contentsearch.common import default_ngram_minsize
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch._datastructures import CaseInsensitiveDict
+from nti.contentsearch._search_results import merge_search_results
 from nti.contentsearch._search_results import empty_search_results
 from nti.contentsearch._search_results import empty_suggest_results
 from nti.contentsearch.common import default_word_tokenizer_expression
@@ -48,31 +49,38 @@ class _SearchableContent(object):
 	def get_schema(self):
 		return getattr(self, '_schema', None)
 			
-	def _get_search_field(self, queryobject):
-		fieldname = content_ if queryobject.is_phrase_search or queryobject.is_prefix_search else quick_
-		return fieldname
+	def _get_search_fields(self, queryobject):
+		if queryobject.is_phrase_search or queryobject.is_prefix_search:
+			result = (content_,)
+		else:
+			result = (quick_, content_)
+		return result
 	
 	def _parse_query(self, query, **kwargs):
 		qo = QueryObject.create(query, **kwargs)
-		fieldname = self._get_search_field(qo)
-		parsed_query = parse_query(fieldname, qo, self.get_schema())
-		return qo, parsed_query
+		fieldnames = self._get_search_fields(qo)
+		parsed_queries = []
+		for fieldname in fieldnames:
+			parsed_queries.append(parse_query(fieldname, qo, self.get_schema()))
+		return qo, parsed_queries
 	
 	def get_search_highlight_type(self):
 		return WORD_HIGHLIGHT
 	
 	def search(self, searcher, query, *args, **kwargs):
-		qo, parsed_query = self._parse_query(query, **kwargs)
-		return self._execute_search(searcher, parsed_query, qo, self.get_search_highlight_type())
+		docids = set()
+		results = None
+		qo, parsed_queries = self._parse_query(query, **kwargs)
+		for parsed_query in parsed_queries:
+			r = self._execute_search(searcher, parsed_query, qo, docids, self.get_search_highlight_type())
+			results = merge_search_results(results, r)
+		return results
 		
 	def suggest_and_search(self, searcher, query, *args, **kwargs):
-		qo, parsed_query = self._parse_query(query, **kwargs)
+		qo = QueryObject.create(query, **kwargs)
 		if ' ' in qo.term or qo.is_prefix_search or qo.is_phrase_search:
-			results = self._execute_search(	searcher, 
-										 	parsed_query,
-										 	qo,
-										 	highlight_type=self.get_search_highlight_type(), 
-										 	creator_method=empty_suggest_and_search_results)
+			results = empty_suggest_and_search_results(qo)
+			results += self.search(searcher, qo)
 		else:
 			result = self.suggest(searcher, qo)
 			suggestions = list(result.suggestions)
@@ -81,12 +89,17 @@ class _SearchableContent(object):
 				qo.set_term(suggestions[0])
 				parsed_query = parse_query(content_, qo, self.get_schema())
 				
-			results = self._execute_search(	searcher,
-										 	parsed_query,
-										 	qo,
-										 	highlight_type=self.get_search_highlight_type(), 
-										 	creator_method=empty_suggest_and_search_results)
-			results.add_suggestions(suggestions)
+				docids = set()
+				results = self._execute_search(	searcher,
+											 	parsed_query,
+											 	qo,
+											 	docids,
+											 	highlight_type=self.get_search_highlight_type(), 
+											 	creator_method=empty_suggest_and_search_results)
+				results.add_suggestions(suggestions)
+			else:
+				results = empty_suggest_and_search_results(qo)
+				results += self.search(searcher, qo)
 
 		return results
 
@@ -99,8 +112,7 @@ class _SearchableContent(object):
 		results.add(records)
 		return results
 	
-	def _execute_search(self, searcher, parsed_query, queryobject, highlight_type=None, creator_method=None):
-		search_field = self._get_search_field(queryobject)
+	def _execute_search(self, searcher, parsed_query, queryobject, docids, highlight_type=None, creator_method=None):
 		creator_method = creator_method or empty_search_results
 		results = creator_method(queryobject)
 		results.highlight_type = highlight_type
@@ -119,13 +131,13 @@ class _SearchableContent(object):
 			return results
 		
 		# return all source objects
-		objects = self.get_objects_from_whoosh_hits(search_hits, search_field)
+		objects = self.get_objects_from_whoosh_hits(search_hits, docids)
 		results.add(objects)
 		
 		return results
 
-	def get_objects_from_whoosh_hits(self, search_hits, search_field):
-		return search_hits
+	def get_objects_from_whoosh_hits(self, search_hits, docids):
+		raise NotImplementedError()
 
 # content analyzer
 
@@ -180,15 +192,18 @@ class Book(_SearchableContent):
 	def get_search_highlight_type(self):
 		return WHOOSH_HIGHLIGHT
 	
-	def get_objects_from_whoosh_hits(self, search_hits, search_field):
+	def get_objects_from_whoosh_hits(self, search_hits, docids):
 		result = []
 		for hit in search_hits:
-			data = _BookHit(ntiid = hit[ntiid_], 
-					 		title = hit[title_],
-					 		content = hit[content_],
-					 		last_modified = hit[last_modified_] )
-			# _set_whoosh_highlight(data, hit, search_field)
-			result.append(data)
+			docnum = hit.docnum
+			if docnum not in docids:
+				docids.add(docnum)
+				data = _BookHit(intid_ = docnum,
+								ntiid  = hit[ntiid_], 
+						 		title  = hit[title_],
+						 		content = hit[content_],
+						 		last_modified = hit[last_modified_] )
+				result.append(data)
 		return result
 
 	def _set_whoosh_highlight(self, data, hit, search_field):
@@ -300,13 +315,14 @@ class UserIndexableContent(_SearchableContent):
 		result[last_modified_] = get_last_modified(data)
 		return result
 
-	def get_objects_from_whoosh_hits(self, search_hits, search_field):
-		result = map(self.get_object_from_whoosh_hit, search_hits)
-		return result
-	
-	def get_object_from_whoosh_hit(self, hit):
-		uid = hit[intid_]
-		result = self.get_object(int(uid))
+	def get_objects_from_whoosh_hits(self, search_hits, docids):
+		result = []
+		for hit in search_hits:
+			uid = int(hit[intid_])
+			if uid not in docids:
+				docids.add(uid)
+				obj = self.get_object(uid)
+				result.append(obj)
 		return result
 	
 	def get_object(self, uid):

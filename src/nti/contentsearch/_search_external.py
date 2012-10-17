@@ -18,7 +18,7 @@ from nti.contentsearch._search_highlights import word_fragments_highlight
 from nti.contentsearch._search_highlights import (WORD_HIGHLIGHT, WHOOSH_HIGHLIGHT)
 
 from nti.contentsearch.common import (	NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
-										SNIPPET, HIT, ID, TARGET_OID, CONTENT, INTID, QUERY,
+										SNIPPET, HIT, ID, CONTENT, INTID, QUERY,
 										HIT_COUNT, ITEMS, SUGGESTIONS, FRAGMENTS, PHRASE_SEARCH)
 
 from nti.contentsearch.common import ( last_modified_, content_, title_, ntiid_)
@@ -153,8 +153,7 @@ class _SuggestAndSearchResultsExternalizer(_SearchResultsExternalizer, _SuggestR
 	
 # search hits
 
-hit_search_external_fields  = (	CLASS, CREATOR, TARGET_OID, TYPE, LAST_MODIFIED, NTIID, \
-								CONTAINER_ID, SNIPPET, ID, INTID)
+hit_search_external_fields  = (	CLASS, CREATOR, TYPE, LAST_MODIFIED, NTIID, CONTAINER_ID, SNIPPET, ID, INTID)
 
 def get_uid(obj):
 	_ds_intid = component.getUtility( zope.intid.IIntIds )
@@ -194,7 +193,6 @@ class _SearchHit(_BaseSearchHit):
 		self._data[CREATOR] = adapted.get_creator() if adapted else u''
 		self._data[NTIID] = adapted.get_ntiid() if adapted else u''
 		self._data[SNIPPET] = adapted.get_content() if adapted else u''
-		self._data[TARGET_OID] = adapted.get_external_oid() if adapted else u''
 		self._data[CONTAINER_ID] = adapted.get_containerId() if adapted else u''
 		self._data[LAST_MODIFIED] = adapted.get_last_modified() if adapted else 0
 		

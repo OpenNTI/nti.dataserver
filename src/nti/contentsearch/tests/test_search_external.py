@@ -29,7 +29,7 @@ from nti.contentsearch._search_external import _MessageInfoSearchHit
 from nti.contentsearch._search_external import _provide_highlight_snippet
 
 
-from nti.contentsearch.common import (NTIID, CREATOR, CONTAINER_ID, CLASS, TYPE, HIT, SNIPPET, TARGET_OID,
+from nti.contentsearch.common import (NTIID, CREATOR, CONTAINER_ID, CLASS, TYPE, HIT, SNIPPET, 
 									  LAST_MODIFIED, HIT_COUNT, ITEMS, QUERY, SUGGESTIONS)
 from nti.contentsearch.common import (ntiid_, content_, title_, last_modified_)
 									
@@ -88,7 +88,6 @@ class TestSearchExternal(ConfiguringTestBase):
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.0'))
 		assert_that(d, has_entry(CREATOR, u'carlos.sanchez@nextthought.com'))
 		assert_that(d, has_entry(NTIID, u'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x085a:5573657273'))
-		assert_that(d, has_entry(TARGET_OID, u'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x085a:5573657273'))
 		assert_that(d,
 			has_entry(SNIPPET, u'You know how to add subtract multiply and divide In fact you may already know how to solve many of the problems'))
 		
@@ -98,7 +97,6 @@ class TestSearchExternal(ConfiguringTestBase):
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:AOPS-HTML-Howes_converted.0'))
 		assert_that(d, has_entry(CREATOR, u'carlos.sanchez@nextthought.com'))
 		assert_that(d, has_entry(NTIID, u'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x1876:5573657273'))
-		assert_that(d, has_entry(TARGET_OID, u'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x1876:5573657273'))
 		assert_that(d, has_entry(SNIPPET, u'redaction serving a sentence in a Michigan jail'))
 		
 	def test_search_hit_note_dict(self):
@@ -107,7 +105,6 @@ class TestSearchExternal(ConfiguringTestBase):
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.0'))
 		assert_that(d, has_entry(CREATOR, u'carlos.sanchez@nextthought.com'))
 		assert_that(d, has_entry(NTIID, u'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x0860:5573657273'))
-		assert_that(d, has_entry(TARGET_OID, u'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x0860:5573657273'))
 		assert_that(d, has_entry(SNIPPET, u'All Waves Rise now and Become my Shield Lightning Strike now and'))
 		
 	def test_search_hit_messgeinfo_dict(self):
@@ -116,7 +113,6 @@ class TestSearchExternal(ConfiguringTestBase):
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:zope.security.management.system_user-OID-0x82:53657373696f6e73'))
 		assert_that(d, has_entry(CREATOR, u'troy.daley@nextthought.com'))
 		assert_that(d, has_entry(NTIID, u'tag:nextthought.com,2011-10:zope.security.management.system_user-OID-0x8a:53657373696f6e73'))
-		assert_that(d, has_entry(TARGET_OID, u'tag:nextthought.com,2011-10:zope.security.management.system_user-OID-0x8a:53657373696f6e73'))
 		assert_that(d, has_entry(SNIPPET, u'Zanpakuto and Zangetsu'))
 		
 	@WithMockDSTrans
@@ -135,7 +131,6 @@ class TestSearchExternal(ConfiguringTestBase):
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:bleach-manga'))
 		assert_that(d, has_entry(CREATOR, u'nt@nti.com'))
 		assert_that(d, has_entry(NTIID, oidstr))
-		assert_that(d, has_entry(TARGET_OID, oidstr))
 		assert_that(d, has_entry(SNIPPET, u'It is not enough to mean well we actually have to do well'))
 		
 	@WithMockDSTrans
@@ -153,7 +148,6 @@ class TestSearchExternal(ConfiguringTestBase):
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:bleach-manga'))
 		assert_that(d, has_entry(CREATOR, u'nt@nti.com'))
 		assert_that(d, has_entry(NTIID, oidstr))
-		assert_that(d, has_entry(TARGET_OID, oidstr))
 		assert_that(d, has_entry(SNIPPET, u'Kon saw it The Secret of a Beautiful Office Lady'))
 		
 	@WithMockDSTrans
@@ -173,7 +167,6 @@ class TestSearchExternal(ConfiguringTestBase):
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:bleach-manga'))
 		assert_that(d, has_entry(CREATOR, u'nt@nti.com'))
 		assert_that(d, has_entry(NTIID, oidstr))
-		assert_that(d, has_entry(TARGET_OID, oidstr))
 		assert_that(d, has_entry(SNIPPET, u'overcome it everytime I have been on the verge of death Fear'))
 
 	def test_search_hit_book(self):
