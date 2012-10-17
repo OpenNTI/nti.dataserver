@@ -204,7 +204,7 @@ setup(
 		'setproctitle >= 1.1.6',
 		'setuptools',
 		'simplejson >= 2.6.2',
-		'sympy == 0.7.1', # sympy-docs-html-0.7.1 is currently greater
+		'sympy == 0.7.2', # sympy-docs-html-0.7.1 is currently greater
 		'six >= 1.2.0',
 		#'slimit',
 		'supervisor >= 3.0b1',
