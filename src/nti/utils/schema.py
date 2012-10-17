@@ -54,6 +54,8 @@ class InvalidValue(sch_interfaces.InvalidValue):
 		super(InvalidValue,self).__init__( *args )
 		if 'value' in kwargs:
 			self.value = kwargs['value']
+		if 'field' in kwargs:
+			self.field = kwargs['field']
 
 # And we monkey patch it in to InvalidValue as well
 if not hasattr(sch_interfaces.InvalidValue, 'value' ):

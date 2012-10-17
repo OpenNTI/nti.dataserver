@@ -129,7 +129,7 @@ def _create_user( request, externalValue, preflight_only=False ):
 					  { 'message': _("Please provide your first and last names." ),
 						'field': 'realname',
 						'code': e.__class__.__name__ },
-						exc_info[2]	)
+					  exc_info[2] )
 	except zope.schema.interfaces.RequiredMissing as e:
 		obj_io.handle_validation_error( request, e )
 	except z3c.password.interfaces.InvalidPassword as e:
@@ -148,7 +148,8 @@ def _create_user( request, externalValue, preflight_only=False ):
 			# Given a choice, identify this on the username, since
 			# we are forcing them to be the same
 			_raise_error( request, hexc.HTTPUnprocessableEntity,
-						  {'field': 'Username', 'fields': ['Username', 'email'],
+						  {'field': 'Username',
+						   'fields': ['Username', 'email'],
 						   'message': str(e),
 						   'code': e.__class__.__name__},
 						exc_info[2] )
@@ -163,9 +164,10 @@ def _create_user( request, externalValue, preflight_only=False ):
 			exc_info = sys.exc_info()
 			_raise_error( request, hexc.HTTPUnprocessableEntity,
 						  {'field': 'Username',
+						   'fields': ['Username', 'realname'],
 						   'message': _('Username cannot be blank'),
 						   'code': 'UsernameCannotBeBlank'},
-						   exc_info[2] )
+						  exc_info[2] )
 		policy, _site = site_policies.find_site_policy( request=request )
 		if policy:
 			e = policy.map_validation_exception( externalValue, e )
