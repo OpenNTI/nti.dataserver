@@ -155,6 +155,7 @@ class _SearchFragment(object):
 				idx = fragment_lower.find(term, endidx)
 			
 		matches = cls._clean_ranges(matches)
+		matches = sorted(matches, key=lambda ra: ra.start)
 		result = _SearchFragment()
 		result.text = fragment
 		result.matches = matches if matches else ()
@@ -167,42 +168,58 @@ def _prune_fragments(termset, original_snippet, original_fragments):
 	if _len == 1:
 		return original_snippet, original_fragments
 	
+	# create a pattern for the phrase terms
+	termset = list(termset) if not isinstance(termset, list) else termset
+	pattern = [termset[0]]
+	for i in range(1, len(termset)):
+		pattern.append(_re_char)
+		pattern.append('+')
+		pattern.append(termset[i])		
+	pattern = ''.join(pattern)
+	pattern = re.compile(pattern, re.I | re.U)
+			
 	for sf in original_fragments:
 		matches = sf.matches
 		matched_len = len(matches)
 		if matched_len < _len:
 			continue
 		
-		idx = 0
-		tmp = []
-		while idx < len(matches):
-			subs = matches[idx:idx+_len]
-			if len(subs) != _len:
-				break
-			
-			i = 0
-			pattern = [subs[i].text]
-			for i in range(1, len(subs)):
-				pattern.append(_re_char)
-				pattern.append('+')
-				pattern.append(subs[i].text)
-			
-			pattern = ''.join(pattern)
-			matched = re.search(pattern, sf.text, re.I | re.U)
-			if matched:
-				tmp.append(_Range(subs[0].start, subs[-1].end, None))
-				idx = idx + _len
-			else:
-				idx += 1
-				
-		if tmp:
-			snippets.append(sf.text)
-			sf.matches = tmp
+		matched = re.search(pattern, sf.text)
+		if matched:
+			sf.matches = [_Range(matched.start(), matched.end(), None)]
 			fragments.append(sf)
+			snippets.append(sf.text)
 		
 	fragments = original_fragments if not fragments else fragments
 	snippet = '...'.join(snippets) if snippets else original_snippet
 	return snippet, fragments
+
+def _search_fragment_snippet(text, fragment, surround=50):
+	start = fragment.matches[0].start
+	end = fragment.matches[-1].end
+
+	st = max(0, start - surround)
+	if st == 0:
+		start = 0
+	else:
+		for idx in range(st, start):
+			if _char_tester.match(text[idx]):
+				start = idx + 1
+				break
+	
+	_len = len(text)
+	ed = min(_len, end + surround)
+	if ed == _len:
+		end = _len
+	else:
+		for idx in range(-ed, -end):
+			if _char_tester.match(text[-idx]):
+				end = -idx
+				break
+		
+	snippet = text[start:end]	
+	print(snippet)
+	return snippet
 
 def word_fragments_highlight(query, text, maxchars=300, surround=50, top=3, analyzer=None, order=highlight.FIRST):
 
@@ -232,8 +249,9 @@ def word_fragments_highlight(query, text, maxchars=300, surround=50, top=3, anal
 			search_fragments.append(sf)	
 		snippet = formatter(text, fragments)
 	else:
-		snippet = text
-		search_fragments = [_SearchFragment.create_from_terms(text, termset, query.is_phrase_search)]
+		sf = _SearchFragment.create_from_terms(text, termset, query.is_phrase_search)
+		snippet = _search_fragment_snippet(text, sf)
+		search_fragments = [sf]
 		
 	if query.is_phrase_search:
 		snippet, search_fragments =  _prune_fragments(termset, snippet, search_fragments)
