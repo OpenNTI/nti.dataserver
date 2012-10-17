@@ -389,8 +389,10 @@ class UsernameCannotContainRealname(InvalidValue): pass
 class UsernameCannotContainAt(user_interfaces.UsernameContainsIllegalChar): pass
 class UsernameCannotContainNextthoughtCom(InvalidValue): pass
 class FieldContainsCensoredSequence(InvalidValue): pass
-class MissingFirstName(zope.schema.interfaces.RequiredMissing): pass
-class MissingLastName(zope.schema.interfaces.RequiredMissing): pass
+class MissingFirstName(zope.schema.interfaces.RequiredMissing):
+	field = 'realname'
+class MissingLastName(zope.schema.interfaces.RequiredMissing):
+	field = 'realname'
 class AtInUsernameImpliesMatchingEmail(InvalidValue): pass
 
 @interface.implementer(ISitePolicyUserEventListener)
@@ -559,7 +561,7 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 		human_name_parts = human_name.first_list + human_name.middle_list + human_name.last_list
 		if any( (x.lower() in user.username.lower() for x in human_name_parts) ):
 			raise UsernameCannotContainRealname("Username %s cannot include any part of the real name %s" % # TODO: I18N
-												(user.username, names.realname), 'Username', user.username, value=user.username )
+												(user.username, names.realname), 'Username', user.username, value=user.username, field='Username' )
 
 		if '@' in user.username:
 			raise UsernameCannotContainAt( user.username, user.ALLOWED_USERNAME_CHARS ).new_instance_restricting_chars( '@' )
