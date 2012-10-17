@@ -31,7 +31,7 @@ def _index(rim, obj, ds_intid):
 		return True
 	return False
 
-def _reindex(user, users, ds_intid, ignore_errors=False):
+def reindex_ugd(user, users, ds_intid, ignore_errors=False):
 	username = user.username
 	logger.debug('Reindexing object(s) for user %s' % username)
 	
@@ -74,7 +74,7 @@ def do_evolve(context):
 	# make sure we register/provide the intid so it can be found
 	component.provideUtility(ds_intid, zope.intid.IIntIds )
 	for user in users.values():
-		_reindex(user, users, ds_intid)
+		reindex_ugd(user, users, ds_intid)
 		
 	logger.debug('Evolution done!!!')
 		
