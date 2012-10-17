@@ -23,8 +23,7 @@ from nti.contentsearch import _cloudsearch_store
 from nti.contentsearch import _cloudsearch_index
 from nti.contentsearch import _cloudsearch_query
 from nti.contentsearch import _cloudsearch_adapter
-from nti.contentsearch.common import ( 	HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, SNIPPET,
-										NTIID, TARGET_OID)
+from nti.contentsearch.common import (HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, SNIPPET, NTIID)
 
 from nti.contentsearch.tests import zanpakuto_commands
 from nti.contentsearch.tests import ConfiguringTestBase
@@ -169,7 +168,6 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 		hit = items[0]
 		assert_that(hit, has_entry(CLASS, HIT))
 		assert_that(hit, has_entry(NTIID, is_not(None)))
-		assert_that(hit, has_entry(TARGET_OID, is_not(None)))
 		assert_that(hit, has_entry(CONTAINER_ID, 'tag:nextthought.com,2011-10:bleach-manga'))
 		assert_that(hit, has_entry(SNIPPET, 'All Waves Rise now and Become my Shield Lightning Strike now and Become my Blade'))
 

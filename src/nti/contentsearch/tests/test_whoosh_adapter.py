@@ -13,8 +13,7 @@ from nti.externalization.externalization import toExternalObject
 
 from nti.contentsearch import interfaces as search_interfaces
 
-from nti.contentsearch.common import ( 	HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS,
-										NTIID, TARGET_OID)
+from nti.contentsearch.common import ( HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, NTIID)
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
@@ -93,11 +92,7 @@ class TestWhooshUserAdapter(ConfiguringTestBase):
 		assert_that(items, has_length(1))
 		assert_that(items[0], has_entry(CLASS, HIT))
 		assert_that(items[0], has_entry(NTIID, is_not(None)))
-		assert_that(items[0], has_entry(TARGET_OID, is_not(None)))
 		assert_that(items[0], has_entry(CONTAINER_ID, 'tag:nextthought.com,2011-10:bleach-manga'))
-
-		hits = toExternalObject(uim.search("*"))
-		assert_that(hits, has_entry(HIT_COUNT, 0))
 
 		hits = toExternalObject(uim.search("ra*"))
 		assert_that(hits, has_entry(HIT_COUNT, 3))
