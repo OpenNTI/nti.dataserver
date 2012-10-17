@@ -124,6 +124,7 @@ class TestApplicationAssessment(SharedApplicationTestBase):
 			assert_that( res.json_body, has_entry( 'AssessmentItems', has_item( has_entry( 'NTIID', self.child_ntiid ) ) ) )
 			assert_that( res.json_body, has_entry( 'Last Modified', greater_than( 0 ) ) )
 
+
 	def _check_submission( self, res ):
 		assert_that( res.json_body, has_entry( StandardExternalFields.CLASS, 'AssessedQuestion' ) )
 		assert_that( res.json_body, has_entry( StandardExternalFields.CREATED_TIME, is_( float ) ) )
