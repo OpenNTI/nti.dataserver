@@ -338,6 +338,10 @@ class TestPreflightView(_AbstractValidationViewBase):
 												has_entry( 'required', True ) ) ) )
 
 		assert_that( val, has_entry( 'ProfileSchema',
+									 has_entry( 'realname',
+												has_entry( 'required', True ) ) ) )
+
+		assert_that( val, has_entry( 'ProfileSchema',
 									 has_entry( 'participates_in_mathcounts',
 												has_entry( 'required', False ) ) ) )
 		assert_that( val, has_entry( 'ProfileSchema',
