@@ -125,6 +125,9 @@ setup(
 		'cryptacular >= 1.4.1', # see z3c.crypt
 		'cssselect >= 0.7.1', # Used by pyquery
 		'cython >= 0.17.1',
+		# Adds support for detecting aborts to transactions which
+		# otherwise only detect failed commits
+		'dm.transaction.aborthook >= 1.0',
 		# support for defining and evolving classes based on schemas
 		# pulls in dm.reuse
 		'dm.zope.schema >= 2.0.1',

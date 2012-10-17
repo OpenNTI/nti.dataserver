@@ -54,6 +54,7 @@ class SessionService(object):
 		self._watching_sessions = set()
 		self._session_watchdog = self._spawn_session_watchdog()
 
+		transactions.add_abort_hooks()
 
 	@property
 	def _session_db(self):
@@ -349,15 +350,18 @@ class SessionService(object):
 		msgs, _ = self._redis.pipeline().lrange( queue_name, 0, -1 ).delete(  queue_name ).execute()
 		# If the transaction aborts, got to put these back so they don't get lost
 		if msgs: # lpush requires at least one message
-			# FIXME: TODO: This fails if the transaction is actually
-			# aborted instead of being committed and failing
-			def after_commit( success ):
+			# By defaulting the success value to false, when
+			# called as a commit hook with one parameter, we do the right
+			# thing, and also do the right thing when called on abort with
+			# no parameter
+			def after_commit_or_abort( success=False ):
 				if success:
 					return
 				logger.info( "Pushing messages back onto %s on abort", queue_name )
 				msgs.reverse()
 				self._redis.lpush( queue_name, *msgs )
-			transaction.get().addAfterCommitHook( after_commit )
+			transaction.get().addAfterCommitHook( after_commit_or_abort )
+			transaction.get().addAfterAbortHook( after_commit_or_abort )
 			# unwrap None encoding, decompress strings. The result is a generator
 			# because it's very rarely actually used
 			result = (None if not x else zlib.decompress(x) for x in msgs)

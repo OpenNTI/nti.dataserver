@@ -1,12 +1,20 @@
 #!/usr/bin/env python
 """
 Support for working with the :mod:`transaction` module.
+
+This module depends on the :mod:`dm.transaction.aborthook` module
+and directly provides the :func:`add_abort_hooks` function; you should
+call this if you need such functionality.
+
 """
 #$Id$
 from zope import interface
 
 import transaction
 import gevent.queue
+
+from dm.transaction.aborthook import add_abort_hooks
+add_abort_hooks = add_abort_hooks # pylint
 
 @interface.implementer(transaction.interfaces.IDataManager)
 class ObjectDataManager(object):
