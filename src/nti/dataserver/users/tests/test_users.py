@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 
-from hamcrest import (assert_that, is_, has_entry, instance_of,
-					  is_in, not_none, is_not, greater_than_or_equal_to,
-					  has_value, has_property,
-					  same_instance, is_not, none, has_length,
-					  contains)
+from hamcrest import (
+	contains, has_value, is_in, same_instance,
+    assert_that, greater_than_or_equal_to, has_entry, has_length,
+    has_property, is_, is_not, none, )
 does_not = is_not
 from hamcrest import has_item
 from hamcrest import greater_than
@@ -23,24 +22,22 @@ from nti.dataserver.users import User, FriendsList, Device, Community, _FriendsL
 from nti.dataserver.interfaces import IFriendsList
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.activitystream_change import Change
-from . import provides
+from nti.tests import provides
 
 from nti.externalization.persistence import getPersistentState
-
+from nti.externalization.externalization import to_external_object
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 from zope.container.interfaces import InvalidItemType
 from zope.component import eventtesting
 from zope.location import interfaces as loc_interfaces
 
-from . import  mock_dataserver
-from .mock_dataserver import WithMockDSTrans
-from .mock_dataserver import WithMockDS
+from nti.dataserver.tests import mock_dataserver
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+from nti.dataserver.tests.mock_dataserver import WithMockDS
 import persistent.wref
 
-from nti.externalization.externalization import to_external_object
-from nti.externalization.internalization import update_from_external_object
-
+from nti.ntiids import ntiids
 from nti.contentrange.contentrange import ContentRangeDescription
 import time
 
@@ -84,6 +81,13 @@ def test_friends_list_case_insensitive():
 
 def test_everyone_has_creator():
 	assert_that( users.Everyone(), has_property( 'creator', nti_interfaces.SYSTEM_USER_NAME ) )
+
+def test_cannot_create_with_invalid_name():
+	with assert_raises(zope.schema.interfaces.ConstraintNotSatisfied):
+		users.Entity( username=nti_interfaces.SYSTEM_USER_NAME )
+
+	with assert_raises(zope.schema.interfaces.ConstraintNotSatisfied):
+		users.Entity( username=nti_interfaces.SYSTEM_USER_ID )
 
 
 class TestUser(mock_dataserver.ConfiguringTestBase):
@@ -705,6 +709,17 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		assert_that( intids.queryId( msg_info ), is_( none() ) )
 		assert_that( intids.queryObject( intid ), is_( none() ) )
 
+	@WithMockDSTrans
+	def test_resolve_by_ntiid(self):
+		user1 = User.create_user( mock_dataserver.current_mock_ds, username='foo@bar' )
+		comm = Community.get_entity( username='Everyone')
+
+		assert_that( ntiids.find_object_with_ntiid( user1.NTIID), is_( user1 ) )
+		assert_that( ntiids.find_object_with_ntiid( comm.NTIID), is_( comm ) )
+
+		assert_that( comm.NTIID, is_( 'tag:nextthought.com,2011-10:system-NamedEntity:Community-everyone' ) )
+		assert_that( to_external_object( comm ),
+					 has_entry( 'NTIID', 'tag:nextthought.com,2011-10:system-NamedEntity:Community-everyone'))
 
 from zope.event import notify
 from nti.apns import APNSDeviceFeedback

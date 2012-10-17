@@ -624,7 +624,7 @@ def get_object_by_oid( connection, oid_string, ignore_creator=False ):
 			if creator_name != None: # must check
 				if ntiids.escape_provider(creator_name) != required_user:
 					result = None
-			elif required_user and required_user != interfaces.SYSTEM_USER_NAME:
+			elif required_user and required_user not in (interfaces.SYSTEM_USER_NAME,interfaces.SYSTEM_USER_ID):
 				result = None
 
 		return result

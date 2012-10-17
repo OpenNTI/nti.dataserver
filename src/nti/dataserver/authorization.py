@@ -148,7 +148,7 @@ class _StringPrincipal(_AbstractPrincipal):
 		self.title = name
 
 def _system_user_factory( string ):
-	assert string == nti_interfaces.SYSTEM_USER_NAME
+	assert string in (nti_interfaces.SYSTEM_USER_NAME, nti_interfaces.SYSTEM_USER_ID)
 	return nti_interfaces.system_user
 
 @interface.implementer(nti_interfaces.IGroup)

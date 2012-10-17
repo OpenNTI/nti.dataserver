@@ -332,7 +332,8 @@ from zope.security.interfaces import IGroupAwarePrincipal
 from zope.security.interfaces import IPermission
 
 from zope.security.management import system_user
-SYSTEM_USER_NAME = system_user.id
+SYSTEM_USER_ID = system_user.id
+SYSTEM_USER_NAME = system_user.title.lower()
 EVERYONE_GROUP_NAME = 'system.Everyone'
 AUTHENTICATED_GROUP_NAME = 'system.Authenticated'
 ACE_ACT_ALLOW = "Allow"
@@ -351,6 +352,9 @@ ACT_ACT_DENY = _psec.Deny
 ALL_PERMISSIONS = _psec.ALL_PERMISSIONS
 ACE_DENY_ALL = _psec.DENY_ALL
 interface.directlyProvides( ALL_PERMISSIONS, IPermission )
+
+import nti.externalization.oids
+nti.externalization.oids.DEFAULT_EXTERNAL_CREATOR = SYSTEM_USER_NAME
 
 class IImpersonatedAuthenticationPolicy(IAuthenticationPolicy):
 	"""
@@ -394,9 +398,13 @@ IGroupAwarePrincipal.__bases__ = tuple( itertools.chain( IGroupAwarePrincipal.__
 
 from nti.utils.schema import ValidTextLine
 
+def valid_entity_username(entity_name):
+	return entity_name and entity_name.lower() not in (SYSTEM_USER_ID.lower(),SYSTEM_USER_NAME.lower())
+
 class IEntity(IZContained, IAnnotatable):
 	username = ValidTextLine(
 		title=u'The username',
+		constraint=valid_entity_username
 		)
 
 class IMissingEntity(IEntity):

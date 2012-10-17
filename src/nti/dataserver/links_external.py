@@ -69,8 +69,8 @@ def render_link( link, nearest_site=None ):
 	ntiid = getattr( target, 'ntiid', None ) \
 		or getattr( target, 'NTIID', None ) \
 		or (isinstance(target,six.string_types) and ntiids.is_valid_ntiid_string(target) and target)
-	if ntiid and not nti_interfaces.IEnclosedContent.providedBy( target ):
-		# Although enclosures have an NTIID, we want to avoid using it
+	if ntiid and not nti_interfaces.IEnclosedContent.providedBy( target ) and not nti_interfaces.IEntity.providedBy( target ):
+		# Although enclosures and entities have an NTIID, we want to avoid using it
 		# if possible because it has a much nicer pretty url.
 		href = ntiid
 		# We're using ntiid as a backdoor for arbitrary strings.
