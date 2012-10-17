@@ -2,7 +2,6 @@ from __future__ import print_function, unicode_literals
 
 import re
 from collections import namedtuple
-from collections import defaultdict
 
 from zope import schema
 from zope import component
@@ -51,9 +50,8 @@ def _get_default_analyzer():
 		sw_util = component.queryUtility(search_interfaces.IStopWords) 
 		stoplist = sw_util.stopwords() if sw_util else ()
 		analyzers = [analysis.RegexTokenizer(expression=_default_expression, gaps=False),
-					 analysis.LowercaseFilter() ]
-		if stoplist:
-			analyzers.append(analysis.StopFilter(stoplist=stoplist))
+					 analysis.LowercaseFilter(),
+					 analysis.StopFilter(stoplist=stoplist) ]
 		_default_analyzer = analysis.CompositeAnalyzer(*analyzers)
 	return _default_analyzer
 
@@ -126,29 +124,21 @@ class _SearchFragment(object):
 	@classmethod
 	def create_from_whoosh_fragment(cls, wf):
 		matches = []
-		fragment = wf.text[wf.startchar:wf.endchar]
-		fragment_lower = fragment.lower()
-		tokens = defaultdict(int)
+		offset = wf.startchar
 		for t in wf.matches:
 			txt = t.text.lower()
-			_len = len(txt)
-			idx = tokens.get(txt)
-			idx = fragment_lower.find(txt, idx)
-			if idx >=0:
-				endidx = idx + _len
-				mrange = _Range(idx, endidx, txt)
-				if _is_word_start(idx, fragment) and _is_word_end(endidx, fragment):
-					matches.append(mrange)
-				tokens[t.text] = endidx 
-				
-		matches = cls._clean_ranges(matches) #TODO: Do we have to check this?
+			idx = t.startchar - offset
+			endidx = t.endchar - offset
+			mrange = _Range(idx, endidx, txt)
+			matches.append(mrange)
+		
 		result = _SearchFragment()
-		result.text = fragment
+		result.text = wf.text[wf.startchar:wf.endchar]
 		result.matches = matches if matches else ()
 		return result
 	
 	@classmethod
-	def create_from_terms(cls, text, termset):
+	def create_from_terms(cls, text, termset, check_word=False):
 		matches = []
 		fragment = text
 		fragment_lower = fragment.lower()
@@ -160,10 +150,10 @@ class _SearchFragment(object):
 			idx = fragment_lower.find(term, idx)
 			while idx >=0:
 				endidx = idx + _len
-				mrange = _Range(idx, endidx, term)
-				matches.append(mrange)
-				idx = endidx
-				idx = fragment_lower.find(term, idx)
+				if not check_word or (_is_word_start(idx, fragment) and _is_word_end(endidx, fragment)):
+					mrange = _Range(idx, endidx, term)
+					matches.append(mrange)
+				idx = fragment_lower.find(term, endidx)
 			
 		matches = cls._clean_ranges(matches)
 		result = _SearchFragment()
@@ -171,14 +161,14 @@ class _SearchFragment(object):
 		result.matches = matches if matches else ()
 		return result
 
-def _prune_fragments(termset, snippet, fragments):
-	result = []
+def _prune_fragments(termset, original_snippet, original_fragments):
+	fragments = []
 	snippets = []
 	_len = len(termset)
 	if _len == 1:
-		return snippet, fragments
+		return original_snippet, original_fragments
 	
-	for sf in fragments:
+	for sf in original_fragments:
 		matches = sf.matches
 		matched_len = len(matches)
 		if matched_len < _len:
@@ -201,12 +191,14 @@ def _prune_fragments(termset, snippet, fragments):
 		if tmp:
 			snippets.append(sf.text)
 			sf.matches = tmp
-			result.append(sf)
+			fragments.append(sf)
 		
-	snippet = '...'.join(snippets)
-	return snippet, result
+	fragments = original_fragments if not fragments else fragments
+	snippet = '...'.join(snippets) if snippets else original_snippet
+	return snippet, fragments
 
 def word_fragments_highlight(query, text, maxchars=300, surround=50, top=3, analyzer=None, order=highlight.FIRST):
+
 	# get query terms
 	text = unicode(text)	
 	query = search_interfaces.ISearchQuery(query)
@@ -232,15 +224,13 @@ def word_fragments_highlight(query, text, maxchars=300, surround=50, top=3, anal
 			sf = _SearchFragment.create_from_whoosh_fragment(f)
 			search_fragments.append(sf)	
 		snippet = formatter(text, fragments)
-			
-		logger.log(loglevels.TRACE, 'Snippet "%r", Fragments %r)', snippet, fragments)
 	else:
 		snippet = text
-		logger.log(loglevels.TRACE, 'Creating fragments from terms ("%r", "%r")', termset, snippet)
-		search_fragments = [_SearchFragment.create_from_terms(text, termset)]
+		search_fragments = [_SearchFragment.create_from_terms(text, termset, query.is_phrase_search)]
 		
 	if query.is_phrase_search:
 		snippet, search_fragments =  _prune_fragments(termset, snippet, search_fragments)
+		logger.log(loglevels.BLATHER, 'prunned ("%r", "%r")', snippet, search_fragments)
 	
 	return snippet, search_fragments
 
