@@ -173,7 +173,7 @@ def create_book_schema():
 							title = fields.TEXT(stored=True, spelling=True),
 				  			last_modified = fields.DATETIME(stored=True),
 				  			keywords = fields.KEYWORD(stored=True), 
-				 			quick = fields.NGRAM(minsize=minsize, maxsize=maxsize, phrase=True),
+				 			quick = fields.NGRAM(minsize=minsize, maxsize=maxsize, phrase=False, stored=False),
 				 			related = fields.KEYWORD(stored=True),
 				 			content = fields.TEXT(stored=True, spelling=True, phrase=True, analyzer=content_analyzer()))
 	return schema
@@ -387,7 +387,7 @@ def create_highlight_schema():
 	minsize, maxsize = ngram_minmax() 			
 	schema = _create_treadable_schema()
 	schema.add(content_, fields.TEXT(stored=False, spelling=True, phrase=True, analyzer=content_analyzer()))
-	schema.add(quick_, fields.NGRAM(minsize=minsize, maxsize=maxsize, phrase=True))
+	schema.add(quick_, fields.NGRAM(minsize=minsize, maxsize=maxsize, phrase=False, stored=False))
 	return schema
 
 class Highlight(TreadableIndexableContent):
