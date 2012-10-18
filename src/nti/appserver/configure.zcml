@@ -306,7 +306,7 @@
 
 	<!-- UI Rendering -->
 	<include package="." file="configure_tables.zcml" />
-
+	<include package="." file="configure_feeds.zcml" />
 	<!-- Content censoring -->
 	<include package="." file="configure_censor.zcml" />
 

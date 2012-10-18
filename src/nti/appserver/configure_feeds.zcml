@@ -1,0 +1,11 @@
+<!-- -*- mode: nxml -*- -->
+<configure
+	xmlns="http://namespaces.zope.org/zope"
+	xmlns:zcml="http://namespaces.zope.org/zcml">
+	<include package="zope.component" />
+
+	<adapter factory=".ugd_feed_views.NoteFeedRenderer" />
+	<adapter factory=".ugd_feed_views.EntityFeedRenderer" />
+	<adapter factory=".ugd_feed_views.SelectedRangeFeedRenderer" />
+
+</configure>
