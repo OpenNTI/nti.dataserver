@@ -2,6 +2,11 @@ from __future__ import print_function, unicode_literals
 
 generation = 12
 
+import math
+import multiprocessing
+
+from concurrent.futures import ProcessPoolExecutor
+
 import zope.intid
 from zope import component
 from ZODB.POSException import POSKeyError
@@ -31,7 +36,11 @@ def _index(rim, obj, ds_intid):
 		return True
 	return False
 
-def reindex_ugd(user, users, ds_intid, ignore_errors=False):
+def reindex_ugd(user, all_users_map, ds_intid, ignore_errors=False):
+	
+	if user is None:
+		return None
+	
 	username = user.username
 	logger.debug('Reindexing object(s) for user %s' % username)
 	
@@ -48,7 +57,7 @@ def reindex_ugd(user, users, ds_intid, ignore_errors=False):
 			if _index(rim, obj, ds_intid):
 				counter = counter + 1
 				for uname in get_sharedWith(obj):
-					sharing_user = users.get(uname, None)
+					sharing_user = all_users_map.get(uname, None)
 					if sharing_user and uname != username: 
 						srim = search_interfaces.IRepozeEntityIndexManager(sharing_user, None)
 						if srim is not None:
@@ -62,6 +71,22 @@ def reindex_ugd(user, users, ds_intid, ignore_errors=False):
 
 	logger.debug('%s object(s) for user %s were reindexed' % (counter, username))
 	
+	return counter
+	
+def _chunk(_input, input_size=None, chunks=multiprocessing.cpu_count()):
+	input_size = input_size or len(_input)
+	size = math.ceil(input_size/chunks)
+	size = int(max(1, size))
+	return map(None, *([iter(_input)] * size))
+
+def _reindex_user_list(user_list, all_users_map, ds_intid):
+	counter = 0
+	for user in user_list:
+		cnt = reindex_ugd(user, all_users_map, ds_intid)
+		if cnt is not None:
+			counter += 1
+	return counter
+		
 def do_evolve(context):
 	conn = context.connection
 	root = conn.root()
@@ -73,9 +98,21 @@ def do_evolve(context):
 	
 	# make sure we register/provide the intid so it can be found
 	component.provideUtility(ds_intid, zope.intid.IIntIds )
-	for user in users.values():
-		reindex_ugd(user, users, ds_intid)
-		
+	
+	no_users = len(users)
+	chunks = _chunk(users.values(), no_users)
+	
+	logger.debug('Evolving data for %s user(s)' % no_users)
+	
+	counter = 0
+	with ProcessPoolExecutor() as executor:
+		for cnt in executor.map(_reindex_user_list, 
+								chunks,
+								[users] * len(chunks),
+								[ds_intid] * len(chunks)):
+			counter += cnt
+			logger.debug('%s out of %s user(s) have been processed' % (counter, no_users))
+			
 	logger.debug('Evolution done!!!')
 		
 def evolve(context):
