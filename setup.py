@@ -147,7 +147,7 @@ setup(
 		# NOTE2: This will go away soon, merged into pyzmq 2.2dev as zmq.green
 		'gevent_zeromq >= 0.2.5',
 		'greenlet >= 0.4.0',
-		'gunicorn >= 0.14.6',
+		'gunicorn == 0.14.6', # NOTE: 0.15.0 is out as of 20121018 but will probably require some adaptation. Talk to JAM first.
 		'hiredis >= 0.1.1', # Redis C parser
 		'html5lib == 0.95',
 		 # WSGI middleware for profiling. Defaults to storing
