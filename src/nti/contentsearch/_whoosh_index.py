@@ -20,7 +20,6 @@ from nti.contentsearch.common import default_ngram_maxsize
 from nti.contentsearch.common import default_ngram_minsize
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch._datastructures import CaseInsensitiveDict
-from nti.contentsearch._search_results import merge_search_results
 from nti.contentsearch._search_results import empty_search_results
 from nti.contentsearch._search_results import empty_suggest_results
 from nti.contentsearch.common import default_word_tokenizer_expression
@@ -57,23 +56,20 @@ class _SearchableContent(object):
 		return result
 	
 	def _parse_query(self, query, **kwargs):
+		parsed_query = None
 		qo = QueryObject.create(query, **kwargs)
 		fieldnames = self._get_search_fields(qo)
-		parsed_query = None
 		for fieldname in fieldnames:
 			pq = parse_query(fieldname, qo, self.get_schema())
 			parsed_query = pq | parsed_query if parsed_query else pq
-		return qo, (parsed_query,)
+		return qo, parsed_query
 	
 	def get_search_highlight_type(self):
 		return WORD_HIGHLIGHT
 	
 	def search(self, searcher, query, *args, **kwargs):
-		results = None
-		qo, parsed_queries = self._parse_query(query, **kwargs)
-		for parsed_query in parsed_queries:
-			r = self._execute_search(searcher, parsed_query, qo, highlight_type=self.get_search_highlight_type())
-			results = merge_search_results(results, r)
+		qo, parsed_query = self._parse_query(query, **kwargs)
+		results = self._execute_search(searcher, parsed_query, qo, highlight_type=self.get_search_highlight_type())
 		return results
 		
 	def suggest_and_search(self, searcher, query, *args, **kwargs):
