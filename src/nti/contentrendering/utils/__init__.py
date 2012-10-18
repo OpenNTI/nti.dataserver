@@ -36,4 +36,4 @@ class NoConcurrentPhantomRenderedBook(RenderedBook):
             result = {'ntiid': key[0]}
             results[key] = result
 
-    return results
+        return results
