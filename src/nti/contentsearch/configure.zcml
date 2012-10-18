@@ -32,10 +32,6 @@
 	<subscriber factory="._search_external.WordSnippetHighlightDecoratorFactory"
 				for=".interfaces.IWordSnippetHighlight"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
-			
-	<subscriber factory="._search_external.WhooshHighlightDecoratorFactory"
-				for=".interfaces.IWhooshSnippetHighlight"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
 				
 	<!-- Content Resolvers -->
 

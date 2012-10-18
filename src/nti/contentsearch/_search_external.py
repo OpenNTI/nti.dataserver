@@ -14,8 +14,8 @@ from nti.externalization.externalization import toExternalObject
 from nti.contentsearch import interfaces as search_interfaces
 
 from nti.contentsearch.common import epoch_time
+from nti.contentsearch._search_highlights import WORD_HIGHLIGHT
 from nti.contentsearch._search_highlights import word_fragments_highlight
-from nti.contentsearch._search_highlights import (WORD_HIGHLIGHT, WHOOSH_HIGHLIGHT)
 
 from nti.contentsearch.common import (	NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
 										SNIPPET, HIT, ID, CONTENT, INTID, QUERY,
@@ -68,15 +68,6 @@ class WordSnippetHighlightDecorator(_BaseWordSnippetHighlightDecorator):
 	
 def WordSnippetHighlightDecoratorFactory(*args):
 	return WordSnippetHighlightDecorator()
-
-@component.adapter(search_interfaces.IWhooshSnippetHighlight)
-class WhooshHighlightDecorator(_BaseWordSnippetHighlightDecorator):
-
-	def decorateExternalObject(self, original, external):
-		super(WhooshHighlightDecorator, self).decorateExternalObject(original, external)
-
-def WhooshHighlightDecoratorFactory(*args):
-	return WhooshHighlightDecorator()
 
 # search results
 
@@ -249,8 +240,6 @@ def _provide_highlight_snippet(hit, query=None, highlight_type=WORD_HIGHLIGHT):
 		hit.query = query
 		if highlight_type == WORD_HIGHLIGHT:
 			interface.alsoProvides( hit, search_interfaces.IWordSnippetHighlight )
-		elif highlight_type == WHOOSH_HIGHLIGHT:
-			interface.alsoProvides( hit, search_interfaces.IWhooshSnippetHighlight )
 		else:
 			interface.alsoProvides( hit, search_interfaces.INoSnippetHighlight )
 	return hit

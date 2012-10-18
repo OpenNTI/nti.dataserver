@@ -19,7 +19,6 @@ import logging
 logger = logging.getLogger( __name__ )
 
 WORD_HIGHLIGHT  = "WordHighlight"
-WHOOSH_HIGHLIGHT = "WhooshHighlight"
 
 _default_analyzer = None
 _default_expression = default_word_tokenizer_expression #"\w+([-']\w+)*"
