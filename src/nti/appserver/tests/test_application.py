@@ -280,7 +280,12 @@ class TestApplication(SharedApplicationTestBase):
 
 		# It should also show up in the RecursiveStream
 		path = '/dataserver2/users/foo@bar/Pages(' + ntiids.ROOT + ')/RecursiveStream'
-		testapp.get( path, extra_environ=self._make_extra_environ(user='foo@bar'))
+		res = testapp.get( path, extra_environ=self._make_extra_environ(user='foo@bar'))
+		assert_that( res.content_type, is_( 'application/vnd.nextthought.locatedexternaldict+json'))
+
+		path = path + '/feed.atom'
+		res = testapp.get( path, extra_environ=self._make_extra_environ(user='foo@bar'))
+		assert_that( res.content_type, is_( 'application/atom+xml'))
 
 	@WithSharedApplicationMockDS
 	def test_deprecated_path_with_slash(self):

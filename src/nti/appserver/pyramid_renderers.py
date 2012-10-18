@@ -209,24 +209,16 @@ import gzip
 class REST(object):
 
 	def __init__( self, info ):
-		self.dataserver = None
+		pass
 
 	def __call__( self, data, system ):
 		request = system['request']
 		response = request.response
 
-		if self.dataserver and (response.status_int >= 200 and response.status_int <= 399):
-			# TODO: Under what circumstances should we autocommit like this?
-			# IN this fashion we are almost always committing, except on error.
-			# We do this because we need to ensure that the OID is set on outgoing
-			# objects.
-			self.dataserver.commit()
-
 		if response.status_int == 204:
 			# No Content response is like 304 and has no body. We still
 			# respect outgoing headers, though
 			raise Exception( "You should return an HTTPNoContent response" )
-
 
 		if data is None:
 			# This cannot happen
@@ -245,12 +237,17 @@ class REST(object):
 		# in the headers, gunicorn throws a UnicodeDecodeError. We have to be very careful
 		# about that
 		# TODO: Streaming
-		if response.content_type.endswith( 'json' ) and 'gzip' in request.accept_encoding:
-			response.content_encoding = b'gzip'
-			strio = StringIO()
-			gzipped = gzip.GzipFile( fileobj=strio, mode='wb' )
-			gzipped.write( body )
-			gzipped.close()
-			body = strio.getvalue()
+		body = compress_body( request, response, body )
 
 		return body
+
+def compress_body(request, response, body, check_json_response_type=True):
+	if (not check_json_response_type or response.content_type.endswith( 'json' )) and 'gzip' in request.accept_encoding:
+		response.content_encoding = b'gzip'
+		strio = StringIO()
+		gzipped = gzip.GzipFile( fileobj=strio, mode='wb' )
+		gzipped.write( body )
+		gzipped.close()
+		body = strio.getvalue()
+
+	return body

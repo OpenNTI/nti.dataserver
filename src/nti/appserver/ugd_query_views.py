@@ -597,8 +597,9 @@ class _UGDAndRecursiveStreamView(_UGDView):
 		all_data += stream_data
 		return all_data
 
+#: The link relationship type that can be used
+#: to get all the visible replies to a Note
 REL_REPLIES = 'replies'
-
 
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
