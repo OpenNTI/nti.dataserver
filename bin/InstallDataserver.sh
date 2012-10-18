@@ -65,7 +65,7 @@ if [ "$INSTALL_EXTRAS" ]; then
 	export UMFPACK="None"
 
 	# make sure we have suitable fortran compiler to install scipy
-	pkgs=( g95 gfortran `seq -f "gfortran-mp-4.%g" 4 7` )
+	pkgs=( g95 gfortran `seq -f "gfortran-mp-4.%g" 5 7` )
 	for p in "${pkgs[@]}"
 	do
 		cmp=`which $p`
