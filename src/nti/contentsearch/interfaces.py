@@ -314,9 +314,6 @@ class INoSnippetHighlight(IHighlightType):
 class IWordSnippetHighlight(IHighlightType):
 	pass
 
-class IWhooshSnippetHighlight(IHighlightType):
-	pass
-
 # user generated content resolvers
 
 class IContentResolver(interface.Interface):

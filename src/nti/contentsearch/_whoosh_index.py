@@ -19,12 +19,12 @@ from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch.common import default_ngram_maxsize
 from nti.contentsearch.common import default_ngram_minsize
 from nti.contentsearch import interfaces as search_interfaces
+from nti.contentsearch._search_highlights import WORD_HIGHLIGHT
 from nti.contentsearch._datastructures import CaseInsensitiveDict
 from nti.contentsearch._search_results import empty_search_results
 from nti.contentsearch._search_results import empty_suggest_results
 from nti.contentsearch.common import default_word_tokenizer_expression
 from nti.contentsearch._search_results import empty_suggest_and_search_results
-from nti.contentsearch._search_highlights import ( WORD_HIGHLIGHT, WHOOSH_HIGHLIGHT)
 
 from nti.contentsearch.common import (	channel_, content_, keywords_, references_, 
 										recipients_, sharedWith_, ntiid_, last_modified_,
@@ -184,7 +184,7 @@ class Book(_SearchableContent):
 	_schema = create_book_schema()
 	
 	def get_search_highlight_type(self):
-		return WHOOSH_HIGHLIGHT
+		return WORD_HIGHLIGHT
 	
 	def get_objects_from_whoosh_hits(self, search_hits, docids=None):
 		result = []
