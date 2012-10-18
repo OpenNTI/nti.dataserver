@@ -215,6 +215,12 @@ ONE_DAY = 24 * 60 * 60
 ONE_WEEK = 7 * ONE_DAY
 ONE_MONTH = 30 * ONE_DAY
 
+#: A request classification that is meant to indicate a browser
+#: or browser-like environment being used programattically, i.e.,
+#: a web-app request, as opposed to a pure, interactive human user
+#: of the browser
+CLASS_BROWSER_APP = 'application-browser'
+
 class _NonChallengingBasicAuthPlugin(BasicAuthPlugin):
 	"""
 	For use when the request is probably an interactive XHR request, but
@@ -225,8 +231,8 @@ class _NonChallengingBasicAuthPlugin(BasicAuthPlugin):
 	it then to create our own type?
 	"""
 
-	classifications = {IChallenger: ['application-browser'],
-					   IIdentifier: ['application-browser']}
+	classifications = {IChallenger: [CLASS_BROWSER_APP],
+					   IIdentifier: [CLASS_BROWSER_APP]}
 
 	def challenge( self, *args ):
 		exc = super(_NonChallengingBasicAuthPlugin,self).challenge( *args )
@@ -242,17 +248,25 @@ def _nti_request_classifier( environ ):
 	requests in which the browser is being used by an application and we don't
 	want to generate a native authentication dialog.
 	"""
+
 	result = default_request_classifier( environ )
 	if result == 'browser':
-		# OK, but is it an interactive browser request where we'd like to
+		# OK, but is it an programmatic browser request where we'd like to
 		# change up the auth rules?
 		if environ.get( 'HTTP_X_REQUESTED_WITH' ) == 'XMLHttpRequest':
 			# An easy Yes!
-			result = 'application-browser'
+			result = CLASS_BROWSER_APP
 		else:
 			# Hmm. Going to have to do some guessing. Sigh.
-			if 'HTTP_REFERER' in environ and 'Mozilla' in environ.get( 'HTTP_USER_AGENT' ):
-				result = 'application-browser'
+			# First, we sniff for something that looks like it's sent by
+			# a true web browser, like Chrome or Firefox
+			# Then, if there is an Accept value given other than the default that's
+			# sent by user agents like, say, NetNewsWire, then it was probably
+			# set programatically
+			if ('HTTP_REFERER' in environ
+				 and 'Mozilla' in environ.get( 'HTTP_USER_AGENT' )
+				 and environ.get('HTTP_ACCEPT') != '*/*'):
+				result = CLASS_BROWSER_APP
 	return result
 
 interface.directlyProvides(_nti_request_classifier, IRequestClassifier)
