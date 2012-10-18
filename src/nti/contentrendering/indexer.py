@@ -269,7 +269,7 @@ def _remove_index_files(location, indexname):
 			os.remove(name)
 
 def main():
-	from nti.contentrendering.utils import NoPhantomRenderedBook, EmptyMockDocument
+	from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook, EmptyMockDocument
 	
 	arg_parser = argparse.ArgumentParser( description="Content indexer" )
 	arg_parser.add_argument( 'contentpath', help="Content book location" )
@@ -287,7 +287,7 @@ def main():
 		logging.basicConfig(level=logging.INFO, format='%(asctime)-15s %(name)-5s %(levelname)-8s %(message)s')
 		
 	_remove_index_files(contentpath, indexname)
-	book = NoPhantomRenderedBook( EmptyMockDocument(), contentpath)
+	book = NoConcurrentPhantomRenderedBook( EmptyMockDocument(), contentpath)
 	transform(book, indexname=indexname, file_indexing=file_indexing)
 	
 if __name__ == '__main__':
