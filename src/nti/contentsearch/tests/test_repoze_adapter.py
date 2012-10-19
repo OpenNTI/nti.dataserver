@@ -245,6 +245,31 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 		
 		hits = rim.search('"you will be ready"')
 		assert_that(hits, has_length(0))
-				
+		
+		hits = rim.search('"Ax+B"')
+		assert_that(hits, has_length(0))
+		
+	@WithMockDSTrans
+	def test_note_math_equation(self):
+		username = 'ichigo@bleach.com'
+		user = self._create_user(username=username )
+		msg = u"ax+by = 100"
+		note = Note()
+		note.body = [unicode(msg)]
+		note.creator = username
+		note.containerId = make_ntiid(nttype='bleach', specific='manga')
+		note = user.addContainedObject( note )
+		
+		rim = search_interfaces.IRepozeEntityIndexManager(user, None)
+		docid = rim.index_content(note)
+		assert_that(docid, is_not(None))
+
+		hits = rim.search('"ax+by"')
+		assert_that(hits, has_length(1))
+		
+		hits = rim.search('"ax by"')
+		assert_that(hits, has_length(1))
+		
+	
 if __name__ == '__main__':
 	unittest.main()

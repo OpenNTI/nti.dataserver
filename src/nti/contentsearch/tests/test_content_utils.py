@@ -18,6 +18,7 @@ from nti.ntiids.ntiids import make_ntiid
 from nti.contentsearch._content_utils import rank_words
 from nti.contentsearch._content_utils import get_content
 from nti.contentsearch.interfaces import IContentResolver
+from nti.contentsearch._content_utils import split_content
 from nti.contentsearch._content_utils import get_punkt_translation_table
 
 from nti.contentsearch.tests import ConfiguringTestBase
@@ -40,6 +41,10 @@ class TestContentUtils(ConfiguringTestBase):
 		with open(path, "r") as f:
 			cls.note = json.load(f)
 
+	def test_split_conent(self):
+		s = u'ax+by=0'
+		assert_that(split_content(s), is_(['ax', 'by','0']))
+		
 	def test_get_content(self):
 		assert_that(get_content(None), is_(u''))
 		assert_that(get_content({}), is_(u''))
@@ -174,7 +179,6 @@ class TestContentUtils(ConfiguringTestBase):
 		word = 'stranger'
 		w = rank_words(word, terms)
 		assert_that(w, is_(['bravo', 'delta', 'charlie', 'alfa', 'echo']))
-		
 		
 	def test_punk_translation_table(self):
 		table = get_punkt_translation_table()

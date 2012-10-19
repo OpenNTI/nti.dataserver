@@ -14,16 +14,20 @@ from zopyx.txng3.core import resultset as zopyx_resultset
 
 from nti.contentsearch import zopyxtxng3coreresultset as ntizopy_rs
 from nti.contentsearch import zopyxtxng3coredoclist as ntizopyx_doclist
-from nti.contentsearch import zopyxtxng3corewordlist as ntizopyx_wordlist
+from nti.contentsearch import zopyxtxng3coreevaluator as ntizopyx_evaluator
 
-for module in (zopyx_coreidx, zopyx_evaluator, zopyx_resultset):
+# change the evaluator to correct issue in getting the words 
+# from the zopyx.txng3.core.parsetree nodes
+zopyx_coreidx.Evaluator = ntizopyx_evaluator.Evaluator
+
+for module in (zopyx_coreidx, zopyx_evaluator, zopyx_resultset, ntizopyx_evaluator):
 	module.LOG = zopyxtxng3corelogger.LOG
-	module.WordList = ntizopyx_wordlist.WordList
 	module.DocidList = ntizopyx_doclist.DocidList
 	module.unionResultSets = ntizopy_rs.unionResultSets
 	module.inverseResultSet = ntizopy_rs.inverseResultSet
 	module.intersectionResultSets = ntizopy_rs.intersectionResultSets
 	
+
 # legacy imports
 
 import logging
