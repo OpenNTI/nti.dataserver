@@ -161,6 +161,10 @@ def _extract_key_words(tokenized_words, extractor=None, max_words=10):
 		keywords.append(unicode(word.lower()))
 	return keywords
 
+def _get_attribute(node, name):
+	attributes = node.attrib
+	return attributes.get(name, None)
+
 def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=False):
 	title = unicode(node.title)
 	ntiid = unicode(node.ntiid)
@@ -173,9 +177,8 @@ def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=Fa
 	# find last_modified
 	last_modified = time.time()
 	for n in node.dom(b'meta'):
-		attributes = n.attrib
-		if attributes.get('http-equiv', None) == "last-modified":
-			last_modified = _parse_last_modified(attributes.get('content', None))
+		if _get_attribute(n, 'http-equiv') == "last-modified":
+			last_modified = _parse_last_modified(_get_attribute(n, 'content'))
 			break
 	
 	as_time = datetime.fromtimestamp(float(last_modified))
@@ -210,22 +213,39 @@ def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=Fa
 			documents.append(tokenized_words)
 	else:
 		# get content
-		def _collector(n):
+		def _collector(n, data):
 			if not isinstance(n, etree._Comment):
 				content = _get_node_content(n)
 				content = content.translate(table) if content else None
 				if content:
 					tokenized_words = tokenizer.tokenize(content)
-					documents.append(tokenized_words)
+					data.extend(tokenized_words)
 					
 				for c in n.iterchildren():
-					_collector(c)
+					_collector(c, data)
 				
+		def _traveler(n):
+			n_id = _get_attribute(n, "id")
+			data_ntiid = _get_attribute(n, "data_ntiid")
+			if n_id or (data_ntiid and data_ntiid != "none"):
+				data = []
+				_collector(n, data)
+				documents.append(data)
+			else:
+				content = _get_node_content(n)
+				content = content.translate(table) if content else None
+				if content:
+					tokenized_words = tokenizer.tokenize(content)
+					documents.append(tokenized_words)
+				
+				for c in n.iterchildren():
+					_traveler(c)
+		
 		for n in node.dom(b'div').filter(b'.page-contents'):
-			_collector(n)
+			_traveler(n)
 			
 		for n in node.dom(b'div').filter(b'#footnotes'):
-			_collector(n)
+			_traveler(n)
 	
 	# TODO: key word should done on a book basis
 	# compute keywords

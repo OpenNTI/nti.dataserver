@@ -13,7 +13,7 @@ class EmptyMockDocument(object):
     def getElementsByTagName(self, name): 
         return ()
     
-def _phantom_function( htmlFile, scriptName, args, key ):
+def _phantom_function(htmlFile, scriptName, args, key):
     return (key, {'ntiid': key[0]})
 
 class NoPhantomRenderedBook(RenderedBook):
