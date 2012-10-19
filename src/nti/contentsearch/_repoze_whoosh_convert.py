@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 from __future__ import print_function, unicode_literals
 
 import re
@@ -8,6 +6,9 @@ from datetime import datetime
 
 from whoosh import fields
 import repoze.catalog.query as repquery
+
+import logging
+logger = logging.getLogger( __name__ )
 
 class QueryConverter(object):
 	

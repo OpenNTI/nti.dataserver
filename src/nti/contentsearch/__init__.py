@@ -14,9 +14,11 @@ from zopyx.txng3.core import resultset as zopyx_resultset
 
 from nti.contentsearch import zopyxtxng3coreresultset as ntizopy_rs
 from nti.contentsearch import zopyxtxng3coredoclist as ntizopyx_doclist
+from nti.contentsearch import zopyxtxng3corewordlist as ntizopyx_wordlist
 
 for module in (zopyx_coreidx, zopyx_evaluator, zopyx_resultset):
 	module.LOG = zopyxtxng3corelogger.LOG
+	module.WordList = ntizopyx_wordlist.WordList
 	module.DocidList = ntizopyx_doclist.DocidList
 	module.unionResultSets = ntizopy_rs.unionResultSets
 	module.inverseResultSet = ntizopy_rs.inverseResultSet

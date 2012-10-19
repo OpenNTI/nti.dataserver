@@ -1,3 +1,5 @@
+from __future__ import print_function, unicode_literals
+
 ###########################################################################
 # TextIndexNG V 3                
 # The next generation TextIndex for Zope

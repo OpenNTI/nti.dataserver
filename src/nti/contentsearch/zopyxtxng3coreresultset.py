@@ -18,8 +18,9 @@ from BTrees.LLBTree import union as union64
 from BTrees.LLBTree import difference as difference64
 from BTrees.LLBTree import intersection as intersection64
 
-from zopyx.txng3.core.resultset import ResultSet, WordList
+from zopyx.txng3.core.resultset import ResultSet
 
+from nti.contentsearch.zopyxtxng3corewordlist import WordList
 from nti.contentsearch.zopyxtxng3coredoclist import DocidList
     
 import logging
