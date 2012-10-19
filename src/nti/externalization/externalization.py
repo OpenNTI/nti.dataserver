@@ -94,6 +94,75 @@ SEQUENCE_TYPES = (persistent.list.PersistentList, collections.Set, list, tuple)
 #: all map onto a dict.
 MAPPING_TYPES  = (persistent.mapping.PersistentMapping,BTrees.OOBTree.OOBTree,collections.Mapping)
 
+class _ExternalizationState(object):
+	__slots__ = ( 'coerceNone', 'name', 'registry', 'catch_components', 'catch_component_action',
+				  'default_non_externalizable_replacer',
+				  'ext_obj_cache')
+
+	def __init__( self, **kwargs ):
+		self.ext_obj_cache = dict()
+		for k, v in kwargs.iteritems():
+			setattr( self, k, v )
+
+def _to_external_object_state( obj, state, top_level=False ):
+	try:
+		orig_obj = obj
+		# TODO: This is needless for the mapping types and sequence types. rework to avoid.
+		# Benchmarks show that simply moving it into the last block doesn't actually save much
+		# (due to all the type checks in front of it?)
+		if not hasattr( obj, 'toExternalObject' ) and not IExternalObject.providedBy( obj ):
+			adapter = state.registry.queryAdapter( obj, IExternalObject, default=None, name=state.name )
+			if not adapter and state.name != '':
+				# try for the default, but allow passing name of None to disable (?)
+				adapter = state.registry.queryAdapter( obj, IExternalObject, default=None, name='' )
+			if adapter:
+		 		obj = adapter
+
+		# Note that for speed, before calling 'recall' we are performing the primitive check
+		result = obj
+		if hasattr( obj, "toExternalObject" ):
+			result = obj.toExternalObject()
+		elif hasattr( obj, "toExternalDictionary" ):
+			result = obj.toExternalDictionary()
+		elif hasattr( obj, "toExternalList" ):
+			result = obj.toExternalList()
+		elif isinstance(obj, MAPPING_TYPES ):
+			result = to_standard_external_dictionary( obj, name=state.name, registry=state.registry )
+			if obj.__class__ is dict:
+				result.pop( 'Class', None )
+			# Note that we recurse on the original items, not the things newly
+			# added.
+			# NOTE: This means that Links added here will not be externalized. There
+			# is an IExternalObjectDecorator that does that
+			for key, value in obj.items():
+				result[key] = _to_external_object_state( value, state ) if not isinstance(value, _primitives) else value
+		elif isinstance( obj, SEQUENCE_TYPES ) or sequence.IFiniteSequence.providedBy( obj ):
+			result = state.registry.getAdapter( [(_to_external_object_state(x, state) if not isinstance(x, _primitives) else x) for x in obj], ILocatedExternalSequence )
+		# PList doesn't support None values, JSON does. The closest
+		# coersion I can think of is False.
+		elif obj is None:
+			if state.coerceNone:
+				result = False
+		else:
+			# Otherwise, we probably won't be able to
+			# JSON-ify it.
+			# TODO: Should this live here, or at a higher level where the ultimate external target/use-case is known?
+			result = state.registry.queryAdapter( obj, INonExternalizableReplacer, default=state.default_non_externalizable_replacer )(obj)
+
+		for decorator in state.registry.subscribers( (orig_obj,), IExternalObjectDecorator ):
+			decorator.decorateExternalObject( orig_obj, result )
+		return result
+	except state.catch_components as t:
+		if top_level:
+			raise
+		# python rocks. catch_components could be an empty tuple, meaning we catch nothing.
+		# or it could be any arbitrary list of exceptions.
+		# NOTE: we cannot try to to-string the object, it may try to call back to us
+		# NOTE2: In case we encounter a proxy (zope.container.contained.ContainedProxy)
+		# the type(o) is not reliable. Only the __class__ is.
+		logger.exception("Exception externalizing component object %s/%s", type(obj), obj.__class__ )
+		return state.catch_component_action( obj, t )
+
 
 def toExternalObject( obj, coerceNone=False, name=_ex_name_marker, registry=component,
 					  catch_components=(), catch_component_action=None,
@@ -125,70 +194,19 @@ def toExternalObject( obj, coerceNone=False, name=_ex_name_marker, registry=comp
 	if isinstance(obj, _primitives):
 		return obj
 
+	v = dict(locals())
+	v.pop( 'obj' )
+	state = _ExternalizationState( **v )
+
 	if name == _ex_name_marker:
 		name = _ex_name_local.name[-1]
 	if name == _ex_name_marker:
 		name = ''
 	_ex_name_local.name.append( name )
+	state.name = name
 
 	try:
-		def recall( o ):
-			try:
-				return toExternalObject( o, coerceNone=coerceNone, name=name, registry=registry,
-										 catch_components=catch_components, catch_component_action=catch_component_action,
-										 default_non_externalizable_replacer=default_non_externalizable_replacer )
-			except catch_components as t:
-				# python rocks. catch_components could be an empty tuple, meaning we catch nothing.
-				# or it could be any arbitrary list of exceptions.
-				# NOTE: we cannot try to to-string the object, it may try to call back to us
-				# NOTE2: In case we encounter a proxy (zope.container.contained.ContainedProxy)
-				# the type(o) is not reliable. Only the __class__ is.
-				logger.exception("Exception externalizing component object %s/%s", type(o), o.__class__ )
-				return catch_component_action( o, t )
-
-		orig_obj = obj
-		if not hasattr( obj, 'toExternalObject' ) and not IExternalObject.providedBy( obj ):
-			adapter = registry.queryAdapter( obj, IExternalObject, default=None, name=name )
-			if not adapter and name != '':
-				# try for the default, but allow passing name of None to disable (?)
-				adapter = registry.queryAdapter( obj, IExternalObject, default=None, name='' )
-			if adapter:
-				obj = adapter
-
-		# Note that for speed, before calling 'recall' we are performing the primitive check
-		result = obj
-		if hasattr( obj, "toExternalObject" ):
-			result = obj.toExternalObject()
-		elif hasattr( obj, "toExternalDictionary" ):
-			result = obj.toExternalDictionary()
-		elif hasattr( obj, "toExternalList" ):
-			result = obj.toExternalList()
-		elif isinstance(obj, MAPPING_TYPES ):
-			result = to_standard_external_dictionary( obj, name=name, registry=registry )
-			if obj.__class__ is dict:
-				result.pop( 'Class', None )
-			# Note that we recurse on the original items, not the things newly
-			# added.
-			# NOTE: This means that Links added here will not be externalized. There
-			# is an IExternalObjectDecorator that does that
-			for key, value in obj.items():
-				result[key] = recall( value ) if not isinstance(value, _primitives) else value
-		elif isinstance( obj, SEQUENCE_TYPES ) or sequence.IFiniteSequence.providedBy( obj ):
-			result = registry.getAdapter( [(recall(x) if not isinstance(x, _primitives) else x) for x in obj], ILocatedExternalSequence )
-		# PList doesn't support None values, JSON does. The closest
-		# coersion I can think of is False.
-		elif obj is None:
-			if coerceNone:
-				result = False
-		else:
-			# Otherwise, we probably won't be able to
-			# JSON-ify it.
-			# TODO: Should this live here, or at a higher level where the ultimate external target/use-case is known?
-			result = registry.queryAdapter( obj, INonExternalizableReplacer, default=default_non_externalizable_replacer )(obj)
-
-		for decorator in registry.subscribers( (orig_obj,), IExternalObjectDecorator ):
-			decorator.decorateExternalObject( orig_obj, result )
-		return result
+		return _to_external_object_state( obj, state, True )
 	finally:
 		_ex_name_local.name.pop()
 
