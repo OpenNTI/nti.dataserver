@@ -103,7 +103,7 @@ def ConcurrentExecutor(max_workers=None, _throw_exceptions=False):
 		# map() channels through submit() so this captures all activity
 		def submit( self, fn, *args, **kwargs ):
 			_fn = _nothrow(fn)
-			functools.update_wrapper( _fn, fn )
+			_fn = functools.update_wrapper( _fn, fn )
 			return super(_Executor,self).submit( _fn, *args, **kwargs )
 
 	return _Executor(max_workers=max_workers)
@@ -115,11 +115,11 @@ class _nothrow(object):
 	For pickling, must be a top-level object.
 	"""
 	def __init__(self, fn):
-		self.fn = fn
+		self.__fn = fn
 
 	def __call__( self, *args, **kwargs):
 		try:
-			return self.fn(*args, **kwargs)
+			return self.__fn(*args, **kwargs)
 		except Exception as e:
 			# logging may not be reliable in this pool
 			import traceback; traceback.print_exc()
