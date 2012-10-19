@@ -133,8 +133,13 @@ class _SuggestResultsExternalizer(_BaseSearchResultsExternalizer):
 	
 	def toExternalObject(self):
 		eo = super(_SuggestResultsExternalizer, self).toExternalObject()
-		eo[ITEMS] = self.suggestions
-		eo[SUGGESTIONS] = eo[ITEMS]
+		eo[ITEMS] = items = []
+		for item in self.suggestions:
+			if item is not None:
+				items.append(item)
+				
+		eo[SUGGESTIONS] = items
+		eo[HIT_COUNT] = len(items)
 		eo[LAST_MODIFIED] = 0 
 		return eo
 	
