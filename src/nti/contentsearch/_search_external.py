@@ -86,7 +86,6 @@ class _BaseSearchResultsExternalizer(object):
 			
 	def toExternalObject(self):
 		eo = {QUERY: self.query.term}
-		eo[HIT_COUNT] = len(self.results)
 		return eo
 	
 @component.adapter(search_interfaces.ISearchResults)
@@ -107,8 +106,12 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 		query = self.query
 		last_modified = 0
 		highlight_type = self.highlight_type
+		
 		# use iterator in case of any paging
 		for item in self.results:
+			if item is None:
+				continue
+
 			# adapt to a search hit 
 			hit = get_search_hit(item, query, highlight_type)
 			last_modified = max(last_modified, hit.last_modified)
@@ -117,6 +120,7 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 			external[PHRASE_SEARCH] = is_phrase_search
 			items.append(external)
 			
+		eo[HIT_COUNT] = len(items)
 		eo[LAST_MODIFIED] = last_modified
 		return eo
 
