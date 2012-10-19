@@ -193,7 +193,7 @@ setup(
 		 # statsd server implementation, pure python. probably easier than setting up node. Might want to get it from https://github.com/sivy/py-statsd
 		 # Consider also https://github.com/phensley/gstatsd
 		'pystatsd >= 0.1.6',
-		'pytz >= 2012f',
+		'pytz >= 2012g',
 		'rdflib >= 3.2.2',
 		'redis >= 2.6.2', # Redis python client
 		'repoze.catalog >= 0.8.2',
