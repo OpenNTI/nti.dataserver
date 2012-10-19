@@ -97,12 +97,13 @@ def _get_page_content(text):
 	c = _parse_text(c, page_c_pattern, None)
 	return c or text
 
-def _sanitize_content(text, tokens=False, tokenizer=default_tokenizer ):
+def _sanitize_content(text, tokens=False, tokenizer=default_tokenizer, table=None):
 	# user ds sanitizer
 	text = _sanitize_user_html_to_text(text)
 	# remove any html (i.e. meta, link) that is not removed
 	text = clean_html(text)
 	# tokenize words
+	text = text.translate(table) if table else text
 	tokenized_words = tokenizer.tokenize(text)
 	result = tokenized_words if tokens else ' '.join(tokenized_words)
 	return result
@@ -204,8 +205,9 @@ def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=Fa
 			raw_content = f.read()
 
 		raw_content = _get_page_content(raw_content)
-		tokenized_words = _sanitize_content(raw_content, tokens=True)
-		documents.append(tokenized_words)
+		tokenized_words = _sanitize_content(raw_content, tokens=True, table=table)
+		if tokenized_words:
+			documents.append(tokenized_words)
 	else:
 		# get content
 		def _collector(n):
