@@ -7,7 +7,7 @@ from nti.contentrendering.indexer import transform
 from nti.contentrendering.indexer import get_or_create_index
 from nti.contentrendering.RenderedBook import _EclipseTOCMiniDomTopic
 from nti.contentrendering.indexer import _index_book_node as index_book_node
-from nti.contentrendering.tests import NoPhantomRenderedBook, EmptyMockDocument 
+from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook, EmptyMockDocument 
 		
 from hamcrest import assert_that, has_length
 
@@ -24,7 +24,7 @@ class TestIndexer(unittest.TestCase):
 	def test_index_book(self):
 		indexname='biology'
 		path = os.path.join( os.path.dirname( __file__ ),  'intro-biology-rendered-book' )
-		book = NoPhantomRenderedBook( EmptyMockDocument(), path)
+		book = NoConcurrentPhantomRenderedBook( EmptyMockDocument(), path)
 		transform(book, indexname=indexname, indexdir=self.idxdir, optimize=False)
 		
 		idx = get_or_create_index(indexdir=self.idxdir, indexname=indexname, recreate=False)
