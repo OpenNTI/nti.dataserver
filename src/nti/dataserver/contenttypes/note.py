@@ -16,7 +16,6 @@ from nti.ntiids.ntiids import find_object_with_ntiid
 
 from zope import interface
 
-from zope import component
 from ZODB.interfaces import IConnection
 from zope.annotation import interfaces as an_interfaces
 from zope.container.contained import contained
@@ -47,16 +46,19 @@ class Note(ThreadableExternalizableMixin, Highlight):
 	#: We override the default highlight style to suppress it.
 	style = 'suppressed'
 
+	#: The default body consists of one empty string
+	body = ("",)
+
 	def __init__(self):
 		super(Note,self).__init__()
-		self.body = ("",)
+		self.body = self.body
 
 	__getitem__ = _make_getitem( 'body' )
 
 	def toExternalDictionary( self, mergeFrom=None ):
 		result = super(Note,self).toExternalDictionary(mergeFrom=mergeFrom)
 		# In our initial state, don't try to send empty body/text
-		if self.body == ('',):
+		if self.body == Note.body:
 			result.pop( 'body' )
 
 		return result

@@ -29,7 +29,6 @@ def test_round_trip():
 		ext = integer_strings.to_external_string( i )
 		__traceback_info__ = i, ext
 		parsed = integer_strings.from_external_string( ext )
-		print( i, ext, parsed )
 		assert_that( parsed, is_( i ) )
 
 	# Small values

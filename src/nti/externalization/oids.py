@@ -136,6 +136,17 @@ def to_external_ntiid_oid( contained, default_oid=_ext_ntiid_oid, add_to_connect
 	if _isContainedProxy(contained):
 		contained = _getContainedProxiedObject( contained )
 	contained = removeAllProxies( contained )
+
+	# By definition, these are persistent.Persistent objects, so a _v_ attribute
+	# is going to be volatile and thread-local (or nearly). If the object cache
+	# is in use, the worst that can happen is that the third part of the OID
+	# is/not around for longer/less long than otherwise. (Which could potentially differ
+	# from one worker to the next).
+	# On large renderings, benchmarks show this can be worth ~10%
+	ext_oid = getattr( contained, '_v_to_external_ntiid_oid', None)
+	if ext_oid:
+		return ext_oid
+
 	oid = toExternalOID( contained,
 						 default=(default_oid if default_oid is not _ext_ntiid_oid else str(id(contained))),
 						 add_to_connection=add_to_connection,
@@ -144,8 +155,13 @@ def to_external_ntiid_oid( contained, default_oid=_ext_ntiid_oid, add_to_connect
 		return None
 
 	creator = getattr( contained, 'creator', DEFAULT_EXTERNAL_CREATOR )
-	return ntiids.make_ntiid( provider=(creator
+	ext_oid = ntiids.make_ntiid( provider=(creator
 										if isinstance( creator, six.string_types )
 										else getattr( creator, 'username', DEFAULT_EXTERNAL_CREATOR )),
 								specific=oid,
 								nttype=ntiids.TYPE_OID )
+	try:
+		setattr( contained, '_v_to_external_ntiid_oid', ext_oid )
+	except AttributeError:
+		pass
+	return ext_oid

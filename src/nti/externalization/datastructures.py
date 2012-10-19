@@ -142,8 +142,10 @@ class AbstractDynamicObjectIO(ExternalizableDictionaryMixin):
 			attr_val = self._ext_getattr( ext_self, k )
 			result[k] = toExternalObject( attr_val ) if k not in primitive_ext_keys else attr_val
 
-			if ILocation.providedBy( result[k] ):
+			try: #if ILocation.providedBy( result[k] ):
 				result[k].__parent__ = ext_self
+			except AttributeError:
+				pass
 
 		if StandardExternalFields.ID in result and StandardExternalFields.OID in result \
 			   and self._prefer_oid_ and result[StandardExternalFields.ID] != result[StandardExternalFields.OID]:
