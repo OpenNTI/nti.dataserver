@@ -93,6 +93,15 @@ class Storage(zopystorage.Storage):
 			
 			r = union64(r, docids)
 		return r
+	
+	def hasContigousWordids(self, docid, wordids):
+		# sometimes there are null word ids. This occurs
+		# where it the word cannot be found in the lexicon
+		for w in wordids:
+			if w is None:
+				return False
+		return super(Storage, self).hasContigousWordids(docid, wordids)
+
 
 @interface.implementer(IStorageWithTermFrequency)
 class StorageWithTermFrequency(Storage):
