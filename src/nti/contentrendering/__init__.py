@@ -81,14 +81,46 @@ def run_phantom_on_page( htmlFile, scriptName, args=(), key=_none_key, expect_no
 
 	return (key, result)
 
+import functools
 import concurrent.futures
-def ConcurrentExecutor(max_workers=None):
+
+def ConcurrentExecutor(max_workers=None, _throw_exceptions=False):
 	"""
 	An abstraction layer to let rendering code easily switch between different concurrency
 	strategies.
 
 	It also serves as a compatibility shim to make us compatible with gevent thread patching.
+	For that reason, we avoid throwing any exceptions and instead return them; throwing
+	exceptions is not safe in the multiprocessing case and can hang the pool, and has undefined
+	results in the thread case.
 	"""
 	# Notice that we did not import the full path because it gets swizzled at
-	# runtime
-	return concurrent.futures.ProcessPoolExecutor(max_workers=max_workers)
+	# runtime. For that same reason, we subclass dynamically at runtime.
+	if _throw_exceptions:
+		return concurrent.futures.ProcessPoolExecutor(max_workers=max_workers)
+
+	class _Executor(concurrent.futures.ProcessPoolExecutor):
+		# map() channels through submit() so this captures all activity
+		def submit( self, fn, *args, **kwargs ):
+			_fn = _nothrow(fn)
+			functools.update_wrapper( _fn, fn )
+			return super(_Executor,self).submit( _fn, *args, **kwargs )
+
+	return _Executor(max_workers=max_workers)
+
+class _nothrow(object):
+	"""
+	For submission to executors, a callable that doesn't throw (and avoids hangs.)
+
+	For pickling, must be a top-level object.
+	"""
+	def __init__(self, fn):
+		self.fn = fn
+
+	def __call__( self, *args, **kwargs):
+		try:
+			return self.fn(*args, **kwargs)
+		except Exception as e:
+			# logging may not be reliable in this pool
+			import traceback; traceback.print_exc()
+			return e # TODO: These may not be serializable?
