@@ -141,12 +141,20 @@ def ngram_minmax():
 	maxsize = ngc_util.maxsize if ngc_util else default_ngram_maxsize
 	return (minsize, maxsize)
 
+def ngram_field():
+	minsize, maxsize = ngram_minmax()
+	tokenizer = analysis.RegexTokenizer(expression=_default_expression)
+	return fields.NGRAMWORDS(minsize=minsize, maxsize=maxsize, stored=False, tokenizer=tokenizer, at='start')
+
 def content_analyzer():
 	sw_util = component.queryUtility(search_interfaces.IStopWords) 
 	stopwords = sw_util.stopwords() if sw_util else ()
 	analyzer = 	analysis.StandardAnalyzer(expression=_default_expression, stoplist=stopwords)
 	return analyzer
 	
+def content_field(stored=True):
+	return fields.TEXT(stored=stored, spelling=True, phrase=True, analyzer=content_analyzer())
+
 # book content
 
 def create_book_schema():
@@ -163,15 +171,14 @@ def create_book_schema():
 	related: ntiids of related sections
 	ref: chapter reference
 	"""
-	minsize, maxsize = ngram_minmax()
 	schema = fields.Schema(	docid = fields.ID(stored=True, unique=True),
 							ntiid = fields.ID(stored=True, unique=False),
 							title = fields.TEXT(stored=True, spelling=True),
 				  			last_modified = fields.DATETIME(stored=True),
 				  			keywords = fields.KEYWORD(stored=True), 
-				 			quick = fields.NGRAM(minsize=minsize, maxsize=maxsize, phrase=True, stored=False),
+				 			quick = ngram_field(),
 				 			related = fields.KEYWORD(stored=True),
-				 			content = fields.TEXT(stored=True, spelling=True, phrase=True, analyzer=content_analyzer()))
+				 			content = content_field(stored=True))
 	return schema
 
 #TODO: do an adapter
@@ -379,11 +386,10 @@ class TreadableIndexableContent(UserIndexableContent):
 	
 # highlight
 
-def create_highlight_schema():	
-	minsize, maxsize = ngram_minmax() 			
+def create_highlight_schema():				
 	schema = _create_treadable_schema()
-	schema.add(content_, fields.TEXT(stored=False, spelling=True, phrase=True, analyzer=content_analyzer()))
-	schema.add(quick_, fields.NGRAM(minsize=minsize, maxsize=maxsize, phrase=True, stored=False))
+	schema.add(content_, content_field(stored=False))
+	schema.add(quick_, ngram_field())
 	return schema
 
 class Highlight(TreadableIndexableContent):
