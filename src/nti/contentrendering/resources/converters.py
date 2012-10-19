@@ -172,7 +172,10 @@ def _processBatchSource(generator, params, raise_exceptions=False):
 			return generator.compile_batch_to_representations()
 	except Exception:
 		# Running in a concurrent.futures, throwing tends to
-		# hang the pool
+		# hang the pool.
+		# NOTE that the pool we usually use now does not have that problem.
+		# however, we want to customize the return value so as not to cause
+		# further problems.
 		if raise_exceptions:
 			raise
 		import traceback; traceback.print_exc()
