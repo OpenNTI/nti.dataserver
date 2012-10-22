@@ -131,7 +131,7 @@ def parse_subqueries(qo, stored_names=(), map_func=map_to_key_names):
 		chain = chain & op if chain else op
 	return chain
 	
-@interface.implementer( search_interfaces.ISearchQueryValidator )
+@interface.implementer( search_interfaces.IRepozeSearchQueryValidator )
 class _DefaultSearchQueryValiator(object):
 	
 	def validate(self, query):
@@ -144,7 +144,7 @@ class _DefaultSearchQueryValiator(object):
 			return False
 	
 def validate_query(query, language='en'):
-	validator = component.getUtility(search_interfaces.ISearchQueryValidator, name=language)
+	validator = component.getUtility(search_interfaces.IRepozeSearchQueryValidator, name=language)
 	return validator.validate(query)
 	
 def parse_query(catalog, fieldname, qo):

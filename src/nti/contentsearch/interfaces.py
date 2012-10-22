@@ -503,6 +503,9 @@ class ISearchQueryValidator(interface.Interface):
 	def validate(query):
 		"""check if the specified search query is valid"""
 		
+class IRepozeSearchQueryValidator(ISearchQueryValidator):
+	pass
+
 # search results
 
 class IWordSimilarity(interface.Interface):	
