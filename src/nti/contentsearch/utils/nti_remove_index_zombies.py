@@ -13,7 +13,6 @@ from nti.dataserver import interfaces as nti_interfaces
 
 import nti.contentsearch
 from nti.contentsearch.utils import find_user_dfls
-from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch.utils.repoze_utils import get_catalog_and_docids
 
 def main():
@@ -57,10 +56,6 @@ def remove_zombies( usernames, verbose=False):
 
 	for username in usernames:
 		entity = users.Entity.get_entity( username )
-		rim = search_interfaces.IRepozeEntityIndexManager(entity, None)
-		if rim is None:
-			continue
-		
 		_unindex_zombies(entity, verbose)
 		if nti_interfaces.IUser.providedBy(entity):
 			for dfl in find_user_dfls(entity):
