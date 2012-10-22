@@ -18,8 +18,6 @@ def reindex_ugd(user, users_get, ds_intid):
 	username = user.username
 	logger.debug('Reindexing object(s) for %s' % username)
 	
-	remove_entity_catalogs(user)
-	
 	counter = 0
 	dfl_names = set()
 	
@@ -55,6 +53,11 @@ def reindex_all(context):
 	ds_intid = lsm.getUtility( provided=zope.intid.IIntIds )
 	component.provideUtility(ds_intid, zope.intid.IIntIds )
 	
+	# remove all catalogs first
+	for user in users.values():
+		remove_entity_catalogs(user)
+		
+	# reindex all users ugd
 	for user in users.values():
 		reindex_ugd(user, users.get, ds_intid)
 		
