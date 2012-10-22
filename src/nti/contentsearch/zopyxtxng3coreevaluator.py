@@ -26,8 +26,7 @@ class Evaluator(zopyx_evaluator.Evaluator):
 			seq = words[idx]
 			if isinstance(seq, collections.Iterable) and not isinstance(seq, six.string_types) :
 				words.pop(idx)
-				for w in seq:
-					words.append(w)
+				words.extend(seq)
 			elif isinstance(seq, zopyx_parsetree.BaseNode):
 				words[idx] = seq.getValue()
 			else:
