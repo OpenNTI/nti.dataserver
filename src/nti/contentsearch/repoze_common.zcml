@@ -14,6 +14,11 @@
 			 for="nti.dataserver.interfaces.IEntity"
 			 provides=".interfaces.IRepozeEntityIndexManager" />
 	
+	<!-- Search query -->
+	
+	<utility factory="._repoze_query._DefaultSearchQueryValiator"  />
+	<utility factory="._repoze_query._DefaultSearchQueryValiator" name="en" />
+	
 	<!-- Catalog Creators -->
 	
 	<utility factory="._repoze_index._RepozeNoteCatalogCreator" name="note" />
