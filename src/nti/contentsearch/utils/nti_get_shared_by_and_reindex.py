@@ -88,7 +88,8 @@ def compute_shared_by_and_reindex(username, reindex, verbose):
 		if verbose:
 			print('Reindexing data for %s entities\n' % len(result))
 		for u in result:
-			reindex_entity_content(u, include_dfls=True, verbose=verbose)	
+			if users.Entity.get_entity(u) is not None:
+				reindex_entity_content(u, include_dfls=True, verbose=verbose)	
 	
 	return result
 	
