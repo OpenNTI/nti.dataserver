@@ -4,6 +4,7 @@ from __future__ import print_function, unicode_literals
 
 import os
 import sys
+import time
 import argparse
 
 from ZODB.POSException import POSKeyError
@@ -18,7 +19,7 @@ from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch.utils import find_all_indexable_pairs
 from nti.contentsearch.utils.repoze_utils import remove_entity_catalogs
 			
-def reindex_entity_content( username, include_dfls):
+def reindex_entity_content(username, include_dfls=False, verbose=False):
 	entity = users.Entity.get_entity( username )
 	if not entity:
 		print( "user/entity '%s' does not exists" % username, file=sys.stderr )
@@ -27,6 +28,8 @@ def reindex_entity_content( username, include_dfls):
 	counter = 0	
 	dfl_names = set()
 	
+	t = time.time()
+		
 	# remove catalogs for main entity
 	remove_entity_catalogs(entity)
 	
@@ -49,6 +52,10 @@ def reindex_entity_content( username, include_dfls):
 				# broken reference for object
 				pass
 	
+	t = time.time() - t
+	if verbose:
+		print('%s object(s) reindexed for %s in %.2f(s)' % (counter, username, t))
+		
 	return counter
 
 def main():
@@ -56,15 +63,17 @@ def main():
 	arg_parser.add_argument( 'env_dir', help="Dataserver environment root directory" )
 	arg_parser.add_argument( 'username', help="The username" )
 	arg_parser.add_argument( '--include_dfls', help="Unindex content in user's dfls", action='store_true', dest='include_dfls')
+	arg_parser.add_argument( '--verbose', help="Verbose output", action='store_true', dest='verbose')
 	args = arg_parser.parse_args()
 
+	verbose = args.verbose
 	username = args.username
 	include_dfls = args.include_dfls
 	env_dir = os.path.expanduser(args.env_dir)
 	
 	run_with_dataserver( environment_dir=env_dir,
 						 xmlconfig_packages=(nti.contentsearch,),
-						 function=lambda: reindex_entity_content(username, include_dfls) )
+						 function=lambda: reindex_entity_content(username, include_dfls, verbose) )
 
 if __name__ == '__main__':
 	main()
