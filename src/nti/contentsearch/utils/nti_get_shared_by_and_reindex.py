@@ -83,7 +83,8 @@ def compute_shared_by_and_reindex(username, reindex, verbose):
 	result = sorted(result)
 	
 	if not reindex:
-		print(result)
+		for u in result:
+			print(u)
 	else:
 		if verbose:
 			print('Reindexing data for %s entities\n' % len(result))
