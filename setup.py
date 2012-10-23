@@ -27,6 +27,7 @@ entry_points = {
 		"nti_reindex_user_content = nti.contentsearch.utils.nti_reindex_user_content:main",
 		"nti_remove_user_search_content = nti.contentsearch.utils.nti_remove_user_content:main",
 		"nti_remove_index_zombies = nti.contentsearch.utils.nti_remove_index_zombies:main",
+		'nti_get_shared_by_and_reindex = nti.contentsearch.utils.nti_get_shared_by_and_reindex:main',
 		"nti_s3put = nti.contentlibrary.nti_s3put:main",
 		"nti_gslopinionexport = nti.contentrendering.gslopinionexport:main",
 		"nti_jsonpbuilder = nti.contentrendering.jsonpbuilder:main",
