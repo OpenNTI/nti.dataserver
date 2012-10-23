@@ -1,0 +1,7 @@
+# -*- mode: html -*-
+
+name: uline uuline uwave dashuline dotuline
+<span class="underline" tal:content="self"></span>
+
+name: sout xout
+<span class="lineout" tal:content="self"></span>
