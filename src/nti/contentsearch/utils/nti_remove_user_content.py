@@ -41,9 +41,9 @@ def main():
 			
 	run_with_dataserver( environment_dir=env_dir,
 						 xmlconfig_packages=(nti.contentsearch,),
-						 function=lambda: remove_user_content(username, include_dfls, content_types) )
+						 function=lambda: remove_user_content(username, content_types, include_dfls) )
 			
-def remove_entity_content( username, include_dfls, content_types):
+def remove_entity_content(username, content_types=(), include_dfls=False):
 	entity = users.Entity.get_entity( username )
 	if not entity:
 		print( "user/entity '%s' does not exists" % username, file=sys.stderr )

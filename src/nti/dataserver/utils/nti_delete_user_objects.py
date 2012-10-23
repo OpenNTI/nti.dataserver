@@ -24,7 +24,8 @@ def remove_user_objects( username, object_types=(), export_dir=None ):
 	# normalize object types
 	object_types = set(map(lambda x: x.lower(), object_types))
 
-	captured_types = defaultdict(list)
+	captured_types = set()
+	exported_objects = defaultdict(list)
 	if export_dir:
 		export_dir = os.path.expanduser(export_dir)
 		if not os.path.exists(export_dir):
@@ -37,16 +38,17 @@ def remove_user_objects( username, object_types=(), export_dir=None ):
 			_id = getattr(obj, 'id', None )
 			containerId = getattr(obj, 'containerId', None )
 			if containerId and _id and user.deleteContainedObject( containerId, _id ):
-				if external is not None:
-					captured_types[type_name].append(external)
 				counter = counter +  1
+				captured_types.add(type_name)
+				if external is not None:
+					exported_objects[type_name].append(external)
 
-	if captured_types:
-		remove_user_content(username, captured_types.keys())
-		if export_dir:
+	if counter:
+		remove_user_content(username, captured_types)
+		if export_dir and exported_objects:
 			utc_datetime = datetime.datetime.utcnow()
 			s = utc_datetime.strftime("%Y-%m-%d-%H%M%SZ")
-			for name, objs in captured_types.items():
+			for name, objs in exported_objects.items():
 				name = "%s-%s-%s.json" % (username, name, s)
 				outname = os.path.join(export_dir, name)
 				with open(outname, "w") as fp:
