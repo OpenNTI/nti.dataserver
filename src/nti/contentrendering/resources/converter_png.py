@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-A resource converter to create MathXML.
+A resource converter to create PNGs.
 
-..note:: This module is currently not used or tested.
+..note:: This module is currently not tested.
 
 $Id$
 """
@@ -14,6 +14,7 @@ logger = __import__('logging').getLogger(__name__)
 import os
 import tempfile
 import re
+import shutil
 import glob
 import time
 
@@ -43,7 +44,16 @@ def _size(key, png):
 def _scale(input, output, scale, defaultScale):
 	# Use IM to scale. Must be top-level to pickle
 	#scale is 1x, 2x, 4x
-	return os.system( 'convert %s -resize %d%% PNG32:%s' % (input, 100*(scale/defaultScale) , output) )
+	#return os.system( 'convert %s -resize %f%% PNG32:%s' % (input, 100*(scale/defaultScale) , output) )
+	command = [ 'convert', input, '-resize', '%f%%' % (100*(scale/defaultScale)), 'PNG32:%s' % output ]
+	retval1 = subprocess.call( command )
+	# Use pngcrush to clean the resized PNG.
+	tmpfile = tempfile.mkstemp( suffix = '.png' )
+	os.close(tmpfile[0])
+	command = [ 'pngcrush', '-q', output, tmpfile[1] ]
+	retval2 = subprocess.call( command )
+	shutil.move( tmpfile[1], output )
+	return retval1 if (retval1 < retval2) else retval2
 
 class _GSPDFPNG2(plasTeX.Imagers.gspdfpng.GSPDFPNG):
 	"""
@@ -53,13 +63,18 @@ class _GSPDFPNG2(plasTeX.Imagers.gspdfpng.GSPDFPNG):
 	some features are removed.
 
 	"""
-	command = ('%s -q -dSAFER -dBATCH -dNOPAUSE -sDEVICE=pngalpha ' % gs) + \
-			  '-dGraphicsAlphaBits=4 -sOutputFile=img%d.png'
+	#command = ('%s -q -dSAFER -dBATCH -dNOPAUSE -sDEVICE=pngalpha ' % gs) + \
+	#    '-dGraphicsAlphaBits=4 -sOutputFile=img%d.png'
+	command = [ gs, '-q', '-dSAFER', '-dBATCH', '-dNOPAUSE', '-sDEVICE=pngalpha', '-dGraphicsAlphaBits=4', 
+		    '-sOutputFile=img%d.png']
 	compiler = 'pdflatex'
 	fileExtension = '.png'
-	size = 500
+	# SAJ: The relationship between resolution and defaultScaleFator is important to prevent the distortion of
+	# input images. Oversampling the input image and then downsizing producess a better output that sampling
+	# the input image at 72 dpi.  It also allows us to easily produce 1x, 2x, 3x, and 4x image sizes.
+	resolution = 288 # SAJ: Should be an integer multiple of 72
+	defaultScaleFactor = 4.0 # SAJ: This needs to be equal to resolution/72
 	scaleFactor = 1
-	defaultScaleFactor = 4.0
 
 	def executeConverter(self, output):
 		# Must have been called from the converter
@@ -72,7 +87,7 @@ class _GSPDFPNG2(plasTeX.Imagers.gspdfpng.GSPDFPNG):
 		#os.system( "pdfcrop --hires images.out images.out" )
 		# pdfcrop produces useless stdout data
 		with open('/dev/null', 'w') as dev_null:
-			subprocess.check_call( ('pdfcrop', '--hires', 'images.out', 'images.out' ),
+			subprocess.call( ('pdfcrop', '--hires', 'images.out', 'images.out' ),
 								   stdout=dev_null, stderr=dev_null )
 
 		#maxpages = int(subprocess.Popen( "pdfinfo images.out | grep Pages | awk '{print $2}'", shell=True, stdout=subprocess.PIPE).communicate()[0])
@@ -88,16 +103,23 @@ class _GSPDFPNG2(plasTeX.Imagers.gspdfpng.GSPDFPNG):
 		## 	# coming in too small
 		## 	# We're arbitrarily assigning a height above baseline to match the margin
 
-		options = ''
+		#options = ''
+		options = []
 		if self._configOptions:
 			for opt, value in self._configOptions:
 				opt, value = str(opt), str(value)
 				if ' ' in value:
 					value = '"%s"' % value
-				options += '%s %s ' % (opt, value)
+				#options += '%s %s ' % (opt, value)
+				options.extend( [ opt, value ] )
 
 		# FIXME: Convert to subprocess. os.system is unsafe.
-		res = os.system('%s -r%d %s%s' % (self.command, self.size ,options, 'images.out')), None
+		#res = os.system('%s -r%d %s%s' % (self.command, self.resolution ,options, 'images.out')), None
+		self.command.append( '-r%d' % self.resolution)
+		self.command.extend( options )
+		self.command.append( 'images.out' )
+		# SAJ: Turn the result of the subprocess call into a tuple.  This seems rather hackish.
+		res = subprocess.call( self.command ), None
 
 		pngs = glob.glob('img*.png')
 		pngs.sort(lambda a,b: cmp(int(re.search(r'(\d+)\.\w+$',a).group(1)),
@@ -108,8 +130,10 @@ class _GSPDFPNG2(plasTeX.Imagers.gspdfpng.GSPDFPNG):
 			for the_tuple in executor.map( _size, self.images.keys(), pngs ):
 				img = self.images[the_tuple[0]]
 				img._cropped = True
-				img.width = math.ceil( float(the_tuple[1]) / 1.3 )
-				img.height = math.ceil( float(the_tuple[2]) / 1.3 )
+				#img.width = math.ceil( float(the_tuple[1]) / 1.3 )
+				#img.height = math.ceil( float(the_tuple[2]) / 1.3 )
+				img.width = the_tuple[1]
+				img.height = the_tuple[2]
 				#img.depth = -3
 
 		return res
@@ -127,7 +151,8 @@ class _GSPDFPNG2(plasTeX.Imagers.gspdfpng.GSPDFPNG):
 
 
 def _invert(ifile, ofile):
-	return os.system('convert %s -negate %s' % (ifile, ofile))
+	#return os.system('convert %s -negate %s' % (ifile, ofile))
+	return subprocess.call( ['convert', ifile, '-negate', ofile ] )
 
 from ._util import copy
 
@@ -171,12 +196,12 @@ class GSPDFPNG2BatchConverter(converters.ImagerContentUnitRepresentationBatchCon
 				raise Exception( "Unable to generate image for '%s' (%s)" % (source, image) )
 			for scale in self.scales:
 			   	newImage = self.makeImage( os.path.join( tempdir,
-														 self.__newNameFromOrig(image.path,
-																				scale,
-																				False)),
-											math.ceil(image.width * (scale / rsg.imager.defaultScaleFactor)),
-											math.ceil(image.height * (scale/rsg.imager.defaultScaleFactor)),
-											image.depth )
+									 self.__newNameFromOrig(image.path,
+												scale,
+												False)),
+							   math.ceil(image.width * (scale / rsg.imager.defaultScaleFactor)),
+							   math.ceil(image.height * (scale/rsg.imager.defaultScaleFactor)),
+							   image.depth )
 
 				newImage._scaleFactor = scale
 				newImage._source = source
@@ -210,12 +235,12 @@ class GSPDFPNG2BatchConverter(converters.ImagerContentUnitRepresentationBatchCon
 			for scale in self.scales:
 				for origImage in allNewImages:
 					newImage = self.makeImage( os.path.join( tempdir,
-															 self.__newNameFromOrig(origImage.path,
-																					scale,
-																					True)),
-												origImage.width,
-												origImage.height,
-												origImage.depth )
+										 self.__newNameFromOrig(origImage.path,
+													scale,
+													True)),
+								   origImage.width,
+								   origImage.height,
+								   origImage.depth )
 					newImage.source = origImage.source
 					newImage.qualifiers = ('inverted', scale)
 					interface.alsoProvides( newImage, interfaces.IContentUnitRepresentation )
