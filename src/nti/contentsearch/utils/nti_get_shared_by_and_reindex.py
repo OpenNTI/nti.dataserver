@@ -11,24 +11,28 @@ from zope import component
 
 from nti.dataserver import users
 from nti.dataserver.utils import run_with_dataserver
+from nti.dataserver.activitystream_change import Change
 
 import nti.contentsearch
 from nti.contentsearch import interfaces as search_interfaces
-
-from nti.dataserver.activitystream_change import Change
+from nti.contentsearch.utils.nti_reindex_user_content import reindex_entity_content
 
 def main():
 	arg_parser = argparse.ArgumentParser( description="Print names of entities that could share with a particular user" )
 	arg_parser.add_argument( 'env_dir', help="Dataserver environment root directory" )
 	arg_parser.add_argument( 'username', help="The username" )
+	arg_parser.add_argument( '--verbose', help="Unindex content in user's dfls", action='store_true', dest='verbose')
+	arg_parser.add_argument( '--reindex', help="Verbose output", action='store_true', dest='reindex')
 	args = arg_parser.parse_args()
 
+	verbose = args.verbose
+	reindex = args.reindex
 	username = args.username
 	env_dir = os.path.expanduser(args.env_dir)
 	
 	run_with_dataserver( environment_dir=env_dir,
 						 xmlconfig_packages=(nti.contentsearch,),
-						 function=lambda: compute_shared_by(username) )
+						 function=lambda: compute_shared_by_and_reindex(username, reindex, verbose) )
 	
 def get_creator(obj):
 	creator = None
@@ -42,7 +46,7 @@ def get_creator(obj):
 	creator = creator.username if creator and hasattr(creator, 'username') else creator
 	return creator
 		
-def compute_shared_by( username):
+def compute_shared_by_and_reindex(username, reindex, verbose):
 	entity = users.Entity.get_entity( username )
 	if not entity:
 		print( "user/entity '%s' does not exists" % username, file=sys.stderr )
@@ -74,8 +78,19 @@ def compute_shared_by( username):
 			if creator: result.add(creator)
 				
 	result.update(communities_dfls)
+	if username in result:
+		result.remove(username)
 	result = sorted(result)
-	print(result)
+	
+	if not reindex:
+		print(result)
+	else:
+		if verbose:
+			print('Reindexing data for %s entities\n' % len(result))
+		for u in result:
+			reindex_entity_content(u, include_dfls=True, verbose=verbose)	
+	
+	return result
 	
 if __name__ == '__main__':
 	main()
