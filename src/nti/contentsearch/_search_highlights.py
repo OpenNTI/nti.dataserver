@@ -171,7 +171,7 @@ class _SearchFragment(object):
 		result.matches = matches if matches else ()
 		return result
 
-def _prune_fragments(termset, original_snippet, original_fragments):
+def _prune_phrase_terms_fragments(termset, original_snippet, original_fragments):
 	snippets = []
 	fragments = []
 	_len = len(termset)
@@ -204,34 +204,43 @@ def _prune_fragments(termset, original_snippet, original_fragments):
 	snippet = '...'.join(snippets) if snippets else original_snippet
 	return snippet, fragments
 
-def _search_fragment_snippet(text, fragment, surround=50):
-	if not fragment.matches:
-		return text
+def _context_fragment(sf, termset, query, maxchars=500, surround=50):
+	if not sf.matches:
+		return sf
 	
-	start = fragment.matches[0].start
-	end = fragment.matches[-1].end
+	snippet = []
+	text = sf.text
+	for m in sf.matches:
+		start = m.start
+		end = m.end
 
-	st = max(0, start - surround)
-	if st == 0:
-		start = 0
-	else:
-		for idx in range(st, start):
-			if _char_tester.match(text[idx]):
-				start = idx + 1
-				break
-	
-	_len = len(text)
-	ed = min(_len, end + surround)
-	if ed == _len:
-		end = _len
-	else:
-		for idx in range(-ed, -end):
-			if _char_tester.match(text[-idx]):
-				end = -idx
-				break
+		st = max(0, start - surround)
+		if st == 0:
+			start = 0
+		else:
+			for idx in range(st, start):
+				if _char_tester.match(text[idx]):
+					start = idx + 1
+					break
 		
-	snippet = text[start:end]
-	return snippet
+		_len = len(text)
+		ed = min(_len, end + surround)
+		if ed == _len:
+			end = _len
+		else:
+			for idx in range(-ed, -end):
+				if _char_tester.match(text[-idx]):
+					end = -idx
+					break
+				
+		s = text[start:end]
+		snippet.append(s)
+		if len(s) > maxchars:
+			break
+		
+	snippet = '\n'.join(snippet)
+	sf = _SearchFragment.create_from_terms(snippet, termset, query.is_phrase_search)
+	return sf
 
 def word_fragments_highlight(query, text, maxchars=300, surround=50, top=3, analyzer=None, order=highlight.FIRST):
 
@@ -262,11 +271,12 @@ def word_fragments_highlight(query, text, maxchars=300, surround=50, top=3, anal
 		snippet = formatter(text, fragments)
 	else:
 		sf = _SearchFragment.create_from_terms(text, termset, query.is_phrase_search)
-		snippet = _search_fragment_snippet(text, sf)
+		sf = _context_fragment(sf, termset, query, maxchars=maxchars, surround=surround)
+		snippet = sf.text
 		search_fragments = [sf]
 		
 	if query.is_phrase_search:
-		snippet, search_fragments =  _prune_fragments(termset, snippet, search_fragments)
+		snippet, search_fragments =  _prune_phrase_terms_fragments(termset, snippet, search_fragments)
 	
 	return snippet, search_fragments
 
