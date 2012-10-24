@@ -1,9 +1,9 @@
 Dependencies (macports):
+- zmq22				# 2012-10-24
 - gcc45				# 2012-03-07
 - llvm-gcc-4.2		# 2012-03-07 (Optional)
 
 - py27-cython		# 2011-08-31
-- py27-zmq			# 2.10.0, and corresponding ZMQ. 2011-10-22
 - py27-gevent		# For greenlets, runloop, and sockio. 2011-08-26
 - py27-sphinx		# 1.0.7 for documentation generation
 - py27-lxml			# XML and HTML parsing. v2.3. 2011-09-14
