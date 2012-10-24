@@ -15,7 +15,7 @@ from nti.contentsearch.utils.nti_remove_user_content import remove_user_content
 
 from nti.dataserver.utils.nti_export_user_objects import get_user_objects, to_external_object
 
-def remove_user_objects( username, object_types=(), export_dir=None ):
+def remove_user_objects( username, object_types=(), export_dir=None, verbose=False):
 	user = users.User.get_user( username )
 	if not user:
 		print( "User '%s' does not exists" % username, file=sys.stderr )
@@ -31,14 +31,14 @@ def remove_user_objects( username, object_types=(), export_dir=None ):
 		if not os.path.exists(export_dir):
 			os.makedirs(export_dir)
 
-	counter = 0
-	for type_name, adapted, obj in get_user_objects( user, object_types):
+	counter = defaultdict(int)
+	for type_name, adapted, obj in list(get_user_objects( user, object_types)):
 		external = to_external_object(adapted) if export_dir else None
 		with user.updates():
 			_id = getattr(obj, 'id', None )
 			containerId = getattr(obj, 'containerId', None )
 			if containerId and _id and user.deleteContainedObject( containerId, _id ):
-				counter = counter +  1
+				counter[type_name] = counter[type_name] +  1
 				captured_types.add(type_name)
 				if external is not None:
 					exported_objects[type_name].append(external)
@@ -53,7 +53,11 @@ def remove_user_objects( username, object_types=(), export_dir=None ):
 				outname = os.path.join(export_dir, name)
 				with open(outname, "w") as fp:
 					json.dump(objs, fp, indent=4)
-	else:
+					
+		if verbose:
+			for t,c in counter.items():
+				print('%s %s object(s) deleted' % (c, t))
+	elif verbose:
 		print( "No objects were removed for user '%s'" % username, file=sys.stderr)
 
 def main():
@@ -68,15 +72,18 @@ def main():
 							 nargs="*",
 							 dest='object_types',
 							 help="The object type(s) to delete" )
+	arg_parser.add_argument( '-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
 	
 	args = arg_parser.parse_args()
 	
-	env_dir = args.env_dir
+	verbose = args.verbose
 	username = args.username
-	export_dir = args.export_dir
+	env_dir = os.path.expanduser(args.env_dir)
 	object_types = set(args.object_types) if args.object_types else ()
+	export_dir = os.path.expanduser(args.export_dir)  if args.export_dir else None
 	
-	run_with_dataserver( environment_dir=env_dir, function=lambda: remove_user_objects(username, object_types, export_dir) )
+	run_with_dataserver(environment_dir=env_dir, 
+						function=lambda: remove_user_objects(username, object_types, export_dir, verbose) )
 
 if __name__ == '__main__':
 	main()
