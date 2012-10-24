@@ -16,6 +16,7 @@ from zope.generations.utility import findObjectsProviding, findObjectsMatching
 from nti.dataserver import users
 from nti.dataserver.utils import run_with_dataserver
 from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.links_external import render_link
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.interfaces import StandardExternalFields
 from nti.dataserver.chat_transcripts import _DocidMeetingTranscriptStorage as DMTS
@@ -29,10 +30,19 @@ def _is_transcript(type_name):
 
 def _clean_links(obj):
 	if isinstance(obj, Mapping):
-		obj.pop(StandardExternalFields.LINKS, None)
+		links = obj.get(StandardExternalFields.LINKS, None)
+		if links is not None:
+			obj[StandardExternalFields.LINKS] =\
+					 [render_link(link) if nti_interfaces.ILink.providedBy(link) else link \
+					  for link in obj[StandardExternalFields.LINKS]]
+			
+		url = obj.get('url', None)
+		if nti_interfaces.ILink.providedBy(url):
+			obj['url'] = render_link(url)
+			
 		map(_clean_links, obj.values())
 	elif isinstance(obj, (list, tuple)):
-		map(_clean_links, obj)
+		map(_clean_links, obj)	
 	return obj
 
 def get_user_objects(user, object_types=()):
