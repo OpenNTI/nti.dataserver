@@ -53,9 +53,9 @@ def to_external_object(obj):
 	return external
 
 def export_user_objects( username, object_types=(), export_dir="/tmp"):
-	user = users.User.get_user( username )
+	user = users.Entity.get_entity( username )
 	if not user:
-		print( "User '%s' does not exists" % username, file=sys.stderr )
+		print( "User/Entity '%s' does not exists" % username, file=sys.stderr )
 		sys.exit( 2 )
 
 	# create export dir
