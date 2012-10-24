@@ -2,6 +2,7 @@ from __future__ import print_function, unicode_literals, absolute_import
 
 import re
 import six
+import difflib
 import collections
 
 from pkg_resources import resource_filename
@@ -13,7 +14,7 @@ from persistent.interfaces import IPersistent
 from dolmen.builtins import IDict
 
 from nltk.tokenize import RegexpTokenizer
-	
+
 from nti.contentfragments import interfaces as frg_interfaces
 
 from nti.chatserver import interfaces as chat_interfaces
@@ -384,16 +385,9 @@ class _DefaultStopWords(object):
 
 @interface.implementer( search_interfaces.IWordSimilarity )
 class _DefaultWordSimilarity(object):
-	
-	def __init__(self):
-		try:
-			from zopyx.txng3.ext.levenshtein import ratio as zopyx_ratio
-			self._ratio = zopyx_ratio
-		except ImportError:
-			self._ratio = lambda x,y: 1
 			
 	def compute(self, a, b):
-		result = self._ratio(a,b)
+		result = difflib.SequenceMatcher(None, a, b).ratio()
 		return result
 
 	def rank(self, word, terms, reverse=True):
