@@ -4,20 +4,17 @@ from __future__ import unicode_literals, print_function
 
 import os
 import simplejson as json
-import pkg_resources
 
 from zc import intid as zc_intid
 from zope import interface
 from zope import component
-from zope.component.hooks import site, setHooks, getSite
+from zope.component.hooks import site, getSite
 import zope.generations.generations
 from zope.generations import interfaces as gen_interfaces
 
 import nti.dataserver.classes as classes
 import nti.dataserver.providers as providers
 
-from nti import deprecated
-from nti.dataserver import containers
 from nti.dataserver.users import User, Community, FriendsList
 
 import logging
@@ -89,7 +86,7 @@ class ExampleDatabaseInitializer(object):
 		max_test_users = self.max_test_users
 		for x in range(1, max_test_users):
 			uid = 'test.user.%s' % x
-			name = 'Test-%s' % x
+			name = 'TestUser-%s' % x
 			USERS.append( (uid + '@nextthought.com', name) )
 
 		# Some busey people
@@ -211,7 +208,6 @@ class ExampleDatabaseInitializer(object):
 		mock_dataserver.shards = root['shards']
 		communities = self._make_communities(mock_dataserver)
 
-
 		USERS = self._make_usernames()
 		def create_add_user(user_tuple):
 			#from IPython.core.debugger import Tracer;  Tracer()()
@@ -224,9 +220,9 @@ class ExampleDatabaseInitializer(object):
 
 			args = {'username':uname, 'password':password,'dataserver':mock_dataserver}
 			ext_value = {}
-			ext_value['email'] = unicode(uname) if len(user_tuple) < 3 else user_tuple[2]
 			ext_value['realname'] = user_tuple[1]
-			ext_value['alias'] = user_tuple[1].split()[0]
+			ext_value['email'] = unicode(uname) if len(user_tuple) < 3 else user_tuple[2]
+			ext_value['alias'] = user_tuple[1].split()[0] if not is_test_user else user_tuple[1]
 			args['external_value'] = ext_value
 			user = User.create_user( **args )
 			register_user( user )
@@ -242,7 +238,6 @@ class ExampleDatabaseInitializer(object):
 #				self._add_test_user_friendlist(user)
 
 		map(create_add_user, USERS)
-
 
 		provider = providers.Provider( 'OU', parent=root['providers'] )
 		root['providers']['OU'] = provider
