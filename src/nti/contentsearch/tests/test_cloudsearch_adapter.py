@@ -2,10 +2,8 @@ import os
 import time
 import uuid
 import unittest
-import threading
 
 from zope import component
-
 
 from nti.dataserver.users import User
 from nti.dataserver.contenttypes import Note
@@ -27,30 +25,11 @@ from nti.contentsearch.common import (HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY
 
 from nti.contentsearch.tests import zanpakuto_commands
 from nti.contentsearch.tests import ConfiguringTestBase
-from nti.contentsearch.tests.mock_cloudsearch import _MockCloudSearch
-from nti.contentsearch.tests.mock_cloudsearch import _MockCloundSearchQueryParser
+from nti.contentsearch.tests.mock_cloudsearch import MockCloudSearch
+from nti.contentsearch.tests.mock_cloudsearch import MockCloundSearchQueryParser
+from nti.contentsearch.tests.mock_cloudsearch import MockCloudSearchStorageService
 
 from hamcrest import (is_not, has_key, has_entry, has_length, assert_that)
-
-class MockCloudSearchStorageService(_cloudsearch_store._CloudSearchStorageService):
-	
-	def __init__( self ):
-		super(MockCloudSearchStorageService, self).__init__()
-		
-	def _spawn_index_listener(self):
-		self.stop = False
-		def read_idx_msgs():
-			while not self.stop:
-				time.sleep(1)
-				if not self.stop:
-					self.read_process_index_msgs()
-		
-		th = threading.Thread(target=read_idx_msgs)
-		th.start()
-		return th
-	
-	def halt(self):
-		self.stop =True
 	
 #@unittest.SkipTest	
 class TestCloudSearchAdapter(ConfiguringTestBase):
@@ -95,10 +74,10 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 		self.aws_op_delay = 2.5
 		self._register_zcml()
 		
-		parser = _MockCloundSearchQueryParser()
+		parser = MockCloundSearchQueryParser()
 		component.provideUtility( parser, provides=search_interfaces.ICloudSearchQueryParser )
 		
-		self.store = _MockCloudSearch()
+		self.store = MockCloudSearch()
 		component.provideUtility( self.store, provides=search_interfaces.ICloudSearchStore )
 		
 		self.cs_service = MockCloudSearchStorageService()

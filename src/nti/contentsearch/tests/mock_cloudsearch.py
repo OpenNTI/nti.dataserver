@@ -1,3 +1,6 @@
+import time
+import threading
+
 from zope import component
 from zope import interface
 
@@ -6,6 +9,7 @@ from whoosh import fields
 from whoosh import analysis
 from whoosh import ramindex
 
+from nti.contentsearch import _cloudsearch_store
 from nti.contentsearch.common import (content_, ngrams_)
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch._cloudsearch_query import adapt_searchon_types
@@ -42,7 +46,7 @@ def create_schema():
 _cs_schema = create_schema()		
 
 @interface.implementer(search_interfaces.ICloudSearchQueryParser)
-class _MockCloundSearchQueryParser(object):
+class MockCloundSearchQueryParser(object):
 	
 	_schema = _cs_schema
 	
@@ -73,7 +77,7 @@ class _MockCloundSearchQueryParser(object):
 		return result
 	
 @interface.implementer(search_interfaces.ICloudSearchStore)
-class _MockCloudSearch(object):
+class MockCloudSearch(object):
 
 	def __init__( self ):
 		self.schema = _cs_schema
@@ -127,5 +131,24 @@ class _MockCloudSearch(object):
 	def get_search_service(self, domain_name=None):
 		return self
 
+class MockCloudSearchStorageService(_cloudsearch_store._CloudSearchStorageService):
+	
+	def __init__( self ):
+		super(MockCloudSearchStorageService, self).__init__()
+		
+	def _spawn_index_listener(self):
+		self.stop = False
+		def read_idx_msgs():
+			while not self.stop:
+				time.sleep(1)
+				if not self.stop:
+					self.read_process_index_msgs()
+		
+		th = threading.Thread(target=read_idx_msgs)
+		th.start()
+		return th
+	
+	def halt(self):
+		self.stop =True
 
 	
