@@ -2,6 +2,7 @@ from __future__ import print_function, unicode_literals
 
 import zope.intid
 from zope import component
+from zc import intid as zc_intid
 from ZODB.POSException import POSKeyError
 
 from nti.dataserver.users import friends_lists
@@ -52,6 +53,7 @@ def reindex_all(context):
 	
 	ds_intid = lsm.getUtility( provided=zope.intid.IIntIds )
 	component.provideUtility(ds_intid, zope.intid.IIntIds )
+	component.provideUtility(ds_intid, zc_intid.IIntIds )
 	
 	# remove all catalogs first
 	for user in users.values():
