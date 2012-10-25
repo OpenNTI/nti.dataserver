@@ -9,8 +9,6 @@ from zope import component
 from zope.annotation import factory as an_factory
 from zope.interface.common.mapping import IFullMapping
 
-from persistent.mapping import PersistentMapping
-
 from perfmetrics import metricmethod
 
 from nti.dataserver import interfaces as nti_interfaces
@@ -37,13 +35,10 @@ logger = logging.getLogger( __name__ )
 	
 @component.adapter(nti_interfaces.IEntity)
 @interface.implementer(search_interfaces.ICloudSearchEntityIndexManager, IFullMapping)
-class _CloudSearchEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
+class _CloudSearchEntityIndexManager(_SearchEntityIndexManager):
 
 	_v_service = None
 	
-	def __init__(self):
-		PersistentMapping.__init__(self)
-
 	def _get_cs_service(self):
 		if self._v_service is None:
 			self._v_service = component.getUtility(search_interfaces.ICloudSearchStoreService)

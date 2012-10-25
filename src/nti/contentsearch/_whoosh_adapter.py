@@ -12,8 +12,6 @@ from zope.proxy import ProxyBase
 from zope.annotation import factory as an_factory
 from zope.interface.common.mapping import IFullMapping
 
-from persistent.mapping import PersistentMapping
-
 from whoosh.store import LockError
 
 from nti.dataserver import interfaces as nti_interfaces
@@ -108,7 +106,7 @@ whoosh_indices = LFUMap(maxsize=500, on_removal_callback=_on_index_removed)
 
 @component.adapter(nti_interfaces.IEntity)
 @interface.implementer( search_interfaces.IWhooshEntityIndexManager, IFullMapping )
-class _WhooshEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
+class _WhooshEntityIndexManager(_SearchEntityIndexManager):
 		
 	delay = 0.25
 	maxiters = 40

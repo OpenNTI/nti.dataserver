@@ -5,8 +5,6 @@ from zope import interface
 from zope.annotation import factory as an_factory
 from zope.interface.common.mapping import IFullMapping
 
-from persistent.mapping import PersistentMapping
-
 from perfmetrics import metricmethod
 
 from nti.dataserver import interfaces as nti_interfaces
@@ -33,10 +31,7 @@ logger = logging.getLogger( __name__ )
 
 @component.adapter(nti_interfaces.IEntity)
 @interface.implementer( search_interfaces.IRepozeEntityIndexManager, IFullMapping )
-class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
-
-	def __init__(self):
-		PersistentMapping.__init__(self)
+class _RepozeEntityIndexManager(_SearchEntityIndexManager):
 
 	def add_catalog(self, catalog, type_name):
 		if type_name not in self:
