@@ -5,8 +5,9 @@ from zope import component
 from zope import interface
 from zope.location.interfaces import ILocation
 
-from nti.dataserver import interfaces as nti_interfaces
+from persistent.mapping import PersistentMapping
 
+from nti.dataserver import interfaces as nti_interfaces
 
 from nti.contentsearch import interfaces as search_interfaces
 
@@ -14,7 +15,7 @@ import logging
 logger = logging.getLogger( __name__ )
 
 @interface.implementer( search_interfaces.IEntityIndexManager, ILocation )
-class _SearchEntityIndexManager(object):
+class _SearchEntityIndexManager(PersistentMapping):
 	
 	@property
 	def username(self):
