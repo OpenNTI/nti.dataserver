@@ -14,12 +14,12 @@ from nti.contentsearch._whoosh_indexstorage import create_directory_index
 from nti.contentsearch._whoosh_bookindexmanager import WhooshBookIndexManager
 
 from nti.contentsearch.common import (HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS,
-									  SNIPPET, NTIID, SUGGESTIONS)
+									  SNIPPET, NTIID, SUGGESTIONS, SCORE)
 
 from nti.contentsearch.tests import zanpakuto_commands
 from nti.contentsearch.tests import ConfiguringTestBase
 
-from hamcrest import (assert_that, has_key, has_entry, has_length, is_not, has_item)
+from hamcrest import (assert_that, has_key, has_entry, has_length, is_not, is_, has_item)
 
 _whoosh_index.compute_ngrams = True
 
@@ -60,6 +60,7 @@ class TestWhooshBookIndexManager(ConfiguringTestBase):
 		item = items[0]
 		assert_that(item, has_entry(CLASS, HIT))
 		assert_that(item, has_entry(NTIID, is_not(None)))
+		assert_that(item, has_entry(SCORE, is_not(None)))
 		assert_that(item, has_entry(CONTAINER_ID,  is_not(None)))
 		assert_that(item, has_entry(SNIPPET, 'All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade'))
 		
@@ -78,7 +79,18 @@ class TestWhooshBookIndexManager(ConfiguringTestBase):
 		assert_that(hits, has_entry(HIT_COUNT, 3))
 		assert_that(hits, has_entry(QUERY, 'ra*'))
 		assert_that(hits, has_key(ITEMS))
+		items = hits[ITEMS]
+		assert_that(items, has_length(3))
+		for item in items:
+			assert_that(item, has_entry(SCORE, is_(1.0)))
 		
+	def test_partial_search_start(self):
+		hits = toExternalObject(self.bim.search("bl"))
+		items = hits[ITEMS]
+		assert_that(items, has_length(2))
+		for item in items:
+			assert_that(item, has_entry(SCORE, is_not(None)))
+			
 	def test_suggest(self):
 		hits = toExternalObject(self.bim.suggest("ra"))
 		assert_that(hits, has_entry(HIT_COUNT, 4))

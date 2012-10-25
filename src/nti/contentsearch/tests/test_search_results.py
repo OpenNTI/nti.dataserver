@@ -48,7 +48,7 @@ class TestSearchResults(ConfiguringTestBase):
 		sr.add(notes)
 		assert_that(len(sr), is_(len(notes)))
 		for x, note in enumerate(notes):
-			assert_that(note, is_(sr[x]))
+			assert_that(note, is_(sr[x][0]))
 			
 		note = Note()
 		note.body = [u'test']
@@ -148,8 +148,9 @@ class TestSearchResults(ConfiguringTestBase):
 		offset = len(a)
 		a = merge_search_results(a, b)
 		assert_that(a, has_length(len(zanpakuto_commands)))
-		for x, note in enumerate(b):
-			assert_that(note, is_(a[offset+x]))
+		for x, tp in enumerate(b):
+			expected = a[offset+x]
+			assert_that(tp, is_(expected))
 			
 		assert_that(a.prop1, is_('value1'))
 		assert_that(a.prop2, is_('value2'))

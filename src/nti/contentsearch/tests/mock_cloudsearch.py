@@ -113,6 +113,7 @@ class MockCloudSearch(object):
 				data = {}
 				entry = {u'id': h['id'], u'data': data, u'version': int(h['version'])}
 				data['intid'] = [ h['intid'] ]
+				data['score'] = [h.score or 1.0]
 				result.append(entry)
 		return result
 
