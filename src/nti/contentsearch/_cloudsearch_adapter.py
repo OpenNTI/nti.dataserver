@@ -54,7 +54,7 @@ class _CloudSearchEntityIndexManager(PersistentMapping, _SearchEntityIndexManage
 		uid = cloud_data.get(intid_, None)
 		uid = uid[0] if isinstance(uid, (list, tuple)) else uid
 		result = self.get_object(uid) if uid is not None else None
-		return result
+		return (result, 1.0)
 		
 	def _do_search(self, qo, highlight_type=WORD_HIGHLIGHT, creator_method=None):
 		creator_method = creator_method or empty_search_results
@@ -71,7 +71,9 @@ class _CloudSearchEntityIndexManager(PersistentMapping, _SearchEntityIndexManage
 		objects = service.search(bq=bq, return_fields=search_stored_fields, size=limit, start=start)
 		
 		# get ds objects
-		results.add(map(self._get_search_hit, objects))
+		for obj in objects:
+			hit_score = self._get_search_hit(obj)
+			results.add(hit_score)
 		return results
 	
 	@metricmethod

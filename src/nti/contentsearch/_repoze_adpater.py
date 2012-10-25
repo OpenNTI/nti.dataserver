@@ -89,19 +89,20 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 		return fieldname
 	
 	@metricmethod
-	def _get_hits_from_docids(self, results, docids, type_name):
+	def _get_hits_from_docids(self, results, doc_weights, type_name):
 		# get all objects from the ds
-		objects = map(self.get_object, docids)
-		results.add(objects)
+		for docid, score in doc_weights.items():
+			obj = self.get_object(docid)
+			results.add((obj, score))
 		
 	@metricmethod
 	def _do_catalog_query(self, catalog, qo, type_name, fieldname=None):
 		fieldname = fieldname or self._get_search_field(qo)
 		is_all_query, queryobject = parse_query(catalog, fieldname, qo)
 		if is_all_query:
-			return 0, []
-
-		result = catalog.query(queryobject)
+			result =  {}
+		else:
+			result = queryobject._apply(catalog, names=None)
 		return result
 
 	def _do_search(self, qo, searchon=(), highlight_type=WORD_HIGHLIGHT, creator_method=None, fieldname=None):
@@ -112,8 +113,8 @@ class _RepozeEntityIndexManager(PersistentMapping, _SearchEntityIndexManager):
 
 		for type_name in searchon:
 			catalog = self.get_catalog(type_name)
-			_, docids = self._do_catalog_query(catalog, qo, type_name, fieldname=fieldname)
-			self._get_hits_from_docids(results, docids, type_name)
+			doc_weights = self._do_catalog_query(catalog, qo, type_name, fieldname=fieldname)
+			self._get_hits_from_docids(results, doc_weights, type_name)
 
 		return results
 

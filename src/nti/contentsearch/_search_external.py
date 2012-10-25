@@ -18,7 +18,7 @@ from nti.contentsearch._search_highlights import WORD_HIGHLIGHT
 from nti.contentsearch._search_highlights import word_fragments_highlight
 
 from nti.contentsearch.common import (	NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
-										SNIPPET, HIT, ID, CONTENT, INTID, QUERY,
+										SNIPPET, HIT, ID, CONTENT, INTID, QUERY, SCORE,
 										HIT_COUNT, ITEMS, SUGGESTIONS, FRAGMENTS, PHRASE_SEARCH)
 
 from nti.contentsearch.common import ( last_modified_, content_, title_, ntiid_)
@@ -108,12 +108,14 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 		highlight_type = self.highlight_type
 		
 		# use iterator in case of any paging
-		for item in self.results:
-			if item is None:
+		for hit in self.results:
+			if hit is None or hit[0] is None:
 				continue
 
+			item = hit[0]
+			score = hit[1]
 			# adapt to a search hit 
-			hit = get_search_hit(item, query, highlight_type)
+			hit = get_search_hit(item, score, query, highlight_type)
 			last_modified = max(last_modified, hit.last_modified)
 			# run any decorator
 			external = toExternalObject(hit)
@@ -178,21 +180,6 @@ class _BaseSearchHit(object, UserDict.DictMixin):
 	def __delitem__(self, key):
 		self._data.pop(key)
 		
-	def __repr__(self):
-		return "<%s %r>" % (self.__class__.__name__, self._data)
-	
-class _SearchHit(_BaseSearchHit):
-	def __init__( self, original ):
-		super(_SearchHit, self).__init__()
-		adapted = component.queryAdapter(original, search_interfaces.IContentResolver)
-		self._data[CLASS] = HIT
-		self._data[TYPE] = original.__class__.__name__
-		self._data[CREATOR] = adapted.get_creator() if adapted else u''
-		self._data[NTIID] = adapted.get_ntiid() if adapted else u''
-		self._data[SNIPPET] = adapted.get_content() if adapted else u''
-		self._data[CONTAINER_ID] = adapted.get_containerId() if adapted else u''
-		self._data[LAST_MODIFIED] = adapted.get_last_modified() if adapted else 0
-		
 	def get_query(self):
 		return self._query
 	
@@ -201,9 +188,33 @@ class _SearchHit(_BaseSearchHit):
 		
 	query = property(get_query, set_query)
 	
+	def get_score(self):
+		return self._data.get(SCORE, 1.0)
+	
+	def set_score(self, score=1.0):
+		self._data[SCORE] = score or 1.0
+		
+	score = property(get_score, set_score)
+	
 	@property
 	def last_modified(self):
 		return self._data.get(LAST_MODIFIED, 0)
+	
+	def __repr__(self):
+		return "<%s %r>" % (self.__class__.__name__, self._data)
+	
+class _SearchHit(_BaseSearchHit):
+	def __init__( self, original, score=1.0 ):
+		super(_SearchHit, self).__init__()
+		adapted = component.queryAdapter(original, search_interfaces.IContentResolver)
+		self._data[CLASS] = HIT
+		self._data[SCORE] = score
+		self._data[TYPE] = original.__class__.__name__
+		self._data[CREATOR] = adapted.get_creator() if adapted else u''
+		self._data[NTIID] = adapted.get_ntiid() if adapted else u''
+		self._data[SNIPPET] = adapted.get_content() if adapted else u''
+		self._data[CONTAINER_ID] = adapted.get_containerId() if adapted else u''
+		self._data[LAST_MODIFIED] = adapted.get_last_modified() if adapted else 0
 		
 @component.adapter(nti_interfaces.IHighlight)
 class _HighlightSearchHit(_SearchHit):
@@ -219,8 +230,8 @@ class _NoteSearchHit(_SearchHit):
 	
 @component.adapter(chat_interfaces.IMessageInfo)
 class _MessageInfoSearchHit(_SearchHit):
-	def __init__( self, original ):
-		super(_MessageInfoSearchHit, self).__init__(original)
+	def __init__( self, original, score=1.0 ):
+		super(_MessageInfoSearchHit, self).__init__(original, score)
 		adapted = component.queryAdapter(original, search_interfaces.IContentResolver)
 		self._data[ID] = adapted.get_id() if adapted else u''
 		
@@ -250,8 +261,10 @@ def _provide_highlight_snippet(hit, query=None, highlight_type=WORD_HIGHLIGHT):
 			interface.alsoProvides( hit, search_interfaces.INoSnippetHighlight )
 	return hit
 
-def get_search_hit(obj, query=None, highlight_type=WORD_HIGHLIGHT):
+def get_search_hit(obj, score=1.0, query=None, highlight_type=WORD_HIGHLIGHT):
 	hit = component.queryAdapter( obj, ext_interfaces.IExternalObject, default=None, name='search-hit')
 	hit = hit or _SearchHit(obj)
+	hit.score = score
+	hit.query = query
 	hit = _provide_highlight_snippet(hit, query, highlight_type)
 	return hit

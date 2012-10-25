@@ -518,6 +518,7 @@ class IWordSimilarity(interface.Interface):
 class ISearchHit(ext_interfaces.IExternalObject):
 	query = schema.TextLine(title="query that produced this hit")
 	last_modified = schema.Float(title="last modified date for this hit")
+	score = schema.Float(title="query relevance score")
 	
 class IBaseSearchResults(interface.Interface):
 	query = schema.Object(ISearchQuery, title="search query")

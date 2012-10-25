@@ -201,22 +201,16 @@ class Book(_SearchableContent):
 				if docids is not None:
 					docids.add(docnum)
 					
-				data = _BookHit(intid_ = docnum,
+				score = hit.score or 1.0
+				data = _BookHit(intid  = docnum,
+								score  = score,
 								ntiid  = hit[ntiid_], 
 						 		title  = hit[title_],
 						 		content = hit[content_],
 						 		last_modified = hit[last_modified_] )
-				result.append(data)
+				result.append((data, score))
 		return result
 
-	def _set_whoosh_highlight(self, data, hit, search_field):
-		try:
-			whoosh_highlight = hit.highlights(search_field)
-			if whoosh_highlight:
-				data['whoosh_highlight'] = whoosh_highlight
-		except:
-			pass
-			
 # ugd content getter 
 
 def get_channel(obj):
@@ -325,8 +319,9 @@ class UserIndexableContent(_SearchableContent):
 			if docids is None or uid not in docids:
 				if docids is not None:
 					docids.add(uid)
+				score = hit.score or 1.0
 				obj = self.get_object(uid)
-				result.append(obj)
+				result.append((obj, score))
 		return result
 	
 	def get_object(self, uid):

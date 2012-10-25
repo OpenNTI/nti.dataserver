@@ -98,11 +98,22 @@ class _SearchResults(_PageableSearchResults):
 	def hits(self):
 		return self._hits
 	
-	def add(self, items):
-		items = [items] if not isinstance(items, Iterable)  else items
+	def _add(self, item):
+		if isinstance(item, tuple):
+			if item[0] is not None:
+				t = (item[0], 1.0 if len(item) < 2 else float(item[1]))
+				self._hits.append(t)
+		elif item is not None:
+			self._hits.append((item, 1.0))
+			
+	def add(self, hits):
+		if not isinstance(hits, tuple):
+			items = [hits] if not isinstance(hits, Iterable) else hits
+		else:
+			items = [hits] if hits is not None else () 
+			
 		for item in items or ():
-			if item is not None:
-				self._hits.append(item)
+			self._add(item)
 				
 	def __iadd__(self, other):
 		if 	search_interfaces.ISearchResults.providedBy(other) or \
