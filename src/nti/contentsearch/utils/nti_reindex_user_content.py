@@ -42,18 +42,18 @@ def reindex_entity_content(username, include_dfls=False, verbose=False):
 			dfl_names.add(e.username)
 		
 		rim = search_interfaces.IRepozeEntityIndexManager(e, None)
-		catalog = rim.get_create_catalog(obj) if rim is not None else None
-		if catalog is not None:
-			try:
+		try:
+			catalog = rim.get_create_catalog(obj) if rim is not None else None
+			if catalog is not None:
 				docid = get_uid(obj)
 				if docid is not None:
 					catalog.index_doc(docid, obj)
 					counter = counter + 1
 				elif verbose:
 					print("Cannot find int64 id for %r. Object will not be indexed" % obj)
-			except POSKeyError:
-				# broken reference for object
-				pass
+		except POSKeyError:
+			# broken reference for object
+			pass
 	
 	t = time.time() - t
 	if verbose:

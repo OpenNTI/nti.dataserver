@@ -30,18 +30,18 @@ def reindex_ugd(user, users_get, ds_intid):
 			dfl_names.add(e.username)
 		
 		rim = search_interfaces.IRepozeEntityIndexManager(e, None)
-		catalog = rim.get_create_catalog(obj) if rim is not None else None
-		if catalog is not None:
-			try:
+		try:
+			catalog = rim.get_create_catalog(obj) if rim is not None else None
+			if catalog is not None:
 				docid = get_uid(obj, ds_intid)
 				if docid is not None:
 					catalog.index_doc(docid, obj)
 					counter = counter + 1
 				else:
 					logger.warn("Cannot find int64 id for %r. Object will not be indexed" % obj)
-			except POSKeyError:
-				# broken reference for object
-				pass
+		except POSKeyError:
+			# broken reference for object
+			pass
 	
 	logger.debug('%s object(s) for user %s were reindexed' % (counter, username))
 	
