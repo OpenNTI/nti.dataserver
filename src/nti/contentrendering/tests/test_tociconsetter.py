@@ -1,7 +1,8 @@
-from . import ConfiguringTestBase, EmptyMockDocument, NoPhantomRenderedBook
+from . import ConfiguringTestBase
 from nti.contentrendering import tociconsetter
 from nti.tests import provides
 from nti.contentrendering import interfaces
+from nti.contentrendering.utils import EmptyMockDocument, NoPhantomRenderedBook
 
 import os
 from hamcrest import assert_that, has_length, greater_than_or_equal_to, is_, none

@@ -1,7 +1,8 @@
-from . import ConfiguringTestBase, EmptyMockDocument, NoPhantomRenderedBook
+from . import ConfiguringTestBase
 from nti.contentrendering.relatedlinksetter import performTransforms
 from nti.contentrendering.contentchecks import performChecks
 from nti.contentrendering.RenderedBook import RenderedBook
+from nti.contentrendering.utils import EmptyMockDocument, NoPhantomRenderedBook
 
 from nti.contentrendering.contentchecks import mathjaxerror
 import os

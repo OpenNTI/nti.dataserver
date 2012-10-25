@@ -3,6 +3,7 @@ from nti.contentrendering import RenderedBook
 from nti.contentrendering import default_root_sharing_setter
 from nti.tests import provides
 from nti.contentrendering import interfaces
+from nti.contentrendering.utils import EmptyMockDocument, NoConcurrentPhantomRenderedBook
 
 import io
 import os
@@ -16,7 +17,7 @@ def test_module_provides():
 
 class TestTransforms(ConfiguringTestBase):
 
-	def test_transform(self):
+	def test_file_sharedWith(self):
 		"""
 		Verify that defaultsharingsetter can read the default sharing info from the designated file and
 		update the ToC.
@@ -30,7 +31,7 @@ class TestTransforms(ConfiguringTestBase):
 			refData = refData.strip()
 
 		# Open the copy of the rendered book
-		book = RenderedBook.RenderedBook( None, os.path.join( os.path.dirname( __file__ ), TEST_CONTENT ) )
+		book = NoConcurrentPhantomRenderedBook( None, os.path.join( os.path.dirname( __file__ ), TEST_CONTENT ) )
 
 		# Assert ToC is present
 		assert_that( book, has_property( 'toc', is_not( none() ) ) )
@@ -38,6 +39,28 @@ class TestTransforms(ConfiguringTestBase):
 		assert_that( book.toc, has_property( 'root_topic', is_not( none() ) ) )
 		
 		default_root_sharing_setter.transform( book, save_toc=False )
+			
+		# Assert that the shareWith property of the ToC root element is set correctly
+		assert_that( book.toc.root_topic.get_default_sharing_group(), is_( refData ) )
+
+	def test_arg_sharedWith(self):
+		"""
+		Verify that defaultsharingsetter can read the default sharing info from the command line and
+		update the ToC.
+		"""
+
+		# Read the reference data
+		refData = 'entity0 entity1 entity2 entity3'
+
+		# Open the copy of the rendered book
+		book = RenderedBook.RenderedBook( None, os.path.join( os.path.dirname( __file__ ), TEST_CONTENT ) )
+
+		# Assert ToC is present
+		assert_that( book, has_property( 'toc', is_not( none() ) ) )
+		# Assert that the root topic is present
+		assert_that( book.toc, has_property( 'root_topic', is_not( none() ) ) )
+		
+		default_root_sharing_setter.transform( book, save_toc=False, group_name=refData )
 			
 		# Assert that the shareWith property of the ToC root element is set correctly
 		assert_that( book.toc.root_topic.get_default_sharing_group(), is_( refData ) )

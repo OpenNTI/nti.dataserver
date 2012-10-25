@@ -1,7 +1,8 @@
-from . import ConfiguringTestBase, EmptyMockDocument, NoPhantomRenderedBook
+from . import ConfiguringTestBase
 from nti.contentrendering import sectionvideoadder
 from nti.tests import provides
 from nti.contentrendering import interfaces
+from nti.contentrendering.utils import EmptyMockDocument, NoPhantomRenderedBook
 
 import os
 import tempfile
