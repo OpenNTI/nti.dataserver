@@ -14,7 +14,7 @@ from nti.contentsearch import interfaces as search_interfaces
 
 def get_uid(obj, intids=None):
 	intids = intids or component.getUtility( zope.intid.IIntIds )
-	result = intids.getId(obj)
+	result = intids.queryId(obj)
 	return result
 
 def find_user_dfls(user):

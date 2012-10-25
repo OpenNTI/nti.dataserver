@@ -34,8 +34,11 @@ def reindex_ugd(user, users_get, ds_intid):
 		if catalog is not None:
 			try:
 				docid = get_uid(obj, ds_intid)
-				catalog.index_doc(docid, obj)
-				counter = counter + 1
+				if docid is not None:
+					catalog.index_doc(docid, obj)
+					counter = counter + 1
+				else:
+					logger.warn("Cannot find int64 id for %r. Object will not be indexed" % obj)
 			except POSKeyError:
 				# broken reference for object
 				pass
