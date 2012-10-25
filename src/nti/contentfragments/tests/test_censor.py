@@ -22,6 +22,7 @@ import nti.contentfragments.schema
 import nti.contentfragments.interfaces
 from nti.contentfragments.censor import WordMatchScanner
 from nti.contentfragments.censor import WordPlusTrivialMatchScanner
+from nti.contentfragments.censor import DefaultCensoredContentPolicy
 from nti.contentfragments.censor import SimpleReplacementCensoredContentStrategy
 
 import nti.tests
@@ -35,10 +36,9 @@ def test_defaults():
 	strat = component.getUtility( nti.contentfragments.interfaces.ICensoredContentStrategy )
 
 	bad_val = 'Guvf vf shpxvat fghcvq, lbh ZbgureShpxre onfgneq'.encode( 'rot13' )
-
 	assert_that( strat.censor_ranges( bad_val, scanner.scan( bad_val ) ),
 				 is_( 'This is ******* stupid, you ************ *******' ) )
-
+	
 def test_mike_words():
 	scanner = component.getUtility( nti.contentfragments.interfaces.ICensoredContentScanner )
 	strat = component.getUtility( nti.contentfragments.interfaces.ICensoredContentStrategy )
@@ -113,6 +113,15 @@ def test_trivial_and_word_match_scanner():
 	assert_that( strat.censor_ranges( bad_val, scanner.scan( bad_val ) ),
 				 is_( 'butter constitution computation' ) )
 	
+def test_html_and_default_policy():
+	policy = DefaultCensoredContentPolicy()
+	template = '<html><head/><body><b>%s</b></body></html>'
+	for w in ('shpx', 'penc'):
+		bad_val = template % w.encode( 'rot13' )
+		bad_val =  nti.contentfragments.interfaces.HTMLContentFragment(bad_val)
+		assert_that(policy.censor(bad_val, None),
+				 	is_( '<html><head/><body><b>****</b></body></html>' ) )
+	
 def test_schema_event_censoring():
 
 	class ICensored(interface.Interface):
@@ -138,4 +147,5 @@ def test_schema_event_censoring():
 				 is_( 'This is ******* stupid, you ************ *******' ) )
 	
 if __name__ == '__main__':
-	test_trivial_and_word_match_scanner()
+	nti.tests.module_setup( set_up_packages=(nti.contentfragments,) )
+	test_html_and_default_policy()

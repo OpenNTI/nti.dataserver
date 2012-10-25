@@ -12,8 +12,11 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import re
-from collections import defaultdict
 from pkg_resources import resource_filename
+
+import html5lib
+from lxml import etree
+from html5lib import treebuilders
 
 from zope import interface
 from zope import component
@@ -194,11 +197,35 @@ class DefaultCensoredContentPolicy(object):
 		pass
 
 	def censor( self, fragment, target ):
+		if interfaces.IHTMLContentFragment.providedBy(fragment):
+			result = self.censor_html(fragment, target)
+		else:
+			result = self.censor_text(fragment, target)
+		return result
+		
+	def censor_text(self, fragment, target):
 		scanner = component.getUtility( interfaces.ICensoredContentScanner )
 		strat = component.getUtility( interfaces.ICensoredContentStrategy )
-
 		return strat.censor_ranges( fragment, scanner.scan( fragment ) )
-
+	
+	def censor_html(self, fragment, target):
+		result = None
+		try:
+			p = html5lib.HTMLParser(tree=treebuilders.getTreeBuilder("lxml"), namespaceHTMLElements=False)
+			doc = p.parse( fragment )
+			for node in doc.iter():
+				for name in ('text', 'tail'):
+					text = getattr(node, name, None)
+					if text:
+						text = self.censor_text( interfaces.UnicodeContentFragment(text), target)
+						setattr(node, name, text)
+					
+			docstr = unicode(etree.tostring(doc))
+			result = interfaces.CensoredHTMLContentFragment(docstr)
+		except:
+			result = self.censor_text(fragment, target)
+		return result
+		
 
 @component.adapter(interfaces.IUnicodeContentFragment, interface.Interface, sch_interfaces.IBeforeObjectAssignedEvent)
 def censor_before_object_assigned( fragment, target, event ):
