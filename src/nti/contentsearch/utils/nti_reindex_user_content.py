@@ -46,8 +46,11 @@ def reindex_entity_content(username, include_dfls=False, verbose=False):
 		if catalog is not None:
 			try:
 				docid = get_uid(obj)
-				catalog.index_doc(docid, obj)
-				counter = counter + 1
+				if docid is not None:
+					catalog.index_doc(docid, obj)
+					counter = counter + 1
+				elif verbose:
+					print("Cannot find int64 id for %r. Object will not be indexed" % obj)
 			except POSKeyError:
 				# broken reference for object
 				pass
