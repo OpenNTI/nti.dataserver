@@ -242,14 +242,9 @@ def find_object_with_ntiid(key, **kwargs):
 	if kwargs:
 		warnings.warn( "Function currently takes no kwargs" )
 
-	result = None
 	ntiid = _parse( key )
-
 	resolver = component.queryUtility( interfaces.INTIIDResolver, name=ntiid.nttype )
-
 	if not resolver:
 		logger.warn( "No ntiid resolver for '%s' in '%s'", ntiid.nttype, key )
 		return None
-
-
 	return resolver.resolve( key )
