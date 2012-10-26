@@ -48,10 +48,12 @@ def migrate( obj ):
 				if not isinstance( shape, _CanvasPolygonShape ) or shape.sides != 4:
 					continue
 				
-				st = (shape._a, shape._b, shape._c, shape._d, shape._tx, shape._ty)
+				tx = shape.transform
+				st = (tx.a, tx.b, tx.c, tx.d, tx.tx, tx.ty)
 				st = scale(st, scalar)
 				st = rotate(st, angle)
-				shape._a, shape._b, shape._c, shape._d, shape._tx, shape._ty = st
+				tx.a, tx.b, tx.c, tx.d, tx.tx, tx.ty = st
+				shape.transform = tx
 				
 def needs_migrate(x):
 	"""
