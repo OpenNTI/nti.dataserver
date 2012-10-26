@@ -40,6 +40,8 @@ def rotate(shapeTransform, rad):
 	return multiply(shapeTransform,  [c,s,-s,c,0,0])
 	
 def migrate( obj ):
+	scalar = math.cos(math.pi/4.0)
+	angle = -math.pi/4.0
 	for _, item in enumerate(obj.body):
 		if isinstance( item, Canvas ):
 			for shape in item.shapeList:
@@ -47,8 +49,8 @@ def migrate( obj ):
 					continue
 				
 				st = (shape._a, shape._b, shape._c, shape._d, shape._tx, shape._ty)
-				st = scale(st, math.cos(math.pi/4.0));
-				st = rotate(st, -math.pi/4.0)
+				st = scale(st, scalar)
+				st = rotate(st, angle)
 				shape._a, shape._b, shape._c, shape._d, shape._tx, shape._ty = st
 				
 def needs_migrate(x):
