@@ -43,6 +43,7 @@ Dependencies for content generation:
 	- texlive-math-extra
 	- texlive-fonts-extra
 	- texlive-science 
+	- texlive-pstricks
 	- gtk2
 	- pdf2svg
 	- ImageMagick
