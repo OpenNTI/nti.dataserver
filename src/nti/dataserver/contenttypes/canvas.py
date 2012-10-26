@@ -53,12 +53,12 @@ class Canvas(ThreadableExternalizableMixin, UserContentRoot, ExternalizableInsta
 
 	# We write shapes ourself for speed. The list is often long and only
 	# contains _CanvasShape "objects". Note that this means they cannot be decorated
-	_excluded_out_ivars_ = ExternalizableInstanceDict._excluded_out_ivars_.union( ('shapeList', 'viewPortRatio') )
+	_excluded_out_ivars_ = ExternalizableInstanceDict._excluded_out_ivars_.union( ('shapeList', 'viewportRatio') )
 
 	def __init__(self):
 		super(Canvas,self).__init__()
 		self.shapeList = PersistentList()
-		self.viewPortRatio = 1.0
+		self.viewportRatio = 1.0
 
 	def append( self, shape ):
 		if not isinstance( shape, _CanvasShape ):
@@ -73,9 +73,9 @@ class Canvas(ThreadableExternalizableMixin, UserContentRoot, ExternalizableInsta
 		# Special handling of shapeList to preserve the PersistentList.
 		# (Though this probably doesn't matter. See the note at the top of the class)
 		shapeList = args[0].pop( 'shapeList', self )
-		viewPortRatio = args[0].pop( 'viewPortRatio', 1.0 )
-		assert isinstance( viewPortRatio, numbers.Real )
-		self.viewPortRatio = viewPortRatio
+		viewportRatio = args[0].pop( 'viewportRatio', 1.0 )
+		assert isinstance( viewportRatio, numbers.Real )
+		self.viewportRatio = viewportRatio
 		
 		super(Canvas,self).updateFromExternalObject( *args, **kwargs )
 		if shapeList is not self:
@@ -99,12 +99,12 @@ class Canvas(ThreadableExternalizableMixin, UserContentRoot, ExternalizableInsta
 
 		# be polite and put it back
 		args[0]['shapeList'] = list(self.shapeList) 
-		args[0]['viewPortRatio'] = viewPortRatio
+		args[0]['viewportRatio'] = viewportRatio
 
 	def toExternalDictionary( self, mergeFrom=None ):
 		result = super(Canvas,self).toExternalDictionary( mergeFrom=mergeFrom )
 		result['shapeList'] = [x.toExternalObject() for x in self.shapeList]
-		result['viewPortRatio'] = self.viewPortRatio
+		result['viewportRatio'] = self.viewportRatio
 		return result
 
 	def __eq__( self, other ):

@@ -25,8 +25,8 @@ logger = logging.getLogger( __name__ )
 def migrate( obj ):
 	for _, item in enumerate(obj.body):
 		if isinstance( item, Canvas ):
-			if not hasattr(item, "viewPortRatio"):
-				item.viewPortRatio = 1.0
+			if not hasattr(item, "viewportRatio"):
+				item.viewportRatio = 1.0
 
 def needs_migrate(x):
 	"""
@@ -38,8 +38,8 @@ def needs_migrate(x):
 
 def evolve( context ):
 	"""
-	Evolve generation 31 to generation 32 by making adding a field called viewPortRatio
-	to all cavas objects.
+	Evolve generation 31 to generation 32 by making adding a field called viewportRatio
+	to all canvas objects.
 	"""
 
 	setHooks()
