@@ -101,6 +101,36 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters 
 
 		return result
 
+	def removeFriend( self, friend ):
+		"""
+		remove a friend
+
+		:param friend: Perhaps unwisely, we will accept a few potential values
+			for `friend`. In the simplest most desired case, it may be an existing, named Entity.
+			It may not be this list or this list's creator.
+			
+		:return: True if friend was removed. False othewise
+		"""
+		
+		if friend is None or friend is self or friend is self.creator:
+			return False
+
+		if not isinstance( friend, Entity ):
+			try:
+				friend = self.get_entity( friend, default=friend )
+			except TypeError:
+				pass
+
+		result = False
+		if isinstance( friend, Entity ):
+			wref = nti_interfaces.IWeakRef( friend )
+			__traceback_info__ = friend, wref
+			if wref in  self._friends_wref_set:
+				self._friends_wref_set.remove(wref)
+				result = True
+				
+		return result
+	
 	@property
 	def NTIID(self):
 		# TODO: Cache this. @CachedProperty?
