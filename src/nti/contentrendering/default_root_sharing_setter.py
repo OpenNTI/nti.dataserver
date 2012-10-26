@@ -41,7 +41,7 @@ def main():
 	context = interfaces.JobComponents( os.path.split( os.path.abspath( contentpath ) )[-1] )
 
 	book = NoConcurrentPhantomRenderedBook( EmptyMockDocument(), contentpath )
-	transform( book, context=context, group_name=args.group_name )
+	transform( book, context=context, group_name=args.groupname )
 
 def transform( book, save_toc=True, context=None, group_name=None ):
 	"""
