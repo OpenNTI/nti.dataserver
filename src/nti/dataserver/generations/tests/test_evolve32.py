@@ -37,7 +37,7 @@ class TestEvolve32(mock_dataserver.ConfiguringTestBase):
 
 			note = Note()
 			canvas = Canvas()
-			delattr(canvas, 'viewPortRatio')
+			delattr(canvas, 'viewportRatio')
 			canvas.append( CanvasCircleShape() )
 			note.body = [canvas]
 			note.containerId = "foo:bar"
@@ -53,4 +53,4 @@ class TestEvolve32(mock_dataserver.ConfiguringTestBase):
 			jason = ds_folder['users']['jason.madden@nextthought.com']
 			note = jason.getContainedObject( "foo:bar", note_id )
 			canvas = note.body[0]
-			assert_that( canvas, has_property( 'viewPortRatio', 1.0 ) )
+			assert_that( canvas, has_property( 'viewportRatio', 1.0 ) )
