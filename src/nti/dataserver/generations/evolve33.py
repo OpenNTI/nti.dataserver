@@ -12,7 +12,10 @@ from zope.generations.utility import findObjectsMatching
 
 from zope import component
 from zope.component.hooks import site, setHooks
+
 from nti.dataserver.contenttypes.canvas import Canvas, _CanvasPolygonShape
+
+from . import evolve32
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -40,9 +43,11 @@ def rotate(shapeTransform, rad):
 	return multiply(shapeTransform,  [c,s,-s,c,0,0])
 	
 def migrate( obj ):
+	evolve32.migrate(obj)
+	
 	scalar = math.cos(math.pi/4.0)
 	angle = -math.pi/4.0
-	for _, item in enumerate(obj.body):
+	for item in obj.body:
 		if isinstance( item, Canvas ):
 			for shape in item.shapeList:
 				if not isinstance( shape, _CanvasPolygonShape ) or shape.sides != 4:
@@ -65,9 +70,9 @@ def needs_migrate(x):
 
 def evolve( context ):
 	"""
-	Evolve generation 32 to generation 33 by performing a scale and rotation on the transform of existing squares.
+	Evolve generation 32 to generation 33 by scaling and rotating existing squares. It also adds a field called viewportRatio
+	to all canvas objects.
 	"""
-
 	setHooks()
 	ds_folder = context.connection.root()['nti.dataserver']
 	with site( ds_folder ):
