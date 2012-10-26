@@ -35,8 +35,8 @@ def scale(shapeTransform, sx, sy=None):
 	return multiply(shapeTransform, [sx,0,0,sy,0,0])
 
 def rotate(shapeTransform, rad):
-	c = math.cos(rad);
-	s = math.sin(rad);
+	c = math.cos(rad)
+	s = math.sin(rad)
 	return multiply(shapeTransform,  [c,s,-s,c,0,0])
 	
 def migrate( obj ):
