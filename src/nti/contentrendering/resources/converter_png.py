@@ -47,12 +47,15 @@ def _scale(input, output, scale, defaultScale):
 	#return os.system( 'convert %s -resize %f%% PNG32:%s' % (input, 100*(scale/defaultScale) , output) )
 	command = [ 'convert', input, '-resize', '%f%%' % (100*(scale/defaultScale)), 'PNG32:%s' % output ]
 	retval1 = subprocess.call( command )
+	
 	# Use pngcrush to clean the resized PNG.
-	tmpfile = tempfile.mkstemp( suffix = '.png' )
-	os.close(tmpfile[0])
-	command = [ 'pngcrush', '-q', output, tmpfile[1] ]
+	prefix = hex(int(time.time()))
+	tmpfile = tempfile.mktemp(suffix='.png', prefix=prefix)
+	command = [ 'pngcrush', '-q', output, tmpfile ]
 	retval2 = subprocess.call( command )
-	shutil.move( tmpfile[1], output )
+	if os.path.exists(tmpfile):
+		shutil.move( tmpfile, output )
+		
 	return retval1 if (retval1 < retval2) else retval2
 
 class _GSPDFPNG2(plasTeX.Imagers.gspdfpng.GSPDFPNG):
