@@ -20,7 +20,7 @@ from nti.dataserver.tests.mock_dataserver import  mock_db_trans, WithMockDS
 
 from nti.deprecated import hides_warnings
 
-from hamcrest import (assert_that,  close_to)
+from hamcrest import (assert_that, has_property, close_to)
 
 class TestEvolve33(mock_dataserver.ConfiguringTestBase):
 	set_up_packages = (nti.dataserver,)
@@ -37,6 +37,7 @@ class TestEvolve33(mock_dataserver.ConfiguringTestBase):
 
 			note = Note()
 			canvas = Canvas()
+			delattr(canvas, 'viewportRatio')
 			square = CanvasPolygonShape(sides=4)
 			tx = CanvasAffineTransform()
 			tx.a = 0.0975
@@ -61,6 +62,7 @@ class TestEvolve33(mock_dataserver.ConfiguringTestBase):
 			jason = ds_folder['users']['jason.madden@nextthought.com']
 			note = jason.getContainedObject( "foo:bar", note_id )
 			canvas = note.body[0]
+			assert_that( canvas, has_property( 'viewportRatio', 1.0 ) )
 			square = canvas.shapeList[0]
 			tx = square.transform
 			assert_that(tx.a, close_to(0.05125, 0.0001))
