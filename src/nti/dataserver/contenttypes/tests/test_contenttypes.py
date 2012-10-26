@@ -658,9 +658,11 @@ class TestCanvas(mock_dataserver.ConfiguringTestBase):
 
 		assert_that( ext, has_entries( 'Class', 'Canvas',
 									   'shapeList', only_contains( has_entries( *shape1_has_items ), has_entries( *shape2_has_items ) ),
+									   'viewPortRatio', 1.0,
 									   'CreatedTime', canvas.createdTime ))
 
 		ext['ContainerId'] = 'CID'
+		ext['viewPortRatio'] = 2.0
 		canvas2 = Canvas()
 		ds = self.ds
 		with mock_dataserver.mock_db_trans(ds):
@@ -668,7 +670,7 @@ class TestCanvas(mock_dataserver.ConfiguringTestBase):
 
 		assert_that( canvas2, is_( canvas ) )
 		assert_that( canvas2.containerId, is_( 'CID' ) )
-
+		assert_that( canvas2.viewPortRatio, is_( 2.0 ) )
 		shape3 = CanvasPathShape( closed=False, points=[1, 2.5] )
 		shape = CanvasPathShape()
 		with mock_dataserver.mock_db_trans(ds):
