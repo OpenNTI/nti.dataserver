@@ -193,6 +193,7 @@ def _bookmark_predicate_factory( request ):
 
 SORT_KEYS = {
 	'lastModified': lambda x: getattr( x, 'lastModified', 0 ), # TODO: Adapt to dublin core?
+	'createdTime' : lambda x: getattr( x, 'createdTime', 0 ), # TODO: Adapt to dublin core?
 	'LikeCount': liking.like_count,
 	'ReferencedByCount': ( _build_reference_lists, _reference_list_length )
 	}
@@ -305,8 +306,8 @@ class _UGDView(object):
 		sorts by ``lastModified`` by default, but everything else comes from the query parameters:
 
 		sortOn
-			The field to sort on. Options are ``lastModified``, ``LikeCount`` and ``ReferencedByCount``.
-			Only ``lastModified`` is valid for the stream views.
+			The field to sort on. Options are ``lastModified``, ``createdTime``, ``LikeCount`` and ``ReferencedByCount``.
+			Only ``lastModified``, ``createdTime`` are valid for the stream views.
 
 		sortOrder
 			The sort direction. Options are ``ascending`` and ``descending``.
