@@ -11,13 +11,13 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import sys
+import pprint
+import argparse
 
 from nti.dataserver import users
-from . import run_with_dataserver
+from nti.dataserver.utils import run_with_dataserver
 from nti.dataserver.users import interfaces as user_interfaces
 from nti.externalization.externalization import to_external_object
-
-import argparse
 
 def main():
 	arg_parser = argparse.ArgumentParser( description="Create a (Dynamic)FriendsList" )
@@ -65,7 +65,6 @@ def _create_fl( args ):
 	owner.addContainedObject( dfl )
 
 	if args.verbose:
-		import pprint
 		pprint.pprint( to_external_object( dfl ) )
 
 	return dfl
