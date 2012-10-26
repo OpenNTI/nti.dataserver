@@ -87,6 +87,7 @@ def test_update_friends_list():
 
 	# Can go back to one
 	fl.updateFromExternalObject( {'friends': [user2] } )
+	assert_that( list(fl), has_length( 1 ) )
 	assert_that( list(fl), contains( user2 ) )
 
 	fl.updateFromExternalObject( {'friends': [user] } )
