@@ -25,7 +25,7 @@ from urlparse import urlparse
 
 from pyquery import PyQuery as pq
 
-WGET_CMD = '/opt/local/bin/wget'
+WGET_CMD = [ 'wget', '-q' ]
 
 def get_open_port():
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -123,7 +123,9 @@ def _get_url_resources(url, out_dir="/tmp", user_spider=False):
 	tmp = None
 	resources = {}
 
-	args = [WGET_CMD, '-m', '-nH', '--no-parent', '-p']
+	args = []
+	args.extend(WGET_CMD)
+	args.extend( ['-m', '-nH', '--no-parent', '-p'] )
 	cut_dirs = _get_cut_dirs(url)
 	if cut_dirs > 0:
 		args.append('--cut-dirs=%s' % cut_dirs)
@@ -163,7 +165,9 @@ def _get_file(url, out_dir, target, force_html=False):
 	"""
 	Return the specified target from the specified url
 	"""
-	args = [WGET_CMD, '-N', '-nH', '-P %s' % out_dir]
+	args = []
+	args.extend(WGET_CMD)
+	args.extend( ['-N', '-nH', '-P', out_dir] )
 	if force_html:
 		args.extend(['-p', '--force-html'])
 
@@ -185,9 +189,9 @@ def _get_cut_dirs(url):
 
 def _execute_cmd(args):
 	cmd = ' '.join(args)
-	retcode = subprocess.call(cmd, shell=True)
+	retcode = subprocess.call(args, shell=False)
 	if retcode != 0:
-		raise Exception("Fail to execute '%s'" % cmd)
+		raise Exception("Fail to execute '%s', return code %s" % (cmd, retcode) )
 	return True
 
 def _remove_file(target):
