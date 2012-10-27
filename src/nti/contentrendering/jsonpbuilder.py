@@ -13,8 +13,6 @@ logger = logging.getLogger(__name__)
 import simplejson as json
 
 from zope import interface
-from zope import component
-from zope.deprecation import deprecate
 from zope.configuration import xmlconfig
 
 import nti.contentrendering
@@ -34,16 +32,16 @@ class _JSONPWrapper(object):
 		self.data['version'] = '1'
 
 		# Read the ToC file and base64 encode
-		with io.open( filename, 'rb') as file:
-			self.data['content'] = base64.standard_b64encode(file.read())
+		with io.open( filename, 'rb') as f:
+			self.data['content'] = base64.standard_b64encode(f.read())
 			self.data['Content-Encoding'] = 'base64'
 
 	def writeJSONPToFile(self):
 		# Write the JSONP output
-		with io.open( self.filename + '.jsonp', 'wb') as file:
-			file.write(self.jsonpFunctionName + '(')
-			json.dump(self.data, file)
-			file.write(');')
+		with io.open( self.filename + '.jsonp', 'wb') as f:
+			f.write(self.jsonpFunctionName + '(')
+			json.dump(self.data, f)
+			f.write(');')
 
 def main():
 	""" Main program routine """
