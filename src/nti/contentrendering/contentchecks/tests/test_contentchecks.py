@@ -1,12 +1,14 @@
-from nti.contentrendering.tests import ConfiguringTestBase, EmptyMockDocument, NoPhantomRenderedBook
+import os
+
+from nti.contentrendering.utils import EmptyMockDocument, NoPhantomRenderedBook
 
 from nti.contentrendering.contentchecks import performChecks
 
-
 from nti.contentrendering.contentchecks import mathjaxerror
-import os
-from hamcrest import assert_that, has_length, greater_than_or_equal_to, is_
 
+from nti.contentrendering.tests import ConfiguringTestBase
+
+from hamcrest import assert_that, has_length, greater_than_or_equal_to, is_
 
 class TestContentChecks(ConfiguringTestBase):
 
