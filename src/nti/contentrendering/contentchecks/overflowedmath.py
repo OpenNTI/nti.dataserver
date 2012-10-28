@@ -1,8 +1,7 @@
 #!/usr/bin/env python2.7
-import os
+
 import logging
 logger = logging.getLogger(__name__)
-
 
 from zope import interface
 from .. import interfaces
@@ -10,6 +9,7 @@ interface.moduleProvides(interfaces.IRenderedBookValidator)
 
 import nti.contentrendering
 javascript = nti.contentrendering.javascript_path( 'detectOverflowedMath.js' )
+
 def check(book):
 	results = book.runPhantomOnPages(javascript)
 
