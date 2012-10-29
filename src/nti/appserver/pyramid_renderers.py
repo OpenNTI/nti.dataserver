@@ -46,7 +46,7 @@ def find_content_type( request, data=None ):
 	'plist'.
 	"""
 	best_match = None
-	full_type = ''
+	full_type = b''
 	if data is not None:
 		content_type_aware = data if IContentTypeAware.providedBy( data ) \
 							 else request.registry.queryAdapter( data, IContentTypeAware )
@@ -63,14 +63,14 @@ def find_content_type( request, data=None ):
 
 	app_json = MIME_BASE_JSON
 	app_plst = MIME_BASE_PLIST
-	app_c_json = full_type + MIME_EXT_JSON if full_type else MIME_BASE_JSON
-	app_c_plst = full_type + MIME_EXT_PLIST if full_type else MIME_BASE_PLIST
+	app_c_json = str(full_type) + MIME_EXT_JSON if full_type else MIME_BASE_JSON
+	app_c_plst = str(full_type) + MIME_EXT_PLIST if full_type else MIME_BASE_PLIST
 
 	if request.accept:
 		# In preference order
 		offers = ( app_c_json, app_c_plst,
 				   app_json, app_plst,
-				   'application/json', 'application/xml' )
+				   b'application/json', b'application/xml' )
 		best_match = request.accept.best_match( offers )
 
 	if best_match:
