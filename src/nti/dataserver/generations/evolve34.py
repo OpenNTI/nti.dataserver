@@ -6,7 +6,7 @@ __docformat__ = "restructuredtext en"
 generation = 34
 
 import math
-from collections import Iterable
+import collections
 
 from zope.generations.utility import findObjectsMatching
 
@@ -58,7 +58,7 @@ def migrate( obj ):
 				shape.transform = tx
 				item.shapeList[i] = shape
 				polygon_cnt += 1
-				
+
 	return polygon_cnt
 
 def needs_migrate(x):
@@ -67,7 +67,10 @@ def needs_migrate(x):
 	Notes, the most common thing, but also the MessageInfo objects stored under
 	annotations of users.
 	"""
-	return isinstance( getattr( x, 'body', None ), Iterable)
+	try:
+		return isinstance( x.body, collections.Iterable)
+	except (KeyError,AttributeError): # Key error can be a POSKeyError, raised when cross-db things go missing
+		return False
 
 def evolve( context ):
 	"""
@@ -77,15 +80,9 @@ def evolve( context ):
 	ds_folder = context.connection.root()['nti.dataserver']
 	with site( ds_folder ):
 		assert component.getSiteManager() == ds_folder.getSiteManager(), "Hooks not installed?"
-		total = 0
+
 		users = ds_folder['users']
 		for user in users.values():
-			logger.debug("Procesing polygon objects for %s" % user.username)
-			cnt = 0
-			for obj in findObjectsMatching( user, needs_migrate):
+			for obj in findObjectsMatching( user, needs_migrate ):
 				__traceback_info__ = user, obj
-				cnt += migrate( obj )
-			logger.debug("%s polygon objects were migrated for %s" % (cnt, user.username))
-			total += cnt
-		
-		logger.debug("%s polygon objects were migrated" % total)
+				migrate( obj )
