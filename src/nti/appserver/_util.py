@@ -211,8 +211,8 @@ def raise_json_error( request,
 	:param tb: The traceback from `sys.exc_info`.
 	"""
 	#logger.exception( "Failed to create user; returning expected error" )
-	mts = ('application/json', 'text/plain')
-	accept_type = 'application/json'
+	mts = (b'application/json', b'text/plain')
+	accept_type = b'application/json'
 	if getattr(request, 'accept', None):
 		accept_type = request.accept.best_match( mts )
 
@@ -220,7 +220,7 @@ def raise_json_error( request,
 		# Our internal schema field is username, but that maps to Username on the outside
 		v['field'] = 'Username'
 
-	if accept_type == 'application/json':
+	if accept_type == b'application/json':
 		try:
 			v = json.dumps( v )
 		except TypeError:

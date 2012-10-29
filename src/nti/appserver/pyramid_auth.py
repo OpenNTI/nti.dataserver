@@ -285,13 +285,13 @@ def _create_middleware( secure_cookies=False,
 						cookie_secret='secret',
 						cookie_timeout=ONE_WEEK ):
 	user_auth = NTIUsersAuthenticatorPlugin()
-	basicauth = BasicAuthPlugin('NTI')
 
-	basicauth_interactive = _NonChallengingBasicAuthPlugin('NTI')
-
-	# Note that the cookie name needs to be bytes, not unicode. Otherwise we wind up with
+	# Note that the cookie name and header names needs to be bytes, not unicode. Otherwise we wind up with
 	# unicode objects in the headers, which are supposed to be ascii. Things like the Cookie
 	# module (used by webtest) then fail
+	basicauth = BasicAuthPlugin(b'NTI')
+	basicauth_interactive = _NonChallengingBasicAuthPlugin(b'NTI')
+
 	auth_tkt = AuthTktCookiePlugin(cookie_secret,
 								   b'nti.auth_tkt',
 								   secure=secure_cookies,

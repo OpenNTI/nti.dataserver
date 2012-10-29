@@ -20,15 +20,16 @@ from zope.mimetype.interfaces import IContentTypeAware, mimeTypeConstraint
 from nti.mimetype.interfaces import IContentTypeMarker
 
 # The base mimetype for items in this package.
-MIME_BASE = 'application/vnd.nextthought'
+# NOTE: Mimetypes should be bytes, not unicode
+MIME_BASE = b'application/vnd.nextthought'
 
 # The extension on the base mimetype explicitly requesting
 # JSON format data
-MIME_EXT_JSON = '+json'
+MIME_EXT_JSON = b'+json'
 
 # The extension on the base mimetype explicitly requesting
 # plist format data
-MIME_EXT_PLIST = '+plist'
+MIME_EXT_PLIST = b'+plist'
 
 # The base mimetype with json
 MIME_BASE_JSON = MIME_BASE + MIME_EXT_JSON
@@ -139,12 +140,15 @@ def nti_mimetype_class( content_type ):
 		return cname.lower() if (cname and cname != 'nextthought') else None
 
 def nti_mimetype_with_class( clazz ):
+	"""
+	Returns a ASCII string.
+	"""
 
-	name = ''
+	name = b''
 	if isinstance( clazz, type ):
-		name = '.' + clazz.__name__
+		name = b'.' + clazz.__name__
 	elif isinstance( clazz, basestring ):
-		name = '.' + clazz
+		name = b'.' + clazz.encode( 'ascii' )
 
 	return MIME_BASE + name.lower()
 

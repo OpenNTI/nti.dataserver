@@ -155,7 +155,7 @@ def _handshake_view( request ):
 
 	response = request.response
 	response.body = data
-	response.content_type = 'text/plain'
+	response.content_type = b'text/plain'
 	return response
 
 @interface.implementer( ws_interfaces.IWSWillUpgradeVeto )
