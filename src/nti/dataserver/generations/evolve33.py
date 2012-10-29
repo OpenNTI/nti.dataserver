@@ -15,8 +15,6 @@ from zope.component.hooks import site, setHooks
 
 from nti.dataserver.contenttypes.canvas import Canvas, _CanvasPolygonShape
 
-from . import evolve32
-
 import logging
 logger = logging.getLogger( __name__ )
 
@@ -43,13 +41,12 @@ def rotate(shapeTransform, rad):
 	return multiply(shapeTransform,  [c,s,-s,c,0,0])
 
 def migrate( obj ):
-	evolve32.migrate(obj)
-
+	polygon_cnt = 0
 	scalar = math.cos(math.pi/4.0)
 	angle = -math.pi/4.0
 	for item in obj.body:
 		if isinstance( item, Canvas ):
-			for shape in item.shapeList:
+			for i, shape in enumerate(item.shapeList):
 				if not isinstance( shape, _CanvasPolygonShape ) or shape.sides != 4:
 					continue
 
@@ -59,6 +56,10 @@ def migrate( obj ):
 				st = rotate(st, angle)
 				tx.a, tx.b, tx.c, tx.d, tx.tx, tx.ty = st
 				shape.transform = tx
+				item.shapeList[i] = shape
+				polygon_cnt += 1
+				
+	return polygon_cnt
 
 def needs_migrate(x):
 	"""
@@ -76,9 +77,14 @@ def evolve( context ):
 	ds_folder = context.connection.root()['nti.dataserver']
 	with site( ds_folder ):
 		assert component.getSiteManager() == ds_folder.getSiteManager(), "Hooks not installed?"
-
+		total = 0
 		users = ds_folder['users']
 		for user in users.values():
-			for note in findObjectsMatching( user, needs_migrate):
-				__traceback_info__ = user, note
-				migrate( note )
+			logger.debug("Procesing polygon objects for %s" % user.username)
+			for obj in findObjectsMatching( user, needs_migrate):
+				__traceback_info__ = user, obj
+				cnt = migrate( obj )
+				logger.debug("%s polygon objects were migrated for %s" % (cnt, user.username))
+				total += cnt
+		
+		logger.debug("%s polygon objects were migrated" % total)
