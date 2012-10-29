@@ -3,8 +3,6 @@ __docformat__ = "restructuredtext en"
 
 generation = 32
 
-from nti.dataserver.contenttypes import Canvas
-
 def migrate( obj ):
 	pass
 
