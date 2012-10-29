@@ -147,23 +147,23 @@ def _handshake_view( request ):
 	except KeyError: #Currently this means user DNE. see dataserver/session_storage.py # TODO: Something better
 		raise hexc.HTTPForbidden()
 	#data = "%s:15:10:jsonp-polling,htmlfile" % (session.session_id,)
-	# session_id:heartbeat_seconds:close_timeout:supported_type, supported_type
+	# session_id:heartbeat_seconds:close_timeout:supported_type, supported_type,...
 	handler_types = [x[0] for x in component.getAdapters( (request,), nti.socketio.interfaces.ISocketIOTransport)]
 	data = "%s:15:10:%s" % (session.session_id, ",".join(handler_types))
 	data = data.encode( 'ascii' )
-	# We are not handling JSONP here
+	# NOTE: We are not handling JSONP here. It should not be a registered transport
 
 	response = request.response
 	response.body = data
 	response.content_type = 'text/plain'
 	return response
 
+@interface.implementer( ws_interfaces.IWSWillUpgradeVeto )
 class _WSWillUpgradeVeto(object):
 	"""
 	A veto handler to avoid upgrading to websockets if the session doesn't
 	exist. This lets our 404 propagate.
 	"""
-	interface.implements( ws_interfaces.IWSWillUpgradeVeto )
 
 	def __init__( self, evt=None ):
 		return
@@ -190,7 +190,12 @@ def _get_session(session_id):
 	"""
 	Returns a valid session to use, or raises HTTPNotFound.
 	"""
-	session = component.getUtility( nti_interfaces.IDataserver ).session_manager.get_session( session_id )
+	try:
+		session = component.getUtility( nti_interfaces.IDataserver ).session_manager.get_session( session_id )
+	except (KeyError,ValueError):
+		logger.warn( "Client sent bad value for session (%s); DDoS attempt?", session_id, exc_info=True )
+		raise hexc.HTTPNotFound( "No session found or illegal session id" )
+
 	if session is None:
 		raise hexc.HTTPNotFound("No session found for %s" % session_id)
 	if not session.owner:
@@ -232,7 +237,11 @@ def _connect_view( request ):
 	environ['socketio'].session = session # TODO: Needed anymore?
 
 	# Create a transport and handle the request likewise
-	transport = component.getAdapter( request, nti.socketio.interfaces.ISocketIOTransport, name=transport )
+	try:
+		transport = component.getAdapter( request, nti.socketio.interfaces.ISocketIOTransport, name=transport )
+	except LookupError:
+		raise hexc.HTTPNotFound( "Unknown transport type %s" % transport )
+
 	request_method = environ.get("REQUEST_METHOD")
 	jobs_or_response = transport.connect(session, request_method)
 

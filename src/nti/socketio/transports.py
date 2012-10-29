@@ -80,9 +80,9 @@ def _using_session_proxy( service, sid  ):
 		logger.warn( "Session %s already has proxy %s", sid, existing )
 		yield proxy
 
+@component.adapter( pyramid.interfaces.IRequest )
+@interface.implementer( interfaces.ISocketIOTransport )
 class XHRPollingTransport(BaseTransport):
-	component.adapts( pyramid.interfaces.IRequest )
-	interface.implements( interfaces.ISocketIOTransport )
 
 	proxy_timeout = 5.0
 
@@ -243,10 +243,9 @@ def run_job_in_site( *args, **kwargs ):
 								   default=_run_job_in_site )
 	return runner( *args, **kwargs )
 
+@component.adapter( pyramid.interfaces.IRequest )
+@interface.implementer( interfaces.ISocketIOTransport )
 class WebsocketTransport(BaseTransport):
-
-	component.adapts( pyramid.interfaces.IRequest )
-	interface.implements( interfaces.ISocketIOTransport )
 
 	def __init__( self, request ):
 		super(WebsocketTransport,self).__init__(request)

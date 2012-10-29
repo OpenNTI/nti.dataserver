@@ -1,13 +1,54 @@
 #!/usr/bin/env python
 
-from hamcrest import (assert_that, is_, has_length, only_contains, has_property)
+from hamcrest import assert_that
+from hamcrest import contains_string
 
-import contextlib
-import gevent
+from zope import component
+from nti.dataserver import interfaces as nti_interfaces
 
-from nti.appserver import dataserver_socketio_views as socketio_server
-from gevent.queue import Queue
-import nti.socketio.protocol
-
-from nti.appserver.tests import ConfiguringTestBase
 from nti.dataserver.tests import mock_dataserver
+from .test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
+from .test_application import TestApp
+
+
+
+class TestSocketioViews(SharedApplicationTestBase):
+
+
+	@WithSharedApplicationMockDS
+	def test_connect_bad_transport(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			self._create_user()
+		class S(object):
+			pass
+		class SM(object):
+			def get_session( self, x ):
+				return self
+			owner = 'foo@bar'
+			socket = S()
+
+		component.getUtility( nti_interfaces.IDataserver ).session_manager = SM()
+		testapp = TestApp( self.app )
+		res = testapp.get( '/socket.io/1/jsonp-polling/1234', extra_environ=self._make_extra_environ(),
+						   status=404)
+
+		assert_that( res.body, contains_string( 'Unknown transport type jsonp-polling' ) )
+
+	@WithSharedApplicationMockDS
+	def test_connect_bad_session_id(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			self._create_user()
+		class S(object):
+			pass
+		class SM(object):
+			def get_session( self, x ):
+				raise ValueError(x)
+			owner = 'foo@bar'
+			socket = S()
+
+		component.getUtility( nti_interfaces.IDataserver ).session_manager = SM()
+		testapp = TestApp( self.app )
+		res = testapp.get( '/socket.io/1/jsonp-polling/1234', extra_environ=self._make_extra_environ(),
+						   status=404)
+
+		assert_that( res.body, contains_string( 'No session found or illegal session id' ) )
