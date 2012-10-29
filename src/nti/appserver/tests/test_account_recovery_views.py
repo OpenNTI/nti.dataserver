@@ -28,7 +28,7 @@ from nti.dataserver import users
 from nose.tools import assert_raises
 
 from zope import component
-from zope.lifecycleevent import modified
+from zope.lifecycleevent import modified, created, added
 
 import urllib
 import pyramid.httpexceptions as hexc
@@ -90,7 +90,10 @@ class TestApplicationUsernameRecovery(SharedApplicationTestBase):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user( )
 			profile = user_interfaces.IUserProfile( user )
+			created( profile ) # fire events for the profile object to get it indexed
+			added( profile )
 			profile.email = 'jason.madden@nextthought.com'
+			modified( profile )
 			modified( user )
 
 		app = TestApp( self.app )
@@ -177,8 +180,12 @@ class TestApplicationPasswordRecovery(SharedApplicationTestBase):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user( )
 			profile = user_interfaces.IUserProfile( user )
+			created( profile ) # Fire events on the profile to get it in the index
+			added( profile )
 			profile.email = 'jason.madden@nextthought.com'
+			modified( profile )
 			modified( user )
+
 
 		app = TestApp( self.app )
 

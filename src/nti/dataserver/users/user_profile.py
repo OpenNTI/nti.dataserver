@@ -111,11 +111,15 @@ class UserProfile(FriendlyNamed):
 	"""
 	An adapter for storing profile information. We provide a specific implementation
 	of the ``avatarURL`` property rather than relying on field storage.
+
+	For convenience, we have a read-only shadow of the username value.
 	"""
 	### NOTE: See users_external, this is fairly tightly coupled to that
 	_avatarURL = None
 	avatarURL = _AvatarUrlProperty( data_name="avatarURL", url_attr_name='_avatarURL', file_attr_name='_avatarURL' )
 	__getitem__ = avatarURL.make_getitem()
+
+	username = property( lambda self: self.context.username )
 
 def make_password_recovery_email_hash( email ):
 	return unicode( hashlib.sha1( email ).hexdigest() )
