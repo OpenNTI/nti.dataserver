@@ -39,6 +39,7 @@ from nti.dataserver import users
 from nti.dataserver import liking
 from nti.dataserver import authorization as nauth
 from nti.dataserver.mimetype import nti_mimetype_from_object
+from nti.dataserver.links import Link
 
 from z3c.batching.batch import Batch
 
@@ -302,15 +303,23 @@ class _UGDView(object):
 	@metricmethod
 	def _sort_filter_batch_result( self, result ):
 		"""
-		Sort, filter, and batch (page) the result by modifying it in place. This method
-		sorts by ``lastModified`` by default, but everything else comes from the query parameters:
+		Sort, filter, and batch (page) the result dictionary by
+		modifying it in place, potentially adding new keys (this
+		implementation adds several keys; see below). This method
+		sorts by ``lastModified`` by default, but everything else
+		comes from the following query parameters:
 
 		sortOn
-			The field to sort on. Options are ``lastModified``, ``createdTime``, ``LikeCount`` and ``ReferencedByCount``.
-			Only ``lastModified``, ``createdTime`` are valid for the stream views.
+			The field to sort on. Options are ``lastModified``,
+			``createdTime``, ``LikeCount`` and ``ReferencedByCount``.
+			Only ``lastModified``, ``createdTime`` are valid for the
+			stream views.
 
 		sortOrder
-			The sort direction. Options are ``ascending`` and ``descending``.
+			The sort direction. Options are ``ascending`` and
+			``descending``. If you do not specify, a value that makes
+			the most sense for the ``sortOn`` parameter will be used
+			by default.
 
 		filter
 			Whether to filter the returned data in some fashion. Several values are defined:
@@ -354,21 +363,40 @@ class _UGDView(object):
 			object type that the change references.
 
 		exclude
-			A comma-separated list of MIME types of objects *not* to return,
-			functioning otherwise like ``accept.`` If ``accept`` is given (and doesn't contain ``*/*``), any
-			value for ``exclude`` is ignored. This value should not include ``*/*``.
+			A comma-separated list of MIME types of objects *not* to
+			return, functioning otherwise like ``accept.`` If
+			``accept`` is given (and doesn't contain ``*/*``), any
+			value for ``exclude`` is ignored. This value should not
+			include ``*/*``.
 
 		batchSize
-			Integer giving the page size. Must be greater than zero. Paging only happens when
-			this is supplied together with ``batchStart``
+			Integer giving the page size. Must be greater than zero.
+			Paging only happens when this is supplied together with
+			``batchStart``
 
 		batchStart
-			Integer giving the index of the first object to return, starting with zero. Paging only
-			happens when this is supplied together with ``batchSize``.
+			Integer giving the index of the first object to return,
+			starting with zero. Paging only happens when this is
+			supplied together with ``batchSize``.
 
 		:param dict result: The result dictionary that will be returned to the client.
 			Contains the ``Items`` list of all items found. You may add keys to the dictionary.
 			You may (and should) modify the Items list directly.
+
+			This method adds the ``TotalItemCount`` and
+			``FilteredTotalItemCount`` keys, containing integers
+			giving the total number of results, and the total number
+			of filtered results (which is the same as the total if the
+			null filter is in use).
+
+			It also ensures that, if batching (paging) is being used,
+			if there is a next or previous page, then links of
+			relevance ``batch-next`` and ``batch-prev`` are added. You
+			should use these links to know when to continue paging
+			forward or backwards through the data (as, for example, the very last
+			page will have no ``batch-next`` link), rather than trying to construct URLs based
+			on the values in ``TotalItemCount`` or ``FilteredTotalItemCount``.
+
 		"""
 
 		# Before we filter and batch, we sort. Some filter operations need the sorted
@@ -377,7 +405,7 @@ class _UGDView(object):
 		# we're not
 
 		result_list = result['Items']
-		result['TotalItemCount'] = len(result_list)
+		result['TotalItemCount'] = result['FilteredTotalItemCount'] = len(result_list)
 
 		# The request keys match what z3c.table does
 		sort_on = self.request.params.get( 'sortOn', self._DEFAULT_SORT_ON )
@@ -412,6 +440,7 @@ class _UGDView(object):
 
 		if predicate:
 			result_list = filter(predicate, result_list)
+			result['FilteredTotalItemCount'] = len(result_list)
 			result['Items'] = result_list
 
 		# Finally, sort the smallest set.
@@ -441,9 +470,18 @@ class _UGDView(object):
 				result_list = []
 			else:
 				result_list = Batch( result_list, batch_start, batch_size )
+				# Insert links to the next and previous batch
+				next_batch, prev_batch = result_list.next, result_list.previous
+				for batch, rel in ((next_batch, 'batch-next'), (prev_batch, 'batch-prev')):
+					if batch is not None and batch != result_list:
+						batch_params = self.request.params.copy()
+						batch_params['batchStart'] = batch.start
+						link_next_href = self.request.current_route_path( _query=batch_params )
+						link_next = Link( link_next_href, rel=rel )
+						result.setdefault( 'Links', [] ).append( link_next )
 
 			result['Items'] = result_list
-			# TODO: Inserting links to next/previous/start/end
+
 
 class _RecursiveUGDView(_UGDView):
 
