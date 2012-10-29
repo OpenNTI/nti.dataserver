@@ -81,10 +81,11 @@ def evolve( context ):
 		users = ds_folder['users']
 		for user in users.values():
 			logger.debug("Procesing polygon objects for %s" % user.username)
+			cnt = 0
 			for obj in findObjectsMatching( user, needs_migrate):
 				__traceback_info__ = user, obj
-				cnt = migrate( obj )
-				logger.debug("%s polygon objects were migrated for %s" % (cnt, user.username))
-				total += cnt
+				cnt += migrate( obj )
+			logger.debug("%s polygon objects were migrated for %s" % (cnt, user.username))
+			total += cnt
 		
 		logger.debug("%s polygon objects were migrated" % total)
