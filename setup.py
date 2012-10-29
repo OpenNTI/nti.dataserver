@@ -86,7 +86,7 @@ setup(
 		#'nose >= 1.2.1',
 		# But it's also listed in extras/test, and it's very hard to upgrade
 		# when that changes
-		#'distribute >= 0.6.28', # Can't seem to include that anywhere
+		#'distribute >= 0.6.30', # Can't seem to include that anywhere
 		# In theory this should make it possible to get
 		# the svn revision number from svn 1.7. Doesn't seem
 		# to work (with distribute?)
@@ -111,7 +111,7 @@ setup(
 		# See also umysqldb for a mysql adapter that should be gevent compat, with same API
 		# It's currently being installed from requirements.txt because it has no release on pypi.
 		# It depends on umysql, which has been released as 2.4 on pypi
-		'umysql >= 2.4',
+		'umysql == 2.4', # TODO: There is a 2.5 out. Can we adapt it?
 		'RelStorage >= 1.5.1',
 		'python-memcached >= 1.48', # pure-python cache for relstorage. Must set cache-module-name. Needed for gevent
 		# See also http://pypi.python.org/pypi/neoppod/ for a completely different option
@@ -161,7 +161,7 @@ setup(
 		#'linesman >= 0.2.2', # Conflicts with Pillow. Modify requires.txt as part of the patch
 		'logilab-common >= 0.58.1',
 		'lxml >= 3.0.1', # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
-		'nameparser >= 0.2.2', # Human name parsing
+		'nameparser >= 0.2.3', # Human name parsing
 		'nltk >= 2.0.3',
 		# numpy is req'd by nltk, but not depended on. sigh.
 		# This turns out to be because it CANNOT be installed in a setup.py:
@@ -196,15 +196,15 @@ setup(
 		 # Consider also https://github.com/phensley/gstatsd
 		'pystatsd >= 0.1.6',
 		'pytz >= 2012g',
-		'rdflib >= 3.2.2',
-		'redis >= 2.6.2', # Redis python client
+		'rdflib >= 3.2.3',
+		'redis >= 2.7.1', # Redis python client. Note that Amazon deployed servers are still in the 2.6 (2.4?) series
 		'repoze.catalog >= 0.8.2',
 		'repoze.lru >= 0.6', # LRU caching. Dep of Pyramid
 		'repoze.sendmail >= 3.2',
 		'repoze.who >= 2.0',
 		'repoze.zodbconn >= 0.14',
 		'grequests >= 0.1.0', #replaces requests.async in 0.13
-		'requests >= 0.14.1', # HTTP
+		'requests >= 0.14.2', # HTTP
 		'scss',
 		'setproctitle >= 1.1.6',
 		'setuptools',
@@ -230,7 +230,7 @@ setup(
 		'zc.lockfile >= 1.0.0',
 		'zc.queue >= 1.3',
 		'zc.zlibstorage >= 0.1.1', # compressed records. Will be built-in to newer ZODB
-		'zc.zodbdgc >= 0.6.0',
+		'zc.zodbdgc >= 0.6.1',
 		#'zetalibrary',
 		'zodburi >= 1.1', # used by pyramid_zodbconn
 		'zope.app.broken >= 3.6.0', # Improved broken objects
@@ -239,7 +239,7 @@ setup(
 		'zope.annotation >= 3.5.0',
 		'zope.broken >= 3.6.0', # This is actually deprecated, use the ZODB import
 		'zope.browser',
-		'zope.browserpage',
+		'zope.browserpage >= 4.0.0',
 		'zope.browserresource',
 		'zope.catalog >= 3.8.2',
 		'zope.cachedescriptors >= 3.5.1',
@@ -300,13 +300,14 @@ setup(
 		'tools': [
 			'pyramid_debugtoolbar >= 1.0.3',
 			'dblatex >= 0.3.4', # content rendering, convert docbook to tex
-			'ipython[notebook] >= 0.13', # notebook is web based, pulls in tornado
+			'ipython[notebook] >= 0.13.1', # notebook is web based, pulls in tornado
 			'pudb', # Python full screen console debugger. Beats ipython's: import pudb; pdb.set_trace()
 			'nose-pudb >= 0.1.2', # Nose integration: --pudb --pudb-failures. 0.1.2 requires trivial patch
-			'readline',
+			'readline >= 6.2.4.1',
 			'httpie >= 0.3.0',
-			'logilab_astng >= 0.24.0', # 24.1 is out, not yet on pypi (2012-10-09)
-			'pylint >= 0.25.2', # 26.0 is out, not yet on pypi (2012-10-09)
+			'logilab_astng >= 0.24.1',
+			'pip-tools >= 0.2.1', # command pip-review, pip-dump
+			'pylint >= 0.26.0',
 			'zodbupdate >= 0.5',
 			'zodbbrowser >= 0.10.0',
 			'sphinx >= 1.1.3', # Narrative docs
