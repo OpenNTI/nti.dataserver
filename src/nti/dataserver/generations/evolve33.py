@@ -29,7 +29,7 @@ def multiply(t, m):
 
 	dx = t[0] * m[4] + t[2] * m[5] + t[4]
 	dy = t[1] * m[4] + t[3] * m[5] + t[5]
-	
+
 	#(a, b, c, d, tx, ty)
 	return (m11, m12, m21, m22, dx, dy)
 
@@ -41,10 +41,10 @@ def rotate(shapeTransform, rad):
 	c = math.cos(rad)
 	s = math.sin(rad)
 	return multiply(shapeTransform,  [c,s,-s,c,0,0])
-	
+
 def migrate( obj ):
 	evolve32.migrate(obj)
-	
+
 	scalar = math.cos(math.pi/4.0)
 	angle = -math.pi/4.0
 	for item in obj.body:
@@ -52,14 +52,14 @@ def migrate( obj ):
 			for shape in item.shapeList:
 				if not isinstance( shape, _CanvasPolygonShape ) or shape.sides != 4:
 					continue
-				
+
 				tx = shape.transform
 				st = (tx.a, tx.b, tx.c, tx.d, tx.tx, tx.ty)
 				st = scale(st, scalar)
 				st = rotate(st, angle)
 				tx.a, tx.b, tx.c, tx.d, tx.tx, tx.ty = st
 				shape.transform = tx
-				
+
 def needs_migrate(x):
 	"""
 	Something needs migrated if it has an iterable 'body'. This catches
@@ -70,8 +70,7 @@ def needs_migrate(x):
 
 def evolve( context ):
 	"""
-	Evolve generation 32 to generation 33 by scaling and rotating existing squares. It also adds a field called viewportRatio
-	to all canvas objects.
+	Evolve generation 32 to generation 33 by scaling and rotating existing squares.
 	"""
 	setHooks()
 	ds_folder = context.connection.root()['nti.dataserver']
