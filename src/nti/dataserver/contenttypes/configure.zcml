@@ -11,6 +11,7 @@
 	<include package="nti.externalization" />
 
 	<ext:registerMimeFactories module=".note" />
+	<ext:registerMimeFactories module=".bookmark" />
 	<ext:registerMimeFactories module=".highlight" />
 	<ext:registerMimeFactories module=".redaction" />
 	<ext:registerMimeFactories module=".canvas" />

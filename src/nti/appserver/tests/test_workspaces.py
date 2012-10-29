@@ -254,6 +254,7 @@ class TestUserService(tests.ConfiguringTestBase):
 
 		assert_that( 'application/vnd.nextthought.transcriptsummary', is_not( is_in( list(UserPagesCollection(None).accepts) ) ) )
 		assert_that( 'application/vnd.nextthought.canvasurlshape', is_in( list(UserPagesCollection(None).accepts) ) )
+		assert_that( 'application/vnd.nextthought.bookmark', is_in( list(UserPagesCollection(None).accepts) ) )
 
 	@mock_dataserver.WithMockDSTrans
 	def test_user_pages_collection_restricted(self):

@@ -325,6 +325,7 @@ class CollectionSummaryExternalizer(object):
 			if model_interfaces.ISimpleEnclosureContainer.providedBy( collection ):
 				ext_collection['accepts'].extend( ('image/*',) )
 				ext_collection['accepts'].extend( ('application/pdf',) )
+			ext_collection['accepts'].sort() # For the convenience of tests
 
 		_links = datastructures.find_links( self._collection )
 		if _links:
