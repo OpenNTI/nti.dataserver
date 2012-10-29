@@ -115,7 +115,7 @@ def render_externalizable(data, system):
 	# preference, use the URL that was requested.
 	if isinstance( body, collections.MutableMapping ):
 		if 'href' not in body or not nti_traversal.is_valid_resource_path( body['href'] ):
-			body['href'] = request.path
+			body['href'] = request.path_qs
 
 	# Search for a last modified value.
 	# We take the most recent one we can find

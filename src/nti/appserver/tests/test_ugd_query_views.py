@@ -7,6 +7,7 @@ from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import none
 from hamcrest import has_entry
+from hamcrest import has_entries
 from hamcrest import has_length
 from hamcrest import has_key
 from hamcrest import contains
@@ -410,10 +411,25 @@ class TestApplicationUGDQueryViews(ApplicationTestBase):
 		res = testapp.get( path, params={'batchSize': '1', 'batchStart': '0', 'sortOn': 'lastModified', 'sortOrder': 'ascending'}, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
 		assert_that( res.json_body, has_entry( 'Items', contains( has_entry( 'ID', top_n_id ) ) ) )
+		assert_that( res.json_body, has_entry( 'Links',
+											   contains(
+												   has_entries( 'href', '/dataserver2/users/sjohnson%40nextthought.com/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?sortOn=lastModified&batchSize=1&sortOrder=ascending&batchStart=1',
+																'rel', 'batch-next') ) ) )
+		# Capture the URL that's returned to us, and make sure it matches what we're told to come back to
+		# so that next and prev are symmetrical
+		# (Modulo some slightly different URL encoding)
+		prev_href = res.json_body['href']
+		prev_href = prev_href.replace( "@", "%40" ).replace( ':', '%3A' )
+
 
 		res = testapp.get( path, params={'batchSize': '1', 'batchStart': '1', 'sortOn': 'lastModified', 'sortOrder': 'ascending'}, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
 		assert_that( res.json_body, has_entry( 'Items', contains( has_entry( 'ID', reply_n_id ) ) ) )
+		assert_that( res.json_body, has_entry( 'Links',
+											   contains(
+												   has_entries( 'href', '/dataserver2/users/sjohnson%40nextthought.com/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?sortOn=lastModified&batchSize=1&sortOrder=ascending&batchStart=0',
+																'rel', 'batch-prev') ) ) )
+		assert_that( res.json_body['Links'][0], has_entry( 'href', prev_href ) )
 
 		res = testapp.get( path, params={'batchSize': '1', 'batchStart': '2'}, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body, has_entry( 'Items', has_length( 0 ) ) )
