@@ -53,3 +53,18 @@ name: Else
 <div class="algorithm-indent-block" tal:content="self">else clause</div>
 <b>end if</b>
 </div>
+
+name: For
+<div class="algorithm-if-block">
+<b>for </b><em tal:content="self">emphasized text</em><b> do</b>
+<div class="algorithm-indent-block" tal:content="self/attributes/loop">Loop Block</div>
+<b>end</b>
+</div>
+
+name: While
+<div class="algorithm-if-block">
+<b>while </b><em tal:content="self">emphasized text</em><b> do</b>
+<div class="algorithm-indent-block" tal:content="self/attributes/loop">Loop Block</div>
+<b>end</b>
+</div>
+

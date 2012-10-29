@@ -45,6 +45,7 @@ class function(Base.Environment):
     class semicolon(Base.Command):
         macroName = ';'
 
+
 # Commands for different types of If / If-Then / If-Then-Else blocks
 
 class If(Base.Command):
@@ -71,3 +72,20 @@ class eIf(Base.Command):
     blockType = True
     args = '(then_comment) self then (else_comment) else'
 
+# Commands for different types of pre-condition based looping blocks
+
+class _PreLoop(Base.Command):
+    blockType = True
+    args = '(comment) self loop'
+
+class For(_PreLoop):
+    pass
+
+class While(_PreLoop):
+    pass
+
+class ForEach(_PreLoop):
+    pass
+
+class ForAll(_PreLoop):
+    pass
