@@ -46,16 +46,18 @@ def _scale(input, output, scale, defaultScale):
 	#scale is 1x, 2x, 4x
 	#return os.system( 'convert %s -resize %f%% PNG32:%s' % (input, 100*(scale/defaultScale) , output) )
 	command = [ 'convert', input, '-resize', '%f%%' % (100*(scale/defaultScale)), 'PNG32:%s' % output ]
+	__traceback_info__ = command
 	retval1 = subprocess.call( command )
-	
+
 	# Use pngcrush to clean the resized PNG.
 	prefix = hex(int(time.time()))
 	tmpfile = tempfile.mktemp(suffix='.png', prefix=prefix)
 	command = [ 'pngcrush', '-q', output, tmpfile ]
+	__traceback_info__ = command
 	retval2 = subprocess.call( command )
 	if os.path.exists(tmpfile):
 		shutil.move( tmpfile, output )
-		
+
 	return retval1 if (retval1 < retval2) else retval2
 
 class _GSPDFPNG2(plasTeX.Imagers.gspdfpng.GSPDFPNG):
@@ -68,7 +70,7 @@ class _GSPDFPNG2(plasTeX.Imagers.gspdfpng.GSPDFPNG):
 	"""
 	#command = ('%s -q -dSAFER -dBATCH -dNOPAUSE -sDEVICE=pngalpha ' % gs) + \
 	#    '-dGraphicsAlphaBits=4 -sOutputFile=img%d.png'
-	command = [ gs, '-q', '-dSAFER', '-dBATCH', '-dNOPAUSE', '-sDEVICE=pngalpha', '-dGraphicsAlphaBits=4', 
+	command = [ gs, '-q', '-dSAFER', '-dBATCH', '-dNOPAUSE', '-sDEVICE=pngalpha', '-dGraphicsAlphaBits=4',
 		    '-sOutputFile=img%d.png']
 	compiler = 'pdflatex'
 	fileExtension = '.png'
@@ -90,8 +92,9 @@ class _GSPDFPNG2(plasTeX.Imagers.gspdfpng.GSPDFPNG):
 		#os.system( "pdfcrop --hires images.out images.out" )
 		# pdfcrop produces useless stdout data
 		with open('/dev/null', 'w') as dev_null:
-			subprocess.call( ('pdfcrop', '--hires', 'images.out', 'images.out' ),
-								   stdout=dev_null, stderr=dev_null )
+			command = ('pdfcrop', '--hires', 'images.out', 'images.out' )
+			__traceback_info__ = command
+			subprocess.call( command, stdout=dev_null, stderr=dev_null )
 
 		#maxpages = int(subprocess.Popen( "pdfinfo images.out | grep Pages | awk '{print $2}'", shell=True, stdout=subprocess.PIPE).communicate()[0])
 		# Record the fact that we've cropped them (in parallel, getting the size takes time)
@@ -116,11 +119,10 @@ class _GSPDFPNG2(plasTeX.Imagers.gspdfpng.GSPDFPNG):
 				#options += '%s %s ' % (opt, value)
 				options.extend( [ opt, value ] )
 
-		# FIXME: Convert to subprocess. os.system is unsafe.
-		#res = os.system('%s -r%d %s%s' % (self.command, self.resolution ,options, 'images.out')), None
 		self.command.append( '-r%d' % self.resolution)
 		self.command.extend( options )
 		self.command.append( 'images.out' )
+		__traceback_info__ = self.command
 		# SAJ: Turn the result of the subprocess call into a tuple.  This seems rather hackish.
 		res = subprocess.call( self.command ), None
 
