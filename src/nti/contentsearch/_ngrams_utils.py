@@ -8,12 +8,13 @@ from whoosh import analysis
 from nti.contentsearch.common import default_ngram_minsize
 from nti.contentsearch.common import default_ngram_maxsize
 from nti.contentsearch import interfaces as search_interfaces
+from nti.contentsearch.common import default_word_tokenizer_expression
 
 import logging
 logger = logging.getLogger( __name__ )
 
 def ngram_tokens(text, minsize=3, maxsize=10, at='start', unique=True, lower=True):
-	tokenizer = analysis.RegexTokenizer()
+	tokenizer = analysis.RegexTokenizer(expression=default_word_tokenizer_expression)
 	ng_filter = analysis.NgramFilter(minsize=minsize, maxsize=maxsize, at=at)
 	text = text.lower() if lower else text
 	stream = tokenizer(unicode(text.lower()))
