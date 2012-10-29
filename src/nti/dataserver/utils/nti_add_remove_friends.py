@@ -13,6 +13,7 @@ from nti.dataserver import users
 from nti.dataserver.utils import run_with_dataserver
 from nti.dataserver.users import interfaces as user_interfaces
 from nti.externalization.externalization import to_external_object
+from nti.externalization.internalization import update_from_external_object
 
 def main():
 	arg_parser = argparse.ArgumentParser( description="Add/Remvove friends from a FriendsList" )
@@ -44,30 +45,31 @@ def _create_fl( args ):
 		sys.exit( 2 )
 
 	thelist = None
-	flname = args.name.lower() 
+	flname = args.name.lower()
 	for fl in owner.friendsLists.values():
 		username = fl.username.lower()
 		realname = user_interfaces.IFriendlyNamed( fl ).realname or u''
 		if flname == realname.lower() or flname == username:
 			thelist = fl
 			break
-	
+
 	if thelist is None:
 		print("Friend list not found", args, file=sys.stderr )
 		sys.exit(3)
-		
-	for member_name in args.add_members or ():
-		member = users.User.get_user( member_name )
-		if member and member != owner:
-			thelist.addFriend( member )
-			
-	for member_name in args.remove_members or ():
-		member = users.User.get_user( member_name )
-		if member and member != owner:
-			thelist.removeFriend( member )
-	
+
+	current_friends = {x for x in thelist}
+	to_add = {thelist.get_entity(x) for x in args.add_members or ()}
+	to_add.discard( None )
+	to_remove = {thelist.get_entity(x) for x in args.remove_members or ()}
+	to_remove.discard( None )
+
+	final_friends = current_friends | to_add
+	final_friends = final_friends - to_remove
+
+	update_from_external_object( thelist, {'friends': list(final_friends)} )
+
 	if args.verbose:
 		pprint.pprint( to_external_object( thelist ) )
-		
+
 if __name__ == '__main__':
 	main()
