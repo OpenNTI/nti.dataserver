@@ -55,10 +55,12 @@ class Canvas(ThreadableExternalizableMixin, UserContentRoot, ExternalizableInsta
 	# contains _CanvasShape "objects". Note that this means they cannot be decorated
 	_excluded_out_ivars_ = ExternalizableInstanceDict._excluded_out_ivars_.union( ('shapeList', 'viewportRatio') )
 
+	viewportRatio = 1.0
+
 	def __init__(self):
 		super(Canvas,self).__init__()
 		self.shapeList = PersistentList()
-		self.viewportRatio = 1.0
+
 
 	def append( self, shape ):
 		if not isinstance( shape, _CanvasShape ):
@@ -73,10 +75,10 @@ class Canvas(ThreadableExternalizableMixin, UserContentRoot, ExternalizableInsta
 		# Special handling of shapeList to preserve the PersistentList.
 		# (Though this probably doesn't matter. See the note at the top of the class)
 		shapeList = args[0].pop( 'shapeList', self )
-		viewportRatio = args[0].pop( 'viewportRatio', 1.0 )
-		assert isinstance( viewportRatio, numbers.Real )
-		self.viewportRatio = viewportRatio
-		
+		viewportRatio = args[0].get( 'viewportRatio' )
+		if isinstance( viewportRatio, numbers.Real ) and viewportRatio > 0 and viewportRatio != self.viewportRatio:
+			self.viewportRatio = viewportRatio
+
 		super(Canvas,self).updateFromExternalObject( *args, **kwargs )
 		if shapeList is not self:
 			# Copy the current files. If we find anything that refers
@@ -98,8 +100,7 @@ class Canvas(ThreadableExternalizableMixin, UserContentRoot, ExternalizableInsta
 								existing_file.__parent__ = shape
 
 		# be polite and put it back
-		args[0]['shapeList'] = list(self.shapeList) 
-		args[0]['viewportRatio'] = viewportRatio
+		args[0]['shapeList'] = list(self.shapeList)
 
 	def toExternalDictionary( self, mergeFrom=None ):
 		result = super(Canvas,self).toExternalDictionary( mergeFrom=mergeFrom )

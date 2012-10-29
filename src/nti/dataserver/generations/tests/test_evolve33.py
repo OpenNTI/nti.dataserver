@@ -37,7 +37,6 @@ class TestEvolve33(mock_dataserver.ConfiguringTestBase):
 
 			note = Note()
 			canvas = Canvas()
-			delattr(canvas, 'viewportRatio')
 			square = CanvasPolygonShape(sides=4)
 			tx = CanvasAffineTransform()
 			tx.a = 0.0975
@@ -71,8 +70,7 @@ class TestEvolve33(mock_dataserver.ConfiguringTestBase):
 			assert_that(tx.d, close_to(0.05125, 0.0001))
 			assert_that(tx.tx, close_to(0.57375, 0.0001))
 			assert_that(tx.ty, close_to(0.06875, 0.0001))
-			
+
 if __name__ == '__main__':
 	import unittest
 	unittest.main()
-	
