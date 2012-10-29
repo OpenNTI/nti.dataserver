@@ -100,6 +100,8 @@ def forgot_username_view(request):
 	base_template = 'username_recovery_email'
 	if not matching_users:
 		base_template = 'failed_' + base_template
+	else:
+		matching_users = filter( nti_interfaces.IUser.providedBy, matching_users ) # ensure only real users, not profiles or other matches
 	queue_simple_html_text_email( base_template, subject=_("NextThought Username Reminder"),
 								  recipients=[email_assoc_with_account],
 								  template_args={'users': matching_users},
@@ -199,9 +201,9 @@ def find_users_with_email( email, dataserver, username=None, match_info=False ):
 	email hash (or parent/contact email hash) matching the given email.
 
 	:param basestring username: If given, we will only examine
-		a user with this name (and will return a sequence of length 0 or 1).
-		This is a shortcut to share code for username and password recovery that
-		will probably go away once things are indexed.
+		a user with this name (and will return a sequence of length 0 or 1); if found,
+		only an IUser will be in the sequence.
+
 	:param bool match_info: If given and True, then the result will be a sequence of
 		`tuple` objects, first the user and then the name of the field that matched.
 	:return: A sequence of the matched user objects.
@@ -219,7 +221,8 @@ def find_users_with_email( email, dataserver, username=None, match_info=False ):
 		matches.update( ((x, match_type) for x in ent_catalog.searchResults( **{match_type: (v,v)} ) ) )
 
 	if username:
-		matches = ( (u,match_type) for u, match_type in matches if u.username.lower() == username)
+		matches = ( (u,match_type) for u, match_type in matches
+					if nti_interfaces.IUser.providedBy( u ) and u.username.lower() == username)
 
 
 	return [x[0] for x in matches] if not match_info else list(matches)
