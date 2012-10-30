@@ -10,13 +10,13 @@ class TestNgramUtils(ConfiguringTestBase):
 
 	def test_ngram_compute(self):
 		n = ngrams('Sing Crimson Princess')
-		assert_that(n, is_('cr cri crim crims crimso crimson pr pri prin princ prince princes princess si sin sing'))
+		assert_that(n, is_('pr crim princess princes princ prin pri crimso si crims cr crimson sing cri prince sin'))
 		
 		n = ngrams('word word word')
-		assert_that(n, is_('wo wor word'))
+		assert_that(n, is_('wo word wor'))
 		
 		n = ngrams('self-esteem')
-		assert_that(n, is_('se sel self self- self-e self-es self-est self-este self-estee self-esteem'))
+		assert_that(n, is_('self- self-este self-es self self-est self-e self-estee sel se self-esteem'))
 		
 		n = ngrams(None)
 		assert_that(n, is_(''))
