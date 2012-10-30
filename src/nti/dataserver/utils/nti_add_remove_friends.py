@@ -65,7 +65,8 @@ def _create_fl( args ):
 
 	final_friends = current_friends | to_add
 	final_friends = final_friends - to_remove
-
+	final_friends = {x.username for x in final_friends}
+	
 	update_from_external_object( thelist, {'friends': list(final_friends)} )
 
 	if args.verbose:
