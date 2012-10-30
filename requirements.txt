@@ -1,7 +1,6 @@
 file:../lib/pywikipedia/#egg=pywikipedia
-# 1.0b4 is out, but not yet tagged; we need it for subprocess, but we actually
-# need trunk for EINVAL handling and ultimately a fix for posix_read
--e git+https://github.com/SiteSupport/gevent.git#egg=gevent
+# See https://github.com/SiteSupport/gevent/blob/master/changelog.rst
+-e git+https://github.com/SiteSupport/gevent.git@1.0rc1#egg=gevent
 # gevent mysql-compat driver. Base client:
 # Note: Released as 2.4 so currently in setup.py
 #-e git+https://github.com/esnme/ultramysql.git#egg=umysql-dev
