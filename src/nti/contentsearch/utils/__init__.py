@@ -20,7 +20,12 @@ def get_uid(obj, intids=None):
 def find_user_dfls(user):
 	"""return a generator with dfl objects for the specfied user"""
 	
-	for obj in findObjectsProviding( user, nti_interfaces.IFriendsList):
+	if hasattr(user, "friendsLists"):
+		source = user.friendsLists.values()
+	else:
+		source = findObjectsProviding( user, nti_interfaces.IFriendsList)
+	
+	for obj in source:
 		if isinstance(obj, friends_lists.DynamicFriendsList):
 			yield obj
 
