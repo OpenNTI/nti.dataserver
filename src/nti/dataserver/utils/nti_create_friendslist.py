@@ -68,3 +68,7 @@ def _create_fl( args ):
 		pprint.pprint( to_external_object( dfl ) )
 
 	return dfl
+
+if __name__ == '__main__':
+	main()
+	
