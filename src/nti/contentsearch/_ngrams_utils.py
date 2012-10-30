@@ -7,6 +7,8 @@ from whoosh import analysis
 
 import repoze.lru
 
+
+from nti.contentsearch._content_utils import split_content
 from nti.contentsearch.common import default_ngram_minsize
 from nti.contentsearch.common import default_ngram_maxsize
 from nti.contentsearch import interfaces as search_interfaces
@@ -18,7 +20,7 @@ logger = logging.getLogger( __name__ )
 def _text_or_token(token, text_only=False):
 	return token.text if text_only else token.copy()
 
-def ngram_filter(text, minsize=3, maxsize=10, at='start', unique=True, lower=True, text_only=True):
+def whoosh_ngram_filter(text, minsize=3, maxsize=10, at='start', unique=True, lower=True, text_only=True):
 	text = text.lower() if lower else text
 	ng_filter = analysis.NgramFilter(minsize=minsize, maxsize=maxsize, at=at)
 	tokenizer = analysis.RegexTokenizer(expression=default_word_tokenizer_expression)
@@ -29,6 +31,20 @@ def ngram_filter(text, minsize=3, maxsize=10, at='start', unique=True, lower=Tru
 		result = {_text_or_token(token, text_only) for token in ng_filter(stream)}
 	return result
 		
+def ngram_filter(text, minsize=3, maxsize=10, unique=True, lower=True):
+	result = set() if unique else []
+	tokens = split_content(text)
+	for text in tokens:
+		text = text.lower() if lower else text
+		limit = min(maxsize, len(text))
+		for size in xrange(minsize, limit + 1):
+			ngram = text[:size]
+			if unique:
+				result.add(ngram)
+			else:
+				result.append(ngram)
+	return result
+
 @repoze.lru.lru_cache(1000)
 def ngrams(text):
 	u = component.getUtility(search_interfaces.INgramComputer)
@@ -43,7 +59,7 @@ class _DefaultNgramComputer(object):
 	
 	def compute(self, text):
 		if text:
-			result = ngram_filter(text, self.minsize, self.maxsize, unique=True, text_only=True)
+			result = ngram_filter(text, self.minsize, self.maxsize, unique=True)
 			result = ' '.join(result)
 		else:
 			result = u''
