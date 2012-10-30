@@ -365,7 +365,7 @@ class _UGDPostView(_UGDModifyViewBase):
 			# OK, now that we've got an object, start firing events
 			lifecycleevent.created( containedObject )
 			try:
-				owner.addContainedObject( containedObject )
+				owner.addContainedObject( containedObject ) # Should fire lifecycleevent.added
 			except KeyError:
 				# for ease of testing, re-posting with an exported data file,
 				# try to auto-gen an ID.
@@ -393,17 +393,15 @@ class _UGDPostView(_UGDModifyViewBase):
 		__traceback_info__ = containedObject
 		assert containedObject.__parent__
 		assert containedObject.__name__
-		return containedObject
+
 		# We used to ACL proxy here
+		return containedObject
+
 
 
 class _UGDDeleteView(_UGDModifyViewBase):
 	""" DELETing an existing object is possible. Only the user
 	that owns the object can DELETE it."""
-
-	def __init__(self, request):
-		super(_UGDDeleteView,self).__init__( request )
-
 
 	def __call__(self):
 		context = self.request.context
@@ -426,7 +424,7 @@ class _UGDDeleteView(_UGDModifyViewBase):
 			self._check_object_exists( theObject )
 
 			lastModified = 0
-			if user.deleteContainedObject( theObject.containerId, theObject.id ) is None:
+			if user.deleteContainedObject( theObject.containerId, theObject.id ) is None: # Should fire lifecycleevent.removed
 				raise hexc.HTTPNotFound()
 
 			lastModified = theObject.creator.lastModified
@@ -441,9 +439,6 @@ class _UGDPutView(_UGDModifyViewBase):
 	creating an object with an arbitrary OID)."""
 
 
-	def __init__(self, request):
-		super(_UGDPutView,self).__init__(request)
-
 	def _get_object_to_update( self ):
 		try:
 			return self.request.context.resource
@@ -454,7 +449,6 @@ class _UGDPutView(_UGDModifyViewBase):
 			raise
 
 	def __call__(self):
-		context = self.request.context
 		object_to_update = self._get_object_to_update()
 		theObject = object_to_update
 		self._check_object_exists( theObject )
@@ -486,7 +480,7 @@ class _UGDPutView(_UGDModifyViewBase):
 
 			self._check_object_exists( theObject, creator, containerId, objId )
 
-			self.updateContentObject( theObject, externalValue )
+			self.updateContentObject( theObject, externalValue ) # Should fire lifecycleevent.modified
 
 
 		if theObject and theObject == theObject.creator:
@@ -520,17 +514,17 @@ class _UGDFieldPutView(_UGDPutView):
 		return value
 
 
-def _force_update_modification_time( object, lastModified, max_depth=-1 ):
+def _force_update_modification_time( obj, lastModified, max_depth=-1 ):
 	"""Traverse up the parent tree (up to `max_depth` times) updating modification times."""
-	if hasattr( object, 'updateLastMod' ):
-		object.updateLastMod( lastModified )
+	if hasattr( obj, 'updateLastMod' ):
+		obj.updateLastMod( lastModified )
 
 	if max_depth == 0:
 		return
 	if max_depth > 0:
 		max_depth = max_depth - 1
 
-	parent = getattr( object, '__parent__', None )
+	parent = getattr( obj, '__parent__', None )
 	if parent is None:
 		return
 	_force_update_modification_time( parent, lastModified, max_depth )
@@ -539,9 +533,6 @@ class _EnclosurePostView(_UGDModifyViewBase):
 	"""
 	View for creating new enclosures.
 	"""
-
-	def __init__(self, request):
-		super(_EnclosurePostView,self).__init__( request )
 
 	def __call__(self):
 		context = self.request.context # A _AbstractObjectResource OR an ISimpleEnclosureContainer
@@ -621,16 +612,13 @@ class _EnclosurePostView(_UGDModifyViewBase):
 																					   enclosure.name ) )
 		# TODO: We need to return some representation of this object
 		# just created. We need an 'Entry' wrapper.
-		#return ACLLocationProxy( enclosure, context, enclosure.name, nacl.ACL( enclosure, context.__acl__ ) )
+
 		return enclosure
 
 class _EnclosurePutView(_UGDModifyViewBase):
 	"""
 	View for editing an existing enclosure.
 	"""
-
-	def __init__( self, request ):
-		super(_EnclosurePutView,self).__init__( request )
 
 	def __call__( self ):
 		context = self.request.context
@@ -665,7 +653,7 @@ class _EnclosureDeleteView(object):
 		assert IEnclosedContent.providedBy( context )
 		container = traversal.find_interface( context, ISimpleEnclosureContainer )
 		# TODO: Handle the KeyError here and also if ISimpleEnclosureContainer was not found
-		container.del_enclosure( context.name )
+		container.del_enclosure( context.name ) # should fire lifecycleevent.removed
 
 		result = hexc.HTTPNoContent()
 		return result
