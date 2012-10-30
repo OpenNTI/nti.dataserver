@@ -83,7 +83,7 @@ get_content = get_object_content
 def get_object_ngrams(obj, default=None):
 	content = get_object_content(obj, default)
 	n_grams = ngrams(content) if content else default
-	return n_grams.lower() if n_grams else default
+	return n_grams if n_grams else default
 get_ngrams = get_object_ngrams
 
 def get_content_and_ngrams(obj, default=None):

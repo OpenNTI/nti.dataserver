@@ -5,10 +5,6 @@ Defines traversal views and resources for the dataserver.
 from __future__ import print_function, unicode_literals, absolute_import
 logger = __import__( 'logging' ).getLogger( __name__ )
 
-import sys
-import numbers
-import collections
-import time
 
 from zope import component
 from zope import interface
@@ -16,7 +12,7 @@ from zope import interface
 from zope import lifecycleevent
 from zope.schema import interfaces as sch_interfaces
 
-import pyramid.security as sec
+
 from nti.appserver import httpexceptions as hexc
 from nti.appserver.httpexceptions import HTTPUnprocessableEntity
 
@@ -25,34 +21,31 @@ import transaction
 
 from zope.location.location import LocationProxy
 
-from nti.dataserver.interfaces import (IDataserver, ISimpleEnclosureContainer, IEnclosedContent)
+from nti.dataserver.interfaces import IEnclosedContent
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver import users
+
 
 from nti.externalization.externalization import toExternalObject
-from nti.externalization.datastructures import LocatedExternalDict
+
 from nti.externalization.oids import to_external_ntiid_oid as toExternalOID
-from nti.externalization.interfaces import StandardInternalFields, StandardExternalFields
-from nti.ntiids import ntiids
+from nti.externalization.interfaces import StandardInternalFields
 
-from nti.dataserver import enclosures
-from nti.dataserver.mimetype import MIME_BASE, nti_mimetype_from_object
 from nti.appserver import interfaces as app_interfaces
-
-from nti.contentlibrary import interfaces as lib_interfaces
 from nti.assessment import interfaces as asm_interfaces
 
 from nti.appserver import _external_object_io as obj_io
+from nti.appserver._view_utils import ModeledContentUploadRequestUtilsMixin
+from nti.appserver._view_utils import ModeledContentEditRequestUtilsMixin
+from nti.appserver._view_utils import AbstractAuthenticatedView
+from nti.appserver._view_utils import AbstractView
 
-class _ServiceGetView(object):
+from nti.appserver.enclosure_views import EnclosureDeleteView
+from nti.appserver.enclosure_views import EnclosurePutView
 
-	def __init__( self, request ):
-		self.request = request
+class _ServiceGetView(AbstractAuthenticatedView):
 
 	def __call__( self ):
-		username = sec.authenticated_userid( self.request )
-		ds = self.request.registry.getUtility(IDataserver)
-		user = users.User.get_user( username, dataserver=ds )
+		user = self.getRemoteUser()
 		if not user:
 			raise hexc.HTTPForbidden()
 		service = self.request.registry.getAdapter( user, app_interfaces.IService )
@@ -60,10 +53,7 @@ class _ServiceGetView(object):
 		return service
 
 
-class _GenericGetView(object):
-
-	def __init__( self, request ):
-		self.request = request
+class _GenericGetView(AbstractView):
 
 	def __call__( self ):
 		# TODO: We sometimes want to change the interface that we return
@@ -109,157 +99,11 @@ class _GenericGetView(object):
 				result.__parent__ = self.request.context.__parent__
 		return result
 
-class _EmptyContainerGetView(object):
-
-	def __init__( self, request ):
-		self.request = request
+class _EmptyContainerGetView(AbstractView):
 
 	def __call__( self ):
 		raise hexc.HTTPNotFound( self.request.context.ntiid )
 
-
-
-import nti.externalization.internalization
-def _createContentObject( dataserver, owner, datatype, externalValue, creator ):
-	"""
-	:param owner: The entity which will contain the object.
-	:param creator: The user attempting to create the object. Possibly separate from the
-		owner. Permissions will be checked for the creator
-	"""
-	# The datatype can legit be null if we are MimeType-only
-	if externalValue is None:
-		return None
-
-	result = None
-	if datatype is not None and owner is not None:
-		result = owner.maybeCreateContainedObjectWithType( datatype, externalValue )
-
-	if result is None:
-		result = nti.externalization.internalization.find_factory_for( externalValue )
-		if result:
-			result = result()
-
-	return result
-
-class _UGDModifyViewBase(object):
-
-	inputClass = dict
-	def __init__( self, request ):
-		self.request = request
-		self.dataserver = self.request.registry.getUtility(IDataserver)
-
-
-	def readInput(self, value=None):
-		""" Returns the object specified by self.inputClass object. The data from the
-		input stream is parsed, an instance of self.inputClass is created and update()'d
-		from the input data.
-
-		:raises hexc.HTTPBadRequest: If there is an error parsing/transforming the
-			client request.
-		"""
-		result = obj_io.read_body_as_external_object( self.request, input_data=value, expected_type=self.inputClass )
-		try:
-			return self._transformInput( result )
-		except hexc.HTTPException:
-			raise
-		except Exception:
-			# Sadly, there's not a good exception list to catch.
-			# plistlib raises undocumented exceptions from xml.parsers.expat
-			# json may raise ValueError or other things, depending on implementation.
-			# transformInput may raise TypeError if the request is bad, but it
-			# may also raise AttributeError if the inputClass is bad, but that
-			# could also come from other places. We call it all client error.
-			logger.exception( "Failed to parse/transform value %s", value )
-			_, _, tb = sys.exc_info()
-			ex = hexc.HTTPBadRequest()
-			raise ex, None, tb
-
-	def getRemoteUser( self ):
-		return users.User.get_user( sec.authenticated_userid( self.request ), dataserver=self.dataserver )
-
-	def _transformInput( self, value ):
-		return value
-
-	def _check_object_exists(self, o, cr='', cid='', oid=''):
-		if o is None:
-			raise hexc.HTTPNotFound( "No object %s/%s/%s" % (cr, cid,oid))
-
-	def updateContentObject( self, contentObject, externalValue, set_id=False, notify=True ):
-		containedObject = obj_io.update_object_from_external_object( contentObject, externalValue, notify=notify, request=self.request )
-
-		# If they provided an ID, use it if we can and we need to
-		if set_id and StandardExternalFields.ID in externalValue \
-			and hasattr( containedObject, StandardInternalFields.ID ) \
-			and getattr( containedObject, StandardInternalFields.ID, None ) != externalValue[StandardExternalFields.ID]:
-			try:
-				containedObject.id = externalValue['ID']
-			except AttributeError:
-				# It's OK if we cannot use the given ID; POST is meant
-				# to auto-assign
-				pass
-		return containedObject
-
-	def checkObjectOutFromUserForUpdate( self, user, containerId, objId ):
-		"""
-		Having identified an object, make sure the user is aware that we are going
-		to change it. Should be called in a ``with user.updates()`` block.
-		"""
-		# TODO: We might need to do some ID massaging here, if the ID is an OID in the old, non-intid
-		# appended form
-		return user.getContainedObject( containerId, objId )
-
-	def idForLocation( self, value ):
-		theId = None
-		if isinstance(value,collections.Mapping):
-			theId = value['ID']
-		elif hasattr(value, 'id' ):
-			theId = value.id
-		return theId
-
-	def _find_file_field(self):
-		if self.request.content_type == 'multipart/form-data':
-			# Expecting exactly one key in POST, the file
-			field = None
-			for k in self.request.POST:
-				v = self.request.POST[k]
-				if hasattr( v, 'type' ) and hasattr( v, 'file' ):
-					# must be our field
-					field = v
-					break
-			return field
-
-	def _get_body_content(self):
-		field = self._find_file_field()
-		if field is not None:
-			in_file = field.file
-			in_file.seek( 0 )
-			return in_file.read()
-
-		return self.request.body
-
-	def _get_body_type(self):
-		field = self._find_file_field()
-		if field is not None:
-			return field.type
-		return self.request.content_type or 'application/octet-stream'
-
-	def _get_body_name(self):
-		field = self._find_file_field()
-		if field is not None and field.filename:
-			return field.filename
-		return self.request.headers.get( 'Slug' ) or ''
-
-
-from nti.dataserver.mimetype import nti_mimetype_class
-
-def class_name_from_content_type( request ):
-	"""
-	:return: The class name portion of one of our content-types, or None
-		if the content-type doesn't conform. Note that this will be lowercase.
-	"""
-	content_type = request.content_type if hasattr( request, 'content_type' ) else request
-	content_type = content_type or ''
-	return nti_mimetype_class( content_type )
 
 def _id(x): return x
 
@@ -272,15 +116,12 @@ def _question_set_submission_transformer( obj ):
 	return asm_interfaces.IQAssessedQuestionSet
 
 
-class _UGDPostView(_UGDModifyViewBase):
+class _UGDPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixin):
 	""" HTTP says POST creates a NEW entity under the Request-URI """
 	# Therefore our context is a container, and we should respond created.
 
-	def __init__( self, request ):
-		super(_UGDPostView,self).__init__( request )
-
 	def createContentObject( self, user, datatype, externalValue, creator ):
-		return _createContentObject( self.dataserver, user, datatype, externalValue, creator )
+		return obj_io.create_modeled_content_object( self.dataserver, user, datatype, externalValue, creator )
 
 	def __call__( self ):
 		try:
@@ -310,7 +151,7 @@ class _UGDPostView(_UGDModifyViewBase):
 			# Convert unicode to ascii
 			datatype = str( externalValue['Class'] ) + 's'
 		else:
-			datatype = class_name_from_content_type( self.request )
+			datatype = obj_io.class_name_from_content_type( self.request )
 			datatype = datatype + 's' if datatype else None
 
 		containedObject = self.createContentObject( owner, datatype, externalValue, creator )
@@ -399,7 +240,7 @@ class _UGDPostView(_UGDModifyViewBase):
 
 
 
-class _UGDDeleteView(_UGDModifyViewBase):
+class _UGDDeleteView(AbstractAuthenticatedView,ModeledContentEditRequestUtilsMixin):
 	""" DELETing an existing object is possible. Only the user
 	that owns the object can DELETE it."""
 
@@ -419,7 +260,7 @@ class _UGDDeleteView(_UGDModifyViewBase):
 				if enclosed:
 					# should be self.request.context.resource.__parent__
 					self.request.context = enclosed
-					return _EnclosureDeleteView( self.request )()
+					return EnclosureDeleteView( self.request )()
 
 			self._check_object_exists( theObject )
 
@@ -434,7 +275,7 @@ class _UGDDeleteView(_UGDModifyViewBase):
 		return result
 
 
-class _UGDPutView(_UGDModifyViewBase):
+class _UGDPutView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixin,ModeledContentEditRequestUtilsMixin):
 	""" PUTting to an existing object is possible (but not
 	creating an object with an arbitrary OID)."""
 
@@ -476,7 +317,7 @@ class _UGDPutView(_UGDModifyViewBase):
 			if theObject is None and traversal.find_interface( object_to_update, IEnclosedContent ):
 				# should be self.request.context.resource.__parent__
 				self.request.context = traversal.find_interface( object_to_update, IEnclosedContent )
-				return _EnclosurePutView( self.request )()
+				return EnclosurePutView( self.request )()
 
 			self._check_object_exists( theObject, creator, containerId, objId )
 
@@ -514,149 +355,6 @@ class _UGDFieldPutView(_UGDPutView):
 		return value
 
 
-def _force_update_modification_time( obj, lastModified, max_depth=-1 ):
-	"""Traverse up the parent tree (up to `max_depth` times) updating modification times."""
-	if hasattr( obj, 'updateLastMod' ):
-		obj.updateLastMod( lastModified )
-
-	if max_depth == 0:
-		return
-	if max_depth > 0:
-		max_depth = max_depth - 1
-
-	parent = getattr( obj, '__parent__', None )
-	if parent is None:
-		return
-	_force_update_modification_time( parent, lastModified, max_depth )
-
-class _EnclosurePostView(_UGDModifyViewBase):
-	"""
-	View for creating new enclosures.
-	"""
-
-	def __call__(self):
-		context = self.request.context # A _AbstractObjectResource OR an ISimpleEnclosureContainer
-		# Enclosure containers are defined to be IContainerNamesContainer,
-		# which means they will choose their name based on what we give them
-		enclosure_container = context if ISimpleEnclosureContainer.providedBy( context ) else getattr( context, 'resource', None )
-		if enclosure_container is None:
-			# Posting data to something that cannot take it. This was probably
-			# actually meant to be a PUT to update existing data
-			raise hexc.HTTPForbidden("Cannot POST here. Did you mean to PUT?")
-
-		# AtomPub specifies a 'Slug' header to be used as the base of the
-		# name
-		# TODO: Use a ZCA factory to create enclosure?
-
-		content = None
-		content_type = self._get_body_type()
-		# Chop a trailing '+json' off if present
-		if '+' in content_type:
-			content_type = content_type[0:content_type.index('+')]
-
-		# First, see if they're giving us something we can model
-		datatype = class_name_from_content_type( content_type )
-		datatype = datatype + 's' if datatype else None
-		# Pass in all the information we have, as if it was a full externalized object
-		modeled_content = nti.externalization.internalization.find_factory_for( {StandardExternalFields.MIMETYPE: content_type,
-																				 StandardExternalFields.CLASS: datatype} )
-		if modeled_content:
-			modeled_content = modeled_content()
-		#modeled_content = self.dataserver.create_content_type( datatype, create_missing=False )
-		#if not getattr( modeled_content, '__external_can_create__', False ):
-		#	modeled_content = None
-
-		if modeled_content is not None:
-			modeled_content.creator = self.getRemoteUser()
-			self.updateContentObject( modeled_content, self.readInput(self._get_body_content()), set_id=True )
-			modeled_content.containerId = getattr( enclosure_container, 'id', None ) or getattr( enclosure_container, 'ID' ) # TODO: Assumptions
-			content_type = nti_mimetype_from_object( modeled_content )
-
-		content = modeled_content if modeled_content is not None else self._get_body_content()
-		if content is not modeled_content and content_type.startswith( MIME_BASE ):
-			# If they tried to send us something to model, but we didn't actually
-			# model it, then screw that, it's just a blob
-			content_type = 'application/octet-stream'
-			# OTOH, it would be nice to not have to
-			# replicate the content type into the enclosure object when we
-			# create it. We should delay until later. This means we need a new
-			# enclosure object
-
-		enclosure = enclosures.SimplePersistentEnclosure(
-			self._get_body_name(),
-			content,
-			content_type )
-		enclosure.creator = self.getRemoteUser()
-		enclosure_container.add_enclosure( enclosure )
-
-		# Ensure we'll be able to get a OID
-		if getattr( enclosure_container, '_p_jar', None ):
-			if modeled_content is not None:
-				enclosure_container._p_jar.add( modeled_content )
-			enclosure_container._p_jar.add( enclosure )
-
-		# TODO: Creating enclosures generally doesn't update the modification time
-		# of its container. It arguably should. Since we currently report a few levels
-		# of the tree at once, though, (classes AND their sections) it is necessary
-		# to update a few levels at once. This is wrong and increases the chance of conflicts.
-		# The right thing is to stop doing that.
-		_force_update_modification_time( enclosure_container, enclosure.lastModified )
-
-		self.request.response.status_int = 201 # Created
-		# If we're doing a form submission, then the browser (damn IE)
-		# will try to follow this location if we send it
-		# which results in annoying and useless dialogs
-		if self._find_file_field() is None:
-			self.request.response.location = self.request.resource_url( LocationProxy( enclosure,
-																					   context,
-																					   enclosure.name ) )
-		# TODO: We need to return some representation of this object
-		# just created. We need an 'Entry' wrapper.
-
-		return enclosure
-
-class _EnclosurePutView(_UGDModifyViewBase):
-	"""
-	View for editing an existing enclosure.
-	"""
-
-	def __call__( self ):
-		context = self.request.context
-		assert IEnclosedContent.providedBy( context )
-
-
-		# How should we be dealing with changes to Content-Type?
-		# Changes to Slug are not allowed because that would change the URL
-		# Not modeled # TODO: Check IModeledContent.providedBy( context.data )?
-		# FIXME: See comments in _EnclosurePostView about mod times.
-		if not context.mime_type.startswith( MIME_BASE ):
-			context.data = self._get_body_content()
-			_force_update_modification_time( context, time.time() )
-			result = hexc.HTTPNoContent()
-		else:
-			modeled_content = context.data
-			self.updateContentObject( modeled_content, self.readInput(self._get_body_content()) )
-			result = modeled_content
-			_force_update_modification_time( context, modeled_content.lastModified )
-		return result
-
-class _EnclosureDeleteView(object):
-	"""
-	View for deleting an object.
-	"""
-
-	def __init__( self, request ):
-		self.request = request
-
-	def __call__( self ):
-		context = self.request.context
-		assert IEnclosedContent.providedBy( context )
-		container = traversal.find_interface( context, ISimpleEnclosureContainer )
-		# TODO: Handle the KeyError here and also if ISimpleEnclosureContainer was not found
-		container.del_enclosure( context.name ) # should fire lifecycleevent.removed
-
-		result = hexc.HTTPNoContent()
-		return result
 
 def _method_not_allowed(request):
 	raise hexc.HTTPMethodNotAllowed()

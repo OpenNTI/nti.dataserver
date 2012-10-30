@@ -3,6 +3,8 @@
 """
 Trivial implementation of the basic parts of an in-memory redis-like implementation.
 
+TODO: See also https://github.com/jamesls/fakeredis and https://github.com/gamechanger/dockets/blob/master/vows/fakeredis.py
+
 $Id$
 """
 
@@ -49,14 +51,14 @@ class InMemoryMockRedis(object):
 	def rename(self, old_key, new_key):
 		if new_key in self.database:
 			raise ValueError("key '%s' already in database" % new_key)
-		
+
 		if old_key not in self.database:
 			raise KeyError(old_key)
-		
+
 		value = self.database.pop( old_key )
 		self.database[new_key] = value
 		return True
-	
+
 	###
 	# Pipeline
 	###
@@ -87,14 +89,14 @@ class InMemoryMockRedis(object):
 			q = self.database[key] = list()
 		q.append( value )
 		return len(q)
-		
+
 	def lpush( self, key, value ):
 		q = self.get( key )
 		if q is None:
 			q = self.database[key] = list()
 		q.insert(0, value )
 		return len(q)
-		
+
 	def lindex( self, key, index ):
 		obj = self.get( key )
 		if obj is None:
@@ -105,28 +107,28 @@ class InMemoryMockRedis(object):
 			return obj[index]
 		except IndexError:
 			return None
-		
+
 	def lpop( self, key ):
 		obj = self.get( key )
 		if obj is None:
 			return None
 		assert_that( obj, is_( list ) )
 		return obj.pop(0) if obj else None
-	
+
 	def rpop( self, key ):
 		obj = self.get( key )
 		if obj is None:
 			return None
 		assert_that( obj, is_( list ) )
 		return obj.pop() if obj else None
-	
+
 	def llen( self, key ):
 		obj = self.get( key )
 		if obj is None:
 			return 0
 		assert_that( obj, is_( list ) )
 		return len(obj)
-		
+
 	###
 	# Set operations
 	###
@@ -142,7 +144,7 @@ class InMemoryMockRedis(object):
 				s.add(a)
 				result += 1
 		return result
-	
+
 	def scard(self, key):
 		s = self.database.get(key, None)
 		result = 0
@@ -150,7 +152,7 @@ class InMemoryMockRedis(object):
 			assert_that( s, is_( set ) )
 			result = len(s)
 		return result
-	
+
 	def srem(self, key, *args):
 		s = self.database.get(key, None)
 		result = 0
@@ -166,7 +168,7 @@ class InMemoryMockRedis(object):
 		s = self.database.get(key, set())
 		assert_that( s, is_( set ) )
 		return s
-	
+
 	def sismember(self, key, val):
 		s = self.database.get(key, None)
 		result = 0
@@ -174,11 +176,11 @@ class InMemoryMockRedis(object):
 			assert_that( s, is_( set ) )
 			result = 1 if val in s else 0
 		return result
-	
+
 	###
 	# Counters operations
 	###
-	
+
 	def incr(self, key):
 		obj = self.database.get(key, None)
 		if obj is None:
@@ -186,7 +188,7 @@ class InMemoryMockRedis(object):
 		assert_that( obj, is_( int ) )
 		self.database[key] = obj + 1
 		return self.database[key]
-		
+
 class Pipeline(object):
 
 	def __init__( self, redis ):

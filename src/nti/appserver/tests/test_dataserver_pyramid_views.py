@@ -11,7 +11,8 @@ from hamcrest import has_length
 from hamcrest import has_property
 from hamcrest import greater_than
 
-from nti.appserver.dataserver_pyramid_views import (class_name_from_content_type,
+from nti.appserver._external_object_io import class_name_from_content_type
+from nti.appserver.dataserver_pyramid_views import (
 													_UGDPutView,
 													_UGDPostView,
 													_UGDDeleteView)

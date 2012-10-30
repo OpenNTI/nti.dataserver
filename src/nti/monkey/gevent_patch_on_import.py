@@ -22,6 +22,9 @@ TRACE_GREENLETS = False
 
 if getattr( gevent, 'version_info', (0,) )[0] >= 1 and 'ZEO' not in sys.modules: # Don't do this when we are loaded for conflict resolution into somebody else's space
 
+	# As of 2012-10-30 and gevent 1.0rc1, the change in 1.0b4 to patch os.read and os.write
+	# is undone. Comments below left for historical interest
+
 	# The below is fixed as of 2012-09-21. If pserve hangs on a signal, you need to update.
 	# This will be deleted in a few weeks.
 	# import gevent.os
@@ -41,7 +44,7 @@ if getattr( gevent, 'version_info', (0,) )[0] >= 1 and 'ZEO' not in sys.modules:
 	# 	logger.exception( "Failed to remove os.read/write patch. Gevent outdated?")
 	# 	raise
 
-	# As of 2012-10-06, patching sys/std[out/err/in] hangs gunicorn, so be sure it's false
+	# As of 2012-10-06, patching sys/std[out/err/in] hangs gunicorn, so be sure it's false (this is marked experimental in 1.0rc1)
 	gevent.monkey.patch_all(sys=False, Event=False)
 	# NOTE: There is an incompatibility with patching 'thread' and the 'multiprocessing' module:
 	logger = __import__('logging').getLogger(__name__) # Only import this after the patch, it allocates locks
