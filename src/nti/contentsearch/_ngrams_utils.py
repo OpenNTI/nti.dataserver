@@ -30,7 +30,7 @@ def whoosh_ngram_filter(text, minsize=3, maxsize=10, at='start', unique=True, lo
 		result = {_text_or_token(token, text_only) for token in ng_filter(stream)}
 	return result
 	
-@repoze.lru.lru_cache(1000)
+@repoze.lru.lru_cache(3000)
 def _ngram_cache(text, minsize=3, maxsize=10, unique=True, lower=True):
 	result = []
 	text = text.lower() if lower else text
@@ -38,7 +38,7 @@ def _ngram_cache(text, minsize=3, maxsize=10, unique=True, lower=True):
 	for size in xrange(minsize, limit + 1):
 		ngram = text[:size]
 		result.append(ngram)
-	return result
+	return tuple(result)
 	
 def ngram_filter(text, minsize=3, maxsize=10, unique=True, lower=True):
 	result = set() if unique else []
