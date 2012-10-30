@@ -17,7 +17,7 @@ def ngram_tokens(text, minsize=3, maxsize=10, at='start', unique=True, lower=Tru
 	tokenizer = analysis.RegexTokenizer(expression=default_word_tokenizer_expression)
 	ng_filter = analysis.NgramFilter(minsize=minsize, maxsize=maxsize, at=at)
 	text = text.lower() if lower else text
-	stream = tokenizer(unicode(text.lower()))
+	stream = tokenizer(unicode(text))
 	if not unique:
 		result = [token.copy() for token in ng_filter(stream)]
 	else:
