@@ -268,15 +268,18 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 			with user1.updates():
 				note.addSharingTarget( friends_list )
 				user1.addContainedObject( note )
+
 			assert_that( note.id, is_not( none() ) )
 
 			assert_that( note, is_in( user2.getSharedContainer( 'c1' ) ) )
 			assert_that( friends_list, is_in( note.sharingTargets ) )
+			assert_that( user2.getSharedContainer( 'c1' ), has_length( 1 ) )
 
 			with user1.updates():
 				user1.deleteContainedObject( note.containerId, note.id )
 
 			assert_that( note, is_not( is_in( user2.getSharedContainer( 'c1' ) ) ) )
+			assert_that( user2.getSharedContainer( 'c1' ), has_length( 0 ) )
 
 	@WithMockDS(with_changes=True)
 	def test_share_unshare_note_with_friendslist(self):

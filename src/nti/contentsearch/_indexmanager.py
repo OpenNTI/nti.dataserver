@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from __future__ import print_function, unicode_literals
 
 import six
@@ -76,7 +77,7 @@ class IndexManager(object):
 	def search(self, query):
 		query = QueryObject.create(query)
 		cnt_results = self.content_search(query=query)
-		ugd_results = self.user_data_search(query=query)	
+		ugd_results = self.user_data_search(query=query)
 		results = merge_search_results(cnt_results, ugd_results)
 		logger.debug("Query '%s' returned %s hit(s)" % (query.term, len(results)))
 		return results
@@ -85,7 +86,7 @@ class IndexManager(object):
 	def suggest_and_search(self, query):
 		query = QueryObject.create(query)
 		cnt_results = self.content_suggest_and_search(query=query)
-		ugd_results = self.user_data_suggest_and_search(query=query)	
+		ugd_results = self.user_data_suggest_and_search(query=query)
 		results = merge_suggest_and_search_results(cnt_results, ugd_results)
 		return results
 
@@ -93,7 +94,7 @@ class IndexManager(object):
 	def suggest(self, query):
 		query = QueryObject.create(query)
 		cnt_results = self.content_suggest(query=query)
-		ugd_results = self.user_data_suggest(query=query)	
+		ugd_results = self.user_data_suggest(query=query)
 		results = merge_suggest_results(cnt_results, ugd_results)
 		return results
 
@@ -166,7 +167,7 @@ class IndexManager(object):
 			rest = uim.suggest_and_search(query=query)
 			results = merge_suggest_and_search_results (results, rest)
 		return results
-	
+
 	def user_data_suggest(self, query):
 		query = QueryObject.create(query)
 		results = empty_suggest_results(query)
@@ -200,7 +201,7 @@ class IndexManager(object):
 
 	@classmethod
 	def onChange(cls, datasvr, msg, target=None, broadcast=None):
-		handle_index_event(cls.get_shared_indexmanager(), target, msg)
+		handle_index_event(cls.get_shared_indexmanager(), target, msg, broadcast=broadcast)
 
 	# -------------------
 
@@ -210,4 +211,3 @@ class IndexManager(object):
 
 	def _close( self, book_manager ):
 		raise NotImplementedError()
-
