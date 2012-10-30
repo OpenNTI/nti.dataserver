@@ -927,7 +927,7 @@ class User(Principal):
 			obj = objAndOrigSharingTuple[0]
 			origSharing = objAndOrigSharingTuple[1]
 
-		# Step one is to announce all data changes globally
+		# Step one is to announce all data changes globally as a broadcast.
 		if changeType != Change.CIRCLED:
 			change = Change( changeType, obj )
 			change.creator = self
@@ -1082,6 +1082,10 @@ def user_devicefeedback( msg ):
 
 
 def onChange( datasvr, msg, target=None, broadcast=None, **kwargs ):
+	"""
+
+	:param broadcast: If true, then we ignore this event. See chat_transcripts.py.
+	"""
 	if target and not broadcast:
 		#logger.debug( 'Incoming change to %s', target )
 		entity = target
