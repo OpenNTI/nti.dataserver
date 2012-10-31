@@ -299,12 +299,12 @@ class _ContentUnitFieldsTraversable(object):
 
 		raise KeyError( name ) # pragma: no cover
 
-from .dataserver_pyramid_views import _UGDModifyViewBase as UGDModifyViewBase
+from ._view_utils import AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
 			  context=app_interfaces.IContentUnitPreferences,
 			  permission=nauth.ACT_UPDATE, request_method='PUT' )
-class _ContentUnitPreferencesPutView(UGDModifyViewBase):
+class _ContentUnitPreferencesPutView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixin):
 
 	def _transformInput( self, value ):
 		return value
