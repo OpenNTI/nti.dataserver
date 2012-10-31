@@ -3,19 +3,17 @@ from __future__ import print_function, unicode_literals
 import six
 
 from zope import interface
-from zope.index.interfaces import IInjection
-from zope.index.interfaces import IStatistics
-from zope.index.interfaces import IIndexSort
-from zope.index.interfaces import IIndexSearch
 
 from zopyx.txng3.core.index import Index
+from zopyx.txng3.core.interfaces import ILexicon
 from zopyx.txng3.core.config import DEFAULT_LEXICON
 from zopyx.txng3.core.config import DEFAULT_RANKING
 from zopyx.txng3.core.config import DEFAULT_ENCODING
 from zopyx.txng3.core.config import DEFAULT_ADDITIONAL_CHARS
 
-from repoze.catalog.interfaces import ICatalogIndex
 from repoze.catalog.indexes.common import CatalogIndex
+
+from nti.contentsearch import interfaces as search_interfaces
 
 import logging
 logger = logging.getLogger(__name__)
@@ -29,7 +27,7 @@ class _Proxy(object):
 		for field in fields or ():
 			self.__dict__[field] = data
 
-@interface.implementer(IInjection, IIndexSearch, IStatistics)
+@interface.implementer(search_interfaces.ITextIndexNG3)
 class TextIndexNG3(object):
 	
 	meta_type = 'TextIndexNG3'
@@ -70,8 +68,6 @@ class TextIndexNG3(object):
 							splitter_additional_chars=kwargs.get('splitter_additional_chars', DEFAULT_ADDITIONAL_CHARS),
 						)
 
-	# --- IInjection --- 
-	
 	def clear(self):
 		self.index.clear()
 		
@@ -85,8 +81,6 @@ class TextIndexNG3(object):
 		self.unindex_object(docid)
 
 	reindex_doc = index_doc
-
-	# --- IStatistics --- 
 	
 	def documentCount(self):
 		result = []
@@ -99,8 +93,6 @@ class TextIndexNG3(object):
 	def wordCount(self):
 		return self.index_size()
 	word_count = wordCount
-	
-	# --- IIndexSearch --- 
 	
 	def apply(self, query, *args, **kwargs):
 		query = unicode(query or '')			
@@ -120,8 +112,6 @@ class TextIndexNG3(object):
 	def suggest(self, term, threshold=0.75, prefix=-1): 
 		lexicon = self.index.getLexicon()
 		return lexicon.getSimiliarWords(term=term, threshold=threshold, common_length=prefix) 
-	
-	# -------------------
 	
 	def index_object(self, docid, obj, *args, **kwargs):
 		result = self.index.index_object(obj, docid)
@@ -148,7 +138,12 @@ class TextIndexNG3(object):
 				result.update(docs)
 		return result
 	
-	# ---------------
+	def getLexicon(self):
+		return self.index.getLexicon()
+	
+	def setLexicon(self, lexicon):
+		assert lexicon is not None and ILexicon.providedBy(lexicon)
+		self.index._lexicon = lexicon
 	
 	@property
 	def title(self):
@@ -161,7 +156,7 @@ class TextIndexNG3(object):
 	def get_index_source_names(self):
 		return self.fields
 
-@interface.implementer(ICatalogIndex, IIndexSort)
+@interface.implementer(search_interfaces.ICatalogTextIndexNG3)
 class CatalogTextIndexNG3(CatalogIndex, TextIndexNG3):
 	""" 
 	Full-text index.
