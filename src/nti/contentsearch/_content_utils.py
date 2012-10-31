@@ -51,6 +51,8 @@ def split_content(text, language='en'):
 	result = tokenizer.tokenize(unicode(text)) if text else ()
 	return result
 	
+tokenize_content = split_content
+
 def get_content(text=None, language='en'):
 	result = ()
 	text = unicode(text) if text else None
@@ -59,8 +61,6 @@ def get_content(text=None, language='en'):
 		result = split_content(text.translate(table))
 	result = ' '.join(result)
 	return unicode(result)
-
-tokenize_content = get_content
 
 @interface.implementer(search_interfaces.IContentResolver)
 @component.adapter(basestring)
