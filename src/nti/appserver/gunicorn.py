@@ -165,7 +165,8 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		# For now, we just add on the time in seconds and  microseconds with %(T)s.%(D)s. Other options include
 		# using a different key with a fake % char, like ^,
 		# (Note: microseconds and seconds are not /total/, they are each fractions.)
-		self.cfg.settings['access_log_format'].set( self.cfg.access_log_format + " %(T)s.%(D)ss" )
+		# (Note: See below for why this must be sure to be a byte string: Frickin IE in short)
+		self.cfg.settings['access_log_format'].set( str(self.cfg.access_log_format) + b" %(T)s.%(D)ss" )
 		# Also, if there is a handler set for the gunicorn access log (e.g., '-' for stderr)
 		# Then the default propagation settings mean we get two copies of access logging.
 		# make that stop.
@@ -318,7 +319,12 @@ class _ServerFactory(object):
 					self.request.headers = []
 					self.request.path = self.path
 					for header in self.headers.headers:
-						__traceback_info__ = header
+						# If we're not careful to split with a byte string here, we can
+						# run into UnicodeDecodeErrors: True, all the headers are supposed to be sent
+						# in ASCII, but frickin IE (at least 9.0) can send non-ASCII values,
+						# without url encoding them, in the value of the Referer field (specifically
+						# seen when it includes a fragment in the URI, which is also explicitly against
+						# section 14.36 of HTTP 1.1. Stupid IE).
 						k, v = header.split( b':', 1)
 						self.request.headers.append( (k.upper(), v.strip()) )
 
