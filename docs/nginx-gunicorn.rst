@@ -3,7 +3,7 @@
 ============================================
 
 The combination of the nginx HTTP server, gunicorn WSGI server, and
-pound reverse proxy is a popular one in the Python world. `nginx
+haproxy reverse proxy is a popular one in the Python world. `nginx
 <http://nginx.org/>`_ is a very lightweight HTTP server (relative to
 Apache) and will be used for serving the static parts of the site.
 `gunicorn <http://gunicorn.org/>`_ is a load balancer/monitor specifically
@@ -28,9 +28,8 @@ nginx Setup
 Our end goal will be to get nginx serving static content from
 ``/Library/WebServer/Documents/`` on port 8080 (Linux) or port 8080 (OS X)
 with gzip compression enabled. Dynamic content requests will be
-forwarded to port 8081. On Linux, we additionally setup Pound to serve
-on port 80 and switch between nginx and gunicorn in order to handle
-WebSockets and SSL. (The section `SSL And Complete Configuration`_
+forwarded to port 8081 where the dataserver runs.
+(The section `SSL And Complete Configuration`_
 gives the final configuration.)
 
 Installation
@@ -240,7 +239,7 @@ domain socket (a file) instead of a port; this might be a bit faster.
 HAProxy
 =======
 
-The 1.5-dev series of haproxy is required for proper proxy support.
+The 1.5-dev series of haproxy is required for proper PROXY protocal support.
 Version 1.5-dev9 is current. On linux, compile with:
 
 ::
@@ -249,18 +248,24 @@ Version 1.5-dev9 is current. On linux, compile with:
 
 If you first install the haproxy RPM, then you can patch
 ``/etc/init.d/haproxy`` to use the new binary (or replace the old
-binary with the new one). The configuration would reside in
-``/etc/haproxy/haproxy.cfg``:
+binary with the new one).
+
+The configuration would reside in ``/etc/haproxy/haproxy.cfg``.
+HAProxy is configured to take HTTP traffic from stunnel and direct it to
+the Dataserver directly if possible, otherwise to assume it is static
+content and direct to nginx. It also listens or port 843 (the flash
+socket policy port) and directs that to the dataserver as well (in
+plain TCP mode).
 
 ::
 
   global
-    log         127.0.0.1 local2
-    maxconn     4096 # Total Max Connections. This is dependent on ulimit
-    nbproc      3
+	log         127.0.0.1 local2
+	maxconn     4096 # Total Max Connections. This is dependent on ulimit
+	nbproc      3
 
   defaults
-    mode        http
+	mode        http
 	# If we don't set this, then we lose X-Forwarded-For
 	option http-server-close
 
@@ -269,6 +274,12 @@ binary with the new one). The configuration would reside in
 	log global
 	timeout client 600
 	use_backend ssl_backend if TRUE
+
+  frontend flashsocketredirct 0.0.0.0:843
+	mode tcp
+	timeout client 600
+	default_backend flash_backend
+
 
   backend ssl_backend
 	timeout server 30000
@@ -345,19 +356,29 @@ binary with the new one). The configuration would reside in
 
 
   backend www_backend
-    balance roundrobin
-    option forwardfor # This sets X-Forwarded-For
-    timeout server 30000
-    timeout connect 4000
-    server nginx 127.0.0.1:8080 weight 1 maxconn 1024
+	balance roundrobin
+	option forwardfor # This sets X-Forwarded-For
+	timeout server 30000
+	timeout connect 4000
+	server nginx 127.0.0.1:8080 weight 1 maxconn 1024
 
   backend socket_backend
-    balance roundrobin
-    option forwardfor # This sets X-Forwarded-For
-    timeout queue 5000
-    timeout server 86400000
-    timeout connect 86400000
-    server dataserver 127.0.0.1:8081 weight 1 maxconn 1024
+	balance roundrobin
+	option forwardfor # This sets X-Forwarded-For
+	timeout queue 5000
+	timeout server 86400000
+	timeout connect 86400000
+	server dataserver 127.0.0.1:8081 weight 1 maxconn 1024
+
+  backend flash_backend
+	mode tcp
+	balance roundrobin
+	timeout queue 5000
+	timeout server 86400000
+	timeout connect 86400000
+	balance roundrobin
+	option forwardfor # This sets X-Forwarded-For
+	server flashserver 127.0.0.1:10843 weight 1 maxconn 1024
 
 Logging
 -------
@@ -402,7 +423,7 @@ Stunnel
 =======
 
 These instructions are for version 4.53; any version greater than 4.44
-is required in order to add proxy support so that HAProxy knows the
+is required in order to add PROXY support so that HAProxy knows the
 originating IP and can pass it on to nginx.
 
 On AWS, first install the available stunnel distribution (to get setup
