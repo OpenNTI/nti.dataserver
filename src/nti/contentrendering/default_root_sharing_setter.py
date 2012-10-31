@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 from __future__ import print_function, unicode_literals
 
 import argparse
@@ -9,8 +10,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 from zope import interface
-from zope import component
-from zope.deprecation import deprecate
 from zope.configuration import xmlconfig
 
 import nti.contentrendering
@@ -22,7 +21,7 @@ DEFAULT_SHARING_GROUP_FILENAME = 'nti-default-root-sharing-group.txt'
 
 def _parse_args():
 	arg_parser = argparse.ArgumentParser( description="Content default sharing setter" )
-        arg_parser.add_argument( 'contentpath', help="Content book location" )
+	arg_parser.add_argument( 'contentpath', help="Content book location" )
 	arg_parser.add_argument( "-g", "--groupname", dest='groupname', help="Name of the default sharing group", default=None)
 	return arg_parser.parse_args()
 
@@ -61,21 +60,23 @@ def transform( book, save_toc=True, context=None, group_name=None ):
 	raise Exception( "Failed to add default sharing group to  %s. Either the RenderedBook is malformed or the default sharing group data file is missing." % (book) )
 
 def _handle_toc(toc, book, group_name=None):
-	contentLocation = book.contentLocation
+	
 	modified = True
+	contentLocation = book.contentLocation
 
 	if contentLocation:
-		sharedWith = ''
+		sharedWith = []
 		if group_name:
-			sharedWith = group_name
+			sharedWith.append(group_name)
 		else:
 			sharedWith_file = os.path.join(contentLocation, '..', DEFAULT_SHARING_GROUP_FILENAME)
-			with io.open( sharedWith_file, 'rb') as file:
-				for line in file.readlines():
+			with io.open( sharedWith_file, 'rb') as src:
+				for line in src.readlines():
 					if line[0] is not '#':
 						# Otherwise the line is a comment
-						sharedWith = ' '.join([sharedWith, line.strip()])
-
+						sharedWith.append(line.strip())
+		
+		sharedWith = ' '.join(sharedWith)
 		index = book.toc.root_topic
 		modified = index.set_default_sharing_group( sharedWith.strip() )
 
