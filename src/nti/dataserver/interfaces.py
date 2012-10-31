@@ -673,6 +673,13 @@ class IShareableModeledContent(IShareable,IModeledContent):
 	Modeled content that can be shared.
 	"""
 
+	# This is the name of the property we accept externally and update from. If
+	# its not defined in an interface, we can't associate an ObjectModifiedEvent
+	# with the correct interface. See nti.externalization.internalization.update_from_external_object
+	sharedWith = schema.Set(
+		title="An alias for `flattenedSharingTargetNames`, taking externalization of local usernames into account",
+		value_type=schema.TextLine(title="The username or NTIID" ) )
+
 class IFriendsList(IModeledContent,IEntity):
 
 	def __iter__():
