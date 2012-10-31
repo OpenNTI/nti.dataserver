@@ -244,7 +244,7 @@ def is_writable( context, username, **kwargs ):
 
 	return has_permission( auth.ACT_UPDATE, context, username, **kwargs )
 
-
+from ZODB.POSException import POSKeyError
 class ACLDecorator(object):
 	interface.implements(ext_interfaces.IExternalMappingDecorator)
 	component.adapts(object)
@@ -253,7 +253,11 @@ class ACLDecorator(object):
 		pass
 
 	def decorateExternalMapping( self, orig, result ):
-		result.__acl__ = ACL( orig )
+		try:
+			result.__acl__ = ACL( orig )
+		except POSKeyError:
+			logger.warn( "Failed to get ACL on POSKeyError" )
+			result.__acl__ = ()
 
 class _ACL(list):
 	interface.implements(nti_interfaces.IACL)
@@ -367,10 +371,17 @@ class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
 	def _get_sharing_target_names(self):
 		raise NotImplementedError() # pragma: no cover
 
+	def __do_get_sharing_target_names(self):
+		try:
+			return self._get_sharing_target_names()
+		except POSKeyError:
+			logger.warn( "POSKeyError getting sharing target names.")
+			return ()
+
 	@property
 	def __acl__( self ):
 		result = self._creator_acl()
-		for name in self._get_sharing_target_names():
+		for name in self.__do_get_sharing_target_names():
 			result.append( ace_allowing( name, auth.ACT_READ, _ShareableModeledContentACLProvider ) )
 		return result
 
