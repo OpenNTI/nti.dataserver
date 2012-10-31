@@ -12,10 +12,10 @@ from hamcrest import has_property
 from hamcrest import greater_than
 
 from nti.appserver._external_object_io import class_name_from_content_type
-from nti.appserver.dataserver_pyramid_views import (
-													_UGDPutView,
-													_UGDPostView,
-													_UGDDeleteView)
+from nti.appserver.ugd_edit_views import UGDPutView as _UGDPutView
+from nti.appserver.ugd_edit_views import UGDPostView as _UGDPostView
+from nti.appserver.ugd_edit_views import UGDDeleteView as _UGDDeleteView
+
 from nti.appserver.tests import SharedConfiguringTestBase
 from pyramid.threadlocal import get_current_request
 import pyramid.httpexceptions as hexc
