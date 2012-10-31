@@ -55,7 +55,14 @@ class UserContentRoot(sharing.ShareableMixin, datastructures.ContainedMixin, dat
 
 	def toExternalObject( self ):
 		extDict = getattr( self, 'toExternalDictionary' )()
+		extDict['sharedWith'] = self.sharedWith
+		return extDict
 
+	@property
+	def sharedWith(self):
+		"""
+		From IShareableModeledContent.
+		"""
 		# Return the values of things we're sharing with. Note that instead of
 		# just using the 'username' attribute directly ourself, we are externalizing
 		# the whole object and returning the externalized value of the username.
@@ -75,9 +82,7 @@ class UserContentRoot(sharing.ShareableMixin, datastructures.ContainedMixin, dat
 				username = toExternalObject( entity )['Username']
 
 			ext_shared_with.append( username )
-
-		extDict['sharedWith'] = ext_shared_with
-		return extDict
+		return ext_shared_with
 
 	def _is_update_sharing_only( self, parsed ):
 		"""

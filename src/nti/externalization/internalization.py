@@ -185,15 +185,26 @@ def update_from_external_object( containedObject, externalObject,
 								 require_updater=False,
 								 notify=True, object_hook=_object_hook ):
 	"""
+	Central method for updating objects from external values.
+
+	:param containedObject: The object to update.
+	:param externalObject: The object (typically a mapping or sequence) to update
+		the object from. Usually this is obtained by parsing an external
+		format like JSON.
 	:param context: An object passed to the update methods.
 	:param require_updater: If True (not the default) an exception will be raised
-		if not implementation of :class:`interfaces.IInternalObjectUpdater` can be found
+		if no implementation of :class:`~nti.externalization.interfaces.IInternalObjectUpdater` can be found
 		for the `containedObject.`
 	:param bool notify: If ``True`` (the default), then if the updater for the `containedObject` either has no preference
 		(returns None) or indicates that the object has changed,
-		then an :class:`lifecycleevent.IObjectModifiedEvent` will be fired. This may
+		then an :class:`~zope.lifecycleevent.interfaces.IObjectModifiedEvent` will be fired. This may
 		be a recursive process so a top-level call to this object may spawn
-		multiple events.
+		multiple events. The events that are fired will have a ``descriptions`` list containing
+		one or more :class:`~zope.lifecycleevent.interfaces.IAttributes` each with
+		``attributes`` for each attribute we modify (assuming that the keys in the ``externalObject``
+		map one-to-one to an attribute; if this is the case and we can also find an interface
+		declaring the attribute, then the ``IAttributes`` will have the right value for ``interface``
+		as well).
 	:param callable object_hook: If given, called with the results of every nested object
 		as it has been updated. The return value will be used instead of the nested object.
 		Signature ``f(k,v,x)`` where ``k`` is either the key name, or None in the case of a sequence,
@@ -223,7 +234,11 @@ def update_from_external_object( containedObject, externalObject,
 		return tmp
 
 	assert isinstance( externalObject, collections.MutableMapping )
-	for k,v in externalObject.iteritems():
+	# We have to save the list of keys, it's common that they get popped during the update
+	# process, and then we have no descriptions to send
+	external_keys = list()
+	for k, v in externalObject.iteritems():
+		external_keys.append( k )
 		if isinstance( v, _primitives ):
 			continue
 
@@ -258,10 +273,23 @@ def update_from_external_object( containedObject, externalObject,
 		else:
 			updated = updater.updateFromExternalObject( externalObject )
 
-		# Broadcast a modified event if the object seems to have changed. We don't have a specific interface
-		# being modified, it's the whole object. We send along all the keys we can.
+		# Broadcast a modified event if the object seems to have changed.
 		if notify and (updated is None or updated):
-			lifecycleevent.modified( containedObject, lifecycleevent.Attributes(None, *externalObject) )
+			# TODO: We need to try to find the actual interfaces and fields to allow correct
+			# decisions to be made at higher levels.
+			# zope.formlib.form.applyData does this because it has a specific, configured mapping. We
+			# just do the best we can by looking at what's implemented. The most specific
+			# interface wins
+			descriptions = {} # map from interface class to list of keys
+			provides = interface.providedBy( containedObject )
+			for k in external_keys:
+				iface_providing = None
+				attr = provides.get( k )
+				if attr:
+					iface_providing = attr.interface
+				descriptions.setdefault( iface_providing, [] ).append( k )
+			attributes = [lifecycleevent.Attributes(k, *v) for k, v in descriptions.items()]
+			lifecycleevent.modified( containedObject, *attributes )
 
 	return containedObject
 

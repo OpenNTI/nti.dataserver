@@ -9,6 +9,9 @@ from hamcrest import none
 from hamcrest import has_length
 #from hamcrest import is_not
 from hamcrest import has_property
+from hamcrest import all_of
+from hamcrest import contains
+from hamcrest import has_item
 from hamcrest import greater_than
 
 from nti.appserver._external_object_io import class_name_from_content_type
@@ -151,6 +154,13 @@ class TestUGDModifyViews(SharedConfiguringTestBase):
 		# One event, for the object we modified
 		assert_that( eventtesting.getEvents(  ), has_length( 1 ) )
 		assert_that( eventtesting.getEvents( IObjectModifiedEvent ), has_length( 1 ) )
+		mod_event = eventtesting.getEvents( IObjectModifiedEvent )[0]
+		assert_that( mod_event, has_property( 'descriptions',
+											  has_item(
+												  all_of(
+													  has_property( 'interface', is_( nti_interfaces.IUser ) ),
+													  has_property( 'attributes', contains( 'password' ) ) ) ) ) )
+
 		assert_that( user, has_property( 'lastModified', greater_than( 0 ) ) )
 
 	@WithMockDSTrans
