@@ -2,6 +2,8 @@ from __future__ import print_function, unicode_literals
 
 import six
 
+import BTrees
+
 from zope import interface
 
 from zopyx.txng3.core.index import Index
@@ -166,7 +168,9 @@ class CatalogTextIndexNG3(CatalogIndex, TextIndexNG3):
 	- Eq
 	- NotEq
 	"""
-
+	
+	family = BTrees.family64
+	
 	def __init__(self, field, discriminator=None, *args, **kwargs):
 		
 		if not isinstance(field, six.string_types):
