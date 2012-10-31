@@ -11,6 +11,7 @@ import argparse
 
 from nti.dataserver import users
 from nti.dataserver.utils import run_with_dataserver
+from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
@@ -47,6 +48,8 @@ def _create_fl( args ):
 	thelist = None
 	flname = args.name.lower()
 	for fl in owner.friendsLists.values():
+		if not nti_interfaces.IEntity.providedBy(fl):
+			continue
 		username = fl.username.lower()
 		realname = user_interfaces.IFriendlyNamed( fl ).realname or u''
 		if flname == realname.lower() or flname == username:
