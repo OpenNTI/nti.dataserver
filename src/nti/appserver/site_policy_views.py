@@ -51,6 +51,6 @@ def logon_site_css_view(request):
 			return hexc.HTTPSeeOther( location=request.resource_path( request.context, *new_path ) )
 
 	# Nothing found
-	request.response.content_type = 'text/css'
+	request.response.content_type = b'text/css'
 	request.response.text = ''
 	return request.response
