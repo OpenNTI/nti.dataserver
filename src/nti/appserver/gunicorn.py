@@ -281,10 +281,10 @@ class _ServerFactory(object):
 
 			# Things to copy out of the our prepared environment
 			# into the environment created by the super's get_environment
-			ENV_TO_COPY = ('RAW_URI', 'wsgi.errors', 'wsgi.file_wrapper',
-						   'REMOTE_ADDR','SERVER_SOFTWARE',
-						   'SERVER_NAME', 'SERVER_PORT',
-						   'wsgi.url_scheme')
+			ENV_TO_COPY = (b'RAW_URI', b'wsgi.errors', b'wsgi.file_wrapper',
+						   b'REMOTE_ADDR',b'SERVER_SOFTWARE',
+						   b'SERVER_NAME', b'SERVER_PORT',
+						   b'wsgi.url_scheme')
 
 
 			# We are using the SocketIO server and the Gevent Worker
@@ -298,10 +298,10 @@ class _ServerFactory(object):
 				req = self.request
 				req.body = req.input_buffer
 				req.method = req.typestr
-				if '?' in req.uri:
-					_, query = req.uri.split('?', 1)
+				if b'?' in req.uri:
+					_, query = req.uri.split(b'?', 1)
 				else:
-					_, query = req.uri, ''
+					_, query = req.uri, b''
 				req.query = query
 				req.headers = getattr( req, 'headers', None ) or req.get_input_headers()
 				_, env = gunicorn.http.wsgi.create(req, self.socket, self.client_address, worker.address, worker.cfg)
@@ -318,7 +318,8 @@ class _ServerFactory(object):
 					self.request.headers = []
 					self.request.path = self.path
 					for header in self.headers.headers:
-						k, v = header.split( ':', 1)
+						__traceback_info__ = header
+						k, v = header.split( b':', 1)
 						self.request.headers.append( (k.upper(), v.strip()) )
 
 
@@ -328,8 +329,8 @@ class _ServerFactory(object):
 				ws_env = super(HandlerClass,self).get_environ()
 				for k in self.ENV_TO_COPY:
 					ws_env[k] = env[k]
-				ws_env['gunicorn.sock'] = self.socket
-				ws_env['gunicorn.socket'] = self.socket
+				ws_env[b'gunicorn.sock'] = self.socket
+				ws_env[b'gunicorn.socket'] = self.socket
 				return ws_env
 
 
