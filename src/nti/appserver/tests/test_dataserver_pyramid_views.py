@@ -12,10 +12,10 @@ from hamcrest import has_property
 from hamcrest import greater_than
 
 from nti.appserver._external_object_io import class_name_from_content_type
-from nti.appserver.dataserver_pyramid_views import (
-													_UGDPutView,
-													_UGDPostView,
-													_UGDDeleteView)
+from nti.appserver.ugd_edit_views import UGDPutView as _UGDPutView
+from nti.appserver.ugd_edit_views import UGDPostView as _UGDPostView
+from nti.appserver.ugd_edit_views import UGDDeleteView as _UGDDeleteView
+
 from nti.appserver.tests import SharedConfiguringTestBase
 from pyramid.threadlocal import get_current_request
 import pyramid.httpexceptions as hexc
@@ -93,7 +93,7 @@ class _ContainedObject(object):
 
 from zope.component import eventtesting
 from zope import component
-from zope.lifecycleevent import IObjectModifiedEvent, IObjectRemovedEvent
+from zope.lifecycleevent import IObjectModifiedEvent, IObjectRemovedEvent, IObjectAddedEvent
 from nti.appserver._dataserver_pyramid_traversal import _NTIIDsContainerResource
 class TestUGDModifyViews(SharedConfiguringTestBase):
 
@@ -200,6 +200,11 @@ class TestUGDModifyViews(SharedConfiguringTestBase):
 															'ContainerId': 'FriendsLists'} )
 		view.getRemoteUser = lambda: user
 		view() # First time fine
+		# Fires events the first time
+		# ObjectCreated, ObjectAdded, zc...IntIdAdded, zope...IntIdAdded, ContainerModified
+		assert_that( eventtesting.getEvents(  ), has_length( 5 ) )
+		assert_that( eventtesting.getEvents( IObjectAddedEvent ), has_length( 1 ) )
+
 		with self.assertRaises(hexc.HTTPConflict):
 			view()
 

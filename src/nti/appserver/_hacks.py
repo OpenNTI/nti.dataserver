@@ -5,7 +5,7 @@ $Id$
 """
 from __future__ import print_function, unicode_literals
 
-from .dataserver_pyramid_views import _UGDPutView as UGDPutView
+from .ugd_edit_views import UGDPutView
 
 from pyramid.view import view_config
 
@@ -29,7 +29,7 @@ class _FriendsListsFriendsFieldUpdateView(UGDPutView):
 	This is done by specifically naming a view for the remainder of the path
 	after a friends list.
 	"""
-
+	# TODO: Can this go away now?
 	inputClass = list
 
 	def _get_object_to_update( self ):
