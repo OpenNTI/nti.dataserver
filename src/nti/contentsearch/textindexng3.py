@@ -127,7 +127,7 @@ class TextIndexNG3(object):
 		return len(self.index.getLexicon())
 	
 	def get_docids(self):
-		result = []
+		result = None
 		for i, field in enumerate(self.fields):
 			s = self.index.getStorage(field)
 			docs = s.getDocIds()
@@ -138,7 +138,7 @@ class TextIndexNG3(object):
 				result.update(docs)
 			else:
 				result.update(docs)
-		return result
+		return result or ()
 	
 	def getLexicon(self):
 		return self.index.getLexicon()
