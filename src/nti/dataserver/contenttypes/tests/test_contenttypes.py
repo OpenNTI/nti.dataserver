@@ -8,6 +8,9 @@ from hamcrest import has_length
 from hamcrest import not_none
 from hamcrest import instance_of
 from hamcrest import greater_than
+from hamcrest import all_of
+from hamcrest import contains
+
 from zope.annotation import interfaces as an_interfaces
 from zope import component
 import unittest
@@ -33,14 +36,14 @@ from nti.dataserver import containers
 
 from nti.contentrange.contentrange import ContentRangeDescription, DomContentRangeDescription, ElementDomContentPointer
 
+from zope.component import eventtesting
+
+from zope.lifecycleevent import IObjectModifiedEvent
+
+
 import nti.externalization.internalization
 from nti.externalization.internalization import update_from_external_object
-#nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.users' )
-#nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.contenttypes' )
-#nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.providers' )
-#nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.classes' )
-#nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.quizzes' )
-#nti.externalization.internalization.register_legacy_search_module( 'nti.chatserver.messageinfo' )
+
 
 from zc import intid as zc_intid
 
@@ -173,6 +176,7 @@ class HighlightTest(_BaseSelectedRangeTest):
 	def test_external_style(self):
 		highlight = Highlight()
 		assert_that( highlight.style, is_( 'plain' ) )
+		assert_that( highlight, verifiably_provides( nti_interfaces.IHighlight ) )
 
 		with self.assertRaises(zope.schema.interfaces.ConstraintNotSatisfied):
 			highlight.updateFromExternalObject( {'style':'redaction'} )
@@ -195,6 +199,7 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 		"Notes should be favoritable, and can become IUserRating"
 		n = Note()
 		assert_that( n, verifiably_provides( nti_interfaces.IFavoritable ) )
+		assert_that( n, verifiably_provides( nti_interfaces.INote ) )
 		ratings = liking._lookup_like_rating_for_write( n, liking.FAVR_CAT_NAME )
 		assert_that( ratings, verifiably_provides( contentratings.interfaces.IUserRating ) )
 		assert_that( ratings, has_property( 'numberOfRatings', 0 ) )
@@ -559,6 +564,8 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_update_sharing_only( self ):
+		component.provideHandler( eventtesting.events.append, (None,) )
+
 		users.User.create_user( username='jason.madden@nextthought.com' )
 		n = Note()
 		n.body = ['This is the body']
@@ -566,7 +573,19 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 		ds = self.ds
 		ds.root_connection.add( n )
 		ext = { 'sharedWith': ['jason.madden@nextthought.com'] }
-		n.updateFromExternalObject( ext, dataserver=ds )
+
+		eventtesting.clearEvents()
+
+		update_from_external_object( n, ext, context=ds )
+
+		assert_that( eventtesting.getEvents( IObjectModifiedEvent ), has_length( 1 ) )
+		mod_event = eventtesting.getEvents( IObjectModifiedEvent )[0]
+		assert_that( mod_event, has_property( 'descriptions',
+											  has_item(
+												  all_of(
+													  has_property( 'interface', is_( nti_interfaces.IShareableModeledContent ) ),
+													  has_property( 'attributes', contains( 'sharedWith' ) ) ) ) ) )
+
 
 	@WithMockDSTrans
 	def test_update_sharing_only_unresolvable_user( self ):
