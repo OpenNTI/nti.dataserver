@@ -18,7 +18,7 @@ def adapt_searchon_types(searchon=None):
 class _DefaultCloudSearchQueryParser(object):
 	
 	def _get_search_fields(self, qo):
-		result = (content_,) if qo.is_phrase_search or qo.is_prefix_search else (ngrams_, content_)
+		result = (content_,) if qo.is_phrase_search or qo.is_prefix_search else (ngrams_,)
 		return result
 	
 	def parse(self, qo, username=None):
@@ -29,10 +29,13 @@ class _DefaultCloudSearchQueryParser(object):
 		bq = ['(and']
 		bq.append("%s:'%s'" % (username_, username))
 		
-		bq.append('(or')
-		for search_field in search_fields:
-			bq.append("%s:'%s'" % (search_field, qo.term))
-		bq.append(')')
+		if len(search_fields) > 1:
+			bq.append('(or')
+			for search_field in search_fields:
+				bq.append("%s:'%s'" % (search_field, qo.term))
+			bq.append(')')
+		else:
+			bq.append("%s:'%s'" % (search_fields[0], qo.term))
 		
 		if searchon:
 			bq.append('(or')

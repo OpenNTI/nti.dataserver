@@ -18,7 +18,8 @@ logger = logging.getLogger( __name__ )
 def _text_or_token(token, text_only=False):
 	return token.text if text_only else token.copy()
 
-def whoosh_ngram_filter(text, minsize=3, maxsize=10, at='start', unique=True, lower=True, text_only=True):
+def whoosh_ngram_filter(text, minsize=3, maxsize=None, at='start', unique=True, lower=True, text_only=True):
+	maxsize = maxsize or len(text)
 	text = text.lower() if lower else text
 	ng_filter = analysis.NgramFilter(minsize=minsize, maxsize=maxsize, at=at)
 	tokenizer = analysis.RegexTokenizer(expression=default_word_tokenizer_expression)
@@ -30,8 +31,9 @@ def whoosh_ngram_filter(text, minsize=3, maxsize=10, at='start', unique=True, lo
 	return result
 	
 @repoze.lru.lru_cache(3000)
-def _ngram_cache(text, minsize=3, maxsize=10, unique=True, lower=True):
+def _ngram_cache(text, minsize=3, maxsize=None, unique=True, lower=True):
 	result = []
+	maxsize = maxsize or len(text)
 	text = text.lower() if lower else text
 	limit = min(maxsize, len(text))
 	for size in xrange(minsize, limit + 1):
@@ -40,9 +42,8 @@ def _ngram_cache(text, minsize=3, maxsize=10, unique=True, lower=True):
 	return tuple(result)
 	
 def ngram_filter(text, minsize=3, maxsize=None, unique=True, lower=True):
-	result = set() if unique else []
 	tokens = split_content(text)
-	maxsize = maxsize or max(map(len, tokens))
+	result = set() if unique else []
 	for text in tokens:
 		ngrams = _ngram_cache(text, minsize, maxsize, unique, lower)
 		if unique:
@@ -52,7 +53,7 @@ def ngram_filter(text, minsize=3, maxsize=None, unique=True, lower=True):
 	return result
 
 @repoze.lru.lru_cache(1000)
-def ngrams(text, minsize=None, maxsize=None):
+def ngrams(text):
 	u = component.getUtility(search_interfaces.INgramComputer)
 	result = u.compute(text)
 	return unicode(result)
@@ -63,11 +64,9 @@ class _DefaultNgramComputer(object):
 	maxsize = None
 	minsize = default_ngram_minsize
 	
-	def compute(self, text, minsize=None, maxsize=None):
+	def compute(self, text):
 		if text:
-			minsize = minsize or self.minsize
-			maxsize = maxsize or self.maxsize
-			result = ngram_filter(text, minsize, maxsize)
+			result = ngram_filter(text, self.minsize, self.maxsize)
 			result = ' '.join(result)
 		else:
 			result = u''
