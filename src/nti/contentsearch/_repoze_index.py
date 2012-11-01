@@ -4,10 +4,8 @@ import BTrees
 
 from zope import interface
 from zope import component
-from zope.index.text.baseindex import BaseIndex
 
 from repoze.catalog.catalog import Catalog
-from repoze.catalog.indexes.common import CatalogIndex
 from repoze.catalog.indexes.text import CatalogTextIndex
 from repoze.catalog.indexes.field import CatalogFieldIndex
 from repoze.catalog.indexes.keyword import CatalogKeywordIndex
@@ -19,10 +17,6 @@ from nti.contentsearch._ngrams_utils import ngrams
 
 import logging
 logger = logging.getLogger( __name__ )
-
-# want to make sure change the family for all catalog index fields
-BaseIndex.family = BTrees.family64
-CatalogIndex.family = BTrees.family64
 
 def get_channel(obj, default):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
