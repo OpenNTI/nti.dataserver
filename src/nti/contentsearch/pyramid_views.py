@@ -14,7 +14,7 @@ from nti.contentlibrary.interfaces import IContentPackageLibrary
 
 from nti.contentsearch.interfaces import IIndexManager
 from nti.contentsearch._search_query import QueryObject
-from nti.contentsearch._content_utils import get_punkt_translation_table
+from nti.contentsearch._content_utils import get_content_translation_table
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -67,7 +67,7 @@ def clean_search_query(query, language='en'):
 		m = _extractor_pe.search(result)
 		result = m.group() if m else u''
 	
-	table = get_punkt_translation_table(language)
+	table = get_content_translation_table(language)
 	result = result.translate(table) if result else u''
 	return unicode(result)
 
