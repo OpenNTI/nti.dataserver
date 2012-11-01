@@ -8,7 +8,9 @@ import unittest
 from nti.contentsearch.spambayes.tokenizer import tokenize
 from nti.contentsearch.spambayes.classifier import Classifier 
 
-class TestHammer(unittest.TestCase):
+from nti.contentsearch.spambayes.tests import ConfiguringTestBase
+
+class TestHammer(ConfiguringTestBase):
 
 	@classmethod
 	def setUpClass(cls):	

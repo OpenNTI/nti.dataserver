@@ -41,9 +41,9 @@ from nti.contentsearch.common import (text_, body_, selectedText_, replacementCo
 import logging
 logger = logging.getLogger( __name__ )
 
-def get_punkt_translation_table(language='en'):
-	table = component.queryUtility(search_interfaces.IPunktTranslationTable, name=language)
-	return table or _default_punkt_translation_table()
+def get_content_translation_table(language='en'):
+	table = component.queryUtility(search_interfaces.IContentTranslationTable, name=language)
+	return table or _default_content_translation_table()
 
 @repoze.lru.lru_cache(1000)
 def split_content(text, language='en'):
@@ -57,7 +57,7 @@ def get_content(text=None, language='en'):
 	result = ()
 	text = unicode(text) if text else None
 	if text:
-		table = get_punkt_translation_table(language)
+		table = get_content_translation_table(language)
 		result = split_content(text.translate(table))
 	result = ' '.join(result)
 	return unicode(result)
@@ -385,7 +385,6 @@ class _DefaultStopWords(object):
 	def available_languages(self, ):
 		return ('en',)
 	
-
 @interface.implementer( search_interfaces.IWordSimilarity )
 class _DefaultWordSimilarity(object):
 			
@@ -402,8 +401,8 @@ def rank_words(word, terms, reverse=True):
 	result = ws.rank(word, terms, reverse)
 	return result
 
-@interface.implementer( search_interfaces.IPunktTranslationTable )
-def _default_punkt_translation_table():
+@interface.implementer( search_interfaces.IContentTranslationTable )
+def _default_content_translation_table():
 	name = resource_filename(__name__, "punctuation-en.txt")
 	with open(name, 'r') as src:
 		lines = src.readlines()

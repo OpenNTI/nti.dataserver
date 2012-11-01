@@ -17,9 +17,6 @@ default_max_discriminators = 150
 default_unknown_word_strength = 0.45
 default_minimum_prob_strength = 0.10
 
-default_tkn_skip_max_word_size = 12
-default_tkn_min_lengh_word_size = 3
-
 PERSISTENT_HAM_INT = 1
 PERSISTENT_SPAM_INT = 2
 PERSISTENT_UNSURE_INT = 0

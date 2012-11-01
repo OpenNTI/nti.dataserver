@@ -402,8 +402,8 @@ class IMessageInfoContentResolver(IThreadableContentResolver):
 
 # content processing
 
-class IPunktTranslationTable(interface.Interface):
-	"""marker interface for punctuation translationt table"""
+class IContentTranslationTable(interface.Interface):
+	"""marker interface for content translationt table"""
 	pass
 		
 class IContentTokenizer(interface.Interface):

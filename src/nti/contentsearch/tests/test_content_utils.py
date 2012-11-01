@@ -19,7 +19,7 @@ from nti.contentsearch._content_utils import rank_words
 from nti.contentsearch._content_utils import get_content
 from nti.contentsearch.interfaces import IContentResolver
 from nti.contentsearch._content_utils import split_content
-from nti.contentsearch._content_utils import get_punkt_translation_table
+from nti.contentsearch._content_utils import get_content_translation_table
 
 from nti.contentsearch.tests import ConfiguringTestBase
 from nti.contentsearch.tests import domain as sample_words
@@ -186,8 +186,8 @@ class TestContentUtils(ConfiguringTestBase):
 		w = rank_words(word, terms)
 		assert_that(w, is_(['bravo', 'delta', 'charlie', 'alfa', 'echo']))
 		
-	def test_punk_translation_table(self):
-		table = get_punkt_translation_table()
+	def test_content_translation_table(self):
+		table = get_content_translation_table()
 		assert_that(table, has_length(605))
 		s = u'California Court of Appeal\u2019s said Bushman may \u2026be guilty of disturbing the peace through \u2018offensive\u2019'
 		t = s.translate(table)
