@@ -425,8 +425,8 @@ class IStopWords(interface.Interface):
 		"available languages"
 		
 class INgramComputer(interface.Interface):
-	minsize = schema.Int(title="min ngram size", required=True)
-	minsize = schema.Int(title="max ngram size", required=True)
+	minsize = schema.Int(title="Min ngram size.", required=True)
+	maxsize = schema.Int(title="Max ngram size", required=False)
 	
 	def compute(text):
 		"""compute the ngrams for the specified text"""
