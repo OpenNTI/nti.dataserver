@@ -2700,6 +2700,7 @@ var swfobject=function(){var D="undefined",r="object",S="Shockwave Flash",W="Sho
 // Reference: http://tools.ietf.org/html/rfc6455
 // JAM: This is pulled from the source at https://github.com/gimite/web-socket-js/blob/master/web_socket.js rather than the version included with socket.io.
 // We also updated the SWF files from there to use the latest
+// JAM: Note2: Further patches were required to the SWF files. We forked the repo for them. See https://github.com/NextThought/web-socket-js
 //window.WEB_SOCKET_FORCE_FLASH = true; //Set this to true to test in Chrome
 (function() {
 
