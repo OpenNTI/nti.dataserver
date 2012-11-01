@@ -1,5 +1,7 @@
 from __future__ import print_function, unicode_literals
 
+from BTrees.LFBTree import LFBucket
+
 from zope import component
 from zope import interface
 from zope.annotation import factory as an_factory
@@ -79,9 +81,9 @@ class _RepozeEntityIndexManager(_SearchEntityIndexManager):
 		result = sort_search_types(result)
 		return result
 
-	def _get_search_field(self, queryobject):
-		fieldname = content_ if queryobject.is_phrase_search or queryobject.is_prefix_search else ngrams_
-		return fieldname
+	def _get_search_fields(self, queryobject):
+		result = (content_,) if queryobject.is_phrase_search or queryobject.is_prefix_search else (ngrams_, content_)
+		return result
 	
 	@metricmethod
 	def _get_hits_from_docids(self, results, doc_weights, type_name):
@@ -91,16 +93,16 @@ class _RepozeEntityIndexManager(_SearchEntityIndexManager):
 			results.add((obj, score))
 		
 	@metricmethod
-	def _do_catalog_query(self, catalog, qo, type_name, fieldname=None):
-		fieldname = fieldname or self._get_search_field(qo)
-		is_all_query, queryobject = parse_query(catalog, fieldname, qo)
+	def _do_catalog_query(self, catalog, qo, type_name, search_fields=()):
+		search_fields = search_fields or self._get_search_fields(qo)
+		is_all_query, queryobject = parse_query(catalog, search_fields, qo)
 		if is_all_query:
-			result =  {}
+			result = LFBucket()
 		else:
 			result = queryobject._apply(catalog, names=None)
 		return result
 
-	def _do_search(self, qo, searchon=(), highlight_type=WORD_HIGHLIGHT, creator_method=None, fieldname=None):
+	def _do_search(self, qo, searchon=(), highlight_type=WORD_HIGHLIGHT, creator_method=None, search_fields=()):
 		creator_method = creator_method or empty_search_results
 		results = creator_method(qo)
 		results.highlight_type = highlight_type
@@ -108,7 +110,7 @@ class _RepozeEntityIndexManager(_SearchEntityIndexManager):
 
 		for type_name in searchon:
 			catalog = self.get_catalog(type_name)
-			doc_weights = self._do_catalog_query(catalog, qo, type_name, fieldname=fieldname)
+			doc_weights = self._do_catalog_query(catalog, qo, type_name, search_fields=search_fields)
 			self._get_hits_from_docids(results, doc_weights, type_name)
 
 		return results
@@ -157,7 +159,7 @@ class _RepozeEntityIndexManager(_SearchEntityIndexManager):
 			results = self._do_search(queryobject,
 									  searchon,
 									  creator_method=empty_suggest_and_search_results,
-									  fieldname=content_)
+									  search_fields=(content_,))
 			results.add_suggestions(suggestions)
 
 		return results

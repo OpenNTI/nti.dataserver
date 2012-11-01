@@ -147,7 +147,7 @@ def validate_query(query, language='en'):
 	validator = component.getUtility(search_interfaces.IRepozeSearchQueryValidator, name=language)
 	return validator.validate(query)
 	
-def parse_query(catalog, fieldname, qo):
+def parse_query(catalog, search_fields, qo):
 	is_all = is_all_query(qo.term)
 	subquery_chain = parse_subqueries(qo, catalog.keys())
 	if is_all:
@@ -157,6 +157,12 @@ def parse_query(catalog, fieldname, qo):
 		if not validate_query(query_term): 
 			query_term = u'-'
 			subquery_chain = None
-		queryobject = Contains.create_for_indexng3(fieldname, query_term, limit=qo.limit)
+		
+		queryobject = None
+		for fieldname in search_fields:
+			#TODO: contains operation depends on the field type
+			contains = Contains.create_for_indexng3(fieldname, query_term, limit=qo.limit)
+			queryobject = contains if queryobject is None else queryobject | contains
+			
 		queryobject = queryobject & subquery_chain if subquery_chain else queryobject
 		return is_all, queryobject

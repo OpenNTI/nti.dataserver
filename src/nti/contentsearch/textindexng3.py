@@ -3,6 +3,7 @@ from __future__ import print_function, unicode_literals
 import six
 
 import BTrees
+from BTrees.LFBTree import LFBucket
 
 from zope import interface
 
@@ -96,9 +97,9 @@ class TextIndexNG3(object):
 		return self.index_size()
 	word_count = wordCount
 	
-	def apply(self, query, *args, **kwargs):
-		query = unicode(query or '')			
-		results = {}
+	def apply(self, query, *args, **kwargs):		
+		results = LFBucket() # makes it compatible w/ repoze.catalog
+		query = unicode(query or '')	
 		rs = self.index.search(query, **kwargs)
 		if rs:
 			ranked_results = rs.ranked_results
@@ -107,8 +108,7 @@ class TextIndexNG3(object):
 					results[docid] = rank
 			else:
 				for docid in rs.docids:
-					results[docid] = 1.0
-					
+					results[docid] = 1.0			
 		return results
 		
 	def suggest(self, term, threshold=0.75, prefix=-1): 

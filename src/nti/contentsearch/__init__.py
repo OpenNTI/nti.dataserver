@@ -5,6 +5,17 @@ import time
 
 # monkey patch
 
+import BTrees
+
+from zope.index.text.baseindex import BaseIndex
+
+from repoze.catalog.query import BoolOp
+from repoze.catalog.indexes.common import CatalogIndex
+
+BoolOp.family = BTrees.family64
+BaseIndex.family = BTrees.family64
+CatalogIndex.family = BTrees.family64
+
 from nti.contentsearch import zopyxtxng3corelogger
 sys.modules["zopyx.txng3.core.logger"] = zopyxtxng3corelogger
 
@@ -27,12 +38,7 @@ for module in (zopyx_coreidx, zopyx_evaluator, zopyx_resultset, ntizopyx_evaluat
 	module.inverseResultSet = ntizopy_rs.inverseResultSet
 	module.intersectionResultSets = ntizopy_rs.intersectionResultSets
 	
-
 # legacy imports
-
-import logging
-logger = logging.getLogger( __name__ )
-
 from nti.contentsearch.common import indexable_type_names
 from nti.contentsearch._content_utils import split_content
 from nti.contentsearch._content_utils import get_content_translation_table as get_punctuation_translation_table

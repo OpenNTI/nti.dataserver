@@ -17,23 +17,27 @@ def adapt_searchon_types(searchon=None):
 @interface.implementer(search_interfaces.ICloudSearchQueryParser)
 class _DefaultCloudSearchQueryParser(object):
 	
-	def _get_search_field(self, qo):
-		fieldname = content_ if qo.is_phrase_search or qo.is_prefix_search else ngrams_
-		return fieldname
+	def _get_search_fields(self, qo):
+		result = (content_,) if qo.is_phrase_search or qo.is_prefix_search else (ngrams_, content_)
+		return result
 	
 	def parse(self, qo, username=None):
 		username = username or qo.username
 		searchon = adapt_searchon_types(qo.searchon)
-		search_field = self._get_search_field(qo)
+		search_fields = self._get_search_fields(qo)
 		
 		bq = ['(and']
 		bq.append("%s:'%s'" % (username_, username))
-		bq.append("%s:'%s'" % (search_field, qo.term))
+		
+		bq.append('(or')
+		for search_field in search_fields:
+			bq.append("%s:'%s'" % (search_field, qo.term))
+		bq.append(')')
 		
 		if searchon:
 			bq.append('(or')
 			for type_name in searchon:
-				bq.append("%s:'%s'" % (type_, type_name))
+				bq.append("%s:'%s' " % (type_, type_name))
 			bq.append(')')
 			
 		bq.append(')')
