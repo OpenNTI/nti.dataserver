@@ -21,7 +21,7 @@ logger = logging.getLogger( __name__ )
 WORD_HIGHLIGHT  = "WordHighlight"
 
 _default_analyzer = None
-_default_expression = default_word_tokenizer_expression #"\w+([-']\w+)*"
+_default_expression = default_word_tokenizer_expression
 _default_pattern = re.compile(_default_expression, re.I)
 
 def _get_terms(query, pattern=_default_pattern):

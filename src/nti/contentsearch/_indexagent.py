@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 from __future__ import print_function, unicode_literals
 
 import six
@@ -73,7 +71,7 @@ def handle_index_event(indexmanager, target, change, broadcast=None):
 	change_object = change.object
 	should_process = True
 	if not broadcast: # only check if we're not a global broadcast
-		if change.type in (nti_interfaces.SC_CREATED,nti_interfaces.SC_SHARED,nti_interfaces.SC_MODIFIED):
+		if change.type in (nti_interfaces.SC_CREATED, nti_interfaces.SC_SHARED, nti_interfaces.SC_MODIFIED):
 			entity = target
 			if isinstance( target, six.string_types ):
 				entity = Entity.get_entity( target ) # FIXME: Tightly coupled
