@@ -42,7 +42,6 @@ class Trainer(Classifier):
 			return self.spamprob(tokens)
 		else:
 			return random.uniform(default_ham_cutoff, default_spam_cutoff)
-	
 
 class PersistentClassifier(Persistent, Trainer):
 	

@@ -6,23 +6,25 @@ import tempfile
 from nti.contentsearch.spambayes.tokenizer import tokenize
 from nti.contentsearch.spambayes.utils.emessage import create_sql3classifier_db
 
+from nti.contentsearch.spambayes.tests import ConfiguringTestBase
+
 from hamcrest import (assert_that, is_, greater_than_or_equal_to, has_length)
 
-class TestUtis(unittest.TestCase):
+class TestUtils(ConfiguringTestBase):
 	
 	def setUp(self):
-		super(TestUtis, self).setUp()
+		super(TestUtils, self).setUp()
 		self.path = tempfile.mkdtemp(dir="/tmp")
 		self.dbpath = os.path.join(self.path, "sample.db")
 		
 	def tearDown(self):
-		super(TestUtis, self).tearDown()
+		super(TestUtils, self).tearDown()
 		shutil.rmtree(self.path, True)
 		
 	def test_create_sql3classifier_db( self ):
 		directory = os.path.dirname(__file__)
 		sc = create_sql3classifier_db(self.dbpath, directory, fnfilter='_spam*')
-		assert_that(sc.words, has_length(1028))
+		assert_that(sc.words, has_length(857))
 		rc = sc.get_record('and')
 		assert_that(rc.spamcount, is_(3))
 		

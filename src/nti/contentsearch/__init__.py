@@ -35,7 +35,7 @@ logger = logging.getLogger( __name__ )
 
 from nti.contentsearch.common import indexable_type_names
 from nti.contentsearch._content_utils import split_content
-from nti.contentsearch._content_utils import get_punkt_translation_table as get_punctuation_translation_table
+from nti.contentsearch._content_utils import get_content_translation_table as get_punctuation_translation_table
 
 def get_indexable_types():
 	return indexable_type_names

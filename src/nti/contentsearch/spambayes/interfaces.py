@@ -28,6 +28,9 @@ class ISpamManager(ISpamClassifier):
 	def mark_ham(context):
 		"""train the specifid objec as ham"""
 		
-class ISearchFeatures(interface.Interface):
-	is_ngram_search_supported = schema.Bool(title="Property for ngram search support.", default=False, readonly=True)
-	is_word_suggest_supported = schema.Bool(title="Property for word suggestion support.", default=False, readonly=True)
+class ITokenizerSettings(interface.Interface):	
+	max_word_size = schema.Int(title="Maximum word size to tokenize.", readonly=True)
+	min_word_size = schema.Int(title="Maximum word size to tokenize.", readonly=True)
+	short_runs = schema.Bool(title="Do short runs", default=True, readonly=True)
+	generate_long_skips = schema.Bool(title="Generate long skips", default=True, readonly=True)
+	replace_nonascii_chars = schema.Bool(title="Replace non-asciii chars in content", default=False, readonly=True)
