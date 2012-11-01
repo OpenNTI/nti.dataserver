@@ -101,7 +101,7 @@ setup(
 		 # PIL is currently (as of 2012-07) at version 1.1.7 (from 2009), which
 		 # is the version that Pillow forked from in 2010 as version 1.0. So
 		 # Pillow is currently way ahead of PIL
-		'Pillow >= 1.7.7',
+		'Pillow >= 1.7.8',
 		'RestrictedPython',
 		'ZConfig >= 2.9.3',
 		'ZODB3 >= 3.10.5', # NOTE: Soon need to include persistent >= 4.0.2, being pulled out of ZODB
