@@ -101,6 +101,8 @@ default_ngram_minsize = 2
 default_ngram_maxsize = 11 # average word size in English in 5.10 
 default_word_tokenizer_expression = r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-']\w+)*"
 
+default_punk_char_expression =  r"[ \? | ( | \" | \` | { | \[ | : | ; | & | \# | \* | @ | \) | } | \] | \- | , | \. | ! | \s]"
+
 def epoch_time(dt):
 	if dt:
 		seconds = mktime(dt.timetuple())

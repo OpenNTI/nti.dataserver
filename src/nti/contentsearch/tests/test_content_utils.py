@@ -45,6 +45,12 @@ class TestContentUtils(ConfiguringTestBase):
 		s = u'ax+by=0'
 		assert_that(split_content(s), is_(['ax', 'by','0']))
 		
+		s = u':)'
+		assert_that(split_content(s), is_([]))
+		
+		s = u"''''''''"
+		assert_that(split_content(s), is_([]))
+		
 	def test_get_content(self):
 		assert_that(get_content(None), is_(u''))
 		assert_that(get_content({}), is_(u''))

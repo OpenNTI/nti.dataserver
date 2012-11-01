@@ -13,7 +13,7 @@ from whoosh import highlight
 from nti.externalization import interfaces as ext_interfaces
 
 from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch.common import default_word_tokenizer_expression
+from nti.contentsearch.common import default_word_tokenizer_expression, default_punk_char_expression
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -58,8 +58,7 @@ def _set_matched_filter(tokens, termset):
 		t.matched = t.text in termset
 		yield t
 	
-_re_char = r"[ \? | ( | \" | \` | { | \[ | : | ; | & | \# | \* | @ | \) | } | \] | \- | , | \. | ! | \s]"
-_char_tester = re.compile(_re_char)
+_char_tester = re.compile(default_punk_char_expression)
 
 def _is_word_start(idx, text):
 	result = idx == 0 or _char_tester.match(text[idx-1])
@@ -182,7 +181,7 @@ def _prune_phrase_terms_fragments(termset, original_snippet, original_fragments)
 	termset = list(termset) if not isinstance(termset, list) else termset
 	pattern = [termset[0]]
 	for i in range(1, len(termset)):
-		pattern.append(_re_char)
+		pattern.append(default_punk_char_expression)
 		pattern.append('+')
 		pattern.append(termset[i])		
 	pattern = ''.join(pattern)
