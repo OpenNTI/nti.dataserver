@@ -5,17 +5,16 @@ import re
 import six
 import sys
 import email
-import binascii
 import fnmatch
+import binascii
 import traceback
 import collections
 import transaction
 
-from logging import DEBUG
 from email.message import Message as eMessage
 
 from nti.contentsearch.spambayes.tokenizer import tokenize
-from nti.contentsearch.spambayes.storage_classifier import SQL3Classifier
+from nti.contentsearch.spambayes.storage import SQL3Classifier
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -145,7 +144,7 @@ def get_email_messages(directory, fnfilter='*', indexfile=None, default_spam=Tru
 					is_spam = index.get(filename, default_spam)
 					yield msg, is_spam, source
 			except Exception, e:
-				if logger.isEnabledFor(DEBUG):
+				if logger.isEnabledFor(logging.DEBUG):
 					logger.exception("Could not read message in file '%s'" % source)
 				else:
 					logger.error("Could not read message in file '%s'. %s" % (source, e))

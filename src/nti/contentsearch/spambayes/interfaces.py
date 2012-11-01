@@ -16,10 +16,13 @@ class ISpamClassifier(interface.Interface):
 		
 class ISpamManager(ISpamClassifier):
 	
-	def mark_spam(context, mtime=None, train=False):
+	def is_spam(context):
+		"""return if the given obj has been mark as a spam"""
+		
+	def mark_spam(context, mtime=None, train=True):
 		"""mark the specified object as spam"""
 	
-	def unmark_spam(context, untrain=False):
+	def unmark_spam(context, untrain=True):
 		"""unmark the specified object as ham"""
 		
 	def mark_ham(context):
