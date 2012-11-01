@@ -82,7 +82,7 @@ class _RepozeEntityIndexManager(_SearchEntityIndexManager):
 		return result
 
 	def _get_search_fields(self, queryobject):
-		result = (content_,) if queryobject.is_phrase_search or queryobject.is_prefix_search else (ngrams_, content_)
+		result = (content_,) if queryobject.is_phrase_search or queryobject.is_prefix_search else (ngrams_,)
 		return result
 	
 	@metricmethod
