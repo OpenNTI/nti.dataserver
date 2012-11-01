@@ -9,7 +9,6 @@ import repoze.lru
 
 from nti.contentsearch._content_utils import split_content
 from nti.contentsearch.common import default_ngram_minsize
-from nti.contentsearch.common import default_ngram_maxsize
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch.common import default_word_tokenizer_expression
 
@@ -40,9 +39,10 @@ def _ngram_cache(text, minsize=3, maxsize=10, unique=True, lower=True):
 		result.append(ngram)
 	return tuple(result)
 	
-def ngram_filter(text, minsize=3, maxsize=10, unique=True, lower=True):
+def ngram_filter(text, minsize=3, maxsize=None, unique=True, lower=True):
 	result = set() if unique else []
 	tokens = split_content(text)
+	maxsize = maxsize or max(map(len, tokens))
 	for text in tokens:
 		ngrams = _ngram_cache(text, minsize, maxsize, unique, lower)
 		if unique:
@@ -52,7 +52,7 @@ def ngram_filter(text, minsize=3, maxsize=10, unique=True, lower=True):
 	return result
 
 @repoze.lru.lru_cache(1000)
-def ngrams(text):
+def ngrams(text, minsize=None, maxsize=None):
 	u = component.getUtility(search_interfaces.INgramComputer)
 	result = u.compute(text)
 	return unicode(result)
@@ -60,12 +60,14 @@ def ngrams(text):
 @interface.implementer( search_interfaces.INgramComputer )		
 class _DefaultNgramComputer(object):
 	
+	maxsize = None
 	minsize = default_ngram_minsize
-	maxsize = default_ngram_maxsize
 	
-	def compute(self, text):
+	def compute(self, text, minsize=None, maxsize=None):
 		if text:
-			result = ngram_filter(text, self.minsize, self.maxsize, unique=True)
+			minsize = minsize or self.minsize
+			maxsize = maxsize or self.maxsize
+			result = ngram_filter(text, minsize, maxsize)
 			result = ' '.join(result)
 		else:
 			result = u''
