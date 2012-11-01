@@ -70,8 +70,6 @@ class WhooshBookIndexManager(object):
 	def __repr__( self ):
 		return 'WhooshBookIndexManager(indexname=%s)' % self.indexname
 	
-	# ---------------
-	
 	@metric
 	def search(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
@@ -91,8 +89,6 @@ class WhooshBookIndexManager(object):
 			results = self.book.suggest(s, query)
 		return results
 	
-	# ---------------
-
 	def close(self):
 		self.bookidx.close()
 

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 from __future__ import print_function, unicode_literals
 
 import six
@@ -71,8 +70,6 @@ class IndexManager(object):
 		result = sorted(result, key=lambda s: s.lower())
 		return result
 
-	# -------------------
-
 	@metric
 	def search(self, query):
 		query = QueryObject.create(query)
@@ -97,8 +94,6 @@ class IndexManager(object):
 		ugd_results = self.user_data_suggest(query=query)
 		results = merge_suggest_results(cnt_results, ugd_results)
 		return results
-
-	# -------------------
 
 	def get_book_index_manager(self, indexid):
 		return self.books.get(indexid, None) if indexid is not None else None
@@ -134,8 +129,6 @@ class IndexManager(object):
 		results = bm.suggest(query) if (bm is not None and not query.is_empty) else None
 		return results if results is not None else empty_suggest_results(query)
 
-	# -------------------
-
 	def _get_user_index_manager(self, target, create=True):
 		if isinstance( target, six.string_types ):
 			target = self.get_entity( target )
@@ -149,8 +142,6 @@ class IndexManager(object):
 			if uim is not None:
 				result.append(uim)
 		return result
-
-	# -------------------
 
 	def user_data_search(self, query):
 		query = QueryObject.create(query)
@@ -176,8 +167,6 @@ class IndexManager(object):
 			results = merge_suggest_results(results, rest)
 		return results
 
-	# -------------------
-
 	def index_user_content(self, target, type_name=None, data=None):
 		um = None
 		if data is not None:
@@ -202,8 +191,6 @@ class IndexManager(object):
 	@classmethod
 	def onChange(cls, datasvr, msg, target=None, broadcast=None):
 		handle_index_event(cls.get_shared_indexmanager(), target, msg, broadcast=broadcast)
-
-	# -------------------
 
 	def close(self):
 		for bm in self.books.itervalues():
