@@ -45,7 +45,7 @@ def get_content_translation_table(language='en'):
 	table = component.queryUtility(search_interfaces.IContentTranslationTable, name=language)
 	return table or _default_content_translation_table()
 
-@repoze.lru.lru_cache(1000)
+@repoze.lru.lru_cache(100)
 def split_content(text, language='en'):
 	tokenizer = component.getUtility(search_interfaces.IContentTokenizer, name=language)
 	result = tokenizer.tokenize(unicode(text)) if text else ()

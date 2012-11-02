@@ -30,7 +30,7 @@ def whoosh_ngram_filter(text, minsize=3, maxsize=None, at='start', unique=True, 
 		result = {_text_or_token(token, text_only) for token in ng_filter(stream)}
 	return result
 	
-@repoze.lru.lru_cache(3000)
+@repoze.lru.lru_cache(5000)
 def _ngram_cache(text, minsize=3, maxsize=None, unique=True, lower=True):
 	result = []
 	maxsize = maxsize or len(text)
@@ -52,7 +52,7 @@ def ngram_filter(text, minsize=3, maxsize=None, unique=True, lower=True):
 			result.extend(ngrams)
 	return result
 
-@repoze.lru.lru_cache(1000)
+@repoze.lru.lru_cache(100)
 def ngrams(text):
 	u = component.getUtility(search_interfaces.INgramComputer)
 	result = u.compute(text)
