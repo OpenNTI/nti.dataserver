@@ -98,7 +98,7 @@ indexable_type_names = (note_, highlight_, redaction_, messageinfo_)
 indexable_types_order = { x:p for p,x in enumerate(indexable_type_names) }
 
 default_ngram_minsize = 2
-default_ngram_maxsize = 13 # average word size in English in 5.10 
+default_ngram_maxsize = 20 # average word size in English in 5.10 
 default_word_tokenizer_expression = r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-']\w+)*"
 
 default_punk_char_expression =  r"[ \? | ( | \" | \` | { | \[ | : | ; | & | \# | \* | @ | \) | } | \] | \- | , | \. | ! | \s]"

@@ -9,6 +9,7 @@ import repoze.lru
 
 from nti.contentsearch._content_utils import split_content
 from nti.contentsearch.common import default_ngram_minsize
+from nti.contentsearch.common import default_ngram_maxsize
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch.common import default_word_tokenizer_expression
 
@@ -61,8 +62,8 @@ def ngrams(text):
 @interface.implementer( search_interfaces.INgramComputer )		
 class _DefaultNgramComputer(object):
 	
-	maxsize = None
 	minsize = default_ngram_minsize
+	maxsize = default_ngram_maxsize
 	
 	def compute(self, text):
 		if text:
