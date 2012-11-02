@@ -2,8 +2,21 @@ from __future__ import print_function, unicode_literals
 
 import math
 
-from nti.contentsearch.spambayes import default_hist_nbuckets
-from nti.contentsearch.spambayes import default_hist_percentiles
+from zope import component
+
+from nti.contentsearch.spambayes import interfaces as sp_interfaces
+
+def _options():
+	result = component.getUtility(sp_interfaces.IHistogramSettings)
+	return result
+
+def _buckets():
+	result = _options().buckets
+	return result
+
+def _percentiles():
+	result = _options().percentiles
+	return result
 
 class Hist(object):
 	"""
@@ -14,13 +27,13 @@ class Hist(object):
 	# and max values seen.
 	# Note:  nbuckets can be passed for backward compatibility.  The
 	# display() method can be passed a different nbuckets value.
-	def __init__(self, nbuckets=default_hist_nbuckets, lo=0.0, hi=100.0, percentiles=default_hist_percentiles):
+	def __init__(self, lo=0.0, hi=100.0):
 		self.data = []  # the raw data points
 		self.lo, self.hi = lo, hi
-		self.nbuckets = nbuckets
+		self.nbuckets = _buckets()
 		self.stats_uptodate = False
-		self.buckets = [0] * nbuckets
-		self.percentiles = percentiles
+		self.percentiles = _percentiles()
+		self.buckets = [0] * self.nbuckets
 
 	# add a value to the collection.
 	def add(self, x):

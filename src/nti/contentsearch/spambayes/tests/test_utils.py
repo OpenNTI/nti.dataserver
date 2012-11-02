@@ -24,7 +24,7 @@ class TestUtils(ConfiguringTestBase):
 	def test_create_sql3classifier_db( self ):
 		directory = os.path.dirname(__file__)
 		sc = create_sql3classifier_db(self.dbpath, directory, fnfilter='_spam*')
-		assert_that(sc.words, has_length(857))
+		assert_that(sc.words, has_length(858))
 		rc = sc.get_record('and')
 		assert_that(rc.spamcount, is_(3))
 		

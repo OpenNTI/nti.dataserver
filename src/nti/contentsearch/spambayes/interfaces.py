@@ -48,3 +48,7 @@ class IClassifierSettings(ITokenizerSettings):
 	unknown_word_strength = schema.Float(title="Unknown word strength", readonly=True)
 	unknown_word_probability = schema.Float(title="Unknown word probability", readonly=True)
 	minimum_probability_strength = schema.Float(title="Minimum probability strength", readonly=True)
+
+class IHistogramSettings(interface.Interface):
+	buckets = schema.Int(title="Number of buckets in histogram", readonly=True)
+	percentiles = schema.Tuple(title="Percentiles numbers (0,100)", readonly=True)
