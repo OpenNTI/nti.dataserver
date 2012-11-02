@@ -46,6 +46,15 @@ Deployment and Setup
 	content-in-cdn
 	passenger
 
+The Application: Server and Setup
+=================================
+
+.. toctree::
+	:maxdepth: 2
+
+	middlewares
+	application
+
 Users and Logon
 ===============
 

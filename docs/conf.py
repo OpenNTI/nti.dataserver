@@ -54,6 +54,7 @@ autoclass_content = 'both'
 intersphinx_mapping = {
 	'python':  ('http://docs.python.org/2.7/', None),
 	'boto': ('http://boto.readthedocs.org/en/latest/', None),
+	'paste': ('http://pythonpaste.org/', None),
 #	'zodb':    ('http://zodb.readthedocs.org/en/latest/', None),
 #	'pyramid': ('http://docs.pylonsproject.org/projects/pyramid/en/latest/', None),
 	'pyquery': ('http://packages.python.org/pyquery/', None) }
