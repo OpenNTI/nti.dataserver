@@ -1,6 +1,7 @@
 import unittest
 import nti.appserver
-
+from hamcrest import assert_that
+from hamcrest import is_
 from nti.monkey import pyramid_excview_tween_iface_patch
 pyramid_excview_tween_iface_patch.patch()
 
@@ -27,6 +28,28 @@ class ITestMailDelivery(IMailer, IMailDelivery):
 
 from nti.appserver import z3c_zpt
 
+import webtest.lint
+from webtest.lint import check_headers as _orig_check_headers
+def unicode_check_headers(headers):
+	"""
+	Up through at lest WebTest 1.4.0, the middleware in webtest.lint
+	doesn't ensure that header names and values are bytestrings, but
+	this is required (if not in the spec, then in the implementation
+	provided in gevent 1.0rc1). This check causes that to happen.
+	"""
+	_orig_check_headers( headers )
+	for k, v in headers:
+		assert_that( k, is_( str ), 'Header names must be byte strings' )
+		assert_that( v, is_( str ), 'Header values must be byte strings' )
+
+def monkey_patch_check_headers():
+	"""
+	Patches webtest.lint to use :func:`unicode_check_headers`. This module
+	does this on import.
+	"""
+	if webtest.lint.check_headers.__module__ == 'webtest.lint':
+		webtest.lint.check_headers = unicode_check_headers
+monkey_patch_check_headers()
 
 class _TestBaseMixin(object):
 	set_up_packages = (nti.appserver,)
