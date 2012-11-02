@@ -20,9 +20,17 @@ class WebSocketServer(gevent.pywsgi.WSGIServer): # In gevent 1.0, gevent.wsgi is
 	"""
 	HTTP server that can handle websockets.
 	"""
+
+	handler_class = geventwebsocket.handler.WebSocketHandler
 	def __init__( self, *args, **kwargs ):
-		kwargs['handler_class'] = geventwebsocket.handler.WebSocketHandler
+		"""
+		:raises ValueError: If a ``handler_class`` keyword argument is supplied
+			that specifies a non-:class:`geventwebsocket.handler.WebSocketHandler` subclass.
+			That type of handler is required for websockets to work.
+		"""
 		super(WebSocketServer,self).__init__(*args, **kwargs)
+		if not issubclass( self.handler_class, geventwebsocket.handler.WebSocketHandler ):
+			raise ValueError( "Unable to run with a handler that is not a type of %s", WebSocketServer.handler_class )
 
 
 class FlashPolicyServer(gevent.server.StreamServer):

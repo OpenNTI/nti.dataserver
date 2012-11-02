@@ -111,7 +111,7 @@ setup(
 		# See also umysqldb for a mysql adapter that should be gevent compat, with same API
 		# It's currently being installed from requirements.txt because it has no release on pypi.
 		# It depends on umysql, which has been released as 2.4 on pypi
-		'umysql == 2.5', 
+		'umysql == 2.5',
 		'RelStorage >= 1.5.1',
 		'python-memcached >= 1.48', # pure-python cache for relstorage. Must set cache-module-name. Needed for gevent
 		# See also http://pypi.python.org/pypi/neoppod/ for a completely different option
@@ -149,7 +149,7 @@ setup(
 		# NOTE2: This will go away soon, merged into pyzmq 2.2dev as zmq.green
 		'gevent_zeromq >= 0.2.5',
 		'greenlet >= 0.4.0',
-		'gunicorn == 0.14.6', # NOTE: 0.15.0 is out as of 20121018 but will probably require some adaptation. Talk to JAM first.
+		'gunicorn == 0.15.0',
 		'hiredis >= 0.1.1', # Redis C parser
 		'html5lib == 0.95',
 		 # WSGI middleware for profiling. Defaults to storing
