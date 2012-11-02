@@ -66,12 +66,18 @@ class PersistentContainedExternal(ContainedExternal,Persistent):
 	pass
 
 from nti.appserver.cors import cors_filter_factory as CORSInjector, cors_option_filter_factory as CORSOptionHandler
+from paste.exceptions.errormiddleware import ErrorMiddleware
 def TestApp(app=_TestApp):
+	"""Sets up the pipeline just like in real life.
+
+	:return: A WebTest testapp.
+	"""
+
 	# Nose may call this with zero args
 	if app is _TestApp:
 		return None
 
-	return _TestApp( CORSInjector( CORSOptionHandler( app ) ) )
+	return _TestApp( CORSInjector( CORSOptionHandler( ErrorMiddleware( app, debug=True ) ) ) )
 
 class _AppTestBaseMixin(object):
 
@@ -86,7 +92,8 @@ class _AppTestBaseMixin(object):
 		result = {
 			b'HTTP_AUTHORIZATION': b'Basic ' + (user + ':temp001').encode('base64'),
 			b'HTTP_ORIGIN': b'http://localhost', # To trigger CORS
-			b'HTTP_USER_AGENT': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_3) AppleWebKit/537.6 (KHTML, like Gecko) Chrome/23.0.1239.0 Safari/537.6'
+			b'HTTP_USER_AGENT': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_3) AppleWebKit/537.6 (KHTML, like Gecko) Chrome/23.0.1239.0 Safari/537.6',
+			b'paste.throw_errors': True, # Cause paste to throw everything in case it gets in the pipeline
 			}
 		for k, v in kwargs.items():
 			k = str(k)
