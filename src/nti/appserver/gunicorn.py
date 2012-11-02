@@ -71,24 +71,20 @@ def _create_flash_socket(cfg, log):
 	TCPSocket = dottedname.resolve( 'gunicorn.sock.TCPSocket' )
 
 	class FlashConf(object):
-		address = ('0.0.0.0',10843)
+		address = ('0.0.0.0', getattr(cfg, 'flash_policy_server_port', 10843) )
 		def __getattr__( self, name ):
 			return getattr( cfg, name )
 	conf = FlashConf( )
 
 	# get it only once
 	addr = conf.address
-
-	if util.is_ipv6(addr[0]):
-		sock_type = TCP6Socket
-	else:
-		sock_type = TCPSocket
+	sock_type = TCP6Socket if util.is_ipv6(addr[0]) else TCPSocket
 
 	try:
 		result = sock_type(conf, log)
 		log.info( "Listening at %s", result )
 		return result
-	except socket.error, e:
+	except socket.error, e: # pragma: no cover
 		if e[0] == errno.EADDRINUSE:
 			log.error("Connection in use: %s", str(addr))
 		elif e[0] == errno.EADDRNOTAVAIL:
@@ -195,7 +191,7 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 	_preloaded_app = None
 
 	@classmethod
-	def setup(cls):
+	def setup(cls): # pragma: no cover
 		"""
 		We cannot patch the entire system to work with gevent due to
 		issues with ZODB (but see application.py). Instead, we patch
@@ -217,7 +213,7 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 			except socket.error:
 				logger.error( "Failed to create flash policy socket" )
 
-		if getattr( self.cfg, 'preload_app', None ):
+		if getattr( self.cfg, 'preload_app', None ): # pragma: no cover
 			logger.warn( "Preloading app before forking not supported" )
 
 
@@ -233,7 +229,7 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 			logger.exception( "Failed to create appserver" )
 			raise
 
-	def init_process(self):
+	def init_process(self, _call_super=True):
 		"""
 		We must create the appserver only once, and only after the process
 		has forked if we are using ZEO; even though we do not have pthreads that fail to survive
@@ -260,7 +256,7 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		# Then the default propagation settings mean we get two copies of access logging.
 		# make that stop.
 		gun_logger = logging.getLogger( 'gunicorn.access' )
-		if gun_logger.handlers:
+		if gun_logger.handlers: # pragma: no cover
 			gun_logger.propagate = False
 
 		self.server_class = _ServerFactory( self )
@@ -269,7 +265,8 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		# Everything must be complete and ready to go before we call into
 		# the super, it in turn calls run()
 		# TODO: Errors here get silently swallowed and gunicorn just cycles the worker
-		super(GeventApplicationWorker,self).init_process()
+		if _call_super: # pragma: no cover
+			super(GeventApplicationWorker,self).init_process()
 
 
 
@@ -297,9 +294,7 @@ class _ServerFactory(object):
 			worker.policy_server.start()
 			logger.info( "Created flash policy server on %s", policy_server_sock )
 
-		# The super class will provide a Pool based on the
-		# worker_connections setting
-		if False:
+		if False: # pragma: no cover
 			def print_stacks():
 				from nti.appserver._util import dump_stacks
 				import sys
@@ -309,6 +304,9 @@ class _ServerFactory(object):
 
 			gevent.spawn( print_stacks )
 
+		# The super class will provide a Pool based on the
+		# worker_connections setting
+		assert spawn is not None
 		class WorkerGreenlet(spawn.greenlet_class):
 			"""
 			See nti.dataserver for this. We provide a pretty thread name to the extent
@@ -330,7 +328,7 @@ class _ServerFactory(object):
 				try:
 					uid = unauthenticated_userid( prequest )
 					cache = True
-				except LookupError:
+				except LookupError: # pragma: no cover
 					# In some cases, pyramid tries to turn this into an authenticated
 					# user id, and if it's too early, we won't be able to use the dataserver
 					uid = prequest.remote_user
