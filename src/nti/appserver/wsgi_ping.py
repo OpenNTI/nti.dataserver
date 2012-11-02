@@ -30,4 +30,5 @@ class PingHandler(object):
 		return result
 
 def ping_handler_factory( app, global_conf=None ):
+	"Paste factory for :class:`PingHandler`"
 	return PingHandler( app )

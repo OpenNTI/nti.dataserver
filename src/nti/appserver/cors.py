@@ -1,39 +1,66 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+An outer layer middleware designed to work with `CORS`_. Also integrates with
+Paste to set up expected exceptions. The definitions here were lifted from the
+`CORS`_ spec on 2011-10-18.
 
-import logging
-logger = logging.getLogger( __name__ )
+$Id$
 
-import wsgiref.headers
+.. _CORS: http://www.w3.org/TR/cors/
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
 import sys
-import transaction
-import pyramid.httpexceptions
-import socket
+import wsgiref.headers
+import functools
 
-# From http://www.w3.org/TR/cors/, 2011-10-18
+# Exceptions we will ignore for middleware purposes
+#import transaction
+#import pyramid.httpexceptions
+import greenlet
 
-SIMPLE_METHODS = ('GET', 'HEAD', 'POST')
+#: The exceptions in this list will be considered expected
+#: and not create error reports from Paste. Instead, Paste
+#: will raise them, and they will be caught here. Paste will
+#: catch everything else.
+EXPECTED_EXCEPTIONS = (greenlet.GreenletExit, # During restarts this can be generated
+					   )
+# Previously this contained:
+# transaction.interfaces.DoomedTransaction, # This should never get here with the transaction middleware in place
+# pyramid.httpexceptions.HTTPException, # Pyramid is beneath us, so this should never get here either
 
-SIMPLE_HEADERS = ('ACCEPT', 'ACCEPT-LANGUAGE',
-				  'CONTENT-LANGUAGE', 'LAST-EVENT-ID')
-SIMPLE_CONTENT_TYPES = ('application/x-www-form-urlencoded',
-						'multipart/form-data', 'text/plain')
-SIMPLE_RESPONSE_HEADERS = ('cache-control', 'content-language',
-						   'content-type', 'expires',
-						   'last-modified', 'pragma')
+SIMPLE_METHODS = (b'GET', b'HEAD', b'POST') #: HTTP methods that `CORS`_ defines as "simple"
+
+SIMPLE_HEADERS = (b'ACCEPT', b'ACCEPT-LANGUAGE',
+				  b'CONTENT-LANGUAGE', b'LAST-EVENT-ID') #: HTTP request headers that `CORS`_ defines as "simple"
+SIMPLE_CONTENT_TYPES = (b'application/x-www-form-urlencoded',
+						b'multipart/form-data', b'text/plain') #: HTTP content types that `CORS`_ defines as "simple"
+SIMPLE_RESPONSE_HEADERS = (b'cache-control', b'content-language',
+						   b'content-type', b'expires',
+						   b'last-modified', b'pragma') #: HTTP response headers that `CORS`_ defines as simple
 
 def is_simple_request_method( environ ):
+	"Checks to see if the environment represents a simple `CORS`_ request"
 	return environ['REQUEST_METHOD'] in SIMPLE_METHODS
 
 def is_simple_header( name, value=None ):
+	"Checks to see if the name represents a simple `CORS`_ request header"
 	return name.upper() in SIMPLE_HEADERS \
 		   or (name.upper() == 'CONTENT-TYPE' and value and value.lower() in SIMPLE_CONTENT_TYPES)
 
 def is_simple_response_header( name ):
+	"Checks to see if the name represents a simple `CORS`_ response header"
 	return name and name.lower() in SIMPLE_RESPONSE_HEADERS
 
 class CORSInjector(object):
 	""" Inject CORS around any application. Should be wrapped around (before) authentication
-	and before ErrorMiddleware. """
+	and before :class:`~paste.exceptions.errormiddleware.ErrorMiddleware`.
+	"""
 	def __init__( self, app ):
 		self.captured = app
 
@@ -53,50 +80,48 @@ class CORSInjector(object):
 			# they can effectively be ignored since they could be compared
 			# to unbounded lists. We choose not to even check for them.
 			local_start_request = the_start_request
-			def f( status, headers, exc_info=None ):
+			@functools.wraps(local_start_request)
+			def cors_start_request( status, headers, exc_info=None ):
 				theHeaders = wsgiref.headers.Headers( headers )
 				# For simple requests, we only need to set
 				# -Allow-Origin, -Allow-Credentials, and -Expose-Headers.
 				# If we fail, we destroy the browser's cache.
 				# Since we support credentials, we cannot use the * wildcard origin.
-				theHeaders['Access-Control-Allow-Origin'] = environ['HTTP_ORIGIN']
-				theHeaders['Access-Control-Allow-Credentials'] = "true" # case-sensitive
+				theHeaders[b'Access-Control-Allow-Origin'] = environ['HTTP_ORIGIN']
+				theHeaders[b'Access-Control-Allow-Credentials'] = b"true" # case-sensitive
 				# We would need to add Access-Control-Expose-Headers to
 				# expose non-simple response headers to the client, even on simple requests
 
 				# All the other values are only needed for preflight requests,
 				# which are OPTIONS
 				if environ['REQUEST_METHOD'] == 'OPTIONS':
-					theHeaders['Access-Control-Allow-Methods'] = 'POST, GET, PUT, DELETE, OPTIONS'
-					theHeaders['Access-Control-Max-Age'] = "1728000" # 20 days
+					theHeaders[b'Access-Control-Allow-Methods'] = b'POST, GET, PUT, DELETE, OPTIONS'
+					theHeaders[b'Access-Control-Max-Age'] = b"1728000" # 20 days
 					# TODO: Should we inspect the Access-Control-Request-Headers at all?
-					theHeaders['Access-Control-Allow-Headers'] = 'Pragma, Slug, X-Requested-With, Authorization, If-Modified-Since, Content-Type, Origin, Accept, Cookie, Accept-Encoding, Cache-Control'
-					theHeaders['Access-Control-Expose-Headers'] = 'Location, Warning'
+					theHeaders[b'Access-Control-Allow-Headers'] = b'Pragma, Slug, X-Requested-With, Authorization, If-Modified-Since, Content-Type, Origin, Accept, Cookie, Accept-Encoding, Cache-Control'
+					theHeaders[b'Access-Control-Expose-Headers'] = b'Location, Warning'
 
 				return local_start_request( status, headers, exc_info )
 
-			the_start_request = f
+			the_start_request = cors_start_request
 		result = None
-		try:
-			environ.setdefault( 'paste.expected_exceptions', [] ).append( transaction.interfaces.DoomedTransaction )
-			environ.setdefault( 'paste.expected_exceptions', [] ).append( pyramid.httpexceptions.HTTPException )
 
+		environ.setdefault( b'paste.expected_exceptions', [] ).extend( EXPECTED_EXCEPTIONS )
+		try:
 			result = self.captured( environ, the_start_request )
-		except transaction.interfaces.DoomedTransaction: # pragma: no cover
-			# No biggie, let the real response go out.
-			pass
-		except pyramid.httpexceptions.HTTPException: # pragma: no cover
-			raise
-		except Exception as e:
-			# The vast majority of these we expect to be caught by paste.
+		except EXPECTED_EXCEPTIONS as e:
 			# We don't do anything fancy, just log and continue
 			logger.exception( "Failed to handle request" )
 			result = ('Failed to handle request ' + str(e),)
 			start_request( '500 Internal Server Error', [('Content-Type', 'text/plain')], sys.exc_info() )
 
+		# Everything else we allow to propagate. This might kill the worker and cause it to respawn
+		# If so, it will be printed on stderr and captured by supervisor
+
 		return result
 
 def cors_filter_factory( app, global_conf=None ):
+	"Paste filter factory to include :class:`CORSInjector`"
 	return CORSInjector(app)
 
 class CORSOptionHandler(object):
@@ -117,11 +142,12 @@ class CORSOptionHandler(object):
 		# swallowing all OPTION requests at this level.
 
 		if environ['REQUEST_METHOD'] == 'OPTIONS':
-			start_response( '200 OK', [('Content-Type', 'text/plain')] )
-			result = ("",)
+			start_response( b'200 OK', [(b'Content-Type', b'text/plain')] )
+			result = (b"",)
 		else:
 			result = self.captured( environ, start_response )
 		return result
 
 def cors_option_filter_factory( app, global_conf=None ):
+	"Paste filter factory to include :class:`CORSOptionHandler`"
 	return CORSOptionHandler( app )
