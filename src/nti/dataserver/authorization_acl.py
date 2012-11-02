@@ -9,12 +9,14 @@ import logging
 logger = logging.getLogger(__name__)
 
 import six
-import os
 
 from zope import interface
 from zope import component
 
 import pyramid.security
+
+from nti.utils.property import alias
+
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import authorization as auth
 from nti.dataserver import authentication
@@ -109,7 +111,7 @@ class _ACE(object):
 
 	def to_external_string(self):
 		"""
-		:return: A string representing this ACE in a form that can be read
+		Returns a string representing this ACE in a form that can be read
 		by :meth:`from_external_string`
 		"""
 		return "%s:%s:%s" % (self.action,
@@ -143,6 +145,9 @@ class _ACE(object):
 									 getattr( self.permission, 'id', self.permission ),
 									 (" := " + provenance if provenance else '' ) )
 
+def _ace_denying_all( provenance ):
+	return _ACE( *(nti_interfaces.ACE_DENY_ALL + (provenance,) ) )
+
 # Export these ACE functions publicly
 ace_allowing = _ACE.allowing
 ace_denying = _ACE.denying
@@ -151,6 +156,7 @@ ace_from_string = _ACE.from_external_string
 def acl_from_file( path_or_file ):
 	"""
 	Return an ACL parsed from reading the contents of the given file.
+
 	:param path_or_file: Either a string giving a path to a readable file,
 		or a file-like object supporting :meth:`file.readlines`. Each non-blank,
 		non-commented (has a leading #) line will be parsed as an ace using :func:`ace_from_string`.
@@ -302,8 +308,8 @@ def acl_from_aces( *args ):
 @component.adapter(nti_interfaces.IEntity)
 class _EntityACLProvider(object):
 	"""
-	ACL provider for class:`nti_interfaces.IEntity` objects.
-    The entity itself is allowed all permissions.
+	ACL provider for class:`nti_interfaces.IEntity` objects. The
+	entity itself is allowed all permissions.
 	"""
 	# TODO: Extend this for other subclasses such as communities?
 	# Define 'roles' and make Users members of roles that represent
@@ -315,7 +321,9 @@ class _EntityACLProvider(object):
 	@property
 	def __acl__( self ):
 		"""
-		:return: A fresh, mutable list containing exactly three :class:`_ACE`s, giving
+		The ACL for the entity.
+
+		:return: A fresh, mutable list containing exactly three :class:`_ACE` objects, giving
 			all rights to the entity, read access to authenticated users (is that right?)
 			and denying all rights to everyone else.
 		"""
@@ -326,7 +334,7 @@ class _EntityACLProvider(object):
 		acl.append( ace_allowing( 'nextthought.com', auth.ACT_MODERATE, self ) )
 		acl.append( ace_allowing( 'nextthought.com', auth.ACT_COPPA_ADMIN, self ) )
 		# Everyone else can do nothing
-		acl.append( nti_interfaces.ACE_DENY_ALL )
+		acl.append( _ace_denying_all( _EntityACLProvider ) )
 		return acl
 
 @interface.implementer(nti_interfaces.IACLProvider)
@@ -334,14 +342,18 @@ class _EntityACLProvider(object):
 class _CreatedACLProvider(object):
 	"""
 	ACL provider for class:`nti_interfaces.ICreated` objects.
-    The creator of an object is allowed all permissions.
+	The creator of an object is allowed all permissions.
 	"""
 
 	def __init__( self, created ):
 		self._created = created
 
+	context = alias('_created')
+
 	def _creator_acl( self ):
 		"""
+		Creates the ACL for just the creator; subclasses may call.
+
 		:return: A fresh, mutable list containing at most one :class:`_ACE` for
 				the creator (if there is a creator).
 		"""
@@ -352,11 +364,13 @@ class _CreatedACLProvider(object):
 	@property
 	def __acl__( self ):
 		"""
+		The ACL for the creator.
+
 		:return: A fresh, mutable list containing at exactly two :class:`_ACE` for
 				the creator (if there is a creator), and one denying all rights to everyone else.
 		"""
 		acl = self._creator_acl( )
-		acl.append( nti_interfaces.ACE_DENY_ALL )
+		acl.append( _ace_denying_all( _CreatedACLProvider ) )
 		return acl
 
 
@@ -364,11 +378,21 @@ class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
 	"""
 	Abstract base class for providing the ACL in the common case of an object that has a creator
 	that should have full access plus others that should have read access (the *sharing targets*).
-	Subclasses of this class will need to implement the method to return an iterable of all
-	the sharing target names.
+	Subclasses of this class will need to implement :meth:`_get_sharing_target_names`
+	to return an iterable of all the sharing target names.
+
+	.. py:attribute:: _DENY_ALL
+
+		Subclasses can set this to ``True`` (default is ``False``) to force explicitly
+		denying all access to everyone not otherwise listed as having access.
 	"""
 
+	_DENY_ALL = False
+
 	def _get_sharing_target_names(self):
+		"""
+		Subclasses implement to return an iterable over names that should have read access.
+		"""
 		raise NotImplementedError() # pragma: no cover
 
 	def __do_get_sharing_target_names(self):
@@ -380,9 +404,15 @@ class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
 
 	@property
 	def __acl__( self ):
+		"""
+		The ACL for this object. If this class sets :attr:`_DENY_ALL` to ``True`` then everyone
+		not explicitly listed is denied any access.
+		"""
 		result = self._creator_acl()
 		for name in self.__do_get_sharing_target_names():
-			result.append( ace_allowing( name, auth.ACT_READ, _ShareableModeledContentACLProvider ) )
+			result.append( ace_allowing( name, auth.ACT_READ, AbstractCreatedAndSharedACLProvider ) )
+		if self._DENY_ALL:
+			result.append( _ace_denying_all( AbstractCreatedAndSharedACLProvider ) )
 		return result
 
 
@@ -390,17 +420,27 @@ class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
 class _ShareableModeledContentACLProvider(AbstractCreatedAndSharedACLProvider):
 	"""
 	Extends the ACL for :class:`nti_interfaces.ICreated` objects to things that
-    are shared.
+	are shared.
 
-    Those things that are shared can be viewed (:data:`auth.ACT_READ`) by those they are
+	Those things that are shared can be viewed (:data:`auth.ACT_READ`) by those they are
 	shared with.
+
+	This is modified: If this object is the child of another IShareableModeledContent,
+	e.g., a Canvas inside a Note, then the ACL is skipped and just inherited
+	from the parent (so traversal must be appropriate and respected in ACL checks). This
+	prevents problems when denying all access.
 	"""
 
-	def __init__( self, obj ):
-		super(_ShareableModeledContentACLProvider, self).__init__( obj )
+	_DENY_ALL = True
 
 	def _get_sharing_target_names( self ):
-		return self._created.flattenedSharingTargetNames
+		return self.context.flattenedSharingTargetNames
+
+	@property
+	def __acl__( self ):
+		if nti_interfaces.IShareableModeledContent.providedBy( getattr( self.context, '__parent__', None ) ):
+			return ()
+		return super(_ShareableModeledContentACLProvider,self).__acl__
 
 # NOTE: All of the ACLs around classes will change as
 # roles become more defined. E.g., TAs will have some access.
@@ -432,7 +472,7 @@ class _SectionInfoACLProvider(_CreatedACLProvider):
 		if self._created.Provider:
 			result.append( _provider_admin_ace( self._created ) )
 		# And finally nobody else gets jack squat
-		result.append( ace_denying( nti_interfaces.EVERYONE_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _SectionInfoACLProvider ) )
+		result.append( _ace_denying_all( _SectionInfoACLProvider ) )
 		return result
 
 @component.adapter( nti_interfaces.IClassInfo )
