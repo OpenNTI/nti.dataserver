@@ -13,7 +13,7 @@ from nti.dataserver import interfaces as nti_interfaces
 
 import nti.contentsearch
 from nti.contentsearch.utils import find_user_dfls
-from nti.contentsearch.utils.repoze_utils import get_catalog_and_docids
+from nti.contentsearch.utils._repoze_utils import get_catalog_and_docids
 
 def main():
 	arg_parser = argparse.ArgumentParser( description="Remove index zombies" )

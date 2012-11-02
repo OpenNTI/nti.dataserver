@@ -13,7 +13,7 @@ import nti.contentsearch
 from nti.contentsearch import get_indexable_types
 from nti.contentsearch.utils import find_user_dfls
 from nti.contentsearch.common import normalize_type_name as _nrm
-from nti.contentsearch.utils.repoze_utils import remove_entity_catalogs
+from nti.contentsearch.utils._repoze_utils import remove_entity_catalogs
 
 def main():
 	arg_parser = argparse.ArgumentParser( description="Unindex user content" )
