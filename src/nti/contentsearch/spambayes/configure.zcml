@@ -13,7 +13,10 @@
 			 for="nti.dataserver.interfaces.IEntity"
 			 provides=".interfaces.ISpamManager" />
 			 
-	<utility factory="._settings._DefaultTokenizerSettings"  />
+	<utility factory="._settings._DefaultTokenizerSettings" />
+	<utility factory="._settings._DefaultClassifierSettings"
+			 provides=".interfaces.IClassifierSettings" />
+	
 	<utility factory="._stripper._default_translation_table" name="spambayes" />
 		
 	<utility factory=".tokenizer._ContentTokenizer" name="spam_tokenizer" />
