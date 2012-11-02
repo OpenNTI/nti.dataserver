@@ -37,15 +37,11 @@ from __future__ import print_function, unicode_literals, generators
 
 from collections import defaultdict
 
-from nti.contentsearch.spambayes import LN2
-from nti.contentsearch.spambayes import default_use_bigrams
-from nti.contentsearch.spambayes import default_unknown_word_prob
-from nti.contentsearch.spambayes import default_arc_discriminators
-from nti.contentsearch.spambayes import default_max_discriminators
-from nti.contentsearch.spambayes import default_unknown_word_strength
-from nti.contentsearch.spambayes import default_minimum_prob_strength
+from zope import component
 
+from nti.contentsearch.spambayes import LN2
 from nti.contentsearch.spambayes.statistics.chi2 import chi2Q
+from nti.contentsearch.spambayes import interfaces as sp_interfaces
 
 class _BaseWordInfo(object):
 	def update(self, spam, ham):
@@ -79,27 +75,43 @@ class WordInfo(_BaseWordInfo):
 	def __setstate__(self, t):
 		self.spamcount, self.hamcount = t
 
+def _options():
+	result = component.getUtility(sp_interfaces.IClassifierSettings)
+	return result
+
+def _use_bigrams():
+	result = _options().use_bigrams
+	return result
+
+def _unknown_word_prob():
+	result = _options().unknown_word_probability
+	return result
+
+def _max_discriminators():
+	result = _options().max_discriminators
+	return result
+
+def _arc_discriminators():
+	result = _options().arc_discriminators
+	return result
+
+def _unknown_word_strength():
+	result = _options().unknown_word_strength
+	return result
+
+def _minimum_prob_strength():
+	result = _options().minimum_probability_strength
+	return result
+
 class Classifier(object):
 	
 	# allow a subclass to use a different class for WordInfo
 	WordInfoClass = WordInfo
 
-	def __init__(self, unknown_word_strength=default_unknown_word_strength, 
-				 unknown_word_prob=default_unknown_word_prob, 
-				 minimum_prob_strength=default_minimum_prob_strength, 
-				 max_discriminators=default_max_discriminators, 
-				 use_bigrams=default_use_bigrams, 
-				 mapfactory=dict):
+	def __init__(self, mapfactory=dict):
 		self.nspam = self.nham = 0
 		self.wordinfo = mapfactory()
 		self._v_probcache = defaultdict(dict)
-		self.unknown_word_prob = unknown_word_prob
-		self.max_discriminators = max_discriminators
-		self.minimum_prob_strength = minimum_prob_strength
-		self.unknown_word_strength = unknown_word_strength
-		
-		# vars that force re-learning
-		self.use_bigrams = use_bigrams
 			
 	def _get_probcache(self):
 		return self._v_probcache
@@ -198,18 +210,18 @@ class Classifier(object):
 
 	spamprob = chi2_spamprob
 
-	def arc_spamprob(self, wordstream, limit=default_arc_discriminators):
+	def arc_spamprob(self, wordstream, limit=None):
 		clues = []
 		records = {}
 		tspam, tham = self._wordcounts()
-		limit = limit or self.max_discriminators
+		limit = limit or _arc_discriminators()
 		
 		def _calc_pspam(word):
 			result = records.get(word, None)
 			if result is None:
 				rc = self._wordinfoget(word) if self.has_word(word) else None
 				if not rc or rc.is_empty():
-					result = self.unknown_word_prob # 0.4 also recommended
+					result = _unknown_word_prob() # 0.4 also recommended
 				else:
 					rbad = rc.spamcount / float(tspam)
 					rgood = 2*rc.hamcount / float(tham)
@@ -272,7 +284,7 @@ class Classifier(object):
 		True, you're telling the classifier this message is definitely spam,
 		else that it's definitely not spam.
 		"""
-		if self.use_bigrams:
+		if _use_bigrams():
 			wordstream = self._enhance_wordstream(wordstream)
 		self._add_msg(wordstream, is_spam)
 
@@ -281,7 +293,7 @@ class Classifier(object):
 		In case of pilot error, call unlearn ASAP after screwing up.
 		Pass the same arguments you passed to learn().
 		"""
-		if self.use_bigrams:
+		if _use_bigrams():
 			wordstream = self._enhance_wordstream(wordstream)
 		self._remove_msg(wordstream, is_spam)
 	
@@ -316,8 +328,8 @@ class Classifier(object):
 
 		prob = spamratio / (hamratio + spamratio)
 
-		S = self.unknown_word_strength
-		StimesX = S * self.unknown_word_prob
+		S = _unknown_word_strength()
+		StimesX = S * _unknown_word_prob()
 
 		# now do Robinson's Bayesian adjustment.
 		#
@@ -428,9 +440,9 @@ class Classifier(object):
 	# Tokens with spamprobs less than minimum_prob_strength away from 0.5
 	# aren't returned.
 	def _getclues(self, wordstream):
-		mindist = self.minimum_prob_strength
+		mindist = _minimum_prob_strength()
 		
-		if self.use_bigrams:
+		if _use_bigrams():
 			# this scheme mixes single tokens with pairs of adjacent tokens.
 			# wordstream is "tiled" into non-overlapping unigrams and
 			# bigrams.  Non-overlap is important to prevent a single original
@@ -498,15 +510,15 @@ class Classifier(object):
 					push(tup)
 			clues.sort()
 			
-		if len(clues) > self.max_discriminators:
-			del clues[0 : -self.max_discriminators]
+		if len(clues) > _max_discriminators():
+			del clues[0 : -_max_discriminators()]
 		# return (prob, word, record).
 		return [t[1:] for t in clues]
 		
 	def _worddistanceget(self, word):
 		record = self._wordinfoget(word)
 		if record is None:
-			prob = self.unknown_word_prob
+			prob = _unknown_word_prob()
 		else:
 			prob = self.probability(record)
 		distance = abs(prob - 0.5)
@@ -569,3 +581,24 @@ class Classifier(object):
 	
 
 Bayes = Classifier
+
+from zope import interface
+
+from nti.contentsearch.spambayes import PERSISTENT_HAM_INT
+from nti.contentsearch.spambayes import PERSISTENT_SPAM_INT
+from nti.contentsearch.spambayes import PERSISTENT_UNSURE_INT
+
+@interface.implementer(sp_interfaces.IProbabilityClassifier)
+class _DefaultProbabilityClassifier(object):
+	
+	ham_cutoff = 0.20
+	spam_cutoff = 0.90
+
+	def __call__(self, probability):
+		if probability < self.ham_cutoff:
+			disposition = PERSISTENT_HAM_INT
+		elif probability > self.spam_cutoff:
+			disposition = PERSISTENT_SPAM_INT
+		else:
+			disposition = PERSISTENT_UNSURE_INT
+		return disposition

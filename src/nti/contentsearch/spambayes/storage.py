@@ -1,6 +1,5 @@
 from __future__ import print_function, unicode_literals
 
-import random
 import sqlite3 as sql
 
 from persistent import Persistent
@@ -8,22 +7,9 @@ from BTrees.OOBTree import OOBTree
 
 from nti.utils.transactions import ObjectDataManager
 
-from nti.contentsearch.spambayes import default_ham_cutoff
-from nti.contentsearch.spambayes import default_spam_cutoff
 from nti.contentsearch.spambayes.tokenizer import tokenize
 from nti.contentsearch.spambayes.classifier import Classifier
-from nti.contentsearch.spambayes.classifier import _BaseWordInfo
 
-from nti.contentsearch.spambayes import default_use_bigrams
-from nti.contentsearch.spambayes import default_unknown_word_prob
-from nti.contentsearch.spambayes import default_max_discriminators
-from nti.contentsearch.spambayes import default_unknown_word_strength
-from nti.contentsearch.spambayes import default_minimum_prob_strength
-
-class PersistentWordInfo(Persistent, _BaseWordInfo):
-	def __init__(self):
-		self.spamcount = self.hamcount = 0
-	
 class Trainer(Classifier):
 	
 	def train(self, text, is_spam=True):
@@ -37,25 +23,13 @@ class Trainer(Classifier):
 			self.unlearn(tokens, is_spam)
 		
 	def classify(self, text):
-		if text:
-			tokens = tokenize(unicode(text))
-			return self.spamprob(tokens)
-		else:
-			return random.uniform(default_ham_cutoff, default_spam_cutoff)
+		tokens = tokenize(unicode(text))
+		return self.spamprob(tokens)
 
 class PersistentClassifier(Persistent, Trainer):
 	
-	WordInfoClass = PersistentWordInfo
-	
-	def __init__(self, unknown_word_strength=default_unknown_word_strength, 
-				 unknown_word_prob=default_unknown_word_prob, 
-				 minimum_prob_strength=default_minimum_prob_strength, 
-				 max_discriminators=default_max_discriminators, 
-				 use_bigrams=default_use_bigrams, 
-				 mapfactory=OOBTree):
-		
-		Trainer.__init__(self, unknown_word_strength, unknown_word_prob, minimum_prob_strength, 
-						 max_discriminators, use_bigrams, mapfactory)
+	def __init__(self, mapfactory=OOBTree):
+		Trainer.__init__(self, mapfactory=mapfactory)
 
 PersistentBayes = PersistentClassifier
 

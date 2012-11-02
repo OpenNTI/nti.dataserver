@@ -3,6 +3,12 @@ from __future__ import print_function, unicode_literals
 from zope import schema
 from zope import interface
 
+class IProbabilityClassifier(interface.Interface):
+	"""marker interface to classify a prob. result as a ham or spam"""
+	
+	def __call__(probability):
+		pass
+		
 class ISpamClassifier(interface.Interface):
 
 	def train(text, is_spam=True):
@@ -34,3 +40,11 @@ class ITokenizerSettings(interface.Interface):
 	short_runs = schema.Bool(title="Do short runs", default=True, readonly=True)
 	generate_long_skips = schema.Bool(title="Generate long skips", default=True, readonly=True)
 	replace_nonascii_chars = schema.Bool(title="Replace non-asciii chars in content", default=False, readonly=True)
+
+class IClassifierSettings(ITokenizerSettings):	
+	use_bigrams = schema.Bool(title="Use bigrams when classifiying", default=False, readonly=True)
+	arc_discriminators = schema.Int(title="ARC discriminators", readonly=True)
+	max_discriminators = schema.Int(title="Max discriminators", readonly=True)
+	unknown_word_strength = schema.Float(title="Unknown word strength", readonly=True)
+	unknown_word_probability = schema.Float(title="Unknown word probability", readonly=True)
+	minimum_probability_strength = schema.Float(title="Minimum probability strength", readonly=True)
