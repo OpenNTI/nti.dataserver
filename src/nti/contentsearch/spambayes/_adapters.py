@@ -13,6 +13,8 @@ from zope.annotation import factory as an_factory
 
 from nti.dataserver import interfaces as nti_interfaces
 
+from nti.contentfragments import interfaces as frg_interfaces
+
 from nti.contentsearch import interfaces as cts_interfaces
 from nti.contentsearch.spambayes import interfaces as sps_interfaces
 from nti.contentsearch.spambayes.storage import PersistentClassifier
@@ -60,6 +62,9 @@ class _EnitySpamManager(_EntitySpamClassifier):
 		else:
 			adapted = component.queryAdapter(obj, cts_interfaces.IContentResolver)
 			result = adapted.get_content() if adapted is not None else None
+			
+		if result:
+			result = component.getAdapter(result, frg_interfaces.IPlainTextContentFragment, name='text' )
 		return result
 			
 	def is_marked(self, obj):

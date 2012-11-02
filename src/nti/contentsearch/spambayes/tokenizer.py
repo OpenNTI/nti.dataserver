@@ -6,17 +6,16 @@ import math
 from zope import component
 from zope import interface
 
-from nti.contentfragments import interfaces as frg_interfaces
-
 from nti.contentsearch import interfaces as cs_interfaces
 
 from nti.contentsearch.spambayes import LN2
 from nti.contentsearch.spambayes._stripper import has_highbit_char
 from nti.contentsearch.spambayes import interfaces as sps_interfaces
 from nti.contentsearch.spambayes._stripper import _default_translation_table
-from nti.contentsearch.spambayes._stripper import (word_re, numeric_entity_re, find_html_virus_clues, numeric_entity_replacer)
-from nti.contentsearch.spambayes._stripper import (crack_uuencode, crack_urls, crack_html_style, crack_html_comment, crack_noframes)
-		
+from nti.contentsearch.spambayes._stripper import (	crack_uuencode, crack_urls, crack_html_style, 
+													crack_html_comment, crack_noframes)
+from nti.contentsearch.spambayes._stripper import (	word_re, numeric_entity_re, breaking_entity_re, html_re,
+													find_html_virus_clues, numeric_entity_replacer)
 def log2(n, log=math.log, c=LN2):
 	return log(n)/c
 
@@ -133,8 +132,18 @@ def tokenize(text, *args, **kwargs):
 		for t in tokens:
 			yield t
 
-	# remove html/xml tags. 
-	text = component.getAdapter( text, frg_interfaces.IPlainTextContentFragment, name='text' )
+	# remove html/xml tags.  also &nbsp;.  <br> and <p> tags should
+	# create a space too.
+	text = breaking_entity_re.sub(' ', text)
+	
+	# it's important to eliminate html tags rather than, e.g.,
+	# replace them with a blank (as this code used to do), else
+	# simple tricks like
+	#    Wr<!$FS|i|R3$s80sA >inkle Reduc<!$FS|i|R3$s80sA >tion
+	# can be used to disguise words.  <br> and <p> were special-
+	# cased just above (because browsers break text on those,
+	# they can't be used to hide words effectively).
+	text = html_re.sub('', text)
 	
 	for t in tokenize_text(	text, *args, **kwargs):
 		yield t

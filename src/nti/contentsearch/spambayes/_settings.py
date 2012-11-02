@@ -13,10 +13,15 @@ class _DefaultTokenizerSettings(object):
 	replace_nonascii_chars = True
 	
 @interface.implementer(sps_interfaces.IClassifierSettings)
-class _DefaultClassifierSettings(_DefaultTokenizerSettings):
+class _DefaultClassifierSettings(object):
 	use_bigrams = False
 	arc_discriminators = 50
 	max_discriminators = 150
 	unknown_word_strength = 0.45	
 	unknown_word_probability = 0.5
 	minimum_probability_strength = 0.10
+	
+@interface.implementer(sps_interfaces.IHistogramSettings)
+class _DefaultHistogramSettings(object):
+	buckets = 200
+	percentiles = (5, 25, 75, 95)
