@@ -22,6 +22,7 @@ class WebSocketServer(gevent.pywsgi.WSGIServer): # In gevent 1.0, gevent.wsgi is
 	"""
 
 	handler_class = geventwebsocket.handler.WebSocketHandler
+
 	def __init__( self, *args, **kwargs ):
 		"""
 		:raises ValueError: If a ``handler_class`` keyword argument is supplied
@@ -36,18 +37,26 @@ class WebSocketServer(gevent.pywsgi.WSGIServer): # In gevent 1.0, gevent.wsgi is
 class FlashPolicyServer(gevent.server.StreamServer):
 	"""
 	TCP Server for `Flash policies <http://www.adobe.com/devnet/flashplayer/articles/socket_policy_files.html>`_
+
+	.. note:: The usual registered port for these is 843, which is
+		a privileged port. So by default we listen on 10843 and require
+		a TCP proxy to pass trafic from the privileged port to us. (We
+		should NEVER have the privileges to listen to ports less then 1024.)
 	"""
 
-
+	#: The policy document we serve, granting all access.
 	policy = b"""<?xml version="1.0" encoding="utf-8"?>
 	<!DOCTYPE cross-domain-policy SYSTEM "http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd">
 	<cross-domain-policy>
 		<allow-access-from domain="*" to-ports="*"/>
 	</cross-domain-policy>\n"""
 
+	STANDARD_POLICY_PORT = 843
+	NONPRIV_POLICY_PORT = 10843
+
 	def __init__(self, listener=None, backlog=None):
 		if listener is None:
-			listener = ('0.0.0.0', 10843)
+			listener = ('0.0.0.0', self.NONPRIV_POLICY_PORT)
 		super(FlashPolicyServer,self).__init__(listener=listener, backlog=backlog)
 
 	def handle(self, socket, address):

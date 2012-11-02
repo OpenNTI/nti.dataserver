@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 """
-Support for running the application with gunicorn. You must use our worker, configured with paster:
+Support for running the application with gunicorn.
+
+You must use our worker (:class:`GeventApplicationWorker`), configured with paster::
+
 	[server:main]
 	use = egg:gunicorn#main
 	host =
@@ -71,7 +74,7 @@ def _create_flash_socket(cfg, log):
 	TCPSocket = dottedname.resolve( 'gunicorn.sock.TCPSocket' )
 
 	class FlashConf(object):
-		address = ('0.0.0.0', getattr(cfg, 'flash_policy_server_port', 10843) )
+		address = ('0.0.0.0', getattr(cfg, 'flash_policy_server_port', FlashPolicyServer.NONPRIV_POLICY_PORT) )
 		def __getattr__( self, name ):
 			return getattr( cfg, name )
 	conf = FlashConf( )
@@ -178,8 +181,14 @@ class _PyWSGIWebSocketHandler(WebSocketServer.handler_class,ggevent.PyWSGIHandle
 
 
 class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
+	"""
+	Our application worker.
+	"""
 
+	#: We need to be served by something that can handle websockets
 	server_class = WebSocketServer
+
+	#: Our custom server requires a custom handler.
 	wsgi_handler = _PyWSGIWebSocketHandler
 
 
