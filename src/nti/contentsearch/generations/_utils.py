@@ -10,7 +10,7 @@ from nti.dataserver.users import friends_lists
 from nti.contentsearch.utils import get_uid
 from nti.contentsearch.utils import find_all_indexable_pairs
 from nti.contentsearch import interfaces as search_interfaces 
-from nti.contentsearch.utils.repoze_utils import remove_entity_catalogs
+from nti.contentsearch.utils._repoze_utils import remove_entity_catalogs
 						
 import logging
 logger = logging.getLogger( __name__ )

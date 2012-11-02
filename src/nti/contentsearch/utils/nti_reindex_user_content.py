@@ -15,9 +15,9 @@ from nti.dataserver.utils import run_with_dataserver
 
 import nti.contentsearch
 from nti.contentsearch.utils import get_uid
-from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch.utils import find_all_indexable_pairs
-from nti.contentsearch.utils.repoze_utils import remove_entity_catalogs
+from nti.contentsearch import interfaces as search_interfaces
+from nti.contentsearch.utils._repoze_utils import remove_entity_catalogs
 			
 def reindex_entity_content(username, include_dfls=False, verbose=False):
 	entity = users.Entity.get_entity( username )
