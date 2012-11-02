@@ -11,6 +11,32 @@ Main
 
 .. automodule:: gevent
 
+baseserver
+==========
+
+.. automodule:: gevent.baseserver
+
+monkey
+======
+
+.. automodule:: gevent.monkey
+
+pywsgi
+======
+
+.. automodule:: gevent.pywsgi
+	:undoc-members:
+
+Server
+======
+
+.. automodule:: gevent.server
+
+Socket
+======
+
+.. automodule:: gevent.socket
+
 Queue
 =====
 
