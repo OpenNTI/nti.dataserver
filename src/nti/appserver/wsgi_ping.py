@@ -23,8 +23,8 @@ class PingHandler(object):
 	def __call__( self, environ, start_response ):
 
 		if environ['PATH_INFO'] == '/_ops/ping':
-			start_response( '200 OK', [('Content-Type', 'text/plain')] )
-			result = ("",)
+			start_response( b'200 OK', [(b'Content-Type', b'text/plain')] )
+			result = (b"",)
 		else:
 			result = self.captured( environ, start_response )
 		return result
