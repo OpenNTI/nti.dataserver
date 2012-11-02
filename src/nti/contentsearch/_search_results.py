@@ -101,11 +101,7 @@ class _SearchResults(_PageableSearchResults):
 	def _add(self, item):
 		if isinstance(item, tuple):
 			if item[0] is not None:
-				if len(item) != 2:
-					t = (item[0], 1.0 if len(item) < 2 else float(item[1]))
-				else:
-					t = item
-				self._hits.append(t)
+				self._hits.append(item)
 		elif item is not None:
 			self._hits.append((item, 1.0))
 			
