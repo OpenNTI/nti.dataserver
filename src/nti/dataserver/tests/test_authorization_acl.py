@@ -42,7 +42,7 @@ class TestShareableACLProvider(mock_dataserver.ConfiguringTestBase):
 		verifyObject( nti_interfaces.IACLProvider, acl_prov )
 
 		acl = acl_prov.__acl__
-		assert_that( acl, has_length( 1 ) )
+		assert_that( acl, has_length( 2 ) )
 
 		action, actor, permission = acl[0]
 		assert_that( action, is_( nti_interfaces.ACE_ACT_ALLOW ) )
@@ -65,7 +65,7 @@ class TestShareableACLProvider(mock_dataserver.ConfiguringTestBase):
 		verifyObject( nti_interfaces.IACLProvider, acl_prov )
 
 		acl = acl_prov.__acl__
-		assert_that( acl, has_length( 2 ) )
+		assert_that( acl, has_length( 3 ) )
 
 		action, actor, permission = acl[0]
 		assert_that( action, is_( nti_interfaces.ACE_ACT_ALLOW ) )
@@ -97,7 +97,7 @@ class TestShareableACLProvider(mock_dataserver.ConfiguringTestBase):
 		verifyObject( nti_interfaces.IACLProvider, acl_prov )
 
 		acl = acl_prov.__acl__
-		assert_that( acl, has_length( 2 ) )
+		assert_that( acl, has_length( 3 ) )
 
 		for action in (auth.ACT_CREATE,auth.ACT_DELETE,auth.ACT_UPDATE,auth.ACT_READ):
 			assert_that( acl_prov, permits( 'sjohnson@nextthought.com',

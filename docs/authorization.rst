@@ -19,3 +19,4 @@ ACLs
 .. automodule:: nti.dataserver.authorization_acl
 	:members:
 	:private-members:
+	:special-members:
