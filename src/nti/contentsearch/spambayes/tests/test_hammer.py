@@ -68,7 +68,7 @@ class TestHammer(ConfiguringTestBase):
 				body.append(word)
 
 		body = '\n'.join(textwrap.wrap(' '.join(body)))
-		return body
+		return unicode(body)
 
 	def test_trainer( self ):
 		"""
