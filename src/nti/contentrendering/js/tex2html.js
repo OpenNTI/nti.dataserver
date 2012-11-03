@@ -9,7 +9,9 @@ page.onConsoleMessage = function(msg){
 	if (msg === 'Exit process'){
 		phantom.exit();
 	}
-	console.log(msg);
+	else { //phantom.exit() is async so this must be in an else to avoid spurious output
+		console.log(msg);
+	}
 };
 
 var processPage = function(){

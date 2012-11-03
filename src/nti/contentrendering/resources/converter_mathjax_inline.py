@@ -82,7 +82,7 @@ class MathjaxInlineCompilerDriver(converters.AbstractOneOutputDocumentCompilerDr
 
 	def _compilation_source_for_content_unit( self, content_unit ):
 		tex_without_delimiters = content_unit.source[1:-1]
-		
+
 		# Filter spaceing / formatting bits that MathJax does not handle
 		tex_without_delimiters = re.sub(r'\[[0-9][0-9]*ex\]', '', tex_without_delimiters)
 
@@ -132,6 +132,8 @@ class MathjaxInlineCompilerDriver(converters.AbstractOneOutputDocumentCompilerDr
 		tempdir = tempfile.mkdtemp()
 
 		maths = [math.strip() for math in output.split('\n') if math.strip()]
+		if len(maths) != len(self._generatables):
+			raise ValueError( "Wrong number of math expressions produced", maths, self._generatables )
 
 		files = list()
 		for i, math in enumerate(maths):
@@ -141,7 +143,10 @@ class MathjaxInlineCompilerDriver(converters.AbstractOneOutputDocumentCompilerDr
 			# Note this is slightly shady. We aren't keeping track of the original source anywhere
 			# except for in the superclass, and the resource DB depends on us handing back the original
 			# source. See superclass for more details
-			files.append( FilesystemContentUnitRepresentation(path=fname, resourceType=self.resourceType, source=self._generatables[i]) )
+			__traceback_info__ = i, fname, math, len(self._generatables), workdir
+			files.append( FilesystemContentUnitRepresentation(path=fname,
+															  resourceType=self.resourceType,
+															  source=self._generatables[i]) )
 
 		return files
 
