@@ -50,8 +50,8 @@ def _scale(input, output, scale, defaultScale):
 	retval1 = subprocess.call( command )
 
 	# Use pngcrush to clean the resized PNG.
-	prefix = hex(int(time.time()))
-	tmpfile = tempfile.mktemp(suffix='.png', prefix=prefix)
+	prefix = hex(int(time.time()*1000))
+	tmpfile = tempfile.mkstemp(suffix='.png', prefix=prefix)[1]
 	command = [ 'pngcrush', '-q', output, tmpfile ]
 	__traceback_info__ = command
 	retval2 = subprocess.call( command )
