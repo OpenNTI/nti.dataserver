@@ -94,21 +94,23 @@ class _RedisStorageService(object):
 		return result
 	
 	def _push_back_msgs(self, msgs, encode=True):
-		logger.info( "Pushing messages back onto %s on exception", self.queue_name )
-		msgs.reverse()
-		msgs = [zlib.compress(repr(m)) for m in msgs] if encode else msgs
-		self._redis.lpush(self.queue_name, *msgs)
+		if msgs:
+			logger.info( "Pushing messages back onto %s on exception", self.queue_name )
+			msgs.reverse()
+			msgs = [zlib.compress(repr(m)) for m in msgs] if encode else msgs
+			self._redis.lpush(self.queue_name, *msgs)
 		
 	def read_process_index_msgs(self):
-		encoded_msgs = self._get_index_msgs()
-		if encoded_msgs:
-			msgs = (eval(zlib.decompress(m)) for m in encoded_msgs)
-			logger.log(loglevels.TRACE, 'Processing %s index event(s) read from redis queue %r', len(encoded_msgs), self.queue_name)
-			try:
+		encoded_msgs = ()
+		try:
+			encoded_msgs = self._get_index_msgs()
+			if encoded_msgs:
+				msgs = (eval(zlib.decompress(m)) for m in encoded_msgs)
+				logger.log(loglevels.TRACE, 'Processing %s index event(s) read from redis queue %r', len(encoded_msgs), self.queue_name)
 				self.process_messages(msgs)			
-			except Exception:
-				self._push_back_msgs(encoded_msgs, encode=False)
-				logger.exception( "Failed to read and process index messages" )
+		except Exception:
+			self._push_back_msgs(encoded_msgs, encode=False)
+			logger.exception( "Failed to read and process index messages" )
 	
 	def process_messages(self, msgs):
 		pass
