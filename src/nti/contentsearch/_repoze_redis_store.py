@@ -34,7 +34,6 @@ class _RedisRepozeStorageService(_RedisStorageService):
 				logger.exception("Error while processing index message for %s" % username)
 				
 	def _process_user_messages(self, username, msgs):
-		_ds_intid = component.getUtility( zope.intid.IIntIds )
 		trxrunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner)
 		def f():
 			entity = Entity.get_entity(username)
@@ -42,6 +41,7 @@ class _RedisRepozeStorageService(_RedisStorageService):
 			if im is None:
 				logger.debug("Cannot adapt to repoze index manager for entity %s" % username)
 				return
+			_ds_intid = component.getUtility( zope.intid.IIntIds )
 			for op, oid, _, _, _ in msgs:
 				data = _ds_intid.queryObject(int(oid), None)
 				if data is not None:
