@@ -191,6 +191,10 @@ class _BaseRepozeEntityIndexManager(_SearchEntityIndexManager):
 			return True
 		return False
 
+	def unindex_doc(self, docid):
+		for catalog in self.values():
+			catalog.unindex_doc(docid)
+		
 	def remove_index(self, type_name):
 		result = self.remove_catalog(type_name)
 		return result
