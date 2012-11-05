@@ -451,6 +451,42 @@ class IRedactionRepozeCatalogFieldCreator(interface.Interface):
 class IMessageInfoRepozeCatalogFieldCreator(interface.Interface):
 	pass
 
+
+class IRedisStoreService(interface.Interface):
+	
+	queue_name = schema.TextLine(title="Queue name", required=True)
+	sleep_wait_time = schema.Float(title="Message interval", required=True)
+	expiration_time = schema.Float(title="Message redis expiration time", required=True)
+	
+	def add(docid, username, version, external):
+		"""
+		register an add index operation with redis
+		
+		:param docid document id
+		:param username target user
+		:param version document version
+		:param external: data-dict to index
+		"""
+	
+	def update(docid, username, version, external):
+		"""
+		register a update index operation with redis
+		
+		:param docid document id
+		:param username target user
+		:param version document version
+		:param external: data-dict to index
+		"""
+		
+	def delete(docid, username, version):
+		"""
+		register a delete index operation with redis
+		
+		:param docid document id
+		:param username target user
+		:param version document version
+		"""
+	
 # cloud search
 
 class ICloudSearchObject(IDict):
@@ -470,26 +506,7 @@ class ICloudSearchStore(interface.Interface):
 	def get_aws_domains():
 		"""return all aws search domains"""
 		
-class ICloudSearchStoreService(interface.Interface):
-	
-	# document service
-	
-	def add(_id, version, fields):
-		"""
-		index the specified data fields
-		
-		:param _id cloud search document id
-		:param version document version
-		:param fields : data-dict to index
-		"""
-	
-	def delete(_id, version):
-		"""
-		unindex the specified document
-		
-		:param _id cloud search document id
-		:param version document version
-		"""
+class ICloudSearchStoreService(IRedisStoreService):
 	
 	def commit():
 		"""
