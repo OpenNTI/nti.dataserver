@@ -27,6 +27,12 @@ class _BaseSearchResults(object):
 		assert search_interfaces.ISearchQuery.providedBy(query)
 		self._query = query
 	
+	def __str__( self ):
+		return self.__repr__()
+
+	def __repr__( self ):
+		return '%s(hits=%s)' % (self.__class__.__name__, self.total)
+	
 	@property
 	def query(self):
 		return self._query
