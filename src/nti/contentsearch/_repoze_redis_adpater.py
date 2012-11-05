@@ -32,7 +32,6 @@ class _RepozeRedisEntityIndexManager(_BaseRepozeEntityIndexManager):
 		return True
 
 	def do_index_content(self, data, type_name=None):
-		logger.info("IN DO B8")
 		return super(_RepozeRedisEntityIndexManager, self).index_content(data, type_name)
 		
 	def update_content(self, data, type_name=None):
