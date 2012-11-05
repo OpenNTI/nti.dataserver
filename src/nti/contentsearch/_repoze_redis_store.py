@@ -37,20 +37,20 @@ class _RedisRepozeStorageService(_RedisStorageService):
 		trxrunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner)
 		def f():
 			entity = Entity.get_entity(username)
-			im = search_interfaces.IRepozeEntityIndexManager(entity, None)
+			im = search_interfaces.IRepozeRedisEntityIndexManager(entity, None)
 			if im is None:
-				logger.debug("Cannot adapt to repoze index manager for entity %s" % username)
+				logger.debug("Cannot adapt to repoze [redis] index manager for entity %s" % username)
 				return
 			_ds_intid = component.getUtility( zope.intid.IIntIds )
 			for op, oid, _, _, _ in msgs:
 				data = _ds_intid.queryObject(int(oid), None)
 				if data is not None:
 					if op == 'add':
-						im.index_content(data)
+						im.do_index_content(data)
 					elif op == 'update':
-						im.update_content(data)
+						im.do_update_content(data)
 					elif op == 'delete':
-						im.delete_content(data)
+						im.do_delete_content(data)
 				else:
 					logger.debug("Cannot find object with id %s" % oid)
 						
