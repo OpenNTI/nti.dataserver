@@ -19,4 +19,6 @@ def create_index_manager_with_repoze():
 	book_idx_manager = wbm_factory()
 	return IndexManager(book_idx_manager, search_interfaces.IRepozeEntityIndexManager)
 
-
+def create_index_manager_with_repoze_redis():
+	book_idx_manager = wbm_factory()
+	return IndexManager(book_idx_manager, search_interfaces.IRepozeRedisEntityIndexManager)

@@ -31,9 +31,7 @@ from nti.contentsearch._search_results import empty_suggest_and_search_results
 import logging
 logger = logging.getLogger( __name__ )
 
-@component.adapter(nti_interfaces.IEntity)
-@interface.implementer( search_interfaces.IRepozeEntityIndexManager, IFullMapping )
-class _RepozeEntityIndexManager(_SearchEntityIndexManager):
+class _BaseRepozeEntityIndexManager(_SearchEntityIndexManager):
 
 	def add_catalog(self, catalog, type_name):
 		if type_name not in self:
@@ -201,6 +199,12 @@ class _RepozeEntityIndexManager(_SearchEntityIndexManager):
 
 	def has_stored_indices(self):
 		return len(self.get_catalog_names()) > 0
+
+
+@component.adapter(nti_interfaces.IEntity)
+@interface.implementer( search_interfaces.IRepozeEntityIndexManager, IFullMapping )
+class _RepozeEntityIndexManager(_BaseRepozeEntityIndexManager):
+	pass
 
 def _RepozeEntityIndexManagerFactory(user):
 	result = an_factory(_RepozeEntityIndexManager)(user)
