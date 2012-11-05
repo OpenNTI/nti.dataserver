@@ -8,12 +8,16 @@
 			 name="nti.dataserver-contentsearch"
 			 provides="zope.generations.interfaces.IInstallableSchemaManager"/>
 		
-	<!-- Index managers -->
+	<!-- Entity adapters -->
 		
 	<adapter factory="._repoze_adpater._RepozeEntityIndexManagerFactory"
 			 for="nti.dataserver.interfaces.IEntity"
 			 provides=".interfaces.IRepozeEntityIndexManager" />
 	
+	<adapter factory="._repoze_redis_adpater._RepozeRedisEntityIndexManagerFactory"
+			 for="nti.dataserver.interfaces.IEntity"
+			 provides=".interfaces.IRepozeRedisEntityIndexManager" />
+			 
 	<!-- Search query -->
 	
 	<utility factory="._repoze_query._DefaultSearchQueryValiator"  />
@@ -26,4 +30,5 @@
 	<utility factory="._repoze_index._RepozeRedactionCatalogCreator" name="redaction" />
 	<utility factory="._repoze_index._RepozeMessageInfoCatalogCreator" name="messageinfo" />
 
+	<utility factory="._repoze_redis_store._RedisRepozeStorageService"  />
 </configure>

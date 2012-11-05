@@ -144,6 +144,9 @@ class IndexEvent(component.interfaces.ObjectEvent):
 class IRepozeEntityIndexManager(IEntityIndexManager):
 	pass
 
+class IRepozeRedisEntityIndexManager(IEntityIndexManager):
+	pass
+
 class IWhooshEntityIndexManager(IEntityIndexManager):
 	pass
 
@@ -487,6 +490,12 @@ class IRedisStoreService(interface.Interface):
 		:param version document version
 		"""
 	
+class IRepozeStoreService(IRedisStoreService):
+	def process_messages(msgs):
+		"""
+		process the messages read from redis
+		"""
+
 # cloud search
 
 class ICloudSearchObject(IDict):
