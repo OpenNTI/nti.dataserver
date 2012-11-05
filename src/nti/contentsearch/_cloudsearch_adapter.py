@@ -115,7 +115,7 @@ class _CloudSearchEntityIndexManager(_SearchEntityIndexManager):
 		service = self._get_cs_service()
 		type_name = normalize_type_name(type_name or get_type_name(data))
 		oid, external = to_cloud_object(data, self.username)
-		service.add(oid, self.a_version,  external) 
+		service.add(oid, version=self.a_version, external=external) 
 		result = service.commit()
 		self._check_errors(result)
 		return True
@@ -127,7 +127,7 @@ class _CloudSearchEntityIndexManager(_SearchEntityIndexManager):
 		if not data: return None
 		service = self._get_cs_service()
 		oid = get_cloud_oid(data)
-		service.delete(oid, self.d_version) 
+		service.delete(oid, version=self.d_version) 
 		result = service.commit()
 		self._check_errors(result)
 		return True

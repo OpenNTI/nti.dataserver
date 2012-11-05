@@ -1,13 +1,9 @@
 from __future__ import print_function, unicode_literals
 
 import os
-import zlib
-
-import gevent
 
 from zope import component
 from zope import interface
-from ZODB import loglevels
 
 from boto.cloudsearch import regions
 from boto.cloudsearch.domain import Domain
@@ -15,9 +11,8 @@ from boto.cloudsearch import connect_to_region
 from boto.cloudsearch.search import SearchConnection
 from boto.cloudsearch.document import DocumentServiceConnection
 
-from nti.dataserver import interfaces as nti_interfaces
-
 from nti.contentsearch import interfaces as search_interfaces
+from nti.contentsearch._redis_indexstore import _RedisStorageService
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -89,23 +84,11 @@ class _CloudSearchStore(object):
 		result = get_search_service(domain) if domain else None
 		return result
 
-SLEEP_WAIT_TIME = 10
-EXPIRATION_TIME_IN_SECS = 60
 
 @interface.implementer(search_interfaces.ICloudSearchStoreService)
-class _CloudSearchStorageService(object):
+class _CloudSearchStorageService(_RedisStorageService):
 	
-	_redis = None
 	_store = None
-	
-	def __init__( self ):
-		self._v_index_listener = self._spawn_index_listener()
-		self._v_default_queue_name = u'nti/cloudsearch'
-
-	def _get_redis( self ):
-		if self._redis is None:
-			self._redis = component.getUtility( nti_interfaces.IRedisClient )
-		return self._redis
 	
 	def _get_store(self):
 		if self._store is None:
@@ -114,22 +97,12 @@ class _CloudSearchStorageService(object):
 	
 	@property
 	def default_queue_name(self):
-		return self._v_default_queue_name
+		return self.queue_name
 		
-	# document service
-	
-	def add(self, _id, version, external):
-		msg = repr(('add', _id, version, external))
-		self._put_msg(msg)
-	
-	def delete(self, _id, version):
-		msg = repr(('delete', _id, version, None))
-		self._put_msg(msg)
+	# search/index service
 	
 	def commit(self):
-		return None # no-op
-	
-	# search service
+		return None
 	
 	def search(self, *args, **kwargs):
 		service = self._get_store().get_search_service()
@@ -138,63 +111,14 @@ class _CloudSearchStorageService(object):
 	
 	# redis
 	
-	def _get_index_msgs( self, queue_name):
-		msgs, _ = self._get_redis().pipeline().lrange(queue_name, 0, -1).delete(queue_name).execute()
-		return msgs
-	
-	def _put_msg(self, msg, queue_name=None):
-		if msg is not None:
-			msg = zlib.compress( msg )
-			self._put_msg_to_redis(msg, queue_name)
-	
-	def _put_msg_to_redis( self, msg, queue_name=None):
-		queue_name = queue_name or self.default_queue_name
-		self._get_redis().pipeline().rpush(queue_name, msg ).expire(queue_name, EXPIRATION_TIME_IN_SECS).execute()
-			
-	def _spawn_index_listener(self):
-		
-		def read_index_msgs():
-			while True:
-				# wait for idx ops
-				gevent.sleep(SLEEP_WAIT_TIME)
-				self.read_process_index_msgs()
-				
-		result = gevent.spawn( read_index_msgs )
-		return result
-	
-	def _push_back_msgs(self, msgs, queue_name):
-		logger.info( "Pushing messages back onto %s on exception", queue_name )
-		msgs.reverse()
-		self._redis.lpush( queue_name, *msgs )
-		
-	def read_process_index_msgs(self, queue_name=None):
-		queue_name = queue_name or self.default_queue_name
-		try:
-			msgs = self._get_index_msgs(queue_name)
-			self._process_and_dispatch(msgs, queue_name)			
-		except Exception:
-			self._push_back_msgs(msgs, queue_name)
-			logger.exception( "Failed to read and process index messages" )
-	
-	def _process_and_dispatch(self, msgs, queue_name):
-		if msgs:
-			logger.log(loglevels.TRACE, 'Processing %s index event(s) read from redis queue %r', len(msgs), queue_name)
-			service = self._get_store().get_document_service()
-			result = self.dispatch_messages_to_cs( msgs, service )
-			if result and result.errors: # check for parsing validation errors
-				s = '\n'.join(result.errors[:5]) # don't show all error
-				logger.error(s) # log errors only 
-				#TODO: save result / messages to a file
-			
-	@classmethod
-	def dispatch_messages_to_cs(cls, msgs, service):
+	def process_messages(self, msgs):
+		service = self._get_store().get_document_service()
 		for m in msgs:
-			m = eval(zlib.decompress(m))
-			op, _id, version, external =  m
-			if op == 'add':
-				service.add(_id, version, external)
+			op, oid, _, version, external =  m
+			if op in ('add', 'update'):
+				service.add(oid, version, external)
 			elif op == 'delete':
-				service.delete(_id, version)
+				service.delete(oid, version)
 		result = service.commit()
 		return result
 	
