@@ -43,15 +43,18 @@ class _RedisRepozeStorageService(_RedisStorageService):
 				return
 			_ds_intid = component.getUtility( zope.intid.IIntIds )
 			for op, oid, _, _, _ in msgs:
-				data = _ds_intid.queryObject(int(oid), None)
-				if data is not None:
-					if op == 'add':
-						im.do_index_content(data)
-					elif op == 'update':
-						im.do_update_content(data)
-					elif op == 'delete':
-						im.do_delete_content(data)
-				else:
-					logger.debug("Cannot find object with id %s" % oid)
+				oid = int(oid)
+				if op in ('add', 'update'):
+					data = _ds_intid.queryObject(oid, None)
+					if data is not None:
+						if op == 'add':
+							im.do_index_content(data)
+						else:
+							im.do_update_content(data)
+					else:
+						logger.debug("Cannot find object with id %s" % oid)
+				elif op == 'delete':
+					im.unindex_doc(oid)
+				
 						
 		trxrunner(f, retries=5, sleep=0.1)
