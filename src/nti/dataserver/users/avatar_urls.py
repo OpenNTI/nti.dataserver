@@ -12,6 +12,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import random
+import urlparse
 
 from zope import interface
 from zope import component
@@ -72,6 +73,7 @@ class GravatarComputedAvatarURL(object):
 	def __init__( self, context ):
 
 		email = _username_as_email( context.username )
+		from_real_email = False
 		try:
 			profile = interfaces.ICompleteUserProfile( context, None )
 		except TypeError:
@@ -79,9 +81,14 @@ class GravatarComputedAvatarURL(object):
 		else:
 			if profile and profile.email:
 				email = profile.email
+				from_real_email = True
 
 		gravatar_type = _find_default_gravatar_type( profile, context, self )
 		self.avatarURL = create_gravatar_url( email, gravatar_type )
+		if from_real_email:
+			scheme, netloc, url, params, query, fragment = urlparse.urlparse( self.avatarURL )
+			fragment = 'using_provided_email_address'
+			self.avatarURL = urlparse.urlunparse( (scheme, netloc, url, params, query, fragment ) )
 
 @component.adapter(nti_interfaces.ICoppaUser)
 @interface.implementer(interfaces.IAvatarURLProvider,interfaces.IAvatarURL)
