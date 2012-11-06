@@ -44,6 +44,7 @@ class _RepozeRedisStorageService(_RedisStorageService):
 			
 	def _process_user_messages(self, username, msg_list):
 		trxrunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner)
+		logger.info("Processing %s redis-arriving message(s) for user %s", len(msg_list), username)
 		def f():
 			entity = Entity.get_entity(username)
 			im = search_interfaces.IRepozeEntityIndexManager(entity, None)
