@@ -76,20 +76,16 @@ class MockCloundSearchQueryParser(object):
 		result = query.And(ands)
 		return result
 	
-@interface.implementer(search_interfaces.ICloudSearchStore)
-class MockCloudSearch(object):
-
-	def __init__( self ):
-		self.schema = _cs_schema
-		self.index =  ramindex.RamIndex(self.schema)
-		
+	
+class MockDocumentService(object):
+	def __init__( self, index ):
+		self.index = index
+			
 	def exists(self, _id):
 		with self.index.searcher() as s:
 			doc_number = s.document_number(id=unicode(_id))
-			return doc_number is not None
+			return doc_number is not None	
 		
-	# document service
-	
 	def add(self, _id, version, external):
 		data = dict(external)
 		data['id'] = unicode(_id)
@@ -107,8 +103,13 @@ class MockCloudSearch(object):
 		writer.delete_by_term(u'id', _id)
 		writer.commit()
 		
-	# search service
+	def commit(self, *args, **kwargs):
+		return None
 	
+class MockSearchService(object):
+	def __init__( self, index ):
+		self.index = index
+			
 	def search(self, bq, *args, **kwargs):
 		result = []
 		with self.index.searcher() as s:
@@ -120,11 +121,16 @@ class MockCloudSearch(object):
 				data['score'] = [h.score or 1.0]
 				result.append(entry)
 		return result
-
-	def commit(self, *args, **kwargs):
-		return None
 	
-	# cloud search store
+@interface.implementer(search_interfaces.ICloudSearchStore)
+class MockCloudSearch(_cloudsearch_store._CloudSearchStore):
+
+	def __init__( self ):
+		self.schema = _cs_schema
+		self.index = ramindex.RamIndex(self.schema)
+
+	def reset_aws_connection(self, **kwargs):
+		pass
 	
 	def get_aws_domains(self):
 		return ()
@@ -133,10 +139,10 @@ class MockCloudSearch(object):
 		return None
 	
 	def get_document_service(self, domain_name=None):
-		return self
+		return MockDocumentService(self.index)
 	
 	def get_search_service(self, domain_name=None):
-		return self
+		return MockSearchService(self.index)
 
 class MockCloudSearchStorageService(_cloudsearch_store._CloudSearchStorageService):
 	

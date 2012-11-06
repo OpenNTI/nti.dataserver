@@ -31,12 +31,12 @@ logger = logging.getLogger( __name__ )
 @interface.implementer(search_interfaces.ICloudSearchEntityIndexManager, IFullMapping)
 class _CloudSearchEntityIndexManager(_SearchEntityIndexManager):
 
-	_v_service = None
+	_v_store = None
 	
-	def _get_cs_service(self):
-		if self._v_service is None:
-			self._v_service = component.getUtility(search_interfaces.ICloudSearchStoreService)
-		return self._v_service
+	def _get_cs_store(self):
+		if self._v_store is None:
+			self._v_store = component.getUtility(search_interfaces.ICloudSearchStore)
+		return self._v_store
 
 	def _get_search_hit(self, obj):
 		cloud_data = obj['data']
@@ -51,13 +51,13 @@ class _CloudSearchEntityIndexManager(_SearchEntityIndexManager):
 		results.highlight_type = highlight_type
 		if qo.is_empty: return results
 		
-		service = self._get_cs_service()
+		service = self._get_cs_store()
 
 		# perform cloud query
 		start = qo.get('start', 0)
 		limit = sys.maxint # return all hits
 		bq = parse_query(qo, self.username)
-		objects = service.search_cs(bq=bq, return_fields=search_stored_fields, size=limit, start=start)
+		objects = service.search(bq=bq, return_fields=search_stored_fields, size=limit, start=start)
 		
 		# get ds objects
 		for obj in objects:
@@ -81,11 +81,10 @@ class _CloudSearchEntityIndexManager(_SearchEntityIndexManager):
 		qo = QueryObject.create(query, **kwargs)
 		return self._do_search(content_, qo, creator_method=empty_suggest_and_search_results)
 	
-	
 	def index_content(self, data, type_name=None):
-		service = self._get_cs_service()
+		service = self._get_cs_store()
 		docid = self.get_uid(data)
-		result = service.add_cs(docid, self.username) 
+		result = service.add(docid, self.username) 
 		service.handle_cs_errors(result, throw=True)
 		return True
 	
@@ -93,9 +92,9 @@ class _CloudSearchEntityIndexManager(_SearchEntityIndexManager):
 	update_content = index_content
 
 	def delete_content(self, data, type_name=None):
-		service = self._get_cs_service()
+		service = self._get_cs_store()
 		docid = self.get_uid(data)
-		result = service.delete_cs(docid, self.username) 
+		result = service.delete(docid, self.username) 
 		service.handle_cs_errors(result, throw=True)
 		return True
 
@@ -111,8 +110,8 @@ class _CloudSearchEntityIndexManager(_SearchEntityIndexManager):
 		bq.append(')')
 		bq = ' '.join(bq)
 		
-		service = self._get_cs_service()
-		results = service.search_cs(bq=bq, return_fields=[intid_], size=size, start=0)
+		service = self._get_cs_store()
+		results = service.search(bq=bq, return_fields=[intid_], size=size, start=0)
 		for r in results:
 			yield r[intid_]
 			
@@ -120,7 +119,7 @@ class _CloudSearchEntityIndexManager(_SearchEntityIndexManager):
 		
 	def has_stored_indices(self):
 		bq = unicode("%s:'%s'" % (username_, self.username))
-		service  = self._get_cs_service()
+		service  = self._get_cs_store()
 		results = service.search_cs(bq=bq, return_fields=[intid_], size=1, start=0) if service else ()
 		return len(results) > 0
 		
