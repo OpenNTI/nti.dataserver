@@ -14,6 +14,9 @@ from nti.dataserver.contenttypes import Note
 
 from nti.ntiids.ntiids import make_ntiid
 
+from nti.externalization.externalization import toExternalObject
+
+from nti.contentsearch.common import (ITEMS, HIT_COUNT)
 from nti.contentsearch._search_query import QueryObject
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch._whoosh_index import create_book_schema
@@ -29,7 +32,7 @@ from nti.contentsearch.tests import phrases
 from nti.contentsearch.tests import zanpakuto_commands
 from nti.contentsearch.tests import ConfiguringTestBase
 
-from hamcrest import (is_, assert_that, has_length)
+from hamcrest import (is_, assert_that, has_length, has_entry)
 
 class _BaseIndexManagerTest(object):
 
@@ -269,6 +272,39 @@ class _BaseIndexManagerTest(object):
 		q = QueryObject(term='jinzen', username=user_1.username)
 		hits = self.im.user_data_search(query=q)
 		assert_that(hits, has_length(1))
+		
+	@WithMockDSTrans
+	def test_same_content_two_comm(self):
+		ds = mock_dataserver.current_mock_ds
+		user = User.create_user( ds, username='nti.com', password='temp001')
+		
+		note = Note()
+		note.body = [unicode('Only a few atain both')]
+		note.creator = 'nti.com'
+		note.containerId = make_ntiid(nttype='bleach', specific='manga')
+				
+		comms = []
+		for name in ('Bankai', 'Shikai'):
+			c = Community.create_community( ds, username=name)
+			user.join_community( c )
+			user.follow( c )
+			comms.append(c)
+			note.addSharingTarget( c )
+
+		note = user.addContainedObject( note )
+		
+		self.im = self.create_index_mananger()
+		for c in comms:
+			self.im.index_user_content(data=note, target=c)
+		self.wait_delay()
+		
+		q = QueryObject(term='atain', username=user.username)
+		hits = self.im.user_data_search(query=q)
+		assert_that(hits, has_length(2))
+		
+		hits = toExternalObject(hits)
+		assert_that(hits, has_entry(HIT_COUNT, 1))
+		assert_that(hits, has_entry(ITEMS, has_length(1)))
 		
 class TestIndexManagerWithRepoze(_BaseIndexManagerTest, ConfiguringTestBase):
 
