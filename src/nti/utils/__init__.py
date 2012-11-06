@@ -17,8 +17,8 @@ _AVATAR_SERVICES = { 'gravatar': { True: b'secure.gravatar.com',
 					'libravatar': {True: b'seccdn.libravatar.org',
 								   False: b'cdn.libravatar.org'} }
 
-GENERATED_GRAVATAR_TYPES = ('retro', 'identicon', 'monsterid', 'wavatar' )
-KNOWN_GRAVATAR_TYPES = GENERATED_GRAVATAR_TYPES + ('mm','404')
+GENERATED_GRAVATAR_TYPES = ('retro', 'identicon', 'monsterid', 'wavatar' ) #: Constants identifying the various generated gravatar types
+KNOWN_GRAVATAR_TYPES = GENERATED_GRAVATAR_TYPES + ('mm','404') #: Constants for all types of gravatars, generated or static
 
 def create_gravatar_url( username,
 						 defaultGravatarType='mm',
@@ -29,8 +29,8 @@ def create_gravatar_url( username,
 	Return a gravatar URL for the given username (which is assumed to be an email address).
 
 	:keyword basestring defaultGravatarType: The gravatar type to use if no specific
-		gravatar is available. Defaults to 'mm' for mystery man.
-	:keyword bool secure: If `True` (default `False`) HTTPS URL will be generated.
+		gravatar is available. Defaults to ``mm`` for mystery man. See :data:`KNOWN_GRAVATAR_TYPES` for the options.
+	:keyword bool secure: If ``True`` (default ``False``) HTTPS URL will be generated.
 	:keyword int size: The pixel dimensions of the image, between 1 and 512. Default 128.
 
 	:return: A gravatar URL for the given username. See http://en.gravatar.com/site/implement/images/
@@ -72,14 +72,12 @@ def make_cache_dir(cache_name, env_var=None):
 		result = os.environ.get( env_var )
 
 	if result is None:
+		child_parts = ('var', 'caches', cache_name)
 		# In preference order
-		env_child = ( ('DATASERVER_ENV', ('var', 'caches', cache_name)),
-					  ('DATASERVER_DIR', ('var', 'caches', cache_name)),
-					  ('VIRTUAL_ENV',    ('var', 'caches', cache_name) ) )
-		for env_var, child in env_child:
+		for env_var in ('DATASERVER_ENV', 'DATASERVER_DIR', 'VIRTUAL_ENV'):
 			if env_var in os.environ:
 				parent = os.environ[env_var]
-				result = os.path.join( parent, *child )
+				result = os.path.join( parent, *child_parts )
 				break
 
 	# Ok, no environment to be found. How about some system specific stuff?
@@ -104,6 +102,15 @@ def make_cache_dir(cache_name, env_var=None):
 	return result
 
 def setupChameleonCache(config=False):
+	"""
+	Sets the location for the :mod:`chameleon` cache using
+	:func:`make_cache_dir`.
+
+	:param bool config: If ``True`` (not the default), then
+		:mod:`chameleon.config` will be updated to reflect the
+		results of this function.
+	:return: The string giving the path to the cache location.
+	"""
 	# Set up a cache for these things to make subsequent renders faster
 
 	result = None
