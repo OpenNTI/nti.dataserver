@@ -1,6 +1,8 @@
 from __future__ import print_function, unicode_literals
 
+import uuid
 import UserDict
+import collections
 
 import zope.intid
 from zope import component
@@ -18,10 +20,10 @@ from nti.contentsearch._search_highlights import WORD_HIGHLIGHT
 from nti.contentsearch._search_highlights import word_fragments_highlight
 
 from nti.contentsearch.common import (	NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
-										SNIPPET, HIT, ID, CONTENT, INTID, QUERY, SCORE,
+										SNIPPET, HIT, ID, CONTENT, INTID, QUERY, SCORE, OID,
 										HIT_COUNT, ITEMS, SUGGESTIONS, FRAGMENTS, PHRASE_SEARCH)
 
-from nti.contentsearch.common import ( last_modified_, content_, title_, ntiid_)
+from nti.contentsearch.common import ( last_modified_, content_, title_, ntiid_, intid_)
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -91,6 +93,10 @@ class _BaseSearchResultsExternalizer(object):
 @component.adapter(search_interfaces.ISearchResults)
 class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 	
+	def __init__( self, results ):
+		super(_SearchResultsExternalizer, self).__init__(results)
+		self.seen = set()
+		
 	@property
 	def hits(self):
 		return self.results.hits
@@ -111,10 +117,14 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 			if hit is None or hit[0] is None:
 				continue
 
-			item = hit[0]
-			score = hit[1]
+			item, score = hit
+			
 			# adapt to a search hit 
 			hit = get_search_hit(item, score, query, highlight_type)
+			if hit.oid in self.seen:
+				continue
+			
+			self.seen.add(hit.oid)
 			last_modified = max(last_modified, hit.last_modified)
 			# run any decorator
 			external = toExternalObject(hit)
@@ -157,10 +167,20 @@ def get_uid(obj):
 	uid = _ds_intid.getId(obj)
 	return uid
 
+def get_hit_id(obj):
+	if nti_interfaces.IModeledContent.providedBy(obj):
+		result = unicode(get_uid(obj))
+	elif isinstance(obj, collections.Mapping):
+		result = obj.get(OID, None)
+	else:
+		result = None
+	return result or unicode(uuid.uuid4())
+
 @interface.implementer(search_interfaces.ISearchHit)
 class _BaseSearchHit(object, UserDict.DictMixin):
-	def __init__( self ):
+	def __init__( self, oid=None):
 		self._data = {}
+		self.oid = oid
 		self._query = None
 		
 	def toExternalObject(self):
@@ -203,7 +223,7 @@ class _BaseSearchHit(object, UserDict.DictMixin):
 	
 class _SearchHit(_BaseSearchHit):
 	def __init__( self, original, score=1.0 ):
-		super(_SearchHit, self).__init__()
+		super(_SearchHit, self).__init__(get_hit_id(original))
 		adapted = component.queryAdapter(original, search_interfaces.IContentResolver)
 		self._data[CLASS] = HIT
 		self._data[SCORE] = score
@@ -245,6 +265,7 @@ class _WhooshBookSearchHit(_BaseSearchHit):
 		self._data[CONTAINER_ID] = hit[ntiid_]
 		self._data[title_.capitalize()] = hit[title_]
 		self._data[LAST_MODIFIED] = epoch_time(hit[last_modified_])
+		self.oid = ''.join((hit[ntiid_], u'-', unicode(hit[intid_])))
 			
 	@property
 	def last_modified(self):

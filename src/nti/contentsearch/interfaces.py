@@ -581,14 +581,14 @@ class IWordSimilarity(interface.Interface):
 		"""return the specified terms based on the distance to the specified word"""
 		
 class ISearchHit(ext_interfaces.IExternalObject):
-	query = schema.TextLine(title="query that produced this hit")
-	last_modified = schema.Float(title="last modified date for this hit")
-	score = schema.Float(title="query relevance score")
+	query = schema.Object(ISearchQuery, title="query that produced this hit", required=True, readonly=True)
+	score = schema.Float(title="hit relevance score", required=True, readonly=True)
+	oid = schema.TextLine(title="hit unique id", required=True, readonly=True)
+	last_modified = schema.Float(title="last modified date for this hit", required=False, readonly=True)
 	
 class IBaseSearchResults(interface.Interface):
 	query = schema.Object(ISearchQuery, title="search query")
-	pass
-
+	
 class ISearchResults(IBaseSearchResults):
 	hits = schema.Iterable("search result hits")
 	
