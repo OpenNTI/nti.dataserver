@@ -5,6 +5,7 @@ import collections
 import zope.intid
 from zope import component
 from zope import interface
+from zope.event import notify
 
 from nti.dataserver.users import Entity
 from nti.dataserver import interfaces as nti_interfaces
@@ -15,7 +16,7 @@ from nti.contentsearch._redis_indexstore import _RedisStorageService
 import logging
 logger = logging.getLogger( __name__ )
 
-@interface.implementer(search_interfaces.IRepozeRedisStoreService)
+@interface.implementer(search_interfaces.IRedisStoreService)
 class _RepozeRedisStorageService(_RedisStorageService):
 	
 	def process_messages(self, msgs):
@@ -37,24 +38,27 @@ class _RepozeRedisStorageService(_RedisStorageService):
 		trxrunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner)
 		def f():
 			entity = Entity.get_entity(username)
-			im = search_interfaces.IRepozeRedisEntityIndexManager(entity, None)
+			im = search_interfaces.IRepozeEntityIndexManager(entity, None)
 			if im is None:
-				logger.debug("Cannot adapt to repoze [redis] index manager for entity %s" % username)
+				logger.debug("Cannot adapt to repoze index manager for entity %s" % username)
 				return
+			
 			_ds_intid = component.getUtility( zope.intid.IIntIds )
 			for op, oid, _, _, _ in msgs:
 				oid = int(oid)
+				data = _ds_intid.queryObject(oid, None)
 				if op in ('add', 'update'):
-					data = _ds_intid.queryObject(oid, None)
 					if data is not None:
 						if op == 'add':
-							im.do_index_content(data)
+							im.index_content(data)
+							notify(search_interfaces.IndexEvent(entity, data, search_interfaces.IE_INDEXED))
 						else:
-							im.do_update_content(data)
+							im.update_content(data)
+							notify(search_interfaces.IndexEvent(entity, data, search_interfaces.IE_REINDEXED))
 					else:
 						logger.debug("Cannot find object with id %s" % oid)
 				elif op == 'delete':
 					im.unindex_doc(oid)
-				
+					notify(search_interfaces.IndexEvent(entity, data or oid, search_interfaces.IE_UNINDEXED))
 						
 		trxrunner(f, retries=5, sleep=0.1)

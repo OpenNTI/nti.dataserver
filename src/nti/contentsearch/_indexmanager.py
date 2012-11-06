@@ -39,7 +39,7 @@ class IndexManager(object):
 			cls.indexmanager = super(IndexManager, cls).__new__(cls, *args, **kwargs)
 		return cls.indexmanager
 
-	def __init__(self, bookidx_manager_factory, useridx_manager_adapter, search_pool_size=5, *args, **kwargs):
+	def __init__(self, bookidx_manager_factory, useridx_manager_adapter):
 		self.books = CaseInsensitiveDict()
 		self.bookidx_manager_factory = bookidx_manager_factory
 		self.useridx_manager_adapter = useridx_manager_adapter
@@ -167,21 +167,21 @@ class IndexManager(object):
 			results = merge_suggest_results(results, rest)
 		return results
 
-	def index_user_content(self, target, type_name=None, data=None):
+	def index_user_content(self, target, data, type_name=None):
 		um = None
 		if data is not None:
 			um = self._get_user_index_manager(target)
 		if um is not None and data is not None and um.index_content(data, type_name):
 			notify(search_interfaces.IndexEvent(target, data, search_interfaces.IE_INDEXED))
 
-	def update_user_content(self, target, type_name=None, data=None):
+	def update_user_content(self, target, data, type_name=None):
 		um = None
 		if data is not None:
 			um = self._get_user_index_manager(target)
 		if um is not None and data is not None and um.update_content(data, type_name):
 			notify(search_interfaces.IndexEvent(target, data, search_interfaces.IE_REINDEXED))
 
-	def delete_user_content(self, target, type_name=None, data=None):
+	def delete_user_content(self, target, data, type_name=None):
 		um = None
 		if data is not None:
 			um = self._get_user_index_manager(target)
