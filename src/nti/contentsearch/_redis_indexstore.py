@@ -50,6 +50,10 @@ class _RedisStorageService(object):
 	def batch_proc(self):
 		return self._v_batch_proc
 	
+	@property
+	def stop(self):
+		return self._v_stop
+	
 	def halt(self):
 		self._v_stop = True
 		
@@ -84,10 +88,10 @@ class _RedisStorageService(object):
 	def _spawn_index_listener(self):
 		
 		def read_index_msgs():
-			while not self._v_stop:
+			while not self.stop:
 				# wait for idx ops
 				gevent.sleep(self.sleep_wait_time)
-				if not self._v_stop:
+				if not self.stop:
 					self.read_process_index_msgs()
 				
 		result = gevent.spawn( read_index_msgs )
