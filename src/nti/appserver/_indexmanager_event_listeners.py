@@ -14,7 +14,7 @@ logger = __import__('logging').getLogger(__name__)
 
 import os
 import os.path
-import tempfile
+
 
 import gevent
 
@@ -26,25 +26,31 @@ from nti.contentsearch import interfaces as search_interfaces
 
 from nti.contentlibrary.boto_s3 import key_last_modified
 
+from nti.utils import make_cache_dir
+
+def _add_book( indexmanager, indexname, indexdir, ntiid ):
+	try:
+		__traceback_info__ = indexdir, indexmanager, indexname, ntiid
+		if indexmanager.add_book( indexname=indexname, indexdir=indexdir, ntiid=ntiid ):
+			logger.debug( 'Added index %s at %s to %s', indexname, indexdir, indexmanager )
+		else:
+			logger.warn( 'Failed to add index %s at %s to %s', indexname, indexdir, indexmanager )
+	except ImportError: # pragma: no cover
+		# Adding a book on disk loads the Whoosh indexes, which
+		# are implemented as pickles. Incompatible version changes
+		# lead to unloadable pickles. We've seen this manifest as ImportError
+		logger.exception( "Failed to add book search %s", indexname )
+
 @component.adapter(lib_interfaces.IFilesystemContentPackage, IObjectCreatedEvent)
 def add_filesystem_index( title, event ):
 	indexmanager = component.queryUtility( search_interfaces.IIndexManager )
 	if indexmanager is None: # pragma: no cover
 		return
 
-	try:
-		indexname = os.path.basename( title.get_parent_key().bucket.name ) # TODO: So many assumptions here
-		indexdir_key = title.make_sibling_key( 'indexdir' )
-		__traceback_info__ = indexdir_key, indexmanager, indexname
-		if indexmanager.add_book( indexname=indexname, indexdir=indexdir_key.absolute_path, ntiid=title.ntiid ):
-			logger.debug( 'Added index %s at %s to %s', indexname, indexdir_key, indexmanager )
-		else:
-			logger.warn( 'Failed to add index %s at %s to %s', indexname, indexdir_key, indexmanager )
-	except ImportError: # pragma: no cover
-		# Adding a book on disk loads the Whoosh indexes, which
-		# are implemented as pickles. Incompatible version changes
-		# lead to unloadable pickles. We've seen this manifest as ImportError
-		logger.exception( "Failed to add book search %s", title )
+	indexname = os.path.basename( title.get_parent_key().bucket.name ) # TODO: So many assumptions here
+	indexdir_key = title.make_sibling_key( 'indexdir' )
+	_add_book( indexmanager, indexname, indexdir_key.absolute_path, title.ntiid )
+
 
 @component.adapter(lib_interfaces.IS3ContentPackage, IObjectCreatedEvent)
 def add_s3_index( title, event ):
@@ -59,9 +65,7 @@ def add_s3_index( title, event ):
 	# TODO: We really want a utility to manage this cache.
 	# It would be created at startup by the application, and given the name of
 	# a directory to use. We would then use it to store and retrieve things.
-	index_cache_dir = os.environ.get( 'NTI_INDEX_CACHE_DIR', tempfile.gettempdir() )
-	if not os.path.isdir( index_cache_dir ):
-		os.mkdir( index_cache_dir )
+	index_cache_dir = make_cache_dir( 'whoosh_content_index', env_var='NTI_INDEX_CACHE_DIR' )
 
 	index_name = title.get_parent_key().key
 	title_index_cache_dir = os.path.join( index_cache_dir, index_name, 'indexdir' )
@@ -108,9 +112,5 @@ def add_s3_index( title, event ):
 	finally:
 		cache_lock.close()
 
-	__traceback_info__ = title, index_name, title_index_cache_dir
-	if indexmanager.add_book(indexname=index_name, indexdir=title_index_cache_dir, ntiid=title.ntiid ):
-		# If the index is corrupt, that may throw, often a TypeError. On version
-		# differences, it can throw an ImportError. Ultimately this should propagate up and terminate
-		# the worker process
-		logger.debug( 'Added book %s to %s', index_name, indexmanager )
+
+	_add_book( indexmanager, index_name, title_index_cache_dir, title.ntiid )
