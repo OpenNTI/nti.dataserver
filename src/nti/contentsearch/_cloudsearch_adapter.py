@@ -111,7 +111,6 @@ class _CloudSearchEntityIndexManager(_SearchEntityIndexManager):
 				logger.error(s)
 
 	def index_content(self, data, type_name=None):
-		if not data: return None
 		service = self._get_cs_service()
 		type_name = normalize_type_name(type_name or get_type_name(data))
 		oid, external = to_cloud_object(data, self.username)
@@ -124,7 +123,6 @@ class _CloudSearchEntityIndexManager(_SearchEntityIndexManager):
 	update_content = index_content
 
 	def delete_content(self, data, type_name=None):
-		if not data: return None
 		service = self._get_cs_service()
 		oid = get_cloud_oid(data)
 		service.delete(oid, version=self.d_version) 
