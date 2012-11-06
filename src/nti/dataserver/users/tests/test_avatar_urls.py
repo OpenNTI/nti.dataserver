@@ -27,6 +27,7 @@ from zope import interface
 from zope.annotation import interfaces as an_interfaces
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import links
+from nti.dataserver import users
 from nti.dataserver.users import interfaces
 from nti.dataserver.users import Everyone
 from nti.dataserver.users import users_external
@@ -60,6 +61,18 @@ def test_coppa_user():
 	profile.avatarURL = '/a/path/to/data/@@view'
 	assert_that( users_external._avatar_url( o ), is_( links.Link ) )
 
+
+def test_user_with_email():
+
+	u = users.User( "jason.madden@nextthought.com" )
+	profile = interfaces.ICompleteUserProfile( u )
+
+	profile.email = 'jason.madden@nextthought.com'
+
+	avurl_prof = interfaces.IAvatarURL( u )
+
+	assert_that( avurl_prof.avatarURL,
+				 is_( 'http://www.gravatar.com/avatar/5738739998b683ac8fe23a61c32bb5a0?s=128&d=identicon#using_provided_email_address' ) )
 
 def test_everyone():
 
