@@ -164,8 +164,7 @@ class _BaseRepozeEntityIndexManager(_SearchEntityIndexManager):
 		
 	# ----------------
 
-	def index_content(self, data, type_name=None, **kwargs):
-		if not data: return None
+	def index_content(self, data, type_name=None):
 		docid = self.get_uid(data)
 		catalog = self.get_create_catalog(data, type_name)
 		if catalog:
@@ -173,8 +172,7 @@ class _BaseRepozeEntityIndexManager(_SearchEntityIndexManager):
 			return True
 		return False
 
-	def update_content(self, data, type_name=None, *args, **kwargs):
-		if not data: return None
+	def update_content(self, data, type_name=None):
 		docid = self.get_uid(data)
 		catalog = self.get_create_catalog(data, type_name)
 		if catalog:
@@ -182,8 +180,7 @@ class _BaseRepozeEntityIndexManager(_SearchEntityIndexManager):
 			return True
 		return False
 
-	def delete_content(self, data, type_name=None, *args, **kwargs):
-		if not data: return None
+	def delete_content(self, data, type_name=None):
 		docid = self.get_uid(data)
 		catalog = self.get_create_catalog(data, type_name, create=False)
 		if catalog:
