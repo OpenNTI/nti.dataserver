@@ -45,6 +45,9 @@ def get_document_service(domain=None, endpoint=None):
 @interface.implementer(search_interfaces.ICloudSearchStore)
 class _CloudSearchStore(object):
 	
+	_v_domains = {}
+	_v_connection = None
+	
 	def __init__(self, search_domain='ntisearch', **kwargs):
 		self.search_domain = search_domain
 		self.reset_aws_connection(**kwargs)
@@ -88,16 +91,8 @@ class _CloudSearchStore(object):
 		domain = self.get_domain(domain_name)
 		result = get_search_service(domain) if domain else None
 		return result
-
-@interface.implementer(search_interfaces.ICloudSearchStoreService)
-class _CloudSearchStorageService(_RedisStorageService):
 	
-	_store = None
-	
-	def _get_store(self):
-		if self._store is None:
-			self._store = component.getUtility( search_interfaces.ICloudSearchStore  )
-		return self._store
+	# index methods
 	
 	@property
 	def version(self):
@@ -111,16 +106,16 @@ class _CloudSearchStorageService(_RedisStorageService):
 	def d_version(self):
 		return self.version + 1
 	
-	def search_cs(self, *args, **kwargs):
-		service = self._get_store().get_search_service()
+	def search(self, service=None, *args, **kwargs):
+		service = service or self.get_search_service()
 		result = service.search(*args, **kwargs)
 		return result
 	
-	def add_cs(self, docid, username, service=None, commit=True):
+	def add(self, docid, username, service=None, commit=True):
 		_ds_intid = component.getUtility( zope.intid.IIntIds )
 		data = _ds_intid.queryObject(docid, None)
 		if data is not None:
-			service = service or self._get_store().get_document_service()
+			service = service or self.get_document_service()
 			oid = get_cloud_oid(docid)
 			external = to_cloud_object(data, username)
 			service.add(oid, self.a_version, external)
@@ -131,11 +126,11 @@ class _CloudSearchStorageService(_RedisStorageService):
 			logger.debug("Cannot find object with id %s" % docid)
 		return False
 			
-	update_cs = add_cs
+	update = add
 		
-	def delete_cs(self, docid, username, service=None, commit=True):
+	def delete(self, docid, username, service=None, commit=True):
 		oid = get_cloud_oid(docid)
-		service = service or self._get_store().get_document_service()
+		service = service or self.get_document_service()
 		service.delete(oid, self.d_version)
 		if commit:
 			return service.commit()
@@ -150,18 +145,28 @@ class _CloudSearchStorageService(_RedisStorageService):
 					raise Exception(s)
 				else:
 					logger.error(s)
+
+@interface.implementer(search_interfaces.ICloudSearchStoreService)
+class _CloudSearchStorageService(_RedisStorageService):
+	
+	_store = None
+	
+	def _get_store(self):
+		if self._store is None:
+			self._store = component.getUtility( search_interfaces.ICloudSearchStore  )
+		return self._store
 					
 	def process_messages(self, msgs):
-		_ds_intid = component.getUtility( zope.intid.IIntIds )
-		service = self._get_store().get_document_service()
+		store = self._get_store()
+		service = store.get_document_service()
 		for m in msgs:
 			op, docid, username =  m
 			if op in ('add', 'update'):
-				self.add_cs(docid, username, service, False)
+				store.add(docid, username, service, False)
 			elif op == 'delete':
-				service.delete_cs(docid, username, service, False)
+				store.delete(docid, username, service, False)
 		result = service.commit()
-		self.handle_cs_errors(result)
+		store.handle_cs_errors(result)
 	
 @interface.implementer(search_interfaces.ICloudSearchStore)
 def _create_cloudsearch_store():

@@ -27,7 +27,6 @@ from nti.contentsearch.tests import zanpakuto_commands
 from nti.contentsearch.tests import ConfiguringTestBase
 from nti.contentsearch.tests.mock_cloudsearch import MockCloudSearch
 from nti.contentsearch.tests.mock_cloudsearch import MockCloundSearchQueryParser
-from nti.contentsearch.tests.mock_cloudsearch import MockCloudSearchStorageService
 
 from hamcrest import (is_not, has_key, has_entry, has_length, assert_that)
 	
@@ -56,9 +55,6 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 								 adapts=[nti_interfaces.INote],
 								 provides=search_interfaces.ICloudSearchObject)	
 		
-		self.cs_service = MockCloudSearchStorageService()
-		component.provideUtility( self.cs_service, provides=search_interfaces.ICloudSearchStoreService )
-		
 	def _register_zcml_cs(self):
 		self.aws_op_delay = 5
 		self._register_zcml()
@@ -70,7 +66,7 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 		component.provideUtility( self.store, provides=search_interfaces.ICloudSearchStore )
 
 	def _register_zcml_mock(self):
-		self.aws_op_delay = 2.5
+		self.aws_op_delay = 0.5
 		self._register_zcml()
 		
 		parser = MockCloundSearchQueryParser()
@@ -82,9 +78,6 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 	def setUp( self ):
 		super(TestCloudSearchAdapter,self).setUp()
 		self._register_zcml_mock()	
-		
-	def tearDown(self):
-		self.cs_service.halt()
 		
 	# ---------------------
 	
