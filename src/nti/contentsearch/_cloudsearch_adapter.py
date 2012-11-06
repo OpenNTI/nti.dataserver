@@ -1,8 +1,6 @@
 from __future__ import print_function, unicode_literals
 
 import sys
-import time
-from datetime import datetime
 
 from zope import interface
 from zope import component
@@ -14,13 +12,9 @@ from perfmetrics import metricmethod
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.contentsearch.common import is_all_query
-from nti.contentsearch.common import get_type_name
 from nti.contentsearch._search_query import QueryObject
-from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch._cloudsearch_query import parse_query
 from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch._cloudsearch_index import get_cloud_oid
-from nti.contentsearch._cloudsearch_index import to_cloud_object
 from nti.contentsearch._search_results import empty_search_results
 from nti.contentsearch._search_results import empty_suggest_results
 from nti.contentsearch._cloudsearch_index import search_stored_fields
@@ -63,7 +57,7 @@ class _CloudSearchEntityIndexManager(_SearchEntityIndexManager):
 		start = qo.get('start', 0)
 		limit = sys.maxint # return all hits
 		bq = parse_query(qo, self.username)
-		objects = service.search(bq=bq, return_fields=search_stored_fields, size=limit, start=start)
+		objects = service.search_cs(bq=bq, return_fields=search_stored_fields, size=limit, start=start)
 		
 		# get ds objects
 		for obj in objects:
@@ -87,36 +81,12 @@ class _CloudSearchEntityIndexManager(_SearchEntityIndexManager):
 		qo = QueryObject.create(query, **kwargs)
 		return self._do_search(content_, qo, creator_method=empty_suggest_and_search_results)
 	
-	# ---------------------- 
 	
-	@property
-	def version(self):
-		return int(time.mktime(datetime.utcnow().timetuple()))
-	
-	@property
-	def a_version(self):
-		return self.version - 10
-	
-	@property
-	def d_version(self):
-		return self.version + 1
-	
-	def _check_errors(self, result, n=5, throw=True):
-		errors = result.errors[:n] if result is not None else ()
-		if errors:
-			s = '\n'.join(errors)
-			if throw:
-				raise Exception(s)
-			else:
-				logger.error(s)
-
 	def index_content(self, data, type_name=None):
 		service = self._get_cs_service()
-		type_name = normalize_type_name(type_name or get_type_name(data))
-		oid, external = to_cloud_object(data, self.username)
-		service.add(oid, version=self.a_version, external=external) 
-		result = service.commit()
-		self._check_errors(result)
+		docid = self.get_uid(data)
+		result = service.add_cs(docid, self.username) 
+		service.handle_cs_errors(result, throw=True)
 		return True
 	
 	# update is simply and add w/ a different version number
@@ -124,32 +94,16 @@ class _CloudSearchEntityIndexManager(_SearchEntityIndexManager):
 
 	def delete_content(self, data, type_name=None):
 		service = self._get_cs_service()
-		oid = get_cloud_oid(data)
-		service.delete(oid, version=self.d_version) 
-		result = service.commit()
-		self._check_errors(result)
+		docid = self.get_uid(data)
+		result = service.delete_cs(docid, self.username) 
+		service.handle_cs_errors(result, throw=True)
 		return True
 
-	def remove_index(self, type_name=None):
-		counter = 0
-		service = self._get_cs_service()
-		for oid in self.get_aws_oids(type_name=type_name):
-			service.delete(oid, self.d_version)
-			counter = counter + 1
-		
-		if counter:
-			result = service.commit()
-			self._check_errors(result, throw=False)
-			deletes = getattr(result, 'deletes', 0) if result is not None else 0
-			return deletes
-		return 0
-		
 	def get_aws_oids(self, type_name=None, size=sys.maxint):
 		"""
-		return a generator w/ int ids of the objects indexed in aws
+		return a generator w/ ids of the objects indexed in aws
 		"""
 		
-		# prepare query
 		bq = ['(and']
 		bq.append("%s:'%s'" % (username_, self.username))
 		if type_name:
@@ -158,16 +112,16 @@ class _CloudSearchEntityIndexManager(_SearchEntityIndexManager):
 		bq = ' '.join(bq)
 		
 		service = self._get_cs_service()
-		results = service.search(bq=bq, return_fields=[intid_], size=size, start=0)
+		results = service.search_cs(bq=bq, return_fields=[intid_], size=size, start=0)
 		for r in results:
-			yield r['id']
+			yield r[intid_]
 			
 	# ---------------------- 
 		
 	def has_stored_indices(self):
 		bq = unicode("%s:'%s'" % (username_, self.username))
 		service  = self._get_cs_service()
-		results = service.search(bq=bq, return_fields=[intid_], size=1, start=0) if service else ()
+		results = service.search_cs(bq=bq, return_fields=[intid_], size=1, start=0) if service else ()
 		return len(results) > 0
 		
 	def get_stored_indices(self):

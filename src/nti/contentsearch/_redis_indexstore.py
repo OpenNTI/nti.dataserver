@@ -57,20 +57,20 @@ class _RedisStorageService(object):
 	def halt(self):
 		self._v_stop = True
 		
-	def encode_message(self, op, docid, username, version=0, external=None):
-		msg = repr((op, docid, username, version, external))
+	def encode_message(self, op, docid, username):
+		msg = repr((op, docid, username))
 		return msg
 		
-	def add(self, docid, username=None, version=0, external=None):
-		msg = self.encode_message('add', docid, username, version, external)
+	def add(self, docid, username):
+		msg = self.encode_message('add', docid, username)
 		self._put_msg(msg)
 	
-	def update(self, docid, username=None, version=0, external=None):
-		msg = self.encode_message('update', docid, username, version, external)
+	def update(self, docid, username):
+		msg = self.encode_message('update', docid, username)
 		self._put_msg(msg)
 		
-	def delete(self, docid, username=None, version=0):
-		msg = self.encode_message('delete', docid, username, version)
+	def delete(self, docid, username):
+		msg = self.encode_message('delete', docid, username)
 		self._put_msg(msg)
 	
 	def _get_index_msgs(self):

@@ -1,7 +1,10 @@
 from __future__ import print_function, unicode_literals
 
 import os
+import time
+from datetime import datetime
 
+import zope.intid
 from zope import component
 from zope import interface
 
@@ -12,6 +15,8 @@ from boto.cloudsearch.search import SearchConnection
 from boto.cloudsearch.document import DocumentServiceConnection
 
 from nti.contentsearch import interfaces as search_interfaces
+from nti.contentsearch._cloudsearch_index import get_cloud_oid
+from nti.contentsearch._cloudsearch_index import to_cloud_object
 from nti.contentsearch._redis_indexstore import _RedisStorageService
 
 import logging
@@ -84,7 +89,6 @@ class _CloudSearchStore(object):
 		result = get_search_service(domain) if domain else None
 		return result
 
-
 @interface.implementer(search_interfaces.ICloudSearchStoreService)
 class _CloudSearchStorageService(_RedisStorageService):
 	
@@ -96,41 +100,68 @@ class _CloudSearchStorageService(_RedisStorageService):
 		return self._store
 	
 	@property
-	def default_queue_name(self):
-		return self.queue_name
-		
-	# search/index service
+	def version(self):
+		return int(time.mktime(datetime.utcnow().timetuple()))
 	
-	def add(self, _id, version, external):
-		msg = repr(('add', _id, version, external))
-		self._put_msg(msg)
+	@property
+	def a_version(self):
+		return self.version - 10
 	
-	update = add
+	@property
+	def d_version(self):
+		return self.version + 1
 	
-	def delete(self, _id, version):
-		msg = repr(('delete', _id, version, None))
-		self._put_msg(msg)
-		
-	def commit(self):
-		return None
-	
-	def search(self, *args, **kwargs):
+	def search_cs(self, *args, **kwargs):
 		service = self._get_store().get_search_service()
 		result = service.search(*args, **kwargs)
 		return result
 	
-	# redis
-	
+	def add_cs(self, docid, username, service=None, commit=True):
+		_ds_intid = component.getUtility( zope.intid.IIntIds )
+		data = _ds_intid.queryObject(docid, None)
+		if data is not None:
+			service = service or self._get_store().get_document_service()
+			oid = get_cloud_oid(docid)
+			external = to_cloud_object(data, username)
+			service.add(oid, self.a_version, external)
+			if commit:
+				return service.commit()
+			return True
+		else:
+			logger.debug("Cannot find object with id %s" % docid)
+		return False
+			
+	update_cs = add_cs
+		
+	def delete_cs(self, docid, username, service=None, commit=True):
+		oid = get_cloud_oid(docid)
+		service = service or self._get_store().get_document_service()
+		service.delete(oid, self.d_version)
+		if commit:
+			return service.commit()
+		return True
+		
+	def handle_cs_errors(self, result, max_display=5, throw=False):
+		if result is not None and hasattr(result, 'errors'): 
+			errors = result.errors[:max_display]
+			if errors:
+				s = '\n'.join(errors)
+				if throw:
+					raise Exception(s)
+				else:
+					logger.error(s)
+					
 	def process_messages(self, msgs):
+		_ds_intid = component.getUtility( zope.intid.IIntIds )
 		service = self._get_store().get_document_service()
 		for m in msgs:
-			op, oid, version, external =  m
+			op, docid, username =  m
 			if op in ('add', 'update'):
-				service.add(oid, version, external)
+				self.add_cs(docid, username, service, False)
 			elif op == 'delete':
-				service.delete(oid, version)
+				service.delete_cs(docid, username, service, False)
 		result = service.commit()
-		return result
+		self.handle_cs_errors(result)
 	
 @interface.implementer(search_interfaces.ICloudSearchStore)
 def _create_cloudsearch_store():
