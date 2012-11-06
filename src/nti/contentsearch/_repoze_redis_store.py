@@ -15,8 +15,8 @@ from nti.contentsearch._redis_indexstore import _RedisStorageService
 import logging
 logger = logging.getLogger( __name__ )
 
-@interface.implementer(search_interfaces.IRepozeStoreService)
-class _RedisRepozeStorageService(_RedisStorageService):
+@interface.implementer(search_interfaces.IRepozeRedisStoreService)
+class _RepozeRedisStorageService(_RedisStorageService):
 	
 	def process_messages(self, msgs):
 		users = collections.defaultdict(list)

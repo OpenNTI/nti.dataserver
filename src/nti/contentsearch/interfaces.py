@@ -490,7 +490,7 @@ class IRedisStoreService(interface.Interface):
 		:param version document version
 		"""
 	
-class IRepozeStoreService(IRedisStoreService):
+class IRepozeRedisStoreService(IRedisStoreService):
 	def process_messages(msgs):
 		"""
 		process the messages read from redis
@@ -527,6 +527,11 @@ class ICloudSearchStoreService(IRedisStoreService):
 	def search( *args, **kwargs):
 		"""
 		return a searh against cloud search
+		"""
+		
+	def process_messages(msgs):
+		"""
+		process the messages read from redis
 		"""
 		
 class ICloudSearchQueryParser(interface.Interface):

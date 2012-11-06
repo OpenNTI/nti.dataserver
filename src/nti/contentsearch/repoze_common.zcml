@@ -31,6 +31,6 @@
 	<utility factory="._repoze_index._RepozeMessageInfoCatalogCreator" name="messageinfo" />
 
 	<!--
-	<utility factory="._repoze_redis_store._RedisRepozeStorageService"  />
+	<utility factory="._repoze_redis_store._RepozeRedisStorageService"  />
 	-->
 </configure>

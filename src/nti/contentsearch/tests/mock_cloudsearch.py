@@ -138,7 +138,6 @@ class MockCloudSearchStorageService(_cloudsearch_store._CloudSearchStorageServic
 		super(MockCloudSearchStorageService, self).__init__()
 		
 	def _spawn_index_listener(self):
-		self.stop = False
 		def read_idx_msgs():
 			while not self.stop:
 				time.sleep(1)
@@ -148,8 +147,6 @@ class MockCloudSearchStorageService(_cloudsearch_store._CloudSearchStorageServic
 		th = threading.Thread(target=read_idx_msgs)
 		th.start()
 		return th
-	
-	def halt(self):
-		self.stop =True
+
 
 	

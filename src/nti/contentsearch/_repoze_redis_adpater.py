@@ -21,7 +21,7 @@ class _RepozeRedisEntityIndexManager(_BaseRepozeEntityIndexManager):
 	
 	def _get_service(self):
 		if self._v_service is None:
-			self._v_service = component.getUtility(search_interfaces.IRepozeStoreService)
+			self._v_service = component.getUtility(search_interfaces.IRepozeRedisStoreService)
 		return self._v_service
 	
 	def index_content(self, data, type_name=None):
