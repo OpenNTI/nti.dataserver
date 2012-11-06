@@ -35,6 +35,17 @@ class IContentPackageLibrary(interface.Interface):
 		(Support for titles is a convenience and not to be relied upon).
 		"""
 
+	def get( key, default=None ):
+		"""
+		See :meth:`__getitem__`
+		"""
+
+	def __contains__( key ):
+		"Consistent with :meth:`__getitem__`"
+
+	def __len__():
+		"The number of content packages in this library"
+
 	contentPackages = schema.Iterable( title=u'Sequence of all known :class:`IContentPackage`')
 
 # TODO: I'm not happy with the way paths are handled. How can the 'relative'

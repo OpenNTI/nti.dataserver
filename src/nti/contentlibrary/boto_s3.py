@@ -186,7 +186,6 @@ class BotoS3ContentUnit(ContentUnit):
 			data = _read_key( new_key )
 		return data
 
-
 	@repoze.lru.lru_cache( 1, cache=_exist_cache )
 	def does_sibling_entry_exist( self, sibling_name ):
 		"""

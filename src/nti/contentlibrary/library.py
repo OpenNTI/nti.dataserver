@@ -62,6 +62,16 @@ class AbstractLibrary(object):
 		except KeyError:
 			return default
 
+	# Other container methods
+	def __delitem__( self, key ):
+		raise TypeError("deletion not supported")
+	def __setitem__( self, key ):
+		raise TypeError("setting not supported" )
+	def __len__( self ):
+		return len(self.contentPackages)
+	def __contains__( self, key ):
+		return self.get( key ) is not None
+
 	def pathToNTIID(self, ntiid):
 		""" Returns a list of TOCEntry objects in order until
 		the given ntiid is encountered, or None of the id cannot be found."""

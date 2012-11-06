@@ -4,6 +4,13 @@
 
 .. automodule:: chameleon
 
+Configuration
+=============
+
+.. automodule:: chameleon.config
+	:private-members:
+	:undoc-members:
+
 ZPT Template
 ============
 
