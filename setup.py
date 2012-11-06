@@ -139,7 +139,7 @@ setup(
 		# Possible downside: Last update Aug 2010
 		'feedgenerator >= 1.2.1',
 		'futures >= 2.1.3',
-		#'gevent == 1.0dev', Coming from requirements.txt right now
+		#'gevent == 1.0rc1', Coming from requirements.txt right now
 		# NOTE: gevent_zeromq and pyzmq are tightly coupled. Updating pyzmq
 		# usually requires rebuilding gevent_zeromq. You'll get errors about 'Context has wrong size'.
 		# You may be able to fix it with 'pip install -U --force --no-deps gevent_zeromq'. You may not;
