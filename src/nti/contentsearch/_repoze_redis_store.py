@@ -1,12 +1,13 @@
 from __future__ import print_function, unicode_literals
 
-import time
+import gevent
 import random
 import collections
 
 import zope.intid
 from zope import component
 from zope import interface
+from ZODB import loglevels
 from zope.event import notify
 
 from nti.dataserver.users import Entity
@@ -21,6 +22,8 @@ logger = logging.getLogger( __name__ )
 @interface.implementer(search_interfaces.IRedisStoreService)
 class _RepozeRedisStorageService(_RedisStorageService):
 	
+	logging_level = loglevels.TRACE
+	
 	def process_messages(self, msgs):
 		users = collections.defaultdict(list)
 		
@@ -30,7 +33,7 @@ class _RepozeRedisStorageService(_RedisStorageService):
 			users[username].append(m)
 			
 		# wait some secs to process
-		time.sleep(random.uniform(3, 4))
+		gevent.sleep(random.uniform(3, 4))
 		
 		for username, msg_list in users.items():
 			try:
@@ -69,10 +72,13 @@ class _RepozeRedisStorageService(_RedisStorageService):
 					else:
 						retries += 1  
 						if retries <= 5:
+							# sometimes we need to wait to make sure db commit has happened
+							# this should go away when we handle index events as zope events
 							advance = False
-							time.sleep(0.2) #sometimes we need to wait to make sure db commit has happened
+							logger.log(self.logging_level, 'Could not find object %s. Retry %s', oid, retries)
+							gevent.sleep(0.5) 
 						else:
-							logger.debug("Cannot find object with id %s" % oid)
+							logger.log(self.logging_level, 'Cannot find object with id %s', oid)
 				elif op == 'delete':
 					im.unindex_doc(oid)
 					notify(search_interfaces.IndexEvent(entity, data or oid, search_interfaces.IE_UNINDEXED))
