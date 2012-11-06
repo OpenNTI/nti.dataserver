@@ -31,7 +31,7 @@ from nti.contentsearch._search_external import _provide_highlight_snippet
 
 from nti.contentsearch.common import (NTIID, CREATOR, CONTAINER_ID, CLASS, TYPE, HIT, SNIPPET, 
 									  LAST_MODIFIED, HIT_COUNT, ITEMS, QUERY, SUGGESTIONS)
-from nti.contentsearch.common import (ntiid_, content_, title_, last_modified_)
+from nti.contentsearch.common import (ntiid_, content_, title_, last_modified_, intid_)
 									
 									
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
@@ -172,6 +172,7 @@ class TestSearchExternal(ConfiguringTestBase):
 	def test_search_hit_book(self):
 		containerId = make_ntiid(nttype='bleach', specific='manga')	
 		hit = {}
+		hit[intid_] = 100
 		hit[title_] = 'Bleach'
 		hit[ntiid_] = containerId
 		hit[last_modified_] = datetime.fromtimestamp(time.time())
