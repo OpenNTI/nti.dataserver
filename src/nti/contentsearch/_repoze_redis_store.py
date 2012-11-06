@@ -4,11 +4,11 @@ import gevent
 import random
 import collections
 
-import zope.intid
 from zope import component
 from zope import interface
 from ZODB import loglevels
 from zope.event import notify
+from zc import intid as zc_intid
 
 from nti.dataserver.users import Entity
 from nti.dataserver import interfaces as nti_interfaces
@@ -22,7 +22,7 @@ logger = logging.getLogger( __name__ )
 @interface.implementer(search_interfaces.IRedisStoreService)
 class _RepozeRedisStorageService(_RedisStorageService):
 	
-	logging_level = loglevels.TRACE
+	logging_level = loglevels.BLATHER
 	
 	def process_messages(self, msgs):
 		users = collections.defaultdict(list)
@@ -41,7 +41,17 @@ class _RepozeRedisStorageService(_RedisStorageService):
 			except:
 				self._push_back_msgs(msg_list, encode=True)		
 				logger.exception("Error while processing index message for %s" % username)
-				
+			
+	def _process_message(self, username, msg):
+		trxrunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner)
+		def f():
+			entity = Entity.get_entity(username)
+			im = search_interfaces.IRepozeEntityIndexManager(entity, None)
+			if im is None:
+				logger.log(self.logging_level, "Cannot adapt to repoze index manager for entity %s", username)
+				logger.debug("Cannot adapt to repoze index manager for entity %s" % username)
+				return	
+			
 	def _process_user_messages(self, username, msg_list):
 		
 		trxrunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner)
@@ -52,15 +62,13 @@ class _RepozeRedisStorageService(_RedisStorageService):
 				logger.debug("Cannot adapt to repoze index manager for entity %s" % username)
 				return
 			
-			_ds_intid = component.getUtility( zope.intid.IIntIds )
-			
 			idx = 0
 			retries = 0
+			intids = component.getUtility( zc_intid.IIntIds )
 			while idx < len(msg_list):
-				op, oid, _ = msg_list[idx]
-				oid = int(oid)
-				data = _ds_intid.queryObject(oid, None)
 				advance = True
+				op, oid, _ = msg_list[idx]
+				data = intids.queryObject(int(oid), None)
 				if op in ('add', 'update'):
 					if data is not None:
 						if op == 'add':
