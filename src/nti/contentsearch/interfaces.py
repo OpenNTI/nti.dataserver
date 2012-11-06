@@ -144,9 +144,6 @@ class IndexEvent(component.interfaces.ObjectEvent):
 class IRepozeEntityIndexManager(IEntityIndexManager):
 	pass
 
-class IRepozeRedisEntityIndexManager(IEntityIndexManager):
-	pass
-
 class IWhooshEntityIndexManager(IEntityIndexManager):
 	pass
 
@@ -454,6 +451,7 @@ class IRedactionRepozeCatalogFieldCreator(interface.Interface):
 class IMessageInfoRepozeCatalogFieldCreator(interface.Interface):
 	pass
 
+# redis
 
 class IRedisStoreService(interface.Interface):
 	
@@ -461,41 +459,35 @@ class IRedisStoreService(interface.Interface):
 	sleep_wait_time = schema.Float(title="Message interval", required=True)
 	expiration_time = schema.Float(title="Message redis expiration time", required=True)
 	
-	def add(docid, username, version, external):
+	def add(docid, username):
 		"""
 		register an add index operation with redis
 		
 		:param docid document id
 		:param username target user
-		:param version document version
-		:param external: data-dict to index
 		"""
 	
-	def update(docid, username, version, external):
+	def update(docid, username):
 		"""
 		register a update index operation with redis
 		
 		:param docid document id
 		:param username target user
-		:param version document version
-		:param external: data-dict to index
 		"""
 		
-	def delete(docid, username, version):
+	def delete(docid, username):
 		"""
 		register a delete index operation with redis
 		
 		:param docid document id
 		:param username target user
-		:param version document version
 		"""
 	
-class IRepozeRedisStoreService(IRedisStoreService):
 	def process_messages(msgs):
 		"""
 		process the messages read from redis
 		"""
-
+		
 # cloud search
 
 class ICloudSearchObject(IDict):

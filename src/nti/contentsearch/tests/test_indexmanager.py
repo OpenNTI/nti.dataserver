@@ -70,6 +70,9 @@ class _BaseIndexManagerTest(object):
 		features = component.getUtility(search_interfaces.ISearchFeatures)
 		return features.is_word_suggest_supported
 
+	def wait_delay(self):
+		pass
+	
 	@WithMockDSTrans
 	def test_add_book(self):
 		self.im = self.create_index_mananger()
@@ -124,7 +127,8 @@ class _BaseIndexManagerTest(object):
 	def test_unified_search(self):
 		_, usr = self._add_notes_and_index(('omega radicals', 'the queen of coffee'))
 		self.im.add_book(indexname='bleach', ntiid='bleach', indexdir=self.book_idx_dir)
-
+		self.wait_delay()
+				
 		q = QueryObject(term='omega', indexid='bleach', username=usr.username)
 		hits = self.im.search(q)
 		assert_that(hits, has_length(2))
@@ -141,7 +145,8 @@ class _BaseIndexManagerTest(object):
 
 		_, usr = self._add_notes_and_index(('omega radicals', 'the queen of coffee'))
 		self.im.add_book(indexname='bleach', indexdir=self.book_idx_dir)
-
+		self.wait_delay()
+		
 		q = QueryObject(term='omeg', indexid='bleach', username=usr.username)
 		hits = self.im.suggest(q)
 		assert_that(hits, has_length(1))
@@ -157,7 +162,8 @@ class _BaseIndexManagerTest(object):
 
 		_, usr = self._add_notes_and_index(('omega radicals', 'the queen of coffee'))
 		self.im.add_book(indexname='bleach', indexdir=self.book_idx_dir)
-
+		self.wait_delay()
+		
 		q = QueryObject(term='omeg', indexid='bleach', username=usr.username)
 		hits = self.im.suggest(q)
 		assert_that(hits, has_length(1))
@@ -170,7 +176,8 @@ class _BaseIndexManagerTest(object):
 
 		_, usr = self._add_notes_and_index(('omega radicals', 'the queen of coffee'))
 		self.im.add_book(indexname='bleach', indexdir=self.book_idx_dir)
-
+		self.wait_delay()
+		
 		q = QueryObject(term='omeg', indexid='bleach', username=usr.username)
 		hits = self.im.suggest_and_search(q)
 		assert_that(hits, has_length(2))
@@ -182,7 +189,8 @@ class _BaseIndexManagerTest(object):
 	@WithMockDSTrans
 	def test_search_notes(self):
 		_, usr = self._add_notes_and_index()
-
+		self.wait_delay()
+		
 		q = QueryObject(term='not_to_be_found', username=usr.username, searchon=('Notes',))
 		hits = self.im.user_data_search(query=q)
 		assert_that(hits, has_length(0))
@@ -198,6 +206,8 @@ class _BaseIndexManagerTest(object):
 			return
 
 		_, usr = self._add_notes_and_index()
+		self.wait_delay()
+		
 		q = QueryObject(term='flow', username=usr.username, searchon=('Notes',))
 		hits = self.im.user_data_suggest(q)
 		assert_that(hits, has_length(1))
@@ -209,6 +219,8 @@ class _BaseIndexManagerTest(object):
 			return
 
 		_, usr = self._add_notes_and_index()
+		self.wait_delay()
+		
 		q = QueryObject(term='creat', username=usr.username, searchon=('Notes',))
 		hits = self.im.user_data_suggest_and_search(query=q)
 		assert_that(hits, has_length(1))
@@ -216,7 +228,8 @@ class _BaseIndexManagerTest(object):
 	@WithMockDSTrans
 	def test_update_delete_note(self):
 		notes, user = self._add_notes_and_index()
-
+		self.wait_delay()
+		
 		note = notes[0]
 		note.body = [u'Shoot To Death']
 		self.im.update_user_content(user, data=note)
@@ -251,6 +264,7 @@ class _BaseIndexManagerTest(object):
 		self.im = self.create_index_mananger()
 		self.im.index_user_content(data=note, target=user_2)
 		self.im.index_user_content(data=note, target=c)
+		self.wait_delay()
 		
 		q = QueryObject(term='jinzen', username=user_1.username)
 		hits = self.im.user_data_search(query=q)

@@ -101,6 +101,16 @@ class _CloudSearchStorageService(_RedisStorageService):
 		
 	# search/index service
 	
+	def add(self, _id, version, external):
+		msg = repr(('add', _id, version, external))
+		self._put_msg(msg)
+	
+	update = add
+	
+	def delete(self, _id, version):
+		msg = repr(('delete', _id, version, None))
+		self._put_msg(msg)
+		
 	def commit(self):
 		return None
 	
@@ -114,7 +124,7 @@ class _CloudSearchStorageService(_RedisStorageService):
 	def process_messages(self, msgs):
 		service = self._get_store().get_document_service()
 		for m in msgs:
-			op, oid, _, version, external =  m
+			op, oid, version, external =  m
 			if op in ('add', 'update'):
 				service.add(oid, version, external)
 			elif op == 'delete':
