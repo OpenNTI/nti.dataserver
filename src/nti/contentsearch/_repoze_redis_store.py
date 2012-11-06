@@ -1,5 +1,7 @@
 from __future__ import print_function, unicode_literals
 
+import time
+import random
 import collections
 
 import zope.intid
@@ -24,9 +26,12 @@ class _RepozeRedisStorageService(_RedisStorageService):
 		
 		# organize by entity
 		for m in msgs:
-			_, _, username, _, _ =  m  # (op, oid, username, version, external)
+			_, _, username =  m  # (op, oid, username)
 			users[username].append(m)
 			
+		# wait some secs to process
+		time.sleep(random.uniform(3, 4))
+		
 		for username, msg_list in users.items():
 			try:
 				self._process_user_messages(username, msg_list)
@@ -34,7 +39,8 @@ class _RepozeRedisStorageService(_RedisStorageService):
 				self._push_back_msgs(msg_list, encode=True)		
 				logger.exception("Error while processing index message for %s" % username)
 				
-	def _process_user_messages(self, username, msgs):
+	def _process_user_messages(self, username, msg_list):
+		
 		trxrunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner)
 		def f():
 			entity = Entity.get_entity(username)
@@ -44,9 +50,14 @@ class _RepozeRedisStorageService(_RedisStorageService):
 				return
 			
 			_ds_intid = component.getUtility( zope.intid.IIntIds )
-			for op, oid, _, _, _ in msgs:
+			
+			idx = 0
+			retries = 0
+			while idx < len(msg_list):
+				op, oid, _ = msg_list[idx]
 				oid = int(oid)
 				data = _ds_intid.queryObject(oid, None)
+				advance = True
 				if op in ('add', 'update'):
 					if data is not None:
 						if op == 'add':
@@ -56,9 +67,18 @@ class _RepozeRedisStorageService(_RedisStorageService):
 							im.update_content(data)
 							notify(search_interfaces.IndexEvent(entity, data, search_interfaces.IE_REINDEXED))
 					else:
-						logger.debug("Cannot find object with id %s" % oid)
+						retries += 1  
+						if retries <= 5:
+							advance = False
+							time.sleep(0.2) #sometimes we need to wait to make sure db commit has happened
+						else:
+							logger.debug("Cannot find object with id %s" % oid)
 				elif op == 'delete':
 					im.unindex_doc(oid)
 					notify(search_interfaces.IndexEvent(entity, data or oid, search_interfaces.IE_UNINDEXED))
-						
+					
+				if advance:
+					idx += 1
+					retries = 0
+					
 		trxrunner(f, retries=5, sleep=0.1)
