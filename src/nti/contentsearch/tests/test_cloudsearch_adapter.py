@@ -66,7 +66,7 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 		component.provideUtility( self.store, provides=search_interfaces.ICloudSearchStore )
 
 	def _register_zcml_mock(self):
-		self.aws_op_delay = 0.5
+		self.aws_op_delay = 0.4
 		self._register_zcml()
 		
 		parser = MockCloundSearchQueryParser()

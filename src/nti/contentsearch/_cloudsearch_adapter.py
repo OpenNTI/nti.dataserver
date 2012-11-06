@@ -103,6 +103,8 @@ class _CloudSearchEntityIndexManager(_SearchEntityIndexManager):
 		return a generator w/ ids of the objects indexed in aws
 		"""
 		
+		#TODO: get this query through query parser
+		
 		bq = ['(and']
 		bq.append("%s:'%s'" % (username_, self.username))
 		if type_name:

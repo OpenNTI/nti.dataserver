@@ -126,8 +126,6 @@ class _CloudSearchStore(object):
 			logger.debug("Cannot find object with id %s" % docid)
 		return False
 			
-	update = add
-		
 	def delete(self, docid, username, service=None, commit=True):
 		oid = get_cloud_oid(docid)
 		service = service or self.get_document_service()
