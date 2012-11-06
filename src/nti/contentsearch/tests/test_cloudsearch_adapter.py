@@ -56,6 +56,9 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 								 adapts=[nti_interfaces.INote],
 								 provides=search_interfaces.ICloudSearchObject)	
 		
+		self.cs_service = MockCloudSearchStorageService()
+		component.provideUtility( self.cs_service, provides=search_interfaces.ICloudSearchStoreService )
+		
 	def _register_zcml_cs(self):
 		self.aws_op_delay = 5
 		self._register_zcml()
@@ -65,11 +68,7 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 		
 		self.store = _cloudsearch_store._create_cloudsearch_store()
 		component.provideUtility( self.store, provides=search_interfaces.ICloudSearchStore )
-		
-		self.cs_service = MockCloudSearchStorageService()
-		self.cs_service._redis = self.redis
-		component.provideUtility( self.cs_service, provides=search_interfaces.ICloudSearchStoreService )
-		
+
 	def _register_zcml_mock(self):
 		self.aws_op_delay = 2.5
 		self._register_zcml()
@@ -79,11 +78,6 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 		
 		self.store = MockCloudSearch()
 		component.provideUtility( self.store, provides=search_interfaces.ICloudSearchStore )
-		
-		self.cs_service = MockCloudSearchStorageService()
-		self.cs_service._redis = self.redis
-		component.provideUtility( self.cs_service, provides=search_interfaces.ICloudSearchStoreService )
-
 		
 	def setUp( self ):
 		super(TestCloudSearchAdapter,self).setUp()

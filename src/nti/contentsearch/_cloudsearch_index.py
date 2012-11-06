@@ -104,10 +104,8 @@ def create_search_domain(connection, domain_name='ntisearch', language='en'):
 	
 	return domain
 
-def get_cloud_oid(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
-	oid = adapted.get_external_oid()
-	return hashlib.sha224(oid).hexdigest()
+def get_cloud_oid(oid):
+	return hashlib.sha224(str(oid)).hexdigest()
 
 def get_object_content(data):
 	adapted = component.getAdapter(data, search_interfaces.IContentResolver)
@@ -199,8 +197,7 @@ class _CSMessageInfo(_AbstractCSObject):
 		super(_CSMessageInfo, self)._set_items(src)
 
 def to_cloud_object(obj, username):
-	oid = get_cloud_oid(obj)
 	data = search_interfaces.ICloudSearchObject(obj)
 	data[username_] = username
-	return oid, data
+	return data
 

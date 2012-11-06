@@ -509,21 +509,39 @@ class ICloudSearchStore(interface.Interface):
 		
 class ICloudSearchStoreService(IRedisStoreService):
 	
-	def commit():
-		"""
-		commit index operation(s)
-		"""
-	
 	# search service
 	
-	def search( *args, **kwargs):
+	def search_cs( *args, **kwargs):
 		"""
-		return a searh against cloud search
+		run a search against cloud search
 		"""
 		
-	def process_messages(msgs):
+	# document service
+	
+	def handle_cs_errors(result, max_display=5, throw=False):
 		"""
-		process the messages read from redis
+		handle any CloudSearch errors
+		
+		:param result CloudSearch results
+		:param max_display Max errors to display
+		:param throw Throw exception if any errors
+		"""
+		
+	def add_cs( docid, username):
+		"""
+		index the content from the object with specified doc id
+		
+		:param docid document id
+		:param username target user
+		:return error results
+		"""
+	
+	def delete_cs( docid, username):
+		"""
+		remove the content from the object with specified doc id
+		
+		:param docid document id
+		:param username target user
 		"""
 		
 class ICloudSearchQueryParser(interface.Interface):

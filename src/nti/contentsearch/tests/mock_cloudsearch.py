@@ -39,7 +39,7 @@ def create_schema():
 							shared_with = fields.TEXT(stored=False, spelling=False, phrase=False),
 							keywords = fields.TEXT(stored=False, spelling=False, phrase=False),
 							references = fields.TEXT(stored=False, spelling=False, phrase=False), 
-							ngrams = fields.NGRAM(minsize=minsize, maxsize=maxsize, phrase=True),
+							ngrams = fields.NGRAMWORDS(minsize=minsize, maxsize=maxsize, stored=False, at='start'),
 							content = fields.TEXT(stored=False, spelling=True, phrase=True, analyzer=analyzer))
 	return schema
 		
@@ -88,6 +88,8 @@ class MockCloudSearch(object):
 			doc_number = s.document_number(id=unicode(_id))
 			return doc_number is not None
 		
+	# document service
+	
 	def add(self, _id, version, external):
 		data = dict(external)
 		data['id'] = unicode(_id)
@@ -105,6 +107,8 @@ class MockCloudSearch(object):
 		writer.delete_by_term(u'id', _id)
 		writer.commit()
 		
+	# search service
+	
 	def search(self, bq, *args, **kwargs):
 		result = []
 		with self.index.searcher() as s:
@@ -120,6 +124,8 @@ class MockCloudSearch(object):
 	def commit(self, *args, **kwargs):
 		return None
 	
+	# cloud search store
+	
 	def get_aws_domains(self):
 		return ()
 
@@ -134,9 +140,6 @@ class MockCloudSearch(object):
 
 class MockCloudSearchStorageService(_cloudsearch_store._CloudSearchStorageService):
 	
-	def __init__( self ):
-		super(MockCloudSearchStorageService, self).__init__()
-		
 	def _spawn_index_listener(self):
 		def read_idx_msgs():
 			while not self.stop:
