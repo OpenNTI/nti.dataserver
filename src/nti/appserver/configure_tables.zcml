@@ -27,7 +27,7 @@
 			 />
 
 	<!-- Moderation -->
-	<adapter factory="._table_utils.NoteBodyColumn"
+	<adapter factory="._table_utils.NoteLikeBodyColumn"
 			 for="* * .flagging_views.ModerationAdminTable"
 			 provides="z3c.table.interfaces.IColumn" />
 
@@ -83,7 +83,7 @@
 			 />
 
 	<!-- New Note Email -->
-	<adapter factory="._table_utils.NoteBodyColumn"
+	<adapter factory="._table_utils.NoteLikeBodyColumn"
 			 for="* * ._stream_event_listeners.NewNoteBodyTable"
 			 provides="z3c.table.interfaces.IColumn"
 			 name="new-note-body" />

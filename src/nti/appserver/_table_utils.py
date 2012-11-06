@@ -43,16 +43,17 @@ class TrivialTableAbsoluteURL(object):
 	def __call__( self ):
 		return self.request.path
 
-class NoteBodyColumn(column.GetAttrColumn):
+class NoteLikeBodyColumn(column.GetAttrColumn):
 	"""
-	Column to display the body of a Note.
+	Column to display the ``body`` of a :class:`nti.dataserver.interfaces.INote`
+	(or something similar, such as a chat message).
 	"""
 	weight = 1
 	header = 'Content'
 	attrName = 'body'
 
 	def renderCell( self, item ):
-		content = super(NoteBodyColumn,self).renderCell( item )
+		content = super(NoteLikeBodyColumn,self).renderCell( item )
 		parts = []
 		for part in content:
 			if nti_interfaces.ICanvas.providedBy( part ):

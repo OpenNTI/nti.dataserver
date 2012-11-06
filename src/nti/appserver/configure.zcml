@@ -97,13 +97,25 @@
 			 provides="zope.traversing.interfaces.ITraversable"
 			 name="fields" />
 
-
+	<!-- Flagging -->
 	<subscriber factory=".flagging_views.FlagLinkDecorator"
-				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"	/>
+	<!-- Make messages appear as flaggable -->
+	<class class="nti.chatserver.messageinfo.MessageInfo">
+		<!-- Making it flaggable... -->
+		<implements interface="nti.dataserver.interfaces.IFlaggable" />
+		<!-- ...promises that it can be annotatable -->
+		<implements interface="zope.annotation.interfaces.IAttributeAnnotatable" />
+		<!-- NOTE: That gets zope.dublincore involved in updating modification times -->
+	</class>
+
+	<!-- Favorites/liking -->
 	<subscriber factory=".liking_views.FavoriteLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 	<subscriber factory=".liking_views.LikeLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+
+	<!-- Other decorators -->
 	<subscriber factory=".ugd_query_views.RepliesLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 
