@@ -110,7 +110,7 @@ setup(
 		# 'MySQL-python', # mysql adapter
 		# See also umysqldb for a mysql adapter that should be gevent compat, with same API
 		# It's currently being installed from requirements.txt because it has no release on pypi.
-		# It depends on umysql, which has been released as 2.4 on pypi
+		# It depends on umysql, which has been released as 2.5 on pypi
 		'umysql == 2.5',
 		'RelStorage >= 1.5.1',
 		'python-memcached >= 1.48', # pure-python cache for relstorage. Must set cache-module-name. Needed for gevent
@@ -195,13 +195,13 @@ setup(
 		 # statsd server implementation, pure python. probably easier than setting up node. Might want to get it from https://github.com/sivy/py-statsd
 		 # Consider also https://github.com/phensley/gstatsd
 		'pystatsd >= 0.1.6',
-		'pytz >= 2012g',
+		'pytz >= 2012h',
 		'rdflib >= 3.2.3',
 		'redis >= 2.7.1', # Redis python client. Note that Amazon deployed servers are still in the 2.6 (2.4?) series
 		'repoze.catalog >= 0.8.2',
 		'repoze.lru >= 0.6', # LRU caching. Dep of Pyramid
 		'repoze.sendmail >= 3.2',
-		'repoze.who >= 2.0',
+		'repoze.who == 2.0', # 2.1b1 is out, should be drop in, may require changes
 		'repoze.zodbconn >= 0.14',
 		'grequests >= 0.1.0', #replaces requests.async in 0.13
 		'requests >= 0.14.2', # HTTP
