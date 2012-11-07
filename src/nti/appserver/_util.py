@@ -191,7 +191,7 @@ def dump_stacks_view(request):
 	body = '\n'.join(dump_stacks())
 	print( body )
 	request.response.text = body
-	request.response.content_type = 'text/plain'
+	request.response.content_type = b'text/plain'
 	return request.response
 
 import anyjson as json

@@ -16,11 +16,18 @@ from pyramid.view import view_config
 from zope.file import download
 import zope.file.interfaces
 
+from plone.namedfile import NamedImage
+
 from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
 
+from nti.utils import dataurl
+
 from nti.appserver import traversal
+from nti.appserver import httpexceptions as hexc
 from nti.appserver.z3c_zpt import PyramidZopeRequestProxy
+from nti.appserver._view_utils import UploadRequestUtilsMixin
+
 
 @view_config( route_name='objects.generic.traversal',
 			  context=zope.file.interfaces.IFile,
@@ -50,3 +57,54 @@ def file_view(request):
 	# from something like putting the blobs up in S3/cloudfront and serving from there,
 	# or at least not serving from the dataserver directly.
 	return request.response
+
+@view_config( route_name='objects.generic.traversal',
+			  context=nti_interfaces.IDataserverFolder,
+			  permission=nauth.ACT_READ, # anyone logged in...
+			  request_method='POST',
+			  name="image_to_dataurl")
+def image_to_dataurl(request):
+	"""
+	A view intended as a helper for legacy browsers. When a form
+	containing a single file naming an image is POST'd,
+	echos it back as a ``data`` URL, as described in :mod:`~nti.utils.dataurl`.
+
+	If the ``Accept`` header specifies JSON, then the value will be returned in a
+	JSON dictionary, having keys ``dataurl``, ``width_px``, ``height_px`` and
+	``file_size``.
+	"""
+
+	upload = UploadRequestUtilsMixin( )
+	upload.request = request
+
+	data = upload._get_body_content()
+	filename = upload._get_body_name()
+
+	# Now, sniff the data with the named image type. If we don't get
+	# an image type back, regardless of what they uploaded, then it's not
+	# valid
+	# TODO: We could insert scaling or other manipulations here
+	named_image = NamedImage( data=data, filename=filename )
+	if not named_image.contentType or not named_image.contentType.startswith( 'image' ):
+		raise hexc.HTTPBadRequest("Not an image upload")
+
+	data_url = dataurl.encode( data, mime_type=named_image.contentType )
+
+	response = request.response
+	mts = (b'text/plain',b'application/json')
+	accept_type = b'text/plain'
+	if getattr(request, 'accept', None):
+		accept_type = request.accept.best_match( mts )
+
+	if not accept_type or accept_type == b'text/plain':
+		response.content_type = b'text/plain'
+		response.body = data_url
+	else:
+		response.content_type = accept_type
+		width, height = named_image.getImageSize()
+		file_size = named_image.getSize()
+		response.json_body = { 'dataurl': data_url,
+							   'width_px': width,
+							   'height_px': height,
+							   'file_size': file_size }
+	return response
