@@ -9,4 +9,14 @@
 
 	<include package="." file="configure_activitylog.zcml" />
 
+	<!-- Mark PersistentMapping as an IFullMapping -->
+	<class class="persistent.mapping.PersistentMapping">
+		<implements interface="zope.interface.common.mapping.IFullMapping" />
+	</class>
+
+	<!-- Marke PersistentList as an ISequence -->
+	<class class="persistent.list.PersistentList">
+		<implements interface="zope.interface.common.sequence.ISequence" />
+	</class>
+
 </configure>

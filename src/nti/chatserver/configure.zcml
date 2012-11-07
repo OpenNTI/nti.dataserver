@@ -9,6 +9,7 @@
 	<include package="nti.externalization" />
 	<ext:registerMimeFactories module=".messageinfo" />
 
+	<include package="nti.zodb" />
 
 	<adapter factory="._meeting_post_policy.MeetingPostPolicy"
 			 for=".interfaces.IMeeting"

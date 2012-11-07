@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """ Chatserver functionality. """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
 
 __docformat__ = "restructuredtext en"
 
@@ -25,7 +25,9 @@ from persistent import Persistent
 from persistent.mapping import PersistentMapping
 
 from zope import interface
+from zope.interface.common import mapping as imapping
 from zope import component
+from zope import schema
 
 
 from ._metaclass import _ChatObjectMeta
@@ -42,7 +44,8 @@ EVT_RECV_MESSAGE = 'chat_recvMessage'
 from nti.utils.sets import discard as _discard
 
 class IChatHandlerSessionState(interface.Interface):
-	rooms_i_moderate = interface.Attribute( "Mapping of rooms I moderate" )
+	rooms_i_moderate = schema.Object( imapping.IFullMapping,
+									  title="Mapping of rooms I moderate" )
 
 @interface.implementer(IChatHandlerSessionState)
 @component.adapter(sio_interfaces.ISocketSession)
@@ -50,23 +53,30 @@ class _ChatHandlerSessionState(Persistent):
 	"""
 	An annotation for sessions to store the state a chat handler likes to have,
 	since chat handlers have no state for longer than a single event.
+
+	.. caution:: Recall that relatively speaking annotations are expensive and probably
+		not suited to writing something for every incoming message (that creates
+		lots of database transaction traffic) such as would potentially be needed
+		for persistent rate-based throttling.
 	"""
 
 	def __init__(self):
 		self.rooms_i_moderate = PersistentMapping()
 
 from zope.annotation import factory as an_factory
-def _ChatHandlerSessionStateFactory(session):
-	return an_factory(_ChatHandlerSessionState)(session)
+_ChatHandlerSessionStateFactory = an_factory(_ChatHandlerSessionState)
+
 
 @interface.implementer(chat_interfaces.IChatEventHandler)
 @component.adapter(nti_interfaces.IUser,sio_interfaces.ISocketSession,chat_interfaces.IChatserver)
 class _ChatHandler(object):
 	"""
-	Class to handle each of the messages sent to or from a client.
+	Class to handle each of the messages sent to or from a client in the ``chat`` prefix.
 
-	Instances of this class are tied to the session, not the chatserver.
-	They should go away when the user's session does.
+	As a socket event handler, instances of this class are created
+	fresh to handle every event and thus have no persistent state. This
+	objects uses the strategy of adapting the session to storage using
+	annotations if necessary to store additional state.
 	"""
 
 	__metaclass__ = _ChatObjectMeta
@@ -75,12 +85,13 @@ class _ChatHandler(object):
 	_session_consumer_args_search_ = ('nti.chatserver.meeting','nti.chatserver.messageinfo')
 
 
-	event_prefix = 'chat'
+	event_prefix = 'chat' #: the namespace of events we handle
 
 	chatserver = None
 	session_user = None
 	session = None
-	# public methods correspond to events
+
+	# recall that public methods correspond to incomming events
 
 	def __init__( self, *args):
 		# For backwards compat, we accept either two args or three, as specified
@@ -216,6 +227,9 @@ class _ChatHandler(object):
 @interface.implementer(chat_interfaces.IChatEventHandler)
 @component.adapter(nti_interfaces.ICoppaUserWithoutAgreement,sio_interfaces.ISocketSession,chat_interfaces.IChatserver)
 def ChatHandlerNotAvailable(*args):
+	"""
+	A factory that produces ``None``, effectively disabling chat.
+	"""
 	return None
 
 @interface.implementer(sio_interfaces.ISocketEventHandler)
