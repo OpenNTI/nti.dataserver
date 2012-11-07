@@ -60,7 +60,14 @@ class TestApplicationZopeFileViews(SharedApplicationTestBase):
 							extra_environ=environ,
 							headers={b'Accept': b'application/json'})
 		assert_that( res.status_int, is_( 200 ) )
-		return res
+
+		path = path + '_extjs'
+		ext_res = testapp.post( path,
+								upload_files=[('field', 'foo.jpeg', data )],
+								extra_environ=environ )
+		assert_that( res.status_int, is_( 200 ) )
+
+		return res, ext_res
 
 
 	@WithSharedApplicationMockDS
@@ -70,8 +77,13 @@ class TestApplicationZopeFileViews(SharedApplicationTestBase):
 
 	@WithSharedApplicationMockDS
 	def test_echo_PNG(self):
-		res = self._do_test_echo( PNG_DATAURL )
+		res, ext_res = self._do_test_echo( PNG_DATAURL )
 		assert_that( res.json_body, is_( {'dataurl': PNG_DATAURL,
 										  'width_px': 1,
 										  'height_px': 1,
 										  'file_size': 725} ) )
+		assert_that( ext_res.json_body, is_( {'dataurl': PNG_DATAURL,
+											  'width_px': 1,
+											  'height_px': 1,
+											  'file_size': 725,
+											  'success': True} ) )
