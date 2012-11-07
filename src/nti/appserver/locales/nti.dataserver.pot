@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nti.dataserver 0.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2012-10-17 16:24-0500\n"
+"POT-Creation-Date: 2012-11-07 17:06-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -30,15 +30,15 @@ msgstr ""
 msgid "That username is not available. Please choose another."
 msgstr ""
 
-#: src/nti/appserver/account_recovery_views.py:103
+#: src/nti/appserver/account_recovery_views.py:105
 msgid "NextThought Username Reminder"
 msgstr ""
 
-#: src/nti/appserver/account_recovery_views.py:185
+#: src/nti/appserver/account_recovery_views.py:187
 msgid "NextThought Password Reset"
 msgstr ""
 
-#: src/nti/appserver/account_recovery_views.py:279
+#: src/nti/appserver/account_recovery_views.py:282
 msgid "Your reset link is not valid. Please request a new one."
 msgstr ""
 
@@ -106,6 +106,12 @@ msgstr ""
 
 #: src/nti/appserver/invitations/interfaces.py:154
 msgid "The invitation code has expired."
+msgstr ""
+
+#: src/nti/chatserver/_meeting_post_policy.py:143
+msgid ""
+"The message is too big. It can contain a maximum of ${parts} characters or "
+"shapes"
 msgstr ""
 
 #: src/nti/dataserver/users/interfaces.py:50

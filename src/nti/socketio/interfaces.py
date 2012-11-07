@@ -9,7 +9,9 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-from zope import interface, schema
+from zope import interface
+from zope import schema
+from zope.interface.common.interfaces import IStandardError
 from zope.interface.interfaces import IObjectEvent, ObjectEvent
 from zope.interface.common import mapping
 from zope.annotation import interfaces as an_interfaces
@@ -277,7 +279,10 @@ class ISocketSessionClientMessageConsumer(interface.Interface):
 
 	def __call__( session, message ):
 		"""
-		Handle the ``message`` that has arrived from the client.
+		Handle the ``message`` that has arrived from the client. Generally, this
+		method should not raise un-retryable exceptions so that a
+		transaction wrapped around this method can commit.
+
 		:param session: The :class:`ISocketSession` that received the message.
 		:param message: An :class:`ISocketIOMessage`.
 		:return: Undefined.
@@ -294,6 +299,7 @@ class ISocketEventHandler(interface.Interface):
 	the user. If the method returns a result that is not None, then if the
 	user requested acknowledgement that result will be sent as the ack (if
 	the user requested ack and the result was None, False will be returned).
+	See :class:`ISocketEventHandlerClientError` for a description of error handling.
 
 	These objects may be registered as subscription adapters for
 	:class:`socketio.interfaces.ISocketIOSocket`. If there is duplication
@@ -316,3 +322,29 @@ class ISocketEventHandler(interface.Interface):
 		when the session is being killed.
 		TODO: This should be a separate interface or event.
 		"""
+
+class ISocketEventHandlerClientError(IStandardError):
+	"""
+	Marker interface for exceptions that may optionally be raised
+	by methods of an :class:`ISocketEventHandler`.
+
+	If any registered handler raises an exception of any kind, no
+	further handlers will be called, and the work done by all handlers
+	up to that point will be rolled back using a savepoint.
+
+	If the exception raised provides this interface, then the problem is
+	due to client error, not a server bug or error (i.e., this is like an
+	HTTP 40X response, as opposed to an HTTP 50X response). In that
+	case, the object will be formatted in a specific way for sending to the client
+	to let them know; otherwise a generic "server error" will be sent.
+
+	In any case, if the client has requested an ACK for the message being processed,
+	then the exception data is sent as the ack. Otherwise, it's sent as a generic
+	event.
+	"""
+
+@interface.implementer(ISocketEventHandlerClientError)
+class SocketEventHandlerClientError(StandardError):
+	"""
+	Default convenience implementation of :class:`ISocketEventHandlerClientError`.
+	"""

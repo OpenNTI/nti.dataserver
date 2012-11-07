@@ -12,6 +12,7 @@ from zope import interface
 import nti.dataserver.users as users
 import nti.dataserver.interfaces as nti_interfaces
 import nti.chatserver.interfaces as chat_interfaces
+import nti.socketio.interfaces as sio_interfaces
 from nti.chatserver import _handler as chat_handler, messageinfo
 
 from nti.socketio.session_consumer import SessionConsumer, UnauthenticatedSessionError
@@ -190,9 +191,23 @@ class TestSessionConsumer(mock_dataserver.ConfiguringTestBase):
 
 		# Dispatch chat event
 		def h( arg):
-			raise Exception( "The error" )
+			raise ValueError( "The error" )
 
 		self.handler = h
 		self.cons( self.socket, {'type': 'event', 'name': 'chat_handler', 'args': ("The arg",)} )
 
-		assert_that( self.socket.events, contains( ('server-error', ("The error",))) )
+		assert_that( self.socket.events, contains( ('server-error', ('{"error-type": "server-error", "message": "The error", "code": "ValueError"}',) )) )
+
+	@mock_dataserver.WithMockDSTrans
+	def test_ack_event_exception( self ):
+		# Authenticate
+		self._auth_user()
+
+		# Dispatch chat event
+		def h( arg):
+			raise sio_interfaces.SocketEventHandlerClientError( "A client error" )
+
+		self.handler = h
+		self.cons( self.socket, {'id': "1", 'type': 'event', 'name': 'chat_handler', 'args': ("The arg",)} )
+
+		assert_that( self.socket.acks, contains( ('1', [{'error-type': 'client-error', 'message': u'A client error', 'code': 'SocketEventHandlerClientError'}])) )
