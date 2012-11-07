@@ -22,8 +22,9 @@ logger = logging.getLogger( __name__ )
 @interface.implementer(search_interfaces.IRedisStoreService)
 class _RepozeRedisStorageService(_RedisStorageService):
 	
-	wait_time = 0.5
-	max_wait_time = 10
+	wait_time = 1
+	max_retries = 4
+	max_cumm_wait_time = 10
 	logging_level = loglevels.TRACE
 	
 	def process_messages(self, msgs):
@@ -72,7 +73,7 @@ class _RepozeRedisStorageService(_RedisStorageService):
 							notify(search_interfaces.IndexEvent(entity, data, search_interfaces.IE_REINDEXED))
 					else:
 						retries += 1  
-						if cumulative <= self.max_wait_time and retries <= 5:
+						if cumulative <= self.max_cumm_wait_time and retries < self.max_retries:
 							# sometimes we need to wait to make sure db commit has happened
 							# this should go away when we handle index events as zope events
 							advance = False
