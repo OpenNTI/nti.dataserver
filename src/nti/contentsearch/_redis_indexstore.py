@@ -16,6 +16,24 @@ DEFAULT_QUEUE_NAME = u'nti/cloudsearch'
 import logging
 logger = logging.getLogger( __name__ )
 
+ADD_OPERATION = 'add'
+UPDATE_OPERATION = 'update'
+DELETE_OPERATION = 'delete'
+		
+_op_precedence = {ADD_OPERATION : 0, UPDATE_OPERATION: 1, DELETE_OPERATION: 2}
+
+def sort_messages(msg_list):
+	def m_cmp(a, b):
+		r = cmp(a[2], b[2])
+		if r == 0:
+			r = cmp(a[1], b[1])
+		if r == 0:
+			o_a = _op_precedence.get(a[0], 0)
+			o_b = _op_precedence.get(b[0], 0)
+			r = cmp(o_a, o_b)
+		return r
+	return sorted(msg_list, cmp=m_cmp) 
+
 class _RedisStorageService(object):
 	
 	_redis = None
@@ -62,15 +80,15 @@ class _RedisStorageService(object):
 		return msg
 		
 	def add(self, docid, username):
-		msg = self.encode_message('add', docid, username)
+		msg = self.encode_message(ADD_OPERATION, docid, username)
 		self._put_msg(msg)
 	
 	def update(self, docid, username):
-		msg = self.encode_message('update', docid, username)
+		msg = self.encode_message(UPDATE_OPERATION, docid, username)
 		self._put_msg(msg)
 		
 	def delete(self, docid, username):
-		msg = self.encode_message('delete', docid, username)
+		msg = self.encode_message(DELETE_OPERATION, docid, username)
 		self._put_msg(msg)
 	
 	def _get_index_msgs(self):
@@ -109,7 +127,7 @@ class _RedisStorageService(object):
 		try:
 			encoded_msgs = self._get_index_msgs()
 			if encoded_msgs:
-				msgs = (eval(zlib.decompress(m)) for m in encoded_msgs)
+				msgs = [eval(zlib.decompress(m)) for m in encoded_msgs]
 				logger.log(loglevels.TRACE, 'Processing %s index event(s) read from redis queue %r', len(encoded_msgs), self.queue_name)
 				self.process_messages(msgs)			
 		except Exception:
