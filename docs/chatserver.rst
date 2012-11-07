@@ -1,5 +1,6 @@
-Chat API
-====================
+==========
+ Chat API
+==========
 
 
 .. toctree::
@@ -9,7 +10,33 @@ Chat API
 
 .. automodule:: nti.chatserver
 .. automodule:: nti.chatserver.chatserver
-.. automodule:: nti.chatserver._handler
-.. automodule:: nti.chatserver.meeting
+
+Chat Messages
+=============
 .. automodule:: nti.chatserver.messageinfo
+
+
+Handling Events
+===============
+.. automodule:: nti.chatserver._handler
+	:private-members:
+	:undoc-members:
+
+Meeting Rooms
+=============
+
+.. automodule:: nti.chatserver.meeting
+
+Meeting Policies and Moderation
+-------------------------------
+.. automodule:: nti.chatserver._meeting_post_policy
+	:private-members:
+	:undoc-members:
+
+
+Metaclass
+=========
+
 .. automodule:: nti.chatserver._metaclass
+	:private-members:
+	:undoc-members:

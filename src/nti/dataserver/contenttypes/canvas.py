@@ -115,6 +115,18 @@ class Canvas(ThreadableExternalizableMixin, UserContentRoot, ExternalizableInsta
 		except AttributeError: #pragma: no cover
 			return NotImplemented
 
+	def __len__( self ):
+		"""
+		The size of a canvas is how many shapes it contains.
+		"""
+		return len(self.shapeList)
+
+	def __nonzero__( self ):
+		"""
+		Canvas objects are always true, even when containing no shapes.
+		"""
+		return True
+
 @interface.implementer(IExternalObject)
 class CanvasAffineTransform(object):
 	"""
