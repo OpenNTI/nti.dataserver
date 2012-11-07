@@ -108,3 +108,28 @@ def image_to_dataurl(request):
 							   'height_px': height,
 							   'file_size': file_size }
 	return response
+
+@view_config( route_name='objects.generic.traversal',
+			  context=nti_interfaces.IDataserverFolder,
+			  permission=nauth.ACT_READ, # anyone logged in...
+			  request_method='POST',
+			  name="image_to_dataurl_extjs")
+def image_to_dataurl_extjs(request):
+	"""
+	Demonstrating once again the frailties of massive monolithic frameworks, ExtJS <= 4.1
+	has hardcoded, REST-violating, badly broken assumptions encoded into its
+	form submission logic. This method exists only for use by broken ExtJS versions
+	and does undocumented, black magic-y things to try to make the behemoth happy.
+	"""
+
+	# To start with, it just /assumes/ that it's going to get json data back. Apparently
+	# headers haven't been invented
+	request.accept = b'application/json'
+	rsp = image_to_dataurl( request )
+
+	# Then, it further assumes that there is a redundant 'succes' value
+	# in the json body. Status codes also don't exist, and layer boundaries are meaningless
+	body = dict(rsp.json_body)
+	body['success'] = True
+	rsp.json_body = body
+	return rsp
