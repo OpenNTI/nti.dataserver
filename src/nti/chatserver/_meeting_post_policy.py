@@ -98,15 +98,43 @@ class _MeetingMessagePostPolicy(object):
 		"""
 		return (msg_info.channel or CHANNEL_DEFAULT) in (CHANNEL_DEFAULT, CHANNEL_WHISPER)
 
+	#: Research indicates that AIM uses a 1024 byte limit for the body (including formatting!)
+	#: while MSN uses a much smaller limit of 400 characters (though that's enforced on the client
+	#: and can be raised with hacks to a few thousand)
+	MAX_BODY_SIZE = 1024
+
+	def _does_message_conform_to_limits( self, msg_info ):
+		"""
+		Answers whether the message conforms to the general limits established, such
+		as body size, etc.
+		"""
+
+		# Recall that different channels can have different types
+		# of bodies, currently either an array of strings/canvas objects or a mapping.
+		# The channels that this class supports only accept the list-of-strings/canvas objects;
+		# this method is bypassed for the moderation channels
+
+		# so this counts all formatted text, plus number of objects in canvases (do we want that?)
+		body_len = sum((len( x ) for x in msg_info.body or ()))
+		return body_len <= self.MAX_BODY_SIZE
+
+
 	def post_message( self, msg_info ):
 		"""
 		:return: A value that can be interpreted as a boolean, indicating success of posting
 			the message. If the value is a number and not a bool object, then it is the
 			number by which the general message count of the room should be incremented (currently only one).
 		"""
+		# TODO: Got to modify the handler interaction to be able to inform
+		# the client about these problems
 		if not self._is_message_on_supported_channel( msg_info ):
 			logger.debug( "Dropping message on unsupported channel %s", msg_info )
 			return False
+
+		if not self._does_message_conform_to_limits( msg_info ):
+			logger.debug( "Dropping message due to size limit" )
+			return False
+
 		result = True
 		# TODO: How to handle messages from senders that do not occupy this room?
 		# In the ordinary case, would we want to drop them?
@@ -253,6 +281,15 @@ def _only_for_moderator( f ):
 		return f( self, msg_info )
 	return enforcing
 
+def _always_true_for_moderator( f ):
+	@functools.wraps(f)
+	def bypassing( self, msg_info ):
+		if self.is_moderated_by( msg_info.Sender ):
+			return True
+		return f( self, msg_info )
+	return bypassing
+
+
 class _ModeratedMeetingMessagePostPolicy(_MeetingMessagePostPolicy):
 	"""A chat room that moderates messages."""
 
@@ -287,6 +324,10 @@ class _ModeratedMeetingMessagePostPolicy(_MeetingMessagePostPolicy):
 
 	def _is_message_on_supported_channel( self, msg_info ):
 		return (msg_info.channel or CHANNEL_DEFAULT) in CHANNELS
+
+	@_always_true_for_moderator
+	def _does_message_conform_to_limits(self, msg_info ):
+		return super(_ModeratedMeetingMessagePostPolicy,self)._does_message_conform_to_limits( msg_info )
 
 	def post_message( self, msg_info ):
 		# In moderated rooms, we break each channel out
@@ -347,6 +388,8 @@ class _ModeratedMeetingMessagePostPolicy(_MeetingMessagePostPolicy):
 
 	@_bypass_for_moderator
 	def _msg_handle_DEFAULT( self, msg_info ):
+		if not self._does_message_conform_to_limits( msg_info ):
+			return False
 		self._ensure_message_stored( msg_info )
 		self.moderation_state.hold_message_for_moderation( msg_info )
 		self.emit_recvMessageForModeration( self.moderated_by_usernames, msg_info )
@@ -434,6 +477,8 @@ def meeting_should_change_moderation_state(self, evt):
 		self._moderation_state = None
 
 
+@component.adapter(interfaces.IMeeting)
+@interface.implementer(interfaces.IMeetingPolicy)
 def MeetingPostPolicy(self):
 	"""
 	Adapter from a meeting to its policy.
