@@ -22,6 +22,8 @@ logger = logging.getLogger( __name__ )
 @interface.implementer(search_interfaces.IRedisStoreService)
 class _RepozeRedisStorageService(_RedisStorageService):
 	
+	wait_time = 0.5
+	max_wait_time = 10
 	logging_level = loglevels.TRACE
 	
 	def process_messages(self, msgs):
@@ -54,6 +56,7 @@ class _RepozeRedisStorageService(_RedisStorageService):
 			
 			idx = 0
 			retries = 0
+			cumulative = 0
 			intids = component.getUtility( zc_intid.IIntIds )
 			while idx < len(msg_list):
 				advance = True
@@ -69,14 +72,15 @@ class _RepozeRedisStorageService(_RedisStorageService):
 							notify(search_interfaces.IndexEvent(entity, data, search_interfaces.IE_REINDEXED))
 					else:
 						retries += 1  
-						if retries <= 5:
+						if cumulative <= self.max_wait_time and retries <= 5:
 							# sometimes we need to wait to make sure db commit has happened
 							# this should go away when we handle index events as zope events
 							advance = False
 							logger.log(self.logging_level, 'Could not find object %s. Retry %s', oid, retries)
-							gevent.sleep(0.5) 
+							gevent.sleep(self.wait_time) 
+							cumulative += self.wait_time
 						else:
-							logger.log(self.logging_level, 'Cannot find object with id %s', oid)
+							logger.debug('Cannot find object with id %s', oid)
 				elif op == 'delete':
 					im.unindex_doc(oid)
 					notify(search_interfaces.IndexEvent(entity, data or oid, search_interfaces.IE_UNINDEXED))
