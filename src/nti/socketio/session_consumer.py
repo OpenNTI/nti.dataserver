@@ -6,11 +6,14 @@ logger = logging.getLogger( __name__ )
 
 import sys
 import itertools
-
+import anyjson as json
 
 from zope import interface
 from zope import component
 from zope.event import notify
+from zope.i18n import translate
+
+import transaction
 
 import nti.externalization.internalization
 from nti.externalization.externalization import toExternalObject
@@ -104,13 +107,10 @@ class SessionConsumer(object):
 		def call():
 			"""
 			Call the handlers in order, passing the arguments. The last non-None
-			result from a handler will be our result.
+			result from a handler will be our result. Any exception raised is propagated.
 			"""
 			last_result = None
 			for h in handler_list:
-				# TODO Exception handling? We're simply propagating the first one and
-				# failing to call any subsequent handlers. This is probably OK if everything
-				# is transactional...
 				# Note that we're converting the input to objects for each
 				# handler in the list. This could be a little inefficient in the case
 				# of multiple handlers that come from related packages.
@@ -141,6 +141,11 @@ class SessionConsumer(object):
 			return False
 
 		socket_obj = session.socket
+		# We take a savepoint before running any handlers. We still need to
+		# complete the transaction and commit it even if an exception occurs (because we have
+		# handled this message; retrying won't help), but the work done
+		# by the handlers should not be saved so as to ensure a consistent state.
+		savepoint = transaction.savepoint( optimistic=True )
 		try:
 			result = handler( )
 			if message.get('id'):
@@ -153,13 +158,45 @@ class SessionConsumer(object):
 		except component.ComponentLookupError: # pragma: no cover
 			# This is a programming error we can and should fix
 			raise
-		except Exception as e:
-			# TODO: We should have a system of error codes in place
-			logger.exception( "Exception handling event %s", message )
-			socket_obj.send_event( 'server-error', str(e) )
+		except StandardError as e:
+			savepoint.rollback() # could potentially raise InvalidSavepointRollbackError
+
+			if sio_interfaces.ISocketEventHandlerClientError.providedBy( e ):
+				error_type = 'client-error'
+			else:
+				error_type = 'server-error'
+				logger.exception( "Exception handling event %s", message )
+
+			event = _exception_to_event( e )
+			event['error-type'] = error_type
+			if message.get( 'id' ):
+				socket_obj.ack( message['id'], [event] )
+			else:
+				socket_obj.send_event( error_type, json.dumps( event ) )
 			return False
 		else:
 			return True
+
+def _exception_to_event( the_error ):
+	__traceback_info__ = the_error
+
+	msg = ''
+
+	if len(the_error.args) == 3:
+		# message, field, value
+		msg = the_error.args[0]
+
+	# z3c.password and similar (nti.dataserver.users._InvalidData) set this for internationalization
+	# purposes
+	if getattr(the_error, 'i18n_message', None):
+		msg = translate( the_error.i18n_message )
+	else:
+		msg = the_error.message or msg
+		msg = translate(msg)
+
+	return {'message': msg,
+			'code': the_error.__class__.__name__ }
+
 
 _registered_legacy_search_mods = set()
 

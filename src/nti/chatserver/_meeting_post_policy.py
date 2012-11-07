@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 import logging
 logger = logging.getLogger( __name__ )
+from . import MessageFactory as _
 
 import collections
 import functools
@@ -20,6 +21,7 @@ import BTrees
 from zope import interface
 from zope import component
 from zope.event import notify
+from nti.socketio import interfaces as sio_interfaces
 
 
 from zc import intid as zc_intid
@@ -30,6 +32,10 @@ from ._metaclass import _ChatObjectMeta
 from .interfaces import CHANNEL_DEFAULT, CHANNEL_WHISPER, CHANNELS
 from .interfaces import STATUS_POSTED, STATUS_SHADOWED, STATUS_PENDING #, STATUS_INITIAL
 
+class MessageTooBig(sio_interfaces.SocketEventHandlerClientError):
+	"""
+	Raised when a policy is asked to post a message that exceeds the size limits.
+	"""
 
 @interface.implementer(interfaces.IMeetingPolicy)
 class _MeetingMessagePostPolicy(object):
@@ -133,7 +139,9 @@ class _MeetingMessagePostPolicy(object):
 
 		if not self._does_message_conform_to_limits( msg_info ):
 			logger.debug( "Dropping message due to size limit" )
-			return False
+			# partial support for handling too big messages and getting it back to the client
+			raise MessageTooBig( _("The message is too big. It can contain a maximum of ${parts} characters or shapes",
+								   mapping={'parts': self.MAX_BODY_SIZE}) )
 
 		result = True
 		# TODO: How to handle messages from senders that do not occupy this room?

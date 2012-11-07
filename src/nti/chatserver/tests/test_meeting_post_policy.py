@@ -6,11 +6,12 @@ $Id$
 from __future__ import print_function, unicode_literals
 
 from hamcrest import assert_that
-
+from nose.tools import assert_raises
 from nti.chatserver import interfaces
 from nti.tests import verifiably_provides, is_false
 
 from nti.chatserver._meeting_post_policy import _MeetingMessagePostPolicy, _ModeratedMeetingMessagePostPolicy, _ModeratedMeetingState
+from nti.chatserver._meeting_post_policy import MessageTooBig
 
 def test_provides():
 
@@ -29,3 +30,14 @@ def test_post_on_bad_channel():
 
 	assert_that( _ModeratedMeetingMessagePostPolicy(moderation_state=_ModeratedMeetingState()).post_message( O ),
 				 is_false() )
+
+def test_post_too_big():
+	class O(object):
+		channel = interfaces.CHANNEL_DEFAULT
+		body = ['abcd']
+
+	policy = _MeetingMessagePostPolicy()
+	policy.MAX_BODY_SIZE = 1
+
+	with assert_raises(MessageTooBig):
+		policy.post_message( O )
