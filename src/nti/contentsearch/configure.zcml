@@ -97,4 +97,5 @@
 	<include file="zopyx.zcml" />
 	<include file="repoze_minimal.zcml" />
 	<include file="whoosh.zcml" />
+	<include file="configure_redis_storage_service.zcml" />
 </configure>

@@ -20,6 +20,16 @@ from nti.contentsearch._redis_indexstore import (ADD_OPERATION, UPDATE_OPERATION
 import logging
 logger = logging.getLogger( __name__ )
 
+def optimize(msgs_list):
+	prev = None
+	for i, current in enumerate(msgs_list):
+		# (op, oid, username) check same object, same user
+		if prev and prev[1] == current[1] and prev[2] == current[2]:
+			if current[0] in (DELETE_OPERATION, UPDATE_OPERATION):
+				msgs_list[i-1] = None	
+		prev = current
+	return msgs_list	
+	
 @interface.implementer(search_interfaces.IRedisStoreService)
 class _RepozeRedisStorageService(_RedisStorageService):
 	
@@ -30,8 +40,7 @@ class _RepozeRedisStorageService(_RedisStorageService):
 	logging_level = loglevels.TRACE
 	
 	def process_messages(self, msgs):
-		#TODO: we can optmize operations
-		sorted_list = sort_messages(msgs)
+		sorted_list = optimize(sort_messages(msgs))
 		# wait some random time to start processing
 		gevent.sleep(random.uniform(2, 4))
 		try:
@@ -53,7 +62,9 @@ class _RepozeRedisStorageService(_RedisStorageService):
 				advance = True
 				msg = msg_list[idx]
 				if not msg:
+					idx += 1
 					continue
+				
 				op, oid, username = msg
 				
 				entity = Entity.get_entity(username)
