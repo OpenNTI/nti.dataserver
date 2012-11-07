@@ -41,12 +41,12 @@ class _RedisStorageService(object):
 	def __init__(self, 	queue_name=DEFAULT_QUEUE_NAME, 
 						expiration_time=EXPIRATION_TIME_IN_SECS, 
 						sleep_wait_time=SLEEP_WAIT_TIME,
-						auto_start=True):
+						autostart=True):
 		self._v_stop = False
 		self._v_queue_name = queue_name
 		self._v_sleep_wait_time = sleep_wait_time
 		self._v_expiration_time = expiration_time
-		self._v_index_listener = self._spawn_index_listener() if auto_start else None
+		self._v_index_listener = self._spawn_index_listener() if autostart else None
 
 	def _get_redis( self ):
 		if self._redis is None:
@@ -76,7 +76,8 @@ class _RedisStorageService(object):
 	def start(self):
 		if not self._v_index_listener:
 			self._v_stop = False
-			self._v_index_listener = self._spawn_index_listener() 
+			self._v_index_listener = self._spawn_index_listener()
+			return self._v_index_listener
 	
 	def halt(self):
 		self._v_stop = True
