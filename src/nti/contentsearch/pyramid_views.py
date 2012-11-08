@@ -4,29 +4,17 @@ __docformat__ = "restructuredtext en"
 
 import re
 
-from zope import component
 from zope import interface
 
 from pyramid.security import authenticated_userid
 
-from nti.ntiids.ntiids import is_valid_ntiid_string
-from nti.contentlibrary.interfaces import IContentPackageLibrary
-
 from nti.contentsearch.interfaces import IIndexManager
 from nti.contentsearch._search_query import QueryObject
+from nti.contentsearch._views_utils import get_collection
 from nti.contentsearch._content_utils import get_content_translation_table
 
 import logging
 logger = logging.getLogger( __name__ )
-
-def get_collection(ntiid, default=None, registry=component):
-	result = default
-	if ntiid and is_valid_ntiid_string(ntiid):
-		_library = registry.queryUtility( IContentPackageLibrary )
-		if _library:
-			paths = _library.pathToNTIID(ntiid)
-			result = paths[0].ntiid if paths else default
-	return unicode(result.lower()) if result else default
 
 def _locate(obj, parent, name=None):
 	# TODO: (Instead of modification info, we should be using etags here, anyway).
@@ -84,7 +72,7 @@ def get_queryobject(request):
 	ntiid = request.matchdict.get('ntiid', None)
 	if ntiid:
 		args['location'] = ntiid
-		indexid = get_collection(ntiid, default=None, registry=request.registry)
+		indexid = get_collection(ntiid, request.registry)
 		if indexid is None:
 			logger.debug("Could not find collection for ntiid '%s'" % ntiid)
 		else:

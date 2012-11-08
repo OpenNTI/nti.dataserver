@@ -85,12 +85,15 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 	def __init__( self, results ):
 		super(_SearchResultsExternalizer, self).__init__(results)
 		self.seen = set()
-		
-	@property
-	def hits(self):
-		return self.results.hits
-	items = hits
 	
+	def sort_hits(self, hits):
+		sortBy = self.query.sortBy
+		if sortBy:
+			comparator = component.queryUtility(search_interfaces.ISearchHitComparator, name=sortBy)
+			if comparator:
+				hits = sorted(hits, cmp=comparator)
+		return hits
+			
 	def toExternalObject(self):
 		eo = super(_SearchResultsExternalizer, self).toExternalObject()
 		eo[PHRASE_SEARCH] = self.query.is_phrase_search
@@ -100,7 +103,7 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 		query = self.query
 		last_modified = 0
 		highlight_type = self.highlight_type
-		
+			
 		# use iterator in case of any paging
 		for hit in self.results:
 			if hit is None or hit[0] is None:

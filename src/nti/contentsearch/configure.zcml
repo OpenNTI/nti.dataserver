@@ -21,6 +21,8 @@
 	<adapter factory="._search_hits._WhooshBookSearchHit"
 			 name="search-hit" />
 
+	<utility factory="._search_hits._RelevanceSearchHitComparator" name="relevance" />
+	
 	<adapter factory="._search_external._SearchResultsExternalizer" />
 	<adapter factory="._search_external._SuggestResultsExternalizer" />
 	<adapter factory="._search_external._SuggestAndSearchResultsExternalizer" />
@@ -52,11 +54,11 @@
 			 for="nti.dataserver.interfaces.IRedaction" />
 			 
 	<adapter factory="._content_utils._NoteContentResolver"
-			 provides=".interfaces.IContentResolver"
+			 provides=".interfaces.INoteContentResolver"
 			 for="nti.dataserver.interfaces.INote" />
 		
 	<adapter factory="._content_utils._MessageInfoContentResolver"
-			 provides=".interfaces.IContentResolver"
+			 provides=".interfaces.IMessageInfoContentResolver"
 			 for="nti.chatserver.interfaces.IMessageInfo" />
 			 
 	<adapter factory="._content_utils._CanvasShapeContentResolver"
@@ -66,7 +68,11 @@
 	<adapter factory="._content_utils._CanvasTextShapeContentResolver"
 			 provides=".interfaces.IContentResolver"
 			 for="nti.dataserver.contenttypes.CanvasTextShape" />
-			 	  
+			 	 
+	<adapter factory="._content_utils._BookContentResolver"
+			 provides=".interfaces.IBookContentResolver"
+			 for=".interfaces.IBookContent" />
+			 
 	<!-- Content processing -->
 	
 	<utility factory="._content_utils._default_content_translation_table"  />

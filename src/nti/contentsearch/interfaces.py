@@ -5,7 +5,7 @@ from zope import interface
 from zope import component
 from zope.deprecation import deprecated
 from zope.index import interfaces as zidx_interfaces
-from zope.interface.common.mapping import IFullMapping
+from zope.interface.common.mapping import IReadMapping, IMapping, IFullMapping
 
 from repoze.catalog import interfaces as rcat_interfaces
 
@@ -324,8 +324,15 @@ class IWhooshIndexStorage(interface.Interface):
 
 # book content
 
-class IWhooshBookContent(interface.Interface):
-	pass
+class IBookContent(interface.Interface):
+	docnum = schema.Int(title="Document number", required=True)
+	ntiid = schema.Float(title="NTIID", required=True)
+	content = schema.Text(title="Text content", required=True)
+	last_modified = schema.Float(title="Last modified date", required=True)
+	
+class IWhooshBookContent(IBookContent, IReadMapping):
+	intid = schema.Int(title="Alias for docnum", required=True)
+	score = schema.Float(title="Search score", required=False, default=1.0)
 
 # text highlight types
 
@@ -345,19 +352,23 @@ class IContentResolver(interface.Interface):
 	def get_content():
 		"""return the text content to index"""
 		
-class IUserContentResolver(IContentResolver):
-		
+class INTIIDResolver(interface.Interface):
+	
 	def get_ntiid():
 		"""return the NTI identifier"""
+		
+class IContainerIDResolver(interface.Interface):
+	
+	def get_containerId():
+		"""return the container identifier"""
+		
+class IUserContentResolver(INTIIDResolver, IContainerIDResolver,  IContentResolver):
 		
 	def get_external_oid():
 		"""return the external object identifier"""
 	
 	def get_creator():
 		"""return the creator"""
-	
-	def get_containerId():
-		"""return the container identifier"""
 	
 	def get_last_modified():
 		"""return the last modified"""
@@ -400,6 +411,9 @@ class IMessageInfoContentResolver(IThreadableContentResolver):
 	def get_recipients():
 		"""return the message recipients"""
 
+class IBookContentResolver(INTIIDResolver, IContainerIDResolver,  IContentResolver):
+	pass
+		
 # content processing
 
 class IContentTranslationTable(interface.Interface):
@@ -557,6 +571,7 @@ class ISearchQuery(interface.Interface):
 	limit = schema.Int(title="search results limit", required=False)
 	indexid = schema.TextLine(title="Book content NTIID", required=False)
 	searchon = schema.Iterable("Content types to search on", required=False)
+	sortBy = schema.TextLine(title="Field or function to sorty by", required=False)
 	location = schema.TextLine(title="The reference NTIID where the search was invoked", required=False)
 	batchSize = schema.Int(title="page size", required=False)
 	batchStart = schema.Int(title="The index of the first object to return, starting with zero", required=False)
@@ -581,23 +596,27 @@ class IWordSimilarity(interface.Interface):
 	def rank(word, terms, reverse=True):
 		"""return the specified terms based on the distance to the specified word"""
 		
-class ISearchHit(ext_interfaces.IExternalObject):
+class ISearchHit(IMapping, ext_interfaces.IExternalObject):
 	query = schema.Object(ISearchQuery, title="query that produced this hit", required=True, readonly=True)
 	score = schema.Float(title="hit relevance score", required=True, readonly=True)
 	oid = schema.TextLine(title="hit unique id", required=True, readonly=True)
 	last_modified = schema.Float(title="last modified date for this hit", required=False, readonly=True)
 	
+class ISearchHitComparator(interface.Interface):
+	def compare(a, b):
+		"""A comparison function, which imposes a total ordering on some collection of search hits"""
+	
 class IBaseSearchResults(interface.Interface):
 	query = schema.Object(ISearchQuery, title="search query")
 	
 class ISearchResults(IBaseSearchResults):
-	hits = schema.List(title="search result hits")
+	hits = schema.List(title="search result hits", required=True, readonly=True)
 	
 	def add(hit_or_hits):
 		"""add a search hit(s) to this result"""
 	
 class ISuggestResults(IBaseSearchResults):
-	suggestions = schema.Set(title="suggested words")
+	suggestions = schema.Set(title="suggested words", required=True, readonly=True)
 	
 	def add_suggestions(word_or_words):
 		"""add a word suggestion(s) to this result"""

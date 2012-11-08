@@ -100,9 +100,10 @@ class _SearchResults(_PageableSearchResults):
 		super(_SearchResults, self).__init__(query)
 		self._hits = []
 
-	@property
-	def hits(self):
+	def get_hits(self):
 		return self._hits
+	
+	hits = property(get_hits)
 	
 	def _add(self, item):
 		if isinstance(item, tuple):
@@ -134,11 +135,11 @@ class _SuggestResults(_BaseSearchResults):
 	def __init__(self, query):
 		super(_SuggestResults, self).__init__(query)
 		self._words = set()
-
-	@property
-	def hits(self):
-		return self._words
 	
+	def get_hits(self):
+		return self._words
+		
+	hits = property(get_hits)
 	suggestions = hits
 	
 	def add_suggestions(self, items):
@@ -164,14 +165,16 @@ class _SuggestAndSearchResults(_SearchResults, _SuggestResults):
 		_SearchResults.__init__(self, query)
 		_SuggestResults.__init__(self, query)
 
-	@property
-	def hits(self):
+	def get_hits(self):
 		return self._hits
 	
-	@property
-	def suggestions(self):
+	hits = property(get_hits)
+	
+	def get_words(self):
 		return self._words
-			
+		
+	suggestions = property(get_words)
+	
 	def add(self, items):
 		_SearchResults.add(self, items)
 		

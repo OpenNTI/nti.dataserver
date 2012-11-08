@@ -2,6 +2,7 @@ from __future__ import print_function, unicode_literals
 
 import inspect
 from datetime import datetime
+from operator import methodcaller
 
 import zope.intid
 from zope import interface
@@ -181,10 +182,16 @@ def create_book_schema():
 				 			content = content_field(stored=True))
 	return schema
 
-#TODO: do an adapter
+
 @interface.implementer(search_interfaces.IWhooshBookContent)
-class _BookHit(dict):
-	pass
+class _BookContent(dict):
+	intid = property(methodcaller('get','intid'))
+	ntiid = property(methodcaller('get','ntiid'))
+	content = property(methodcaller('get','content'))
+	last_modified = property(methodcaller('get','last_modified'))
+	score = property(methodcaller('get','score', 1.0))
+	docnum = intid
+	containerId = ntiid
 
 class Book(_SearchableContent):
 
@@ -202,12 +209,12 @@ class Book(_SearchableContent):
 					docids.add(docnum)
 					
 				score = hit.score or 1.0
-				data = _BookHit(intid  = docnum,
-								score  = score,
-								ntiid  = hit[ntiid_], 
-						 		title  = hit[title_],
-						 		content = hit[content_],
-						 		last_modified = hit[last_modified_] )
+				data = _BookContent(intid  = docnum,
+									score  = score,
+									ntiid  = hit[ntiid_], 
+						 			title  = hit[title_],
+						 			content = hit[content_],
+						 			last_modified = hit[last_modified_] )
 				result.append((data, score))
 		return result
 
