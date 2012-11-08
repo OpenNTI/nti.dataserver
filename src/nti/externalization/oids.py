@@ -53,14 +53,14 @@ def toExternalOID( self, default=None, add_to_connection=False, add_to_intids=Fa
 			# The object ID is defined to be 8 charecters long. It gets
 			# padded with null chars to get to that length; we strip
 			# those out. Finally, it probably has chars that
-			# aren't legal it UTF or ASCII, so we go to hex and prepend
+			# aren't legal in UTF or ASCII, so we go to hex and prepend
 			# a flag, '0x'
 			oid = oid.lstrip(b'\x00')
-			oid = '0x' + oid.encode('hex')
+			oid = b'0x' + oid.encode('hex')
 			jar = jar or getattr( self, '_p_jar', None )
 			if jar:
 				db_name = jar.db().database_name
-				oid = oid + ':' + db_name.encode( 'hex' )
+				oid = oid + b':' + db_name.encode( 'hex' )
 
 			intutility = component.queryUtility( zc_intid.IIntIds )
 			if intutility:
@@ -69,8 +69,8 @@ def toExternalOID( self, default=None, add_to_connection=False, add_to_intids=Fa
 					intid = intutility.register( self )
 				if intid is not None:
 					if not jar:
-						oid = oid + ':' # Ensure intid is always the third part
-					oid = oid + ':' + integer_strings.to_external_string( intid )
+						oid = oid + b':' # Ensure intid is always the third part
+					oid = oid + b':' + integer_strings.to_external_string( intid )
 	return oid or default
 
 to_external_oid = toExternalOID
