@@ -25,7 +25,7 @@ from pyramid.threadlocal import get_current_request
 
 
 import gunicorn.workers.ggevent as ggevent
-#import gunicorn.http.wsgi
+import gunicorn.http.wsgi
 #import gunicorn.sock
 
 import gevent
@@ -95,16 +95,19 @@ def _create_flash_socket(cfg, log):
 
 		raise
 
-# class _PhonyRequest(object):
-# 	headers = ()
-# 	input_buffer = None
-# 	typestr = None
-# 	uri = None
-# 	path = None
-# 	version = (1,0)
-# 	proxy_protocol_info = None # added in 0.15.0
-# 	def get_input_headers(self):
-# 		raise Exception("Not implemented for phony request")
+class _PhonyRequest(object):
+	headers = ()
+	input_buffer = None
+	typestr = None
+	uri = None
+	path = None
+	query = None
+	method = None
+	body = None
+	version = (1,0)
+	proxy_protocol_info = None # added in 0.15.0
+	def get_input_headers(self):
+		raise Exception("Not implemented for phony request")
 
 
 class _PyWSGIWebSocketHandler(WebSocketServer.handler_class,ggevent.PyWSGIHandler):
@@ -113,71 +116,41 @@ class _PyWSGIWebSocketHandler(WebSocketServer.handler_class,ggevent.PyWSGIHandle
 	websocket request upgrading. Order of inheritance matters.
 	"""
 
-	# JAM 20121002: The below is all from pre-gunicorn 0.15.0. It actually seems
-	# to have been unnecessary in 0.14.6 as well. At any rate, unit, gp and int
-	# tests all pass without this code in place, and inspection of the referenced
-	# classes and workers doesn't reveal a need for it: the gevent worker extends
-	# the Async worker, and the proxy/forward handling is done in gunicorn.http.wsgi.
-	# We'll know for sure if the logs look...odd...in the proxied environments
+	# In gunicorn, an AsyncWorker defaults to handling requests itself, passing
+	# them off to the application directly. Worker.handle goes to Worker.handle_request.
+	# However, if you have a server_class involved, then that server entirely pre-empts
+	# all the handling that the AsnycWorker would do. Since the Worker is what's aware
+	# of the gunicorn configuration and calls gunicorn.http.wsgi.create to handle
+	# getting the X-FORWARDED-PROTOCOL, etc, correct, it's important to do that.
+	# Our worker uses a custom server, and we depend on that to be able to pass the right
+	# information to gunicorn.http.wsgi.create
 
-	# # Things to copy out of the our prepared environment
-	# # into the environment created by the super's get_environment
-	# ENV_TO_COPY = (b'RAW_URI', b'wsgi.errors', b'wsgi.file_wrapper',
-	# 			   b'REMOTE_ADDR',b'SERVER_SOFTWARE',
-	# 			   b'SERVER_NAME', b'SERVER_PORT',
-	# 			   b'wsgi.url_scheme')
+	def get_environ(self):
+		# Start with what gevent creates
+		environ = super(_PyWSGIWebSocketHandler,self).get_environ()
+		# and then merge in anything that gunicorn wants to do instead
 
+		request = _PhonyRequest()
+		request.typestr = self.command
+		request.uri = environ['RAW_URI']
+		request.method = environ['REQUEST_METHOD']
+		request.query = environ['QUERY_STRING']
+		request.headers = []
+		request.path = environ['PATH_INFO']
+		request.body = environ['wsgi.input']
+		for header in self.headers.headers:
+			# If we're not careful to split with a byte string here, we can
+			# run into UnicodeDecodeErrors: True, all the headers are supposed to be sent
+			# in ASCII, but frickin IE (at least 9.0) can send non-ASCII values,
+			# without url encoding them, in the value of the Referer field (specifically
+			# seen when it includes a fragment in the URI, which is also explicitly against
+			# section 14.36 of HTTP 1.1. Stupid IE).
+			k, v = header.split( b':', 1)
+			request.headers.append( (k.upper(), v.strip()) )
+		_, gunicorn_env = gunicorn.http.wsgi.create(request, self.socket, self.client_address, self.server.worker.address, self.server.worker.cfg)
 
-	# # We are using the SocketIO server and the Gevent Worker
-	# # Only the Sync and Async workers setup the environment
-	# # and deal with things like x-forwarded-for. So we
-	# # must override the default pywsgi environment creation
-	# # to use that provided by gunicorn to get these features
-	# # The plain WSGIHandler uses prepare_env. The pywsgi handler
-	# # uses get_environ
-	# def prepare_env(self):
-	# 	req = self.request
-	# 	req.body = req.input_buffer
-	# 	req.method = req.typestr
-	# 	if b'?' in req.uri:
-	# 		_, query = req.uri.split(b'?', 1)
-	# 	else:
-	# 		_, query = req.uri, b''
-	# 	req.query = query
-	# 	req.headers = getattr( req, 'headers', None ) or req.get_input_headers()
-	# 	_, env = gunicorn.http.wsgi.create(req, self.socket, self.client_address, worker.address, worker.cfg)
-	# 	return env
-
-
-	# def get_environ(self):
-	# 	if not getattr( self, 'request', None ):
-	# 		# gevent.pywsgi can call this before gunicorn has a chance to
-	# 		# assign a request object.
-	# 		self.request = _PhonyRequest()
-	# 		self.request.typestr = self.command
-	# 		self.request.uri = self.path
-	# 		self.request.headers = []
-	# 		self.request.path = self.path
-	# 		for header in self.headers.headers:
-	# 			# If we're not careful to split with a byte string here, we can
-	# 			# run into UnicodeDecodeErrors: True, all the headers are supposed to be sent
-	# 			# in ASCII, but frickin IE (at least 9.0) can send non-ASCII values,
-	# 			# without url encoding them, in the value of the Referer field (specifically
-	# 			# seen when it includes a fragment in the URI, which is also explicitly against
-	# 			# section 14.36 of HTTP 1.1. Stupid IE).
-	# 			k, v = header.split( b':', 1)
-	# 			self.request.headers.append( (k.upper(), v.strip()) )
-
-
-	# 	env = self.prepare_env()
-	# 	# This does everything except it screws with REMOTE_ADDR
-	# 	# and some other values we want gunicorn to rule
-	# 	ws_env = super(HandlerClass,self).get_environ()
-	# 	for k in self.ENV_TO_COPY:
-	# 		ws_env[k] = env[k]
-	# 	ws_env[b'gunicorn.sock'] = self.socket
-	# 	ws_env[b'gunicorn.socket'] = self.socket
-	# 	return ws_env
+		environ.update( gunicorn_env )
+		return environ
 
 
 class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
@@ -185,16 +158,11 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 	Our application worker.
 	"""
 
-	#: We need to be served by something that can handle websockets
-	server_class = WebSocketServer
-
 	#: Our custom server requires a custom handler.
 	wsgi_handler = _PyWSGIWebSocketHandler
 
-
 	app_server = None
 	app = None
-	server_class = None
 	socket = None
 	policy_server = None
 	_preloaded_app = None
@@ -234,9 +202,12 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 				(dummy_app.kwargs.get( 'host', ''), int(dummy_app.global_conf['http_port'])),
 				wsgi_app,
 				handler_class=self.wsgi_handler)
+			self.app_server.worker = self # See _PyWSGIWebSocketHandler.get_environ
+			return self.app_server
 		except Exception:
 			logger.exception( "Failed to create appserver" )
 			raise
+
 
 	def init_process(self, _call_super=True):
 		"""
@@ -345,6 +316,7 @@ class _ServerFactory(object):
 				result = "%s:%s" % (prequest.path, uid or '' )
 				if cache:
 					setattr( prequest, '_worker_greenlet_cached_thread_name', result )
+
 				return result
 
 		spawn.greenlet_class = WorkerGreenlet
