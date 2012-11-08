@@ -591,13 +591,13 @@ class IBaseSearchResults(interface.Interface):
 	query = schema.Object(ISearchQuery, title="search query")
 	
 class ISearchResults(IBaseSearchResults):
-	hits = schema.Iterable("search result hits")
+	hits = schema.List(title="search result hits")
 	
 	def add(hit_or_hits):
 		"""add a search hit(s) to this result"""
 	
 class ISuggestResults(IBaseSearchResults):
-	suggestions = schema.Iterable("suggested words")
+	suggestions = schema.Set(title="suggested words")
 	
 	def add_suggestions(word_or_words):
 		"""add a word suggestion(s) to this result"""
