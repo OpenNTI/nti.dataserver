@@ -5,6 +5,9 @@ from hamcrest import assert_that, is_, less_than, greater_than, less_than_or_equ
 from hamcrest import same_instance
 from hamcrest import has_property
 
+from nti.tests import verifiably_provides
+
+from nti.zodb import interfaces
 from nti.zodb.minmax import MergingCounter, NumericMinimum, NumericMaximum, ConstantZeroValue
 
 from nose.tools import assert_raises
@@ -15,6 +18,8 @@ def test_comparisons():
 	mc2 = MergingCounter()
 
 	assert_that( mc1, is_( mc2 ) )
+	assert_that( mc1, verifiably_provides( interfaces.INumericCounter ) )
+
 	mc2.increment()
 
 	assert_that( mc1, is_( less_than( mc2 ) ) )
@@ -24,6 +29,17 @@ def test_comparisons():
 	assert_that( mc1, is_( less_than_or_equal_to( mc2 ) ) )
 
 	assert_that( hash(mc1), is_( mc1.value ) )
+
+def test_add():
+	mc1 = MergingCounter(1)
+	mc2 = MergingCounter(2)
+
+	assert_that( mc1 + mc2, is_( MergingCounter( 3 ) ) )
+
+	assert_that( mc1 + 2, is_( 3 ) )
+
+	mc1 += 2
+	assert_that( mc1, is_( MergingCounter( 3 ) ) )
 
 def test_merge_resolve():
 
