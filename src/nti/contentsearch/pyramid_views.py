@@ -83,6 +83,7 @@ def get_queryobject(request):
 
 	ntiid = request.matchdict.get('ntiid', None)
 	if ntiid:
+		args['location'] = ntiid
 		indexid = get_collection(ntiid, default=None, registry=request.registry)
 		if indexid is None:
 			logger.debug("Could not find collection for ntiid '%s'" % ntiid)

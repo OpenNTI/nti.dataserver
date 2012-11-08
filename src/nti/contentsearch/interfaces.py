@@ -557,6 +557,7 @@ class ISearchQuery(interface.Interface):
 	limit = schema.Int(title="search results limit", required=False)
 	indexid = schema.TextLine(title="Book content NTIID", required=False)
 	searchon = schema.Iterable("Content types to search on", required=False)
+	location = schema.TextLine(title="The reference NTIID where the search was invoked", required=False)
 	batchSize = schema.Int(title="page size", required=False)
 	batchStart = schema.Int(title="The index of the first object to return, starting with zero", required=False)
 	
