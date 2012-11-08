@@ -29,6 +29,7 @@ import UserList
 
 from nti.dataserver import users
 from nti.ntiids import ntiids
+from nti.externalization.oids import to_external_ntiid_oid
 from nti.dataserver.datastructures import ZContainedMixin
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans, WithMockDS
 from nti.dataserver.tests import mock_dataserver
@@ -45,6 +46,9 @@ class ContainedExternal(ZContainedMixin):
 
 	def toExternalObject( self ):
 		return str(self)
+	def to_container_key(self):
+		return to_external_ntiid_oid(self, default_oid=str(id(self)))
+
 
 class TestUGDQueryViews(ConfiguringTestBase):
 

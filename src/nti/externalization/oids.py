@@ -35,6 +35,7 @@ def toExternalOID( self, default=None, add_to_connection=False, add_to_intids=Fa
 		not have an intid, and an intid utility is available, then if this is
 		``True`` (not the default) we will register it with the utility.
 	"""
+
 	oid = None
 	if hasattr( self, 'toExternalOID' ):
 		oid = self.toExternalOID( )
@@ -117,14 +118,14 @@ from_external_oid = fromExternalOID
 
 DEFAULT_EXTERNAL_CREATOR = system_user.id
 
-_ext_ntiid_oid = object()
-def to_external_ntiid_oid( contained, default_oid=_ext_ntiid_oid, add_to_connection=False, add_to_intids=False ):
+
+def to_external_ntiid_oid( contained, default_oid=None, add_to_connection=False, add_to_intids=False ):
 	"""
 	:return: An NTIID string utilizing the object's creator and persistent
 		id.
-	:param default_oid: The default value for the externalization of the OID.
-		If this is None, and no external OID can be found (using :func:`toExternalOID`),
-		then this function will return None. (If not given, this method will return some non-persistent value)
+	:param str default_oid: The default value for the externalization of the OID.
+		If this is ``None`` (the default), and no external OID can be found (using :func:`toExternalOID`),
+		then this function will return None.
 	:param add_to_connection: If the object is persistent but not yet added to a connection,
 		setting this to true will attempt to add it to the nearest connection in
 		its containment tree, thus letting it have an OID.
@@ -148,7 +149,7 @@ def to_external_ntiid_oid( contained, default_oid=_ext_ntiid_oid, add_to_connect
 		return ext_oid
 
 	oid = toExternalOID( contained,
-						 default=(default_oid if default_oid is not _ext_ntiid_oid else str(id(contained))),
+						 default=default_oid,
 						 add_to_connection=add_to_connection,
 						 add_to_intids=add_to_intids )
 	if not oid:

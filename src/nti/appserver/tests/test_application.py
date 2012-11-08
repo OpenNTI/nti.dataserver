@@ -61,6 +61,9 @@ class ContainedExternal(ZContainedMixin):
 
 	def toExternalObject( self ):
 		return str(self)
+	def to_container_key(self):
+		return to_external_ntiid_oid(self, default_oid=str(id(self)))
+
 
 class PersistentContainedExternal(ContainedExternal,Persistent):
 	pass
@@ -888,6 +891,11 @@ class TestApplication(SharedApplicationTestBase):
 		data = u'"data:image/gif;base64,R0lGODlhEAAQANUAAP///////vz9/fr7/Pf5+vX4+fP2+PL19/D09uvx8+Xt797o69zm6tnk6Nfi5tLf49Dd483c4cva38nZ38jY3cbX3MTW3MPU2sLT2cHT2cDS2b3R2L3Q17zP17vP1rvO1bnN1LbM1LbL07XL0rTK0bLI0LHH0LDHz6/Gzq7Ezq3EzavDzKnCy6jByqbAyaS+yKK9x6C7xZ66xJu/zJi2wY2uukZncwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAEAAQAAAGekCAcEgsEmvIJNJmBNSEAQHh8GQWn4BBAZHAWm1MsM0AVtTEYYd67bAtGrO4lb1mOB4RyixNb0MkFRh7ADZ9bRMWGh+DhX02FxsgJIMAhhkdISUpjIY2IycrLoxhYBxgKCwvMZRCNRkeIiYqLTAyNKxOcbq7uGi+YgBBADs="'
 		res = self._edit_user_ext_field( 'avatarURL', data )
 		assert_that( res.json_body, has_entry( 'avatarURL', starts_with( '/dataserver2/' ) ) )
+
+		testapp = TestApp( self.app )
+
+		res = testapp.get( res.json_body['avatarURL'], extra_environ=self._make_extra_environ() )
+		assert_that( res.content_type, is_( 'image/gif' ) )
 
 	@WithSharedApplicationMockDS
 	def test_put_data_to_user( self ):
