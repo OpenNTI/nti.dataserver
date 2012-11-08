@@ -8,6 +8,8 @@ from __future__ import print_function, unicode_literals
 
 import functools
 
+from . import interfaces
+from zope import interface
 from zope.minmax._minmax import Maximum, Minimum, AbstractValue
 
 # The Default Max/Min classes exist because, in some circumstances
@@ -16,6 +18,7 @@ from zope.minmax._minmax import Maximum, Minimum, AbstractValue
 # is not there (for no clear reason!). These classes define it as a default
 
 @functools.total_ordering
+@interface.implementer(interfaces.INumericValue)
 class AbstractNumericValue(AbstractValue):
 	"""
 	A numeric value that provides ordering operations.
@@ -29,14 +32,12 @@ class AbstractNumericValue(AbstractValue):
 	def set(self,value):
 		self.value = value
 
+	# Comparison methods
 	def __eq__( self, other ):
 		try:
 			return other is self or self.value == other.value
 		except AttributeError: # pragma: no cover
 			return NotImplemented
-
-	def __hash__(self):
-		return self.value
 
 	def __lt__(self, other ):
 		try:
@@ -50,11 +51,37 @@ class AbstractNumericValue(AbstractValue):
 		except AttributeError: # pragma: no cover
 			return NotImplemented
 
+	def __hash__(self):
+		return self.value
+
+	# Numeric methods
+	def __isub__(self, other):
+		other_value = getattr( other, 'value', other )
+		self.set( self.value - other_value )
+		return self
+
+	def __iadd__(self, other):
+		other_value = getattr( other, 'value', other )
+		self.set( self.value + other_value )
+		return self
+
+	def __rsub__( self, other ):
+		# other - self.
+		# By definition, not called if other is the same type as this
+		return other - self.value
+
+	def __add__( self, other ):
+		other_value = getattr( other, 'value', other )
+		result = self.value + other_value
+		if other_value is not other:
+			result = type(self)(result)
+		return result
+
 	def __str__( self ):
 		return str(self.value)
 
 	def __repr__( self ):
-		return "%s(%s)" %(self.__class__.__name__, self.value)
+		return "%s(%s)" % (self.__class__.__name__, self.value)
 
 class _ConstantZeroValue(AbstractNumericValue):
 	"""
@@ -88,7 +115,7 @@ class NumericMinimum(AbstractNumericValue,Minimum):
 	Minimizes the number during conflicts.
 	"""
 
-
+@interface.implementer(interfaces.INumericCounter)
 class MergingCounter(AbstractNumericValue):
 	"""
 	A :mod:`zope.minmax` item that resolves conflicts by
