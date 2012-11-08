@@ -100,7 +100,7 @@ import ZODB.POSException
 from zope import interface
 from zope import component
 from zope import intid
-from zope.cachedescriptors.property import CachedProperty
+from zope.cachedescriptors.property import CachedProperty, Lazy
 
 
 class _IMeetingTranscriptStorage(interface.Interface):
@@ -374,16 +374,15 @@ def TranscriptSummaryAdapter(meeting_storage):
 		logger.exception( "Meeting object gone missing." )
 		return None
 
-
+@interface.implementer(nti_interfaces.IZContained,
+					   nti_interfaces.ILinked,
+					   nti_interfaces.ITranscriptSummary,
+					   ext_interfaces.IInternalObjectIO) # TODO: Strip this out, make schema driven
 class TranscriptSummary(nti.externalization.datastructures.ExternalizableInstanceDict):
 	"""
 	The transcript summary for a user in a room.
 	"""
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-	interface.implements(nti_interfaces.IZContained,
-						 nti_interfaces.ILinked,
-						 nti_interfaces.ITranscriptSummary,
-						 ext_interfaces.IInternalObjectIO) # TODO: Strip this out, make schema driven
 
 	__parent__ = None
 	links = ()
@@ -422,16 +421,27 @@ class TranscriptSummary(nti.externalization.datastructures.ExternalizableInstanc
 		# TODO: constant
 		return (links.Link( Transcript( meeting_storage ), rel="transcript" ),)
 
+	def __reduce__(self):
+		"""
+		These objects cannot be pickled.
+		""" # because they hold other persistent objects that are meant to be weak-refd
+		raise TypeError()
+
 	@property
 	def __name__(self):
 		return self.NTIID
 
+# For purposes of filtering during UGD queries, make the objects that store
+# messages appear to be transcript summaries, since that is what they will
+# externalize as. TODO: This design is wonky
+_AbstractMeetingTranscriptStorage.mime_type = TranscriptSummary.mime_type
+
+@interface.implementer(nti_interfaces.ITranscript)
 class Transcript(TranscriptSummary):
 	"""
 	The transcript for a user in a room.
 	"""
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-	interface.implements(nti_interfaces.ITranscript)
 
 
 	_NTIID_TYPE_ = ntiids.TYPE_TRANSCRIPT
@@ -441,15 +451,27 @@ class Transcript(TranscriptSummary):
 		:param _MeetingTranscriptStorage meeting_storage: The storage for the user in the room.
 		"""
 		super(Transcript,self).__init__( meeting_storage )
-		# TODO: Make loading these lazy, since we are
-		# creating these for links in summaries
-		self.Messages = list( meeting_storage.itervalues() )
+		self._meeting_storage = meeting_storage
+
+	@Lazy
+	def Messages(self):
+		return list( self._meeting_storage.itervalues() )
+
+	def toExternalObject(self,mergeFrom=None):
+		len(self.Messages) # Get in the instance dict if not already so it externalizes
+		return super(Transcript,self).toExternalObject(mergeFrom=mergeFrom)
 
 	def _create_links( self, meeting_storage ):
 		return ()
 
 	def __len__( self ):
 		return len( self.Messages )
+
+	def __nonzero__(self):
+		return True
+
+	def __getitem__( self, msg_id ):
+		return self.get_message( msg_id )
 
 	def get_message( self, msg_id ):
 		"""

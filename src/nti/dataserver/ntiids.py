@@ -1,8 +1,9 @@
+#!/usr/bin/env python
 """
 Constants and types for dealing with our unique IDs.
 $Revision$
 """
-
+from __future__ import print_function, unicode_literals, absolute_import
 logger = __import__('logging').getLogger(__name__)
 
 import numbers
