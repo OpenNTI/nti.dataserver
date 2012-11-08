@@ -131,5 +131,6 @@ def image_to_dataurl_extjs(request):
 	# in the json body. Status codes also don't exist, and layer boundaries are meaningless
 	body = dict(rsp.json_body)
 	body['success'] = True
+	rsp.content_type = b'text/plain'
 	rsp.json_body = body
 	return rsp
