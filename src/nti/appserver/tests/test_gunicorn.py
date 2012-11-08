@@ -21,6 +21,8 @@ from hamcrest import has_key
 from hamcrest import has_entry
 
 from pyramid.testing import DummyRequest
+from pyramid.request import Request
+from cStringIO import StringIO
 
 import nti.tests
 import socket
@@ -45,6 +47,15 @@ class MockConfig(object):
 	flash_policy_server_port = 1
 	settings = None
 	access_log_format = ''
+	workers = 2
+	secure_scheme_headers =  {
+		"X-FORWARDED-PROTOCOL": "ssl",
+		"X-FORWARDED-PROTO": "https",
+		"X-FORWARDED-SSL": "on"
+	}
+	x_forwarded_for_header = 'X-FORWARDED-FOR'
+	forwarded_allow_ips = '127.0.0.1'
+
 
 class MockSocket(object):
 
@@ -83,6 +94,36 @@ class TestGeventApplicationWorker(nti.tests.ConfiguringTestBase):
 		worker = gunicorn.GeventApplicationWorker( None, None, MockSocket(), None, None, MockConfig, logger)
 		with assert_raises(Exception):
 			worker._init_server()
+
+	@fudge.patch('gunicorn.workers.base.WorkerTmp','nti.appserver.gunicorn.loadwsgi')
+	def test_handler_in_server(self, fudge_tmp, fudge_loadwsgi):
+		fudge_tmp.is_a_stub()
+		fudge_loadwsgi.is_a_stub()
+		global_conf = {}
+		#  age, ppid, socket, app, timeout, cfg, log
+		dummy_app = gunicorn.dummy_app_factory( global_conf )
+		dummy_app.app = dummy_app
+		global_conf['__file__'] = ''
+		global_conf['http_port'] = '1'
+		worker = gunicorn.GeventApplicationWorker( None, None, MockSocket(), dummy_app, None, MockConfig, logger)
+		server = worker._init_server()
+
+		# Be sure that everything is set up so that the environment comes out as expeted
+		rqst = Request.blank( '/pages?format=json', environ={b'REQUEST_METHOD': b'DELETE'} )
+
+		rqst.headers['X-FORWARDED-PROTOCOL'] = 'ssl'
+		rqst.headers['X-FORWARDED-FOR'] = '10.10.10.10'
+		rfile = StringIO(rqst.as_bytes() + b'\r\n')
+		handler = server.handler_class(None, ('127.0.0.1', 12345), server, rfile) # socket, address, server, rfile
+		rline = handler.read_requestline()
+		handler.read_request( rline )
+		handler.content_length = None
+		environ = handler.get_environ()
+
+		assert_that( environ, has_entry( 'wsgi.url_scheme', 'https' ) )
+		assert_that( environ, has_entry( 'REMOTE_ADDR', '10.10.10.10' ) )
+		assert_that( environ, has_entry( 'REQUEST_METHOD', 'DELETE' ) )
+		assert_that( environ, has_entry( 'PATH_INFO', '/pages' ) )
 
 
 	@fudge.patch('gunicorn.workers.base.WorkerTmp','nti.appserver.gunicorn.loadwsgi','gevent.socket.socket', 'nti.appserver.gunicorn.get_current_request')
