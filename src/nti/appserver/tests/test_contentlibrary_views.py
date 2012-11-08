@@ -107,9 +107,9 @@ class TestContainerPrefs(NewRequestSharedConfiguringTestBase):
 		self._do_check_root_inherited( ntiid=cid, sharedWith=['a@b'] )
 
 
-	@WithMockDS
+	@WithMockDSTrans
 	def test_traverse_container_to_prefs(self):
-		user = users.User( "foo@bar" )
+		user = users.User.create_user( username="foo@bar" )
 
 		cont_obj = Note()
 		cont_obj.containerId = "tag:nextthought.com:foo,bar"

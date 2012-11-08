@@ -336,7 +336,7 @@ def to_standard_external_dictionary( self, mergeFrom=None, name=_ex_name_marker,
 		# objects (chat rooms?) if we do this to them
 		result_id = result[StandardExternalFields.ID]
 		std_oid = to_external_ntiid_oid( self )
-		if std_oid.startswith( result_id ) and self.__class__.__name__ == 'Note':
+		if std_oid and std_oid.startswith( result_id ) and self.__class__.__name__ == 'Note':
 			result[StandardExternalFields.ID] = std_oid
 
 		result[StandardExternalFields.OID] = result[StandardExternalFields.ID]
