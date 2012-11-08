@@ -93,11 +93,11 @@ def _process_words(words):
 	return words or []
 
 @interface.implementer(search_interfaces.IContentResolver)
-class _BasicContentaResolver(object):
+class _BasicContentResolver(object):
 	def __init__( self, obj ):
 		self.obj = obj
 
-class _AbstractIndexDataResolver(_BasicContentaResolver):
+class _AbstractIndexDataResolver(_BasicContentResolver):
 
 	def get_ntiid(self):
 		return to_external_ntiid_oid( self.obj )
@@ -223,17 +223,19 @@ class _MessageInfoContentResolver(_ThreadableContentResolver, _PartsContentResol
 		return _process_words(data)
 
 @component.adapter(Canvas)
-class _CanvasShapeContentResolver(_BasicContentaResolver, _PartsContentResolver):
+class _CanvasShapeContentResolver(_BasicContentResolver, _PartsContentResolver):
 	def get_content(self):
 		return self._resolve(self.obj.shapeList)
 
 @component.adapter(CanvasTextShape)
-class _CanvasTextShapeContentResolver(_BasicContentaResolver):
+class _CanvasTextShapeContentResolver(_BasicContentResolver):
 	def get_content(self):
 		return get_content(self.obj.text)
 
-@interface.implementer(search_interfaces.IContentResolver)
 @component.adapter(IDict)
+@interface.implementer(	search_interfaces.IContentResolver,
+						search_interfaces.INTIIDResolver,
+						search_interfaces.IContainerIDResolver)
 class _DictContentResolver(object):
 
 	def __init__( self, obj ):
@@ -363,6 +365,19 @@ class _DictContentResolver(object):
 		data = self.obj.get(recipients_, ())
 		return _process_words(data)
 
+
+@component.adapter(search_interfaces.IBookContent)
+@interface.implementer(search_interfaces.IBookContentResolver)
+class _BookContentResolver(_BasicContentResolver):
+	
+	def get_content(self):
+		return self.obj.content
+	
+	def get_ntiid(self):
+		return self.obj.ntiid
+	get_containerId = get_ntiid
+
+	
 @interface.implementer( search_interfaces.IContentTokenizer )
 class _ContentTokenizer(object):
 	tokenizer = RegexpTokenizer(default_word_tokenizer_expression,

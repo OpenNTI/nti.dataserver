@@ -12,9 +12,9 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.chatserver import interfaces as chat_interfaces
 from nti.externalization import interfaces as ext_interfaces
 
-from nti.contentsearch import interfaces as search_interfaces
-
 from nti.contentsearch.common import epoch_time
+from nti.contentsearch._views_utils import get_ntiid_path
+from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch._search_highlights import WORD_HIGHLIGHT
 
 from nti.contentsearch.common import (	NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
@@ -152,3 +152,47 @@ def get_search_hit(obj, score=1.0, query=None, highlight_type=WORD_HIGHLIGHT):
 	hit.query = query
 	hit = _provide_highlight_snippet(hit, query, highlight_type)
 	return hit
+
+
+@interface.implementer(search_interfaces.ISearchHitComparator)
+class _RelevanceSearchHitComparator(object):
+
+	def _path_common(self, x, y):
+		count = 0
+		_limit = min(len(x), len(y))
+		for i in xrange(0, _limit):
+			if x[i] == y[i]:
+				count += 1
+			else:
+				break
+		return count
+	
+	def _get_containerId(self, item):
+		if search_interfaces.ISearchHit.providedBy(item):
+			result = item.get(NTIID, None)
+		elif isinstance(item, tuple):
+			adapted = component.queryAdapter(item[0], search_interfaces.IContainerIDResolver)
+			result = adapted.get_containerId() if adapted else None
+		else:
+			result = None
+		return result
+	
+	def _get_score(self, item):
+		if search_interfaces.ISearchHit.providedBy(item):
+			result = item.get(SCORE, 1.0)
+		elif isinstance(item, tuple):
+			result = item[1]
+		else:
+			result = 1.0
+		return result
+	
+	def compare(self, a, b):
+		location_path = get_ntiid_path(a.query.location)
+		a_path = self.get_path(a.get(NTIID, None))
+		b_path = self.get_path(b.get(NTIID, None))
+		a_common = -self._path_common(location_path, a_path)
+		b_common = -self._path_common(location_path, b_path)
+		r= cmp(a_common, b_common)
+		if r == 0:
+			r = cmp(a.score, b.score)
+		return r
