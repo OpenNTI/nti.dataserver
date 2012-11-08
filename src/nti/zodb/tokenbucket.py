@@ -63,3 +63,6 @@ class PersistentTokenBucket(object):
 			self._tokens.set( min(self.capacity, self._tokens + delta) )
 		self._timestamp.set( now )
 		return self._tokens.value
+
+	def __repr__(self):
+		return "%s(%s,%s)" % (type(self).__name__, self.capacity, self.fill_rate)

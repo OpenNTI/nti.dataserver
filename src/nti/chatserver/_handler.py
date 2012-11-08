@@ -7,13 +7,14 @@ __docformat__ = "restructuredtext en"
 import logging
 logger = logging.getLogger( __name__ )
 
+import os
 import warnings
-
 
 from nti.externalization.interfaces import StandardExternalFields as XFields
 from nti.chatserver import interfaces as chat_interfaces
 from nti.socketio import interfaces as sio_interfaces
 from nti.dataserver import interfaces as nti_interfaces
+from nti.zodb import interfaces as zodb_interfaces
 
 # FIXME: Break this dependency
 
@@ -28,10 +29,16 @@ from zope import interface
 from zope.interface.common import mapping as imapping
 from zope import component
 from zope import schema
+from zope.cachedescriptors.property import Lazy
+
+
+from nti.utils.sets import discard as _discard
+from nti.zodb.tokenbucket import PersistentTokenBucket
 
 
 from ._metaclass import _ChatObjectMeta
 from . import interfaces
+from . import MessageFactory as _
 
 
 EVT_ENTERED_ROOM = 'chat_enteredRoom'
@@ -41,11 +48,18 @@ EVT_RECV_MESSAGE = 'chat_recvMessage'
 
 
 
-from nti.utils.sets import discard as _discard
+class MessageRateExceeded(sio_interfaces.SocketEventHandlerClientError):
+	"""
+	Raised when a user is attempting to post too many chat messages too quickly.
+	"""
+
+	i18n_message = _("You are trying to send too many chat messages too quickly. Please wait and try again.")
 
 class IChatHandlerSessionState(interface.Interface):
 	rooms_i_moderate = schema.Object( imapping.IFullMapping,
 									  title="Mapping of rooms I moderate" )
+	message_post_rate_limit = schema.Object( zodb_interfaces.ITokenBucket,
+											 title="Take one token for every message you attempt to post." )
 
 @interface.implementer(IChatHandlerSessionState)
 @component.adapter(sio_interfaces.ISocketSession)
@@ -57,11 +71,23 @@ class _ChatHandlerSessionState(Persistent):
 	.. caution:: Recall that relatively speaking annotations are expensive and probably
 		not suited to writing something for every incoming message (that creates
 		lots of database transaction traffic) such as would potentially be needed
-		for persistent rate-based throttling.
+		for persistent rate-based throttling. On the other hand, if you're going to be
+		writing something anyway (e.g., you have successfully posted a message to a chat
+		room) then adding something here is probably not a problem.
 	"""
 
-	def __init__(self):
-		self.rooms_i_moderate = PersistentMapping()
+	@Lazy
+	def rooms_i_moderate(self):
+		return PersistentMapping()
+
+	@Lazy
+	def message_post_rate_limit(self):
+		# This is sure to be heavily tweaked over time. Initially, we
+		# start with one limit for all users: In any given 60 second period,
+		# you can post 30 messages (one every other second). You can burst
+		# faster than that, up to a max of 30 incoming messages. If you aren't
+		# ever idle, you can sustain a rate of one message every two seconds.
+		return PersistentTokenBucket(30, 2.0)
 
 from zope.annotation import factory as an_factory
 _ChatHandlerSessionStateFactory = an_factory(_ChatHandlerSessionState)
@@ -125,6 +151,15 @@ class _ChatHandler(object):
 		msg_info.Sender = self.session.owner
 		msg_info.sender_sid = self.session.session_id
 		result = True
+		# Rate limit all incoming chat messages
+		state = IChatHandlerSessionState(self.session)
+		if not state.message_post_rate_limit.consume():
+			if 'DATASERVER_SYNC_CHANGES' in os.environ: # hack for testing
+				logger.warn( "Allowing message rate for %s to exceed throttle %s during integration testings.", self, state.message_post_rate_limit )
+			else:
+				raise MessageRateExceeded()
+
+
 		for room in set(msg_info.rooms):
 			result &= self._chatserver.post_message_to_room( room, msg_info )
 		return result
