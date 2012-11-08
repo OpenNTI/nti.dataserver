@@ -13,6 +13,7 @@ from nti.externalization.oids import to_external_ntiid_oid, toExternalOID
 from nti.externalization.internalization import find_factory_for_class_name
 import nti.dataserver.interfaces as nti_interfaces
 from nti.dataserver._Dataserver import run_job_in_site
+from nti.dataserver._Dataserver import get_object_by_oid
 import nti.dataserver
 
 import transaction
@@ -93,6 +94,8 @@ class TestDataserver( mock_dataserver.ConfiguringTestBase ):
 
 		assert_that( mock_dataserver.current_mock_ds.get_by_oid( obj._p_oid ), is_( obj ) )
 		assert_that( mock_dataserver.current_mock_ds.get_by_oid( '00000' ), is_( none() ) )
+
+		assert_that( get_object_by_oid( mock_dataserver.current_transaction, u'436534760' ), is_( none() ) )
 
 	@mock_dataserver.WithMockDSTrans
 	def test_get_external_oid(self):

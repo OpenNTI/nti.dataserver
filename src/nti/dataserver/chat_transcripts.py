@@ -378,6 +378,7 @@ def TranscriptSummaryAdapter(meeting_storage):
 					   nti_interfaces.ILinked,
 					   nti_interfaces.ITranscriptSummary,
 					   ext_interfaces.IInternalObjectIO) # TODO: Strip this out, make schema driven
+@component.adapter(_IMeetingTranscriptStorage)
 class TranscriptSummary(nti.externalization.datastructures.ExternalizableInstanceDict):
 	"""
 	The transcript summary for a user in a room.
@@ -437,6 +438,7 @@ class TranscriptSummary(nti.externalization.datastructures.ExternalizableInstanc
 _AbstractMeetingTranscriptStorage.mime_type = TranscriptSummary.mime_type
 
 @interface.implementer(nti_interfaces.ITranscript)
+@component.adapter(_IMeetingTranscriptStorage)
 class Transcript(TranscriptSummary):
 	"""
 	The transcript for a user in a room.

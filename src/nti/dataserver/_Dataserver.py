@@ -13,6 +13,8 @@ import gevent.local
 import ZODB.interfaces
 from ZODB.interfaces import IConnection
 import ZODB.POSException
+import struct # Connection can throw struct.error unpacking an OID
+
 from zope import interface
 from zope import component
 from zope.event import notify
@@ -596,11 +598,17 @@ def get_object_by_oid( connection, oid_string, ignore_creator=False ):
 	if not oid_string:
 		logger.debug( 'No OID string given' )
 		return None
+
 	__traceback_info__ = oid_string, database_name, intid
 	try:
 		if database_name:
 			connection = connection.get_connection( database_name )
+
+		# ZEO/FileStorage tends to rais KeyError here, and RelStorage can do that to.
+		# RelStorage can also raise struct.error if the oid_string is not packed validly:
+		# see ZODB.utils.u64.
 		result = connection[oid_string]
+
 		#if result is None and required_user not in (required_user_marker, interfaces.SYSTEM_USER_NAME):
 			# TODO: Right here, we have a user. We couldn't find the object globally,
 			# so it may have been moved. We need to get the user-local index
@@ -628,6 +636,6 @@ def get_object_by_oid( connection, oid_string, ignore_creator=False ):
 				result = None
 
 		return result
-	except (KeyError,UnicodeDecodeError):
+	except (KeyError,UnicodeDecodeError,struct.error):
 		logger.exception( "Failed to resolve oid '%s' using '%s'", oid_string.encode('hex'), connection )
 		return None
