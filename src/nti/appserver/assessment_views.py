@@ -50,9 +50,14 @@ def pageinfo_from_question_view( request ):
 	# has been altered to ensure that this is unicode. we also assert it here.
 	__traceback_info__ = accept_type, request.context, request.context.__parent__
 	assert request.context.__parent__ and request.context.__parent__.__class__ is unicode, type(request.context.__parent__)
-	route_path = request.route_path( 'objects.generic.traversal', traverse=('NTIIDs', request.context.__parent__) )
+	# Using request.route_path to produce a path, not a URL, can fail when accessed over HTTPS,
+	# because at some point the Location header gets turned into a full URL, and in pyramid 1.3.4,
+	# this fails to take into consideration the request scheme, always return HTTP instead of HTTPS.
+	# Thus we request the complete URL here
+	# TODO: In pyramid 1.4, consider doing this as a sub-request and skipping the redirect?
+	route_url = request.route_url( 'objects.generic.traversal', traverse=('NTIIDs', request.context.__parent__) )
 
-	return hexc.HTTPSeeOther( location=route_path )
+	return hexc.HTTPSeeOther( location=route_url )
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
