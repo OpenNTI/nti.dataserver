@@ -81,7 +81,7 @@ class CreatorBasedAnnotationMeetingStorage(object):
 		if getattr( room, '_p_jar', None ) is None:
 			IConnection( creator ).add( room )
 
-		room.id = oids.to_external_ntiid_oid( room, None )
+		room.id = oids.to_external_ntiid_oid( room, default_oid=None, add_to_intids=True )
 		if room.id is None:
 			__traceback_info__ = creator, meeting_container, room
 			raise ValueError( "Unable to get OID for room" )

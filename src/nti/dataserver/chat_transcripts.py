@@ -157,16 +157,20 @@ class _DocidMeetingTranscriptStorage(_AbstractMeetingTranscriptStorage):
 	"""
 
 	def __init__( self, meeting ):
+		intids = self._intids
+		if intids.queryId( meeting ) is None:
+			# This really shouldn't be happening anywhere. Why is it?
+			logger.warn( "Creating a transcript for a meeting without an intid. How is this possible? %s", meeting )
+			intids.register( meeting )
+
 		super(_DocidMeetingTranscriptStorage,self).__init__(meeting)
-		family = getattr( self._intids, 'family', BTrees.family64 )
+		family = getattr( intids, 'family', BTrees.family64 )
 		self.messages = family.II.TreeSet()
 
 	def add_message( self, msg ):
 		"""
 		Stores the message in this transcript.
 		"""
-		# TODO: Can/Should we start assuming this object exists
-		# and use getId?
 		self.messages.add( self._intids.getId( msg ) )
 
 	def itervalues(self):
