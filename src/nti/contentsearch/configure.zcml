@@ -5,26 +5,26 @@
 	<include package="nti.contentfragments" file="configure.zcml" />
 		
 	<!-- Externalization -->
+	
+	<adapter factory="._search_hits._HighlightSearchHit"
+			 name="search-hit" />
+			 
+	<adapter factory="._search_hits._NoteSearchHit"
+			 name="search-hit" />
+			 
+	<adapter factory="._search_hits._MessageInfoSearchHit"
+			 name="search-hit" />
+			 
+	<adapter factory="._search_hits._RedactionSearchHit"
+			 name="search-hit" />
+			  
+	<adapter factory="._search_hits._WhooshBookSearchHit"
+			 name="search-hit" />
 
 	<adapter factory="._search_external._SearchResultsExternalizer" />
 	<adapter factory="._search_external._SuggestResultsExternalizer" />
 	<adapter factory="._search_external._SuggestAndSearchResultsExternalizer" />
-	
-	<adapter factory="._search_external._HighlightSearchHit"
-			 name="search-hit" />
-			 
-	<adapter factory="._search_external._NoteSearchHit"
-			 name="search-hit" />
-			 
-	<adapter factory="._search_external._MessageInfoSearchHit"
-			 name="search-hit" />
-			 
-	<adapter factory="._search_external._RedactionSearchHit"
-			 name="search-hit" />
-			  
-	<adapter factory="._search_external._WhooshBookSearchHit"
-			 name="search-hit" />
-			 
+				 
 	<subscriber factory="._search_external.NoSnippetHighlightDecoratorFactory"
 				for=".interfaces.INoSnippetHighlight"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
