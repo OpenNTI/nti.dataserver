@@ -819,7 +819,10 @@ class UserServiceExternalizer(ServiceExternalizer):
 		# Querying the utilities for the user, which would be registered for specific
 		# IUser types or something...
 		# TODO: These strings are in several places
-		capabilities = set( ('nti.platform.p2p.chat', 'nti.platform.p2p.sharing', 'nti.platform.p2p.friendslists') )
+		capabilities = set( ('nti.platform.p2p.chat',
+							 'nti.platform.p2p.sharing',
+							 'nti.platform.p2p.friendslists',
+							 'nti.platform.customization.avatar_upload') )
 		# TODO: This should probably be subscriber, not adapter, since we have to remember
 		# to register both (see configure-site-policies)
 		cap_filter = site_policies.queryAdapterInSite( self.context.user, app_interfaces.IUserCapabilityFilter )
