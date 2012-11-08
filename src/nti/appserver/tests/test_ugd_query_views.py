@@ -592,3 +592,32 @@ class TestApplicationUGDQueryViews(ApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'Items',
 											   contains( has_entry( 'ID', fav_id_follow ),
 														 has_entry( 'ID', bm_id ) ) ) )
+
+		# TranscriptSummaries can be filtered
+		with mock_dataserver.mock_db_trans( self.ds ):
+			# First, give a transcript summary
+
+			user = users.User.get_user( user.username )
+			from nti.chatserver import interfaces as chat_interfaces
+			import zc.intid as zc_intid
+			from zope import component
+			storage = chat_interfaces.IUserTranscriptStorage(user)
+
+			from nti.chatserver.messageinfo import MessageInfo as Msg
+			from nti.chatserver.meeting import _Meeting as Meet
+			msg = Msg()
+			meet = Meet()
+
+			meet.containerId = 'tag:nti:foo'
+			meet.ID = 'the_meeting'
+			msg.containerId = meet.containerId
+			msg.ID = '42'
+
+			component.getUtility( zc_intid.IIntIds ).register( msg )
+			component.getUtility( zc_intid.IIntIds ).register( meet )
+			storage.add_message( meet, msg )
+
+		res = testapp.get( path, params={'accept':'application/vnd.nextthought.transcriptsummary'}, extra_environ=self._make_extra_environ())
+		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
+		assert_that( res.json_body, has_entry( 'Items',
+											   contains( has_entry( 'Class', 'TranscriptSummary' ) ) ) )
