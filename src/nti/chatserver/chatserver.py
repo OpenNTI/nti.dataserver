@@ -317,7 +317,8 @@ class Chatserver(object):
 				# give us a list of occupants, then regardless of whether
 				# they are currently online these occupants should get transcripts.
 				for occupant in room_info_dict['Occupants']:
-					if isinstance( occupant, tuple ): occupant = occupant[0]
+					if isinstance( occupant, tuple ):
+						occupant = occupant[0]
 					room.add_additional_transcript_username( occupant )
 
 		if room is None:
@@ -330,15 +331,26 @@ class Chatserver(object):
 			session = None
 			session_ids = None
 			if isinstance( occupant, tuple ):
-				# Two-tuples give us the session ID
+				# Two-tuples give us the session ID that we must find
 				session_ids = occupant[1]
 				occupant = occupant[0]
-			occupants.append( occupant )
+
 			session = self.get_session_for( occupant, session_ids )
-			if session:	sessions.append( session.session_id )
+			if session:
+				# Only if we find a session does the occupant stay in. This
+				# takes care of weird things like trying to add a Community
+				# to the list.
+				# TODO: This has gone back and forth. Should we still add
+				# occupants to the additional_transcript_username list even if
+				# they're not online (for awhile that was effectively the case)?
+				# Just if they are an IUser?
+				occupants.append( occupant )
+				sessions.append( session.session_id )
+
 		if not sessions or (callable(sessions_validator) and not sessions_validator(sessions)):
 			logger.debug( "No occupants found for room %s", room_info_dict )
 			return None
+
 		# Run it through the usual dict-to-object mechanism
 		# so that we get correct OID resolution
 		room_info_dict.pop( 'Occupants' )
