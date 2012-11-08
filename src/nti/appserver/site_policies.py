@@ -777,7 +777,22 @@ def send_site_default_landing_page_cookie( user, event ):
 
 @interface.implementer(app_interfaces.IUserCapabilityFilter)
 @component.adapter(nti_interfaces.ICoppaUserWithoutAgreement)
-class NoChatCapabilityFilter(object):
+class NoAvatarUploadCapabilityFilter(object):
+	"""
+	Removes the ability to upload avatars.
+	"""
+
+	def __init__( self, context=None ):
+		pass
+
+	def filterCapabilities( self, capabilities ):
+		result = set(capabilities)
+		result.discard( 'nti.platform.customization.avatar_upload' )
+		return result
+
+@interface.implementer(app_interfaces.IUserCapabilityFilter)
+@component.adapter(nti_interfaces.ICoppaUserWithoutAgreement)
+class NoChatCapabilityFilter(NoAvatarUploadCapabilityFilter):
 	"""
 	Removes chat.
 	"""
@@ -786,7 +801,7 @@ class NoChatCapabilityFilter(object):
 		pass
 
 	def filterCapabilities( self, capabilities ):
-		result = set(capabilities)
+		result = super(NoChatCapabilityFilter,self).filterCapabilities( capabilities )
 		result.discard( 'nti.platform.p2p.chat' )
 		return result
 
