@@ -28,9 +28,9 @@ from nti.contentsearch._search_results import empty_search_results
 from nti.contentsearch._search_results import merge_search_results
 from nti.contentsearch._search_results import empty_suggest_results
 from nti.contentsearch._search_results import merge_suggest_results
+from nti.contentsearch._search_indexmanager import _SearchEntityIndexManager
 from nti.contentsearch._search_results import empty_suggest_and_search_results
 from nti.contentsearch._search_results import merge_suggest_and_search_results
-from nti.contentsearch._search_indexmanager import _SearchEntityIndexManager
 
 import logging
 logger = logging.getLogger( __name__ )
