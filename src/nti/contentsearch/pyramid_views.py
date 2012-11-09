@@ -61,9 +61,12 @@ def clean_search_query(query, language='en'):
 
 def get_queryobject(request):
 	
+	# parse params:
+	args = dict(request.params)
+	
 	term = request.matchdict.get('term', u'')
 	term = clean_search_query(unicode(term))
-	args = {'term': term}
+	args['term'] =  term
 
 	username = request.matchdict.get('user', None)
 	username = username or authenticated_userid( request )
@@ -79,9 +82,4 @@ def get_queryobject(request):
 			args['indexid'] = indexid
 
 	# from IPython.core.debugger import Tracer;  Tracer()() 
-	# parse params:
-	for k, v in request.params.items():
-		if k.lower() in QueryObject.__properties__:
-			args[k] = v
-			
 	return QueryObject(**args)

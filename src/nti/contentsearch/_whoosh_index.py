@@ -83,7 +83,7 @@ class _SearchableContent(object):
 			suggestions = list(result.suggestions)
 			if suggestions:
 				suggestions = rank_words(qo.term, suggestions)
-				qo.set_term(suggestions[0])
+				qo.term = suggestions[0]
 				parsed_query = parse_query(content_, qo, self.get_schema())
 				
 				results = self._execute_search(	searcher,

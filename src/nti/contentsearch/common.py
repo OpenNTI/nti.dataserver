@@ -103,6 +103,9 @@ default_word_tokenizer_expression = r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-
 
 default_punk_char_expression =  r"[ \? | ( | \" | \` | { | \[ | : | ; | & | \# | \* | @ | \) | } | \] | \- | , | \. | ! | \s]"
 
+ascending_ = u'ascending'
+descending_ = u'descending'
+
 def epoch_time(dt):
 	if dt:
 		seconds = mktime(dt.timetuple())

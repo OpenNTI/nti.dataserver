@@ -573,14 +573,16 @@ class ISearchQuery(interface.Interface):
 	limit = schema.Int(title="search results limit", required=False)
 	indexid = schema.TextLine(title="Book content NTIID", required=False)
 	searchOn = schema.Iterable("Content types to search on", required=False)
-	sortOn = schema.TextLine(title="Field or function to sorty by", required=False)
+	sortOn = schema.TextLine(title="Field or function to sort by", required=False)
 	location = schema.TextLine(title="The reference NTIID where the search was invoked", required=False)
-	
+	sortOrder = schema.TextLine(title="descending or ascending  to sort order", default='descending', required=False)
+		
 	batchSize = schema.Int(title="page size", required=False)
 	batchStart = schema.Int(title="The index of the first object to return, starting with zero", required=False)
 	
 	is_prefix_search = schema.Bool(title="Returns true if the search is for prefix search", required=True, readonly=True)
 	is_phrase_search = schema.Bool(title="Returns true if the search is for phrase search", required=True, readonly=True)
+	is_descending_sort_order = schema.Bool(title="Returns true if the sortOrder is descending", required=True, default=True, readonly=True)
 		
 class ISearchQueryValidator(interface.Interface):
 	

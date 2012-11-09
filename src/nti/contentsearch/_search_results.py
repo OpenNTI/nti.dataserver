@@ -152,7 +152,8 @@ class _SearchResults(_PageableSearchResults):
 		sortOn = self.query.sortOn
 		comparator = component.queryUtility(search_interfaces.ISearchHitComparator, name=sortOn) if sortOn else None
 		if comparator is not None:
-			self._hits.sort(comparator.compare)
+			reverse = not self.query.is_descending_sort_order
+			self._hits.sort(comparator.compare, reverse=reverse)
 			
 	def __iadd__(self, other):
 		if 	search_interfaces.ISearchResults.providedBy(other) or \
