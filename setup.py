@@ -283,7 +283,7 @@ setup(
 		'zope.publisher >= 3.13.1',
 		'zope.processlifetime',
 		'zope.proxy >= 4.0.0',
-		'zope.schema >= 4.2.0',
+		'zope.schema >= 4.2.1',
 		'zope.security >= 3.8.3',
 		'zope.site >= 3.9.2', # local, persistent ZCA sites
 		'zope.size >= 3.5.0',
