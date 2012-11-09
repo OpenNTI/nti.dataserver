@@ -19,6 +19,7 @@ def node_splitter(node, splitter):
 	"""Split word nodes with splitter."""
 	
 	if isinstance(node, six.string_types):
+		logging.warn("Incorrect node type. '%r' will be treated as a WordNode" % node)
 		node = WordNode(node)
 		
 	v = node.getValue()
