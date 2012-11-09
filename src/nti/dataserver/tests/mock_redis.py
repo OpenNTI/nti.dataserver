@@ -83,18 +83,20 @@ class InMemoryMockRedis(object):
 			return obj[start:]
 		return obj[start:end]
 
-	def rpush( self, key, value ):
+	def rpush( self, key, *args ):
 		q = self.get( key )
 		if q is None:
 			q = self.database[key] = list()
-		q.append( value )
+		for value in args:
+			q.append( value )
 		return len(q)
 
-	def lpush( self, key, value ):
+	def lpush( self, key, *args ):
 		q = self.get( key )
 		if q is None:
 			q = self.database[key] = list()
-		q.insert(0, value )
+		for value in args:
+			q.insert(0, value)
 		return len(q)
 
 	def lindex( self, key, index ):
