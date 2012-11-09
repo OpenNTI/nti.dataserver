@@ -78,15 +78,10 @@ def get_queryobject(request):
 		else:
 			args['indexid'] = indexid
 
+	# from IPython.core.debugger import Tracer;  Tracer()() 
 	# parse params:
 	for k, v in request.params.items():
-		if k in QueryObject.__properties__:
-			try:
-				v = v.replace(u'null', u'None')
-				v = eval(v)
-				v = v[0] if isinstance(v, (list, tuple)) else v
-				args[k] = v
-			except:
-				pass
-		
+		if k.lower() in QueryObject.__properties__:
+			args[k] = v
+			
 	return QueryObject(**args)
