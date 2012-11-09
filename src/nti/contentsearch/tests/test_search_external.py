@@ -112,7 +112,7 @@ class TestSearchExternal(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_search_results_sort_relevance(self):
 		
-		qo = QueryObject.create("sode no shirayuki", sortBy='relevance')
+		qo = QueryObject.create("sode no shirayuki", sortOn='relevance')
 		containerId = make_ntiid(nttype='bleach', specific='manga')	
 		searchResults = component.getUtility(search_interfaces.ISearchResultsCreator)(qo)
 		searchResults.highlight_type = WORD_HIGHLIGHT

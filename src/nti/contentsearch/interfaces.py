@@ -569,11 +569,13 @@ class ICloudSearchQueryParser(interface.Interface):
 class ISearchQuery(interface.Interface):
 	term = schema.TextLine(title="Query search term", required=True)
 	username = schema.TextLine(title="User doing the search", required=True)
+	
 	limit = schema.Int(title="search results limit", required=False)
 	indexid = schema.TextLine(title="Book content NTIID", required=False)
-	searchon = schema.Iterable("Content types to search on", required=False)
-	sortBy = schema.TextLine(title="Field or function to sorty by", required=False)
+	searchOn = schema.Iterable("Content types to search on", required=False)
+	sortOn = schema.TextLine(title="Field or function to sorty by", required=False)
 	location = schema.TextLine(title="The reference NTIID where the search was invoked", required=False)
+	
 	batchSize = schema.Int(title="page size", required=False)
 	batchStart = schema.Int(title="The index of the first object to return, starting with zero", required=False)
 	
