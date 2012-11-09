@@ -149,8 +149,8 @@ class _SearchResults(_PageableSearchResults):
 			self._add(item)
 				
 	def sort(self):
-		sortBy = self.query.sortBy
-		comparator = component.queryUtility(search_interfaces.ISearchHitComparator, name=sortBy) if sortBy else None
+		sortOn = self.query.sortOn
+		comparator = component.queryUtility(search_interfaces.ISearchHitComparator, name=sortOn) if sortOn else None
 		if comparator is not None:
 			self._hits.sort(comparator.compare)
 			
