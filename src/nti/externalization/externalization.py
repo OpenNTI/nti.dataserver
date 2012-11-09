@@ -287,6 +287,7 @@ def _isMagicKey( key ):
 
 isSyntheticKey = _isMagicKey
 
+
 def _datetime_to_epoch( dt ):
 	return time.mktime( dt.timetuple() ) if dt is not None else None
 
@@ -304,6 +305,45 @@ def _choose_field( result, self, ext_name, converter=lambda x: x, fields=(), sup
 			value = sup_converter( value )
 			if value is not None:
 				result[ext_name] = value
+
+
+def to_standard_external_last_modified_time( context, default=None, _write_into=None ):
+	"""
+	Find and return a number representing the time since the epoch
+	in fractional seconds at which the ``context`` was last modified.
+	This is the same value that is used by :func:`to_standard_external_dictionary`,
+	and takes into account whether something is :class:`nti.dataserver.interfaces.ILastModified`
+	or :class:`zope.dublincore.interfaces.IDCTimes`.
+
+	:return: A number if it can be found, or the value of ``default``
+	"""
+	# The _write_into argument is for the benefit of to_standard_external_dictionary
+	holder = _write_into if _write_into is not None else dict()
+
+	_choose_field( holder, context, StandardExternalFields.LAST_MODIFIED,
+				   fields=(StandardInternalFields.LAST_MODIFIED, StandardInternalFields.LAST_MODIFIEDU),
+				   sup_iface=dub_interfaces.IDCTimes, sup_fields=('modified',), sup_converter=_datetime_to_epoch)
+	return holder.get( StandardExternalFields.LAST_MODIFIED, default)
+
+def to_standard_external_created_time( context, default=None, _write_into=None ):
+	"""
+	Find and return a number representing the time since the epoch
+	in fractional seconds at which the ``context`` was created.
+	This is the same value that is used by :func:`to_standard_external_dictionary`,
+	and takes into account whether something is :class:`nti.dataserver.interfaces.ILastModified`
+	or :class:`zope.dublincore.interfaces.IDCTimes`.
+
+	:return: A number if it can be found, or the value of ``default``
+	"""
+	# The _write_into argument is for the benefit of to_standard_external_dictionary
+	holder = _write_into if _write_into is not None else dict()
+
+	_choose_field( holder, context, StandardExternalFields.CREATED_TIME,
+				   fields=(StandardInternalFields.CREATED_TIME,),
+				   sup_iface=dub_interfaces.IDCTimes, sup_fields=('created',), sup_converter=_datetime_to_epoch)
+
+	return holder.get( StandardExternalFields.CREATED_TIME, default )
+
 
 def to_standard_external_dictionary( self, mergeFrom=None, name=_ex_name_marker, registry=component):
 	"""
@@ -348,12 +388,9 @@ def to_standard_external_dictionary( self, mergeFrom=None, name=_ex_name_marker,
 	_choose_field( result, self, StandardExternalFields.CREATOR,
 				   fields=(StandardInternalFields.CREATOR, StandardExternalFields.CREATOR),
 				   converter=str )
-	_choose_field( result, self, StandardExternalFields.LAST_MODIFIED,
-				   fields=(StandardInternalFields.LAST_MODIFIED, StandardInternalFields.LAST_MODIFIEDU),
-				   sup_iface=dub_interfaces.IDCTimes, sup_fields=('modified',), sup_converter=_datetime_to_epoch)
-	_choose_field( result, self, StandardExternalFields.CREATED_TIME,
-				   fields=(StandardInternalFields.CREATED_TIME,),
-				   sup_iface=dub_interfaces.IDCTimes, sup_fields=('created',), sup_converter=_datetime_to_epoch)
+
+	to_standard_external_last_modified_time( self, _write_into=result )
+	to_standard_external_created_time( self, _write_into=result )
 
 	if StandardExternalFields.CLASS not in result:
 		cls = getattr(self, '__external_class_name__', None)
