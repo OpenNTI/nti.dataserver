@@ -11,7 +11,7 @@ from hamcrest import has_entries
 from hamcrest import has_length
 from hamcrest import has_key
 from hamcrest import contains
-
+import fudge
 
 from nti.appserver.ugd_query_views import lists_and_dicts_to_ext_collection
 from nti.appserver.ugd_query_views import _UGDView
@@ -20,13 +20,15 @@ from nti.appserver.ugd_query_views import _RecursiveUGDStreamView
 from nti.appserver.ugd_query_views import _UGDStreamView
 from nti.appserver.ugd_query_views import _UGDAndRecursiveStreamView
 
-
 from nti.appserver.tests import ConfiguringTestBase
+from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
 from pyramid.threadlocal import get_current_request
 import pyramid.httpexceptions as hexc
 import persistent
 import UserList
+from datetime import datetime
 
+from nti.assessment.assessed import QAssessedQuestion
 from nti.dataserver import users
 from nti.ntiids import ntiids
 from nti.externalization.oids import to_external_ntiid_oid
@@ -40,6 +42,7 @@ import nti.dataserver.interfaces as nti_interfaces
 from nti.contentlibrary import interfaces as lib_interfaces
 
 from zope.keyreference.interfaces import IKeyReference
+from zope import lifecycleevent
 
 @interface.implementer(IKeyReference) # IF we don't, we won't get intids
 class ContainedExternal(ZContainedMixin):
@@ -625,3 +628,66 @@ class TestApplicationUGDQueryViews(ApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
 		assert_that( res.json_body, has_entry( 'Items',
 											   contains( has_entry( 'Class', 'TranscriptSummary' ) ) ) )
+
+
+class TestUGDQueryViewsSharedApplication(SharedApplicationTestBase):
+
+	@WithSharedApplicationMockDS
+	@fudge.patch( "zope.dublincore.timeannotators.datetime" )
+	def test_sort_assessments(self, fudge_dt):
+		now = fudge_dt.provides( 'now' )
+		now.returns( datetime.fromtimestamp( 1 ) )
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = self._create_user( )
+
+			top_n = QAssessedQuestion()
+			top_n.containerId = 'tag:nti:foo'
+			lifecycleevent.created( top_n )
+			user.addContainedObject( top_n )
+			top_n_id = top_n.id
+
+			now.returns( datetime.fromtimestamp( 2 ) )
+
+			reply_n = QAssessedQuestion()
+			reply_n.containerId = 'tag:nti:foo'
+			lifecycleevent.created( reply_n )
+			user.addContainedObject( reply_n )
+			reply_n_id = reply_n.id
+
+
+		testapp = TestApp( self.app )
+		path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + top_n.containerId + ')/UserGeneratedData'
+
+
+		res = testapp.get( path, params={'sortOn': 'lastModified', 'sortOrder': 'descending'}, extra_environ=self._make_extra_environ())
+		assert_that( res.json_body, has_entry( 'Items', has_length( 2 ) ) )
+		assert_that( res.json_body,
+					 has_entry( 'Items',
+								contains(
+									has_entries( 'ID', reply_n_id, 'Last Modified', 2.0 ),
+									has_entries( 'ID', top_n_id, 'Last Modified', 1.0 ) ) ) )
+
+		res = testapp.get( path, params={'sortOn': 'createdTime', 'sortOrder': 'descending'}, extra_environ=self._make_extra_environ())
+		assert_that( res.json_body, has_entry( 'Items', has_length( 2 ) ) )
+		assert_that( res.json_body,
+					 has_entry( 'Items',
+								contains(
+									has_entries( 'ID', reply_n_id, 'CreatedTime', 2.0 ),
+									has_entries( 'ID', top_n_id, 'CreatedTime', 1.0 ) ) ) )
+
+
+		res = testapp.get( path, params={'sortOn': 'lastModified', 'sortOrder': 'ascending'}, extra_environ=self._make_extra_environ())
+		assert_that( res.json_body, has_entry( 'Items', has_length( 2 ) ) )
+		assert_that( res.json_body,
+					 has_entry( 'Items',
+								contains(
+									has_entry( 'ID', top_n_id ),
+									has_entry( 'ID', reply_n_id ) ) ) )
+
+		res = testapp.get( path, params={'sortOn': 'createdTime', 'sortOrder': 'ascending'}, extra_environ=self._make_extra_environ())
+		assert_that( res.json_body, has_entry( 'Items', has_length( 2 ) ) )
+		assert_that( res.json_body,
+					 has_entry( 'Items',
+								contains(
+									has_entry( 'ID', top_n_id ),
+									has_entry( 'ID', reply_n_id ) ) ) )

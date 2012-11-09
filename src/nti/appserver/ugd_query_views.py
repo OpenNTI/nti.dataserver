@@ -32,6 +32,9 @@ from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.oids import to_external_oid
 
+from nti.externalization.externalization import to_standard_external_last_modified_time
+from nti.externalization.externalization import to_standard_external_created_time
+
 from nti.ntiids import ntiids
 
 from nti.dataserver import interfaces as nti_interfaces
@@ -193,8 +196,11 @@ def _bookmark_predicate_factory( request ):
 	return lambda o: is_fav_p( o ) or is_bm_p( o )
 
 SORT_KEYS = {
-	'lastModified': lambda x: getattr( x, 'lastModified', 0 ), # TODO: Adapt to dublin core?
-	'createdTime' : lambda x: getattr( x, 'createdTime', 0 ), # TODO: Adapt to dublin core?
+	# LastModified and createdTime are sorted on the same values we would provide
+	# externally, which might involve an attribute /or/ adapting to IDCTimes.
+	# TODO: As such, these aren't particularly cheap
+	'lastModified': functools.partial( to_standard_external_last_modified_time, default=0 ),
+	'createdTime' : functools.partial( to_standard_external_created_time, default=0),
 	'LikeCount': liking.like_count,
 	'ReferencedByCount': ( _build_reference_lists, _reference_list_length )
 	}
