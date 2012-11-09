@@ -7,10 +7,10 @@ from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch.common import (username_, content_, type_, ngrams_)
 
-def adapt_searchon_types(searchon=None):
-	if searchon:
-		searchon = [normalize_type_name(x) for x in searchon]
-		return searchon
+def adapt_searchOn_types(searchOn=None):
+	if searchOn:
+		searchOn = [normalize_type_name(x) for x in searchOn]
+		return searchOn
 	else:
 		return ()
 	
@@ -23,7 +23,7 @@ class _DefaultCloudSearchQueryParser(object):
 	
 	def parse(self, qo, username=None):
 		username = username or qo.username
-		searchon = adapt_searchon_types(qo.searchon)
+		searchOn = adapt_searchOn_types(qo.searchOn)
 		search_fields = self._get_search_fields(qo)
 		
 		bq = ['(and']
@@ -37,9 +37,9 @@ class _DefaultCloudSearchQueryParser(object):
 		else:
 			bq.append("%s:'%s'" % (search_fields[0], qo.term))
 		
-		if searchon:
+		if searchOn:
 			bq.append('(or')
-			for type_name in searchon:
+			for type_name in searchOn:
 				bq.append("%s:'%s' " % (type_, type_name))
 			bq.append(')')
 			

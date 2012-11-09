@@ -156,19 +156,19 @@ class _WhooshEntityIndexManager(_SearchEntityIndexManager):
 	
 	# -------------------
 		
-	def _adapt_searchon_types(self, searchon=None):
+	def _adapt_searchOn_types(self, searchOn=None):
 		indexables = get_indexables()
-		if searchon:
-			searchon = [normalize_type_name(x) for x in searchon if normalize_type_name(x) in indexables]
-		result = searchon or indexables
+		if searchOn:
+			searchOn = [normalize_type_name(x) for x in searchOn if normalize_type_name(x) in indexables]
+		result = searchOn or indexables
 		result = sort_search_types(result)
 		return result
 	
 	def _do_search(self, query, is_ngram_search=False, **kwargs):
 		query = QueryObject.create(query, **kwargs)
-		searchon = self._adapt_searchon_types(query.searchon)
+		searchOn = self._adapt_searchOn_types(query.searchOn)
 		results = empty_search_results(query)
-		for type_name in searchon:
+		for type_name in searchOn:
 			index = self._get_or_create_index(type_name)
 			with index:
 				indexable = self.get_indexable_object(type_name)
@@ -183,9 +183,9 @@ class _WhooshEntityIndexManager(_SearchEntityIndexManager):
 
 	def suggest_and_search(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
-		searchon = self._adapt_searchon_types(query.searchon)
+		searchOn = self._adapt_searchOn_types(query.searchOn)
 		results = empty_suggest_and_search_results(query)
-		for type_name in searchon:
+		for type_name in searchOn:
 			index = self._get_or_create_index(type_name)
 			with index:
 				indexable = self.get_indexable_object(type_name)
@@ -196,9 +196,9 @@ class _WhooshEntityIndexManager(_SearchEntityIndexManager):
 
 	def suggest(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
-		searchon = self._adapt_searchon_types(query.searchon)
+		searchOn = self._adapt_searchOn_types(query.searchOn)
 		results = empty_suggest_results(query)
-		for type_name in searchon:
+		for type_name in searchOn:
 			index = self._get_or_create_index(type_name)
 			with index:
 				indexable = self.get_indexable_object(type_name)

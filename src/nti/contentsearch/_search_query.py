@@ -3,11 +3,12 @@ from __future__ import print_function, unicode_literals
 import re
 import six
 import UserDict
+import collections
 
 from zope import component
 from zope import interface
 
-from nti.contentsearch.common import to_list
+from nti.contentsearch.common import descending_
 from nti.contentsearch import interfaces as search_interfaces
 
 phrase_search = re.compile(r'"(?P<text>.*?)"')
@@ -20,14 +21,86 @@ def _default_query_adapter(query, *args, **kwargs):
 		query = QueryObject.create(query, *args, **kwargs)
 	return query
 	
+def _getter(name, default=None):
+	def function(self):
+		return self._data.get(name, default)
+	return function
+
+def _setter_str(name, default=None):
+	def function(self, val):
+		val = val or default
+		val = unicode(val) if isinstance(val, six.string_types) else repr(val)
+		self._data[name] = val
+	return function
+
+def _setter_int(name, _abs=True):
+	def function(self, val):
+		if val is not None:
+			val = abs(int(val)) if _abs else int(val)
+		self._data[name] = val
+	return function
+
+def _setter_float(name, _abs=True):
+	def function(self, val):
+		if val is not None:
+			val = abs(float(val)) if _abs else float(val)
+		self._data[name] = val
+	return function
+
+def _setter_tuple(name, unique=True):
+	def function(self, val):
+		if val is not None:
+			if isinstance(val, (list, tuple)) and len(val) == 1:
+				val = val[0]
+			if isinstance(val, six.string_types):
+				val = val.split(',')
+			if not isinstance(val, collections.Iterable):
+				val = list(val)
+			val = tuple(set(val)) if unique else tuple(val)
+		self._data[name] = val
+	return function
+
+class _MetaQueryObject(type):
+	
+	def __new__(cls, name, bases, dct):
+		t = type.__new__(cls, name, bases, dct)
+		
+		# string properties
+		for name in t.__str_properties__:
+			df = t.__defaults__.get(name, None)
+			setattr(t, name, property(_getter(name, df), _setter_str(name)))
+		setattr(t, 'query', property(_getter('term'), _setter_str('term')))
+		
+		# int properties
+		for name in t.__int_properties__:
+			df = t.__defaults__.get(name, None)
+			setattr(t, name, property(_getter(name, df), _setter_int(name)))
+		
+		# float properties
+		for name in t.__float_properties__:
+			df = t.__defaults__.get(name, None)
+			setattr(t, name, property(_getter(name, df), _setter_float(name)))
+			
+		# set properties
+		for name in t.__set_properties__:
+			df = t.__defaults__.get(name, None)
+			setattr(t, name, property(_getter(name, df), _setter_tuple(name)))
+			
+		return t
+	
 @interface.implementer(search_interfaces.ISearchQuery)
 class QueryObject(object, UserDict.DictMixin):
 	
+	__metaclass__ = _MetaQueryObject
+	
 	__float_properties__ = ('threshold',)
-	__int_properties__ 	 = ('limit', 'maxdist', 'prefix', 'surround', 'maxchars', 'batchsize', 'batchstart')
-	__properties__ 		 = ('term', 'books', 'indexid', 'searchon', 'username', 'location', 'sorton') + \
-						   __int_properties__ + __float_properties__
+	__int_properties__ 	 = ('limit', 'maxdist', 'prefix', 'surround', 'maxchars', 'batchSize', 'batchStart')
+	__str_properties__ 	 = ('term', 'indexid', 'username', 'location', 'sortOn', 'sortOrder')
+	__set_properties__	 = ('searchOn',)
+	__properties__ 		 = __set_properties__ + __str_properties__ + __int_properties__ + __float_properties__
 
+	__defaults__ 		 = {'surround': 20, 'maxchars' : 300, 'threshold' : 0.4999, 'sortOrder':descending_}
+	
 	def __init__(self, *args, **kwargs):
 		self._data = {}
 		for k, v in kwargs.items():
@@ -41,128 +114,21 @@ class QueryObject(object, UserDict.DictMixin):
 		return self.term
 
 	def __repr__( self ):
-		return 'QueryObject(%s)' % self._data
+		return 'QueryObject(%r)' % self._data
 
 	def __getitem__(self, key):
-		key = key.lower()
 		return self._data[key]
 
 	def __setitem__(self, key, val):
-		key = key.lower()
-		
-		# check for alias
-		key = 'term' if key == 'query' else key
-		key = 'indexid' if key == 'indexname' else key
-		key = 'searchon' if key == 'search_on' else key
-				
-		if key in self.__properties__:
-			if key == 'term':
-				self.set_term(val)
-			elif key == 'batchsize':
-				self.set_batchsize(val)
-			elif key == 'batchstart':
-				self.set_batchstart(val)
-			elif key == 'searchon':
-				self.set_searchon(val)
-			elif key in self.__int_properties__:
-				self._data[key] = int(val) if val is not None else val
-			elif key in self.__float_properties__:
-				self._data[key] = float(val) if val is not None else val
-			else:
-				self._data[key] = unicode(val) if isinstance(val, six.string_types) else val
+		if hasattr(self, key):
+			setattr(self, key, val)
+		else:
+			self._data[key] = unicode(val) if isinstance(val, six.string_types) else val
 
 	# -- search --
-
-	@property
-	def indexid(self):
-		return self._data.get('indexid', None)
-
-	@property
-	def location(self):
-		return self._data.get('location', None)
-	
-	@property
-	def books(self):
-		books = self._data.get('books', ())
-		if not books:
-			indexid = self._data.get('indexid', None)
-			if indexid is not None:
-				books = (indexid,)
-		return books
-
-	def get_searchon(self):
-		result = self._data.get('searchon', None)
-		return result
-
-	def set_searchon(self, val):
-		if isinstance(val, six.string_types):
-			val = val.split(',')
-		self._data['searchon'] = to_list(val) if val is not None else None
-	
-	searchOn = property(get_searchon, set_searchon)
-	searchon = searchOn
-	
-	@property
-	def sortOn(self):
-		return self._data.get('sorton', None)
-	
-	@property
-	def username(self):
-		return self._data.get('username', None)
-
-	def get_term(self):
-		return self._data['term']
-
-	def set_term(self, term):
-		self._data['term'] = unicode(term) if term is not None else term
-
-	term = property(get_term, set_term)
-	query = term
-	word = query
-
-	def get_batchsize(self):
-		return self._data.get('batchsize', None)
-
-	def set_batchsize(self, batchsize=None):
-		pagelen = abs(int(batchsize)) if batchsize is not None else batchsize
-		self._data['batchsize'] = pagelen
-
-	batchsize = property(get_batchsize, set_batchsize)
-	batchSize = batchsize
-	
-	def get_batchstart(self):
-		return self._data.get('batchstart', None)
-
-	def set_batchstart(self, batchstart=None):
-		pagenum = abs(int(batchstart)) if batchstart is not None else batchstart
-		self._data['batchstart'] = pagenum
-
-	batchstart = property(get_batchstart, set_batchstart)
-	batchStart = batchstart
-	
-	def get_limit(self):
-		return self._data.get('limit', None)
-
-	def set_limit(self, limit=None):
-		limit = abs(int(limit)) if limit is not None else limit
-		self._data['limit'] = limit
-
-	limit = property(get_limit, set_limit)
 	
 	def get_subqueries(self):
-		result = []
-		for k in self.keys():
-			if k not in self.__properties__:
-				result.append( (k, self._data.get(k)) )
-		return result
-
-	@property
-	def num_subqueries(self):
-		result = 0
-		for k in self.keys():
-			if k not in self.__properties__:
-				result = result + 1
-		return result
+		return ()
 
 	@property
 	def is_empty(self):
@@ -170,65 +136,17 @@ class QueryObject(object, UserDict.DictMixin):
 	
 	@property
 	def is_phrase_search(self):
-		return phrase_search.match(self.term) is not None
+		return phrase_search.match(self.term) is not None if self.term else False
 	
 	@property
 	def is_prefix_search(self):
-		return prefix_search.match(self.term) is not None
+		return prefix_search.match(self.term) is not None if self.term else False
 
-	# -- suggest --
-
-	def get_maxdist(self):
-		return self._data.get('maxdist', None)
-
-	def set_maxdist(self, maxdist):
-		self.__setitem__('maxdist', maxdist)
-
-	maxdist = property(get_maxdist, set_maxdist)
-
-	def get_prefix(self):
-		return self._data.get('prefix', None)
-
-	def set_prefix(self, prefix):
-		self.__setitem__('prefix', prefix)
-
-	prefix = property(get_prefix, set_prefix)
-
-	def get_threshold(self):
-		return self._data.get('threshold', 0.4999)
-
-	def set_threshold(self, threshold):
-		self.__setitem__('threshold', threshold)
-
-	threshold = property(get_threshold, set_threshold)
-
-	# -- highlight --
-
-	def get_surround(self):
-		return self._data.get('surround', 20)
-
-	def set_surround(self, surround=20):
-		self.__setitem__('surround', surround)
-
-	surround = property(get_surround, set_surround)
-
-	def get_maxchars(self):
-		return self._data.get('maxchars', 300)
-
-	def set_maxchars(self, maxchars=300):
-		self.__setitem__('maxchars', maxchars)
-
-	maxchars = property(get_maxchars, set_maxchars)
-
+	@property
+	def is_descending_sort_order(self):
+		return self.sortOrder == descending_
+	
 	# ---------------
-
-	@classmethod
-	def parse_query_properties(cls, **kwargs):
-		result = {}
-		for k, v in kwargs.items():
-			if k.lower() in cls.__properties__:
-				result[k] = v
-		return result
 
 	@classmethod
 	def create(cls, query, **kwargs):

@@ -71,11 +71,11 @@ class _BaseRepozeEntityIndexManager(_SearchEntityIndexManager):
 				self.add_catalog(catalog, type_name)
 		return catalog
 
-	def _adapt_searchon_types(self, searchon=None):
+	def _adapt_searchOn_types(self, searchOn=None):
 		catnames = self.get_catalog_names()
-		if searchon:
-			searchon = [normalize_type_name(x) for x in searchon if normalize_type_name(x) in catnames]
-		result = searchon or catnames
+		if searchOn:
+			searchOn = [normalize_type_name(x) for x in searchOn if normalize_type_name(x) in catnames]
+		result = searchOn or catnames
 		result = sort_search_types(result)
 		return result
 
@@ -100,13 +100,13 @@ class _BaseRepozeEntityIndexManager(_SearchEntityIndexManager):
 			result = queryobject._apply(catalog, names=None)
 		return result
 
-	def _do_search(self, qo, searchon=(), highlight_type=WORD_HIGHLIGHT, creator_method=None, search_fields=()):
+	def _do_search(self, qo, searchOn=(), highlight_type=WORD_HIGHLIGHT, creator_method=None, search_fields=()):
 		creator_method = creator_method or empty_search_results
 		results = creator_method(qo)
 		results.highlight_type = highlight_type
 		if qo.is_empty: return results
 
-		for type_name in searchon:
+		for type_name in searchOn:
 			catalog = self.get_catalog(type_name)
 			doc_weights = self._do_catalog_query(catalog, qo, type_name, search_fields=search_fields)
 			self._get_hits_from_docids(results, doc_weights, type_name)
@@ -116,20 +116,20 @@ class _BaseRepozeEntityIndexManager(_SearchEntityIndexManager):
 	@metricmethod
 	def search(self, query, *args, **kwargs):
 		qo = QueryObject.create(query, **kwargs)
-		searchon = self._adapt_searchon_types(qo.searchon)
+		searchOn = self._adapt_searchOn_types(qo.searchOn)
 		highlight_type = None if is_all_query(qo.term) else WORD_HIGHLIGHT
-		results = self._do_search(qo, searchon, highlight_type)
+		results = self._do_search(qo, searchOn, highlight_type)
 		return results
 
 	def suggest(self, query, *args, **kwargs):
 		qo = QueryObject.create(query, **kwargs)
-		searchon = self._adapt_searchon_types(qo.searchon)
+		searchOn = self._adapt_searchOn_types(qo.searchOn)
 		results = empty_suggest_results(qo)
 		if qo.is_empty: return results
 
 		threshold = qo.threshold
 		prefix = qo.prefix or len(qo.term)
-		for type_name in searchon:
+		for type_name in searchOn:
 			catalog = self.get_catalog(type_name)
 			textfield = catalog.get(content_, None)
 
@@ -142,20 +142,20 @@ class _BaseRepozeEntityIndexManager(_SearchEntityIndexManager):
 
 	def suggest_and_search(self, query, limit=None, *args, **kwargs):
 		queryobject = QueryObject.create(query, **kwargs)
-		searchon = self._adapt_searchon_types(queryobject.searchon)
+		searchOn = self._adapt_searchOn_types(queryobject.searchOn)
 		if ' ' in queryobject.term or queryobject.is_prefix_search or queryobject.is_phrase_search:
 			results = self._do_search(queryobject,
-									  searchon,
+									  searchOn,
 									  creator_method=empty_suggest_and_search_results)
 		else:
-			result = self.suggest(queryobject, searchon=searchon)
+			result = self.suggest(queryobject, searchOn=searchOn)
 			suggestions = result.suggestions
 			if suggestions:
 				suggestions = rank_words(query.term, suggestions)
 				queryobject.term = suggestions[0]
 
 			results = self._do_search(queryobject,
-									  searchon,
+									  searchOn,
 									  creator_method=empty_suggest_and_search_results,
 									  search_fields=(content_,))
 			results.add_suggestions(suggestions)

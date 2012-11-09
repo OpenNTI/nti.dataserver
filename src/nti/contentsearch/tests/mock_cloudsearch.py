@@ -12,7 +12,7 @@ from whoosh import ramindex
 from nti.contentsearch import _cloudsearch_store
 from nti.contentsearch.common import (content_, ngrams_)
 from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch._cloudsearch_query import adapt_searchon_types
+from nti.contentsearch._cloudsearch_query import adapt_searchOn_types
 from nti.contentsearch.common import (default_ngram_maxsize, default_ngram_minsize) 
 
 def content_analyzer():
@@ -65,7 +65,7 @@ class MockCloundSearchQueryParser(object):
 			
 		ors=[]
 		ands=[term, query.Term("username", unicode(username))]
-		searchon = adapt_searchon_types(qo.searchon)
+		searchon = adapt_searchOn_types(qo.searchOn)
 		if searchon:
 			for type_name in searchon:
 				ors.append(query.Term("type", unicode(type_name)))
