@@ -11,7 +11,7 @@ from nti.contentlibrary.interfaces import IContentPackageLibrary
 import logging
 logger = logging.getLogger( __name__ )
 
-@repoze.lru.lru_cache(1000)
+@repoze.lru.lru_cache(300)
 def get_ntiid_path(ntiid, registry=component):
 	result = ()
 	_library = registry.queryUtility(IContentPackageLibrary)
