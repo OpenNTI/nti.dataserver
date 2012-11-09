@@ -668,6 +668,9 @@ class IShareable(interface.Interface):
 		title="The usernames of all the users (including communities, etc) this obj is shared with.",
 		value_type=schema.TextLine(title="The username" ) )
 
+	# TODO: This should add the 'sharingTargets' property and require it? See MessageInfo and
+	# authorization_acl._ShareableModeledContentACLProvider
+
 class IShareableModeledContent(IShareable,IModeledContent):
 	"""
 	Modeled content that can be shared.

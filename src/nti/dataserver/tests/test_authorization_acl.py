@@ -359,17 +359,24 @@ class Permits(BaseMatcher):
 			item = nti_interfaces.IACLProvider( item, item )
 		return self.policy.permits( item, [self.prin], self.perm )
 
+	__description__ = 'ACL permitting '
 	def describe_to( self, description ):
-		description.append_text( 'ACL permitting ') \
+		description.append_text( self.__description__ ) \
 								 .append_text( self.prin.id ) \
 								 .append_text( ' permission ' ) \
 								 .append( self.perm.id )
 
 	def describe_mismatch(self, item, mismatch_description):
-		mismatch_description.append_text('was ').append_description_of(getattr( item, '__acl__', item ))
+		acl = getattr( item, '__acl__', None )
+		if acl is None:
+			acl = getattr( nti_interfaces.IACLProvider( item, item ), '__acl__', None )
+
+		mismatch_description.append_text('was ').append_description_of( item )
+		if acl is not None and acl is not item:
+			mismatch_description.append_text( ' with acl ').append_description_of( acl )
 
 class Denies(Permits):
-
+	__description__ = 'ACL denying '
 	def _matches( self, item ):
 		return not super(Denies,self)._matches( item )
 
