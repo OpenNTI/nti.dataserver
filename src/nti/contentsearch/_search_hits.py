@@ -182,7 +182,7 @@ def path_intersection(x, y):
 			result.append(x[i])
 		else:
 			break
-	return result
+	return tuple(result)
 	
 @interface.implementer(search_interfaces.ISearchHitComparator)
 class _RelevanceSearchHitComparator(_ScoreSearchHitComparator):
