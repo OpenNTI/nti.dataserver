@@ -185,11 +185,12 @@ class _RelevanceSearchHitComparator(_ScoreSearchHitComparator):
 	
 	def get_ntiid_path(self, item):
 		if isinstance(item, six.string_types):
-			return get_ntiid_path(item)
+			result = get_ntiid_path(item)
 		elif search_interfaces.IBaseHit.providedBy(item):
-			return get_ntiid_path(item.query.location)
+			result = get_ntiid_path(item.query.location)
 		else:
-			return ()
+			result = ()
+		return result
 			
 	def get_containerId(self, item):
 		if search_interfaces.ISearchHit.providedBy(item):
