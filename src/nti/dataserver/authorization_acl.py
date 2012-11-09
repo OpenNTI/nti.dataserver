@@ -423,7 +423,9 @@ class _ShareableModeledContentACLProvider(AbstractCreatedAndSharedACLProvider):
 	are shared.
 
 	Those things that are shared can be viewed (:data:`auth.ACT_READ`) by those they are
-	shared with.
+	shared with. (When shared with something that can be adapted to :class:`nti.dataserver.interfaces.IUsernameIterable`,
+	then the complete list of users is expanded into the ACL; the alternative is to have
+	principals appear to be members of all these things, as a group.)
 
 	This is modified: If this object is the child of another IShareableModeledContent,
 	e.g., a Canvas inside a Note, then the ACL is skipped and just inherited
@@ -434,7 +436,25 @@ class _ShareableModeledContentACLProvider(AbstractCreatedAndSharedACLProvider):
 	_DENY_ALL = True
 
 	def _get_sharing_target_names( self ):
-		return self.context.flattenedSharingTargetNames
+		# Certain objects that strictly implement IShareableModeledContent
+		# only provide the names of the sharing targets, not the
+		# actual targets themselves, notably, MessageInfo. These cannot
+		# currently be shared with groups that need to be expanded anyway.
+		if not hasattr( self.context, 'sharingTargets' ):
+			return self.context.flattenedSharingTargetNames
+		result = set()
+		# By expanding in this way, in certain cases we can get
+		# multiple entries for the creator. That's OK, because the creator
+		# ACE comes first, and because they are both 'allow' entries
+		sharing_targets = self.context.sharingTargets
+		for target in sharing_targets:
+			expanded = nti_interfaces.IUsernameIterable( target, None )
+			if expanded is not None:
+				result.update( expanded )
+			else:
+				result.add( target.username )
+
+		return result
 
 	@property
 	def __acl__( self ):

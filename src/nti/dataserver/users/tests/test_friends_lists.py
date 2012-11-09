@@ -127,10 +127,11 @@ def test_update_friends_list():
 	assert_that( list(fl), has_length( 7 ) )
 	assert_that( sorted(fl), contains( user2, user3, user4, user5, user6, user7, user8 ) )
 
-
+from nti.dataserver.tests.test_authorization_acl import permits
+from nti.dataserver import authorization as nauth
 
 @WithMockDS(with_changes=True)
-def test_dfl_goes_to_stream():
+def test_sharing_with_dfl():
 	ds = mock_dataserver.current_mock_ds
 	with mock_dataserver.mock_db_trans( ds ):
 		# Set up listeners
@@ -165,12 +166,13 @@ def test_dfl_goes_to_stream():
 				child_stream = u.getContainedStream( parent_note.containerId )
 				assert_that( child_stream, has_length( 0 ) )
 
-			# Share the note with the DFL and its two members
+			# Share the note with the DFL and thus its two members
 			parent_note.addSharingTarget( parent_dfl )
 			parent_user.addContainedObject( parent_note )
 
 		# Sharing with the DFL caused broadcast events and notices to go out
-		# to the members of the DFL
+		# to the members of the DFL. These members have the shared object
+		# in their stream
 		for u in (child_user, other_user):
 			__traceback_info__ = u
 			child_stream = u.getContainedStream( parent_note.containerId )
@@ -178,7 +180,8 @@ def test_dfl_goes_to_stream():
 			assert_that( u.notificationCount, has_property( 'value', 1 ) )
 
 
-		# If I reply to it, then the same thing happens
+		# If a member of the DFL replies to the note,
+		# then the same thing happens,
 		with child_user.updates():
 			child_note = Note()
 			child_note.creator = child_user
@@ -199,9 +202,13 @@ def test_dfl_goes_to_stream():
 		other_stream = other_user.getContainedStream( child_note.containerId )
 		assert_that( other_stream, has_length( 2 ) )
 		assert_that( other_user.notificationCount, has_property( 'value', 2 ) )
+		#parent_stream = parent_user.getContainedStream( parent_note.containerId )
+		#assert_that( parent_stream, has_length( 1 ) )
 
 
-		# If the child shares something unrelated, it is visible to the creator
+		# If a member of the DFL shares something unrelated with the group,
+		# it is visible to the creator in the shared data, in the stream, and
+		# in the notification count
 		parent_user.notificationCount.value = 0
 		with child_user.updates():
 			child_note = Note()
@@ -215,12 +222,26 @@ def test_dfl_goes_to_stream():
 
 			child_user.addContainedObject( child_note )
 
-		# In the shared data
+		# The shared note is in the shared data for the owner of the DFL
 		parent_shared_cont = parent_user.getSharedContainer( child_note.containerId )
 		assert_that( parent_shared_cont, has_length( 1 ) )
 		assert_that( parent_shared_cont, contains( child_note ) )
-		# In the stream
+		# And in the stream of the owner of the DFL
 		parent_stream = parent_user.getContainedStream( child_note.containerId )
 		assert_that( parent_stream, has_length( 1 ) )
-		# As a notification
+		# and as a notification for the DFL owner
 		assert_that( parent_user.notificationCount, has_property( 'value', 1 ) )
+
+		# and is in the other member's stream as well
+		other_stream = other_user.getContainedStream( child_note.containerId )
+		assert_that( other_stream, has_length( 1 ) )
+		assert_that( other_user.notificationCount, has_property( 'value', 3 ) )
+
+		# This Note provides ACL access to its creator and the members of the DFL
+		# (TODO: This is implemented by expanding the membership list of the DFL
+		# when the ACL is constructed. The other option is to have the DFL
+		# appear in the principal list of the user, as is done for communities; that
+		# would change this test.)
+		assert_that( child_note, permits( child_user, nauth.ACT_READ ) )
+		assert_that( child_note, permits( parent_user, nauth.ACT_READ ) )
+		assert_that( child_note, permits( other_user, nauth.ACT_READ ) )
