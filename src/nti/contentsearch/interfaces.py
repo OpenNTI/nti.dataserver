@@ -5,6 +5,7 @@ from zope import interface
 from zope import component
 from zope.deprecation import deprecated
 from zope.index import interfaces as zidx_interfaces
+from zope.interface.common.sequence import IMinimalSequence
 from zope.interface.common.mapping import IReadMapping, IMapping, IFullMapping
 
 from repoze.catalog import interfaces as rcat_interfaces
@@ -595,26 +596,37 @@ class IWordSimilarity(interface.Interface):
 		
 	def rank(word, terms, reverse=True):
 		"""return the specified terms based on the distance to the specified word"""
-		
-class ISearchHit(IMapping, ext_interfaces.IExternalObject):
+	
+class IBaseHit(interface.Interface):
+	"""represent a base search hit"""
 	query = schema.Object(ISearchQuery, title="query that produced this hit", required=True, readonly=True)
 	score = schema.Float(title="hit relevance score", required=True, readonly=True)
+	
+class IIndexHit(IBaseHit, IMinimalSequence):
+	"""represent a search hit stored in a ISearchResults"""
+	obj = schema.Object(interface.Interface, title="hit object", required=True, readonly=True)
+	
+class ISearchHit(IBaseHit, IMapping, ext_interfaces.IExternalObject):
+	"""represent an externalized search hit"""
 	oid = schema.TextLine(title="hit unique id", required=True, readonly=True)
 	last_modified = schema.Float(title="last modified date for this hit", required=False, readonly=True)
-	
+
 class ISearchHitComparator(interface.Interface):
 	def compare(a, b):
-		"""A comparison function, which imposes a total ordering on some collection of search hits"""
-	
+		"""Compare arguments for for order. a or b can beither a IndexHit or ISearchHit"""
+		
 class IBaseSearchResults(interface.Interface):
 	query = schema.Object(ISearchQuery, title="search query")
 	
 class ISearchResults(IBaseSearchResults):
-	hits = schema.List(title="search result hits", required=True, readonly=True)
+	hits = schema.List(title="IIndexHit objects", required=True, readonly=True)
 	
 	def add(hit_or_hits):
 		"""add a search hit(s) to this result"""
 	
+	def sort():
+		"""sort the results based on the sortBy query param"""
+		
 class ISuggestResults(IBaseSearchResults):
 	suggestions = schema.Set(title="suggested words", required=True, readonly=True)
 	

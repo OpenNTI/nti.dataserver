@@ -1,5 +1,6 @@
 from __future__ import print_function, unicode_literals
 
+import six
 import uuid
 import UserDict
 import collections
@@ -153,9 +154,24 @@ def get_search_hit(obj, score=1.0, query=None, highlight_type=WORD_HIGHLIGHT):
 	hit = _provide_highlight_snippet(hit, query, highlight_type)
 	return hit
 
+@interface.implementer(search_interfaces.ISearchHitComparator)
+class _ScoreSearchHitComparator(object):
+	
+	def get_score(self, item):
+		if search_interfaces.IBaseHit.providedBy(item):
+			result = item.score
+		else:
+			result = 1.0
+		return result
+	
+	def compare(self, a, b):
+		a_score = self.get_score(a)
+		b_score = self.get_score(b)
+		result = cmp(b_score, a_score)
+		return result
 
 @interface.implementer(search_interfaces.ISearchHitComparator)
-class _RelevanceSearchHitComparator(object):
+class _RelevanceSearchHitComparator(_ScoreSearchHitComparator):
 
 	def _path_common(self, x, y):
 		count = 0
@@ -167,32 +183,30 @@ class _RelevanceSearchHitComparator(object):
 				break
 		return count
 	
-	def _get_containerId(self, item):
+	def get_ntiid_path(self, item):
+		if isinstance(item, six.string_types):
+			return get_ntiid_path(item)
+		elif search_interfaces.IBaseHit.providedBy(item):
+			return get_ntiid_path(item.query.location)
+		else:
+			return ()
+			
+	def get_containerId(self, item):
 		if search_interfaces.ISearchHit.providedBy(item):
 			result = item.get(NTIID, None)
-		elif isinstance(item, tuple):
-			adapted = component.queryAdapter(item[0], search_interfaces.IContainerIDResolver)
+		elif search_interfaces.IIndexHit.providedBy(item):
+			adapted = component.queryAdapter(item.obj, search_interfaces.IContainerIDResolver)
 			result = adapted.get_containerId() if adapted else None
 		else:
 			result = None
 		return result
 	
-	def _get_score(self, item):
-		if search_interfaces.ISearchHit.providedBy(item):
-			result = item.get(SCORE, 1.0)
-		elif isinstance(item, tuple):
-			result = item[1]
-		else:
-			result = 1.0
-		return result
-	
 	def compare(self, a, b):
-		location_path = get_ntiid_path(a.query.location)
-		a_path = self.get_path(a.get(NTIID, None))
-		b_path = self.get_path(b.get(NTIID, None))
-		a_common = -self._path_common(location_path, a_path)
-		b_common = -self._path_common(location_path, b_path)
-		r= cmp(a_common, b_common)
-		if r == 0:
-			r = cmp(a.score, b.score)
-		return r
+		location_path = self.get_ntiid_path(a)
+		a_path = get_ntiid_path(self.get_containerId(a))
+		b_path = get_ntiid_path(self.get_containerId(b))
+		a_common = self._path_common(location_path, a_path)
+		b_common = self._path_common(location_path, b_path)
+		result = cmp(b_common, a_common)
+		result = super(_RelevanceSearchHitComparator, self).compare(a, b) if result == 0 else result
+		return result

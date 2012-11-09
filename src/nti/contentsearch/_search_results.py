@@ -3,12 +3,12 @@ from __future__ import print_function, unicode_literals
 import six
 from collections import Iterable
 
-from z3c.batching.batch import Batch
-
 from zope import interface
 from zope import component
 from zope.location import ILocation
 from zope.mimetype import interfaces as zmime_interfaces
+
+from z3c.batching.batch import Batch
 
 from nti.mimetype.mimetype import nti_mimetype_with_class
 
@@ -52,7 +52,7 @@ class _BaseSearchResults(object):
 		return self.hits[n]
 
 	def __iter__(self):
-		return iter(self.hits)
+		return iter(self.hits)		
 	
 class _PageableSearchResults(_BaseSearchResults):
 	
@@ -83,6 +83,26 @@ class _PageableSearchResults(_BaseSearchResults):
 		else:
 			return super(_PageableSearchResults, self).__iter__()
 
+
+@interface.implementer( search_interfaces.IIndexHit)
+class _IndexHit(object):
+	
+	__slots__ = ('obj', 'score', 'query')
+	
+	def __init__(self, obj, score, query=None):
+		self.obj = obj
+		self.score = score
+		self.query = query
+		
+	def __getitem__(self, index):
+		if index==0:
+			return self.obj
+		elif index == 1:
+			return self.score
+		elif index == 2:
+			return self.query
+		raise IndexError()
+	
 class _MetaSearchResults(type):
 	
 	def __new__(cls, name, bases, dct):
@@ -105,22 +125,35 @@ class _SearchResults(_PageableSearchResults):
 	
 	hits = property(get_hits)
 	
+	def _do_add(self, t):
+		self._hits.append()
+		
 	def _add(self, item):
-		if isinstance(item, tuple):
-			if item[0] is not None:
+		if search_interfaces.IIndexHit.providedBy(item):
+			if item.obj is not None:
+				item.query = self.query
 				self._hits.append(item)
+		elif isinstance(item, tuple):
+			if item[0] is not None:
+				self._hits.append(_IndexHit(item[0], item[1], self.query))
 		elif item is not None:
-			self._hits.append((item, 1.0))
+			self._hits.append(_IndexHit(item, 1.0, self.query))
 			
 	def add(self, hits):
-		if not isinstance(hits, tuple):
-			items = [hits] if not isinstance(hits, Iterable) else hits
+		if search_interfaces.IIndexHit.providedBy(hits) or isinstance(hits, tuple):
+			items = [hits]
 		else:
-			items = [hits] if hits is not None else () 
+			items = [hits] if not isinstance(hits, Iterable) else hits
 			
 		for item in items or ():
 			self._add(item)
 				
+	def sort(self):
+		sortBy = self.query.sortBy
+		comparator = component.queryUtility(search_interfaces.ISearchHitComparator, name=sortBy) if sortBy else None
+		if comparator is not None:
+			self._hits.sort(comparator.compare)
+			
 	def __iadd__(self, other):
 		if 	search_interfaces.ISearchResults.providedBy(other) or \
 			search_interfaces.ISuggestAndSearchResults.providedBy(other):

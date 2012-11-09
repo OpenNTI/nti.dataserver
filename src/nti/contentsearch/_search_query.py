@@ -25,7 +25,7 @@ class QueryObject(object, UserDict.DictMixin):
 	
 	__float_properties__ = ('threshold',)
 	__int_properties__ 	 = ('limit', 'maxdist', 'prefix', 'surround', 'maxchars', 'batchsize', 'batchstart')
-	__properties__ 		 = ('term', 'books', 'indexid', 'searchon', 'username', 'location', 'sortBy') + \
+	__properties__ 		 = ('term', 'books', 'indexid', 'searchon', 'username', 'location', 'sortby') + \
 						   __int_properties__ + __float_properties__
 
 	def __init__(self, *args, **kwargs):
@@ -104,7 +104,7 @@ class QueryObject(object, UserDict.DictMixin):
 	
 	@property
 	def sortBy(self):
-		return self._data.get('sortBy', None)
+		return self._data.get('sortby', None)
 	
 	@property
 	def username(self):
