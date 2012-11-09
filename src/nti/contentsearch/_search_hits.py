@@ -9,6 +9,8 @@ import zope.intid
 from zope import component
 from zope import interface
 
+import repoze.lru
+
 from nti.dataserver import interfaces as nti_interfaces
 from nti.chatserver import interfaces as chat_interfaces
 from nti.externalization import interfaces as ext_interfaces
@@ -170,18 +172,42 @@ class _ScoreSearchHitComparator(object):
 		result = cmp(b_score, a_score)
 		return result
 
+	
+@repoze.lru.lru_cache(300)
+def path_intersection(x, y):
+	result = []
+	_limit = min(len(x), len(y))
+	for i in xrange(0, _limit):
+		if x[i] == y[i]:
+			result.append(x[i])
+		else:
+			break
+	return result
+	
 @interface.implementer(search_interfaces.ISearchHitComparator)
 class _RelevanceSearchHitComparator(_ScoreSearchHitComparator):
 
-	def _path_common(self, x, y):
-		count = 0
-		_limit = min(len(x), len(y))
-		for i in xrange(0, _limit):
-			if x[i] == y[i]:
-				count += 1
+	@classmethod
+	def score_path(cls, reference, p):
+		
+		if not reference or not p:
+			return 0
+		
+		ip = path_intersection(reference, p)
+		if len(ip) == 0:
+			result = 0 # no path intersection
+		elif len(ip) == len(reference):
+			if len(reference) == len(p):
+				result = 10000  # give max priority to hits int the same location
 			else:
-				break
-		return count
+				result = 9000 # hit is below
+		elif len(ip) == len(p): # p is n a subset of ref
+			result = len(p) * 20
+		else: # common anscestors
+			result = len(ip) * 20
+			result -= len(p) - len(ip)
+			
+		return max(0,result) 
 	
 	def get_ntiid_path(self, item):
 		if isinstance(item, six.string_types):
@@ -206,8 +232,8 @@ class _RelevanceSearchHitComparator(_ScoreSearchHitComparator):
 		location_path = self.get_ntiid_path(a)
 		a_path = get_ntiid_path(self.get_containerId(a))
 		b_path = get_ntiid_path(self.get_containerId(b))
-		a_common = self._path_common(location_path, a_path)
-		b_common = self._path_common(location_path, b_path)
-		result = cmp(b_common, a_common)
+		a_score = self.score_path(location_path, a_path)
+		b_score = self.score_path(location_path, b_path)
+		result = cmp(b_score, a_score)
 		result = super(_RelevanceSearchHitComparator, self).compare(a, b) if result == 0 else result
 		return result
