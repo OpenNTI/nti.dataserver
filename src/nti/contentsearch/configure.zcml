@@ -21,6 +21,7 @@
 	<adapter factory="._search_hits._WhooshBookSearchHit"
 			 name="search-hit" />
 
+	<utility factory="._search_hits._ScoreSearchHitComparator" name="score" />
 	<utility factory="._search_hits._RelevanceSearchHitComparator" name="relevance" />
 	
 	<adapter factory="._search_external._SearchResultsExternalizer" />

@@ -23,7 +23,6 @@ from nti.contentsearch._search_hits import _WhooshBookSearchHit
 from nti.contentsearch._search_hits import _MessageInfoSearchHit
 from nti.contentsearch._search_hits import _provide_highlight_snippet
 
-
 from nti.contentsearch.common import (ntiid_, content_, title_, last_modified_, intid_)
 from nti.contentsearch.common import (NTIID, CREATOR, CONTAINER_ID, CLASS, TYPE, HIT, SNIPPET)									
 									

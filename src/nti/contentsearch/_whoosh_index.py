@@ -185,10 +185,10 @@ def create_book_schema():
 
 @interface.implementer(search_interfaces.IWhooshBookContent)
 class _BookContent(dict):
-	intid = property(methodcaller('get','intid'))
-	ntiid = property(methodcaller('get','ntiid'))
-	content = property(methodcaller('get','content'))
-	last_modified = property(methodcaller('get','last_modified'))
+	intid = property(methodcaller('get', intid_))
+	ntiid = property(methodcaller('get', ntiid_))
+	content = property(methodcaller('get', content_))
+	last_modified = property(methodcaller('get', last_modified_))
 	score = property(methodcaller('get','score', 1.0))
 	docnum = intid
 	containerId = ntiid
