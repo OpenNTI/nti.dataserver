@@ -35,14 +35,21 @@ class _RepozeRedisStorageService(_RedisStorageService):
 	
 	wait_time = 0.5
 	max_retries = 5
+	
 	# control the amount of time we spend waiting
 	max_cumm_wait_time = 5
 	logging_level = loglevels.TRACE
 	
+	# for testing
+	use_trx_runner = True
+	
+	def initial_wait(self):
+		return random.uniform(2, 4)
+	
 	def process_messages(self, msgs):
 		sorted_list = optimize(sort_messages(msgs))
 		# wait some random time to start processing
-		gevent.sleep(random.uniform(2, 4))
+		gevent.sleep(self.initial_wait())
 		try:
 			self._process_user_messages(sorted_list)
 		except:
@@ -50,7 +57,7 @@ class _RepozeRedisStorageService(_RedisStorageService):
 			logger.exception("Error while processing index messages")
 			
 	def _process_user_messages(self, msg_list):
-		trxrunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner)
+		
 		logger.info("Processing %s redis-arriving message(s)", len(msg_list))
 		
 		def f():
@@ -97,5 +104,8 @@ class _RepozeRedisStorageService(_RedisStorageService):
 				if advance:
 					idx += 1
 					retries = 0
-					
-		trxrunner(f, retries=5, sleep=0.1)
+		if self.use_trx_runner:		
+			trxrunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner)
+			trxrunner(f, retries=5, sleep=0.1)
+		else:
+			f()
