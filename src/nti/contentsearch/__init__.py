@@ -26,10 +26,14 @@ from zopyx.txng3.core import resultset as zopyx_resultset
 from nti.contentsearch import zopyxtxng3coreresultset as ntizopy_rs
 from nti.contentsearch import zopyxtxng3coredoclist as ntizopyx_doclist
 from nti.contentsearch import zopyxtxng3coreevaluator as ntizopyx_evaluator
+from nti.contentsearch import zopyxtxng3coreparsetree as ntizopyx_parsetree
 
 # change the evaluator to correct issue in getting the words 
 # from the zopyx.txng3.core.parsetree nodes
 zopyx_coreidx.Evaluator = ntizopyx_evaluator.Evaluator
+
+# sometimes the nodes sent to the node splitter function are strings
+zopyx_coreidx.node_splitter = ntizopyx_parsetree.node_splitter
 
 for module in (zopyx_coreidx, zopyx_evaluator, zopyx_resultset, ntizopyx_evaluator):
 	module.LOG = zopyxtxng3corelogger.LOG
