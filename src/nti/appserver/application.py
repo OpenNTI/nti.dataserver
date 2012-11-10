@@ -187,6 +187,8 @@ def createApplication( http_port,
 
 	# Arrange for a db connection to be opened with each request
 	# if pyramid_zodbconn.get_connection() is called (until called, this does nothing)
+	# TODO: We can probably replace this with something simpler, or else
+	# better integrate this
 	pyramid_config.include( 'pyramid_zodbconn' )
 	# Notice that we're using the db from the DS directly, not requiring construction
 	# of a new DB based on a URI; that is a second option if we don't want the
@@ -196,7 +198,7 @@ def createApplication( http_port,
 	# is weird the way it is currently handled, with static fields of a context manager class.
 	# I think the DS will want to be a transaction.interfaces.ISynchronizer and/or an IDataManager
 	pyramid_config.registry.zodb_database = server.db # 0.2
-	pyramid_config.registry._zodb_databases = { '': server.db } # 0.3
+	pyramid_config.registry._zodb_databases = { '': server.db } # 0.3, 0.4
 
 	# Add a tween that ensures we are within a SiteManager. This also has
 	# some logic to clean up some bad transaction handling in pyramid_tm.
@@ -285,7 +287,7 @@ def createApplication( http_port,
 		except Exception:
 			logger.exception( "Failed to add dictionary server" )
 
-	pyramid_config.load_zcml( 'nti.appserver:pyramid.zcml' ) # must use full spec, we may not have created the pyramid_config
+	pyramid_config.load_zcml( 'nti.appserver:pyramid.zcml' ) # must use full spec, we may not have created the pyramid_config object so its working package may be unknown
 	pyramid_config.add_renderer( name='rest', factory='nti.appserver.pyramid_renderers.REST' )
 	# Override the stock Chameleon template renderer to use z3c.pt for better compatibility with
 	# the existing Zope stuff
