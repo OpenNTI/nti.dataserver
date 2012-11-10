@@ -187,7 +187,7 @@ setup(
 		'pyramid_mailer >= 0.9', # Which uses repoze.sendmail
 		'pyramid_who >= 0.3',
 		'pyramid_zcml >= 0.9.2',
-		'pyramid_zodbconn >= 0.3',
+		'pyramid_zodbconn >= 0.4',
 		'pyramid-openid >= 0.3.4',
 		# Best if the system has ZMQ >= 2.2.0. Can work as far back as 2.1.7 (at least). 2.1.10 or better recommended;
 		# I (JAM) *think* the ZMQ libs are all binary compatible so you can upgrade from 2.1 to 2.2
