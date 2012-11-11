@@ -623,7 +623,8 @@ class IBaseSearchResults(interface.Interface):
 	query = schema.Object(ISearchQuery, title="search query")
 	
 class ISearchResults(IBaseSearchResults):
-	hits = schema.List(title="IIndexHit objects", required=True, readonly=True)
+	hits = schema.List(	value_type=schema.Object(IIndexHit, title="index hit"),
+						title="IIndexHit objects", required=True, readonly=True)
 	
 	def add(hit_or_hits):
 		"""add a search hit(s) to this result"""
@@ -632,7 +633,8 @@ class ISearchResults(IBaseSearchResults):
 		"""sort the results based on the sortBy query param"""
 		
 class ISuggestResults(IBaseSearchResults):
-	suggestions = schema.Set(title="suggested words", required=True, readonly=True)
+	suggestions = schema.Set(value_type=schema.TextLine(title="suggested word"),
+							 title="suggested words", required=True, readonly=True)
 	
 	def add_suggestions(word_or_words):
 		"""add a word suggestion(s) to this result"""
