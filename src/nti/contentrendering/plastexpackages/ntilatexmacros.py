@@ -5,6 +5,8 @@ from plasTeX import Base, Command, Environment
 
 from plasTeX.Base import Crossref
 
+from nti.contentrendering.plastexpackages.graphicx import includegraphics
+
 # Monkey patching time
 # SAJ: The following are set to render properly nested HTML.
 Base.figure.forcePars = False
@@ -61,6 +63,12 @@ class ntiincludevideo(_OneText):
 			self.attributes['poster'] = '//img.youtube.com/vi/' + self.attributes['video_id'] + '/0.jpg'
 			self.attributes['thumbnail'] = '//img.youtube.com/vi/' + self.attributes['video_id'] + '/1.jpg'
 		return result
+
+class ntiincludeannotationgraphics(includegraphics):
+	pass
+
+class ntiincludenoannotationgraphics(includegraphics):
+	pass
 
 class ntipagenum(_OneText):
 	pass

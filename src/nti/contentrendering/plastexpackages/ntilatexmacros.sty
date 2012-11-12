@@ -1,0 +1,11 @@
+%% This provides the necessary macros to gracefully handle NTI custom macros when running LaTeX or pdfLaTeX.
+\NeedsTeXFormat{LaTeX2e}[1995/12/01]
+\ProvidesPackage{ntilatexmacros}[2012/11/12 v0.1 NTI Custom Macro style sheet]
+
+\RequirePackage{graphicx}
+
+% Macro for including graphics with annotation enabled
+\newcommand{\ntiincludeannotationgraphics}[2][]{\includegraphics[#1]{#2}}
+
+% Macro for including graphics with annotation disabled
+\newcommand{\ntiincludenoannotationgraphics}[2][]{\includegraphics[#1]{#2}}

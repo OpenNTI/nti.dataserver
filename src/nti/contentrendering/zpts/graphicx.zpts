@@ -1,7 +1,7 @@
 name: includegraphics rotatebox scalebox reflectbox resizebox
-<span class="nti-data-markupenabled" itemprop="nti-data-markupenabled">
+<span itemprop="nti-data-markupdisabled">
 <img tal:condition="not:self/style" tal:attributes="src self/image/url; id self/id; alt self/source; style string:width:${self/image/width/px};; height:${self/image/height/px}" />
 <img tal:condition="self/style" tal:attributes="src self/image/url; id self/id; alt self/source; style self/style/inline" />
 </span>
 
-name: DeclareGraphicsExtensions graphicspath
+name: DeclareGraphicsExtensions DeclareGraphicsRule graphicspath
