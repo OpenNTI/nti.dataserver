@@ -13,8 +13,45 @@
 	margin-right: .25em;
 	margin-bottom: .5em;
 	margin-left: .25em;
+	vertical-align: middle;
 }
 
 #NTIContent .description-item p.par {
 	display: inline;
+}
+
+#NTIContent td > p.par {
+	margin: 0;
+}
+
+#NTIContent td {
+	padding-left: 1.0em;
+	padding-right: 1.0em;
+}
+
+#NTIContent table {
+	margin-left: auto;
+	margin-right: auto;
+	border-spacing: 0;
+}
+
+#NTIContent .sidebar {
+	padding-top: 1em;
+	padding-bottom: 1em;
+	padding-left: 3em;
+	padding-right: 3em;
+	border-left-style: solid;
+	border-left-width: 0.3em;
+	border-left-color: rgba(100, 100, 100, 0.3);
+	background-color: rgba(235, 235, 235, 0.3);
+}
+
+#NTIContent .sidebar-title {
+	font-size: 175%;
+	font-weight: 200;
+	margin-bottom: 0.5em;
+}
+
+#NTIContent .math.equation {
+	font-size: 130%;
 }
