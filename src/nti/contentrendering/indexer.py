@@ -25,7 +25,7 @@ from nti.contentrendering import interfaces
 from nti.contentsearch import get_punctuation_translation_table
 from nti.contentfragments.html import _sanitize_user_html_to_text
 from nti.contentsearch.whoosh_contenttypes import create_book_schema
-from nti.contentrendering.termextract import extract_key_words_from_tokens, TermExtractor
+from nti.contentprocessing.termextract import extract_key_words_from_tokens, TermExtractor
 
 import logging
 logger = logging.getLogger(__name__)
