@@ -2,7 +2,7 @@ import unittest
 
 from zope import component
 
-from nti.contentsearch import interfaces as cs_interfaces
+from nti.contentprocessing import interfaces as cp_interfaces
 
 from nti.contentsearch.spambayes.tests import ConfiguringTestBase
 
@@ -13,7 +13,7 @@ class TestTokenzier(ConfiguringTestBase):
 	spam_msg = "Your Status: Approved-Today Today's Date: August 2nd, 2012 Advance Amount: 1,500.00"
 	
 	def do_tokenize(self, text=None, *args, **kwargs):
-		tokenizer = component.getUtility(cs_interfaces.IContentTokenizer, name='spam_tokenizer')
+		tokenizer = component.getUtility(cp_interfaces.IContentTokenizer, name='spam_tokenizer')
 		result = tokenizer.tokenize(text, *args, **kwargs) if text else u''
 		return unicode(' '.join(result))
 

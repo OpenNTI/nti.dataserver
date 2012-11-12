@@ -6,7 +6,7 @@ import math
 from zope import component
 from zope import interface
 
-from nti.contentsearch import interfaces as cs_interfaces
+from nti.contentprocessing import interfaces as cp_interfaces
 
 from nti.contentsearch.spambayes import LN2
 from nti.contentsearch.spambayes._stripper import has_highbit_char
@@ -20,7 +20,7 @@ def log2(n, log=math.log, c=LN2):
 	return log(n)/c
 
 def get_content_translation_table():
-	table = component.queryUtility(cs_interfaces.IContentTranslationTable, name="spambayes")
+	table = component.queryUtility(cp_interfaces.IContentTranslationTable, name="spambayes")
 	return table or _default_translation_table()
 	
 def tokenize_word(word, *args, **kwargs): 
@@ -149,7 +149,7 @@ def tokenize(text, *args, **kwargs):
 		yield t
 		
 	
-@interface.implementer( cs_interfaces.IContentTokenizer )
+@interface.implementer( cp_interfaces.IContentTokenizer )
 class _ContentTokenizer(object):
 	
 	def tokenize(self, text, *args, **kwargs):

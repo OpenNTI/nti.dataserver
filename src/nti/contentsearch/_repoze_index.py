@@ -13,7 +13,7 @@ from repoze.catalog.indexes.keyword import CatalogKeywordIndex
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch.textindexng3 import CatalogTextIndexNG3
 
-from nti.contentsearch._ngrams_utils import ngrams
+from nti.contentprocessing import compute_ngrams
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -76,13 +76,13 @@ get_content = get_object_content
 
 def get_object_ngrams(obj, default=None):
 	content = get_object_content(obj, default)
-	n_grams = ngrams(content) if content else default
+	n_grams = compute_ngrams(content) if content else default
 	return n_grams if n_grams else default
 get_ngrams = get_object_ngrams
 
 def get_content_and_ngrams(obj, default=None):
 	content = get_object_content(obj)
-	n_grams = ngrams(content)
+	n_grams = compute_ngrams(content)
 	result = '%s %s' % (content, n_grams) if content else u''
 	return result or default
 

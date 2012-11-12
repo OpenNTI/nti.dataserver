@@ -13,9 +13,10 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.chatserver import interfaces as chat_interfaces
 
+from nti.contentprocessing import compute_ngrams
+
 from nti.contentsearch import interfaces as search_interfaces
 
-from nti.contentsearch._ngrams_utils import ngrams
 from nti.contentsearch.common import get_type_name
 
 from nti.contentsearch.common import (	CLASS, CREATOR, last_modified_fields, ntiid_fields, INTID, 
@@ -114,7 +115,7 @@ def get_object_content(data):
 
 def get_object_ngrams(obj):
 	content = get_object_content(obj)
-	n_grams = ngrams(content) if content else u''
+	n_grams = compute_ngrams(content) if content else u''
 	result = n_grams if n_grams else u''
 	return result
 

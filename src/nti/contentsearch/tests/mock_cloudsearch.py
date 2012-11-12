@@ -9,11 +9,12 @@ from whoosh import fields
 from whoosh import analysis
 from whoosh import ramindex
 
+from nti.contentprocessing import (default_ngram_maxsize, default_ngram_minsize) 
+
 from nti.contentsearch import _cloudsearch_store
 from nti.contentsearch.common import (content_, ngrams_)
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch._cloudsearch_query import adapt_searchOn_types
-from nti.contentsearch.common import (default_ngram_maxsize, default_ngram_minsize) 
 
 def content_analyzer():
 	sw_util = component.queryUtility(search_interfaces.IStopWords) 
