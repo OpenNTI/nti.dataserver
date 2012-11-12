@@ -79,7 +79,7 @@ def _set_default_resource_types():
 	_implement( Math.equation, displayMathTypes )
 
 
-	from plasTeX.Packages.graphicx import includegraphics
+	from nti.contentrendering.plastexpackages.graphicx import includegraphics
 	_implement( includegraphics, ('png',) )
 
 	from plasTeX.Packages import amsmath
@@ -102,7 +102,7 @@ def _set_default_resource_types():
 	# a module called graphicx reloaded from this package
 	# which doesn't inherit our type. Who is doing that?
 	import sys
-	sys.modules['graphicx'] = sys.modules['plasTeX.Packages.graphicx']
+	sys.modules['graphicx'] = sys.modules['nti.contentrendering.plastexpackages.graphicx']
 
 
 
