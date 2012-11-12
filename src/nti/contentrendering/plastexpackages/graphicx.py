@@ -3,7 +3,7 @@
 import os, re
 from plasTeX import Command
 
-from graphics import DeclareGraphicsExtensions, graphicspath
+from nti.contentrendering.plastexpackages.graphics import DeclareGraphicsExtensions, DeclareGraphicsRule, graphicspath
 
 class includegraphics(Command):
 	args = '* [ options:dict ] file:str'
@@ -92,6 +92,9 @@ class includegraphics(Command):
 		return res
 
 class DeclareGraphicsExtensions(DeclareGraphicsExtensions):
+	packageName = 'graphicx'
+
+class DeclareGraphicsRule(DeclareGraphicsRule):
 	packageName = 'graphicx'
 
 class graphicspath(graphicspath):
