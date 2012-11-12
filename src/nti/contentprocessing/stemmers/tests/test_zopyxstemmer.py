@@ -1,6 +1,6 @@
 import unittest
 			
-from nti.contentrendering.stemmers import ZopyYXStemmer
+from nti.contentprocessing.stemmers import ZopyYXStemmer
 		
 from hamcrest import assert_that, is_
 

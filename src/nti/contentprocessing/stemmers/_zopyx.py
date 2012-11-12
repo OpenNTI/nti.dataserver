@@ -4,7 +4,7 @@ from zope import interface
 
 from zopyx.txng3.ext import stemmer
 
-from nti.contentrendering.stemmers import interfaces as stemmer_interfaces
+from nti.contentprocessing.stemmers import interfaces as stemmer_interfaces
 
 @interface.implementer(stemmer_interfaces.IStemmer)
 class ZopyYXStemmer(object):

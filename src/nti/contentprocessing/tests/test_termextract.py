@@ -1,11 +1,13 @@
 import os
 import unittest
 			
-from nti.contentrendering.termextract import extract_key_words
+from nti.contentprocessing.termextract import extract_key_words
+		
+from nti.contentprocessing.tests import ConfiguringTestBase
 		
 from hamcrest import assert_that, is_
 
-class TestTermExtract(unittest.TestCase):
+class TestTermExtract(ConfiguringTestBase):
 
 	def test_index_content(self):
 		name = os.path.join(os.path.dirname(__file__), 'sample.txt')

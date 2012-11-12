@@ -15,11 +15,9 @@
 #!/usr/bin/env python
 
 import os
-import re
 from collections import defaultdict
 
-from nltk.tokenize import RegexpTokenizer
-
+from nti.contentprocessing import split_content
 from nti.contentprocessing.stemmers import PorterStemmer
 from nti.contentprocessing.taggers import get_backoff_ngram_tagger
 
@@ -89,9 +87,6 @@ class TermExtractor(object):
 		result = sorted(result, reverse=True, key=lambda x: x.occur)
 		
 		return result
-
-default_tokenizer = RegexpTokenizer(r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-']\w+)*",
-									flags = re.MULTILINE | re.DOTALL)
 	
 def extract_key_words_from_tokens(tokenized_words, extractor=None, tagger=None, stemmer=None):
 	tagger = tagger or get_backoff_ngram_tagger()
@@ -105,8 +100,8 @@ def extract_key_words_from_tokens(tokenized_words, extractor=None, tagger=None, 
 	result = extractor.extract(tagged_terms)
 	return result
 
-def extract_key_words_from_text(content, extractor=None, tokenizer=default_tokenizer, tagger=None, stemmer=None):
-	tokenized_words = tokenizer.tokenize(content)
+def extract_key_words_from_text(content, extractor=None, tagger=None, stemmer=None):
+	tokenized_words = split_content(content)
 	return extract_key_words_from_tokens(tokenized_words, extractor=extractor, tagger=extractor, stemmer=stemmer)
 
 extract_key_words = extract_key_words_from_text
