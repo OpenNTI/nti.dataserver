@@ -1,0 +1,19 @@
+<!-- -*- mode: nxml -*- -->
+<configure xmlns="http://namespaces.zope.org/zope" i18n_domain="zope">
+	<include package="zope.component" />
+
+	<include package="nti.contentfragments" file="configure.zcml" />
+
+	<utility factory="._content_utils._default_content_translation_table"  />
+	<utility factory="._content_utils._default_content_translation_table" name="en" />
+	
+	<utility factory="._content_utils._ContentTokenizer"  />
+	<utility factory="._content_utils._ContentTokenizer" name="en" />
+	
+	<utility factory="._content_utils._DefaultWordSimilarity"  />
+	<utility factory="._content_utils._DefaultWordSimilarity" name="en" />
+	
+	<utility factory="._ngrams_utils._DefaultNgramComputer" />
+	<utility factory="._ngrams_utils._DefaultNgramComputer" name="en" />
+
+</configure>

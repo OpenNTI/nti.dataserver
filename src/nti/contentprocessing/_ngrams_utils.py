@@ -7,11 +7,11 @@ from whoosh import analysis
 
 import repoze.lru
 
-from nti.contentsearch._content_utils import split_content
-from nti.contentsearch.common import default_ngram_minsize
-from nti.contentsearch.common import default_ngram_maxsize
-from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch.common import default_word_tokenizer_expression
+from nti.contentprocessing import default_ngram_minsize
+from nti.contentprocessing import default_ngram_maxsize
+from nti.contentprocessing import interfaces as cp_interfaces
+from nti.contentprocessing._content_utils import split_content
+from nti.contentprocessing import default_word_tokenizer_expression
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -54,12 +54,12 @@ def ngram_filter(text, minsize=3, maxsize=None, unique=True, lower=True):
 	return result
 
 @repoze.lru.lru_cache(100)
-def ngrams(text):
-	u = component.getUtility(search_interfaces.INgramComputer)
+def compute_ngrams(text):
+	u = component.getUtility(cp_interfaces.INgramComputer)
 	result = u.compute(text)
 	return unicode(result)
 
-@interface.implementer( search_interfaces.INgramComputer )		
+@interface.implementer( cp_interfaces.INgramComputer )		
 class _DefaultNgramComputer(object):
 	
 	minsize = default_ngram_minsize

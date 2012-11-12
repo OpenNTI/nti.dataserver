@@ -4,7 +4,7 @@ import re
 
 from zope import interface
 
-from nti.contentsearch import interfaces as cs_interfaces
+from nti.contentprocessing import interfaces as cp_interfaces
 
 # patch encodings.aliases to recognize 'ansi_x3_4_1968'
 from encodings.aliases import aliases # The aliases dictionary
@@ -231,7 +231,7 @@ breaking_entity_re = re.compile(r"""
 
 word_re = re.compile("(?x)(?:[A-Z]\\.)+ | \\$?\\d+(?:\\.\\d+)?%? | \\w+(?:[-']\\w+)*", re.MULTILINE | re.DOTALL | re.UNICODE)
 
-@interface.implementer(cs_interfaces.IContentTranslationTable )
+@interface.implementer(cp_interfaces.IContentTranslationTable )
 def _default_translation_table():
 	# for support of the replace_nonascii_chars option, build a string.translate
 	# table that maps all high-bit chars and control chars to a '?' character.

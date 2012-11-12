@@ -11,20 +11,22 @@ from zope import component
 from whoosh import fields
 from whoosh import analysis
 from whoosh import highlight
-from whoosh.util import rcompile
+
+from nti.contentprocessing import rank_words
+from nti.contentprocessing import default_ngram_maxsize
+from nti.contentprocessing import default_ngram_minsize
+from nti.contentprocessing import interfaces as cp_interfaces
+from nti.contentprocessing import default_word_tokenizer_pattern
 
 from nti.contentsearch._search_query import QueryObject
 from nti.contentsearch._whoosh_query import parse_query
-from nti.contentsearch._content_utils import rank_words
 from nti.contentsearch.common import normalize_type_name
-from nti.contentsearch.common import default_ngram_maxsize
-from nti.contentsearch.common import default_ngram_minsize
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch._search_highlights import WORD_HIGHLIGHT
 from nti.contentsearch._datastructures import CaseInsensitiveDict
 from nti.contentsearch._search_results import empty_search_results
 from nti.contentsearch._search_results import empty_suggest_results
-from nti.contentsearch.common import default_word_tokenizer_expression
+
 from nti.contentsearch._search_results import empty_suggest_and_search_results
 
 from nti.contentsearch.common import (	channel_, content_, keywords_, references_, 
@@ -36,7 +38,6 @@ import logging
 logger = logging.getLogger( __name__ )
 
 _default_word_max_dist = 15
-_default_expression = rcompile(default_word_tokenizer_expression)
 
 class _SearchableContent(object):
 	
@@ -137,20 +138,20 @@ class _SearchableContent(object):
 # content analyzer
 
 def ngram_minmax():
-	ngc_util = component.queryUtility(search_interfaces.INgramComputer) 
+	ngc_util = component.queryUtility(cp_interfaces.INgramComputer) 
 	minsize = ngc_util.minsize if ngc_util else default_ngram_minsize
 	maxsize = ngc_util.maxsize if ngc_util else default_ngram_maxsize
 	return (minsize, maxsize)
 
 def ngram_field():
 	minsize, maxsize = ngram_minmax()
-	tokenizer = analysis.RegexTokenizer(expression=_default_expression)
+	tokenizer = analysis.RegexTokenizer(expression=default_word_tokenizer_pattern)
 	return fields.NGRAMWORDS(minsize=minsize, maxsize=maxsize, stored=False, tokenizer=tokenizer, at='start')
 
 def content_analyzer():
 	sw_util = component.queryUtility(search_interfaces.IStopWords) 
 	stopwords = sw_util.stopwords() if sw_util else ()
-	analyzer = 	analysis.StandardAnalyzer(expression=_default_expression, stoplist=stopwords)
+	analyzer = 	analysis.StandardAnalyzer(expression=default_word_tokenizer_pattern, stoplist=stopwords)
 	return analyzer
 	
 def content_field(stored=True):

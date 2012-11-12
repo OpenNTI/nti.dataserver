@@ -1,11 +1,7 @@
 from __future__ import print_function, unicode_literals, absolute_import
 
-import re
 import six
-import difflib
 import collections
-
-from pkg_resources import resource_filename
 
 from zope import component
 from zope import interface
@@ -13,11 +9,8 @@ from persistent.interfaces import IPersistent
 
 from dolmen.builtins import IDict
 
-from nltk.tokenize import RegexpTokenizer
-
-import repoze.lru
-
-from nti.contentfragments import interfaces as frg_interfaces
+from nti.contentprocessing import split_content
+from nti.contentprocessing import get_content_translation_table
 
 from nti.chatserver import interfaces as chat_interfaces
 
@@ -29,7 +22,6 @@ from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.contentsearch.common import to_list
 from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch.common import default_word_tokenizer_expression
 
 from nti.contentsearch.common import (CLASS, BODY, ID)
 from nti.contentsearch.common import (text_, body_, selectedText_, replacementContent_, redactionExplanation_,
@@ -40,18 +32,6 @@ from nti.contentsearch.common import (text_, body_, selectedText_, replacementCo
 
 import logging
 logger = logging.getLogger( __name__ )
-
-def get_content_translation_table(language='en'):
-	table = component.queryUtility(search_interfaces.IContentTranslationTable, name=language)
-	return table or _default_content_translation_table()
-
-@repoze.lru.lru_cache(100)
-def split_content(text, language='en'):
-	tokenizer = component.getUtility(search_interfaces.IContentTokenizer, name=language)
-	result = tokenizer.tokenize(unicode(text)) if text else ()
-	return result
-	
-tokenize_content = split_content
 
 def get_content(text=None, language='en'):
 	result = ()
@@ -377,20 +357,7 @@ class _BookContentResolver(_BasicContentResolver):
 		return self.obj.ntiid
 	get_containerId = get_ntiid
 
-	
-@interface.implementer( search_interfaces.IContentTokenizer )
-class _ContentTokenizer(object):
-	tokenizer = RegexpTokenizer(default_word_tokenizer_expression,
-								flags = re.MULTILINE | re.DOTALL | re.UNICODE)
 
-	def tokenize(self, content):
-		if not content or not isinstance(content, six.string_types):
-			return ()
-		
-		plain_text = component.getAdapter( content, frg_interfaces.IPlainTextContentFragment, name='text' )
-		words = self.tokenizer.tokenize(plain_text)
-		return words
-	
 @interface.implementer( search_interfaces.IStopWords )
 class _DefaultStopWords(object):
 	
@@ -399,34 +366,5 @@ class _DefaultStopWords(object):
 
 	def available_languages(self, ):
 		return ('en',)
-	
-@interface.implementer( search_interfaces.IWordSimilarity )
-class _DefaultWordSimilarity(object):
-			
-	def compute(self, a, b):
-		result = difflib.SequenceMatcher(None, a, b).ratio()
-		return result
 
-	def rank(self, word, terms, reverse=True):
-		result = sorted(terms, key=lambda w: self.compute(word, w), reverse=reverse)
-		return result
-	
-def rank_words(word, terms, reverse=True):
-	ws = component.getUtility(search_interfaces.IWordSimilarity)
-	result = ws.rank(word, terms, reverse)
-	return result
-
-@interface.implementer( search_interfaces.IContentTranslationTable )
-def _default_content_translation_table():
-	name = resource_filename(__name__, "punctuation-en.txt")
-	with open(name, 'r') as src:
-		lines = src.readlines()
-	
-	result = {}
-	for line in lines:
-		line = line.replace('\n', '')
-		splits = line.split('\t')
-		repl = splits[4] or None if len(splits) >= 5 else None
-		result[int(splits[0])] = repl
-	return result
 

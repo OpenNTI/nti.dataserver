@@ -12,8 +12,11 @@ from whoosh import highlight
 
 from nti.externalization import interfaces as ext_interfaces
 
+from nti.contentprocessing import default_word_tokenizer_pattern
+from nti.contentprocessing import default_word_tokenizer_expression
+
 from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch.common import default_word_tokenizer_expression, default_punk_char_expression
+from nti.contentsearch.common import default_punk_char_expression
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -21,10 +24,8 @@ logger = logging.getLogger( __name__ )
 WORD_HIGHLIGHT  = "WordHighlight"
 
 _default_analyzer = None
-_default_expression = default_word_tokenizer_expression
-_default_pattern = re.compile(_default_expression, re.I)
 
-def _get_terms(query, pattern=_default_pattern):
+def _get_terms(query, pattern=default_word_tokenizer_pattern):
 	pos = 0
 	terms = []
 	query = re.sub('[*?]','', query)
@@ -36,8 +37,8 @@ def _get_terms(query, pattern=_default_pattern):
 		m = pattern.search(query, pos)
 	return tuple(terms)
 
-def _get_query_terms(query, pattern=_default_pattern):
-	result = _get_terms(query.term, _default_pattern)
+def _get_query_terms(query, pattern=default_word_tokenizer_pattern):
+	result = _get_terms(query.term, default_word_tokenizer_pattern)
 	if not query.is_phrase_search:
 		result = frozenset(result)
 	return result
@@ -47,7 +48,7 @@ def _get_default_analyzer():
 	if _default_analyzer is None:
 		sw_util = component.queryUtility(search_interfaces.IStopWords) 
 		stoplist = sw_util.stopwords() if sw_util else ()
-		analyzers = [analysis.RegexTokenizer(expression=_default_expression, gaps=False),
+		analyzers = [analysis.RegexTokenizer(expression=default_word_tokenizer_expression, gaps=False),
 					 analysis.LowercaseFilter(),
 					 analysis.StopFilter(stoplist=stoplist) ]
 		_default_analyzer = analysis.CompositeAnalyzer(*analyzers)
