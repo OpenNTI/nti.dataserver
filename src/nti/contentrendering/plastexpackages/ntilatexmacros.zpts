@@ -25,3 +25,10 @@ name: ntiglossaryterm
 
 name: ntiimagehref
 <a class="thumb" tal:attributes="href self/attributes/url"><img tal:attributes="src self/attributes/img"></a>
+
+name: sidebar
+<div tal:condition="self" tal:attributes="class python: type(self).__name__; id self/id">
+<div tal:condition="self/title" class="sidebar-title" tal:content="self/title">Sidebar Title</div>
+<div tal:replace="self">Sidebar Body</div>
+</div>
+

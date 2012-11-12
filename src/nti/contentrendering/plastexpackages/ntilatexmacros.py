@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 #pylint: disable=R0904
 
-from plasTeX import Base, Command
+from plasTeX import Base, Command, Environment
 
 from plasTeX.Base import Crossref
 
@@ -77,6 +77,11 @@ class textsuperscript(Base.Command):
 class textsubscript(Base.Command):
 	args = 'self'
 
+# The sidebar environment is to be the base class for other side types such as those from AoPS.
+class sidebar(Environment):
+	args = 'title'
+	blockType = True
+
 # The following 'text' symbols are 'Predefined' LaTeX 2e commands
 
 class textcopyright(Base.Command):
@@ -141,9 +146,6 @@ class textparallel(Base.Command):
 
 class textperp(Base.Command):
 	unicode = u'\u22A5'
-
-class textpi(Base.Command):
-	unicode = u'\u03C0'
 
 class textprime(Base.Command):
 	unicode = u'\u2032'
