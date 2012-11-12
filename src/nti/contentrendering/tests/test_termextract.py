@@ -1,12 +1,11 @@
 import os
 import unittest
 			
-from nti.contentrendering.termextract import ZopyYXStemmer
 from nti.contentrendering.termextract import extract_key_words
 		
 from hamcrest import assert_that, is_
 
-class TestIndexer(unittest.TestCase):
+class TestTermExtract(unittest.TestCase):
 
 	def test_index_content(self):
 		name = os.path.join(os.path.dirname(__file__), 'sample.txt')
@@ -20,11 +19,7 @@ class TestIndexer(unittest.TestCase):
 								('blood vessel', 1, 2), 
 								('blood cells', 1, 2),
 								('body works', 1, 2),
-								('blood cells viruses', 1, 3)]))	
-		
-	def test_stemmer(self):
-		stemmer = ZopyYXStemmer()
-		assert_that(stemmer.stem('viruses'), is_('virus'))
+								('blood cells viruses', 1, 3)]))
 
 if __name__ == '__main__':
 	unittest.main()

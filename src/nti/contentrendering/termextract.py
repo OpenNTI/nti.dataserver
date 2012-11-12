@@ -15,9 +15,13 @@
 #!/usr/bin/env python
 
 import os
-import gzip
-import pickle
+import re
 from collections import defaultdict
+
+from nltk.tokenize import RegexpTokenizer
+
+from nti.contentrendering.stemmers import PorterStemmer
+from nti.contentrendering.taggers import get_backoff_ngram_tagger
 
 class DefaultFilter(object):
 
@@ -85,69 +89,12 @@ class TermExtractor(object):
 		result = sorted(result, reverse=True, key=lambda x: x.occur)
 		
 		return result
-	
-# for the time being we assume the training sents comes
-# from the brown corpus
-_training_sents = None
-def default_training_sents():
-	global _training_sents
-	if _training_sents is None:
-		try:
-			from nltk.corpus import brown
-			_training_sents = brown.tagged_sents()
-		except:
-			_training_sents = ()
-	return _training_sents
-
-from nltk.tag import DefaultTagger, UnigramTagger, BigramTagger, TrigramTagger
-
-def backoff_tagger(train_sents, start_tagger=None, tagger_classes=()): 
-	backoff = start_tagger
-	for cls in tagger_classes: 
-		backoff = cls(train_sents, backoff=backoff) 
-	return backoff
-
-def train_default_tagger(train_sents=None):
-	train_sents = train_sents or default_training_sents()
-	tagger = DefaultTagger('NN')
-	if train_sents:
-		tagger = backoff_tagger(train_sents=train_sents, start_tagger=tagger,
-								tagger_classes=(UnigramTagger, BigramTagger, TrigramTagger))
-	return tagger
-
-# return default tagger using the default training sentences
-_default_tagger = None
-def default_tagger():
-	global _default_tagger
-	if _default_tagger is None:
-		try:
-			name = os.path.join(os.path.dirname(__file__), "taggers/default_tagger.pickle.gz")
-			with gzip.open(name,"rb") as f:
-				_default_tagger = pickle.load(f)
-		except:
-			_default_tagger = DefaultTagger('NN')
-	return _default_tagger
-
-from zopyx.txng3.ext import stemmer
-
-class ZopyYXStemmer(object):
-	def __init__(self, language='english'):
-		self._stemmer = stemmer.Stemmer(language)
-		
-	def stem(self, token):
-		token = unicode(token)
-		result = self._stemmer.stem((token,))
-		return result[0] if result else token
-		
-import re
-from nltk import PorterStemmer
-from nltk.tokenize import RegexpTokenizer
 
 default_tokenizer = RegexpTokenizer(r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-']\w+)*",
 									flags = re.MULTILINE | re.DOTALL)
 	
 def extract_key_words_from_tokens(tokenized_words, extractor=None, tagger=None, stemmer=None):
-	tagger = tagger or default_tagger()
+	tagger = tagger or get_backoff_ngram_tagger()
 	stemmer = stemmer or PorterStemmer()
 	extractor = extractor or TermExtractor()
 	tagged_items = tagger.tag(tokenized_words)
