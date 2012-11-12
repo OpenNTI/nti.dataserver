@@ -12,7 +12,7 @@ import repoze.lru
 
 from nltk.tag import DefaultTagger, NgramTagger
 
-from nti.contentrendering.taggers import interfaces as tagger_interfaces
+from nti.contentprocessing.taggers import interfaces as tagger_interfaces
 
 import logging
 logger = logging.getLogger( __name__ )
