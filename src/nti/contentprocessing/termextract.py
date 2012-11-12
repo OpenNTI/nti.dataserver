@@ -20,8 +20,8 @@ from collections import defaultdict
 
 from nltk.tokenize import RegexpTokenizer
 
-from nti.contentrendering.stemmers import PorterStemmer
-from nti.contentrendering.taggers import get_backoff_ngram_tagger
+from nti.contentprocessing.stemmers import PorterStemmer
+from nti.contentprocessing.taggers import get_backoff_ngram_tagger
 
 class DefaultFilter(object):
 
