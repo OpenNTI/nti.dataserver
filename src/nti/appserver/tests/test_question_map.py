@@ -13,7 +13,7 @@ from hamcrest import is_
 from hamcrest import has_length
 from hamcrest import has_property
 
-import json
+import simplejson as json
 
 from .._question_map import QuestionMap, _populate_question_map_from_text
 
@@ -50,7 +50,7 @@ ASSM_ITEMS = {
 
 SECTION_ONE = {
 	'NTIID': 'tag:nextthought.com,2011-10:testing-HTML-temp.section_one',
-	'filename': 'tag_nextthought_com_2011-10_testing-HTML-temp_section_one.html',
+#	'filename': 'tag_nextthought_com_2011-10_testing-HTML-temp_section_one.html',
 	'href': 'tag_nextthought_com_2011-10_testing-HTML-temp_section_one.html',
 	'AssessmentItems': ASSM_ITEMS,
 	}
@@ -73,7 +73,7 @@ ASSM_JSON_W_SET = {
 	'href': 'index.html'
 	}
 
-ASSM_STRING_W_SET = json.dumps( ASSM_JSON_W_SET )
+ASSM_STRING_W_SET = json.dumps( ASSM_JSON_W_SET, indent='\t' )
 
 def test_create_question_map_captures_set_ntiids(index_string=ASSM_STRING_W_SET):
 	class MockEntry(object):
@@ -106,7 +106,7 @@ def test_create_question_map_captures_set_ntiids(index_string=ASSM_STRING_W_SET)
 def test_create_question_map_nested_level_with_no_filename():
 
 	section_one = SECTION_ONE.copy()
-	del section_one['filename']
+#	del section_one['filename']
 	chapter_one = CHAPTER_ONE.copy()
 	chapter_one['Items'][section_one['NTIID']] = section_one
 
@@ -126,7 +126,7 @@ def test_create_question_map_nested_level_with_no_filename():
 def test_create_question_map_nested_two_level_with_no_filename():
 
 	section_one = SECTION_ONE.copy()
-	del section_one['filename']
+#	del section_one['filename']
 	interloper = { 'NTIID': 'foo',
 				   'Items': { section_one['NTIID']: section_one } }
 
@@ -144,3 +144,49 @@ def test_create_question_map_nested_two_level_with_no_filename():
 	assm_string = json.dumps( assm_json )
 
 	test_create_question_map_captures_set_ntiids( assm_string )
+
+
+ASSESSMENT_STRING_QUESTIONS_IN_FIRST_FILE = """
+{
+	"Items": {
+		"tag:nextthought.com,2011-10:mathcounts-HTML-mathcounts2012.mathcounts_2011_2012": {
+			"AssessmentItems": {},
+			"Items": {
+				"tag:nextthought.com,2011-10:mathcounts-HTML-mathcounts2012.warm_up_1": {
+					"AssessmentItems": {
+						"tag:nextthought.com,2011-10:mathcounts-NAQ-mathcounts2012.naq.qid.1": """ + json.dumps(ASSM_ITEMS['tag:nextthought.com,2011-10:testing-NAQ-temp.naq.testquestion']) + """
+
+					},
+					"NTIID": "tag:nextthought.com,2011-10:mathcounts-HTML-mathcounts2012.warm_up_1",
+					"filename": "tag_nextthought_com_2011-10_mathcounts-HTML-mathcounts2012_warm_up_1.html",
+					"href": "tag_nextthought_com_2011-10_mathcounts-HTML-mathcounts2012_warm_up_1.html"
+				}
+			},
+			"NTIID": "tag:nextthought.com,2011-10:mathcounts-HTML-mathcounts2012.mathcounts_2011_2012",
+			"filename": "index.html",
+			"href": "index.html"
+		}
+	},
+	"href": "index.html"
+}
+"""
+
+def test_create_from_mathcounts2012_no_Question_section_in_chapter():
+	index_string = ASSESSMENT_STRING_QUESTIONS_IN_FIRST_FILE
+	class MockEntry(object):
+		def make_sibling_key( self, key ):
+			return key
+	question_map = QuestionMap()
+
+	_populate_question_map_from_text( question_map, index_string, MockEntry() )
+
+	assert_that( question_map, has_length( 1 ) )
+
+	assm_items = question_map.by_file.get('tag_nextthought_com_2011-10_mathcounts-HTML-mathcounts2012_warm_up_1.html')
+
+	assert_that( assm_items, has_length( 1 ) )
+	question = assm_items[0]
+
+	assert_that( question, has_property( '__name__', 'tag:nextthought.com,2011-10:mathcounts-NAQ-mathcounts2012.naq.qid.1' ) )
+	assert_that( question, has_property( 'ntiid', 'tag:nextthought.com,2011-10:mathcounts-NAQ-mathcounts2012.naq.qid.1', ) )
+	assert_that( question, has_property( '__parent__', 'tag:nextthought.com,2011-10:mathcounts-HTML-mathcounts2012.warm_up_1' ) )
