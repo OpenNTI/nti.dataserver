@@ -15,5 +15,8 @@
 	
 	<utility factory="._ngrams_utils._DefaultNgramComputer" />
 	<utility factory="._ngrams_utils._DefaultNgramComputer" name="en" />
-
+	
+	<include package=".stemmers" file="configure.zcml" />
+	<include package=".taggers" file="configure.zcml" />
+	
 </configure>

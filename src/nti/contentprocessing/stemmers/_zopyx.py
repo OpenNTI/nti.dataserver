@@ -16,5 +16,3 @@ class ZopyYXStemmer(object):
         result = self._stemmer.stem((token,))
         return result[0] if result else token
 
-if __name__ == '__main__':
-    print(ZopyYXStemmer().stem('carlos'))
