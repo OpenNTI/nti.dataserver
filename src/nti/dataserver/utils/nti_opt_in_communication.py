@@ -23,8 +23,6 @@ def main():
 
 def _get_user_info():
 	ent_catalog = component.getUtility(ICatalog, name=user_index.CATALOG_NAME)
-	ent_catalog.updateIndexes()
-	
 	for user in list(ent_catalog.searchResults( topics='opt_in_email_communication')):
 		profile = user_interfaces.ICompleteUserProfile(user, None)
 		if profile is not None:
