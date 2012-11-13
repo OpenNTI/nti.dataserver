@@ -19,3 +19,8 @@ git+https://github.com/hongqn/umysqldb.git#egg=umysqldb-dev
 -e ../site-lib/geventwebsocket
 # Gunicorn dev for testing
 # -e git+https://github.com/benoitc/gunicorn.git#egg=gunicorn-dev
+## Redis-queue, a simple job queue
+## at this time, 0.3.2 is on PyPi, but I (JAM) want some of the
+## URL handling changse from trunk. Installing as editable
+## for experimenting
+-e git+https://github.com/nvie/rq.git@master#egg=rq
