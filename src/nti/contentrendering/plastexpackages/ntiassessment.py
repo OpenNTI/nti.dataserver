@@ -55,7 +55,7 @@ from zope.cachedescriptors.property import readproperty
 
 import os
 import itertools
-import simplejson as json
+import simplejson as json # Needed for sort_keys, ensure_ascii
 import codecs
 
 from nti.contentrendering.plastexpackages import interfaces
@@ -547,62 +547,85 @@ def ProcessOptions( options, document ):
 @interface.implementer(interfaces.IAssessmentExtractor)
 @component.adapter(cdr_interfaces.IRenderedBook)
 class _AssessmentExtractor(object):
+	"""
+	"Transforms" a rendered book by extracting assessment information into a separate file
+	called ``assessment_index.json.`` This file describes a dictionary with the following
+	structure::
+
+		Items => { # Keyed by NTIID of the file
+			NTIID => string # This level is about an NTIID section
+			filename => string # The relative containing file for this NTIID
+			AssessmentItems => { # Keyed by NTIID of the question
+				NTIID => string # The NTIID of the question
+				... # All the rest of the keys of the question object
+			}
+			Items => { # Keyed by NTIIDs of child sections; recurses
+				# As containing, except 'filename' will be null/None
+			}
+		}
+
+	"""
 
 	def __init__( self, book=None ):
 		# Usable as either a utility factory or an adapter
 		pass
 
 	def transform( self, book ):
-		index = {}
-		self._build_index( book.document.getElementsByTagName( 'document' )[0], index.setdefault( 'Items', {} ) )
+		index = {'Items': {}}
+		self._build_index( book.document.getElementsByTagName( 'document' )[0], index['Items'] )
 		#index['filename'] = index.get( 'filename', 'index.html' ) # This leads to duplicate data
 		index['href'] = index.get( 'href', 'index.html' )
 		with codecs.open( os.path.join( book.contentLocation, 'assessment_index.json'), 'w', encoding='utf-8' ) as fp:
-			json.dump( index, fp, indent='\t' )
+			json.dump( index, fp, indent='\t', sort_keys=True, ensure_ascii=True ) # sort_keys for repeatability. Do force ensure_ascii because even though we're using codes to encode automatically, the reader might not decode
 		return index
 
 	def _build_index( self, element, index ):
 		"""
 		Recurse through the element adding assessment objects to the index,
 		keyed off of NTIIDs.
+
+		:param dict index: The containing index node. Typically, this will be
+			an ``Items`` dictionary in a containing index.
 		"""
 		ntiid = getattr( element, 'ntiid', None )
 		if not ntiid:
 			# If we hit something without an ntiid, it's not a section-level
 			# element, it's a paragraph or something like it. Thus we collapse into
-			# the parent
-			ntiid_index = index
+			# the parent. Obviously, we'll only look for AssessmentObjects inside of here
+			element_index = index
 		else:
-			ntiid_index = {}
-			index[ntiid] = ntiid_index
+			assert ntiid not in index, "NTIIDs must be unique"
+			element_index = index[ntiid] = {}
 
-			ntiid_index['NTIID'] = ntiid
-			ntiid_index['filename'] = getattr( element, 'filename', None )
-			if not ntiid_index['filename'] and getattr( element, 'filenameoverride', None ):
+			element_index['NTIID'] = ntiid
+			element_index['filename'] = getattr( element, 'filename', None )
+			if not element_index['filename'] and getattr( element, 'filenameoverride', None ):
 				# FIXME: XXX: We are assuming the filename extension. Why aren't we finding
 				# these at filename? See EclipseHelp.zpts for comparison
-				ntiid_index['filename'] = getattr( element, 'filenameoverride' ) + '.html'
-			ntiid_index['href'] = getattr( element, 'url', ntiid_index['filename'] )
+				element_index['filename'] = getattr( element, 'filenameoverride' ) + '.html'
+			element_index['href'] = getattr( element, 'url', element_index['filename'] )
 
-		assessment_objects = ntiid_index.setdefault( 'AssessmentItems', {} )
+		assessment_objects = element_index.setdefault( 'AssessmentItems', {} )
 
 		for child in element.childNodes:
 			ass_obj = getattr( child, 'assessment_object', None )
 			if callable( ass_obj ):
-				# Verify that we can round-trip this object
 				int_obj = ass_obj()
-				ext_obj = toExternalObject( int_obj ) # No need to go into its children, like parts.
-				__traceback_info__ = child, int_obj, ext_obj
-				raw_int_obj = type(int_obj)() # Use the class of the object returned as a factory.
-				nti.externalization.internalization.update_from_external_object( raw_int_obj, ext_obj, require_updater=True )
-				factory = nti.externalization.internalization.find_factory_for( toExternalObject( int_obj ) ) # Also be sure factories can be found
-				assert factory is not None
-				# The ext_obj was mutated by the internalization process, so we need to externalize
-				# again. Or run a deep copy (?)
+				self._ensure_roundtrips( int_obj, provenance=child ) # Verify that we can round-trip this object
 				assessment_objects[child.ntiid] = toExternalObject( int_obj )
-			else:
+			else: # assessment_objects are leafs, never have children to worry about
 				if getattr( child, 'ntiid', None ):
-					child_index = ntiid_index.setdefault( 'Items', {} )
+					containing_index = element_index.setdefault( 'Items', {} ) # we have a child with an NTIID; make sure we have a container for it
 				else:
-					child_index = ntiid_index
-				self._build_index( child, child_index )
+					containing_index = element_index # an unnamed thing; wrap it up with us; should only have AssessmentItems
+				self._build_index( child, containing_index )
+
+	def _ensure_roundtrips( self, assm_obj, provenance=None ):
+		ext_obj = toExternalObject( assm_obj ) # No need to go into its children, like parts.
+		__traceback_info__ = provenance, assm_obj, ext_obj
+		raw_int_obj = type(assm_obj)() # Use the class of the object returned as a factory.
+		nti.externalization.internalization.update_from_external_object( raw_int_obj, ext_obj, require_updater=True )
+		factory = nti.externalization.internalization.find_factory_for( toExternalObject( assm_obj ) ) # Also be sure factories can be found
+		assert factory is not None
+		# The ext_obj was mutated by the internalization process, so we need to externalize
+		# again. Or run a deep copy (?)

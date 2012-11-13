@@ -36,7 +36,7 @@ def _ntiid_object_hook( k, v, x ):
 		# We started out with LatexContentFragments when we wrote these,
 		# and if we re-convert when we read, we tend to over-escape
 		# One thing we do need to do, though, is replace long dashes with standard minus signs
-		v.value = cfg_interfaces.LatexContentFragment( x['value'].replace( '\u2212', '-') )
+		v.value = cfg_interfaces.LatexContentFragment( x['value'].replace( u'\u2212', '-') )
 
 	return v
 
@@ -64,6 +64,7 @@ class QuestionMap(dict):
 			obj.__parent__ = unicode(level_ntiid) if level_ntiid else None
 
 			if containing_filename:
+				assert containing_filename in self.by_file, "Container for file must already be present"
 				self.by_file[containing_filename].append( obj )
 				# Hack in ACL support. We are piggybacking off of
 				# IDelimitedEntry's support in authorization_acl.py
@@ -75,7 +76,10 @@ class QuestionMap(dict):
 				obj.read_contents_of_sibling_entry = read_contents_of_sibling_entry
 				interface.alsoProvides( obj, lib_interfaces.IFilesystemEntry )
 
-	def _from_index_entry(self, index, hierarchy_entry, nearest_containing_key=None, nearest_containing_ntiid=None ):
+	def __from_index_entry(self, index, hierarchy_entry, nearest_containing_key=None, nearest_containing_ntiid=None ):
+		"""
+		Called with an entry for a file or (sub)section. May or may not have children of its own.
+		"""
 		key_for_this_level = nearest_containing_key
 		if index.get( 'filename' ):
 			key_for_this_level = hierarchy_entry.make_sibling_key( index['filename'] )
@@ -93,21 +97,34 @@ class QuestionMap(dict):
 			self.by_file[key_for_this_level] = factory()
 
 
-		# JAM: This is very odd. Each level of the tree uses its own key
-		# to store the assessment items found in each of its children. At one time we had a situation
-		# where too many 'filename'-less intervening levels caused the chain to get broken and the
-		# leaf questions to effectively be lost. We are now carrying the nearest containing key around,
-		# so that's no longer a problem, but now we may be returning too many items?
 		level_ntiid = index.get( 'NTIID' ) or nearest_containing_ntiid
-		for item in index['Items'].values():
-			self.__process_assessments( item.get( "AssessmentItems", {} ), key_for_this_level, hierarchy_entry, level_ntiid )
+		self.__process_assessments( index.get( "AssessmentItems", {} ),
+									key_for_this_level,
+									hierarchy_entry,
+									level_ntiid )
 
-			if 'Items' in item:
-				self._from_index_entry( item, hierarchy_entry, nearest_containing_key=key_for_this_level, nearest_containing_ntiid=level_ntiid )
+		for child_item in index.get('Items',{}).values():
+			self.__from_index_entry( child_item, hierarchy_entry, nearest_containing_key=key_for_this_level, nearest_containing_ntiid=level_ntiid )
+
+
+	def _from_root_index( self, assessment_index_json, content_package ):
+		"""
+		The top-level is handled specially: ``index.html`` is never allowed to have
+		assessment items.
+		"""
+
+		assert 'Items' in assessment_index_json, "Root contains 'Items'"
+		assert len(assessment_index_json['Items']) == 1, "Root's 'Items' only has Root NTIID"
+		root_ntiid = assessment_index_json['Items'].keys()[0] # TODO: This ought to come from the content_package. We need to update tests to be sure
+		assert 'Items' in assessment_index_json['Items'][root_ntiid], "Root's 'Items' contains the actual section Items"
+		for child_ntiid, child_index in assessment_index_json['Items'][root_ntiid]['Items'].items():
+			# Each of these should have a filename
+			assert child_index.get( 'filename' )
+			self.__from_index_entry( child_index, content_package, nearest_containing_ntiid=child_ntiid )
 
 
 @component.adapter(lib_interfaces.IContentPackage,IObjectCreatedEvent)
-def add_assessment_items_from_new_content( title, event ):
+def add_assessment_items_from_new_content( content_package, event ):
 	"""
 	Assessment items have their NTIID as their __name__, and the NTIID of their primary
 	container within this context as their __parent__ (that should really be the hierarchy entry)
@@ -116,32 +133,34 @@ def add_assessment_items_from_new_content( title, event ):
 	if question_map is None: #pragma: no cover
 		return
 
-	logger.info( "Adding assessment items from new content %s %s", title, event )
+	logger.info( "Adding assessment items from new content %s %s", content_package, event )
 
-	asm_index_text = title.read_contents_of_sibling_entry( 'assessment_index.json' )
-	_populate_question_map_from_text( question_map, asm_index_text, title )
+	asm_index_text = content_package.read_contents_of_sibling_entry( 'assessment_index.json' )
+	_populate_question_map_from_text( question_map, asm_index_text, content_package )
 
-def _populate_question_map_from_text( question_map, asm_index_text, title ):
-	if asm_index_text:
-		asm_index_text = unicode(asm_index_text)
-		# In this one specific case, we know that these are already
-		# content fragments (probably HTML content fragments)
-		# If we go through the normal adapter process from string to
-		# fragment, we will wind up with sanitized HTML, which is not what
-		# we want, in this case
-		# TODO: Needs specific test cases
-		# NOTE: This breaks certain assumptions that assume that there are no
-		# subclasses of str or unicode, notably pyramid.traversal. See assessment_views.py
-		# for more details.
-		def hook(o):
-			return dict( (k,cfg_interfaces.UnicodeContentFragment(v) if isinstance(v, unicode) else v) for k, v in o )
+def _populate_question_map_from_text( question_map, asm_index_text, content_package ):
+	if not asm_index_text:
+		return
 
-		index = simplejson.loads( asm_index_text,
-								  object_pairs_hook=hook )
-		try:
-			question_map._from_index_entry( index, title )
-		except (interface.Invalid, ValueError): # pragma: no cover
-			# Because the map is updated in place, depending on where the error
-			# was, we might have some data...that's not good, but it's not a show stopper either,
-			# since we shouldn't get content like this out of the rendering process
-			logger.exception( "Failed to load assessment items, invalid assessment_index for %s", title )
+	asm_index_text = unicode(asm_index_text, 'utf-8')
+	# In this one specific case, we know that these are already
+	# content fragments (probably HTML content fragments)
+	# If we go through the normal adapter process from string to
+	# fragment, we will wind up with sanitized HTML, which is not what
+	# we want, in this case
+	# TODO: Needs specific test cases
+	# NOTE: This breaks certain assumptions that assume that there are no
+	# subclasses of str or unicode, notably pyramid.traversal. See assessment_views.py
+	# for more details.
+	def hook(o):
+		return dict( (k,cfg_interfaces.UnicodeContentFragment(v) if isinstance(v, unicode) else v) for k, v in o )
+
+	index = simplejson.loads( asm_index_text,
+							  object_pairs_hook=hook )
+	try:
+		question_map._from_root_index( index, content_package )
+	except (interface.Invalid, ValueError): # pragma: no cover
+		# Because the map is updated in place, depending on where the error
+		# was, we might have some data...that's not good, but it's not a show stopper either,
+		# since we shouldn't get content like this out of the rendering process
+		logger.exception( "Failed to load assessment items, invalid assessment_index for %s", content_package )
