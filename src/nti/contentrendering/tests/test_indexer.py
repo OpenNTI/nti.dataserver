@@ -18,9 +18,11 @@ from whoosh.query import (Or, Term)
 class TestIndexer(ConfiguringTestBase):
 
 	def setUp(self):
+		ConfiguringTestBase.setUp(self)
 		self.idxdir = tempfile.mkdtemp(dir="/tmp")
 
 	def tearDown(self):
+		ConfiguringTestBase.tearDown(self)
 		shutil.rmtree(self.idxdir, True)
 
 	def test_index_book(self):
