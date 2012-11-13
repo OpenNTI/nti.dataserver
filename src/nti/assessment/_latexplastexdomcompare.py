@@ -63,6 +63,8 @@ def _symbolic( child ):
 		return parse_expr( child.textContent )
 	except (TokenError,SyntaxError,AttributeError,TypeError): #TypeError arises on 1(2) -> function call of 1
 		return child
+	except NameError: # sympy 0.7.2 has a bug; it wants to raise TokenError, instead raises NameError on "'''"
+		return child
 
 def _mathChildIsEqual(child1, child2):
 	#If are children aren't even the same type they are probably not equal
