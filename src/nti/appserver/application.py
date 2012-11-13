@@ -61,6 +61,7 @@ from pyramid.interfaces import ILocation
 from zope.location.interfaces import ILocation as IZLocation
 IZLocation.__bases__ = (ILocation,)
 
+from nti.monkey import logbook_patch_on_import; logbook_patch_on_import.patch()
 
 SOCKET_IO_PATH = 'socket.io'
 

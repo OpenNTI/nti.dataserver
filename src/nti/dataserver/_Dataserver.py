@@ -26,6 +26,9 @@ from persistent import Persistent
 import transaction
 from zope.component.hooks import site
 
+# Be sure and do this before rq gets set up
+from nti.monkey import logbook_patch_on_import; logbook_patch_on_import.patch()
+
 import redis
 
 from nti.externalization import oids
