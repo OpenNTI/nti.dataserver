@@ -1,21 +1,23 @@
 #!/usr/bin/env python
 """
 Support functions for comparing latex Math DOMs using PlasTeX
+
+$Id$
 """
-from __future__ import print_function, unicode_literals
-import logging
-logger = logging.getLogger(__name__)
+from __future__ import print_function, unicode_literals, absolute_import
+logger = __import__('logging').getLogger(__name__)
 
-from sympy.parsing.sympy_parser import parse_expr, TokenError
+from sympy.parsing import sympy_parser
 
-from nti.assessment import interfaces
 from zope import interface
 from zope import component
 from zope.component.interfaces import ComponentLookupError
 
+from nti.assessment import interfaces
+
 def _mathIsEqual(math1, math2):
 	if math1 is None or math2 is None:
-		# We follow the rules for NULL: it's not equal to anything,
+		# We follow the rules for SQL NULL: it's not equal to anything,
 		# even itself
 		return False
 	return _mathChildrenAreEqual(math1.childNodes, math2.childNodes) or \
@@ -60,16 +62,19 @@ def _symbolic( child ):
 	with other objects given to this method (i.e., should not return None).
 	"""
 	try:
-		return parse_expr( child.textContent )
-	except (TokenError,SyntaxError,AttributeError,TypeError): #TypeError arises on 1(2) -> function call of 1
+		return sympy_parser.parse_expr( child.textContent )
+	except (sympy_parser.TokenError,SyntaxError,AttributeError,TypeError): # TypeError arises on 1(2) -> function call of 1
 		return child
-	except NameError: # sympy 0.7.2 has a bug; it wants to raise TokenError, instead raises NameError on "'''"
+	except NameError:
+		# sympy 0.7.2 has a bug: it wants to raise TokenError, instead raises NameError on "'''"
+		# In general, even github trunk (as-of 20121113) has problems parsing multi-line continued strings. The file is full
+		# of 'strstart' refs to undefined variables
 		return child
 
 def _mathChildIsEqual(child1, child2):
-	#If are children aren't even the same type they are probably not equal
+	# If are children aren't even the same type they are probably not equal
 
-	#If they are actually the same thing (only happens in None case I think)
+	# If they are actually the same thing (only happens in None case I think)
 	if child1 == child2:
 		return True
 
@@ -130,7 +135,7 @@ class Grader(object):
 	def __call__( self ):
 		result = grade( self.solution, self.response )
 		if not result and not self.response.value.startswith( '<' ):
-			#Hmm. Is there some trailing text we should brush away from the response?
+			# Hmm. Is there some trailing text we should brush away from the response?
 			# Only try if it's not OpenMath XML (which only comes up in test cases now)
 			parts = self.response.value.rsplit( ' ', 1 )
 			if len( parts ) == 2:
