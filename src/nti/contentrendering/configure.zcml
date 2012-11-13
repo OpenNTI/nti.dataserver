@@ -32,4 +32,6 @@
 	<include package=".contentchecks" />
 	<include package=".resources" />
 	<include package=".plastexpackages" />
+	
+	<include package="nti.contentprocessing" />
 </configure>

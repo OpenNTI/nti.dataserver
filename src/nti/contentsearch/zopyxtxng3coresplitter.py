@@ -5,7 +5,7 @@ from zope.component.interfaces import IFactory
 
 from zopyx.txng3.core.interfaces import ISplitter
 
-from nti.contentsearch import split_content
+from nti.contentprocessing import split_content
 
 @interface.implementer(ISplitter)
 class Splitter(object):

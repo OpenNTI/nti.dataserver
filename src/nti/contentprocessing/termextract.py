@@ -12,9 +12,10 @@
 #
 ##############################################################################
 
-#!/usr/bin/env python
+from __future__ import print_function, unicode_literals
 
 import os
+import sys
 from collections import defaultdict
 
 from nti.contentprocessing import split_content
@@ -102,14 +103,13 @@ def extract_key_words_from_tokens(tokenized_words, extractor=None, tagger=None, 
 
 def extract_key_words_from_text(content, extractor=None, tagger=None, stemmer=None):
 	tokenized_words = split_content(content)
-	return extract_key_words_from_tokens(tokenized_words, extractor=extractor, tagger=extractor, stemmer=stemmer)
+	return extract_key_words_from_tokens(tokenized_words, extractor=extractor, tagger=tagger, stemmer=stemmer)
 
 extract_key_words = extract_key_words_from_text
 
 if __name__ == '__main__':
-	import sys
 	args = sys.argv[1:]
 	if args:
 		with open(os.path.expanduser(args[0]),"r") as f:
 			content = f.read()
-		print extract_key_words(content)
+		print(extract_key_words(content))
