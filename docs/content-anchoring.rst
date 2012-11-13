@@ -191,12 +191,12 @@ ends inside of ``Text`` content.
   *EQUAL TO* ``start`` the additional context objects mirror the
   ``Text`` nodes returned by repeateadly asking `TreeWalker
   <http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#treewalker>`_
-  configured to show ``Text`` nodes for ``previousNode`` starting from the node used to generate the
+  configured to show non whitespace only ``Text`` nodes for ``previousNode`` starting from the node used to generate the
   *primary context* object. Similarily, if this anchor has a ``role``
   *EQUAL TO* ``end`` the additional context objects mirror the
   ``Text`` nodes returned by repeateadly asking `TreeWalker
   <http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#treewalker>`_
-  configured to show ``Text`` nodes for ``nextNode`` starting from the node used to generate the
+  configured to show non whitespace only ``Text`` nodes for ``nextNode`` starting from the node used to generate the
   *primary context* object. See ``Converting a Text Node to
   TextDomContentPointer`` for more information.
 * ``edgeOffset`` is the character offset from the start of the
@@ -441,11 +441,13 @@ node's ``textContent`` string.
 	A ``Text`` node is considered contextually
 	relevant to an anchor with a ``role`` of ``start``, if it can be found by
 	walking from the ``Text`` node modeled by the anchors *primary
-	context* object, using a ``TreeWalker's`` ``previousNode`` function.
+	context* object, using a ``TreeWalker's`` (configured to show non
+	whitespace only ``Text`` nodes) ``previousNode`` function.
 	Similarily, a ``Text`` node is considered contextually
 	relevant to an anchor with a ``role`` of ``end``, if it can be found by
 	walking from the ``Text`` node modeled by the anchors *primary
-	context* object, using a ``TreeWalker's`` ``nextNode`` function.
+	context* object, using a ``TreeWalker's`` (configured to show non
+	whitespace only ``Text`` nodes) ``nextNode`` function.
 
 Given the ability to genreate the *primary context* object,
 *additional context* objects and an ``edgeOffset`` as outlined
@@ -465,7 +467,7 @@ anchor, generate the anchor's *primary context*.  The anchor's
 object's ``contextText`` property, of the offset from the range object.
 
 Using a ``TreeWalker`` rooted at the anchor's ``ancestor``, start at container and
-iterate ``Text`` node siblings to generate *additional context*
+iterate non whitespace only ``Text`` node siblings to generate *additional context*
 object's.  Continue to iterate creating ``TextContext`` objects
 for each sibling until 15 characters have been collected, or 5 context objects have been created.
 If anchor ``role`` is ``start``, iterate siblings to the left using the
@@ -477,10 +479,18 @@ head is the *primary context* object, and whose tail is the
 
 See examples at bottom of page.
 
-.. warning::
+.. note::
   In the past, when walking ``Text`` nodes, we have encountered nodes
-  whose ``textContent`` is only whitespace.  Should we skip those when
-  walking siblings with the TreeWalker?
+  whose ``textContent`` is only whitespace.  This behaviour is
+  different across the various browsers.  Some browsers specifically
+  hide whitespace only ``Text`` nodes when working with the dom others seem
+  to actually inject whitespace only ``Text`` nodes as a way to
+  maintin formatting information of the original source. Generating
+  ``TextContext`` objects that represent whitespace only content provides no additional useful
+  information while at the same time introducing potential
+  instability.  Because of this, and to ensure consistency across
+  various browser implementations, when generating and resolving TextContext these empty
+  ``Text`` nodes are skipped during DOM enumeration.
 
 .. note::
   The Range's offsets are specified in terms of the DOM object's node
@@ -655,6 +665,12 @@ essentially just the length of the first or last word).
 	it turns out to be false, set the *score multiplier* to ``n / (n + 0.5)``
 	(``n`` being the number of context objects, including the
 	primary).
+
+.. note::
+	Legacy context objects may exist that represent whitespace only
+	``Text`` nodes.  For backwards compatibility these empty
+	``TextContext`` objects should be removed prior to scoring
+	secondary context objects.
 
 .. warning::
 	CUTZ - The number of secondary context objects not being maximal
