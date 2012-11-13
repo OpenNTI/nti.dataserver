@@ -14,18 +14,22 @@ from xml.dom.minidom import Node
 
 import lxml.etree as etree
 
+from zope import component
 from zope import interface
 
 from nltk import clean_html
-from nltk.tokenize import RegexpTokenizer
 
 from whoosh import index
 
-from nti.contentrendering import interfaces
-from nti.contentsearch import get_punctuation_translation_table
-from nti.contentfragments.html import _sanitize_user_html_to_text
-from nti.contentsearch.whoosh_contenttypes import create_book_schema
+from nti.contentprocessing import split_content
+from nti.contentprocessing import get_content_translation_table
 from nti.contentprocessing.termextract import extract_key_words_from_tokens, TermExtractor
+
+from nti.contentfragments.html import _sanitize_user_html_to_text
+
+from nti.contentrendering import interfaces
+
+from nti.contentsearch.whoosh_contenttypes import create_book_schema
 
 import logging
 logger = logging.getLogger(__name__)
@@ -33,9 +37,6 @@ logger = logging.getLogger(__name__)
 interface.moduleProvides( interfaces.IRenderedBookTransformer )
 
 page_c_pattern = re.compile("<div class=\"page-contents\">(.*)</body>")
-
-default_tokenizer = RegexpTokenizer(r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-']\w+)*",
-									flags = re.MULTILINE | re.DOTALL | re.UNICODE)
 
 def get_schema():
 	return create_book_schema()
@@ -97,14 +98,14 @@ def _get_page_content(text):
 	c = _parse_text(c, page_c_pattern, None)
 	return c or text
 
-def _sanitize_content(text, tokens=False, tokenizer=default_tokenizer, table=None):
+def _sanitize_content(text, tokens=False, table=None):
 	# user ds sanitizer
 	text = _sanitize_user_html_to_text(text)
 	# remove any html (i.e. meta, link) that is not removed
 	text = clean_html(text)
 	# tokenize words
 	text = text.translate(table) if table else text
-	tokenized_words = tokenizer.tokenize(text)
+	tokenized_words = split_content(text)
 	result = tokenized_words if tokens else ' '.join(tokenized_words)
 	return result
 
@@ -165,14 +166,14 @@ def _get_attribute(node, name):
 	attributes = node.attrib
 	return attributes.get(name, None)
 
-def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=False):
+def _index_book_node(writer, node, file_indexing=False):
 	title = unicode(node.title)
 	ntiid = unicode(node.ntiid)
 	content_file = node.location
 	logger.info( "Indexing (%s, %s, %s)", os.path.basename(content_file), title, ntiid )
 	
 	related = _get_related(node.topic)
-	table = get_punctuation_translation_table()
+	table = get_content_translation_table()
 	
 	# find last_modified
 	last_modified = time.time()
@@ -218,7 +219,7 @@ def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=Fa
 				content = _get_node_content(n)
 				content = content.translate(table) if content else None
 				if content:
-					tokenized_words = tokenizer.tokenize(content)
+					tokenized_words = split_content(content)
 					data.extend(tokenized_words)
 					
 				for c in n.iterchildren():
@@ -235,7 +236,7 @@ def _index_book_node(writer, node, tokenizer=default_tokenizer, file_indexing=Fa
 				content = _get_node_content(n)
 				content = content.translate(table) if content else None
 				if content:
-					tokenized_words = tokenizer.tokenize(content)
+					tokenized_words = split_content(content)
 					documents.append(tokenized_words)
 				
 				for c in n.iterchildren():
@@ -291,8 +292,18 @@ def _remove_index_files(location, indexname):
 			os.remove(name)
 
 def main():
-	from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook, EmptyMockDocument
 	
+	def register():
+		from zope.configuration import xmlconfig
+		from zope.configuration.config import ConfigurationMachine
+		from zope.configuration.xmlconfig import registerCommonDirectives
+		context = ConfigurationMachine()
+		registerCommonDirectives(context)
+		
+		import nti.contentrendering as contentrendering
+		xmlconfig.file("configure.zcml", contentrendering, context=context)
+	register()
+
 	arg_parser = argparse.ArgumentParser( description="Content indexer" )
 	arg_parser.add_argument( 'contentpath', help="Content book location" )
 	arg_parser.add_argument( "-i", "--indexname", dest='indexname', help="Content index name", default=None)
@@ -309,6 +320,9 @@ def main():
 		logging.basicConfig(level=logging.INFO, format='%(asctime)-15s %(name)-5s %(levelname)-8s %(message)s')
 		
 	_remove_index_files(contentpath, indexname)
+	
+	from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook, EmptyMockDocument
+	
 	book = NoConcurrentPhantomRenderedBook( EmptyMockDocument(), contentpath)
 	transform(book, indexname=indexname, file_indexing=file_indexing)
 	
