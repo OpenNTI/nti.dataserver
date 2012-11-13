@@ -65,6 +65,13 @@ class TestLatex(ConfiguringTestBase):
 		grader = component.getMultiAdapter( (None, soln, rsp), interfaces.IQSymbolicMathGrader )
 		assert_that( grader(  ), is_false() )
 
+	def test_grade_sympy_parse_problem(self):
+		rsp = response.QTextResponse( "'''" ) # Notice an unterminated string
+		soln = solution.QLatexSymbolicMathSolution( r"1876" )
+
+		grader = component.getMultiAdapter( (None, soln, rsp), interfaces.IQSymbolicMathGrader )
+		assert_that( grader(  ), is_false() )
+
 	def test_math_child_is_equal_cases(self):
 		class MathChild(object):
 			OTHER_NODE = 0
