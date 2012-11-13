@@ -172,7 +172,7 @@ ASSESSMENT_STRING_QUESTIONS_IN_FIRST_FILE = """
 """
 
 def test_create_from_mathcounts2012_no_Question_section_in_chapter():
-	index_string = ASSESSMENT_STRING_QUESTIONS_IN_FIRST_FILE
+	index_string = str(ASSESSMENT_STRING_QUESTIONS_IN_FIRST_FILE)
 	class MockEntry(object):
 		def make_sibling_key( self, key ):
 			return key
