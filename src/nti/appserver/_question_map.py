@@ -13,6 +13,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import simplejson
+import six
 
 from zope import interface
 from zope import component
@@ -142,7 +143,7 @@ def _populate_question_map_from_text( question_map, asm_index_text, content_pack
 	if not asm_index_text:
 		return
 
-	asm_index_text = unicode(asm_index_text, 'utf-8')
+	asm_index_text = unicode(asm_index_text, 'utf-8') if isinstance(asm_index_text, six.binary_type) else asm_index_text
 	# In this one specific case, we know that these are already
 	# content fragments (probably HTML content fragments)
 	# If we go through the normal adapter process from string to
