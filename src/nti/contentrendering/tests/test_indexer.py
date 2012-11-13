@@ -9,11 +9,13 @@ from nti.contentrendering.RenderedBook import _EclipseTOCMiniDomTopic
 from nti.contentrendering.indexer import _index_book_node as index_book_node
 from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook, EmptyMockDocument 
 		
+from nti.contentrendering.tests import ConfiguringTestBase
+
 from hamcrest import assert_that, has_length
 
 from whoosh.query import (Or, Term)
 
-class TestIndexer(unittest.TestCase):
+class TestIndexer(ConfiguringTestBase):
 
 	def setUp(self):
 		self.idxdir = tempfile.mkdtemp(dir="/tmp")
