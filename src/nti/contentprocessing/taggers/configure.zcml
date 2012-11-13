@@ -1,0 +1,8 @@
+<!-- -*- mode: nxml -*- -->
+<configure xmlns="http://namespaces.zope.org/zope" i18n_domain="zope">
+	<include package="zope.component" />
+
+	<utility factory="._nltk._NLTKTaggedSents" provides=".interfaces.INLTKTaggedSents"/>
+	<utility factory="._nltk.get_backoff_ngram_tagger" provides=".interfaces.INLTKBackoffNgramTagger" />
+	
+</configure>

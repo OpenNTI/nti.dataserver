@@ -1,0 +1,11 @@
+<!-- -*- mode: nxml -*- -->
+<configure xmlns="http://namespaces.zope.org/zope" i18n_domain="zope">
+	<include package="zope.component" />
+
+	<utility factory=".PorterStemmer" provides=".interfaces.IStemmer"/>
+	<utility factory=".PorterStemmer" name="porter" 
+			 provides=".interfaces.IStemmer"/>
+	
+	<utility factory="._zopyx.ZopyYXStemmer" name="zopyx" />
+	
+</configure>
