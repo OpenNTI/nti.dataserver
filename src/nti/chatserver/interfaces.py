@@ -57,6 +57,11 @@ class IMeeting(nti_interfaces.IModeledContent, nti_interfaces.IZContained):
 	to be persistent and which is created on demand.
 	"""
 
+	RoomId = schema.TextLine( title="Meeting identifier", description="Meeting identifier" )
+	
+	CreatedTime = schema.Float( title="Meeting creation time",
+							 	description="Meeting creation time" )
+		
 	Moderated = schema.Bool( title="Whether the meeting is being moderated or not.",
 							 description="Toggling this changes the policy in use." )
 
