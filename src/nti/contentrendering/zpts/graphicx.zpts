@@ -1,3 +1,5 @@
+# -*- mode: html -*-
+
 name: includegraphics rotatebox scalebox reflectbox resizebox
 <span itemprop="nti-data-markupdisabled">
 <img tal:condition="not:self/style" tal:attributes="src self/image/url; id self/id; alt self/source; style string:width:${self/image/width/px};; height:${self/image/height/px}" />

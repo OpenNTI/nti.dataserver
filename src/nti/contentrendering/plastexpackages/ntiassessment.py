@@ -516,7 +516,7 @@ class naquestionref(Crossref.ref):
 	pass
 
 from persistent.list import PersistentList
-class naquestionset(Base.List,plastexids.NTIIDMixin):
+class naquestionset(Base.List, plastexids.NTIIDMixin):
 
 	# Only classes with counters can be labeled, and \label sets the
 	# id property, which in turn is used as part of the NTIID (when no NTIID is set explicitly)
@@ -594,7 +594,7 @@ class _AssessmentExtractor(object):
 			# the parent. Obviously, we'll only look for AssessmentObjects inside of here
 			element_index = index
 		else:
-			assert ntiid not in index, "NTIIDs must be unique"
+			assert ntiid not in index, ("NTIIDs must be unique", ntiid, index.keys())
 			element_index = index[ntiid] = {}
 
 			element_index['NTIID'] = ntiid

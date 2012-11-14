@@ -47,6 +47,18 @@ def nextID(self, suffix=''):
 from plasTeX.Base.LaTeX.Sectioning import SectionUtils
 
 def _ntiid_get_local_part_title(self):
+	"""
+	Given a DOM element representing a section-like object with a title, return the
+	title portion as for use in local part of an NTIID
+
+	If not otherwise specified, this will be the ``title`` attribute. This can
+	be overridden with the ``_ntiid_title_attr_name`` attribute to choose a different
+	attribute. This attribute is required, unless the ``_ntiid_allow_missing_title``
+	attribute is set to true.
+
+	If a title text is found, it is stripped and case-normalized in order to ensure
+	uniqueness.
+	"""
 	title = None
 	attr = getattr( self, '_ntiid_title_attr_name', 'title' )
 	if (hasattr(self, attr) or not getattr( self, '_ntiid_allow_missing_title', False)):
@@ -56,9 +68,11 @@ def _ntiid_get_local_part_title(self):
 			# Sometimes title is a string, sometimes its a TexFragment
 			if hasattr(title, 'textContent'):
 				title = title.textContent
-	return title
+	if title:
+		return title.strip().lower()
 
-def _preferred_local_part(self):
+
+def _preferred_local_part(context):
 	"""
 	Look for and return the "local" part of an NTIID, based on the preferred
 	value for the object. Typically, this will be the `title` of the element,
@@ -66,12 +80,12 @@ def _preferred_local_part(self):
 	:raises AttributeError: If the element has no title.
 	"""
 	local = None
-	document = self.ownerDocument
-	title = getattr(self, '_ntiid_get_local_part', None )
+	document = context.ownerDocument
+	title = getattr(context, '_ntiid_get_local_part', None )
 	if title:
 		# TODO: When we need to generate a number, if the object is associated
 		# with a counter, could/should we use the counter?
-		map_name = getattr( self, '_ntiid_cache_map_name', '_section_ntiids_map' )
+		map_name = getattr( context, '_ntiid_cache_map_name', '_section_ntiids_map' )
 		_section_ntiids_map = document.userdata.setdefault( map_name, {} )
 		counter = _section_ntiids_map.setdefault( title, 0 )
 		if counter == 0:
