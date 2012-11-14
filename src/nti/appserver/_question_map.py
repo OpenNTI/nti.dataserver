@@ -113,14 +113,22 @@ class QuestionMap(dict):
 		The top-level is handled specially: ``index.html`` is never allowed to have
 		assessment items.
 		"""
-
-		assert 'Items' in assessment_index_json, "Root contains 'Items'"
-		assert len(assessment_index_json['Items']) == 1, "Root's 'Items' only has Root NTIID"
+		__traceback_info__ = assessment_index_json, content_package
+		assert 'Items' in assessment_index_json, "Root must contain 'Items'"
+		assert len(assessment_index_json['Items']) == 1, "Root's 'Items' must only have Root NTIID"
 		root_ntiid = assessment_index_json['Items'].keys()[0] # TODO: This ought to come from the content_package. We need to update tests to be sure
 		assert 'Items' in assessment_index_json['Items'][root_ntiid], "Root's 'Items' contains the actual section Items"
 		for child_ntiid, child_index in assessment_index_json['Items'][root_ntiid]['Items'].items():
-			# Each of these should have a filename
-			assert child_index.get( 'filename' )
+			__traceback_info__ = child_ntiid, child_index, content_package
+			# Each of these should have a filename. If they do not, they obviously cannot contain
+			# assessment items. The condition of a missing/bad filename has been seen in
+			# jacked-up content that abuses the section hierarchy (skips levels) and/or jacked-up themes/configurations
+			# that split incorrectly.
+			if 'filename' not in child_index or not child_index['filename'] or child_index['filename'].startswith( 'index.html#' ):
+				logger.debug( "Ignoring invalid child with invalid filename; cannot contain assessments: %s", child_index )
+				continue
+
+			assert child_index.get( 'filename' ), 'Child must contain valid filename to contain assessments'
 			self.__from_index_entry( child_index, content_package, nearest_containing_ntiid=child_ntiid )
 
 
