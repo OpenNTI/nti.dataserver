@@ -1,7 +1,7 @@
 from __future__ import print_function, unicode_literals
 
 import six
-from collections import Iterable
+from collections import Iterable, namedtuple
 
 from zope import interface
 from zope import component
@@ -84,24 +84,8 @@ class _PageableSearchResults(_BaseSearchResults):
 			return super(_PageableSearchResults, self).__iter__()
 
 
-@interface.implementer( search_interfaces.IIndexHit)
-class _IndexHit(object):
-	
-	__slots__ = ('obj', 'score', 'query')
-	
-	def __init__(self, obj, score, query=None):
-		self.obj = obj
-		self.score = score
-		self.query = query
-		
-	def __getitem__(self, index):
-		if index==0:
-			return self.obj
-		elif index == 1:
-			return self.score
-		elif index == 2:
-			return self.query
-		raise IndexError()
+_IndexHit = namedtuple('_IndexHit', 'obj score query')
+interface.alsoProvides(_IndexHit, search_interfaces.IIndexHit)
 	
 class _MetaSearchResults(type):
 	
