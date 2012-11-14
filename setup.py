@@ -183,7 +183,7 @@ setup(
 		'plone.namedfile >= 2.0', # much like zope.file, but some image-specific goodness.
 		'pyPDF >= 1.13', # Pure python PDF reading library. Not complex. Has newer fork pyPDF2, not yet on PyPI?
 		'pyquery >= 1.2.2', # jquery-like traversing of python datastructures. lxml, cssselect
-		'pyramid >= 1.3.4, < 1.4a1' ,
+		'pyramid >= 1.4a4' ,
 		'pyramid_tm >= 0.5',
 		'pyramid_mailer >= 0.9', # Which uses repoze.sendmail
 		'pyramid_who >= 0.3',

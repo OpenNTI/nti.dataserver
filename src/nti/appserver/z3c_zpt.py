@@ -23,10 +23,11 @@ from pyramid.decorator import reify
 from pyramid import renderers
 from pyramid.renderers import get_renderer
 
-
 def renderer_factory(info):
 	"""
 	Factory to produce renderers. Intended to be used with asset specs.
+
+	.. note:: At this time, this does not support the pyramid 1.4 macro syntax.
 	"""
 	return renderers.template_renderer_factory(info, ZPTTemplateRenderer)
 
@@ -35,9 +36,16 @@ class ZPTTemplateRenderer(object):
 	"""
 	Renders using a :class:`z3c.pt.pagetemplate.ViewPageTemplateFile`
 	"""
-	def __init__(self, path, lookup):
+	def __init__(self, path, lookup, macro=None):
+		"""
+		:keyword macro: New in pyramid 1.4, currently unsupported.
+		:raise ValueError: If the ``macro`` argument is supplied.
+		"""
 		self.path = path
 		self.lookup = lookup
+		if macro:
+			__traceback_info__ = path, lookup, macro
+			raise ValueError( macro )
 
 	@reify # avoid looking up reload_templates before manager pushed
 	def template(self):
