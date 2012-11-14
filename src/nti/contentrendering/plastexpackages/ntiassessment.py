@@ -587,6 +587,13 @@ class _AssessmentExtractor(object):
 		:param dict index: The containing index node. Typically, this will be
 			an ``Items`` dictionary in a containing index.
 		"""
+		if self._is_uninteresting( element ):
+			# It's important to identify uninteresting nodes because
+			# some uninteresting nodes that would never make it into the TOC or otherwise be noticed
+			# actually can present with hard-coded duplicate NTIIDs, which would
+			# cause us to fail.
+			return
+
 		ntiid = getattr( element, 'ntiid', None )
 		if not ntiid:
 			# If we hit something without an ntiid, it's not a section-level
@@ -613,7 +620,8 @@ class _AssessmentExtractor(object):
 				int_obj = ass_obj()
 				self._ensure_roundtrips( int_obj, provenance=child ) # Verify that we can round-trip this object
 				assessment_objects[child.ntiid] = toExternalObject( int_obj )
-			else: # assessment_objects are leafs, never have children to worry about
+				# assessment_objects are leafs, never have children to worry about
+			elif child.hasChildNodes(): # Recurse for children if needed
 				if getattr( child, 'ntiid', None ):
 					containing_index = element_index.setdefault( 'Items', {} ) # we have a child with an NTIID; make sure we have a container for it
 				else:
@@ -629,3 +637,27 @@ class _AssessmentExtractor(object):
 		assert factory is not None
 		# The ext_obj was mutated by the internalization process, so we need to externalize
 		# again. Or run a deep copy (?)
+
+	def _is_uninteresting( self, element ):
+		"""
+		Uninteresting elements do not get an entry in the index. These are
+		elements that have no children and no assessment items of their own.
+		"""
+
+		cache_attr = '@assessment_extractor_uninteresting'
+		if getattr( element, cache_attr, None ) is not None:
+			return getattr( element, cache_attr )
+
+		boring = False
+		if callable( getattr( element, 'assessment_object', None ) ):
+			boring = False
+		elif not element.hasChildNodes():
+			boring = True
+		elif all( (self._is_uninteresting(x) for x in element.childNodes) ):
+			boring = True
+
+		try:
+			setattr( element, cache_attr, boring )
+		except AttributeError: pass
+
+		return boring
