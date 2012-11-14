@@ -26,7 +26,7 @@ def _get_user_info():
 	for user in list(ent_catalog.searchResults( topics='opt_in_email_communication')):
 		profile = user_interfaces.ICompleteUserProfile(user, None)
 		if profile is not None:
-			print('\t'.join((user.username, profile.email)))
+			print('\t'.join((user.username, profile.email or u'')))
 		
 if __name__ == '__main__':
 	main()
