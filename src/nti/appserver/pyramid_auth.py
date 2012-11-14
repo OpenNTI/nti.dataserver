@@ -291,7 +291,9 @@ def _create_middleware( secure_cookies=False,
 	# module (used by webtest) then fail
 	basicauth = BasicAuthPlugin(b'NTI')
 	basicauth_interactive = _NonChallengingBasicAuthPlugin(b'NTI')
-
+	# TODO: In Pyramid 1.4, their AuthTkit implementation started using SHA512
+	# instead of MD5 for better collision resistance. Find a way to may that happen
+	# here.
 	auth_tkt = AuthTktCookiePlugin(cookie_secret,
 								   b'nti.auth_tkt',
 								   secure=secure_cookies,

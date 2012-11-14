@@ -7,6 +7,8 @@ which prevents the real exception from being seen or debugged. This module
 provides a wrapper for the tween factory that corrects this problem in a non-obtrusive
 way.
 
+This is fixed in 1.4a4 and subsequent, which is now the requirement.
+
 $Id$
 """
 
@@ -18,6 +20,11 @@ logger = __import__('logging').getLogger(__name__)
 import functools
 
 from pyramid import tweens
+
+if 'IRequest' not in tweens.__dict__:
+	# This is the only way I could see to differentiate versions.
+	# This is not present in 1.3, and we don't want to do this in 1.4
+	raise ImportError("Please run setup.py and update the pyramid dependency.")
 
 def _wrap_handler( handler ):
 	@functools.wraps(handler)
