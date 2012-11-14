@@ -114,8 +114,14 @@ class QuestionMap(dict):
 		assessment items.
 		"""
 		__traceback_info__ = assessment_index_json, content_package
+
 		assert 'Items' in assessment_index_json, "Root must contain 'Items'"
-		assert len(assessment_index_json['Items']) == 1, "Root's 'Items' must only have Root NTIID"
+		root_items = assessment_index_json['Items']
+		if not root_items:
+			logger.debug( "Ignoring assessment index that contains no assessments at any level %s", content_package )
+			return
+
+		assert len(root_items) == 1, "Root's 'Items' must only have Root NTIID"
 		root_ntiid = assessment_index_json['Items'].keys()[0] # TODO: This ought to come from the content_package. We need to update tests to be sure
 		assert 'Items' in assessment_index_json['Items'][root_ntiid], "Root's 'Items' contains the actual section Items"
 		for child_ntiid, child_index in assessment_index_json['Items'][root_ntiid]['Items'].items():
