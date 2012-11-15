@@ -5,7 +5,6 @@ import sys
 from zope import interface
 from zope import component
 from zope.annotation import factory as an_factory
-from zope.interface.common.mapping import IFullMapping
 
 from perfmetrics import metricmethod
 
@@ -28,7 +27,7 @@ import logging
 logger = logging.getLogger( __name__ )
 	
 @component.adapter(nti_interfaces.IEntity)
-@interface.implementer(search_interfaces.ICloudSearchEntityIndexManager, IFullMapping)
+@interface.implementer(search_interfaces.ICloudSearchEntityIndexManager)
 class _CloudSearchEntityIndexManager(_SearchEntityIndexManager):
 
 	_v_store = None
