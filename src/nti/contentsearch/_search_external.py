@@ -92,7 +92,9 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 		eo[ITEMS] = items = []
 		
 		# process hits
+		count = 0
 		last_modified = 0
+		limit = self.query.limit
 		highlight_type = self.highlight_type
 			
 		# sort 
@@ -118,6 +120,10 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 			# run any decorator
 			external = toExternalObject(hit)
 			items.append(external)
+			
+			count += 1 
+			if count >= limit:
+				break
 			
 		eo[HIT_COUNT] = len(items)
 		eo[LAST_MODIFIED] = last_modified

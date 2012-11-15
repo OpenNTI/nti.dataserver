@@ -2,6 +2,7 @@ from __future__ import print_function, unicode_literals
 
 import re
 import six
+import sys
 import UserDict
 import collections
 
@@ -99,7 +100,8 @@ class QueryObject(object, UserDict.DictMixin):
 	__set_properties__	 = ('searchOn',)
 	__properties__ 		 = __set_properties__ + __str_properties__ + __int_properties__ + __float_properties__
 
-	__defaults__ 		 = {'surround': 20, 'maxchars' : 300, 'threshold' : 0.4999, 'sortOrder':descending_}
+	__defaults__ 		 = {'surround': 20, 'maxchars' : 300, 'threshold' : 0.4999, 'sortOrder':descending_ ,
+							'limit': sys.maxint}
 	
 	def __init__(self, *args, **kwargs):
 		self._data = {}
