@@ -57,6 +57,8 @@ class IMeeting(nti_interfaces.IModeledContent, nti_interfaces.IZContained):
 	to be persistent and which is created on demand.
 	"""
 
+	creator = schema.TextLine( title="Meeting creator", description="User that started the meeting" )
+	
 	RoomId = schema.TextLine( title="Meeting identifier", description="Meeting identifier" )
 	
 	CreatedTime = schema.Float( title="Meeting creation time",
