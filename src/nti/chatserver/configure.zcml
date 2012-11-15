@@ -41,4 +41,10 @@
 
 	<adapter factory="._acl._MeetingACLProvider" />
 
+	<!-- Database creation and migration -->
+	
+	<utility factory=".generations.install._ContentSearchSchemaManager"
+			 name="nti.dataserver-chatserver"
+			 provides="zope.generations.interfaces.IInstallableSchemaManager"/>
+			 
 </configure>

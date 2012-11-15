@@ -48,6 +48,8 @@ STATUSES = (STATUS_INITIAL,STATUS_PENDING,STATUS_POSTED,STATUS_SHADOWED)
 STATUS_VOCABULARY = schema.vocabulary.SimpleVocabulary(
 	[schema.vocabulary.SimpleTerm( _x ) for _x in STATUSES] )
 
+MEETING_CATALOG_NAME = 'nti.chatserver.++etc++meeting-catalog'
+
 class IMeeting(nti_interfaces.IModeledContent, nti_interfaces.IZContained):
 	"""
 	Provides the storage structure for a meeting.
