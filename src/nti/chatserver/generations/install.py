@@ -42,7 +42,7 @@ def install_meeting_catalog( dataserver_folder ):
 	lsm.registerUtility( catalog, provided=ICatalog, name=chat_interfaces.MEETING_CATALOG_NAME )
 
 	for name, clazz in ( ('RoomId', chat_index.RoomIdIndex),
-						 ('CreatedTime', chat_index.CreatedTimeIndex),
+						 ('CreatedDate', chat_index.CreatedDateIndex),
 						 ('Moderated', chat_index.ModeratedIndex)):
 		index = clazz( family=BTrees.family64 )
 		intids.register( index )
