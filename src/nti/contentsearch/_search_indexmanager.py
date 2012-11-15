@@ -4,7 +4,7 @@ import zope.intid
 from zope import component
 from zope import interface
 from zope.location.interfaces import ILocation
-from zope.interface.common.mapping import IFullMapping
+from zope.interface.common.mapping import IMapping
 
 from persistent.mapping import PersistentMapping
 
@@ -17,7 +17,7 @@ from nti.contentsearch import interfaces as search_interfaces
 import logging
 logger = logging.getLogger( __name__ )
 
-@interface.implementer( search_interfaces.IEntityIndexManager, ILocation, IFullMapping )
+@interface.implementer( search_interfaces.IEntityIndexManager, ILocation, IMapping)
 class _SearchEntityIndexManager(PersistentMapping):
 	
 	@property
