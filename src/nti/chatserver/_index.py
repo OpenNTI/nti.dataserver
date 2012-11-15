@@ -1,6 +1,7 @@
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+import six
 from datetime import date
 
 from zope import interface
@@ -31,6 +32,16 @@ class _NormalizingFieldIndex(FieldIndex, Contained):
 class _FieldIndex(AttributeIndex, _NormalizingFieldIndex):
 	pass
 
+class CreatorIndex(_FieldIndex):
+	default_field_name = 'creator'
+	default_interface = chat_interfaces.IMeeting
+	
+	def normalize( self, value ):
+		if not isinstance(value, six.string_types):
+			value = getattr(value, 'username')
+		value = value.lower() if value else None
+		return value
+	
 class RoomIdIndex(_FieldIndex):
 	default_field_name = 'RoomId'
 	default_interface = chat_interfaces.IMeeting
@@ -44,7 +55,10 @@ class CreatedDateIndex(_FieldIndex):
 	default_interface = chat_interfaces.IMeeting
 	
 	def normalize( self, value ):
-		dt = date.fromtimestamp(value)
-		return dt.isoformat()
+		if isinstance(value, (int,float)):
+			dt = date.fromtimestamp(value)
+			return dt.isoformat()
+		else:
+			return value
 
 
