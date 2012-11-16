@@ -86,22 +86,6 @@ if [ "$INSTALL_EXTRAS" ]; then
 		pip install -U ${p}
 	done
 	
-	# let's try to use GNU gcc compiler
-	pkgs=( `seq -f "gcc-mp-4.%g" 5 7` )
-	for p in "${pkgs[@]}"
-	do
-		cmp=`which $p`
-		if [ -n "$cmp" ]; then
-			ln -s $cmp $TMPWK_DIR/gcc
-			break
-		elif [ -f "/opt/local/bin/$p" ]; then
-			ln -s "/opt/local/bin/$p" $TMPWK_DIR/gcc
-			break
-		fi
-	done
-	
-	pip install -U scikits.learn
-	
 	# clean
 	rm -rf $TMPWK_DIR
 fi
