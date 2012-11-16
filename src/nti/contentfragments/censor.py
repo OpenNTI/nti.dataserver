@@ -102,7 +102,7 @@ def TrivialMatchScannerExternalFile( file_path ):
 @interface.implementer(interfaces.ICensoredContentScanner)
 class WordMatchScanner(TrivialMatchScanner):
 
-	_re_char = r"[ \? | ( | \" | \` | { | \[ | : | ; | & | \# | \* | @ | \) | } | \] | \- | , | \. | ! | \s]"
+	_re_char = r'[\?|!|(|)|"|\'|`|{|}|\[|\]|:|;|,|\.|\^|%|&|#|*|@|$|&|+|\-|<|>|=|_|\~|\\|\s]'
 
 	def __init__( self, white_words=(), prohibited_words=() ):
 		self.char_tester = re.compile(self._re_char)
