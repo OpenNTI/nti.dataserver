@@ -124,18 +124,21 @@ class IMessageInfo(nti_interfaces.IShareableModeledContent, nti_interfaces.IZCon
 	channel = schema.Choice(
 		title="The channel the message was sent to.",
 		vocabulary=CHANNEL_VOCABULARY)
+	
 	Status = schema.Choice(
 		title="The status of the message. Set by the server.",
 		vocabulary=STATUS_VOCABULARY )
+	
+	Creator = schema.TextLine( title="Message creator", description="User that send this message" )
 
 class IMessageInfoEvent(z_interfaces.IObjectEvent):
 	"""
 	An event having to do with an :class:`IMessageInfo`.
 	"""
 
+@interface.implementer( IMessageInfoEvent )
 class MessageInfoEvent(z_interfaces.ObjectEvent):
-	interface.implements(IMessageInfoEvent)
-
+	pass
 
 class IMessageInfoPostedToRoomEvent(IMessageInfoEvent):
 	"""
@@ -152,8 +155,8 @@ class IMessageInfoPostedToRoomEvent(IMessageInfoEvent):
 		title="The room that the message was posted to" )
 
 
+@interface.implementer( IMessageInfoPostedToRoomEvent )
 class MessageInfoPostedToRoomEvent(MessageInfoEvent):
-	interface.implements(IMessageInfoPostedToRoomEvent)
 
 	def __init__( self, obj, recipients=(), room=None ):
 		super(MessageInfoPostedToRoomEvent,self).__init__( obj )
@@ -286,9 +289,9 @@ class IUserNotificationEvent(Interface):
 	args = schema.Iterable( title="Iterable of objects to externalize and send as arguments." )
 
 
+@interface.implementer( IUserNotificationEvent )
 class UserNotificationEvent(object):
 	"Base class for user notification events"
-	interface.implements(IUserNotificationEvent)
 
 	def __init__( self, name, targets, *args ):
 		self.name = name
