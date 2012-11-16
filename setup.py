@@ -294,6 +294,10 @@ setup(
 		# textindexng3
 		'zopyx.txng3.core >= 3.5.3',
 		'zopyx.txng3.ext >= 3.3.3',
+        # Data analysis
+        # pandas,
+        # scikit-learn,
+        # rpy2, -- Requires R installed.
 		],
 	extras_require = {
 		'test': [
