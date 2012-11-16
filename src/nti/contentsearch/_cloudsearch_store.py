@@ -143,6 +143,7 @@ class _CloudSearchStore(object):
 					raise Exception(s)
 				else:
 					logger.error(s)
+			return errors
 
 @interface.implementer(search_interfaces.ICloudSearchStoreService)
 class _CloudSearchStorageService(_RedisStorageService):
