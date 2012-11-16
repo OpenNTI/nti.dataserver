@@ -35,6 +35,8 @@ from nti.contentfragments import interfaces
 # If efficiency really matters, and we have many different filters we are
 # applying, we would need to do a better job pipelining to avoid copies
 
+punkt_re_char = r'[\?|!|(|)|"|\'|`|{|}|\[|\]|:|;|,|\.|\^|%|&|#|*|@|$|&|+|\-|<|>|=|_|\~|\\|\s]'
+		
 def _get_censored_fragment(org_fragment, new_fragment):
 	try:
 		result = org_fragment.censored( new_fragment )
@@ -61,8 +63,27 @@ class SimpleReplacementCensoredContentStrategy(object):
 		new_fragment = ''.join( buf )
 		return _get_censored_fragment(content_fragment, new_fragment)
 
+class BasicScanner(object):
+	
+	def sort_ranges(self, ranges):
+		return sorted(ranges, key=lambda ra: ra[0])
+		
+	def test_range(self, v, yielded):
+		for t in yielded:
+			if v[0] >= t[0] and v[1] <= t[1]:
+				return False
+		return True
+	
+	def do_scan(self, fragment, ranges):
+		pass
+	
+	def scan( self, content_fragment ):
+		yielded = [] # A simple, inefficient way of making sure we don't send overlapping ranges
+		content_fragment = content_fragment.lower()
+		return self.do_scan(content_fragment, yielded)
+	
 @interface.implementer(interfaces.ICensoredContentScanner)
-class TrivialMatchScanner(object):
+class TrivialMatchScanner(BasicScanner):
 
 	def __init__( self, prohibited_values=() ):
 		# normalize case, ignore blanks
@@ -70,25 +91,45 @@ class TrivialMatchScanner(object):
 		# clearly go at the front of the list
 		self.prohibited_values = [x.lower() for x in prohibited_values if x]
 
-	def _test_range(self, v, yielded):
-		for t in yielded:
-			if v[0] >= t[0] and v[1] <= t[1]:
-				return False
-		return True
-
-	def _do_scan(self, content_fragment, yielded):
+	def do_scan(self, content_fragment, yielded):
 		for x in self.prohibited_values:
 			idx = content_fragment.find( x, 0 )
 			while (idx != -1):
 				match_range = (idx, idx + len(x))
-				if self._test_range(match_range, yielded):
+				if self.test_range(match_range, yielded):
 					yield match_range
 				idx = content_fragment.find( x, idx + len(x) )
 
-	def scan( self, content_fragment ):
-		yielded = [] # A simple, inefficient way of making sure we don't send overlapping ranges
-		content_fragment = content_fragment.lower()
-		return self._do_scan(content_fragment, yielded)
+@interface.implementer(interfaces.ICensoredContentScanner)
+class RegExpMatchScanner(BasicScanner):
+
+	def __init__( self, regexp, flags=re.I):
+		self.pattern = re.compile(regexp, flags)
+
+	def do_scan(self, content_fragment, yielded):
+		for m in self.pattern.finditer(content_fragment):
+			match_range = m.span()
+			if self.test_range(m.p, yielded):
+				yield match_range
+	
+#@interface.implementer(interfaces.ICensoredContentScanner)
+#def RegExpMatchScannerExternalFile( file_path ):
+#	"""
+#	External files are stored in rot13.
+#	"""
+#	with open(file_path, 'rU') as src:
+#		all_re = []
+#		for word in src.readlines():
+#			word = word.encode('rot13').strip()
+#			r = []
+#			for i,c in enumerate(word):
+#				r.append(c)
+#				if i < len(word)-1:
+#					r.append("(%s)*" % punkt_re_char)
+#			e = ''.join(r)
+#			all_re.append(e)	
+#		regexp = '|'.join(all_re[:50])
+#	return RegExpMatchScanner(regexp)
 
 @interface.implementer(interfaces.ICensoredContentScanner)
 def TrivialMatchScannerExternalFile( file_path ):
@@ -102,10 +143,8 @@ def TrivialMatchScannerExternalFile( file_path ):
 @interface.implementer(interfaces.ICensoredContentScanner)
 class WordMatchScanner(TrivialMatchScanner):
 
-	_re_char = r'[\?|!|(|)|"|\'|`|{|}|\[|\]|:|;|,|\.|\^|%|&|#|*|@|$|&|+|\-|<|>|=|_|\~|\\|\s]'
-
 	def __init__( self, white_words=(), prohibited_words=() ):
-		self.char_tester = re.compile(self._re_char)
+		self.char_tester = re.compile(punkt_re_char)
 		self.white_words = [word.lower() for word in white_words]
 		self.prohibited_words = [word.lower() for word in prohibited_words]
 
@@ -129,19 +168,15 @@ class WordMatchScanner(TrivialMatchScanner):
 				idx = content_fragment.find( x, endidx )
 		return ranges
 				
-	def _do_scan(self, content_fragment, white_words_ranges=[]):
+	def do_scan(self, content_fragment, white_words_ranges=[]):
 		ranges = self._find_ranges(self.white_words, content_fragment)
 		white_words_ranges.extend(ranges)
 
 		# yield/return any prohibited_words
 		ranges = self._find_ranges(self.prohibited_words, content_fragment)
 		for match_range in ranges:
-			if self._test_range(match_range, white_words_ranges):
+			if self.test_range(match_range, white_words_ranges):
 				yield match_range
-
-	def scan( self, content_fragment ):
-		content_fragment = content_fragment.lower()
-		return self._do_scan(content_fragment)
 
 @interface.implementer(interfaces.ICensoredContentScanner)
 class WordPlusTrivialMatchScanner(WordMatchScanner):
@@ -154,13 +189,13 @@ class WordPlusTrivialMatchScanner(WordMatchScanner):
 		yielded = []
 		white_words_ranges = []
 		content_fragment = content_fragment.lower()
-		word_ranges = WordMatchScanner._do_scan(self, content_fragment, white_words_ranges)
+		word_ranges = WordMatchScanner.do_scan(self, content_fragment, white_words_ranges)
 		for match_range in word_ranges:
 			yielded.append(match_range)
 			yield match_range
 
 		yielded = yielded + white_words_ranges
-		trivial_ranges = TrivialMatchScanner._do_scan(self, content_fragment, yielded)
+		trivial_ranges = TrivialMatchScanner.do_scan(self, content_fragment, yielded)
 		for match_range in trivial_ranges:
 			yield match_range
 
