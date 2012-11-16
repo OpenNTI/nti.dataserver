@@ -97,7 +97,7 @@ setup(
 		 # Zope Acquisition; used by contentratings implicitly
 		 # cool concept. Pulls in ExtensionClass (which should not be used)
 		'Acquisition >= 4.0a1',
-		'Chameleon >= 2.10',
+		'Chameleon >= 2.11',
 		 # 'friendly' fork of PIL, developed by Zope/Plone.
 		 # PIL is currently (as of 2012-07) at version 1.1.7 (from 2009), which
 		 # is the version that Pillow forked from in 2010 as version 1.0. So
@@ -302,7 +302,7 @@ setup(
 			'zc.buildout == 1.6.3',
 			'nose-progressive',
 			'pyhamcrest >= 1.6',
-			'webtest >= 1.4.0',
+			'webtest >= 1.4.2',
 			'fudge'],
 		'tools': [
 			'pyramid_debugtoolbar >= 1.0.3',
