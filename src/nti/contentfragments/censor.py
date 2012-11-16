@@ -12,6 +12,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import re
+import string
 from pkg_resources import resource_filename
 
 import html5lib
@@ -193,6 +194,8 @@ class DefaultCensoredContentPolicy(object):
 	you must do that yourself.
 	"""
 
+	allowed_chars = string.printable
+	
 	def __init__( self, fragment=None, target=None ):
 		pass
 
@@ -204,9 +207,10 @@ class DefaultCensoredContentPolicy(object):
 		return result
 		
 	def censor_text(self, fragment, target):
+		filtered_fragment = ''.join(s for s in fragment if s in self.allowed_chars) 
 		scanner = component.getUtility( interfaces.ICensoredContentScanner )
 		strat = component.getUtility( interfaces.ICensoredContentStrategy )
-		return strat.censor_ranges( fragment, scanner.scan( fragment ) )
+		return strat.censor_ranges( filtered_fragment, scanner.scan( filtered_fragment ) )
 	
 	def censor_html(self, fragment, target):
 		result = None
