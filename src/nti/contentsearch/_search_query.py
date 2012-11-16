@@ -89,6 +89,8 @@ class _MetaQueryObject(type):
 			
 		return t
 	
+_empty_subqueries = {}
+
 @interface.implementer(search_interfaces.ISearchQuery)
 class QueryObject(object, UserDict.DictMixin):
 	
@@ -130,7 +132,7 @@ class QueryObject(object, UserDict.DictMixin):
 	# -- search --
 	
 	def get_subqueries(self):
-		return ()
+		return _empty_subqueries
 
 	@property
 	def is_empty(self):
