@@ -1,0 +1,11 @@
+# -*- mode: html -*-
+
+name: mathcountschapter
+<div class="chapter title" tal:attributes="id self/id; ntiid self/ntiid">
+<span class="nti-mathcounts-calc">
+<img tal:attributes="src self/attributes/img">
+</span>
+<div class="nti-mathcounts-title" tal:content="self/title">Title</div>
+</div>
+<p class="placeholder"></p>
+<p tal:replace="self"></p>

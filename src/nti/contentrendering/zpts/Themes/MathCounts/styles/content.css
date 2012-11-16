@@ -7,4 +7,24 @@
 	font-size: 150%;
 	text-align: center;
 	font-weight: bold;
+	margin-bottom: 20px;
 }
+
+#NTIContent .nti-mathcounts-calc{
+        padding-top: 10px;
+	padding-left: 3px;
+        float:left;
+}
+
+#NTIContent .sidebar{
+	margin-left: 3px;
+        padding-left: 1.5em;
+	padding-right: 1.5em;
+	background-color: #fffbe3;
+	color: #757474;
+	border-left-style: solid;
+        border-left-color: #f5e28a;
+	border-left-width: 0.3em;
+	box-shadow: 1px 1px 3px 1px rgba(0, 0, 0, 0.09), -1px -1px 1px 0px rgba(255, 255, 255, 1) inset;
+}
+
