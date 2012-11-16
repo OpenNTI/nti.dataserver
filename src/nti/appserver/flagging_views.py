@@ -16,6 +16,7 @@ from pyramid.view import view_config
 
 from zope import interface
 from zope import component
+from zc import intid as zc_intid
 
 from nti.appserver import _util
 
@@ -109,8 +110,9 @@ from zope.proxy.decorator import SpecificationDecoratorBase
 from nti.appserver.z3c_zpt import PyramidZopeRequestProxy
 
 def _moderation_table( request ):
+	intids = component.getUtility(zc_intid.IIntIds)
 	content = component.getUtility( nti_interfaces.IGlobalFlagStorage ).iterflagged()
-	content = list(content)
+	content = [x for x in content if intids.queryId(x) is not None] # exclude deleted items that are somehow still in the catalog
 	the_table = ModerationAdminTable( content,
 									  PyramidZopeRequestProxy( request ) )
 

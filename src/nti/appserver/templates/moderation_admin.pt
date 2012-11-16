@@ -47,6 +47,21 @@
 			margin-right: 30px;
 			}
 		</style>
+		<style>
+			.content-body div {
+				overflow: hidden;
+				overflow-wrap: break-word;
+				text-wrap: unrestricted;
+				max-width: 500px;
+				vertical-align: top;
+			}
+			.content-body div div.canvas {
+				display: inline;
+			}
+			.select-object-checkbox {
+				vertical-align: top;
+			}
+		</style>
 	</head>
 	<body class="normal-text">
 		<div metal:use-macro="options/master/macros/header">
