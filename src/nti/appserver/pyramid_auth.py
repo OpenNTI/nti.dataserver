@@ -3,27 +3,33 @@
 """
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
 
 
 import binascii
 import logging
 logger = logging.getLogger(__name__ )
 
-from pyramid.interfaces import IAuthenticationPolicy
-
 from zope import interface
 from zope import component
+
+# Like Pyramid 1.4+, cause Paste's AuthTkt cookies to use the more secure
+# SHA512 algorithm instead of the weaker MD5
+import nti.monkey.paste_auth_tkt_sha512_patch_on_import
+nti.monkey.paste_auth_tkt_sha512_patch_on_import.patch()
+
+from pyramid.interfaces import IAuthenticationPolicy
 from repoze.who.interfaces import IAuthenticator, IIdentifier, IChallenger, IChallengeDecider, IRequestClassifier
+from nti.dataserver import interfaces as nti_interfaces
+
 from repoze.who.middleware import PluggableAuthenticationMiddleware
 from repoze.who.plugins.basicauth import BasicAuthPlugin
 from repoze.who.plugins.auth_tkt import AuthTktCookiePlugin
-#from repoze.who.classifiers import default_challenge_decider
 from pyramid_who.classifiers import forbidden_challenger
 from repoze.who.classifiers import default_request_classifier
 from pyramid_who.whov2 import WhoV2AuthenticationPolicy
 
-from nti.dataserver import interfaces as nti_interfaces
+
 from nti.dataserver.users import User
 from nti.dataserver import authentication as nti_authentication
 
@@ -291,9 +297,7 @@ def _create_middleware( secure_cookies=False,
 	# module (used by webtest) then fail
 	basicauth = BasicAuthPlugin(b'NTI')
 	basicauth_interactive = _NonChallengingBasicAuthPlugin(b'NTI')
-	# TODO: In Pyramid 1.4, their AuthTkit implementation started using SHA512
-	# instead of MD5 for better collision resistance. Find a way to may that happen
-	# here.
+
 	auth_tkt = AuthTktCookiePlugin(cookie_secret,
 								   b'nti.auth_tkt',
 								   secure=secure_cookies,
