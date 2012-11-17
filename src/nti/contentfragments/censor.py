@@ -35,7 +35,9 @@ from nti.contentfragments import interfaces
 # If efficiency really matters, and we have many different filters we are
 # applying, we would need to do a better job pipelining to avoid copies
 
-punkt_re_char = r'[\?|!|(|)|"|\'|`|{|}|\[|\]|:|;|,|\.|\^|%|&|#|*|@|$|&|+|\-|<|>|=|_|\~|\\|\s]'
+special_chars = r"?(){}[].^*+-~"
+special_chars_map = {c:'\\' for c in special_chars}
+punkt_re_char = r'[\?|!|\(|\)|"|\'|`|\{|\}|\[|\]|:|;|,|\.|\^|%|&|#|\*|@|$|&|\+|\-|<|>|=|_|\~|\\|\s]'
 		
 def _get_censored_fragment(org_fragment, new_fragment):
 	try:
