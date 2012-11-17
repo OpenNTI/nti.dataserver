@@ -158,13 +158,16 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 			result = []
 			for ent_name in l:
 				__traceback_info__ = name, ent_name
-				try:
-					e = self.entity.get_entity( ent_name, default=self )
-					e = None if e is self else e # Defend against no dataserver component to resolve with
-				except InappropriateSiteError:
-					# We've seen this in logging that is captured and happens
-					# after things finish running, notably nose's logcapture.
-					e = None
+				if nti_interfaces.IEntity.providedBy( ent_name ):
+					e = ent_name
+				else:
+					try:
+						e = self.entity.get_entity( ent_name, default=self )
+						e = None if e is self else e # Defend against no dataserver component to resolve with
+					except InappropriateSiteError:
+						# We've seen this in logging that is captured and happens
+						# after things finish running, notably nose's logcapture.
+						e = None
 
 				if e:
 					result.append( toExternalObject( e, name=name ) )
@@ -179,12 +182,13 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 
 		# Communities are not currently editable,
 		# and will need special handling of Everyone
-		extDict['Communities'] = ext(self.entity.communities, name='')
+		extDict['Communities'] = ext(self.entity.dynamic_memberships, name='')
+		extDict['DynamicMemberships'] = extDict['Communities']
 		# Following is writable
-		extDict['following'] = ext(self.entity.following)
+		extDict['following'] = ext(self.entity.entities_followed)
 		# as is ignoring and accepting
-		extDict['ignoring'] = ext(self.entity.ignoring_shared_data_from)
-		extDict['accepting'] = ext(self.entity.accepting_shared_data_from)
+		extDict['ignoring'] = ext(self.entity.entities_ignoring_shared_data_from)
+		extDict['accepting'] = ext(self.entity.entities_accepting_shared_data_from)
 		extDict['AvatarURLChoices'] = component.getAdapter( self.entity, interfaces.IAvatarChoices ).get_choices()
 		extDict['Links'] = self._replace_or_add_edit_link_with_self( extDict.get( 'Links', () ) )
 		extDict['Last Modified'] = getattr( self.entity, 'lastModified', 0 )

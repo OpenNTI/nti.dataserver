@@ -189,12 +189,14 @@ class _ContentUnitPreferencesDecorator(object):
 			# units themselves. Now we're into weird fallback territory. This is probably very shaky and
 			# needing constant review, but it's a start.
 			dfl_name = None
-			for com_name in remote_user.communities:
+			for dynamic_member in remote_user.dynamic_memberships:
 				# Can we find a DynamicFriendsList/DFL/Team that the user belongs too?
 				# And just one? If so, then it's our default sharing target
-				if ntiids.is_valid_ntiid_string( com_name ):
+				if nti_interfaces.IDynamicSharingTarget.providedBy( dynamic_member ) and not nti_interfaces.ICommunity.providedBy( dynamic_member ):
+					# Found one...
 					if dfl_name is None:
-						dfl_name = com_name
+						# and so far just one
+						dfl_name = dynamic_member.NTIID
 					else:
 						# damn, more than one.
 						dfl_name = None

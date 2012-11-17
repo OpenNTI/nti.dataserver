@@ -40,8 +40,8 @@ class TestApplicationUserSearch(SharedApplicationTestBase):
 			user2 = self._create_user(username='jason@nextthought.com' )
 			dfl = users.DynamicFriendsList( username='Friends' )
 			dfl.creator = user1
-			dfl.addFriend( user2 )
 			user1.addContainedObject( dfl )
+			dfl.addFriend( user2 )
 			dfl_ntiid = dfl.NTIID
 
 		testapp = TestApp( self.app )
@@ -79,6 +79,7 @@ class TestApplicationUserSearch(SharedApplicationTestBase):
 			path = '/dataserver2/%s/Friends' % t
 			res = testapp.get( str(path), extra_environ=self._make_extra_environ('jason@nextthought.com'))
 
+			assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
 			member = res.json_body['Items'][0]
 			assert_that( member, has_entry( 'Username', dfl_ntiid ) )
 

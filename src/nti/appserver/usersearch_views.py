@@ -186,9 +186,8 @@ def _search_scope_to_remote_user( remote_user, search_term, op=operator.contains
 			result.append( section )
 
 	if not result:
-		warnings.warn( "Hack for UI: looking at display names of communities" )
-		for x in remote_user.communities:
-			x = users.Entity.get_entity( x )
+		warnings.warn( "Hack for UI: looking at display names of dynamic memberships (communities and DFLs)" )
+		for x in remote_user.dynamic_memberships:
 			if x and op( x.username.lower(), search_term.lower() ):
 				result.append( x )
 				break

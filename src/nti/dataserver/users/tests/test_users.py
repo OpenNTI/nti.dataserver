@@ -113,12 +113,13 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		user1.addContainedObject( fl1 )
 		fl1.addFriend( user2 )
 
-		assert_that( user2.communities, has_item( fl1.NTIID ) )
+		assert_that( user2.dynamic_memberships, has_item( fl1 ) )
 
 		fl1.updateFromExternalObject( {'friends': [user3.username]} )
 
-		assert_that( user3.communities, has_item( fl1.NTIID ) )
-		assert_that( user2.communities, does_not( has_item( fl1.NTIID ) ) )
+		assert_that( user3.dynamic_memberships, has_item( fl1 ) )
+		assert_that( to_external_object( user3 ), has_entry( 'Communities', has_item( has_entry( 'realname', 'Friends' ) ) ) )
+		assert_that( user2.dynamic_memberships, does_not( has_item( fl1 ) ) )
 
 
 	@WithMockDSTrans
@@ -531,7 +532,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		comm = Community( 'AoPS' )
 		self.ds.root['users'][comm.username] = comm
 
-		user.join_community( comm ); user2.join_community( comm )
+		user.record_dynamic_membership( comm ); user2.record_dynamic_membership( comm )
 		user.follow( comm )
 
 		note = Note()
@@ -558,7 +559,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		comm = Community( 'AoPS' )
 		self.ds.root['users'][comm.username] = comm
 
-		user.join_community( comm ); user2.join_community( comm )
+		user.record_dynamic_membership( comm ); user2.record_dynamic_membership( comm )
 		user.follow( comm )
 
 		note = Note()
@@ -588,7 +589,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		self.ds.root['users'][comm.username] = comm
 		comm.MAX_STREAM_SIZE = user.MAX_STREAM_SIZE * 3
 
-		user.join_community( comm ); user2.join_community( comm )
+		user.record_dynamic_membership( comm ); user2.record_dynamic_membership( comm )
 		user.follow( comm )
 
 		def _note_in_foo_at_time_shared_with( x, target ):

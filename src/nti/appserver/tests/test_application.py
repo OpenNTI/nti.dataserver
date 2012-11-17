@@ -1463,9 +1463,17 @@ class TestRootPageEntryLibrary(TestApplicationLibraryBase):
 	_stream_type = 'RecursiveStream'
 
 	def test_one_dfl_entry_default_share(self):
+		"""If a user is a member of exactly ONE DFL, then that is his default sharing."""
 		with mock_dataserver.mock_db_trans(self.ds):
 			u = self._create_user()
-			u._communities.add( ntiids.ROOT )
+			u2 = self._create_user( username="user2@nti" )
+			fl1 = users.DynamicFriendsList(username='Friends')
+			fl1.creator = u2 # Creator must be set
+
+			u2.addContainedObject( fl1 )
+			fl1.addFriend( u )
+
+			fl1_ntiid = fl1.NTIID
 
 		testapp = TestApp( self.app )
 		res = testapp.get( '/dataserver2/NTIIDs/' + self.child_ntiid,
@@ -1473,7 +1481,7 @@ class TestRootPageEntryLibrary(TestApplicationLibraryBase):
 						   extra_environ=self._make_extra_environ() )
 		assert_that( res.status_int, is_( 200 ) )
 		assert_that( res.json_body, has_entry( 'MimeType', 'application/vnd.nextthought.pageinfo' ) )
-		assert_that( res.json_body, has_entry( 'sharingPreference', has_entry( 'sharedWith', [ntiids.ROOT] ) ) )
+		assert_that( res.json_body, has_entry( 'sharingPreference', has_entry( 'sharedWith', [fl1_ntiid] ) ) )
 
 
 	def test_set_root_page_prefs_inherits(self):

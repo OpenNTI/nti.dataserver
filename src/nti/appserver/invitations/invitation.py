@@ -72,7 +72,7 @@ class JoinCommunityInvitation(ZcmlInvitation):
 				continue
 			if nti_interfaces.ICommunity.providedBy( entity ):
 				logger.info( "Accepting invitation to join community %s", entity )
-				user.join_community( entity )
+				user.record_dynamic_membership( entity )
 				user.follow( entity )
 			elif nti_interfaces.IFriendsList.providedBy( entity ):
 				logger.info( "Accepting invitation to join DFL %s", entity )
