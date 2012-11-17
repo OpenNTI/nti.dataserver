@@ -103,33 +103,34 @@ class TrivialMatchScanner(BasicScanner):
 @interface.implementer(interfaces.ICensoredContentScanner)
 class RegExpMatchScanner(BasicScanner):
 
-	def __init__( self, regexp, flags=re.I):
-		self.pattern = re.compile(regexp, flags)
+	def __init__( self, patterns):
+		self.patterns = tuple(patterns)
 
 	def do_scan(self, content_fragment, yielded):
-		for m in self.pattern.finditer(content_fragment):
-			match_range = m.span()
-			if self.test_range(m.p, yielded):
-				yield match_range
+		for p in self.patterns:
+			for m in p.finditer(content_fragment):
+				match_range = m.span()
+				if self.test_range(m.p, yielded):
+					yield match_range
 	
-#@interface.implementer(interfaces.ICensoredContentScanner)
-#def RegExpMatchScannerExternalFile( file_path ):
-#	"""
-#	External files are stored in rot13.
-#	"""
-#	with open(file_path, 'rU') as src:
-#		all_re = []
-#		for word in src.readlines():
-#			word = word.encode('rot13').strip()
-#			r = []
-#			for i,c in enumerate(word):
-#				r.append(c)
-#				if i < len(word)-1:
-#					r.append("(%s)*" % punkt_re_char)
-#			e = ''.join(r)
-#			all_re.append(e)	
-#		regexp = '|'.join(all_re[:50])
-#	return RegExpMatchScanner(regexp)
+@interface.implementer(interfaces.ICensoredContentScanner)
+def RegExpMatchScannerExternalFile( file_path ):
+	"""
+	External files are stored in rot13.
+	"""
+	with open(file_path, 'rU') as src:
+		all_patterns = []
+		for word in src.readlines():
+			r = []
+			word = word.strip().encode('rot13')
+			for i,c in enumerate(word):
+				r.append(c)
+				if i < len(word)-1:
+					r.append("(%s)*" % punkt_re_char)
+			e = ''.join(r)
+			p = re.compile(e, re.I)
+			all_patterns.append(p)	
+	return RegExpMatchScanner(all_patterns)
 
 @interface.implementer(interfaces.ICensoredContentScanner)
 def TrivialMatchScannerExternalFile( file_path ):
