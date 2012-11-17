@@ -413,8 +413,20 @@ class IMissingEntity(IEntity):
 	entity.
 	"""
 
-class ICommunity(IEntity):
+
+class IDynamicSharingTarget(IEntity):
+	"""
+	These objects reverse the normal sharing; instead of being
+	pushed at sharing time to all the named targets, shared data
+	is instead *pulled* at read time by an individual member of this
+	entity. As such, these objects represent collections of members,
+	but not necessarily enumerable collections (e.g., communities
+	are not enumerable).
+	"""
+
+class ICommunity(IDynamicSharingTarget):
 	pass
+
 
 class IUser(IEntity,IContainerIterable):
 	"""

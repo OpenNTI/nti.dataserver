@@ -51,10 +51,13 @@ def effective_principals( username,
 	# Add principals for all the communities that the user is in
 	# These are valid ACL targets because they are in the same namespace
 	# as users (so no need to prefix with community_ or something like that)
-	for community in getattr( user, 'communities', ()): # Mostly tests pass in a non-User user_factory
+	for community in getattr( user, 'dynamic_memberships', ()): # Mostly tests pass in a non-User user_factory
 		# Make sure it's a valid community
-		community = users.Entity.get_entity( community )
-		if isinstance( community, users.Community ) and not isinstance( community, users.Everyone ): # TODO interface?
+		# (TODO: Why? Do we not have an IPrincipal adapter for DynamicFriendsLists?
+		# If we did allow them here, that would change the need to expand them
+		# in ACLs)
+		# TODO: Interfaces
+		if isinstance( community, users.Community ) and not isinstance( community, users.Everyone ):
 			result.add( nti_interfaces.IPrincipal( community ) )
 
 	# These last three will be duplicates of string-only versions

@@ -230,7 +230,7 @@ class _FriendsListUsernameIterable(object):
 
 from nti.dataserver.sharing import DynamicSharingTargetMixin
 
-
+@interface.implementer(nti_interfaces.IDynamicSharingTarget)
 class DynamicFriendsList(DynamicSharingTargetMixin,FriendsList):
 	"""
 	An incredible hack to introduce a dynamic, but iterable
@@ -257,12 +257,9 @@ class DynamicFriendsList(DynamicSharingTargetMixin,FriendsList):
 	def _on_added_friend( self, friend ):
 		assert self.creator, "Must have creator"
 		super(DynamicFriendsList,self)._on_added_friend( friend )
-		if hasattr( friend, '_communities' ) and hasattr( friend, '_following' ):
-			# TODO: This is here to support the weird unresolved friend-as-string
-			# thing
-			friend._communities.add( self.NTIID )
-			friend._following.add( self.NTIID )
-		# TODO: When this object is deleted we need to clean this up
+		friend.record_dynamic_membership( self )
+		friend.follow( self )
+		# TODO: When this object is deleted, or edited, we need to clean this up
 
 	def _update_friends_from_external( self, new_friends ):
 		old_friends = set( self )
@@ -273,8 +270,8 @@ class DynamicFriendsList(DynamicSharingTargetMixin,FriendsList):
 		# removals.
 		ex_friends = old_friends - new_friends
 		for i_hate_you in ex_friends:
-			sets.discard( i_hate_you._communities, self.NTIID )
-			sets.discard( i_hate_you._following, self.NTIID )
+			i_hate_you.record_no_longer_dynamic_member( self )
+			i_hate_you.stop_following( self )
 
 	def accept_shared_data_from( self, source ):
 		"""

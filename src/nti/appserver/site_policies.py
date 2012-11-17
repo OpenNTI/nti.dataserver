@@ -717,7 +717,7 @@ def _join_community_user_created( self, user, event ):
 			com_names.alias = self.COM_ALIAS
 			com_names.realname = self.COM_REALNAME
 
-		user.join_community( community )
+		user.record_dynamic_membership( community )
 		user.follow( community )
 
 @interface.implementer(ISitePolicyUserEventListener)

@@ -146,8 +146,8 @@ class TestUGDQueryViews(ConfiguringTestBase):
 			community = users.Community.create_community( self.ds, username='MathCounts' )
 			user2 = users.User.create_user( self.ds, username='steve.johnson@nextthought.com' )
 
-			user.join_community( community )
-			user2.join_community( community )
+			user.record_dynamic_membership( community )
+			user2.record_dynamic_membership( community )
 
 			user.follow( community )
 			user2.follow( community )

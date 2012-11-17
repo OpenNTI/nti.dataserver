@@ -571,7 +571,7 @@ class TestCreateViewNotDevmode(_AbstractNotDevmodeViewBase):
 													 #'email': 'jason@test.nextthought.com'
 													 } )
 		new_user = account_create_view( self.request )
-		assert_that( new_user, has_property( 'communities', has_item( com_name ) ) )
+		assert_that( new_user, has_property( 'usernames_of_dynamic_memberships', has_item( com_name ) ) )
 		assert_that( user_interfaces.IFriendlyNamed( new_user ), has_property( 'realname', 'Jason Madden' ) )
 		assert_that( user_interfaces.ICompleteUserProfile( new_user ),
 					 has_property( 'birthdate', datetime.date( 1982, 1, 31 ) ) )
@@ -777,7 +777,7 @@ class TestCreateView(_AbstractValidationViewBase):
 		new_user = account_create_view( self.request )
 		assert_that( new_user, verifiably_provides( nti_interfaces.ICoppaUserWithAgreement ) )
 		assert_that( new_user, verifiably_provides( site_policies.IMathcountsCoppaUserWithAgreement ) )
-		assert_that( new_user, has_property( 'communities', has_item( 'MATHCOUNTS' ) ) )
+		assert_that( new_user, has_property( 'usernames_of_dynamic_memberships', has_item( 'MATHCOUNTS' ) ) )
 		assert_that( user_interfaces.IFriendlyNamed( new_user ), has_property( 'realname', 'Joe Bananna' ) )
 		assert_that( user_interfaces.IFriendlyNamed( new_user ),
 					 has_property( 'birthdate', datetime.date( 1982, 1, 31 ) ) )
@@ -813,7 +813,7 @@ class TestCreateView(_AbstractValidationViewBase):
 													 #'email': 'jason@test.nextthought.com'
 													 } )
 		new_user = account_create_view( self.request )
-		assert_that( new_user, has_property( 'communities', has_item( com_name ) ) )
+		assert_that( new_user, has_property( 'usernames_of_dynamic_memberships', has_item( com_name ) ) )
 		assert_that( user_interfaces.IFriendlyNamed( new_user ), has_property( 'realname', 'Jason Madden' ) )
 		assert_that( user_interfaces.IFriendlyNamed( new_user ), has_property( 'alias', 'Jason Madden' ) )
 		assert_that( user_interfaces.ICompleteUserProfile( new_user ),
