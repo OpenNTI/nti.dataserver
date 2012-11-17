@@ -48,21 +48,40 @@ def get_schema_fields(iface, attributes):
 			
 def get_imodeled_schemas():
 	result = {}
+	all_fields = {}
 	for iface in known_imodeled:
 		attributes = {}
 		if nti_interfaces.IThreadable in iface.getBases():
 			attributes.update(threadable_fields)
 		get_schema_fields(iface, attributes)
+		all_fields.update(attributes)
 		result[iface] = attributes
-	return result
+	return result, all_fields
 
 def _create_args_parser():
-	imodeled_schemas = get_imodeled_schemas()
-	pprint(imodeled_schemas)
+	
+	# parse model content schemas
+	imodeled_schemas, all_fields = get_imodeled_schemas()
+		
 	arg_parser = argparse.ArgumentParser( description="Set object attributes." )
 	arg_parser.add_argument( 'env_dir', help="Dataserver environment root directory" )
 	arg_parser.add_argument( '-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
-	return arg_parser
+	arg_parser.add_argument( '--cascade', help="Cascade operation on threadable objects", action='store_true', dest='cascade')
+	
+	# add params
+	group = arg_parser.add_mutually_exclusive_group()
+	group.add_argument('-nid', '--ntiid', dest='ntiid', help="Object NTIID" )
+	group.add_argument('-oid', '--oid', dest='oid', help="Object ID (hex)")
+
+	for name, sch in all_fields.items():
+		help_ = sch.getDoc() or sch.title
+		help_ = help_.replace('\n', '.')
+		opt = '--%s' % name
+		arg_parser.add_argument( opt, help=help_, dest=name, required=False)
+			
+	arg_parser.add_argument( '--fields', dest='fields', nargs="*", help="Key:value pairs" )
+	
+	return arg_parser, imodeled_schemas
 	
 def main():
 	arg_parser = _create_args_parser()
