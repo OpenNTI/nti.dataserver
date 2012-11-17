@@ -12,7 +12,6 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import re
-import string
 from pkg_resources import resource_filename
 
 import html5lib
@@ -38,7 +37,7 @@ from nti.contentfragments import interfaces
 special_chars = r"?(){}[].^*+-~"
 special_chars_map = {c:'\\' for c in special_chars}
 punkt_re_char = r'[\?|!|\(|\)|"|\'|`|\{|\}|\[|\]|:|;|,|\.|\^|%|&|#|\*|@|$|&|\+|\-|<|>|=|_|\~|\\|\s]'
-		
+
 def _get_censored_fragment(org_fragment, new_fragment):
 	try:
 		result = org_fragment.censored( new_fragment )
@@ -66,24 +65,24 @@ class SimpleReplacementCensoredContentStrategy(object):
 		return _get_censored_fragment(content_fragment, new_fragment)
 
 class BasicScanner(object):
-	
+
 	def sort_ranges(self, ranges):
 		return sorted(ranges, key=lambda ra: ra[0])
-		
+
 	def test_range(self, v, yielded):
 		for t in yielded:
 			if v[0] >= t[0] and v[1] <= t[1]:
 				return False
 		return True
-	
+
 	def do_scan(self, fragment, ranges):
 		pass
-	
+
 	def scan( self, content_fragment ):
 		yielded = [] # A simple, inefficient way of making sure we don't send overlapping ranges
 		content_fragment = content_fragment.lower()
 		return self.do_scan(content_fragment, yielded)
-	
+
 @interface.implementer(interfaces.ICensoredContentScanner)
 class TrivialMatchScanner(BasicScanner):
 
@@ -114,7 +113,7 @@ class RegExpMatchScanner(BasicScanner):
 				match_range = m.span()
 				if self.test_range(m.p, yielded):
 					yield match_range
-	
+
 @interface.implementer(interfaces.ICensoredContentScanner)
 def RegExpMatchScannerExternalFile( file_path ):
 	"""
@@ -131,7 +130,7 @@ def RegExpMatchScannerExternalFile( file_path ):
 					r.append("(%s)*" % punkt_re_char)
 			e = ''.join(r)
 			p = re.compile(e, re.I)
-			all_patterns.append(p)	
+			all_patterns.append(p)
 	return RegExpMatchScanner(all_patterns)
 
 @interface.implementer(interfaces.ICensoredContentScanner)
@@ -154,11 +153,11 @@ class WordMatchScanner(TrivialMatchScanner):
 	def _test_start(self, idx, content_fragment):
 		result = idx == 0 or self.char_tester.match(content_fragment[idx-1])
 		return result
-	
+
 	def _test_end(self, idx, content_fragment):
 		result = idx == len(content_fragment) or self.char_tester.match(content_fragment[idx])
 		return result
-	
+
 	def _find_ranges(self, word_list, content_fragment):
 		ranges = []
 		for x in word_list:
@@ -170,7 +169,7 @@ class WordMatchScanner(TrivialMatchScanner):
 					ranges.append(match_range)
 				idx = content_fragment.find( x, endidx )
 		return ranges
-				
+
 	def do_scan(self, content_fragment, white_words_ranges=[]):
 		ranges = self._find_ranges(self.white_words, content_fragment)
 		white_words_ranges.extend(ranges)
@@ -232,8 +231,6 @@ class DefaultCensoredContentPolicy(object):
 	you must do that yourself.
 	"""
 
-	allowed_chars = string.printable
-	
 	def __init__( self, fragment=None, target=None ):
 		pass
 
@@ -243,13 +240,12 @@ class DefaultCensoredContentPolicy(object):
 		else:
 			result = self.censor_text(fragment, target)
 		return result
-		
+
 	def censor_text(self, fragment, target):
-		filtered_fragment = ''.join(s for s in fragment if s in self.allowed_chars) 
 		scanner = component.getUtility( interfaces.ICensoredContentScanner )
 		strat = component.getUtility( interfaces.ICensoredContentStrategy )
-		return strat.censor_ranges( filtered_fragment, scanner.scan( filtered_fragment ) )
-	
+		return strat.censor_ranges( fragment, scanner.scan( fragment ) )
+
 	def censor_html(self, fragment, target):
 		result = None
 		try:
@@ -261,13 +257,13 @@ class DefaultCensoredContentPolicy(object):
 					if text:
 						text = self.censor_text( interfaces.UnicodeContentFragment(text), target)
 						setattr(node, name, text)
-					
+
 			docstr = unicode(etree.tostring(doc))
 			result = interfaces.CensoredHTMLContentFragment(docstr)
 		except:
 			result = self.censor_text(fragment, target)
 		return result
-		
+
 
 @component.adapter(interfaces.IUnicodeContentFragment, interface.Interface, sch_interfaces.IBeforeObjectAssignedEvent)
 def censor_before_object_assigned( fragment, target, event ):
