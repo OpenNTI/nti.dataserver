@@ -98,6 +98,10 @@ def queryAdapterInSite( obj, target, request=None, site_names=None, default=None
 		Overrides the `request` parameter.
 	"""
 
+	# TODO: Replace this with named IComponents instances and z3c.baseregistry.
+	# That will integrate much better with traversal and will allow them to extend
+	# and override each other
+
 	site_names = get_possible_site_names(request, include_default=True)
 
 	for site in site_names:
@@ -194,7 +198,8 @@ class RequestAwareUserPlacer(nti_shards.AbstractShardPlacer):
 ## Handling events within particular sites
 #
 # TODO: It's not clear what the best way is to handle this. We have a
-# few options.
+# few options. (NOTE: This was written before the existence of z3c.baseregistry;
+# using that should simplify things notably.)
 #
 # The simplest is that each site-aware handler re-delegates to a named
 # utility based on the site names. This works because it can be

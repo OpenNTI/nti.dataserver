@@ -223,6 +223,7 @@ setup(
 		'transaction >= 1.3.0',
 		'webob >= 1.2.3',
 		'whoosh >= 2.4.1',
+		'z3c.baseregistry >= 2.0.0', # ZCML configurable local component registries
 		'z3c.batching >= 1.1.0', # result paging. Pulled in by z3c.table
 		 # bcrypt/pbkdf2 for zope.password
 		 # adds cryptacular and pbkdf2
