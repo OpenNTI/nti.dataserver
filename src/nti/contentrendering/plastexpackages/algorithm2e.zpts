@@ -3,6 +3,9 @@
 name: function
 <div class="algorithm-function" tal:content="self">Function Body</div>
 
+name: procedure
+<div class="algorithm-function" tal:content="self">Procedure Body</div>
+
 name: ;
 <br/>
 
@@ -19,6 +22,16 @@ name: KwData
 name: KwResult
 <div class="algorithm-kwresult">
 <b>Result:</b> <span tal:content="self"></span>
+</div>
+
+name: SetKw SetKwRepeat
+# This template is intentionally empty
+
+name: Begin
+<div class="algorithm-if-block">
+<b>begin </b> <span tal:condition="self/attributes/comment" tal:content="self/attributes/comment">Comment</span>
+<div class="algorithm-indent-block" tal:content="self/attributes/self">Block</div>
+<b>end</b>
 </div>
 
 name: If
@@ -49,7 +62,7 @@ name: uElseIf
 
 name: Else
 <div class="algorithm-else-block">
-<b>else</b> <span tal:condition="self/attributes/comment" tal:content="self/attributes/comment">Comment</span>
+<b>else </b> <span tal:condition="self/attributes/comment" tal:content="self/attributes/comment">Comment</span>
 <div class="algorithm-indent-block" tal:content="self">else clause</div>
 <b>end if</b>
 </div>
@@ -66,5 +79,29 @@ name: While
 <b>while </b><em tal:content="self">emphasized text</em><b> do</b>
 <div class="algorithm-indent-block" tal:content="self/attributes/loop">Loop Block</div>
 <b>end</b>
+</div>
+
+name: Repeat
+<div class="algorithm-if-block">
+<b>repeat </b><span tal:condition="self/attributes/comment" tal:content="self/attributes/comment">Comment</span>
+<div class="algorithm-indent-block" tal:content="self/attributes/loop">Loop Block</div>
+<b>until </b><em tal:content="self">emphasized text</em> <span tal:condition="self/attributes/comment" tal:content="self/attributes/comment2">Comment</span>
+</div>
+
+# Custom constructs for Hedda
+
+name: Label
+<div class="algorithm-kwdata">
+<b>label:</b> <span tal:content="self"></span>
+</div>
+
+name: Goto
+<div class="algorithm-kwdata">
+<b>goto</b> <span tal:content="self"></span>
+</div>
+
+name: Procedure
+<div class="algorithm-kwdata">
+<b>procedure:</b> <em tal:content="self">procedure</em>
 </div>
 
