@@ -231,18 +231,27 @@ class _FriendsListUsernameIterable(object):
 from nti.dataserver.sharing import DynamicSharingTargetMixin
 
 @interface.implementer(nti_interfaces.IDynamicSharingTarget)
-class DynamicFriendsList(DynamicSharingTargetMixin,FriendsList):
+class DynamicFriendsList(DynamicSharingTargetMixin,FriendsList): #order matters
 	"""
-	An incredible hack to introduce a dynamic, but iterable
-	user managed group/list.
+	Something of a hack to introduce a dynamic, but iterable
+	user-managed group/list.
 
-	These are half FriendsList and half Community. When people are added
-	to the list (and they don't get a veto), they are also added to the "community"
-	that is this object. Their private _community set gets our NTIID
-	added to it. The NTIID is resolvable through Entity.get_entity like magic,
-	so this object will magically start appearing for them, and also will be
-	searchable by them.
+	These are half FriendsList and half Community. When people are
+	added to the list (and they don't get a veto), they are also added
+	to the "community" that is this object, where it externalizes
+	using its NTIID as 'Username' (since its local username is not
+	unique) The NTIID is resolvable through Entity.get_entity like
+	magic, so this object will magically start appearing for them, and
+	also will be searchable by them.
+
+	Targets not only don't get a say about being added to the group in
+	the first place, they cannot exit it, as the external property
+	that is "Communities" or "DynamicMemberships" is not currently
+	editable. This could be implemented in a couple of ways, with the easiest
+	being to simply make that property editable. Note however that they can
+	stop following this DFL, cutting down on the visible noise.
 	"""
+
 	__external_class_name__ = 'FriendsList'
 	__external_can_create__ = False
 	defaultGravatarType = 'retro'
@@ -250,16 +259,15 @@ class DynamicFriendsList(DynamicSharingTargetMixin,FriendsList):
 	# interface value takes precedence over the class attribute
 	mime_type = 'application/vnd.nextthought.friendslist'
 
-	# TODO: Users can leave these things by editing their 'communities' attribute
-	# When that happens, we need to catch that event and remove them from here
-	# as well. Or somehow tie the things closer together.
-
+	# This object handle updating friends on creating/updating
+	# An event (see sharing.py) handles when this object is deleted.
+	# If 'Communities' becomes editable, then a new event would need to be
+	# done to handle removing the friend in that case
 	def _on_added_friend( self, friend ):
 		assert self.creator, "Must have creator"
 		super(DynamicFriendsList,self)._on_added_friend( friend )
 		friend.record_dynamic_membership( self )
 		friend.follow( self )
-		# TODO: When this object is deleted, or edited, we need to clean this up
 
 	def _update_friends_from_external( self, new_friends ):
 		old_friends = set( self )

@@ -102,27 +102,6 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 
 
 	@WithMockDSTrans
-	def test_dynamic_friendslist(self):
-		user1 = User.create_user( self.ds, username='foo23' )
-		user2 = User.create_user( self.ds, username='foo12' )
-		user3 = User.create_user( self.ds, username='foo13' )
-
-		fl1 = users.DynamicFriendsList(username='Friends')
-		fl1.creator = user1 # Creator must be set
-
-		user1.addContainedObject( fl1 )
-		fl1.addFriend( user2 )
-
-		assert_that( user2.dynamic_memberships, has_item( fl1 ) )
-
-		fl1.updateFromExternalObject( {'friends': [user3.username]} )
-
-		assert_that( user3.dynamic_memberships, has_item( fl1 ) )
-		assert_that( to_external_object( user3 ), has_entry( 'Communities', has_item( has_entry( 'realname', 'Friends' ) ) ) )
-		assert_that( user2.dynamic_memberships, does_not( has_item( fl1 ) ) )
-
-
-	@WithMockDSTrans
 	def test_can_find_friendslist_with_ntiid(self):
 		user1 = User.create_user( self.ds, username='foo@bar' )
 		user2 = User.create_user( self.ds, username='foo2@bar' )

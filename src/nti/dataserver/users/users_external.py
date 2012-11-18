@@ -180,10 +180,12 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 		extDict['email'] = prof.email
 		extDict['birthdate'] = prof.birthdate.isoformat() if prof.birthdate is not None else None
 
-		# Communities are not currently editable,
-		# and will need special handling of Everyone
-		extDict['Communities'] = ext(self.entity.dynamic_memberships, name='')
+		# DynamicMemberships/Communities are not currently editable,
+		# and will need special handling of (a) Everyone and (b) DynamicFriendsLists
+		# (proper events could handle the latter)
+		extDict['Communities'] = ext(self.entity.dynamic_memberships, name='') # Deprecated
 		extDict['DynamicMemberships'] = extDict['Communities']
+
 		# Following is writable
 		extDict['following'] = ext(self.entity.entities_followed)
 		# as is ignoring and accepting
