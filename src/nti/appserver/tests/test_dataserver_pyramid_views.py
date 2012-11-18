@@ -212,7 +212,7 @@ class TestUGDModifyViews(SharedConfiguringTestBase):
 		view() # First time fine
 		# Fires events the first time
 		# ObjectCreated, ObjectAdded, zc...IntIdAdded, zope...IntIdAdded, ContainerModified
-		assert_that( eventtesting.getEvents(  ), has_length( 5 ) )
+		assert_that( eventtesting.getEvents(  ), has_length( 6 ) )
 		assert_that( eventtesting.getEvents( IObjectAddedEvent ), has_length( 1 ) )
 
 		with self.assertRaises(hexc.HTTPConflict):

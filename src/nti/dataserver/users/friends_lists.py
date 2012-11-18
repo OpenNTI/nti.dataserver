@@ -10,11 +10,11 @@ logger = __import__( 'logging' ).getLogger( __name__ )
 from zope import interface
 from zope import component
 from zope.component.factory import Factory
+from zc import intid as zc_intid
 
 from BTrees.OOBTree import OOTreeSet, difference as OOBTree_difference, intersection as OOBTree_intersection
 
 from nti.ntiids import ntiids
-from nti.utils import sets
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import enclosures
@@ -340,7 +340,14 @@ class _FriendsListMap(datastructures.AbstractCaseInsensitiveNamedLastModifiedBTr
 			types of FLs.
 		"""
 		factory = FriendsList if not extDict.get( 'IsDynamicSharing' ) else DynamicFriendsList
-		return factory( extDict['Username'] if 'Username' in extDict else extDict['ID'] )
+		result = factory( extDict['Username'] if 'Username' in extDict else extDict['ID'] )
+		# To allow these to be updated and add members during creation, they must be able
+		# to be weak ref'd, which means they must have intid
+		try:
+			component.getUtility( zc_intid.IIntIds ).register( result )
+		except component.ComponentLookupError:
+			pass # unittest cases
+		return result
 
 nti_interfaces.IFriendsList.setTaggedValue( nti_interfaces.IHTC_NEW_FACTORY,
 											Factory( _FriendsListMap.external_factory,
