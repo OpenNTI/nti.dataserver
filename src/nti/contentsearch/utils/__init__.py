@@ -26,7 +26,7 @@ def find_user_dfls(user):
 		source = findObjectsProviding( user, nti_interfaces.IFriendsList)
 	
 	for obj in source:
-		if isinstance(obj, friends_lists.DynamicFriendsList):
+		if nti_interfaces.IDynamicSharingTarget.providedBy(obj):
 			yield obj
 
 def get_sharedWith(obj):
