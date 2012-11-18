@@ -51,7 +51,7 @@ class ZcmlInvitation(BaseInvitation):
 	and isn't automatically adaptable to IKeyReference.
 	"""
 
-class JoinCommunityInvitation(ZcmlInvitation):
+class JoinEntitiesInvitation(ZcmlInvitation):
 	"""
 	Simple first pass at a pre-configured invitation to join existing
 	entities. Intended to be configured with ZCML and not stored persistently.
@@ -64,12 +64,16 @@ class JoinCommunityInvitation(ZcmlInvitation):
 		self.code = code
 		self.entities = entities
 
-	def accept( self, user ):
+	def _iter_entities(self):
 		for entity_name in self.entities:
 			entity = users.Entity.get_entity( entity_name )
 			if entity is None:
 				logger.warn( "Unable to accept invitation to join non-existent entity %s", entity_name )
 				continue
+			yield entity
+
+	def accept( self, user ):
+		for entity in self._iter_entities():
 			if nti_interfaces.ICommunity.providedBy( entity ):
 				logger.info( "Accepting invitation to join community %s", entity )
 				user.record_dynamic_membership( entity )
@@ -80,3 +84,5 @@ class JoinCommunityInvitation(ZcmlInvitation):
 			else:
 				logger.warn( "Don't know how to accept invitation to join entity %s", entity )
 		super(JoinCommunityInvitation,self).accept( user )
+
+JoinCommunityInvitation = JoinEntitiesInvitation

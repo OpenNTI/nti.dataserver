@@ -230,7 +230,7 @@ class _FriendsListUsernameIterable(object):
 
 from nti.dataserver.sharing import DynamicSharingTargetMixin
 
-@interface.implementer(nti_interfaces.IDynamicSharingTarget)
+@interface.implementer(nti_interfaces.IDynamicSharingTargetFriendsList)
 class DynamicFriendsList(DynamicSharingTargetMixin,FriendsList): #order matters
 	"""
 	Something of a hack to introduce a dynamic, but iterable
@@ -299,7 +299,7 @@ class DynamicFriendsList(DynamicSharingTargetMixin,FriendsList): #order matters
 		return source is self.creator or source in list(self)
 
 @interface.implementer(nti_interfaces.IUsernameIterable)
-@component.adapter(DynamicFriendsList)
+@component.adapter(nti_interfaces.IDynamicSharingTargetFriendsList)
 class _DynamicFriendsListUsernameIterable(_FriendsListUsernameIterable):
 	"""
 	Iterates the contained friends, but also includes the creator

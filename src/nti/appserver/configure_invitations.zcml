@@ -6,7 +6,14 @@
 	<include package="zope.component" />
 	<include package=".invitations" file="meta.zcml" />
 
+	<!--
+	We instead use an extended version of this, tightly
+	coupled to the rest of the views.
+
 	<utility factory=".invitations.utility.ZcmlInvitations"
+			 provides=".invitations.interfaces.IInvitations" />
+	-->
+	<utility factory=".invitation_views._TrivialDefaultInvitations"
 			 provides=".invitations.interfaces.IInvitations" />
 
 	<!--
@@ -16,5 +23,10 @@
 	<invite:joinCommunities
 		code="MATHCOUNTS"
 		entities="MATHCOUNTS" />
+
+
+	<subscriber
+		factory=".invitation_views.DFLGetInvitationLinkProvider"
+		provides="nti.externalization.interfaces.IExternalMappingDecorator"/>
 
 </configure>
