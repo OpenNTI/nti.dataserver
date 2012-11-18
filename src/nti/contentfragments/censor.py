@@ -35,7 +35,7 @@ from nti.contentfragments import interfaces
 # applying, we would need to do a better job pipelining to avoid copies
 
 special_chars = r"?(){}[].^*+-~"
-special_chars_map = {c:'\\' for c in special_chars}
+special_chars_map = {c:u'\\' for c in special_chars}
 punkt_re_char = r'[\?|!|\(|\)|"|\'|`|\{|\}|\[|\]|:|;|,|\.|\^|%|&|#|\*|@|$|&|\+|\-|<|>|=|_|\~|\\|\s]'
 
 def _get_censored_fragment(org_fragment, new_fragment):
@@ -113,6 +113,17 @@ class RegExpMatchScanner(BasicScanner):
 				match_range = m.span()
 				if self.test_range(m.p, yielded):
 					yield match_range
+					
+	@classmethod
+	def create_regexp(cls, word, flags=re.I):
+		r=[]
+		for i,c in enumerate(word):
+			r.append(special_chars_map.get(c,u'') + c)
+			if not c.isspace() and not c in punkt_re_char and i < len(word)-1:
+				r.append("(%s)*" % punkt_re_char)
+		e = ''.join(r)
+		p = re.compile(e, flags)	
+		return p
 
 @interface.implementer(interfaces.ICensoredContentScanner)
 def RegExpMatchScannerExternalFile( file_path ):
@@ -122,14 +133,8 @@ def RegExpMatchScannerExternalFile( file_path ):
 	with open(file_path, 'rU') as src:
 		all_patterns = []
 		for word in src.readlines():
-			r = []
 			word = word.strip().encode('rot13')
-			for i,c in enumerate(word):
-				r.append(c)
-				if i < len(word)-1:
-					r.append("(%s)*" % punkt_re_char)
-			e = ''.join(r)
-			p = re.compile(e, re.I)
+			p = RegExpMatchScanner.create_regexp(word)
 			all_patterns.append(p)
 	return RegExpMatchScanner(all_patterns)
 
