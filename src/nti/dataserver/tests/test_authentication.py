@@ -35,7 +35,7 @@ class TestPrincipals(mock_dataserver.ConfiguringTestBase):
 		u = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
 		community = users.Community( "Foobar" )
 		self.ds.root['users']['Foobar'] = community
-		u.join_community( community )
+		u.record_dynamic_membership( community )
 
 		with_u = authentication.effective_principals( u )
 		by_name = authentication.effective_principals( u.username )
