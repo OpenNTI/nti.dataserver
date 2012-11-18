@@ -797,16 +797,25 @@ class NoAvatarUploadCapabilityFilter(object):
 
 @interface.implementer(app_interfaces.IUserCapabilityFilter)
 @component.adapter(nti_interfaces.ICoppaUserWithoutAgreement)
-class NoChatCapabilityFilter(NoAvatarUploadCapabilityFilter):
+class NoDFLCapabilityFilter(NoAvatarUploadCapabilityFilter):
+	"""
+	Removes the ability to create DFLs.
+	"""
+
+	def filterCapabilities( self, capabilities ):
+		result = super(NoDFLCapabilityFilter,self).filterCapabilities( capabilities )
+		result.discard( 'nti.platform.p2p.dynamicfriendslists' )
+		return result
+
+@interface.implementer(app_interfaces.IUserCapabilityFilter)
+@component.adapter(nti_interfaces.ICoppaUserWithoutAgreement)
+class NoChatAvatarDFLCapabilityFilter(NoDFLCapabilityFilter):
 	"""
 	Removes chat.
 	"""
 
-	def __init__( self, context=None ):
-		pass
-
 	def filterCapabilities( self, capabilities ):
-		result = super(NoChatCapabilityFilter,self).filterCapabilities( capabilities )
+		result = super(NoChatAvatarDFLCapabilityFilter,self).filterCapabilities( capabilities )
 		result.discard( 'nti.platform.p2p.chat' )
 		return result
 
@@ -814,7 +823,7 @@ class NoChatCapabilityFilter(NoAvatarUploadCapabilityFilter):
 @interface.implementer(ISitePolicyUserEventListener)
 class _AdultCommunitySitePolicyEventListener(GenericAdultSitePolicyEventListener):
 	"""
-	Implements the policy for ad adult site, adding new users to a single community.
+	Implements the policy for an adult site, adding new users to a single community.
 	"""
 
 	COM_USERNAME = None

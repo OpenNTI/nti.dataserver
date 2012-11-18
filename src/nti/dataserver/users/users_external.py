@@ -105,6 +105,10 @@ class _FriendsListExternalObject(_EntityExternalObject):
 
 		extDict['friends'] = theFriends
 		extDict['CompositeGravatars'] = self._composite_gravatars()
+		# We took great care to make DFLs and FLs indistinguishable from each other
+		# in the external form, to make things easier for the UI. This now
+		# comes back to bite us when we need to make that distinction.
+		extDict['IsDynamicSharing'] = nti_interfaces.IDynamicSharingTarget.providedBy( self.entity )
 
 		return extDict
 

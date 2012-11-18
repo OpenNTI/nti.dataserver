@@ -26,7 +26,7 @@
 			 name="testmathcounts.nextthought.com" />
 
 	<!-- On the MC site, NO ONE can chat -->
-	<adapter factory=".site_policies.NoChatCapabilityFilter"
+	<adapter factory=".site_policies.NoChatAvatarDFLCapabilityFilter"
 			 for="nti.dataserver.interfaces.IUser"
 			 provides="nti.appserver.interfaces.IUserCapabilityFilter"
 			 name="testmathcounts.nextthought.com" />

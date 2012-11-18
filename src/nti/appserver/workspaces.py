@@ -133,7 +133,8 @@ class UncacheableHomogeneousTypedContainerCollection(HomogeneousTypedContainerCo
 @component.adapter(model_interfaces.IFriendsListContainer)
 class FriendsListContainerCollection(UncacheableHomogeneousTypedContainerCollection):
 	"""
-	Magically adds the dynamic sharing communities to the friends list.
+	Magically adds the dynamic sharing communities that a user is a member of
+	to the FriendsLists collection.
 	Hopefully temporary, necessary for the web up to render them.
 
 	..note:: We are correctly not sending back an 'edit' link, but the UI still presents
@@ -164,7 +165,7 @@ class FriendsListContainerCollection(UncacheableHomogeneousTypedContainerCollect
 		if not self._container.__parent__:
 			return self._container
 		# TODO: This needs a test case
-		dfl_communities = (users.Entity.get_entity( x ) for x in self._container.__parent__.communities)
+		dfl_communities = self._container.__parent__.dynamic_memberships
 		dfl_communities = [x for x in dfl_communities if model_interfaces.IFriendsList.providedBy( x ) ]
 		if not dfl_communities:
 			return self._container
@@ -819,10 +820,11 @@ class UserServiceExternalizer(ServiceExternalizer):
 		# Querying the utilities for the user, which would be registered for specific
 		# IUser types or something...
 		# TODO: These strings are in several places
-		capabilities = set( ('nti.platform.p2p.chat',
-							 'nti.platform.p2p.sharing',
-							 'nti.platform.p2p.friendslists',
-							 'nti.platform.customization.avatar_upload') )
+		capabilities = set( ('nti.platform.p2p.chat', # Can the user chat?
+							 'nti.platform.p2p.sharing', # Can the user access UGD sharing features?
+							 'nti.platform.p2p.friendslists', # Can the user create new FriendsLists? (Enforced by the vocabulary)
+							 'nti.platform.p2p.dynamicfriendslists', # Can the user create new DynamicFriendsLists? (NOTE: NOT Enforced by the vocab)
+							 'nti.platform.customization.avatar_upload') ) # Can the user upload custom avatar pictures?
 		# TODO: This should probably be subscriber, not adapter, since we have to remember
 		# to register both (see configure-site-policies)
 		cap_filter = site_policies.queryAdapterInSite( self.context.user, app_interfaces.IUserCapabilityFilter )

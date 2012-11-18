@@ -23,6 +23,7 @@ from nti.dataserver.interfaces import IFriendsList
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.activitystream_change import Change
 from nti.tests import provides
+from nti.tests import verifiably_provides
 
 from nti.externalization.persistence import getPersistentState
 from nti.externalization.externalization import to_external_object
@@ -54,16 +55,23 @@ class PersistentContainedThreadable(ContainedMixin,persistent.Persistent):
 		return repr( (self.__class__.__name__, self.containerId, self.id) )
 
 def test_create_friends_list_through_registry():
-	def _test( name ):
+	def _test( name, dynamic_sharing=False ):
 		user = User( 'foo12' )
-		created = user.maybeCreateContainedObjectWithType( name, {'Username': 'Friend' } )
+		created = user.maybeCreateContainedObjectWithType( name, {'Username': 'Friend', 'IsDynamicSharing': dynamic_sharing } )
 		assert_that( created, is_(FriendsList) )
 		assert_that( created.username, is_( 'Friend' ) )
 		assert_that( created, provides( IFriendsList ) )
 
+		if dynamic_sharing:
+			assert_that( created, verifiably_provides( nti_interfaces.IDynamicSharingTarget ) )
+		else:
+			assert_that( created, does_not( provides( nti_interfaces.IDynamicSharingTarget ) ) )
+
 	yield _test, 'FriendsLists'
 	# case insensitive
 	yield _test, 'friendslists'
+	# can create dynamic
+	yield _test, 'Friendslists', True
 
 def test_adding_wrong_type_to_friendslist():
 	friends = FriendsListContainer()
