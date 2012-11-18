@@ -75,7 +75,7 @@ class _BaseIndexManagerTest(object):
 
 	def wait_delay(self):
 		pass
-	
+
 	@WithMockDSTrans
 	def test_add_book(self):
 		self.im = self.create_index_mananger()
@@ -88,11 +88,11 @@ class _BaseIndexManagerTest(object):
 		self.im.add_book(indexname='bleach', ntiid='bleach', indexdir=self.book_idx_dir)
 
 		q = QueryObject(indexid='bleach', query='omega')
-		hits = self.im.content_search(query=q) 
+		hits = self.im.content_search(query=q)
 		assert_that(hits, has_length(1))
 
 		q = QueryObject(indexid='bleach', query='wen')
-		hits = self.im.content_suggest_and_search(query=q) 
+		hits = self.im.content_suggest_and_search(query=q)
 		assert_that(hits, has_length(1))
 
 		q = QueryObject(indexid='bleach', query='extre')
@@ -103,7 +103,7 @@ class _BaseIndexManagerTest(object):
 		notes = []
 		conn = mock_dataserver.current_transaction
 
-		username = str(uuid.uuid4()).split('-')[-1] + '@nti.com' 
+		username = str(uuid.uuid4()).split('-')[-1] + '@nti.com'
 		usr = User.create_user( mock_dataserver.current_mock_ds, username=username, password='temp001' )
 
 		for x in strings:
@@ -131,7 +131,7 @@ class _BaseIndexManagerTest(object):
 		_, usr = self._add_notes_and_index(('omega radicals', 'the queen of coffee'))
 		self.im.add_book(indexname='bleach', ntiid='bleach', indexdir=self.book_idx_dir)
 		self.wait_delay()
-				
+
 		q = QueryObject(term='omega', indexid='bleach', username=usr.username)
 		hits = self.im.search(q)
 		assert_that(hits, has_length(2))
@@ -149,7 +149,7 @@ class _BaseIndexManagerTest(object):
 		_, usr = self._add_notes_and_index(('omega radicals', 'the queen of coffee'))
 		self.im.add_book(indexname='bleach', indexdir=self.book_idx_dir)
 		self.wait_delay()
-		
+
 		q = QueryObject(term='omeg', indexid='bleach', username=usr.username)
 		hits = self.im.suggest(q)
 		assert_that(hits, has_length(1))
@@ -166,7 +166,7 @@ class _BaseIndexManagerTest(object):
 		_, usr = self._add_notes_and_index(('omega radicals', 'the queen of coffee'))
 		self.im.add_book(indexname='bleach', indexdir=self.book_idx_dir)
 		self.wait_delay()
-		
+
 		q = QueryObject(term='omeg', indexid='bleach', username=usr.username)
 		hits = self.im.suggest(q)
 		assert_that(hits, has_length(1))
@@ -180,7 +180,7 @@ class _BaseIndexManagerTest(object):
 		_, usr = self._add_notes_and_index(('omega radicals', 'the queen of coffee'))
 		self.im.add_book(indexname='bleach', indexdir=self.book_idx_dir)
 		self.wait_delay()
-		
+
 		q = QueryObject(term='omeg', indexid='bleach', username=usr.username)
 		hits = self.im.suggest_and_search(q)
 		assert_that(hits, has_length(2))
@@ -193,7 +193,7 @@ class _BaseIndexManagerTest(object):
 	def test_search_notes(self):
 		_, usr = self._add_notes_and_index()
 		self.wait_delay()
-		
+
 		q = QueryObject(term='not_to_be_found', username=usr.username, searchon=('Notes',))
 		hits = self.im.user_data_search(query=q)
 		assert_that(hits, has_length(0))
@@ -210,7 +210,7 @@ class _BaseIndexManagerTest(object):
 
 		_, usr = self._add_notes_and_index()
 		self.wait_delay()
-		
+
 		q = QueryObject(term='flow', username=usr.username, searchon=('Notes',))
 		hits = self.im.user_data_suggest(q)
 		assert_that(hits, has_length(1))
@@ -223,7 +223,7 @@ class _BaseIndexManagerTest(object):
 
 		_, usr = self._add_notes_and_index()
 		self.wait_delay()
-		
+
 		q = QueryObject(term='creat', username=usr.username, searchon=('Notes',))
 		hits = self.im.user_data_suggest_and_search(query=q)
 		assert_that(hits, has_length(1))
@@ -232,7 +232,7 @@ class _BaseIndexManagerTest(object):
 	def test_update_delete_note(self):
 		notes, user = self._add_notes_and_index()
 		self.wait_delay()
-		
+
 		note = notes[0]
 		note.body = [u'Shoot To Death']
 		self.im.update_user_content(user, data=note)
@@ -245,67 +245,67 @@ class _BaseIndexManagerTest(object):
 		q = QueryObject(term='deviate', username=user.username, searchon=('Notes',))
 		hits = self.im.user_data_search(query=q)
 		assert_that(hits, has_length(0))
-		
+
 	@WithMockDSTrans
 	def test_note_share_comm(self):
 		ds = mock_dataserver.current_mock_ds
 		user_1 = User.create_user( ds, username='nti-1.com', password='temp001')
 		user_2 = User.create_user( ds, username='nti-2.com', password='temp001')
-		
+
 		c = Community.create_community( ds, username='Bankai')
 		for u in (user_1, user_2):
-			u.join_community( c )
+			u.record_dynamic_membership( c )
 			u.follow( c )
-		
+
 		note = Note()
 		note.body = [unicode('Hitsugaya and Madarame performing Jinzen')]
 		note.creator = 'nti.com'
 		note.containerId = make_ntiid(nttype='bleach', specific='manga')
 		note.addSharingTarget( c )
 		note = user_2.addContainedObject( note )
-		
+
 		self.im = self.create_index_mananger()
 		self.im.index_user_content(data=note, target=user_2)
 		self.im.index_user_content(data=note, target=c)
 		self.wait_delay()
-		
+
 		q = QueryObject(term='jinzen', username=user_1.username)
 		hits = self.im.user_data_search(query=q)
 		assert_that(hits, has_length(1))
-		
+
 	@WithMockDSTrans
 	def test_same_content_two_comm(self):
 		ds = mock_dataserver.current_mock_ds
 		user = User.create_user( ds, username='nti.com', password='temp001')
-		
+
 		note = Note()
 		note.body = [unicode('Only a few atain both')]
 		note.creator = 'nti.com'
 		note.containerId = make_ntiid(nttype='bleach', specific='manga')
-				
+
 		comms = []
 		for name in ('Bankai', 'Shikai'):
 			c = Community.create_community( ds, username=name)
-			user.join_community( c )
+			user.record_dynamic_membership( c )
 			user.follow( c )
 			comms.append(c)
 			note.addSharingTarget( c )
 
 		note = user.addContainedObject( note )
-		
+
 		self.im = self.create_index_mananger()
 		for c in comms:
 			self.im.index_user_content(data=note, target=c)
 		self.wait_delay()
-		
+
 		q = QueryObject(term='atain', username=user.username)
 		hits = self.im.user_data_search(query=q)
 		assert_that(hits, has_length(2))
-		
+
 		hits = toExternalObject(hits)
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 		assert_that(hits, has_entry(ITEMS, has_length(1)))
-		
+
 class TestIndexManagerWithRepoze(_BaseIndexManagerTest, ConfiguringTestBase):
 
 	@classmethod
@@ -337,13 +337,13 @@ class TestIndexManagerWithWhoosh(_BaseIndexManagerTest, ConfiguringTestBase):
 	def tearDownClass(cls):
 		_BaseIndexManagerTest.tearDownClass()
 		shutil.rmtree(cls.whoosh_dir, True)
-		
+
 	def setUp(self):
 		ConfiguringTestBase.setUp(self)
 
 	def tearDown(self):
 		ConfiguringTestBase.tearDown(self)
-		
+
 	def create_index_mananger(self):
 		return create_index_manager_with_whoosh(indexdir=self.whoosh_dir, use_md5=False)
 
