@@ -713,6 +713,9 @@ class IFriendsList(IModeledContent,IEntity):
 
 		"""
 
+class IDynamicSharingTargetFriendsList(IDynamicSharingTarget,IFriendsList):
+	pass
+
 from zope.container.constraints import contains
 
 class IFriendsListContainer(INamedContainer):

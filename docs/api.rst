@@ -1,17 +1,29 @@
-Dataserver API documentation
-======================================
+==============================
+ Dataserver API documentation
+==============================
 
 .. toctree::
 	:maxdepth: 3
 
-**Dataserver**
+
+Dataserver
+==========
 
 .. automodule:: nti.dataserver
 
-*** Users ***
+Users
+-----
+
+.. automodule:: nti.dataserver.users
+.. automodule:: nti.dataserver.users.entity
+.. automodule:: nti.dataserver.users.users_external
+.. automodule:: nti.dataserver.users.users
+
+Friends Lists and Sharing
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. automodule:: nti.dataserver.sharing
-.. automodule:: nti.dataserver.users
+.. automodule:: nti.dataserver.users.friends_lists
 
 *** Contenttypes ***
 
