@@ -161,6 +161,14 @@ def test_create_update_dynamic_friendslist():
 	assert_that( to_external_object( user3 ), has_entry( 'Communities', has_item( has_entry( 'realname', 'Friends' ) ) ) )
 	assert_that( user2.dynamic_memberships, does_not( has_item( fl1 ) ) )
 
+	# The external form masquerades as a normal FL...
+	x = to_external_object( fl1 )
+	assert_that( x, has_entry( 'Class', 'FriendsList' ) )
+	assert_that( x, has_entry( 'MimeType', 'application/vnd.nextthought.friendslist' ) )
+	assert_that( x, has_entry( 'NTIID', 'tag:nextthought.com,2011-10:foo23-MeetingRoom:Group-friends' ) )
+	# ... with one exception
+	assert_that( x, has_entry( 'IsDynamicSharing', True ) )
+
 
 @WithMockDSTrans
 def test_delete_dynamic_friendslist_clears_memberships():
