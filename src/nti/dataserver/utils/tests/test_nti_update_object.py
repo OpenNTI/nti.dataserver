@@ -5,7 +5,7 @@ import unittest
 import nti.dataserver
 from nti.dataserver.users import User
 from nti.dataserver.contenttypes import Note
-from nti.dataserver.utils import nti_update_object as nuo
+from nti.dataserver.utils import nti_update_object as nti_update
 
 from nti.ntiids.ntiids import make_ntiid
 
@@ -51,9 +51,33 @@ class TestNTIUpdate(ConfiguringTestBase):
 		note = self.create_note('my note', usr)
 		assert_that(note.selectedText, is_(u''))
 		assert_that(note.applicableRange, is_(None))
-		note = nuo.process_update(note.id, self.update_json)
+		note = nti_update.process_update(note.id, self.update_json)
 		assert_that(note.selectedText, is_(u'My selectedText'))
 		assert_that(note.applicableRange, is_not(None))
+		
+	@WithMockDSTrans
+	def test_simple_cascade(self):
+		aizen = self._create_user('aizen@nt.com')
+		note_a = self.create_note('Leader of the Arrancar Army', aizen)
+		grimmjow = self._create_user('grimmjow@nt.com')
+		note_g = self.create_note("6th Espada in Aizen's Army", grimmjow, note_a.containerId, inReplyTo=note_a)
+		assert_that(note_g.selectedText, is_(u''))
+		assert_that(note_g.applicableRange, is_(None))
+		assert_that(note_g.inReplyTo, is_(note_a))
+		
+		# update
+		nti_update.process_update(note_a.id, self.update_json, cascade=True)
+		
+		# check master note
+		note_a = nti_update.find_object(note_a.id)
+		assert_that(note_a.selectedText, is_(u'My selectedText'))
+		assert_that(note_a.applicableRange, is_not(None))
+		
+		# check slave_note
+		note_g = nti_update.find_object(note_g.id)
+		assert_that(note_g.selectedText, is_(u''))
+		assert_that(note_g.applicableRange, is_not(None))
+		assert_that(note_g.inReplyTo, is_(note_a))
 
 if __name__ == '__main__':
 	unittest.main()

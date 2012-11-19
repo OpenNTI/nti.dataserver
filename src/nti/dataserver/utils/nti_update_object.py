@@ -88,6 +88,15 @@ def get_creator(obj):
 	return result
 	
 def update_object(creator, obj, ext_object, verbose=False):
+	# make sure we preseve the IThreadable fields
+	if nti_interfaces.IThreadable.providedBy(obj):
+		ext_object = dict(ext_object)
+		ext_object['inReplyTo'] = obj.inReplyTo.id if obj.inReplyTo is not None else None
+		references = []
+		for r in obj.references or ():
+			references.append(r.id)
+		ext_object['references'] = references
+		
 	objId = obj.id
 	containerId = obj.containerId
 	with creator.updates():
