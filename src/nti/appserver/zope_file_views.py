@@ -127,10 +127,13 @@ def image_to_dataurl_extjs(request):
 	request.accept = b'application/json'
 	rsp = image_to_dataurl( request )
 
-	# Then, it further assumes that there is a redundant 'succes' value
+	# Then, it further assumes that there is a redundant 'success' value
 	# in the json body. Status codes also don't exist, and layer boundaries are meaningless
 	body = dict(rsp.json_body)
 	body['success'] = True
+	# IE9 will prompt the user to save the response for application/*
+	# content-types when not loading through a XHR, so we have to lie about
+	# the response type, which confuses many tools but makes IE happy
 	rsp.content_type = b'text/plain'
 	rsp.json_body = body
 	return rsp
