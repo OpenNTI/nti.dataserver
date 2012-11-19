@@ -46,7 +46,7 @@ class TestNTIUpdate(ConfiguringTestBase):
 		return note
 
 	@WithMockDSTrans
-	def xtest_simple_proc_update(self):
+	def test_simple_proc_update(self):
 		usr = self._create_user()
 		note = self.create_note('my note', usr)
 		assert_that(note.selectedText, is_(u''))
