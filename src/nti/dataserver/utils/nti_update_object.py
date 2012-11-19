@@ -65,8 +65,8 @@ def get_external_object(json_exp=None, json_file=None, fields=()):
 	# process any key/value pairs
 	for f in fields or ():
 		p = f.split('=')
-		if p and len(p) >=2:
-			result[unicode(p[0])] = unicode(p[1])
+		if p and len(p) >=2 and p[0] and p[1]:
+			result[unicode(p[0])] = json.loads(unicode(p[1]))
 	
 	for k in result.keys():
 		if k in forbidden_fields:

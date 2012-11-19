@@ -112,6 +112,27 @@ class TestNTIUpdate(ConfiguringTestBase):
 		assert_that(note.selectedText, is_(u''))
 		assert_that(note.applicableRange, is_(None)) # None b/c redacions are not thredable
 		
+	@WithMockDSTrans
+	def test_invalid_params(self):
+		usr = self._create_user()
+		note = self.create_note('my note', usr)
+		try:
+			nti_update.process_update(note.id, fields=('body="123"',))
+			self.fail("should not accepted body field")
+		except:
+			pass
+		
+		try:
+			nti_update.process_update(note.id, fields=('sharedWith=123',))
+			self.fail("should not accepted sharedWith field")
+		except:
+			pass
+		
+		try:
+			nti_update.process_update(note.id, fields=('selectedText="here"', 'id=123',))
+			self.fail("should not accepted id field")
+		except:
+			pass
 if __name__ == '__main__':
 	unittest.main()
 	
