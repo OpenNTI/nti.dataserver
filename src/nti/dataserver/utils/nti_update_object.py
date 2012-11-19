@@ -88,7 +88,7 @@ def get_creator(obj):
 	return result
 	
 def read_source(obj, ext_object):
-	result = to_external_object(obj)
+	result = dict(to_external_object(obj))
 	for n in forbidden_fields:
 		result.pop(n, None)
 	result.update(ext_object)
