@@ -8,6 +8,8 @@ import argparse
 import anyjson as json
 from pprint import pprint
 
+from zope import component
+
 from nti.dataserver import users
 from nti.dataserver.utils import run_with_dataserver
 from nti.dataserver import interfaces as nti_interfaces
@@ -45,14 +47,6 @@ def _get_ntiid(arg):
 		ntiids.validate_ntiid_string( ntiid )
 	return ntiid
 
-def _find_object(ntiid):
-	obj = ntiids.find_object_with_ntiid(ntiid)
-	if obj is None:
-		raise Exception("Cannot find object with NTIID '%s'" % ntiid)
-	elif not nti_interfaces.IModeledContent.providedBy(obj):
-		raise Exception("Object referenced by '%s' does not implement IModeledContent interface" % ntiid)
-	return obj
-
 def _get_external_object(args):
 	result = {}
 	
@@ -79,8 +73,16 @@ def _get_external_object(args):
 			raise Exception('Cannot set prohibited key "%s"' % k)
 	return result
 
+def _find_object(ntiid):
+	obj = ntiids.find_object_with_ntiid(ntiid)
+	if obj is None:
+		raise Exception("Cannot find object with NTIID '%s'" % ntiid)
+	elif not nti_interfaces.IModeledContent.providedBy(obj):
+		raise Exception("Object referenced by '%s' does not implement IModeledContent interface" % ntiid)
+	return obj
+
 def _get_creator(obj):
-	result = getattr(obj, ext_interfaces.StandardInternalFields.CREATOR)
+	result = obj.creator
 	if isinstance(result, six.string_types):
 		result = users.Entity.get_entity(result)
 	return result
@@ -93,19 +95,50 @@ def _update_object(creator, obj, ext_object, verbose=False):
 		obj = update_from_external_object(obj, ext_object)
 		if verbose:
 			pprint(to_external_object(obj))
+	return obj
 
-def _process(args):
+def _get_cascadable_properties(args, obj, ext_obj):
+	result = {}
+	if args.cascade and nti_interfaces.IThreadable.providedBy(obj):
+		ip = getattr(obj, "_inheritable_properties_", ())
+		for n in ip:
+			if n in ext_obj:
+				result[n] = ext_obj[n]
+	return result
+
+def _reference_object(master, slave):
+	result = slave.inReplyTo == master
+	if not result:
+		for r in slave.references or ():
+			result = r == master
+			if result: break
+	return result
+
+def _process_cascade(modeled_obj, ext_obj, verbose=False):
+	containerId = modeled_obj.containerId
+	dataserver = component.getUtility( nti_interfaces.IDataserver)
+	users_folder = nti_interfaces.IShardLayout( dataserver ).users_folder
+	for user in users_folder.values():
+		container = user.getContainer(containerId, {}) if hasattr(user, 'getContainer') else {}
+		for obj in container.values():
+			if _reference_object(modeled_obj, obj):
+				_update_object(user, obj, ext_obj, verbose)
+			
+def _process_update(args):
 	ntiid = _get_ntiid(args.id)
 	modeled_obj = _find_object(ntiid)
 	ext_obj = _get_external_object(args)
 	creator = _get_creator(modeled_obj)
 	modeled_obj = _update_object(creator, modeled_obj, ext_obj, args.verbose)
+	casc_properties = _get_cascadable_properties(args, modeled_obj, ext_obj)
+	if casc_properties:
+		_process_cascade(modeled_obj, casc_properties, args.verbose)
 	return modeled_obj
 
 def main():
 	arg_parser = _create_args_parser()
 	args = arg_parser.parse_args()
-	run_with_dataserver( environment_dir=args.env_dir, function=lambda: _process(args) )
+	run_with_dataserver( environment_dir=args.env_dir, function=lambda: _process_update(args) )
 
 if __name__ == '__main__':
 	main()
