@@ -87,15 +87,17 @@ def get_creator(obj):
 		result = users.Entity.get_entity(result)
 	return result
 	
+def read_source(obj, ext_object):
+	result = to_external_object(obj)
+	for n in forbidden_fields:
+		result.pop(n, None)
+	result.update(ext_object)
+	return result
+
 def update_object(creator, obj, ext_object, verbose=False):
 	# make sure we preseve the IThreadable fields
 	if nti_interfaces.IThreadable.providedBy(obj):
-		ext_object = dict(ext_object)
-		ext_object['inReplyTo'] = obj.inReplyTo.id if obj.inReplyTo is not None else None
-		references = []
-		for r in obj.references or ():
-			references.append(r.id)
-		ext_object['references'] = references
+		ext_object = read_source(obj, ext_object)
 		
 	objId = obj.id
 	containerId = obj.containerId
