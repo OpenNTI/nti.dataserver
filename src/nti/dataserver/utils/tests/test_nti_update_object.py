@@ -5,6 +5,7 @@ import unittest
 import nti.dataserver
 from nti.dataserver.users import User
 from nti.dataserver.contenttypes import Note
+from nti.dataserver.contenttypes import Redaction
 from nti.dataserver.utils import nti_update_object as nti_update
 
 from nti.ntiids.ntiids import make_ntiid
@@ -40,7 +41,6 @@ class TestNTIUpdate(ConfiguringTestBase):
 		for r in references or ():
 			note.addReference(r)
 		note.containerId = containerId or make_ntiid(nttype='bleach', specific='manga')
-		
 		mock_dataserver.current_transaction.add(note)
 		note = user.addContainedObject( note ) 	
 		return note
@@ -82,6 +82,36 @@ class TestNTIUpdate(ConfiguringTestBase):
 		assert_that(note_g.inReplyTo, is_(note_a))
 		assert_that(note_g.references, is_([note_a]))
 
+	@WithMockDSTrans
+	def test_with_redaction_no_cascade(self):
+		user = self._create_user('tolkien@nt.com')
+		redaction = Redaction()
+		redaction.selectedText = u'Iluvatar'
+		redaction.replacementContent = u'Eru'
+		redaction.redactionExplanation = u'Supreme god of Arda and Middle-earth.'
+		redaction.creator = user
+		redaction.containerId = make_ntiid(nttype='book', specific='silmarillion')
+		mock_dataserver.current_transaction.add(redaction)
+		redaction = user.addContainedObject( redaction )
+		
+		note = self.create_note("Father of All", user,
+								 redaction.containerId, inReplyTo=redaction, references=(redaction,))
+		
+		assert_that(note.inReplyTo, is_(redaction))
+		assert_that(note.references, is_([redaction]))
+		assert_that(note.applicableRange, is_(None))
+		
+		# update
+		redaction = nti_update.process_update(redaction.id, self.update_json, cascade=True)
+		assert_that(redaction.selectedText, is_(u'My selectedText'))
+		assert_that(redaction.applicableRange, is_not(None))
+		
+		note = nti_update.find_object(note.id)
+		assert_that(note.inReplyTo, is_(redaction))
+		assert_that(note.references, is_([redaction]))
+		assert_that(note.selectedText, is_(u''))
+		assert_that(note.applicableRange, is_(None)) # None b/c redacions are not thredable
+		
 if __name__ == '__main__':
 	unittest.main()
 	
