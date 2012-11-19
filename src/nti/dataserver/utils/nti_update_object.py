@@ -141,7 +141,7 @@ def _process_args(args):
 def main():
 	arg_parser = _create_args_parser()
 	args = arg_parser.parse_args()
-	run_with_dataserver( environment_dir=args.env_dir, function=lambda: process_update(args) )
+	run_with_dataserver( environment_dir=args.env_dir, function=lambda: _process_args(args) )
 
 if __name__ == '__main__':
 	main()
