@@ -133,6 +133,7 @@ class TestNTIUpdate(ConfiguringTestBase):
 			self.fail("should not accepted id field")
 		except:
 			pass
+		
 if __name__ == '__main__':
 	unittest.main()
 	
