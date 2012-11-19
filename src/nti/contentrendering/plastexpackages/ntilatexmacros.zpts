@@ -34,7 +34,7 @@ name: sidebar
 
 name: ntiincludeannotationgraphics
 <span itemprop="nti-data-markupenabled">
-<img tal:condition="not:self/style" tal:attributes="src self/image/url; id self/id; alt self/source; style string:width:${self/image/width/px};; height:${self/image/height/px}" />
+<img tal:condition="not:self/style" crossorigin="anonymous" tal:attributes="src self/image/url; id self/id; alt self/source; style string:width:${self/image/width/px};; height:${self/image/height/px}" />
 <img tal:condition="self/style" tal:attributes="src self/image/url; id self/id; alt self/source; style self/style/inline" />
 </span>
 
