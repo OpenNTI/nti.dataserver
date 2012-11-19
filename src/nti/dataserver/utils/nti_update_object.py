@@ -134,6 +134,7 @@ def process_cascade(modeled_obj, ext_obj, verbose=False):
 		for obj in container.values():
 			if reference_object(modeled_obj, obj):
 				update_object(user, obj, ext_obj, verbose)
+				#TODO: Do we recurse?
 			
 def process_update(oid, json_exp=None, json_file=None, fields=(), cascade=False, verbose=False):
 	ntiid = get_ntiid(oid)
