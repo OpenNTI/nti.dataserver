@@ -10,6 +10,8 @@ from nti.ntiids.ntiids import make_ntiid
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
+from nti.ntiids import ntiids
+
 import nti.contentsearch
 
 from nti.tests import ConfiguringTestBase
@@ -40,10 +42,12 @@ class TestNTIDeleteUserObjects(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_simple_delete(self):
 		usr = self._create_user()
-		self.create_note('my note', usr)
+		note = self.create_note('my note', usr)
+		oid = note.id
 		cmap, _ = nti_delete.delete_entity_objects(usr)
 		assert_that(cmap, has_entry('note', is_(1)))
-
+		note = ntiids.find_object_with_ntiid(oid)
+		assert_that(note, is_(None))
 		
 if __name__ == '__main__':
 	unittest.main()
