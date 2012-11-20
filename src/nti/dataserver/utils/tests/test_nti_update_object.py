@@ -118,19 +118,19 @@ class TestNTIUpdate(ConfiguringTestBase):
 		note = self.create_note('my note', usr)
 		try:
 			nti_update.process_update(note.id, fields=('body="123"',))
-			self.fail("should not accepted body field")
+			self.fail("should not have accepted 'body' field")
 		except:
 			pass
 		
 		try:
 			nti_update.process_update(note.id, fields=('sharedWith=123',))
-			self.fail("should not accepted sharedWith field")
+			self.fail("should not have accepted 'sharedWith' field")
 		except:
 			pass
 		
 		try:
 			nti_update.process_update(note.id, fields=('selectedText="here"', 'id=123',))
-			self.fail("should not accepted id field")
+			self.fail("should not have accepted 'id' field")
 		except:
 			pass
 		
