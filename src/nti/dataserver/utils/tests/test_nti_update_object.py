@@ -33,13 +33,15 @@ class TestNTIUpdate(ConfiguringTestBase):
 		usr = User.create_user( ds, username=username, password=password)
 		return usr
 		
-	def create_note(self, text, user, containerId=None, inReplyTo=None, references=()):
+	def create_note(self, text, user, containerId=None, inReplyTo=None, references=(), sharedWith=()):
 		note = Note()
 		note.body = [text]
 		note.creator = user
 		note.setInReplyTo(inReplyTo)
 		for r in references or ():
 			note.addReference(r)
+		for s in sharedWith or ():
+			note.addSharingTarget(s)
 		note.containerId = containerId or make_ntiid(nttype='bleach', specific='manga')
 		mock_dataserver.current_transaction.add(note)
 		note = user.addContainedObject( note ) 	
@@ -48,12 +50,23 @@ class TestNTIUpdate(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_simple_proc_update(self):
 		usr = self._create_user()
-		note = self.create_note('my note', usr)
+		note = self.create_note(u'my note', usr)
 		assert_that(note.selectedText, is_(u''))
 		assert_that(note.applicableRange, is_(None))
 		note = nti_update.process_update(note.id, self.update_json)
 		assert_that(note.selectedText, is_(u'My selectedText'))
 		assert_that(note.applicableRange, is_not(None))
+		assert_that(note.body, is_((u'my note',)))
+		
+	@WithMockDSTrans
+	def test_simple_sharedWith(self):
+		usr_1 = self._create_user('nt1@nti.com')
+		usr_2 = self._create_user('nt2@nti.com')
+		note = self.create_note('my shared note', usr_1, sharedWith=(usr_2,))
+		assert_that(note.sharedWith, is_(['nt2@nti.com']))
+		note = nti_update.process_update(note.id, self.update_json)
+		assert_that(note.sharedWith, is_(['nt2@nti.com']))
+		assert_that(note.body, is_((u'my shared note',)))
 		
 	@WithMockDSTrans
 	def test_simple_cascade(self):
