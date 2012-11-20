@@ -64,7 +64,7 @@ class IndexManager(object):
 
 	def get_user_communities(self, username):
 		user = self.get_entity(username)
-		result = list(user.communities) if user and hasattr(user, 'communities') else ()
+		result = list(getattr(user, 'usernames_of_dynamic_memberships', ()))
 		if result and 'Everyone' in result:
 			result.remove('Everyone')
 		result = sorted(result, key=lambda s: s.lower())

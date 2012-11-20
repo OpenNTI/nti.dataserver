@@ -1,7 +1,7 @@
 from __future__ import print_function, unicode_literals
 
 import six
-from collections import Iterable, namedtuple
+from collections import Iterable, namedtuple, defaultdict
 
 from zope import interface
 from zope import component
@@ -87,6 +87,21 @@ class _PageableSearchResults(_BaseSearchResults):
 _IndexHit = namedtuple('_IndexHit', 'obj score query')
 interface.alsoProvides(_IndexHit, search_interfaces.IIndexHit)
 	
+class _IndexHitMetaData(object):
+	
+	def __init__(self):
+		self._container_count = defaultdict(int)
+	
+	def track(self, ihit):
+		rsr = search_interfaces.IContainerIDResolver(ihit.obj, None)
+		containerId = rsr.get_containerId() if rsr is not None else '++unknown-container'
+		self._container_count[containerId] = self._container_count[containerId] + 1
+		
+	def __iadd__(self, other):
+		for k,v in other._container_count.items():
+			self._container_count[k] = self._container_count[k] + v
+		return self
+		
 class _MetaSearchResults(type):
 	
 	def __new__(cls, name, bases, dct):
@@ -103,25 +118,28 @@ class _SearchResults(_PageableSearchResults):
 	def __init__(self, query):
 		super(_SearchResults, self).__init__(query)
 		self._hits = []
+		self._ihitmeta = _IndexHitMetaData()
 
 	def get_hits(self):
 		return self._hits
 	
 	hits = property(get_hits)
 	
-	def _do_add(self, t):
-		self._hits.append()
-		
 	def _add(self, item):
+		ihit = None
 		if search_interfaces.IIndexHit.providedBy(item):
 			if item.obj is not None:
 				item.query = self.query
-				self._hits.append(item)
+				ihit = item
 		elif isinstance(item, tuple):
 			if item[0] is not None:
-				self._hits.append(_IndexHit(item[0], item[1], self.query))
+				ihit = _IndexHit(item[0], item[1], self.query)
 		elif item is not None:
-			self._hits.append(_IndexHit(item, 1.0, self.query))
+			ihit = _IndexHit(item, 1.0, self.query)
+		
+		if ihit is not None:
+			self._hits.append(ihit)
+			self._ihitmeta.track(ihit)
 			
 	def add(self, hits):
 		if search_interfaces.IIndexHit.providedBy(hits) or isinstance(hits, tuple):
@@ -138,11 +156,14 @@ class _SearchResults(_PageableSearchResults):
 		if comparator is not None:
 			reverse = not self.query.is_descending_sort_order
 			self._hits.sort(comparator.compare, reverse=reverse)
-			
+	
 	def __iadd__(self, other):
 		if 	search_interfaces.ISearchResults.providedBy(other) or \
 			search_interfaces.ISuggestAndSearchResults.providedBy(other):
+			
+			self._ihitmeta += other._ihitmeta
 			self._hits.extend(other.hits)
+			
 		return self
 	
 @interface.implementer( search_interfaces.ISuggestResults )
