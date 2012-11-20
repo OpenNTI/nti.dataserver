@@ -119,9 +119,10 @@ def get_cascadable_properties(obj, ext_obj, cascade=False):
 	return result
 
 def reference_object(master, slave):
-	result = slave.inReplyTo == master
+	result = getattr(slave,'inReplyTo', None) == master
 	if not result:
-		for r in slave.references or ():
+		references = getattr(slave,'references', ())
+		for r in references or ():
 			result = r == master
 			if result: break
 	return result
