@@ -62,7 +62,7 @@ class IndexManager(object):
 		result = self.get_entity(username)
 		return result is not None
 
-	def get_user_communities(self, username):
+	def get_user_dymamic_memberships(self, username):
 		user = self.get_entity(username)
 		result = list(getattr(user, 'usernames_of_dynamic_memberships', ()))
 		if result and 'Everyone' in result:
@@ -137,7 +137,7 @@ class IndexManager(object):
 
 	def _get_search_uims(self, username):
 		result = []
-		for name in [username] + self.get_user_communities(username):
+		for name in [username] + self.get_user_dymamic_memberships(username):
 			uim = self._get_user_index_manager(name)
 			if uim is not None:
 				result.append(uim)
