@@ -17,7 +17,7 @@ from hamcrest import (assert_that, is_)
 
 BUFFER = 6
 
-class NLTKMessageGenerator:
+class NLTKMessageGenerator(object):
 
 	def __init__(self, fileobj, n=3):
 		raw = fileobj.read()
