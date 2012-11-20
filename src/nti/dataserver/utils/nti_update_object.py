@@ -103,9 +103,10 @@ def update_object(creator, obj, ext_object, verbose=False):
 	containerId = obj.containerId
 	with creator.updates():
 		obj = creator.getContainedObject( containerId, objId )
-		obj = update_from_external_object(obj, ext_object)
-		if verbose:
-			pprint(to_external_object(obj))
+		if obj is not None:
+			obj = update_from_external_object(obj, ext_object)
+			if verbose:
+				pprint(to_external_object(obj))
 	return obj
 
 def get_cascadable_properties(obj, ext_obj, cascade=False):
