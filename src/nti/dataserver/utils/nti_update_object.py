@@ -23,9 +23,20 @@ from nti.ntiids import ntiids
 import logging
 logger = logging.getLogger( __name__ )
 
-forbidden_fields = set([v for k,v in ext_interfaces.StandardExternalFields.__dict__.iteritems() if not k.startswith( '_' ) and k !='ALL'])
-forbidden_int_fields = set([v for k,v in ext_interfaces.StandardInternalFields.__dict__.iteritems() if not k.startswith( '_' )])
-forbidden_fields = tuple(forbidden_fields.union(forbidden_int_fields)) + ('flattenedSharingTargetNames', 'sharedWith', 'body')
+def _get_internal_forbidden_fields():
+	result = set()
+	for k,v in ext_interfaces.StandardExternalFields.__dict__.iteritems():
+		if not k.startswith( '_' ) and k !='ALL':
+			result.add(v)
+			
+	for k,v in ext_interfaces.StandardInternalFields.__dict__.iteritems():
+		if not k.startswith( '_' ):
+			result.add(v)
+			
+	return result
+
+internal_forbidden_fields = tuple(_get_internal_forbidden_fields())
+input_forbidden_fields = internal_forbidden_fields + ('flattenedSharingTargetNames', 'sharedWith', 'body')
 
 def _create_args_parser():
 	arg_parser = argparse.ArgumentParser( description="Set object attributes." )
@@ -69,7 +80,7 @@ def get_external_object(json_exp=None, json_file=None, fields=()):
 			result[unicode(p[0])] = json.loads(unicode(p[1]))
 	
 	for k in result.keys():
-		if k in forbidden_fields:
+		if k in input_forbidden_fields:
 			raise Exception('Cannot set prohibited key "%s"' % k)
 	return result
 
@@ -89,7 +100,7 @@ def get_creator(obj):
 	
 def read_source(obj, ext_object):
 	result = dict(to_external_object(obj))
-	for n in forbidden_fields:
+	for n in internal_forbidden_fields:
 		result.pop(n, None)
 	result.update(ext_object)
 	return result
