@@ -33,7 +33,7 @@ class NLTKMessageGenerator(object):
 	
 	generate = generate_message
 	
-class TestLatexTransforms(ConfiguringTestBase):
+class TestCensorDoc(ConfiguringTestBase):
 	
 	set_up_packages = (nti.contentfragments,)
 	
@@ -52,10 +52,6 @@ class TestLatexTransforms(ConfiguringTestBase):
 			
 	def test_geo_brazil(self):
 		name = os.path.join(os.path.dirname(__file__), "geobrazil.txt.gz");
-		self._test_book(name)
-			
-	def test_dracula(self):
-		name = os.path.join(os.path.dirname(__file__), "dracula.txt.gz");
 		self._test_book(name)
 	
 if __name__ == '__main__':
