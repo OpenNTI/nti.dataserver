@@ -11,15 +11,18 @@ from collections import Mapping
 from collections import defaultdict
 
 from zope.component import getAdapter
-from zope.generations.utility import findObjectsProviding, findObjectsMatching
+from zope.generations.utility import findObjectsMatching
+
+from nti.chatserver import interfaces as chat_interfaces
 
 from nti.dataserver import users
 from nti.dataserver.utils import run_with_dataserver
-from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.links_external import render_link
+from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.chat_transcripts import _DocidMeetingTranscriptStorage as DMTS
+
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.interfaces import StandardExternalFields
-from nti.dataserver.chat_transcripts import _DocidMeetingTranscriptStorage as DMTS
 
 def _get_object_type(obj):
 	result = obj.__class__.__name__
@@ -27,6 +30,9 @@ def _get_object_type(obj):
 
 def _is_transcript(type_name):
 	return type_name in ('transcript', 'messageinfo')
+
+def _has_transcript(object_types):
+	return 'transcript' in object_types or 'messageinfo' in object_types
 
 def _clean_links(obj):
 	if isinstance(obj, Mapping):
@@ -47,15 +53,18 @@ def _clean_links(obj):
 
 def get_user_objects(user, object_types=()):
 	
-	for obj in findObjectsProviding( user, nti_interfaces.IModeledContent):
+	def condition(x):
+		return 	isinstance(x, DMTS) or \
+				(nti_interfaces.IModeledContent.providedBy(x) and not chat_interfaces.IMessageInfo.providedBy(x))
+				
+	for obj in findObjectsMatching( user, condition):
 		type_name = _get_object_type(obj)
-		if (not object_types or type_name in object_types) and not _is_transcript(type_name):
-			yield type_name, obj, obj
-
-	if not object_types or 'transcript' in object_types or 'messageinfo' in object_types:
-		for mts in findObjectsMatching( user, lambda x: isinstance(x, DMTS) ):
-			adapted = getAdapter(mts, nti_interfaces.ITranscript)
-			yield 'transcript', adapted, obj
+		if not object_types or type_name in object_types:
+			if isinstance(obj, DMTS):
+				adapted = getAdapter(obj, nti_interfaces.ITranscript)
+				yield 'transcript', adapted, obj
+			else:
+				yield type_name, obj, obj
 			
 def to_external_object(obj):
 	external = toExternalObject(obj)
