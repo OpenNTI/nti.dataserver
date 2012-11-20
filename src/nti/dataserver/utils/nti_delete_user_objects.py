@@ -35,9 +35,10 @@ def remove_user_objects( username, object_types=(), export_dir=None, verbose=Fal
 	for type_name, adapted, obj in list(get_user_objects( user, object_types)):
 		external = to_external_object(adapted) if export_dir else None
 		with user.updates():
-			_id = getattr(obj, 'id', None )
-			containerId = getattr(obj, 'containerId', None )
-			if containerId and _id and user.deleteContainedObject( containerId, _id ):
+			objId = obj.id
+			containerId = obj.containerId
+			obj = user.getContainedObject( containerId, objId )
+			if obj is not None and user.deleteContainedObject( containerId, objId ):
 				counter[type_name] = counter[type_name] +  1
 				captured_types.add(type_name)
 				if external is not None:
