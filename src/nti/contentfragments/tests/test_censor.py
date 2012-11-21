@@ -109,10 +109,14 @@ def test_trivial_and_word_match_scanner():
 	assert_that( strat.censor_ranges( bad_val, scanner.scan( bad_val ) ),
 				 is_( 'butter constitution computation' ) )
 	
-#def test_regexp_match_scanner():
-#	profanity_file = resource_filename( __name__, '../profanity_2_regexp.txt' )
-#	strat = frag_censor.RegExpMatchScannerExternalFile(profanity_file)	
-#	
+def test_regexp_match_scanner():
+	profanity_file = resource_filename( __name__, '../profanity_list.txt' )
+	strat = frag_censor.RegExpMatchScannerExternalFile(profanity_file)	
+	
+	bad_val = 'Guvf vf shpxvat fghcvq, lbh ZbgureShpxre onfgneq'.encode( 'rot13' )
+	ranges = strat.sort_ranges(strat.scan(bad_val))
+	assert_that(ranges, is_([(8, 12), (8, 14), (8, 15), (28, 38), (28, 40), (34, 38), (34, 40), (41, 48)]))
+	
 def test_html_and_default_policy():
 	policy = frag_censor.DefaultCensoredContentPolicy()
 	template = '<html><head/><body><b>%s</b></body></html>'

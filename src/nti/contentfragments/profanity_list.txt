@@ -471,7 +471,6 @@ shpxref
 shpxrq
 shpxva
 shpxvat
-shpxvatf
 shpxzr
 shqtr cnpxre
 shqtrcnpxre
@@ -532,7 +531,6 @@ svfgshpxre
 svfgshpxref
 svfgshpxrq
 svfgshpxvat
-svfgshpxvatf
 syhsre
 syhssre
 syvccvat gur oveq
@@ -641,7 +639,6 @@ zbgunshpxref
 zbgunshpxrq
 zbgunshpxva
 zbgunshpxvat
-zbgunshpxvatf
 zbgure shpxre
 zbgure shxnu
 zbgure shxre
@@ -655,7 +652,6 @@ zbgureshpxref
 zbgureshpxrq
 zbgureshpxva
 zbgureshpxvat
-zbgureshpxvatf
 zbsb
 zhgun shpxre
 zhgun shxnu
