@@ -67,7 +67,10 @@ class SimpleReplacementCensoredContentStrategy(object):
 class BasicScanner(object):
 
 	def sort_ranges(self, ranges):
-		return sorted(ranges, key=lambda ra: ra[0])
+		def _cmp(x, y):
+			r = cmp(x[0], y[0])
+			return r if r != 0 else cmp(x[1], y[1])
+		return sorted(ranges, cmp=_cmp)
 
 	def test_range(self, v, yielded):
 		for t in yielded:
@@ -111,7 +114,7 @@ class RegExpMatchScanner(BasicScanner):
 		for p in self.patterns:
 			for m in p.finditer(content_fragment):
 				match_range = m.span()
-				if self.test_range(m.p, yielded):
+				if self.test_range(match_range, yielded):
 					yield match_range
 					
 	@classmethod
@@ -131,11 +134,11 @@ def RegExpMatchScannerExternalFile( file_path ):
 	External files are stored in rot13.
 	"""
 	with open(file_path, 'rU') as src:
-		all_patterns = []
+		all_patterns = set()
 		for word in src.readlines():
 			word = word.strip().encode('rot13')
 			p = RegExpMatchScanner.create_regexp(word)
-			all_patterns.append(p)
+			all_patterns.add(p)
 	return RegExpMatchScanner(all_patterns)
 
 @interface.implementer(interfaces.ICensoredContentScanner)
