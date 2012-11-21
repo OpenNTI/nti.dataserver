@@ -37,10 +37,11 @@ import nti.externalization.internalization
 
 from nti.dataserver import datastructures
 from nti.dataserver import interfaces as nti_interfaces
-import nti.apns.interfaces
-from . import interfaces
+from nti.dataserver.users import interfaces
 
 from nti.externalization.datastructures import InterfaceObjectIO
+
+import nti.apns.interfaces
 
 def _get_shared_dataserver(context=None,default=None):
 	if default != None:
@@ -327,3 +328,9 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 
 	def __hash__(self):
 		return _lower(self.username).__hash__()
+
+@component.adapter(basestring)
+@interface.implementer(nti_interfaces.IEntity)
+def _username_entity_adapter(username):
+	return Entity.get_entity(username) if username else None
+
