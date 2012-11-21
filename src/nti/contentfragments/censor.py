@@ -1,10 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-"""
-Implementations of the content censoring algorithms.
-
-$Id$
-"""
 
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
@@ -107,9 +101,13 @@ class TrivialMatchScanner(BasicScanner):
 @interface.implementer(interfaces.ICensoredContentScanner)
 class RegExpMatchScanner(BasicScanner):
 
-	def __init__( self, patterns):
-		self.patterns = tuple(patterns)
-
+	def __init__( self, patterns=(), words=()):
+		all_patterns = set()
+		for w in words or ():
+			all_patterns.add(self.create_regexp(w))
+		all_patterns.update(patterns or ())
+		self.patterns = tuple(all_patterns)
+		
 	def do_scan(self, content_fragment, yielded):
 		for p in self.patterns:
 			for m in p.finditer(content_fragment):
@@ -134,29 +132,25 @@ def RegExpMatchScannerExternalFile( file_path ):
 	External files are stored in rot13.
 	"""
 	with open(file_path, 'rU') as src:
-		all_patterns = set()
-		for word in src.readlines():
-			word = word.strip().encode('rot13')
-			p = RegExpMatchScanner.create_regexp(word)
-			all_patterns.add(p)
-	return RegExpMatchScanner(all_patterns)
+		all_words = {w.strip().encode('rot13').lower() for w in src.readlines()}
+	return RegExpMatchScanner(words=all_words)
 
 @interface.implementer(interfaces.ICensoredContentScanner)
 def TrivialMatchScannerExternalFile( file_path ):
 	"""
 	External files are stored in rot13.
 	"""
-	# TODO: Does rot13 unicode?
 	with open(file_path, 'rU') as src:
-		return TrivialMatchScanner((x.encode('rot13').strip() for x in src.readlines()))
+		all_words = {w.strip().encode('rot13').lower() for w in src.readlines()}
+	return TrivialMatchScanner(all_words)
 
 @interface.implementer(interfaces.ICensoredContentScanner)
 class WordMatchScanner(TrivialMatchScanner):
 
 	def __init__( self, white_words=(), prohibited_words=() ):
 		self.char_tester = re.compile(punkt_re_char)
-		self.white_words = [word.lower() for word in white_words]
-		self.prohibited_words = [word.lower() for word in prohibited_words]
+		self.white_words = tuple([word.lower() for word in white_words])
+		self.prohibited_words = tuple([word.lower() for word in prohibited_words])
 
 	def _test_start(self, idx, content_fragment):
 		result = idx == 0 or self.char_tester.match(content_fragment[idx-1])
