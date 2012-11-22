@@ -145,7 +145,7 @@ def TrivialMatchScannerExternalFile( file_path ):
 	return TrivialMatchScanner(all_words)
 
 @interface.implementer(interfaces.ICensoredContentScanner)
-class WordMatchScanner(TrivialMatchScanner):
+class WordMatchScanner(BasicScanner):
 
 	def __init__( self, white_words=(), prohibited_words=() ):
 		self.char_tester = re.compile(punkt_re_char)
@@ -183,7 +183,7 @@ class WordMatchScanner(TrivialMatchScanner):
 				yield match_range
 
 @interface.implementer(interfaces.ICensoredContentScanner)
-class WordPlusTrivialMatchScanner(WordMatchScanner):
+class WordPlusTrivialMatchScanner(WordMatchScanner, TrivialMatchScanner):
 
 	def __init__( self, white_words=(), prohibited_words=(), prohibited_values=()):
 		WordMatchScanner.__init__(self, white_words, prohibited_words)
@@ -205,14 +205,15 @@ class WordPlusTrivialMatchScanner(WordMatchScanner):
 
 @interface.implementer(interfaces.ICensoredContentScanner)
 def ExternalWordPlusTrivialMatchScannerFiles( white_words_path, prohibited_words_path, profanity_path):
+	
 	with open(white_words_path, 'rU') as src:
-		white_words = (x.strip() for x in src.readlines() )
+		white_words = {x.strip().lower() for x in src.readlines()}
 
 	with open(prohibited_words_path, 'rU') as src:
-		prohibited_words = (x.encode('rot13').strip() for x in src.readlines() )
+		prohibited_words = {x.encode('rot13').strip().lower() for x in src.readlines()}
 
 	with open(profanity_path, 'rU') as src:
-		profanity_list = (x.encode('rot13').strip() for x in src.readlines() )
+		profanity_list = {x.encode('rot13').strip().lower() for x in src.readlines()}
 
 	return WordPlusTrivialMatchScanner(white_words, prohibited_words, profanity_list)
 
