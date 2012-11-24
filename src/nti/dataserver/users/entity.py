@@ -328,9 +328,3 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 
 	def __hash__(self):
 		return _lower(self.username).__hash__()
-
-@component.adapter(basestring)
-@interface.implementer(nti_interfaces.IEntity)
-def _username_entity_adapter(username):
-	return Entity.get_entity(username) if username else None
-

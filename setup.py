@@ -108,7 +108,7 @@ setup(
 		'ZConfig >= 2.9.3',
 		 # NOTE: ZODB has a new release, 4.0.0a1 (Notice it's not ZODB3 anymore, so
 		 # there's no need to hard-pin the ZODB3 version.) For this version, we
-		 # will need to additionally include persistent >= 4.0.2 and BTrees >= 4.0.0
+		 # will need to additionally include persistent >= 4.0.3 and BTrees >= 4.0.1, and ZEO >= 4.0.0
 		 # which were pulled out of ZODB for better pypy support. We'll switch to it
 		 # when it goes non-alpha. It may require a tweak to our monkey patch if
 		 # has not been fixed.
@@ -167,7 +167,7 @@ setup(
 		 # Depends on the system graphviz installation; an alternative is repoze.profile which has
 		 # fewer dependencies, but less helpful output and doesn't work with multiple workers (?)
 		#'linesman >= 0.2.2', # Conflicts with Pillow. Modify requires.txt as part of the patch
-		'logilab-common >= 0.58.1',
+		'logilab-common >= 0.58.3',
 		'lxml >= 3.0.1', # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
 		'nameparser >= 0.2.3', # Human name parsing
 		'nltk >= 2.0.4',
@@ -184,7 +184,7 @@ setup(
 		'plone.namedfile >= 2.0', # much like zope.file, but some image-specific goodness.
 		'pyPDF >= 1.13', # Pure python PDF reading library. Not complex. Has newer fork pyPDF2, not yet on PyPI?
 		'pyquery >= 1.2.2', # jquery-like traversing of python datastructures. lxml, cssselect
-		'pyramid >= 1.4a4' ,
+		'pyramid >= 1.4b1' ,
 		'pyramid_tm >= 0.5',
 		'pyramid_mailer >= 0.9', # Which uses repoze.sendmail
 		'pyramid_who >= 0.3',
@@ -205,7 +205,9 @@ setup(
 		'pystatsd >= 0.1.6',
 		'pytz >= 2012h',
 		'rdflib >= 3.2.3',
-		'redis >= 2.7.1', # Redis python client. Note that Amazon deployed servers are still in the 2.6 (2.4?) series
+		# Redis python client. Note that Amazon deployed servers are still in the 2.6 (2.4?) series
+		'redis >= 2.7.2',
+		# There is a nice complete mock for it at fakeredis, installed for tests
 		'repoze.catalog >= 0.8.2',
 		'repoze.lru >= 0.6', # LRU caching. Dep of Pyramid
 		'repoze.sendmail >= 3.2',
@@ -252,30 +254,30 @@ setup(
 		'zope.browserresource',
 		'zope.catalog >= 3.8.2',
 		'zope.cachedescriptors >= 3.5.1',
-		'zope.component >= 4.0.0',
+		'zope.component >= 4.0.1',
 		# Schema vocabularies based on querying ZCA; useful
 		# for views and other metadata
 		'zope.componentvocabulary >= 1.0.1',
-		'zope.configuration >= 4.0.0',
+		'zope.configuration >= 4.0.1',
 		'zope.container >= 3.12.0',
 		'zope.contenttype >= 3.5.5', # A utility module for content-type handling.
 		'zope.copy >= 4.0.0',
 		'zope.datetime >= 3.4.1',
-		'zope.deprecation >= 4.0.0',
+		'zope.deprecation >= 4.0.1',
 		'zope.deferredimport >= 3.5.3', # useful with zope.deprecation. Req'd by contentratings
 		'zope.dottedname >= 3.4.6',
 		'zope.dublincore >= 3.8.2',
-		'zope.event >= 4.0.0',
-		'zope.exceptions >= 4.0.1',
+		'zope.event >= 4.0.1',
+		'zope.exceptions >= 4.0.2',
 		'zope.filerepresentation >= 3.6.1',
 		'zope.file >= 0.6.2',
 		'zope.formlib >= 4.1.1', # Req'd by zope.mimetype among others,
 		'zope.generations >= 3.7.1',
-		'zope.hookable >= 4.0.0', # explicitly list this to ensure we get the fast C version. Used by ZCA.
+		'zope.hookable >= 4.0.1', # explicitly list this to ensure we get the fast C version. Used by ZCA.
 		'zope.i18n >= 3.8.0',
-		'zope.i18nmessageid >= 4.0.0',
+		'zope.i18nmessageid >= 4.0.1',
 		'zope.index >= 3.6.4',
-		'zope.interface >= 4.0.1',
+		'zope.interface >= 4.0.2',
 		'zope.intid >= 3.7.2',
 		'zope.lifecycleevent >= 3.7.0',
 		'zope.location >= 4.0.0',
@@ -285,8 +287,8 @@ setup(
 		'zope.password >= 3.6.1', # encrypted password management
 		'zope.publisher >= 3.13.1',
 		'zope.processlifetime',
-		'zope.proxy >= 4.0.0',
-		'zope.schema >= 4.2.1',
+		'zope.proxy >= 4.0.1',
+		'zope.schema >= 4.2.2',
 		'zope.security >= 3.8.3',
 		'zope.site >= 3.9.2', # local, persistent ZCA sites
 		'zope.size >= 3.5.0',
@@ -294,7 +296,7 @@ setup(
 		'zope.tales >= 3.5.2',
 		'zope.traversing >= 3.14.0',
 		# textindexng3
-		'zopyx.txng3.core >= 3.5.3',
+		'zopyx.txng3.core >= 3.6.0',
 		'zopyx.txng3.ext >= 3.3.3',
         # Data analysis
         # pandas,
@@ -308,7 +310,8 @@ setup(
 			'zc.buildout == 1.6.3',
 			'nose-progressive',
 			'pyhamcrest >= 1.6',
-			'webtest >= 1.4.2',
+			'WebTest >= 1.4.3',
+			'fakeredis >= 0.3.0',
 			'fudge'],
 		'tools': [
 			'pyramid_debugtoolbar >= 1.0.3',
@@ -331,7 +334,7 @@ setup(
 			'rope >= 0.9.4', # refactoring library. c.f. ropemacs
 			'ropemode >= 0.2', # IDE helper for rope
 			#'Pymacs >= 0.25',
-			'virtualenv >= 1.8.2',
+			'virtualenv >= 1.8.3',
 			'pip >= 1.2.1',
 			# Monitoring stats and instrumenting code
 			# See above for python-statsd
