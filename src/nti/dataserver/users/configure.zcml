@@ -104,9 +104,4 @@
 	<adapter factory=".user_profile.EmailRequiredUserProfileFactory"
 			 zcml:condition="not-have devmode" />
 
-	<!-- misc adapters -->
-	<adapter factory=".entity._username_entity_adapter"
-			 provides="nti.dataserver.interfaces.IEntity"
-			 for="basestring" />
-			 
 </configure>
