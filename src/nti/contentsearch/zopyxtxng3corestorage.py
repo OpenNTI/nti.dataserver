@@ -1,38 +1,25 @@
 from __future__ import print_function, unicode_literals
 
-###########################################################################
-# TextIndexNG V 3                
-# The next generation TextIndex for Zope
-#
-# This software is governed by a license. See
-# LICENSE.txt for the terms of this license.
-###########################################################################
-
-"""
-Storage of docid -> wordids mapping
-
-$Id: storage.py 2194 2009-12-08 06:06:24Z ajung $
-"""
-
 import BTrees.Length 
 
-from BTrees.IIBTree import IIBTree, IISet
+from BTrees.IIBTree import IISet as IISet32
+from BTrees.IIBTree import IIBTree as IIBTree32
 from BTrees.IIBTree import difference as difference32
 
 from BTrees.LOBTree import LOBTree
-from BTrees.LLBTree import union as union64
 from BTrees.LLBTree import LLBTree
+from BTrees.LLBTree import union as union64
 
 from zope import interface
 from zope.component.interfaces import IFactory
 
-from zopyx.txng3.core import widcode as zopywidcode
-from zopyx.txng3.core import storage as zopystorage
+from zopyx.txng3.core import widcode as zopyx_widcode
+from zopyx.txng3.core import storage as zopyx_storage
 from zopyx.txng3.core.interfaces import IStorageWithTermFrequency
 	
 from nti.contentsearch.zopyxtxng3coredoclist import DocidList
 
-class Storage(zopystorage.Storage):
+class Storage(zopyx_storage.Storage):
 	
 	def clear(self):
 		self._doc2wid = LOBTree()   # docid -> [wordids]
@@ -45,17 +32,17 @@ class Storage(zopystorage.Storage):
 		if not self._doc2wid.has_key(docid):
 			self._length.change(1)
 	
-		enc_widlist = zopywidcode.encode(widlist)
+		enc_widlist = zopyx_widcode.encode(widlist)
 		old_enc_widlist = self._doc2wid.get(docid)
 		if old_enc_widlist is not None:
 			old_enc_widlist = old_enc_widlist.get() # unwrap _PS instance
 	
 		removed_wordids = []
 		if old_enc_widlist != enc_widlist :
-			self._doc2wid[docid] = zopystorage._PS(enc_widlist)
+			self._doc2wid[docid] = zopyx_storage._PS(enc_widlist)
 			if old_enc_widlist is not None:
-				old_widlist = IISet(zopywidcode.decode(old_enc_widlist))
-				removed_wordids = difference32(old_widlist, IISet(widlist))
+				old_widlist = IISet32(zopyx_widcode.decode(old_enc_widlist))
+				removed_wordids = difference32(old_widlist, IISet32(widlist))
 	
 		tree = self._wid2doc
 		tree_has = tree.has_key
@@ -121,7 +108,7 @@ class StorageWithTermFrequency(Storage):
 			else:
 				occurences[wid] += 1
 		
-		self._frequencies[docid] = IIBTree()
+		self._frequencies[docid] = IIBTree32()
 		tree = self._frequencies[docid]
 		for wid,num in occurences.items():
 			tree[wid] = num
