@@ -93,13 +93,17 @@ def test_word_match_scanner():
 	ranges = list(wm.scan(bad_val))
 	assert_that(ranges, is_([(10,15)]))
 	
-def test_trivial_and_word_match_scanner():
+def test_pipeline_scanner():
 	profanity_file = resource_filename( __name__, '../profanity_list.txt' )
-	profanity_list = [x.encode('rot13').strip() for x in open(profanity_file, 'rU').readlines()]
+	profanity_list = {x.encode('rot13').strip() for x in open(profanity_file, 'rU').readlines()}
 
+	scanners = []
+	scanners.append(frag_censor.WordMatchScanner((), ('stupid',)))
+	scanners.append(frag_censor.TrivialMatchScanner(profanity_list))
+	scanner = frag_censor.PipeLineMatchScanner(scanners)
+	
 	strat = frag_censor.SimpleReplacementCensoredContentStrategy()	
-	scanner = frag_censor.WordPlusTrivialMatchScanner((), ('stupid',), profanity_list)
-
+		
 	bad_val = 'Guvf vf shpxvat fghcvq, lbh ZbgureShpxre onfgneq'.encode( 'rot13' )
 	assert_that( strat.censor_ranges( bad_val, scanner.scan( bad_val ) ),
 				 is_( 'This is ******* ******, you ************ *******' ) )
