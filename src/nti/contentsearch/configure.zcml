@@ -38,6 +38,7 @@
 				
 	<!-- Content processing -->
 	
+	<!-- make sure stop words are registered before zopyx.zcml -->
 	<utility factory="._content_utils._DefaultStopWords" />
 	
 	<!-- Content Resolvers -->
