@@ -33,13 +33,21 @@ name: sidebar
 </div>
 
 name: ntiincludeannotationgraphics
-<span itemprop="nti-data-markupenabled">
-<img tal:condition="not:self/style" crossorigin="anonymous" tal:attributes="src self/image/url; id self/id; alt self/source; style string:width:${self/image/width/px};; height:${self/image/height/px}" />
-<img tal:condition="self/style" crossorigin="anonymous" tal:attributes="src self/image/url; id self/id; alt self/source; style self/style/inline" />
+<span tal:condition="not:self/image/resizeable" itemprop="nti-data-markupenabled">
+<img tal:condition="not:self/style" crossorigin="anonymous" tal:attributes="src self/image/url; id self/id; alt self/source; style string:width:${self/image/width/px};; height:${self/image/height/px}; data-nti-image-size self/image/current_size; data-nti-image-full self/image/full_size/url; data-nti-image-half self/image/half_size/url; data-nti-image-quarter self/image/quarter_size/url" />
+<img tal:condition="self/style" crossorigin="anonymous" tal:attributes="src self/image/url; id self/id; alt self/source; style self/style/inline; data-nti-image-size self/image/current_size; data-nti-image-full self/image/full_size/url; data-nti-image-half self/image/half_size/url; data-nti-image-quarter self/image/quarter_size/url" />
+</span>
+<span tal:condition="self/image/resizeable" itemprop="nti-data-markupenabled nti-data-resizeable">
+<img tal:condition="not:self/style" crossorigin="anonymous" tal:attributes="src self/image/url; id self/id; alt self/source; style string:width:${self/image/width/px};; height:${self/image/height/px}; data-nti-image-size self/image/current_size; data-nti-image-full self/image/full_size/url; data-nti-image-half self/image/half_size/url; data-nti-image-quarter self/image/quarter_size/url" />
+<img tal:condition="self/style" crossorigin="anonymous" tal:attributes="src self/image/url; id self/id; alt self/source; style self/style/inline; data-nti-image-size self/image/current_size; data-nti-image-full self/image/full_size/url; data-nti-image-half self/image/half_size/url; data-nti-image-quarter self/image/quarter_size/url" />
 </span>
 
 name: ntiincludenoannotationgraphics
-<span itemprop="nti-data-markupdisabled">
-<img tal:condition="not:self/style" tal:attributes="src self/image/url; id self/id; alt self/source; style string:width:${self/image/width/px};; height:${self/image/height/px}" />
-<img tal:condition="self/style" tal:attributes="src self/image/url; id self/id; alt self/source; style self/style/inline" />
+<span tal:condition="not:self/image/resizeable" itemprop="nti-data-markupdisabled">
+<img tal:condition="not:self/style" crossorigin="anonymous" tal:attributes="src self/image/url; id self/id; alt self/source; style string:width:${self/image/width/px};; height:${self/image/height/px}; data-nti-image-size self/image/current_size; data-nti-image-full self/image/full_size/url; data-nti-image-half self/image/half_size/url; data-nti-image-quarter self/image/quarter_size/url" />
+<img tal:condition="self/style" crossorigin="anonymous" tal:attributes="src self/image/url; id self/id; alt self/source; style self/style/inline; data-nti-image-size self/image/current_size; data-nti-image-full self/image/full_size/url; data-nti-image-half self/image/half_size/url; data-nti-image-quarter self/image/quarter_size/url" />
+</span>
+<span tal:condition="self/image/resizeable" itemprop="nti-data-markupdisabled nti-data-resizeable">
+<img tal:condition="not:self/style" crossorigin="anonymous" tal:attributes="src self/image/url; id self/id; alt self/source; style string:width:${self/image/width/px};; height:${self/image/height/px}; data-nti-image-size self/image/current_size; ddata-nti-image-full self/image/full_size/url; data-nti-image-half self/image/half_size/url; data-nti-image-quarter self/image/quarter_size/url" />
+<img tal:condition="self/style" crossorigin="anonymous" tal:attributes="src self/image/url; id self/id; alt self/source; style self/style/inline; data-nti-image-size self/image/current_size; ddata-nti-image-full self/image/full_size/url; data-nti-image-half self/image/half_size/url; data-nti-image-quarter self/image/quarter_size/url" />
 </span>
