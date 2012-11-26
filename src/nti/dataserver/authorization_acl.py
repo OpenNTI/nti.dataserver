@@ -16,12 +16,15 @@ from zope import component
 import pyramid.security
 
 from nti.utils.property import alias
+from nti.ntiids import ntiids
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import authorization as auth
 from nti.dataserver import authentication
 from nti.contentlibrary import interfaces as content_interfaces
 from nti.externalization import interfaces as ext_interfaces
+
+from nti.dataserver import traversal
 
 class _ACE(object):
 	"""
@@ -172,7 +175,7 @@ def acl_from_file( path_or_file ):
 	return _acl_from_ace_lines( lines, provenance )
 
 def _acl_from_ace_lines( lines, provenance ):
-	return _ACL( [ace_from_string(x.strip(),provenance=provenance)
+	return _ACL( [ace_from_string(x.strip(), provenance=provenance)
 				  for x in lines
 				  if x and x.strip() and not x.strip().startswith( '#' )] )
 
@@ -265,8 +268,8 @@ class ACLDecorator(object):
 			logger.warn( "Failed to get ACL on POSKeyError" )
 			result.__acl__ = ()
 
+@interface.implementer(nti_interfaces.IACL)
 class _ACL(list):
-	interface.implements(nti_interfaces.IACL)
 
 	def __add__( self, other ):
 		"We allow concatenating single ACE objects to an ACL to produce a new ACL"
@@ -467,7 +470,7 @@ class _ShareableModeledContentACLProvider(AbstractCreatedAndSharedACLProvider):
 
 def _provider_admin_ace( obj ):
 	localname = str(obj.Provider).split('@')[0]
-	return ace_allowing( 'role:' + localname + '.Admin', nti_interfaces.ALL_PERMISSIONS )
+	return ace_allowing( nti_interfaces.IGroup('role:' + localname + '.Admin'), nti_interfaces.ALL_PERMISSIONS )
 
 @component.adapter(nti_interfaces.ISectionInfo)
 class _SectionInfoACLProvider(_CreatedACLProvider):
@@ -572,28 +575,51 @@ class _LibraryTOCEntryACLProvider(object):
 @component.adapter( content_interfaces.IDelimitedHierarchyEntry )
 class _DelimitedHierarchyEntryACLProvider(object):
 	"""
-	Checks a filesystem entry for the existence of a '.nti_acl' file, and if present,
-	reads an ACL from it. Otherwise, the ACL allows all authenticated
-	users access.
+	Checks a hierarchy entry for the existence of a '.nti_acl' file, and if present,
+	reads an ACL from it.
+
+	Otherwise, the ACL allows all authenticated users access.
 	"""
 
-	def __init__( self, obj ):
-		self._obj = obj
-		acl_string = obj.read_contents_of_sibling_entry( '.nti_acl' )
+	def __init__( self, context ):
+		acl_string = context.read_contents_of_sibling_entry( '.nti_acl' )
 		if acl_string is not None:
 			try:
-				self.__acl__ = _acl_from_ace_lines( acl_string.splitlines(), obj )
+				self.__acl__ = self._acl_from_string(context, acl_string )
 			except (ValueError,AssertionError,TypeError):
-				logger.exception( "Failed to read acl from %s; denying all access.", obj )
+				logger.exception( "Failed to read acl from %s; denying all access.", context )
 				self.__acl__ = _ACL( (ace_denying( nti_interfaces.EVERYONE_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _DelimitedHierarchyEntryACLProvider ), ) )
 		else:
 			self.__acl__ = _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _DelimitedHierarchyEntryACLProvider ), ) )
 
+	def _acl_from_string(self, context, acl_string):
+		return _acl_from_ace_lines( acl_string.splitlines(), context )
+
+@interface.implementer( nti_interfaces.IACLProvider )
+@component.adapter( content_interfaces.IDelimitedHierarchyContentUnit )
+class _DelimitedHierarchyContentUnitACLProvider(_DelimitedHierarchyEntryACLProvider):
+	"""
+	For content units (and packages) that are part of a hierarchy,
+	read the ACL file if they have one, and also add read-access to a pseudo-group
+	based on the NTIID of the closest containing content package.
+	"""
+
+	def _acl_from_string( self, context, acl_string ):
+		acl = super(_DelimitedHierarchyContentUnitACLProvider,self)._acl_from_string( context, acl_string )
+		package = traversal.find_interface( context, content_interfaces.IContentPackage, strict=False )
+		if package is not None and package.ntiid:
+			parts = ntiids.get_parts( package.ntiid )
+			if parts and parts.provider and parts.specific:
+				acl = acl + ace_allowing( nti_interfaces.IGroup('content-role:' + parts.provider.lower() + ':' + parts.specific.lower()),
+										  auth.ACT_READ,
+										  _DelimitedHierarchyContentUnitACLProvider )
+		return acl
+
+@component.adapter(nti_interfaces.IFriendsList)
 class _FriendsListACLProvider(_CreatedACLProvider):
 	"""
 	Makes friends lists readable by those it contains.
 	"""
-	component.adapts(nti_interfaces.IFriendsList)
 
 	def __init__( self, obj ):
 		super(_FriendsListACLProvider,self).__init__( obj )

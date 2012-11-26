@@ -93,14 +93,13 @@ ACT_READ     = Permission('zope.View')
 ROLE_ADMIN = 'role:nti.admin'
 
 
+@interface.implementer(nti_interfaces.IGroupMember)
+@component.adapter(annotation.interfaces.IAttributeAnnotatable)
 class _PersistentGroupMember(persistent.Persistent):
 	"""
 	Implementation of the group membership by
 	storing a collection.
 	"""
-
-	interface.implements(nti_interfaces.IGroupMember)
-	component.adapts(annotation.interfaces.IAttributeAnnotatable)
 
 	def __init__( self ):
 		# We store strings in this set, and adapt them to
@@ -111,8 +110,7 @@ class _PersistentGroupMember(persistent.Persistent):
 	def groups(self):
 		return (nti_interfaces.IGroup(g) for g in self._groups)
 
-def _persistent_group_member_factory( obj ):
-	return annotation.factory(_PersistentGroupMember)(obj)
+_persistent_group_member_factory = annotation.factory(_PersistentGroupMember)
 
 # Note that principals should be comparable based solely on their ID.
 # TODO: Should we enforce case-insensitivity here?
@@ -134,12 +132,12 @@ class _AbstractPrincipal(object):
 	def __repr__(self):
 		return "%s('%s')" % (self.__class__.__name__, unicode(self.id).encode('unicode_escape'))
 
+@interface.implementer(nti_interfaces.IPrincipal)
+@component.adapter(basestring)
 class _StringPrincipal(_AbstractPrincipal):
 	"""
 	Allows any string to be an IPrincipal.
 	"""
-	interface.implements(nti_interfaces.IPrincipal)
-	component.adapts(basestring)
 	description = ''
 
 	def __init__(self,name):
@@ -153,7 +151,12 @@ def _system_user_factory( string ):
 
 @interface.implementer(nti_interfaces.IGroup)
 @component.adapter(basestring)
-class _EveryoneGroup(_StringPrincipal):
+class _StringGroup(_StringPrincipal):
+	"""
+	Allows any string to be an IGroup.
+	"""
+
+class _EveryoneGroup(_StringGroup):
 	"Everyone, authenticated or not."
 
 	REQUIRED_NAME = nti_interfaces.EVERYONE_GROUP_NAME
@@ -176,6 +179,7 @@ def _string_principal_factory( name ):
 		return None
 
 	# Check for a named adapter first, since we are the no-name factory.
+	# Note that this might return an IGroup
 	result = component.queryAdapter( name,
 									 nti_interfaces.IPrincipal,
 									 name=name )
@@ -183,6 +187,25 @@ def _string_principal_factory( name ):
 		result = _StringPrincipal( name )
 
 	return result
+
+def _string_group_factory( name ):
+	if not name:
+		return None
+
+	# Try the named factory
+	result = component.queryAdapter( name,
+									 nti_interfaces.IGroup,
+									 name=name )
+	if result is None:
+		# Try the principal factory, see if something is registered
+		result = component.queryAdapter( name,
+										 nti_interfaces.IPrincipal,
+										 name=name )
+
+	if nti_interfaces.IGroup.providedBy( result ):
+		return result
+	return _StringGroup(name)
+
 
 @interface.implementer(nti_interfaces.IPrincipal)
 @component.adapter(nti_interfaces.IUser)

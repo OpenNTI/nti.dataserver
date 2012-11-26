@@ -114,6 +114,10 @@ class IDelimitedHierarchyEntry(interface.Interface,dub_interfaces.IDCTimes):
 	The primary reason for this interface is as a facade supporting both local
 	filesystem storage and Amazon S3 (:mod:`boto.s3`) storage.
 
+	The ``__parent__`` of this entry should be an :class:`IDelimitedHierarchyEntry` representing
+	its parent in the tree and having the same ``key`` as :meth:`get_parent_key`. Note
+	that this interface is commonly mixed-in with :class:`IContentUnit` which also defines
+	the ``__parent__`` attribute.
 	"""
 
 	key = schema.Object( IDelimitedHierarchyKey, title="The key designating this entry in the hierarchy." )
@@ -156,9 +160,12 @@ class IDelimitedHierarchyEntry(interface.Interface,dub_interfaces.IDCTimes):
 		"""
 
 class IDelimitedHierarchyContentUnit(IContentUnit,IDelimitedHierarchyEntry):
-	pass
+	"""
+	The unification of :class:`IContentUnit` and :class:`IDelimitedHierarchyEntry`, to make writing adapters
+	easier. All content units provided by this package will implement this interface.
+	"""
 
-class IDelimitedHierarchyContentPackage(IContentPackage,IDelimitedHierarchyEntry):
+class IDelimitedHierarchyContentPackage(IContentPackage,IDelimitedHierarchyContentUnit):
 	pass
 
 class IS3Bucket(IDelimitedHierarchyBucket): # .boto_s3 will patch these to be IZContained
