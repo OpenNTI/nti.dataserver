@@ -186,18 +186,17 @@ class WordMatchScanner(BasicScanner):
 				yield match_range
 
 @interface.implementer(interfaces.ICensoredContentScanner)
-class PipeLineMatchScanner(object):
+class PipeLineMatchScanner(BasicScanner):
 
 	def __init__( self, scanners=()):
 		self.scanners = scanners
 		
-	def scan( self, content_fragment ):
-		yielded = []
+	def do_scan( self, content_fragment, ranges=[]):
 		content_fragment = content_fragment.lower()
 		for s in self.scanners:
-			ranges = s.do_scan(content_fragment, yielded)
-			for match_range in ranges:
-				yielded.append(match_range)
+			matched_ranges = s.do_scan(content_fragment, ranges)
+			for match_range in matched_ranges:
+				ranges.append(match_range)
 				yield match_range
 
 @interface.implementer(interfaces.ICensoredContentScanner)
