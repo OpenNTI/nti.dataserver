@@ -30,8 +30,11 @@ from nti.contentfragments import interfaces
 
 special_chars = r"?(){}[].^*+-~"
 special_chars_map = {c:u'\\' for c in special_chars}
-punkt_re_char = r'[\?|!|\(|\)|"|\'|`|\{|\}|\[|\]|:|;|,|\.|\^|%|&|#|\*|@|$|&|\+|\-|<|>|=|_|\~|\\|\s]'
-
+def punkt_re_char():
+	# content processing uses content fragments
+	from nti.contentprocessing import default_punk_char_expression
+	return default_punk_char_expression
+	
 def _get_censored_fragment(org_fragment, new_fragment):
 	try:
 		result = org_fragment.censored( new_fragment )
@@ -120,8 +123,8 @@ class RegExpMatchScanner(BasicScanner):
 		r=[]
 		for i,c in enumerate(word):
 			r.append(special_chars_map.get(c,u'') + c)
-			if not c.isspace() and not c in punkt_re_char and i < len(word)-1:
-				r.append("(%s)*" % punkt_re_char)
+			if not c.isspace() and not c in punkt_re_char() and i < len(word)-1:
+				r.append("(%s)*" % punkt_re_char())
 		e = ''.join(r)
 		p = re.compile(e, flags)	
 		return p
@@ -148,7 +151,7 @@ def TrivialMatchScannerExternalFile( file_path ):
 class WordMatchScanner(BasicScanner):
 
 	def __init__( self, white_words=(), prohibited_words=() ):
-		self.char_tester = re.compile(punkt_re_char)
+		self.char_tester = re.compile(punkt_re_char())
 		self.white_words = tuple([word.lower() for word in white_words])
 		self.prohibited_words = tuple([word.lower() for word in prohibited_words])
 
