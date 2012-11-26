@@ -102,6 +102,15 @@ class TrivialMatchScanner(BasicScanner):
 				idx = content_fragment.find( x, idx + len(x) )
 
 @interface.implementer(interfaces.ICensoredContentScanner)
+def TrivialMatchScannerExternalFile( file_path ):
+	"""
+	External files are stored in rot13.
+	"""
+	with open(file_path, 'rU') as src:
+		all_words = {w.strip().encode('rot13').lower() for w in src.readlines()}
+	return TrivialMatchScanner(all_words)
+
+@interface.implementer(interfaces.ICensoredContentScanner)
 class RegExpMatchScanner(BasicScanner):
 
 	def __init__( self, patterns=(), words=()):
@@ -137,15 +146,6 @@ def RegExpMatchScannerExternalFile( file_path ):
 	with open(file_path, 'rU') as src:
 		all_words = {w.strip().encode('rot13').lower() for w in src.readlines()}
 	return RegExpMatchScanner(words=all_words)
-
-@interface.implementer(interfaces.ICensoredContentScanner)
-def TrivialMatchScannerExternalFile( file_path ):
-	"""
-	External files are stored in rot13.
-	"""
-	with open(file_path, 'rU') as src:
-		all_words = {w.strip().encode('rot13').lower() for w in src.readlines()}
-	return TrivialMatchScanner(all_words)
 
 @interface.implementer(interfaces.ICensoredContentScanner)
 class WordMatchScanner(BasicScanner):
@@ -186,46 +186,39 @@ class WordMatchScanner(BasicScanner):
 				yield match_range
 
 @interface.implementer(interfaces.ICensoredContentScanner)
-class WordPlusTrivialMatchScanner(WordMatchScanner, TrivialMatchScanner):
+class PipeLineMatchScanner(object):
 
-	def __init__( self, white_words=(), prohibited_words=(), prohibited_values=()):
-		WordMatchScanner.__init__(self, white_words, prohibited_words)
-		TrivialMatchScanner.__init__(self, prohibited_values)
-
+	def __init__( self, scanners=()):
+		self.scanners = scanners
+		
 	def scan( self, content_fragment ):
 		yielded = []
-		white_words_ranges = []
 		content_fragment = content_fragment.lower()
-		word_ranges = WordMatchScanner.do_scan(self, content_fragment, white_words_ranges)
-		for match_range in word_ranges:
-			yielded.append(match_range)
-			yield match_range
-
-		yielded = yielded + white_words_ranges
-		trivial_ranges = TrivialMatchScanner.do_scan(self, content_fragment, yielded)
-		for match_range in trivial_ranges:
-			yield match_range
-
-@interface.implementer(interfaces.ICensoredContentScanner)
-def ExternalWordPlusTrivialMatchScannerFiles( white_words_path, prohibited_words_path, profanity_path):
-	
-	with open(white_words_path, 'rU') as src:
-		white_words = {x.strip().lower() for x in src.readlines()}
-
-	with open(prohibited_words_path, 'rU') as src:
-		prohibited_words = {x.encode('rot13').strip().lower() for x in src.readlines()}
-
-	with open(profanity_path, 'rU') as src:
-		profanity_list = {x.encode('rot13').strip().lower() for x in src.readlines()}
-
-	return WordPlusTrivialMatchScanner(white_words, prohibited_words, profanity_list)
+		for s in self.scanners:
+			ranges = s.do_scan(content_fragment, yielded)
+			for match_range in ranges:
+				yielded.append(match_range)
+				yield match_range
 
 @interface.implementer(interfaces.ICensoredContentScanner)
 def DefaultTrivialProfanityScanner():
-	white_path = resource_filename( __name__, 'white_list.txt' )
-	prohibited_words = resource_filename( __name__, 'prohibited_words.txt' )
-	profanity_values = resource_filename( __name__, 'profanity_list.txt' )
-	return ExternalWordPlusTrivialMatchScannerFiles( white_path, prohibited_words, profanity_values )
+	white_words_path = resource_filename( __name__, 'white_list.txt' )
+	prohibited_words_path = resource_filename( __name__, 'prohibited_words.txt' )
+	profanity_list_path = resource_filename( __name__, 'profanity_list.txt' )
+	
+	with open(white_words_path, 'rU') as src:
+		white_words = {x.strip().lower() for x in src.readlines()}
+		
+	with open(prohibited_words_path, 'rU') as src:
+		prohibited_words = {x.encode('rot13').strip().lower() for x in src.readlines()}
+	
+	with open(profanity_list_path, 'rU') as src:
+		profanity_list = {x.encode('rot13').strip().lower() for x in src.readlines()}
+
+	scanners = []
+	scanners.append(WordMatchScanner(white_words, prohibited_words))
+	scanners.append(TrivialMatchScanner(profanity_list))
+	return PipeLineMatchScanner(scanners)
 
 @interface.implementer(interfaces.ICensoredContentPolicy)
 class DefaultCensoredContentPolicy(object):
