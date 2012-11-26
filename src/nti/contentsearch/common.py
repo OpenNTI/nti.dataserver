@@ -97,8 +97,6 @@ canvastextshape_ = 'canvastextshape'
 indexable_type_names = (note_, highlight_, redaction_, messageinfo_)
 indexable_types_order = { x:p for p,x in enumerate(indexable_type_names) }
 
-default_punk_char_expression =  r'[\?|!|(|)|"|\'|`|{|}|\[|\]|:|;|,|\.|\^|%|&|#|*|@|$|&|+|\-|<|>|=|_|\~|\\|\s]'
-
 ascending_ = u'ascending'
 descending_ = u'descending'
 
