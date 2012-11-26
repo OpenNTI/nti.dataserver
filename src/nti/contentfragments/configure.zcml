@@ -105,7 +105,7 @@
 
 	<!-- Censoring -->
 	<!-- Defaults -->
-	<utility factory=".censor.DefaultTrivialProfanityScanner" />
+	<utility factory=".censor._word_plus_trivial_profanity_scanner" />
 	<utility factory=".censor.SimpleReplacementCensoredContentStrategy" />
 	<subscriber handler=".censor.censor_before_object_assigned" />
 

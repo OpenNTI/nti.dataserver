@@ -95,7 +95,8 @@ def test_word_match_scanner():
 	
 def test_pipeline_scanner():
 	profanity_file = resource_filename( __name__, '../profanity_list.txt' )
-	profanity_list = {x.encode('rot13').strip() for x in open(profanity_file, 'rU').readlines()}
+	with open(profanity_file, 'rU') as f:
+		profanity_list = {x.encode('rot13').strip() for x in f.readlines()}
 
 	scanners = []
 	scanners.append(frag_censor.WordMatchScanner((), ('stupid',)))
@@ -114,7 +115,9 @@ def test_pipeline_scanner():
 	
 def test_regexp_match_scanner():
 	profanity_file = resource_filename( __name__, '../profanity_regexp_list.txt' )
-	strat = frag_censor.RegExpMatchScannerExternalFile(profanity_file)	
+	with open(profanity_file, 'rU') as f:
+		profanity_list = {x.encode('rot13').strip() for x in f.readlines()}
+	strat = frag_censor.RegExpMatchScanner(words=profanity_list)
 	
 	bad_val = 'Guvf vf shpxvat fghcvq, lbh ZbgureShpxre onfgneq'.encode( 'rot13' )
 	ranges = strat.sort_ranges(strat.scan(bad_val))
