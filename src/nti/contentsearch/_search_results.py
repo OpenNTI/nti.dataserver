@@ -87,7 +87,8 @@ class _PageableSearchResults(_BaseSearchResults):
 _IndexHit = namedtuple('_IndexHit', 'obj score query')
 interface.alsoProvides(_IndexHit, search_interfaces.IIndexHit)
 	
-class _IndexHitMetaData(object):
+@interface.implementer(search_interfaces.IIndexHitMetaDataTracker)
+class _IndexHitMetaDataTracker(object):
 	
 	def __init__(self):
 		self._container_count = defaultdict(int)
@@ -118,7 +119,7 @@ class _SearchResults(_PageableSearchResults):
 	def __init__(self, query):
 		super(_SearchResults, self).__init__(query)
 		self._hits = []
-		self._ihitmeta = _IndexHitMetaData()
+		self._ihitmeta = _IndexHitMetaDataTracker()
 
 	def get_hits(self):
 		return self._hits
