@@ -18,31 +18,43 @@ name: maketitle
 # TODO: Should we use HTML5 microdata to include the NTIID?
 
 name: part chapter section
-<div class="chapter title" tal:attributes="id self/id; ntiid self/ntiid; data-ntiid self/ntiid" tal:content="self/title">Morbi metus pede, imperdiet vitae</div>
+<div tal:attributes="id self/id; ntiid self/ntiid; data-ntiid self/ntiid">
+<div class="chapter title" tal:content="self/title">Morbi metus pede, imperdiet vitae</div>
 <p class="placeholder"></p>
 <p tal:replace="self"></p>
+</div>
 
 
 name: subsection
-<div class="subsection title" tal:attributes="id self/id; ntiid self/ntiid; data-ntiid self/ntiid" tal:content="self/title">Cras dignissim</div>
+<div tal:attributes="id self/id; ntiid self/ntiid; data-ntiid self/ntiid">
+<div class="subsection title" tal:content="self/title">Cras dignissim</div>
 <p tal:replace="self"></p>
+</div>
 
 
 name: subsubsection
-<div class="subsubsection title" tal:attributes="id self/id; ntiid self/ntiid; data-ntiid self/ntiid" tal:content="self/title">Velit id pharetra</div>
+<div tal:attributes="id self/id; ntiid self/ntiid; data-ntiid self/ntiid">
+<div class="subsubsection title" tal:content="self/title">Velit id pharetra</div>
 <p tal:replace="self"></p>
+</div>
 
 
 name: paragraph
-<div class="paragraph title" tal:attributes="id self/id; ntiid self/ntiid; data-ntiid self/ntiid" tal:content="self/title">Donec elementum mauris vel urna</div>
+<div tal:attributes="id self/id; ntiid self/ntiid; data-ntiid self/ntiid">
+<div class="paragraph title" tal:content="self/title">Donec elementum mauris vel urna</div>
 <p tal:replace="self"></p>
+</div>
 
 
 name: subparagraph
-<div class="subparagraph title" tal:attributes="id self/id; ntiid self/ntiid" tal:content="self/title">Duis orci</div>
+<div tal:attributes="id self/id; ntiid self/ntiid; data-ntiid self/ntiid">
+<div class="subparagraph title" tal:content="self/title">Duis orci</div>
 <p tal:replace="self"></p>
+</div>
 
 
 name: subsubparagraph
-<div class="subsubparagraph title" tal:attributes="id self/id; ntiid self/ntiid; data-ntiid self/ntiid" tal:content="self/title">Mauris fringilla, metus</div>
+<div tal:attributes="id self/id; ntiid self/ntiid; data-ntiid self/ntiid">
+<div class="subsubparagraph title" tal:content="self/title">Mauris fringilla, metus</div>
 <p tal:replace="self"></p>
+</div>
