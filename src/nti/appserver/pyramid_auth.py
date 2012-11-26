@@ -432,4 +432,4 @@ class OUAdminFactory(object):
 
 	@property
 	def groups(self):
-		return [ nti_interfaces.IPrincipal( "role:OU.Admin" ) ]
+		return [ nti_interfaces.IGroup( "role:OU.Admin" ) ]
