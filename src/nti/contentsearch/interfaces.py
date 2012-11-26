@@ -581,7 +581,7 @@ class IBaseHit(interface.Interface):
 class IIndexHit(IBaseHit, IMinimalSequence):
 	"""represent a search hit stored in a ISearchResults"""
 	obj = schema.Object(interface.Interface, title="hit object", required=True, readonly=True)
-	
+		
 class ISearchHit(IBaseHit, IMapping, ext_interfaces.IExternalObject):
 	"""represent an externalized search hit"""
 	oid = schema.TextLine(title="hit unique id", required=True, readonly=True)
@@ -590,7 +590,16 @@ class ISearchHit(IBaseHit, IMapping, ext_interfaces.IExternalObject):
 class ISearchHitComparator(interface.Interface):
 	def compare(a, b):
 		"""Compare arguments for for order. a or b can beither a IndexHit or ISearchHit"""
+	
+class IIndexHitMetaDataTracker(interface.Interface):
+	"""Class to track index hit meta data"""
+	
+	def track(ihit):
+		"""track any metadata from the specified index hit"""
 		
+	def __iadd__(other):
+		pass
+			
 class IBaseSearchResults(interface.Interface):
 	query = schema.Object(ISearchQuery, title="search query")
 	
@@ -603,6 +612,9 @@ class ISearchResults(IBaseSearchResults):
 	
 	def sort():
 		"""sort the results based on the sortBy query param"""
+		
+	def __iadd__(other):
+		pass
 		
 class ISuggestResults(IBaseSearchResults):
 	suggestions = schema.Set(value_type=schema.TextLine(title="suggested word"),
