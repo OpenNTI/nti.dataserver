@@ -383,9 +383,16 @@ class ICompleteUserProfile(IRestrictedUserProfile):
 		description="Your affiliation, such as school name",
 		required=False)
 
+	# TODO: Does this belong here?
+	transition_time = schema.Float(
+		title='Transition time',
+		description="Time at which the user transition from a restricted to a full user",
+		required=False)
+	
 ICompleteUserProfile['home_page'].setTaggedValue( TAG_HIDDEN_IN_UI, True )
 ICompleteUserProfile['description'].setTaggedValue( TAG_HIDDEN_IN_UI, True )
 ICompleteUserProfile['location'].setTaggedValue( TAG_HIDDEN_IN_UI, True )
+ICompleteUserProfile['transition_time'].setTaggedValue( TAG_HIDDEN_IN_UI, True )
 
 class IEmailRequiredUserProfile(ICompleteUserProfile):
 	"""
