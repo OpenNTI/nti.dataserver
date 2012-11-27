@@ -42,7 +42,7 @@ def _get_user_info(useindex=False, verbose=False):
 			if verbose:
 				print('Could not cast "%s" to ICompleteUserProfile' % user)
 		elif verbose:
-			print('\t'.join((user.username, profile.opt_in_email_communication, profile.email or u'')))
+			print('\t'.join((user.username, str(profile.opt_in_email_communication), profile.email or u'')))
 		elif useindex or profile.opt_in_email_communication:
 			print('\t'.join((user.username, profile.email or u'')))
 		
