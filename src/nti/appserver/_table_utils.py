@@ -64,12 +64,18 @@ class NoteLikeBodyColumn(column.GetAttrColumn):
 				body = ["<div class='canvas'>&lt;CANVAS OBJECT of length %s &gt;" % len(part)]
 				for canvas_part in part:
 					if hasattr( canvas_part, 'url' ):
-						# Write it out as a link to the image
+						# Write it out as a link to the image.
+						# TODO: This is a bit of a hack
 						# TODO: Are there any permissions problems with this? Potentially?
 						# The data-url wouldn't have them. In notification emails, this
 						# could also be a problem
-						link = canvas_part.toExternalObject()['url']
-						body.append( "<img src='%s' />" % render_link(link) )
+						part_ext = canvas_part.toExternalObject()
+						__traceback_info__ = part_ext
+						link = part_ext['url']
+						# TODO: Apparently there are some unmigrated objects that don't have _file
+						# hidden away somewhere?
+						link_external = render_link(link) if nti_interfaces.ILink.providedBy( link ) else link
+						body.append( "<img src='%s' />" % link_external )
 				body.append( '</div>' )
 				parts.append( '<br />'.join( body ) )
 			elif part:
