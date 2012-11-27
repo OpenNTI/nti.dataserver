@@ -67,7 +67,7 @@ class _EntitySummaryExternalObject(object):
 		names = interfaces.IFriendlyNamed( entity )
 		extDict['realname'] = names.realname or entity.username
 		extDict['alias'] = names.alias or names.realname or entity.username
-		extDict['CreatedTime'] = getattr( self, 'createdTime', 42 ) # for migration
+		extDict['CreatedTime'] = getattr( entity, 'createdTime', 42 ) # for migration
 		extDict.__parent__ = entity.__parent__
 		extDict.__name__ = entity.__name__
 		extDict.__acl__ = auth.ACL( entity )
