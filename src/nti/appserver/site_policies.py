@@ -521,7 +521,7 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 				if getattr( orig_profile, name, None ): # Only copy things that have values. Let defaults be used otherwise
 					setattr( new_profile, name, getattr( orig_profile, name ) )
 					
-			setattr( new_profile, 'transition_time', time.time() )
+		user.transitionTime = time.time()
 			
 		notify( app_interfaces.UserUpgradedEvent( user,
 												  restricted_interface=self.IF_WOUT_AGREEMENT, restricted_profile=orig_profile,

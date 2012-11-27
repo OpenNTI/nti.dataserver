@@ -93,7 +93,7 @@ class TestApplicationCoppaAdmin(SharedApplicationTestBase):
 
 			assert_that( user_interfaces.IFriendlyNamed( user ), has_property( 'realname', 'Jason' ) )
 			assert_that( user_interfaces.IUserProfile( user ), has_property( 'contact_email', 'jason.madden@nextthought.com' ) )
-			assert_that( user_interfaces.IUserProfile( user ), has_property( 'transition_time', greater_than_or_equal_to(now)) )
+			assert_that( user, has_property( 'transitionTime', greater_than_or_equal_to(now)) )
 			
 			upgrade_event = eventtesting.getEvents( app_interfaces.IUserUpgradedEvent )[0]
 			assert_that( upgrade_event, has_property( 'user', user ) )
