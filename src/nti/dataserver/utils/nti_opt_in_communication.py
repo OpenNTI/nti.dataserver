@@ -38,7 +38,12 @@ def _get_user_info(useindex=False, verbose=False):
 		
 	for user in users:
 		profile = user_interfaces.ICompleteUserProfile(user, None)
-		if profile is not None and (useindex or profile.opt_in_email_communication):
+		if profile is None:
+			if verbose:
+				print('Could not cast "%s" to ICompleteUserProfile' % user)
+		elif verbose:
+			print('\t'.join((user.username, profile.opt_in_email_communication, profile.email or u'')))
+		elif useindex or profile.opt_in_email_communication:
 			print('\t'.join((user.username, profile.email or u'')))
 		
 if __name__ == '__main__':
