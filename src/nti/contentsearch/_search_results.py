@@ -91,16 +91,25 @@ interface.alsoProvides(_IndexHit, search_interfaces.IIndexHit)
 class _IndexHitMetaDataTracker(object):
 	
 	def __init__(self):
+		self._last_modified = 0
 		self._container_count = defaultdict(int)
 	
 	def track(self, ihit):
-		rsr = search_interfaces.IContainerIDResolver(ihit.obj, None)
-		containerId = rsr.get_containerId() if rsr is not None else '++unknown-container'
+		# unique container count
+		rsr = search_interfaces.IContainerIDResolver(ihit.obj)
+		containerId = rsr.get_containerId() or u'++unknown-container'
 		self._container_count[containerId] = self._container_count[containerId] + 1
 		
+		# last modified
+		rsr = search_interfaces.ILastModifiedResolver(ihit.obj)
+		self._last_modified  = max(self._last_modified, rsr.get_last_modified() or 0)
+		
 	def __iadd__(self, other):
+		# unique container count
 		for k,v in other._container_count.items():
 			self._container_count[k] = self._container_count[k] + v
+		# last modified
+		self._last_modified = max(self._last_modified, other._last_modified)
 		return self
 		
 class _MetaSearchResults(type):
