@@ -39,11 +39,15 @@ def _get_user_info(useindex=False, verbose=False):
 	for user in users:
 		if not nti_interfaces.IUser.providedBy(user):
 			continue
-		profile = user_interfaces.ICompleteUserProfile(user)
+		
+		profile = user_interfaces.IUserProfile( user )
+		email = getattr( profile, 'email', None )
+		opt_in = getattr( profile, 'opt_in_email_communication', False )
+		
 		if verbose:
-			print('\t'.join((user.username, str(profile.opt_in_email_communication), str(profile.email))))
-		elif useindex or profile.opt_in_email_communication:
-			print('\t'.join((user.username, str(profile.email))))
+			print('\t'.join((user.username, str(opt_in), str(email))))
+		elif useindex or opt_in:
+			print('\t'.join((user.username, str(email))))
 		
 if __name__ == '__main__':
 	main()
