@@ -40,6 +40,7 @@ import nameparser
 import datetime
 import urllib
 import string
+import time
 
 def get_possible_site_names(request=None, include_default=False):
 	"""
@@ -519,6 +520,9 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 
 				if getattr( orig_profile, name, None ): # Only copy things that have values. Let defaults be used otherwise
 					setattr( new_profile, name, getattr( orig_profile, name ) )
+					
+			setattr( new_profile, 'transition_time', time.time() )
+			
 		notify( app_interfaces.UserUpgradedEvent( user,
 												  restricted_interface=self.IF_WOUT_AGREEMENT, restricted_profile=orig_profile,
 												  upgraded_interface=self.IF_WITH_AGREEMENT, upgraded_profile=new_profile,
