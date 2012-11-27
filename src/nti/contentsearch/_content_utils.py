@@ -74,6 +74,9 @@ def _process_words(words):
 
 @interface.implementer(search_interfaces.IContentResolver)
 class _BasicContentResolver(object):
+	
+	__slots__ = 'obj'
+	
 	def __init__( self, obj ):
 		self.obj = obj
 
@@ -210,7 +213,8 @@ class _CanvasTextShapeContentResolver(_BasicContentResolver):
 @component.adapter(IDict)
 @interface.implementer(	search_interfaces.IContentResolver,
 						search_interfaces.INTIIDResolver,
-						search_interfaces.IContainerIDResolver)
+						search_interfaces.IContainerIDResolver,
+						search_interfaces.ILastModifiedResolver)
 class _DictContentResolver(object):
 
 	def __init__( self, obj ):
