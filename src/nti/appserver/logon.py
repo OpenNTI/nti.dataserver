@@ -9,6 +9,13 @@ or :func:`password_login`.
 
 A login session is terminated with :func:`logout`.
 
+OpenID
+======
+
+Attribute exchange is used to collect permissions from providers. The
+URI used as the `attribute type identifier <http://openid.net/specs/openid-attribute-exchange-1_0.html#attribute-name-definition>`_
+is in :const:`AX_TYPE_CONTENT_ROLES`
+
 $Id$
 """
 
@@ -17,8 +24,8 @@ __docformat__ = "restructuredtext en"
 
 import logging
 logger = logging.getLogger(__name__)
-# Clean up the logging of openid, which writes to stderr by default. This is actually
-# the recommended approach
+# Clean up the logging of openid, which writes to stderr by default. Patching
+# the module like this is actually the recommended approach
 import openid.oidutil
 openid.oidutil.log = logging.getLogger('openid').info
 
@@ -70,6 +77,20 @@ REL_LOGIN_OPENID = 'logon.openid' #: See :func:`openid_login`
 REL_LOGIN_FACEBOOK = 'logon.facebook' #: See :func:`facebook_oauth1`
 REL_LOGIN_LOGOUT = 'logon.logout' #: See :func:`logout`
 
+ROUTE_OPENID_RESPONSE = 'logon.openid.response'
+
+#: The URI used as in attribute exchange to request the content to which
+#: the authenticated entity has access. The attribute value type is defined
+#: as a list of unlimited length, each entry of which refers to a specific
+#: :class:`nti.contentlibrary.interfaces.IContentPackage`. Certain providers
+#: may have special mapping rules, but in general, each entry is the specific local
+#: part of the NTIID of that content package (and the provider is implied from the
+#: OpenID domain). These will be turned into groups that the :class:`nti.dataserver.interfaces.IUser`
+#: is a member of; see :class:`nti.dataserver.interfaces.IGroupMember` and :mod:`nti.dataserver.authorization_acl`.
+#:
+#: The NTIID of each content package thus referenced should be checked to be sure it came from the
+#: OpenID domain.
+AX_TYPE_CONTENT_ROLES = 'tag:nextthought.com,2012:ax/contentroles/1'
 
 # The time limit for a GET request during
 # the authentication process
@@ -491,7 +512,73 @@ def password_logon(request):
 
 import pyramid_openid.view
 
+from zope.proxy import non_overridable
+from zope.proxy.decorator import SpecificationDecoratorBase
+
+# Pyramid_openid wants to read its settings from the global
+# configuration at request.registry.settings. We may want to do things differently on different
+# virtual sites or for different users. Thus, we proxy the path to
+# request.registry.settings.
+
+class _PyramidOpenidRegistryProxy(SpecificationDecoratorBase):
+
+	def __init__( self, base ):
+		SpecificationDecoratorBase.__init__( self, base )
+		self._settings = dict(base.settings)
+
+	@non_overridable
+	@property
+	def settings(self):
+		return self._settings
+
+class _PyramidOpenidRequestProxy(SpecificationDecoratorBase):
+
+	def __init__( self, base ):
+		SpecificationDecoratorBase.__init__( self, base )
+		self.registry = _PyramidOpenidRegistryProxy( base.registry )
+
+_OPENID_FIELD_NAME = 'openid2'
+def _openid_configure( request ):
+	"""
+	Configure the settings needed for pyramid_openid on this request.
+	"""
+	# Here, we set up the sreg and ax values
+
+	settings = { 'openid.param_field_name': _OPENID_FIELD_NAME,
+				 'openid.success_callback': 'nti.appserver.logon:_openidcallback',
+				# Google uses a weird mix of namespaces. It only supports these values, plus
+				# country (http://code.google.com/apis/accounts/docs/OpenID.html#endpoint)
+				 'openid.ax_required': 'email=http://schema.openid.net/contact/email firstname=http://axschema.org/namePerson/first lastname=http://axschema.org/namePerson/last language=http://axschema.org/pref/language',
+				 'openid.ax_optional': 'content_roles=' + AX_TYPE_CONTENT_ROLES,
+				 'openid.sreg_required': 'email fullname nickname language' }
+	request.registry.settings.update( settings )
+
+from openid.extensions import ax
+# ensure the patch is needed and going to apply correctly
+assert pyramid_openid.view.ax is ax
+assert 'AttrInfo' not in pyramid_openid.view.__dict__
+
+class _AttrInfo(ax.AttrInfo):
+	"""
+	Pyramid_openid provides no way to specify the 'count' value, but we
+	need to set it to unlimited for :const:`AX_TYPE_CONTENT_ROLES` (because the default
+	is one and the provider is not supposed to return more than that). So we subclass
+	and monkey patch to change the value. (Subclassing ensures that isinstance checks continue
+	to work)
+	"""
+
+	def __init__( self, type_uri, **kwargs ):
+		if type_uri == AX_TYPE_CONTENT_ROLES:
+			kwargs['count'] = ax.UNLIMITED_VALUES
+		super(_AttrInfo,self).__init__( type_uri, **kwargs )
+
+ax.AttrInfo = _AttrInfo
+
 def _openid_login(context, request, openid='https://www.google.com/accounts/o8/id', params=None):
+	"""
+	Wrapper around :func:`pyramid_openid.view.verify_openid` that takes care of some error handling
+	and settings.
+	"""
 	if params is None:
 		params = request.params
 	if 'oidcsum' not in params:
@@ -499,14 +586,21 @@ def _openid_login(context, request, openid='https://www.google.com/accounts/o8/i
 		return _create_failure_response( request, error="Invalid params; missing oidcsum" )
 
 
-	openid_field = request.registry.settings.get('openid.param_field_name', 'openid')
-	nrequest = pyramid.request.Request.blank( request.route_url( 'logon.google.result', _query=params ),
+	openid_field = _OPENID_FIELD_NAME
+	# pyramid_openid routes back to whatever URL we initially came from;
+	# we always want it to be from our response wrapper
+	nrequest = pyramid.request.Request.blank( request.route_url( ROUTE_OPENID_RESPONSE, _query=params ),
 											  # In theory, if we're constructing the URL correctly, this is enough
 											  # to carry through HTTPS info
 											  base_url=request.host_url,
 											  POST={openid_field: openid } )
-	logger.debug( "Directing pyramid request to %s", nrequest )
 	nrequest.registry = request.registry
+	nrequest = _PyramidOpenidRequestProxy( nrequest )
+	assert request.registry is not nrequest.registry
+	assert request.registry.settings is not nrequest.registry.settings
+	_openid_configure( nrequest )
+	logger.debug( "Directing pyramid request to %s", nrequest )
+
 	# If the discover process fails, the view will do two things:
 	# (1) Flash a message in the session queue request.settings.get('openid.error_flash_queue', '')
 	# (2) redirect to request.settings.get( 'openid.errordestination', '/' )
@@ -530,6 +624,26 @@ def _openid_login(context, request, openid='https://www.google.com/accounts/o8/i
 		result = _create_failure_response( request, error=q_after[0] )
 	return result
 
+@view_config(route_name=ROUTE_OPENID_RESPONSE)#, request_method='GET')
+def _openid_response(context, request):
+	"""
+	Process an OpenID response. This exists as a wrapper around
+	:func:`pyramid_openid.view.verify_openid` because that function
+	does nothing on failure, but we need to know about failure. (This is as-of
+	0.3.4; it is fixed in trunk.)
+	"""
+	response = None
+	openid_mode = request.params.get( 'openid.mode', None )
+	if openid_mode != 'id_res':
+		# Failure.
+		response = _create_failure_response( request )
+	else:
+		# If we call directly, we miss the ax settings
+		#response = pyramid_openid.view.verify_openid( context, request )
+		response = _openid_login( context, request )
+	return response
+
+
 @view_config(route_name=REL_LOGIN_GOOGLE, request_method="GET")
 def google_login(context, request):
 	return _openid_login( context, request )
@@ -540,22 +654,6 @@ def openid_login(context, request):
 		return _create_failure_response( request, error='Missing openid' )
 	return _openid_login( context, request, request.params['openid'] )
 
-@view_config(route_name="logon.google.result")#, request_method='GET')
-def google_response(context, request):
-	"""
-	Process an OpenID response from google. This exists as a wrapper around
-	:func:`pyramid_openid.view.verify_openid` because that function
-	does nothing in failure, but we need to know about failure. (This is as-of
-	0.3.4; it is fixed in trunk.)
-	"""
-	response = None
-	openid_mode = request.params.get( 'openid.mode', None )
-	if openid_mode != 'id_res':
-		# Failure.
-		response = _create_failure_response( request )
-	else:
-		response = pyramid_openid.view.verify_openid( context, request )
-	return response
 
 def _deal_with_external_account( request, fname, lname, email, idurl, iface, creator ):
 	#print( "User ", email, " belongs to ", idurl )
@@ -597,12 +695,14 @@ def _openidcallback( context, request, success_dict ):
 	# To try to prevent this, we are using a basic checksum approach to see if things
 	# match: oidcsum. In some cases we can't do that, though
 
-	# Google only supports AX, sreg is ignored. AoPS gives us back nothing
-	# except identity_url
-	# Each of these comes back as a list, for some reason
-	fname = success_dict.get( 'ax', {} ).get('firstname', [''])[0]
-	lname = success_dict.get( 'ax', {} ).get('lastname', [''])[0]
-	email = success_dict.get( 'ax', {} ).get('email', [''])[0]
+	# Google only supports AX, sreg is ignored.
+	# AoPS gives us back nothing, ignoring both AX and sreg
+
+	# In AX, there can be 0 or more values; the openid library always represents
+	# this using a list (see openid.extensions.ax.AXKeyValueMessage.get and pyramid_openid.view.process_provider_response)
+	fname = success_dict.get( 'ax', {} ).get('firstname', ('',))[0]
+	lname = success_dict.get( 'ax', {} ).get('lastname', ('',))[0]
+	email = success_dict.get( 'ax', {} ).get('email', ('',))[0]
 	idurl = success_dict.get( 'identity_url' )
 	oidcsum = request.params.get( 'oidcsum' )
 

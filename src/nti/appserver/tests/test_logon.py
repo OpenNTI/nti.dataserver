@@ -7,6 +7,7 @@ from __future__ import print_function, unicode_literals
 from hamcrest import (assert_that, is_, none, not_none, ends_with, starts_with,)
 from hamcrest import  has_entry, has_length, has_key,  has_item
 from hamcrest import same_instance, greater_than_or_equal_to, greater_than
+from hamcrest import contains_string
 
 from hamcrest.library import has_property
 from nti.tests import provides
@@ -14,7 +15,7 @@ from zope import component
 from zope.component import eventtesting, provideHandler
 
 from nti.appserver import logon
-from nti.appserver.logon import (ping, handshake,password_logon, google_login, openid_login)
+from nti.appserver.logon import (ping, handshake,password_logon, google_login, openid_login, ROUTE_OPENID_RESPONSE)
 from nti.appserver import user_link_provider
 
 from nti.appserver.tests import ConfiguringTestBase
@@ -27,6 +28,7 @@ import pyramid.request
 
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans, WithMockDS
+import zope.testing.loghandler
 #from nti.tests import provides
 
 from zope import interface
@@ -49,6 +51,11 @@ class TestLogon(ConfiguringTestBase):
 		super(TestLogon,self).setUp()
 		eventtesting.clearEvents()
 		del _user_created_events[:]
+		self.log_handler = zope.testing.loghandler.Handler(self)
+
+	def cleanUp(self):
+		self.log_handler.close()
+		super(TestLogon,self).cleanUp()
 
 	def test_unathenticated_ping(self):
 		"An unauthenticated ping returns one link, to the handshake."
@@ -176,13 +183,24 @@ class TestLogon(ConfiguringTestBase):
 		from pyramid.session import UnencryptedCookieSessionFactoryConfig
 		my_session_factory = UnencryptedCookieSessionFactoryConfig('ntidataservercookiesecretpass')
 		self.config.set_session_factory( my_session_factory )
-		self.config.add_route( name='logon.google.result', pattern='/dataserver2/logon.google.result' )
+		self.config.add_route( name=ROUTE_OPENID_RESPONSE, pattern='/dataserver2/' + ROUTE_OPENID_RESPONSE )
 
 		# TODO: This test is assuming we have access to google.com
 		get_current_request().params['oidcsum'] = '1234'
+		self.log_handler.add( 'pyramid_openid.view' )
 		result = google_login( None, get_current_request() )
 		assert_that( result, is_( hexc.HTTPFound ) )
 		assert_that( result.location, starts_with( 'https://www.google.com/accounts/o8/' ) )
+		redir_url = None
+		for r in self.log_handler.records:
+			if (r.getMessage() or '' ).startswith( 'Redirecting to: ' ):
+				redir_url = r.getMessage()[len('Redirecting to: '):]
+				break
+		assert_that( redir_url, is_( not_none() ) )
+		# TODO: These prefixes are probably order dependent and fragile
+		assert_that( redir_url, contains_string( 'ext1=unlimited' ) )
+		assert_that( redir_url, contains_string( 'ax.if_available=ext1' ) )
+
 
 		# An openid request to a non-existant domain will fail
 		# to begin negotiation
