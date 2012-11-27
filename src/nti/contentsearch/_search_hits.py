@@ -15,7 +15,6 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.chatserver import interfaces as chat_interfaces
 from nti.externalization import interfaces as ext_interfaces
 
-from nti.contentsearch.common import epoch_time
 from nti.contentsearch._views_utils import get_ntiid_path
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch._search_highlights import WORD_HIGHLIGHT
@@ -132,7 +131,7 @@ class _WhooshBookSearchHit(_BaseSearchHit):
 		self._data[SNIPPET] = hit[content_]
 		self._data[CONTAINER_ID] = hit[ntiid_]
 		self._data[title_.capitalize()] = hit[title_]
-		self._data[LAST_MODIFIED] = epoch_time(hit[last_modified_])
+		self._data[LAST_MODIFIED] = hit[last_modified_]
 		self.oid = ''.join((hit[ntiid_], u'-', unicode(hit[intid_])))
 			
 	@property

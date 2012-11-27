@@ -18,6 +18,7 @@ from nti.contentprocessing import default_ngram_minsize
 from nti.contentprocessing import interfaces as cp_interfaces
 from nti.contentprocessing import default_word_tokenizer_pattern
 
+from nti.contentsearch.common import epoch_time
 from nti.contentsearch._search_query import QueryObject
 from nti.contentsearch._whoosh_query import parse_query
 from nti.contentsearch.common import normalize_type_name
@@ -186,13 +187,16 @@ def create_book_schema():
 
 @interface.implementer(search_interfaces.IWhooshBookContent)
 class _BookContent(dict):
-	intid = property(methodcaller('get', intid_))
 	ntiid = property(methodcaller('get', ntiid_))
+	title = property(methodcaller('get', title_))
 	content = property(methodcaller('get', content_))
 	last_modified = property(methodcaller('get', last_modified_))
+	# whoosh specific
+	intid = property(methodcaller('get', intid_))
 	score = property(methodcaller('get','score', 1.0))
-	docnum = intid
-	containerId = ntiid
+	# alias
+	docnum = property(methodcaller('get', intid_))
+	containerId = property(methodcaller('get', ntiid_))
 
 class Book(_SearchableContent):
 
@@ -210,12 +214,13 @@ class Book(_SearchableContent):
 					docids.add(docnum)
 					
 				score = hit.score or 1.0
+				last_modified = epoch_time(hit[last_modified_])
 				data = _BookContent(intid  = docnum,
 									score  = score,
 									ntiid  = hit[ntiid_], 
 						 			title  = hit[title_],
 						 			content = hit[content_],
-						 			last_modified = hit[last_modified_] )
+						 			last_modified = last_modified )
 				result.append((data, score))
 		return result
 

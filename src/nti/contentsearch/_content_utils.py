@@ -346,6 +346,8 @@ class _BookContentResolver(_BasicContentResolver):
 		return self.obj.ntiid
 	get_containerId = get_ntiid
 
+	def get_last_modified(self):
+		return self.obj.last_modified
 
 @interface.implementer( search_interfaces.IStopWords )
 class _DefaultStopWords(object):

@@ -328,6 +328,7 @@ class IWhooshIndexStorage(interface.Interface):
 class IBookContent(interface.Interface):
 	docnum = schema.Int(title="Document number", required=True)
 	ntiid = schema.Float(title="NTIID", required=True)
+	title = schema.Text(title="Content title", required=True)
 	content = schema.Text(title="Text content", required=True)
 	last_modified = schema.Float(title="Last modified date", required=True)
 	
@@ -411,7 +412,7 @@ class IMessageInfoContentResolver(IThreadableContentResolver):
 	def get_recipients():
 		"""return the message recipients"""
 
-class IBookContentResolver(INTIIDResolver, IContainerIDResolver,  IContentResolver):
+class IBookContentResolver(INTIIDResolver, IContainerIDResolver,  IContentResolver, ILastModifiedResolver):
 	pass
 		
 # content processing
