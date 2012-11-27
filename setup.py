@@ -88,7 +88,7 @@ setup(
 		#'nose >= 1.2.1',
 		# But it's also listed in extras/test, and it's very hard to upgrade
 		# when that changes
-		#'distribute >= 0.6.30', # Can't seem to include that anywhere
+		#'distribute >= 0.6.32', # Can't seem to include that anywhere
 		# In theory this should make it possible to get
 		# the svn revision number from svn 1.7. Doesn't seem
 		# to work (with distribute?)
@@ -271,7 +271,7 @@ setup(
 		'zope.exceptions >= 4.0.2',
 		'zope.filerepresentation >= 3.6.1',
 		'zope.file >= 0.6.2',
-		'zope.formlib >= 4.1.1', # Req'd by zope.mimetype among others,
+		'zope.formlib >= 4.2.0', # Req'd by zope.mimetype among others,
 		'zope.generations >= 3.7.1',
 		'zope.hookable >= 4.0.1', # explicitly list this to ensure we get the fast C version. Used by ZCA.
 		'zope.i18n >= 3.8.0',
@@ -325,7 +325,7 @@ setup(
 			'pip-tools >= 0.2.1', # command pip-review, pip-dump
 			'pylint >= 0.26.0',
 			'zodbupdate >= 0.5',
-			'zodbbrowser >= 0.10.0',
+			'zodbbrowser >= 0.10.1',
 			'sphinx >= 1.1.3', # Narrative docs
 			'sphinxtheme.readability >= 0.0.6',
 			'repoze.sphinx.autointerface >= 0.7.1',
@@ -334,7 +334,7 @@ setup(
 			'rope >= 0.9.4', # refactoring library. c.f. ropemacs
 			'ropemode >= 0.2', # IDE helper for rope
 			#'Pymacs >= 0.25',
-			'virtualenv >= 1.8.3',
+			'virtualenv >= 1.8.4',
 			'pip >= 1.2.1',
 			# Monitoring stats and instrumenting code
 			# See above for python-statsd
