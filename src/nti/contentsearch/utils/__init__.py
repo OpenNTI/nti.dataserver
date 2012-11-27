@@ -26,18 +26,17 @@ def find_user_dfls(user):
 		source = findObjectsProviding( user, nti_interfaces.IFriendsList)
 	
 	for obj in source:
-		if nti_interfaces.IDynamicSharingTarget.providedBy(obj):
+		if nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(obj):
 			yield obj
 
 def get_sharedWith(obj):
 	"""return the usernames the specified obejct is shared with"""
 	# from IPython.core.debugger import Tracer;  Tracer()() ## DEBUG ##
-	adapted = component.queryAdapter(obj, search_interfaces.IContentResolver)
-	result = getattr(adapted, 'get_sharedWith', None) if adapted is not None else None
-	result = result() if result else ()
-	return result
+	rsr = search_interfaces.IContentResolver(obj, None)
+	result = rsr.get_sharedWith() if rsr is not None else ()
+	return result or ()
 
-def find_all_indexable_pairs(user, user_get=users.Entity.get_entity, include_dfls=True):
+def find_all_indexable_pairs(user, user_get=users.Entity.get_entity, include_dfls=False):
 	"""
 	return a generator with all the objects that need to be indexed. 
 	The genertor yield pairs (entity, obj) indicating that the object has to be indexed
@@ -47,12 +46,10 @@ def find_all_indexable_pairs(user, user_get=users.Entity.get_entity, include_dfl
 	dfls = []
 	username = user.username
 	
-	#intids = intids or component.getUtility( zope.intid.IIntIds )
-	
 	indexable_types = get_indexable_types()
 	for obj in findObjectsProviding( user, nti_interfaces.IModeledContent):
 		
-		if isinstance(obj, friends_lists.DynamicFriendsList) and include_dfls:
+		if include_dfls and nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(obj):
 			dfls.append(obj)
 		elif get_type_name(obj) in indexable_types:
 			
@@ -67,5 +64,5 @@ def find_all_indexable_pairs(user, user_get=users.Entity.get_entity, include_dfl
 	for dfl in dfls:
 		for container in dfl.containersOfShared.containers.values():
 			for obj in container:
-				if obj is not None and get_type_name(obj) in indexable_types:
+				if get_type_name(obj) in indexable_types:
 					yield (dfl, obj)

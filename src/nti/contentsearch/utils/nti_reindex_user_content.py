@@ -10,8 +10,8 @@ import argparse
 from ZODB.POSException import POSKeyError
 
 from nti.dataserver import users
-from nti.dataserver.users import friends_lists
 from nti.dataserver.utils import run_with_dataserver
+from nti.dataserver import interfaces as nti_interfaces
 
 import nti.contentsearch
 from nti.contentsearch.utils import get_uid
@@ -36,14 +36,14 @@ def reindex_entity_content(username, include_dfls=False, verbose=False):
 	# loop through all user indexable objects
 	for e, obj in find_all_indexable_pairs(entity, include_dfls=include_dfls):
 		
-		# if we find a DFL clear its catalogs
-		if isinstance(e, friends_lists.DynamicFriendsList) and e.username not in dfl_names:
+		# if we find a DFL clear its catalogs so the can be reindex
+		if nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(e) and e.username not in dfl_names:
 			remove_entity_catalogs(e)
 			dfl_names.add(e.username)
 		
-		rim = search_interfaces.IRepozeEntityIndexManager(e, None)
+		rim = search_interfaces.IRepozeEntityIndexManager(e)
 		try:
-			catalog = rim.get_create_catalog(obj) if rim is not None else None
+			catalog = rim.get_create_catalog(obj)
 			if catalog is not None:
 				docid = get_uid(obj)
 				if docid is not None:

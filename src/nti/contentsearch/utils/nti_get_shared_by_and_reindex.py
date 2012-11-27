@@ -52,9 +52,9 @@ def compute_shared_by_and_reindex(username, reindex, verbose):
 		print( "user/entity '%s' does not exists" % username, file=sys.stderr )
 		sys.exit(2)
 
-	communities_dfls = list(entity.communities) if entity and hasattr(entity, 'communities') else ()
-	if communities_dfls and 'Everyone' in communities_dfls:
-		communities_dfls.remove('Everyone')
+	dynamic_memberships = list(getattr(entity, 'usernames_of_dynamic_memberships', ()))
+	if dynamic_memberships and 'Everyone' in dynamic_memberships:
+		dynamic_memberships.remove('Everyone')
 		
 	result = set()
 	
@@ -77,7 +77,7 @@ def compute_shared_by_and_reindex(username, reindex, verbose):
 			creator = get_creator(obj)
 			if creator: result.add(creator)
 				
-	result.update(communities_dfls)
+	result.update(dynamic_memberships)
 	if username in result:
 		result.remove(username)
 	result = sorted(result)
