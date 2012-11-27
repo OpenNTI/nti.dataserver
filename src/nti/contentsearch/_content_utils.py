@@ -26,7 +26,7 @@ from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch.common import (CLASS, BODY, ID)
 from nti.contentsearch.common import (text_, body_, selectedText_, replacementContent_, redactionExplanation_,
 									  creator_fields, keyword_fields, last_modified_fields, sharedWith_,
-									  container_id_fields, ntiid_fields, oid_fields, highlight_, note_,
+									  container_id_fields, ntiid_fields,  highlight_, note_,
 									  messageinfo_, redaction_, canvas_, canvastextshape_, references_,
 									  inReplyTo_, recipients_, channel_, flattenedSharingTargetNames_)
 
@@ -81,11 +81,6 @@ class _AbstractIndexDataResolver(_BasicContentResolver):
 
 	def get_ntiid(self):
 		return to_external_ntiid_oid( self.obj )
-
-	def get_external_oid(self):
-		return to_external_ntiid_oid( self.obj )
-	get_oid = get_external_oid
-	get_objectId = get_external_oid
 
 	def get_creator(self):
 		result = _get_any_attr(self.obj, creator_fields)
@@ -279,9 +274,6 @@ class _DictContentResolver(object):
 	def get_ntiid(self):
 		return self._get_attr(ntiid_fields)
 
-	def get_external_oid(self):
-		return self._get_attr(oid_fields)
-
 	def get_creator(self):
 		result = self._get_attr(creator_fields)
 		return unicode(result) if result else None
@@ -303,9 +295,6 @@ class _DictContentResolver(object):
 
 	def get_last_modified(self):
 		return self._get_attr(last_modified_fields)
-
-	get_oid = get_external_oid
-	get_objectId = get_external_oid
 
 	# treadable content resolver
 

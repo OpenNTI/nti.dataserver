@@ -362,17 +362,16 @@ class IContainerIDResolver(interface.Interface):
 	
 	def get_containerId():
 		"""return the container identifier"""
-		
-class IUserContentResolver(INTIIDResolver, IContainerIDResolver,  IContentResolver):
-		
-	def get_external_oid():
-		"""return the external object identifier"""
+	
+class ILastModifiedResolver(interface.Interface):
+	
+	def get_last_modified():
+		"""return the last modified date"""
+			
+class IUserContentResolver(INTIIDResolver, IContainerIDResolver,  IContentResolver, ILastModifiedResolver):
 	
 	def get_creator():
 		"""return the creator"""
-	
-	def get_last_modified():
-		"""return the last modified"""
 	
 class IThreadableContentResolver(IUserContentResolver):
 	
