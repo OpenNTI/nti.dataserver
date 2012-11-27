@@ -26,17 +26,17 @@ name: part chapter section
 
 
 name: subsection
-<div class="subsection title" tal:attributes="id self/id; ntiid self/ntiid; data-ntiid self/ntiid" tal:content="self/title">Cras dignissim</div>
+<div class="subsection title" tal:attributes="id self/id; ntiid self/ntiid" tal:content="self/title">Cras dignissim</div>
 <p tal:replace="self"></p>
 
 
 name: subsubsection
-<div class="subsubsection title" tal:attributes="id self/id; ntiid self/ntiid; data-ntiid self/ntiid" tal:content="self/title">Velit id pharetra</div>
+<div class="subsubsection title" tal:attributes="id self/id; ntiid self/ntiid" tal:content="self/title">Velit id pharetra</div>
 <p tal:replace="self"></p>
 
 
 name: paragraph
-<div class="paragraph title" tal:attributes="id self/id; ntiid self/ntiid; data-ntiid self/ntiid" tal:content="self/title">Donec elementum mauris vel urna</div>
+<div class="paragraph title" tal:attributes="id self/id; ntiid self/ntiid" tal:content="self/title">Donec elementum mauris vel urna</div>
 <p tal:replace="self"></p>
 
 
@@ -46,5 +46,5 @@ name: subparagraph
 
 
 name: subsubparagraph
-<div class="subsubparagraph title" tal:attributes="id self/id; ntiid self/ntiid; data-ntiid self/ntiid" tal:content="self/title">Mauris fringilla, metus</div>
+<div class="subsubparagraph title" tal:attributes="id self/id; ntiid self/ntiid" tal:content="self/title">Mauris fringilla, metus</div>
 <p tal:replace="self"></p>
