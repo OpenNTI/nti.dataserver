@@ -37,14 +37,13 @@ def _get_user_info(useindex=False, verbose=False):
 		users = ent_catalog.searchResults( topics='opt_in_email_communication')
 		
 	for user in users:
-		profile = user_interfaces.ICompleteUserProfile(user, None)
-		if profile is None:
-			if verbose:
-				print('Could not cast "%s" to ICompleteUserProfile' % user)
-		elif verbose:
-			print('\t'.join((user.username, str(profile.opt_in_email_communication), profile.email or u'')))
+		if not nti_interfaces.IUser.providedBy(user):
+			continue
+		profile = user_interfaces.ICompleteUserProfile(user)
+		if verbose:
+			print('\t'.join((user.username, str(profile.opt_in_email_communication), str(profile.email))))
 		elif useindex or profile.opt_in_email_communication:
-			print('\t'.join((user.username, profile.email or u'')))
+			print('\t'.join((user.username, str(profile.email))))
 		
 if __name__ == '__main__':
 	main()
