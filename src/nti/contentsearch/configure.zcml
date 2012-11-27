@@ -23,6 +23,7 @@
 
 	<utility factory="._search_hits._ScoreSearchHitComparator" name="score" />
 	<utility factory="._search_hits._RelevanceSearchHitComparator" name="relevance" />
+	<utility factory="._search_hits._LastModifiedSearchHitComparator" name="last_modified" />
 	
 	<adapter factory="._search_external._SearchResultsExternalizer" />
 	<adapter factory="._search_external._SuggestResultsExternalizer" />
