@@ -8,6 +8,7 @@ from nti.ntiids.ntiids import make_ntiid
 
 import nti.contentsearch
 from nti.contentsearch import interfaces as search_interfaces
+from nti.contentsearch.utils import _repoze_utils as rpz_utils
 from nti.contentsearch.utils import nti_reindex_user_content as nti_ruc
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
@@ -62,12 +63,16 @@ class TestReindexUserContent(ConfiguringTestBase):
 		rim = search_interfaces.IRepozeEntityIndexManager(user)
 		hits = rim.search("shoot")
 		assert_that(hits, has_length(1))
-		catfield = list(rim.get('note').values())[0]
-		assert_that(list(catfield._indexed()), has_length(len(zanpakuto_commands)))
+		
+		catsdocs = list(rpz_utils.get_catalog_and_docids(user))
+		assert_that(catsdocs, has_length(1))
+		assert_that(catsdocs[0][1], has_length(len(zanpakuto_commands)))
 				
 		# remove catalog
+		rpz_utils.remove_entity_catalogs(user)
 		rim = search_interfaces.IRepozeEntityIndexManager(user)
-		rim.pop('note')
+		assert_that(rim, has_length(0))
+
 		hits = rim.search("shoot")
 		assert_that(hits, has_length(0))
 		
@@ -76,8 +81,8 @@ class TestReindexUserContent(ConfiguringTestBase):
 		rim = search_interfaces.IRepozeEntityIndexManager(user)
 		hits = rim.search("shoot")
 		assert_that(hits, has_length(1))
-		catfield = list(rim.get('note').values())[0]
-		assert_that(list(catfield._indexed()), has_length(len(zanpakuto_commands)))
+		catsdocs = list(rpz_utils.get_catalog_and_docids(user))
+		assert_that(catsdocs[0][1], has_length(len(zanpakuto_commands)))
 		
 if __name__ == '__main__':
 	unittest.main()
