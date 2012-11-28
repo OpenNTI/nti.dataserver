@@ -51,16 +51,16 @@ def reindex_entity_content(entity, include_dfls=False, verbose=False):
 def _reindex_process(username, include_dfls=False, verbose=False):
 	entity = users.Entity.get_entity( username )
 	if not entity:
-		print( "user/entity '%s' does not exists" % username, file=sys.stderr )
+		print( "entity '%s' does not exists" % username, file=sys.stderr )
 		sys.exit( 2 )
 	return reindex_entity_content(entity, include_dfls, verbose)
 
 def main():
-	arg_parser = argparse.ArgumentParser( description="Reindex user content" )
+	arg_parser = argparse.ArgumentParser( description="Reindex entity content" )
 	arg_parser.add_argument( 'env_dir', help="Dataserver environment root directory" )
 	arg_parser.add_argument( 'username', help="The username" )
-	arg_parser.add_argument( '--include_dfls', help="Unindex content in user's dfls", action='store_true', dest='include_dfls')
-	arg_parser.add_argument( '--verbose', help="Verbose output", action='store_true', dest='verbose')
+	arg_parser.add_argument('-v', '--verbose', help="Verbose output", action='store_true', dest='verbose')
+	arg_parser.add_argument('-i', '--include_dfls', help="Reindex content in user's dfls", action='store_true', dest='include_dfls')
 	args = arg_parser.parse_args()
 
 	verbose = args.verbose
