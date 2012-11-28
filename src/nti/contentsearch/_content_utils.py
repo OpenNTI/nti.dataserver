@@ -107,7 +107,7 @@ class _AbstractIndexDataResolver(_BasicContentResolver):
 		return list(result) if result else []
 
 	def get_sharedWith(self):
-		data = _get_any_attr(self.obj, [flattenedSharingTargetNames_, sharedWith_])
+		data = _get_any_attr(self.obj, [sharedWith_, flattenedSharingTargetNames_])
 		return _process_words(data)
 
 	def get_last_modified(self):
