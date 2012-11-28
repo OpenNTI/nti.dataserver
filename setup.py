@@ -131,7 +131,6 @@ setup(
 		 # See also collective.subscribe for a different take, useful when we need
 		 # this stuff globally (https://github.com/collective/collective.subscribe/tree/master/collective/subscribe)
 		'contentratings == 1.0',
-		'coverage >= 3.5.3', # Test coverage
 		'cryptacular >= 1.4.1', # see z3c.crypt
 		'cssselect >= 0.7.1', # Used by pyquery
 		'cython >= 0.17.1',
@@ -183,7 +182,7 @@ setup(
 		'plone.scale >= 1.2.2', # image scaling/storage based on PIL
 		'plone.namedfile >= 2.0', # much like zope.file, but some image-specific goodness.
 		'pyPDF >= 1.13', # Pure python PDF reading library. Not complex. Has newer fork pyPDF2, not yet on PyPI?
-		'pyquery >= 1.2.2', # jquery-like traversing of python datastructures. lxml, cssselect
+		'pyquery >= 1.2.3', # jquery-like traversing of python datastructures. lxml, cssselect
 		'pyramid >= 1.4b1' ,
 		'pyramid_tm >= 0.5',
 		'pyramid_mailer >= 0.9', # Which uses repoze.sendmail
@@ -238,7 +237,7 @@ setup(
 		'z3c.table >= 1.0.0', # Flexible table rendering
 		'zc.dict >= 1.3b1', # BTree based dicts that are subclassable
 		'zc.intid >= 1.0.1',
-		'zc.lockfile >= 1.0.0',
+		'zc.lockfile >= 1.0.1',
 		'zc.queue >= 1.3',
 		'zc.zlibstorage >= 0.1.1', # compressed records. Will be built-in to newer ZODB
 		'zc.zodbdgc >= 0.6.1',
@@ -305,6 +304,7 @@ setup(
 		],
 	extras_require = {
 		'test': [
+			'coverage >= 3.5.3', # Test coverage
 			'nose >= 1.2.1',
 			'zope.testing >= 4.1.1',
 			'zc.buildout == 1.6.3',
@@ -312,6 +312,7 @@ setup(
 			'pyhamcrest >= 1.6',
 			'WebTest >= 1.4.3',
 			'fakeredis >= 0.3.0',
+			'tempstorage >= 2.12.2', # ZODB in-memory conflict-resolving storage; like MappingStorage, but handles changes
 			'fudge'],
 		'tools': [
 			'pyramid_debugtoolbar >= 1.0.3',
@@ -325,7 +326,7 @@ setup(
 			'pip-tools >= 0.2.1', # command pip-review, pip-dump
 			'pylint >= 0.26.0',
 			'zodbupdate >= 0.5',
-			'zodbbrowser >= 0.10.1',
+			'zodbbrowser >= 0.10.2',
 			'sphinx >= 1.1.3', # Narrative docs
 			'sphinxtheme.readability >= 0.0.6',
 			'repoze.sphinx.autointerface >= 0.7.1',

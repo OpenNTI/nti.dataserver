@@ -4,12 +4,13 @@ import ZODB
 
 from ZODB.DemoStorage import DemoStorage
 from ZODB.FileStorage import FileStorage
+from tempstorage.TemporaryStorage import TemporaryStorage
 
 import nti.dataserver as dataserver
 import nti.dataserver._Dataserver
 
-
 from zope import component
+from zope.dottedname import resolve as dottedname
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.tests import ConfiguringTestBase as _BaseConfiguringTestBase
@@ -40,17 +41,22 @@ class ChangePassingMockDataserver(dataserver._Dataserver.Dataserver ):
 		component.provideUtility( client )
 		return client
 
-	def _setup_storage( self, *args ):
-		# DemoStorage supports blobs, a plain MappingStorage does not.
-		return DemoStorage()
-
 	def _setup_dbs( self, *args ):
 		self.conf.zeo_uris = ["memory://1?database_name=Users&demostorage=true",
 							  ]
 		self.conf.zeo_launched = True
 		def make_db():
 			databases = {}
-			db = ZODB.DB( DemoStorage(), databases=databases, database_name='Users' )
+			# DemoStorage supports blobs if its 'changes' storage supports blobs or is not given;
+			# a plain MappingStorage does not.
+			# It might be nice to use TemporaryStorage here for the 'base', but it's incompatible
+			# with DemoStorage: It raises a plain KeyError instead of a POSKeyError for missing
+			# objects, which breaks DemoStorages' base-to-change handling logic
+			# Blobs are used for storing "files", which are used for image data, which comes up
+			# in at least evolve25
+			NEED_BLOBS = True
+			factory = DemoStorage if NEED_BLOBS else TemporaryStorage
+			db = ZODB.DB( factory(), databases=databases, database_name='Users' )
 			return db
 
 		self.conf.zeo_make_db = make_db
@@ -58,21 +64,13 @@ class ChangePassingMockDataserver(dataserver._Dataserver.Dataserver ):
 			self.conf.connect_databases = lambda: (self._mock_database.databases['Users'], None, None )
 		return super( ChangePassingMockDataserver, self )._setup_dbs( *args )
 
-#	def _setup_storages( self, *args ):
-#		return ( self._setup_storage(), self._setup_storage(), self._setup_storage() )
-
-	#def _setupPresence( self ):
-	#	def getPresence( s ):
-	#		return "Online"
-
-	#	users.User.presence = property(getPresence)
 
 class MockDataserver(ChangePassingMockDataserver):
 
 	def enqueue_change( self, change, **kwargs ):
 		pass
 
-from zope.dottedname import resolve as dottedname
+
 def add_memory_shard( mock_ds, new_shard_name ):
 	"""
 	Operating within the scope of a transaction, add a new shard with the given

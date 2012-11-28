@@ -268,7 +268,8 @@ class MinimalDataserver(object):
 		# IDatabaseOpenedWithRoot.
 
 		# zope.generations installers/evolvers are triggered on IDatabaseOpenedWithRoot
-		# We notify both in that order.
+		# We notify both in that same order (sometimes action is taken on IDatabaseOpened
+		# which impacts how zope.generations does its work on OpenedWithRoot)
 
 		# TODO: Should we be the ones doing this?
 
@@ -278,24 +279,17 @@ class MinimalDataserver(object):
 		self._parentDir = parentDir
 		self._dataFileName = dataFileName
 
-
-	def _setup_storage( self, zeo_addr, storage_name, blob_dir, shared_blob_dir=True ):
-		raise Exception( "Setup_storage no longer supported" )
-
-	def _setup_launch_zeo( self, clientPipe, path, args, daemon ):
-		raise Exception( "Must launch ZEO first." )
-
-	def _setup_storages( self, parentDir, dataFileName, daemon ):
-		raise Exception( "Setup storages no longer supported" )
-
-	__my_setup_storages = _setup_storages
+		for deprecated in ('_setup_storage', '_setup_launch_zeo', '_setup_storages'):
+			meth = getattr( self, deprecated, None )
+			if meth is not None: # pragma: no cover
+				raise DeprecationWarning( deprecated + " is no longer supported. Remove your method " + str(meth) )
 
 	def _setup_dbs( self, parentDir, dataFileName, daemon ):
 		"""
-		Creates the database connections. Returns a tuple (userdb, sessiondb, searchdb).
+		Creates the database connections. Returns a tuple (userdb, sessiondb, searchdb);
+		The first object in the tuple is the root database, and all databases are arranged
+		in a multi-database setup.
 		"""
-		if self._setup_storages != self.__my_setup_storages:
-			raise Exception( "Setup storages no longer supported:" + str( self._setup_storages ) )
 		db, ses_db, search_db = self.conf.connect_databases()
 		return db, ses_db, search_db
 
@@ -303,7 +297,7 @@ class MinimalDataserver(object):
 		if not conf.main_conf.has_option( 'redis', 'redis_url' ):
 			msg = "YOUR CONFIGURATION IS OUT OF DATE. Please install redis and then run nti_init_env --upgrade-outdated --write-supervisord"
 			logger.warn( msg )
-			raise RuntimeError( msg )
+			raise DeprecationWarning( msg )
 
 		redis_url = conf.main_conf.get( 'redis', 'redis_url' )
 		parsed_url = urlparse( redis_url )
