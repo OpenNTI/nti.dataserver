@@ -91,11 +91,6 @@ ACT_MODERATE = Permission('nti.actions.moderate')
 ACT_COPPA_ADMIN = Permission('nti.actions.coppa_admin')
 ACT_READ     = Permission('zope.View')
 
-# Groups that are expected to have certain rights
-# in certain areas
-ROLE_ADMIN = 'role:nti.admin'
-
-
 @interface.implementer(nti_interfaces.IMutableGroupMember)
 @component.adapter(annotation.interfaces.IAttributeAnnotatable)
 class _PersistentGroupMember(persistent.Persistent,
@@ -166,6 +161,20 @@ class _StringGroup(_StringPrincipal):
 	Allows any string to be an IGroup.
 	"""
 
+@interface.implementer(nti_interfaces.IRole)
+class _StringRole(_StringGroup):
+	pass
+
+#: Name of the super-user group that is expected to have full rights
+#: in certain areas
+ROLE_ADMIN_NAME = 'role:nti.admin'
+ROLE_ADMIN = _StringRole( ROLE_ADMIN_NAME )
+
+#: Name of the high-permission group that is expected to have certain
+#: moderation-like rights in certain areas
+ROLE_MODERATOR_NAME = 'role:nti.moderator'
+ROLE_MODERATOR = _StringRole( ROLE_MODERATOR_NAME )
+
 class _EveryoneGroup(_StringGroup):
 	"Everyone, authenticated or not."
 
@@ -216,6 +225,25 @@ def _string_group_factory( name ):
 		return result
 	return _StringGroup(name)
 
+
+def _string_role_factory( name ):
+	if not name:
+		return None
+
+	# Try the named factory
+	result = component.queryAdapter( name,
+									 nti_interfaces.IRole,
+									 name=name )
+	if result is None:
+		# Try the principal factory, see if something is registered
+		# that turns out to be a role
+		result = component.queryAdapter( name,
+										 nti_interfaces.IPrincipal,
+										 name=name )
+
+	if nti_interfaces.IRole.providedBy( result ):
+		return result
+	return _StringRole(name)
 
 @interface.implementer(nti_interfaces.IPrincipal)
 @component.adapter(nti_interfaces.IUser)

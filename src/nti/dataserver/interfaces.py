@@ -331,6 +331,11 @@ from zope.security.interfaces import IGroup
 from zope.security.interfaces import IGroupAwarePrincipal
 from zope.security.interfaces import IPermission
 
+class IRole(IGroup):
+	"""
+	Marker for a type of group intended to be used to grant permissions.
+	"""
+
 from zope.security.management import system_user
 SYSTEM_USER_ID = system_user.id
 SYSTEM_USER_NAME = system_user.title.lower()
