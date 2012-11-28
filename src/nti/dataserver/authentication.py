@@ -24,16 +24,16 @@ def effective_principals( username,
 	"""
 	Find and return the principals for the given username. This will include
 	the username itself (obviously), plus a principal for Everyone, plus
-	any groups the user is in (as found with :class:`nti_interfaces.IGroupMember`)
+	any groups the user is in (as found with :class:`~nti.dataserver.interfaces.IGroupMember`)
 
 	:param username: Either a string giving a username to be looked up,
 		or a user object having the ``username`` attribute.
 	:param registry: The component registry to query. Defaults to the global
 		registry.
-	:param bool authenticated: If True (the default) assume this user is properly
+	:keyword bool authenticated: If True (the default) assume this user is properly
 		authenticated, and add the pseudo-group for authenticated people as a
 		principal.
-	:return: An iterable (set) of :class:`nti_interfaces.IPrincipal` objects.
+	:return: An iterable (set) of :class:`nti.dataserver.interfaces.IPrincipal` objects.
 	"""
 
 	if not username:
@@ -43,7 +43,8 @@ def effective_principals( username,
 	username = user.username if hasattr(user, 'username') else username # canonicalize
 
 	result = set()
-	# Query all the available groups for this user
+	# Query all the available groups for this user,
+	# primary groups (unnamed adapter) and other groups (named adapters)
 	for _, adapter in registry.getAdapters( (user,),
 											nti_interfaces.IGroupMember ):
 		result.update( adapter.groups )
