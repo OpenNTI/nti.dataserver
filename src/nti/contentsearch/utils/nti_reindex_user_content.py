@@ -11,7 +11,6 @@ from ZODB.POSException import POSKeyError
 
 from nti.dataserver import users
 from nti.dataserver.utils import run_with_dataserver
-from nti.dataserver import interfaces as nti_interfaces
 
 import nti.contentsearch
 from nti.contentsearch.utils import get_uid
@@ -26,8 +25,6 @@ def reindex_entity_content(username, include_dfls=False, verbose=False):
 		sys.exit( 2 )
 
 	counter = 0	
-	dfl_names = set()
-	
 	t = time.time()
 		
 	# remove catalogs for main entity
@@ -35,12 +32,6 @@ def reindex_entity_content(username, include_dfls=False, verbose=False):
 	
 	# loop through all user indexable objects
 	for e, obj in find_all_indexable_pairs(entity, include_dfls=include_dfls):
-		
-		# if we find a DFL clear its catalogs so the can be reindex
-		if nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(e) and e.username not in dfl_names:
-			remove_entity_catalogs(e)
-			dfl_names.add(e.username)
-		
 		rim = search_interfaces.IRepozeEntityIndexManager(e)
 		try:
 			catalog = rim.get_create_catalog(obj)
