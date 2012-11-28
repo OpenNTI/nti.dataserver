@@ -18,7 +18,7 @@ from nti.dataserver.utils.nti_export_user_objects import get_user_objects, to_ex
 def delete_entity_objects( user, object_types=(), extenalize=False):
 
 	# normalize object types
-	object_types = set(map(lambda x: x.lower(), object_types))
+	object_types = set(map(lambda x: x.lower(), object_types or ()))
 
 	captured_types = set()
 	exported_objects = defaultdict(list)
