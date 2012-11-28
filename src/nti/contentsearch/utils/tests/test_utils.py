@@ -60,13 +60,13 @@ class TestUtils(ConfiguringTestBase):
 		return dfl
 
 	@WithMockDSTrans
-	def xtest_find_indexable_pairs(self):
+	def test_find_indexable_pairs(self):
 		notes, user = self._create_notes()
 		pairs = list(find_all_indexable_pairs(user))
 		assert_that(pairs, has_length(len(notes)))
 		
 	@WithMockDSTrans
-	def xtest_find_indexable_pairs_sharedWith(self):
+	def test_find_indexable_pairs_sharedWith(self):
 		user_1 = self._create_user(username='nt1@nti.com')
 		user_2 = self._create_user(username='nt2@nti.com')
 		self._create_note(u'test', user_1, sharedWith=(user_2,))
@@ -79,13 +79,14 @@ class TestUtils(ConfiguringTestBase):
 	def test_find_indexable_pairs_dfl(self):
 		user_1 = self._create_user(username='nt1@nti.com')
 		user_2 = self._create_user(username='nt2@nti.com')
+		user_3 = self._create_user(username='nt3@nti.com')
 		dfl = self._create_friends_list(user_1, members=(user_2,))
-		self._create_note(u'test', user_1, sharedWith=(dfl,))
+		self._create_note(u'test', user_1, sharedWith=(dfl, user_3))
 		pairs = list(find_all_indexable_pairs(user_1,include_dfls=True))
-		assert_that(pairs, has_length(2))
+		assert_that(pairs, has_length(3))
 		assert_that(pairs[0][0], is_(user_1))
-		assert_that(pairs[1][0], is_(dfl))
-		
-		
+		assert_that(pairs[1][0], is_(user_3))
+		assert_that(pairs[2][0], is_(dfl))
+			
 if __name__ == '__main__':
 	unittest.main()
