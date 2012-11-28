@@ -20,7 +20,7 @@ from nti.contentsearch.common import ( 	HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUE
 from nti.contentsearch.tests import zanpakuto_commands
 from nti.contentsearch.tests import ConfiguringTestBase
 
-from hamcrest import (is_, is_not, has_key, has_item, has_entry, has_length, assert_that)
+from hamcrest import (is_not, has_key, has_item, has_entry, has_length, assert_that)
 
 class TestRepozeUserAdapter(ConfiguringTestBase):
 
@@ -59,7 +59,7 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 			docid = rim.index_content(note)
 			if do_assert:
 				assert_that(docid, is_not(None))
-			docids.append(docids)
+			docids.append(docid)
 		return usr, notes, docids
 
 	def _add_user_index_notes(self):
@@ -68,26 +68,12 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 		return usr, docids, notes
 
 	@WithMockDSTrans
-	def test_empty(self):
-		usr = self._create_user()
-		rim = search_interfaces.IRepozeEntityIndexManager(usr, None)
-		assert_that(rim.get_stored_indices(), is_([]))
-		assert_that(rim.has_stored_indices(), is_(False))
-
-	@WithMockDSTrans
-	def test_index_notes(self):
-		usr, _, _, = self._index_notes()
-		rim = search_interfaces.IRepozeEntityIndexManager(usr, None)
-		assert_that(rim.get_stored_indices(), is_([u'note']))
-		assert_that(rim.has_stored_indices(), is_(True))
-
-	@WithMockDSTrans
 	def test_delete_catalog(self):
 		usr, _, _, = self._index_notes()
 		rim = search_interfaces.IRepozeEntityIndexManager(usr, None)
-		assert_that(rim.get_stored_indices(), is_([u'note']))
+		assert_that(rim, has_key('note'))
 		rim.remove_index('note')
-		assert_that(rim.get_stored_indices(), is_([]))
+		assert_that(rim, is_not(has_key('note')))
 
 	@WithMockDSTrans
 	def test_query_notes(self):

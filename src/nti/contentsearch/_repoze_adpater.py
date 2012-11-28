@@ -199,11 +199,6 @@ class _RepozeEntityIndexManager(_SearchEntityIndexManager):
 		result = self.remove_catalog(type_name)
 		return result
 
-	get_stored_indices = get_catalog_names
-
-	def has_stored_indices(self):
-		return len(self.get_catalog_names()) > 0
-
 def _RepozeEntityIndexManagerFactory(user):
 	result = an_factory(_RepozeEntityIndexManager)(user)
 	return result

@@ -18,12 +18,8 @@ from nti.contentsearch.utils import find_all_indexable_pairs
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch.utils._repoze_utils import remove_entity_catalogs
 			
-def reindex_entity_content(username, include_dfls=False, verbose=False):
-	entity = users.Entity.get_entity( username )
-	if not entity:
-		print( "user/entity '%s' does not exists" % username, file=sys.stderr )
-		sys.exit( 2 )
-
+def reindex_entity_content(entity, include_dfls=False, verbose=False):
+	
 	counter = 0	
 	t = time.time()
 		
@@ -48,9 +44,16 @@ def reindex_entity_content(username, include_dfls=False, verbose=False):
 	
 	t = time.time() - t
 	if verbose:
-		print('%s object(s) reindexed for %s in %.2f(s)' % (counter, username, t))
+		print('%s object(s) reindexed for %s in %.2f(s)' % (counter, entity.username, t))
 		
 	return counter
+
+def _reindex_process(username, include_dfls=False, verbose=False):
+	entity = users.Entity.get_entity( username )
+	if not entity:
+		print( "user/entity '%s' does not exists" % username, file=sys.stderr )
+		sys.exit( 2 )
+	return reindex_entity_content(entity, include_dfls, verbose)
 
 def main():
 	arg_parser = argparse.ArgumentParser( description="Reindex user content" )
@@ -67,7 +70,7 @@ def main():
 	
 	run_with_dataserver( environment_dir=env_dir,
 						 xmlconfig_packages=(nti.contentsearch,),
-						 function=lambda: reindex_entity_content(username, include_dfls, verbose) )
+						 function=lambda: _reindex_process(username, include_dfls, verbose) )
 
 if __name__ == '__main__':
 	main()

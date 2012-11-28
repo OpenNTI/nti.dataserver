@@ -115,17 +115,6 @@ class _CloudSearchEntityIndexManager(_SearchEntityIndexManager):
 		results = service.search(bq=bq, return_fields=[intid_], size=size, start=0)
 		for r in results:
 			yield r[intid_]
-			
-	# ---------------------- 
-		
-	def has_stored_indices(self):
-		bq = unicode("%s:'%s'" % (username_, self.username))
-		service  = self._get_cs_store()
-		results = service.search_cs(bq=bq, return_fields=[intid_], size=1, start=0) if service else ()
-		return len(results) > 0
-		
-	def get_stored_indices(self):
-		return ()
 
 def _CloudSearchEntityIndexManagerFactory(user):
 	result = an_factory(_CloudSearchEntityIndexManager)(user)

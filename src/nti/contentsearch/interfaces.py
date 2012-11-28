@@ -66,16 +66,6 @@ class IBookIndexManager(ISearcher):
 class IEntityIndexManager(ISearcher):
 
 	username = schema.TextLine(title="entity name", required=True)
-	
-	def has_stored_indices():
-		"""
-		return if there are accessible/stored indices for the user
-		"""
-		
-	def get_stored_indices():
-		"""
-		return the index names accessible/stored in this manager for the user
-		"""
 				
 	def index_content(data, type_name=None):
 		"""

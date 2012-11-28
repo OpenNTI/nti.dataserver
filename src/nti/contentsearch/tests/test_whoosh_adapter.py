@@ -64,21 +64,6 @@ class TestWhooshUserAdapter(ConfiguringTestBase):
 		return notes, usr
 
 	@WithMockDSTrans
-	def test_empty(self):
-		username = str(uuid.uuid4()).split('-')[-1] + '@nti.com' 
-		usr = self._create_user(username=username)
-		uim = search_interfaces.IWhooshEntityIndexManager(usr, None)
-		assert_that(uim.get_stored_indices(), is_([]))
-		assert_that(uim.has_stored_indices(), is_(False))
-
-	@WithMockDSTrans
-	def test_index_notes(self):
-		_, usr = self._add_user_index_notes(True)
-		uim = search_interfaces.IWhooshEntityIndexManager(usr, None)
-		assert_that(uim.get_stored_indices(), is_(['note']))
-		assert_that(uim.has_stored_indices(), is_(True))
-
-	@WithMockDSTrans
 	def test_query_notes(self):
 		_, usr = self._add_user_index_notes()
 		uim = search_interfaces.IWhooshEntityIndexManager(usr, None)
