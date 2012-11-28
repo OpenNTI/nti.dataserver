@@ -307,6 +307,12 @@ def acl_from_aces( *args ):
 
 	return _ACL( args )
 
+def _add_admin_moderation( acl, provenance ):
+	acl.append( ace_allowing( auth.ROLE_MODERATOR, auth.ACT_MODERATE, provenance ) )
+	acl.append( ace_allowing( auth.ROLE_ADMIN, auth.ACT_MODERATE, provenance ) )
+	acl.append( ace_allowing( auth.ROLE_ADMIN, auth.ACT_COPPA_ADMIN, provenance ) )
+
+
 @interface.implementer(nti_interfaces.IACLProvider)
 @component.adapter(nti_interfaces.IEntity)
 class _EntityACLProvider(object):
@@ -332,10 +338,7 @@ class _EntityACLProvider(object):
 		"""
 		acl = _ACL([ace_allowing( self._entity.username, nti_interfaces.ALL_PERMISSIONS, self ),
 					ace_allowing( pyramid.security.Authenticated, auth.ACT_READ, self),])
-		warnings.warn( "Temporary hack allowing @nextthought.com users moderation and coppa admin on all users" )
-
-		acl.append( ace_allowing( 'nextthought.com', auth.ACT_MODERATE, self ) )
-		acl.append( ace_allowing( 'nextthought.com', auth.ACT_COPPA_ADMIN, self ) )
+		_add_admin_moderation( acl, self )
 		# Everyone else can do nothing
 		acl.append( _ace_denying_all( _EntityACLProvider ) )
 		return acl
@@ -595,6 +598,8 @@ class _DelimitedHierarchyEntryACLProvider(object):
 	def _acl_from_string(self, context, acl_string):
 		return _acl_from_ace_lines( acl_string.splitlines(), context )
 
+
+
 @interface.implementer( nti_interfaces.IACLProvider )
 @component.adapter( content_interfaces.IDelimitedHierarchyContentUnit )
 class _DelimitedHierarchyContentUnitACLProvider(_DelimitedHierarchyEntryACLProvider):
@@ -610,7 +615,7 @@ class _DelimitedHierarchyContentUnitACLProvider(_DelimitedHierarchyEntryACLProvi
 		if package is not None and package.ntiid:
 			parts = ntiids.get_parts( package.ntiid )
 			if parts and parts.provider and parts.specific:
-				acl = acl + ace_allowing( nti_interfaces.IGroup('content-role:' + parts.provider.lower() + ':' + parts.specific.lower()),
+				acl = acl + ace_allowing( nti_interfaces.IRole('content-role:' + parts.provider.lower() + ':' + parts.specific.lower()),
 										  auth.ACT_READ,
 										  _DelimitedHierarchyContentUnitACLProvider )
 		return acl
@@ -633,19 +638,15 @@ class _FriendsListACLProvider(_CreatedACLProvider):
 		result.append( ace_denying( nti_interfaces.EVERYONE_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _SectionInfoACLProvider ) )
 		return result
 
-import warnings
 @interface.implementer( nti_interfaces.IACLProvider )
 @component.adapter(nti_interfaces.IDataserverFolder)
 class _DataserverFolderACLProvider(object):
 
 	def __init__( self, context ):
-		warnings.warn( "Temporary hack allowing @nextthought.com users moderation and coppa admin on the root." )
 		# Got to be here after the components are registered
-		self.__acl__ = _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, auth.ACT_READ, _DataserverFolderACLProvider ),
-							  # TEMP Hack allowing nextthought.com users full permissions
-							  ace_allowing( 'nextthought.com', auth.ACT_MODERATE, _DataserverFolderACLProvider ),
-							  ace_allowing( 'nextthought.com', auth.ACT_COPPA_ADMIN, _DataserverFolderACLProvider )
-							  ) )
+		acl = _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, auth.ACT_READ, _DataserverFolderACLProvider ),) )
+		_add_admin_moderation( acl, _DataserverFolderACLProvider )
+		self.__acl__ = acl
 
 @interface.implementer( nti_interfaces.IACLProvider )
 @component.adapter(content_interfaces.IContentPackageLibrary)

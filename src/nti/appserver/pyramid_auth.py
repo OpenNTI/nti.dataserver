@@ -32,6 +32,7 @@ from pyramid_who.whov2 import WhoV2AuthenticationPolicy
 
 from nti.dataserver.users import User
 from nti.dataserver import authentication as nti_authentication
+from nti.dataserver import authorization as nti_authorization
 
 # TODO: This decoding stuff is happening too simalarly in the different
 # places. Decide what's really needed and remove what isn't and consolidate
@@ -427,9 +428,15 @@ class OUAdminFactory(object):
 	If this is registered, it makes everyone an administrator of the OU provider.
 	"""
 
-	def __init__( self, o ):
-		pass
+	def __init__( self, context ):
+		self.groups = (nti_interfaces.IRole( "role:OU.Admin" ), )
 
-	@property
-	def groups(self):
-		return [ nti_interfaces.IGroup( "role:OU.Admin" ) ]
+@interface.implementer(nti_interfaces.IGroupMember)
+@component.adapter(nti_interfaces.IUser)
+class NextthoughtDotComAdmin(object):
+	"""
+	Somewhat hackish way to grant the admin role to any account in @nextthought.com
+	"""
+
+	def __init__( self, context ):
+		self.groups = (nti_authorization.ROLE_ADMIN,) if context.username.endswith( '@nextthought.com' ) else ()
