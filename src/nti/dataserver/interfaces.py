@@ -385,16 +385,45 @@ class IImpersonatedAuthenticationPolicy(IAuthenticationPolicy):
 
 class IGroupMember(interface.Interface):
 	"""
-	Something that can report on the groups
-	it belongs to.
+	Something that can report on the groups it belongs to.
+
+	In general, it is expected that :class:`IUser` can be adapted to this
+	interface or its descendent :class:`zope.security.interfaces.IGroupAwarePrincipal` to return the
+	"primary" groups the user is a member of. Named adapters may be registered
+	to return specific "types" of groups (e.g, roles) the user is a member of; these
+	are not primary groups.
+
+	See :func:`nti.dataserver.authentication.effective_principals` for
+	details on how groups and memberships are used to determine permissions.
+
 	"""
 
-	groups = schema.Iterable(
-		title=u'Iterate across the IGroups belonged to.')
+	groups = schema.Iterable(title=u'Iterate across the IGroups belonged to.')
 
-# We inject our group-only definition into the union of Principal and Group
-IGroupAwarePrincipal.__bases__ = tuple( itertools.chain( IGroupAwarePrincipal.__bases__,
-														 (IGroupMember,) ))
+# zope.security defines IPrincipal and IGroupAwarePrincipal which extends IPrincipal.
+# It does not offer the concept of something which simply offers a list of groups;
+# our IGroupMember is that concept.
+# We now proceed to cause IGroupAwarePrincipal to descend from IGroupMember:
+# IPrincipal   IGroupMember
+#   \              /
+#  IGroupAwarePrincipal
+IGroupAwarePrincipal.__bases__ = IGroupAwarePrincipal.__bases__ + (IGroupMember,)
+
+
+class IMutableGroupMember(IGroupMember):
+	"""
+	Something that can change the groups it belongs to. See :class:`zope.security.interfaces.IMemberAwareGroup`
+	for inspiration.
+	"""
+
+	def setGroups(value):
+		"""
+		Causes this object to report itself (only) as members of the groups
+		in the argument.
+
+		:param value: An iterable of either IGroup objects or strings naming the groups
+			to which the member now belongs.
+		"""
 
 from nti.utils.schema import ValidTextLine
 

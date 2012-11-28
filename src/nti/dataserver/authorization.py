@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 """
-Constants and classes relating to authorisation.
+Constants and classes relating to authorisation (principals, groups,
+and group memberships).
 
 Comparison to libACL
 ====================
@@ -47,15 +48,16 @@ generally (equivalent to global capabilities.).
 
 Persistent storage references to principals should be by their unique
 identifier string (not object identity). Yet ACLs should hold
-IPrincipal objects. This conversion happens through (optionally named) ZCA adapters.
-Likewise, the permissions in an ACL entry should be IPermission objects,
-but persistent storage should be strings; conversion is handled by registering
-IPermission objects by name as utilities.
+``IPrincipal`` objects. This conversion happens through (optionally named)
+ZCA adapters. Likewise, the permissions in an ACL entry should be
+``IPermission`` objects, but persistent storage should be strings;
+conversion is handled by registering ``IPermission`` objects by name as
+utilities.
 
 $Id$
 """
 
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
 
 import functools
 
@@ -65,11 +67,12 @@ from BTrees.OOBTree import OOSet
 from zope import interface
 from zope import annotation
 from zope import component
+from zope.container import contained
+
 from zope.security.permission import Permission
-import pyramid.security
 
 import nti.dataserver.interfaces as nti_interfaces
-from nti.dataserver import users
+
 
 # TODO: How does zope normally present these? Side effects of import are Bad
 if not '__str__' in Permission.__dict__:
@@ -93,9 +96,10 @@ ACT_READ     = Permission('zope.View')
 ROLE_ADMIN = 'role:nti.admin'
 
 
-@interface.implementer(nti_interfaces.IGroupMember)
+@interface.implementer(nti_interfaces.IMutableGroupMember)
 @component.adapter(annotation.interfaces.IAttributeAnnotatable)
-class _PersistentGroupMember(persistent.Persistent):
+class _PersistentGroupMember(persistent.Persistent,
+							 contained.Contained): # (recall annotations should be IContained)
 	"""
 	Implementation of the group membership by
 	storing a collection.
@@ -109,6 +113,12 @@ class _PersistentGroupMember(persistent.Persistent):
 	@property
 	def groups(self):
 		return (nti_interfaces.IGroup(g) for g in self._groups)
+
+	def setGroups( self, value ):
+		# take either strings or IGroup objects
+		groups = {getattr(x,'id', x) for x in value}
+		self._groups.clear()
+		self._groups.update( groups )
 
 _persistent_group_member_factory = annotation.factory(_PersistentGroupMember)
 
@@ -215,13 +225,21 @@ class _UserPrincipal(_AbstractPrincipal):
 	"""
 
 	def __init__( self, user ):
-		self._user = user
+		self.context = user
 
 	@property
 	def id(self):
-		return self._user.username
+		return self.context.username
 	title = id
 	description = id
+
+@interface.implementer(nti_interfaces.IGroupAwarePrincipal)
+@component.adapter(nti_interfaces.IUser)
+class _UserGroupAwarePrincipal(_UserPrincipal):
+
+	@property
+	def groups(self):
+		return nti_interfaces.IMutableGroupMember(self.context).groups
 
 @interface.implementer(nti_interfaces.IPrincipal)
 class _CommunityGroup(_UserPrincipal): # IGroup extends IPrincipal
