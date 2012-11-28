@@ -239,9 +239,12 @@ class Renderable(BaseRenderable):
 				elif dimen <= assets['2'].width:
 					img = assets['2']
 					current_size = 'half'
-				elif dimen <= assets['1'].width:
+				elif dimen < assets['1'].width:
 					img = assets['1']
 					current_size = 'full'
+				elif dimen == assets['1'].width:
+					img = assets['1']
+					current_size = 'actual'
 				else:
 					img = assets['1']
 					current_size = 'oversize'
@@ -254,9 +257,12 @@ class Renderable(BaseRenderable):
 				elif dimen <= assets['2'].height:
 					img = assets['2']
 					current_size = 'half'
-				elif dimen <= assets['1'].height:
+				elif dimen < assets['1'].height:
 					img = assets['1']
 					current_size = 'full'
+				elif dimen == assets['1'].height:
+					img = assets['1']
+					current_size = 'actual'
 				else:
 					img = assets['1']
 					current_size = 'oversize'
@@ -270,8 +276,8 @@ class Renderable(BaseRenderable):
 
 
 		# SAJ: Here we determine if the assets support browser resizing.  The only time resizing is not 
-		# supported is when the requested size is larger than the largest asset.
-		if current_size in 'oversize':
+		# supported is when the requested size is the same size or larger than the largest asset.
+		if current_size in 'oversize' or current_size in 'actual':
 			logger.warning( 'Using oversized resource for: %s' % self.source )
 			img.resizeable = False
 		else:
