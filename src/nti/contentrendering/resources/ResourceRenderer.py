@@ -272,6 +272,7 @@ class Renderable(BaseRenderable):
 		# SAJ: Here we determine if the assets support browser resizing.  The only time resizing is not 
 		# supported is when the requested size is larger than the largest asset.
 		if current_size in 'oversize':
+			logger.warning( 'Using oversized resource for: %s' % self.source )
 			img.resizeable = False
 		else:
 			img.resizeable = True
