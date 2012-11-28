@@ -606,7 +606,7 @@ class _DelimitedHierarchyContentUnitACLProvider(_DelimitedHierarchyEntryACLProvi
 	"""
 	For content units (and packages) that are part of a hierarchy,
 	read the ACL file if they have one, and also add read-access to a pseudo-group
-	based on the NTIID of the closest containing content package.
+	based on the (lowercased) NTIID of the closest containing content package.
 	"""
 
 	def _acl_from_string( self, context, acl_string ):
@@ -615,7 +615,7 @@ class _DelimitedHierarchyContentUnitACLProvider(_DelimitedHierarchyEntryACLProvi
 		if package is not None and package.ntiid:
 			parts = ntiids.get_parts( package.ntiid )
 			if parts and parts.provider and parts.specific:
-				acl = acl + ace_allowing( nti_interfaces.IRole('content-role:' + parts.provider.lower() + ':' + parts.specific.lower()),
+				acl = acl + ace_allowing( auth.role_for_providers_content( parts.provider, parts.specific ),
 										  auth.ACT_READ,
 										  _DelimitedHierarchyContentUnitACLProvider )
 		return acl
