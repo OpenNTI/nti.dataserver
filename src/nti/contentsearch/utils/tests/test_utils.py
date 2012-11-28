@@ -3,6 +3,8 @@ import unittest
 import nti.dataserver
 from nti.dataserver.users import User
 from nti.dataserver.contenttypes import Note
+from nti.dataserver.users import DynamicFriendsList
+from nti.dataserver.users import interfaces as user_interfaces
 
 from nti.ntiids.ntiids import make_ntiid
 
@@ -45,6 +47,17 @@ class TestUtils(ConfiguringTestBase):
 			note = self._create_note(msg, usr, sharedWith=sharedWith)
 			notes.append(note)
 		return notes, usr
+
+	def _create_friends_list(self, owner, username, realname=None, members=() ):
+		dfl = DynamicFriendsList(username)
+		dfl.creator = owner
+		if realname:
+			user_interfaces.IFriendlyNamed( dfl ).realname = unicode(realname)
+
+		owner.addContainedObject( dfl )
+		for m in members:
+			dfl.addFriend( m )
+		return dfl
 
 	@WithMockDSTrans
 	def test_find_indexable_pairs(self):
