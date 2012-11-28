@@ -9,7 +9,7 @@ from nti.ntiids.ntiids import make_ntiid
 import nti.contentsearch
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch.utils import _repoze_utils as rpz_utils
-from nti.contentsearch.utils import nti_reindex_user_content as nti_ruc
+from nti.contentsearch.utils import nti_reindex_entity_content as nti_ruc
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
