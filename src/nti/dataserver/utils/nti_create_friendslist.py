@@ -24,7 +24,7 @@ def create_friends_list(owner, username, realname=None, members=(), dynamic=Fals
 	# add to container b4 adding members
 	owner.addContainedObject( dfl )
 	
-	for member_name in members:
+	for member_name in members or ():
 		member = users.User.get_user( member_name )
 		if member and member != owner:
 			dfl.addFriend( member )
