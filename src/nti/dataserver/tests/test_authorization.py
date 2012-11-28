@@ -43,6 +43,14 @@ def test_user_adapts_to_group_member(  ):
 
 	assert_that( pgm.groups, contains( nti_interfaces.IGroup('abc') ) )
 
+	# additional roles
+	rgm = component.getAdapter( u, nti_interfaces.IGroupMember, nauth.CONTENT_ROLE_PREFIX )
+	assert_that( rgm, verifiably_provides( nti_interfaces.IGroupMember ) )
+	assert_that( list(rgm.groups), is_([]) )
+
+	assert_that( u, has_attr( '__annotations__' ) )
+	assert_that( u.__annotations__, has_length( 2 ) )
+
 
 def test_string_adapts_to_principal(  ):
 	# no-name

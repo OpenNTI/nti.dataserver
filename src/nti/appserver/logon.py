@@ -38,6 +38,7 @@ from nti.appserver import interfaces as app_interfaces
 from nti.dataserver.links import Link
 from nti.dataserver import mimetype
 from nti.dataserver import users
+from nti.dataserver import authorization as nauth
 
 from nti.appserver._util import logon_userid_with_request
 from nti.appserver.account_creation_views import REL_CREATE_ACCOUNT, REL_PREFLIGHT_CREATE_ACCOUNT
@@ -656,7 +657,17 @@ def openid_login(context, request):
 
 
 def _deal_with_external_account( request, fname, lname, email, idurl, iface, creator ):
-	#print( "User ", email, " belongs to ", idurl )
+	"""
+	Finds or creates an account based on an external authentication.
+
+	:param email: Becomes the user's local username; must be globally unique, but is not
+		required to be an actual email. (TODO: If it is, we should update
+		the user profile.)
+	:param idul: The URL that identifies the user on the external system.
+	:param iface: The interface that the user object will implement.
+	:return: The user object
+	"""
+
 	dataserver = request.registry.getUtility(nti_interfaces.IDataserver)
 	user = users.User.get_user( username=email, dataserver=dataserver )
 	url_attr = iface.names()[0]
@@ -665,7 +676,6 @@ def _deal_with_external_account( request, fname, lname, email, idurl, iface, cre
 			interface.alsoProvides( user, iface )
 			setattr( user, url_attr, idurl )
 			lifecycleevent.modified( user, lifecycleevent.Attributes( iface, url_attr ) )
-			# TODO: Can I assign to persistent object's __class__? Should I?
 		assert getattr( user, url_attr ) == idurl
 	else:
 		# This fires lifecycleevent.IObjectCreatedEvent and IObjectAddedEvent. The oldParent attribute
@@ -679,10 +689,41 @@ def _deal_with_external_account( request, fname, lname, email, idurl, iface, cre
 		assert getattr( user, url_attr ) == idurl
 	return user
 
-@component.adapter(nti_interfaces.IUser,app_interfaces.IUserLogonEvent)
-def _user_did_logon( user, event ):
-	user.update_last_login_time()
+def _update_users_content_roles( user, idurl, content_roles ):
+	"""
+	Update the content roles assigned to the given user based on information
+	returned from an external provider.
 
+	:param user: The user object
+	:param idurl: The URL identifying the user on the external system. All
+		content roles we update will be based on this idurl; in particular, we assume
+		that the base hostname of the URL maps to a NTIID ``provider``, and we will
+		only add/remove roles from this provider. For example, ``http://openid.primia.org/username``
+		becomes the provider ``prmia.``
+	:param iterable content_roles: An iterable of strings naming provider-local
+		content roles. If empty/None, then the user will be granted no roles
+		from the provider of the ``idurl``; otherwise, the content roles from the given
+		``provider`` will be updated to match.
+	"""
+	member = component.getAdapter( user, nti_interfaces.IMutableGroupMember, nauth.CONTENT_ROLE_PREFIX )
+	if not content_roles and not member.hasGroups():
+		return # No-op
+
+	provider = urlparse.urlparse( idurl ).netloc.split( '.' )[-2] # http://x.y.z.nextthought.com/openid => nextthought
+
+	empty_role = nauth.role_for_providers_content( provider, '' )
+
+	# Delete all of our provider's roles, leaving everything else intact
+	other_provider_roles = [x for x in member.groups if not x.id.startswith( empty_role.id )]
+	# Create new roles for what they tell us
+	roles_to_add = [nauth.role_for_providers_content( provider, x )
+					for x
+					in (content_roles or ())
+					if x]
+	# NOTE: At this step here we my need to map from external provider identifiers (stock numbers or whatever)
+	# to internal NTIID values. Somehow.
+
+	member.setGroups( other_provider_roles + roles_to_add )
 
 
 def _openidcallback( context, request, success_dict ):
@@ -694,17 +735,19 @@ def _openidcallback( context, request, success_dict ):
 	# we use the credentials you actually authenticated with, its just confusing.
 	# To try to prevent this, we are using a basic checksum approach to see if things
 	# match: oidcsum. In some cases we can't do that, though
+	idurl = success_dict['identity_url']
+	oidcsum = request.params.get( 'oidcsum' )
 
 	# Google only supports AX, sreg is ignored.
 	# AoPS gives us back nothing, ignoring both AX and sreg
 
 	# In AX, there can be 0 or more values; the openid library always represents
 	# this using a list (see openid.extensions.ax.AXKeyValueMessage.get and pyramid_openid.view.process_provider_response)
-	fname = success_dict.get( 'ax', {} ).get('firstname', ('',))[0]
-	lname = success_dict.get( 'ax', {} ).get('lastname', ('',))[0]
-	email = success_dict.get( 'ax', {} ).get('email', ('',))[0]
-	idurl = success_dict.get( 'identity_url' )
-	oidcsum = request.params.get( 'oidcsum' )
+	ax_dict = success_dict.get( 'ax', {} )
+	fname = ax_dict.get('firstname', ('',))[0]
+	lname = ax_dict.get('lastname', ('',))[0]
+	email = ax_dict.get('email', ('',))[0]
+	content_roles = ax_dict.get( 'content_roles', () )
 
 	### XXX: FIXME: HACK: Extracting a desired username back from the
 	# identity URL.
@@ -724,12 +767,19 @@ def _openidcallback( context, request, success_dict ):
 	try:
 		# TODO: Make this look the interface and factory to assign up by name (something in the idurl?)
 		# That way we can automatically assign an IAoPSUser and use a users.AoPSUser
-		_deal_with_external_account( request, fname, lname, email, idurl, nti_interfaces.IOpenIdUser, users.OpenIdUser )
+		the_user = _deal_with_external_account( request, fname, lname, email, idurl, nti_interfaces.IOpenIdUser, users.OpenIdUser )
+		_update_users_content_roles( the_user, idurl, content_roles )
 	except Exception as e:
 		return _create_failure_response( request, error=str(e) )
 
 
 	return _create_success_response( request, userid=email )
+
+
+@component.adapter(nti_interfaces.IUser,app_interfaces.IUserLogonEvent)
+def _user_did_logon( user, event ):
+	user.update_last_login_time()
+
 
 ###
 # TODO: The two facebook methods below could be radically simplified using

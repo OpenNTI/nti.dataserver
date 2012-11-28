@@ -54,6 +54,13 @@ ZCA adapters. Likewise, the permissions in an ACL entry should be
 conversion is handled by registering ``IPermission`` objects by name as
 utilities.
 
+Namespaces
+==========
+
+Principals, groups, and roles all share a flat namespace. Principals
+(and groups) do not have a prefix. Roles have a prefix ending in ``role:``;
+sub-types of roles may have a prefix to that, such as ``content-role:``.
+
 $Id$
 """
 
@@ -67,6 +74,7 @@ from BTrees.OOBTree import OOSet
 from zope import interface
 from zope import annotation
 from zope import component
+from zope.cachedescriptors.property import Lazy
 from zope.container import contained
 
 from zope.security.permission import Permission
@@ -100,14 +108,28 @@ class _PersistentGroupMember(persistent.Persistent,
 	storing a collection.
 	"""
 
+	GROUP_FACTORY = nti_interfaces.IGroup
+
 	def __init__( self ):
-		# We store strings in this set, and adapt them to
-		# IGroups during iteration.
-		self._groups = OOSet()
+		pass
+
+	@Lazy
+	def _groups(self):
+		"""We store strings in this set, and adapt them to
+		IGroups during iteration."""
+
+		groups = OOSet()
+		self._p_changed = True
+		if self._p_jar:
+			self._p_jar.add( groups )
+		return groups
 
 	@property
 	def groups(self):
-		return (nti_interfaces.IGroup(g) for g in self._groups)
+		if '_groups' not in self.__dict__:
+			return ()
+
+		return (self.GROUP_FACTORY(g) for g in self._groups)
 
 	def setGroups( self, value ):
 		# take either strings or IGroup objects
@@ -115,7 +137,28 @@ class _PersistentGroupMember(persistent.Persistent,
 		self._groups.clear()
 		self._groups.update( groups )
 
+	def hasGroups( self ):
+		return '_groups' in self.__dict__ and len(self._groups)
+
+# This factory is registered for the default annotation
 _persistent_group_member_factory = annotation.factory(_PersistentGroupMember)
+
+class _PersistentRoleMember(_PersistentGroupMember):
+	GROUP_FACTORY = nti_interfaces.IRole
+
+def _make_group_member_factory( group_type, factory=_PersistentGroupMember ):
+	"""
+	Create and return a factory suitable for use adapting to
+	:class:`nti.dataserver.interfaces.IMutableGroupMember` for things
+	that can be annotated; the objects produced by the factory are
+	themselves persistent.
+
+	:param str group_type: A string naming the type of groups this membership
+		will record. This is used as part of the annotation key; this factory
+		should be registered with the same name as the ``group_type``
+	"""
+	key = factory.__module__ + '.' + factory.__name__ + ':' + group_type
+	return annotation.factory( factory, key )
 
 # Note that principals should be comparable based solely on their ID.
 # TODO: Should we enforce case-insensitivity here?
@@ -165,14 +208,26 @@ class _StringGroup(_StringPrincipal):
 class _StringRole(_StringGroup):
 	pass
 
+ROLE_PREFIX = 'role:'
+CONTENT_ROLE_PREFIX = 'content-role:'
+
+_content_role_member_factory = _make_group_member_factory( CONTENT_ROLE_PREFIX, _PersistentRoleMember )
+
+def role_for_providers_content( provider, local_part ):
+	"""
+	Create an IRole for access to content provided by the given ``provider``
+	and having the local (specific) part of an NTIID matching ``local_part``
+	"""
+	return nti_interfaces.IRole( CONTENT_ROLE_PREFIX + provider.lower() + ':' + local_part.lower())
+
 #: Name of the super-user group that is expected to have full rights
 #: in certain areas
-ROLE_ADMIN_NAME = 'role:nti.admin'
+ROLE_ADMIN_NAME = ROLE_PREFIX + 'nti.admin'
 ROLE_ADMIN = _StringRole( ROLE_ADMIN_NAME )
 
 #: Name of the high-permission group that is expected to have certain
 #: moderation-like rights in certain areas
-ROLE_MODERATOR_NAME = 'role:nti.moderator'
+ROLE_MODERATOR_NAME = ROLE_PREFIX + 'nti.moderator'
 ROLE_MODERATOR = _StringRole( ROLE_MODERATOR_NAME )
 
 class _EveryoneGroup(_StringGroup):
