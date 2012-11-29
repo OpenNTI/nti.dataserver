@@ -54,7 +54,10 @@ def _create_args_parser():
 	arg_parser.add_argument( 'env_dir', help="Dataserver environment root directory" )
 	arg_parser.add_argument( 'username', help="The username to edit" )
 	arg_parser.add_argument( '-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
-	
+	arg_parser.add_argument('--site',
+							dest='site',
+							action='store_true',
+							help="Application SITE. Use this when site policy should be invoked to set interfaces" )
 	attributes = {}
 	def get_schema_fields(iface, attributes):
 		names = iface.names()
@@ -80,7 +83,10 @@ def _create_args_parser():
 def main():
 	arg_parser = _create_args_parser()
 	args = arg_parser.parse_args()
+	conf_packages = () if not args.site else ('nti.appserver',)
 	run_with_dataserver( environment_dir=args.env_dir, 
+						 xmlconfig_packages=conf_packages,
+						 verbose=args.verbose,
 						 function=lambda: _change_attributes(args) )
 
 if __name__ == '__main__':
