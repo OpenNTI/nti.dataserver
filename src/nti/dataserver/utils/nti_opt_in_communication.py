@@ -18,12 +18,21 @@ def main():
 	arg_parser.add_argument( 'env_dir', help="Dataserver environment root directory" )
 	arg_parser.add_argument( '-d', '--debug', help="Don't use entity index", action='store_true', dest='debug')
 	arg_parser.add_argument( '-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
+	arg_parser.add_argument('--site',
+							dest='site',
+							action='store_true',
+							help="Application SITE. Use this when site policy should be invoked to get interface field values" )
+
 	args = arg_parser.parse_args()
 
 	env_dir = args.env_dir
 	verbose = args.verbose
 	useindex = not args.debug
-	run_with_dataserver( environment_dir=env_dir, function=lambda: _get_user_info(useindex, verbose) )
+	conf_packages = () if not args.site else ('nti.appserver',)
+	run_with_dataserver( environment_dir=env_dir, 
+						 xmlconfig_packages=conf_packages,
+						 verbose=verbose,
+						 function=lambda: _get_user_info(useindex, verbose) )
 	sys.exit( 0 )
 
 def _get_user_info(useindex=False, verbose=False):
