@@ -13,10 +13,17 @@ from hamcrest import contains
 from hamcrest.library import has_property
 from nti.tests import provides
 from nose.tools import assert_raises
+import zope.testing.loghandler
+
+import pyramid.testing
+from pyramid.testing import DummyRequest
 
 
 from zope import component
+from zope import interface
 from zope.component import eventtesting
+
+import os
 
 from nti.appserver import logon
 from nti.appserver.logon import (ping, handshake,password_logon, google_login, openid_login, ROUTE_OPENID_RESPONSE, _update_users_content_roles)
@@ -26,23 +33,21 @@ from nti.appserver.tests import NewRequestSharedConfiguringTestBase
 #from .test_application import WithSharedApplicationMockDS
 from pyramid.threadlocal import get_current_request
 
-import pyramid.testing
-from pyramid.testing import DummyRequest
 import pyramid.httpexceptions as hexc
 import pyramid.request
 
 from nti.dataserver import authorization as nauth
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans#, WithMockDS
-import zope.testing.loghandler
+
 #from nti.tests import provides
 
-from zope import interface
 import nti.dataserver.interfaces as nti_interfaces
 import nti.appserver.interfaces as app_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 
 from nti.externalization.externalization import EXT_FORMAT_JSON, to_external_representation, to_external_object
 from nti.dataserver import users
+from nti.contentlibrary.filesystem import DynamicFilesystemLibrary as FileLibrary
 
 class DummyView(object):
 	response = "Response"
@@ -87,6 +92,10 @@ class TestLogon(NewRequestSharedConfiguringTestBase):
 
 		self.config.add_route( name='objects.generic.traversal', pattern='/dataserver2/*traverse' )
 		self.config.add_route( name='user.root.service', pattern='/dataserver2{_:/?}' )
+
+		# Provide a library
+		library = FileLibrary( os.path.join( os.path.dirname(__file__), 'ExLibrary' ) )
+		component.provideUtility( library )
 
 	def test_unathenticated_ping(self):
 		"An unauthenticated ping returns one link, to the handshake."
@@ -346,7 +355,7 @@ class TestLogon(NewRequestSharedConfiguringTestBase):
 											   nti_interfaces.IFacebookUser,
 											   users.FacebookUser.create_user )
 	@WithMockDSTrans
-	def test_update_provider_content_access(self):
+	def test_update_provider_content_access_not_in_library(self):
 		user = users.User.create_user( self.ds, username='jason.madden@nextthought.com', password='temp001' )
 		content_roles = component.getAdapter( user, nti_interfaces.IGroupMember, nauth.CONTENT_ROLE_PREFIX )
 		# initially empty
@@ -388,6 +397,30 @@ class TestLogon(NewRequestSharedConfiguringTestBase):
 		_update_users_content_roles( user, idurl, None )
 		# leaving the other roles behind
 		assert_that( content_roles.groups, contains( *aops_roles ) )
+
+
+	@WithMockDSTrans
+	def test_update_provider_content_access_in_library(self):
+		"""If we supply the title of a work, the works actual NTIID gets used."""
+		# There are two things with the same title in the library, but different ntiids
+		# label="COSMETOLOGY" ntiid="tag:nextthought.com,2011-10:MN-HTML-MiladyCosmetology.cosmetology"
+		# label="COSMETOLOGY" ntiid="tag:nextthought.com,2011-10:MN-HTML-uncensored.cosmetology"
+
+		user = users.User.create_user( self.ds, username='jason.madden@nextthought.com', password='temp001' )
+		content_roles = component.getAdapter( user, nti_interfaces.IGroupMember, nauth.CONTENT_ROLE_PREFIX )
+		# initially empty
+		assert_that( list(content_roles.groups), is_( [] ) )
+
+		# Provider of course has to match
+		idurl = 'http://openid.mn.com/jmadden'
+		# The role is the title of the work
+		local_roles = ('cosmetology',)
+
+		_update_users_content_roles( user, idurl, local_roles )
+
+		assert_that( content_roles.groups, contains( nauth.role_for_providers_content( 'mn', 'MiladyCosmetology.cosmetology' ),
+													 nauth.role_for_providers_content( 'mn', 'Uncensored.cosmetology' ) ) )
+
 
 from zope.lifecycleevent.interfaces import IObjectCreatedEvent, IObjectModifiedEvent
 _user_created_events = []

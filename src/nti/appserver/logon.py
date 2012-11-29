@@ -37,6 +37,7 @@ from zope.event import notify
 from nti.dataserver import interfaces as nti_interfaces
 from nti.externalization import interfaces as ext_interfaces
 from nti.appserver import interfaces as app_interfaces
+from nti.contentlibrary import interfaces as lib_interfaces
 
 from nti.dataserver.links import Link
 from nti.dataserver import mimetype
@@ -46,6 +47,8 @@ from nti.dataserver import authorization as nauth
 from nti.appserver._util import logon_userid_with_request
 from nti.appserver.account_creation_views import REL_CREATE_ACCOUNT, REL_PREFLIGHT_CREATE_ACCOUNT
 from nti.appserver.account_recovery_views import REL_FORGOT_USERNAME, REL_FORGOT_PASSCODE, REL_RESET_PASSCODE
+
+from nti.ntiids import ntiids
 
 from pyramid.view import view_config
 from pyramid import security as sec
@@ -715,25 +718,43 @@ def _update_users_content_roles( user, idurl, content_roles ):
 	:param iterable content_roles: An iterable of strings naming provider-local
 		content roles. If empty/None, then the user will be granted no roles
 		from the provider of the ``idurl``; otherwise, the content roles from the given
-		``provider`` will be updated to match.
+		``provider`` will be updated to match. The local roles can be the exact (case-insensitive) match
+		for the title of a work, and the user will be granted access to the derived NTIID for the work
+		whose title matches. Otherwise (no title match), the user will be granted direct access
+		to the role as given.
 	"""
 	member = component.getAdapter( user, nti_interfaces.IMutableGroupMember, nauth.CONTENT_ROLE_PREFIX )
 	if not content_roles and not member.hasGroups():
 		return # No-op
 
 	provider = urlparse.urlparse( idurl ).netloc.split( '.' )[-2] # http://x.y.z.nextthought.com/openid => nextthought
+	provider = provider.lower()
 
 	empty_role = nauth.role_for_providers_content( provider, '' )
 
 	# Delete all of our provider's roles, leaving everything else intact
 	other_provider_roles = [x for x in member.groups if not x.id.startswith( empty_role.id )]
 	# Create new roles for what they tell us
-	roles_to_add = [nauth.role_for_providers_content( provider, x )
-					for x
-					in (content_roles or ())
-					if x]
-	# NOTE: At this step here we my need to map from external provider identifiers (stock numbers or whatever)
-	# to internal NTIID values. Somehow.
+	# NOTE: At this step here we may need to map from external provider identifiers (stock numbers or whatever)
+	# to internal NTIID values. Somehow. Searching titles is one way to ease that
+
+	library = component.queryUtility( lib_interfaces.IContentPackageLibrary )
+
+	roles_to_add = []
+	# Set up a map from title to list-of specific-parts-of-ntiids for all content from this provider
+	provider_packages = {}
+	for package in (library.contentPackages if library is not None else ()):
+		if ntiids.get_provider( package.ntiid ).lower() == provider:
+			provider_packages.setdefault( package.title.lower(), [] ).append( ntiids.get_specific( package.ntiid ) )
+
+	for local_role in (content_roles or ()):
+		local_role = local_role.lower()
+		if local_role in provider_packages:
+			for specific in provider_packages[local_role]:
+				roles_to_add.append( nauth.role_for_providers_content( provider, specific ) )
+		else:
+			roles_to_add.append( nauth.role_for_providers_content( provider, local_role ) )
+
 
 	member.setGroups( other_provider_roles + roles_to_add )
 
