@@ -979,18 +979,26 @@ class TestApplicationCreateUser(_AbstractApplicationCreateUserTest):
 		path = b'/dataserver2/users/@@account.create'
 
 		res = app.post( path, data, extra_environ={b'HTTP_ORIGIN': b'http://prmia.nextthought.com'} )
-
+		# The right HTTP status and headers
 		assert_that( res, has_property( 'status_int', 201 ) )
 		assert_that( res, has_property( 'location', contains_string( '/dataserver2/users/jason' ) ) )
-
+		# The right logon cookies
 		assert_that( res.cookies_set, has_key( 'nti.auth_tkt' ) )
 		assert_that( res.cookies_set, has_key( 'nti.landing_page' ) )
+		# The right User data
 		assert_that( res.json_body, has_entry( 'Username', 'jason2_nextthought_com' ) )
+		assert_that( res.json_body, has_entry( 'email', 'foo@bar.com' ) )
 
 		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
 		# Be sure we picked up the right template
 		assert_that( mailer.queue, has_item( has_property( 'body', does_not( contains_string( 'MATHCOUNTS' ) ) ) ) )
+
+		# Be sure the profile was committed correctly
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = users.User.get_user( res.json_body['Username'] )
+			assert_that( user_interfaces.IUserProfile( user ),
+						 has_property( 'email', res.json_body['email'] ) )
 
 	@WithSharedApplicationMockDS
 	def test_create_user_logged_in( self ):
