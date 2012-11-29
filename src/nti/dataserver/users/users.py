@@ -1022,9 +1022,10 @@ class User(Principal):
 # be 'User' as well.
 # TODO: MimeTypes?
 
+@interface.implementer( nti_interfaces.IOpenIdUser )
 class OpenIdUser(User):
 	__external_class_name__ = 'User'
-	interface.implements( nti_interfaces.IOpenIdUser )
+
 	identity_url = None
 
 	def __init__(self, username, **kwargs ):
@@ -1033,13 +1034,10 @@ class OpenIdUser(User):
 		if id_url:
 			self.identity_url = id_url
 
-
+@interface.implementer( nti_interfaces.IFacebookUser )
 class FacebookUser(User):
 	__external_class_name__ = 'User'
-
-	interface.implements( nti_interfaces.IFacebookUser )
 	facebook_url = None
-
 
 	def __init__(self, username, **kwargs ):
 		id_url = kwargs.pop( 'facebook_url', None)

@@ -86,7 +86,7 @@ REL_ACCOUNT_PROFILE_UPGRADE = "account.profile.needs.updated"
 _PLACEHOLDER_USERNAME = 'A_Username_We_Allow_That_Doesnt_Conflict'
 _PLACEHOLDER_REALNAME = 'com.nextthought.account_creation_user WithALastName'
 
-def _create_user( request, externalValue, preflight_only=False ):
+def _create_user( request, externalValue, preflight_only=False, require_password=True, user_factory=users.User.create_user ):
 
 	try:
 		desired_userid = externalValue['Username'] # May throw KeyError
@@ -94,12 +94,13 @@ def _create_user( request, externalValue, preflight_only=False ):
 		# below.
 		# TODO: See comments in the user about needing to use site policies vs the default
 		# Not sure if that is required
-		pwd = externalValue['password']
-		# We're good about checking the desired_userid, but we actually would allow
-		# None for an account without a password (an openid account), but that's not
-		# helpful here
-		if pwd is None:
-			raise KeyError( 'password' )
+		if require_password:
+			pwd = externalValue['password']
+			# We're good about checking the desired_userid, but we actually would allow
+			# None for an account without a password (an openid account), but that's not
+			# helpful here
+			if pwd is None:
+				raise KeyError( 'password' )
 	except KeyError:
 		exc_info = sys.exc_info()
 		_raise_error( request, hexc.HTTPUnprocessableEntity,
@@ -118,9 +119,9 @@ def _create_user( request, externalValue, preflight_only=False ):
 		# is currently not being applied by the site policy until after
 		# the user object has been updated (if it's based on interface). When we
 		# need different values, that falls over.
-		new_user = users.User.create_user( username=desired_userid,
-										   external_value=externalValue,
-										   preflight_only=preflight_only ) # May throw validation error
+		new_user = user_factory( username=desired_userid,
+								 external_value=externalValue,
+								 preflight_only=preflight_only ) # May throw validation error
 		return new_user
 	except nameparser.parser.BlankHumanNameError as e:
 		exc_info = sys.exc_info()
