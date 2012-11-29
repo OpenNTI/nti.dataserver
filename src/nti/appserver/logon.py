@@ -29,7 +29,10 @@ logger = logging.getLogger(__name__)
 import openid.oidutil
 openid.oidutil.log = logging.getLogger('openid').info
 
-from zope import interface, component, lifecycleevent
+from zope import interface
+from zope import component
+from zope import lifecycleevent
+from zope.event import notify
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.externalization import interfaces as ext_interfaces
@@ -656,7 +659,7 @@ def openid_login(context, request):
 	return _openid_login( context, request, request.params['openid'] )
 
 
-def _deal_with_external_account( request, fname, lname, email, idurl, iface, creator ):
+def _deal_with_external_account( request, fname, lname, email, idurl, iface, user_factory ):
 	"""
 	Finds or creates an account based on an external authentication.
 
@@ -678,15 +681,24 @@ def _deal_with_external_account( request, fname, lname, email, idurl, iface, cre
 			lifecycleevent.modified( user, lifecycleevent.Attributes( iface, url_attr ) )
 		assert getattr( user, url_attr ) == idurl
 	else:
+		# When creating, we go through the same steps as account_creation_views,
+		# guaranteeing the proper validation
+		external_value = { 'Username': email,
+						   'realname': fname + ' ' + lname,
+						   url_attr: idurl,
+						   'email': email }
+		from .account_creation_views import _create_user # XXX A bit scuzzy
+
 		# This fires lifecycleevent.IObjectCreatedEvent and IObjectAddedEvent. The oldParent attribute
 		# will be None
-		kwargs = {'dataserver': dataserver,
-				  'username': email,
-				  'password': '',
-				  }
-		kwargs[url_attr] = idurl
-		user = creator.create_user( **kwargs )
+		user = _create_user( request, external_value, require_password=False, user_factory=user_factory )
+		__traceback_info__ = request, user_factory, iface, user
+		assert getattr( user, url_attr ) is None # doesn't get read from the external value right now
+		setattr( user, url_attr, idurl )
 		assert getattr( user, url_attr ) == idurl
+		assert iface.providedBy( user )
+		# We manually fire the user_created event. See account_creation_views
+		notify( app_interfaces.UserCreatedWithRequestEvent( user, request ) )
 	return user
 
 def _update_users_content_roles( user, idurl, content_roles ):
@@ -767,8 +779,10 @@ def _openidcallback( context, request, success_dict ):
 	try:
 		# TODO: Make this look the interface and factory to assign up by name (something in the idurl?)
 		# That way we can automatically assign an IAoPSUser and use a users.AoPSUser
-		the_user = _deal_with_external_account( request, fname, lname, email, idurl, nti_interfaces.IOpenIdUser, users.OpenIdUser )
+		the_user = _deal_with_external_account( request, fname, lname, email, idurl, nti_interfaces.IOpenIdUser, users.OpenIdUser.create_user )
 		_update_users_content_roles( the_user, idurl, content_roles )
+	except hexc.HTTPError:
+		raise
 	except Exception as e:
 		return _create_failure_response( request, error=str(e) )
 
@@ -861,7 +875,7 @@ def facebook_oauth2(request):
 										data['first_name'], data['last_name'],
 										data['email'], data['link'],
 										nti_interfaces.IFacebookUser,
-										users.FacebookUser )
+										users.FacebookUser.create_user )
 	# Do we have a facebook picture to use? If so, snag it and use it.
 	pic_glet.join()
 	pic_rsp = pic_rsp.response
