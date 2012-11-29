@@ -94,6 +94,7 @@ def main():
 	export_dir = os.path.expanduser(args.export_dir)  if args.export_dir else None
 	
 	run_with_dataserver(environment_dir=env_dir, 
+						verbose = verbose,
 						function=lambda: _remove_entity_objects(username, object_types, export_dir, verbose) )
 
 if __name__ == '__main__':

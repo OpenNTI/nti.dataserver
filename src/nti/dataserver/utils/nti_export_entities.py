@@ -56,6 +56,7 @@ def main():
 
 	# run export
 	run_with_dataserver(environment_dir=env_dir, 
+						verbose = verbose,
 						function=lambda: export_entities(entities, export_dir, verbose) )
 
 if __name__ == '__main__':
