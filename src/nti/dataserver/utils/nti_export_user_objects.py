@@ -109,6 +109,10 @@ def main():
 	arg_parser = argparse.ArgumentParser( description="Export user objects" )
 	arg_parser.add_argument( 'env_dir', help="Dataserver environment root directory" )
 	arg_parser.add_argument( 'username', help="The username" )
+	arg_parser.add_argument('--site',
+							dest='site',
+							action='store_true',
+							help="Application SITE. Use this to get link info" )
 	arg_parser.add_argument( '-d', '--directory',
 							 dest='export_dir',
 							 default=None,
@@ -124,10 +128,12 @@ def main():
 	env_dir = args.env_dir
 	username = args.username
 	export_dir = args.export_dir or env_dir
+	conf_packages = () if not args.site else ('nti.appserver',)
 	object_types = set(args.object_types) if args.object_types else ()
 
 	# run export
 	run_with_dataserver(environment_dir=env_dir, 
+						xmlconfig_packages=conf_packages,
 						function=lambda: export_user_objects(username, object_types, export_dir) )
 
 if __name__ == '__main__':
