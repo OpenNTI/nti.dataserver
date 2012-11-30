@@ -97,7 +97,7 @@ ROUTE_OPENID_RESPONSE = 'logon.openid.response'
 #:
 #: The NTIID of each content package thus referenced should be checked to be sure it came from the
 #: OpenID domain.
-AX_TYPE_CONTENT_ROLES = 'tag:nextthought.com,2012:ax/contentroles/1'
+AX_TYPE_CONTENT_ROLES = 'tag:nextthought.com,2011:ax/contentroles/1'
 
 # The time limit for a GET request during
 # the authentication process
@@ -555,9 +555,13 @@ def _openid_configure( request ):
 				 'openid.success_callback': 'nti.appserver.logon:_openidcallback',
 				# Google uses a weird mix of namespaces. It only supports these values, plus
 				# country (http://code.google.com/apis/accounts/docs/OpenID.html#endpoint)
-				 'openid.ax_required': 'email=http://schema.openid.net/contact/email firstname=http://axschema.org/namePerson/first lastname=http://axschema.org/namePerson/last language=http://axschema.org/pref/language',
+				 'openid.ax_required': 'email=http://schema.openid.net/contact/email firstname=http://axschema.org/namePerson/first lastname=http://axschema.org/namePerson/last',
 				 'openid.ax_optional': 'content_roles=' + AX_TYPE_CONTENT_ROLES,
-				 'openid.sreg_required': 'email fullname nickname language' }
+				 # See _openidcallback: Sreg isn't used anywhere right now, so it's disabled
+				 # Note that there is an sreg value for 'nickname' that could serve as
+				 # our 'alias' if we wanted to try to ask for it.
+				 #'openid.sreg_required': 'email fullname nickname language'
+				 }
 	request.registry.settings.update( settings )
 
 from openid.extensions import ax
@@ -662,20 +666,20 @@ def openid_login(context, request):
 	return _openid_login( context, request, request.params['openid'] )
 
 
-def _deal_with_external_account( request, fname, lname, email, idurl, iface, user_factory ):
+def _deal_with_external_account( request, username, fname, lname, email, idurl, iface, user_factory ):
 	"""
 	Finds or creates an account based on an external authentication.
 
-	:param email: Becomes the user's local username; must be globally unique, but is not
-		required to be an actual email. (TODO: If it is, we should update
-		the user profile.)
+	:param username: The login name the user typed. Must be globally unique, and
+		should be in the form of an email.
+	:param email: The email the user provides. Should be an email. Not required.
 	:param idul: The URL that identifies the user on the external system.
 	:param iface: The interface that the user object will implement.
 	:return: The user object
 	"""
 
 	dataserver = request.registry.getUtility(nti_interfaces.IDataserver)
-	user = users.User.get_user( username=email, dataserver=dataserver )
+	user = users.User.get_user( username=username, dataserver=dataserver )
 	url_attr = iface.names()[0]
 	if user:
 		if not iface.providedBy( user ):
@@ -686,7 +690,7 @@ def _deal_with_external_account( request, fname, lname, email, idurl, iface, use
 	else:
 		# When creating, we go through the same steps as account_creation_views,
 		# guaranteeing the proper validation
-		external_value = { 'Username': email,
+		external_value = { 'Username': username,
 						   'realname': fname + ' ' + lname,
 						   url_attr: idurl,
 						   'email': email }
@@ -772,7 +776,9 @@ def _openidcallback( context, request, success_dict ):
 	oidcsum = request.params.get( 'oidcsum' )
 
 	# Google only supports AX, sreg is ignored.
-	# AoPS gives us back nothing, ignoring both AX and sreg
+	# AoPS gives us back nothing, ignoring both AX and sreg.
+	# So right now, even though we ask for both, we are also totally ignoring
+	# sreg
 
 	# In AX, there can be 0 or more values; the openid library always represents
 	# this using a list (see openid.extensions.ax.AXKeyValueMessage.get and pyramid_openid.view.process_provider_response)
@@ -790,17 +796,19 @@ def _openidcallback( context, request, success_dict ):
 	if not fname and not lname and not email and idurl and idurl.startswith( 'http://openid.aops.com/' ):
 		# Derive the username as the last part of the URL
 		# http://openid.aops.com/<username>
-		email = idurl.split( '/' )[-1]
-		email = email + '@' + _MissingUserAopsLoginLinkProvider.domains[0]
+		username = idurl.split( '/' )[-1]
+		username = username + '@' + _MissingUserAopsLoginLinkProvider.domains[0]
+	else:
+		username = email
 
-	if str(hash(email)) != oidcsum:
+	if str(hash(username)) != oidcsum:
 		   logger.warn( "Checksum mismatch. Logged in multiple times? %s %s", oidcsum, success_dict)
-		   return _create_failure_response(request, error='Email checksum mismatch')
+		   return _create_failure_response(request, error='Username/Email checksum mismatch')
 
 	try:
 		# TODO: Make this look the interface and factory to assign up by name (something in the idurl?)
 		# That way we can automatically assign an IAoPSUser and use a users.AoPSUser
-		the_user = _deal_with_external_account( request, fname, lname, email, idurl, nti_interfaces.IOpenIdUser, users.OpenIdUser.create_user )
+		the_user = _deal_with_external_account( request, username, fname, lname, email, idurl, nti_interfaces.IOpenIdUser, users.OpenIdUser.create_user )
 		_update_users_content_roles( the_user, idurl, content_roles )
 	except hexc.HTTPError:
 		raise

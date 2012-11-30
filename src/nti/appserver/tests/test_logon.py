@@ -216,7 +216,6 @@ class TestLogon(NewRequestSharedConfiguringTestBase):
 		assert_that( redir_url, contains_string( 'ext1=unlimited' ) )
 		assert_that( redir_url, contains_string( 'ax.if_available=ext1' ) )
 
-
 		# An openid request to a non-existant domain will fail
 		# to begin negotiation
 		get_current_request().params['openid'] = 'http://localhost/oidprovider/'
@@ -276,6 +275,7 @@ class TestLogon(NewRequestSharedConfiguringTestBase):
 	@WithMockDSTrans
 	def test_create_openid_from_external( self ):
 		user = logon._deal_with_external_account( get_current_request(),
+												  "jason.madden@nextthought.com",
 												  "Jason",
 												  "Madden",
 												  "jason.madden@nextthought.com",
@@ -299,6 +299,7 @@ class TestLogon(NewRequestSharedConfiguringTestBase):
 		# Can also auth as facebook for the same email address
 		# TODO: Think about that
 		fb_user = logon._deal_with_external_account( get_current_request(),
+													 "jason.madden@nextthought.com",
 													 "Jason",
 													 "Madden",
 													 "jason.madden@nextthought.com",
@@ -324,6 +325,7 @@ class TestLogon(NewRequestSharedConfiguringTestBase):
 	def test_create_facebook_from_external( self ):
 
 		fb_user = logon._deal_with_external_account( get_current_request(),
+													 "jason.madden@nextthought.com",
 													 "Jason",
 													 "Madden",
 													 "jason.madden@nextthought.com",
@@ -348,9 +350,10 @@ class TestLogon(NewRequestSharedConfiguringTestBase):
 	def test_create_from_external_bad_data( self ):
 		with assert_raises(hexc.HTTPError):
 			logon._deal_with_external_account( get_current_request(),
+											   "jason.madden@nextthought.com",
 											   "Jason",
 											   "Madden",
-											   "jason.madden_nextthought_com",
+											   "jason.madden_nextthought_com", # Bad email
 											   "http://facebook.com",
 											   nti_interfaces.IFacebookUser,
 											   users.FacebookUser.create_user )
