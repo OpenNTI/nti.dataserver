@@ -141,6 +141,9 @@ class QMatchingPart(QPart):
 
 @interface.implementer(interfaces.IQFreeResponsePart)
 class QFreeResponsePart(QPart):
+
+	grader_name = 'LowerStringEqualityGrader'
+
 	def __eq__( self, other ):
 		try:
 			return self is other or (isinstance(other,QFreeResponsePart)

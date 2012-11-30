@@ -12,6 +12,9 @@ from zope import interface
 @staticmethod
 def _id(o): return o
 
+@staticmethod
+def _lower(o): return unicode(o).lower()
+
 class _AbstractGrader(object):
 	"""
 	"""
@@ -38,6 +41,13 @@ class StringEqualityGrader(EqualityGrader):
 	an equality comparison.
 	"""
 	solution_converter = unicode
+
+class LowerStringEqualityGrader(StringEqualityGrader):
+	"""
+	Grader that converts the response to a lowercase string 
+	before doing an equality comparison.
+	"""
+	solution_converter = _lower
 
 class FloatEqualityGrader(EqualityGrader):
 	"""
