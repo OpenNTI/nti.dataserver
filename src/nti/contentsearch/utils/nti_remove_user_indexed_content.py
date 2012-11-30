@@ -48,8 +48,7 @@ def main():
 	if not idx_types:
 		content_types = get_indexable_types()
 	else:
-		content_types = [_nrm(n) for n in idx_types if _nrm(n) in get_indexable_types()]
-		content_types = set(content_types)
+		content_types = {_nrm(n) for n in idx_types if _nrm(n) in get_indexable_types()}
 		if not content_types:
 			print("No valid content type(s) were specified")
 			sys.exit(3)
