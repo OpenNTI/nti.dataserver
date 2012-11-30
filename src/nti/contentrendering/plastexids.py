@@ -10,15 +10,10 @@ $Id$
 """
 from __future__ import print_function, unicode_literals
 
+logger = __import__('logging').getLogger( __name__ )
+
 import functools
 import hashlib
-
-
-import plasTeX
-from plasTeX.Logging import getLogger
-log = getLogger(__name__)
-logger = log
-
 
 from zope.deprecation import deprecate
 from nti.deprecated import hiding_warnings
@@ -46,9 +41,7 @@ def nextID(self, suffix=''):
 	setattr(self, 'NTIID', ntiid)
 	return _make_ntiid( self,  ntiid, suffix )
 
-
-
-
+import plasTeX
 # SectionUtils is the (a) parent of chapter, section, ..., paragraph, as well as document
 from plasTeX.Base.LaTeX.Sectioning import SectionUtils
 
