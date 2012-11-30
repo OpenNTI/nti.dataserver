@@ -186,9 +186,8 @@ def _search_scope_to_remote_user( remote_user, search_term, op=operator.contains
 			result.append( section )
 
 	if not result:
-		warnings.warn( "Hack for UI: looking at display names of communities" )
-		for x in remote_user.communities:
-			x = users.Entity.get_entity( x )
+		warnings.warn( "Hack for UI: looking at display names of dynamic memberships (communities and DFLs)" )
+		for x in remote_user.dynamic_memberships:
 			if x and op( x.username.lower(), search_term.lower() ):
 				result.append( x )
 				break
@@ -198,7 +197,7 @@ def _search_scope_to_remote_user( remote_user, search_term, op=operator.contains
 
 def _make_visibility_test(remote_user):
 	if remote_user:
-		remote_com_names = remote_user.communities - set( ('Everyone',) )
+		remote_com_names = remote_user.usernames_of_dynamic_memberships - set( ('Everyone',) )
 		def test(x):
 			# User can see himself
 			if x == remote_user:
@@ -210,6 +209,7 @@ def _make_visibility_test(remote_user):
 			# FIXME: Hardcoding this site/user policy
 			if nti_interfaces.ICoppaUserWithoutAgreement.providedBy( x ):
 				return False
-			return not hasattr(x, 'communities') or x.communities.intersection( remote_com_names )
+			# Otherwise, visible if it doesn't have dynamic memberships, or we share dynamic memberships
+			return not hasattr(x, 'usernames_of_dynamic_memberships') or x.usernames_of_dynamic_memberships.intersection( remote_com_names )
 		return test
 	return lambda x: True

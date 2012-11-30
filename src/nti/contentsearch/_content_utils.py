@@ -26,7 +26,7 @@ from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch.common import (CLASS, BODY, ID)
 from nti.contentsearch.common import (text_, body_, selectedText_, replacementContent_, redactionExplanation_,
 									  creator_fields, keyword_fields, last_modified_fields, sharedWith_,
-									  container_id_fields, ntiid_fields, oid_fields, highlight_, note_,
+									  container_id_fields, ntiid_fields,  highlight_, note_,
 									  messageinfo_, redaction_, canvas_, canvastextshape_, references_,
 									  inReplyTo_, recipients_, channel_, flattenedSharingTargetNames_)
 
@@ -74,6 +74,9 @@ def _process_words(words):
 
 @interface.implementer(search_interfaces.IContentResolver)
 class _BasicContentResolver(object):
+	
+	__slots__ = 'obj'
+	
 	def __init__( self, obj ):
 		self.obj = obj
 
@@ -81,11 +84,6 @@ class _AbstractIndexDataResolver(_BasicContentResolver):
 
 	def get_ntiid(self):
 		return to_external_ntiid_oid( self.obj )
-
-	def get_external_oid(self):
-		return to_external_ntiid_oid( self.obj )
-	get_oid = get_external_oid
-	get_objectId = get_external_oid
 
 	def get_creator(self):
 		result = _get_any_attr(self.obj, creator_fields)
@@ -109,7 +107,7 @@ class _AbstractIndexDataResolver(_BasicContentResolver):
 		return list(result) if result else []
 
 	def get_sharedWith(self):
-		data = _get_any_attr(self.obj, [flattenedSharingTargetNames_, sharedWith_])
+		data = _get_any_attr(self.obj, [sharedWith_, flattenedSharingTargetNames_])
 		return _process_words(data)
 
 	def get_last_modified(self):
@@ -215,7 +213,8 @@ class _CanvasTextShapeContentResolver(_BasicContentResolver):
 @component.adapter(IDict)
 @interface.implementer(	search_interfaces.IContentResolver,
 						search_interfaces.INTIIDResolver,
-						search_interfaces.IContainerIDResolver)
+						search_interfaces.IContainerIDResolver,
+						search_interfaces.ILastModifiedResolver)
 class _DictContentResolver(object):
 
 	def __init__( self, obj ):
@@ -279,9 +278,6 @@ class _DictContentResolver(object):
 	def get_ntiid(self):
 		return self._get_attr(ntiid_fields)
 
-	def get_external_oid(self):
-		return self._get_attr(oid_fields)
-
 	def get_creator(self):
 		result = self._get_attr(creator_fields)
 		return unicode(result) if result else None
@@ -303,9 +299,6 @@ class _DictContentResolver(object):
 
 	def get_last_modified(self):
 		return self._get_attr(last_modified_fields)
-
-	get_oid = get_external_oid
-	get_objectId = get_external_oid
 
 	# treadable content resolver
 
@@ -357,6 +350,8 @@ class _BookContentResolver(_BasicContentResolver):
 		return self.obj.ntiid
 	get_containerId = get_ntiid
 
+	def get_last_modified(self):
+		return self.obj.last_modified
 
 @interface.implementer( search_interfaces.IStopWords )
 class _DefaultStopWords(object):

@@ -85,7 +85,7 @@ if [ "$INSTALL_EXTRAS" ]; then
 		echo "Installing $p"
 		pip install -U ${p}
 	done
-
+	
 	# clean
 	rm -rf $TMPWK_DIR
 fi

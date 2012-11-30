@@ -1,6 +1,8 @@
 #!/usr/bin/env python2.7
 #pylint: disable=R0904
 
+import hashlib
+
 from plasTeX import Base, Command, Environment
 
 from plasTeX.Base import Crossref
@@ -52,6 +54,13 @@ class ntiincludevideo(_OneText):
 
 	def invoke( self, tex ):
 		result = super(ntiincludevideo, self).invoke( tex )
+
+		# Set the id of the element
+		source = self.source
+		_id = hashlib.md5(source.strip().encode('utf-8')).hexdigest()
+		setattr( self, "@id", _id )
+		setattr( self, "@hasgenid", True )
+
 		# change youtube view links to embed
 		self.attributes['video_url'] = self.attributes['video_url'].textContent.replace( "/watch?v=", '/embed/' )
 		self.attributes['width'] = 640

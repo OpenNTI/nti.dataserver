@@ -299,17 +299,25 @@ from nti.contentlibrary.filesystem import FilesystemContentPackage
 
 class TestLibraryEntryAclProvider(mock_dataserver.ConfiguringTestBase):
 
+	@classmethod
+	def setUpClass(cls):
+		cls.temp_dir = tempfile.mkdtemp()
+		cls.library_entry = FilesystemContentPackage()
+		cls.library_entry.filename = os.path.join( cls.temp_dir, 'index.html' )
+		cls.acl_path = os.path.join( cls.temp_dir, '.nti_acl' )
+
+	@classmethod
+	def tearDownClass(cls):
+		shutil.rmtree( cls.temp_dir )
+
 	def setUp(self):
 		super(TestLibraryEntryAclProvider,self).setUp()
-		self.temp_dir = tempfile.mkdtemp()
-		self.library_entry = FilesystemContentPackage()
-		self.library_entry.filename = os.path.join( self.temp_dir, 'index.html' )
-
 		component.provideUtility( ACLAuthorizationPolicy() )
-
-	def tearDown(self):
-		shutil.rmtree( self.temp_dir )
-		super(TestLibraryEntryAclProvider,self).tearDown()
+		self.library_entry.ntiid = None
+		try:
+			os.unlink( self.acl_path )
+		except OSError:
+			pass
 
 	def test_no_acl_file(self):
 		acl_prov = nti_interfaces.IACLProvider( self.library_entry )
@@ -317,7 +325,7 @@ class TestLibraryEntryAclProvider(mock_dataserver.ConfiguringTestBase):
 										auth.ACT_READ ) )
 
 	def test_malformed_acl_file_denies_all(self):
-		with open( os.path.join( self.temp_dir, '.nti_acl' ), 'w' ) as f:
+		with open( self.acl_path, 'w' ) as f:
 			f.write( "This file is invalid" )
 		acl_prov = nti_interfaces.IACLProvider( self.library_entry )
 		assert_that( acl_prov, denies( nti_interfaces.AUTHENTICATED_GROUP_NAME,
@@ -325,7 +333,7 @@ class TestLibraryEntryAclProvider(mock_dataserver.ConfiguringTestBase):
 
 
 	def test_specific_acl_file(self):
-		with open( os.path.join( self.temp_dir, '.nti_acl' ), 'w' ) as f:
+		with open( self.acl_path, 'w' ) as f:
 			f.write( "Allow:User:[nti.actions.create]\n" )
 			f.write( " # This line has a comment\n" )
 			f.write( "  \n" ) #This line is blank
@@ -344,6 +352,16 @@ class TestLibraryEntryAclProvider(mock_dataserver.ConfiguringTestBase):
 					 is_( True ) )
 		assert_that( bool(auth_acl.has_permission(auth.ACT_CREATE, acl_prov, "OtherUser", user_factory=lambda s: s)),
 					 is_( False ) )
+
+		# Now, with an NTIID
+		self.library_entry.ntiid = 'tag:nextthought.com,2011-10:PRMIA-HTML-Volume_III.A.2_converted.the_prm_handbook_volume_iii'
+		acl_prov = nti_interfaces.IACLProvider( self.library_entry )
+		assert_that( acl_prov, permits( "User", auth.ACT_CREATE ) )
+		assert_that( acl_prov, denies( "OtherUser", auth.ACT_CREATE ) )
+
+		assert_that( acl_prov, permits( "content-role:prmia:Volume_III.A.2_converted.the_prm_handbook_volume_iii".lower(), auth.ACT_READ ) )
+		assert_that( acl_prov, permits( nti_interfaces.IGroup("content-role:prmia:Volume_III.A.2_converted.the_prm_handbook_volume_iii".lower()), auth.ACT_READ ) )
+
 
 from zope.security.permission import Permission
 class Permits(BaseMatcher):

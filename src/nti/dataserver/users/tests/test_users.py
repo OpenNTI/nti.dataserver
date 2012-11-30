@@ -23,6 +23,7 @@ from nti.dataserver.interfaces import IFriendsList
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.activitystream_change import Change
 from nti.tests import provides
+from nti.tests import verifiably_provides
 
 from nti.externalization.persistence import getPersistentState
 from nti.externalization.externalization import to_external_object
@@ -54,16 +55,23 @@ class PersistentContainedThreadable(ContainedMixin,persistent.Persistent):
 		return repr( (self.__class__.__name__, self.containerId, self.id) )
 
 def test_create_friends_list_through_registry():
-	def _test( name ):
+	def _test( name, dynamic_sharing=False ):
 		user = User( 'foo12' )
-		created = user.maybeCreateContainedObjectWithType( name, {'Username': 'Friend' } )
+		created = user.maybeCreateContainedObjectWithType( name, {'Username': 'Friend', 'IsDynamicSharing': dynamic_sharing } )
 		assert_that( created, is_(FriendsList) )
 		assert_that( created.username, is_( 'Friend' ) )
 		assert_that( created, provides( IFriendsList ) )
 
+		if dynamic_sharing:
+			assert_that( created, verifiably_provides( nti_interfaces.IDynamicSharingTarget ) )
+		else:
+			assert_that( created, does_not( provides( nti_interfaces.IDynamicSharingTarget ) ) )
+
 	yield _test, 'FriendsLists'
 	# case insensitive
 	yield _test, 'friendslists'
+	# can create dynamic
+	yield _test, 'Friendslists', True
 
 def test_adding_wrong_type_to_friendslist():
 	friends = FriendsListContainer()
@@ -99,26 +107,6 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 
 		with assert_raises(TypeError):
 			users.Entity.get_entity( username=1 )
-
-
-	@WithMockDSTrans
-	def test_dynamic_friendslist(self):
-		user1 = User.create_user( self.ds, username='foo23' )
-		user2 = User.create_user( self.ds, username='foo12' )
-		user3 = User.create_user( self.ds, username='foo13' )
-
-		fl1 = users.DynamicFriendsList(username='Friends')
-		fl1.creator = user1 # Creator must be set
-
-		user1.addContainedObject( fl1 )
-		fl1.addFriend( user2 )
-
-		assert_that( user2.communities, has_item( fl1.NTIID ) )
-
-		fl1.updateFromExternalObject( {'friends': [user3.username]} )
-
-		assert_that( user3.communities, has_item( fl1.NTIID ) )
-		assert_that( user2.communities, does_not( has_item( fl1.NTIID ) ) )
 
 
 	@WithMockDSTrans
@@ -531,7 +519,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		comm = Community( 'AoPS' )
 		self.ds.root['users'][comm.username] = comm
 
-		user.join_community( comm ); user2.join_community( comm )
+		user.record_dynamic_membership( comm ); user2.record_dynamic_membership( comm )
 		user.follow( comm )
 
 		note = Note()
@@ -558,7 +546,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		comm = Community( 'AoPS' )
 		self.ds.root['users'][comm.username] = comm
 
-		user.join_community( comm ); user2.join_community( comm )
+		user.record_dynamic_membership( comm ); user2.record_dynamic_membership( comm )
 		user.follow( comm )
 
 		note = Note()
@@ -588,7 +576,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		self.ds.root['users'][comm.username] = comm
 		comm.MAX_STREAM_SIZE = user.MAX_STREAM_SIZE * 3
 
-		user.join_community( comm ); user2.join_community( comm )
+		user.record_dynamic_membership( comm ); user2.record_dynamic_membership( comm )
 		user.follow( comm )
 
 		def _note_in_foo_at_time_shared_with( x, target ):

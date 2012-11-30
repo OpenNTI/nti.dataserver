@@ -71,7 +71,7 @@ def _discard( s, k ):
 # rather than use isinstance().
 # It also requires a small patch to work with relstorage, which
 # does not implement ZODB.interfaces.IStorageCurrentRecordIteration:
- 		# if not hasattr( self.storage, '_index'):
+		# if not hasattr( self.storage, '_index'):
 		# 	# Only FileStorage has _index (this is not an API defined attribute)
 		# 	if not hasattr( self.storage, 'record_iternext' ):
 		# 	# RelStorage is not IStorageCurrentRecordIteration
@@ -83,8 +83,7 @@ def _discard( s, k ):
 from ._meeting_post_policy import _ModeratedMeetingState
 _bwc_renames = { 'nti.chatserver.meeting _ModeratedMeetingState': 'nti.chatserver._meeting_post_policy _ModeratedMeetingState' }
 
-
-
+@interface.implementer( interfaces.IMeeting )
 class _Meeting(contenttypes.ThreadableExternalizableMixin,
 				Persistent,
 				datastructures.ExternalizableInstanceDict):
@@ -93,8 +92,6 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 	__metaclass__ = _ChatObjectMeta
 	__emits__ = ('recvMessage', 'enteredRoom', 'exitedRoom',
 				 'roomMembershipChanged', 'roomModerationChanged' )
-
-	interface.implements(interfaces.IMeeting)
 
 	_prefer_oid_ = False
 

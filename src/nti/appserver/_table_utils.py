@@ -26,6 +26,8 @@ from zope.proxy.decorator import SpecificationDecoratorBase
 
 from zope.traversing.browser.interfaces import IAbsoluteURL
 
+from nti.dataserver.links_external import render_link
+
 @interface.implementer(dc_interfaces.IZopeDublinCore)
 class _FakeDublinCoreProxy(SpecificationDecoratorBase):
 	pass
@@ -51,17 +53,34 @@ class NoteLikeBodyColumn(column.GetAttrColumn):
 	weight = 1
 	header = 'Content'
 	attrName = 'body'
+	cssClasses = { 'td': 'content-body' }
 
 	def renderCell( self, item ):
 		content = super(NoteLikeBodyColumn,self).renderCell( item )
 		parts = []
 		for part in content:
 			if nti_interfaces.ICanvas.providedBy( part ):
-				# TODO: Inspect about the presence of images, etc
-				parts.append( "&lt;CANVAS OBJECT&gt;" )
-			else:
+				# TODO: We can do better than this. For one, we could use adapters
+				body = ["<div class='canvas'>&lt;CANVAS OBJECT of length %s &gt;" % len(part)]
+				for canvas_part in part:
+					if hasattr( canvas_part, 'url' ):
+						# Write it out as a link to the image.
+						# TODO: This is a bit of a hack
+						# TODO: Are there any permissions problems with this? Potentially?
+						# The data-url wouldn't have them. In notification emails, this
+						# could also be a problem
+						part_ext = canvas_part.toExternalObject()
+						__traceback_info__ = part_ext
+						link = part_ext['url']
+						# TODO: Apparently there are some unmigrated objects that don't have _file
+						# hidden away somewhere?
+						link_external = render_link(link) if nti_interfaces.ILink.providedBy( link ) else link
+						body.append( "<img src='%s' />" % link_external )
+				body.append( '</div>' )
+				parts.append( '<br />'.join( body ) )
+			elif part:
 				parts.append( frg_interfaces.IPlainTextContentFragment( part, None ) or unicode(part) )
-		return '<br />'.join( parts )
+		return '<div>' + '<br />'.join( parts ) + '</div>'
 
 class IntIdCheckBoxColumn(column.CheckBoxColumn):
 	"""
@@ -70,9 +89,10 @@ class IntIdCheckBoxColumn(column.CheckBoxColumn):
 	"""
 	weight = 0
 	header = 'Select'
+	cssClasses = { 'td': 'select-object-checkbox' }
 
 	def getItemValue(self, item):
-		return str(component.getUtility( zc_intid.IIntIds ).getId( item ))
+		return str(component.getUtility( zc_intid.IIntIds ).queryId( item ) or -1)
 
 def fake_dc_core_for_times( item ):
 	times = dc_interfaces.IDCTimes( item, None )

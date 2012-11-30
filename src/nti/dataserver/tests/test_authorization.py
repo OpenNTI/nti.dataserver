@@ -1,9 +1,16 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 
 #pylint: disable=R0904,W0402
-from hamcrest import assert_that, has_length, contains_string, is_, same_instance, is_not
+
+from __future__ import print_function, absolute_import, unicode_literals
+
+from hamcrest import assert_that, has_length, is_, same_instance, is_not
+from hamcrest import contains
 from nti.dataserver.tests import has_attr, provides
+
 from nti.tests import verifiably_provides
+
+import nti.tests
 
 from zope.interface.verify import verifyObject
 from zope import component
@@ -13,70 +20,96 @@ import nti.dataserver.authorization as nauth
 import nti.dataserver.users as users
 import nti.dataserver.interfaces as nti_interfaces
 
-import mock_dataserver
 
-class TestPGM(mock_dataserver.ConfiguringTestBase):
+setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.dataserver',) )
+tearDownModule = nti.tests.module_teardown
 
-	def test_user_adapts( self ):
-		u = users.User( 'sjohnson@nextthought.com', 't' )
-		pgm = nti_interfaces.IGroupMember( u )
+def test_user_adapts_to_group_member(  ):
+	u = users.User( 'sjohnson@nextthought.com', 't' )
+	pgm = nti_interfaces.IGroupMember( u )
 
-		assert_that( u, has_attr( '__annotations__' ) )
-		assert_that( u.__annotations__, has_length( 1 ) )
-		assert_that( list(u.__annotations__.keys())[0], contains_string( pgm.__class__.__name__ ) )
+	assert_that( pgm, verifiably_provides( nti_interfaces.IGroupMember ) )
+	assert_that( list(pgm.groups), is_([]) )
+	# As it happens, we get back as IGroupAwarePrincipal
+	assert_that( pgm, verifiably_provides( nti_interfaces.IGroupAwarePrincipal ) )
 
-		verifyObject( nti_interfaces.IGroupMember, pgm )
+	# Internally, this is implemented with annotations
+	assert_that( u, has_attr( '__annotations__' ) )
+	assert_that( u.__annotations__, has_length( 1 ) )
 
-		assert_that( list(pgm.groups), is_([]) )
+	# And we're using the same objects so it works
+	mutable = nti_interfaces.IMutableGroupMember( u )
+	mutable.setGroups( ('abc',) )
 
-class TestPrincipals(mock_dataserver.ConfiguringTestBase):
+	assert_that( pgm.groups, contains( nti_interfaces.IGroup('abc') ) )
 
-	def test_string_adapts( self ):
-		# no-name
-		iprin = nti_interfaces.IPrincipal( 'foo@bar' )
-		assert_that( iprin, provides( nti_interfaces.IPrincipal ) )
-		verifyObject( nti_interfaces.IPrincipal, iprin )
+	# additional roles
+	rgm = component.getAdapter( u, nti_interfaces.IGroupMember, nauth.CONTENT_ROLE_PREFIX )
+	assert_that( rgm, verifiably_provides( nti_interfaces.IGroupMember ) )
+	assert_that( list(rgm.groups), is_([]) )
 
-		#empty-string
-		assert_that( nti_interfaces.IPrincipal( '', self ), is_(same_instance(self)))
-
-		# named system, as component
-		assert_that( component.getAdapter( nti_interfaces.SYSTEM_USER_NAME,
-										   nti_interfaces.IPrincipal,
-										   name=nti_interfaces.SYSTEM_USER_NAME ),
-					 is_( same_instance( nti_interfaces.system_user ) ) )
-		# system without name, as interface
-		assert_that( nti_interfaces.IPrincipal( nti_interfaces.SYSTEM_USER_NAME ),
-					 is_( same_instance( nti_interfaces.system_user ) ) )
-		# everyone
-		assert_that( nti_interfaces.IPrincipal( 'system.Everyone' ),
-					 provides( nti_interfaces.IGroup ) )
-		# everyone authenticated
-		assert_that( nti_interfaces.IPrincipal( 'system.Authenticated' ),
-					 provides( nti_interfaces.IGroup ) )
-		assert_that( nti_interfaces.IPrincipal( 'system.Authenticated' ),
-					 is_not( nti_interfaces.IPrincipal( 'system.Everyone' ) ) )
-
-	def test_sorting(self):
-		a = nti_interfaces.IPrincipal('a')
-		b = nti_interfaces.IPrincipal('b')
-		c = nti_interfaces.IPrincipal('c')
-		d = nti_interfaces.IPrincipal('d')
-
-		unsorted = [d, b, a, c]
-		srtd = sorted(unsorted)
-		assert_that( srtd, is_( [a, b, c, d] ) )
+	assert_that( u, has_attr( '__annotations__' ) )
+	assert_that( u.__annotations__, has_length( 2 ) )
 
 
-	def test_user_adapts( self ):
-		u = users.User( 'sjohnson@nextthought.com', 't' )
-		iprin = nti_interfaces.IPrincipal( u )
-		assert_that( iprin, verifiably_provides( nti_interfaces.IPrincipal ) )
-		assert_that( iprin.id, is_( u.username ) )
-		assert_that( iprin.description, is_( u.username ) )
-		assert_that( iprin.title, is_( u.username ) )
-		assert_that( repr(iprin), is_("_UserPrincipal('sjohnson@nextthought.com')") )
-		assert_that( str(iprin), is_('sjohnson@nextthought.com') )
+def test_string_adapts_to_principal(  ):
+	# no-name
+	iprin = nti_interfaces.IPrincipal( 'foo@bar' )
+	assert_that( iprin, provides( nti_interfaces.IPrincipal ) )
+	verifyObject( nti_interfaces.IPrincipal, iprin )
+
+	#empty-string
+	x = object()
+	assert_that( nti_interfaces.IPrincipal( '', x ), is_(same_instance(x)))
+
+	# named system, as component
+	assert_that( component.getAdapter( nti_interfaces.SYSTEM_USER_NAME,
+									   nti_interfaces.IPrincipal,
+									   name=nti_interfaces.SYSTEM_USER_NAME ),
+				 is_( same_instance( nti_interfaces.system_user ) ) )
+	# system without name, as interface
+	assert_that( nti_interfaces.IPrincipal( nti_interfaces.SYSTEM_USER_NAME ),
+				 is_( same_instance( nti_interfaces.system_user ) ) )
+	# everyone
+	assert_that( nti_interfaces.IPrincipal( 'system.Everyone' ),
+				 provides( nti_interfaces.IGroup ) )
+	# everyone authenticated
+	assert_that( nti_interfaces.IPrincipal( 'system.Authenticated' ),
+				 provides( nti_interfaces.IGroup ) )
+	assert_that( nti_interfaces.IPrincipal( 'system.Authenticated' ),
+				 is_not( nti_interfaces.IPrincipal( 'system.Everyone' ) ) )
+
+def test_iprincipal_sorting():
+	a = nti_interfaces.IPrincipal('a')
+	b = nti_interfaces.IPrincipal('b')
+	c = nti_interfaces.IPrincipal('c')
+	d = nti_interfaces.IPrincipal('d')
+
+	unsorted = [d, b, a, c]
+	srtd = sorted(unsorted)
+	assert_that( srtd, is_( [a, b, c, d] ) )
+
+
+def test_user_adapts_to_principal(  ):
+	u = users.User( 'sjohnson@nextthought.com', 't' )
+	iprin = nti_interfaces.IPrincipal( u )
+
+	assert_that( iprin, verifiably_provides( nti_interfaces.IPrincipal ) )
+
+
+	iprin2 = nti_interfaces.IGroupAwarePrincipal( u )
+	assert_that( iprin2, verifiably_provides( nti_interfaces.IPrincipal ) )
+	assert_that( iprin2, verifiably_provides( nti_interfaces.IGroupAwarePrincipal ) )
+	# And, in fact, when we asked for an IPrincipal, we actually
+	# got back an IGroupAwarePrincipal
+	assert_that( iprin, verifiably_provides( nti_interfaces.IGroupAwarePrincipal ) )
+	assert_that( iprin, is_( iprin2 ) )
+
+	assert_that( iprin.id, is_( u.username ) )
+	assert_that( iprin.description, is_( u.username ) )
+	assert_that( iprin.title, is_( u.username ) )
+	assert_that( repr(iprin), is_("_UserGroupAwarePrincipal('sjohnson@nextthought.com')") )
+	assert_that( str(iprin), is_('sjohnson@nextthought.com') )
 
 
 

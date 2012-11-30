@@ -3,29 +3,36 @@
 """
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
 
 
 import binascii
 import logging
 logger = logging.getLogger(__name__ )
 
-from pyramid.interfaces import IAuthenticationPolicy
-
 from zope import interface
 from zope import component
+
+# Like Pyramid 1.4+, cause Paste's AuthTkt cookies to use the more secure
+# SHA512 algorithm instead of the weaker MD5
+import nti.monkey.paste_auth_tkt_sha512_patch_on_import
+nti.monkey.paste_auth_tkt_sha512_patch_on_import.patch()
+
+from pyramid.interfaces import IAuthenticationPolicy
 from repoze.who.interfaces import IAuthenticator, IIdentifier, IChallenger, IChallengeDecider, IRequestClassifier
+from nti.dataserver import interfaces as nti_interfaces
+
 from repoze.who.middleware import PluggableAuthenticationMiddleware
 from repoze.who.plugins.basicauth import BasicAuthPlugin
 from repoze.who.plugins.auth_tkt import AuthTktCookiePlugin
-#from repoze.who.classifiers import default_challenge_decider
 from pyramid_who.classifiers import forbidden_challenger
 from repoze.who.classifiers import default_request_classifier
 from pyramid_who.whov2 import WhoV2AuthenticationPolicy
 
-from nti.dataserver import interfaces as nti_interfaces
+
 from nti.dataserver.users import User
 from nti.dataserver import authentication as nti_authentication
+from nti.dataserver import authorization as nti_authorization
 
 # TODO: This decoding stuff is happening too simalarly in the different
 # places. Decide what's really needed and remove what isn't and consolidate
@@ -421,9 +428,15 @@ class OUAdminFactory(object):
 	If this is registered, it makes everyone an administrator of the OU provider.
 	"""
 
-	def __init__( self, o ):
-		pass
+	def __init__( self, context ):
+		self.groups = (nti_interfaces.IRole( "role:OU.Admin" ), )
 
-	@property
-	def groups(self):
-		return [ nti_interfaces.IPrincipal( "role:OU.Admin" ) ]
+@interface.implementer(nti_interfaces.IGroupMember)
+@component.adapter(nti_interfaces.IUser)
+class NextthoughtDotComAdmin(object):
+	"""
+	Somewhat hackish way to grant the admin role to any account in @nextthought.com
+	"""
+
+	def __init__( self, context ):
+		self.groups = (nti_authorization.ROLE_ADMIN,) if context.username.endswith( '@nextthought.com' ) else ()

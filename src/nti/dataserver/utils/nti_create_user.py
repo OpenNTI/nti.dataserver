@@ -128,7 +128,7 @@ def _create_user( factory, username, password, realname, communities=(), options
 	args['external_value'] = ext_value
 	user = factory( **args )
 	if nti_interfaces.IUser.providedBy( user ):
-		for com_name in communities:
+		for com_name in communities or ():
 			community = users.Entity.get_entity( com_name, default='' )
 			if community:
 				user.join_community( community )

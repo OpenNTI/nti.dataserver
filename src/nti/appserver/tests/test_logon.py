@@ -4,36 +4,50 @@ from __future__ import print_function, unicode_literals
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
-from hamcrest import (assert_that, is_, none, not_none, ends_with, starts_with,)
+from hamcrest import (assert_that, is_, not_none, ends_with, starts_with,)
 from hamcrest import  has_entry, has_length, has_key,  has_item
 from hamcrest import same_instance, greater_than_or_equal_to, greater_than
+from hamcrest import contains_string
+from hamcrest import contains
 
 from hamcrest.library import has_property
 from nti.tests import provides
-from zope import component
-from zope.component import eventtesting, provideHandler
-
-from nti.appserver import logon
-from nti.appserver.logon import (ping, handshake,password_logon, google_login, openid_login)
-from nti.appserver import user_link_provider
-
-from nti.appserver.tests import ConfiguringTestBase
-from pyramid.threadlocal import get_current_request
+from nose.tools import assert_raises
+import zope.testing.loghandler
 
 import pyramid.testing
+from pyramid.testing import DummyRequest
+
+
+from zope import component
+from zope import interface
+from zope.component import eventtesting
+
+import os
+
+from nti.appserver import logon
+from nti.appserver.logon import (ping, handshake,password_logon, google_login, openid_login, ROUTE_OPENID_RESPONSE, _update_users_content_roles)
+from nti.appserver import user_link_provider
+
+from nti.appserver.tests import NewRequestSharedConfiguringTestBase
+#from .test_application import WithSharedApplicationMockDS
+from pyramid.threadlocal import get_current_request
+
 import pyramid.httpexceptions as hexc
 import pyramid.request
 
+from nti.dataserver import authorization as nauth
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans#, WithMockDS
 
-
-from nti.dataserver.tests.mock_dataserver import WithMockDSTrans, WithMockDS
 #from nti.tests import provides
 
-from zope import interface
 import nti.dataserver.interfaces as nti_interfaces
+import nti.appserver.interfaces as app_interfaces
+from nti.dataserver.users import interfaces as user_interfaces
 
 from nti.externalization.externalization import EXT_FORMAT_JSON, to_external_representation, to_external_object
 from nti.dataserver import users
+from nti.contentlibrary.filesystem import DynamicFilesystemLibrary as FileLibrary
 
 class DummyView(object):
 	response = "Response"
@@ -43,20 +57,48 @@ class DummyView(object):
 	def __call__( self ):
 		return self.response
 
-class TestLogon(ConfiguringTestBase):
+class TestLogon(NewRequestSharedConfiguringTestBase):
 
 	def setUp(self):
 		super(TestLogon,self).setUp()
 		eventtesting.clearEvents()
 		del _user_created_events[:]
+		self.log_handler = zope.testing.loghandler.Handler(self)
 
-	def test_unathenticated_ping(self):
-		"An unauthenticated ping returns one link, to the handshake."
+	def tearDown(self):
+		self.log_handler.close()
+		policy = component.queryUtility( pyramid.interfaces.IAuthenticationPolicy )
+		if policy:
+			component.globalSiteManager.unregisterUtility( policy, provided=pyramid.interfaces.IAuthenticationPolicy )
+		super(TestLogon,self).tearDown()
+
+	@classmethod
+	def setUpClass( self, request_factory=DummyRequest, request_args=() ):
+		super(TestLogon,self).setUpClass( request_factory=request_factory, request_args=request_args )
+		component.provideHandler( eventtesting.events.append, (None,) )
+		component.provideHandler( _handle_user_create_event )
+
 		self.config.add_route( name='logon.handshake', pattern='/dataserver2/handshake' )
-		self.config.add_route( name='objects.generic.traversal', pattern='/dataserver2/*traverse' )
+		self.config.add_route( name='logon.nti.password', pattern='/dataserver2/logon.password' )
+		self.config.add_route( name='logon.google', pattern='/dataserver2/logon.google' )
+		self.config.add_route( name='logon.openid', pattern='/dataserver2/logon.openid' )
+		self.config.add_route( name='logon.facebook.oauth1', pattern='/dataserver2/logon.facebook.1' )
+
 		self.config.add_route( name='logon.forgot.username', pattern='/dataserver2/logon.forgot.username' )
 		self.config.add_route( name='logon.forgot.passcode', pattern='/dataserver2/logon.forgot.passcode' )
 		self.config.add_route( name='logon.reset.passcode', pattern='/dataserver2/logon.reset.passcode' )
+
+		self.config.add_route( name='logon.logout', pattern='/dataserver2/logon.logout' )
+
+		self.config.add_route( name='objects.generic.traversal', pattern='/dataserver2/*traverse' )
+		self.config.add_route( name='user.root.service', pattern='/dataserver2{_:/?}' )
+
+		# Provide a library
+		library = FileLibrary( os.path.join( os.path.dirname(__file__), 'ExLibrary' ) )
+		component.provideUtility( library )
+
+	def test_unathenticated_ping(self):
+		"An unauthenticated ping returns one link, to the handshake."
 
 		result = ping( get_current_request() )
 		assert_that( result, has_property( 'links', has_length( 6 ) ) )
@@ -68,12 +110,9 @@ class TestLogon(ConfiguringTestBase):
 
 
 	@WithMockDSTrans
-	def test_authenticated_ping(self):
+	def _test_authenticated_ping(self):
 		"An authenticated ping returns two links, to the handshake and the root"
-		self.config.add_route( name='user.root.service', pattern='/dataserver2{_:/?}' )
-		self.config.add_route( name='logon.handshake', pattern='/dataserver2/handshake' )
-		self.config.add_route( name='logon.logout', pattern='/dataserver2/logon.logout' )
-		self.config.add_route( name='objects.generic.traversal', pattern='/dataserver2/*traverse' )
+
 		class Policy(object):
 			interface.implements( pyramid.interfaces.IAuthenticationPolicy )
 			def authenticated_userid( self, request ):
@@ -102,17 +141,6 @@ class TestLogon(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_fake_authenticated_handshake(self):
 
-		self.config.add_route( name='user.root.service', pattern='/dataserver2{_:/?}' )
-		self.config.add_route( name='objects.generic.traversal', pattern='/dataserver2/*traverse' )
-		self.config.add_route( name='logon.handshake', pattern='/dataserver2/handshake' )
-		self.config.add_route( name='logon.nti.password', pattern='/dataserver2/logon.password' )
-		self.config.add_route( name='logon.google', pattern='/dataserver2/logon.google' )
-		self.config.add_route( name='logon.logout', pattern='/dataserver2/logon.logout' )
-		self.config.add_route( name='logon.facebook.oauth1', pattern='/dataserver2/logon.facebook.1' )
-		self.config.add_route( name='logon.forgot.username', pattern='/dataserver2/logon.forgot' )
-		self.config.add_route( name='logon.forgot.passcode', pattern='/dataserver2/logon.forgot.passcode' )
-		self.config.add_route( name='logon.reset.passcode', pattern='/dataserver2/logon.reset.passcode' )
-
 		# A user that doesn't actually exist.
 		# Per current policy, the first link will be the generic password login
 		class Policy(object):
@@ -120,7 +148,7 @@ class TestLogon(ConfiguringTestBase):
 			def authenticated_userid( self, request ):
 				return 'jason.madden@nextthought.com'
 
-		get_current_request().registry.registerUtility( Policy() )
+		component.provideUtility( Policy() )
 		get_current_request().params['username'] = 'jason.madden@nextthought.com'
 
 		result = handshake( get_current_request() )
@@ -135,27 +163,21 @@ class TestLogon(ConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_handshake_existing_user_with_pass(self):
-		self.config.add_route( name='logon.nti.password', pattern='/dataserver2/logon.nti.password' )
-		self.config.add_route( name='logon.forgot.username', pattern='/dataserver2/logon.forgot.username' )
-		self.config.add_route( name='logon.forgot.passcode', pattern='/dataserver2/logon.forgot.passcode' )
-		self.config.add_route( name='logon.reset.passcode', pattern='/dataserver2/logon.reset.passcode' )
-		self.config.add_route( name='objects.generic.traversal', pattern='/dataserver2/*traverse' )
+		# Clean up routes we don't yet want
+		for route_name in ('logon.google', 'logon.openid', 'logon.facebook.oauth1', 'logon.forgot.passcode', 'logon.forgot.username' ):
+			route = component.getUtility( pyramid.interfaces.IRouteRequest, name=route_name )
+			__traceback_info__ = route_name, route
+			assert component.globalSiteManager.unregisterUtility( route, provided=pyramid.interfaces.IRouteRequest, name=route_name )
+
 		user = users.User.create_user( self.ds, username='jason.madden@nextthought.com', password='temp001' )
 
 		get_current_request().params['username'] = 'jason.madden@nextthought.com'
-
-		# With no other routes present, and us having a password, we can
-		# login that way
-		result = handshake( get_current_request() )
-		assert_that( result, has_property( 'links', has_length( 6 ) ) )
-		assert_that( result.links[0].target, is_( '/dataserver2/logon.nti.password?username=jason.madden%40nextthought.com' ) )
-
 
 		# Give us the capability to do a google logon, and we can
 		self.config.add_route( name='logon.google', pattern='/dataserver2/logon.google' )
 		result = handshake( get_current_request() )
 		assert_that( result, has_property( 'links', has_length( 7 ) ) )
-		assert_that( result.links[0].target, is_( '/dataserver2/logon.nti.password?username=jason.madden%40nextthought.com' ) )
+		assert_that( result.links[0].target, is_( '/dataserver2/logon.password?username=jason.madden%40nextthought.com' ) )
 		assert_that( result.links[1].target, is_( '/dataserver2/logon.google?username=jason.madden%40nextthought.com&oidcsum=-1978826904171095151' ) )
 
 		# Give us a specific identity_url, and that changes to open id
@@ -164,7 +186,7 @@ class TestLogon(ConfiguringTestBase):
 		interface.alsoProvides( user, nti_interfaces.IOpenIdUser )
 		result = handshake( get_current_request() )
 		assert_that( result, has_property( 'links', has_length( 7 ) ) )
-		assert_that( result.links[0].target, is_( '/dataserver2/logon.nti.password?username=jason.madden%40nextthought.com' ) )
+		assert_that( result.links[0].target, is_( '/dataserver2/logon.password?username=jason.madden%40nextthought.com' ) )
 		assert_that( result.links[1].target, is_( '/dataserver2/logon.openid?username=jason.madden%40nextthought.com&openid=http%3A%2F%2Fgoogle.com%2Ffoo&oidcsum=-1978826904171095151' ) )
 
 	def test_openid_login( self ):
@@ -176,13 +198,24 @@ class TestLogon(ConfiguringTestBase):
 		from pyramid.session import UnencryptedCookieSessionFactoryConfig
 		my_session_factory = UnencryptedCookieSessionFactoryConfig('ntidataservercookiesecretpass')
 		self.config.set_session_factory( my_session_factory )
-		self.config.add_route( name='logon.google.result', pattern='/dataserver2/logon.google.result' )
+		self.config.add_route( name=ROUTE_OPENID_RESPONSE, pattern='/dataserver2/' + ROUTE_OPENID_RESPONSE )
 
 		# TODO: This test is assuming we have access to google.com
 		get_current_request().params['oidcsum'] = '1234'
+		self.log_handler.add( 'pyramid_openid.view' )
 		result = google_login( None, get_current_request() )
 		assert_that( result, is_( hexc.HTTPFound ) )
 		assert_that( result.location, starts_with( 'https://www.google.com/accounts/o8/' ) )
+		redir_url = None
+		for r in self.log_handler.records:
+			if (r.getMessage() or '' ).startswith( 'Redirecting to: ' ):
+				redir_url = r.getMessage()[len('Redirecting to: '):]
+				break
+		assert_that( redir_url, is_( not_none() ) )
+		# TODO: These prefixes are probably order dependent and fragile
+		assert_that( redir_url, contains_string( 'ext1=unlimited' ) )
+		assert_that( redir_url, contains_string( 'ax.if_available=ext1' ) )
+
 
 		# An openid request to a non-existant domain will fail
 		# to begin negotiation
@@ -193,22 +226,21 @@ class TestLogon(ConfiguringTestBase):
 
 
 	def test_password_logon_failed(self):
-		super(TestLogon,self).tearDown()
-		super(TestLogon,self).setUp(request_factory=pyramid.request.Request.blank, request_args=('/',))
+		self.beginRequest(request_factory=pyramid.request.Request.blank, request_args=('/',))
 		class Policy(object):
 			interface.implements( pyramid.interfaces.IAuthenticationPolicy )
 			def forget( self, request ):
 				return [("Policy", "Me")]
 			def authenticated_userid( self, request ): return None
-		get_current_request().registry.registerUtility( Policy() )
+		component.provideUtility( Policy() )
+		#get_current_request().registry.registerUtility( Policy() )
 		result = password_logon( get_current_request() )
 		assert_that( result, is_( hexc.HTTPUnauthorized ) )
 		assert_that( result.headers, has_entry( "Policy", "Me" ) )
 
         # Or a redirect
-		super(TestLogon,self).tearDown()
-		super(TestLogon,self).setUp(request_factory=pyramid.request.Request.blank, request_args=('/?failure=/the/url/to/go/to',))
-		get_current_request().registry.registerUtility( Policy() )
+		self.beginRequest(request_factory=pyramid.request.Request.blank, request_args=('/?failure=/the/url/to/go/to',))
+		#get_current_request().registry.registerUtility( Policy() )
 		#get_current_request().params['failure'] = '/the/url/to/go/to'
 		result = password_logon( get_current_request() )
 		assert_that( result, is_( hexc.HTTPSeeOther ) )
@@ -242,46 +274,37 @@ class TestLogon(ConfiguringTestBase):
 		assert_that( result, has_property( 'location', '/the/url/to/go/to' ) )
 
 	@WithMockDSTrans
-	def test_create_from_external( self ):
-		component.provideHandler( eventtesting.events.append, (None,) )
-		component.provideHandler( _handle_user_create_event )
-
-		# For now, we are adding to some predefined communities
-		mc = users.Community( 'MathCounts' )
-		self.ds.root['users'][mc.username] = mc
+	def test_create_openid_from_external( self ):
 		user = logon._deal_with_external_account( get_current_request(),
 												  "Jason",
 												  "Madden",
 												  "jason.madden@nextthought.com",
 												  "http://example.com",
 												  nti_interfaces.IOpenIdUser,
-												  users.OpenIdUser )
+												  users.OpenIdUser.create_user )
 		assert_that( user, provides( nti_interfaces.IOpenIdUser ) )
 		assert_that( user, is_( users.OpenIdUser ) )
 		assert_that( user, has_property( 'identity_url', 'http://example.com' ) )
-
-		# This:
-		#assert_that( users.Entity.get_entity( 'MathCounts' ), not_none() )
-		#assert_that( user.communities, has_item( 'MathCounts' ) )
-		#assert_that( user.following, has_item( 'MathCounts' ) )
-		# Only happens if this:
-		#self.request.headers['origin'] = 'http://mathcounts.nextthought.com'
-		# happened first. But as the policies are getting stricter, that's not
-		# possible.
+		assert_that( user_interfaces.IUserProfile( user ), has_property( 'realname', 'Jason Madden' ) )
+		assert_that( user_interfaces.IUserProfile( user ), has_property( 'email', 'jason.madden@nextthought.com' ) )
 
 		# The creation of this user caused events to fire
 		assert_that( eventtesting.getEvents(), has_length( greater_than_or_equal_to( 1 ) ) )
+
 		assert_that( _user_created_events, has_length( 1 ) )
 		assert_that( _user_created_events[0][0], is_( same_instance( user ) ) )
+		# We created a new user during a request, so that event fired
+		assert_that( eventtesting.getEvents(app_interfaces.IUserCreatedWithRequestEvent), has_length( 1 ) )
 
-		# Can also auth as facebook
+		# Can also auth as facebook for the same email address
+		# TODO: Think about that
 		fb_user = logon._deal_with_external_account( get_current_request(),
 													 "Jason",
 													 "Madden",
 													 "jason.madden@nextthought.com",
 													 "http://facebook.com",
 													 nti_interfaces.IFacebookUser,
-													 users.FacebookUser )
+													 users.FacebookUser.create_user )
 
 		assert_that( fb_user, is_( same_instance( user ) ) )
 		assert_that( fb_user, provides( nti_interfaces.IFacebookUser ) )
@@ -294,6 +317,109 @@ class TestLogon(ConfiguringTestBase):
 		assert_that( mod_events[0], has_property( 'object', fb_user ) )
 		assert_that( mod_events[0].descriptions, has_item( has_property( 'attributes', has_item( 'facebook_url' ) ) ) )
 
+		# But the created-with-request did not fire
+		assert_that( eventtesting.getEvents(app_interfaces.IUserCreatedWithRequestEvent), has_length( 1 ) )
+
+	@WithMockDSTrans
+	def test_create_facebook_from_external( self ):
+
+		fb_user = logon._deal_with_external_account( get_current_request(),
+													 "Jason",
+													 "Madden",
+													 "jason.madden@nextthought.com",
+													 "http://facebook.com",
+													 nti_interfaces.IFacebookUser,
+													 users.FacebookUser.create_user )
+
+
+		assert_that( fb_user, provides( nti_interfaces.IFacebookUser ) )
+		assert_that( fb_user, has_property( 'facebook_url', 'http://facebook.com' ) )
+
+		# The creation of this user caused events to fire
+		assert_that( eventtesting.getEvents(), has_length( greater_than_or_equal_to( 1 ) ) )
+
+		assert_that( _user_created_events, has_length( 1 ) )
+		assert_that( _user_created_events[0][0], is_( same_instance( fb_user ) ) )
+		# We created a new user during a request, so that event fired
+		assert_that( eventtesting.getEvents(app_interfaces.IUserCreatedWithRequestEvent), has_length( 1 ) )
+
+
+	@WithMockDSTrans
+	def test_create_from_external_bad_data( self ):
+		with assert_raises(hexc.HTTPError):
+			logon._deal_with_external_account( get_current_request(),
+											   "Jason",
+											   "Madden",
+											   "jason.madden_nextthought_com",
+											   "http://facebook.com",
+											   nti_interfaces.IFacebookUser,
+											   users.FacebookUser.create_user )
+	@WithMockDSTrans
+	def test_update_provider_content_access_not_in_library(self):
+		user = users.User.create_user( self.ds, username='jason.madden@nextthought.com', password='temp001' )
+		content_roles = component.getAdapter( user, nti_interfaces.IGroupMember, nauth.CONTENT_ROLE_PREFIX )
+		# initially empty
+		assert_that( list(content_roles.groups), is_( [] ) )
+
+		# add some from this provider
+		idurl = 'http://openid.nextthought.com/jmadden'
+		local_roles = ('ABCD',)
+		_update_users_content_roles( user, idurl, local_roles )
+		assert_that( content_roles.groups, contains( *[nauth.role_for_providers_content( 'nextthought', x ) for x in local_roles] ) )
+
+
+		# add some more from this provider
+		local_roles += ('DEFG',)
+		_update_users_content_roles( user, idurl, local_roles )
+
+		assert_that( content_roles.groups, contains( *[nauth.role_for_providers_content( 'nextthought', x ) for x in local_roles] ) )
+
+		# Suppose that this user has some other roles too from a different provider
+		aops_roles = [nauth.role_for_providers_content( 'aops', '1234')]
+		complete_roles = aops_roles + [nauth.role_for_providers_content( 'nextthought', x ) for x in local_roles]
+		assert_that( complete_roles, has_length( 3 ) )
+		content_roles.setGroups( complete_roles )
+
+		# If we update NTI again...
+		_update_users_content_roles( user, idurl, local_roles )
+		# nothing changes.
+		assert_that( content_roles.groups, contains( *complete_roles ) )
+
+		# We can change up the NTI roles...
+		local_roles = ('HIJK',)
+		_update_users_content_roles( user, idurl, local_roles )
+		complete_roles = aops_roles + [nauth.role_for_providers_content( 'nextthought', x ) for x in local_roles]
+		# and the aops roles are intact
+		assert_that( complete_roles, has_length( 2 ) )
+		assert_that( content_roles.groups, contains( *complete_roles ) )
+
+		# We can remove the NTI roles
+		_update_users_content_roles( user, idurl, None )
+		# leaving the other roles behind
+		assert_that( content_roles.groups, contains( *aops_roles ) )
+
+
+	@WithMockDSTrans
+	def test_update_provider_content_access_in_library(self):
+		"""If we supply the title of a work, the works actual NTIID gets used."""
+		# There are two things with the same title in the library, but different ntiids
+		# label="COSMETOLOGY" ntiid="tag:nextthought.com,2011-10:MN-HTML-MiladyCosmetology.cosmetology"
+		# label="COSMETOLOGY" ntiid="tag:nextthought.com,2011-10:MN-HTML-uncensored.cosmetology"
+
+		user = users.User.create_user( self.ds, username='jason.madden@nextthought.com', password='temp001' )
+		content_roles = component.getAdapter( user, nti_interfaces.IGroupMember, nauth.CONTENT_ROLE_PREFIX )
+		# initially empty
+		assert_that( list(content_roles.groups), is_( [] ) )
+
+		# Provider of course has to match
+		idurl = 'http://openid.mn.com/jmadden'
+		# The role is the title of the work
+		local_roles = ('cosmetology',)
+
+		_update_users_content_roles( user, idurl, local_roles )
+
+		assert_that( content_roles.groups, contains( nauth.role_for_providers_content( 'mn', 'MiladyCosmetology.cosmetology' ),
+													 nauth.role_for_providers_content( 'mn', 'Uncensored.cosmetology' ) ) )
 
 
 from zope.lifecycleevent.interfaces import IObjectCreatedEvent, IObjectModifiedEvent

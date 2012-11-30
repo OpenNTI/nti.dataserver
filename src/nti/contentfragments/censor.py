@@ -1,10 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-"""
-Implementations of the content censoring algorithms.
-
-$Id$
-"""
 
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
@@ -34,6 +28,13 @@ from nti.contentfragments import interfaces
 # If efficiency really matters, and we have many different filters we are
 # applying, we would need to do a better job pipelining to avoid copies
 
+special_chars = r"?(){}[].^*+-~"
+special_chars_map = {c:u'\\' for c in special_chars}
+def punkt_re_char():
+	# content processing uses content fragments
+	from nti.contentprocessing import default_punk_char_expression
+	return default_punk_char_expression
+	
 def _get_censored_fragment(org_fragment, new_fragment):
 	try:
 		result = org_fragment.censored( new_fragment )
@@ -60,8 +61,30 @@ class SimpleReplacementCensoredContentStrategy(object):
 		new_fragment = ''.join( buf )
 		return _get_censored_fragment(content_fragment, new_fragment)
 
+class BasicScanner(object):
+
+	def sort_ranges(self, ranges):
+		def _cmp(x, y):
+			r = cmp(x[0], y[0])
+			return r if r != 0 else cmp(x[1], y[1])
+		return sorted(ranges, cmp=_cmp)
+
+	def test_range(self, v, yielded):
+		for t in yielded:
+			if v[0] >= t[0] and v[1] <= t[1]:
+				return False
+		return True
+
+	def do_scan(self, fragment, ranges):
+		pass
+
+	def scan( self, content_fragment ):
+		yielded = [] # A simple, inefficient way of making sure we don't send overlapping ranges
+		content_fragment = content_fragment.lower()
+		return self.do_scan(content_fragment, yielded)
+
 @interface.implementer(interfaces.ICensoredContentScanner)
-class TrivialMatchScanner(object):
+class TrivialMatchScanner(BasicScanner):
 
 	def __init__( self, prohibited_values=() ):
 		# normalize case, ignore blanks
@@ -69,53 +92,59 @@ class TrivialMatchScanner(object):
 		# clearly go at the front of the list
 		self.prohibited_values = [x.lower() for x in prohibited_values if x]
 
-	def _test_range(self, v, yielded):
-		for t in yielded:
-			if v[0] >= t[0] and v[1] <= t[1]:
-				return False
-		return True
-
-	def _do_scan(self, content_fragment, yielded):
+	def do_scan(self, content_fragment, yielded):
 		for x in self.prohibited_values:
 			idx = content_fragment.find( x, 0 )
 			while (idx != -1):
 				match_range = (idx, idx + len(x))
-				if self._test_range(match_range, yielded):
+				if self.test_range(match_range, yielded):
 					yield match_range
 				idx = content_fragment.find( x, idx + len(x) )
 
-	def scan( self, content_fragment ):
-		yielded = [] # A simple, inefficient way of making sure we don't send overlapping ranges
-		content_fragment = content_fragment.lower()
-		return self._do_scan(content_fragment, yielded)
+@interface.implementer(interfaces.ICensoredContentScanner)
+class RegExpMatchScanner(BasicScanner):
+
+	def __init__( self, patterns=(), words=()):
+		all_patterns = set()
+		for w in words or ():
+			all_patterns.add(self.create_regexp(w))
+		all_patterns.update(patterns or ())
+		self.patterns = tuple(all_patterns)
+		
+	def do_scan(self, content_fragment, yielded):
+		for p in self.patterns:
+			for m in p.finditer(content_fragment):
+				match_range = m.span()
+				if self.test_range(match_range, yielded):
+					yield match_range
+					
+	@classmethod
+	def create_regexp(cls, word, flags=re.I):
+		r=[]
+		for i,c in enumerate(word):
+			r.append(special_chars_map.get(c,u'') + c)
+			if not c.isspace() and not c in punkt_re_char() and i < len(word)-1:
+				r.append("(%s)*" % punkt_re_char())
+		e = ''.join(r)
+		p = re.compile(e, flags)	
+		return p
 
 @interface.implementer(interfaces.ICensoredContentScanner)
-def TrivialMatchScannerExternalFile( file_path ):
-	"""
-	External files are stored in rot13.
-	"""
-	# TODO: Does rot13 unicode?
-	with open(file_path, 'rU') as src:
-		return TrivialMatchScanner((x.encode('rot13').strip() for x in src.readlines()))
-
-@interface.implementer(interfaces.ICensoredContentScanner)
-class WordMatchScanner(TrivialMatchScanner):
-
-	_re_char = r"[ \? | ( | \" | \` | { | \[ | : | ; | & | \# | \* | @ | \) | } | \] | \- | , | \. | ! | \s]"
+class WordMatchScanner(BasicScanner):
 
 	def __init__( self, white_words=(), prohibited_words=() ):
-		self.char_tester = re.compile(self._re_char)
-		self.white_words = [word.lower() for word in white_words]
-		self.prohibited_words = [word.lower() for word in prohibited_words]
+		self.char_tester = re.compile(punkt_re_char())
+		self.white_words = tuple([word.lower() for word in white_words])
+		self.prohibited_words = tuple([word.lower() for word in prohibited_words])
 
 	def _test_start(self, idx, content_fragment):
 		result = idx == 0 or self.char_tester.match(content_fragment[idx-1])
 		return result
-	
+
 	def _test_end(self, idx, content_fragment):
 		result = idx == len(content_fragment) or self.char_tester.match(content_fragment[idx])
 		return result
-	
+
 	def _find_ranges(self, word_list, content_fragment):
 		ranges = []
 		for x in word_list:
@@ -127,61 +156,61 @@ class WordMatchScanner(TrivialMatchScanner):
 					ranges.append(match_range)
 				idx = content_fragment.find( x, endidx )
 		return ranges
-				
-	def _do_scan(self, content_fragment, white_words_ranges=[]):
+
+	def do_scan(self, content_fragment, white_words_ranges=[]):
 		ranges = self._find_ranges(self.white_words, content_fragment)
 		white_words_ranges.extend(ranges)
 
 		# yield/return any prohibited_words
 		ranges = self._find_ranges(self.prohibited_words, content_fragment)
 		for match_range in ranges:
-			if self._test_range(match_range, white_words_ranges):
+			if self.test_range(match_range, white_words_ranges):
 				yield match_range
 
-	def scan( self, content_fragment ):
+@interface.implementer(interfaces.ICensoredContentScanner)
+class PipeLineMatchScanner(BasicScanner):
+
+	def __init__( self, scanners=()):
+		self.scanners = tuple(scanners)
+		
+	def do_scan( self, content_fragment, ranges=[]):
 		content_fragment = content_fragment.lower()
-		return self._do_scan(content_fragment)
+		for s in self.scanners:
+			matched_ranges = s.do_scan(content_fragment, ranges)
+			for match_range in matched_ranges:
+				ranges.append(match_range)
+				yield match_range
+
 
 @interface.implementer(interfaces.ICensoredContentScanner)
-class WordPlusTrivialMatchScanner(WordMatchScanner):
-
-	def __init__( self, white_words=(), prohibited_words=(), prohibited_values=()):
-		WordMatchScanner.__init__(self, white_words, prohibited_words)
-		TrivialMatchScanner.__init__(self, prohibited_values)
-
-	def scan( self, content_fragment ):
-		yielded = []
-		white_words_ranges = []
-		content_fragment = content_fragment.lower()
-		word_ranges = WordMatchScanner._do_scan(self, content_fragment, white_words_ranges)
-		for match_range in word_ranges:
-			yielded.append(match_range)
-			yield match_range
-
-		yielded = yielded + white_words_ranges
-		trivial_ranges = TrivialMatchScanner._do_scan(self, content_fragment, yielded)
-		for match_range in trivial_ranges:
-			yield match_range
-
-@interface.implementer(interfaces.ICensoredContentScanner)
-def ExternalWordPlusTrivialMatchScannerFiles( white_words_path, prohibited_words_path, profanity_path):
+def _word_profanity_scanner():
+	"""
+	External files are stored in rot13.
+	"""
+	white_words_path = resource_filename( __name__, 'white_list.txt' )
+	prohibited_words_path = resource_filename( __name__, 'prohibited_words.txt' )
+	
 	with open(white_words_path, 'rU') as src:
-		white_words = (x.strip() for x in src.readlines() )
-
+		white_words = {x.strip().lower() for x in src.readlines()}
+		
 	with open(prohibited_words_path, 'rU') as src:
-		prohibited_words = (x.encode('rot13').strip() for x in src.readlines() )
-
-	with open(profanity_path, 'rU') as src:
-		profanity_list = (x.encode('rot13').strip() for x in src.readlines() )
-
-	return WordPlusTrivialMatchScanner(white_words, prohibited_words, profanity_list)
+		prohibited_words = {x.encode('rot13').strip().lower() for x in src.readlines()}
+		
+	return WordMatchScanner(white_words, prohibited_words)
+	
+@interface.implementer(interfaces.ICensoredContentScanner)
+def _word_plus_trivial_profanity_scanner():
+	profanity_list_path = resource_filename( __name__, 'profanity_list.txt')
+	with open(profanity_list_path, 'rU') as src:
+		profanity_list = {x.encode('rot13').strip().lower() for x in src.readlines()}
+	return PipeLineMatchScanner([_word_profanity_scanner(), TrivialMatchScanner(profanity_list)])
 
 @interface.implementer(interfaces.ICensoredContentScanner)
-def DefaultTrivialProfanityScanner():
-	white_path = resource_filename( __name__, 'white_list.txt' )
-	prohibited_words = resource_filename( __name__, 'prohibited_words.txt' )
-	profanity_values = resource_filename( __name__, 'profanity_list.txt' )
-	return ExternalWordPlusTrivialMatchScannerFiles( white_path, prohibited_words, profanity_values )
+def _word_plus_regexp_profanity_scanner():
+	profanity_list_path = resource_filename( __name__, 'profanity_regexp_list.txt')
+	with open(profanity_list_path, 'rU') as src:
+		profanity_list = {x.encode('rot13').strip().lower() for x in src.readlines()}
+	return PipeLineMatchScanner([_word_profanity_scanner(), RegExpMatchScanner(words=profanity_list)])
 
 @interface.implementer(interfaces.ICensoredContentPolicy)
 class DefaultCensoredContentPolicy(object):
@@ -202,12 +231,12 @@ class DefaultCensoredContentPolicy(object):
 		else:
 			result = self.censor_text(fragment, target)
 		return result
-		
+
 	def censor_text(self, fragment, target):
 		scanner = component.getUtility( interfaces.ICensoredContentScanner )
 		strat = component.getUtility( interfaces.ICensoredContentStrategy )
 		return strat.censor_ranges( fragment, scanner.scan( fragment ) )
-	
+
 	def censor_html(self, fragment, target):
 		result = None
 		try:
@@ -219,13 +248,13 @@ class DefaultCensoredContentPolicy(object):
 					if text:
 						text = self.censor_text( interfaces.UnicodeContentFragment(text), target)
 						setattr(node, name, text)
-					
+
 			docstr = unicode(etree.tostring(doc))
 			result = interfaces.CensoredHTMLContentFragment(docstr)
 		except:
 			result = self.censor_text(fragment, target)
 		return result
-		
+
 
 @component.adapter(interfaces.IUnicodeContentFragment, interface.Interface, sch_interfaces.IBeforeObjectAssignedEvent)
 def censor_before_object_assigned( fragment, target, event ):

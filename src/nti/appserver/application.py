@@ -246,7 +246,8 @@ def createApplication( http_port,
 	pyramid_config.add_route( name='logon.handshake', pattern='/dataserver2/logon.handshake' )
 	pyramid_config.add_route( name='logon.nti.password', pattern='/dataserver2/logon.nti.password' )
 	pyramid_config.add_route( name='logon.google', pattern='/dataserver2/logon.google' )
-	pyramid_config.add_route( name='logon.google.result', pattern='/dataserver2/logon.google.result' )
+	from nti.appserver.logon import ROUTE_OPENID_RESPONSE
+	pyramid_config.add_route( name=ROUTE_OPENID_RESPONSE, pattern='/dataserver2/' + ROUTE_OPENID_RESPONSE )
 	pyramid_config.add_route( name='logon.openid', pattern='/dataserver2/logon.openid' )
 	pyramid_config.add_route( name='logon.logout', pattern='/dataserver2/logon.logout' )
 	pyramid_config.add_route( name='logon.facebook.oauth1', pattern='/dataserver2/logon.facebook1' )
@@ -256,13 +257,13 @@ def createApplication( http_port,
 	pyramid_config.add_route( name='logout', pattern='/dataserver2/logout' )
 	pyramid_config.add_view( route_name='logout', view='nti.appserver.logon.logout' )
 
-
-	pyramid_config.add_route( name='verify_openid', pattern='/dataserver2/openid.html' )
-	# Note that the openid value MUST be POST'd to this view; an unmodified view goes into
-	# an infinite loop if the openid value is part of a GET param
-	# This value works for any google apps account: https://www.google.com/accounts/o8/id
-	pyramid_config.add_view( route_name='verify_openid', view='pyramid_openid.verify_openid' )
-	pyramid_config.add_view( name='verify_openid', route_name='verify_openid', view='pyramid_openid.verify_openid' )
+#	# Not actually used anywhere; the logon.* routes are
+#	pyramid_config.add_route( name='verify_openid', pattern='/dataserver2/openid.html' )
+#	# Note that the openid value MUST be POST'd to this view; an unmodified view goes into
+#	# an infinite loop if the openid value is part of a GET param
+#	# This value works for any google apps account: https://www.google.com/accounts/o8/id
+#	pyramid_config.add_view( route_name='verify_openid', view='pyramid_openid.verify_openid' )
+#	pyramid_config.add_view( name='verify_openid', route_name='verify_openid', view='pyramid_openid.verify_openid' )
 
 	###
 	# Site-specific CSS packages

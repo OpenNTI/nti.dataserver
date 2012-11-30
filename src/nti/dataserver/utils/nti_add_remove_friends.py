@@ -16,6 +16,50 @@ from nti.dataserver.users import interfaces as user_interfaces
 from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
 
+def add_remove_friends( owner, name, add_members=(), remove_members=()):
+	thelist = None
+	flname = name.lower()
+	for fl in owner.friendsLists.values():
+		if not nti_interfaces.IEntity.providedBy(fl):
+			continue
+		username = fl.username.lower()
+		realname = user_interfaces.IFriendlyNamed( fl ).realname or u''
+		if flname == realname.lower() or flname == username:
+			thelist = fl
+			break
+
+	if thelist is None:
+		return None
+	
+	current_friends = {x for x in thelist}
+	to_add = {thelist.get_entity(x) for x in add_members or ()}
+	to_add.discard( None )
+	to_remove = {thelist.get_entity(x) for x in remove_members or ()}
+	to_remove.discard( None )
+
+	final_friends = current_friends | to_add
+	final_friends = final_friends - to_remove
+	final_friends = {x.username for x in final_friends}
+	
+	result = update_from_external_object( thelist, {'friends': list(final_friends)} )
+	return result
+
+def process_params(args):
+	owner = users.User.get_user( args.owner )
+	if not owner:
+		print("No owner found", args, file=sys.stderr )
+		sys.exit( 2 )
+
+	thelist = add_remove_friends(owner, args.name, args.add_members, args.remove_members)
+	
+	if thelist is None:
+		print("Friend list not found", args, file=sys.stderr )
+		sys.exit(3)
+	
+	if args.verbose:
+		pprint.pprint( to_external_object( thelist ) )	
+	return thelist
+		
 def main():
 	arg_parser = argparse.ArgumentParser( description="Add/Remvove friends from a FriendsList" )
 	arg_parser.add_argument( '-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
@@ -36,44 +80,9 @@ def main():
 
 	run_with_dataserver( environment_dir=env_dir,
 						 verbose=args.verbose,
-						 function=lambda: _create_fl(args) )
+						 function=lambda: process_params(args) )
 
 
-def _create_fl( args ):
-	owner = users.User.get_user( args.owner )
-	if not owner:
-		print("No owner found", args, file=sys.stderr )
-		sys.exit( 2 )
-
-	thelist = None
-	flname = args.name.lower()
-	for fl in owner.friendsLists.values():
-		if not nti_interfaces.IEntity.providedBy(fl):
-			continue
-		username = fl.username.lower()
-		realname = user_interfaces.IFriendlyNamed( fl ).realname or u''
-		if flname == realname.lower() or flname == username:
-			thelist = fl
-			break
-
-	if thelist is None:
-		print("Friend list not found", args, file=sys.stderr )
-		sys.exit(3)
-
-	current_friends = {x for x in thelist}
-	to_add = {thelist.get_entity(x) for x in args.add_members or ()}
-	to_add.discard( None )
-	to_remove = {thelist.get_entity(x) for x in args.remove_members or ()}
-	to_remove.discard( None )
-
-	final_friends = current_friends | to_add
-	final_friends = final_friends - to_remove
-	final_friends = {x.username for x in final_friends}
-	
-	update_from_external_object( thelist, {'friends': list(final_friends)} )
-
-	if args.verbose:
-		pprint.pprint( to_external_object( thelist ) )
 
 if __name__ == '__main__':
 	main()

@@ -229,7 +229,7 @@ class ExampleDatabaseInitializer(object):
 			for c in communities:
 				if	(c.alias == self.nti_testers and is_test_user) or \
 					(c.alias != self.nti_testers and not is_test_user):
-					user.join_community( c )
+					user.record_dynamic_membership( c )
 					user.follow( c )
 
 			if not is_test_user:

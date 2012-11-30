@@ -34,6 +34,14 @@ class KwResult(Base.Command):
     blockType = True
     args = 'self'
 
+class SetKw(Base.Command):
+    blockType = True
+    args = 'name self'
+
+class SetKwRepeat(Base.Command):
+    blockType = True
+    args = 'name self until'
+
 class function(Base.Environment):
     args = '[placement]'
     blockType = True
@@ -45,6 +53,21 @@ class function(Base.Environment):
     class semicolon(Base.Command):
         macroName = ';'
 
+class procedure(Base.Environment):
+    args = '[placement]'
+    blockType = True
+
+    class TitleOfAlgo(Base.Command):
+        blockType = True
+        args = 'self'
+
+    class semicolon(Base.Command):
+        macroName = ';'
+
+
+class Begin(Base.Command):
+    blockType = True
+    args = '(comment) self'
 
 # Commands for different types of If / If-Then / If-Then-Else blocks
 
@@ -88,4 +111,13 @@ class ForEach(_PreLoop):
     pass
 
 class ForAll(_PreLoop):
+    pass
+
+# Commands for different types of post-condition based looping blocks
+
+class _PostLoop(Base.Command):
+    blockType = True
+    args = '(comment) self loop (comment2)'
+
+class Repeat(_PostLoop):
     pass

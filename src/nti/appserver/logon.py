@@ -9,6 +9,13 @@ or :func:`password_login`.
 
 A login session is terminated with :func:`logout`.
 
+OpenID
+======
+
+Attribute exchange is used to collect permissions from providers. The
+URI used as the `attribute type identifier <http://openid.net/specs/openid-attribute-exchange-1_0.html#attribute-name-definition>`_
+is in :const:`AX_TYPE_CONTENT_ROLES`
+
 $Id$
 """
 
@@ -17,24 +24,31 @@ __docformat__ = "restructuredtext en"
 
 import logging
 logger = logging.getLogger(__name__)
-# Clean up the logging of openid, which writes to stderr by default. This is actually
-# the recommended approach
+# Clean up the logging of openid, which writes to stderr by default. Patching
+# the module like this is actually the recommended approach
 import openid.oidutil
 openid.oidutil.log = logging.getLogger('openid').info
 
-from zope import interface, component, lifecycleevent
+from zope import interface
+from zope import component
+from zope import lifecycleevent
+from zope.event import notify
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.externalization import interfaces as ext_interfaces
 from nti.appserver import interfaces as app_interfaces
+from nti.contentlibrary import interfaces as lib_interfaces
 
 from nti.dataserver.links import Link
 from nti.dataserver import mimetype
 from nti.dataserver import users
+from nti.dataserver import authorization as nauth
 
 from nti.appserver._util import logon_userid_with_request
 from nti.appserver.account_creation_views import REL_CREATE_ACCOUNT, REL_PREFLIGHT_CREATE_ACCOUNT
 from nti.appserver.account_recovery_views import REL_FORGOT_USERNAME, REL_FORGOT_PASSCODE, REL_RESET_PASSCODE
+
+from nti.ntiids import ntiids
 
 from pyramid.view import view_config
 from pyramid import security as sec
@@ -70,6 +84,20 @@ REL_LOGIN_OPENID = 'logon.openid' #: See :func:`openid_login`
 REL_LOGIN_FACEBOOK = 'logon.facebook' #: See :func:`facebook_oauth1`
 REL_LOGIN_LOGOUT = 'logon.logout' #: See :func:`logout`
 
+ROUTE_OPENID_RESPONSE = 'logon.openid.response'
+
+#: The URI used as in attribute exchange to request the content to which
+#: the authenticated entity has access. The attribute value type is defined
+#: as a list of unlimited length, each entry of which refers to a specific
+#: :class:`nti.contentlibrary.interfaces.IContentPackage`. Certain providers
+#: may have special mapping rules, but in general, each entry is the specific local
+#: part of the NTIID of that content package (and the provider is implied from the
+#: OpenID domain). These will be turned into groups that the :class:`nti.dataserver.interfaces.IUser`
+#: is a member of; see :class:`nti.dataserver.interfaces.IGroupMember` and :mod:`nti.dataserver.authorization_acl`.
+#:
+#: The NTIID of each content package thus referenced should be checked to be sure it came from the
+#: OpenID domain.
+AX_TYPE_CONTENT_ROLES = 'tag:nextthought.com,2012:ax/contentroles/1'
 
 # The time limit for a GET request during
 # the authentication process
@@ -491,7 +519,73 @@ def password_logon(request):
 
 import pyramid_openid.view
 
+from zope.proxy import non_overridable
+from zope.proxy.decorator import SpecificationDecoratorBase
+
+# Pyramid_openid wants to read its settings from the global
+# configuration at request.registry.settings. We may want to do things differently on different
+# virtual sites or for different users. Thus, we proxy the path to
+# request.registry.settings.
+
+class _PyramidOpenidRegistryProxy(SpecificationDecoratorBase):
+
+	def __init__( self, base ):
+		SpecificationDecoratorBase.__init__( self, base )
+		self._settings = dict(base.settings)
+
+	@non_overridable
+	@property
+	def settings(self):
+		return self._settings
+
+class _PyramidOpenidRequestProxy(SpecificationDecoratorBase):
+
+	def __init__( self, base ):
+		SpecificationDecoratorBase.__init__( self, base )
+		self.registry = _PyramidOpenidRegistryProxy( base.registry )
+
+_OPENID_FIELD_NAME = 'openid2'
+def _openid_configure( request ):
+	"""
+	Configure the settings needed for pyramid_openid on this request.
+	"""
+	# Here, we set up the sreg and ax values
+
+	settings = { 'openid.param_field_name': _OPENID_FIELD_NAME,
+				 'openid.success_callback': 'nti.appserver.logon:_openidcallback',
+				# Google uses a weird mix of namespaces. It only supports these values, plus
+				# country (http://code.google.com/apis/accounts/docs/OpenID.html#endpoint)
+				 'openid.ax_required': 'email=http://schema.openid.net/contact/email firstname=http://axschema.org/namePerson/first lastname=http://axschema.org/namePerson/last language=http://axschema.org/pref/language',
+				 'openid.ax_optional': 'content_roles=' + AX_TYPE_CONTENT_ROLES,
+				 'openid.sreg_required': 'email fullname nickname language' }
+	request.registry.settings.update( settings )
+
+from openid.extensions import ax
+# ensure the patch is needed and going to apply correctly
+assert pyramid_openid.view.ax is ax
+assert 'AttrInfo' not in pyramid_openid.view.__dict__
+
+class _AttrInfo(ax.AttrInfo):
+	"""
+	Pyramid_openid provides no way to specify the 'count' value, but we
+	need to set it to unlimited for :const:`AX_TYPE_CONTENT_ROLES` (because the default
+	is one and the provider is not supposed to return more than that). So we subclass
+	and monkey patch to change the value. (Subclassing ensures that isinstance checks continue
+	to work)
+	"""
+
+	def __init__( self, type_uri, **kwargs ):
+		if type_uri == AX_TYPE_CONTENT_ROLES:
+			kwargs['count'] = ax.UNLIMITED_VALUES
+		super(_AttrInfo,self).__init__( type_uri, **kwargs )
+
+ax.AttrInfo = _AttrInfo
+
 def _openid_login(context, request, openid='https://www.google.com/accounts/o8/id', params=None):
+	"""
+	Wrapper around :func:`pyramid_openid.view.verify_openid` that takes care of some error handling
+	and settings.
+	"""
 	if params is None:
 		params = request.params
 	if 'oidcsum' not in params:
@@ -499,14 +593,21 @@ def _openid_login(context, request, openid='https://www.google.com/accounts/o8/i
 		return _create_failure_response( request, error="Invalid params; missing oidcsum" )
 
 
-	openid_field = request.registry.settings.get('openid.param_field_name', 'openid')
-	nrequest = pyramid.request.Request.blank( request.route_url( 'logon.google.result', _query=params ),
+	openid_field = _OPENID_FIELD_NAME
+	# pyramid_openid routes back to whatever URL we initially came from;
+	# we always want it to be from our response wrapper
+	nrequest = pyramid.request.Request.blank( request.route_url( ROUTE_OPENID_RESPONSE, _query=params ),
 											  # In theory, if we're constructing the URL correctly, this is enough
 											  # to carry through HTTPS info
 											  base_url=request.host_url,
 											  POST={openid_field: openid } )
-	logger.debug( "Directing pyramid request to %s", nrequest )
 	nrequest.registry = request.registry
+	nrequest = _PyramidOpenidRequestProxy( nrequest )
+	assert request.registry is not nrequest.registry
+	assert request.registry.settings is not nrequest.registry.settings
+	_openid_configure( nrequest )
+	logger.debug( "Directing pyramid request to %s", nrequest )
+
 	# If the discover process fails, the view will do two things:
 	# (1) Flash a message in the session queue request.settings.get('openid.error_flash_queue', '')
 	# (2) redirect to request.settings.get( 'openid.errordestination', '/' )
@@ -530,6 +631,26 @@ def _openid_login(context, request, openid='https://www.google.com/accounts/o8/i
 		result = _create_failure_response( request, error=q_after[0] )
 	return result
 
+@view_config(route_name=ROUTE_OPENID_RESPONSE)#, request_method='GET')
+def _openid_response(context, request):
+	"""
+	Process an OpenID response. This exists as a wrapper around
+	:func:`pyramid_openid.view.verify_openid` because that function
+	does nothing on failure, but we need to know about failure. (This is as-of
+	0.3.4; it is fixed in trunk.)
+	"""
+	response = None
+	openid_mode = request.params.get( 'openid.mode', None )
+	if openid_mode != 'id_res':
+		# Failure.
+		response = _create_failure_response( request )
+	else:
+		# If we call directly, we miss the ax settings
+		#response = pyramid_openid.view.verify_openid( context, request )
+		response = _openid_login( context, request )
+	return response
+
+
 @view_config(route_name=REL_LOGIN_GOOGLE, request_method="GET")
 def google_login(context, request):
 	return _openid_login( context, request )
@@ -540,25 +661,19 @@ def openid_login(context, request):
 		return _create_failure_response( request, error='Missing openid' )
 	return _openid_login( context, request, request.params['openid'] )
 
-@view_config(route_name="logon.google.result")#, request_method='GET')
-def google_response(context, request):
-	"""
-	Process an OpenID response from google. This exists as a wrapper around
-	:func:`pyramid_openid.view.verify_openid` because that function
-	does nothing in failure, but we need to know about failure. (This is as-of
-	0.3.4; it is fixed in trunk.)
-	"""
-	response = None
-	openid_mode = request.params.get( 'openid.mode', None )
-	if openid_mode != 'id_res':
-		# Failure.
-		response = _create_failure_response( request )
-	else:
-		response = pyramid_openid.view.verify_openid( context, request )
-	return response
 
-def _deal_with_external_account( request, fname, lname, email, idurl, iface, creator ):
-	#print( "User ", email, " belongs to ", idurl )
+def _deal_with_external_account( request, fname, lname, email, idurl, iface, user_factory ):
+	"""
+	Finds or creates an account based on an external authentication.
+
+	:param email: Becomes the user's local username; must be globally unique, but is not
+		required to be an actual email. (TODO: If it is, we should update
+		the user profile.)
+	:param idul: The URL that identifies the user on the external system.
+	:param iface: The interface that the user object will implement.
+	:return: The user object
+	"""
+
 	dataserver = request.registry.getUtility(nti_interfaces.IDataserver)
 	user = users.User.get_user( username=email, dataserver=dataserver )
 	url_attr = iface.names()[0]
@@ -567,24 +682,81 @@ def _deal_with_external_account( request, fname, lname, email, idurl, iface, cre
 			interface.alsoProvides( user, iface )
 			setattr( user, url_attr, idurl )
 			lifecycleevent.modified( user, lifecycleevent.Attributes( iface, url_attr ) )
-			# TODO: Can I assign to persistent object's __class__? Should I?
 		assert getattr( user, url_attr ) == idurl
 	else:
+		# When creating, we go through the same steps as account_creation_views,
+		# guaranteeing the proper validation
+		external_value = { 'Username': email,
+						   'realname': fname + ' ' + lname,
+						   url_attr: idurl,
+						   'email': email }
+		from .account_creation_views import _create_user # XXX A bit scuzzy
+
 		# This fires lifecycleevent.IObjectCreatedEvent and IObjectAddedEvent. The oldParent attribute
 		# will be None
-		kwargs = {'dataserver': dataserver,
-				  'username': email,
-				  'password': '',
-				  }
-		kwargs[url_attr] = idurl
-		user = creator.create_user( **kwargs )
+		user = _create_user( request, external_value, require_password=False, user_factory=user_factory )
+		__traceback_info__ = request, user_factory, iface, user
+		assert getattr( user, url_attr ) is None # doesn't get read from the external value right now
+		setattr( user, url_attr, idurl )
 		assert getattr( user, url_attr ) == idurl
+		assert iface.providedBy( user )
+		# We manually fire the user_created event. See account_creation_views
+		notify( app_interfaces.UserCreatedWithRequestEvent( user, request ) )
 	return user
 
-@component.adapter(nti_interfaces.IUser,app_interfaces.IUserLogonEvent)
-def _user_did_logon( user, event ):
-	user.update_last_login_time()
+def _update_users_content_roles( user, idurl, content_roles ):
+	"""
+	Update the content roles assigned to the given user based on information
+	returned from an external provider.
 
+	:param user: The user object
+	:param idurl: The URL identifying the user on the external system. All
+		content roles we update will be based on this idurl; in particular, we assume
+		that the base hostname of the URL maps to a NTIID ``provider``, and we will
+		only add/remove roles from this provider. For example, ``http://openid.primia.org/username``
+		becomes the provider ``prmia.``
+	:param iterable content_roles: An iterable of strings naming provider-local
+		content roles. If empty/None, then the user will be granted no roles
+		from the provider of the ``idurl``; otherwise, the content roles from the given
+		``provider`` will be updated to match. The local roles can be the exact (case-insensitive) match
+		for the title of a work, and the user will be granted access to the derived NTIID for the work
+		whose title matches. Otherwise (no title match), the user will be granted direct access
+		to the role as given.
+	"""
+	member = component.getAdapter( user, nti_interfaces.IMutableGroupMember, nauth.CONTENT_ROLE_PREFIX )
+	if not content_roles and not member.hasGroups():
+		return # No-op
+
+	provider = urlparse.urlparse( idurl ).netloc.split( '.' )[-2] # http://x.y.z.nextthought.com/openid => nextthought
+	provider = provider.lower()
+
+	empty_role = nauth.role_for_providers_content( provider, '' )
+
+	# Delete all of our provider's roles, leaving everything else intact
+	other_provider_roles = [x for x in member.groups if not x.id.startswith( empty_role.id )]
+	# Create new roles for what they tell us
+	# NOTE: At this step here we may need to map from external provider identifiers (stock numbers or whatever)
+	# to internal NTIID values. Somehow. Searching titles is one way to ease that
+
+	library = component.queryUtility( lib_interfaces.IContentPackageLibrary )
+
+	roles_to_add = []
+	# Set up a map from title to list-of specific-parts-of-ntiids for all content from this provider
+	provider_packages = {}
+	for package in (library.contentPackages if library is not None else ()):
+		if ntiids.get_provider( package.ntiid ).lower() == provider:
+			provider_packages.setdefault( package.title.lower(), [] ).append( ntiids.get_specific( package.ntiid ) )
+
+	for local_role in (content_roles or ()):
+		local_role = local_role.lower()
+		if local_role in provider_packages:
+			for specific in provider_packages[local_role]:
+				roles_to_add.append( nauth.role_for_providers_content( provider, specific ) )
+		else:
+			roles_to_add.append( nauth.role_for_providers_content( provider, local_role ) )
+
+
+	member.setGroups( other_provider_roles + roles_to_add )
 
 
 def _openidcallback( context, request, success_dict ):
@@ -596,15 +768,19 @@ def _openidcallback( context, request, success_dict ):
 	# we use the credentials you actually authenticated with, its just confusing.
 	# To try to prevent this, we are using a basic checksum approach to see if things
 	# match: oidcsum. In some cases we can't do that, though
-
-	# Google only supports AX, sreg is ignored. AoPS gives us back nothing
-	# except identity_url
-	# Each of these comes back as a list, for some reason
-	fname = success_dict.get( 'ax', {} ).get('firstname', [''])[0]
-	lname = success_dict.get( 'ax', {} ).get('lastname', [''])[0]
-	email = success_dict.get( 'ax', {} ).get('email', [''])[0]
-	idurl = success_dict.get( 'identity_url' )
+	idurl = success_dict['identity_url']
 	oidcsum = request.params.get( 'oidcsum' )
+
+	# Google only supports AX, sreg is ignored.
+	# AoPS gives us back nothing, ignoring both AX and sreg
+
+	# In AX, there can be 0 or more values; the openid library always represents
+	# this using a list (see openid.extensions.ax.AXKeyValueMessage.get and pyramid_openid.view.process_provider_response)
+	ax_dict = success_dict.get( 'ax', {} )
+	fname = ax_dict.get('firstname', ('',))[0]
+	lname = ax_dict.get('lastname', ('',))[0]
+	email = ax_dict.get('email', ('',))[0]
+	content_roles = ax_dict.get( 'content_roles', () )
 
 	### XXX: FIXME: HACK: Extracting a desired username back from the
 	# identity URL.
@@ -624,12 +800,21 @@ def _openidcallback( context, request, success_dict ):
 	try:
 		# TODO: Make this look the interface and factory to assign up by name (something in the idurl?)
 		# That way we can automatically assign an IAoPSUser and use a users.AoPSUser
-		_deal_with_external_account( request, fname, lname, email, idurl, nti_interfaces.IOpenIdUser, users.OpenIdUser )
+		the_user = _deal_with_external_account( request, fname, lname, email, idurl, nti_interfaces.IOpenIdUser, users.OpenIdUser.create_user )
+		_update_users_content_roles( the_user, idurl, content_roles )
+	except hexc.HTTPError:
+		raise
 	except Exception as e:
 		return _create_failure_response( request, error=str(e) )
 
 
 	return _create_success_response( request, userid=email )
+
+
+@component.adapter(nti_interfaces.IUser,app_interfaces.IUserLogonEvent)
+def _user_did_logon( user, event ):
+	user.update_last_login_time()
+
 
 ###
 # TODO: The two facebook methods below could be radically simplified using
@@ -711,7 +896,7 @@ def facebook_oauth2(request):
 										data['first_name'], data['last_name'],
 										data['email'], data['link'],
 										nti_interfaces.IFacebookUser,
-										users.FacebookUser )
+										users.FacebookUser.create_user )
 	# Do we have a facebook picture to use? If so, snag it and use it.
 	pic_glet.join()
 	pic_rsp = pic_rsp.response

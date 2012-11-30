@@ -10,11 +10,11 @@ logger = __import__( 'logging' ).getLogger( __name__ )
 from zope import interface
 from zope import component
 from zope.component.factory import Factory
+from zc import intid as zc_intid
 
 from BTrees.OOBTree import OOTreeSet, difference as OOBTree_difference, intersection as OOBTree_intersection
 
 from nti.ntiids import ntiids
-from nti.utils import sets
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import enclosures
@@ -31,7 +31,7 @@ def _get_shared_dataserver(context=None,default=None):
 
 
 @interface.implementer(nti_interfaces.IFriendsList,nti_interfaces.ISimpleEnclosureContainer)
-class FriendsList(enclosures.SimpleEnclosureMixin,Entity): #Mixin order matters for __setstate__
+class FriendsList(enclosures.SimpleEnclosureMixin,Entity): # Mixin order matters for __setstate__
 	""" A FriendsList or Circle belongs to a user and
 	contains references (strings or weakrefs to principals) to other
 	users. It has a name and ID, possibly a custom image.
@@ -230,39 +230,46 @@ class _FriendsListUsernameIterable(object):
 
 from nti.dataserver.sharing import DynamicSharingTargetMixin
 
-
-class DynamicFriendsList(DynamicSharingTargetMixin,FriendsList):
+@interface.implementer(nti_interfaces.IDynamicSharingTargetFriendsList)
+class DynamicFriendsList(DynamicSharingTargetMixin,FriendsList): #order matters
 	"""
-	An incredible hack to introduce a dynamic, but iterable
-	user managed group/list.
+	Something of a hack to introduce a dynamic, but iterable
+	user-managed group/list.
 
-	These are half FriendsList and half Community. When people are added
-	to the list (and they don't get a veto), they are also added to the "community"
-	that is this object. Their private _community set gets our NTIID
-	added to it. The NTIID is resolvable through Entity.get_entity like magic,
-	so this object will magically start appearing for them, and also will be
-	searchable by them.
+	These are half FriendsList and half Community. When people are
+	added to the list (and they don't get a veto), they are also added
+	to the "community" that is this object, where it externalizes
+	using its NTIID as 'Username' (since its local username is not
+	unique) The NTIID is resolvable through Entity.get_entity like
+	magic, so this object will magically start appearing for them, and
+	also will be searchable by them.
+
+	Targets not only don't get a say about being added to the group in
+	the first place, they cannot exit it, as the external property
+	that is "Communities" or "DynamicMemberships" is not currently
+	editable. This could be implemented in a couple of ways, with the easiest
+	being to simply make that property editable. Note however that they can
+	stop following this DFL, cutting down on the visible noise.
 	"""
-	__external_class_name__ = 'FriendsList'
-	__external_can_create__ = False
+
 	defaultGravatarType = 'retro'
-	# Doesn't work because it's not in the instance dict, and the IModeledContent
-	# interface value takes precedence over the class attribute
+
+	__external_class_name__ = 'FriendsList'
+	#: Although this class itself cannot be directly created externally,
+	#: the factory may change this. See :meth:`_FriendsListMap.external_factory`
+	__external_can_create__ = False
+
 	mime_type = 'application/vnd.nextthought.friendslist'
 
-	# TODO: Users can leave these things by editing their 'communities' attribute
-	# When that happens, we need to catch that event and remove them from here
-	# as well. Or somehow tie the things closer together.
-
+	# This object handle updating friends on creating/updating
+	# An event (see sharing.py) handles when this object is deleted.
+	# If 'Communities' becomes editable, then a new event would need to be
+	# done to handle removing the friend in that case
 	def _on_added_friend( self, friend ):
 		assert self.creator, "Must have creator"
 		super(DynamicFriendsList,self)._on_added_friend( friend )
-		if hasattr( friend, '_communities' ) and hasattr( friend, '_following' ):
-			# TODO: This is here to support the weird unresolved friend-as-string
-			# thing
-			friend._communities.add( self.NTIID )
-			friend._following.add( self.NTIID )
-		# TODO: When this object is deleted we need to clean this up
+		friend.record_dynamic_membership( self )
+		friend.follow( self )
 
 	def _update_friends_from_external( self, new_friends ):
 		old_friends = set( self )
@@ -273,8 +280,8 @@ class DynamicFriendsList(DynamicSharingTargetMixin,FriendsList):
 		# removals.
 		ex_friends = old_friends - new_friends
 		for i_hate_you in ex_friends:
-			sets.discard( i_hate_you._communities, self.NTIID )
-			sets.discard( i_hate_you._following, self.NTIID )
+			i_hate_you.record_no_longer_dynamic_member( self )
+			i_hate_you.stop_following( self )
 
 	def accept_shared_data_from( self, source ):
 		"""
@@ -292,7 +299,7 @@ class DynamicFriendsList(DynamicSharingTargetMixin,FriendsList):
 		return source is self.creator or source in list(self)
 
 @interface.implementer(nti_interfaces.IUsernameIterable)
-@component.adapter(DynamicFriendsList)
+@component.adapter(nti_interfaces.IDynamicSharingTargetFriendsList)
 class _DynamicFriendsListUsernameIterable(_FriendsListUsernameIterable):
 	"""
 	Iterates the contained friends, but also includes the creator
@@ -310,12 +317,38 @@ from nti.dataserver import datastructures
 
 @interface.implementer(nti_interfaces.IFriendsListContainer)
 class _FriendsListMap(datastructures.AbstractCaseInsensitiveNamedLastModifiedBTreeContainer):
-
+	"""
+	Container class for :class:`FriendsList` objects.
+	"""
 
 	contained_type = nti_interfaces.IFriendsList
 	container_name = 'FriendsLists'
 
+	@classmethod
+	def external_factory( cls, extDict ):
+		"""
+		Creates a new friends list.
+
+		If the external dictionary has the ``IsDynamicSharing`` value set to true,
+		then the friends list is a :class:`DynamicFriendsList`. This is necessary because
+		externally we do not distinguish between the two classes for the sake of the UI.
+
+		.. note:: This might need to change; this might in fact be a very bad idea. This
+			bypasses any of the site or role-based object creation set up by nti.appserver;
+			meaning that if we need to implement something like that we have to do it in a different
+			fashion. This would be easier if the UI wanted to/was able to distinguish the two
+			types of FLs.
+		"""
+		factory = FriendsList if not extDict.get( 'IsDynamicSharing' ) else DynamicFriendsList
+		result = factory( extDict['Username'] if 'Username' in extDict else extDict['ID'] )
+		# To allow these to be updated and add members during creation, they must be able
+		# to be weak ref'd, which means they must have intid
+		try:
+			component.getUtility( zc_intid.IIntIds ).register( result )
+		except component.ComponentLookupError:
+			pass # unittest cases
+		return result
 
 nti_interfaces.IFriendsList.setTaggedValue( nti_interfaces.IHTC_NEW_FACTORY,
-											Factory( lambda extDict:  FriendsList( extDict['Username'] if 'Username' in extDict else extDict['ID'] ),
+											Factory( _FriendsListMap.external_factory,
 													 interfaces=(nti_interfaces.IFriendsList,)) )

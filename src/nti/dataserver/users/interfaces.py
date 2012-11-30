@@ -382,7 +382,7 @@ class ICompleteUserProfile(IRestrictedUserProfile):
 		title='Affiliation',
 		description="Your affiliation, such as school name",
 		required=False)
-
+	
 ICompleteUserProfile['home_page'].setTaggedValue( TAG_HIDDEN_IN_UI, True )
 ICompleteUserProfile['description'].setTaggedValue( TAG_HIDDEN_IN_UI, True )
 ICompleteUserProfile['location'].setTaggedValue( TAG_HIDDEN_IN_UI, True )

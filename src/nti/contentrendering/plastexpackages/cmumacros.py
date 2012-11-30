@@ -9,6 +9,7 @@ from nti.contentrendering import plastexids
 from nti.contentrendering.resources import interfaces as res_interfaces
 
 from plasTeX import Base
+from plasTeX.Base import ColumnType
 
 class _Ignored(Base.Command):
         unicode = ''
@@ -86,3 +87,33 @@ class alt(Base.Command):
 #		print("Default is: %s" % self.attributes['default'])
 #		print("Alternative is: %s" % self.attributes['alternative'])
 #		return []
+
+# Custom column type for CMU tables
+ColumnType.new(str('Y'), {'text-align':'left'})
+ColumnType.new(str('k'), {'text-align':'left', 'background-color': '#cccccc'}, args='width:str')
+
+# Custom command to for title row color
+class titlerow(Base.Command):
+	args = '[ space ]'
+
+	def digest(self, tokens):
+		super(titlerow, self).digest(tokens)
+		node = self.parentNode.parentNode
+		node.rowspec['background-color'] = '#cccccc'
+
+# Custom commands for use with the algorithm2e environment
+class Label(Base.Command):
+    blockType = True
+    args = 'self'
+
+class Goto(Base.Command):
+    blockType = True
+    args = 'self'
+
+class Procedure(Base.Command):
+    blockType = True
+    args = 'self'
+
+class Input(Base.Command):
+    blockType = True
+    args = 'self'

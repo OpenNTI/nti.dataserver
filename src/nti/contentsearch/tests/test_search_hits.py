@@ -2,7 +2,6 @@ import os
 import json
 import time
 import unittest
-from datetime import datetime
 
 from nti.dataserver.users import User
 from nti.dataserver.contenttypes import Note
@@ -165,7 +164,7 @@ class TestSearchHits(ConfiguringTestBase):
 		hit[intid_] = 100
 		hit[title_] = 'Bleach'
 		hit[ntiid_] = containerId
-		hit[last_modified_] = datetime.fromtimestamp(time.time())
+		hit[last_modified_] = time.time()
 		hit[content_] = u'All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade'
 		d = self._externalize(_WhooshBookSearchHit, hit, 'shield')
 		assert_that(d, has_entry(CLASS, HIT))

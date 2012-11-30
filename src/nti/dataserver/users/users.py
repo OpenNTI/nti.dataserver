@@ -192,7 +192,7 @@ class Everyone(Community):
 	_realname = 'Everyone'
 	_alias = 'Public'
 	def __init__(self):
-		super(Everyone,self).__init__( 'Everyone' )
+		super(Everyone,self).__init__( self._realname )
 
 	def __setstate__(self,state):
 		for k in ('_avatarURL', '_realname', 'alias'):
@@ -373,19 +373,19 @@ class User(Principal):
 		nti_interfaces.IUser['username'].bind(self).validate( self.username )
 		# We maintain a Map of our friends lists, organized by
 		# username (only one friend with a username)
-		_create_fl = True
 
 		if self.__parent__ is None and component.queryUtility( zope.intid.IIntIds ) is not None:
-			warnings.warn( "No parent provided. User will have no Everyone list; either use User.create_user or provide parent kwarg",
+			warnings.warn( "No parent provided. User will have no Everyone list or Community; either use User.create_user or provide parent kwarg",
 						   stacklevel=(2 if type(self) == User else 3) + _stack_adjust )
-			_create_fl = False
-
 
 		self.friendsLists = _FriendsListMap()
 		self.friendsLists.__parent__ = self
 
 		# Join our default community
-		self._communities.add( 'Everyone' )
+		if self.__parent__:
+			everyone = self.__parent__.get( Everyone._realname )
+			if everyone:
+				self.record_dynamic_membership( everyone )
 
 		# We maintain a list of devices associated with this user
 		# TODO: Want a persistent set?
@@ -554,14 +554,12 @@ class User(Principal):
 		Overrides the super method to return both the communities we are a
 		member of, plus the friends lists we ourselves have created that are dynamic.
 		"""
-		for comm in self._communities:
-			comm = self.get_entity( comm )
-			if comm:
-				yield comm
+		result = set(super(User,self)._get_dynamic_sharing_targets_for_read())
 
 		for fl in self.friendsLists.values():
-			if isinstance( fl, sharing.DynamicSharingTargetMixin ):
-				yield fl
+			if nti_interfaces.IDynamicSharingTarget.providedBy( fl ):
+				result.add( fl )
+		return result
 
 	def accept_shared_data_from( self, source ):
 		""" Accepts if not ignored; auto-follows as well.
@@ -767,8 +765,7 @@ class User(Principal):
 				seen.add( k )
 				yield k
 
-		for c_name in self.communities:
-			com = self.get_entity( c_name )
+		for com in self.dynamic_memberships:
 			if not hasattr( com, 'containersOfShared' ):
 				continue
 			for k in com.containersOfShared:
@@ -1025,9 +1022,10 @@ class User(Principal):
 # be 'User' as well.
 # TODO: MimeTypes?
 
+@interface.implementer( nti_interfaces.IOpenIdUser )
 class OpenIdUser(User):
 	__external_class_name__ = 'User'
-	interface.implements( nti_interfaces.IOpenIdUser )
+
 	identity_url = None
 
 	def __init__(self, username, **kwargs ):
@@ -1036,13 +1034,10 @@ class OpenIdUser(User):
 		if id_url:
 			self.identity_url = id_url
 
-
+@interface.implementer( nti_interfaces.IFacebookUser )
 class FacebookUser(User):
 	__external_class_name__ = 'User'
-
-	interface.implements( nti_interfaces.IFacebookUser )
 	facebook_url = None
-
 
 	def __init__(self, username, **kwargs ):
 		id_url = kwargs.pop( 'facebook_url', None)

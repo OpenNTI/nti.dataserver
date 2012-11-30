@@ -173,4 +173,5 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 		assert_that( res.content_type, is_( 'text/html' ) )
 
 		# TODO: Note that our plain-textification is screwing up at paragraph boundaries.
-		assert_that( res.body, contains_string( 'This part is HTMLAnd spreads across paragraphs.<br />&lt;CANVAS OBJECT&gt;' ) )
+		assert_that( res.body, contains_string( 'This part is HTMLAnd spreads across paragraphs.<br />'
+												"<div class='canvas'>&lt;CANVAS OBJECT of length 0 &gt;") )

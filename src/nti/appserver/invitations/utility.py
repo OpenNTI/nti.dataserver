@@ -63,6 +63,7 @@ class PersistentInvitations(persistent.Persistent,contained.Contained):
 		self._invitations[invitation.code] = invitation
 
 	def getInvitationByCode( self, code ):
+		code = code.strip() if code else code
 		return self._invitations.get( code )
 
 class ZcmlInvitations(PersistentInvitations):

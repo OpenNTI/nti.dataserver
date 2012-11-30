@@ -66,16 +66,6 @@ class IBookIndexManager(ISearcher):
 class IEntityIndexManager(ISearcher):
 
 	username = schema.TextLine(title="entity name", required=True)
-	
-	def has_stored_indices():
-		"""
-		return if there are accessible/stored indices for the user
-		"""
-		
-	def get_stored_indices():
-		"""
-		return the index names accessible/stored in this manager for the user
-		"""
 				
 	def index_content(data, type_name=None):
 		"""
@@ -328,6 +318,7 @@ class IWhooshIndexStorage(interface.Interface):
 class IBookContent(interface.Interface):
 	docnum = schema.Int(title="Document number", required=True)
 	ntiid = schema.Float(title="NTIID", required=True)
+	title = schema.Text(title="Content title", required=True)
 	content = schema.Text(title="Text content", required=True)
 	last_modified = schema.Float(title="Last modified date", required=True)
 	
@@ -362,17 +353,16 @@ class IContainerIDResolver(interface.Interface):
 	
 	def get_containerId():
 		"""return the container identifier"""
-		
-class IUserContentResolver(INTIIDResolver, IContainerIDResolver,  IContentResolver):
-		
-	def get_external_oid():
-		"""return the external object identifier"""
+	
+class ILastModifiedResolver(interface.Interface):
+	
+	def get_last_modified():
+		"""return the last modified date"""
+			
+class IUserContentResolver(INTIIDResolver, IContainerIDResolver,  IContentResolver, ILastModifiedResolver):
 	
 	def get_creator():
 		"""return the creator"""
-	
-	def get_last_modified():
-		"""return the last modified"""
 	
 class IThreadableContentResolver(IUserContentResolver):
 	
@@ -412,7 +402,7 @@ class IMessageInfoContentResolver(IThreadableContentResolver):
 	def get_recipients():
 		"""return the message recipients"""
 
-class IBookContentResolver(INTIIDResolver, IContainerIDResolver,  IContentResolver):
+class IBookContentResolver(INTIIDResolver, IContainerIDResolver,  IContentResolver, ILastModifiedResolver):
 	pass
 		
 # content processing
@@ -581,7 +571,7 @@ class IBaseHit(interface.Interface):
 class IIndexHit(IBaseHit, IMinimalSequence):
 	"""represent a search hit stored in a ISearchResults"""
 	obj = schema.Object(interface.Interface, title="hit object", required=True, readonly=True)
-	
+		
 class ISearchHit(IBaseHit, IMapping, ext_interfaces.IExternalObject):
 	"""represent an externalized search hit"""
 	oid = schema.TextLine(title="hit unique id", required=True, readonly=True)
@@ -590,7 +580,16 @@ class ISearchHit(IBaseHit, IMapping, ext_interfaces.IExternalObject):
 class ISearchHitComparator(interface.Interface):
 	def compare(a, b):
 		"""Compare arguments for for order. a or b can beither a IndexHit or ISearchHit"""
+	
+class IIndexHitMetaDataTracker(interface.Interface):
+	"""Class to track index hit meta data"""
+	
+	def track(ihit):
+		"""track any metadata from the specified index hit"""
 		
+	def __iadd__(other):
+		pass
+			
 class IBaseSearchResults(interface.Interface):
 	query = schema.Object(ISearchQuery, title="search query")
 	
@@ -603,6 +602,9 @@ class ISearchResults(IBaseSearchResults):
 	
 	def sort():
 		"""sort the results based on the sortBy query param"""
+		
+	def __iadd__(other):
+		pass
 		
 class ISuggestResults(IBaseSearchResults):
 	suggestions = schema.Set(value_type=schema.TextLine(title="suggested word"),

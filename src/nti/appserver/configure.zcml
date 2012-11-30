@@ -351,6 +351,10 @@
 			 provides="nti.dataserver.interfaces.IGroupMember"
 			 zcml:condition="have devmode" />
 
+	<adapter name="NextthoughtDotComAdmin"
+			 for="nti.dataserver.interfaces.IUser"
+			 factory=".pyramid_auth.NextthoughtDotComAdmin"
+			 provides="nti.dataserver.interfaces.IGroupMember" />
 	<include package="." file="configure_invitations.zcml" />
 
 </configure>

@@ -12,11 +12,11 @@ from whoosh import highlight
 
 from nti.externalization import interfaces as ext_interfaces
 
+from nti.contentprocessing import default_punk_char_expression
 from nti.contentprocessing import default_word_tokenizer_pattern
 from nti.contentprocessing import default_word_tokenizer_expression
 
 from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch.common import default_punk_char_expression
 
 import logging
 logger = logging.getLogger( __name__ )

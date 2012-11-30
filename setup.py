@@ -19,16 +19,17 @@ entry_points = {
 		"nti_set_password = nti.dataserver.utils.nti_set_password:main",
 		"nti_follow_entity = nti.dataserver.utils.nti_follow_entity:main",
 		"nti_remove_user = nti.dataserver.utils.nti_remove_user:main",
+		"nti_update_object = nti.dataserver.utils.nti_update_object:main",
 		"nti_export_entities = nti.dataserver.utils.nti_export_entities:main",
 		"nti_set_user_attribute = nti.dataserver.utils.nti_set_user_attribute:main",
 		"nti_delete_user_objects = nti.dataserver.utils.nti_delete_user_objects:main",
 		"nti_export_user_objects = nti.dataserver.utils.nti_export_user_objects:main",
+		"nti_opt_in_communication = nti.dataserver.utils.nti_opt_in_communication:main",
 		"nti_sharing_listener = nti.appserver.application:sharing_listener_main",
 		"nti_index_listener = nti.appserver.application:index_listener_main",
-		"nti_reindex_user_content = nti.contentsearch.utils.nti_reindex_user_content:main",
-		"nti_remove_user_search_content = nti.contentsearch.utils.nti_remove_user_content:main",
+		"nti_reindex_entity_content = nti.contentsearch.utils.nti_reindex_entity_content:main",
+		"nti_remove_user_indexed_content = nti.contentsearch.utils.nti_remove_user_indexed_content:main",
 		"nti_remove_index_zombies = nti.contentsearch.utils.nti_remove_index_zombies:main",
-		'nti_get_shared_by_and_reindex = nti.contentsearch.utils.nti_get_shared_by_and_reindex:main',
 		"nti_s3put = nti.contentlibrary.nti_s3put:main",
 		"nti_gslopinionexport = nti.contentrendering.gslopinionexport:main",
 		"nti_jsonpbuilder = nti.contentrendering.jsonpbuilder:main",
@@ -86,7 +87,7 @@ setup(
 		#'nose >= 1.2.1',
 		# But it's also listed in extras/test, and it's very hard to upgrade
 		# when that changes
-		#'distribute >= 0.6.30', # Can't seem to include that anywhere
+		#'distribute >= 0.6.32', # Can't seem to include that anywhere
 		# In theory this should make it possible to get
 		# the svn revision number from svn 1.7. Doesn't seem
 		# to work (with distribute?)
@@ -96,7 +97,7 @@ setup(
 		 # Zope Acquisition; used by contentratings implicitly
 		 # cool concept. Pulls in ExtensionClass (which should not be used)
 		'Acquisition >= 4.0a1',
-		'Chameleon >= 2.10',
+		'Chameleon >= 2.11',
 		 # 'friendly' fork of PIL, developed by Zope/Plone.
 		 # PIL is currently (as of 2012-07) at version 1.1.7 (from 2009), which
 		 # is the version that Pillow forked from in 2010 as version 1.0. So
@@ -106,7 +107,7 @@ setup(
 		'ZConfig >= 2.9.3',
 		 # NOTE: ZODB has a new release, 4.0.0a1 (Notice it's not ZODB3 anymore, so
 		 # there's no need to hard-pin the ZODB3 version.) For this version, we
-		 # will need to additionally include persistent >= 4.0.2 and BTrees >= 4.0.0
+		 # will need to additionally include persistent >= 4.0.3 and BTrees >= 4.0.1, and ZEO >= 4.0.0
 		 # which were pulled out of ZODB for better pypy support. We'll switch to it
 		 # when it goes non-alpha. It may require a tweak to our monkey patch if
 		 # has not been fixed.
@@ -129,7 +130,6 @@ setup(
 		 # See also collective.subscribe for a different take, useful when we need
 		 # this stuff globally (https://github.com/collective/collective.subscribe/tree/master/collective/subscribe)
 		'contentratings == 1.0',
-		'coverage >= 3.5.3', # Test coverage
 		'cryptacular >= 1.4.1', # see z3c.crypt
 		'cssselect >= 0.7.1', # Used by pyquery
 		'cython >= 0.17.1',
@@ -155,7 +155,7 @@ setup(
 		# NOTE2: This will go away soon, merged into pyzmq 2.2dev as zmq.green
 		'gevent_zeromq >= 0.2.5',
 		'greenlet >= 0.4.0',
-		'gunicorn == 0.15.0',
+		'gunicorn == 0.16.1',
 		'hiredis >= 0.1.1', # Redis C parser
 		'html5lib == 0.95',
 		 # WSGI middleware for profiling. Defaults to storing
@@ -165,7 +165,7 @@ setup(
 		 # Depends on the system graphviz installation; an alternative is repoze.profile which has
 		 # fewer dependencies, but less helpful output and doesn't work with multiple workers (?)
 		#'linesman >= 0.2.2', # Conflicts with Pillow. Modify requires.txt as part of the patch
-		'logilab-common >= 0.58.1',
+		'logilab-common >= 0.58.3',
 		'lxml >= 3.0.1', # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
 		'nameparser >= 0.2.3', # Human name parsing
 		'nltk >= 2.0.4',
@@ -181,8 +181,10 @@ setup(
 		'plone.scale >= 1.2.2', # image scaling/storage based on PIL
 		'plone.namedfile >= 2.0', # much like zope.file, but some image-specific goodness.
 		'pyPDF >= 1.13', # Pure python PDF reading library. Not complex. Has newer fork pyPDF2, not yet on PyPI?
-		'pyquery >= 1.2.2', # jquery-like traversing of python datastructures. lxml, cssselect
-		'pyramid >= 1.3.4, < 1.4a1' ,
+		# jquery-like traversing of python datastructures. lxml, cssselect
+		# optional dependency on 'restkit' for interactive WSGI stuff (used to be Paste)
+		'pyquery >= 1.2.4',
+		'pyramid >= 1.4b1' ,
 		'pyramid_tm >= 0.5',
 		'pyramid_mailer >= 0.9', # Which uses repoze.sendmail
 		'pyramid_who >= 0.3',
@@ -203,7 +205,9 @@ setup(
 		'pystatsd >= 0.1.6',
 		'pytz >= 2012h',
 		'rdflib >= 3.2.3',
-		'redis >= 2.7.1', # Redis python client. Note that Amazon deployed servers are still in the 2.6 (2.4?) series
+		# Redis python client. Note that Amazon deployed servers are still in the 2.6 (2.4?) series
+		'redis >= 2.7.2',
+		# There is a nice complete mock for it at fakeredis, installed for tests
 		'repoze.catalog >= 0.8.2',
 		'repoze.lru >= 0.6', # LRU caching. Dep of Pyramid
 		'repoze.sendmail >= 3.2',
@@ -222,6 +226,7 @@ setup(
 		'transaction >= 1.3.0',
 		'webob >= 1.2.3',
 		'whoosh >= 2.4.1',
+		'z3c.baseregistry >= 2.0.0', # ZCML configurable local component registries
 		'z3c.batching >= 1.1.0', # result paging. Pulled in by z3c.table
 		 # bcrypt/pbkdf2 for zope.password
 		 # adds cryptacular and pbkdf2
@@ -233,7 +238,7 @@ setup(
 		'z3c.table >= 1.0.0', # Flexible table rendering
 		'zc.dict >= 1.3b1', # BTree based dicts that are subclassable
 		'zc.intid >= 1.0.1',
-		'zc.lockfile >= 1.0.0',
+		'zc.lockfile >= 1.0.1',
 		'zc.queue >= 1.3',
 		'zc.zlibstorage >= 0.1.1', # compressed records. Will be built-in to newer ZODB
 		'zc.zodbdgc >= 0.6.1',
@@ -249,30 +254,30 @@ setup(
 		'zope.browserresource',
 		'zope.catalog >= 3.8.2',
 		'zope.cachedescriptors >= 3.5.1',
-		'zope.component >= 4.0.0',
+		'zope.component >= 4.0.1',
 		# Schema vocabularies based on querying ZCA; useful
 		# for views and other metadata
 		'zope.componentvocabulary >= 1.0.1',
-		'zope.configuration >= 4.0.0',
+		'zope.configuration >= 4.0.1',
 		'zope.container >= 3.12.0',
 		'zope.contenttype >= 3.5.5', # A utility module for content-type handling.
 		'zope.copy >= 4.0.0',
 		'zope.datetime >= 3.4.1',
-		'zope.deprecation >= 4.0.0',
+		'zope.deprecation >= 4.0.1',
 		'zope.deferredimport >= 3.5.3', # useful with zope.deprecation. Req'd by contentratings
 		'zope.dottedname >= 3.4.6',
 		'zope.dublincore >= 3.8.2',
-		'zope.event >= 4.0.0',
-		'zope.exceptions >= 4.0.1',
+		'zope.event >= 4.0.1',
+		'zope.exceptions >= 4.0.2',
 		'zope.filerepresentation >= 3.6.1',
 		'zope.file >= 0.6.2',
-		'zope.formlib >= 4.1.1', # Req'd by zope.mimetype among others,
+		'zope.formlib >= 4.2.0', # Req'd by zope.mimetype among others,
 		'zope.generations >= 3.7.1',
-		'zope.hookable >= 4.0.0', # explicitly list this to ensure we get the fast C version. Used by ZCA.
+		'zope.hookable >= 4.0.1', # explicitly list this to ensure we get the fast C version. Used by ZCA.
 		'zope.i18n >= 3.8.0',
-		'zope.i18nmessageid >= 4.0.0',
+		'zope.i18nmessageid >= 4.0.1',
 		'zope.index >= 3.6.4',
-		'zope.interface >= 4.0.1',
+		'zope.interface >= 4.0.2',
 		'zope.intid >= 3.7.2',
 		'zope.lifecycleevent >= 3.7.0',
 		'zope.location >= 4.0.0',
@@ -282,8 +287,8 @@ setup(
 		'zope.password >= 3.6.1', # encrypted password management
 		'zope.publisher >= 3.13.1',
 		'zope.processlifetime',
-		'zope.proxy >= 4.0.0',
-		'zope.schema >= 4.2.1',
+		'zope.proxy >= 4.0.1',
+		'zope.schema >= 4.2.2',
 		'zope.security >= 3.8.3',
 		'zope.site >= 3.9.2', # local, persistent ZCA sites
 		'zope.size >= 3.5.0',
@@ -291,17 +296,24 @@ setup(
 		'zope.tales >= 3.5.2',
 		'zope.traversing >= 3.14.0',
 		# textindexng3
-		'zopyx.txng3.core >= 3.5.3',
+		'zopyx.txng3.core >= 3.6.0',
 		'zopyx.txng3.ext >= 3.3.3',
+        # Data analysis
+        # pandas,
+        # scikit-learn,
+        # rpy2, -- Requires R installed.
 		],
 	extras_require = {
 		'test': [
+			'coverage >= 3.6b1', # Test coverage
 			'nose >= 1.2.1',
 			'zope.testing >= 4.1.1',
 			'zc.buildout == 1.6.3',
 			'nose-progressive',
 			'pyhamcrest >= 1.6',
-			'webtest >= 1.4.0',
+			'WebTest >= 1.4.3',
+			'fakeredis >= 0.3.0',
+			'tempstorage >= 2.12.2', # ZODB in-memory conflict-resolving storage; like MappingStorage, but handles changes
 			'fudge'],
 		'tools': [
 			'pyramid_debugtoolbar >= 1.0.3',
@@ -315,7 +327,7 @@ setup(
 			'pip-tools >= 0.2.1', # command pip-review, pip-dump
 			'pylint >= 0.26.0',
 			'zodbupdate >= 0.5',
-			'zodbbrowser >= 0.10.0',
+			'zodbbrowser >= 0.10.2',
 			'sphinx >= 1.1.3', # Narrative docs
 			'sphinxtheme.readability >= 0.0.6',
 			'repoze.sphinx.autointerface >= 0.7.1',
@@ -324,7 +336,7 @@ setup(
 			'rope >= 0.9.4', # refactoring library. c.f. ropemacs
 			'ropemode >= 0.2', # IDE helper for rope
 			#'Pymacs >= 0.25',
-			'virtualenv >= 1.8.2',
+			'virtualenv >= 1.8.4',
 			'pip >= 1.2.1',
 			# Monitoring stats and instrumenting code
 			# See above for python-statsd

@@ -26,12 +26,6 @@ def get_containerId(obj, default):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	return adapted.get_containerId() or default
 
-def get_external_oid(obj, default):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
-	return adapted.get_external_oid() or default
-get_oid = get_external_oid
-get_objectId = get_external_oid
-
 def get_ntiid(obj, default):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	return adapted.get_ntiid() or default

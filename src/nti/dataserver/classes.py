@@ -10,7 +10,7 @@ from zope import interface
 from zope.component.factory import Factory
 from zope.container.btree import BTreeContainer
 import BTrees
-from nti.dataserver import containers
+
 # pylint chokes on from . import ... stuff,
 # which means it assumes old-style classes, which
 # is annoying.
@@ -22,7 +22,9 @@ from nti.dataserver import enclosures
 from nti.dataserver import datastructures
 from nti.dataserver import contenttypes
 from nti.dataserver import mimetype
+
 from nti.dataserver import interfaces as nti_interfaces
+from zope.annotation import interfaces as an_interfaces
 
 from nti.dataserver import links
 
@@ -68,15 +70,16 @@ def _add_container_iface( obj, iface ):
 		interface.alsoProvides( obj, iface )
 		obj.container_name = obj.__name__
 
+@interface.implementer(nti_interfaces.IClassInfo,
+					   nti_interfaces.ISimpleEnclosureContainer,
+					   nti_interfaces.IZContained,
+					   an_interfaces.IAttributeAnnotatable)
 class ClassInfo( datastructures.PersistentCreatedModDateTrackingObject,
 				 ExternalizableInstanceDict,
 				 enclosures.SimpleEnclosureMixin,
 				 datastructures.ContainedMixin):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-	interface.implements(nti_interfaces.IClassInfo,
-						 nti_interfaces.ISimpleEnclosureContainer,
-						 nti_interfaces.IZContained)
 
 	__external_can_create__ = True
 
@@ -150,6 +153,15 @@ class ClassInfo( datastructures.PersistentCreatedModDateTrackingObject,
 
 	def __getitem__( self, key ):
 		return self._sections[key]
+
+	def __len__( self ):
+		return len( self._sections )
+	def __delitem__(self, key):
+		raise TypeError()
+	def __setitem__( self, key ):
+		raise TypeError()
+	def __nonzero__( self ):
+		return True
 
 
 	def __setstate__( self, state ):
@@ -239,7 +251,8 @@ nti_interfaces.IClassInfo.setTaggedValue( nti_interfaces.IHTC_NEW_FACTORY,
 @interface.implementer(nti_interfaces.ISectionInfo,
 					   nti_interfaces.ISimpleEnclosureContainer,
 					   nti_interfaces.IZContained,
-					   nti_interfaces.IUsernameIterable)
+					   nti_interfaces.IUsernameIterable,
+					   an_interfaces.IAttributeAnnotatable)
 class SectionInfo( datastructures.PersistentCreatedModDateTrackingObject,
 				   ExternalizableInstanceDict,
 				   enclosures.SimpleEnclosureMixin ):

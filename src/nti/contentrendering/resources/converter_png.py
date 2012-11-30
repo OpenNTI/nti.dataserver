@@ -43,9 +43,10 @@ def _size(key, png):
 
 def _scale(input, output, scale, defaultScale):
 	# Use IM to scale. Must be top-level to pickle
-	#scale is 1x, 2x, 4x
+	# Scale is the fraction of defaultScale that we wise to scale the image to.  For example, if scale is 2 and
+	# defaultScale is 1, then the image would be scaled to 1/2 the original size.
 	#return os.system( 'convert %s -resize %f%% PNG32:%s' % (input, 100*(scale/defaultScale) , output) )
-	command = [ 'convert', input, '-resize', '%f%%' % (100*(scale/defaultScale)), 'PNG32:%s' % output ]
+	command = [ 'convert', input, '-resize', '%f%%' % (100 * ( defaultScale / scale ) ), 'PNG32:%s' % output ]
 	__traceback_info__ = command
 	retval1 = subprocess.call( command )
 
@@ -75,10 +76,9 @@ class _GSPDFPNG2(plasTeX.Imagers.gspdfpng.GSPDFPNG):
 	compiler = 'pdflatex'
 	fileExtension = '.png'
 	# SAJ: The relationship between resolution and defaultScaleFator is important to prevent the distortion of
-	# input images. Oversampling the input image and then downsizing producess a better output that sampling
-	# the input image at 72 dpi.  It also allows us to easily produce 1x, 2x, 3x, and 4x image sizes.
-	resolution = 288 # SAJ: Should be an integer multiple of 72
-	defaultScaleFactor = 4.0 # SAJ: This needs to be equal to resolution/72
+	# the input images. 
+	resolution = 72 # SAJ: Should be an integer multiple of 72
+	defaultScaleFactor = 1.0 # SAJ: This needs to be equal to resolution/72
 	scaleFactor = 1
 
 	def executeConverter(self, output):
@@ -148,8 +148,8 @@ class _GSPDFPNG2(plasTeX.Imagers.gspdfpng.GSPDFPNG):
 		superclass then does NOT define it. """
 		self.source.write( "\\newcommand{\plasTeXregister}{}" )
 		super(_GSPDFPNG2,self).writePreamble( document )
-		self.source.write('\\usepackage[a0paper]{geometry}\n')
-		self.source.write('\\setlength{\\pdfpagewidth}{84.1cm}\n\\setlength{\\pdfpageheight}{118.9cm}\n')
+		self.source.write('\\usepackage[b0paper]{geometry}\n')
+		self.source.write('\\setlength{\\pdfpagewidth}{100.0cm}\n\\setlength{\\pdfpageheight}{141.4cm}\n')
 
 	def scaleImages(self): # pragma: no cover
 		raise NotImplementedError("Scaling is done in the converter.")
@@ -164,7 +164,7 @@ from ._util import copy
 
 class GSPDFPNG2BatchConverter(converters.ImagerContentUnitRepresentationBatchConverter):
 
-	scales = (1,)
+	scales = (1,2,4)
 	shouldInvert = False
 	batch = 0
 
@@ -204,8 +204,8 @@ class GSPDFPNG2BatchConverter(converters.ImagerContentUnitRepresentationBatchCon
 									 self.__newNameFromOrig(image.path,
 												scale,
 												False)),
-							   math.ceil(image.width * (scale / rsg.imager.defaultScaleFactor)),
-							   math.ceil(image.height * (scale/rsg.imager.defaultScaleFactor)),
+							   math.ceil(image.width * (rsg.imager.defaultScaleFactor/scale)),
+							   math.ceil(image.height * (rsg.imager.defaultScaleFactor/scale)),
 							   image.depth )
 
 				newImage._scaleFactor = scale

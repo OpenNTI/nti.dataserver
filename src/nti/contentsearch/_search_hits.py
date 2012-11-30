@@ -15,7 +15,6 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.chatserver import interfaces as chat_interfaces
 from nti.externalization import interfaces as ext_interfaces
 
-from nti.contentsearch.common import epoch_time
 from nti.contentsearch._views_utils import get_ntiid_path
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch._search_highlights import WORD_HIGHLIGHT
@@ -132,7 +131,7 @@ class _WhooshBookSearchHit(_BaseSearchHit):
 		self._data[SNIPPET] = hit[content_]
 		self._data[CONTAINER_ID] = hit[ntiid_]
 		self._data[title_.capitalize()] = hit[title_]
-		self._data[LAST_MODIFIED] = epoch_time(hit[last_modified_])
+		self._data[LAST_MODIFIED] = hit[last_modified_]
 		self.oid = ''.join((hit[ntiid_], u'-', unicode(hit[intid_])))
 			
 	@property
@@ -159,20 +158,41 @@ def get_search_hit(obj, score=1.0, query=None, highlight_type=WORD_HIGHLIGHT):
 @interface.implementer(search_interfaces.ISearchHitComparator)
 class _ScoreSearchHitComparator(object):
 	
-	def get_score(self, item):
-		if search_interfaces.IBaseHit.providedBy(item):
-			result = item.score
-		else:
-			result = 1.0
+	@classmethod
+	def get_score(cls, item):
+		result = item.score if search_interfaces.IBaseHit.providedBy(item) else 1.0
+		return result
+	
+	@classmethod
+	def compare_score(cls, a, b):
+		a_score = cls.get_score(a)
+		b_score = cls.get_score(b)
+		result = cmp(b_score, a_score)
 		return result
 	
 	def compare(self, a, b):
-		a_score = self.get_score(a)
-		b_score = self.get_score(b)
-		result = cmp(b_score, a_score)
-		return result
+		return self.compare_score(a, b)
 
+@interface.implementer(search_interfaces.ISearchHitComparator)
+class _LastModifiedSearchHitComparator(object):
 	
+	@classmethod
+	def get_lm(cls, item):
+		obj = item.obj if search_interfaces.IBaseHit.providedBy(item) else item
+		rsr = search_interfaces.ILastModifiedResolver(obj, None)
+		result = rsr.get_last_modified() if rsr is not None else 0
+		return result
+	
+	@classmethod
+	def compare_lm(cls, a, b):
+		a_lm = cls.get_lm(a)
+		b_lm = cls.get_lm(b)
+		result = cmp(a_lm, b_lm)
+		return result
+	
+	def compare(self, a, b):
+		return self.compare_lm(a, b)
+
 @repoze.lru.lru_cache(300)
 def path_intersection(x, y):
 	result = []
@@ -209,7 +229,8 @@ class _RelevanceSearchHitComparator(_ScoreSearchHitComparator):
 			
 		return max(0,result) 
 	
-	def get_ntiid_path(self, item):
+	@classmethod
+	def get_ntiid_path(cls, item):
 		if isinstance(item, six.string_types):
 			result = get_ntiid_path(item)
 		elif search_interfaces.IBaseHit.providedBy(item):
@@ -218,7 +239,8 @@ class _RelevanceSearchHitComparator(_ScoreSearchHitComparator):
 			result = ()
 		return result
 			
-	def get_containerId(self, item):
+	@classmethod
+	def get_containerId(cls, item):
 		if search_interfaces.ISearchHit.providedBy(item):
 			result = item.get(NTIID, None)
 		elif search_interfaces.IIndexHit.providedBy(item):

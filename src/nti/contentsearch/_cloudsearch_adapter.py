@@ -5,7 +5,6 @@ import sys
 from zope import interface
 from zope import component
 from zope.annotation import factory as an_factory
-from zope.interface.common.mapping import IFullMapping
 
 from perfmetrics import metricmethod
 
@@ -28,7 +27,7 @@ import logging
 logger = logging.getLogger( __name__ )
 	
 @component.adapter(nti_interfaces.IEntity)
-@interface.implementer(search_interfaces.ICloudSearchEntityIndexManager, IFullMapping)
+@interface.implementer(search_interfaces.ICloudSearchEntityIndexManager)
 class _CloudSearchEntityIndexManager(_SearchEntityIndexManager):
 
 	_v_store = None
@@ -116,17 +115,6 @@ class _CloudSearchEntityIndexManager(_SearchEntityIndexManager):
 		results = service.search(bq=bq, return_fields=[intid_], size=size, start=0)
 		for r in results:
 			yield r[intid_]
-			
-	# ---------------------- 
-		
-	def has_stored_indices(self):
-		bq = unicode("%s:'%s'" % (username_, self.username))
-		service  = self._get_cs_store()
-		results = service.search_cs(bq=bq, return_fields=[intid_], size=1, start=0) if service else ()
-		return len(results) > 0
-		
-	def get_stored_indices(self):
-		return ()
 
 def _CloudSearchEntityIndexManagerFactory(user):
 	result = an_factory(_CloudSearchEntityIndexManager)(user)

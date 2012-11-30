@@ -4,17 +4,20 @@ import zope.intid
 from zope import component
 from zope import interface
 from zope.location.interfaces import ILocation
+from zope.interface.common.mapping import IMapping
 
 from persistent.mapping import PersistentMapping
 
 from nti.dataserver import interfaces as nti_interfaces
+
+from nti.chatserver import interfaces as chat_interfaces
 
 from nti.contentsearch import interfaces as search_interfaces
 
 import logging
 logger = logging.getLogger( __name__ )
 
-@interface.implementer( search_interfaces.IEntityIndexManager, ILocation )
+@interface.implementer( search_interfaces.IEntityIndexManager, ILocation, IMapping)
 class _SearchEntityIndexManager(PersistentMapping):
 	
 	@property
@@ -40,11 +43,14 @@ class _SearchEntityIndexManager(PersistentMapping):
 		return result
 		
 	def verify_access(self, obj):
-		adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
-		creator = adapted.get_creator().lower()
-		sharedWith = set([x.lower() for x in adapted.get_sharedWith() or ()])
-		index_owner = self.username.lower()
-		result = index_owner == creator or index_owner in sharedWith
+		if chat_interfaces.IMessageInfo.providedBy(obj):
+			result = True # Any hit on a message info is accepted
+		else:
+			adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+			creator = adapted.get_creator().lower()
+			sharedWith = set([x.lower() for x in adapted.get_sharedWith() or ()])
+			index_owner = self.username.lower()
+			result = index_owner == creator or index_owner in sharedWith
 		return result
 
 	@property
@@ -71,8 +77,4 @@ class _SearchEntityIndexManager(PersistentMapping):
 
 	def remove_index(self, type_name):
 		raise NotImplementedError()
-		
-	def get_stored_indices(self):
-		raise NotImplementedError()
-			
-	
+

@@ -104,5 +104,4 @@
 	<adapter factory=".user_profile.EmailRequiredUserProfileFactory"
 			 zcml:condition="not-have devmode" />
 
-
 </configure>

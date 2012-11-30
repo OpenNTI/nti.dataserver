@@ -12,13 +12,7 @@ from nti.dataserver.users import entity
 from nti.dataserver.utils import run_with_dataserver
 from nti.externalization.externalization import toExternalObject
 			
-def to_external_object(obj):
-	external = toExternalObject(obj)
-	return external
-
 def export_entities( entities, export_dir="/tmp", verbose=False):
-	
-	# create export dir
 	export_dir = export_dir or "/tmp"
 	export_dir = os.path.expanduser(export_dir)
 	if not os.path.exists(export_dir):
@@ -32,12 +26,14 @@ def export_entities( entities, export_dir="/tmp", verbose=False):
 	objects = []
 	for entityname in entities:
 		e = entity.Entity.get_entity( entityname )
-		if not e and verbose:
+		if e is not None:
+			objects.append(toExternalObject(e))
+		elif verbose:
 			print( "Entity '%s' does not exists" % entityname, file=sys.stderr )
-		objects.append(to_external_object(e))
-	
-	with open(outname, "w") as fp:
-		json.dump(objects, fp, indent=4)
+
+	if objects:
+		with open(outname, "w") as fp:
+			json.dump(objects, fp, indent=4)
 	
 def main():
 	arg_parser = argparse.ArgumentParser( description="Export user objects" )
@@ -60,6 +56,7 @@ def main():
 
 	# run export
 	run_with_dataserver(environment_dir=env_dir, 
+						verbose = verbose,
 						function=lambda: export_entities(entities, export_dir, verbose) )
 
 if __name__ == '__main__':

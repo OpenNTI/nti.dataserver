@@ -10,6 +10,7 @@ from plasTeX.Renderers import mixin, unmix, renderable_as_unicode
 from plasTeX.DOM import Node
 from plasTeX.Logging import getLogger
 from plasTeX.Filenames import Filenames
+from plasTeX.Imagers import Dimension
 
 
 import zope.dottedname.resolve as dottedname
@@ -185,7 +186,111 @@ class Renderable(BaseRenderable):
 
 	@property
 	def image(self):
-		return self.getResource(['png', 'orig', 1])
+		def _determine_units( dimen ):
+			'''This function determines what units are being used for a dimension.'''
+			unit_names = ['inch', 'in','ex','em','pt','px','mm','cm','pc']
+
+			for unit_name in unit_names:
+				if unit_name in dimen:
+					dimen = dimen.replace( unit_name, '' )
+					return dimen, unit_name
+
+		def _make_dimension( dimen_string ):
+			'''This function turns a number, unit tuple into a Dimension object'''
+			dimen, unit_name = _determine_units( dimen_string )
+			dimension = None
+			if unit_name in 'in' or unit_name in 'inch':
+				dimension = Dimension( float(dimen) * 72 )
+			elif unit_name in 'ex':
+				pass
+			elif unit_name in 'em':
+				pass
+			elif unit_name in 'pt':
+				dimension = Dimension( float(dimen) )
+			elif unit_name in 'px':
+				dimension = Dimension( float(dimen) )
+			elif unit_name in 'mm':
+				dimension = Dimension( float(dimen) / 72 * 25.4 )
+			elif unit_name in 'cm':
+				dimension = Dimension( float(dimen) / 72 * 2.54 )
+			elif unit_name in 'pc':
+				dimension = Dimension( float(dimen) / 12 )
+			else:
+				logger.warning('Unknown unit: %s' % unit_name)
+			return dimension
+
+		# SAJ: For now assuming that the PNG converter creates assets with scales 1, 2, and 4.
+		assets = {}
+		assets['1'] = self.getResource(['png', 'orig', 1])
+		assets['2'] = self.getResource(['png', 'orig', 2])
+		assets['4'] = self.getResource(['png', 'orig', 4])
+
+		# SAJ: The following if-else bock determines which of the assets is the closest to the requested
+		# style size, but is not smaller than the requested.  This prevents lose of image quality from
+		# enlarging images.
+		img = None
+		current_size = ''
+		if self.style:
+			if 'width' in self.style:
+				dimen = _make_dimension( self.style['width'] )
+				if dimen <= assets['4'].width:
+					img = assets['4']
+					current_size = 'quarter'
+				elif dimen <= assets['2'].width:
+					img = assets['2']
+					current_size = 'half'
+				elif dimen < assets['1'].width:
+					img = assets['1']
+					current_size = 'full'
+				elif dimen == assets['1'].width:
+					img = assets['1']
+					current_size = 'actual'
+				else:
+					img = assets['1']
+					current_size = 'oversize'
+
+			elif 'height' in self.style:
+				dimen = _make_dimension( self.style['height'] )
+				if dimen <= assets['4'].height:
+					img = assets['4']
+					current_size = 'quarter'
+				elif dimen <= assets['2'].height:
+					img = assets['2']
+					current_size = 'half'
+				elif dimen < assets['1'].height:
+					img = assets['1']
+					current_size = 'full'
+				elif dimen == assets['1'].height:
+					img = assets['1']
+					current_size = 'actual'
+				else:
+					img = assets['1']
+					current_size = 'oversize'
+
+			else:
+				img = assets['1']
+				current_size = 'full'
+		else:
+			img = assets['1']
+			current_size = 'full'
+
+
+		# SAJ: Here we determine if the assets support browser resizing.  The only time resizing is not 
+		# supported is when the requested size is the same size or larger than the largest asset.
+		if current_size == 'oversize':
+			logger.warning( 'Using oversized resource for: %s' % self.source )
+			img.resizeable = False
+		elif current_size == 'actual':
+			img.resizeable = False
+		else:
+			img.resizeable = True
+
+		img.current_size = current_size
+		img.full_size = assets['1']
+		img.half_size = assets['2']
+		img.quarter_size = assets['4']
+
+		return img
 
 	@property
 	def vectorImage(self):

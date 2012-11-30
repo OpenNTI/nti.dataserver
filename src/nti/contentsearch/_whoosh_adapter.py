@@ -10,7 +10,6 @@ from zope import interface
 from zope import component
 from zope.proxy import ProxyBase
 from zope.annotation import factory as an_factory
-from zope.interface.common.mapping import IFullMapping
 
 from whoosh.store import LockError
 
@@ -61,19 +60,6 @@ def get_index_writer(index, writer_ctor_args, maxiters, delay):
 				raise e
 	return writer
 	
-def get_stored_indices(username, storage, use_md5=True):
-	result = []
-	for type_name in get_indexables():
-		type_name = normalize_type_name(type_name)
-		index_name = get_indexname(username, type_name, use_md5)
-		if storage.index_exists(index_name, username=username):
-			result.append(type_name)
-	return result
-	
-def has_stored_indices(username, storage, use_md5=True):
-	names = get_stored_indices(username, storage, use_md5)
-	return True if names else False
-	
 # proxy class to wrap an whoosh index
 
 class _Proxy(ProxyBase):
@@ -105,7 +91,7 @@ whoosh_indices = LFUMap(maxsize=500, on_removal_callback=_on_index_removed)
 # entity adapter for whoosh indicies
 
 @component.adapter(nti_interfaces.IEntity)
-@interface.implementer( search_interfaces.IWhooshEntityIndexManager, IFullMapping )
+@interface.implementer( search_interfaces.IWhooshEntityIndexManager )
 class _WhooshEntityIndexManager(_SearchEntityIndexManager):
 		
 	delay = 0.25
@@ -268,16 +254,6 @@ class _WhooshEntityIndexManager(_SearchEntityIndexManager):
 		setattr(indexable ,'get_object', self.get_object)
 		return indexable
 	
-	# -------------------
-	
-	def get_stored_indices(self):
-		result =  list(self.keys())#s get_stored_indices(self.username, self.storage, self.use_md5)
-		return result
-	
-	def has_stored_indices(self):
-		names = self.get_stored_indices()
-		return True if names else False	
-
 def _WhooshEntityIndexManagerFactory(user):
 	result = an_factory(_WhooshEntityIndexManager)(user)
 	return result

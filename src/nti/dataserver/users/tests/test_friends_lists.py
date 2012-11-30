@@ -11,20 +11,33 @@ __docformat__ = "restructuredtext en"
 
 from hamcrest import assert_that
 from hamcrest import has_entry
+from hamcrest import has_item
 from hamcrest import has_length
 from hamcrest import has_property
 from hamcrest import contains
+from hamcrest import is_
+from hamcrest import is_not as does_not
 
 import nti.tests
 from nti.tests import is_true, is_false
 
-setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.dataserver',) )
-tearDownModule = nti.tests.module_teardown
+from zope.component import eventtesting
 
-from zope import interface
-from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.users import interfaces
+def setUpModule():
+	nti.tests.module_setup( set_up_packages=('nti.dataserver',) )
+	eventtesting.setUp()
+
+def tearDownModule():
+	nti.tests.module_teardown()
+	eventtesting.clearEvents()
+
+#from zope import interface
+#from nti.dataserver import interfaces as nti_interfaces
+#from nti.dataserver.users import interfaces
+
 from nti.dataserver.users import FriendsList
+from nti.dataserver.users import User
+
 import nti.externalization.internalization
 import nti.externalization.externalization
 from nti.externalization.externalization import to_external_object
@@ -126,6 +139,62 @@ def test_update_friends_list():
 	assert_that( updated, is_true() )
 	assert_that( list(fl), has_length( 7 ) )
 	assert_that( sorted(fl), contains( user2, user3, user4, user5, user6, user7, user8 ) )
+
+@WithMockDSTrans
+def test_create_update_dynamic_friendslist():
+	ds = mock_dataserver.current_mock_ds
+	user1 = User.create_user( ds, username='foo23' )
+	user2 = User.create_user( ds, username='foo12' )
+	user3 = User.create_user( ds, username='foo13' )
+
+	fl1 = users.DynamicFriendsList(username='Friends')
+	fl1.creator = user1 # Creator must be set
+
+	user1.addContainedObject( fl1 )
+	fl1.addFriend( user2 )
+
+	assert_that( user2.dynamic_memberships, has_item( fl1 ) )
+
+	fl1.updateFromExternalObject( {'friends': [user3.username]} )
+
+	assert_that( user3.dynamic_memberships, has_item( fl1 ) )
+	assert_that( to_external_object( user3 ), has_entry( 'Communities', has_item( has_entry( 'realname', 'Friends' ) ) ) )
+	assert_that( user2.dynamic_memberships, does_not( has_item( fl1 ) ) )
+
+	# The external form masquerades as a normal FL...
+	x = to_external_object( fl1 )
+	assert_that( x, has_entry( 'Class', 'FriendsList' ) )
+	assert_that( x, has_entry( 'MimeType', 'application/vnd.nextthought.friendslist' ) )
+	assert_that( x, has_entry( 'NTIID', 'tag:nextthought.com,2011-10:foo23-MeetingRoom:Group-friends' ) )
+	# ... with one exception
+	assert_that( x, has_entry( 'IsDynamicSharing', True ) )
+
+
+@WithMockDSTrans
+def test_delete_dynamic_friendslist_clears_memberships():
+	ds = mock_dataserver.current_mock_ds
+	user1 = User.create_user( ds, username='foo23' )
+	user2 = User.create_user( ds, username='foo12' )
+
+	fl1 = users.DynamicFriendsList(username='Friends')
+	fl1.creator = user1 # Creator must be set
+
+	user1.addContainedObject( fl1 )
+	fl1.addFriend( user2 )
+
+	assert_that( list(user2.dynamic_memberships), has_item( fl1 ) )
+	assert_that( list(user2.entities_followed), has_item( fl1 ) )
+
+	eventtesting.clearEvents()
+	assert_that( user1.deleteContainedObject( fl1.containerId, fl1.id ), is_( fl1 ) )
+
+	# If the events don't fire correctly, the weakref will still have this cached
+	# so it will still seem to be present
+	assert_that( list(user2.dynamic_memberships), does_not( has_item( fl1 ) ) )
+	assert_that( list(user2.entities_followed), does_not( has_item( fl1 ) ) )
+	assert_that( user2, has_property( '_dynamic_memberships', has_length( 1 ) ) )
+
+
 
 from nti.dataserver.tests.test_authorization_acl import permits
 from nti.dataserver import authorization as nauth

@@ -32,7 +32,7 @@ class AbstractTwoStateViewLinkDecorator(object):
 	"""
 	A decorator which checks the state of a predicate of two functions (the object and username)
 	and adds one of two links depending on the value of the predicate. The links
-	are to views having the same name as the ``rel`` attribute of the generated
+	are to views on the original object having the same name as the ``rel`` attribute of the generated
 	link.
 
 	Instances define the following attributes:
@@ -48,6 +48,9 @@ class AbstractTwoStateViewLinkDecorator(object):
 	.. py:attribute:: true_view
 
 		The name of the view to use when the predicate is true.
+
+	If the resolved view name (i.e., one of ``false_view`` or ``true_view``) is ``None``,
+	then no link will be added.
 
 	.. note:: This may cause the returned objects to be user-specific,
 		which may screw with caching.
@@ -72,17 +75,21 @@ class AbstractTwoStateViewLinkDecorator(object):
 		if not context.__parent__:
 			return
 
-		i_like = self.predicate( context, current_user )
-		_links = mapping.setdefault( StandardExternalFields.LINKS, [] )
+		predicate_passed = self.predicate( context, current_user )
 		# We're assuming that because you can see it, you can (un)like it.
 		# this matches the views
-		rel = self.true_view if i_like else self.false_view
+		rel = self.true_view if predicate_passed else self.false_view
+		if rel is None: # Disabled in this case
+			return
+
 		# Use the NTIID rather than the 'physical' path because the 'physical'
 		# path may not quite be traversable at this point
 		link = links.Link( ext_oids.to_external_ntiid_oid( context ), rel=rel, elements=('@@' + rel,) )
 		interface.alsoProvides( link, ILocation )
 		link.__name__ = ''
 		link.__parent__ = context
+
+		_links = mapping.setdefault( StandardExternalFields.LINKS, [] )
 		_links.append( link )
 
 @interface.implementer(app_interfaces.IUncacheableInResponse)

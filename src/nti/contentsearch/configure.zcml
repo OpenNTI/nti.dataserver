@@ -23,6 +23,7 @@
 
 	<utility factory="._search_hits._ScoreSearchHitComparator" name="score" />
 	<utility factory="._search_hits._RelevanceSearchHitComparator" name="relevance" />
+	<utility factory="._search_hits._LastModifiedSearchHitComparator" name="last_modified" />
 	
 	<adapter factory="._search_external._SearchResultsExternalizer" />
 	<adapter factory="._search_external._SuggestResultsExternalizer" />
@@ -38,6 +39,7 @@
 				
 	<!-- Content processing -->
 	
+	<!-- make sure stop words are registered before zopyx.zcml -->
 	<utility factory="._content_utils._DefaultStopWords" />
 	
 	<!-- Content Resolvers -->
@@ -84,6 +86,10 @@
 	<utility factory="._search_results._SuggestResultsCreator"  />
 	<utility factory="._search_results._SuggestAndSearchResultsCreator"  />
 	
+	<class class="._search_results._IndexHit">
+		<implements interface=".interfaces.IIndexHit" />
+	</class>
+	
 	<!-- Search query -->
 	
 	<adapter factory="._search_query._default_query_adapter"
@@ -93,5 +99,5 @@
 	<include file="zopyx.zcml" />
 	<include file="repoze_minimal.zcml" />
 	<include file="whoosh.zcml" />
-	<include file="configure_redis_storage_service.zcml" />
+	
 </configure>

@@ -10,7 +10,6 @@ import argparse
 from ZODB.POSException import POSKeyError
 
 from nti.dataserver import users
-from nti.dataserver.users import friends_lists
 from nti.dataserver.utils import run_with_dataserver
 
 import nti.contentsearch
@@ -19,15 +18,9 @@ from nti.contentsearch.utils import find_all_indexable_pairs
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch.utils._repoze_utils import remove_entity_catalogs
 			
-def reindex_entity_content(username, include_dfls=False, verbose=False):
-	entity = users.Entity.get_entity( username )
-	if not entity:
-		print( "user/entity '%s' does not exists" % username, file=sys.stderr )
-		sys.exit( 2 )
-
-	counter = 0	
-	dfl_names = set()
+def reindex_entity_content(entity, include_dfls=False, verbose=False):
 	
+	counter = 0	
 	t = time.time()
 		
 	# remove catalogs for main entity
@@ -35,15 +28,9 @@ def reindex_entity_content(username, include_dfls=False, verbose=False):
 	
 	# loop through all user indexable objects
 	for e, obj in find_all_indexable_pairs(entity, include_dfls=include_dfls):
-		
-		# if we find a DFL clear its catalogs
-		if isinstance(e, friends_lists.DynamicFriendsList) and e.username not in dfl_names:
-			remove_entity_catalogs(e)
-			dfl_names.add(e.username)
-		
-		rim = search_interfaces.IRepozeEntityIndexManager(e, None)
+		rim = search_interfaces.IRepozeEntityIndexManager(e)
 		try:
-			catalog = rim.get_create_catalog(obj) if rim is not None else None
+			catalog = rim.get_create_catalog(obj)
 			if catalog is not None:
 				docid = get_uid(obj)
 				if docid is not None:
@@ -57,16 +44,23 @@ def reindex_entity_content(username, include_dfls=False, verbose=False):
 	
 	t = time.time() - t
 	if verbose:
-		print('%s object(s) reindexed for %s in %.2f(s)' % (counter, username, t))
+		print('%s object(s) reindexed for %s in %.2f(s)' % (counter, entity.username, t))
 		
 	return counter
 
+def _reindex_process(username, include_dfls=False, verbose=False):
+	entity = users.Entity.get_entity( username )
+	if not entity:
+		print( "entity '%s' does not exists" % username, file=sys.stderr )
+		sys.exit( 2 )
+	return reindex_entity_content(entity, include_dfls, verbose)
+
 def main():
-	arg_parser = argparse.ArgumentParser( description="Reindex user content" )
+	arg_parser = argparse.ArgumentParser( description="Reindex entity content" )
 	arg_parser.add_argument( 'env_dir', help="Dataserver environment root directory" )
 	arg_parser.add_argument( 'username', help="The username" )
-	arg_parser.add_argument( '--include_dfls', help="Unindex content in user's dfls", action='store_true', dest='include_dfls')
-	arg_parser.add_argument( '--verbose', help="Verbose output", action='store_true', dest='verbose')
+	arg_parser.add_argument('-v', '--verbose', help="Verbose output", action='store_true', dest='verbose')
+	arg_parser.add_argument('-i', '--include_dfls', help="Reindex content in user's dfls", action='store_true', dest='include_dfls')
 	args = arg_parser.parse_args()
 
 	verbose = args.verbose
@@ -76,7 +70,7 @@ def main():
 	
 	run_with_dataserver( environment_dir=env_dir,
 						 xmlconfig_packages=(nti.contentsearch,),
-						 function=lambda: reindex_entity_content(username, include_dfls, verbose) )
+						 function=lambda: _reindex_process(username, include_dfls, verbose) )
 
 if __name__ == '__main__':
 	main()

@@ -11,7 +11,13 @@ from zope.location.interfaces import LocationError
 
 class PlastexTraverser(zope.traversing.adapters.DefaultTraversable):
 	"""
-	Missing attributes simply return None.
+	Missing attributes simply return None. Many existing templates
+	rely on this (instead of specifying a default fallback) since
+	the plastex simpletal engine had this behaviour.
+
+	This MUST be registered as an adapter for the DOM objects
+	used in rendering.
+
 	"""
 	def traverse( self, name, furtherPath ):
 		try:

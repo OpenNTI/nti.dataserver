@@ -57,7 +57,7 @@ We begin by defining the root ``Object``:
 		   alternate,
 		   parent,
 		   edit, //The href to use to make changes to this object
-	   } rel;  //Relationship, represented as a string. This is only a  partial enumeration
+	   } rel;  //Relationship, represented as a string. This is only a	partial enumeration
 
 
 	   optional string type; // The MIME type of the target.
@@ -112,13 +112,35 @@ These objects describe users and things related to users.
    }
 
    struct FriendsList : Entity<Contained> {
-   	   //'friends' is a list of friends, possibly containing existing
-   	   // users or other emails. When you POST/PUT an object, these
-   	   // will be usernames (emails); the dataserver will resolve them
+	   // NOTE: The UI should only expose the ability to create these
+	   // objects if the capability 'nti.platform.p2p.friendslists' is
+	   // present. Furthermore, the ability to set 'IsDynamicSharing'
+	   // to true should be restricted to those with the capability
+	   // 'nti.platform.p2p.dynamicfriendlists'.
+
+	   //'friends' is a list of friends, possibly containing existing
+	   // users or other emails. When you POST/PUT an object, these
+	   // will be usernames (emails); the dataserver will resolve them
 	   Entity friends[];
 	   // A small set of URLs choosen to "uniquely" represent this
 	   // list
 	   URL CompositeGravatars[];
+	   // An immutable property that determines whether or not
+	   // objects shared with this list are distributed dynamically as
+	   // the list membership chages, or statically at the time of
+	   // sharing.
+	   // NOTE: static distribution is MUCH less expensive
+	   // than dynamic. Prefer static distribution. The default value
+	   // is static distribution (false). If you set this to true at
+	   // creation time, the created object will forevermore do
+	   // dynamic distribution.
+	   // NOTE: Internally, static and dynamic distribution are
+	   // implemented with two distinct classes, but this fact is not
+	   // exposed to the external world (they return the same Class
+	   // and MimeType value), which is what necessitates the use of
+	   // this property to differentiate them. This may change in the
+	   // future if needed.
+	   bool IsDynamicSharing;
    }
 
    struct Person : Entity {
@@ -197,42 +219,42 @@ These are definitions related to content that a user can generate.
    }
 
    mixin Taggable {
-       // Although the tag collections are defined as lists of words,
-       // in reality they may be treated as unordered sets.
-       // Spaces in individual terms may be split. Capitilazition may
-       // not be preserved. These are plain text, and any HTML
-       // will simply cause the term to be discarded
+	   // Although the tag collections are defined as lists of words,
+	   // in reality they may be treated as unordered sets.
+	   // Spaces in individual terms may be split. Capitilazition may
+	   // not be preserved. These are plain text, and any HTML
+	   // will simply cause the term to be discarded
 
 
-       // Tags that are added automatically, somehow derived from the data
-       string[] AutoTags;
-       // Tags that are added manually by the user.
-       string[] tags;
+	   // Tags that are added automatically, somehow derived from the data
+	   string[] AutoTags;
+	   // Tags that are added manually by the user.
+	   string[] tags;
    }
 
    mixin Likeable {
-       // Defines things that can be "liked". You post
-       // to the links with rel=like or rel=unlike to like or unlike
-       // something. The presence of one of those (e.g., rel=unlike)
-       // means you have already taken the opposite action (e.g.,
-       // liked the item)
+	   // Defines things that can be "liked". You post
+	   // to the links with rel=like or rel=unlike to like or unlike
+	   // something. The presence of one of those (e.g., rel=unlike)
+	   // means you have already taken the opposite action (e.g.,
+	   // liked the item)
 	   unsigned int LikeCount = 0;
    }
 
    mixin Favoritable {
-       // Defines things that can be "favorited" (bookmarked). You post
-       // to the links with rel=favorite or rel=unfavorite to favorite or un
-       // something. The presence of one of those
-       // means you have already taken the opposite action
+	   // Defines things that can be "favorited" (bookmarked). You post
+	   // to the links with rel=favorite or rel=unfavorite to favorite or un
+	   // something. The presence of one of those
+	   // means you have already taken the opposite action
    }
 
    mixin Flaggable {
-       // Defines things that can be "flagged" for moderation. You post
-       // to the links with rel=flag or rel=flag.metoo to flag
-       // something or flag it again. (Unflagging something can only
-       // be done by moderators.) Thus the rel=flag link means no one
+	   // Defines things that can be "flagged" for moderation. You post
+	   // to the links with rel=flag or rel=flag.metoo to flag
+	   // something or flag it again. (Unflagging something can only
+	   // be done by moderators.) Thus the rel=flag link means no one
 	   // has flagged it, while rel=flag.metoo means at least one
-       // person has already flagged it.
+	   // person has already flagged it.
    }
 
    // NOTE that it is possible to update only the sharing of a
@@ -243,7 +265,7 @@ These are definitions related to content that a user can generate.
    //NOTE: Does not currently exist as a creatable entity, only
    //an abstract concept.
    struct SelectedRange : PersistentObject<Anchored,Shareable,Taggable> {
-        string selectedText; //Populated from the Range object's string value: http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-range-stringifier
+		string selectedText; //Populated from the Range object's string value: http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#dom-range-stringifier
    }
 
    // A location in the DOM that the user would like to remember.
@@ -254,15 +276,15 @@ These are definitions related to content that a user can generate.
 
 
    struct Highlight : SelectedRange {
-        //Variants of highlights. Currently, 'plain' or 'suppressed';
-        //suppressed is useful for subclasses that may or may not always
-        //want to display the highlight portion
-        string style;
+		//Variants of highlights. Currently, 'plain' or 'suppressed';
+		//suppressed is useful for subclasses that may or may not always
+		//want to display the highlight portion
+		string style;
    }
 
    struct Redaction : SelectedRange {
-        optional string replacementContent;
-        optional string redactionExplanation;
+		optional string replacementContent;
+		optional string redactionExplanation;
    }
 
    mixin Threadable {

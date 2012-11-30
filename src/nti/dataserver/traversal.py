@@ -11,7 +11,7 @@ traversing_patch_on_import.patch()
 del traversing_patch_on_import
 
 
-from pyramid.traversal import _join_path_tuple # TODO: Remove the dependency on pyramid at this level
+from pyramid.traversal import _join_path_tuple, find_interface as _p_find_interface # TODO: Remove the dependency on pyramid at this level
 
 from zope import component
 from zope.location import interfaces as loc_interfaces
@@ -20,9 +20,9 @@ from nti.dataserver import interfaces as nti_interfaces
 
 
 def resource_path( res ):
-	# This function is somewhat more flexible than pyramids, and
+	# This function is somewhat more flexible than Pyramid's, and
 	# also more strict. It requires strings (not None, for example)
-	# and bottoming out an at IRoot. This helps us get things right.
+	# and bottoms out at an IRoot. This helps us get things right.
 	# It is probably also a bit slower.
 	__traceback_info__ = res
 
@@ -100,3 +100,22 @@ def find_nearest_site(context):
 
 
 	return nearest_site
+
+def find_interface(resource, interface, strict=True):
+	"""
+	Given an object, find the first object in its lineage providing the given interface.
+
+	This is similar to :func:`pyramid.traversal.find_interface`, but, as with :func:`resource_path`
+	requires the strict adherence to the resource tree, unless ``strict`` is set to ``False``
+	"""
+
+	__traceback_info__ = resource, interface
+
+	if not strict:
+		return _p_find_interface( resource, interface )
+
+	lineage = loc_interfaces.ILocationInfo( resource ).getParents()
+	lineage.insert( 0, resource )
+	for item in lineage:
+		if interface.providedBy( item ):
+			return item

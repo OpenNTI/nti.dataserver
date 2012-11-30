@@ -2,9 +2,6 @@ import unittest
 import nti.appserver
 from hamcrest import assert_that
 from hamcrest import is_
-from nti.monkey import pyramid_excview_tween_iface_patch
-pyramid_excview_tween_iface_patch.patch()
-
 
 from pyramid.testing import setUp as psetUp
 from pyramid.testing import tearDown as ptearDown
@@ -57,8 +54,8 @@ class _TestBaseMixin(object):
 	config = None
 	request = None
 
-	def beginRequest( self ):
-		self.request = DummyRequest()
+	def beginRequest( self, request_factory=DummyRequest, request_args=() ):
+		self.request = request_factory( *request_args )
 		self.config.begin( request=self.request )
 
 	def get_ds(self):

@@ -1,0 +1,24 @@
+# -*- mode: html -*-
+
+name: titlerow
+
+# Templates for use with the algorithm2e package
+name: Label
+<div class="algorithm-kwdata">
+<b>label:</b> <span tal:content="self"></span>
+</div>
+
+name: Goto
+<div class="algorithm-kwdata">
+<b>goto</b> <span tal:content="self"></span>
+</div>
+
+name: Procedure
+<div class="algorithm-kwdata">
+<b>procedure:</b> <em tal:content="self">procedure</em>
+</div>
+
+name: Input
+<div class="algorithm-kwdata">
+<b>input:</b> <span tal:content="self"></span>
+</div>

@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 """
-Constants and classes relating to authorisation.
+Constants and classes relating to authorisation (principals, groups,
+and group memberships).
 
 Comparison to libACL
 ====================
@@ -47,15 +48,23 @@ generally (equivalent to global capabilities.).
 
 Persistent storage references to principals should be by their unique
 identifier string (not object identity). Yet ACLs should hold
-IPrincipal objects. This conversion happens through (optionally named) ZCA adapters.
-Likewise, the permissions in an ACL entry should be IPermission objects,
-but persistent storage should be strings; conversion is handled by registering
-IPermission objects by name as utilities.
+``IPrincipal`` objects. This conversion happens through (optionally named)
+ZCA adapters. Likewise, the permissions in an ACL entry should be
+``IPermission`` objects, but persistent storage should be strings;
+conversion is handled by registering ``IPermission`` objects by name as
+utilities.
+
+Namespaces
+==========
+
+Principals, groups, and roles all share a flat namespace. Principals
+(and groups) do not have a prefix. Roles have a prefix ending in ``role:``;
+sub-types of roles may have a prefix to that, such as ``content-role:``.
 
 $Id$
 """
 
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
 
 import functools
 
@@ -65,11 +74,13 @@ from BTrees.OOBTree import OOSet
 from zope import interface
 from zope import annotation
 from zope import component
+from zope.cachedescriptors.property import Lazy
+from zope.container import contained
+
 from zope.security.permission import Permission
-import pyramid.security
 
 import nti.dataserver.interfaces as nti_interfaces
-from nti.dataserver import users
+
 
 # TODO: How does zope normally present these? Side effects of import are Bad
 if not '__str__' in Permission.__dict__:
@@ -88,31 +99,66 @@ ACT_MODERATE = Permission('nti.actions.moderate')
 ACT_COPPA_ADMIN = Permission('nti.actions.coppa_admin')
 ACT_READ     = Permission('zope.View')
 
-# Groups that are expected to have certain rights
-# in certain areas
-ROLE_ADMIN = 'role:nti.admin'
-
-
-class _PersistentGroupMember(persistent.Persistent):
+@interface.implementer(nti_interfaces.IMutableGroupMember)
+@component.adapter(annotation.interfaces.IAttributeAnnotatable)
+class _PersistentGroupMember(persistent.Persistent,
+							 contained.Contained): # (recall annotations should be IContained)
 	"""
 	Implementation of the group membership by
 	storing a collection.
 	"""
 
-	interface.implements(nti_interfaces.IGroupMember)
-	component.adapts(annotation.interfaces.IAttributeAnnotatable)
+	GROUP_FACTORY = nti_interfaces.IGroup
 
 	def __init__( self ):
-		# We store strings in this set, and adapt them to
-		# IGroups during iteration.
-		self._groups = OOSet()
+		pass
+
+	@Lazy
+	def _groups(self):
+		"""We store strings in this set, and adapt them to
+		IGroups during iteration."""
+
+		groups = OOSet()
+		self._p_changed = True
+		if self._p_jar:
+			self._p_jar.add( groups )
+		return groups
 
 	@property
 	def groups(self):
-		return (nti_interfaces.IGroup(g) for g in self._groups)
+		if '_groups' not in self.__dict__:
+			return ()
 
-def _persistent_group_member_factory( obj ):
-	return annotation.factory(_PersistentGroupMember)(obj)
+		return (self.GROUP_FACTORY(g) for g in self._groups)
+
+	def setGroups( self, value ):
+		# take either strings or IGroup objects
+		groups = {getattr(x,'id', x) for x in value}
+		self._groups.clear()
+		self._groups.update( groups )
+
+	def hasGroups( self ):
+		return '_groups' in self.__dict__ and len(self._groups)
+
+# This factory is registered for the default annotation
+_persistent_group_member_factory = annotation.factory(_PersistentGroupMember)
+
+class _PersistentRoleMember(_PersistentGroupMember):
+	GROUP_FACTORY = nti_interfaces.IRole
+
+def _make_group_member_factory( group_type, factory=_PersistentGroupMember ):
+	"""
+	Create and return a factory suitable for use adapting to
+	:class:`nti.dataserver.interfaces.IMutableGroupMember` for things
+	that can be annotated; the objects produced by the factory are
+	themselves persistent.
+
+	:param str group_type: A string naming the type of groups this membership
+		will record. This is used as part of the annotation key; this factory
+		should be registered with the same name as the ``group_type``
+	"""
+	key = factory.__module__ + '.' + factory.__name__ + ':' + group_type
+	return annotation.factory( factory, key )
 
 # Note that principals should be comparable based solely on their ID.
 # TODO: Should we enforce case-insensitivity here?
@@ -134,12 +180,12 @@ class _AbstractPrincipal(object):
 	def __repr__(self):
 		return "%s('%s')" % (self.__class__.__name__, unicode(self.id).encode('unicode_escape'))
 
+@interface.implementer(nti_interfaces.IPrincipal)
+@component.adapter(basestring)
 class _StringPrincipal(_AbstractPrincipal):
 	"""
 	Allows any string to be an IPrincipal.
 	"""
-	interface.implements(nti_interfaces.IPrincipal)
-	component.adapts(basestring)
 	description = ''
 
 	def __init__(self,name):
@@ -153,7 +199,38 @@ def _system_user_factory( string ):
 
 @interface.implementer(nti_interfaces.IGroup)
 @component.adapter(basestring)
-class _EveryoneGroup(_StringPrincipal):
+class _StringGroup(_StringPrincipal):
+	"""
+	Allows any string to be an IGroup.
+	"""
+
+@interface.implementer(nti_interfaces.IRole)
+class _StringRole(_StringGroup):
+	pass
+
+ROLE_PREFIX = 'role:'
+CONTENT_ROLE_PREFIX = 'content-role:'
+
+_content_role_member_factory = _make_group_member_factory( CONTENT_ROLE_PREFIX, _PersistentRoleMember )
+
+def role_for_providers_content( provider, local_part ):
+	"""
+	Create an IRole for access to content provided by the given ``provider``
+	and having the local (specific) part of an NTIID matching ``local_part``
+	"""
+	return nti_interfaces.IRole( CONTENT_ROLE_PREFIX + provider.lower() + ':' + local_part.lower())
+
+#: Name of the super-user group that is expected to have full rights
+#: in certain areas
+ROLE_ADMIN_NAME = ROLE_PREFIX + 'nti.admin'
+ROLE_ADMIN = _StringRole( ROLE_ADMIN_NAME )
+
+#: Name of the high-permission group that is expected to have certain
+#: moderation-like rights in certain areas
+ROLE_MODERATOR_NAME = ROLE_PREFIX + 'nti.moderator'
+ROLE_MODERATOR = _StringRole( ROLE_MODERATOR_NAME )
+
+class _EveryoneGroup(_StringGroup):
 	"Everyone, authenticated or not."
 
 	REQUIRED_NAME = nti_interfaces.EVERYONE_GROUP_NAME
@@ -176,6 +253,7 @@ def _string_principal_factory( name ):
 		return None
 
 	# Check for a named adapter first, since we are the no-name factory.
+	# Note that this might return an IGroup
 	result = component.queryAdapter( name,
 									 nti_interfaces.IPrincipal,
 									 name=name )
@@ -183,6 +261,44 @@ def _string_principal_factory( name ):
 		result = _StringPrincipal( name )
 
 	return result
+
+def _string_group_factory( name ):
+	if not name:
+		return None
+
+	# Try the named factory
+	result = component.queryAdapter( name,
+									 nti_interfaces.IGroup,
+									 name=name )
+	if result is None:
+		# Try the principal factory, see if something is registered
+		result = component.queryAdapter( name,
+										 nti_interfaces.IPrincipal,
+										 name=name )
+
+	if nti_interfaces.IGroup.providedBy( result ):
+		return result
+	return _StringGroup(name)
+
+
+def _string_role_factory( name ):
+	if not name:
+		return None
+
+	# Try the named factory
+	result = component.queryAdapter( name,
+									 nti_interfaces.IRole,
+									 name=name )
+	if result is None:
+		# Try the principal factory, see if something is registered
+		# that turns out to be a role
+		result = component.queryAdapter( name,
+										 nti_interfaces.IPrincipal,
+										 name=name )
+
+	if nti_interfaces.IRole.providedBy( result ):
+		return result
+	return _StringRole(name)
 
 @interface.implementer(nti_interfaces.IPrincipal)
 @component.adapter(nti_interfaces.IUser)
@@ -192,13 +308,21 @@ class _UserPrincipal(_AbstractPrincipal):
 	"""
 
 	def __init__( self, user ):
-		self._user = user
+		self.context = user
 
 	@property
 	def id(self):
-		return self._user.username
+		return self.context.username
 	title = id
 	description = id
+
+@interface.implementer(nti_interfaces.IGroupAwarePrincipal)
+@component.adapter(nti_interfaces.IUser)
+class _UserGroupAwarePrincipal(_UserPrincipal):
+
+	@property
+	def groups(self):
+		return nti_interfaces.IMutableGroupMember(self.context).groups
 
 @interface.implementer(nti_interfaces.IPrincipal)
 class _CommunityGroup(_UserPrincipal): # IGroup extends IPrincipal

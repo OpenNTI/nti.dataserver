@@ -1,3 +1,5 @@
+# -*- mode: html -*-
+
 name: abstract
 <div class="abstract" tal:content="self">abstract</div>
 
@@ -16,9 +18,11 @@ name: maketitle
 # TODO: Should we use HTML5 microdata to include the NTIID?
 
 name: part chapter section
-<div class="chapter title" tal:attributes="id self/id; ntiid self/ntiid" tal:content="self/title">Morbi metus pede, imperdiet vitae</div>
+<div tal:attributes="id self/id; ntiid self/ntiid; data-ntiid self/ntiid">
+<div class="chapter title" tal:content="self/title">Morbi metus pede, imperdiet vitae</div>
 <p class="placeholder"></p>
 <p tal:replace="self"></p>
+</div>
 
 
 name: subsection

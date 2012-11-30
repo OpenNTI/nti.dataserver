@@ -5,7 +5,6 @@ from BTrees.LFBTree import LFBucket
 from zope import component
 from zope import interface
 from zope.annotation import factory as an_factory
-from zope.interface.common.mapping import IFullMapping
 
 from perfmetrics import metricmethod
 
@@ -33,7 +32,9 @@ from nti.contentsearch._search_results import empty_suggest_and_search_results
 import logging
 logger = logging.getLogger( __name__ )
 
-class _BaseRepozeEntityIndexManager(_SearchEntityIndexManager):
+@component.adapter(nti_interfaces.IEntity)
+@interface.implementer( search_interfaces.IRepozeEntityIndexManager)
+class _RepozeEntityIndexManager(_SearchEntityIndexManager):
 
 	def add_catalog(self, catalog, type_name):
 		if type_name not in self:
@@ -197,17 +198,6 @@ class _BaseRepozeEntityIndexManager(_SearchEntityIndexManager):
 	def remove_index(self, type_name):
 		result = self.remove_catalog(type_name)
 		return result
-
-	get_stored_indices = get_catalog_names
-
-	def has_stored_indices(self):
-		return len(self.get_catalog_names()) > 0
-
-
-@component.adapter(nti_interfaces.IEntity)
-@interface.implementer( search_interfaces.IRepozeEntityIndexManager, IFullMapping )
-class _RepozeEntityIndexManager(_BaseRepozeEntityIndexManager):
-	pass
 
 def _RepozeEntityIndexManagerFactory(user):
 	result = an_factory(_RepozeEntityIndexManager)(user)

@@ -40,6 +40,7 @@ import nameparser
 import datetime
 import urllib
 import string
+# import time
 
 def get_possible_site_names(request=None, include_default=False):
 	"""
@@ -97,6 +98,10 @@ def queryAdapterInSite( obj, target, request=None, site_names=None, default=None
 	:keyword site_names: If given and non-empty, the list of site names to use.
 		Overrides the `request` parameter.
 	"""
+
+	# TODO: Replace this with named IComponents instances and z3c.baseregistry.
+	# That will integrate much better with traversal and will allow them to extend
+	# and override each other
 
 	site_names = get_possible_site_names(request, include_default=True)
 
@@ -194,7 +199,8 @@ class RequestAwareUserPlacer(nti_shards.AbstractShardPlacer):
 ## Handling events within particular sites
 #
 # TODO: It's not clear what the best way is to handle this. We have a
-# few options.
+# few options. (NOTE: This was written before the existence of z3c.baseregistry;
+# using that should simplify things notably.)
 #
 # The simplest is that each site-aware handler re-delegates to a named
 # utility based on the site names. This works because it can be
@@ -514,6 +520,9 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 
 				if getattr( orig_profile, name, None ): # Only copy things that have values. Let defaults be used otherwise
 					setattr( new_profile, name, getattr( orig_profile, name ) )
+					
+		# user.transitionTime = time.time()
+			
 		notify( app_interfaces.UserUpgradedEvent( user,
 												  restricted_interface=self.IF_WOUT_AGREEMENT, restricted_profile=orig_profile,
 												  upgraded_interface=self.IF_WITH_AGREEMENT, upgraded_profile=new_profile,
@@ -712,7 +721,7 @@ def _join_community_user_created( self, user, event ):
 			com_names.alias = self.COM_ALIAS
 			com_names.realname = self.COM_REALNAME
 
-		user.join_community( community )
+		user.record_dynamic_membership( community )
 		user.follow( community )
 
 @interface.implementer(ISitePolicyUserEventListener)
@@ -792,16 +801,25 @@ class NoAvatarUploadCapabilityFilter(object):
 
 @interface.implementer(app_interfaces.IUserCapabilityFilter)
 @component.adapter(nti_interfaces.ICoppaUserWithoutAgreement)
-class NoChatCapabilityFilter(NoAvatarUploadCapabilityFilter):
+class NoDFLCapabilityFilter(NoAvatarUploadCapabilityFilter):
+	"""
+	Removes the ability to create DFLs.
+	"""
+
+	def filterCapabilities( self, capabilities ):
+		result = super(NoDFLCapabilityFilter,self).filterCapabilities( capabilities )
+		result.discard( 'nti.platform.p2p.dynamicfriendslists' )
+		return result
+
+@interface.implementer(app_interfaces.IUserCapabilityFilter)
+@component.adapter(nti_interfaces.ICoppaUserWithoutAgreement)
+class NoChatAvatarDFLCapabilityFilter(NoDFLCapabilityFilter):
 	"""
 	Removes chat.
 	"""
 
-	def __init__( self, context=None ):
-		pass
-
 	def filterCapabilities( self, capabilities ):
-		result = super(NoChatCapabilityFilter,self).filterCapabilities( capabilities )
+		result = super(NoChatAvatarDFLCapabilityFilter,self).filterCapabilities( capabilities )
 		result.discard( 'nti.platform.p2p.chat' )
 		return result
 
@@ -809,7 +827,7 @@ class NoChatCapabilityFilter(NoAvatarUploadCapabilityFilter):
 @interface.implementer(ISitePolicyUserEventListener)
 class _AdultCommunitySitePolicyEventListener(GenericAdultSitePolicyEventListener):
 	"""
-	Implements the policy for ad adult site, adding new users to a single community.
+	Implements the policy for an adult site, adding new users to a single community.
 	"""
 
 	COM_USERNAME = None

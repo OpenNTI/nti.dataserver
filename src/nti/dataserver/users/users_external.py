@@ -67,7 +67,7 @@ class _EntitySummaryExternalObject(object):
 		names = interfaces.IFriendlyNamed( entity )
 		extDict['realname'] = names.realname or entity.username
 		extDict['alias'] = names.alias or names.realname or entity.username
-		extDict['CreatedTime'] = getattr( self, 'createdTime', 42 ) # for migration
+		extDict['CreatedTime'] = getattr( entity, 'createdTime', 42 ) # for migration
 		extDict.__parent__ = entity.__parent__
 		extDict.__name__ = entity.__name__
 		extDict.__acl__ = auth.ACL( entity )
@@ -105,6 +105,10 @@ class _FriendsListExternalObject(_EntityExternalObject):
 
 		extDict['friends'] = theFriends
 		extDict['CompositeGravatars'] = self._composite_gravatars()
+		# We took great care to make DFLs and FLs indistinguishable from each other
+		# in the external form, to make things easier for the UI. This now
+		# comes back to bite us when we need to make that distinction.
+		extDict['IsDynamicSharing'] = nti_interfaces.IDynamicSharingTarget.providedBy( self.entity )
 
 		return extDict
 
@@ -158,13 +162,16 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 			result = []
 			for ent_name in l:
 				__traceback_info__ = name, ent_name
-				try:
-					e = self.entity.get_entity( ent_name, default=self )
-					e = None if e is self else e # Defend against no dataserver component to resolve with
-				except InappropriateSiteError:
-					# We've seen this in logging that is captured and happens
-					# after things finish running, notably nose's logcapture.
-					e = None
+				if nti_interfaces.IEntity.providedBy( ent_name ):
+					e = ent_name
+				else:
+					try:
+						e = self.entity.get_entity( ent_name, default=self )
+						e = None if e is self else e # Defend against no dataserver component to resolve with
+					except InappropriateSiteError:
+						# We've seen this in logging that is captured and happens
+						# after things finish running, notably nose's logcapture.
+						e = None
 
 				if e:
 					result.append( toExternalObject( e, name=name ) )
@@ -177,14 +184,17 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 		extDict['email'] = prof.email
 		extDict['birthdate'] = prof.birthdate.isoformat() if prof.birthdate is not None else None
 
-		# Communities are not currently editable,
-		# and will need special handling of Everyone
-		extDict['Communities'] = ext(self.entity.communities, name='')
+		# DynamicMemberships/Communities are not currently editable,
+		# and will need special handling of (a) Everyone and (b) DynamicFriendsLists
+		# (proper events could handle the latter)
+		extDict['Communities'] = ext(self.entity.dynamic_memberships, name='') # Deprecated
+		extDict['DynamicMemberships'] = extDict['Communities']
+
 		# Following is writable
-		extDict['following'] = ext(self.entity.following)
+		extDict['following'] = ext(self.entity.entities_followed)
 		# as is ignoring and accepting
-		extDict['ignoring'] = ext(self.entity.ignoring_shared_data_from)
-		extDict['accepting'] = ext(self.entity.accepting_shared_data_from)
+		extDict['ignoring'] = ext(self.entity.entities_ignoring_shared_data_from)
+		extDict['accepting'] = ext(self.entity.entities_accepting_shared_data_from)
 		extDict['AvatarURLChoices'] = component.getAdapter( self.entity, interfaces.IAvatarChoices ).get_choices()
 		extDict['Links'] = self._replace_or_add_edit_link_with_self( extDict.get( 'Links', () ) )
 		extDict['Last Modified'] = getattr( self.entity, 'lastModified', 0 )

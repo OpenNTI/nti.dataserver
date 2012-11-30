@@ -53,8 +53,9 @@ def pageinfo_from_question_view( request ):
 	# Using request.route_path to produce a path, not a URL, can fail when accessed over HTTPS,
 	# because at some point the Location header gets turned into a full URL, and in pyramid 1.3.4,
 	# this fails to take into consideration the request scheme, always return HTTP instead of HTTPS.
-	# Thus we request the complete URL here
-	# TODO: In pyramid 1.4, consider doing this as a sub-request and skipping the redirect?
+	# Thus we request the complete URL here (JAM: Note, this was wrong. This was a misconfiguration of
+	# gunicorn/haproxy and a failure to get the secure headers.)
+	# TODO: Now that we are on pyramid 1.4, consider doing this as a sub-request and skipping the redirect
 	route_url = request.route_url( 'objects.generic.traversal', traverse=('NTIIDs', request.context.__parent__) )
 
 	return hexc.HTTPSeeOther( location=route_url )
