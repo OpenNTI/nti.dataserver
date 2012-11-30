@@ -98,7 +98,7 @@ class _href(_Container):
 
 def _url_to_pyquery( url ):
 	# Must use requests, not the url= argument, as
-	# that User-Agent is blocked
+	# the default Python User-Agent is blocked (note: pyquery 1.2.4 starts using requests internally by default)
 	# The custom user-agent string is to trick Google into sending UTF-8.
 	return pyquery.PyQuery( requests.get( url, headers={'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_4) AppleWebKit/537.1+ (KHTML, like Gecko) Version/5.1.7 Safari/534.57.2"} ).text )
 
@@ -209,9 +209,9 @@ CONTAINERS = { 'blockquote': 'quote',
 			   'center': 'center' }
 
 def _build_header(title = None, authors = None, base_url = None):
-	lines = [br'\documentclass{book}', 
-		 br'\usepackage{graphicx}', 
-		 br'\usepackage{ntilatexmacros}', 
+	lines = [br'\documentclass{book}',
+		 br'\usepackage{graphicx}',
+		 br'\usepackage{ntilatexmacros}',
 		 br'\usepackage{hyperref}']
         if base_url:
                 lines.append( br'\hyperbaseurl{' + _url_escape(base_url) + b'}' )
@@ -323,7 +323,7 @@ def main():
 	# Make output directory
 	if not os.path.exists( title ):
 		os.mkdir(title)
- 
+
 	# Write output tex file
 	with open( os.path.join(title, title + '.tex'), 'wb') as file:
 		file.write( buffer.getvalue() )
