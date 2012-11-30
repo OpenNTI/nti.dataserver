@@ -1,5 +1,5 @@
-#name: tabular array tabular* tabularx
-name: array
+name: tabular array tabular* tabularx
+#name: array
 type: xml
 <table class="tabular">
 <tr tal:repeat="row self">

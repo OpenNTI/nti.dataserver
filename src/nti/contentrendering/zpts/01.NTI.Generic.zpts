@@ -43,8 +43,8 @@ name: par
 <a tal:attributes="name self/id" tal:condition="python:self.id and self.source.strip()" ></a>
 <p class="par" tal:attributes="id self/id" tal:content="self" tal:condition="self/source/strip" tal:omit-tag="self/blockType"></p>
 
-name: tabular tabular* tabularx
-<div tal:attributes="id self/id; class python: type(self).__name__" tal:content="self/resource"/>
+#name: tabular tabular* tabularx
+#<div tal:attributes="id self/id; class python: type(self).__name__" tal:content="self/resource"/>
 
 name: mathnumber mathname
 <span class="inline-math"><span tal:attributes="class python: type(self).__name__" tal:content="self/attributes/text"/></span>
