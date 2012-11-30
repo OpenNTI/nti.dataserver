@@ -121,17 +121,3 @@ class _PostLoop(Base.Command):
 
 class Repeat(_PostLoop):
     pass
-
-# Custom constructs for Hedda
-
-class Label(Base.Command):
-    blockType = True
-    args = 'self'
-
-class Goto(Base.Command):
-    blockType = True
-    args = 'self'
-
-class Procedure(Base.Command):
-    blockType = True
-    args = 'self'
