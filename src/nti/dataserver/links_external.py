@@ -59,9 +59,10 @@ def render_link( link, nearest_site=None ):
 		for this to work or we will use the nearest site (probably the root).
 	:type link: :class:`nti_interfaces.ILink`
 	"""
-
+	__traceback_info__ = link, nearest_site
 
 	target = link.target
+	assert target is not None
 	rel = link.rel
 	content_type = link.target_mime_type or nti_mimetype_from_object( target )
 

@@ -3,6 +3,7 @@
 """
 Policies based on the user. See also :mod:`nti.appserver.site_policies` for
 site-based policies.
+
 For content censoring policies based on the user, see :mod:`nti.appserver.censor_policies`.
 
 This module is curently where preventing sharing for coppa kids is implemented.
@@ -52,8 +53,39 @@ from nti.dataserver.users import user_profile
 
 @component.adapter(nti_interfaces.IModeledContent, IObjectModifiedEvent)
 def dispatch_content_edited_to_user_policies( content, event ):
-	editor = users.User.get_user( psec.authenticated_userid( get_current_request() ) )
+	request = get_current_request()
+	if request is None:
+		return
+	# TODO: This interacts funny with chat events. There is no current request, but
+	# there may be an authentication policy installed, which can lead to repoze.who
+	# throwing errors. In some places in chat we install our own authentication policy,
+	# but not everywhere. See the following stack trace.
+	editor = users.User.get_user( psec.authenticated_userid( request ) )
 	component.handle( content, editor, event )
+
+# Traceback (most recent call last):
+#   File "nti/socketio/session_consumer.py", line 150, in _on_msg
+#     result = handler( )
+#   File "nti/socketio/session_consumer.py", line 119, in call
+#     result = h(*args)
+#   File "nti/chatserver/_handler.py", line 198, in enterRoom
+#     room = self._chatserver.create_room_from_dict( room_info, sessions_validator=sessions_validator )
+#   File "nti/chatserver/chatserver.py", line 359, in create_room_from_dict
+#     internalization.update_from_external_object( room, room_info_dict, context=ds )
+#   File "nti/externalization/internalization.py", line 292, in update_from_external_object
+#     lifecycleevent.modified( containedObject, *attributes )
+#   File "/zope/lifecycleevent/__init__.py", line 109, in modified
+#     notify(ObjectModifiedEvent(object, *descriptions))
+# ...
+#   File "nti/appserver/user_policies.py", line 55, in dispatch_content_edited_to_user_policies
+#     editor = users.User.get_user( psec.authenticated_userid( get_current_request() ) )
+#   File "/pyramid-1.4b1-py2.7.egg/pyramid/security.py", line 71, in authenticated_userid
+#     return policy.authenticated_userid(request)
+#   File "/pyramid_who-0.3-py2.7.egg/pyramid_who/whov2.py", line 51, in authenticated_userid
+#     identity = self._get_identity(request)
+#   File "/pyramid_who-0.3-py2.7.egg/pyramid_who/whov2.py", line 87, in _get_identity
+#     identity = request.environ.get('repoze.who.identity')
+# AttributeError: 'NoneType' object has no attribute 'environ'
 
 @component.adapter(nti_interfaces.IModeledContent, nti_interfaces.ICoppaUserWithoutAgreement, IObjectCreatedEvent)
 def veto_sharing_for_unsigned_coppa_create( content, creator, event ):

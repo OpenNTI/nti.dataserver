@@ -438,13 +438,15 @@ class _CanvasUrlShape(_CanvasShape):
 			# to determine when to return a link vs the data URL.
 
 			# We do not want to rely on traversal to this object, so we give the exact
-			# path to the file. (Traversal works for pure canvas, and canvas-in-note, but breaks
+			# NTIID path to the file. (Traversal works for pure canvas, and canvas-in-note, but breaks
 			# for canvas-in-chat-message)
 			target = to_external_ntiid_oid( self._file, add_to_connection=True )
-
-			link = links.Link( target=target, target_mime_type=self._file.mimeType, elements=('@@view',), rel="data" )
-			interface.alsoProvides( link, nti_interfaces.ILinkExternalHrefOnly )
-			result['url'] = link
+			if target:
+				link = links.Link( target=target, target_mime_type=self._file.mimeType, elements=('@@view',), rel="data" )
+				interface.alsoProvides( link, nti_interfaces.ILinkExternalHrefOnly )
+				result['url'] = link
+			else:
+				logger.warn( "Unable to produce URL for file data in %s", self )
 		else:
 			result['url'] = self.url
 		return result

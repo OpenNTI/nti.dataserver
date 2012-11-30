@@ -173,6 +173,7 @@ class _DFLUserLikeDecorator(object):
 from nti.dataserver import users
 from pyramid import security as psec
 from pyramid.threadlocal import get_current_request
+from pyramid.threadlocal import get_current_registry
 
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
 @component.adapter(nti_interfaces.IUser)
@@ -291,7 +292,12 @@ class _AuthenticatedUserLinkAdder(object):
 			return
 
 		links = list( external.get( StandardExternalFields.LINKS, () ) )
-		for provider in request.registry.subscribers( (original,request), app_interfaces.IAuthenticatedUserLinkProvider ):
+		try:
+			reg = request.registry
+		except AttributeError:
+			reg = get_current_registry() # match pyramid.security.authenticated_userid
+
+		for provider in reg.subscribers( (original,request), app_interfaces.IAuthenticatedUserLinkProvider ):
 			links.extend( provider.get_links() )
 
 		external[StandardExternalFields.LINKS] = links

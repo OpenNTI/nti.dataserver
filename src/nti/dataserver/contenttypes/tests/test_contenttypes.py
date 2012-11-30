@@ -697,7 +697,10 @@ class TestCanvas(mock_dataserver.ConfiguringTestBase):
 		assert_that( shape, is_( shape3 ) )
 
 		shape3 = CanvasUrlShape( url='data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw==' )
-		shape = CanvasUrlShape()
+		with mock_dataserver.mock_db_trans(ds):
+			shape3.__parent__ = self.ds.root
+			shape = CanvasUrlShape()
+			shape.__parent__ = self.ds.root
 		with mock_dataserver.mock_db_trans(ds):
 			ext_shape = shape3.toExternalObject()
 			from nti.dataserver.links import Link
@@ -707,8 +710,11 @@ class TestCanvas(mock_dataserver.ConfiguringTestBase):
 		assert_that( shape, is_( shape3 ) )
 		assert_that( shape, has_property( 'url', 'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw==' ) )
 
-		assert_that( shape.toExternalObject(), has_entry( 'url', is_( Link ) ) )
-		assert_that( shape3.__dict__, has_entry( '_file', has_property( 'mimeType', b'image/gif' ) ) )
+		with mock_dataserver.mock_db_trans(ds):
+			shape.__parent__ = self.ds.root
+
+			assert_that( shape.toExternalObject(), has_entry( 'url', is_( Link ) ) )
+			assert_that( shape3.__dict__, has_entry( '_file', has_property( 'mimeType', b'image/gif' ) ) )
 
 
 		shape4 = CanvasUrlShape( url='/path/to/relative/image.png' )

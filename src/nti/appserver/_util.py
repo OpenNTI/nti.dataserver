@@ -84,7 +84,12 @@ class AbstractTwoStateViewLinkDecorator(object):
 
 		# Use the NTIID rather than the 'physical' path because the 'physical'
 		# path may not quite be traversable at this point
-		link = links.Link( ext_oids.to_external_ntiid_oid( context ), rel=rel, elements=('@@' + rel,) )
+		target_ntiid = ext_oids.to_external_ntiid_oid( context )
+		if target_ntiid is None:
+			logger.warn( "Failed to get ntiid; not adding link %s for %s", rel, context )
+			return
+
+		link = links.Link( target_ntiid, rel=rel, elements=('@@' + rel,) )
 		interface.alsoProvides( link, ILocation )
 		link.__name__ = ''
 		link.__parent__ = context

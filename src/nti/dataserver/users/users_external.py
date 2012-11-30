@@ -37,9 +37,12 @@ def _avatar_url( entity ):
 			# It's not quite possible to fully traverse to the file if the profile
 			# is implemented as an annotation (and that exposes lots of internal details)
 			# so we go directly to the file address
-			link = links.Link( target=to_external_ntiid_oid(the_file, add_to_connection=True), target_mime_type=the_file.mimeType, elements=('@@view',), rel="data" )
-			interface.alsoProvides( link, nti_interfaces.ILinkExternalHrefOnly )
-			return link
+			target = to_external_ntiid_oid( the_file, add_to_connection=True )
+			if target:
+				link = links.Link( target=target, target_mime_type=the_file.mimeType, elements=('@@view',), rel="data" )
+				interface.alsoProvides( link, nti_interfaces.ILinkExternalHrefOnly )
+				return link
+			logger.warn( "Unable to produce avatarURL for %s", entity )
 	return with_url.avatarURL
 
 @component.adapter( nti_interfaces.IEntity )
