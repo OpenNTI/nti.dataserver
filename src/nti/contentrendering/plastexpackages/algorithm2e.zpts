@@ -87,21 +87,3 @@ name: Repeat
 <div class="algorithm-indent-block" tal:content="self/attributes/loop">Loop Block</div>
 <b>until </b><em tal:content="self">emphasized text</em> <span tal:condition="self/attributes/comment" tal:content="self/attributes/comment2">Comment</span>
 </div>
-
-# Custom constructs for Hedda
-
-name: Label
-<div class="algorithm-kwdata">
-<b>label:</b> <span tal:content="self"></span>
-</div>
-
-name: Goto
-<div class="algorithm-kwdata">
-<b>goto</b> <span tal:content="self"></span>
-</div>
-
-name: Procedure
-<div class="algorithm-kwdata">
-<b>procedure:</b> <em tal:content="self">procedure</em>
-</div>
-

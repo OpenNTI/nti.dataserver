@@ -100,3 +100,20 @@ class titlerow(Base.Command):
 		super(titlerow, self).digest(tokens)
 		node = self.parentNode.parentNode
 		node.rowspec['background-color'] = '#cccccc'
+
+# Custom commands for use with the algorithm2e environment
+class Label(Base.Command):
+    blockType = True
+    args = 'self'
+
+class Goto(Base.Command):
+    blockType = True
+    args = 'self'
+
+class Procedure(Base.Command):
+    blockType = True
+    args = 'self'
+
+class Input(Base.Command):
+    blockType = True
+    args = 'self'
