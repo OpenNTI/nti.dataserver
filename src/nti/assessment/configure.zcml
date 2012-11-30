@@ -72,6 +72,9 @@
 	<!-- Generic grading -->
 	<adapter factory=".graders.StringEqualityGrader"
 			 for="* .interfaces.IQSingleValuedSolution .interfaces.IQTextResponse" />
+	<adapter factory=".graders.LowerStringEqualityGrader"
+			 name="LowerStringEqualityGrader"
+			 for="* .interfaces.IQSingleValuedSolution .interfaces.IQTextResponse" />
 	<adapter factory=".graders.FloatEqualityGrader"
 			 for="* .interfaces.IQNumericMathSolution .interfaces.IQTextResponse" />
 	<adapter factory=".graders.MultipleChoiceGrader"

@@ -69,5 +69,5 @@ class TestFreeResponseSolution(ConfiguringTestBase):
 	def test_grade_string(self):
 		assert_that( solution.QFreeResponseSolution( "text" ).grade( "text" ), is_true( ) )
 
-		# Case sensitive at the moment
-		assert_that( solution.QFreeResponseSolution( "text" ).grade( "Text" ), is_false( ) )
+		# SAJ: We are now not case sensitive
+		assert_that( solution.QFreeResponseSolution( "text" ).grade( "Text" ), is_true( ) )
