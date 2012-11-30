@@ -22,13 +22,19 @@ logger = log
 
 from zope.deprecation import deprecate
 from nti.deprecated import hiding_warnings
+from nti.ntiids import ntiids
+
 
 def _make_ntiid( document, local, local_prefix='', nttype='HTML' ):
 	local = unicode(local)
-	local = local.replace( ' ', '_' ).replace( '-', '_' ).replace('?','_').lower()
+	for char in ntiids._illegal_chars_ + ' ': # XXX Private
+		local = local.replace( char, '_' ) # Note that we're NOT using string.translate: it's not unicode safe
+
 	provider = document.config.get( "NTI", "provider" )
 
-	return 'tag:nextthought.com,2011-10:%s-%s-%s.%s%s' % (provider, nttype, document.userdata['jobname'], local_prefix, local)
+	ntiid = 'tag:nextthought.com,2011-10:%s-%s-%s.%s%s' % (provider, nttype, document.userdata['jobname'], local_prefix, local)
+	ntiids.validate_ntiid_string( ntiid ) # Ensure valid, otherwise raise
+	return ntiid
 
 
 @deprecate("Prefer the section element ntiid attribute")
