@@ -923,6 +923,7 @@ class TestChatserver(ConfiguringTestBase):
 		req_fact = dottedname.resolve( 'pyramid.request.Request' )
 		self.configure_packages( (appserver,) )
 		request = req_fact.blank( '/' )
+		#request.registry = component.getSiteManager()
 		config = psetUp(registry=component.getSiteManager(),request=request,hook_zca=False)
 		config.setup_registry()
 		config.testing_securitypolicy( nti_interfaces.IPrincipal( 'sjohnson' ) )
@@ -938,6 +939,7 @@ class TestChatserver(ConfiguringTestBase):
 			note.creator = sessions[1].the_user
 			note.addSharingTarget( sessions[2].the_user )
 			self.ds.root._p_jar.add( note )
+			# If there's no __parent__, there's no link
 			note.__parent__ = self.ds.root
 
 			assert_that( note, permits( 'sjohnson', auth.ACT_UPDATE ) )
@@ -954,5 +956,28 @@ class TestChatserver(ConfiguringTestBase):
 			ext_note2 = sessions[2].socket.events[0]['args'][0]
 			assert_that( ext_note, is_not( ext_note2 ) )
 			assert_that( ext_note2, has_entry( 'Links', is_not( has_item( has_entry( 'rel', 'edit' ) ) ) ) )
+
+			msg_info = chat.MessageInfo()
+			msg_info.creator = sessions[1].the_user.username
+			msg_info.recipients = [sessions[2].the_user.username]
+			msg_info.sharedWith = msg_info.recipients
+			msg_info.containerId = 'foobar'
+			# Make sure it has a parent and oid
+			storage = chat_interfaces.IMessageInfoStorage( msg_info )
+			storage.add_message( msg_info )
+
+
+
+			assert_that( msg_info, permits( 'sjohnson', auth.ACT_UPDATE ) )
+			assert_that( msg_info, denies( 'jason', auth.ACT_UPDATE ) )
+			assert_that( msg_info, permits( 'jason', auth.ACT_READ ) )
+
+			del sessions[2].socket.events[:]
+			chatserver.send_event_to_user( 'jason', 'event', msg_info )
+			assert_that( sessions[2].socket.events, has_length( 1 ) )
+			ext_msg = sessions[2].socket.events[0]['args'][0]
+			assert_that( ext_msg, has_entry( 'Links', has_item( has_entry( 'rel', 'flag' ) ) ) )
+
+
 		finally:
 			ptearDown()

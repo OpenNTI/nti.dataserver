@@ -41,6 +41,9 @@ import pyramid.config
 import pyramid.authorization
 import pyramid.security
 import pyramid.httpexceptions as hexc
+import pyramid.registry
+from pyramid.threadlocal import get_current_registry
+
 from paste.deploy.converters import asbool
 
 import nti.appserver.workspaces
@@ -175,6 +178,13 @@ def createApplication( http_port,
 		# If we fail to do this, things like 'pyramid.includes' don't get processed
 		pyramid_config.setup_registry(debug_logger=logging.getLogger( 'pyramid' ),
 									  settings=settings)
+
+		# Note that the pyramid.registry.global_registry remains
+		# the default registry, but it doesn't have the correct configuration.
+		# Give it the right base. Otherwise, outside of a request, e.g., when sending
+		# chat events, the configuration is wrong
+		assert get_current_registry() is pyramid.registry.global_registry
+		pyramid.registry.global_registry.__bases__ = (component.getGlobalSiteManager(),)
 
 
 	# Our addons

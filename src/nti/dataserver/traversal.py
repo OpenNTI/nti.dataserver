@@ -24,7 +24,7 @@ def resource_path( res ):
 	# also more strict. It requires strings (not None, for example)
 	# and bottoms out at an IRoot. This helps us get things right.
 	# It is probably also a bit slower.
-	__traceback_info__ = res
+	__traceback_info__ = res,
 
 	# Ask for the parents; we do this instead of getPath() and url_quote
 	# to work properly with unicode paths through the magic of pyramid
