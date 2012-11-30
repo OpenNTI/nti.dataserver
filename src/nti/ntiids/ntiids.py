@@ -58,19 +58,22 @@ TYPE_TRANSCRIPT_SUMMARY = 'TranscriptSummary'
 
 
 # Validation
-_illegal_chars_ = r"/\";=?<>#%'{}|^[]"
+_illegal_chars_ = r"/\";=?<>#%'{}|^[]" # Space is technically legal (?)
 
-class InvalidNTIIDError(ValueError): pass
+
+class InvalidNTIIDError(ValueError):
+	pass
 
 def validate_ntiid_string( string ):
 	"""
 	Ensures the string is a valid NTIID, else raises :class:`InvalidNTIIDError`.
+
 	:return: The `string`.
 	"""
 	try:
-		string = unicode(string)
-	except UnicodeDecodeError:
-		raise InvalidNTIIDError( "String contains non-ascii values " + repr(string) )
+		string = string if isinstance(string,unicode) else unicode(string, 'utf-8') # cannot decode unicode
+	except (UnicodeDecodeError,TypeError):
+		raise InvalidNTIIDError( "String contains non-utf-8 values " + repr(string) )
 
 	if not string or not string.startswith( 'tag:nextthought.com,20' ):
 		raise InvalidNTIIDError( 'Missing correct start value: ' + repr(string) )
@@ -99,11 +102,12 @@ def is_valid_ntiid_string( string ):
 
 def is_ntiid_of_type( ntiid, nttype ):
 	"""
+	Check if the given ``ntiid`` is valid and of the given type
+	(ignoring subtypes).
+
 	:return: A True value if the ntiid is valid and has a type
 		portion equivalent to the given nttype (i.e., ignoring
 		subtypes).
-
-	EOD
 	"""
 	result = None
 	the_type = get_type( ntiid )
@@ -118,25 +122,34 @@ def escape_provider( provider ):
 	characters not safe for a URL, such as _ and ' '. When
 	comparing provider names with those that come fram an NTIID,
 	you should always call this function.
+
 	:return: The escaped provider, or the original value if it could not be escaped.
 
-	EOD
 	"""
 	try:
 		return provider.replace( ' ', '_' ).replace( '-', '_' )
 	except AttributeError:
 		return provider
 
+# TODO: A function to "escape" the local/specific part. Unfortunately, it's
+# non-reversible so its less an escape and more a permutation.
+# NOTE: While string.translate is tempting,
+# it cannot be used because we allow the local parts to be Unicode and string.translate
+# works on bytes
+
 def make_ntiid( date=DATE, provider=None, nttype=None, specific=None, base=None ):
 	"""
-	:return: A new NTIID formatted as of the given date.
+	Create a new NTIID.
+
 	:param number date: A value from :meth:`time.time`. If missing (0 or `None`), today will be used.
 		If a string, then that string should be a portion of an ISO format date, e.g., 2011-10.
-	:param string provider: Optional provider name. We will sanitize it for our format.
-	:param string nttype: Required NTIID type (if no base is given)
-	:param string specific: Optional type-specific part.
-	:param string base: If given, an NTIID string from which provider, nttype, specific, and date
+	:param str provider: Optional provider name. We will sanitize it for our format.
+	:param str nttype: Required NTIID type (if no base is given)
+	:param str specific: Optional type-specific part.
+	:param str base: If given, an NTIID string from which provider, nttype, specific, and date
 		will be taken if they are not directly specified. If not a valid NTIID, will be ignored.
+
+	:return: A new NTIID string formatted as of the given date.
 	"""
 
 	if base is not None and not is_valid_ntiid_string( base ):
