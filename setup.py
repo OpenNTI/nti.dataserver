@@ -181,7 +181,9 @@ setup(
 		'plone.scale >= 1.2.2', # image scaling/storage based on PIL
 		'plone.namedfile >= 2.0', # much like zope.file, but some image-specific goodness.
 		'pyPDF >= 1.13', # Pure python PDF reading library. Not complex. Has newer fork pyPDF2, not yet on PyPI?
-		'pyquery >= 1.2.3', # jquery-like traversing of python datastructures. lxml, cssselect
+		# jquery-like traversing of python datastructures. lxml, cssselect
+		# optional dependency on 'restkit' for interactive WSGI stuff (used to be Paste)
+		'pyquery >= 1.2.4',
 		'pyramid >= 1.4b1' ,
 		'pyramid_tm >= 0.5',
 		'pyramid_mailer >= 0.9', # Which uses repoze.sendmail
@@ -303,7 +305,7 @@ setup(
 		],
 	extras_require = {
 		'test': [
-			'coverage >= 3.5.3', # Test coverage
+			'coverage >= 3.6b1', # Test coverage
 			'nose >= 1.2.1',
 			'zope.testing >= 4.1.1',
 			'zc.buildout == 1.6.3',
